@@ -364,7 +364,8 @@ def run_judge(
 
     template_kwargs: dict = {"enable_thinking": thinking}
     if image_token_budget is not None:
-        template_kwargs["max_soft_tokens"] = image_token_budget
+        # transformers >=5.14 wants per-call processor kwargs nested.
+        template_kwargs["processor_kwargs"] = {"max_soft_tokens": image_token_budget}
     inputs = processor.apply_chat_template(
         messages,
         add_generation_prompt=True,
@@ -409,17 +410,23 @@ def run_judge(
     return text, usage, elapsed
 
 
-def count_context_tokens(messages: list[dict], model_id: str) -> int:
+def count_context_tokens(
+    messages: list[dict], model_id: str, image_token_budget: int | None = None
+) -> int:
     """Tokenize the prompt (processor only, no model weights)."""
     from transformers import AutoProcessor
 
     processor = AutoProcessor.from_pretrained(model_id)
+    extra: dict = {}
+    if image_token_budget is not None:
+        extra["processor_kwargs"] = {"max_soft_tokens": image_token_budget}
     inputs = processor.apply_chat_template(
         messages,
         add_generation_prompt=True,
         tokenize=True,
         return_dict=True,
         return_tensors="pt",
+        **extra,
     )
     return int(inputs["input_ids"].shape[-1])
 
@@ -558,7 +565,7 @@ def main() -> None:
         )
         print(f'[dry run] instruction: "{evidence.instruction}"')
         print(f"[dry run] stats block:\n{evidence.stats_block}")
-        tokens = count_context_tokens(messages, args.model)
+        tokens = count_context_tokens(messages, args.model, args.image_token_budget)
         print(f"[dry run] context length: {tokens} input tokens")
         return
 
