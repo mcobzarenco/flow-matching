@@ -1,0 +1,29 @@
+[project]
+name = "flow-matching"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "anthropic>=0.117.0",
+    "av>=15,<16",
+    "ipython>=9.15.0",
+    "lerobot[feetech,smolvla,viz]>=0.4",
+    "pillow>=12.3.0",
+    "torch>=2.7.0",
+    "torchvision>=0.22.0",
+]
+
+[dependency-groups]
+dev = [
+    "pyright[nodejs]>=1.1.411",
+    "ruff>=0.15.21",
+]
+
+[tool.pyright]
+include = ["fmatch", "main.py", "check.py", "eval_smolvla.py"]
+venvPath = "."
+venv = ".venv"
+
+[tool.ruff]
+extend-exclude = ["MNIST"]

@@ -1,0 +1,60 @@
+{
+  "policy": "lerobot/smolvla_base",
+  "dataset": {
+    "repo_id": "ZGGZZG/so100_drop0",
+    "root": "/home/marius/w/community_dataset_v1_v3/ZGGZZG/so100_drop0"
+  },
+  "config": {
+    "episodes": [
+      0,
+      1,
+      2
+    ],
+    "stride": 15,
+    "chunk_size": 50,
+    "device": "cuda",
+    "amp": true,
+    "camera_rename_map": {
+      "observation.images.image": "observation.images.camera1",
+      "observation.images.image2": "observation.images.camera2"
+    }
+  },
+  "overall": {
+    "chunk_mse": 409.9918602004781,
+    "chunk_mae": 11.427380874226703,
+    "first_mae": 3.044886049403939,
+    "per_motor_mae": {
+      "left_shoulder_pan": 4.132639435271124,
+      "left_shoulder_lift": 27.243239263557964,
+      "left_elbow_flex": 20.65311338902604,
+      "left_wrist_flex": 10.293037470062519,
+      "left_wrist_roll": 3.738219495684844,
+      "left_gripper": 2.5040357273890246
+    },
+    "frames_evaluated": 93,
+    "avg_inference_seconds": 0.1397851376451712
+  },
+  "per_episode": [
+    {
+      "episode": 0,
+      "frames_evaluated": 29,
+      "chunk_mse": 413.7885175193636,
+      "chunk_mae": 11.689525427770695,
+      "first_mae": 2.8530302725989243
+    },
+    {
+      "episode": 1,
+      "frames_evaluated": 35,
+      "chunk_mse": 591.4975332574194,
+      "chunk_mae": 13.919847393418891,
+      "first_mae": 3.872247392790658
+    },
+    {
+      "episode": 2,
+      "frames_evaluated": 29,
+      "chunk_mse": 186.10797331656508,
+      "chunk_mae": 8.142961359500072,
+      "first_mae": 2.2382022738456726
+    }
+  ]
+}
