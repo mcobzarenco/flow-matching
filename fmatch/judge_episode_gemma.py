@@ -23,7 +23,6 @@ Notes:
 
 import argparse
 import json
-import os
 import re
 import sys
 import time
@@ -31,10 +30,6 @@ from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 from typing import Any
-
-if "HF_TOKEN" not in os.environ:
-    # An invalid cached token would turn public downloads into 401s.
-    os.environ.setdefault("HF_HUB_DISABLE_IMPLICIT_TOKEN", "1")
 
 import numpy as np
 import torch

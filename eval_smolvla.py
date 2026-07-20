@@ -37,20 +37,15 @@ matter the stride or evaluation order. Set `seed=None` (API) for stochastic
 sampling.
 
 The first run downloads the policy weights and tokenizer from the HF Hub
-(~1 GB). Only public repos are needed, so an invalid cached token would only
-hurt; we therefore ignore implicit tokens unless HF_TOKEN is set explicitly.
+(~1 GB; public repos, so no authentication is required).
 """
 
 import argparse
 import json
-import os
 import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-
-if "HF_TOKEN" not in os.environ:
-    os.environ.setdefault("HF_HUB_DISABLE_IMPLICIT_TOKEN", "1")
 
 import torch
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
