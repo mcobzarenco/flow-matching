@@ -25,8 +25,8 @@ from .layers import (
     DeviceLike,
     RMSNorm,
     apply_rotary_pos_emb,
+    attention,
     buffer_device,
-    eager_attention,
     rope_cos_sin,
 )
 from .masks import MaskMapping, build_text_masks
@@ -155,6 +155,8 @@ class TextAttention(nn.Module):
         self.head_dim = config.head_dim_for_layer(layer_idx)
         self.is_kv_shared_layer = config.is_kv_shared_layer(layer_idx)
         self.is_kv_source_layer = config.is_kv_source_layer(layer_idx)
+        # Mutable on purpose: see gemma4.model.set_attention_backend.
+        self.attn_backend = config.attn_backend
 
         use_alternative_attention = config.attention_k_eq_v and not self.is_sliding
         if use_alternative_attention:
@@ -256,8 +258,14 @@ class TextAttention(nn.Module):
             if self.is_kv_source_layer:
                 shared_kv[self.layer_type] = (key, value)
 
-        attn_output = eager_attention(
-            query, key, value, attention_mask, self.num_key_value_groups, scaling=1.0
+        attn_output = attention(
+            self.attn_backend,
+            query,
+            key,
+            value,
+            attention_mask,
+            self.num_key_value_groups,
+            scaling=1.0,
         )
         return self.o_proj(attn_output.reshape(batch, seq_len, -1))
 

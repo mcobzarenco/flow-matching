@@ -10,6 +10,8 @@ import torch
 from torch import Tensor, nn
 from torch.nn import functional as F
 
+from .config import AttentionBackend
+
 type DeviceLike = torch.device | str | None
 
 
@@ -91,8 +93,9 @@ def eager_attention(
     num_key_value_groups: int,
     scaling: float = 1.0,
 ) -> Tensor:
-    """Eager attention, softmax in float32. Shapes: q [B, H, Sq, D],
-    k/v [B, KV, Skv, D], additive mask [B, 1, Sq, Skv] or None.
+    """Eager attention, softmax in float32; mirrors HF's reference path
+    op-for-op. Shapes: q [B, H, Sq, D], k/v [B, KV, Skv, D], additive mask
+    [B, 1, Sq, Skv] or None.
 
     Returns [B, Sq, H, D].
     """
@@ -106,6 +109,47 @@ def eager_attention(
     attn_weights = F.softmax(attn_weights, dim=-1, dtype=torch.float32).to(query.dtype)
     attn_output = torch.matmul(attn_weights, value_states)
     return attn_output.transpose(1, 2).contiguous()
+
+
+def sdpa_attention(
+    query: Tensor,
+    key: Tensor,
+    value: Tensor,
+    attention_mask: Tensor | None,
+    num_key_value_groups: int,
+    scaling: float = 1.0,
+) -> Tensor:
+    """Fused attention via ``F.scaled_dot_product_attention``. Same contract
+    as :func:`eager_attention`; numerics differ at bf16-ULP scale (fused
+    kernels accumulate in fp32 but do not round-trip the softmax through
+    fp32->bf16)."""
+    attn_output = F.scaled_dot_product_attention(
+        query,
+        key,
+        value,
+        attn_mask=attention_mask,
+        scale=scaling,
+        enable_gqa=num_key_value_groups > 1,
+    )
+    return attn_output.transpose(1, 2).contiguous()
+
+
+def attention(
+    backend: AttentionBackend,
+    query: Tensor,
+    key: Tensor,
+    value: Tensor,
+    attention_mask: Tensor | None,
+    num_key_value_groups: int,
+    scaling: float = 1.0,
+) -> Tensor:
+    if backend is AttentionBackend.SDPA:
+        return sdpa_attention(
+            query, key, value, attention_mask, num_key_value_groups, scaling
+        )
+    return eager_attention(
+        query, key, value, attention_mask, num_key_value_groups, scaling
+    )
 
 
 def rope_cos_sin(

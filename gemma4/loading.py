@@ -22,7 +22,7 @@ from pathlib import Path
 import torch
 from safetensors import safe_open
 
-from .config import Gemma4Config
+from .config import AttentionBackend, Gemma4Config
 from .model import Gemma4Model
 
 _AUDIO_PREFIXES = ("model.audio_tower.", "model.embed_audio.")
@@ -63,11 +63,13 @@ def load_model(
     *,
     device: torch.device | str = "cpu",
     dtype: torch.dtype | None = None,
+    attn_backend: AttentionBackend | None = None,
     config: Gemma4Config | None = None,
 ) -> Gemma4Model:
     """Load a checkpoint, materializing weights directly on ``device``.
 
-    ``dtype`` overrides the checkpoint's dtype (default bf16). The model is
+    ``dtype`` overrides the checkpoint's dtype (default bf16); ``attn_backend``
+    overrides the attention implementation for both towers. The model is
     returned in eval mode with gradients disabled; for training, re-enable
     with ``model.requires_grad_(True)`` / ``model.train()``.
     """
@@ -76,6 +78,16 @@ def load_model(
         config = load_config(checkpoint_dir)
     if dtype is not None:
         config = dataclasses.replace(config, dtype=dtype)
+    if attn_backend is not None:
+        config = dataclasses.replace(
+            config,
+            text=dataclasses.replace(config.text, attn_backend=attn_backend),
+            vision=(
+                dataclasses.replace(config.vision, attn_backend=attn_backend)
+                if config.vision is not None
+                else None
+            ),
+        )
 
     model = Gemma4Model(config, device="meta")
 

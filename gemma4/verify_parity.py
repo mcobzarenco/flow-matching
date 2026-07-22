@@ -19,13 +19,16 @@ implementations are bitwise-identical and run-to-run stable.
 
 Checks: full prefill forward, cached stepwise greedy decode, end-to-end
 ``generate()``, optional ``--long-context`` (sliding-window coverage) and
-``--image`` (vision path).
+``--image`` (vision path). Prompts are wrapped in the checkpoint's chat
+template by default (the correct instruct usage — generations should be
+coherent); pass ``--raw`` to feed prompts verbatim instead. ``--attn-backend``
+selects our attention implementation (the HF reference always runs eager).
 
 Usage::
 
     uv run python -m gemma4.verify_parity --device cuda --max-new-tokens 32
-    uv run python -m gemma4.verify_parity --device cuda --long-context 600 \
-        --image /tmp/parity_test.png
+    uv run python -m gemma4.verify_parity --device cuda --attn-backend sdpa \
+        --long-context 600 --image /tmp/parity_test.png
 """
 
 from __future__ import annotations
@@ -40,13 +43,15 @@ import torch
 from torch import Tensor
 
 from .cache import KVCache
+from .config import AttentionBackend
 from .generation import generate
 from .loading import load_generation_defaults, load_model, resolve_checkpoint_dir
 
 DEFAULT_MODEL = "google/gemma-4-e2b-it"
 DEFAULT_PROMPTS = (
-    "The three primary colors are",
-    "Instruct: pick up the red cube and place it in the bin.\nPlan:",
+    "What are the three primary colors? Answer in one sentence.",
+    "You control a robot arm. Plan the steps to pick up the red cube "
+    "and place it in the bin.",
 )
 
 
@@ -101,6 +106,18 @@ def main() -> int:
     parser.add_argument("--device", default="cpu")
     parser.add_argument("--prompt", action="append", default=None)
     parser.add_argument(
+        "--raw",
+        action="store_true",
+        help="feed prompts verbatim instead of applying the chat template",
+    )
+    parser.add_argument(
+        "--attn-backend",
+        type=AttentionBackend,
+        choices=list(AttentionBackend),
+        default=AttentionBackend.EAGER,
+        help="attention implementation for the pure-torch model",
+    )
+    parser.add_argument(
         "--image", default=None, help="path to an image for the multimodal check"
     )
     parser.add_argument("--max-new-tokens", type=int, default=16)
@@ -138,16 +155,25 @@ def main() -> int:
     hf_model = hf_model.to(device).eval()
     watch.lap("reference model loaded")
 
-    print("loading pure-torch implementation ...", flush=True)
-    model = load_model(checkpoint_dir, device=device)
+    print(f"loading pure-torch implementation ({args.attn_backend}) ...", flush=True)
+    model = load_model(checkpoint_dir, device=device, attn_backend=args.attn_backend)
     watch.lap("pure-torch model loaded")
 
     prompts = args.prompt if args.prompt else list(DEFAULT_PROMPTS)
     all_ok = True
 
     for prompt in prompts:
-        print(f"\n=== prompt: {prompt!r}", flush=True)
-        input_ids = tokenizer(prompt, return_tensors="pt").input_ids.to(device)
+        style = "raw" if args.raw else "chat template"
+        print(f"\n=== prompt ({style}): {prompt!r}", flush=True)
+        if args.raw:
+            input_ids = tokenizer(prompt, return_tensors="pt").input_ids
+        else:
+            input_ids = tokenizer.apply_chat_template(
+                [{"role": "user", "content": prompt}],
+                add_generation_prompt=True,
+                return_tensors="pt",
+            )
+        input_ids = input_ids.to(device)
         comparisons: list[Comparison] = []
 
         # 1. Full forward, no cache: all prompt positions (hard gate).

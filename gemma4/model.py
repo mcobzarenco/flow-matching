@@ -13,10 +13,10 @@ import torch
 from torch import Tensor, nn
 
 from .cache import KVCache
-from .config import Gemma4Config
+from .config import AttentionBackend, Gemma4Config
 from .layers import DeviceLike
-from .text import TextModel
-from .vision import MultimodalEmbedder, VisionModel
+from .text import TextAttention, TextModel
+from .vision import MultimodalEmbedder, VisionAttention, VisionModel
 
 
 @dataclass(frozen=True, slots=True)
@@ -139,3 +139,11 @@ class Gemma4Model(nn.Module):
             logits = logits * softcap
 
         return Gemma4Output(logits=logits, last_hidden_state=hidden_states)
+
+
+def set_attention_backend(module: nn.Module, backend: AttentionBackend) -> None:
+    """Switch the attention implementation of all attention submodules in
+    place (cheap; useful for A/B benchmarking a loaded model)."""
+    for submodule in module.modules():
+        if isinstance(submodule, (TextAttention, VisionAttention)):
+            submodule.attn_backend = backend

@@ -31,6 +31,19 @@ class RopeType(StrEnum):
     PROPORTIONAL = "proportional"
 
 
+class AttentionBackend(StrEnum):
+    """How attention is computed.
+
+    EAGER mirrors HF's reference implementation op-for-op (fp32 softmax) and
+    is the parity baseline. SDPA uses ``F.scaled_dot_product_attention``
+    (fused kernels; numerics differ at bf16-ULP scale). This is a runtime
+    choice, not a checkpoint property: it is never read from config.json.
+    """
+
+    EAGER = "eager"
+    SDPA = "sdpa"
+
+
 @dataclass(frozen=True, slots=True)
 class RopeParameters:
     rope_type: RopeType
@@ -112,6 +125,8 @@ class Gemma4TextConfig:
 
     # MoE (26B-A4B only, not implemented).
     enable_moe_block: bool = False
+
+    attn_backend: AttentionBackend = AttentionBackend.EAGER
 
     def __post_init__(self) -> None:
         if len(self.layer_types) != self.num_hidden_layers:
@@ -237,6 +252,8 @@ class Gemma4VisionConfig:
     position_embedding_size: int = 10_240
     use_clipped_linears: bool = True
     standardize: bool = False
+
+    attn_backend: AttentionBackend = AttentionBackend.EAGER
 
     def __post_init__(self) -> None:
         if self.standardize:

@@ -21,8 +21,8 @@ from .layers import (
     DeviceLike,
     RMSNorm,
     apply_rotary_pos_emb,
+    attention,
     buffer_device,
-    eager_attention,
 )
 from .masks import build_bidirectional_mask
 from .text import activation_fn
@@ -191,6 +191,8 @@ class VisionAttention(nn.Module):
         self.num_key_value_groups = (
             config.num_attention_heads // config.num_key_value_heads
         )
+        # Mutable on purpose: see gemma4.model.set_attention_backend.
+        self.attn_backend = config.attn_backend
         hidden = config.hidden_size
         self.q_proj = ClippableLinear(
             config,
@@ -258,8 +260,14 @@ class VisionAttention(nn.Module):
         value = self.v_norm(value)
         value = value.transpose(1, 2)
 
-        attn_output = eager_attention(
-            query, key, value, attention_mask, self.num_key_value_groups, scaling=1.0
+        attn_output = attention(
+            self.attn_backend,
+            query,
+            key,
+            value,
+            attention_mask,
+            self.num_key_value_groups,
+            scaling=1.0,
         )
         return self.o_proj(attn_output.reshape(batch, seq_len, -1))
 

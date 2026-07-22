@@ -25,6 +25,7 @@ the target device, and different submodules may use different dtypes:
 
 from .cache import KVCache
 from .config import (
+    AttentionBackend,
     Gemma4Config,
     Gemma4TextConfig,
     Gemma4VisionConfig,
@@ -34,11 +35,12 @@ from .config import (
 )
 from .generation import GenerationResult, SamplingParams, generate
 from .loading import load_config, load_model, resolve_checkpoint_dir
-from .model import Gemma4Model, Gemma4Output
+from .model import Gemma4Model, Gemma4Output, set_attention_backend
 from .text import TextModel
 from .vision import VisionModel
 
 __all__ = [
+    "AttentionBackend",
     "Gemma4Config",
     "Gemma4Model",
     "Gemma4Output",
@@ -56,4 +58,5 @@ __all__ = [
     "load_config",
     "load_model",
     "resolve_checkpoint_dir",
+    "set_attention_backend",
 ]
