@@ -35,8 +35,8 @@ selects our attention implementation (the HF reference always runs eager).
 
 Usage::
 
-    uv run python -m gemma4.verify_parity --device cuda --max-new-tokens 32
-    uv run python -m gemma4.verify_parity --device cuda --attn-backend sdpa \
+    uv run python -m jimmy.gemma4.verify_parity --device cuda --max-new-tokens 32
+    uv run python -m jimmy.gemma4.verify_parity --device cuda --attn-backend sdpa \
         --long-context 600
 """
 

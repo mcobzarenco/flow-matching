@@ -191,7 +191,7 @@ class VisionAttention(nn.Module):
         self.num_key_value_groups = (
             config.num_attention_heads // config.num_key_value_heads
         )
-        # Mutable on purpose: see gemma4.model.set_attention_backend.
+        # Mutable on purpose: see jimmy.gemma4.model.set_attention_backend.
         self.attn_backend = config.attn_backend
         hidden = config.hidden_size
         self.q_proj = ClippableLinear(

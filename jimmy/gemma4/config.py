@@ -37,7 +37,7 @@ class AttentionBackend(StrEnum):
     EAGER mirrors HF's reference implementation op-for-op (fp32 softmax) and
     is the parity baseline. SDPA uses ``F.scaled_dot_product_attention``
     (fused kernels; numerics differ at bf16-ULP scale, greedy tokens verified
-    identical — see gemma4/verify_parity.py) and is the default: measured on
+    identical — see jimmy/gemma4/verify_parity.py) and is the default: measured on
     H100 it is ~1.9x faster / 4.7x leaner on 8k-token text prefill and ~1.6x
     on image prefill, with decode dispatched to eager at q_len==1 (faster
     there). This is a runtime choice, not a checkpoint property: it is never
