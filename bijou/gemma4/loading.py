@@ -116,7 +116,7 @@ def load_model(
     model.requires_grad_(False)
     # Parameters are already on the target device; this sweeps over the small
     # computed buffers (rope inv_freq, embed scales), which meta construction
-    # materializes on CPU (see jimmy.gemma4.layers.buffer_device).
+    # materializes on CPU (see bijou.gemma4.layers.buffer_device).
     return model.to(device)
 
 

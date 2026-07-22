@@ -155,7 +155,7 @@ class TextAttention(nn.Module):
         self.head_dim = config.head_dim_for_layer(layer_idx)
         self.is_kv_shared_layer = config.is_kv_shared_layer(layer_idx)
         self.is_kv_source_layer = config.is_kv_source_layer(layer_idx)
-        # Mutable on purpose: see jimmy.gemma4.model.set_attention_backend.
+        # Mutable on purpose: see bijou.gemma4.model.set_attention_backend.
         self.attn_backend = config.attn_backend
 
         use_alternative_attention = config.attention_k_eq_v and not self.is_sliding

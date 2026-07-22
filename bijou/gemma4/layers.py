@@ -120,7 +120,7 @@ def eager_attention(
 # torch 2.11. Above that only the mem-efficient backend remains, and it does
 # not support enable_gqa -- without the workaround below, Gemma4's global
 # layers (head_dim 512) silently fall back to the math backend (~3x slower,
-# measured in jimmy/gemma4/bench.py).
+# measured in bijou/gemma4/bench.py).
 _SDPA_FUSED_MAX_HEAD_DIM = 256
 
 
@@ -168,7 +168,7 @@ def attention(
 ) -> Tensor:
     """Dispatch to the configured attention implementation.
 
-    Perf policy (measured on H100, see jimmy/gemma4/bench.py): single-token decode
+    Perf policy (measured on H100, see bijou/gemma4/bench.py): single-token decode
     always takes the eager path — at q_len == 1 the fused SDPA kernels are
     launch-bound and ~2x slower than two small gemms. Both paths are
     semantically identical; they differ only at bf16-ULP scale.

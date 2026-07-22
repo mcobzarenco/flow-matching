@@ -13,8 +13,8 @@ allocator state. Workloads:
 
 Usage::
 
-    uv run python -m jimmy.gemma4.bench --device cuda
-    uv run python -m jimmy.gemma4.bench --device cuda --prefill 512 2048 4096 8192
+    uv run python -m bijou.gemma4.bench --device cuda
+    uv run python -m bijou.gemma4.bench --device cuda --prefill 512 2048 4096 8192
 """
 
 from __future__ import annotations

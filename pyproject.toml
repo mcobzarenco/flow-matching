@@ -31,7 +31,7 @@ dev = [
 ]
 
 [tool.pyright]
-include = ["fmatch", "jimmy", "main.py", "check.py", "eval_smolvla.py"]
+include = ["fmatch", "bijou", "main.py", "check.py", "eval_smolvla.py"]
 venvPath = "."
 venv = ".venv"
 # Parameter annotations are required (return annotations are enforced by

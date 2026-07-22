@@ -4,7 +4,7 @@ Loads HF checkpoints (``google/gemma-4-e2b-it``) and reproduces the reference
 transformers implementation bit-exactly in bf16 (eager attention). Text and
 vision towers are implemented; the audio tower is not.
 
-Correctness is checked with ``python -m jimmy.gemma4.verify_parity``: greedy
+Correctness is checked with ``python -m bijou.gemma4.verify_parity``: greedy
 tokens must match HF exactly and logits must agree within a small tolerance
 (bf16-ULP-scale differences are expected and acceptable — we do not promise
 bitwise equality, leaving room to optimize kernels; on H100 with eager
