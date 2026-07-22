@@ -33,6 +33,8 @@ Properties:
 import argparse
 import json
 import shutil
+import subprocess
+import tempfile
 import time
 import traceback
 from collections import Counter
@@ -42,6 +44,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pyarrow.parquet as pq
 from tqdm import tqdm
 
 SUPPORTED_SOURCE_VERSIONS = {"v2.0", "v2.1"}
@@ -148,6 +151,95 @@ def stage_copy(src: Path, dst: Path, info: dict) -> None:
                     dst / "videos" / chunk_dir.name / key_dir.name,
                     dirs_exist_ok=True,
                 )
+
+
+# ---------------------------------------------------------------------------
+# Data-column sanitation (drop columns not declared in info features)
+# ---------------------------------------------------------------------------
+
+
+def sanitize_data_columns(root: Path, info: dict) -> set[str]:
+    """Drop parquet columns that aren't declared features.
+
+    Some community datasets carry legacy columns (e.g. ``next.done``) in the
+    per-episode parquets that are absent from ``info.json`` features; the
+    datasets library later refuses to cast the consolidated v3 file against
+    the declared schema.
+    """
+    declared = {k for k, f in info["features"].items() if f.get("dtype") != "video"}
+    dropped: set[str] = set()
+    for parquet_path in sorted(root.glob("data/chunk-*/episode_*.parquet")):
+        names = pq.read_schema(parquet_path).names  # cheap: footer only
+        extras = [c for c in names if c not in declared]
+        if extras:
+            dropped.update(extras)
+            table = pq.read_table(parquet_path)
+            table = table.select([c for c in names if c in declared])
+            pq.write_table(table, parquet_path)
+    return dropped
+
+
+# ---------------------------------------------------------------------------
+# Video concat: ffmpeg fallback for streams PyAV refuses to mux
+# ---------------------------------------------------------------------------
+
+_original_concatenate = None
+
+
+def concatenate_with_ffmpeg_fallback(
+    input_video_paths: list,
+    output_video_path: Path | str,
+    *args: object,
+    **kwargs: object,
+) -> None:
+    """lerobot's PyAV concat, falling back to ffmpeg's concat demuxer.
+
+    Some episodes contain duplicate/non-monotonic DTS at file boundaries;
+    PyAV's mux raises EINVAL on these while ffmpeg repairs them in stream
+    copy mode.
+    """
+    assert _original_concatenate is not None
+    try:
+        _original_concatenate(input_video_paths, output_video_path, *args, **kwargs)
+        return
+    except Exception as error:  # noqa: BLE001 - deliberate fallback
+        log("video-concat", f"pyav failed ({error}); retrying with ffmpeg")
+    with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False) as handle:
+        for path in input_video_paths:
+            escaped = str(Path(path).resolve()).replace("'", "'\\''")
+            handle.write(f"file '{escaped}'\n")
+        list_path = Path(handle.name)
+    try:
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-hide_banner",
+                "-loglevel",
+                "error",
+                "-y",
+                "-f",
+                "concat",
+                "-safe",
+                "0",
+                "-i",
+                str(list_path),
+                "-c",
+                "copy",
+                str(output_video_path),
+            ],
+            check=True,
+        )
+    finally:
+        list_path.unlink(missing_ok=True)
+
+
+def install_concat_fallback() -> None:
+    global _original_concatenate
+    import lerobot.scripts.convert_dataset_v21_to_v30 as converter_module
+
+    if converter_module.concatenate_video_files is not concatenate_with_ffmpeg_fallback:
+        _original_concatenate = converter_module.concatenate_video_files
+        converter_module.concatenate_video_files = concatenate_with_ffmpeg_fallback
 
 
 # ---------------------------------------------------------------------------
@@ -314,8 +406,17 @@ def convert_one(ds: SubDataset, output: Path) -> dict:
 
     info = json.loads((ds.path / "meta" / "info.json").read_text())
 
+    video_keys = [k for k, f in info["features"].items() if f.get("dtype") == "video"]
+    if video_keys and not (ds.path / "videos").is_dir():
+        raise RuntimeError(
+            f"declares video features {video_keys} but has no videos/ directory"
+        )
+
     log(ds.name, f"staging copy ({ds.size_bytes / 1e9:.1f} GB, {ds.version})")
     stage_copy(ds.path, staging, info)
+    dropped = sanitize_data_columns(staging, info)
+    if dropped:
+        log(ds.name, f"dropped undeclared parquet columns: {sorted(dropped)}")
     if repair_stats_keys(staging, info["features"]):
         log(ds.name, "repaired flat camera stats keys")
     if (
@@ -325,6 +426,7 @@ def convert_one(ds: SubDataset, output: Path) -> dict:
         synthesize_episodes_stats(staging, info, ds.name)
 
     log(ds.name, "converting v2.1 -> v3.0")
+    install_concat_fallback()
     convert_dataset(repo_id=ds.name, root=staging, push_to_hub=False)
 
     if old_leftover.exists():
