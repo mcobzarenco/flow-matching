@@ -2,18 +2,23 @@
 
 Contract (deliberately *not* bitwise, to leave room for kernel optimizations):
 
-- hard gates: greedy tokens must match HF exactly; single-forward logits
-  (prefill, and the first cached-decode step) must agree within
-  ``--tolerance`` (default 2.0). Measured context for the default: the eager
-  backend is bitwise-identical to HF on H100; the SDPA backend lands at
-  max|Δ| ≈ 0.6-1.8 on text (≈ 5-14 bf16 ULPs at softcapped-logit scale,
-  from 35 layers of fused kernels skipping the fp32 softmax round-trip)
-  while producing identical greedy tokens. Structural bugs produce O(10+)
-  diffs and wrong tokens, so the gate still bites.
+- hard gates: single-forward logits (prefill, and the first cached-decode
+  step) must agree within ``--tolerance`` (default 2.0), and greedy tokens
+  must match HF exactly — except that a divergence is accepted when it
+  happens at a *near-tie*: the two candidate tokens' logits within
+  ``--tolerance`` of each other in **both** implementations at the fork step.
+  ULP-scale kernel noise legitimately flips such ties (observed on E4B with
+  random-token context and image captions); a confident disagreement still
+  fails.
+- Measured context for the tolerance default: the eager backend is
+  bitwise-identical to HF on H100; the SDPA backend lands at max|Δ| ≈ 0.6-1.8
+  on text (≈ 5-14 bf16 ULPs at softcapped-logit scale, from the decoder
+  stack of fused kernels skipping the fp32 softmax round-trip). Structural
+  bugs produce O(10+) diffs and confidently wrong tokens, so the gates bite.
 - informational: bitwise status and multi-step decode drift. Once per-step
   kernels differ by a ULP anywhere, the KV-cache feedback loop amplifies
   differences across steps (deterministic chaos), so drift there is expected
-  and only token agreement is enforced.
+  and only (near-tie-aware) token agreement is enforced.
 - image prompts gate on *last-position* logits and generated tokens: logits
   at interior image-token positions are never consumed and are hypersensitive
   to ULP-scale soft-token noise.
@@ -53,8 +58,8 @@ import torch
 from torch import Tensor
 
 from .cache import KVCache
+from .generation import GenerationResult, generate
 from .layers import AttentionBackend
-from .generation import generate
 from .loading import load_generation_defaults, load_model, resolve_checkpoint_dir
 from .model import Gemma4Model, set_attention_backend
 
@@ -109,6 +114,65 @@ def check_all(comparisons: list[Comparison]) -> bool:
         print(comparison.report())
         ok &= comparison.passed
     return ok
+
+
+def compare_generated_tokens(
+    name: str,
+    result: GenerationResult,
+    hf_output: Any,
+    prompt_len: int,
+    tolerance: float,
+) -> Comparison:
+    """Token-level comparison of our generate() vs HF generate(). Sequences
+    must match exactly, except a single fork at a near-tie step is accepted
+    (comparison stops there — post-fork continuations legitimately differ)."""
+    ours_tokens: list[int] = result.sequences[0, prompt_len:].tolist()
+    theirs_tokens: list[int] = hf_output.sequences[0, prompt_len:].tolist()
+    if ours_tokens == theirs_tokens:
+        return Comparison(name, True, True, 0.0)
+    for step, (ours_token, theirs_token) in enumerate(zip(ours_tokens, theirs_tokens)):
+        if ours_token == theirs_token:
+            continue
+        near, gap = is_near_tie(
+            result.step_logits[step].float(),
+            hf_output.logits[step].float(),
+            ours_token,
+            theirs_token,
+            tolerance,
+        )
+        detail = (
+            f"(forked at step {step}: token {ours_token} vs {theirs_token}, "
+            f"top-2 gap {gap:.3f})"
+        )
+        return Comparison(name, near, False, gap, detail)
+    return Comparison(
+        name,
+        False,
+        False,
+        float("nan"),
+        f"(length mismatch: {len(ours_tokens)} vs {len(theirs_tokens)} tokens)",
+    )
+
+
+def is_near_tie(
+    ours_logits: Tensor,
+    theirs_logits: Tensor,
+    ours_token: int,
+    theirs_token: int,
+    tolerance: float,
+) -> tuple[bool, float]:
+    """Whether a greedy-token disagreement is a genuine near-tie.
+
+    True iff the two candidate tokens' logits are within ``tolerance`` of
+    each other in *both* implementations (ULP-scale noise can then flip the
+    argmax legitimately). Returns (near_tie, max_gap). Logits: [1, V] fp32.
+    """
+    gap_ours = float((ours_logits[0, ours_token] - ours_logits[0, theirs_token]).abs())
+    gap_theirs = float(
+        (theirs_logits[0, ours_token] - theirs_logits[0, theirs_token]).abs()
+    )
+    max_gap = max(gap_ours, gap_theirs)
+    return max_gap <= tolerance, max_gap
 
 
 def main() -> int:
@@ -239,28 +303,31 @@ def run_checks(
         )
         watch.lap("stepwise decode compared")
 
-        # 3. End-to-end generate() token parity (hard gate). HF's generate
-        # stops on the generation_config eos ids, so use the same set.
+        # 3. End-to-end generate() token parity (hard gate, near-tie aware).
+        # HF's generate stops on the generation_config eos ids, so use the
+        # same set.
         gen_defaults = load_generation_defaults(checkpoint_dir)
         eos = gen_defaults.get("eos_token_id", None)
         eos_ids = tuple(eos) if isinstance(eos, list) else None
         result = generate(
             model, input_ids, max_new_tokens=args.max_new_tokens, eos_token_ids=eos_ids
         )
-        ours_text = tokenizer.decode(result.sequences[0, input_ids.shape[1] :])
-        hf_tokens = hf_model.generate(
+        hf_output = hf_model.generate(
             input_ids,
             max_new_tokens=args.max_new_tokens,
             do_sample=False,
             use_cache=True,
+            return_dict_in_generate=True,
+            output_logits=True,
         )
-        match = bool(
-            result.sequences.shape == hf_tokens.shape
-            and torch.equal(result.sequences, hf_tokens)
-        )
+        ours_text = tokenizer.decode(result.sequences[0, input_ids.shape[1] :])
         comparisons.append(
-            Comparison(
-                "generate() token ids", match, match, 0.0 if match else float("nan")
+            compare_generated_tokens(
+                "generate() token ids",
+                result,
+                hf_output,
+                input_ids.shape[1],
+                args.tolerance,
             )
         )
         print(f"  generated: {ours_text!r}")
@@ -342,6 +409,7 @@ def stepwise_decode_comparisons(
         first_divergent: int | None = None
         bitwise = True
         tokens_match = True
+        detail = ""
         steps_run = 0
         for step in range(max_new_tokens):
             steps_run = step + 1
@@ -351,10 +419,23 @@ def stepwise_decode_comparisons(
                 if first_divergent is None:
                     first_divergent = step
             max_drift = max(max_drift, step_cmp.max_abs_diff)
-            token = ours.logits[:, -1, :].float().argmax(dim=-1)[:, None]
-            hf_token = theirs.logits[:, -1, :].float().argmax(dim=-1)[:, None]
+            ours_logits = ours.logits[:, -1, :].float()
+            theirs_logits = theirs.logits[:, -1, :].float()
+            token = ours_logits.argmax(dim=-1)[:, None]
+            hf_token = theirs_logits.argmax(dim=-1)[:, None]
             if not torch.equal(token, hf_token):
-                tokens_match = False
+                near, gap = is_near_tie(
+                    ours_logits,
+                    theirs_logits,
+                    int(token.item()),
+                    int(hf_token.item()),
+                    tolerance,
+                )
+                tokens_match = near
+                detail = (
+                    f"(forked at step {step}, top-2 gap {gap:.3f}"
+                    f"{', near-tie' if near else ''})"
+                )
                 break
             ours = model(token, cache=cache, logits_to_keep=1)
             theirs = hf_model(
@@ -364,9 +445,8 @@ def stepwise_decode_comparisons(
                 logits_to_keep=1,
             )
 
-    detail = (
-        "" if first_divergent is None else f"(first drift at step {first_divergent})"
-    )
+    if not detail and first_divergent is not None:
+        detail = f"(first drift at step {first_divergent})"
     comparisons.append(
         Comparison(
             f"decode tokens agree ({steps_run} steps)",
@@ -449,21 +529,23 @@ def run_image_check(
         image_position_ids=batch["image_position_ids"],
         eos_token_ids=eos_ids,
     )
-    hf_tokens = hf_model.generate(
+    hf_output = hf_model.generate(
         input_ids=batch["input_ids"],
         pixel_values=batch["pixel_values"],
         image_position_ids=batch["image_position_ids"],
         max_new_tokens=args.max_new_tokens,
         do_sample=False,
         use_cache=True,
-    )
-    match = bool(
-        result.sequences.shape == hf_tokens.shape
-        and torch.equal(result.sequences, hf_tokens)
+        return_dict_in_generate=True,
+        output_logits=True,
     )
     comparisons.append(
-        Comparison(
-            "image generate() token ids", match, match, 0.0 if match else float("nan")
+        compare_generated_tokens(
+            "image generate() token ids",
+            result,
+            hf_output,
+            batch["input_ids"].shape[1],
+            args.tolerance,
         )
     )
     tokenizer = transformers.AutoTokenizer.from_pretrained(checkpoint_dir)
