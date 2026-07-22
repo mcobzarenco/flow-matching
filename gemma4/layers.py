@@ -6,11 +6,16 @@ so that outputs are bit-identical in bf16.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import torch
 from torch import Tensor, nn
 from torch.nn import functional as F
 
 from .config import AttentionBackend
+
+if TYPE_CHECKING:
+    from .masks import MaskSpec
 
 type DeviceLike = torch.device | str | None
 
@@ -118,16 +123,19 @@ def sdpa_attention(
     attention_mask: Tensor | None,
     num_key_value_groups: int,
     scaling: float = 1.0,
+    is_causal: bool = False,
 ) -> Tensor:
     """Fused attention via ``F.scaled_dot_product_attention``. Same contract
     as :func:`eager_attention`; numerics differ at bf16-ULP scale (fused
     kernels accumulate in fp32 but do not round-trip the softmax through
-    fp32->bf16)."""
+    fp32->bf16). With ``is_causal`` no mask tensor is passed, keeping the
+    flash kernel eligible."""
     attn_output = F.scaled_dot_product_attention(
         query,
         key,
         value,
-        attn_mask=attention_mask,
+        attn_mask=None if is_causal else attention_mask,
+        is_causal=is_causal,
         scale=scaling,
         enable_gqa=num_key_value_groups > 1,
     )
@@ -139,16 +147,29 @@ def attention(
     query: Tensor,
     key: Tensor,
     value: Tensor,
-    attention_mask: Tensor | None,
+    mask: "MaskSpec",
     num_key_value_groups: int,
     scaling: float = 1.0,
 ) -> Tensor:
-    if backend is AttentionBackend.SDPA:
+    """Dispatch to the configured attention implementation.
+
+    Perf policy (measured on H100, see gemma4/bench.py): single-token decode
+    always takes the eager path — at q_len == 1 the fused SDPA kernels are
+    launch-bound and ~2x slower than two small gemms. Both paths are
+    semantically identical; they differ only at bf16-ULP scale.
+    """
+    if backend is AttentionBackend.SDPA and query.shape[2] > 1:
         return sdpa_attention(
-            query, key, value, attention_mask, num_key_value_groups, scaling
+            query,
+            key,
+            value,
+            mask.tensor,
+            num_key_value_groups,
+            scaling,
+            is_causal=mask.is_causal,
         )
     return eager_attention(
-        query, key, value, attention_mask, num_key_value_groups, scaling
+        query, key, value, mask.tensor, num_key_value_groups, scaling
     )
 
 

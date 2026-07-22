@@ -29,7 +29,7 @@ from .layers import (
     buffer_device,
     rope_cos_sin,
 )
-from .masks import MaskMapping, build_text_masks
+from .masks import MaskMapping, MaskSpec, build_text_masks
 
 type SharedKV = dict[LayerType, tuple[Tensor, Tensor]]
 type RopeMapping = dict[LayerType, tuple[Tensor, Tensor]]
@@ -223,7 +223,7 @@ class TextAttention(nn.Module):
         self,
         hidden_states: Tensor,
         position_embeddings: tuple[Tensor, Tensor],
-        attention_mask: Tensor | None,
+        attention_mask: MaskSpec,
         shared_kv: SharedKV,
         cache: KVCache | None,
     ) -> Tensor:
@@ -350,7 +350,7 @@ class DecoderLayer(nn.Module):
         hidden_states: Tensor,
         per_layer_input: Tensor,
         position_embeddings: tuple[Tensor, Tensor],
-        attention_mask: Tensor | None,
+        attention_mask: MaskSpec,
         shared_kv: SharedKV,
         cache: KVCache | None,
     ) -> Tensor:

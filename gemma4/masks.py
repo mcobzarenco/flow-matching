@@ -3,11 +3,20 @@
 Masks are additive float tensors of shape [B, 1, Sq, Skv]: ``0.0`` where a
 position may be attended, ``torch.finfo(dtype).min`` where it may not. When no
 mask is needed (single-token decode without padding, or a bidirectional
-encoder without padding) ``None`` is returned — adding an all-zero mask is a
+encoder without padding) the tensor is ``None`` — adding an all-zero mask is a
 bit-exact no-op, so this matches HF's mask-skipping.
+
+A pure causal pattern (full-attention prefill, no padding, no past) is
+additionally flagged ``is_causal=True``; the SDPA backend then uses the
+kernel's native causal mode instead of the tensor, keeping the flash kernel
+eligible (it cannot take an arbitrary additive bias). Mask construction is
+backend-agnostic: the tensor is always materialized so eager consumers work
+regardless of the flag.
 """
 
 from __future__ import annotations
+
+from dataclasses import dataclass
 
 import torch
 from torch import Tensor
@@ -15,7 +24,22 @@ from torch import Tensor
 from .cache import KVCache
 from .config import Gemma4TextConfig, LayerType
 
-type MaskMapping = dict[LayerType, Tensor | None]
+
+@dataclass(frozen=True, slots=True)
+class MaskSpec:
+    """How a layer's attention should be masked.
+
+    ``tensor`` is the additive mask (None = attend everything, e.g.
+    single-token decode). ``is_causal=True`` asserts the pattern is exactly
+    lower-triangular with q_len == kv_len and no padding — backends with a
+    native causal mode may then ignore ``tensor``.
+    """
+
+    tensor: Tensor | None = None
+    is_causal: bool = False
+
+
+type MaskMapping = dict[LayerType, MaskSpec]
 
 
 def _build_mask(
@@ -72,20 +96,26 @@ def build_text_masks(
         if q_len == 1 and padding_mask is None:
             # Single-token decode: every cached position is visible (sliding
             # caches are already trimmed to the window) => zero mask => skip.
-            masks[layer_type] = None
+            masks[layer_type] = MaskSpec()
             continue
-        masks[layer_type] = _build_mask(
-            batch_size=batch_size,
-            q_len=q_len,
-            kv_len=kv_len,
-            q_offset=q_offset,
-            kv_offset=kv_offset,
-            sliding_window=(
-                config.sliding_window if layer_type is LayerType.SLIDING else None
+        pure_causal = (
+            layer_type is LayerType.FULL and padding_mask is None and q_offset == 0
+        )
+        masks[layer_type] = MaskSpec(
+            tensor=_build_mask(
+                batch_size=batch_size,
+                q_len=q_len,
+                kv_len=kv_len,
+                q_offset=q_offset,
+                kv_offset=kv_offset,
+                sliding_window=(
+                    config.sliding_window if layer_type is LayerType.SLIDING else None
+                ),
+                padding_mask=padding_mask,
+                dtype=dtype,
+                device=device,
             ),
-            padding_mask=padding_mask,
-            dtype=dtype,
-            device=device,
+            is_causal=pure_causal,
         )
     return masks
 

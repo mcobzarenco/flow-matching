@@ -24,7 +24,7 @@ from .layers import (
     attention,
     buffer_device,
 )
-from .masks import build_bidirectional_mask
+from .masks import MaskSpec, build_bidirectional_mask
 from .text import activation_fn
 
 
@@ -240,7 +240,7 @@ class VisionAttention(nn.Module):
         self,
         hidden_states: Tensor,
         position_embeddings: tuple[Tensor, Tensor],
-        attention_mask: Tensor | None,
+        attention_mask: MaskSpec,
     ) -> Tensor:
         batch, seq_len, _ = hidden_states.shape
         hidden_shape = (batch, seq_len, -1, self.head_dim)
@@ -324,7 +324,7 @@ class VisionEncoderLayer(nn.Module):
         self,
         hidden_states: Tensor,
         position_embeddings: tuple[Tensor, Tensor],
-        attention_mask: Tensor | None,
+        attention_mask: MaskSpec,
     ) -> Tensor:
         residual = hidden_states
         hidden_states = self.input_layernorm(hidden_states)
@@ -360,7 +360,9 @@ class VisionEncoder(nn.Module):
     def forward(
         self, inputs_embeds: Tensor, valid_mask: Tensor, pixel_position_ids: Tensor
     ) -> Tensor:
-        attention_mask = build_bidirectional_mask(valid_mask, inputs_embeds.dtype)
+        attention_mask = MaskSpec(
+            tensor=build_bidirectional_mask(valid_mask, inputs_embeds.dtype)
+        )
         position_embeddings = self.rotary_emb(pixel_position_ids, inputs_embeds.dtype)
         hidden_states = inputs_embeds
         for layer in self.layers:
