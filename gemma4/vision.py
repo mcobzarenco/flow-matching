@@ -17,7 +17,13 @@ from torch import Tensor, nn
 from torch.nn import functional as F
 
 from .config import Gemma4VisionConfig
-from .layers import RMSNorm, apply_rotary_pos_emb, eager_attention
+from .layers import (
+    DeviceLike,
+    RMSNorm,
+    apply_rotary_pos_emb,
+    buffer_device,
+    eager_attention,
+)
 from .masks import build_bidirectional_mask
 from .text import activation_fn
 
@@ -32,16 +38,30 @@ class ClippableLinear(nn.Module):
     output_max: Tensor
 
     def __init__(
-        self, config: Gemma4VisionConfig, in_features: int, out_features: int
+        self,
+        config: Gemma4VisionConfig,
+        in_features: int,
+        out_features: int,
+        *,
+        device: DeviceLike = None,
+        dtype: torch.dtype | None = None,
     ) -> None:
         super().__init__()
         self.use_clipped_linears = config.use_clipped_linears
-        self.linear = nn.Linear(in_features, out_features, bias=False)
+        self.linear = nn.Linear(
+            in_features, out_features, bias=False, device=device, dtype=dtype
+        )
         if self.use_clipped_linears:
-            self.register_buffer("input_min", torch.tensor(-float("inf")))
-            self.register_buffer("input_max", torch.tensor(float("inf")))
-            self.register_buffer("output_min", torch.tensor(-float("inf")))
-            self.register_buffer("output_max", torch.tensor(float("inf")))
+            # Persistent buffers: the actual clip bounds come from the checkpoint.
+            for name, value in (
+                ("input_min", -float("inf")),
+                ("input_max", float("inf")),
+                ("output_min", -float("inf")),
+                ("output_max", float("inf")),
+            ):
+                self.register_buffer(
+                    name, torch.tensor(value, device=device, dtype=dtype)
+                )
 
     def forward(self, x: Tensor) -> Tensor:
         if self.use_clipped_linears:
@@ -53,12 +73,26 @@ class ClippableLinear(nn.Module):
 
 
 class VisionPatchEmbedder(nn.Module):
-    def __init__(self, config: Gemma4VisionConfig) -> None:
+    def __init__(
+        self,
+        config: Gemma4VisionConfig,
+        *,
+        device: DeviceLike = None,
+        dtype: torch.dtype | None = None,
+    ) -> None:
         super().__init__()
         patch_features = 3 * config.patch_size**2
-        self.input_proj = nn.Linear(patch_features, config.hidden_size, bias=False)
+        self.input_proj = nn.Linear(
+            patch_features, config.hidden_size, bias=False, device=device, dtype=dtype
+        )
         self.position_embedding_table = nn.Parameter(
-            torch.ones(2, config.position_embedding_size, config.hidden_size)
+            torch.ones(
+                2,
+                config.position_embedding_size,
+                config.hidden_size,
+                device=device,
+                dtype=dtype,
+            )
         )
 
     def forward(
@@ -82,19 +116,27 @@ class VisionPatchEmbedder(nn.Module):
         return hidden_states + position_embeddings
 
 
-def vision_rope_inv_freq(config: Gemma4VisionConfig) -> Tensor:
+def vision_rope_inv_freq(
+    config: Gemma4VisionConfig, *, device: DeviceLike = None
+) -> Tensor:
     """Per-spatial-dimension inverse frequencies (x and y share the range)."""
     spatial_dim = config.head_dim // 2
-    exponent = torch.arange(0, spatial_dim, 2, dtype=torch.int64, device="cpu")
+    exponent = torch.arange(0, spatial_dim, 2, dtype=torch.int64, device=device)
     return 1.0 / (config.rope_theta ** (exponent.to(dtype=torch.float) / spatial_dim))
 
 
 class VisionRotaryEmbedding(nn.Module):
     inv_freq: Tensor
 
-    def __init__(self, config: Gemma4VisionConfig) -> None:
+    def __init__(
+        self, config: Gemma4VisionConfig, *, device: DeviceLike = None
+    ) -> None:
         super().__init__()
-        self.register_buffer("inv_freq", vision_rope_inv_freq(config), persistent=False)
+        self.register_buffer(
+            "inv_freq",
+            vision_rope_inv_freq(config, device=buffer_device(device)),
+            persistent=False,
+        )
 
     @torch.no_grad()
     def forward(
@@ -137,7 +179,13 @@ def apply_multidimensional_rope(
 
 
 class VisionAttention(nn.Module):
-    def __init__(self, config: Gemma4VisionConfig) -> None:
+    def __init__(
+        self,
+        config: Gemma4VisionConfig,
+        *,
+        device: DeviceLike = None,
+        dtype: torch.dtype | None = None,
+    ) -> None:
         super().__init__()
         self.head_dim = config.head_dim
         self.num_key_value_groups = (
@@ -145,20 +193,46 @@ class VisionAttention(nn.Module):
         )
         hidden = config.hidden_size
         self.q_proj = ClippableLinear(
-            config, hidden, config.num_attention_heads * self.head_dim
+            config,
+            hidden,
+            config.num_attention_heads * self.head_dim,
+            device=device,
+            dtype=dtype,
         )
         self.k_proj = ClippableLinear(
-            config, hidden, config.num_key_value_heads * self.head_dim
+            config,
+            hidden,
+            config.num_key_value_heads * self.head_dim,
+            device=device,
+            dtype=dtype,
         )
         self.v_proj = ClippableLinear(
-            config, hidden, config.num_key_value_heads * self.head_dim
+            config,
+            hidden,
+            config.num_key_value_heads * self.head_dim,
+            device=device,
+            dtype=dtype,
         )
         self.o_proj = ClippableLinear(
-            config, config.num_attention_heads * self.head_dim, hidden
+            config,
+            config.num_attention_heads * self.head_dim,
+            hidden,
+            device=device,
+            dtype=dtype,
         )
-        self.q_norm = RMSNorm(self.head_dim, eps=config.rms_norm_eps)
-        self.k_norm = RMSNorm(self.head_dim, eps=config.rms_norm_eps)
-        self.v_norm = RMSNorm(self.head_dim, eps=config.rms_norm_eps, with_scale=False)
+        self.q_norm = RMSNorm(
+            self.head_dim, eps=config.rms_norm_eps, device=device, dtype=dtype
+        )
+        self.k_norm = RMSNorm(
+            self.head_dim, eps=config.rms_norm_eps, device=device, dtype=dtype
+        )
+        self.v_norm = RMSNorm(
+            self.head_dim,
+            eps=config.rms_norm_eps,
+            with_scale=False,
+            device=device,
+            dtype=dtype,
+        )
 
     def forward(
         self,
@@ -191,12 +265,24 @@ class VisionAttention(nn.Module):
 
 
 class VisionMLP(nn.Module):
-    def __init__(self, config: Gemma4VisionConfig) -> None:
+    def __init__(
+        self,
+        config: Gemma4VisionConfig,
+        *,
+        device: DeviceLike = None,
+        dtype: torch.dtype | None = None,
+    ) -> None:
         super().__init__()
         hidden, intermediate = config.hidden_size, config.intermediate_size
-        self.gate_proj = ClippableLinear(config, hidden, intermediate)
-        self.up_proj = ClippableLinear(config, hidden, intermediate)
-        self.down_proj = ClippableLinear(config, intermediate, hidden)
+        self.gate_proj = ClippableLinear(
+            config, hidden, intermediate, device=device, dtype=dtype
+        )
+        self.up_proj = ClippableLinear(
+            config, hidden, intermediate, device=device, dtype=dtype
+        )
+        self.down_proj = ClippableLinear(
+            config, intermediate, hidden, device=device, dtype=dtype
+        )
         self.act_fn = activation_fn(config.hidden_activation)
 
     def forward(self, x: Tensor) -> Tensor:
@@ -204,15 +290,27 @@ class VisionMLP(nn.Module):
 
 
 class VisionEncoderLayer(nn.Module):
-    def __init__(self, config: Gemma4VisionConfig) -> None:
+    def __init__(
+        self,
+        config: Gemma4VisionConfig,
+        *,
+        device: DeviceLike = None,
+        dtype: torch.dtype | None = None,
+    ) -> None:
         super().__init__()
         hidden, eps = config.hidden_size, config.rms_norm_eps
-        self.self_attn = VisionAttention(config)
-        self.mlp = VisionMLP(config)
-        self.input_layernorm = RMSNorm(hidden, eps=eps)
-        self.post_attention_layernorm = RMSNorm(hidden, eps=eps)
-        self.pre_feedforward_layernorm = RMSNorm(hidden, eps=eps)
-        self.post_feedforward_layernorm = RMSNorm(hidden, eps=eps)
+        self.self_attn = VisionAttention(config, device=device, dtype=dtype)
+        self.mlp = VisionMLP(config, device=device, dtype=dtype)
+        self.input_layernorm = RMSNorm(hidden, eps=eps, device=device, dtype=dtype)
+        self.post_attention_layernorm = RMSNorm(
+            hidden, eps=eps, device=device, dtype=dtype
+        )
+        self.pre_feedforward_layernorm = RMSNorm(
+            hidden, eps=eps, device=device, dtype=dtype
+        )
+        self.post_feedforward_layernorm = RMSNorm(
+            hidden, eps=eps, device=device, dtype=dtype
+        )
 
     def forward(
         self,
@@ -237,11 +335,18 @@ class VisionEncoderLayer(nn.Module):
 
 
 class VisionEncoder(nn.Module):
-    def __init__(self, config: Gemma4VisionConfig) -> None:
+    def __init__(
+        self,
+        config: Gemma4VisionConfig,
+        *,
+        device: DeviceLike = None,
+        dtype: torch.dtype | None = None,
+    ) -> None:
         super().__init__()
-        self.rotary_emb = VisionRotaryEmbedding(config)
+        self.rotary_emb = VisionRotaryEmbedding(config, device=device)
         self.layers = nn.ModuleList(
-            VisionEncoderLayer(config) for _ in range(config.num_hidden_layers)
+            VisionEncoderLayer(config, device=device, dtype=dtype)
+            for _ in range(config.num_hidden_layers)
         )
 
     def forward(
@@ -306,11 +411,17 @@ class VisionPooler(nn.Module):
 class VisionModel(nn.Module):
     """Full vision tower: soft tokens (padding stripped) in float32."""
 
-    def __init__(self, config: Gemma4VisionConfig) -> None:
+    def __init__(
+        self,
+        config: Gemma4VisionConfig,
+        *,
+        device: DeviceLike = None,
+        dtype: torch.dtype | None = None,
+    ) -> None:
         super().__init__()
         self.config = config
-        self.patch_embedder = VisionPatchEmbedder(config)
-        self.encoder = VisionEncoder(config)
+        self.patch_embedder = VisionPatchEmbedder(config, device=device, dtype=dtype)
+        self.encoder = VisionEncoder(config, device=device, dtype=dtype)
         self.pooler = VisionPooler(config)
 
     def forward(self, pixel_values: Tensor, pixel_position_ids: Tensor) -> Tensor:
@@ -336,14 +447,28 @@ class MultimodalEmbedder(nn.Module):
     """Projects vision soft tokens into the language-model embedding space."""
 
     def __init__(
-        self, multimodal_hidden_size: int, text_hidden_size: int, eps: float
+        self,
+        multimodal_hidden_size: int,
+        text_hidden_size: int,
+        eps: float,
+        *,
+        device: DeviceLike = None,
+        dtype: torch.dtype | None = None,
     ) -> None:
         super().__init__()
         self.embedding_pre_projection_norm = RMSNorm(
-            multimodal_hidden_size, eps=eps, with_scale=False
+            multimodal_hidden_size,
+            eps=eps,
+            with_scale=False,
+            device=device,
+            dtype=dtype,
         )
         self.embedding_projection = nn.Linear(
-            multimodal_hidden_size, text_hidden_size, bias=False
+            multimodal_hidden_size,
+            text_hidden_size,
+            bias=False,
+            device=device,
+            dtype=dtype,
         )
 
     def forward(self, inputs_embeds: Tensor) -> Tensor:

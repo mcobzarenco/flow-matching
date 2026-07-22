@@ -7,7 +7,6 @@ VLA); audio inputs are rejected at the loader level by simply not existing.
 
 from __future__ import annotations
 
-import contextlib
 from dataclasses import dataclass
 
 import torch
@@ -15,6 +14,7 @@ from torch import Tensor, nn
 
 from .cache import KVCache
 from .config import Gemma4Config
+from .layers import DeviceLike
 from .text import TextModel
 from .vision import MultimodalEmbedder, VisionModel
 
@@ -28,24 +28,46 @@ class Gemma4Output:
 
 
 class Gemma4Model(nn.Module):
-    def __init__(self, config: Gemma4Config) -> None:
+    """``device``/``dtype`` are forwarded to every submodule (torch factory
+    convention), so parameters are created directly on the target device.
+    ``dtype`` defaults to the checkpoint dtype declared in the config (bf16
+    for E2B); submodules can be instantiated individually with different
+    settings if a future config splits dtypes per component."""
+
+    def __init__(
+        self,
+        config: Gemma4Config,
+        *,
+        device: DeviceLike = None,
+        dtype: torch.dtype | None = None,
+    ) -> None:
         super().__init__()
+        if dtype is None:
+            dtype = config.dtype
         self.config = config
-        self.language_model = TextModel(config.text)
+        self.language_model = TextModel(config.text, device=device, dtype=dtype)
         self.vision_tower = (
-            VisionModel(config.vision) if config.vision is not None else None
+            VisionModel(config.vision, device=device, dtype=dtype)
+            if config.vision is not None
+            else None
         )
         self.embed_vision = (
             MultimodalEmbedder(
                 multimodal_hidden_size=config.vision.hidden_size,
                 text_hidden_size=config.text.hidden_size,
                 eps=config.vision.rms_norm_eps,
+                device=device,
+                dtype=dtype,
             )
             if config.vision is not None
             else None
         )
         self.lm_head = nn.Linear(
-            config.text.hidden_size, config.text.vocab_size, bias=False
+            config.text.hidden_size,
+            config.text.vocab_size,
+            bias=False,
+            device=device,
+            dtype=dtype,
         )
 
     def get_image_features(
@@ -117,34 +139,3 @@ class Gemma4Model(nn.Module):
             logits = logits * softcap
 
         return Gemma4Output(logits=logits, last_hidden_state=hidden_states)
-
-
-def build_model(
-    config: Gemma4Config,
-    *,
-    device: torch.device | str | None = None,
-    dtype: torch.dtype | None = None,
-) -> Gemma4Model:
-    """Construct a randomly-initialized model directly on ``device``/``dtype``.
-
-    Rather than threading factory kwargs through every module, this relies on
-    torch's construction contexts: ``torch.device`` scopes the default device
-    and ``set_default_dtype`` the default floating dtype. Tensors that must
-    stay float32 (rope inverse frequencies) request their dtype explicitly and
-    are unaffected. Use :func:`gemma4.load_model` to load checkpoints; this is
-    for from-scratch components (e.g. a VLA action expert reusing these
-    modules).
-    """
-    with contextlib.ExitStack() as stack:
-        if device is not None:
-            stack.enter_context(torch.device(device))
-        if dtype is not None:
-            previous = torch.get_default_dtype()
-            torch.set_default_dtype(dtype)
-            stack.callback(torch.set_default_dtype, previous)
-        model = Gemma4Model(config)
-    if device is not None:
-        # Sweep the deliberately-CPU-constructed buffers (rope inv_freq, embed
-        # scales) onto the target device; parameters are already there.
-        model = model.to(device)
-    return model

@@ -21,7 +21,14 @@ from torch import Tensor, nn
 
 from .cache import KVCache
 from .config import Gemma4TextConfig, LayerType, RopeType
-from .layers import RMSNorm, apply_rotary_pos_emb, eager_attention, rope_cos_sin
+from .layers import (
+    DeviceLike,
+    RMSNorm,
+    apply_rotary_pos_emb,
+    buffer_device,
+    eager_attention,
+    rope_cos_sin,
+)
 from .masks import MaskMapping, build_text_masks
 
 type SharedKV = dict[LayerType, tuple[Tensor, Tensor]]
@@ -41,8 +48,6 @@ class ScaledEmbedding(nn.Embedding):
 
     The scale is materialized in the weight dtype (bf16 rounding of e.g.
     ``sqrt(1536)`` is intentional and matches the reference implementation).
-    The buffer is created on CPU so that meta-device construction (the weight
-    loader) keeps it real; ``model.to(device)`` moves it afterwards.
     """
 
     embed_scale: Tensor
@@ -53,18 +58,27 @@ class ScaledEmbedding(nn.Embedding):
         embedding_dim: int,
         padding_idx: int,
         embed_scale: float,
+        *,
+        device: DeviceLike = None,
+        dtype: torch.dtype | None = None,
     ) -> None:
-        super().__init__(num_embeddings, embedding_dim, padding_idx)
+        super().__init__(
+            num_embeddings, embedding_dim, padding_idx, device=device, dtype=dtype
+        )
         self.register_buffer(
-            "embed_scale", torch.tensor(embed_scale, device="cpu"), persistent=False
+            "embed_scale",
+            torch.tensor(embed_scale, device=buffer_device(device)),
+            persistent=False,
         )
 
     def forward(self, input: Tensor) -> Tensor:
         return super().forward(input) * self.embed_scale.to(self.weight.dtype)
 
 
-def rope_inv_freq(config: Gemma4TextConfig, layer_type: LayerType) -> Tensor:
-    """Inverse frequencies for a layer type, always on CPU in float32.
+def rope_inv_freq(
+    config: Gemma4TextConfig, layer_type: LayerType, *, device: DeviceLike = None
+) -> Tensor:
+    """Float32 inverse frequencies for a layer type.
 
     ``default``: standard RoPE over the full head_dim.
     ``proportional`` (p-RoPE): only ``partial_rotary_factor * head_dim``
@@ -75,18 +89,18 @@ def rope_inv_freq(config: Gemma4TextConfig, layer_type: LayerType) -> Tensor:
     head_dim = config.head_dim_for_type(layer_type)
     base = params.rope_theta
     if params.rope_type is RopeType.DEFAULT:
-        exponent = torch.arange(0, head_dim, 2, dtype=torch.int64, device="cpu")
+        exponent = torch.arange(0, head_dim, 2, dtype=torch.int64, device=device)
         inv_freq = 1.0 / (base ** (exponent.to(dtype=torch.float) / head_dim))
     elif params.rope_type is RopeType.PROPORTIONAL:
         rope_angles = int(params.partial_rotary_factor * head_dim // 2)
-        exponent = torch.arange(0, 2 * rope_angles, 2, dtype=torch.int64, device="cpu")
+        exponent = torch.arange(0, 2 * rope_angles, 2, dtype=torch.int64, device=device)
         inv_freq_rotated = 1.0 / (base ** (exponent.to(dtype=torch.float) / head_dim))
         nope_angles = head_dim // 2 - rope_angles
         if nope_angles > 0:
             inv_freq = torch.cat(
                 (
                     inv_freq_rotated,
-                    torch.zeros(nope_angles, dtype=torch.float32, device="cpu"),
+                    torch.zeros(nope_angles, dtype=torch.float32, device=device),
                 ),
                 dim=0,
             )
@@ -100,13 +114,12 @@ def rope_inv_freq(config: Gemma4TextConfig, layer_type: LayerType) -> Tensor:
 class TextRotaryEmbedding(nn.Module):
     """Precomputed inverse frequencies per layer type; cos/sin in float32."""
 
-    def __init__(self, config: Gemma4TextConfig) -> None:
+    def __init__(self, config: Gemma4TextConfig, *, device: DeviceLike = None) -> None:
         super().__init__()
         for layer_type in set(config.layer_types):
-            # Explicit CPU tensors so meta-device construction keeps them real.
             self.register_buffer(
                 f"inv_freq_{layer_type.name}",
-                rope_inv_freq(config, layer_type),
+                rope_inv_freq(config, layer_type, device=buffer_device(device)),
                 persistent=False,
             )
 
@@ -126,7 +139,14 @@ class TextRotaryEmbedding(nn.Module):
 
 
 class TextAttention(nn.Module):
-    def __init__(self, config: Gemma4TextConfig, layer_idx: int) -> None:
+    def __init__(
+        self,
+        config: Gemma4TextConfig,
+        layer_idx: int,
+        *,
+        device: DeviceLike = None,
+        dtype: torch.dtype | None = None,
+    ) -> None:
         super().__init__()
         self.config = config
         self.layer_idx = layer_idx
@@ -148,11 +168,21 @@ class TextAttention(nn.Module):
         hidden = config.hidden_size
         bias = config.attention_bias
         self.q_proj = nn.Linear(
-            hidden, config.num_attention_heads * self.head_dim, bias=bias
+            hidden,
+            config.num_attention_heads * self.head_dim,
+            bias=bias,
+            device=device,
+            dtype=dtype,
         )
-        self.q_norm = RMSNorm(self.head_dim, eps=config.rms_norm_eps)
+        self.q_norm = RMSNorm(
+            self.head_dim, eps=config.rms_norm_eps, device=device, dtype=dtype
+        )
         self.o_proj = nn.Linear(
-            config.num_attention_heads * self.head_dim, hidden, bias=bias
+            config.num_attention_heads * self.head_dim,
+            hidden,
+            bias=bias,
+            device=device,
+            dtype=dtype,
         )
 
         # KV-shared layers have no K/V weights at all.
@@ -161,12 +191,30 @@ class TextAttention(nn.Module):
         self.k_norm: RMSNorm | None = None
         self.v_norm: RMSNorm | None = None
         if not self.is_kv_shared_layer:
-            self.k_proj = nn.Linear(hidden, num_kv_heads * self.head_dim, bias=bias)
+            self.k_proj = nn.Linear(
+                hidden,
+                num_kv_heads * self.head_dim,
+                bias=bias,
+                device=device,
+                dtype=dtype,
+            )
             if not self.k_eq_v:
-                self.v_proj = nn.Linear(hidden, num_kv_heads * self.head_dim, bias=bias)
-            self.k_norm = RMSNorm(self.head_dim, eps=config.rms_norm_eps)
+                self.v_proj = nn.Linear(
+                    hidden,
+                    num_kv_heads * self.head_dim,
+                    bias=bias,
+                    device=device,
+                    dtype=dtype,
+                )
+            self.k_norm = RMSNorm(
+                self.head_dim, eps=config.rms_norm_eps, device=device, dtype=dtype
+            )
             self.v_norm = RMSNorm(
-                self.head_dim, eps=config.rms_norm_eps, with_scale=False
+                self.head_dim,
+                eps=config.rms_norm_eps,
+                with_scale=False,
+                device=device,
+                dtype=dtype,
             )
 
     def forward(
@@ -215,13 +263,26 @@ class TextAttention(nn.Module):
 
 
 class TextMLP(nn.Module):
-    def __init__(self, config: Gemma4TextConfig, layer_idx: int) -> None:
+    def __init__(
+        self,
+        config: Gemma4TextConfig,
+        layer_idx: int,
+        *,
+        device: DeviceLike = None,
+        dtype: torch.dtype | None = None,
+    ) -> None:
         super().__init__()
         hidden = config.hidden_size
         intermediate = config.intermediate_size_for_layer(layer_idx)
-        self.gate_proj = nn.Linear(hidden, intermediate, bias=False)
-        self.up_proj = nn.Linear(hidden, intermediate, bias=False)
-        self.down_proj = nn.Linear(intermediate, hidden, bias=False)
+        self.gate_proj = nn.Linear(
+            hidden, intermediate, bias=False, device=device, dtype=dtype
+        )
+        self.up_proj = nn.Linear(
+            hidden, intermediate, bias=False, device=device, dtype=dtype
+        )
+        self.down_proj = nn.Linear(
+            intermediate, hidden, bias=False, device=device, dtype=dtype
+        )
         self.act_fn = activation_fn(config.hidden_activation)
 
     def forward(self, x: Tensor) -> Tensor:
@@ -231,27 +292,50 @@ class TextMLP(nn.Module):
 class DecoderLayer(nn.Module):
     layer_scalar: Tensor
 
-    def __init__(self, config: Gemma4TextConfig, layer_idx: int) -> None:
+    def __init__(
+        self,
+        config: Gemma4TextConfig,
+        layer_idx: int,
+        *,
+        device: DeviceLike = None,
+        dtype: torch.dtype | None = None,
+    ) -> None:
         super().__init__()
         hidden = config.hidden_size
         eps = config.rms_norm_eps
-        self.self_attn = TextAttention(config, layer_idx)
-        self.mlp = TextMLP(config, layer_idx)
-        self.input_layernorm = RMSNorm(hidden, eps=eps)
-        self.post_attention_layernorm = RMSNorm(hidden, eps=eps)
-        self.pre_feedforward_layernorm = RMSNorm(hidden, eps=eps)
-        self.post_feedforward_layernorm = RMSNorm(hidden, eps=eps)
+        self.self_attn = TextAttention(config, layer_idx, device=device, dtype=dtype)
+        self.mlp = TextMLP(config, layer_idx, device=device, dtype=dtype)
+        self.input_layernorm = RMSNorm(hidden, eps=eps, device=device, dtype=dtype)
+        self.post_attention_layernorm = RMSNorm(
+            hidden, eps=eps, device=device, dtype=dtype
+        )
+        self.pre_feedforward_layernorm = RMSNorm(
+            hidden, eps=eps, device=device, dtype=dtype
+        )
+        self.post_feedforward_layernorm = RMSNorm(
+            hidden, eps=eps, device=device, dtype=dtype
+        )
         # Persistent buffer, loaded from the checkpoint.
-        self.register_buffer("layer_scalar", torch.ones(1))
+        self.register_buffer("layer_scalar", torch.ones(1, device=device, dtype=dtype))
 
         self.act_fn = activation_fn(config.hidden_activation)
         self.per_layer_input_gate = nn.Linear(
-            hidden, config.hidden_size_per_layer_input, bias=False
+            hidden,
+            config.hidden_size_per_layer_input,
+            bias=False,
+            device=device,
+            dtype=dtype,
         )
         self.per_layer_projection = nn.Linear(
-            config.hidden_size_per_layer_input, hidden, bias=False
+            config.hidden_size_per_layer_input,
+            hidden,
+            bias=False,
+            device=device,
+            dtype=dtype,
         )
-        self.post_per_layer_input_norm = RMSNorm(hidden, eps=eps)
+        self.post_per_layer_input_norm = RMSNorm(
+            hidden, eps=eps, device=device, dtype=dtype
+        )
 
     def forward(
         self,
@@ -293,7 +377,13 @@ class DecoderLayer(nn.Module):
 class TextModel(nn.Module):
     """Decoder stack without the LM head."""
 
-    def __init__(self, config: Gemma4TextConfig) -> None:
+    def __init__(
+        self,
+        config: Gemma4TextConfig,
+        *,
+        device: DeviceLike = None,
+        dtype: torch.dtype | None = None,
+    ) -> None:
         super().__init__()
         self.config = config
         self.embed_tokens = ScaledEmbedding(
@@ -301,13 +391,17 @@ class TextModel(nn.Module):
             config.hidden_size,
             padding_idx=config.pad_token_id,
             embed_scale=config.hidden_size**0.5,
+            device=device,
+            dtype=dtype,
         )
         self.layers = nn.ModuleList(
-            DecoderLayer(config, layer_idx)
+            DecoderLayer(config, layer_idx, device=device, dtype=dtype)
             for layer_idx in range(config.num_hidden_layers)
         )
-        self.norm = RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
-        self.rotary_emb = TextRotaryEmbedding(config)
+        self.norm = RMSNorm(
+            config.hidden_size, eps=config.rms_norm_eps, device=device, dtype=dtype
+        )
+        self.rotary_emb = TextRotaryEmbedding(config, device=device)
 
         # PLE tables/projections.
         self.embed_tokens_per_layer = ScaledEmbedding(
@@ -315,14 +409,21 @@ class TextModel(nn.Module):
             config.num_hidden_layers * config.hidden_size_per_layer_input,
             padding_idx=config.pad_token_id,
             embed_scale=config.hidden_size_per_layer_input**0.5,
+            device=device,
+            dtype=dtype,
         )
         self.per_layer_model_projection = nn.Linear(
             config.hidden_size,
             config.num_hidden_layers * config.hidden_size_per_layer_input,
             bias=False,
+            device=device,
+            dtype=dtype,
         )
         self.per_layer_projection_norm = RMSNorm(
-            config.hidden_size_per_layer_input, eps=config.rms_norm_eps
+            config.hidden_size_per_layer_input,
+            eps=config.rms_norm_eps,
+            device=device,
+            dtype=dtype,
         )
         self.per_layer_input_scale = 2.0**-0.5
         self.per_layer_model_projection_scale = config.hidden_size**-0.5

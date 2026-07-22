@@ -10,6 +10,19 @@ import torch
 from torch import Tensor, nn
 from torch.nn import functional as F
 
+type DeviceLike = torch.device | str | None
+
+
+def buffer_device(device: DeviceLike) -> DeviceLike:
+    """Device for *computed* non-persistent buffers (rope frequencies, embed
+    scales). Meta-device construction — used by the checkpoint loader — would
+    lose their values, and they cannot be restored from a checkpoint, so meta
+    requests materialize them on CPU instead; the loader's final ``.to(device)``
+    sweep moves them to the target device."""
+    if device is not None and torch.device(device).type == "meta":
+        return "cpu"
+    return device
+
 
 class RMSNorm(nn.Module):
     """Gemma4 RMSNorm: computed in float32, optional learned scale.
@@ -19,11 +32,19 @@ class RMSNorm(nn.Module):
 
     weight: nn.Parameter | None
 
-    def __init__(self, dim: int, eps: float = 1e-6, with_scale: bool = True) -> None:
+    def __init__(
+        self,
+        dim: int,
+        eps: float = 1e-6,
+        with_scale: bool = True,
+        *,
+        device: DeviceLike = None,
+        dtype: torch.dtype | None = None,
+    ) -> None:
         super().__init__()
         self.eps = eps
         if with_scale:
-            self.weight = nn.Parameter(torch.ones(dim))
+            self.weight = nn.Parameter(torch.ones(dim, device=device, dtype=dtype))
         else:
             self.register_parameter("weight", None)
 

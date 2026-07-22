@@ -77,8 +77,7 @@ def load_model(
     if dtype is not None:
         config = dataclasses.replace(config, dtype=dtype)
 
-    with torch.device("meta"):
-        model = Gemma4Model(config)
+    model = Gemma4Model(config, device="meta")
 
     state_dict: dict[str, torch.Tensor] = {}
     weight_files = sorted(checkpoint_dir.glob("*.safetensors"))
@@ -104,7 +103,8 @@ def load_model(
     model.eval()
     model.requires_grad_(False)
     # Parameters are already on the target device; this sweeps over the small
-    # non-persistent buffers (rope inv_freq, embed scales) constructed on CPU.
+    # computed buffers (rope inv_freq, embed scales), which meta construction
+    # materializes on CPU (see gemma4.layers.buffer_device).
     return model.to(device)
 
 

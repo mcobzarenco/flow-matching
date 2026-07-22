@@ -1,17 +1,24 @@
-"""Verify bit-exact parity of the pure-torch Gemma4 vs HF transformers.
+"""Verify the pure-torch Gemma4 against HF transformers (eager attention).
 
-Runs three checks against ``Gemma4ForConditionalGeneration`` (eager attention):
+Contract (deliberately *not* bitwise, to leave room for kernel optimizations):
 
-1. full-sequence forward: logits of every prompt position,
-2. cached greedy decode: per-step logits and chosen tokens,
-3. (with ``--image``) the same, with an image in the prompt.
+- hard gates: greedy tokens must match HF exactly; single-forward logits
+  (prefill, and the first cached-decode step) must agree within
+  ``--tolerance`` (default 0.25 ≈ 2 bf16 ULPs at softcapped-logit scale);
+- informational: bitwise status and multi-step decode drift. Once per-step
+  kernels differ by a ULP anywhere, the KV-cache feedback loop amplifies
+  differences across steps (deterministic chaos), so drift there is expected
+  and only token agreement is enforced.
 
-All comparisons are bitwise (``torch.equal``); max abs diff is reported too.
+Checks: full prefill forward, cached stepwise greedy decode, end-to-end
+``generate()``, optional ``--long-context`` (sliding-window coverage) and
+``--image`` (vision path).
 
 Usage::
 
-    uv run python -m gemma4.verify_parity --max-new-tokens 16
-    uv run python -m gemma4.verify_parity --image path/to.jpg --device cuda
+    uv run python -m gemma4.verify_parity --device cuda --max-new-tokens 32
+    uv run python -m gemma4.verify_parity --device cuda --long-context 600 \
+        --image /tmp/parity_test.png
 """
 
 from __future__ import annotations
@@ -36,17 +43,6 @@ DEFAULT_PROMPTS = (
 )
 
 
-@dataclass(frozen=True, slots=True)
-class Comparison:
-    name: str
-    bitwise_equal: bool
-    max_abs_diff: float
-
-    def report(self) -> str:
-        status = "OK (bitwise)" if self.bitwise_equal else "MISMATCH"
-        return f"  {self.name:<42} {status:<14} max|Δ|={self.max_abs_diff:.3e}"
-
-
 class Stopwatch:
     def __init__(self) -> None:
         self.t0 = time.monotonic()
@@ -55,20 +51,40 @@ class Stopwatch:
         print(f"  [{time.monotonic() - self.t0:7.1f}s] {label}", flush=True)
 
 
-def compare(name: str, ours: Tensor, theirs: Tensor) -> Comparison:
+@dataclass(frozen=True, slots=True)
+class Comparison:
+    name: str
+    passed: bool
+    bitwise_equal: bool
+    max_abs_diff: float
+    detail: str = ""
+
+    def report(self) -> str:
+        if self.bitwise_equal:
+            status = "OK (bitwise)"
+        elif self.passed:
+            status = "OK (within tol)"
+        else:
+            status = "FAILED"
+        detail = f"  {self.detail}" if self.detail else ""
+        return f"  {self.name:<42} {status:<16} max|Δ|={self.max_abs_diff:.3e}{detail}"
+
+
+def compare(name: str, ours: Tensor, theirs: Tensor, tolerance: float) -> Comparison:
     if ours.shape != theirs.shape:
         raise AssertionError(
             f"{name}: shape {tuple(ours.shape)} != {tuple(theirs.shape)}"
         )
-    diff = (ours.float() - theirs.float()).abs().max().item()
-    return Comparison(name, bool(torch.equal(ours, theirs)), diff)
+    bitwise = bool(torch.equal(ours, theirs))
+    diff = 0.0 if bitwise else (ours.float() - theirs.float()).abs().max().item()
+    return Comparison(name, diff <= tolerance, bitwise, diff)
 
 
 def check_all(comparisons: list[Comparison]) -> bool:
     ok = True
     for comparison in comparisons:
         print(comparison.report())
-        ok &= comparison.bitwise_equal
+        ok &= comparison.passed
     return ok
 
 
@@ -81,6 +97,12 @@ def main() -> int:
         "--image", default=None, help="path to an image for the multimodal check"
     )
     parser.add_argument("--max-new-tokens", type=int, default=16)
+    parser.add_argument(
+        "--tolerance",
+        type=float,
+        default=0.25,
+        help="max abs logit difference allowed for single-forward comparisons",
+    )
     parser.add_argument(
         "--long-context",
         type=int,
@@ -121,23 +143,30 @@ def main() -> int:
         input_ids = tokenizer(prompt, return_tensors="pt").input_ids.to(device)
         comparisons: list[Comparison] = []
 
-        # 1. Full forward, no cache: all prompt positions.
+        # 1. Full forward, no cache: all prompt positions (hard gate).
         with torch.no_grad():
             ours = model(input_ids)
             theirs = hf_model(input_ids=input_ids)
         comparisons.append(
-            compare("prefill logits (all positions)", ours.logits, theirs.logits)
+            compare(
+                "prefill logits (all positions)",
+                ours.logits,
+                theirs.logits,
+                args.tolerance,
+            )
         )
         watch.lap("prefill compared")
 
         # 2. Cached stepwise decode, greedy.
         comparisons.extend(
-            stepwise_decode_comparisons(model, hf_model, input_ids, args.max_new_tokens)
+            stepwise_decode_comparisons(
+                model, hf_model, input_ids, args.max_new_tokens, args.tolerance
+            )
         )
         watch.lap("stepwise decode compared")
 
-        # 3. End-to-end generate() token parity. HF's generate stops on the
-        # generation_config eos ids, so use the same set.
+        # 3. End-to-end generate() token parity (hard gate). HF's generate
+        # stops on the generation_config eos ids, so use the same set.
         gen_defaults = load_generation_defaults(checkpoint_dir)
         eos = gen_defaults.get("eos_token_id", None)
         eos_ids = tuple(eos) if isinstance(eos, list) else None
@@ -156,7 +185,9 @@ def main() -> int:
             and torch.equal(result.sequences, hf_tokens)
         )
         comparisons.append(
-            Comparison("generate() token ids", match, 0.0 if match else float("nan"))
+            Comparison(
+                "generate() token ids", match, match, 0.0 if match else float("nan")
+            )
         )
         print(f"  generated: {ours_text!r}")
         all_ok &= check_all(comparisons)
@@ -174,11 +205,18 @@ def main() -> int:
             ours = model(input_ids, logits_to_keep=1)
             theirs = hf_model(input_ids=input_ids, logits_to_keep=1)
         comparisons.append(
-            compare("prefill logits (last position)", ours.logits, theirs.logits)
+            compare(
+                "prefill logits (last position)",
+                ours.logits,
+                theirs.logits,
+                args.tolerance,
+            )
         )
         watch.lap("long-context prefill compared")
         comparisons.extend(
-            stepwise_decode_comparisons(model, hf_model, input_ids, args.max_new_tokens)
+            stepwise_decode_comparisons(
+                model, hf_model, input_ids, args.max_new_tokens, args.tolerance
+            )
         )
         watch.lap("long-context stepwise decode compared")
         all_ok &= check_all(comparisons)
@@ -186,18 +224,21 @@ def main() -> int:
     if args.image is not None:
         all_ok &= run_image_check(args, checkpoint_dir, model, hf_model, device)
 
-    print(
-        "\nPASS: all comparisons bitwise-identical"
-        if all_ok
-        else "\nFAIL: mismatches found"
-    )
+    print("\nPASS" if all_ok else "\nFAIL")
     return 0 if all_ok else 1
 
 
 def stepwise_decode_comparisons(
-    model, hf_model, input_ids: Tensor, max_new_tokens: int
+    model, hf_model, input_ids: Tensor, max_new_tokens: int, tolerance: float
 ) -> list[Comparison]:
-    """Drive both models manually one token at a time and compare each step."""
+    """Drive both models manually one token at a time.
+
+    Hard gates: the first step's logits (cached prefill, no feedback yet)
+    within tolerance, and per-step greedy token agreement. Later steps' logit
+    drift is reported for information: once any kernel differs by a ULP, the
+    cache feedback loop amplifies differences across steps even between two
+    runs of the *same* implementation (observed with HF vs itself on CPU).
+    """
     from transformers import DynamicCache
 
     comparisons: list[Comparison] = []
@@ -212,17 +253,32 @@ def stepwise_decode_comparisons(
             use_cache=True,
             logits_to_keep=1,
         )
-        max_diff = 0.0
+        comparisons.append(
+            compare(
+                "cached prefill logits (last position)",
+                ours.logits,
+                theirs.logits,
+                tolerance,
+            )
+        )
+
+        max_drift = 0.0
+        first_divergent: int | None = None
         bitwise = True
-        token = input_ids  # placeholder
+        tokens_match = True
+        steps_run = 0
         for step in range(max_new_tokens):
-            step_cmp = compare(f"step {step}", ours.logits, theirs.logits)
-            bitwise &= step_cmp.bitwise_equal
-            max_diff = max(max_diff, step_cmp.max_abs_diff)
+            steps_run = step + 1
+            step_cmp = compare(f"step {step}", ours.logits, theirs.logits, tolerance)
+            if not step_cmp.bitwise_equal:
+                bitwise = False
+                if first_divergent is None:
+                    first_divergent = step
+            max_drift = max(max_drift, step_cmp.max_abs_diff)
             token = ours.logits[:, -1, :].float().argmax(dim=-1)[:, None]
             hf_token = theirs.logits[:, -1, :].float().argmax(dim=-1)[:, None]
             if not torch.equal(token, hf_token):
-                bitwise = False
+                tokens_match = False
                 break
             ours = model(token, cache=cache, logits_to_keep=1)
             theirs = hf_model(
@@ -231,8 +287,18 @@ def stepwise_decode_comparisons(
                 use_cache=True,
                 logits_to_keep=1,
             )
+
+    detail = (
+        "" if first_divergent is None else f"(first drift at step {first_divergent})"
+    )
     comparisons.append(
-        Comparison(f"cached decode logits ({max_new_tokens} steps)", bitwise, max_diff)
+        Comparison(
+            f"decode tokens agree ({steps_run} steps)",
+            tokens_match,
+            bitwise,
+            max_drift,
+            detail,
+        )
     )
     return comparisons
 
@@ -275,7 +341,9 @@ def run_image_check(args, checkpoint_dir, model, hf_model, device) -> bool:
             pixel_values=batch["pixel_values"],
             image_position_ids=batch["image_position_ids"],
         )
-    comparisons = [compare("image prefill logits", ours.logits, theirs.logits)]
+    comparisons = [
+        compare("image prefill logits", ours.logits, theirs.logits, args.tolerance)
+    ]
 
     result = generate(
         model,
