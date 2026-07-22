@@ -26,8 +26,9 @@ cache; greedy argmax agreed at every step regardless. On H100 CUDA both
 implementations are bitwise-identical and run-to-run stable.
 
 Checks: full prefill forward, cached stepwise greedy decode, end-to-end
-``generate()``, optional ``--long-context`` (sliding-window coverage) and
-``--image`` (vision path). Prompts are wrapped in the checkpoint's chat
+``generate()``, an image prompt (vision path; a deterministic synthetic image
+by default, ``--image`` to use a file) and optional ``--long-context``
+(sliding-window coverage). Prompts are wrapped in the checkpoint's chat
 template by default (the correct instruct usage — generations should be
 coherent); pass ``--raw`` to feed prompts verbatim instead. ``--attn-backend``
 selects our attention implementation (the HF reference always runs eager).
@@ -36,7 +37,7 @@ Usage::
 
     uv run python -m gemma4.verify_parity --device cuda --max-new-tokens 32
     uv run python -m gemma4.verify_parity --device cuda --attn-backend sdpa \
-        --long-context 600 --image /tmp/parity_test.png
+        --long-context 600
 """
 
 from __future__ import annotations
@@ -126,7 +127,10 @@ def main() -> int:
         help="attention implementation(s) for the pure-torch model",
     )
     parser.add_argument(
-        "--image", default=None, help="path to an image for the multimodal check"
+        "--image",
+        default=None,
+        help="image file for the multimodal check "
+        "(default: deterministic synthetic image)",
     )
     parser.add_argument("--max-new-tokens", type=int, default=16)
     parser.add_argument(
@@ -282,8 +286,7 @@ def run_checks(args, model, hf_model, tokenizer, checkpoint_dir, device, watch) 
         watch.lap("long-context stepwise decode compared")
         all_ok &= check_all(comparisons)
 
-    if args.image is not None:
-        all_ok &= run_image_check(args, checkpoint_dir, model, hf_model, device)
+    all_ok &= run_image_check(args, checkpoint_dir, model, hf_model, device)
 
     return all_ok
 
@@ -365,10 +368,11 @@ def stepwise_decode_comparisons(
 
 def run_image_check(args, checkpoint_dir, model, hf_model, device) -> bool:
     import transformers
-    from PIL import Image
+
+    from .testing import load_test_image
 
     processor = transformers.AutoProcessor.from_pretrained(checkpoint_dir)
-    image = Image.open(args.image).convert("RGB")
+    image, image_label = load_test_image(args.image)
     messages = [
         {
             "role": "user",
@@ -387,7 +391,7 @@ def run_image_check(args, checkpoint_dir, model, hf_model, device) -> bool:
     ).to(device)
 
     print(
-        f"\n=== image prompt: {args.image} "
+        f"\n=== image prompt: {image_label} "
         f"({int((batch['input_ids'] == model.config.image_token_id).sum())} soft tokens)"
     )
     with torch.no_grad():

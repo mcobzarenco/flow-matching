@@ -8,7 +8,8 @@ allocator state. Workloads:
   lm_head cost does not drown out attention),
 - decode: cached greedy generation (includes the per-step host sync of the
   eos check, i.e. realistic single-stream latency),
-- image prefill (optional, with --image): vision tower + text prefill.
+- image prefill: vision tower + text prefill (a deterministic synthetic
+  image by default, ``--image`` to use a file).
 
 Usage::
 
@@ -96,7 +97,12 @@ def main() -> int:
     parser.add_argument("--decode-tokens", type=int, default=128)
     parser.add_argument("--decode-prompt", type=int, default=128)
     parser.add_argument("--iters", type=int, default=5)
-    parser.add_argument("--image", default=None)
+    parser.add_argument(
+        "--image",
+        default=None,
+        help="image file for the image-prefill workload "
+        "(default: deterministic synthetic image)",
+    )
     args = parser.parse_args()
 
     device = torch.device(args.device)
@@ -105,28 +111,29 @@ def main() -> int:
     model = load_model(checkpoint_dir, device=device)
     bos = model.config.text.bos_token_id
 
-    image_batch = None
-    if args.image is not None:
-        import transformers
-        from PIL import Image
+    import transformers
 
-        processor = transformers.AutoProcessor.from_pretrained(checkpoint_dir)
-        messages = [
-            {
-                "role": "user",
-                "content": [
-                    {"type": "image", "image": Image.open(args.image).convert("RGB")},
-                    {"type": "text", "text": "Describe this image."},
-                ],
-            }
-        ]
-        image_batch = processor.apply_chat_template(
-            messages,
-            add_generation_prompt=True,
-            tokenize=True,
-            return_dict=True,
-            return_tensors="pt",
-        ).to(device)
+    from .testing import load_test_image
+
+    processor = transformers.AutoProcessor.from_pretrained(checkpoint_dir)
+    image, image_label = load_test_image(args.image)
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {"type": "image", "image": image},
+                {"type": "text", "text": "Describe this image."},
+            ],
+        }
+    ]
+    image_batch = processor.apply_chat_template(
+        messages,
+        add_generation_prompt=True,
+        tokenize=True,
+        return_dict=True,
+        return_tensors="pt",
+    ).to(device)
+    print(f"image workload: {image_label}", flush=True)
 
     results: dict[AttentionBackend, dict[str, float]] = {}
     for backend in (AttentionBackend.EAGER, AttentionBackend.SDPA):
@@ -145,20 +152,19 @@ def main() -> int:
                 args.decode_tokens,
             )
         )
-        if image_batch is not None:
-            with torch.no_grad():
-                t = []
-                for _ in range(args.iters + 1):
-                    t0 = time.perf_counter()
-                    model(
-                        image_batch["input_ids"],
-                        pixel_values=image_batch["pixel_values"],
-                        image_position_ids=image_batch["image_position_ids"],
-                        logits_to_keep=1,
-                    )
-                    _sync(device)
-                    t.append(time.perf_counter() - t0)
-                rows["image prefill (s)"] = statistics.median(t[1:])
+        with torch.no_grad():
+            t = []
+            for _ in range(args.iters + 1):
+                t0 = time.perf_counter()
+                model(
+                    image_batch["input_ids"],
+                    pixel_values=image_batch["pixel_values"],
+                    image_position_ids=image_batch["image_position_ids"],
+                    logits_to_keep=1,
+                )
+                _sync(device)
+                t.append(time.perf_counter() - t0)
+            rows["image prefill (s)"] = statistics.median(t[1:])
         results[backend] = rows
         print(f"  {backend}: done", flush=True)
 
