@@ -254,9 +254,7 @@ def load_episode_summary(
 ) -> EpisodeSummary:
     dataset = LeRobotDataset(repo_id, root=root)
     if not 0 <= episode < dataset.num_episodes:
-        raise SystemExit(
-            f"episode {episode} out of range (dataset has {dataset.num_episodes})"
-        )
+        raise SystemExit(f"episode {episode} out of range (dataset has {dataset.num_episodes})")
 
     row = dataset.meta.episodes[episode]
     start, stop = int(row["dataset_from_index"]), int(row["dataset_to_index"])
@@ -272,17 +270,13 @@ def load_episode_summary(
     state = np.asarray(table["observation.state"], dtype=np.float32)
 
     feature = dataset.meta.features["action"]
-    motor_names = list(
-        feature.get("names") or [f"motor_{i}" for i in range(action.shape[1])]
-    )
+    motor_names = list(feature.get("names") or [f"motor_{i}" for i in range(action.shape[1])])
 
     camera_keys = list(dataset.meta.camera_keys)
     if cameras:
         unknown = set(cameras) - set(camera_keys)
         if unknown:
-            raise SystemExit(
-                f"unknown cameras {sorted(unknown)}; dataset has {camera_keys}"
-            )
+            raise SystemExit(f"unknown cameras {sorted(unknown)}; dataset has {camera_keys}")
         camera_keys = [k for k in camera_keys if k in cameras]
 
     # Evenly spaced timesteps, always including the first and last frame.
@@ -296,9 +290,7 @@ def load_episode_summary(
                 (
                     label,
                     camera,
-                    tensor_to_image_b64(
-                        item[camera], max_image_dim, image_format, jpeg_quality
-                    ),
+                    tensor_to_image_b64(item[camera], max_image_dim, image_format, jpeg_quality),
                 )
             )
 
@@ -375,9 +367,7 @@ def print_report(
             "task": summary.task,
             "num_frames": summary.num_frames,
             "duration_s": round(summary.duration_s, 2),
-            "judge": judgment.to_dict()
-            if judgment is not None
-            else {"raw_response": raw},
+            "judge": judgment.to_dict() if judgment is not None else {"raw_response": raw},
         }
         if usage is not None:
             payload["usage"] = usage
@@ -428,9 +418,7 @@ def main() -> None:
         default=None,
         help="Dataset repo id; defaults to the last two path components of --root.",
     )
-    parser.add_argument(
-        "--episode", type=int, default=0, help="Episode index to judge."
-    )
+    parser.add_argument("--episode", type=int, default=0, help="Episode index to judge.")
     parser.add_argument(
         "--num-frames",
         type=int,
@@ -473,9 +461,7 @@ def main() -> None:
     )
     parser.add_argument("--model", type=str, default=DEFAULT_MODEL)
     parser.add_argument("--max-tokens", type=int, default=1500)
-    parser.add_argument(
-        "--json", action="store_true", help="Emit a machine-readable JSON report."
-    )
+    parser.add_argument("--json", action="store_true", help="Emit a machine-readable JSON report.")
     parser.add_argument(
         "--dry-run",
         action="store_true",
@@ -516,9 +502,7 @@ def main() -> None:
                 system=SYSTEM_PROMPT,
                 messages=[{"role": "user", "content": content}],
             )
-            print(
-                f"[dry run] context length: {count.input_tokens} input tokens ({args.model})"
-            )
+            print(f"[dry run] context length: {count.input_tokens} input tokens ({args.model})")
         else:
             print("[dry run] set ANTHROPIC_API_KEY to report the exact context length")
         return

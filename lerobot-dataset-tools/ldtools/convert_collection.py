@@ -312,10 +312,7 @@ def episode_video_stats(video_path: Path) -> dict[str, np.ndarray]:
     indices = sample_indices(int(num_frames))
     frames = decoder.get_frames_at(indices).data.numpy().astype(np.float32)  # (N,C,H,W)
     stats = get_feature_stats(frames, axis=(0, 2, 3), keepdims=True, quantile_list=[])
-    return {
-        k: v if k == "count" else np.squeeze(v / 255.0, axis=0)
-        for k, v in stats.items()
-    }
+    return {k: v if k == "count" else np.squeeze(v / 255.0, axis=0) for k, v in stats.items()}
 
 
 def synthesize_episodes_stats(root: Path, info: dict, name: str) -> None:
@@ -379,18 +376,14 @@ def validate_v3(root: Path, name: str) -> dict:
 
     info = json.loads((root / "meta" / "info.json").read_text())
     if info.get("codebase_version") != "v3.0":
-        raise RuntimeError(
-            f"expected v3.0 after conversion, got {info.get('codebase_version')}"
-        )
+        raise RuntimeError(f"expected v3.0 after conversion, got {info.get('codebase_version')}")
     dataset = LeRobotDataset(name, root=root)
     if dataset.num_episodes != info["total_episodes"]:
         raise RuntimeError(
             f"episode count mismatch: {dataset.num_episodes} != {info['total_episodes']}"
         )
     if dataset.num_frames != info["total_frames"]:
-        raise RuntimeError(
-            f"frame count mismatch: {dataset.num_frames} != {info['total_frames']}"
-        )
+        raise RuntimeError(f"frame count mismatch: {dataset.num_frames} != {info['total_frames']}")
     return {"episodes": dataset.num_episodes, "frames": dataset.num_frames}
 
 
@@ -410,9 +403,7 @@ def convert_one(ds: SubDataset, output: Path) -> dict:
 
     video_keys = [k for k, f in info["features"].items() if f.get("dtype") == "video"]
     if video_keys and not (ds.path / "videos").is_dir():
-        raise RuntimeError(
-            f"declares video features {video_keys} but has no videos/ directory"
-        )
+        raise RuntimeError(f"declares video features {video_keys} but has no videos/ directory")
 
     log(ds.name, f"staging copy ({ds.size_bytes / 1e9:.1f} GB, {ds.version})")
     stage_copy(ds.path, staging, info)
@@ -421,10 +412,7 @@ def convert_one(ds: SubDataset, output: Path) -> dict:
         log(ds.name, f"dropped undeclared parquet columns: {sorted(dropped)}")
     if repair_stats_keys(staging, info["features"]):
         log(ds.name, "repaired flat camera stats keys")
-    if (
-        ds.version == "v2.0"
-        or not (staging / "meta" / "episodes_stats.jsonl").is_file()
-    ):
+    if ds.version == "v2.0" or not (staging / "meta" / "episodes_stats.jsonl").is_file():
         synthesize_episodes_stats(staging, info, ds.name)
 
     log(ds.name, "converting v2.1 -> v3.0")
@@ -473,12 +461,8 @@ def main() -> None:
         default=None,
         help="Subset to process, as '<user>/<dataset>' names (default: all).",
     )
-    parser.add_argument(
-        "--stats-only", action="store_true", help="Print the census and exit."
-    )
-    parser.add_argument(
-        "--force", action="store_true", help="Reconvert even if output exists."
-    )
+    parser.add_argument("--stats-only", action="store_true", help="Print the census and exit.")
+    parser.add_argument("--force", action="store_true", help="Reconvert even if output exists.")
     parser.add_argument(
         "--workers",
         type=int,
@@ -537,9 +521,7 @@ def main() -> None:
     else:
         with ProcessPoolExecutor(max_workers=args.workers) as pool:
             futures = {pool.submit(run_safely, ds, output): ds for ds in todo}
-            for future in tqdm(
-                as_completed(futures), total=len(futures), unit="dataset"
-            ):
+            for future in tqdm(as_completed(futures), total=len(futures), unit="dataset"):
                 ds = futures[future]
                 result = future.result()
                 outcomes[result["status"]] += 1
@@ -568,10 +550,7 @@ def run_safely(ds: SubDataset, output: Path) -> dict:
 
 def append_manifest(manifest_path: Path, name: str, result: dict) -> None:
     with manifest_path.open("a") as f:
-        f.write(
-            json.dumps({"dataset": name, "time": time.strftime("%F %T"), **result})
-            + "\n"
-        )
+        f.write(json.dumps({"dataset": name, "time": time.strftime("%F %T"), **result}) + "\n")
 
 
 if __name__ == "__main__":

@@ -116,9 +116,7 @@ class Judgment:
             return cls(
                 overall_score=int(payload["overall_score"]),
                 verdict=Verdict(payload["verdict"]),
-                task_completion_visible=TaskCompletion(
-                    payload["task_completion_visible"]
-                ),
+                task_completion_visible=TaskCompletion(payload["task_completion_visible"]),
                 scores=AspectScores(
                     visual_quality=int(aspect["visual_quality"]),
                     smoothness=int(aspect["smoothness"]),
@@ -190,9 +188,7 @@ def to_pil(chw: torch.Tensor, max_dim: int) -> Image.Image:
     return image
 
 
-def trajectory_stats(
-    action: np.ndarray, state: np.ndarray, names: list[str], fps: float
-) -> str:
+def trajectory_stats(action: np.ndarray, state: np.ndarray, names: list[str], fps: float) -> str:
     steps = np.abs(np.diff(action, axis=0))
     follow_err = np.abs(action - state).mean(axis=0)
 
@@ -232,9 +228,7 @@ def gather_evidence(
 ) -> EpisodeEvidence:
     dataset = LeRobotDataset(repo_id, root=root)
     if not 0 <= episode < dataset.num_episodes:
-        raise SystemExit(
-            f"episode {episode} out of range 0..{dataset.num_episodes - 1}"
-        )
+        raise SystemExit(f"episode {episode} out of range 0..{dataset.num_episodes - 1}")
 
     meta_row = dataset.meta.episodes[episode]
     lo, hi = int(meta_row["dataset_from_index"]), int(meta_row["dataset_to_index"])
@@ -264,9 +258,7 @@ def gather_evidence(
     for offset in picks:
         item = dataset[lo + int(offset)]
         for cam in cams:
-            caption = (
-                f"[frame {offset + 1}/{length}, t={offset / fps:.1f}s, camera {cam}]"
-            )
+            caption = f"[frame {offset + 1}/{length}, t={offset / fps:.1f}s, camera {cam}]"
             frames.append((caption, to_pil(item[cam], max_dim)))
 
     return EpisodeEvidence(
@@ -450,18 +442,14 @@ def report(
                     "model": model_id,
                     "usage": usage,
                     "generation_seconds": round(seconds, 2),
-                    "judge": judgment.to_dict()
-                    if judgment
-                    else {"raw_response": raw_text},
+                    "judge": judgment.to_dict() if judgment else {"raw_response": raw_text},
                 },
                 indent=2,
             )
         )
         return
 
-    print(
-        f"=== {evidence.repo_id} — episode {evidence.episode} (judge: {model_id}) ==="
-    )
+    print(f"=== {evidence.repo_id} — episode {evidence.episode} (judge: {model_id}) ===")
     print(f'task     : "{evidence.instruction}"')
     print(f"length   : {evidence.num_frames} frames @ {evidence.fps:.0f} fps")
     print(
@@ -491,9 +479,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Judge a LeRobot v3.0 episode with a local Gemma 4 model."
     )
-    parser.add_argument(
-        "--root", type=Path, required=True, help="Dataset directory (v3.0)."
-    )
+    parser.add_argument("--root", type=Path, required=True, help="Dataset directory (v3.0).")
     parser.add_argument(
         "--repo-id",
         type=str,
@@ -529,9 +515,7 @@ def main() -> None:
         help="Enable sampling at this temperature (default: greedy/deterministic).",
     )
     parser.add_argument("--max-new-tokens", type=int, default=1200)
-    parser.add_argument(
-        "--context", type=str, default=None, help="Extra scene context."
-    )
+    parser.add_argument("--context", type=str, default=None, help="Extra scene context.")
     parser.add_argument("--json", action="store_true")
     parser.add_argument(
         "--dry-run",
@@ -555,9 +539,7 @@ def main() -> None:
 
     if args.dry_run:
         sizes = {img.size for _, img in evidence.frames}
-        print(
-            f"[dry run] {len(evidence.frames)} frames at {sizes}, judge model {args.model}"
-        )
+        print(f"[dry run] {len(evidence.frames)} frames at {sizes}, judge model {args.model}")
         print(f'[dry run] instruction: "{evidence.instruction}"')
         print(f"[dry run] stats block:\n{evidence.stats_block}")
         tokens = count_context_tokens(messages, args.model, args.image_token_budget)

@@ -59,13 +59,13 @@ Originally a small MNIST flow-matching project (`fmatch/model.py`,
 | file | what it is |
 |---|---|
 | `eval_smolvla.py` | Open-loop SmolVLA eval on a local LeRobot v3 dataset. Modular API (`SmolVLAEval.load()`, `predict_chunk`, `evaluate_frame/episode`, frozen result dataclasses) + CLI. **Deterministic**: flow-matching noise from seeded generator, per-frame seed = `seed + dataset_index` (order/stride independent, bit-exact across processes). |
-| `fmatch/judge_episode.py` | Claude-as-judge episode QA (Anthropic API). Samples N timesteps × all cameras (512 px JPEG/PNG — token cost is dims-only: ~(w·h)/750), sends task + trajectory stats, strict JSON verdict → frozen `EpisodeJudgment` (+`Verdict`/`TaskCompletion` StrEnums, from/to JSON). `--dry-run` uses the free token-counting endpoint. `--context` for scene clarifications. Usage measured ~2.5–4.3k input tok/episode. |
-| `fmatch/judge_episode_gemma.py` | Same concept, fully independent implementation, **local Gemma 4 12B** via transformers. Greedy by default; `--thinking`; `--image-token-budget {70,140,280,560,1120}` (→ `processor_kwargs={"max_soft_tokens": …}`); `--load-in-4bit` (bitsandbytes) for 8 GB GPUs. H100 bf16: ~9.5 s/episode, 4,247 tok @ budget 280. |
-| `fmatch/convert_collection.py` | Collection → v3.0 migration pipeline. Census by `codebase_version`, then per sub-dataset: staged copy (skips dup video trees + `*.bak`) → stats-key repair → v2.0→v2.1 hop (synthesizes `episodes_stats.jsonl`; numeric stats exact from parquet, image stats from ~100 torchcodec-sampled frames/episode-camera — the CPU hot spot) → official `convert_dataset_v21_to_v30` (in-process) → validation (`LeRobotDataset` load + count checks) → atomic move. Idempotent (skip if output is valid v3.0), `--workers N` process pool, `--datasets` subset, `--stats-only`, quarantining manifest `conversion_manifest.jsonl`. |
+| `lerobot-dataset-tools/ldtools/judge_episode.py` | Claude-as-judge episode QA (Anthropic API). Samples N timesteps × all cameras (512 px JPEG/PNG — token cost is dims-only: ~(w·h)/750), sends task + trajectory stats, strict JSON verdict → frozen `EpisodeJudgment` (+`Verdict`/`TaskCompletion` StrEnums, from/to JSON). `--dry-run` uses the free token-counting endpoint. `--context` for scene clarifications. Usage measured ~2.5–4.3k input tok/episode. |
+| `lerobot-dataset-tools/ldtools/judge_episode_gemma.py` | Same concept, fully independent implementation, **local Gemma 4 12B** via transformers. Greedy by default; `--thinking`; `--image-token-budget {70,140,280,560,1120}` (→ `processor_kwargs={"max_soft_tokens": …}`); `--load-in-4bit` (bitsandbytes) for 8 GB GPUs. H100 bf16: ~9.5 s/episode, 4,247 tok @ budget 280. |
+| `lerobot-dataset-tools/ldtools/convert_collection.py` | Collection → v3.0 migration pipeline. Census by `codebase_version`, then per sub-dataset: staged copy (skips dup video trees + `*.bak`) → stats-key repair → v2.0→v2.1 hop (synthesizes `episodes_stats.jsonl`; numeric stats exact from parquet, image stats from ~100 torchcodec-sampled frames/episode-camera — the CPU hot spot) → official `convert_dataset_v21_to_v30` (in-process) → validation (`LeRobotDataset` load + count checks) → atomic move. Idempotent (skip if output is valid v3.0), `--workers N` process pool, `--datasets` subset, `--stats-only`, quarantining manifest `conversion_manifest.jsonl`. |
 | `init-vm-gpu.sh` | Lambda/Ubuntu24.04 GPU box bootstrap (driver 595, zsh, uv, clone, sync). Non-interactive (needrestart/dpkg guards, oh-my-zsh `--unattended`). |
 | `init-vm-cpu.sh` | Same minus driver/reboot; formats+mounts GCE disk `google-lerobot-data` at `/data`. |
 | `docs/so101_recording_tutorial.md` | Full SO-101 record→train→deploy tutorial (all lerobot CLIs via uv). |
-| `docs/community_to_v3_pipeline_plan.md` | The 8-stage plan: inventory → download → normalize → convert → judge → filter → merge-by-feature-signature → QA. |
+| `lerobot-dataset-tools/docs/pipeline_plan.md` | The 8-stage plan: inventory → download → normalize → convert → judge → filter → merge-by-feature-signature → QA. |
 
 `pyproject.toml` essentials: `requires-python >=3.13,<3.14`;
 `lerobot[dataset,feetech,smolvla,viz]>=0.4` (currently 0.6.0), `av>=15,<16`,
@@ -115,7 +115,7 @@ v1 census (verified locally): 124× v2.1, 4× v2.0.
 - Laptop: `/home/marius/w/community_dataset_v1` (complete, byte-verified vs
   hub); `/home/marius/w/community_dataset_v1_v3` (converted so far:
   `ZGGZZG/so100_drop0`, `aimihat/so100_tape`, `ad330/cubePlace`(v2.0 path);
-  full-sweep command ready: `uv run python -m fmatch.convert_collection
+  full-sweep command ready: `uv run python -m ldtools.convert_collection
   --source … --output … --workers 6`).
 - Own recording: `/home/marius/w/datasets/marius/so101_pick_place_clean`
   (7 eps, 3399 frames, cams `front`+`wrist`, modern `[-100,100]` units) —
