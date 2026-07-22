@@ -95,6 +95,12 @@ class Normalizer:
         return {"mean": self.mean.tolist(), "std": self.std.tolist()}
 
 
+def _worker_init(_worker_id: int) -> None:
+    # Keep dataloader workers single-threaded: N workers x M torch threads
+    # oversubscribes the host.
+    torch.set_num_threads(1)
+
+
 class PrefixCollator:
     """Builds batched multimodal prompts from LeRobot items.
 
@@ -115,6 +121,11 @@ class PrefixCollator:
         self.instruction = instruction
         self.max_soft_tokens = max_soft_tokens
         self._processor: Any = None
+
+    def __getstate__(self) -> dict[str, Any]:
+        # Never ship a constructed processor across process boundaries; spawn
+        # workers rebuild it lazily.
+        return {**self.__dict__, "_processor": None}
 
     def _to_pil(self, image: Tensor) -> Any:
         from PIL import Image
@@ -377,12 +388,12 @@ def main() -> int:
         collate_fn=collator,
         drop_last=True,
         persistent_workers=args.num_workers > 0,
-        # Keep dataloader workers single-threaded: they fork from a parent
-        # with a multi-GB model resident, and N workers x M torch threads
-        # oversubscribes the host.
-        worker_init_fn=(lambda _worker_id: torch.set_num_threads(1))
-        if args.num_workers > 0
-        else None,
+        worker_init_fn=_worker_init if args.num_workers > 0 else None,
+        # Spawned (not forked) workers: the parent holds live CUDA state and
+        # has decoded video in-process (the eval batch), and torchcodec/ffmpeg
+        # deadlock or throw "Could not push packet to decoder" in forked
+        # children (verified empirically on the H100 box).
+        multiprocessing_context="spawn" if args.num_workers > 0 else None,
     )
 
     # -- model -----------------------------------------------------------
