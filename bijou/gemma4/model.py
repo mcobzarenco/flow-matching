@@ -101,30 +101,9 @@ class Gemma4Model(nn.Module):
         ``pixel_values``/``image_position_ids`` are given.
         """
         text_config = self.config.text
-        image_mask = input_ids == self.config.image_token_id
-
-        # Multimodal placeholder ids are out of the embedding's vocabulary:
-        # embed the pad token there instead, then scatter the image features.
-        llm_input_ids = torch.where(image_mask, text_config.pad_token_id, input_ids)
-        inputs_embeds = self.language_model.embed_tokens(llm_input_ids)
-        per_layer_inputs = self.language_model.get_per_layer_inputs(llm_input_ids)
-
-        if pixel_values is not None:
-            if image_position_ids is None:
-                raise ValueError("image_position_ids is required with pixel_values")
-            image_features = self.get_image_features(pixel_values, image_position_ids)
-            image_features = image_features.to(inputs_embeds.dtype)
-            n_slots = int(image_mask.sum())
-            if n_slots * inputs_embeds.shape[-1] != image_features.numel():
-                raise ValueError(
-                    f"image token slots ({n_slots}) do not match soft tokens "
-                    f"({image_features.shape[0]})"
-                )
-            inputs_embeds = inputs_embeds.masked_scatter(
-                image_mask.unsqueeze(-1).expand_as(inputs_embeds), image_features
-            )
-        elif bool(image_mask.any()):
-            raise ValueError("input contains image tokens but no pixel_values given")
+        inputs_embeds, per_layer_inputs = self.embed_multimodal(
+            input_ids, pixel_values=pixel_values, image_position_ids=image_position_ids
+        )
 
         hidden_states = self.language_model(
             inputs_embeds=inputs_embeds,
@@ -145,6 +124,50 @@ class Gemma4Model(nn.Module):
             logits = logits * softcap
 
         return Gemma4Output(logits=logits, last_hidden_state=hidden_states)
+
+    def embed_multimodal(
+        self,
+        input_ids: Tensor,
+        *,
+        pixel_values: Tensor | None = None,
+        image_position_ids: Tensor | None = None,
+    ) -> tuple[Tensor, Tensor]:
+        """Assemble decoder inputs: (inputs_embeds, per-layer PLE inputs).
+
+        Embeds ``input_ids`` (image placeholders replaced by the pad token,
+        then overwritten by vision soft tokens) and returns the raw
+        token-identity PLE component. This is the full multimodal front-end
+        of the model without running the decoder — used by e.g. the Bijou
+        prefix encoder.
+        """
+        image_mask = input_ids == self.config.image_token_id
+
+        # Multimodal placeholder ids are out of the embedding's vocabulary:
+        # embed the pad token there instead, then scatter the image features.
+        llm_input_ids = torch.where(
+            image_mask, self.config.text.pad_token_id, input_ids
+        )
+        inputs_embeds = self.language_model.embed_tokens(llm_input_ids)
+        per_layer_inputs = self.language_model.get_per_layer_inputs(llm_input_ids)
+
+        if pixel_values is not None:
+            if image_position_ids is None:
+                raise ValueError("image_position_ids is required with pixel_values")
+            image_features = self.get_image_features(pixel_values, image_position_ids)
+            image_features = image_features.to(inputs_embeds.dtype)
+            n_slots = int(image_mask.sum())
+            if n_slots * inputs_embeds.shape[-1] != image_features.numel():
+                raise ValueError(
+                    f"image token slots ({n_slots}) do not match soft tokens "
+                    f"({image_features.shape[0]})"
+                )
+            inputs_embeds = inputs_embeds.masked_scatter(
+                image_mask.unsqueeze(-1).expand_as(inputs_embeds), image_features
+            )
+        elif bool(image_mask.any()):
+            raise ValueError("input contains image tokens but no pixel_values given")
+
+        return inputs_embeds, per_layer_inputs
 
 
 def set_attention_backend(module: nn.Module, backend: AttentionBackend) -> None:

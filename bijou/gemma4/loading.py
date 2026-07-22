@@ -22,7 +22,7 @@ from pathlib import Path
 import torch
 from safetensors import safe_open
 
-from .config import Gemma4Config
+from .config import Gemma4Config, LayerType
 from .layers import DEFAULT_ATTENTION_BACKEND, AttentionBackend
 from .model import Gemma4Model
 
@@ -34,6 +34,13 @@ _SHARED_KV_SUFFIXES = (
     "v_norm.weight",
 )
 _LAYER_RE = re.compile(r"^language_model\.layers\.(\d+)\.self_attn\.(.+)$")
+_ANY_LAYER_RE = re.compile(r"^language_model\.layers\.(\d+)\.")
+# Keys whose tensors pack one slice per decoder layer along a dimension;
+# truncation keeps the first `num_layers` slices (dim, slice axis).
+_PLE_PACKED_KEYS = {
+    "language_model.embed_tokens_per_layer.weight": 1,
+    "language_model.per_layer_model_projection.weight": 0,
+}
 
 
 def resolve_checkpoint_dir(model_id_or_path: str | Path) -> Path:
@@ -59,6 +66,40 @@ def _is_dropped_shared_kv_key(config: Gemma4Config, key: str) -> bool:
     return config.text.is_kv_shared_layer(layer_idx) and suffix in _SHARED_KV_SUFFIXES
 
 
+def _is_truncated_layer_key(key: str, num_layers: int) -> bool:
+    match = _ANY_LAYER_RE.match(key)
+    return match is not None and int(match.group(1)) >= num_layers
+
+
+def truncated_config(config: Gemma4Config, num_layers: int) -> Gemma4Config:
+    """Config for the first ``num_layers`` decoder layers of a checkpoint.
+
+    Truncation may not cross into the KV-shared region (those layers have no
+    K/V weights to keep) and must end on a full-attention layer. The
+    truncated model has no KV sharing; run with a :class:`KVCache` to export
+    per-layer K/V (full-attention layers cache the entire sequence).
+    """
+    text = config.text
+    if not 0 < num_layers <= text.first_kv_shared_layer_idx:
+        raise ValueError(
+            f"num_layers must be in (0, {text.first_kv_shared_layer_idx}] "
+            f"(the non-KV-shared prefix), got {num_layers}"
+        )
+    layer_types = text.layer_types[:num_layers]
+    if layer_types[-1] is not LayerType.FULL:
+        raise ValueError(
+            f"truncation point must end on a full_attention layer; layer "
+            f"{num_layers - 1} is {layer_types[-1]}"
+        )
+    text = dataclasses.replace(
+        text,
+        num_hidden_layers=num_layers,
+        layer_types=layer_types,
+        num_kv_shared_layers=0,
+    )
+    return dataclasses.replace(config, text=text)
+
+
 def load_model(
     model_id_or_path: str | Path,
     *,
@@ -66,22 +107,32 @@ def load_model(
     dtype: torch.dtype | None = None,
     attn_backend: AttentionBackend = DEFAULT_ATTENTION_BACKEND,
     config: Gemma4Config | None = None,
+    truncate_layers: int | None = None,
 ) -> Gemma4Model:
     """Load a checkpoint, materializing weights directly on ``device``.
 
     ``dtype`` overrides the checkpoint's dtype (the released E-series ship
     bf16); ``attn_backend`` selects the attention implementation for both
-    towers. The model is returned in eval mode with gradients disabled; for
-    training, re-enable with ``model.requires_grad_(True)`` / ``model.train()``.
+    towers. With ``truncate_layers=N`` only the first N decoder layers are
+    instantiated and loaded — including only the first N slices of the packed
+    per-layer-embedding (PLE) tensors — e.g. the Bijou prefix encoder keeps
+    just the non-KV-shared prefix (see :func:`truncated_config`). The model
+    is returned in eval mode with gradients disabled; for training, re-enable
+    with ``model.requires_grad_(True)`` / ``model.train()``.
     """
     checkpoint_dir = resolve_checkpoint_dir(model_id_or_path)
     if config is None:
         config = load_config(checkpoint_dir)
     if dtype is not None:
         config = dataclasses.replace(config, dtype=dtype)
+    if truncate_layers is not None:
+        config = truncated_config(config, truncate_layers)
 
     model = Gemma4Model(config, attn_backend=attn_backend, device="meta")
 
+    ple_slice_dim = truncate_layers and (
+        truncate_layers * config.text.hidden_size_per_layer_input
+    )
     state_dict: dict[str, torch.Tensor] = {}
     weight_files = sorted(checkpoint_dir.glob("*.safetensors"))
     if not weight_files:
@@ -94,7 +145,19 @@ def load_model(
                 name = key.removeprefix("model.")
                 if _is_dropped_shared_kv_key(config, name):
                     continue
-                tensor = f.get_tensor(key)
+                if truncate_layers is not None and _is_truncated_layer_key(
+                    name, truncate_layers
+                ):
+                    continue
+                if ple_slice_dim and (axis := _PLE_PACKED_KEYS.get(name)) is not None:
+                    # Read only the kept slices from disk.
+                    tensor_slice = f.get_slice(key)
+                    if axis == 0:
+                        tensor = tensor_slice[:ple_slice_dim, :]
+                    else:
+                        tensor = tensor_slice[:, :ple_slice_dim]
+                else:
+                    tensor = f.get_tensor(key)
                 if tensor.is_floating_point():
                     tensor = tensor.to(config.dtype)
                 state_dict[name] = tensor

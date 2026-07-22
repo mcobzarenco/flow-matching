@@ -22,7 +22,7 @@ import torch
 from torch import Tensor, nn
 
 from .cache import KVCache
-from .config import Gemma4TextConfig, LayerType, RopeType
+from .config import Gemma4TextConfig, LayerType
 from .layers import (
     DEFAULT_ATTENTION_BACKEND,
     AttentionBackend,
@@ -32,6 +32,7 @@ from .layers import (
     attention,
     buffer_device,
     rope_cos_sin,
+    rope_inv_freq_from_params,
 )
 from .masks import MaskMapping, MaskSpec, build_text_masks
 
@@ -82,37 +83,13 @@ class ScaledEmbedding(nn.Embedding):
 def rope_inv_freq(
     config: Gemma4TextConfig, layer_type: LayerType, *, device: DeviceLike = None
 ) -> Tensor:
-    """Float32 inverse frequencies for a layer type.
-
-    ``default``: standard RoPE over the full head_dim.
-    ``proportional`` (p-RoPE): only ``partial_rotary_factor * head_dim``
-    dimensions carry non-zero frequencies; the rest get frequency 0, which
-    makes them rotation-free (cos=1, sin=0).
-    """
-    params = config.rope_parameters[layer_type]
-    head_dim = config.head_dim_for_type(layer_type)
-    base = params.rope_theta
-    if params.rope_type is RopeType.DEFAULT:
-        exponent = torch.arange(0, head_dim, 2, dtype=torch.int64, device=device)
-        inv_freq = 1.0 / (base ** (exponent.to(dtype=torch.float) / head_dim))
-    elif params.rope_type is RopeType.PROPORTIONAL:
-        rope_angles = int(params.partial_rotary_factor * head_dim // 2)
-        exponent = torch.arange(0, 2 * rope_angles, 2, dtype=torch.int64, device=device)
-        inv_freq_rotated = 1.0 / (base ** (exponent.to(dtype=torch.float) / head_dim))
-        nope_angles = head_dim // 2 - rope_angles
-        if nope_angles > 0:
-            inv_freq = torch.cat(
-                (
-                    inv_freq_rotated,
-                    torch.zeros(nope_angles, dtype=torch.float32, device=device),
-                ),
-                dim=0,
-            )
-        else:
-            inv_freq = inv_freq_rotated
-    else:
-        raise ValueError(f"unsupported rope type: {params.rope_type}")
-    return inv_freq / params.factor
+    """Float32 inverse frequencies for a layer type (see
+    :func:`bijou.gemma4.layers.rope_inv_freq_from_params`)."""
+    return rope_inv_freq_from_params(
+        config.rope_parameters[layer_type],
+        config.head_dim_for_type(layer_type),
+        device=device,
+    )
 
 
 class TextRotaryEmbedding(nn.Module):

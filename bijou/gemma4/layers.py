@@ -13,6 +13,8 @@ import torch
 from torch import Tensor, nn
 from torch.nn import functional as F
 
+from .config import RopeParameters, RopeType
+
 if TYPE_CHECKING:
     from .masks import MaskSpec
 
@@ -206,6 +208,40 @@ def attention(
     return eager_attention(
         query, key, value, mask.tensor, num_key_value_groups, scaling
     )
+
+
+def rope_inv_freq_from_params(
+    params: RopeParameters, head_dim: int, *, device: DeviceLike = None
+) -> Tensor:
+    """Float32 inverse frequencies for one attention geometry.
+
+    ``default``: standard RoPE over the full head_dim.
+    ``proportional`` (p-RoPE): only ``partial_rotary_factor * head_dim``
+    dimensions carry non-zero frequencies; the rest get frequency 0, which
+    makes them rotation-free (cos=1, sin=0).
+    """
+    base = params.rope_theta
+    if params.rope_type is RopeType.DEFAULT:
+        exponent = torch.arange(0, head_dim, 2, dtype=torch.int64, device=device)
+        inv_freq = 1.0 / (base ** (exponent.to(dtype=torch.float) / head_dim))
+    elif params.rope_type is RopeType.PROPORTIONAL:
+        rope_angles = int(params.partial_rotary_factor * head_dim // 2)
+        exponent = torch.arange(0, 2 * rope_angles, 2, dtype=torch.int64, device=device)
+        inv_freq_rotated = 1.0 / (base ** (exponent.to(dtype=torch.float) / head_dim))
+        nope_angles = head_dim // 2 - rope_angles
+        if nope_angles > 0:
+            inv_freq = torch.cat(
+                (
+                    inv_freq_rotated,
+                    torch.zeros(nope_angles, dtype=torch.float32, device=device),
+                ),
+                dim=0,
+            )
+        else:
+            inv_freq = inv_freq_rotated
+    else:
+        raise ValueError(f"unsupported rope type: {params.rope_type}")
+    return inv_freq / params.factor
 
 
 def rope_cos_sin(
