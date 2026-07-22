@@ -116,6 +116,14 @@ def eager_attention(
     return attn_output.transpose(1, 2).contiguous()
 
 
+# Fused SDPA kernels (flash, cudnn) top out at head_dim 256 on H100 as of
+# torch 2.11. Above that only the mem-efficient backend remains, and it does
+# not support enable_gqa -- without the workaround below, Gemma4's global
+# layers (head_dim 512) silently fall back to the math backend (~3x slower,
+# measured in gemma4/bench.py).
+_SDPA_FUSED_MAX_HEAD_DIM = 256
+
+
 def sdpa_attention(
     query: Tensor,
     key: Tensor,
@@ -130,6 +138,13 @@ def sdpa_attention(
     kernels accumulate in fp32 but do not round-trip the softmax through
     fp32->bf16). With ``is_causal`` no mask tensor is passed, keeping the
     flash kernel eligible."""
+    if query.shape[-1] > _SDPA_FUSED_MAX_HEAD_DIM and num_key_value_groups > 1:
+        # Materialize KV heads so the mem-efficient backend is eligible.
+        key = repeat_kv(key, num_key_value_groups)
+        value = repeat_kv(value, num_key_value_groups)
+        enable_gqa = False
+    else:
+        enable_gqa = num_key_value_groups > 1
     attn_output = F.scaled_dot_product_attention(
         query,
         key,
@@ -137,7 +152,7 @@ def sdpa_attention(
         attn_mask=None if is_causal else attention_mask,
         is_causal=is_causal,
         scale=scaling,
-        enable_gqa=num_key_value_groups > 1,
+        enable_gqa=enable_gqa,
     )
     return attn_output.transpose(1, 2).contiguous()
 
