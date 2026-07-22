@@ -168,11 +168,13 @@ def main() -> int:
         if args.raw:
             input_ids = tokenizer(prompt, return_tensors="pt").input_ids
         else:
-            input_ids = tokenizer.apply_chat_template(
+            templated = tokenizer.apply_chat_template(
                 [{"role": "user", "content": prompt}],
                 add_generation_prompt=True,
+                return_dict=True,
                 return_tensors="pt",
             )
+            input_ids = templated["input_ids"]
         input_ids = input_ids.to(device)
         comparisons: list[Comparison] = []
 
