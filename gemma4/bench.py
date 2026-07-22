@@ -46,18 +46,24 @@ def random_ids(n_tokens: int, device: torch.device, bos: int) -> torch.Tensor:
 
 def time_prefill(
     model: Gemma4Model, input_ids: torch.Tensor, device: torch.device, iters: int
-) -> float:
-    """Median seconds per forward."""
+) -> tuple[float, float]:
+    """(median seconds per forward, peak GiB allocated during the forward)."""
     times: list[float] = []
+    peak = 0.0
     with torch.no_grad():
         model(input_ids, logits_to_keep=1)  # warmup / autotune / alloc
         _sync(device)
+        if device.type == "cuda":
+            torch.cuda.reset_peak_memory_stats(device)
+            base = torch.cuda.memory_allocated(device)
         for _ in range(iters):
             t0 = time.perf_counter()
             model(input_ids, logits_to_keep=1)
             _sync(device)
             times.append(time.perf_counter() - t0)
-    return statistics.median(times)
+        if device.type == "cuda":
+            peak = (torch.cuda.max_memory_allocated(device) - base) / 2**30
+    return statistics.median(times), peak
 
 
 def time_decode(
@@ -127,7 +133,9 @@ def main() -> int:
         rows: dict[str, float] = {}
         for n in args.prefill:
             ids = random_ids(n, device, bos)
-            rows[f"prefill {n} (s)"] = time_prefill(model, ids, device, args.iters)
+            seconds, peak_gib = time_prefill(model, ids, device, args.iters)
+            rows[f"prefill {n} (s)"] = seconds
+            rows[f"prefill {n} peak mem (GiB)"] = peak_gib
         rows[f"decode {args.decode_tokens} @ prompt {args.decode_prompt} (tok/s)"] = (
             time_decode(
                 model,
@@ -155,11 +163,13 @@ def main() -> int:
 
     eager, sdpa = results[AttentionBackend.EAGER], results[AttentionBackend.SDPA]
     width = max(len(k) for k in eager)
-    print(f"\n{'workload':<{width}}  {'eager':>12}  {'sdpa':>12}  {'speedup':>8}")
+    print(f"\n{'workload':<{width}}  {'eager':>12}  {'sdpa':>12}  {'ratio':>8}")
     for key in eager:
         a, b = eager[key], sdpa[key]
-        speedup = a / b if "(s)" in key else b / a
-        print(f"{key:<{width}}  {a:>12.4f}  {b:>12.4f}  {speedup:>7.2f}x")
+        better_high = "tok/s" in key
+        ratio = (b / a) if better_high else (a / b if b else float("inf"))
+        print(f"{key:<{width}}  {a:>12.4f}  {b:>12.4f}  {ratio:>7.2f}x")
+    print("(ratio > 1 means sdpa is better)")
     return 0
 
 
