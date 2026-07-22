@@ -1,0 +1,104 @@
+"""Shared building blocks: RMSNorm, rotary embeddings, eager attention.
+
+Every op here mirrors the reference HF implementation expression-for-expression
+so that outputs are bit-identical in bf16.
+"""
+
+from __future__ import annotations
+
+import torch
+from torch import Tensor, nn
+from torch.nn import functional as F
+
+
+class RMSNorm(nn.Module):
+    """Gemma4 RMSNorm: computed in float32, optional learned scale.
+
+    Note: unlike Gemma 2/3, the scale is applied as ``x * w`` (not ``x * (1+w)``).
+    """
+
+    weight: nn.Parameter | None
+
+    def __init__(self, dim: int, eps: float = 1e-6, with_scale: bool = True) -> None:
+        super().__init__()
+        self.eps = eps
+        if with_scale:
+            self.weight = nn.Parameter(torch.ones(dim))
+        else:
+            self.register_parameter("weight", None)
+
+    def forward(self, x: Tensor) -> Tensor:
+        xf = x.float()
+        mean_squared = xf.pow(2).mean(-1, keepdim=True) + self.eps
+        normed = xf * torch.pow(mean_squared, -0.5)
+        if self.weight is not None:
+            normed = normed * self.weight.float()
+        return normed.type_as(x)
+
+
+def rotate_half(x: Tensor) -> Tensor:
+    x1 = x[..., : x.shape[-1] // 2]
+    x2 = x[..., x.shape[-1] // 2 :]
+    return torch.cat((-x2, x1), dim=-1)
+
+
+def apply_rotary_pos_emb(
+    x: Tensor, cos: Tensor, sin: Tensor, unsqueeze_dim: int = 2
+) -> Tensor:
+    """Rotate ``x`` of shape [B, S, H, D] with cos/sin of shape [B, S, D]."""
+    cos = cos.unsqueeze(unsqueeze_dim)
+    sin = sin.unsqueeze(unsqueeze_dim)
+    return (x * cos) + (rotate_half(x) * sin)
+
+
+def repeat_kv(hidden_states: Tensor, n_rep: int) -> Tensor:
+    """Expand KV heads: [B, KV, S, D] -> [B, KV*n_rep, S, D]."""
+    batch, num_key_value_heads, slen, head_dim = hidden_states.shape
+    if n_rep == 1:
+        return hidden_states
+    hidden_states = hidden_states[:, :, None, :, :].expand(
+        batch, num_key_value_heads, n_rep, slen, head_dim
+    )
+    return hidden_states.reshape(batch, num_key_value_heads * n_rep, slen, head_dim)
+
+
+def eager_attention(
+    query: Tensor,
+    key: Tensor,
+    value: Tensor,
+    attention_mask: Tensor | None,
+    num_key_value_groups: int,
+    scaling: float = 1.0,
+) -> Tensor:
+    """Eager attention, softmax in float32. Shapes: q [B, H, Sq, D],
+    k/v [B, KV, Skv, D], additive mask [B, 1, Sq, Skv] or None.
+
+    Returns [B, Sq, H, D].
+    """
+    key_states = repeat_kv(key, num_key_value_groups)
+    value_states = repeat_kv(value, num_key_value_groups)
+
+    attn_weights = torch.matmul(query, key_states.transpose(2, 3)) * scaling
+    if attention_mask is not None:
+        attn_weights = attn_weights + attention_mask
+
+    attn_weights = F.softmax(attn_weights, dim=-1, dtype=torch.float32).to(query.dtype)
+    attn_output = torch.matmul(attn_weights, value_states)
+    return attn_output.transpose(1, 2).contiguous()
+
+
+def rope_cos_sin(
+    inv_freq: Tensor, position_ids: Tensor, dtype: torch.dtype
+) -> tuple[Tensor, Tensor]:
+    """cos/sin tables for RoPE, computed in float32 then cast.
+
+    ``inv_freq``: [D/2] float32; ``position_ids``: [B, S] int; returns two
+    [B, S, D] tensors of ``dtype``.
+    """
+    inv_freq_expanded = (
+        inv_freq[None, :, None].float().expand(position_ids.shape[0], -1, 1)
+    )
+    position_ids_expanded = position_ids[:, None, :].float()
+    freqs = (inv_freq_expanded @ position_ids_expanded).transpose(1, 2)
+    emb = torch.cat((freqs, freqs), dim=-1)
+    return emb.cos().to(dtype), emb.sin().to(dtype)

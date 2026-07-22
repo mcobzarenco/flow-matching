@@ -1,0 +1,150 @@
+"""Top-level Gemma 4 model: text decoder + vision tower + LM head.
+
+Mirrors HF's ``Gemma4ForConditionalGeneration`` for text-only and text+image
+inputs. The audio tower is intentionally not implemented (not needed for the
+VLA); audio inputs are rejected at the loader level by simply not existing.
+"""
+
+from __future__ import annotations
+
+import contextlib
+from dataclasses import dataclass
+
+import torch
+from torch import Tensor, nn
+
+from .cache import KVCache
+from .config import Gemma4Config
+from .text import TextModel
+from .vision import MultimodalEmbedder, VisionModel
+
+
+@dataclass(frozen=True, slots=True)
+class Gemma4Output:
+    """Result of a forward pass. ``logits`` are softcapped, in model dtype."""
+
+    logits: Tensor
+    last_hidden_state: Tensor
+
+
+class Gemma4Model(nn.Module):
+    def __init__(self, config: Gemma4Config) -> None:
+        super().__init__()
+        self.config = config
+        self.language_model = TextModel(config.text)
+        self.vision_tower = (
+            VisionModel(config.vision) if config.vision is not None else None
+        )
+        self.embed_vision = (
+            MultimodalEmbedder(
+                multimodal_hidden_size=config.vision.hidden_size,
+                text_hidden_size=config.text.hidden_size,
+                eps=config.vision.rms_norm_eps,
+            )
+            if config.vision is not None
+            else None
+        )
+        self.lm_head = nn.Linear(
+            config.text.hidden_size, config.text.vocab_size, bias=False
+        )
+
+    def get_image_features(
+        self, pixel_values: Tensor, image_position_ids: Tensor
+    ) -> Tensor:
+        """Soft tokens projected into LM space: [num_soft_tokens, hidden]."""
+        if self.vision_tower is None or self.embed_vision is None:
+            raise ValueError("model was built without a vision tower")
+        soft_tokens = self.vision_tower(pixel_values, image_position_ids)
+        return self.embed_vision(soft_tokens)
+
+    def forward(
+        self,
+        input_ids: Tensor,
+        *,
+        pixel_values: Tensor | None = None,
+        image_position_ids: Tensor | None = None,
+        padding_mask: Tensor | None = None,
+        position_ids: Tensor | None = None,
+        cache: KVCache | None = None,
+        logits_to_keep: int = 0,
+    ) -> Gemma4Output:
+        """``input_ids`` [B, S]; image placeholder positions (id
+        ``config.image_token_id``) are replaced by vision soft tokens when
+        ``pixel_values``/``image_position_ids`` are given.
+        """
+        text_config = self.config.text
+        image_mask = input_ids == self.config.image_token_id
+
+        # Multimodal placeholder ids are out of the embedding's vocabulary:
+        # embed the pad token there instead, then scatter the image features.
+        llm_input_ids = torch.where(image_mask, text_config.pad_token_id, input_ids)
+        inputs_embeds = self.language_model.embed_tokens(llm_input_ids)
+        per_layer_inputs = self.language_model.get_per_layer_inputs(llm_input_ids)
+
+        if pixel_values is not None:
+            if image_position_ids is None:
+                raise ValueError("image_position_ids is required with pixel_values")
+            image_features = self.get_image_features(pixel_values, image_position_ids)
+            image_features = image_features.to(inputs_embeds.dtype)
+            n_slots = int(image_mask.sum())
+            if n_slots * inputs_embeds.shape[-1] != image_features.numel():
+                raise ValueError(
+                    f"image token slots ({n_slots}) do not match soft tokens "
+                    f"({image_features.shape[0]})"
+                )
+            inputs_embeds = inputs_embeds.masked_scatter(
+                image_mask.unsqueeze(-1).expand_as(inputs_embeds), image_features
+            )
+        elif bool(image_mask.any()):
+            raise ValueError("input contains image tokens but no pixel_values given")
+
+        hidden_states = self.language_model(
+            inputs_embeds=inputs_embeds,
+            per_layer_inputs=per_layer_inputs,
+            position_ids=position_ids,
+            padding_mask=padding_mask,
+            cache=cache,
+        )
+
+        if logits_to_keep:
+            hidden_for_logits = hidden_states[:, -logits_to_keep:, :]
+        else:
+            hidden_for_logits = hidden_states
+        logits = self.lm_head(hidden_for_logits)
+        if (softcap := text_config.final_logit_softcapping) is not None:
+            logits = logits / softcap
+            logits = torch.tanh(logits)
+            logits = logits * softcap
+
+        return Gemma4Output(logits=logits, last_hidden_state=hidden_states)
+
+
+def build_model(
+    config: Gemma4Config,
+    *,
+    device: torch.device | str | None = None,
+    dtype: torch.dtype | None = None,
+) -> Gemma4Model:
+    """Construct a randomly-initialized model directly on ``device``/``dtype``.
+
+    Rather than threading factory kwargs through every module, this relies on
+    torch's construction contexts: ``torch.device`` scopes the default device
+    and ``set_default_dtype`` the default floating dtype. Tensors that must
+    stay float32 (rope inverse frequencies) request their dtype explicitly and
+    are unaffected. Use :func:`gemma4.load_model` to load checkpoints; this is
+    for from-scratch components (e.g. a VLA action expert reusing these
+    modules).
+    """
+    with contextlib.ExitStack() as stack:
+        if device is not None:
+            stack.enter_context(torch.device(device))
+        if dtype is not None:
+            previous = torch.get_default_dtype()
+            torch.set_default_dtype(dtype)
+            stack.callback(torch.set_default_dtype, previous)
+        model = Gemma4Model(config)
+    if device is not None:
+        # Sweep the deliberately-CPU-constructed buffers (rope inv_freq, embed
+        # scales) onto the target device; parameters are already there.
+        model = model.to(device)
+    return model

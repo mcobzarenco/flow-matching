@@ -31,7 +31,7 @@ dev = [
 ]
 
 [tool.pyright]
-include = ["fmatch", "main.py", "check.py", "eval_smolvla.py"]
+include = ["fmatch", "gemma4", "main.py", "check.py", "eval_smolvla.py"]
 venvPath = "."
 venv = ".venv"
 
