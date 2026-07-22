@@ -70,6 +70,10 @@ def build_card(
 ) -> str:
     src = census(source)
     dst = census(output)
+    converted_names = sorted(
+        "/".join(p.parent.parent.parts[-2:]) for p in output.glob("*/*/meta/info.json")
+    )
+    example_name = converted_names[0] if converted_names else "<user>/<dataset>"
     manifest = load_final_manifest(output / "conversion_manifest.jsonl")
     failed = {k: v for k, v in manifest.items() if v["status"] == "failed"}
     unsupported = {k: v for k, v in manifest.items() if v["status"] == "unsupported"}
@@ -82,6 +86,7 @@ def build_card(
 
     a("---")
     a("license: apache-2.0")
+    a("viewer: false")  # umbrella repo: many independent datasets, no single schema
     a("tags:")
     a("- LeRobot")
     a("- robotics")
@@ -103,6 +108,36 @@ def build_card(
         f"Conversion is fully reproducible with [lerobot-dataset-tools]({TOOLS_URL}); "
         "the exact per-dataset log is in [`conversion_manifest.jsonl`](./conversion_manifest.jsonl)."
     )
+    a("")
+    a("## Usage")
+    a("")
+    a(
+        "This is an *umbrella* repo: every `<user>/<dataset>` subtree is an "
+        "independent LeRobotDataset (hence no dataset viewer). Download a "
+        "subtree and point lerobot at it:"
+    )
+    a("")
+    a("```python")
+    a("from huggingface_hub import snapshot_download")
+    a("from lerobot.datasets.lerobot_dataset import LeRobotDataset")
+    a("")
+    a(f'name = "{example_name}"  # any sub-dataset in this repo')
+    a("root = snapshot_download(")
+    a(f'    "{target_repo}",')
+    a('    repo_type="dataset",')
+    a('    allow_patterns=[f"{name}/**"],')
+    a('    local_dir="./data",')
+    a(")")
+    a('dataset = LeRobotDataset(name, root=f"./data/{name}")')
+    a("```")
+    a("")
+    a("or with the CLI:")
+    a("")
+    a("```bash")
+    a(
+        f'hf download {target_repo} --repo-type=dataset --include "{example_name}/**" --local-dir ./data'
+    )
+    a("```")
     a("")
     a("## Statistics")
     a("")
