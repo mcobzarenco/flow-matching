@@ -46,6 +46,7 @@ import argparse
 import sys
 import time
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 import torch
@@ -55,7 +56,7 @@ from .cache import KVCache
 from .config import AttentionBackend
 from .generation import generate
 from .loading import load_generation_defaults, load_model, resolve_checkpoint_dir
-from .model import set_attention_backend
+from .model import Gemma4Model, set_attention_backend
 
 DEFAULT_MODEL = "google/gemma-4-e2b-it"
 DEFAULT_PROMPTS = (
@@ -188,7 +189,15 @@ def main() -> int:
     return 0 if all_ok else 1
 
 
-def run_checks(args, model, hf_model, tokenizer, checkpoint_dir, device, watch) -> bool:
+def run_checks(
+    args: argparse.Namespace,
+    model: Gemma4Model,
+    hf_model: Any,
+    tokenizer: Any,
+    checkpoint_dir: Path,
+    device: torch.device,
+    watch: Stopwatch,
+) -> bool:
     prompts = args.prompt if args.prompt else list(DEFAULT_PROMPTS)
     all_ok = True
 
@@ -238,13 +247,13 @@ def run_checks(args, model, hf_model, tokenizer, checkpoint_dir, device, watch) 
         result = generate(
             model, input_ids, max_new_tokens=args.max_new_tokens, eos_token_ids=eos_ids
         )
+        ours_text = tokenizer.decode(result.sequences[0, input_ids.shape[1] :])
         hf_tokens = hf_model.generate(
             input_ids,
             max_new_tokens=args.max_new_tokens,
             do_sample=False,
             use_cache=True,
         )
-        ours_text = tokenizer.decode(result.sequences[0, input_ids.shape[1] :])
         match = bool(
             result.sequences.shape == hf_tokens.shape
             and torch.equal(result.sequences, hf_tokens)
@@ -292,7 +301,11 @@ def run_checks(args, model, hf_model, tokenizer, checkpoint_dir, device, watch) 
 
 
 def stepwise_decode_comparisons(
-    model, hf_model, input_ids: Tensor, max_new_tokens: int, tolerance: float
+    model: Gemma4Model,
+    hf_model: Any,
+    input_ids: Tensor,
+    max_new_tokens: int,
+    tolerance: float,
 ) -> list[Comparison]:
     """Drive both models manually one token at a time.
 
@@ -366,7 +379,13 @@ def stepwise_decode_comparisons(
     return comparisons
 
 
-def run_image_check(args, checkpoint_dir, model, hf_model, device) -> bool:
+def run_image_check(
+    args: argparse.Namespace,
+    checkpoint_dir: Path,
+    model: Gemma4Model,
+    hf_model: Any,
+    device: torch.device,
+) -> bool:
     import transformers
 
     from .testing import load_test_image

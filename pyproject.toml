@@ -34,6 +34,24 @@ dev = [
 include = ["fmatch", "gemma4", "main.py", "check.py", "eval_smolvla.py"]
 venvPath = "."
 venv = ".venv"
+# Parameter annotations are required (return annotations are enforced by
+# ruff's ANN2xx rules; pyright has no "missing return annotation" rule,
+# only unknown-type inference checks).
+reportMissingParameterType = "error"
 
 [tool.ruff]
 extend-exclude = ["MNIST"]
+
+[tool.ruff.lint]
+# flake8-annotations: require explicit argument and return annotations.
+# ANN401 (no Any) is off: we use Any deliberately at untyped third-party
+# boundaries (transformers models/tokenizers).
+extend-select = ["ANN"]
+ignore = ["ANN401"]
+
+[tool.ruff.lint.extend-per-file-ignores]
+# Legacy code predating the annotation requirement; clean up opportunistically.
+"fmatch/*" = ["ANN"]
+"main.py" = ["ANN"]
+"check.py" = ["ANN"]
+"eval_smolvla.py" = ["ANN"]
