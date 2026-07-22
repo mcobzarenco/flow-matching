@@ -189,8 +189,8 @@ _original_concatenate = None
 def concatenate_with_ffmpeg_fallback(
     input_video_paths: list,
     output_video_path: Path | str,
-    *args: object,
-    **kwargs: object,
+    overwrite: bool = True,
+    compatibility_check: bool = False,
 ) -> None:
     """lerobot's PyAV concat, falling back to ffmpeg's concat demuxer.
 
@@ -200,7 +200,9 @@ def concatenate_with_ffmpeg_fallback(
     """
     assert _original_concatenate is not None
     try:
-        _original_concatenate(input_video_paths, output_video_path, *args, **kwargs)
+        _original_concatenate(
+            input_video_paths, Path(output_video_path), overwrite, compatibility_check
+        )
         return
     except Exception as error:  # noqa: BLE001 - deliberate fallback
         log("video-concat", f"pyav failed ({error}); retrying with ffmpeg")
