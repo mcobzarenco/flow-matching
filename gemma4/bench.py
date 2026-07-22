@@ -50,6 +50,7 @@ def time_prefill(
     """(median seconds per forward, peak GiB allocated during the forward)."""
     times: list[float] = []
     peak = 0.0
+    base = 0
     with torch.no_grad():
         model(input_ids, logits_to_keep=1)  # warmup / autotune / alloc
         _sync(device)
