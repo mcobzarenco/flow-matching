@@ -68,6 +68,9 @@ class TrainArgs:
     num_workers: int
     device: str
     seed: int
+    wandb_project: str | None
+    wandb_run_name: str | None
+    wandb_samples: int
 
 
 class Normalizer:
@@ -216,8 +219,42 @@ def flow_matching_loss(
     return mse[valid].mean()
 
 
+def _chunk_plot(
+    predicted: Tensor, truth: Tensor, valid: Tensor, action_names: list[str]
+) -> Any:
+    """Per-joint predicted-vs-ground-truth curves over the action chunk.
+    Returns a matplotlib figure (caller logs and closes it)."""
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    dims = predicted.shape[-1]
+    ncols = 3
+    nrows = (dims + ncols - 1) // ncols
+    fig, axes = plt.subplots(
+        nrows, ncols, figsize=(4 * ncols, 2.5 * nrows), squeeze=False
+    )
+    steps = range(predicted.shape[0])
+    n_valid = int(valid.sum())
+    for dim in range(dims):
+        ax = axes[dim // ncols][dim % ncols]
+        ax.plot(steps[:n_valid], truth[:n_valid, dim].tolist(), label="truth")
+        ax.plot(
+            steps[:n_valid],
+            predicted[:n_valid, dim].tolist(),
+            label="predicted",
+            linestyle="--",
+        )
+        name = action_names[dim] if dim < len(action_names) else f"dim {dim}"
+        ax.set_title(name, fontsize=9)
+    axes[0][0].legend(fontsize=8)
+    fig.tight_layout()
+    return fig
+
+
 @torch.no_grad()
-def evaluate_chunk_mae(
+def validate(
     model: BijouModel,
     prefix: PrefixKV,
     batch: dict[str, Any],
@@ -225,9 +262,17 @@ def evaluate_chunk_mae(
     state_normalizer: Normalizer,
     device: torch.device,
     seed: int,
+    *,
+    wandb_run: Any = None,
+    eval_items: list[dict[str, Any]] | None = None,
+    cameras: tuple[str, ...] = (),
+    action_names: list[str] | None = None,
+    step: int = 0,
 ) -> float:
-    """Deterministic sampled-chunk MAE against ground truth, in raw action
-    units (the eval-harness metric from the SmolVLA work)."""
+    """Deterministic sampled-chunk MAE in raw action units (the eval-harness
+    metric from the SmolVLA work). With a wandb run, also logs a table of the
+    first ``len(eval_items)`` samples: camera images, task, state, and
+    per-joint predicted-vs-truth chunk plots."""
     state = state_normalizer.normalize(batch["state"].to(device))
     generator = torch.Generator(device=device).manual_seed(seed)
     sampled = model.sample_actions(prefix, state, num_steps=10, generator=generator)
@@ -235,7 +280,48 @@ def evaluate_chunk_mae(
     truth = batch["actions"].to(device).float()
     valid = ~batch["action_is_pad"].to(device)
     error = (sampled - truth).abs()
-    return float(error[valid].mean())
+    mae = float(error[valid].mean())
+
+    if wandb_run is not None and eval_items:
+        import matplotlib.pyplot as plt
+        import wandb
+
+        columns: list[Any] = [
+            "sample",
+            *cameras,
+            "task",
+            "state",
+            "chunk_mae",
+            "pred_vs_truth",
+        ]
+        table = wandb.Table(columns=columns)
+        for i, item in enumerate(eval_items):
+            images = [
+                wandb.Image(
+                    (item[camera].clamp(0, 1) * 255)
+                    .to(torch.uint8)
+                    .permute(1, 2, 0)
+                    .numpy()
+                )
+                for camera in cameras
+            ]
+            figure = _chunk_plot(
+                sampled[i].cpu(), truth[i].cpu(), valid[i].cpu(), action_names or []
+            )
+            state_str = ", ".join(
+                f"{x:.1f}" for x in item["observation.state"].tolist()
+            )
+            table.add_data(
+                i,
+                *images,
+                str(item["task"]),
+                state_str,
+                float(error[i][valid[i]].mean()),
+                wandb.Image(figure),
+            )
+            plt.close(figure)
+        wandb_run.log({"eval/samples": table}, step=step)
+    return mae
 
 
 def save_checkpoint(
@@ -311,6 +397,19 @@ def parse_args() -> TrainArgs:
     parser.add_argument("--num-workers", type=int, default=8)
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument(
+        "--wandb-project",
+        default=None,
+        help="enable Weights & Biases logging to this project "
+        "(WANDB_API_KEY must be set)",
+    )
+    parser.add_argument("--wandb-run-name", default=None)
+    parser.add_argument(
+        "--wandb-samples",
+        type=int,
+        default=4,
+        help="validation samples logged with images/state/task/action plots",
+    )
     raw = parser.parse_args()
     return TrainArgs(
         dataset_root=raw.dataset_root.expanduser(),
@@ -335,6 +434,9 @@ def parse_args() -> TrainArgs:
         num_workers=raw.num_workers,
         device=raw.device,
         seed=raw.seed,
+        wandb_project=raw.wandb_project,
+        wandb_run_name=raw.wandb_run_name,
+        wandb_samples=raw.wandb_samples,
     )
 
 
@@ -449,10 +551,40 @@ def main() -> int:
         f"(soft-token budget {args.max_soft_tokens}/camera)",
         flush=True,
     )
+    # Raw items backing the first eval samples (unshuffled loader => dataset
+    # order): keeps the original camera frames for rich validation logging.
+    n_samples = min(args.wandb_samples, args.batch_size)
+    eval_items = [dataset[i] for i in range(n_samples)]
+    action_names = list(features["action"].get("names") or [])
 
     args.save_dir.mkdir(parents=True, exist_ok=True)
     log_path = args.save_dir / "train_log.jsonl"
     log_file = log_path.open("a")
+
+    wandb_run: Any = None
+    if args.wandb_project is not None:
+        import wandb
+
+        wandb_run = wandb.init(
+            project=args.wandb_project,
+            name=args.wandb_run_name,
+            dir=str(args.save_dir),
+            config={
+                "train_args": {
+                    k: str(v) if isinstance(v, Path) else v
+                    for k, v in dataclasses.asdict(args).items()
+                },
+                "expert_config": dataclasses.asdict(expert_config),
+                "dataset": {
+                    "repo_id": args.repo_id,
+                    "episodes": dataset.num_episodes,
+                    "frames": dataset.num_frames,
+                    "fps": fps,
+                    "cameras": cameras,
+                },
+                "trainable_params": n_trainable,
+            },
+        )
 
     step = 0
     window: list[float] = []
@@ -489,9 +621,19 @@ def main() -> int:
                 print(json.dumps(record), flush=True)
                 log_file.write(json.dumps(record) + "\n")
                 log_file.flush()
+                if wandb_run is not None:
+                    wandb_run.log(
+                        {
+                            "train/loss": record["loss"],
+                            "train/grad_norm": record["grad_norm"],
+                            "train/lr": record["lr"],
+                            "train/s_per_step": record["s_per_step"],
+                        },
+                        step=step,
+                    )
 
             if step % args.eval_every == 0:
-                mae = evaluate_chunk_mae(
+                mae = validate(
                     model,
                     eval_prefix,
                     eval_batch,
@@ -499,11 +641,18 @@ def main() -> int:
                     state_normalizer,
                     device,
                     args.seed,
+                    wandb_run=wandb_run,
+                    eval_items=eval_items,
+                    cameras=cameras,
+                    action_names=action_names,
+                    step=step,
                 )
                 record = {"step": step, "eval_chunk_mae": round(mae, 4)}
                 print(json.dumps(record), flush=True)
                 log_file.write(json.dumps(record) + "\n")
                 log_file.flush()
+                if wandb_run is not None:
+                    wandb_run.log({"eval/chunk_mae": mae}, step=step)
 
             if step % args.save_every == 0 or step == args.steps:
                 path = save_checkpoint(
@@ -518,6 +667,8 @@ def main() -> int:
                 print(f"saved {path}", flush=True)
 
     log_file.close()
+    if wandb_run is not None:
+        wandb_run.finish()
     return 0
 
 

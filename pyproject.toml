@@ -10,9 +10,11 @@ dependencies = [
     "bitsandbytes>=0.49.2",
     "ipython>=9.15.0",
     "lerobot[dataset,feetech,smolvla,viz]>=0.4",
+    "matplotlib>=3.11.1",
     "pillow>=12.3.0",
     "torch>=2.7.0",
     "torchvision>=0.22.0",
+    "wandb>=0.28.1",
 ]
 
 [tool.uv]
