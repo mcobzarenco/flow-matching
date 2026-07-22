@@ -97,6 +97,7 @@ def from_backbone(
     state_dim: int | None = None,
     device: DeviceLike = "cpu",
     dtype: torch.dtype | None = None,
+    expert_dtype: torch.dtype | None = None,
     attn_backend: AttentionBackend = DEFAULT_ATTENTION_BACKEND,
 ) -> BijouModel:
     """Build a Bijou model from a Gemma 4 checkpoint.
@@ -104,6 +105,9 @@ def from_backbone(
     Pass either a full ``expert_config`` or just ``action_dim``/``state_dim``
     to use :func:`default_expert_config`. The backbone is truncated to its
     non-KV-shared prefix, frozen; the expert is freshly initialized.
+    ``expert_dtype`` may differ from the backbone dtype (e.g. fp32 expert on
+    a bf16 backbone for training — the expert casts its inputs and the
+    exported KV streams to its own dtype).
     """
     checkpoint_dir = resolve_checkpoint_dir(model_id_or_path)
     config = load_config(checkpoint_dir)
@@ -132,10 +136,12 @@ def from_backbone(
         attn_backend=attn_backend,
         truncate_layers=config.text.first_kv_shared_layer_idx,
     )
+    if expert_dtype is None:
+        expert_dtype = dtype if dtype is not None else config.dtype
     expert = ActionExpert(
         expert_config,
         attn_backend=attn_backend,
         device=device,
-        dtype=dtype if dtype is not None else config.dtype,
+        dtype=expert_dtype,
     )
     return BijouModel(backbone=backbone, expert=expert)

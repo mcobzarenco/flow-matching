@@ -55,6 +55,22 @@ from .gemma4.text import activation_fn
 type StreamKV = dict[int, tuple[Tensor, Tensor]]
 
 
+@dataclass(frozen=True, slots=True)
+class PrefixKV:
+    """Exported prefix K/V streams: {backbone_layer_idx: (K, V)}, each
+    [B, kv_heads, P, head_dim], plus the (padded) prefix length P and, for
+    padded batches, the True-means-real padding mask [B, P]."""
+
+    streams: StreamKV
+    length: int
+    padding_mask: Tensor | None = None
+
+    @property
+    def batch_size(self) -> int:
+        first_key = next(iter(self.streams.values()))[0]
+        return first_key.shape[0]
+
+
 class SelfAttentionMode(StrEnum):
     """Masking of the expert's self-attention over ``[state][actions]``.
 
@@ -172,6 +188,7 @@ class ExpertCrossAttention(nn.Module):
         hidden_states: Tensor,
         stream: tuple[Tensor, Tensor],
         position_embeddings: tuple[Tensor, Tensor],
+        mask: MaskSpec,
     ) -> Tensor:
         batch, seq_len, _ = hidden_states.shape
         cos, sin = position_embeddings
@@ -186,7 +203,7 @@ class ExpertCrossAttention(nn.Module):
             query,
             key,
             value,
-            MaskSpec(),  # suffix tokens attend the whole prefix
+            mask,
             num_key_value_groups=self.num_heads // key.shape[1],
             scaling=1.0,
         )
@@ -319,13 +336,14 @@ class ExpertLayer(nn.Module):
         hidden_states: Tensor,
         stream: tuple[Tensor, Tensor],
         cross_position_embeddings: tuple[Tensor, Tensor],
+        cross_attention_mask: MaskSpec,
         self_position_embeddings: tuple[Tensor, Tensor],
         self_attention_mask: MaskSpec,
     ) -> Tensor:
         residual = hidden_states
         hidden_states = self.pre_cross_attention_layernorm(hidden_states)
         hidden_states = self.cross_attn(
-            hidden_states, stream, cross_position_embeddings
+            hidden_states, stream, cross_position_embeddings, cross_attention_mask
         )
         hidden_states = self.post_cross_attention_layernorm(hidden_states)
         hidden_states = residual + hidden_states
@@ -446,19 +464,33 @@ class ActionExpert(nn.Module):
         )
         return MaskSpec(tensor=tensor[None, None].expand(batch, 1, length, length))
 
+    def _cross_attention_mask(
+        self, prefix: PrefixKV, dtype: torch.dtype, device: torch.device
+    ) -> MaskSpec:
+        if prefix.padding_mask is None:
+            return MaskSpec()
+        real = prefix.padding_mask.to(device=device, dtype=torch.bool)
+        min_value = torch.finfo(dtype).min
+        tensor = torch.where(
+            real[:, None, None, :],
+            torch.tensor(0.0, device=device, dtype=dtype),
+            min_value,
+        )
+        return MaskSpec(tensor=tensor)
+
     def forward(
         self,
-        streams: StreamKV,
-        prefix_length: int,
+        prefix: PrefixKV,
         state: Tensor,
         noisy_actions: Tensor,
         time: Tensor,
     ) -> Tensor:
         """Velocity of the action chunk at flow time τ.
 
-        streams: {backbone_layer: (K, V)} exported prefix KV.
         state: [B, state_dim]; noisy_actions: [B, chunk_size, action_dim];
         time: [B] flow times in [0, 1]. Returns [B, chunk_size, action_dim].
+        Inputs and prefix streams are cast to the expert's own dtype (the
+        backbone may run in a different precision, e.g. bf16 vs fp32 expert).
         """
         config = self.config
         batch = state.shape[0]
@@ -467,26 +499,30 @@ class ActionExpert(nn.Module):
                 f"expected chunk of {config.chunk_size} actions, "
                 f"got {noisy_actions.shape[1]}"
             )
+        dtype = self.state_proj.weight.dtype
 
-        state_embeds = self.state_proj(state)[:, None, :]
-        action_embeds = self.action_in_proj(noisy_actions)
+        state_embeds = self.state_proj(state.to(dtype))[:, None, :]
+        action_embeds = self.action_in_proj(noisy_actions.to(dtype))
         time_embeds = sinusoidal_time_embedding(time, config.time_embed_dim)
         time_embeds = self.time_out_proj(
-            self.time_act(self.time_in_proj(time_embeds.to(action_embeds.dtype)))
+            self.time_act(self.time_in_proj(time_embeds.to(dtype)))
         )
         action_embeds = action_embeds + time_embeds[:, None, :]
         hidden_states = torch.cat([state_embeds, action_embeds], dim=1)
 
         device = hidden_states.device
-        dtype = hidden_states.dtype
+        streams = {
+            idx: (k.to(dtype), v.to(dtype)) for idx, (k, v) in prefix.streams.items()
+        }
         suffix_positions = torch.arange(config.suffix_length, device=device)
         cross_position_embeddings = rope_cos_sin(
-            self.cross_inv_freq, (prefix_length + suffix_positions)[None, :], dtype
+            self.cross_inv_freq, (prefix.length + suffix_positions)[None, :], dtype
         )
         self_position_embeddings = rope_cos_sin(
             self.self_inv_freq, suffix_positions[None, :], dtype
         )
         self_attention_mask = self._self_attention_mask(batch, dtype, device)
+        cross_attention_mask = self._cross_attention_mask(prefix, dtype, device)
 
         for layer, stream_idx in zip(
             self.layers, config.cross_attention_schedule, strict=True
@@ -495,6 +531,7 @@ class ActionExpert(nn.Module):
                 hidden_states,
                 streams[stream_idx],
                 cross_position_embeddings,
+                cross_attention_mask,
                 self_position_embeddings,
                 self_attention_mask,
             )

@@ -10,29 +10,12 @@ fresh robot state, at ~10 Euler steps per chunk.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 import torch
 from torch import Tensor, nn
 
-from .expert import ActionExpert, StreamKV
+from .expert import ActionExpert, PrefixKV, StreamKV
 from .gemma4.cache import KVCache
 from .gemma4.model import Gemma4Model
-
-
-@dataclass(frozen=True, slots=True)
-class PrefixKV:
-    """Exported prefix K/V streams: {backbone_layer_idx: (K, V)}, each
-    [B, kv_heads, P, head_dim], plus the prefix length P (for positioning the
-    expert's suffix tokens)."""
-
-    streams: StreamKV
-    length: int
-
-    @property
-    def batch_size(self) -> int:
-        first_key = next(iter(self.streams.values()))[0]
-        return first_key.shape[0]
 
 
 class BijouModel(nn.Module):
@@ -66,10 +49,16 @@ class BijouModel(nn.Module):
         *,
         pixel_values: Tensor | None = None,
         image_position_ids: Tensor | None = None,
+        padding_mask: Tensor | None = None,
     ) -> PrefixKV:
         """Run the truncated backbone over the multimodal prefix and export
         the expert's K/V streams. Cache the result across flow steps (and, if
-        the observation is unchanged, across replans)."""
+        the observation is unchanged, across replans).
+
+        For right-padded batches (mixed-length instructions), pass the HF
+        ``attention_mask`` (True/1 = real token) as ``padding_mask``; it masks
+        both the backbone's self-attention and the expert's cross-attention.
+        """
         inputs_embeds, per_layer_inputs = self.backbone.embed_multimodal(
             input_ids, pixel_values=pixel_values, image_position_ids=image_position_ids
         )
@@ -77,6 +66,7 @@ class BijouModel(nn.Module):
         self.backbone.language_model(
             inputs_embeds=inputs_embeds,
             per_layer_inputs=per_layer_inputs,
+            padding_mask=padding_mask,
             cache=cache,
         )
         streams: StreamKV = {}
@@ -84,7 +74,9 @@ class BijouModel(nn.Module):
             layer = cache.layers[layer_idx]
             assert layer.keys is not None and layer.values is not None
             streams[layer_idx] = (layer.keys, layer.values)
-        return PrefixKV(streams=streams, length=input_ids.shape[1])
+        return PrefixKV(
+            streams=streams, length=input_ids.shape[1], padding_mask=padding_mask
+        )
 
     def forward(
         self,
@@ -96,7 +88,7 @@ class BijouModel(nn.Module):
         """Velocity of the action chunk at flow time ``time`` (see
         ``bijou.expert`` for the flow convention). Shapes: state
         [B, state_dim], noisy_actions [B, chunk, action_dim], time [B]."""
-        return self.expert(prefix.streams, prefix.length, state, noisy_actions, time)
+        return self.expert(prefix, state, noisy_actions, time)
 
     @torch.no_grad()
     def sample_actions(
@@ -131,7 +123,7 @@ class BijouModel(nn.Module):
         dt = -1.0 / num_steps
         time = torch.ones(batch, dtype=dtype, device=device)
         for _ in range(num_steps):
-            velocity = self.expert(prefix.streams, prefix.length, state, actions, time)
-            actions = actions + dt * velocity
+            velocity = self.expert(prefix, state, actions, time)
+            actions = actions + dt * velocity.to(actions.dtype)
             time = time + dt
         return actions

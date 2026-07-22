@@ -23,9 +23,9 @@ Quick start::
     actions = model.sample_actions(prefix, state)
 """
 
-from .expert import ActionExpert, ExpertConfig, SelfAttentionMode
+from .expert import ActionExpert, ExpertConfig, PrefixKV, SelfAttentionMode
 from .loading import default_expert_config, from_backbone, prefix_global_layers
-from .model import BijouModel, PrefixKV
+from .model import BijouModel
 
 __all__ = [
     "ActionExpert",
