@@ -10,6 +10,13 @@ Contract (deliberately *not* bitwise, to leave room for kernel optimizations):
   differences across steps (deterministic chaos), so drift there is expected
   and only token agreement is enforced.
 
+Measured reference for the drift scale (laptop CPU, oneDNN bf16, HF compared
+against *itself* in one process): most decode runs are identical; when one
+diverges, the first divergent step's logits differ by median 1.0 / max 5 bf16
+ULPs (max|Δ|=0.375 at softcapped-logit scale), then drift persists via the
+cache; greedy argmax agreed at every step regardless. On H100 CUDA both
+implementations are bitwise-identical and run-to-run stable.
+
 Checks: full prefill forward, cached stepwise greedy decode, end-to-end
 ``generate()``, optional ``--long-context`` (sliding-window coverage) and
 ``--image`` (vision path).
