@@ -1,8 +1,8 @@
 """Pure-torch Gemma 4 vision tower (encoder-free patch pipeline).
 
 ``pixel_values`` are rows of raw RGB patches in [0, 1] (one row per
-``patch_size²`` tile, 3·16² = 768 features for E2B) as produced by the Gemma4
-image processor. The tower is:
+``patch_size²`` tile, e.g. 3·16² = 768 features for the E-series) as produced
+by the Gemma4 image processor. The tower is:
 
   patch embedder (linear + learned 2D position embeddings)
   -> 16 bidirectional transformer layers with 2D RoPE and clipped linears
@@ -18,6 +18,8 @@ from torch.nn import functional as F
 
 from .config import Gemma4VisionConfig
 from .layers import (
+    DEFAULT_ATTENTION_BACKEND,
+    AttentionBackend,
     DeviceLike,
     RMSNorm,
     apply_rotary_pos_emb,
@@ -183,6 +185,7 @@ class VisionAttention(nn.Module):
         self,
         config: Gemma4VisionConfig,
         *,
+        attn_backend: AttentionBackend = DEFAULT_ATTENTION_BACKEND,
         device: DeviceLike = None,
         dtype: torch.dtype | None = None,
     ) -> None:
@@ -192,7 +195,7 @@ class VisionAttention(nn.Module):
             config.num_attention_heads // config.num_key_value_heads
         )
         # Mutable on purpose: see bijou.gemma4.model.set_attention_backend.
-        self.attn_backend = config.attn_backend
+        self.attn_backend = attn_backend
         hidden = config.hidden_size
         self.q_proj = ClippableLinear(
             config,
@@ -302,12 +305,15 @@ class VisionEncoderLayer(nn.Module):
         self,
         config: Gemma4VisionConfig,
         *,
+        attn_backend: AttentionBackend = DEFAULT_ATTENTION_BACKEND,
         device: DeviceLike = None,
         dtype: torch.dtype | None = None,
     ) -> None:
         super().__init__()
         hidden, eps = config.hidden_size, config.rms_norm_eps
-        self.self_attn = VisionAttention(config, device=device, dtype=dtype)
+        self.self_attn = VisionAttention(
+            config, attn_backend=attn_backend, device=device, dtype=dtype
+        )
         self.mlp = VisionMLP(config, device=device, dtype=dtype)
         self.input_layernorm = RMSNorm(hidden, eps=eps, device=device, dtype=dtype)
         self.post_attention_layernorm = RMSNorm(
@@ -347,13 +353,16 @@ class VisionEncoder(nn.Module):
         self,
         config: Gemma4VisionConfig,
         *,
+        attn_backend: AttentionBackend = DEFAULT_ATTENTION_BACKEND,
         device: DeviceLike = None,
         dtype: torch.dtype | None = None,
     ) -> None:
         super().__init__()
         self.rotary_emb = VisionRotaryEmbedding(config, device=device)
         self.layers = nn.ModuleList(
-            VisionEncoderLayer(config, device=device, dtype=dtype)
+            VisionEncoderLayer(
+                config, attn_backend=attn_backend, device=device, dtype=dtype
+            )
             for _ in range(config.num_hidden_layers)
         )
 
@@ -425,13 +434,16 @@ class VisionModel(nn.Module):
         self,
         config: Gemma4VisionConfig,
         *,
+        attn_backend: AttentionBackend = DEFAULT_ATTENTION_BACKEND,
         device: DeviceLike = None,
         dtype: torch.dtype | None = None,
     ) -> None:
         super().__init__()
         self.config = config
         self.patch_embedder = VisionPatchEmbedder(config, device=device, dtype=dtype)
-        self.encoder = VisionEncoder(config, device=device, dtype=dtype)
+        self.encoder = VisionEncoder(
+            config, attn_backend=attn_backend, device=device, dtype=dtype
+        )
         self.pooler = VisionPooler(config)
 
     def forward(self, pixel_values: Tensor, pixel_position_ids: Tensor) -> Tensor:

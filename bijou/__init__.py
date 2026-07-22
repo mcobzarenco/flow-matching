@@ -5,8 +5,9 @@ Gemma lineage and to the model's on-device ambitions.
 
 Package layout:
 
-- ``bijou.gemma4`` — hackable pure-torch Gemma 4 (E2B) implementation,
-  verified against the HF reference (``python -m bijou.gemma4.verify_parity``).
+- ``bijou.gemma4`` — hackable pure-torch Gemma 4 E-series (E2B, E4B)
+  implementation, verified against the HF reference
+  (``python -m bijou.gemma4.verify_parity``).
 - VLA-specific components (action expert, policy wrapper, lerobot
   integration) will live here as they are built.
 """

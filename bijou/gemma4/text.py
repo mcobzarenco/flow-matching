@@ -6,11 +6,13 @@ Faithful reimplementation of HF's ``Gemma4TextModel``:
 - Per-Layer Embeddings (PLE): a packed auxiliary embedding table plus a
   projection of the input embeddings feed a small residual signal into every
   decoder layer,
-- hybrid attention: sliding-window layers (head_dim 256, plain RoPE) and
-  global layers (head_dim 512, p-RoPE with partial rotation),
+- hybrid attention: sliding-window layers with plain RoPE over ``head_dim``
+  and global layers with p-RoPE (partial rotation) over the wider
+  ``global_head_dim``,
 - KV sharing: the last ``num_kv_shared_layers`` layers have no K/V projections
   and reuse the states of the last non-shared layer of the same type,
-- double-wide MLPs on the KV-shared layers,
+- optionally double-wide MLPs on the KV-shared layers (``use_double_wide_mlp``,
+  used by E2B but not E4B),
 - Q/K RMSNorm with scale, V RMSNorm without scale, attention scaling 1.0.
 """
 
@@ -22,6 +24,8 @@ from torch import Tensor, nn
 from .cache import KVCache
 from .config import Gemma4TextConfig, LayerType, RopeType
 from .layers import (
+    DEFAULT_ATTENTION_BACKEND,
+    AttentionBackend,
     DeviceLike,
     RMSNorm,
     apply_rotary_pos_emb,
@@ -144,6 +148,7 @@ class TextAttention(nn.Module):
         config: Gemma4TextConfig,
         layer_idx: int,
         *,
+        attn_backend: AttentionBackend = DEFAULT_ATTENTION_BACKEND,
         device: DeviceLike = None,
         dtype: torch.dtype | None = None,
     ) -> None:
@@ -156,7 +161,7 @@ class TextAttention(nn.Module):
         self.is_kv_shared_layer = config.is_kv_shared_layer(layer_idx)
         self.is_kv_source_layer = config.is_kv_source_layer(layer_idx)
         # Mutable on purpose: see bijou.gemma4.model.set_attention_backend.
-        self.attn_backend = config.attn_backend
+        self.attn_backend = attn_backend
 
         use_alternative_attention = config.attention_k_eq_v and not self.is_sliding
         if use_alternative_attention:
@@ -305,13 +310,16 @@ class DecoderLayer(nn.Module):
         config: Gemma4TextConfig,
         layer_idx: int,
         *,
+        attn_backend: AttentionBackend = DEFAULT_ATTENTION_BACKEND,
         device: DeviceLike = None,
         dtype: torch.dtype | None = None,
     ) -> None:
         super().__init__()
         hidden = config.hidden_size
         eps = config.rms_norm_eps
-        self.self_attn = TextAttention(config, layer_idx, device=device, dtype=dtype)
+        self.self_attn = TextAttention(
+            config, layer_idx, attn_backend=attn_backend, device=device, dtype=dtype
+        )
         self.mlp = TextMLP(config, layer_idx, device=device, dtype=dtype)
         self.input_layernorm = RMSNorm(hidden, eps=eps, device=device, dtype=dtype)
         self.post_attention_layernorm = RMSNorm(
@@ -389,6 +397,7 @@ class TextModel(nn.Module):
         self,
         config: Gemma4TextConfig,
         *,
+        attn_backend: AttentionBackend = DEFAULT_ATTENTION_BACKEND,
         device: DeviceLike = None,
         dtype: torch.dtype | None = None,
     ) -> None:
@@ -403,7 +412,13 @@ class TextModel(nn.Module):
             dtype=dtype,
         )
         self.layers = nn.ModuleList(
-            DecoderLayer(config, layer_idx, device=device, dtype=dtype)
+            DecoderLayer(
+                config,
+                layer_idx,
+                attn_backend=attn_backend,
+                device=device,
+                dtype=dtype,
+            )
             for layer_idx in range(config.num_hidden_layers)
         )
         self.norm = RMSNorm(

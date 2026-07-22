@@ -1,15 +1,21 @@
 """Typed configuration for the pure-torch Gemma 4 implementation.
 
-Mirrors the fields of the HF `Gemma4Config` family that are relevant for
+Mirrors the fields of the HF ``Gemma4Config`` family that are relevant for
 inference, parsed from a checkpoint's ``config.json``. Only fields that this
 implementation actually reads are kept — if you add a feature, add its config
 field here.
+
+Config dataclasses carry no defaults: they describe a specific checkpoint
+architecture and every field must be explicit. In practice configs are read
+from disk (:meth:`Gemma4Config.from_json` via ``load_model``); for from-scratch
+construction and tests, :func:`e2b_config` and :func:`e4b_config` build the
+released E-series architectures in code.
 """
 
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 from typing import Any, Self
@@ -31,106 +37,68 @@ class RopeType(StrEnum):
     PROPORTIONAL = "proportional"
 
 
-class AttentionBackend(StrEnum):
-    """How attention is computed.
-
-    EAGER mirrors HF's reference implementation op-for-op (fp32 softmax) and
-    is the parity baseline. SDPA uses ``F.scaled_dot_product_attention``
-    (fused kernels; numerics differ at bf16-ULP scale, greedy tokens verified
-    identical — see bijou/gemma4/verify_parity.py) and is the default: measured on
-    H100 it is ~1.9x faster / 4.7x leaner on 8k-token text prefill and ~1.6x
-    on image prefill, with decode dispatched to eager at q_len==1 (faster
-    there). This is a runtime choice, not a checkpoint property: it is never
-    read from config.json.
-    """
-
-    EAGER = "eager"
-    SDPA = "sdpa"
-
-
 @dataclass(frozen=True, slots=True)
 class RopeParameters:
     rope_type: RopeType
     rope_theta: float
-    partial_rotary_factor: float = 1.0
     # Linear position scaling factor (divides the inverse frequencies).
-    factor: float = 1.0
+    factor: float
+    partial_rotary_factor: float
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
         return cls(
             rope_type=RopeType(data.get("rope_type", "default")),
             rope_theta=float(data["rope_theta"]),
-            partial_rotary_factor=float(data.get("partial_rotary_factor", 1.0)),
             factor=float(data.get("factor", 1.0)),
+            partial_rotary_factor=float(data.get("partial_rotary_factor", 1.0)),
         )
-
-
-def _default_layer_types(num_layers: int) -> tuple[LayerType, ...]:
-    """Default 5:1 sliding/full pattern (every 6th layer is full attention)."""
-    return tuple(
-        LayerType.SLIDING if (i + 1) % 6 else LayerType.FULL for i in range(num_layers)
-    )
 
 
 @dataclass(frozen=True, slots=True)
 class Gemma4TextConfig:
-    """Decoder config. Defaults correspond to Gemma 4 E2B."""
+    """Decoder architecture. See :func:`e2b_config` / :func:`e4b_config` for
+    the released E-series values."""
 
-    vocab_size: int = 262_144
-    hidden_size: int = 1536
-    intermediate_size: int = 6144
-    num_hidden_layers: int = 35
-    num_attention_heads: int = 8
-    num_key_value_heads: int = 1
-    head_dim: int = 256
-    hidden_activation: str = "gelu_pytorch_tanh"
-    rms_norm_eps: float = 1e-6
-    pad_token_id: int = 0
-    eos_token_ids: tuple[int, ...] = (1,)
-    bos_token_id: int = 2
-    tie_word_embeddings: bool = True
-    attention_bias: bool = False
-    sliding_window: int = 512
-    layer_types: tuple[LayerType, ...] = field(
-        default_factory=lambda: _default_layer_types(35)
-    )
-    final_logit_softcapping: float | None = 30.0
-    # None (E2B) => plain causal; "vision" (12B) => bidirectional attention
-    # within each image block; "all" => fully bidirectional.
-    use_bidirectional_attention: str | None = None
-    rope_parameters: dict[LayerType, RopeParameters] = field(
-        default_factory=lambda: {
-            LayerType.SLIDING: RopeParameters(
-                rope_type=RopeType.DEFAULT, rope_theta=10_000.0
-            ),
-            LayerType.FULL: RopeParameters(
-                rope_type=RopeType.PROPORTIONAL,
-                rope_theta=1_000_000.0,
-                partial_rotary_factor=0.25,
-            ),
-        }
-    )
+    vocab_size: int
+    hidden_size: int
+    intermediate_size: int
+    num_hidden_layers: int
+    num_attention_heads: int
+    num_key_value_heads: int
+    head_dim: int
+    hidden_activation: str
+    rms_norm_eps: float
+    pad_token_id: int
+    eos_token_ids: tuple[int, ...]
+    bos_token_id: int
+    tie_word_embeddings: bool
+    attention_bias: bool
+    sliding_window: int
+    layer_types: tuple[LayerType, ...]
+    final_logit_softcapping: float | None
+    # None => plain causal; "vision" (12B) => bidirectional attention within
+    # each image block; "all" => fully bidirectional.
+    use_bidirectional_attention: str | None
+    rope_parameters: dict[LayerType, RopeParameters]
 
     # Per-Layer Embeddings (PLE).
-    vocab_size_per_layer_input: int = 262_144
-    hidden_size_per_layer_input: int = 256
+    vocab_size_per_layer_input: int
+    hidden_size_per_layer_input: int
 
     # Global (full) attention layers use a wider head dim with p-RoPE.
-    global_head_dim: int = 512
-    num_global_key_value_heads: int | None = None
-    attention_k_eq_v: bool = False
+    global_head_dim: int
+    num_global_key_value_heads: int | None
+    attention_k_eq_v: bool
 
     # The last `num_kv_shared_layers` layers reuse the K/V states of the last
     # non-shared layer of the same layer type.
-    num_kv_shared_layers: int = 20
-    # KV-shared layers use MLPs with twice the intermediate size.
-    use_double_wide_mlp: bool = True
+    num_kv_shared_layers: int
+    # KV-shared layers use MLPs with twice the intermediate size (E2B only).
+    use_double_wide_mlp: bool
 
     # MoE (26B-A4B only, not implemented).
-    enable_moe_block: bool = False
-
-    attn_backend: AttentionBackend = AttentionBackend.SDPA
+    enable_moe_block: bool
 
     def __post_init__(self) -> None:
         if len(self.layer_types) != self.num_hidden_layers:
@@ -144,7 +112,8 @@ class Gemma4TextConfig:
             raise NotImplementedError("MoE blocks (26B-A4B) are not implemented")
         if self.use_bidirectional_attention is not None:
             raise NotImplementedError(
-                "use_bidirectional_attention is not implemented (E2B uses None)"
+                "use_bidirectional_attention is not implemented "
+                "(the E-series models use None)"
             )
 
     # -- derived structure ---------------------------------------------------
@@ -184,80 +153,67 @@ class Gemma4TextConfig:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
-        num_layers = int(data.get("num_hidden_layers", 35))
-        if "layer_types" in data:
-            layer_types = tuple(LayerType(t) for t in data["layer_types"])
-        else:
-            layer_types = _default_layer_types(num_layers)
-        rope_data = data.get("rope_parameters")
-        if rope_data is not None:
-            rope_parameters = {
-                LayerType(t): RopeParameters.from_dict(params)
-                for t, params in rope_data.items()
-            }
-        else:
-            rope_parameters = cls().rope_parameters
-        eos = data.get("eos_token_id", 1)
-        eos_token_ids = tuple(eos) if isinstance(eos, list) else (int(eos),)
+        eos = data["eos_token_id"]
         return cls(
-            vocab_size=int(data.get("vocab_size", 262_144)),
-            hidden_size=int(data.get("hidden_size", 1536)),
-            intermediate_size=int(data.get("intermediate_size", 6144)),
-            num_hidden_layers=num_layers,
-            num_attention_heads=int(data.get("num_attention_heads", 8)),
-            num_key_value_heads=int(data.get("num_key_value_heads", 1)),
-            head_dim=int(data.get("head_dim", 256)),
-            hidden_activation=str(data.get("hidden_activation", "gelu_pytorch_tanh")),
-            rms_norm_eps=float(data.get("rms_norm_eps", 1e-6)),
-            pad_token_id=int(data.get("pad_token_id", 0)),
-            eos_token_ids=eos_token_ids,
-            bos_token_id=int(data.get("bos_token_id", 2)),
-            tie_word_embeddings=bool(data.get("tie_word_embeddings", True)),
-            attention_bias=bool(data.get("attention_bias", False)),
-            sliding_window=int(data.get("sliding_window", 512)),
-            layer_types=layer_types,
+            vocab_size=int(data["vocab_size"]),
+            hidden_size=int(data["hidden_size"]),
+            intermediate_size=int(data["intermediate_size"]),
+            num_hidden_layers=int(data["num_hidden_layers"]),
+            num_attention_heads=int(data["num_attention_heads"]),
+            num_key_value_heads=int(data["num_key_value_heads"]),
+            head_dim=int(data["head_dim"]),
+            hidden_activation=str(data["hidden_activation"]),
+            rms_norm_eps=float(data["rms_norm_eps"]),
+            pad_token_id=int(data["pad_token_id"]),
+            eos_token_ids=tuple(eos) if isinstance(eos, list) else (int(eos),),
+            bos_token_id=int(data["bos_token_id"]),
+            tie_word_embeddings=bool(data["tie_word_embeddings"]),
+            attention_bias=bool(data["attention_bias"]),
+            sliding_window=int(data["sliding_window"]),
+            layer_types=tuple(LayerType(t) for t in data["layer_types"]),
             final_logit_softcapping=(
                 float(cap)
                 if (cap := data.get("final_logit_softcapping")) is not None
                 else None
             ),
             use_bidirectional_attention=data.get("use_bidirectional_attention"),
-            rope_parameters=rope_parameters,
-            vocab_size_per_layer_input=int(
-                data.get("vocab_size_per_layer_input", 262_144)
+            rope_parameters={
+                LayerType(t): RopeParameters.from_dict(params)
+                for t, params in data["rope_parameters"].items()
+            },
+            vocab_size_per_layer_input=int(data["vocab_size_per_layer_input"]),
+            hidden_size_per_layer_input=int(data["hidden_size_per_layer_input"]),
+            global_head_dim=int(data["global_head_dim"]),
+            num_global_key_value_heads=(
+                int(heads)
+                if (heads := data.get("num_global_key_value_heads")) is not None
+                else None
             ),
-            hidden_size_per_layer_input=int(
-                data.get("hidden_size_per_layer_input", 256)
-            ),
-            global_head_dim=int(data.get("global_head_dim", 512)),
-            num_global_key_value_heads=data.get("num_global_key_value_heads"),
-            attention_k_eq_v=bool(data.get("attention_k_eq_v", False)),
-            num_kv_shared_layers=int(data.get("num_kv_shared_layers", 0)),
-            use_double_wide_mlp=bool(data.get("use_double_wide_mlp", False)),
-            enable_moe_block=bool(data.get("enable_moe_block", False)),
+            attention_k_eq_v=bool(data["attention_k_eq_v"]),
+            num_kv_shared_layers=int(data["num_kv_shared_layers"]),
+            use_double_wide_mlp=bool(data["use_double_wide_mlp"]),
+            enable_moe_block=bool(data["enable_moe_block"]),
         )
 
 
 @dataclass(frozen=True, slots=True)
 class Gemma4VisionConfig:
-    """Encoder-free vision tower config. Defaults correspond to Gemma 4 E2B."""
+    """Encoder-free vision tower architecture (identical across E2B/E4B)."""
 
-    hidden_size: int = 768
-    intermediate_size: int = 3072
-    num_hidden_layers: int = 16
-    num_attention_heads: int = 12
-    num_key_value_heads: int = 12
-    head_dim: int = 64
-    hidden_activation: str = "gelu_pytorch_tanh"
-    rms_norm_eps: float = 1e-6
-    rope_theta: float = 100.0
-    pooling_kernel_size: int = 3
-    patch_size: int = 16
-    position_embedding_size: int = 10_240
-    use_clipped_linears: bool = True
-    standardize: bool = False
-
-    attn_backend: AttentionBackend = AttentionBackend.SDPA
+    hidden_size: int
+    intermediate_size: int
+    num_hidden_layers: int
+    num_attention_heads: int
+    num_key_value_heads: int
+    head_dim: int
+    hidden_activation: str
+    rms_norm_eps: float
+    rope_theta: float
+    pooling_kernel_size: int
+    patch_size: int
+    position_embedding_size: int
+    use_clipped_linears: bool
+    standardize: bool
 
     def __post_init__(self) -> None:
         if self.standardize:
@@ -265,22 +221,21 @@ class Gemma4VisionConfig:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
-        rope_data = data.get("rope_parameters") or {}
         return cls(
-            hidden_size=int(data.get("hidden_size", 768)),
-            intermediate_size=int(data.get("intermediate_size", 3072)),
-            num_hidden_layers=int(data.get("num_hidden_layers", 16)),
-            num_attention_heads=int(data.get("num_attention_heads", 12)),
-            num_key_value_heads=int(data.get("num_key_value_heads", 12)),
-            head_dim=int(data.get("head_dim", 64)),
-            hidden_activation=str(data.get("hidden_activation", "gelu_pytorch_tanh")),
-            rms_norm_eps=float(data.get("rms_norm_eps", 1e-6)),
-            rope_theta=float(rope_data.get("rope_theta", 100.0)),
-            pooling_kernel_size=int(data.get("pooling_kernel_size", 3)),
-            patch_size=int(data.get("patch_size", 16)),
-            position_embedding_size=int(data.get("position_embedding_size", 10_240)),
-            use_clipped_linears=bool(data.get("use_clipped_linears", False)),
-            standardize=bool(data.get("standardize", False)),
+            hidden_size=int(data["hidden_size"]),
+            intermediate_size=int(data["intermediate_size"]),
+            num_hidden_layers=int(data["num_hidden_layers"]),
+            num_attention_heads=int(data["num_attention_heads"]),
+            num_key_value_heads=int(data["num_key_value_heads"]),
+            head_dim=int(data["head_dim"]),
+            hidden_activation=str(data["hidden_activation"]),
+            rms_norm_eps=float(data["rms_norm_eps"]),
+            rope_theta=float(data["rope_parameters"]["rope_theta"]),
+            pooling_kernel_size=int(data["pooling_kernel_size"]),
+            patch_size=int(data["patch_size"]),
+            position_embedding_size=int(data["position_embedding_size"]),
+            use_clipped_linears=bool(data["use_clipped_linears"]),
+            standardize=bool(data["standardize"]),
         )
 
 
@@ -289,14 +244,14 @@ class Gemma4Config:
     """Top-level multimodal config (text + vision; the audio tower is not
     implemented and its checkpoint weights are ignored)."""
 
-    text: Gemma4TextConfig = field(default_factory=Gemma4TextConfig)
-    vision: Gemma4VisionConfig | None = field(default_factory=Gemma4VisionConfig)
-    image_token_id: int = 258_880
-    video_token_id: int = 258_884
-    audio_token_id: int = 258_881
-    boi_token_id: int = 255_999
-    eoi_token_id: int = 258_882
-    dtype: torch.dtype = torch.bfloat16
+    text: Gemma4TextConfig
+    vision: Gemma4VisionConfig | None
+    image_token_id: int
+    video_token_id: int
+    audio_token_id: int
+    boi_token_id: int
+    eoi_token_id: int
+    dtype: torch.dtype
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
@@ -305,10 +260,9 @@ class Gemma4Config:
                 f"not a gemma4 config: model_type={data.get('model_type')}"
             )
         vision_data = data.get("vision_config")
-        dtype_str = data.get("dtype", "bfloat16")
-        dtype = getattr(torch, dtype_str)
+        dtype = getattr(torch, data["dtype"])
         if not isinstance(dtype, torch.dtype):
-            raise ValueError(f"invalid dtype {dtype_str!r}")
+            raise ValueError(f"invalid dtype {data['dtype']!r}")
         return cls(
             text=Gemma4TextConfig.from_dict(data["text_config"]),
             vision=(
@@ -316,11 +270,11 @@ class Gemma4Config:
                 if vision_data is not None
                 else None
             ),
-            image_token_id=int(data.get("image_token_id", 258_880)),
-            video_token_id=int(data.get("video_token_id", 258_884)),
-            audio_token_id=int(data.get("audio_token_id", 258_881)),
-            boi_token_id=int(data.get("boi_token_id", 255_999)),
-            eoi_token_id=int(data.get("eoi_token_id", 258_882)),
+            image_token_id=int(data["image_token_id"]),
+            video_token_id=int(data["video_token_id"]),
+            audio_token_id=int(data["audio_token_id"]),
+            boi_token_id=int(data["boi_token_id"]),
+            eoi_token_id=int(data["eoi_token_id"]),
             dtype=dtype,
         )
 
@@ -328,3 +282,137 @@ class Gemma4Config:
     def from_json(cls, path: Path | str) -> Self:
         with open(path) as f:
             return cls.from_dict(json.load(f))
+
+
+# -- released architectures ---------------------------------------------------
+
+
+def _hybrid_layer_types(num_layers: int, period: int) -> tuple[LayerType, ...]:
+    """Every ``period``-th layer is full attention, the rest sliding.
+
+    Note the released E-series differ here: E2B uses period 5 (4:1) while E4B
+    uses period 6 (5:1, the transformers default).
+    """
+    return tuple(
+        LayerType.SLIDING if (i + 1) % period else LayerType.FULL
+        for i in range(num_layers)
+    )
+
+
+def _e_series_rope_parameters() -> dict[LayerType, RopeParameters]:
+    return {
+        LayerType.SLIDING: RopeParameters(
+            rope_type=RopeType.DEFAULT,
+            rope_theta=10_000.0,
+            factor=1.0,
+            partial_rotary_factor=1.0,
+        ),
+        LayerType.FULL: RopeParameters(
+            rope_type=RopeType.PROPORTIONAL,
+            rope_theta=1_000_000.0,
+            factor=1.0,
+            partial_rotary_factor=0.25,
+        ),
+    }
+
+
+def _e_series_vision_config() -> Gemma4VisionConfig:
+    return Gemma4VisionConfig(
+        hidden_size=768,
+        intermediate_size=3072,
+        num_hidden_layers=16,
+        num_attention_heads=12,
+        num_key_value_heads=12,
+        head_dim=64,
+        hidden_activation="gelu_pytorch_tanh",
+        rms_norm_eps=1e-6,
+        rope_theta=100.0,
+        pooling_kernel_size=3,
+        patch_size=16,
+        position_embedding_size=10_240,
+        use_clipped_linears=True,
+        standardize=False,
+    )
+
+
+def _e_series_config(text: Gemma4TextConfig) -> Gemma4Config:
+    return Gemma4Config(
+        text=text,
+        vision=_e_series_vision_config(),
+        image_token_id=258_880,
+        video_token_id=258_884,
+        audio_token_id=258_881,
+        boi_token_id=255_999,
+        eoi_token_id=258_882,
+        dtype=torch.bfloat16,
+    )
+
+
+def e2b_config() -> Gemma4Config:
+    """The ``google/gemma-4-e2b-it`` architecture (matches its config.json)."""
+    return _e_series_config(
+        Gemma4TextConfig(
+            vocab_size=262_144,
+            hidden_size=1536,
+            intermediate_size=6144,
+            num_hidden_layers=35,
+            num_attention_heads=8,
+            num_key_value_heads=1,
+            head_dim=256,
+            hidden_activation="gelu_pytorch_tanh",
+            rms_norm_eps=1e-6,
+            pad_token_id=0,
+            eos_token_ids=(1,),
+            bos_token_id=2,
+            tie_word_embeddings=True,
+            attention_bias=False,
+            sliding_window=512,
+            layer_types=_hybrid_layer_types(35, period=5),
+            final_logit_softcapping=30.0,
+            use_bidirectional_attention=None,
+            rope_parameters=_e_series_rope_parameters(),
+            vocab_size_per_layer_input=262_144,
+            hidden_size_per_layer_input=256,
+            global_head_dim=512,
+            num_global_key_value_heads=None,
+            attention_k_eq_v=False,
+            num_kv_shared_layers=20,
+            use_double_wide_mlp=True,
+            enable_moe_block=False,
+        )
+    )
+
+
+def e4b_config() -> Gemma4Config:
+    """The ``google/gemma-4-e4b-it`` architecture (matches its config.json)."""
+    return _e_series_config(
+        Gemma4TextConfig(
+            vocab_size=262_144,
+            hidden_size=2560,
+            intermediate_size=10_240,
+            num_hidden_layers=42,
+            num_attention_heads=8,
+            num_key_value_heads=2,
+            head_dim=256,
+            hidden_activation="gelu_pytorch_tanh",
+            rms_norm_eps=1e-6,
+            pad_token_id=0,
+            eos_token_ids=(1,),
+            bos_token_id=2,
+            tie_word_embeddings=True,
+            attention_bias=False,
+            sliding_window=512,
+            layer_types=_hybrid_layer_types(42, period=6),
+            final_logit_softcapping=30.0,
+            use_bidirectional_attention=None,
+            rope_parameters=_e_series_rope_parameters(),
+            vocab_size_per_layer_input=262_144,
+            hidden_size_per_layer_input=256,
+            global_head_dim=512,
+            num_global_key_value_heads=None,
+            attention_k_eq_v=False,
+            num_kv_shared_layers=18,
+            use_double_wide_mlp=False,
+            enable_moe_block=False,
+        )
+    )

@@ -6,18 +6,38 @@ so that outputs are bit-identical in bf16.
 
 from __future__ import annotations
 
+from enum import StrEnum
 from typing import TYPE_CHECKING
 
 import torch
 from torch import Tensor, nn
 from torch.nn import functional as F
 
-from .config import AttentionBackend
-
 if TYPE_CHECKING:
     from .masks import MaskSpec
 
 type DeviceLike = torch.device | str | None
+
+
+class AttentionBackend(StrEnum):
+    """How attention is computed. A runtime choice passed at construction
+    (never part of the checkpoint config); switchable in place afterwards via
+    ``bijou.gemma4.model.set_attention_backend``.
+
+    EAGER mirrors HF's reference implementation op-for-op (fp32 softmax) and
+    is the parity baseline. SDPA uses ``F.scaled_dot_product_attention``
+    (fused kernels; numerics differ at bf16-ULP scale, greedy tokens verified
+    identical — see bijou/gemma4/verify_parity.py) and is the default:
+    measured on H100 it is ~1.9x faster / 4.7x leaner on 8k-token text
+    prefill and ~1.6x on image prefill, with decode dispatched to eager at
+    q_len==1 (faster there).
+    """
+
+    EAGER = "eager"
+    SDPA = "sdpa"
+
+
+DEFAULT_ATTENTION_BACKEND = AttentionBackend.SDPA
 
 
 def buffer_device(device: DeviceLike) -> DeviceLike:
@@ -119,8 +139,8 @@ def eager_attention(
 # Fused SDPA kernels (flash, cudnn) top out at head_dim 256 on H100 as of
 # torch 2.11. Above that only the mem-efficient backend remains, and it does
 # not support enable_gqa -- without the workaround below, Gemma4's global
-# layers (head_dim 512) silently fall back to the math backend (~3x slower,
-# measured in bijou/gemma4/bench.py).
+# layers (global_head_dim 512 across the E-series) silently fall back to the
+# math backend (~3x slower, measured in bijou/gemma4/bench.py).
 _SDPA_FUSED_MAX_HEAD_DIM = 256
 
 

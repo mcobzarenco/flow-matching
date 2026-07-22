@@ -1,8 +1,10 @@
-"""Hackable pure-torch implementation of Gemma 4 (E2B).
+"""Hackable pure-torch implementation of the Gemma 4 E-series (E2B, E4B).
 
-Loads HF checkpoints (``google/gemma-4-e2b-it``) and reproduces the reference
-transformers implementation bit-exactly in bf16 (eager attention). Text and
-vision towers are implemented; the audio tower is not.
+Loads HF checkpoints (``google/gemma-4-e2b-it``, ``google/gemma-4-e4b-it``)
+and reproduces the reference transformers implementation bit-exactly in bf16
+(eager attention). Text and vision towers are implemented; the audio tower is
+not. Architectures are fully config-driven (:func:`e2b_config` /
+:func:`e4b_config` build them in code for from-scratch use).
 
 Correctness is checked with ``python -m bijou.gemma4.verify_parity``: greedy
 tokens must match HF exactly and logits must agree within a small tolerance
@@ -25,15 +27,17 @@ the target device, and different submodules may use different dtypes:
 
 from .cache import KVCache
 from .config import (
-    AttentionBackend,
     Gemma4Config,
     Gemma4TextConfig,
     Gemma4VisionConfig,
     LayerType,
     RopeParameters,
     RopeType,
+    e2b_config,
+    e4b_config,
 )
 from .generation import GenerationResult, SamplingParams, generate
+from .layers import AttentionBackend
 from .loading import load_config, load_model, resolve_checkpoint_dir
 from .model import Gemma4Model, Gemma4Output, set_attention_backend
 from .text import TextModel
@@ -54,6 +58,8 @@ __all__ = [
     "SamplingParams",
     "TextModel",
     "VisionModel",
+    "e2b_config",
+    "e4b_config",
     "generate",
     "load_config",
     "load_model",

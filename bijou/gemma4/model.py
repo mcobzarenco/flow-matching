@@ -13,8 +13,8 @@ import torch
 from torch import Tensor, nn
 
 from .cache import KVCache
-from .config import AttentionBackend, Gemma4Config
-from .layers import DeviceLike
+from .config import Gemma4Config
+from .layers import DEFAULT_ATTENTION_BACKEND, AttentionBackend, DeviceLike
 from .text import TextAttention, TextModel
 from .vision import MultimodalEmbedder, VisionAttention, VisionModel
 
@@ -30,14 +30,16 @@ class Gemma4Output:
 class Gemma4Model(nn.Module):
     """``device``/``dtype`` are forwarded to every submodule (torch factory
     convention), so parameters are created directly on the target device.
-    ``dtype`` defaults to the checkpoint dtype declared in the config (bf16
-    for E2B); submodules can be instantiated individually with different
-    settings if a future config splits dtypes per component."""
+    ``dtype`` defaults to the dtype declared in the checkpoint config;
+    submodules can be instantiated individually with different settings if a
+    future config splits dtypes per component. ``attn_backend`` is the
+    runtime attention implementation (see ``layers.AttentionBackend``)."""
 
     def __init__(
         self,
         config: Gemma4Config,
         *,
+        attn_backend: AttentionBackend = DEFAULT_ATTENTION_BACKEND,
         device: DeviceLike = None,
         dtype: torch.dtype | None = None,
     ) -> None:
@@ -45,9 +47,13 @@ class Gemma4Model(nn.Module):
         if dtype is None:
             dtype = config.dtype
         self.config = config
-        self.language_model = TextModel(config.text, device=device, dtype=dtype)
+        self.language_model = TextModel(
+            config.text, attn_backend=attn_backend, device=device, dtype=dtype
+        )
         self.vision_tower = (
-            VisionModel(config.vision, device=device, dtype=dtype)
+            VisionModel(
+                config.vision, attn_backend=attn_backend, device=device, dtype=dtype
+            )
             if config.vision is not None
             else None
         )

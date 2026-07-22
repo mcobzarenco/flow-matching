@@ -53,7 +53,7 @@ import torch
 from torch import Tensor
 
 from .cache import KVCache
-from .config import AttentionBackend
+from .layers import AttentionBackend
 from .generation import generate
 from .loading import load_generation_defaults, load_model, resolve_checkpoint_dir
 from .model import Gemma4Model, set_attention_backend

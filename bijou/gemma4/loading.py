@@ -22,7 +22,8 @@ from pathlib import Path
 import torch
 from safetensors import safe_open
 
-from .config import AttentionBackend, Gemma4Config
+from .config import Gemma4Config
+from .layers import DEFAULT_ATTENTION_BACKEND, AttentionBackend
 from .model import Gemma4Model
 
 _AUDIO_PREFIXES = ("model.audio_tower.", "model.embed_audio.")
@@ -63,33 +64,23 @@ def load_model(
     *,
     device: torch.device | str = "cpu",
     dtype: torch.dtype | None = None,
-    attn_backend: AttentionBackend | None = None,
+    attn_backend: AttentionBackend = DEFAULT_ATTENTION_BACKEND,
     config: Gemma4Config | None = None,
 ) -> Gemma4Model:
     """Load a checkpoint, materializing weights directly on ``device``.
 
-    ``dtype`` overrides the checkpoint's dtype (default bf16); ``attn_backend``
-    overrides the attention implementation for both towers. The model is
-    returned in eval mode with gradients disabled; for training, re-enable
-    with ``model.requires_grad_(True)`` / ``model.train()``.
+    ``dtype`` overrides the checkpoint's dtype (the released E-series ship
+    bf16); ``attn_backend`` selects the attention implementation for both
+    towers. The model is returned in eval mode with gradients disabled; for
+    training, re-enable with ``model.requires_grad_(True)`` / ``model.train()``.
     """
     checkpoint_dir = resolve_checkpoint_dir(model_id_or_path)
     if config is None:
         config = load_config(checkpoint_dir)
     if dtype is not None:
         config = dataclasses.replace(config, dtype=dtype)
-    if attn_backend is not None:
-        config = dataclasses.replace(
-            config,
-            text=dataclasses.replace(config.text, attn_backend=attn_backend),
-            vision=(
-                dataclasses.replace(config.vision, attn_backend=attn_backend)
-                if config.vision is not None
-                else None
-            ),
-        )
 
-    model = Gemma4Model(config, device="meta")
+    model = Gemma4Model(config, attn_backend=attn_backend, device="meta")
 
     state_dict: dict[str, torch.Tensor] = {}
     weight_files = sorted(checkpoint_dir.glob("*.safetensors"))

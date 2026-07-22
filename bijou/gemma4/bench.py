@@ -26,7 +26,7 @@ import time
 
 import torch
 
-from .config import AttentionBackend
+from .layers import AttentionBackend
 from .generation import generate
 from .loading import load_model, resolve_checkpoint_dir
 from .model import Gemma4Model, set_attention_backend
