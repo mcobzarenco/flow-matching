@@ -736,6 +736,17 @@ def main() -> int:
         if sub_dataset.meta.stats is None:
             dropped.append(f"{repo_id} (no stats)")
             continue
+        # Some community datasets ship metadata claiming more frames than
+        # their parquet actually holds; ConcatDataset sizes by len(), so a
+        # shuffled index would eventually hit the phantom tail (observed:
+        # zaringleb/* missing 269 trailing frames -> worker IndexError).
+        actual_rows = len(sub_dataset.hf_dataset)
+        if len(sub_dataset) != actual_rows:
+            dropped.append(
+                f"{repo_id} (metadata claims {len(sub_dataset)} frames, "
+                f"parquet holds {actual_rows})"
+            )
+            continue
         datasets.append(sub_dataset)
         stats_list.append(sub_dataset.meta.stats)
         camera_census[
