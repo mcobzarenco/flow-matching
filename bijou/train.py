@@ -98,6 +98,21 @@ class TrainArgs:
     wandb_run_name: str | None
 
 
+@dataclass(frozen=True, slots=True)
+class CollatedBatch:
+    """One collated batch: prefix inputs plus action-chunk targets. All
+    fields are always present (unlike the raw per-dataset LeRobot items,
+    whose camera keys vary — those stay dicts)."""
+
+    input_ids: Tensor
+    attention_mask: Tensor
+    pixel_values: Tensor
+    image_position_ids: Tensor
+    state: Tensor
+    actions: Tensor
+    action_is_pad: Tensor
+
+
 class Normalizer:
     """MEAN_STD normalization from LeRobot dataset stats."""
 
@@ -251,7 +266,7 @@ class PrefixCollator:
         array = (image.clamp(0, 1) * 255).to(torch.uint8).permute(1, 2, 0).numpy()
         return Image.fromarray(array)
 
-    def __call__(self, items: list[dict[str, Any]]) -> dict[str, Any]:
+    def __call__(self, items: list[dict[str, Any]]) -> CollatedBatch:
         if self._processor is None:
             # Lazy construction (not import): the collator is pickled into
             # spawned dataloader workers, each of which rebuilds it.
@@ -283,27 +298,33 @@ class PrefixCollator:
                 "padding": True,
             },
         )
-        return {
-            "input_ids": batch["input_ids"],
-            "attention_mask": batch["attention_mask"],
-            "pixel_values": batch["pixel_values"],
-            "image_position_ids": batch["image_position_ids"],
-            "state": torch.stack([item["observation.state"] for item in items]),
-            "actions": torch.stack([item["action"] for item in items]),
-            "action_is_pad": torch.stack([item["action_is_pad"] for item in items]),
-        }
+        return CollatedBatch(
+            input_ids=batch["input_ids"],
+            attention_mask=batch["attention_mask"],
+            pixel_values=batch["pixel_values"],
+            image_position_ids=batch["image_position_ids"],
+            state=torch.stack([item["observation.state"] for item in items]),
+            actions=torch.stack([item["action"] for item in items]),
+            action_is_pad=torch.stack([item["action_is_pad"] for item in items]),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class Normalizers:
+    action: Normalizer
+    state: Normalizer
 
 
 def encode_prefix(
-    model: BijouModel, batch: dict[str, Any], device: torch.device
+    model: BijouModel, batch: CollatedBatch, device: torch.device
 ) -> PrefixKV:
-    attention_mask = batch["attention_mask"].to(device)
+    attention_mask = batch.attention_mask.to(device)
     padding_mask = None if bool(attention_mask.all()) else attention_mask
     with torch.no_grad():
         return model.encode_prefix(
-            batch["input_ids"].to(device),
-            pixel_values=batch["pixel_values"].to(device),
-            image_position_ids=batch["image_position_ids"].to(device),
+            batch.input_ids.to(device),
+            pixel_values=batch.pixel_values.to(device),
+            image_position_ids=batch.image_position_ids.to(device),
             padding_mask=padding_mask,
         )
 
@@ -311,14 +332,13 @@ def encode_prefix(
 def flow_matching_loss(
     model: BijouModel,
     prefix: PrefixKV,
-    batch: dict[str, Any],
-    action_normalizer: Normalizer,
-    state_normalizer: Normalizer,
+    batch: CollatedBatch,
+    normalizers: Normalizers,
     device: torch.device,
 ) -> Tensor:
-    actions = action_normalizer.normalize(batch["actions"].to(device))
-    state = state_normalizer.normalize(batch["state"].to(device))
-    valid = ~batch["action_is_pad"].to(device)
+    actions = normalizers.action.normalize(batch.actions.to(device))
+    state = normalizers.state.normalize(batch.state.to(device))
+    valid = ~batch.action_is_pad.to(device)
 
     noise = torch.randn_like(actions)
     # π0's time distribution: Beta(1.5, 1) squeezed into (0, 1).
@@ -367,9 +387,8 @@ def _chunk_plot(
 def validate(
     model: BijouModel,
     prefix: PrefixKV,
-    batch: dict[str, Any],
-    action_normalizer: Normalizer,
-    state_normalizer: Normalizer,
+    batch: CollatedBatch,
+    normalizers: Normalizers,
     device: torch.device,
     seed: int,
     *,
@@ -383,12 +402,12 @@ def validate(
     metric from the SmolVLA work), always computed and returned; wandb is
     additive only — with a run, also logs a table over the eval samples:
     camera images, task, state, and per-joint predicted-vs-truth plots."""
-    state = state_normalizer.normalize(batch["state"].to(device))
+    state = normalizers.state.normalize(batch.state.to(device))
     generator = torch.Generator(device=device).manual_seed(seed)
     sampled = model.sample_actions(prefix, state, num_steps=10, generator=generator)
-    sampled = action_normalizer.unnormalize(sampled.float())
-    truth = batch["actions"].to(device).float()
-    valid = ~batch["action_is_pad"].to(device)
+    sampled = normalizers.action.unnormalize(sampled.float())
+    truth = batch.actions.to(device).float()
+    valid = ~batch.action_is_pad.to(device)
     error = (sampled - truth).abs()
     mae = float(error[valid].mean())
 
@@ -441,7 +460,7 @@ def validate(
 def save_checkpoint(
     model: BijouModel,
     args: TrainArgs,
-    normalizers: dict[str, Normalizer],
+    normalizers: Normalizers,
     step: int,
 ) -> Path:
     checkpoint_dir = args.save_dir / f"step_{step:06d}"
@@ -450,7 +469,11 @@ def save_checkpoint(
     metadata = {
         "backbone": args.backbone,
         "expert_config": dataclasses.asdict(model.expert.config),
-        "normalization": {k: n.state_dict() for k, n in normalizers.items()},
+        # Keys match the dataset feature names (stable checkpoint format).
+        "normalization": {
+            "action": normalizers.action.state_dict(),
+            "observation.state": normalizers.state.state_dict(),
+        },
         "train_args": {
             k: str(v) if isinstance(v, Path) else v
             for k, v in dataclasses.asdict(args).items()
@@ -655,9 +678,9 @@ def main() -> int:
         for reason in dropped:
             print(f"  - {reason}", flush=True)
 
-    action_normalizer = Normalizer.from_aggregated_stats(stats_list, "action", device)
-    state_normalizer = Normalizer.from_aggregated_stats(
-        stats_list, "observation.state", device
+    normalizers = Normalizers(
+        action=Normalizer.from_aggregated_stats(stats_list, "action", device),
+        state=Normalizer.from_aggregated_stats(stats_list, "observation.state", device),
     )
 
     collator = PrefixCollator(
@@ -733,7 +756,7 @@ def main() -> int:
     eval_prefix = encode_prefix(model, eval_batch, device)
     print(
         f"eval set: {len(eval_indices)} samples at dataset indices "
-        f"{eval_indices}; prefix {eval_batch['input_ids'].shape[1]} tokens "
+        f"{eval_indices}; prefix {eval_batch.input_ids.shape[1]} tokens "
         f"(soft-token budget {args.max_soft_tokens}/camera)",
         flush=True,
     )
@@ -773,9 +796,7 @@ def main() -> int:
             if step >= args.steps:
                 break
             prefix = encode_prefix(model, batch, device)
-            loss = flow_matching_loss(
-                model, prefix, batch, action_normalizer, state_normalizer, device
-            )
+            loss = flow_matching_loss(model, prefix, batch, normalizers, device)
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
             grad_norm = torch.nn.utils.clip_grad_norm_(
@@ -816,8 +837,7 @@ def main() -> int:
                     model,
                     eval_prefix,
                     eval_batch,
-                    action_normalizer,
-                    state_normalizer,
+                    normalizers,
                     device,
                     args.seed,
                     wandb_run=wandb_run,
@@ -834,15 +854,7 @@ def main() -> int:
                     wandb_run.log({"eval/chunk_mae": mae}, step=step)
 
             if step % args.save_every == 0 or step == args.steps:
-                path = save_checkpoint(
-                    model,
-                    args,
-                    {
-                        "action": action_normalizer,
-                        "observation.state": state_normalizer,
-                    },
-                    step,
-                )
+                path = save_checkpoint(model, args, normalizers, step)
                 print(f"saved {path}", flush=True)
 
     log_file.close()
