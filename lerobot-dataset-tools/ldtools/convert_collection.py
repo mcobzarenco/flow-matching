@@ -154,6 +154,70 @@ def stage_copy(src: Path, dst: Path, info: dict) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Metadata reconciliation: episodes.jsonl is the source of truth
+# ---------------------------------------------------------------------------
+
+
+def reconcile_with_episodes_metadata(root: Path, info: dict, name: str) -> None:
+    """Make files and declared totals agree with ``meta/episodes.jsonl``.
+
+    Two failure patterns exist in the community collections (the cleaning
+    pipeline filtered episodes without removing files or fixing totals):
+
+    1. orphaned per-episode parquet/mp4 files for episode indices that are
+       absent from ``episodes.jsonl`` -> the official converter refuses
+       ("Number of episodes is not the same"). We delete the orphans.
+    2. ``info.json`` totals that disagree with the actual data
+       (``total_frames`` off by a few) -> the converted dataset reloads as
+       "insufficient cache" and lerobot falls back to the hub with a
+       misleading error. We recompute totals from ``episodes.jsonl``.
+    """
+    episodes = [
+        json.loads(line)
+        for line in (root / "meta" / "episodes.jsonl").read_text().splitlines()
+        if line.strip()
+    ]
+    valid = {int(e["episode_index"]) for e in episodes}
+
+    orphans = 0
+    for path in sorted(root.glob("data/chunk-*/episode_*.parquet")) + sorted(
+        root.glob("videos/chunk-*/*/episode_*.mp4")
+    ):
+        if int(path.stem.rsplit("_", 1)[1]) not in valid:
+            path.unlink()
+            orphans += 1
+    if orphans:
+        log(name, f"removed {orphans} orphaned episode files not in episodes.jsonl")
+
+    # Recompute declared totals from the episode metadata.
+    true_episodes = len(valid)
+    true_frames = sum(int(e["length"]) for e in episodes)
+    video_keys = [k for k, f in info["features"].items() if f.get("dtype") == "video"]
+    updates: dict[str, int] = {}
+    if info.get("total_episodes") != true_episodes:
+        updates["total_episodes"] = true_episodes
+    if info.get("total_frames") != true_frames:
+        updates["total_frames"] = true_frames
+    expected_videos = true_episodes * len(video_keys)
+    if "total_videos" in info and info["total_videos"] != expected_videos:
+        updates["total_videos"] = expected_videos
+    if updates:
+        log(name, f"reconciled info.json totals from episodes.jsonl: {updates}")
+        info.update(updates)
+        (root / "meta" / "info.json").write_text(json.dumps(info, indent=4))
+
+    # episodes_stats.jsonl may also carry entries for removed episodes.
+    stats_path = root / "meta" / "episodes_stats.jsonl"
+    if stats_path.is_file():
+        lines = [
+            line
+            for line in stats_path.read_text().splitlines()
+            if line.strip() and int(json.loads(line)["episode_index"]) in valid
+        ]
+        stats_path.write_text("\n".join(lines) + "\n")
+
+
+# ---------------------------------------------------------------------------
 # Data-column sanitation (drop columns not declared in info features)
 # ---------------------------------------------------------------------------
 
@@ -407,6 +471,7 @@ def convert_one(ds: SubDataset, output: Path) -> dict:
 
     log(ds.name, f"staging copy ({ds.size_bytes / 1e9:.1f} GB, {ds.version})")
     stage_copy(ds.path, staging, info)
+    reconcile_with_episodes_metadata(staging, info, ds.name)
     dropped = sanitize_data_columns(staging, info)
     if dropped:
         log(ds.name, f"dropped undeclared parquet columns: {sorted(dropped)}")
