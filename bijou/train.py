@@ -68,9 +68,9 @@ class TrainArgs:
     num_workers: int
     device: str
     seed: int
+    eval_samples: int
     wandb_project: str | None
     wandb_run_name: str | None
-    wandb_samples: int
 
 
 class Normalizer:
@@ -270,9 +270,9 @@ def validate(
     step: int = 0,
 ) -> float:
     """Deterministic sampled-chunk MAE in raw action units (the eval-harness
-    metric from the SmolVLA work). With a wandb run, also logs a table of the
-    first ``len(eval_items)`` samples: camera images, task, state, and
-    per-joint predicted-vs-truth chunk plots."""
+    metric from the SmolVLA work), always computed and returned; wandb is
+    additive only — with a run, also logs a table over the eval samples:
+    camera images, task, state, and per-joint predicted-vs-truth plots."""
     state = state_normalizer.normalize(batch["state"].to(device))
     generator = torch.Generator(device=device).manual_seed(seed)
     sampled = model.sample_actions(prefix, state, num_steps=10, generator=generator)
@@ -398,18 +398,20 @@ def parse_args() -> TrainArgs:
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument(
+        "--eval-samples",
+        type=int,
+        default=8,
+        help="validation set size: samples spread evenly across the dataset; "
+        "chunk MAE is reported on these (and, with wandb, per-sample rich "
+        "logs: camera frames, task, state, predicted-vs-truth action plots)",
+    )
+    parser.add_argument(
         "--wandb-project",
         default=None,
         help="enable Weights & Biases logging to this project "
         "(WANDB_API_KEY must be set)",
     )
     parser.add_argument("--wandb-run-name", default=None)
-    parser.add_argument(
-        "--wandb-samples",
-        type=int,
-        default=4,
-        help="validation samples logged with images/state/task/action plots",
-    )
     raw = parser.parse_args()
     return TrainArgs(
         dataset_root=raw.dataset_root.expanduser(),
@@ -434,9 +436,9 @@ def parse_args() -> TrainArgs:
         num_workers=raw.num_workers,
         device=raw.device,
         seed=raw.seed,
+        eval_samples=raw.eval_samples,
         wandb_project=raw.wandb_project,
         wandb_run_name=raw.wandb_run_name,
-        wandb_samples=raw.wandb_samples,
     )
 
 
@@ -532,29 +534,22 @@ def main() -> int:
         optimizer, lambda step: lr_lambda(step, args)
     )
 
-    # A fixed batch for the deterministic sampled-chunk eval. Built with an
-    # in-process loader: iterating the main (persistent-workers) loader once
-    # and abandoning the iterator would leak a full worker pool.
-    eval_loader = torch.utils.data.DataLoader(
-        dataset,
-        batch_size=args.batch_size,
-        shuffle=False,
-        num_workers=0,
-        collate_fn=collator,
-        drop_last=True,
-    )
-    eval_batch = next(iter(eval_loader))
-    del eval_loader
+    # Fixed validation set, independent of the training batch size:
+    # --eval-samples items spread evenly across the dataset (deterministic),
+    # collated in-process (safe: dataloader workers are spawned, not forked)
+    # and prefix-encoded once. The raw items keep the original camera frames
+    # for rich logging.
+    eval_indices = torch.linspace(0, len(dataset) - 1, args.eval_samples)
+    eval_items = [dataset[int(i)] for i in eval_indices.long()]
+    eval_batch = collator(eval_items)
     eval_prefix = encode_prefix(model, eval_batch, device)
     print(
-        f"prefix: {eval_batch['input_ids'].shape[1]} tokens "
+        f"eval set: {args.eval_samples} samples at dataset indices "
+        f"{eval_indices.long().tolist()}; prefix "
+        f"{eval_batch['input_ids'].shape[1]} tokens "
         f"(soft-token budget {args.max_soft_tokens}/camera)",
         flush=True,
     )
-    # Raw items backing the first eval samples (unshuffled loader => dataset
-    # order): keeps the original camera frames for rich validation logging.
-    n_samples = min(args.wandb_samples, args.batch_size)
-    eval_items = [dataset[i] for i in range(n_samples)]
     action_names = list(features["action"].get("names") or [])
 
     args.save_dir.mkdir(parents=True, exist_ok=True)
