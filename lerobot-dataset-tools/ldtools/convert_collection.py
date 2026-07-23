@@ -44,6 +44,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pyarrow as pa
 import pyarrow.parquet as pq
 from tqdm import tqdm
 
@@ -189,6 +190,16 @@ def reconcile_with_episodes_metadata(root: Path, info: dict, name: str) -> None:
     if orphans:
         log(name, f"removed {orphans} orphaned episode files not in episodes.jsonl")
 
+    # Densify: the official v21->v30 converter assumes contiguous episode
+    # indices, and the v3 reader assumes the global frame `index` column is
+    # the row counter. Community datasets whose episodes were filtered (or
+    # whose indices were renumbered inconsistently) violate both.
+    episodes.sort(key=lambda e: int(e["episode_index"]))
+    mapping = {int(e["episode_index"]): new for new, e in enumerate(episodes)}
+    if any(old != new for old, new in mapping.items()) or frame_index_broken(root, info, episodes):
+        log(name, f"densifying {len(episodes)} episodes (sparse or broken indices)")
+        densify_indices(root, info, episodes, mapping)
+
     # Recompute declared totals from the episode metadata.
     true_episodes = len(valid)
     true_frames = sum(int(e["length"]) for e in episodes)
@@ -206,15 +217,107 @@ def reconcile_with_episodes_metadata(root: Path, info: dict, name: str) -> None:
         info.update(updates)
         (root / "meta" / "info.json").write_text(json.dumps(info, indent=4))
 
-    # episodes_stats.jsonl may also carry entries for removed episodes.
+    # episodes_stats.jsonl may carry entries for removed episodes, and must
+    # follow any renumbering.
     stats_path = root / "meta" / "episodes_stats.jsonl"
     if stats_path.is_file():
-        lines = [
-            line
+        records = [
+            json.loads(line)
             for line in stats_path.read_text().splitlines()
             if line.strip() and int(json.loads(line)["episode_index"]) in valid
         ]
-        stats_path.write_text("\n".join(lines) + "\n")
+        for record in records:
+            record["episode_index"] = mapping[int(record["episode_index"])]
+        records.sort(key=lambda r: int(r["episode_index"]))
+        stats_path.write_text("\n".join(json.dumps(r) for r in records) + "\n")
+
+
+def _episode_paths(root: Path, info: dict, episode_index: int) -> tuple[Path, list[Path]]:
+    chunks_size = int(info.get("chunks_size", 1000))
+    chunk = episode_index // chunks_size
+    data = root / info["data_path"].format(episode_chunk=chunk, episode_index=episode_index)
+    videos = [
+        root
+        / info["video_path"].format(episode_chunk=chunk, video_key=key, episode_index=episode_index)
+        for key, f in info["features"].items()
+        if f.get("dtype") == "video"
+    ]
+    return data, videos
+
+
+def frame_index_broken(root: Path, info: dict, episodes: list[dict]) -> bool:
+    """True if the global `index` column doesn't equal the row counter.
+
+    Uses parquet footer statistics (no data read) where available.
+    """
+    start = 0
+    for episode in episodes:
+        data_path, _ = _episode_paths(root, info, int(episode["episode_index"]))
+        metadata = pq.ParquetFile(data_path).metadata
+        column = metadata.schema.to_arrow_schema().get_field_index("index")
+        lo = hi = None
+        for group_index in range(metadata.num_row_groups):
+            stats = metadata.row_group(group_index).column(column).statistics
+            if stats is None or not stats.has_min_max:
+                lo, hi = None, None
+                break
+            lo = stats.min if lo is None else min(lo, stats.min)
+            hi = stats.max if hi is None else max(hi, stats.max)
+        if lo is None or hi is None:  # no stats: read the column
+            values = pq.read_table(data_path, columns=["index"])["index"].to_numpy()
+            lo, hi = int(values.min()), int(values.max())
+        length = int(episode["length"])
+        if lo != start or hi != start + length - 1:
+            return True
+        start += length
+    return False
+
+
+def densify_indices(root: Path, info: dict, episodes: list[dict], mapping: dict[int, int]) -> None:
+    """Renumber episodes 0..K-1 and rebuild the global frame index.
+
+    Processes episodes in ascending original order; since new <= old always
+    holds when closing gaps, renames never clobber unprocessed files.
+    """
+    start = 0
+    for episode in episodes:
+        old = int(episode["episode_index"])
+        new = mapping[old]
+        old_data, old_videos = _episode_paths(root, info, old)
+        new_data, new_videos = _episode_paths(root, info, new)
+
+        table = pq.read_table(old_data)
+        length = table.num_rows
+        if length != int(episode["length"]):
+            raise RuntimeError(
+                f"episode {old}: parquet has {length} rows but episodes.jsonl "
+                f"declares {episode['length']}"
+            )
+        table = table.set_column(
+            table.schema.get_field_index("episode_index"),
+            "episode_index",
+            pa.array(np.full(length, new, dtype=np.int64)),
+        )
+        table = table.set_column(
+            table.schema.get_field_index("index"),
+            "index",
+            pa.array(np.arange(start, start + length, dtype=np.int64)),
+        )
+        new_data.parent.mkdir(parents=True, exist_ok=True)
+        pq.write_table(table, new_data)
+        if new_data != old_data:
+            old_data.unlink()
+
+        for old_video, new_video in zip(old_videos, new_videos):
+            if old_video != new_video:
+                new_video.parent.mkdir(parents=True, exist_ok=True)
+                old_video.rename(new_video)
+
+        episode["episode_index"] = new
+        start += length
+
+    episodes_path = root / "meta" / "episodes.jsonl"
+    episodes_path.write_text("\n".join(json.dumps(e) for e in episodes) + "\n")
 
 
 # ---------------------------------------------------------------------------
