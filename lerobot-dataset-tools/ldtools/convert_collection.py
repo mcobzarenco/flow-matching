@@ -32,6 +32,7 @@ Properties:
 
 import argparse
 import json
+import re
 import shutil
 import subprocess
 import tempfile
@@ -178,6 +179,26 @@ def reconcile_with_episodes_metadata(root: Path, info: dict, name: str) -> None:
         for line in (root / "meta" / "episodes.jsonl").read_text().splitlines()
         if line.strip()
     ]
+
+    # Drop episodes whose parquet row count disagrees with their declared
+    # length (recording corruption, e.g. re-record leftovers). Loud, and
+    # recorded in the manifest via the returned note.
+    consistent = []
+    for episode in episodes:
+        data_path, _ = _episode_paths(root, info, int(episode["episode_index"]))
+        rows = pq.ParquetFile(data_path).metadata.num_rows if data_path.is_file() else -1
+        if rows != int(episode["length"]):
+            log(
+                name,
+                f"dropping corrupt episode {episode['episode_index']} "
+                f"(parquet rows {rows} != declared length {episode['length']})",
+            )
+        else:
+            consistent.append(episode)
+    dropped_corrupt = len(episodes) - len(consistent)
+    episodes = consistent
+    if not episodes:
+        raise RuntimeError("no internally-consistent episodes left after reconciliation")
     valid = {int(e["episode_index"]) for e in episodes}
 
     orphans = 0
@@ -212,6 +233,9 @@ def reconcile_with_episodes_metadata(root: Path, info: dict, name: str) -> None:
     expected_videos = true_episodes * len(video_keys)
     if "total_videos" in info and info["total_videos"] != expected_videos:
         updates["total_videos"] = expected_videos
+    if dropped_corrupt:
+        updates["total_episodes"] = true_episodes
+        updates["total_frames"] = true_frames
     if updates:
         log(name, f"reconciled info.json totals from episodes.jsonl: {updates}")
         info.update(updates)
@@ -232,13 +256,37 @@ def reconcile_with_episodes_metadata(root: Path, info: dict, name: str) -> None:
         stats_path.write_text("\n".join(json.dumps(r) for r in records) + "\n")
 
 
+def _resolve_chunked(root: Path, template_path: str, **fmt: object) -> Path:
+    """Resolve a v2.x chunked path, tolerating wrong chunk placement.
+
+    Some datasets violate their own ``chunks_size`` (e.g. 1504 episodes all
+    in ``chunk-000``); if the computed chunk doesn't contain the file, search
+    the other chunk dirs for it.
+    """
+    computed = root / template_path.format(**fmt)
+    if computed.is_file():
+        return computed
+    wildcard = re.sub(r"\{episode_chunk[^}]*\}", "*", template_path)
+    matches = sorted(
+        root.glob(wildcard.format(**{k: v for k, v in fmt.items() if k != "episode_chunk"}))
+    )
+    return matches[0] if matches else computed
+
+
 def _episode_paths(root: Path, info: dict, episode_index: int) -> tuple[Path, list[Path]]:
     chunks_size = int(info.get("chunks_size", 1000))
     chunk = episode_index // chunks_size
-    data = root / info["data_path"].format(episode_chunk=chunk, episode_index=episode_index)
+    data = _resolve_chunked(
+        root, info["data_path"], episode_chunk=chunk, episode_index=episode_index
+    )
     videos = [
-        root
-        / info["video_path"].format(episode_chunk=chunk, video_key=key, episode_index=episode_index)
+        _resolve_chunked(
+            root,
+            info["video_path"],
+            episode_chunk=chunk,
+            video_key=key,
+            episode_index=episode_index,
+        )
         for key, f in info["features"].items()
         if f.get("dtype") == "video"
     ]
@@ -321,6 +369,74 @@ def densify_indices(root: Path, info: dict, episodes: list[dict], mapping: dict[
 
 
 # ---------------------------------------------------------------------------
+# Feature sanitation: v3.0 cannot represent some legacy/exotic features
+# ---------------------------------------------------------------------------
+
+# v3.0 features must be image/video or fixed-shape numeric arrays
+# (lerobot feature_utils supports shapes of rank 1..5 plus scalars).
+UNSUPPORTED_FEATURE_DTYPES = {"string", "list", "dict"}
+
+
+def drop_unsupported_features(root: Path, info: dict, name: str) -> list[str]:
+    """Remove features the v3.0 format cannot represent (e.g. per-frame
+    ``string`` subtask annotations, ``list`` fields) from ``info.json`` and
+    from the data parquets. The source repos remain the home of this data.
+    """
+    doomed = [
+        key
+        for key, feature in info["features"].items()
+        if feature.get("dtype") in UNSUPPORTED_FEATURE_DTYPES
+    ]
+    if not doomed:
+        return []
+    log(name, f"dropping features unsupported by v3.0: {doomed}")
+    for key in doomed:
+        del info["features"][key]
+    (root / "meta" / "info.json").write_text(json.dumps(info, indent=4))
+    # the columns themselves are removed by sanitize_data_columns (they are
+    # now undeclared)
+    return doomed
+
+
+def normalize_list_wrapped_scalars(root: Path, info: dict, name: str) -> None:
+    """Unwrap columns stored as list<T> where the feature declares shape [1].
+
+    Some datasets store scalar features (e.g. ``next.done`` bool, shape [1])
+    wrapped in single-element lists; the v3.0 schema cast then fails with
+    "Couldn't cast list<element: bool> to bool".
+    """
+    scalar_keys = {
+        key
+        for key, feature in info["features"].items()
+        if feature.get("dtype") not in ("video", "image")
+        and list(feature.get("shape") or []) == [1]
+    }
+    if not scalar_keys:
+        return
+    fixed_columns: set[str] = set()
+    for parquet_path in sorted(root.glob("data/chunk-*/episode_*.parquet")):
+        schema = pq.read_schema(parquet_path)
+        wrapped = [
+            key
+            for key in scalar_keys
+            if key in schema.names and pa.types.is_list(schema.field(key).type)
+        ]
+        if not wrapped:
+            continue
+        table = pq.read_table(parquet_path)
+        for key in wrapped:
+            column = table[key].combine_chunks()
+            flat = column.flatten()
+            if len(flat) != len(table):
+                raise RuntimeError(f"{key}: list-wrapped column has non-singleton lists")
+            table = table.set_column(table.schema.get_field_index(key), key, flat)
+        pq.write_table(table, parquet_path)
+        fixed_columns.update(wrapped)
+    if fixed_columns:
+        log(name, f"unwrapped list-stored scalar columns: {sorted(fixed_columns)}")
+
+
+# ---------------------------------------------------------------------------
 # Data-column sanitation (drop columns not declared in info features)
 # ---------------------------------------------------------------------------
 
@@ -351,6 +467,36 @@ def sanitize_data_columns(root: Path, info: dict) -> set[str]:
 # ---------------------------------------------------------------------------
 
 _original_concatenate = None
+
+
+_original_concat_data = None
+
+
+def concat_data_files_with_arrow_fallback(
+    paths_to_cat: list, new_root: Path, chunk_idx: int, file_idx: int, image_keys: list
+) -> None:
+    """lerobot's pandas-based data concat, with a pyarrow-native fallback.
+
+    Datasets storing depth maps (or other large arrays) as parquet columns
+    break the pandas round-trip (`Table.from_pandas` cannot infer the
+    extension dtype). Arrow-native concatenation preserves the source schema
+    exactly and needs no inference.
+    """
+    assert _original_concat_data is not None
+    try:
+        _original_concat_data(paths_to_cat, new_root, chunk_idx, file_idx, image_keys)
+        return
+    except Exception as error:  # noqa: BLE001 - deliberate fallback
+        log("data-concat", f"pandas failed ({type(error).__name__}); retrying with pyarrow")
+    import lerobot.scripts.convert_dataset_v21_to_v30 as converter_module
+
+    tables = [pq.read_table(p) for p in paths_to_cat]
+    table = pa.concat_tables(tables, promote_options="default")
+    path = Path(new_root) / converter_module.DEFAULT_DATA_PATH.format(
+        chunk_index=chunk_idx, file_index=file_idx
+    )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    pq.write_table(table, path)
 
 
 def concatenate_with_ffmpeg_fallback(
@@ -403,12 +549,15 @@ def concatenate_with_ffmpeg_fallback(
 
 
 def install_concat_fallback() -> None:
-    global _original_concatenate
+    global _original_concatenate, _original_concat_data
     import lerobot.scripts.convert_dataset_v21_to_v30 as converter_module
 
     if converter_module.concatenate_video_files is not concatenate_with_ffmpeg_fallback:
         _original_concatenate = converter_module.concatenate_video_files
         converter_module.concatenate_video_files = concatenate_with_ffmpeg_fallback
+    if converter_module.concat_data_files is not concat_data_files_with_arrow_fallback:
+        _original_concat_data = converter_module.concat_data_files
+        converter_module.concat_data_files = concat_data_files_with_arrow_fallback
 
 
 # ---------------------------------------------------------------------------
@@ -574,6 +723,8 @@ def convert_one(ds: SubDataset, output: Path) -> dict:
 
     log(ds.name, f"staging copy ({ds.size_bytes / 1e9:.1f} GB, {ds.version})")
     stage_copy(ds.path, staging, info)
+    dropped_features = drop_unsupported_features(staging, info, ds.name)
+    normalize_list_wrapped_scalars(staging, info, ds.name)
     reconcile_with_episodes_metadata(staging, info, ds.name)
     dropped = sanitize_data_columns(staging, info)
     if dropped:
@@ -600,12 +751,15 @@ def convert_one(ds: SubDataset, output: Path) -> dict:
     shutil.move(str(staging), str(final))
     log(ds.name, f"done in {time.time() - started:.0f}s -> {final}")
 
-    return {
+    result = {
         "status": "converted",
         "source_version": ds.version,
         "seconds": round(time.time() - started, 1),
         **counts,
     }
+    if dropped_features:
+        result["dropped_features"] = dropped_features
+    return result
 
 
 def main() -> None:
