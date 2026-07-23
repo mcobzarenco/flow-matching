@@ -13,11 +13,20 @@ The prompt is the instruction sandwich discussed in the design:
 giving instruction-conditioned image KV and image-conditioned instruction KV
 under causal attention.
 
-Usage (dev sample)::
+Training data is selected with ``--train-data``: any mix of dataset
+directories and collection roots (scanned for ``*/meta/info.json`` and
+``*/*/meta/info.json``, i.e. flat and ``<user>/<dataset>`` layouts). Datasets
+whose action/state dims differ from the first selected dataset are dropped
+loudly. Camera keys are discovered per sample (sorted, so prompt slots are
+positional — the community collections' generic image/image2 keys carry no
+reliable wrist-vs-scene semantics); normalization uses count-weighted
+aggregated stats over the selection.
+
+Usage::
 
     uv run python -m bijou.train \
-        --dataset-root ~/community_dataset_v1_v3/ZGGZZG/so100_drop0 \
-        --repo-id ZGGZZG/so100_drop0 --device cuda --steps 200
+        --train-data ~/datasets/mcobzarenco/community_dataset_v2_v3 \
+        --device cuda --steps 5000
 """
 
 from __future__ import annotations
@@ -30,7 +39,9 @@ import os
 import statistics
 import sys
 import time
+from collections import Counter
 from dataclasses import dataclass
+from fnmatch import fnmatch
 from itertools import islice
 from pathlib import Path
 from typing import Any
@@ -55,12 +66,13 @@ DEFAULT_BACKBONE = "google/gemma-4-e2b-it"
 
 @dataclass(frozen=True, slots=True)
 class TrainArgs:
-    dataset_root: Path
-    repo_id: str
+    train_data: tuple[Path, ...]
+    exclude: tuple[str, ...]
     backbone: str
     save_dir: Path
     instruction: str | None
     cameras: tuple[str, ...] | None
+    max_cameras: int | None
     max_soft_tokens: int
     stream_counts: tuple[int, ...]
     self_attention_mode: str
@@ -101,6 +113,35 @@ class Normalizer:
         std = torch.as_tensor(stats[key]["std"], dtype=torch.float32, device=device)
         return cls(mean, std)
 
+    @classmethod
+    def from_aggregated_stats(
+        cls,
+        stats_list: list[dict[str, dict[str, Any]]],
+        key: str,
+        device: torch.device,
+    ) -> "Normalizer":
+        """Count-weighted aggregation across datasets: the exact combined
+        mean, and std via E[x²] composition (all in float64 before rounding
+        to float32)."""
+        counts = torch.tensor(
+            [float(s[key]["count"][0]) for s in stats_list], dtype=torch.float64
+        )
+        means = torch.stack(
+            [torch.as_tensor(s[key]["mean"], dtype=torch.float64) for s in stats_list]
+        )
+        stds = torch.stack(
+            [torch.as_tensor(s[key]["std"], dtype=torch.float64) for s in stats_list]
+        )
+        total = counts.sum()
+        weights = (counts / total)[:, None]
+        mean = (weights * means).sum(dim=0)
+        second_moment = (weights * (stds.pow(2) + means.pow(2))).sum(dim=0)
+        std = (second_moment - mean.pow(2)).clamp(min=0).sqrt()
+        return cls(
+            mean.to(dtype=torch.float32, device=device),
+            std.to(dtype=torch.float32, device=device),
+        )
+
     def normalize(self, x: Tensor) -> Tensor:
         return (x - self.mean) / (self.std + 1e-8)
 
@@ -109,6 +150,47 @@ class Normalizer:
 
     def state_dict(self) -> dict[str, list[float]]:
         return {"mean": self.mean.tolist(), "std": self.std.tolist()}
+
+
+def repo_id_of(dataset_dir: Path) -> str:
+    return f"{dataset_dir.parent.name}/{dataset_dir.name}"
+
+
+def discover_datasets(paths: tuple[Path, ...], exclude: tuple[str, ...]) -> list[Path]:
+    """Resolve ``--train-data`` entries to dataset directories.
+
+    A path containing ``meta/info.json`` is a dataset; anything else is
+    treated as a collection root and scanned one and two levels deep (flat
+    and ``<user>/<dataset>`` layouts). ``exclude`` patterns are fnmatch'd
+    against the derived ``<user>/<dataset>`` repo id.
+    """
+    found: list[Path] = []
+    for path in paths:
+        path = path.expanduser()
+        if (path / "meta" / "info.json").exists():
+            found.append(path)
+            continue
+        nested = sorted(
+            info.parent.parent
+            for pattern in ("*/meta/info.json", "*/*/meta/info.json")
+            for info in path.glob(pattern)
+        )
+        if not nested:
+            raise FileNotFoundError(f"no LeRobot datasets under {path}")
+        found.extend(nested)
+
+    selected: list[Path] = []
+    seen: set[Path] = set()
+    for dataset_dir in found:
+        if dataset_dir in seen:
+            continue
+        seen.add(dataset_dir)
+        if any(fnmatch(repo_id_of(dataset_dir), pattern) for pattern in exclude):
+            continue
+        selected.append(dataset_dir)
+    if not selected:
+        raise FileNotFoundError("no datasets left after --exclude filtering")
+    return selected
 
 
 def _worker_init(_worker_id: int) -> None:
@@ -128,15 +210,37 @@ class PrefixCollator:
     def __init__(
         self,
         checkpoint: str,
-        cameras: tuple[str, ...],
         instruction: str | None,
         max_soft_tokens: int,
+        camera_filter: tuple[str, ...] | None = None,
+        max_cameras: int | None = None,
     ) -> None:
         self.checkpoint = checkpoint
-        self.cameras = cameras
         self.instruction = instruction
         self.max_soft_tokens = max_soft_tokens
+        self.camera_filter = camera_filter
+        self.max_cameras = max_cameras
         self._processor: Any = None
+
+    def cameras_of(self, item: dict[str, Any]) -> list[str]:
+        """Sorted camera keys of one sample; prompt slots are positional (the
+        community collections' image/image2 keys carry no reliable
+        wrist-vs-scene semantics — SmolVLA precedent)."""
+        cameras = sorted(k for k in item if k.startswith("observation.images."))
+        if self.camera_filter is not None:
+            allowed = set(self.camera_filter)
+            cameras = [
+                k
+                for k in cameras
+                if k in allowed or k.removeprefix("observation.images.") in allowed
+            ]
+        if not cameras:
+            raise ValueError(
+                f"sample has no cameras after filtering ({self.camera_filter=})"
+            )
+        if self.max_cameras is not None:
+            cameras = cameras[: self.max_cameras]
+        return cameras
 
     def __getstate__(self) -> dict[str, Any]:
         # Never ship a constructed processor across process boundaries; spawn
@@ -160,7 +264,7 @@ class PrefixCollator:
         for item in items:
             instruction = self.instruction or str(item["task"])
             content: list[dict[str, Any]] = [{"type": "text", "text": instruction}]
-            for camera in self.cameras:
+            for camera in self.cameras_of(item):
                 content.append({"type": "image", "image": self._to_pil(item[camera])})
             content.append({"type": "text", "text": instruction})
             conversations.append([{"role": "user", "content": content}])
@@ -271,7 +375,7 @@ def validate(
     *,
     wandb_run: Any = None,
     eval_items: list[dict[str, Any]] | None = None,
-    cameras: tuple[str, ...] = (),
+    collator: PrefixCollator | None = None,
     action_names: list[str] | None = None,
     step: int = 0,
 ) -> float:
@@ -288,10 +392,14 @@ def validate(
     error = (sampled - truth).abs()
     mae = float(error[valid].mean())
 
-    if wandb_run is not None and eval_items:
+    if wandb_run is not None and eval_items and collator is not None:
+        # Cameras vary per sample across mixed datasets: generic positional
+        # columns, padded with None where a sample has fewer cameras.
+        per_item_cameras = [collator.cameras_of(item) for item in eval_items]
+        n_slots = max(len(cams) for cams in per_item_cameras)
         columns: list[Any] = [
             "sample",
-            *cameras,
+            *(f"camera_{i}" for i in range(n_slots)),
             "task",
             "state",
             "chunk_mae",
@@ -299,15 +407,18 @@ def validate(
         ]
         table = wandb.Table(columns=columns)
         for i, item in enumerate(eval_items):
-            images = [
+            cams = per_item_cameras[i]
+            images: list[Any] = [
                 wandb.Image(
                     (item[camera].clamp(0, 1) * 255)
                     .to(torch.uint8)
                     .permute(1, 2, 0)
-                    .numpy()
+                    .numpy(),
+                    caption=camera.removeprefix("observation.images."),
                 )
-                for camera in cameras
+                for camera in cams
             ]
+            images += [None] * (n_slots - len(cams))
             figure = _chunk_plot(
                 sampled[i].cpu(), truth[i].cpu(), valid[i].cpu(), action_names or []
             )
@@ -361,8 +472,19 @@ def lr_lambda(step: int, args: TrainArgs) -> float:
 
 def parse_args() -> TrainArgs:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--dataset-root", type=Path, required=True)
-    parser.add_argument("--repo-id", required=True)
+    parser.add_argument(
+        "--train-data",
+        type=Path,
+        nargs="+",
+        required=True,
+        help="dataset directories and/or collection roots, mixed freely",
+    )
+    parser.add_argument(
+        "--exclude",
+        nargs="*",
+        default=[],
+        help="fnmatch patterns against <user>/<dataset> repo ids to skip",
+    )
     parser.add_argument("--backbone", default=DEFAULT_BACKBONE)
     parser.add_argument(
         "--save-dir", type=Path, default=Path("outputs/train/bijou_dev")
@@ -376,7 +498,14 @@ def parse_args() -> TrainArgs:
         "--cameras",
         nargs="*",
         default=None,
-        help="image feature keys in prompt order (default: all, sorted)",
+        help="only use these camera keys when present (full keys or suffixes; "
+        "default: all cameras of each sample, sorted)",
+    )
+    parser.add_argument(
+        "--max-cameras",
+        type=int,
+        default=None,
+        help="cap cameras per sample (applied after --cameras filtering)",
     )
     parser.add_argument("--max-soft-tokens", type=int, default=140)
     parser.add_argument("--stream-counts", type=int, nargs="*", default=[4, 4, 7])
@@ -419,12 +548,13 @@ def parse_args() -> TrainArgs:
     parser.add_argument("--wandb-run-name", default=None)
     raw = parser.parse_args()
     return TrainArgs(
-        dataset_root=raw.dataset_root.expanduser(),
-        repo_id=raw.repo_id,
+        train_data=tuple(raw.train_data),
+        exclude=tuple(raw.exclude),
         backbone=raw.backbone,
         save_dir=raw.save_dir,
         instruction=raw.instruction,
         cameras=tuple(raw.cameras) if raw.cameras else None,
+        max_cameras=raw.max_cameras,
         max_soft_tokens=raw.max_soft_tokens,
         stream_counts=tuple(raw.stream_counts),
         self_attention_mode=raw.self_attention_mode,
@@ -462,34 +592,80 @@ def main() -> int:
 
     checkpoint_dir = resolve_checkpoint_dir(args.backbone)
 
-    # -- dataset ---------------------------------------------------------
-    probe = LeRobotDataset(args.repo_id, root=str(args.dataset_root))
-    fps = probe.fps
-    features = probe.meta.info["features"]
-    cameras = args.cameras or tuple(
-        sorted(k for k, f in features.items() if f["dtype"] == "video")
-    )
-    action_dim = int(features["action"]["shape"][0])
-    state_dim = int(features["observation.state"]["shape"][0])
-    dataset = LeRobotDataset(
-        args.repo_id,
-        root=str(args.dataset_root),
-        delta_timestamps={"action": [i / fps for i in range(args.chunk_size)]},
+    # -- datasets --------------------------------------------------------
+    dataset_dirs = discover_datasets(args.train_data, args.exclude)
+    dataset_infos = [
+        json.loads((d / "meta" / "info.json").read_text()) for d in dataset_dirs
+    ]
+    # Dims are dictated by the first selected dataset; mismatches are
+    # dropped loudly (the community collections mix in a few 7/12/14-dof
+    # datasets — cross-embodiment padding is out of scope for now).
+    action_dim = int(dataset_infos[0]["features"]["action"]["shape"][0])
+    state_dim = int(dataset_infos[0]["features"]["observation.state"]["shape"][0])
+    datasets: list[LeRobotDataset] = []
+    stats_list: list[dict[str, Any]] = []
+    camera_census: Counter[tuple[str, ...]] = Counter()
+    dropped: list[str] = []
+    total_episodes = 0
+    for dataset_dir, info in zip(dataset_dirs, dataset_infos, strict=True):
+        repo_id = repo_id_of(dataset_dir)
+        dims = (
+            int(info["features"]["action"]["shape"][0]),
+            int(info["features"]["observation.state"]["shape"][0]),
+        )
+        if dims != (action_dim, state_dim):
+            dropped.append(f"{repo_id} (action/state dims {dims[0]}/{dims[1]})")
+            continue
+        dataset = LeRobotDataset(
+            repo_id,
+            root=str(dataset_dir),
+            delta_timestamps={
+                "action": [i / info["fps"] for i in range(args.chunk_size)]
+            },
+        )
+        if dataset.meta.stats is None:
+            dropped.append(f"{repo_id} (no stats)")
+            continue
+        datasets.append(dataset)
+        stats_list.append(dataset.meta.stats)
+        camera_census[
+            tuple(
+                sorted(
+                    k.removeprefix("observation.images.")
+                    for k, f in info["features"].items()
+                    if f["dtype"] == "video"
+                )
+            )
+        ] += 1
+        total_episodes += dataset.num_episodes
+    if not datasets:
+        raise ValueError("no compatible datasets selected")
+    dataset: torch.utils.data.ConcatDataset[dict[str, Any]] = (
+        torch.utils.data.ConcatDataset(datasets)
     )
     print(
-        f"dataset: {args.repo_id}: {dataset.num_episodes} episodes, "
-        f"{dataset.num_frames} frames, fps {fps}, cameras {cameras}, "
-        f"action/state dim {action_dim}/{state_dim}",
+        f"train data: {len(datasets)} datasets, {total_episodes} episodes, "
+        f"{len(dataset)} frames, action/state dim {action_dim}/{state_dim}",
         flush=True,
     )
-    stats = dataset.meta.stats
-    if stats is None:
-        raise ValueError(f"dataset {args.repo_id} has no stats (meta/stats.json)")
-    action_normalizer = Normalizer.from_stats(stats, "action", device)
-    state_normalizer = Normalizer.from_stats(stats, "observation.state", device)
+    for camera_set, count in camera_census.most_common():
+        print(f"  {count:4d} x cameras {camera_set}", flush=True)
+    if dropped:
+        print(f"dropped {len(dropped)} incompatible datasets:", flush=True)
+        for reason in dropped:
+            print(f"  - {reason}", flush=True)
+
+    action_normalizer = Normalizer.from_aggregated_stats(stats_list, "action", device)
+    state_normalizer = Normalizer.from_aggregated_stats(
+        stats_list, "observation.state", device
+    )
 
     collator = PrefixCollator(
-        str(checkpoint_dir), cameras, args.instruction, args.max_soft_tokens
+        str(checkpoint_dir),
+        args.instruction,
+        args.max_soft_tokens,
+        camera_filter=args.cameras,
+        max_cameras=args.max_cameras,
     )
     loader = torch.utils.data.DataLoader(
         dataset,
@@ -561,7 +737,7 @@ def main() -> int:
         f"(soft-token budget {args.max_soft_tokens}/camera)",
         flush=True,
     )
-    action_names = list(features["action"].get("names") or [])
+    action_names = list(dataset_infos[0]["features"]["action"].get("names") or [])
 
     args.save_dir.mkdir(parents=True, exist_ok=True)
     log_path = args.save_dir / "train_log.jsonl"
@@ -580,11 +756,10 @@ def main() -> int:
                 },
                 "expert_config": dataclasses.asdict(expert_config),
                 "dataset": {
-                    "repo_id": args.repo_id,
-                    "episodes": dataset.num_episodes,
-                    "frames": dataset.num_frames,
-                    "fps": fps,
-                    "cameras": cameras,
+                    "repo_ids": [d.repo_id for d in datasets],
+                    "episodes": total_episodes,
+                    "frames": len(dataset),
+                    "camera_sets": {"/".join(k): v for k, v in camera_census.items()},
                 },
                 "trainable_params": n_trainable,
             },
@@ -647,7 +822,7 @@ def main() -> int:
                     args.seed,
                     wandb_run=wandb_run,
                     eval_items=eval_items,
-                    cameras=cameras,
+                    collator=collator,
                     action_names=action_names,
                     step=step,
                 )
