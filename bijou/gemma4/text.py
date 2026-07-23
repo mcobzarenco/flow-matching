@@ -28,6 +28,7 @@ from .layers import (
     AttentionBackend,
     DeviceLike,
     RMSNorm,
+    activation_fn,
     apply_rotary_pos_emb,
     attention,
     buffer_device,
@@ -38,14 +39,6 @@ from .masks import MaskMapping, MaskSpec, build_text_masks
 
 type SharedKV = dict[LayerType, tuple[Tensor, Tensor]]
 type RopeMapping = dict[LayerType, tuple[Tensor, Tensor]]
-
-
-def activation_fn(name: str) -> nn.Module:
-    if name == "gelu_pytorch_tanh":
-        return nn.GELU(approximate="tanh")
-    if name == "silu":
-        return nn.SiLU()
-    raise ValueError(f"unsupported activation: {name}")
 
 
 class ScaledEmbedding(nn.Embedding):

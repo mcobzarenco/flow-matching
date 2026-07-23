@@ -22,12 +22,12 @@ from .layers import (
     AttentionBackend,
     DeviceLike,
     RMSNorm,
+    activation_fn,
     apply_rotary_pos_emb,
     attention,
     buffer_device,
 )
 from .masks import MaskSpec, build_bidirectional_mask
-from .text import activation_fn
 
 
 class ClippableLinear(nn.Module):

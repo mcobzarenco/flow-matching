@@ -39,6 +39,14 @@ class AttentionBackend(StrEnum):
 DEFAULT_ATTENTION_BACKEND = AttentionBackend.SDPA
 
 
+def activation_fn(name: str) -> nn.Module:
+    if name == "gelu_pytorch_tanh":
+        return nn.GELU(approximate="tanh")
+    if name == "silu":
+        return nn.SiLU()
+    raise ValueError(f"unsupported activation: {name}")
+
+
 def buffer_device(device: DeviceLike) -> DeviceLike:
     """Device for *computed* non-persistent buffers (rope frequencies, embed
     scales). Meta-device construction — used by the checkpoint loader — would

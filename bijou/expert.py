@@ -43,6 +43,7 @@ from .gemma4.layers import (
     AttentionBackend,
     DeviceLike,
     RMSNorm,
+    activation_fn,
     apply_rotary_pos_emb,
     attention,
     buffer_device,
@@ -50,7 +51,6 @@ from .gemma4.layers import (
     rope_inv_freq_from_params,
 )
 from .gemma4.masks import MaskSpec
-from .gemma4.text import activation_fn
 
 type StreamKV = dict[int, tuple[Tensor, Tensor]]
 

@@ -31,6 +31,7 @@ import statistics
 import sys
 import time
 from dataclasses import dataclass
+from itertools import islice
 from pathlib import Path
 from typing import Any
 
@@ -550,7 +551,7 @@ def main() -> int:
     # and prefix-encoded once. The raw items keep the original camera frames
     # for rich logging.
     stride = max(len(dataset) // args.eval_samples, 1)
-    eval_indices = list(range(0, len(dataset), stride))[: args.eval_samples]
+    eval_indices = list(islice(range(0, len(dataset), stride), args.eval_samples))
     eval_items = [dataset[i] for i in eval_indices]
     eval_batch = collator(eval_items)
     eval_prefix = encode_prefix(model, eval_batch, device)
