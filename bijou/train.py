@@ -55,6 +55,10 @@ class TrainArgs:
     max_soft_tokens: int
     stream_counts: tuple[int, ...]
     self_attention_mode: str
+    expert_hidden: int
+    expert_heads: int
+    expert_intermediate: int
+    expert_cross_heads: int
     chunk_size: int
     batch_size: int
     steps: int
@@ -384,6 +388,10 @@ def parse_args() -> TrainArgs:
         choices=["causal_actions", "bidirectional"],
         default="causal_actions",
     )
+    parser.add_argument("--expert-hidden", type=int, default=768)
+    parser.add_argument("--expert-heads", type=int, default=6)
+    parser.add_argument("--expert-intermediate", type=int, default=3072)
+    parser.add_argument("--expert-cross-heads", type=int, default=4)
     parser.add_argument("--chunk-size", type=int, default=50)
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--steps", type=int, default=200)
@@ -423,6 +431,10 @@ def parse_args() -> TrainArgs:
         max_soft_tokens=raw.max_soft_tokens,
         stream_counts=tuple(raw.stream_counts),
         self_attention_mode=raw.self_attention_mode,
+        expert_hidden=raw.expert_hidden,
+        expert_heads=raw.expert_heads,
+        expert_intermediate=raw.expert_intermediate,
+        expert_cross_heads=raw.expert_cross_heads,
         chunk_size=raw.chunk_size,
         batch_size=raw.batch_size,
         steps=raw.steps,
@@ -506,6 +518,10 @@ def main() -> int:
         action_dim=action_dim,
         state_dim=state_dim,
         stream_counts=args.stream_counts,
+        hidden_size=args.expert_hidden,
+        num_attention_heads=args.expert_heads,
+        intermediate_size=args.expert_intermediate,
+        cross_attention_heads=args.expert_cross_heads,
         chunk_size=args.chunk_size,
         self_attention_mode=SelfAttentionMode(args.self_attention_mode),
     )
@@ -539,14 +555,14 @@ def main() -> int:
     # collated in-process (safe: dataloader workers are spawned, not forked)
     # and prefix-encoded once. The raw items keep the original camera frames
     # for rich logging.
-    eval_indices = torch.linspace(0, len(dataset) - 1, args.eval_samples)
-    eval_items = [dataset[int(i)] for i in eval_indices.long()]
+    stride = max(len(dataset) // args.eval_samples, 1)
+    eval_indices = list(range(0, len(dataset), stride))[: args.eval_samples]
+    eval_items = [dataset[i] for i in eval_indices]
     eval_batch = collator(eval_items)
     eval_prefix = encode_prefix(model, eval_batch, device)
     print(
-        f"eval set: {args.eval_samples} samples at dataset indices "
-        f"{eval_indices.long().tolist()}; prefix "
-        f"{eval_batch['input_ids'].shape[1]} tokens "
+        f"eval set: {len(eval_indices)} samples at dataset indices "
+        f"{eval_indices}; prefix {eval_batch['input_ids'].shape[1]} tokens "
         f"(soft-token budget {args.max_soft_tokens}/camera)",
         flush=True,
     )
