@@ -742,37 +742,49 @@ def episode_video_stats(video_path: Path) -> dict[str, np.ndarray]:
 
 
 def synthesize_episodes_stats(root: Path, info: dict, name: str) -> None:
-    """Write meta/episodes_stats.jsonl for a v2.0 dataset and bump to v2.1."""
+    """Ensure every episode in episodes.jsonl has an episodes_stats entry.
+
+    Covers two cases: v2.0 datasets (no episodes_stats.jsonl at all) and
+    datasets with *partial* coverage (e.g. stats missing for a tail of
+    episodes; the official converter indexes stats positionally and crashes).
+    Existing entries are kept; only gaps are computed."""
     from lerobot.datasets.compute_stats import get_feature_stats
 
     features = info["features"]
-    chunks_size = int(info.get("chunks_size", 1000))
     episodes = [
         json.loads(line)
         for line in (root / "meta" / "episodes.jsonl").read_text().splitlines()
         if line.strip()
     ]
 
-    records = []
-    for i, episode in enumerate(episodes):
-        if i % 10 == 0:
-            log(name, f"synthesizing episode stats (v2.0->v2.1): {i}/{len(episodes)}")
+    stats_path = root / "meta" / "episodes_stats.jsonl"
+    existing: dict[int, dict] = {}
+    if stats_path.is_file():
+        for line in stats_path.read_text().splitlines():
+            if line.strip():
+                record = json.loads(line)
+                existing[int(record["episode_index"])] = record
+
+    missing = [e for e in episodes if int(e["episode_index"]) not in existing]
+    if not missing:
+        return
+    log(name, f"synthesizing episode stats for {len(missing)}/{len(episodes)} episodes")
+
+    for i, episode in enumerate(missing):
+        if i % 10 == 0 and len(missing) > 10:
+            log(name, f"  stats progress: {i}/{len(missing)}")
         ep_idx = int(episode["episode_index"])
-        chunk = ep_idx // chunks_size
-        df = pd.read_parquet(
-            root / info["data_path"].format(episode_chunk=chunk, episode_index=ep_idx)
-        )
+        data_path, video_paths = _episode_paths(root, info, ep_idx)
+        df = pd.read_parquet(data_path)
 
         ep_stats: dict[str, dict] = {}
+        video_iter = iter(video_paths)
         for key, feature in features.items():
             dtype = feature.get("dtype")
             if dtype in ("string", "language"):
                 continue
             if dtype in ("video", "image"):
-                video_path = root / info["video_path"].format(
-                    episode_chunk=chunk, video_key=key, episode_index=ep_idx
-                )
-                ep_stats[key] = episode_video_stats(video_path)
+                ep_stats[key] = episode_video_stats(next(video_iter))
             else:
                 column = df[key].to_numpy()
                 array = np.stack(list(column)) if column.dtype == object else column
@@ -784,11 +796,13 @@ def synthesize_episodes_stats(root: Path, info: dict, name: str) -> None:
             key: {k: np.asarray(v).tolist() for k, v in stats.items()}
             for key, stats in ep_stats.items()
         }
-        records.append(json.dumps({"episode_index": ep_idx, "stats": serialized}))
+        existing[ep_idx] = {"episode_index": ep_idx, "stats": serialized}
 
-    (root / "meta" / "episodes_stats.jsonl").write_text("\n".join(records) + "\n")
-    info["codebase_version"] = "v2.1"
-    (root / "meta" / "info.json").write_text(json.dumps(info, indent=4))
+    ordered = [existing[int(e["episode_index"])] for e in episodes]
+    stats_path.write_text("\n".join(json.dumps(r) for r in ordered) + "\n")
+    if info.get("codebase_version") == "v2.0":
+        info["codebase_version"] = "v2.1"
+        (root / "meta" / "info.json").write_text(json.dumps(info, indent=4))
 
 
 # ---------------------------------------------------------------------------
@@ -843,8 +857,7 @@ def convert_one(ds: SubDataset, output: Path) -> dict:
         log(ds.name, f"dropped undeclared parquet columns: {sorted(dropped)}")
     if repair_stats_keys(staging, info["features"]):
         log(ds.name, "repaired flat camera stats keys")
-    if ds.version == "v2.0" or not (staging / "meta" / "episodes_stats.jsonl").is_file():
-        synthesize_episodes_stats(staging, info, ds.name)
+    synthesize_episodes_stats(staging, info, ds.name)  # gap-fills; no-op when complete
 
     log(ds.name, "converting v2.1 -> v3.0")
     install_concat_fallback()
