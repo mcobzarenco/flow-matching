@@ -180,23 +180,39 @@ def reconcile_with_episodes_metadata(root: Path, info: dict, name: str) -> None:
         if line.strip()
     ]
 
-    # Drop episodes whose parquet row count disagrees with their declared
-    # length (recording corruption, e.g. re-record leftovers). Loud, and
-    # recorded in the manifest via the returned note.
+    # Episodes whose parquet row count disagrees with their declared length:
+    # if the videos agree with the parquet (only the metadata is stale, e.g.
+    # trimmed datasets), repair the declared length; otherwise drop the
+    # episode as corrupt. Loud either way.
     consistent = []
+    repaired = 0
     for episode in episodes:
-        data_path, _ = _episode_paths(root, info, int(episode["episode_index"]))
+        data_path, video_paths = _episode_paths(root, info, int(episode["episode_index"]))
         rows = pq.ParquetFile(data_path).metadata.num_rows if data_path.is_file() else -1
-        if rows != int(episode["length"]):
+        if rows == int(episode["length"]):
+            consistent.append(episode)
+            continue
+        if rows > 0 and all(_video_frame_count(v) == rows for v in video_paths):
+            log(
+                name,
+                f"repairing declared length of episode {episode['episode_index']}: "
+                f"{episode['length']} -> {rows} (parquet and videos agree)",
+            )
+            episode["length"] = rows
+            consistent.append(episode)
+            repaired += 1
+        else:
             log(
                 name,
                 f"dropping corrupt episode {episode['episode_index']} "
                 f"(parquet rows {rows} != declared length {episode['length']})",
             )
-        else:
-            consistent.append(episode)
     dropped_corrupt = len(episodes) - len(consistent)
     episodes = consistent
+    if repaired:
+        (root / "meta" / "episodes.jsonl").write_text(
+            "\n".join(json.dumps(e) for e in episodes) + "\n"
+        )
     if not episodes:
         raise RuntimeError("no internally-consistent episodes left after reconciliation")
     valid = {int(e["episode_index"]) for e in episodes}
@@ -233,7 +249,7 @@ def reconcile_with_episodes_metadata(root: Path, info: dict, name: str) -> None:
     expected_videos = true_episodes * len(video_keys)
     if "total_videos" in info and info["total_videos"] != expected_videos:
         updates["total_videos"] = expected_videos
-    if dropped_corrupt:
+    if dropped_corrupt or repaired:
         updates["total_episodes"] = true_episodes
         updates["total_frames"] = true_frames
     if updates:
@@ -254,6 +270,32 @@ def reconcile_with_episodes_metadata(root: Path, info: dict, name: str) -> None:
             record["episode_index"] = mapping[int(record["episode_index"])]
         records.sort(key=lambda r: int(r["episode_index"]))
         stats_path.write_text("\n".join(json.dumps(r) for r in records) + "\n")
+
+
+def _video_frame_count(video_path: Path) -> int:
+    if not video_path.is_file():
+        return -1
+    result = subprocess.run(
+        [
+            "ffprobe",
+            "-v",
+            "error",
+            "-count_packets",
+            "-select_streams",
+            "v:0",
+            "-show_entries",
+            "stream=nb_read_packets",
+            "-of",
+            "csv=p=0",
+            str(video_path),
+        ],
+        capture_output=True,
+        text=True,
+    )
+    try:
+        return int(result.stdout.strip())
+    except ValueError:
+        return -1
 
 
 def _resolve_chunked(root: Path, template_path: str, **fmt: object) -> Path:
@@ -377,6 +419,72 @@ def densify_indices(root: Path, info: dict, episodes: list[dict], mapping: dict[
 UNSUPPORTED_FEATURE_DTYPES = {"string", "list", "dict"}
 
 
+def drop_hollow_cameras(root: Path, info: dict, name: str) -> list[str]:
+    """Drop video features whose files are mostly missing.
+
+    Some datasets added a camera mid-recording (e.g. 269 videos for 1504
+    episodes); the converter requires every camera to cover every episode.
+    Cameras covering every episode are kept; partial ones are dropped with
+    their files.
+    """
+    total = int(info.get("total_episodes", 0))
+    dropped: list[str] = []
+    for key in [k for k, f in info["features"].items() if f.get("dtype") == "video"]:
+        count = len(list(root.glob(f"videos/chunk-*/{key}/episode_*.mp4")))
+        if 0 < count < total:
+            log(name, f"dropping camera {key}: only {count}/{total} episode videos exist")
+            for path in root.glob(f"videos/chunk-*/{key}"):
+                shutil.rmtree(path)
+            del info["features"][key]
+            dropped.append(key)
+    if dropped:
+        if "total_videos" in info:
+            video_keys = [k for k, f in info["features"].items() if f.get("dtype") == "video"]
+            info["total_videos"] = total * len(video_keys)
+        (root / "meta" / "info.json").write_text(json.dumps(info, indent=4))
+    return dropped
+
+
+def shrink_oversized_stats(root: Path, name: str, max_elements: int = 64) -> None:
+    """Reduce per-episode stats arrays with more than ``max_elements`` values
+    to scalars (exact aggregation over the original array).
+
+    Depth-map features get per-pixel stats in v2.1 (e.g. 480x640 per stat per
+    episode); carried into v3 episode metadata they exceed lerobot's 100 MB
+    single-file limit. Scalar min/max/mean/std keep normalization sane.
+    """
+    stats_path = root / "meta" / "episodes_stats.jsonl"
+    if not stats_path.is_file():
+        return
+    shrunk: set[str] = set()
+    records = []
+    for line in stats_path.read_text().splitlines():
+        if not line.strip():
+            continue
+        record = json.loads(line)
+        for key, stats in record.get("stats", {}).items():
+            minimum = np.asarray(stats.get("min"))
+            if minimum.size <= max_elements:
+                continue
+            mean = np.asarray(stats["mean"], dtype=np.float64)
+            std = np.asarray(stats["std"], dtype=np.float64)
+            # Exact total variance: pixels have equal frame counts.
+            global_mean = float(mean.mean())
+            global_var = float((std**2 + mean**2).mean() - global_mean**2)
+            record["stats"][key] = {
+                "min": [float(np.asarray(stats["min"]).min())],
+                "max": [float(np.asarray(stats["max"]).max())],
+                "mean": [global_mean],
+                "std": [max(global_var, 0.0) ** 0.5],
+                "count": stats.get("count", [1]),
+            }
+            shrunk.add(key)
+        records.append(record)
+    if shrunk:
+        log(name, f"shrunk oversized per-episode stats to scalars: {sorted(shrunk)}")
+        stats_path.write_text("\n".join(json.dumps(r) for r in records) + "\n")
+
+
 def drop_unsupported_features(root: Path, info: dict, name: str) -> list[str]:
     """Remove features the v3.0 format cannot represent (e.g. per-frame
     ``string`` subtask annotations, ``list`` fields) from ``info.json`` and
@@ -413,13 +521,15 @@ def normalize_list_wrapped_scalars(root: Path, info: dict, name: str) -> None:
     }
     if not scalar_keys:
         return
+
+    def is_listy(t: pa.DataType) -> bool:
+        return pa.types.is_list(t) or pa.types.is_fixed_size_list(t) or pa.types.is_large_list(t)
+
     fixed_columns: set[str] = set()
     for parquet_path in sorted(root.glob("data/chunk-*/episode_*.parquet")):
         schema = pq.read_schema(parquet_path)
         wrapped = [
-            key
-            for key in scalar_keys
-            if key in schema.names and pa.types.is_list(schema.field(key).type)
+            key for key in scalar_keys if key in schema.names and is_listy(schema.field(key).type)
         ]
         if not wrapped:
             continue
@@ -723,8 +833,10 @@ def convert_one(ds: SubDataset, output: Path) -> dict:
 
     log(ds.name, f"staging copy ({ds.size_bytes / 1e9:.1f} GB, {ds.version})")
     stage_copy(ds.path, staging, info)
-    dropped_features = drop_unsupported_features(staging, info, ds.name)
+    dropped_features = drop_hollow_cameras(staging, info, ds.name)
+    dropped_features += drop_unsupported_features(staging, info, ds.name)
     normalize_list_wrapped_scalars(staging, info, ds.name)
+    shrink_oversized_stats(staging, ds.name)
     reconcile_with_episodes_metadata(staging, info, ds.name)
     dropped = sanitize_data_columns(staging, info)
     if dropped:
