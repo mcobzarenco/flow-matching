@@ -60,9 +60,12 @@ def _build_mask(
     if sliding_window is not None:
         allowed = allowed & (kv_idx > q_idx - sliding_window)
     if padding_mask is not None:
-        # padding_mask: [B, total_seen + q_len] bool, True = real token. Slice
+        # padding_mask: [B, total_seen + q_len], True/1 = real token (HF
+        # attention masks arrive as Long; cast so the & stays boolean). Slice
         # the columns covered by this mask's kv window.
-        cols = padding_mask[:, kv_offset : kv_offset + kv_len].to(device=device)
+        cols = padding_mask[:, kv_offset : kv_offset + kv_len].to(
+            device=device, dtype=torch.bool
+        )
         allowed = allowed & cols[:, None, None, :]
     allowed = allowed.expand(batch_size, 1, q_len, kv_len)
     min_value = torch.finfo(dtype).min
