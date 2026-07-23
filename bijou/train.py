@@ -616,18 +616,18 @@ def main() -> int:
         if dims != (action_dim, state_dim):
             dropped.append(f"{repo_id} (action/state dims {dims[0]}/{dims[1]})")
             continue
-        dataset = LeRobotDataset(
+        sub_dataset = LeRobotDataset(
             repo_id,
             root=str(dataset_dir),
             delta_timestamps={
                 "action": [i / info["fps"] for i in range(args.chunk_size)]
             },
         )
-        if dataset.meta.stats is None:
+        if sub_dataset.meta.stats is None:
             dropped.append(f"{repo_id} (no stats)")
             continue
-        datasets.append(dataset)
-        stats_list.append(dataset.meta.stats)
+        datasets.append(sub_dataset)
+        stats_list.append(sub_dataset.meta.stats)
         camera_census[
             tuple(
                 sorted(
@@ -637,7 +637,7 @@ def main() -> int:
                 )
             )
         ] += 1
-        total_episodes += dataset.num_episodes
+        total_episodes += sub_dataset.num_episodes
     if not datasets:
         raise ValueError("no compatible datasets selected")
     dataset: torch.utils.data.ConcatDataset[dict[str, Any]] = (
