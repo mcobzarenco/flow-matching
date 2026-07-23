@@ -34,10 +34,18 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import matplotlib
+import matplotlib.pyplot as plt
 import torch
+import transformers
+import wandb
+from lerobot.datasets.lerobot_dataset import LeRobotDataset
+from PIL import Image
+from safetensors.torch import save_file
 from torch import Tensor
 
-from .expert import PrefixKV
+from .expert import PrefixKV, SelfAttentionMode
+from .gemma4.loading import load_config, resolve_checkpoint_dir
 from .loading import default_expert_config, from_backbone
 from .model import BijouModel
 
@@ -134,16 +142,14 @@ class PrefixCollator:
         # workers rebuild it lazily.
         return {**self.__dict__, "_processor": None}
 
-    def _to_pil(self, image: Tensor) -> Any:
-        from PIL import Image
-
+    def _to_pil(self, image: Tensor) -> Image.Image:
         array = (image.clamp(0, 1) * 255).to(torch.uint8).permute(1, 2, 0).numpy()
         return Image.fromarray(array)
 
     def __call__(self, items: list[dict[str, Any]]) -> dict[str, Any]:
         if self._processor is None:
-            import transformers
-
+            # Lazy construction (not import): the collator is pickled into
+            # spawned dataloader workers, each of which rebuilds it.
             self._processor = transformers.AutoProcessor.from_pretrained(
                 self.checkpoint
             )
@@ -228,11 +234,6 @@ def _chunk_plot(
 ) -> Any:
     """Per-joint predicted-vs-ground-truth curves over the action chunk.
     Returns a matplotlib figure (caller logs and closes it)."""
-    import matplotlib
-
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
-
     dims = predicted.shape[-1]
     ncols = 3
     nrows = (dims + ncols - 1) // ncols
@@ -287,9 +288,6 @@ def validate(
     mae = float(error[valid].mean())
 
     if wandb_run is not None and eval_items:
-        import matplotlib.pyplot as plt
-        import wandb
-
         columns: list[Any] = [
             "sample",
             *cameras,
@@ -334,8 +332,6 @@ def save_checkpoint(
     normalizers: dict[str, Normalizer],
     step: int,
 ) -> Path:
-    from safetensors.torch import save_file
-
     checkpoint_dir = args.save_dir / f"step_{step:06d}"
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
     save_file(model.expert.state_dict(), str(checkpoint_dir / "expert.safetensors"))
@@ -456,14 +452,12 @@ def parse_args() -> TrainArgs:
 
 def main() -> int:
     os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+    # Headless rendering for the eval plots regardless of DISPLAY (must be
+    # forced before any figure is created; imports stay at the top).
+    matplotlib.use("Agg", force=True)
     args = parse_args()
     torch.manual_seed(args.seed)
     device = torch.device(args.device)
-
-    from lerobot.datasets.lerobot_dataset import LeRobotDataset
-
-    from .expert import SelfAttentionMode
-    from .gemma4.loading import load_config, resolve_checkpoint_dir
 
     checkpoint_dir = resolve_checkpoint_dir(args.backbone)
 
@@ -574,8 +568,6 @@ def main() -> int:
 
     wandb_run: Any = None
     if args.wandb_project is not None:
-        import wandb
-
         wandb_run = wandb.init(
             project=args.wandb_project,
             name=args.wandb_run_name,

@@ -10,15 +10,21 @@ real weights — outputs are meaningless, shapes and code paths are real.
 
 from __future__ import annotations
 
+import argparse
 import json
 import shutil
+import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-if TYPE_CHECKING:
-    from PIL import Image
+import numpy as np
+import torch
+from PIL import Image, ImageDraw
+from safetensors.torch import save_file
 
-    from .config import Gemma4Config
+from .config import Gemma4Config
+from .loading import resolve_checkpoint_dir
+from .model import Gemma4Model
 
 
 def synthetic_test_image(width: int = 640, height: int = 480) -> Image.Image:
@@ -30,9 +36,6 @@ def synthetic_test_image(width: int = 640, height: int = 480) -> Image.Image:
     the default 640x480 it matches the geometry of the image used for the
     recorded H100 parity and benchmark results.
     """
-    import numpy as np
-    from PIL import Image, ImageDraw
-
     grad = np.zeros((height, width, 3), dtype=np.uint8)
     grad[..., 0] = (np.arange(width, dtype=np.uint32) * 255 // width)[None, :]
     grad[..., 1] = (np.arange(height, dtype=np.uint32) * 255 // height)[:, None]
@@ -53,8 +56,6 @@ def synthetic_test_image(width: int = 640, height: int = 480) -> Image.Image:
 
 def load_test_image(path: str | None) -> tuple[Image.Image, str]:
     """(image, label): opens ``path`` if given, else the synthetic default."""
-    from PIL import Image
-
     if path is not None:
         return Image.open(path).convert("RGB"), path
     image = synthetic_test_image()
@@ -156,13 +157,6 @@ def write_tiny_checkpoint(
     checkpoints, including the packed PLE tensors and no lm_head — tied), and
     the processor files copied from ``processor_source``.
     """
-    import torch
-    from safetensors.torch import save_file
-
-    from .config import Gemma4Config
-    from .loading import resolve_checkpoint_dir
-    from .model import Gemma4Model
-
     output = Path(output_dir).expanduser()
     output.mkdir(parents=True, exist_ok=True)
 
@@ -188,8 +182,6 @@ def write_tiny_checkpoint(
 
 
 def _main() -> int:
-    import argparse
-
     parser = argparse.ArgumentParser(description=write_tiny_checkpoint.__doc__)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--processor-source", default="google/gemma-4-e2b-it")
@@ -203,6 +195,4 @@ def _main() -> int:
 
 
 if __name__ == "__main__":
-    import sys
-
     sys.exit(_main())

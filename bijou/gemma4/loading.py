@@ -20,6 +20,7 @@ import re
 from pathlib import Path
 
 import torch
+from huggingface_hub import snapshot_download
 from safetensors import safe_open
 
 from .config import Gemma4Config, LayerType
@@ -49,8 +50,6 @@ def resolve_checkpoint_dir(model_id_or_path: str | Path) -> Path:
     path = Path(model_id_or_path)
     if path.is_dir():
         return path
-    from huggingface_hub import snapshot_download
-
     return Path(snapshot_download(str(model_id_or_path)))
 
 

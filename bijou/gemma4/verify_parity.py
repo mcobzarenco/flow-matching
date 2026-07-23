@@ -55,13 +55,16 @@ from pathlib import Path
 from typing import Any
 
 import torch
+import transformers
 from torch import Tensor
+from transformers import DynamicCache
 
 from .cache import KVCache
 from .generation import GenerationResult, generate
 from .layers import AttentionBackend
 from .loading import load_generation_defaults, load_model, resolve_checkpoint_dir
 from .model import Gemma4Model, set_attention_backend
+from .testing import load_test_image
 
 DEFAULT_MODEL = "google/gemma-4-e2b-it"
 DEFAULT_PROMPTS = (
@@ -213,8 +216,6 @@ def main() -> int:
         "window and its cache once N + decoded tokens exceed 512)",
     )
     args = parser.parse_args()
-
-    import transformers
 
     device = torch.device(args.device)
     checkpoint_dir = resolve_checkpoint_dir(args.model)
@@ -382,8 +383,6 @@ def stepwise_decode_comparisons(
     cache feedback loop amplifies differences across steps even between two
     runs of the *same* implementation (observed with HF vs itself on CPU).
     """
-    from transformers import DynamicCache
-
     comparisons: list[Comparison] = []
     cache = KVCache(model.config.text)
     hf_cache = DynamicCache(config=hf_model.config.text_config)
@@ -466,10 +465,6 @@ def run_image_check(
     hf_model: Any,
     device: torch.device,
 ) -> bool:
-    import transformers
-
-    from .testing import load_test_image
-
     processor = transformers.AutoProcessor.from_pretrained(checkpoint_dir)
     image, image_label = load_test_image(args.image)
     messages = [

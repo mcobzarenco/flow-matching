@@ -7,16 +7,13 @@ so that outputs are bit-identical in bf16.
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import TYPE_CHECKING
 
 import torch
 from torch import Tensor, nn
 from torch.nn import functional as F
 
 from .config import RopeParameters, RopeType
-
-if TYPE_CHECKING:
-    from .masks import MaskSpec
+from .masks import MaskSpec
 
 type DeviceLike = torch.device | str | None
 
@@ -184,7 +181,7 @@ def attention(
     query: Tensor,
     key: Tensor,
     value: Tensor,
-    mask: "MaskSpec",
+    mask: MaskSpec,
     num_key_value_groups: int,
     scaling: float = 1.0,
 ) -> Tensor:

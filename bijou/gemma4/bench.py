@@ -25,11 +25,13 @@ import sys
 import time
 
 import torch
+import transformers
 
-from .layers import AttentionBackend
 from .generation import generate
+from .layers import AttentionBackend
 from .loading import load_model, resolve_checkpoint_dir
 from .model import Gemma4Model, set_attention_backend
+from .testing import load_test_image
 
 DEFAULT_MODEL = "google/gemma-4-e2b-it"
 
@@ -110,10 +112,6 @@ def main() -> int:
     print(f"loading {checkpoint_dir.name} on {device} ...", flush=True)
     model = load_model(checkpoint_dir, device=device)
     bos = model.config.text.bos_token_id
-
-    import transformers
-
-    from .testing import load_test_image
 
     processor = transformers.AutoProcessor.from_pretrained(checkpoint_dir)
     image, image_label = load_test_image(args.image)
