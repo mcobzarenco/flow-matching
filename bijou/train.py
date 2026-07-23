@@ -36,10 +36,10 @@ import dataclasses
 import json
 import math
 import os
-import statistics
 import sys
 import time
 from collections import Counter
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from fnmatch import fnmatch
 from itertools import islice
@@ -91,6 +91,7 @@ class TrainArgs:
     eval_every: int
     save_every: int
     num_workers: int
+    prefetch_factor: int
     device: str
     seed: int
     eval_samples: int
@@ -102,7 +103,12 @@ class TrainArgs:
 class CollatedBatch:
     """One collated batch: prefix inputs plus action-chunk targets. All
     fields are always present (unlike the raw per-dataset LeRobot items,
-    whose camera keys vary — those stay dicts)."""
+    whose camera keys vary — those stay dicts).
+
+    ``has_padding`` is computed CPU-side in the dataloader workers so the
+    training loop never needs a device->host sync to decide whether to build
+    padding masks.
+    """
 
     input_ids: Tensor
     attention_mask: Tensor
@@ -111,6 +117,76 @@ class CollatedBatch:
     state: Tensor
     actions: Tensor
     action_is_pad: Tensor
+    has_padding: bool
+
+    def tensors(self) -> dict[str, Tensor]:
+        return {
+            f.name: value
+            for f in dataclasses.fields(self)
+            if isinstance(value := getattr(self, f.name), Tensor)
+        }
+
+    def pin_memory(self) -> "CollatedBatch":
+        """Called by the DataLoader when ``pin_memory=True`` (torch supports
+        custom batch types via this hook); pinned memory makes the H2D
+        copies in :class:`DevicePrefetcher` truly asynchronous."""
+        return dataclasses.replace(
+            self, **{name: t.pin_memory() for name, t in self.tensors().items()}
+        )
+
+    def to(
+        self, device: torch.device | str, *, non_blocking: bool = False
+    ) -> "CollatedBatch":
+        return dataclasses.replace(
+            self,
+            **{
+                name: t.to(device, non_blocking=non_blocking)
+                for name, t in self.tensors().items()
+            },
+        )
+
+
+class DevicePrefetcher:
+    """One-batch-lookahead host->device transfer on a side CUDA stream.
+
+    Centralizes every H2D copy of the training pipeline: the loop receives
+    batches already device-resident, and the copy of batch N+1 overlaps the
+    compute of batch N (dataloader workers cannot produce CUDA tensors —
+    each would need its own CUDA context — so this is the closest torch gets
+    to "the loader hands you device batches"). Degrades to plain synchronous
+    transfers on non-CUDA devices.
+    """
+
+    def __init__(self, loader: Iterable[CollatedBatch], device: torch.device) -> None:
+        self.loader = loader
+        self.device = device
+
+    def __iter__(self) -> Iterator[CollatedBatch]:
+        if self.device.type != "cuda":
+            for batch in self.loader:
+                yield batch.to(self.device)
+            return
+
+        stream = torch.cuda.Stream(self.device)
+        compute_stream = torch.cuda.current_stream(self.device)
+        batches = iter(self.loader)
+
+        def preload() -> CollatedBatch | None:
+            cpu_batch = next(batches, None)
+            if cpu_batch is None:
+                return None
+            with torch.cuda.stream(stream):
+                return cpu_batch.to(self.device, non_blocking=True)
+
+        batch = preload()
+        while batch is not None:
+            compute_stream.wait_stream(stream)
+            # The tensors were allocated on the side stream; tell the caching
+            # allocator they are consumed on the compute stream.
+            for tensor in batch.tensors().values():
+                tensor.record_stream(compute_stream)
+            yield batch  # consumer enqueues the step's compute, then returns
+            batch = preload()  # blocks on workers while the GPU crunches
 
 
 class Normalizer:
@@ -306,6 +382,8 @@ class PrefixCollator:
             state=torch.stack([item["observation.state"] for item in items]),
             actions=torch.stack([item["action"] for item in items]),
             action_is_pad=torch.stack([item["action_is_pad"] for item in items]),
+            # Decided here (CPU, in the worker) so the train loop never syncs.
+            has_padding=bool((batch["attention_mask"] == 0).any()),
         )
 
 
@@ -315,16 +393,14 @@ class Normalizers:
     state: Normalizer
 
 
-def encode_prefix(
-    model: BijouModel, batch: CollatedBatch, device: torch.device
-) -> PrefixKV:
-    attention_mask = batch.attention_mask.to(device)
-    padding_mask = None if bool(attention_mask.all()) else attention_mask
+def encode_prefix(model: BijouModel, batch: CollatedBatch) -> PrefixKV:
+    """``batch`` must already be device-resident (see DevicePrefetcher)."""
+    padding_mask = batch.attention_mask if batch.has_padding else None
     with torch.no_grad():
         return model.encode_prefix(
-            batch.input_ids.to(device),
-            pixel_values=batch.pixel_values.to(device),
-            image_position_ids=batch.image_position_ids.to(device),
+            batch.input_ids,
+            pixel_values=batch.pixel_values,
+            image_position_ids=batch.image_position_ids,
             padding_mask=padding_mask,
         )
 
@@ -334,15 +410,19 @@ def flow_matching_loss(
     prefix: PrefixKV,
     batch: CollatedBatch,
     normalizers: Normalizers,
-    device: torch.device,
 ) -> Tensor:
-    actions = normalizers.action.normalize(batch.actions.to(device))
-    state = normalizers.state.normalize(batch.state.to(device))
-    valid = ~batch.action_is_pad.to(device)
+    """``batch`` must already be device-resident; no transfers happen here."""
+    actions = normalizers.action.normalize(batch.actions)
+    state = normalizers.state.normalize(batch.state)
+    valid = ~batch.action_is_pad
 
     noise = torch.randn_like(actions)
     # π0's time distribution: Beta(1.5, 1) squeezed into (0, 1).
-    tau = torch.distributions.Beta(1.5, 1.0).sample((actions.shape[0],)).to(device)
+    tau = (
+        torch.distributions.Beta(1.5, 1.0)
+        .sample((actions.shape[0],))
+        .to(actions.device)
+    )
     tau = tau * 0.999 + 0.001
     tau_ = tau[:, None, None]
     noisy_actions = tau_ * noise + (1 - tau_) * actions
@@ -389,7 +469,6 @@ def validate(
     prefix: PrefixKV,
     batch: CollatedBatch,
     normalizers: Normalizers,
-    device: torch.device,
     seed: int,
     *,
     wandb_run: Any = None,
@@ -401,13 +480,14 @@ def validate(
     """Deterministic sampled-chunk MAE in raw action units (the eval-harness
     metric from the SmolVLA work), always computed and returned; wandb is
     additive only — with a run, also logs a table over the eval samples:
-    camera images, task, state, and per-joint predicted-vs-truth plots."""
-    state = normalizers.state.normalize(batch.state.to(device))
-    generator = torch.Generator(device=device).manual_seed(seed)
+    camera images, task, state, and per-joint predicted-vs-truth plots.
+    ``batch`` must already be device-resident."""
+    state = normalizers.state.normalize(batch.state)
+    generator = torch.Generator(device=state.device).manual_seed(seed)
     sampled = model.sample_actions(prefix, state, num_steps=10, generator=generator)
     sampled = normalizers.action.unnormalize(sampled.float())
-    truth = batch.actions.to(device).float()
-    valid = ~batch.action_is_pad.to(device)
+    truth = batch.actions.float()
+    valid = ~batch.action_is_pad
     error = (sampled - truth).abs()
     mae = float(error[valid].mean())
 
@@ -552,6 +632,12 @@ def parse_args() -> TrainArgs:
     parser.add_argument("--eval-every", type=int, default=50)
     parser.add_argument("--save-every", type=int, default=100)
     parser.add_argument("--num-workers", type=int, default=8)
+    parser.add_argument(
+        "--prefetch-factor",
+        type=int,
+        default=4,
+        help="batches prefetched per dataloader worker",
+    )
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument(
@@ -596,6 +682,7 @@ def parse_args() -> TrainArgs:
         eval_every=raw.eval_every,
         save_every=raw.save_every,
         num_workers=raw.num_workers,
+        prefetch_factor=raw.prefetch_factor,
         device=raw.device,
         seed=raw.seed,
         eval_samples=raw.eval_samples,
@@ -704,6 +791,10 @@ def main() -> int:
         # deadlock or throw "Could not push packet to decoder" in forked
         # children (verified empirically on the H100 box).
         multiprocessing_context="spawn" if args.num_workers > 0 else None,
+        # Pinned batches make DevicePrefetcher's H2D copies truly async; a
+        # deeper prefetch queue absorbs the variance of GOP-boundary decodes.
+        pin_memory=device.type == "cuda",
+        prefetch_factor=args.prefetch_factor if args.num_workers > 0 else None,
     )
 
     # -- model -----------------------------------------------------------
@@ -752,8 +843,8 @@ def main() -> int:
     stride = max(len(dataset) // args.eval_samples, 1)
     eval_indices = list(islice(range(0, len(dataset), stride), args.eval_samples))
     eval_items = [dataset[i] for i in eval_indices]
-    eval_batch = collator(eval_items)
-    eval_prefix = encode_prefix(model, eval_batch, device)
+    eval_batch = collator(eval_items).to(device)
+    eval_prefix = encode_prefix(model, eval_batch)
     print(
         f"eval set: {len(eval_indices)} samples at dataset indices "
         f"{eval_indices}; prefix {eval_batch.input_ids.shape[1]} tokens "
@@ -789,14 +880,18 @@ def main() -> int:
         )
 
     step = 0
-    window: list[float] = []
+    # Loss/grad-norm live on-device between log points: a single .item()
+    # sync per log_every steps instead of one per step.
+    window: list[Tensor] = []
+    grad_norm = torch.zeros((), device=device)
+    prefetcher = DevicePrefetcher(loader, device)
     t_last = time.perf_counter()
     while step < args.steps:
-        for batch in loader:
+        for batch in prefetcher:
             if step >= args.steps:
                 break
-            prefix = encode_prefix(model, batch, device)
-            loss = flow_matching_loss(model, prefix, batch, normalizers, device)
+            prefix = encode_prefix(model, batch)
+            loss = flow_matching_loss(model, prefix, batch, normalizers)
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
             grad_norm = torch.nn.utils.clip_grad_norm_(
@@ -805,18 +900,18 @@ def main() -> int:
             optimizer.step()
             scheduler.step()
             step += 1
-            window.append(loss.detach().item())
+            window.append(loss.detach())
 
             if step % args.log_every == 0:
                 dt = (time.perf_counter() - t_last) / args.log_every
-                t_last = time.perf_counter()
                 record = {
                     "step": step,
-                    "loss": round(statistics.mean(window), 4),
-                    "grad_norm": round(float(grad_norm), 3),
+                    "loss": round(torch.stack(window).mean().item(), 4),
+                    "grad_norm": round(grad_norm.item(), 3),
                     "lr": scheduler.get_last_lr()[0],
                     "s_per_step": round(dt, 3),
                 }
+                t_last = time.perf_counter()
                 window.clear()
                 print(json.dumps(record), flush=True)
                 log_file.write(json.dumps(record) + "\n")
@@ -838,7 +933,6 @@ def main() -> int:
                     eval_prefix,
                     eval_batch,
                     normalizers,
-                    device,
                     args.seed,
                     wandb_run=wandb_run,
                     eval_items=eval_items,
