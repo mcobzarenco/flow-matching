@@ -910,6 +910,12 @@ def main() -> int:
         raise SystemExit("--video-decoder-cache must be >= 1")
     os.environ["LEROBOT_VIDEO_DECODER_CACHE_SIZE"] = str(args.video_decoder_cache)
 
+    # TF32 for fp32 matmuls (torch's default is full-IEEE "highest"): the
+    # expert trains in fp32, and true fp32 matmul leaves ~5-7x of H100
+    # throughput on the table. TF32's per-op 10-bit mantissa is far above
+    # bf16 and standard for training; the bf16 backbone is unaffected.
+    torch.set_float32_matmul_precision("high")
+
     # Data parallelism (torchrun): one full replica + optimizer per rank.
     # Without WORLD_SIZE in the environment this is a plain single-process
     # run — identical behavior to before DDP support existed.
