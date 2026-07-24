@@ -1010,6 +1010,14 @@ def main() -> int:
             delta_timestamps={
                 "action": [i / info["fps"] for i in range(args.chunk_size)]
             },
+            # Nearest-frame decode tolerance. lerobot's 1e-4 default is
+            # unrepresentable deep into v3-format concatenated video files:
+            # torchcodec returns fp32 pts, whose resolution at e.g. 1140s
+            # (~1.4e-4) exceeds it, so a CORRECT nearest frame gets rejected
+            # (observed: kaiserbuffle/hanoi_dc, 19-minute file). Half a
+            # frame period is the exact nearest-frame criterion and still
+            # catches genuine desync (off by >= a full frame).
+            tolerance_s=0.5 / info["fps"],
         )
         if sub_dataset.meta.stats is None:
             dropped.append(f"{repo_id} (no stats)")
