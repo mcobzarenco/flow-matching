@@ -161,7 +161,7 @@ def stage_copy(src: Path, dst: Path, info: dict) -> None:
 # ---------------------------------------------------------------------------
 
 
-def reconcile_with_episodes_metadata(root: Path, info: dict, name: str) -> None:
+def reconcile_with_episodes_metadata(root: Path, info: dict, name: str) -> dict:
     """Make files and declared totals agree with ``meta/episodes.jsonl``.
 
     Two failure patterns exist in the community collections (the cleaning
@@ -174,7 +174,11 @@ def reconcile_with_episodes_metadata(root: Path, info: dict, name: str) -> None:
        (``total_frames`` off by a few) -> the converted dataset reloads as
        "insufficient cache" and lerobot falls back to the hub with a
        misleading error. We recompute totals from ``episodes.jsonl``.
+
+    Returns a structured summary of corrections (for the manifest / dataset
+    card); empty dict when nothing needed fixing.
     """
+    corrections: dict = {}
     episodes = [
         json.loads(line)
         for line in (root / "meta" / "episodes.jsonl").read_text().splitlines()
@@ -187,6 +191,7 @@ def reconcile_with_episodes_metadata(root: Path, info: dict, name: str) -> None:
     # episode as corrupt. Loud either way.
     consistent = []
     repaired = 0
+    dropped_episode_ids: list[int] = []
     for episode in episodes:
         data_path, video_paths = _episode_paths(root, info, int(episode["episode_index"]))
         rows = pq.ParquetFile(data_path).metadata.num_rows if data_path.is_file() else -1
@@ -208,8 +213,12 @@ def reconcile_with_episodes_metadata(root: Path, info: dict, name: str) -> None:
                 f"dropping corrupt episode {episode['episode_index']} "
                 f"(parquet rows {rows} != declared length {episode['length']})",
             )
-    if len(consistent) != len(episodes):
-        log(name, f"dropped {len(episodes) - len(consistent)} corrupt episode(s)")
+            dropped_episode_ids.append(int(episode["episode_index"]))
+    if dropped_episode_ids:
+        log(name, f"dropped {len(dropped_episode_ids)} corrupt episode(s)")
+        corrections["dropped_corrupt_episodes"] = dropped_episode_ids
+    if repaired:
+        corrections["repaired_episode_lengths"] = repaired
     episodes = consistent
     if repaired:
         (root / "meta" / "episodes.jsonl").write_text(
@@ -259,6 +268,9 @@ def reconcile_with_episodes_metadata(root: Path, info: dict, name: str) -> None:
         updates["splits"] = expected_splits
     if updates:
         log(name, f"reconciled info.json aggregates from episodes.jsonl: {updates}")
+        corrections["aggregates"] = {
+            key: {"from": info.get(key), "to": value} for key, value in updates.items()
+        }
         info.update(updates)
         (root / "meta" / "info.json").write_text(json.dumps(info, indent=4))
 
@@ -275,6 +287,8 @@ def reconcile_with_episodes_metadata(root: Path, info: dict, name: str) -> None:
             record["episode_index"] = mapping[int(record["episode_index"])]
         records.sort(key=lambda r: int(r["episode_index"]))
         stats_path.write_text("\n".join(json.dumps(r) for r in records) + "\n")
+
+    return corrections
 
 
 def _video_frame_count(video_path: Path) -> int:
@@ -944,7 +958,7 @@ def convert_one(ds: SubDataset, output: Path) -> dict:
     dropped_features += drop_unsupported_features(staging, info, ds.name)
     normalize_list_wrapped_scalars(staging, info, ds.name)
     shrink_oversized_stats(staging, ds.name)
-    reconcile_with_episodes_metadata(staging, info, ds.name)
+    corrections = reconcile_with_episodes_metadata(staging, info, ds.name)
     dropped = sanitize_data_columns(staging, info)
     if dropped:
         log(ds.name, f"dropped undeclared parquet columns: {sorted(dropped)}")
@@ -976,6 +990,8 @@ def convert_one(ds: SubDataset, output: Path) -> dict:
     }
     if dropped_features:
         result["dropped_features"] = dropped_features
+    if corrections:
+        result["corrections"] = corrections
     return result
 
 

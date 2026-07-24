@@ -62,6 +62,32 @@ def fmt_gb(size_bytes: int) -> str:
     return f"{size_bytes / 1e9:.1f} GB"
 
 
+def build_correction_rows(manifest: dict[str, dict]) -> list[tuple[str, str]]:
+    """Human-readable per-dataset corrections from structured manifest fields."""
+    rows: list[tuple[str, str]] = []
+    for name, record in sorted(manifest.items()):
+        parts: list[str] = []
+        aggregates = record.get("corrections", {}).get("aggregates", {})
+        for key, change in aggregates.items():
+            if key == "splits":
+                parts.append("stale `splits` recomputed")
+            else:
+                parts.append(f"`{key}` {change['from']} → {change['to']}")
+        dropped = record.get("corrections", {}).get("dropped_corrupt_episodes")
+        if dropped:
+            parts.append(f"dropped {len(dropped)} corrupt episode(s) {dropped}")
+        repaired = record.get("corrections", {}).get("repaired_episode_lengths")
+        if repaired:
+            parts.append(f"repaired {repaired} declared episode length(s)")
+        if record.get("dropped_features"):
+            parts.append(f"dropped v3-incompatible features {record['dropped_features']}")
+        if record.get("status") == "patched" and record.get("note"):
+            parts.append(record["note"])
+        if parts:
+            rows.append((name, "; ".join(parts)))
+    return rows
+
+
 def build_card(
     source: Path,
     output: Path,
@@ -202,15 +228,32 @@ def build_card(
     a(f"    --source-repo {source_repo} --target-repo {target_repo} --write")
     a("```")
     a("")
-    a("## Known residual imperfections")
+    a("## Source-data corrections")
     a("")
     a(
-        "A small number of episodes (single digits per affected dataset) have a "
-        "few trailing video frames beyond their declared length — recording "
-        "artifacts present in the source data that are not fully repairable "
-        "without re-encoding. They load, decode and train normally (frames are "
-        "indexed by the episode metadata; the tail frames are simply unused). "
-        "Episode-level integrity reports live in the conversion manifest."
+        "Some source datasets ship metadata that contradicts their own data "
+        "(e.g. inflated `total_frames` counters, which make "
+        "`LeRobotDataset.__len__` overreport and crash shuffled samplers with "
+        "IndexError). The converter recomputes every aggregate from the actual "
+        "episode table and records each correction in the manifest. Corrections "
+        "applied in this collection:"
+    )
+    a("")
+    correction_rows = build_correction_rows(manifest)
+    if correction_rows:
+        a("| dataset | correction |")
+        a("|---|---|")
+        for dataset_name, description in correction_rows:
+            a(f"| `{dataset_name}` | {description} |")
+    else:
+        a("*(none needed)*")
+    a("")
+    a(
+        "Remaining known quirk: a handful of episodes across the collections "
+        "have a few trailing video frames beyond their declared length (source "
+        "recording artifacts, not repairable without re-encoding). They load, "
+        "decode and train normally — frames are indexed via episode metadata, so "
+        "the tail frames are simply never read."
     )
     a("")
     a("## Provenance & license")
