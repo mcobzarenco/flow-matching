@@ -355,14 +355,36 @@ submodules never import package roots.
 
 ### C.3 Normalization and checkpoints
 
-- MEAN_STD from **count-weighted aggregation across selected datasets**
-  (exact mean / E[x²] composition in fp64; all SO-100 data shares the
-  [−100,100] unit convention so aggregation is well-posed).
-- Checkpoints (`--save-every`): `expert.safetensors` +
-  `bijou_config.json` (expert config, backbone id, normalization stats
-  keyed `action`/`observation.state`, train args, step) — self-contained
-  for inference; the backbone is re-derived from the referenced checkpoint.
-  No optimizer state yet → **no resume support** (open item).
+- MEAN_STD **per dataset**: every sample is normalized with its own
+  dataset's stats (`StatsAttachedDataset` → batch fields → loss/eval).
+  Rationale (measured): 294/303 community datasets record old-lerobot
+  DEGREE-calibrated angles whose DIY homing offsets spread the SAME
+  physical rest pose by 20–63° std across rigs — camera-invisible; under
+  aggregate normalization the model must route the offset from the state
+  token at gain exactly 1 and was only at ~0.56 by 7k steps (predictions
+  "flat at the wrong constant", trivial state-copy baseline unbeaten).
+  Per-dataset stats subtract it in the pipeline. Stds floored at 1e-2;
+  non-finite stats → dataset dropped loudly.
+- Checkpoints (`--save-every`): `expert.safetensors` + `optimizer.pt`
+  (Adam moments, LambdaLR state, step) + `bijou_config.json` (expert
+  config, backbone id, aggregate stats as rollout fallback,
+  `per_dataset_normalization` table, train args, step).
+- **Stats-table contract (decided)**: the table covers the datasets of
+  THIS run only — no inheritance/merging across `--init-from` chains. A
+  fine-tune checkpoint carries the fine-tune rigs' stats (what deployment
+  needs); pretraining stats live in the pretraining checkpoint; eval on
+  any dataset gets stats from the dataset itself. Rollout must normalize
+  with the deployment rig's stats.
+- **Restarts**: `--resume <ckpt>` = lossless continuation (weights +
+  optimizer + schedule + step; checkpoint's optimizer hyperparameters win
+  over CLI, printed loudly; `--steps` counts total). `--init-from <ckpt>`
+  = warm start (weights only, CLI honored, fresh step count — use a new
+  `--save-dir`, short re-warmup ~300 steps for cold Adam moments; the only
+  option for checkpoints predating `optimizer.pt`). Both fail early on
+  expert-config mismatch. Training never reads normalization from the
+  checkpoint (per-dataset stats come from the data), so `--train-data`
+  may change freely across restarts — only action/state dims and chunk
+  size must match.
 
 ### C.4 Hyperparameters and runs so far
 
