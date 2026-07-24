@@ -953,8 +953,19 @@ def main() -> int:
     camera_census: Counter[tuple[str, ...]] = Counter()
     dropped: list[str] = []
     total_episodes = 0
+    selected_dirs: dict[str, Path] = {}
     for dataset_dir, info in zip(dataset_dirs, dataset_infos, strict=True):
         repo_id = repo_id_of(dataset_dir)
+        # The same repo id can appear under multiple collection roots (e.g.
+        # v1 and v2 of the community collections share datasets): training
+        # it twice would double-weight it and clash in the stats table.
+        # First root in --train-data order wins, dropped loudly.
+        if repo_id in selected_dirs:
+            dropped.append(
+                f"{repo_id} (duplicate at {dataset_dir}; "
+                f"keeping {selected_dirs[repo_id]})"
+            )
+            continue
         dims = (
             int(info["features"]["action"]["shape"][0]),
             int(info["features"]["observation.state"]["shape"][0]),
@@ -990,6 +1001,7 @@ def main() -> int:
             dropped.append(f"{repo_id} (non-finite action/state stats)")
             continue
         datasets.append(StatsAttachedDataset(sub_dataset, stats))
+        selected_dirs[repo_id] = dataset_dir
         per_dataset_stats[repo_id] = stats
         stats_list.append(sub_dataset.meta.stats)
         camera_census[
@@ -1035,10 +1047,10 @@ def main() -> int:
         camera_filter=args.cameras,
         max_cameras=args.max_cameras,
     )
-    # Under DDP each rank draws its shard from a coordinated shuffle; the
-    # explicit generator makes worker seeding independent of unrelated RNG
-    # consumption (single-process keeps the legacy global-RNG shuffle path
-    # so existing runs reproduce exactly).
+    # The explicit generator (both modes) makes the shuffle order and the
+    # dataloader worker base-seeds a pure function of (--seed, rank) —
+    # otherwise they'd draw from the global RNG and entangle batch order
+    # with how much randomness model init happened to consume.
     sampler: torch.utils.data.DistributedSampler[Any] | None = None
     if distributed:
         sampler = torch.utils.data.DistributedSampler(
@@ -1049,9 +1061,7 @@ def main() -> int:
         batch_size=args.batch_size,
         shuffle=sampler is None,
         sampler=sampler,
-        generator=torch.Generator().manual_seed(args.seed + rank)
-        if distributed
-        else None,
+        generator=torch.Generator().manual_seed(args.seed + rank),
         num_workers=args.num_workers,
         collate_fn=collator,
         drop_last=True,
