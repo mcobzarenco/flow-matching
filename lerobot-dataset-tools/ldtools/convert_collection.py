@@ -766,6 +766,20 @@ def prune_undeclared_stats(root: Path, features: dict, name: str) -> None:
 # ---------------------------------------------------------------------------
 
 
+def _normalize_stats_types(record: dict) -> None:
+    """Force float leaves for min/max/mean/std and int for count.
+
+    Mixed int/float stats across episodes (original entries vs synthesized
+    gap-fills) make the arrow writer refuse the episodes-metadata table.
+    """
+    for stats in record.get("stats", {}).values():
+        for stat_name, value in stats.items():
+            if stat_name == "count":
+                stats[stat_name] = np.asarray(value, dtype=np.int64).tolist()
+            else:
+                stats[stat_name] = np.asarray(value, dtype=np.float64).tolist()
+
+
 def episode_video_stats(video_path: Path) -> dict[str, np.ndarray]:
     """Per-channel stats over sampled frames of one episode video, in [0,1].
 
@@ -845,6 +859,8 @@ def synthesize_episodes_stats(root: Path, info: dict, name: str) -> None:
         existing[ep_idx] = {"episode_index": ep_idx, "stats": serialized}
 
     ordered = [existing[int(e["episode_index"])] for e in episodes]
+    for record in ordered:
+        _normalize_stats_types(record)
     stats_path.write_text("\n".join(json.dumps(r) for r in ordered) + "\n")
     if info.get("codebase_version") == "v2.0":
         info["codebase_version"] = "v2.1"
