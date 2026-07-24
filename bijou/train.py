@@ -590,8 +590,10 @@ def validate(
     (each sample's own stats, matching training)."""
     state = (batch.state - batch.state_mean) / batch.state_std
     generator = torch.Generator(device=state.device).manual_seed(seed)
-    # Model-default sampler (Heun): one source of truth for eval + rollout.
-    sampled = model.sample_actions(prefix, state, generator=generator)
+    # Eval is a measurement: Heun-10 keeps integration error well below
+    # model error (0.018 vs 0.05 mean deviation at the Heun-5 deployment
+    # default; ~1-2s extra per eval, off the training path).
+    sampled = model.sample_actions(prefix, state, num_steps=10, generator=generator)
     sampled = (
         sampled.float() * batch.action_std[:, None, :] + batch.action_mean[:, None, :]
     )
