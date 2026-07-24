@@ -4,9 +4,15 @@ The frozen truncated backbone encodes the multimodal prefix per batch
 (no grad); the expert is optimized with the π0/SmolVLA flow-matching recipe:
 τ ~ Beta(1.5, 1) (scaled into (0, 1)), x_τ = τ·ε + (1−τ)·actions, MSE against
 the velocity target ε − actions, with episode-boundary action padding masked
-out. Actions and state are MEAN_STD-normalized from the dataset stats; the
-stats are saved into every checkpoint (inference must unnormalize with the
-same stats).
+out. Actions and state are MEAN_STD-normalized **per dataset** (each sample
+uses its own dataset's stats, the π0/SmolVLA convention): 59–95% of the
+aggregate action variance across the community collections is between-dataset
+rig offsets that images cannot see, and normalizing them away is what makes
+the state→action identity learnable (measured: aggregate normalization left
+the trained model behind the state-copy baseline). Checkpoints store the
+per-dataset stats table plus a count-weighted aggregate as a fallback for
+rigs without stats; inference must unnormalize with the deployment rig's
+stats.
 
 The prompt is the instruction sandwich discussed in the design:
 ``[instruction][cam_1]...[cam_N][instruction]`` inside a user chat turn,
@@ -17,10 +23,10 @@ Training data is selected with ``--train-data``: any mix of dataset
 directories and collection roots (scanned for ``*/meta/info.json`` and
 ``*/*/meta/info.json``, i.e. flat and ``<user>/<dataset>`` layouts). Datasets
 whose action/state dims differ from the first selected dataset are dropped
-loudly. Camera keys are discovered per sample (sorted, so prompt slots are
-positional — the community collections' generic image/image2 keys carry no
-reliable wrist-vs-scene semantics); normalization uses count-weighted
-aggregated stats over the selection.
+loudly (as are datasets with missing/non-finite stats). Camera keys are
+discovered per sample (sorted, so prompt slots are positional — the community
+collections' generic image/image2 keys carry no reliable wrist-vs-scene
+semantics).
 
 Usage::
 
@@ -106,6 +112,10 @@ class CollatedBatch:
     fields are always present (unlike the raw per-dataset LeRobot items,
     whose camera keys vary — those stay dicts).
 
+    ``state``/``actions`` are raw (unnormalized); the per-sample MEAN_STD
+    stats of each sample's own dataset ride along ([B, dim] each) so the
+    loss and eval normalize per dataset.
+
     ``has_padding`` is computed CPU-side in the dataloader workers so the
     training loop never needs a device->host sync to decide whether to build
     padding masks.
@@ -118,6 +128,10 @@ class CollatedBatch:
     state: Tensor
     actions: Tensor
     action_is_pad: Tensor
+    action_mean: Tensor
+    action_std: Tensor
+    state_mean: Tensor
+    state_std: Tensor
     has_padding: bool
 
     def tensors(self) -> dict[str, Tensor]:
@@ -242,6 +256,76 @@ class Normalizer:
 
     def state_dict(self) -> dict[str, list[float]]:
         return {"mean": self.mean.tolist(), "std": self.std.tolist()}
+
+
+@dataclass(frozen=True, slots=True)
+class DatasetStats:
+    """One dataset's MEAN_STD stats for action and state (float32, CPU)."""
+
+    action_mean: Tensor
+    action_std: Tensor
+    state_mean: Tensor
+    state_std: Tensor
+
+    @classmethod
+    def from_lerobot_stats(cls, stats: dict[str, dict[str, Any]]) -> "DatasetStats":
+        def as_vector(key: str, field: str) -> Tensor:
+            return torch.as_tensor(stats[key][field], dtype=torch.float32).reshape(-1)
+
+        # Floor the stds: a (near-)constant joint would otherwise amplify
+        # float rounding jitter ~1e4x into the normalized targets. At the
+        # floor, deviations from the dataset mean pass through ~unscaled.
+        return cls(
+            action_mean=as_vector("action", "mean"),
+            action_std=as_vector("action", "std").clamp(min=1e-2),
+            state_mean=as_vector("observation.state", "mean"),
+            state_std=as_vector("observation.state", "std").clamp(min=1e-2),
+        )
+
+    def is_finite(self) -> bool:
+        return all(
+            bool(torch.isfinite(t).all())
+            for t in (
+                self.action_mean,
+                self.action_std,
+                self.state_mean,
+                self.state_std,
+            )
+        )
+
+    def state_dict(self) -> dict[str, dict[str, list[float]]]:
+        return {
+            "action": {
+                "mean": self.action_mean.tolist(),
+                "std": self.action_std.tolist(),
+            },
+            "observation.state": {
+                "mean": self.state_mean.tolist(),
+                "std": self.state_std.tolist(),
+            },
+        }
+
+
+class StatsAttachedDataset(torch.utils.data.Dataset[dict[str, Any]]):
+    """Wraps one LeRobot dataset so every item carries its dataset's stats
+    (per-dataset normalization: between-rig calibration offsets must not
+    survive into the training targets)."""
+
+    def __init__(self, dataset: LeRobotDataset, stats: DatasetStats) -> None:
+        self.dataset = dataset
+        self.stats = stats
+
+    def __len__(self) -> int:
+        return len(self.dataset)
+
+    def __getitem__(self, index: int) -> dict[str, Any]:
+        item = self.dataset[index]
+        # Shared tensors (the collator's stack copies them per batch).
+        item["action_mean"] = self.stats.action_mean
+        item["action_std"] = self.stats.action_std
+        item["state_mean"] = self.stats.state_mean
+        item["state_std"] = self.stats.state_std
+        return item
 
 
 def repo_id_of(dataset_dir: Path) -> str:
@@ -383,6 +467,10 @@ class PrefixCollator:
             state=torch.stack([item["observation.state"] for item in items]),
             actions=torch.stack([item["action"] for item in items]),
             action_is_pad=torch.stack([item["action_is_pad"] for item in items]),
+            action_mean=torch.stack([item["action_mean"] for item in items]),
+            action_std=torch.stack([item["action_std"] for item in items]),
+            state_mean=torch.stack([item["state_mean"] for item in items]),
+            state_std=torch.stack([item["state_std"] for item in items]),
             # Decided here (CPU, in the worker) so the train loop never syncs.
             has_padding=bool((batch["attention_mask"] == 0).any()),
         )
@@ -410,11 +498,13 @@ def flow_matching_loss(
     model: BijouModel,
     prefix: PrefixKV,
     batch: CollatedBatch,
-    normalizers: Normalizers,
 ) -> Tensor:
-    """``batch`` must already be device-resident; no transfers happen here."""
-    actions = normalizers.action.normalize(batch.actions)
-    state = normalizers.state.normalize(batch.state)
+    """``batch`` must already be device-resident; no transfers happen here.
+    Actions/state are normalized with each sample's own dataset stats."""
+    actions = (batch.actions - batch.action_mean[:, None, :]) / batch.action_std[
+        :, None, :
+    ]
+    state = (batch.state - batch.state_mean) / batch.state_std
     valid = ~batch.action_is_pad
 
     noise = torch.randn_like(actions)
@@ -469,7 +559,6 @@ def validate(
     model: BijouModel,
     prefix: PrefixKV,
     batch: CollatedBatch,
-    normalizers: Normalizers,
     seed: int,
     *,
     wandb_run: Any = None,
@@ -482,11 +571,14 @@ def validate(
     metric from the SmolVLA work), always computed and returned; wandb is
     additive only — with a run, also logs a table over the eval samples:
     camera images, task, state, and per-joint predicted-vs-truth plots.
-    ``batch`` must already be device-resident."""
-    state = normalizers.state.normalize(batch.state)
+    ``batch`` must already be device-resident; normalization is per dataset
+    (each sample's own stats, matching training)."""
+    state = (batch.state - batch.state_mean) / batch.state_std
     generator = torch.Generator(device=state.device).manual_seed(seed)
     sampled = model.sample_actions(prefix, state, num_steps=10, generator=generator)
-    sampled = normalizers.action.unnormalize(sampled.float())
+    sampled = (
+        sampled.float() * batch.action_std[:, None, :] + batch.action_mean[:, None, :]
+    )
     truth = batch.actions.float()
     valid = ~batch.action_is_pad
     error = (sampled - truth).abs()
@@ -542,6 +634,7 @@ def save_checkpoint(
     model: BijouModel,
     args: TrainArgs,
     normalizers: Normalizers,
+    per_dataset_stats: dict[str, DatasetStats],
     step: int,
 ) -> Path:
     checkpoint_dir = args.save_dir / f"step_{step:06d}"
@@ -550,10 +643,17 @@ def save_checkpoint(
     metadata = {
         "backbone": args.backbone,
         "expert_config": dataclasses.asdict(model.expert.config),
-        # Keys match the dataset feature names (stable checkpoint format).
+        # Training normalized per dataset; inference must normalize with the
+        # deployment rig's stats. "normalization" keeps the count-weighted
+        # aggregate as a fallback for rigs without stats (keys match the
+        # dataset feature names; stable checkpoint format).
         "normalization": {
             "action": normalizers.action.state_dict(),
             "observation.state": normalizers.state.state_dict(),
+        },
+        "per_dataset_normalization": {
+            repo_id: stats.state_dict()
+            for repo_id, stats in sorted(per_dataset_stats.items())
         },
         "train_args": {
             k: str(v) if isinstance(v, Path) else v
@@ -732,8 +832,9 @@ def main() -> int:
     # datasets — cross-embodiment padding is out of scope for now).
     action_dim = int(dataset_infos[0]["features"]["action"]["shape"][0])
     state_dim = int(dataset_infos[0]["features"]["observation.state"]["shape"][0])
-    datasets: list[LeRobotDataset] = []
+    datasets: list[StatsAttachedDataset] = []
     stats_list: list[dict[str, Any]] = []
+    per_dataset_stats: dict[str, DatasetStats] = {}
     camera_census: Counter[tuple[str, ...]] = Counter()
     dropped: list[str] = []
     total_episodes = 0
@@ -768,7 +869,13 @@ def main() -> int:
                 f"parquet holds {actual_rows})"
             )
             continue
-        datasets.append(sub_dataset)
+
+        stats = DatasetStats.from_lerobot_stats(sub_dataset.meta.stats)
+        if not stats.is_finite():
+            dropped.append(f"{repo_id} (non-finite action/state stats)")
+            continue
+        datasets.append(StatsAttachedDataset(sub_dataset, stats))
+        per_dataset_stats[repo_id] = stats
         stats_list.append(sub_dataset.meta.stats)
         camera_census[
             tuple(
@@ -797,6 +904,9 @@ def main() -> int:
         for reason in dropped:
             print(f"  - {reason}", flush=True)
 
+    # Aggregate stats are NOT used for training math (normalization is per
+    # dataset) — they ride along in checkpoints as a fallback for rigs
+    # without their own stats.
     normalizers = Normalizers(
         action=Normalizer.from_aggregated_stats(stats_list, "action", device),
         state=Normalizer.from_aggregated_stats(stats_list, "observation.state", device),
@@ -902,7 +1012,7 @@ def main() -> int:
                 },
                 "expert_config": dataclasses.asdict(expert_config),
                 "dataset": {
-                    "repo_ids": [d.repo_id for d in datasets],
+                    "repo_ids": [d.dataset.repo_id for d in datasets],
                     "episodes": total_episodes,
                     "frames": len(dataset),
                     "camera_sets": {"/".join(k): v for k, v in camera_census.items()},
@@ -923,7 +1033,7 @@ def main() -> int:
             if step >= args.steps:
                 break
             prefix = encode_prefix(model, batch)
-            loss = flow_matching_loss(model, prefix, batch, normalizers)
+            loss = flow_matching_loss(model, prefix, batch)
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
             grad_norm = torch.nn.utils.clip_grad_norm_(
@@ -964,7 +1074,6 @@ def main() -> int:
                     model,
                     eval_prefix,
                     eval_batch,
-                    normalizers,
                     args.seed,
                     wandb_run=wandb_run,
                     eval_items=eval_items,
@@ -980,7 +1089,9 @@ def main() -> int:
                     wandb_run.log({"eval/chunk_mae": mae}, step=step)
 
             if step % args.save_every == 0 or step == args.steps:
-                path = save_checkpoint(model, args, normalizers, step)
+                path = save_checkpoint(
+                    model, args, normalizers, per_dataset_stats, step
+                )
                 print(f"saved {path}", flush=True)
 
     log_file.close()
