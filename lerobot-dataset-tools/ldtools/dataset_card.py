@@ -202,6 +202,17 @@ def build_card(
     a(f"    --source-repo {source_repo} --target-repo {target_repo} --write")
     a("```")
     a("")
+    a("## Known residual imperfections")
+    a("")
+    a(
+        "A small number of episodes (single digits per affected dataset) have a "
+        "few trailing video frames beyond their declared length — recording "
+        "artifacts present in the source data that are not fully repairable "
+        "without re-encoding. They load, decode and train normally (frames are "
+        "indexed by the episode metadata; the tail frames are simply unused). "
+        "Episode-level integrity reports live in the conversion manifest."
+    )
+    a("")
     a("## Provenance & license")
     a("")
     a(
