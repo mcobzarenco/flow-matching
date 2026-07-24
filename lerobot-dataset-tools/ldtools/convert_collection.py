@@ -686,8 +686,27 @@ def build_stats_key_repairs(features: dict) -> dict[str, str]:
     return repairs
 
 
+def build_ghost_camera_repairs(stats_keys: list[str], features: dict) -> dict[str, str]:
+    """Positionally map stats keys for renamed cameras onto declared ones.
+
+    The collection standardizer renamed camera features (e.g. ``arm`` ->
+    ``image``, ``context`` -> ``image2``) without rewriting per-episode
+    stats. When the sets are disjoint and equally sized, map by order.
+    """
+    declared = [k for k, f in features.items() if f.get("dtype") in ("video", "image")]
+    ghost = [
+        k for k in stats_keys if k.startswith("observation.") and k not in features and "image" in k
+    ]
+    ghost = [k for k in ghost if k not in declared]
+    unmatched_declared = [k for k in declared if k not in stats_keys]
+    if ghost and len(ghost) == len(unmatched_declared):
+        return dict(zip(sorted(ghost), sorted(unmatched_declared)))
+    return {}
+
+
 def repair_stats_keys(root: Path, features: dict) -> int:
-    """Re-key camera stats entries that lost the ``images.`` segment."""
+    """Re-key camera stats entries that lost the ``images.`` segment or were
+    left under pre-standardization camera names (ghost cameras)."""
     repairs = build_stats_key_repairs(features)
     fixed = 0
 
@@ -706,14 +725,40 @@ def repair_stats_keys(root: Path, features: dict) -> int:
         for line in lines:
             record = json.loads(line)
             stats = record.get("stats", {})
-            if any(old in stats for old in repairs):
-                record["stats"] = {repairs.get(k, k): v for k, v in stats.items()}
+            mapping = dict(repairs)
+            mapping.update(build_ghost_camera_repairs(list(stats.keys()), features))
+            if any(old in stats for old in mapping):
+                record["stats"] = {mapping.get(k, k): v for k, v in stats.items()}
                 changed = True
             rewritten.append(json.dumps(record))
         if changed:
             ep_stats_path.write_text("\n".join(rewritten) + "\n")
             fixed += 1
     return fixed
+
+
+def prune_undeclared_stats(root: Path, features: dict, name: str) -> None:
+    """Drop per-episode stats entries for keys that are no longer features
+    (e.g. cameras removed by the hollow-camera step). Mixed stats columns
+    crash the v3 episodes-metadata writer with a KeyError."""
+    ep_stats_path = root / "meta" / "episodes_stats.jsonl"
+    if not ep_stats_path.is_file():
+        return
+    pruned: set[str] = set()
+    rewritten = []
+    for line in ep_stats_path.read_text().splitlines():
+        if not line.strip():
+            continue
+        record = json.loads(line)
+        stats = record.get("stats", {})
+        doomed = [k for k in stats if k not in features]
+        for key in doomed:
+            del stats[key]
+            pruned.add(key)
+        rewritten.append(json.dumps(record))
+    if pruned:
+        log(name, f"pruned stats for undeclared keys: {sorted(pruned)}")
+        ep_stats_path.write_text("\n".join(rewritten) + "\n")
 
 
 # ---------------------------------------------------------------------------
@@ -848,6 +893,8 @@ def convert_one(ds: SubDataset, output: Path) -> dict:
 
     log(ds.name, f"staging copy ({ds.size_bytes / 1e9:.1f} GB, {ds.version})")
     stage_copy(ds.path, staging, info)
+    if repair_stats_keys(staging, info["features"]):
+        log(ds.name, "repaired renamed/flat camera stats keys")
     dropped_features = drop_hollow_cameras(staging, info, ds.name)
     dropped_features += drop_unsupported_features(staging, info, ds.name)
     normalize_list_wrapped_scalars(staging, info, ds.name)
@@ -856,8 +903,7 @@ def convert_one(ds: SubDataset, output: Path) -> dict:
     dropped = sanitize_data_columns(staging, info)
     if dropped:
         log(ds.name, f"dropped undeclared parquet columns: {sorted(dropped)}")
-    if repair_stats_keys(staging, info["features"]):
-        log(ds.name, "repaired flat camera stats keys")
+    prune_undeclared_stats(staging, info["features"], ds.name)
     synthesize_episodes_stats(staging, info, ds.name)  # gap-fills; no-op when complete
 
     log(ds.name, "converting v2.1 -> v3.0")
