@@ -260,48 +260,61 @@ class Normalizer:
 
 @dataclass(frozen=True, slots=True)
 class DatasetStats:
-    """One dataset's MEAN_STD stats for action and state (float32, CPU)."""
+    """One dataset's MEAN_STD stats for action and state.
 
-    action_mean: Tensor
-    action_std: Tensor
-    state_mean: Tensor
-    state_std: Tensor
+    Plain float tuples, deliberately not tensors: the dataset objects are
+    pickled into every spawned dataloader worker, and torch shares pickled
+    CPU tensors through shared-memory file descriptors — 4 tensors x 300+
+    datasets exhausts the default ulimit (observed: EMFILE on worker spawn).
+    """
+
+    action_mean: tuple[float, ...]
+    action_std: tuple[float, ...]
+    state_mean: tuple[float, ...]
+    state_std: tuple[float, ...]
 
     @classmethod
     def from_lerobot_stats(cls, stats: dict[str, dict[str, Any]]) -> "DatasetStats":
-        def as_vector(key: str, field: str) -> Tensor:
-            return torch.as_tensor(stats[key][field], dtype=torch.float32).reshape(-1)
+        def as_vector(
+            key: str, field: str, floor: float | None = None
+        ) -> tuple[float, ...]:
+            values = torch.as_tensor(stats[key][field], dtype=torch.float32)
+            if floor is not None:
+                # Floor the stds: a (near-)constant joint would otherwise
+                # amplify float rounding jitter ~1e4x into the normalized
+                # targets. At the floor, deviations from the dataset mean
+                # pass through ~unscaled.
+                values = values.clamp(min=floor)
+            return tuple(values.reshape(-1).tolist())
 
-        # Floor the stds: a (near-)constant joint would otherwise amplify
-        # float rounding jitter ~1e4x into the normalized targets. At the
-        # floor, deviations from the dataset mean pass through ~unscaled.
         return cls(
             action_mean=as_vector("action", "mean"),
-            action_std=as_vector("action", "std").clamp(min=1e-2),
+            action_std=as_vector("action", "std", floor=1e-2),
             state_mean=as_vector("observation.state", "mean"),
-            state_std=as_vector("observation.state", "std").clamp(min=1e-2),
+            state_std=as_vector("observation.state", "std", floor=1e-2),
         )
 
     def is_finite(self) -> bool:
         return all(
-            bool(torch.isfinite(t).all())
-            for t in (
+            math.isfinite(x)
+            for vector in (
                 self.action_mean,
                 self.action_std,
                 self.state_mean,
                 self.state_std,
             )
+            for x in vector
         )
 
     def state_dict(self) -> dict[str, dict[str, list[float]]]:
         return {
             "action": {
-                "mean": self.action_mean.tolist(),
-                "std": self.action_std.tolist(),
+                "mean": list(self.action_mean),
+                "std": list(self.action_std),
             },
             "observation.state": {
-                "mean": self.state_mean.tolist(),
-                "std": self.state_std.tolist(),
+                "mean": list(self.state_mean),
+                "std": list(self.state_std),
             },
         }
 
@@ -309,7 +322,8 @@ class DatasetStats:
 class StatsAttachedDataset(torch.utils.data.Dataset[dict[str, Any]]):
     """Wraps one LeRobot dataset so every item carries its dataset's stats
     (per-dataset normalization: between-rig calibration offsets must not
-    survive into the training targets)."""
+    survive into the training targets). Tensors are materialized per item,
+    in the worker — see the DatasetStats docstring."""
 
     def __init__(self, dataset: LeRobotDataset, stats: DatasetStats) -> None:
         self.dataset = dataset
@@ -320,11 +334,10 @@ class StatsAttachedDataset(torch.utils.data.Dataset[dict[str, Any]]):
 
     def __getitem__(self, index: int) -> dict[str, Any]:
         item = self.dataset[index]
-        # Shared tensors (the collator's stack copies them per batch).
-        item["action_mean"] = self.stats.action_mean
-        item["action_std"] = self.stats.action_std
-        item["state_mean"] = self.stats.state_mean
-        item["state_std"] = self.stats.state_std
+        item["action_mean"] = torch.tensor(self.stats.action_mean)
+        item["action_std"] = torch.tensor(self.stats.action_std)
+        item["state_mean"] = torch.tensor(self.stats.state_mean)
+        item["state_std"] = torch.tensor(self.stats.state_std)
         return item
 
 
