@@ -588,7 +588,8 @@ def validate(
     (each sample's own stats, matching training)."""
     state = (batch.state - batch.state_mean) / batch.state_std
     generator = torch.Generator(device=state.device).manual_seed(seed)
-    sampled = model.sample_actions(prefix, state, num_steps=10, generator=generator)
+    # Model-default sampler (Heun): one source of truth for eval + rollout.
+    sampled = model.sample_actions(prefix, state, generator=generator)
     sampled = (
         sampled.float() * batch.action_std[:, None, :] + batch.action_mean[:, None, :]
     )

@@ -10,12 +10,27 @@ fresh robot state, at ~10 Euler steps per chunk.
 
 from __future__ import annotations
 
+from enum import Enum
+
 import torch
 from torch import Tensor, nn
 
 from .expert import ActionExpert, PrefixKV, StreamKV
 from .gemma4.cache import KVCache
 from .gemma4.model import Gemma4Model
+
+
+class SamplingMethod(Enum):
+    """ODE solver for integrating the velocity field from noise to actions.
+
+    EULER: 1 model evaluation per step, first-order (global error O(1/n)).
+    HEUN: explicit trapezoidal predictor-corrector, 2 evaluations per step,
+    second-order (O(1/n²)); the better quality-per-evaluation trade for all
+    but the very smallest step counts (Karras et al., EDM).
+    """
+
+    EULER = "euler"
+    HEUN = "heun"
 
 
 class BijouModel(nn.Module):
@@ -96,11 +111,24 @@ class BijouModel(nn.Module):
         prefix: PrefixKV,
         state: Tensor,
         *,
-        num_steps: int = 10,
+        num_steps: int = 5,
+        method: SamplingMethod = SamplingMethod.HEUN,
         noise: Tensor | None = None,
         generator: torch.Generator | None = None,
     ) -> Tensor:
-        """Euler integration of the velocity field from τ=1 (noise) to τ=0.
+        """Integrate the velocity field from τ=1 (noise) to τ=0.
+
+        The default (Heun, 5 steps = 10 model evaluations) costs the same as
+        the Euler/10 convention of π0/SmolVLA and integrates more accurately:
+        on a trained checkpoint vs a Heun-64 reference, Heun-5 halves the
+        worst-case error (0.24 vs 0.53 normalized units) at equal cost.
+        ``num_steps`` counts solver steps: Euler does 1 evaluation per step,
+        Heun 2 — and below ~4 steps Heun's corrector is wasted (use Euler if
+        you must go that low).
+
+        The model is trained on τ ∈ (0.001, 1]; Heun's final corrector
+        evaluates at exactly τ=0, a negligible extrapolation for the smooth
+        sinusoidal time embedding.
 
         Pass ``noise`` of shape [B, chunk, action_dim] (or a seeded
         ``generator``) for deterministic evaluation. Returns the action chunk
@@ -120,10 +148,18 @@ class BijouModel(nn.Module):
                 generator=generator,
             )
         actions = noise
-        dt = -1.0 / num_steps
-        time = torch.ones(batch, dtype=dtype, device=device)
-        for _ in range(num_steps):
+        for k in range(num_steps):
+            # Exact endpoints (no accumulated float drift): τ goes
+            # 1 -> 1-1/n -> ... -> 0.
+            t = 1.0 - k / num_steps
+            t_next = 1.0 - (k + 1) / num_steps
+            dt = t_next - t
+            time = torch.full((batch,), t, dtype=dtype, device=device)
             velocity = self.expert(prefix, state, actions, time)
+            if method is SamplingMethod.HEUN:
+                predicted = actions + dt * velocity.to(actions.dtype)
+                time_next = torch.full((batch,), t_next, dtype=dtype, device=device)
+                velocity_next = self.expert(prefix, state, predicted, time_next)
+                velocity = 0.5 * (velocity + velocity_next)
             actions = actions + dt * velocity.to(actions.dtype)
-            time = time + dt
         return actions

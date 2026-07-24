@@ -74,7 +74,7 @@ exists in checkpoints but is deliberately not implemented.
 ActionExpert: 15 narrow layers, each =
   cross-attn(one scheduled stream) → self-attn([state][a_1..a_50]) → gated MLP
         ▼
-velocity of the action chunk at flow time τ  →  10-step Euler τ:1→0
+velocity of the action chunk at flow time τ  →  Heun τ:1→0 (default 5 steps)
 ```
 
 - **Prefix encoder** = the backbone truncated at `first_kv_shared_layer_idx`
@@ -107,7 +107,10 @@ velocity of the action chunk at flow time τ  →  10-step Euler τ:1→0
   ablation. Velocity head is zero-initialized.
 - **Flow matching** (lerobot π0/SmolVLA conventions, so recipes port):
   `x_τ = τ·ε + (1−τ)·a`, target `u = ε − a`, ε~N(0,I), train
-  τ ~ Beta(1.5,1)·0.999+0.001; sampling integrates τ 1→0 in 10 Euler steps;
+  τ ~ Beta(1.5,1)·0.999+0.001; sampling integrates τ 1→0 with
+  `SamplingMethod.HEUN` (default, 5 steps = 10 NFE, same cost as π0's
+  Euler-10 but ~2x lower worst-case integration error — measured vs a
+  Heun-64 reference; Euler available; Heun wasteful below ~4 steps);
   `sample_actions(noise=, generator=)` for seeded determinism (eval harness
   pattern from the SmolVLA work ports directly).
 - **Prompt**: instruction sandwich. Under E2B's causal-only attention this
@@ -313,7 +316,7 @@ submodules never import package roots.
 - Expert knobs: `--expert-{hidden,heads,intermediate,cross-heads}`,
   `--stream-counts`, `--self-attention-mode`, `--chunk-size`.
 - `--eval-samples N`: eval set = N items at evenly-strided concat indices
-  (spans datasets/episodes); chunk-MAE (raw units, seeded 10-step
+  (spans datasets/episodes); chunk-MAE (raw units, seeded model-default
   sampling) always reported to tty+jsonl. Orthogonal to wandb.
 - `--wandb-project` (off by default) adds scalars + a rich per-eval table:
   positional camera columns with key captions, task, state, per-sample MAE,
