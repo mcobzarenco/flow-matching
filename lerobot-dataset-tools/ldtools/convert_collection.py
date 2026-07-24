@@ -243,6 +243,9 @@ def reconcile_with_episodes_metadata(root: Path, info: dict, name: str) -> None:
     true_frames = sum(int(e["length"]) for e in episodes)
     video_keys = [k for k, f in info["features"].items() if f.get("dtype") == "video"]
     updates: dict[str, int] = {}
+    # Aggregates are never trusted from source info.json: recompute all of
+    # them from the reconciled episode table (several source datasets ship
+    # inflated total_frames, stale splits or total_videos=0).
     if info.get("total_episodes") != true_episodes:
         updates["total_episodes"] = true_episodes
     if info.get("total_frames") != true_frames:
@@ -250,11 +253,11 @@ def reconcile_with_episodes_metadata(root: Path, info: dict, name: str) -> None:
     expected_videos = true_episodes * len(video_keys)
     if "total_videos" in info and info["total_videos"] != expected_videos:
         updates["total_videos"] = expected_videos
-    if dropped_corrupt or repaired:
-        updates["total_episodes"] = true_episodes
-        updates["total_frames"] = true_frames
+    expected_splits = {"train": f"0:{true_episodes}"}
+    if info.get("splits") != expected_splits:
+        updates["splits"] = expected_splits
     if updates:
-        log(name, f"reconciled info.json totals from episodes.jsonl: {updates}")
+        log(name, f"reconciled info.json aggregates from episodes.jsonl: {updates}")
         info.update(updates)
         (root / "meta" / "info.json").write_text(json.dumps(info, indent=4))
 
@@ -873,19 +876,44 @@ def synthesize_episodes_stats(root: Path, info: dict, name: str) -> None:
 
 
 def validate_v3(root: Path, name: str) -> dict:
-    """Load the converted dataset and cross-check its bookkeeping."""
+    """Load the converted dataset and cross-check its bookkeeping.
+
+    The frame/episode invariants are checked against *independent* sources
+    (physical parquet row counts and the episode table), not just the values
+    lerobot itself reads from info.json — `dataset.num_frames == total_frames`
+    alone would be circular, and inflated source counters have shipped real
+    IndexErrors to training runs.
+    """
     from lerobot.datasets.lerobot_dataset import LeRobotDataset
 
     info = json.loads((root / "meta" / "info.json").read_text())
     if info.get("codebase_version") != "v3.0":
         raise RuntimeError(f"expected v3.0 after conversion, got {info.get('codebase_version')}")
+
+    physical_rows = sum(
+        pq.read_metadata(f).num_rows for f in sorted(root.glob("data/chunk-*/file-*.parquet"))
+    )
+    episode_table = pd.concat(
+        pd.read_parquet(p) for p in sorted(root.glob("meta/episodes/chunk-*/file-*.parquet"))
+    )
+    episode_length_sum = int(episode_table["length"].sum())
+
     dataset = LeRobotDataset(name, root=root)
-    if dataset.num_episodes != info["total_episodes"]:
-        raise RuntimeError(
-            f"episode count mismatch: {dataset.num_episodes} != {info['total_episodes']}"
-        )
-    if dataset.num_frames != info["total_frames"]:
-        raise RuntimeError(f"frame count mismatch: {dataset.num_frames} != {info['total_frames']}")
+    checks = {
+        "info.total_episodes": info["total_episodes"],
+        "episode table rows": len(episode_table),
+        "dataset.num_episodes": dataset.num_episodes,
+    }
+    if len(set(checks.values())) != 1:
+        raise RuntimeError(f"episode count mismatch: {checks}")
+    checks = {
+        "info.total_frames": info["total_frames"],
+        "sum(episode lengths)": episode_length_sum,
+        "physical parquet rows": physical_rows,
+        "dataset.num_frames": dataset.num_frames,
+    }
+    if len(set(checks.values())) != 1:
+        raise RuntimeError(f"frame count mismatch: {checks}")
     return {"episodes": dataset.num_episodes, "frames": dataset.num_frames}
 
 
