@@ -123,7 +123,7 @@ v1 census (verified locally): 124× v2.1, 4× v2.0.
 
 ### Upload plan (decided)
 Converted collections → **public HF repos** (per-collection, mirroring
-`<user>/<dataset>` layout), via `hf upload-large-folder` (resumable). HF
+`<user>/<dataset>` layout), via `hf upload` (resumable). HF
 pricing: $12/TB/mo public with **free egress/CDN** — beats GCS (~$20/TB +
 $0.12/GB egress) since the corpus will be re-downloaded to training boxes.
 One-time ~$145 GCP egress to upload ~1.3 TB out.
@@ -249,7 +249,7 @@ MoE, 31B. arXiv 2607.02770. Apache 2.0. transformers ≥5.14
 
 1. GCP VM downloading v2 (user-driven, resumable); then: census → sample →
    full conversion sweep (`--workers 12`) → start v1 download in parallel →
-   v3 (758 GB) → `hf upload-large-folder` per collection.
+   v3 (758 GB) → `hf upload` per collection.
 2. Laptop v1 full conversion sweep: ready to run (3/128 done).
 3. H100 quota appeal (denial email) or L4/A100 fallback request.
 4. Judge calibration set + batch judge mode (`--all-episodes` JSONL) not yet

@@ -73,7 +73,7 @@ datasets with reasons, and exact reproduction commands.
 ## Upload
 
 ```bash
-uv run hf upload-large-folder <user>/community_dataset_v2_v3 \
+uv run hf upload <user>/community_dataset_v2_v3 \
     /data/community_dataset_v2_v3 --repo-type=dataset
 ```
 
