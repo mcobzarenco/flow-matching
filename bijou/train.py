@@ -33,6 +33,16 @@ Usage::
     uv run python -m bijou.train \
         --train-data ~/datasets/mcobzarenco/community_dataset_v2_v3 \
         --device cuda --steps 5000
+
+    # Multi-GPU: one full replica + optimizer per GPU (DDP over the expert
+    # only; the frozen backbone is never synced). --batch-size and
+    # --num-workers are PER RANK; logged loss is all-reduced across ranks;
+    # eval/logging/checkpoints happen on rank 0. Without torchrun the
+    # script runs exactly as before.
+    MALLOC_ARENA_MAX=2 MALLOC_MMAP_THRESHOLD_=131072 \
+    uv run torchrun --standalone --nproc-per-node=4 -m bijou.train \
+        --train-data ~/datasets/mcobzarenco/community_dataset_v2_v3 \
+        --device cuda --steps 20000
 """
 
 from __future__ import annotations
@@ -50,7 +60,7 @@ from dataclasses import dataclass
 from fnmatch import fnmatch
 from itertools import islice
 from pathlib import Path
-from typing import Any
+from typing import Any, TextIO
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -510,12 +520,17 @@ def encode_prefix(model: BijouModel, batch: CollatedBatch) -> PrefixKV:
 
 
 def flow_matching_loss(
-    model: BijouModel,
+    velocity_model: torch.nn.Module,
     prefix: PrefixKV,
     batch: CollatedBatch,
 ) -> Tensor:
     """``batch`` must already be device-resident; no transfers happen here.
-    Actions/state are normalized with each sample's own dataset stats."""
+    Actions/state are normalized with each sample's own dataset stats.
+
+    ``velocity_model`` is the expert (or its DDP wrapper under torchrun —
+    training forwards must go through the wrapper for gradient hooks);
+    call convention (prefix, state, noisy_actions, tau) is shared by
+    ActionExpert, BijouModel and DDP(ActionExpert)."""
     actions = (batch.actions - batch.action_mean[:, None, :]) / batch.action_std[
         :, None, :
     ]
@@ -534,7 +549,7 @@ def flow_matching_loss(
     noisy_actions = tau_ * noise + (1 - tau_) * actions
     target = noise - actions
 
-    velocity = model(prefix, state, noisy_actions, tau)
+    velocity = velocity_model(prefix, state, noisy_actions, tau)
     mse = (velocity.float() - target.float()).pow(2)
     # valid [B, chunk] indexes the first two dims of mse [B, chunk, dim].
     return mse[valid].mean()
@@ -770,7 +785,12 @@ def parse_args() -> TrainArgs:
     parser.add_argument("--expert-intermediate", type=int, default=3072)
     parser.add_argument("--expert-cross-heads", type=int, default=4)
     parser.add_argument("--chunk-size", type=int, default=50)
-    parser.add_argument("--batch-size", type=int, default=8)
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=8,
+        help="per rank under torchrun (global batch = batch-size x world size)",
+    )
     parser.add_argument("--steps", type=int, default=200)
     parser.add_argument("--lr", type=float, default=1e-4)
     parser.add_argument("--warmup-steps", type=int, default=20)
@@ -779,7 +799,12 @@ def parse_args() -> TrainArgs:
     parser.add_argument("--log-every", type=int, default=10)
     parser.add_argument("--eval-every", type=int, default=50)
     parser.add_argument("--save-every", type=int, default=100)
-    parser.add_argument("--num-workers", type=int, default=8)
+    parser.add_argument(
+        "--num-workers",
+        type=int,
+        default=8,
+        help="dataloader workers per rank under torchrun",
+    )
     parser.add_argument(
         "--prefetch-factor",
         type=int,
@@ -884,8 +909,31 @@ def main() -> int:
     if args.video_decoder_cache < 1:
         raise SystemExit("--video-decoder-cache must be >= 1")
     os.environ["LEROBOT_VIDEO_DECODER_CACHE_SIZE"] = str(args.video_decoder_cache)
-    torch.manual_seed(args.seed)
+
+    # Data parallelism (torchrun): one full replica + optimizer per rank.
+    # Without WORLD_SIZE in the environment this is a plain single-process
+    # run — identical behavior to before DDP support existed.
+    world_size = int(os.environ.get("WORLD_SIZE", "1"))
+    distributed = world_size > 1
     device = torch.device(args.device)
+    rank = 0
+    if distributed:
+        torch.distributed.init_process_group(
+            "nccl" if device.type == "cuda" else "gloo"
+        )
+        rank = torch.distributed.get_rank()
+        if device.type == "cuda":
+            device = torch.device("cuda", int(os.environ["LOCAL_RANK"]))
+            torch.cuda.set_device(device)
+    is_main = rank == 0
+
+    # Per-rank RNG stream (τ and ε draws must decorrelate across ranks).
+    # Dataloader worker seeds derive from this deterministically: torch
+    # draws each worker's base seed from the parent process RNG, so worker
+    # seeds are a pure function of (--seed, rank, worker_id). The
+    # DistributedSampler below is seeded with the BASE seed on every rank
+    # so the shuffled partition stays coordinated.
+    torch.manual_seed(args.seed + rank)
 
     checkpoint_dir = resolve_checkpoint_dir(args.backbone)
 
@@ -959,17 +1007,18 @@ def main() -> int:
     dataset: torch.utils.data.ConcatDataset[dict[str, Any]] = (
         torch.utils.data.ConcatDataset(datasets)
     )
-    print(
-        f"train data: {len(datasets)} datasets, {total_episodes} episodes, "
-        f"{len(dataset)} frames, action/state dim {action_dim}/{state_dim}",
-        flush=True,
-    )
-    for camera_set, count in camera_census.most_common():
-        print(f"  {count:4d} x cameras {camera_set}", flush=True)
-    if dropped:
-        print(f"dropped {len(dropped)} incompatible datasets:", flush=True)
-        for reason in dropped:
-            print(f"  - {reason}", flush=True)
+    if is_main:
+        print(
+            f"train data: {len(datasets)} datasets, {total_episodes} episodes, "
+            f"{len(dataset)} frames, action/state dim {action_dim}/{state_dim}",
+            flush=True,
+        )
+        for camera_set, count in camera_census.most_common():
+            print(f"  {count:4d} x cameras {camera_set}", flush=True)
+        if dropped:
+            print(f"dropped {len(dropped)} incompatible datasets:", flush=True)
+            for reason in dropped:
+                print(f"  - {reason}", flush=True)
 
     # Aggregate stats are NOT used for training math (normalization is per
     # dataset) — they ride along in checkpoints as a fallback for rigs
@@ -986,10 +1035,23 @@ def main() -> int:
         camera_filter=args.cameras,
         max_cameras=args.max_cameras,
     )
+    # Under DDP each rank draws its shard from a coordinated shuffle; the
+    # explicit generator makes worker seeding independent of unrelated RNG
+    # consumption (single-process keeps the legacy global-RNG shuffle path
+    # so existing runs reproduce exactly).
+    sampler: torch.utils.data.DistributedSampler[Any] | None = None
+    if distributed:
+        sampler = torch.utils.data.DistributedSampler(
+            dataset, shuffle=True, seed=args.seed, drop_last=True
+        )
     loader = torch.utils.data.DataLoader(
         dataset,
         batch_size=args.batch_size,
-        shuffle=True,
+        shuffle=sampler is None,
+        sampler=sampler,
+        generator=torch.Generator().manual_seed(args.seed + rank)
+        if distributed
+        else None,
         num_workers=args.num_workers,
         collate_fn=collator,
         drop_last=True,
@@ -1026,13 +1088,21 @@ def main() -> int:
         expert_dtype=torch.float32,
     )
     n_trainable = sum(p.numel() for p in model.expert.parameters())
-    print(
-        f"model: frozen backbone ({len(model.backbone.language_model.layers)} "
-        f"layers, streams {expert_config.streams}) + fp32 expert "
-        f"({n_trainable / 1e6:.1f}M params, schedule "
-        f"{expert_config.cross_attention_schedule})",
-        flush=True,
-    )
+    if is_main:
+        print(
+            f"model: frozen backbone ({len(model.backbone.language_model.layers)} "
+            f"layers, streams {expert_config.streams}) + fp32 expert "
+            f"({n_trainable / 1e6:.1f}M params, schedule "
+            f"{expert_config.cross_attention_schedule})",
+            flush=True,
+        )
+        if distributed:
+            print(
+                f"ddp: {world_size} ranks, global batch "
+                f"{args.batch_size * world_size} ({args.batch_size}/rank), "
+                f"{args.num_workers} dataloader workers/rank",
+                flush=True,
+            )
 
     optimizer = torch.optim.AdamW(
         model.expert.parameters(),
@@ -1054,7 +1124,8 @@ def main() -> int:
             ),
             strict=True,
         )
-        print(f"loaded expert weights from {checkpoint_to_load}", flush=True)
+        if is_main:
+            print(f"loaded expert weights from {checkpoint_to_load}", flush=True)
     if args.resume is not None:
         optimizer_path = args.resume / "optimizer.pt"
         if not optimizer_path.exists():
@@ -1071,14 +1142,17 @@ def main() -> int:
                 f"checkpoint is at step {start_step}, nothing to do with "
                 f"--steps {args.steps} (it counts total steps)"
             )
-        print(
-            f"resumed optimizer/scheduler at step {start_step} "
-            f"(lr {scheduler.get_last_lr()[0]:.2e})",
-            flush=True,
-        )
+        if is_main:
+            print(
+                f"resumed optimizer/scheduler at step {start_step} "
+                f"(lr {scheduler.get_last_lr()[0]:.2e})",
+                flush=True,
+            )
         restored = optimizer.param_groups[0]
         base_lr = float(restored.get("initial_lr", restored["lr"]))
-        if base_lr != args.lr or float(restored["weight_decay"]) != args.weight_decay:
+        if is_main and (
+            base_lr != args.lr or float(restored["weight_decay"]) != args.weight_decay
+        ):
             print(
                 "note: --resume keeps the checkpoint's optimizer "
                 f"hyperparameters (base lr {base_lr:.2e}, weight decay "
@@ -1087,30 +1161,53 @@ def main() -> int:
                 flush=True,
             )
 
+    # DDP over the expert only — the frozen backbone replica is inference-
+    # only and never synced. Wrapping AFTER the weight load means DDP's
+    # construction-time broadcast (rank 0 -> all) covers the loaded state.
+    # model.expert stays the raw module: eval, clipping, checkpointing and
+    # the optimizer all see it directly; only training forwards go through
+    # the wrapper (flow_matching_loss).
+    velocity_model: torch.nn.Module = model.expert
+    if distributed:
+        velocity_model = torch.nn.parallel.DistributedDataParallel(
+            model.expert,
+            device_ids=[device.index] if device.type == "cuda" else None,
+            # Expert buffers are constant RoPE tables; per-step broadcasts
+            # would be pure overhead.
+            broadcast_buffers=False,
+            gradient_as_bucket_view=True,
+        )
+
     # Fixed validation set, independent of the training batch size:
     # --eval-samples items spread evenly across the dataset (deterministic),
     # collated in-process (safe: dataloader workers are spawned, not forked)
     # and prefix-encoded once. The raw items keep the original camera frames
-    # for rich logging.
-    stride = max(len(dataset) // args.eval_samples, 1)
-    eval_indices = list(islice(range(0, len(dataset), stride), args.eval_samples))
-    eval_items = [dataset[i] for i in eval_indices]
-    eval_batch = collator(eval_items).to(device)
-    eval_prefix = encode_prefix(model, eval_batch)
-    print(
-        f"eval set: {len(eval_indices)} samples at dataset indices "
-        f"{eval_indices}; prefix {eval_batch.input_ids.shape[1]} tokens "
-        f"(soft-token budget {args.max_soft_tokens}/camera)",
-        flush=True,
-    )
+    # for rich logging. Rank 0 only — other ranks never decode the eval set
+    # (sharded per-rank eval is a planned second iteration).
+    eval_items: list[dict[str, Any]] = []
+    eval_batch: CollatedBatch | None = None
+    eval_prefix: PrefixKV | None = None
+    if is_main:
+        stride = max(len(dataset) // args.eval_samples, 1)
+        eval_indices = list(islice(range(0, len(dataset), stride), args.eval_samples))
+        eval_items = [dataset[i] for i in eval_indices]
+        eval_batch = collator(eval_items).to(device)
+        eval_prefix = encode_prefix(model, eval_batch)
+        print(
+            f"eval set: {len(eval_indices)} samples at dataset indices "
+            f"{eval_indices}; prefix {eval_batch.input_ids.shape[1]} tokens "
+            f"(soft-token budget {args.max_soft_tokens}/camera)",
+            flush=True,
+        )
     action_names = list(dataset_infos[0]["features"]["action"].get("names") or [])
 
-    args.save_dir.mkdir(parents=True, exist_ok=True)
-    log_path = args.save_dir / "train_log.jsonl"
-    log_file = log_path.open("a")
+    log_file: TextIO | None = None
+    if is_main:
+        args.save_dir.mkdir(parents=True, exist_ok=True)
+        log_file = (args.save_dir / "train_log.jsonl").open("a")
 
     wandb_run: Any = None
-    if args.wandb_project is not None:
+    if args.wandb_project is not None and is_main:
         wandb_run = wandb.init(
             project=args.wandb_project,
             name=args.wandb_run_name,
@@ -1128,22 +1225,29 @@ def main() -> int:
                     "camera_sets": {"/".join(k): v for k, v in camera_census.items()},
                 },
                 "trainable_params": n_trainable,
+                "world_size": world_size,
+                "global_batch_size": args.batch_size * world_size,
             },
         )
 
     step = start_step
     # Loss/grad-norm live on-device between log points: a single .item()
-    # sync per log_every steps instead of one per step.
+    # sync per log_every steps instead of one per step. (grad_norm is
+    # identical on all ranks after DDP's gradient sync — no reduce needed.)
     window: list[Tensor] = []
     grad_norm = torch.zeros((), device=device)
     prefetcher = DevicePrefetcher(loader, device)
+    epoch = 0
     t_last = time.perf_counter()
     while step < args.steps:
+        if sampler is not None:
+            # Fresh coordinated shuffle each pass over the data.
+            sampler.set_epoch(epoch)
         for batch in prefetcher:
             if step >= args.steps:
                 break
             prefix = encode_prefix(model, batch)
-            loss = flow_matching_loss(model, prefix, batch)
+            loss = flow_matching_loss(velocity_model, prefix, batch)
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
             grad_norm = torch.nn.utils.clip_grad_norm_(
@@ -1155,31 +1259,45 @@ def main() -> int:
             window.append(loss.detach())
 
             if step % args.log_every == 0:
-                dt = (time.perf_counter() - t_last) / args.log_every
-                record = {
-                    "step": step,
-                    "loss": round(torch.stack(window).mean().item(), 4),
-                    "grad_norm": round(grad_norm.item(), 3),
-                    "lr": scheduler.get_last_lr()[0],
-                    "s_per_step": round(dt, 3),
-                }
-                t_last = time.perf_counter()
+                # All ranks participate in the reduce (they hit the same
+                # step in lockstep); only rank 0 syncs to host and reports.
+                window_mean = torch.stack(window).mean()
                 window.clear()
-                print(json.dumps(record), flush=True)
-                log_file.write(json.dumps(record) + "\n")
-                log_file.flush()
-                if wandb_run is not None:
-                    wandb_run.log(
-                        {
-                            "train/loss": record["loss"],
-                            "train/grad_norm": record["grad_norm"],
-                            "train/lr": record["lr"],
-                            "train/s_per_step": record["s_per_step"],
-                        },
-                        step=step,
-                    )
+                if distributed:
+                    torch.distributed.all_reduce(window_mean)
+                    window_mean /= world_size
+                dt = (time.perf_counter() - t_last) / args.log_every
+                t_last = time.perf_counter()
+                if is_main:
+                    record = {
+                        "step": step,
+                        "loss": round(window_mean.item(), 4),
+                        "grad_norm": round(grad_norm.item(), 3),
+                        "lr": scheduler.get_last_lr()[0],
+                        "samples": step * args.batch_size * world_size,
+                        "s_per_step": round(dt, 3),
+                    }
+                    assert log_file is not None
+                    print(json.dumps(record), flush=True)
+                    log_file.write(json.dumps(record) + "\n")
+                    log_file.flush()
+                    if wandb_run is not None:
+                        wandb_run.log(
+                            {
+                                "train/loss": record["loss"],
+                                "train/grad_norm": record["grad_norm"],
+                                "train/lr": record["lr"],
+                                "train/samples": record["samples"],
+                                "train/s_per_step": record["s_per_step"],
+                            },
+                            step=step,
+                        )
 
-            if step % args.eval_every == 0:
+            if step % args.eval_every == 0 and is_main:
+                assert eval_batch is not None and eval_prefix is not None
+                assert log_file is not None
+                # Other ranks proceed; DDP's next backward all-reduce makes
+                # them wait for rank 0 (~seconds, well under NCCL timeouts).
                 mae = validate(
                     model,
                     eval_prefix,
@@ -1198,7 +1316,7 @@ def main() -> int:
                 if wandb_run is not None:
                     wandb_run.log({"eval/chunk_mae": mae}, step=step)
 
-            if step % args.save_every == 0 or step == args.steps:
+            if (step % args.save_every == 0 or step == args.steps) and is_main:
                 path = save_checkpoint(
                     model,
                     args,
@@ -1209,10 +1327,16 @@ def main() -> int:
                     step,
                 )
                 print(f"saved {path}", flush=True)
+        epoch += 1
 
-    log_file.close()
+    if log_file is not None:
+        log_file.close()
     if wandb_run is not None:
         wandb_run.finish()
+    if distributed:
+        # Let rank 0 finish its final save/eval before the group dissolves.
+        torch.distributed.barrier()
+        torch.distributed.destroy_process_group()
     return 0
 
 
