@@ -208,7 +208,8 @@ def reconcile_with_episodes_metadata(root: Path, info: dict, name: str) -> None:
                 f"dropping corrupt episode {episode['episode_index']} "
                 f"(parquet rows {rows} != declared length {episode['length']})",
             )
-    dropped_corrupt = len(episodes) - len(consistent)
+    if len(consistent) != len(episodes):
+        log(name, f"dropped {len(episodes) - len(consistent)} corrupt episode(s)")
     episodes = consistent
     if repaired:
         (root / "meta" / "episodes.jsonl").write_text(
@@ -242,7 +243,7 @@ def reconcile_with_episodes_metadata(root: Path, info: dict, name: str) -> None:
     true_episodes = len(valid)
     true_frames = sum(int(e["length"]) for e in episodes)
     video_keys = [k for k, f in info["features"].items() if f.get("dtype") == "video"]
-    updates: dict[str, int] = {}
+    updates: dict[str, object] = {}
     # Aggregates are never trusted from source info.json: recompute all of
     # them from the reconciled episode table (several source datasets ship
     # inflated total_frames, stale splits or total_videos=0).
