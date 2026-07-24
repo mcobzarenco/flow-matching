@@ -92,6 +92,7 @@ class TrainArgs:
     save_every: int
     num_workers: int
     prefetch_factor: int
+    video_decoder_cache: int
     device: str
     seed: int
     eval_samples: int
@@ -638,6 +639,16 @@ def parse_args() -> TrainArgs:
         default=4,
         help="batches prefetched per dataloader worker",
     )
+    parser.add_argument(
+        "--video-decoder-cache",
+        type=int,
+        default=4,
+        help="max open torchcodec decoders cached per dataloader worker "
+        "(exported as LEROBOT_VIDEO_DECODER_CACHE_SIZE). lerobot's default "
+        "of 100 pins ~50-100MB of ffmpeg buffers per entry; with shuffled "
+        "sampling over hundreds of video files that fills every worker's "
+        "cache and OOM-killed a 20-worker run at ~190GB host RAM",
+    )
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument(
@@ -683,6 +694,7 @@ def parse_args() -> TrainArgs:
         save_every=raw.save_every,
         num_workers=raw.num_workers,
         prefetch_factor=raw.prefetch_factor,
+        video_decoder_cache=raw.video_decoder_cache,
         device=raw.device,
         seed=raw.seed,
         eval_samples=raw.eval_samples,
@@ -697,6 +709,14 @@ def main() -> int:
     # forced before any figure is created; imports stay at the top).
     matplotlib.use("Agg", force=True)
     args = parse_args()
+    # Bound each dataloader worker's torchcodec decoder cache. Spawned
+    # workers inherit os.environ, and lerobot reads this when it constructs
+    # its per-process cache at import time inside the worker. (The main
+    # process's own cache was already built with lerobot's default at import
+    # time here, but the main process only decodes the small eval set once.)
+    if args.video_decoder_cache < 1:
+        raise SystemExit("--video-decoder-cache must be >= 1")
+    os.environ["LEROBOT_VIDEO_DECODER_CACHE_SIZE"] = str(args.video_decoder_cache)
     torch.manual_seed(args.seed)
     device = torch.device(args.device)
 
@@ -726,6 +746,7 @@ def main() -> int:
         if dims != (action_dim, state_dim):
             dropped.append(f"{repo_id} (action/state dims {dims[0]}/{dims[1]})")
             continue
+
         sub_dataset = LeRobotDataset(
             repo_id,
             root=str(dataset_dir),
@@ -736,10 +757,10 @@ def main() -> int:
         if sub_dataset.meta.stats is None:
             dropped.append(f"{repo_id} (no stats)")
             continue
+
         # Some community datasets ship metadata claiming more frames than
-        # their parquet actually holds; ConcatDataset sizes by len(), so a
-        # shuffled index would eventually hit the phantom tail (observed:
-        # zaringleb/* missing 269 trailing frames -> worker IndexError).
+        # their parquet actually holds; ConcatDataset sizes by len()
+
         actual_rows = len(sub_dataset.hf_dataset)
         if len(sub_dataset) != actual_rows:
             dropped.append(
