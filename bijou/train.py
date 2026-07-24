@@ -59,10 +59,10 @@ import transformers
 import wandb
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
 from PIL import Image
-from safetensors.torch import save_file
+from safetensors.torch import load_file, save_file
 from torch import Tensor
 
-from .expert import PrefixKV, SelfAttentionMode
+from .expert import ExpertConfig, PrefixKV, SelfAttentionMode
 from .gemma4.loading import load_config, resolve_checkpoint_dir
 from .loading import default_expert_config, from_backbone
 from .model import BijouModel
@@ -76,6 +76,8 @@ class TrainArgs:
     exclude: tuple[str, ...]
     backbone: str
     save_dir: Path
+    init_from: Path | None
+    resume: Path | None
     instruction: str | None
     cameras: tuple[str, ...] | None
     max_cameras: int | None
@@ -649,11 +651,23 @@ def save_checkpoint(
     args: TrainArgs,
     normalizers: Normalizers,
     per_dataset_stats: dict[str, DatasetStats],
+    optimizer: torch.optim.Optimizer,
+    scheduler: torch.optim.lr_scheduler.LRScheduler,
     step: int,
 ) -> Path:
     checkpoint_dir = args.save_dir / f"step_{step:06d}"
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
     save_file(model.expert.state_dict(), str(checkpoint_dir / "expert.safetensors"))
+    # Adam moments etc. (~2x expert params) make --resume a lossless
+    # continuation; --init-from ignores this file.
+    torch.save(
+        {
+            "optimizer": optimizer.state_dict(),
+            "scheduler": scheduler.state_dict(),
+            "step": step,
+        },
+        checkpoint_dir / "optimizer.pt",
+    )
     metadata = {
         "backbone": args.backbone,
         "expert_config": dataclasses.asdict(model.expert.config),
@@ -679,6 +693,23 @@ def save_checkpoint(
         json.dumps(metadata, indent=2, default=str)
     )
     return checkpoint_dir
+
+
+def ensure_matching_expert_config(
+    expert_config: ExpertConfig, checkpoint: Path
+) -> None:
+    """Loud, early failure when a checkpoint's expert differs from the CLI's
+    (strict state-dict loading would also fail, but with worse diagnostics
+    — and silently NOT fail for same-shape config differences like the
+    cross-attention schedule)."""
+    saved = json.loads((checkpoint / "bijou_config.json").read_text())["expert_config"]
+    current = json.loads(json.dumps(dataclasses.asdict(expert_config), default=str))
+    if current != saved:
+        raise SystemExit(
+            f"expert config mismatch vs {checkpoint}:\n"
+            f"  checkpoint: {json.dumps(saved, sort_keys=True)}\n"
+            f"  cli:        {json.dumps(current, sort_keys=True)}"
+        )
 
 
 def lr_lambda(step: int, args: TrainArgs) -> float:
@@ -763,6 +794,22 @@ def parse_args() -> TrainArgs:
         "sampling over hundreds of video files that fills every worker's "
         "cache and OOM-killed a 20-worker run at ~190GB host RAM",
     )
+    parser.add_argument(
+        "--init-from",
+        type=Path,
+        default=None,
+        help="warm start: load expert weights from this checkpoint directory "
+        "(fresh optimizer, schedule and step count — use a NEW --save-dir or "
+        "the source checkpoint will eventually be overwritten)",
+    )
+    parser.add_argument(
+        "--resume",
+        type=Path,
+        default=None,
+        help="full resume: expert weights + optimizer/scheduler/step from "
+        "this checkpoint directory (requires its optimizer.pt; --steps "
+        "counts total steps including the resumed ones)",
+    )
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument(
@@ -781,11 +828,15 @@ def parse_args() -> TrainArgs:
     )
     parser.add_argument("--wandb-run-name", default=None)
     raw = parser.parse_args()
+    if raw.init_from is not None and raw.resume is not None:
+        parser.error("--init-from and --resume are mutually exclusive")
     return TrainArgs(
         train_data=tuple(raw.train_data),
         exclude=tuple(raw.exclude),
         backbone=raw.backbone,
         save_dir=raw.save_dir,
+        init_from=raw.init_from,
+        resume=raw.resume,
         instruction=raw.instruction,
         cameras=tuple(raw.cameras) if raw.cameras else None,
         max_cameras=raw.max_cameras,
@@ -991,6 +1042,49 @@ def main() -> int:
         optimizer, lambda step: lr_lambda(step, args)
     )
 
+    start_step = 0
+    checkpoint_to_load = args.init_from or args.resume
+    if checkpoint_to_load is not None:
+        ensure_matching_expert_config(expert_config, checkpoint_to_load)
+        model.expert.load_state_dict(
+            load_file(
+                str(checkpoint_to_load / "expert.safetensors"), device=str(device)
+            ),
+            strict=True,
+        )
+        print(f"loaded expert weights from {checkpoint_to_load}", flush=True)
+    if args.resume is not None:
+        optimizer_path = args.resume / "optimizer.pt"
+        if not optimizer_path.exists():
+            raise SystemExit(
+                f"{optimizer_path} missing (checkpoint predates optimizer "
+                "saving) — use --init-from for a warm start instead"
+            )
+        saved_state = torch.load(optimizer_path, map_location="cpu", weights_only=True)
+        optimizer.load_state_dict(saved_state["optimizer"])
+        scheduler.load_state_dict(saved_state["scheduler"])
+        start_step = int(saved_state["step"])
+        if start_step >= args.steps:
+            raise SystemExit(
+                f"checkpoint is at step {start_step}, nothing to do with "
+                f"--steps {args.steps} (it counts total steps)"
+            )
+        print(
+            f"resumed optimizer/scheduler at step {start_step} "
+            f"(lr {scheduler.get_last_lr()[0]:.2e})",
+            flush=True,
+        )
+        restored = optimizer.param_groups[0]
+        base_lr = float(restored.get("initial_lr", restored["lr"]))
+        if base_lr != args.lr or float(restored["weight_decay"]) != args.weight_decay:
+            print(
+                "note: --resume keeps the checkpoint's optimizer "
+                f"hyperparameters (base lr {base_lr:.2e}, weight decay "
+                f"{restored['weight_decay']}); CLI --lr/--weight-decay are "
+                "ignored, --steps/--warmup-steps still shape the schedule",
+                flush=True,
+            )
+
     # Fixed validation set, independent of the training batch size:
     # --eval-samples items spread evenly across the dataset (deterministic),
     # collated in-process (safe: dataloader workers are spawned, not forked)
@@ -1035,7 +1129,7 @@ def main() -> int:
             },
         )
 
-    step = 0
+    step = start_step
     # Loss/grad-norm live on-device between log points: a single .item()
     # sync per log_every steps instead of one per step.
     window: list[Tensor] = []
@@ -1104,7 +1198,13 @@ def main() -> int:
 
             if step % args.save_every == 0 or step == args.steps:
                 path = save_checkpoint(
-                    model, args, normalizers, per_dataset_stats, step
+                    model,
+                    args,
+                    normalizers,
+                    per_dataset_stats,
+                    optimizer,
+                    scheduler,
+                    step,
                 )
                 print(f"saved {path}", flush=True)
 
