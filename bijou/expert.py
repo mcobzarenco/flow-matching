@@ -447,7 +447,10 @@ class ActionExpert(nn.Module):
         nn.init.zeros_(self.action_out_proj.bias)
 
     def _self_attention_mask(
-        self, batch: int, dtype: torch.dtype, device: torch.device
+        self,
+        batch: int,
+        dtype: torch.dtype,
+        device: torch.device,
     ) -> MaskSpec:
         if self.config.self_attention_mode is SelfAttentionMode.BIDIRECTIONAL:
             return MaskSpec()
@@ -465,7 +468,10 @@ class ActionExpert(nn.Module):
         return MaskSpec(tensor=tensor[None, None].expand(batch, 1, length, length))
 
     def _cross_attention_mask(
-        self, prefix: PrefixKV, dtype: torch.dtype, device: torch.device
+        self,
+        prefix: PrefixKV,
+        dtype: torch.dtype,
+        device: torch.device,
     ) -> MaskSpec:
         if prefix.padding_mask is None:
             return MaskSpec()
