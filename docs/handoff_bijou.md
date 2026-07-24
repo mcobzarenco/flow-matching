@@ -416,9 +416,23 @@ frames, cams front/wrist) mixes in cleanly (padding path exercised).
   worktree `major-yak`); RTX 3000 Ada 8 GB (fits tiny-backbone CUDA
   smokes); 60 GB RAM. uv project, Python 3.13, transformers 5.14.1 pinned
   via override. `uv run pyright` / `uv run ruff check` are the gates.
-- **H100 box**: `ubuntu@209.20.156.82` (ssh -A for GitHub; `uv` at
+- **H100 box (1x)**: `ubuntu@209.20.156.82` (ssh -A for GitHub; `uv` at
   `~/.local/bin`). Repo `~/flow-matching` synced to origin/main
   (`git fetch && git reset --hard origin/main`). Bills while up.
+- **H100 box (4x SXM, Lambda Georgia)**: `ubuntu@68.209.73.71` — full
+  NVLink mesh (NV18, measured 355 GB/s bus bw on expert-gradient-sized
+  all-reduce), 104 vCPU, 885 GB RAM, 11 TB disk, GPU Base 24.04 image
+  (preinstalled driver 580.126.20 deliberately untouched — no Lambda
+  Stack, no dist-upgrade). Same layout as the 1x box (repo, uv, HF token,
+  wandb .netrc carried over; E2B backbone pre-cached).
+- **Multi-GPU training (DDP)**: `uv run torchrun --standalone
+  --nproc-per-node=4 -m bijou.train ...` — replica + optimizer per GPU,
+  DDP over the expert only; --batch-size/--num-workers are per rank;
+  loss all-reduced at log points; rank 0 owns eval/wandb/jsonl/
+  checkpoints (checkpoints carry no module. prefix — interchangeable
+  across world sizes); per-rank RNG = seed+rank, sampler on the base
+  seed; without WORLD_SIZE the script is byte-identical single-process.
+  Sharded per-rank eval = planned 2nd iteration.
 - **Data on the box**: `~/datasets/mcobzarenco/community_dataset_v2_v3`
   (121 GB, 323 datasets); `~/datasets/marius/so101_pick_place_clean`;
   `~/community_dataset_v1_v3/ZGGZZG/so100_drop0` (old 1-dataset dev
