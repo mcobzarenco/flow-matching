@@ -32,6 +32,7 @@ Properties:
 
 import argparse
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -924,6 +925,11 @@ def main() -> None:
     output = args.output.expanduser().resolve()
     output.mkdir(parents=True, exist_ok=True)
 
+    # Post-conversion validation materializes datasets through the HF
+    # `datasets` cache; keep that on the output volume (boot disks are small
+    # and depth datasets can need tens of GB).
+    os.environ.setdefault("HF_DATASETS_CACHE", str(output / ".hf_datasets_cache"))
+
     datasets = discover(source)
     if not datasets:
         raise SystemExit(
@@ -977,6 +983,9 @@ def main() -> None:
     staging_root = output / ".staging"
     if staging_root.exists() and not any(staging_root.rglob("*")):
         shutil.rmtree(staging_root)
+    cache_root = output / ".hf_datasets_cache"
+    if os.environ.get("HF_DATASETS_CACHE") == str(cache_root) and cache_root.exists():
+        shutil.rmtree(cache_root, ignore_errors=True)
 
     print(f"\ndone: {dict(outcomes)}")
     if outcomes["failed"]:
