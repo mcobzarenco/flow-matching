@@ -394,6 +394,19 @@ def discover_datasets(paths: tuple[Path, ...], exclude: tuple[str, ...]) -> list
     return selected
 
 
+def action_state_dims(info: dict[str, Any]) -> tuple[int, int] | None:
+    """Action/state dims from a dataset's info.json, or None when either
+    feature is absent (a few community datasets use bespoke feature names,
+    e.g. arm_action/hand_action/observation.arm_state — not trainable here)."""
+    features = info.get("features") or {}
+    if "action" not in features or "observation.state" not in features:
+        return None
+    return (
+        int(features["action"]["shape"][0]),
+        int(features["observation.state"]["shape"][0]),
+    )
+
+
 def _worker_init(_worker_id: int) -> None:
     # Keep dataloader workers single-threaded: N workers x M torch threads
     # oversubscribes the host.
@@ -948,11 +961,22 @@ def main() -> int:
     dataset_infos = [
         json.loads((d / "meta" / "info.json").read_text()) for d in dataset_dirs
     ]
-    # Dims are dictated by the first selected dataset; mismatches are
-    # dropped loudly (the community collections mix in a few 7/12/14-dof
-    # datasets — cross-embodiment padding is out of scope for now).
-    action_dim = int(dataset_infos[0]["features"]["action"]["shape"][0])
-    state_dim = int(dataset_infos[0]["features"]["observation.state"]["shape"][0])
+    # Dims are dictated by the first selected dataset that declares the
+    # standard action/observation.state features; feature-less datasets and
+    # dim mismatches are dropped loudly (the community collections mix in a
+    # few 7/12/14-dof and bespoke-feature datasets — cross-embodiment
+    # padding is out of scope for now).
+    anchor_info = next(
+        (info for info in dataset_infos if action_state_dims(info) is not None),
+        None,
+    )
+    if anchor_info is None:
+        raise ValueError(
+            "no selected dataset declares action/observation.state features"
+        )
+    anchor_dims = action_state_dims(anchor_info)
+    assert anchor_dims is not None
+    action_dim, state_dim = anchor_dims
     datasets: list[StatsAttachedDataset] = []
     stats_list: list[dict[str, Any]] = []
     per_dataset_stats: dict[str, DatasetStats] = {}
@@ -972,10 +996,10 @@ def main() -> int:
                 f"keeping {selected_dirs[repo_id]})"
             )
             continue
-        dims = (
-            int(info["features"]["action"]["shape"][0]),
-            int(info["features"]["observation.state"]["shape"][0]),
-        )
+        dims = action_state_dims(info)
+        if dims is None:
+            dropped.append(f"{repo_id} (no action/observation.state features)")
+            continue
         if dims != (action_dim, state_dim):
             dropped.append(f"{repo_id} (action/state dims {dims[0]}/{dims[1]})")
             continue
@@ -1215,7 +1239,7 @@ def main() -> int:
             f"(soft-token budget {args.max_soft_tokens}/camera)",
             flush=True,
         )
-    action_names = list(dataset_infos[0]["features"]["action"].get("names") or [])
+    action_names = list(anchor_info["features"]["action"].get("names") or [])
 
     log_file: TextIO | None = None
     if is_main:
