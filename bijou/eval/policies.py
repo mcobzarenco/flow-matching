@@ -52,6 +52,35 @@ class StateCopyPolicy:
         ]
 
 
+class NormalizedStateCopyPolicy:
+    """State-copy through the per-dataset stats: normalize the state with the
+    STATE stats, unnormalize with the ACTION stats —
+    ``â = μ_a + σ_a · (s − μ_s)/σ_s``, held for the whole chunk.
+
+    On SO-100 teleop data, action (leader/commanded) and state (follower/
+    measured) differ by quasi-constant offsets: gravity droop on loaded
+    joints, leader-follower calibration deltas, gripper clamp force. Those
+    offsets live in μ_a − μ_s, so this baseline hits offset-but-constant
+    traces that raw state-copy misses — with zero learning. It is the
+    correct trivial policy under per-dataset normalization, and the honest
+    reference for how much of a learned model's edge is stats arithmetic."""
+
+    name = "state-copy-norm"
+
+    def __init__(self, chunk_size: int) -> None:
+        self.chunk_size = chunk_size
+
+    def predict(self, items: list[dict[str, Any]], indices: list[int]) -> list[Tensor]:
+        predictions: list[Tensor] = []
+        for item in items:
+            normalized = (item["observation.state"] - item["state_mean"]) / item[
+                "state_std"
+            ]
+            action = normalized * item["action_std"] + item["action_mean"]
+            predictions.append(action[None, :].expand(self.chunk_size, -1).clone())
+        return predictions
+
+
 def sample_noise(seed: int, shape: tuple[int, ...]) -> Tensor:
     """Seeded on CPU so values are identical regardless of device."""
     generator = torch.Generator().manual_seed(seed)

@@ -40,7 +40,12 @@ from .metrics import (
     score_frame,
     summarize,
 )
-from .policies import BijouPolicy, ChunkPolicy, StateCopyPolicy
+from .policies import (
+    BijouPolicy,
+    ChunkPolicy,
+    NormalizedStateCopyPolicy,
+    StateCopyPolicy,
+)
 from .report import THEMES, ReportSample, render_report
 from .smolvla import SmolVLAEvalPolicy
 
@@ -154,7 +159,10 @@ def main() -> int:
     indices = sorted(random.Random(args.seed).sample(range(len(dataset)), num_samples))
     print(f"sampling {num_samples} frames (seed {args.seed})", flush=True)
 
-    policies: list[ChunkPolicy] = [StateCopyPolicy(args.chunk_size)]
+    policies: list[ChunkPolicy] = [
+        StateCopyPolicy(args.chunk_size),
+        NormalizedStateCopyPolicy(args.chunk_size),
+    ]
     if args.checkpoint is not None:
         policy = BijouPolicy(
             args.checkpoint,
