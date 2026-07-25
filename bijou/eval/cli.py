@@ -41,7 +41,7 @@ from .metrics import (
     summarize,
 )
 from .policies import BijouPolicy, ChunkPolicy, StateCopyPolicy
-from .report import ReportSample, render_report
+from .report import THEMES, ReportSample, render_report
 from .smolvla import SmolVLAEvalPolicy
 
 
@@ -117,6 +117,12 @@ def parse_args() -> argparse.Namespace:
         default=12,
         help="datapoints charted in the report (evenly spread over the "
         "sampled frames; bounds report size on large evals)",
+    )
+    parser.add_argument(
+        "--report-theme",
+        choices=sorted(THEMES),
+        default="dark",
+        help="report color scheme",
     )
     return parser.parse_args()
 
@@ -328,6 +334,7 @@ def main() -> int:
             motor_names,
             [report_samples[i] for i in sorted(report_samples)],
             total_scored=num_samples,
+            theme=THEMES[args.report_theme],
         )
         print(f"wrote {args.report}", flush=True)
     return 0
