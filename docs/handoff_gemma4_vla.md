@@ -65,7 +65,7 @@ Originally a small MNIST flow-matching project (`fmatch/model.py`,
 | `init-vm-gpu.sh` | Lambda/Ubuntu24.04 GPU box bootstrap (driver 595, zsh, uv, clone, sync). Non-interactive (needrestart/dpkg guards, oh-my-zsh `--unattended`). |
 | `init-vm-cpu.sh` | Same minus driver/reboot; formats+mounts GCE disk `google-lerobot-data` at `/data`. |
 | `docs/so101_recording_tutorial.md` | Full SO-101 record→train→deploy tutorial (all lerobot CLIs via uv). |
-| `https://github.com/mcobzarenco/lerobot-dataset-tools/blob/main/docs/pipeline_plan.md` | The 8-stage plan: inventory → download → normalize → convert → judge → filter → merge-by-feature-signature → QA. |
+| `docs/community_to_v3_pipeline_plan.md` | The 8-stage plan: inventory → download → normalize → convert → judge → filter → merge-by-feature-signature → QA. |
 
 `pyproject.toml` essentials: `requires-python >=3.13,<3.14`;
 `lerobot[dataset,feetech,smolvla,viz]>=0.4` (currently 0.6.0), `av>=15,<16`,
