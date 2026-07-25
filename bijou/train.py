@@ -335,22 +335,52 @@ class StatsAttachedDataset(torch.utils.data.Dataset[dict[str, Any]]):
     """Wraps one LeRobot dataset so every item carries its dataset's stats
     (per-dataset normalization: between-rig calibration offsets must not
     survive into the training targets). Tensors are materialized per item,
-    in the worker — see the DatasetStats docstring."""
+    in the worker — see the DatasetStats docstring.
+
+    Unfetchable items (e.g. a corrupt video packet — killed two multi-hour
+    runs) are substituted with a far-away index from the SAME dataset,
+    loudly: the jump escapes the corrupt GOP/file, per-dataset stats stay
+    correct, and batch shapes are unaffected. Bounded retries keep systemic
+    breakage (a wholly unreadable dataset) fatal rather than silent."""
+
+    # Large prime jump: far enough to land in a different episode/video
+    # file; attempts bound the walk if corruption spans multiple regions.
+    _RETRY_STRIDE = 9973
+    _MAX_ATTEMPTS = 5
 
     def __init__(self, dataset: LeRobotDataset, stats: DatasetStats) -> None:
         self.dataset = dataset
         self.stats = stats
+        self.failed_fetches = 0
 
     def __len__(self) -> int:
         return len(self.dataset)
 
     def __getitem__(self, index: int) -> dict[str, Any]:
-        item = self.dataset[index]
+        item = self._fetch_with_substitution(index, self._MAX_ATTEMPTS)
         item["action_mean"] = torch.tensor(self.stats.action_mean)
         item["action_std"] = torch.tensor(self.stats.action_std)
         item["state_mean"] = torch.tensor(self.stats.state_mean)
         item["state_std"] = torch.tensor(self.stats.state_std)
         return item
+
+    def _fetch_with_substitution(self, index: int, attempts: int) -> dict[str, Any]:
+        try:
+            return self.dataset[index]
+        except Exception as error:  # noqa: BLE001 - any corrupt-sample failure
+            if attempts <= 1:
+                raise
+            self.failed_fetches += 1
+            substitute = (index + self._RETRY_STRIDE) % len(self.dataset)
+            print(
+                f"[data] {self.dataset.repo_id}[{index}] unfetchable "
+                f"({type(error).__name__}: {error}); substituting index "
+                f"{substitute} (failure #{self.failed_fetches} in this "
+                "process)",
+                file=sys.stderr,
+                flush=True,
+            )
+            return self._fetch_with_substitution(substitute, attempts - 1)
 
 
 def repo_id_of(dataset_dir: Path) -> str:
