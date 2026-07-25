@@ -22,6 +22,7 @@ Usage::
 from __future__ import annotations
 
 import argparse
+import datetime
 import json
 import random
 import time
@@ -40,6 +41,7 @@ from .metrics import (
     summarize,
 )
 from .policies import BijouPolicy, ChunkPolicy, StateCopyPolicy
+from .report import ReportSample, render_report
 from .smolvla import SmolVLAEvalPolicy
 
 
@@ -101,6 +103,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--device", default="cuda")
     parser.add_argument(
         "--output-json", type=Path, default=None, help="write summaries as JSON"
+    )
+    parser.add_argument(
+        "--report",
+        type=Path,
+        default=None,
+        help="write a self-contained HTML report (tables + per-datapoint "
+        "prediction charts) to this path",
+    )
+    parser.add_argument(
+        "--report-samples",
+        type=int,
+        default=12,
+        help="datapoints charted in the report (evenly spread over the "
+        "sampled frames; bounds report size on large evals)",
     )
     return parser.parse_args()
 
@@ -169,6 +185,13 @@ def main() -> int:
         worker_init_fn=eval_worker_init if args.num_workers > 0 else None,
         multiprocessing_context="spawn" if args.num_workers > 0 else None,
     )
+    # Datapoints whose predictions are retained for the report: evenly
+    # spread over the sampled frames so charts span datasets, bounded so
+    # large evals stay renderable.
+    report_stride = max(len(indices) // max(args.report_samples, 1), 1)
+    report_indices = set(indices[::report_stride][: args.report_samples])
+    report_samples: dict[int, ReportSample] = {}
+
     scores: dict[str, list[FrameScore]] = {p.name: [] for p in policies}
     done = 0
     for batch_number, items in enumerate(loader):
@@ -181,16 +204,34 @@ def main() -> int:
                 items, batch_indices, predictions, strict=True
             ):
                 truth = item["action"]
+                predicted = predicted[: truth.shape[0]].float()
                 scores[policy.name].append(
                     score_frame(
                         index=index,
                         repo_id=str(item["repo_id"]),
-                        predicted=predicted[: truth.shape[0]].float(),
+                        predicted=predicted,
                         truth=truth.float(),
                         valid=~item["action_is_pad"],
                         inference_seconds=elapsed,
                     )
                 )
+                if args.report is not None and index in report_indices:
+                    sample = report_samples.get(index) or ReportSample(
+                        index=index,
+                        repo_id=str(item["repo_id"]),
+                        task=str(item["task"]),
+                        state=item["observation.state"].float(),
+                        cameras={
+                            k.removeprefix("observation.images."): v
+                            for k, v in item.items()
+                            if k.startswith("observation.images.")
+                        },
+                        truth=truth.float(),
+                        valid=~item["action_is_pad"],
+                        predictions={},
+                    )
+                    sample.predictions[policy.name] = predicted
+                    report_samples[index] = sample
         done += len(items)
         if batch_number % 5 == 0:
             print(f"  scored {done}/{num_samples} frames", flush=True)
@@ -266,4 +307,27 @@ def main() -> int:
         args.output_json.parent.mkdir(parents=True, exist_ok=True)
         args.output_json.write_text(json.dumps(payload, indent=2))
         print(f"\nwrote {args.output_json}", flush=True)
+
+    if args.report is not None:
+        config_lines = [
+            f"generated: {datetime.datetime.now().isoformat(timespec='seconds')}",
+            f"data: {', '.join(str(p) for p in args.data)}",
+            f"selection: {len(selection.datasets)} datasets, "
+            f"{selection.total_episodes} episodes, {len(dataset)} frames "
+            f"({len(selection.dropped)} dropped)",
+            f"samples: {num_samples} frames, seed {args.seed}",
+            f"checkpoint: {args.checkpoint or '-'}",
+            f"smolvla: {args.smolvla or '-'}",
+            f"sampler: {args.sample_method}-{args.sample_steps}",
+        ]
+        render_report(
+            args.report,
+            config_lines,
+            summaries,
+            comparisons,
+            motor_names,
+            [report_samples[i] for i in sorted(report_samples)],
+            total_scored=num_samples,
+        )
+        print(f"wrote {args.report}", flush=True)
     return 0
