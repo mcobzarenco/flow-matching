@@ -24,19 +24,23 @@ from torch import Tensor
 
 from .metrics import PairedComparison, PolicySummary
 
-_STYLE = """
-body { font-family: -apple-system, system-ui, sans-serif; margin: 2em auto;
-       max-width: 1100px; color: #222; }
-table { border-collapse: collapse; margin: 0.8em 0; font-size: 14px;
-        font-variant-numeric: tabular-nums; }
-th, td { border: 1px solid #ccc; padding: 4px 10px; text-align: right; }
-th:first-child, td:first-child { text-align: left; }
-th { background: #f0f0f0; }
-pre { background: #f7f7f7; padding: 0.8em; font-size: 13px; overflow-x: auto; }
-.sample { border-top: 2px solid #ddd; margin-top: 2em; padding-top: 1em; }
-.cams img { margin-right: 8px; border: 1px solid #ccc; }
-.meta { color: #555; font-size: 14px; }
-img.chart { max-width: 100%; }
+_BG = "#121417"
+
+_STYLE = f"""
+body {{ font-family: -apple-system, system-ui, sans-serif; margin: 2em auto;
+       max-width: 1100px; color: #d8dade; background: {_BG}; }}
+h1, h2, h3 {{ color: #eceef1; }}
+table {{ border-collapse: collapse; margin: 0.8em 0; font-size: 14px;
+        font-variant-numeric: tabular-nums; }}
+th, td {{ border: 1px solid #3a3f46; padding: 4px 10px; text-align: right; }}
+th:first-child, td:first-child {{ text-align: left; }}
+th {{ background: #1f242b; }}
+pre {{ background: #1a1e24; padding: 0.8em; font-size: 13px;
+      overflow-x: auto; color: #c3c7cd; }}
+.sample {{ border-top: 2px solid #2c3138; margin-top: 2em; padding-top: 1em; }}
+.cams img {{ margin-right: 8px; border: 1px solid #3a3f46; }}
+.meta {{ color: #9aa0a8; font-size: 14px; }}
+img.chart {{ max-width: 100%; }}
 """
 
 
@@ -67,41 +71,45 @@ def _image_data_uri(image: Tensor, height: int = 220) -> str:
 
 
 def _chart_data_uri(sample: ReportSample, motor_names: list[str]) -> str:
-    """Per-joint chart: ground truth (black) vs every policy's prediction."""
+    """Per-joint chart: ground truth (white) vs every policy's prediction,
+    styled for the dark page (figure background matches the page)."""
     matplotlib.use("Agg", force=True)
     dims = sample.truth.shape[-1]
     ncols = 3
     nrows = (dims + ncols - 1) // ncols
-    fig, axes = plt.subplots(
-        nrows, ncols, figsize=(4.2 * ncols, 2.6 * nrows), squeeze=False
-    )
     n_valid = int(sample.valid.sum())
     steps = range(n_valid)
-    for dim in range(dims):
-        ax = axes[dim // ncols][dim % ncols]
-        ax.plot(
-            steps,
-            sample.truth[:n_valid, dim].tolist(),
-            label="truth",
-            color="black",
-            linewidth=1.8,
+    with plt.style.context("dark_background"):
+        fig, axes = plt.subplots(
+            nrows, ncols, figsize=(4.2 * ncols, 2.6 * nrows), squeeze=False
         )
-        for name, predicted in sample.predictions.items():
+        fig.patch.set_facecolor(_BG)
+        for dim in range(dims):
+            ax = axes[dim // ncols][dim % ncols]
+            ax.set_facecolor(_BG)
             ax.plot(
                 steps,
-                predicted[:n_valid, dim].tolist(),
-                label=name,
-                linestyle="--",
-                linewidth=1.2,
+                sample.truth[:n_valid, dim].tolist(),
+                label="truth",
+                color="#eceef1",
+                linewidth=1.8,
             )
-        name = motor_names[dim] if dim < len(motor_names) else f"dim {dim}"
-        ax.set_title(name, fontsize=9)
-        ax.tick_params(labelsize=8)
-    axes[0][0].legend(fontsize=8)
-    fig.tight_layout()
-    buffer = io.BytesIO()
-    fig.savefig(buffer, format="png", dpi=90)
-    plt.close(fig)
+            for name, predicted in sample.predictions.items():
+                ax.plot(
+                    steps,
+                    predicted[:n_valid, dim].tolist(),
+                    label=name,
+                    linestyle="--",
+                    linewidth=1.2,
+                )
+            name = motor_names[dim] if dim < len(motor_names) else f"dim {dim}"
+            ax.set_title(name, fontsize=9)
+            ax.tick_params(labelsize=8)
+        axes[0][0].legend(fontsize=8)
+        fig.tight_layout()
+        buffer = io.BytesIO()
+        fig.savefig(buffer, format="png", dpi=90, facecolor=fig.get_facecolor())
+        plt.close(fig)
     encoded = base64.b64encode(buffer.getvalue()).decode("ascii")
     return f"data:image/png;base64,{encoded}"
 

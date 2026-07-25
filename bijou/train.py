@@ -257,10 +257,16 @@ def flow_matching_loss(
 
 
 def _chunk_plot(
-    predicted: Tensor, truth: Tensor, valid: Tensor, action_names: list[str]
+    predicted: Tensor,
+    truth: Tensor,
+    valid: Tensor,
+    state: Tensor,
+    action_names: list[str],
 ) -> Any:
-    """Per-joint predicted-vs-ground-truth curves over the action chunk.
-    Returns a matplotlib figure (caller logs and closes it)."""
+    """Per-joint curves over the action chunk: ground truth, the model's
+    prediction, and the trivial state-copy baseline (hold current joint
+    positions — the minimum bar a learned policy must clear). Returns a
+    matplotlib figure (caller logs and closes it)."""
     dims = predicted.shape[-1]
     ncols = 3
     nrows = (dims + ncols - 1) // ncols
@@ -271,12 +277,28 @@ def _chunk_plot(
     n_valid = int(valid.sum())
     for dim in range(dims):
         ax = axes[dim // ncols][dim % ncols]
-        ax.plot(steps[:n_valid], truth[:n_valid, dim].tolist(), label="truth")
+        ax.plot(
+            steps[:n_valid],
+            truth[:n_valid, dim].tolist(),
+            label="truth",
+            color="black",
+            linewidth=1.8,
+        )
+        ax.plot(
+            steps[:n_valid],
+            [float(state[dim])] * n_valid,
+            label="state-copy",
+            color="tab:blue",
+            linestyle="--",
+            linewidth=1.2,
+        )
         ax.plot(
             steps[:n_valid],
             predicted[:n_valid, dim].tolist(),
             label="predicted",
+            color="tab:orange",
             linestyle="--",
+            linewidth=1.2,
         )
         name = action_names[dim] if dim < len(action_names) else f"dim {dim}"
         ax.set_title(name, fontsize=9)
@@ -346,7 +368,11 @@ def validate(
             ]
             images += [None] * (n_slots - len(cams))
             figure = _chunk_plot(
-                sampled[i].cpu(), truth[i].cpu(), valid[i].cpu(), action_names or []
+                sampled[i].cpu(),
+                truth[i].cpu(),
+                valid[i].cpu(),
+                batch.state[i].cpu(),
+                action_names or [],
             )
             state_str = ", ".join(
                 f"{x:.1f}" for x in item["observation.state"].tolist()
