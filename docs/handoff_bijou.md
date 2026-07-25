@@ -461,6 +461,17 @@ frames, cams front/wrist) mixes in cleanly (padding path exercised).
 
 ## E. Open threads, roughly prioritized
 
+- **Eval harness: DONE** (`python -m bijou.eval`): scores state-copy
+  baseline (always) + `--checkpoint` bijou + `--smolvla` on the SAME K
+  seeded frames of a `--data` selection (`--train-data` semantics; shared
+  pipeline in `bijou/data.py`). Pad-masked chunk metrics + paired
+  per-frame deltas/win-rate vs baseline; `--output-json`. First held-out
+  result (marius rig, zero-shot): state-copy 9.5 < bijou@40k 12.8 <
+  smolvla_base 14.2 — no zero-shot policy beats trivial on an unseen rig;
+  pretrained checkpoints are fine-tuning substrates. Next: episode-level
+  train/val splits for fine-tune evals; static-HTML report (decided over
+  streamlit: artifact > app).
+
 1. **Relaunch + babysit the 20k community-v2 run** (guard landed; verify
    `s_per_step` post-pipeline-work; consider `--save-every 1000`).
 2. **Open-loop eval harness** on held-out episodes (port
