@@ -13,10 +13,14 @@ ready-to-train model:
 
 from __future__ import annotations
 
+import json
+from dataclasses import dataclass
 from itertools import chain
 from pathlib import Path
+from typing import Any
 
 import torch
+from safetensors.torch import load_file
 
 from .expert import ActionExpert, ExpertConfig, SelfAttentionMode
 from .gemma4.config import Gemma4Config, LayerType
@@ -145,3 +149,91 @@ def from_backbone(
         dtype=expert_dtype,
     )
     return BijouModel(backbone=backbone, expert=expert)
+
+
+@dataclass(frozen=True, slots=True)
+class CheckpointInfo:
+    """Metadata of a bijou training checkpoint (bijou_config.json)."""
+
+    backbone: str
+    train_args: dict[str, Any]
+    step: int
+    normalization: dict[str, dict[str, list[float]]]
+    per_dataset_normalization: dict[str, dict[str, dict[str, list[float]]]]
+
+    @property
+    def chunk_size(self) -> int:
+        return int(self.train_args["chunk_size"])
+
+    @property
+    def max_soft_tokens(self) -> int:
+        return int(self.train_args["max_soft_tokens"])
+
+
+def expert_config_from_train_args(
+    backbone_config: Gemma4Config,
+    train_args: dict[str, Any],
+    *,
+    action_dim: int,
+    state_dim: int,
+) -> ExpertConfig:
+    """Rebuild the expert config a training run used from its recorded args
+    (the serialized expert_config in bijou_config.json stringifies enums and
+    nested dataclasses; the train args are the clean source)."""
+    return default_expert_config(
+        backbone_config,
+        action_dim=action_dim,
+        state_dim=state_dim,
+        stream_counts=tuple(train_args["stream_counts"]),
+        hidden_size=int(train_args["expert_hidden"]),
+        num_attention_heads=int(train_args["expert_heads"]),
+        intermediate_size=int(train_args["expert_intermediate"]),
+        cross_attention_heads=int(train_args["expert_cross_heads"]),
+        chunk_size=int(train_args["chunk_size"]),
+        self_attention_mode=SelfAttentionMode(train_args["self_attention_mode"]),
+    )
+
+
+def from_checkpoint(
+    checkpoint: str | Path,
+    *,
+    device: DeviceLike = "cpu",
+    dtype: torch.dtype | None = None,
+    expert_dtype: torch.dtype = torch.float32,
+    attn_backend: AttentionBackend = DEFAULT_ATTENTION_BACKEND,
+) -> tuple[BijouModel, CheckpointInfo]:
+    """Load a bijou training checkpoint directory (as written by
+    bijou.train.save_checkpoint): backbone resolved from the recorded id,
+    expert config rebuilt from the recorded train args, expert weights
+    loaded strictly. Returns the eval-mode model plus checkpoint metadata
+    (normalization stats table etc.)."""
+    checkpoint = Path(checkpoint)
+    meta = json.loads((checkpoint / "bijou_config.json").read_text())
+    info = CheckpointInfo(
+        backbone=meta["backbone"],
+        train_args=meta["train_args"],
+        step=int(meta["step"]),
+        normalization=meta["normalization"],
+        per_dataset_normalization=meta.get("per_dataset_normalization", {}),
+    )
+    checkpoint_dir = resolve_checkpoint_dir(info.backbone)
+    expert_config = expert_config_from_train_args(
+        load_config(checkpoint_dir),
+        info.train_args,
+        action_dim=len(info.normalization["action"]["mean"]),
+        state_dim=len(info.normalization["observation.state"]["mean"]),
+    )
+    model = from_backbone(
+        checkpoint_dir,
+        expert_config,
+        device=device,
+        dtype=dtype,
+        expert_dtype=expert_dtype,
+        attn_backend=attn_backend,
+    )
+    model.expert.load_state_dict(
+        load_file(str(checkpoint / "expert.safetensors"), device=str(device)),
+        strict=True,
+    )
+    model.eval()
+    return model, info
