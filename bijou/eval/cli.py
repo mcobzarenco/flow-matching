@@ -30,7 +30,7 @@ from typing import Any
 
 import torch
 
-from ..data import select_datasets, worker_init
+from ..data import select_datasets
 from ..model import SamplingMethod
 from .metrics import (
     FrameScore,
@@ -46,6 +46,14 @@ from .smolvla import SmolVLAEvalPolicy
 def identity_collate(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Keep raw items as a list (module-level: spawn workers pickle this)."""
     return items
+
+
+def eval_worker_init(_worker_id: int) -> None:
+    """Single-threaded + file_system tensor sharing, IN the worker: tensors
+    are serialized worker-side, so the sharing strategy must be set there —
+    the main-process call alone still produced fd-based storages."""
+    torch.set_num_threads(1)
+    torch.multiprocessing.set_sharing_strategy("file_system")
 
 
 def parse_args() -> argparse.Namespace:
@@ -158,7 +166,7 @@ def main() -> int:
         shuffle=False,
         num_workers=args.num_workers,
         collate_fn=identity_collate,
-        worker_init_fn=worker_init if args.num_workers > 0 else None,
+        worker_init_fn=eval_worker_init if args.num_workers > 0 else None,
         multiprocessing_context="spawn" if args.num_workers > 0 else None,
     )
     scores: dict[str, list[FrameScore]] = {p.name: [] for p in policies}
