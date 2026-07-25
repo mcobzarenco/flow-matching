@@ -100,6 +100,7 @@ class BijouPolicy:
         seed: int,
         sample_steps: int = 10,
         method: SamplingMethod = SamplingMethod.HEUN,
+        expert_dtype: torch.dtype = torch.float32,
     ) -> None:
         self.name = f"bijou@{checkpoint.name.removeprefix('step_').lstrip('0') or '0'}"
         self.device = device
@@ -108,7 +109,9 @@ class BijouPolicy:
         self.method = method
         self.model: BijouModel
         self.info: CheckpointInfo
-        self.model, self.info = from_checkpoint(checkpoint, device=device)
+        self.model, self.info = from_checkpoint(
+            checkpoint, device=device, expert_dtype=expert_dtype
+        )
         self.collator = PrefixCollator(
             checkpoint=str(resolve_checkpoint_dir(self.info.backbone)),
             instruction=None,
