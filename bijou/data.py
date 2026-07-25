@@ -8,7 +8,10 @@ provably select and prepare data the same way:
 - ``select_datasets``: the guard pipeline — dims anchored by the first
   dataset with standard features; loud drops for bespoke features, dim
   mismatches, missing/non-finite stats, metadata-vs-parquet frame count
-  disagreements and cross-root duplicate repo ids.
+  disagreements and cross-root duplicate repo ids. Optional deterministic
+  per-dataset episode holdout (``EpisodeSplit``/``holdout_episodes``):
+  training loads the TRAIN side, eval reproduces the exact HOLDOUT side
+  from (fraction, split seed) alone — no persisted split files.
 - ``DatasetStats``/``StatsAttachedDataset``: per-dataset MEAN_STD stats
   attached to every item (per-dataset normalization) with loud, bounded
   substitution of unfetchable samples.
@@ -21,9 +24,11 @@ from __future__ import annotations
 import dataclasses
 import json
 import math
+import random
 import sys
 from collections import Counter
 from dataclasses import dataclass
+from enum import Enum
 from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any
@@ -248,6 +253,33 @@ def discover_datasets(paths: tuple[Path, ...], exclude: tuple[str, ...]) -> list
     return selected
 
 
+class EpisodeSplit(Enum):
+    """Which side of the per-dataset episode holdout a selection loads."""
+
+    ALL = "all"
+    TRAIN = "train"
+    HOLDOUT = "holdout"
+
+
+def holdout_episodes(
+    repo_id: str, num_episodes: int, fraction: float, split_seed: int
+) -> tuple[int, ...]:
+    """Deterministic per-dataset episode holdout.
+
+    A pure function of (repo_id, num_episodes, fraction, split_seed):
+    reproducible anywhere (training and eval agree without shared state),
+    independent of dataset ordering, and deliberately independent of the
+    training --seed (which changes across restarts — the holdout must not).
+    Every dataset with >= 2 episodes contributes at least one held-out
+    episode and always keeps at least one for training.
+    """
+    if fraction <= 0 or num_episodes < 2:
+        return ()
+    count = min(num_episodes - 1, max(1, round(fraction * num_episodes)))
+    rng = random.Random(f"{split_seed}:{repo_id}")
+    return tuple(sorted(rng.sample(range(num_episodes), count)))
+
+
 def action_state_dims(info: dict[str, Any]) -> tuple[int, int] | None:
     """Action/state dims from a dataset's info.json, or None when either
     feature is absent (a few community datasets use bespoke feature names,
@@ -263,7 +295,13 @@ def action_state_dims(info: dict[str, Any]) -> tuple[int, int] | None:
 
 @dataclass(frozen=True, slots=True)
 class DataSelection:
-    """Outcome of the selection guard pipeline over discovered datasets."""
+    """Outcome of the selection guard pipeline over discovered datasets.
+
+    ``total_episodes`` counts the episodes actually loaded (i.e. after any
+    episode-split filtering); ``held_out_episodes``/``held_out_datasets``
+    count the holdout side across the selected datasets regardless of which
+    side this selection loaded.
+    """
 
     datasets: list[StatsAttachedDataset]
     per_dataset_stats: dict[str, DatasetStats]
@@ -274,13 +312,21 @@ class DataSelection:
     state_dim: int
     action_names: list[str]
     total_episodes: int
+    episode_split: EpisodeSplit
+    held_out_episodes: int
+    held_out_datasets: int
 
     def concat(self) -> torch.utils.data.ConcatDataset[dict[str, Any]]:
         return torch.utils.data.ConcatDataset(self.datasets)
 
 
 def select_datasets(
-    paths: tuple[Path, ...], exclude: tuple[str, ...], chunk_size: int
+    paths: tuple[Path, ...],
+    exclude: tuple[str, ...],
+    chunk_size: int,
+    episode_split: EpisodeSplit = EpisodeSplit.ALL,
+    holdout_fraction: float = 0.0,
+    split_seed: int = 0,
 ) -> DataSelection:
     """Discover, validate and wrap datasets; drop the incompatible loudly.
 
@@ -288,7 +334,15 @@ def select_datasets(
     standard action/observation.state features (the community collections
     mix in a few 7/12/14-dof and bespoke-feature datasets — cross-embodiment
     padding is out of scope for now).
+
+    ``episode_split``/``holdout_fraction``/``split_seed`` select which side
+    of the deterministic per-dataset episode holdout to load (see
+    ``holdout_episodes``). TRAIN with fraction 0 loads everything —
+    identical to ALL. Training and eval reproduce the same split by passing
+    the same fraction and split seed; nothing is persisted.
     """
+    if episode_split is EpisodeSplit.HOLDOUT and holdout_fraction <= 0:
+        raise ValueError("episode_split=HOLDOUT requires holdout_fraction > 0")
     dataset_dirs = discover_datasets(paths, exclude)
     dataset_infos = [
         json.loads((d / "meta" / "info.json").read_text()) for d in dataset_dirs
@@ -311,6 +365,8 @@ def select_datasets(
     camera_census: Counter[tuple[str, ...]] = Counter()
     dropped: list[str] = []
     total_episodes = 0
+    held_out_total = 0
+    held_out_datasets = 0
     selected_dirs: dict[str, Path] = {}
     for dataset_dir, info in zip(dataset_dirs, dataset_infos, strict=True):
         repo_id = repo_id_of(dataset_dir)
@@ -332,9 +388,31 @@ def select_datasets(
             dropped.append(f"{repo_id} (action/state dims {dims[0]}/{dims[1]})")
             continue
 
+        meta_episodes = int(info["total_episodes"])
+        held_out = (
+            holdout_episodes(repo_id, meta_episodes, holdout_fraction, split_seed)
+            if episode_split is not EpisodeSplit.ALL
+            else ()
+        )
+        episodes: list[int] | None
+        if episode_split is EpisodeSplit.HOLDOUT:
+            if not held_out:
+                dropped.append(
+                    f"{repo_id} (no held-out episodes: "
+                    f"{meta_episodes} episode(s) total)"
+                )
+                continue
+            episodes = list(held_out)
+        elif episode_split is EpisodeSplit.TRAIN and held_out:
+            keep = set(range(meta_episodes)) - set(held_out)
+            episodes = sorted(keep)
+        else:
+            episodes = None
+
         sub_dataset = LeRobotDataset(
             repo_id,
             root=str(dataset_dir),
+            episodes=episodes,
             delta_timestamps={"action": [i / info["fps"] for i in range(chunk_size)]},
             # Nearest-frame decode tolerance. lerobot's 1e-4 default is
             # unrepresentable deep into v3-format concatenated video files:
@@ -350,11 +428,25 @@ def select_datasets(
             continue
 
         # Some community datasets ship metadata claiming more frames than
-        # their parquet actually holds; ConcatDataset sizes by len()
+        # their parquet actually holds; ConcatDataset sizes by len(). With
+        # an episode filter len(dataset) IS len(hf_dataset) (tautology), so
+        # the claim must come from per-episode lengths in the metadata.
         actual_rows = len(sub_dataset.hf_dataset)
-        if len(sub_dataset) != actual_rows:
+        if episodes is None:
+            claimed_rows = len(sub_dataset)
+        else:
+            lengths = {
+                int(ep): int(n)
+                for ep, n in zip(
+                    sub_dataset.meta.episodes["episode_index"],
+                    sub_dataset.meta.episodes["length"],
+                    strict=True,
+                )
+            }
+            claimed_rows = sum(lengths.get(ep, 0) for ep in episodes)
+        if claimed_rows != actual_rows:
             dropped.append(
-                f"{repo_id} (metadata claims {len(sub_dataset)} frames, "
+                f"{repo_id} (metadata claims {claimed_rows} frames, "
                 f"parquet holds {actual_rows})"
             )
             continue
@@ -377,6 +469,8 @@ def select_datasets(
             )
         ] += 1
         total_episodes += sub_dataset.num_episodes
+        held_out_total += len(held_out)
+        held_out_datasets += 1 if held_out else 0
     if not datasets:
         raise ValueError("no compatible datasets selected")
 
@@ -390,6 +484,9 @@ def select_datasets(
         state_dim=state_dim,
         action_names=list(anchor_info["features"]["action"].get("names") or []),
         total_episodes=total_episodes,
+        episode_split=episode_split,
+        held_out_episodes=held_out_total,
+        held_out_datasets=held_out_datasets,
     )
 
 

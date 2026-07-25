@@ -66,6 +66,7 @@ from torch import Tensor
 from .data import (
     CollatedBatch,
     DatasetStats,
+    EpisodeSplit,
     PrefixCollator,
     encode_prefix,
     select_datasets,
@@ -83,6 +84,8 @@ DEFAULT_BACKBONE = "google/gemma-4-e2b-it"
 class TrainArgs:
     train_data: tuple[Path, ...]
     exclude: tuple[str, ...]
+    holdout_episodes: float
+    split_seed: int
     backbone: str
     save_dir: Path
     init_from: Path | None
@@ -478,6 +481,22 @@ def parse_args() -> TrainArgs:
         default=[],
         help="fnmatch patterns against <user>/<dataset> repo ids to skip",
     )
+    parser.add_argument(
+        "--holdout-episodes",
+        type=float,
+        default=0.0,
+        help="fraction of each dataset's episodes to EXCLUDE from training "
+        "(deterministic per-dataset split; every >=2-episode dataset "
+        "contributes at least one). Score them with bijou.eval "
+        "--episodes holdout using the same fraction and --split-seed",
+    )
+    parser.add_argument(
+        "--split-seed",
+        type=int,
+        default=0,
+        help="seed for the episode holdout split — independent of --seed "
+        "so restarts/resumes never shift the split",
+    )
     parser.add_argument("--backbone", default=DEFAULT_BACKBONE)
     parser.add_argument(
         "--save-dir", type=Path, default=Path("outputs/train/bijou_dev")
@@ -584,9 +603,13 @@ def parse_args() -> TrainArgs:
     raw = parser.parse_args()
     if raw.init_from is not None and raw.resume is not None:
         parser.error("--init-from and --resume are mutually exclusive")
+    if not 0.0 <= raw.holdout_episodes < 1.0:
+        parser.error("--holdout-episodes must be in [0, 1)")
     return TrainArgs(
         train_data=tuple(raw.train_data),
         exclude=tuple(raw.exclude),
+        holdout_episodes=raw.holdout_episodes,
+        split_seed=raw.split_seed,
         backbone=raw.backbone,
         save_dir=raw.save_dir,
         init_from=raw.init_from,
@@ -671,7 +694,14 @@ def main() -> int:
     checkpoint_dir = resolve_checkpoint_dir(args.backbone)
 
     # -- datasets --------------------------------------------------------
-    selection = select_datasets(args.train_data, args.exclude, args.chunk_size)
+    selection = select_datasets(
+        args.train_data,
+        args.exclude,
+        args.chunk_size,
+        episode_split=EpisodeSplit.TRAIN,
+        holdout_fraction=args.holdout_episodes,
+        split_seed=args.split_seed,
+    )
     action_dim, state_dim = selection.action_dim, selection.state_dim
     per_dataset_stats = selection.per_dataset_stats
     dataset = selection.concat()
@@ -682,6 +712,14 @@ def main() -> int:
             f"action/state dim {action_dim}/{state_dim}",
             flush=True,
         )
+        if args.holdout_episodes > 0:
+            print(
+                f"episode holdout: {selection.held_out_episodes} episodes "
+                f"across {selection.held_out_datasets} datasets excluded "
+                f"(fraction {args.holdout_episodes}, split seed "
+                f"{args.split_seed})",
+                flush=True,
+            )
         for camera_set, count in selection.camera_census.most_common():
             print(f"  {count:4d} x cameras {camera_set}", flush=True)
         if selection.dropped:

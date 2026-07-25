@@ -31,7 +31,7 @@ from typing import Any
 
 import torch
 
-from ..data import select_datasets
+from ..data import EpisodeSplit, select_datasets
 from ..model import SamplingMethod
 from .metrics import (
     FrameScore,
@@ -74,6 +74,27 @@ def parse_args() -> argparse.Namespace:
         "bijou.train --train-data)",
     )
     parser.add_argument("--exclude", nargs="*", default=[])
+    parser.add_argument(
+        "--episodes",
+        choices=[s.value for s in EpisodeSplit],
+        default=EpisodeSplit.ALL.value,
+        help="which side of the per-dataset episode holdout to evaluate; "
+        "'holdout' scores exactly the episodes a training run with the "
+        "same --holdout-episodes and --split-seed never saw",
+    )
+    parser.add_argument(
+        "--holdout-episodes",
+        type=float,
+        default=0.0,
+        help="holdout fraction — must match the training run's "
+        "--holdout-episodes for the split to line up",
+    )
+    parser.add_argument(
+        "--split-seed",
+        type=int,
+        default=0,
+        help="split seed — must match the training run's --split-seed",
+    )
     parser.add_argument(
         "--checkpoint",
         type=Path,
@@ -142,7 +163,17 @@ def main() -> int:
     torch.multiprocessing.set_sharing_strategy("file_system")
     device = torch.device(args.device)
 
-    selection = select_datasets(tuple(args.data), tuple(args.exclude), args.chunk_size)
+    episode_split = EpisodeSplit(args.episodes)
+    if episode_split is not EpisodeSplit.ALL and args.holdout_episodes <= 0:
+        raise SystemExit(f"--episodes {args.episodes} requires --holdout-episodes > 0")
+    selection = select_datasets(
+        tuple(args.data),
+        tuple(args.exclude),
+        args.chunk_size,
+        episode_split=episode_split,
+        holdout_fraction=args.holdout_episodes,
+        split_seed=args.split_seed,
+    )
     dataset = selection.concat()
     print(
         f"eval data: {len(selection.datasets)} datasets, "
@@ -150,6 +181,14 @@ def main() -> int:
         f"action/state dim {selection.action_dim}/{selection.state_dim}",
         flush=True,
     )
+    if episode_split is not EpisodeSplit.ALL:
+        print(
+            f"episode split: {episode_split.value} "
+            f"(fraction {args.holdout_episodes}, split seed {args.split_seed}; "
+            f"{selection.held_out_episodes} held-out episodes across "
+            f"{selection.held_out_datasets} datasets)",
+            flush=True,
+        )
     if selection.dropped:
         print(f"dropped {len(selection.dropped)} incompatible datasets:", flush=True)
         for reason in selection.dropped:
@@ -310,6 +349,9 @@ def main() -> int:
     if args.output_json is not None:
         payload: dict[str, Any] = {
             "data": [str(p) for p in args.data],
+            "episodes": args.episodes,
+            "holdout_episodes": args.holdout_episodes,
+            "split_seed": args.split_seed,
             "num_samples": num_samples,
             "seed": args.seed,
             "checkpoint": str(args.checkpoint) if args.checkpoint else None,
@@ -330,6 +372,13 @@ def main() -> int:
             f"{selection.total_episodes} episodes, {len(dataset)} frames "
             f"({len(selection.dropped)} dropped)",
             f"samples: {num_samples} frames, seed {args.seed}",
+            f"episodes: {args.episodes}"
+            + (
+                f" (holdout fraction {args.holdout_episodes}, "
+                f"split seed {args.split_seed})"
+                if episode_split is not EpisodeSplit.ALL
+                else ""
+            ),
             f"checkpoint: {args.checkpoint or '-'}",
             f"smolvla: {args.smolvla or '-'}",
             f"sampler: {args.sample_method}-{args.sample_steps}",
