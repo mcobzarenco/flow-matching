@@ -100,6 +100,11 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     torch.set_float32_matmul_precision("high")
+    # Eval workers ship RAW items (10+ tensor storages each, vs training's
+    # one collated batch); the default fd-based sharing pins one shm fd per
+    # storage and blows the 1024-fd ulimit -> 'received 0 items of ancdata'.
+    # The file_system strategy shares via named files instead.
+    torch.multiprocessing.set_sharing_strategy("file_system")
     device = torch.device(args.device)
 
     selection = select_datasets(tuple(args.data), tuple(args.exclude), args.chunk_size)
