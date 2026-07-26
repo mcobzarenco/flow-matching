@@ -11,7 +11,8 @@ Design notes (see the design discussion in the repo history):
 - Cross-attention queries adopt the backbone's global-attention geometry so
   the exported K/V are consumed exactly as the backbone's own deep layers
   consume them: head_dim = ``global_head_dim`` (512), q-RMSNorm, p-RoPE at
-  positions continuing after the prefix, attention scaling 1.0.
+  positions continuing after each sample's REAL (unpadded) prefix,
+  attention scaling 1.0.
 - The per-layer stream assignment is the ``cross_attention_schedule`` tuple
   (its length is the expert depth), e.g. blocks ``(4,4,4,4, 9,9,9,9,
   14,...)``; cycle/hybrid schedules are config diffs, not code paths.
@@ -60,7 +61,9 @@ type StreamKV = dict[int, tuple[Tensor, Tensor]]
 class PrefixKV:
     """Exported prefix K/V streams: {backbone_layer_idx: (K, V)}, each
     [B, kv_heads, P, head_dim], plus the (padded) prefix length P and, for
-    padded batches, the True-means-real padding mask [B, P]."""
+    padded batches, the True-means-real padding mask [B, P]. Per-sample
+    real lengths (expert query positions) derive from the mask; ``length``
+    is the KV width and the position base only for unpadded batches."""
 
     streams: StreamKV
     length: int
@@ -602,9 +605,21 @@ class ActionExpert(nn.Module):
             idx: (k.to(dtype), v.to(dtype)) for idx, (k, v) in prefix.streams.items()
         }
         suffix_positions = torch.arange(config.suffix_length, device=device)
+        # Cross-attention queries continue after each sample's REAL prefix.
+        # Using the padded batch width here would shift every query->key
+        # RoPE distance by that sample's padding, making predictions depend
+        # on batch-mates' prompt lengths (measured: max|delta| 0.55 on the
+        # expert alone, outputs/probe_effect1_fix.py).
+        if prefix.padding_mask is not None:
+            real_lengths = prefix.padding_mask.to(device=device, dtype=torch.long).sum(
+                dim=1,
+            )
+            cross_positions = real_lengths[:, None] + suffix_positions[None, :]
+        else:
+            cross_positions = (prefix.length + suffix_positions)[None, :]
         cross_position_embeddings = rope_cos_sin(
             self.cross_inv_freq,
-            (prefix.length + suffix_positions)[None, :],
+            cross_positions,
             dtype,
         )
         self_position_embeddings = rope_cos_sin(
