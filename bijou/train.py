@@ -78,8 +78,8 @@ from .loading import default_expert_config, from_backbone
 from .model import BijouModel
 
 DEFAULT_BACKBONE = "google/gemma-4-e2b-it"
-# Rows in the wandb eval table (each costs camera images + a matplotlib
-# figure per eval): a spot check, deliberately not scaled to the eval set.
+# Rows in the wandb probe table (each costs camera images + a matplotlib
+# figure per eval): a spot check, deliberately not scaled to the probe size.
 EVAL_TABLE_ROWS = 32
 
 
@@ -118,7 +118,7 @@ class TrainArgs:
     video_decoder_cache: int
     device: str
     seed: int
-    eval_samples: int
+    eval_samples: int | None
     eval_seed: int
     wandb_project: str | None
     wandb_run_name: str | None
@@ -314,35 +314,91 @@ def _chunk_plot(
     return fig
 
 
+@dataclass(frozen=True, slots=True)
+class ProbeSet:
+    """This rank's shard of a seeded MAE probe, CPU-resident between evals.
+
+    ``total`` is the global probe size across ranks. ``rich_items`` are raw
+    items kept for wandb rich logging at ``rich_positions`` (positions in
+    this shard's streaming order, strided across the shard so the table
+    spans the concatenated datasets instead of the earliest ones).
+    """
+
+    total: int
+    batches: list[CollatedBatch]
+    rich_items: list[dict[str, Any]]
+    rich_positions: tuple[int, ...]
+
+
+def build_probe_set(
+    dataset: torch.utils.data.ConcatDataset[dict[str, Any]],
+    collator: PrefixCollator,
+    num_samples: int,
+    seed: int,
+    rank: int,
+    world_size: int,
+    batch_size: int,
+    keep_rich: bool,
+) -> ProbeSet:
+    """Draw, fetch and collate one probe set's shard for this rank.
+
+    The frame draw is exactly bijou.eval's: seeded sampling without
+    replacement over the same selection scores the same frames. The sorted
+    draw is striped round-robin across ranks, so every shard spreads evenly
+    over the concatenated datasets.
+    """
+    num = min(num_samples, len(dataset))
+    indices = sorted(random.Random(seed).sample(range(len(dataset)), num))
+    shard = indices[rank::world_size]
+    items = [dataset[i] for i in shard]
+    batches = [
+        collator(items[i : i + batch_size]) for i in range(0, len(items), batch_size)
+    ]
+    rich_positions: tuple[int, ...] = ()
+    rich_items: list[dict[str, Any]] = []
+    if keep_rich and items:
+        stride = max(len(items) // EVAL_TABLE_ROWS, 1)
+        rich_positions = tuple(range(0, len(items), stride))[:EVAL_TABLE_ROWS]
+        rich_items = [items[p] for p in rich_positions]
+    return ProbeSet(
+        total=num,
+        batches=batches,
+        rich_items=rich_items,
+        rich_positions=rich_positions,
+    )
+
+
 @torch.no_grad()
 def validate(
     model: BijouModel,
-    eval_batches: list[CollatedBatch],
+    probe: ProbeSet,
     device: torch.device,
     seed: int,
     *,
     distributed: bool = False,
     wandb_run: Any = None,
-    rich_items: list[dict[str, Any]] | None = None,
     collator: PrefixCollator | None = None,
     action_names: list[str] | None = None,
     step: int = 0,
+    table_key: str = "eval/samples",
 ) -> float:
     """Sampled-chunk MAE in raw action units over this rank's shard of the
-    eval set; with ``distributed`` the sums all-reduce to the global value
+    probe set; with ``distributed`` the sums all-reduce to the global value
     (collective — every rank must call this at the same step). Batches
     arrive CPU-resident and visit the device one at a time, and the prefix
-    is re-encoded per eval, so eval-set size costs host RAM, not GPU memory.
+    is re-encoded per eval, so probe size costs host RAM, not GPU memory.
     The valid-element-weighted aggregation is exactly bijou.eval's
     chunk_mae. Normalization is per dataset (each sample's own stats,
-    matching training). With a wandb run, also logs a table over the
-    ``rich_items`` (the shard's first samples): camera images, task, state,
+    matching training). With a wandb run and a probe carrying rich items,
+    also logs a table under ``table_key``: camera images, task, state,
     per-joint predicted-vs-truth plots."""
     totals = torch.zeros(2, device=device)  # [abs-error sum, valid elements]
-    rich_count = len(rich_items) if rich_items else 0
     rich_rows: list[tuple[Tensor, Tensor, Tensor, Tensor]] = []
+    wanted = iter(probe.rich_positions)
+    next_rich = next(wanted, None)
+    base = 0
     generator = torch.Generator(device=device).manual_seed(seed)
-    for cpu_batch in eval_batches:
+    for cpu_batch in probe.batches:
         batch = cpu_batch.to(device)
         prefix = encode_prefix(model, batch)
         state = (batch.state - batch.state_mean) / batch.state_std
@@ -359,11 +415,10 @@ def validate(
         error = (sampled - truth).abs()
         totals[0] += error[valid].sum()
         totals[1] += valid.sum() * error.shape[-1]
-        # Shard order matches rich_items (its first samples): keep their
-        # predictions for the table as they stream past.
-        for i in range(sampled.shape[0]):
-            if len(rich_rows) == rich_count:
-                break
+        # Batches stream in shard order: pick off the rich positions
+        # (matching probe.rich_items one-to-one) as they pass.
+        while next_rich is not None and next_rich < base + sampled.shape[0]:
+            i = next_rich - base
             rich_rows.append(
                 (
                     sampled[i].cpu(),
@@ -372,14 +427,16 @@ def validate(
                     batch.state[i].cpu(),
                 )
             )
+            next_rich = next(wanted, None)
+        base += sampled.shape[0]
     if distributed:
         torch.distributed.all_reduce(totals)
     mae = float(totals[0] / totals[1].clamp(min=1))
 
-    if wandb_run is not None and rich_items and collator is not None:
+    if wandb_run is not None and probe.rich_items and collator is not None:
         # Cameras vary per sample across mixed datasets: generic positional
         # columns, padded with None where a sample has fewer cameras.
-        per_item_cameras = [collator.cameras_of(item) for item in rich_items]
+        per_item_cameras = [collator.cameras_of(item) for item in probe.rich_items]
         n_slots = max(len(cams) for cams in per_item_cameras)
         columns: list[Any] = [
             "sample",
@@ -390,7 +447,7 @@ def validate(
             "pred_vs_truth",
         ]
         table = wandb.Table(columns=columns)
-        for i, (item, row) in enumerate(zip(rich_items, rich_rows, strict=True)):
+        for i, (item, row) in enumerate(zip(probe.rich_items, rich_rows, strict=True)):
             row_sampled, row_truth, row_valid, row_state = row
             cams = per_item_cameras[i]
             images: list[Any] = [
@@ -423,7 +480,7 @@ def validate(
                 wandb.Image(figure),
             )
             plt.close(figure)
-        wandb_run.log({"eval/samples": table}, step=step)
+        wandb_run.log({table_key: table}, step=step)
     return mae
 
 
@@ -647,7 +704,7 @@ def parse_args() -> TrainArgs:
         "--eval-every",
         type=int,
         default=50,
-        help="steps between eval-set scorings",
+        help="steps between MAE probes (eval_chunk_mae/train_mae)",
     )
     parser.add_argument(
         "--save-every", type=int, default=100, help="steps between checkpoints"
@@ -699,17 +756,19 @@ def parse_args() -> TrainArgs:
     parser.add_argument(
         "--eval-samples",
         type=int,
-        default=8,
-        help="eval-set size, sampled without replacement (capped at the "
-        "dataset size) and sharded across ranks; evaluated in batches of "
-        "--batch-size, so size costs host RAM, not GPU memory",
+        default=None,
+        help="MAE probe size: eval_chunk_mae on held-out episodes (with "
+        "--holdout-episodes) plus train_mae on training data; sampled "
+        "without replacement per split, sharded across ranks, evaluated in "
+        "batches of --batch-size; required when --holdout-episodes > 0, "
+        "omit to disable probing",
     )
     parser.add_argument(
         "--eval-seed",
         type=int,
         default=0,
-        help="eval sampling/noise seed, independent of --seed; matches the "
-        "frames bijou.eval --seed picks on the same data",
+        help="probe sampling/noise seed, independent of --seed; matches the "
+        "frames bijou.eval --seed picks on the same data and split",
     )
     parser.add_argument(
         "--wandb-project",
@@ -723,6 +782,13 @@ def parse_args() -> TrainArgs:
         parser.error("--init-from and --resume are mutually exclusive")
     if not 0.0 <= raw.holdout_episodes < 1.0:
         parser.error("--holdout-episodes must be in [0, 1)")
+    if raw.holdout_episodes > 0 and raw.eval_samples is None:
+        parser.error(
+            "--eval-samples is required when --holdout-episodes > 0 "
+            "(it sizes the held-out eval_chunk_mae probe)"
+        )
+    if raw.eval_samples is not None and raw.eval_samples < 1:
+        parser.error("--eval-samples must be >= 1")
     return TrainArgs(
         train_data=tuple(raw.train_data),
         exclude=tuple(raw.exclude),
@@ -1009,36 +1075,66 @@ def main() -> int:
             gradient_as_bucket_view=True,
         )
 
-    # Fixed validation set, independent of the training batch size.
-    # Seeded sampling without replacement, exactly like bijou.eval: same
-    # data + same seed there reproduces this eval set. Every rank computes
-    # the same indices, takes a round-robin shard, and keeps its shard as
-    # CPU-resident collated batches (collation in-process is safe:
-    # dataloader workers are spawned, not forked). GPU memory per eval is
-    # bounded by one batch, so large eval sets cost host RAM only. Rank 0
-    # additionally keeps the raw items of its shard's head for rich wandb
-    # logging (original camera frames).
-    num_eval = min(args.eval_samples, len(dataset))
-    eval_indices = sorted(
-        random.Random(args.eval_seed).sample(range(len(dataset)), num_eval)
-    )
-    shard_indices = eval_indices[rank::world_size]
-    shard_items = [dataset[i] for i in shard_indices]
-    eval_batches = [
-        collator(shard_items[i : i + args.batch_size])
-        for i in range(0, len(shard_items), args.batch_size)
-    ]
-    rich_items: list[dict[str, Any]] = shard_items[:EVAL_TABLE_ROWS] if is_main else []
-    del shard_items
-    if is_main:
-        head = ", ".join(str(i) for i in eval_indices[:16])
-        indices_str = f"[{head}, ...]" if num_eval > 16 else f"[{head}]"
-        print(
-            f"eval set: {num_eval} samples (seed {args.eval_seed}), "
-            f"up to {math.ceil(num_eval / world_size)}/rank in batches of "
-            f"{args.batch_size}, at dataset indices {indices_str}",
-            flush=True,
+    # Fixed MAE probe sets, independent of the training batch size, fetched
+    # once and kept as CPU-resident collated batches per rank (collation
+    # in-process is safe: dataloader workers are spawned, not forked; GPU
+    # memory per eval is bounded by one batch, so probe size costs host RAM
+    # only). eval_chunk_mae probes the held-out episodes (needs
+    # --holdout-episodes > 0); train_mae probes the training split. Both
+    # draws are what bijou.eval --episodes {holdout,train} --seed
+    # <eval-seed> would score. Rank 0 keeps raw items strided across its
+    # shard for the rich wandb table.
+    eval_probe: ProbeSet | None = None
+    train_probe: ProbeSet | None = None
+    if args.eval_samples is not None:
+        if args.holdout_episodes > 0:
+            eval_selection = select_datasets(
+                args.train_data,
+                args.exclude,
+                args.chunk_size,
+                episode_split=EpisodeSplit.HOLDOUT,
+                holdout_fraction=args.holdout_episodes,
+                split_seed=args.split_seed,
+            )
+            eval_dataset = eval_selection.concat()
+            eval_probe = build_probe_set(
+                eval_dataset,
+                collator,
+                args.eval_samples,
+                args.eval_seed,
+                rank,
+                world_size,
+                args.batch_size,
+                keep_rich=is_main,
+            )
+            if is_main:
+                print(
+                    f"eval probe: {eval_probe.total} of {len(eval_dataset)} "
+                    f"held-out-episode frames (seed {args.eval_seed}), "
+                    f"sharded over {world_size} rank(s) in batches of "
+                    f"{args.batch_size}",
+                    flush=True,
+                )
+            # Only the fetched probe items survive; the second dataset
+            # selection (arrow tables, metadata for every dataset) does not
+            # need to stay resident for the whole run.
+            del eval_selection, eval_dataset
+        train_probe = build_probe_set(
+            dataset,
+            collator,
+            args.eval_samples,
+            args.eval_seed,
+            rank,
+            world_size,
+            args.batch_size,
+            keep_rich=is_main and eval_probe is None,
         )
+        if is_main:
+            print(
+                f"train probe: {train_probe.total} of {len(dataset)} "
+                f"training frames (seed {args.eval_seed})",
+                flush=True,
+            )
     action_names = selection.action_names
 
     log_file: TextIO | None = None
@@ -1135,31 +1231,50 @@ def main() -> int:
                             step=step,
                         )
 
-            if step % args.eval_every == 0:
-                # Collective: every rank scores its shard, the MAE sums
-                # all-reduce inside validate. Noise decorrelates across
-                # ranks via the +rank offset but is identical across eval
-                # points, keeping the series comparable step to step.
-                mae = validate(
+            if train_probe is not None and step % args.eval_every == 0:
+                # Collective: every rank scores its shards, the MAE sums
+                # all-reduce inside validate (same call order everywhere).
+                # Noise decorrelates across ranks via the +rank offset but
+                # is identical across eval points, keeping both series
+                # comparable step to step.
+                probe_record: dict[str, Any] = {"step": step}
+                probe_metrics: dict[str, float] = {}
+                if eval_probe is not None:
+                    eval_mae = validate(
+                        model,
+                        eval_probe,
+                        device,
+                        args.eval_seed + rank,
+                        distributed=distributed,
+                        wandb_run=wandb_run,
+                        collator=collator,
+                        action_names=action_names,
+                        step=step,
+                        table_key="eval/samples",
+                    )
+                    probe_record["eval_chunk_mae"] = round(eval_mae, 4)
+                    probe_metrics["eval/chunk_mae"] = eval_mae
+                train_mae = validate(
                     model,
-                    eval_batches,
+                    train_probe,
                     device,
                     args.eval_seed + rank,
                     distributed=distributed,
                     wandb_run=wandb_run,
-                    rich_items=rich_items,
                     collator=collator,
                     action_names=action_names,
                     step=step,
+                    table_key="train/samples",
                 )
+                probe_record["train_mae"] = round(train_mae, 4)
+                probe_metrics["train/mae"] = train_mae
                 if is_main:
                     assert log_file is not None
-                    record = {"step": step, "eval_chunk_mae": round(mae, 4)}
-                    print(json.dumps(record), flush=True)
-                    log_file.write(json.dumps(record) + "\n")
+                    print(json.dumps(probe_record), flush=True)
+                    log_file.write(json.dumps(probe_record) + "\n")
                     log_file.flush()
                     if wandb_run is not None:
-                        wandb_run.log({"eval/chunk_mae": mae}, step=step)
+                        wandb_run.log(probe_metrics, step=step)
 
             if (step % args.save_every == 0 or step == args.steps) and is_main:
                 path = save_checkpoint(
