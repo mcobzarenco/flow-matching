@@ -7,7 +7,6 @@ wheels/
 *.egg-info
 
 # data
-MNIST
 outputs
 
 # virtual environments

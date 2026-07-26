@@ -324,21 +324,21 @@ fine-tuned checkpoint self-contained, unlike `smolvla_base`).
 
 ## 7. Evaluate
 
-### Offline (no robot) — with this repo's `eval_smolvla.py`
+### Offline (no robot) — with this repo's `bijou.eval`
 
 ```bash
-uv run python eval_smolvla.py \
-  --root /home/marius/w/my_datasets/marius/so101_pick_place \
-  --repo-id marius/so101_pick_place \
-  --policy outputs/train/smolvla_so101_pick_place/checkpoints/last/pretrained_model \
-  --episodes 0 1 2 --stride 15 --output eval_finetuned.json
+uv run python -m bijou.eval \
+  --data /home/marius/w/my_datasets/marius/so101_pick_place \
+  --smolvla outputs/train/smolvla_so101_pick_place/checkpoints/last/pretrained_model \
+  --num-samples 256 --output-json eval_finetuned.json
 ```
 
-Because the fine-tuned checkpoint's camera features are named after your
-cameras, the rename map resolves to identity, and its saved stats already
-match your dataset (the default dataset-stats override is a no-op — fine
-either way). Hold out a few episodes from training (`--dataset.episodes` at
-train time) if you want honest numbers.
+This scores the policy against the state-copy baselines on seeded random
+frames (add `--checkpoint` to compare a bijou checkpoint on the same
+frames). Because the fine-tuned checkpoint's camera features are named
+after your cameras, the rename map resolves to identity, and its saved
+stats already match your dataset. Use `--episodes holdout` with the
+training run's `--holdout-episodes`/`--split-seed` for honest numbers.
 
 ### On the robot — policy-driven rollouts
 
@@ -379,7 +379,7 @@ the offline MAE numbers are only a cheap proxy.
 | Edit dataset | `uv run lerobot-edit-dataset --help` |
 | Replay episode | `uv run lerobot-replay --robot... --dataset.episode=0` |
 | Fine-tune | `uv run lerobot-train --policy.path=lerobot/smolvla_base ... --policy.push_to_hub=false` |
-| Offline eval | `uv run python eval_smolvla.py --root ... --policy <checkpoint>` |
+| Offline eval | `uv run python -m bijou.eval --data ... --smolvla <checkpoint>` |
 | On-robot eval | `uv run lerobot-rollout --policy.path=<checkpoint> ...` |
 
 ## 9. Gotchas

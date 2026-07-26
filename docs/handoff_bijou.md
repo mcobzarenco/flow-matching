@@ -4,8 +4,9 @@ Purpose: complete context from the Bijou build thread (July 2026) — the
 implemented ML architecture, the design alternatives we weighed, a survey of
 the code, the training setup, and the infrastructure state — in enough depth
 to continue in a fresh session. Section D isolates machines/paths so the ML
-content (A–C) reads without operational noise. Predecessor context:
-`docs/handoff_gemma4_vla.md`.
+content (A–C) reads without operational noise. (The predecessor doc,
+`handoff_gemma4_vla.md`, covered the gemma4 port and was retired with the
+MNIST-era code; its surviving content lives in `bijou/gemma4/` docstrings.)
 
 **TL;DR state**: `bijou/` contains (1) a pure-torch, HF-parity-verified
 Gemma 4 E-series implementation (`bijou/gemma4/`), and (2) the Bijou VLA — a
@@ -265,9 +266,8 @@ submodules never import package roots.
 
 ### B.3 Conventions (enforced)
 
-- **Typing**: full parameter+return annotations everywhere — ruff
-  flake8-annotations (`ANN`, ANN401 off) + pyright
-  `reportMissingParameterType=error`; `fmatch/` legacy exempt per-file.
+- **Typing**: full parameter+return annotations everywhere — ruff + pyright
+  per `pyproject.toml`; rules and rationale in `docs/code-styleguide.md`.
   Dataclasses over dicts wherever all fields are present
   (`CollatedBatch`, `Normalizers`, configs, `PrefixKV`, `MaskSpec`); dicts
   only for genuinely variable schemas (raw LeRobot items, external stats).
@@ -474,9 +474,9 @@ frames, cams front/wrist) mixes in cleanly (padding path exercised).
 
 1. **Relaunch + babysit the 20k community-v2 run** (guard landed; verify
    `s_per_step` post-pipeline-work; consider `--save-every 1000`).
-2. **Open-loop eval harness** on held-out episodes (port
-   `eval_smolvla.py`'s seeded-noise, chunk-MAE-per-frame pattern; the
-   `--val-data` argument design is agreed-in-principle).
+2. **Open-loop eval harness** on held-out episodes (port the original
+   SmolVLA eval script's seeded-noise, chunk-MAE-per-frame pattern; the
+   `--val-data` argument design is agreed-in-principle). [Done: `bijou.eval`.]
 3. **lerobot policy wrapper** (`PreTrainedPolicy` + processor pipeline +
    registry) so `lerobot-rollout`/`lerobot-train` work; then real-robot
    rollouts on the SO-101.
