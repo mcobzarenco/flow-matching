@@ -4,9 +4,8 @@ Purpose: complete context from the Bijou build thread (July 2026) — the
 implemented ML architecture, the design alternatives we weighed, a survey of
 the code, the training setup, and the infrastructure state — in enough depth
 to continue in a fresh session. Section D isolates machines/paths so the ML
-content (A–C) reads without operational noise. (The predecessor doc,
-`handoff_gemma4_vla.md`, covered the gemma4 port and was retired with the
-MNIST-era code; its surviving content lives in `bijou/gemma4/` docstrings.)
+content (A–C) reads without operational noise. The gemma4 port itself is
+documented in `bijou/gemma4/` docstrings.
 
 **TL;DR state**: `bijou/` contains (1) a pure-torch, HF-parity-verified
 Gemma 4 E-series implementation (`bijou/gemma4/`), and (2) the Bijou VLA — a

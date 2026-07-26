@@ -1,4 +1,4 @@
-"""SmolVLA as an evaluation policy (ported from the retired eval_smolvla.py).
+"""SmolVLA as an evaluation policy.
 
 lerobot policies normalize with dataset stats through their processor
 pipelines and expect the camera keys they were trained with. Our eval spans

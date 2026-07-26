@@ -84,7 +84,8 @@ Two-tier, to balance cost and quality:
    68k episodes ≈ 90–190 GPU-hours sequential ⇒ **use vLLM** (or 2–4 GPU
    workers) to get continuous batching; target < 24 h wall-clock.
    Output: JSONL of `Judgment` records keyed (collection, dataset, episode).
-2. **Adjudication: Claude** (`fmatch/judge_episode.py`, sonnet) only for the
+2. **Adjudication: Claude** (judge-episode script on the conversion box,
+   sonnet) only for the
    disagreement/uncertainty band: verdict == "review", parse failures, and
    a random QA sample of keeps/discards. At ~4.3k tokens/episode, budget
    scales with band size (10% band ≈ 30M tokens ≈ $90–100 sonnet input).
