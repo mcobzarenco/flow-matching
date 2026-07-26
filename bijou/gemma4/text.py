@@ -214,6 +214,40 @@ class TextAttention(nn.Module):
                 dtype=dtype,
             )
 
+    def project_kv(
+        self,
+        hidden_states: Tensor,
+        position_embeddings: tuple[Tensor, Tensor],
+        cache: KVCache | None,
+    ) -> tuple[Tensor, Tensor]:
+        """K/V states of this layer for ``hidden_states`` (already through the
+        decoder layer's input layernorm), cached if a cache is given. The
+        K/V half of :meth:`forward`, exposed so a prefix encode can stop at
+        its deepest exported layer without paying for that layer's attention
+        and MLP (the K/V depend only on the layer's input)."""
+        assert not self.is_kv_shared_layer, "KV-shared layers own no K/V"
+        assert self.k_proj is not None
+        assert self.k_norm is not None and self.v_norm is not None
+        batch, seq_len, _ = hidden_states.shape
+        hidden_shape = (batch, seq_len, -1, self.head_dim)
+        cos, sin = position_embeddings
+
+        key = self.k_proj(hidden_states).view(hidden_shape)
+        value = (
+            self.v_proj(hidden_states).view(hidden_shape)
+            if self.v_proj is not None
+            else key
+        )
+        key = self.k_norm(key)
+        key = apply_rotary_pos_emb(key, cos, sin, unsqueeze_dim=2)
+        key = key.transpose(1, 2)
+        value = self.v_norm(value)
+        value = value.transpose(1, 2)
+
+        if cache is not None:
+            key, value = cache.update(self.layer_idx, key, value)
+        return key, value
+
     @override
     def forward(
         self,
@@ -235,22 +269,7 @@ class TextAttention(nn.Module):
         if self.is_kv_shared_layer:
             key, value = shared_kv[self.layer_type]
         else:
-            assert self.k_proj is not None
-            assert self.k_norm is not None and self.v_norm is not None
-            key = self.k_proj(hidden_states).view(hidden_shape)
-            value = (
-                self.v_proj(hidden_states).view(hidden_shape)
-                if self.v_proj is not None
-                else key
-            )
-            key = self.k_norm(key)
-            key = apply_rotary_pos_emb(key, cos, sin, unsqueeze_dim=2)
-            key = key.transpose(1, 2)
-            value = self.v_norm(value)
-            value = value.transpose(1, 2)
-
-            if cache is not None:
-                key, value = cache.update(self.layer_idx, key, value)
+            key, value = self.project_kv(hidden_states, position_embeddings, cache)
             if self.is_kv_source_layer:
                 shared_kv[self.layer_type] = (key, value)
 
@@ -518,6 +537,7 @@ class TextModel(nn.Module):
         attention_masks: MaskMapping | None = None,
         padding_mask: Tensor | None = None,
         cache: KVCache | None = None,
+        kv_stop_layer: int | None = None,
     ) -> Tensor:
         """Returns the final hidden states [B, S, hidden].
 
@@ -527,6 +547,12 @@ class TextModel(nn.Module):
         ``padding_mask`` is a 2D HF-style attention mask [B, seen + S]
         (True/1 = real token) used to build masks when ``attention_masks`` is
         not provided.
+
+        ``kv_stop_layer``: stop after CACHING that layer's K/V (its
+        attention, MLP and all deeper layers never run — a K/V export needs
+        only the layer's input). Requires ``cache``; the return value is
+        then the stop layer's input WITHOUT the final norm — only the cache
+        contents are meaningful.
         """
         if (input_ids is None) == (inputs_embeds is None):
             raise ValueError("specify exactly one of input_ids or inputs_embeds")
@@ -568,10 +594,28 @@ class TextModel(nn.Module):
             inputs_embeds.dtype,
         )
 
+        if kv_stop_layer is not None:
+            if cache is None:
+                raise ValueError("kv_stop_layer without a cache does nothing")
+            if not 0 <= kv_stop_layer < len(self.layers):
+                raise ValueError(
+                    f"kv_stop_layer {kv_stop_layer} outside the stack "
+                    f"({len(self.layers)} layers)",
+                )
+
         hidden_states = inputs_embeds
         shared_kv: SharedKV = {}
         for i, layer in enumerate(self.layers):
             layer_type = self.config.layer_types[i]
+            if i == kv_stop_layer:
+                layer.self_attn.project_kv(
+                    layer.input_layernorm(hidden_states),
+                    position_embeddings[layer_type],
+                    cache,
+                )
+                assert cache is not None
+                cache.advance(q_len)
+                return hidden_states
             hidden_states = layer(
                 hidden_states,
                 per_layer_inputs[:, :, i, :],

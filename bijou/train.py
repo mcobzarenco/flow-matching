@@ -1073,6 +1073,10 @@ def main() -> int:
         lr=args.lr,
         betas=(0.9, 0.95),
         weight_decay=args.weight_decay,
+        # One kernel launch for the whole 404M-param update instead of the
+        # foreach chain; CUDA only (CPU runs keep the reference path, which
+        # also keeps the CPU loss oracle stable).
+        fused=device.type == "cuda",
     )
     scheduler = torch.optim.lr_scheduler.LambdaLR(
         optimizer,

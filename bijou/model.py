@@ -86,6 +86,10 @@ class BijouModel(nn.Module):
             per_layer_inputs=per_layer_inputs,
             padding_mask=padding_mask,
             cache=cache,
+            # The deepest exported layer's K/V depend only on its input:
+            # its attention/MLP and any deeper layers are dead weight here
+            # (~1/15 of decoder compute at the default E2B schedule).
+            kv_stop_layer=max(self.expert.config.streams),
         )
         streams: StreamKV = {}
         for layer_idx in self.expert.config.streams:
