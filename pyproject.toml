@@ -78,6 +78,8 @@ strictSetInference = true
 #   COM  trailing commas (one-arg-per-line when split; formatter-stable,
 #        verified: COM812 fix -> format reaches a fixpoint)
 #   ERA  no commented-out code             FBT  no positional booleans
+#   I    sorted/grouped imports (matches the editor's organize-imports
+#        code action; the formatter deliberately never touches imports)
 #   N    pep8 naming                       PERF trivial perf traps
 #   PIE/PLE/PLW  misc correctness          PTH  pathlib over os.path
 #   RET  return-statement hygiene          RUF  ruff-native (incl. mutable
@@ -91,6 +93,7 @@ extend-select = [
     "COM",
     "ERA",
     "FBT",
+    "I",
     "N",
     "PERF",
     "PIE",
@@ -120,5 +123,10 @@ ignore = [
 ]
 # Math typography in docstrings is intentional, not homoglyph confusion.
 allowed-confusables = ["−", "–", "σ", "τ", "ε"]
+
+[tool.ruff.lint.isort]
+# Explicit rather than inferred from directory layout: scratch scripts in
+# gitignored outputs/ import bijou too and should sort it identically.
+known-first-party = ["bijou"]
 
 

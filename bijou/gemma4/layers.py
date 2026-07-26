@@ -7,7 +7,6 @@ so that outputs are bit-identical in bf16.
 from __future__ import annotations
 
 from enum import StrEnum
-
 from typing import override
 
 import torch

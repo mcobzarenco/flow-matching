@@ -82,6 +82,10 @@ covers what they can't.
 - **All imports at the top.** No lazy imports, no `TYPE_CHECKING` blocks —
   if importing something is slow or cyclic, that's an architecture smell
   to fix, not hide.
+- **Imports are sorted and grouped** (stdlib / third-party / first-party;
+  ruff `I`, `known-first-party = ["bijou"]`). This matches the editor's
+  `source.organizeImports.ruff` code action, so on-save organize-imports
+  and `check.py` can never disagree.
 - **The import DAG is strict** and reviewed:
   `data → model → expert → gemma4`; `train`/`eval`/`rollout` sit on top
   and import downward only. No module imports its importer.

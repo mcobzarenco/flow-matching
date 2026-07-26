@@ -8,7 +8,6 @@ VLA); audio inputs are rejected at the loader level by simply not existing.
 from __future__ import annotations
 
 from dataclasses import dataclass
-
 from typing import override
 
 import torch
