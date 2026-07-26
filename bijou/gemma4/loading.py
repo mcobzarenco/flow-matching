@@ -82,13 +82,13 @@ def truncated_config(config: Gemma4Config, num_layers: int) -> Gemma4Config:
     if not 0 < num_layers <= text.first_kv_shared_layer_idx:
         raise ValueError(
             f"num_layers must be in (0, {text.first_kv_shared_layer_idx}] "
-            f"(the non-KV-shared prefix), got {num_layers}"
+            f"(the non-KV-shared prefix), got {num_layers}",
         )
     layer_types = text.layer_types[:num_layers]
     if layer_types[-1] is not LayerType.FULL:
         raise ValueError(
             f"truncation point must end on a full_attention layer; layer "
-            f"{num_layers - 1} is {layer_types[-1]}"
+            f"{num_layers - 1} is {layer_types[-1]}",
         )
     text = dataclasses.replace(
         text,
@@ -138,14 +138,16 @@ def load_model(
         raise FileNotFoundError(f"no *.safetensors files in {checkpoint_dir}")
     for weight_file in weight_files:
         with safe_open(weight_file, framework="pt", device=str(device)) as f:
-            for key in f.keys():
+            # it exposes .keys() but not iteration/__contains__.
+            for key in f.keys():  # noqa: SIM118
                 if key.startswith(_AUDIO_PREFIXES):
                     continue
                 name = key.removeprefix("model.")
                 if _is_dropped_shared_kv_key(config, name):
                     continue
                 if truncate_layers is not None and _is_truncated_layer_key(
-                    name, truncate_layers
+                    name,
+                    truncate_layers,
                 ):
                     continue
                 if ple_slice_dim and (axis := _PLE_PACKED_KEYS.get(name)) is not None:
@@ -179,5 +181,5 @@ def load_generation_defaults(checkpoint_dir: Path) -> dict[str, object]:
     path = checkpoint_dir / "generation_config.json"
     if not path.exists():
         return {}
-    with open(path) as f:
+    with path.open() as f:
         return json.load(f)

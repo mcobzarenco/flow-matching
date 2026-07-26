@@ -31,7 +31,7 @@ from dataclasses import dataclass
 from enum import Enum
 from fnmatch import fnmatch
 from pathlib import Path
-from typing import Any
+from typing import Any, override
 
 import torch
 import transformers
@@ -78,17 +78,21 @@ class CollatedBatch:
             if isinstance(value := getattr(self, f.name), Tensor)
         }
 
-    def pin_memory(self) -> "CollatedBatch":
+    def pin_memory(self) -> CollatedBatch:
         """Called by the DataLoader when ``pin_memory=True`` (torch supports
         custom batch types via this hook); pinned memory makes the H2D
         copies in DevicePrefetcher truly asynchronous."""
         return dataclasses.replace(
-            self, **{name: t.pin_memory() for name, t in self.tensors().items()}
+            self,
+            **{name: t.pin_memory() for name, t in self.tensors().items()},
         )
 
     def to(
-        self, device: torch.device | str, *, non_blocking: bool = False
-    ) -> "CollatedBatch":
+        self,
+        device: torch.device | str,
+        *,
+        non_blocking: bool = False,
+    ) -> CollatedBatch:
         return dataclasses.replace(
             self,
             **{
@@ -114,9 +118,11 @@ class DatasetStats:
     state_std: tuple[float, ...]
 
     @classmethod
-    def from_lerobot_stats(cls, stats: dict[str, dict[str, Any]]) -> "DatasetStats":
+    def from_lerobot_stats(cls, stats: dict[str, dict[str, Any]]) -> DatasetStats:
         def as_vector(
-            key: str, field: str, floor: float | None = None
+            key: str,
+            field: str,
+            floor: float | None = None,
         ) -> tuple[float, ...]:
             values = torch.as_tensor(stats[key][field], dtype=torch.float32)
             if floor is not None:
@@ -184,6 +190,7 @@ class StatsAttachedDataset(torch.utils.data.Dataset[dict[str, Any]]):
     def __len__(self) -> int:
         return len(self.dataset)
 
+    @override
     def __getitem__(self, index: int) -> dict[str, Any]:
         item = self._fetch_with_substitution(index, self._MAX_ATTEMPTS)
         item["repo_id"] = self.dataset.repo_id
@@ -196,7 +203,7 @@ class StatsAttachedDataset(torch.utils.data.Dataset[dict[str, Any]]):
     def _fetch_with_substitution(self, index: int, attempts: int) -> dict[str, Any]:
         try:
             return self.dataset[index]
-        except Exception as error:  # noqa: BLE001 - any corrupt-sample failure
+        except Exception as error:
             if attempts <= 1:
                 raise
             self.failed_fetches += 1
@@ -262,7 +269,10 @@ class EpisodeSplit(Enum):
 
 
 def holdout_episodes(
-    repo_id: str, num_episodes: int, fraction: float, split_seed: int
+    repo_id: str,
+    num_episodes: int,
+    fraction: float,
+    split_seed: int,
 ) -> tuple[int, ...]:
     """Deterministic per-dataset episode holdout.
 
@@ -353,7 +363,7 @@ def select_datasets(
     )
     if anchor_info is None:
         raise ValueError(
-            "no selected dataset declares action/observation.state features"
+            "no selected dataset declares action/observation.state features",
         )
     anchor_dims = action_state_dims(anchor_info)
     assert anchor_dims is not None
@@ -377,7 +387,7 @@ def select_datasets(
         if repo_id in selected_dirs:
             dropped.append(
                 f"{repo_id} (duplicate at {dataset_dir}; "
-                f"keeping {selected_dirs[repo_id]})"
+                f"keeping {selected_dirs[repo_id]})",
             )
             continue
         dims = action_state_dims(info)
@@ -399,7 +409,7 @@ def select_datasets(
             if not held_out:
                 dropped.append(
                     f"{repo_id} (no held-out episodes: "
-                    f"{meta_episodes} episode(s) total)"
+                    f"{meta_episodes} episode(s) total)",
                 )
                 continue
             episodes = list(held_out)
@@ -447,7 +457,7 @@ def select_datasets(
         if claimed_rows != actual_rows:
             dropped.append(
                 f"{repo_id} (metadata claims {claimed_rows} frames, "
-                f"parquet holds {actual_rows})"
+                f"parquet holds {actual_rows})",
             )
             continue
 
@@ -465,7 +475,7 @@ def select_datasets(
                     k.removeprefix("observation.images.")
                     for k, f in info["features"].items()
                     if f["dtype"] == "video"
-                )
+                ),
             )
         ] += 1
         total_episodes += sub_dataset.num_episodes
@@ -533,12 +543,13 @@ class PrefixCollator:
             ]
         if not cameras:
             raise ValueError(
-                f"sample has no cameras after filtering ({self.camera_filter=})"
+                f"sample has no cameras after filtering ({self.camera_filter=})",
             )
         if self.max_cameras is not None:
             cameras = cameras[: self.max_cameras]
         return cameras
 
+    @override
     def __getstate__(self) -> dict[str, Any]:
         # Never ship a constructed processor across process boundaries; spawn
         # workers rebuild it lazily.
@@ -553,7 +564,7 @@ class PrefixCollator:
             # Lazy construction (not import): the collator is pickled into
             # spawned dataloader workers, each of which rebuilds it.
             self._processor = transformers.AutoProcessor.from_pretrained(
-                self.checkpoint
+                self.checkpoint,
             )
             self._processor.tokenizer.padding_side = "right"
 
@@ -561,8 +572,10 @@ class PrefixCollator:
         for item in items:
             instruction = self.instruction or str(item["task"])
             content: list[dict[str, Any]] = [{"type": "text", "text": instruction}]
-            for camera in self.cameras_of(item):
-                content.append({"type": "image", "image": self._to_pil(item[camera])})
+            content.extend(
+                {"type": "image", "image": self._to_pil(item[camera])}
+                for camera in self.cameras_of(item)
+            )
             content.append({"type": "text", "text": instruction})
             conversations.append([{"role": "user", "content": content}])
 

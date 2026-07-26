@@ -104,7 +104,7 @@ class Comparison:
 def compare(name: str, ours: Tensor, theirs: Tensor, tolerance: float) -> Comparison:
     if ours.shape != theirs.shape:
         raise AssertionError(
-            f"{name}: shape {tuple(ours.shape)} != {tuple(theirs.shape)}"
+            f"{name}: shape {tuple(ours.shape)} != {tuple(theirs.shape)}",
         )
     bitwise = bool(torch.equal(ours, theirs))
     diff = 0.0 if bitwise else (ours.float() - theirs.float()).abs().max().item()
@@ -133,7 +133,10 @@ def compare_generated_tokens(
     theirs_tokens: list[int] = hf_output.sequences[0, prompt_len:].tolist()
     if ours_tokens == theirs_tokens:
         return Comparison(name, True, True, 0.0)
-    for step, (ours_token, theirs_token) in enumerate(zip(ours_tokens, theirs_tokens)):
+    # strict=False: a length mismatch is a legitimate outcome, reported below.
+    for step, (ours_token, theirs_token) in enumerate(
+        zip(ours_tokens, theirs_tokens, strict=False),
+    ):
         if ours_token == theirs_token:
             continue
         near, gap = is_near_tie(
@@ -172,7 +175,7 @@ def is_near_tie(
     """
     gap_ours = float((ours_logits[0, ours_token] - ours_logits[0, theirs_token]).abs())
     gap_theirs = float(
-        (theirs_logits[0, ours_token] - theirs_logits[0, theirs_token]).abs()
+        (theirs_logits[0, ours_token] - theirs_logits[0, theirs_token]).abs(),
     )
     max_gap = max(gap_ours, gap_theirs)
     return max_gap <= tolerance, max_gap
@@ -228,7 +231,9 @@ def main() -> int:
     )
     # Typed as Any: the HF stubs' protocol checks add noise without value here.
     hf_model: Any = transformers.Gemma4ForConditionalGeneration.from_pretrained(
-        checkpoint_dir, dtype=torch.bfloat16, attn_implementation="eager"
+        checkpoint_dir,
+        dtype=torch.bfloat16,
+        attn_implementation="eager",
     )
     hf_model = hf_model.to(device).eval()
     watch.lap("reference model loaded")
@@ -247,7 +252,13 @@ def main() -> int:
         set_attention_backend(model, backend)
         print(f"\n######## attention backend: {backend} ########", flush=True)
         all_ok &= run_checks(
-            args, model, hf_model, tokenizer, checkpoint_dir, device, watch
+            args,
+            model,
+            hf_model,
+            tokenizer,
+            checkpoint_dir,
+            device,
+            watch,
         )
 
     print("\nPASS" if all_ok else "\nFAIL")
@@ -292,15 +303,19 @@ def run_checks(
                 ours.logits,
                 theirs.logits,
                 args.tolerance,
-            )
+            ),
         )
         watch.lap("prefill compared")
 
         # 2. Cached stepwise decode, greedy.
         comparisons.extend(
             stepwise_decode_comparisons(
-                model, hf_model, input_ids, args.max_new_tokens, args.tolerance
-            )
+                model,
+                hf_model,
+                input_ids,
+                args.max_new_tokens,
+                args.tolerance,
+            ),
         )
         watch.lap("stepwise decode compared")
 
@@ -311,7 +326,10 @@ def run_checks(
         eos = gen_defaults.get("eos_token_id", None)
         eos_ids = tuple(eos) if isinstance(eos, list) else None
         result = generate(
-            model, input_ids, max_new_tokens=args.max_new_tokens, eos_token_ids=eos_ids
+            model,
+            input_ids,
+            max_new_tokens=args.max_new_tokens,
+            eos_token_ids=eos_ids,
         )
         hf_output = hf_model.generate(
             input_ids,
@@ -329,7 +347,7 @@ def run_checks(
                 hf_output,
                 input_ids.shape[1],
                 args.tolerance,
-            )
+            ),
         )
         print(f"  generated: {ours_text!r}")
         all_ok &= check_all(comparisons)
@@ -339,7 +357,8 @@ def run_checks(
         gen = torch.Generator().manual_seed(0)
         body = torch.randint(1_000, 200_000, (1, args.long_context - 1), generator=gen)
         input_ids = torch.cat(
-            [torch.tensor([[model.config.text.bos_token_id]]), body], dim=-1
+            [torch.tensor([[model.config.text.bos_token_id]]), body],
+            dim=-1,
         ).to(device)
         print(f"\n=== long context: {args.long_context} random tokens", flush=True)
         comparisons = []
@@ -352,13 +371,17 @@ def run_checks(
                 ours.logits,
                 theirs.logits,
                 args.tolerance,
-            )
+            ),
         )
         watch.lap("long-context prefill compared")
         comparisons.extend(
             stepwise_decode_comparisons(
-                model, hf_model, input_ids, args.max_new_tokens, args.tolerance
-            )
+                model,
+                hf_model,
+                input_ids,
+                args.max_new_tokens,
+                args.tolerance,
+            ),
         )
         watch.lap("long-context stepwise decode compared")
         all_ok &= check_all(comparisons)
@@ -401,7 +424,7 @@ def stepwise_decode_comparisons(
                 ours.logits,
                 theirs.logits,
                 tolerance,
-            )
+            ),
         )
 
         max_drift = 0.0
@@ -453,7 +476,7 @@ def stepwise_decode_comparisons(
             bitwise,
             max_drift,
             detail,
-        )
+        ),
     )
     return comparisons
 
@@ -474,7 +497,7 @@ def run_image_check(
                 {"type": "image", "image": image},
                 {"type": "text", "text": "Describe this image in one sentence."},
             ],
-        }
+        },
     ]
     batch = processor.apply_chat_template(
         messages,
@@ -486,7 +509,7 @@ def run_image_check(
 
     print(
         f"\n=== image prompt: {image_label} "
-        f"({int((batch['input_ids'] == model.config.image_token_id).sum())} soft tokens)"
+        f"({int((batch['input_ids'] == model.config.image_token_id).sum())} soft tokens)",
     )
     with torch.no_grad():
         ours = model(
@@ -508,7 +531,7 @@ def run_image_check(
             ours.logits[:, -1:, :],
             theirs.logits[:, -1:, :],
             args.tolerance,
-        )
+        ),
     ]
     all_diff = (ours.logits.float() - theirs.logits.float()).abs().max().item()
     print(f"  (info) all-positions max|Δ|={all_diff:.3e}")
@@ -541,11 +564,11 @@ def run_image_check(
             hf_output,
             batch["input_ids"].shape[1],
             args.tolerance,
-        )
+        ),
     )
     tokenizer = transformers.AutoTokenizer.from_pretrained(checkpoint_dir)
     print(
-        f"  generated: {tokenizer.decode(result.sequences[0, batch['input_ids'].shape[1] :])!r}"
+        f"  generated: {tokenizer.decode(result.sequences[0, batch['input_ids'].shape[1] :])!r}",
     )
     return check_all(comparisons)
 

@@ -36,24 +36,96 @@ dev = [
 include = ["fmatch", "bijou", "main.py", "check.py", "eval_smolvla.py"]
 venvPath = "."
 venv = ".venv"
+# Curated strict-ish set (see docs/code-styleguide.md). Full strict mode is
+# off the table: lerobot/transformers are untyped, and the reportUnknown*
+# family would drown real signal at every third-party call.
+#
 # Parameter annotations are required (return annotations are enforced by
 # ruff's ANN2xx rules; pyright has no "missing return annotation" rule,
 # only unknown-type inference checks).
 reportMissingParameterType = "error"
+# Overriding a base method silently is how signature drift ships: mark it.
+reportImplicitOverride = "error"
+# Stale escape hatches must not outlive the problem they suppressed.
+reportUnnecessaryTypeIgnoreComment = "error"
+# Dead-logic detectors: a check the types make impossible is a bug or a
+# wrong annotation, either way worth a loud failure.
+reportUnnecessaryIsInstance = "error"
+reportUnnecessaryCast = "error"
+reportUnnecessaryComparison = "error"
+reportUnnecessaryContains = "error"
+reportMatchNotExhaustive = "error"
+reportPropertyTypeMismatch = "error"
+reportConstantRedefinition = "error"
+reportDeprecated = "error"
+deprecateTypingAliases = true
+# Infer list/dict/set element types strictly instead of widening to Unknown.
+strictListInference = true
+strictDictionaryInference = true
+strictSetInference = true
+# NOT enabled, deliberately:
+# - reportUninitializedInstanceVariable: torch's register_buffer pattern
+#   (class-level Tensor annotation + register_buffer in __init__) trips it
+#   on every module with buffers.
+# - reportUnknown*/reportMissingTypeStubs: untyped third-party boundary.
 
 [tool.ruff]
 extend-exclude = ["MNIST"]
 
 [tool.ruff.lint]
-# flake8-annotations: require explicit argument and return annotations.
-# ANN401 (no Any) is off: we use Any deliberately at untyped third-party
-# boundaries (transformers models/tokenizers).
-extend-select = ["ANN"]
-ignore = ["ANN401"]
+# Curated rule families (rationale in docs/code-styleguide.md):
+#   ANN  annotations everywhere            B    bugbear correctness traps
+#   A    builtin shadowing                 C4   comprehension hygiene
+#   COM  trailing commas (one-arg-per-line when split; formatter-stable,
+#        verified: COM812 fix -> format reaches a fixpoint)
+#   ERA  no commented-out code             FBT  no positional booleans
+#   N    pep8 naming                       PERF trivial perf traps
+#   PIE/PLE/PLW  misc correctness          PTH  pathlib over os.path
+#   RET  return-statement hygiene          RUF  ruff-native (incl. mutable
+#   SIM  simplifications                        dataclass defaults)
+#   UP   modern syntax
+extend-select = [
+    "A",
+    "ANN",
+    "B",
+    "C4",
+    "COM",
+    "ERA",
+    "FBT",
+    "N",
+    "PERF",
+    "PIE",
+    "PLE",
+    "PLW",
+    "PTH",
+    "RET",
+    "RUF",
+    "SIM",
+    "UP",
+]
+ignore = [
+    # Any is deliberate at untyped third-party boundaries (transformers,
+    # lerobot models/tokenizers/items).
+    "ANN401",
+    # COM812 is the one COM rule we want; COM819 (banned trailing comma)
+    # never fires with the formatter, COM818 is fine to keep.
+    # Positional booleans in CALLS: torch idioms (requires_grad_(False),
+    # train(False)) make this unactionable; definitions stay covered by
+    # FBT001/FBT002.
+    "FBT003",
+    # `import torch.nn.functional as F` is the universal torch convention.
+    "N812",
+    # Rebinding a loop variable (`path = path.expanduser()`) is idiomatic
+    # shadowing, not an error.
+    "PLW2901",
+]
+# Math typography in docstrings is intentional, not homoglyph confusion.
+allowed-confusables = ["−", "–", "σ", "τ", "ε"]
 
 [tool.ruff.lint.extend-per-file-ignores]
-# Legacy code predating the annotation requirement; clean up opportunistically.
-"fmatch/*" = ["ANN"]
+# Legacy code predating the lint requirements; slated for removal (see the
+# repo-cleanup list) — not worth retrofitting.
+"fmatch/*" = ["ANN", "B", "COM", "ERA", "FBT", "N", "PTH", "RET", "RUF", "SIM", "UP"]
 "main.py" = ["ANN"]
 "check.py" = ["ANN"]
-"eval_smolvla.py" = ["ANN"]
+"eval_smolvla.py" = ["ANN", "B", "COM", "ERA", "FBT", "N", "PTH", "RET", "RUF", "SIM", "UP"]

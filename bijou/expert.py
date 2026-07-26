@@ -33,6 +33,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 from enum import StrEnum
+from typing import cast, override
 
 import torch
 from torch import Tensor, nn
@@ -136,7 +137,10 @@ class ExpertConfig:
 
 
 def sinusoidal_time_embedding(
-    time: Tensor, dim: int, min_period: float = 4e-3, max_period: float = 4.0
+    time: Tensor,
+    dim: int,
+    min_period: float = 4e-3,
+    max_period: float = 4.0,
 ) -> Tensor:
     """[B] flow times in [0, 1] -> [B, dim] float32 sin/cos features.
 
@@ -173,7 +177,10 @@ class ExpertCrossAttention(nn.Module):
             dtype=dtype,
         )
         self.q_norm = RMSNorm(
-            self.head_dim, eps=config.rms_norm_eps, device=device, dtype=dtype
+            self.head_dim,
+            eps=config.rms_norm_eps,
+            device=device,
+            dtype=dtype,
         )
         self.o_proj = nn.Linear(
             self.num_heads * self.head_dim,
@@ -183,6 +190,7 @@ class ExpertCrossAttention(nn.Module):
             dtype=dtype,
         )
 
+    @override
     def forward(
         self,
         hidden_states: Tensor,
@@ -234,9 +242,14 @@ class ExpertSelfAttention(nn.Module):
         self.q_norm = RMSNorm(self.head_dim, eps=eps, device=device, dtype=dtype)
         self.k_norm = RMSNorm(self.head_dim, eps=eps, device=device, dtype=dtype)
         self.v_norm = RMSNorm(
-            self.head_dim, eps=eps, with_scale=False, device=device, dtype=dtype
+            self.head_dim,
+            eps=eps,
+            with_scale=False,
+            device=device,
+            dtype=dtype,
         )
 
+    @override
     def forward(
         self,
         hidden_states: Tensor,
@@ -278,16 +291,29 @@ class ExpertMLP(nn.Module):
         super().__init__()
         hidden, intermediate = config.hidden_size, config.intermediate_size
         self.gate_proj = nn.Linear(
-            hidden, intermediate, bias=False, device=device, dtype=dtype
+            hidden,
+            intermediate,
+            bias=False,
+            device=device,
+            dtype=dtype,
         )
         self.up_proj = nn.Linear(
-            hidden, intermediate, bias=False, device=device, dtype=dtype
+            hidden,
+            intermediate,
+            bias=False,
+            device=device,
+            dtype=dtype,
         )
         self.down_proj = nn.Linear(
-            intermediate, hidden, bias=False, device=device, dtype=dtype
+            intermediate,
+            hidden,
+            bias=False,
+            device=device,
+            dtype=dtype,
         )
         self.act_fn = activation_fn(config.hidden_activation)
 
+    @override
     def forward(self, x: Tensor) -> Tensor:
         return self.down_proj(self.act_fn(self.gate_proj(x)) * self.up_proj(x))
 
@@ -306,31 +332,56 @@ class ExpertLayer(nn.Module):
         super().__init__()
         hidden, eps = config.hidden_size, config.rms_norm_eps
         self.cross_attn = ExpertCrossAttention(
-            config, attn_backend=attn_backend, device=device, dtype=dtype
+            config,
+            attn_backend=attn_backend,
+            device=device,
+            dtype=dtype,
         )
         self.self_attn = ExpertSelfAttention(
-            config, attn_backend=attn_backend, device=device, dtype=dtype
+            config,
+            attn_backend=attn_backend,
+            device=device,
+            dtype=dtype,
         )
         self.mlp = ExpertMLP(config, device=device, dtype=dtype)
         self.pre_cross_attention_layernorm = RMSNorm(
-            hidden, eps=eps, device=device, dtype=dtype
+            hidden,
+            eps=eps,
+            device=device,
+            dtype=dtype,
         )
         self.post_cross_attention_layernorm = RMSNorm(
-            hidden, eps=eps, device=device, dtype=dtype
+            hidden,
+            eps=eps,
+            device=device,
+            dtype=dtype,
         )
         self.pre_self_attention_layernorm = RMSNorm(
-            hidden, eps=eps, device=device, dtype=dtype
+            hidden,
+            eps=eps,
+            device=device,
+            dtype=dtype,
         )
         self.post_self_attention_layernorm = RMSNorm(
-            hidden, eps=eps, device=device, dtype=dtype
+            hidden,
+            eps=eps,
+            device=device,
+            dtype=dtype,
         )
         self.pre_feedforward_layernorm = RMSNorm(
-            hidden, eps=eps, device=device, dtype=dtype
+            hidden,
+            eps=eps,
+            device=device,
+            dtype=dtype,
         )
         self.post_feedforward_layernorm = RMSNorm(
-            hidden, eps=eps, device=device, dtype=dtype
+            hidden,
+            eps=eps,
+            device=device,
+            dtype=dtype,
         )
 
+    @override
     def forward(
         self,
         hidden_states: Tensor,
@@ -343,7 +394,10 @@ class ExpertLayer(nn.Module):
         residual = hidden_states
         hidden_states = self.pre_cross_attention_layernorm(hidden_states)
         hidden_states = self.cross_attn(
-            hidden_states, stream, cross_position_embeddings, cross_attention_mask
+            hidden_states,
+            stream,
+            cross_position_embeddings,
+            cross_attention_mask,
         )
         hidden_states = self.post_cross_attention_layernorm(hidden_states)
         hidden_states = residual + hidden_states
@@ -351,7 +405,9 @@ class ExpertLayer(nn.Module):
         residual = hidden_states
         hidden_states = self.pre_self_attention_layernorm(hidden_states)
         hidden_states = self.self_attn(
-            hidden_states, self_position_embeddings, self_attention_mask
+            hidden_states,
+            self_position_embeddings,
+            self_attention_mask,
         )
         hidden_states = self.post_self_attention_layernorm(hidden_states)
         hidden_states = residual + hidden_states
@@ -360,8 +416,7 @@ class ExpertLayer(nn.Module):
         hidden_states = self.pre_feedforward_layernorm(hidden_states)
         hidden_states = self.mlp(hidden_states)
         hidden_states = self.post_feedforward_layernorm(hidden_states)
-        hidden_states = residual + hidden_states
-        return hidden_states
+        return residual + hidden_states
 
 
 class ActionExpert(nn.Module):
@@ -385,16 +440,32 @@ class ActionExpert(nn.Module):
         hidden = config.hidden_size
 
         self.state_proj = nn.Linear(
-            config.state_dim, hidden, bias=True, device=device, dtype=dtype
+            config.state_dim,
+            hidden,
+            bias=True,
+            device=device,
+            dtype=dtype,
         )
         self.action_in_proj = nn.Linear(
-            config.action_dim, hidden, bias=True, device=device, dtype=dtype
+            config.action_dim,
+            hidden,
+            bias=True,
+            device=device,
+            dtype=dtype,
         )
         self.time_in_proj = nn.Linear(
-            config.time_embed_dim, hidden, bias=True, device=device, dtype=dtype
+            config.time_embed_dim,
+            hidden,
+            bias=True,
+            device=device,
+            dtype=dtype,
         )
         self.time_out_proj = nn.Linear(
-            hidden, hidden, bias=True, device=device, dtype=dtype
+            hidden,
+            hidden,
+            bias=True,
+            device=device,
+            dtype=dtype,
         )
         self.time_act = nn.SiLU()
 
@@ -406,7 +477,11 @@ class ActionExpert(nn.Module):
         # Zero-initialized so the initial velocity field is 0 (standard for
         # flow/diffusion heads).
         self.action_out_proj = nn.Linear(
-            hidden, config.action_dim, bias=True, device=device, dtype=dtype
+            hidden,
+            config.action_dim,
+            bias=True,
+            device=device,
+            dtype=dtype,
         )
 
         self.register_buffer(
@@ -440,8 +515,11 @@ class ActionExpert(nn.Module):
         for module in self.modules():
             if isinstance(module, nn.Linear):
                 nn.init.normal_(module.weight, mean=0.0, std=0.02)
-                if module.bias is not None:
-                    nn.init.zeros_(module.bias)
+                # cast past the stubs: torch types Linear.bias as Parameter,
+                # but bias=False modules carry None at runtime.
+                bias = cast("nn.Parameter | None", module.bias)
+                if bias is not None:
+                    nn.init.zeros_(bias)
         nn.init.zeros_(self.action_out_proj.weight)
         assert self.action_out_proj.bias is not None
         nn.init.zeros_(self.action_out_proj.bias)
@@ -463,7 +541,9 @@ class ActionExpert(nn.Module):
         )
         min_value = torch.finfo(dtype).min
         tensor = torch.where(
-            allowed, torch.tensor(0.0, device=device, dtype=dtype), min_value
+            allowed,
+            torch.tensor(0.0, device=device, dtype=dtype),
+            min_value,
         )
         return MaskSpec(tensor=tensor[None, None].expand(batch, 1, length, length))
 
@@ -484,6 +564,7 @@ class ActionExpert(nn.Module):
         )
         return MaskSpec(tensor=tensor)
 
+    @override
     def forward(
         self,
         prefix: PrefixKV,
@@ -503,7 +584,7 @@ class ActionExpert(nn.Module):
         if noisy_actions.shape[1] != config.chunk_size:
             raise ValueError(
                 f"expected chunk of {config.chunk_size} actions, "
-                f"got {noisy_actions.shape[1]}"
+                f"got {noisy_actions.shape[1]}",
             )
         dtype = self.state_proj.weight.dtype
 
@@ -511,7 +592,7 @@ class ActionExpert(nn.Module):
         action_embeds = self.action_in_proj(noisy_actions.to(dtype))
         time_embeds = sinusoidal_time_embedding(time, config.time_embed_dim)
         time_embeds = self.time_out_proj(
-            self.time_act(self.time_in_proj(time_embeds.to(dtype)))
+            self.time_act(self.time_in_proj(time_embeds.to(dtype))),
         )
         action_embeds = action_embeds + time_embeds[:, None, :]
         hidden_states = torch.cat([state_embeds, action_embeds], dim=1)
@@ -522,16 +603,22 @@ class ActionExpert(nn.Module):
         }
         suffix_positions = torch.arange(config.suffix_length, device=device)
         cross_position_embeddings = rope_cos_sin(
-            self.cross_inv_freq, (prefix.length + suffix_positions)[None, :], dtype
+            self.cross_inv_freq,
+            (prefix.length + suffix_positions)[None, :],
+            dtype,
         )
         self_position_embeddings = rope_cos_sin(
-            self.self_inv_freq, suffix_positions[None, :], dtype
+            self.self_inv_freq,
+            suffix_positions[None, :],
+            dtype,
         )
         self_attention_mask = self._self_attention_mask(batch, dtype, device)
         cross_attention_mask = self._cross_attention_mask(prefix, dtype, device)
 
         for layer, stream_idx in zip(
-            self.layers, config.cross_attention_schedule, strict=True
+            self.layers,
+            config.cross_attention_schedule,
+            strict=True,
         ):
             hidden_states = layer(
                 hidden_states,

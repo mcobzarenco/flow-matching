@@ -176,8 +176,11 @@ class Normalizer:
 
     @classmethod
     def from_stats(
-        cls, stats: dict[str, dict[str, Any]], key: str, device: torch.device
-    ) -> "Normalizer":
+        cls,
+        stats: dict[str, dict[str, Any]],
+        key: str,
+        device: torch.device,
+    ) -> Normalizer:
         mean = torch.as_tensor(stats[key]["mean"], dtype=torch.float32, device=device)
         std = torch.as_tensor(stats[key]["std"], dtype=torch.float32, device=device)
         return cls(mean, std)
@@ -188,18 +191,19 @@ class Normalizer:
         stats_list: list[dict[str, dict[str, Any]]],
         key: str,
         device: torch.device,
-    ) -> "Normalizer":
+    ) -> Normalizer:
         """Count-weighted aggregation across datasets: the exact combined
         mean, and std via E[x²] composition (all in float64 before rounding
         to float32)."""
         counts = torch.tensor(
-            [float(s[key]["count"][0]) for s in stats_list], dtype=torch.float64
+            [float(s[key]["count"][0]) for s in stats_list],
+            dtype=torch.float64,
         )
         means = torch.stack(
-            [torch.as_tensor(s[key]["mean"], dtype=torch.float64) for s in stats_list]
+            [torch.as_tensor(s[key]["mean"], dtype=torch.float64) for s in stats_list],
         )
         stds = torch.stack(
-            [torch.as_tensor(s[key]["std"], dtype=torch.float64) for s in stats_list]
+            [torch.as_tensor(s[key]["std"], dtype=torch.float64) for s in stats_list],
         )
         total = counts.sum()
         weights = (counts / total)[:, None]
@@ -240,7 +244,9 @@ def flow_matching_loss(
     call convention (prefix, state, noisy_actions, tau) is shared by
     ActionExpert, BijouModel and DDP(ActionExpert)."""
     actions = (batch.actions - batch.action_mean[:, None, :]) / batch.action_std[
-        :, None, :
+        :,
+        None,
+        :,
     ]
     state = (batch.state - batch.state_mean) / batch.state_std
     valid = ~batch.action_is_pad
@@ -278,7 +284,10 @@ def _chunk_plot(
     ncols = 3
     nrows = (dims + ncols - 1) // ncols
     fig, axes = plt.subplots(
-        nrows, ncols, figsize=(4 * ncols, 2.5 * nrows), squeeze=False
+        nrows,
+        ncols,
+        figsize=(4 * ncols, 2.5 * nrows),
+        squeeze=False,
     )
     steps = range(predicted.shape[0])
     n_valid = int(valid.sum())
@@ -338,6 +347,7 @@ def build_probe_set(
     rank: int,
     world_size: int,
     batch_size: int,
+    *,
     keep_rich: bool,
 ) -> ProbeSet:
     """Draw, fetch and collate one probe set's shard for this rank.
@@ -425,7 +435,7 @@ def validate(
                     truth[i].cpu(),
                     valid[i].cpu(),
                     batch.state[i].cpu(),
-                )
+                ),
             )
             next_rich = next(wanted, None)
         base += sampled.shape[0]
@@ -528,13 +538,14 @@ def save_checkpoint(
         "step": step,
     }
     (checkpoint_dir / "bijou_config.json").write_text(
-        json.dumps(metadata, indent=2, default=str)
+        json.dumps(metadata, indent=2, default=str),
     )
     return checkpoint_dir
 
 
 def ensure_matching_expert_config(
-    expert_config: ExpertConfig, checkpoint: Path
+    expert_config: ExpertConfig,
+    checkpoint: Path,
 ) -> None:
     """Loud, early failure when a checkpoint's expert differs from the CLI's
     (strict state-dict loading would also fail, but with worse diagnostics
@@ -546,7 +557,7 @@ def ensure_matching_expert_config(
         raise SystemExit(
             f"expert config mismatch vs {checkpoint}:\n"
             f"  checkpoint: {json.dumps(saved, sort_keys=True)}\n"
-            f"  cli:        {json.dumps(current, sort_keys=True)}"
+            f"  cli:        {json.dumps(current, sort_keys=True)}",
         )
 
 
@@ -643,7 +654,10 @@ def parse_args() -> TrainArgs:
         help="expert self-attention over the action chunk",
     )
     parser.add_argument(
-        "--expert-hidden", type=int, default=768, help="expert hidden size"
+        "--expert-hidden",
+        type=int,
+        default=768,
+        help="expert hidden size",
     )
     parser.add_argument(
         "--expert-heads",
@@ -689,7 +703,10 @@ def parse_args() -> TrainArgs:
         help="linear warmup steps to --lr",
     )
     parser.add_argument(
-        "--weight-decay", type=float, default=1e-5, help="AdamW weight decay"
+        "--weight-decay",
+        type=float,
+        default=1e-5,
+        help="AdamW weight decay",
     )
     parser.add_argument(
         "--grad-clip",
@@ -698,7 +715,10 @@ def parse_args() -> TrainArgs:
         help="gradient-norm clip over the expert",
     )
     parser.add_argument(
-        "--log-every", type=int, default=10, help="steps between metric logs"
+        "--log-every",
+        type=int,
+        default=10,
+        help="steps between metric logs",
     )
     parser.add_argument(
         "--eval-every",
@@ -707,7 +727,10 @@ def parse_args() -> TrainArgs:
         help="steps between MAE probes (eval_chunk_mae/train_mae)",
     )
     parser.add_argument(
-        "--save-every", type=int, default=100, help="steps between checkpoints"
+        "--save-every",
+        type=int,
+        default=100,
+        help="steps between checkpoints",
     )
     parser.add_argument(
         "--num-workers",
@@ -744,7 +767,9 @@ def parse_args() -> TrainArgs:
         "checkpoint directory (--steps counts total, including resumed)",
     )
     parser.add_argument(
-        "--device", default="cuda", help="torch device (cuda, cuda:N, cpu)"
+        "--device",
+        default="cuda",
+        help="torch device (cuda, cuda:N, cpu)",
     )
     parser.add_argument(
         "--seed",
@@ -785,7 +810,7 @@ def parse_args() -> TrainArgs:
     if raw.holdout_episodes > 0 and raw.eval_samples is None:
         parser.error(
             "--eval-samples is required when --holdout-episodes > 0 "
-            "(it sizes the held-out eval_chunk_mae probe)"
+            "(it sizes the held-out eval_chunk_mae probe)",
         )
     if raw.eval_samples is not None and raw.eval_samples < 1:
         parser.error("--eval-samples must be >= 1")
@@ -860,7 +885,7 @@ def main() -> int:
     rank = 0
     if distributed:
         torch.distributed.init_process_group(
-            "nccl" if device.type == "cuda" else "gloo"
+            "nccl" if device.type == "cuda" else "gloo",
         )
         rank = torch.distributed.get_rank()
         if device.type == "cuda":
@@ -920,10 +945,14 @@ def main() -> int:
     # without their own stats.
     normalizers = Normalizers(
         action=Normalizer.from_aggregated_stats(
-            list(selection.lerobot_stats.values()), "action", device
+            list(selection.lerobot_stats.values()),
+            "action",
+            device,
         ),
         state=Normalizer.from_aggregated_stats(
-            list(selection.lerobot_stats.values()), "observation.state", device
+            list(selection.lerobot_stats.values()),
+            "observation.state",
+            device,
         ),
     )
 
@@ -941,7 +970,10 @@ def main() -> int:
     sampler: torch.utils.data.DistributedSampler[Any] | None = None
     if distributed:
         sampler = torch.utils.data.DistributedSampler(
-            dataset, shuffle=True, seed=args.seed, drop_last=True
+            dataset,
+            shuffle=True,
+            seed=args.seed,
+            drop_last=True,
         )
     loader = torch.utils.data.DataLoader(
         dataset,
@@ -1008,7 +1040,8 @@ def main() -> int:
         weight_decay=args.weight_decay,
     )
     scheduler = torch.optim.lr_scheduler.LambdaLR(
-        optimizer, lambda step: lr_lambda(step, args)
+        optimizer,
+        lambda step: lr_lambda(step, args),
     )
 
     start_step = 0
@@ -1017,7 +1050,8 @@ def main() -> int:
         ensure_matching_expert_config(expert_config, checkpoint_to_load)
         model.expert.load_state_dict(
             load_file(
-                str(checkpoint_to_load / "expert.safetensors"), device=str(device)
+                str(checkpoint_to_load / "expert.safetensors"),
+                device=str(device),
             ),
             strict=True,
         )
@@ -1028,7 +1062,7 @@ def main() -> int:
         if not optimizer_path.exists():
             raise SystemExit(
                 f"{optimizer_path} missing (checkpoint predates optimizer "
-                "saving) — use --init-from for a warm start instead"
+                "saving) — use --init-from for a warm start instead",
             )
         saved_state = torch.load(optimizer_path, map_location="cpu", weights_only=True)
         optimizer.load_state_dict(saved_state["optimizer"])
@@ -1037,7 +1071,7 @@ def main() -> int:
         if start_step >= args.steps:
             raise SystemExit(
                 f"checkpoint is at step {start_step}, nothing to do with "
-                f"--steps {args.steps} (it counts total steps)"
+                f"--steps {args.steps} (it counts total steps)",
             )
         if is_main:
             print(
@@ -1189,7 +1223,8 @@ def main() -> int:
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
             grad_norm = torch.nn.utils.clip_grad_norm_(
-                model.expert.parameters(), args.grad_clip
+                model.expert.parameters(),
+                args.grad_clip,
             )
             optimizer.step()
             scheduler.step()

@@ -120,7 +120,10 @@ def parse_args() -> argparse.Namespace:
         help="bfloat16 halves expert memory for small inference GPUs",
     )
     parser.add_argument(
-        "--seed", type=int, default=None, help="noise seed (default: stochastic)"
+        "--seed",
+        type=int,
+        default=None,
+        help="noise seed (default: stochastic)",
     )
     parser.add_argument(
         "--check",
@@ -139,7 +142,7 @@ def rig_stats(args: argparse.Namespace, policy: BijouPolicy) -> dict[str, torch.
         if args.stats_repo_id not in table:
             raise SystemExit(
                 f"{args.stats_repo_id!r} not in the checkpoint's stats table "
-                f"({len(table)} entries); pass --stats-dataset instead"
+                f"({len(table)} entries); pass --stats-dataset instead",
             )
         entry = table[args.stats_repo_id]
     elif args.stats_dataset is not None:
@@ -216,14 +219,14 @@ def main() -> int:
 
     print(
         f"policy: {policy.name} (chunk {chunk_size}, "
-        f"{args.sample_method}-{args.sample_steps}, {args.expert_dtype} expert)"
+        f"{args.sample_method}-{args.sample_steps}, {args.expert_dtype} expert)",
     )
     print(f"task: {args.task!r}")
     print(f"cameras (prompt order): {sorted(cameras)}")
     print(f"state stats mean: {[round(x, 1) for x in stats['state_mean'].tolist()]}")
     print(
         f"loop: {args.fps} Hz, execute {horizon}/{chunk_size} per replan, "
-        f"{args.duration:.0f}s, max_relative_target={args.max_relative_target}"
+        f"{args.duration:.0f}s, max_relative_target={args.max_relative_target}",
     )
     if args.check:
         print("check mode: not connecting to the robot")
@@ -235,7 +238,7 @@ def main() -> int:
             id=args.robot_id,
             cameras=cameras,
             max_relative_target=args.max_relative_target,
-        )
+        ),
     )
     robot.connect()
     print("robot connected; ctrl-c to stop", flush=True)
@@ -253,7 +256,7 @@ def main() -> int:
             replans += 1
             print(
                 f"replan {replans}: {latency * 1000:.0f} ms | state "
-                f"{[round(float(x), 1) for x in item['observation.state']]}",  # type: ignore[index]
+                f"{[round(float(x), 1) for x in item['observation.state']]}",
                 flush=True,
             )
             next_tick = time.perf_counter()

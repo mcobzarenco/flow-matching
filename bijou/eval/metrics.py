@@ -35,7 +35,8 @@ class FrameScore:
     @property
     def chunk_mse(self) -> float:
         return self.squared_error_sum / max(
-            self.n_valid * len(self.per_motor_abs_sum), 1
+            self.n_valid * len(self.per_motor_abs_sum),
+            1,
         )
 
 

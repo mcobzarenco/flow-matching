@@ -64,13 +64,16 @@ def _build_mask(
         # attention masks arrive as Long; cast so the & stays boolean). Slice
         # the columns covered by this mask's kv window.
         cols = padding_mask[:, kv_offset : kv_offset + kv_len].to(
-            device=device, dtype=torch.bool
+            device=device,
+            dtype=torch.bool,
         )
         allowed = allowed & cols[:, None, None, :]
     allowed = allowed.expand(batch_size, 1, q_len, kv_len)
     min_value = torch.finfo(dtype).min
     return torch.where(
-        allowed, torch.tensor(0.0, device=device, dtype=dtype), min_value
+        allowed,
+        torch.tensor(0.0, device=device, dtype=dtype),
+        min_value,
     )
 
 
@@ -124,7 +127,8 @@ def build_text_masks(
 
 
 def build_bidirectional_mask(
-    valid_mask: Tensor | None, dtype: torch.dtype
+    valid_mask: Tensor | None,
+    dtype: torch.dtype,
 ) -> Tensor | None:
     """Padding-only bidirectional mask for the vision encoder.
 

@@ -66,13 +66,13 @@ def default_expert_config(
     if len(stream_counts) != len(streams):
         raise ValueError(
             f"stream_counts has {len(stream_counts)} entries but the backbone "
-            f"prefix has {len(streams)} global layers ({streams})"
+            f"prefix has {len(streams)} global layers ({streams})",
         )
     schedule = tuple(
         chain.from_iterable(
             (stream,) * count
             for stream, count in zip(streams, stream_counts, strict=True)
-        )
+        ),
     )
     return ExpertConfig(
         hidden_size=hidden_size,
@@ -119,10 +119,12 @@ def from_backbone(
     if expert_config is None:
         if action_dim is None or state_dim is None:
             raise ValueError(
-                "pass either expert_config or both action_dim and state_dim"
+                "pass either expert_config or both action_dim and state_dim",
             )
         expert_config = default_expert_config(
-            config, action_dim=action_dim, state_dim=state_dim
+            config,
+            action_dim=action_dim,
+            state_dim=state_dim,
         )
 
     available = prefix_global_layers(config)
@@ -130,7 +132,7 @@ def from_backbone(
         if stream not in available:
             raise ValueError(
                 f"cross-attention stream {stream} is not a global layer of the "
-                f"backbone prefix (available: {available})"
+                f"backbone prefix (available: {available})",
             )
 
     backbone = load_model(

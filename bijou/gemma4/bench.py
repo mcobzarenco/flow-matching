@@ -48,7 +48,10 @@ def random_ids(n_tokens: int, device: torch.device, bos: int) -> torch.Tensor:
 
 
 def time_prefill(
-    model: Gemma4Model, input_ids: torch.Tensor, device: torch.device, iters: int
+    model: Gemma4Model,
+    input_ids: torch.Tensor,
+    device: torch.device,
+    iters: int,
 ) -> tuple[float, float]:
     """(median seconds per forward, peak GiB allocated during the forward)."""
     times: list[float] = []
@@ -83,7 +86,10 @@ def time_decode(
         _sync(device)
         t0 = time.perf_counter()
         result = generate(
-            model, input_ids, max_new_tokens=new_tokens, eos_token_ids=(-1,)
+            model,
+            input_ids,
+            max_new_tokens=new_tokens,
+            eos_token_ids=(-1,),
         )
         _sync(device)
         elapsed = time.perf_counter() - t0
@@ -122,7 +128,7 @@ def main() -> int:
                 {"type": "image", "image": image},
                 {"type": "text", "text": "Describe this image."},
             ],
-        }
+        },
     ]
     image_batch = processor.apply_chat_template(
         messages,

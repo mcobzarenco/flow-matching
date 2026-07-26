@@ -188,7 +188,9 @@ def _main() -> int:
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
     path = write_tiny_checkpoint(
-        args.output, processor_source=args.processor_source, seed=args.seed
+        args.output,
+        processor_source=args.processor_source,
+        seed=args.seed,
     )
     print(path)
     return 0

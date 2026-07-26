@@ -1,3 +1,5 @@
+from typing import override
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -13,6 +15,7 @@ class Block(nn.Module):  # pre-LN residual GEGLU block
         nn.init.zeros_(self.proj.weight)  # block is identity at init
         nn.init.zeros_(self.proj.bias)
 
+    @override
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         a, b = self.gate_val(self.norm(x)).chunk(2, dim=-1)
         return x + self.proj(F.gelu(a, approximate="tanh") * b)
@@ -32,6 +35,7 @@ class VF(nn.Module):  # v_theta(x, t) — unconditional
         self.blocks = nn.Sequential(*[Block(h) for _ in range(depth)])
         self.out = nn.Sequential(nn.LayerNorm(h), nn.Linear(h, d))
 
+    @override
     def forward(self, x: torch.Tensor, t: torch.Tensor) -> torch.Tensor:
         a = 2 * torch.pi * t[:, None] * self.freqs[None]
         return self.out(self.blocks(self.inp(torch.cat([x, a.sin(), a.cos()], -1))))

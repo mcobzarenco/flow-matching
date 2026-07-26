@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from typing import override
+
 import torch
 from torch import Tensor, nn
 
@@ -48,11 +50,17 @@ class Gemma4Model(nn.Module):
             dtype = config.dtype
         self.config = config
         self.language_model = TextModel(
-            config.text, attn_backend=attn_backend, device=device, dtype=dtype
+            config.text,
+            attn_backend=attn_backend,
+            device=device,
+            dtype=dtype,
         )
         self.vision_tower = (
             VisionModel(
-                config.vision, attn_backend=attn_backend, device=device, dtype=dtype
+                config.vision,
+                attn_backend=attn_backend,
+                device=device,
+                dtype=dtype,
             )
             if config.vision is not None
             else None
@@ -77,7 +85,9 @@ class Gemma4Model(nn.Module):
         )
 
     def get_image_features(
-        self, pixel_values: Tensor, image_position_ids: Tensor
+        self,
+        pixel_values: Tensor,
+        image_position_ids: Tensor,
     ) -> Tensor:
         """Soft tokens projected into LM space: [num_soft_tokens, hidden]."""
         if self.vision_tower is None or self.embed_vision is None:
@@ -85,6 +95,7 @@ class Gemma4Model(nn.Module):
         soft_tokens = self.vision_tower(pixel_values, image_position_ids)
         return self.embed_vision(soft_tokens)
 
+    @override
     def forward(
         self,
         input_ids: Tensor,
@@ -102,7 +113,9 @@ class Gemma4Model(nn.Module):
         """
         text_config = self.config.text
         inputs_embeds, per_layer_inputs = self.embed_multimodal(
-            input_ids, pixel_values=pixel_values, image_position_ids=image_position_ids
+            input_ids,
+            pixel_values=pixel_values,
+            image_position_ids=image_position_ids,
         )
 
         hidden_states = self.language_model(
@@ -145,7 +158,9 @@ class Gemma4Model(nn.Module):
         # Multimodal placeholder ids are out of the embedding's vocabulary:
         # embed the pad token there instead, then scatter the image features.
         llm_input_ids = torch.where(
-            image_mask, self.config.text.pad_token_id, input_ids
+            image_mask,
+            self.config.text.pad_token_id,
+            input_ids,
         )
         inputs_embeds = self.language_model.embed_tokens(llm_input_ids)
         per_layer_inputs = self.language_model.get_per_layer_inputs(llm_input_ids)
@@ -159,10 +174,11 @@ class Gemma4Model(nn.Module):
             if n_slots * inputs_embeds.shape[-1] != image_features.numel():
                 raise ValueError(
                     f"image token slots ({n_slots}) do not match soft tokens "
-                    f"({image_features.shape[0]})"
+                    f"({image_features.shape[0]})",
                 )
             inputs_embeds = inputs_embeds.masked_scatter(
-                image_mask.unsqueeze(-1).expand_as(inputs_embeds), image_features
+                image_mask.unsqueeze(-1).expand_as(inputs_embeds),
+                image_features,
             )
         elif bool(image_mask.any()):
             raise ValueError("input contains image tokens but no pixel_values given")

@@ -104,7 +104,7 @@ class Gemma4TextConfig:
         if len(self.layer_types) != self.num_hidden_layers:
             raise ValueError(
                 f"layer_types has {len(self.layer_types)} entries for "
-                f"{self.num_hidden_layers} layers"
+                f"{self.num_hidden_layers} layers",
             )
         if self.layer_types[-1] is not LayerType.FULL:
             raise ValueError("last layer must be full_attention")
@@ -113,7 +113,7 @@ class Gemma4TextConfig:
         if self.use_bidirectional_attention is not None:
             raise NotImplementedError(
                 "use_bidirectional_attention is not implemented "
-                "(the E-series models use None)"
+                "(the E-series models use None)",
             )
 
     # -- derived structure ---------------------------------------------------
@@ -257,7 +257,7 @@ class Gemma4Config:
     def from_dict(cls, data: dict[str, Any]) -> Self:
         if data.get("model_type") not in (None, "gemma4"):
             raise ValueError(
-                f"not a gemma4 config: model_type={data.get('model_type')}"
+                f"not a gemma4 config: model_type={data.get('model_type')}",
             )
         vision_data = data.get("vision_config")
         dtype = getattr(torch, data["dtype"])
@@ -280,7 +280,7 @@ class Gemma4Config:
 
     @classmethod
     def from_json(cls, path: Path | str) -> Self:
-        with open(path) as f:
+        with Path(path).open() as f:
             return cls.from_dict(json.load(f))
 
 
@@ -379,7 +379,7 @@ def e2b_config() -> Gemma4Config:
             num_kv_shared_layers=20,
             use_double_wide_mlp=True,
             enable_moe_block=False,
-        )
+        ),
     )
 
 
@@ -414,5 +414,5 @@ def e4b_config() -> Gemma4Config:
             num_kv_shared_layers=18,
             use_double_wide_mlp=False,
             enable_moe_block=False,
-        )
+        ),
     )

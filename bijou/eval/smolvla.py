@@ -29,13 +29,15 @@ PostprocessorPipeline = PolicyProcessorPipeline[PolicyAction, PolicyAction]
 
 
 def build_rename_map(
-    dataset_cameras: list[str], policy_cameras: list[str]
+    dataset_cameras: list[str],
+    policy_cameras: list[str],
 ) -> dict[str, str]:
     """Map dataset camera keys onto the policy's camera keys, both in sorted
     order (the convention used when the SmolVLA community datasets were
     standardized). Extra dataset cameras are dropped; SmolVLA masks missing
     policy views."""
-    return dict(zip(sorted(dataset_cameras), sorted(policy_cameras)))
+    # strict=False: unequal camera counts are the documented case above.
+    return dict(zip(sorted(dataset_cameras), sorted(policy_cameras), strict=False))
 
 
 def stats_to_tensors(stats: dict[str, dict[str, Any]]) -> dict[str, dict[str, Tensor]]:
@@ -65,7 +67,8 @@ class SmolVLAEvalPolicy:
         self.policy.to(device)
         self.policy.eval()
         self._processors: dict[
-            str, tuple[dict[str, str], PreprocessorPipeline, PostprocessorPipeline]
+            str,
+            tuple[dict[str, str], PreprocessorPipeline, PostprocessorPipeline],
         ] = {}
 
     @property
@@ -76,7 +79,9 @@ class SmolVLAEvalPolicy:
         return [k for k in (self.policy.config.input_features or {}) if "image" in k]
 
     def _processors_for(
-        self, repo_id: str, item: dict[str, Any]
+        self,
+        repo_id: str,
+        item: dict[str, Any],
     ) -> tuple[dict[str, str], PreprocessorPipeline, PostprocessorPipeline]:
         cached = self._processors.get(repo_id)
         if cached is not None:

@@ -115,11 +115,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--chunk-size", type=int, default=50)
     parser.add_argument(
-        "--batch-size", type=int, default=32, help="bijou prefix-encode batch"
+        "--batch-size",
+        type=int,
+        default=32,
+        help="bijou prefix-encode batch",
     )
     parser.add_argument("--num-workers", type=int, default=4)
     parser.add_argument(
-        "--sample-steps", type=int, default=10, help="flow ODE solver steps"
+        "--sample-steps",
+        type=int,
+        default=10,
+        help="flow ODE solver steps",
     )
     parser.add_argument(
         "--sample-method",
@@ -128,7 +134,10 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--device", default="cuda")
     parser.add_argument(
-        "--output-json", type=Path, default=None, help="write summaries as JSON"
+        "--output-json",
+        type=Path,
+        default=None,
+        help="write summaries as JSON",
     )
     parser.add_argument(
         "--report",
@@ -213,7 +222,7 @@ def main() -> int:
         if policy.info.chunk_size != args.chunk_size:
             raise SystemExit(
                 f"checkpoint chunk size {policy.info.chunk_size} != "
-                f"--chunk-size {args.chunk_size}"
+                f"--chunk-size {args.chunk_size}",
             )
         policies.append(policy)
     if args.smolvla is not None:
@@ -223,7 +232,7 @@ def main() -> int:
                 device=device,
                 seed=args.seed,
                 lerobot_stats=selection.lerobot_stats,
-            )
+            ),
         )
 
     # Fetch each sampled frame once (parallel decode; spawn context — the
@@ -254,7 +263,10 @@ def main() -> int:
             predictions = policy.predict(items, batch_indices)
             elapsed = (time.perf_counter() - start) / len(items)
             for item, index, predicted in zip(
-                items, batch_indices, predictions, strict=True
+                items,
+                batch_indices,
+                predictions,
+                strict=True,
             ):
                 truth = item["action"]
                 predicted = predicted[: truth.shape[0]].float()
@@ -266,7 +278,7 @@ def main() -> int:
                         truth=truth.float(),
                         valid=~item["action_is_pad"],
                         inference_seconds=elapsed,
-                    )
+                    ),
                 )
                 if args.report is not None and index in report_indices:
                     sample = report_samples.get(index) or ReportSample(

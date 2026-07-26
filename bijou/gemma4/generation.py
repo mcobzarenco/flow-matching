@@ -34,7 +34,9 @@ class GenerationResult:
 
 
 def _sample(
-    logits: Tensor, params: SamplingParams, generator: torch.Generator | None
+    logits: Tensor,
+    params: SamplingParams,
+    generator: torch.Generator | None,
 ) -> Tensor:
     logits = logits / params.temperature
     if params.top_k is not None:

@@ -110,7 +110,9 @@ class BijouPolicy:
         self.model: BijouModel
         self.info: CheckpointInfo
         self.model, self.info = from_checkpoint(
-            checkpoint, device=device, expert_dtype=expert_dtype
+            checkpoint,
+            device=device,
+            expert_dtype=expert_dtype,
         )
         self.collator = PrefixCollator(
             checkpoint=str(resolve_checkpoint_dir(self.info.backbone)),
@@ -128,7 +130,7 @@ class BijouPolicy:
             [
                 sample_noise(self.seed + index, (chunk, batch.actions.shape[2]))
                 for index in indices
-            ]
+            ],
         ).to(self.device)
         sampled = self.model.sample_actions(
             prefix,

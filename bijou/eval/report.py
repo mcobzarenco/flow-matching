@@ -128,7 +128,9 @@ def _image_data_uri(image: Tensor, height: int = 220) -> str:
 
 
 def _chart_data_uri(
-    sample: ReportSample, motor_names: list[str], theme: ReportTheme
+    sample: ReportSample,
+    motor_names: list[str],
+    theme: ReportTheme,
 ) -> str:
     """Per-joint chart: ground truth vs every policy's prediction, with the
     figure background matching the page."""
@@ -145,7 +147,10 @@ def _chart_data_uri(
     )
     with style:
         fig, axes = plt.subplots(
-            nrows, ncols, figsize=(4.2 * ncols, 2.6 * nrows), squeeze=False
+            nrows,
+            ncols,
+            figsize=(4.2 * ncols, 2.6 * nrows),
+            squeeze=False,
         )
         fig.patch.set_facecolor(theme.page_bg)
         for dim in range(dims):
@@ -189,7 +194,9 @@ def _table(header: list[str], rows: list[list[str]]) -> str:
 
 
 def _sample_block(
-    sample: ReportSample, motor_names: list[str], theme: ReportTheme
+    sample: ReportSample,
+    motor_names: list[str],
+    theme: ReportTheme,
 ) -> str:
     per_policy_mae = {
         name: float((predicted - sample.truth).abs()[sample.valid].mean())

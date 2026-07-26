@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from enum import StrEnum
 
+from typing import override
+
 import torch
 from torch import Tensor, nn
 from torch.nn import functional as F
@@ -70,8 +72,8 @@ class RMSNorm(nn.Module):
         self,
         dim: int,
         eps: float = 1e-6,
-        with_scale: bool = True,
         *,
+        with_scale: bool = True,
         device: DeviceLike = None,
         dtype: torch.dtype | None = None,
     ) -> None:
@@ -82,6 +84,7 @@ class RMSNorm(nn.Module):
         else:
             self.register_parameter("weight", None)
 
+    @override
     def forward(self, x: Tensor) -> Tensor:
         xf = x.float()
         mean_squared = xf.pow(2).mean(-1, keepdim=True) + self.eps
@@ -98,7 +101,10 @@ def rotate_half(x: Tensor) -> Tensor:
 
 
 def apply_rotary_pos_emb(
-    x: Tensor, cos: Tensor, sin: Tensor, unsqueeze_dim: int = 2
+    x: Tensor,
+    cos: Tensor,
+    sin: Tensor,
+    unsqueeze_dim: int = 2,
 ) -> Tensor:
     """Rotate ``x`` of shape [B, S, H, D] with cos/sin of shape [B, S, D]."""
     cos = cos.unsqueeze(unsqueeze_dim)
@@ -112,7 +118,11 @@ def repeat_kv(hidden_states: Tensor, n_rep: int) -> Tensor:
     if n_rep == 1:
         return hidden_states
     hidden_states = hidden_states[:, :, None, :, :].expand(
-        batch, num_key_value_heads, n_rep, slen, head_dim
+        batch,
+        num_key_value_heads,
+        n_rep,
+        slen,
+        head_dim,
     )
     return hidden_states.reshape(batch, num_key_value_heads * n_rep, slen, head_dim)
 
@@ -158,6 +168,7 @@ def sdpa_attention(
     attention_mask: Tensor | None,
     num_key_value_groups: int,
     scaling: float = 1.0,
+    *,
     is_causal: bool = False,
 ) -> Tensor:
     """Fused attention via ``F.scaled_dot_product_attention``. Same contract
@@ -211,12 +222,20 @@ def attention(
             is_causal=mask.is_causal,
         )
     return eager_attention(
-        query, key, value, mask.tensor, num_key_value_groups, scaling
+        query,
+        key,
+        value,
+        mask.tensor,
+        num_key_value_groups,
+        scaling,
     )
 
 
 def rope_inv_freq_from_params(
-    params: RopeParameters, head_dim: int, *, device: DeviceLike = None
+    params: RopeParameters,
+    head_dim: int,
+    *,
+    device: DeviceLike = None,
 ) -> Tensor:
     """Float32 inverse frequencies for one attention geometry.
 
@@ -250,7 +269,9 @@ def rope_inv_freq_from_params(
 
 
 def rope_cos_sin(
-    inv_freq: Tensor, position_ids: Tensor, dtype: torch.dtype
+    inv_freq: Tensor,
+    position_ids: Tensor,
+    dtype: torch.dtype,
 ) -> tuple[Tensor, Tensor]:
     """cos/sin tables for RoPE, computed in float32 then cast.
 

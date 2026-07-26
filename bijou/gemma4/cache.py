@@ -36,7 +36,10 @@ class KVCache:
         self.layers = [_LayerKV() for _ in range(self.config.num_hidden_layers)]
 
     def update(
-        self, layer_idx: int, keys: Tensor, values: Tensor
+        self,
+        layer_idx: int,
+        keys: Tensor,
+        values: Tensor,
     ) -> tuple[Tensor, Tensor]:
         """Append new K/V states [B, KV, S, D]; return the states to attend to."""
         layer = self.layers[layer_idx]

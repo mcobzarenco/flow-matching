@@ -6,16 +6,27 @@ import sys
 
 def run(*cmd: str) -> int:
     print("$", *cmd)
-    return subprocess.run(cmd).returncode
+    return subprocess.run(cmd, check=False).returncode
 
 
 def main() -> int:
     fix = "--fix" in sys.argv[1:]
-    steps = [
-        ("ruff", "format") + (() if fix else ("--check",)),
-        ("ruff", "check") + (("--fix",) if fix else ()),
-        ("pyright",),
-    ]
+    # In fix mode, lint fixes run BEFORE the formatter: COM812 inserts
+    # trailing commas that the formatter then explodes one-per-line, so a
+    # single --fix pass lands on the final (stable) style.
+    steps = (
+        [
+            ("ruff", "check", "--fix"),
+            ("ruff", "format"),
+            ("pyright",),
+        ]
+        if fix
+        else [
+            ("ruff", "format", "--check"),
+            ("ruff", "check"),
+            ("pyright",),
+        ]
+    )
     return max(run(*step) for step in steps)
 
 

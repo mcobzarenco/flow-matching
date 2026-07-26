@@ -18,6 +18,8 @@ Faithful reimplementation of HF's ``Gemma4TextModel``:
 
 from __future__ import annotations
 
+from typing import override
+
 import torch
 from torch import Tensor, nn
 
@@ -61,7 +63,11 @@ class ScaledEmbedding(nn.Embedding):
         dtype: torch.dtype | None = None,
     ) -> None:
         super().__init__(
-            num_embeddings, embedding_dim, padding_idx, device=device, dtype=dtype
+            num_embeddings,
+            embedding_dim,
+            padding_idx,
+            device=device,
+            dtype=dtype,
         )
         self.register_buffer(
             "embed_scale",
@@ -69,12 +75,16 @@ class ScaledEmbedding(nn.Embedding):
             persistent=False,
         )
 
+    @override
     def forward(self, input: Tensor) -> Tensor:
         return super().forward(input) * self.embed_scale.to(self.weight.dtype)
 
 
 def rope_inv_freq(
-    config: Gemma4TextConfig, layer_type: LayerType, *, device: DeviceLike = None
+    config: Gemma4TextConfig,
+    layer_type: LayerType,
+    *,
+    device: DeviceLike = None,
 ) -> Tensor:
     """Float32 inverse frequencies for a layer type (see
     :func:`bijou.gemma4.layers.rope_inv_freq_from_params`)."""
@@ -103,8 +113,12 @@ class TextRotaryEmbedding(nn.Module):
         return buffer
 
     @torch.no_grad()
+    @override
     def forward(
-        self, position_ids: Tensor, layer_types: set[LayerType], dtype: torch.dtype
+        self,
+        position_ids: Tensor,
+        layer_types: set[LayerType],
+        dtype: torch.dtype,
     ) -> RopeMapping:
         return {
             layer_type: rope_cos_sin(self.inv_freq(layer_type), position_ids, dtype)
@@ -152,7 +166,10 @@ class TextAttention(nn.Module):
             dtype=dtype,
         )
         self.q_norm = RMSNorm(
-            self.head_dim, eps=config.rms_norm_eps, device=device, dtype=dtype
+            self.head_dim,
+            eps=config.rms_norm_eps,
+            device=device,
+            dtype=dtype,
         )
         self.o_proj = nn.Linear(
             config.num_attention_heads * self.head_dim,
@@ -184,7 +201,10 @@ class TextAttention(nn.Module):
                     dtype=dtype,
                 )
             self.k_norm = RMSNorm(
-                self.head_dim, eps=config.rms_norm_eps, device=device, dtype=dtype
+                self.head_dim,
+                eps=config.rms_norm_eps,
+                device=device,
+                dtype=dtype,
             )
             self.v_norm = RMSNorm(
                 self.head_dim,
@@ -194,6 +214,7 @@ class TextAttention(nn.Module):
                 dtype=dtype,
             )
 
+    @override
     def forward(
         self,
         hidden_states: Tensor,
@@ -258,16 +279,29 @@ class TextMLP(nn.Module):
         hidden = config.hidden_size
         intermediate = config.intermediate_size_for_layer(layer_idx)
         self.gate_proj = nn.Linear(
-            hidden, intermediate, bias=False, device=device, dtype=dtype
+            hidden,
+            intermediate,
+            bias=False,
+            device=device,
+            dtype=dtype,
         )
         self.up_proj = nn.Linear(
-            hidden, intermediate, bias=False, device=device, dtype=dtype
+            hidden,
+            intermediate,
+            bias=False,
+            device=device,
+            dtype=dtype,
         )
         self.down_proj = nn.Linear(
-            intermediate, hidden, bias=False, device=device, dtype=dtype
+            intermediate,
+            hidden,
+            bias=False,
+            device=device,
+            dtype=dtype,
         )
         self.act_fn = activation_fn(config.hidden_activation)
 
+    @override
     def forward(self, x: Tensor) -> Tensor:
         return self.down_proj(self.act_fn(self.gate_proj(x)) * self.up_proj(x))
 
@@ -288,18 +322,31 @@ class DecoderLayer(nn.Module):
         hidden = config.hidden_size
         eps = config.rms_norm_eps
         self.self_attn = TextAttention(
-            config, layer_idx, attn_backend=attn_backend, device=device, dtype=dtype
+            config,
+            layer_idx,
+            attn_backend=attn_backend,
+            device=device,
+            dtype=dtype,
         )
         self.mlp = TextMLP(config, layer_idx, device=device, dtype=dtype)
         self.input_layernorm = RMSNorm(hidden, eps=eps, device=device, dtype=dtype)
         self.post_attention_layernorm = RMSNorm(
-            hidden, eps=eps, device=device, dtype=dtype
+            hidden,
+            eps=eps,
+            device=device,
+            dtype=dtype,
         )
         self.pre_feedforward_layernorm = RMSNorm(
-            hidden, eps=eps, device=device, dtype=dtype
+            hidden,
+            eps=eps,
+            device=device,
+            dtype=dtype,
         )
         self.post_feedforward_layernorm = RMSNorm(
-            hidden, eps=eps, device=device, dtype=dtype
+            hidden,
+            eps=eps,
+            device=device,
+            dtype=dtype,
         )
         # Persistent buffer, loaded from the checkpoint.
         self.register_buffer("layer_scalar", torch.ones(1, device=device, dtype=dtype))
@@ -320,9 +367,13 @@ class DecoderLayer(nn.Module):
             dtype=dtype,
         )
         self.post_per_layer_input_norm = RMSNorm(
-            hidden, eps=eps, device=device, dtype=dtype
+            hidden,
+            eps=eps,
+            device=device,
+            dtype=dtype,
         )
 
+    @override
     def forward(
         self,
         hidden_states: Tensor,
@@ -335,7 +386,11 @@ class DecoderLayer(nn.Module):
         residual = hidden_states
         hidden_states = self.input_layernorm(hidden_states)
         hidden_states = self.self_attn(
-            hidden_states, position_embeddings, attention_mask, shared_kv, cache
+            hidden_states,
+            position_embeddings,
+            attention_mask,
+            shared_kv,
+            cache,
         )
         hidden_states = self.post_attention_layernorm(hidden_states)
         hidden_states = residual + hidden_states
@@ -356,8 +411,7 @@ class DecoderLayer(nn.Module):
         hidden_states = self.post_per_layer_input_norm(hidden_states)
         hidden_states = residual + hidden_states
 
-        hidden_states = hidden_states * self.layer_scalar
-        return hidden_states
+        return hidden_states * self.layer_scalar
 
 
 class TextModel(nn.Module):
@@ -392,7 +446,10 @@ class TextModel(nn.Module):
             for layer_idx in range(config.num_hidden_layers)
         )
         self.norm = RMSNorm(
-            config.hidden_size, eps=config.rms_norm_eps, device=device, dtype=dtype
+            config.hidden_size,
+            eps=config.rms_norm_eps,
+            device=device,
+            dtype=dtype,
         )
         self.rotary_emb = TextRotaryEmbedding(config, device=device)
 
@@ -431,7 +488,9 @@ class TextModel(nn.Module):
         )
 
     def project_per_layer_inputs(
-        self, inputs_embeds: Tensor, per_layer_inputs: Tensor
+        self,
+        inputs_embeds: Tensor,
+        per_layer_inputs: Tensor,
     ) -> Tensor:
         """Combine the context projection of ``inputs_embeds`` with the
         token-identity component: ``(proj + identity) / sqrt(2)``."""
@@ -448,6 +507,7 @@ class TextModel(nn.Module):
         projection = self.per_layer_projection_norm(projection)
         return (projection + per_layer_inputs) * self.per_layer_input_scale
 
+    @override
     def forward(
         self,
         input_ids: Tensor | None = None,
@@ -477,11 +537,12 @@ class TextModel(nn.Module):
         elif per_layer_inputs is None:
             raise ValueError(
                 "per_layer_inputs is required when passing inputs_embeds "
-                "(this implementation does not reverse the embedding table)"
+                "(this implementation does not reverse the embedding table)",
             )
         assert inputs_embeds is not None
         per_layer_inputs = self.project_per_layer_inputs(
-            inputs_embeds, per_layer_inputs
+            inputs_embeds,
+            per_layer_inputs,
         )
 
         batch, q_len, _ = inputs_embeds.shape
@@ -502,7 +563,9 @@ class TextModel(nn.Module):
             )
 
         position_embeddings = self.rotary_emb(
-            position_ids, set(self.config.layer_types), inputs_embeds.dtype
+            position_ids,
+            set(self.config.layer_types),
+            inputs_embeds.dtype,
         )
 
         hidden_states = inputs_embeds

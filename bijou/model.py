@@ -12,6 +12,8 @@ from __future__ import annotations
 
 from enum import Enum
 
+from typing import override
+
 import torch
 from torch import Tensor, nn
 
@@ -44,7 +46,7 @@ class BijouModel(nn.Module):
             if not 0 <= layer_idx < text.num_hidden_layers:
                 raise ValueError(
                     f"cross-attention stream {layer_idx} outside backbone "
-                    f"(has {text.num_hidden_layers} layers)"
+                    f"(has {text.num_hidden_layers} layers)",
                 )
             if (
                 text.head_dim_for_layer(layer_idx)
@@ -53,7 +55,7 @@ class BijouModel(nn.Module):
                 raise ValueError(
                     f"stream {layer_idx} head_dim "
                     f"{text.head_dim_for_layer(layer_idx)} != expert cross-attention "
-                    f"head_dim {expert.config.cross_attention_head_dim}"
+                    f"head_dim {expert.config.cross_attention_head_dim}",
                 )
         self.backbone = backbone
         self.expert = expert
@@ -75,7 +77,9 @@ class BijouModel(nn.Module):
         both the backbone's self-attention and the expert's cross-attention.
         """
         inputs_embeds, per_layer_inputs = self.backbone.embed_multimodal(
-            input_ids, pixel_values=pixel_values, image_position_ids=image_position_ids
+            input_ids,
+            pixel_values=pixel_values,
+            image_position_ids=image_position_ids,
         )
         cache = KVCache(self.backbone.config.text)
         self.backbone.language_model(
@@ -90,9 +94,12 @@ class BijouModel(nn.Module):
             assert layer.keys is not None and layer.values is not None
             streams[layer_idx] = (layer.keys, layer.values)
         return PrefixKV(
-            streams=streams, length=input_ids.shape[1], padding_mask=padding_mask
+            streams=streams,
+            length=input_ids.shape[1],
+            padding_mask=padding_mask,
         )
 
+    @override
     def forward(
         self,
         prefix: PrefixKV,

@@ -12,6 +12,8 @@ by the Gemma4 image processor. The tower is:
 
 from __future__ import annotations
 
+from typing import override
+
 import torch
 from torch import Tensor, nn
 from torch.nn import functional as F
@@ -51,7 +53,11 @@ class ClippableLinear(nn.Module):
         super().__init__()
         self.use_clipped_linears = config.use_clipped_linears
         self.linear = nn.Linear(
-            in_features, out_features, bias=False, device=device, dtype=dtype
+            in_features,
+            out_features,
+            bias=False,
+            device=device,
+            dtype=dtype,
         )
         if self.use_clipped_linears:
             # Persistent buffers: the actual clip bounds come from the checkpoint.
@@ -62,9 +68,11 @@ class ClippableLinear(nn.Module):
                 ("output_max", float("inf")),
             ):
                 self.register_buffer(
-                    name, torch.tensor(value, device=device, dtype=dtype)
+                    name,
+                    torch.tensor(value, device=device, dtype=dtype),
                 )
 
+    @override
     def forward(self, x: Tensor) -> Tensor:
         if self.use_clipped_linears:
             x = torch.clamp(x, self.input_min, self.input_max)
@@ -85,7 +93,11 @@ class VisionPatchEmbedder(nn.Module):
         super().__init__()
         patch_features = 3 * config.patch_size**2
         self.input_proj = nn.Linear(
-            patch_features, config.hidden_size, bias=False, device=device, dtype=dtype
+            patch_features,
+            config.hidden_size,
+            bias=False,
+            device=device,
+            dtype=dtype,
         )
         self.position_embedding_table = nn.Parameter(
             torch.ones(
@@ -94,9 +106,10 @@ class VisionPatchEmbedder(nn.Module):
                 config.hidden_size,
                 device=device,
                 dtype=dtype,
-            )
+            ),
         )
 
+    @override
     def forward(
         self,
         pixel_values: Tensor,
@@ -113,13 +126,17 @@ class VisionPatchEmbedder(nn.Module):
         x_emb = F.embedding(clamped[..., 0], self.position_embedding_table[0])
         y_emb = F.embedding(clamped[..., 1], self.position_embedding_table[1])
         position_embeddings = torch.where(
-            padding_positions.unsqueeze(-1), 0.0, x_emb + y_emb
+            padding_positions.unsqueeze(-1),
+            0.0,
+            x_emb + y_emb,
         )
         return hidden_states + position_embeddings
 
 
 def vision_rope_inv_freq(
-    config: Gemma4VisionConfig, *, device: DeviceLike = None
+    config: Gemma4VisionConfig,
+    *,
+    device: DeviceLike = None,
 ) -> Tensor:
     """Per-spatial-dimension inverse frequencies (x and y share the range)."""
     spatial_dim = config.head_dim // 2
@@ -131,7 +148,10 @@ class VisionRotaryEmbedding(nn.Module):
     inv_freq: Tensor
 
     def __init__(
-        self, config: Gemma4VisionConfig, *, device: DeviceLike = None
+        self,
+        config: Gemma4VisionConfig,
+        *,
+        device: DeviceLike = None,
     ) -> None:
         super().__init__()
         self.register_buffer(
@@ -141,8 +161,11 @@ class VisionRotaryEmbedding(nn.Module):
         )
 
     @torch.no_grad()
+    @override
     def forward(
-        self, position_ids: Tensor, dtype: torch.dtype
+        self,
+        position_ids: Tensor,
+        dtype: torch.dtype,
     ) -> tuple[Tensor, Tensor]:
         """position_ids [B, P, 2] -> cos/sin [B, P, head_dim], the two spatial
         dimensions' tables concatenated."""
@@ -164,7 +187,10 @@ class VisionRotaryEmbedding(nn.Module):
 
 
 def apply_multidimensional_rope(
-    x: Tensor, cos: Tensor, sin: Tensor, ndim: int = 2
+    x: Tensor,
+    cos: Tensor,
+    sin: Tensor,
+    ndim: int = 2,
 ) -> Tensor:
     """Split the head dim into ``ndim`` equal parts and rotate each with its
     spatial dimension's cos/sin table. x [B, P, H, D]; cos/sin [B, P, D]."""
@@ -226,10 +252,16 @@ class VisionAttention(nn.Module):
             dtype=dtype,
         )
         self.q_norm = RMSNorm(
-            self.head_dim, eps=config.rms_norm_eps, device=device, dtype=dtype
+            self.head_dim,
+            eps=config.rms_norm_eps,
+            device=device,
+            dtype=dtype,
         )
         self.k_norm = RMSNorm(
-            self.head_dim, eps=config.rms_norm_eps, device=device, dtype=dtype
+            self.head_dim,
+            eps=config.rms_norm_eps,
+            device=device,
+            dtype=dtype,
         )
         self.v_norm = RMSNorm(
             self.head_dim,
@@ -239,6 +271,7 @@ class VisionAttention(nn.Module):
             dtype=dtype,
         )
 
+    @override
     def forward(
         self,
         hidden_states: Tensor,
@@ -286,16 +319,29 @@ class VisionMLP(nn.Module):
         super().__init__()
         hidden, intermediate = config.hidden_size, config.intermediate_size
         self.gate_proj = ClippableLinear(
-            config, hidden, intermediate, device=device, dtype=dtype
+            config,
+            hidden,
+            intermediate,
+            device=device,
+            dtype=dtype,
         )
         self.up_proj = ClippableLinear(
-            config, hidden, intermediate, device=device, dtype=dtype
+            config,
+            hidden,
+            intermediate,
+            device=device,
+            dtype=dtype,
         )
         self.down_proj = ClippableLinear(
-            config, intermediate, hidden, device=device, dtype=dtype
+            config,
+            intermediate,
+            hidden,
+            device=device,
+            dtype=dtype,
         )
         self.act_fn = activation_fn(config.hidden_activation)
 
+    @override
     def forward(self, x: Tensor) -> Tensor:
         return self.down_proj(self.act_fn(self.gate_proj(x)) * self.up_proj(x))
 
@@ -312,20 +358,33 @@ class VisionEncoderLayer(nn.Module):
         super().__init__()
         hidden, eps = config.hidden_size, config.rms_norm_eps
         self.self_attn = VisionAttention(
-            config, attn_backend=attn_backend, device=device, dtype=dtype
+            config,
+            attn_backend=attn_backend,
+            device=device,
+            dtype=dtype,
         )
         self.mlp = VisionMLP(config, device=device, dtype=dtype)
         self.input_layernorm = RMSNorm(hidden, eps=eps, device=device, dtype=dtype)
         self.post_attention_layernorm = RMSNorm(
-            hidden, eps=eps, device=device, dtype=dtype
+            hidden,
+            eps=eps,
+            device=device,
+            dtype=dtype,
         )
         self.pre_feedforward_layernorm = RMSNorm(
-            hidden, eps=eps, device=device, dtype=dtype
+            hidden,
+            eps=eps,
+            device=device,
+            dtype=dtype,
         )
         self.post_feedforward_layernorm = RMSNorm(
-            hidden, eps=eps, device=device, dtype=dtype
+            hidden,
+            eps=eps,
+            device=device,
+            dtype=dtype,
         )
 
+    @override
     def forward(
         self,
         hidden_states: Tensor,
@@ -335,7 +394,9 @@ class VisionEncoderLayer(nn.Module):
         residual = hidden_states
         hidden_states = self.input_layernorm(hidden_states)
         hidden_states = self.self_attn(
-            hidden_states, position_embeddings, attention_mask
+            hidden_states,
+            position_embeddings,
+            attention_mask,
         )
         hidden_states = self.post_attention_layernorm(hidden_states)
         hidden_states = residual + hidden_states
@@ -344,8 +405,7 @@ class VisionEncoderLayer(nn.Module):
         hidden_states = self.pre_feedforward_layernorm(hidden_states)
         hidden_states = self.mlp(hidden_states)
         hidden_states = self.post_feedforward_layernorm(hidden_states)
-        hidden_states = residual + hidden_states
-        return hidden_states
+        return residual + hidden_states
 
 
 class VisionEncoder(nn.Module):
@@ -361,16 +421,23 @@ class VisionEncoder(nn.Module):
         self.rotary_emb = VisionRotaryEmbedding(config, device=device)
         self.layers = nn.ModuleList(
             VisionEncoderLayer(
-                config, attn_backend=attn_backend, device=device, dtype=dtype
+                config,
+                attn_backend=attn_backend,
+                device=device,
+                dtype=dtype,
             )
             for _ in range(config.num_hidden_layers)
         )
 
+    @override
     def forward(
-        self, inputs_embeds: Tensor, valid_mask: Tensor, pixel_position_ids: Tensor
+        self,
+        inputs_embeds: Tensor,
+        valid_mask: Tensor,
+        pixel_position_ids: Tensor,
     ) -> Tensor:
         attention_mask = MaskSpec(
-            tensor=build_bidirectional_mask(valid_mask, inputs_embeds.dtype)
+            tensor=build_bidirectional_mask(valid_mask, inputs_embeds.dtype),
         )
         position_embeddings = self.rotary_emb(pixel_position_ids, inputs_embeds.dtype)
         hidden_states = inputs_embeds
@@ -388,13 +455,16 @@ class VisionPooler(nn.Module):
         self.root_hidden_size = config.hidden_size**0.5
 
     def _avg_pool_by_positions(
-        self, hidden_states: Tensor, pixel_position_ids: Tensor, length: int
+        self,
+        hidden_states: Tensor,
+        pixel_position_ids: Tensor,
+        length: int,
     ) -> tuple[Tensor, Tensor]:
         input_seq_len = hidden_states.shape[1]
         k = int((input_seq_len // length) ** 0.5)
         if k * k * length != input_seq_len:
             raise ValueError(
-                f"cannot pool {input_seq_len} patches to {length} soft tokens (k={k})"
+                f"cannot pool {input_seq_len} patches to {length} soft tokens (k={k})",
             )
         clamped = pixel_position_ids.clamp(min=0)
         max_x = clamped[..., 0].max(dim=-1, keepdim=True)[0] + 1
@@ -405,6 +475,7 @@ class VisionPooler(nn.Module):
         mask = torch.logical_not((weights == 0).all(dim=1))
         return output.to(hidden_states.dtype), mask
 
+    @override
     def forward(
         self,
         hidden_states: Tensor,
@@ -415,12 +486,14 @@ class VisionPooler(nn.Module):
         if output_length > hidden_states.shape[1]:
             raise ValueError(
                 f"cannot output more soft tokens ({output_length}) than patches "
-                f"({hidden_states.shape[1]})"
+                f"({hidden_states.shape[1]})",
             )
         hidden_states = hidden_states.masked_fill(padding_positions.unsqueeze(-1), 0.0)
         if hidden_states.shape[1] != output_length:
             hidden_states, valid_mask = self._avg_pool_by_positions(
-                hidden_states, pixel_position_ids, output_length
+                hidden_states,
+                pixel_position_ids,
+                output_length,
             )
         else:
             valid_mask = ~padding_positions
@@ -442,10 +515,14 @@ class VisionModel(nn.Module):
         self.config = config
         self.patch_embedder = VisionPatchEmbedder(config, device=device, dtype=dtype)
         self.encoder = VisionEncoder(
-            config, attn_backend=attn_backend, device=device, dtype=dtype
+            config,
+            attn_backend=attn_backend,
+            device=device,
+            dtype=dtype,
         )
         self.pooler = VisionPooler(config)
 
+    @override
     def forward(self, pixel_values: Tensor, pixel_position_ids: Tensor) -> Tensor:
         """Returns [num_valid_soft_tokens, hidden] across the whole batch."""
         kernel = self.config.pooling_kernel_size
@@ -453,13 +530,20 @@ class VisionModel(nn.Module):
 
         padding_positions = (pixel_position_ids == -1).all(dim=-1)
         inputs_embeds = self.patch_embedder(
-            pixel_values, pixel_position_ids, padding_positions
+            pixel_values,
+            pixel_position_ids,
+            padding_positions,
         )
         hidden_states = self.encoder(
-            inputs_embeds, ~padding_positions, pixel_position_ids
+            inputs_embeds,
+            ~padding_positions,
+            pixel_position_ids,
         )
         pooled, valid_mask = self.pooler(
-            hidden_states, pixel_position_ids, padding_positions, output_length
+            hidden_states,
+            pixel_position_ids,
+            padding_positions,
+            output_length,
         )
         # Strip padded soft tokens and cast back to the working dtype.
         return pooled[valid_mask].to(inputs_embeds.dtype)
@@ -493,7 +577,8 @@ class MultimodalEmbedder(nn.Module):
             dtype=dtype,
         )
 
+    @override
     def forward(self, inputs_embeds: Tensor) -> Tensor:
         return self.embedding_projection(
-            self.embedding_pre_projection_norm(inputs_embeds)
+            self.embedding_pre_projection_norm(inputs_embeds),
         )
