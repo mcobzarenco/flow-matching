@@ -28,6 +28,7 @@ override-dependencies = [
 
 [dependency-groups]
 dev = [
+    "ipython>=9.15.0",
     "pyright[nodejs]>=1.1.411",
     # Keep in lockstep with the ruff bundled by Zed's extension (editor
     # diagnostics come from that binary): version skew means default-rule

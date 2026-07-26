@@ -74,7 +74,7 @@ from .data import (
 )
 from .expert import ExpertConfig, PrefixKV, SelfAttentionMode
 from .gemma4.loading import load_config, resolve_checkpoint_dir
-from .loading import default_expert_config, from_backbone
+from .loading import CheckpointMetadata, default_expert_config, from_backbone
 from .model import BijouModel
 
 DEFAULT_BACKBONE = "google/gemma-4-e2b-it"
@@ -324,6 +324,16 @@ def _chunk_plot(
 
 
 @dataclass(frozen=True, slots=True)
+class RichRow:
+    """One probe sample's prediction, kept (CPU-side) for the wandb table."""
+
+    sampled: Tensor
+    truth: Tensor
+    valid: Tensor
+    state: Tensor
+
+
+@dataclass(frozen=True, slots=True)
 class ProbeSet:
     """This rank's shard of a seeded MAE probe, CPU-resident between evals.
 
@@ -403,7 +413,7 @@ def validate(
     also logs a table under ``table_key``: camera images, task, state,
     per-joint predicted-vs-truth plots."""
     totals = torch.zeros(2, device=device)  # [abs-error sum, valid elements]
-    rich_rows: list[tuple[Tensor, Tensor, Tensor, Tensor]] = []
+    rich_rows: list[RichRow] = []
     wanted = iter(probe.rich_positions)
     next_rich = next(wanted, None)
     base = 0
@@ -430,11 +440,11 @@ def validate(
         while next_rich is not None and next_rich < base + sampled.shape[0]:
             i = next_rich - base
             rich_rows.append(
-                (
-                    sampled[i].cpu(),
-                    truth[i].cpu(),
-                    valid[i].cpu(),
-                    batch.state[i].cpu(),
+                RichRow(
+                    sampled=sampled[i].cpu(),
+                    truth=truth[i].cpu(),
+                    valid=valid[i].cpu(),
+                    state=batch.state[i].cpu(),
                 ),
             )
             next_rich = next(wanted, None)
@@ -458,7 +468,6 @@ def validate(
         ]
         table = wandb.Table(columns=columns)
         for i, (item, row) in enumerate(zip(probe.rich_items, rich_rows, strict=True)):
-            row_sampled, row_truth, row_valid, row_state = row
             cams = per_item_cameras[i]
             images: list[Any] = [
                 wandb.Image(
@@ -472,10 +481,10 @@ def validate(
             ]
             images += [None] * (n_slots - len(cams))
             figure = _chunk_plot(
-                row_sampled,
-                row_truth,
-                row_valid,
-                row_state,
+                row.sampled,
+                row.truth,
+                row.valid,
+                row.state,
                 action_names or [],
             )
             state_str = ", ".join(
@@ -486,12 +495,50 @@ def validate(
                 *images,
                 str(item["task"]),
                 state_str,
-                float((row_sampled - row_truth).abs()[row_valid].mean()),
+                float((row.sampled - row.truth).abs()[row.valid].mean()),
                 wandb.Image(figure),
             )
             plt.close(figure)
         wandb_run.log({table_key: table}, step=step)
     return mae
+
+
+@dataclass(frozen=True, slots=True)
+class TrainState:
+    """optimizer.pt payload — everything --resume needs beyond the weights.
+    Stored as a plain dict on disk (torch.load(weights_only=True) rejects
+    custom classes), so the payload methods are the (de)serialization edge.
+    """
+
+    optimizer: dict[str, Any]
+    scheduler: dict[str, Any]
+    step: int
+
+    def to_payload(self) -> dict[str, Any]:
+        return {
+            "optimizer": self.optimizer,
+            "scheduler": self.scheduler,
+            "step": self.step,
+        }
+
+    @classmethod
+    def from_payload(cls, data: dict[str, Any]) -> TrainState:
+        return cls(
+            optimizer=data["optimizer"],
+            scheduler=data["scheduler"],
+            step=int(data["step"]),
+        )
+
+
+def aggregate_stats(normalizers: Normalizers) -> DatasetStats:
+    """The count-weighted aggregate stats as a DatasetStats (the checkpoint
+    fallback entry for rigs without their own stats)."""
+    return DatasetStats(
+        action_mean=tuple(normalizers.action.mean.tolist()),
+        action_std=tuple(normalizers.action.std.tolist()),
+        state_mean=tuple(normalizers.state.mean.tolist()),
+        state_std=tuple(normalizers.state.std.tolist()),
+    )
 
 
 def save_checkpoint(
@@ -508,37 +555,25 @@ def save_checkpoint(
     save_file(model.expert.state_dict(), str(checkpoint_dir / "expert.safetensors"))
     # Adam moments etc. (~2x expert params) make --resume a lossless
     # continuation; --init-from ignores this file.
-    torch.save(
-        {
-            "optimizer": optimizer.state_dict(),
-            "scheduler": scheduler.state_dict(),
-            "step": step,
-        },
-        checkpoint_dir / "optimizer.pt",
+    train_state = TrainState(
+        optimizer=optimizer.state_dict(),
+        scheduler=scheduler.state_dict(),
+        step=step,
     )
-    metadata = {
-        "backbone": args.backbone,
-        "expert_config": dataclasses.asdict(model.expert.config),
-        # Training normalized per dataset; inference must normalize with the
-        # deployment rig's stats. "normalization" keeps the count-weighted
-        # aggregate as a fallback for rigs without stats (keys match the
-        # dataset feature names; stable checkpoint format).
-        "normalization": {
-            "action": normalizers.action.state_dict(),
-            "observation.state": normalizers.state.state_dict(),
-        },
-        "per_dataset_normalization": {
-            repo_id: stats.state_dict()
-            for repo_id, stats in sorted(per_dataset_stats.items())
-        },
-        "train_args": {
+    torch.save(train_state.to_payload(), checkpoint_dir / "optimizer.pt")
+    metadata = CheckpointMetadata(
+        backbone=args.backbone,
+        expert_config=model.expert.config,
+        normalization=aggregate_stats(normalizers),
+        per_dataset_normalization=per_dataset_stats,
+        train_args={
             k: str(v) if isinstance(v, Path) else v
             for k, v in dataclasses.asdict(args).items()
         },
-        "step": step,
-    }
+        step=step,
+    )
     (checkpoint_dir / "bijou_config.json").write_text(
-        json.dumps(metadata, indent=2, default=str),
+        json.dumps(metadata.to_json_dict(), indent=2, default=str),
     )
     return checkpoint_dir
 
@@ -1064,10 +1099,12 @@ def main() -> int:
                 f"{optimizer_path} missing (checkpoint predates optimizer "
                 "saving) — use --init-from for a warm start instead",
             )
-        saved_state = torch.load(optimizer_path, map_location="cpu", weights_only=True)
-        optimizer.load_state_dict(saved_state["optimizer"])
-        scheduler.load_state_dict(saved_state["scheduler"])
-        start_step = int(saved_state["step"])
+        train_state = TrainState.from_payload(
+            torch.load(optimizer_path, map_location="cpu", weights_only=True),
+        )
+        optimizer.load_state_dict(train_state.optimizer)
+        scheduler.load_state_dict(train_state.scheduler)
+        start_step = train_state.step
         if start_step >= args.steps:
             raise SystemExit(
                 f"checkpoint is at step {start_step}, nothing to do with "

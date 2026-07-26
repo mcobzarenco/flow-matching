@@ -44,6 +44,7 @@ import torch
 from lerobot.cameras.opencv import OpenCVCameraConfig
 from lerobot.robots.so_follower import SOFollower, SOFollowerRobotConfig
 
+from .data import DatasetStats
 from .eval.policies import BijouPolicy
 from .model import SamplingMethod
 
@@ -134,9 +135,10 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def rig_stats(args: argparse.Namespace, policy: BijouPolicy) -> dict[str, torch.Tensor]:
-    """Per-rig MEAN_STD stats as flat tensors, from the checkpoint table or a
-    local dataset directory."""
+def rig_stats(args: argparse.Namespace, policy: BijouPolicy) -> DatasetStats:
+    """Per-rig MEAN_STD stats, from the checkpoint table (already floored at
+    training time) or a local dataset directory (floored on load, matching
+    training's construction path)."""
     if args.stats_repo_id is not None:
         table = policy.info.per_dataset_normalization
         if args.stats_repo_id not in table:
@@ -144,40 +146,30 @@ def rig_stats(args: argparse.Namespace, policy: BijouPolicy) -> dict[str, torch.
                 f"{args.stats_repo_id!r} not in the checkpoint's stats table "
                 f"({len(table)} entries); pass --stats-dataset instead",
             )
-        entry = table[args.stats_repo_id]
-    elif args.stats_dataset is not None:
+        return table[args.stats_repo_id]
+    if args.stats_dataset is not None:
         stats = json.loads((args.stats_dataset / "meta" / "stats.json").read_text())
-        entry = {
-            key: {field: stats[key][field] for field in ("mean", "std")}
-            for key in ("action", "observation.state")
-        }
-    else:
-        raise SystemExit("pass --stats-repo-id or --stats-dataset")
-    floor = 1e-2  # matches training's DatasetStats std floor
-    return {
-        "action_mean": torch.tensor(entry["action"]["mean"]),
-        "action_std": torch.tensor(entry["action"]["std"]).clamp(min=floor),
-        "state_mean": torch.tensor(entry["observation.state"]["mean"]),
-        "state_std": torch.tensor(entry["observation.state"]["std"]).clamp(min=floor),
-    }
+        return DatasetStats.from_lerobot_stats(stats)
+    raise SystemExit("pass --stats-repo-id or --stats-dataset")
 
 
 def observation_to_item(
     observation: dict[str, Any],
     task: str,
-    stats: dict[str, torch.Tensor],
+    stats: DatasetStats,
     chunk_size: int,
 ) -> dict[str, Any]:
     """Robot observation -> the item shape BijouPolicy consumes (mirrors a
-    StatsAttachedDataset item). Ground-truth fields are zero stubs: the
-    collator requires them and the policy reads only their shapes."""
+    StatsAttachedDataset item, including the stats tensors). Ground-truth
+    fields are zero stubs: the collator requires them and the policy reads
+    only their shapes."""
     state = torch.tensor([float(observation[f"{m}.pos"]) for m in SO_MOTORS])
     item: dict[str, Any] = {
         "task": task,
         "observation.state": state,
         "action": torch.zeros(chunk_size, len(SO_MOTORS)),
         "action_is_pad": torch.zeros(chunk_size, dtype=torch.bool),
-        **stats,
+        **stats.item_tensors(),
     }
     for key, value in observation.items():
         if key.endswith(".pos"):
@@ -223,7 +215,7 @@ def main() -> int:
     )
     print(f"task: {args.task!r}")
     print(f"cameras (prompt order): {sorted(cameras)}")
-    print(f"state stats mean: {[round(x, 1) for x in stats['state_mean'].tolist()]}")
+    print(f"state stats mean: {[round(x, 1) for x in stats.state_mean]}")
     print(
         f"loop: {args.fps} Hz, execute {horizon}/{chunk_size} per replan, "
         f"{args.duration:.0f}s, max_relative_target={args.max_relative_target}",

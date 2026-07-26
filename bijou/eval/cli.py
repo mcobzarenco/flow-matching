@@ -26,6 +26,7 @@ import datetime
 import json
 import random
 import time
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -35,6 +36,8 @@ from ..data import EpisodeSplit, select_datasets
 from ..model import SamplingMethod
 from .metrics import (
     FrameScore,
+    PairedComparison,
+    PolicySummary,
     compare_paired,
     format_table,
     score_frame,
@@ -48,6 +51,41 @@ from .policies import (
 )
 from .report import THEMES, ReportSample, render_report
 from .smolvla import SmolVLAEvalPolicy
+
+
+@dataclass(frozen=True, slots=True)
+class EvalReport:
+    """Schema of the --output-json payload: what was evaluated (data,
+    split, sampling, policies) plus the per-policy summaries and paired
+    comparisons. The JSON contract other tooling parses — extend, don't
+    reshape."""
+
+    data: list[str]
+    episodes: str
+    holdout_episodes: float
+    split_seed: int
+    num_samples: int
+    seed: int
+    checkpoint: str | None
+    smolvla: str | None
+    summaries: list[PolicySummary]
+    paired: list[PairedComparison]
+    motor_names: list[str]
+
+    def to_json_dict(self) -> dict[str, Any]:
+        return {
+            "data": self.data,
+            "episodes": self.episodes,
+            "holdout_episodes": self.holdout_episodes,
+            "split_seed": self.split_seed,
+            "num_samples": self.num_samples,
+            "seed": self.seed,
+            "checkpoint": self.checkpoint,
+            "smolvla": self.smolvla,
+            "summaries": [s.to_dict() for s in self.summaries],
+            "paired": [c.to_dict() for c in self.paired],
+            "motor_names": self.motor_names,
+        }
 
 
 def identity_collate(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -359,21 +397,21 @@ def main() -> int:
         )
 
     if args.output_json is not None:
-        payload: dict[str, Any] = {
-            "data": [str(p) for p in args.data],
-            "episodes": args.episodes,
-            "holdout_episodes": args.holdout_episodes,
-            "split_seed": args.split_seed,
-            "num_samples": num_samples,
-            "seed": args.seed,
-            "checkpoint": str(args.checkpoint) if args.checkpoint else None,
-            "smolvla": args.smolvla,
-            "summaries": [s.to_dict() for s in summaries],
-            "paired": [c.to_dict() for c in comparisons],
-            "motor_names": motor_names,
-        }
+        report = EvalReport(
+            data=[str(p) for p in args.data],
+            episodes=args.episodes,
+            holdout_episodes=args.holdout_episodes,
+            split_seed=args.split_seed,
+            num_samples=num_samples,
+            seed=args.seed,
+            checkpoint=str(args.checkpoint) if args.checkpoint else None,
+            smolvla=args.smolvla,
+            summaries=summaries,
+            paired=comparisons,
+            motor_names=motor_names,
+        )
         args.output_json.parent.mkdir(parents=True, exist_ok=True)
-        args.output_json.write_text(json.dumps(payload, indent=2))
+        args.output_json.write_text(json.dumps(report.to_json_dict(), indent=2))
         print(f"\nwrote {args.output_json}", flush=True)
 
     if args.report is not None:

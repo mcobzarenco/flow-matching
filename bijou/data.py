@@ -164,6 +164,29 @@ class DatasetStats:
             },
         }
 
+    @classmethod
+    def from_state_dict(cls, data: dict[str, dict[str, list[float]]]) -> DatasetStats:
+        """Exact inverse of :meth:`state_dict` — no flooring: serialized
+        stats were floored at construction (``from_lerobot_stats``), and a
+        checkpoint round-trip must not alter values."""
+        return cls(
+            action_mean=tuple(data["action"]["mean"]),
+            action_std=tuple(data["action"]["std"]),
+            state_mean=tuple(data["observation.state"]["mean"]),
+            state_std=tuple(data["observation.state"]["std"]),
+        )
+
+    def item_tensors(self) -> dict[str, Tensor]:
+        """The four per-item stats tensors exactly as training items carry
+        them (materialized fresh per call — see the class docstring for why
+        they are not stored as tensors)."""
+        return {
+            "action_mean": torch.tensor(self.action_mean),
+            "action_std": torch.tensor(self.action_std),
+            "state_mean": torch.tensor(self.state_mean),
+            "state_std": torch.tensor(self.state_std),
+        }
+
 
 class StatsAttachedDataset(torch.utils.data.Dataset[dict[str, Any]]):
     """Wraps one LeRobot dataset so every item carries its dataset's stats
@@ -194,10 +217,7 @@ class StatsAttachedDataset(torch.utils.data.Dataset[dict[str, Any]]):
     def __getitem__(self, index: int) -> dict[str, Any]:
         item = self._fetch_with_substitution(index, self._MAX_ATTEMPTS)
         item["repo_id"] = self.dataset.repo_id
-        item["action_mean"] = torch.tensor(self.stats.action_mean)
-        item["action_std"] = torch.tensor(self.stats.action_std)
-        item["state_mean"] = torch.tensor(self.stats.state_mean)
-        item["state_std"] = torch.tensor(self.stats.state_std)
+        item.update(self.stats.item_tensors())
         return item
 
     def _fetch_with_substitution(self, index: int, attempts: int) -> dict[str, Any]:
@@ -290,17 +310,46 @@ def holdout_episodes(
     return tuple(sorted(rng.sample(range(num_episodes), count)))
 
 
-def action_state_dims(info: dict[str, Any]) -> tuple[int, int] | None:
-    """Action/state dims from a dataset's info.json, or None when either
-    feature is absent (a few community datasets use bespoke feature names,
-    e.g. arm_action/hand_action/observation.arm_state — not trainable here)."""
-    features = info.get("features") or {}
-    if "action" not in features or "observation.state" not in features:
-        return None
-    return (
-        int(features["action"]["shape"][0]),
-        int(features["observation.state"]["shape"][0]),
-    )
+@dataclass(frozen=True, slots=True)
+class DatasetInfo:
+    """The slice of a dataset's ``meta/info.json`` the selection pipeline
+    consumes, parsed once per dataset instead of dug out of the raw dict at
+    every use.
+
+    ``action_state_dims`` is None when the standard action/state features
+    are absent (a few community datasets use bespoke feature names, e.g.
+    arm_action/hand_action/observation.arm_state — not trainable here).
+    """
+
+    fps: float
+    total_episodes: int
+    action_state_dims: tuple[int, int] | None
+    action_names: tuple[str, ...]
+    cameras: tuple[str, ...]
+
+    @classmethod
+    def from_json(cls, path: Path) -> DatasetInfo:
+        data = json.loads(path.read_text())
+        features: dict[str, Any] = data.get("features") or {}
+        dims = None
+        if "action" in features and "observation.state" in features:
+            dims = (
+                int(features["action"]["shape"][0]),
+                int(features["observation.state"]["shape"][0]),
+            )
+        return cls(
+            fps=float(data["fps"]),
+            total_episodes=int(data["total_episodes"]),
+            action_state_dims=dims,
+            action_names=tuple(features.get("action", {}).get("names") or ()),
+            cameras=tuple(
+                sorted(
+                    key.removeprefix("observation.images.")
+                    for key, feature in features.items()
+                    if feature.get("dtype") == "video"
+                ),
+            ),
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -355,19 +404,18 @@ def select_datasets(
         raise ValueError("episode_split=HOLDOUT requires holdout_fraction > 0")
     dataset_dirs = discover_datasets(paths, exclude)
     dataset_infos = [
-        json.loads((d / "meta" / "info.json").read_text()) for d in dataset_dirs
+        DatasetInfo.from_json(d / "meta" / "info.json") for d in dataset_dirs
     ]
     anchor_info = next(
-        (info for info in dataset_infos if action_state_dims(info) is not None),
+        (info for info in dataset_infos if info.action_state_dims is not None),
         None,
     )
     if anchor_info is None:
         raise ValueError(
             "no selected dataset declares action/observation.state features",
         )
-    anchor_dims = action_state_dims(anchor_info)
-    assert anchor_dims is not None
-    action_dim, state_dim = anchor_dims
+    assert anchor_info.action_state_dims is not None
+    action_dim, state_dim = anchor_info.action_state_dims
 
     datasets: list[StatsAttachedDataset] = []
     per_dataset_stats: dict[str, DatasetStats] = {}
@@ -390,7 +438,7 @@ def select_datasets(
                 f"keeping {selected_dirs[repo_id]})",
             )
             continue
-        dims = action_state_dims(info)
+        dims = info.action_state_dims
         if dims is None:
             dropped.append(f"{repo_id} (no action/observation.state features)")
             continue
@@ -398,9 +446,13 @@ def select_datasets(
             dropped.append(f"{repo_id} (action/state dims {dims[0]}/{dims[1]})")
             continue
 
-        meta_episodes = int(info["total_episodes"])
         held_out = (
-            holdout_episodes(repo_id, meta_episodes, holdout_fraction, split_seed)
+            holdout_episodes(
+                repo_id,
+                info.total_episodes,
+                holdout_fraction,
+                split_seed,
+            )
             if episode_split is not EpisodeSplit.ALL
             else ()
         )
@@ -409,12 +461,12 @@ def select_datasets(
             if not held_out:
                 dropped.append(
                     f"{repo_id} (no held-out episodes: "
-                    f"{meta_episodes} episode(s) total)",
+                    f"{info.total_episodes} episode(s) total)",
                 )
                 continue
             episodes = list(held_out)
         elif episode_split is EpisodeSplit.TRAIN and held_out:
-            keep = set(range(meta_episodes)) - set(held_out)
+            keep = set(range(info.total_episodes)) - set(held_out)
             episodes = sorted(keep)
         else:
             episodes = None
@@ -423,7 +475,7 @@ def select_datasets(
             repo_id,
             root=str(dataset_dir),
             episodes=episodes,
-            delta_timestamps={"action": [i / info["fps"] for i in range(chunk_size)]},
+            delta_timestamps={"action": [i / info.fps for i in range(chunk_size)]},
             # Nearest-frame decode tolerance. lerobot's 1e-4 default is
             # unrepresentable deep into v3-format concatenated video files:
             # torchcodec returns fp32 pts, whose resolution at e.g. 1140s
@@ -431,7 +483,7 @@ def select_datasets(
             # (observed: kaiserbuffle/hanoi_dc, 19-minute file). Half a
             # frame period is the exact nearest-frame criterion and still
             # catches genuine desync (off by >= a full frame).
-            tolerance_s=0.5 / info["fps"],
+            tolerance_s=0.5 / info.fps,
         )
         if sub_dataset.meta.stats is None:
             dropped.append(f"{repo_id} (no stats)")
@@ -469,15 +521,7 @@ def select_datasets(
         selected_dirs[repo_id] = dataset_dir
         per_dataset_stats[repo_id] = stats
         lerobot_stats[repo_id] = sub_dataset.meta.stats
-        camera_census[
-            tuple(
-                sorted(
-                    k.removeprefix("observation.images.")
-                    for k, f in info["features"].items()
-                    if f["dtype"] == "video"
-                ),
-            )
-        ] += 1
+        camera_census[info.cameras] += 1
         total_episodes += sub_dataset.num_episodes
         held_out_total += len(held_out)
         held_out_datasets += 1 if held_out else 0
@@ -492,7 +536,7 @@ def select_datasets(
         dropped=dropped,
         action_dim=action_dim,
         state_dim=state_dim,
-        action_names=list(anchor_info["features"]["action"].get("names") or []),
+        action_names=list(anchor_info.action_names),
         total_episodes=total_episodes,
         episode_split=episode_split,
         held_out_episodes=held_out_total,

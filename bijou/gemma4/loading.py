@@ -17,6 +17,7 @@ from __future__ import annotations
 import dataclasses
 import json
 import re
+from dataclasses import dataclass
 from pathlib import Path
 
 import torch
@@ -175,11 +176,24 @@ def load_model(
     return model.to(device)
 
 
-def load_generation_defaults(checkpoint_dir: Path) -> dict[str, object]:
-    """The checkpoint's ``generation_config.json`` as a plain dict (eos ids,
-    sampling defaults); purely informational for callers."""
+@dataclass(frozen=True, slots=True)
+class GenerationDefaults:
+    """The consumed slice of a checkpoint's ``generation_config.json``:
+    the eos ids HF's generate() stops on (int or list in the JSON,
+    normalized to a tuple; None when absent or no config file exists)."""
+
+    eos_token_ids: tuple[int, ...] | None
+
+
+def load_generation_defaults(checkpoint_dir: Path) -> GenerationDefaults:
     path = checkpoint_dir / "generation_config.json"
     if not path.exists():
-        return {}
+        return GenerationDefaults(eos_token_ids=None)
     with path.open() as f:
-        return json.load(f)
+        data = json.load(f)
+    eos = data.get("eos_token_id")
+    if eos is None:
+        return GenerationDefaults(eos_token_ids=None)
+    if isinstance(eos, int):
+        return GenerationDefaults(eos_token_ids=(eos,))
+    return GenerationDefaults(eos_token_ids=tuple(int(t) for t in eos))

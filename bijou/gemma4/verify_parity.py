@@ -324,9 +324,7 @@ def run_checks(
         # 3. End-to-end generate() token parity (hard gate, near-tie aware).
         # HF's generate stops on the generation_config eos ids, so use the
         # same set.
-        gen_defaults = load_generation_defaults(checkpoint_dir)
-        eos = gen_defaults.get("eos_token_id", None)
-        eos_ids = tuple(eos) if isinstance(eos, list) else None
+        eos_ids = load_generation_defaults(checkpoint_dir).eos_token_ids
         result = generate(
             model,
             input_ids,
@@ -538,9 +536,7 @@ def run_image_check(
     all_diff = (ours.logits.float() - theirs.logits.float()).abs().max().item()
     print(f"  (info) all-positions max|Δ|={all_diff:.3e}")
 
-    gen_defaults = load_generation_defaults(checkpoint_dir)
-    eos = gen_defaults.get("eos_token_id", None)
-    eos_ids = tuple(eos) if isinstance(eos, list) else None
+    eos_ids = load_generation_defaults(checkpoint_dir).eos_token_ids
     result = generate(
         model,
         batch["input_ids"],

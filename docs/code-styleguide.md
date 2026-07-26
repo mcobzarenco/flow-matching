@@ -87,8 +87,11 @@ covers what they can't.
   `source.organizeImports.ruff` code action, so on-save organize-imports
   and `check.py` can never disagree.
 - **The import DAG is strict** and reviewed:
-  `data → model → expert → gemma4`; `train`/`eval`/`rollout` sit on top
-  and import downward only. No module imports its importer.
+  `train`/`eval`/`rollout` → `loading` → `data` → `model` → `expert` →
+  `gemma4`, importing downward only. No module imports its importer.
+  (`loading` owns the checkpoint schema — both the write side,
+  `CheckpointMetadata`, and the read side, `CheckpointInfo` — because
+  `train` and `eval` both sit above it.)
 - Package CLIs live in `cli.py`, not `__main__.py` (spawn-based
   multiprocessing cannot unpickle objects defined in a package
   `__main__`).

@@ -13,6 +13,7 @@ ready-to-train model:
 
 from __future__ import annotations
 
+import dataclasses
 import json
 from dataclasses import dataclass
 from itertools import chain
@@ -22,6 +23,7 @@ from typing import Any
 import torch
 from safetensors.torch import load_file
 
+from .data import DatasetStats
 from .expert import ActionExpert, ExpertConfig, SelfAttentionMode
 from .gemma4.config import Gemma4Config, LayerType
 from .gemma4.layers import DEFAULT_ATTENTION_BACKEND, AttentionBackend, DeviceLike
@@ -154,27 +156,104 @@ def from_backbone(
 
 
 @dataclass(frozen=True, slots=True)
+class CheckpointTrainArgs:
+    """The architecture-determining subset of a checkpoint's recorded train
+    args — every field a loader needs to rebuild the model. Present in all
+    checkpoints since the format's introduction; newer recorded args (lr,
+    seeds, data paths, ...) stay in the raw JSON but are not needed here."""
+
+    expert_hidden: int
+    expert_heads: int
+    expert_intermediate: int
+    expert_cross_heads: int
+    stream_counts: tuple[int, ...]
+    self_attention_mode: SelfAttentionMode
+    chunk_size: int
+    max_soft_tokens: int
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> CheckpointTrainArgs:
+        return cls(
+            expert_hidden=int(data["expert_hidden"]),
+            expert_heads=int(data["expert_heads"]),
+            expert_intermediate=int(data["expert_intermediate"]),
+            expert_cross_heads=int(data["expert_cross_heads"]),
+            stream_counts=tuple(int(n) for n in data["stream_counts"]),
+            self_attention_mode=SelfAttentionMode(data["self_attention_mode"]),
+            chunk_size=int(data["chunk_size"]),
+            max_soft_tokens=int(data["max_soft_tokens"]),
+        )
+
+
+@dataclass(frozen=True, slots=True)
 class CheckpointInfo:
-    """Metadata of a bijou training checkpoint (bijou_config.json)."""
+    """Read-side view of a checkpoint's ``bijou_config.json``: the parsed
+    subset consumers need (the write side is :class:`CheckpointMetadata`).
+
+    ``normalization`` is the count-weighted aggregate over the training
+    datasets — a fallback for rigs without stats; ``per_dataset_normalization``
+    is the per-dataset stats table (keyed by repo id — genuinely dynamic).
+    """
 
     backbone: str
-    train_args: dict[str, Any]
+    train_args: CheckpointTrainArgs
     step: int
-    normalization: dict[str, dict[str, list[float]]]
-    per_dataset_normalization: dict[str, dict[str, dict[str, list[float]]]]
+    normalization: DatasetStats
+    per_dataset_normalization: dict[str, DatasetStats]
 
     @property
     def chunk_size(self) -> int:
-        return int(self.train_args["chunk_size"])
+        return self.train_args.chunk_size
 
     @property
     def max_soft_tokens(self) -> int:
-        return int(self.train_args["max_soft_tokens"])
+        return self.train_args.max_soft_tokens
+
+
+@dataclass(frozen=True, slots=True)
+class CheckpointMetadata:
+    """Write-side schema of ``bijou_config.json`` (bijou.train fills it,
+    :func:`from_checkpoint` reads the result back as CheckpointInfo).
+
+    ``train_args`` is the full CLI record as a JSON-ready dict — prepared by
+    the caller because this module must not import bijou.train's TrainArgs
+    (the import DAG points the other way).
+    """
+
+    backbone: str
+    expert_config: ExpertConfig
+    normalization: DatasetStats
+    per_dataset_normalization: dict[str, DatasetStats]
+    train_args: dict[str, Any]
+    step: int
+
+    def to_json_dict(self) -> dict[str, Any]:
+        """The exact historical bijou_config.json layout (key order included
+        — checkpoints diff cleanly across runs). Enums inside expert_config
+        still rely on ``json.dumps(default=str)``, preserving the format
+        existing checkpoints were written with."""
+        return {
+            "backbone": self.backbone,
+            "expert_config": dataclasses.asdict(self.expert_config),
+            # Training normalized per dataset; inference must normalize
+            # with the deployment rig's stats. "normalization" keeps the
+            # count-weighted aggregate as a fallback for rigs without stats
+            # (keys match the dataset feature names; stable format).
+            "normalization": self.normalization.state_dict(),
+            "per_dataset_normalization": {
+                repo_id: stats.state_dict()
+                for repo_id, stats in sorted(
+                    self.per_dataset_normalization.items(),
+                )
+            },
+            "train_args": self.train_args,
+            "step": self.step,
+        }
 
 
 def expert_config_from_train_args(
     backbone_config: Gemma4Config,
-    train_args: dict[str, Any],
+    train_args: CheckpointTrainArgs,
     *,
     action_dim: int,
     state_dim: int,
@@ -186,13 +265,13 @@ def expert_config_from_train_args(
         backbone_config,
         action_dim=action_dim,
         state_dim=state_dim,
-        stream_counts=tuple(train_args["stream_counts"]),
-        hidden_size=int(train_args["expert_hidden"]),
-        num_attention_heads=int(train_args["expert_heads"]),
-        intermediate_size=int(train_args["expert_intermediate"]),
-        cross_attention_heads=int(train_args["expert_cross_heads"]),
-        chunk_size=int(train_args["chunk_size"]),
-        self_attention_mode=SelfAttentionMode(train_args["self_attention_mode"]),
+        stream_counts=train_args.stream_counts,
+        hidden_size=train_args.expert_hidden,
+        num_attention_heads=train_args.expert_heads,
+        intermediate_size=train_args.expert_intermediate,
+        cross_attention_heads=train_args.expert_cross_heads,
+        chunk_size=train_args.chunk_size,
+        self_attention_mode=train_args.self_attention_mode,
     )
 
 
@@ -213,17 +292,20 @@ def from_checkpoint(
     meta = json.loads((checkpoint / "bijou_config.json").read_text())
     info = CheckpointInfo(
         backbone=meta["backbone"],
-        train_args=meta["train_args"],
+        train_args=CheckpointTrainArgs.from_dict(meta["train_args"]),
         step=int(meta["step"]),
-        normalization=meta["normalization"],
-        per_dataset_normalization=meta.get("per_dataset_normalization", {}),
+        normalization=DatasetStats.from_state_dict(meta["normalization"]),
+        per_dataset_normalization={
+            repo_id: DatasetStats.from_state_dict(entry)
+            for repo_id, entry in meta.get("per_dataset_normalization", {}).items()
+        },
     )
     checkpoint_dir = resolve_checkpoint_dir(info.backbone)
     expert_config = expert_config_from_train_args(
         load_config(checkpoint_dir),
         info.train_args,
-        action_dim=len(info.normalization["action"]["mean"]),
-        state_dim=len(info.normalization["observation.state"]["mean"]),
+        action_dim=len(info.normalization.action_mean),
+        state_dim=len(info.normalization.state_mean),
     )
     model = from_backbone(
         checkpoint_dir,

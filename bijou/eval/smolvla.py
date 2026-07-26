@@ -1,4 +1,4 @@
-"""SmolVLA as an evaluation policy (ported from eval_smolvla.py).
+"""SmolVLA as an evaluation policy (ported from the retired eval_smolvla.py).
 
 lerobot policies normalize with dataset stats through their processor
 pipelines and expect the camera keys they were trained with. Our eval spans
@@ -13,6 +13,7 @@ determinism convention of the other policies.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any
 
 import torch
@@ -47,6 +48,16 @@ def stats_to_tensors(stats: dict[str, dict[str, Any]]) -> dict[str, dict[str, Te
     }
 
 
+@dataclass(frozen=True, slots=True)
+class RepoProcessors:
+    """One repo's lerobot processor pipelines: the camera rename map plus
+    pre/post processors with that repo's stats baked in."""
+
+    rename_map: dict[str, str]
+    preprocessor: PreprocessorPipeline
+    postprocessor: PostprocessorPipeline
+
+
 class SmolVLAEvalPolicy:
     """SmolVLA checkpoint scored on the same items as the other policies."""
 
@@ -66,10 +77,7 @@ class SmolVLAEvalPolicy:
         self.policy = LerobotSmolVLA.from_pretrained(policy_path)
         self.policy.to(device)
         self.policy.eval()
-        self._processors: dict[
-            str,
-            tuple[dict[str, str], PreprocessorPipeline, PostprocessorPipeline],
-        ] = {}
+        self._processors: dict[str, RepoProcessors] = {}
 
     @property
     def chunk_size(self) -> int:
@@ -82,7 +90,7 @@ class SmolVLAEvalPolicy:
         self,
         repo_id: str,
         item: dict[str, Any],
-    ) -> tuple[dict[str, str], PreprocessorPipeline, PostprocessorPipeline]:
+    ) -> RepoProcessors:
         cached = self._processors.get(repo_id)
         if cached is not None:
             return cached
@@ -114,7 +122,11 @@ class SmolVLAEvalPolicy:
                 },
             },
         )
-        self._processors[repo_id] = (rename_map, preprocessor, postprocessor)
+        self._processors[repo_id] = RepoProcessors(
+            rename_map=rename_map,
+            preprocessor=preprocessor,
+            postprocessor=postprocessor,
+        )
         return self._processors[repo_id]
 
     @torch.no_grad()
@@ -122,7 +134,7 @@ class SmolVLAEvalPolicy:
         predictions: list[Tensor] = []
         for item, index in zip(items, indices, strict=True):
             repo_id = str(item["repo_id"])
-            _, preprocessor, postprocessor = self._processors_for(repo_id, item)
+            processors = self._processors_for(repo_id, item)
             observation = {
                 k: v for k, v in item.items() if k.startswith("observation.")
             }
@@ -131,9 +143,9 @@ class SmolVLAEvalPolicy:
                 self.seed + index,
                 (1, self.chunk_size, int(self.policy.config.max_action_dim)),
             ).to(self.device)
-            batch = preprocessor(observation)
+            batch = processors.preprocessor(observation)
             self.policy.reset()
             predicted = self.policy.predict_action_chunk(batch, noise=noise)
-            predicted = postprocessor(predicted)
+            predicted = processors.postprocessor(predicted)
             predictions.append(predicted[0].to("cpu", torch.float32))
         return predictions
