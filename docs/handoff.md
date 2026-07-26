@@ -1,8 +1,8 @@
 # Bijou handoff — current state, full context (2026-07-27)
 
-Read this first. Deep architecture rationale lives in
-`docs/handoff_bijou.md` (older but still accurate on design); per-module
-contracts live in code docstrings. This doc is the operational truth:
+Read this first. Architecture and its design rationale live in
+`README.md`; per-module contracts live in code docstrings. This doc is
+the operational truth:
 what exists, what it scored, what is running, what is queued, and how the
 owner likes to work. The owner's chat thread now lives in the main
 checkout `/home/marius/w/flow-matching`; everything is committed to
@@ -28,7 +28,10 @@ Ultimate goal: beat baselines on the owner's physical SO-101.
 Package layout (strict import DAG, enforced by review):
 `train`/`eval`/`rollout` → `loading` → `data` → `model` → `expert` →
 `gemma4`. gemma4 is a pure-torch reimplementation, bit-exact vs HF on
-greedy text+image generation (`bijou/gemma4/verify_parity.py`).
+greedy text+image generation (`bijou/gemma4/verify_parity.py`). Design
+decisions and their alternatives (stream choice, schedule, state
+placement, prompt shape) are summarized in `README.md`; historical
+context beyond that lives in the git log.
 
 ## 2. Results ledger (all open-loop chunk MAE, raw degrees, Heun-10, 256 frames, seed 0)
 
