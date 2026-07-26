@@ -29,7 +29,10 @@ override-dependencies = [
 [dependency-groups]
 dev = [
     "pyright[nodejs]>=1.1.411",
-    "ruff>=0.15.21",
+    # Keep in lockstep with the ruff bundled by Zed's extension (editor
+    # diagnostics come from that binary): version skew means default-rule
+    # skew, e.g. 0.16 added ISC004/DTZ005/TRY004 to the defaults.
+    "ruff>=0.16.0",
 ]
 
 [tool.pyright]
@@ -82,9 +85,15 @@ strictSetInference = true
 #        code action; the formatter deliberately never touches imports)
 #   N    pep8 naming                       PERF trivial perf traps
 #   PIE/PLE/PLW  misc correctness          PTH  pathlib over os.path
-#   RET  return-statement hygiene          RUF  ruff-native (incl. mutable
+#   RET  return-statement hygiene         RUF  ruff-native (incl. mutable
 #   SIM  simplifications                        dataclass defaults)
 #   UP   modern syntax
+# Plus two named rules we want regardless of ruff's shifting defaults:
+#   ISC004  unparenthesized implicit concat in collections (missing-comma
+#           detector; whole-ISC stays off — ISC001 conflicts with the
+#           formatter and ISC002 would flag every argparse help string)
+#   TRY004  raise TypeError from type checks (whole-TRY stays off — TRY003
+#           penalizes the long, loud error messages we deliberately write)
 extend-select = [
     "A",
     "ANN",
@@ -104,6 +113,8 @@ extend-select = [
     "RUF",
     "SIM",
     "UP",
+    "ISC004",
+    "TRY004",
 ]
 ignore = [
     # Any is deliberate at untyped third-party boundaries (transformers,

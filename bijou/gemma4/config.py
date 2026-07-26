@@ -262,7 +262,7 @@ class Gemma4Config:
         vision_data = data.get("vision_config")
         dtype = getattr(torch, data["dtype"])
         if not isinstance(dtype, torch.dtype):
-            raise ValueError(f"invalid dtype {data['dtype']!r}")
+            raise TypeError(f"invalid dtype {data['dtype']!r}")
         return cls(
             text=Gemma4TextConfig.from_dict(data["text_config"]),
             vision=(

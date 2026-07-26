@@ -132,5 +132,15 @@ covers what they can't.
 - ruff `ARG` (unused arguments): protocol conformance requires
   name-stable parameters; the underscore convention covers the rest.
 - ruff `PLR` complexity metrics, `TRY003` (long exception messages are a
-  feature here), `T20` (print *is* the logging system), `DTZ` (local
-  timestamps in reports are intended).
+  feature here; `TRY004` *is* enforced), `T20` (print *is* the logging
+  system), `ISC001/002` (formatter conflict / every argparse help string;
+  `ISC004` *is* enforced).
+
+## Toolchain lockstep
+
+- The dev-dependency ruff version tracks the binary Zed's extension
+  bundles (editor diagnostics come from that binary, resolving the same
+  `pyproject.toml`). Version skew = default-rule skew: ruff 0.16 added
+  ISC004/DTZ005/TRY004 to the *defaults* that `extend-select` builds on,
+  which made the editor flag code the older CLI accepted. When the editor
+  and `check.py` disagree, compare `ruff --version` first.

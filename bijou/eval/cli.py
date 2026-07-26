@@ -377,12 +377,17 @@ def main() -> int:
         print(f"\nwrote {args.output_json}", flush=True)
 
     if args.report is not None:
+        # Local wall-clock time, offset-aware (naive now() is ambiguous
+        # when comparing reports generated on different machines).
+        generated = datetime.datetime.now(datetime.UTC).astimezone()
         config_lines = [
-            f"generated: {datetime.datetime.now().isoformat(timespec='seconds')}",
+            f"generated: {generated.isoformat(timespec='seconds')}",
             f"data: {', '.join(str(p) for p in args.data)}",
-            f"selection: {len(selection.datasets)} datasets, "
-            f"{selection.total_episodes} episodes, {len(dataset)} frames "
-            f"({len(selection.dropped)} dropped)",
+            (
+                f"selection: {len(selection.datasets)} datasets, "
+                f"{selection.total_episodes} episodes, {len(dataset)} frames "
+                f"({len(selection.dropped)} dropped)"
+            ),
             f"samples: {num_samples} frames, seed {args.seed}",
             f"episodes: {args.episodes}"
             + (

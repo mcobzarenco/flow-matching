@@ -69,8 +69,10 @@ from .testing import load_test_image
 DEFAULT_MODEL = "google/gemma-4-e2b-it"
 DEFAULT_PROMPTS = (
     "What are the three primary colors? Answer in one sentence.",
-    "You control a robot arm. Plan the steps to pick up the red cube "
-    "and place it in the bin.",
+    (
+        "You control a robot arm. Plan the steps to pick up the red cube "
+        "and place it in the bin."
+    ),
 )
 
 
