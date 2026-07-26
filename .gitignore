@@ -8,6 +8,7 @@ wheels/
 
 # data
 outputs
+reports
 
 # virtual environments
 .venv
