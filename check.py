@@ -5,7 +5,10 @@ import sys
 
 
 def run(*cmd: str) -> int:
-    print("$", *cmd)
+    # flush: under a pipe, print is block-buffered while the subprocess
+    # writes straight through — without it the banners drift below the
+    # tools' output and a piped tail can hide failures.
+    print("$", *cmd, flush=True)
     return subprocess.run(cmd, check=False).returncode
 
 
@@ -27,7 +30,11 @@ def main() -> int:
             ("pyright",),
         ]
     )
-    return max(run(*step) for step in steps)
+    code = max(run(*step) for step in steps)
+    # An explicit verdict on the LAST line: piped/tailed output must never
+    # be able to hide a failure.
+    print("CHECKS PASSED" if code == 0 else f"CHECKS FAILED (exit {code})", flush=True)
+    return code
 
 
 if __name__ == "__main__":

@@ -608,6 +608,10 @@ class TextModel(nn.Module):
         for i, layer in enumerate(self.layers):
             layer_type = self.config.layer_types[i]
             if i == kv_stop_layer:
+                # ModuleList iteration erases the element type (torch types
+                # Module.__getattr__ as Tensor | Module): narrow before
+                # attribute access.
+                assert isinstance(layer, DecoderLayer)
                 layer.self_attn.project_kv(
                     layer.input_layernorm(hidden_states),
                     position_embeddings[layer_type],
