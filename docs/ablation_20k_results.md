@@ -18,7 +18,7 @@ seed 42, 20k steps = 1.28M samples ≈ **5.3% of one train-split epoch**.
 ## Train loss (mean over steps 18k–20k)
 
 control **0.1739** · bidir **0.1652** · streams0016 **0.1736** ·
-tokens280 **0.1745** (still finishing at time of writing)
+tokens280 **0.1739**
 
 bidir is ~5% lower throughout, from step ~500 on. streams0016 and
 tokens280 are indistinguishable from control on loss.
@@ -29,11 +29,11 @@ Same 256 frames for every arm within a side (identical selection + seed).
 `Δ` = paired per-frame chunk-MAE delta vs raw state-copy (negative =
 better than baseline); `win` = fraction of frames beating it.
 
-| side | state-copy | control | bidir | streams0016 |
-|---|---|---|---|---|
-| train episodes | 11.10 | 11.52 (Δ+0.24, 42%) | 11.78 (Δ+0.47, 39%) | 11.55 (Δ+0.25, 41%) |
-| held-out episodes | 10.30 | 10.55 (Δ+0.36, 40%) | 10.85 (Δ+0.65, 40%) | 10.86 (Δ+0.64, 41%) |
-| marius rig (held-out rig) | 9.54 | 13.80 (Δ+4.19, 17%) | 17.55 (Δ+7.77, 16%) | 14.17 (Δ+4.64, 14%) |
+| side | state-copy | control | bidir | streams0016 | tokens280 |
+|---|---|---|---|---|---|
+| train episodes | 11.10 | 11.52 (Δ+0.24, 42%) | 11.78 (Δ+0.47, 39%) | 11.55 (Δ+0.25, 41%) | 11.59 (Δ+0.30, 41%) |
+| held-out episodes | 10.30 | 10.55 (Δ+0.36, 40%) | 10.85 (Δ+0.65, 40%) | 10.86 (Δ+0.64, 41%) | 10.40 (Δ+0.21, 40%) |
+| marius rig (held-out rig) | 9.54 | 13.80 (Δ+4.19, 17%) | 17.55 (Δ+7.77, 16%) | 14.17 (Δ+4.64, 14%) | 14.65 (Δ+5.01, 15%) |
 
 Reference on the **same held-out frames**: mainline
 `bijou_community_v1v2v3_20k_ddp4/step_040000` scores **6.93**
@@ -68,11 +68,13 @@ training".
    transfer across episodes is nearly free. Everything interesting is in
    cross-rig transfer (calibration offsets, camera placement).
 
-4. **streams0016 ≈ control, tokens280 ≈ control (on loss).** Cross-attn
-   depth placement is a wash at this scale — no reason to abandon 4-4-8.
-   Doubling visual tokens costs 1.9× step time for zero loss improvement;
-   at this training scale visual bandwidth is not the binding constraint.
-   (tokens280 open-loop eval pending; its loss curve overlaps control's.)
+4. **streams0016 ≈ control; tokens280 ≈ control at matched steps, worse
+   at matched compute.** Cross-attn depth placement is a wash at this
+   scale — no reason to abandon 4-4-8. tokens280 posts the best held-out
+   number (10.40, Δ+0.21) and best first_mae/p90 there, but is behind
+   control on the other two sides and costs 1.9× per step: for the same
+   wall clock, control trains ~2× the steps. Not worth it while training
+   scale is the bottleneck; worth revisiting once it isn't.
 
 ## Decision
 
