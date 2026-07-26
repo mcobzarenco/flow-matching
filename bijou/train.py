@@ -48,11 +48,11 @@ import dataclasses
 import json
 import math
 import os
+import random
 import sys
 import time
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
-from itertools import islice
 from pathlib import Path
 from typing import Any, TextIO
 
@@ -116,6 +116,7 @@ class TrainArgs:
     device: str
     seed: int
     eval_samples: int
+    eval_seed: int
     wandb_project: str | None
     wandb_run_name: str | None
 
@@ -467,7 +468,13 @@ def lr_lambda(step: int, args: TrainArgs) -> float:
 
 
 def parse_args() -> TrainArgs:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        prog="python -m bijou.train",
+        description="Train the Bijou action expert on LeRobot v3 datasets "
+        "(dataset directories and/or collection roots). Runs on a single "
+        "GPU by default and data-parallel under torchrun; checkpoints "
+        "carry everything bijou.eval and bijou.rollout need.",
+    )
     parser.add_argument(
         "--train-data",
         type=Path,
@@ -485,21 +492,27 @@ def parse_args() -> TrainArgs:
         "--holdout-episodes",
         type=float,
         default=0.0,
-        help="fraction of each dataset's episodes to EXCLUDE from training "
-        "(deterministic per-dataset split; every >=2-episode dataset "
-        "contributes at least one). Score them with bijou.eval "
-        "--episodes holdout using the same fraction and --split-seed",
+        help="fraction of each dataset's episodes to exclude from training; "
+        "score them with bijou.eval --episodes holdout (same fraction and "
+        "--split-seed)",
     )
     parser.add_argument(
         "--split-seed",
         type=int,
         default=0,
-        help="seed for the episode holdout split — independent of --seed "
-        "so restarts/resumes never shift the split",
+        help="episode-holdout seed, independent of --seed so restarts "
+        "never shift the split",
     )
-    parser.add_argument("--backbone", default=DEFAULT_BACKBONE)
     parser.add_argument(
-        "--save-dir", type=Path, default=Path("outputs/train/bijou_dev")
+        "--backbone",
+        default=DEFAULT_BACKBONE,
+        help="backbone HF model id or local checkpoint path",
+    )
+    parser.add_argument(
+        "--save-dir",
+        type=Path,
+        default=Path("outputs/train/bijou_dev"),
+        help="output directory: step_NNNNNN/ checkpoints, train_log.jsonl, wandb files",
     )
     parser.add_argument(
         "--instruction",
@@ -510,8 +523,8 @@ def parse_args() -> TrainArgs:
         "--cameras",
         nargs="*",
         default=None,
-        help="only use these camera keys when present (full keys or suffixes; "
-        "default: all cameras of each sample, sorted)",
+        help="only use these camera keys when present (full keys or "
+        "suffixes; default: all cameras of each sample, sorted)",
     )
     parser.add_argument(
         "--max-cameras",
@@ -519,32 +532,93 @@ def parse_args() -> TrainArgs:
         default=None,
         help="cap cameras per sample (applied after --cameras filtering)",
     )
-    parser.add_argument("--max-soft-tokens", type=int, default=140)
-    parser.add_argument("--stream-counts", type=int, nargs="*", default=[4, 4, 7])
+    parser.add_argument(
+        "--max-soft-tokens",
+        type=int,
+        default=140,
+        help="vision soft-token budget per camera in the prompt",
+    )
+    parser.add_argument(
+        "--stream-counts",
+        type=int,
+        nargs="*",
+        default=[4, 4, 7],
+        help="expert cross-attention layers per backbone KV stream, "
+        "shallow to deep (0 skips a stream)",
+    )
     parser.add_argument(
         "--self-attention-mode",
         choices=["causal_actions", "bidirectional"],
         default="causal_actions",
+        help="expert self-attention over the action chunk",
     )
-    parser.add_argument("--expert-hidden", type=int, default=768)
-    parser.add_argument("--expert-heads", type=int, default=6)
-    parser.add_argument("--expert-intermediate", type=int, default=3072)
-    parser.add_argument("--expert-cross-heads", type=int, default=4)
-    parser.add_argument("--chunk-size", type=int, default=50)
+    parser.add_argument(
+        "--expert-hidden", type=int, default=768, help="expert hidden size"
+    )
+    parser.add_argument(
+        "--expert-heads",
+        type=int,
+        default=6,
+        help="expert self-attention heads",
+    )
+    parser.add_argument(
+        "--expert-intermediate",
+        type=int,
+        default=3072,
+        help="expert MLP intermediate size",
+    )
+    parser.add_argument(
+        "--expert-cross-heads",
+        type=int,
+        default=4,
+        help="expert cross-attention heads",
+    )
+    parser.add_argument(
+        "--chunk-size",
+        type=int,
+        default=50,
+        help="actions predicted per sample (frames at the dataset fps)",
+    )
     parser.add_argument(
         "--batch-size",
         type=int,
         default=8,
         help="per rank under torchrun (global batch = batch-size x world size)",
     )
-    parser.add_argument("--steps", type=int, default=200)
-    parser.add_argument("--lr", type=float, default=1e-4)
-    parser.add_argument("--warmup-steps", type=int, default=20)
-    parser.add_argument("--weight-decay", type=float, default=1e-5)
-    parser.add_argument("--grad-clip", type=float, default=10.0)
-    parser.add_argument("--log-every", type=int, default=10)
-    parser.add_argument("--eval-every", type=int, default=50)
-    parser.add_argument("--save-every", type=int, default=100)
+    parser.add_argument("--steps", type=int, default=200, help="total optimizer steps")
+    parser.add_argument(
+        "--lr",
+        type=float,
+        default=1e-4,
+        help="peak learning rate (cosine decay to 10%% after warmup)",
+    )
+    parser.add_argument(
+        "--warmup-steps",
+        type=int,
+        default=20,
+        help="linear warmup steps to --lr",
+    )
+    parser.add_argument(
+        "--weight-decay", type=float, default=1e-5, help="AdamW weight decay"
+    )
+    parser.add_argument(
+        "--grad-clip",
+        type=float,
+        default=10.0,
+        help="gradient-norm clip over the expert",
+    )
+    parser.add_argument(
+        "--log-every", type=int, default=10, help="steps between metric logs"
+    )
+    parser.add_argument(
+        "--eval-every",
+        type=int,
+        default=50,
+        help="steps between eval-set scorings",
+    )
+    parser.add_argument(
+        "--save-every", type=int, default=100, help="steps between checkpoints"
+    )
     parser.add_argument(
         "--num-workers",
         type=int,
@@ -561,37 +635,47 @@ def parse_args() -> TrainArgs:
         "--video-decoder-cache",
         type=int,
         default=4,
-        help="max open torchcodec decoders cached per dataloader worker "
-        "(exported as LEROBOT_VIDEO_DECODER_CACHE_SIZE). lerobot's default "
-        "of 100 pins ~50-100MB of ffmpeg buffers per entry; with shuffled "
-        "sampling over hundreds of video files that fills every worker's "
-        "cache and OOM-killed a 20-worker run at ~190GB host RAM",
+        help="max cached video decoders per dataloader worker (exported as "
+        "LEROBOT_VIDEO_DECODER_CACHE_SIZE; lerobot's default of 100 "
+        "OOM-kills many-dataset runs)",
     )
     parser.add_argument(
         "--init-from",
         type=Path,
         default=None,
-        help="warm start: load expert weights from this checkpoint directory "
-        "(fresh optimizer, schedule and step count — use a NEW --save-dir or "
-        "the source checkpoint will eventually be overwritten)",
+        help="warm start: expert weights from this checkpoint directory, "
+        "fresh optimizer and step count (use a new --save-dir)",
     )
     parser.add_argument(
         "--resume",
         type=Path,
         default=None,
-        help="full resume: expert weights + optimizer/scheduler/step from "
-        "this checkpoint directory (requires its optimizer.pt; --steps "
-        "counts total steps including the resumed ones)",
+        help="full resume: weights + optimizer/scheduler/step from this "
+        "checkpoint directory (--steps counts total, including resumed)",
     )
-    parser.add_argument("--device", default="cuda")
-    parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument(
+        "--device", default="cuda", help="torch device (cuda, cuda:N, cpu)"
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=0,
+        help="training seed: init, data order, τ/ε draws (per-rank streams "
+        "derive from it)",
+    )
     parser.add_argument(
         "--eval-samples",
         type=int,
         default=8,
-        help="validation set size: samples spread evenly across the dataset; "
-        "chunk MAE is reported on these (and, with wandb, per-sample rich "
-        "logs: camera frames, task, state, predicted-vs-truth action plots)",
+        help="eval-set size, sampled without replacement (capped at the "
+        "dataset size); kept on-device for the whole run, so keep it modest",
+    )
+    parser.add_argument(
+        "--eval-seed",
+        type=int,
+        default=0,
+        help="eval sampling/noise seed, independent of --seed; matches the "
+        "frames bijou.eval --seed picks on the same data",
     )
     parser.add_argument(
         "--wandb-project",
@@ -599,7 +683,7 @@ def parse_args() -> TrainArgs:
         help="enable Weights & Biases logging to this project "
         "(WANDB_API_KEY must be set)",
     )
-    parser.add_argument("--wandb-run-name", default=None)
+    parser.add_argument("--wandb-run-name", default=None, help="wandb run display name")
     raw = parser.parse_args()
     if raw.init_from is not None and raw.resume is not None:
         parser.error("--init-from and --resume are mutually exclusive")
@@ -640,6 +724,7 @@ def parse_args() -> TrainArgs:
         device=raw.device,
         seed=raw.seed,
         eval_samples=raw.eval_samples,
+        eval_seed=raw.eval_seed,
         wandb_project=raw.wandb_project,
         wandb_run_name=raw.wandb_run_name,
     )
@@ -891,7 +976,7 @@ def main() -> int:
         )
 
     # Fixed validation set, independent of the training batch size:
-    # --eval-samples items spread evenly across the dataset (deterministic),
+    # --eval-samples items drawn without replacement (seeded by --eval-seed),
     # collated in-process (safe: dataloader workers are spawned, not forked)
     # and prefix-encoded once. The raw items keep the original camera frames
     # for rich logging. Rank 0 only — other ranks never decode the eval set
@@ -900,14 +985,19 @@ def main() -> int:
     eval_batch: CollatedBatch | None = None
     eval_prefix: PrefixKV | None = None
     if is_main:
-        stride = max(len(dataset) // args.eval_samples, 1)
-        eval_indices = list(islice(range(0, len(dataset), stride), args.eval_samples))
+        # Seeded sampling without replacement, exactly like bijou.eval:
+        # same data + same seed there reproduces this eval set.
+        num_eval = min(args.eval_samples, len(dataset))
+        eval_indices = sorted(
+            random.Random(args.eval_seed).sample(range(len(dataset)), num_eval)
+        )
         eval_items = [dataset[i] for i in eval_indices]
         eval_batch = collator(eval_items).to(device)
         eval_prefix = encode_prefix(model, eval_batch)
         print(
-            f"eval set: {len(eval_indices)} samples at dataset indices "
-            f"{eval_indices}; prefix {eval_batch.input_ids.shape[1]} tokens "
+            f"eval set: {len(eval_indices)} samples (seed {args.eval_seed}) "
+            f"at dataset indices {eval_indices}; prefix "
+            f"{eval_batch.input_ids.shape[1]} tokens "
             f"(soft-token budget {args.max_soft_tokens}/camera)",
             flush=True,
         )
@@ -1016,7 +1106,7 @@ def main() -> int:
                     model,
                     eval_prefix,
                     eval_batch,
-                    args.seed,
+                    args.eval_seed,
                     wandb_run=wandb_run,
                     eval_items=eval_items,
                     collator=collator,
