@@ -129,6 +129,24 @@ the next rollout.
   (mean-of-N) rollout option is designed-not-built (draws batch through
   the expert; prefix encodes once; unimodality caveat — inspect charts).
 
+**Re-anchoring probe (2026-07-27, falsifier for delta-actions — no
+training; script `outputs/probe_reanchor.py` on box+laptop, JSONs in
+`reports/probe_reanchor_*.json`)**: cont45k@45k zero-shot rig
+predictions, post-hoc corrected. On clean256 / rig-holdout3403:
+raw 11.71/16.35; **anchor-rigid (shift chunk to start at state — the
+test-time delta-action equivalent) buys only −0.25/−0.35** — nowhere
+near copy (9.54/11.39) → the wall is NOT absolute anchoring; delta
+parameterization deprioritized. **Per-frame oracle constant offset:
+6.51/9.14** (beats copy, p90 halves) — the predicted chunk SHAPE is
+right, the level is wrong. **One offset per dataset recovers nothing**
+(11.89/16.37, fitted offsets ±1–6°, zero-mean across frames) → the
+level error is frame/scene-dependent, not rig calibration: the model
+mis-localizes the mid-chunk working point visually on an unseen rig.
+Conclusion: cross-rig gap ≈ spatial grounding, not action-space
+parameterization. Redirects budget to backbone adaptation (LoRA arm)
+and inference-time ensembling (level uncertainty averages out over
+draws — across-draw std 5.9° fits this picture).
+
 **E2B-IT prompt/vision validation** (full untruncated model, greedy):
 our exact collator prompts elicit coherent instruct behavior; a
 describe-the-scene variant grounds correctly (wooden table, arm motors/
@@ -322,23 +340,34 @@ code mid-experiment.
    score intermediate checkpoints (probes say 2k≈4k — verify before
    rollout candidate selection); community-side forgetting check;
    consider HF upload of both arms' step_004000.
-3. **Physical**: rollout candidate is now `bijou_ft_marius_4k_init45k/
+3. **DONE 2026-07-27**: re-anchoring probe (§2) — delta-actions
+   falsified as the cross-rig fix; error = frame-dependent level
+   mis-estimation (visual grounding). Promoted accordingly:
+   `--sample-draws N` rollout ensembling (attacks level uncertainty
+   directly, zero training) and the LoRA-backbone arm (representation
+   adaptation). Cheap sharpener if wanted: copy+oracle-offset baseline
+   (= GT within-chunk dispersion, CPU-only) to quantify how much
+   better than copy bijou's chunk *shape* is.
+4. **Physical**: rollout candidate is now `bijou_ft_marius_4k_init45k/
    step_004000` (first checkpoint to beat copy on held-out rig
    episodes) — or ft_v2 (step_001250 or 1250/2000 comparison)
    after verifying camera device mapping; try `--sample-steps 10`;
    optionally add `--sample-draws N` (mean-of-N; ~20 lines in rollout;
    check unimodality on the sampling report first).
-4. **Perf**: length-bucketed batching, then torch.compile spike
+5. **Perf**: length-bucketed batching, then torch.compile spike
    (backbone 79% of step). Profile numbers in §2.
-5. **Future ablation arms** (matched, holdout recipe): streams0016
-   re-test at scale (rig-transfer hint), E4B backbone (4 streams, needs
-   4-entry --stream-counts), E2B **base vs IT** backbone (prediction:
-   ±0.2 MAE, IT edge grows only with language-diverse data; verify -pt
+6. **Future ablation arms** (matched, holdout recipe): LoRA-backbone
+   (promoted by the re-anchoring probe; grad-path work in
+   `docs/plan_unfreeze_trunk.md` §1–§2), streams0016 re-test at scale
+   (rig-transfer hint), E4B backbone (4 streams, needs 4-entry
+   --stream-counts), E2B **base vs IT** backbone (prediction: ±0.2
+   MAE, IT edge grows only with language-diverse data; verify -pt
    checkpoint ships the vision tower; ablate chat template on/off),
-   `--trim-leading-idle` (6.7% idle frames), delta-actions.
-6. **Bigger bets**: unfreeze trunk (`docs/plan_unfreeze_trunk.md`);
+   `--trim-leading-idle` (6.7% idle frames), state-noise augmentation.
+   Delta-actions demoted (falsified by the re-anchoring probe §2).
+7. **Bigger bets**: unfreeze trunk (`docs/plan_unfreeze_trunk.md`);
    lerobot policy plugin (`lerobot-rollout --policy.type=bijou`).
-7. **Hygiene**: rotate wandb key; guard `--backbone`/
+8. **Hygiene**: rotate wandb key; guard `--backbone`/
    `--max-soft-tokens` at --init-from; MaskSpec/PrefixKV field defaults
    (styleguide exceptions); consider uploading ft_v2 checkpoints to HF
    (uploaded 2026-07-27: cont45k step_045000 with optimizer;
