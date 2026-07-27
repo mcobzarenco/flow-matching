@@ -100,6 +100,12 @@ re-test. Episode-level generalization ≈ free; cross-rig is the wall.
   → ~2% better downstream MAE + fatter-tail wins at matched budget.
   JSONs/reports in `reports/` (`eval_ft4k_init*_holdout_full.json`,
   `report_ft4k_init*_holdout.html`); checkpoints every 500 on the box.
+  **Heun-30 re-score** of init45k @4000 on the same 3,403 frames
+  (`*_heun30.*` in `reports/`): 10.376 → **10.097** (−0.28), first_mae
+  3.07 → 2.53 (beats copy's 2.63), win-vs-copy 0.477, only +39%
+  s/frame (0.057→0.079 — prefix encode dominates) — confirms the
+  sampling-analysis finding that fine-tune fields want more integration
+  steps; rollout latency budget permitting, try `--sample-steps 30`.
 
 **Camera-swap scare (resolved)**: owner suspected `clean`'s front/wrist
 keys were swapped. Frame-level inspection of ALL episodes of both rig
