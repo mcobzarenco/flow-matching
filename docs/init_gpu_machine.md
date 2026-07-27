@@ -9,8 +9,8 @@ self-contained for the setup task itself.
 **Done means**: `nvidia-smi` shows all GPUs; `uv run` works in
 `~/flow-matching`; the three community dataset collections and the
 owner's two rig datasets are on disk in the expected layout; HF + wandb
-auth work; the smoke eval below reproduces a known score; a short
-training run writes a checkpoint.
+auth work; the smoke training run below behaves as described and
+writes a checkpoint.
 
 ## 0. What you need before starting
 
@@ -19,14 +19,14 @@ training run writes a checkpoint.
 - **GitHub**: the repo (`github.com:mcobzarenco/flow-matching`) is
   private — clone happens over SSH. Connect with agent forwarding
   (`ssh -A`) from a machine whose agent holds a key with repo access
-  (the owner's laptop). `git push` from the box also needs `-A`.
+  (the owner's laptop). `git push` from the new machine also needs
+  `-A`.
 - **Hugging Face token** for the `mcobzarenco` account (or any account
   that has accepted the Gemma license — `google/gemma-4-e2b-it` is
   gated; everything else used here is public).
 - **wandb API key** (project `bijou-dev`, entity `aristotle1337`).
-- **Disk**: ≥ 2 TB. The datasets alone are ~930 GB on disk
-  (120G + 121G + 687G community, 1.4G rig); checkpoints are 1.6 GB
-  each (4.8 GB with optimizer state); the backbone cache ~10 GB.
+- **Disk**: ≥ 2 TB. The datasets alone are ~930 GB on disk; training
+  checkpoints are a few GB each; the backbone cache ~10 GB.
 
 ## 1. Base system: `init-vm-gpu.sh`
 
@@ -121,26 +121,26 @@ for c in community_dataset_v1_v3 community_dataset_v2_v3 community_dataset_v3_v3
 done
 ```
 
-Alternative when another box already holds them (same-DC rsync is
-usually faster; always `--partial`, generous timeouts, expect to
-re-run after stalls):
+Alternative when another machine already holds them (machine-to-
+machine rsync is often faster; always `--partial`, generous timeouts,
+expect to re-run after stalls):
 
 ```sh
 rsync -a --partial --info=progress2 --timeout=120 \
-    ubuntu@<old-box-ip>:datasets/mcobzarenco/ ~/datasets/mcobzarenco/
+    <user>@<source-host>:datasets/mcobzarenco/ ~/datasets/mcobzarenco/
 ```
 
 ### 3b. Owner rig datasets (NOT public)
 
 `marius/so101_pick_place_clean` (7 episodes, 88 MB) and
-`marius/so101_pick_place_v2` (50 episodes, 1.3 GB). They exist on the
-owner's laptop at `/home/marius/w/datasets/marius/` and on the
-current H100 box at `~/datasets/marius/`. Copy preserving the
-`marius/<name>` layout:
+`marius/so101_pick_place_v2` (50 episodes, 1.3 GB). Source of truth:
+the owner's laptop, `/home/marius/w/datasets/marius/`. Push them from
+the laptop, preserving the `marius/<name>` layout:
 
 ```sh
+ssh ubuntu@<new-ip> mkdir -p datasets
 rsync -a --partial --info=progress2 \
-    ubuntu@<old-box-ip>:datasets/marius/ ~/datasets/marius/
+    /home/marius/w/datasets/marius ubuntu@<new-ip>:datasets/
 ```
 
 ### 3c. Verify the data
@@ -159,47 +159,13 @@ train/eval run over all three roots: it must say
 dataset with a reason — ~206 dropped for incompatible dims etc. is
 expected and correct).
 
-## 4. Checkpoints (optional, for warm starts / eval)
+## 4. Smoke test (measure, don't assume)
 
-Public model repo `mcobzarenco/bijou-checkpoints`, laid out
-`<run_name>/<step_dir>/{bijou_config.json,expert.safetensors[,optimizer.pt]}`
-— the same shape training writes under `outputs/train/`. To fetch the
-current mainline pretrain (see `docs/handoff.md` §2 for what exists):
-
-```sh
-cd ~/flow-matching
-uv run hf download mcobzarenco/bijou-checkpoints \
-    --include "bijou_community_v1v2v3_cont45k_ddp4/step_045000/*" \
-    --local-dir outputs/train
-```
-
-`--init-from <dir>` needs only config + weights; `--resume <dir>`
-additionally needs `optimizer.pt` (only some hub checkpoints carry it).
-
-## 5. Smoke tests (measure, don't assume)
-
-**Eval** — reproduces a known number end-to-end (backbone download +
-gated auth, video decode, expert load, CUDA). With the community data
-and the cont45k checkpoint from step 4:
-
-```sh
-cd ~/flow-matching
-MALLOC_ARENA_MAX=2 MALLOC_MMAP_THRESHOLD_=131072 \
-uv run python -m bijou.eval \
-    --data ~/datasets/mcobzarenco/community_dataset_v1_v3 \
-           ~/datasets/mcobzarenco/community_dataset_v2_v3 \
-           ~/datasets/mcobzarenco/community_dataset_v3_v3 \
-    --episodes holdout --holdout-episodes 0.1 --split-seed 0 \
-    --checkpoint outputs/train/bijou_community_v1v2v3_cont45k_ddp4/step_045000 \
-    --num-samples 256 --num-workers 8 --device cuda
-```
-
-Expected: `bijou@45000` chunk MAE **≈ 6.85** (Heun-10, seed 0; ±0.1–0.3
-is normal noise-draw/kernel jitter, a whole point is not), state-copy
-baseline ≈ 10.30.
-
-**Train** — exercises the write path (DDP, probes, checkpoint save).
-A few hundred steps on all GPUs (adjust `--nproc-per-node`):
+A short training run from scratch — the expert is freshly (randomly)
+initialized, no checkpoint needed — exercises the whole stack: gated
+backbone download (~10 GB on first run), video decode, DDP, CUDA,
+eval probes, checkpoint write. A few hundred steps on all GPUs
+(adjust `--nproc-per-node`):
 
 ```sh
 cd ~/flow-matching
@@ -216,17 +182,17 @@ uv run torchrun --standalone --nproc-per-node=4 -m bijou.train \
     --seed 0 --save-dir outputs/train/smoke_test
 ```
 
-Healthy signs: the selection report from §3c; ~1.1–1.5 s/step on
-H100s at batch 64/rank once warm (first step ~12 s — CUDA warmup);
+Healthy signs: the selection report from §3c; ~1.1–1.5 s/step per
+H100 at batch 64/rank once warm (first step ~12 s — CUDA warmup);
 loss starting ≈ 2.0 (fresh expert) and clearly falling within a few
 hundred steps; `outputs/train/smoke_test/step_000200/` written with
 config + weights + optimizer. Delete `outputs/train/smoke_test` after.
 
-## 6. Conventions for real runs (the short version)
+## 5. Conventions for real runs (the short version)
 
 - Always under **tmux**, always `2>&1 | tee ~/<run>_console.log`, via a
-  launcher script in `~` (see the `launch_*.sh` examples on the
-  current box, described in `docs/handoff.md` §4).
+  launcher script in `~` (current launcher examples are described in
+  `docs/handoff.md`).
 - Always `MALLOC_ARENA_MAX=2 MALLOC_MMAP_THRESHOLD_=131072` (glibc
   arena bloat with many dataloader workers; train.py itself caps the
   lerobot video-decoder cache via `LEROBOT_VIDEO_DECODER_CACHE_SIZE=4`).
@@ -239,7 +205,7 @@ config + weights + optimizer. Delete `outputs/train/smoke_test` after.
 - CLI semantics that matter (holdout/eval/resume-vs-init-from):
   `docs/handoff.md` §5.
 
-## 7. Failure modes seen in practice
+## 6. Failure modes seen in practice
 
 - Driver installed but `nvidia-smi` fails → you skipped the reboot.
 - `nvidia-smi` worked during setup but fails after ("Driver/library

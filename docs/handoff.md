@@ -159,7 +159,7 @@ dead; next perf wins are length-bucketed batching (batch pads 452 vs
 ## 4. Machines, data, services
 
 - **New machine bring-up**: `docs/init_gpu_machine.md` (init-vm-gpu.sh
-  → auth → dataset downloads → smoke tests with expected numbers).
+  → auth → dataset downloads → from-scratch smoke train run).
 - **Box**: `ssh ubuntu@68.209.73.71` (use `-A` for git push). 4×H100
   SXM, 104 vCPU, 885GB RAM. Repo `~/flow-matching` (sync: `git fetch &&
   git reset --hard origin/main`; uv at `~/.local/bin/uv`). Env for all
