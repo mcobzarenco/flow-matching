@@ -85,6 +85,21 @@ re-test. Episode-level generalization ≈ free; cross-rig is the wall.
   steps ≈ 10.6 epochs, final loss 0.0298): **not yet rolled out
   physically**. No holdout (owner chose same-params); checkpoints every
   250.
+- **Init comparison pair** (2026-07-27, `bijou_ft_marius_4k_init45k`
+  vs `bijou_ft_marius_4k_init40k`): identical recipes — both rig
+  datasets, holdout 0.1/split-seed 0 (3,403 held-out frames: clean ep
+  {1} + v2 eps {10,14,16,25,29}), 4k steps DDP2 global 128, lr 5e-5,
+  seed 7 — except --init-from (cont45k 45k vs mainline 40k). Offline
+  eval on the FULL 3,403-frame holdout (honest; state-copy 11.39 on
+  this set), step_004000: **init45k 10.376 vs init40k 10.595**
+  (−0.22; p90 17.9 vs 19.0; win-vs-copy 0.452 vs 0.435). Both beat
+  copy (−0.92/−0.72) — first rig-side copy wins. Beat copy on mean
+  and p90 but lose p50: better on motion frames, slightly worse on
+  idle ones. Probe curves flat 2k→4k while train MAE fell to ~2.7
+  (memorization without holdout damage). Extra ~11.5M pretrain samples
+  → ~2% better downstream MAE + fatter-tail wins at matched budget.
+  JSONs/reports in `reports/` (`eval_ft4k_init*_holdout_full.json`,
+  `report_ft4k_init*_holdout.html`); checkpoints every 500 on the box.
 
 **Camera-swap scare (resolved)**: owner suspected `clean`'s front/wrist
 keys were swapped. Frame-level inspection of ALL episodes of both rig
@@ -123,25 +138,17 @@ dead; next perf wins are length-bucketed batching (batch pads 452 vs
 
 ## 3. In flight right now
 
-- **Fine-tune comparison pair** (started ~15:20/15:33 UTC 2026-07-27,
-  ~1.2h each): `bijou_ft_marius_4k_init45k` (tmux `ft45k`, GPUs 0,1,
-  log `~/ft_4k_init45k_console.log`) vs `bijou_ft_marius_4k_init40k`
-  (tmux `ft40k`, GPUs 2,3, log `~/ft_4k_init40k_console.log`).
-  IDENTICAL recipes — both rig datasets (clean 7 + v2 50 eps), holdout
-  0.1/split-seed 0 (= clean ep {1} 509 frames + v2 eps {10,14,16,25,29}
-  2,894 frames = 3,403 held out, 32,675 train), 4k steps, DDP2 global
-  128, lr 5e-5 warmup 100, seed 7, eval-every 250 with 128-frame
-  probes, save-every 500 — except `--init-from`: cont45k step_045000 vs
-  mainline step_040000. Question: what does the extra ~11.5M-sample
-  pretrain buy downstream on owner traces? In-training probes are
-  indicative only (128 frames); score checkpoints offline on the full
-  3,403-frame holdout after (`--episodes holdout --num-samples 3403`).
-  Launchers `~/launch_ft_compare_init{45,40}k.sh` (copies in local
-  gitignored `outputs/`). Distinct rendezvous ports 29511/29512 (two
-  concurrent torchruns cannot share --standalone's default).
+- Nothing. The box is idle (last runs: the ft init-comparison pair,
+  finished ~16:45 UTC 2026-07-27; results in §2). Launchers for the
+  pair: `~/launch_ft_compare_init{45,40}k.sh` (copies in local
+  gitignored `outputs/`; note the distinct rendezvous ports 29511/29512
+  — two concurrent torchruns cannot share --standalone's default).
 - **Scoring tooling**: `~/eval_reports.sh <arm> <gpu> <ckpt> <tag>`
   (3 sides + HTML reports) and `~/eval_ablation2.sh` (JSONs only).
   Summarizer: `outputs/abl_results/summarize_r2.py` (worktree copy).
+  Full-holdout rig eval pattern: `--data .../so101_pick_place_clean
+  .../so101_pick_place_v2 --episodes holdout --holdout-episodes 0.1
+  --split-seed 0 --num-samples 3403`.
 
 ## 4. Machines, data, services
 
@@ -302,10 +309,14 @@ code mid-experiment.
    generalization saturated. Next budget discussion pending the
    fine-tune comparison (§3); candidates: multi-day continuation, a
    contamination-free from-scratch WITH holdout, streams0016 at scale.
-2. **When ft pair finishes**: offline-score both arms' checkpoints on
-   the full 3,403-frame rig holdout + community sides; pick the rollout
-   candidate; consider HF upload of both.
-3. **Physical**: rollout ft_v2 (step_001250 or 1250/2000 comparison)
+2. **DONE 2026-07-27**: ft init-pair scored on the full rig holdout
+   (§2): init45k wins −0.22 MAE, both beat copy. Open follow-ups:
+   score intermediate checkpoints (probes say 2k≈4k — verify before
+   rollout candidate selection); community-side forgetting check;
+   consider HF upload of both arms' step_004000.
+3. **Physical**: rollout candidate is now `bijou_ft_marius_4k_init45k/
+   step_004000` (first checkpoint to beat copy on held-out rig
+   episodes) — or ft_v2 (step_001250 or 1250/2000 comparison)
    after verifying camera device mapping; try `--sample-steps 10`;
    optionally add `--sample-draws N` (mean-of-N; ~20 lines in rollout;
    check unimodality on the sampling report first).
