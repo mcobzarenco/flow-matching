@@ -44,6 +44,19 @@ cumulative samples, loss ~0.099. Scores 6.93 on the held-out-episode
 frames — **contaminated** (trained on all episodes, no holdout existed
 yet) — and 12.76 on the owner rig vs copy 9.54 (loses cross-rig).
 
+**cont45k continuation** (2026-07-27,
+`bijou_community_v1v2v3_cont45k_ddp4/step_045000`: init-from 40k +
+fresh optimizer + warmup 500, 45k steps × global 256 ≈ +11.5M samples,
+~27M cumulative, holdout 0.1/seed 0 ACTIVE, final loss ~0.089):
+holdout **6.851** (vs 6.93 — equally contaminated frames, flat within
+noise jitter), train side 6.741, owner rig **11.709** (best pretrain
+rig score: mainline-40k 12.76, best ablation arm 13.15; copy 9.54
+still ahead). Probe curve: warm-restart transient to ~8.9 by 1.5k,
+recovered by ~37k, bottomed 6.80 @40k, 7.05 final — episode-level
+generalization saturated; the rig side is where the samples went.
+Reports `reports/report_mainline_cont45k_{holdout,marius}.html` +
+JSONs in `reports/`. On HF with optimizer.pt.
+
 **4-arm ablation** (from scratch, holdout 0.1/seed 0, seed 42, batch 64,
 1×H100 each; 20k then lossless resume→40k; doc:
 `docs/ablation_20k_results.md`, now 40k-centric):
@@ -110,24 +123,25 @@ dead; next perf wins are length-bucketed batching (batch pads 452 vs
 
 ## 3. In flight right now
 
-- **`community-v1v2v3-cont45k-ddp4`** on the box (tmux session
-  `mainline`, log `~/mainline_cont45k_console.log`): continuation of
-  mainline 40k via **--init-from + fresh optimizer + warmup 500** (owner
-  explicitly prefers this over extended-horizon --resume: stale Adam
-  second moments + re-heated LR cause a loss transient). 45k steps,
-  global 256 ≈ +11.5M samples, holdout 0.1/seed 0 ACTIVE this time
-  (train mix −10% vs lineage; eval_chunk_mae probes the exact ablation
-  eval frames — contaminated for this lineage but comparable; owner
-  accepted). lr peak 1e-4 cosine→1e-5, seed 11, save-every 5000,
-  eval-every 500 with 256-frame probes. Started ~23:06 on 2026-07-26,
-  ~1.1 s/step → ~13.5h. Save dir
-  `outputs/train/bijou_community_v1v2v3_cont45k_ddp4`.
-- **Morning task**: score the final/latest checkpoint — bijou.eval on
-  holdout (contaminated ref: 6.93) + owner rig (honest; mainline-40k
-  got 12.76, arms 13.15–17). Launcher scripts for scoring:
-  `~/eval_reports.sh <arm> <gpu> <ckpt> <tag>` (3 sides + HTML reports)
-  and `~/eval_ablation2.sh` (JSONs only). Summarizer:
-  `outputs/abl_results/summarize_r2.py` (worktree copy).
+- **Fine-tune comparison pair** (started ~15:20/15:33 UTC 2026-07-27,
+  ~1.2h each): `bijou_ft_marius_4k_init45k` (tmux `ft45k`, GPUs 0,1,
+  log `~/ft_4k_init45k_console.log`) vs `bijou_ft_marius_4k_init40k`
+  (tmux `ft40k`, GPUs 2,3, log `~/ft_4k_init40k_console.log`).
+  IDENTICAL recipes — both rig datasets (clean 7 + v2 50 eps), holdout
+  0.1/split-seed 0 (= clean ep {1} 509 frames + v2 eps {10,14,16,25,29}
+  2,894 frames = 3,403 held out, 32,675 train), 4k steps, DDP2 global
+  128, lr 5e-5 warmup 100, seed 7, eval-every 250 with 128-frame
+  probes, save-every 500 — except `--init-from`: cont45k step_045000 vs
+  mainline step_040000. Question: what does the extra ~11.5M-sample
+  pretrain buy downstream on owner traces? In-training probes are
+  indicative only (128 frames); score checkpoints offline on the full
+  3,403-frame holdout after (`--episodes holdout --num-samples 3403`).
+  Launchers `~/launch_ft_compare_init{45,40}k.sh` (copies in local
+  gitignored `outputs/`). Distinct rendezvous ports 29511/29512 (two
+  concurrent torchruns cannot share --standalone's default).
+- **Scoring tooling**: `~/eval_reports.sh <arm> <gpu> <ckpt> <tag>`
+  (3 sides + HTML reports) and `~/eval_ablation2.sh` (JSONs only).
+  Summarizer: `outputs/abl_results/summarize_r2.py` (worktree copy).
 
 ## 4. Machines, data, services
 
@@ -283,25 +297,29 @@ code mid-experiment.
 
 ## 9. Decision queue / next steps
 
-1. **Morning**: score cont45k final checkpoint (holdout frames +
-   owner rig); compare 6.93/12.76. If the curve is still steep, discuss
-   a multi-day run (or a fresh from-scratch WITH holdout at larger
-   budget — the contamination-free pretrain we don't have yet).
-2. **Physical**: rollout ft_v2 (step_001250 or 1250/2000 comparison)
+1. **DONE 2026-07-27**: cont45k scored (§2) — holdout flat (6.85 vs
+   6.93), rig −1.05 (11.71): scale still pays cross-rig, episode-level
+   generalization saturated. Next budget discussion pending the
+   fine-tune comparison (§3); candidates: multi-day continuation, a
+   contamination-free from-scratch WITH holdout, streams0016 at scale.
+2. **When ft pair finishes**: offline-score both arms' checkpoints on
+   the full 3,403-frame rig holdout + community sides; pick the rollout
+   candidate; consider HF upload of both.
+3. **Physical**: rollout ft_v2 (step_001250 or 1250/2000 comparison)
    after verifying camera device mapping; try `--sample-steps 10`;
    optionally add `--sample-draws N` (mean-of-N; ~20 lines in rollout;
    check unimodality on the sampling report first).
-3. **Perf**: length-bucketed batching, then torch.compile spike
+4. **Perf**: length-bucketed batching, then torch.compile spike
    (backbone 79% of step). Profile numbers in §2.
-4. **Future ablation arms** (matched, holdout recipe): streams0016
+5. **Future ablation arms** (matched, holdout recipe): streams0016
    re-test at scale (rig-transfer hint), E4B backbone (4 streams, needs
    4-entry --stream-counts), E2B **base vs IT** backbone (prediction:
    ±0.2 MAE, IT edge grows only with language-diverse data; verify -pt
    checkpoint ships the vision tower; ablate chat template on/off),
    `--trim-leading-idle` (6.7% idle frames), delta-actions.
-5. **Bigger bets**: unfreeze trunk (`docs/plan_unfreeze_trunk.md`);
+6. **Bigger bets**: unfreeze trunk (`docs/plan_unfreeze_trunk.md`);
    lerobot policy plugin (`lerobot-rollout --policy.type=bijou`).
-6. **Hygiene**: rotate wandb key; README.md still empty; guard
-   `--backbone`/`--max-soft-tokens` at --init-from; MaskSpec/PrefixKV
-   field defaults (styleguide exceptions); consider uploading ft_v2 +
-   cont45k checkpoints to HF when done.
+7. **Hygiene**: rotate wandb key; guard `--backbone`/
+   `--max-soft-tokens` at --init-from; MaskSpec/PrefixKV field defaults
+   (styleguide exceptions); consider uploading ft_v2 checkpoints to HF
+   (cont45k step_045000 uploaded 2026-07-27).
