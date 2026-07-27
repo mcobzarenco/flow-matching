@@ -38,14 +38,19 @@ ssh -A ubuntu@<ip> ./init-vm-gpu.sh     # reboots at the end
 ```
 
 Idempotent-ish; safe to re-run. It performs: apt dist-upgrade, NVIDIA
-driver install (pinned in the script), zsh + oh-my-zsh as default
-shell, tmux, **ffmpeg (required: torchcodec links against system
-libav\*)**, uv, clone of the repo to `~/flow-matching`, and `uv sync`
-(pinned Python + all deps, including lerobot extras). It reboots to
-load the driver unless `--no-reboot` is passed — reboot before using
-the GPU either way.
+driver install **only when no working driver is detected** — Lambda
+"GPU Base" images ship preinstalled drivers and the script keeps them
+(layering another driver risks DKMS/version conflicts) — zsh +
+oh-my-zsh as default shell, tmux, **ffmpeg (required: torchcodec links
+against system libav\*)**, uv, clone of the repo to `~/flow-matching`,
+and `uv sync` (pinned Python + all deps, including lerobot extras).
+It reboots only when the driver needs (re)loading: after a fresh
+driver install, or when dist-upgrade replaced a preinstalled driver's
+userspace libraries under the loaded kernel module (nvidia-smi stops
+answering until reboot). `--no-reboot` defers that reboot to you.
+On a GPU Base image the common case is: driver kept, no reboot.
 
-After the reboot, verify:
+Afterwards (post-reboot, where one happened), verify:
 
 ```sh
 nvidia-smi        # all GPUs listed, driver loaded
@@ -237,6 +242,9 @@ config + weights + optimizer. Delete `outputs/train/smoke_test` after.
 ## 7. Failure modes seen in practice
 
 - Driver installed but `nvidia-smi` fails → you skipped the reboot.
+- `nvidia-smi` worked during setup but fails after ("Driver/library
+  version mismatch") → dist-upgrade bumped the preinstalled driver's
+  userspace; reboot loads the matching kernel module.
 - 401/403 fetching the backbone → token's account hasn't accepted the
   Gemma license (§2).
 - `wandb.init` permission error despite a correct `~/.netrc` → the

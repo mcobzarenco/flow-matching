@@ -3,12 +3,15 @@
 # training. Fully non-interactive; safe to re-run (idempotent-ish).
 #
 # Reproduces the manual setup of the first H100 box:
-#   dist-upgrade, NVIDIA driver, zsh + oh-my-zsh (default shell), tmux,
-#   ffmpeg (torchcodec links against system libav*), uv, repo clone + uv sync.
+#   dist-upgrade, NVIDIA driver (only when none is working — Lambda "GPU
+#   Base" images ship preinstalled drivers, which are kept), zsh + oh-my-zsh
+#   (default shell), tmux, ffmpeg (torchcodec links against system libav*),
+#   uv, repo clone + uv sync.
 #
 # Usage:
 #   scp init-vm.sh ubuntu@<ip>:
-#   ssh ubuntu@<ip> ./init-vm.sh              # reboots at the end (driver)
+#   ssh ubuntu@<ip> ./init-vm.sh              # reboots only if the driver
+#                                             # needs (re)loading
 #   ssh ubuntu@<ip> ./init-vm.sh --no-reboot
 set -euo pipefail
 
@@ -38,16 +41,30 @@ APT_GET=(sudo -E apt-get -y
     -o Dpkg::Options::=--force-confdef
     -o Dpkg::Options::=--force-confold)
 
+# --- nvidia driver detection ------------------------------------------------
+# Lambda GPU Base images ship working preinstalled drivers — keep those:
+# layering $NVIDIA_DRIVER on top risks DKMS/version conflicts. Install only
+# on bare images where no driver answers. Detect BEFORE apt touches anything.
+NEED_DRIVER=1
+if command -v nvidia-smi >/dev/null && nvidia-smi >/dev/null 2>&1; then
+    log "NVIDIA driver already working (version $(nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -1)) — keeping it"
+    NEED_DRIVER=0
+fi
+
 # --- system packages -------------------------------------------------------
 log "apt update + dist-upgrade"
 "${APT_GET[@]}" update
 "${APT_GET[@]}" dist-upgrade
 
-log "installing system packages (driver, shell, tooling, ffmpeg)"
+log "installing system packages (shell, tooling, ffmpeg)"
 "${APT_GET[@]}" install \
-    "$NVIDIA_DRIVER" \
     zsh tmux ffmpeg \
     git curl ca-certificates rsync htop
+
+if [[ "$NEED_DRIVER" -eq 1 ]]; then
+    log "no working NVIDIA driver detected — installing $NVIDIA_DRIVER"
+    "${APT_GET[@]}" install "$NVIDIA_DRIVER"
+fi
 
 # --- oh-my-zsh + default shell --------------------------------------------
 if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
@@ -99,7 +116,13 @@ follow docs/init_gpu_machine.md in the repo step by step. Quick check:
   nvidia-smi
 EOF
 
-if [[ "$REBOOT" -eq 1 ]]; then
+# A reboot is needed when a driver was just installed, or when a
+# preinstalled driver stopped answering because dist-upgrade replaced its
+# userspace libraries out from under the loaded kernel module
+# ("Driver/library version mismatch").
+if [[ "$NEED_DRIVER" -eq 0 ]] && nvidia-smi >/dev/null 2>&1; then
+    log "preinstalled NVIDIA driver kept — no reboot needed"
+elif [[ "$REBOOT" -eq 1 ]]; then
     log "rebooting now to load the NVIDIA driver (pass --no-reboot to skip)"
     sudo reboot
 else
