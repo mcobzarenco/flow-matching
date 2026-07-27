@@ -94,12 +94,9 @@ log "uv sync (downloads pinned python + all project deps, incl. lerobot extras)"
 # --- done -------------------------------------------------------------------
 log "setup complete"
 cat <<'EOF'
-Next steps after the reboot:
-  - verify the GPU:        nvidia-smi
-  - copy datasets over:    rsync -a --info=progress2 <local>/community_dataset_v1_v3 ubuntu@<this-ip>:~/
-  - run the offline eval:  cd ~/flow-matching && uv run python eval_smolvla.py \
-                               --root ~/community_dataset_v1_v3/ZGGZZG/so100_drop0 \
-                               --repo-id ZGGZZG/so100_drop0
+Next steps after the reboot: auth (HF + wandb), datasets, smoke tests —
+follow docs/init_gpu_machine.md in the repo step by step. Quick check:
+  nvidia-smi
 EOF
 
 if [[ "$REBOOT" -eq 1 ]]; then
