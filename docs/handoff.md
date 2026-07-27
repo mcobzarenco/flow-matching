@@ -339,4 +339,7 @@ code mid-experiment.
 7. **Hygiene**: rotate wandb key; guard `--backbone`/
    `--max-soft-tokens` at --init-from; MaskSpec/PrefixKV field defaults
    (styleguide exceptions); consider uploading ft_v2 checkpoints to HF
-   (cont45k step_045000 uploaded 2026-07-27).
+   (uploaded 2026-07-27: cont45k step_045000 with optimizer;
+   ft_marius_4k_init45k step_004000 WITHOUT — owner deleted
+   optimizer.pt deliberately, not resumable; earlier ft_4k step dirs on
+   the box still carry theirs).
