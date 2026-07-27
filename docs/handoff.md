@@ -147,6 +147,28 @@ parameterization. Redirects budget to backbone adaptation (LoRA arm)
 and inference-time ensembling (level uncertainty averages out over
 draws — across-draw std 5.9° fits this picture).
 
+**Per-τ / step-count diagnostic (2026-07-27, Phase 0 of the adaLN
+investigation; `outputs/probe_tau_diagnostic.py`, JSON in `reports/`)**:
+{cont45k, ft-init45k} × {community-holdout 256, rig-holdout 256},
+fixed τ grid × 4 draws + fixed-noise Heun {5,10,20,30}. Findings:
+(1) **integration gap is real in-domain**: Heun-5→30 = −0.99 MAE
+(7.57→6.57, 13%) for the pretrain on community, −1.13 (11.03→9.90,
+10%) for the ft on rig — the “pretrain fields are smoother” belief is
+wrong at 256-frame scale; ~1 MAE of recoverable integration error
+exists on both. (2) **OOD cost lives at HIGH τ**: zero-shot rig
+implied-action error at τ=0.9 is 12.6° vs 4.8° in-dist, while its
+Heun gap is only 0.4 — initial chunk placement from context, not
+refinement: independent confirmation of the grounding story from the
+re-anchor probe. (3) **fine-tuning roughens mid-τ**: ft model shows a
+vel-MSE bump at τ≈0.2–0.5 on BOTH sides (0.44–0.60 vs pretrain's
+0.07 valley) — the 4k-step ft damages mid-τ transport generally.
+Also first measured: **ft forgetting on community holdout = +0.85**
+(7.71 vs 6.86). Note τ→0 vel-MSE → ~0.8–0.9 is irreducible
+(ε unidentifiable), not weakness — read the implied-action row.
+Implication for adaLN (Phase 1/2): realistic prize ≈ 0.5–1.0 MAE
+in-domain + Heun-5-quality rollouts (latency), NOT the ~5-point OOD
+gap. Fidelity: Heun-10 numbers match the eval ledger within 0.01.
+
 **E2B-IT prompt/vision validation** (full untruncated model, greedy):
 our exact collator prompts elicit coherent instruct behavior; a
 describe-the-scene variant grounds correctly (wooden table, arm motors/
