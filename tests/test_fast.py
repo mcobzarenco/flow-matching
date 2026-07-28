@@ -13,7 +13,15 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from bijou.fast import FastDecodeError, FastTokenizer, dct_matrix
+from bijou.fast import (
+    FastDecodeError,
+    FastTokenizer,
+    QuantileEntry,
+    dct_matrix,
+    load_quantile_table,
+    quantile_entry_for,
+    save_quantile_table,
+)
 
 H, D = 50, 6
 
@@ -120,3 +128,44 @@ def test_fit_rejects_too_small_vocab() -> None:
 
 def test_vocab_size_respected(tokenizer: FastTokenizer) -> None:
     assert tokenizer.vocab_size <= 512
+
+
+def test_fit_quantized_equivalent_to_fit() -> None:
+    chunks = smooth_chunks(128, seed=8)
+    direct = FastTokenizer.fit(chunks, vocab_size=512)
+    staged = FastTokenizer.fit_quantized(
+        FastTokenizer.quantize_chunks(chunks, 10.0),
+        scale=10.0,
+        time_horizon=H,
+        action_dim=D,
+        vocab_size=512,
+    )
+    probe = smooth_chunks(4, seed=9)
+    for chunk in probe:
+        assert direct.encode(chunk) == staged.encode(chunk)
+
+
+def test_quantile_entry_round_trip() -> None:
+    rng = np.random.default_rng(10)
+    raw = rng.uniform(-90.0, 90.0, size=(H, D))
+    entry = QuantileEntry(
+        q01=tuple(np.quantile(raw, 0.01, axis=0).tolist()),
+        q99=tuple(np.quantile(raw, 0.99, axis=0).tolist()),
+    )
+    np.testing.assert_allclose(
+        entry.unnormalize(entry.normalize(raw)),
+        raw,
+        atol=1e-9,
+    )
+
+
+def test_quantile_table_save_load_and_loud_lookup(tmp_path: Path) -> None:
+    table = {
+        "marius/rig": QuantileEntry(q01=(-1.0,) * D, q99=(1.0,) * D),
+    }
+    save_quantile_table(table, tmp_path)
+    reloaded = load_quantile_table(tmp_path)
+    assert reloaded == table
+    assert quantile_entry_for(reloaded, "marius/rig") == table["marius/rig"]
+    with pytest.raises(ValueError, match="no quantile stats"):
+        quantile_entry_for(reloaded, "unknown/dataset")
