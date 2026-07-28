@@ -287,11 +287,15 @@ def backbone_snapshot(model: BijouModel) -> dict[str, Tensor]:
     when any unfreeze flag is on): parameters cast bf16 (the fp32 masters'
     precision beyond bf16 lives only in optimizer.pt), buffers at native
     dtype (RoPE inv_freq tables are fp32 by design — bf16 would corrupt
-    them)."""
+    them). The copy+cast happens HOST-side: a device-side cast would
+    transiently allocate ~4.3 GB of VRAM, an OOM at the ~79 GB/80 GB
+    occupancy measured for the live-trunk DDP config (A100, batch 32)."""
     parameter_names = {name for name, _ in model.backbone.named_parameters()}
     return {
         name: (
-            tensor.to(torch.bfloat16) if name in parameter_names else tensor
+            tensor.detach().cpu().to(torch.bfloat16)
+            if name in parameter_names
+            else tensor.detach().cpu()
         ).contiguous()
         for name, tensor in model.backbone.state_dict().items()
         if name not in BACKBONE_UNSAVED_KEYS
