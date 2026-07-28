@@ -169,6 +169,29 @@ Implication for adaLN (Phase 1/2): realistic prize ≈ 0.5–1.0 MAE
 in-domain + Heun-5-quality rollouts (latency), NOT the ~5-point OOD
 gap. Fidelity: Heun-10 numbers match the eval ledger within 0.01.
 
+**Vision spatial-acuity probe (2026-07-28, laptop;
+`outputs/probe_vision_acuity.py`, report `reports/vision_acuity.html`
++ .json, caches in `outputs/acuity/`)**: real boat crop pasted at
+controlled positions on 7 rig backgrounds; sensitivity curves +
+linear (x,y) readout at every stage of the frozen pipeline. Geometry
+confirmed: 640×480 → 624×480 → 39×30 patches (16 px) → 3×3 pool →
+130 soft tokens (48×48 px cells). Findings: (1) **the pool is
+exonerated** — soft tokens are the BEST linear-position stage (8.4 px
+held-out-positions RMSE) beating pre-pool (11.3): averaging denoises;
+crop/asymmetric-budget interventions lose their premise. (2) **LM
+depth discards position**: soft 8.4 → K4 10.8 → K9 15.4 → K14
+17.3 px; K4 is the sharpest stream the expert sees (tension with
+streams0016's deepest-heavy rig hint — its edge isn't positional
+precision). (3) **Split verdict vs the 24 px pre-registered bar**:
+familiar scenes pass (11–17 px ≈ 1–1.5 cm), cross-background misses
+(25–32 px ≈ 2–3 cm) — position is present but with thin margin;
+expert under-exploitation remains implicated (adaLN/capacity track
+live; cross-scene degradation mildly supports LoRA). (4) **Not
+object-centric**: task-object motion moves K14 only ~1.9× more than
+equal motion of an irrelevant background patch; high nuisance floors
+at K/V. Caveats: linear readout = lower bound; pasted sharp edges
+read optimistically; front cam, one object.
+
 **E2B-IT prompt/vision validation** (full untruncated model, greedy):
 our exact collator prompts elicit coherent instruct behavior; a
 describe-the-scene variant grounds correctly (wooden table, arm motors/
@@ -184,35 +207,40 @@ dead; next perf wins are length-bucketed batching (batch pads 452 vs
 
 ## 3. In flight right now
 
-- Nothing. The box is idle (last runs: the ft init-comparison pair,
-  finished ~16:45 UTC 2026-07-27; results in §2). Launchers for the
-  pair: `~/launch_ft_compare_init{45,40}k.sh` (copies in local
-  gitignored `outputs/`; note the distinct rendezvous ports 29511/29512
-  — two concurrent torchruns cannot share --standalone's default).
-- **Scoring tooling**: `~/eval_reports.sh <arm> <gpu> <ckpt> <tag>`
-  (3 sides + HTML reports) and `~/eval_ablation2.sh` (JSONs only).
-  Summarizer: `outputs/abl_results/summarize_r2.py` (worktree copy).
-  Full-holdout rig eval pattern: `--data .../so101_pick_place_clean
-  .../so101_pick_place_v2 --episodes holdout --holdout-episodes 0.1
-  --split-seed 0 --num-samples 3403`.
+- Nothing. **The 4×H100 box was DELETED on 2026-07-28** (cost saving
+  while deciding the next training round). Provision a replacement per
+  `docs/init_gpu_machine.md` when the next round is funded.
+- Useful eval pattern to recreate (the old `eval_reports.sh`): 3 sides
+  = community holdout/train (`--episodes X --holdout-episodes 0.1
+  --split-seed 0`, 256 frames, seed 0) + rig
+  (`so101_pick_place_clean`, 256). Full-holdout rig eval:
+  `--data .../so101_pick_place_clean .../so101_pick_place_v2
+  --episodes holdout --holdout-episodes 0.1 --split-seed 0
+  --num-samples 3403`. Ft-pair launchers survive in local gitignored
+  `outputs/launch_ft_compare_init{45,40}k.sh` (note distinct rendezvous
+  ports — two concurrent torchruns cannot share --standalone's
+  default).
 
 ## 4. Machines, data, services
 
 - **New machine bring-up**: `docs/init_gpu_machine.md` (init-vm-gpu.sh
   → auth → dataset downloads → from-scratch smoke train run).
-- **Box**: `ssh ubuntu@68.209.73.71` (use `-A` for git push). 4×H100
-  SXM, 104 vCPU, 885GB RAM. Repo `~/flow-matching` (sync: `git fetch &&
-  git reset --hard origin/main`; uv at `~/.local/bin/uv`). Env for all
-  training: `MALLOC_ARENA_MAX=2 MALLOC_MMAP_THRESHOLD_=131072` (+
-  `LEROBOT_VIDEO_DECODER_CACHE_SIZE=4` set by train.py). WANDB key via
-  `~/.netrc` (launchers export it — wandb.init rejects netrc-only; key
-  appeared in shell history once, owner should rotate). Data:
-  `~/datasets/mcobzarenco/community_dataset_v{1,2,3}_v3` (1036 datasets
-  selected, 26.98M frames, dims 6/6) and `~/datasets/marius/
-  so101_pick_place_clean` (7 eps) + `so101_pick_place_v2` (50 eps).
-  Launchers in `~`: launch_ablation{,_r2}.sh, launch_ft{,_v2}.sh,
-  launch_mainline_cont45k.sh, eval_ablation2.sh, eval_reports.sh.
-  Eval JSONs `~/eval_abl_{r1post,r2}_*.json`; reports `~/reports_out/`.
+- **Box**: NONE since 2026-07-28 (the 4×H100 at 68.209.73.71 was
+  deleted). Training env conventions that must carry to the next box:
+  `MALLOC_ARENA_MAX=2 MALLOC_MMAP_THRESHOLD_=131072` (+
+  `LEROBOT_VIDEO_DECODER_CACHE_SIZE=4` set by train.py); WANDB key via
+  `~/.netrc` with launcher-side export (wandb.init rejects netrc-only;
+  key appeared in shell history once, owner should rotate).
+  **Artifact inventory after deletion** — on HF: mainline lineage
+  (v1v2 10k; v1v2v3 15k/40k; cont45k 45k WITH optimizer),
+  ft_marius_2k (8 steps), ft_4k_init45k step_004000,
+  v2_20k_pdnorm_r2 step_002500. On the laptop: ft_marius_2k,
+  ft_marius_v2_2k (never on HF), ft_4k_init45k step_004000, all eval/
+  probe JSONs + HTML in `reports/`. LOST with the box: ft_4k_init40k
+  checkpoints (scores survive in `reports/`; re-creatable from the HF
+  40k mainline + rig data in ~1.2h), the 8 ablation-arm checkpoints
+  (abl_*_{20,40}k), cont45k intermediates (5k–40k), community-dataset
+  local copies (re-downloadable from HF hub).
 - **Laptop**: RTX 3000 Ada, 8 GiB (bf16 backbone 4.77 GiB + bf16 expert
   fits; peak 6.29 GiB; ~233 ms/replan warm, ~2s CUDA warmup first
   replan). Main checkout `/home/marius/w/flow-matching` (owner's chat
