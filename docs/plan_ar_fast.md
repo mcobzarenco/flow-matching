@@ -31,15 +31,26 @@ are permanently coupled):
       quantile_stats.json   # per-dataset q01/q99 (fit normalization)
       fit_report.json       # provenance: datasets, chunks, fidelity
 
-Quantile lifecycle: FIT normalizes each dataset's chunks with its own
-q01/q99 (per-dataset normalization, same argument as MEAN_STD for the
-flow loss); TRAINING normalizes each item with its dataset's entry
-(loud failure + remedy when missing); INFERENCE un-normalizes AR
-decodes with the deployment rig's entry (resolved like MEAN_STD stats
-today). New rig at fine-tune time: compute its q01/q99 from parquet on
-the spot and extend the RUN's copy — inputs only need train/inference
-consistency; the shared BPE stays untouched. No aggregate fallback:
-wrong quantiles produce silent garbage, so unknown datasets fail loudly.
+Quantile lifecycle (owner-corrected 2026-07-28: the runtime table lives
+in CHECKPOINTS, mirroring per_dataset_normalization — the tokenizer is
+just normalized-chunk ↔ tokens, and the train/inference consistency
+requirement is a model↔rig contract exactly like MEAN_STD):
+
+- FIT: each dataset's chunks normalized with its own exact q01/q99;
+  `quantile_stats.json` in the tokenizer dir = fit provenance AND the
+  initial table training consumes (computing quantiles needs a full
+  parquet scan — ~20–40 min over the corpus — so they must be
+  precomputed, unlike MEAN_STD which rides in lerobot's meta).
+- TRAINING (`--fast-tokenizer`): resolve each dataset from that table,
+  compute on the fly ONLY for missing ones (new rig at ft time —
+  seconds), and RECORD the resolved table into `bijou_config.json`
+  beside per_dataset_normalization.
+- EVAL + ROLLOUT: resolve AR quantiles from the CHECKPOINT's recorded
+  table by repo_id — the model and its normalization contract are one
+  artifact (rollout's --stats-repo-id pattern). Loud failure for
+  unknown rigs; deliberately NO aggregate fallback (wrong quantiles =
+  silent garbage). Honest asymmetry vs flow-eval's data-side MEAN_STD
+  attachment, forced by quantiles not living in `meta/stats.json`.
 
 Fit CLI (`python -m bijou.fast`): fits on FULL corpora (BPE training
 measured near-linear, ~0.8s/7.3k chunks → minutes for ~5M chunks);
