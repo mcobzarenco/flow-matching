@@ -6,10 +6,14 @@ as it can. Where Python can't enforce something, we enforce it by
 convention — and write the convention down here. This is a living document;
 rules get added or amended as we hit new cases.
 
-Enforcement lives in `pyproject.toml` (ruff + pyright, run via
+Enforcement lives in `pyproject.toml` (ruff + pyright + pytest, run via
 `uv run python check.py`; `--fix` applies formatting and lint fixes).
 Anything the linters can check, they do — this file explains *why*, and
-covers what they can't.
+covers what they can't. Tests live in `tests/` (pytest, added 2026-07-28
+with bijou.fast): pure-CPU, synthetic-data, fast — they run inside
+check.py's verdict, so they must stay in the milliseconds-to-seconds
+range; anything needing real data or a GPU is a probe in `outputs/`,
+not a test.
 
 ## Types
 

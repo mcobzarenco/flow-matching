@@ -32,11 +32,18 @@ dev = [
     # Keep in lockstep with the ruff bundled by Zed's extension (editor
     # diagnostics come from that binary): version skew means default-rule
     # skew, e.g. 0.16 added ISC004/DTZ005/TRY004 to the defaults.
+    "pytest>=9.1.1",
     "ruff>=0.16.0",
 ]
 
+[tool.pytest.ini_options]
+# The repo is used in-place (no installed package): put the root on
+# sys.path so tests import bijou exactly like `python -m bijou.train` does.
+pythonpath = ["."]
+testpaths = ["tests"]
+
 [tool.pyright]
-include = ["bijou", "check.py"]
+include = ["bijou", "tests", "check.py"]
 venvPath = "."
 venv = ".venv"
 # Curated strict-ish set (see docs/code-styleguide.md). Full strict mode is

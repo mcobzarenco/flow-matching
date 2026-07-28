@@ -1,0 +1,250 @@
+"""FAST action-chunk tokenizer: DCT + BPE (Pertsch et al., arXiv:2501.09747).
+
+Owned reimplementation of the reference ``physical-intelligence/fast``
+processor (no ``trust_remote_code``), with this repo's conventions:
+
+- ``time_horizon``/``action_dim`` are FIXED at fit time (the reference
+  caches them mutably from the last call; our chunks are homogeneous).
+- ``decode`` raises :class:`FastDecodeError` on invalid token sequences
+  (the reference prints and returns zeros). Autoregressive generations can
+  be malformed — the caller decides the fallback, loudly.
+- Coefficients outside the fitted alphabet are clipped and COUNTED (the
+  reference clips the low end silently); the first clip prints a warning.
+- The DCT is an explicit orthonormal DCT-II matrix (time_horizon squared),
+  applied along time per action dimension; the inverse is its transpose
+  (orthogonal), so round-trips are exact up to quantization. This avoids a
+  scipy dependency for one 50-point transform and matches
+  ``scipy.fft.dct(..., norm="ortho")`` analytically.
+
+Input chunks must already be normalized (the paper recommends per-dataset
+quantile normalization: q01..q99 mapped to [-1, 1]); the tokenizer is
+normalization-agnostic and the quantization scale is calibrated for
+roughly unit-range signals.
+
+Tokenization pipeline (fit and encode share the first three steps):
+
+  chunk [H, D] --DCT over time--> coefficients [H, D]
+    --round(x * scale)--> integers --flatten (freq-major, dims
+    interleaved: low frequencies of every dim first)--> alphabet chars
+    --BPE--> token ids
+
+BPE is a plain ``tokenizers`` BPE model over a synthetic single-codepoint
+alphabet (one char per quantized coefficient value), no pre-tokenizer, no
+normalizer: merges therefore span the whole flattened chunk, and decoding
+is an exact join of token strings.
+"""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+from typing import Any
+
+import numpy as np
+import numpy.typing as npt
+from tokenizers import Tokenizer
+from tokenizers.models import BPE
+from tokenizers.trainers import BpeTrainer
+
+FloatArray = npt.NDArray[np.float64]
+
+CONFIG_FILENAME = "fast_config.json"
+BPE_FILENAME = "bpe.json"
+
+
+class FastDecodeError(ValueError):
+    """A token sequence does not decode to a valid coefficient matrix."""
+
+
+def dct_matrix(n: int) -> FloatArray:
+    """Orthonormal DCT-II matrix M [n, n]: ``M @ x`` transforms a length-n
+    signal; ``M.T`` is the exact inverse (M is orthogonal).
+
+    M[k, i] = c_k * cos(pi * (2i + 1) * k / (2n)),
+    c_0 = sqrt(1/n), c_{k>0} = sqrt(2/n) — the ``norm="ortho"`` convention
+    of scipy.fft.dct.
+    """
+    if n < 1:
+        raise ValueError(f"DCT size must be >= 1, got {n}")
+    k = np.arange(n, dtype=np.float64)[:, None]
+    i = np.arange(n, dtype=np.float64)[None, :]
+    matrix = np.cos(np.pi * (2.0 * i + 1.0) * k / (2.0 * n))
+    matrix *= np.sqrt(2.0 / n)
+    matrix[0, :] *= np.sqrt(0.5)
+    return matrix
+
+
+class FastTokenizer:
+    """A fitted FAST tokenizer. Build with :meth:`fit` or :meth:`load`."""
+
+    def __init__(
+        self,
+        bpe: Tokenizer,
+        *,
+        scale: float,
+        min_coefficient: int,
+        alphabet_size: int,
+        time_horizon: int,
+        action_dim: int,
+    ) -> None:
+        self.bpe = bpe
+        self.scale = scale
+        self.min_coefficient = min_coefficient
+        self.alphabet_size = alphabet_size
+        self.time_horizon = time_horizon
+        self.action_dim = action_dim
+        self._dct = dct_matrix(time_horizon)
+        self.clipped_coefficients = 0
+
+    @property
+    def vocab_size(self) -> int:
+        return int(self.bpe.get_vocab_size())
+
+    def _quantize(self, chunk: FloatArray) -> npt.NDArray[np.int64]:
+        """[H, D] float chunk -> flattened alphabet indices [H * D]."""
+        if chunk.shape != (self.time_horizon, self.action_dim):
+            raise ValueError(
+                f"expected chunk of shape "
+                f"({self.time_horizon}, {self.action_dim}), got {chunk.shape}",
+            )
+        coefficients = self._dct @ chunk
+        quantized = np.round(coefficients * self.scale).astype(np.int64)
+        indices = quantized.reshape(-1) - self.min_coefficient
+        clipped = np.clip(indices, 0, self.alphabet_size - 1)
+        n_clipped = int((clipped != indices).sum())
+        if n_clipped:
+            if self.clipped_coefficients == 0:
+                print(
+                    f"FAST: clipping {n_clipped} DCT coefficient(s) outside "
+                    f"the fitted alphabet (further clips counted silently "
+                    f"in .clipped_coefficients)",
+                    flush=True,
+                )
+            self.clipped_coefficients += n_clipped
+        return clipped
+
+    def encode(self, chunk: FloatArray) -> list[int]:
+        """Normalized action chunk [time_horizon, action_dim] -> token ids."""
+        indices = self._quantize(chunk)
+        text = "".join(map(chr, indices.tolist()))
+        # tokenizers is untyped; ids is list[int] per its documentation.
+        ids: Any = self.bpe.encode(text).ids
+        return list(ids)
+
+    def encode_batch(self, chunks: FloatArray) -> list[list[int]]:
+        """[N, time_horizon, action_dim] -> N token-id lists (ragged)."""
+        if chunks.ndim != 3:
+            raise ValueError(f"expected [N, H, D], got shape {chunks.shape}")
+        return [self.encode(chunk) for chunk in chunks]
+
+    def decode(self, token_ids: list[int]) -> FloatArray:
+        """Token ids -> action chunk [time_horizon, action_dim].
+
+        Raises :class:`FastDecodeError` when the sequence does not decode
+        to exactly time_horizon * action_dim coefficients (malformed
+        autoregressive generations) or contains unknown ids.
+        """
+        pieces: list[str] = []
+        for token_id in token_ids:
+            piece = self.bpe.id_to_token(token_id)
+            if piece is None:
+                raise FastDecodeError(
+                    f"token id {token_id} is outside the vocabulary "
+                    f"({self.vocab_size})",
+                )
+            pieces.append(piece)
+        indices = np.array([ord(ch) for ch in "".join(pieces)], dtype=np.int64)
+        expected = self.time_horizon * self.action_dim
+        if indices.shape[0] != expected:
+            raise FastDecodeError(
+                f"decoded to {indices.shape[0]} coefficients, expected "
+                f"{expected} ({self.time_horizon} x {self.action_dim})",
+            )
+        quantized = indices.reshape(self.time_horizon, self.action_dim)
+        coefficients = (quantized + self.min_coefficient) / self.scale
+        return self._dct.T @ coefficients
+
+    @classmethod
+    def fit(
+        cls,
+        chunks: FloatArray,
+        *,
+        scale: float = 10.0,
+        vocab_size: int = 1024,
+    ) -> FastTokenizer:
+        """Fit on normalized chunks [N, time_horizon, action_dim].
+
+        ``scale`` trades reconstruction fidelity against compression
+        (paper default 10, insensitive); ``vocab_size`` is the BPE
+        vocabulary (paper default 1024).
+        """
+        if chunks.ndim != 3 or chunks.shape[0] == 0:
+            raise ValueError(
+                f"expected non-empty [N, H, D] chunk array, got {chunks.shape}",
+            )
+        _, time_horizon, action_dim = chunks.shape
+        matrix = dct_matrix(time_horizon)
+        coefficients = np.einsum("kh,nhd->nkd", matrix, chunks.astype(np.float64))
+        quantized = np.round(coefficients * scale).astype(np.int64)
+        min_coefficient = int(quantized.min())
+        alphabet_size = int(quantized.max()) - min_coefficient + 1
+        if alphabet_size > vocab_size:
+            raise ValueError(
+                f"quantized alphabet ({alphabet_size} symbols) exceeds "
+                f"vocab_size {vocab_size}; lower --fast-scale or raise the "
+                "vocabulary",
+            )
+
+        flat = quantized.reshape(quantized.shape[0], -1) - min_coefficient
+
+        def corpus() -> Any:
+            for row in flat:
+                yield "".join(map(chr, row.tolist()))
+
+        bpe = Tokenizer(BPE())
+        trainer = BpeTrainer(
+            vocab_size=vocab_size,
+            min_frequency=2,
+            show_progress=False,
+            special_tokens=[],
+            initial_alphabet=[chr(i) for i in range(alphabet_size)],
+            max_token_length=10_000,
+        )
+        bpe.train_from_iterator(corpus(), trainer=trainer)
+        return cls(
+            bpe,
+            scale=scale,
+            min_coefficient=min_coefficient,
+            alphabet_size=alphabet_size,
+            time_horizon=time_horizon,
+            action_dim=action_dim,
+        )
+
+    def save(self, directory: Path) -> None:
+        """Write ``fast_config.json`` + ``bpe.json`` (hub-uploadable dir)."""
+        directory.mkdir(parents=True, exist_ok=True)
+        self.bpe.save(str(directory / BPE_FILENAME))
+        (directory / CONFIG_FILENAME).write_text(
+            json.dumps(
+                {
+                    "scale": self.scale,
+                    "min_coefficient": self.min_coefficient,
+                    "alphabet_size": self.alphabet_size,
+                    "time_horizon": self.time_horizon,
+                    "action_dim": self.action_dim,
+                },
+                indent=2,
+            ),
+        )
+
+    @classmethod
+    def load(cls, directory: Path) -> FastTokenizer:
+        config = json.loads((directory / CONFIG_FILENAME).read_text())
+        return cls(
+            Tokenizer.from_file(str(directory / BPE_FILENAME)),
+            scale=float(config["scale"]),
+            min_coefficient=int(config["min_coefficient"]),
+            alphabet_size=int(config["alphabet_size"]),
+            time_horizon=int(config["time_horizon"]),
+            action_dim=int(config["action_dim"]),
+        )

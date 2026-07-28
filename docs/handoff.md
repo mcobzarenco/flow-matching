@@ -349,6 +349,21 @@ dead; next perf wins are length-bucketed batching (batch pads 452 vs
   ±jitter-tier vs bf16, comparable within-run). backbone_snapshot
   casts HOST-side (device-side transient ≈4.3 GB would OOM at the
   measured 79/80 GB DDP occupancy).
+- **bijou/fast.py (2026-07-28)**: owned FAST action tokenizer (DCT +
+  BPE, arXiv:2501.09747) for the planned AR+flow mixture — explicit
+  orthonormal DCT matrix (no scipy dep), plain-BPE over a synthetic
+  alphabet (no ByteLevel), fixed H/D at fit, FastDecodeError on
+  malformed sequences (reference zero-fills silently), clip-and-count
+  for out-of-alphabet coefficients, save/load = fast_config.json +
+  bpe.json (hub-uploadable dir). Measured on 5 local datasets (7.3k
+  chunks, union fit 0.8s, `outputs/probe_fast_local.py`): 21–25
+  tokens/chunk (12–14× vs naive 300), reconstruction MAE
+  0.37–0.68° raw (p99 ≤3.4°), 0.07 ms/chunk encode. First pytest
+  infrastructure landed with it: `tests/` + pytest in check.py's
+  verdict (dev-dep; pythonpath ini). Plan: fit ONCE on the full
+  corpus (needs per-dataset q01/q99 quantile stats — same pass as the
+  shelved delta-stats script), upload the dir to HF, `--fast-tokenizer`
+  points at it.
 - **--fps filter (2026-07-28)**: train + eval accept `--fps 30 ...` to
   drop datasets at other frame rates; default None = all (historical
   behavior, bit-identical). Any filter changes concatenated frame

@@ -22,12 +22,14 @@ def main() -> int:
             ("ruff", "check", "--fix"),
             ("ruff", "format"),
             ("pyright",),
+            ("pytest", "-q", "tests"),
         ]
         if fix
         else [
             ("ruff", "format", "--check"),
             ("ruff", "check"),
             ("pyright",),
+            ("pytest", "-q", "tests"),
         ]
     )
     code = max(run(*step) for step in steps)
