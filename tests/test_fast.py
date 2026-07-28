@@ -144,6 +144,22 @@ def test_fit_quantized_equivalent_to_fit() -> None:
         assert direct.encode(chunk) == staged.encode(chunk)
 
 
+def test_quantile_constant_dims_and_clipping() -> None:
+    entry = QuantileEntry(
+        q01=(-1.0, 5.0) + (-1.0,) * (D - 2),
+        q99=(1.0, 5.0 + 1e-6) + (1.0,) * (D - 2),  # dim 1 is constant
+    )
+    chunk = np.zeros((H, D))
+    chunk[:, 1] = 5.0 + np.linspace(-0.5, 0.5, H)  # jitter around parked
+    chunk[0, 0] = 1000.0  # wild outlier in a normal dim
+    normalized = entry.normalize(chunk)
+    assert (normalized[:, 1] == 0.0).all(), "constant dim must map to 0"
+    assert normalized[0, 0] == 8.0, "outliers clip at NORMALIZED_CLIP"
+    assert entry.normalized_overflow(chunk) == 1
+    restored = entry.unnormalize(normalized)
+    np.testing.assert_allclose(restored[:, 1], 5.0 + 5e-7)  # midpoint
+
+
 def test_quantile_entry_round_trip() -> None:
     rng = np.random.default_rng(10)
     raw = rng.uniform(-90.0, 90.0, size=(H, D))

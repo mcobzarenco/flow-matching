@@ -58,6 +58,22 @@ class FastDecodeError(ValueError):
     """A token sequence does not decode to a valid coefficient matrix."""
 
 
+# Encoding-convention constants (v1). Both are part of what makes tokens
+# meaningful — changing either invalidates every fitted tokenizer and
+# trained AR head, so changes require a NEW tokenizer version by policy.
+#
+# CONSTANT_SPAN (raw units, degrees here): a dimension whose q01..q99 span
+# is below this is effectively constant (parked joint, padded dim); it
+# carries no information and normalizes to 0 — dividing by a floored span
+# instead amplifies encoder jitter and outlier excursions by ~1e6 (observed:
+# a 7.3e9-symbol alphabet on the community corpus).
+# NORMALIZED_CLIP: quantile normalization puts 98% of mass in [-1, 1];
+# excursions beyond this are outliers by the FAST paper's own robustness
+# argument and are clipped (callers report clip counts loudly).
+CONSTANT_SPAN = 1e-3
+NORMALIZED_CLIP = 8.0
+
+
 @dataclass(frozen=True, slots=True)
 class QuantileEntry:
     """One dataset's per-dimension q01/q99 action quantiles — the
@@ -67,16 +83,36 @@ class QuantileEntry:
     q01: tuple[float, ...]
     q99: tuple[float, ...]
 
-    def normalize(self, chunk: FloatArray) -> FloatArray:
-        """Raw action chunk -> roughly [-1, 1] (q01..q99 mapped exactly)."""
+    def _span(self) -> tuple[FloatArray, npt.NDArray[np.bool_]]:
         low = np.asarray(self.q01)
-        span = np.maximum(np.asarray(self.q99) - low, 1e-6)
-        return (chunk - low) / span * 2.0 - 1.0
+        span = np.asarray(self.q99) - low
+        constant = span < CONSTANT_SPAN
+        return np.where(constant, 1.0, span), constant
+
+    def normalize(self, chunk: FloatArray) -> FloatArray:
+        """Raw action chunk -> [-NORMALIZED_CLIP, NORMALIZED_CLIP] with
+        q01..q99 mapped to [-1, 1]; constant dimensions map to 0."""
+        span, constant = self._span()
+        normalized = (chunk - np.asarray(self.q01)) / span * 2.0 - 1.0
+        normalized = np.where(constant, 0.0, normalized)
+        return np.clip(normalized, -NORMALIZED_CLIP, NORMALIZED_CLIP)
+
+    def normalized_overflow(self, chunk: FloatArray) -> int:
+        """How many values of ``chunk`` fall outside the clip range — for
+        loud reporting at fit/encode call sites."""
+        span, constant = self._span()
+        normalized = (chunk - np.asarray(self.q01)) / span * 2.0 - 1.0
+        normalized = np.where(constant, 0.0, normalized)
+        return int((np.abs(normalized) > NORMALIZED_CLIP).sum())
 
     def unnormalize(self, chunk: FloatArray) -> FloatArray:
+        """Inverse on the non-clipped range; constant dimensions restore
+        their q01..q99 midpoint."""
+        span, constant = self._span()
         low = np.asarray(self.q01)
-        span = np.maximum(np.asarray(self.q99) - low, 1e-6)
-        return (chunk + 1.0) / 2.0 * span + low
+        raw = (chunk + 1.0) / 2.0 * span + low
+        midpoint = (low + np.asarray(self.q99)) / 2.0
+        return np.where(constant, midpoint, raw)
 
 
 def quantile_entry_from_stats(stats_path: Path) -> QuantileEntry:
@@ -249,8 +285,9 @@ class FastTokenizer:
         if alphabet_size > vocab_size:
             raise ValueError(
                 f"quantized alphabet ({alphabet_size} symbols) exceeds "
-                f"vocab_size {vocab_size}; lower the scale or raise the "
-                "vocabulary",
+                f"vocab_size {vocab_size}; lower --scale, raise "
+                "--vocab-size, or check the inputs were normalized (raw "
+                "chunks produce huge DCT coefficients)",
             )
 
         offset = quantized - min_coefficient

@@ -115,7 +115,16 @@ def dataset_chunks(
     if not windows:
         print(f"  - {repo_id} (no episode reaches {chunk_size} frames)", flush=True)
         return None
-    normalized = entry.normalize(np.stack(windows))
+    stacked = np.stack(windows)
+    overflow = entry.normalized_overflow(stacked)
+    if overflow:
+        fraction = overflow / stacked.size
+        print(
+            f"  - {repo_id}: clipped {overflow} outlier values "
+            f"({fraction:.5%}) beyond the normalized range",
+            flush=True,
+        )
+    normalized = entry.normalize(stacked)
     span = np.maximum(np.asarray(entry.q99) - np.asarray(entry.q01), 1e-6)
     return DatasetChunks(
         repo_id=repo_id,
