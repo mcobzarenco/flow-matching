@@ -31,26 +31,30 @@ are permanently coupled):
       quantile_stats.json   # per-dataset q01/q99 (fit normalization)
       fit_report.json       # provenance: datasets, chunks, fidelity
 
-Quantile lifecycle (owner-corrected 2026-07-28: the runtime table lives
-in CHECKPOINTS, mirroring per_dataset_normalization — the tokenizer is
-just normalized-chunk ↔ tokens, and the train/inference consistency
-requirement is a model↔rig contract exactly like MEAN_STD):
+Quantile lifecycle (settled 2026-07-28 after two owner corrections:
+tokenizer-owned table → checkpoint-owned table → **dataset-owned,
+native schema** — each strictly simpler):
 
-- FIT: each dataset's chunks normalized with its own exact q01/q99;
-  `quantile_stats.json` in the tokenizer dir = fit provenance AND the
-  initial table training consumes (computing quantiles needs a full
-  parquet scan — ~20–40 min over the corpus — so they must be
-  precomputed, unlike MEAN_STD which rides in lerobot's meta).
-- TRAINING (`--fast-tokenizer`): resolve each dataset from that table,
-  compute on the fly ONLY for missing ones (new rig at ft time —
-  seconds), and RECORD the resolved table into `bijou_config.json`
-  beside per_dataset_normalization.
-- EVAL + ROLLOUT: resolve AR quantiles from the CHECKPOINT's recorded
-  table by repo_id — the model and its normalization contract are one
-  artifact (rollout's --stats-repo-id pattern). Loud failure for
-  unknown rigs; deliberately NO aggregate fallback (wrong quantiles =
-  silent garbage). Honest asymmetry vs flow-eval's data-side MEAN_STD
-  attachment, forced by quantiles not living in `meta/stats.json`.
+- **Newer lerobot already computes q01/q10/q50/q90/q99 natively** in
+  `meta/stats.json` (the owner's so101_pick_place_v2 has them); the
+  community conversions predate that and carry only
+  count/max/mean/min/std. So: BACKFILL the native keys (action +
+  state) into the converted datasets — one parquet scan each via the
+  fit CLI's `--backfill-stats` mode — and re-upload (3 collection
+  repos, stats.json files only). Methodology note: native quantiles
+  aggregate per-episode stats (approximate), backfill computes exact;
+  per-dataset self-consistency holds either way — not worth matching
+  lerobot's aggregation.
+- TRAINING/EVAL: quantiles ride items via DatasetStats /
+  StatsAttachedDataset — the EXACT mean/std mechanism (parse-edge
+  `None` for un-backfilled datasets; AR training fails loudly with
+  "backfill" as the remedy; flow-only training unaffected).
+- CHECKPOINTS: per_dataset_normalization carries the quantiles for
+  free once DatasetStats does; ROLLOUT resolves the rig from the
+  checkpoint like --stats-repo-id today. No aggregate fallback for AR.
+- FIT: reads quantiles FROM stats.json when present (fit normalization
+  ≡ training normalization, same source), computes+warns otherwise;
+  the tokenizer dir's `quantile_stats.json` is provenance only.
 
 Fit CLI (`python -m bijou.fast`): fits on FULL corpora (BPE training
 measured near-linear, ~0.8s/7.3k chunks → minutes for ~5M chunks);
