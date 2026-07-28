@@ -323,7 +323,16 @@ def trainable_text_parameters(model: BijouModel) -> Iterator[torch.nn.Parameter]
     yield from model.backbone.embed_vision.parameters()
 
 
-def unfreeze_backbone(model: BijouModel, args: TrainArgs) -> dict[str, int]:
+@dataclass(frozen=True, slots=True)
+class TrunkParameterCounts:
+    """Trainable trunk parameters enabled by :func:`unfreeze_backbone`,
+    by subsystem (0 = that subsystem stayed frozen)."""
+
+    text: int
+    vision: int
+
+
+def unfreeze_backbone(model: BijouModel, args: TrainArgs) -> TrunkParameterCounts:
     """Flip ``requires_grad`` on the requested trunk subsets; everything
     else stays frozen (``load_model`` freezes the whole backbone).
 
@@ -333,17 +342,23 @@ def unfreeze_backbone(model: BijouModel, args: TrainArgs) -> dict[str, int]:
     no activation cost, no backward — without any code-path changes
     inside gemma4.
     """
-    counts = {"text": 0, "vision": 0}
+    text = 0
+    vision = 0
     if args.unfreeze_text_lr > 0:
         for parameter in trainable_text_parameters(model):
             parameter.requires_grad_(True)
-            counts["text"] += parameter.numel()
+            text += parameter.numel()
     if args.unfreeze_vision_lr > 0:
-        assert model.backbone.vision_tower is not None
+        if model.backbone.vision_tower is None:
+            raise SystemExit(
+                f"--unfreeze-vision-lr {args.unfreeze_vision_lr} but the "
+                f"backbone ({args.backbone}) has no vision tower — drop the "
+                "flag or use a multimodal backbone",
+            )
         for parameter in model.backbone.vision_tower.parameters():
             parameter.requires_grad_(True)
-            counts["vision"] += parameter.numel()
-    return counts
+            vision += parameter.numel()
+    return TrunkParameterCounts(text=text, vision=vision)
 
 
 def decay_split(
@@ -1225,9 +1240,9 @@ def main() -> int:
             "frozen backbone"
             if not args.trunk_trained
             else (
-                f"LIVE backbone (text {trunk_counts['text'] / 1e6:.1f}M @ "
+                f"LIVE backbone (text {trunk_counts.text / 1e6:.1f}M @ "
                 f"lr {args.unfreeze_text_lr:.1e}, vision "
-                f"{trunk_counts['vision'] / 1e6:.1f}M @ lr "
+                f"{trunk_counts.vision / 1e6:.1f}M @ lr "
                 f"{args.unfreeze_vision_lr:.1e}; embeddings/PLE tables "
                 "frozen; fp32 masters, bf16 autocast)"
             )
@@ -1248,6 +1263,8 @@ def main() -> int:
                 flush=True,
             )
 
+    # Fixed-key dicts, deliberately: this is torch's optimizer param-group
+    # API format (a third-party boundary), consumed by AdamW below.
     param_groups: list[dict[str, Any]] = [
         {"params": list(model.expert.parameters()), "lr": args.lr},
     ]
@@ -1479,7 +1496,7 @@ def main() -> int:
                     },
                 },
                 "trainable_params": n_trainable,
-                "trainable_trunk_params": trunk_counts,
+                "trainable_trunk_params": dataclasses.asdict(trunk_counts),
                 "world_size": world_size,
                 "global_batch_size": args.batch_size * world_size,
             },
