@@ -1,7 +1,7 @@
 # Plan: training with an unfrozen Gemma4 E2B trunk
 
-Status: **IMPLEMENTED 2026-07-28** (`--unfreeze-text-lr` /
-`--unfreeze-vision-lr` in bijou.train; snapshot/load in bijou.loading).
+Status: **IMPLEMENTED 2026-07-28** (`--text-lr` /
+`--vision-lr` in bijou.train; snapshot/load in bijou.loading).
 Validated on the tiny backbone: flags-off oracle EXACT (1.8896/1.7237),
 flags-on grad-flow probe (`outputs/probe_unfreeze_gradflow.py`) all
 green (partition exactness incl. stop-layer split, embeddings/PLE/tower
@@ -44,14 +44,14 @@ use, not the action parameterization:
 
 Two optional flags, both default 0.0 = today's behavior, bitwise:
 
-- `--unfreeze-text-lr LR`: text decoder layers 0–14 (attention, MLPs,
+- `--text-lr LR`: text decoder layers 0–14 (attention, MLPs,
   norms) + the multimodal projector (`embed_vision`), as one param
   group at LR. **Token embeddings and per-layer-embedding tables stay
   frozen** — few rows touched per batch, dense Adam state for a 262k
   vocab is pure waste, and frozen embeddings are the cheapest
   forgetting control. (A future `--unfreeze-embeddings` flag is
   possible; no current need.)
-- `--unfreeze-vision-lr LR`: adds the vision tower (~120M params —
+- `--vision-lr LR`: adds the vision tower (~120M params —
   the encoder-free E-series pipeline, not the 400M SigLIP of the
   original draft) + its position table as another param group.
   **Expected to stay 0**: the acuity probe shows the tower's output is
@@ -61,7 +61,7 @@ Two optional flags, both default 0.0 = today's behavior, bitwise:
   — saves its activations and any backward through it).
 
 Guards: flags require `--holdout-episodes` unchanged semantics
-(nothing new); `--unfreeze-vision-lr > 0` without text unfreezing is
+(nothing new); `--vision-lr > 0` without text unfreezing is
 permitted (legitimate arm) but prints loudly. Expert LR/schedule
 unchanged; all groups share the cosine schedule + warmup, scaled by
 their group LR. Continuing from cont45k means the expert is *warm* —
@@ -71,7 +71,7 @@ standard init-from recipe) is expected to suffice. A trunk-LR zero-hold
 (freeze-then-thaw) is a contingency, not built until a 200-step probe
 shows instability.
 
-Suggested starting point: `--unfreeze-text-lr 1e-5` (grid 5e-6..2.5e-5
+Suggested starting point: `--text-lr 1e-5` (grid 5e-6..2.5e-5
 if budget allows) with `--lr 1e-4`, `--grad-clip 10.0`. The original
 plan said 1.0; MEASURED live-trunk norms (10k run, 2026-07-28) are
 p50 3.8 / p90 6.4 / max 19.2 — clip 1.0 renormalized 100% of steps by
@@ -154,7 +154,7 @@ CheckpointInfo / CheckpointTrainArgs). Changes:
 - When any trunk param trained: write `backbone.safetensors` (bf16
   cast of the fp32 masters — full truncated-trunk state, ~4.3 GB) next
   to `expert.safetensors`. Metadata gains OPTIONAL fields
-  (`unfreeze_text_lr`, `unfreeze_vision_lr`) with defaults so old
+  (`text_lr`, `vision_lr`) with defaults so old
   json parses unchanged; train args ride along as they already do.
 - `from_checkpoint`: if `backbone.safetensors` exists, load it over
   the HF-resolved truncated backbone; else exactly today's behavior.
@@ -187,7 +187,7 @@ estimate stands). 20k steps DDP4 at batch 64/rank ≈ one overnight.
 4. 200-step run from cont45k init: loss should start near cont45k's
    final (~0.089) and not spike; compare against a frozen 200-step
    control from the same init (loss continuity, grad norms per group).
-5. The real run: frozen-continue vs `--unfreeze-text-lr 1e-5`
+5. The real run: frozen-continue vs `--text-lr 1e-5`
    continue, same budget from the same init, scored on community
    holdout/train + rig zero-shot + full rig-holdout after a paired rig
    ft. Decision metric: does trunk adaptation move holdout AND

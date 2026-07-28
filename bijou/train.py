@@ -114,9 +114,9 @@ class TrainArgs:
     chunk_size: int
     batch_size: int
     steps: int
-    lr: float
-    unfreeze_text_lr: float
-    unfreeze_vision_lr: float
+    expert_lr: float
+    text_lr: float | None
+    vision_lr: float | None
     warmup_steps: int
     weight_decay: float
     grad_clip: float
@@ -136,7 +136,7 @@ class TrainArgs:
 
     @property
     def trunk_trained(self) -> bool:
-        return self.unfreeze_text_lr > 0 or self.unfreeze_vision_lr > 0
+        return self.text_lr is not None or self.vision_lr is not None
 
 
 class DevicePrefetcher:
@@ -345,14 +345,14 @@ def unfreeze_backbone(model: BijouModel, args: TrainArgs) -> TrunkParameterCount
     """
     text = 0
     vision = 0
-    if args.unfreeze_text_lr > 0:
+    if args.text_lr is not None:
         for parameter in trainable_text_parameters(model):
             parameter.requires_grad_(True)
             text += parameter.numel()
-    if args.unfreeze_vision_lr > 0:
+    if args.vision_lr is not None:
         if model.backbone.vision_tower is None:
             raise SystemExit(
-                f"--unfreeze-vision-lr {args.unfreeze_vision_lr} but the "
+                f"--vision-lr {args.vision_lr} but the "
                 f"backbone ({args.backbone}) has no vision tower — drop the "
                 "flag or use a multimodal backbone",
             )
@@ -883,29 +883,31 @@ def parse_args() -> TrainArgs:
     )
     parser.add_argument("--steps", type=int, default=200, help="total optimizer steps")
     parser.add_argument(
-        "--unfreeze-text-lr",
-        type=float,
-        default=0.0,
-        help="learning rate for the backbone TEXT trunk (decoder layers up "
-        "to the deepest exported stream, PLE projections, multimodal "
-        "projector); 0 = frozen (the default, exactly the pre-flag "
-        "behavior). Token embeddings and PLE tables always stay frozen. "
-        "Loads the trunk fp32 with bf16-autocast forwards; suggest 1e-5 "
-        "and --grad-clip 1.0",
-    )
-    parser.add_argument(
-        "--unfreeze-vision-lr",
-        type=float,
-        default=0.0,
-        help="learning rate for the vision tower; 0 = frozen (the default). "
-        "The acuity probe says position is sharpest at the tower output "
-        "and dies in the LM layers - expect to leave this at 0",
-    )
-    parser.add_argument(
-        "--lr",
+        "--expert-lr",
         type=float,
         default=1e-4,
-        help="peak learning rate (cosine decay to 10%% after warmup)",
+        help="peak learning rate of the action expert (cosine decay to "
+        "10%% after warmup); every component-lr below shares this "
+        "schedule shape, scaled to its own peak",
+    )
+    parser.add_argument(
+        "--text-lr",
+        type=float,
+        default=None,
+        help="peak learning rate for the backbone TEXT trunk (decoder "
+        "layers up to the deepest exported stream, PLE projections, "
+        "multimodal projector); OMIT to keep the trunk frozen (the "
+        "historical behavior). Token embeddings and PLE tables always "
+        "stay frozen. A live trunk loads fp32 with bf16-autocast "
+        "forwards; suggest 1e-5",
+    )
+    parser.add_argument(
+        "--vision-lr",
+        type=float,
+        default=None,
+        help="peak learning rate for the vision tower; OMIT to keep it "
+        "frozen. The acuity probe says position is sharpest at the tower "
+        "output and dies in the LM layers - expect to leave this unset",
     )
     parser.add_argument(
         "--warmup-steps",
@@ -1025,14 +1027,20 @@ def parse_args() -> TrainArgs:
         )
     if raw.eval_samples is not None and raw.eval_samples < 1:
         parser.error("--eval-samples must be >= 1")
-    if raw.unfreeze_text_lr < 0 or raw.unfreeze_vision_lr < 0:
-        parser.error("--unfreeze-*-lr must be >= 0")
-    if raw.unfreeze_vision_lr > 0 and raw.unfreeze_text_lr == 0:
+    if raw.expert_lr <= 0:
+        parser.error("--expert-lr must be > 0 (the expert always trains)")
+    for name, value in (("--text-lr", raw.text_lr), ("--vision-lr", raw.vision_lr)):
+        if value is not None and value <= 0:
+            parser.error(
+                f"{name} {value} is not a usable learning rate — omit the "
+                "flag entirely to keep that component frozen",
+            )
+    if raw.vision_lr is not None and raw.text_lr is None:
         print(
             "NOTE: vision tower unfrozen with the text trunk FROZEN - "
             "gradients still traverse the frozen text stack to reach the "
             "tower (activation cost without text adaptation). Legitimate "
-            "but unusual; the standard move is --unfreeze-text-lr alone.",
+            "but unusual; the standard move is --text-lr alone.",
             file=sys.stderr,
             flush=True,
         )
@@ -1059,9 +1067,9 @@ def parse_args() -> TrainArgs:
         chunk_size=raw.chunk_size,
         batch_size=raw.batch_size,
         steps=raw.steps,
-        lr=raw.lr,
-        unfreeze_text_lr=raw.unfreeze_text_lr,
-        unfreeze_vision_lr=raw.unfreeze_vision_lr,
+        expert_lr=raw.expert_lr,
+        text_lr=raw.text_lr,
+        vision_lr=raw.vision_lr,
         warmup_steps=raw.warmup_steps,
         weight_decay=raw.weight_decay,
         grad_clip=raw.grad_clip,
@@ -1255,10 +1263,10 @@ def main() -> int:
             if not args.trunk_trained
             else (
                 f"LIVE backbone (text {trunk_counts.text / 1e6:.1f}M @ "
-                f"lr {args.unfreeze_text_lr:.1e}, vision "
-                f"{trunk_counts.vision / 1e6:.1f}M @ lr "
-                f"{args.unfreeze_vision_lr:.1e}; embeddings/PLE tables "
-                "frozen; fp32 masters, bf16 autocast)"
+                f"lr {args.text_lr if args.text_lr is not None else 0:.1e}, "
+                f"vision {trunk_counts.vision / 1e6:.1f}M @ lr "
+                f"{args.vision_lr if args.vision_lr is not None else 0:.1e}; "
+                "embeddings/PLE tables frozen; fp32 masters, bf16 autocast)"
             )
         )
         print(
@@ -1280,32 +1288,32 @@ def main() -> int:
     # Fixed-key dicts, deliberately: this is torch's optimizer param-group
     # API format (a third-party boundary), consumed by AdamW below.
     param_groups: list[dict[str, Any]] = [
-        {"params": list(model.expert.parameters()), "lr": args.lr},
+        {"params": list(model.expert.parameters()), "lr": args.expert_lr},
     ]
-    if args.unfreeze_text_lr > 0:
+    if args.text_lr is not None:
         decayed, undecayed = decay_split(trainable_text_parameters(model))
-        param_groups.append({"params": decayed, "lr": args.unfreeze_text_lr})
+        param_groups.append({"params": decayed, "lr": args.text_lr})
         param_groups.append(
             {
                 "params": undecayed,
-                "lr": args.unfreeze_text_lr,
+                "lr": args.text_lr,
                 "weight_decay": 0.0,
             },
         )
-    if args.unfreeze_vision_lr > 0:
+    if args.vision_lr is not None:
         assert model.backbone.vision_tower is not None
         decayed, undecayed = decay_split(model.backbone.vision_tower.parameters())
-        param_groups.append({"params": decayed, "lr": args.unfreeze_vision_lr})
+        param_groups.append({"params": decayed, "lr": args.vision_lr})
         param_groups.append(
             {
                 "params": undecayed,
-                "lr": args.unfreeze_vision_lr,
+                "lr": args.vision_lr,
                 "weight_decay": 0.0,
             },
         )
     optimizer = torch.optim.AdamW(
         param_groups,
-        lr=args.lr,
+        lr=args.expert_lr,
         betas=(0.9, 0.95),
         weight_decay=args.weight_decay,
         # One kernel launch per param group instead of the foreach chain;
@@ -1376,13 +1384,14 @@ def main() -> int:
         restored = optimizer.param_groups[0]
         base_lr = float(restored.get("initial_lr", restored["lr"]))
         if is_main and (
-            base_lr != args.lr or float(restored["weight_decay"]) != args.weight_decay
+            base_lr != args.expert_lr
+            or float(restored["weight_decay"]) != args.weight_decay
         ):
             print(
                 "note: --resume keeps the checkpoint's optimizer "
                 f"hyperparameters (base lr {base_lr:.2e}, weight decay "
-                f"{restored['weight_decay']}); CLI --lr/--weight-decay are "
-                "ignored, --steps/--warmup-steps still shape the schedule",
+                f"{restored['weight_decay']}); CLI --expert-lr/--weight-decay "
+                "are ignored, --steps/--warmup-steps still shape the schedule",
                 flush=True,
             )
 

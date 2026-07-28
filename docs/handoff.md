@@ -211,7 +211,9 @@ dead; next perf wins are length-bucketed batching (batch pads 452 vs
   2026-07-28, tmux `mainline` on the 8×A100 box, log
   `~/unftext10k_console.log`, launcher `~/launch_unfreeze_text10k.sh`,
   wandb run d63z3lcv): unfrozen-TEXT-trunk continuation — init-from
-  cont45k step_045000, --unfreeze-text-lr 1e-5 (529.4M live), lr 1e-4,
+  cont45k step_045000, --text-lr 1e-5 (529.4M live), expert lr 1e-4
+  (launched pre-rename as --unfreeze-text-lr/--lr — the box launcher
+  still says that; sync only after the run ends),
   **grad-clip 10.0** (RESTARTED at step ~170: the plan's 1.0 was
   measured renormalizing 100% of steps by ~4× — p50 norm 3.8, p90 6.4,
   max 19.2 — recipe corrected, ~11 min lost), warmup 500, 10k steps
@@ -295,7 +297,7 @@ dead; next perf wins are length-bucketed batching (batch pads 452 vs
   `--init-from` = warm start, config-guarded (`ensure_matching_expert_
   config` diffs the full ExpertConfig; loud SystemExit; NOT guarded:
   `--max-soft-tokens` and `--backbone` — known footguns). `--resume` =
-  lossless continuation (optimizer.pt), CLI --lr ignored (printed),
+  lossless continuation (optimizer.pt), CLI --expert-lr ignored (printed),
   cosine re-evaluated over new --steps → LR jumps up; owner dislikes
   this, prefers init-from+warmup for extensions.
 - **eval** (`python -m bijou.eval`): `--episodes {all,train,holdout}` +
@@ -323,8 +325,10 @@ dead; next perf wins are length-bucketed batching (batch pads 452 vs
 
 ## 6. Recent code changes a fresh session must know
 
-- **Unfreeze flags (2026-07-28)**: `--unfreeze-text-lr` /
-  `--unfreeze-vision-lr` (bijou.train) train the backbone trunk per
+- **Component-lr flags (2026-07-28, renamed same day from
+  --lr/--unfreeze-*-lr)**: `--expert-lr` plus `--text-lr` /
+  `--vision-lr` (bijou.train) — omit a component's lr to keep it
+  frozen (explicit 0 rejected loudly); they train the backbone per
   `docs/plan_unfreeze_trunk.md`. Text set mirrors kv_stop_layer
   exactly (full layers below the deepest stream; stop layer only
   input_layernorm + k/v proj + k_norm; PLE *projections* yes, PLE
@@ -461,8 +465,8 @@ code mid-experiment.
    (backbone 79% of step). Profile numbers in §2.
 6. **NEXT BIG MOVE (owner-approved direction 2026-07-28)**: unfreeze
    the E2B text trunk and continue from cont45k — updated plan in
-   `docs/plan_unfreeze_trunk.md` (`--unfreeze-text-lr` /
-   `--unfreeze-vision-lr`, vision expected frozen per the acuity
+   `docs/plan_unfreeze_trunk.md` (`--text-lr` /
+   `--vision-lr`, vision expected frozen per the acuity
    probe, embeddings/PLE frozen, fp32 masters + bf16 autocast, old
    checkpoints load unchanged). LoRA arm DROPPED (engineering framing:
    single continuation, not an attribution round). Implement flags →
