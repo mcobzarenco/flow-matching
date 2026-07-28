@@ -226,10 +226,24 @@ dead; next perf wins are length-bucketed batching (batch pads 452 vs
   short cosine). Watch item for r2: if train_mae recovers but
   eval_chunk_mae lags, the 5×-slower expert is tracking trunk feature
   drift too loosely.
-- **New 2×H100 box `ssh ubuntu@192.222.54.70`** (owner-provisioned
-  2026-07-28, datasets downloading): designated for the FAST tokenizer
-  corpus fit (quantile-stats pass + ~1M-chunk fit + hub upload) once
-  data lands.
+- **2×H100 box `ssh ubuntu@192.222.54.70`** (owner-provisioned
+  2026-07-28): FAST tokenizer fit done (below). Has all 3 community
+  collections + both rig sets under `~/datasets/mcobzarenco/` (rig too
+  — owner re-downloaded there; the `marius/` copies were removed).
+  flow-matching + lerobot-dataset-tools cloned.
+- **DONE 2026-07-28 — quantile backfill + FAST tokenizer v1**:
+  ldtools.backfill_quantile_stats (exact corpus q01/q10/q50/q90/q99,
+  correcting LeRobot's mean-of-episode-quantiles bug) run on all 3
+  community collections (v1 129, v2 324, v3 790 datasets; 1 bespoke
+  drop) + both rig sets, **re-uploaded to the hub** (community + rig
+  dataset repos; local rig copies refreshed). FAST tokenizer
+  **`mcobzarenco/bijou-checkpoints/fast_tokenizer_v1`** on HF: fit on
+  1040 datasets / 4.9M chunks (~32 min BPE), vocab 1024 (alphabet
+  1019), scale 10. Fidelity (fit_report.json in the artifact): p50 52
+  tok/chunk, 5.7× compression, recon MAE p50 0.44° / p90 0.58° raw
+  (≪ model error), rig 55–57 tok / 0.44–0.68°. Constant-dim guard +
+  normalized clip landed during the fit (parked joints / padded dims
+  had floored-span division → 7.3e9-symbol alphabet; now map to 0).
 - Useful eval pattern to recreate (the old `eval_reports.sh`): 3 sides
   = community holdout/train (`--episodes X --holdout-episodes 0.1
   --split-seed 0`, 256 frames, seed 0) + rig
