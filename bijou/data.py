@@ -386,6 +386,7 @@ def select_datasets(
     episode_split: EpisodeSplit = EpisodeSplit.ALL,
     holdout_fraction: float = 0.0,
     split_seed: int = 0,
+    allowed_fps: tuple[float, ...] | None = None,
 ) -> DataSelection:
     """Discover, validate and wrap datasets; drop the incompatible loudly.
 
@@ -399,6 +400,13 @@ def select_datasets(
     ``holdout_episodes``). TRAIN with fraction 0 loads everything —
     identical to ALL. Training and eval reproduce the same split by passing
     the same fraction and split seed; nothing is persisted.
+
+    ``allowed_fps`` drops datasets recorded at any other frame rate (the
+    chunk spans ``chunk_size`` NATIVE frames, so mixed-fps corpora mix
+    wall-clock horizons — 11.9% of community frames are non-30fps). None =
+    keep all (the historical behavior). NOTE: any filter changes the
+    concatenated frame indexing, so eval scores are only comparable
+    between runs using the same filter.
     """
     if episode_split is EpisodeSplit.HOLDOUT and holdout_fraction <= 0:
         raise ValueError("episode_split=HOLDOUT requires holdout_fraction > 0")
@@ -444,6 +452,10 @@ def select_datasets(
             continue
         if dims != (action_dim, state_dim):
             dropped.append(f"{repo_id} (action/state dims {dims[0]}/{dims[1]})")
+            continue
+        if allowed_fps is not None and info.fps not in allowed_fps:
+            allowed = ", ".join(f"{fps:g}" for fps in allowed_fps)
+            dropped.append(f"{repo_id} (fps {info.fps:g} not in {{{allowed}}})")
             continue
 
         held_out = (
@@ -526,7 +538,11 @@ def select_datasets(
         held_out_total += len(held_out)
         held_out_datasets += 1 if held_out else 0
     if not datasets:
-        raise ValueError("no compatible datasets selected")
+        # The caller normally prints the drop list; when NOTHING survives
+        # (e.g. an --fps filter excluding every dataset) it never gets the
+        # chance, so the reasons must ride in the error itself.
+        reasons = "\n".join(f"  - {reason}" for reason in dropped)
+        raise ValueError(f"no compatible datasets selected; dropped:\n{reasons}")
 
     return DataSelection(
         datasets=datasets,

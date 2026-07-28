@@ -94,6 +94,7 @@ EVAL_TABLE_ROWS = 32
 class TrainArgs:
     train_data: tuple[Path, ...]
     exclude: tuple[str, ...]
+    fps: tuple[float, ...] | None
     holdout_episodes: float
     split_seed: int
     backbone: str
@@ -770,6 +771,17 @@ def parse_args() -> TrainArgs:
         help="fnmatch patterns against <user>/<dataset> repo ids to skip",
     )
     parser.add_argument(
+        "--fps",
+        type=float,
+        nargs="+",
+        default=None,
+        help="keep only datasets recorded at one of these frame rates "
+        "(e.g. --fps 30); default keeps every fps, the historical "
+        "behavior. Filtering changes the concatenated frame indexing, so "
+        "eval numbers are only comparable between runs with the same "
+        "filter",
+    )
+    parser.add_argument(
         "--holdout-episodes",
         type=float,
         default=0.0,
@@ -1027,6 +1039,7 @@ def parse_args() -> TrainArgs:
     return TrainArgs(
         train_data=tuple(raw.train_data),
         exclude=tuple(raw.exclude),
+        fps=tuple(raw.fps) if raw.fps else None,
         holdout_episodes=raw.holdout_episodes,
         split_seed=raw.split_seed,
         backbone=raw.backbone,
@@ -1123,6 +1136,7 @@ def main() -> int:
         episode_split=EpisodeSplit.TRAIN,
         holdout_fraction=args.holdout_episodes,
         split_seed=args.split_seed,
+        allowed_fps=args.fps,
     )
     action_dim, state_dim = selection.action_dim, selection.state_dim
     per_dataset_stats = selection.per_dataset_stats
@@ -1428,6 +1442,7 @@ def main() -> int:
                 episode_split=EpisodeSplit.HOLDOUT,
                 holdout_fraction=args.holdout_episodes,
                 split_seed=args.split_seed,
+                allowed_fps=args.fps,
             )
             eval_dataset = eval_selection.concat()
             eval_probe = build_probe_set(

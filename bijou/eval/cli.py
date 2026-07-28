@@ -64,6 +64,7 @@ class EvalReport:
     episodes: str
     holdout_episodes: float
     split_seed: int
+    fps: list[float] | None
     num_samples: int
     seed: int
     checkpoint: str | None
@@ -78,6 +79,7 @@ class EvalReport:
             "episodes": self.episodes,
             "holdout_episodes": self.holdout_episodes,
             "split_seed": self.split_seed,
+            "fps": self.fps,
             "num_samples": self.num_samples,
             "seed": self.seed,
             "checkpoint": self.checkpoint,
@@ -132,6 +134,16 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=0,
         help="split seed — must match the training run's --split-seed",
+    )
+    parser.add_argument(
+        "--fps",
+        type=float,
+        nargs="+",
+        default=None,
+        help="keep only datasets recorded at one of these frame rates; "
+        "default keeps every fps. Must match the training run's --fps for "
+        "scores to be comparable (any filter changes the concatenated "
+        "frame indexing and thus the sampled eval frames)",
     )
     parser.add_argument(
         "--checkpoint",
@@ -220,6 +232,7 @@ def main() -> int:
         episode_split=episode_split,
         holdout_fraction=args.holdout_episodes,
         split_seed=args.split_seed,
+        allowed_fps=tuple(args.fps) if args.fps else None,
     )
     dataset = selection.concat()
     print(
@@ -402,6 +415,7 @@ def main() -> int:
             episodes=args.episodes,
             holdout_episodes=args.holdout_episodes,
             split_seed=args.split_seed,
+            fps=list(args.fps) if args.fps else None,
             num_samples=num_samples,
             seed=args.seed,
             checkpoint=str(args.checkpoint) if args.checkpoint else None,
@@ -437,6 +451,7 @@ def main() -> int:
             f"checkpoint: {args.checkpoint or '-'}",
             f"smolvla: {args.smolvla or '-'}",
             f"sampler: {args.sample_method}-{args.sample_steps}",
+            f"fps filter: {args.fps or 'all'}",
         ]
         render_report(
             args.report,
