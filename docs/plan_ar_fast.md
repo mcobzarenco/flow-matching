@@ -41,10 +41,14 @@ native schema** — each strictly simpler):
   count/max/mean/min/std. So: BACKFILL the native keys (action +
   state) into the converted datasets — one parquet scan each via the
   fit CLI's `--backfill-stats` mode — and re-upload (3 collection
-  repos, stats.json files only). Methodology note: native quantiles
-  aggregate per-episode stats (approximate), backfill computes exact;
-  per-dataset self-consistency holds either way — not worth matching
-  lerobot's aggregation.
+  repos, stats.json files only). Methodology note (verified in lerobot
+  source): native dataset-level quantiles are a count-weighted MEAN of
+  per-episode quantiles — quantiles don't compose by averaging, so
+  extremes regress toward the median (measured −54° vs exact −120° on
+  rig v2) — i.e. native values are WRONG for corpus use and the
+  backfill force-corrects them everywhere, rig datasets included.
+  mean/std/min/max aggregate correctly (parallel variance) — the flow
+  lineage's MEAN_STD normalization is untainted.
 - TRAINING/EVAL: quantiles ride items via DatasetStats /
   StatsAttachedDataset — the EXACT mean/std mechanism (parse-edge
   `None` for un-backfilled datasets; AR training fails loudly with
