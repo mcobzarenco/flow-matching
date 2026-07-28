@@ -72,10 +72,14 @@ standard init-from recipe) is expected to suffice. A trunk-LR zero-hold
 shows instability.
 
 Suggested starting point: `--unfreeze-text-lr 1e-5` (grid 5e-6..2.5e-5
-if budget allows) with `--lr 1e-4`, `--grad-clip 1.0` (10.0 was
-calibrated for the expert alone; tighten when the trunk is live).
-Weight decay: keep 1e-5 on matmul weights, 0 on norms (param-group
-filter by name).
+if budget allows) with `--lr 1e-4`, `--grad-clip 10.0`. The original
+plan said 1.0; MEASURED live-trunk norms (10k run, 2026-07-28) are
+p50 3.8 / p90 6.4 / max 19.2 — clip 1.0 renormalized 100% of steps by
+~4× (moment-estimate noise from the varying rescale, and decoupled
+weight decay silently ~4× stronger relative to the gradient) instead
+of catching outliers. 10.0 preserves the lineage's never-bites
+safety-net semantics. Weight decay: keep 1e-5 on matmul weights, 0 on
+norms (param-group filter by name).
 
 ## 2. Gradient path (verified, unchanged from original)
 
