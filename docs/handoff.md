@@ -207,25 +207,29 @@ dead; next perf wins are length-bucketed batching (batch pads 452 vs
 
 ## 3. In flight right now
 
-- **RUNNING: `community-v1v2v3-unftext10k-ddp8`** (launched 17:20 UTC
-  2026-07-28, tmux `mainline` on the 8×A100 box, log
-  `~/unftext10k_console.log`, launcher `~/launch_unfreeze_text10k.sh`,
-  wandb run d63z3lcv): unfrozen-TEXT-trunk continuation — init-from
-  cont45k step_045000, --text-lr 1e-5 (529.4M live), expert lr 1e-4
-  (launched pre-rename as --unfreeze-text-lr/--lr — the box launcher
-  still says that; sync only after the run ends),
-  **grad-clip 10.0** (RESTARTED at step ~170: the plan's 1.0 was
-  measured renormalizing 100% of steps by ~4× — p50 norm 3.8, p90 6.4,
-  max 19.2 — recipe corrected, ~11 min lost), warmup 500, 10k steps
-  full cosine, batch 32×8 = global 256 (matches cont45k), holdout
-  0.1/seed 0, probes 256 (the exact cont45k eval frames), save @2500
-  (~13 GB each), seed 12, NO --fps filter (eval comparability).
-  Measured: ~2.2–2.9 s/step early → ETA ~6–8h; 76.7 GB/rank, all GPUs
-  100%; loss starts ~0.09 (continuous with cont45k's 0.089).
-  References to beat: holdout probe 6.85, rig 11.71 (rig scoring needs
-  laptop-side data — rig datasets deliberately not on this box).
-  GPU validation that preceded it: loss continuity, DDP8 memory,
-  checkpoint write/reload of the adapted trunk.
+- **RUNNING: `community-v1v2v3-unftext15k-r2-ddp8`** (launched 19:03
+  UTC 2026-07-28, tmux `mainline` on the 8×A100 box, log
+  `~/unftext15k_r2_console.log`, launcher
+  `~/launch_unfreeze_text15k.sh`): unfrozen-TEXT-trunk continuation r2
+  — init-from cont45k step_045000, **--expert-lr 2e-5 --text-lr 2e-5**
+  (single LR, π0-style), grad-clip 10.0, warmup 500, **15k steps**
+  (owner target ~14h; measured early pace ~2.0 s/step → likely ~9h),
+  batch 32×8 = global 256, holdout 0.1/seed 0, probes 256 (cont45k
+  eval frames; reference 6.85), save @2500, seed 13, NO --fps filter.
+  Input pipeline fixed and VERIFIED (workers 16, prefetch 8, decoder
+  cache 8): sustained 8×100% GPU vs r1's constant per-rank 0% stalls;
+  host load 35 vs 63.
+  **History**: r0 aborted @~170 (grad-clip 1.0 renormalized every step
+  ~4×; → 10.0). r1 aborted @~1.8k (expert peak 1e-4 re-heated the warm
+  expert: loss 0.104→0.113 rising, probes 8.1–8.6 vs 6.85 — cont45k
+  needed ~35k steps to anneal the same transient; unrecoverable in a
+  short cosine). Watch item for r2: if train_mae recovers but
+  eval_chunk_mae lags, the 5×-slower expert is tracking trunk feature
+  drift too loosely.
+- **New 2×H100 box `ssh ubuntu@192.222.54.70`** (owner-provisioned
+  2026-07-28, datasets downloading): designated for the FAST tokenizer
+  corpus fit (quantile-stats pass + ~1M-chunk fit + hub upload) once
+  data lands.
 - Useful eval pattern to recreate (the old `eval_reports.sh`): 3 sides
   = community holdout/train (`--episodes X --holdout-episodes 0.1
   --split-seed 0`, 256 frames, seed 0) + rig
