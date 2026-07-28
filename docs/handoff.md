@@ -207,9 +207,19 @@ dead; next perf wins are length-bucketed batching (batch pads 452 vs
 
 ## 3. In flight right now
 
-- Nothing. **The 4×H100 box was DELETED on 2026-07-28** (cost saving
-  while deciding the next training round). Provision a replacement per
-  `docs/init_gpu_machine.md` when the next round is funded.
+- **READY TO LAUNCH (awaiting owner's wandb login + GO)**: the
+  unfrozen-text-trunk continuation on the new 8×A100 box —
+  `~/launch_unfreeze_text45k.sh` (copy in local gitignored `outputs/`):
+  init-from cont45k step_045000, --unfreeze-text-lr 1e-5 (529.4M text
+  params live), lr 1e-4, grad-clip 1.0, warmup 500, 45k steps, batch
+  32/rank × 8 = global 256 (matches cont45k), holdout 0.1/seed 0,
+  eval 256 @500, save @5000 (~13 GB/checkpoint), seed 12, NO --fps
+  filter (eval comparability with cont45k's 6.85/11.71). GPU-validated
+  2026-07-28 on the box: loss continuity from cont45k (starts 0.084 vs
+  final ~0.089, no spike), 8-rank DDP 69–79 GB/rank all-GPUs-100%,
+  checkpoint write (backbone.safetensors 4.3G, optimizer 7.5G) +
+  cuda reload of the adapted trunk. Steady-state s/step TBD in the
+  real run (probe steps jittered 1.3–4.3s during decoder warmup).
 - Useful eval pattern to recreate (the old `eval_reports.sh`): 3 sides
   = community holdout/train (`--episodes X --holdout-episodes 0.1
   --split-seed 0`, 256 frames, seed 0) + rig
@@ -225,12 +235,21 @@ dead; next perf wins are length-bucketed batching (batch pads 452 vs
 
 - **New machine bring-up**: `docs/init_gpu_machine.md` (init-vm-gpu.sh
   → auth → dataset downloads → from-scratch smoke train run).
-- **Box**: NONE since 2026-07-28 (the 4×H100 at 68.209.73.71 was
-  deleted). Training env conventions that must carry to the next box:
+- **Box**: `ssh ubuntu@150.136.37.72` (use `-A` for git operations;
+  Lambda, provisioned 2026-07-28 via init-vm-gpu.sh). 8×A100-SXM4-80GB,
+  240 vCPU, 1.77T RAM, 19T disk. Repo `~/flow-matching`; HF token in
+  place (gated backbone verified); wandb login PENDING (owner does
+  `wandb login`; launchers read ~/.netrc and export WANDB_API_KEY —
+  wandb.init rejects netrc-only). Data:
+  `~/datasets/mcobzarenco/community_dataset_v{1,2,3}_v3` complete
+  (120/121/687 GB). Rig datasets deliberately NOT transferred (owner:
+  not needed yet). cont45k step_045000 (config+expert, no optimizer)
+  at `outputs/train/.../step_045000`. Training env:
   `MALLOC_ARENA_MAX=2 MALLOC_MMAP_THRESHOLD_=131072` (+
-  `LEROBOT_VIDEO_DECODER_CACHE_SIZE=4` set by train.py); WANDB key via
-  `~/.netrc` with launcher-side export (wandb.init rejects netrc-only;
-  key appeared in shell history once, owner should rotate).
+  `LEROBOT_VIDEO_DECODER_CACHE_SIZE=4` set by train.py) +
+  `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` for live-trunk
+  runs (69–79 GB/rank measured). The old 4×H100 (68.209.73.71) was
+  deleted 2026-07-28; its wandb-key-in-history rotation is still owed.
   **Artifact inventory after deletion** — on HF: mainline lineage
   (v1v2 10k; v1v2v3 15k/40k; cont45k 45k WITH optimizer),
   ft_marius_2k (8 steps), ft_4k_init45k step_004000,
@@ -319,7 +338,15 @@ dead; next perf wins are length-bucketed batching (batch pads 452 vs
   `outputs/probe_unfreeze_gradflow.py` (records 1.5528 oracle).
   Known-benign: fresh zero-init out_proj blocks trunk grads at step 1
   only; probes/eval run in the trunk's build dtype (fp32 when live —
-  ±jitter-tier vs bf16, comparable within-run).
+  ±jitter-tier vs bf16, comparable within-run). backbone_snapshot
+  casts HOST-side (device-side transient ≈4.3 GB would OOM at the
+  measured 79/80 GB DDP occupancy).
+- **--fps filter (2026-07-28)**: train + eval accept `--fps 30 ...` to
+  drop datasets at other frame rates; default None = all (historical
+  behavior, bit-identical). Any filter changes concatenated frame
+  indexing ⇒ eval numbers only comparable between same-filter runs —
+  which is why the unfreeze run does NOT use it. Eval JSON gains an
+  `fps` field; empty selections now die listing every drop reason.
 
 - **Episode holdout** shared by train/eval (`bijou/data.py`
   `EpisodeSplit`, `holdout_episodes`); metadata-vs-parquet frame guard
