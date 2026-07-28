@@ -494,6 +494,13 @@ code mid-experiment.
    after verifying camera device mapping; try `--sample-steps 10`;
    optionally add `--sample-draws N` (mean-of-N; ~20 lines in rollout;
    check unimodality on the sampling report first).
+4b. **adaRMS time conditioning** (`docs/plan_adarms_time.md`, planned
+   2026-07-28): DiT-style per-layer τ modulation, identity at init,
+   selectable via `--time-conditioning {additive,adarms}` (additive
+   stays default + byte-identical). Motivated by the Phase-0 gap (§2:
+   ~1 MAE recoverable integration error, mid-τ ft roughening). Always
+   from-scratch (+37% params, no additive warm-start). A matched A/B
+   arm, not on the critical path.
 5. **Perf**: length-bucketed batching, then torch.compile spike
    (backbone 79% of step). Profile numbers in §2.
 6. **NEXT BIG MOVE (owner-approved direction 2026-07-28)**: unfreeze

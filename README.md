@@ -105,6 +105,8 @@ with an explicit `CHECKS PASSED`/`FAILED` verdict). Conventions:
   latency for an 8 GiB laptop GPU).
 - `docs/code-styleguide.md` — how code is written here.
 - `docs/plan_unfreeze_trunk.md` — the next big training experiment.
+- `docs/plan_ar_fast.md` — autoregressive FAST-token co-training design.
+- `docs/plan_adarms_time.md` — adaRMS time conditioning for the expert.
 - `docs/so101_recording_tutorial.md`, `docs/community_to_v3_pipeline_plan.md`
   — data recording and corpus conversion.
 
