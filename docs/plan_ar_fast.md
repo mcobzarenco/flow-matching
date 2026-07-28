@@ -28,8 +28,10 @@ are permanently coupled):
     fast_tokenizer_v1/
       fast_config.json      # scale, alphabet, H, D
       bpe.json              # BPE vocabulary/merges
-      quantile_stats.json   # per-dataset q01/q99 (fit normalization)
       fit_report.json       # provenance: datasets, chunks, fidelity
+
+(No quantile table in the artifact — owner-settled: datasets' stats.json
+is the source, checkpoints record what they trained with.)
 
 Quantile lifecycle (settled 2026-07-28 after two owner corrections:
 tokenizer-owned table → checkpoint-owned table → **dataset-owned,
@@ -56,9 +58,10 @@ native schema** — each strictly simpler):
 - CHECKPOINTS: per_dataset_normalization carries the quantiles for
   free once DatasetStats does; ROLLOUT resolves the rig from the
   checkpoint like --stats-repo-id today. No aggregate fallback for AR.
-- FIT: reads quantiles FROM stats.json when present (fit normalization
-  ≡ training normalization, same source), computes+warns otherwise;
-  the tokenizer dir's `quantile_stats.json` is provenance only.
+- FIT: reads quantiles FROM stats.json (fit normalization ≡ training
+  normalization, same source); fails loudly on un-backfilled datasets
+  with the backfill command as the remedy. The tokenizer artifact
+  carries NO quantile table.
 
 Fit CLI (`python -m bijou.fast`): fits on FULL corpora (BPE training
 measured near-linear, ~0.8s/7.3k chunks → minutes for ~5M chunks);

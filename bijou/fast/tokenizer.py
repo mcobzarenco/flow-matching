@@ -52,7 +52,6 @@ IntArray = npt.NDArray[np.int64]
 
 CONFIG_FILENAME = "fast_config.json"
 BPE_FILENAME = "bpe.json"
-QUANTILE_FILENAME = "quantile_stats.json"
 
 
 class FastDecodeError(ValueError):
@@ -80,46 +79,24 @@ class QuantileEntry:
         return (chunk + 1.0) / 2.0 * span + low
 
 
-def quantile_entry_for(
-    table: dict[str, QuantileEntry],
-    repo_id: str,
-) -> QuantileEntry:
-    """Loud lookup: wrong quantiles silently corrupt token semantics, so
-    there is deliberately NO aggregate fallback."""
-    entry = table.get(repo_id)
-    if entry is None:
+def quantile_entry_from_stats(stats_path: Path) -> QuantileEntry:
+    """Read the action q01/q99 from a dataset's ``meta/stats.json`` — the
+    single source of truth for quantile normalization (exact values are
+    backfilled by ldtools.backfill_quantile_stats; LeRobot's native
+    episode-aggregated quantiles are wrong for corpus use). Checkpoints
+    record the entries they trained with; the tokenizer artifact
+    deliberately carries none."""
+    action = json.loads(stats_path.read_text()).get("action", {})
+    if "q01" not in action or "q99" not in action:
         raise ValueError(
-            f"no quantile stats for {repo_id!r} in this FAST tokenizer — "
-            "compute them (python -m bijou.fast on a corpus including it, "
-            "or extend the run's table for a new rig dataset)",
+            f"{stats_path} lacks action q01/q99 — backfill exact quantiles "
+            "first (uv run python -m ldtools.backfill_quantile_stats "
+            "--root <collection> --force, in lerobot-dataset-tools)",
         )
-    return entry
-
-
-def save_quantile_table(
-    table: dict[str, QuantileEntry],
-    directory: Path,
-) -> None:
-    (directory / QUANTILE_FILENAME).write_text(
-        json.dumps(
-            {
-                repo_id: {"q01": list(e.q01), "q99": list(e.q99)}
-                for repo_id, e in sorted(table.items())
-            },
-            indent=2,
-        ),
+    return QuantileEntry(
+        q01=tuple(float(v) for v in action["q01"]),
+        q99=tuple(float(v) for v in action["q99"]),
     )
-
-
-def load_quantile_table(directory: Path) -> dict[str, QuantileEntry]:
-    data = json.loads((directory / QUANTILE_FILENAME).read_text())
-    return {
-        repo_id: QuantileEntry(
-            q01=tuple(float(v) for v in entry["q01"]),
-            q99=tuple(float(v) for v in entry["q99"]),
-        )
-        for repo_id, entry in data.items()
-    }
 
 
 def dct_matrix(n: int) -> FloatArray:

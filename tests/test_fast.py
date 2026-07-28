@@ -8,6 +8,7 @@ compression must be real.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import numpy as np
@@ -18,9 +19,7 @@ from bijou.fast import (
     FastTokenizer,
     QuantileEntry,
     dct_matrix,
-    load_quantile_table,
-    quantile_entry_for,
-    save_quantile_table,
+    quantile_entry_from_stats,
 )
 
 H, D = 50, 6
@@ -159,13 +158,15 @@ def test_quantile_entry_round_trip() -> None:
     )
 
 
-def test_quantile_table_save_load_and_loud_lookup(tmp_path: Path) -> None:
-    table = {
-        "marius/rig": QuantileEntry(q01=(-1.0,) * D, q99=(1.0,) * D),
-    }
-    save_quantile_table(table, tmp_path)
-    reloaded = load_quantile_table(tmp_path)
-    assert reloaded == table
-    assert quantile_entry_for(reloaded, "marius/rig") == table["marius/rig"]
-    with pytest.raises(ValueError, match="no quantile stats"):
-        quantile_entry_for(reloaded, "unknown/dataset")
+def test_quantile_entry_from_stats_reads_and_fails_loudly(
+    tmp_path: Path,
+) -> None:
+    stats_path = tmp_path / "stats.json"
+    stats_path.write_text(
+        json.dumps({"action": {"q01": [-1.0] * D, "q99": [1.0] * D}}),
+    )
+    entry = quantile_entry_from_stats(stats_path)
+    assert entry == QuantileEntry(q01=(-1.0,) * D, q99=(1.0,) * D)
+    stats_path.write_text(json.dumps({"action": {"mean": [0.0] * D}}))
+    with pytest.raises(ValueError, match="backfill"):
+        quantile_entry_from_stats(stats_path)

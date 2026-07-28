@@ -28,7 +28,7 @@ from .tokenizer import (
     FloatArray,
     IntArray,
     QuantileEntry,
-    save_quantile_table,
+    quantile_entry_from_stats,
 )
 
 REPORT_FILENAME = "fit_report.json"
@@ -99,14 +99,13 @@ def dataset_chunks(
     stride: int,
     scale: float,
 ) -> DatasetChunks | None:
-    """Exact q01/q99 over ALL frames, then quantized full-window chunks.
-    None (printed) when no episode is long enough for a single window."""
+    """Quantized full-window chunks, normalized with the dataset's OWN
+    stats.json quantiles (fit normalization must equal training
+    normalization, and stats.json is the single source — loud failure
+    when a dataset was never backfilled). None (printed) when no episode
+    is long enough for a single window."""
     episodes = episode_actions(dataset_dir)
-    all_frames = np.concatenate(episodes)
-    entry = QuantileEntry(
-        q01=tuple(np.quantile(all_frames, 0.01, axis=0).tolist()),
-        q99=tuple(np.quantile(all_frames, 0.99, axis=0).tolist()),
-    )
+    entry = quantile_entry_from_stats(dataset_dir / "meta" / "stats.json")
     windows: list[FloatArray] = []
     for actions in episodes:
         windows.extend(
@@ -257,7 +256,6 @@ def main() -> int:
 
     report = fidelity_report(tokenizer, datasets)
     tokenizer.save(args.output)
-    save_quantile_table({d.repo_id: d.entry for d in datasets}, args.output)
     (args.output / REPORT_FILENAME).write_text(
         json.dumps(
             {
