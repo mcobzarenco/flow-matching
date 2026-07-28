@@ -22,6 +22,7 @@ from typing import Any
 
 import torch
 from safetensors.torch import load_file
+from torch import Tensor
 
 from .data import DatasetStats
 from .expert import ActionExpert, ExpertConfig, SelfAttentionMode
@@ -275,6 +276,47 @@ def expert_config_from_train_args(
     )
 
 
+# The LM head is tied to the token embeddings (one storage, two state-dict
+# keys): safetensors refuses aliased tensors, and Bijou never runs the head
+# anyway — excluded on save, allowed to be exactly the missing key on load.
+BACKBONE_UNSAVED_KEYS = frozenset({"lm_head.weight"})
+
+
+def backbone_snapshot(model: BijouModel) -> dict[str, Tensor]:
+    """The trunk state for ``backbone.safetensors`` (written by bijou.train
+    when any unfreeze flag is on): parameters cast bf16 (the fp32 masters'
+    precision beyond bf16 lives only in optimizer.pt), buffers at native
+    dtype (RoPE inv_freq tables are fp32 by design — bf16 would corrupt
+    them)."""
+    parameter_names = {name for name, _ in model.backbone.named_parameters()}
+    return {
+        name: (
+            tensor.to(torch.bfloat16) if name in parameter_names else tensor
+        ).contiguous()
+        for name, tensor in model.backbone.state_dict().items()
+        if name not in BACKBONE_UNSAVED_KEYS
+    }
+
+
+def load_adapted_backbone(
+    model: BijouModel,
+    checkpoint: Path,
+    device: DeviceLike,
+) -> None:
+    """Load ``backbone.safetensors`` over the (already-built) truncated
+    backbone. Copy semantics cast the bf16 snapshot into whatever dtype the
+    backbone was built with (bf16 for eval/rollout, fp32 masters for a
+    live-trunk continuation)."""
+    state = load_file(str(checkpoint / "backbone.safetensors"), device=str(device))
+    missing, unexpected = model.backbone.load_state_dict(state, strict=False)
+    problems = [name for name in missing if name not in BACKBONE_UNSAVED_KEYS]
+    if problems or unexpected:
+        raise SystemExit(
+            f"backbone.safetensors mismatch at {checkpoint}: "
+            f"missing {problems}, unexpected {list(unexpected)}",
+        )
+
+
 def from_checkpoint(
     checkpoint: str | Path,
     *,
@@ -319,5 +361,11 @@ def from_checkpoint(
         load_file(str(checkpoint / "expert.safetensors"), device=str(device)),
         strict=True,
     )
+    # Trunk-trained checkpoints (any --unfreeze-*-lr > 0) carry the adapted
+    # backbone; checkpoints without the file load the HF backbone exactly
+    # as before the file existed.
+    if (checkpoint / "backbone.safetensors").exists():
+        load_adapted_backbone(model, checkpoint, device)
+        print(f"loaded adapted backbone from {checkpoint}", flush=True)
     model.eval()
     return model, info

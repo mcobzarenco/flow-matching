@@ -300,6 +300,27 @@ dead; next perf wins are length-bucketed batching (batch pads 452 vs
 
 ## 6. Recent code changes a fresh session must know
 
+- **Unfreeze flags (2026-07-28)**: `--unfreeze-text-lr` /
+  `--unfreeze-vision-lr` (bijou.train) train the backbone trunk per
+  `docs/plan_unfreeze_trunk.md`. Text set mirrors kv_stop_layer
+  exactly (full layers below the deepest stream; stop layer only
+  input_layernorm + k/v proj + k_norm; PLE *projections* yes, PLE
+  *tables*/embeddings/final norm/lm_head no; embed_vision in the text
+  group). Frozen tower/embeddings feed the decoder grad-free inputs ⇒
+  autograd builds no graph for them (no gemma4 changes). Live trunk:
+  fp32 masters + bf16-autocast prefix encode inside `BijouTrainStep`,
+  wrapped by ONE DDP (static_graph; partition exactness = every
+  trainable param gets grads each step — verified). Checkpoints gain
+  `backbone.safetensors` (params bf16, buffers native — RoPE tables
+  fp32; lm_head excluded: tied storage, safetensors rejects aliases);
+  detection by file presence, OLD checkpoints hit a byte-identical
+  path. `--init-from` an adapted checkpoint with flags OFF = freeze
+  the adapted trunk. Flags-off CPU oracle EXACT; flags-on probe
+  `outputs/probe_unfreeze_gradflow.py` (records 1.5528 oracle).
+  Known-benign: fresh zero-init out_proj blocks trunk grads at step 1
+  only; probes/eval run in the trunk's build dtype (fp32 when live —
+  ±jitter-tier vs bf16, comparable within-run).
+
 - **Episode holdout** shared by train/eval (`bijou/data.py`
   `EpisodeSplit`, `holdout_episodes`); metadata-vs-parquet frame guard
   derives claimed counts from per-episode lengths under filtering.

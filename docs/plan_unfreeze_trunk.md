@@ -1,7 +1,18 @@
 # Plan: training with an unfrozen Gemma4 E2B trunk
 
-Status: **approved direction, not yet implemented** (updated 2026-07-28;
-supersedes the original proposal). Goal: continue from the best
+Status: **IMPLEMENTED 2026-07-28** (`--unfreeze-text-lr` /
+`--unfreeze-vision-lr` in bijou.train; snapshot/load in bijou.loading).
+Validated on the tiny backbone: flags-off oracle EXACT (1.8896/1.7237),
+flags-on grad-flow probe (`outputs/probe_unfreeze_gradflow.py`) all
+green (partition exactness incl. stop-layer split, embeddings/PLE/tower
+frozen, every trainable param receives finite grads — the DDP
+static_graph precondition), checkpoint round-trips (new format, OLD
+format byte-identical path, --init-from adapted trunk with flags on and
+off), 2-rank gloo DDP smoke. Flags-on probe oracle: 1.5528 (seed 0,
+2 dev items, warm out_proj). Note: a FRESH expert's zero-init
+action_out_proj blocks trunk gradients on step 1 only (grads populate
+as zeros — DDP-safe; flows from step 2). GPU memory/throughput
+validation pending on the new box. Goal: continue from the best
 checkpoint — `bijou_community_v1v2v3_cont45k_ddp4/step_045000`, on HF
 with optimizer — with the text trunk live at a low learning rate:
 shortest time to a potentially better checkpoint. Not a matched
