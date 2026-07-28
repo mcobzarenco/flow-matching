@@ -13,7 +13,7 @@ References: FAST (arXiv:2501.09747) — DCT + BPE action tokenization,
 training compute; π0.5-KI — train the VLM on FAST CE, insulate the flow
 expert behind stop-gradient.
 
-## 1. Tokenizer artifact (implemented: `bijou/fast.py`)
+## 1. Tokenizer artifact (implemented: `bijou/fast/`)
 
 Owned reimplementation (no trust_remote_code): orthonormal DCT-II
 matrix over time per dim → round(×scale) → freq-major flatten → chars →

@@ -353,7 +353,7 @@ dead; next perf wins are length-bucketed batching (batch pads 452 vs
   ±jitter-tier vs bf16, comparable within-run). backbone_snapshot
   casts HOST-side (device-side transient ≈4.3 GB would OOM at the
   measured 79/80 GB DDP occupancy).
-- **bijou/fast.py (2026-07-28)**: owned FAST action tokenizer (DCT +
+- **bijou/fast/ (2026-07-28)**: owned FAST action tokenizer (DCT +
   BPE, arXiv:2501.09747) for the planned AR+flow mixture — explicit
   orthonormal DCT matrix (no scipy dep), plain-BPE over a synthetic
   alphabet (no ByteLevel), fixed H/D at fit, FastDecodeError on
