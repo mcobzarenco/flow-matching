@@ -394,10 +394,11 @@ code mid-experiment.
    falsified as the cross-rig fix; error = frame-dependent level
    mis-estimation (visual grounding). Promoted accordingly:
    `--sample-draws N` rollout ensembling (attacks level uncertainty
-   directly, zero training) and the LoRA-backbone arm (representation
-   adaptation). Cheap sharpener if wanted: copy+oracle-offset baseline
-   (= GT within-chunk dispersion, CPU-only) to quantify how much
-   better than copy bijou's chunk *shape* is.
+   directly, zero training) and backbone adaptation (now item 6; the
+   LoRA variant was later dropped). Cheap sharpener if wanted:
+   copy+oracle-offset baseline (= GT within-chunk dispersion,
+   CPU-only) to quantify how much better than copy bijou's chunk
+   *shape* is.
 4. **Physical**: rollout candidate is now `bijou_ft_marius_4k_init45k/
    step_004000` (first checkpoint to beat copy on held-out rig
    episodes) — or ft_v2 (step_001250 or 1250/2000 comparison)
@@ -406,21 +407,27 @@ code mid-experiment.
    check unimodality on the sampling report first).
 5. **Perf**: length-bucketed batching, then torch.compile spike
    (backbone 79% of step). Profile numbers in §2.
-6. **Future ablation arms** (matched, holdout recipe): LoRA-backbone
-   (promoted by the re-anchoring probe; grad-path work in
-   `docs/plan_unfreeze_trunk.md` §1–§2), streams0016 re-test at scale
-   (rig-transfer hint), E4B backbone (4 streams, needs 4-entry
-   --stream-counts), E2B **base vs IT** backbone (prediction: ±0.2
-   MAE, IT edge grows only with language-diverse data; verify -pt
-   checkpoint ships the vision tower; ablate chat template on/off),
+6. **NEXT BIG MOVE (owner-approved direction 2026-07-28)**: unfreeze
+   the E2B text trunk and continue from cont45k — updated plan in
+   `docs/plan_unfreeze_trunk.md` (`--unfreeze-text-lr` /
+   `--unfreeze-vision-lr`, vision expected frozen per the acuity
+   probe, embeddings/PLE frozen, fp32 masters + bf16 autocast, old
+   checkpoints load unchanged). LoRA arm DROPPED (engineering framing:
+   single continuation, not an attribution round). Implement flags →
+   validation ladder → A/B on the next box.
+7. **Future ablation arms** (matched, holdout recipe): streams0016
+   re-test at scale (rig-transfer hint — but see acuity probe: K4 is
+   the sharpest positional stream, so a shallow-heavy schedule arm,
+   e.g. 8-4-4, is now evidence-backed too), adaLN-Zero time
+   conditioning (Phase-0 baselines in §2), E4B backbone (4 streams,
+   needs 4-entry --stream-counts), E2B **base vs IT** backbone,
    `--trim-leading-idle` (6.7% idle frames), state-noise augmentation.
    Delta-actions demoted (falsified by the re-anchoring probe §2).
-7. **Bigger bets**: unfreeze trunk (`docs/plan_unfreeze_trunk.md`);
-   lerobot policy plugin (`lerobot-rollout --policy.type=bijou`).
-8. **Hygiene**: rotate wandb key; guard `--backbone`/
+8. **Bigger bets**: lerobot policy plugin
+   (`lerobot-rollout --policy.type=bijou`).
+9. **Hygiene**: rotate wandb key; guard `--backbone`/
    `--max-soft-tokens` at --init-from; MaskSpec/PrefixKV field defaults
-   (styleguide exceptions); consider uploading ft_v2 checkpoints to HF
-   (uploaded 2026-07-27: cont45k step_045000 with optimizer;
-   ft_marius_4k_init45k step_004000 WITHOUT — owner deleted
-   optimizer.pt deliberately, not resumable; earlier ft_4k step dirs on
-   the box still carry theirs).
+   (styleguide exceptions); consider uploading ft_marius_v2_2k to HF
+   (laptop-only since the box deletion; ft_marius_4k_init45k
+   step_004000 is on HF weights-only — owner deleted optimizer.pt
+   deliberately, not resumable).

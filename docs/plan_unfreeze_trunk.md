@@ -1,167 +1,211 @@
 # Plan: training with an unfrozen Gemma4 E2B trunk
 
-Status: **proposal, not implemented**. Design for letting gradients from the
-flow-matching loss update the VLM prefix encoder (currently frozen bf16,
-layers 0–14 of E2B + vision tower + projector + embeddings, ~2.55B params).
+Status: **approved direction, not yet implemented** (updated 2026-07-28;
+supersedes the original proposal). Goal: continue from the best
+checkpoint — `bijou_community_v1v2v3_cont45k_ddp4/step_045000`, on HF
+with optimizer — with the text trunk live at a low learning rate:
+shortest time to a potentially better checkpoint. Not a matched
+ablation round; the LoRA alternative from the original plan is dropped
+(hand-rolled adapters inside parity-tested `gemma4/`, strictly less
+expressive, and its forgetting-control motivation is weak here — the
+expert-only rig ft already costs +0.85 community MAE and we accept it).
 
-## Why (and why it might not help)
+## Why now (evidence since the original plan)
 
-For: the trunk's features are generic web-VLM features; adapting them to
-robot imagery/instructions is the single biggest capacity unlock left
-(π0 and SmolVLA both train their VLM trunks). The in-dist vs held-out gap
-suggests representations, not the expert, are the bottleneck.
-Against: 27M frames of robot data can erode language grounding
-(catastrophic forgetting), cost triples-ish, and the expert-only recipe is
-not yet exhausted (bidirectional/soft-token/stream ablations pending).
-Recommendation: run the flag ablations first; unfreeze second.
+The original precondition — "run the flag ablations first" — is met
+(4-arm round: scale dominates, no architecture change earned its cost).
+Three probes localize the remaining error in the representation/its
+use, not the action parameterization:
 
-## 1. Gradient path (the model-specific part)
+- Re-anchor probe: cross-rig error = frame-dependent *level*
+  mis-estimation; chunk shape is right. Visual grounding, not action
+  space.
+- τ-diagnostic: OOD cost concentrates at high τ (initial placement from
+  context), where the prefix representation is the only input signal.
+- Vision acuity probe: position is sharpest at the vision tower's
+  output (8.4 px linear readout) and **degrades through the LM layers**
+  (K4 10.8 → K9 15.4 → K14 17.3 px; cross-background 25–32 px), and the
+  representation is not object-centric (task-object motion barely
+  outweighs background motion at K14). The trunk's *text stack* is
+  where position dies — exactly what text-layer training addresses.
 
-The expert consumes the prefix as exported K/V of global layers {4, 9, 14}.
-Verified: `KVCache.update()` is functional during prefill — it stores and
-returns the exact computed tensors (no preallocated buffers, no in-place
-writes), so autograd flows through `cache.layers[i].keys/values` as-is.
+## 1. What unfreezes (CLI surface)
 
-Required changes:
+Two optional flags, both default 0.0 = today's behavior, bitwise:
 
-- `encode_prefix` (bijou/data.py) and `BijouModel.encode_prefix`: make the
-  `torch.no_grad()` conditional (`requires_grad` mode flag or a
-  `with_grad: bool` parameter). Inference/eval keep no-grad.
-- `embed_multimodal` (vision tower + projector + PLE): same conditionality.
-- Keep two K/V paths: the cache path (inference, incl. cached decode) and
-  the training path. Since prefill-cache storage is already functional,
-  the SAME path works for training — no new collection mechanism needed.
-  Add a unit test asserting nonzero grads on a layer-4 K/V projection and
-  on the token embedding after one training step (tiny backbone), and zero
-  grads with the flag off.
-- Sliding-window layers slice their stored K/V (`[-window+1:]`) — irrelevant
-  for training (streams are global layers; prefill length < window anyway),
-  but the slice is also functional, so no hazard.
+- `--unfreeze-text-lr LR`: text decoder layers 0–14 (attention, MLPs,
+  norms) + the multimodal projector (`embed_vision`), as one param
+  group at LR. **Token embeddings and per-layer-embedding tables stay
+  frozen** — few rows touched per batch, dense Adam state for a 262k
+  vocab is pure waste, and frozen embeddings are the cheapest
+  forgetting control. (A future `--unfreeze-embeddings` flag is
+  possible; no current need.)
+- `--unfreeze-vision-lr LR`: adds the vision tower (~120M params —
+  the encoder-free E-series pipeline, not the 400M SigLIP of the
+  original draft) + its position table as another param group.
+  **Expected to stay 0**: the acuity probe shows the tower's output is
+  the *best* positional stage; adaptation is needed downstream of it.
+  When 0, the vision tower runs under `no_grad` (soft tokens are
+  inputs to the text stack, so autograd never needs the tower's graph
+  — saves its activations and any backward through it).
 
-## 2. What to unfreeze (staged)
+Guards: flags require `--holdout-episodes` unchanged semantics
+(nothing new); `--unfreeze-vision-lr > 0` without text unfreezing is
+permitted (legitimate arm) but prints loudly. Expert LR/schedule
+unchanged; all groups share the cosine schedule + warmup, scaled by
+their group LR. Continuing from cont45k means the expert is *warm* —
+the original plan's "cold expert backpropagating garbage into a live
+trunk" risk mostly evaporates; `--warmup-steps 500` (the owner's
+standard init-from recipe) is expected to suffice. A trunk-LR zero-hold
+(freeze-then-thaw) is a contingency, not built until a 200-step probe
+shows instability.
 
-- **Stage A (default)**: text layers 0–14 + per-layer-embedding tables +
-  multimodal projector. Vision tower (SigLIP, ~400M) stays frozen —
-  robot images are natural images; saves ~1/3 of trunk activation memory.
-- **Stage B (flag)**: `--vision-lr` > 0 adds the vision tower (+ separate
-  param group).
-- **Alternative track**: LoRA on q/k/v/o + MLP of the text layers
-  (rank 16–64) — ~50M trainable, no optimizer-state explosion, checkpoint
-  stays small. Worth having as a cheap arm in the same ablation; the plan
-  below is for full fine-tuning, LoRA piggybacks on the same grad-path work.
+Suggested starting point: `--unfreeze-text-lr 1e-5` (grid 5e-6..2.5e-5
+if budget allows) with `--lr 1e-4`, `--grad-clip 1.0` (10.0 was
+calibrated for the expert alone; tighten when the trunk is live).
+Weight decay: keep 1e-5 on matmul weights, 0 on norms (param-group
+filter by name).
 
-## 3. Numerics: mixed precision done properly
+## 2. Gradient path (verified, unchanged from original)
 
-The trunk is bf16. Direct bf16 updates are unusable at trunk lr (~1e-5
-relative updates vanish below bf16's ~4e-3 resolution). Standard fix:
-**fp32 master weights in the optimizer, bf16 compute copy** — i.e. either
-(a) hold trunk params in fp32 and autocast the forward to bf16, or
-(b) keep bf16 params + maintain fp32 masters manually.
-(a) is torch-idiomatic: load the trunk fp32 (`dtype=torch.float32` in
-`load_model`), wrap prefix encode + expert forward in
-`torch.autocast(bf16)`. The expert itself stays fp32-with-TF32 (unchanged
-semantics under autocast — revisit later).
+The expert consumes exported K/V of global layers {4, 9, 14};
+`KVCache.update()` is functional during prefill (stores/returns the
+computed tensors, no in-place writes), so autograd flows through
+`cache.layers[i].keys/values` as-is. Required changes:
 
-## 4. Memory budget (per H100, batch 32/rank)
+- `BijouModel.encode_prefix` + `data.encode_prefix`: `torch.no_grad`
+  becomes conditional (parameter, not global state). Inference/eval
+  keep no-grad unconditionally.
+- `embed_multimodal`: vision tower call wrapped in `no_grad` when the
+  tower is frozen; PLE/embedding lookups stay under grad (cheap) but
+  their tables have `requires_grad=False`.
+- `kv_stop_layer` (stops prefix encode after the deepest exported
+  layer's K/V) is grad-transparent — keep.
+- Unit tests (tiny backbone, CPU): nonzero grad on a layer-4 K/V
+  projection and on a vision-tower linear iff the respective flag is
+  on; zero otherwise; expert grads bitwise-identical with both flags
+  off (loss oracle 1.8896 / 1.7237 must hold EXACTLY with flags off;
+  flags-on gets its own loudly-recorded oracle values).
 
-| item | size |
+## 3. Numerics: fp32 masters + bf16 autocast (decision pinned)
+
+Direct bf16 updates at LR ~1e-5 vanish below bf16 resolution. Choice
+(a) from the original plan: when any unfreeze flag is on, load the
+trunk fp32 and run prefix encode under `torch.autocast(bf16)`. The
+expert stays fp32-with-TF32 *outside* the autocast region (narrower
+than the original draft — cleaner attribution, oracle stability); the
+expert already casts incoming K/V streams to its own dtype. Frozen
+mode (both flags 0) keeps today's bf16 load path — bitwise identical,
+regression-gated. gemma4 HF-parity tests untouched (inference path
+unchanged).
+
+## 4. Memory budget (per H100-80GB, batch 32/rank, text-only unfreeze)
+
+Trainable ≈ decoder layers + projector ≈ **~1.8B** (verify the exact
+count at implementation; embeddings/PLE frozen cut it well below the
+original 2.15B estimate).
+
+| item | est. |
 |---|---|
-| trunk fp32 masters (2.15B text-side) | 8.6 GB |
-| trunk grads fp32 | 8.6 GB |
-| Adam moments fp32 ×2 | 17.2 GB |
-| frozen vision tower bf16 | 0.9 GB |
-| expert (params+grads+moments fp32) | 6.5 GB |
-| activations (bf16 autocast, batch 32, ~450 tok, 15 layers) | ~8–15 GB |
-| **total** | **~55–60 GB** ✓ fits, tight |
+| trunk fp32 masters | ~7.2 GB |
+| trunk fp32 grads | ~7.2 GB |
+| Adam moments ×2 fp32 | ~14.4 GB |
+| frozen: vision tower + embeddings/PLE (bf16) | ~1.5 GB |
+| expert fp32 (params+grads+Adam) | ~6.5 GB |
+| activations (bf16, batch 32, ~450 tok, 15 layers; tower no-grad) | ~6–12 GB |
+| **total** | **~43–49 GB** — fits with headroom |
 
-Levers if it doesn't fit at the desired batch:
-1. `ZeroRedundancyOptimizer` (ZeRO-1): shards Adam moments across the 4
-   ranks → −13 GB/GPU. Cheap to adopt, first lever to pull.
-2. Activation checkpointing per trunk layer (`torch.utils.checkpoint`),
-   ~30% step-time cost, −70% trunk activation memory.
-3. Batch 16/rank + (new) gradient accumulation ×2.
-4. 8-bit Adam for the trunk group (bitsandbytes) — new dependency, last
-   resort.
+Levers if a bigger batch is wanted: ZeRO-1
+(`ZeroRedundancyOptimizer`, −~11 GB/rank), activation checkpointing
+per trunk layer (~30% step cost), gradient accumulation. 8-bit Adam
+stays last resort (new dependency).
 
-## 5. Optimization recipe
+## 5. Distributed training
 
-- **Param groups**: expert lr 1e-4 (unchanged); trunk lr `--trunk-lr`
-  (default 0.0 = frozen — the single CLI switch; suggest 1e-5 to 2.5e-5),
-  same cosine schedule, shared warmup (raise to ~1000 even for fine-tunes —
-  a cold expert backpropagating garbage into a live trunk early is the
-  main destabilization risk; consider trunk-lr zero-hold for the first
-  500 steps: freeze-then-thaw inside one run).
-- Grad clip: tighten global clip to 1.0 when the trunk is live (10.0 was
-  calibrated for the expert alone).
-- Weight decay: keep 1e-5 on matmul weights, 0 on norms/embeddings
-  (param-group filter by name).
+DDP currently wraps only the expert. With the trunk live, introduce
+`BijouTrainStep(nn.Module)` owning the BijouModel: `forward(batch,
+noise, tau)` = prefix-encode (with grad) + expert velocity; DDP wraps
+that when any unfreeze flag is on (`gradient_as_bucket_view`,
+`static_graph=True` — fixed layer usage). Frozen mode keeps the
+current expert-only wrap, byte-identical, regression-tested. Find
+-unused-parameters stays off (all wrapped params participate:
+embeddings/PLE are excluded from the wrap by `requires_grad=False`).
 
-## 6. Distributed training changes
+## 6. Checkpoint format (existing checkpoints keep loading — hard requirement)
 
-DDP currently wraps only the expert; with the trunk live, both modules'
-grads must be produced inside one wrapped forward for bucket accounting.
-Introduce `BijouTrainStep(nn.Module)` owning the BijouModel whose
-`forward(batch tensors, noisy_actions, tau)` runs prefix-encode (with
-grad) + expert velocity; DDP wraps that when `--trunk-lr > 0`
-(`gradient_as_bucket_view`, no buffer broadcast). Frozen mode keeps the
-current expert-only wrap — byte-identical behavior, regression-tested.
-`static_graph=True` is safe (fixed layer usage) and helps with the large
-bucket count. Backbone buffers (RoPE tables) constant as before.
+Current schema is the `loading.py` dataclasses (CheckpointMetadata /
+CheckpointInfo / CheckpointTrainArgs). Changes:
 
-## 7. Checkpoint format (breaking-ish, kept backward compatible)
+- When any trunk param trained: write `backbone.safetensors` (bf16
+  cast of the fp32 masters — full truncated-trunk state, ~4.3 GB) next
+  to `expert.safetensors`. Metadata gains OPTIONAL fields
+  (`unfreeze_text_lr`, `unfreeze_vision_lr`) with defaults so old
+  json parses unchanged; train args ride along as they already do.
+- `from_checkpoint`: if `backbone.safetensors` exists, load it over
+  the HF-resolved truncated backbone; else exactly today's behavior.
+  Old checkpoints: no new file, no new fields → byte-identical load
+  path. Eval/rollout pick up adapted trunks transparently (laptop
+  VRAM unchanged: bf16 trunk is the same size).
+- `--init-from` a trunk-trained checkpoint with flags at 0 = freeze
+  the adapted trunk (adapt once, iterate experts cheaply). The
+  ExpertConfig guard is untouched (unfreeze flags are train args, not
+  architecture) — so cont45k init-from with unfreeze flags on is
+  allowed by design, which is the whole point.
+- `optimizer.pt` grows to ~30–35 GB (fp32 masters + moments). Bump
+  `--save-every`, and delete optimizers of non-final steps as the run
+  progresses (the owner already prunes these manually).
 
-- New per-checkpoint file `backbone.safetensors` (trunk weights, saved
-  bf16 ~4.3 GB; fp32 masters live only inside `optimizer.pt`, which grows
-  to ~35 GB — bump `--save-every`, consider keep-last-k pruning).
-- `bijou_config.json` gains `"trunk_trained": true` + trunk lr.
-- `loading.from_checkpoint`: if `backbone.safetensors` exists, load it
-  over the HF backbone after truncation; else current behavior. Old
-  checkpoints remain loadable unchanged; eval/rollout pick up trained
-  trunks transparently.
-- `--resume`/`--init-from` follow existing semantics; `--init-from` a
-  trunk-trained checkpoint with `--trunk-lr 0` = freeze the adapted trunk
-  (useful: adapt once, iterate experts cheaply afterwards).
+## 7. Throughput expectation
 
-## 8. Throughput expectation
+Today's step split: prefix fwd 79% (of which vision ~1/3), expert
+fwd+bwd 20%. Text-only unfreeze adds ≈2× the text-trunk forward as
+backward, vision stays forward-only no-grad: expect **~2–2.3× step
+time** at the same batch (measure on the new box; the original 2–2.5×
+estimate stands). 20k steps DDP4 at batch 64/rank ≈ one overnight.
 
-Backward through the trunk ≈ 2× its forward; step time roughly 2–2.5×
-current (~1.15 s → ~2.4–2.9 s at batch 64 global-256 equivalents, or hold
-~1.5 s at batch 32/rank). 20k steps ≈ 14–17 h on the 4× box. Budget one
-overnight per arm.
+## 8. Validation ladder (before any long run)
 
-## 9. Validation ladder (before any long run)
+1. Unit grad-flow tests + flags-off oracle EXACT (CPU tiny backbone);
+   record flags-on oracle values loudly.
+2. Memory probe at target batch on one GPU; report peak.
+3. 2-rank gloo smoke for the DDP wrap switch.
+4. 200-step run from cont45k init: loss should start near cont45k's
+   final (~0.089) and not spike; compare against a frozen 200-step
+   control from the same init (loss continuity, grad norms per group).
+5. The real run: frozen-continue vs `--unfreeze-text-lr 1e-5`
+   continue, same budget from the same init, scored on community
+   holdout/train + rig zero-shot + full rig-holdout after a paired rig
+   ft. Decision metric: does trunk adaptation move holdout AND
+   rig-side numbers (representation win), or only train-side
+   (capacity memorization)? Re-run the acuity probe on the adapted
+   trunk — K-stage RMSE and the object-centricity ratio are now
+   baseline-ed (17.3 px / 1.9×) and should move if the mechanism is
+   what we think.
 
-1. Unit: grad-flow assertions (tiny backbone) — nonzero trunk grads with
-   flag on, zero with flag off; expert grads unchanged bitwise with flag
-   off (regression oracle 1.9777).
-2. Memory probe: one H100, target batch, report peak.
-3. 2-rank gloo smoke (mechanics under DDP wrap change).
-4. 200-step 4-GPU run: loss continuity vs frozen baseline at same init
-   (first ~20 steps should track closely; divergence pattern sanity).
-5. A/B 20k: frozen vs `--trunk-lr 1e-5` from the same `--init-from`,
-   scored with `bijou.eval` on in-dist + held-out-rig + (once built)
-   held-out episodes. Held-out is where trunk adaptation should pay;
-   if it only moves in-dist numbers, it's memorizing with more capacity.
+## 9. Risks
 
-## 10. Risks
+- Feature drift under a warm expert: the expert was trained against
+  frozen features; the trunk moving underneath it can transiently
+  worsen loss. Low trunk LR + shared warmup mitigates; step-4 probe
+  catches it.
+- Language/vision forgetting: accepted for this deployment (narrow
+  instruction distribution); frozen embeddings help; not otherwise
+  mitigated. If instruction diversity ever matters, revisit.
+- Checkpoint bloat / slower loops: ~35 GB optimizers, prune
+  aggressively.
+- Silent parity regression: inference path untouched; gemma4 parity
+  tests stay as-is; flags-off oracle is the tripwire.
 
-- Language/vision forgetting → worse novel-instruction following
-  (mitigate: low trunk lr, freeze embeddings, LoRA arm as control).
-- Early-training destabilization from cold-expert gradients (mitigate:
-  freeze-then-thaw).
-- Checkpoint bloat and slower iteration loops.
-- The KV-export training path silently regressing inference parity —
-  keep the gemma4 HF-parity tests untouched (inference path unchanged).
+## Order of work
 
-## Suggested order of work
+1. Grad-path conditionality + `requires_grad` partitioning + unit
+   tests (self-contained).
+2. `BijouTrainStep` + DDP switch + param groups + autocast + fp32
+   trunk load; flags-off oracle check.
+3. Checkpoint write/read (`backbone.safetensors` + optional metadata
+   fields); round-trip test incl. an OLD checkpoint from HF.
+4. Memory/throughput probe on the next box; then ladder steps 4–5.
 
-1. Grad-path conditionality + unit tests (small, self-contained).
-2. `BijouTrainStep` + DDP wrap switch + param groups + autocast (+ fp32
-   trunk load), regression-oracle check.
-3. Checkpoint format + from_checkpoint loading.
-4. ZeRO-1 + (if needed) activation checkpointing.
-5. Memory/throughput probes, then the A/B.
-
-Estimated implementation: a focused day including validation, most of it
-in `train.py` + `loading.py`, ~zero changes inside `gemma4/` (the cache
-path already supports it).
+Estimate: a focused day of implementation + validation (most of it in
+`train.py`/`loading.py`; ~zero changes inside `gemma4/`), then one
+overnight for the A/B.
