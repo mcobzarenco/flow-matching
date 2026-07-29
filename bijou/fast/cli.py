@@ -4,7 +4,7 @@ Fits on LeRobot v3 collection roots / dataset dirs with per-dataset
 quantile normalization and writes an immutable tokenizer directory
 (fast_config.json, bpe.json, quantile_stats.json, fit_report.json) ready
 for hub upload. See ``bijou/fast/tokenizer.py`` for the algorithm and
-``docs/plan_ar_fast.md`` for the artifact lifecycle.
+``docs/architecture.md`` §8.3 for the artifact lifecycle.
 
 Deliberately self-contained on the data side (pathlib + pandas over
 parquet): pulling in bijou.data would drag torch/lerobot into a pure-CPU

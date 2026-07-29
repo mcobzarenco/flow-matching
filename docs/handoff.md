@@ -386,7 +386,7 @@ dead; next perf wins are length-bucketed batching (batch pads 452 vs
   --lr/--unfreeze-*-lr)**: `--expert-lr` plus `--text-lr` /
   `--vision-lr` (bijou.train) — omit a component's lr to keep it
   frozen (explicit 0 rejected loudly); they train the backbone per
-  `docs/plan_unfreeze_trunk.md`. Text set mirrors kv_stop_layer
+  `docs/architecture.md` §8.1. Text set mirrors kv_stop_layer
   exactly (full layers below the deepest stream; stop layer only
   input_layernorm + k/v proj + k_norm; PLE *projections* yes, PLE
   *tables*/embeddings/final norm/lm_head no; embed_vision in the text
@@ -544,14 +544,13 @@ code mid-experiment.
    adarms-bidir-h1536). adaRMS oracle (tiny, seed 0): 1.886/2.0928.
 5. **Perf**: length-bucketed batching, then torch.compile spike
    (backbone 79% of step). Profile numbers in §2.
-6. **NEXT BIG MOVE (owner-approved direction 2026-07-28)**: unfreeze
-   the E2B text trunk and continue from cont45k — updated plan in
-   `docs/plan_unfreeze_trunk.md` (`--text-lr` /
-   `--vision-lr`, vision expected frozen per the acuity
-   probe, embeddings/PLE frozen, fp32 masters + bf16 autocast, old
-   checkpoints load unchanged). LoRA arm DROPPED (engineering framing:
-   single continuation, not an attribution round). Implement flags →
-   validation ladder → A/B on the next box.
+6. **Backbone/expert architecture directions** — all consolidated in
+   `docs/architecture.md` §8 (trunk unfreezing §8.1 IMPLEMENTED +
+   evaluating; adaRMS §8.2 IMPLEMENTED + first arm in flight; AR
+   FAST-token co-training §8.3 proposed; stream-schedule re-test,
+   expert shape, backbone variants, sample-draws, throughput,
+   rejected/deprioritized). The three `plan_*.md` were subsumed there
+   2026-07-29.
 7. **Future ablation arms** (matched, holdout recipe): streams0016
    re-test at scale (rig-transfer hint — but see acuity probe: K4 is
    the sharpest positional stream, so a shallow-heavy schedule arm,
