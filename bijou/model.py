@@ -76,10 +76,11 @@ class BijouModel(nn.Module):
         ``attention_mask`` (True/1 = real token) as ``padding_mask``; it masks
         both the backbone's self-attention and the expert's cross-attention.
 
-        Shapes (P = prompt/prefix tokens = the encoded sequence length):
+        Shapes (P = prompt/prefix tokens = the encoded sequence length;
+        ``images`` = Σ per-sample camera images, not B):
           - input_ids: [B, P]
-          - pixel_values: [B, patches, 3·patch_size²]
-          - image_position_ids: [B, patches, 2]  ((x, y) spatial ids)
+          - pixel_values: [images, patches, 3·patch_size²]
+          - image_position_ids: [images, patches, 2]  ((x, y) spatial ids)
           - padding_mask (when present): [B, P]  (True = real token)
           - returns PrefixKV: streams[layer] = (key, value) each
             [B, kv_heads, P, head_dim]; padding_mask [B, P] or None

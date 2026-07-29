@@ -48,6 +48,11 @@ Batch & sequence:
 - `suffix` — expert token count `= 1 + chunk` (the `[state][a_1..a_chunk]`
   sequence; the expert's `S`)
 - `chunk` — action-chunk length in timesteps (`chunk_size`, default 50)
+- `images` — camera images in a batch, summed over samples (Σ per-sample
+  cameras — NOT `B`: samples contribute variable camera counts and the
+  processor flattens them; verified: a 2-cam + 1-cam pair collates to a
+  leading dim of 3). Inside the vision tower each image is one "batch"
+  row, so this is also the tower's leading axis.
 - `patches` — image patch tokens per padded grid (pre-pool)
 - `soft_tokens` — pooled vision soft tokens (valid tokens, flattened
   across the batch as the tower returns them)

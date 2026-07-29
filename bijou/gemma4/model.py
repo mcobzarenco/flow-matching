@@ -90,11 +90,11 @@ class Gemma4Model(nn.Module):
     ) -> Tensor:
         """Vision soft tokens projected into LM space.
 
-        Shapes:
-          - pixel_values: [B, patches, 3·patch_size²]
-          - image_position_ids: [B, patches, 2]  ((x, y) spatial ids)
+        Shapes (``images`` = camera images, Σ over samples — not B):
+          - pixel_values: [images, patches, 3·patch_size²]
+          - image_position_ids: [images, patches, 2]  ((x, y) spatial ids)
           - returns: [soft_tokens, hidden]  (valid soft tokens, flattened
-            across the batch)
+            across the images)
         """
         if self.vision_tower is None or self.embed_vision is None:
             raise ValueError("model was built without a vision tower")
@@ -118,10 +118,10 @@ class Gemma4Model(nn.Module):
         replaced by vision soft tokens when ``pixel_values`` /
         ``image_position_ids`` are given.
 
-        Shapes (T = seen + S):
+        Shapes (T = seen + S; ``images`` = Σ per-sample camera images):
           - input_ids: [B, S]
-          - pixel_values (when present): [B, patches, 3·patch_size²]
-          - image_position_ids (when present): [B, patches, 2]
+          - pixel_values (when present): [images, patches, 3·patch_size²]
+          - image_position_ids (when present): [images, patches, 2]
           - padding_mask (when present): [B, T]
           - position_ids (when present): [B, S]
           - returns Gemma4Output(logits [B, S', vocab] with
@@ -169,10 +169,10 @@ class Gemma4Model(nn.Module):
         of the model without running the decoder — used by e.g. the Bijou
         prefix encoder.
 
-        Shapes:
+        Shapes (``images`` = Σ per-sample camera images):
           - input_ids: [B, S]
-          - pixel_values (when present): [B, patches, 3·patch_size²]
-          - image_position_ids (when present): [B, patches, 2]
+          - pixel_values (when present): [images, patches, 3·patch_size²]
+          - image_position_ids (when present): [images, patches, 2]
           - returns (inputs_embeds [B, S, hidden],
             per_layer_inputs [B, S, num_layers, ple_dim])
         """

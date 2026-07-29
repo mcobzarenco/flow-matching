@@ -116,12 +116,14 @@ class VisionPatchEmbedder(nn.Module):
         pixel_position_ids: Tensor,
         padding_positions: Tensor,
     ) -> Tensor:
-        """Embed raw patches + 2D learned position; returns [B, patches, hidden].
+        """Embed raw patches + 2D learned position; returns
+        [images, patches, hidden].
 
-        Shapes:
-          - pixel_values: [B, patches, 3·patch_size²]  (in [0, 1])
-          - pixel_position_ids: [B, patches, 2]  ((x, y), (-1, -1) = pad)
-          - padding_positions: [B, patches]  (bool, True = pad)
+        Shapes (``images`` leads throughout the tower — each camera image
+        is one batch row here, Σ per-sample cameras at the model level):
+          - pixel_values: [images, patches, 3·patch_size²]  (in [0, 1])
+          - pixel_position_ids: [images, patches, 2]  ((x, y), (-1, -1) = pad)
+          - padding_positions: [images, patches]  (bool, True = pad)
         """
         pixel_values = 2 * (pixel_values - 0.5)
         pixel_values = pixel_values.to(self.input_proj.weight.dtype)
@@ -175,8 +177,8 @@ class VisionRotaryEmbedding(nn.Module):
         """2D spatial RoPE tables.
 
         Shapes:
-          - position_ids: [B, patches, 2]
-          - returns (cos, sin), each [B, patches, head_dim]  (the two
+          - position_ids: [images, patches, 2]
+          - returns (cos, sin), each [images, patches, head_dim]  (the two
             spatial dimensions' tables concatenated)
         """
         inv_freq_expanded = (
@@ -203,7 +205,8 @@ def apply_multidimensional_rope(
     ndim: int = 2,
 ) -> Tensor:
     """Split the head dim into ``ndim`` equal parts and rotate each with its
-    spatial dimension's cos/sin table. x [B, P, H, D]; cos/sin [B, P, D]."""
+    spatial dimension's cos/sin table. x [images, patches, heads, head_dim];
+    cos/sin [images, patches, head_dim]."""
     per_dim = 2 * (x.shape[-1] // (2 * ndim))
     split_sizes = [per_dim] * ndim
     x_parts = torch.split(x, split_sizes, dim=-1)
@@ -288,12 +291,13 @@ class VisionAttention(nn.Module):
         position_embeddings: tuple[Tensor, Tensor],
         attention_mask: MaskSpec,
     ) -> Tensor:
-        """Bidirectional patch self-attention; returns [B, patches, hidden].
+        """Bidirectional patch self-attention; returns
+        [images, patches, hidden].
 
         Shapes:
-          - hidden_states: [B, patches, hidden]
-          - position_embeddings: (cos, sin), each [B, patches, head_dim]
-          - attention_mask.tensor: [B, 1, patches, patches]
+          - hidden_states: [images, patches, hidden]
+          - position_embeddings: (cos, sin), each [images, patches, head_dim]
+          - attention_mask.tensor: [images, 1, patches, patches]
         """
         batch, seq_len, _ = hidden_states.shape
         hidden_shape = (batch, seq_len, -1, self.head_dim)
@@ -363,7 +367,7 @@ class VisionMLP(nn.Module):
         """Gated GLU MLP; shape-preserving.
 
         Shapes:
-          - x: [B, patches, hidden]  (returns [B, patches, hidden])
+          - x: [images, patches, hidden]  (returns [images, patches, hidden])
         """
         return self.down_proj(self.act_fn(self.gate_proj(x)) * self.up_proj(x))
 
@@ -413,12 +417,12 @@ class VisionEncoderLayer(nn.Module):
         position_embeddings: tuple[Tensor, Tensor],
         attention_mask: MaskSpec,
     ) -> Tensor:
-        """self-attn -> MLP encoder block; returns [B, patches, hidden].
+        """self-attn -> MLP encoder block; returns [images, patches, hidden].
 
         Shapes:
-          - hidden_states: [B, patches, hidden]
-          - position_embeddings: (cos, sin), each [B, patches, head_dim]
-          - attention_mask.tensor: [B, 1, patches, patches]
+          - hidden_states: [images, patches, hidden]
+          - position_embeddings: (cos, sin), each [images, patches, head_dim]
+          - attention_mask.tensor: [images, 1, patches, patches]
         """
         residual = hidden_states
         hidden_states = self.input_layernorm(hidden_states)
@@ -465,12 +469,12 @@ class VisionEncoder(nn.Module):
         valid_mask: Tensor,
         pixel_position_ids: Tensor,
     ) -> Tensor:
-        """Run the ViT encoder; returns [B, patches, hidden].
+        """Run the ViT encoder; returns [images, patches, hidden].
 
         Shapes:
-          - inputs_embeds: [B, patches, hidden]
-          - valid_mask: [B, patches]  (bool, True = real patch)
-          - pixel_position_ids: [B, patches, 2]
+          - inputs_embeds: [images, patches, hidden]
+          - valid_mask: [images, patches]  (bool, True = real patch)
+          - pixel_position_ids: [images, patches, 2]
         """
         attention_mask = MaskSpec(
             tensor=build_bidirectional_mask(valid_mask, inputs_embeds.dtype),
@@ -522,12 +526,12 @@ class VisionPooler(nn.Module):
         """Spatial 3x3 average-pool patches to soft tokens.
 
         Shapes:
-          - hidden_states: [B, patches, hidden]
-          - pixel_position_ids: [B, patches, 2]
-          - padding_positions: [B, patches]  (bool, True = pad)
+          - hidden_states: [images, patches, hidden]
+          - pixel_position_ids: [images, patches, 2]
+          - padding_positions: [images, patches]  (bool, True = pad)
           - output_length: soft_tokens-per-image (int, = patches // kernel²)
-          - returns (pooled [B, output_length, hidden],
-            valid_mask [B, output_length] bool)
+          - returns (pooled [images, output_length, hidden],
+            valid_mask [images, output_length] bool)
         """
         if output_length > hidden_states.shape[1]:
             raise ValueError(
@@ -571,11 +575,11 @@ class VisionModel(nn.Module):
     @override
     def forward(self, pixel_values: Tensor, pixel_position_ids: Tensor) -> Tensor:
         """Patch-embed -> ViT encoder -> spatial pool; returns the valid
-        soft tokens flattened across the batch.
+        soft tokens flattened across the images.
 
         Shapes:
-          - pixel_values: [B, patches, 3·patch_size²]
-          - pixel_position_ids: [B, patches, 2]  ((-1, -1) = pad)
+          - pixel_values: [images, patches, 3·patch_size²]
+          - pixel_position_ids: [images, patches, 2]  ((-1, -1) = pad)
           - returns: [soft_tokens, hidden]  (padding stripped)
         """
         kernel = self.config.pooling_kernel_size

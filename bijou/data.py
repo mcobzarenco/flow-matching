@@ -50,12 +50,27 @@ class CollatedBatch:
     whose camera keys vary — those stay dicts).
 
     ``state``/``actions`` are raw (unnormalized); the per-sample MEAN_STD
-    stats of each sample's own dataset ride along ([B, dim] each) so the
-    loss and eval normalize per dataset.
+    stats of each sample's own dataset ride along so the loss and eval
+    normalize per dataset.
 
     ``has_padding`` is computed CPU-side in the dataloader workers so the
     training loop never needs a device->host sync to decide whether to build
     padding masks.
+
+    Shapes (P = padded prompt width of THIS batch; ``images`` = Σ
+    per-sample camera images, not B — samples contribute variable camera
+    counts and the processor flattens them):
+      - input_ids: [B, P]
+      - attention_mask: [B, P]  (1 = real token, 0 = right padding)
+      - pixel_values: [images, patches, 3·patch_size²]  (raw RGB in [0, 1])
+      - image_position_ids: [images, patches, 2]  ((x, y) spatial ids)
+      - state: [B, state_dim]
+      - actions: [B, chunk, action_dim]
+      - action_is_pad: [B, chunk]  (bool; True = past the episode end —
+        the value there is the last real action repeated, see
+        flow_matching_loss)
+      - action_mean / action_std: [B, action_dim]
+      - state_mean / state_std: [B, state_dim]
     """
 
     input_ids: Tensor
@@ -179,7 +194,10 @@ class DatasetStats:
     def item_tensors(self) -> dict[str, Tensor]:
         """The four per-item stats tensors exactly as training items carry
         them (materialized fresh per call — see the class docstring for why
-        they are not stored as tensors)."""
+        they are not stored as tensors).
+
+        Shapes: action_mean/action_std [action_dim]; state_mean/state_std
+        [state_dim] (per item — the collator stacks in the batch axis)."""
         return {
             "action_mean": torch.tensor(self.action_mean),
             "action_std": torch.tensor(self.action_std),
@@ -616,10 +634,22 @@ class PrefixCollator:
         return {**self.__dict__, "_processor": None}
 
     def _to_pil(self, image: Tensor) -> Image.Image:
+        """One camera frame [3, height, width] (float in [0, 1], CHW as
+        LeRobot decodes video) -> PIL RGB image for the processor."""
         array = (image.clamp(0, 1) * 255).to(torch.uint8).permute(1, 2, 0).numpy()
         return Image.fromarray(array)
 
     def __call__(self, items: list[dict[str, Any]]) -> CollatedBatch:
+        """Collate ``B = len(items)`` LeRobot items into one CollatedBatch
+        (shapes in its docstring). Per-item inputs consumed here:
+          - observation.images.*: [3, height, width] each  (float, [0, 1])
+          - observation.state: [state_dim]
+          - action: [chunk, action_dim]
+          - action_is_pad: [chunk]  (bool)
+          - action_mean/action_std: [action_dim]; state_mean/state_std:
+            [state_dim]  (attached by StatsAttachedDataset)
+          - task: str  (overridden by ``instruction`` when set)
+        """
         if self._processor is None:
             # Lazy construction (not import): the collator is pickled into
             # spawned dataloader workers, each of which rebuilds it.
@@ -671,7 +701,9 @@ class PrefixCollator:
 
 
 def encode_prefix(model: BijouModel, batch: CollatedBatch) -> PrefixKV:
-    """``batch`` must already be device-resident."""
+    """``batch`` must already be device-resident. No-grad wrapper over
+    BijouModel.encode_prefix (shapes there); training with a live trunk
+    uses BijouTrainStep instead, which encodes under grad."""
     padding_mask = batch.attention_mask if batch.has_padding else None
     with torch.no_grad():
         return model.encode_prefix(
