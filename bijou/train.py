@@ -3,9 +3,11 @@
 The frozen truncated backbone encodes the multimodal prefix per batch
 (no grad); the expert is optimized with the π0/SmolVLA flow-matching recipe:
 τ ~ Beta(1.5, 1) (scaled into (0, 1)), x_τ = τ·ε + (1−τ)·actions, MSE against
-the velocity target ε − actions, with episode-boundary action padding masked
-out. Actions and state are MEAN_STD-normalized **per dataset** (each sample
-uses its own dataset's stats, the π0/SmolVLA convention): 59–95% of the
+the velocity target ε − actions, over the full chunk — episode-boundary
+chunks carry repeat-last-action targets (hold still after task completion)
+rather than masked padding. Actions and state are MEAN_STD-normalized
+**per dataset** (each sample uses its own dataset's stats, the π0/SmolVLA
+convention): 59–95% of the
 aggregate action variance across the community collections is between-dataset
 rig offsets that images cannot see, and normalizing them away is what makes
 the state→action identity learnable (measured: aggregate normalization left
@@ -255,6 +257,15 @@ def flow_matching_loss(
     """``batch`` must already be device-resident; no transfers happen here.
     Actions/state are normalized with each sample's own dataset stats.
 
+    Episode-boundary chunks train on the full ``chunk`` length with
+    repeat-last-action targets: lerobot's delta-timestamps query clamps
+    indices to the episode range (dataset_reader._get_query_indices), so
+    positions past the end already hold the final real action — the
+    desired "reach and hold" target — and ``action_is_pad`` is deliberately
+    ignored here (decision 2026-07-29: full-chunk targets over masking;
+    the expert attends every position, so masked-out padding was still
+    silently shaping predictions). Eval stays real-steps-only.
+
     ``velocity_model`` is the expert (or its DDP wrapper under torchrun —
     training forwards must go through the wrapper for gradient hooks);
     call convention (prefix, state, noisy_actions, tau) is shared by
@@ -265,7 +276,6 @@ def flow_matching_loss(
         :,
     ]
     state = (batch.state - batch.state_mean) / batch.state_std
-    valid = ~batch.action_is_pad
 
     noise = torch.randn_like(actions)
     # π0's time distribution: Beta(1.5, 1) squeezed into (0, 1).
@@ -280,9 +290,7 @@ def flow_matching_loss(
     target = noise - actions
 
     velocity = velocity_model(prefix, state, noisy_actions, tau)
-    mse = (velocity.float() - target.float()).pow(2)
-    # valid [B, chunk] indexes the first two dims of mse [B, chunk, dim].
-    return mse[valid].mean()
+    return (velocity.float() - target.float()).pow(2).mean()
 
 
 def trainable_text_parameters(model: BijouModel) -> Iterator[torch.nn.Parameter]:

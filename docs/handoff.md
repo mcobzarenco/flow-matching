@@ -427,6 +427,26 @@ dead; next perf wins are length-bucketed batching (batch pads 452 vs
 
 ## 6. Recent code changes a fresh session must know
 
+- **Full-chunk training targets (2026-07-29, owner decision — option
+  (a) repeat-last)**: `flow_matching_loss` no longer masks
+  episode-boundary padding — the loss is the plain mean over all 50
+  steps. No new code fills the tail: lerobot's delta-timestamps query
+  CLAMPS indices to the episode range, so padded positions already
+  hold the final real action repeated (verified elementwise on v1) =
+  "hold still after completion" targets. Rationale: the expert attends
+  every chunk position (directly under bidirectional), so masked
+  padding still shaped predictions; the alternative (restrict starts
+  to full chunks) would have cost ~12% of start positions — rejected
+  via the episode-length scan (`reports/episode_lengths.json`: <50f
+  episodes are 0.47% eps / 0.012% frames, 0 on rig). Eval and the
+  train-probe `validate` still score REAL steps only (`action_is_pad`
+  stays in the collated batch for them). Oracle values UNCHANGED
+  (1.8896/1.7237) — the 2-sample dev batch contains no boundary
+  chunk, so the oracle does NOT exercise this path; the elementwise
+  clamp check above is the regression evidence. NOTE: runs trained
+  after this see slightly different gradients on boundary chunks than
+  the whole ledger lineage; loss curves remain comparable in practice
+  (boundary chunks are a small minority of samples).
 - **Component-lr flags (2026-07-28, renamed same day from
   --lr/--unfreeze-*-lr)**: `--expert-lr` plus `--text-lr` /
   `--vision-lr` (bijou.train) — omit a component's lr to keep it

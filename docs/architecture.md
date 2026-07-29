@@ -157,8 +157,17 @@ lerobot's π0/SmolVLA convention. With ε ~ N(0, I) and clean chunk a:
     x_τ = τ·ε + (1−τ)·a          target  u = ε − a
     τ ~ Beta(1.5, 1) → (0.001, 1]   (mass toward τ=1)
 
-MSE of the expert's velocity against u, masked to non-padded action steps
-(episode-boundary padding carries no loss). Sampling integrates τ from 1
+MSE of the expert's velocity against u over the FULL chunk: episode-
+boundary chunks carry repeat-last-action targets (lerobot's delta-
+timestamps query clamps indices to the episode range, so tail positions
+hold the final real action — verified elementwise on v1). Decision
+2026-07-29, replacing the earlier masked-out padding: the expert attends
+every chunk position (directly under bidirectional self-attention), so
+masked padding still shaped predictions invisibly, and "hold the last
+action" is the correct post-completion behavior. The scan
+(`reports/episode_lengths.json`) sized the alternative — full-chunk-only
+start sampling — at ~12% of start positions lost; rejected. Eval still
+scores real steps only. Sampling integrates τ from 1
 (noise) to 0 with exact endpoints; **Heun** (2nd-order predictor-
 corrector, 2 evals/step) is default — ~2× lower integration error than
 Euler at equal cost; Heun-10 is the eval convention. The τ→0 corrector
