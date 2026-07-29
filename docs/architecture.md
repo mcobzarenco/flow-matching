@@ -350,7 +350,17 @@ of the expert by τ. A per-layer zero-init head `SiLU → Linear(hidden →
 that is a LayerNorm artifact (LayerNorm has a bias to condition); RMSNorm
 is bias-free by design, so the additive τ-injection is supplied by the
 gate instead, and scale modulates the one thing an RMSNorm output is (a
-magnitude). **Identity at init** (γ=gate=0 ⇒ every block is the identity ⇒
+magnitude). NOTE (verified against openpi source 2026-07-29): π0.5's
+adaRMS **keeps the shift** — `normed·(1+scale) + shift`, gated residual,
+zero-init, applied at their pre-norm-only Gemma blocks. Our no-shift
+design is a deliberate deviation, not a match (their gate has no
+post-norm to act through; ours does). β's unique capability is injecting
+a τ-dependent vector independent of current activations — one
+composition step more direct than gate-through-state-token, plausibly
+relevant exactly at high τ (where OOD cost concentrates). If the per-τ
+mechanism probe on an adarms checkpoint shows the high-τ gap NOT
+shrinking, a β arm is the targeted follow-up (+hidden per sublayer head:
+229M→343M modulation at h1536). **Identity at init** (γ=gate=0 ⇒ every block is the identity ⇒
 zero velocity field), so it is a from-scratch-only architecture (cannot
 warm-start additive→adarms; the guard enforces this). **Justification.**
 The τ-diagnostic's ~1 MAE integration gap + mid-τ roughening: the marginal
