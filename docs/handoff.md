@@ -207,6 +207,26 @@ dead; next perf wins are length-bucketed batching (batch pads 452 vs
 
 ## 3. In flight right now
 
+- **RUNNING: `adarms-bidir-h1536-40k-ddp2`** (launched ~00:53 UTC
+  2026-07-29, 2×H100 box, tmux `adarms`, log
+  `~/adarms_bidir_h1536_console.log`, launcher
+  `~/launch_adarms_bidir_h1536.sh`, wandb zi7qw0sw): FROM-SCRATCH
+  architecture probe — **adaRMS** τ-conditioning + **bidirectional**
+  self-attn + **hidden 1536** (E2B width; intermediate 6144, 8+8
+  heads; expert **1037M** fp32) + **--fps 30** (30fps datasets only:
+  993 datasets / 23.6M frames after filter; both rig sets are 30fps so
+  kept), frozen backbone, expert-lr 1e-4, 40k steps, warmup 500,
+  holdout 0.1/seed 0, global batch 128, save @5000. Healthy:
+  identity-at-init descent (loss 1.95→0.47 by step 190), ~1.05 s/step
+  (≈ 12h ETA), 42GB/80GB per rank. **NOT comparable to cont45k** (new
+  arch AND --fps 30 changes the holdout frame set) — a fresh
+  architecture exploration. Prior caution: the 4-arm ablation found
+  bidirectional catastrophic cross-rig (17.1 vs 13.3); this re-tests it
+  at scale + adaRMS + E2B width (owner's call).
+- Note: the 8×A100 unfreeze r2 (`unftext15k`) is a SEPARATE run on the
+  OTHER box (150.136.37.72) — see below / wandb; still owed a probe
+  readout.
+
 - **RUNNING: `community-v1v2v3-unftext15k-r2-ddp8`** (launched 19:03
   UTC 2026-07-28, tmux `mainline` on the 8×A100 box, log
   `~/unftext15k_r2_console.log`, launcher
@@ -227,10 +247,11 @@ dead; next perf wins are length-bucketed batching (batch pads 452 vs
   eval_chunk_mae lags, the 5×-slower expert is tracking trunk feature
   drift too loosely.
 - **2×H100 box `ssh ubuntu@192.222.54.70`** (owner-provisioned
-  2026-07-28): FAST tokenizer fit done (below). Has all 3 community
-  collections + both rig sets under `~/datasets/mcobzarenco/` (rig too
-  — owner re-downloaded there; the `marius/` copies were removed).
-  flow-matching + lerobot-dataset-tools cloned.
+  2026-07-28): FAST tokenizer fit done (below); now RUNNING the adaRMS
+  exploration (§3). Has all 3 community collections + both rig sets
+  under `~/datasets/mcobzarenco/` (rig too — owner re-downloaded there;
+  the `marius/` copies were removed). flow-matching +
+  lerobot-dataset-tools cloned. 52 vCPU, 442GB RAM, wandb login done.
 - **DONE 2026-07-28 — quantile backfill + FAST tokenizer v1**:
   ldtools.backfill_quantile_stats (exact corpus q01/q10/q50/q90/q99,
   correcting LeRobot's mean-of-episode-quantiles bug) run on all 3
@@ -494,13 +515,12 @@ code mid-experiment.
    after verifying camera device mapping; try `--sample-steps 10`;
    optionally add `--sample-draws N` (mean-of-N; ~20 lines in rollout;
    check unimodality on the sampling report first).
-4b. **adaRMS time conditioning** (`docs/plan_adarms_time.md`, planned
-   2026-07-28): DiT-style per-layer τ modulation, identity at init,
-   selectable via `--time-conditioning {additive,adarms}` (additive
-   stays default + byte-identical). Motivated by the Phase-0 gap (§2:
-   ~1 MAE recoverable integration error, mid-τ ft roughening). Always
-   from-scratch (+37% params, no additive warm-start). A matched A/B
-   arm, not on the critical path.
+4b. **adaRMS time conditioning** — IMPLEMENTED 2026-07-28
+   (`--time-conditioning adarms`, scale+gate no-shift RMSNorm-faithful,
+   identity at init, additive default byte-identical; oracle 1.8896/
+   1.7237 exact; old checkpoints load unchanged; tests in
+   `tests/test_expert.py`). First run in flight (§3,
+   adarms-bidir-h1536). adaRMS oracle (tiny, seed 0): 1.886/2.0928.
 5. **Perf**: length-bucketed batching, then torch.compile spike
    (backbone 79% of step). Profile numbers in §2.
 6. **NEXT BIG MOVE (owner-approved direction 2026-07-28)**: unfreeze
