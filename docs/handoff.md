@@ -272,21 +272,25 @@ dead; next perf wins are length-bucketed batching (batch pads 452 vs
   on HF **with optimizer**
   (`bijou_adarms_bidir_h1536_40k_ddp2/step_040000`); reports/JSONs
   copied to `reports/`. The 2×H100 box is now idle.
-- **RUNNING: `community-v1v2v3-unftext30k-r2cont-ddp8`** (8×A100 box
-  150.136.37.72, tmux `mainline2`, log `~/unftext30k_r2cont_console.log`,
-  launcher `~/launch_unfreeze_text30k_resume.sh`, wandb q3d7eq5o):
-  **--resume** continuation of unftext15k_r2 from step_015000 for +15k
-  (owner's overnight instruction), reusing optimizer moments + the
-  adapted trunk. --steps 30000, LR re-heated at 15000 from ~2e-6 to
-  ~1.11e-5 (cosine re-evaluated over 30k — the known --resume behavior,
-  accepted). Same save-dir; ETA ~12:15 UTC. Launched 04:08 UTC 2026-07-29.
-- **unftext15k_r2 FINISHED** (step 15000, holdout eval 7.16 / train
-  6.30): unfrozen text @2e-5 for 15k ended STILL ABOVE frozen cont45k's
-  6.85 on the same holdout frames — in-distribution, text-trunk
-  unfreezing did not beat the frozen baseline (feature-drift watch item
-  confirmed; the expert was tuned to frozen features). Real verdict
-  needs RIG-side scoring (rig data not on that box; on laptop/HF). The
-  +15k resume tests whether more training + re-heated LR helps.
+- **STOPPED + PARTIALLY UPLOADED: paired rig fine-tunes** (8×A100 box,
+  2026-07-29): arm A `ft-rig-from-unftext25k-ddp4` (init-from
+  unftext15k_r2 step_025000, adapted trunk) and arm B
+  `ft-rig-from-cont45k-ddp4` (init-from cont45k, vanilla trunk) — both
+  rig datasets, backbone UNFROZEN (--text-lr 2e-5 --expert-lr 2e-5),
+  10k steps, save @2000, holdout 0.1/seed 0, seed 7 paired. Owner
+  killed arm B at ~2.1k and arm A at ~7.6k (arm A loss ~0.010 by then).
+  **Arm A checkpoints step_002000/004000/006000 are on HF weights-only**
+  (`bijou_ft_rig_from_unftext25k_ddp4/`); arm B's 2k and all optimizers
+  discarded with the box. The A-vs-B paired verdict is dead; what
+  remains possible is offline-scoring arm A's 2k/4k/6k on the full
+  3,403-frame rig holdout (2×H100 box has both rig datasets) to pick
+  the best pre-overfit checkpoint.
+- **unftext lineage CLOSED**: r2 15k finished at holdout 7.16 / train
+  6.30 (above frozen cont45k's 6.85 in-training-probe terms, but the
+  offline apples-to-apples in §2 shows 15k/25k modestly BEAT frozen on
+  both community and rig sides). The --resume continuation
+  (r2cont, +15k re-heated) was stopped by owner at ~26,650 (hovering
+  ~7.2–7.5, not improving); step_025000 on HF weights-only.
 - PITFALL (hard-won overnight): `pgrep -f <pattern>` MATCHES THE SSH
   COMMAND STRING ITSELF when the pattern text appears in the command —
   a completion-detector using `pgrep -f bijou.train` self-matched every
@@ -294,25 +298,17 @@ dead; next perf wins are length-bucketed batching (batch pads 452 vs
   `pgrep -fc "[b]ijou.train"` (or match torchrun / check GPU mem). No
   harm done (GPUs verified free before the manual launch).
 
-- **RUNNING: `community-v1v2v3-unftext15k-r2-ddp8`** (launched 19:03
-  UTC 2026-07-28, tmux `mainline` on the 8×A100 box, log
-  `~/unftext15k_r2_console.log`, launcher
-  `~/launch_unfreeze_text15k.sh`): unfrozen-TEXT-trunk continuation r2
-  — init-from cont45k step_045000, **--expert-lr 2e-5 --text-lr 2e-5**
-  (single LR, π0-style), grad-clip 10.0, warmup 500, **15k steps**
-  (owner target ~14h; measured early pace ~2.0 s/step → likely ~9h),
-  batch 32×8 = global 256, holdout 0.1/seed 0, probes 256 (cont45k
-  eval frames; reference 6.85), save @2500, seed 13, NO --fps filter.
-  Input pipeline fixed and VERIFIED (workers 16, prefetch 8, decoder
-  cache 8): sustained 8×100% GPU vs r1's constant per-rank 0% stalls;
-  host load 35 vs 63.
-  **History**: r0 aborted @~170 (grad-clip 1.0 renormalized every step
-  ~4×; → 10.0). r1 aborted @~1.8k (expert peak 1e-4 re-heated the warm
-  expert: loss 0.104→0.113 rising, probes 8.1–8.6 vs 6.85 — cont45k
-  needed ~35k steps to anneal the same transient; unrecoverable in a
-  short cosine). Watch item for r2: if train_mae recovers but
-  eval_chunk_mae lags, the 5×-slower expert is tracking trunk feature
-  drift too loosely.
+- **8×A100 box 150.136.37.72: idle, owner about to DELETE it.**
+  Everything important is off-box (arm A checkpoints + r2 15k/25k
+  weights on HF; eval JSONs/reports in `reports/`; launchers in
+  `outputs/`; wandb synced). Accepted losses: r2 optimizer states
+  (lineage can never be warm-resumed), r2 intermediates 2.5k–22.5k,
+  arm B's step_002000.
+  Unfreeze-run history worth keeping: r0 aborted @~170 (grad-clip 1.0
+  renormalized every step ~4× → use 10.0); r1 aborted @~1.8k (expert
+  peak 1e-4 re-heats a warm expert into a rising-loss transient → use
+  2e-5); r2's input pipeline fix (workers 16, prefetch 8, decoder
+  cache 8) sustained 8×100% GPU.
 - **2×H100 box `ssh ubuntu@192.222.54.70`** (owner-provisioned
   2026-07-28): FAST tokenizer fit done (below); adaRMS run finished —
   box idle. Has all 3 community collections + both rig sets
