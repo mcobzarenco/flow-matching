@@ -19,7 +19,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import contextlib
 import re
 import sys
 import time
@@ -157,16 +156,13 @@ def run_judge(
 
     new_tokens = output_ids[0][input_len:]
     decoded = processor.decode(new_tokens, skip_special_tokens=False)
-
-    text: str | None = None
-    # Schema-less tokenizers raise freely inside parse_response; the
-    # thought-channel strip below is the fallback either way.
-    with contextlib.suppress(Exception):
-        parsed = processor.parse_response(decoded)
-        if isinstance(parsed, dict):
-            text = str(parsed.get("content", ""))
-    if not text:
-        text = strip_thought_channel(decoded)
+    # The regex strip is the one and only extraction path. The processor's
+    # parse_response looks like the official alternative but is not usable
+    # here: probed 2026-07-30 under transformers 5.14.1 + gemma-4-12B-it,
+    # it raises unconditionally when called without `prefix=` (the tokenized
+    # prompt) — an earlier port wrapped it in suppress(Exception), which
+    # only hid that the fallback was doing all the work.
+    text = strip_thought_channel(decoded)
 
     usage = {"input_tokens": input_len, "output_tokens": int(new_tokens.shape[-1])}
     return text, usage, elapsed
