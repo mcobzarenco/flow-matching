@@ -68,12 +68,21 @@ class BijouModel(nn.Module):
         padding_mask: Tensor | None = None,
     ) -> PrefixKV:
         """Run the truncated backbone over the multimodal prefix and export
-        the expert's K/V streams. Cache the result across flow steps (and, if
-        the observation is unchanged, across replans).
+        the expert's K/V streams (returns a PrefixKV of width P). Cache the
+        result across flow steps (and, if the observation is unchanged,
+        across replans).
 
         For right-padded batches (mixed-length instructions), pass the HF
         ``attention_mask`` (True/1 = real token) as ``padding_mask``; it masks
         both the backbone's self-attention and the expert's cross-attention.
+
+        Shapes (P = prompt/prefix tokens = the encoded sequence length):
+          - input_ids: [B, P]
+          - pixel_values: [B, patches, 3·patch_size²]
+          - image_position_ids: [B, patches, 2]  ((x, y) spatial ids)
+          - padding_mask (when present): [B, P]  (True = real token)
+          - returns PrefixKV: streams[layer] = (key, value) each
+            [B, kv_heads, P, head_dim]; padding_mask [B, P] or None
         """
         inputs_embeds, per_layer_inputs = self.backbone.embed_multimodal(
             input_ids,
@@ -111,8 +120,15 @@ class BijouModel(nn.Module):
         time: Tensor,
     ) -> Tensor:
         """Velocity of the action chunk at flow time ``time`` (see
-        ``bijou.expert`` for the flow convention). Shapes: state
-        [B, state_dim], noisy_actions [B, chunk, action_dim], time [B]."""
+        ``bijou.expert`` for the flow convention); returns
+        [B, chunk, action_dim].
+
+        Shapes:
+          - prefix.streams[layer]: (key, value) each [B, kv_heads, P, head_dim]
+          - state: [B, state_dim]
+          - noisy_actions: [B, chunk, action_dim]
+          - time: [B]
+        """
         return self.expert(prefix, state, noisy_actions, time)
 
     @torch.no_grad()
@@ -140,9 +156,14 @@ class BijouModel(nn.Module):
         evaluates at exactly τ=0, a negligible extrapolation for the smooth
         sinusoidal time embedding.
 
-        Pass ``noise`` of shape [B, chunk, action_dim] (or a seeded
-        ``generator``) for deterministic evaluation. Returns the action chunk
-        [B, chunk_size, action_dim].
+        Pass ``noise`` (or a seeded ``generator``) for deterministic
+        evaluation.
+
+        Shapes:
+          - prefix.streams[layer]: (key, value) each [B, kv_heads, P, head_dim]
+          - state: [B, state_dim]
+          - noise (when given): [B, chunk, action_dim]
+          - returns: [B, chunk, action_dim]
         """
         config = self.expert.config
         batch = state.shape[0]

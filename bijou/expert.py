@@ -223,6 +223,14 @@ class ExpertCrossAttention(nn.Module):
         position_embeddings: tuple[Tensor, Tensor],
         mask: MaskSpec,
     ) -> Tensor:
+        """Cross-attend one exported prefix stream; returns [B, suffix, hidden].
+
+        Shapes:
+          - hidden_states: [B, suffix, hidden]  (queries: the expert suffix)
+          - stream: (key, value), each [B, kv_heads, P, head_dim]
+          - position_embeddings: (cos, sin), each [B, suffix, head_dim]
+          - mask.tensor (when present): [B, 1, suffix, P]
+        """
         batch, seq_len, _ = hidden_states.shape
         cos, sin = position_embeddings
         query = self.q_proj(hidden_states).view(batch, seq_len, -1, self.head_dim)
@@ -281,6 +289,13 @@ class ExpertSelfAttention(nn.Module):
         position_embeddings: tuple[Tensor, Tensor],
         mask: MaskSpec,
     ) -> Tensor:
+        """Self-attend the suffix; returns [B, suffix, hidden].
+
+        Shapes:
+          - hidden_states: [B, suffix, hidden]
+          - position_embeddings: (cos, sin), each [B, suffix, head_dim]
+          - mask.tensor (when present): [B, 1, suffix, suffix]
+        """
         batch, seq_len, _ = hidden_states.shape
         shape = (batch, seq_len, self.num_heads, self.head_dim)
         cos, sin = position_embeddings
@@ -340,6 +355,11 @@ class ExpertMLP(nn.Module):
 
     @override
     def forward(self, x: Tensor) -> Tensor:
+        """Gated GLU MLP; shape-preserving.
+
+        Shapes:
+          - x: [B, suffix, hidden]  (returns [B, suffix, hidden])
+        """
         return self.down_proj(self.act_fn(self.gate_proj(x)) * self.up_proj(x))
 
 
@@ -450,10 +470,22 @@ class ExpertLayer(nn.Module):
         self_attention_mask: MaskSpec,
         condition: Tensor | None = None,
     ) -> Tensor:
-        """``condition`` is the [B, hidden] τ embedding in adaRMS mode (drives
-        this layer's scale/gate head); None in additive mode, where every
-        modulation slot is None and each block is byte-identical to the
-        pre-adaRMS path (``_apply_scale``/``_apply_gate`` are then no-ops)."""
+        """cross-attn -> self-attn -> MLP; returns [B, suffix, hidden].
+
+        ``condition`` is the τ embedding in adaRMS mode (drives this layer's
+        scale/gate head); None in additive mode, where every modulation slot
+        is None and each block is byte-identical to the pre-adaRMS path
+        (``_apply_scale``/``_apply_gate`` are then no-ops).
+
+        Shapes:
+          - hidden_states: [B, suffix, hidden]
+          - stream: (key, value), each [B, kv_heads, P, head_dim]
+          - cross_position_embeddings: (cos, sin), each [B, suffix, head_dim]
+          - cross_attention_mask.tensor (when present): [B, 1, suffix, P]
+          - self_position_embeddings: (cos, sin), each [B, suffix, head_dim]
+          - self_attention_mask.tensor (when present): [B, 1, suffix, suffix]
+          - condition (adaRMS only): [B, hidden]
+        """
         if self.modulation is None:
             cross_scale = cross_gate = self_scale = None
             self_gate = mlp_scale = mlp_gate = None
@@ -692,12 +724,18 @@ class ActionExpert(nn.Module):
         noisy_actions: Tensor,
         time: Tensor,
     ) -> Tensor:
-        """Velocity of the action chunk at flow time τ.
+        """Velocity of the action chunk at flow time τ; returns
+        [B, chunk, action_dim].
 
-        state: [B, state_dim]; noisy_actions: [B, chunk_size, action_dim];
-        time: [B] flow times in [0, 1]. Returns [B, chunk_size, action_dim].
         Inputs and prefix streams are cast to the expert's own dtype (the
         backbone may run in a different precision, e.g. bf16 vs fp32 expert).
+
+        Shapes:
+          - prefix.streams[layer]: (key, value), each [B, kv_heads, P, head_dim]
+          - prefix.padding_mask (when present): [B, P]  (True = real token)
+          - state: [B, state_dim]
+          - noisy_actions: [B, chunk, action_dim]
+          - time: [B]  (flow times in [0, 1])
         """
         config = self.config
         batch = state.shape[0]

@@ -30,6 +30,44 @@ ActionExpert (404M fp32): 16 layers, each =
 Heun integration τ: 1 → 0  →  50-action chunk
 ```
 
+## 0. Tensor dimension notation
+
+Canonical identifiers for tensor axes, used in every `nn.Module` method
+docstring in the ML code (single letters where standard, names
+otherwise). A docstring lists each tensor argument as
+`- name: [axis, axis, ...]`.
+
+Batch & sequence:
+- `B` — batch size
+- `S` — query sequence length: the tokens a module processes this call
+  (backbone prompt tokens; the expert's `suffix`)
+- `T` — total key/value length in self-attention: `seen + S` with a KV
+  cache, `= S` at prefill / no cache
+- `P` — prefix length: the exported prompt tokens the expert
+  cross-attends (the `PrefixKV` width)
+- `suffix` — expert token count `= 1 + chunk` (the `[state][a_1..a_chunk]`
+  sequence; the expert's `S`)
+- `chunk` — action-chunk length in timesteps (`chunk_size`, default 50)
+- `patches` — image patch tokens per padded grid (pre-pool)
+- `soft_tokens` — pooled vision soft tokens (valid tokens, flattened
+  across the batch as the tower returns them)
+
+Feature & head axes:
+- `hidden` — model hidden size (backbone 1536; expert 1024/1536)
+- `head_dim` — per-attention-head dimension
+- `heads` — query attention heads; `kv_heads` — key/value heads
+  (`kv_heads ≤ heads` under GQA)
+- `intermediate` — MLP intermediate (GLU) size
+- `action_dim` / `state_dim` — action / state dimensionality (6/6 here)
+- `time_embed_dim` — sinusoidal time-embedding dimension
+- `vocab` — token vocabulary size
+- `num_layers` — decoder layer count (the PLE per-layer axis)
+- `ple_dim` — per-layer-embedding dimension (`hidden_size_per_layer_input`)
+
+Inline literals where an axis is a fixed small constant: `2` = the (x, y)
+spatial pair in `image_position_ids`; `head_dim/2` = RoPE inverse-freq
+length; `3·patch_size²` = a raw-RGB vision patch row.
+
 ## 1. Prefix encoder — frozen truncated Gemma-4 E2B
 
 **Why truncated.** Gemma-4 E-series layers ≥15 (E2B, of 35) carry no K/V
