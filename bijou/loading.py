@@ -313,13 +313,16 @@ def backbone_snapshot(model: BijouModel) -> dict[str, Tensor]:
 def load_adapted_backbone(
     model: BijouModel,
     checkpoint: Path,
-    device: DeviceLike,
 ) -> None:
     """Load ``backbone.safetensors`` over the (already-built) truncated
-    backbone. Copy semantics cast the bf16 snapshot into whatever dtype the
-    backbone was built with (bf16 for eval/rollout, fp32 masters for a
-    live-trunk continuation)."""
-    state = load_file(str(checkpoint / "backbone.safetensors"), device=str(device))
+    backbone. The file is materialized on CPU and streamed into the live
+    parameters by ``load_state_dict``'s copy semantics — loading it straight
+    to the target device would transiently hold a second full trunk
+    (~4.3 GB) next to the built one, which OOMed the 8 GiB laptop GPU at
+    rollout. The same copy semantics cast the bf16 snapshot into whatever
+    dtype the backbone was built with (bf16 for eval/rollout, fp32 masters
+    for a live-trunk continuation)."""
+    state = load_file(str(checkpoint / "backbone.safetensors"), device="cpu")
     missing, unexpected = model.backbone.load_state_dict(state, strict=False)
     problems = [name for name in missing if name not in BACKBONE_UNSAVED_KEYS]
     if problems or unexpected:
@@ -369,15 +372,17 @@ def from_checkpoint(
         expert_dtype=expert_dtype,
         attn_backend=attn_backend,
     )
+    # CPU-load + copy-in for the same transient-memory reason as
+    # load_adapted_backbone (the expert file is 1.6 GB fp32).
     model.expert.load_state_dict(
-        load_file(str(checkpoint / "expert.safetensors"), device=str(device)),
+        load_file(str(checkpoint / "expert.safetensors"), device="cpu"),
         strict=True,
     )
     # Trunk-trained checkpoints (any --unfreeze-*-lr > 0) carry the adapted
     # backbone; checkpoints without the file load the HF backbone exactly
     # as before the file existed.
     if (checkpoint / "backbone.safetensors").exists():
-        load_adapted_backbone(model, checkpoint, device)
+        load_adapted_backbone(model, checkpoint)
         print(f"loaded adapted backbone from {checkpoint}", flush=True)
     model.eval()
     return model, info

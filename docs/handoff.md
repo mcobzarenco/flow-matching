@@ -450,7 +450,12 @@ dead; next perf wins are length-bucketed batching (batch pads 452 vs
   only; probes/eval run in the trunk's build dtype (fp32 when live —
   ±jitter-tier vs bf16, comparable within-run). backbone_snapshot
   casts HOST-side (device-side transient ≈4.3 GB would OOM at the
-  measured 79/80 GB DDP occupancy).
+  measured 79/80 GB DDP occupancy). Load side mirrors this
+  (2026-07-29): expert/backbone safetensors are loaded to CPU and
+  streamed in via load_state_dict copy semantics — load_file straight
+  to the device held a second full trunk next to the built one and
+  OOMed the 8 GiB laptop GPU at rollout (measured post-fix laptop
+  load peak: 4.77 GiB, bf16 trunk + bf16 expert).
 - **bijou/fast/ (2026-07-28)**: owned FAST action tokenizer (DCT +
   BPE, arXiv:2501.09747) for the planned AR+flow mixture — explicit
   orthonormal DCT matrix (no scipy dep), plain-BPE over a synthetic

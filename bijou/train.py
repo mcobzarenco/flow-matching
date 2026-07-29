@@ -1352,10 +1352,13 @@ def main() -> int:
     checkpoint_to_load = args.init_from or args.resume
     if checkpoint_to_load is not None:
         ensure_matching_expert_config(expert_config, checkpoint_to_load)
+        # CPU-load + copy-in: loading straight to the device transiently
+        # holds a second copy of the weights next to the built module
+        # (see loading.load_adapted_backbone).
         model.expert.load_state_dict(
             load_file(
                 str(checkpoint_to_load / "expert.safetensors"),
-                device=str(device),
+                device="cpu",
             ),
             strict=True,
         )
@@ -1365,7 +1368,7 @@ def main() -> int:
         # don't, and the HF backbone loaded above simply stays (that is the
         # cont45k -> unfreeze continuation path).
         if (checkpoint_to_load / "backbone.safetensors").exists():
-            load_adapted_backbone(model, checkpoint_to_load, device)
+            load_adapted_backbone(model, checkpoint_to_load)
             if is_main:
                 print(
                     f"loaded ADAPTED backbone weights from "
