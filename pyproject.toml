@@ -140,7 +140,7 @@ ignore = [
     "PLW2901",
 ]
 # Math typography in docstrings is intentional, not homoglyph confusion.
-allowed-confusables = ["−", "–", "σ", "τ", "ε"]
+allowed-confusables = ["−", "–", "σ", "τ", "ε", "γ", "β"]
 
 [tool.ruff.lint.isort]
 # Explicit rather than inferred from directory layout: scratch scripts in

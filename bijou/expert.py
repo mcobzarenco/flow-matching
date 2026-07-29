@@ -19,9 +19,13 @@ Design notes (see the design discussion in the repo history):
 - Self-attention over the suffix is bidirectional or causal-over-actions
   (state visible to and from everything in both modes) — an explicit ablation
   knob, ``SelfAttentionMode``.
-- Flow time τ enters as a sinusoidal embedding, MLP-transformed and added to
-  the action token embeddings (π0-style); the state token is not
-  time-conditioned.
+- Flow time τ enters via one of two schemes (``TimeConditioning``): ADDITIVE
+  (π0-style — sinusoidal embedding, MLP-transformed, added to the action
+  token embeddings; state token not time-conditioned) or ADARMS (DiT-style
+  adaptive RMSNorm — per-layer scale on the norm outputs and gate on the
+  sublayer contributions, identity at init). adaRMS is the intended
+  successor; the additive path is kept for loading pre-adaRMS checkpoints
+  and is deletable as a unit (its ``None``-guarded branches).
 
 Flow-matching convention (matches lerobot's π0/SmolVLA):
 ``x_τ = τ·ε + (1−τ)·actions`` with ε ~ N(0, I), so τ=1 is pure noise; the
@@ -87,6 +91,23 @@ class SelfAttentionMode(StrEnum):
     CAUSAL_ACTIONS = "causal_actions"
 
 
+class TimeConditioning(StrEnum):
+    """How flow time τ conditions the expert.
+
+    ADDITIVE: the π0/SmolVLA scheme currently shipped — τ's MLP embedding
+    is added to the action token embeddings at the input; the state token
+    is not time-conditioned; layers are unconditioned.
+    ADARMS: DiT-style adaptive RMSNorm — τ's embedding drives a per-layer
+    zero-initialized head producing a per-channel SCALE on each sublayer's
+    (RMS)norm output and a GATE on its residual contribution (no shift —
+    RMSNorm carries no bias; the gate is the additive-injection route).
+    Identity at init. The intended successor to ADDITIVE.
+    """
+
+    ADDITIVE = "additive"
+    ADARMS = "adarms"
+
+
 @dataclass(frozen=True, slots=True)
 class ExpertConfig:
     """Architecture of the action expert. Use
@@ -114,6 +135,7 @@ class ExpertConfig:
     state_dim: int
     chunk_size: int
     time_embed_dim: int
+    time_conditioning: TimeConditioning
 
     def __post_init__(self) -> None:
         if not self.cross_attention_schedule:
@@ -321,6 +343,25 @@ class ExpertMLP(nn.Module):
         return self.down_proj(self.act_fn(self.gate_proj(x)) * self.up_proj(x))
 
 
+# adaRMS application, factored so the additive path is a clean ``None``
+# no-op (delete these guards, and the two ``None`` cases below, to drop
+# additive support once adaRMS wins). Modulation vectors are per-sample
+# [B, hidden], broadcast across the suffix positions.
+def _apply_scale(hidden_states: Tensor, scale: Tensor | None) -> Tensor:
+    """RMSNorm-output scale: ``norm(x)*(1+γ)``; identity when scale is None."""
+    if scale is None:
+        return hidden_states
+    return hidden_states * (1.0 + scale[:, None, :])
+
+
+def _apply_gate(hidden_states: Tensor, gate: Tensor | None) -> Tensor:
+    """Sublayer-contribution gate: ``g*out``; identity (pass-through, gate
+    conceptually 1) when gate is None."""
+    if gate is None:
+        return hidden_states
+    return hidden_states * gate[:, None, :]
+
+
 class ExpertLayer(nn.Module):
     """cross-attention -> self-attention -> MLP, Gemma-style sandwich norms."""
 
@@ -347,6 +388,20 @@ class ExpertLayer(nn.Module):
             dtype=dtype,
         )
         self.mlp = ExpertMLP(config, device=device, dtype=dtype)
+        # adaRMS only: SiLU -> Linear(hidden, 6*hidden), zero-initialized
+        # (ActionExpert.reset_parameters), producing (scale, gate) for each
+        # of cross-attn / self-attn / MLP. None => additive (unconditioned).
+        self.modulation: nn.Sequential | None = None
+        if config.time_conditioning is TimeConditioning.ADARMS:
+            self.modulation = nn.Sequential(
+                nn.SiLU(),
+                nn.Linear(
+                    config.hidden_size,
+                    6 * config.hidden_size,
+                    device=device,
+                    dtype=dtype,
+                ),
+            )
         self.pre_cross_attention_layernorm = RMSNorm(
             hidden,
             eps=eps,
@@ -393,32 +448,69 @@ class ExpertLayer(nn.Module):
         cross_attention_mask: MaskSpec,
         self_position_embeddings: tuple[Tensor, Tensor],
         self_attention_mask: MaskSpec,
+        condition: Tensor | None = None,
     ) -> Tensor:
+        """``condition`` is the [B, hidden] τ embedding in adaRMS mode (drives
+        this layer's scale/gate head); None in additive mode, where every
+        modulation slot is None and each block is byte-identical to the
+        pre-adaRMS path (``_apply_scale``/``_apply_gate`` are then no-ops)."""
+        if self.modulation is None:
+            cross_scale = cross_gate = self_scale = None
+            self_gate = mlp_scale = mlp_gate = None
+        else:
+            assert condition is not None, "adaRMS layer requires a condition"
+            (
+                cross_scale,
+                cross_gate,
+                self_scale,
+                self_gate,
+                mlp_scale,
+                mlp_gate,
+            ) = self.modulation(condition).chunk(6, dim=-1)
+
         residual = hidden_states
-        hidden_states = self.pre_cross_attention_layernorm(hidden_states)
+        hidden_states = _apply_scale(
+            self.pre_cross_attention_layernorm(hidden_states),
+            cross_scale,
+        )
         hidden_states = self.cross_attn(
             hidden_states,
             stream,
             cross_position_embeddings,
             cross_attention_mask,
         )
-        hidden_states = self.post_cross_attention_layernorm(hidden_states)
+        hidden_states = _apply_gate(
+            self.post_cross_attention_layernorm(hidden_states),
+            cross_gate,
+        )
         hidden_states = residual + hidden_states
 
         residual = hidden_states
-        hidden_states = self.pre_self_attention_layernorm(hidden_states)
+        hidden_states = _apply_scale(
+            self.pre_self_attention_layernorm(hidden_states),
+            self_scale,
+        )
         hidden_states = self.self_attn(
             hidden_states,
             self_position_embeddings,
             self_attention_mask,
         )
-        hidden_states = self.post_self_attention_layernorm(hidden_states)
+        hidden_states = _apply_gate(
+            self.post_self_attention_layernorm(hidden_states),
+            self_gate,
+        )
         hidden_states = residual + hidden_states
 
         residual = hidden_states
-        hidden_states = self.pre_feedforward_layernorm(hidden_states)
+        hidden_states = _apply_scale(
+            self.pre_feedforward_layernorm(hidden_states),
+            mlp_scale,
+        )
         hidden_states = self.mlp(hidden_states)
-        hidden_states = self.post_feedforward_layernorm(hidden_states)
+        hidden_states = _apply_gate(
+            self.post_feedforward_layernorm(hidden_states),
+            mlp_gate,
+        )
         return residual + hidden_states
 
 
@@ -477,6 +569,14 @@ class ActionExpert(nn.Module):
             for _ in range(config.num_layers)
         )
         self.norm = RMSNorm(hidden, eps=config.rms_norm_eps, device=device, dtype=dtype)
+        # adaRMS only: a final scale on the output norm (no gate — no
+        # residual there), zero-initialized => identity at init.
+        self.final_modulation: nn.Sequential | None = None
+        if config.time_conditioning is TimeConditioning.ADARMS:
+            self.final_modulation = nn.Sequential(
+                nn.SiLU(),
+                nn.Linear(hidden, hidden, device=device, dtype=dtype),
+            )
         # Zero-initialized so the initial velocity field is 0 (standard for
         # flow/diffusion heads).
         self.action_out_proj = nn.Linear(
@@ -526,6 +626,23 @@ class ActionExpert(nn.Module):
         nn.init.zeros_(self.action_out_proj.weight)
         assert self.action_out_proj.bias is not None
         nn.init.zeros_(self.action_out_proj.bias)
+        # adaRMS heads zero-initialized (overriding the normal-init above):
+        # scale=0 => norm output unchanged, gate=0 => sublayer contributes
+        # nothing => every layer is the identity at init, so the residual
+        # stream passes through untouched and the velocity field is 0.
+        for module in self.modules():
+            if isinstance(module, ExpertLayer) and module.modulation is not None:
+                head = module.modulation[1]
+                assert isinstance(head, nn.Linear)
+                nn.init.zeros_(head.weight)
+                assert head.bias is not None
+                nn.init.zeros_(head.bias)
+        if self.final_modulation is not None:
+            head = self.final_modulation[1]
+            assert isinstance(head, nn.Linear)
+            nn.init.zeros_(head.weight)
+            assert head.bias is not None
+            nn.init.zeros_(head.bias)
 
     def _self_attention_mask(
         self,
@@ -597,7 +714,12 @@ class ActionExpert(nn.Module):
         time_embeds = self.time_out_proj(
             self.time_act(self.time_in_proj(time_embeds.to(dtype))),
         )
-        action_embeds = action_embeds + time_embeds[:, None, :]
+        # ADDITIVE: fold τ into the action tokens, layers unconditioned.
+        # ADARMS: τ conditions each layer's scale/gate head instead.
+        adarms = config.time_conditioning is TimeConditioning.ADARMS
+        condition = time_embeds if adarms else None
+        if not adarms:
+            action_embeds = action_embeds + time_embeds[:, None, :]
         hidden_states = torch.cat([state_embeds, action_embeds], dim=1)
 
         device = hidden_states.device
@@ -642,7 +764,14 @@ class ActionExpert(nn.Module):
                 cross_attention_mask,
                 self_position_embeddings,
                 self_attention_mask,
+                condition,
             )
 
         hidden_states = self.norm(hidden_states)
+        if self.final_modulation is not None:
+            assert condition is not None
+            hidden_states = _apply_scale(
+                hidden_states,
+                self.final_modulation(condition),
+            )
         return self.action_out_proj(hidden_states[:, 1:, :])

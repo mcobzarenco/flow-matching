@@ -72,7 +72,7 @@ from .data import (
     select_datasets,
     worker_init,
 )
-from .expert import ExpertConfig, PrefixKV, SelfAttentionMode
+from .expert import ExpertConfig, PrefixKV, SelfAttentionMode, TimeConditioning
 from .gemma4.loading import load_config, resolve_checkpoint_dir
 from .gemma4.text import DecoderLayer
 from .loading import (
@@ -107,6 +107,7 @@ class TrainArgs:
     max_soft_tokens: int
     stream_counts: tuple[int, ...]
     self_attention_mode: str
+    time_conditioning: str
     expert_hidden: int
     expert_heads: int
     expert_intermediate: int
@@ -733,6 +734,10 @@ def ensure_matching_expert_config(
     — and silently NOT fail for same-shape config differences like the
     cross-attention schedule)."""
     saved = json.loads((checkpoint / "bijou_config.json").read_text())["expert_config"]
+    # Back-compat: fields added to ExpertConfig after a checkpoint was
+    # written are absent from its serialized config; fill their defaults so
+    # an unchanged run still matches. A pre-adaRMS checkpoint is additive.
+    saved.setdefault("time_conditioning", TimeConditioning.ADDITIVE.value)
     current = json.loads(json.dumps(dataclasses.asdict(expert_config), default=str))
     if current != saved:
         raise SystemExit(
@@ -844,6 +849,15 @@ def parse_args() -> TrainArgs:
         choices=["causal_actions", "bidirectional"],
         default="causal_actions",
         help="expert self-attention over the action chunk",
+    )
+    parser.add_argument(
+        "--time-conditioning",
+        choices=[m.value for m in TimeConditioning],
+        default=TimeConditioning.ADDITIVE.value,
+        help="how flow time τ conditions the expert: 'additive' (π0-style "
+        "input add, the default) or 'adarms' (DiT-style per-layer scale/"
+        "gate, identity at init). adarms changes the architecture — a fresh "
+        "expert only (cannot --init-from an additive checkpoint)",
     )
     parser.add_argument(
         "--expert-hidden",
@@ -1060,6 +1074,7 @@ def parse_args() -> TrainArgs:
         max_soft_tokens=raw.max_soft_tokens,
         stream_counts=tuple(raw.stream_counts),
         self_attention_mode=raw.self_attention_mode,
+        time_conditioning=raw.time_conditioning,
         expert_hidden=raw.expert_hidden,
         expert_heads=raw.expert_heads,
         expert_intermediate=raw.expert_intermediate,
@@ -1243,6 +1258,7 @@ def main() -> int:
         cross_attention_heads=args.expert_cross_heads,
         chunk_size=args.chunk_size,
         self_attention_mode=SelfAttentionMode(args.self_attention_mode),
+        time_conditioning=TimeConditioning(args.time_conditioning),
     )
     model = from_backbone(
         checkpoint_dir,

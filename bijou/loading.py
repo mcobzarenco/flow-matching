@@ -25,7 +25,7 @@ from safetensors.torch import load_file
 from torch import Tensor
 
 from .data import DatasetStats
-from .expert import ActionExpert, ExpertConfig, SelfAttentionMode
+from .expert import ActionExpert, ExpertConfig, SelfAttentionMode, TimeConditioning
 from .gemma4.config import Gemma4Config, LayerType
 from .gemma4.layers import DEFAULT_ATTENTION_BACKEND, AttentionBackend, DeviceLike
 from .gemma4.loading import load_config, load_model, resolve_checkpoint_dir
@@ -57,6 +57,7 @@ def default_expert_config(
     time_embed_dim: int = 256,
     self_attention_mode: SelfAttentionMode = SelfAttentionMode.CAUSAL_ACTIONS,
     self_attention_rope_theta: float = 10_000.0,
+    time_conditioning: TimeConditioning = TimeConditioning.ADDITIVE,
 ) -> ExpertConfig:
     """Expert config with a blocks cross-attention schedule.
 
@@ -93,6 +94,7 @@ def default_expert_config(
         state_dim=state_dim,
         chunk_size=chunk_size,
         time_embed_dim=time_embed_dim,
+        time_conditioning=time_conditioning,
     )
 
 
@@ -171,6 +173,7 @@ class CheckpointTrainArgs:
     self_attention_mode: SelfAttentionMode
     chunk_size: int
     max_soft_tokens: int
+    time_conditioning: TimeConditioning
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> CheckpointTrainArgs:
@@ -183,6 +186,10 @@ class CheckpointTrainArgs:
             self_attention_mode=SelfAttentionMode(data["self_attention_mode"]),
             chunk_size=int(data["chunk_size"]),
             max_soft_tokens=int(data["max_soft_tokens"]),
+            # Pre-adaRMS checkpoints (no such key) are additive.
+            time_conditioning=TimeConditioning(
+                data.get("time_conditioning", TimeConditioning.ADDITIVE.value),
+            ),
         )
 
 
@@ -273,6 +280,7 @@ def expert_config_from_train_args(
         cross_attention_heads=train_args.expert_cross_heads,
         chunk_size=train_args.chunk_size,
         self_attention_mode=train_args.self_attention_mode,
+        time_conditioning=train_args.time_conditioning,
     )
 
 
