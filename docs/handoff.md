@@ -82,6 +82,39 @@ fine-tunes). Caution: the in-TRAINING eval_chunk_mae probe read
 ~7.2–7.4 for these (per-rank noise-seed + sharding), noisier and
 higher than the offline 6.47–6.49 — trust the offline eval.
 
+**adaRMS×bidir×h1536 from-scratch probe** (2026-07-29,
+`bijou_adarms_bidir_h1536_40k_ddp2/step_040000` — on HF **with**
+optimizer): 40k from scratch on the **--fps 30** slice of community
+v1v2v3 + BOTH rig sets (rig train split in training), adaRMS
+τ-conditioning, bidirectional self-attn, hidden 1536 (expert 1037M),
+frozen backbone, expert-lr 1e-4, global 128, holdout 0.1/seed 0, seed
+14. Final loss ~0.105, in-training probe 8.68. Offline eval (Heun-10,
+seed 0; community sides are fps-30 frame sets ⇒ **NOT comparable to
+the cont45k ledger** — baselines re-measured on the same frames):
+
+| side | state-copy | adarms40k | Δ |
+|---|---|---|---|
+| community holdout (256) | 11.50 | **8.07** | −3.43 |
+| community train (256) | 10.72 | 8.80 | −1.92 |
+| rig holdout (full 3,403) | 12.00 | 15.64 | **+3.64** |
+
+Findings: (1) big honest win over copy on community holdout — but
+confounded vs the 4-arm 40k round (adaRMS + bidir + width + 2× batch +
+fps filter + rig data all at once), so it shows the *package* works,
+not which part. (2) **Rig side is catastrophic** (+3.64 vs copy;
+first_mae 4.54 vs copy 2.76) despite the rig train split being IN
+training — the bidirectional rig failure from the 4-arm round (17.1 vs
+13.3 causal) persists at scale and with rig data included; rig frames
+are ~0.15% of the corpus, so pretrain-mixing alone didn't rescue it.
+(3) Holdout side scores better than train side (8.07 vs 8.80): the
+fps-30 train frame draw is simply harder — treat sides independently.
+Reports + JSONs: `reports/report_adarms40k_{comm_holdout,comm_train,
+rig_holdout}.html` / `reports/eval_adarms40k_*.json`. Caveat: the rig
+frame set *should* equal the ft-round 3,403 (the fps filter drops
+nothing on a rig-only eval) yet copy reads 12.00 here vs 11.39 there —
+unexplained; verify frame-set identity before any cross-ledger rig
+comparison.
+
 **4-arm ablation** (from scratch, holdout 0.1/seed 0, seed 42, batch 64,
 1×H100 each; 20k then lossless resume→40k; doc:
 `docs/ablation_20k_results.md`, now 40k-centric):
@@ -232,22 +265,13 @@ dead; next perf wins are length-bucketed batching (batch pads 452 vs
 
 ## 3. In flight right now
 
-- **RUNNING: `adarms-bidir-h1536-40k-ddp2`** (launched ~00:53 UTC
-  2026-07-29, 2×H100 box, tmux `adarms`, log
-  `~/adarms_bidir_h1536_console.log`, launcher
-  `~/launch_adarms_bidir_h1536.sh`, wandb zi7qw0sw): FROM-SCRATCH
-  architecture probe — **adaRMS** τ-conditioning + **bidirectional**
-  self-attn + **hidden 1536** (E2B width; intermediate 6144, 8+8
-  heads; expert **1037M** fp32) + **--fps 30** (30fps datasets only:
-  993 datasets / 23.6M frames after filter; both rig sets are 30fps so
-  kept), frozen backbone, expert-lr 1e-4, 40k steps, warmup 500,
-  holdout 0.1/seed 0, global batch 128, save @5000. Healthy:
-  identity-at-init descent (loss 1.95→0.47 by step 190), ~1.05 s/step
-  (≈ 12h ETA), 42GB/80GB per rank. **NOT comparable to cont45k** (new
-  arch AND --fps 30 changes the holdout frame set) — a fresh
-  architecture exploration. Prior caution: the 4-arm ablation found
-  bidirectional catastrophic cross-rig (17.1 vs 13.3); this re-tests it
-  at scale + adaRMS + E2B width (owner's call).
+- **FINISHED + SCORED: `adarms-bidir-h1536-40k-ddp2`** (2×H100 box,
+  completed 40k ~13:30 UTC 2026-07-29): results in the §2 ledger —
+  community holdout 8.07 vs copy 11.50 (fps-30 frame set), rig holdout
+  15.64 vs copy 12.00 (bidir rig failure persists at scale). Checkpoint
+  on HF **with optimizer**
+  (`bijou_adarms_bidir_h1536_40k_ddp2/step_040000`); reports/JSONs
+  copied to `reports/`. The 2×H100 box is now idle.
 - **RUNNING: `community-v1v2v3-unftext30k-r2cont-ddp8`** (8×A100 box
   150.136.37.72, tmux `mainline2`, log `~/unftext30k_r2cont_console.log`,
   launcher `~/launch_unfreeze_text30k_resume.sh`, wandb q3d7eq5o):
@@ -290,8 +314,8 @@ dead; next perf wins are length-bucketed batching (batch pads 452 vs
   eval_chunk_mae lags, the 5×-slower expert is tracking trunk feature
   drift too loosely.
 - **2×H100 box `ssh ubuntu@192.222.54.70`** (owner-provisioned
-  2026-07-28): FAST tokenizer fit done (below); now RUNNING the adaRMS
-  exploration (§3). Has all 3 community collections + both rig sets
+  2026-07-28): FAST tokenizer fit done (below); adaRMS run finished —
+  box idle. Has all 3 community collections + both rig sets
   under `~/datasets/mcobzarenco/` (rig too — owner re-downloaded there;
   the `marius/` copies were removed). flow-matching +
   lerobot-dataset-tools cloned. 52 vCPU, 442GB RAM, wandb login done.
@@ -565,8 +589,11 @@ code mid-experiment.
    (`--time-conditioning adarms`, scale+gate no-shift RMSNorm-faithful,
    identity at init, additive default byte-identical; oracle 1.8896/
    1.7237 exact; old checkpoints load unchanged; tests in
-   `tests/test_expert.py`). First run in flight (§3,
-   adarms-bidir-h1536). adaRMS oracle (tiny, seed 0): 1.886/2.0928.
+   `tests/test_expert.py`). adaRMS oracle (tiny, seed 0): 1.886/2.0928.
+   First run (adarms-bidir-h1536) finished + scored — see §2 ledger.
+   Attribution still open: the probe bundled adaRMS with bidir/width/
+   fps-30; a causal adaRMS-only arm would isolate the conditioning
+   effect (the bidir rig failure argues the next arm should be causal).
 5. **Perf**: length-bucketed batching, then torch.compile spike
    (backbone 79% of step). Profile numbers in §2.
 6. **Backbone/expert architecture directions** — all consolidated in
