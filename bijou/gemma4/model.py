@@ -88,7 +88,14 @@ class Gemma4Model(nn.Module):
         pixel_values: Tensor,
         image_position_ids: Tensor,
     ) -> Tensor:
-        """Soft tokens projected into LM space: [num_soft_tokens, hidden]."""
+        """Vision soft tokens projected into LM space.
+
+        Shapes:
+          - pixel_values: [B, patches, 3·patch_size²]
+          - image_position_ids: [B, patches, 2]  ((x, y) spatial ids)
+          - returns: [soft_tokens, hidden]  (valid soft tokens, flattened
+            across the batch)
+        """
         if self.vision_tower is None or self.embed_vision is None:
             raise ValueError("model was built without a vision tower")
         soft_tokens = self.vision_tower(pixel_values, image_position_ids)
@@ -106,9 +113,19 @@ class Gemma4Model(nn.Module):
         cache: KVCache | None = None,
         logits_to_keep: int = 0,
     ) -> Gemma4Output:
-        """``input_ids`` [B, S]; image placeholder positions (id
-        ``config.image_token_id``) are replaced by vision soft tokens when
-        ``pixel_values``/``image_position_ids`` are given.
+        """Full forward: multimodal embed -> decoder -> softcapped logits.
+        Image placeholder positions (id ``config.image_token_id``) are
+        replaced by vision soft tokens when ``pixel_values`` /
+        ``image_position_ids`` are given.
+
+        Shapes (T = seen + S):
+          - input_ids: [B, S]
+          - pixel_values (when present): [B, patches, 3·patch_size²]
+          - image_position_ids (when present): [B, patches, 2]
+          - padding_mask (when present): [B, T]
+          - position_ids (when present): [B, S]
+          - returns Gemma4Output(logits [B, S', vocab] with
+            S' = logits_to_keep or S; last_hidden_state [B, S, hidden])
         """
         text_config = self.config.text
         inputs_embeds, per_layer_inputs = self.embed_multimodal(
@@ -151,6 +168,13 @@ class Gemma4Model(nn.Module):
         token-identity PLE component. This is the full multimodal front-end
         of the model without running the decoder — used by e.g. the Bijou
         prefix encoder.
+
+        Shapes:
+          - input_ids: [B, S]
+          - pixel_values (when present): [B, patches, 3·patch_size²]
+          - image_position_ids (when present): [B, patches, 2]
+          - returns (inputs_embeds [B, S, hidden],
+            per_layer_inputs [B, S, num_layers, ple_dim])
         """
         image_mask = input_ids == self.config.image_token_id
 

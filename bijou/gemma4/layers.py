@@ -85,6 +85,12 @@ class RMSNorm(nn.Module):
 
     @override
     def forward(self, x: Tensor) -> Tensor:
+        """Normalize over the last axis; shape-preserving.
+
+        Shapes:
+          - x: [*, dim]  (dim = the normalized axis: hidden, or head_dim
+            for q/k/v norms; returns the same shape)
+        """
         xf = x.float()
         mean_squared = xf.pow(2).mean(-1, keepdim=True) + self.eps
         normed = xf * torch.pow(mean_squared, -0.5)

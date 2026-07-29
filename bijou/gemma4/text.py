@@ -77,6 +77,11 @@ class ScaledEmbedding(nn.Embedding):
 
     @override
     def forward(self, input: Tensor) -> Tensor:
+        """Embed token ids and scale by sqrt(dim).
+
+        Shapes:
+          - input: [B, S]  (token ids; returns [B, S, embedding_dim])
+        """
         return super().forward(input) * self.embed_scale.to(self.weight.dtype)
 
 
@@ -120,6 +125,12 @@ class TextRotaryEmbedding(nn.Module):
         layer_types: set[LayerType],
         dtype: torch.dtype,
     ) -> RopeMapping:
+        """Per-layer-type (cos, sin) tables for the given positions.
+
+        Shapes:
+          - position_ids: [B, S]
+          - returns {layer_type: (cos, sin)}, each [B, S, head_dim]
+        """
         return {
             layer_type: rope_cos_sin(self.inv_freq(layer_type), position_ids, dtype)
             for layer_type in layer_types
@@ -224,7 +235,13 @@ class TextAttention(nn.Module):
         decoder layer's input layernorm), cached if a cache is given. The
         K/V half of :meth:`forward`, exposed so a prefix encode can stop at
         its deepest exported layer without paying for that layer's attention
-        and MLP (the K/V depend only on the layer's input)."""
+        and MLP (the K/V depend only on the layer's input).
+
+        Shapes:
+          - hidden_states: [B, S, hidden]
+          - position_embeddings: (cos, sin), each [B, S, head_dim]
+          - returns (key, value), each [B, kv_heads, T, head_dim]
+        """
         assert not self.is_kv_shared_layer, "KV-shared layers own no K/V"
         assert self.k_proj is not None
         assert self.k_norm is not None and self.v_norm is not None
@@ -257,6 +274,15 @@ class TextAttention(nn.Module):
         shared_kv: SharedKV,
         cache: KVCache | None,
     ) -> Tensor:
+        """Grouped-query self-attention; returns [B, S, hidden].
+
+        Shapes:
+          - hidden_states: [B, S, hidden]
+          - position_embeddings: (cos, sin), each [B, S, head_dim]
+          - attention_mask.tensor (when present): [B, 1, S, T]
+          - shared_kv[layer_type]: (key, value), each [B, kv_heads, T, head_dim]
+            (KV-shared layers read this; a source layer writes it)
+        """
         batch, seq_len, _ = hidden_states.shape
         hidden_shape = (batch, seq_len, -1, self.head_dim)
         cos, sin = position_embeddings
@@ -322,6 +348,11 @@ class TextMLP(nn.Module):
 
     @override
     def forward(self, x: Tensor) -> Tensor:
+        """Gated GLU MLP; shape-preserving.
+
+        Shapes:
+          - x: [B, S, hidden]  (returns [B, S, hidden])
+        """
         return self.down_proj(self.act_fn(self.gate_proj(x)) * self.up_proj(x))
 
 
@@ -402,6 +433,15 @@ class DecoderLayer(nn.Module):
         shared_kv: SharedKV,
         cache: KVCache | None,
     ) -> Tensor:
+        """self-attn -> MLP -> per-layer-embedding mix; returns [B, S, hidden].
+
+        Shapes:
+          - hidden_states: [B, S, hidden]
+          - per_layer_input: [B, S, ple_dim]  (this layer's PLE slice)
+          - position_embeddings: (cos, sin), each [B, S, head_dim]
+          - attention_mask.tensor (when present): [B, 1, S, T]
+          - shared_kv[layer_type]: (key, value), each [B, kv_heads, T, head_dim]
+        """
         residual = hidden_states
         hidden_states = self.input_layernorm(hidden_states)
         hidden_states = self.self_attn(
@@ -544,15 +584,20 @@ class TextModel(nn.Module):
         Exactly one of ``input_ids`` / ``inputs_embeds`` must be given; when
         passing ``inputs_embeds`` (the multimodal path), ``per_layer_inputs``
         (the raw output of :meth:`get_per_layer_inputs`) is required as well.
-        ``padding_mask`` is a 2D HF-style attention mask [B, seen + S]
-        (True/1 = real token) used to build masks when ``attention_masks`` is
-        not provided.
 
         ``kv_stop_layer``: stop after CACHING that layer's K/V (its
         attention, MLP and all deeper layers never run — a K/V export needs
         only the layer's input). Requires ``cache``; the return value is
         then the stop layer's input WITHOUT the final norm — only the cache
         contents are meaningful.
+
+        Shapes (T = seen + S; = S without a cache):
+          - input_ids: [B, S]
+          - inputs_embeds: [B, S, hidden]
+          - per_layer_inputs: [B, S, num_layers, ple_dim]
+          - position_ids: [B, S]
+          - padding_mask (when present): [B, T]  (True = real token)
+          - returns: [B, S, hidden]
         """
         if (input_ids is None) == (inputs_embeds is None):
             raise ValueError("specify exactly one of input_ids or inputs_embeds")
