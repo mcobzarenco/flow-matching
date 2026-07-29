@@ -223,9 +223,27 @@ dead; next perf wins are length-bucketed batching (batch pads 452 vs
   architecture exploration. Prior caution: the 4-arm ablation found
   bidirectional catastrophic cross-rig (17.1 vs 13.3); this re-tests it
   at scale + adaRMS + E2B width (owner's call).
-- Note: the 8×A100 unfreeze r2 (`unftext15k`) is a SEPARATE run on the
-  OTHER box (150.136.37.72) — see below / wandb; still owed a probe
-  readout.
+- **RUNNING: `community-v1v2v3-unftext30k-r2cont-ddp8`** (8×A100 box
+  150.136.37.72, tmux `mainline2`, log `~/unftext30k_r2cont_console.log`,
+  launcher `~/launch_unfreeze_text30k_resume.sh`, wandb q3d7eq5o):
+  **--resume** continuation of unftext15k_r2 from step_015000 for +15k
+  (owner's overnight instruction), reusing optimizer moments + the
+  adapted trunk. --steps 30000, LR re-heated at 15000 from ~2e-6 to
+  ~1.11e-5 (cosine re-evaluated over 30k — the known --resume behavior,
+  accepted). Same save-dir; ETA ~12:15 UTC. Launched 04:08 UTC 2026-07-29.
+- **unftext15k_r2 FINISHED** (step 15000, holdout eval 7.16 / train
+  6.30): unfrozen text @2e-5 for 15k ended STILL ABOVE frozen cont45k's
+  6.85 on the same holdout frames — in-distribution, text-trunk
+  unfreezing did not beat the frozen baseline (feature-drift watch item
+  confirmed; the expert was tuned to frozen features). Real verdict
+  needs RIG-side scoring (rig data not on that box; on laptop/HF). The
+  +15k resume tests whether more training + re-heated LR helps.
+- PITFALL (hard-won overnight): `pgrep -f <pattern>` MATCHES THE SSH
+  COMMAND STRING ITSELF when the pattern text appears in the command —
+  a completion-detector using `pgrep -f bijou.train` self-matched every
+  poll and never fired the auto-resume. Use the bracket trick
+  `pgrep -fc "[b]ijou.train"` (or match torchrun / check GPU mem). No
+  harm done (GPUs verified free before the manual launch).
 
 - **RUNNING: `community-v1v2v3-unftext15k-r2-ddp8`** (launched 19:03
   UTC 2026-07-28, tmux `mainline` on the 8×A100 box, log
@@ -474,7 +492,10 @@ code mid-experiment.
   slower; fused SDPA vs additive-mask paths differ at bf16 ULP scale;
   Module.__getattr__ stubs return Tensor|Module (narrow via isinstance
   after ModuleList iteration); torch Linear.bias stub lies (cast).
-- process: piped output hides failures unless the tool prints a final
+- process: `pgrep -f <pat>` self-matches the ssh/shell command carrying
+  <pat> (a false RUNNING every poll — broke an auto-resume detector);
+  use `pgrep -fc "[p]at"` or check GPU memory instead. piped output
+  hides failures unless the tool prints a final
   verdict (check.py does now); Zed tool versions must match CLI (ruff
   0.15 vs 0.16 default-rule skew burned an afternoon); host crashes
   corrupt HF datasets arrow caches (zero-byte dataset_info.json →
