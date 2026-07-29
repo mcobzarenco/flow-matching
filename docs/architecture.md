@@ -162,6 +162,13 @@ lerobot's π0/SmolVLA convention. With ε ~ N(0, I) and clean chunk a:
     x_τ = τ·ε + (1−τ)·a          target  u = ε − a
     τ ~ Beta(1.5, 1) → (0.001, 1]   (mass toward τ=1)
 
+**τ direction (read this before interpreting any per-τ statement): τ=1 is
+PURE NOISE, τ=0 is data** — π0's diffusion-flavored direction, INVERTED
+relative to the Lipman/rectified-flow convention (t=1 = data). "High τ"
+anywhere in these docs = the noise end = the FIRST integration steps
+(initial chunk placement from prefix context alone); Beta(1.5, 1)
+therefore up-weights the noisy regime during training.
+
 MSE of the expert's velocity against u over the FULL chunk: episode-
 boundary chunks carry repeat-last-action targets (lerobot's delta-
 timestamps query clamps indices to the episode range, so tail positions
