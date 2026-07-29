@@ -98,6 +98,21 @@ the cont45k ledger** — baselines re-measured on the same frames):
 | community train (256) | 10.72 | 8.80 | −1.92 |
 | rig holdout (full 3,403) | 12.00 | 15.64 | **+3.64** |
 
+**Resume to 50k** (`adarms-bidir-h1536-resume60k-b128`, batch 128/rank
+×2 = global 256, seed 15, LR 3.3e-5→1e-5 over 40k→60k, full-chunk
+repeat-last objective from 7f17e0a): owner killed it at ~50,180 (loss
+~0.099); step_050000 scored on the SAME community-holdout frames —
+**7.796** Heun-10 / **7.715** Heun-30 (first_mae 2.551/2.286) vs 8.066
+at 40k. Two signals: +10k steps at the doubled batch bought −0.27; and
+the **Heun-10→30 gap is only −0.08** (additive lineage: −0.28 at
+10→30, ~−1.0 at 5→30) — the pre-registered adaRMS success signature
+(velocity field smooth in τ; integration error ~gone; Heun-30 not
+worth 3× latency here). Usual confound: bidir + width + fps-30 changed
+together. On HF without optimizer
+(`bijou_adarms_bidir_h1536_40k_ddp2/step_050000`); reports/JSONs in
+`reports/` (`*adarms50k_comm_holdout*`). step_050000 optimizer.pt
+still on the box if a further resume is wanted.
+
 Findings: (1) big honest win over copy on community holdout — but
 confounded vs the 4-arm 40k round (adaRMS + bidir + width + 2× batch +
 fps filter + rig data all at once), so it shows the *package* works,
@@ -265,23 +280,18 @@ dead; next perf wins are length-bucketed batching (batch pads 452 vs
 
 ## 3. In flight right now
 
-- **RUNNING: `adarms-bidir-h1536-resume60k-b128`** (2×H100 box, tmux
-  `adarms2`, log `~/adarms_resume60k_console.log`, launcher
-  `~/launch_adarms_resume60k.sh` / local `outputs/`, wandb en08dqd8,
-  launched 15:25 UTC 2026-07-29): **--resume** of the adaRMS run from
-  step_040000 to --steps 60000 (+20k). LR restarted 3.28e-5 (cosine
-  re-eval, owner-reviewed) decaying to 1e-5; **--batch-size 128/rank**
-  (global 256, measured 62.8/80 GB, ~2.05 s/step, ETA ~03:00 UTC,
-  saves 45k/50k/55k/60k); **--seed 15** (fresh shuffle — seed 14 on
-  resume could replay data the model saw); code 7f17e0a = full-chunk
-  repeat-last targets (mid-lineage objective change, accepted; loss
-  continuous ~0.105 at the seam). Everything else identical.
-  PITFALL (new): first launch was HOST-RAM OOM-killed at ~step 40070 —
-  16 workers × prefetch 8 × batch 128 ≈ 133 GB shmem of prefetched
-  batches. Prefetch-factor must scale INVERSELY with batch size
-  (in-flight bytes = workers × prefetch × batch); fixed with
+- **KILLED at ~50,180 + SCORED: `adarms-bidir-h1536-resume60k-b128`**
+  (2×H100 box; owner's call): the --resume of the adaRMS run
+  (batch 128/rank = global 256, seed 15, LR 3.28e-5 cosine to 60k,
+  code 7f17e0a). step_050000 results in the §2 ledger (7.796 h10 /
+  7.715 h30; Heun-gap collapse = adaRMS signature); step_045000 also
+  saved on the box. Box is idle again.
+  PITFALL (from the first launch attempt): HOST-RAM OOM-killed at
+  ~step 40070 — 16 workers × prefetch 8 × batch 128 ≈ 133 GB shmem of
+  prefetched batches. Prefetch-factor must scale INVERSELY with batch
+  size (in-flight bytes = workers × prefetch × batch); fixed with
   --prefetch-factor 4 (same 8,192 in-flight samples/rank as the proven
-  64/8 config). Crash was pre-first-save; resume point untouched.
+  64/8 config).
 - **FINISHED + SCORED: `adarms-bidir-h1536-40k-ddp2`** (2×H100 box,
   completed 40k ~13:30 UTC 2026-07-29): results in the §2 ledger —
   community holdout 8.07 vs copy 11.50 (fps-30 frame set), rig holdout
