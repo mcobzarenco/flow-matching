@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
 dependencies = [
+    "anthropic>=0.40",
     # lerobot[dataset] leaves av unconstrained; the <16 cap is ours and is
     # the only thing pinning the decode stack's ffmpeg ABI.
     "av>=15,<16",
