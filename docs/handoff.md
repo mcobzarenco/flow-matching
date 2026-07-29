@@ -265,13 +265,30 @@ dead; next perf wins are length-bucketed batching (batch pads 452 vs
 
 ## 3. In flight right now
 
+- **RUNNING: `adarms-bidir-h1536-resume60k-b128`** (2×H100 box, tmux
+  `adarms2`, log `~/adarms_resume60k_console.log`, launcher
+  `~/launch_adarms_resume60k.sh` / local `outputs/`, wandb en08dqd8,
+  launched 15:25 UTC 2026-07-29): **--resume** of the adaRMS run from
+  step_040000 to --steps 60000 (+20k). LR restarted 3.28e-5 (cosine
+  re-eval, owner-reviewed) decaying to 1e-5; **--batch-size 128/rank**
+  (global 256, measured 62.8/80 GB, ~2.05 s/step, ETA ~03:00 UTC,
+  saves 45k/50k/55k/60k); **--seed 15** (fresh shuffle — seed 14 on
+  resume could replay data the model saw); code 7f17e0a = full-chunk
+  repeat-last targets (mid-lineage objective change, accepted; loss
+  continuous ~0.105 at the seam). Everything else identical.
+  PITFALL (new): first launch was HOST-RAM OOM-killed at ~step 40070 —
+  16 workers × prefetch 8 × batch 128 ≈ 133 GB shmem of prefetched
+  batches. Prefetch-factor must scale INVERSELY with batch size
+  (in-flight bytes = workers × prefetch × batch); fixed with
+  --prefetch-factor 4 (same 8,192 in-flight samples/rank as the proven
+  64/8 config). Crash was pre-first-save; resume point untouched.
 - **FINISHED + SCORED: `adarms-bidir-h1536-40k-ddp2`** (2×H100 box,
   completed 40k ~13:30 UTC 2026-07-29): results in the §2 ledger —
   community holdout 8.07 vs copy 11.50 (fps-30 frame set), rig holdout
   15.64 vs copy 12.00 (bidir rig failure persists at scale). Checkpoint
   on HF **with optimizer**
   (`bijou_adarms_bidir_h1536_40k_ddp2/step_040000`); reports/JSONs
-  copied to `reports/`. The 2×H100 box is now idle.
+  copied to `reports/`. Now being resumed (entry above).
 - **STOPPED + PARTIALLY UPLOADED: paired rig fine-tunes** (8×A100 box,
   2026-07-29): arm A `ft-rig-from-unftext25k-ddp4` (init-from
   unftext15k_r2 step_025000, adapted trunk) and arm B
