@@ -56,6 +56,31 @@ recovered by ~37k, bottomed 6.80 @40k, 7.05 final — episode-level
 generalization saturated; the rig side is where the samples went.
 Reports `reports/report_mainline_cont45k_{holdout,marius}.html` +
 JSONs in `reports/`. On HF with optimizer.pt.
+**NB the 11.709 rig number is `so101_pick_place_clean`-ONLY-256** — on
+the harder both-rig-datasets/256 set cont45k scores 18.76 (v2
+dominates the sample; fix the frame set before any rig comparison).
+
+**Unfrozen-text-trunk eval (2026-07-29, apples-to-apples, 256/side,
+seed 0; reports `reports/report_{cont45k,unftext15k,unftext25k}_
+{holdout,train,rig}.html`)**: `--text-lr 2e-5` continuation of cont45k
+(r2 lineage, step_015000 / step_025000, adapted backbone on HF).
+
+| ckpt | comm. holdout | comm. train | rig both/256 |
+|---|---|---|---|
+| cont45k frozen | 6.86 | 6.74 | 18.76 |
+| unftext 15k | 6.47 | 6.38 | 18.18 |
+| unftext 25k | 6.49 | 6.32 | 17.97 |
+| state-copy | 10.30 | 11.10 | 12.92 |
+
+Finding: unfreezing the text trunk is a **modest monotone win on BOTH**
+community (−0.4) and rig zero-shot (−0.6..−0.8), plateauing on
+community by 15k, still improving rig a touch at 25k. NOT a
+transfer-killer (an earlier alarm compared against the easier
+clean-only 11.71 — wrong frame set). All checkpoints still lose to
+copy on rig zero-shot (cross-rig wall persists; deployment always
+fine-tunes). Caution: the in-TRAINING eval_chunk_mae probe read
+~7.2–7.4 for these (per-rank noise-seed + sharding), noisier and
+higher than the offline 6.47–6.49 — trust the offline eval.
 
 **4-arm ablation** (from scratch, holdout 0.1/seed 0, seed 42, batch 64,
 1×H100 each; 20k then lossless resume→40k; doc:
