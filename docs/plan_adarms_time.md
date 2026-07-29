@@ -40,41 +40,53 @@ h = sublayer(h); h = post_ln(h); h = residual + h`.
 
 Reuse the same time MLP to produce a **conditioning vector** c = [B,
 hidden]. Each layer owns a zero-initialized modulation head
-`Sequential(SiLU, Linear(hidden → 9·hidden))` producing, per sublayer,
-`(scale, shift, gate)`; the block becomes:
+`Sequential(SiLU, Linear(hidden → 6·hidden))` producing, per sublayer,
+`(scale, gate)`; the block becomes:
 
     residual = h
-    h = pre_ln(h) * (1 + scale) + shift        # modulate the pre-norm output
+    h = pre_ln(h) * (1 + scale)                 # modulate the pre-norm output
     h = sublayer(h)
     h = post_ln(h)
     h = residual + gate * h                     # gate before the residual add
 
-(scale/shift/gate broadcast [B, hidden] → [B, seq, hidden]; applied to all
+(scale/gate broadcast [B, hidden] → [B, seq, hidden]; applied to all
 suffix positions, so unlike additive the state token IS τ-modulated —
-DiT-standard, and desirable: the state representation the actions attend
-can be τ-dependent.) Optionally the final `self.norm` gets a scale+shift
-head too (no gate — no residual there), DiT-faithful; zero-init keeps it
-identity. τ enters ONLY through modulation in this mode: NOT added to
-`action_embeds`.
+standard, and desirable: the state representation the actions attend can
+be τ-dependent.) The final `self.norm` gets a scale head too (no gate —
+no residual there); zero-init keeps it identity. τ enters ONLY through
+modulation in this mode: NOT added to `action_embeds`, so it first enters
+at layer 0 via that layer's scale/gate heads (no dead input — layer 0
+computes τ-dependently from the start).
 
-Design choices, all as discussed (DiT-faithful, param-matching set aside):
+Design choices:
+- **Scale + gate, NO shift β — RMSNorm-faithful.** adaLN-Zero's shift is
+  a LayerNorm artifact: LayerNorm already carries a learned bias, so the
+  modulated shift just conditions it. RMSNorm deliberately has no bias
+  (Gemma is RMSNorm-everywhere, `x/rms(x)·(1+w)`); a modulated β
+  reintroduces exactly the additive term RMSNorm omits. The additive
+  τ-injection β would have provided is instead supplied by the GATE
+  (`residual + g(τ)·sublayer` accumulates τ-dependent content into the
+  stream through every gated sublayer); scale γ modulates the one thing
+  an RMSNorm output IS — a per-channel magnitude. Pure-multiplicative
+  can't create signal in an exactly-zero channel at the norm, but the
+  residual stream is never exactly zero, so that is a non-situation. (A
+  β variant is a possible future ablation, not the default; and this
+  matches openpi's adaRMS naming — confirm against their source before
+  citing.)
 - **All three sublayers modulated**, cross-attention included: τ-dependent
   prefix retrieval (coarse at high noise, fine near τ=0) is the most
   interesting capability this unlocks.
-- **Keep the shift β** (not scale-only): with a scalar condition, β is
-  what lets each layer inject a τ-dependent direction — it subsumes
-  today's input-add at every depth rather than only layer 0.
-- **Per-layer full heads** (9·hidden out): ~16·1024·9216 ≈ **+151M**
-  (~+37%). Compute is elementwise + small matmuls; the expert is ~20% of
+- **Per-layer full heads** (6·hidden out): ~16·1024·6144 ≈ **+101M**
+  (~+25%). Compute is elementwise + small matmuls; the expert is ~20% of
   step time, so a few % on total step time.
 
 ### Identity at init (required)
 
-Zero-init each modulation head's weight AND bias ⇒ scale=shift=gate=0 ⇒
-`modulate(x,0,0)=x` and `gate·sublayer=0` ⇒ every block is the exact
-identity ⇒ the residual stream passes through untouched ⇒ `norm` →
-`action_out_proj` (already zero-init) → velocity 0. So adaRMS at init is
-both body-identity AND zero-field.
+Zero-init each modulation head's weight AND bias ⇒ scale=gate=0 ⇒
+`rmsnorm(h)·(1+0)=rmsnorm(h)` and `gate·sublayer=0` ⇒ every block is the
+exact identity ⇒ the residual stream passes through untouched ⇒ `norm`
+→ `action_out_proj` (already zero-init) → velocity 0. So adaRMS at init
+is both body-identity AND zero-field.
 
 Gradient bootstrap: zero out_proj already blocks body gradients at step 1
 (same as a fresh additive expert — see the unfreeze/AR discussions); zero
@@ -88,12 +100,13 @@ the gates and trains fine; benign over 40k steps. Noted, not fixed.
   `ADDITIVE = "additive"`, `ADARMS = "adarms"`.
 - `ExpertConfig` gains `time_conditioning: TimeConditioning` (no default —
   the frozen config spells every field; the factory supplies the default).
-- `ExpertLayer.__init__`: build `self.modulation` (zero-init) only when
-  ADARMS, else `None`. `forward(..., condition: Tensor | None)`: when
-  `self.modulation is None`, run today's path UNCHANGED (byte-identical);
-  else apply the modulated path. `ActionExpert.forward`: compute c once;
-  skip the input-add in ADARMS; pass c (or None) to each layer; optional
-  final-norm modulation head.
+- `ExpertLayer.__init__`: build `self.modulation` — `Sequential(SiLU,
+  Linear(hidden, 6·hidden))`, zero-init — only when ADARMS, else `None`.
+  `forward(..., condition: Tensor | None)`: when `self.modulation is
+  None`, run today's path UNCHANGED (byte-identical); else apply the
+  scale/gate path. `ActionExpert.forward`: compute c once; skip the
+  input-add in ADARMS; pass c (or None) to each layer; final-norm scale
+  head in ADARMS.
 - `loading.default_expert_config(..., time_conditioning=TimeConditioning.
   ADDITIVE)` — behavior default is fine here (factory, like the other
   knobs); thread into the `ExpertConfig(...)` construction.
@@ -126,8 +139,8 @@ from train_args, so old checkpoints load unchanged.
 2. **Identity-at-init unit test** (tiny, CPU): with a RANDOM-init
    action_out_proj, a fresh adaRMS expert's output equals
    `action_out_proj(norm(input_hidden))` — i.e. the body is the exact
-   identity — and per-layer modulation outputs are all 0. (Additive has
-   no such property; this is the adaRMS-specific guarantee.)
+   identity — and per-layer (scale, gate) outputs are all 0. (Additive
+   has no such property; this is the adaRMS-specific guarantee.)
 3. `check.py` (ruff/pyright/pytest) green; @override on the changed
    forwards; MaskSpec/config typing intact.
 4. Matched A/B on a box: control (additive) vs adarms, same init recipe,
