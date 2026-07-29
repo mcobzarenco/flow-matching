@@ -54,6 +54,8 @@ def _build_mask(
     dtype: torch.dtype,
     device: torch.device,
 ) -> Tensor:
+    """Additive causal(-windowed) mask; padding_mask [B, seen + q_len]
+    (True/1 = real token); returns [B, 1, q_len, kv_len]."""
     q_idx = (torch.arange(q_len, device=device) + q_offset)[None, None, :, None]
     kv_idx = (torch.arange(kv_len, device=device) + kv_offset)[None, None, None, :]
     allowed = kv_idx <= q_idx
@@ -132,8 +134,9 @@ def build_bidirectional_mask(
 ) -> Tensor | None:
     """Padding-only bidirectional mask for the vision encoder.
 
-    ``valid_mask``: [B, S] bool, True = real patch. Returns None when nothing
-    is masked (bit-exact equivalent of adding zeros).
+    ``valid_mask``: [images, patches] bool, True = real patch; returns
+    [images, 1, patches, patches], or None when nothing is masked
+    (bit-exact equivalent of adding zeros).
     """
     if valid_mask is None or bool(valid_mask.all()):
         return None

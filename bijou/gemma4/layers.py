@@ -211,6 +211,10 @@ def attention(
 ) -> Tensor:
     """Dispatch to the configured attention implementation.
 
+    Shapes: query [B, heads, S, head_dim]; key/value
+    [B, kv_heads, T, head_dim]; mask.tensor (when present) broadcastable to
+    [B, 1, S, T]; returns [B, S, heads, head_dim].
+
     Perf policy (measured on H100, see bijou/gemma4/bench.py): single-token decode
     always takes the eager path — at q_len == 1 the fused SDPA kernels are
     launch-bound and ~2x slower than two small gemms. Both paths are

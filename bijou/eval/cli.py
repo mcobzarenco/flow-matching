@@ -334,6 +334,8 @@ def main() -> int:
                 if args.report is not None and index in report_indices:
                     sample = report_samples.get(index) or ReportSample(
                         index=index,
+                        episode=int(item["episode_index"]),
+                        frame_in_episode=int(item["frame_index"]),
                         repo_id=str(item["repo_id"]),
                         task=str(item["task"]),
                         state=item["observation.state"].float(),

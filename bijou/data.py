@@ -57,33 +57,24 @@ class CollatedBatch:
     training loop never needs a device->host sync to decide whether to build
     padding masks.
 
-    Shapes (P = padded prompt width of THIS batch; ``images`` = Σ
-    per-sample camera images, not B — samples contribute variable camera
-    counts and the processor flattens them):
-      - input_ids: [B, P]
-      - attention_mask: [B, P]  (1 = real token, 0 = right padding)
-      - pixel_values: [images, patches, 3·patch_size²]  (raw RGB in [0, 1])
-      - image_position_ids: [images, patches, 2]  ((x, y) spatial ids)
-      - state: [B, state_dim]
-      - actions: [B, chunk, action_dim]
-      - action_is_pad: [B, chunk]  (bool; True = past the episode end —
-        the value there is the last real action repeated, see
-        flow_matching_loss)
-      - action_mean / action_std: [B, action_dim]
-      - state_mean / state_std: [B, state_dim]
+    Shape notes: P = padded prompt width of THIS batch; ``images`` = Σ
+    per-sample camera images, not B (samples contribute variable camera
+    counts and the processor flattens them); ``action_is_pad`` marks
+    positions past the episode end, where the value is the last real
+    action repeated (see flow_matching_loss).
     """
 
-    input_ids: Tensor
-    attention_mask: Tensor
-    pixel_values: Tensor
-    image_position_ids: Tensor
-    state: Tensor
-    actions: Tensor
-    action_is_pad: Tensor
-    action_mean: Tensor
-    action_std: Tensor
-    state_mean: Tensor
-    state_std: Tensor
+    input_ids: Tensor  # [B, P]
+    attention_mask: Tensor  # [B, P]  (1 = real token, 0 = right padding)
+    pixel_values: Tensor  # [images, patches, 3·patch_size²]  (RGB in [0, 1])
+    image_position_ids: Tensor  # [images, patches, 2]  ((x, y) spatial ids)
+    state: Tensor  # [B, state_dim]
+    actions: Tensor  # [B, chunk, action_dim]
+    action_is_pad: Tensor  # [B, chunk]  (bool)
+    action_mean: Tensor  # [B, action_dim]
+    action_std: Tensor  # [B, action_dim]
+    state_mean: Tensor  # [B, state_dim]
+    state_std: Tensor  # [B, state_dim]
     has_padding: bool
 
     def tensors(self) -> dict[str, Tensor]:

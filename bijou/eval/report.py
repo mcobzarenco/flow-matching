@@ -4,8 +4,9 @@ One file, no external assets: matplotlib charts and camera thumbnails are
 embedded as base64 data URIs, so the report can be scp'd, archived next to
 a checkpoint, and diffed across ablations. Sections: run config, the same
 summary/paired/per-motor tables the terminal prints, then per-datapoint
-blocks (repo id, global index, task, state, camera views) with one chart
-overlaying every policy's predicted chunk against the ground truth.
+blocks (repo id, episode + in-episode frame, global index, task, state,
+camera views) with one chart overlaying every policy's predicted chunk
+against the ground truth.
 """
 
 from __future__ import annotations
@@ -103,9 +104,17 @@ THEMES: dict[str, ReportTheme] = {
 
 @dataclass(frozen=True, slots=True)
 class ReportSample:
-    """Everything needed to render one datapoint's block."""
+    """Everything needed to render one datapoint's block.
+
+    ``index`` is the global concatenated-dataset index (what the sampling
+    seed draws); ``episode``/``frame_in_episode`` locate the same frame in
+    dataset-local terms, e.g. for ldtools episode judging or `lerobot`
+    visualization.
+    """
 
     index: int
+    episode: int
+    frame_in_episode: int
     repo_id: str
     task: str
     state: Tensor
@@ -116,7 +125,8 @@ class ReportSample:
 
 
 def _image_data_uri(image: Tensor, height: int = 220) -> str:
-    """CHW float [0,1] tensor -> downscaled PNG data URI."""
+    """One camera frame [3, height, width] (float, [0, 1]) -> downscaled
+    PNG data URI."""
     array = (image.clamp(0, 1) * 255).to(torch.uint8).permute(1, 2, 0).numpy()
     pil = Image.fromarray(array)
     width = max(1, round(pil.width * height / pil.height))
@@ -213,7 +223,8 @@ def _sample_block(
     )
     return (
         f'<div class="sample">'
-        f"<h3>{html.escape(sample.repo_id)} &mdash; frame {sample.index}</h3>"
+        f"<h3>{html.escape(sample.repo_id)} &mdash; episode {sample.episode}, "
+        f"frame {sample.frame_in_episode} (global index {sample.index})</h3>"
         f'<p class="meta">task: {html.escape(sample.task)}<br>'
         f"state: [{state_line}]<br>chunk MAE &mdash; {html.escape(mae_line)}</p>"
         f'<div class="cams">{cameras}</div>'

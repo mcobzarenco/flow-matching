@@ -186,7 +186,10 @@ class DevicePrefetcher:
 
 
 class Normalizer:
-    """MEAN_STD normalization from LeRobot dataset stats."""
+    """MEAN_STD normalization from LeRobot dataset stats.
+
+    ``mean``/``std``: [dim] (action_dim or state_dim); normalize/unnormalize
+    broadcast over any leading axes ([*, dim] -> [*, dim])."""
 
     def __init__(self, mean: Tensor, std: Tensor) -> None:
         self.mean = mean
@@ -269,7 +272,13 @@ def flow_matching_loss(
     ``velocity_model`` is the expert (or its DDP wrapper under torchrun —
     training forwards must go through the wrapper for gradient hooks);
     call convention (prefix, state, noisy_actions, tau) is shared by
-    ActionExpert, BijouModel and DDP(ActionExpert)."""
+    ActionExpert, BijouModel and DDP(ActionExpert).
+
+    Shapes (batch fields in CollatedBatch's docstring):
+      - prefix.streams[layer]: (key, value), each [B, kv_heads, P, head_dim]
+      - velocity/target: [B, chunk, action_dim]; tau: [B]
+      - returns: scalar loss
+    """
     actions = (batch.actions - batch.action_mean[:, None, :]) / batch.action_std[
         :,
         None,
@@ -406,6 +415,7 @@ class BijouTrainStep(torch.nn.Module):
 
     @override
     def forward(self, batch: CollatedBatch) -> Tensor:
+        """Batch (shapes in CollatedBatch's docstring) -> scalar loss."""
         device_type = batch.input_ids.device.type
         with torch.autocast(device_type, torch.bfloat16, enabled=device_type == "cuda"):
             prefix = self.model.encode_prefix(
@@ -427,7 +437,10 @@ def _chunk_plot(
     """Per-joint curves over the action chunk: ground truth, the model's
     prediction, and the trivial state-copy baseline (hold current joint
     positions — the minimum bar a learned policy must clear). Returns a
-    matplotlib figure (caller logs and closes it)."""
+    matplotlib figure (caller logs and closes it).
+
+    Shapes: predicted/truth [chunk, action_dim]; valid [chunk] (bool);
+    state [state_dim] — one sample, CPU-resident."""
     dims = predicted.shape[-1]
     ncols = 3
     nrows = (dims + ncols - 1) // ncols

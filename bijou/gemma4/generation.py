@@ -29,8 +29,8 @@ class GenerationResult:
     """``sequences`` includes the prompt; ``step_logits`` holds the pre-argmax
     float32 logits of each generated position (for parity checking)."""
 
-    sequences: Tensor
-    step_logits: tuple[Tensor, ...]
+    sequences: Tensor  # [B, S + generated]
+    step_logits: tuple[Tensor, ...]  # each [B, vocab]
 
 
 def _sample(
@@ -38,6 +38,7 @@ def _sample(
     params: SamplingParams,
     generator: torch.Generator | None,
 ) -> Tensor:
+    """Temperature/top-k/top-p sampling: logits [B, vocab] -> token ids [B]."""
     logits = logits / params.temperature
     if params.top_k is not None:
         kth = torch.topk(logits, params.top_k, dim=-1).values[..., -1, None]
@@ -64,7 +65,14 @@ def generate(
     sampling: SamplingParams | None = None,
     generator: torch.Generator | None = None,
 ) -> GenerationResult:
-    """Batch-size-1 decoding with a KV cache (greedy unless ``sampling``)."""
+    """Batch-size-1 decoding with a KV cache (greedy unless ``sampling``).
+
+    Shapes:
+      - input_ids: [1, S]
+      - pixel_values (when present): [images, patches, 3·patch_size²]
+      - image_position_ids (when present): [images, patches, 2]
+      - returns GenerationResult (shapes on the dataclass)
+    """
     if input_ids.shape[0] != 1:
         raise ValueError("generate() currently supports batch size 1")
     if eos_token_ids is None:

@@ -229,7 +229,10 @@ class ExpertCrossAttention(nn.Module):
           - hidden_states: [B, suffix, hidden]  (queries: the expert suffix)
           - stream: (key, value), each [B, kv_heads, P, head_dim]
           - position_embeddings: (cos, sin), each [B, suffix, head_dim]
-          - mask.tensor (when present): [B, 1, suffix, P]
+            (padded batches: per-sample positions; [1, suffix, head_dim]
+            broadcast otherwise)
+          - mask.tensor (when present): [B, 1, 1, P]  (padding-only — every
+            query sees the same real prefix columns, broadcast over queries)
         """
         batch, seq_len, _ = hidden_states.shape
         cos, sin = position_embeddings
@@ -293,7 +296,8 @@ class ExpertSelfAttention(nn.Module):
 
         Shapes:
           - hidden_states: [B, suffix, hidden]
-          - position_embeddings: (cos, sin), each [B, suffix, head_dim]
+          - position_embeddings: (cos, sin), each [1, suffix, head_dim]
+            (suffix positions are sample-independent — broadcast over B)
           - mask.tensor (when present): [B, 1, suffix, suffix]
         """
         batch, seq_len, _ = hidden_states.shape
@@ -368,7 +372,8 @@ class ExpertMLP(nn.Module):
 # additive support once adaRMS wins). Modulation vectors are per-sample
 # [B, hidden], broadcast across the suffix positions.
 def _apply_scale(hidden_states: Tensor, scale: Tensor | None) -> Tensor:
-    """RMSNorm-output scale: ``norm(x)*(1+γ)``; identity when scale is None."""
+    """RMSNorm-output scale: ``norm(x)*(1+γ)``; identity when scale is None.
+    hidden_states [B, suffix, hidden]; scale [B, hidden]."""
     if scale is None:
         return hidden_states
     return hidden_states * (1.0 + scale[:, None, :])
@@ -376,7 +381,8 @@ def _apply_scale(hidden_states: Tensor, scale: Tensor | None) -> Tensor:
 
 def _apply_gate(hidden_states: Tensor, gate: Tensor | None) -> Tensor:
     """Sublayer-contribution gate: ``g*out``; identity (pass-through, gate
-    conceptually 1) when gate is None."""
+    conceptually 1) when gate is None. hidden_states [B, suffix, hidden];
+    gate [B, hidden]."""
     if gate is None:
         return hidden_states
     return hidden_states * gate[:, None, :]
@@ -480,9 +486,10 @@ class ExpertLayer(nn.Module):
         Shapes:
           - hidden_states: [B, suffix, hidden]
           - stream: (key, value), each [B, kv_heads, P, head_dim]
-          - cross_position_embeddings: (cos, sin), each [B, suffix, head_dim]
-          - cross_attention_mask.tensor (when present): [B, 1, suffix, P]
-          - self_position_embeddings: (cos, sin), each [B, suffix, head_dim]
+          - cross_position_embeddings: (cos, sin), each
+            [B or 1, suffix, head_dim]  (B when padded, broadcast otherwise)
+          - cross_attention_mask.tensor (when present): [B, 1, 1, P]
+          - self_position_embeddings: (cos, sin), each [1, suffix, head_dim]
           - self_attention_mask.tensor (when present): [B, 1, suffix, suffix]
           - condition (adaRMS only): [B, hidden]
         """

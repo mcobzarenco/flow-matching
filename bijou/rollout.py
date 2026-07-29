@@ -162,7 +162,12 @@ def observation_to_item(
     """Robot observation -> the item shape BijouPolicy consumes (mirrors a
     StatsAttachedDataset item, including the stats tensors). Ground-truth
     fields are zero stubs: the collator requires them and the policy reads
-    only their shapes."""
+    only their shapes.
+
+    Produced item shapes (matching PrefixCollator.__call__'s contract):
+    observation.state [state_dim]; action [chunk, action_dim];
+    action_is_pad [chunk]; observation.images.* [3, height, width]
+    (float, [0, 1], from the camera's HWC uint8 frame)."""
     state = torch.tensor([float(observation[f"{m}.pos"]) for m in SO_MOTORS])
     item: dict[str, Any] = {
         "task": task,

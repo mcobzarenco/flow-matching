@@ -41,7 +41,10 @@ class KVCache:
         keys: Tensor,
         values: Tensor,
     ) -> tuple[Tensor, Tensor]:
-        """Append new K/V states [B, KV, S, D]; return the states to attend to."""
+        """Append new K/V states [B, kv_heads, S, head_dim]; return the
+        states to attend to, [B, kv_heads, T, head_dim] (T = seen + S;
+        sliding layers then trim their STORED copy to the window, but the
+        full pre-trim states are what this call returns)."""
         layer = self.layers[layer_idx]
         if layer.keys is None or layer.values is None:
             full_keys, full_values = keys, values
