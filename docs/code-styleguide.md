@@ -90,9 +90,17 @@ not a test.
   ruff `I`, `known-first-party = ["bijou"]`). This matches the editor's
   `source.organizeImports.ruff` code action, so on-save organize-imports
   and `check.py` can never disagree.
+- **Intra-package imports are relative** (`from .schema import …`,
+  `from ..data import repo_id_of`), never `from bijou.…`: the package is
+  self-contained under moves/renames, and the relative form makes the DAG
+  depth visible at the import site (one dot = sibling, two = parent
+  package). Convention, not lint — ruff's only rule here (`TID252`)
+  enforces the opposite and stays off. (Added 2026-07-30 after bijou.judge
+  landed with absolute self-imports.)
 - **The import DAG is strict** and reviewed:
-  `train`/`eval`/`rollout` → `loading` → `data` → `model` → `expert` →
-  `gemma4`, importing downward only. No module imports its importer.
+  `train`/`eval`/`rollout`/`judge` → `loading` → `data` → `model` →
+  `expert` → `gemma4`, importing downward only (`judge` touches only
+  `data`). No module imports its importer.
   (`loading` owns the checkpoint schema — both the write side,
   `CheckpointMetadata`, and the read side, `CheckpointInfo` — because
   `train` and `eval` both sit above it.)

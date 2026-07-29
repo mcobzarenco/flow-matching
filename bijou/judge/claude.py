@@ -29,8 +29,8 @@ from anthropic import Anthropic
 from anthropic.types import ImageBlockParam, TextBlockParam
 from PIL import Image
 
-from bijou.judge.evidence import EpisodeSummary, load_episode_summary
-from bijou.judge.schema import SYSTEM_PROMPT, EpisodeJudgment
+from .evidence import EpisodeSummary, load_episode_summary
+from .schema import SYSTEM_PROMPT, EpisodeJudgment
 
 # CLI defaults. Named so bijou.judge.sweep (which drives this judge over
 # whole collections) shares the exact same knobs instead of re-hardcoding

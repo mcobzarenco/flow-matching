@@ -33,9 +33,9 @@ from transformers import (
     AutoProcessor,
 )
 
-from bijou.judge.claude import print_report
-from bijou.judge.evidence import EpisodeSummary, load_episode_summary
-from bijou.judge.schema import SYSTEM_PROMPT, EpisodeJudgment
+from .claude import print_report
+from .evidence import EpisodeSummary, load_episode_summary
+from .schema import SYSTEM_PROMPT, EpisodeJudgment
 
 GEMMA_MODEL_ID = "google/gemma-4-12B-it"
 IMAGE_TOKEN_BUDGETS = (70, 140, 280, 560, 1120)

@@ -16,9 +16,9 @@ from typing import Any
 
 from anthropic import Anthropic, APIError
 
-from bijou.judge.claude import build_user_content, request_verdict
-from bijou.judge.evidence import load_episode_summary
-from bijou.judge.schema import PROMPT_HASH, EpisodeJudgment
+from .claude import build_user_content, request_verdict
+from .evidence import load_episode_summary
+from .schema import PROMPT_HASH, EpisodeJudgment
 
 _client_cache: Anthropic | None = None
 

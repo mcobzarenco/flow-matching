@@ -50,16 +50,16 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from bijou.data import repo_id_of
-from bijou.judge.claude import (
+from ..data import repo_id_of
+from .claude import (
     DEFAULT_MAX_IMAGE_DIM,
     DEFAULT_MAX_TOKENS,
     DEFAULT_MODEL,
     DEFAULT_NUM_FRAMES,
 )
-from bijou.judge.schema import PROMPT_HASH
-from bijou.judge.store import judgment_key, load_sidecar, sidecar_record, write_sidecar
-from bijou.judge.worker import JudgeTask, judge_one
+from .schema import PROMPT_HASH
+from .store import JudgmentRecord, load_sidecar, write_sidecar
+from .worker import JudgeTask, judge_one
 
 # Sweep-specific CLI defaults (the judge knobs are imported from
 # bijou.judge.claude so the two CLIs can never drift apart).
@@ -167,16 +167,16 @@ def merge_journal(journal: Path, dirs_by_repo: dict[str, Path]) -> None:
     if not journal.exists():
         print(f"merge: no journal at {journal}, nothing to fold")
         return
-    by_repo: dict[str, dict[tuple[int, str, str], dict[str, Any]]] = {}
+    by_repo: dict[str, dict[tuple[int, str, str], JudgmentRecord]] = {}
     with journal.open() as f:
         for line in f:
             if not line.strip():
                 continue
-            record = json.loads(line)
-            if record.get("status") != "ok":
+            raw = json.loads(line)
+            if raw.get("status") != "ok":
                 continue
-            new = sidecar_record(record)
-            by_repo.setdefault(record["dataset"], {})[judgment_key(new)] = new
+            new = JudgmentRecord.from_journal(raw)
+            by_repo.setdefault(raw["dataset"], {})[new.key()] = new
     added = replaced = unchanged = 0
     missing: list[str] = []
     for repo, new_records in sorted(by_repo.items()):
@@ -184,7 +184,7 @@ def merge_journal(journal: Path, dirs_by_repo: dict[str, Path]) -> None:
         if dataset_dir is None:
             missing.append(repo)
             continue
-        existing = {judgment_key(r): r for r in load_sidecar(dataset_dir)}
+        existing = {r.key(): r for r in load_sidecar(dataset_dir)}
         changed = False
         for key, record in new_records.items():
             old = existing.get(key)
@@ -389,7 +389,7 @@ def main() -> None:
     tasks: list[JudgeTask] = []
     already = 0
     for plan in plans:
-        sidecar_keys = {judgment_key(record) for record in load_sidecar(plan.root)}
+        sidecar_keys = {record.key() for record in load_sidecar(plan.root)}
         for episode in plan.to_judge:
             if (
                 (episode, args.model, PROMPT_HASH) in sidecar_keys

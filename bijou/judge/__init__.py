@@ -15,7 +15,7 @@ verdict schema and the sidecar store) — importing them must not pull the
 anthropic or transformers stacks.
 """
 
-from bijou.judge.schema import (
+from .schema import (
     PROMPT_HASH,
     SYSTEM_PROMPT,
     CameraKind,
@@ -25,11 +25,10 @@ from bijou.judge.schema import (
     TaskCompletion,
     Verdict,
 )
-from bijou.judge.store import (
+from .store import (
     JUDGMENTS_RELPATH,
-    judgment_key,
+    JudgmentRecord,
     load_sidecar,
-    sidecar_record,
     write_sidecar,
 )
 
@@ -40,11 +39,10 @@ __all__ = [
     "CameraKind",
     "EpisodeJudgment",
     "InstructionQuality",
+    "JudgmentRecord",
     "Scores",
     "TaskCompletion",
     "Verdict",
-    "judgment_key",
     "load_sidecar",
-    "sidecar_record",
     "write_sidecar",
 ]
