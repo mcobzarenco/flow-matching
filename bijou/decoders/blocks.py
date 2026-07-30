@@ -3,9 +3,10 @@
 Both action decoders (flow matching, AR FAST) are stacks of the same
 block — cross-attention over one ObservationMemory stream, self-attention
 over the suffix, gated-GLU MLP, sandwich RMSNorms — differing only in the
-suffix content, masks, and heads. ExpertConfig carries the shared
-geometry; τ-conditioning (adaRMS) is built only when requested and is a
-None no-op otherwise.
+suffix content, masks, and heads. The modules here take their parameters
+individually and know nothing about either decoder's config type;
+conditioning hooks (the adaRMS scale/gate heads) are built only when
+``modulated`` is set and are a None no-op otherwise.
 
 Attribute names inside these modules are frozen: they are safetensors key
 segments of every existing flow checkpoint (tests/test_state_dict_keys.py).
@@ -13,8 +14,6 @@ segments of every existing flow checkpoint (tests/test_state_dict_keys.py).
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from enum import StrEnum
 from typing import override
 
 import torch
@@ -27,93 +26,10 @@ from ..nn import (
     DeviceLike,
     MaskSpec,
     RMSNorm,
-    RopeParameters,
     activation_fn,
     apply_rotary_pos_emb,
     attention,
 )
-
-
-class SelfAttentionMode(StrEnum):
-    """Masking of the expert's self-attention over ``[state][actions]``.
-
-    The state token attends and is attended by everything in both modes;
-    in CAUSAL_ACTIONS each action token only attends earlier actions (the
-    SmolVLA ablation found this beats bidirectional; π0 uses bidirectional).
-    """
-
-    BIDIRECTIONAL = "bidirectional"
-    CAUSAL_ACTIONS = "causal_actions"
-
-
-class TimeConditioning(StrEnum):
-    """How flow time τ conditions the expert.
-
-    ADDITIVE: the π0/SmolVLA scheme currently shipped — τ's MLP embedding
-    is added to the action token embeddings at the input; the state token
-    is not time-conditioned; layers are unconditioned.
-    ADARMS: DiT-style adaptive RMSNorm — τ's embedding drives a per-layer
-    zero-initialized head producing a per-channel SCALE on each sublayer's
-    (RMS)norm output and a GATE on its residual contribution (no shift —
-    RMSNorm carries no bias; the gate is the additive-injection route).
-    Identity at init. The intended successor to ADDITIVE.
-    """
-
-    ADDITIVE = "additive"
-    ADARMS = "adarms"
-
-
-@dataclass(frozen=True, slots=True)
-class ExpertConfig:
-    """Architecture of the action expert. Use
-    :func:`bijou.loading.default_expert_config` to derive one from a backbone
-    config with the blocks-schedule knobs."""
-
-    hidden_size: int
-    num_attention_heads: int
-    intermediate_size: int
-    hidden_activation: str
-    rms_norm_eps: float
-
-    self_attention_mode: SelfAttentionMode
-    self_attention_rope_theta: float
-
-    # Cross-attention geometry, copied from the backbone's global layers.
-    cross_attention_heads: int
-    cross_attention_head_dim: int
-    cross_attention_rope: RopeParameters
-    # Backbone layer index each expert layer cross-attends; the length of
-    # this tuple is the expert depth.
-    cross_attention_schedule: tuple[int, ...]
-
-    action_dim: int
-    state_dim: int
-    chunk_size: int
-    time_embed_dim: int
-    time_conditioning: TimeConditioning
-
-    def __post_init__(self) -> None:
-        if not self.cross_attention_schedule:
-            raise ValueError("cross_attention_schedule must not be empty")
-        if self.hidden_size % self.num_attention_heads:
-            raise ValueError("hidden_size must be divisible by num_attention_heads")
-        if (self.hidden_size // self.num_attention_heads) % 2:
-            raise ValueError("self-attention head_dim must be even (RoPE)")
-        if self.time_embed_dim % 2:
-            raise ValueError("time_embed_dim must be even")
-
-    @property
-    def num_layers(self) -> int:
-        return len(self.cross_attention_schedule)
-
-    @property
-    def streams(self) -> tuple[int, ...]:
-        """Backbone layers whose K/V the expert consumes, ascending."""
-        return tuple(sorted(set(self.cross_attention_schedule)))
-
-    @property
-    def suffix_length(self) -> int:
-        return 1 + self.chunk_size
 
 
 class ExpertCrossAttention(nn.Module):
@@ -121,32 +37,35 @@ class ExpertCrossAttention(nn.Module):
 
     def __init__(
         self,
-        config: ExpertConfig,
         *,
+        hidden_size: int,
+        num_heads: int,
+        head_dim: int,
+        rms_norm_eps: float,
         attn_backend: AttentionBackend = DEFAULT_ATTENTION_BACKEND,
         device: DeviceLike = None,
         dtype: torch.dtype | None = None,
     ) -> None:
         super().__init__()
-        self.num_heads = config.cross_attention_heads
-        self.head_dim = config.cross_attention_head_dim
+        self.num_heads = num_heads
+        self.head_dim = head_dim
         self.attn_backend = attn_backend
         self.q_proj = nn.Linear(
-            config.hidden_size,
-            self.num_heads * self.head_dim,
+            hidden_size,
+            num_heads * head_dim,
             bias=False,
             device=device,
             dtype=dtype,
         )
         self.q_norm = RMSNorm(
-            self.head_dim,
-            eps=config.rms_norm_eps,
+            head_dim,
+            eps=rms_norm_eps,
             device=device,
             dtype=dtype,
         )
         self.o_proj = nn.Linear(
-            self.num_heads * self.head_dim,
-            config.hidden_size,
+            num_heads * head_dim,
+            hidden_size,
             bias=False,
             device=device,
             dtype=dtype,
@@ -196,18 +115,20 @@ class ExpertSelfAttention(nn.Module):
 
     def __init__(
         self,
-        config: ExpertConfig,
         *,
+        hidden_size: int,
+        num_heads: int,
+        rms_norm_eps: float,
         attn_backend: AttentionBackend = DEFAULT_ATTENTION_BACKEND,
         device: DeviceLike = None,
         dtype: torch.dtype | None = None,
     ) -> None:
         super().__init__()
-        self.num_heads = config.num_attention_heads
-        self.head_dim = config.hidden_size // config.num_attention_heads
+        self.num_heads = num_heads
+        self.head_dim = hidden_size // num_heads
         self.attn_backend = attn_backend
-        hidden = config.hidden_size
-        eps = config.rms_norm_eps
+        hidden = hidden_size
+        eps = rms_norm_eps
         self.q_proj = nn.Linear(hidden, hidden, bias=False, device=device, dtype=dtype)
         self.k_proj = nn.Linear(hidden, hidden, bias=False, device=device, dtype=dtype)
         self.v_proj = nn.Linear(hidden, hidden, bias=False, device=device, dtype=dtype)
@@ -264,35 +185,36 @@ class ExpertSelfAttention(nn.Module):
 class ExpertMLP(nn.Module):
     def __init__(
         self,
-        config: ExpertConfig,
         *,
+        hidden_size: int,
+        intermediate_size: int,
+        activation: str,
         device: DeviceLike = None,
         dtype: torch.dtype | None = None,
     ) -> None:
         super().__init__()
-        hidden, intermediate = config.hidden_size, config.intermediate_size
         self.gate_proj = nn.Linear(
-            hidden,
-            intermediate,
+            hidden_size,
+            intermediate_size,
             bias=False,
             device=device,
             dtype=dtype,
         )
         self.up_proj = nn.Linear(
-            hidden,
-            intermediate,
+            hidden_size,
+            intermediate_size,
             bias=False,
             device=device,
             dtype=dtype,
         )
         self.down_proj = nn.Linear(
-            intermediate,
-            hidden,
+            intermediate_size,
+            hidden_size,
             bias=False,
             device=device,
             dtype=dtype,
         )
-        self.act_fn = activation_fn(config.hidden_activation)
+        self.act_fn = activation_fn(activation)
 
     @override
     def forward(self, x: Tensor) -> Tensor:
@@ -304,10 +226,11 @@ class ExpertMLP(nn.Module):
         return self.down_proj(self.act_fn(self.gate_proj(x)) * self.up_proj(x))
 
 
-# adaRMS application, factored so the additive path is a clean ``None``
+# adaRMS application, factored so the unmodulated path is a clean ``None``
 # no-op (delete these guards, and the two ``None`` cases below, to drop
-# additive support once adaRMS wins). Modulation vectors are per-sample
-# [B, hidden], broadcast across the suffix positions.
+# the flow decoder's additive support once adaRMS wins). Modulation
+# vectors are per-sample [B, hidden], broadcast across the suffix
+# positions.
 def apply_scale(hidden_states: Tensor, scale: Tensor | None) -> Tensor:
     """RMSNorm-output scale: ``norm(x)*(1+γ)``; identity when scale is None.
     hidden_states [B, suffix, hidden]; scale [B, hidden]."""
@@ -330,37 +253,56 @@ class ExpertLayer(nn.Module):
 
     def __init__(
         self,
-        config: ExpertConfig,
         *,
+        hidden_size: int,
+        num_attention_heads: int,
+        intermediate_size: int,
+        hidden_activation: str,
+        rms_norm_eps: float,
+        cross_attention_heads: int,
+        cross_attention_head_dim: int,
+        modulated: bool,
         attn_backend: AttentionBackend = DEFAULT_ATTENTION_BACKEND,
         device: DeviceLike = None,
         dtype: torch.dtype | None = None,
     ) -> None:
         super().__init__()
-        hidden, eps = config.hidden_size, config.rms_norm_eps
+        hidden, eps = hidden_size, rms_norm_eps
         self.cross_attn = ExpertCrossAttention(
-            config,
+            hidden_size=hidden,
+            num_heads=cross_attention_heads,
+            head_dim=cross_attention_head_dim,
+            rms_norm_eps=eps,
             attn_backend=attn_backend,
             device=device,
             dtype=dtype,
         )
         self.self_attn = ExpertSelfAttention(
-            config,
+            hidden_size=hidden,
+            num_heads=num_attention_heads,
+            rms_norm_eps=eps,
             attn_backend=attn_backend,
             device=device,
             dtype=dtype,
         )
-        self.mlp = ExpertMLP(config, device=device, dtype=dtype)
-        # adaRMS only: SiLU -> Linear(hidden, 6*hidden), zero-initialized
-        # (ActionExpert.reset_parameters), producing (scale, gate) for each
-        # of cross-attn / self-attn / MLP. None => additive (unconditioned).
+        self.mlp = ExpertMLP(
+            hidden_size=hidden,
+            intermediate_size=intermediate_size,
+            activation=hidden_activation,
+            device=device,
+            dtype=dtype,
+        )
+        # ``modulated`` (adaRMS) only: SiLU -> Linear(hidden, 6*hidden),
+        # zero-initialized by the owning decoder's reset_parameters,
+        # producing (scale, gate) for each of cross-attn / self-attn / MLP.
+        # None => unconditioned block.
         self.modulation: nn.Sequential | None = None
-        if config.time_conditioning is TimeConditioning.ADARMS:
+        if modulated:
             self.modulation = nn.Sequential(
                 nn.SiLU(),
                 nn.Linear(
-                    config.hidden_size,
-                    6 * config.hidden_size,
+                    hidden,
+                    6 * hidden,
                     device=device,
                     dtype=dtype,
                 ),
@@ -415,9 +357,11 @@ class ExpertLayer(nn.Module):
     ) -> Tensor:
         """cross-attn -> self-attn -> MLP; returns [B, suffix, hidden].
 
-        ``condition`` is the τ embedding in adaRMS mode (drives this layer's
-        scale/gate head); None in additive mode, where every modulation slot
-        is None and each block is byte-identical to the pre-adaRMS path
+        ``condition`` is the conditioning embedding (flow time τ) when the
+        layer was built ``modulated`` — it drives this layer's scale/gate
+        head; None for unmodulated layers (the flow decoder's additive mode
+        and the AR decoder), where every modulation slot is None and each
+        block is byte-identical to the pre-adaRMS path
         (``apply_scale``/``apply_gate`` are then no-ops).
 
         Shapes:
@@ -434,7 +378,7 @@ class ExpertLayer(nn.Module):
             cross_scale = cross_gate = self_scale = None
             self_gate = mlp_scale = mlp_gate = None
         else:
-            assert condition is not None, "adaRMS layer requires a condition"
+            assert condition is not None, "modulated layer requires a condition"
             (
                 cross_scale,
                 cross_gate,

@@ -36,7 +36,8 @@ with steps of ``dτ = −1/num_steps``.
 from __future__ import annotations
 
 import math
-from enum import Enum
+from dataclasses import dataclass
+from enum import Enum, StrEnum
 from typing import Any, cast, override
 
 import torch
@@ -62,13 +63,92 @@ from ..nn import (
     rope_inv_freq_from_params,
 )
 from .blocks import (
-    ExpertConfig,
     ExpertLayer,
-    SelfAttentionMode,
-    TimeConditioning,
     apply_scale,
     cross_attention_mask,
 )
+
+
+class SelfAttentionMode(StrEnum):
+    """Masking of the expert's self-attention over ``[state][actions]``.
+
+    The state token attends and is attended by everything in both modes;
+    in CAUSAL_ACTIONS each action token only attends earlier actions (the
+    SmolVLA ablation found this beats bidirectional; π0 uses bidirectional).
+    """
+
+    BIDIRECTIONAL = "bidirectional"
+    CAUSAL_ACTIONS = "causal_actions"
+
+
+class TimeConditioning(StrEnum):
+    """How flow time τ conditions the expert.
+
+    ADDITIVE: the π0/SmolVLA scheme currently shipped — τ's MLP embedding
+    is added to the action token embeddings at the input; the state token
+    is not time-conditioned; layers are unconditioned.
+    ADARMS: DiT-style adaptive RMSNorm — τ's embedding drives a per-layer
+    zero-initialized head producing a per-channel SCALE on each sublayer's
+    (RMS)norm output and a GATE on its residual contribution (no shift —
+    RMSNorm carries no bias; the gate is the additive-injection route).
+    Identity at init. The intended successor to ADDITIVE.
+    """
+
+    ADDITIVE = "additive"
+    ADARMS = "adarms"
+
+
+@dataclass(frozen=True, slots=True)
+class ExpertConfig:
+    """Architecture of the flow-matching action expert. Use
+    :func:`bijou.loading.default_expert_config` to derive one from a backbone
+    config with the blocks-schedule knobs."""
+
+    hidden_size: int
+    num_attention_heads: int
+    intermediate_size: int
+    hidden_activation: str
+    rms_norm_eps: float
+
+    self_attention_mode: SelfAttentionMode
+    self_attention_rope_theta: float
+
+    # Cross-attention geometry, copied from the backbone's global layers.
+    cross_attention_heads: int
+    cross_attention_head_dim: int
+    cross_attention_rope: RopeParameters
+    # Backbone layer index each expert layer cross-attends; the length of
+    # this tuple is the expert depth.
+    cross_attention_schedule: tuple[int, ...]
+
+    action_dim: int
+    state_dim: int
+    chunk_size: int
+    time_embed_dim: int
+    time_conditioning: TimeConditioning
+
+    def __post_init__(self) -> None:
+        if not self.cross_attention_schedule:
+            raise ValueError("cross_attention_schedule must not be empty")
+        if self.hidden_size % self.num_attention_heads:
+            raise ValueError("hidden_size must be divisible by num_attention_heads")
+        if (self.hidden_size // self.num_attention_heads) % 2:
+            raise ValueError("self-attention head_dim must be even (RoPE)")
+        if self.time_embed_dim % 2:
+            raise ValueError("time_embed_dim must be even")
+
+    @property
+    def num_layers(self) -> int:
+        return len(self.cross_attention_schedule)
+
+    @property
+    def streams(self) -> tuple[int, ...]:
+        """Backbone layers whose K/V the expert consumes, ascending."""
+        return tuple(sorted(set(self.cross_attention_schedule)))
+
+    @property
+    def suffix_length(self) -> int:
+        return 1 + self.chunk_size
 
 
 class SamplingMethod(Enum):
@@ -161,7 +241,19 @@ class FlowDecoder(ActionDecoder):
         self.time_act = nn.SiLU()
 
         self.layers = nn.ModuleList(
-            ExpertLayer(config, attn_backend=attn_backend, device=device, dtype=dtype)
+            ExpertLayer(
+                hidden_size=hidden,
+                num_attention_heads=config.num_attention_heads,
+                intermediate_size=config.intermediate_size,
+                hidden_activation=config.hidden_activation,
+                rms_norm_eps=config.rms_norm_eps,
+                cross_attention_heads=config.cross_attention_heads,
+                cross_attention_head_dim=config.cross_attention_head_dim,
+                modulated=config.time_conditioning is TimeConditioning.ADARMS,
+                attn_backend=attn_backend,
+                device=device,
+                dtype=dtype,
+            )
             for _ in range(config.num_layers)
         )
         self.norm = RMSNorm(hidden, eps=config.rms_norm_eps, device=device, dtype=dtype)

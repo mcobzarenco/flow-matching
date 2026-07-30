@@ -46,13 +46,7 @@ from ..nn import (
     rope_cos_sin,
     rope_inv_freq_from_params,
 )
-from .blocks import (
-    ExpertConfig,
-    ExpertLayer,
-    SelfAttentionMode,
-    TimeConditioning,
-    cross_attention_mask,
-)
+from .blocks import ExpertLayer, cross_attention_mask
 
 # CE positions to skip: the state position (its target, the seed BOA, is
 # a constant) and PAD padding. torch's cross_entropy convention.
@@ -80,6 +74,14 @@ class ARFastConfig:
     state_dim: int
     chunk_size: int
     action_dim: int
+
+    def __post_init__(self) -> None:
+        if not self.schedule:
+            raise ValueError("schedule must not be empty")
+        if self.hidden_size % self.num_attention_heads:
+            raise ValueError("hidden_size must be divisible by num_attention_heads")
+        if (self.hidden_size // self.num_attention_heads) % 2:
+            raise ValueError("self-attention head_dim must be even (RoPE)")
 
     @property
     def boa(self) -> int:
@@ -147,27 +149,6 @@ class ARFastDecoder(ActionDecoder):
                 "rope-free memory streams are not implemented (the decoder "
                 "RoPEs its cross-attention queries)",
             )
-        # The shared blocks read geometry through ExpertConfig; fields the
-        # AR decoder does not use (chunk/time/self-attention mode) are
-        # inert placeholders — masks and heads are built here, not there.
-        self._block_config = ExpertConfig(
-            hidden_size=config.hidden_size,
-            num_attention_heads=config.num_attention_heads,
-            intermediate_size=config.intermediate_size,
-            hidden_activation=config.hidden_activation,
-            rms_norm_eps=config.rms_norm_eps,
-            self_attention_mode=SelfAttentionMode.CAUSAL_ACTIONS,
-            self_attention_rope_theta=config.self_attention_rope_theta,
-            cross_attention_heads=config.cross_attention_heads,
-            cross_attention_head_dim=geometry.head_dim,
-            cross_attention_rope=geometry.rope,
-            cross_attention_schedule=(0,) * len(config.schedule),
-            action_dim=config.action_dim,
-            state_dim=config.state_dim,
-            chunk_size=config.chunk_size,
-            time_embed_dim=2,
-            time_conditioning=TimeConditioning.ADDITIVE,
-        )
         hidden = config.hidden_size
         self.token_embedding = nn.Embedding(
             config.vocab_total,
@@ -184,7 +165,14 @@ class ARFastDecoder(ActionDecoder):
         )
         self.layers = nn.ModuleList(
             ExpertLayer(
-                self._block_config,
+                hidden_size=hidden,
+                num_attention_heads=config.num_attention_heads,
+                intermediate_size=config.intermediate_size,
+                hidden_activation=config.hidden_activation,
+                rms_norm_eps=config.rms_norm_eps,
+                cross_attention_heads=config.cross_attention_heads,
+                cross_attention_head_dim=geometry.head_dim,
+                modulated=False,
                 attn_backend=attn_backend,
                 device=device,
                 dtype=dtype,
