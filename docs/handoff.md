@@ -454,6 +454,46 @@ dead; next perf wins are length-bucketed batching (batch pads 452 vs
 
 ## 6. Recent code changes a fresh session must know
 
+- **ARFastDecoder (2026-07-30)** — the autoregressive FAST-token
+  baseline as a seam-native decoder (`bijou/decoders/ar_fast.py` +
+  `bijou/fast/codec.py`; design in `docs/plan.md`). Suffix
+  `[state][BOA][t_1..t_k]` fully causal over shared sandwich blocks
+  (`decoders/blocks.py`, lifted from flow.py — key-set fixtures gate
+  the move), teacher-forced CE (`ar_fast_loss`; state/PAD positions
+  IGNORE_INDEX, no mask tensor — PAD is reserved, masks derive),
+  batched greedy decode to EOA + ActionCodec detokenize + per-sample
+  quantile denorm; malformed generations substitute state-copy LOUDLY
+  (`decoder.malformed_decodes`, wandb eval/malformed_decodes). Train:
+  `--decoder ar_fast --fast-tokenizer
+  mcobzarenco/bijou-checkpoints/fast_tokenizer_v1` (+ --ar-max-tokens);
+  collator tokenizes worker-side. Checkpoints: format-2 kind "ar_fast";
+  eval/rollout work unchanged via predict_chunk (BijouPolicy builds
+  noise only for flow). validate() unified onto model.predict_chunk
+  (flow path bitwise-equal; wandb rich tables decoder-agnostic —
+  verified media upload). ORACLES: flow 1.8896/1.7237 EXACT unchanged;
+  NEW AR CPU oracle **4.8837/4.9089** (tiny backbone +
+  tests/fixtures/tiny_fast_tokenizer, seed 0). GPU smoke (300 steps,
+  real E2B + hub tokenizer, v1): CE 4.9→2.03, machinery end-to-end
+  (decode/fallback/eval/wandb); model quality meaningless at 300 steps
+  (offline 17.9 vs copy 10.9, ~2/3 malformed) — the real CE probes are
+  next. 38 tests.
+- **GPU-box pitfall: CUDA "Error 802: system not yet initialized"
+  while nvidia-smi answers (2026-07-30)** — a dist-upgrade pulled
+  driver 595 over Lambda's matched 580 pair on the 2×H100 VMs; 595
+  fabric-probes the NVLinked GPUs (Fabric State "In Progress") and
+  gates CUDA on nvidia-fabricmanager, which cannot run there (no
+  NVSwitch exposed — NV_WARN_NOTHING_TO_DO). The 68.209.75.243 box
+  needed: purge nvidia-*, install matched nvidia-driver-580-open +
+  fabricmanager 580.173.02, apt-mark hold, AND NVreg_NvLinkDisable=1
+  (its host never completes fabric registration — GPUs are PCIe peers
+  now; NCCL allreduce verified bit-exact). The 192.222.54.70 box runs
+  driver 595 with FM dead but its HOST completed fabric registration
+  (State Completed/CliqueId 0) — CUDA fine, 100k run unaffected; align
+  it to 580 only after the run ends, if at all. FM being dead does NOT
+  silently break DDP: collectives either complete or fail loudly.
+  init-vm-gpu.sh now never touches the NVIDIA stack by default (holds
+  it before dist-upgrade); --install-driver gates install+reboot.
+
 - **Modularity refactor steps 1–4 (2026-07-30, `docs/plan.md`)** — the
   encoder×decoder seam is real code now; no behavior change (oracle
   1.8896/1.7237 EXACT at every step; flags-on grad-flow oracle 1.5528;
