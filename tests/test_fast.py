@@ -125,6 +125,37 @@ def test_fit_rejects_too_small_vocab() -> None:
         FastTokenizer.fit(spiky, vocab_size=64)
 
 
+def test_alphabet_bounded_against_planted_outlier() -> None:
+    """A chunk pinned at NORMALIZED_CLIP must not dictate the alphabet —
+    the fast_tokenizer_v1 failure: min/max alphabet derivation let a
+    handful of outlier coefficients (DC of a pinned chunk = 8·√50·10 ≈
+    566) spend 1019 of 1024 vocab slots on base symbols, leaving 5
+    merges (docs/fast-tokenizer-v1-review.md)."""
+    chunks = smooth_chunks(2000, seed=11)
+    chunks[0, :, :] = 8.0
+    tokenizer = FastTokenizer.fit(chunks, vocab_size=512)
+    vocab = tokenizer.bpe.get_vocab()
+    merges = sum(1 for token in vocab if len(token) > 1)
+    assert tokenizer.alphabet_size < 200, "outlier dictated the alphabet"
+    assert merges > 100, f"merge budget eaten ({merges} merges learned)"
+    # The outlier chunk still encodes: its coefficients clip into the
+    # alphabet edge, loudly counted, and decoding stays finite.
+    before = tokenizer.clipped_coefficients
+    tokens = tokenizer.encode(chunks[0])
+    assert tokenizer.clipped_coefficients > before
+    assert np.isfinite(tokenizer.decode(tokens)).all()
+
+
+def test_minmax_coverage_with_outlier_trips_merge_budget_guard() -> None:
+    """alphabet_coverage=1.0 reproduces the v1 min/max derivation; with a
+    pinned-outlier corpus that configuration now fails loudly instead of
+    silently shipping a degenerate vocabulary."""
+    chunks = smooth_chunks(64, seed=12)
+    chunks[0, :, :] = 8.0
+    with pytest.raises(ValueError, match="merge budget"):
+        FastTokenizer.fit(chunks, vocab_size=1024, alphabet_coverage=1.0)
+
+
 def test_vocab_size_respected(tokenizer: FastTokenizer) -> None:
     assert tokenizer.vocab_size <= 512
 

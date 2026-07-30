@@ -2,8 +2,8 @@
 
 Fits on LeRobot v3 collection roots / dataset dirs with per-dataset
 quantile normalization and writes an immutable tokenizer directory
-(fast_config.json, bpe.json, quantile_stats.json, fit_report.json) ready
-for hub upload. See ``bijou/fast/tokenizer.py`` for the algorithm and
+(fast_config.json, bpe.json, fit_report.json) ready for hub upload. See
+``bijou/fast/tokenizer.py`` for the algorithm and
 ``docs/architecture.md`` §8.3 for the artifact lifecycle.
 
 Deliberately self-contained on the data side (pathlib + pandas over
@@ -24,6 +24,7 @@ import numpy as np
 import pandas as pd
 
 from .tokenizer import (
+    DEFAULT_ALPHABET_COVERAGE,
     FastTokenizer,
     FloatArray,
     IntArray,
@@ -178,8 +179,8 @@ def main() -> int:
         description="Fit a FAST action tokenizer (DCT + BPE) on LeRobot v3 "
         "collection roots / dataset dirs, with per-dataset quantile "
         "normalization. Writes an immutable tokenizer directory "
-        "(fast_config.json, bpe.json, quantile_stats.json, "
-        "fit_report.json) ready for hub upload.",
+        "(fast_config.json, bpe.json, fit_report.json) ready for hub "
+        "upload.",
     )
     parser.add_argument("--data", type=Path, nargs="+", required=True)
     parser.add_argument("--output", type=Path, required=True)
@@ -194,6 +195,16 @@ def main() -> int:
     parser.add_argument("--action-dim", type=int, default=6)
     parser.add_argument("--scale", type=float, default=10.0)
     parser.add_argument("--vocab-size", type=int, default=1024)
+    parser.add_argument(
+        "--alphabet-coverage",
+        type=float,
+        default=DEFAULT_ALPHABET_COVERAGE,
+        help="fraction of corpus coefficients the base alphabet must cover "
+        "(per-tail quantile bound); the rest clip into the alphabet edge. "
+        "Keeps worst-case outliers from eating the BPE merge budget "
+        "(fast_tokenizer_v1 shipped 1019 base symbols + 5 merges; see "
+        "docs/fast-tokenizer-v1-review.md). 1.0 = the v1 min/max behavior",
+    )
     parser.add_argument(
         "--max-chunks",
         type=int,
@@ -255,15 +266,52 @@ def main() -> int:
         time_horizon=args.chunk_size,
         action_dim=args.action_dim,
         vocab_size=args.vocab_size,
+        alphabet_coverage=args.alphabet_coverage,
     )
     fit_seconds = time.perf_counter() - fit_started
+    # tokenizers is untyped; get_vocab() is dict[str, int].
+    vocab: Any = tokenizer.bpe.get_vocab()
+    merges = sum(1 for token in vocab if len(token) > 1)
+    low = tokenizer.min_coefficient
+    high = tokenizer.min_coefficient + tokenizer.alphabet_size - 1
+    corpus_clipped = int(((quantized < low) | (quantized > high)).sum())
     print(
         f"fitted in {fit_seconds:.0f}s: alphabet {tokenizer.alphabet_size}, "
-        f"vocab {tokenizer.vocab_size}",
+        f"{merges} merges, vocab {tokenizer.vocab_size}",
         flush=True,
     )
 
     report = fidelity_report(tokenizer, datasets)
+    naive = args.chunk_size * args.action_dim
+    fitted_chunks = sum(report[d.repo_id]["chunks"] for d in datasets)
+    tokens_weighted = (
+        sum(
+            report[d.repo_id]["chunks"] * report[d.repo_id]["tokens_mean"]
+            for d in datasets
+        )
+        / fitted_chunks
+    )
+    mae_weighted = (
+        sum(
+            report[d.repo_id]["chunks"] * report[d.repo_id]["recon_mae_raw"]
+            for d in datasets
+        )
+        / fitted_chunks
+    )
+    compression = naive / tokens_weighted
+    print(
+        f"\ncorpus (chunk-weighted): {tokens_weighted:.1f} tokens/chunk, "
+        f"{compression:.1f}x compression, recon MAE {mae_weighted:.3f} raw "
+        f"units",
+        flush=True,
+    )
+    if compression < 8.0:
+        print(
+            f"WARNING: {compression:.1f}x compression is below the healthy "
+            "~13x regime (FAST paper / local prototype fits) — inspect the "
+            "alphabet/merge split above before training on this artifact",
+            flush=True,
+        )
     tokenizer.save(args.output)
     (args.output / REPORT_FILENAME).write_text(
         json.dumps(
@@ -276,6 +324,15 @@ def main() -> int:
                 "stride": args.stride,
                 "scale": args.scale,
                 "vocab_size": args.vocab_size,
+                "alphabet_coverage": args.alphabet_coverage,
+                "alphabet_size": tokenizer.alphabet_size,
+                "min_coefficient": tokenizer.min_coefficient,
+                "learned_merges": merges,
+                "corpus_clipped_coefficients": corpus_clipped,
+                "corpus_clipped_fraction": corpus_clipped / int(quantized.size),
+                "tokens_per_chunk_weighted": round(tokens_weighted, 2),
+                "compression_weighted": round(compression, 2),
+                "recon_mae_raw_weighted": round(mae_weighted, 4),
                 "seed": args.seed,
                 "fit_seconds": round(fit_seconds, 1),
                 "per_dataset": report,

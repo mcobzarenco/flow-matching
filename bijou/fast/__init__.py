@@ -8,6 +8,7 @@ with ``python -m bijou.fast``). The public API is re-exported here.
 from .tokenizer import (
     BPE_FILENAME,
     CONFIG_FILENAME,
+    DEFAULT_ALPHABET_COVERAGE,
     FastDecodeError,
     FastTokenizer,
     QuantileEntry,
@@ -18,6 +19,7 @@ from .tokenizer import (
 __all__ = [
     "BPE_FILENAME",
     "CONFIG_FILENAME",
+    "DEFAULT_ALPHABET_COVERAGE",
     "FastDecodeError",
     "FastTokenizer",
     "QuantileEntry",

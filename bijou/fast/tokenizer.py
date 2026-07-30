@@ -73,6 +73,18 @@ class FastDecodeError(ValueError):
 CONSTANT_SPAN = 1e-3
 NORMALIZED_CLIP = 8.0
 
+# Fit-time alphabet bound: the base alphabet covers this fraction of the
+# corpus' quantized coefficients (per-tail (1-x)/2 quantiles); the rest
+# clip into the alphabet edge. Derived from min/max instead, a handful of
+# worst-case outliers dictate the alphabet and eat the BPE merge budget —
+# fast_tokenizer_v1 shipped with 1019 of 1024 slots spent on base symbols
+# and FIVE learned merges, ~2x the tokens/chunk of a bounded fit at
+# reconstruction error identical to the third decimal
+# (docs/fast-tokenizer-v1-review.md). The measured coefficient tail is
+# insensitive around this value (0.008% beyond |71|, none beyond |150| on
+# a 359k-coefficient probe); 1.0 reproduces the min/max behavior.
+DEFAULT_ALPHABET_COVERAGE = 0.99995
+
 
 @dataclass(frozen=True, slots=True)
 class QuantileEntry:
@@ -267,10 +279,21 @@ class FastTokenizer:
         time_horizon: int,
         action_dim: int,
         vocab_size: int = 1024,
+        alphabet_coverage: float = DEFAULT_ALPHABET_COVERAGE,
     ) -> FastTokenizer:
         """Fit the BPE on pre-quantized coefficients [N, H*D] (the output
         of :meth:`quantize_chunks`, possibly concatenated across
-        datasets)."""
+        datasets).
+
+        The base alphabet is bounded by corpus quantiles covering
+        ``alphabet_coverage`` of the coefficients, and the corpus is
+        clipped to that alphabet BEFORE the BPE fit — the trainer builds
+        its alphabet from the data, so an unclipped corpus would re-admit
+        the tail symbols (see DEFAULT_ALPHABET_COVERAGE for why min/max
+        derivation is a footgun). Encode-time out-of-alphabet
+        coefficients clip identically (:meth:`_quantize`, counted in
+        ``clipped_coefficients``), so fit and encode see the same
+        distribution."""
         if quantized.ndim != 2 or quantized.shape[0] == 0:
             raise ValueError(
                 f"expected non-empty [N, H*D] array, got {quantized.shape}",
@@ -280,17 +303,38 @@ class FastTokenizer:
                 f"{quantized.shape[1]} coefficients per chunk != "
                 f"time_horizon * action_dim ({time_horizon} * {action_dim})",
             )
-        min_coefficient = int(quantized.min())
-        alphabet_size = int(quantized.max()) - min_coefficient + 1
-        if alphabet_size > vocab_size:
+        if not 0.5 < alphabet_coverage <= 1.0:
             raise ValueError(
-                f"quantized alphabet ({alphabet_size} symbols) exceeds "
-                f"vocab_size {vocab_size}; lower --scale, raise "
-                "--vocab-size, or check the inputs were normalized (raw "
-                "chunks produce huge DCT coefficients)",
+                f"alphabet_coverage must be in (0.5, 1.0], got {alphabet_coverage}",
             )
 
-        offset = quantized - min_coefficient
+        flat = quantized.reshape(-1)
+        tail = (1.0 - alphabet_coverage) / 2.0
+        low = int(np.quantile(flat, tail, method="lower"))
+        high = int(np.quantile(flat, 1.0 - tail, method="higher"))
+        n_clipped = int(((flat < low) | (flat > high)).sum())
+        if n_clipped:
+            print(
+                f"FAST fit: alphabet bounded to [{low}, {high}] "
+                f"({alphabet_coverage:.3%} coverage); clipping {n_clipped} "
+                f"of {flat.size} corpus coefficients "
+                f"({n_clipped / flat.size:.5%})",
+                flush=True,
+            )
+        bounded = np.clip(quantized, low, high)
+        min_coefficient = int(bounded.min())
+        alphabet_size = int(bounded.max()) - min_coefficient + 1
+        if alphabet_size > vocab_size // 2:
+            raise ValueError(
+                f"quantized alphabet ({alphabet_size} symbols) would eat "
+                f"the BPE merge budget (vocab_size {vocab_size}) — the "
+                "degenerate fast_tokenizer_v1 failure mode. Check the "
+                "inputs were quantile-normalized (raw chunks produce huge "
+                "DCT coefficients), or lower --alphabet-coverage / "
+                "--scale, or raise --vocab-size",
+            )
+
+        offset = bounded - min_coefficient
 
         def corpus() -> Any:
             for row in offset:
@@ -306,6 +350,14 @@ class FastTokenizer:
             max_token_length=10_000,
         )
         bpe.train_from_iterator(corpus(), trainer=trainer)
+        # tokenizers is untyped; get_vocab() is dict[str, int].
+        vocab: Any = bpe.get_vocab()
+        merges = sum(1 for token in vocab if len(token) > 1)
+        print(
+            f"FAST fit: alphabet [{low}, {high}] ({alphabet_size} symbols), "
+            f"{merges} learned merges, vocab {bpe.get_vocab_size()}",
+            flush=True,
+        )
         return cls(
             bpe,
             scale=scale,
@@ -322,12 +374,15 @@ class FastTokenizer:
         *,
         scale: float = 10.0,
         vocab_size: int = 1024,
+        alphabet_coverage: float = DEFAULT_ALPHABET_COVERAGE,
     ) -> FastTokenizer:
         """Fit on normalized chunks [N, time_horizon, action_dim].
 
         ``scale`` trades reconstruction fidelity against compression
         (paper default 10, insensitive); ``vocab_size`` is the BPE
-        vocabulary (paper default 1024).
+        vocabulary (paper default 1024); ``alphabet_coverage`` bounds the
+        base alphabet by corpus coefficient quantiles (see
+        :meth:`fit_quantized`).
         """
         return cls.fit_quantized(
             cls.quantize_chunks(chunks, scale),
@@ -335,6 +390,7 @@ class FastTokenizer:
             time_horizon=chunks.shape[1],
             action_dim=chunks.shape[2],
             vocab_size=vocab_size,
+            alphabet_coverage=alphabet_coverage,
         )
 
     def save(self, directory: Path) -> None:
