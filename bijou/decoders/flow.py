@@ -557,7 +557,6 @@ class ExpertLayer(nn.Module):
 class FlowDecoder(ActionDecoder):
     """Flow-matching action decoder: a velocity network over an action
     chunk, conditioned on prefix KV streams, robot state and flow time.
-    Freshly initialized (never loaded from the backbone checkpoint).
 
     Attribute names are frozen — they are the safetensors keys of every
     existing checkpoint (gated by tests/test_state_dict_keys.py)."""
