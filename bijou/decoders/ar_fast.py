@@ -3,11 +3,14 @@ sibling).
 
 Same skeleton as the flow decoder — a stack of shared sandwich blocks
 cross-attending ObservationMemory streams — but the suffix is
-``[state][BOA][t_1..t_k]`` under a plain causal mask, the head is a token
-LM head over the FAST vocabulary + specials, and there is no flow-time
-machinery at all. Training is teacher-forced cross-entropy on the
-collator's ``action_tokens``; inference decodes greedily until EOA and
-detokenizes through the ActionCodec with the batch's per-sample q01/q99.
+``[state][BOA][t_1..t_k]`` under a plain causal mask, the head is a
+token LM head over the FAST vocabulary + BOA/PAD, and there is no
+flow-time machinery at all. There is no EOA: a valid sequence expands
+to exactly chunk_size * action_dim quantized coefficients, so length is
+fixed by the FAST grammar — training is teacher-forced cross-entropy on
+the collator's ``action_tokens``, and inference seeds with BOA, never
+samples BOA/PAD, and decodes greedily under the grammar mask until the
+symbol budget reaches zero — always emitting exactly one chunk.
 
 Baseline intent (docs/plan.md): tests whether the exported K/V interface
 carries enough for discrete action prediction, paired head-to-head with
@@ -52,8 +55,8 @@ from .blocks import (
     cross_attention_mask,
 )
 
-# CE positions to skip: the state position (its target, BOA, is a
-# constant) and PAD padding. torch's cross_entropy convention.
+# CE positions to skip: the state position (its target, the seed BOA, is
+# a constant) and PAD padding. torch's cross_entropy convention.
 IGNORE_INDEX = -100
 
 
@@ -62,8 +65,8 @@ class ARFastConfig:
     """Construction config of the AR decoder. ``schedule`` references
     encoder stream names (length = depth); cross-attention geometry comes
     from the encoder's StreamGeometry at build time, never from here.
-    ``vocab_total`` = BPE vocabulary + 3 specials (BOA, EOA, PAD appended
-    after the BPE ids, in that order — ActionCodec's convention)."""
+    ``vocab_total`` = BPE vocabulary + BOA + PAD (appended after the BPE
+    ids, in that order — ActionCodec's convention)."""
 
     hidden_size: int
     num_attention_heads: int
@@ -82,10 +85,6 @@ class ARFastConfig:
 
     @property
     def boa(self) -> int:
-        return self.vocab_total - 3
-
-    @property
-    def eoa(self) -> int:
         return self.vocab_total - 2
 
     @property
@@ -225,8 +224,23 @@ class ARFastDecoder(ActionDecoder):
             ),
             persistent=False,
         )
-        # Malformed-decode telemetry (predict_chunk substitutes state-copy
-        # and counts here — same pattern as FastTokenizer.clipped_coefficients).
+        # Constrained decoding needs each token's symbol expansion length
+        # (one BPE piece = a run of quantized DCT coefficients). Specials
+        # stay 0 and are handled explicitly in the decode mask. Plain
+        # attribute, not a buffer: derived from the codec, never saved.
+        symbol_lengths = torch.zeros(config.vocab_total, dtype=torch.long)
+        for token_id in range(codec.tokenizer.vocab_size):
+            piece = codec.tokenizer.bpe.id_to_token(token_id)
+            assert piece is not None, f"BPE id {token_id} has no piece"
+            symbol_lengths[token_id] = len(piece)
+        assert bool((symbol_lengths == 1).any()), (
+            "BPE vocabulary has no single-symbol token — exact fill (and "
+            "decode termination) cannot be guaranteed"
+        )
+        self.symbol_lengths = symbol_lengths
+        # Malformed-decode telemetry: structurally unreachable under
+        # constrained decoding — a nonzero counter means a bug, and the
+        # substitution keeps long evals alive while saying so loudly.
         self.malformed_decodes = 0
         if device is None or torch.device(device).type != "meta":
             self.reset_parameters()
@@ -269,10 +283,10 @@ class ARFastDecoder(ActionDecoder):
         Shapes:
           - memory.streams[name].key/value: [B, kv_heads, P, head_dim]
           - state: [B, state_dim]  (normalized)
-          - tokens: [B, T]  (long; BOA/body/EOA/PAD ids)
-          - returns: [B, 1 + T, vocab_total]  (logits at position j predict
-            the token at suffix position j + 1; the state position predicts
-            BOA, which training ignores)
+          - tokens: [B, T]  (long; BOA/body/PAD ids)
+          - returns: [B, 1 + T, vocab_total]  (logits at suffix position j
+            predict the token at position j + 1; the BOA position predicts
+            t_1)
         """
         dtype = self.state_proj.weight.dtype
         embeds = torch.cat(
@@ -339,16 +353,26 @@ class ARFastDecoder(ActionDecoder):
         generator: torch.Generator | None = None,
         noise: Tensor | None = None,
     ) -> Tensor:
-        """Greedy decode until EOA (or max_tokens), then detokenize +
-        denormalize with the batch's per-sample q01/q99. Deterministic:
-        ``generator``/``noise`` are unused (greedy has no randomness) and
-        ``noise`` must be None.
+        """CONSTRAINED greedy decode, then detokenize + denormalize with
+        the batch's per-sample q01/q99. Deterministic: ``generator``/
+        ``noise`` are unused (greedy has no randomness) and ``noise`` must
+        be None. Always emits exactly one chunk.
 
-        Malformed generations (FastDecodeError: wrong coefficient count,
-        unknown ids) substitute the state-copy chunk for that sample and
-        increment ``self.malformed_decodes`` — the pre-registered health
-        metric is the RATE, so it must stay visible, and eval requires a
-        chunk per frame."""
+        The constraint is the FAST grammar: a valid generation expands to
+        exactly chunk_size * action_dim quantized coefficients, so each
+        step masks to body tokens whose symbol length fits the remaining
+        budget — BOA/PAD are never sampled (BOA only seeds the sequence);
+        a row is finished when its budget reaches zero (no EOA — length
+        is fixed by the grammar), after which it emits PAD (inert,
+        stripped before decode). BPE's single-symbol base tokens make
+        exact fill always reachable, so the loop terminates in ≤
+        chunk*dim steps and every generation decodes by construction
+        (``config.max_tokens`` remains as recorded metadata; typical
+        sequences are ~50-60 tokens).
+
+        FastDecodeError is therefore structurally unreachable; if it ever
+        fires (= a bug), the sample is substituted with state-copy and
+        ``self.malformed_decodes`` counts it — loudly."""
         if noise is not None:
             raise ValueError("ARFastDecoder.predict_chunk takes no noise")
         stats = batch.action_stats
@@ -362,30 +386,35 @@ class ARFastDecoder(ActionDecoder):
         config = self.config
         batch_size = state.shape[0]
         device = state.device
+        lengths = self.symbol_lengths.to(device)
+        total_symbols = config.chunk_size * config.action_dim
+        remaining = torch.full(
+            (batch_size,),
+            total_symbols,
+            dtype=torch.long,
+            device=device,
+        )
+        # Every sequence opens with BOA; body tokens follow.
         tokens = torch.full(
             (batch_size, 1),
             config.boa,
             dtype=torch.long,
             device=device,
         )
-        finished = torch.zeros(batch_size, dtype=torch.bool, device=device)
-        for _ in range(config.max_tokens):
-            logits = self(memory, state, tokens)[:, -1, :]
-            # BOA opens the sequence and PAD is a batching artifact —
-            # neither is ever a valid continuation.
-            logits[:, config.boa] = torch.finfo(logits.dtype).min
-            logits[:, config.pad] = torch.finfo(logits.dtype).min
-            next_token = logits.argmax(dim=-1)
-            # Finished rows keep appending EOA (inert; stripped on decode).
-            next_token = torch.where(
-                finished,
-                torch.full_like(next_token, config.eoa),
-                next_token,
-            )
-            tokens = torch.cat([tokens, next_token[:, None]], dim=1)
-            finished = finished | (next_token == config.eoa)
-            if bool(finished.all()):
+        min_value: float = torch.finfo(torch.float32).min
+        for _ in range(total_symbols):
+            if bool((remaining == 0).all()):
                 break
+            logits = self(memory, state, tokens)[:, -1, :].float()
+            # The FAST grammar mask (see docstring). Specials have length
+            # 0, so the > 0 term keeps BOA/PAD unsampleable for live rows;
+            # finished rows (budget 0) emit PAD.
+            allowed = (lengths[None, :] > 0) & (lengths[None, :] <= remaining[:, None])
+            allowed[:, config.pad] = remaining == 0
+            logits = logits.masked_fill(~allowed, min_value)
+            next_token = logits.argmax(dim=-1)
+            tokens = torch.cat([tokens, next_token[:, None]], dim=1)
+            remaining = remaining - lengths[next_token]
 
         q01 = stats.q01.cpu().numpy()
         q99 = stats.q99.cpu().numpy()
@@ -393,9 +422,7 @@ class ARFastDecoder(ActionDecoder):
         chunks: list[Tensor] = []
         malformed = 0
         for row_index, row in enumerate(token_rows):
-            body = row[1:]  # drop BOA
-            if config.eoa in body:
-                body = body[: body.index(config.eoa)]
+            body = [t for t in row[1:] if t != config.pad]  # drop seed BOA
             try:
                 decoded = self.codec.decode(body, q01[row_index], q99[row_index])
                 chunks.append(torch.from_numpy(decoded).float())
@@ -430,12 +457,13 @@ def ar_fast_loss(
     must go through the wrapper for gradient hooks); call convention
     (memory, state, tokens) -> logits.
 
-    Inputs are ``action_tokens[:, :-1]`` (the last column is PAD for every
-    sample but the batch-longest, whose final EOA needs no successor);
-    targets align logits[j] with action_tokens[j]: the state position's
-    target (BOA, a constant) and all PAD positions are IGNORE_INDEX. CE
-    averages over real target tokens, so longer token sequences weigh
-    proportionally more — standard LM behavior.
+    Inputs are ``action_tokens[:, :-1]`` (= [BOA, t_1..t_{k-1}] plus
+    padding; the last column is PAD for every sample but the
+    batch-longest, whose final token needs no successor); logits at
+    suffix position j predict ``action_tokens[:, j]`` — the state
+    position's target (the constant seed BOA) and all PAD positions are
+    IGNORE_INDEX. CE averages over real target tokens, so longer token
+    sequences weigh proportionally more — standard LM behavior.
     """
     tokens = batch.action_tokens
     if tokens is None:
@@ -446,7 +474,7 @@ def ar_fast_loss(
     state = (batch.state - batch.state_stats.mean) / batch.state_stats.std
     logits = model(memory, state, tokens[:, :-1])
     targets = tokens.clone()
-    targets[:, 0] = IGNORE_INDEX
+    targets[:, 0] = IGNORE_INDEX  # the seed BOA, a constant
     pad_id = int(logits.shape[-1] - 1)  # PAD is the last id by convention
     targets[targets == pad_id] = IGNORE_INDEX
     return F.cross_entropy(

@@ -157,7 +157,8 @@ class CollatedBatch[I: BatchInputs]:
     action_is_pad: Tensor  # [B, chunk]  (bool)
     action_stats: NormStats  # each [B, action_dim]
     state_stats: NormStats  # each [B, state_dim]
-    # FAST token ids [B, T_tok] ([BOA, t_1..t_k, EOA] PAD-padded), present
+    # FAST token ids [B, T_tok] (body ids [t_1..t_k], PAD-padded — no
+    # BOA/EOA: sequence length is fixed by the FAST grammar), present
     # iff the Collator was built with an ActionCodec (AR decoders). No
     # separate mask: PAD is a reserved id, exclusions derive from it, and
     # right padding + causal attention hides PAD from real positions.

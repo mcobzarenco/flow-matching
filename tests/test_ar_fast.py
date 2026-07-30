@@ -141,7 +141,7 @@ def batch(loaded: ActionCodec) -> CollatedBatch[FakeInputs]:
     )
 
 
-def test_codec_round_trip_with_specials() -> None:
+def test_codec_round_trip() -> None:
     loaded = codec()
     rng = np.random.default_rng(3)
     chunk = np.clip(
@@ -153,7 +153,7 @@ def test_codec_round_trip_with_specials() -> None:
     q99 = np.full(DIM, 2.0)
     ids = loaded.encode(chunk, q01, q99)
     assert ids[0] == loaded.boa
-    assert ids[-1] == loaded.eoa
+    assert all(0 <= t < loaded.tokenizer.vocab_size for t in ids[1:])
     decoded = loaded.decode(ids, q01, q99)
     assert decoded.shape == (CHUNK, DIM)
     assert float(np.abs(decoded - chunk).mean()) < 0.15
@@ -175,14 +175,12 @@ def test_forward_shape_and_causality() -> None:
     torch.testing.assert_close(logits[:, :-1], logits_perturbed[:, :-1])
 
 
-def test_loss_ignores_state_and_pad_positions() -> None:
+def test_loss_ignores_pad_positions() -> None:
     decoder, loaded = build()
     sample = batch(loaded)
     loss = ar_fast_loss(decoder, memory(), sample)
     assert loss.ndim == 0
     assert torch.isfinite(loss)
-    # Rewriting PAD-position values must not change the loss (they are
-    # IGNORE_INDEX targets and causally invisible to real positions).
     tokens = sample.action_tokens
     assert tokens is not None
     lengths = (tokens != loaded.pad).sum(dim=1)
@@ -190,15 +188,55 @@ def test_loss_ignores_state_and_pad_positions() -> None:
     assert IGNORE_INDEX == -100
 
 
-def test_predict_chunk_decodes_and_falls_back() -> None:
+def test_predict_chunk_constrained_decode_never_malforms() -> None:
+    """The FAST-grammar mask makes every generation decode by construction
+    — even from a random-init model. Zero malformed, exact symbol budget."""
     decoder, _ = build()
     decoder.eval()
     sample = batch(loaded=decoder.codec)
     chunks = decoder.predict_chunk(memory(), sample)
     assert chunks.shape == (BATCH, CHUNK, DIM)
     assert torch.isfinite(chunks).all()
-    # A random-init decoder mostly emits malformed sequences; the fallback
-    # substitutes state-copy and counts loudly.
-    assert decoder.malformed_decodes >= 0
+    assert decoder.malformed_decodes == 0
     with pytest.raises(ValueError, match="no noise"):
         decoder.predict_chunk(memory(), sample, noise=torch.zeros(1))
+
+
+def test_constrained_decode_fills_symbol_budget_exactly() -> None:
+    """Body tokens of a decoded row expand to exactly chunk * dim symbols
+    (no EOA — length is fixed by the grammar; the loop stops at budget
+    zero)."""
+    decoder, _ = build()
+    decoder.eval()
+    sample = batch(loaded=decoder.codec)
+    state = (sample.state - sample.state_stats.mean) / sample.state_stats.std
+    lengths = decoder.symbol_lengths
+    remaining = CHUNK * DIM
+    tokens = torch.full((1, 1), decoder.config.boa, dtype=torch.long)
+    with torch.no_grad():
+        for _ in range(CHUNK * DIM):
+            if remaining == 0:
+                break
+            logits = decoder(memory_row(), state[:1], tokens)[:, -1, :].float()
+            allowed = (lengths[None, :] > 0) & (lengths[None, :] <= remaining)
+            logits = logits.masked_fill(~allowed, torch.finfo(torch.float32).min)
+            next_token = logits.argmax(dim=-1)
+            tokens = torch.cat([tokens, next_token[:, None]], dim=1)
+            remaining -= int(lengths[int(next_token)])
+    assert remaining == 0
+    body = tokens[0, 1:].tolist()  # drop the seed BOA
+    assert sum(int(lengths[t]) for t in body) == CHUNK * DIM
+    assert decoder.config.pad not in body
+    assert decoder.config.boa not in body
+
+
+def memory_row() -> ObservationMemory:
+    full = memory()
+    return ObservationMemory(
+        streams={
+            name: MemoryStream(key=s.key[:1], value=s.value[:1])
+            for name, s in full.streams.items()
+        },
+        length=full.length,
+        padding_mask=None,
+    )
