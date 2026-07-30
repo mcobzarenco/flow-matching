@@ -1,8 +1,8 @@
 # Plan: modular observation encoders × action decoders
 
-Status: **design, agreed in discussion 2026-07-30, not implemented.**
+Status: **design, not implemented** (2026-07-30).
 
-## Brief (owner)
+## Brief
 
 Support different architectural combinations of "VLM trunk" (observation
 encoder) and action decoder, with existing checkpoints deserializing
@@ -15,7 +15,7 @@ least:
 - action decoders: the current **flow-matching expert**, and an
   **autoregressive FAST token decoder**.
 
-## 0. Decisions settled in discussion
+## 0. Settled decisions
 
 - `EncodedPrefix.streams` is an **ordered tuple**, not a dict; stream
   identity is **positional**. Opaque string ids were considered and
@@ -84,8 +84,8 @@ class CollatedBatch(Generic[I]):
     action_std: Tensor             # [B, action_dim]
     state_mean: Tensor             # [B, state_dim]
     state_std: Tensor              # [B, state_dim]
-    action_q01: Tensor             # [B, action_dim]  (ALWAYS present — owner
-    action_q99: Tensor             # [B, action_dim]   decision 2026-07-30)
+    action_q01: Tensor             # [B, action_dim]
+    action_q99: Tensor             # [B, action_dim]
     state_q01: Tensor              # [B, state_dim]
     state_q99: Tensor              # [B, state_dim]
     # AR-only, filled by the collator when built with a FastTokenizer
@@ -321,7 +321,7 @@ Import DAG after: `train/eval/rollout -> loading -> data -> model ->
 - `CollatedBatch` generics vs pyright: verify `Generic` + frozen slots
   dataclass inference stays clean at call sites (fallback: per-encoder
   concrete batch dataclasses sharing the core by composition, no Generic).
-- Quantile stats: **mandatory in the batch** (settled). DatasetStats
+- Quantile stats: **mandatory in the batch**. DatasetStats
   gains q01/q99 for action+state; `from_lerobot_stats` (the data path)
   REQUIRES them — a dataset without backfilled quantiles fails at
   selection with the `ldtools.backfill_quantile_stats` command as the
