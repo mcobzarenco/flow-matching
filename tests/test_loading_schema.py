@@ -115,6 +115,10 @@ def tiny_stats(dim: int = 6) -> DatasetStats:
         action_std=(1.0,) * dim,
         state_mean=(0.0,) * dim,
         state_std=(1.0,) * dim,
+        action_q01=(-1.0,) * dim,
+        action_q99=(1.0,) * dim,
+        state_q01=(-1.0,) * dim,
+        state_q99=(1.0,) * dim,
     )
 
 

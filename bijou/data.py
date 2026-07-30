@@ -12,16 +12,16 @@ provably select and prepare data the same way:
   per-dataset episode holdout (``EpisodeSplit``/``holdout_episodes``):
   training loads the TRAIN side, eval reproduces the exact HOLDOUT side
   from (fraction, split seed) alone — no persisted split files.
-- ``DatasetStats``/``StatsAttachedDataset``: per-dataset MEAN_STD stats
-  attached to every item (per-dataset normalization) with loud, bounded
-  substitution of unfetchable samples.
-- ``CollatedBatch``/``PrefixCollator``: chat-templated multimodal prompt
-  batches ([instruction][cameras...][instruction]) ready for the backbone.
+- ``DatasetStats``/``StatsAttachedDataset``: per-dataset stats (MEAN_STD +
+  exact q01/q99) attached to every item (per-dataset normalization) with
+  loud, bounded substitution of unfetchable samples.
+
+Batch types and the shared Collator live in ``bijou.interface``; the
+Gemma prompt strategy in ``bijou.encoders.gemma4``.
 """
 
 from __future__ import annotations
 
-import dataclasses
 import json
 import math
 import random
@@ -34,94 +34,49 @@ from pathlib import Path
 from typing import Any, override
 
 import torch
-import transformers
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
-from PIL import Image
 from torch import Tensor
 
-from .interface import EncodedPrefix
+from .encoders.gemma4 import GemmaInputs
+from .interface import CollatedBatch, EncodedPrefix
 from .model import BijouModel
 
 
 @dataclass(frozen=True, slots=True)
-class CollatedBatch:
-    """One collated batch: prefix inputs plus action-chunk targets. All
-    fields are always present (unlike the raw per-dataset LeRobot items,
-    whose camera keys vary — those stay dicts).
-
-    ``state``/``actions`` are raw (unnormalized); the per-sample MEAN_STD
-    stats of each sample's own dataset ride along so the loss and eval
-    normalize per dataset.
-
-    ``has_padding`` is computed CPU-side in the dataloader workers so the
-    training loop never needs a device->host sync to decide whether to build
-    padding masks.
-
-    Shape notes: P = padded prompt width of THIS batch; ``images`` = Σ
-    per-sample camera images, not B (samples contribute variable camera
-    counts and the processor flattens them); ``action_is_pad`` marks
-    positions past the episode end, where the value is the last real
-    action repeated (see flow_matching_loss).
-    """
-
-    input_ids: Tensor  # [B, P]
-    attention_mask: Tensor  # [B, P]  (1 = real token, 0 = right padding)
-    pixel_values: Tensor  # [images, patches, 3·patch_size²]  (RGB in [0, 1])
-    image_position_ids: Tensor  # [images, patches, 2]  ((x, y) spatial ids)
-    state: Tensor  # [B, state_dim]
-    actions: Tensor  # [B, chunk, action_dim]
-    action_is_pad: Tensor  # [B, chunk]  (bool)
-    action_mean: Tensor  # [B, action_dim]
-    action_std: Tensor  # [B, action_dim]
-    state_mean: Tensor  # [B, state_dim]
-    state_std: Tensor  # [B, state_dim]
-    has_padding: bool
-
-    def tensors(self) -> dict[str, Tensor]:
-        return {
-            f.name: value
-            for f in dataclasses.fields(self)
-            if isinstance(value := getattr(self, f.name), Tensor)
-        }
-
-    def pin_memory(self) -> CollatedBatch:
-        """Called by the DataLoader when ``pin_memory=True`` (torch supports
-        custom batch types via this hook); pinned memory makes the H2D
-        copies in DevicePrefetcher truly asynchronous."""
-        return dataclasses.replace(
-            self,
-            **{name: t.pin_memory() for name, t in self.tensors().items()},
-        )
-
-    def to(
-        self,
-        device: torch.device | str,
-        *,
-        non_blocking: bool = False,
-    ) -> CollatedBatch:
-        return dataclasses.replace(
-            self,
-            **{
-                name: t.to(device, non_blocking=non_blocking)
-                for name, t in self.tensors().items()
-            },
-        )
-
-
-@dataclass(frozen=True, slots=True)
 class DatasetStats:
-    """One dataset's MEAN_STD stats for action and state.
+    """One dataset's normalization stats for action and state: MEAN_STD
+    plus the exact corpus q01/q99 quantiles.
 
     Plain float tuples, deliberately not tensors: the dataset objects are
     pickled into every spawned dataloader worker, and torch shares pickled
     CPU tensors through shared-memory file descriptors — 4 tensors x 300+
     datasets exhausts the default ulimit (observed: EMFILE on worker spawn).
+
+    Quantiles are required on the data path (``from_lerobot_stats``) and
+    None only when parsed from a checkpoint whose stats tables predate
+    them (``from_state_dict``); consumers that need quantiles check for
+    None and fail fast.
     """
 
     action_mean: tuple[float, ...]
     action_std: tuple[float, ...]
     state_mean: tuple[float, ...]
     state_std: tuple[float, ...]
+    action_q01: tuple[float, ...] | None
+    action_q99: tuple[float, ...] | None
+    state_q01: tuple[float, ...] | None
+    state_q99: tuple[float, ...] | None
+
+    def __post_init__(self) -> None:
+        for modality in ("action", "state"):
+            low = getattr(self, f"{modality}_q01")
+            high = getattr(self, f"{modality}_q99")
+            if (low is None) != (high is None):
+                raise ValueError(
+                    f"{modality} quantiles must be both present or both "
+                    f"absent (q01 {'set' if low is not None else 'None'}, "
+                    f"q99 {'set' if high is not None else 'None'})",
+                )
 
     @classmethod
     def from_lerobot_stats(cls, stats: dict[str, dict[str, Any]]) -> DatasetStats:
@@ -139,27 +94,42 @@ class DatasetStats:
                 values = values.clamp(min=floor)
             return tuple(values.reshape(-1).tolist())
 
+        def quantile(key: str, field: str) -> tuple[float, ...]:
+            if field not in stats.get(key, {}):
+                raise SystemExit(
+                    f"dataset stats lack {key}.{field} (exact corpus "
+                    "quantiles) — backfill them with `python -m "
+                    "ldtools.backfill_quantile_stats --force <dataset_dir>` "
+                    "(lerobot-dataset-tools) and retry",
+                )
+            return as_vector(key, field)
+
         return cls(
             action_mean=as_vector("action", "mean"),
             action_std=as_vector("action", "std", floor=1e-2),
             state_mean=as_vector("observation.state", "mean"),
             state_std=as_vector("observation.state", "std", floor=1e-2),
+            action_q01=quantile("action", "q01"),
+            action_q99=quantile("action", "q99"),
+            state_q01=quantile("observation.state", "q01"),
+            state_q99=quantile("observation.state", "q99"),
         )
 
     def is_finite(self) -> bool:
-        return all(
-            math.isfinite(x)
-            for vector in (
-                self.action_mean,
-                self.action_std,
-                self.state_mean,
-                self.state_std,
-            )
-            for x in vector
+        vectors = (
+            self.action_mean,
+            self.action_std,
+            self.state_mean,
+            self.state_std,
+            self.action_q01 or (),
+            self.action_q99 or (),
+            self.state_q01 or (),
+            self.state_q99 or (),
         )
+        return all(math.isfinite(x) for vector in vectors for x in vector)
 
     def state_dict(self) -> dict[str, dict[str, list[float]]]:
-        return {
+        payload: dict[str, dict[str, list[float]]] = {
             "action": {
                 "mean": list(self.action_mean),
                 "std": list(self.action_std),
@@ -169,32 +139,58 @@ class DatasetStats:
                 "std": list(self.state_std),
             },
         }
+        if self.action_q01 is not None and self.action_q99 is not None:
+            payload["action"]["q01"] = list(self.action_q01)
+            payload["action"]["q99"] = list(self.action_q99)
+        if self.state_q01 is not None and self.state_q99 is not None:
+            payload["observation.state"]["q01"] = list(self.state_q01)
+            payload["observation.state"]["q99"] = list(self.state_q99)
+        return payload
 
     @classmethod
     def from_state_dict(cls, data: dict[str, dict[str, list[float]]]) -> DatasetStats:
         """Exact inverse of :meth:`state_dict` — no flooring: serialized
         stats were floored at construction (``from_lerobot_stats``), and a
-        checkpoint round-trip must not alter values."""
+        checkpoint round-trip must not alter values. Tables written before
+        quantiles existed parse with q01/q99 = None."""
+
+        def optional(key: str, field: str) -> tuple[float, ...] | None:
+            values = data[key].get(field)
+            return tuple(values) if values is not None else None
+
         return cls(
             action_mean=tuple(data["action"]["mean"]),
             action_std=tuple(data["action"]["std"]),
             state_mean=tuple(data["observation.state"]["mean"]),
             state_std=tuple(data["observation.state"]["std"]),
+            action_q01=optional("action", "q01"),
+            action_q99=optional("action", "q99"),
+            state_q01=optional("observation.state", "q01"),
+            state_q99=optional("observation.state", "q99"),
         )
 
     def item_tensors(self) -> dict[str, Tensor]:
-        """The four per-item stats tensors exactly as training items carry
-        them (materialized fresh per call — see the class docstring for why
-        they are not stored as tensors).
+        """The per-item stats tensors exactly as training items carry them
+        (materialized fresh per call — see the class docstring for why they
+        are not stored as tensors). Quantile keys are present iff the stats
+        carry them; the Collator turns their absence into NormStats
+        q01/q99 = None.
 
-        Shapes: action_mean/action_std [action_dim]; state_mean/state_std
-        [state_dim] (per item — the collator stacks in the batch axis)."""
-        return {
+        Shapes: action_* [action_dim]; state_* [state_dim] (per item — the
+        collator stacks in the batch axis)."""
+        tensors = {
             "action_mean": torch.tensor(self.action_mean),
             "action_std": torch.tensor(self.action_std),
             "state_mean": torch.tensor(self.state_mean),
             "state_std": torch.tensor(self.state_std),
         }
+        if self.action_q01 is not None and self.action_q99 is not None:
+            tensors["action_q01"] = torch.tensor(self.action_q01)
+            tensors["action_q99"] = torch.tensor(self.action_q99)
+        if self.state_q01 is not None and self.state_q99 is not None:
+            tensors["state_q01"] = torch.tensor(self.state_q01)
+            tensors["state_q99"] = torch.tensor(self.state_q99)
+        return tensors
 
 
 class StatsAttachedDataset(torch.utils.data.Dataset[dict[str, Any]]):
@@ -575,131 +571,19 @@ def worker_init(_worker_id: int) -> None:
     torch.set_num_threads(1)
 
 
-class PrefixCollator:
-    """Builds batched multimodal prompts from LeRobot items.
-
-    Renders ``[instruction][cameras...][instruction]`` per sample through the
-    Gemma4 processor (chat template, right padding). The processor is built
-    lazily so the collator can be pickled into dataloader workers.
-    """
-
-    def __init__(
-        self,
-        checkpoint: str,
-        instruction: str | None,
-        max_soft_tokens: int,
-        camera_filter: tuple[str, ...] | None = None,
-        max_cameras: int | None = None,
-    ) -> None:
-        self.checkpoint = checkpoint
-        self.instruction = instruction
-        self.max_soft_tokens = max_soft_tokens
-        self.camera_filter = camera_filter
-        self.max_cameras = max_cameras
-        self._processor: Any = None
-
-    def cameras_of(self, item: dict[str, Any]) -> list[str]:
-        """Sorted camera keys of one sample; prompt slots are positional (the
-        community collections' generic image/image2 keys carry no reliable
-        wrist-vs-scene semantics — SmolVLA precedent)."""
-        cameras = sorted(k for k in item if k.startswith("observation.images."))
-        if self.camera_filter is not None:
-            allowed = set(self.camera_filter)
-            cameras = [
-                k
-                for k in cameras
-                if k in allowed or k.removeprefix("observation.images.") in allowed
-            ]
-        if not cameras:
-            raise ValueError(
-                f"sample has no cameras after filtering ({self.camera_filter=})",
-            )
-        if self.max_cameras is not None:
-            cameras = cameras[: self.max_cameras]
-        return cameras
-
-    @override
-    def __getstate__(self) -> dict[str, Any]:
-        # Never ship a constructed processor across process boundaries; spawn
-        # workers rebuild it lazily.
-        return {**self.__dict__, "_processor": None}
-
-    def _to_pil(self, image: Tensor) -> Image.Image:
-        """One camera frame [3, height, width] (float in [0, 1], CHW as
-        LeRobot decodes video) -> PIL RGB image for the processor."""
-        array = (image.clamp(0, 1) * 255).to(torch.uint8).permute(1, 2, 0).numpy()
-        return Image.fromarray(array)
-
-    def __call__(self, items: list[dict[str, Any]]) -> CollatedBatch:
-        """Collate ``B = len(items)`` LeRobot items into one CollatedBatch
-        (shapes in its docstring). Per-item inputs consumed here:
-          - observation.images.*: [3, height, width] each  (float, [0, 1])
-          - observation.state: [state_dim]
-          - action: [chunk, action_dim]
-          - action_is_pad: [chunk]  (bool)
-          - action_mean/action_std: [action_dim]; state_mean/state_std:
-            [state_dim]  (attached by StatsAttachedDataset)
-          - task: str  (overridden by ``instruction`` when set)
-        """
-        if self._processor is None:
-            # Lazy construction (not import): the collator is pickled into
-            # spawned dataloader workers, each of which rebuilds it.
-            self._processor = transformers.AutoProcessor.from_pretrained(
-                self.checkpoint,
-            )
-            self._processor.tokenizer.padding_side = "right"
-
-        conversations = []
-        for item in items:
-            instruction = self.instruction or str(item["task"])
-            content: list[dict[str, Any]] = [{"type": "text", "text": instruction}]
-            content.extend(
-                {"type": "image", "image": self._to_pil(item[camera])}
-                for camera in self.cameras_of(item)
-            )
-            content.append({"type": "text", "text": instruction})
-            conversations.append([{"role": "user", "content": content}])
-
-        batch = self._processor.apply_chat_template(
-            conversations,
-            add_generation_prompt=False,
-            tokenize=True,
-            return_dict=True,
-            return_tensors="pt",
-            # transformers 5.14: per-call processor kwargs must be nested, and
-            # a flat `padding=True` alongside `processor_kwargs` silently
-            # drops the latter -- both go inside (verified empirically).
-            processor_kwargs={
-                "max_soft_tokens": self.max_soft_tokens,
-                "padding": True,
-            },
-        )
-        return CollatedBatch(
-            input_ids=batch["input_ids"],
-            attention_mask=batch["attention_mask"],
-            pixel_values=batch["pixel_values"],
-            image_position_ids=batch["image_position_ids"],
-            state=torch.stack([item["observation.state"] for item in items]),
-            actions=torch.stack([item["action"] for item in items]),
-            action_is_pad=torch.stack([item["action_is_pad"] for item in items]),
-            action_mean=torch.stack([item["action_mean"] for item in items]),
-            action_std=torch.stack([item["action_std"] for item in items]),
-            state_mean=torch.stack([item["state_mean"] for item in items]),
-            state_std=torch.stack([item["state_std"] for item in items]),
-            # Decided here (CPU, in the worker) so the train loop never syncs.
-            has_padding=bool((batch["attention_mask"] == 0).any()),
-        )
-
-
-def encode_prefix(model: BijouModel, batch: CollatedBatch) -> EncodedPrefix:
+def encode_prefix(
+    model: BijouModel,
+    batch: CollatedBatch[GemmaInputs],
+) -> EncodedPrefix:
     """``batch`` must already be device-resident. No-grad wrapper over
     BijouModel.encode_prefix (shapes there); training with a live trunk
     uses BijouTrainStep instead, which encodes under grad."""
-    padding_mask = batch.attention_mask if batch.has_padding else None
+    inputs = batch.encoder_inputs
+    padding_mask = inputs.attention_mask if inputs.has_padding else None
     with torch.no_grad():
         return model.encode_prefix(
-            batch.input_ids,
-            pixel_values=batch.pixel_values,
-            image_position_ids=batch.image_position_ids,
+            inputs.input_ids,
+            pixel_values=inputs.pixel_values,
+            image_position_ids=inputs.image_position_ids,
             padding_mask=padding_mask,
         )

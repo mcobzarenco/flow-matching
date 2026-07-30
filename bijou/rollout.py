@@ -164,10 +164,12 @@ def observation_to_item(
     fields are zero stubs: the collator requires them and the policy reads
     only their shapes.
 
-    Produced item shapes (matching PrefixCollator.__call__'s contract):
+    Produced item shapes (matching the Collator's contract):
     observation.state [state_dim]; action [chunk, action_dim];
     action_is_pad [chunk]; observation.images.* [3, height, width]
-    (float, [0, 1], from the camera's HWC uint8 frame)."""
+    (float, [0, 1], from the camera's HWC uint8 frame). Stats resolved
+    from an old checkpoint's tables carry no quantile keys — the flow
+    policy never reads them."""
     state = torch.tensor([float(observation[f"{m}.pos"]) for m in SO_MOTORS])
     item: dict[str, Any] = {
         "task": task,

@@ -66,18 +66,17 @@ from safetensors.torch import load_file, save_file
 from torch import Tensor
 
 from .data import (
-    CollatedBatch,
     DatasetStats,
     EpisodeSplit,
-    PrefixCollator,
     encode_prefix,
     select_datasets,
     worker_init,
 )
+from .encoders.gemma4 import GemmaInputs, GemmaInputsCollator
 from .expert import ExpertConfig, SelfAttentionMode, TimeConditioning
 from .gemma4.loading import load_config, resolve_checkpoint_dir
 from .gemma4.text import DecoderLayer
-from .interface import EncodedPrefix
+from .interface import CollatedBatch, Collator, EncodedPrefix
 from .loading import (
     CheckpointMetadata,
     backbone_snapshot,
@@ -155,11 +154,15 @@ class DevicePrefetcher:
     transfers on non-CUDA devices.
     """
 
-    def __init__(self, loader: Iterable[CollatedBatch], device: torch.device) -> None:
+    def __init__(
+        self,
+        loader: Iterable[CollatedBatch[GemmaInputs]],
+        device: torch.device,
+    ) -> None:
         self.loader = loader
         self.device = device
 
-    def __iter__(self) -> Iterator[CollatedBatch]:
+    def __iter__(self) -> Iterator[CollatedBatch[GemmaInputs]]:
         if self.device.type != "cuda":
             for batch in self.loader:
                 yield batch.to(self.device)
@@ -169,7 +172,7 @@ class DevicePrefetcher:
         compute_stream = torch.cuda.current_stream(self.device)
         batches = iter(self.loader)
 
-        def preload() -> CollatedBatch | None:
+        def preload() -> CollatedBatch[GemmaInputs] | None:
             cpu_batch = next(batches, None)
             if cpu_batch is None:
                 return None
@@ -181,7 +184,7 @@ class DevicePrefetcher:
             compute_stream.wait_stream(stream)
             # The tensors were allocated on the side stream; tell the caching
             # allocator they are consumed on the compute stream.
-            for tensor in batch.tensors().values():
+            for tensor in batch.all_tensors():
                 tensor.record_stream(compute_stream)
             yield batch  # consumer enqueues the step's compute, then returns
             batch = preload()  # blocks on workers while the GPU crunches
@@ -257,7 +260,7 @@ class Normalizers:
 def flow_matching_loss(
     velocity_model: torch.nn.Module,
     prefix: EncodedPrefix,
-    batch: CollatedBatch,
+    batch: CollatedBatch[Any],
 ) -> Tensor:
     """``batch`` must already be device-resident; no transfers happen here.
     Actions/state are normalized with each sample's own dataset stats.
@@ -281,12 +284,10 @@ def flow_matching_loss(
       - velocity/target: [B, chunk, action_dim]; tau: [B]
       - returns: scalar loss
     """
-    actions = (batch.actions - batch.action_mean[:, None, :]) / batch.action_std[
-        :,
-        None,
-        :,
-    ]
-    state = (batch.state - batch.state_mean) / batch.state_std
+    actions = (
+        batch.actions - batch.action_stats.mean[:, None, :]
+    ) / batch.action_stats.std[:, None, :]
+    state = (batch.state - batch.state_stats.mean) / batch.state_stats.std
 
     noise = torch.randn_like(actions)
     # π0's time distribution: Beta(1.5, 1) squeezed into (0, 1).
@@ -416,15 +417,16 @@ class BijouTrainStep(torch.nn.Module):
         self.model = model
 
     @override
-    def forward(self, batch: CollatedBatch) -> Tensor:
+    def forward(self, batch: CollatedBatch[GemmaInputs]) -> Tensor:
         """Batch (shapes in CollatedBatch's docstring) -> scalar loss."""
-        device_type = batch.input_ids.device.type
+        inputs = batch.encoder_inputs
+        device_type = inputs.input_ids.device.type
         with torch.autocast(device_type, torch.bfloat16, enabled=device_type == "cuda"):
             prefix = self.model.encode_prefix(
-                batch.input_ids,
-                pixel_values=batch.pixel_values,
-                image_position_ids=batch.image_position_ids,
-                padding_mask=batch.attention_mask if batch.has_padding else None,
+                inputs.input_ids,
+                pixel_values=inputs.pixel_values,
+                image_position_ids=inputs.image_position_ids,
+                padding_mask=inputs.attention_mask if inputs.has_padding else None,
             )
         return flow_matching_loss(self.model.expert, prefix, batch)
 
@@ -507,14 +509,14 @@ class ProbeSet:
     """
 
     total: int
-    batches: list[CollatedBatch]
+    batches: list[CollatedBatch[GemmaInputs]]
     rich_items: list[dict[str, Any]]
     rich_positions: tuple[int, ...]
 
 
 def build_probe_set(
     dataset: torch.utils.data.ConcatDataset[dict[str, Any]],
-    collator: PrefixCollator,
+    collator: Collator[GemmaInputs],
     num_samples: int,
     seed: int,
     rank: int,
@@ -560,7 +562,7 @@ def validate(
     *,
     distributed: bool = False,
     wandb_run: Any = None,
-    collator: PrefixCollator | None = None,
+    collator: Collator[GemmaInputs] | None = None,
     action_names: list[str] | None = None,
     step: int = 0,
     table_key: str = "eval/samples",
@@ -584,14 +586,14 @@ def validate(
     for cpu_batch in probe.batches:
         batch = cpu_batch.to(device)
         prefix = encode_prefix(model, batch)
-        state = (batch.state - batch.state_mean) / batch.state_std
+        state = (batch.state - batch.state_stats.mean) / batch.state_stats.std
         # Eval is a measurement: Heun-10 keeps integration error well below
         # model error (0.018 vs 0.05 mean deviation at the Heun-5 deployment
         # default; ~1-2s extra per eval, off the training path).
         sampled = model.sample_actions(prefix, state, num_steps=10, generator=generator)
         sampled = (
-            sampled.float() * batch.action_std[:, None, :]
-            + batch.action_mean[:, None, :]
+            sampled.float() * batch.action_stats.std[:, None, :]
+            + batch.action_stats.mean[:, None, :]
         )
         truth = batch.actions.float()
         valid = ~batch.action_is_pad
@@ -701,6 +703,13 @@ def aggregate_stats(normalizers: Normalizers) -> DatasetStats:
         action_std=tuple(normalizers.action.std.tolist()),
         state_mean=tuple(normalizers.state.mean.tolist()),
         state_std=tuple(normalizers.state.std.tolist()),
+        # Quantiles do not compose across datasets (a mean of per-dataset
+        # quantiles regresses extremes — the exact bug the corpus backfill
+        # fixed), so the aggregate fallback honestly carries none.
+        action_q01=None,
+        action_q99=None,
+        state_q01=None,
+        state_q99=None,
     )
 
 
@@ -1239,10 +1248,9 @@ def main() -> int:
         ),
     )
 
-    collator = PrefixCollator(
-        str(checkpoint_dir),
-        args.instruction,
-        args.max_soft_tokens,
+    collator = Collator(
+        inputs=GemmaInputsCollator(str(checkpoint_dir), args.max_soft_tokens),
+        instruction=args.instruction,
         camera_filter=args.cameras,
         max_cameras=args.max_cameras,
     )
