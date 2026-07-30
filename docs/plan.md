@@ -73,21 +73,27 @@ class EncodedPrefix:
 
 
 @dataclass(frozen=True, slots=True)
+class BatchStats:
+    """One modality's normalization stats, batched: each tensor [B, dim]
+    (dim = action_dim or state_dim). Every sample carries its own
+    dataset's stats — the per-dataset normalization mechanism."""
+    mean: Tensor
+    std: Tensor
+    q01: Tensor
+    q99: Tensor
+
+
+@dataclass(frozen=True, slots=True)
 class CollatedBatch(Generic[I]):
     """Trunk-agnostic core + typed encoder-specific inputs. pin_memory/to
-    recurse into `encoder_inputs` (which implements the same two hooks)."""
+    recurse into `encoder_inputs` and the BatchStats fields (all
+    implement the same two hooks)."""
     encoder_inputs: I              # GemmaInputs | SigLip2Inputs
     state: Tensor                  # [B, state_dim]
     actions: Tensor                # [B, chunk, action_dim]
     action_is_pad: Tensor          # [B, chunk]
-    action_mean: Tensor            # [B, action_dim]
-    action_std: Tensor             # [B, action_dim]
-    state_mean: Tensor             # [B, state_dim]
-    state_std: Tensor              # [B, state_dim]
-    action_q01: Tensor             # [B, action_dim]
-    action_q99: Tensor             # [B, action_dim]
-    state_q01: Tensor              # [B, state_dim]
-    state_q99: Tensor              # [B, state_dim]
+    action_stats: BatchStats       # each [B, action_dim]
+    state_stats: BatchStats        # each [B, state_dim]
     # AR-only, filled by the collator when built with a FastTokenizer
     # (CPU-side in workers); None otherwise. The AR loss asserts loudly.
     # (Cannot be made mandatory like the quantiles: tokens depend on a
@@ -321,9 +327,11 @@ Import DAG after: `train/eval/rollout -> loading -> data -> model ->
 - `CollatedBatch` generics vs pyright: verify `Generic` + frozen slots
   dataclass inference stays clean at call sites (fallback: per-encoder
   concrete batch dataclasses sharing the core by composition, no Generic).
-- Quantile stats: **mandatory in the batch**. DatasetStats
-  gains q01/q99 for action+state; `from_lerobot_stats` (the data path)
-  REQUIRES them — a dataset without backfilled quantiles fails at
+- Quantile stats: **mandatory in the batch** (`BatchStats.q01/q99`).
+  DatasetStats gains q01/q99 for action+state — and can mirror the
+  per-modality grouping (`action: ChannelStats, state: ChannelStats` of
+  float tuples), which its to/from_dict already uses on the wire;
+  `from_lerobot_stats` (the data path) REQUIRES them — a dataset without backfilled quantiles fails at
   selection with the `ldtools.backfill_quantile_stats` command as the
   remedy (corpus + local dev copies verified backfilled 2026-07-30).
   The one place None survives is `from_state_dict` on OLD checkpoints
