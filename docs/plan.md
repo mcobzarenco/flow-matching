@@ -329,8 +329,7 @@ class ARFastDecoderConfig:
     cross_attention_heads: int
     schedule: tuple[str, ...]  # its own schedule over the same names
     tokenizer: str  # artifact ref, e.g. ".../fast_tokenizer_v1"
-    vocab_size: int  # BPE vocab + BOA/EOA/pad specials
-    max_tokens: int  # decode budget (measured p99 + slack)
+    vocab_total: int  # BPE vocab + BOA/PAD specials
     state_dim: int
     chunk_size: int
     action_dim: int

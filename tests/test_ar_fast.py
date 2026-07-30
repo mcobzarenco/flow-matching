@@ -62,7 +62,6 @@ def config(loaded: ActionCodec) -> ARFastConfig:
         schedule=("kv0", "kv0"),
         tokenizer=str(FIXTURE),
         vocab_total=loaded.vocab_total,
-        max_tokens=110,
         state_dim=DIM,
         chunk_size=CHUNK,
         action_dim=DIM,

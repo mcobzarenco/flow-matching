@@ -77,7 +77,6 @@ class ARFastConfig:
     schedule: tuple[str, ...]
     tokenizer: str  # artifact ref (local dir or <user>/<repo>/<subfolder>)
     vocab_total: int
-    max_tokens: int
     state_dim: int
     chunk_size: int
     action_dim: int
@@ -362,8 +361,7 @@ class ARFastDecoder(ActionDecoder):
         stripped before decode). BPE's single-symbol base tokens make
         exact fill always reachable, so the loop terminates in ≤
         chunk*dim steps and every generation decodes by construction
-        (``config.max_tokens`` remains as recorded metadata; typical
-        sequences are ~50-60 tokens). Malformed generations are
+        (typical sequences are ~50-60 tokens). Malformed generations are
         impossible by construction — a decode error here is a bug and
         propagates."""
         if noise is not None:

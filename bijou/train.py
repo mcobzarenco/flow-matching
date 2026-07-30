@@ -121,7 +121,6 @@ class TrainArgs:
     time_conditioning: str
     decoder: str
     fast_tokenizer: str | None
-    ar_max_tokens: int
     expert_hidden: int
     expert_heads: int
     expert_intermediate: int
@@ -851,13 +850,6 @@ def parse_args() -> TrainArgs:
         "mcobzarenco/bijou-checkpoints/fast_tokenizer_v1)",
     )
     parser.add_argument(
-        "--ar-max-tokens",
-        type=int,
-        default=96,
-        help="AR decode budget per chunk (corpus fit p50 ~52 tokens; the "
-        "budget bounds malformed generations, not training)",
-    )
-    parser.add_argument(
         "--expert-hidden",
         type=int,
         default=768,
@@ -1083,7 +1075,6 @@ def parse_args() -> TrainArgs:
         time_conditioning=raw.time_conditioning,
         decoder=raw.decoder,
         fast_tokenizer=raw.fast_tokenizer,
-        ar_max_tokens=raw.ar_max_tokens,
         expert_hidden=raw.expert_hidden,
         expert_heads=raw.expert_heads,
         expert_intermediate=raw.expert_intermediate,
@@ -1329,7 +1320,6 @@ def main() -> int:
             schedule=ar_schedule,
             tokenizer=args.fast_tokenizer,
             vocab_total=action_codec.vocab_total,
-            max_tokens=args.ar_max_tokens,
             state_dim=state_dim,
             chunk_size=args.chunk_size,
             action_dim=action_dim,
