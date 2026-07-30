@@ -2,24 +2,47 @@
 # Initialize a fresh Lambda instance (Ubuntu 24.04) for interactive use and
 # training. Fully non-interactive; safe to re-run (idempotent-ish).
 #
-# Reproduces the manual setup of the first H100 box:
-#   dist-upgrade, NVIDIA driver (only when none is working — Lambda "GPU
-#   Base" images ship preinstalled drivers, which are kept), zsh + oh-my-zsh
-#   (default shell), tmux, ffmpeg (torchcodec links against system libav*),
-#   uv, repo clone + uv sync.
+# GPU-driver policy (the hard-won part — read before "fixing" it):
+#   The script NEVER touches the NVIDIA stack unless --install-driver is
+#   passed. On first run it apt-mark HOLDs every installed nvidia*/
+#   libnvidia*/fabricmanager package so that dist-upgrade cannot replace
+#   the driver out from under the image. Lambda GPU Base images ship a
+#   matched driver + fabricmanager pair (580.173.02 at the time of
+#   writing); an unintended dist-upgrade to the 595 stack broke CUDA on a
+#   2xH100 VM with "Error 802: system not yet initialized" — driver 595
+#   put the NVLinked GPUs into a fabric-probe state ("Fabric State: In
+#   Progress") gated on a fabric manager that cannot run on that VM (no
+#   NVSwitch devices exposed: "NV_WARN_NOTHING_TO_DO"). The matched-580
+#   stack does not gate CUDA on the fabric probe. If a box ever ends up
+#   mismatched: purge 'nvidia-*' 'libnvidia-*', install
+#   nvidia-driver-580-open + nvidia-fabricmanager=580.173.02-1ubuntu1 +
+#   nvidia-utils-580, hold them, reboot.
+#
+# Everything else:
+#   dist-upgrade (with the NVIDIA hold in place), zsh + oh-my-zsh (default
+#   shell), tmux, ffmpeg (torchcodec links against system libav*), uv,
+#   repo clone + uv sync.
 #
 # Usage:
-#   scp init-vm.sh ubuntu@<ip>:
-#   ssh ubuntu@<ip> ./init-vm.sh              # reboots only if the driver
-#                                             # needs (re)loading
-#   ssh ubuntu@<ip> ./init-vm.sh --no-reboot
+#   scp init-vm-gpu.sh ubuntu@<ip>:
+#   ssh ubuntu@<ip> ./init-vm-gpu.sh                  # never touches drivers,
+#                                                     # never reboots
+#   ssh ubuntu@<ip> ./init-vm-gpu.sh --install-driver # bare image: install
+#                                                     # the pinned 580 stack
+#                                                     # and reboot into it
 set -euo pipefail
 
-NVIDIA_DRIVER="nvidia-driver-595-server"
+# The blessed stack: matched driver + fabric manager versions (Lambda GPU
+# Base preinstall). Bump both together, never one.
+NVIDIA_DRIVER_PACKAGES=(
+    "nvidia-driver-580-open"
+    "nvidia-utils-580"
+    "nvidia-fabricmanager=580.173.02-1ubuntu1"
+)
 REPO_URL="git@github.com:mcobzarenco/flow-matching.git"
 REPO_DIR="$HOME/flow-matching"
-REBOOT=1
-[[ "${1:-}" == "--no-reboot" ]] && REBOOT=0
+INSTALL_DRIVER=0
+[[ "${1:-}" == "--install-driver" ]] && INSTALL_DRIVER=1
 
 log() { printf '\n\033[1;36m==> %s\033[0m\n' "$*"; }
 
@@ -41,18 +64,28 @@ APT_GET=(sudo -E apt-get -y
     -o Dpkg::Options::=--force-confdef
     -o Dpkg::Options::=--force-confold)
 
-# --- nvidia driver detection ------------------------------------------------
-# Lambda GPU Base images ship working preinstalled drivers — keep those:
-# layering $NVIDIA_DRIVER on top risks DKMS/version conflicts. Install only
-# on bare images where no driver answers. Detect BEFORE apt touches anything.
-NEED_DRIVER=1
-if command -v nvidia-smi >/dev/null && nvidia-smi >/dev/null 2>&1; then
-    log "NVIDIA driver already working (version $(nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -1)) — keeping it"
-    NEED_DRIVER=0
+# --- NVIDIA stack: freeze BEFORE any apt operation --------------------------
+if [[ "$INSTALL_DRIVER" -eq 1 ]]; then
+    log "installing the pinned NVIDIA stack: ${NVIDIA_DRIVER_PACKAGES[*]}"
+    "${APT_GET[@]}" update
+    "${APT_GET[@]}" install "${NVIDIA_DRIVER_PACKAGES[@]}"
+fi
+INSTALLED_NVIDIA=$(dpkg-query -W -f '${Package}\n' 'nvidia-*' 'libnvidia-*' 2>/dev/null | sort -u)
+if [[ -n "$INSTALLED_NVIDIA" ]]; then
+    log "holding the installed NVIDIA packages (dist-upgrade must not touch them)"
+    # shellcheck disable=SC2086
+    sudo apt-mark hold $INSTALLED_NVIDIA >/dev/null
+    if command -v nvidia-smi >/dev/null && nvidia-smi >/dev/null 2>&1; then
+        log "NVIDIA driver working (version $(nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -1)) — held"
+    else
+        log "NVIDIA packages held, but the driver is not answering — a reboot may be pending"
+    fi
+else
+    log "no NVIDIA packages installed — GPU-less box, or run with --install-driver"
 fi
 
 # --- system packages -------------------------------------------------------
-log "apt update + dist-upgrade"
+log "apt update + dist-upgrade (NVIDIA stack held)"
 "${APT_GET[@]}" update
 "${APT_GET[@]}" dist-upgrade
 
@@ -60,11 +93,6 @@ log "installing system packages (shell, tooling, ffmpeg)"
 "${APT_GET[@]}" install \
     zsh tmux ffmpeg \
     git curl ca-certificates rsync htop
-
-if [[ "$NEED_DRIVER" -eq 1 ]]; then
-    log "no working NVIDIA driver detected — installing $NVIDIA_DRIVER"
-    "${APT_GET[@]}" install "$NVIDIA_DRIVER"
-fi
 
 # --- oh-my-zsh + default shell --------------------------------------------
 if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
@@ -111,20 +139,16 @@ log "uv sync (downloads pinned python + all project deps, incl. lerobot extras)"
 # --- done -------------------------------------------------------------------
 log "setup complete"
 cat <<'EOF'
-Next steps after the reboot: auth (HF + wandb), datasets, smoke tests —
-follow docs/init_gpu_machine.md in the repo step by step. Quick check:
-  nvidia-smi
+Next steps: auth (HF + wandb), datasets, smoke tests — follow
+docs/init_gpu_machine.md in the repo step by step. Quick GPU check:
+  nvidia-smi                       # driver answers
+  uv run python -c "import torch; torch.zeros(1, device='cuda')"
+                                   # CUDA context actually initializes
+                                   # (nvidia-smi alone does NOT prove this;
+                                   # see the fabric-probe note up top)
 EOF
 
-# A reboot is needed when a driver was just installed, or when a
-# preinstalled driver stopped answering because dist-upgrade replaced its
-# userspace libraries out from under the loaded kernel module
-# ("Driver/library version mismatch").
-if [[ "$NEED_DRIVER" -eq 0 ]] && nvidia-smi >/dev/null 2>&1; then
-    log "preinstalled NVIDIA driver kept — no reboot needed"
-elif [[ "$REBOOT" -eq 1 ]]; then
-    log "rebooting now to load the NVIDIA driver (pass --no-reboot to skip)"
+if [[ "$INSTALL_DRIVER" -eq 1 ]]; then
+    log "driver was (re)installed — rebooting to load it"
     sudo reboot
-else
-    log "reboot skipped — run 'sudo reboot' before using the GPU"
 fi

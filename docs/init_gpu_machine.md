@@ -34,28 +34,38 @@ From the machine that has the script (repo root):
 
 ```sh
 scp init-vm-gpu.sh ubuntu@<ip>:
-ssh -A ubuntu@<ip> ./init-vm-gpu.sh     # reboots at the end
+ssh -A ubuntu@<ip> ./init-vm-gpu.sh                   # normal case
+ssh -A ubuntu@<ip> ./init-vm-gpu.sh --install-driver  # bare image only
 ```
 
-Idempotent-ish; safe to re-run. It performs: apt dist-upgrade, NVIDIA
-driver install **only when no working driver is detected** — Lambda
-"GPU Base" images ship preinstalled drivers and the script keeps them
-(layering another driver risks DKMS/version conflicts) — zsh +
-oh-my-zsh as default shell, tmux, **ffmpeg (required: torchcodec links
-against system libav\*)**, uv, clone of the repo to `~/flow-matching`,
-and `uv sync` (pinned Python + all deps, including lerobot extras).
-It reboots only when the driver needs (re)loading: after a fresh
-driver install, or when dist-upgrade replaced a preinstalled driver's
-userspace libraries under the loaded kernel module (nvidia-smi stops
-answering until reboot). `--no-reboot` defers that reboot to you.
-On a GPU Base image the common case is: driver kept, no reboot.
+Idempotent-ish; safe to re-run. **The default run never touches the
+NVIDIA stack and never reboots**: it apt-mark HOLDs every installed
+nvidia\*/libnvidia\*/fabricmanager package FIRST, then dist-upgrades
+(with the hold in place), installs zsh + oh-my-zsh as default shell,
+tmux, **ffmpeg (required: torchcodec links against system libav\*)**,
+uv, clones the repo to `~/flow-matching`, and runs `uv sync`.
+`--install-driver` is for bare images only: it installs the pinned
+**matched** driver + fabric manager pair (`nvidia-driver-580-open` +
+`nvidia-fabricmanager=580.173.02` — bump both together, never one) and
+reboots into it.
 
-Afterwards (post-reboot, where one happened), verify:
+Why the paranoia (measured, 2×H100 VM): a dist-upgrade once pulled the
+595 driver over Lambda's preinstalled 580 pair. Driver 595 put the
+NVLinked GPUs into a fabric-probe state (`nvidia-smi -q`: "Fabric
+State: In Progress") gated on a fabric manager that cannot run on
+these VMs (no NVSwitch devices exposed — FM exits with
+NV_WARN_NOTHING_TO_DO), so every CUDA init failed with **"Error 802:
+system not yet initialized"** — while `nvidia-smi` kept answering
+normally. Remedy for a mismatched box: purge `nvidia-*` `libnvidia-*`,
+install the pinned 580 set, hold, reboot.
+
+Afterwards, verify — both lines; `nvidia-smi` alone does NOT prove
+CUDA works (see above):
 
 ```sh
 nvidia-smi        # all GPUs listed, driver loaded
 cd ~/flow-matching && uv run python -c \
-    "import torch; print(torch.cuda.is_available(), torch.cuda.device_count())"
+    "import torch; torch.zeros(1, device='cuda'); print('cuda ok', torch.cuda.device_count())"
 ```
 
 ## 2. Auth
