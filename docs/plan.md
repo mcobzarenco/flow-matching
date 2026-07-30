@@ -126,8 +126,11 @@ class CollatedBatch(Generic[I]):
     # (Cannot be made mandatory like the quantiles: tokens depend on a
     # tokenizer artifact and cost real CPU per item — they are computed
     # only when an AR decoder will consume them.)
-    action_tokens: Tensor | None  # [B, T_tok] padded token targets
-    action_token_mask: Tensor | None  # [B, T_tok] True = real token
+    # No separate mask field: with right padding + causal attention, PAD
+    # is invisible to real positions, and the CE exclusion derives from
+    # `action_tokens != PAD_ID` (targets built with ignore_index). PAD is
+    # a reserved special, never a real token.
+    action_tokens: Tensor | None  # [B, T_tok] PAD-padded token ids
 ```
 
 ### Encoder inputs in practice
@@ -423,9 +426,11 @@ frozen/live-trunk autocast policy (`BijouTrainStep` generalizes: encode
 - **`bijou/decoders/ar_fast.py` (new)**: token embedding (vocab +
   BOA/EOA/pad), state anchor token, N sandwich blocks (self-attn causal
   over `[state][BOA][t_1..t_k]`, cross-attn per its schedule), LM head.
-  `loss` = CE over `action_tokens` masked by `action_token_mask`;
-  `predict_chunk` = decode -> FastTokenizer.decode -> denormalize via the
-  batch's quantile stats. Requires threading q01/q99 through DatasetStats
+  `loss` = CE over shifted `action_tokens` with ignore_index at PAD
+  (mask derives from the reserved PAD id — no separate mask tensor;
+  attention needs none: right padding + causality already hides PAD
+  from real positions); `predict_chunk` = decode -> FastTokenizer.decode
+  -> denormalize via the batch's quantile stats. Requires threading q01/q99 through DatasetStats
   -> collator (dataset-owned quantiles, already backfilled corpus-wide;
   parse-edge None + loud AR failure for un-backfilled data).
 - **`bijou/encoders/gemma4.py` (new, thin)**: wraps the owned gemma4
