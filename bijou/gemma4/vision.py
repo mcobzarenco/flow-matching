@@ -18,8 +18,7 @@ import torch
 from torch import Tensor, nn
 from torch.nn import functional as F
 
-from .config import Gemma4VisionConfig
-from .layers import (
+from ..nn import (
     DEFAULT_ATTENTION_BACKEND,
     AttentionBackend,
     DeviceLike,
@@ -29,6 +28,7 @@ from .layers import (
     attention,
     buffer_device,
 )
+from .config import Gemma4VisionConfig
 from .masks import MaskSpec, build_bidirectional_mask
 
 

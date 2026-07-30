@@ -16,28 +16,19 @@ regardless of the flag.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 import torch
 from torch import Tensor
 
+from ..nn import MaskSpec
 from .cache import KVCache
 from .config import Gemma4TextConfig, LayerType
 
-
-@dataclass(frozen=True, slots=True)
-class MaskSpec:
-    """How a layer's attention should be masked.
-
-    ``tensor`` is the additive mask (None = attend everything, e.g.
-    single-token decode). ``is_causal=True`` asserts the pattern is exactly
-    lower-triangular with q_len == kv_len and no padding — backends with a
-    native causal mode may then ignore ``tensor``.
-    """
-
-    tensor: Tensor | None = None
-    is_causal: bool = False
-
+__all__ = [
+    "MaskMapping",
+    "MaskSpec",
+    "build_bidirectional_mask",
+    "build_text_masks",
+]
 
 type MaskMapping = dict[LayerType, MaskSpec]
 

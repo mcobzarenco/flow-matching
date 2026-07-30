@@ -27,8 +27,8 @@ import time
 import torch
 import transformers
 
+from ..nn import AttentionBackend
 from .generation import generate
-from .layers import AttentionBackend
 from .loading import load_model, resolve_checkpoint_dir
 from .model import Gemma4Model, set_attention_backend
 from .testing import load_test_image

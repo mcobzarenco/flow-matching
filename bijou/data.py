@@ -39,7 +39,7 @@ from lerobot.datasets.lerobot_dataset import LeRobotDataset
 from PIL import Image
 from torch import Tensor
 
-from .expert import PrefixKV
+from .interface import EncodedPrefix
 from .model import BijouModel
 
 
@@ -691,7 +691,7 @@ class PrefixCollator:
         )
 
 
-def encode_prefix(model: BijouModel, batch: CollatedBatch) -> PrefixKV:
+def encode_prefix(model: BijouModel, batch: CollatedBatch) -> EncodedPrefix:
     """``batch`` must already be device-resident. No-grad wrapper over
     BijouModel.encode_prefix (shapes there); training with a live trunk
     uses BijouTrainStep instead, which encodes under grad."""

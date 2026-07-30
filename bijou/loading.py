@@ -27,9 +27,9 @@ from torch import Tensor
 from .data import DatasetStats
 from .expert import ActionExpert, ExpertConfig, SelfAttentionMode, TimeConditioning
 from .gemma4.config import Gemma4Config, LayerType
-from .gemma4.layers import DEFAULT_ATTENTION_BACKEND, AttentionBackend, DeviceLike
 from .gemma4.loading import load_config, load_model, resolve_checkpoint_dir
 from .model import BijouModel
+from .nn import DEFAULT_ATTENTION_BACKEND, AttentionBackend, DeviceLike
 
 
 def prefix_global_layers(config: Gemma4Config) -> tuple[int, ...]:

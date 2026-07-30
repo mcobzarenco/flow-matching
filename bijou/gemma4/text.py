@@ -23,9 +23,7 @@ from typing import override
 import torch
 from torch import Tensor, nn
 
-from .cache import KVCache
-from .config import Gemma4TextConfig, LayerType
-from .layers import (
+from ..nn import (
     DEFAULT_ATTENTION_BACKEND,
     AttentionBackend,
     DeviceLike,
@@ -37,6 +35,8 @@ from .layers import (
     rope_cos_sin,
     rope_inv_freq_from_params,
 )
+from .cache import KVCache
+from .config import Gemma4TextConfig, LayerType
 from .masks import MaskMapping, MaskSpec, build_text_masks
 
 type SharedKV = dict[LayerType, tuple[Tensor, Tensor]]
@@ -92,7 +92,7 @@ def rope_inv_freq(
     device: DeviceLike = None,
 ) -> Tensor:
     """Float32 inverse frequencies for a layer type (see
-    :func:`bijou.gemma4.layers.rope_inv_freq_from_params`)."""
+    :func:`bijou.nn.rope_inv_freq_from_params`)."""
     return rope_inv_freq_from_params(
         config.rope_parameters[layer_type],
         config.head_dim_for_type(layer_type),

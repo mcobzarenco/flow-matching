@@ -16,11 +16,11 @@ from bijou.expert import (
     ActionExpert,
     ExpertConfig,
     ExpertLayer,
-    PrefixKV,
     SelfAttentionMode,
     TimeConditioning,
 )
-from bijou.gemma4.config import RopeParameters, RopeType
+from bijou.interface import EncodedPrefix, MemoryStream
+from bijou.nn import RopeParameters, RopeType
 
 BATCH, PREFIX_LEN, CHUNK, ACTION_DIM, STATE_DIM, HIDDEN = 2, 5, 4, 6, 6, 32
 
@@ -51,12 +51,16 @@ def tiny_config(time_conditioning: TimeConditioning) -> ExpertConfig:
     )
 
 
-def fabricate() -> tuple[PrefixKV, torch.Tensor, torch.Tensor, torch.Tensor]:
+def fabricate() -> tuple[EncodedPrefix, torch.Tensor, torch.Tensor, torch.Tensor]:
     generator = torch.Generator().manual_seed(1)
     head_dim = 16
     key = torch.randn(BATCH, 1, PREFIX_LEN, head_dim, generator=generator)
     value = torch.randn(BATCH, 1, PREFIX_LEN, head_dim, generator=generator)
-    prefix = PrefixKV(streams={0: (key, value)}, length=PREFIX_LEN, padding_mask=None)
+    prefix = EncodedPrefix(
+        streams={"kv0": MemoryStream(key=key, value=value)},
+        length=PREFIX_LEN,
+        padding_mask=None,
+    )
     state = torch.randn(BATCH, STATE_DIM, generator=generator)
     actions = torch.randn(BATCH, CHUNK, ACTION_DIM, generator=generator)
     time = torch.rand(BATCH, generator=generator)

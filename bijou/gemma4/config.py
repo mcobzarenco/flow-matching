@@ -22,37 +22,27 @@ from typing import Any, Self
 
 import torch
 
+# Re-exports: rope geometry types were lifted to bijou.nn (they parameterize
+# the shared rope primitives); gemma4 configs keep referencing them here.
+from ..nn import RopeParameters, RopeType
+
+__all__ = [
+    "Gemma4Config",
+    "Gemma4TextConfig",
+    "Gemma4VisionConfig",
+    "LayerType",
+    "RopeParameters",
+    "RopeType",
+    "e2b_config",
+    "e4b_config",
+]
+
 
 class LayerType(StrEnum):
     """Attention pattern of a decoder layer."""
 
     SLIDING = "sliding_attention"
     FULL = "full_attention"
-
-
-class RopeType(StrEnum):
-    DEFAULT = "default"
-    # p-RoPE: only `partial_rotary_factor * head_dim` dimensions are rotated;
-    # the remaining frequencies are zero (cos=1, sin=0 -> identity).
-    PROPORTIONAL = "proportional"
-
-
-@dataclass(frozen=True, slots=True)
-class RopeParameters:
-    rope_type: RopeType
-    rope_theta: float
-    # Linear position scaling factor (divides the inverse frequencies).
-    factor: float
-    partial_rotary_factor: float
-
-    @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> Self:
-        return cls(
-            rope_type=RopeType(data.get("rope_type", "default")),
-            rope_theta=float(data["rope_theta"]),
-            factor=float(data.get("factor", 1.0)),
-            partial_rotary_factor=float(data.get("partial_rotary_factor", 1.0)),
-        )
 
 
 @dataclass(frozen=True, slots=True)

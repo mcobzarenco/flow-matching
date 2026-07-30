@@ -25,6 +25,7 @@ the target device, and different submodules may use different dtypes:
 ``Gemma4Model(config, device="cuda", dtype=torch.bfloat16)``.
 """
 
+from ..nn import AttentionBackend
 from .cache import KVCache
 from .config import (
     Gemma4Config,
@@ -37,7 +38,6 @@ from .config import (
     e4b_config,
 )
 from .generation import GenerationResult, SamplingParams, generate
-from .layers import AttentionBackend
 from .loading import load_config, load_model, resolve_checkpoint_dir
 from .model import Gemma4Model, Gemma4Output, set_attention_backend
 from .text import TextModel

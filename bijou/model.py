@@ -3,9 +3,9 @@
 The prefix (chat-templated instruction + camera images, assembled by the
 Gemma4 processor) runs once per observation through the truncated backbone —
 only the non-KV-shared layers, e.g. layers 0–14 for E2B. The K/V of the
-*global-attention* layers (4/9/14 for E2B) are exported as :class:`PrefixKV`
-and cached; the expert then denoises a chunk of actions against them, with
-fresh robot state, at ~10 Euler steps per chunk.
+*global-attention* layers (4/9/14 for E2B) are exported as an
+:class:`EncodedPrefix` and cached; the expert then denoises a chunk of
+actions against them, with fresh robot state, at ~10 Euler steps per chunk.
 """
 
 from __future__ import annotations
@@ -16,9 +16,10 @@ from typing import override
 import torch
 from torch import Tensor, nn
 
-from .expert import ActionExpert, PrefixKV, StreamKV
+from .expert import ActionExpert
 from .gemma4.cache import KVCache
 from .gemma4.model import Gemma4Model
+from .interface import EncodedPrefix, MemoryStream, kv_stream_name
 
 
 class SamplingMethod(Enum):
@@ -66,11 +67,11 @@ class BijouModel(nn.Module):
         pixel_values: Tensor | None = None,
         image_position_ids: Tensor | None = None,
         padding_mask: Tensor | None = None,
-    ) -> PrefixKV:
+    ) -> EncodedPrefix:
         """Run the truncated backbone over the multimodal prefix and export
-        the expert's K/V streams (returns a PrefixKV of width P). Cache the
-        result across flow steps (and, if the observation is unchanged,
-        across replans).
+        the expert's K/V streams (returns an EncodedPrefix of width P).
+        Cache the result across flow steps (and, if the observation is
+        unchanged, across replans).
 
         For right-padded batches (mixed-length instructions), pass the HF
         ``attention_mask`` (True/1 = real token) as ``padding_mask``; it masks
@@ -82,7 +83,7 @@ class BijouModel(nn.Module):
           - pixel_values: [images, patches, 3·patch_size²]
           - image_position_ids: [images, patches, 2]  ((x, y) spatial ids)
           - padding_mask (when present): [B, P]  (True = real token)
-          - returns PrefixKV: streams[layer] = (key, value) each
+          - returns EncodedPrefix: streams["kv{layer}"].key/value each
             [B, kv_heads, P, head_dim]; padding_mask [B, P] or None
         """
         inputs_embeds, per_layer_inputs = self.backbone.embed_multimodal(
@@ -101,12 +102,15 @@ class BijouModel(nn.Module):
             # (~1/15 of decoder compute at the default E2B schedule).
             kv_stop_layer=max(self.expert.config.streams),
         )
-        streams: StreamKV = {}
+        streams: dict[str, MemoryStream] = {}
         for layer_idx in self.expert.config.streams:
             layer = cache.layers[layer_idx]
             assert layer.keys is not None and layer.values is not None
-            streams[layer_idx] = (layer.keys, layer.values)
-        return PrefixKV(
+            streams[kv_stream_name(layer_idx)] = MemoryStream(
+                key=layer.keys,
+                value=layer.values,
+            )
+        return EncodedPrefix(
             streams=streams,
             length=input_ids.shape[1],
             padding_mask=padding_mask,
@@ -115,7 +119,7 @@ class BijouModel(nn.Module):
     @override
     def forward(
         self,
-        prefix: PrefixKV,
+        prefix: EncodedPrefix,
         state: Tensor,
         noisy_actions: Tensor,
         time: Tensor,
@@ -125,7 +129,7 @@ class BijouModel(nn.Module):
         [B, chunk, action_dim].
 
         Shapes:
-          - prefix.streams[layer]: (key, value) each [B, kv_heads, P, head_dim]
+          - prefix.streams[name].key/value: [B, kv_heads, P, head_dim]
           - state: [B, state_dim]
           - noisy_actions: [B, chunk, action_dim]
           - time: [B]
@@ -135,7 +139,7 @@ class BijouModel(nn.Module):
     @torch.no_grad()
     def sample_actions(
         self,
-        prefix: PrefixKV,
+        prefix: EncodedPrefix,
         state: Tensor,
         *,
         num_steps: int = 5,
@@ -161,7 +165,7 @@ class BijouModel(nn.Module):
         evaluation.
 
         Shapes:
-          - prefix.streams[layer]: (key, value) each [B, kv_heads, P, head_dim]
+          - prefix.streams[name].key/value: [B, kv_heads, P, head_dim]
           - state: [B, state_dim]
           - noise (when given): [B, chunk, action_dim]
           - returns: [B, chunk, action_dim]

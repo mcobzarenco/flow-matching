@@ -13,9 +13,9 @@ from typing import override
 import torch
 from torch import Tensor, nn
 
+from ..nn import DEFAULT_ATTENTION_BACKEND, AttentionBackend, DeviceLike
 from .cache import KVCache
 from .config import Gemma4Config
-from .layers import DEFAULT_ATTENTION_BACKEND, AttentionBackend, DeviceLike
 from .text import TextAttention, TextModel
 from .vision import MultimodalEmbedder, VisionAttention, VisionModel
 

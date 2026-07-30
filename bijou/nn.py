@@ -1,20 +1,22 @@
-"""Shared building blocks: RMSNorm, rotary embeddings, eager attention.
+"""Architecture-agnostic NN primitives: RMSNorm, rotary embeddings,
+attention dispatch, mask spec, rope geometry.
 
-Every op here mirrors the reference HF implementation expression-for-expression
-so that outputs are bit-identical in bf16.
+Shared by the gemma4 trunk, the action expert and any future
+encoder/decoder — nothing in here knows about a specific architecture.
+Every op mirrors the reference HF implementation
+expression-for-expression so that outputs are bit-identical in bf16 (the
+gemma4 parity suite exercises them end to end).
 """
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from enum import StrEnum
-from typing import override
+from typing import Any, Self, override
 
 import torch
 from torch import Tensor, nn
 from torch.nn import functional as F
-
-from .config import RopeParameters, RopeType
-from .masks import MaskSpec
 
 type DeviceLike = torch.device | str | None
 
@@ -38,6 +40,45 @@ class AttentionBackend(StrEnum):
 
 
 DEFAULT_ATTENTION_BACKEND = AttentionBackend.SDPA
+
+
+class RopeType(StrEnum):
+    DEFAULT = "default"
+    # p-RoPE: only `partial_rotary_factor * head_dim` dimensions are rotated;
+    # the remaining frequencies are zero (cos=1, sin=0 -> identity).
+    PROPORTIONAL = "proportional"
+
+
+@dataclass(frozen=True, slots=True)
+class RopeParameters:
+    rope_type: RopeType
+    rope_theta: float
+    # Linear position scaling factor (divides the inverse frequencies).
+    factor: float
+    partial_rotary_factor: float
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Self:
+        return cls(
+            rope_type=RopeType(data.get("rope_type", "default")),
+            rope_theta=float(data["rope_theta"]),
+            factor=float(data.get("factor", 1.0)),
+            partial_rotary_factor=float(data.get("partial_rotary_factor", 1.0)),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class MaskSpec:
+    """How a layer's attention should be masked.
+
+    ``tensor`` is the additive mask (None = attend everything, e.g.
+    single-token decode). ``is_causal=True`` asserts the pattern is exactly
+    lower-triangular with q_len == kv_len and no padding — backends with a
+    native causal mode may then ignore ``tensor``.
+    """
+
+    tensor: Tensor | None = None
+    is_causal: bool = False
 
 
 def activation_fn(name: str) -> nn.Module:

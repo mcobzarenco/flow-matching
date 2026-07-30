@@ -74,9 +74,10 @@ from .data import (
     select_datasets,
     worker_init,
 )
-from .expert import ExpertConfig, PrefixKV, SelfAttentionMode, TimeConditioning
+from .expert import ExpertConfig, SelfAttentionMode, TimeConditioning
 from .gemma4.loading import load_config, resolve_checkpoint_dir
 from .gemma4.text import DecoderLayer
+from .interface import EncodedPrefix
 from .loading import (
     CheckpointMetadata,
     backbone_snapshot,
@@ -254,7 +255,7 @@ class Normalizers:
 
 def flow_matching_loss(
     velocity_model: torch.nn.Module,
-    prefix: PrefixKV,
+    prefix: EncodedPrefix,
     batch: CollatedBatch,
 ) -> Tensor:
     """``batch`` must already be device-resident; no transfers happen here.

@@ -43,12 +43,15 @@ from typing import cast, override
 import torch
 from torch import Tensor, nn
 
-from .gemma4.config import RopeParameters, RopeType
-from .gemma4.layers import (
+from .interface import EncodedPrefix, MemoryStream, kv_stream_name
+from .nn import (
     DEFAULT_ATTENTION_BACKEND,
     AttentionBackend,
     DeviceLike,
+    MaskSpec,
     RMSNorm,
+    RopeParameters,
+    RopeType,
     activation_fn,
     apply_rotary_pos_emb,
     attention,
@@ -56,27 +59,6 @@ from .gemma4.layers import (
     rope_cos_sin,
     rope_inv_freq_from_params,
 )
-from .gemma4.masks import MaskSpec
-
-type StreamKV = dict[int, tuple[Tensor, Tensor]]
-
-
-@dataclass(frozen=True, slots=True)
-class PrefixKV:
-    """Exported prefix K/V streams: {backbone_layer_idx: (K, V)}, each
-    [B, kv_heads, P, head_dim], plus the (padded) prefix length P and, for
-    padded batches, the True-means-real padding mask [B, P]. Per-sample
-    real lengths (expert query positions) derive from the mask; ``length``
-    is the KV width and the position base only for unpadded batches."""
-
-    streams: StreamKV
-    length: int
-    padding_mask: Tensor | None = None
-
-    @property
-    def batch_size(self) -> int:
-        first_key = next(iter(self.streams.values()))[0]
-        return first_key.shape[0]
 
 
 class SelfAttentionMode(StrEnum):
@@ -219,7 +201,7 @@ class ExpertCrossAttention(nn.Module):
     def forward(
         self,
         hidden_states: Tensor,
-        stream: tuple[Tensor, Tensor],
+        stream: MemoryStream,
         position_embeddings: tuple[Tensor, Tensor],
         mask: MaskSpec,
     ) -> Tensor:
@@ -227,7 +209,7 @@ class ExpertCrossAttention(nn.Module):
 
         Shapes:
           - hidden_states: [B, suffix, hidden]  (queries: the expert suffix)
-          - stream: (key, value), each [B, kv_heads, P, head_dim]
+          - stream.key/value: [B, kv_heads, P, head_dim]
           - position_embeddings: (cos, sin), each [B, suffix, head_dim]
             (padded batches: per-sample positions; [1, suffix, head_dim]
             broadcast otherwise)
@@ -241,14 +223,14 @@ class ExpertCrossAttention(nn.Module):
         query = apply_rotary_pos_emb(query, cos, sin, unsqueeze_dim=2)
         query = query.transpose(1, 2)
 
-        key, value = stream  # [B, kv_heads, P, head_dim], already normed+rope'd
+        # Keys arrive already normed + position-encoded by the producer.
         attn_output = attention(
             self.attn_backend,
             query,
-            key,
-            value,
+            stream.key,
+            stream.value,
             mask,
-            num_key_value_groups=self.num_heads // key.shape[1],
+            num_key_value_groups=self.num_heads // stream.key.shape[1],
             scaling=1.0,
         )
         return self.o_proj(attn_output.reshape(batch, seq_len, -1))
@@ -469,7 +451,7 @@ class ExpertLayer(nn.Module):
     def forward(
         self,
         hidden_states: Tensor,
-        stream: tuple[Tensor, Tensor],
+        stream: MemoryStream,
         cross_position_embeddings: tuple[Tensor, Tensor],
         cross_attention_mask: MaskSpec,
         self_position_embeddings: tuple[Tensor, Tensor],
@@ -485,7 +467,7 @@ class ExpertLayer(nn.Module):
 
         Shapes:
           - hidden_states: [B, suffix, hidden]
-          - stream: (key, value), each [B, kv_heads, P, head_dim]
+          - stream.key/value: [B, kv_heads, P, head_dim]
           - cross_position_embeddings: (cos, sin), each
             [B or 1, suffix, head_dim]  (B when padded, broadcast otherwise)
           - cross_attention_mask.tensor (when present): [B, 1, 1, P]
@@ -571,6 +553,11 @@ class ActionExpert(nn.Module):
     ) -> None:
         super().__init__()
         self.config = config
+        # Stream names this expert's layers cross-attend, one per layer
+        # (the int schedule is legacy config; lookups are by name).
+        self.schedule_names = tuple(
+            kv_stream_name(idx) for idx in config.cross_attention_schedule
+        )
         hidden = config.hidden_size
 
         self.state_proj = nn.Linear(
@@ -708,7 +695,7 @@ class ActionExpert(nn.Module):
 
     def _cross_attention_mask(
         self,
-        prefix: PrefixKV,
+        prefix: EncodedPrefix,
         dtype: torch.dtype,
         device: torch.device,
     ) -> MaskSpec:
@@ -726,7 +713,7 @@ class ActionExpert(nn.Module):
     @override
     def forward(
         self,
-        prefix: PrefixKV,
+        prefix: EncodedPrefix,
         state: Tensor,
         noisy_actions: Tensor,
         time: Tensor,
@@ -738,7 +725,7 @@ class ActionExpert(nn.Module):
         backbone may run in a different precision, e.g. bf16 vs fp32 expert).
 
         Shapes:
-          - prefix.streams[layer]: (key, value), each [B, kv_heads, P, head_dim]
+          - prefix.streams[name].key/value: [B, kv_heads, P, head_dim]
           - prefix.padding_mask (when present): [B, P]  (True = real token)
           - state: [B, state_dim]
           - noisy_actions: [B, chunk, action_dim]
@@ -769,7 +756,8 @@ class ActionExpert(nn.Module):
 
         device = hidden_states.device
         streams = {
-            idx: (k.to(dtype), v.to(dtype)) for idx, (k, v) in prefix.streams.items()
+            name: MemoryStream(key=s.key.to(dtype), value=s.value.to(dtype))
+            for name, s in prefix.streams.items()
         }
         suffix_positions = torch.arange(config.suffix_length, device=device)
         # Cross-attention queries continue after each sample's REAL prefix.
@@ -797,14 +785,14 @@ class ActionExpert(nn.Module):
         self_attention_mask = self._self_attention_mask(batch, dtype, device)
         cross_attention_mask = self._cross_attention_mask(prefix, dtype, device)
 
-        for layer, stream_idx in zip(
+        for layer, stream_name in zip(
             self.layers,
-            config.cross_attention_schedule,
+            self.schedule_names,
             strict=True,
         ):
             hidden_states = layer(
                 hidden_states,
-                streams[stream_idx],
+                streams[stream_name],
                 cross_position_embeddings,
                 cross_attention_mask,
                 self_position_embeddings,

@@ -59,9 +59,9 @@ import transformers
 from torch import Tensor
 from transformers import DynamicCache
 
+from ..nn import AttentionBackend
 from .cache import KVCache
 from .generation import GenerationResult, generate
-from .layers import AttentionBackend
 from .loading import load_generation_defaults, load_model, resolve_checkpoint_dir
 from .model import Gemma4Model, set_attention_backend
 from .testing import load_test_image

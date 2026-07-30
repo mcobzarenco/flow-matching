@@ -53,26 +53,30 @@ least:
 @dataclass(frozen=True, slots=True)
 class StreamGeometry:
     """Static per-stream contract, known at construction time."""
+
     kv_heads: int
     head_dim: int
-    rope: RopeParameters | None   # None => positions are baked into the
-                                  # memory; decoder applies no query RoPE.
-                                  # Set   => decoder RoPEs queries at
-                                  # positions >= per-sample real prefix len
-                                  # (the Gemma streams' contract today).
+    rope: RopeParameters | None  # None => positions are baked into the
+    # memory; decoder applies no query RoPE.
+    # Set   => decoder RoPEs queries at
+    # positions >= per-sample real prefix len
+    # (the Gemma streams' contract today).
+
 
 @dataclass(frozen=True, slots=True)
 class MemoryStream:
-    key: Tensor      # [B, kv_heads, P, head_dim]
-    value: Tensor    # [B, kv_heads, P, head_dim]
+    key: Tensor  # [B, kv_heads, P, head_dim]
+    value: Tensor  # [B, kv_heads, P, head_dim]
+
 
 @dataclass(frozen=True, slots=True)
 class EncodedPrefix:
     """The value crossing the encoder->decoder seam. Keys are the
     encoder's stream names, insertion-ordered as its `exports`."""
+
     streams: dict[str, MemoryStream]
-    length: int                    # padded P
-    padding_mask: Tensor | None    # [B, P], True = real
+    length: int  # padded P
+    padding_mask: Tensor | None  # [B, P], True = real
 
 
 @dataclass(frozen=True, slots=True)
@@ -88,6 +92,7 @@ class NormStats:
     requires backfilled stats). Consumers that need quantiles (AR/FAST)
     check for None and fail fast with the remedy; flow paths never read
     them."""
+
     mean: Tensor
     std: Tensor
     q01: Tensor | None
@@ -99,19 +104,20 @@ class CollatedBatch(Generic[I]):
     """Trunk-agnostic core + typed encoder-specific inputs. pin_memory/to
     recurse into `encoder_inputs` and the NormStats fields (all
     implement the same two hooks)."""
-    encoder_inputs: I              # GemmaInputs | SigLip2Inputs
-    state: Tensor                  # [B, state_dim]
-    actions: Tensor                # [B, chunk, action_dim]
-    action_is_pad: Tensor          # [B, chunk]
-    action_stats: NormStats        # each [B, action_dim]
-    state_stats: NormStats         # each [B, state_dim]
+
+    encoder_inputs: I  # GemmaInputs | SigLip2Inputs
+    state: Tensor  # [B, state_dim]
+    actions: Tensor  # [B, chunk, action_dim]
+    action_is_pad: Tensor  # [B, chunk]
+    action_stats: NormStats  # each [B, action_dim]
+    state_stats: NormStats  # each [B, state_dim]
     # AR-only, filled by the collator when built with a FastTokenizer
     # (CPU-side in workers); None otherwise. The AR loss asserts loudly.
     # (Cannot be made mandatory like the quantiles: tokens depend on a
     # tokenizer artifact and cost real CPU per item — they are computed
     # only when an AR decoder will consume them.)
-    action_tokens: Tensor | None       # [B, T_tok] padded token targets
-    action_token_mask: Tensor | None   # [B, T_tok] True = real token
+    action_tokens: Tensor | None  # [B, T_tok] padded token targets
+    action_token_mask: Tensor | None  # [B, T_tok] True = real token
 ```
 
 ### Encoder inputs in practice
@@ -123,11 +129,12 @@ class GemmaInputs:
     collator. The prompt layout (which tokens are images, where padding
     sits, P itself) is DECIDED AT COLLATE TIME and carried by input_ids;
     encode() just runs it."""
-    input_ids: Tensor            # [B, P]
-    attention_mask: Tensor       # [B, P]  (1 = real, 0 = right padding)
-    pixel_values: Tensor         # [images, patches, 3·patch_size²]
-    image_position_ids: Tensor   # [images, patches, 2]
-    has_padding: bool            # CPU-side, avoids a device sync
+
+    input_ids: Tensor  # [B, P]
+    attention_mask: Tensor  # [B, P]  (1 = real, 0 = right padding)
+    pixel_values: Tensor  # [images, patches, 3·patch_size²]
+    image_position_ids: Tensor  # [images, patches, 2]
+    has_padding: bool  # CPU-side, avoids a device sync
 
 
 @dataclass(frozen=True, slots=True)
@@ -138,15 +145,16 @@ class SigLip2Inputs:
     derives P and the EncodedPrefix padding mask itself. Gemma encodes
     the image->sample layout inside input_ids (placeholder tokens);
     SigLIP2 has no such carrier, so the mapping travels explicitly."""
+
     # vision tower (NaFlex: native aspect, ragged patch counts)
-    pixel_values: Tensor          # [images, patches, 3·patch_size²]
+    pixel_values: Tensor  # [images, patches, 3·patch_size²]
     pixel_attention_mask: Tensor  # [images, patches]  (True = real patch)
-    spatial_shapes: Tensor        # [images, 2]  ((h, w) in patches, for 2D pos)
-    sample_index: Tensor          # [images]  which batch sample owns each image
-    camera_slot: Tensor           # [images]  positional camera slot (sorted names)
+    spatial_shapes: Tensor  # [images, 2]  ((h, w) in patches, for 2D pos)
+    sample_index: Tensor  # [images]  which batch sample owns each image
+    camera_slot: Tensor  # [images]  positional camera slot (sorted names)
     # text tower (SigLIP tokenizer, 64-token max)
-    text_input_ids: Tensor        # [B, T_text]
-    text_attention_mask: Tensor   # [B, T_text]
+    text_input_ids: Tensor  # [B, T_text]
+    text_attention_mask: Tensor  # [B, T_text]
 ```
 
 (Fixed-resolution SigLIP2 variants would carry `pixel_values`
@@ -158,23 +166,31 @@ shown because 640×480-native is the point of choosing it.)
 ```python
 class ObservationEncoder(nn.Module, Generic[I]):
     """ABC. A trunk: inputs-collation strategy + encode + unfreeze surface."""
+
     def stream_geometries(self) -> dict[str, StreamGeometry]: ...  # keys =
     #   stream names, same order/keys as every EncodedPrefix it produces
     def inputs_collator(self) -> InputsCollator[I]: ...
     def encode(self, inputs: I, *, with_grad: bool) -> EncodedPrefix: ...
     def param_groups(self) -> dict[str, list[Parameter]]: ...
+
     # e.g. {"text": [...], "vision": [...]} — the --text-lr/--vision-lr
     # flags route here for ANY encoder.
 
 
 class ActionDecoder(nn.Module):
     """ABC. Owns its objective and its chunk-space inference."""
-    def action_tokenizer(self) -> FastTokenizer | None: ...   # AR: its artifact
+
+    def action_tokenizer(self) -> FastTokenizer | None: ...  # AR: its artifact
     def loss(self, prefix: EncodedPrefix, batch: CollatedBatch[Any]) -> Tensor: ...
     def predict_chunk(
-        self, prefix: EncodedPrefix, batch: CollatedBatch[Any],
-        *, generator: torch.Generator | None = None, noise: Tensor | None = None,
+        self,
+        prefix: EncodedPrefix,
+        batch: CollatedBatch[Any],
+        *,
+        generator: torch.Generator | None = None,
+        noise: Tensor | None = None,
     ) -> Tensor: ...
+
     # Returns RAW-unit [B, chunk, action_dim]; normalize/denormalize via
     # the batch's per-item stats happens INSIDE (this logic moves out of
     # BijouPolicy). Decoder-specific inference knobs (Heun steps, decode
@@ -201,8 +217,10 @@ class CameraFrame:
     with no reliable semantics, rig datasets carry real ones). Encoders
     MAY render the name into the prompt ("front: <image> wrist: <image>")
     or ignore it (today's positional behavior)."""
+
     name: str
-    image: Tensor                  # [3, height, width], float, [0, 1]
+    image: Tensor  # [3, height, width], float, [0, 1]
+
 
 @dataclass(frozen=True, slots=True)
 class PromptInputs:
@@ -210,22 +228,27 @@ class PromptInputs:
     (instruction override + camera policy applied). Extension point for
     future prompt-side signals — e.g. π0-FAST-style discretized state as
     text would become an optional field here."""
+
     instruction: str
     cameras: tuple[CameraFrame, ...]
+
 
 class InputsCollator(Protocol[I]):
     """Encoder-specific: a batch of PromptInputs -> I.
     Same pickling rules as today's PrefixCollator (lazy HF processor,
     __getstate__ drops the built one)."""
+
     def __call__(self, samples: list[PromptInputs]) -> I: ...
 
+
 @dataclass
-class Collator(Generic[I]):          # lives in interface.py (encoders sit
-    inputs: InputsCollator[I]        # below data.py in the DAG, so the
-    action_tokenizer: FastTokenizer | None   # shared core cannot)
+class Collator(Generic[I]):  # lives in interface.py (encoders sit
+    inputs: InputsCollator[I]  # below data.py in the DAG, so the
+    action_tokenizer: FastTokenizer | None  # shared core cannot)
     instruction: str | None
     camera_filter: tuple[str, ...] | None
     max_cameras: int | None
+
     def __call__(self, items: list[dict[str, Any]]) -> CollatedBatch[I]: ...
 ```
 
@@ -237,23 +260,32 @@ tokenizers, the decoder never learns about pixels.
 ## 2. Configs (tagged unions, parse at the edge)
 
 ```python
-class EncoderKind(StrEnum):  GEMMA4 = "gemma4";  SIGLIP2 = "siglip2"
-class DecoderKind(StrEnum):  FLOW = "flow";      AR_FAST = "ar_fast"
+class EncoderKind(StrEnum):
+    GEMMA4 = "gemma4"
+    SIGLIP2 = "siglip2"
+
+
+class DecoderKind(StrEnum):
+    FLOW = "flow"
+    AR_FAST = "ar_fast"
+
 
 @dataclass(frozen=True, slots=True)
 class GemmaEncoderConfig:
-    backbone: str                  # HF id / local dir
-    exports: tuple[int, ...]       # gemma layer indices, e.g. (4, 9, 14)
-                                   # (trunk internals belong HERE — this is
-                                   # the one config allowed to know them)
+    backbone: str  # HF id / local dir
+    exports: tuple[int, ...]  # gemma layer indices, e.g. (4, 9, 14)
+    # (trunk internals belong HERE — this is
+    # the one config allowed to know them)
     max_soft_tokens: int
+
 
 @dataclass(frozen=True, slots=True)
 class SigLip2EncoderConfig:
-    checkpoint: str                # e.g. google/siglip2-so400m-patch14-384
-    exports: tuple[SigLip2Stage, ...]   # enum: TOP, MID, POOLED_TEXT, ...
-    soft_token_budget: int         # NaFlex budget / pooling knob
+    checkpoint: str  # e.g. google/siglip2-so400m-patch14-384
+    exports: tuple[SigLip2Stage, ...]  # enum: TOP, MID, POOLED_TEXT, ...
+    soft_token_budget: int  # NaFlex budget / pooling knob
     text_max_tokens: int
+
 
 @dataclass(frozen=True, slots=True)
 class FlowDecoderConfig:
@@ -265,7 +297,7 @@ class FlowDecoderConfig:
     self_attention_mode: SelfAttentionMode
     self_attention_rope_theta: float
     cross_attention_heads: int
-    schedule: tuple[str, ...]      # stream NAMES; len = decoder depth
+    schedule: tuple[str, ...]  # stream NAMES; len = decoder depth
     action_dim: int
     state_dim: int
     chunk_size: int
@@ -274,6 +306,7 @@ class FlowDecoderConfig:
     # GONE vs today's ExpertConfig: cross_attention_head_dim,
     # cross_attention_rope — both now per-stream StreamGeometry.
 
+
 @dataclass(frozen=True, slots=True)
 class ARFastDecoderConfig:
     hidden_size: int
@@ -281,10 +314,10 @@ class ARFastDecoderConfig:
     intermediate_size: int
     rms_norm_eps: float
     cross_attention_heads: int
-    schedule: tuple[str, ...]      # its own schedule over the same names
-    tokenizer: str                 # artifact ref, e.g. ".../fast_tokenizer_v1"
-    vocab_size: int                # BPE vocab + BOA/EOA/pad specials
-    max_tokens: int                # decode budget (measured p99 + slack)
+    schedule: tuple[str, ...]  # its own schedule over the same names
+    tokenizer: str  # artifact ref, e.g. ".../fast_tokenizer_v1"
+    vocab_size: int  # BPE vocab + BOA/EOA/pad specials
+    max_tokens: int  # decode budget (measured p99 + slack)
     state_dim: int
     chunk_size: int
     action_dim: int
@@ -344,7 +377,7 @@ generalizes to: synthesize both sides, then diff).
 
 ```python
 # loading.from_checkpoint / from_configs:
-encoder = build_encoder(encoder_config, device=..., dtype=...)   # match on kind
+encoder = build_encoder(encoder_config, device=..., dtype=...)  # match on kind
 geometries = encoder.stream_geometries()
 validate_schedule(decoder_config.schedule, geometries)
 #   - every schedule name exists in geometries (unknown name = loud error)

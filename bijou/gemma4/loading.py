@@ -24,8 +24,8 @@ import torch
 from huggingface_hub import snapshot_download
 from safetensors import safe_open
 
+from ..nn import DEFAULT_ATTENTION_BACKEND, AttentionBackend
 from .config import Gemma4Config, LayerType
-from .layers import DEFAULT_ATTENTION_BACKEND, AttentionBackend
 from .model import Gemma4Model
 
 _AUDIO_PREFIXES = ("model.audio_tower.", "model.embed_audio.")
@@ -172,7 +172,7 @@ def load_model(
     model.requires_grad_(False)
     # Parameters are already on the target device; this sweeps over the small
     # computed buffers (rope inv_freq, embed scales), which meta construction
-    # materializes on CPU (see bijou.gemma4.layers.buffer_device).
+    # materializes on CPU (see bijou.nn.buffer_device).
     return model.to(device)
 
 
