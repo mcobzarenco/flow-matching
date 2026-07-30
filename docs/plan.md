@@ -147,11 +147,9 @@ shown because 640×480-native is the point of choosing it.)
 
 ```python
 class ObservationEncoder(nn.Module, Generic[I]):
-    """ABC. A trunk: collation + encode + unfreeze surface."""
+    """ABC. A trunk: inputs-collation strategy + encode + unfreeze surface."""
     def stream_geometries(self) -> tuple[StreamGeometry, ...]: ...
-    def build_collator(
-        self, instruction: str | None, ...
-    ) -> Collator[I]: ...                        # pickleable into workers
+    def inputs_collator(self) -> InputsCollator[I]: ...
     def encode(self, inputs: I, *, with_grad: bool) -> EncodedPrefix: ...
     def param_groups(self) -> dict[str, list[Parameter]]: ...
     # e.g. {"text": [...], "vision": [...]} — the --text-lr/--vision-lr
@@ -160,6 +158,7 @@ class ObservationEncoder(nn.Module, Generic[I]):
 
 class ActionDecoder(nn.Module):
     """ABC. Owns its objective and its chunk-space inference."""
+    def action_tokenizer(self) -> FastTokenizer | None: ...   # AR: its artifact
     def loss(self, prefix: EncodedPrefix, batch: CollatedBatch[Any]) -> Tensor: ...
     def predict_chunk(
         self, prefix: EncodedPrefix, batch: CollatedBatch[Any],
@@ -171,6 +170,39 @@ class ActionDecoder(nn.Module):
     # temperature) are constructor parameters of the decoder/policy, not
     # ABC surface.
 ```
+
+### Collation: one shared core, per-encoder strategies
+
+There is exactly ONE `Collator` class — the trunk-agnostic core: stacks
+state/actions/action_is_pad, attaches per-sample NormStats, tokenizes AR
+targets in the workers when a tokenizer is present, owns camera-selection
+policy (sorted keys, --camera filter, max_cameras), the instruction
+override, and the worker rules (pickleable, lazy processor construction,
+CPU-side has_padding decisions). Duplicating any of this per encoder is a
+drift hazard (cf. the repeat-last-actions decision — one implementation
+site, not N). Only the `encoder_inputs` production varies:
+
+```python
+class InputsCollator(Protocol[I]):
+    """Encoder-specific: per-sample prompt + ordered camera frames -> I.
+    Same pickling rules as today's PrefixCollator (lazy HF processor,
+    __getstate__ drops the built one)."""
+    def __call__(self, prompts: list[str], images: list[list[Tensor]]) -> I: ...
+
+@dataclass
+class Collator(Generic[I]):          # lives in interface.py (encoders sit
+    inputs: InputsCollator[I]        # below data.py in the DAG, so the
+    action_tokenizer: FastTokenizer | None   # shared core cannot)
+    instruction: str | None
+    camera_filter: tuple[str, ...] | None
+    max_cameras: int | None
+    def __call__(self, items: list[dict[str, Any]]) -> CollatedBatch[I]: ...
+```
+
+The composition root assembles it from both sides:
+`Collator(inputs=encoder.inputs_collator(), action_tokenizer=
+decoder.action_tokenizer(), ...)` — the encoder never learns about
+tokenizers, the decoder never learns about pixels.
 
 ## 2. Configs (tagged unions, parse at the edge)
 
@@ -325,17 +357,20 @@ frozen/live-trunk autocast policy (`BijouTrainStep` generalizes: encode
 - **`bijou/encoders/gemma4.py` (new, thin)**: wraps the owned gemma4
   backbone; `encode` = today's `BijouModel.encode_prefix` (KVCache,
   kv_stop_layer, stream extraction — now returning ordered tuple);
-  `build_collator` = today's `PrefixCollator`; `param_groups` = the
-  text/vision partition from the unfreeze work; `stream_geometries` =
-  (kv_heads=1, head_dim=512, rope=backbone global rope) × exports.
+  `inputs_collator` = the prompt/pixel half of today's `PrefixCollator`
+  (chat template + processor → GemmaInputs; the trunk-agnostic half
+  moves into the shared `Collator`); `param_groups` = the text/vision
+  partition from the unfreeze work; `stream_geometries` = (kv_heads=1,
+  head_dim=512, rope=backbone global rope) × exports.
 - **`bijou/encoders/siglip2.py` (new)**: HF-backed towers initially;
   learned adapter (LN + k/v projections + 2D patch positions + camera-slot
   embeddings, 1D text positions) producing MemoryStreams with
   `rope=None`. Text features cacheable across a rollout (instruction
   fixed) — a rig-latency win to exploit later.
 - **`bijou/data.py`**: keeps dataset selection/stats/holdout (trunk-
-  agnostic); `CollatedBatch` core moves to `interface.py`; `PrefixCollator`
-  moves under `encoders/gemma4.py`.
+  agnostic); `CollatedBatch`, `NormStats` and the shared `Collator` move
+  to `interface.py`; `PrefixCollator`'s encoder-specific half becomes
+  `encoders/gemma4.py`'s `GemmaInputsCollator`.
 - **`bijou/train.py`**: objective-agnostic loop; CLI grows
   `--encoder {gemma4,siglip2}` / `--decoder {flow,ar_fast}` (defaults =
   today's pair) with per-kind arg groups; `train_args` recorded verbatim
