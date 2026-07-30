@@ -80,11 +80,18 @@ class NormStats:
     """One modality's normalization stats, per sample: each tensor
     [B, dim] (dim = action_dim or state_dim). Every sample carries its
     OWN dataset's stats — per-dataset normalization; nothing here is
-    aggregated across the batch."""
+    aggregated across the batch.
+
+    q01/q99 are None only when the stats were resolved from a checkpoint
+    whose per_dataset_normalization predates quantiles (old-checkpoint
+    rollout); batches built from datasets always carry them (selection
+    requires backfilled stats). Consumers that need quantiles (AR/FAST)
+    check for None and fail fast with the remedy; flow paths never read
+    them."""
     mean: Tensor
     std: Tensor
-    q01: Tensor
-    q99: Tensor
+    q01: Tensor | None
+    q99: Tensor | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -429,20 +436,23 @@ Import DAG after: `train/eval/rollout -> loading -> data -> model ->
 - `CollatedBatch` generics vs pyright: verify `Generic` + frozen slots
   dataclass inference stays clean at call sites (fallback: per-encoder
   concrete batch dataclasses sharing the core by composition, no Generic).
-- Quantile stats: **mandatory in the batch** (`NormStats.q01/q99`).
-  DatasetStats gains q01/q99 for action+state — and can mirror the
-  per-modality grouping (`action: ChannelStats, state: ChannelStats` of
-  float tuples), which its to/from_dict already uses on the wire;
-  `from_lerobot_stats` (the data path) REQUIRES them — a dataset without backfilled quantiles fails at
+- Quantile stats: **required on the data path, Optional at the
+  old-checkpoint boundary** (`NormStats.q01/q99: Tensor | None`).
+  DatasetStats gains `q01/q99` for action+state as `tuple[float, ...] |
+  None` — and can mirror the per-modality grouping (`action:
+  ChannelStats, state: ChannelStats` of float tuples), which its
+  to/from_dict already uses on the wire. `from_lerobot_stats` (the data
+  path) REQUIRES them: a dataset without backfilled quantiles fails at
   selection with the `ldtools.backfill_quantile_stats` command as the
-  remedy (corpus + local dev copies verified backfilled 2026-07-30).
-  The one place None survives is `from_state_dict` on OLD checkpoints
-  (their `per_dataset_normalization` tables predate quantiles): there
-  `item_tensors` emits NaN poison, never read by flow paths, and the AR
-  decoder validates `isfinite` at its single consumption site with an
-  error naming the checkpoint and remedy. Old-checkpoint flow rollout
-  therefore keeps working untouched; AR from an old stats table is
-  impossible anyway (old checkpoints are flow models). Side benefit:
+  remedy (corpus + local dev copies verified backfilled).
+  `from_state_dict` on OLD checkpoints (whose `per_dataset_normalization`
+  predates quantiles) yields None; consumers that need quantiles check
+  for None and FAIL FAST with an error naming the checkpoint and remedy
+  — no sentinel values. Old-checkpoint flow rollout keeps working
+  untouched (flow never reads quantiles); AR from an old stats table is
+  impossible anyway (old checkpoints are flow models). A one-off
+  converter (backfill quantiles into old checkpoints' stats tables from
+  the hub datasets) can later retire the Optional entirely. Side benefit:
   in-batch quantiles make a `--normalization quantile` flow arm
   (π0-style [-1,1] scaling) a config-only future experiment.
 - Two-sided learning risk for SigLIP2 streams (adapter k/v from scratch)
