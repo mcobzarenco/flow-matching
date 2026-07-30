@@ -167,7 +167,7 @@ class Gemma4Model(nn.Module):
         then overwritten by vision soft tokens) and returns the raw
         token-identity PLE component. This is the full multimodal front-end
         of the model without running the decoder — used by e.g. the Bijou
-        prefix encoder.
+        observation encoder.
 
         Shapes (``images`` = Σ per-sample camera images):
           - input_ids: [B, S]

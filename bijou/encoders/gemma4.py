@@ -31,10 +31,10 @@ from ..gemma4.config import LayerType
 from ..gemma4.model import Gemma4Model
 from ..gemma4.text import DecoderLayer
 from ..interface import (
-    EncodedPrefix,
     InputsCollator,
     MemoryStream,
     ObservationEncoder,
+    ObservationMemory,
     PromptInputs,
     StreamGeometry,
     kv_stream_name,
@@ -44,7 +44,7 @@ from ..interface import (
 @dataclass(frozen=True, slots=True)
 class GemmaInputs:
     """The trunk-specific half of a collated batch: one chat-templated
-    prompt per sample, ready for ``BijouModel.encode_prefix``.
+    prompt per sample, ready for ``BijouModel.encode_observation``.
 
     The prompt layout (which tokens are images, where padding sits, P
     itself) is decided at collate time and carried by ``input_ids``;
@@ -199,7 +199,7 @@ class GemmaEncoder(ObservationEncoder[GemmaInputs]):
         pixel_values: Tensor | None = None,
         image_position_ids: Tensor | None = None,
         padding_mask: Tensor | None = None,
-    ) -> EncodedPrefix:
+    ) -> ObservationMemory:
         """Run the truncated backbone over the multimodal prefix and export
         the memory streams (grad-transparent — callers choose no_grad).
         Cache the result across flow steps (and, if the observation is
@@ -216,7 +216,7 @@ class GemmaEncoder(ObservationEncoder[GemmaInputs]):
           - pixel_values: [images, patches, 3·patch_size²]
           - image_position_ids: [images, patches, 2]  ((x, y) spatial ids)
           - padding_mask (when present): [B, P]  (True = real token)
-          - returns EncodedPrefix: streams["kv{layer}"].key/value each
+          - returns ObservationMemory: streams["kv{layer}"].key/value each
             [B, kv_heads, P, head_dim]; padding_mask [B, P] or None
         """
         inputs_embeds, per_layer_inputs = self.backbone.embed_multimodal(
@@ -243,14 +243,14 @@ class GemmaEncoder(ObservationEncoder[GemmaInputs]):
                 key=layer.keys,
                 value=layer.values,
             )
-        return EncodedPrefix(
+        return ObservationMemory(
             streams=streams,
             length=input_ids.shape[1],
             padding_mask=padding_mask,
         )
 
     @override
-    def encode(self, inputs: GemmaInputs, *, with_grad: bool) -> EncodedPrefix:
+    def encode(self, inputs: GemmaInputs, *, with_grad: bool) -> ObservationMemory:
         """Encode one collated batch (shapes on GemmaInputs); ``with_grad``
         selects the live-trunk training path (grad-transparent, not
         force-enabled) vs the no-grad eval path."""

@@ -38,7 +38,7 @@ from lerobot.datasets.lerobot_dataset import LeRobotDataset
 from torch import Tensor
 
 from .encoders.gemma4 import GemmaInputs
-from .interface import CollatedBatch, EncodedPrefix
+from .interface import CollatedBatch, ObservationMemory
 from .model import BijouModel
 
 
@@ -571,10 +571,10 @@ def worker_init(_worker_id: int) -> None:
     torch.set_num_threads(1)
 
 
-def encode_prefix(
+def encode_observation(
     model: BijouModel,
     batch: CollatedBatch[GemmaInputs],
-) -> EncodedPrefix:
+) -> ObservationMemory:
     """``batch`` must already be device-resident. No-grad prefix encode
     (training with a live trunk uses BijouTrainStep instead, which encodes
     under grad)."""

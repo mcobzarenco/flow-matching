@@ -27,7 +27,7 @@ least:
 
 ## 0. Settled decisions
 
-- `EncodedPrefix.streams` is a **name-keyed mapping** (`dict[str,
+- `ObservationMemory.streams` is a **name-keyed mapping** (`dict[str,
   MemoryStream]`, insertion-ordered as the encoder's exports); the
   decoder's **schedule references stream names** (`("kv4", "kv4", ...,
   "kv14")`). A positional variant (tuple + integer indices) was
@@ -80,7 +80,7 @@ class MemoryStream:
 
 
 @dataclass(frozen=True, slots=True)
-class EncodedPrefix:
+class ObservationMemory:
     """The value crossing the encoder->decoder seam. Keys are the
     encoder's stream names, insertion-ordered as its `exports`."""
 
@@ -152,7 +152,7 @@ class SigLip2Inputs:
     """Two towers, two preprocessors — and NO unified token sequence:
     there is no P at collate time. The encoder assembles the memory
     ([text tokens][cam_1 soft tokens][cam_2 ...]) at ENCODE time and
-    derives P and the EncodedPrefix padding mask itself. Gemma encodes
+    derives P and the ObservationMemory padding mask itself. Gemma encodes
     the image->sample layout inside input_ids (placeholder tokens);
     SigLIP2 has no such carrier, so the mapping travels explicitly."""
 
@@ -178,9 +178,9 @@ class ObservationEncoder(nn.Module, Generic[I]):
     """ABC. A trunk: inputs-collation strategy + encode + unfreeze surface."""
 
     def stream_geometries(self) -> dict[str, StreamGeometry]: ...  # keys =
-    #   stream names, same order/keys as every EncodedPrefix it produces
+    #   stream names, same order/keys as every ObservationMemory it produces
     def inputs_collator(self) -> InputsCollator[I]: ...
-    def encode(self, inputs: I, *, with_grad: bool) -> EncodedPrefix: ...
+    def encode(self, inputs: I, *, with_grad: bool) -> ObservationMemory: ...
     def param_groups(self) -> dict[str, list[Parameter]]: ...
 
     # e.g. {"text": [...], "vision": [...]} — the --text-lr/--vision-lr
@@ -191,10 +191,10 @@ class ActionDecoder(nn.Module):
     """ABC. Owns its objective and its chunk-space inference."""
 
     def action_tokenizer(self) -> FastTokenizer | None: ...  # AR: its artifact
-    def loss(self, prefix: EncodedPrefix, batch: CollatedBatch[Any]) -> Tensor: ...
+    def loss(self, memory: ObservationMemory, batch: CollatedBatch[Any]) -> Tensor: ...
     def predict_chunk(
         self,
-        prefix: EncodedPrefix,
+        memory: ObservationMemory,
         batch: CollatedBatch[Any],
         *,
         generator: torch.Generator | None = None,
@@ -412,7 +412,7 @@ frozen/live-trunk autocast policy (`BijouTrainStep` generalizes: encode
   `FlowDecoder`, **attribute names frozen** (`layers`, `norm`,
   `action_out_proj`, `state_proj`, `time_in_proj`, `time_out_proj`,
   `cross_inv_freq`, `self_inv_freq`, per-layer names) so safetensors keys
-  are byte-identical. Deltas: consumes `EncodedPrefix` (per-layer lookup
+  are byte-identical. Deltas: consumes `ObservationMemory` (per-layer lookup
   by schedule stream name, "kv4"/"kv9"/"kv14" under legacy configs);
   per-stream `StreamGeometry` sizes each layer's q-projection (legacy:
   all streams 512/1 — identical shapes); RoPE applied per stream geometry (None => skip); gains
@@ -459,7 +459,7 @@ Import DAG after: `train/eval/rollout -> loading -> data -> model ->
 ## 6. Sequencing (each step gated on the CPU loss oracle 1.8896/1.7237 EXACT)
 
 1. `nn.py` lift + `interface.py` extraction; expert consumes
-   EncodedPrefix; schedule becomes positional internally. Key-set test.
+   ObservationMemory; schedule becomes positional internally. Key-set test.
 2. Tagged config schema + legacy synthesizer + fixture tests (cont45k's
    real json committed as a fixture; `--init-from` old-into-new).
 3. Collator split (`CollatedBatch[I]`); call sites in train/eval/rollout.

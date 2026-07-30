@@ -1,6 +1,6 @@
 """Train Bijou (flow-matching action expert) on a LeRobot v3 dataset.
 
-The frozen truncated backbone encodes the multimodal prefix per batch
+The frozen truncated backbone encodes the observation per batch
 (no grad); the expert is optimized with the π0/SmolVLA flow-matching recipe:
 τ ~ Beta(1.5, 1) (scaled into (0, 1)), x_τ = τ·ε + (1−τ)·actions, MSE against
 the velocity target ε − actions, over the full chunk — episode-boundary
@@ -68,7 +68,7 @@ from torch import Tensor
 from .data import (
     DatasetStats,
     EpisodeSplit,
-    encode_prefix,
+    encode_observation,
     select_datasets,
     worker_init,
 )
@@ -339,13 +339,13 @@ class BijouTrainStep(torch.nn.Module):
         inputs = batch.encoder_inputs
         device_type = inputs.input_ids.device.type
         with torch.autocast(device_type, torch.bfloat16, enabled=device_type == "cuda"):
-            prefix = self.model.encode_prefix(
+            memory = self.model.encode_observation(
                 inputs.input_ids,
                 pixel_values=inputs.pixel_values,
                 image_position_ids=inputs.image_position_ids,
                 padding_mask=inputs.attention_mask if inputs.has_padding else None,
             )
-        return flow_matching_loss(self.model.expert, prefix, batch)
+        return flow_matching_loss(self.model.expert, memory, batch)
 
 
 def _chunk_plot(
@@ -487,8 +487,8 @@ def validate(
     """Sampled-chunk MAE in raw action units over this rank's shard of the
     probe set; with ``distributed`` the sums all-reduce to the global value
     (collective — every rank must call this at the same step). Batches
-    arrive CPU-resident and visit the device one at a time, and the prefix
-    is re-encoded per eval, so probe size costs host RAM, not GPU memory.
+    arrive CPU-resident and visit the device one at a time, and the
+    observation memory is re-encoded per eval, so probe size costs host RAM, not GPU memory.
     The valid-element-weighted aggregation is exactly bijou.eval's
     chunk_mae. Normalization is per dataset (each sample's own stats,
     matching training). With a wandb run and a probe carrying rich items,
@@ -502,12 +502,12 @@ def validate(
     generator = torch.Generator(device=device).manual_seed(seed)
     for cpu_batch in probe.batches:
         batch = cpu_batch.to(device)
-        prefix = encode_prefix(model, batch)
+        memory = encode_observation(model, batch)
         state = (batch.state - batch.state_stats.mean) / batch.state_stats.std
         # Eval is a measurement: Heun-10 keeps integration error well below
         # model error (0.018 vs 0.05 mean deviation at the Heun-5 deployment
         # default; ~1-2s extra per eval, off the training path).
-        sampled = model.sample_actions(prefix, state, num_steps=10, generator=generator)
+        sampled = model.sample_actions(memory, state, num_steps=10, generator=generator)
         sampled = (
             sampled.float() * batch.action_stats.std[:, None, :]
             + batch.action_stats.mean[:, None, :]
@@ -1524,8 +1524,8 @@ def main() -> int:
             if train_step is not None:
                 loss = train_step(batch)
             else:
-                prefix = encode_prefix(model, batch)
-                loss = flow_matching_loss(velocity_model, prefix, batch)
+                memory = encode_observation(model, batch)
+                loss = flow_matching_loss(velocity_model, memory, batch)
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
             grad_norm = torch.nn.utils.clip_grad_norm_(

@@ -20,7 +20,7 @@ contracts live in docstrings; the import DAG and coding rules in
 [instruction][cam_1]..[cam_k][instruction]     chat-templated user turn
       │  frozen truncated E2B: layers 0..14 (bf16), no grad
       ▼
-  K/V of GLOBAL prefix layers {4, 9, 14}         PrefixKV, encoded once
+  K/V of GLOBAL prefix layers {4, 9, 14}   ObservationMemory, encoded once
       │  cross-attention (query-only, backbone geometry)
       ▼
 ActionExpert (404M fp32): 16 layers, each =
@@ -43,8 +43,9 @@ Batch & sequence:
   (backbone prompt tokens; the expert's `suffix`)
 - `T` — total key/value length in self-attention: `seen + S` with a KV
   cache, `= S` at prefill / no cache
-- `P` — prefix length: the exported prompt tokens the expert
-  cross-attends (the `PrefixKV` width)
+- `P` — memory width: the encoded-observation tokens the decoder
+  cross-attends (the `ObservationMemory` width; for the Gemma trunk this
+  is the prompt length)
 - `suffix` — expert token count `= 1 + chunk` (the `[state][a_1..a_chunk]`
   sequence; the expert's `S`)
 - `chunk` — action-chunk length in timesteps (`chunk_size`, default 50)
@@ -90,7 +91,7 @@ uses a hybrid 5-period schedule (every 5th layer is FULL/global, the rest
 sliding-window-512). Only the global layers are exported because they
 have uniform 512 `head_dim`, p-RoPE trained for arbitrary range, and are
 never window-truncated — the expert can adopt their geometry exactly.
-`encode_prefix` runs the decoder with `kv_stop_layer = max(streams) = 14`:
+The observation encode runs the decoder with `kv_stop_layer = max(streams) = 14`:
 it caches that layer's K/V and skips its attention/MLP and all deeper
 layers (dead compute for a K/V export; ~1/15 of decoder FLOPs saved, more
 if the schedule stops lower). `KVCache.update()` is functional (no
@@ -138,7 +139,7 @@ Each `ExpertLayer` is a Gemma-style sandwich of three sublayers, each
 - **MLP** — gated GLU, `gelu_pytorch_tanh`.
 
 Padding-position note: cross-attention query positions use each sample's
-real prefix length (`padding_mask.sum(1)`), not the padded batch width —
+real memory width (`padding_mask.sum(1)`), not the padded batch width —
 otherwise a sample's prediction depends on batch-mates' prompt lengths
 (measured max|Δ| 0.55 before the fix; batch-1 rollout unaffected).
 
@@ -267,7 +268,7 @@ reproduce **1.8896 / 1.7237** exactly after any change near the math
 (tied to the current tiny-gemma4). gemma4 changes additionally gate on
 `verify_parity`. Any new architecture path records its own oracle loudly.
 
-**Step split** (H100, batch 64, measured): encode_prefix 79.3% / expert
+**Step split** (H100, batch 64, measured): observation encode 79.3% / expert
 fwd 4.6% / bwd 15.4% / opt 0.7%. The frozen backbone forward dominates —
 expert width is nearly free wall-clock; the perf wins are prefix-side
 (§9.8).

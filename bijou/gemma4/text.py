@@ -233,7 +233,7 @@ class TextAttention(nn.Module):
     ) -> tuple[Tensor, Tensor]:
         """K/V states of this layer for ``hidden_states`` (already through the
         decoder layer's input layernorm), cached if a cache is given. The
-        K/V half of :meth:`forward`, exposed so a prefix encode can stop at
+        K/V half of :meth:`forward`, exposed so an observation encode can stop at
         its deepest exported layer without paying for that layer's attention
         and MLP (the K/V depend only on the layer's input).
 

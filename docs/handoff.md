@@ -460,7 +460,7 @@ dead; next perf wins are length-bucketed batching (batch pads 452 vs
   predict_chunk bitwise-equal to the old eval path; old checkpoints
   load unchanged, gated by tests/fixtures/expert_keys_*.json).
   Layout: `bijou/nn.py` (primitives; gemma4/layers.py deleted),
-  `bijou/interface.py` (MemoryStream/EncodedPrefix/StreamGeometry,
+  `bijou/interface.py` (MemoryStream/ObservationMemory/StreamGeometry,
   NormStats w/ q01/q99, PromptInputs/CameraFrame, InputsCollator,
   the ONE Collator, CollatedBatch[I], ObservationEncoder/ActionDecoder
   ABCs), `bijou/encoders/gemma4.py` (GemmaInputs + GemmaInputsCollator

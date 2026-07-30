@@ -2,7 +2,7 @@
 
 The expert consumes ``[state][action_1..action_chunk]`` tokens and, per layer,
 cross-attends one *global-attention* K/V stream exported from the frozen
-Gemma 4 prefix (layers 4/9/14 for E2B), then self-attends the suffix, then
+Gemma 4 trunk (layers 4/9/14 for E2B), then self-attends the suffix, then
 runs a gated MLP. It predicts the flow-matching velocity of the action chunk
 at flow time τ.
 
@@ -11,7 +11,7 @@ Design notes (see the design discussion in the repo history):
 - Cross-attention queries adopt the backbone's global-attention geometry so
   the exported K/V are consumed exactly as the backbone's own deep layers
   consume them: head_dim = ``global_head_dim`` (512), q-RMSNorm, p-RoPE at
-  positions continuing after each sample's REAL (unpadded) prefix,
+  positions continuing after each sample's REAL (unpadded) memory width,
   attention scaling 1.0.
 - The per-layer stream assignment is the ``cross_attention_schedule`` tuple
   (its length is the expert depth), e.g. blocks ``(4,4,4,4, 9,9,9,9,
@@ -46,8 +46,8 @@ from torch import Tensor, nn
 from ..interface import (
     ActionDecoder,
     CollatedBatch,
-    EncodedPrefix,
     MemoryStream,
+    ObservationMemory,
     kv_stream_name,
 )
 from ..nn import (
@@ -224,7 +224,7 @@ class ExpertCrossAttention(nn.Module):
         position_embeddings: tuple[Tensor, Tensor],
         mask: MaskSpec,
     ) -> Tensor:
-        """Cross-attend one exported prefix stream; returns [B, suffix, hidden].
+        """Cross-attend one exported memory stream; returns [B, suffix, hidden].
 
         Shapes:
           - hidden_states: [B, suffix, hidden]  (queries: the expert suffix)
@@ -233,7 +233,7 @@ class ExpertCrossAttention(nn.Module):
             (padded batches: per-sample positions; [1, suffix, head_dim]
             broadcast otherwise)
           - mask.tensor (when present): [B, 1, 1, P]  (padding-only — every
-            query sees the same real prefix columns, broadcast over queries)
+            query sees the same real memory columns, broadcast over queries)
         """
         batch, seq_len, _ = hidden_states.shape
         cos, sin = position_embeddings
@@ -556,7 +556,8 @@ class ExpertLayer(nn.Module):
 
 class FlowDecoder(ActionDecoder):
     """Flow-matching action decoder: a velocity network over an action
-    chunk, conditioned on prefix KV streams, robot state and flow time.
+    chunk, conditioned on observation-memory streams, robot state and flow
+    time.
 
     Attribute names are frozen — they are the safetensors keys of every
     existing checkpoint (gated by tests/test_state_dict_keys.py)."""
@@ -716,13 +717,13 @@ class FlowDecoder(ActionDecoder):
 
     def _cross_attention_mask(
         self,
-        prefix: EncodedPrefix,
+        memory: ObservationMemory,
         dtype: torch.dtype,
         device: torch.device,
     ) -> MaskSpec:
-        if prefix.padding_mask is None:
+        if memory.padding_mask is None:
             return MaskSpec()
-        real = prefix.padding_mask.to(device=device, dtype=torch.bool)
+        real = memory.padding_mask.to(device=device, dtype=torch.bool)
         min_value = torch.finfo(dtype).min
         tensor = torch.where(
             real[:, None, None, :],
@@ -734,7 +735,7 @@ class FlowDecoder(ActionDecoder):
     @override
     def forward(
         self,
-        prefix: EncodedPrefix,
+        memory: ObservationMemory,
         state: Tensor,
         noisy_actions: Tensor,
         time: Tensor,
@@ -742,12 +743,12 @@ class FlowDecoder(ActionDecoder):
         """Velocity of the action chunk at flow time τ; returns
         [B, chunk, action_dim].
 
-        Inputs and prefix streams are cast to the expert's own dtype (the
+        Inputs and memory streams are cast to the expert's own dtype (the
         backbone may run in a different precision, e.g. bf16 vs fp32 expert).
 
         Shapes:
-          - prefix.streams[name].key/value: [B, kv_heads, P, head_dim]
-          - prefix.padding_mask (when present): [B, P]  (True = real token)
+          - memory.streams[name].key/value: [B, kv_heads, P, head_dim]
+          - memory.padding_mask (when present): [B, P]  (True = real token)
           - state: [B, state_dim]
           - noisy_actions: [B, chunk, action_dim]
           - time: [B]  (flow times in [0, 1])
@@ -778,7 +779,7 @@ class FlowDecoder(ActionDecoder):
         device = hidden_states.device
         streams = {
             name: MemoryStream(key=s.key.to(dtype), value=s.value.to(dtype))
-            for name, s in prefix.streams.items()
+            for name, s in memory.streams.items()
         }
         suffix_positions = torch.arange(config.suffix_length, device=device)
         # Cross-attention queries continue after each sample's REAL prefix.
@@ -786,13 +787,13 @@ class FlowDecoder(ActionDecoder):
         # RoPE distance by that sample's padding, making predictions depend
         # on batch-mates' prompt lengths (measured: max|delta| 0.55 on the
         # expert alone, outputs/probe_effect1_fix.py).
-        if prefix.padding_mask is not None:
-            real_lengths = prefix.padding_mask.to(device=device, dtype=torch.long).sum(
+        if memory.padding_mask is not None:
+            real_lengths = memory.padding_mask.to(device=device, dtype=torch.long).sum(
                 dim=1,
             )
             cross_positions = real_lengths[:, None] + suffix_positions[None, :]
         else:
-            cross_positions = (prefix.length + suffix_positions)[None, :]
+            cross_positions = (memory.length + suffix_positions)[None, :]
         cross_position_embeddings = rope_cos_sin(
             self.cross_inv_freq,
             cross_positions,
@@ -804,7 +805,7 @@ class FlowDecoder(ActionDecoder):
             dtype,
         )
         self_attention_mask = self._self_attention_mask(batch, dtype, device)
-        cross_attention_mask = self._cross_attention_mask(prefix, dtype, device)
+        cross_attention_mask = self._cross_attention_mask(memory, dtype, device)
 
         for layer, stream_name in zip(
             self.layers,
@@ -833,7 +834,7 @@ class FlowDecoder(ActionDecoder):
     @torch.no_grad()
     def sample_actions(
         self,
-        prefix: EncodedPrefix,
+        memory: ObservationMemory,
         state: Tensor,
         *,
         num_steps: int = 5,
@@ -860,7 +861,7 @@ class FlowDecoder(ActionDecoder):
         (the raw-unit wrapper is :meth:`predict_chunk`).
 
         Shapes:
-          - prefix.streams[name].key/value: [B, kv_heads, P, head_dim]
+          - memory.streams[name].key/value: [B, kv_heads, P, head_dim]
           - state: [B, state_dim]
           - noise (when given): [B, chunk, action_dim]
           - returns: [B, chunk, action_dim]
@@ -886,27 +887,27 @@ class FlowDecoder(ActionDecoder):
             t_next = 1.0 - (k + 1) / num_steps
             dt = t_next - t
             time = torch.full((batch,), t, dtype=dtype, device=device)
-            velocity = self(prefix, state, actions, time)
+            velocity = self(memory, state, actions, time)
             if method is SamplingMethod.HEUN:
                 predicted = actions + dt * velocity.to(actions.dtype)
                 time_next = torch.full((batch,), t_next, dtype=dtype, device=device)
-                velocity_next = self(prefix, state, predicted, time_next)
+                velocity_next = self(memory, state, predicted, time_next)
                 velocity = 0.5 * (velocity + velocity_next)
             actions = actions + dt * velocity.to(actions.dtype)
         return actions
 
     @override
-    def loss(self, prefix: EncodedPrefix, batch: CollatedBatch[Any]) -> Tensor:
+    def loss(self, memory: ObservationMemory, batch: CollatedBatch[Any]) -> Tensor:
         """Scalar flow-matching loss (see :func:`flow_matching_loss`). DDP
         training calls the module-level function with the wrapper instead —
         gradient hooks require the forward to go through DDP's __call__."""
-        return flow_matching_loss(self, prefix, batch)
+        return flow_matching_loss(self, memory, batch)
 
     @override
     @torch.no_grad()
     def predict_chunk(
         self,
-        prefix: EncodedPrefix,
+        memory: ObservationMemory,
         batch: CollatedBatch[Any],
         *,
         generator: torch.Generator | None = None,
@@ -920,7 +921,7 @@ class FlowDecoder(ActionDecoder):
         flow-specific knobs beyond the ActionDecoder minimum."""
         state = (batch.state - batch.state_stats.mean) / batch.state_stats.std
         sampled = self.sample_actions(
-            prefix,
+            memory,
             state,
             num_steps=num_steps,
             method=method,
@@ -935,7 +936,7 @@ class FlowDecoder(ActionDecoder):
 
 def flow_matching_loss(
     velocity_model: torch.nn.Module,
-    prefix: EncodedPrefix,
+    memory: ObservationMemory,
     batch: CollatedBatch[Any],
 ) -> Tensor:
     """``batch`` must already be device-resident; no transfers happen here.
@@ -952,11 +953,11 @@ def flow_matching_loss(
 
     ``velocity_model`` is the decoder (or its DDP wrapper under torchrun —
     training forwards must go through the wrapper for gradient hooks);
-    call convention (prefix, state, noisy_actions, tau) is shared by
+    call convention (memory, state, noisy_actions, tau) is shared by
     FlowDecoder, BijouModel and DDP(FlowDecoder).
 
     Shapes (batch fields in CollatedBatch's docstring):
-      - prefix.streams[name]: key/value each [B, kv_heads, P, head_dim]
+      - memory.streams[name]: key/value each [B, kv_heads, P, head_dim]
       - velocity/target: [B, chunk, action_dim]; tau: [B]
       - returns: scalar loss
     """
@@ -977,5 +978,5 @@ def flow_matching_loss(
     noisy_actions = tau_ * noise + (1 - tau_) * actions
     target = noise - actions
 
-    velocity = velocity_model(prefix, state, noisy_actions, tau)
+    velocity = velocity_model(memory, state, noisy_actions, tau)
     return (velocity.float() - target.float()).pow(2).mean()

@@ -3,8 +3,8 @@
 The composition root: ``BijouModel`` owns one :class:`ObservationEncoder`
 (today the truncated Gemma trunk) and one :class:`ActionDecoder` (today
 the flow-matching expert), delegating encode / velocity / sampling. The
-prefix (chat-templated instruction + camera images) is encoded once per
-observation and cached as an :class:`EncodedPrefix`; the decoder then
+observation (chat-templated instruction + camera images) is encoded once
+and cached as an :class:`ObservationMemory`; the decoder then
 denoises a chunk of actions against it, with fresh robot state, at ~10
 model evaluations per chunk.
 
@@ -23,7 +23,7 @@ from torch import Tensor, nn
 from .decoders.flow import FlowDecoder, SamplingMethod
 from .encoders.gemma4 import GemmaEncoder, GemmaInputs
 from .gemma4.model import Gemma4Model
-from .interface import CollatedBatch, EncodedPrefix
+from .interface import CollatedBatch, ObservationMemory
 
 
 class BijouModel(nn.Module):
@@ -42,15 +42,16 @@ class BijouModel(nn.Module):
     def expert(self) -> FlowDecoder:
         return self.decoder
 
-    def encode_prefix(
+    def encode_observation(
         self,
         input_ids: Tensor,
         *,
         pixel_values: Tensor | None = None,
         image_position_ids: Tensor | None = None,
         padding_mask: Tensor | None = None,
-    ) -> EncodedPrefix:
-        """Tensor-level prefix encode (shapes in GemmaEncoder.encode_tensors);
+    ) -> ObservationMemory:
+        """Tensor-level observation encode (shapes in
+        GemmaEncoder.encode_tensors);
         grad-transparent — training wraps it in autocast, eval in no_grad."""
         return self.encoder.encode_tensors(
             input_ids,
@@ -70,11 +71,11 @@ class BijouModel(nn.Module):
         method: SamplingMethod = SamplingMethod.HEUN,
     ) -> Tensor:
         """Collated batch → RAW-unit action chunk [B, chunk, action_dim]:
-        encode the prefix (no grad) and run the decoder's chunk-space
+        encode the observation (no grad) and run the decoder's chunk-space
         inference with the batch's per-sample stats."""
-        prefix = self.encoder.encode(batch.encoder_inputs, with_grad=False)
+        memory = self.encoder.encode(batch.encoder_inputs, with_grad=False)
         return self.decoder.predict_chunk(
-            prefix,
+            memory,
             batch,
             generator=generator,
             noise=noise,
@@ -85,7 +86,7 @@ class BijouModel(nn.Module):
     @torch.no_grad()
     def sample_actions(
         self,
-        prefix: EncodedPrefix,
+        memory: ObservationMemory,
         state: Tensor,
         *,
         num_steps: int = 5,
@@ -93,10 +94,11 @@ class BijouModel(nn.Module):
         noise: Tensor | None = None,
         generator: torch.Generator | None = None,
     ) -> Tensor:
-        """Normalized-unit sampling against an already-encoded prefix (see
+        """Normalized-unit sampling against an already-encoded observation
+        (see
         FlowDecoder.sample_actions for the solver contract and shapes)."""
         return self.decoder.sample_actions(
-            prefix,
+            memory,
             state,
             num_steps=num_steps,
             method=method,
@@ -107,7 +109,7 @@ class BijouModel(nn.Module):
     @override
     def forward(
         self,
-        prefix: EncodedPrefix,
+        memory: ObservationMemory,
         state: Tensor,
         noisy_actions: Tensor,
         time: Tensor,
@@ -117,9 +119,9 @@ class BijouModel(nn.Module):
         [B, chunk, action_dim].
 
         Shapes:
-          - prefix.streams[name].key/value: [B, kv_heads, P, head_dim]
+          - memory.streams[name].key/value: [B, kv_heads, P, head_dim]
           - state: [B, state_dim]
           - noisy_actions: [B, chunk, action_dim]
           - time: [B]
         """
-        return self.decoder(prefix, state, noisy_actions, time)
+        return self.decoder(memory, state, noisy_actions, time)

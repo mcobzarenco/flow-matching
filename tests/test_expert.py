@@ -1,6 +1,7 @@
 """Tests for the action expert's time-conditioning modes.
 
-Pure CPU/synthetic: a tiny ActionExpert with a fabricated prefix, no
+Pure CPU/synthetic: a tiny FlowDecoder with a fabricated observation
+memory, no
 backbone or checkpoint. The load-bearing guarantee is adaRMS
 identity-at-init (every layer is the identity, so the body passes the
 residual stream through untouched); the additive path must NOT have that
@@ -19,7 +20,7 @@ from bijou.decoders.flow import (
     SelfAttentionMode,
     TimeConditioning,
 )
-from bijou.interface import EncodedPrefix, MemoryStream
+from bijou.interface import MemoryStream, ObservationMemory
 from bijou.nn import RopeParameters, RopeType
 
 BATCH, PREFIX_LEN, CHUNK, ACTION_DIM, STATE_DIM, HIDDEN = 2, 5, 4, 6, 6, 32
@@ -51,12 +52,12 @@ def tiny_config(time_conditioning: TimeConditioning) -> ExpertConfig:
     )
 
 
-def fabricate() -> tuple[EncodedPrefix, torch.Tensor, torch.Tensor, torch.Tensor]:
+def fabricate() -> tuple[ObservationMemory, torch.Tensor, torch.Tensor, torch.Tensor]:
     generator = torch.Generator().manual_seed(1)
     head_dim = 16
     key = torch.randn(BATCH, 1, PREFIX_LEN, head_dim, generator=generator)
     value = torch.randn(BATCH, 1, PREFIX_LEN, head_dim, generator=generator)
-    prefix = EncodedPrefix(
+    memory = ObservationMemory(
         streams={"kv0": MemoryStream(key=key, value=value)},
         length=PREFIX_LEN,
         padding_mask=None,
@@ -64,7 +65,7 @@ def fabricate() -> tuple[EncodedPrefix, torch.Tensor, torch.Tensor, torch.Tensor
     state = torch.randn(BATCH, STATE_DIM, generator=generator)
     actions = torch.randn(BATCH, CHUNK, ACTION_DIM, generator=generator)
     time = torch.rand(BATCH, generator=generator)
-    return prefix, state, actions, time
+    return memory, state, actions, time
 
 
 def build(time_conditioning: TimeConditioning) -> FlowDecoder:
@@ -77,9 +78,9 @@ def build(time_conditioning: TimeConditioning) -> FlowDecoder:
 
 
 def test_zero_velocity_at_init() -> None:
-    prefix, state, actions, time = fabricate()
+    memory, state, actions, time = fabricate()
     for mode in (TimeConditioning.ADDITIVE, TimeConditioning.ADARMS):
-        out = build(mode)(prefix, state, actions, time)
+        out = build(mode)(memory, state, actions, time)
         assert out.shape == (BATCH, CHUNK, ACTION_DIM)
         # Zero-init action_out_proj => zero field, both modes.
         torch.testing.assert_close(out, torch.zeros_like(out))
@@ -104,8 +105,8 @@ def test_adarms_body_is_identity_at_init() -> None:
     with torch.no_grad():
         expert.action_out_proj.weight.normal_(std=0.5)
         expert.action_out_proj.bias.normal_(std=0.5)
-    prefix, state, actions, time = fabricate()
-    out = expert(prefix, state, actions, time)
+    memory, state, actions, time = fabricate()
+    out = expert(memory, state, actions, time)
 
     state_embeds = expert.state_proj(state)[:, None, :]
     action_embeds = expert.action_in_proj(actions)  # no time add in adaRMS
@@ -124,8 +125,8 @@ def test_additive_body_is_not_identity() -> None:
     with torch.no_grad():
         expert.action_out_proj.weight.normal_(std=0.5)
         expert.action_out_proj.bias.normal_(std=0.5)
-    prefix, state, actions, time = fabricate()
-    out = expert(prefix, state, actions, time)
+    memory, state, actions, time = fabricate()
+    out = expert(memory, state, actions, time)
 
     state_embeds = expert.state_proj(state)[:, None, :]
     action_embeds = expert.action_in_proj(actions)
