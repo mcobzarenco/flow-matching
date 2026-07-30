@@ -17,15 +17,18 @@ least:
 
 ## 0. Settled decisions
 
-- `EncodedPrefix.streams` is an **ordered tuple**, not a dict; stream
-  identity is **positional**. Opaque string ids were considered and
-  rejected (stringly-typed cross-references; their benefits — reorder
-  safety, self-description — are covered by construction-time validation
-  and the encoder config sitting in the same json).
-- The cross-attention **schedule stays decoder-side but becomes
-  positional**: indices into the encoder's declared `exports`. Decoder
-  configs stop naming trunk internals (no more Gemma layer numbers in
-  `ExpertConfig`). The schedule cannot move encoder-side: its length IS
+- `EncodedPrefix.streams` is a **name-keyed mapping** (`dict[str,
+  MemoryStream]`, insertion-ordered as the encoder's exports); the
+  decoder's **schedule references stream names** (`("kv4", "kv4", ...,
+  "kv14")`). A positional variant (tuple + integer indices) was
+  considered and dropped: a checkpoint whose schedule reads
+  `["kv4", ...]` documents itself, while `[0, 0, ...]` requires
+  cross-referencing the encoder's exports. The drift risk of string
+  references is closed at composition time (schedule names must be a
+  subset of exports; every export consumed; unknown name = loud error).
+  Names are defined by each encoder (gemma: `"kv{layer}"`; siglip2:
+  stage names) — decoder configs still never contain trunk internals.
+- The cross-attention **schedule stays decoder-side**: its length IS
   the decoder depth, and future co-training (two decoders, one prefix)
   needs per-decoder schedules over shared exports.
 - AR option C (full-VLM KV-shared deep half, `architecture.md` §8.3) does
@@ -65,9 +68,9 @@ class MemoryStream:
 
 @dataclass(frozen=True, slots=True)
 class EncodedPrefix:
-    """The value crossing the encoder->decoder seam. Ordered exactly as
-    the encoder config's `exports`."""
-    streams: tuple[MemoryStream, ...]
+    """The value crossing the encoder->decoder seam. Keys are the
+    encoder's stream names, insertion-ordered as its `exports`."""
+    streams: dict[str, MemoryStream]
     length: int                    # padded P
     padding_mask: Tensor | None    # [B, P], True = real
 
@@ -148,7 +151,8 @@ shown because 640×480-native is the point of choosing it.)
 ```python
 class ObservationEncoder(nn.Module, Generic[I]):
     """ABC. A trunk: inputs-collation strategy + encode + unfreeze surface."""
-    def stream_geometries(self) -> tuple[StreamGeometry, ...]: ...
+    def stream_geometries(self) -> dict[str, StreamGeometry]: ...  # keys =
+    #   stream names, same order/keys as every EncodedPrefix it produces
     def inputs_collator(self) -> InputsCollator[I]: ...
     def encode(self, inputs: I, *, with_grad: bool) -> EncodedPrefix: ...
     def param_groups(self) -> dict[str, list[Parameter]]: ...
@@ -183,11 +187,30 @@ drift hazard (cf. the repeat-last-actions decision — one implementation
 site, not N). Only the `encoder_inputs` production varies:
 
 ```python
+@dataclass(frozen=True, slots=True)
+class CameraFrame:
+    """One camera's frame with its slot name (post-filter, sorted — e.g.
+    "front", "wrist"; community datasets carry generic image/image2 names
+    with no reliable semantics, rig datasets carry real ones). Encoders
+    MAY render the name into the prompt ("front: <image> wrist: <image>")
+    or ignore it (today's positional behavior)."""
+    name: str
+    image: Tensor                  # [3, height, width], float, [0, 1]
+
+@dataclass(frozen=True, slots=True)
+class PromptInputs:
+    """One sample's prompt-side payload, assembled by the shared Collator
+    (instruction override + camera policy applied). Extension point for
+    future prompt-side signals — e.g. π0-FAST-style discretized state as
+    text would become an optional field here."""
+    instruction: str
+    cameras: tuple[CameraFrame, ...]
+
 class InputsCollator(Protocol[I]):
-    """Encoder-specific: per-sample prompt + ordered camera frames -> I.
+    """Encoder-specific: a batch of PromptInputs -> I.
     Same pickling rules as today's PrefixCollator (lazy HF processor,
     __getstate__ drops the built one)."""
-    def __call__(self, prompts: list[str], images: list[list[Tensor]]) -> I: ...
+    def __call__(self, samples: list[PromptInputs]) -> I: ...
 
 @dataclass
 class Collator(Generic[I]):          # lives in interface.py (encoders sit
@@ -235,7 +258,7 @@ class FlowDecoderConfig:
     self_attention_mode: SelfAttentionMode
     self_attention_rope_theta: float
     cross_attention_heads: int
-    schedule: tuple[int, ...]      # POSITIONS into exports; len = depth
+    schedule: tuple[str, ...]      # stream NAMES; len = decoder depth
     action_dim: int
     state_dim: int
     chunk_size: int
@@ -251,7 +274,7 @@ class ARFastDecoderConfig:
     intermediate_size: int
     rms_norm_eps: float
     cross_attention_heads: int
-    schedule: tuple[int, ...]      # its own positional schedule
+    schedule: tuple[str, ...]      # its own schedule over the same names
     tokenizer: str                 # artifact ref, e.g. ".../fast_tokenizer_v1"
     vocab_size: int                # BPE vocab + BOA/EOA/pad specials
     max_tokens: int                # decode budget (measured p99 + slack)
@@ -268,7 +291,8 @@ Checkpoint json (format 2):
   "encoder": {"kind": "gemma4", "backbone": "google/gemma-4-e2b-it",
                "exports": [4, 9, 14], "max_soft_tokens": 140},
   "decoder": {"kind": "flow", "hidden_size": 1536, "...": "...",
-               "schedule": [0,0,0,0,1,1,1,1,2,2,2,2,2,2,2,2],
+               "schedule": ["kv4","kv4","kv4","kv4","kv9","kv9","kv9","kv9",
+                            "kv14","kv14","kv14","kv14","kv14","kv14","kv14","kv14"],
                "time_conditioning": "adarms"},
   "step": 100000,
   "train_args": {"...": "unchanged, still recorded verbatim"},
@@ -292,10 +316,10 @@ def legacy_configs(meta: dict) -> tuple[GemmaEncoderConfig, FlowDecoderConfig]:
     args = CheckpointTrainArgs.from_dict(meta["train_args"])
     streams = streams_from_counts(args.stream_counts)        # -> (4, 9, 14)
     schedule = tuple(
-        position
-        for position, count in enumerate(args.stream_counts)
+        f"kv{layer}"
+        for layer, count in zip(streams, args.stream_counts, strict=True)
         for _ in range(count)
-    )                                                        # (0,0,0,0,1,...,2)
+    )                                                        # ("kv4", ..., "kv14")
     encoder = GemmaEncoderConfig(
         backbone=meta["backbone"],
         exports=streams,
@@ -316,7 +340,7 @@ generalizes to: synthesize both sides, then diff).
 encoder = build_encoder(encoder_config, device=..., dtype=...)   # match on kind
 geometries = encoder.stream_geometries()
 validate_schedule(decoder_config.schedule, geometries)
-#   - every index in bounds
+#   - every schedule name exists in geometries (unknown name = loud error)
 #   - every export consumed (unused export = config error, loud)
 #   - len(schedule) == decoder depth (definitionally)
 decoder = build_decoder(decoder_config, geometries, device=..., dtype=...)
@@ -338,10 +362,10 @@ frozen/live-trunk autocast policy (`BijouTrainStep` generalizes: encode
   `FlowDecoder`, **attribute names frozen** (`layers`, `norm`,
   `action_out_proj`, `state_proj`, `time_in_proj`, `time_out_proj`,
   `cross_inv_freq`, `self_inv_freq`, per-layer names) so safetensors keys
-  are byte-identical. Deltas: consumes `EncodedPrefix` (tuple indexing per
-  schedule position instead of dict-by-layer); per-stream `StreamGeometry`
-  sizes each layer's q-projection (legacy: all streams 512/1 — identical
-  shapes); RoPE applied per stream geometry (None => skip); gains
+  are byte-identical. Deltas: consumes `EncodedPrefix` (per-layer lookup
+  by schedule stream name, "kv4"/"kv9"/"kv14" under legacy configs);
+  per-stream `StreamGeometry` sizes each layer's q-projection (legacy:
+  all streams 512/1 — identical shapes); RoPE applied per stream geometry (None => skip); gains
   `loss()` (= `flow_matching_loss` moved in) and `predict_chunk()`
   (= `sample_actions` + the normalize/denormalize now in BijouPolicy).
   GATE: state_dict key-set equality vs today's ActionExpert under a
