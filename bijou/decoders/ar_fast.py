@@ -27,7 +27,6 @@ from torch import Tensor, nn
 from torch.nn import functional as F
 
 from ..fast.codec import ActionCodec
-from ..fast.tokenizer import FastDecodeError
 from ..interface import (
     ActionDecoder,
     CollatedBatch,
@@ -238,10 +237,6 @@ class ARFastDecoder(ActionDecoder):
             "decode termination) cannot be guaranteed"
         )
         self.symbol_lengths = symbol_lengths
-        # Malformed-decode telemetry: structurally unreachable under
-        # constrained decoding — a nonzero counter means a bug, and the
-        # substitution keeps long evals alive while saying so loudly.
-        self.malformed_decodes = 0
         if device is None or torch.device(device).type != "meta":
             self.reset_parameters()
 
@@ -368,11 +363,9 @@ class ARFastDecoder(ActionDecoder):
         exact fill always reachable, so the loop terminates in ≤
         chunk*dim steps and every generation decodes by construction
         (``config.max_tokens`` remains as recorded metadata; typical
-        sequences are ~50-60 tokens).
-
-        FastDecodeError is therefore structurally unreachable; if it ever
-        fires (= a bug), the sample is substituted with state-copy and
-        ``self.malformed_decodes`` counts it — loudly."""
+        sequences are ~50-60 tokens). Malformed generations are
+        impossible by construction — a decode error here is a bug and
+        propagates."""
         if noise is not None:
             raise ValueError("ARFastDecoder.predict_chunk takes no noise")
         stats = batch.action_stats
@@ -419,30 +412,16 @@ class ARFastDecoder(ActionDecoder):
         q01 = stats.q01.cpu().numpy()
         q99 = stats.q99.cpu().numpy()
         token_rows = tokens.cpu().tolist()
-        chunks: list[Tensor] = []
-        malformed = 0
-        for row_index, row in enumerate(token_rows):
-            body = [t for t in row[1:] if t != config.pad]  # drop seed BOA
-            try:
-                decoded = self.codec.decode(body, q01[row_index], q99[row_index])
-                chunks.append(torch.from_numpy(decoded).float())
-            except FastDecodeError:
-                malformed += 1
-                chunks.append(
-                    batch.state[row_index]
-                    .cpu()
-                    .float()[None, :]
-                    .expand(config.chunk_size, -1)
-                    .clone(),
-                )
-        if malformed:
-            self.malformed_decodes += malformed
-            print(
-                f"AR decode: {malformed}/{batch_size} malformed generation(s) "
-                f"substituted with state-copy ({self.malformed_decodes} total "
-                "in this process)",
-                flush=True,
-            )
+        chunks = [
+            torch.from_numpy(
+                self.codec.decode(
+                    [t for t in row[1:] if t != config.pad],  # drop seed BOA
+                    q01[row_index],
+                    q99[row_index],
+                ),
+            ).float()
+            for row_index, row in enumerate(token_rows)
+        ]
         return torch.stack(chunks).to(device)
 
 

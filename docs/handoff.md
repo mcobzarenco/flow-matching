@@ -460,10 +460,15 @@ dead; next perf wins are length-bucketed batching (batch pads 452 vs
   `[state][BOA][t_1..t_k]` fully causal over shared sandwich blocks
   (`decoders/blocks.py`, lifted from flow.py — key-set fixtures gate
   the move), teacher-forced CE (`ar_fast_loss`; state/PAD positions
+  (`ar_fast_loss`; state/PAD positions
   IGNORE_INDEX, no mask tensor — PAD is reserved, masks derive),
-  batched greedy decode to EOA + ActionCodec detokenize + per-sample
-  quantile denorm; malformed generations substitute state-copy LOUDLY
-  (`decoder.malformed_decodes`, wandb eval/malformed_decodes). Train:
+  CONSTRAINED batched greedy decode (the FAST grammar: exactly
+  chunk*dim quantized coefficients; per-step mask to body tokens whose
+  BPE symbol-expansion fits the remaining budget; BOA seeds, BOA/PAD
+  never sampled, NO EOA — length is grammar-fixed) + ActionCodec
+  detokenize + per-sample quantile denorm. Malformed generations are
+  impossible by construction — no fallback/counter/wandb metric exists;
+  a decode error propagates as a bug. Train:
   `--decoder ar_fast --fast-tokenizer
   mcobzarenco/bijou-checkpoints/fast_tokenizer_v1` (+ --ar-max-tokens);
   collator tokenizes worker-side. Checkpoints: format-2 kind "ar_fast";
@@ -471,12 +476,12 @@ dead; next perf wins are length-bucketed batching (batch pads 452 vs
   noise only for flow). validate() unified onto model.predict_chunk
   (flow path bitwise-equal; wandb rich tables decoder-agnostic —
   verified media upload). ORACLES: flow 1.8896/1.7237 EXACT unchanged;
-  NEW AR CPU oracle **4.8837/4.9089** (tiny backbone +
-  tests/fixtures/tiny_fast_tokenizer, seed 0). GPU smoke (300 steps,
-  real E2B + hub tokenizer, v1): CE 4.9→2.03, machinery end-to-end
-  (decode/fallback/eval/wandb); model quality meaningless at 300 steps
-  (offline 17.9 vs copy 10.9, ~2/3 malformed) — the real CE probes are
-  next. 38 tests.
+  AR CPU oracle **4.8803/4.8656** (tiny backbone +
+  tests/fixtures/tiny_fast_tokenizer, seed 0; re-baselined when EOA was
+  dropped). GPU smoke (300 steps, real E2B + hub tokenizer, v1): CE
+  4.9→2.05, ZERO invalid generations, honest probe MAE 54→37→28 over
+  100→300 steps — machinery verified end-to-end; model quality
+  meaningless at this scale, the real CE probes are next. 39 tests.
 - **GPU-box pitfall: CUDA "Error 802: system not yet initialized"
   while nvidia-smi answers (2026-07-30)** — a dist-upgrade pulled
   driver 595 over Lambda's matched 580 pair on the 2×H100 VMs; 595

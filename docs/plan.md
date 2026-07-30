@@ -429,8 +429,12 @@ frozen/live-trunk autocast policy (`BijouTrainStep` generalizes: encode
   `loss` = CE over shifted `action_tokens` with ignore_index at PAD
   (mask derives from the reserved PAD id — no separate mask tensor;
   attention needs none: right padding + causality already hides PAD
-  from real positions); `predict_chunk` = decode -> FastTokenizer.decode
-  -> denormalize via the batch's quantile stats. Requires threading q01/q99 through DatasetStats
+  from real positions); `predict_chunk` = CONSTRAINED greedy decode
+  under the FAST grammar (sequences are [BOA][t_1..t_k], no EOA — a
+  valid generation expands to exactly chunk*dim coefficients, so each
+  step masks to tokens fitting the remaining symbol budget and BOA/PAD
+  are never sampled; every generation decodes by construction) ->
+  FastTokenizer.decode -> denormalize via the batch's quantile stats. Requires threading q01/q99 through DatasetStats
   -> collator (dataset-owned quantiles, already backfilled corpus-wide;
   parse-edge None + loud AR failure for un-backfilled data).
 - **`bijou/encoders/gemma4.py` (new, thin)**: wraps the owned gemma4

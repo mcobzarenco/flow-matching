@@ -1629,7 +1629,6 @@ def main() -> int:
     grad_norm = torch.zeros((), device=device)
     prefetcher = DevicePrefetcher(loader, device)
     epoch = 0
-    malformed_seen = 0
     t_last = time.perf_counter()
     while step < args.steps:
         if sampler is not None:
@@ -1730,16 +1729,6 @@ def main() -> int:
                 )
                 probe_record["train_mae"] = round(train_mae, 4)
                 probe_metrics["train/mae"] = train_mae
-                if isinstance(model.expert, ARFastDecoder):
-                    # Rank-local counter delta across both probes; the
-                    # pre-registered health metric (>1% at convergence ⇒
-                    # constrained decoding).
-                    malformed_delta = model.expert.malformed_decodes - malformed_seen
-                    malformed_seen = model.expert.malformed_decodes
-                    probe_record["malformed_decodes"] = malformed_delta
-                    probe_metrics["eval/malformed_decodes"] = float(
-                        malformed_delta,
-                    )
                 if is_main:
                     assert log_file is not None
                     print(json.dumps(probe_record), flush=True)

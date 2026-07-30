@@ -188,16 +188,16 @@ def test_loss_ignores_pad_positions() -> None:
     assert IGNORE_INDEX == -100
 
 
-def test_predict_chunk_constrained_decode_never_malforms() -> None:
+def test_predict_chunk_constrained_decode_always_valid() -> None:
     """The FAST-grammar mask makes every generation decode by construction
-    — even from a random-init model. Zero malformed, exact symbol budget."""
+    — even from a random-init model (a decode error would propagate as a
+    test failure here)."""
     decoder, _ = build()
     decoder.eval()
     sample = batch(loaded=decoder.codec)
     chunks = decoder.predict_chunk(memory(), sample)
     assert chunks.shape == (BATCH, CHUNK, DIM)
     assert torch.isfinite(chunks).all()
-    assert decoder.malformed_decodes == 0
     with pytest.raises(ValueError, match="no noise"):
         decoder.predict_chunk(memory(), sample, noise=torch.zeros(1))
 
