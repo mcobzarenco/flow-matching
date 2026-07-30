@@ -84,8 +84,15 @@ class CollatedBatch(Generic[I]):
     action_std: Tensor             # [B, action_dim]
     state_mean: Tensor             # [B, state_dim]
     state_std: Tensor              # [B, state_dim]
+    action_q01: Tensor             # [B, action_dim]  (ALWAYS present — owner
+    action_q99: Tensor             # [B, action_dim]   decision 2026-07-30)
+    state_q01: Tensor              # [B, state_dim]
+    state_q99: Tensor              # [B, state_dim]
     # AR-only, filled by the collator when built with a FastTokenizer
     # (CPU-side in workers); None otherwise. The AR loss asserts loudly.
+    # (Cannot be made mandatory like the quantiles: tokens depend on a
+    # tokenizer artifact and cost real CPU per item — they are computed
+    # only when an AR decoder will consume them.)
     action_tokens: Tensor | None       # [B, T_tok] padded token targets
     action_token_mask: Tensor | None   # [B, T_tok] True = real token
 
@@ -314,8 +321,20 @@ Import DAG after: `train/eval/rollout -> loading -> data -> model ->
 - `CollatedBatch` generics vs pyright: verify `Generic` + frozen slots
   dataclass inference stays clean at call sites (fallback: per-encoder
   concrete batch dataclasses sharing the core by composition, no Generic).
-- Quantile stats threading (AR): DatasetStats gains optional q01/q99;
-  un-backfilled datasets fail loudly only when an AR decoder asks.
+- Quantile stats: **mandatory in the batch** (settled). DatasetStats
+  gains q01/q99 for action+state; `from_lerobot_stats` (the data path)
+  REQUIRES them — a dataset without backfilled quantiles fails at
+  selection with the `ldtools.backfill_quantile_stats` command as the
+  remedy (corpus + local dev copies verified backfilled 2026-07-30).
+  The one place None survives is `from_state_dict` on OLD checkpoints
+  (their `per_dataset_normalization` tables predate quantiles): there
+  `item_tensors` emits NaN poison, never read by flow paths, and the AR
+  decoder validates `isfinite` at its single consumption site with an
+  error naming the checkpoint and remedy. Old-checkpoint flow rollout
+  therefore keeps working untouched; AR from an old stats table is
+  impossible anyway (old checkpoints are flow models). Side benefit:
+  in-batch quantiles make a `--normalization quantile` flow arm
+  (π0-style [-1,1] scaling) a config-only future experiment.
 - Two-sided learning risk for SigLIP2 streams (adapter k/v from scratch)
   — this is the stream-vs-KV question; the acuity probe and mini-ablation
   are the falsifiers before any big spend.
