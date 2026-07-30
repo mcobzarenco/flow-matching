@@ -231,10 +231,13 @@ class ARFastDecoder(ActionDecoder):
             piece = codec.tokenizer.bpe.id_to_token(token_id)
             assert piece is not None, f"BPE id {token_id} has no piece"
             symbol_lengths[token_id] = len(piece)
-        assert bool((symbol_lengths == 1).any()), (
-            "BPE vocabulary has no single-symbol token — exact fill (and "
-            "decode termination) cannot be guaranteed"
-        )
+        if not bool((symbol_lengths == 1).any()):
+            # A BPE fitted here always keeps its base alphabet as tokens;
+            # violation means a corrupted or foreign artifact.
+            raise ValueError(
+                "BPE vocabulary has no single-symbol token — exact fill "
+                "(and decode termination) cannot be guaranteed",
+            )
         self.symbol_lengths = symbol_lengths
         if device is None or torch.device(device).type != "meta":
             self.reset_parameters()

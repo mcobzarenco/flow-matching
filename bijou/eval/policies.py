@@ -119,6 +119,10 @@ class BijouPolicy:
             instruction=None,
             camera_filter=None,
             max_cameras=None,
+            # Inference never tokenizes actions — AR decoding needs only the
+            # batch quantiles; CE eval during training uses the train
+            # collator, which does carry the codec.
+            action_codec=None,
         )
 
     @torch.no_grad()

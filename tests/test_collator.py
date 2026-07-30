@@ -74,6 +74,7 @@ def collator(**overrides: Any) -> Collator[FakeInputs]:
         "instruction": None,
         "camera_filter": None,
         "max_cameras": None,
+        "action_codec": None,
     }
     kwargs.update(overrides)
     return Collator(**kwargs)

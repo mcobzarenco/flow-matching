@@ -72,7 +72,7 @@ class ObservationMemory:
 
     streams: dict[str, MemoryStream]
     length: int
-    padding_mask: Tensor | None = None
+    padding_mask: Tensor | None
 
     @property
     def batch_size(self) -> int:
@@ -157,18 +157,21 @@ class CollatedBatch[I: BatchInputs]:
     action_is_pad: Tensor  # [B, chunk]  (bool)
     action_stats: NormStats  # each [B, action_dim]
     state_stats: NormStats  # each [B, state_dim]
-    # FAST token ids [B, T_tok] (body ids [t_1..t_k], PAD-padded — no
-    # BOA/EOA: sequence length is fixed by the FAST grammar), present
-    # iff the Collator was built with an ActionCodec (AR decoders). No
-    # separate mask: PAD is a reserved id, exclusions derive from it, and
-    # right padding + causal attention hides PAD from real positions.
+    # FAST token ids [B, T_tok] ([BOA, t_1..t_k] per ActionCodec.encode,
+    # PAD-padded to the batch max — no EOA: sequence length is fixed by
+    # the FAST grammar), present iff the Collator was built with an
+    # ActionCodec (AR decoders). No separate mask: PAD is a reserved id,
+    # exclusions derive from it, and right padding + causal attention
+    # hides PAD from real positions.
     action_tokens: Tensor | None
 
     def all_tensors(self) -> list[Tensor]:
         """Every tensor in the batch, nested fields included (stream-sync
         bookkeeping walks these after async H2D copies)."""
         return [
-            *(t for t in (self.state, self.actions, self.action_is_pad)),
+            self.state,
+            self.actions,
+            self.action_is_pad,
             *([self.action_tokens] if self.action_tokens is not None else []),
             *self.action_stats.tensors().values(),
             *self.state_stats.tensors().values(),
@@ -302,7 +305,7 @@ class Collator[I: BatchInputs]:
     instruction: str | None
     camera_filter: tuple[str, ...] | None
     max_cameras: int | None
-    action_codec: ActionCodec | None = None
+    action_codec: ActionCodec | None
 
     def _action_tokens(self, items: list[dict[str, Any]]) -> Tensor | None:
         """Tokenize each item's action chunk (worker-side CPU), PAD-pad to
