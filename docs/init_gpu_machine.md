@@ -130,18 +130,26 @@ rsync -a --partial --info=progress2 --timeout=120 \
     <user>@<source-host>:datasets/mcobzarenco/ ~/datasets/mcobzarenco/
 ```
 
-### 3b. Owner rig datasets (NOT public)
+### 3b. Owner rig datasets (private HF repos)
 
-`marius/so101_pick_place_clean` (7 episodes, 88 MB) and
-`marius/so101_pick_place_v2` (50 episodes, 1.3 GB). Source of truth:
-the owner's laptop, `/home/marius/w/datasets/marius/`. Push them from
-the laptop, preserving the `marius/<name>` layout:
+`mcobzarenco/so101_pick_place_clean` (7 episodes, 88 MB) and
+`mcobzarenco/so101_pick_place_v2` (50 episodes, 1.3 GB) are published
+as **private** dataset repos on the hub — the download requires the HF
+auth from §2 to be for an account with access. Download both into the
+same `~/datasets/mcobzarenco/` root as the community collections:
 
 ```sh
-ssh ubuntu@<new-ip> mkdir -p datasets
-rsync -a --partial --info=progress2 \
-    /home/marius/w/datasets/marius ubuntu@<new-ip>:datasets/
+cd ~/flow-matching
+uv run hf download mcobzarenco/so101_pick_place_clean --repo-type dataset \
+    --local-dir ~/datasets/mcobzarenco/so101_pick_place_clean
+uv run hf download mcobzarenco/so101_pick_place_v2 --repo-type dataset \
+    --local-dir ~/datasets/mcobzarenco/so101_pick_place_v2
 ```
+
+(Small enough to run in the foreground.) The hub copies carry the
+exact-quantile `stats.json` backfill that dataset selection requires —
+if a download of any dataset fails selection with a "backfill" error,
+the copy is stale; re-download rather than patching locally.
 
 ### 3c. Verify the data
 
@@ -149,7 +157,8 @@ rsync -a --partial --info=progress2 \
 ls ~/datasets/mcobzarenco/community_dataset_v1_v3 | wc -l   # 57
 ls ~/datasets/mcobzarenco/community_dataset_v2_v3 | wc -l   # 111
 ls ~/datasets/mcobzarenco/community_dataset_v3_v3 | wc -l   # 237
-ls ~/datasets/marius                                        # both rig datasets
+ls ~/datasets/mcobzarenco/so101_pick_place_clean/meta       # info.json, stats.json, ...
+ls ~/datasets/mcobzarenco/so101_pick_place_v2/meta          # info.json, stats.json, ...
 ```
 
 The authoritative check is the selection report at the top of any
