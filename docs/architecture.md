@@ -122,7 +122,8 @@ A narrow decoder over the suffix `[state][a_1..a_50]` (`suffix_length =
 (head_dim 128), intermediate 4096 (GLU), 8 cross-attn heads, 16 layers,
 ~404M fp32**. Freshly initialized, never loaded from the backbone.
 
-Each `ExpertLayer` is a Gemma-style sandwich of three sublayers, each
+Each `SuffixBlock` (`bijou/decoders/blocks.py`, shared with the AR
+decoder) is a Gemma-style sandwich of three sublayers, each
 `residual → pre_RMSNorm → sublayer → post_RMSNorm → +residual`:
 
 - **Cross-attention** over one exported stream. Queries adopt the

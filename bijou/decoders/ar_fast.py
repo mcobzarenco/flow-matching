@@ -46,7 +46,7 @@ from ..nn import (
     rope_cos_sin,
     rope_inv_freq_from_params,
 )
-from .blocks import ExpertLayer, cross_attention_mask
+from .blocks import SuffixBlock, cross_attention_mask
 
 # CE positions to skip: the state position (its target, the seed BOA, is
 # a constant) and PAD padding. torch's cross_entropy convention.
@@ -164,7 +164,7 @@ class ARFastDecoder(ActionDecoder):
             dtype=dtype,
         )
         self.layers = nn.ModuleList(
-            ExpertLayer(
+            SuffixBlock(
                 hidden_size=hidden,
                 num_attention_heads=config.num_attention_heads,
                 intermediate_size=config.intermediate_size,

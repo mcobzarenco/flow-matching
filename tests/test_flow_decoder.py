@@ -13,9 +13,9 @@ from __future__ import annotations
 
 import torch
 
+from bijou.decoders.blocks import SuffixBlock
 from bijou.decoders.flow import (
     ExpertConfig,
-    ExpertLayer,
     FlowDecoder,
     SelfAttentionMode,
     TimeConditioning,
@@ -89,7 +89,7 @@ def test_zero_velocity_at_init() -> None:
 def test_adarms_modulation_heads_zero_at_init() -> None:
     expert = build(TimeConditioning.ADARMS)
     for layer in expert.layers:
-        assert isinstance(layer, ExpertLayer)
+        assert isinstance(layer, SuffixBlock)
         assert layer.modulation is not None
         head = layer.modulation[1]
         assert isinstance(head, torch.nn.Linear)
@@ -120,7 +120,7 @@ def test_additive_body_is_not_identity() -> None:
     output projection zeros the field) — distinct from adaRMS."""
     expert = build(TimeConditioning.ADDITIVE)
     for layer in expert.layers:
-        assert isinstance(layer, ExpertLayer)
+        assert isinstance(layer, SuffixBlock)
         assert layer.modulation is None
     with torch.no_grad():
         expert.action_out_proj.weight.normal_(std=0.5)

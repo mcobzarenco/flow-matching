@@ -63,7 +63,7 @@ from ..nn import (
     rope_inv_freq_from_params,
 )
 from .blocks import (
-    ExpertLayer,
+    SuffixBlock,
     apply_scale,
     cross_attention_mask,
 )
@@ -241,7 +241,7 @@ class FlowDecoder(ActionDecoder):
         self.time_act = nn.SiLU()
 
         self.layers = nn.ModuleList(
-            ExpertLayer(
+            SuffixBlock(
                 hidden_size=hidden,
                 num_attention_heads=config.num_attention_heads,
                 intermediate_size=config.intermediate_size,
@@ -319,7 +319,7 @@ class FlowDecoder(ActionDecoder):
         # nothing => every layer is the identity at init, so the residual
         # stream passes through untouched and the velocity field is 0.
         for module in self.modules():
-            if isinstance(module, ExpertLayer) and module.modulation is not None:
+            if isinstance(module, SuffixBlock) and module.modulation is not None:
                 head = module.modulation[1]
                 assert isinstance(head, nn.Linear)
                 nn.init.zeros_(head.weight)

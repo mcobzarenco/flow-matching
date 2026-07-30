@@ -359,7 +359,7 @@ class BijouTrainStep(torch.nn.Module):
                 image_position_ids=inputs.image_position_ids,
                 padding_mask=inputs.attention_mask if inputs.has_padding else None,
             )
-        return self.loss_fn(self.model.expert, memory, batch)
+        return self.loss_fn(self.model.decoder, memory, batch)
 
 
 def _chunk_plot(
@@ -650,7 +650,7 @@ def save_checkpoint(
 ) -> Path:
     checkpoint_dir = args.save_dir / f"step_{step:06d}"
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
-    save_file(model.expert.state_dict(), str(checkpoint_dir / "expert.safetensors"))
+    save_file(model.decoder.state_dict(), str(checkpoint_dir / "expert.safetensors"))
     if args.trunk_trained:
         # Adapted trunks ride along; from_checkpoint/--init-from detect the
         # file by presence. Frozen runs write exactly the historical layout.
@@ -669,7 +669,7 @@ def save_checkpoint(
     metadata = CheckpointMetadata(
         backbone=args.backbone,
         exports=model.encoder.exports,
-        decoder=decoder_schema_dict(model.expert),
+        decoder=decoder_schema_dict(model.decoder),
         max_soft_tokens=args.max_soft_tokens,
         normalization=aggregate_stats(normalizers),
         per_dataset_normalization=per_dataset_stats,
@@ -1337,7 +1337,7 @@ def main() -> int:
         schedule_desc = str(ar_schedule)
         loss_fn = ar_fast_loss
     trunk_counts = unfreeze_backbone(model, args)
-    n_trainable = sum(p.numel() for p in model.expert.parameters())
+    n_trainable = sum(p.numel() for p in model.decoder.parameters())
     if is_main:
         backbone_desc = (
             "frozen backbone"
@@ -1369,7 +1369,7 @@ def main() -> int:
     # Fixed-key dicts, deliberately: this is torch's optimizer param-group
     # API format (a third-party boundary), consumed by AdamW below.
     param_groups: list[dict[str, Any]] = [
-        {"params": list(model.expert.parameters()), "lr": args.expert_lr},
+        {"params": list(model.decoder.parameters()), "lr": args.expert_lr},
     ]
     encoder_groups = model.encoder.param_groups()
     if args.text_lr is not None:
@@ -1417,11 +1417,11 @@ def main() -> int:
     start_step = 0
     checkpoint_to_load = args.init_from or args.resume
     if checkpoint_to_load is not None:
-        ensure_matching_decoder_config(model.expert, checkpoint_to_load)
+        ensure_matching_decoder_config(model.decoder, checkpoint_to_load)
         # CPU-load + copy-in: loading straight to the device transiently
         # holds a second copy of the weights next to the built module
         # (see loading.load_adapted_backbone).
-        model.expert.load_state_dict(
+        model.decoder.load_state_dict(
             load_file(
                 str(checkpoint_to_load / "expert.safetensors"),
                 device="cpu",
@@ -1480,15 +1480,15 @@ def main() -> int:
                 flush=True,
             )
 
-    # DDP wiring. Frozen trunk (the default): wrap the expert only — the
+    # DDP wiring. Frozen trunk (the default): wrap the decoder only — the
     # backbone replica is inference-only and never synced; byte-identical
     # to every run before the unfreeze flags existed. Live trunk: one
-    # BijouTrainStep module owns prefix-encode + expert so a single DDP
+    # BijouTrainStep module owns prefix-encode + decoder so a single DDP
     # wrapper hooks gradients of both. Wrapping AFTER the weight load means
     # DDP's construction-time broadcast (rank 0 -> all) covers the loaded
-    # state. model.expert stays the raw module for eval, clipping and
+    # state. model.decoder stays the raw module for eval, clipping and
     # checkpointing in both modes.
-    velocity_model: torch.nn.Module = model.expert
+    wrapped_decoder: torch.nn.Module = model.decoder
     train_step: torch.nn.Module | None = None
     if args.trunk_trained:
         train_step = BijouTrainStep(model, loss_fn)
@@ -1507,10 +1507,10 @@ def main() -> int:
                 static_graph=True,
             )
     elif distributed:
-        velocity_model = torch.nn.parallel.DistributedDataParallel(
-            model.expert,
+        wrapped_decoder = torch.nn.parallel.DistributedDataParallel(
+            model.decoder,
             device_ids=[device.index] if device.type == "cuda" else None,
-            # Expert buffers are constant RoPE tables; per-step broadcasts
+            # Decoder buffers are constant RoPE tables; per-step broadcasts
             # would be pure overhead.
             broadcast_buffers=False,
             gradient_as_bucket_view=True,
@@ -1595,7 +1595,7 @@ def main() -> int:
                     k: str(v) if isinstance(v, Path) else v
                     for k, v in dataclasses.asdict(args).items()
                 },
-                "decoder_config": decoder_schema_dict(model.expert),
+                "decoder_config": decoder_schema_dict(model.decoder),
                 "dataset": {
                     "repo_ids": sorted(per_dataset_stats),
                     "episodes": selection.total_episodes,
@@ -1631,7 +1631,7 @@ def main() -> int:
                 loss = train_step(batch)
             else:
                 memory = encode_observation(model, batch)
-                loss = loss_fn(velocity_model, memory, batch)
+                loss = loss_fn(wrapped_decoder, memory, batch)
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
             grad_norm = torch.nn.utils.clip_grad_norm_(

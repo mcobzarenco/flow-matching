@@ -32,8 +32,9 @@ from ..nn import (
 )
 
 
-class ExpertCrossAttention(nn.Module):
-    """Queries in backbone global-attention geometry over an exported stream."""
+class MemoryCrossAttention(nn.Module):
+    """Queries in backbone global-attention geometry over an exported
+    ObservationMemory stream."""
 
     def __init__(
         self,
@@ -110,8 +111,8 @@ class ExpertCrossAttention(nn.Module):
         return self.o_proj(attn_output.reshape(batch, seq_len, -1))
 
 
-class ExpertSelfAttention(nn.Module):
-    """Gemma-flavored self-attention over the ``[state][actions]`` suffix."""
+class SuffixSelfAttention(nn.Module):
+    """Gemma-flavored self-attention over the decoder suffix."""
 
     def __init__(
         self,
@@ -182,7 +183,7 @@ class ExpertSelfAttention(nn.Module):
         return self.o_proj(attn_output.reshape(batch, seq_len, -1))
 
 
-class ExpertMLP(nn.Module):
+class GatedMLP(nn.Module):
     def __init__(
         self,
         *,
@@ -248,7 +249,7 @@ def apply_gate(hidden_states: Tensor, gate: Tensor | None) -> Tensor:
     return hidden_states * gate[:, None, :]
 
 
-class ExpertLayer(nn.Module):
+class SuffixBlock(nn.Module):
     """cross-attention -> self-attention -> MLP, Gemma-style sandwich norms."""
 
     def __init__(
@@ -268,7 +269,7 @@ class ExpertLayer(nn.Module):
     ) -> None:
         super().__init__()
         hidden, eps = hidden_size, rms_norm_eps
-        self.cross_attn = ExpertCrossAttention(
+        self.cross_attn = MemoryCrossAttention(
             hidden_size=hidden,
             num_heads=cross_attention_heads,
             head_dim=cross_attention_head_dim,
@@ -277,7 +278,7 @@ class ExpertLayer(nn.Module):
             device=device,
             dtype=dtype,
         )
-        self.self_attn = ExpertSelfAttention(
+        self.self_attn = SuffixSelfAttention(
             hidden_size=hidden,
             num_heads=num_attention_heads,
             rms_norm_eps=eps,
@@ -285,7 +286,7 @@ class ExpertLayer(nn.Module):
             device=device,
             dtype=dtype,
         )
-        self.mlp = ExpertMLP(
+        self.mlp = GatedMLP(
             hidden_size=hidden,
             intermediate_size=intermediate_size,
             activation=hidden_activation,

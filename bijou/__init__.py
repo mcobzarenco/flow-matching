@@ -8,10 +8,11 @@ Package layout:
 - ``bijou.gemma4`` — hackable pure-torch Gemma 4 E-series (E2B, E4B)
   implementation, verified against the HF reference
   (``python -m bijou.gemma4.verify_parity``).
-- ``bijou.expert`` / ``bijou.model`` / ``bijou.loading`` — the VLA: a frozen,
-  truncated backbone encodes the multimodal prefix once per observation and
-  exports its global-attention K/V streams; a narrow flow-matching action
-  expert cross-attends them to denoise action chunks.
+- ``bijou.encoders`` / ``bijou.decoders`` / ``bijou.model`` / ``bijou.loading``
+  — the VLA: a frozen, truncated backbone encodes the multimodal prefix once
+  per observation and exports its global-attention K/V streams as an
+  ObservationMemory; action decoders (the flow-matching expert, the AR FAST
+  baseline) cross-attend it.
 
 Quick start::
 

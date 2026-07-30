@@ -730,7 +730,7 @@ def from_checkpoint(
         )
     # CPU-load + copy-in for the same transient-memory reason as
     # load_adapted_backbone (the expert file is 1.6 GB fp32).
-    model.expert.load_state_dict(
+    model.decoder.load_state_dict(
         load_file(str(checkpoint / "expert.safetensors"), device="cpu"),
         strict=True,
     )
