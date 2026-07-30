@@ -13,13 +13,18 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from bijou.expert import ActionExpert, ExpertConfig, SelfAttentionMode, TimeConditioning
+from bijou.decoders.flow import (
+    ExpertConfig,
+    FlowDecoder,
+    SelfAttentionMode,
+    TimeConditioning,
+)
 from bijou.nn import RopeParameters, RopeType
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
-def build(time_conditioning: TimeConditioning) -> ActionExpert:
+def build(time_conditioning: TimeConditioning) -> FlowDecoder:
     config = ExpertConfig(
         hidden_size=64,
         num_attention_heads=2,
@@ -43,7 +48,7 @@ def build(time_conditioning: TimeConditioning) -> ActionExpert:
         time_embed_dim=256,
         time_conditioning=time_conditioning,
     )
-    return ActionExpert(config)
+    return FlowDecoder(config)
 
 
 def test_expert_state_dict_keys_are_stable() -> None:
@@ -54,8 +59,8 @@ def test_expert_state_dict_keys_are_stable() -> None:
         expected = json.loads((FIXTURES / fixture).read_text())
         actual = sorted(build(mode).state_dict().keys())
         assert actual == expected, (
-            f"{mode}: expert state_dict keys drifted from the pre-refactor "
-            f"fixture — existing checkpoints would no longer load. "
-            f"missing={sorted(set(expected) - set(actual))} "
+            f"{mode}: decoder state_dict keys drifted from the pre-refactor "
+            f"ActionExpert fixture — existing checkpoints would no longer "
+            f"load. missing={sorted(set(expected) - set(actual))} "
             f"unexpected={sorted(set(actual) - set(expected))}"
         )

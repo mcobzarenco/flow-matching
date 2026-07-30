@@ -19,9 +19,6 @@ from typing import Any, Protocol
 import torch
 from torch import Tensor
 
-from ..data import encode_prefix
-from ..encoders.gemma4 import GemmaInputsCollator
-from ..gemma4.loading import resolve_checkpoint_dir
 from ..interface import Collator
 from ..loading import CheckpointInfo, from_checkpoint
 from ..model import BijouModel, SamplingMethod
@@ -117,10 +114,7 @@ class BijouPolicy:
             expert_dtype=expert_dtype,
         )
         self.collator = Collator(
-            inputs=GemmaInputsCollator(
-                str(resolve_checkpoint_dir(self.info.backbone)),
-                self.info.max_soft_tokens,
-            ),
+            inputs=self.model.encoder.inputs_collator(),
             instruction=None,
             camera_filter=None,
             max_cameras=None,
@@ -129,8 +123,6 @@ class BijouPolicy:
     @torch.no_grad()
     def predict(self, items: list[dict[str, Any]], indices: list[int]) -> list[Tensor]:
         batch = self.collator(items).to(self.device)
-        prefix = encode_prefix(self.model, batch)
-        state = (batch.state - batch.state_stats.mean) / batch.state_stats.std
         chunk = batch.actions.shape[1]
         noise = torch.stack(
             [
@@ -138,15 +130,10 @@ class BijouPolicy:
                 for index in indices
             ],
         ).to(self.device)
-        sampled = self.model.sample_actions(
-            prefix,
-            state,
+        raw = self.model.predict_chunk(
+            batch,
+            noise=noise,
             num_steps=self.sample_steps,
             method=self.method,
-            noise=noise,
-        )
-        raw = (
-            sampled.float() * batch.action_stats.std[:, None, :]
-            + batch.action_stats.mean[:, None, :]
         )
         return [prediction.cpu() for prediction in raw]

@@ -25,7 +25,13 @@ from safetensors.torch import load_file
 from torch import Tensor
 
 from .data import DatasetStats
-from .expert import ActionExpert, ExpertConfig, SelfAttentionMode, TimeConditioning
+from .decoders.flow import (
+    ExpertConfig,
+    FlowDecoder,
+    SelfAttentionMode,
+    TimeConditioning,
+)
+from .encoders.gemma4 import GemmaEncoder
 from .gemma4.config import Gemma4Config, LayerType
 from .gemma4.loading import load_config, load_model, resolve_checkpoint_dir
 from .interface import kv_stream_name
@@ -237,15 +243,19 @@ def from_backbone(
     dtype: torch.dtype | None = None,
     expert_dtype: torch.dtype | None = None,
     attn_backend: AttentionBackend = DEFAULT_ATTENTION_BACKEND,
+    max_soft_tokens: int = 140,
 ) -> BijouModel:
-    """Build a Bijou model from a Gemma 4 checkpoint.
+    """Build a Bijou model (GemmaEncoder + FlowDecoder) from a Gemma 4
+    checkpoint.
 
     Pass either a full ``expert_config`` or just ``action_dim``/``state_dim``
     to use :func:`default_expert_config`. The backbone is truncated to its
-    non-KV-shared prefix, frozen; the expert is freshly initialized.
+    non-KV-shared prefix, frozen; the decoder is freshly initialized.
     ``expert_dtype`` may differ from the backbone dtype (e.g. fp32 expert on
-    a bf16 backbone for training — the expert casts its inputs and the
-    exported KV streams to its own dtype).
+    a bf16 backbone for training — the decoder casts its inputs and the
+    exported KV streams to its own dtype). ``max_soft_tokens`` parameterizes
+    the encoder's inputs collator (the CLI default when not loading a
+    checkpoint that recorded it).
     """
     checkpoint_dir = resolve_checkpoint_dir(model_id_or_path)
     config = load_config(checkpoint_dir)
@@ -278,13 +288,19 @@ def from_backbone(
     )
     if expert_dtype is None:
         expert_dtype = dtype if dtype is not None else config.dtype
-    expert = ActionExpert(
+    encoder = GemmaEncoder(
+        backbone,
+        exports=expert_config.streams,
+        processor_dir=str(checkpoint_dir),
+        max_soft_tokens=max_soft_tokens,
+    )
+    decoder = FlowDecoder(
         expert_config,
         attn_backend=attn_backend,
         device=device,
         dtype=expert_dtype,
     )
-    return BijouModel(backbone=backbone, expert=expert)
+    return BijouModel(encoder=encoder, decoder=decoder)
 
 
 @dataclass(frozen=True, slots=True)
@@ -585,6 +601,7 @@ def from_checkpoint(
         dtype=dtype,
         expert_dtype=expert_dtype,
         attn_backend=attn_backend,
+        max_soft_tokens=info.max_soft_tokens,
     )
     # CPU-load + copy-in for the same transient-memory reason as
     # load_adapted_backbone (the expert file is 1.6 GB fp32).

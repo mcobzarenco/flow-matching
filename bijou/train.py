@@ -72,11 +72,15 @@ from .data import (
     select_datasets,
     worker_init,
 )
+from .decoders.flow import (
+    ExpertConfig,
+    SelfAttentionMode,
+    TimeConditioning,
+    flow_matching_loss,
+)
 from .encoders.gemma4 import GemmaInputs, GemmaInputsCollator
-from .expert import ExpertConfig, SelfAttentionMode, TimeConditioning
 from .gemma4.loading import load_config, resolve_checkpoint_dir
-from .gemma4.text import DecoderLayer
-from .interface import CollatedBatch, Collator, EncodedPrefix
+from .interface import CollatedBatch, Collator
 from .loading import (
     CheckpointMetadata,
     backbone_snapshot,
@@ -257,94 +261,6 @@ class Normalizers:
     state: Normalizer
 
 
-def flow_matching_loss(
-    velocity_model: torch.nn.Module,
-    prefix: EncodedPrefix,
-    batch: CollatedBatch[Any],
-) -> Tensor:
-    """``batch`` must already be device-resident; no transfers happen here.
-    Actions/state are normalized with each sample's own dataset stats.
-
-    Episode-boundary chunks train on the full ``chunk`` length with
-    repeat-last-action targets: lerobot's delta-timestamps query clamps
-    indices to the episode range (dataset_reader._get_query_indices), so
-    positions past the end already hold the final real action — the
-    desired "reach and hold" target — and ``action_is_pad`` is deliberately
-    ignored here (decision 2026-07-29: full-chunk targets over masking;
-    the expert attends every position, so masked-out padding was still
-    silently shaping predictions). Eval stays real-steps-only.
-
-    ``velocity_model`` is the expert (or its DDP wrapper under torchrun —
-    training forwards must go through the wrapper for gradient hooks);
-    call convention (prefix, state, noisy_actions, tau) is shared by
-    ActionExpert, BijouModel and DDP(ActionExpert).
-
-    Shapes (batch fields in CollatedBatch's docstring):
-      - prefix.streams[layer]: (key, value), each [B, kv_heads, P, head_dim]
-      - velocity/target: [B, chunk, action_dim]; tau: [B]
-      - returns: scalar loss
-    """
-    actions = (
-        batch.actions - batch.action_stats.mean[:, None, :]
-    ) / batch.action_stats.std[:, None, :]
-    state = (batch.state - batch.state_stats.mean) / batch.state_stats.std
-
-    noise = torch.randn_like(actions)
-    # π0's time distribution: Beta(1.5, 1) squeezed into (0, 1).
-    tau = (
-        torch.distributions.Beta(1.5, 1.0)
-        .sample((actions.shape[0],))
-        .to(actions.device)
-    )
-    tau = tau * 0.999 + 0.001
-    tau_ = tau[:, None, None]
-    noisy_actions = tau_ * noise + (1 - tau_) * actions
-    target = noise - actions
-
-    velocity = velocity_model(prefix, state, noisy_actions, tau)
-    return (velocity.float() - target.float()).pow(2).mean()
-
-
-def trainable_text_parameters(model: BijouModel) -> Iterator[torch.nn.Parameter]:
-    """The text-trunk parameters that PARTICIPATE in a prefix encode, and
-    only those — the set must be exact because DDP requires every
-    grad-enabled parameter to receive gradients each step.
-
-    Participation mirrors ``kv_stop_layer`` (= the deepest exported
-    stream): layers below it run fully; the stop layer runs only its
-    input layernorm and K/V projections (``TextAttention.project_kv``;
-    its v_norm is scale-less — no parameters); deeper layers, the final
-    norm and the LM head never run. Token embeddings and the PLE tables
-    stay frozen BY DESIGN (few rows touched per batch, dense Adam state
-    for a 262k vocab is waste, and frozen embeddings are the cheapest
-    forgetting control) — but the PLE *projection* path runs for every
-    consumed layer slice, so it trains. The multimodal projector
-    (embed_vision) is the vision->text interface and belongs to the text
-    group regardless of whether the vision tower itself is unfrozen.
-    """
-    text = model.backbone.language_model
-    stop_layer = max(model.expert.config.streams)
-    for idx, layer in enumerate(text.layers):
-        # ModuleList iteration erases the element type (torch types
-        # Module.__getattr__ as Tensor | Module): narrow before access.
-        assert isinstance(layer, DecoderLayer)
-        if idx < stop_layer:
-            yield from layer.parameters()
-        elif idx == stop_layer:
-            yield from layer.input_layernorm.parameters()
-            attention = layer.self_attn
-            assert attention.k_proj is not None
-            assert attention.k_norm is not None
-            yield from attention.k_proj.parameters()
-            if attention.v_proj is not None:
-                yield from attention.v_proj.parameters()
-            yield from attention.k_norm.parameters()
-    yield from text.per_layer_model_projection.parameters()
-    yield from text.per_layer_projection_norm.parameters()
-    assert model.backbone.embed_vision is not None
-    yield from model.backbone.embed_vision.parameters()
-
-
 @dataclass(frozen=True, slots=True)
 class TrunkParameterCounts:
     """Trainable trunk parameters enabled by :func:`unfreeze_backbone`,
@@ -364,20 +280,21 @@ def unfreeze_backbone(model: BijouModel, args: TrainArgs) -> TrunkParameterCount
     no activation cost, no backward — without any code-path changes
     inside gemma4.
     """
+    groups = model.encoder.param_groups()
     text = 0
     vision = 0
     if args.text_lr is not None:
-        for parameter in trainable_text_parameters(model):
+        for parameter in groups["text"]:
             parameter.requires_grad_(True)
             text += parameter.numel()
     if args.vision_lr is not None:
-        if model.backbone.vision_tower is None:
+        if not groups["vision"]:
             raise SystemExit(
                 f"--vision-lr {args.vision_lr} but the "
                 f"backbone ({args.backbone}) has no vision tower — drop the "
                 "flag or use a multimodal backbone",
             )
-        for parameter in model.backbone.vision_tower.parameters():
+        for parameter in groups["vision"]:
             parameter.requires_grad_(True)
             vision += parameter.numel()
     return TrunkParameterCounts(text=text, vision=vision)
@@ -1348,8 +1265,9 @@ def main() -> int:
     param_groups: list[dict[str, Any]] = [
         {"params": list(model.expert.parameters()), "lr": args.expert_lr},
     ]
+    encoder_groups = model.encoder.param_groups()
     if args.text_lr is not None:
-        decayed, undecayed = decay_split(trainable_text_parameters(model))
+        decayed, undecayed = decay_split(encoder_groups["text"])
         param_groups.append({"params": decayed, "lr": args.text_lr})
         param_groups.append(
             {
@@ -1359,8 +1277,8 @@ def main() -> int:
             },
         )
     if args.vision_lr is not None:
-        assert model.backbone.vision_tower is not None
-        decayed, undecayed = decay_split(model.backbone.vision_tower.parameters())
+        assert encoder_groups["vision"]
+        decayed, undecayed = decay_split(encoder_groups["vision"])
         param_groups.append({"params": decayed, "lr": args.vision_lr})
         param_groups.append(
             {

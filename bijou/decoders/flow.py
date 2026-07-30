@@ -37,14 +37,20 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from enum import StrEnum
-from typing import cast, override
+from enum import Enum, StrEnum
+from typing import Any, cast, override
 
 import torch
 from torch import Tensor, nn
 
-from .interface import EncodedPrefix, MemoryStream, kv_stream_name
-from .nn import (
+from ..interface import (
+    ActionDecoder,
+    CollatedBatch,
+    EncodedPrefix,
+    MemoryStream,
+    kv_stream_name,
+)
+from ..nn import (
     DEFAULT_ATTENTION_BACKEND,
     AttentionBackend,
     DeviceLike,
@@ -59,6 +65,19 @@ from .nn import (
     rope_cos_sin,
     rope_inv_freq_from_params,
 )
+
+
+class SamplingMethod(Enum):
+    """ODE solver for integrating the velocity field from noise to actions.
+
+    EULER: 1 model evaluation per step, first-order (global error O(1/n)).
+    HEUN: explicit trapezoidal predictor-corrector, 2 evaluations per step,
+    second-order (O(1/n²)); the better quality-per-evaluation trade for all
+    but the very smallest step counts (Karras et al., EDM).
+    """
+
+    EULER = "euler"
+    HEUN = "heun"
 
 
 class SelfAttentionMode(StrEnum):
@@ -535,10 +554,13 @@ class ExpertLayer(nn.Module):
         return residual + hidden_states
 
 
-class ActionExpert(nn.Module):
-    """Velocity network over an action chunk, conditioned on prefix KV
-    streams, robot state and flow time. Freshly initialized (never loaded
-    from the backbone checkpoint)."""
+class FlowDecoder(ActionDecoder):
+    """Flow-matching action decoder: a velocity network over an action
+    chunk, conditioned on prefix KV streams, robot state and flow time.
+    Freshly initialized (never loaded from the backbone checkpoint).
+
+    Attribute names are frozen — they are the safetensors keys of every
+    existing checkpoint (gated by tests/test_state_dict_keys.py)."""
 
     cross_inv_freq: Tensor
     self_inv_freq: Tensor
@@ -808,3 +830,153 @@ class ActionExpert(nn.Module):
                 self.final_modulation(condition),
             )
         return self.action_out_proj(hidden_states[:, 1:, :])
+
+    @torch.no_grad()
+    def sample_actions(
+        self,
+        prefix: EncodedPrefix,
+        state: Tensor,
+        *,
+        num_steps: int = 5,
+        method: SamplingMethod = SamplingMethod.HEUN,
+        noise: Tensor | None = None,
+        generator: torch.Generator | None = None,
+    ) -> Tensor:
+        """Integrate the velocity field from τ=1 (noise) to τ=0.
+
+        The default (Heun, 5 steps = 10 model evaluations) costs the same as
+        the Euler/10 convention of π0/SmolVLA and integrates more accurately:
+        on a trained checkpoint vs a Heun-64 reference, Heun-5 halves the
+        worst-case error (0.24 vs 0.53 normalized units) at equal cost.
+        ``num_steps`` counts solver steps: Euler does 1 evaluation per step,
+        Heun 2 — and below ~4 steps Heun's corrector is wasted (use Euler if
+        you must go that low).
+
+        The model is trained on τ ∈ (0.001, 1]; Heun's final corrector
+        evaluates at exactly τ=0, a negligible extrapolation for the smooth
+        sinusoidal time embedding.
+
+        Pass ``noise`` (or a seeded ``generator``) for deterministic
+        evaluation. ``state`` and the returned chunk are NORMALIZED units
+        (the raw-unit wrapper is :meth:`predict_chunk`).
+
+        Shapes:
+          - prefix.streams[name].key/value: [B, kv_heads, P, head_dim]
+          - state: [B, state_dim]
+          - noise (when given): [B, chunk, action_dim]
+          - returns: [B, chunk, action_dim]
+        """
+        config = self.config
+        batch = state.shape[0]
+        dtype = state.dtype
+        device = state.device
+        if noise is None:
+            noise = torch.randn(
+                batch,
+                config.chunk_size,
+                config.action_dim,
+                dtype=dtype,
+                device=device,
+                generator=generator,
+            )
+        actions = noise
+        for k in range(num_steps):
+            # Exact endpoints (no accumulated float drift): τ goes
+            # 1 -> 1-1/n -> ... -> 0.
+            t = 1.0 - k / num_steps
+            t_next = 1.0 - (k + 1) / num_steps
+            dt = t_next - t
+            time = torch.full((batch,), t, dtype=dtype, device=device)
+            velocity = self(prefix, state, actions, time)
+            if method is SamplingMethod.HEUN:
+                predicted = actions + dt * velocity.to(actions.dtype)
+                time_next = torch.full((batch,), t_next, dtype=dtype, device=device)
+                velocity_next = self(prefix, state, predicted, time_next)
+                velocity = 0.5 * (velocity + velocity_next)
+            actions = actions + dt * velocity.to(actions.dtype)
+        return actions
+
+    @override
+    def loss(self, prefix: EncodedPrefix, batch: CollatedBatch[Any]) -> Tensor:
+        """Scalar flow-matching loss (see :func:`flow_matching_loss`). DDP
+        training calls the module-level function with the wrapper instead —
+        gradient hooks require the forward to go through DDP's __call__."""
+        return flow_matching_loss(self, prefix, batch)
+
+    @override
+    @torch.no_grad()
+    def predict_chunk(
+        self,
+        prefix: EncodedPrefix,
+        batch: CollatedBatch[Any],
+        *,
+        generator: torch.Generator | None = None,
+        noise: Tensor | None = None,
+        num_steps: int = 5,
+        method: SamplingMethod = SamplingMethod.HEUN,
+    ) -> Tensor:
+        """RAW-unit chunk prediction [B, chunk, action_dim]: normalize the
+        batch's state with its per-sample stats, integrate the field, and
+        unnormalize with the action stats. ``num_steps``/``method`` are
+        flow-specific knobs beyond the ActionDecoder minimum."""
+        state = (batch.state - batch.state_stats.mean) / batch.state_stats.std
+        sampled = self.sample_actions(
+            prefix,
+            state,
+            num_steps=num_steps,
+            method=method,
+            noise=noise,
+            generator=generator,
+        )
+        return (
+            sampled.float() * batch.action_stats.std[:, None, :]
+            + batch.action_stats.mean[:, None, :]
+        )
+
+
+def flow_matching_loss(
+    velocity_model: torch.nn.Module,
+    prefix: EncodedPrefix,
+    batch: CollatedBatch[Any],
+) -> Tensor:
+    """``batch`` must already be device-resident; no transfers happen here.
+    Actions/state are normalized with each sample's own dataset stats.
+
+    Episode-boundary chunks train on the full ``chunk`` length with
+    repeat-last-action targets: lerobot's delta-timestamps query clamps
+    indices to the episode range (dataset_reader._get_query_indices), so
+    positions past the end already hold the final real action — the
+    desired "reach and hold" target — and ``action_is_pad`` is deliberately
+    ignored here (decision 2026-07-29: full-chunk targets over masking;
+    the expert attends every position, so masked-out padding was still
+    silently shaping predictions). Eval stays real-steps-only.
+
+    ``velocity_model`` is the decoder (or its DDP wrapper under torchrun —
+    training forwards must go through the wrapper for gradient hooks);
+    call convention (prefix, state, noisy_actions, tau) is shared by
+    FlowDecoder, BijouModel and DDP(FlowDecoder).
+
+    Shapes (batch fields in CollatedBatch's docstring):
+      - prefix.streams[name]: key/value each [B, kv_heads, P, head_dim]
+      - velocity/target: [B, chunk, action_dim]; tau: [B]
+      - returns: scalar loss
+    """
+    actions = (
+        batch.actions - batch.action_stats.mean[:, None, :]
+    ) / batch.action_stats.std[:, None, :]
+    state = (batch.state - batch.state_stats.mean) / batch.state_stats.std
+
+    noise = torch.randn_like(actions)
+    # π0's time distribution: Beta(1.5, 1) squeezed into (0, 1).
+    tau = (
+        torch.distributions.Beta(1.5, 1.0)
+        .sample((actions.shape[0],))
+        .to(actions.device)
+    )
+    tau = tau * 0.999 + 0.001
+    tau_ = tau[:, None, None]
+    noisy_actions = tau_ * noise + (1 - tau_) * actions
+    target = noise - actions
+
+    velocity = velocity_model(prefix, state, noisy_actions, tau)
+    return (velocity.float() - target.float()).pow(2).mean()

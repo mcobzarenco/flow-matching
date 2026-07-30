@@ -23,16 +23,16 @@ Quick start::
     actions = model.sample_actions(prefix, state)
 """
 
-from .expert import ActionExpert, ExpertConfig, SelfAttentionMode
+from .decoders.flow import ExpertConfig, FlowDecoder, SelfAttentionMode
 from .interface import EncodedPrefix, MemoryStream
 from .loading import default_expert_config, from_backbone, prefix_global_layers
 from .model import BijouModel
 
 __all__ = [
-    "ActionExpert",
     "BijouModel",
     "EncodedPrefix",
     "ExpertConfig",
+    "FlowDecoder",
     "MemoryStream",
     "SelfAttentionMode",
     "default_expert_config",

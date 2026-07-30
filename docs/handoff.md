@@ -454,6 +454,31 @@ dead; next perf wins are length-bucketed batching (batch pads 452 vs
 
 ## 6. Recent code changes a fresh session must know
 
+- **Modularity refactor steps 1–4 (2026-07-30, `docs/plan.md`)** — the
+  encoder×decoder seam is real code now; no behavior change (oracle
+  1.8896/1.7237 EXACT at every step; flags-on grad-flow oracle 1.5528;
+  predict_chunk bitwise-equal to the old eval path; old checkpoints
+  load unchanged, gated by tests/fixtures/expert_keys_*.json).
+  Layout: `bijou/nn.py` (primitives; gemma4/layers.py deleted),
+  `bijou/interface.py` (MemoryStream/EncodedPrefix/StreamGeometry,
+  NormStats w/ q01/q99, PromptInputs/CameraFrame, InputsCollator,
+  the ONE Collator, CollatedBatch[I], ObservationEncoder/ActionDecoder
+  ABCs), `bijou/encoders/gemma4.py` (GemmaInputs + GemmaInputsCollator
+  + GemmaEncoder: encode, stream_geometries, param_groups — the
+  unfreeze partition moved here), `bijou/decoders/flow.py` (ex
+  expert.py: FlowDecoder née ActionExpert, attribute names frozen;
+  SamplingMethod, flow_matching_loss, sample_actions, predict_chunk
+  live here), `bijou/model.py` (composition root; backbone/expert
+  properties preserve call sites). Checkpoints: format 2 json (tagged
+  encoder/decoder configs, schedule as stream names "kv4"...) written
+  by new runs; format 1 read via the permanent synthesizer
+  (loading.expert_config_from_train_args) — NO file conversion.
+  DatasetStats now REQUIRES exact q01/q99 on the data path (ldtools
+  backfill remedy printed; corpus + local dev copies verified) and
+  parses old checkpoint tables to None (fail-fast at any future
+  quantile consumer; flow paths never read them). Tests 34 (new:
+  test_loading_schema, test_collator, test_state_dict_keys).
+
 - **Full-chunk training targets (2026-07-29, owner decision — option
   (a) repeat-last)**: `flow_matching_loss` no longer masks
   episode-boundary padding — the loss is the plain mean over all 50

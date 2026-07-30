@@ -575,15 +575,7 @@ def encode_prefix(
     model: BijouModel,
     batch: CollatedBatch[GemmaInputs],
 ) -> EncodedPrefix:
-    """``batch`` must already be device-resident. No-grad wrapper over
-    BijouModel.encode_prefix (shapes there); training with a live trunk
-    uses BijouTrainStep instead, which encodes under grad."""
-    inputs = batch.encoder_inputs
-    padding_mask = inputs.attention_mask if inputs.has_padding else None
-    with torch.no_grad():
-        return model.encode_prefix(
-            inputs.input_ids,
-            pixel_values=inputs.pixel_values,
-            image_position_ids=inputs.image_position_ids,
-            padding_mask=padding_mask,
-        )
+    """``batch`` must already be device-resident. No-grad prefix encode
+    (training with a live trunk uses BijouTrainStep instead, which encodes
+    under grad)."""
+    return model.encoder.encode(batch.encoder_inputs, with_grad=False)

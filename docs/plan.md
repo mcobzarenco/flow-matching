@@ -1,6 +1,16 @@
 # Plan: modular observation encoders × action decoders
 
-Status: **design, not implemented** (2026-07-30).
+Status: **steps 1–4 IMPLEMENTED** (2026-07-30) — the refactor landed
+without new encoder/decoder types: `bijou/nn.py` + `bijou/interface.py`
+(seam types, ABCs, shared Collator), format-2 tagged checkpoint schema
+with the permanent format-1 synthesizer, the collator split
+(`encoders/gemma4.py` strategy + quantile-carrying NormStats), and the
+GemmaEncoder/FlowDecoder composition under BijouModel. Gates held at
+every step: CPU oracle EXACT 1.8896/1.7237, state_dict key-set fixtures,
+grad-flow probe (flags-on oracle 1.5528), predict_chunk bitwise-equal to
+the old policy path, real format-1 checkpoint loads. Remaining from this
+doc: the new matrix cells (SigLIP2 encoder, AR-FAST decoder) and their
+evidence ladders (§6 step 5).
 
 ## Brief
 

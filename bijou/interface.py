@@ -16,11 +16,12 @@ export = loud error).
 from __future__ import annotations
 
 import dataclasses
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Protocol, Self
 
 import torch
-from torch import Tensor
+from torch import Tensor, nn
 
 from .nn import RopeParameters
 
@@ -225,6 +226,56 @@ class InputsCollator[I: BatchInputs](Protocol):
     ``__getstate__``."""
 
     def __call__(self, samples: list[PromptInputs]) -> I: ...
+
+
+class ObservationEncoder[I: BatchInputs](nn.Module, ABC):
+    """A trunk: inputs-collation strategy + prefix encoding + unfreeze
+    surface. Implementations declare their exported streams' static
+    geometry so a decoder can be sized without knowing the trunk."""
+
+    @abstractmethod
+    def stream_geometries(self) -> dict[str, StreamGeometry]:
+        """Static geometry per stream name; keys and order match every
+        EncodedPrefix this encoder produces."""
+
+    @abstractmethod
+    def inputs_collator(self) -> InputsCollator[I]:
+        """The encoder-specific half of collation (pickleable into
+        dataloader workers)."""
+
+    @abstractmethod
+    def encode(self, inputs: I, *, with_grad: bool) -> EncodedPrefix:
+        """Encode one collated batch of prefix inputs. ``with_grad=False``
+        runs under no_grad (eval/rollout/frozen training); True leaves
+        autograd on for live-trunk training."""
+
+    @abstractmethod
+    def param_groups(self) -> dict[str, list[nn.Parameter]]:
+        """Named unfreezable parameter groups (e.g. "text", "vision") —
+        the component-lr flags route here. Groups are exact: DDP requires
+        every grad-enabled parameter to receive gradients each step."""
+
+
+class ActionDecoder(nn.Module, ABC):
+    """An action decoder: owns its training objective and its chunk-space
+    inference. ``forward`` stays decoder-specific (the flow decoder's is
+    the velocity field; DDP wraps it directly in frozen-trunk training)."""
+
+    @abstractmethod
+    def loss(self, prefix: EncodedPrefix, batch: CollatedBatch[Any]) -> Tensor:
+        """Scalar training loss for one batch against its encoded prefix."""
+
+    @abstractmethod
+    def predict_chunk(
+        self,
+        prefix: EncodedPrefix,
+        batch: CollatedBatch[Any],
+        *,
+        generator: torch.Generator | None = None,
+        noise: Tensor | None = None,
+    ) -> Tensor:
+        """RAW-unit action chunk [B, chunk, action_dim]; normalization via
+        the batch's per-sample stats happens inside."""
 
 
 _IMAGE_KEY_PREFIX = "observation.images."

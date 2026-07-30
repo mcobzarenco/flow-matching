@@ -12,10 +12,10 @@ from __future__ import annotations
 
 import torch
 
-from bijou.expert import (
-    ActionExpert,
+from bijou.decoders.flow import (
     ExpertConfig,
     ExpertLayer,
+    FlowDecoder,
     SelfAttentionMode,
     TimeConditioning,
 )
@@ -67,9 +67,9 @@ def fabricate() -> tuple[EncodedPrefix, torch.Tensor, torch.Tensor, torch.Tensor
     return prefix, state, actions, time
 
 
-def build(time_conditioning: TimeConditioning) -> ActionExpert:
+def build(time_conditioning: TimeConditioning) -> FlowDecoder:
     torch.manual_seed(0)
-    return ActionExpert(
+    return FlowDecoder(
         tiny_config(time_conditioning),
         device="cpu",
         dtype=torch.float32,

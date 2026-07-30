@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 
 from bijou.data import DatasetStats
-from bijou.expert import ExpertConfig
+from bijou.decoders.flow import ExpertConfig
 from bijou.gemma4.config import e2b_config
 from bijou.loading import (
     CheckpointMetadata,
