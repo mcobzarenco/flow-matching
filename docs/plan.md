@@ -73,10 +73,11 @@ class EncodedPrefix:
 
 
 @dataclass(frozen=True, slots=True)
-class BatchStats:
-    """One modality's normalization stats, batched: each tensor [B, dim]
-    (dim = action_dim or state_dim). Every sample carries its own
-    dataset's stats — the per-dataset normalization mechanism."""
+class NormStats:
+    """One modality's normalization stats, per sample: each tensor
+    [B, dim] (dim = action_dim or state_dim). Every sample carries its
+    OWN dataset's stats — per-dataset normalization; nothing here is
+    aggregated across the batch."""
     mean: Tensor
     std: Tensor
     q01: Tensor
@@ -86,14 +87,14 @@ class BatchStats:
 @dataclass(frozen=True, slots=True)
 class CollatedBatch(Generic[I]):
     """Trunk-agnostic core + typed encoder-specific inputs. pin_memory/to
-    recurse into `encoder_inputs` and the BatchStats fields (all
+    recurse into `encoder_inputs` and the NormStats fields (all
     implement the same two hooks)."""
     encoder_inputs: I              # GemmaInputs | SigLip2Inputs
     state: Tensor                  # [B, state_dim]
     actions: Tensor                # [B, chunk, action_dim]
     action_is_pad: Tensor          # [B, chunk]
-    action_stats: BatchStats       # each [B, action_dim]
-    state_stats: BatchStats        # each [B, state_dim]
+    action_stats: NormStats        # each [B, action_dim]
+    state_stats: NormStats         # each [B, state_dim]
     # AR-only, filled by the collator when built with a FastTokenizer
     # (CPU-side in workers); None otherwise. The AR loss asserts loudly.
     # (Cannot be made mandatory like the quantiles: tokens depend on a
@@ -101,8 +102,50 @@ class CollatedBatch(Generic[I]):
     # only when an AR decoder will consume them.)
     action_tokens: Tensor | None       # [B, T_tok] padded token targets
     action_token_mask: Tensor | None   # [B, T_tok] True = real token
+```
+
+### Encoder inputs in practice
+
+```python
+@dataclass(frozen=True, slots=True)
+class GemmaInputs:
+    """Today's prefix fields, verbatim — produced by the chat-template
+    collator. The prompt layout (which tokens are images, where padding
+    sits, P itself) is DECIDED AT COLLATE TIME and carried by input_ids;
+    encode() just runs it."""
+    input_ids: Tensor            # [B, P]
+    attention_mask: Tensor       # [B, P]  (1 = real, 0 = right padding)
+    pixel_values: Tensor         # [images, patches, 3·patch_size²]
+    image_position_ids: Tensor   # [images, patches, 2]
+    has_padding: bool            # CPU-side, avoids a device sync
 
 
+@dataclass(frozen=True, slots=True)
+class SigLip2Inputs:
+    """Two towers, two preprocessors — and NO unified token sequence:
+    there is no P at collate time. The encoder assembles the memory
+    ([text tokens][cam_1 soft tokens][cam_2 ...]) at ENCODE time and
+    derives P and the EncodedPrefix padding mask itself. Gemma encodes
+    the image->sample layout inside input_ids (placeholder tokens);
+    SigLIP2 has no such carrier, so the mapping travels explicitly."""
+    # vision tower (NaFlex: native aspect, ragged patch counts)
+    pixel_values: Tensor          # [images, patches, 3·patch_size²]
+    pixel_attention_mask: Tensor  # [images, patches]  (True = real patch)
+    spatial_shapes: Tensor        # [images, 2]  ((h, w) in patches, for 2D pos)
+    sample_index: Tensor          # [images]  which batch sample owns each image
+    camera_slot: Tensor           # [images]  positional camera slot (sorted names)
+    # text tower (SigLIP tokenizer, 64-token max)
+    text_input_ids: Tensor        # [B, T_text]
+    text_attention_mask: Tensor   # [B, T_text]
+```
+
+(Fixed-resolution SigLIP2 variants would carry `pixel_values`
+[images, 3, H, W] with implicit patch geometry — the NaFlex form is
+shown because 640×480-native is the point of choosing it.)
+
+### The ABCs
+
+```python
 class ObservationEncoder(nn.Module, Generic[I]):
     """ABC. A trunk: collation + encode + unfreeze surface."""
     def stream_geometries(self) -> tuple[StreamGeometry, ...]: ...
@@ -327,7 +370,7 @@ Import DAG after: `train/eval/rollout -> loading -> data -> model ->
 - `CollatedBatch` generics vs pyright: verify `Generic` + frozen slots
   dataclass inference stays clean at call sites (fallback: per-encoder
   concrete batch dataclasses sharing the core by composition, no Generic).
-- Quantile stats: **mandatory in the batch** (`BatchStats.q01/q99`).
+- Quantile stats: **mandatory in the batch** (`NormStats.q01/q99`).
   DatasetStats gains q01/q99 for action+state — and can mirror the
   per-modality grouping (`action: ChannelStats, state: ChannelStats` of
   float tuples), which its to/from_dict already uses on the wire;
