@@ -20,6 +20,7 @@ from typing import override
 import torch
 from torch import Tensor, nn
 
+from .decoders.ar_fast import ARFastDecoder
 from .decoders.flow import FlowDecoder, SamplingMethod
 from .encoders.gemma4 import GemmaEncoder, GemmaInputs
 from .gemma4.model import Gemma4Model
@@ -29,7 +30,11 @@ from .interface import CollatedBatch, ObservationMemory
 class BijouModel(nn.Module):
     """One encoder + one decoder (see the module docstring)."""
 
-    def __init__(self, encoder: GemmaEncoder, decoder: FlowDecoder) -> None:
+    def __init__(
+        self,
+        encoder: GemmaEncoder,
+        decoder: FlowDecoder | ARFastDecoder,
+    ) -> None:
         super().__init__()
         self.encoder = encoder
         self.decoder = decoder
@@ -39,7 +44,15 @@ class BijouModel(nn.Module):
         return self.encoder.backbone
 
     @property
-    def expert(self) -> FlowDecoder:
+    def expert(self) -> FlowDecoder | ARFastDecoder:
+        return self.decoder
+
+    def _flow_decoder(self) -> FlowDecoder:
+        if not isinstance(self.decoder, FlowDecoder):
+            raise TypeError(
+                "this operation integrates the flow velocity field; the "
+                f"loaded decoder is {type(self.decoder).__name__}",
+            )
         return self.decoder
 
     def encode_observation(
@@ -72,15 +85,24 @@ class BijouModel(nn.Module):
     ) -> Tensor:
         """Collated batch → RAW-unit action chunk [B, chunk, action_dim]:
         encode the observation (no grad) and run the decoder's chunk-space
-        inference with the batch's per-sample stats."""
+        inference with the batch's per-sample stats. ``num_steps``/
+        ``method``/``noise`` are flow solver knobs; an AR decoder decodes
+        greedily and ignores them (``noise`` must then be None)."""
         memory = self.encoder.encode(batch.encoder_inputs, with_grad=False)
+        if isinstance(self.decoder, FlowDecoder):
+            return self.decoder.predict_chunk(
+                memory,
+                batch,
+                generator=generator,
+                noise=noise,
+                num_steps=num_steps,
+                method=method,
+            )
         return self.decoder.predict_chunk(
             memory,
             batch,
             generator=generator,
             noise=noise,
-            num_steps=num_steps,
-            method=method,
         )
 
     @torch.no_grad()
@@ -95,9 +117,9 @@ class BijouModel(nn.Module):
         generator: torch.Generator | None = None,
     ) -> Tensor:
         """Normalized-unit sampling against an already-encoded observation
-        (see
-        FlowDecoder.sample_actions for the solver contract and shapes)."""
-        return self.decoder.sample_actions(
+        (see FlowDecoder.sample_actions for the solver contract and
+        shapes); flow decoders only."""
+        return self._flow_decoder().sample_actions(
             memory,
             state,
             num_steps=num_steps,
@@ -124,4 +146,4 @@ class BijouModel(nn.Module):
           - noisy_actions: [B, chunk, action_dim]
           - time: [B]
         """
-        return self.decoder(memory, state, noisy_actions, time)
+        return self._flow_decoder()(memory, state, noisy_actions, time)

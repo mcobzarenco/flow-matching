@@ -16,11 +16,12 @@ from pathlib import Path
 import pytest
 
 from bijou.data import DatasetStats
-from bijou.decoders.flow import ExpertConfig
+from bijou.decoders.flow import ExpertConfig, FlowDecoder
 from bijou.gemma4.config import e2b_config
 from bijou.loading import (
     CheckpointMetadata,
     CheckpointTrainArgs,
+    FlowDecoderConfig,
     GemmaEncoderConfig,
     expert_config_from_architecture,
     expert_config_from_train_args,
@@ -28,7 +29,7 @@ from bijou.loading import (
     parse_decoder_config,
     parse_encoder_config,
 )
-from bijou.train import ensure_matching_expert_config
+from bijou.train import ensure_matching_decoder_config
 
 FIXTURE = Path(__file__).parent / "fixtures" / "legacy_bijou_config.json"
 
@@ -123,9 +124,11 @@ def tiny_stats(dim: int = 6) -> DatasetStats:
 
 
 def format2_meta() -> dict:
+    expert_config = legacy_expert_config()
     metadata = CheckpointMetadata(
         backbone="google/gemma-4-e2b-it",
-        expert_config=legacy_expert_config(),
+        exports=expert_config.streams,
+        decoder=flow_decoder_config_from_expert(expert_config).to_dict(),
         max_soft_tokens=140,
         normalization=tiny_stats(),
         per_dataset_normalization={"marius/rig": tiny_stats()},
@@ -140,28 +143,39 @@ def test_metadata_writes_format2_and_reads_back() -> None:
     assert meta["format"] == 2
     assert meta["encoder"]["kind"] == "gemma4"
     assert meta["decoder"]["kind"] == "flow"
+    decoder_config = parse_decoder_config(meta["decoder"])
+    assert isinstance(decoder_config, FlowDecoderConfig)
     rebuilt = expert_config_from_architecture(
         parse_encoder_config(meta["encoder"]),
-        parse_decoder_config(meta["decoder"]),
+        decoder_config,
         e2b_config(),
     )
     assert rebuilt == legacy_expert_config()
 
 
-def test_ensure_matching_expert_config_both_formats(tmp_path: Path) -> None:
+def meta_decoder(config: ExpertConfig) -> FlowDecoder:
+    """An e2b-sized decoder on the meta device: no allocation, and the
+    config guard only reads ``.config``."""
+    return FlowDecoder(config, device="meta")
+
+
+def test_ensure_matching_decoder_config_both_formats(tmp_path: Path) -> None:
     expert_config = legacy_expert_config()
-    mismatched = dataclasses.replace(expert_config, hidden_size=1024)
+    decoder = meta_decoder(expert_config)
+    mismatched = meta_decoder(
+        dataclasses.replace(expert_config, hidden_size=1024),
+    )
 
     legacy_dir = tmp_path / "legacy"
     legacy_dir.mkdir()
     (legacy_dir / "bijou_config.json").write_text(json.dumps(legacy_meta()))
-    ensure_matching_expert_config(expert_config, legacy_dir)
-    with pytest.raises(SystemExit, match="expert config mismatch"):
-        ensure_matching_expert_config(mismatched, legacy_dir)
+    ensure_matching_decoder_config(decoder, legacy_dir)
+    with pytest.raises(SystemExit, match="decoder config mismatch"):
+        ensure_matching_decoder_config(mismatched, legacy_dir)
 
     format2_dir = tmp_path / "format2"
     format2_dir.mkdir()
     (format2_dir / "bijou_config.json").write_text(json.dumps(format2_meta()))
-    ensure_matching_expert_config(expert_config, format2_dir)
-    with pytest.raises(SystemExit, match="expert config mismatch"):
-        ensure_matching_expert_config(mismatched, format2_dir)
+    ensure_matching_decoder_config(decoder, format2_dir)
+    with pytest.raises(SystemExit, match="decoder config mismatch"):
+        ensure_matching_decoder_config(mismatched, format2_dir)

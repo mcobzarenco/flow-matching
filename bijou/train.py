@@ -53,7 +53,7 @@ import os
 import random
 import sys
 import time
-from collections.abc import Iterable, Iterator
+from collections.abc import Callable, Iterable, Iterator
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, TextIO, override
@@ -72,22 +72,26 @@ from .data import (
     select_datasets,
     worker_init,
 )
+from .decoders.ar_fast import ARFastConfig, ARFastDecoder, ar_fast_loss
 from .decoders.flow import (
-    ExpertConfig,
+    FlowDecoder,
     SelfAttentionMode,
     TimeConditioning,
     flow_matching_loss,
 )
 from .encoders.gemma4 import GemmaInputs, GemmaInputsCollator
 from .gemma4.loading import load_config, resolve_checkpoint_dir
-from .interface import CollatedBatch, Collator
+from .interface import CollatedBatch, Collator, ObservationMemory, kv_stream_name
 from .loading import (
     CheckpointMetadata,
     backbone_snapshot,
+    build_gemma_encoder,
+    decoder_schema_dict,
     default_expert_config,
-    flow_decoder_config_from_expert,
     from_backbone,
     load_adapted_backbone,
+    prefix_global_layers,
+    resolve_action_codec,
 )
 from .model import BijouModel
 
@@ -115,6 +119,9 @@ class TrainArgs:
     stream_counts: tuple[int, ...]
     self_attention_mode: str
     time_conditioning: str
+    decoder: str
+    fast_tokenizer: str | None
+    ar_max_tokens: int
     expert_hidden: int
     expert_heads: int
     expert_intermediate: int
@@ -329,9 +336,17 @@ class BijouTrainStep(torch.nn.Module):
     the (autocast-bf16) K/V streams to its own dtype.
     """
 
-    def __init__(self, model: BijouModel) -> None:
+    def __init__(
+        self,
+        model: BijouModel,
+        loss_fn: Callable[
+            [torch.nn.Module, ObservationMemory, CollatedBatch[GemmaInputs]],
+            Tensor,
+        ],
+    ) -> None:
         super().__init__()
         self.model = model
+        self.loss_fn = loss_fn
 
     @override
     def forward(self, batch: CollatedBatch[GemmaInputs]) -> Tensor:
@@ -345,7 +360,7 @@ class BijouTrainStep(torch.nn.Module):
                 image_position_ids=inputs.image_position_ids,
                 padding_mask=inputs.attention_mask if inputs.has_padding else None,
             )
-        return flow_matching_loss(self.model.expert, memory, batch)
+        return self.loss_fn(self.model.expert, memory, batch)
 
 
 def _chunk_plot(
@@ -502,16 +517,11 @@ def validate(
     generator = torch.Generator(device=device).manual_seed(seed)
     for cpu_batch in probe.batches:
         batch = cpu_batch.to(device)
-        memory = encode_observation(model, batch)
-        state = (batch.state - batch.state_stats.mean) / batch.state_stats.std
-        # Eval is a measurement: Heun-10 keeps integration error well below
-        # model error (0.018 vs 0.05 mean deviation at the Heun-5 deployment
-        # default; ~1-2s extra per eval, off the training path).
-        sampled = model.sample_actions(memory, state, num_steps=10, generator=generator)
-        sampled = (
-            sampled.float() * batch.action_stats.std[:, None, :]
-            + batch.action_stats.mean[:, None, :]
-        )
+        # Decoder-agnostic: flow integrates Heun-10 (eval is a measurement —
+        # integration error well below model error; 0.018 vs 0.05 mean
+        # deviation at the Heun-5 deployment default), AR decodes greedily
+        # and ignores the solver knobs. Raw units either way.
+        sampled = model.predict_chunk(batch, generator=generator, num_steps=10)
         truth = batch.actions.float()
         valid = ~batch.action_is_pad
         error = (sampled - truth).abs()
@@ -659,7 +669,8 @@ def save_checkpoint(
     torch.save(train_state.to_payload(), checkpoint_dir / "optimizer.pt")
     metadata = CheckpointMetadata(
         backbone=args.backbone,
-        expert_config=model.expert.config,
+        exports=model.encoder.exports,
+        decoder=decoder_schema_dict(model.expert),
         max_soft_tokens=args.max_soft_tokens,
         normalization=aggregate_stats(normalizers),
         per_dataset_normalization=per_dataset_stats,
@@ -675,21 +686,21 @@ def save_checkpoint(
     return checkpoint_dir
 
 
-def ensure_matching_expert_config(
-    expert_config: ExpertConfig,
+def ensure_matching_decoder_config(
+    decoder: FlowDecoder | ARFastDecoder,
     checkpoint: Path,
 ) -> None:
-    """Loud, early failure when a checkpoint's expert differs from the CLI's
-    (strict state-dict loading would also fail, but with worse diagnostics
-    — and silently NOT fail for same-shape config differences like the
-    cross-attention schedule). Handles both checkpoint formats: format 2
-    compares decoder configs; format 1 compares the historical serialized
-    expert_config."""
+    """Loud, early failure when a checkpoint's decoder differs from the
+    CLI's (strict state-dict loading would also fail, but with worse
+    diagnostics — and silently NOT fail for same-shape config differences
+    like the cross-attention schedule). Handles both checkpoint formats:
+    format 2 compares decoder schema dicts; format 1 predates AR decoders
+    and compares the historical serialized expert_config."""
     meta = json.loads((checkpoint / "bijou_config.json").read_text())
     if "decoder" in meta:
         saved = meta["decoder"]
-        current = flow_decoder_config_from_expert(expert_config).to_dict()
-    else:
+        current = decoder_schema_dict(decoder)
+    elif isinstance(decoder, FlowDecoder):
         saved = meta["expert_config"]
         # Back-compat: fields added to ExpertConfig after a checkpoint was
         # written are absent from its serialized config; fill their defaults
@@ -697,11 +708,16 @@ def ensure_matching_expert_config(
         # additive.
         saved.setdefault("time_conditioning", TimeConditioning.ADDITIVE.value)
         current = json.loads(
-            json.dumps(dataclasses.asdict(expert_config), default=str),
+            json.dumps(dataclasses.asdict(decoder.config), default=str),
+        )
+    else:
+        raise SystemExit(
+            f"{checkpoint} is a format-1 checkpoint (flow-only era); it "
+            "cannot initialize an AR decoder",
         )
     if current != saved:
         raise SystemExit(
-            f"expert config mismatch vs {checkpoint}:\n"
+            f"decoder config mismatch vs {checkpoint}:\n"
             f"  checkpoint: {json.dumps(saved, sort_keys=True)}\n"
             f"  cli:        {json.dumps(current, sort_keys=True)}",
         )
@@ -818,6 +834,28 @@ def parse_args() -> TrainArgs:
         "input add, the default) or 'adarms' (DiT-style per-layer scale/"
         "gate, identity at init). adarms changes the architecture — a fresh "
         "expert only (cannot --init-from an additive checkpoint)",
+    )
+    parser.add_argument(
+        "--decoder",
+        choices=["flow", "ar_fast"],
+        default="flow",
+        help="action decoder: 'flow' (velocity field, the default) or "
+        "'ar_fast' (autoregressive FAST-token baseline; requires "
+        "--fast-tokenizer). The --expert-* shape flags size either decoder",
+    )
+    parser.add_argument(
+        "--fast-tokenizer",
+        default=None,
+        help="FAST tokenizer artifact: a local directory or "
+        "<user>/<repo>/<subfolder> on the hub (e.g. "
+        "mcobzarenco/bijou-checkpoints/fast_tokenizer_v1)",
+    )
+    parser.add_argument(
+        "--ar-max-tokens",
+        type=int,
+        default=96,
+        help="AR decode budget per chunk (corpus fit p50 ~52 tokens; the "
+        "budget bounds malformed generations, not training)",
     )
     parser.add_argument(
         "--expert-hidden",
@@ -1003,6 +1041,14 @@ def parse_args() -> TrainArgs:
         parser.error("--eval-samples must be >= 1")
     if raw.expert_lr <= 0:
         parser.error("--expert-lr must be > 0 (the expert always trains)")
+    if raw.decoder == "ar_fast" and raw.fast_tokenizer is None:
+        parser.error("--decoder ar_fast requires --fast-tokenizer")
+    if raw.decoder == "flow" and raw.fast_tokenizer is not None:
+        parser.error("--fast-tokenizer is only consumed by --decoder ar_fast")
+    if raw.decoder == "ar_fast" and raw.time_conditioning != "additive":
+        parser.error(
+            "--time-conditioning is flow-only (the AR decoder has no \u03c4)",
+        )
     for name, value in (("--text-lr", raw.text_lr), ("--vision-lr", raw.vision_lr)):
         if value is not None and value <= 0:
             parser.error(
@@ -1035,6 +1081,9 @@ def parse_args() -> TrainArgs:
         stream_counts=tuple(raw.stream_counts),
         self_attention_mode=raw.self_attention_mode,
         time_conditioning=raw.time_conditioning,
+        decoder=raw.decoder,
+        fast_tokenizer=raw.fast_tokenizer,
+        ar_max_tokens=raw.ar_max_tokens,
         expert_hidden=raw.expert_hidden,
         expert_heads=raw.expert_heads,
         expert_intermediate=raw.expert_intermediate,
@@ -1165,11 +1214,17 @@ def main() -> int:
         ),
     )
 
+    action_codec = (
+        resolve_action_codec(args.fast_tokenizer)
+        if args.fast_tokenizer is not None
+        else None
+    )
     collator = Collator(
         inputs=GemmaInputsCollator(str(checkpoint_dir), args.max_soft_tokens),
         instruction=args.instruction,
         camera_filter=args.cameras,
         max_cameras=args.max_cameras,
+        action_codec=action_codec,
     )
     # The explicit generator (both modes) makes the shuffle order and the
     # dataloader worker base-seeds a pure function of (--seed, rank) —
@@ -1206,30 +1261,91 @@ def main() -> int:
     )
 
     # -- model -----------------------------------------------------------
-    expert_config = default_expert_config(
-        load_config(checkpoint_dir),
-        action_dim=action_dim,
-        state_dim=state_dim,
-        stream_counts=args.stream_counts,
-        hidden_size=args.expert_hidden,
-        num_attention_heads=args.expert_heads,
-        intermediate_size=args.expert_intermediate,
-        cross_attention_heads=args.expert_cross_heads,
-        chunk_size=args.chunk_size,
-        self_attention_mode=SelfAttentionMode(args.self_attention_mode),
-        time_conditioning=TimeConditioning(args.time_conditioning),
-    )
-    model = from_backbone(
-        checkpoint_dir,
-        expert_config,
-        device=device,
-        # A live trunk needs fp32 master weights (bf16 updates at trunk
-        # learning rates vanish below bf16 resolution); its forwards run
-        # under bf16 autocast in BijouTrainStep. Frozen runs keep the
-        # checkpoint dtype (bf16) exactly as before the unfreeze flags.
-        dtype=torch.float32 if args.trunk_trained else None,
-        expert_dtype=torch.float32,
-    )
+    # A live trunk needs fp32 master weights (bf16 updates at trunk
+    # learning rates vanish below bf16 resolution); its forwards run
+    # under bf16 autocast in BijouTrainStep. Frozen runs keep the
+    # checkpoint dtype (bf16) exactly as before the unfreeze flags.
+    backbone_dtype = torch.float32 if args.trunk_trained else None
+    if args.decoder == "flow":
+        expert_config = default_expert_config(
+            load_config(checkpoint_dir),
+            action_dim=action_dim,
+            state_dim=state_dim,
+            stream_counts=args.stream_counts,
+            hidden_size=args.expert_hidden,
+            num_attention_heads=args.expert_heads,
+            intermediate_size=args.expert_intermediate,
+            cross_attention_heads=args.expert_cross_heads,
+            chunk_size=args.chunk_size,
+            self_attention_mode=SelfAttentionMode(args.self_attention_mode),
+            time_conditioning=TimeConditioning(args.time_conditioning),
+        )
+        model = from_backbone(
+            checkpoint_dir,
+            expert_config,
+            device=device,
+            dtype=backbone_dtype,
+            expert_dtype=torch.float32,
+        )
+        schedule_desc = str(expert_config.cross_attention_schedule)
+        loss_fn = flow_matching_loss
+    else:
+        assert args.fast_tokenizer is not None  # parse_args guard
+        assert action_codec is not None
+        backbone_config = load_config(checkpoint_dir)
+        streams = prefix_global_layers(backbone_config)
+        if len(args.stream_counts) != len(streams):
+            raise SystemExit(
+                f"--stream-counts has {len(args.stream_counts)} entries but "
+                f"the backbone prefix has {len(streams)} global layers "
+                f"({streams})",
+            )
+        ar_schedule = tuple(
+            kv_stream_name(stream)
+            for stream, count in zip(streams, args.stream_counts, strict=True)
+            for _ in range(count)
+        )
+        exports = tuple(
+            stream
+            for stream, count in zip(streams, args.stream_counts, strict=True)
+            if count > 0
+        )
+        encoder = build_gemma_encoder(
+            checkpoint_dir,
+            backbone_config,
+            exports=exports,
+            max_soft_tokens=args.max_soft_tokens,
+            device=device,
+            dtype=backbone_dtype,
+        )
+        ar_config = ARFastConfig(
+            hidden_size=args.expert_hidden,
+            num_attention_heads=args.expert_heads,
+            intermediate_size=args.expert_intermediate,
+            hidden_activation=backbone_config.text.hidden_activation,
+            rms_norm_eps=backbone_config.text.rms_norm_eps,
+            self_attention_rope_theta=10_000.0,
+            cross_attention_heads=args.expert_cross_heads,
+            schedule=ar_schedule,
+            tokenizer=args.fast_tokenizer,
+            vocab_total=action_codec.vocab_total,
+            max_tokens=args.ar_max_tokens,
+            state_dim=state_dim,
+            chunk_size=args.chunk_size,
+            action_dim=action_dim,
+        )
+        model = BijouModel(
+            encoder=encoder,
+            decoder=ARFastDecoder(
+                ar_config,
+                encoder.stream_geometries(),
+                action_codec,
+                device=device,
+                dtype=torch.float32,
+            ),
+        )
+        schedule_desc = str(ar_schedule)
+        loss_fn = ar_fast_loss
     trunk_counts = unfreeze_backbone(model, args)
     n_trainable = sum(p.numel() for p in model.expert.parameters())
     if is_main:
@@ -1247,9 +1363,9 @@ def main() -> int:
         print(
             f"model: {backbone_desc} "
             f"({len(model.backbone.language_model.layers)} "
-            f"layers, streams {expert_config.streams}) + fp32 expert "
-            f"({n_trainable / 1e6:.1f}M params, schedule "
-            f"{expert_config.cross_attention_schedule})",
+            f"layers, streams {model.encoder.exports}) + fp32 "
+            f"{args.decoder} decoder ({n_trainable / 1e6:.1f}M params, "
+            f"schedule {schedule_desc})",
             flush=True,
         )
         if distributed:
@@ -1311,7 +1427,7 @@ def main() -> int:
     start_step = 0
     checkpoint_to_load = args.init_from or args.resume
     if checkpoint_to_load is not None:
-        ensure_matching_expert_config(expert_config, checkpoint_to_load)
+        ensure_matching_decoder_config(model.expert, checkpoint_to_load)
         # CPU-load + copy-in: loading straight to the device transiently
         # holds a second copy of the weights next to the built module
         # (see loading.load_adapted_backbone).
@@ -1385,7 +1501,7 @@ def main() -> int:
     velocity_model: torch.nn.Module = model.expert
     train_step: torch.nn.Module | None = None
     if args.trunk_trained:
-        train_step = BijouTrainStep(model)
+        train_step = BijouTrainStep(model, loss_fn)
         if distributed:
             train_step = torch.nn.parallel.DistributedDataParallel(
                 train_step,
@@ -1489,7 +1605,7 @@ def main() -> int:
                     k: str(v) if isinstance(v, Path) else v
                     for k, v in dataclasses.asdict(args).items()
                 },
-                "expert_config": dataclasses.asdict(expert_config),
+                "decoder_config": decoder_schema_dict(model.expert),
                 "dataset": {
                     "repo_ids": sorted(per_dataset_stats),
                     "episodes": selection.total_episodes,
@@ -1513,6 +1629,7 @@ def main() -> int:
     grad_norm = torch.zeros((), device=device)
     prefetcher = DevicePrefetcher(loader, device)
     epoch = 0
+    malformed_seen = 0
     t_last = time.perf_counter()
     while step < args.steps:
         if sampler is not None:
@@ -1525,7 +1642,7 @@ def main() -> int:
                 loss = train_step(batch)
             else:
                 memory = encode_observation(model, batch)
-                loss = flow_matching_loss(velocity_model, memory, batch)
+                loss = loss_fn(velocity_model, memory, batch)
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
             grad_norm = torch.nn.utils.clip_grad_norm_(
@@ -1613,6 +1730,16 @@ def main() -> int:
                 )
                 probe_record["train_mae"] = round(train_mae, 4)
                 probe_metrics["train/mae"] = train_mae
+                if isinstance(model.expert, ARFastDecoder):
+                    # Rank-local counter delta across both probes; the
+                    # pre-registered health metric (>1% at convergence ⇒
+                    # constrained decoding).
+                    malformed_delta = model.expert.malformed_decodes - malformed_seen
+                    malformed_seen = model.expert.malformed_decodes
+                    probe_record["malformed_decodes"] = malformed_delta
+                    probe_metrics["eval/malformed_decodes"] = float(
+                        malformed_delta,
+                    )
                 if is_main:
                     assert log_file is not None
                     print(json.dumps(probe_record), flush=True)

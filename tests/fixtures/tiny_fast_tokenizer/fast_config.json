@@ -1,0 +1,7 @@
+{
+  "scale": 10.0,
+  "min_coefficient": -45,
+  "alphabet_size": 86,
+  "time_horizon": 50,
+  "action_dim": 6
+}

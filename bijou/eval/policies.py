@@ -19,6 +19,7 @@ from typing import Any, Protocol
 import torch
 from torch import Tensor
 
+from ..decoders.flow import FlowDecoder
 from ..interface import Collator
 from ..loading import CheckpointInfo, from_checkpoint
 from ..model import BijouModel, SamplingMethod
@@ -123,13 +124,18 @@ class BijouPolicy:
     @torch.no_grad()
     def predict(self, items: list[dict[str, Any]], indices: list[int]) -> list[Tensor]:
         batch = self.collator(items).to(self.device)
-        chunk = batch.actions.shape[1]
-        noise = torch.stack(
-            [
-                sample_noise(self.seed + index, (chunk, batch.actions.shape[2]))
-                for index in indices
-            ],
-        ).to(self.device)
+        # Flow integrates from per-item seeded noise (deterministic and
+        # batch-composition-independent); AR decodes greedily and takes
+        # none.
+        noise: Tensor | None = None
+        if isinstance(self.model.decoder, FlowDecoder):
+            chunk = batch.actions.shape[1]
+            noise = torch.stack(
+                [
+                    sample_noise(self.seed + index, (chunk, batch.actions.shape[2]))
+                    for index in indices
+                ],
+            ).to(self.device)
         raw = self.model.predict_chunk(
             batch,
             noise=noise,

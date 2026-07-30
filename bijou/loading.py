@@ -21,10 +21,12 @@ from pathlib import Path
 from typing import Any
 
 import torch
+from huggingface_hub import snapshot_download
 from safetensors.torch import load_file
 from torch import Tensor
 
 from .data import DatasetStats
+from .decoders.ar_fast import ARFastConfig, ARFastDecoder
 from .decoders.flow import (
     ExpertConfig,
     FlowDecoder,
@@ -32,6 +34,7 @@ from .decoders.flow import (
     TimeConditioning,
 )
 from .encoders.gemma4 import GemmaEncoder
+from .fast.codec import ActionCodec
 from .gemma4.config import Gemma4Config, LayerType
 from .gemma4.loading import load_config, load_model, resolve_checkpoint_dir
 from .interface import kv_stream_name
@@ -55,6 +58,7 @@ class DecoderKind(StrEnum):
     """Tag of an action-decoder config in bijou_config.json."""
 
     FLOW = "flow"
+    AR_FAST = "ar_fast"
 
 
 @dataclass(frozen=True, slots=True)
@@ -160,11 +164,85 @@ def parse_encoder_config(data: dict[str, Any]) -> GemmaEncoderConfig:
             return GemmaEncoderConfig.from_dict(data)
 
 
-def parse_decoder_config(data: dict[str, Any]) -> FlowDecoderConfig:
+def ar_fast_config_to_dict(config: ARFastConfig) -> dict[str, Any]:
+    return {
+        "kind": DecoderKind.AR_FAST.value,
+        "hidden_size": config.hidden_size,
+        "num_attention_heads": config.num_attention_heads,
+        "intermediate_size": config.intermediate_size,
+        "hidden_activation": config.hidden_activation,
+        "rms_norm_eps": config.rms_norm_eps,
+        "self_attention_rope_theta": config.self_attention_rope_theta,
+        "cross_attention_heads": config.cross_attention_heads,
+        "schedule": list(config.schedule),
+        "tokenizer": config.tokenizer,
+        "vocab_total": config.vocab_total,
+        "max_tokens": config.max_tokens,
+        "state_dim": config.state_dim,
+        "chunk_size": config.chunk_size,
+        "action_dim": config.action_dim,
+    }
+
+
+def ar_fast_config_from_dict(data: dict[str, Any]) -> ARFastConfig:
+    return ARFastConfig(
+        hidden_size=int(data["hidden_size"]),
+        num_attention_heads=int(data["num_attention_heads"]),
+        intermediate_size=int(data["intermediate_size"]),
+        hidden_activation=str(data["hidden_activation"]),
+        rms_norm_eps=float(data["rms_norm_eps"]),
+        self_attention_rope_theta=float(data["self_attention_rope_theta"]),
+        cross_attention_heads=int(data["cross_attention_heads"]),
+        schedule=tuple(str(name) for name in data["schedule"]),
+        tokenizer=str(data["tokenizer"]),
+        vocab_total=int(data["vocab_total"]),
+        max_tokens=int(data["max_tokens"]),
+        state_dim=int(data["state_dim"]),
+        chunk_size=int(data["chunk_size"]),
+        action_dim=int(data["action_dim"]),
+    )
+
+
+def parse_decoder_config(data: dict[str, Any]) -> FlowDecoderConfig | ARFastConfig:
     kind = DecoderKind(data["kind"])
     match kind:
         case DecoderKind.FLOW:
             return FlowDecoderConfig.from_dict(data)
+        case DecoderKind.AR_FAST:
+            return ar_fast_config_from_dict(data)
+
+
+def decoder_schema_dict(decoder: FlowDecoder | ARFastDecoder) -> dict[str, Any]:
+    """The checkpoint-schema dict of a built decoder (write side + the
+    --init-from config guard)."""
+    match decoder:
+        case FlowDecoder():
+            return flow_decoder_config_from_expert(decoder.config).to_dict()
+        case ARFastDecoder():
+            return ar_fast_config_to_dict(decoder.config)
+
+
+def resolve_action_codec(ref: str) -> ActionCodec:
+    """Load a FAST tokenizer artifact from a local directory or from the
+    hub (``<user>/<repo>/<subfolder>``, e.g.
+    mcobzarenco/bijou-checkpoints/fast_tokenizer_v1)."""
+    local = Path(ref).expanduser()
+    if (local / "fast_config.json").exists():
+        return ActionCodec.load(local)
+    parts = ref.split("/")
+    if len(parts) < 3:
+        raise SystemExit(
+            f"--fast-tokenizer {ref!r} is neither a local artifact directory "
+            "nor a hub reference of the form <user>/<repo>/<subfolder>",
+        )
+    repo_id = "/".join(parts[:2])
+    subfolder = "/".join(parts[2:])
+    downloaded = snapshot_download(
+        repo_id,
+        repo_type="model",
+        allow_patterns=[f"{subfolder}/*"],
+    )
+    return ActionCodec.load(Path(downloaded) / subfolder)
 
 
 def prefix_global_layers(config: Gemma4Config) -> tuple[int, ...]:
@@ -279,20 +357,16 @@ def from_backbone(
                 f"backbone prefix (available: {available})",
             )
 
-    backbone = load_model(
-        checkpoint_dir,
-        device="cpu" if device is None else device,
-        dtype=dtype,
-        attn_backend=attn_backend,
-        truncate_layers=config.text.first_kv_shared_layer_idx,
-    )
     if expert_dtype is None:
         expert_dtype = dtype if dtype is not None else config.dtype
-    encoder = GemmaEncoder(
-        backbone,
+    encoder = build_gemma_encoder(
+        checkpoint_dir,
+        config,
         exports=expert_config.streams,
-        processor_dir=str(checkpoint_dir),
         max_soft_tokens=max_soft_tokens,
+        device=device,
+        dtype=dtype,
+        attn_backend=attn_backend,
     )
     decoder = FlowDecoder(
         expert_config,
@@ -301,6 +375,33 @@ def from_backbone(
         dtype=expert_dtype,
     )
     return BijouModel(encoder=encoder, decoder=decoder)
+
+
+def build_gemma_encoder(
+    checkpoint_dir: Path,
+    config: Gemma4Config,
+    *,
+    exports: tuple[int, ...],
+    max_soft_tokens: int,
+    device: DeviceLike,
+    dtype: torch.dtype | None,
+    attn_backend: AttentionBackend = DEFAULT_ATTENTION_BACKEND,
+) -> GemmaEncoder:
+    """The Gemma trunk as an observation encoder: loaded truncated to its
+    non-KV-shared layer prefix, frozen."""
+    backbone = load_model(
+        checkpoint_dir,
+        device="cpu" if device is None else device,
+        dtype=dtype,
+        attn_backend=attn_backend,
+        truncate_layers=config.text.first_kv_shared_layer_idx,
+    )
+    return GemmaEncoder(
+        backbone,
+        exports=exports,
+        processor_dir=str(checkpoint_dir),
+        max_soft_tokens=max_soft_tokens,
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -376,7 +477,8 @@ class CheckpointMetadata:
     """
 
     backbone: str
-    expert_config: ExpertConfig
+    exports: tuple[int, ...]
+    decoder: dict[str, Any]
     max_soft_tokens: int
     normalization: DatasetStats
     per_dataset_normalization: dict[str, DatasetStats]
@@ -386,13 +488,13 @@ class CheckpointMetadata:
     def to_json_dict(self) -> dict[str, Any]:
         encoder = GemmaEncoderConfig(
             backbone=self.backbone,
-            exports=self.expert_config.streams,
+            exports=self.exports,
             max_soft_tokens=self.max_soft_tokens,
         )
         return {
             "format": CHECKPOINT_FORMAT,
             "encoder": encoder.to_dict(),
-            "decoder": flow_decoder_config_from_expert(self.expert_config).to_dict(),
+            "decoder": self.decoder,
             "step": self.step,
             "train_args": self.train_args,
             # Training normalized per dataset; inference must normalize
@@ -579,30 +681,55 @@ def from_checkpoint(
         },
     )
     checkpoint_dir = resolve_checkpoint_dir(info.backbone)
-    if format2:
-        expert_config = expert_config_from_architecture(
-            parse_encoder_config(meta["encoder"]),
-            parse_decoder_config(meta["decoder"]),
-            load_config(checkpoint_dir),
-        )
-    else:
-        # Format 1: synthesize from the recorded train args (the legacy
-        # path every pre-format-2 checkpoint takes, kept indefinitely).
-        expert_config = expert_config_from_train_args(
-            load_config(checkpoint_dir),
-            info.train_args,
-            action_dim=len(info.normalization.action_mean),
-            state_dim=len(info.normalization.state_mean),
-        )
-    model = from_backbone(
-        checkpoint_dir,
-        expert_config,
-        device=device,
-        dtype=dtype,
-        expert_dtype=expert_dtype,
-        attn_backend=attn_backend,
-        max_soft_tokens=info.max_soft_tokens,
+    decoder_config: FlowDecoderConfig | ARFastConfig | None = (
+        parse_decoder_config(meta["decoder"]) if format2 else None
     )
+    if isinstance(decoder_config, ARFastConfig):
+        encoder_config = parse_encoder_config(meta["encoder"])
+        encoder = build_gemma_encoder(
+            checkpoint_dir,
+            load_config(checkpoint_dir),
+            exports=encoder_config.exports,
+            max_soft_tokens=encoder_config.max_soft_tokens,
+            device=device,
+            dtype=dtype,
+            attn_backend=attn_backend,
+        )
+        decoder = ARFastDecoder(
+            decoder_config,
+            encoder.stream_geometries(),
+            resolve_action_codec(decoder_config.tokenizer),
+            attn_backend=attn_backend,
+            device=device,
+            dtype=expert_dtype,
+        )
+        model = BijouModel(encoder=encoder, decoder=decoder)
+    else:
+        if decoder_config is not None:
+            expert_config = expert_config_from_architecture(
+                parse_encoder_config(meta["encoder"]),
+                decoder_config,
+                load_config(checkpoint_dir),
+            )
+        else:
+            # Format 1: synthesize from the recorded train args (the legacy
+            # path every pre-format-2 checkpoint takes, kept indefinitely;
+            # format 1 predates AR decoders, so it is always flow).
+            expert_config = expert_config_from_train_args(
+                load_config(checkpoint_dir),
+                info.train_args,
+                action_dim=len(info.normalization.action_mean),
+                state_dim=len(info.normalization.state_mean),
+            )
+        model = from_backbone(
+            checkpoint_dir,
+            expert_config,
+            device=device,
+            dtype=dtype,
+            expert_dtype=expert_dtype,
+            attn_backend=attn_backend,
+            max_soft_tokens=info.max_soft_tokens,
+        )
     # CPU-load + copy-in for the same transient-memory reason as
     # load_adapted_backbone (the expert file is 1.6 GB fp32).
     model.expert.load_state_dict(

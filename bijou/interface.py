@@ -23,6 +23,7 @@ from typing import Any, Protocol, Self
 import torch
 from torch import Tensor, nn
 
+from .fast.codec import ActionCodec
 from .nn import RopeParameters
 
 
@@ -156,12 +157,18 @@ class CollatedBatch[I: BatchInputs]:
     action_is_pad: Tensor  # [B, chunk]  (bool)
     action_stats: NormStats  # each [B, action_dim]
     state_stats: NormStats  # each [B, state_dim]
+    # FAST token ids [B, T_tok] ([BOA, t_1..t_k, EOA] PAD-padded), present
+    # iff the Collator was built with an ActionCodec (AR decoders). No
+    # separate mask: PAD is a reserved id, exclusions derive from it, and
+    # right padding + causal attention hides PAD from real positions.
+    action_tokens: Tensor | None
 
     def all_tensors(self) -> list[Tensor]:
         """Every tensor in the batch, nested fields included (stream-sync
         bookkeeping walks these after async H2D copies)."""
         return [
             *(t for t in (self.state, self.actions, self.action_is_pad)),
+            *([self.action_tokens] if self.action_tokens is not None else []),
             *self.action_stats.tensors().values(),
             *self.state_stats.tensors().values(),
             *self.encoder_inputs.tensors().values(),
@@ -170,7 +177,8 @@ class CollatedBatch[I: BatchInputs]:
     def pin_memory(self) -> CollatedBatch[I]:
         """Called by the DataLoader when ``pin_memory=True`` (torch supports
         custom batch types via this hook); pinned memory makes the H2D
-        copies in DevicePrefetcher truly asynchronous."""
+        copies in DevicePrefetcher truly asynchronous. ``_replace_tensors``
+        covers action_tokens (a direct Tensor field) in both hooks."""
         moved = _replace_tensors(self, lambda t: t.pin_memory())
         return dataclasses.replace(
             moved,
@@ -293,6 +301,38 @@ class Collator[I: BatchInputs]:
     instruction: str | None
     camera_filter: tuple[str, ...] | None
     max_cameras: int | None
+    action_codec: ActionCodec | None = None
+
+    def _action_tokens(self, items: list[dict[str, Any]]) -> Tensor | None:
+        """Tokenize each item's action chunk (worker-side CPU), PAD-pad to
+        the batch max. Quantiles are the tokenizer-fit normalization and
+        are required — items resolved from an old checkpoint's stats table
+        cannot feed an AR decoder."""
+        codec = self.action_codec
+        if codec is None:
+            return None
+        sequences: list[list[int]] = []
+        for item in items:
+            if "action_q01" not in item:
+                raise SystemExit(
+                    f"item from {item.get('repo_id', '<unknown>')} carries no "
+                    "action quantiles — AR tokenization needs the exact "
+                    "q01/q99 the tokenizer was fitted under (backfilled "
+                    "dataset stats; old checkpoint stats tables cannot "
+                    "drive AR training)",
+                )
+            sequences.append(
+                codec.encode(
+                    item["action"].numpy(),
+                    item["action_q01"].numpy(),
+                    item["action_q99"].numpy(),
+                ),
+            )
+        width = max(len(s) for s in sequences)
+        return torch.tensor(
+            [s + [codec.pad] * (width - len(s)) for s in sequences],
+            dtype=torch.long,
+        )
 
     def cameras_of(self, item: dict[str, Any]) -> list[str]:
         """Sorted camera keys of one sample; prompt slots are positional (the
@@ -371,4 +411,5 @@ class Collator[I: BatchInputs]:
             action_is_pad=torch.stack([item["action_is_pad"] for item in items]),
             action_stats=self._stats(items, "action"),
             state_stats=self._stats(items, "state"),
+            action_tokens=self._action_tokens(items),
         )
