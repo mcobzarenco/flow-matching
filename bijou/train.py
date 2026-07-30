@@ -82,6 +82,7 @@ from .loading import (
     CheckpointMetadata,
     backbone_snapshot,
     default_expert_config,
+    flow_decoder_config_from_expert,
     from_backbone,
     load_adapted_backbone,
 )
@@ -733,6 +734,7 @@ def save_checkpoint(
     metadata = CheckpointMetadata(
         backbone=args.backbone,
         expert_config=model.expert.config,
+        max_soft_tokens=args.max_soft_tokens,
         normalization=aggregate_stats(normalizers),
         per_dataset_normalization=per_dataset_stats,
         train_args={
@@ -754,13 +756,23 @@ def ensure_matching_expert_config(
     """Loud, early failure when a checkpoint's expert differs from the CLI's
     (strict state-dict loading would also fail, but with worse diagnostics
     — and silently NOT fail for same-shape config differences like the
-    cross-attention schedule)."""
-    saved = json.loads((checkpoint / "bijou_config.json").read_text())["expert_config"]
-    # Back-compat: fields added to ExpertConfig after a checkpoint was
-    # written are absent from its serialized config; fill their defaults so
-    # an unchanged run still matches. A pre-adaRMS checkpoint is additive.
-    saved.setdefault("time_conditioning", TimeConditioning.ADDITIVE.value)
-    current = json.loads(json.dumps(dataclasses.asdict(expert_config), default=str))
+    cross-attention schedule). Handles both checkpoint formats: format 2
+    compares decoder configs; format 1 compares the historical serialized
+    expert_config."""
+    meta = json.loads((checkpoint / "bijou_config.json").read_text())
+    if "decoder" in meta:
+        saved = meta["decoder"]
+        current = flow_decoder_config_from_expert(expert_config).to_dict()
+    else:
+        saved = meta["expert_config"]
+        # Back-compat: fields added to ExpertConfig after a checkpoint was
+        # written are absent from its serialized config; fill their defaults
+        # so an unchanged run still matches. A pre-adaRMS checkpoint is
+        # additive.
+        saved.setdefault("time_conditioning", TimeConditioning.ADDITIVE.value)
+        current = json.loads(
+            json.dumps(dataclasses.asdict(expert_config), default=str),
+        )
     if current != saved:
         raise SystemExit(
             f"expert config mismatch vs {checkpoint}:\n"

@@ -13,9 +13,9 @@ ready-to-train model:
 
 from __future__ import annotations
 
-import dataclasses
 import json
 from dataclasses import dataclass
+from enum import StrEnum
 from itertools import chain
 from pathlib import Path
 from typing import Any
@@ -28,8 +28,137 @@ from .data import DatasetStats
 from .expert import ActionExpert, ExpertConfig, SelfAttentionMode, TimeConditioning
 from .gemma4.config import Gemma4Config, LayerType
 from .gemma4.loading import load_config, load_model, resolve_checkpoint_dir
+from .interface import kv_stream_name
 from .model import BijouModel
 from .nn import DEFAULT_ATTENTION_BACKEND, AttentionBackend, DeviceLike
+
+# bijou_config.json schema version. Format 2 (tagged encoder/decoder
+# configs) replaced the original layout (backbone + expert_config keys);
+# the read side synthesizes format-2 semantics from format-1 files, so
+# every existing checkpoint keeps loading without conversion.
+CHECKPOINT_FORMAT = 2
+
+
+class EncoderKind(StrEnum):
+    """Tag of an observation-encoder config in bijou_config.json."""
+
+    GEMMA4 = "gemma4"
+
+
+class DecoderKind(StrEnum):
+    """Tag of an action-decoder config in bijou_config.json."""
+
+    FLOW = "flow"
+
+
+@dataclass(frozen=True, slots=True)
+class GemmaEncoderConfig:
+    """The Gemma-trunk observation encoder as recorded in a checkpoint.
+
+    ``exports`` are backbone layer indices whose K/V become the memory
+    streams (named ``kv{layer}`` — trunk internals live HERE, never in
+    decoder configs)."""
+
+    backbone: str
+    exports: tuple[int, ...]
+    max_soft_tokens: int
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "kind": EncoderKind.GEMMA4.value,
+            "backbone": self.backbone,
+            "exports": list(self.exports),
+            "max_soft_tokens": self.max_soft_tokens,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> GemmaEncoderConfig:
+        return cls(
+            backbone=str(data["backbone"]),
+            exports=tuple(int(layer) for layer in data["exports"]),
+            max_soft_tokens=int(data["max_soft_tokens"]),
+        )
+
+    @property
+    def stream_names(self) -> tuple[str, ...]:
+        return tuple(kv_stream_name(layer) for layer in self.exports)
+
+
+@dataclass(frozen=True, slots=True)
+class FlowDecoderConfig:
+    """The flow-matching action decoder as recorded in a checkpoint.
+
+    ``schedule`` references encoder stream NAMES, one per decoder layer
+    (its length is the decoder depth). Cross-attention head_dim and rope
+    are per-stream geometry declared by the encoder, deliberately absent
+    here."""
+
+    hidden_size: int
+    num_attention_heads: int
+    intermediate_size: int
+    hidden_activation: str
+    rms_norm_eps: float
+    self_attention_mode: SelfAttentionMode
+    self_attention_rope_theta: float
+    cross_attention_heads: int
+    schedule: tuple[str, ...]
+    action_dim: int
+    state_dim: int
+    chunk_size: int
+    time_embed_dim: int
+    time_conditioning: TimeConditioning
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "kind": DecoderKind.FLOW.value,
+            "hidden_size": self.hidden_size,
+            "num_attention_heads": self.num_attention_heads,
+            "intermediate_size": self.intermediate_size,
+            "hidden_activation": self.hidden_activation,
+            "rms_norm_eps": self.rms_norm_eps,
+            "self_attention_mode": self.self_attention_mode.value,
+            "self_attention_rope_theta": self.self_attention_rope_theta,
+            "cross_attention_heads": self.cross_attention_heads,
+            "schedule": list(self.schedule),
+            "action_dim": self.action_dim,
+            "state_dim": self.state_dim,
+            "chunk_size": self.chunk_size,
+            "time_embed_dim": self.time_embed_dim,
+            "time_conditioning": self.time_conditioning.value,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> FlowDecoderConfig:
+        return cls(
+            hidden_size=int(data["hidden_size"]),
+            num_attention_heads=int(data["num_attention_heads"]),
+            intermediate_size=int(data["intermediate_size"]),
+            hidden_activation=str(data["hidden_activation"]),
+            rms_norm_eps=float(data["rms_norm_eps"]),
+            self_attention_mode=SelfAttentionMode(data["self_attention_mode"]),
+            self_attention_rope_theta=float(data["self_attention_rope_theta"]),
+            cross_attention_heads=int(data["cross_attention_heads"]),
+            schedule=tuple(str(name) for name in data["schedule"]),
+            action_dim=int(data["action_dim"]),
+            state_dim=int(data["state_dim"]),
+            chunk_size=int(data["chunk_size"]),
+            time_embed_dim=int(data["time_embed_dim"]),
+            time_conditioning=TimeConditioning(data["time_conditioning"]),
+        )
+
+
+def parse_encoder_config(data: dict[str, Any]) -> GemmaEncoderConfig:
+    kind = EncoderKind(data["kind"])
+    match kind:
+        case EncoderKind.GEMMA4:
+            return GemmaEncoderConfig.from_dict(data)
+
+
+def parse_decoder_config(data: dict[str, Any]) -> FlowDecoderConfig:
+    kind = DecoderKind(data["kind"])
+    match kind:
+        case DecoderKind.FLOW:
+            return FlowDecoderConfig.from_dict(data)
 
 
 def prefix_global_layers(config: Gemma4Config) -> tuple[int, ...]:
@@ -222,6 +351,8 @@ class CheckpointInfo:
 class CheckpointMetadata:
     """Write-side schema of ``bijou_config.json`` (bijou.train fills it,
     :func:`from_checkpoint` reads the result back as CheckpointInfo).
+    Writes format 2: tagged encoder/decoder configs derived from the
+    expert config; format-1 files remain readable via the legacy path.
 
     ``train_args`` is the full CLI record as a JSON-ready dict — prepared by
     the caller because this module must not import bijou.train's TrainArgs
@@ -230,19 +361,24 @@ class CheckpointMetadata:
 
     backbone: str
     expert_config: ExpertConfig
+    max_soft_tokens: int
     normalization: DatasetStats
     per_dataset_normalization: dict[str, DatasetStats]
     train_args: dict[str, Any]
     step: int
 
     def to_json_dict(self) -> dict[str, Any]:
-        """The exact historical bijou_config.json layout (key order included
-        — checkpoints diff cleanly across runs). Enums inside expert_config
-        still rely on ``json.dumps(default=str)``, preserving the format
-        existing checkpoints were written with."""
+        encoder = GemmaEncoderConfig(
+            backbone=self.backbone,
+            exports=self.expert_config.streams,
+            max_soft_tokens=self.max_soft_tokens,
+        )
         return {
-            "backbone": self.backbone,
-            "expert_config": dataclasses.asdict(self.expert_config),
+            "format": CHECKPOINT_FORMAT,
+            "encoder": encoder.to_dict(),
+            "decoder": flow_decoder_config_from_expert(self.expert_config).to_dict(),
+            "step": self.step,
+            "train_args": self.train_args,
             # Training normalized per dataset; inference must normalize
             # with the deployment rig's stats. "normalization" keeps the
             # count-weighted aggregate as a fallback for rigs without stats
@@ -254,8 +390,6 @@ class CheckpointMetadata:
                     self.per_dataset_normalization.items(),
                 )
             },
-            "train_args": self.train_args,
-            "step": self.step,
         }
 
 
@@ -266,9 +400,10 @@ def expert_config_from_train_args(
     action_dim: int,
     state_dim: int,
 ) -> ExpertConfig:
-    """Rebuild the expert config a training run used from its recorded args
-    (the serialized expert_config in bijou_config.json stringifies enums and
-    nested dataclasses; the train args are the clean source)."""
+    """Rebuild the expert config a format-1 checkpoint's training run used
+    from its recorded args — the legacy synthesizer's core (the serialized
+    expert_config in old bijou_config.json stringifies enums and nested
+    dataclasses; the train args are the clean source)."""
     return default_expert_config(
         backbone_config,
         action_dim=action_dim,
@@ -281,6 +416,74 @@ def expert_config_from_train_args(
         chunk_size=train_args.chunk_size,
         self_attention_mode=train_args.self_attention_mode,
         time_conditioning=train_args.time_conditioning,
+    )
+
+
+def flow_decoder_config_from_expert(expert_config: ExpertConfig) -> FlowDecoderConfig:
+    """ExpertConfig → the checkpoint-schema decoder config: schedule ints
+    become stream names; cross-attention head_dim/rope (encoder-declared
+    geometry) drop out. Pure and total — the write-side half of the
+    format-2 bridge."""
+    return FlowDecoderConfig(
+        hidden_size=expert_config.hidden_size,
+        num_attention_heads=expert_config.num_attention_heads,
+        intermediate_size=expert_config.intermediate_size,
+        hidden_activation=expert_config.hidden_activation,
+        rms_norm_eps=expert_config.rms_norm_eps,
+        self_attention_mode=expert_config.self_attention_mode,
+        self_attention_rope_theta=expert_config.self_attention_rope_theta,
+        cross_attention_heads=expert_config.cross_attention_heads,
+        schedule=tuple(
+            kv_stream_name(layer) for layer in expert_config.cross_attention_schedule
+        ),
+        action_dim=expert_config.action_dim,
+        state_dim=expert_config.state_dim,
+        chunk_size=expert_config.chunk_size,
+        time_embed_dim=expert_config.time_embed_dim,
+        time_conditioning=expert_config.time_conditioning,
+    )
+
+
+def expert_config_from_architecture(
+    encoder: GemmaEncoderConfig,
+    decoder: FlowDecoderConfig,
+    backbone_config: Gemma4Config,
+) -> ExpertConfig:
+    """Compose the (format-2) encoder + decoder configs back into the
+    expert's construction config: schedule names resolve to backbone layer
+    indices against the encoder's exports; cross-attention geometry comes
+    from the backbone's global layers. Validates the references — unknown
+    stream name or unconsumed export is a config error."""
+    by_name = dict(zip(encoder.stream_names, encoder.exports, strict=True))
+    unknown = [name for name in decoder.schedule if name not in by_name]
+    if unknown:
+        raise SystemExit(
+            f"decoder schedule references unknown stream(s) {sorted(set(unknown))}; "
+            f"the encoder exports {list(encoder.stream_names)}",
+        )
+    unused = [name for name in encoder.stream_names if name not in decoder.schedule]
+    if unused:
+        raise SystemExit(
+            f"encoder export(s) {unused} are not consumed by the decoder "
+            "schedule — remove them from the encoder config or schedule them",
+        )
+    return ExpertConfig(
+        hidden_size=decoder.hidden_size,
+        num_attention_heads=decoder.num_attention_heads,
+        intermediate_size=decoder.intermediate_size,
+        hidden_activation=decoder.hidden_activation,
+        rms_norm_eps=decoder.rms_norm_eps,
+        self_attention_mode=decoder.self_attention_mode,
+        self_attention_rope_theta=decoder.self_attention_rope_theta,
+        cross_attention_heads=decoder.cross_attention_heads,
+        cross_attention_head_dim=backbone_config.text.global_head_dim,
+        cross_attention_rope=backbone_config.text.rope_parameters[LayerType.FULL],
+        cross_attention_schedule=tuple(by_name[name] for name in decoder.schedule),
+        action_dim=decoder.action_dim,
+        state_dim=decoder.state_dim,
+        chunk_size=decoder.chunk_size,
+        time_embed_dim=decoder.time_embed_dim,
+        time_conditioning=decoder.time_conditioning,
     )
 
 
@@ -347,8 +550,10 @@ def from_checkpoint(
     (normalization stats table etc.)."""
     checkpoint = Path(checkpoint)
     meta = json.loads((checkpoint / "bijou_config.json").read_text())
+    format2 = "encoder" in meta
+    backbone_id = meta["encoder"]["backbone"] if format2 else meta["backbone"]
     info = CheckpointInfo(
-        backbone=meta["backbone"],
+        backbone=backbone_id,
         train_args=CheckpointTrainArgs.from_dict(meta["train_args"]),
         step=int(meta["step"]),
         normalization=DatasetStats.from_state_dict(meta["normalization"]),
@@ -358,12 +563,21 @@ def from_checkpoint(
         },
     )
     checkpoint_dir = resolve_checkpoint_dir(info.backbone)
-    expert_config = expert_config_from_train_args(
-        load_config(checkpoint_dir),
-        info.train_args,
-        action_dim=len(info.normalization.action_mean),
-        state_dim=len(info.normalization.state_mean),
-    )
+    if format2:
+        expert_config = expert_config_from_architecture(
+            parse_encoder_config(meta["encoder"]),
+            parse_decoder_config(meta["decoder"]),
+            load_config(checkpoint_dir),
+        )
+    else:
+        # Format 1: synthesize from the recorded train args (the legacy
+        # path every pre-format-2 checkpoint takes, kept indefinitely).
+        expert_config = expert_config_from_train_args(
+            load_config(checkpoint_dir),
+            info.train_args,
+            action_dim=len(info.normalization.action_mean),
+            state_dim=len(info.normalization.state_mean),
+        )
     model = from_backbone(
         checkpoint_dir,
         expert_config,

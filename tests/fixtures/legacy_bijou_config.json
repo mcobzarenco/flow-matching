@@ -1,0 +1,210 @@
+{
+  "backbone": "google/gemma-4-e2b-it",
+  "expert_config": {
+    "hidden_size": 1536,
+    "num_attention_heads": 8,
+    "intermediate_size": 6144,
+    "hidden_activation": "gelu_pytorch_tanh",
+    "rms_norm_eps": 1e-06,
+    "self_attention_mode": "bidirectional",
+    "self_attention_rope_theta": 10000.0,
+    "cross_attention_heads": 8,
+    "cross_attention_head_dim": 512,
+    "cross_attention_rope": {
+      "rope_type": "proportional",
+      "rope_theta": 1000000.0,
+      "factor": 1.0,
+      "partial_rotary_factor": 0.25
+    },
+    "cross_attention_schedule": [
+      4,
+      4,
+      4,
+      4,
+      9,
+      9,
+      9,
+      9,
+      14,
+      14,
+      14,
+      14,
+      14,
+      14,
+      14,
+      14
+    ],
+    "action_dim": 6,
+    "state_dim": 6,
+    "chunk_size": 50,
+    "time_embed_dim": 256,
+    "time_conditioning": "adarms"
+  },
+  "normalization": {
+    "action": {
+      "mean": [
+        4.046886920928955,
+        -33.75446319580078,
+        55.77268981933594,
+        30.67245864868164,
+        53.6524658203125,
+        10.152764320373535
+      ],
+      "std": [
+        18.56857681274414,
+        45.41136932373047,
+        39.47644805908203,
+        51.71804428100586,
+        68.10092163085938,
+        10.490633010864258
+      ]
+    },
+    "observation.state": {
+      "mean": [
+        3.978522777557373,
+        -32.19367599487305,
+        57.57185745239258,
+        31.095197677612305,
+        53.569984436035156,
+        12.818948745727539
+      ],
+      "std": [
+        18.546083450317383,
+        46.240440368652344,
+        38.361663818359375,
+        51.23649215698242,
+        67.94969177246094,
+        9.193977355957031
+      ]
+    }
+  },
+  "per_dataset_normalization": {
+    "mcobzarenco/so101_pick_place_clean": {
+      "action": {
+        "mean": [
+          1.4819716215133667,
+          -36.11656188964844,
+          43.98069763183594,
+          53.50352096557617,
+          66.2265396118164,
+          10.923566818237305
+        ],
+        "std": [
+          10.158525466918945,
+          44.32512283325195,
+          39.60983657836914,
+          24.64327621459961,
+          40.66754150390625,
+          9.115854263305664
+        ]
+      },
+      "observation.state": {
+        "mean": [
+          1.376397967338562,
+          -34.254249572753906,
+          46.027835845947266,
+          53.97844314575195,
+          66.22583770751953,
+          12.550904273986816
+        ],
+        "std": [
+          10.14680004119873,
+          45.543617248535156,
+          38.693115234375,
+          24.173934936523438,
+          40.70050811767578,
+          8.099103927612305
+        ]
+      }
+    },
+    "mcobzarenco/so101_pick_place_v2": {
+      "action": {
+        "mean": [
+          4.313668251037598,
+          -33.50877380371094,
+          56.99919509887695,
+          28.297758102416992,
+          52.3446159362793,
+          10.072591781616211
+        ],
+        "std": [
+          19.21367835998535,
+          45.51582717895508,
+          39.25971603393555,
+          53.19718551635742,
+          70.2135238647461,
+          10.62020492553711
+        ]
+      },
+      "observation.state": {
+        "mean": [
+          4.249174118041992,
+          -31.979351043701172,
+          58.77256774902344,
+          28.715070724487305,
+          52.253623962402344,
+          12.846829414367676
+        ],
+        "std": [
+          19.189748764038086,
+          46.30705261230469,
+          38.12686538696289,
+          52.70024108886719,
+          70.04790496826172,
+          9.300016403198242
+        ]
+      }
+    }
+  },
+  "train_args": {
+    "train_data": [
+      "/home/ubuntu/datasets/mcobzarenco/so101_pick_place_clean",
+      "/home/ubuntu/datasets/mcobzarenco/so101_pick_place_v2"
+    ],
+    "exclude": [],
+    "fps": null,
+    "holdout_episodes": 0.1,
+    "split_seed": 0,
+    "backbone": "google/gemma-4-e2b-it",
+    "save_dir": "outputs/train/bijou_ft_rig_from_adarms50k_ddp2",
+    "init_from": "outputs/train/bijou_adarms_bidir_h1536_40k_ddp2/step_050000",
+    "resume": null,
+    "instruction": null,
+    "cameras": null,
+    "max_cameras": null,
+    "max_soft_tokens": 140,
+    "stream_counts": [
+      4,
+      4,
+      8
+    ],
+    "self_attention_mode": "bidirectional",
+    "time_conditioning": "adarms",
+    "expert_hidden": 1536,
+    "expert_heads": 8,
+    "expert_intermediate": 6144,
+    "expert_cross_heads": 8,
+    "chunk_size": 50,
+    "batch_size": 64,
+    "steps": 10000,
+    "expert_lr": 3e-05,
+    "text_lr": null,
+    "vision_lr": null,
+    "warmup_steps": 100,
+    "weight_decay": 1e-05,
+    "grad_clip": 10.0,
+    "log_every": 10,
+    "eval_every": 250,
+    "save_every": 1000,
+    "num_workers": 16,
+    "prefetch_factor": 8,
+    "video_decoder_cache": 8,
+    "device": "cuda",
+    "seed": 7,
+    "eval_samples": 256,
+    "eval_seed": 0,
+    "wandb_project": "bijou-dev",
+    "wandb_run_name": "ft-rig-from-adarms50k-ddp2"
+  },
+  "step": 5000
+}
