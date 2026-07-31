@@ -51,6 +51,7 @@ import json
 import math
 import os
 import random
+import shutil
 import sys
 import time
 from collections.abc import Callable, Iterable, Iterator
@@ -639,6 +640,18 @@ def aggregate_stats(normalizers: Normalizers) -> DatasetStats:
     )
 
 
+def link_or_copy(source: Path, destination: Path) -> None:
+    """Hardlink ``source`` at ``destination``, falling back to a plain copy
+    across filesystems. Used for inherited (frozen) backbone snapshots:
+    byte-identical content, so ten checkpoints of a frozen-trunk run cost
+    one file's disk."""
+    destination.unlink(missing_ok=True)
+    try:
+        os.link(source, destination)
+    except OSError:
+        shutil.copyfile(source, destination)
+
+
 def save_checkpoint(
     model: BijouModel,
     args: TrainArgs,
@@ -647,16 +660,35 @@ def save_checkpoint(
     optimizer: torch.optim.Optimizer,
     scheduler: torch.optim.lr_scheduler.LRScheduler,
     step: int,
+    *,
+    adapted_backbone_source: Path | None,
 ) -> Path:
+    """Write one self-contained checkpoint directory.
+
+    Invariant: ``backbone.safetensors`` is present iff the model's backbone
+    differs from pristine ``HF(args.backbone)`` — either because this run
+    trains it (snapshot the live fp32 masters) or because it was INHERITED
+    from an adapted checkpoint via --init-from/--resume with the unfreeze
+    flags off (``adapted_backbone_source``; the trunk is then frozen and
+    byte-identical to that file, so it is linked/copied rather than
+    re-serialized). Conditioning only on ``args.trunk_trained`` paired a
+    decoder fine-tuned against adapted features with the pristine trunk on
+    load — silently (found 2026-07-31, ft-rig arm F)."""
     checkpoint_dir = args.save_dir / f"step_{step:06d}"
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
     save_file(model.decoder.state_dict(), str(checkpoint_dir / "expert.safetensors"))
     if args.trunk_trained:
         # Adapted trunks ride along; from_checkpoint/--init-from detect the
-        # file by presence. Frozen runs write exactly the historical layout.
+        # file by presence. Frozen-pristine runs write exactly the
+        # historical layout.
         save_file(
             backbone_snapshot(model),
             str(checkpoint_dir / "backbone.safetensors"),
+        )
+    elif adapted_backbone_source is not None:
+        link_or_copy(
+            adapted_backbone_source,
+            checkpoint_dir / "backbone.safetensors",
         )
     # Adam moments etc. (~2x expert params) make --resume a lossless
     # continuation; --init-from ignores this file.
@@ -1415,6 +1447,7 @@ def main() -> int:
     )
 
     start_step = 0
+    adapted_backbone_source: Path | None = None
     checkpoint_to_load = args.init_from or args.resume
     if checkpoint_to_load is not None:
         ensure_matching_decoder_config(model.decoder, checkpoint_to_load)
@@ -1435,6 +1468,10 @@ def main() -> int:
         # cont45k -> unfreeze continuation path).
         if (checkpoint_to_load / "backbone.safetensors").exists():
             load_adapted_backbone(model, checkpoint_to_load)
+            if not args.trunk_trained:
+                # Frozen inherited trunk: every checkpoint this run saves
+                # must carry the snapshot too (see save_checkpoint).
+                adapted_backbone_source = checkpoint_to_load / "backbone.safetensors"
             if is_main:
                 print(
                     f"loaded ADAPTED backbone weights from "
@@ -1736,6 +1773,7 @@ def main() -> int:
                     optimizer,
                     scheduler,
                     step,
+                    adapted_backbone_source=adapted_backbone_source,
                 )
                 print(f"saved {path}", flush=True)
         epoch += 1
