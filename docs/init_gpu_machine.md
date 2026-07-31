@@ -2,9 +2,10 @@
 
 Audience: an agent (or human) with **no prior context** tasked with
 bringing up a fresh cloud GPU instance (e.g. Lambda, Ubuntu 24.04) until
-it can run Bijou training. What Bijou is: see `README.md`. Operational
-state (results, machines, conventions): `docs/handoff.md`. This doc is
-self-contained for the setup task itself.
+it can run Bijou training. What Bijou is: see `README.md` and
+`docs/architecture.md`; operating conventions:
+`docs/working-together.md`. This doc is self-contained for the setup
+task itself.
 
 **Done means**: `nvidia-smi` shows all GPUs; `uv run` works in
 `~/flow-matching`; the three community dataset collections and the
@@ -196,7 +197,7 @@ uv run torchrun --standalone --nproc-per-node=4 -m bijou.train \
     --holdout-episodes 0.1 --split-seed 0 \
     --device cuda \
     --steps 300 --batch-size 64 --num-workers 12 \
-    --lr 1e-4 --warmup-steps 100 \
+    --expert-lr 1e-4 --warmup-steps 100 \
     --log-every 10 --eval-every 200 --eval-samples 64 --save-every 200 \
     --seed 0 --save-dir outputs/train/smoke_test
 ```
@@ -210,8 +211,9 @@ config + weights + optimizer. Delete `outputs/train/smoke_test` after.
 ## 5. Conventions for real runs (the short version)
 
 - Always under **tmux**, always `2>&1 | tee ~/<run>_console.log`, via a
-  launcher script in `~` (current launcher examples are described in
-  `docs/handoff.md`).
+  launcher script in `~` (local copies of past launchers live in the
+  main checkout's gitignored `outputs/`; header conventions in
+  `docs/working-together.md`).
 - Always `MALLOC_ARENA_MAX=2 MALLOC_MMAP_THRESHOLD_=131072` (glibc
   arena bloat with many dataloader workers; train.py itself caps the
   lerobot video-decoder cache via `LEROBOT_VIDEO_DECODER_CACHE_SIZE=4`).
@@ -222,7 +224,7 @@ config + weights + optimizer. Delete `outputs/train/smoke_test` after.
   while a training run is in flight** (dataloader workers re-import
   code from disk mid-run).
 - CLI semantics that matter (holdout/eval/resume-vs-init-from):
-  `docs/handoff.md` §5.
+  `docs/architecture.md` §5.
 
 ## 6. Failure modes seen in practice
 
@@ -230,6 +232,16 @@ config + weights + optimizer. Delete `outputs/train/smoke_test` after.
 - `nvidia-smi` worked during setup but fails after ("Driver/library
   version mismatch") → dist-upgrade bumped the preinstalled driver's
   userspace; reboot loads the matching kernel module.
+- **CUDA "Error 802: system not yet initialized" while `nvidia-smi`
+  answers** (H100 VMs) → a driver newer than Lambda's matched pair
+  fabric-probes NVLinked GPUs and gates CUDA on nvidia-fabricmanager,
+  which cannot run without an exposed NVSwitch. Fix: purge nvidia-*,
+  install the matched `nvidia-driver-580-open` + fabricmanager pair,
+  `apt-mark hold` both; if fabric registration never completes, add
+  `NVreg_NvLinkDisable=1` (GPUs become PCIe peers; NCCL allreduce
+  verified bit-exact). A dead fabricmanager does NOT silently break
+  DDP — collectives complete or fail loudly. `init-vm-gpu.sh` holds
+  the NVIDIA stack before dist-upgrade for exactly this reason.
 - 401/403 fetching the backbone → token's account hasn't accepted the
   Gemma license (§2).
 - `wandb.init` permission error despite a correct `~/.netrc` → the

@@ -9,12 +9,15 @@ miscalibrated community rigs trainable together; the ultimate target is
 the owner's physical SO-101.
 
 This document is the deep reference for the model and training system as
-they exist, plus the proposed changes we are evaluating (§9). Operational
-state (what ran, what scored, machines) lives in `handoff.md`; per-module
-contracts live in docstrings; the import DAG and coding rules in
-`code-styleguide.md`. Package layout (strict downward-only imports):
-`train`/`eval`/`rollout` → `loading` → `data` → `model` → `expert` →
-`gemma4`.
+they exist, the measured results that shaped them (§7), and the proposed
+changes under evaluation (§8). Per-module contracts live in docstrings;
+code conventions in `code-styleguide.md`; collaboration/operating
+conventions in `working-together.md`. Transient state (in-flight runs,
+machine inventory) lives in wandb, the HF hub, and the chat — not in
+docs. Package layout (strict downward-only imports):
+`train`/`eval`/`rollout` → `loading` → `data` → `model` →
+`encoders`/`decoders` → `gemma4`, with `interface.py` as the
+encoder×decoder seam and `model.py` the composition root.
 
 ```
 [instruction][cam_1]..[cam_k][instruction]     chat-templated user turn
@@ -23,11 +26,15 @@ contracts live in docstrings; the import DAG and coding rules in
   K/V of GLOBAL prefix layers {4, 9, 14}   ObservationMemory, encoded once
       │  cross-attention (query-only, backbone geometry)
       ▼
-ActionExpert (404M fp32): 16 layers, each =
+FlowDecoder (404M fp32): 16 layers, each =
   cross-attn(one scheduled stream) → self-attn([state][a_1..a_50]) → MLP
       │  velocity of the chunk at flow time τ
       ▼
 Heun integration τ: 1 → 0  →  50-action chunk
+
+(An autoregressive FAST-token decoder shares the seam and the sandwich
+blocks — suffix `[state][BOA][t_1..t_k]`, grammar-constrained greedy
+decode; §8.3.)
 ```
 
 ## 0. Tensor dimension notation
@@ -96,7 +103,7 @@ it caches that layer's K/V and skips its attention/MLP and all deeper
 layers (dead compute for a K/V export; ~1/15 of decoder FLOPs saved, more
 if the schedule stops lower). `KVCache.update()` is functional (no
 in-place writes), so this same path is autograd-transparent when the
-trunk is trained (§9.1).
+trunk is trained (§8.1).
 
 **Prompt = instruction sandwich** `[task][cam_1..N][task]` in one
 chat-templated user turn, right-padded across a batch. Under causal
@@ -152,7 +159,7 @@ inputs, and slow visual context is decoupled from fast proprioception.
 (geometric periods 4e-3..4, π0's unit-interval choice) → MLP → added to
 the action-token embeddings at the input; the state token gets no time;
 layers are unconditioned. An alternative per-layer adaRMS scheme is
-implemented and under evaluation (§9.2).
+implemented and under evaluation (§8.2).
 
 Params live ~50% in the MLPs, ~33% in cross-attention (8 heads × 512
 over the residual 1024), ~17% in self-attention.
@@ -174,11 +181,11 @@ therefore up-weights the noisy regime during training.
 MSE of the expert's velocity against u over the FULL chunk: episode-
 boundary chunks carry repeat-last-action targets (lerobot's delta-
 timestamps query clamps indices to the episode range, so tail positions
-hold the final real action — verified elementwise on v1). Decision
-2026-07-29, replacing the earlier masked-out padding: the expert attends
-every chunk position (directly under bidirectional self-attention), so
-masked padding still shaped predictions invisibly, and "hold the last
-action" is the correct post-completion behavior. The scan
+hold the final real action — verified elementwise on v1). This replaced
+masked-out padding: the expert attends every chunk position (directly
+under bidirectional self-attention), so masked padding still shaped
+predictions invisibly, and "hold the last action" is the correct
+post-completion behavior. The scan
 (`reports/episode_lengths.json`) sized the alternative — full-chunk-only
 start sampling — at ~12% of start positions lost; rejected. Eval still
 scores real steps only. Sampling integrates τ from 1
@@ -191,7 +198,7 @@ embedding).
 Sampling analyses (§8) show the field is rougher than assumed:
 Heun-5→30 recovers ~1 MAE (integration error ≈ model-error floor at
 Heun-10), and across-noise-draw std (~5.9°) exceeds single-draw error —
-mean-of-N draws is the single largest known accuracy lever (§9.7).
+mean-of-N draws is the single largest known accuracy lever (§8.7).
 
 ## 4. Data and normalization
 
@@ -216,7 +223,7 @@ aggregate fallback; inference normalizes with the deployment rig's stats
 
 **Quantile stats** (q01/q10/q50/q90/q99, action+state) ride in the same
 `meta/stats.json` and the same per-item mechanism — needed by the FAST
-tokenizer (§9.3). lerobot's native dataset-level quantiles are a
+tokenizer (§8.3). lerobot's native dataset-level quantiles are a
 count-weighted *mean of per-episode quantiles*, which is WRONG (quantiles
 don't compose by averaging; extremes regress toward the median, measured
 −54° vs exact −120° on rig v2); the corpus is corrected to exact
@@ -252,27 +259,75 @@ the expert-only wrap, byte-identical. See §9.1.
 `bijou.eval --seed` would, sharded and all-reduced, CPU-resident.
 
 **Checkpoint schema** (`loading.py` dataclasses): `expert.safetensors` +
-`bijou_config.json` (backbone id, full ExpertConfig, per-dataset +
-aggregate stats, train args, step); `optimizer.pt` for lossless
-`--resume`; and `backbone.safetensors` (bf16 trunk snapshot) iff the trunk
-was trained. Old checkpoints load unchanged (new config fields default at
-the parse edge; `ensure_matching_expert_config` backfills defaults into
-the saved dict before diffing). `--init-from` = warm start (config-guarded,
-optimizer ignored); `--resume` = lossless continuation (optimizer +
-scheduler; CLI lr ignored; cosine re-evaluated over the new `--steps`, so
-extending re-heats LR — the owner accepts this when reusing moments, else
-prefers init-from + warmup).
+`bijou_config.json` (format 2: tagged encoder/decoder configs with
+stream-name schedules, per-dataset + aggregate stats, train args, step);
+`optimizer.pt` for lossless `--resume`; and `backbone.safetensors`
+(bf16 trunk snapshot) **iff the checkpoint's trunk differs from pristine
+HF — trained in-run OR inherited frozen from an adapted `--init-from`**
+(the inherited file is hardlinked/copied, byte-identical; conditioning
+on trained-in-this-run-only once shipped fine-tunes that silently loaded
+the pristine trunk — the invariant is test-gated). Directories are
+self-contained: loading one must need no other directory. Format-1
+checkpoints load via a permanent train-args synthesizer, no file
+conversion; guarded by state-dict key fixtures. `--init-from` = warm
+start (decoder config-guarded, loud SystemExit; NOT guarded:
+`--max-soft-tokens`, `--backbone` — known footguns); `--resume` =
+lossless continuation (CLI lr ignored, printed; cosine re-evaluated
+over the new `--steps`, so extending re-heats LR — accepted when
+reusing moments, else init-from + warmup).
+
+**Holdout/eval CLI semantics.** `--holdout-episodes F --split-seed S`:
+deterministic per-dataset episode split, a pure function of (S,
+repo_id, count, F); train loads the train side; `bijou.eval --episodes
+{all,train,holdout}` with the same flags reproduces it exactly.
+`--eval-samples` (required when holdout > 0) sizes the two in-training
+probes; `--eval-seed` is deliberately separate from `--seed`. Eval
+always scores the state-copy baselines alongside; `--fps` filters
+change the concatenated frame indexing, so numbers are only comparable
+between same-filter runs. Rollout: `--stats-repo-id` must be a repo id
+the checkpoint trained on (per-dataset table lookup); AR decoding
+additionally requires its quantiles.
 
 **Regression gates.** `check.py` (ruff + pyright + pytest, final verdict
-line only). The **loss oracle**: a 2-step tiny-backbone CPU run must
-reproduce **1.8896 / 1.7237** exactly after any change near the math
-(tied to the current tiny-gemma4). gemma4 changes additionally gate on
-`verify_parity`. Any new architecture path records its own oracle loudly.
+line only). The **loss oracles** — a 2-step tiny-backbone CPU run after
+any change near the math (tied to the current tiny-gemma4; regenerate ⇒
+re-baseline loudly):
+
+    uv run python -m bijou.train --train-data /home/marius/w/community_dataset_v1_v3 \
+      --backbone outputs/tiny-gemma4 --expert-hidden 64 --expert-heads 2 \
+      --expert-intermediate 128 --expert-cross-heads 2 --stream-counts 1 1 2 \
+      --steps 2 --batch-size 2 --num-workers 2 --log-every 1 --eval-every 5 \
+      --save-every 1000 --eval-samples 4 --device cpu --seed 0 \
+      --save-dir outputs/train/oracle_tmp
+
+must reproduce **flow 1.8896 / 1.7237** exactly; with `--decoder ar_fast
+--fast-tokenizer tests/fixtures/tiny_fast_tokenizer` added, **AR
+4.8803 / 4.8656**. Flags-on (unfreeze) oracles live in
+`outputs/probe_unfreeze_gradflow.py` (flow 1.5528, AR 4.8689 — asserted
+in the probe). Regenerate the tiny backbone with
+`uv run python -m bijou.gemma4.testing --output outputs/tiny-gemma4`
+(per checkout; changing it re-baselines every oracle). gemma4 changes
+additionally gate on `verify_parity` (needs a big GPU). Any new
+architecture path records its own oracle loudly.
 
 **Step split** (H100, batch 64, measured): observation encode 79.3% / expert
 fwd 4.6% / bwd 15.4% / opt 0.7%. The frozen backbone forward dominates —
 expert width is nearly free wall-clock; the perf wins are prefix-side
-(§9.8).
+(§8.8). Unfrozen-text steps run ~2× frozen at matched batch; live-trunk
+DDP runs measured 69–79 GB/rank (batch 32–64, H100) —
+`PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` helps.
+
+**Hard-won library constraints** (do not re-learn): lerobot workers
+spawn, never fork (torchcodec is fork-unsafe); decoder cache capped
+(default OOMs hosts); `tolerance_s = 0.5/fps`; corrupt community videos
+strike randomly (loud substitution with bounded retries); the
+pretrained-branch `make_pre_post_processors` drops dataset_stats.
+torch: pickled CPU tensors cost 1 shm fd each (DatasetStats stays
+plain floats; file_system sharing set worker-side); SDPA with
+head_dim > 256 needs materialized-KV or silently runs ~3× slower;
+fused-SDPA vs additive-mask paths differ at bf16 ULP scale;
+`Module.__getattr__` stubs return `Tensor | Module` (narrow after
+ModuleList iteration); `Linear.bias` stubs lie (cast with comment).
 
 ## 6. Inference and deployment
 
@@ -282,52 +337,127 @@ RTX 3000 Ada (8 GiB) fits the bf16 backbone (4.77 GiB) + bf16 expert; peak
 tick rate limiter (not a safety system); camera names are positional
 prompt slots; task string must match the recorded instruction. Deployment
 always fine-tunes on rig data first (zero-shot cross-rig transfer is the
-wall, §8) — so the operative metric for any change is fine-tuned-then-
+wall, §7) — so the operative metric for any change is fine-tuned-then-
 scored rig MAE, not zero-shot.
 
-## 7. Empirical grounding (what shaped the design)
+**Artifacts.** Checkpoints + tokenizers:
+[`mcobzarenco/bijou-checkpoints`](https://huggingface.co/mcobzarenco/bijou-checkpoints)
+(seed checkpoints keep `optimizer.pt`, the rest are weights-only).
+Datasets: three community collections + the two rig repos
+(`mcobzarenco/so101_pick_place_{v2,clean}`, private) — all with
+backfilled exact quantiles; boxes mirror them under
+`~/datasets/mcobzarenco/`. Runs log to wandb `bijou-dev`
+(entity `aristotle1337`). Laptop dev data:
+`/home/marius/w/community_dataset_v1_v3` (3 datasets, 44k frames — the
+oracle corpus).
 
-Open-loop chunk MAE (raw degrees, Heun-10, 256 frames, seed 0). Baselines:
-state-copy 11.10 train / 10.30 community-holdout / 9.54 owner-rig.
+## 7. Empirical grounding and results ledger
 
-- **Scale dominates architecture.** A matched 4-arm ablation (causal vs
-  bidirectional, 140 vs 280 soft tokens, 4-4-8 vs all-deepest streams;
-  20k→40k) moved 0.6–1.2 MAE per doubling of steps while no architecture
-  variant separated from control where it counts. Kept: causal
-  (bidirectional catastrophic cross-rig, 17.1 vs 13.3), 140 tokens
+All numbers: open-loop chunk MAE, raw degrees, 256 frames, seed 0
+(Heun-10 for flow; AR decodes greedily), state-copy baselines scored on
+the identical frames. **Comparability rules**: numbers only compare
+within one frame set — the fps-30-filtered set and the unfiltered
+legacy set index frames differently; token-level metrics never cross
+tokenizer versions; the 256-frame probe has a ±0.3 noise floor and the
+in-run probe matches offline eval to ~0.01 when settings agree (per-
+rank sharding once read ~0.3 high on the unftext r2 lineage — trust
+offline for decisions). Full reports/JSONs in `reports/`; superseded
+run narratives live in git history.
+
+### Ledger — fps-30 frame set (current mainline; copy 11.50 holdout / 10.72 train / 12.00 rig-holdout-3403)
+
+| checkpoint | comm holdout | rig holdout (3403) | note |
+|---|---|---|---|
+| adaRMS flow 40k (`bijou_adarms_bidir_h1536_40k_ddp2`) | 8.07 | 15.64 | from-scratch, bidir, h1536, frozen trunk |
+|  … resumed 50k | 7.80 h10 / 7.72 h30 | — | Heun-gap collapse = adaRMS signature |
+|  … resumed 100k | 7.11 h10 / 6.92 h30 | 14.55 | train 7.14 ≈ holdout: zero episode-fit gap when trunk frozen |
+| AR FAST v2, frozen trunk, 10k | 8.34 | — | ≈ flow@40k quality in 10k steps; plateaued ~8.0 |
+| **AR FAST v2 + live text trunk, 50k** (`bijou_ar_fast_v2_unftext2_50k_ddp2`) | **5.96** (first_mae 2.06) | **11.69** (first_mae 3.99) | decoder 1e-4 / text 2.5e-5; first pretrain to beat copy on rig holdout; train probe ~4.9 = episode-fit gap (live trunk memorizes scenes) |
+
+The live-trunk AR line is the project's strongest evidence: −14% vs
+the flow lineage's best on ¼ the samples, `first_mae` beating copy on
+community (2.06 vs 2.73), and the frozen-trunk AR plateau at ~8.0
+locates the gain in the trunk, not the decoder. Attribution is still
+2-factor (live trunk × AR objective; flow-side unfreeze at 2e-5 was
+only a modest win — legacy table below). LR sensitivity is extreme:
+6e-4/3e-4 destroyed a warm 8.34 init to 15.95 within 1k steps (worse
+than from-scratch at matched steps — the trunk outran the decoder);
+1e-4/2.5e-5 dipped to 10.07 then delivered.
+
+Rig fine-tunes from the AR-unftext 50k base (5k steps, decoder 2e-5,
+frozen-vs-1e-5 trunk arms): **no measurable holdout headroom** — both
+arms' minima (11.51 / 11.02 @ step 500) tie the base's 11.69 within
+the 5–6-episode holdout's noise, then memorize (train MAE → 1.2 by
+5k). Unlike every earlier ft, this base trained on the rig data — the
+pretrain banked the ft's gains. The effective sample unit is episodes
+(57 on the rig), not frames; a live trunk opens a train/holdout gap at
+~13% of a "frame epoch" while the frozen-trunk flow run closed 100k at
+zero gap.
+
+### Ledger — legacy (unfiltered) frame set (copy 10.30 holdout / 11.10 train / 9.54 rig-clean-256 / 11.39–12.92 rig-both)
+
+| checkpoint | comm holdout | rig | note |
+|---|---|---|---|
+| mainline cont45k (frozen, ~27M samples) | 6.85 | 11.71 clean-256 / 18.76 both-256 | best frozen-trunk flow; still loses to copy cross-rig |
+| unftext r2 15k / 25k (flow, text-lr 2e-5 from cont45k) | 6.47 / 6.49 | 18.18 / 17.97 both-256 | modest monotone win both sides; plateaued |
+| rig ft `ft_marius_4k_init45k` @4k | — | 10.38 (h30: 10.10) vs copy 11.39 | first honest rig-holdout copy-crossing; init45k beat init40k by 0.22 (pretrain carries downstream) |
+
+(Unexplained: rig-holdout copy reads 12.00 on the fps-30 ledger vs
+11.39 on the ft round despite nominally identical frames — verify
+frame-set identity before any cross-ledger rig comparison.)
+
+### Findings that shaped the design
+
+- **Scale dominates architecture.** The matched 4-arm ablation (causal
+  vs bidirectional, 140 vs 280 soft tokens, 4-4-8 vs all-deepest;
+  20k→40k, `docs/ablation_20k_results.md`) moved 0.6–1.2 MAE per
+  doubling of steps; no variant separated from control where it counts.
+  Kept: causal (bidir catastrophic cross-rig, 17.1 vs 13.3 — and the
+  bidir adaRMS run's rig failure at scale echoes it), 140 tokens
   (280 = 1.9×/step, edge reversed), 4-4-8 (streams0016's rig edge is a
-  hint, §9.4).
-- **Mainline lineage.** cont45k (v1v2v3, ~27M cumulative samples, frozen)
-  scores 6.85 community-holdout / **11.71 owner-rig** (best frozen rig,
-  vs copy 9.54 — still loses cross-rig). Episode-level generalization is
-  ~free; cross-rig is the wall.
-- **The wall is grounding, not action space.** Re-anchor probe: cross-rig
-  error is a frame-dependent *level* mis-estimation (chunk shape is
-  right); a per-frame constant offset would beat copy, but no single
-  per-rig offset does → the model mis-localizes the working point
-  *visually* on an unseen rig. This **falsified delta-actions** as the
-  fix (§9.9) and pointed at the representation.
-- **Acuity probe:** metric position is present at the expert's K/V inputs
-  but thin (K4 10.8 → K14 17.3 px in-scene; 25–32 px cross-background)
-  and NOT object-centric (task-object motion ≈ 1.9× a background patch's
-  at K14). Motivates trunk adaptation (§9.1).
+  hint, §8.4).
+- **The wall is grounding, not action space.** Re-anchor probe:
+  cross-rig error is a frame-dependent *level* mis-estimation (chunk
+  shape is right; a per-frame oracle offset beats copy, no per-rig
+  offset recovers anything) → the model mis-localizes the working point
+  visually on unseen rigs. **Falsified delta-actions** (§8.9); pointed
+  at the representation — and the AR-unftext result above is the first
+  large confirmation that shaping the trunk attacks exactly this
+  (community first_mae 2.06 vs copy 2.73; rig first_mae still behind,
+  3.99 vs 2.76 — rig grounding remains the open front).
+- **Acuity probe:** position is sharpest at the vision-tower output
+  (8.4 px linear readout) and degrades through the LM stack (K4 10.8 →
+  K14 17.3 px in-scene; 25–32 px cross-background); not object-centric
+  (task-object motion ≈ 1.9× background at K14). The pool is exonerated;
+  the text stack's use of visual tokens is the bottleneck — motivates
+  trunk adaptation (§8.1) and conflicts with deepest-heavy schedules
+  (§8.4).
 - **τ-diagnostic:** ~1 MAE recoverable integration error in-domain; OOD
   cost concentrates at high τ (initial placement from context);
-  fine-tuning roughens mid-τ transport. Motivates adaRMS (§9.2) and
-  sample-draws (§9.7).
-- **Fine-tuning works and is always done.** From cont45k, rig ft beats
-  copy on held-out rig episodes (first honest crossing); a paired ft
-  from a +11.5M-sample pretrain beat a shorter one by 0.22 — pretrain
-  quality carries downstream, which is why §9 changes are judged by
-  fine-tuned rig MAE.
+  fine-tuning roughens mid-τ transport; ft forgetting on community
+  ≈ +0.85. Motivates adaRMS (§8.2 — whose Heun-gap collapse, −0.08 at
+  10→30 vs additive's −0.28, confirmed the pre-registered signature)
+  and sample-draws (§8.7).
+- **Sampling analyses:** across-draw std ~5.9° exceeds single-draw
+  error; mean-of-10 took a ft's 5.30° to 2.88° on motion frames — the
+  largest known zero-training lever (§8.7). Fine-tuned fields want more
+  integration steps (Heun-30 re-score −0.28 for +39% s/frame).
+- **Fine-tuning is always done before deployment** — but its headroom
+  is whatever the pretrain didn't bank (see the AR ft arc above). §8
+  changes are judged by fine-tuned-then-scored rig MAE, with rollout as
+  the final arbiter.
 
 ## 8. Directions under evaluation and proposed changes
 
 Each subsection: the change, its justification, status, and the key
 design decisions. Full blow-by-blow lives in git history (these subsume
-the retired `plan_*.md`).
+the retired `plan_*.md`). Smaller queued arms not detailed below:
+`--trim-leading-idle` (~6.7% of frames are leading idle), state-noise
+augmentation, a lerobot policy plugin (`--policy.type=bijou`), suffix
+KV-caching for AR decode. Hygiene owed: rotate the wandb API key (it
+reached a since-deleted box's shell history).
 
-### 8.1 Trunk unfreezing (IMPLEMENTED; evaluating)
+### 8.1 Trunk unfreezing (IMPLEMENTED; the live-trunk AR result is the headline)
 
 **Change.** `--text-lr` trains E2B text layers 0–14 + the multimodal
 projector (embeddings and per-layer-embedding tables stay frozen — few
@@ -340,16 +470,19 @@ expert; π0/SmolVLA both train their trunks. **Numerics/plumbing.** fp32
 masters + bf16 autocast; `BijouTrainStep` + single DDP wrap
 (static_graph); `backbone.safetensors` rides in the checkpoint; frozen
 path stays byte-identical (oracle exact). **Status/finding.** First A/B
-(cont45k init, text-lr 2e-5, 15k→resumed 30k) ended ~7.2 community-
-holdout — still *above* frozen cont45k's 6.85 in-distribution (feature
-drift: the expert was tuned to frozen features). Verdict pending the
-decision-relevant test: **paired rig fine-tune from the unfrozen vs the
-frozen pretrain** — does the adapted trunk transfer better to the rig?
-**Open dials.** trunk-LR grid; freeze-then-thaw if a warm-expert transient
-appears; ZeRO-1 / activation checkpointing for larger batch; a full-thaw
-budget only if cheap thaws pay.
+**Status/finding.** With the flow objective, text-lr 2e-5 from cont45k
+was a modest monotone win (§7 legacy ledger). With the **AR CE
+objective** the same flags produced the project's best result (§7:
+5.96 comm holdout, first rig copy-crossing) — next-token CE through the
+exported-K/V pathway shapes the trunk far better than flow MSE did.
+LR regime is narrow: decoder at its native LR, trunk ≤2.5e-5; hotter
+(3e-4) churns features faster than any decoder tracks and lands below
+from-scratch. **Open dials.** freeze-then-thaw; ZeRO-1 / activation
+checkpointing for batch; whether a flow decoder trained on the FROZEN
+adapted trunk inherits the win (the decisive attribution test — needs
+only `--init-from` the adapted checkpoint with flags off).
 
-### 8.2 adaRMS time conditioning (IMPLEMENTED; first arm in flight)
+### 8.2 adaRMS time conditioning (IMPLEMENTED; signature confirmed)
 
 **Change.** `--time-conditioning adarms`: DiT-style per-layer modulation
 of the expert by τ. A per-layer zero-init head `SiLU → Linear(hidden →
@@ -359,7 +492,7 @@ of the expert by τ. A per-layer zero-init head `SiLU → Linear(hidden →
 that is a LayerNorm artifact (LayerNorm has a bias to condition); RMSNorm
 is bias-free by design, so the additive τ-injection is supplied by the
 gate instead, and scale modulates the one thing an RMSNorm output is (a
-magnitude). NOTE (verified against openpi source 2026-07-29): π0.5's
+magnitude). NOTE (verified against openpi source): π0.5's
 adaRMS **keeps the shift** — `normed·(1+scale) + shift`, gated residual,
 zero-init, applied at their pre-norm-only Gemma blocks. Our no-shift
 design is a deliberate deviation, not a match (their gate has no
@@ -380,30 +513,55 @@ residual blocks. **Cost.** +~101M (~+25%), few % step time (expert is
 gap and the mid-τ bump; chunk-MAE −0.1..−0.4; rig zero-shot unchanged
 (grounding ≠ conditioning). Param-confounded (win = modulation OR
 capacity) until a bottleneck-head follow-up. **Status.** Additive stays
-default and byte-identical; first adarms run (bidirectional, E2B-width
-1536, --fps 30, 40k) is in flight. Forward-compat: once AR co-training
-shares the expert (§8.3), modulation must be MASKED to the flow positions
-(per-position gating, not per-sample broadcast).
+**Status.** Additive stays
+default and byte-identical. The adarms lineage (bidirectional, h1536,
+fps-30, 40k→100k) delivered the pre-registered signature — Heun-10→30
+gap −0.08 vs additive's −0.28 — and the ledger's best flow numbers
+(§7), but confounded (adaRMS + bidir + width + fps filter together),
+and bidir's rig failure persisted at scale. A causal adaRMS-only arm
+would isolate the conditioning effect. Forward-compat: if AR co-training
+ever shares the expert (§8.3 option A), modulation must be MASKED to the
+flow positions (per-position gating, not per-sample broadcast).
 
-### 8.3 Autoregressive FAST-token co-training (tokenizer done; model proposed)
+### 8.3 Autoregressive FAST decoding (decoder + tokenizer SHIPPED; co-training proposed)
 
-**Change.** Add a second training objective: causal next-token prediction
-over **FAST** action tokens (DCT + BPE of the chunk, arXiv:2501.09747),
-mixed with the flow loss, sharing the backbone. Follows π0.5 / knowledge-
-insulation: next-token CE is the gradient source that shapes VLM
-representations well; the flow expert stays the fast deployed decoder
-(with its K/V **stop-gradient-insulated**, so the two objectives touch
-disjoint params and the mixture weight collapses into the component LRs).
-**Justification.** π0-FAST matches diffusion π0 at 5× less training compute
-and follows language better; here it is primarily a *representation-
-shaping* objective for the trunk, targeting the grounding wall (§7).
-**Tokenizer (done):** owned DCT+BPE (`bijou/fast/`), fit on 1040 datasets
-/ 4.9M chunks → `mcobzarenco/bijou-checkpoints/fast_tokenizer_v1` (vocab
-1024, ~52 tok/chunk, recon MAE ~0.44° ≪ model error). Immutable artifact
-(a refit changes token semantics); per-dataset quantile normalization
-read from `stats.json`; constant-dim guard + normalized clip (parked
-joints have ~0 span). **Architecture options** (decision pending the
-unfreeze A/B):
+**Shipped: `ARFastDecoder`** (`bijou/decoders/ar_fast.py`) — a full
+seam-native decoder over the shared sandwich blocks: suffix
+`[state][BOA][t_1..t_k]`, fully causal, teacher-forced CE (state/PAD
+positions ignored), **grammar-constrained greedy decode** — a valid
+sequence expands to exactly chunk×dim quantized DCT coefficients, so
+there is NO EOA and no malformed generations by construction (each step
+masks to tokens whose BPE symbol-expansion fits the remaining budget).
+Train: `--decoder ar_fast --fast-tokenizer <artifact>`; eval/rollout
+work unchanged via `predict_chunk` (greedy — no Heun knobs); AR
+inference additionally needs quantile stats (rides the checkpoint's
+per-dataset table). Results in §7: frozen-trunk plateau ~8.0 at 10k
+(≈ flow@40k quality); with the live trunk, the project's best.
+**Tokenizer:** owned DCT+BPE (`bijou/fast/`, arXiv:2501.09747), fit on
+1040 datasets / 4.9M chunks. **Use `fast_tokenizer_v2`**
+(`mcobzarenco/bijou-checkpoints/fast_tokenizer_v2`: alphabet 159 + 865
+merges, 22.3 tok/chunk, 13.4×, recon 0.48° ≪ model error). v1 is
+degenerate — min/max alphabet derivation let outlier coefficients eat
+the merge budget (1019 base symbols + 5 merges, 53 tok/chunk); the fit
+now bounds the alphabet by corpus-coefficient quantiles
+(`--alphabet-coverage`) and hard-errors when merges would starve.
+Artifacts are immutable (a refit changes token semantics); fit
+normalization = per-dataset exact q01/q99 from `stats.json` (backfilled
+by `ldtools`; lerobot's native quantiles average per-episode quantiles
+and are wrong for corpus use); constant-dim guard + normalized clip
+(parked joints have ~0 span). PI's published universal tokenizer
+converts to our format (`outputs/convert_pi_fast.py`; ByteLevel
+mid-character merges drop, ~24%) — a cross-embodiment ablation arm and
+an independent cross-check of the implementation.
+
+**Proposed next: co-training** — mix causal FAST CE with the flow loss
+on one backbone, π0.5/knowledge-insulation style: CE shapes the trunk;
+the flow expert stays the fast deployed decoder, its K/V
+stop-gradient-insulated so the objectives touch disjoint params and the
+mixture weight collapses into component LRs. The live-trunk AR result
+(§7) is strong evidence for the premise; what co-training adds over
+train-AR-then-freeze is a single run producing both heads.
+**Architecture options for sharing:**
 
 | option | trunk-shaping | expert interference | new params | AR decode | note |
 |---|---|---|---|---|---|
@@ -415,11 +573,11 @@ C's frozen deep half is the risk (late layers are most language-
 specialized; suffix tokens carry pad-PLE identity they never trained on).
 Resolve by a **thaw dial** measured with cheap CE-convergence probes:
 C0 frozen → C1 +deep RMSNorm scales (Lu-et-al. trick, proposed default) →
-C2 +top-5 layers → C3 LoRA → C4 full (ZeRO-1). **Decision rule.** Unfreeze
-A/B strong ⇒ the K/V pathway suffices ⇒ A is attractive for its cost;
-weak ⇒ C tests the actual π0.5 mechanism. **Inference stays flow** (the AR
-head is a training-time shaper + an eval diagnostic — `bijou-ar@step`
-policy scoring the same frames).
+C2 +top-5 layers → C3 LoRA → C4 full (ZeRO-1). The live-trunk AR win
+through exported K/V alone weakens C's motivation: the K/V pathway is
+demonstrably sufficient for trunk-shaping. **Deployed inference stays
+flow** (AR decode is ~30–60 sequential decoder forwards — no suffix KV
+cache yet, the known optimization if it ever deploys).
 
 ### 8.4 Cross-attention stream schedule re-test
 
@@ -440,7 +598,8 @@ ablation said it didn't at 2.56M). The 8 cross-heads are ~1/3 of expert
 params and GQA-share E2B's single global K/V head — 8 views of one keyhole
 has diminishing returns; 4–6 likely captures it, freeing params. But
 retrieval is exactly where the measured problems live, so shrink only with
-a matched arm. (The in-flight adaRMS run already carries width 1536.)
+a matched arm. (Width 1536 shipped in the adaRMS lineage; the AR lineage
+runs 1024.)
 
 ### 8.6 Backbone variants
 

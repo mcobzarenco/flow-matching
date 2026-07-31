@@ -87,27 +87,34 @@ with an explicit `CHECKS PASSED`/`FAILED` verdict). Conventions:
 | path | what |
 |---|---|
 | `bijou/gemma4/` | pure-torch Gemma-4 E-series (text+vision), bit-exact vs HF on greedy text+image generation (`verify_parity.py`); bench + tiny-checkpoint tooling |
-| `bijou/expert.py` | the flow-matching action expert |
-| `bijou/model.py` | BijouModel: prefix encode (stops at the deepest exported layer's K/V), Heun/Euler sampling |
-| `bijou/data.py` | dataset selection guards, deterministic episode holdout, per-dataset stats, prompt collation — shared by train and eval |
+| `bijou/interface.py` | the encoder×decoder seam: ObservationMemory, collation, encoder/decoder ABCs |
+| `bijou/encoders/` | GemmaEncoder — truncated-trunk observation encoding, unfreeze partition |
+| `bijou/decoders/` | FlowDecoder (flow matching) + ARFastDecoder (FAST tokens) over shared blocks |
+| `bijou/fast/` | owned FAST action tokenizer (DCT + BPE) + corpus-fit CLI |
+| `bijou/model.py` | BijouModel composition root: encode once, decode chunks |
+| `bijou/data.py` | dataset selection guards, deterministic episode holdout, per-dataset stats — shared by train and eval |
 | `bijou/loading.py` | model assembly + the checkpoint schema (write/read) |
-| `bijou/train.py` | training CLI: DDP, warm start/resume, sharded MAE probes, wandb |
-| `bijou/eval/` | eval CLI: seeded frame sampling, baselines, SmolVLA comparison, HTML reports |
+| `bijou/train.py` | training CLI: DDP, component LRs, warm start/resume, sharded MAE probes, wandb |
+| `bijou/eval/` | eval CLI: seeded frame sampling, baselines, HTML reports |
 | `bijou/rollout.py` | SO-101 closed-loop rollout CLI |
-| `docs/` | operational handoff, results, runbooks, styleguide, plans |
+| `docs/` | architecture + results, runbooks, styleguides |
 
 ## Docs
 
-- `docs/handoff.md` — operational state: results ledger, machines, in-
-  flight runs, pitfalls, decision queue. **Start here.**
-- `docs/ablation_20k_results.md` — the 4-arm architecture ablation.
+- `docs/architecture.md` — deep reference: model + training system, the
+  results ledger that shaped them, and directions under evaluation.
+  **Start here.**
+- `docs/code-styleguide.md` — how code is written here.
+- `docs/working-together.md` — how work is done here (operating
+  conventions, run operations, measurement discipline).
+- `docs/init_gpu_machine.md` — fresh GPU box → first training run.
 - `docs/rollout_so101.md` — physical rollout runbook (measured VRAM and
   latency for an 8 GiB laptop GPU).
-- `docs/code-styleguide.md` — how code is written here.
-- `docs/architecture.md` — deep reference for the model + training
-  system, and the directions under evaluation (trunk unfreezing, adaRMS
-  time conditioning, AR FAST-token co-training, and more).
+- `docs/ablation_20k_results.md` — the 4-arm architecture ablation.
 - `docs/so101_recording_tutorial.md`, `docs/community_to_v3_pipeline_plan.md`
   — data recording and corpus conversion.
+
+Transient state (in-flight runs, machines, queue) lives in wandb
+(`bijou-dev`), the HF hub, and `reports/` — not in docs.
 
 Checkpoints: [`mcobzarenco/bijou-checkpoints`](https://huggingface.co/mcobzarenco/bijou-checkpoints).
