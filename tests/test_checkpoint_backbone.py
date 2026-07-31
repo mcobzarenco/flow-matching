@@ -136,14 +136,14 @@ def run_save(save_dir: Path, adapted_backbone_source: Path | None) -> Path:
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lambda _: 1.0)
     return save_checkpoint(
         model,
-        make_args(save_dir),
-        Normalizers(
+        args=make_args(save_dir),
+        normalizers=Normalizers(
             action=Normalizer(mean=torch.zeros(DIM), std=torch.ones(DIM)),
             state=Normalizer(mean=torch.zeros(DIM), std=torch.ones(DIM)),
         ),
-        {},
-        optimizer,
-        scheduler,
+        per_dataset_stats={},
+        optimizer=optimizer,
+        scheduler=scheduler,
         step=5,
         adapted_backbone_source=adapted_backbone_source,
     )

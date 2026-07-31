@@ -654,13 +654,13 @@ def link_or_copy(source: Path, destination: Path) -> None:
 
 def save_checkpoint(
     model: BijouModel,
+    *,
     args: TrainArgs,
     normalizers: Normalizers,
     per_dataset_stats: dict[str, DatasetStats],
     optimizer: torch.optim.Optimizer,
     scheduler: torch.optim.lr_scheduler.LRScheduler,
     step: int,
-    *,
     adapted_backbone_source: Path | None,
 ) -> Path:
     """Write one self-contained checkpoint directory.
@@ -1767,12 +1767,12 @@ def main() -> int:
             if (step % args.save_every == 0 or step == args.steps) and is_main:
                 path = save_checkpoint(
                     model,
-                    args,
-                    normalizers,
-                    per_dataset_stats,
-                    optimizer,
-                    scheduler,
-                    step,
+                    args=args,
+                    normalizers=normalizers,
+                    per_dataset_stats=per_dataset_stats,
+                    optimizer=optimizer,
+                    scheduler=scheduler,
+                    step=step,
                     adapted_backbone_source=adapted_backbone_source,
                 )
                 print(f"saved {path}", flush=True)
