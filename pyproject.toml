@@ -9,7 +9,9 @@ dependencies = [
     # lerobot[dataset] leaves av unconstrained; the <16 cap is ours and is
     # the only thing pinning the decode stack's ffmpeg ABI.
     "av>=15,<16",
-    "lerobot[dataset,feetech,smolvla,viz]>=0.4",
+    # async = grpcio+protobuf for the policy-server/robot-client split
+    # (pi05 rig rollouts: 4B doesn't fit the laptop GPU, the box serves).
+    "lerobot[async,dataset,feetech,smolvla,viz]>=0.4",
     "matplotlib>=3.11.1",
     "pillow>=12.3.0",
     "torch>=2.7.0",
