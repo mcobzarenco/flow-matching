@@ -30,6 +30,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import torch
 
 from ..data import EpisodeSplit, select_datasets
@@ -190,6 +191,15 @@ def parse_args() -> argparse.Namespace:
         help="write summaries as JSON",
     )
     parser.add_argument(
+        "--dump-predictions",
+        type=Path,
+        default=None,
+        help="write every policy's predicted chunks (plus truth/valid/"
+        "frame identity) as a compressed .npz — for offline analyses that "
+        "must share this eval's exact prediction conventions (e.g. the "
+        "DCT-truncation sweep) instead of re-implementing them",
+    )
+    parser.add_argument(
         "--report",
         type=Path,
         default=None,
@@ -306,6 +316,11 @@ def main() -> int:
     report_samples: dict[int, ReportSample] = {}
 
     scores: dict[str, list[FrameScore]] = {p.name: [] for p in policies}
+    dump_predictions: dict[str, list[torch.Tensor]] = {p.name: [] for p in policies}
+    dump_truth: list[torch.Tensor] = []
+    dump_valid: list[torch.Tensor] = []
+    dump_repo: list[str] = []
+    dump_index: list[int] = []
     done = 0
     for batch_number, items in enumerate(loader):
         batch_indices = indices[done : done + len(items)]
@@ -331,6 +346,13 @@ def main() -> int:
                         inference_seconds=elapsed,
                     ),
                 )
+                if args.dump_predictions is not None:
+                    dump_predictions[policy.name].append(predicted)
+                    if policy is policies[0]:
+                        dump_truth.append(truth.float())
+                        dump_valid.append(~item["action_is_pad"])
+                        dump_repo.append(str(item["repo_id"]))
+                        dump_index.append(index)
                 if args.report is not None and index in report_indices:
                     sample = report_samples.get(index) or ReportSample(
                         index=index,
@@ -353,6 +375,18 @@ def main() -> int:
         done += len(items)
         if batch_number % 5 == 0:
             print(f"  scored {done}/{num_samples} frames", flush=True)
+
+    if args.dump_predictions is not None:
+        payload: dict[str, np.ndarray] = {
+            "truth": torch.stack(dump_truth).numpy(),
+            "valid": torch.stack(dump_valid).numpy(),
+            "index": np.array(dump_index),
+            "repo_id": np.array(dump_repo),
+        }
+        for name, chunks in dump_predictions.items():
+            payload[f"pred:{name}"] = torch.stack(chunks).numpy()
+        np.savez_compressed(args.dump_predictions, **payload)
+        print(f"dumped predictions to {args.dump_predictions}", flush=True)
 
     summaries = [summarize(name, frame_scores) for name, frame_scores in scores.items()]
     motor_names = selection.action_names or [
