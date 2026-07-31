@@ -385,7 +385,7 @@ def main() -> int:
         }
         for name, chunks in dump_predictions.items():
             payload[f"pred:{name}"] = torch.stack(chunks).numpy()
-        np.savez_compressed(args.dump_predictions, **payload)
+        np.savez_compressed(args.dump_predictions, allow_pickle=False, **payload)
         print(f"dumped predictions to {args.dump_predictions}", flush=True)
 
     summaries = [summarize(name, frame_scores) for name, frame_scores in scores.items()]
