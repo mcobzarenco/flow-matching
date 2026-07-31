@@ -83,6 +83,9 @@ strictSetInference = true
 # - reportUnknown*/reportMissingTypeStubs: untyped third-party boundary.
 
 [tool.ruff]
+# baselines/ is an independent uv project (own pins, own env) - the main
+# repo's toolchain doesn't police it.
+extend-exclude = ["baselines"]
 
 [tool.ruff.lint]
 # Curated rule families (rationale in docs/code-styleguide.md):

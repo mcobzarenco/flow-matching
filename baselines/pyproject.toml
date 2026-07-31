@@ -1,0 +1,14 @@
+[project]
+name = "bijou-baselines"
+version = "0.1.0"
+description = "Baseline VLAs (pi0.5, ...) on stock lerobot pins - independent env, no transformers override, no shims"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    # Same av cap as the main project: lerobot[dataset] leaves av
+    # unconstrained and <16 is what pins the decode stack's ffmpeg ABI.
+    "av>=15,<16",
+    # training extra = dataset + accelerate + wandb; pi = transformers
+    # (lerobot's own <5.6 cap resolves here - the point of this env) +
+    # scipy; async = grpcio policy-server/robot-client; feetech = SO-101.
+    "lerobot[async,feetech,pi,training]==0.6.0",
+]
