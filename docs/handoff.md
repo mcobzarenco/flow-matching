@@ -1,13 +1,13 @@
 # Bijou handoff — current state, full context (2026-07-27)
 
 Read this first. Architecture and its design rationale live in
-`README.md`; per-module contracts live in code docstrings. This doc is
-the operational truth:
-what exists, what it scored, what is running, what is queued, and how the
-owner likes to work. The owner's chat thread now lives in the main
-checkout `/home/marius/w/flow-matching`; everything is committed to
-`main` on `github.com:mcobzarenco/flow-matching`, so `git pull` there
-first.
+`README.md`; per-module contracts live in code docstrings; code
+conventions in `docs/code-styleguide.md`; collaboration and operating
+conventions in `docs/working-together.md`. This doc is the operational
+truth: what exists, what it scored, what is running, what is queued.
+The owner's chat thread lives in the main checkout
+`/home/marius/w/flow-matching`; everything is committed to `main` on
+`github.com:mcobzarenco/flow-matching`, so `git pull` there first.
 
 ## 1. What Bijou is
 
@@ -318,13 +318,6 @@ dead; next perf wins are length-bucketed batching (batch pads 452 vs
   both community and rig sides). The --resume continuation
   (r2cont, +15k re-heated) was stopped by owner at ~26,650 (hovering
   ~7.2–7.5, not improving); step_025000 on HF weights-only.
-- PITFALL (hard-won overnight): `pgrep -f <pattern>` MATCHES THE SSH
-  COMMAND STRING ITSELF when the pattern text appears in the command —
-  a completion-detector using `pgrep -f bijou.train` self-matched every
-  poll and never fired the auto-resume. Use the bracket trick
-  `pgrep -fc "[b]ijou.train"` (or match torchrun / check GPU mem). No
-  harm done (GPUs verified free before the manual launch).
-
 - **8×A100 box 150.136.37.72: idle, owner about to DELETE it.**
   Everything important is off-box (arm A checkpoints + r2 15k/25k
   weights on HF; eval JSONs/reports in `reports/`; launchers in
@@ -632,18 +625,11 @@ dead; next perf wins are length-bucketed batching (batch pads 452 vs
 
 ## 7. How the owner works (respect these)
 
-Everything in `docs/code-styleguide.md`, plus operational habits:
-design discussion BEFORE architecture code; measured changes only —
-before/after numbers, bitwise oracles where possible, no "should be
-fine"; loud failures over silent fallbacks; explicit seeds with separate
-concerns (--seed/--eval-seed/--split-seed); commit+push freely to main
-(rebase if remote moved); update docs so everything reads "as of now"
-(never reference deleted files); probes/one-offs in gitignored outputs/;
-answer speculative questions with reasoned predictions AND a cheap
-falsification plan; the owner interrupts long sleeps — poll in short
-increments; check GPU occupancy before using the laptop GPU (owner runs
-rollouts/recordings there); don't restart in-flight training runs on new
-code mid-experiment.
+Moved to `docs/working-together.md` (2026-07-31) — the evergreen
+operating conventions: decision protocol, measurement discipline, run
+operations, babysitting, ownership boundaries, mistake handling,
+artifact rules. Read it alongside `docs/code-styleguide.md` before
+doing anything.
 
 ## 8. Known pitfalls (hard-won; do not re-learn)
 
@@ -659,16 +645,10 @@ code mid-experiment.
   slower; fused SDPA vs additive-mask paths differ at bf16 ULP scale;
   Module.__getattr__ stubs return Tensor|Module (narrow via isinstance
   after ModuleList iteration); torch Linear.bias stub lies (cast).
-- process: `pgrep -f <pat>` self-matches the ssh/shell command carrying
-  <pat> (a false RUNNING every poll — broke an auto-resume detector);
-  use `pgrep -fc "[p]at"` or check GPU memory instead. piped output
-  hides failures unless the tool prints a final
-  verdict (check.py does now); Zed tool versions must match CLI (ruff
-  0.15 vs 0.16 default-rule skew burned an afternoon); host crashes
-  corrupt HF datasets arrow caches (zero-byte dataset_info.json →
-  delete the cache dirs); rsync big files with --partial + generous
-  timeouts; heredocs with escaped quotes over ssh break — scp scripts
-  instead; `$(...)` forbidden in local shell tool calls.
+- process/workflow pitfalls (pgrep self-matching, piped-output
+  verdicts, rsync --partial, heredocs-over-ssh, arrow-cache corruption,
+  toolchain skew): moved to `docs/working-together.md` and the
+  styleguide's "toolchain lockstep".
 - ML: loss not comparable across normalization schemes, data mixes, or
   self-attention modes; eval MAE definition moves with frames/sampler/
   batching (noise-draw jitter ±0.1-0.3); Beta τ-sampler uses global RNG
