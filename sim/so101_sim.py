@@ -50,9 +50,9 @@ SPAWN_Y = (-0.16, 0.02)
 # the workspace - approximates the physical rig's rest; zero-pose lays
 # the arm flat across the table and points the wrist cam at the horizon.
 HOME_DEGREES = np.array([0.0, -55.0, 75.0, 55.0, 0.0, 30.0])
-# The static leader stand-in (see bijou_pickplace.xml) held raised, as in
-# the rig frames.
-LEADER_DEGREES = np.array([-10.0, -60.0, 40.0, -30.0, 0.0, 25.0])
+# The leader arm mirrors the follower during teleop; posed like a held
+# leader mid-episode (rig frames show it roughly tracking HOME).
+LEADER_DEGREES = np.array([-5.0, -45.0, 65.0, 45.0, 10.0, 35.0])
 DISK_CENTER = (0.22, 0.11)
 DISK_RADIUS = 0.06
 

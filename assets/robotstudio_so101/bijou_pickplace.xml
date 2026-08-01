@@ -17,8 +17,10 @@
     <!-- Photo texture cropped from a real front frame (assets/table). The
          real planks run along +x (away from the camera). -->
     <texture type="2d" name="tabletop" file="../table/table_texture.png"/>
-    <material name="tabletop" texture="tabletop" texrepeat="3 3" reflectance="0.02"
-      rgba="0.82 0.79 0.76 1"/>
+    <!-- Patch covers ~0.2 m of real wood; repeats sized to the 2.4 x 1.0
+         top so plank scale reads naturally. -->
+    <material name="tabletop" texture="tabletop" texrepeat="12 5" reflectance="0.02"
+      rgba="0.74 0.72 0.70 1"/>
     <!-- Flat white texture: the runtime tints it via geom rgba (cheap
          randomization) or paints tex_data directly (full randomization). -->
     <texture type="2d" name="benchy_tex" builtin="flat" rgb1="1 1 1" width="256" height="256"/>
@@ -33,17 +35,23 @@
   <worldbody>
     <light pos="0.2 0 1.5" dir="0 0 -1" directional="true" diffuse="0.45 0.45 0.45"/>
     <light pos="0.6 0.4 0.8" dir="-0.4 -0.4 -0.8" diffuse="0.25 0.25 0.25"/>
-    <!-- Finite tabletop so its far edge is visible like the rig frames;
-         beyond it a distant gray "room" floor. -->
-    <geom name="table" type="box" size="0.55 0.75 0.02" pos="0.25 0 -0.02" material="tabletop"/>
+    <!-- Rig geometry (owner-measured): 1 m x 2.4 m table; both arms on
+         the short (1 m, along y) edge; follower base = origin, 28 cm
+         from the +y corner; leader 25 cm along -y; table extends 2.4 m
+         along +x. Base plates sit fully on the table at the very edge
+         (short edge at x = -0.07). -->
+    <geom name="table" type="box" size="1.2 0.5 0.02" pos="1.13 -0.22 -0.02" material="tabletop"/>
     <geom name="room_floor" size="0 0 0.05" pos="0 0 -0.8" type="plane" rgba="0.55 0.55 0.58 1"/>
 
-    <!-- "front" rig camera (physically a top-ish oblique view): elevated
-         behind-left of the follower, looking forward-down; pose iterated
-         against outputs/sim/real/front_00146.png (winner of the cam sweep:
-         pos (-0.22,-0.05,0.38) lookat (0.26,0.06,0) fovy 68). -->
-    <camera name="top_cam" pos="-0.18 -0.08 0.40"
-      xyaxes="0.2216 -0.9751 0 0.6281 0.1427 0.7648" fovy="70"/>
+    <!-- "front" rig camera: on a rectangular pole between the two arms,
+         lens 56 cm above the table, pitched 15 deg off vertical into the
+         workspace (+x). Image right = -y (leader side), image up = +x. -->
+    <!-- Pole clamped just behind the table edge; lens cantilevered
+         slightly forward so the pole stays out of frame. -->
+    <geom name="camera_pole" type="box" size="0.015 0.02 0.28" pos="-0.09 -0.125 0.28"
+      contype="0" conaffinity="0" rgba="0.2 0.2 0.2 1"/>
+    <camera name="top_cam" pos="0.06 -0.125 0.555"
+      xyaxes="0 -1 0 0.9659 0 0.2588" fovy="70"/>
 
     <!-- Beech disk, ~8 cm like the real one. -->
     <geom name="disk" type="cylinder" size="0.04 0.006" pos="0.22 0.11 0.006" material="wood_disk"/>
@@ -55,11 +63,10 @@
       <geom name="mug" type="cylinder" size="0.042 0.045" rgba="0.92 0.91 0.88 1"/>
     </body>
 
-    <!-- The teleop leader arm occupies the right half of every rig frame
-         (the operator's hand is not modeled). A full second arm via
-         attach; SO101Sim poses it once per reset through its prefixed
-         actuators. -->
-    <body name="leader_mount" pos="0.14 -0.30 0.05" euler="0.45 0.3 1.35">
+    <!-- The teleop leader arm: 25 cm along -y from the follower, same
+         edge, same facing; joints posed raised per reset (the operator's
+         hand is not modeled). -->
+    <body name="leader_mount" pos="0 -0.25 0">
       <attach model="so101_leader" body="base" prefix="leader-"/>
     </body>
 
