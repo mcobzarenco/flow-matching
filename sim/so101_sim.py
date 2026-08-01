@@ -50,6 +50,9 @@ SPAWN_Y = (-0.16, 0.02)
 # the workspace - approximates the physical rig's rest; zero-pose lays
 # the arm flat across the table and points the wrist cam at the horizon.
 HOME_DEGREES = np.array([0.0, -55.0, 75.0, 55.0, 0.0, 30.0])
+# The static leader stand-in (see bijou_pickplace.xml) held raised, as in
+# the rig frames.
+LEADER_DEGREES = np.array([-10.0, -60.0, 40.0, -30.0, 0.0, 25.0])
 DISK_CENTER = (0.22, 0.11)
 DISK_RADIUS = 0.06
 
@@ -86,6 +89,22 @@ class SO101Sim:
         self._benchy_body = self.model.body("benchy").id
         self._benchy_qpos = self.model.joint("benchy_free").qposadr[0]
         self._benchy_mat = self.model.geom("benchy_visual").matid[0]
+        self._leader_actuators = np.array(
+            [self.model.actuator(f"leader-{name}").id for name in JOINTS],
+        )
+        self._recolor_arm()
+
+    def _recolor_arm(self) -> None:
+        """Menagerie ships the yellow-print arm; the rig's is black with an
+        orange moving jaw (see outputs/sim/real/wrist_00260.png). Runtime
+        recolor instead of editing the vendored XML."""
+        black = (0.13, 0.13, 0.14, 1.0)
+        orange = (0.95, 0.45, 0.1, 1.0)
+        for index in range(self.model.nmat):
+            name = self.model.mat(index).name
+            if "so101" not in name:
+                continue
+            self.model.mat_rgba[index] = orange if "moving_jaw" in name else black
 
     def reset(self, seed: int) -> SimObservation:
         """Home the arm, place benchy at a seeded pose, randomize its
@@ -101,13 +120,19 @@ class SO101Sim:
         self.data.qpos[adr + 3 : adr + 7] = (np.cos(yaw / 2), 0.0, 0.0, np.sin(yaw / 2))
 
         # Cheap texture randomization: tint the flat-white texture via the
-        # material color (full tex_data painting is the follow-up).
-        rgba = np.append(rng.uniform(0.1, 0.9, size=3), 1.0)
+        # material color (full tex_data painting is the follow-up). Biased
+        # light like the real light-gray print, with occasional color.
+        base = rng.uniform(0.55, 0.95)
+        rgba = np.append(
+            np.clip(base + rng.uniform(-0.25, 0.1, size=3), 0.05, 1.0),
+            1.0,
+        )
         self.model.mat_rgba[self._benchy_mat] = rgba
 
         # Drive (not teleport) to home so the reset respects servo
-        # dynamics; 1 s settles both the arm and the spawned benchy.
+        # dynamics; 1 s settles both arms and the spawned benchy.
         self.data.ctrl[self._actuator_ids] = np.deg2rad(HOME_DEGREES)
+        self.data.ctrl[self._leader_actuators] = np.deg2rad(LEADER_DEGREES)
         mujoco.mj_step(self.model, self.data, nstep=200)
         return self.observe()
 
