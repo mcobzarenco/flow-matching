@@ -206,11 +206,16 @@ class GemmaEncoder(nn.Module):
         pixel_values: Tensor | None = None,
         image_position_ids: Tensor | None = None,
         padding_mask: Tensor | None = None,
+        retain_cache: bool = False,
     ) -> ObservationMemory:
         """Run the truncated backbone over the multimodal prefix and export
         the memory streams (grad-transparent — callers choose no_grad).
         Cache the result across flow steps (and, if the observation is
         unchanged, across replans).
+
+        ``retain_cache`` keeps the full prefix KVCache on the returned
+        memory (the exported streams are views into it either way);
+        the default drops it, freeing the non-exported layers' K/V.
 
         For right-padded batches (mixed-length instructions), pass the HF
         ``attention_mask`` (True/1 = real token) as ``padding_mask``; it
@@ -254,6 +259,7 @@ class GemmaEncoder(nn.Module):
             streams=streams,
             length=input_ids.shape[1],
             padding_mask=padding_mask,
+            cache=cache if retain_cache else None,
         )
 
     def encode(
@@ -262,10 +268,12 @@ class GemmaEncoder(nn.Module):
         inputs: GemmaInputs,
         *,
         with_grad: bool,
+        retain_cache: bool = False,
     ) -> ObservationMemory:
         """Encode one collated batch (shapes on GemmaInputs); ``with_grad``
         selects the live-trunk training path (grad-transparent, not
-        force-enabled) vs the no-grad eval path."""
+        force-enabled) vs the no-grad eval path. ``retain_cache`` as on
+        :meth:`encode_tensors`."""
         padding_mask = inputs.attention_mask if inputs.has_padding else None
         with torch.no_grad() if not with_grad else contextlib.nullcontext():
             return self.encode_tensors(
@@ -274,6 +282,7 @@ class GemmaEncoder(nn.Module):
                 pixel_values=inputs.pixel_values,
                 image_position_ids=inputs.image_position_ids,
                 padding_mask=padding_mask,
+                retain_cache=retain_cache,
             )
 
     def _trainable_text_parameters(self, trunk: Gemma4Model) -> Iterator[nn.Parameter]:

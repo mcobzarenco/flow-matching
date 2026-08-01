@@ -31,6 +31,7 @@ import torch
 from torch import Tensor, nn
 
 from .fast.codec import ActionCodec
+from .gemma4.cache import KVCache
 from .nn import RopeParameters
 
 
@@ -75,11 +76,19 @@ class ObservationMemory:
     width P and, for padded batches, the True-means-real padding mask
     [B, P]. Per-sample real lengths (decoder query position bases) derive
     from the mask; ``length`` is the KV width and the position base only
-    for unpadded batches."""
+    for unpadded batches.
+
+    ``cache`` is the full prefix KV cache the encode produced — every
+    non-KV-shared layer's K/V, of which the named streams are zero-copy
+    views — retained only when the decoder consumes the whole prefix
+    state (the decoder-only trunk path continues the suffix through it);
+    None for stream-consuming decoders, freeing the non-exported layers.
+    Consumers that need it check for None and fail fast."""
 
     streams: dict[str, MemoryStream]
     length: int
     padding_mask: Tensor | None
+    cache: KVCache | None = None
 
     @property
     def batch_size(self) -> int:
