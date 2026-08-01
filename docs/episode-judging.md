@@ -96,8 +96,11 @@ Two layers with different lifetimes:
 The sidecar lives *inside* the dataset directory on purpose: hub
 upload/download carries it, any machine holding the dataset holds its
 verdicts, and train-time consumers read it next to the rest of the
-metadata with a stdlib-only import (`bijou.judge.store`) — re-validated
-through the schema parser on every load.
+metadata with a light import (`bijou.judge.store`). The record envelope
+validates at load; the verdict payload validates at consumption
+(`parsed_judgment()`), because a sidecar legitimately mixes prompt
+versions and each payload obeys its own prompt's schema — consumers pick
+records by `prompt_hash` first.
 
 Consequences of the key choice: re-running the same configuration is a
 no-op on any machine with the sidecars; switching model re-judges

@@ -42,16 +42,33 @@ class JudgmentRecord:
     num_timesteps: int  # sampled timesteps the judge saw
     max_image_dim: int  # px, longer side after downscaling
     usage: dict[str, int]  # input/output token counts
-    judgment: EpisodeJudgment
+    # Verbatim verdict payload. Deliberately NOT parsed at load: a sidecar
+    # legitimately mixes prompt versions (cascades, calibration, schema
+    # evolution), and each payload obeys ITS OWN prompt's schema — parsing
+    # everything through the current one would brick loading the moment
+    # the schema grows a field. Consumers call ``parsed_judgment()`` on
+    # the records whose prompt_hash matches the schema they understand.
+    judgment: dict[str, Any]
 
     def key(self) -> tuple[int, str, str]:
         return (self.episode_index, self.model, self.prompt_hash)
 
+    def parsed_judgment(self) -> EpisodeJudgment:
+        """Validate + parse the payload under the CURRENT schema — call on
+        records whose ``prompt_hash`` matches the running code's
+        ``schema.PROMPT_HASH`` (older payloads raise, by design)."""
+        return EpisodeJudgment.from_dict(self.judgment)
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> JudgmentRecord:
-        """Parse + validate a stored record (the nested judgment included —
-        loading IS re-validation)."""
+        """Parse + validate the record envelope (the payload validates at
+        consumption — see ``judgment``/``parsed_judgment``)."""
         try:
+            judgment = data["judgment"]
+            if not isinstance(judgment, dict):
+                raise TypeError(
+                    f"judgment must be an object, got {type(judgment).__name__}",
+                )
             return cls(
                 episode_index=int(data["episode_index"]),
                 model=str(data["model"]),
@@ -60,7 +77,7 @@ class JudgmentRecord:
                 num_timesteps=int(data["num_timesteps"]),
                 max_image_dim=int(data["max_image_dim"]),
                 usage={str(k): int(v) for k, v in data["usage"].items()},
-                judgment=EpisodeJudgment.from_dict(data["judgment"]),
+                judgment=judgment,
             )
         except (KeyError, TypeError, ValueError) as error:
             raise ValueError(f"malformed judgment record: {error}") from error
@@ -88,7 +105,7 @@ class JudgmentRecord:
             "num_timesteps": self.num_timesteps,
             "max_image_dim": self.max_image_dim,
             "usage": dict(self.usage),
-            "judgment": self.judgment.to_dict(),
+            "judgment": dict(self.judgment),
         }
 
 

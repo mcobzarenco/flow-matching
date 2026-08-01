@@ -16,6 +16,7 @@ hand. Comparable verdicts are those sharing (model, prompt_hash).
 from __future__ import annotations
 
 import hashlib
+import itertools
 import json
 from dataclasses import dataclass, replace
 from enum import StrEnum
@@ -85,7 +86,13 @@ nothing is interpolated):
 - "events": unusual occurrences at this frame, e.g. "object dropped",
   "collision with the container", "human hand repositions the object"
   (beyond normal teleoperation presence), "episode reset begins" —
-  normally an empty list.
+  normally an empty list. Whenever your progress estimate DECREASES from
+  the previous sampled frame, the later frame's events MUST include a
+  short description of what went wrong (e.g. "boat tips off the disk",
+  "object slips out of the gripper", "placement missed the target") — a
+  silent regression is inconsistent. Mistakes are normal in teleoperated
+  data and do not by themselves make an episode discard-worthy; recovery
+  after a mistake is valuable — judge the demonstration as a whole.
 Use exactly the frame numbers from the image captions, one entry per
 sampled timestep, in chronological order.
 
@@ -135,6 +142,11 @@ Respond with a single JSON object, no markdown fences, matching:
 # Short like a git abbreviated commit: enough to distinguish prompt
 # revisions, short enough to read in a JSONL line.
 PROMPT_HASH = hashlib.sha256(SYSTEM_PROMPT.encode()).hexdigest()[:7]
+
+# Progress may wobble by re-estimation between sampled frames; dips beyond
+# this require an explaining event (the prompt demands one for ANY dip —
+# the tolerance only keeps jitter from failing otherwise-valid verdicts).
+PROGRESS_DIP_TOLERANCE = 0.05
 
 
 class Verdict(StrEnum):
@@ -395,6 +407,14 @@ class EpisodeJudgment:
                 raise ValueError(
                     f"frame_annotations frames must be strictly increasing: {frames}",
                 )
+            for previous, current in itertools.pairwise(annotations):
+                dip = previous.progress - current.progress
+                if dip > PROGRESS_DIP_TOLERANCE and not current.events:
+                    raise ValueError(
+                        f"progress regresses {previous.progress:.2f} -> "
+                        f"{current.progress:.2f} at frame {current.frame} without "
+                        "an explaining event",
+                    )
             return cls(
                 overall_score=_score_1_10(data, "overall_score"),
                 verdict=Verdict(data["verdict"]),
