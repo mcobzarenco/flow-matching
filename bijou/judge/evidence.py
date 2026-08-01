@@ -135,7 +135,14 @@ def load_episode_summary(
     fps = float(dataset.fps)
 
     tasks = row.get("tasks") or ["<no task recorded>"]
-    task = "; ".join(tasks) if isinstance(tasks, list) else str(tasks)
+    # str() per entry: community metadata contains non-string tasks (a
+    # literal int, measured in the wild) — junk labels are a judgment
+    # (instruction_quality=placeholder), not a crash.
+    task = (
+        "; ".join(str(entry) for entry in tasks)
+        if isinstance(tasks, list)
+        else str(tasks)
+    )
 
     # Trajectory columns straight from parquet (no video decoding).
     table = dataset.hf_dataset[start:stop]
