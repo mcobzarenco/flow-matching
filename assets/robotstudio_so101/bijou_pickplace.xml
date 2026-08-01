@@ -39,24 +39,27 @@
     <!-- Rig geometry (owner-measured): 1 m x 2.4 m table; both arms on
          the short (1 m, along y) edge; follower base = origin, 28 cm
          from the +y corner; leader 25 cm along -y; table extends 2.4 m
-         along +x. Base plates sit fully on the table at the very edge
-         (short edge at x = -0.07). -->
-    <geom name="table" type="box" size="1.2 0.5 0.02" pos="1.13 -0.22 -0.02" material="tabletop"/>
+         along +x. Arms are clamped at the very edge: the base plate's
+         rear face (measured from the model: x = -0.056) IS the table
+         edge. -->
+    <geom name="table" type="box" size="1.2 0.5 0.02" pos="1.144 -0.22 -0.02" material="tabletop"/>
     <geom name="room_floor" size="0 0 0.05" pos="0 0 -0.8" type="plane" rgba="0.55 0.55 0.58 1"/>
 
     <!-- "front" rig camera: on a rectangular pole between the two arms,
-         lens 56 cm above the table, pitched 15 deg off vertical into the
+         lens 56 cm above the table, pitched 20 deg off vertical into the
          workspace (+x). Image right = -y (leader side), image up = +x. -->
-    <!-- Pole clamped just behind the table edge; lens cantilevered
-         slightly forward so the pole stays out of frame. -->
-    <geom name="camera_pole" type="box" size="0.015 0.02 0.28" pos="-0.09 -0.125 0.28"
+    <!-- Pole clamped to the table edge between the arms, standing over
+         the table like the arms' clamps: its rear face flush with the
+         edge (x = -0.056), body over the table. Lens on the pole's
+         front face. -->
+    <geom name="camera_pole" type="box" size="0.015 0.02 0.28" pos="-0.041 -0.125 0.28"
       contype="0" conaffinity="0" rgba="0.2 0.2 0.2 1"/>
     <!-- fovy: the modules are "130 deg wide-angle" 1080p UVC cams, but
          that spec is the 16:9 diagonal - the rig captures 4:3 640x480,
          a heavy center crop. Disk pixel-size in the real frame implies
          an effective vertical FOV near 48 deg. -->
-    <camera name="top_cam" pos="0.06 -0.125 0.555"
-      xyaxes="0 -1 0 0.9659 0 0.2588" fovy="52"/>
+    <camera name="top_cam" pos="-0.02 -0.125 0.555"
+      xyaxes="0 -1 0 0.9397 0 0.3420" fovy="52"/>
 
     <!-- Beech disk, ~8 cm like the real one. -->
     <geom name="disk" type="cylinder" size="0.04 0.006" pos="0.22 0.11 0.006" material="wood_disk"/>
