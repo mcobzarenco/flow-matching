@@ -51,17 +51,17 @@ def build_messages(
     user_content: list[dict[str, Any]] = []
     for label, camera, image in summary.frames:
         user_content.append({"type": "image", "image": image})
-        user_content.append({"type": "text", "text": f"{label} — camera '{camera}'"})
+        user_content.append({"type": "text", "text": f"{label} — camera {camera}"})
 
     briefing = (
         f"Episode {summary.episode} of dataset {summary.repo_id}: "
         f"{summary.num_frames} frames, {summary.duration_s:.1f}s "
-        f"at {summary.fps:.0f} fps, cameras: {', '.join(summary.camera_names)}.\n"
+        f"at {summary.fps:.0f} fps, cameras: {', '.join(summary.camera_labels)}.\n"
         f'Operator instruction: "{summary.task}"\n'
     )
     if extra_context:
         briefing += f"Context from the dataset owner: {extra_context}\n"
-    camera_list = ", ".join(f'"{name}"' for name in summary.camera_names)
+    camera_list = ", ".join(f'"{label}"' for label in summary.camera_labels)
     briefing += (
         f"\nFull-trajectory statistics:\n{summary.stats_text}\n\n"
         "Assess this demonstration and reply with the JSON object only. "
@@ -320,9 +320,12 @@ def main() -> None:
 
     try:
         judgment: EpisodeJudgment | None = EpisodeJudgment.from_response_text(text)
-        judgment.check_cameras(summary.camera_names)
+        judgment.check_cameras(summary.camera_labels)
         judgment.check_subgoals(summary.num_frames)
-        judgment.check_frame_annotations(summary.sampled_frames, summary.camera_names)
+        judgment.check_frame_annotations(summary.sampled_frames, summary.camera_labels)
+        judgment = judgment.rename_cameras(
+            dict(zip(summary.camera_labels, summary.camera_names, strict=True)),
+        )
     except ValueError as error:
         print(f"warning: {error}", file=sys.stderr)
         judgment = None

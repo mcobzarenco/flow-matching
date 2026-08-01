@@ -63,9 +63,12 @@ def judge_one(task: JudgeTask) -> dict[str, Any]:
         content = build_user_content(summary)
         raw, usage = request_verdict(_client(), task.model, task.max_tokens, content)
         judgment = EpisodeJudgment.from_response_text(raw)
-        judgment.check_cameras(summary.camera_names)
+        judgment.check_cameras(summary.camera_labels)
         judgment.check_subgoals(summary.num_frames)
-        judgment.check_frame_annotations(summary.sampled_frames, summary.camera_names)
+        judgment.check_frame_annotations(summary.sampled_frames, summary.camera_labels)
+        judgment = judgment.rename_cameras(
+            dict(zip(summary.camera_labels, summary.camera_names, strict=True)),
+        )
         record.update(
             status="ok",
             task=summary.task,

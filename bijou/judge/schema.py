@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import StrEnum
 from typing import Any
 
@@ -47,9 +47,9 @@ not discard for the instruction alone; reflect label problems in
 `instruction_quality` (and rate `task_completion_visible` against the
 stated instruction, "unclear" when it is meaningless).
 
-Classify every camera by what you SEE across the sampled frames — the
-recorded camera names ("image", "image2", ...) are arbitrary and their
-ordering is inconsistent between datasets:
+Classify every camera by what you SEE across the sampled frames — cameras
+are presented under deliberately anonymous labels ("camera A",
+"camera B", ...) because recorded camera names are unreliable:
 - "wrist": mounted on a robot arm, the viewpoint moves with it; gripper
   jaws/fingers typically protrude from a fixed spot at the frame edge while
   the background shifts between frames.
@@ -72,8 +72,13 @@ nothing is interpolated):
   (nothing accomplished yet) to 1.0 (task fully accomplished). Judge
   against the instruction — or against the demonstrated task when the
   instruction is junk. Progress may plateau or decrease (drops, resets).
-- "holding": whether the gripper is physically holding the task object at
-  this frame — a closed gripper with nothing in it is false.
+- "holding": true ONLY while the gripper's fingers are CLOSED on the task
+  object, so that the object is constrained by the hand (lifted, or moving
+  with it). An open gripper hovering over, around, or descending onto the
+  object is NOT holding — even when the object sits between the open
+  fingers. A closed gripper with nothing in it is NOT holding. After
+  release (object resting on its target, fingers opening or withdrawing)
+  is NOT holding. At ambiguous transition frames, answer false.
 - "visible": per camera, whether the manipulated task object is visible
   ("task_object") and whether the robot's gripper/end-effector is visible
   ("gripper").
@@ -426,12 +431,39 @@ class EpisodeJudgment:
             raise ValueError("no JSON object found in response")
         return cls.from_json(text[start : end + 1])
 
-    def check_cameras(self, expected: list[str]) -> None:
-        """Raise if camera_kinds does not cover exactly the shown cameras.
+    def rename_cameras(self, mapping: dict[str, str]) -> EpisodeJudgment:
+        """Translate camera keys throughout (anonymous labels -> dataset
+        names). Judges answer under anonymous labels so recorded names
+        cannot bias the viewpoint call; storage and downstream consumers
+        want the dataset's real names. Strict: every camera key in the
+        verdict must appear in ``mapping``."""
+        seen: set[str] = set(self.camera_kinds)
+        for annotation in self.frame_annotations:
+            seen |= set(annotation.visible)
+        unknown = seen - set(mapping)
+        if unknown:
+            raise ValueError(f"camera keys {sorted(unknown)} not in {sorted(mapping)}")
+        return replace(
+            self,
+            camera_kinds={
+                mapping[label]: kind for label, kind in self.camera_kinds.items()
+            },
+            frame_annotations=tuple(
+                replace(
+                    annotation,
+                    visible={
+                        mapping[label]: vis for label, vis in annotation.visible.items()
+                    },
+                )
+                for annotation in self.frame_annotations
+            ),
+        )
 
-        The map is only usable downstream (train-time camera annotations)
-        when keyed by the dataset's actual camera names; a judge that
-        renamed or dropped a camera produced an unusable verdict.
+    def check_cameras(self, expected: list[str]) -> None:
+        """Raise if camera_kinds does not cover exactly the shown cameras
+        (anonymous labels at parse time, dataset names after
+        ``rename_cameras``) — a judge that renamed or dropped a camera
+        produced an unusable verdict.
         """
         got, want = set(self.camera_kinds), set(expected)
         if got != want:

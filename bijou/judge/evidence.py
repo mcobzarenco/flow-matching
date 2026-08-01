@@ -40,10 +40,16 @@ class EpisodeSummary:
     num_frames: int
     duration_s: float
     motor_names: list[str]
-    camera_names: list[str]  # short names, e.g. "image", "image2"
+    camera_names: list[str]  # dataset short names, e.g. "front", "image2"
+    # Anonymous labels ("A", "B", ...) aligned with camera_names — what the
+    # judge sees and answers with. Recorded names bias the verdict (measured:
+    # a fixed overhead cam named "front" was tagged front over top until
+    # anonymized), so judges never see them; callers translate back via
+    # EpisodeJudgment.rename_cameras after validation.
+    camera_labels: list[str]
     sampled_frames: list[int]  # 1-based frame numbers shown to the judge
     stats_text: str
-    # (timestep label, short camera name, image) in chronological order
+    # (timestep label, camera LABEL, image) in chronological order
     frames: list[tuple[str, str, Image.Image]]
 
 
@@ -153,6 +159,10 @@ def load_episode_summary(
             )
         camera_keys = [k for k in camera_keys if short_camera(k) in wanted]
 
+    # Deterministic anonymous labels: sorted by dataset name, then A, B, …
+    camera_keys = sorted(camera_keys, key=short_camera)
+    camera_labels = [chr(ord("A") + i) for i in range(len(camera_keys))]
+
     # Evenly spaced timesteps, always including the first and last frame.
     picks = np.unique(np.linspace(0, num_frames - 1, num_timesteps).round().astype(int))
     frames: list[tuple[str, str, Image.Image]] = []
@@ -160,8 +170,8 @@ def load_episode_summary(
         item = dataset[start + int(local_idx)]  # decodes video for this frame only
         label = f"frame {local_idx + 1}/{num_frames} (t={local_idx / fps:.1f}s)"
         frames.extend(
-            (label, short_camera(camera), tensor_to_image(item[camera], max_image_dim))
-            for camera in camera_keys
+            (label, camera_label, tensor_to_image(item[camera], max_image_dim))
+            for camera, camera_label in zip(camera_keys, camera_labels, strict=True)
         )
 
     return EpisodeSummary(
@@ -173,6 +183,7 @@ def load_episode_summary(
         duration_s=num_frames / fps,
         motor_names=motor_names,
         camera_names=[short_camera(k) for k in camera_keys],
+        camera_labels=camera_labels,
         sampled_frames=[int(local_idx) + 1 for local_idx in picks],
         stats_text=format_stats(action, state, motor_names, fps),
         frames=frames,

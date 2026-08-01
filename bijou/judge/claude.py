@@ -62,8 +62,8 @@ def build_user_content(
         f'Task instruction: "{summary.task}"\n'
         f"Length: {summary.num_frames} frames = {summary.duration_s:.1f}s "
         f"@ {summary.fps:.0f} fps\n"
-        f"Cameras: {', '.join(summary.camera_names)}\n"
-        f"Sampled timesteps: {len(summary.frames) // max(len(summary.camera_names), 1)} "
+        f"Cameras: {', '.join(summary.camera_labels)}\n"
+        f"Sampled timesteps: {len(summary.frames) // max(len(summary.camera_labels), 1)} "
         f"(each shown for every camera, chronological order)"
     )
     content: list[TextBlockParam | ImageBlockParam] = [{"type": "text", "text": intro}]
@@ -75,7 +75,7 @@ def build_user_content(
             },
         )
     for label, camera, image in summary.frames:
-        content.append({"type": "text", "text": f"{label} — camera '{camera}'"})
+        content.append({"type": "text", "text": f"{label} — camera {camera}"})
         content.append(
             {
                 "type": "image",
@@ -86,7 +86,7 @@ def build_user_content(
                 },
             },
         )
-    camera_list = ", ".join(f'"{name}"' for name in summary.camera_names)
+    camera_list = ", ".join(f'"{label}"' for label in summary.camera_labels)
     content.append(
         {
             "type": "text",
@@ -346,9 +346,12 @@ def main() -> None:
     raw, usage = request_verdict(Anthropic(), args.model, args.max_tokens, content)
     try:
         judgment: EpisodeJudgment | None = EpisodeJudgment.from_response_text(raw)
-        judgment.check_cameras(summary.camera_names)
+        judgment.check_cameras(summary.camera_labels)
         judgment.check_subgoals(summary.num_frames)
-        judgment.check_frame_annotations(summary.sampled_frames, summary.camera_names)
+        judgment.check_frame_annotations(summary.sampled_frames, summary.camera_labels)
+        judgment = judgment.rename_cameras(
+            dict(zip(summary.camera_labels, summary.camera_names, strict=True)),
+        )
     except ValueError as error:
         print(f"warning: {error}", file=sys.stderr)
         judgment = None
