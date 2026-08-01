@@ -17,9 +17,10 @@
     <!-- Photo texture cropped from a real front frame (assets/table). The
          real planks run along +x (away from the camera). -->
     <texture type="2d" name="tabletop" file="../table/table_texture.png"/>
-    <!-- Patch covers ~0.2 m of real wood; repeats sized to the 2.4 x 1.0
-         top so plank scale reads naturally. -->
-    <material name="tabletop" texture="tabletop" texrepeat="12 5" reflectance="0.02"
+    <!-- Mirror-tiled seamless texture (sim/make_table_texture.py); one
+         2x2-mirrored tile covers ~0.4 m, sized to the 2.4 x 1.0 top so
+         plank scale reads naturally. -->
+    <material name="tabletop" texture="tabletop" texrepeat="6 2.5" reflectance="0.02"
       rgba="0.74 0.72 0.70 1"/>
     <!-- Flat white texture: the runtime tints it via geom rgba (cheap
          randomization) or paints tex_data directly (full randomization). -->
@@ -50,16 +51,20 @@
          slightly forward so the pole stays out of frame. -->
     <geom name="camera_pole" type="box" size="0.015 0.02 0.28" pos="-0.09 -0.125 0.28"
       contype="0" conaffinity="0" rgba="0.2 0.2 0.2 1"/>
+    <!-- fovy: the modules are "130 deg wide-angle" 1080p UVC cams, but
+         that spec is the 16:9 diagonal - the rig captures 4:3 640x480,
+         a heavy center crop. Disk pixel-size in the real frame implies
+         an effective vertical FOV near 48 deg. -->
     <camera name="top_cam" pos="0.06 -0.125 0.555"
-      xyaxes="0 -1 0 0.9659 0 0.2588" fovy="70"/>
+      xyaxes="0 -1 0 0.9659 0 0.2588" fovy="52"/>
 
     <!-- Beech disk, ~8 cm like the real one. -->
     <geom name="disk" type="cylinder" size="0.04 0.006" pos="0.22 0.11 0.006" material="wood_disk"/>
 
     <!-- Stand-ins for the persistent clutter in the rig frames. -->
-    <geom name="mouse" type="ellipsoid" size="0.032 0.055 0.02" pos="0.42 0.05 0.02"
-      rgba="0.35 0.36 0.38 1"/>
-    <body name="mug" pos="0.46 0.22 0.045">
+    <geom name="mouse" type="ellipsoid" size="0.032 0.055 0.02" pos="0.40 -0.22 0.02"
+      euler="0 0 0.4" rgba="0.35 0.36 0.38 1"/>
+    <body name="mug" pos="0.48 -0.02 0.045">
       <geom name="mug" type="cylinder" size="0.042 0.045" rgba="0.92 0.91 0.88 1"/>
     </body>
 

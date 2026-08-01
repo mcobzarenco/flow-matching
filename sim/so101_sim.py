@@ -95,16 +95,18 @@ class SO101Sim:
         self._recolor_arm()
 
     def _recolor_arm(self) -> None:
-        """Menagerie ships the yellow-print arm; the rig's is black with an
-        orange moving jaw (see outputs/sim/real/wrist_00260.png). Runtime
-        recolor instead of editing the vendored XML."""
+        """Menagerie ships the yellow-print arm; the rig's are black, and
+        only the LEADER has the bright orange moving jaw (owner-confirmed;
+        the follower is all black). Runtime recolor instead of editing the
+        vendored XML."""
         black = (0.13, 0.13, 0.14, 1.0)
         orange = (0.95, 0.45, 0.1, 1.0)
         for index in range(self.model.nmat):
             name = self.model.mat(index).name
             if "so101" not in name:
                 continue
-            self.model.mat_rgba[index] = orange if "moving_jaw" in name else black
+            leader_jaw = "moving_jaw" in name and name.startswith("leader-")
+            self.model.mat_rgba[index] = orange if leader_jaw else black
 
     def reset(self, seed: int) -> SimObservation:
         """Home the arm, place benchy at a seeded pose, randomize its
