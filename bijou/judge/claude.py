@@ -39,7 +39,11 @@ DEFAULT_MODEL = "claude-opus-4-8"  # $5/$25 per MTok (2026-07)
 DEFAULT_NUM_FRAMES = 10  # sampled timesteps per episode
 DEFAULT_MAX_IMAGE_DIM = 512  # px, longer side after downscaling
 DEFAULT_JPEG_QUALITY = 90
-DEFAULT_MAX_TOKENS = 1500  # response budget
+# Response cap, not a charge (billing is per generated token). The verdict
+# scales with timesteps x cameras via frame_annotations: 10 frames / 2 cams
+# ran ~1.45k tokens, and 1500 truncated a 20-frame run mid-JSON — loudly,
+# as a parse failure. Sized for ~30 frames of dense annotations with slack.
+DEFAULT_MAX_TOKENS = 4096
 
 
 def image_to_jpeg_b64(image: Image.Image, quality: int) -> str:

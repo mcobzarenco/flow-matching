@@ -88,7 +88,7 @@ nothing is interpolated):
   (beyond normal teleoperation presence), "episode reset begins" —
   normally an empty list. Whenever your progress estimate DECREASES from
   the previous sampled frame, the later frame's events MUST include a
-  short description of what went wrong (e.g. "boat tips off the disk",
+  short description of what went wrong (e.g. "object tips off the target",
   "object slips out of the gripper", "placement missed the target") — a
   silent regression is inconsistent. Mistakes are normal in teleoperated
   data and do not by themselves make an episode discard-worthy; recovery
