@@ -1,19 +1,18 @@
 """Prototype demo: render seeded resets from both cameras, run a scripted
 arm sweep, and sanity-check the success predicate by teleporting benchy
-onto the disk. Writes PNGs to sim/out/.
+onto the disk. Writes PNGs to outputs/sim/.
 
 Usage: MUJOCO_GL=egl uv run python -m sim.demo_scene
 """
-
-from pathlib import Path
 
 import mujoco
 import numpy as np
 from PIL import Image
 
+from . import OUTPUT_DIR
 from .so101_sim import DISK_CENTER, SO101Sim
 
-OUT = Path(__file__).parent / "out"
+OUT = OUTPUT_DIR
 
 
 def save(name: str, image: np.ndarray) -> None:

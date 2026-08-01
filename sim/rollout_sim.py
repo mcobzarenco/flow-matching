@@ -7,8 +7,8 @@ top camera is fed under the name "front" so the prompt's sorted camera
 slots match training (front, wrist); the viewpoint mismatch is part of
 the measured domain gap, not a bug.
 
-Writes a side-by-side (front|wrist) GIF and prints per-replan telemetry
-+ the success predicate.
+Writes a side-by-side (front|wrist) GIF to outputs/sim/ and prints
+per-replan telemetry + the success predicate.
 
 Usage:
   MUJOCO_GL=egl uv run python -m sim.rollout_sim \
@@ -27,6 +27,7 @@ from bijou.decoders.flow import SamplingMethod
 from bijou.eval.policies import BijouPolicy
 from bijou.rollout import SO_MOTORS, observation_to_item
 
+from . import OUTPUT_DIR
 from .so101_sim import DISK_CENTER, SimObservation, SO101Sim
 
 STATS_REPO_ID = "mcobzarenco/so101_pick_place_v2"
@@ -45,7 +46,7 @@ def parse_args() -> argparse.Namespace:
         default="bfloat16",
         choices=["float32", "bfloat16"],
     )
-    parser.add_argument("--gif", type=Path, default=Path("sim/out/rollout.gif"))
+    parser.add_argument("--gif", type=Path, default=OUTPUT_DIR / "rollout.gif")
     return parser.parse_args()
 
 

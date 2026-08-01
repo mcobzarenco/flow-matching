@@ -1,14 +1,13 @@
 """One-off: render candidate home poses (top + wrist) to pick one where
-the wrist camera overlooks the workspace. Writes sim/out/pose<i>_*.png."""
-
-from pathlib import Path
+the wrist camera overlooks the workspace. Writes outputs/sim/pose<i>_*.png."""
 
 import numpy as np
 from PIL import Image
 
+from . import OUTPUT_DIR
 from .so101_sim import SO101Sim
 
-OUT = Path(__file__).parent / "out"
+OUT = OUTPUT_DIR
 
 CANDIDATES = (
     np.array([0.0, -40.0, 60.0, 15.0, 0.0, 30.0]),
