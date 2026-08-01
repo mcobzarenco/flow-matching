@@ -10,7 +10,7 @@ import numpy as np
 from PIL import Image
 
 from . import OUTPUT_DIR
-from .so101_sim import DISK_CENTER, SO101Sim
+from .so101_sim import SO101Sim
 
 OUT = OUTPUT_DIR
 
@@ -42,7 +42,7 @@ def main() -> int:
 
     # Teleport benchy onto the disk -> predicate must flip to True.
     adr = sim._benchy_qpos  # prototype demo pokes internals
-    sim.data.qpos[adr : adr + 3] = (*DISK_CENTER, 0.005)
+    sim.data.qpos[adr : adr + 3] = (*sim.disk_center, 0.005)
     sim.data.qpos[adr + 3 : adr + 7] = (1.0, 0.0, 0.0, 0.0)
     sim.data.qvel[:] = 0.0
     mujoco.mj_forward(sim.model, sim.data)

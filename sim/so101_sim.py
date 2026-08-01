@@ -42,10 +42,13 @@ CONTROL_HZ = 30
 # accepted for the prototype rather than re-tuning menagerie's timestep).
 PHYSICS_STEPS_PER_TICK = 7
 
-# Benchy spawn region: annulus around the disk kept inside comfortable
-# reach (menagerie pickup keyframe grasps at ~0.22 m forward).
-SPAWN_X = (0.16, 0.28)
-SPAWN_Y = (-0.16, 0.02)
+# Benchy spawn region: in front of the disk, inside comfortable reach
+# (menagerie pickup keyframe grasps at ~0.22 m forward). Ranges chosen
+# for mean benchy->disk distance ~9.5 cm (halved from the original
+# ~18.3 cm); the near bound keeps hull (3 cm half-length) clear of the
+# 4 cm disk. Relative to the disk at (0.22, 0.11).
+SPAWN_X = (0.17, 0.27)
+SPAWN_Y = (-0.005, 0.04)
 # Episode-initial pose: the median first-frame observation.state across
 # the 50 episodes of so101_pick_place_v2 (measured from the dataset
 # parquet; per-joint std 2-20 deg). NOTE the real shoulder_lift median
@@ -55,8 +58,6 @@ HOME_DEGREES = np.array([4.6, -102.7, 97.0, 78.7, 77.6, 3.5])
 # The leader arm mirrors the follower during teleop; at episode start the
 # operator holds it at the same rest pose.
 LEADER_DEGREES = np.array([4.6, -102.7, 97.0, 78.7, 77.6, 3.5])
-DISK_CENTER = (0.22, 0.11)
-DISK_RADIUS = 0.06
 
 
 @dataclass(frozen=True, slots=True)
@@ -94,6 +95,11 @@ class SO101Sim:
         self._leader_actuators = np.array(
             [self.model.actuator(f"leader-{name}").id for name in JOINTS],
         )
+        # Disk geometry from the model - the XML is the single source of
+        # truth (a hardcoded copy here once drifted from it).
+        disk = self.model.geom("disk")
+        self.disk_center: tuple[float, float] = (float(disk.pos[0]), float(disk.pos[1]))
+        self.disk_radius: float = float(disk.size[0])
         self._recolor_arm()
 
     def _recolor_arm(self) -> None:
@@ -167,13 +173,18 @@ class SO101Sim:
         upright = float(self.data.xmat[self._benchy_body].reshape(3, 3)[2, 2])
         return pos, upright
 
+    def benchy_disk_distance(self) -> float:
+        """XY distance from the benchy base to the disk center (meters)."""
+        pos, _ = self.benchy_pose()
+        return float(
+            np.hypot(pos[0] - self.disk_center[0], pos[1] - self.disk_center[1]),
+        )
+
     def success(self) -> bool:
         """Benchy resting upright on the disk: xy within the disk radius,
         base at disk height, still, and not held (gripper open enough)."""
         pos, upright = self.benchy_pose()
-        dx = pos[0] - DISK_CENTER[0]
-        dy = pos[1] - DISK_CENTER[1]
-        on_disk = float(np.hypot(dx, dy)) < DISK_RADIUS
+        on_disk = self.benchy_disk_distance() < self.disk_radius
         at_height = 0.004 < pos[2] < 0.03
         still = float(np.abs(self.data.qvel[: self.model.nv]).max()) < 0.5
         return on_disk and at_height and upright > 0.9 and still

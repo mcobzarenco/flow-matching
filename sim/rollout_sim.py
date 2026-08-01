@@ -1,22 +1,25 @@
-"""Closed-loop bijou rollout in the SO-101 sim (the sim twin of
+"""Closed-loop bijou rollout(s) in the SO-101 sim (the sim twin of
 bijou/rollout.py).
 
 Same inference path as the physical rollouts — BijouPolicy + the real
 ``observation_to_item`` — with SO101Sim in place of SOFollower. The sim's
-top camera is fed under the name "front" so the prompt's sorted camera
-slots match training (front, wrist); the viewpoint mismatch is part of
-the measured domain gap, not a bug.
+top camera is fed under the name "front", matching the rig dataset's
+(mislabelled) camera key.
 
-Writes a full-resolution side-by-side (front|wrist) H.264 video to
-outputs/sim/ and prints per-replan telemetry + the success predicate.
+Runs one episode per seed (policy loaded once), writes a full-resolution
+side-by-side (front|wrist) H.264 video per seed to
+outputs/sim/rollout_seed<NNN>.mp4, and prints a per-seed summary table:
+initial/min/final benchy->disk distance and success.
 
 Usage:
   MUJOCO_GL=egl uv run python -m sim.rollout_sim \
-      --checkpoint outputs/train/bijou_ft_rig_from_adarms100k_ddp2/step_005000
+      --checkpoint outputs/train/bijou_ft_rig_from_adarms100k_ddp2/step_005000 \
+      --seed 0 --num-seeds 20
 """
 
 import argparse
 import time
+from dataclasses import dataclass
 from pathlib import Path
 
 import av
@@ -28,7 +31,7 @@ from bijou.eval.policies import BijouPolicy
 from bijou.rollout import SO_MOTORS, observation_to_item
 
 from . import OUTPUT_DIR
-from .so101_sim import CONTROL_HZ, DISK_CENTER, SimObservation, SO101Sim
+from .so101_sim import CONTROL_HZ, SimObservation, SO101Sim
 
 STATS_REPO_ID = "mcobzarenco/so101_pick_place_v2"
 TASK = "Pick up the toy boat and place it on the wooden disk."
@@ -37,7 +40,13 @@ TASK = "Pick up the toy boat and place it on the wooden disk."
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--checkpoint", type=Path, required=True)
-    parser.add_argument("--seed", type=int, default=0, help="env + noise seed")
+    parser.add_argument("--seed", type=int, default=0, help="first env + noise seed")
+    parser.add_argument(
+        "--num-seeds",
+        type=int,
+        default=1,
+        help="episodes: seed .. seed+N-1",
+    )
     parser.add_argument("--replans", type=int, default=15)
     parser.add_argument("--execute-horizon", type=int, default=30)
     parser.add_argument("--sample-steps", type=int, default=10)
@@ -46,8 +55,22 @@ def parse_args() -> argparse.Namespace:
         default="bfloat16",
         choices=["float32", "bfloat16"],
     )
-    parser.add_argument("--video", type=Path, default=OUTPUT_DIR / "rollout.mp4")
+    parser.add_argument("--out-dir", type=Path, default=OUTPUT_DIR)
     return parser.parse_args()
+
+
+@dataclass(frozen=True, slots=True)
+class EpisodeResult:
+    seed: int
+    initial_cm: float
+    min_cm: float
+    final_cm: float
+    success_tick: int | None
+
+    @property
+    def progress_cm(self) -> float:
+        """Distance recovered from spawn to the episode's closest point."""
+        return self.initial_cm - self.min_cm
 
 
 def to_observation(obs: SimObservation) -> dict[str, object]:
@@ -56,11 +79,70 @@ def to_observation(obs: SimObservation) -> dict[str, object]:
     observation: dict[str, object] = {
         f"{motor}.pos": float(obs.state[index]) for index, motor in enumerate(SO_MOTORS)
     }
-    observation["front"] = (
-        obs.top
-    )  # top view rides the front slot (see module docstring)
+    observation["front"] = obs.top
     observation["wrist"] = obs.wrist
     return observation
+
+
+def write_video(path: Path, frames: list[np.ndarray]) -> None:
+    container = av.open(str(path), mode="w")
+    stream = container.add_stream("h264", rate=CONTROL_HZ)
+    stream.width = frames[0].shape[1]
+    stream.height = frames[0].shape[0]
+    stream.pix_fmt = "yuv420p"
+    for frame in frames:
+        for packet in stream.encode(av.VideoFrame.from_ndarray(frame, format="rgb24")):
+            container.mux(packet)
+    for packet in stream.encode():
+        container.mux(packet)
+    container.close()
+
+
+def run_episode(
+    policy: BijouPolicy,
+    sim: SO101Sim,
+    seed: int,
+    *,
+    replans: int,
+    horizon: int,
+    video_path: Path,
+) -> EpisodeResult:
+    obs = sim.reset(seed)
+    chunk_size = policy.info.chunk_size
+    stats = policy.info.per_dataset_normalization[STATS_REPO_ID]
+    frames: list[np.ndarray] = []
+    initial = sim.benchy_disk_distance()
+    closest = initial
+    success_tick: int | None = None
+
+    for replan in range(replans):
+        item = observation_to_item(to_observation(obs), TASK, stats, chunk_size)
+        start = time.perf_counter()
+        chunk = policy.predict([item], [replan])[0]
+        latency = time.perf_counter() - start
+        print(
+            f"  seed {seed} replan {replan}: {latency * 1000:.0f} ms | "
+            f"benchy->disk {sim.benchy_disk_distance() * 100:.1f} cm",
+            flush=True,
+        )
+        for step in range(horizon):
+            obs = sim.step(chunk[step].numpy())
+            frames.append(np.concatenate([obs.top, obs.wrist], axis=1))
+            closest = min(closest, sim.benchy_disk_distance())
+            if sim.success():
+                success_tick = replan * horizon + step
+                break
+        if success_tick is not None:
+            break
+
+    write_video(video_path, frames)
+    return EpisodeResult(
+        seed=seed,
+        initial_cm=initial * 100,
+        min_cm=closest * 100,
+        final_cm=sim.benchy_disk_distance() * 100,
+        success_tick=success_tick,
+    )
 
 
 def main() -> int:
@@ -76,55 +158,36 @@ def main() -> int:
         method=SamplingMethod.HEUN,
         expert_dtype=getattr(torch, args.expert_dtype),
     )
-    stats = policy.info.per_dataset_normalization[STATS_REPO_ID]
-    chunk_size = policy.info.chunk_size
-    horizon = min(args.execute_horizon, chunk_size)
-    print(f"policy: {policy.name} (chunk {chunk_size}, heun-{args.sample_steps})")
+    horizon = min(args.execute_horizon, policy.info.chunk_size)
+    print(f"policy: {policy.name} (heun-{args.sample_steps}, horizon {horizon})")
 
     sim = SO101Sim()
-    obs = sim.reset(args.seed)
-    frames: list[np.ndarray] = []
-    success_tick: int | None = None
-
-    for replan in range(args.replans):
-        item = observation_to_item(to_observation(obs), TASK, stats, chunk_size)
-        start = time.perf_counter()
-        chunk = policy.predict([item], [replan])[0]
-        latency = time.perf_counter() - start
-        pos, _ = sim.benchy_pose()
-        distance = float(np.hypot(pos[0] - DISK_CENTER[0], pos[1] - DISK_CENTER[1]))
-        print(
-            f"replan {replan}: {latency * 1000:.0f} ms | state "
-            f"{np.round(obs.state, 1)} | chunk[0] "
-            f"{np.round(chunk[0].numpy(), 1)} | benchy->disk {distance * 100:.1f} cm",
-            flush=True,
+    args.out_dir.mkdir(parents=True, exist_ok=True)
+    results: list[EpisodeResult] = []
+    for seed in range(args.seed, args.seed + args.num_seeds):
+        video_path = args.out_dir / f"rollout_seed{seed:03d}.mp4"
+        results.append(
+            run_episode(
+                policy,
+                sim,
+                seed,
+                replans=args.replans,
+                horizon=horizon,
+                video_path=video_path,
+            ),
         )
-        for step in range(horizon):
-            obs = sim.step(chunk[step].numpy())
-            frames.append(np.concatenate([obs.top, obs.wrist], axis=1))
-            if sim.success():
-                success_tick = replan * horizon + step
-                break
-        if success_tick is not None:
-            break
 
+    print("\nseed | init cm | min cm | final cm | progress cm | success")
+    for r in sorted(results, key=lambda r: -r.progress_cm):
+        success = f"tick {r.success_tick}" if r.success_tick is not None else "-"
+        print(
+            f"{r.seed:4d} | {r.initial_cm:7.1f} | {r.min_cm:6.1f} | "
+            f"{r.final_cm:8.1f} | {r.progress_cm:11.1f} | {success}",
+        )
+    best = max(results, key=lambda r: r.progress_cm)
     print(
-        f"success: {success_tick is not None}"
-        + (f" (tick {success_tick})" if success_tick else ""),
+        f"\nbest seed by progress: {best.seed} (video rollout_seed{best.seed:03d}.mp4)",
     )
-    args.video.parent.mkdir(parents=True, exist_ok=True)
-    container = av.open(str(args.video), mode="w")
-    stream = container.add_stream("h264", rate=CONTROL_HZ)
-    stream.width = frames[0].shape[1]
-    stream.height = frames[0].shape[0]
-    stream.pix_fmt = "yuv420p"
-    for frame in frames:
-        for packet in stream.encode(av.VideoFrame.from_ndarray(frame, format="rgb24")):
-            container.mux(packet)
-    for packet in stream.encode():
-        container.mux(packet)
-    container.close()
-    print(f"wrote {args.video} ({len(frames)} frames @ {CONTROL_HZ} fps, full res)")
     return 0
 
 
