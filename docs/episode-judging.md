@@ -114,7 +114,39 @@ function of episode length needs no memory.
 
 Known caveat, recorded where it bites: lerobot's `delete_episodes`
 renumbers `episode_index`, so any dataset rewrite must remap or
-deliberately drop the sidecar.
+deliberately drop the sidecar (and re-run materialization).
+
+## Materialization: LeRobot-native projections
+
+The sidecar is provenance; consumers shouldn't need to know it exists.
+`bijou.judge.materialize` projects one `(model, prompt_hash)` selection
+per dataset into the surfaces a plain `LeRobotDataset` already exposes:
+
+- **Subgoals** → `language_persistent` rows, `style="subtask"`: the
+  form the online visualizer renders and `active_at(t)` resolves —
+  persistent-until-superseded is exactly the piecewise-constant
+  semantics, so subgoal text is available at *every* frame.
+- **Events** → `language_events` rows, `style="event"` (project-local
+  style registered through lerobot's import-time hook): momentary rows
+  stored on the exact frame where they fired, resolved by
+  `emitted_at(t)`. Point-in-time facts are never broadcast.
+- **Progress / holding / per-camera visibility** → NaN-masked float32
+  feature columns (`annotation.progress`, `annotation.holding`,
+  `annotation.visible_object`, `annotation.visible_gripper` — vectors
+  ordered like the feature's `names`). NaN = the judge never saw that
+  frame: the loss mask is `isfinite`, and `delta_timestamps` works on
+  them like any other column. Never interpolate.
+
+Invariants: the finite mask of `annotation.progress` IS the judge's
+sampled-frame set (so a sampled frame without an event row is a true
+negative, an unsampled frame is unknown); judge frame numbers are
+1-based, `frame_index` 0-based — the off-by-one is resolved in exactly
+one place; every run rewrites the whole dataset (stale rows from an
+earlier selection cannot survive) and stamps
+`meta/judge_annotations.json` with the selection it was built from, so
+loaders pinning `(model, prompt_hash)` fail loudly on mismatch. No
+stats are written for annotation columns — they are labels, nothing
+normalizes them, and NaN would poison `aggregate_stats`.
 
 ## Sweeping and cost discipline
 
@@ -154,8 +186,8 @@ on them:
 
 ## Train-time consumption (the point of all this)
 
-Planned uses, in rough order of ambition — the sidecar schema already
-carries what each needs:
+Planned uses, in rough order of ambition — the materialized columns and
+sidecar already carry what each needs:
 
 1. **Filtering**: drop `discard` episodes via the existing
    `LeRobotDataset(episodes=...)` mechanism (same path the holdout split

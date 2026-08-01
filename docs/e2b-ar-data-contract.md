@@ -85,12 +85,21 @@ config for reproducibility.
 
 | target | semantics | native LeRobot access | coverage |
 |---|---|---|---|
-| **subgoal** | piecewise-constant text; segments cover every frame of a judged episode | `language_persistent` rows, `style="subtask"`, in the data parquet — items expose the column; `lerobot.datasets.language_render.active_at(t, persistent=rows, style="subtask")` resolves the frame's subgoal (`bijou.judge.materialize` writes these from sidecars) | every judged episode |
-| **holding** (bool) | gripper physically holds the task object AT the sampled frame; **never interpolate** | sidecar only (`frame_annotations[].holding`) | ~10–20 sampled frames per judged episode; supervise only there (loss mask) |
-| **progress** (0–1) | task-completion fraction at the sampled frame; dips imply an event | sidecar only (`frame_annotations[].progress`) | same sampled frames |
-| **visibility** | per camera: task object / gripper visible at the sampled frame | sidecar only (`frame_annotations[].visible`) | same sampled frames |
-| **events** | free-text occurrences at a frame (drops, interventions, resets); mistake-marking for BC masking | sidecar only (`frame_annotations[].events`) | rare by design |
-| episode quality | verdict/scores/issues — filtering & sample weighting | sidecar (curation applies discards upstream in the curated corpus) | every judged episode |
+| **subgoal** | piecewise-constant text; segments cover every frame of a judged episode | `language_persistent` rows, `style="subtask"` — items expose the column; `lerobot.datasets.language_render.active_at(t, persistent=rows, style="subtask")` resolves the frame's subgoal | every frame of a judged episode |
+| **holding** (bool) | gripper physically holds the task object AT the sampled frame; **never interpolate** | `annotation.holding` float32 column: 0/1 at sampled frames, NaN elsewhere — loss mask = `isfinite` | ~10–20 sampled frames per judged episode |
+| **progress** (0–1) | task-completion fraction at the sampled frame; dips imply an event | `annotation.progress` float32 column, NaN-masked; works with `delta_timestamps` (e.g. progress at t and t+chunk) | same sampled frames |
+| **visibility** | per camera: task object / gripper visible at the sampled frame | `annotation.visible_object` / `annotation.visible_gripper` float32 vectors over cameras (order = the feature's `names`), NaN-masked | same sampled frames |
+| **events** | free-text occurrences at a frame (drops, interventions, resets); mistake-marking for BC masking | `language_events` rows, `style="event"`, on the exact firing frame; `emitted_at(t)` resolves them (style registration: import `bijou.judge.materialize`) | rare by design |
+| episode quality | verdict/scores/issues — filtering & sample weighting | sidecar only (curation applies discards upstream in the curated corpus) | every judged episode |
+
+All of the above except episode quality are written by
+`bijou.judge.materialize` (full-dataset rewrite, idempotent). The
+finite-value mask of `annotation.progress` IS the judge's sampled-frame
+set: a sampled frame with no event row is a true "no event" negative;
+an unsampled frame is unknown. `meta/judge_annotations.json` stamps the
+`(model, prompt_hash)` selection the columns were built from — check it
+against the loader's pin instead of trusting sidecar joins. Reference
+dataset with all surfaces live: `mcobzarenco/so101_pick_place_v2`.
 
 Known label quality (measured on rig, aperture channel as ground truth):
 `holding` ≈ 75–85% per-sampled-frame agreement, errors concentrated at
@@ -99,10 +108,9 @@ monotone on clean episodes; camera tags need majority voting. **Treat
 auxiliary labels as weak supervision** — masked losses, modest weights,
 and re-measure at calibration (curation TODO 4).
 
-Per-frame scalars (`holding`/`progress`) have no native lerobot home; if
-sidecar joins prove awkward in the loader, the agreed fallback is plain
-feature columns (`annotation.progress` float32, NaN = unsupervised) —
-ask before inventing a third form.
+Per-frame scalars ride ordinary feature columns — no sidecar joins in
+the loader. The sidecar remains the provenance store and the only home
+of episode-level quality fields.
 
 ## Suggested target-sequence assembly (informative, not binding)
 
