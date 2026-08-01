@@ -65,6 +65,7 @@ def judge_one(task: JudgeTask) -> dict[str, Any]:
         judgment = EpisodeJudgment.from_response_text(raw)
         judgment.check_cameras(summary.camera_names)
         judgment.check_subgoals(summary.num_frames)
+        judgment.check_frame_annotations(summary.sampled_frames, summary.camera_names)
         record.update(
             status="ok",
             task=summary.task,

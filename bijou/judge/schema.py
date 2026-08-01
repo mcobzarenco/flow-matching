@@ -65,6 +65,25 @@ describe what is actually demonstrated (grounded in the visible objects and
 outcome, varied phrasing, usable directly as training labels). If the
 stated instruction is accurate, include a cleaned-up version of it.
 
+For each sampled timestep, also report dense `frame_annotations` — these
+describe THAT exact frame only (frames in between were never observed, so
+nothing is interpolated):
+- "progress": fraction of the stated task completed by this moment, 0.0
+  (nothing accomplished yet) to 1.0 (task fully accomplished). Judge
+  against the instruction — or against the demonstrated task when the
+  instruction is junk. Progress may plateau or decrease (drops, resets).
+- "holding": whether the gripper is physically holding the task object at
+  this frame — a closed gripper with nothing in it is false.
+- "visible": per camera, whether the manipulated task object is visible
+  ("task_object") and whether the robot's gripper/end-effector is visible
+  ("gripper").
+- "events": unusual occurrences at this frame, e.g. "object dropped",
+  "collision with the container", "human hand repositions the object"
+  (beyond normal teleoperation presence), "episode reset begins" —
+  normally an empty list.
+Use exactly the frame numbers from the image captions, one entry per
+sampled timestep, in chronological order.
+
 Also segment the episode into sequential `subgoals` (typically 2-6): a
 short imperative phrase for what the robot is doing in each phase, phrased
 in the task's own terms and grounded in the visible objects — e.g. for a
@@ -94,6 +113,13 @@ Respond with a single JSON object, no markdown fences, matching:
   "observed_task": "<1-2 sentences: what actually happens>",
   "suggested_instructions": ["<imperative instruction>", ...],
   "subgoals": [{"until_frame": <int>, "subgoal": "<imperative phrase>"}, ...],
+  "frame_annotations": [
+    {"frame": <int from the captions>, "progress": <0.0-1.0>,
+     "holding": true | false,
+     "visible": {"<camera name>": {"task_object": true | false, "gripper": true | false}, ...},
+     "events": ["<short description>", ...]},
+    ...
+  ],
   "camera_kinds": {"<camera name>": "wrist" | "top" | "front" | "side" | "unknown", ...},
   "issues": [<short strings>],
   "summary": "<2-4 sentences>"
@@ -187,6 +213,89 @@ class Scores:
     camera_framing: int
 
 
+def _strict_bool(data: dict[str, Any], field: str) -> bool:
+    value = data[field]
+    if not isinstance(value, bool):
+        raise TypeError(f"{field} must be a boolean, got {value!r}")
+    return value
+
+
+@dataclass(frozen=True, slots=True)
+class CameraVisibility:
+    """What one camera can see at one sampled frame."""
+
+    task_object: bool
+    gripper: bool
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> CameraVisibility:
+        return cls(
+            task_object=_strict_bool(data, "task_object"),
+            gripper=_strict_bool(data, "gripper"),
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"task_object": self.task_object, "gripper": self.gripper}
+
+
+@dataclass(frozen=True, slots=True)
+class FrameAnnotation:
+    """Dense annotations for ONE sampled frame — valid at that frame only.
+
+    Deliberately never interpolated (unlike subgoals): the judge saw this
+    exact frame; the frames in between were not observed. Consumers train
+    on annotated frames with a mask, or densify with a tracker — never
+    lerp.
+    """
+
+    frame: int  # 1-based frame number, one of the sampled timesteps
+    progress: float  # fraction of the task completed, in [0, 1]
+    holding: bool  # gripper physically holds the task object
+    visible: dict[str, CameraVisibility]  # keyed by short camera name
+    events: tuple[str, ...]  # unusual occurrences at this frame
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> FrameAnnotation:
+        frame = data["frame"]
+        if isinstance(frame, bool) or not isinstance(frame, int) or frame < 1:
+            raise ValueError(f"frame must be a positive integer, got {frame!r}")
+        progress = data["progress"]
+        if isinstance(progress, bool) or not isinstance(progress, int | float):
+            raise TypeError(f"progress must be a number, got {progress!r}")
+        if not 0.0 <= progress <= 1.0:
+            raise ValueError(f"progress must be in [0, 1], got {progress}")
+        visible_raw = data["visible"]
+        if not isinstance(visible_raw, dict) or not visible_raw:
+            raise ValueError("visible must be a non-empty object")
+        events_raw = data["events"]
+        if not isinstance(events_raw, list):
+            raise TypeError(
+                f"events must be an array, got {type(events_raw).__name__}",
+            )
+        events = tuple(str(event).strip() for event in events_raw)
+        if not all(events):
+            raise ValueError(f"events contains empty entries: {events_raw!r}")
+        return cls(
+            frame=frame,
+            progress=float(progress),
+            holding=_strict_bool(data, "holding"),
+            visible={
+                str(camera): CameraVisibility.from_dict(vis)
+                for camera, vis in visible_raw.items()
+            },
+            events=events,
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "frame": self.frame,
+            "progress": self.progress,
+            "holding": self.holding,
+            "visible": {camera: vis.to_dict() for camera, vis in self.visible.items()},
+            "events": list(self.events),
+        }
+
+
 @dataclass(frozen=True, slots=True)
 class Subgoal:
     """One temporal segment of an episode.
@@ -234,6 +343,7 @@ class EpisodeJudgment:
     observed_task: str
     suggested_instructions: tuple[str, ...]
     subgoals: tuple[Subgoal, ...]
+    frame_annotations: tuple[FrameAnnotation, ...]
     camera_kinds: dict[str, CameraKind]
     issues: tuple[str, ...]
     summary: str
@@ -269,6 +379,17 @@ class EpisodeJudgment:
                 raise ValueError(
                     f"subgoal until_frame values must be strictly increasing: {boundaries}",
                 )
+            annotations_raw = data["frame_annotations"]
+            if not isinstance(annotations_raw, list) or not annotations_raw:
+                raise ValueError("frame_annotations must be a non-empty array")
+            annotations = tuple(
+                FrameAnnotation.from_dict(entry) for entry in annotations_raw
+            )
+            frames = [annotation.frame for annotation in annotations]
+            if frames != sorted(set(frames)):
+                raise ValueError(
+                    f"frame_annotations frames must be strictly increasing: {frames}",
+                )
             return cls(
                 overall_score=_score_1_10(data, "overall_score"),
                 verdict=Verdict(data["verdict"]),
@@ -283,6 +404,7 @@ class EpisodeJudgment:
                 observed_task=observed_task,
                 suggested_instructions=instructions,
                 subgoals=subgoals,
+                frame_annotations=annotations,
                 camera_kinds={
                     str(name): CameraKind(kind) for name, kind in camera_kinds.items()
                 },
@@ -316,6 +438,28 @@ class EpisodeJudgment:
             raise ValueError(
                 f"camera_kinds keys {sorted(got)} != cameras shown {sorted(want)}",
             )
+
+    def check_frame_annotations(
+        self,
+        sampled_frames: list[int],
+        cameras: list[str],
+    ) -> None:
+        """Raise unless dense annotations cover exactly the sampled frames,
+        each with visibility for exactly the shown cameras — the judge
+        annotating frames it never saw (or cameras it renamed) produced an
+        unusable verdict."""
+        got = [annotation.frame for annotation in self.frame_annotations]
+        if got != list(sampled_frames):
+            raise ValueError(
+                f"frame_annotations frames {got} != sampled frames {list(sampled_frames)}",
+            )
+        want = set(cameras)
+        for annotation in self.frame_annotations:
+            if set(annotation.visible) != want:
+                raise ValueError(
+                    f"frame {annotation.frame} visibility covers "
+                    f"{sorted(annotation.visible)} != cameras shown {sorted(want)}",
+                )
 
     def check_subgoals(self, num_frames: int) -> None:
         """Raise unless the segments cover exactly frames 1..num_frames —
@@ -352,6 +496,9 @@ class EpisodeJudgment:
             "observed_task": self.observed_task,
             "suggested_instructions": list(self.suggested_instructions),
             "subgoals": [segment.to_dict() for segment in self.subgoals],
+            "frame_annotations": [
+                annotation.to_dict() for annotation in self.frame_annotations
+            ],
             "camera_kinds": {
                 name: kind.value for name, kind in self.camera_kinds.items()
             },

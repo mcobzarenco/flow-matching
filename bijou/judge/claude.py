@@ -176,6 +176,18 @@ def print_report(
     for segment in judgment.subgoals:
         print(f'  frames {start:>4}-{segment.until_frame:<4}: "{segment.subgoal}"')
         start = segment.until_frame + 1
+    for annotation in judgment.frame_annotations:
+        visibility = " ".join(
+            f"{camera}[{'O' if vis.task_object else '-'}{'G' if vis.gripper else '-'}]"
+            for camera, vis in sorted(annotation.visible.items())
+        )
+        events = (
+            f"  events: {'; '.join(annotation.events)}" if annotation.events else ""
+        )
+        print(
+            f"  f{annotation.frame:>4} prog {annotation.progress:4.2f} "
+            f"hold {'Y' if annotation.holding else '-'} {visibility}{events}",
+        )
     print(
         "cameras  : "
         + "  ".join(
@@ -336,6 +348,7 @@ def main() -> None:
         judgment: EpisodeJudgment | None = EpisodeJudgment.from_response_text(raw)
         judgment.check_cameras(summary.camera_names)
         judgment.check_subgoals(summary.num_frames)
+        judgment.check_frame_annotations(summary.sampled_frames, summary.camera_names)
     except ValueError as error:
         print(f"warning: {error}", file=sys.stderr)
         judgment = None

@@ -41,6 +41,7 @@ class EpisodeSummary:
     duration_s: float
     motor_names: list[str]
     camera_names: list[str]  # short names, e.g. "image", "image2"
+    sampled_frames: list[int]  # 1-based frame numbers shown to the judge
     stats_text: str
     # (timestep label, short camera name, image) in chronological order
     frames: list[tuple[str, str, Image.Image]]
@@ -172,6 +173,7 @@ def load_episode_summary(
         duration_s=num_frames / fps,
         motor_names=motor_names,
         camera_names=[short_camera(k) for k in camera_keys],
+        sampled_frames=[int(local_idx) + 1 for local_idx in picks],
         stats_text=format_stats(action, state, motor_names, fps),
         frames=frames,
     )
