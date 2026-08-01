@@ -3,7 +3,7 @@
 The composition root: ``BijouModel`` owns the backbone network ONCE (the
 truncated Gemma), plus one prompt-side encoder strategy (the collation +
 prefix-encode + unfreeze surface, which receives the backbone as an
-argument) and one :class:`ActionDecoder`. The observation
+argument) and one action decoder. The observation
 (chat-templated instruction + camera images) is encoded once and cached
 as an :class:`ObservationMemory`; the decoder then denoises a chunk of
 actions against it, with fresh robot state, at ~10 model evaluations per
@@ -30,6 +30,7 @@ from typing import override
 import torch
 from torch import Tensor, nn
 
+from .decoders.ar_backbone import ARBackboneDecoder, ar_backbone_loss
 from .decoders.ar_fast import ARFastDecoder, ar_fast_loss
 from .decoders.flow import FlowDecoder, SamplingMethod, flow_matching_loss
 from .encoders.gemma4 import GemmaEncoder, GemmaInputs
@@ -45,7 +46,7 @@ class BijouModel(nn.Module):
         self,
         backbone: Gemma4Model,
         encoder: GemmaEncoder,
-        decoder: FlowDecoder | ARFastDecoder,
+        decoder: FlowDecoder | ARFastDecoder | ARBackboneDecoder,
     ) -> None:
         super().__init__()
         self.backbone = backbone
@@ -70,11 +71,17 @@ class BijouModel(nn.Module):
         """Encode one collated batch of encoder inputs against the
         backbone. ``with_grad=False`` runs under no_grad (eval/rollout/
         frozen training); True leaves autograd on for live-backbone
-        training."""
-        return self.encoder.encode(self.backbone, inputs, with_grad=with_grad)
+        training. The full prefix cache is retained iff this model's
+        decoder consumes it (the ar_backbone suffix role)."""
+        return self.encoder.encode(
+            self.backbone,
+            inputs,
+            with_grad=with_grad,
+            retain_cache=isinstance(self.decoder, ARBackboneDecoder),
+        )
 
     @property
-    def expert(self) -> FlowDecoder | ARFastDecoder:
+    def expert(self) -> FlowDecoder | ARFastDecoder | ARBackboneDecoder:
         return self.decoder
 
     def _flow_decoder(self) -> FlowDecoder:
@@ -99,6 +106,8 @@ class BijouModel(nn.Module):
                 return flow_matching_loss(decoder, memory, batch)
             case ARFastDecoder():
                 return ar_fast_loss(decoder, memory, batch)
+            case ARBackboneDecoder():
+                return ar_backbone_loss(self.backbone, decoder, memory, batch)
 
     def encode_observation(
         self,
@@ -135,21 +144,32 @@ class BijouModel(nn.Module):
         ``method``/``noise`` are flow solver knobs; an AR decoder decodes
         greedily and ignores them (``noise`` must then be None)."""
         memory = self.encode(batch.encoder_inputs, with_grad=False)
-        if isinstance(self.decoder, FlowDecoder):
-            return self.decoder.predict_chunk(
-                memory,
-                batch,
-                generator=generator,
-                noise=noise,
-                num_steps=num_steps,
-                method=method,
-            )
-        return self.decoder.predict_chunk(
-            memory,
-            batch,
-            generator=generator,
-            noise=noise,
-        )
+        decoder = self.decoder
+        match decoder:
+            case FlowDecoder():
+                return decoder.predict_chunk(
+                    memory,
+                    batch,
+                    generator=generator,
+                    noise=noise,
+                    num_steps=num_steps,
+                    method=method,
+                )
+            case ARFastDecoder():
+                return decoder.predict_chunk(
+                    memory,
+                    batch,
+                    generator=generator,
+                    noise=noise,
+                )
+            case ARBackboneDecoder():
+                return decoder.predict_chunk(
+                    self.backbone,
+                    memory,
+                    batch,
+                    generator=generator,
+                    noise=noise,
+                )
 
     @torch.no_grad()
     def sample_actions(

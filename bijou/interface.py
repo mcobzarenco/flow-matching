@@ -23,12 +23,11 @@ runner for the decoder-only path).
 from __future__ import annotations
 
 import dataclasses
-from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Protocol, Self
 
 import torch
-from torch import Tensor, nn
+from torch import Tensor
 
 from .fast.codec import ActionCodec
 from .gemma4.cache import KVCache
@@ -256,26 +255,15 @@ class InputsCollator[I: BatchInputs](Protocol):
     def __call__(self, samples: list[PromptInputs]) -> I: ...
 
 
-class ActionDecoder(nn.Module, ABC):
-    """An action decoder: chunk-space inference over an observation memory.
-    Training objectives are module-level functions beside each decoder
-    (``flow_matching_loss``, ``ar_fast_loss``), dispatched by
-    ``BijouModel.loss`` — the decoder classes own parameters and forwards,
-    not objectives. ``forward`` stays decoder-specific (the flow decoder's
-    is the velocity field)."""
-
-    @abstractmethod
-    def predict_chunk(
-        self,
-        memory: ObservationMemory,
-        batch: CollatedBatch[Any],
-        *,
-        generator: torch.Generator | None = None,
-        noise: Tensor | None = None,
-    ) -> Tensor:
-        """RAW-unit action chunk [B, chunk, action_dim]; normalization via
-        the batch's per-sample stats happens inside."""
-
+# Action decoders are plain nn.Modules; the composition contract lives in
+# BijouModel's concrete union (exhaustive match dispatch — pyright-gated),
+# not an ABC: the decoders' signatures legitimately differ (the flow
+# decoder's forward is a velocity field with solver knobs; the ar_backbone
+# decoder runs against the backbone itself), and every consumer goes
+# through the root. Shared conventions: training objectives are
+# module-level functions beside each decoder (``flow_matching_loss``,
+# ``ar_fast_loss``, ``ar_backbone_loss``), and ``predict_chunk`` returns
+# RAW-unit chunks [B, chunk, action_dim] (per-sample stats applied inside).
 
 _IMAGE_KEY_PREFIX = "observation.images."
 

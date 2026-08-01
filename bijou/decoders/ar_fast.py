@@ -28,7 +28,6 @@ from torch.nn import functional as F
 
 from ..fast.codec import ActionCodec
 from ..interface import (
-    ActionDecoder,
     CollatedBatch,
     MemoryStream,
     ObservationMemory,
@@ -92,7 +91,7 @@ class ARFastConfig:
         return self.vocab_total - 1
 
 
-class ARFastDecoder(ActionDecoder):
+class ARFastDecoder(nn.Module):
     """Causal token decoder over ObservationMemory (see module docstring).
 
     ``codec`` is a runtime resource (BPE + quantile glue), not a module:
@@ -321,7 +320,6 @@ class ARFastDecoder(ActionDecoder):
             )
         return self.lm_head(self.norm(hidden_states))
 
-    @override
     @torch.no_grad()
     def predict_chunk(
         self,

@@ -44,7 +44,6 @@ import torch
 from torch import Tensor, nn
 
 from ..interface import (
-    ActionDecoder,
     CollatedBatch,
     MemoryStream,
     ObservationMemory,
@@ -182,7 +181,7 @@ def sinusoidal_time_embedding(
     return torch.cat([torch.sin(angle), torch.cos(angle)], dim=-1)
 
 
-class FlowDecoder(ActionDecoder):
+class FlowDecoder(nn.Module):
     """Flow-matching action decoder: a velocity network over an action
     chunk, conditioned on observation-memory streams, robot state and flow
     time.
@@ -519,7 +518,6 @@ class FlowDecoder(ActionDecoder):
             actions = actions + dt * velocity.to(actions.dtype)
         return actions
 
-    @override
     @torch.no_grad()
     def predict_chunk(
         self,
@@ -534,7 +532,7 @@ class FlowDecoder(ActionDecoder):
         """RAW-unit chunk prediction [B, chunk, action_dim]: normalize the
         batch's state with its per-sample stats, integrate the field, and
         unnormalize with the action stats. ``num_steps``/``method`` are
-        flow-specific knobs beyond the ActionDecoder minimum."""
+        flow-specific solver knobs (other decoder kinds have none)."""
         state = (batch.state - batch.state_stats.mean) / batch.state_stats.std
         sampled = self.sample_actions(
             memory,

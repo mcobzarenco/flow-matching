@@ -72,6 +72,7 @@ from .data import (
     select_datasets,
     worker_init,
 )
+from .decoders.ar_backbone import ARBackboneDecoder
 from .decoders.ar_fast import ARFastConfig, ARFastDecoder
 from .decoders.flow import (
     FlowDecoder,
@@ -725,7 +726,7 @@ def save_checkpoint(
 
 
 def ensure_matching_decoder_config(
-    decoder: FlowDecoder | ARFastDecoder,
+    decoder: FlowDecoder | ARFastDecoder | ARBackboneDecoder,
     checkpoint: Path,
 ) -> None:
     """Loud, early failure when a checkpoint's decoder differs from the
@@ -751,7 +752,7 @@ def ensure_matching_decoder_config(
     else:
         raise SystemExit(
             f"{checkpoint} is a format-1 checkpoint (flow-only era); it "
-            "cannot initialize an AR decoder",
+            "cannot initialize a non-flow decoder",
         )
     if current != saved:
         raise SystemExit(

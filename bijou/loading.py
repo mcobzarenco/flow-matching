@@ -26,6 +26,7 @@ from safetensors.torch import load_file
 from torch import Tensor
 
 from .data import DatasetStats
+from .decoders.ar_backbone import ARBackboneConfig, ARBackboneDecoder
 from .decoders.ar_fast import ARFastConfig, ARFastDecoder
 from .decoders.flow import (
     ExpertConfig,
@@ -98,6 +99,7 @@ class DecoderKind(StrEnum):
 
     FLOW = "flow"
     AR_FAST = "ar_fast"
+    AR_BACKBONE = "ar_backbone"
 
 
 @dataclass(frozen=True, slots=True)
@@ -237,16 +239,45 @@ def ar_fast_config_from_dict(data: dict[str, Any]) -> ARFastConfig:
     )
 
 
-def parse_decoder_config(data: dict[str, Any]) -> FlowDecoderConfig | ARFastConfig:
+def ar_backbone_config_to_dict(config: ARBackboneConfig) -> dict[str, Any]:
+    return {
+        "kind": DecoderKind.AR_BACKBONE.value,
+        "tokenizer": config.tokenizer,
+        "vocab_total": config.vocab_total,
+        "block_base": config.block_base,
+        "state_dim": config.state_dim,
+        "chunk_size": config.chunk_size,
+        "action_dim": config.action_dim,
+    }
+
+
+def ar_backbone_config_from_dict(data: dict[str, Any]) -> ARBackboneConfig:
+    return ARBackboneConfig(
+        tokenizer=str(data["tokenizer"]),
+        vocab_total=int(data["vocab_total"]),
+        block_base=int(data["block_base"]),
+        state_dim=int(data["state_dim"]),
+        chunk_size=int(data["chunk_size"]),
+        action_dim=int(data["action_dim"]),
+    )
+
+
+def parse_decoder_config(
+    data: dict[str, Any],
+) -> FlowDecoderConfig | ARFastConfig | ARBackboneConfig:
     kind = DecoderKind(data["kind"])
     match kind:
         case DecoderKind.FLOW:
             return FlowDecoderConfig.from_dict(data)
         case DecoderKind.AR_FAST:
             return ar_fast_config_from_dict(data)
+        case DecoderKind.AR_BACKBONE:
+            return ar_backbone_config_from_dict(data)
 
 
-def decoder_schema_dict(decoder: FlowDecoder | ARFastDecoder) -> dict[str, Any]:
+def decoder_schema_dict(
+    decoder: FlowDecoder | ARFastDecoder | ARBackboneDecoder,
+) -> dict[str, Any]:
     """The checkpoint-schema dict of a built decoder (write side + the
     --init-from config guard)."""
     match decoder:
@@ -254,6 +285,8 @@ def decoder_schema_dict(decoder: FlowDecoder | ARFastDecoder) -> dict[str, Any]:
             return flow_decoder_config_from_expert(decoder.config).to_dict()
         case ARFastDecoder():
             return ar_fast_config_to_dict(decoder.config)
+        case ARBackboneDecoder():
+            return ar_backbone_config_to_dict(decoder.config)
 
 
 def resolve_action_codec(ref: str) -> ActionCodec:
@@ -569,7 +602,7 @@ class CheckpointSections:
 
     backbone: BackboneConfig
     prompt: GemmaPromptConfig | None
-    decoder: FlowDecoderConfig | ARFastConfig | None
+    decoder: FlowDecoderConfig | ARFastConfig | ARBackboneConfig | None
 
 
 def checkpoint_sections(meta: dict[str, Any]) -> CheckpointSections:
@@ -771,12 +804,22 @@ def from_checkpoint(
         },
     )
     checkpoint_dir = resolve_checkpoint_dir(info.backbone)
-    if isinstance(sections.decoder, ARFastConfig):
+    if isinstance(sections.decoder, ARFastConfig | ARBackboneConfig):
         decoder_config = sections.decoder
         assert sections.prompt is not None  # tagged formats carry it
+        backbone_config = load_config(checkpoint_dir)
+        if (
+            isinstance(decoder_config, ARBackboneConfig)
+            and sections.backbone.depth is not BackboneDepth.FULL
+        ):
+            raise SystemExit(
+                f"{checkpoint} records an ar_backbone decoder with a "
+                f"'{sections.backbone.depth}' backbone — its suffix runs "
+                "the KV-shared deep half, which only the full stack has",
+            )
         backbone, encoder = build_gemma_encoder(
             checkpoint_dir,
-            load_config(checkpoint_dir),
+            backbone_config,
             exports=sections.prompt.exports,
             max_soft_tokens=sections.prompt.max_soft_tokens,
             device=device,
@@ -784,14 +827,24 @@ def from_checkpoint(
             attn_backend=attn_backend,
             depth=sections.backbone.depth,
         )
-        decoder = ARFastDecoder(
-            decoder_config,
-            encoder.stream_geometries(),
-            resolve_action_codec(decoder_config.tokenizer),
-            attn_backend=attn_backend,
-            device=device,
-            dtype=expert_dtype,
-        )
+        decoder: ARFastDecoder | ARBackboneDecoder
+        if isinstance(decoder_config, ARFastConfig):
+            decoder = ARFastDecoder(
+                decoder_config,
+                encoder.stream_geometries(),
+                resolve_action_codec(decoder_config.tokenizer),
+                attn_backend=attn_backend,
+                device=device,
+                dtype=expert_dtype,
+            )
+        else:
+            decoder = ARBackboneDecoder(
+                decoder_config,
+                backbone_config.text,
+                resolve_action_codec(decoder_config.tokenizer),
+                device=device,
+                dtype=expert_dtype,
+            )
         model = BijouModel(backbone=backbone, encoder=encoder, decoder=decoder)
     else:
         if sections.decoder is not None:
