@@ -20,8 +20,8 @@ from typing import override
 import torch
 from torch import Tensor, nn
 
-from .decoders.ar_fast import ARFastDecoder
-from .decoders.flow import FlowDecoder, SamplingMethod
+from .decoders.ar_fast import ARFastDecoder, ar_fast_loss
+from .decoders.flow import FlowDecoder, SamplingMethod, flow_matching_loss
 from .encoders.gemma4 import GemmaEncoder, GemmaInputs
 from .gemma4.model import Gemma4Model
 from .interface import CollatedBatch, ObservationMemory
@@ -54,6 +54,21 @@ class BijouModel(nn.Module):
                 f"loaded decoder is {type(self.decoder).__name__}",
             )
         return self.decoder
+
+    def loss(
+        self,
+        memory: ObservationMemory,
+        batch: CollatedBatch[GemmaInputs],
+    ) -> Tensor:
+        """Scalar training loss of this model's decoder for one batch
+        against its observation memory — the objective dispatch (each
+        decoder kind's objective is a module-level function beside it)."""
+        decoder = self.decoder
+        match decoder:
+            case FlowDecoder():
+                return flow_matching_loss(decoder, memory, batch)
+            case ARFastDecoder():
+                return ar_fast_loss(decoder, memory, batch)
 
     def encode_observation(
         self,

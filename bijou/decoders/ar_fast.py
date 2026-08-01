@@ -322,13 +322,6 @@ class ARFastDecoder(ActionDecoder):
         return self.lm_head(self.norm(hidden_states))
 
     @override
-    def loss(self, memory: ObservationMemory, batch: CollatedBatch[Any]) -> Tensor:
-        """Teacher-forced CE (see :func:`ar_fast_loss`). DDP training calls
-        the module-level function with the wrapper instead — gradient hooks
-        require the forward to go through DDP's __call__."""
-        return ar_fast_loss(self, memory, batch)
-
-    @override
     @torch.no_grad()
     def predict_chunk(
         self,
@@ -415,15 +408,15 @@ class ARFastDecoder(ActionDecoder):
 
 
 def ar_fast_loss(
-    model: torch.nn.Module,
+    decoder: ARFastDecoder,
     memory: ObservationMemory,
     batch: CollatedBatch[Any],
 ) -> Tensor:
     """Teacher-forced token cross-entropy.
 
-    ``model`` is the ARFastDecoder (or its DDP wrapper — training forwards
-    must go through the wrapper for gradient hooks); call convention
-    (memory, state, tokens) -> logits.
+    The AR objective as a module-level function (BijouModel.loss dispatches
+    here); training's single DDP wrapper hooks gradients at the train-step
+    level, so the decoder is always the raw module.
 
     Inputs are ``action_tokens[:, :-1]`` (= [BOA, t_1..t_{k-1}] plus
     padding; the last column is PAD for every sample but the
@@ -440,7 +433,7 @@ def ar_fast_loss(
             "ActionCodec (--fast-tokenizer) to train an AR decoder",
         )
     state = (batch.state - batch.state_stats.mean) / batch.state_stats.std
-    logits = model(memory, state, tokens[:, :-1])
+    logits = decoder(memory, state, tokens[:, :-1])
     targets = tokens.clone()
     targets[:, 0] = IGNORE_INDEX  # the seed BOA, a constant
     pad_id = int(logits.shape[-1] - 1)  # PAD is the last id by convention

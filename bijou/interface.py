@@ -269,14 +269,12 @@ class ObservationEncoder[I: BatchInputs](nn.Module, ABC):
 
 
 class ActionDecoder(nn.Module, ABC):
-    """An action decoder: owns its training objective and its chunk-space
-    inference. ``forward`` stays decoder-specific (the flow decoder's is
-    the velocity field; DDP wraps it directly in frozen-trunk training)."""
-
-    @abstractmethod
-    def loss(self, memory: ObservationMemory, batch: CollatedBatch[Any]) -> Tensor:
-        """Scalar training loss for one batch against its observation
-        memory."""
+    """An action decoder: chunk-space inference over an observation memory.
+    Training objectives are module-level functions beside each decoder
+    (``flow_matching_loss``, ``ar_fast_loss``), dispatched by
+    ``BijouModel.loss`` — the decoder classes own parameters and forwards,
+    not objectives. ``forward`` stays decoder-specific (the flow decoder's
+    is the velocity field)."""
 
     @abstractmethod
     def predict_chunk(

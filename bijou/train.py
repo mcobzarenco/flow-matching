@@ -54,7 +54,7 @@ import random
 import shutil
 import sys
 import time
-from collections.abc import Callable, Iterable, Iterator
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, TextIO, override
@@ -69,20 +69,18 @@ from torch import Tensor
 from .data import (
     DatasetStats,
     EpisodeSplit,
-    encode_observation,
     select_datasets,
     worker_init,
 )
-from .decoders.ar_fast import ARFastConfig, ARFastDecoder, ar_fast_loss
+from .decoders.ar_fast import ARFastConfig, ARFastDecoder
 from .decoders.flow import (
     FlowDecoder,
     SelfAttentionMode,
     TimeConditioning,
-    flow_matching_loss,
 )
 from .encoders.gemma4 import GemmaInputs, GemmaInputsCollator
 from .gemma4.loading import load_config, resolve_checkpoint_dir
-from .interface import CollatedBatch, Collator, ObservationMemory, kv_stream_name
+from .interface import CollatedBatch, Collator, kv_stream_name
 from .loading import (
     CheckpointMetadata,
     backbone_snapshot,
@@ -321,46 +319,43 @@ def decay_split(
 
 
 class BijouTrainStep(torch.nn.Module):
-    """One training forward with a LIVE trunk: prefix encode (with grad,
-    bf16 autocast on CUDA) + expert velocity + loss, as a single module so
-    a single DDP wrapper hooks gradients of both the trunk and the expert.
+    """One training forward — prefix encode + decoder objective — as a
+    single module, so ONE DDP wrapper hooks gradients of everything a run
+    trains (frozen-trunk runs simply carry no trainable trunk parameters).
 
-    The frozen path deliberately does NOT use this class — it keeps the
-    original no-grad encode + DDP(expert) wiring, byte-identical to every
-    run before the unfreeze flags existed (and to the CPU loss oracle).
+    ``trunk_trained`` selects the prefix-encode regime:
+    - False (frozen): no-grad encode at the backbone's native dtype —
+      byte-identical math to every frozen run and to the CPU loss oracle
+      (the autocast context is constructed disabled: a no-op).
+    - True (live): grad-transparent encode under bf16 autocast on CUDA,
+      over fp32 master weights (direct bf16 updates vanish below bf16
+      resolution at trunk-scale learning rates).
 
-    The trunk runs under bf16 autocast while its master weights are fp32
-    (direct bf16 updates vanish below bf16 resolution at trunk-scale
-    learning rates). The expert runs OUTSIDE the autocast region, fp32
-    with TF32 matmuls, exactly as in the frozen path; it already casts
-    the (autocast-bf16) K/V streams to its own dtype.
+    The decoder runs OUTSIDE the autocast region either way, fp32 with
+    TF32 matmuls; it already casts the (possibly autocast-bf16) K/V
+    streams to its own dtype.
     """
 
-    def __init__(
-        self,
-        model: BijouModel,
-        loss_fn: Callable[
-            [torch.nn.Module, ObservationMemory, CollatedBatch[GemmaInputs]],
-            Tensor,
-        ],
-    ) -> None:
+    def __init__(self, model: BijouModel, *, trunk_trained: bool) -> None:
         super().__init__()
         self.model = model
-        self.loss_fn = loss_fn
+        self.trunk_trained = trunk_trained
 
     @override
     def forward(self, batch: CollatedBatch[GemmaInputs]) -> Tensor:
         """Batch (shapes in CollatedBatch's docstring) -> scalar loss."""
         inputs = batch.encoder_inputs
         device_type = inputs.input_ids.device.type
-        with torch.autocast(device_type, torch.bfloat16, enabled=device_type == "cuda"):
-            memory = self.model.encode_observation(
-                inputs.input_ids,
-                pixel_values=inputs.pixel_values,
-                image_position_ids=inputs.image_position_ids,
-                padding_mask=inputs.attention_mask if inputs.has_padding else None,
+        with torch.autocast(
+            device_type,
+            torch.bfloat16,
+            enabled=device_type == "cuda" and self.trunk_trained,
+        ):
+            memory = self.model.encoder.encode(
+                inputs,
+                with_grad=self.trunk_trained,
             )
-        return self.loss_fn(self.model.decoder, memory, batch)
+        return self.model.loss(memory, batch)
 
 
 def _chunk_plot(
@@ -1311,7 +1306,6 @@ def main() -> int:
             expert_dtype=torch.float32,
         )
         schedule_desc = str(expert_config.cross_attention_schedule)
-        loss_fn = flow_matching_loss
     else:
         assert args.fast_tokenizer is not None  # parse_args guard
         assert action_codec is not None
@@ -1367,7 +1361,6 @@ def main() -> int:
             ),
         )
         schedule_desc = str(ar_schedule)
-        loss_fn = ar_fast_loss
     trunk_counts = unfreeze_backbone(model, args)
     n_trainable = sum(p.numel() for p in model.decoder.parameters())
     if is_main:
@@ -1517,40 +1510,30 @@ def main() -> int:
                 flush=True,
             )
 
-    # DDP wiring. Frozen trunk (the default): wrap the decoder only — the
-    # backbone replica is inference-only and never synced; byte-identical
-    # to every run before the unfreeze flags existed. Live trunk: one
-    # BijouTrainStep module owns prefix-encode + decoder so a single DDP
-    # wrapper hooks gradients of both. Wrapping AFTER the weight load means
-    # DDP's construction-time broadcast (rank 0 -> all) covers the loaded
-    # state. model.decoder stays the raw module for eval, clipping and
-    # checkpointing in both modes.
-    wrapped_decoder: torch.nn.Module = model.decoder
-    train_step: torch.nn.Module | None = None
-    if args.trunk_trained:
-        train_step = BijouTrainStep(model, loss_fn)
-        if distributed:
-            train_step = torch.nn.parallel.DistributedDataParallel(
-                train_step,
-                device_ids=[device.index] if device.type == "cuda" else None,
-                # Backbone/expert buffers are constant RoPE tables etc.;
-                # per-step broadcasts would be pure overhead. The
-                # trainable-parameter partition guarantees every
-                # grad-enabled parameter receives gradients every step
-                # (trainable_text_parameters mirrors kv_stop_layer), and
-                # the graph never changes.
-                broadcast_buffers=False,
-                gradient_as_bucket_view=True,
-                static_graph=True,
-            )
-    elif distributed:
-        wrapped_decoder = torch.nn.parallel.DistributedDataParallel(
-            model.decoder,
+    # DDP wiring: ONE train-step module owns prefix encode + objective, so
+    # a single wrapper hooks gradients of everything trained, for both the
+    # frozen and live-trunk regimes (the frozen trunk contributes no
+    # trainable parameters — DDP's reducer ignores it). Wrapping AFTER the
+    # weight load means DDP's construction-time broadcast (rank 0 -> all)
+    # covers the loaded state. model.decoder stays the raw module for
+    # eval, clipping and checkpointing.
+    train_step: torch.nn.Module = BijouTrainStep(
+        model,
+        trunk_trained=args.trunk_trained,
+    )
+    if distributed:
+        train_step = torch.nn.parallel.DistributedDataParallel(
+            train_step,
             device_ids=[device.index] if device.type == "cuda" else None,
-            # Decoder buffers are constant RoPE tables; per-step broadcasts
-            # would be pure overhead.
+            # Backbone/decoder buffers are constant RoPE tables etc.;
+            # per-step broadcasts would be pure overhead. The trainable
+            # partition guarantees every grad-enabled parameter receives
+            # gradients every step (frozen: the whole decoder; live trunk:
+            # trainable_text_parameters mirrors kv_stop_layer), and the
+            # graph never changes.
             broadcast_buffers=False,
             gradient_as_bucket_view=True,
+            static_graph=True,
         )
 
     # Fixed MAE probe sets, independent of the training batch size, fetched
@@ -1664,11 +1647,7 @@ def main() -> int:
         for batch in prefetcher:
             if step >= args.steps:
                 break
-            if train_step is not None:
-                loss = train_step(batch)
-            else:
-                memory = encode_observation(model, batch)
-                loss = loss_fn(wrapped_decoder, memory, batch)
+            loss = train_step(batch)
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
             grad_norm = torch.nn.utils.clip_grad_norm_(

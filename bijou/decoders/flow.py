@@ -520,13 +520,6 @@ class FlowDecoder(ActionDecoder):
         return actions
 
     @override
-    def loss(self, memory: ObservationMemory, batch: CollatedBatch[Any]) -> Tensor:
-        """Scalar flow-matching loss (see :func:`flow_matching_loss`). DDP
-        training calls the module-level function with the wrapper instead —
-        gradient hooks require the forward to go through DDP's __call__."""
-        return flow_matching_loss(self, memory, batch)
-
-    @override
     @torch.no_grad()
     def predict_chunk(
         self,
@@ -558,7 +551,7 @@ class FlowDecoder(ActionDecoder):
 
 
 def flow_matching_loss(
-    velocity_model: torch.nn.Module,
+    decoder: FlowDecoder,
     memory: ObservationMemory,
     batch: CollatedBatch[Any],
 ) -> Tensor:
@@ -574,10 +567,9 @@ def flow_matching_loss(
     the expert attends every position, so masked-out padding was still
     silently shaping predictions). Eval stays real-steps-only.
 
-    ``velocity_model`` is the decoder (or its DDP wrapper under torchrun —
-    training forwards must go through the wrapper for gradient hooks);
-    call convention (memory, state, noisy_actions, tau) is shared by
-    FlowDecoder, BijouModel and DDP(FlowDecoder).
+    The flow objective as a module-level function (BijouModel.loss
+    dispatches here); training's single DDP wrapper hooks gradients at the
+    train-step level, so the decoder is always the raw module.
 
     Shapes (batch fields in CollatedBatch's docstring):
       - memory.streams[name]: key/value each [B, kv_heads, P, head_dim]
@@ -601,5 +593,5 @@ def flow_matching_loss(
     noisy_actions = tau_ * noise + (1 - tau_) * actions
     target = noise - actions
 
-    velocity = velocity_model(memory, state, noisy_actions, tau)
+    velocity = decoder(memory, state, noisy_actions, tau)
     return (velocity.float() - target.float()).pow(2).mean()
