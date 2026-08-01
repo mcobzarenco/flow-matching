@@ -2,7 +2,7 @@
 arm sweep, and sanity-check the success predicate by teleporting benchy
 onto the disk. Writes PNGs to sim/out/.
 
-Usage: uv run python sim/demo_scene.py
+Usage: MUJOCO_GL=egl uv run python -m sim.demo_scene
 """
 
 from pathlib import Path
@@ -10,7 +10,8 @@ from pathlib import Path
 import mujoco
 import numpy as np
 from PIL import Image
-from so101_sim import DISK_CENTER, SO101Sim
+
+from .so101_sim import DISK_CENTER, SO101Sim
 
 OUT = Path(__file__).parent / "out"
 

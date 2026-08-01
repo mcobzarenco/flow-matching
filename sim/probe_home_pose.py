@@ -5,7 +5,8 @@ from pathlib import Path
 
 import numpy as np
 from PIL import Image
-from so101_sim import SO101Sim
+
+from .so101_sim import SO101Sim
 
 OUT = Path(__file__).parent / "out"
 
