@@ -7,8 +7,8 @@ top camera is fed under the name "front" so the prompt's sorted camera
 slots match training (front, wrist); the viewpoint mismatch is part of
 the measured domain gap, not a bug.
 
-Writes a side-by-side (front|wrist) GIF to outputs/sim/ and prints
-per-replan telemetry + the success predicate.
+Writes a full-resolution side-by-side (front|wrist) H.264 video to
+outputs/sim/ and prints per-replan telemetry + the success predicate.
 
 Usage:
   MUJOCO_GL=egl uv run python -m sim.rollout_sim \
@@ -19,16 +19,16 @@ import argparse
 import time
 from pathlib import Path
 
+import av
 import numpy as np
 import torch
-from PIL import Image
 
 from bijou.decoders.flow import SamplingMethod
 from bijou.eval.policies import BijouPolicy
 from bijou.rollout import SO_MOTORS, observation_to_item
 
 from . import OUTPUT_DIR
-from .so101_sim import DISK_CENTER, SimObservation, SO101Sim
+from .so101_sim import CONTROL_HZ, DISK_CENTER, SimObservation, SO101Sim
 
 STATS_REPO_ID = "mcobzarenco/so101_pick_place_v2"
 TASK = "Pick up the toy boat and place it on the wooden disk."
@@ -46,7 +46,7 @@ def parse_args() -> argparse.Namespace:
         default="bfloat16",
         choices=["float32", "bfloat16"],
     )
-    parser.add_argument("--gif", type=Path, default=OUTPUT_DIR / "rollout.gif")
+    parser.add_argument("--video", type=Path, default=OUTPUT_DIR / "rollout.mp4")
     return parser.parse_args()
 
 
@@ -83,7 +83,7 @@ def main() -> int:
 
     sim = SO101Sim()
     obs = sim.reset(args.seed)
-    frames: list[Image.Image] = []
+    frames: list[np.ndarray] = []
     success_tick: int | None = None
 
     for replan in range(args.replans):
@@ -101,9 +101,7 @@ def main() -> int:
         )
         for step in range(horizon):
             obs = sim.step(chunk[step].numpy())
-            if step % 2 == 0:
-                side = np.concatenate([obs.top, obs.wrist], axis=1)
-                frames.append(Image.fromarray(side).reduce(2))
+            frames.append(np.concatenate([obs.top, obs.wrist], axis=1))
             if sim.success():
                 success_tick = replan * horizon + step
                 break
@@ -114,15 +112,19 @@ def main() -> int:
         f"success: {success_tick is not None}"
         + (f" (tick {success_tick})" if success_tick else ""),
     )
-    args.gif.parent.mkdir(parents=True, exist_ok=True)
-    frames[0].save(
-        args.gif,
-        save_all=True,
-        append_images=frames[1:],
-        duration=66,  # 2 sim ticks per frame at 30 Hz
-        loop=0,
-    )
-    print(f"wrote {args.gif} ({len(frames)} frames)")
+    args.video.parent.mkdir(parents=True, exist_ok=True)
+    container = av.open(str(args.video), mode="w")
+    stream = container.add_stream("h264", rate=CONTROL_HZ)
+    stream.width = frames[0].shape[1]
+    stream.height = frames[0].shape[0]
+    stream.pix_fmt = "yuv420p"
+    for frame in frames:
+        for packet in stream.encode(av.VideoFrame.from_ndarray(frame, format="rgb24")):
+            container.mux(packet)
+    for packet in stream.encode():
+        container.mux(packet)
+    container.close()
+    print(f"wrote {args.video} ({len(frames)} frames @ {CONTROL_HZ} fps, full res)")
     return 0
 
 

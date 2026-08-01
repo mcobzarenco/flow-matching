@@ -46,13 +46,15 @@ PHYSICS_STEPS_PER_TICK = 7
 # reach (menagerie pickup keyframe grasps at ~0.22 m forward).
 SPAWN_X = (0.16, 0.28)
 SPAWN_Y = (-0.16, 0.02)
-# Rest pose in degrees (rig order): arm folded up, gripper overlooking
-# the workspace - approximates the physical rig's rest; zero-pose lays
-# the arm flat across the table and points the wrist cam at the horizon.
-HOME_DEGREES = np.array([0.0, -55.0, 75.0, 55.0, 0.0, 30.0])
-# The leader arm mirrors the follower during teleop; posed like a held
-# leader mid-episode (rig frames show it roughly tracking HOME).
-LEADER_DEGREES = np.array([-5.0, -45.0, 65.0, 45.0, 10.0, 35.0])
+# Episode-initial pose: the median first-frame observation.state across
+# the 50 episodes of so101_pick_place_v2 (measured from the dataset
+# parquet; per-joint std 2-20 deg). NOTE the real shoulder_lift median
+# (-102.7) exceeds the menagerie ctrlrange clamp (+-100 deg): the sim
+# rests at -100, a ~2.7 deg mismatch vs the rig's calibration.
+HOME_DEGREES = np.array([4.6, -102.7, 97.0, 78.7, 77.6, 3.5])
+# The leader arm mirrors the follower during teleop; at episode start the
+# operator holds it at the same rest pose.
+LEADER_DEGREES = np.array([4.6, -102.7, 97.0, 78.7, 77.6, 3.5])
 DISK_CENTER = (0.22, 0.11)
 DISK_RADIUS = 0.06
 
