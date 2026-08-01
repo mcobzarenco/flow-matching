@@ -255,12 +255,16 @@ checkpoints/logging on rank 0. Optimizer AdamW (0.9, 0.95), fused on CUDA
 schedule to 10% after linear warmup, grad-clip 10.0 (a never-bites safety
 net; a tighter clip renormalizes most steps and injects moment noise).
 
-**Component learning rates.** `--expert-lr` (always > 0), plus optional
-`--text-lr` / `--vision-lr` — omitting a component's lr keeps it frozen
-(explicit 0 is rejected). All groups share the cosine shape scaled to
-their own peak. Trunk training uses fp32 master weights with a bf16
-autocast prefix encode (bf16 updates vanish below bf16 resolution at
-~1e-5); the expert stays fp32-with-TF32 outside the autocast region. One
+**Component learning rates.** `--decoder-lr` (always > 0), plus optional
+`--backbone-text-lr` / `--backbone-vision-lr` — omitting a component's
+lr keeps it frozen (explicit 0 is rejected); the flags mirror the
+param-group names {decoder, backbone_text, backbone_vision} (renamed
+2026-08-01 from --expert-lr/--text-lr/--vision-lr; recorded train_args
+load under both spellings forever). All groups share the cosine shape
+scaled to their own peak. Backbone training uses fp32 master weights
+with a bf16 autocast prefix encode (bf16 updates vanish below bf16
+resolution at ~1e-5); the decoder stays fp32-with-TF32 outside the
+autocast region. One
 `BijouTrainStep` module owns prefix-encode + objective in BOTH regimes
 (`backbone_trained` selects no-grad native-dtype encode vs grad + autocast),
 so a single DDP wrapper (`static_graph`) hooks everything trained;
@@ -312,8 +316,8 @@ any change near the math (tied to the current tiny-gemma4; regenerate ⇒
 re-baseline loudly):
 
     uv run python -m bijou.train --train-data /home/marius/w/community_dataset_v1_v3 \
-      --backbone outputs/tiny-gemma4 --expert-hidden 64 --expert-heads 2 \
-      --expert-intermediate 128 --expert-cross-heads 2 --stream-counts 1 1 2 \
+      --backbone outputs/tiny-gemma4 --decoder-hidden 64 --decoder-heads 2 \
+      --decoder-intermediate 128 --decoder-cross-heads 2 --stream-counts 1 1 2 \
       --steps 2 --batch-size 2 --num-workers 2 --log-every 1 --eval-every 5 \
       --save-every 1000 --eval-samples 4 --device cpu --seed 0 \
       --save-dir outputs/train/oracle_tmp
@@ -477,10 +481,10 @@ reached a since-deleted box's shell history).
 
 ### 8.1 Trunk unfreezing (IMPLEMENTED; the live-trunk AR result is the headline)
 
-**Change.** `--text-lr` trains E2B text layers 0–14 + the multimodal
-projector (embeddings and per-layer-embedding tables stay frozen — few
-rows/step, dense Adam waste, cheapest forgetting control); `--vision-lr`
-adds the tower (expected to stay off — the acuity probe puts position
+**Change.** `--backbone-text-lr` trains E2B text layers 0–14 + the
+multimodal projector (embeddings and per-layer-embedding tables stay
+frozen — few rows/step, dense Adam waste, cheapest forgetting control);
+`--backbone-vision-lr` adds the tower (expected to stay off — the acuity probe puts position
 sharpest at the tower output, so adaptation is needed *downstream*).
 **Justification.** The in-dist-vs-cross-rig gap and the acuity probe both
 localize the bottleneck in the text stack's use of visual tokens, not the
@@ -583,7 +587,7 @@ train-AR-then-freeze is a single run producing both heads.
 
 | option | trunk-shaping | expert interference | new params | AR decode | note |
 |---|---|---|---|---|---|
-| A shared expert | K/V cross-attn (needs --text-lr) | real risk | ~3M | ~50–100 ms | smallest diff; duplicate the state token so flow/AR masks don't leak |
+| A shared expert | K/V cross-attn (needs --backbone-text-lr) | real risk | ~3M | ~50–100 ms | smallest diff; duplicate the state token so flow/AR masks don't leak |
 | B separate 6-layer decoder | K/V cross-attn | none | ~85–150M | ~50 ms | escape hatch; weakest prior |
 | C full VLM (KV-sharing) | native LM circuit (π0.5-faithful) | none by construction | ~5M | ~150–250 ms | primary; deep half runs query-only against the cached layer-14 K/V — prefix never runs it, checkpoint/rollout unchanged |
 

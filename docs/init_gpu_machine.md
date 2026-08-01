@@ -197,7 +197,7 @@ uv run torchrun --standalone --nproc-per-node=4 -m bijou.train \
     --holdout-episodes 0.1 --split-seed 0 \
     --device cuda \
     --steps 300 --batch-size 64 --num-workers 12 \
-    --expert-lr 1e-4 --warmup-steps 100 \
+    --decoder-lr 1e-4 --warmup-steps 100 \
     --log-every 10 --eval-every 200 --eval-samples 64 --save-every 200 \
     --seed 0 --save-dir outputs/train/smoke_test
 ```

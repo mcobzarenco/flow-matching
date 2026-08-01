@@ -52,6 +52,22 @@ def legacy_expert_config() -> ExpertConfig:
     )
 
 
+def test_train_args_read_both_key_spellings() -> None:
+    """New checkpoints record decoder_*; historical ones expert_* — both
+    load, and mixed sources agree on the same values."""
+    legacy_args = legacy_meta()["train_args"]
+    renamed = {
+        **{k: v for k, v in legacy_args.items() if not k.startswith("expert_")},
+        "decoder_hidden": legacy_args["expert_hidden"],
+        "decoder_heads": legacy_args["expert_heads"],
+        "decoder_intermediate": legacy_args["expert_intermediate"],
+        "decoder_cross_heads": legacy_args["expert_cross_heads"],
+    }
+    assert CheckpointTrainArgs.from_dict(renamed) == CheckpointTrainArgs.from_dict(
+        legacy_args,
+    )
+
+
 def test_legacy_synthesizer_reproduces_recorded_expert_config() -> None:
     """The synthesized config must equal the expert_config the format-1
     checkpoint actually recorded (same normalization ensure_matching

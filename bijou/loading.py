@@ -452,10 +452,10 @@ class CheckpointTrainArgs:
     checkpoints since the format's introduction; newer recorded args (lr,
     seeds, data paths, ...) stay in the raw JSON but are not needed here."""
 
-    expert_hidden: int
-    expert_heads: int
-    expert_intermediate: int
-    expert_cross_heads: int
+    decoder_hidden: int
+    decoder_heads: int
+    decoder_intermediate: int
+    decoder_cross_heads: int
     stream_counts: tuple[int, ...]
     self_attention_mode: SelfAttentionMode
     chunk_size: int
@@ -464,11 +464,20 @@ class CheckpointTrainArgs:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> CheckpointTrainArgs:
+        # Old checkpoints recorded the decoder shape under the historical
+        # "expert_*" arg names; both spellings load forever.
+        def either(new: str, old: str) -> Any:
+            return data[new] if new in data else data[old]
+
         return cls(
-            expert_hidden=int(data["expert_hidden"]),
-            expert_heads=int(data["expert_heads"]),
-            expert_intermediate=int(data["expert_intermediate"]),
-            expert_cross_heads=int(data["expert_cross_heads"]),
+            decoder_hidden=int(either("decoder_hidden", "expert_hidden")),
+            decoder_heads=int(either("decoder_heads", "expert_heads")),
+            decoder_intermediate=int(
+                either("decoder_intermediate", "expert_intermediate"),
+            ),
+            decoder_cross_heads=int(
+                either("decoder_cross_heads", "expert_cross_heads"),
+            ),
             stream_counts=tuple(int(n) for n in data["stream_counts"]),
             self_attention_mode=SelfAttentionMode(data["self_attention_mode"]),
             chunk_size=int(data["chunk_size"]),
@@ -608,10 +617,10 @@ def expert_config_from_train_args(
         action_dim=action_dim,
         state_dim=state_dim,
         stream_counts=train_args.stream_counts,
-        hidden_size=train_args.expert_hidden,
-        num_attention_heads=train_args.expert_heads,
-        intermediate_size=train_args.expert_intermediate,
-        cross_attention_heads=train_args.expert_cross_heads,
+        hidden_size=train_args.decoder_hidden,
+        num_attention_heads=train_args.decoder_heads,
+        intermediate_size=train_args.decoder_intermediate,
+        cross_attention_heads=train_args.decoder_cross_heads,
         chunk_size=train_args.chunk_size,
         self_attention_mode=train_args.self_attention_mode,
         time_conditioning=train_args.time_conditioning,

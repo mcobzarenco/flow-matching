@@ -123,16 +123,16 @@ class TrainArgs:
     time_conditioning: str
     decoder: str
     fast_tokenizer: str | None
-    expert_hidden: int
-    expert_heads: int
-    expert_intermediate: int
-    expert_cross_heads: int
+    decoder_hidden: int
+    decoder_heads: int
+    decoder_intermediate: int
+    decoder_cross_heads: int
     chunk_size: int
     batch_size: int
     steps: int
-    expert_lr: float
-    text_lr: float | None
-    vision_lr: float | None
+    decoder_lr: float
+    backbone_text_lr: float | None
+    backbone_vision_lr: float | None
     warmup_steps: int
     weight_decay: float
     grad_clip: float
@@ -152,7 +152,7 @@ class TrainArgs:
 
     @property
     def backbone_trained(self) -> bool:
-        return self.text_lr is not None or self.vision_lr is not None
+        return self.backbone_text_lr is not None or self.backbone_vision_lr is not None
 
 
 class DevicePrefetcher:
@@ -291,14 +291,14 @@ def unfreeze_backbone(model: BijouModel, args: TrainArgs) -> BackboneParameterCo
     groups = model.param_groups()
     text = 0
     vision = 0
-    if args.text_lr is not None:
+    if args.backbone_text_lr is not None:
         for parameter in groups["backbone_text"]:
             parameter.requires_grad_(True)
             text += parameter.numel()
-    if args.vision_lr is not None:
+    if args.backbone_vision_lr is not None:
         if not groups["backbone_vision"]:
             raise SystemExit(
-                f"--vision-lr {args.vision_lr} but the "
+                f"--backbone-vision-lr {args.backbone_vision_lr} but the "
                 f"backbone ({args.backbone}) has no vision tower — drop the "
                 "flag or use a multimodal backbone",
             )
@@ -855,23 +855,23 @@ def parse_args() -> TrainArgs:
         type=int,
         nargs="*",
         default=[4, 4, 7],
-        help="expert cross-attention layers per backbone KV stream, "
+        help="decoder cross-attention layers per backbone KV stream, "
         "shallow to deep (0 skips a stream)",
     )
     parser.add_argument(
         "--self-attention-mode",
         choices=["causal_actions", "bidirectional"],
         default="causal_actions",
-        help="expert self-attention over the action chunk",
+        help="decoder self-attention over the action chunk",
     )
     parser.add_argument(
         "--time-conditioning",
         choices=[m.value for m in TimeConditioning],
         default=TimeConditioning.ADDITIVE.value,
-        help="how flow time τ conditions the expert: 'additive' (π0-style "
+        help="how flow time τ conditions the flow decoder: 'additive' (π0-style "
         "input add, the default) or 'adarms' (DiT-style per-layer scale/"
         "gate, identity at init). adarms changes the architecture — a fresh "
-        "expert only (cannot --init-from an additive checkpoint)",
+        "decoder only (cannot --init-from an additive checkpoint)",
     )
     parser.add_argument(
         "--decoder",
@@ -879,7 +879,7 @@ def parse_args() -> TrainArgs:
         default="flow",
         help="action decoder: 'flow' (velocity field, the default) or "
         "'ar_fast' (autoregressive FAST-token baseline; requires "
-        "--fast-tokenizer). The --expert-* shape flags size either decoder",
+        "--fast-tokenizer). The --decoder-* shape flags size either decoder",
     )
     parser.add_argument(
         "--fast-tokenizer",
@@ -889,28 +889,28 @@ def parse_args() -> TrainArgs:
         "mcobzarenco/bijou-checkpoints/fast_tokenizer_v1)",
     )
     parser.add_argument(
-        "--expert-hidden",
+        "--decoder-hidden",
         type=int,
         default=768,
-        help="expert hidden size",
+        help="decoder hidden size",
     )
     parser.add_argument(
-        "--expert-heads",
+        "--decoder-heads",
         type=int,
         default=6,
-        help="expert self-attention heads",
+        help="decoder self-attention heads",
     )
     parser.add_argument(
-        "--expert-intermediate",
+        "--decoder-intermediate",
         type=int,
         default=3072,
-        help="expert MLP intermediate size",
+        help="decoder MLP intermediate size",
     )
     parser.add_argument(
-        "--expert-cross-heads",
+        "--decoder-cross-heads",
         type=int,
         default=4,
-        help="expert cross-attention heads",
+        help="decoder cross-attention heads",
     )
     parser.add_argument(
         "--chunk-size",
@@ -926,15 +926,15 @@ def parse_args() -> TrainArgs:
     )
     parser.add_argument("--steps", type=int, default=200, help="total optimizer steps")
     parser.add_argument(
-        "--expert-lr",
+        "--decoder-lr",
         type=float,
         default=1e-4,
-        help="peak learning rate of the action expert (cosine decay to "
+        help="peak learning rate of the action decoder (cosine decay to "
         "10%% after warmup); every component-lr below shares this "
         "schedule shape, scaled to its own peak",
     )
     parser.add_argument(
-        "--text-lr",
+        "--backbone-text-lr",
         type=float,
         default=None,
         help="peak learning rate for the backbone TEXT stack (decoder "
@@ -945,7 +945,7 @@ def parse_args() -> TrainArgs:
         "forwards; suggest 1e-5",
     )
     parser.add_argument(
-        "--vision-lr",
+        "--backbone-vision-lr",
         type=float,
         default=None,
         help="peak learning rate for the vision tower; OMIT to keep it "
@@ -968,7 +968,7 @@ def parse_args() -> TrainArgs:
         "--grad-clip",
         type=float,
         default=10.0,
-        help="gradient-norm clip over the expert",
+        help="gradient-norm clip over everything trained",
     )
     parser.add_argument(
         "--log-every",
@@ -1070,8 +1070,8 @@ def parse_args() -> TrainArgs:
         )
     if raw.eval_samples is not None and raw.eval_samples < 1:
         parser.error("--eval-samples must be >= 1")
-    if raw.expert_lr <= 0:
-        parser.error("--expert-lr must be > 0 (the expert always trains)")
+    if raw.decoder_lr <= 0:
+        parser.error("--decoder-lr must be > 0 (the decoder always trains)")
     if raw.decoder == "ar_fast" and raw.fast_tokenizer is None:
         parser.error("--decoder ar_fast requires --fast-tokenizer")
     if raw.decoder == "flow" and raw.fast_tokenizer is not None:
@@ -1080,18 +1080,21 @@ def parse_args() -> TrainArgs:
         parser.error(
             "--time-conditioning is flow-only (the AR decoder has no \u03c4)",
         )
-    for name, value in (("--text-lr", raw.text_lr), ("--vision-lr", raw.vision_lr)):
+    for name, value in (
+        ("--backbone-text-lr", raw.backbone_text_lr),
+        ("--backbone-vision-lr", raw.backbone_vision_lr),
+    ):
         if value is not None and value <= 0:
             parser.error(
                 f"{name} {value} is not a usable learning rate — omit the "
                 "flag entirely to keep that component frozen",
             )
-    if raw.vision_lr is not None and raw.text_lr is None:
+    if raw.backbone_vision_lr is not None and raw.backbone_text_lr is None:
         print(
             "NOTE: vision tower unfrozen with the text stack FROZEN - "
             "gradients still traverse the frozen text stack to reach the "
             "tower (activation cost without text adaptation). Legitimate "
-            "but unusual; the standard move is --text-lr alone.",
+            "but unusual; the standard move is --backbone-text-lr alone.",
             file=sys.stderr,
             flush=True,
         )
@@ -1114,16 +1117,16 @@ def parse_args() -> TrainArgs:
         time_conditioning=raw.time_conditioning,
         decoder=raw.decoder,
         fast_tokenizer=raw.fast_tokenizer,
-        expert_hidden=raw.expert_hidden,
-        expert_heads=raw.expert_heads,
-        expert_intermediate=raw.expert_intermediate,
-        expert_cross_heads=raw.expert_cross_heads,
+        decoder_hidden=raw.decoder_hidden,
+        decoder_heads=raw.decoder_heads,
+        decoder_intermediate=raw.decoder_intermediate,
+        decoder_cross_heads=raw.decoder_cross_heads,
         chunk_size=raw.chunk_size,
         batch_size=raw.batch_size,
         steps=raw.steps,
-        expert_lr=raw.expert_lr,
-        text_lr=raw.text_lr,
-        vision_lr=raw.vision_lr,
+        decoder_lr=raw.decoder_lr,
+        backbone_text_lr=raw.backbone_text_lr,
+        backbone_vision_lr=raw.backbone_vision_lr,
         warmup_steps=raw.warmup_steps,
         weight_decay=raw.weight_decay,
         grad_clip=raw.grad_clip,
@@ -1302,10 +1305,10 @@ def main() -> int:
             action_dim=action_dim,
             state_dim=state_dim,
             stream_counts=args.stream_counts,
-            hidden_size=args.expert_hidden,
-            num_attention_heads=args.expert_heads,
-            intermediate_size=args.expert_intermediate,
-            cross_attention_heads=args.expert_cross_heads,
+            hidden_size=args.decoder_hidden,
+            num_attention_heads=args.decoder_heads,
+            intermediate_size=args.decoder_intermediate,
+            cross_attention_heads=args.decoder_cross_heads,
             chunk_size=args.chunk_size,
             self_attention_mode=SelfAttentionMode(args.self_attention_mode),
             time_conditioning=TimeConditioning(args.time_conditioning),
@@ -1348,13 +1351,13 @@ def main() -> int:
             dtype=backbone_dtype,
         )
         ar_config = ARFastConfig(
-            hidden_size=args.expert_hidden,
-            num_attention_heads=args.expert_heads,
-            intermediate_size=args.expert_intermediate,
+            hidden_size=args.decoder_hidden,
+            num_attention_heads=args.decoder_heads,
+            intermediate_size=args.decoder_intermediate,
             hidden_activation=backbone_config.text.hidden_activation,
             rms_norm_eps=backbone_config.text.rms_norm_eps,
             self_attention_rope_theta=10_000.0,
-            cross_attention_heads=args.expert_cross_heads,
+            cross_attention_heads=args.decoder_cross_heads,
             schedule=ar_schedule,
             tokenizer=args.fast_tokenizer,
             vocab_total=action_codec.vocab_total,
@@ -1382,9 +1385,9 @@ def main() -> int:
             if not args.backbone_trained
             else (
                 f"LIVE backbone (text {backbone_counts.text / 1e6:.1f}M @ "
-                f"lr {args.text_lr if args.text_lr is not None else 0:.1e}, "
+                f"lr {args.backbone_text_lr if args.backbone_text_lr is not None else 0:.1e}, "
                 f"vision {backbone_counts.vision / 1e6:.1f}M @ lr "
-                f"{args.vision_lr if args.vision_lr is not None else 0:.1e}; "
+                f"{args.backbone_vision_lr if args.backbone_vision_lr is not None else 0:.1e}; "
                 "embeddings/PLE tables frozen; fp32 masters, bf16 autocast)"
             )
         )
@@ -1407,14 +1410,14 @@ def main() -> int:
     # Fixed-key dicts, deliberately: this is torch's optimizer param-group
     # API format (a third-party boundary), consumed by AdamW below. The
     # model's named groups route to per-component learning rates; the
-    # head group always trains at --expert-lr.
+    # head group always trains at --decoder-lr.
     named_groups = model.param_groups()
     param_groups: list[dict[str, Any]] = [
-        {"params": named_groups["decoder"], "lr": args.expert_lr},
+        {"params": named_groups["decoder"], "lr": args.decoder_lr},
     ]
     for group_name, group_lr in (
-        ("backbone_text", args.text_lr),
-        ("backbone_vision", args.vision_lr),
+        ("backbone_text", args.backbone_text_lr),
+        ("backbone_vision", args.backbone_vision_lr),
     ):
         if group_lr is None:
             continue
@@ -1430,7 +1433,7 @@ def main() -> int:
         )
     optimizer = torch.optim.AdamW(
         param_groups,
-        lr=args.expert_lr,
+        lr=args.decoder_lr,
         betas=(0.9, 0.95),
         weight_decay=args.weight_decay,
         # One kernel launch per param group instead of the foreach chain;
@@ -1509,13 +1512,13 @@ def main() -> int:
         restored = optimizer.param_groups[0]
         base_lr = float(restored.get("initial_lr", restored["lr"]))
         if is_main and (
-            base_lr != args.expert_lr
+            base_lr != args.decoder_lr
             or float(restored["weight_decay"]) != args.weight_decay
         ):
             print(
                 "note: --resume keeps the checkpoint's optimizer "
                 f"hyperparameters (base lr {base_lr:.2e}, weight decay "
-                f"{restored['weight_decay']}); CLI --expert-lr/--weight-decay "
+                f"{restored['weight_decay']}); CLI --decoder-lr/--weight-decay "
                 "are ignored, --steps/--warmup-steps still shape the schedule",
                 flush=True,
             )
