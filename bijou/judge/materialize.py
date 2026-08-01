@@ -1,59 +1,50 @@
-"""Materialize judge subgoals into LeRobot-native subtask annotations.
+"""Materialize judge subgoals as LeRobot-native ``language_persistent`` rows.
 
-Run: ``python -m bijou.judge.materialize --root <dataset> [--form ...]``
+Run: ``python -m bijou.judge.materialize --root <dataset>``
 
 Reads the dataset's ``meta/judgments.json`` sidecar (the durable verdict
-store) and projects each judged episode's subgoal segments into lerobot's
-native forms:
+store) and writes each judged episode's subgoal segments into the data
+parquet as ``language_persistent`` rows with ``style="subtask"`` — the
+form the online dataset visualizer's Annotations tab renders and
+lerobot's ``active_at(t)`` resolver consumes (persistent = active until
+superseded, precisely our piecewise-constant semantics). One
+``role="assistant"`` row per segment at the segment's exact start-frame
+timestamp; segments carry 1-based inclusive ``until_frame``, so segment
+k activates at ``frame_timestamps[previous_until]``. Reuses lerobot's
+own steerable-pipeline reader/staging/writer (their row validation,
+struct schema, per-episode-row-group atomic rewrites) and advertises the
+columns in ``meta/info.json`` features (without which non-streaming
+LeRobotDataset loads cast against the old schema and fail).
 
-- ``--form sarm``: episode-metadata columns in ``meta/episodes/*.parquet``
-  (``sparse_subtask_names/_start_times/_end_times/_start_frames/
-  _end_frames`` + bare legacy duplicates — lerobot's
-  ``save_annotations_to_dataset`` sparse convention, consumed by the SARM
-  reward-model tooling and its local PNG visualizer).
-- ``--form language``: ``language_persistent`` rows with
-  ``style="subtask"`` in the DATA parquet — what the online dataset
-  visualizer's Annotations tab actually renders (verified against the
-  space source: it reads ``language_persistent``/``language_events`` and
-  never the SARM columns). Reuses lerobot's own steerable-pipeline
-  reader/staging/writer, so row validation, struct schema and atomic
-  rewrites are theirs; one ``role="assistant"`` row per segment at the
-  segment's exact start-frame timestamp (persistent = active until
-  superseded, precisely our piecewise-constant semantics).
-- ``--form both`` (default): both projections.
-
-Mapping: judge segments carry 1-based inclusive ``until_frame``. SARM
-columns get 0-based [start, end) frames and seconds; language rows get
-one row per segment at ``frame_timestamps[start_frame]``.
-
-The sidecar stays the source of truth: projections are idempotent and
+The sidecar stays the source of truth: the projection is idempotent and
 re-runnable (later verdicts overwrite). Records are selected by prompt
 hash (default: the running code's PROMPT_HASH) and optionally by model;
-latest ``judged_at`` wins per episode. SARM rows are matched on the
-``episode_index`` COLUMN, not the DataFrame index — lerobot's own writer
-indexes per-file frames with global indices, which breaks on multi-file
-datasets.
+latest ``judged_at`` wins per episode.
 
-CAVEAT (language form): ``LanguageColumnsWriter`` rewrites whole data
-files — episodes sharing a file with the selection but absent from it get
-EMPTY language columns (pre-existing rows wiped). Fine for first-time
-annotation; re-materialize the full dataset after adding verdicts.
+A SARM-columns projection (``sparse_subtask_*`` episode-metadata
+columns) existed briefly and was removed: the visualizer never reads
+them, no consumer of ours does, and every projection is a mapping to
+keep in sync with schema evolution — resurrect from git if a SARM
+reward-model experiment ever wants it.
+
+CAVEAT: ``LanguageColumnsWriter`` rewrites whole data files — episodes
+sharing a file with the selection but absent from it get EMPTY language
+columns (pre-existing rows wiped). Fine for first-time annotation;
+re-materialize the full dataset after adding verdicts. This is THE
+invariant for the future curation merge to test.
 
 Deliberately NOT materialized: per-frame annotations (progress, holding,
-visibility, events) stay sidecar-only for now — events could become
-``language_events`` rows later, but their style vocabulary
-(interjection/vqa/trace) doesn't fit mistake-marking yet.
+visibility, events) stay sidecar-only for now — see
+docs/e2b-ar-data-contract.md for how consumers access them.
 """
 
 from __future__ import annotations
 
 import argparse
-import json
 import tempfile
 from pathlib import Path
 from typing import Any
 
-import pandas as pd
 from lerobot.annotations.steerable_pipeline.reader import iter_episodes
 from lerobot.annotations.steerable_pipeline.staging import EpisodeStaging
 from lerobot.annotations.steerable_pipeline.writer import LanguageColumnsWriter
@@ -62,16 +53,6 @@ from lerobot.datasets.language import language_feature_info
 
 from .schema import PROMPT_HASH
 from .store import JudgmentRecord, load_sidecar
-
-SUBTASK_FIELDS = (
-    "subtask_names",
-    "subtask_start_times",
-    "subtask_end_times",
-    "subtask_start_frames",
-    "subtask_end_frames",
-)
-# The visualizer/SARM sparse convention writes both prefixed and legacy names.
-SUBTASK_COLUMNS = tuple(f"sparse_{field}" for field in SUBTASK_FIELDS) + SUBTASK_FIELDS
 
 
 def select_records(
@@ -91,32 +72,6 @@ def select_records(
         if current is None or record.judged_at > current.judged_at:
             chosen[record.episode_index] = record
     return chosen
-
-
-def subtask_cells(record: JudgmentRecord, fps: float) -> dict[str, list[Any]]:
-    """One episode's subgoals -> SARM sparse column cells."""
-    judgment = record.parsed_judgment()
-    names: list[str] = []
-    start_times: list[float] = []
-    end_times: list[float] = []
-    start_frames: list[int] = []
-    end_frames: list[int] = []
-    previous = 0
-    for segment in judgment.subgoals:
-        names.append(segment.subgoal)
-        start_frames.append(previous)
-        end_frames.append(segment.until_frame)
-        start_times.append(previous / fps)
-        end_times.append(segment.until_frame / fps)
-        previous = segment.until_frame
-    cells = dict(
-        zip(
-            SUBTASK_FIELDS,
-            (names, start_times, end_times, start_frames, end_frames),
-            strict=True,
-        ),
-    )
-    return {f"sparse_{field}": value for field, value in cells.items()} | cells
 
 
 def materialize_language(root: Path, chosen: dict[int, JudgmentRecord]) -> int:
@@ -174,36 +129,6 @@ def materialize_language(root: Path, chosen: dict[int, JudgmentRecord]) -> int:
     return written
 
 
-def materialize_sarm(root: Path, chosen: dict[int, JudgmentRecord]) -> int:
-    """Write SARM subtask columns for every judged episode; returns
-    episodes materialized."""
-    fps = float(json.loads((root / "meta" / "info.json").read_text())["fps"])
-    cells_by_episode = {
-        episode: subtask_cells(record, fps) for episode, record in chosen.items()
-    }
-
-    written = 0
-    for path in sorted((root / "meta" / "episodes").rglob("*.parquet")):
-        frame = pd.read_parquet(path)
-        changed = False
-        for column in SUBTASK_COLUMNS:
-            if column not in frame.columns:
-                frame[column] = None
-            frame[column] = frame[column].astype(object)
-        for position, episode_index in enumerate(frame["episode_index"]):
-            cells = cells_by_episode.get(int(episode_index))
-            if cells is None:
-                continue
-            row = frame.index[position]
-            for column, value in cells.items():
-                frame.at[row, column] = value
-            changed = True
-            written += 1
-        if changed:
-            frame.to_parquet(path, engine="pyarrow", compression="snappy")
-    return written
-
-
 def select_or_die(
     root: Path,
     *,
@@ -226,7 +151,8 @@ def select_or_die(
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Project judge subgoals into lerobot-native subtask columns.",
+        description="Project judge subgoals into lerobot-native "
+        "language_persistent subtask rows.",
     )
     parser.add_argument(
         "--root",
@@ -247,14 +173,6 @@ def main() -> None:
         default=None,
         help="Only materialize records from this judge model (default: any).",
     )
-    parser.add_argument(
-        "--form",
-        choices=["sarm", "language", "both"],
-        default="both",
-        help="sarm = episode-metadata columns (SARM tooling); language = "
-        "language_persistent rows in data parquet (online visualizer) "
-        "(default: %(default)s).",
-    )
     args = parser.parse_args()
 
     root = args.root.expanduser().resolve()
@@ -263,12 +181,8 @@ def main() -> None:
         prompt_hash=args.prompt_hash,
         model=args.model,
     )
-    if args.form in ("sarm", "both"):
-        written = materialize_sarm(root, chosen)
-        print(f"sarm: subtask columns for {written} episode(s) in {root}")
-    if args.form in ("language", "both"):
-        written = materialize_language(root, chosen)
-        print(f"language: subtask rows for {written} episode(s) in {root}")
+    written = materialize_language(root, chosen)
+    print(f"language_persistent subtask rows for {written} episode(s) in {root}")
     if skipped:
         print(f"({skipped} sidecar episode(s) skipped by hash/model filters)")
 
