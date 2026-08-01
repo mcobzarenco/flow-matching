@@ -41,7 +41,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--execute-horizon", type=int, default=30)
     parser.add_argument("--sample-steps", type=int, default=10)
     parser.add_argument(
-        "--expert-dtype", default="bfloat16", choices=["float32", "bfloat16"]
+        "--expert-dtype",
+        default="bfloat16",
+        choices=["float32", "bfloat16"],
     )
     parser.add_argument("--gif", type=Path, default=Path("sim/out/rollout.gif"))
     return parser.parse_args()
@@ -109,7 +111,7 @@ def main() -> int:
 
     print(
         f"success: {success_tick is not None}"
-        + (f" (tick {success_tick})" if success_tick else "")
+        + (f" (tick {success_tick})" if success_tick else ""),
     )
     args.gif.parent.mkdir(parents=True, exist_ok=True)
     frames[0].save(
