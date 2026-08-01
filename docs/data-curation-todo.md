@@ -11,6 +11,14 @@ Working list for the corpus filter/merge + judge-driven augmentation
 - [ ] **2. Download data** — only the in-scope datasets (dims 6/6 ∧
       fps=30, known from metadata: 991 of 1,242) + rig datasets; verify
       exact q01/q99 backfill in every `stats.json`.
+- [ ] **2b. Rig dataset consolidation** — merge
+      `so101_pick_place_{clean,v2}` into one dataset and rename camera
+      `front` → `top` (verified 2026-08-01: it is a fixed overhead view;
+      the name misleads humans and judges alike). Re-backfill stats +
+      exact quantiles after the merge. NOTE: new frame indexing ⇒ rig
+      eval numbers start a fresh ledger line; old rig comparisons don't
+      carry over. Checkpoint stats tables key on repo_id — rollout
+      `--stats-repo-id` must use the new id going forward.
 - [ ] **3. Mechanical filter pass** (before any judge spend) — small
       tool over meta + data parquet producing per-dataset episode
       exclusion lists consumed by both the judge sweep and the merge:

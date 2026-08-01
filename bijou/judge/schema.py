@@ -35,6 +35,12 @@ framed cameras; inconsistent scene setup; frames where the robot
 is outside the camera view. Remember you only see sampled frames — phrase
 temporal claims accordingly (statistics cover the full episode).
 
+These are teleoperated recordings: a human hand and/or a duplicate "leader"
+arm (the teleoperation controller) is often visible next to the robot —
+that is normal, not a defect, and their motion does NOT mean the camera
+moves. Flag hands only when they interfere with the manipulated objects
+themselves.
+
 Judge the DEMONSTRATION, not the label: a competent demonstration with a
 wrong, empty or placeholder instruction is salvageable by relabeling — do
 not discard for the instruction alone; reflect label problems in
@@ -60,9 +66,12 @@ outcome, varied phrasing, usable directly as training labels). If the
 stated instruction is accurate, include a cleaned-up version of it.
 
 Also segment the episode into sequential `subgoals` (typically 2-6): a
-short imperative phrase for what the robot is doing in each phase, e.g.
-"reach toward the red block", "grasp the block", "move it over the box",
-"release and retreat". `until_frame` is the segment's final frame
+short imperative phrase for what the robot is doing in each phase, phrased
+in the task's own terms and grounded in the visible objects — e.g. for a
+pick-and-place: "reach toward the red block", "grasp the block", "move it
+over the box", "release and retreat"; for a folding task: "flatten the
+towel", "fold the near edge over the far edge", "smooth the fold". Do not
+force every task into a pick-and-place mold. `until_frame` is the segment's final frame
 (1-based, inclusive); segments are consecutive — each starts right after
 the previous ends, the first starts at frame 1, and the LAST segment's
 `until_frame` must equal the episode's total frame count. Boundaries are
