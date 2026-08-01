@@ -292,17 +292,17 @@ def unfreeze_backbone(model: BijouModel, args: TrainArgs) -> TrunkParameterCount
     text = 0
     vision = 0
     if args.text_lr is not None:
-        for parameter in groups["text"]:
+        for parameter in groups["trunk_text"]:
             parameter.requires_grad_(True)
             text += parameter.numel()
     if args.vision_lr is not None:
-        if not groups["vision"]:
+        if not groups["trunk_vision"]:
             raise SystemExit(
                 f"--vision-lr {args.vision_lr} but the "
                 f"backbone ({args.backbone}) has no vision tower — drop the "
                 "flag or use a multimodal backbone",
             )
-        for parameter in groups["vision"]:
+        for parameter in groups["trunk_vision"]:
             parameter.requires_grad_(True)
             vision += parameter.numel()
     return TrunkParameterCounts(text=text, vision=vision)
@@ -1405,29 +1405,26 @@ def main() -> int:
             )
 
     # Fixed-key dicts, deliberately: this is torch's optimizer param-group
-    # API format (a third-party boundary), consumed by AdamW below.
+    # API format (a third-party boundary), consumed by AdamW below. The
+    # model's named groups route to per-component learning rates; the
+    # head group always trains at --expert-lr.
+    named_groups = model.param_groups()
     param_groups: list[dict[str, Any]] = [
-        {"params": list(model.decoder.parameters()), "lr": args.expert_lr},
+        {"params": named_groups["head"], "lr": args.expert_lr},
     ]
-    encoder_groups = model.param_groups()
-    if args.text_lr is not None:
-        decayed, undecayed = decay_split(encoder_groups["text"])
-        param_groups.append({"params": decayed, "lr": args.text_lr})
+    for group_name, group_lr in (
+        ("trunk_text", args.text_lr),
+        ("trunk_vision", args.vision_lr),
+    ):
+        if group_lr is None:
+            continue
+        assert named_groups[group_name]  # unfreeze_backbone validated
+        decayed, undecayed = decay_split(named_groups[group_name])
+        param_groups.append({"params": decayed, "lr": group_lr})
         param_groups.append(
             {
                 "params": undecayed,
-                "lr": args.text_lr,
-                "weight_decay": 0.0,
-            },
-        )
-    if args.vision_lr is not None:
-        assert encoder_groups["vision"]
-        decayed, undecayed = decay_split(encoder_groups["vision"])
-        param_groups.append({"params": decayed, "lr": args.vision_lr})
-        param_groups.append(
-            {
-                "params": undecayed,
-                "lr": args.vision_lr,
+                "lr": group_lr,
                 "weight_decay": 0.0,
             },
         )

@@ -55,9 +55,18 @@ class BijouModel(nn.Module):
         return self.trunk
 
     def param_groups(self) -> dict[str, list[nn.Parameter]]:
-        """Named unfreezable trunk groups ("text", "vision") — the
-        component-lr flags route here (see GemmaEncoder.param_groups)."""
-        return self.encoder.param_groups(self.trunk)
+        """Named trainable-parameter groups — the routing vocabulary for
+        component learning rates: ``"head"`` (the decoder — always
+        trained), ``"trunk_text"``/``"trunk_vision"`` (unfreezable trunk
+        subsets; see GemmaEncoder.param_groups for the exactness
+        contract). Groups are disjoint by construction — the decoder owns
+        only its own parameters."""
+        trunk_groups = self.encoder.param_groups(self.trunk)
+        return {
+            "head": list(self.decoder.parameters()),
+            "trunk_text": trunk_groups["text"],
+            "trunk_vision": trunk_groups["vision"],
+        }
 
     def encode(self, inputs: GemmaInputs, *, with_grad: bool) -> ObservationMemory:
         """Encode one collated batch of encoder inputs against the trunk.
