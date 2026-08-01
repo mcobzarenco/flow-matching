@@ -17,6 +17,10 @@ Working list for the corpus filter/merge + judge-driven augmentation
   - [ ] scope: dims 6/6, fps=30 (dataset-level)
   - [ ] length < 50 frames; length outliers (< 2 s, > p99.5)
   - [ ] NaN/inf actions, zero-travel episodes, idle fraction ≥ ~80%
+  - [ ] **dataset-level survivor floor**: drop datasets with < k
+        episodes remaining after the above (k TBD at calibration, ~5–10
+        — tiny datasets carry per-dataset stats/holdout overhead for
+        negligible frames)
   - [ ] quantify leading/trailing idle while here (trim decision for a
         later filter version, not this one)
 - [ ] **4. Calibration pilot** — judge sweep 2 eps/dataset on the
@@ -46,7 +50,12 @@ Working list for the corpus filter/merge + judge-driven augmentation
 - [ ] **9. A/B** — live-trunk AR recipe, curated vs current fps-30 set,
       matched steps; judged on comm holdout + rig-holdout first_mae.
 - [ ] **10. Augmentation arms (bijou-side)** — instruction sampling from
-      sidecars; camera-kind prefix annotations with dropout-to-unknown.
+      sidecars; camera-kind prefix annotations with dropout-to-unknown;
+      **subgoal conditioning**: judges emit per-episode subgoal segments
+      (every frame inherits its segment's label — piecewise-constant
+      interpolation between annotated boundaries), train-time arm
+      conditions the prefix on the current subgoal (prototyped on the
+      rig 2026-08-01; segments ride in `meta/judgments.json`).
 - [ ] **11. fast_tokenizer_v2** — percentile-bounded alphabet, fit on
       the curated corpus; coordinate timing with the AR experiments
       (token metrics never cross tokenizer versions).

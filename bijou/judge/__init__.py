@@ -22,6 +22,7 @@ from .schema import (
     EpisodeJudgment,
     InstructionQuality,
     Scores,
+    Subgoal,
     TaskCompletion,
     Verdict,
 )
@@ -41,6 +42,7 @@ __all__ = [
     "InstructionQuality",
     "JudgmentRecord",
     "Scores",
+    "Subgoal",
     "TaskCompletion",
     "Verdict",
     "load_sidecar",

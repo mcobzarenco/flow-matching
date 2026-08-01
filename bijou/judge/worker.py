@@ -64,6 +64,7 @@ def judge_one(task: JudgeTask) -> dict[str, Any]:
         raw, usage = request_verdict(_client(), task.model, task.max_tokens, content)
         judgment = EpisodeJudgment.from_response_text(raw)
         judgment.check_cameras(summary.camera_names)
+        judgment.check_subgoals(summary.num_frames)
         record.update(
             status="ok",
             task=summary.task,

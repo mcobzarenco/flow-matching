@@ -172,6 +172,10 @@ def print_report(
     )
     print(f"instr    : {judgment.instruction_quality.value}")
     print(f'observed : "{judgment.observed_task}"')
+    start = 1
+    for segment in judgment.subgoals:
+        print(f'  frames {start:>4}-{segment.until_frame:<4}: "{segment.subgoal}"')
+        start = segment.until_frame + 1
     print(
         "cameras  : "
         + "  ".join(
@@ -331,6 +335,7 @@ def main() -> None:
     try:
         judgment: EpisodeJudgment | None = EpisodeJudgment.from_response_text(raw)
         judgment.check_cameras(summary.camera_names)
+        judgment.check_subgoals(summary.num_frames)
     except ValueError as error:
         print(f"warning: {error}", file=sys.stderr)
         judgment = None

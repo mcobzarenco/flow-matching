@@ -321,6 +321,7 @@ def main() -> None:
     try:
         judgment: EpisodeJudgment | None = EpisodeJudgment.from_response_text(text)
         judgment.check_cameras(summary.camera_names)
+        judgment.check_subgoals(summary.num_frames)
     except ValueError as error:
         print(f"warning: {error}", file=sys.stderr)
         judgment = None

@@ -59,6 +59,17 @@ describe what is actually demonstrated (grounded in the visible objects and
 outcome, varied phrasing, usable directly as training labels). If the
 stated instruction is accurate, include a cleaned-up version of it.
 
+Also segment the episode into sequential `subgoals` (typically 2-6): a
+short imperative phrase for what the robot is doing in each phase, e.g.
+"reach toward the red block", "grasp the block", "move it over the box",
+"release and retreat". `until_frame` is the segment's final frame
+(1-based, inclusive); segments are consecutive — each starts right after
+the previous ends, the first starts at frame 1, and the LAST segment's
+`until_frame` must equal the episode's total frame count. Boundaries are
+your best estimate from the sampled frames (the true transition may fall
+between samples). Use a single segment when the episode has no
+distinguishable phases.
+
 Respond with a single JSON object, no markdown fences, matching:
 {
   "overall_score": <int 1-10>,
@@ -73,6 +84,7 @@ Respond with a single JSON object, no markdown fences, matching:
   "instruction_quality": "good" | "vague" | "mismatched" | "placeholder",
   "observed_task": "<1-2 sentences: what actually happens>",
   "suggested_instructions": ["<imperative instruction>", ...],
+  "subgoals": [{"until_frame": <int>, "subgoal": "<imperative phrase>"}, ...],
   "camera_kinds": {"<camera name>": "wrist" | "top" | "front" | "side" | "unknown", ...},
   "issues": [<short strings>],
   "summary": "<2-4 sentences>"
@@ -167,6 +179,36 @@ class Scores:
 
 
 @dataclass(frozen=True, slots=True)
+class Subgoal:
+    """One temporal segment of an episode.
+
+    Frames (previous segment's ``until_frame``, this ``until_frame``] in
+    1-based numbering carry ``subgoal``; the first segment starts at
+    frame 1. Boundaries are judge estimates quantized to the sampled
+    timesteps — every frame in between inherits its segment's label
+    (piecewise-constant interpolation).
+    """
+
+    until_frame: int
+    subgoal: str
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Subgoal:
+        until_frame = data["until_frame"]
+        if isinstance(until_frame, bool) or not isinstance(until_frame, int):
+            raise TypeError(f"until_frame must be an integer, got {until_frame!r}")
+        if until_frame < 1:
+            raise ValueError(f"until_frame must be >= 1, got {until_frame}")
+        subgoal = str(data["subgoal"]).strip()
+        if not subgoal:
+            raise ValueError("subgoal must be a non-empty string")
+        return cls(until_frame=until_frame, subgoal=subgoal)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"until_frame": self.until_frame, "subgoal": self.subgoal}
+
+
+@dataclass(frozen=True, slots=True)
 class EpisodeJudgment:
     """Structured verdict returned by a judge model.
 
@@ -182,6 +224,7 @@ class EpisodeJudgment:
     instruction_quality: InstructionQuality
     observed_task: str
     suggested_instructions: tuple[str, ...]
+    subgoals: tuple[Subgoal, ...]
     camera_kinds: dict[str, CameraKind]
     issues: tuple[str, ...]
     summary: str
@@ -208,6 +251,15 @@ class EpisodeJudgment:
                 raise ValueError(
                     f"suggested_instructions contains empty entries: {suggested!r}",
                 )
+            subgoals_raw = data["subgoals"]
+            if not isinstance(subgoals_raw, list) or not subgoals_raw:
+                raise ValueError("subgoals must be a non-empty array")
+            subgoals = tuple(Subgoal.from_dict(entry) for entry in subgoals_raw)
+            boundaries = [segment.until_frame for segment in subgoals]
+            if boundaries != sorted(set(boundaries)):
+                raise ValueError(
+                    f"subgoal until_frame values must be strictly increasing: {boundaries}",
+                )
             return cls(
                 overall_score=_score_1_10(data, "overall_score"),
                 verdict=Verdict(data["verdict"]),
@@ -221,6 +273,7 @@ class EpisodeJudgment:
                 instruction_quality=InstructionQuality(data["instruction_quality"]),
                 observed_task=observed_task,
                 suggested_instructions=instructions,
+                subgoals=subgoals,
                 camera_kinds={
                     str(name): CameraKind(kind) for name, kind in camera_kinds.items()
                 },
@@ -255,6 +308,26 @@ class EpisodeJudgment:
                 f"camera_kinds keys {sorted(got)} != cameras shown {sorted(want)}",
             )
 
+    def check_subgoals(self, num_frames: int) -> None:
+        """Raise unless the segments cover exactly frames 1..num_frames —
+        anything else breaks the per-frame lookup downstream."""
+        last = self.subgoals[-1].until_frame
+        if last != num_frames:
+            raise ValueError(
+                f"subgoals end at frame {last}, episode has {num_frames} frames",
+            )
+
+    def subgoal_at(self, frame: int) -> str:
+        """1-based frame number -> its segment's subgoal (every frame
+        between annotated boundaries inherits the segment label)."""
+        for segment in self.subgoals:
+            if frame <= segment.until_frame:
+                return segment.subgoal
+        raise ValueError(
+            f"frame {frame} beyond the last subgoal boundary "
+            f"({self.subgoals[-1].until_frame})",
+        )
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "overall_score": self.overall_score,
@@ -269,6 +342,7 @@ class EpisodeJudgment:
             "instruction_quality": self.instruction_quality.value,
             "observed_task": self.observed_task,
             "suggested_instructions": list(self.suggested_instructions),
+            "subgoals": [segment.to_dict() for segment in self.subgoals],
             "camera_kinds": {
                 name: kind.value for name, kind in self.camera_kinds.items()
             },

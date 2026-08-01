@@ -62,7 +62,11 @@ per-aspect scores + `issues`/`summary` judge the demonstration;
 `instruction_quality` (good/vague/mismatched/placeholder) judges the
 label; `observed_task` + `suggested_instructions` are grounded relabels
 usable directly as training instructions (hindsight relabeling when the
-stated task isn't what happened); `camera_kinds` maps each camera name to
+stated task isn't what happened); `subgoals` segments the episode into
+sequential phases ("reach toward the boat", "grasp and lift", …) with
+1-based inclusive `until_frame` boundaries — every frame inherits its
+segment's label (`subgoal_at`), boundaries quantized to the sampled
+timesteps; `camera_kinds` maps each camera name to
 wrist/top/front/side/unknown.
 
 ## Prompt identity is a hash, not a version
@@ -162,6 +166,10 @@ carries what each needs:
 4. **Instruction augmentation**: sample from `suggested_instructions`
    (plus the original task string) at train time — label diversity and
    hindsight relabels with zero new video.
+5. **Subgoal conditioning**: condition the prefix on the current frame's
+   subgoal (piecewise-constant between judged boundaries) — finer
+   language grounding for long-horizon episodes, and a natural
+   inference-time steering hook.
 
 Each is a measured experiment against eval baselines, not a default: the
 curation signal earns its place in training the same way any other change
