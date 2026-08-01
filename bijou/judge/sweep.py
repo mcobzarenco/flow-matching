@@ -58,7 +58,7 @@ from .claude import (
     DEFAULT_NUM_FRAMES,
 )
 from .schema import PROMPT_HASH
-from .store import JudgmentRecord, load_sidecar, write_sidecar
+from .store import JudgmentRecord, discover_datasets, load_sidecar, write_sidecar
 from .worker import JudgeTask, judge_one
 
 # Sweep-specific CLI defaults (the judge knobs are imported from
@@ -92,21 +92,6 @@ class DatasetPlan:
     cameras: int
     to_judge: list[int]
     skipped: list[tuple[int, int]]  # (episode, length) below --min-frames
-
-
-def discover_datasets(roots: list[Path]) -> list[Path]:
-    """Dataset dirs under collection roots (or roots that are datasets)."""
-    found: list[Path] = []
-    for root in roots:
-        root = root.expanduser().resolve()
-        if (root / "meta" / "info.json").exists():
-            found.append(root)
-            continue
-        nested = sorted(p.parent.parent for p in root.glob("*/*/meta/info.json"))
-        if not nested:
-            raise SystemExit(f"no LeRobot datasets under {root}")
-        found.extend(nested)
-    return found
 
 
 def plan_dataset(

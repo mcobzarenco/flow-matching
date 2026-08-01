@@ -25,6 +25,26 @@ from .schema import EpisodeJudgment
 JUDGMENTS_RELPATH = Path("meta") / "judgments.json"
 
 
+def discover_datasets(roots: list[Path]) -> list[Path]:
+    """Dataset dirs under collection roots (or roots that are datasets).
+
+    Lives here (not in the sweep) so verdict *consumers* — aggregation,
+    materialization — can walk a collection without importing the judging
+    stacks.
+    """
+    found: list[Path] = []
+    for root in roots:
+        root = root.expanduser().resolve()
+        if (root / "meta" / "info.json").exists():
+            found.append(root)
+            continue
+        nested = sorted(p.parent.parent for p in root.glob("*/*/meta/info.json"))
+        if not nested:
+            raise SystemExit(f"no LeRobot datasets under {root}")
+        found.extend(nested)
+    return found
+
+
 @dataclass(frozen=True, slots=True)
 class JudgmentRecord:
     """One stored verdict: identity, evidence provenance, and the judgment.
