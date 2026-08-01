@@ -1,5 +1,6 @@
-"""Checkpoint-schema tests: format-2 tagged configs, the format-1 legacy
-synthesizer, and the --init-from config guard across both formats.
+"""Checkpoint-schema tests: format-3 sectioned configs, the format-2 and
+format-1 read-side synthesizers, and the --init-from config guard across
+formats.
 
 Offline by construction: the backbone architecture comes from
 ``e2b_config()`` (built in code, matching google/gemma-4-e2b-it), and the
@@ -22,12 +23,15 @@ from bijou.loading import (
     CheckpointMetadata,
     CheckpointTrainArgs,
     FlowDecoderConfig,
-    GemmaEncoderConfig,
+    GemmaPromptConfig,
+    TrunkConfig,
+    TrunkDepth,
+    checkpoint_sections,
     expert_config_from_architecture,
     expert_config_from_train_args,
     flow_decoder_config_from_expert,
     parse_decoder_config,
-    parse_encoder_config,
+    parse_prompt_config,
 )
 from bijou.train import ensure_matching_decoder_config
 
@@ -59,55 +63,51 @@ def test_legacy_synthesizer_reproduces_recorded_expert_config() -> None:
     assert synthesized == recorded
 
 
-def test_format2_bridge_roundtrips_expert_config() -> None:
+def test_prompt_decoder_bridge_roundtrips_expert_config() -> None:
     expert_config = legacy_expert_config()
-    encoder = GemmaEncoderConfig(
-        backbone="google/gemma-4-e2b-it",
+    prompt = GemmaPromptConfig(
         exports=expert_config.streams,
         max_soft_tokens=140,
     )
     decoder = flow_decoder_config_from_expert(expert_config)
     assert decoder.schedule[:5] == ("kv4", "kv4", "kv4", "kv4", "kv9")
-    rebuilt = expert_config_from_architecture(encoder, decoder, e2b_config())
+    rebuilt = expert_config_from_architecture(prompt, decoder, e2b_config())
     assert rebuilt == expert_config
 
 
 def test_config_dicts_roundtrip_through_json() -> None:
     expert_config = legacy_expert_config()
-    encoder = GemmaEncoderConfig(
-        backbone="google/gemma-4-e2b-it",
+    prompt = GemmaPromptConfig(
         exports=(4, 9, 14),
         max_soft_tokens=140,
     )
     decoder = flow_decoder_config_from_expert(expert_config)
-    encoder_parsed = parse_encoder_config(json.loads(json.dumps(encoder.to_dict())))
+    prompt_parsed = parse_prompt_config(json.loads(json.dumps(prompt.to_dict())))
     decoder_parsed = parse_decoder_config(json.loads(json.dumps(decoder.to_dict())))
-    assert encoder_parsed == encoder
+    assert prompt_parsed == prompt
     assert decoder_parsed == decoder
 
 
 def test_unknown_stream_and_unused_export_fail_loudly() -> None:
     expert_config = legacy_expert_config()
     decoder = flow_decoder_config_from_expert(expert_config)
-    encoder = GemmaEncoderConfig(
-        backbone="google/gemma-4-e2b-it",
+    prompt = GemmaPromptConfig(
         exports=(4, 9),  # kv14 missing => schedule references unknown stream
         max_soft_tokens=140,
     )
     with pytest.raises(SystemExit, match="unknown stream"):
-        expert_config_from_architecture(encoder, decoder, e2b_config())
+        expert_config_from_architecture(prompt, decoder, e2b_config())
 
     schedule_without_kv9 = tuple(
         "kv4" if name == "kv9" else name for name in decoder.schedule
     )
     decoder_unused = dataclasses.replace(decoder, schedule=schedule_without_kv9)
-    encoder_full = GemmaEncoderConfig(
-        backbone="google/gemma-4-e2b-it",
+    prompt_full = GemmaPromptConfig(
         exports=(4, 9, 14),
         max_soft_tokens=140,
     )
     with pytest.raises(SystemExit, match="not consumed"):
-        expert_config_from_architecture(encoder_full, decoder_unused, e2b_config())
+        expert_config_from_architecture(prompt_full, decoder_unused, e2b_config())
 
 
 def tiny_stats(dim: int = 6) -> DatasetStats:
@@ -123,13 +123,18 @@ def tiny_stats(dim: int = 6) -> DatasetStats:
     )
 
 
-def format2_meta() -> dict:
+def format3_meta() -> dict:
     expert_config = legacy_expert_config()
     metadata = CheckpointMetadata(
-        backbone="google/gemma-4-e2b-it",
-        exports=expert_config.streams,
+        trunk=TrunkConfig(
+            backbone="google/gemma-4-e2b-it",
+            depth=TrunkDepth.PREFIX,
+        ),
+        prompt=GemmaPromptConfig(
+            exports=expert_config.streams,
+            max_soft_tokens=140,
+        ),
         decoder=flow_decoder_config_from_expert(expert_config).to_dict(),
-        max_soft_tokens=140,
         normalization=tiny_stats(),
         per_dataset_normalization={"marius/rig": tiny_stats()},
         train_args=legacy_meta()["train_args"],
@@ -138,19 +143,59 @@ def format2_meta() -> dict:
     return json.loads(json.dumps(metadata.to_json_dict(), default=str))
 
 
-def test_metadata_writes_format2_and_reads_back() -> None:
-    meta = format2_meta()
-    assert meta["format"] == 2
-    assert meta["encoder"]["kind"] == "gemma4"
+def format2_meta() -> dict:
+    """A format-2 payload as historical checkpoints carry it (the backbone
+    id lives inside the encoder section) — hand-built because the write
+    side moved to format 3."""
+    meta3 = format3_meta()
+    return {
+        "format": 2,
+        "encoder": {
+            "kind": "gemma4",
+            "backbone": meta3["trunk"]["backbone"],
+            "exports": meta3["prompt"]["exports"],
+            "max_soft_tokens": meta3["prompt"]["max_soft_tokens"],
+        },
+        "decoder": meta3["decoder"],
+        "step": meta3["step"],
+        "train_args": meta3["train_args"],
+        "normalization": meta3["normalization"],
+        "per_dataset_normalization": meta3["per_dataset_normalization"],
+    }
+
+
+def test_metadata_writes_format3_and_reads_back() -> None:
+    meta = format3_meta()
+    assert meta["format"] == 3
+    assert meta["trunk"] == {
+        "backbone": "google/gemma-4-e2b-it",
+        "depth": "prefix",
+    }
+    assert meta["prompt"]["kind"] == "gemma4"
     assert meta["decoder"]["kind"] == "flow"
-    decoder_config = parse_decoder_config(meta["decoder"])
-    assert isinstance(decoder_config, FlowDecoderConfig)
+    sections = checkpoint_sections(meta)
+    assert sections.trunk.depth is TrunkDepth.PREFIX
+    assert sections.prompt is not None
+    assert isinstance(sections.decoder, FlowDecoderConfig)
     rebuilt = expert_config_from_architecture(
-        parse_encoder_config(meta["encoder"]),
-        decoder_config,
+        sections.prompt,
+        sections.decoder,
         e2b_config(),
     )
     assert rebuilt == legacy_expert_config()
+
+
+def test_sections_synthesized_identically_across_formats() -> None:
+    """Formats 1/2/3 of the same checkpoint must parse to the same
+    sections (modulo format 1's absent tagged configs)."""
+    from_format3 = checkpoint_sections(format3_meta())
+    from_format2 = checkpoint_sections(format2_meta())
+    assert from_format2 == from_format3
+
+    from_format1 = checkpoint_sections(legacy_meta())
+    assert from_format1.trunk == from_format3.trunk
+    assert from_format1.prompt is None
+    assert from_format1.decoder is None
 
 
 def meta_decoder(config: ExpertConfig) -> FlowDecoder:

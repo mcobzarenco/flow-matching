@@ -29,7 +29,9 @@ from bijou.decoders.flow import (
 )
 from bijou.encoders.gemma4 import GemmaEncoder
 from bijou.gemma4.config import e2b_config
+from bijou.gemma4.loading import truncated_config
 from bijou.gemma4.model import Gemma4Model
+from bijou.loading import TrunkDepth, checkpoint_sections
 from bijou.model import BijouModel
 from bijou.nn import RopeParameters, RopeType
 from bijou.train import (
@@ -73,7 +75,9 @@ def tiny_decoder() -> FlowDecoder:
 def tiny_model() -> BijouModel:
     # The backbone stays on the meta device: the flags-off save paths under
     # test never touch its weights (only encoder.exports for metadata).
-    config = e2b_config()
+    # Truncated exactly as the real build (depth derivation reads the
+    # trunk's config: no KV-shared layers <=> prefix depth).
+    config = truncated_config(e2b_config(), 15)
     encoder = GemmaEncoder(
         config,
         exports=(4, 9, 14),
@@ -190,10 +194,13 @@ def test_frozen_inherited_trunk_rides_along(tmp_path: Path) -> None:
         adapted["language_model.layers.0.mlp.down_proj.weight"],
     )
     # Metadata still records the pristine id (resolution base) — the
-    # adapted diff is exactly the carried file.
-    meta = json.loads((checkpoint / "bijou_config.json").read_text())
-    backbone_id = meta["encoder"]["backbone"] if "encoder" in meta else meta["backbone"]
-    assert backbone_id == "google/gemma-4-e2b-it"
+    # adapted diff is exactly the carried file — and the depth the model
+    # was built at.
+    sections = checkpoint_sections(
+        json.loads((checkpoint / "bijou_config.json").read_text()),
+    )
+    assert sections.trunk.backbone == "google/gemma-4-e2b-it"
+    assert sections.trunk.depth is TrunkDepth.PREFIX
 
 
 def test_inherited_source_must_exist(tmp_path: Path) -> None:

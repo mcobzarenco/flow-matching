@@ -83,6 +83,9 @@ from .gemma4.loading import load_config, resolve_checkpoint_dir
 from .interface import CollatedBatch, Collator, kv_stream_name
 from .loading import (
     CheckpointMetadata,
+    GemmaPromptConfig,
+    TrunkConfig,
+    TrunkDepth,
     backbone_snapshot,
     build_gemma_encoder,
     decoder_schema_dict,
@@ -691,10 +694,22 @@ def save_checkpoint(
     )
     torch.save(train_state.to_payload(), checkpoint_dir / "optimizer.pt")
     metadata = CheckpointMetadata(
-        backbone=args.backbone,
-        exports=model.encoder.exports,
+        trunk=TrunkConfig(
+            backbone=args.backbone,
+            # Structural fact of the built model: a truncated trunk has
+            # its KV-shared region cut away (truncated_config), a full one
+            # keeps it — no plumbing to drift.
+            depth=(
+                TrunkDepth.FULL
+                if model.trunk.config.text.num_kv_shared_layers > 0
+                else TrunkDepth.PREFIX
+            ),
+        ),
+        prompt=GemmaPromptConfig(
+            exports=model.encoder.exports,
+            max_soft_tokens=args.max_soft_tokens,
+        ),
         decoder=decoder_schema_dict(model.decoder),
-        max_soft_tokens=args.max_soft_tokens,
         normalization=aggregate_stats(normalizers),
         per_dataset_normalization=per_dataset_stats,
         train_args={

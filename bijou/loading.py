@@ -42,15 +42,51 @@ from .interface import kv_stream_name
 from .model import BijouModel
 from .nn import DEFAULT_ATTENTION_BACKEND, AttentionBackend, DeviceLike
 
-# bijou_config.json schema version. Format 2 (tagged encoder/decoder
-# configs) replaced the original layout (backbone + expert_config keys);
-# the read side synthesizes format-2 semantics from format-1 files, so
-# every existing checkpoint keeps loading without conversion.
-CHECKPOINT_FORMAT = 2
+# bijou_config.json schema version. Format 3 sections the metadata by
+# role — trunk (the shared network), prompt (the prompt-side strategy),
+# decoder (the tagged head config) — replacing format 2's encoder/decoder
+# pair, which had replaced the original layout (backbone + expert_config
+# keys). The read side synthesizes current semantics from BOTH older
+# formats, so every existing checkpoint keeps loading without conversion.
+CHECKPOINT_FORMAT = 3
 
 
-class EncoderKind(StrEnum):
-    """Tag of an observation-encoder config in bijou_config.json."""
+class TrunkDepth(StrEnum):
+    """How much of the backbone stack a checkpoint's model runs."""
+
+    # Truncated to the non-KV-shared prefix (layers 0..14 for E2B) — the
+    # cross-attention decoders' trunk; formats 1/2 are always this.
+    PREFIX = "prefix"
+    # The whole stack — the decoder-only trunk path (prompt encode still
+    # stops at the prefix; the suffix runs the KV-shared deep half).
+    FULL = "full"
+
+
+@dataclass(frozen=True, slots=True)
+class TrunkConfig:
+    """The trunk section of bijou_config.json: which backbone, how deep.
+    Adaptedness is deliberately NOT recorded here — ``backbone.safetensors``
+    presence is the (test-gated) invariant for a trunk that differs from
+    pristine HF."""
+
+    backbone: str
+    depth: TrunkDepth
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"backbone": self.backbone, "depth": self.depth.value}
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> TrunkConfig:
+        return cls(
+            backbone=str(data["backbone"]),
+            depth=TrunkDepth(data["depth"]),
+        )
+
+
+class PromptKind(StrEnum):
+    """Tag of a prompt-side encoder config in bijou_config.json.
+    (Format 2 called this section "encoder" and kept the backbone id
+    inside it; format 3 moves the backbone to the trunk section.)"""
 
     GEMMA4 = "gemma4"
 
@@ -63,29 +99,26 @@ class DecoderKind(StrEnum):
 
 
 @dataclass(frozen=True, slots=True)
-class GemmaEncoderConfig:
-    """The Gemma-trunk observation encoder as recorded in a checkpoint.
+class GemmaPromptConfig:
+    """The Gemma prompt-side strategy as recorded in a checkpoint.
 
     ``exports`` are backbone layer indices whose K/V become the memory
     streams (named ``kv{layer}`` — trunk internals live HERE, never in
     decoder configs)."""
 
-    backbone: str
     exports: tuple[int, ...]
     max_soft_tokens: int
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "kind": EncoderKind.GEMMA4.value,
-            "backbone": self.backbone,
+            "kind": PromptKind.GEMMA4.value,
             "exports": list(self.exports),
             "max_soft_tokens": self.max_soft_tokens,
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> GemmaEncoderConfig:
+    def from_dict(cls, data: dict[str, Any]) -> GemmaPromptConfig:
         return cls(
-            backbone=str(data["backbone"]),
             exports=tuple(int(layer) for layer in data["exports"]),
             max_soft_tokens=int(data["max_soft_tokens"]),
         )
@@ -158,11 +191,11 @@ class FlowDecoderConfig:
         )
 
 
-def parse_encoder_config(data: dict[str, Any]) -> GemmaEncoderConfig:
-    kind = EncoderKind(data["kind"])
+def parse_prompt_config(data: dict[str, Any]) -> GemmaPromptConfig:
+    kind = PromptKind(data["kind"])
     match kind:
-        case EncoderKind.GEMMA4:
-            return GemmaEncoderConfig.from_dict(data)
+        case PromptKind.GEMMA4:
+            return GemmaPromptConfig.from_dict(data)
 
 
 def ar_fast_config_to_dict(config: ARFastConfig) -> dict[str, Any]:
@@ -385,16 +418,21 @@ def build_gemma_encoder(
     device: DeviceLike,
     dtype: torch.dtype | None,
     attn_backend: AttentionBackend = DEFAULT_ATTENTION_BACKEND,
+    depth: TrunkDepth = TrunkDepth.PREFIX,
 ) -> tuple[Gemma4Model, GemmaEncoder]:
-    """The Gemma trunk (loaded truncated to its non-KV-shared layer
-    prefix, frozen) plus its prompt-side encoder strategy — the pair
-    BijouModel composes."""
+    """The Gemma trunk (frozen; truncated to its non-KV-shared layer
+    prefix at the default PREFIX depth, whole stack at FULL) plus its
+    prompt-side encoder strategy — the pair BijouModel composes."""
     trunk = load_model(
         checkpoint_dir,
         device="cpu" if device is None else device,
         dtype=dtype,
         attn_backend=attn_backend,
-        truncate_layers=config.text.first_kv_shared_layer_idx,
+        truncate_layers=(
+            config.text.first_kv_shared_layer_idx
+            if depth is TrunkDepth.PREFIX
+            else None
+        ),
     )
     encoder = GemmaEncoder(
         trunk.config,
@@ -469,32 +507,29 @@ class CheckpointInfo:
 class CheckpointMetadata:
     """Write-side schema of ``bijou_config.json`` (bijou.train fills it,
     :func:`from_checkpoint` reads the result back as CheckpointInfo).
-    Writes format 2: tagged encoder/decoder configs derived from the
-    expert config; format-1 files remain readable via the legacy path.
+    Writes format 3: role-sectioned metadata — ``trunk`` (which backbone,
+    how deep), ``prompt`` (the tagged prompt-side config), ``decoder``
+    (the tagged head config). Format-1/2 files remain readable via
+    :func:`checkpoint_sections`.
 
     ``train_args`` is the full CLI record as a JSON-ready dict — prepared by
     the caller because this module must not import bijou.train's TrainArgs
     (the import DAG points the other way).
     """
 
-    backbone: str
-    exports: tuple[int, ...]
+    trunk: TrunkConfig
+    prompt: GemmaPromptConfig
     decoder: dict[str, Any]
-    max_soft_tokens: int
     normalization: DatasetStats
     per_dataset_normalization: dict[str, DatasetStats]
     train_args: dict[str, Any]
     step: int
 
     def to_json_dict(self) -> dict[str, Any]:
-        encoder = GemmaEncoderConfig(
-            backbone=self.backbone,
-            exports=self.exports,
-            max_soft_tokens=self.max_soft_tokens,
-        )
         return {
             "format": CHECKPOINT_FORMAT,
-            "encoder": encoder.to_dict(),
+            "trunk": self.trunk.to_dict(),
+            "prompt": self.prompt.to_dict(),
             "decoder": self.decoder,
             "step": self.step,
             "train_args": self.train_args,
@@ -510,6 +545,46 @@ class CheckpointMetadata:
                 )
             },
         }
+
+
+@dataclass(frozen=True, slots=True)
+class CheckpointSections:
+    """A checkpoint's role sections with format differences erased — the
+    ONE read-side entry for anything that needs a checkpoint's
+    architecture. ``prompt``/``decoder`` are None only for format-1
+    checkpoints (flow-only era: the decoder is synthesized from the
+    recorded train args, and the prompt side had no recorded config
+    beyond max_soft_tokens, which lives in train_args)."""
+
+    trunk: TrunkConfig
+    prompt: GemmaPromptConfig | None
+    decoder: FlowDecoderConfig | ARFastConfig | None
+
+
+def checkpoint_sections(meta: dict[str, Any]) -> CheckpointSections:
+    """Parse any ``bijou_config.json`` payload (format 1, 2 or 3) into
+    sections. Pure — no file or hub access."""
+    if "trunk" in meta:  # format 3
+        return CheckpointSections(
+            trunk=TrunkConfig.from_dict(meta["trunk"]),
+            prompt=parse_prompt_config(meta["prompt"]),
+            decoder=parse_decoder_config(meta["decoder"]),
+        )
+    if "encoder" in meta:  # format 2: backbone inside the encoder section
+        return CheckpointSections(
+            trunk=TrunkConfig(
+                backbone=str(meta["encoder"]["backbone"]),
+                depth=TrunkDepth.PREFIX,
+            ),
+            prompt=parse_prompt_config(meta["encoder"]),
+            decoder=parse_decoder_config(meta["decoder"]),
+        )
+    # Format 1: backbone at the top level, flow-only, no tagged configs.
+    return CheckpointSections(
+        trunk=TrunkConfig(backbone=str(meta["backbone"]), depth=TrunkDepth.PREFIX),
+        prompt=None,
+        decoder=None,
+    )
 
 
 def expert_config_from_train_args(
@@ -564,23 +639,24 @@ def flow_decoder_config_from_expert(expert_config: ExpertConfig) -> FlowDecoderC
 
 
 def expert_config_from_architecture(
-    encoder: GemmaEncoderConfig,
+    prompt: GemmaPromptConfig,
     decoder: FlowDecoderConfig,
     backbone_config: Gemma4Config,
 ) -> ExpertConfig:
-    """Compose the (format-2) encoder + decoder configs back into the
-    expert's construction config: schedule names resolve to backbone layer
-    indices against the encoder's exports; cross-attention geometry comes
-    from the backbone's global layers. Validates the references — unknown
-    stream name or unconsumed export is a config error."""
-    by_name = dict(zip(encoder.stream_names, encoder.exports, strict=True))
+    """Compose the prompt + decoder configs back into the expert's
+    construction config: schedule names resolve to backbone layer
+    indices against the prompt section's exports; cross-attention
+    geometry comes from the backbone's global layers. Validates the
+    references — unknown stream name or unconsumed export is a config
+    error."""
+    by_name = dict(zip(prompt.stream_names, prompt.exports, strict=True))
     unknown = [name for name in decoder.schedule if name not in by_name]
     if unknown:
         raise SystemExit(
             f"decoder schedule references unknown stream(s) {sorted(set(unknown))}; "
-            f"the encoder exports {list(encoder.stream_names)}",
+            f"the encoder exports {list(prompt.stream_names)}",
         )
-    unused = [name for name in encoder.stream_names if name not in decoder.schedule]
+    unused = [name for name in prompt.stream_names if name not in decoder.schedule]
     if unused:
         raise SystemExit(
             f"encoder export(s) {unused} are not consumed by the decoder "
@@ -669,10 +745,9 @@ def from_checkpoint(
     (normalization stats table etc.)."""
     checkpoint = Path(checkpoint)
     meta = json.loads((checkpoint / "bijou_config.json").read_text())
-    format2 = "encoder" in meta
-    backbone_id = meta["encoder"]["backbone"] if format2 else meta["backbone"]
+    sections = checkpoint_sections(meta)
     info = CheckpointInfo(
-        backbone=backbone_id,
+        backbone=sections.trunk.backbone,
         train_args=CheckpointTrainArgs.from_dict(meta["train_args"]),
         step=int(meta["step"]),
         normalization=DatasetStats.from_state_dict(meta["normalization"]),
@@ -682,19 +757,18 @@ def from_checkpoint(
         },
     )
     checkpoint_dir = resolve_checkpoint_dir(info.backbone)
-    decoder_config: FlowDecoderConfig | ARFastConfig | None = (
-        parse_decoder_config(meta["decoder"]) if format2 else None
-    )
-    if isinstance(decoder_config, ARFastConfig):
-        encoder_config = parse_encoder_config(meta["encoder"])
+    if isinstance(sections.decoder, ARFastConfig):
+        decoder_config = sections.decoder
+        assert sections.prompt is not None  # tagged formats carry it
         trunk, encoder = build_gemma_encoder(
             checkpoint_dir,
             load_config(checkpoint_dir),
-            exports=encoder_config.exports,
-            max_soft_tokens=encoder_config.max_soft_tokens,
+            exports=sections.prompt.exports,
+            max_soft_tokens=sections.prompt.max_soft_tokens,
             device=device,
             dtype=dtype,
             attn_backend=attn_backend,
+            depth=sections.trunk.depth,
         )
         decoder = ARFastDecoder(
             decoder_config,
@@ -706,10 +780,11 @@ def from_checkpoint(
         )
         model = BijouModel(trunk=trunk, encoder=encoder, decoder=decoder)
     else:
-        if decoder_config is not None:
+        if sections.decoder is not None:
+            assert sections.prompt is not None  # tagged formats carry it
             expert_config = expert_config_from_architecture(
-                parse_encoder_config(meta["encoder"]),
-                decoder_config,
+                sections.prompt,
+                sections.decoder,
                 load_config(checkpoint_dir),
             )
         else:
