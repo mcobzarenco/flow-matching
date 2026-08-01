@@ -78,7 +78,9 @@ MODEL_PRICES = {
 # Older tokenizers run ~10% lighter on the text part; rough by design.
 EST_TOKENS_PER_IMAGE = 305
 EST_TEXT_TOKENS = 1464
-EST_OUTPUT_TOKENS = 500
+# Measured on the rig v2 test sweep (12 eps, 10 timesteps / 2 cams, dense
+# frame_annotations): 17,257/12 ≈ 1.4k out per episode.
+EST_OUTPUT_TOKENS = 1450
 
 
 @dataclass(frozen=True, slots=True)
