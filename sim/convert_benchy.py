@@ -115,7 +115,7 @@ def main() -> int:
     (out_dir / "benchy_col_assets.xml").write_text("\n".join(asset_lines) + "\n")
     (out_dir / "benchy_col_geoms.xml").write_text("\n".join(geom_lines) + "\n")
     print(
-        f"wrote {out_dir}/benchy_visual.obj, {len(pieces)} collision pieces + includes"
+        f"wrote {out_dir}/benchy_visual.obj, {len(pieces)} collision pieces + includes",
     )
     return 0
 
