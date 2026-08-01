@@ -52,6 +52,14 @@ Working list for the corpus filter/merge + judge-driven augmentation
         in sidecars)
 - [ ] **7. Ship `mcobzarenco/community_curated_v1`** to the hub with the
       manifest-generated card.
+  - [ ] materialize judge subgoals into lerobot-native form during the
+        merge (sidecar stays the provenance store): SARM-style episode
+        columns (`{sparse}_subtask_names/_start_frames/_end_frames` in
+        episodes parquet — what the online visualizer renders) and/or
+        `language_persistent` rows with `style="subtask"` (per-frame
+        column; `active_at(t)` resolver = our piecewise-constant lookup;
+        `lerobot.datasets.language` + `annotations/steerable_pipeline`
+        writer).
 - [ ] **8. Re-baseline the new frame set** — state-copy + AR-unftext-50k
       scored on curated holdout (new indexing = new ledger section;
       nothing comparable across frame sets).
