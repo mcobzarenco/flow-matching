@@ -41,13 +41,16 @@ import pytest
 import torch
 from torch import Tensor
 
+from bijou.encoders.gemma4 import GemmaEncoder
 from bijou.gemma4.cache import KVCache
 from bijou.gemma4.config import (
+    Gemma4Config,
     Gemma4TextConfig,
     LayerType,
     RopeParameters,
     RopeType,
 )
+from bijou.gemma4.model import Gemma4Model
 from bijou.gemma4.text import TextModel
 from bijou.nn import AttentionBackend
 
@@ -227,6 +230,78 @@ def test_batch_composition_invariance(backend: AttentionBackend) -> None:
         )
         delta = float((batched[i] - alone[0]).abs().max())
         assert delta < 1e-4, f"sample {i}: batch-dependent by {delta}"
+
+
+def tiny_gemma4_config() -> Gemma4Config:
+    """Text-only wrapper for the encoder-path test (vision None; the
+    image token id is outside the tiny vocab so no prompt id ever
+    matches it)."""
+    return Gemma4Config(
+        text=tiny_text_config(),
+        vision=None,
+        image_token_id=999,
+        video_token_id=998,
+        audio_token_id=997,
+        boi_token_id=996,
+        eoi_token_id=995,
+        dtype=torch.float32,
+    )
+
+
+def test_encode_is_padding_orientation_invariant() -> None:
+    """What every EXISTING checkpoint depends on: the exported-stream
+    K/V at real-token columns are identical (≤ reduction-order noise)
+    whether the prompt batch is right-padded (the historical collation),
+    left-padded (the current one), or not padded at all — through the
+    real GemmaEncoder.encode_tensors path with per-sample logical
+    position_ids. This is the executable form of the padding-impact
+    analysis: the 2026-08-01 left-padding switch changes nothing for
+    stream consumers."""
+    config = tiny_gemma4_config()
+    torch.manual_seed(0)
+    backbone = Gemma4Model(config, attn_backend=AttentionBackend.EAGER)
+    backbone.eval()
+    backbone.requires_grad_(False)
+    stop = config.text.first_kv_shared_layer_idx - 1
+    encoder = GemmaEncoder(
+        config,
+        exports=(stop,),
+        processor_dir="unused",
+        max_soft_tokens=1,
+    )
+    prompts = [prompt_ids(length, seed=i) for i, length in enumerate(PROMPT_LENGTHS)]
+    width = max(int(p.shape[0]) for p in prompts)
+
+    def encode(*, pad_left: bool) -> list[Tensor]:
+        ids = torch.full((len(prompts), width), 0, dtype=torch.long)
+        real = torch.zeros((len(prompts), width), dtype=torch.bool)
+        for i, prompt in enumerate(prompts):
+            length = int(prompt.shape[0])
+            span = slice(width - length, width) if pad_left else slice(0, length)
+            ids[i, span] = prompt
+            real[i, span] = True
+        with torch.no_grad():
+            memory = encoder.encode_tensors(backbone, ids, padding_mask=real)
+        stream = memory.streams[f"kv{stop}"]
+        # Per-sample real-token columns, in logical order ([2·kv_heads,
+        # L_i, head_dim] each — ragged across the batch).
+        return [
+            torch.cat([stream.key[i][:, real[i], :], stream.value[i][:, real[i], :]])
+            for i in range(len(prompts))
+        ]
+
+    left = encode(pad_left=True)
+    right = encode(pad_left=False)
+    for i, prompt in enumerate(prompts):
+        delta = float((left[i] - right[i]).abs().max())
+        assert delta < 1e-4, f"sample {i}: orientation-dependent K/V, max|Δ|={delta}"
+        # And both equal the unpadded single-sample encode.
+        with torch.no_grad():
+            alone = encoder.encode_tensors(backbone, prompt[None, :])
+        stream = alone.streams[f"kv{stop}"]
+        reference = torch.cat([stream.key[0], stream.value[0]])
+        delta = float((left[i] - reference).abs().max())
+        assert delta < 1e-4, f"sample {i}: padded vs unpadded max|Δ|={delta}"
 
 
 @pytest.mark.parametrize("backend", BACKENDS)

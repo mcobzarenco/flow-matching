@@ -1,11 +1,22 @@
 """The Gemma prompt-side observation encoder.
 
 Collation renders ``[instruction][cameras...][instruction]`` per sample
-through the Gemma4 processor (chat template, right padding). The camera
+through the Gemma4 processor (chat template, LEFT padding). The camera
 slot NAMES in each PromptInputs are deliberately ignored — prompt slots
 are positional (community image/image2 keys carry no reliable semantics;
 SmolVLA precedent). The processor is built lazily so the strategy can be
 pickled into dataloader workers.
+
+Padding orientation (decided 2026-08-01, test-gated in
+tests/test_backbone_continuation.py): prompts are LEFT-padded with
+per-sample logical position_ids. For the exported-K/V consumers both
+orientations produce identical real-token K/V (pads are masked columns
+and real positions carry the same RoPE), but suffix continuation through
+the backbone — the ar_backbone path — is only correct when the suffix is
+physically adjacent to the real prompt: sliding-window masks live in
+PHYSICAL index space, so a right-padding gap sits inside the window and
+evicts real prompt tokens (measured max|Δ| 1.216 on the tiny fixture).
+One convention for every path; the standard batched-generation choice.
 
 Encoding runs the truncated backbone over the multimodal prefix and
 exports the K/V of the configured global layers as memory streams — the
@@ -53,7 +64,7 @@ class GemmaInputs:
 
     Shapes (``images`` = Σ per-sample camera images, not B):
       - input_ids: [B, P]
-      - attention_mask: [B, P]  (1 = real token, 0 = right padding)
+      - attention_mask: [B, P]  (1 = real token, 0 = left padding)
       - pixel_values: [images, patches, 3·patch_size²]  (RGB in [0, 1])
       - image_position_ids: [images, patches, 2]  ((x, y) spatial ids)
     """
@@ -119,7 +130,9 @@ class GemmaInputsCollator:
             self._processor = transformers.AutoProcessor.from_pretrained(
                 self.checkpoint,
             )
-            self._processor.tokenizer.padding_side = "right"
+            # LEFT padding (see the module docstring): correct for every
+            # consumer, required by backbone suffix continuation.
+            self._processor.tokenizer.padding_side = "left"
 
         conversations = []
         for sample in samples:
@@ -217,10 +230,12 @@ class GemmaEncoder(nn.Module):
         memory (the exported streams are views into it either way);
         the default drops it, freeing the non-exported layers' K/V.
 
-        For right-padded batches (mixed-length instructions), pass the HF
+        For padded batches (mixed-length instructions), pass the HF
         ``attention_mask`` (True/1 = real token) as ``padding_mask``; it
         masks both the backbone's self-attention and the decoder's
-        cross-attention.
+        cross-attention, and real tokens get per-sample LOGICAL
+        position_ids (cumsum of the mask) — correct for either padding
+        orientation, and required for left padding.
 
         Shapes (P = prompt/prefix tokens = the encoded sequence length;
         ``images`` = Σ per-sample camera images, not B):
@@ -236,10 +251,18 @@ class GemmaEncoder(nn.Module):
             pixel_values=pixel_values,
             image_position_ids=image_position_ids,
         )
+        # Logical positions: pads (masked everywhere) clamp to 0; real
+        # tokens count 0..L−1 regardless of which side the padding is on.
+        position_ids = (
+            (padding_mask.long().cumsum(-1) - 1).clamp(min=0)
+            if padding_mask is not None
+            else None
+        )
         cache = KVCache(backbone.config.text)
         backbone.language_model(
             inputs_embeds=inputs_embeds,
             per_layer_inputs=per_layer_inputs,
+            position_ids=position_ids,
             padding_mask=padding_mask,
             cache=cache,
             # The deepest exported layer's K/V depend only on its input:
