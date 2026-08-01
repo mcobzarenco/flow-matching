@@ -312,40 +312,56 @@ class GemmaEncoder(nn.Module):
         self,
         backbone: Gemma4Model,
     ) -> Iterator[nn.Parameter]:
-        """The text-stack parameters that PARTICIPATE in a prefix encode,
-        and only those — the set must be exact because DDP requires every
+        """The text-stack parameters that PARTICIPATE in a forward, and
+        only those — the set must be exact because DDP requires every
         grad-enabled parameter to receive gradients each step.
 
-        Participation mirrors ``kv_stop_layer`` (= the deepest exported
-        stream): layers below it run fully; the stop layer runs only its
-        input layernorm and K/V projections (``TextAttention.project_kv``;
-        its v_norm is scale-less — no parameters); deeper layers, the final
-        norm and the LM head never run. Token embeddings and the PLE tables
-        stay frozen BY DESIGN (few rows touched per batch, dense Adam state
-        for a 262k vocab is waste, and frozen embeddings are the cheapest
-        forgetting control) — but the PLE *projection* path runs for every
-        consumed layer slice, so it trains. The multimodal projector
-        (embed_vision) is the vision->text interface and belongs to the
-        text group regardless of whether the vision tower itself is
-        unfrozen.
+        Participation depends on the mounted depth (a structural fact of
+        the backbone's config):
+
+        - FULL stack (``num_kv_shared_layers > 0`` — the decoder-only
+          path): the suffix runs EVERY layer and the final norm, so the
+          whole stack participates (the prefix still stops at
+          ``kv_stop_layer``; the suffix is what reaches the deep half).
+        - Truncated prefix: participation mirrors ``kv_stop_layer``
+          (= the deepest exported stream): layers below it run fully; the
+          stop layer runs only its input layernorm and K/V projections
+          (``TextAttention.project_kv``; its v_norm is scale-less — no
+          parameters); deeper layers and the final norm never run.
+
+        Either way: token embeddings and the PLE tables stay frozen BY
+        DESIGN (few rows touched per batch, dense Adam state for a 262k
+        vocab is waste, and frozen embeddings are the cheapest forgetting
+        control — the ar_backbone patch owns its own trainable rows); the
+        tied LM head never trains; the PLE *projection* path runs for
+        every consumed layer slice, so it trains. The multimodal
+        projector (embed_vision) is the vision->text interface and
+        belongs to the text group regardless of whether the vision tower
+        itself is unfrozen.
         """
         text = backbone.language_model
-        stop_layer = max(self.exports)
-        for idx, layer in enumerate(text.layers):
-            # ModuleList iteration erases the element type (torch types
-            # Module.__getattr__ as Tensor | Module): narrow before access.
-            assert isinstance(layer, DecoderLayer)
-            if idx < stop_layer:
+        if backbone.config.text.num_kv_shared_layers > 0:
+            for layer in text.layers:
                 yield from layer.parameters()
-            elif idx == stop_layer:
-                yield from layer.input_layernorm.parameters()
-                attention = layer.self_attn
-                assert attention.k_proj is not None
-                assert attention.k_norm is not None
-                yield from attention.k_proj.parameters()
-                if attention.v_proj is not None:
-                    yield from attention.v_proj.parameters()
-                yield from attention.k_norm.parameters()
+            yield from text.norm.parameters()
+        else:
+            stop_layer = max(self.exports)
+            for idx, layer in enumerate(text.layers):
+                # ModuleList iteration erases the element type (torch types
+                # Module.__getattr__ as Tensor | Module): narrow before
+                # access.
+                assert isinstance(layer, DecoderLayer)
+                if idx < stop_layer:
+                    yield from layer.parameters()
+                elif idx == stop_layer:
+                    yield from layer.input_layernorm.parameters()
+                    attention = layer.self_attn
+                    assert attention.k_proj is not None
+                    assert attention.k_norm is not None
+                    yield from attention.k_proj.parameters()
+                    if attention.v_proj is not None:
+                        yield from attention.v_proj.parameters()
+                    yield from attention.k_norm.parameters()
         yield from text.per_layer_model_projection.parameters()
         yield from text.per_layer_projection_norm.parameters()
         assert backbone.embed_vision is not None

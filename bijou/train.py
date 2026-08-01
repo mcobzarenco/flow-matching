@@ -72,7 +72,7 @@ from .data import (
     select_datasets,
     worker_init,
 )
-from .decoders.ar_backbone import ARBackboneDecoder
+from .decoders.ar_backbone import ARBackboneConfig, ARBackboneDecoder
 from .decoders.ar_fast import ARFastConfig, ARFastDecoder
 from .decoders.flow import (
     FlowDecoder,
@@ -876,11 +876,15 @@ def parse_args() -> TrainArgs:
     )
     parser.add_argument(
         "--decoder",
-        choices=["flow", "ar_fast"],
+        choices=["flow", "ar_fast", "ar_backbone"],
         default="flow",
-        help="action decoder: 'flow' (velocity field, the default) or "
-        "'ar_fast' (autoregressive FAST-token baseline; requires "
-        "--fast-tokenizer). The --decoder-* shape flags size either decoder",
+        help="action decoder: 'flow' (velocity field, the default), "
+        "'ar_fast' (autoregressive FAST tokens through a fresh "
+        "cross-attention decoder) or 'ar_backbone' (FAST tokens decoded "
+        "by the FULL backbone itself — the decoder-only path; trains a "
+        "~11M vocabulary patch, usually with --backbone-text-lr). AR "
+        "decoders require --fast-tokenizer; the --decoder-* shape flags "
+        "size flow/ar_fast only",
     )
     parser.add_argument(
         "--fast-tokenizer",
@@ -1073,14 +1077,29 @@ def parse_args() -> TrainArgs:
         parser.error("--eval-samples must be >= 1")
     if raw.decoder_lr <= 0:
         parser.error("--decoder-lr must be > 0 (the decoder always trains)")
-    if raw.decoder == "ar_fast" and raw.fast_tokenizer is None:
-        parser.error("--decoder ar_fast requires --fast-tokenizer")
+    if raw.decoder in ("ar_fast", "ar_backbone") and raw.fast_tokenizer is None:
+        parser.error(f"--decoder {raw.decoder} requires --fast-tokenizer")
     if raw.decoder == "flow" and raw.fast_tokenizer is not None:
-        parser.error("--fast-tokenizer is only consumed by --decoder ar_fast")
-    if raw.decoder == "ar_fast" and raw.time_conditioning != "additive":
+        parser.error("--fast-tokenizer is only consumed by the AR decoders")
+    if raw.decoder != "flow" and raw.time_conditioning != "additive":
         parser.error(
-            "--time-conditioning is flow-only (the AR decoder has no \u03c4)",
+            "--time-conditioning is flow-only (AR decoders have no \u03c4)",
         )
+    if raw.decoder == "ar_backbone":
+        # The backbone IS the architecture: decoder shape flags and the
+        # cross-attention schedule describe models this run doesn't build.
+        for flag, attribute in (
+            ("--decoder-hidden", "decoder_hidden"),
+            ("--decoder-heads", "decoder_heads"),
+            ("--decoder-intermediate", "decoder_intermediate"),
+            ("--decoder-cross-heads", "decoder_cross_heads"),
+            ("--stream-counts", "stream_counts"),
+        ):
+            if getattr(raw, attribute) != parser.get_default(attribute):
+                parser.error(
+                    f"{flag} sizes the flow/ar_fast decoders; ar_backbone "
+                    "IS the backbone — drop the flag",
+                )
     for name, value in (
         ("--backbone-text-lr", raw.backbone_text_lr),
         ("--backbone-vision-lr", raw.backbone_vision_lr),
@@ -1322,6 +1341,53 @@ def main() -> int:
             expert_dtype=torch.float32,
         )
         schedule_desc = str(expert_config.cross_attention_schedule)
+    elif args.decoder == "ar_backbone":
+        assert args.fast_tokenizer is not None  # parse_args guard
+        assert action_codec is not None
+        backbone_config = load_config(checkpoint_dir)
+        # Prefill still stops at the deepest non-KV-shared layer; its
+        # stream export rides along unused (the decoder reads the CACHE).
+        stop = backbone_config.text.first_kv_shared_layer_idx - 1
+        backbone, encoder = build_gemma_encoder(
+            checkpoint_dir,
+            backbone_config,
+            exports=(stop,),
+            max_soft_tokens=args.max_soft_tokens,
+            device=device,
+            dtype=backbone_dtype,
+            depth=BackboneDepth.FULL,
+        )
+        # Tail-anchored block: the last vocab_total ids sit inside the
+        # tokenizer's unused tail (E2B: 261118.. ⊂ the 3259-id run at
+        # 258885..262143) — no magic constant, adapts to any backbone,
+        # recorded in the checkpoint's decoder section.
+        ar_backbone_config = ARBackboneConfig(
+            tokenizer=args.fast_tokenizer,
+            vocab_total=action_codec.vocab_total,
+            block_base=backbone_config.text.vocab_size - action_codec.vocab_total,
+            state_dim=state_dim,
+            chunk_size=args.chunk_size,
+            action_dim=action_dim,
+        )
+        ar_backbone_decoder = ARBackboneDecoder(
+            ar_backbone_config,
+            backbone_config.text,
+            action_codec,
+            device=device,
+            dtype=torch.float32,
+        )
+        # Block logits start near the average text logit (full-vocab CE
+        # competes against text priors); DDP's construction broadcast
+        # makes rank 0's draw authoritative.
+        ar_backbone_decoder.init_tables_from_backbone(backbone)
+        model = BijouModel(
+            backbone=backbone,
+            encoder=encoder,
+            decoder=ar_backbone_decoder,
+        )
+        schedule_desc = (
+            f"full-depth suffix, FAST block @ {ar_backbone_config.block_base}"
+        )
     else:
         assert args.fast_tokenizer is not None  # parse_args guard
         assert action_codec is not None
