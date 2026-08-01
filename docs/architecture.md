@@ -15,9 +15,16 @@ code conventions in `code-styleguide.md`; collaboration/operating
 conventions in `working-together.md`. Transient state (in-flight runs,
 machine inventory) lives in wandb, the HF hub, and the chat — not in
 docs. Package layout (strict downward-only imports):
-`train`/`eval`/`rollout` → `loading` → `data` → `model` →
-`encoders`/`decoders` → `gemma4`, with `interface.py` as the
-encoder×decoder seam and `model.py` the composition root.
+`train`/`eval`/`rollout` → `loading` → `model` →
+`encoders`/`decoders` → `interface` → `gemma4` (`data` beside `model`,
+imported by `loading`), with `interface.py` as the encoder×decoder seam
+and `model.py` the composition root: `BijouModel` owns the trunk ONCE
+and composes a prompt-side encoder strategy (which receives the trunk
+as an argument) with an action decoder — one network can serve several
+roles (prefix encoder for the cross-attention decoders; prefix + suffix
+runner for the planned decoder-only path). The root also owns the
+objective dispatch (`BijouModel.loss`) and the named trainable-group
+routing (`param_groups`: head / trunk_text / trunk_vision).
 
 ```
 [instruction][cam_1]..[cam_k][instruction]     chat-templated user turn
@@ -249,27 +256,34 @@ net; a tighter clip renormalizes most steps and injects moment noise).
 (explicit 0 is rejected). All groups share the cosine shape scaled to
 their own peak. Trunk training uses fp32 master weights with a bf16
 autocast prefix encode (bf16 updates vanish below bf16 resolution at
-~1e-5); the expert stays fp32-with-TF32 outside the autocast region. When
-the trunk is live, one `BijouTrainStep` module owns prefix-encode + expert
-so a single DDP wrapper (`static_graph`) hooks both; the frozen path keeps
-the expert-only wrap, byte-identical. See §9.1.
+~1e-5); the expert stays fp32-with-TF32 outside the autocast region. One
+`BijouTrainStep` module owns prefix-encode + objective in BOTH regimes
+(`trunk_trained` selects no-grad native-dtype encode vs grad + autocast),
+so a single DDP wrapper (`static_graph`) hooks everything trained;
+single-process frozen math is byte-identical to the historical
+decoder-only wrap (oracle-exact), multi-rank frozen runs changed
+gradient bucketing composition at the 2026-08-01 refactor (declared
+re-baseline). See §9.1.
 
 **In-training probes.** `--eval-samples N` sizes two MAE probes
 (eval_chunk_mae on holdout, train_mae on train), drawn exactly as
 `bijou.eval --seed` would, sharded and all-reduced, CPU-resident.
 
 **Checkpoint schema** (`loading.py` dataclasses): `expert.safetensors` +
-`bijou_config.json` (format 2: tagged encoder/decoder configs with
-stream-name schedules, per-dataset + aggregate stats, train args, step);
+`bijou_config.json` (format 3: role-sectioned — `trunk` {backbone,
+depth: prefix|full}, `prompt` {kind, exports, max_soft_tokens},
+`decoder` = the tagged head config with stream-name schedules — plus
+per-dataset + aggregate stats, train args, step);
 `optimizer.pt` for lossless `--resume`; and `backbone.safetensors`
 (bf16 trunk snapshot) **iff the checkpoint's trunk differs from pristine
 HF — trained in-run OR inherited frozen from an adapted `--init-from`**
 (the inherited file is hardlinked/copied, byte-identical; conditioning
 on trained-in-this-run-only once shipped fine-tunes that silently loaded
 the pristine trunk — the invariant is test-gated). Directories are
-self-contained: loading one must need no other directory. Format-1
-checkpoints load via a permanent train-args synthesizer, no file
-conversion; guarded by state-dict key fixtures. `--init-from` = warm
+self-contained: loading one must need no other directory. Format-1/2
+checkpoints load forever via `checkpoint_sections`' read-side synthesis
+(format 1 through the train-args synthesizer), no file conversion;
+guarded by state-dict key fixtures and cross-format section tests. `--init-from` = warm
 start (decoder config-guarded, loud SystemExit; NOT guarded:
 `--max-soft-tokens`, `--backbone` — known footguns); `--resume` =
 lossless continuation (CLI lr ignored, printed; cosine re-evaluated

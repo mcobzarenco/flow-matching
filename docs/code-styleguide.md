@@ -98,12 +98,13 @@ not a test.
   enforces the opposite and stays off. (Added 2026-07-30 after bijou.judge
   landed with absolute self-imports.)
 - **The import DAG is strict** and reviewed:
-  `train`/`eval`/`rollout`/`judge` → `loading` → `data` → `model` →
-  `expert` → `gemma4`, importing downward only (`judge` touches only
-  `data`). No module imports its importer.
+  `train`/`eval`/`rollout`/`judge` → `loading` → `model` →
+  `encoders`/`decoders` → `interface` → `gemma4`, importing downward
+  only; `data` sits beside `model` (loading imports both; `judge`
+  touches only `data`). No module imports its importer.
   (`loading` owns the checkpoint schema — both the write side,
-  `CheckpointMetadata`, and the read side, `CheckpointInfo` — because
-  `train` and `eval` both sit above it.)
+  `CheckpointMetadata`, and the read side, `CheckpointInfo`/
+  `checkpoint_sections` — because `train` and `eval` both sit above it.)
 - Package CLIs live in `cli.py`, not `__main__.py` (spawn-based
   multiprocessing cannot unpickle objects defined in a package
   `__main__`).

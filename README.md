@@ -87,7 +87,7 @@ with an explicit `CHECKS PASSED`/`FAILED` verdict). Conventions:
 | path | what |
 |---|---|
 | `bijou/gemma4/` | pure-torch Gemma-4 E-series (text+vision), bit-exact vs HF on greedy text+image generation (`verify_parity.py`); bench + tiny-checkpoint tooling |
-| `bijou/interface.py` | the encoder×decoder seam: ObservationMemory, collation, encoder/decoder ABCs |
+| `bijou/interface.py` | the encoder×decoder seam: ObservationMemory (streams + optional prefix KV cache), collation, the ActionDecoder ABC |
 | `bijou/encoders/` | GemmaEncoder — truncated-trunk observation encoding, unfreeze partition |
 | `bijou/decoders/` | FlowDecoder (flow matching) + ARFastDecoder (FAST tokens) over shared blocks |
 | `bijou/fast/` | owned FAST action tokenizer (DCT + BPE) + corpus-fit CLI |
