@@ -13,6 +13,8 @@ dependencies = [
     # (pi05 rig rollouts: 4B doesn't fit the laptop GPU, the box serves).
     "lerobot[async,dataset,feetech,smolvla,viz]>=0.4",
     "matplotlib>=3.11.1",
+    # SO-101 digital twin (sim/): closed-loop eval next to bijou inference.
+    "mujoco>=3.2",
     "pillow>=12.3.0",
     "torch>=2.7.0",
     "torchvision>=0.22.0",

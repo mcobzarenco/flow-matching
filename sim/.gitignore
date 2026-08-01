@@ -1,0 +1,4 @@
+out/
+assets/benchy/
+assets/robotstudio_so101/*
+!assets/robotstudio_so101/bijou_pickplace.xml
