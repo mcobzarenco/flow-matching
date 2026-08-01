@@ -28,10 +28,13 @@
     <material name="benchy_mat" texture="benchy_tex" specular="0.3" shininess="0.3"/>
     <material name="wood_disk" rgba="0.87 0.78 0.62 1" specular="0.1" shininess="0.1"/>
     <!-- meshdir="assets" (from so101.xml) resolves relative to THIS file's
-         dir, so benchy at sim/assets/benchy needs ../../ -->
+         dir, so benchy at assets/benchy needs ../../. Collision pieces
+         are a generated CoACD decomposition (convert_benchy.py): a single
+         convex hull measured 2.63x the boat's volume and batted the boat
+         around before visual contact. -->
     <mesh name="benchy_visual" file="../../benchy/benchy_visual.obj"/>
-    <mesh name="benchy_collision" file="../../benchy/benchy_collision.obj"/>
   </asset>
+  <include file="../benchy/benchy_col_assets.xml"/>
 
   <worldbody>
     <light pos="0.2 0 1.5" dir="0 0 -1" directional="true" diffuse="0.45 0.45 0.45"/>
@@ -78,18 +81,18 @@
       <attach model="so101_leader" body="base" prefix="leader-"/>
     </body>
 
-    <!-- Physics (measured, probe_benchy_drift): the curved hull rests on
-         1-2 contact points; default condim 3 has NO torsional/rolling
+    <!-- Physics (measured, probe_benchy_drift): the hull rests on few
+         contact points; default condim 3 has NO torsional/rolling
          friction, so the boat spun 43 deg / drifted 9 mm per 10 s
          untouched. condim 6 + tors/roll friction -> 0.06 mm / 0.01 deg;
          joint damping + harder solref decay the residual micro-jiggle
-         (MuJoCo never sleeps). -->
+         (MuJoCo never sleeps). Those params ride in the generated
+         collision include. -->
     <body name="benchy" pos="0.22 -0.08 0.001">
       <joint name="benchy_free" type="free" damping="0.05"/>
       <geom name="benchy_visual" type="mesh" mesh="benchy_visual" material="benchy_mat"
         contype="0" conaffinity="0" group="2" density="0"/>
-      <geom name="benchy_collision" type="mesh" mesh="benchy_collision" mass="0.04"
-        condim="6" friction="1 0.05 0.01" solref="0.005 1" group="3" rgba="0.5 0.5 0.5 0.3"/>
+      <include file="../benchy/benchy_col_geoms.xml"/>
     </body>
   </worldbody>
 </mujoco>
