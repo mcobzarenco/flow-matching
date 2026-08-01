@@ -5,9 +5,9 @@
 #   1. menagerie robotstudio_so101 (Apache-2.0), pinned commit
 #   2. official 3DBenchy STL -> decimated/UV'd OBJs (convert_benchy.py)
 # Our task scene (bijou_pickplace.xml) is tracked in git and survives in
-# place; everything else under sim/assets/ is fetched.
+# place; everything else under assets/ (repo root) is fetched.
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/.."
 
 MENAGERIE_COMMIT="main"  # pin to a SHA once the prototype graduates
 
@@ -28,7 +28,7 @@ fi
 if [[ ! -f assets/benchy/benchy_visual.obj ]]; then
     curl -sL -o /tmp/3DBenchy.stl \
         https://raw.githubusercontent.com/CreativeTools/3DBenchy/master/Single-part/3DBenchy.stl
-    uv run convert_benchy.py /tmp/3DBenchy.stl
+    uv run sim/convert_benchy.py /tmp/3DBenchy.stl
 else
     echo "benchy meshes already present"
 fi

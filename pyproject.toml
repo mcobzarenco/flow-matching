@@ -48,7 +48,13 @@ pythonpath = ["."]
 testpaths = ["tests"]
 
 [tool.pyright]
-include = ["bijou", "tests", "check.py"]
+include = ["bijou", "sim", "tests", "check.py"]
+# convert_benchy is a PEP-723 script running in its own uv env (trimesh,
+# xatlas); its imports don't exist in the project venv.
+exclude = ["sim/convert_benchy.py"]
+# Local Any-stubs for untyped C-extension packages (mujoco). pyright picks
+# up ./typings automatically; kept explicit for greppability.
+stubPath = "typings"
 venvPath = "."
 venv = ".venv"
 # Curated strict-ish set (see docs/code-styleguide.md). Full strict mode is

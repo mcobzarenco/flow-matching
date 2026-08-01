@@ -27,7 +27,7 @@ import mujoco
 import numpy as np
 
 SCENE_PATH = (
-    Path(__file__).parent / "assets" / "robotstudio_so101" / "bijou_pickplace.xml"
+    Path(__file__).parents[1] / "assets" / "robotstudio_so101" / "bijou_pickplace.xml"
 )
 JOINTS = (
     "shoulder_pan",

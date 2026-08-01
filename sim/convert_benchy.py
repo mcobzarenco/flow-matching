@@ -11,7 +11,7 @@
 """One-off: 3DBenchy STL -> MuJoCo-ready OBJs.
 
 Input: the official CreativeTools STL (mm units, 225k faces, no UVs).
-Outputs (sim/assets/benchy/):
+Outputs (assets/benchy/, repo root):
   - benchy_visual.obj    decimated to ~24k faces, xatlas-generated UVs,
                          meters, origin at the hull-base center (z=0)
   - benchy_collision.obj convex hull (MuJoCo uses convex collision meshes)
@@ -35,7 +35,7 @@ TARGET_FACES = 24_000
 
 def main() -> int:
     stl_path = Path(sys.argv[1])
-    out_dir = Path(__file__).parent / "assets" / "benchy"
+    out_dir = Path(__file__).parents[1] / "assets" / "benchy"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     mesh = trimesh.load(stl_path)
