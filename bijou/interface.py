@@ -5,17 +5,17 @@ An encoder strategy turns one observation (instruction + camera frames
 streams a decoder cross-attends. The streams' static geometry (:class:`
 StreamGeometry`) is declared by the encoder at construction time so a
 decoder can size its query projections and RoPE behavior without knowing
-what kind of trunk produced the memory (see ``docs/plan.md``).
+what kind of backbone produced the memory (see ``docs/plan.md``).
 
-Stream names are defined by the encoder (the Gemma trunk exports its
+Stream names are defined by the encoder (the Gemma backbone exports its
 global layers' K/V as ``"kv{layer}"``); decoder schedules reference those
 names, and composition validates the references (unknown name or unused
 export = loud error).
 
-The trunk network itself is owned by the composition root
+The backbone network itself is owned by the composition root
 (:class:`bijou.model.BijouModel`), not by the encoder: the encoder is
 the prompt-side strategy (collation, prefix encode, unfreeze partition)
-and receives the trunk as an argument — one network can serve several
+and receives the backbone as an argument — one network can serve several
 roles (prefix encoder for cross-attention decoders; prefix + suffix
 runner for the decoder-only path).
 """
@@ -36,7 +36,7 @@ from .nn import RopeParameters
 
 
 def kv_stream_name(layer_idx: int) -> str:
-    """The Gemma trunk's stream-naming convention: K/V of backbone layer
+    """The Gemma backbone's stream-naming convention: K/V of backbone layer
     ``layer_idx`` is exported as ``"kv{layer_idx}"``. Shared by the
     producer (observation encode) and the consumer (the flow decoder's
     int-schedule config) until the encoder abstraction owns it."""
@@ -81,7 +81,7 @@ class ObservationMemory:
     ``cache`` is the full prefix KV cache the encode produced — every
     non-KV-shared layer's K/V, of which the named streams are zero-copy
     views — retained only when the decoder consumes the whole prefix
-    state (the decoder-only trunk path continues the suffix through it);
+    state (the decoder-only backbone path continues the suffix through it);
     None for stream-consuming decoders, freeing the non-exported layers.
     Consumers that need it check for None and fail fast."""
 
@@ -161,7 +161,7 @@ class NormStats:
 @dataclass(frozen=True, slots=True)
 class CollatedBatch[I: BatchInputs]:
     """One collated batch: encoder-specific inputs plus the
-    trunk-agnostic action-chunk targets and per-sample stats.
+    backbone-agnostic action-chunk targets and per-sample stats.
 
     ``state``/``actions`` are raw (unnormalized); ``action_is_pad`` marks
     positions past the episode end, where the value is the last real
@@ -282,7 +282,7 @@ _IMAGE_KEY_PREFIX = "observation.images."
 
 @dataclass
 class Collator[I: BatchInputs]:
-    """The ONE trunk-agnostic collator: stacks state/actions/targets,
+    """The ONE backbone-agnostic collator: stacks state/actions/targets,
     attaches per-sample NormStats, applies the camera-selection policy and
     the instruction override, and delegates encoder-input production to the
     encoder's strategy. Never subclassed per encoder."""

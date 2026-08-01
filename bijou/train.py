@@ -82,10 +82,10 @@ from .encoders.gemma4 import GemmaInputs, GemmaInputsCollator
 from .gemma4.loading import load_config, resolve_checkpoint_dir
 from .interface import CollatedBatch, Collator, kv_stream_name
 from .loading import (
+    BackboneConfig,
+    BackboneDepth,
     CheckpointMetadata,
     GemmaPromptConfig,
-    TrunkConfig,
-    TrunkDepth,
     backbone_snapshot,
     build_gemma_encoder,
     decoder_schema_dict,
@@ -151,7 +151,7 @@ class TrainArgs:
     wandb_run_name: str | None
 
     @property
-    def trunk_trained(self) -> bool:
+    def backbone_trained(self) -> bool:
         return self.text_lr is not None or self.vision_lr is not None
 
 
@@ -270,16 +270,16 @@ class Normalizers:
 
 
 @dataclass(frozen=True, slots=True)
-class TrunkParameterCounts:
-    """Trainable trunk parameters enabled by :func:`unfreeze_backbone`,
+class BackboneParameterCounts:
+    """Trainable backbone parameters enabled by :func:`unfreeze_backbone`,
     by subsystem (0 = that subsystem stayed frozen)."""
 
     text: int
     vision: int
 
 
-def unfreeze_backbone(model: BijouModel, args: TrainArgs) -> TrunkParameterCounts:
-    """Flip ``requires_grad`` on the requested trunk subsets; everything
+def unfreeze_backbone(model: BijouModel, args: TrainArgs) -> BackboneParameterCounts:
+    """Flip ``requires_grad`` on the requested backbone subsets; everything
     else stays frozen (``load_model`` freezes the whole backbone).
 
     Freezing by ``requires_grad`` alone is sufficient for efficiency too:
@@ -292,20 +292,20 @@ def unfreeze_backbone(model: BijouModel, args: TrainArgs) -> TrunkParameterCount
     text = 0
     vision = 0
     if args.text_lr is not None:
-        for parameter in groups["trunk_text"]:
+        for parameter in groups["backbone_text"]:
             parameter.requires_grad_(True)
             text += parameter.numel()
     if args.vision_lr is not None:
-        if not groups["trunk_vision"]:
+        if not groups["backbone_vision"]:
             raise SystemExit(
                 f"--vision-lr {args.vision_lr} but the "
                 f"backbone ({args.backbone}) has no vision tower — drop the "
                 "flag or use a multimodal backbone",
             )
-        for parameter in groups["trunk_vision"]:
+        for parameter in groups["backbone_vision"]:
             parameter.requires_grad_(True)
             vision += parameter.numel()
-    return TrunkParameterCounts(text=text, vision=vision)
+    return BackboneParameterCounts(text=text, vision=vision)
 
 
 def decay_split(
@@ -324,25 +324,25 @@ def decay_split(
 class BijouTrainStep(torch.nn.Module):
     """One training forward — prefix encode + decoder objective — as a
     single module, so ONE DDP wrapper hooks gradients of everything a run
-    trains (frozen-trunk runs simply carry no trainable trunk parameters).
+    trains (frozen-backbone runs simply carry no trainable backbone parameters).
 
-    ``trunk_trained`` selects the prefix-encode regime:
+    ``backbone_trained`` selects the prefix-encode regime:
     - False (frozen): no-grad encode at the backbone's native dtype —
       byte-identical math to every frozen run and to the CPU loss oracle
       (the autocast context is constructed disabled: a no-op).
     - True (live): grad-transparent encode under bf16 autocast on CUDA,
       over fp32 master weights (direct bf16 updates vanish below bf16
-      resolution at trunk-scale learning rates).
+      resolution at backbone-scale learning rates).
 
     The decoder runs OUTSIDE the autocast region either way, fp32 with
     TF32 matmuls; it already casts the (possibly autocast-bf16) K/V
     streams to its own dtype.
     """
 
-    def __init__(self, model: BijouModel, *, trunk_trained: bool) -> None:
+    def __init__(self, model: BijouModel, *, backbone_trained: bool) -> None:
         super().__init__()
         self.model = model
-        self.trunk_trained = trunk_trained
+        self.backbone_trained = backbone_trained
 
     @override
     def forward(self, batch: CollatedBatch[GemmaInputs]) -> Tensor:
@@ -352,9 +352,9 @@ class BijouTrainStep(torch.nn.Module):
         with torch.autocast(
             device_type,
             torch.bfloat16,
-            enabled=device_type == "cuda" and self.trunk_trained,
+            enabled=device_type == "cuda" and self.backbone_trained,
         ):
-            memory = self.model.encode(inputs, with_grad=self.trunk_trained)
+            memory = self.model.encode(inputs, with_grad=self.backbone_trained)
         return self.model.loss(memory, batch)
 
 
@@ -638,7 +638,7 @@ def aggregate_stats(normalizers: Normalizers) -> DatasetStats:
 def link_or_copy(source: Path, destination: Path) -> None:
     """Hardlink ``source`` at ``destination``, falling back to a plain copy
     across filesystems. Used for inherited (frozen) backbone snapshots:
-    byte-identical content, so ten checkpoints of a frozen-trunk run cost
+    byte-identical content, so ten checkpoints of a frozen-backbone run cost
     one file's disk."""
     destination.unlink(missing_ok=True)
     try:
@@ -664,16 +664,16 @@ def save_checkpoint(
     differs from pristine ``HF(args.backbone)`` — either because this run
     trains it (snapshot the live fp32 masters) or because it was INHERITED
     from an adapted checkpoint via --init-from/--resume with the unfreeze
-    flags off (``adapted_backbone_source``; the trunk is then frozen and
+    flags off (``adapted_backbone_source``; the backbone is then frozen and
     byte-identical to that file, so it is linked/copied rather than
-    re-serialized). Conditioning only on ``args.trunk_trained`` paired a
-    decoder fine-tuned against adapted features with the pristine trunk on
+    re-serialized). Conditioning only on ``args.backbone_trained`` paired a
+    decoder fine-tuned against adapted features with the pristine backbone on
     load — silently (found 2026-07-31, ft-rig arm F)."""
     checkpoint_dir = args.save_dir / f"step_{step:06d}"
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
     save_file(model.decoder.state_dict(), str(checkpoint_dir / "expert.safetensors"))
-    if args.trunk_trained:
-        # Adapted trunks ride along; from_checkpoint/--init-from detect the
+    if args.backbone_trained:
+        # Adapted backbones ride along; from_checkpoint/--init-from detect the
         # file by presence. Frozen-pristine runs write exactly the
         # historical layout.
         save_file(
@@ -694,15 +694,15 @@ def save_checkpoint(
     )
     torch.save(train_state.to_payload(), checkpoint_dir / "optimizer.pt")
     metadata = CheckpointMetadata(
-        trunk=TrunkConfig(
-            backbone=args.backbone,
-            # Structural fact of the built model: a truncated trunk has
+        backbone=BackboneConfig(
+            id=args.backbone,
+            # Structural fact of the built model: a truncated backbone has
             # its KV-shared region cut away (truncated_config), a full one
             # keeps it — no plumbing to drift.
             depth=(
-                TrunkDepth.FULL
-                if model.trunk.config.text.num_kv_shared_layers > 0
-                else TrunkDepth.PREFIX
+                BackboneDepth.FULL
+                if model.backbone.config.text.num_kv_shared_layers > 0
+                else BackboneDepth.PREFIX
             ),
         ),
         prompt=GemmaPromptConfig(
@@ -937,11 +937,11 @@ def parse_args() -> TrainArgs:
         "--text-lr",
         type=float,
         default=None,
-        help="peak learning rate for the backbone TEXT trunk (decoder "
+        help="peak learning rate for the backbone TEXT stack (decoder "
         "layers up to the deepest exported stream, PLE projections, "
-        "multimodal projector); OMIT to keep the trunk frozen (the "
+        "multimodal projector); OMIT to keep the backbone frozen (the "
         "historical behavior). Token embeddings and PLE tables always "
-        "stay frozen. A live trunk loads fp32 with bf16-autocast "
+        "stay frozen. A live backbone loads fp32 with bf16-autocast "
         "forwards; suggest 1e-5",
     )
     parser.add_argument(
@@ -1088,7 +1088,7 @@ def parse_args() -> TrainArgs:
             )
     if raw.vision_lr is not None and raw.text_lr is None:
         print(
-            "NOTE: vision tower unfrozen with the text trunk FROZEN - "
+            "NOTE: vision tower unfrozen with the text stack FROZEN - "
             "gradients still traverse the frozen text stack to reach the "
             "tower (activation cost without text adaptation). Legitimate "
             "but unusual; the standard move is --text-lr alone.",
@@ -1291,11 +1291,11 @@ def main() -> int:
     )
 
     # -- model -----------------------------------------------------------
-    # A live trunk needs fp32 master weights (bf16 updates at trunk
+    # A live backbone needs fp32 master weights (bf16 updates at backbone
     # learning rates vanish below bf16 resolution); its forwards run
     # under bf16 autocast in BijouTrainStep. Frozen runs keep the
     # checkpoint dtype (bf16) exactly as before the unfreeze flags.
-    backbone_dtype = torch.float32 if args.trunk_trained else None
+    backbone_dtype = torch.float32 if args.backbone_trained else None
     if args.decoder == "flow":
         expert_config = default_expert_config(
             load_config(checkpoint_dir),
@@ -1339,7 +1339,7 @@ def main() -> int:
             for stream, count in zip(streams, args.stream_counts, strict=True)
             if count > 0
         )
-        trunk, encoder = build_gemma_encoder(
+        backbone, encoder = build_gemma_encoder(
             checkpoint_dir,
             backbone_config,
             exports=exports,
@@ -1363,7 +1363,7 @@ def main() -> int:
             action_dim=action_dim,
         )
         model = BijouModel(
-            trunk=trunk,
+            backbone=backbone,
             encoder=encoder,
             decoder=ARFastDecoder(
                 ar_config,
@@ -1374,16 +1374,16 @@ def main() -> int:
             ),
         )
         schedule_desc = str(ar_schedule)
-    trunk_counts = unfreeze_backbone(model, args)
+    backbone_counts = unfreeze_backbone(model, args)
     n_trainable = sum(p.numel() for p in model.decoder.parameters())
     if is_main:
         backbone_desc = (
             "frozen backbone"
-            if not args.trunk_trained
+            if not args.backbone_trained
             else (
-                f"LIVE backbone (text {trunk_counts.text / 1e6:.1f}M @ "
+                f"LIVE backbone (text {backbone_counts.text / 1e6:.1f}M @ "
                 f"lr {args.text_lr if args.text_lr is not None else 0:.1e}, "
-                f"vision {trunk_counts.vision / 1e6:.1f}M @ lr "
+                f"vision {backbone_counts.vision / 1e6:.1f}M @ lr "
                 f"{args.vision_lr if args.vision_lr is not None else 0:.1e}; "
                 "embeddings/PLE tables frozen; fp32 masters, bf16 autocast)"
             )
@@ -1410,11 +1410,11 @@ def main() -> int:
     # head group always trains at --expert-lr.
     named_groups = model.param_groups()
     param_groups: list[dict[str, Any]] = [
-        {"params": named_groups["head"], "lr": args.expert_lr},
+        {"params": named_groups["decoder"], "lr": args.expert_lr},
     ]
     for group_name, group_lr in (
-        ("trunk_text", args.text_lr),
-        ("trunk_vision", args.vision_lr),
+        ("backbone_text", args.text_lr),
+        ("backbone_vision", args.vision_lr),
     ):
         if group_lr is None:
             continue
@@ -1439,7 +1439,7 @@ def main() -> int:
         fused=device.type == "cuda",
     )
     # Everything the optimizer updates, for the gradient clip: the frozen
-    # path clips exactly the expert (unchanged behavior); a live trunk is
+    # path clips exactly the expert (unchanged behavior); a live backbone is
     # clipped jointly with it (one global norm).
     clipped_parameters: list[torch.nn.Parameter] = [
         p for group in param_groups for p in group["params"]
@@ -1466,20 +1466,20 @@ def main() -> int:
         )
         if is_main:
             print(f"loaded expert weights from {checkpoint_to_load}", flush=True)
-        # Trunk-trained checkpoints carry the adapted backbone; plain ones
+        # Backbone-trained checkpoints carry the adapted file; plain ones
         # don't, and the HF backbone loaded above simply stays (that is the
         # cont45k -> unfreeze continuation path).
         if (checkpoint_to_load / "backbone.safetensors").exists():
             load_adapted_backbone(model, checkpoint_to_load)
-            if not args.trunk_trained:
-                # Frozen inherited trunk: every checkpoint this run saves
+            if not args.backbone_trained:
+                # Frozen inherited backbone: every checkpoint this run saves
                 # must carry the snapshot too (see save_checkpoint).
                 adapted_backbone_source = checkpoint_to_load / "backbone.safetensors"
             if is_main:
                 print(
                     f"loaded ADAPTED backbone weights from "
                     f"{checkpoint_to_load} (bf16 snapshot into "
-                    f"{'fp32 masters' if args.trunk_trained else 'bf16'})",
+                    f"{'fp32 masters' if args.backbone_trained else 'bf16'})",
                     flush=True,
                 )
     if args.resume is not None:
@@ -1522,14 +1522,14 @@ def main() -> int:
 
     # DDP wiring: ONE train-step module owns prefix encode + objective, so
     # a single wrapper hooks gradients of everything trained, for both the
-    # frozen and live-trunk regimes (the frozen trunk contributes no
+    # frozen and live-backbone regimes (the frozen backbone contributes no
     # trainable parameters — DDP's reducer ignores it). Wrapping AFTER the
     # weight load means DDP's construction-time broadcast (rank 0 -> all)
     # covers the loaded state. model.decoder stays the raw module for
     # eval, clipping and checkpointing.
     train_step: torch.nn.Module = BijouTrainStep(
         model,
-        trunk_trained=args.trunk_trained,
+        backbone_trained=args.backbone_trained,
     )
     if distributed:
         train_step = torch.nn.parallel.DistributedDataParallel(
@@ -1538,7 +1538,7 @@ def main() -> int:
             # Backbone/decoder buffers are constant RoPE tables etc.;
             # per-step broadcasts would be pure overhead. The trainable
             # partition guarantees every grad-enabled parameter receives
-            # gradients every step (frozen: the whole decoder; live trunk:
+            # gradients every step (frozen: the whole decoder; live backbone:
             # trainable_text_parameters mirrors kv_stop_layer), and the
             # graph never changes.
             broadcast_buffers=False,
@@ -1635,7 +1635,7 @@ def main() -> int:
                     },
                 },
                 "trainable_params": n_trainable,
-                "trainable_trunk_params": dataclasses.asdict(trunk_counts),
+                "trainable_backbone_params": dataclasses.asdict(backbone_counts),
                 "world_size": world_size,
                 "global_batch_size": args.batch_size * world_size,
             },
@@ -1688,10 +1688,10 @@ def main() -> int:
                         "samples": step * args.batch_size * world_size,
                         "s_per_step": round(dt, 3),
                     }
-                    if args.trunk_trained:
-                        # Group 1 is the first trunk group (same cosine
+                    if args.backbone_trained:
+                        # Group 1 is the first backbone group (same cosine
                         # shape as the expert's, scaled to its base lr).
-                        record["lr_trunk"] = scheduler.get_last_lr()[1]
+                        record["lr_backbone"] = scheduler.get_last_lr()[1]
                     assert log_file is not None
                     print(json.dumps(record), flush=True)
                     log_file.write(json.dumps(record) + "\n")

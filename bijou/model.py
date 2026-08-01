@@ -1,24 +1,26 @@
-"""Bijou: one trunk, a prompt-side encoder strategy, an action decoder.
+"""Bijou: one backbone, a prompt-side encoder strategy, an action decoder.
 
-The composition root: ``BijouModel`` owns the trunk network ONCE (the
-truncated Gemma backbone), plus one prompt-side encoder strategy (the
-collation + prefix-encode + unfreeze surface, which receives the trunk
-as an argument) and one :class:`ActionDecoder`. The observation
+The composition root: ``BijouModel`` owns the backbone network ONCE (the
+truncated Gemma), plus one prompt-side encoder strategy (the collation +
+prefix-encode + unfreeze surface, which receives the backbone as an
+argument) and one :class:`ActionDecoder`. The observation
 (chat-templated instruction + camera images) is encoded once and cached
 as an :class:`ObservationMemory`; the decoder then denoises a chunk of
 actions against it, with fresh robot state, at ~10 model evaluations per
 chunk.
 
-Trunk ownership lives here — not in the encoder — because one network
+Backbone ownership lives here — not in the encoder — because one network
 can serve several roles: the prefix encoder for the cross-attention
 decoders today, and prefix + suffix runner for the decoder-only path.
 The root is the one place with every role in scope, so it also owns the
 objective dispatch (:meth:`loss`) and the trainable-group routing
 (:meth:`param_groups`).
 
-``backbone``/``expert`` are the historical names of the two halves and
-remain the public accessors (checkpoint files are keyed by them:
-``expert.safetensors``, ``backbone.safetensors``).
+Naming: "backbone" is the ONE word for the Gemma network, in both its
+senses — the pretrained artifact (``--backbone``, ``BackboneConfig.id``,
+``backbone.safetensors``) and the mounted module (``model.backbone``).
+``expert`` is the decoder's historical name (checkpoint file
+``expert.safetensors``).
 """
 
 from __future__ import annotations
@@ -36,43 +38,40 @@ from .interface import CollatedBatch, ObservationMemory
 
 
 class BijouModel(nn.Module):
-    """One trunk + one encoder strategy + one decoder (see the module
+    """One backbone + one encoder strategy + one decoder (see the module
     docstring)."""
 
     def __init__(
         self,
-        trunk: Gemma4Model,
+        backbone: Gemma4Model,
         encoder: GemmaEncoder,
         decoder: FlowDecoder | ARFastDecoder,
     ) -> None:
         super().__init__()
-        self.trunk = trunk
+        self.backbone = backbone
         self.encoder = encoder
         self.decoder = decoder
 
-    @property
-    def backbone(self) -> Gemma4Model:
-        return self.trunk
-
     def param_groups(self) -> dict[str, list[nn.Parameter]]:
         """Named trainable-parameter groups — the routing vocabulary for
-        component learning rates: ``"head"`` (the decoder — always
-        trained), ``"trunk_text"``/``"trunk_vision"`` (unfreezable trunk
+        component learning rates: ``"decoder"`` (always trained),
+        ``"backbone_text"``/``"backbone_vision"`` (unfreezable backbone
         subsets; see GemmaEncoder.param_groups for the exactness
         contract). Groups are disjoint by construction — the decoder owns
         only its own parameters."""
-        trunk_groups = self.encoder.param_groups(self.trunk)
+        backbone_groups = self.encoder.param_groups(self.backbone)
         return {
-            "head": list(self.decoder.parameters()),
-            "trunk_text": trunk_groups["text"],
-            "trunk_vision": trunk_groups["vision"],
+            "decoder": list(self.decoder.parameters()),
+            "backbone_text": backbone_groups["text"],
+            "backbone_vision": backbone_groups["vision"],
         }
 
     def encode(self, inputs: GemmaInputs, *, with_grad: bool) -> ObservationMemory:
-        """Encode one collated batch of encoder inputs against the trunk.
-        ``with_grad=False`` runs under no_grad (eval/rollout/frozen
-        training); True leaves autograd on for live-trunk training."""
-        return self.encoder.encode(self.trunk, inputs, with_grad=with_grad)
+        """Encode one collated batch of encoder inputs against the
+        backbone. ``with_grad=False`` runs under no_grad (eval/rollout/
+        frozen training); True leaves autograd on for live-backbone
+        training."""
+        return self.encoder.encode(self.backbone, inputs, with_grad=with_grad)
 
     @property
     def expert(self) -> FlowDecoder | ARFastDecoder:
@@ -113,7 +112,7 @@ class BijouModel(nn.Module):
         GemmaEncoder.encode_tensors);
         grad-transparent — training wraps it in autocast, eval in no_grad."""
         return self.encoder.encode_tensors(
-            self.trunk,
+            self.backbone,
             input_ids,
             pixel_values=pixel_values,
             image_position_ids=image_position_ids,

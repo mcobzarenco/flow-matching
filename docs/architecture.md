@@ -18,13 +18,17 @@ docs. Package layout (strict downward-only imports):
 `train`/`eval`/`rollout` → `loading` → `model` →
 `encoders`/`decoders` → `interface` → `gemma4` (`data` beside `model`,
 imported by `loading`), with `interface.py` as the encoder×decoder seam
-and `model.py` the composition root: `BijouModel` owns the trunk ONCE
-and composes a prompt-side encoder strategy (which receives the trunk
-as an argument) with an action decoder — one network can serve several
-roles (prefix encoder for the cross-attention decoders; prefix + suffix
-runner for the planned decoder-only path). The root also owns the
+and `model.py` the composition root: `BijouModel` owns the backbone
+ONCE and composes a prompt-side encoder strategy (which receives the
+backbone as an argument) with an action decoder — one network can serve
+several roles (prefix encoder for the cross-attention decoders; prefix +
+suffix runner for the planned decoder-only path). The root also owns the
 objective dispatch (`BijouModel.loss`) and the named trainable-group
-routing (`param_groups`: head / trunk_text / trunk_vision).
+routing (`param_groups`: decoder / backbone_text / backbone_vision).
+Naming: **backbone** is the one identifier for the Gemma network — the
+pretrained artifact (`--backbone`, `BackboneConfig.id`,
+`backbone.safetensors`) and the mounted module (`model.backbone`) alike;
+"trunk" survives only as informal prose.
 
 ```
 [instruction][cam_1]..[cam_k][instruction]     chat-templated user turn
@@ -258,7 +262,7 @@ their own peak. Trunk training uses fp32 master weights with a bf16
 autocast prefix encode (bf16 updates vanish below bf16 resolution at
 ~1e-5); the expert stays fp32-with-TF32 outside the autocast region. One
 `BijouTrainStep` module owns prefix-encode + objective in BOTH regimes
-(`trunk_trained` selects no-grad native-dtype encode vs grad + autocast),
+(`backbone_trained` selects no-grad native-dtype encode vs grad + autocast),
 so a single DDP wrapper (`static_graph`) hooks everything trained;
 single-process frozen math is byte-identical to the historical
 decoder-only wrap (oracle-exact), multi-rank frozen runs changed
@@ -270,9 +274,9 @@ re-baseline). See §9.1.
 `bijou.eval --seed` would, sharded and all-reduced, CPU-resident.
 
 **Checkpoint schema** (`loading.py` dataclasses): `expert.safetensors` +
-`bijou_config.json` (format 3: role-sectioned — `trunk` {backbone,
+`bijou_config.json` (format 3: role-sectioned — `backbone` {id,
 depth: prefix|full}, `prompt` {kind, exports, max_soft_tokens},
-`decoder` = the tagged head config with stream-name schedules — plus
+`decoder` = the tagged config with stream-name schedules — plus
 per-dataset + aggregate stats, train args, step);
 `optimizer.pt` for lossless `--resume`; and `backbone.safetensors`
 (bf16 trunk snapshot) **iff the checkpoint's trunk differs from pristine

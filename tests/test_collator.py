@@ -2,7 +2,7 @@
 
 Pure CPU/synthetic: a fake InputsCollator stands in for the encoder
 strategy, so no processor/checkpoint is needed. What's covered is the
-trunk-agnostic half — camera policy, instruction override, NormStats
+backbone-agnostic half — camera policy, instruction override, NormStats
 stacking (quantiles present / absent / mixed), and DatasetStats'
 quantile lifecycle (required on the data path, Optional from old
 checkpoint tables).

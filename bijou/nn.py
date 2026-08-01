@@ -1,7 +1,7 @@
 """Architecture-agnostic NN primitives: RMSNorm, rotary embeddings,
 attention dispatch, mask spec, rope geometry.
 
-Shared by the gemma4 trunk, the action expert and any future
+Shared by the gemma4 backbone, the action expert and any future
 encoder/decoder — nothing in here knows about a specific architecture.
 Every op mirrors the reference HF implementation
 expression-for-expression so that outputs are bit-identical in bf16 (the

@@ -5,13 +5,15 @@ Working list for the corpus filter/merge + judge-driven augmentation
 `fast-tokenizer-v1-review.md`, ledger comparability rules in
 `architecture.md` §7).
 
-- [ ] **1. Provision gcloud box** — CPU-only ~64–88 vCPU, 3 TB SSD,
-      on-demand (not spot); `init-vm-cpu.sh`, `hf auth`,
-      `~/.anthropic.env`.
-- [ ] **2. Download data** — only the in-scope datasets (dims 6/6 ∧
-      fps=30, known from metadata: 991 of 1,242) + rig datasets; verify
-      exact q01/q99 backfill in every `stats.json`.
-- [ ] **2b. Rig dataset consolidation** — merge
+- [x] **1. Provision gcloud box** — `curation-1` (us-east1-b):
+      n2-standard-32 on-demand, 8×375 GB local-SSD RAID0 = 2.9 TB
+      `/data` (1.6/2.9 GB/s measured), 100 GB pd-balanced `/durable`;
+      repos + hf auth + anthropic key installed.
+- [x] **2. Download data** — in-scope datasets (dims 6/6 ∧ fps=30) +
+      rig: 991 + 2 datasets, ~680 GB in `/data/source/{v1,v2,v3,rig}`
+      (sequential 8-worker hf download after parallel bursts tripped the
+      CDN limiter). q01/q99 verification folded into step 3's tool.
+- [ ] *(ON HOLD)* **2b. Rig dataset consolidation** — merge
       `so101_pick_place_{clean,v2}` into one dataset and rename camera
       `front` → `top` (verified 2026-08-01: it is a fixed overhead view;
       the name misleads humans and judges alike). Re-backfill stats +
@@ -19,9 +21,16 @@ Working list for the corpus filter/merge + judge-driven augmentation
       eval numbers start a fresh ledger line; old rig comparisons don't
       carry over. Checkpoint stats tables key on repo_id — rollout
       `--stats-repo-id` must use the new id going forward.
-- [ ] **3. Mechanical filter pass** (before any judge spend) — small
-      tool over meta + data parquet producing per-dataset episode
-      exclusion lists consumed by both the judge sweep and the merge:
+- [ ] **3. Mechanical filter + merge into `curated_v0`** (before any
+      judge spend) — `ldtools.filter_collections`: applies the episode
+      filters below and writes survivors into ONE combined collection
+      (`/data/curated_v0/<user>/<dataset>`): untouched datasets
+      hardlinked, datasets with drops rebuilt — episodes renumbered,
+      videos REMUXED not re-encoded (keyframe-aligned starts, measured
+      130/130; encode-needing files quarantined loudly), stats
+      re-aggregated + exact action/state quantiles recomputed. Judges
+      then run on `curated_v0`; judge-gated filtering produces the final
+      collection later (step 6):
   - [ ] scope: dims 6/6, fps=30 (dataset-level)
   - [ ] length < 50 frames; length outliers (< 2 s, > p99.5)
   - [ ] NaN/inf actions, zero-travel episodes, idle fraction ≥ ~80%

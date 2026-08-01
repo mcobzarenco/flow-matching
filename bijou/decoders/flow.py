@@ -2,7 +2,7 @@
 
 The expert consumes ``[state][action_1..action_chunk]`` tokens and, per layer,
 cross-attends one *global-attention* K/V stream exported from the frozen
-Gemma 4 trunk (layers 4/9/14 for E2B), then self-attends the suffix, then
+Gemma 4 backbone (layers 4/9/14 for E2B), then self-attends the suffix, then
 runs a gated MLP. It predicts the flow-matching velocity of the action chunk
 at flow time τ.
 

@@ -43,50 +43,52 @@ from .model import BijouModel
 from .nn import DEFAULT_ATTENTION_BACKEND, AttentionBackend, DeviceLike
 
 # bijou_config.json schema version. Format 3 sections the metadata by
-# role — trunk (the shared network), prompt (the prompt-side strategy),
-# decoder (the tagged head config) — replacing format 2's encoder/decoder
-# pair, which had replaced the original layout (backbone + expert_config
-# keys). The read side synthesizes current semantics from BOTH older
-# formats, so every existing checkpoint keeps loading without conversion.
+# role — backbone (the shared network), prompt (the prompt-side
+# strategy), decoder (the tagged head config) — replacing format 2's
+# encoder/decoder pair, which had replaced the original layout (backbone
+# + expert_config keys). The read side synthesizes current semantics
+# from BOTH older formats, so every existing checkpoint keeps loading
+# without conversion.
 CHECKPOINT_FORMAT = 3
 
 
-class TrunkDepth(StrEnum):
+class BackboneDepth(StrEnum):
     """How much of the backbone stack a checkpoint's model runs."""
 
     # Truncated to the non-KV-shared prefix (layers 0..14 for E2B) — the
-    # cross-attention decoders' trunk; formats 1/2 are always this.
+    # cross-attention decoders' backbone; formats 1/2 are always this.
     PREFIX = "prefix"
-    # The whole stack — the decoder-only trunk path (prompt encode still
-    # stops at the prefix; the suffix runs the KV-shared deep half).
+    # The whole stack — the decoder-only path (prompt encode still stops
+    # at the prefix; the suffix runs the KV-shared deep half).
     FULL = "full"
 
 
 @dataclass(frozen=True, slots=True)
-class TrunkConfig:
-    """The trunk section of bijou_config.json: which backbone, how deep.
+class BackboneConfig:
+    """The backbone section of bijou_config.json: which pretrained
+    checkpoint (``id``: HF id or local path), how deep it is mounted.
     Adaptedness is deliberately NOT recorded here — ``backbone.safetensors``
-    presence is the (test-gated) invariant for a trunk that differs from
-    pristine HF."""
+    presence is the (test-gated) invariant for a backbone that differs
+    from pristine HF."""
 
-    backbone: str
-    depth: TrunkDepth
+    id: str
+    depth: BackboneDepth
 
     def to_dict(self) -> dict[str, Any]:
-        return {"backbone": self.backbone, "depth": self.depth.value}
+        return {"id": self.id, "depth": self.depth.value}
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> TrunkConfig:
+    def from_dict(cls, data: dict[str, Any]) -> BackboneConfig:
         return cls(
-            backbone=str(data["backbone"]),
-            depth=TrunkDepth(data["depth"]),
+            id=str(data["id"]),
+            depth=BackboneDepth(data["depth"]),
         )
 
 
 class PromptKind(StrEnum):
     """Tag of a prompt-side encoder config in bijou_config.json.
     (Format 2 called this section "encoder" and kept the backbone id
-    inside it; format 3 moves the backbone to the trunk section.)"""
+    inside it; format 3 moves the id to the backbone section.)"""
 
     GEMMA4 = "gemma4"
 
@@ -103,7 +105,7 @@ class GemmaPromptConfig:
     """The Gemma prompt-side strategy as recorded in a checkpoint.
 
     ``exports`` are backbone layer indices whose K/V become the memory
-    streams (named ``kv{layer}`` — trunk internals live HERE, never in
+    streams (named ``kv{layer}`` — backbone internals live HERE, never in
     decoder configs)."""
 
     exports: tuple[int, ...]
@@ -391,7 +393,7 @@ def from_backbone(
 
     if expert_dtype is None:
         expert_dtype = dtype if dtype is not None else config.dtype
-    trunk, encoder = build_gemma_encoder(
+    backbone, encoder = build_gemma_encoder(
         checkpoint_dir,
         config,
         exports=expert_config.streams,
@@ -406,7 +408,7 @@ def from_backbone(
         device=device,
         dtype=expert_dtype,
     )
-    return BijouModel(trunk=trunk, encoder=encoder, decoder=decoder)
+    return BijouModel(backbone=backbone, encoder=encoder, decoder=decoder)
 
 
 def build_gemma_encoder(
@@ -418,29 +420,29 @@ def build_gemma_encoder(
     device: DeviceLike,
     dtype: torch.dtype | None,
     attn_backend: AttentionBackend = DEFAULT_ATTENTION_BACKEND,
-    depth: TrunkDepth = TrunkDepth.PREFIX,
+    depth: BackboneDepth = BackboneDepth.PREFIX,
 ) -> tuple[Gemma4Model, GemmaEncoder]:
-    """The Gemma trunk (frozen; truncated to its non-KV-shared layer
+    """The Gemma backbone (frozen; truncated to its non-KV-shared layer
     prefix at the default PREFIX depth, whole stack at FULL) plus its
     prompt-side encoder strategy — the pair BijouModel composes."""
-    trunk = load_model(
+    backbone = load_model(
         checkpoint_dir,
         device="cpu" if device is None else device,
         dtype=dtype,
         attn_backend=attn_backend,
         truncate_layers=(
             config.text.first_kv_shared_layer_idx
-            if depth is TrunkDepth.PREFIX
+            if depth is BackboneDepth.PREFIX
             else None
         ),
     )
     encoder = GemmaEncoder(
-        trunk.config,
+        backbone.config,
         exports=exports,
         processor_dir=str(checkpoint_dir),
         max_soft_tokens=max_soft_tokens,
     )
-    return trunk, encoder
+    return backbone, encoder
 
 
 @dataclass(frozen=True, slots=True)
@@ -507,9 +509,9 @@ class CheckpointInfo:
 class CheckpointMetadata:
     """Write-side schema of ``bijou_config.json`` (bijou.train fills it,
     :func:`from_checkpoint` reads the result back as CheckpointInfo).
-    Writes format 3: role-sectioned metadata — ``trunk`` (which backbone,
-    how deep), ``prompt`` (the tagged prompt-side config), ``decoder``
-    (the tagged head config). Format-1/2 files remain readable via
+    Writes format 3: role-sectioned metadata — ``backbone`` (which
+    pretrained checkpoint, how deep), ``prompt`` (the tagged prompt-side
+    config), ``decoder`` (the tagged config). Format-1/2 files remain readable via
     :func:`checkpoint_sections`.
 
     ``train_args`` is the full CLI record as a JSON-ready dict — prepared by
@@ -517,7 +519,7 @@ class CheckpointMetadata:
     (the import DAG points the other way).
     """
 
-    trunk: TrunkConfig
+    backbone: BackboneConfig
     prompt: GemmaPromptConfig
     decoder: dict[str, Any]
     normalization: DatasetStats
@@ -528,7 +530,7 @@ class CheckpointMetadata:
     def to_json_dict(self) -> dict[str, Any]:
         return {
             "format": CHECKPOINT_FORMAT,
-            "trunk": self.trunk.to_dict(),
+            "backbone": self.backbone.to_dict(),
             "prompt": self.prompt.to_dict(),
             "decoder": self.decoder,
             "step": self.step,
@@ -556,32 +558,35 @@ class CheckpointSections:
     recorded train args, and the prompt side had no recorded config
     beyond max_soft_tokens, which lives in train_args)."""
 
-    trunk: TrunkConfig
+    backbone: BackboneConfig
     prompt: GemmaPromptConfig | None
     decoder: FlowDecoderConfig | ARFastConfig | None
 
 
 def checkpoint_sections(meta: dict[str, Any]) -> CheckpointSections:
     """Parse any ``bijou_config.json`` payload (format 1, 2 or 3) into
-    sections. Pure — no file or hub access."""
-    if "trunk" in meta:  # format 3
+    sections. Pure — no file or hub access. Dispatch is on the recorded
+    format number (format-1 files predate the field): the "backbone" key
+    is a section in format 3 but a plain id string in format 1."""
+    fmt = int(meta.get("format", 1))
+    if fmt >= 3:
         return CheckpointSections(
-            trunk=TrunkConfig.from_dict(meta["trunk"]),
+            backbone=BackboneConfig.from_dict(meta["backbone"]),
             prompt=parse_prompt_config(meta["prompt"]),
             decoder=parse_decoder_config(meta["decoder"]),
         )
-    if "encoder" in meta:  # format 2: backbone inside the encoder section
+    if fmt == 2:  # backbone id inside the encoder section
         return CheckpointSections(
-            trunk=TrunkConfig(
-                backbone=str(meta["encoder"]["backbone"]),
-                depth=TrunkDepth.PREFIX,
+            backbone=BackboneConfig(
+                id=str(meta["encoder"]["backbone"]),
+                depth=BackboneDepth.PREFIX,
             ),
             prompt=parse_prompt_config(meta["encoder"]),
             decoder=parse_decoder_config(meta["decoder"]),
         )
-    # Format 1: backbone at the top level, flow-only, no tagged configs.
+    # Format 1: backbone id at the top level, flow-only, no tagged configs.
     return CheckpointSections(
-        trunk=TrunkConfig(backbone=str(meta["backbone"]), depth=TrunkDepth.PREFIX),
+        backbone=BackboneConfig(id=str(meta["backbone"]), depth=BackboneDepth.PREFIX),
         prompt=None,
         decoder=None,
     )
@@ -689,13 +694,13 @@ BACKBONE_UNSAVED_KEYS = frozenset({"lm_head.weight"})
 
 
 def backbone_snapshot(model: BijouModel) -> dict[str, Tensor]:
-    """The trunk state for ``backbone.safetensors`` (written by bijou.train
+    """The backbone state for ``backbone.safetensors`` (written by bijou.train
     when any unfreeze flag is on): parameters cast bf16 (the fp32 masters'
     precision beyond bf16 lives only in optimizer.pt), buffers at native
     dtype (RoPE inv_freq tables are fp32 by design — bf16 would corrupt
     them). The copy+cast happens HOST-side: a device-side cast would
     transiently allocate ~4.3 GB of VRAM, an OOM at the ~79 GB/80 GB
-    occupancy measured for the live-trunk DDP config (A100, batch 32)."""
+    occupancy measured for the live-backbone DDP config (A100, batch 32)."""
     parameter_names = {name for name, _ in model.backbone.named_parameters()}
     return {
         name: (
@@ -715,11 +720,11 @@ def load_adapted_backbone(
     """Load ``backbone.safetensors`` over the (already-built) truncated
     backbone. The file is materialized on CPU and streamed into the live
     parameters by ``load_state_dict``'s copy semantics — loading it straight
-    to the target device would transiently hold a second full trunk
+    to the target device would transiently hold a second full backbone
     (~4.3 GB) next to the built one, which OOMed the 8 GiB laptop GPU at
     rollout. The same copy semantics cast the bf16 snapshot into whatever
     dtype the backbone was built with (bf16 for eval/rollout, fp32 masters
-    for a live-trunk continuation)."""
+    for a live-backbone continuation)."""
     state = load_file(str(checkpoint / "backbone.safetensors"), device="cpu")
     missing, unexpected = model.backbone.load_state_dict(state, strict=False)
     problems = [name for name in missing if name not in BACKBONE_UNSAVED_KEYS]
@@ -747,7 +752,7 @@ def from_checkpoint(
     meta = json.loads((checkpoint / "bijou_config.json").read_text())
     sections = checkpoint_sections(meta)
     info = CheckpointInfo(
-        backbone=sections.trunk.backbone,
+        backbone=sections.backbone.id,
         train_args=CheckpointTrainArgs.from_dict(meta["train_args"]),
         step=int(meta["step"]),
         normalization=DatasetStats.from_state_dict(meta["normalization"]),
@@ -760,7 +765,7 @@ def from_checkpoint(
     if isinstance(sections.decoder, ARFastConfig):
         decoder_config = sections.decoder
         assert sections.prompt is not None  # tagged formats carry it
-        trunk, encoder = build_gemma_encoder(
+        backbone, encoder = build_gemma_encoder(
             checkpoint_dir,
             load_config(checkpoint_dir),
             exports=sections.prompt.exports,
@@ -768,7 +773,7 @@ def from_checkpoint(
             device=device,
             dtype=dtype,
             attn_backend=attn_backend,
-            depth=sections.trunk.depth,
+            depth=sections.backbone.depth,
         )
         decoder = ARFastDecoder(
             decoder_config,
@@ -778,7 +783,7 @@ def from_checkpoint(
             device=device,
             dtype=expert_dtype,
         )
-        model = BijouModel(trunk=trunk, encoder=encoder, decoder=decoder)
+        model = BijouModel(backbone=backbone, encoder=encoder, decoder=decoder)
     else:
         if sections.decoder is not None:
             assert sections.prompt is not None  # tagged formats carry it

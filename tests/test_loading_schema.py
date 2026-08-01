@@ -20,12 +20,12 @@ from bijou.data import DatasetStats
 from bijou.decoders.flow import ExpertConfig, FlowDecoder
 from bijou.gemma4.config import e2b_config
 from bijou.loading import (
+    BackboneConfig,
+    BackboneDepth,
     CheckpointMetadata,
     CheckpointTrainArgs,
     FlowDecoderConfig,
     GemmaPromptConfig,
-    TrunkConfig,
-    TrunkDepth,
     checkpoint_sections,
     expert_config_from_architecture,
     expert_config_from_train_args,
@@ -126,9 +126,9 @@ def tiny_stats(dim: int = 6) -> DatasetStats:
 def format3_meta() -> dict:
     expert_config = legacy_expert_config()
     metadata = CheckpointMetadata(
-        trunk=TrunkConfig(
-            backbone="google/gemma-4-e2b-it",
-            depth=TrunkDepth.PREFIX,
+        backbone=BackboneConfig(
+            id="google/gemma-4-e2b-it",
+            depth=BackboneDepth.PREFIX,
         ),
         prompt=GemmaPromptConfig(
             exports=expert_config.streams,
@@ -152,7 +152,7 @@ def format2_meta() -> dict:
         "format": 2,
         "encoder": {
             "kind": "gemma4",
-            "backbone": meta3["trunk"]["backbone"],
+            "backbone": meta3["backbone"]["id"],
             "exports": meta3["prompt"]["exports"],
             "max_soft_tokens": meta3["prompt"]["max_soft_tokens"],
         },
@@ -167,14 +167,14 @@ def format2_meta() -> dict:
 def test_metadata_writes_format3_and_reads_back() -> None:
     meta = format3_meta()
     assert meta["format"] == 3
-    assert meta["trunk"] == {
-        "backbone": "google/gemma-4-e2b-it",
+    assert meta["backbone"] == {
+        "id": "google/gemma-4-e2b-it",
         "depth": "prefix",
     }
     assert meta["prompt"]["kind"] == "gemma4"
     assert meta["decoder"]["kind"] == "flow"
     sections = checkpoint_sections(meta)
-    assert sections.trunk.depth is TrunkDepth.PREFIX
+    assert sections.backbone.depth is BackboneDepth.PREFIX
     assert sections.prompt is not None
     assert isinstance(sections.decoder, FlowDecoderConfig)
     rebuilt = expert_config_from_architecture(
@@ -193,7 +193,7 @@ def test_sections_synthesized_identically_across_formats() -> None:
     assert from_format2 == from_format3
 
     from_format1 = checkpoint_sections(legacy_meta())
-    assert from_format1.trunk == from_format3.trunk
+    assert from_format1.backbone == from_format3.backbone
     assert from_format1.prompt is None
     assert from_format1.decoder is None
 

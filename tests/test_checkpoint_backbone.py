@@ -3,11 +3,11 @@
 ``backbone.safetensors`` must be present iff the checkpoint's backbone
 differs from pristine HF — trained in-run OR inherited frozen from an
 adapted --init-from/--resume checkpoint. Conditioning on
-``args.trunk_trained`` alone shipped flags-off fine-tunes whose decoders
+``args.backbone_trained`` alone shipped flags-off fine-tunes whose decoders
 were trained against adapted features but whose checkpoints silently
-loaded the pristine trunk (found 2026-07-31, ft-rig arm F).
+loaded the pristine backbone (found 2026-07-31, ft-rig arm F).
 
-The trunk-trained branch itself (live fp32 masters -> bf16 snapshot) is
+The backbone-trained branch itself (live fp32 masters -> bf16 snapshot) is
 exercised by real unfreeze runs and stays out of scope here: it needs
 materialized backbone weights, which is probe territory.
 """
@@ -31,7 +31,7 @@ from bijou.encoders.gemma4 import GemmaEncoder
 from bijou.gemma4.config import e2b_config
 from bijou.gemma4.loading import truncated_config
 from bijou.gemma4.model import Gemma4Model
-from bijou.loading import TrunkDepth, checkpoint_sections
+from bijou.loading import BackboneDepth, checkpoint_sections
 from bijou.model import BijouModel
 from bijou.nn import RopeParameters, RopeType
 from bijou.train import (
@@ -76,7 +76,7 @@ def tiny_model() -> BijouModel:
     # The backbone stays on the meta device: the flags-off save paths under
     # test never touch its weights (only encoder.exports for metadata).
     # Truncated exactly as the real build (depth derivation reads the
-    # trunk's config: no KV-shared layers <=> prefix depth).
+    # backbone's config: no KV-shared layers <=> prefix depth).
     config = truncated_config(e2b_config(), 15)
     encoder = GemmaEncoder(
         config,
@@ -85,7 +85,7 @@ def tiny_model() -> BijouModel:
         max_soft_tokens=140,
     )
     return BijouModel(
-        trunk=Gemma4Model(config, device="meta"),
+        backbone=Gemma4Model(config, device="meta"),
         encoder=encoder,
         decoder=tiny_decoder(),
     )
@@ -176,10 +176,10 @@ def test_frozen_pristine_run_writes_no_backbone(tmp_path: Path) -> None:
     assert not (checkpoint / "backbone.safetensors").exists()
 
 
-def test_frozen_inherited_trunk_rides_along(tmp_path: Path) -> None:
+def test_frozen_inherited_backbone_rides_along(tmp_path: Path) -> None:
     """Flags off but initialized from an adapted checkpoint: the inherited
     snapshot must ride in every checkpoint, byte-identical to the source
-    (from_checkpoint detects adapted trunks by file presence)."""
+    (from_checkpoint detects adapted backbones by file presence)."""
     source_dir = tmp_path / "init_checkpoint"
     source_dir.mkdir()
     source = source_dir / "backbone.safetensors"
@@ -199,8 +199,8 @@ def test_frozen_inherited_trunk_rides_along(tmp_path: Path) -> None:
     sections = checkpoint_sections(
         json.loads((checkpoint / "bijou_config.json").read_text()),
     )
-    assert sections.trunk.backbone == "google/gemma-4-e2b-it"
-    assert sections.trunk.depth is TrunkDepth.PREFIX
+    assert sections.backbone.id == "google/gemma-4-e2b-it"
+    assert sections.backbone.depth is BackboneDepth.PREFIX
 
 
 def test_inherited_source_must_exist(tmp_path: Path) -> None:

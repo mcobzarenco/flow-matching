@@ -52,6 +52,16 @@ not a test.
   and converts on the way in (see `bijou/gemma4/config.py`).
 - Prefer enums (`EpisodeSplit`, `SamplingMethod`) over string constants;
   parse strings into enums at the CLI/JSON boundary.
+- **One word per concept: the Gemma network is the `backbone`** — in
+  both senses (the pretrained artifact: `--backbone`,
+  `BackboneConfig.id`, `backbone.safetensors`; and the mounted module:
+  `model.backbone`, `backbone_text`/`backbone_vision` groups,
+  `backbone_trained`). "Trunk" is allowed in prose as an informal
+  synonym but never in identifiers or schema keys. (Added 2026-08-01:
+  the seam refactor briefly introduced a two-sense trunk/backbone
+  convention; it produced `trunk.backbone` in the metadata and was
+  reverted the same day — a naming rule that needs a judgment call at
+  every site is a trap.)
 
 ## Functions and arguments
 
