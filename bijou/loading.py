@@ -37,6 +37,7 @@ from .encoders.gemma4 import GemmaEncoder
 from .fast.codec import ActionCodec
 from .gemma4.config import Gemma4Config, LayerType
 from .gemma4.loading import load_config, load_model, resolve_checkpoint_dir
+from .gemma4.model import Gemma4Model
 from .interface import kv_stream_name
 from .model import BijouModel
 from .nn import DEFAULT_ATTENTION_BACKEND, AttentionBackend, DeviceLike
@@ -357,7 +358,7 @@ def from_backbone(
 
     if expert_dtype is None:
         expert_dtype = dtype if dtype is not None else config.dtype
-    encoder = build_gemma_encoder(
+    trunk, encoder = build_gemma_encoder(
         checkpoint_dir,
         config,
         exports=expert_config.streams,
@@ -372,7 +373,7 @@ def from_backbone(
         device=device,
         dtype=expert_dtype,
     )
-    return BijouModel(encoder=encoder, decoder=decoder)
+    return BijouModel(trunk=trunk, encoder=encoder, decoder=decoder)
 
 
 def build_gemma_encoder(
@@ -384,22 +385,24 @@ def build_gemma_encoder(
     device: DeviceLike,
     dtype: torch.dtype | None,
     attn_backend: AttentionBackend = DEFAULT_ATTENTION_BACKEND,
-) -> GemmaEncoder:
-    """The Gemma trunk as an observation encoder: loaded truncated to its
-    non-KV-shared layer prefix, frozen."""
-    backbone = load_model(
+) -> tuple[Gemma4Model, GemmaEncoder]:
+    """The Gemma trunk (loaded truncated to its non-KV-shared layer
+    prefix, frozen) plus its prompt-side encoder strategy — the pair
+    BijouModel composes."""
+    trunk = load_model(
         checkpoint_dir,
         device="cpu" if device is None else device,
         dtype=dtype,
         attn_backend=attn_backend,
         truncate_layers=config.text.first_kv_shared_layer_idx,
     )
-    return GemmaEncoder(
-        backbone,
+    encoder = GemmaEncoder(
+        trunk.config,
         exports=exports,
         processor_dir=str(checkpoint_dir),
         max_soft_tokens=max_soft_tokens,
     )
+    return trunk, encoder
 
 
 @dataclass(frozen=True, slots=True)
@@ -684,7 +687,7 @@ def from_checkpoint(
     )
     if isinstance(decoder_config, ARFastConfig):
         encoder_config = parse_encoder_config(meta["encoder"])
-        encoder = build_gemma_encoder(
+        trunk, encoder = build_gemma_encoder(
             checkpoint_dir,
             load_config(checkpoint_dir),
             exports=encoder_config.exports,
@@ -701,7 +704,7 @@ def from_checkpoint(
             device=device,
             dtype=expert_dtype,
         )
-        model = BijouModel(encoder=encoder, decoder=decoder)
+        model = BijouModel(trunk=trunk, encoder=encoder, decoder=decoder)
     else:
         if decoder_config is not None:
             expert_config = expert_config_from_architecture(

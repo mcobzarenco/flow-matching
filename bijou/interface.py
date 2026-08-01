@@ -1,16 +1,23 @@
 """The observation-encoder ↔ action-decoder seam.
 
-An encoder turns one observation (instruction + camera frames [+ state,
-eventually]) into an :class:`ObservationMemory`: named memory streams a
-decoder cross-attends. The streams' static geometry (:class:`
+An encoder strategy turns one observation (instruction + camera frames
+[+ state, eventually]) into an :class:`ObservationMemory`: named memory
+streams a decoder cross-attends. The streams' static geometry (:class:`
 StreamGeometry`) is declared by the encoder at construction time so a
 decoder can size its query projections and RoPE behavior without knowing
 what kind of trunk produced the memory (see ``docs/plan.md``).
 
-Stream names are defined by each encoder (the Gemma trunk exports its
+Stream names are defined by the encoder (the Gemma trunk exports its
 global layers' K/V as ``"kv{layer}"``); decoder schedules reference those
 names, and composition validates the references (unknown name or unused
 export = loud error).
+
+The trunk network itself is owned by the composition root
+(:class:`bijou.model.BijouModel`), not by the encoder: the encoder is
+the prompt-side strategy (collation, prefix encode, unfreeze partition)
+and receives the trunk as an argument — one network can serve several
+roles (prefix encoder for cross-attention decoders; prefix + suffix
+runner for the decoder-only path).
 """
 
 from __future__ import annotations
@@ -238,34 +245,6 @@ class InputsCollator[I: BatchInputs](Protocol):
     ``__getstate__``."""
 
     def __call__(self, samples: list[PromptInputs]) -> I: ...
-
-
-class ObservationEncoder[I: BatchInputs](nn.Module, ABC):
-    """A trunk: inputs-collation strategy + observation encoding + unfreeze
-    surface. Implementations declare their exported streams' static
-    geometry so a decoder can be sized without knowing the trunk."""
-
-    @abstractmethod
-    def stream_geometries(self) -> dict[str, StreamGeometry]:
-        """Static geometry per stream name; keys and order match every
-        ObservationMemory this encoder produces."""
-
-    @abstractmethod
-    def inputs_collator(self) -> InputsCollator[I]:
-        """The encoder-specific half of collation (pickleable into
-        dataloader workers)."""
-
-    @abstractmethod
-    def encode(self, inputs: I, *, with_grad: bool) -> ObservationMemory:
-        """Encode one collated batch of encoder inputs. ``with_grad=False``
-        runs under no_grad (eval/rollout/frozen training); True leaves
-        autograd on for live-trunk training."""
-
-    @abstractmethod
-    def param_groups(self) -> dict[str, list[nn.Parameter]]:
-        """Named unfreezable parameter groups (e.g. "text", "vision") —
-        the component-lr flags route here. Groups are exact: DDP requires
-        every grad-enabled parameter to receive gradients each step."""
 
 
 class ActionDecoder(nn.Module, ABC):

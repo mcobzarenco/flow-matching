@@ -285,7 +285,7 @@ def unfreeze_backbone(model: BijouModel, args: TrainArgs) -> TrunkParameterCount
     no activation cost, no backward — without any code-path changes
     inside gemma4.
     """
-    groups = model.encoder.param_groups()
+    groups = model.param_groups()
     text = 0
     vision = 0
     if args.text_lr is not None:
@@ -351,10 +351,7 @@ class BijouTrainStep(torch.nn.Module):
             torch.bfloat16,
             enabled=device_type == "cuda" and self.trunk_trained,
         ):
-            memory = self.model.encoder.encode(
-                inputs,
-                with_grad=self.trunk_trained,
-            )
+            memory = self.model.encode(inputs, with_grad=self.trunk_trained)
         return self.model.loss(memory, batch)
 
 
@@ -1327,7 +1324,7 @@ def main() -> int:
             for stream, count in zip(streams, args.stream_counts, strict=True)
             if count > 0
         )
-        encoder = build_gemma_encoder(
+        trunk, encoder = build_gemma_encoder(
             checkpoint_dir,
             backbone_config,
             exports=exports,
@@ -1351,6 +1348,7 @@ def main() -> int:
             action_dim=action_dim,
         )
         model = BijouModel(
+            trunk=trunk,
             encoder=encoder,
             decoder=ARFastDecoder(
                 ar_config,
@@ -1396,7 +1394,7 @@ def main() -> int:
     param_groups: list[dict[str, Any]] = [
         {"params": list(model.decoder.parameters()), "lr": args.expert_lr},
     ]
-    encoder_groups = model.encoder.param_groups()
+    encoder_groups = model.param_groups()
     if args.text_lr is not None:
         decayed, undecayed = decay_split(encoder_groups["text"])
         param_groups.append({"params": decayed, "lr": args.text_lr})

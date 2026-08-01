@@ -1,12 +1,20 @@
-"""Bijou: an observation encoder composed with an action decoder.
+"""Bijou: one trunk, a prompt-side encoder strategy, an action decoder.
 
-The composition root: ``BijouModel`` owns one :class:`ObservationEncoder`
-(today the truncated Gemma trunk) and one :class:`ActionDecoder` (today
-the flow-matching expert), delegating encode / velocity / sampling. The
-observation (chat-templated instruction + camera images) is encoded once
-and cached as an :class:`ObservationMemory`; the decoder then
-denoises a chunk of actions against it, with fresh robot state, at ~10
-model evaluations per chunk.
+The composition root: ``BijouModel`` owns the trunk network ONCE (the
+truncated Gemma backbone), plus one prompt-side encoder strategy (the
+collation + prefix-encode + unfreeze surface, which receives the trunk
+as an argument) and one :class:`ActionDecoder`. The observation
+(chat-templated instruction + camera images) is encoded once and cached
+as an :class:`ObservationMemory`; the decoder then denoises a chunk of
+actions against it, with fresh robot state, at ~10 model evaluations per
+chunk.
+
+Trunk ownership lives here — not in the encoder — because one network
+can serve several roles: the prefix encoder for the cross-attention
+decoders today, and prefix + suffix runner for the decoder-only path.
+The root is the one place with every role in scope, so it also owns the
+objective dispatch (:meth:`loss`) and the trainable-group routing
+(:meth:`param_groups`).
 
 ``backbone``/``expert`` are the historical names of the two halves and
 remain the public accessors (checkpoint files are keyed by them:
@@ -28,20 +36,34 @@ from .interface import CollatedBatch, ObservationMemory
 
 
 class BijouModel(nn.Module):
-    """One encoder + one decoder (see the module docstring)."""
+    """One trunk + one encoder strategy + one decoder (see the module
+    docstring)."""
 
     def __init__(
         self,
+        trunk: Gemma4Model,
         encoder: GemmaEncoder,
         decoder: FlowDecoder | ARFastDecoder,
     ) -> None:
         super().__init__()
+        self.trunk = trunk
         self.encoder = encoder
         self.decoder = decoder
 
     @property
     def backbone(self) -> Gemma4Model:
-        return self.encoder.backbone
+        return self.trunk
+
+    def param_groups(self) -> dict[str, list[nn.Parameter]]:
+        """Named unfreezable trunk groups ("text", "vision") — the
+        component-lr flags route here (see GemmaEncoder.param_groups)."""
+        return self.encoder.param_groups(self.trunk)
+
+    def encode(self, inputs: GemmaInputs, *, with_grad: bool) -> ObservationMemory:
+        """Encode one collated batch of encoder inputs against the trunk.
+        ``with_grad=False`` runs under no_grad (eval/rollout/frozen
+        training); True leaves autograd on for live-trunk training."""
+        return self.encoder.encode(self.trunk, inputs, with_grad=with_grad)
 
     @property
     def expert(self) -> FlowDecoder | ARFastDecoder:
@@ -82,6 +104,7 @@ class BijouModel(nn.Module):
         GemmaEncoder.encode_tensors);
         grad-transparent — training wraps it in autocast, eval in no_grad."""
         return self.encoder.encode_tensors(
+            self.trunk,
             input_ids,
             pixel_values=pixel_values,
             image_position_ids=image_position_ids,
@@ -103,7 +126,7 @@ class BijouModel(nn.Module):
         inference with the batch's per-sample stats. ``num_steps``/
         ``method``/``noise`` are flow solver knobs; an AR decoder decodes
         greedily and ignores them (``noise`` must then be None)."""
-        memory = self.encoder.encode(batch.encoder_inputs, with_grad=False)
+        memory = self.encode(batch.encoder_inputs, with_grad=False)
         if isinstance(self.decoder, FlowDecoder):
             return self.decoder.predict_chunk(
                 memory,

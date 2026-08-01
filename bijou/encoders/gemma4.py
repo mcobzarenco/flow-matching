@@ -27,13 +27,12 @@ from PIL import Image
 from torch import Tensor, nn
 
 from ..gemma4.cache import KVCache
-from ..gemma4.config import LayerType
+from ..gemma4.config import Gemma4Config, LayerType
 from ..gemma4.model import Gemma4Model
 from ..gemma4.text import DecoderLayer
 from ..interface import (
     InputsCollator,
     MemoryStream,
-    ObservationEncoder,
     ObservationMemory,
     PromptInputs,
     StreamGeometry,
@@ -158,29 +157,35 @@ class GemmaInputsCollator:
         )
 
 
-class GemmaEncoder(ObservationEncoder[GemmaInputs]):
-    """The truncated Gemma trunk as an observation encoder (see the module
-    docstring). ``exports`` are the global layers whose K/V become the
-    memory streams; the trunk arrives frozen (``load_model``) and
-    ``param_groups`` exposes the unfreezable subsets."""
+class GemmaEncoder(nn.Module):
+    """The Gemma prompt-side strategy: collation, prefix encoding, and the
+    trunk's unfreeze surface (see the module docstring). ``exports`` are
+    the global layers whose K/V become the memory streams.
+
+    The trunk itself is NOT owned here — BijouModel owns it once and
+    passes it into the compute methods; this module carries only
+    prompt-side parameters (none today; a projected-state slot is the
+    anticipated first). ``config`` is the trunk's (truncated) architecture
+    — enough to declare stream geometries without the weights."""
 
     def __init__(
         self,
-        backbone: Gemma4Model,
+        config: Gemma4Config,
         *,
         exports: tuple[int, ...],
         processor_dir: str,
         max_soft_tokens: int,
     ) -> None:
         super().__init__()
-        self.backbone = backbone
+        self.config = config
         self.exports = exports
         self.processor_dir = processor_dir
         self.max_soft_tokens = max_soft_tokens
 
-    @override
     def stream_geometries(self) -> dict[str, StreamGeometry]:
-        text = self.backbone.config.text
+        """Static geometry per stream name; keys and order match every
+        ObservationMemory this encoder produces."""
+        text = self.config.text
         geometry = StreamGeometry(
             kv_heads=text.num_global_key_value_heads or text.num_key_value_heads,
             head_dim=text.head_dim_for_type(LayerType.FULL),
@@ -188,12 +193,14 @@ class GemmaEncoder(ObservationEncoder[GemmaInputs]):
         )
         return {kv_stream_name(layer): geometry for layer in self.exports}
 
-    @override
     def inputs_collator(self) -> InputsCollator[GemmaInputs]:
+        """The encoder-specific half of collation (pickleable into
+        dataloader workers)."""
         return GemmaInputsCollator(self.processor_dir, self.max_soft_tokens)
 
     def encode_tensors(
         self,
+        trunk: Gemma4Model,
         input_ids: Tensor,
         *,
         pixel_values: Tensor | None = None,
@@ -219,13 +226,13 @@ class GemmaEncoder(ObservationEncoder[GemmaInputs]):
           - returns ObservationMemory: streams["kv{layer}"].key/value each
             [B, kv_heads, P, head_dim]; padding_mask [B, P] or None
         """
-        inputs_embeds, per_layer_inputs = self.backbone.embed_multimodal(
+        inputs_embeds, per_layer_inputs = trunk.embed_multimodal(
             input_ids,
             pixel_values=pixel_values,
             image_position_ids=image_position_ids,
         )
-        cache = KVCache(self.backbone.config.text)
-        self.backbone.language_model(
+        cache = KVCache(trunk.config.text)
+        trunk.language_model(
             inputs_embeds=inputs_embeds,
             per_layer_inputs=per_layer_inputs,
             padding_mask=padding_mask,
@@ -249,21 +256,27 @@ class GemmaEncoder(ObservationEncoder[GemmaInputs]):
             padding_mask=padding_mask,
         )
 
-    @override
-    def encode(self, inputs: GemmaInputs, *, with_grad: bool) -> ObservationMemory:
+    def encode(
+        self,
+        trunk: Gemma4Model,
+        inputs: GemmaInputs,
+        *,
+        with_grad: bool,
+    ) -> ObservationMemory:
         """Encode one collated batch (shapes on GemmaInputs); ``with_grad``
         selects the live-trunk training path (grad-transparent, not
         force-enabled) vs the no-grad eval path."""
         padding_mask = inputs.attention_mask if inputs.has_padding else None
         with torch.no_grad() if not with_grad else contextlib.nullcontext():
             return self.encode_tensors(
+                trunk,
                 inputs.input_ids,
                 pixel_values=inputs.pixel_values,
                 image_position_ids=inputs.image_position_ids,
                 padding_mask=padding_mask,
             )
 
-    def _trainable_text_parameters(self) -> Iterator[nn.Parameter]:
+    def _trainable_text_parameters(self, trunk: Gemma4Model) -> Iterator[nn.Parameter]:
         """The text-trunk parameters that PARTICIPATE in a prefix encode,
         and only those — the set must be exact because DDP requires every
         grad-enabled parameter to receive gradients each step.
@@ -281,7 +294,7 @@ class GemmaEncoder(ObservationEncoder[GemmaInputs]):
         text group regardless of whether the vision tower itself is
         unfrozen.
         """
-        text = self.backbone.language_model
+        text = trunk.language_model
         stop_layer = max(self.exports)
         for idx, layer in enumerate(text.layers):
             # ModuleList iteration erases the element type (torch types
@@ -300,21 +313,24 @@ class GemmaEncoder(ObservationEncoder[GemmaInputs]):
                 yield from attention.k_norm.parameters()
         yield from text.per_layer_model_projection.parameters()
         yield from text.per_layer_projection_norm.parameters()
-        assert self.backbone.embed_vision is not None
-        yield from self.backbone.embed_vision.parameters()
+        assert trunk.embed_vision is not None
+        yield from trunk.embed_vision.parameters()
 
-    @override
-    def param_groups(self) -> dict[str, list[nn.Parameter]]:
-        """``"text"``: decoder layers up to the stop layer + PLE projections
+    def param_groups(self, trunk: Gemma4Model) -> dict[str, list[nn.Parameter]]:
+        """Named unfreezable trunk subsets — the component-lr flags route
+        here. Groups are exact: DDP requires every grad-enabled parameter
+        to receive gradients each step.
+
+        ``"text"``: decoder layers up to the stop layer + PLE projections
         + the multimodal projector (see _trainable_text_parameters).
         ``"vision"``: the vision tower (empty when the backbone has none —
         callers decide whether that is an error)."""
         vision = (
-            list(self.backbone.vision_tower.parameters())
-            if self.backbone.vision_tower is not None
+            list(trunk.vision_tower.parameters())
+            if trunk.vision_tower is not None
             else []
         )
         return {
-            "text": list(self._trainable_text_parameters()),
+            "text": list(self._trainable_text_parameters(trunk)),
             "vision": vision,
         }

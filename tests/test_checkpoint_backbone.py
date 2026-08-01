@@ -73,13 +73,18 @@ def tiny_decoder() -> FlowDecoder:
 def tiny_model() -> BijouModel:
     # The backbone stays on the meta device: the flags-off save paths under
     # test never touch its weights (only encoder.exports for metadata).
+    config = e2b_config()
     encoder = GemmaEncoder(
-        Gemma4Model(e2b_config(), device="meta"),
+        config,
         exports=(4, 9, 14),
         processor_dir="unused",
         max_soft_tokens=140,
     )
-    return BijouModel(encoder=encoder, decoder=tiny_decoder())
+    return BijouModel(
+        trunk=Gemma4Model(config, device="meta"),
+        encoder=encoder,
+        decoder=tiny_decoder(),
+    )
 
 
 def make_args(save_dir: Path) -> TrainArgs:
