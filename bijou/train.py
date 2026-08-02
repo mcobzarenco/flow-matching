@@ -872,16 +872,20 @@ def ensure_matching_decoder_config(
             "cannot initialize a non-flow decoder",
         )
     if current != saved:
-        # Aux is data-side (zero parameters): an aux-only difference is
-        # the sanctioned warm-start pattern (enable aux on an aux-less
-        # base, or continue without it) — loud note, not an error.
-        current_core = {k: v for k, v in current.items() if k != "aux"}
-        saved_core = {k: v for k, v in saved.items() if k != "aux"}
+        # Aux and the suffix format are DATA-side (zero parameters): a
+        # difference confined to them is the sanctioned warm-start
+        # pattern (enable aux / adopt the opener format on an older
+        # base) — loud note, not an error.
+        data_side = ("aux", "suffix_format")
+        current_core = {k: v for k, v in current.items() if k not in data_side}
+        saved_core = {k: v for k, v in saved.items() if k not in data_side}
         if current_core == saved_core:
+            differing = [key for key in data_side if current.get(key) != saved.get(key)]
             print(
-                f"note: aux config differs from {checkpoint} (checkpoint "
-                f"{saved.get('aux')}, cli {current.get('aux')}) — aux adds "
-                "no parameters, warm start proceeds with the CLI's aux",
+                f"note: data-side decoder config differs from {checkpoint} "
+                f"({', '.join(f'{k}: {saved.get(k)} -> {current.get(k)}' for k in differing)}) "
+                "— zero-parameter change, warm start proceeds with the "
+                "CLI's format",
                 flush=True,
             )
             return
