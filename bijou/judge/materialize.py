@@ -16,8 +16,10 @@ sees without any sidecar knowledge:
 - **events** → ``language_events`` rows, ``style="event"`` (project-local
   style, registered through lerobot's documented import-time extension
   hook). Event rows live on the exact frame row where they fired —
-  lerobot's writer buckets them by timestamp — and resolve via
-  ``emitted_at(t)``. Point-in-time facts are never broadcast.
+  lerobot's writer buckets them by timestamp; a frame may carry SEVERAL
+  rows (one per event), so consumers read the frame's rows directly —
+  ``emitted_at`` is a single-row resolver and raises on multi-event
+  frames. Point-in-time facts are never broadcast.
 - **progress / holding / per-camera visibility** → NaN-masked float32
   feature columns: ``annotation.progress`` and ``annotation.holding``
   (scalars), ``annotation.visible_object`` and

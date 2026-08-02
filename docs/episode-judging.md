@@ -132,8 +132,10 @@ per dataset into the surfaces a plain `LeRobotDataset` already exposes:
   semantics, so subgoal text is available at *every* frame.
 - **Events** → `language_events` rows, `style="event"` (project-local
   style registered through lerobot's import-time hook): momentary rows
-  stored on the exact frame where they fired, resolved by
-  `emitted_at(t)`. Point-in-time facts are never broadcast.
+  stored on the exact frame where they fired, one row per event — frames
+  can carry several, so consumers read the frame's rows directly rather
+  than through single-row resolvers. Point-in-time facts are never
+  broadcast.
 - **Progress / holding / per-camera visibility** → NaN-masked float32
   feature columns (`annotation.progress`, `annotation.holding`,
   `annotation.visible_object`, `annotation.visible_gripper` — vectors

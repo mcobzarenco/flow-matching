@@ -76,7 +76,7 @@ stats for what survives.
 | verdict, scores, completion, instruction quality, suggested instructions, issues | episode | sidecar | `bijou.judge.store.load_sidecar` |
 | camera kinds (majority vote) | dataset | `meta/camera_kinds.json` | `json.loads` |
 | subgoal text | every frame (piecewise-constant) | `language_persistent` column, `style="subtask"` | `active_at(t, ...)` |
-| events (free text) | exact firing frame | `language_events` column, `style="event"` | `emitted_at(t, ...)` |
+| events (free text) | exact firing frame | `language_events` column, `style="event"` | read the item's rows directly (a frame may carry several) |
 | progress ∈ [0,1] | judge-sampled frames only | `annotation.progress` float32 column, NaN elsewhere | item + `isfinite` mask |
 | holding ∈ {0,1} | judge-sampled frames only | `annotation.holding` float32 column, NaN elsewhere | item + `isfinite` mask |
 | object/gripper visibility per camera | judge-sampled frames only | `annotation.visible_object` / `annotation.visible_gripper` float32 vectors, NaN elsewhere | item + feature `names` |
@@ -195,24 +195,22 @@ conditioning or prediction is not restricted to sampled frames.
 
 **Events** (drops, resets, interventions, progress regressions) are
 momentary rows in `language_events` (`style="event"`) stored on the
-exact frame where they fired. The `"event"` style is project-local —
-import `bijou.judge.materialize` once, anywhere, before using lerobot's
-resolvers on it, or they reject the unknown style:
+exact frame where they fired. **A frame may carry several events**
+(measured on the full corpus sweep: 0.15% of sampled frames, 1.5% of
+episodes) — read the item's rows directly and treat them as a set. Do
+NOT resolve events through `lerobot.datasets.language_render.emitted_at`:
+it is a single-row resolver and raises `ValueError: Ambiguous resolver`
+on multi-event frames.
 
 ```python
-from bijou.judge.materialize import EVENT_STYLE  # side effect: registers "event"
-from lerobot.datasets.language_render import active_at, emitted_at
+from lerobot.datasets.language_render import active_at
 
 t = float(item["timestamp"])
 subgoal = active_at(t, persistent=item["language_persistent"], style="subtask")
 subgoal["content"]  # non-None on every frame of a judged episode
 
-event = emitted_at(
-    t,
-    persistent=item["language_persistent"],
-    events=item["language_events"],
-    style=EVENT_STYLE,
-)  # None on frames without an event (the overwhelming majority)
+events = [row["content"] for row in (item["language_events"] or [])]
+# [] on frames without an event (the overwhelming majority)
 ```
 
 Event negatives are only defined on judge-sampled frames: a sampled

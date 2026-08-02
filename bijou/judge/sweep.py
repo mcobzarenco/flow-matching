@@ -405,7 +405,6 @@ def run_batch_mode(
     args: argparse.Namespace,
     tasks: list[JudgeTask],
     journal_ok: set[tuple[str, int, str, str, int, int]],
-    journal_failed: set[tuple[str, int]],
     dirs_by_repo: dict[str, Path],
 ) -> None:
     """Batch transport: fold pending manifest batches first (resume), then
@@ -417,11 +416,17 @@ def run_batch_mode(
 
     # Manifest entries not yet in the journal are in-flight (or lost)
     # batches from an earlier run: fold them before submitting anything.
+    # The failed-set here is deliberately the RAW one, ignoring
+    # --retry-failed: a schema-failed episode's manifest entry points at
+    # a finished batch whose response already failed validation once —
+    # "resuming" it would re-fold the same bad response forever. Retry
+    # must fall through to a fresh submission instead.
+    _, journal_failed_raw = load_journal_done(args.output, retry_failed=False)
     pending = [
         entry
         for entry in load_manifest(manifest_path)
         if entry.journal_key() not in journal_ok
-        and (entry.repo_id, entry.episode) not in journal_failed
+        and (entry.repo_id, entry.episode) not in journal_failed_raw
     ]
     pending_keys = {entry.journal_key() for entry in pending}
     tasks = [
@@ -592,7 +597,7 @@ def main() -> None:
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     if args.batch:
-        run_batch_mode(args, tasks, journal_ok, journal_failed, dirs_by_repo)
+        run_batch_mode(args, tasks, journal_ok, dirs_by_repo)
         return
     if not tasks:
         print("nothing to judge")
