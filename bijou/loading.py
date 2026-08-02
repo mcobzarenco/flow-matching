@@ -21,10 +21,12 @@ from pathlib import Path
 from typing import Any
 
 import torch
+import transformers
 from huggingface_hub import snapshot_download
 from safetensors.torch import load_file
 from torch import Tensor
 
+from .aux_text import AuxDecodeConfig, build_aux_runtime
 from .data import DatasetStats
 from .decoders.ar_backbone import ARBackboneConfig, ARBackboneDecoder
 from .decoders.ar_fast import ARFastConfig, ARFastDecoder
@@ -248,10 +250,12 @@ def ar_backbone_config_to_dict(config: ARBackboneConfig) -> dict[str, Any]:
         "state_dim": config.state_dim,
         "chunk_size": config.chunk_size,
         "action_dim": config.action_dim,
+        "aux": None if config.aux is None else config.aux.to_dict(),
     }
 
 
 def ar_backbone_config_from_dict(data: dict[str, Any]) -> ARBackboneConfig:
+    aux = data.get("aux")  # absent in pre-aux checkpoints == null
     return ARBackboneConfig(
         tokenizer=str(data["tokenizer"]),
         vocab_total=int(data["vocab_total"]),
@@ -259,6 +263,7 @@ def ar_backbone_config_from_dict(data: dict[str, Any]) -> ARBackboneConfig:
         state_dim=int(data["state_dim"]),
         chunk_size=int(data["chunk_size"]),
         action_dim=int(data["action_dim"]),
+        aux=None if aux is None else AuxDecodeConfig.from_dict(aux),
     )
 
 
@@ -838,10 +843,20 @@ def from_checkpoint(
                 dtype=expert_dtype,
             )
         else:
+            aux_runtime = None
+            if decoder_config.aux is not None:
+                # The scaffold tokenizes from the backbone checkpoint's
+                # own tokenizer files — the same artifact the collator
+                # rendered training text with.
+                aux_runtime = build_aux_runtime(
+                    decoder_config.aux,
+                    transformers.AutoTokenizer.from_pretrained(str(checkpoint_dir)),
+                )
             decoder = ARBackboneDecoder(
                 decoder_config,
                 backbone_config.text,
                 resolve_action_codec(decoder_config.tokenizer),
+                aux_runtime=aux_runtime,
                 device=device,
                 dtype=expert_dtype,
             )

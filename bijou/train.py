@@ -1369,6 +1369,7 @@ def main() -> int:
             state_dim=state_dim,
             chunk_size=args.chunk_size,
             action_dim=action_dim,
+            aux=None,
         )
         ar_backbone_decoder = ARBackboneDecoder(
             ar_backbone_config,

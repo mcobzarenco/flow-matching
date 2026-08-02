@@ -62,10 +62,113 @@ class AuxField(StrEnum):
 
 
 class TextTokenizer(Protocol):
-    """The slice of a HF tokenizer the aux renderer uses (tests inject a
-    stub; runtime uses AutoTokenizer)."""
+    """The slice of a HF tokenizer the aux renderer/decoder uses (tests
+    inject a stub; runtime uses AutoTokenizer)."""
 
     def encode(self, text: str, *, add_special_tokens: bool = ...) -> list[int]: ...
+
+    def decode(self, ids: list[int]) -> str: ...
+
+
+@dataclass(frozen=True, slots=True)
+class AuxDecodeConfig:
+    """The aux record a checkpoint carries in its decoder section —
+    everything inference needs to elicit the fields the model trained on,
+    plus label provenance. ``template_version`` pins the exact header
+    bytes (AUX_TEMPLATE_VERSION when written); a version this code does
+    not know is a loud error, never a guess."""
+
+    template_version: int
+    fields: tuple[AuxField, ...]
+    prompt_hash: str
+    judge_model: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "template_version": self.template_version,
+            "fields": [f.value for f in self.fields],
+            "prompt_hash": self.prompt_hash,
+            "judge_model": self.judge_model,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> AuxDecodeConfig:
+        version = int(data["template_version"])
+        if version != AUX_TEMPLATE_VERSION:
+            raise SystemExit(
+                f"checkpoint aux template_version {version} != this code's "
+                f"{AUX_TEMPLATE_VERSION} — forced-scaffold decoding would "
+                "elicit a format the model never trained on",
+            )
+        return cls(
+            template_version=version,
+            fields=tuple(AuxField(f) for f in data["fields"]),
+            prompt_hash=str(data["prompt_hash"]),
+            judge_model=str(data["judge_model"]),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class AuxRuntime:
+    """Tokenized scaffold for forced-field decoding, built once from the
+    checkpoint's text tokenizer (:func:`build_aux_runtime`). Header ids
+    are FED (never predicted); value ids are decoded under per-field
+    constraints; ``terminator_id`` ends every field's value."""
+
+    config: AuxDecodeConfig
+    tokenizer: TextTokenizer
+    header_ids: dict[AuxField, tuple[int, ...]]
+    value_candidates: dict[AuxField, tuple[tuple[int, ...], ...]]
+    terminator_id: int
+
+
+def build_aux_runtime(
+    config: AuxDecodeConfig,
+    tokenizer: TextTokenizer,
+) -> AuxRuntime:
+    """Tokenize the versioned template's scaffold. The field terminator
+    must be a single token (true for \\n under the Gemma tokenizer and
+    the test stub) — anything else is a loud error, since value decoding
+    detects termination by one id."""
+
+    def encode(text: str) -> tuple[int, ...]:
+        return tuple(tokenizer.encode(text, add_special_tokens=False))
+
+    terminator = encode(FIELD_TERMINATOR)
+    if len(terminator) != 1:
+        raise SystemExit(
+            f"aux field terminator {FIELD_TERMINATOR!r} tokenizes to "
+            f"{len(terminator)} ids — single-token terminator required",
+        )
+    headers = {
+        AuxField.SUBGOAL: encode(SUBGOAL_HEADER),
+        AuxField.HOLDING: encode(HOLDING_HEADER),
+        AuxField.PROGRESS: encode(PROGRESS_HEADER),
+    }
+    candidates: dict[AuxField, tuple[tuple[int, ...], ...]] = {
+        # Constrained value set; first-token argmax picks the candidate,
+        # its remaining ids are forced.
+        AuxField.HOLDING: tuple(encode(value) for value in HOLDING_VALUES),
+    }
+    return AuxRuntime(
+        config=config,
+        tokenizer=tokenizer,
+        header_ids={f: headers[f] for f in config.fields},
+        value_candidates={f: candidates[f] for f in config.fields if f in candidates},
+        terminator_id=terminator[0],
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class AuxGeneration:
+    """One sample's generated aux fields (raw text + lenient parses;
+    None = field not elicited or unparseable — the raw text is the
+    ground truth for reports)."""
+
+    text: str
+    subgoal: str | None
+    holding: bool | None
+    progress: float | None
 
 
 @dataclass
