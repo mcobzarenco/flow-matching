@@ -5,9 +5,9 @@ for the HF tokenizer, and items mirror the REAL annotated rig-v2
 surfaces (language_persistent/language_events row dicts, NaN-masked
 float32 scalars) as audited 2026-08-02. Label provenance is the
 dataset's own stamp (no code-level prompt-hash pin — see
-docs/episode-annotations.md); the cross-module tripwire here is the
-EVENT_STYLE constant, which must match the judge materializer's (both
-register/consume the same lerobot language style).
+docs/episode-annotations.md). EVENT_STYLE is defined ONCE in
+bijou.annotations (the artifact-contract leaf both the judge writer and
+these renderers import), which also registers the lerobot style.
 """
 
 from __future__ import annotations
@@ -19,14 +19,13 @@ import pytest
 import torch
 from lerobot.datasets.language import EVENT_ONLY_STYLES, STYLE_REGISTRY
 
+from bijou.annotations import EVENT_STYLE
 from bijou.aux_text import (
     AUX_TEMPLATE_VERSION,
-    EVENT_STYLE,
     AuxField,
     AuxSpec,
     assemble_suffix,
 )
-from bijou.judge.materialize import EVENT_STYLE as JUDGE_EVENT_STYLE
 
 
 class CharTokenizer:
@@ -115,11 +114,10 @@ def decode(ids: list[int]) -> str:
     return "".join(chr(i) for i in ids)
 
 
-def test_event_style_matches_the_judge_materializer() -> None:
-    """Writer (judge) and reader (aux) speak one lerobot style; aux_text
-    registers it as the DAG leaf, so either import order resolves event
-    rows."""
-    assert EVENT_STYLE == JUDGE_EVENT_STYLE
+def test_event_style_is_registered_by_the_contract_leaf() -> None:
+    """bijou.annotations registers the style at import — the one
+    definition the judge writer and the training readers share (the
+    old mirrored-constant parity test dissolved with the move)."""
     assert EVENT_STYLE in STYLE_REGISTRY
     assert EVENT_STYLE in EVENT_ONLY_STYLES
     assert AUX_TEMPLATE_VERSION == 2  # header bytes unchanged since v2

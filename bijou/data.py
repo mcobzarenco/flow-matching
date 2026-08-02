@@ -37,7 +37,7 @@ import torch
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
 from torch import Tensor
 
-from .aux_text import CAMERA_KINDS
+from .annotations import CAMERA_KINDS, load_sidecar
 
 
 @dataclass(frozen=True, slots=True)
@@ -216,10 +216,12 @@ class StatsAttachedDataset(torch.utils.data.Dataset[dict[str, Any]]):
         dataset: LeRobotDataset,
         stats: DatasetStats,
         camera_kinds: dict[str, str],
+        suggestions: dict[int, tuple[str, ...]],
     ) -> None:
         self.dataset = dataset
         self.stats = stats
         self.camera_kinds = camera_kinds
+        self.suggestions = suggestions
         self.failed_fetches = 0
 
     def __len__(self) -> int:
@@ -230,6 +232,10 @@ class StatsAttachedDataset(torch.utils.data.Dataset[dict[str, Any]]):
         item = self._fetch_with_substitution(index, self._MAX_ATTEMPTS)
         item["repo_id"] = self.dataset.repo_id
         item["camera_kinds"] = self.camera_kinds
+        item["suggested_instructions"] = self.suggestions.get(
+            int(item["episode_index"]),
+            (),
+        )
         item.update(self.stats.item_tensors())
         return item
 
@@ -449,6 +455,46 @@ def annotation_stamp(
     return AnnotationStamp(prompt_hash=stamp_hash, judge_model=str(model))
 
 
+def episode_suggestions_of(
+    dataset_dir: Path,
+    repo_id: str,
+    stamp: AnnotationStamp,
+) -> dict[int, tuple[str, ...]]:
+    """Per-episode judge-suggested instruction rewrites (2-3 grounded
+    alternatives, present on every judged episode), from the sidecar
+    records matching the dataset's own stamp. Typed end to end via the
+    bijou.annotations contract; records that fail validation under the
+    current schema are skipped with one loud per-dataset summary (a
+    guard for older-stamp corpora — today every stamp is current)."""
+    suggestions: dict[int, tuple[str, ...]] = {}
+    skipped = 0
+    records = [
+        record
+        for record in load_sidecar(dataset_dir)
+        if record.prompt_hash == stamp.prompt_hash and record.model == stamp.judge_model
+    ]
+    # Evidence-keyed sidecars can hold several records per episode;
+    # sort so the LAST write wins deterministically.
+    records.sort(key=lambda r: (r.episode_index, r.judged_at))
+    for record in records:
+        try:
+            judgment = record.parsed_judgment()
+        except (KeyError, TypeError, ValueError):
+            skipped += 1
+            continue
+        rewrites = tuple(s for s in judgment.suggested_instructions if s.strip())
+        if rewrites:
+            suggestions[record.episode_index] = rewrites
+    if skipped:
+        print(
+            f"[instructions] {repo_id}: {skipped} sidecar record(s) failed "
+            "schema validation — their episodes keep the recorded "
+            "instruction",
+            flush=True,
+        )
+    return suggestions
+
+
 def camera_kinds_of(
     dataset_dir: Path,
     repo_id: str,
@@ -503,6 +549,8 @@ def select_datasets(
     split_seed: int = 0,
     allowed_fps: tuple[float, ...] | None = None,
     required_prompt_hash: str | None = None,
+    *,
+    load_suggested_instructions: bool = False,
 ) -> DataSelection:
     """Discover, validate and wrap datasets; drop the incompatible loudly.
 
@@ -650,13 +698,16 @@ def select_datasets(
             continue
         stamp = annotation_stamp(dataset_dir, repo_id, required_prompt_hash)
         kinds: dict[str, str] = {}
+        suggestions: dict[int, tuple[str, ...]] = {}
         if stamp is not None:
             annotated_repos.add(repo_id)
             annotation_stamps.add(stamp)
             kinds = camera_kinds_of(dataset_dir, repo_id, stamp)
             if kinds:
                 camera_kinds[repo_id] = kinds
-        datasets.append(StatsAttachedDataset(sub_dataset, stats, kinds))
+            if load_suggested_instructions:
+                suggestions = episode_suggestions_of(dataset_dir, repo_id, stamp)
+        datasets.append(StatsAttachedDataset(sub_dataset, stats, kinds, suggestions))
         selected_dirs[repo_id] = dataset_dir
         per_dataset_stats[repo_id] = stats
         lerobot_stats[repo_id] = sub_dataset.meta.stats

@@ -85,6 +85,7 @@ def collator(**overrides: Any) -> Collator[FakeInputs]:
         "action_codec": None,
         "aux": None,
         "camera_kind_dropout": 0.0,
+        "instruction_augment": 0.0,
     }
     kwargs.update(overrides)
     return Collator(**kwargs)
@@ -155,6 +156,45 @@ def test_camera_kinds_resolve_with_unknown_fallback() -> None:
     batch = collator()([bare])
     (prompt,) = batch.encoder_inputs.samples
     assert prompt.cameras[0].kind == "unknown"
+
+
+def test_instruction_augment_samples_judge_rewrites() -> None:
+    """With probability p the recorded task swaps for a uniformly drawn
+    judge rewrite; unjudged items (no/empty suggestions) always keep the
+    recorded string; the CLI override beats both."""
+    suggested = ("grasp the red cube", "pick the cube up and hold it")
+    judged = item(with_quantiles=True)
+    judged["suggested_instructions"] = suggested
+
+    always = collator(instruction_augment=1.0)
+    picked = {
+        always([dict(judged)]).encoder_inputs.samples[0].instruction for _ in range(16)
+    }
+    assert picked <= set(suggested)  # never the recorded string at p=1
+    assert len(picked) == 2  # both rewrites appear (uniform draw)
+
+    bare = item(with_quantiles=True)  # no suggestions key at all
+    assert always([bare]).encoder_inputs.samples[0].instruction == "pick up the cube"
+    off = collator(instruction_augment=0.0)
+    assert (
+        off([dict(judged)]).encoder_inputs.samples[0].instruction == "pick up the cube"
+    )
+    override = collator(instruction="do the thing", instruction_augment=1.0)
+    assert (
+        override([dict(judged)]).encoder_inputs.samples[0].instruction == "do the thing"
+    )
+    torch.manual_seed(11)
+    half = collator(instruction_augment=0.5)
+    sequence = [
+        half([dict(judged)]).encoder_inputs.samples[0].instruction for _ in range(32)
+    ]
+    assert "pick up the cube" in sequence  # recorded survives at p=0.5
+    assert any(s in suggested for s in sequence)
+    torch.manual_seed(11)
+    again = collator(instruction_augment=0.5)
+    assert [
+        again([dict(judged)]).encoder_inputs.samples[0].instruction for _ in range(32)
+    ] == sequence  # seeded determinism
 
 
 def test_camera_kind_dropout_is_seeded_and_bounded() -> None:

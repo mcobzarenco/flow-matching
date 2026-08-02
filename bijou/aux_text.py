@@ -36,11 +36,10 @@ text-vocabulary ids (the full-vocab head was chosen for exactly this);
 action ids live in the FAST block. The collator assembles both into one
 suffix tensor in BACKBONE id space.
 
-This module also owns the project-local lerobot "event" language style
-registration (idempotent set-adds on lerobot's documented import-time
-hook) — it is the DAG leaf both the judge (writer) and training
-(reader) sit above, so importing either side makes event rows
-resolvable.
+The artifact vocabulary (EVENT_STYLE + its lerobot registration, the
+camera-kind vocabulary, the verdict schema) lives one module lower, in
+``bijou.annotations`` — the contract leaf both the judge (writer) and
+the training readers import.
 """
 
 from __future__ import annotations
@@ -51,21 +50,10 @@ from typing import Any, Protocol, override
 
 import torch
 import transformers
-from lerobot.datasets.language import (
-    EVENT_ONLY_STYLES,
-    EXTENDED_STYLES,
-    STYLE_REGISTRY,
-)
 from lerobot.datasets.language_render import active_at
 from torch import Tensor
 
-# The project-local lerobot language style event rows are stored under.
-# bijou.judge.materialize writes rows with its own equal constant —
-# test-gated in tests/test_aux_text.py.
-EVENT_STYLE = "event"
-EXTENDED_STYLES.add(EVENT_STYLE)
-EVENT_ONLY_STYLES.add(EVENT_STYLE)
-STYLE_REGISTRY.add(EVENT_STYLE)
+from .annotations import EVENT_STYLE
 
 AUX_TEMPLATE_VERSION = 2
 # Suffix format 4 (the only trained format going forward): every
@@ -89,10 +77,6 @@ SUFFIX_FORMAT = 4
 MODE_SUFFIX_FORMAT = 3
 OPENER_SUFFIX_FORMAT = 2
 GENERATION_OPENER = "<|turn>model\n"
-# The judge's semantic camera-kind vocabulary (episode-annotations.md):
-# per-dataset majority vote; "unknown" doubles as the missing/tie/
-# dropout value, so prompts render one format everywhere.
-CAMERA_KINDS = frozenset({"wrist", "top", "front", "side", "unknown"})
 # Mode token offsets: backbone id = (block_base − NUM_MODES) + offset —
 # directly below the FAST block, inside the same reserved-unused tail,
 # embedded through the decoder's trainable mode tables.

@@ -25,8 +25,11 @@ machine inventory) lives in wandb, the HF hub, and the chat — not in
 Package layout (strict downward-only imports):
 `train`/`eval`/`rollout`/`judge` → `loading` → `model` →
 `encoders`/`decoders` → `interface` → `gemma4` (`data` beside `model`,
-imported by `loading`; `judge` touches only `data`; `aux_text` is a
-leaf beside `gemma4`, imported by `interface`/`data` and above), with
+imported by `loading`; `judge` touches only `data`; `aux_text` and
+`annotations` are leaves beside `gemma4` — `annotations` is the
+judge-annotation artifact CONTRACT, the shapes both the judge writer
+and the training readers share; production concerns — the prompt and
+its hash — stay in `judge`), with
 `interface.py` as the encoder×decoder seam
 and `model.py` the composition root: `BijouModel` owns the backbone
 ONCE and composes a prompt-side encoder strategy (which receives the
@@ -493,6 +496,21 @@ don't compose by averaging; extremes regress toward the median, measured
 quantiles by `ldtools.backfill_quantile_stats`. mean/std/min/max compose
 correctly and are untainted.
 
+**Instruction augmentation** (`--instruction-augment P`, default 0.0):
+with probability P a judged episode's recorded task string swaps for a
+uniformly drawn judge-suggested rewrite (2–3 grounded alternatives per
+judged episode, sidecar `suggested_instructions`, parsed typed through
+the `bijou.annotations` contract and attached per episode by
+StatsAttachedDataset). Uniform on purpose — phrasing DIVERSITY is the
+goal, not quality filtering; unjudged episodes always keep the recorded
+string, the CLI `--instruction` override beats both, and probes/eval
+score the recorded instruction (augment-0 clone), so eval numbers stay
+comparable across P. Directly attacks the rollout brittleness that the
+task string must match the recorded instruction. Pre-registered
+expectation for the first augmented run: recorded-string probe MAE may
+read marginally worse early while phrasing robustness improves —
+expected, not a regression.
+
 **Robustness.** Workers spawn (never fork — torchcodec is fork-unsafe);
 decoder cache capped (default OOMs hosts); `tolerance_s = 0.5/fps` (v3
 concatenated files break 1e-4 tolerance); corrupt community videos are
@@ -537,7 +555,9 @@ only) enables aux text training (§2.4); `--aux-loss-weight` sets w
 (default 0.5 — the labels are weak supervision); `--aux-dropout` sets
 the [ACT] mode-dropout rate (default 0.1); `--aux-prompt-hash` is the
 opt-in provenance pin (§2.4); `--camera-kind-dropout` (default 0.1,
-all decoder kinds) is the prompt-side kind→unknown dropout (§1). Train step returns
+all decoder kinds) is the prompt-side kind→unknown dropout (§1);
+`--instruction-augment` (default 0.0, all decoder kinds) samples
+judge-suggested task rewrites (§4). Train step returns
 component losses; `train/loss_action` + `train/loss_aux` log beside
 `train/loss` on aux runs (aux aggregates as CE-sum/token-count across
 the window and all ranks — a position-weighted mean, immune to the

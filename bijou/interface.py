@@ -325,6 +325,12 @@ class Collator[I: BatchInputs]:
     # Aux text rendering (ar_backbone only); requires action_codec.
     aux: AuxSpec | None
     camera_kind_dropout: float
+    # With probability p, swap the recorded task string for a uniformly
+    # drawn judge-suggested rewrite (item["suggested_instructions"],
+    # attached per episode by StatsAttachedDataset) — phrasing-diversity
+    # augmentation. The CLI --instruction override always wins; probes
+    # run an augment-0 clone (evals score the recorded instruction).
+    instruction_augment: float
     _generator: torch.Generator | None = dataclasses.field(
         default=None,
         repr=False,
@@ -336,22 +342,49 @@ class Collator[I: BatchInputs]:
             raise ValueError(
                 f"camera kind dropout {self.camera_kind_dropout} outside [0, 1)",
             )
+        if not 0.0 <= self.instruction_augment <= 1.0:
+            raise ValueError(
+                f"instruction augment {self.instruction_augment} outside [0, 1]",
+            )
 
     @override
     def __getstate__(self) -> dict[str, Any]:
         # Generators don't pickle; spawned workers re-seed lazily.
         return {**self.__dict__, "_generator": None}
 
+    def _rng(self) -> torch.Generator:
+        if self._generator is None:
+            self._generator = torch.Generator().manual_seed(torch.initial_seed())
+        return self._generator
+
     def _camera_kind(self, item: dict[str, Any], camera: str) -> str:
         kind = (item.get("camera_kinds") or {}).get(camera, "unknown")
-        if kind != "unknown" and self.camera_kind_dropout > 0.0:
-            if self._generator is None:
-                self._generator = torch.Generator().manual_seed(torch.initial_seed())
-            if float(torch.rand((), generator=self._generator)) < (
-                self.camera_kind_dropout
-            ):
-                return "unknown"
+        if (
+            kind != "unknown"
+            and self.camera_kind_dropout > 0.0
+            and float(torch.rand((), generator=self._rng())) < self.camera_kind_dropout
+        ):
+            return "unknown"
         return kind
+
+    def _instruction(self, item: dict[str, Any]) -> str:
+        """The prompt instruction for one item: CLI override > sampled
+        judge rewrite (probability ``instruction_augment``, uniform over
+        the episode's suggestions) > the recorded task string. Both
+        sandwich copies receive the same string by construction."""
+        if self.instruction is not None:
+            return self.instruction
+        recorded = str(item["task"])
+        if self.instruction_augment > 0.0:
+            suggestions = tuple(item.get("suggested_instructions") or ())
+            if suggestions and (
+                float(torch.rand((), generator=self._rng())) < self.instruction_augment
+            ):
+                pick = int(
+                    torch.randint(len(suggestions), (), generator=self._rng()),
+                )
+                return suggestions[pick]
+        return recorded
 
     def _action_tokens(self, items: list[dict[str, Any]]) -> Tensor | None:
         """Tokenize each item's action chunk (worker-side CPU), PAD-pad to
@@ -443,7 +476,7 @@ class Collator[I: BatchInputs]:
         """
         samples = [
             PromptInputs(
-                instruction=self.instruction or str(item["task"]),
+                instruction=self._instruction(item),
                 cameras=tuple(
                     CameraFrame(
                         name=(name := key.removeprefix(_IMAGE_KEY_PREFIX)),

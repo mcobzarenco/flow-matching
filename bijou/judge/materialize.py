@@ -76,18 +76,13 @@ from lerobot.datasets.io_utils import (
     write_info,
     write_table_one_row_group_per_episode,
 )
-from lerobot.datasets.language import (
-    EVENT_ONLY_STYLES,
-    EXTENDED_STYLES,
-    STYLE_REGISTRY,
-    language_feature_info,
-)
+from lerobot.datasets.language import language_feature_info
 
+from ..annotations import EVENT_STYLE
 from .evidence import short_camera
 from .schema import PROMPT_HASH, EpisodeJudgment, FrameAnnotation
 from .store import JudgmentRecord, load_sidecar
 
-EVENT_STYLE = "event"
 ANNOTATION_PROGRESS = "annotation.progress"
 ANNOTATION_HOLDING = "annotation.holding"
 ANNOTATION_VISIBLE_OBJECT = "annotation.visible_object"
@@ -99,21 +94,6 @@ ANNOTATION_COLUMNS = (
     ANNOTATION_VISIBLE_GRIPPER,
 )
 PROVENANCE_RELPATH = Path("meta") / "judge_annotations.json"
-
-
-def _register_event_style() -> None:
-    """Register the project-local "event" style with lerobot's language
-    machinery via its documented import-time hook: ``EVENT_ONLY_STYLES``
-    routes rows to ``language_events`` in the writer and resolvers;
-    ``EXTENDED_STYLES``/``STYLE_REGISTRY`` mark the style known
-    (``STYLE_REGISTRY`` is a snapshot union built at lerobot import, so
-    it needs the explicit add)."""
-    EXTENDED_STYLES.add(EVENT_STYLE)
-    EVENT_ONLY_STYLES.add(EVENT_STYLE)
-    STYLE_REGISTRY.add(EVENT_STYLE)
-
-
-_register_event_style()
 
 
 def select_records(

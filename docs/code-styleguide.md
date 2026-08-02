@@ -111,12 +111,18 @@ not a test.
   `train`/`eval`/`rollout`/`judge` → `loading` → `model` →
   `encoders`/`decoders` → `interface` → `gemma4`, importing downward
   only; `data` sits beside `model` (loading imports both; `judge`
-  touches only `data`); `aux_text` is a leaf beside `gemma4` (imported
-  by `interface`, `data` and everything above — it owns the lerobot
-  "event" language-style registration both the judge writer and the
-  training reader rely on, and a test asserts the two modules'
-  EVENT_STYLE constants agree, exactly so judge → data never
-  reverses). No module imports its importer.
+  touches only `data`); `aux_text` and `annotations` are leaves beside
+  `gemma4`. `annotations` is the judge-annotation ARTIFACT contract
+  (verdict schema, sidecar record + I/O, camera-kind vocabulary, the
+  lerobot "event" style registration): the judge WRITES artifacts and
+  training READS them, so the shapes live below both —
+  `judge/schema.py`/`store.py` re-export the moved names (judge-side
+  call sites unaffected), while `SYSTEM_PROMPT`/`PROMPT_HASH` (how
+  verdicts are produced) stay judge-side. This is what keeps
+  judge → data from ever reversing. No module imports its importer.
+  (Added 2026-08-02: `data` needed typed sidecar parsing for
+  instruction augmentation; groping the JSON untyped to dodge a DAG
+  edge was the smell — moving the contract was the fix.)
   (`loading` owns the checkpoint schema — both the write side,
   `CheckpointMetadata`, and the read side, `CheckpointInfo`/
   `checkpoint_sections` — because `train` and `eval` both sit above it.)

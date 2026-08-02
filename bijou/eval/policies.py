@@ -129,8 +129,11 @@ class BijouPolicy:
             aux=None,
             # Kinds travel with the items (StatsAttachedDataset attaches
             # them; rollout items carry an explicit map); never dropped
-            # at inference — dropout is a train-time regularizer.
+            # at inference — dropout is a train-time regularizer. Same
+            # for instruction augmentation: inference scores/serves the
+            # instruction it was GIVEN.
             camera_kind_dropout=0.0,
+            instruction_augment=0.0,
         )
 
     @torch.no_grad()

@@ -142,6 +142,7 @@ class TrainArgs:
     aux_dropout: float
     aux_prompt_hash: str | None
     camera_kind_dropout: float
+    instruction_augment: float
     decoder_hidden: int
     decoder_heads: int
     decoder_intermediate: int
@@ -1106,6 +1107,15 @@ def parse_args() -> TrainArgs:
         "kinds",
     )
     parser.add_argument(
+        "--instruction-augment",
+        type=float,
+        default=0.0,
+        help="probability of swapping the recorded task string for a "
+        "uniformly drawn judge-suggested rewrite (phrasing diversity; "
+        "judged episodes only — unjudged keep the recorded string). "
+        "Probes always score the recorded instruction",
+    )
+    parser.add_argument(
         "--fast-tokenizer",
         default=None,
         help="FAST tokenizer artifact: a local directory or "
@@ -1329,6 +1339,10 @@ def parse_args() -> TrainArgs:
         parser.error(
             f"--camera-kind-dropout {raw.camera_kind_dropout} outside [0, 1)",
         )
+    if not 0.0 <= raw.instruction_augment <= 1.0:
+        parser.error(
+            f"--instruction-augment {raw.instruction_augment} outside [0, 1]",
+        )
     aux_dropout = (
         raw.aux_dropout
         if raw.aux_dropout is not None
@@ -1391,6 +1405,7 @@ def parse_args() -> TrainArgs:
         aux_dropout=aux_dropout,
         aux_prompt_hash=raw.aux_prompt_hash,
         camera_kind_dropout=raw.camera_kind_dropout,
+        instruction_augment=raw.instruction_augment,
         decoder_hidden=raw.decoder_hidden,
         decoder_heads=raw.decoder_heads,
         decoder_intermediate=raw.decoder_intermediate,
@@ -1477,6 +1492,7 @@ def main() -> int:
         split_seed=args.split_seed,
         allowed_fps=args.fps,
         required_prompt_hash=args.aux_prompt_hash,
+        load_suggested_instructions=args.instruction_augment > 0,
     )
     action_dim, state_dim = selection.action_dim, selection.state_dim
     per_dataset_stats = selection.per_dataset_stats
@@ -1587,7 +1603,15 @@ def main() -> int:
         action_codec=action_codec,
         aux=aux_spec,
         camera_kind_dropout=args.camera_kind_dropout,
+        instruction_augment=args.instruction_augment,
     )
+    if is_main and args.instruction_augment > 0:
+        with_rewrites = sum(len(dataset.suggestions) for dataset in selection.datasets)
+        print(
+            f"instruction augment: p={args.instruction_augment}, "
+            f"{with_rewrites} episode(s) carry judge rewrites",
+            flush=True,
+        )
     if is_main and selection.camera_kinds:
         tagged = sum(len(v) for v in selection.camera_kinds.values())
         print(
@@ -1605,6 +1629,7 @@ def main() -> int:
             dataclasses.replace(aux_spec, dropout=0.0) if aux_spec is not None else None
         ),
         camera_kind_dropout=0.0,
+        instruction_augment=0.0,
     )
     # The explicit generator (both modes) makes the shuffle order and the
     # dataloader worker base-seeds a pure function of (--seed, rank) —

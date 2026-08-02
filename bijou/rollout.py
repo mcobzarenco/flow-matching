@@ -45,7 +45,8 @@ import torch
 from lerobot.cameras.opencv import OpenCVCameraConfig
 from lerobot.robots.so_follower import SOFollower, SOFollowerRobotConfig
 
-from .aux_text import CAMERA_KINDS, AuxDecodeMode
+from .annotations import CAMERA_KINDS
+from .aux_text import AuxDecodeMode
 from .data import DatasetStats
 from .eval.policies import BijouPolicy
 from .model import SamplingMethod
