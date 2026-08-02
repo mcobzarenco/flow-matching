@@ -216,6 +216,15 @@ class StatsAttachedDataset(torch.utils.data.Dataset[dict[str, Any]]):
     # file; attempts bound the walk if corruption spans multiple regions.
     _RETRY_STRIDE = 9973
     _MAX_ATTEMPTS = 5
+    # Circuit breaker: substitution absorbs RARE pathologies (a handful
+    # of undecodable frames in crowd-sourced recordings — e.g. the
+    # timestamp-desync class, curation field report 2026-08-02); it must
+    # not paper over a systematically broken dataset or a bad refactor.
+    # Consecutive failures already die via _MAX_ATTEMPTS; SCATTERED
+    # breakage is what the rate check catches. Per-instance = per
+    # (worker, dataset); the floor avoids small-sample aborts.
+    _BREAKER_MIN_FETCHES = 100
+    _BREAKER_MAX_RATE = 0.05
 
     def __init__(
         self,
@@ -229,6 +238,7 @@ class StatsAttachedDataset(torch.utils.data.Dataset[dict[str, Any]]):
         self.camera_kinds = camera_kinds
         self.episode_annotations = episode_annotations
         self.failed_fetches = 0
+        self.total_fetches = 0
 
     def __len__(self) -> int:
         return len(self.dataset)
@@ -246,18 +256,30 @@ class StatsAttachedDataset(torch.utils.data.Dataset[dict[str, Any]]):
         return item
 
     def _fetch_with_substitution(self, index: int, attempts: int) -> dict[str, Any]:
+        self.total_fetches += 1
         try:
             return self.dataset[index]
         except Exception as error:
             if attempts <= 1:
                 raise
             self.failed_fetches += 1
+            if (
+                self.total_fetches >= self._BREAKER_MIN_FETCHES
+                and self.failed_fetches / self.total_fetches > self._BREAKER_MAX_RATE
+            ):
+                raise RuntimeError(
+                    f"{self.dataset.repo_id}: {self.failed_fetches} of "
+                    f"{self.total_fetches} fetches in this process failed "
+                    f"(> {self._BREAKER_MAX_RATE:.0%}) — substitution absorbs "
+                    "rare pathologies, not systematic breakage; inspect the "
+                    "dataset or drop it via --exclude",
+                ) from error
             substitute = (index + self._RETRY_STRIDE) % len(self.dataset)
             print(
                 f"[data] {self.dataset.repo_id}[{index}] unfetchable "
                 f"({type(error).__name__}: {error}); substituting index "
-                f"{substitute} (failure #{self.failed_fetches} in this "
-                "process)",
+                f"{substitute} (failure #{self.failed_fetches} of "
+                f"{self.total_fetches} fetches in this process)",
                 file=sys.stderr,
                 flush=True,
             )
