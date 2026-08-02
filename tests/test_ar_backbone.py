@@ -2,8 +2,9 @@
 
 Reuses the keystone fixture family (tests/test_backbone_continuation)
 with a 256-token vocabulary so the FAST block (fixture codec: 130 ids)
-sits at the vocabulary TAIL — block_base 126 — mirroring the real plan
-(E2B: 1026 ids at 258885 inside the unused tail). Covers: config
+sits at the vocabulary TAIL — block_base 126 — mirroring the real
+placement (E2B: 1026 ids at 261118, inside the reserved-unused run
+starting at 258885). Covers: config
 round-trip, the patched full-vocabulary head (text columns = the tied
 head's, block columns = the patch's, softcap after overwrite),
 teacher-forced-vs-incremental consistency (the decode loop's cache path

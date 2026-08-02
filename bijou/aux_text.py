@@ -39,6 +39,7 @@ from enum import StrEnum
 from typing import Any, Protocol, override
 
 import torch
+import transformers
 from lerobot.datasets.language_render import active_at
 from torch import Tensor
 
@@ -218,11 +219,8 @@ class AuxSpec:
 
     def tokenizer(self) -> TextTokenizer:
         if self._tokenizer is None:
-            # Lazy import cost lives in transformers itself (already a
-            # collator dependency); the tokenizer files are the processor
-            # dir's.
-            import transformers  # heavy; workers only
-
+            # Built lazily worker-side (the instance is dropped by
+            # __getstate__); the tokenizer files are the processor dir's.
             self._tokenizer = transformers.AutoTokenizer.from_pretrained(
                 self.tokenizer_dir,
             )
@@ -340,6 +338,15 @@ def assemble_suffix(
     is_aux = torch.zeros((batch, width), dtype=torch.bool)
     for i, aux in enumerate(aux_ids):
         if aux:
+            # Text ids must stay below the block: an id inside the
+            # reserved run would silently alias an action token in the
+            # loss/decode routing (never produced by a real tokenizer,
+            # but "never" is what asserts are for).
+            if max(aux) >= block_base:
+                raise ValueError(
+                    f"aux row {i} contains id {max(aux)} >= block_base "
+                    f"{block_base} — aux ids must be text-vocabulary ids",
+                )
             suffix[i, : len(aux)] = torch.tensor(aux, dtype=torch.long)
             is_aux[i, : len(aux)] = True
         suffix[i, len(aux) : len(aux) + blocks.shape[1]] = blocks[i]

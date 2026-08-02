@@ -511,7 +511,8 @@ def holding_likelihood_accuracy(
 ) -> float | None:
     """Teacher-forced likelihood accuracy for ``holding`` over the items
     that carry the label: score p(yes) vs p(no) at the value position
-    under the LABEL context (opener + rendered subgoal field + holding
+    under the LABEL context (opener + the trained fields preceding
+    holding in template order, as the labels render them + holding
     header) — no generation involved, so it measures the sparse field
     free decoding rarely elicits. Returns None when no item is labeled.
 
@@ -531,9 +532,13 @@ def holding_likelihood_accuracy(
         if value is None or not bool(torch.isfinite(value)):
             continue
         prefix = list(decoder.opener_ids)
-        subgoal_ids = aux_spec.render_field(AuxField.SUBGOAL, item)
-        if subgoal_ids is not None:
-            prefix.extend(subgoal_ids)
+        # Context = exactly what training put before holding: the run's
+        # OWN fields, template order (a field the run never trained
+        # would make the scoring context OOD).
+        if AuxField.SUBGOAL in aux_spec.fields:
+            subgoal_ids = aux_spec.render_field(AuxField.SUBGOAL, item)
+            if subgoal_ids is not None:
+                prefix.extend(subgoal_ids)
         prefix.extend(runtime.header_ids[AuxField.HOLDING])
         row_batch = collator([item]).to(device)
         row_memory = model.encode(row_batch.encoder_inputs, with_grad=False)
@@ -1243,6 +1248,15 @@ def parse_args() -> TrainArgs:
         parser.error("--aux-fields is ar_backbone-only (aux rides its suffix)")
     if raw.aux_fields is not None and not raw.aux_fields:
         parser.error("--aux-fields given with no fields — omit the flag instead")
+    if raw.aux_fields is not None:
+        # Template order is an invariant, not a preference (AuxSpec
+        # re-guards, but that fires only after dataset selection).
+        ordered = [f.value for f in AuxField if f.value in raw.aux_fields]
+        if list(raw.aux_fields) != ordered:
+            parser.error(
+                f"--aux-fields must keep template order {ordered} "
+                f"(got {list(raw.aux_fields)})",
+            )
     if raw.aux_loss_weight <= 0:
         parser.error("--aux-loss-weight must be > 0 (omit --aux-fields to disable)")
     if raw.decoder == "ar_backbone":

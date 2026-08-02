@@ -1,14 +1,16 @@
 """Decoder-only action decoder: the backbone's suffix role (ar_backbone).
 
 The prompt is prefill-encoded once (the ObservationMemory retains the
-full prefix KV cache); this decoder continues ``[state][BOA][t_1..t_k]``
+full prefix KV cache); this decoder continues the suffix-format-2
+sequence ``[state][<start_of_turn>model\\n][aux text?][BOA][t_1..t_k]``
 through ALL backbone layers — the KV-shared deep half included — and
 reads FULL-VOCABULARY logits from the frozen tied LM head with the FAST
-block's columns supplied by a trainable patch. Aux text outputs (future)
-extend the same head; today every predicted position is an action token
-and decoding is grammar-constrained inside the block from the seeded
-BOA onward. (Aux + actions will share one softmax: text first, then the
-grammar-fixed action block, one head.)
+block's columns supplied by a trainable patch. Aux text (subgoal /
+holding / progress rendered from judge annotations, bijou.aux_text) and
+action tokens share that one softmax: the last opener position is the
+trained DECISION POINT — first aux token on labeled samples, BOA
+otherwise — so an aux-less run trains the decision point to BOA on
+every sample and the two regimes stay one model family.
 
 Ownership: this module owns ONLY the new parameters (~11M at E2B scale)
 — the state projection (suffix position 0, zero-initialized so the
@@ -19,17 +21,23 @@ stays exactly "the new parameters".
 
 Id spaces: the collator's ``action_tokens`` and the codec speak CODEC
 ids [0, vocab_total); the head/targets speak backbone ids
-``block_base + codec_id`` (a contiguous run of reserved-unused vocabulary
-ids — E2B: 258885.., inside the 3259-id unused tail). The backbone never
-consumes FAST ids as ids: suffix tokens enter as patch embeddings via
-``inputs_embeds``/``per_layer_inputs``; the block ids exist so action
-and text tokens share one softmax (full-vocab CE now, aux text later).
+``block_base + codec_id`` — the block is TAIL-anchored at
+``vocab_size − vocab_total`` (E2B: 261118..262143, inside the 3259-id
+reserved-unused run starting at 258885). Aux text ids are ordinary
+sub-block text ids. The backbone never consumes FAST ids as ids: suffix
+tokens enter as embeddings via ``inputs_embeds``/``per_layer_inputs``
+(text ids through the frozen tables, block ids through the patch); the
+block ids exist so actions and text share one softmax under
+full-vocabulary CE.
 
-Sequence/loss conventions mirror ``ar_fast``: BOA seeds and is never
-predicted (the state position's constant target is ignored), PAD is
-batch padding only, there is no EOA (length is fixed by the FAST
-grammar), and constrained greedy decode masks to body tokens whose BPE
-symbol expansion fits the remaining chunk*dim budget.
+Sequence/loss conventions: state and all-but-the-last opener positions
+predict constants and are IGNOREd; BOA IS predicted (the decision
+point's target on aux-less samples, the aux segment's terminator
+otherwise); PAD is batch padding only and always ignored; there is no
+EOA (action length is fixed by the FAST grammar). Decoding is the ONE
+free-until-BOA path (:meth:`ARBackboneDecoder.predict_chunk_with_text`):
+text-or-BOA mask under a token budget, then the ar_fast-style
+grammar-constrained greedy mask by remaining symbol budget.
 """
 
 from __future__ import annotations
@@ -56,11 +64,6 @@ from ..gemma4.model import Gemma4Model
 from ..interface import CollatedBatch, ObservationMemory
 from ..nn import DeviceLike
 from .ar_fast import IGNORE_INDEX
-
-# Free-text aux value caps (safety net at decode; training truncates via
-# AuxSpec.max_subgoal_tokens).
-MAX_SUBGOAL_DECODE_TOKENS = 24
-MAX_PROGRESS_DECODE_TOKENS = 6
 
 
 @dataclass(frozen=True, slots=True)
@@ -91,6 +94,12 @@ class ARBackboneConfig:
             raise ValueError(f"vocab_total {self.vocab_total} is not a FAST vocabulary")
         if self.block_base < 0:
             raise ValueError(f"block_base {self.block_base} must be non-negative")
+        if self.aux is not None and self.suffix_format < SUFFIX_FORMAT:
+            raise ValueError(
+                f"aux config on suffix format {self.suffix_format}: aux "
+                "text shipped WITH the opener format — no such checkpoint "
+                "exists, and the decode path could not elicit it",
+            )
 
 
 class ARBackboneDecoder(nn.Module):

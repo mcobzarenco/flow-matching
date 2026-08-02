@@ -1,18 +1,19 @@
-"""ARBackboneDecoder aux path (commit ② of the aux feature).
+"""ARBackboneDecoder aux path (suffix format 2).
 
 Builds on test_ar_backbone's tiny fixture family (256-vocab text-only
 model, fixture FAST codec at the vocabulary tail). Covers: the
 range-split suffix embedding (text ids through the frozen tables, block
 ids through the patch — and bitwise identity of the all-block path),
 the componentized full-vocab CE (aux-off single-call equality; aux-on
-weighting arithmetic), config round-trip with the aux section, and
-forced-scaffold decode_with_aux (headers forced, holding constrained to
-{yes,no}, block ids masked out of text values, valid action chunk,
-loud guard without a runtime).
+weighting arithmetic), config round-trip with the aux section, and the
+ONE free-until-BOA decode path (block ids masked out of the free phase,
+budget enforced, force-BOA fallback counted, always a grammar-valid
+action chunk).
 """
 
 from __future__ import annotations
 
+import dataclasses
 import json
 
 import pytest
@@ -28,10 +29,14 @@ from test_ar_backbone import (
 )
 from test_aux_text import CharTokenizer
 
+import bijou.decoders.ar_backbone
 from bijou.aux_text import (
     AUX_TEMPLATE_VERSION,
+    GENERATION_OPENER,
+    MAX_FREE_TOKENS,
     AuxDecodeConfig,
     AuxField,
+    assemble_suffix,
     build_aux_runtime,
 )
 from bijou.decoders.ar_backbone import (
@@ -61,8 +66,6 @@ def build_with_aux() -> tuple[Gemma4Model, ARBackboneDecoder]:
 
 def test_config_roundtrips_with_aux_section() -> None:
     loaded = codec()
-    import dataclasses
-
     config = dataclasses.replace(decoder_config(loaded), aux=aux_config())
     payload = json.loads(json.dumps(ar_backbone_config_to_dict(config)))
     assert payload["aux"]["fields"] == ["subgoal", "holding", "progress"]
@@ -135,10 +138,6 @@ def test_aux_on_loss_components_and_weighting() -> None:
     assert tokens is not None
     # Hand-assembled mixed suffix: a short aux text before the actions.
     aux_ids = [[ord(c) for c in "holding: yes\n"], []]
-    import dataclasses
-
-    from bijou.aux_text import assemble_suffix
-
     suffix, is_aux = assemble_suffix(
         aux_ids,
         tokens,
@@ -167,8 +166,6 @@ def test_free_decode_is_budgeted_and_always_yields_chunks() -> None:
     chunks, generations = decoder.predict_chunk_with_text(backbone, memory, sample)
     assert chunks.shape == (BATCH, loaded.time_horizon, loaded.action_dim)
     assert bool(torch.isfinite(chunks).all())
-    from bijou.aux_text import MAX_FREE_TOKENS
-
     for generation in generations:
         # Free ids decode as text (char stub): never block ids, bounded.
         assert len(generation.text) <= MAX_FREE_TOKENS
@@ -178,9 +175,9 @@ def test_free_decode_is_budgeted_and_always_yields_chunks() -> None:
 def test_zero_budget_forces_boa_and_counts_fallback(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    import bijou.decoders.ar_backbone as module
-
-    monkeypatch.setattr(module, "MAX_FREE_TOKENS", 0)
+    # Patch the DECODER module's binding (predict_chunk_with_text reads
+    # its own global, not aux_text's).
+    monkeypatch.setattr(bijou.decoders.ar_backbone, "MAX_FREE_TOKENS", 0)
     backbone, decoder = build_with_aux()
     loaded = codec()
     chunks, generations = decoder.predict_chunk_with_text(
@@ -207,7 +204,5 @@ def test_format2_requires_tokenizer() -> None:
 
 
 def test_opener_ids_tokenize_the_template_opener() -> None:
-    from bijou.aux_text import GENERATION_OPENER
-
     _, decoder = build_with_aux()
     assert decoder.opener_ids == tuple(ord(c) for c in GENERATION_OPENER)
