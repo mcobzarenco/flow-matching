@@ -2208,6 +2208,14 @@ def main() -> int:
                 holdout_fraction=args.holdout_episodes,
                 split_seed=args.split_seed,
                 allowed_fps=args.fps,
+                # The eval probe needs the SAME per-episode labels the
+                # train side loads: Q1 conditions probe frames on their
+                # true labels, Q2 slices by outcome, Q3 flips it — all
+                # three are silently dead without them (caught in the
+                # pre-launch audit of the first conditioned run).
+                load_episode_annotations=(
+                    args.instruction_augment > 0 or args.condition_fields is not None
+                ),
             )
             eval_dataset = eval_selection.concat()
             eval_probe = build_probe_set(
