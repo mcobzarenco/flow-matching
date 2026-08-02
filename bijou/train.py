@@ -73,6 +73,7 @@ from .aux_text import (
     SUFFIX_FORMAT,
     AuxDecodeConfig,
     AuxField,
+    AuxGeneration,
     AuxSpec,
     aux_label_text,
     build_aux_runtime,
@@ -617,6 +618,24 @@ def validate(
     mae = float(totals[0] / totals[1].clamp(min=1))
 
     if wandb_run is not None and probe.rich_items and collator is not None:
+        # Aux generations (ar_backbone) ride IN the samples table as two
+        # raw-string columns — the whole generated aux segment next to
+        # what the labels would render — computed up front so the column
+        # set is known. Rank-0-only, no collectives, bounded to the rich
+        # subset (one extra free-until-BOA decode over ≤ EVAL_TABLE_ROWS).
+        decoder = model.decoder
+        generations: list[AuxGeneration] | None = None
+        aux_fields: tuple[AuxField, ...] = ()
+        if isinstance(decoder, ARBackboneDecoder):
+            rich_batch = collator(probe.rich_items).to(device)
+            rich_memory = model.encode(rich_batch.encoder_inputs, with_grad=False)
+            _, generations = decoder.predict_chunk_with_text(
+                model.backbone,
+                rich_memory,
+                rich_batch,
+            )
+            if collator.aux is not None:
+                aux_fields = collator.aux.fields
         # Cameras vary per sample across mixed datasets: generic positional
         # columns, padded with None where a sample has fewer cameras.
         per_item_cameras = [collator.cameras_of(item) for item in probe.rich_items]
@@ -628,6 +647,7 @@ def validate(
             "state",
             "chunk_mae",
             "pred_vs_truth",
+            *(["aux_generated", "aux_label"] if generations is not None else []),
         ]
         table = wandb.Table(columns=columns)
         for i, (item, row) in enumerate(zip(probe.rich_items, rich_rows, strict=True)):
@@ -653,6 +673,12 @@ def validate(
             state_str = ", ".join(
                 f"{x:.1f}" for x in item["observation.state"].tolist()
             )
+            aux_columns: tuple[str, ...] = ()
+            if generations is not None:
+                aux_columns = (
+                    generations[i].text,
+                    aux_label_text(item, aux_fields) if aux_fields else "",
+                )
             table.add_data(
                 i,
                 *images,
@@ -660,37 +686,13 @@ def validate(
                 state_str,
                 float((row.sampled - row.truth).abs()[row.valid].mean()),
                 wandb.Image(figure),
+                *aux_columns,
             )
             plt.close(figure)
         wandb_run.log({table_key: table}, step=step)
 
-        # Aux generations vs labels + holding likelihood, rank-0-only
-        # (no collectives inside): the qualitative + quantitative aux
-        # surfaces, bounded to the rich subset.
-        decoder = model.decoder
         if isinstance(decoder, ARBackboneDecoder):
-            rich_batch = collator(probe.rich_items).to(device)
-            memory = model.encode(rich_batch.encoder_inputs, with_grad=False)
-            _, generations = decoder.predict_chunk_with_text(
-                model.backbone,
-                memory,
-                rich_batch,
-            )
             aux_spec = collator.aux
-            fields = aux_spec.fields if aux_spec is not None else ()
-            aux_table = wandb.Table(
-                columns=["sample", "task", "generated", "label"],
-            )
-            for i, (item, generation) in enumerate(
-                zip(probe.rich_items, generations, strict=True),
-            ):
-                aux_table.add_data(
-                    i,
-                    str(item["task"]),
-                    generation.text,
-                    aux_label_text(item, fields) if fields else "",
-                )
-            wandb_run.log({f"{table_key}_aux": aux_table}, step=step)
             if decoder.aux_runtime is not None and aux_spec is not None:
                 accuracy = holding_likelihood_accuracy(
                     model,
