@@ -382,11 +382,17 @@ Trained text outputs rendered from the LLM-judge annotations
   collator runs a dropout-0 clone so eval tables always show true
   labels.
 - **Field set and order.** `--aux-fields` selects a subset of
-  {subgoal, holding, progress, event} but never reorders (template
-  order is validated at the CLI boundary and re-guarded in `AuxSpec`);
-  free-text values (subgoal, event) are truncated at 16 tokens,
-  loudly. The FREE-decode budget (`MAX_FREE_TOKENS = 72`) covers the
-  worst-case full template with slack.
+  {subgoal, holding, progress, event, visible} but never reorders
+  (template order is validated at the CLI boundary and re-guarded in
+  `AuxSpec`; new fields APPEND so trained prefixes stay stable);
+  free-text values are truncated loudly (subgoal 16, event 24 —
+  multi-event joins). `visible` renders which cameras see the task
+  object and the gripper (`visible: object top; gripper top,wrist`),
+  labeled by semantic kind — view-binding is the most directly
+  grounding-targeted label available; "none" on a sampled frame is a
+  TRUE negative (occlusion is signal). The FREE-decode budget
+  (`MAX_FREE_TOKENS = 96`) covers the worst-case full template with
+  slack.
 - **Template versioning.** `AUX_TEMPLATE_VERSION` (2) rides in the
   checkpoint's decoder section (`AuxDecodeConfig`: version, fields,
   prompt hash, judge model); loading a version this code doesn't know
@@ -505,7 +511,11 @@ StatsAttachedDataset). Uniform on purpose — phrasing DIVERSITY is the
 goal, not quality filtering; unjudged episodes always keep the recorded
 string, the CLI `--instruction` override beats both, and probes/eval
 score the recorded instruction (augment-0 clone), so eval numbers stay
-comparable across P. Directly attacks the rollout brittleness that the
+comparable across P. The rewrite pool also includes the judge's
+`observed_task` description — hindsight relabeling to what actually
+happened — GATED to completion==yes episodes until outcome
+conditioning ships (an instruction describing a failure must not train
+as instruction-following without the outcome label explaining it). Directly attacks the rollout brittleness that the
 task string must match the recorded instruction. Pre-registered
 expectation for the first augmented run: recorded-string probe MAE may
 read marginally worse early while phrasing robustness improves —

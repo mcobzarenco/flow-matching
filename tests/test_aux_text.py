@@ -169,6 +169,38 @@ def test_event_truncation_is_bounded() -> None:
     assert text.count("z") == 8
 
 
+def test_visibility_renders_kind_labels_and_true_negatives() -> None:
+    """Sampled frames render which cameras see object/gripper, labeled
+    by semantic kind (short-name fallback for unknown); all-zeros is a
+    TRUE 'none' (occlusion is signal); NaN frames render nothing."""
+    item = judged_item()
+    # Slot order = sorted short names: gripper_cam, overhead.
+    item["camera_kinds"] = {"overhead": "top", "gripper_cam": "wrist"}
+    item["annotation.visible_object"] = torch.tensor([0.0, 1.0])
+    item["annotation.visible_gripper"] = torch.tensor([1.0, 1.0])
+    text = decode(spec().render(item))
+    assert "visible: object top; gripper wrist,top\n" in text
+
+    item["annotation.visible_object"] = torch.tensor([0.0, 0.0])
+    assert "visible: object none; gripper wrist,top\n" in decode(spec().render(item))
+
+    item["annotation.visible_object"] = torch.tensor([math.nan, math.nan])
+    assert "visible" not in decode(spec().render(item))
+
+
+def test_visibility_handles_single_camera_scalars_and_mismatch() -> None:
+    # lerobot stores shape-(1,) features as 0-d scalars.
+    item = judged_item()
+    item["camera_kinds"] = {"cam": "front"}
+    item["annotation.visible_object"] = torch.tensor(1.0)
+    item["annotation.visible_gripper"] = torch.tensor(0.0)
+    assert "visible: object front; gripper none\n" in decode(spec().render(item))
+    # Kinds/vector slot-count disagreement renders nothing (data issue,
+    # not guessed through).
+    item["camera_kinds"] = {"cam": "front", "ghost": "top"}
+    assert "visible" not in decode(spec().render(item))
+
+
 def test_presence_based_fields() -> None:
     # Unsampled frame: holding/progress NaN -> subgoal only.
     item = judged_item(holding=math.nan, progress=math.nan)

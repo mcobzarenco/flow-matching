@@ -84,24 +84,28 @@ ACT_MODE = 0
 AUX_MODE = 1
 NUM_MODES = 2
 # Free-phase token budget at decode: worst-case configured template
-# (headers ~14 + subgoal 16 + holding 4 + progress 5 + event 16) with
-# slack; the fallback (force BOA, count it) fires past this.
-MAX_FREE_TOKENS = 72
+# (headers ~18 + subgoal 16 + holding 4 + progress 5 + event 24 +
+# visible ~14) with slack; the fallback (force BOA, count it) fires
+# past this.
+MAX_FREE_TOKENS = 96
 FIELD_TERMINATOR = "\n"
 SUBGOAL_HEADER = "subgoal: "
 HOLDING_HEADER = "holding: "
 PROGRESS_HEADER = "progress: "
 EVENT_HEADER = "event: "
+VISIBLE_HEADER = "visible: "
 HOLDING_VALUES = ("no", "yes")  # indexed by the 0/1 label
 
 
 class AuxField(StrEnum):
-    """Aux fields in their fixed template order."""
+    """Aux fields in their fixed template order (new fields append —
+    existing checkpoints' trained prefixes stay stable)."""
 
     SUBGOAL = "subgoal"
     HOLDING = "holding"
     PROGRESS = "progress"
     EVENT = "event"
+    VISIBLE = "visible"
 
 
 class AuxDecodeMode(StrEnum):
@@ -199,6 +203,7 @@ def build_aux_runtime(
         AuxField.HOLDING: encode(HOLDING_HEADER),
         AuxField.PROGRESS: encode(PROGRESS_HEADER),
         AuxField.EVENT: encode(EVENT_HEADER),
+        AuxField.VISIBLE: encode(VISIBLE_HEADER),
     }
     candidates: dict[AuxField, tuple[tuple[int, ...], ...]] = {
         # Constrained value set; first-token argmax picks the candidate,
@@ -225,6 +230,7 @@ class AuxGeneration:
     holding: bool | None
     progress: float | None
     event: str | None
+    visible: str | None
 
 
 @dataclass
@@ -339,6 +345,12 @@ class AuxSpec:
                     )
                     body = body[: self.max_event_tokens]
                 return header + body + self._encode(FIELD_TERMINATOR)
+            case AuxField.VISIBLE:
+                text = visibility_text(item)
+                if text is None:
+                    return None
+                # Bounded by camera count — no truncation cap needed.
+                return self._encode(f"{VISIBLE_HEADER}{text}{FIELD_TERMINATOR}")
 
     def render(self, item: dict[str, Any]) -> list[int]:
         """All present fields' token ids, template order. Empty for
@@ -358,6 +370,47 @@ class AuxSpec:
             if float(torch.rand((), generator=self._generator)) < self.dropout:
                 return []
         return ids
+
+
+def visibility_text(item: dict[str, Any]) -> str | None:
+    """``object top,wrist; gripper top`` — which cameras can see the task
+    object and the gripper on this frame, or None when the frame wasn't
+    judge-sampled (NaN mask) or no camera map travels with the item.
+    Slot order is the feature's convention (sorted camera short names —
+    the same sort as the item's camera_kinds keys); cameras are labeled
+    by semantic kind, falling back to the short name where the kind is
+    unknown, deduplicated in slot order. Cameras seeing nothing render
+    "none" — a TRUE negative on sampled frames (occlusion is signal).
+    Slot-count mismatches (kinds map ≠ visibility vector) render
+    nothing: the two surfaces disagree, a data issue to surface
+    upstream, not to guess through."""
+    kinds = item.get("camera_kinds") or {}
+    if not kinds:
+        return None
+    names = sorted(kinds)
+    parts: list[str] = []
+    for label, key in (
+        ("object", "annotation.visible_object"),
+        ("gripper", "annotation.visible_gripper"),
+    ):
+        value = item.get(key)
+        if value is None:
+            return None
+        # Single-camera datasets store shape-(1,) features as scalars
+        # (lerobot convention) — normalize before the slot walk.
+        vector = torch.atleast_1d(value)
+        if vector.numel() != len(names) or not bool(torch.isfinite(vector).all()):
+            return None
+        seen = [
+            kinds.get(name, "unknown")
+            if kinds.get(name, "unknown") != "unknown"
+            else name
+            for name, slot in zip(names, vector.tolist(), strict=True)
+            if slot >= 0.5
+        ]
+        cameras = ",".join(dict.fromkeys(seen)) or "none"
+        parts.append(f"{label} {cameras}")
+    return "; ".join(parts)
 
 
 def events_text(item: dict[str, Any]) -> str | None:
@@ -409,6 +462,10 @@ def aux_label_text(item: dict[str, Any], fields: tuple[AuxField, ...]) -> str:
                 text = events_text(item)
                 if text is not None:
                     parts.append(f"{EVENT_HEADER}{text}{FIELD_TERMINATOR}")
+            case AuxField.VISIBLE:
+                text = visibility_text(item)
+                if text is not None:
+                    parts.append(f"{VISIBLE_HEADER}{text}{FIELD_TERMINATOR}")
     return "".join(parts)
 
 

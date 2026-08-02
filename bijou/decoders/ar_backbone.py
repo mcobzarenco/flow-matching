@@ -686,7 +686,7 @@ def _parse_aux(text: str) -> AuxGeneration:
     verbatim for reports (parse failures are None, never exceptions)."""
     values: dict[str, str] = {}
     for line in text.splitlines():
-        for field_name in ("subgoal", "holding", "progress", "event"):
+        for field_name in ("subgoal", "holding", "progress", "event", "visible"):
             prefix = f"{field_name}: "
             if line.startswith(prefix):
                 values[field_name] = line[len(prefix) :].strip()
@@ -704,6 +704,7 @@ def _parse_aux(text: str) -> AuxGeneration:
         holding=None if holding is None else holding == "yes",
         progress=parsed_progress,
         event=values.get("event"),
+        visible=values.get("visible"),
     )
 
 

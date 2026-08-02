@@ -37,7 +37,7 @@ import torch
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
 from torch import Tensor
 
-from .annotations import CAMERA_KINDS, load_sidecar
+from .annotations import CAMERA_KINDS, TaskCompletion, load_sidecar
 
 
 @dataclass(frozen=True, slots=True)
@@ -461,11 +461,16 @@ def episode_suggestions_of(
     stamp: AnnotationStamp,
 ) -> dict[int, tuple[str, ...]]:
     """Per-episode judge-suggested instruction rewrites (2-3 grounded
-    alternatives, present on every judged episode), from the sidecar
-    records matching the dataset's own stamp. Typed end to end via the
-    bijou.annotations contract; records that fail validation under the
-    current schema are skipped with one loud per-dataset summary (a
-    guard for older-stamp corpora — today every stamp is current)."""
+    alternatives, present on every judged episode — plus the judge's
+    ``observed_task`` description on episodes whose completion is
+    visibly YES: hindsight relabeling to what actually happened, gated
+    to successes so instruction-following never trains on
+    failure-describing text until outcome conditioning ships), from the
+    sidecar records matching the dataset's own stamp. Typed end to end
+    via the bijou.annotations contract; records that fail validation
+    under the current schema are skipped with one loud per-dataset
+    summary (a guard for older-stamp corpora — today every stamp is
+    current)."""
     suggestions: dict[int, tuple[str, ...]] = {}
     skipped = 0
     records = [
@@ -482,9 +487,14 @@ def episode_suggestions_of(
         except (KeyError, TypeError, ValueError):
             skipped += 1
             continue
-        rewrites = tuple(s for s in judgment.suggested_instructions if s.strip())
+        rewrites = [s for s in judgment.suggested_instructions if s.strip()]
+        if (
+            judgment.task_completion_visible is TaskCompletion.YES
+            and judgment.observed_task.strip()
+        ):
+            rewrites.append(judgment.observed_task.strip())
         if rewrites:
-            suggestions[record.episode_index] = rewrites
+            suggestions[record.episode_index] = tuple(rewrites)
     if skipped:
         print(
             f"[instructions] {repo_id}: {skipped} sidecar record(s) failed "
