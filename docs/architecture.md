@@ -54,9 +54,10 @@ pretrained artifact (`--backbone`, `BackboneConfig.id`,
       │    (ARFastDecoder: same blocks, FAST tokens, constrained greedy)
       │
       └─ decoder-only (ar_backbone): the FULL E2B continues the suffix
-           [state][<start_of_turn>model\n][aux text?][BOA][t_1..t_k]
+           [state][<start_of_turn>model\n][MODE][aux text?][BOA][t_1..t_k]
            through all 35 layers against the retained prefix cache;
-           ~11M new params; free-until-BOA, then FAST-grammar decode
+           ~11M new params; fed [ACT]|[AUX] mode commands speak-vs-act;
+           free-until-BOA under [AUX], then FAST-grammar decode
 ```
 
 ## 0. Tensor dimension notation
@@ -256,39 +257,55 @@ text share ONE softmax: `lm_head` logits are computed, the block's
 columns are overwritten from the patch, and the softcap is applied
 AFTER the overwrite (block capped identically to text).
 
-**Suffix format 2** (`aux_text.SUFFIX_FORMAT`, recorded per checkpoint;
-format-1 = pre-opener legacy, loadable for warm starts with a loud
-warning):
+**Suffix format 3** (`aux_text.SUFFIX_FORMAT`, recorded per checkpoint;
+formats 1–2 = legacy, loadable for warm starts — the mode tables
+fresh-init loudly — and decoded via their own trained sequence with a
+loud warning):
 
-    [state][<start_of_turn>model\n][aux text — if labeled][BOA][t_1..t_k]
+    [state][<start_of_turn>model\n][MODE][aux text — iff AUX][BOA][t_1..t_k]
 
-The opener is the IT chat template's own generation prompt, so the
-trained "speak or act" DECISION POINT sits on the single most
-reinforced transition instruction tuning built. Teacher-forced
-full-vocabulary CE: state and all-but-the-last opener positions are
-IGNOREd; the last opener position is trained (first aux token on
-labeled samples, BOA otherwise — an aux-less run trains it to BOA on
-every sample); PAD is batch padding, always ignored; no EOA (action
-length is fixed by the FAST grammar). Loss components: `total = action
-+ w·aux` with per-position mean CE split by the collator's aux mask
-(`--aux-loss-weight`, default 0.5; batches without a labeled sample
-contribute aux = 0 — collective-safe, but it dilutes the logged
-`train/loss_aux` toward 0 on sparsely-judged corpora; compare that
-metric only between runs on the same judged fraction).
+The opener is the IT chat template's own generation prompt (format 2's
+contribution). `MODE ∈ {[ACT], [AUX]}` is **fed, never predicted**:
+two reserved ids directly below the FAST block (`mode_base =
+block_base − 2` — E2B: 261116/261117, same unused tail), embedded
+through their own tiny patch tables. A row feeds [AUX] iff it carries
+aux supervision (label presence × aux dropout, decided at collation),
+so "speak vs act" is COMMANDED, never inferred: the model is never
+asked to predict from appearance whether a judge happened to label a
+frame, and both conditionals — p(actions | ACT) and p(aux, actions |
+AUX) — train on their own sample mass. Teacher-forced full-vocabulary
+CE: state, opener and the fed MODE position are IGNOREd; the MODE
+position's own logits are the trained transition (first aux token
+under [AUX], BOA under [ACT] — aux-less runs feed [ACT] everywhere);
+PAD is batch padding, always ignored; no EOA (action length is fixed
+by the FAST grammar). Loss components: `total = action + w·aux` with
+per-position mean CE split by the collator's aux mask
+(`--aux-loss-weight`, default 0.5); aux is logged as a
+position-weighted mean (CE sum / token count, all-reduced), so
+sparsely-labeled corpora don't dilute `train/loss_aux` toward 0.
 
-**Decoding is ONE path** (`predict_chunk_with_text`, free-until-BOA),
-for aux and aux-less checkpoints alike: feed `[state][opener]`, then a
-FREE phase where only text ids and BOA are legal (the rest of the FAST
-block is masked) under a `MAX_FREE_TOKENS = 48` budget — exhaustion
-forces BOA, loudly, and increments a cumulative `fallback_count` (a
-persistent rate means the model stopped closing its aux segment) —
-then the ACTION phase under the ar_fast grammar mask (each step masks
-to tokens whose BPE symbol expansion fits the remaining chunk×dim
-budget; a full-length chunk is guaranteed by construction). An aux-less
-model emits BOA at the first free step: same path, one extra forward.
-Forced-scaffold decoding was measured OOD on aux-saturated checkpoints
-(18.2 vs 13.5 MAE on the 300-step smoke arm) — never compare numbers
-across decode formats.
+**Decoding is ONE loop with two entry modes** (`predict_chunk`):
+
+- `ACT` — feed `[state][opener][ACT][BOA]` in a single prefill (BOA is
+  the only trained continuation of [ACT], so it is fed, not sampled),
+  then the ACTION phase under the ar_fast grammar mask (each step
+  masks to tokens whose BPE symbol expansion fits the remaining
+  chunk×dim budget; a full-length chunk is guaranteed by
+  construction). The deployment fast path — and a TRAINED context,
+  unlike format 2's force-BOA (measured OOD 18.2 vs 13.5 on the
+  aux-saturated smoke arm).
+- `FREE` — feed `[state][opener][AUX]`, then the FREE phase where only
+  text ids and BOA are legal (mode ids and the rest of the FAST block
+  are masked) under a `MAX_FREE_TOKENS = 48` budget — exhaustion
+  forces BOA, loudly, and increments a cumulative `fallback_count` (a
+  persistent rate means the model stopped closing its aux segment) —
+  then the ACTION phase. Conditioned on [AUX] the model has never seen
+  immediate BOA, so the aux fields come out at every frame — not at
+  the labeled-frame frequency. FREE on an aux-less checkpoint is a
+  loud error ([AUX] is untrained there).
+
+Never compare numbers across decode modes — they are different
+measurement conditions by design.
 
 Prompt-side geometry is what makes the suffix exact: left padding +
 logical positions (§1) put every suffix token physically adjacent to
@@ -306,14 +323,22 @@ suffix:
     holding: no\n
     progress: 30%\n
 
-- **Presence-based rendering.** A field appears iff its label exists at
-  the frame: subgoal on every frame of a judged episode
-  (piecewise-constant `language_persistent` rows); holding/progress
-  only on judge-sampled frames (the finite mask IS the sampled-frame
-  set — never interpolated). Unjudged samples render nothing — their
-  suffix is `[state][opener][BOA][actions]`, so mixed corpora train one
-  format and an aux fine-tune extends a pretrained base rather than
-  fighting it.
+- **Presence-based rendering, mode-conditioned.** A field appears iff
+  its label exists at the frame: subgoal on every frame of a judged
+  episode (piecewise-constant `language_persistent` rows);
+  holding/progress only on judge-sampled frames (the finite mask IS
+  the sampled-frame set — never interpolated). A sample with ≥1
+  rendered field feeds [AUX]; unjudged/dropped samples render nothing
+  and feed [ACT] — mixed sparsely-annotated corpora train one format,
+  the mode explains label presence away, and an aux fine-tune extends
+  a pretrained base rather than fighting it.
+- **Mode dropout** (`--aux-dropout`, default 0.1 on aux runs): a
+  labeled sample trains as [ACT] with probability p — keeps the
+  deployment fast path trained even at 100% annotation coverage.
+  Draws are per-visit from a generator seeded by the dataloader worker
+  seed (pure function of --seed, rank, worker); the probe-side
+  collator runs a dropout-0 clone so eval tables always show true
+  labels.
 - **Field set and order.** `--aux-fields` selects a subset of
   {subgoal, holding, progress} but never reorders (template order is
   validated at the CLI boundary and re-guarded in `AuxSpec`); subgoal
@@ -338,16 +363,20 @@ suffix:
   (`assemble_suffix`) builds one mixed suffix tensor in backbone id
   space (guarded: aux ids must sit below `block_base`) plus the
   aux-position mask the loss splits on.
-- **Metrics.** Component losses `train/loss_action` / `train/loss_aux`;
-  in-run eval logs the free-decode generations as raw-string columns
+- **Metrics.** Component losses `train/loss_action` / `train/loss_aux`
+  (the aux mean is position-weighted across batches and ranks);
+  in-run eval logs the FREE-decode generations as raw-string columns
   (`aux_generated` vs `aux_label`) inside the `eval/samples` wandb
-  table, and `eval/samples_holding_acc` — teacher-forced likelihood
-  accuracy p(yes) vs p(no) at the holding value position under the
-  label context (sparse fields are rarely elicited by free decode from
-  arbitrary frames; likelihood scoring measures them anyway). Labels
-  are weak supervision (~80% inter-judge agreement on holding, ±15%
-  progress MAE): weight modestly, expect an accuracy ceiling near the
-  label noise.
+  table — the table's chunks and text come from the same decode
+  (self-consistent rows), while the scalar MAE probes score the ACT
+  fast path (comparable across aux-on/off/less arms) — and
+  `eval/samples_holding_acc`: teacher-forced likelihood accuracy
+  p(yes) vs p(no) at the holding value position under the label
+  context ([AUX] + preceding trained fields; sparse fields appear in
+  free decode at every frame now, but likelihood scoring stays the
+  clean per-field measurement). Labels are weak supervision (~80%
+  inter-judge agreement on holding, ±15% progress MAE): weight
+  modestly, expect an accuracy ceiling near the label noise.
 - **Owed:** the offline `bijou.eval` report has no aux section yet
   (generations + aux metrics in HTML/JSON); in-run wandb is the current
   surface.
@@ -459,10 +488,12 @@ flags and `--stream-counts`; AR decoders require `--fast-tokenizer
 (the backbone IS the architecture — flags describing a model the run
 doesn't build are errors, not ignored). `--aux-fields` (ar_backbone
 only) enables aux text training (§2.4); `--aux-loss-weight` sets w
-(default 0.5 — the labels are weak supervision). Train step returns
+(default 0.5 — the labels are weak supervision); `--aux-dropout` sets
+the [ACT] mode-dropout rate (default 0.1). Train step returns
 component losses; `train/loss_action` + `train/loss_aux` log beside
-`train/loss` on aux runs (the aux window mean is collective-safe by
-including label-less batches as 0 — see the dilution caveat in §2.4).
+`train/loss` on aux runs (aux aggregates as CE-sum/token-count across
+the window and all ranks — a position-weighted mean, immune to the
+sparse-batch dilution a mean-of-means would suffer).
 
 **In-training probes.** `--eval-samples N` sizes two MAE probes
 (eval_chunk_mae on holdout, train_mae on train), drawn exactly as
@@ -490,14 +521,17 @@ checkpoints load forever via `checkpoint_sections`' read-side synthesis
 (format 1 through the train-args synthesizer), no file conversion;
 guarded by state-dict key fixtures and cross-format section tests. `--init-from` = warm
 `--init-from` = warm
-start (decoder config-guarded, loud SystemExit — except the zero-
-parameter DATA-side keys {aux, suffix_format}, which may differ with a
-printed note: enabling aux / adopting the opener format on an older
-base is the sanctioned warm-start pattern; NOT guarded:
-`--max-soft-tokens`, `--backbone` — known footguns); `--resume` =
+start (decoder config-guarded, loud SystemExit — except the data-side
+format keys {aux, suffix_format}, which may differ with a printed
+note: enabling aux / adopting a newer suffix format on an older base
+is the sanctioned warm-start pattern, and format-added params — the
+mode tables, for pre-format-3 checkpoints — fresh-init loudly with an
+exact allowed-missing-keys check; NOT guarded: `--max-soft-tokens`,
+`--backbone` — known footguns); `--resume` =
 lossless continuation (CLI lr ignored, printed; cosine re-evaluated
 over the new `--steps`, so extending re-heats LR — accepted when
-reusing moments, else init-from + warmup).
+reusing moments, else init-from + warmup; resume stays STRICT about
+decoder keys — never resume across a format change).
 
 **Holdout/eval CLI semantics.** `--holdout-episodes F --split-seed S`:
 deterministic per-dataset episode split, a pure function of (S,
@@ -527,14 +561,14 @@ must reproduce **flow 1.8896 / 1.7237** exactly; with `--decoder ar_fast
 --fast-tokenizer tests/fixtures/tiny_fast_tokenizer` added, **AR
 4.8803 / 4.8656**; with `--decoder ar_backbone --fast-tokenizer
 tests/fixtures/tiny_fast_tokenizer` (and the `--decoder-*` shape flags
-OMITTED — ar_backbone rejects them), **27.8116 / 27.8348** (random tiny
+OMITTED — ar_backbone rejects them), **27.7622 / 27.7245** (random tiny
 weights under full-vocabulary CE — an anchor, not a quality signal; the
 huge step-1 grad norm is softcap saturation, clipped in practice;
-re-baselined 2026-08-02 for suffix format 2 — the opener-prefixed
-sequence — from 27.7661/27.8015).
+re-baselined 2026-08-02 for suffix format 3 — the fed mode token —
+from format 2's 27.8116/27.8348).
 Flags-on (unfreeze) oracles live in
 `outputs/probe_unfreeze_gradflow.py` (flow 1.5528, AR 4.8689,
-ar_backbone 27.8836 — format-2 re-baseline — with the FULL-depth
+ar_backbone 27.6946 — format-3 re-baseline — with the FULL-depth
 partition checks, asserted in the probe). Regenerate the tiny backbone
 with
 `uv run python -m bijou.gemma4.testing --output outputs/tiny-gemma4`
@@ -578,11 +612,14 @@ prompt slots; task string must match the recorded instruction. Deployment
 always fine-tunes on rig data first (zero-shot cross-rig transfer is the
 wall, §7) — so the operative metric for any change is fine-tuned-then-
 scored rig MAE, not zero-shot. All decoder kinds serve `predict_chunk`
-behind one policy interface; ar_backbone decodes through the unified
-free-until-BOA path (§2.3; no suffix KV-cache reuse across replans yet
-— the known optimization if it deploys), and AR checkpoints need the
-deployment rig's exact q01/q99 quantiles (the tokenizer's fit
-normalization), which old-format stats tables don't carry.
+behind one policy interface, returning a `ChunkPrediction` (chunks +
+aux generations); ar_backbone picks its decode mode via `--aux-mode
+{act,free}` on eval and rollout (§2.3: act = fast path, free = speak
+first, ~30–45 extra suffix forwards per replan; no suffix KV-cache
+reuse across replans yet — the known optimization if it deploys), and
+AR checkpoints need the deployment rig's exact q01/q99 quantiles (the
+tokenizer's fit normalization), which old-format stats tables don't
+carry.
 
 **Artifacts.** Checkpoints + tokenizers:
 [`mcobzarenco/bijou-checkpoints`](https://huggingface.co/mcobzarenco/bijou-checkpoints)
@@ -886,14 +923,17 @@ landed. Expert-side autocast is dead (expert is only ~20%).
 ### 8.10 Aux text tasks (IMPLEMENTED §2.4; value measurement next)
 
 **Status.** Rendering, loss, decode, metrics and provenance pinning all
-shipped (§2.4), validated on the annotated rig v2 dataset: the 300-step
-aux smoke arm drove loss_aux 22.3 → 0.07 with coherent self-emitted
-subgoals and ZERO free-phase budget fallbacks; the matched aux-less arm
-emitted BOA immediately on 16/16 probe rows (the decision point trains
-cleanly in both regimes). Aux labels exist on rig v2 only today; the
+shipped (§2.4). Format-2 smokes on the annotated rig v2 dataset
+validated the mechanism (aux arm: loss_aux 22.3 → 0.07, coherent
+self-emitted subgoals, zero budget fallbacks; aux-less arm: BOA
+immediately on 16/16 probe rows); **suffix format 3** (the fed mode
+token + `--aux-dropout`, built for sparsely-annotated corpora — §2.3)
+supersedes those arms and needs its own smoke before the value
+experiment. Aux labels exist on rig v2 only today; the
 community-corpus judging pass is the data-side dependency for aux at
 pretrain scale.
-**Next: the paired value experiment** — aux-on vs aux-off fine-tunes
+**Next: the paired value experiment, ON FORMAT 3** — aux-on vs aux-off
+fine-tunes
 from the 100k base on rig v2, matched seed/steps/LRs (5k, eval every
 250, decoder 2e-5 / text 1e-5), one variable. Pre-registered: aux-on
 action MAE within probe noise (±0.3) of aux-off at matched steps (aux

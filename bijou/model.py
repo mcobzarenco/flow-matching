@@ -30,6 +30,7 @@ from typing import override
 import torch
 from torch import Tensor, nn
 
+from .aux_text import AuxDecodeMode
 from .decoders.ar_backbone import ARBackboneDecoder, ar_backbone_losses
 from .decoders.ar_fast import ARFastDecoder, ar_fast_loss
 from .decoders.flow import FlowDecoder, SamplingMethod, flow_matching_loss
@@ -106,26 +107,33 @@ class BijouModel(nn.Module):
         self,
         memory: ObservationMemory,
         batch: CollatedBatch[GemmaInputs],
-    ) -> tuple[Tensor, Tensor, Tensor | None]:
-        """(total, action component, aux component | None) — the total
-        carries the graph; components arrive detached for logging. Flow
-        and ar_fast have a single-component objective (aux None)."""
+    ) -> tuple[Tensor, Tensor, Tensor | None, Tensor | None]:
+        """(total, action component, aux CE sum | None, aux position
+        count | None) — the total carries the graph; the rest arrive
+        detached for logging (aux as sum+count so the train loop can
+        aggregate a position-weighted mean across batches and ranks).
+        Flow and ar_fast have a single-component objective (aux None)."""
         decoder = self.decoder
         match decoder:
             case FlowDecoder():
                 total = flow_matching_loss(decoder, memory, batch)
-                return total, total.detach(), None
+                return total, total.detach(), None, None
             case ARFastDecoder():
                 total = ar_fast_loss(decoder, memory, batch)
-                return total, total.detach(), None
+                return total, total.detach(), None, None
             case ARBackboneDecoder():
-                total, action, aux = ar_backbone_losses(
+                total, action, aux_sum, aux_count = ar_backbone_losses(
                     self.backbone,
                     decoder,
                     memory,
                     batch,
                 )
-                return total, action.detach(), None if aux is None else aux.detach()
+                return (
+                    total,
+                    action.detach(),
+                    None if aux_sum is None else aux_sum.detach(),
+                    aux_count,
+                )
 
     def encode_observation(
         self,
@@ -155,6 +163,7 @@ class BijouModel(nn.Module):
         noise: Tensor | None = None,
         num_steps: int = 5,
         method: SamplingMethod = SamplingMethod.HEUN,
+        aux_mode: AuxDecodeMode = AuxDecodeMode.ACT,
     ) -> ChunkPrediction:
         """Collated batch → :class:`ChunkPrediction` (RAW-unit chunks
         [B, chunk, action_dim] + per-row aux generations for decoders
@@ -162,7 +171,9 @@ class BijouModel(nn.Module):
         the decoder's chunk-space inference with the batch's per-sample
         stats. ``num_steps``/``method``/``noise`` are flow solver knobs;
         an AR decoder decodes greedily and ignores them (``noise`` must
-        then be None)."""
+        then be None). ``aux_mode`` is ar_backbone's decode mode (ACT =
+        straight to actions, FREE = aux text first; ignored by other
+        decoder kinds)."""
         memory = self.encode(batch.encoder_inputs, with_grad=False)
         decoder = self.decoder
         match decoder:
@@ -187,6 +198,7 @@ class BijouModel(nn.Module):
                     self.backbone,
                     memory,
                     batch,
+                    mode=aux_mode,
                     generator=generator,
                     noise=noise,
                 )

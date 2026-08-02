@@ -35,6 +35,7 @@ from bijou.aux_text import (
     GENERATION_OPENER,
     MAX_FREE_TOKENS,
     AuxDecodeConfig,
+    AuxDecodeMode,
     AuxField,
     assemble_suffix,
     build_aux_runtime,
@@ -46,6 +47,7 @@ from bijou.decoders.ar_backbone import (
 )
 from bijou.gemma4.model import Gemma4Model
 from bijou.loading import ar_backbone_config_to_dict, parse_decoder_config
+from bijou.nn import AttentionBackend
 
 
 def aux_config() -> AuxDecodeConfig:
@@ -58,9 +60,23 @@ def aux_config() -> AuxDecodeConfig:
 
 
 def build_with_aux() -> tuple[Gemma4Model, ARBackboneDecoder]:
-    backbone, decoder, _ = build()
-    decoder.aux_runtime = build_aux_runtime(aux_config(), CharTokenizer())
-    decoder.aux_loss_weight = 0.5
+    """An aux-CAPABLE decoder: aux rides the config (FREE decode is
+    gated on it), runtime + loss weight attached."""
+    loaded = codec()
+    torch.manual_seed(0)
+    backbone = Gemma4Model(gemma_config(), attn_backend=AttentionBackend.EAGER)
+    backbone.eval()
+    backbone.requires_grad_(False)
+    decoder = ARBackboneDecoder(
+        dataclasses.replace(decoder_config(loaded), aux=aux_config()),
+        gemma_config().text,
+        loaded,
+        tokenizer=CharTokenizer(),
+        aux_runtime=build_aux_runtime(aux_config(), CharTokenizer()),
+        aux_loss_weight=0.5,
+        device="cpu",
+        dtype=torch.float32,
+    )
     return backbone, decoder
 
 
@@ -116,13 +132,13 @@ def test_aux_off_loss_is_the_single_call_objective() -> None:
     backbone, decoder, loaded = build()
     sample = batch(loaded)
     assert sample.suffix_tokens is None
-    total, action, aux = ar_backbone_losses(
+    total, action, aux_sum, aux_count = ar_backbone_losses(
         backbone,
         decoder,
         encode_memory(backbone),
         sample,
     )
-    assert aux is None
+    assert aux_sum is None and aux_count is None
     assert torch.equal(total, action)
     assert torch.equal(
         ar_backbone_loss(backbone, decoder, encode_memory(backbone), sample),
@@ -145,14 +161,19 @@ def test_aux_on_loss_components_and_weighting() -> None:
         codec_pad=loaded.pad,
     )
     sample = dataclasses.replace(sample, suffix_tokens=suffix, suffix_is_aux=is_aux)
-    total, action, aux = ar_backbone_losses(
+    total, action, aux_sum, aux_count = ar_backbone_losses(
         backbone,
         decoder,
         encode_memory(backbone),
         sample,
     )
-    assert aux is not None and torch.isfinite(aux) and torch.isfinite(action)
-    assert torch.allclose(total, action + 0.5 * aux)
+    assert aux_sum is not None and aux_count is not None
+    assert torch.isfinite(aux_sum) and torch.isfinite(action)
+    # Row 0 carries exactly len("holding: yes\n") aux positions; row 1
+    # none — the count IS the labeled-token count, and the total applies
+    # the position-weighted mean.
+    assert int(aux_count) == len(aux_ids[0])
+    assert torch.allclose(total, action + 0.5 * (aux_sum / aux_count))
 
 
 def test_free_decode_is_budgeted_and_always_yields_chunks() -> None:
@@ -163,7 +184,12 @@ def test_free_decode_is_budgeted_and_always_yields_chunks() -> None:
     loaded = codec()
     sample = batch(loaded)
     memory = encode_memory(backbone)
-    prediction = decoder.predict_chunk(backbone, memory, sample)
+    prediction = decoder.predict_chunk(
+        backbone,
+        memory,
+        sample,
+        mode=AuxDecodeMode.FREE,
+    )
     generations = prediction.generations
     assert generations is not None
     assert prediction.chunks.shape == (BATCH, loaded.time_horizon, loaded.action_dim)
@@ -186,6 +212,7 @@ def test_zero_budget_forces_boa_and_counts_fallback(
         backbone,
         encode_memory(backbone),
         batch(loaded),
+        mode=AuxDecodeMode.FREE,
     )
     generations = prediction.generations
     assert generations is not None
@@ -196,7 +223,7 @@ def test_zero_budget_forces_boa_and_counts_fallback(
     assert decoder.fallback_count >= 0
 
 
-def test_format2_requires_tokenizer() -> None:
+def test_opener_format_requires_tokenizer() -> None:
     loaded = codec()
     with pytest.raises(ValueError, match="text tokenizer"):
         ARBackboneDecoder(
@@ -205,6 +232,48 @@ def test_format2_requires_tokenizer() -> None:
             loaded,
             tokenizer=None,
         )
+
+
+def test_free_decode_rejected_on_auxless_checkpoint() -> None:
+    """Every aux-less training sample fed [ACT] — [AUX] is untrained,
+    so FREE decode must refuse rather than emit garbage."""
+    backbone, decoder, loaded = build()  # config.aux is None
+    with pytest.raises(ValueError, match="aux-less"):
+        decoder.predict_chunk(
+            backbone,
+            encode_memory(backbone),
+            batch(loaded),
+            mode=AuxDecodeMode.FREE,
+        )
+
+
+def test_mixed_batch_derives_mode_per_row() -> None:
+    """A labeled row trains [AUX]->aux, an unlabeled row [ACT]->BOA —
+    the loss derives the fed mode from each row's aux positions, so the
+    same batch carries both regimes (this is also how aux dropout lands
+    on [ACT])."""
+    backbone, decoder = build_with_aux()
+    loaded = codec()
+    sample = batch(loaded)
+    tokens = sample.action_tokens
+    assert tokens is not None
+    aux_ids = [[ord(c) for c in "holding: no\n"], []]
+    suffix, is_aux = assemble_suffix(
+        aux_ids,
+        tokens,
+        block_base=decoder.config.block_base,
+        codec_pad=loaded.pad,
+    )
+    sample = dataclasses.replace(sample, suffix_tokens=suffix, suffix_is_aux=is_aux)
+    total, action, aux_sum, aux_count = ar_backbone_losses(
+        backbone,
+        decoder,
+        encode_memory(backbone),
+        sample,
+    )
+    assert torch.isfinite(total) and torch.isfinite(action)
+    assert aux_sum is not None and aux_count is not None
+    assert int(aux_count) == len(aux_ids[0])
 
 
 def test_opener_ids_tokenize_the_template_opener() -> None:

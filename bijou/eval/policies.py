@@ -19,6 +19,7 @@ from typing import Any, Protocol
 import torch
 from torch import Tensor
 
+from ..aux_text import AuxDecodeMode
 from ..decoders.flow import FlowDecoder
 from ..interface import Collator
 from ..loading import CheckpointInfo, from_checkpoint
@@ -101,12 +102,14 @@ class BijouPolicy:
         sample_steps: int = 10,
         method: SamplingMethod = SamplingMethod.HEUN,
         expert_dtype: torch.dtype = torch.float32,
+        aux_mode: AuxDecodeMode = AuxDecodeMode.ACT,
     ) -> None:
         self.name = f"bijou@{checkpoint.name.removeprefix('step_').lstrip('0') or '0'}"
         self.device = device
         self.seed = seed
         self.sample_steps = sample_steps
         self.method = method
+        self.aux_mode = aux_mode
         self.model: BijouModel
         self.info: CheckpointInfo
         self.model, self.info = from_checkpoint(
@@ -146,5 +149,6 @@ class BijouPolicy:
             noise=noise,
             num_steps=self.sample_steps,
             method=self.method,
+            aux_mode=self.aux_mode,
         )
         return [chunk.cpu() for chunk in prediction.chunks]

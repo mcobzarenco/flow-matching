@@ -26,7 +26,7 @@ from test_aux_text import CharTokenizer
 from test_backbone_continuation import tiny_text_config
 from torch import Tensor
 
-from bijou.aux_text import SUFFIX_FORMAT
+from bijou.aux_text import ACT_MODE, AUX_MODE, NUM_MODES, SUFFIX_FORMAT
 from bijou.decoders.ar_backbone import (
     ARBackboneConfig,
     ARBackboneDecoder,
@@ -264,12 +264,37 @@ def test_teacher_forced_matches_incremental_decode_path() -> None:
 
 
 def test_predict_chunk_constrained_decode_always_valid() -> None:
+    """Default ACT mode: [state][opener][ACT][BOA] prefill, straight to
+    the grammar phase — a full valid chunk and empty generations."""
     backbone, decoder, loaded = build()
     sample = batch(loaded)
     prediction = decoder.predict_chunk(backbone, encode_memory(backbone), sample)
     assert prediction.chunks.shape == (BATCH, loaded.time_horizon, loaded.action_dim)
     assert bool(torch.isfinite(prediction.chunks).all())
     assert prediction.generations is not None  # ar_backbone always has text
+    assert all(generation.text == "" for generation in prediction.generations)
+
+
+def test_mode_ids_route_through_the_mode_tables() -> None:
+    """The two ids below the block embed through mode_embed/mode_ple
+    (scaled like the backbone's own tying), not the frozen text tables
+    — and block routing is unchanged around them."""
+    backbone, decoder, _ = build()
+    config = decoder.config
+    assert config.mode_base == config.block_base - NUM_MODES
+    ids = torch.tensor(
+        [[config.mode_base + ACT_MODE, config.mode_base + AUX_MODE]],
+    )
+    embeds, ple = decoder._suffix_inputs_backbone_ids(backbone, None, ids)
+    reference = decoder.mode_embed(torch.tensor([[0, 1]])) * decoder.embed_scale
+    assert torch.equal(embeds, reference)
+    ple_reference = (decoder.mode_ple(torch.tensor([[0, 1]])) * decoder.ple_scale).view(
+        1,
+        2,
+        decoder.num_layers,
+        decoder.ple_dim,
+    )
+    assert torch.equal(ple, ple_reference)
 
 
 def test_missing_cache_fails_loudly() -> None:

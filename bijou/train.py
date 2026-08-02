@@ -68,10 +68,12 @@ from safetensors.torch import load_file, save_file
 from torch import Tensor
 
 from .aux_text import (
+    AUX_MODE,
     AUX_TEMPLATE_VERSION,
     PINNED_PROMPT_HASH,
     SUFFIX_FORMAT,
     AuxDecodeConfig,
+    AuxDecodeMode,
     AuxField,
     AuxGeneration,
     AuxSpec,
@@ -138,6 +140,7 @@ class TrainArgs:
     fast_tokenizer: str | None
     aux_fields: tuple[str, ...] | None
     aux_loss_weight: float
+    aux_dropout: float
     decoder_hidden: int
     decoder_heads: int
     decoder_intermediate: int
@@ -363,10 +366,11 @@ class BijouTrainStep(torch.nn.Module):
     def forward(
         self,
         batch: CollatedBatch[GemmaInputs],
-    ) -> tuple[Tensor, Tensor, Tensor | None]:
+    ) -> tuple[Tensor, Tensor, Tensor | None, Tensor | None]:
         """Batch (shapes in CollatedBatch's docstring) -> (total loss with
-        graph, detached action component, detached aux component | None).
-        Single-component objectives return (loss, loss.detach(), None)."""
+        graph, detached action component, detached aux CE sum | None,
+        aux position count | None). Single-component objectives return
+        (loss, loss.detach(), None, None)."""
         inputs = batch.encoder_inputs
         device_type = inputs.input_ids.device.type
         with torch.autocast(
@@ -532,9 +536,12 @@ def holding_likelihood_accuracy(
         if value is None or not bool(torch.isfinite(value)):
             continue
         prefix = list(decoder.opener_ids)
-        # Context = exactly what training put before holding: the run's
-        # OWN fields, template order (a field the run never trained
-        # would make the scoring context OOD).
+        # Context = exactly what training put before holding: the [AUX]
+        # mode token, then the run's OWN fields in template order (a
+        # field the run never trained would make the scoring context
+        # OOD).
+        if decoder.uses_modes:
+            prefix.append(decoder.config.mode_base + AUX_MODE)
         if AuxField.SUBGOAL in aux_spec.fields:
             subgoal_ids = aux_spec.render_field(AuxField.SUBGOAL, item)
             if subgoal_ids is not None:
@@ -598,10 +605,14 @@ def validate(
         # integration error well below model error; 0.018 vs 0.05 mean
         # deviation at the Heun-5 deployment default), AR decodes greedily
         # and ignores the solver knobs. Raw units either way.
+        # ar_backbone scores the ACT fast path here (comparable across
+        # aux-on / aux-off arms); the rich table below is the FREE-mode
+        # surface for aux-capable checkpoints.
         sampled = model.predict_chunk(
             batch,
             generator=generator,
             num_steps=10,
+            aux_mode=AuxDecodeMode.ACT,
         ).chunks
         truth = batch.actions.float()
         valid = ~batch.action_is_pad
@@ -637,13 +648,18 @@ def validate(
         generations: list[AuxGeneration] | None = None
         rich_chunks: Tensor | None = None
         aux_fields: tuple[AuxField, ...] = ()
-        if isinstance(decoder, ARBackboneDecoder):
+        if isinstance(decoder, ARBackboneDecoder) and decoder.config.aux is not None:
+            # FREE-mode decode: the aux-capable table shows what the
+            # model says AND the chunk that follows its own aux context
+            # (self-consistent rows); aux-less checkpoints keep the
+            # scalar pass's ACT rows and no aux columns.
             rich_batch = collator(probe.rich_items).to(device)
             rich_memory = model.encode(rich_batch.encoder_inputs, with_grad=False)
             rich_prediction = decoder.predict_chunk(
                 model.backbone,
                 rich_memory,
                 rich_batch,
+                mode=AuxDecodeMode.FREE,
             )
             generations = rich_prediction.generations
             rich_chunks = rich_prediction.chunks.cpu()
@@ -861,13 +877,15 @@ def save_checkpoint(
 def ensure_matching_decoder_config(
     decoder: FlowDecoder | ARFastDecoder | ARBackboneDecoder,
     checkpoint: Path,
-) -> None:
+) -> dict[str, Any]:
     """Loud, early failure when a checkpoint's decoder differs from the
     CLI's (strict state-dict loading would also fail, but with worse
     diagnostics — and silently NOT fail for same-shape config differences
     like the cross-attention schedule). Handles both checkpoint formats:
     format 2 compares decoder schema dicts; format 1 predates AR decoders
-    and compares the historical serialized expert_config."""
+    and compares the historical serialized expert_config. Returns the
+    checkpoint's saved decoder config dict (the weight loader keys its
+    format-migration tolerance off it)."""
     meta = json.loads((checkpoint / "bijou_config.json").read_text())
     if "decoder" in meta:
         saved = meta["decoder"]
@@ -888,10 +906,11 @@ def ensure_matching_decoder_config(
             "cannot initialize a non-flow decoder",
         )
     if current != saved:
-        # Aux and the suffix format are DATA-side (zero parameters): a
+        # Aux and the suffix format are data-side format dials: a
         # difference confined to them is the sanctioned warm-start
-        # pattern (enable aux / adopt the opener format on an older
-        # base) — loud note, not an error.
+        # pattern (enable aux / adopt a newer suffix format on an older
+        # base — the weight loader fresh-inits format-added params,
+        # loudly) — note, not an error.
         data_side = ("aux", "suffix_format")
         current_core = {k: v for k, v in current.items() if k not in data_side}
         saved_core = {k: v for k, v in saved.items() if k not in data_side}
@@ -900,16 +919,17 @@ def ensure_matching_decoder_config(
             print(
                 f"note: data-side decoder config differs from {checkpoint} "
                 f"({', '.join(f'{k}: {saved.get(k)} -> {current.get(k)}' for k in differing)}) "
-                "— zero-parameter change, warm start proceeds with the "
+                "— sanctioned warm-start pattern, proceeding with the "
                 "CLI's format",
                 flush=True,
             )
-            return
+            return saved
         raise SystemExit(
             f"decoder config mismatch vs {checkpoint}:\n"
             f"  checkpoint: {json.dumps(saved, sort_keys=True)}\n"
             f"  cli:        {json.dumps(current, sort_keys=True)}",
         )
+    return saved
 
 
 def lr_lambda(step: int, args: TrainArgs) -> float:
@@ -1053,6 +1073,16 @@ def parse_args() -> TrainArgs:
         help="weight of the aux-text CE component (total = action + "
         "w*aux); labels are weak supervision (~80%% judge agreement), "
         "hence the modest default",
+    )
+    parser.add_argument(
+        "--aux-dropout",
+        type=float,
+        default=None,
+        help="probability a LABELED sample trains as [ACT] with its aux "
+        "text dropped (mode dropout): keeps the deployment fast path "
+        "trained under dense annotation and decouples the mode from "
+        "appearance. Default 0.1 when --aux-fields is on; requires "
+        "--aux-fields",
     )
     parser.add_argument(
         "--fast-tokenizer",
@@ -1268,6 +1298,15 @@ def parse_args() -> TrainArgs:
             )
     if raw.aux_loss_weight <= 0:
         parser.error("--aux-loss-weight must be > 0 (omit --aux-fields to disable)")
+    if raw.aux_dropout is not None and raw.aux_fields is None:
+        parser.error("--aux-dropout requires --aux-fields (it drops aux labels)")
+    if raw.aux_dropout is not None and not 0.0 <= raw.aux_dropout < 1.0:
+        parser.error(f"--aux-dropout {raw.aux_dropout} outside [0, 1)")
+    aux_dropout = (
+        raw.aux_dropout
+        if raw.aux_dropout is not None
+        else (0.1 if raw.aux_fields is not None else 0.0)
+    )
     if raw.decoder == "ar_backbone":
         # The backbone IS the architecture: decoder shape flags and the
         # cross-attention schedule describe models this run doesn't build.
@@ -1322,6 +1361,7 @@ def parse_args() -> TrainArgs:
         fast_tokenizer=raw.fast_tokenizer,
         aux_fields=tuple(raw.aux_fields) if raw.aux_fields is not None else None,
         aux_loss_weight=raw.aux_loss_weight,
+        aux_dropout=aux_dropout,
         decoder_hidden=raw.decoder_hidden,
         decoder_heads=raw.decoder_heads,
         decoder_intermediate=raw.decoder_intermediate,
@@ -1480,13 +1520,14 @@ def main() -> int:
             block_base=(
                 load_config(checkpoint_dir).text.vocab_size - action_codec.vocab_total
             ),
+            dropout=args.aux_dropout,
         )
         if is_main:
             print(
                 f"aux: {len(selection.annotated_repos)} annotated dataset(s) "
                 f"@ {PINNED_PROMPT_HASH} (judges: {aux_decode_config.judge_model}), "
                 f"fields {list(args.aux_fields)}, loss weight "
-                f"{args.aux_loss_weight}",
+                f"{args.aux_loss_weight}, mode dropout {args.aux_dropout}",
                 flush=True,
             )
     collator = Collator(
@@ -1496,6 +1537,14 @@ def main() -> int:
         max_cameras=args.max_cameras,
         action_codec=action_codec,
         aux=aux_spec,
+    )
+    # Probes and eval tables always see the TRUE labels: mode dropout is
+    # a training-time regularizer, so the probe-side collator runs a
+    # dropout-0 clone of the aux spec.
+    probe_collator = (
+        dataclasses.replace(collator, aux=dataclasses.replace(aux_spec, dropout=0.0))
+        if aux_spec is not None and aux_spec.dropout > 0.0
+        else collator
     )
     # The explicit generator (both modes) makes the shuffle order and the
     # dataloader worker base-seeds a pure function of (--seed, rank) —
@@ -1754,17 +1803,48 @@ def main() -> int:
     adapted_backbone_source: Path | None = None
     checkpoint_to_load = args.init_from or args.resume
     if checkpoint_to_load is not None:
-        ensure_matching_decoder_config(model.decoder, checkpoint_to_load)
+        saved_decoder = ensure_matching_decoder_config(
+            model.decoder,
+            checkpoint_to_load,
+        )
         # CPU-load + copy-in: loading straight to the device transiently
         # holds a second copy of the weights next to the built module
         # (see loading.load_adapted_backbone).
-        model.decoder.load_state_dict(
-            load_file(
-                str(checkpoint_to_load / "expert.safetensors"),
-                device="cpu",
-            ),
-            strict=True,
+        expert_state = load_file(
+            str(checkpoint_to_load / "expert.safetensors"),
+            device="cpu",
         )
+        if (
+            args.init_from is not None
+            and isinstance(model.decoder, ARBackboneDecoder)
+            and int(saved_decoder.get("suffix_format", 1)) < SUFFIX_FORMAT
+        ):
+            # Format migration on warm start: format 3 added the mode
+            # tables — EXACTLY those keys may be absent (fresh-init,
+            # loudly); anything else missing is corruption. --resume
+            # stays strict (the optimizer state predates the params;
+            # never resume across a format change).
+            missing, unexpected = model.decoder.load_state_dict(
+                expert_state,
+                strict=False,
+            )
+            allowed_missing = {"mode_embed.weight", "mode_ple.weight"}
+            if unexpected or not set(missing) <= allowed_missing:
+                raise SystemExit(
+                    f"expert.safetensors of {checkpoint_to_load} does not "
+                    f"match the decoder beyond the known format migration "
+                    f"(missing {sorted(missing)}, unexpected "
+                    f"{sorted(unexpected)})",
+                )
+            if is_main:
+                print(
+                    f"note: {sorted(missing)} initialized fresh (checkpoint "
+                    f"suffix format {saved_decoder.get('suffix_format', 1)} "
+                    f"predates the mode tables)",
+                    flush=True,
+                )
+        else:
+            model.decoder.load_state_dict(expert_state, strict=True)
         if is_main:
             print(f"loaded expert weights from {checkpoint_to_load}", flush=True)
         # Backbone-trained checkpoints carry the adapted file; plain ones
@@ -1872,7 +1952,7 @@ def main() -> int:
             eval_dataset = eval_selection.concat()
             eval_probe = build_probe_set(
                 eval_dataset,
-                collator,
+                probe_collator,
                 args.eval_samples,
                 args.eval_seed,
                 rank,
@@ -1894,7 +1974,7 @@ def main() -> int:
             del eval_selection, eval_dataset
         train_probe = build_probe_set(
             dataset,
-            collator,
+            probe_collator,
             args.eval_samples,
             args.eval_seed,
             rank,
@@ -1948,7 +2028,8 @@ def main() -> int:
     # identical on all ranks after DDP's gradient sync — no reduce needed.)
     window: list[Tensor] = []
     window_action: list[Tensor] = []
-    window_aux: list[Tensor] = []
+    window_aux_sum: list[Tensor] = []
+    window_aux_count: list[Tensor] = []
     grad_norm = torch.zeros((), device=device)
     prefetcher = DevicePrefetcher(loader, device)
     epoch = 0
@@ -1960,7 +2041,7 @@ def main() -> int:
         for batch in prefetcher:
             if step >= args.steps:
                 break
-            loss, action_component, aux_component = train_step(batch)
+            loss, action_component, aux_sum, aux_count = train_step(batch)
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
             grad_norm = torch.nn.utils.clip_grad_norm_(
@@ -1972,29 +2053,42 @@ def main() -> int:
             step += 1
             window.append(loss.detach())
             window_action.append(action_component)
-            if aux_component is not None:
-                window_aux.append(aux_component)
+            if aux_sum is not None and aux_count is not None:
+                window_aux_sum.append(aux_sum)
+                window_aux_count.append(aux_count)
 
             if step % args.log_every == 0:
                 # All ranks participate in the reduce (they hit the same
                 # step in lockstep); only rank 0 syncs to host and reports.
-                # Aux batches without a single judged sample still carry an
-                # aux term (0-safe mean) — every rank appends every step, so
-                # the collective stays aligned.
+                # Aux rides as (CE sum, position count) — the reduced
+                # ratio is the position-weighted mean over the window
+                # across all ranks, so sparsely-labeled batches weigh by
+                # their actual aux tokens instead of diluting a
+                # batch-mean toward 0. Aux runs append every step (0-sum
+                # batches included), so the collective stays aligned.
                 window_mean = torch.stack(window).mean()
                 action_mean = torch.stack(window_action).mean()
-                aux_mean = torch.stack(window_aux).mean() if window_aux else None
+                aux_totals = (
+                    torch.stack(
+                        [
+                            torch.stack(window_aux_sum).sum(),
+                            torch.stack(window_aux_count).sum().float(),
+                        ],
+                    )
+                    if window_aux_sum
+                    else None
+                )
                 window.clear()
                 window_action.clear()
-                window_aux.clear()
+                window_aux_sum.clear()
+                window_aux_count.clear()
                 if distributed:
                     torch.distributed.all_reduce(window_mean)
                     window_mean /= world_size
                     torch.distributed.all_reduce(action_mean)
                     action_mean /= world_size
-                    if aux_mean is not None:
-                        torch.distributed.all_reduce(aux_mean)
-                        aux_mean /= world_size
+                    if aux_totals is not None:
+                        torch.distributed.all_reduce(aux_totals)
                 dt = (time.perf_counter() - t_last) / args.log_every
                 t_last = time.perf_counter()
                 if is_main:
@@ -2006,9 +2100,13 @@ def main() -> int:
                         "samples": step * args.batch_size * world_size,
                         "s_per_step": round(dt, 3),
                     }
-                    if aux_mean is not None:
+                    if aux_totals is not None:
                         record["loss_action"] = round(action_mean.item(), 4)
-                        record["loss_aux"] = round(aux_mean.item(), 4)
+                        if float(aux_totals[1]) > 0:
+                            record["loss_aux"] = round(
+                                float(aux_totals[0] / aux_totals[1]),
+                                4,
+                            )
                     if args.backbone_trained:
                         # Group 1 is the first backbone group (same cosine
                         # shape as the expert's, scaled to its base lr).
@@ -2025,8 +2123,9 @@ def main() -> int:
                             "train/samples": record["samples"],
                             "train/s_per_step": record["s_per_step"],
                         }
-                        if "loss_aux" in record:
+                        if "loss_action" in record:
                             wandb_metrics["train/loss_action"] = record["loss_action"]
+                        if "loss_aux" in record:
                             wandb_metrics["train/loss_aux"] = record["loss_aux"]
                         wandb_run.log(wandb_metrics, step=step)
 
@@ -2046,7 +2145,7 @@ def main() -> int:
                         args.eval_seed + rank,
                         distributed=distributed,
                         wandb_run=wandb_run,
-                        collator=collator,
+                        collator=probe_collator,
                         action_names=action_names,
                         step=step,
                         table_key="eval/samples",
@@ -2060,7 +2159,7 @@ def main() -> int:
                     args.eval_seed + rank,
                     distributed=distributed,
                     wandb_run=wandb_run,
-                    collator=collator,
+                    collator=probe_collator,
                     action_names=action_names,
                     step=step,
                     table_key="train/samples",

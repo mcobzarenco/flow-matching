@@ -47,14 +47,26 @@ from torch import Tensor
 PINNED_PROMPT_HASH = "9b796de"
 
 AUX_TEMPLATE_VERSION = 2
-# Suffix format 2 (the only trained format going forward): every
-# ar_backbone suffix — aux or not — is [state][GENERATION_OPENER][aux
-# text when labeled][BOA][actions]. The opener is the IT chat template's
-# own generation prompt, so the trained decision point ("speak or act")
-# sits on the single most reinforced transition instruction tuning
-# built. Aux-less runs train the decision point to BOA directly.
-SUFFIX_FORMAT = 2
+# Suffix format 3 (the only trained format going forward): every
+# ar_backbone suffix — aux or not — is [state][GENERATION_OPENER][MODE]
+# [aux text when labeled][BOA][actions]. The opener is the IT chat
+# template's own generation prompt (introduced by format 2, which
+# OPENER_SUFFIX_FORMAT marks for per-feature legacy gating); the MODE
+# token is FED, never predicted — [AUX] on samples that carry aux
+# supervision, [ACT] otherwise — so "speak vs act" is commanded by the
+# caller instead of learned as a marginal over whichever frames a judge
+# happened to label (label presence is explained away; vision features
+# are never asked to predict judged-ness). Aux-less runs feed [ACT] on
+# every sample.
+SUFFIX_FORMAT = 3
+OPENER_SUFFIX_FORMAT = 2
 GENERATION_OPENER = "<start_of_turn>model\n"
+# Mode token offsets: backbone id = (block_base − NUM_MODES) + offset —
+# directly below the FAST block, inside the same reserved-unused tail,
+# embedded through the decoder's trainable mode tables.
+ACT_MODE = 0
+AUX_MODE = 1
+NUM_MODES = 2
 # Free-phase token budget at decode: worst-case configured template
 # (headers ~12 + subgoal 16 + holding 4 + progress 5) with slack; the
 # fallback (force BOA, count it) fires past this.
@@ -72,6 +84,17 @@ class AuxField(StrEnum):
     SUBGOAL = "subgoal"
     HOLDING = "holding"
     PROGRESS = "progress"
+
+
+class AuxDecodeMode(StrEnum):
+    """Inference-time mode selection for the format-3 decode: which mode
+    token is fed after the opener. ACT — feed [ACT][BOA], straight to
+    grammar-constrained actions (the deployment fast path). FREE — feed
+    [AUX], free-until-BOA text generation first (requires an
+    aux-trained checkpoint: [AUX] is untrained otherwise)."""
+
+    ACT = "act"
+    FREE = "free"
 
 
 class TextTokenizer(Protocol):
@@ -188,20 +211,30 @@ class AuxGeneration:
 class AuxSpec:
     """Aux-rendering configuration + the lazy text tokenizer.
 
-    Pickled into spawned dataloader workers — the tokenizer is built
-    lazily and dropped in ``__getstate__`` (the GemmaInputsCollator
-    convention). ``annotated_repos`` are the repo ids whose annotation
-    stamps were verified at selection time (stale-hash datasets are
-    treated as unjudged, loudly, by selection — not here).
-    ``block_base`` maps codec ids into backbone id space for the
-    assembled suffix."""
+    Pickled into spawned dataloader workers — the tokenizer and the
+    dropout generator are built lazily and dropped in ``__getstate__``
+    (the GemmaInputsCollator convention). ``annotated_repos`` are the
+    repo ids whose annotation stamps were verified at selection time
+    (stale-hash datasets are treated as unjudged, loudly, by selection —
+    not here). ``block_base`` maps codec ids into backbone id space for
+    the assembled suffix.
+
+    ``dropout``: probability a LABELED sample renders as unlabeled
+    (trains [ACT] + BOA with its aux text dropped) — keeps the fast
+    path trained under dense annotation. Draws come from a per-process
+    generator seeded from ``torch.initial_seed()`` (in a dataloader
+    worker: a pure function of --seed, rank and worker id — same seed,
+    same dropout pattern; probe collators run a dropout-0 clone so eval
+    always sees the true labels)."""
 
     tokenizer_dir: str
     fields: tuple[AuxField, ...]
     annotated_repos: frozenset[str]
     block_base: int
+    dropout: float
     max_subgoal_tokens: int = 16
     _tokenizer: Any = field(default=None, repr=False, compare=False)
+    _generator: torch.Generator | None = field(default=None, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         ordered = tuple(f for f in AuxField if f in self.fields)
@@ -212,10 +245,12 @@ class AuxSpec:
             )
         if not self.fields:
             raise ValueError("aux enabled with no fields — pass aux=None instead")
+        if not 0.0 <= self.dropout < 1.0:
+            raise ValueError(f"aux dropout {self.dropout} outside [0, 1)")
 
     @override
     def __getstate__(self) -> dict[str, Any]:
-        return {**self.__dict__, "_tokenizer": None}
+        return {**self.__dict__, "_tokenizer": None, "_generator": None}
 
     def tokenizer(self) -> TextTokenizer:
         if self._tokenizer is None:
@@ -270,7 +305,9 @@ class AuxSpec:
 
     def render(self, item: dict[str, Any]) -> list[int]:
         """All present fields' token ids, template order. Empty for
-        unjudged frames and for datasets whose stamp failed verification."""
+        unjudged frames, for datasets whose stamp failed verification,
+        and — with probability ``dropout`` — for labeled samples (mode
+        dropout: the sample then trains as [ACT])."""
         if item.get("repo_id") not in self.annotated_repos:
             return []
         ids: list[int] = []
@@ -278,6 +315,11 @@ class AuxSpec:
             rendered = self.render_field(aux_field, item)
             if rendered is not None:
                 ids.extend(rendered)
+        if ids and self.dropout > 0.0:
+            if self._generator is None:
+                self._generator = torch.Generator().manual_seed(torch.initial_seed())
+            if float(torch.rand((), generator=self._generator)) < self.dropout:
+                return []
         return ids
 
 

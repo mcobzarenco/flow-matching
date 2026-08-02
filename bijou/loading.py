@@ -26,7 +26,7 @@ from huggingface_hub import snapshot_download
 from safetensors.torch import load_file
 from torch import Tensor
 
-from .aux_text import SUFFIX_FORMAT, AuxDecodeConfig, build_aux_runtime
+from .aux_text import OPENER_SUFFIX_FORMAT, AuxDecodeConfig, build_aux_runtime
 from .data import DatasetStats
 from .decoders.ar_backbone import ARBackboneConfig, ARBackboneDecoder
 from .decoders.ar_fast import ARFastConfig, ARFastDecoder
@@ -848,9 +848,11 @@ def from_checkpoint(
         else:
             # The backbone checkpoint's own tokenizer — the artifact the
             # collator rendered training text with (opener + aux metrics).
+            # Keyed off the OPENER format: every format ≥ 2 trained the
+            # opener and needs it tokenized at construction.
             text_tokenizer = (
                 transformers.AutoTokenizer.from_pretrained(str(checkpoint_dir))
-                if decoder_config.suffix_format >= SUFFIX_FORMAT
+                if decoder_config.suffix_format >= OPENER_SUFFIX_FORMAT
                 or decoder_config.aux is not None
                 else None
             )

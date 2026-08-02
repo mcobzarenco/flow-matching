@@ -1,16 +1,19 @@
 """Decoder-only action decoder: the backbone's suffix role (ar_backbone).
 
 The prompt is prefill-encoded once (the ObservationMemory retains the
-full prefix KV cache); this decoder continues the suffix-format-2
-sequence ``[state][<start_of_turn>model\\n][aux text?][BOA][t_1..t_k]``
-through ALL backbone layers — the KV-shared deep half included — and
-reads FULL-VOCABULARY logits from the frozen tied LM head with the FAST
-block's columns supplied by a trainable patch. Aux text (subgoal /
-holding / progress rendered from judge annotations, bijou.aux_text) and
-action tokens share that one softmax: the last opener position is the
-trained DECISION POINT — first aux token on labeled samples, BOA
-otherwise — so an aux-less run trains the decision point to BOA on
-every sample and the two regimes stay one model family.
+full prefix KV cache); this decoder continues the suffix-format-3
+sequence ``[state][<start_of_turn>model\\n][MODE][aux text?][BOA]
+[t_1..t_k]`` through ALL backbone layers — the KV-shared deep half
+included — and reads FULL-VOCABULARY logits from the frozen tied LM
+head with the FAST block's columns supplied by a trainable patch. Aux
+text (subgoal / holding / progress rendered from judge annotations,
+bijou.aux_text) and action tokens share that one softmax. The MODE
+token ([ACT] | [AUX]) is FED, never predicted: whether a sample speaks
+is decided by its label presence (and aux dropout) at collation, so
+the model is never asked to infer judged-ness from appearance, and
+inference COMMANDS the mode — [ACT] goes straight to actions, [AUX]
+elicits the aux segment. Aux-less runs feed [ACT] everywhere and stay
+the same model family.
 
 Ownership: this module owns ONLY the new parameters (~11M at E2B scale)
 — the state projection (suffix position 0, zero-initialized so the
@@ -50,10 +53,15 @@ from torch import Tensor, nn
 from torch.nn import functional as F
 
 from ..aux_text import (
+    ACT_MODE,
+    AUX_MODE,
     GENERATION_OPENER,
     MAX_FREE_TOKENS,
+    NUM_MODES,
+    OPENER_SUFFIX_FORMAT,
     SUFFIX_FORMAT,
     AuxDecodeConfig,
+    AuxDecodeMode,
     AuxGeneration,
     AuxRuntime,
     TextTokenizer,
@@ -80,10 +88,11 @@ class ARBackboneConfig:
     state_dim: int
     chunk_size: int
     action_dim: int
-    # Suffix format (aux_text.SUFFIX_FORMAT when written): 2 = the
-    # opener-prefixed format every new run trains; parsed 1 = a legacy
-    # checkpoint (pre-opener) — loadable for warm starts, decode quality
-    # under the unified path is undefined (loud warning).
+    # Suffix format (aux_text.SUFFIX_FORMAT when written): 3 = the
+    # opener+mode format every new run trains; parsed 2 (opener, no
+    # mode) / 1 (pre-opener) = legacy checkpoints — loadable for warm
+    # starts (fresh mode rows), decoded via their own mode-less path
+    # with a loud warning.
     suffix_format: int
     # Aux text record: template version + fields + label provenance
     # (None = trained without aux — the decision point trains to BOA).
@@ -94,12 +103,23 @@ class ARBackboneConfig:
             raise ValueError(f"vocab_total {self.vocab_total} is not a FAST vocabulary")
         if self.block_base < 0:
             raise ValueError(f"block_base {self.block_base} must be non-negative")
-        if self.aux is not None and self.suffix_format < SUFFIX_FORMAT:
+        if self.aux is not None and self.suffix_format < OPENER_SUFFIX_FORMAT:
             raise ValueError(
                 f"aux config on suffix format {self.suffix_format}: aux "
                 "text shipped WITH the opener format — no such checkpoint "
                 "exists, and the decode path could not elicit it",
             )
+        if self.suffix_format >= SUFFIX_FORMAT and self.block_base < NUM_MODES:
+            raise ValueError(
+                f"block_base {self.block_base} leaves no room for the "
+                f"{NUM_MODES} mode ids directly below the FAST block",
+            )
+
+    @property
+    def mode_base(self) -> int:
+        """First backbone id of the mode-token pair ([ACT], [AUX]) —
+        directly below the FAST block."""
+        return self.block_base - NUM_MODES
 
 
 class ARBackboneDecoder(nn.Module):
@@ -135,25 +155,30 @@ class ARBackboneDecoder(nn.Module):
         self.aux_loss_weight = aux_loss_weight
         # Cumulative free-phase budget exhaustions (decode health metric).
         self.fallback_count = 0
-        if config.suffix_format >= SUFFIX_FORMAT:
+        # Per-feature format gating: the opener arrived with format 2,
+        # the mode token with format 3 — a format-2 checkpoint keeps its
+        # trained opener and decodes via the mode-less legacy path.
+        self.uses_modes = config.suffix_format >= SUFFIX_FORMAT
+        if config.suffix_format >= OPENER_SUFFIX_FORMAT:
             if tokenizer is None:
                 raise ValueError(
-                    "suffix format 2 needs the backbone's text tokenizer "
-                    "(the generation opener is tokenized at construction)",
+                    "opener-format checkpoints need the backbone's text "
+                    "tokenizer (the generation opener is tokenized at "
+                    "construction)",
                 )
             self.opener_ids: tuple[int, ...] = tuple(
                 tokenizer.encode(GENERATION_OPENER, add_special_tokens=False),
             )
         else:
+            self.opener_ids = ()
+        if not self.uses_modes:
             print(
                 "[ar_backbone] LEGACY suffix format "
-                f"{config.suffix_format} checkpoint: decode under the "
-                "unified free-until-BOA path is untrained for it — "
-                "fine for --init-from warm starts, re-fine-tune before "
-                "trusting inference",
+                f"{config.suffix_format} checkpoint (pre-mode): decoding "
+                "uses its own mode-less path — fine for --init-from warm "
+                "starts, re-fine-tune before trusting inference",
                 flush=True,
             )
-            self.opener_ids = ()
         if codec.vocab_total != config.vocab_total:
             raise ValueError(
                 f"codec vocab_total {codec.vocab_total} != config "
@@ -207,6 +232,17 @@ class ARBackboneDecoder(nn.Module):
             device=device,
             dtype=dtype,
         )
+        # Mode-token tables ([ACT], [AUX]) — same patch mechanism as the
+        # FAST block, two rows directly below it. Present (and saved)
+        # for every format so state-dict shapes are format-independent;
+        # legacy checkpoints load them fresh and never feed them.
+        self.mode_embed = nn.Embedding(NUM_MODES, hidden, device=device, dtype=dtype)
+        self.mode_ple = nn.Embedding(
+            NUM_MODES,
+            self.num_layers * self.ple_dim,
+            device=device,
+            dtype=dtype,
+        )
         # Constrained decoding needs each token's symbol expansion length
         # (one BPE piece = a run of quantized DCT coefficients). Specials
         # stay 0 and are handled explicitly in the decode mask. Plain
@@ -234,6 +270,8 @@ class ARBackboneDecoder(nn.Module):
         should prefer :meth:`init_tables_from_backbone`."""
         nn.init.normal_(self.fast_embed.weight, mean=0.0, std=0.02)
         nn.init.normal_(self.fast_ple.weight, mean=0.0, std=0.02)
+        nn.init.normal_(self.mode_embed.weight, mean=0.0, std=0.02)
+        nn.init.normal_(self.mode_ple.weight, mean=0.0, std=0.02)
         nn.init.zeros_(self.state_proj.weight)
         assert self.state_proj.bias is not None
         nn.init.zeros_(self.state_proj.bias)
@@ -250,6 +288,8 @@ class ARBackboneDecoder(nn.Module):
         for table, mean in (
             (self.fast_embed.weight, embed_mean),
             (self.fast_ple.weight, ple_mean),
+            (self.mode_embed.weight, embed_mean),
+            (self.mode_ple.weight, ple_mean),
         ):
             noise = torch.randn_like(table) * 0.02
             table.copy_(mean.to(table.dtype)[None, :] + noise)
@@ -281,17 +321,24 @@ class ARBackboneDecoder(nn.Module):
         state: Tensor | None,
         tokens: Tensor,
     ) -> tuple[Tensor, Tensor]:
-        """As :meth:`_suffix_inputs` but ``tokens`` are BACKBONE ids: text
-        ids (< block_base — the aux segment) embed through the frozen
-        embed_tokens/PLE tables; block ids through the patch. An all-block
-        suffix reproduces the pre-aux computation bitwise (torch.where
-        with an all-False mask returns the block side elementwise)."""
+        """As :meth:`_suffix_inputs` but ``tokens`` are BACKBONE ids,
+        routed by range: text ids (< mode_base — the aux segment) embed
+        through the frozen embed_tokens/PLE tables, the two mode ids
+        through the mode tables, block ids through the FAST patch. An
+        all-block suffix reproduces the pre-aux computation bitwise
+        (nested torch.where with all-False masks returns the block side
+        elementwise)."""
         text = backbone.language_model
         target_dtype = text.embed_tokens.weight.dtype
-        is_text = (tokens < self.config.block_base)[..., None]
+        mode_base = self.config.mode_base
+        is_block = tokens >= self.config.block_base
+        is_mode = ((tokens >= mode_base) & ~is_block)[..., None]
+        is_text = (tokens < mode_base)[..., None]
         block_ids = (tokens - self.config.block_base).clamp(min=0)
-        # Text-side lookups use the pad row at block positions (discarded
-        # by the select) — every id stays in range for both tables.
+        mode_ids = (tokens - mode_base).clamp(min=0, max=NUM_MODES - 1)
+        # Text-side lookups use the pad row at block/mode positions
+        # (discarded by the select) — every id stays in range for every
+        # table.
         text_ids = torch.where(
             is_text[..., 0],
             tokens,
@@ -300,16 +347,29 @@ class ARBackboneDecoder(nn.Module):
         embeds = torch.where(
             is_text,
             text.embed_tokens(text_ids).float(),
-            self.fast_embed(block_ids) * self.embed_scale,
+            torch.where(
+                is_mode,
+                self.mode_embed(mode_ids) * self.embed_scale,
+                self.fast_embed(block_ids) * self.embed_scale,
+            ),
         )
         ple = torch.where(
             is_text[..., None],
             text.get_per_layer_inputs(text_ids).float(),
-            (self.fast_ple(block_ids) * self.ple_scale).view(
-                tokens.shape[0],
-                tokens.shape[1],
-                self.num_layers,
-                self.ple_dim,
+            torch.where(
+                is_mode[..., None],
+                (self.mode_ple(mode_ids) * self.ple_scale).view(
+                    tokens.shape[0],
+                    tokens.shape[1],
+                    self.num_layers,
+                    self.ple_dim,
+                ),
+                (self.fast_ple(block_ids) * self.ple_scale).view(
+                    tokens.shape[0],
+                    tokens.shape[1],
+                    self.num_layers,
+                    self.ple_dim,
+                ),
             ),
         )
         if state is not None:
@@ -434,27 +494,38 @@ class ARBackboneDecoder(nn.Module):
         memory: ObservationMemory,
         batch: CollatedBatch[Any],
         *,
+        mode: AuxDecodeMode = AuxDecodeMode.ACT,
         generator: torch.Generator | None = None,
         noise: Tensor | None = None,
     ) -> ChunkPrediction:
-        """Free-until-BOA, then grammar-constrained actions — the single
-        decode path for every ar_backbone checkpoint, batched with
-        per-row phases. Deterministic greedy; ``generator``/``noise``
-        unused/must be None.
+        """The single decode path for every ar_backbone checkpoint,
+        batched with per-row phases. Deterministic greedy;
+        ``generator``/``noise`` unused/must be None.
 
-        Feed ``[state][opener]``, then per row: FREE phase (text ids and
-        BOA only — the rest of the FAST block is masked; budget
-        MAX_FREE_TOKENS, exhaustion forces BOA and increments
-        ``fallback_count``, printed loudly) until BOA, then the ACTION
+        ``mode`` picks the fed mode token (format 3): ACT feeds
+        ``[state][opener][ACT][BOA]`` and goes straight to the ACTION
         phase (the ar_fast grammar mask by remaining symbol budget; PAD
-        once finished, inert). An aux-less-trained model emits BOA at
-        the first free step — same path, one extra forward.
+        once finished, inert) — the deployment fast path. FREE feeds
+        ``[state][opener][AUX]`` then runs the FREE phase per row (text
+        ids and BOA only — mode ids and the rest of the FAST block are
+        masked; budget MAX_FREE_TOKENS, exhaustion forces BOA and
+        increments ``fallback_count``, printed loudly) until BOA, then
+        actions. FREE requires an aux-trained checkpoint ([AUX] is
+        untrained otherwise — loud error). Pre-mode legacy checkpoints
+        ignore ``mode`` and decode their own trained format:
+        ``[state][opener?]`` then free-until-BOA.
 
         Returns a ChunkPrediction: chunks [B, chunk, action_dim] raw
-        units + one AuxGeneration per row (empty text when the model
-        went straight to BOA)."""
+        units + one AuxGeneration per row (empty text under ACT and
+        whenever the model went straight to BOA)."""
         if noise is not None:
             raise ValueError("ARBackboneDecoder.predict_chunk takes no noise")
+        if self.uses_modes and mode is AuxDecodeMode.FREE and self.config.aux is None:
+            raise ValueError(
+                "FREE decode on an aux-less checkpoint: every training "
+                "sample fed [ACT], so the [AUX] mode is untrained — "
+                "decode with mode=act",
+            )
         stats = batch.action_stats
         if stats.q01 is None or stats.q99 is None:
             raise SystemExit(
@@ -473,21 +544,40 @@ class ARBackboneDecoder(nn.Module):
         total_symbols = config.chunk_size * config.action_dim
         min_value: float = torch.finfo(torch.float32).min
 
-        # Static free-phase mask: text ids + BOA allowed, the rest of the
-        # block (and beyond) illegal before BOA.
+        # Static free-phase mask: text ids + BOA allowed; mode ids and
+        # the rest of the block (and beyond) illegal before BOA. (Mode
+        # ids are fed only — masking them is a no-op for legacy layouts.)
         vocab = base + config.vocab_total
         free_allowed = torch.zeros(vocab, dtype=torch.bool, device=device)
         free_allowed[:base] = True
+        free_allowed[config.mode_base : base] = False
         free_allowed[boa_backbone] = True
 
-        in_action = torch.zeros(batch_size, dtype=torch.bool, device=device)
+        # The fed prefix and starting phase are the mode (format 3); a
+        # pre-mode legacy checkpoint feeds its own trained prefix.
+        prefix_ids = list(self.opener_ids)
+        start_in_action = False
+        if self.uses_modes:
+            match mode:
+                case AuxDecodeMode.ACT:
+                    prefix_ids += [config.mode_base + ACT_MODE, boa_backbone]
+                    start_in_action = True
+                case AuxDecodeMode.FREE:
+                    prefix_ids.append(config.mode_base + AUX_MODE)
+
+        in_action = torch.full(
+            (batch_size,),
+            start_in_action,
+            dtype=torch.bool,
+            device=device,
+        )
         remaining = torch.full((batch_size,), total_symbols, device=device)
         free_spent = 0
         free_ids: list[list[int]] = [[] for _ in range(batch_size)]
         action_ids: list[list[int]] = [[] for _ in range(batch_size)]
 
-        opener = torch.tensor([self.opener_ids], dtype=torch.long, device=device)
-        feed = opener.expand(batch_size, -1)
+        prefix = torch.tensor([prefix_ids], dtype=torch.long, device=device)
+        feed = prefix.expand(batch_size, -1)
         feed_state: Tensor | None = state
         fed = 0
         fallback_count = 0
@@ -617,19 +707,25 @@ def ar_backbone_losses(
     decoder: ARBackboneDecoder,
     memory: ObservationMemory,
     batch: CollatedBatch[Any],
-) -> tuple[Tensor, Tensor, Tensor | None]:
-    """Teacher-forced FULL-VOCABULARY cross-entropy over the format-2
-    suffix ``[state][opener][aux?][BOA][actions]`` — (total, action
-    component, aux component | None).
+) -> tuple[Tensor, Tensor, Tensor | None, Tensor | None]:
+    """Teacher-forced FULL-VOCABULARY cross-entropy over the format-3
+    suffix ``[state][opener][MODE][aux?][BOA][actions]`` — (total with
+    graph, action component, aux CE SUM | None, aux position count |
+    None). Aux rides as sum+count (not a mean) so the train loop can
+    aggregate a position-weighted mean across batches and ranks — a
+    per-batch mean dilutes toward 0 on sparsely-labeled corpora.
 
-    The opener is prepended HERE (the collator supplies content only):
-    state and all-but-the-last opener positions predict constants and
-    are IGNOREd; the last opener position is the trained DECISION POINT
-    — first aux token on labeled samples, BOA otherwise (aux-less runs
-    train it to BOA on every sample). Component split: ``action`` = mean
-    CE over action targets (pretrain scale), ``aux`` = mean CE over
-    aux-text targets (None when the batch has no aux capability), total
-    = action + aux_loss_weight * aux.
+    The opener and per-row MODE token are prepended HERE (the collator
+    supplies content only; a row's mode is derived from its content —
+    [AUX] iff it carries aux positions, which is also how aux dropout
+    lands on [ACT]). State, opener and the fed MODE position predict
+    constants and are IGNOREd; the MODE token's own logits are the
+    trained transition — first aux token on [AUX] rows, BOA on [ACT]
+    rows. Component split: ``action`` = mean CE over action targets
+    (pretrain scale); total = action + aux_loss_weight * (aux_sum /
+    aux_count) — batch-mean semantics, 0-safe when a batch has no
+    labeled sample. Legacy pre-mode decoders (warm-start loads) train
+    their own opener-only sequence.
     """
     state = (batch.state - batch.state_stats.mean) / batch.state_stats.std
     base = decoder.config.block_base
@@ -651,16 +747,34 @@ def ar_backbone_losses(
         dtype=torch.long,
         device=content.device,
     ).expand(content.shape[0], -1)
-    full = torch.cat([opener, content], dim=1)
+    if decoder.uses_modes:
+        mode_base = decoder.config.mode_base
+        if is_aux_content is None:
+            modes = torch.full(
+                (content.shape[0], 1),
+                mode_base + ACT_MODE,
+                dtype=torch.long,
+                device=content.device,
+            )
+        else:
+            modes = torch.where(
+                is_aux_content.any(dim=1),
+                mode_base + AUX_MODE,
+                mode_base + ACT_MODE,
+            )[:, None].to(device=content.device, dtype=torch.long)
+        prefix = torch.cat([opener, modes], dim=1)
+    else:
+        prefix = opener
+    full = torch.cat([prefix, content], dim=1)
     logits = decoder.forward_backbone_ids(backbone, memory, state, full[:, :-1])
     pad_id = base + decoder.codec.pad
     targets = full.clone()
-    # State + opener-constant positions carry no signal; the LAST opener
-    # position (targets index len(opener)-1... its target is full[len]
-    # = content[0]) is the decision point and stays trained. Note the
-    # shift: logits[j] predicts full[j], so IGNORE full[0..len-1] keeps
-    # exactly the constant opener targets out and content[0] in.
-    targets[:, : opener.shape[1]] = IGNORE_INDEX
+    # State + opener + fed-MODE positions carry no signal; the MODE
+    # position's own logits (targets index len(prefix)-1... its target
+    # is full[len(prefix)] = content[0]) stay trained. Note the shift:
+    # logits[j] predicts full[j], so IGNORE full[0..len(prefix)-1] keeps
+    # exactly the constant prefix targets out and content[0] in.
+    targets[:, : prefix.shape[1]] = IGNORE_INDEX
     targets[full == pad_id] = IGNORE_INDEX
     if is_aux_content is None:
         action = F.cross_entropy(
@@ -668,9 +782,9 @@ def ar_backbone_losses(
             targets.reshape(-1),
             ignore_index=IGNORE_INDEX,
         )
-        return action, action, None
+        return action, action, None, None
     is_aux = torch.cat(
-        [torch.zeros_like(opener, dtype=torch.bool), is_aux_content],
+        [torch.zeros_like(prefix, dtype=torch.bool), is_aux_content],
         dim=1,
     )
     elementwise = F.cross_entropy(
@@ -683,9 +797,10 @@ def ar_backbone_losses(
     aux_positions = valid & is_aux
     action_positions = valid & ~is_aux
     action = elementwise[action_positions].sum() / action_positions.sum().clamp(min=1)
-    aux = elementwise[aux_positions].sum() / aux_positions.sum().clamp(min=1)
-    total = action + decoder.aux_loss_weight * aux
-    return total, action, aux
+    aux_count = aux_positions.sum()
+    aux_sum = elementwise[aux_positions].sum()
+    total = action + decoder.aux_loss_weight * (aux_sum / aux_count.clamp(min=1))
+    return total, action, aux_sum, aux_count
 
 
 def ar_backbone_loss(
@@ -697,5 +812,5 @@ def ar_backbone_loss(
     """Scalar objective (see :func:`ar_backbone_losses`; BijouModel.loss
     dispatches here — the train step calls the tuple form for component
     logging)."""
-    total, _, _ = ar_backbone_losses(backbone, decoder, memory, batch)
+    total, _, _, _ = ar_backbone_losses(backbone, decoder, memory, batch)
     return total

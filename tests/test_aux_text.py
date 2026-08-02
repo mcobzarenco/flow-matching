@@ -44,6 +44,7 @@ def spec(**overrides: Any) -> AuxSpec:
         "fields": (AuxField.SUBGOAL, AuxField.HOLDING, AuxField.PROGRESS),
         "annotated_repos": frozenset({"mcobzarenco/so101_pick_place_v2"}),
         "block_base": 1000,
+        "dropout": 0.0,
         "max_subgoal_tokens": 16,
     }
     kwargs.update(overrides)
@@ -144,7 +145,31 @@ def test_field_subset_keeps_order_and_rejects_reorder() -> None:
             fields=(AuxField.HOLDING, AuxField.SUBGOAL),
             annotated_repos=frozenset(),
             block_base=1000,
+            dropout=0.0,
         )
+
+
+def test_mode_dropout_drops_whole_samples_deterministically() -> None:
+    """dropout=p renders a labeled sample as unlabeled with probability
+    p (the sample then trains [ACT]); draws come from a generator seeded
+    from torch.initial_seed(), so a fixed torch seed fixes the pattern."""
+    item = judged_item()
+    # Boundary values need no seeding: 0 keeps everything (the probe
+    # collator's clone), and dropout=1 is rejected outright.
+    assert spec(dropout=0.0).render(item) != []
+    with pytest.raises(ValueError, match="outside"):
+        spec(dropout=1.0)
+    torch.manual_seed(1234)
+    dropped = spec(dropout=0.5)
+    pattern = [dropped.render(item) == [] for _ in range(32)]
+    assert any(pattern) and not all(pattern)  # both outcomes occur
+    torch.manual_seed(1234)
+    again = spec(dropout=0.5)
+    assert [again.render(item) == [] for _ in range(32)] == pattern
+    # Unlabeled sources are unaffected (already empty).
+    other = judged_item()
+    other["repo_id"] = "someone/unjudged"
+    assert dropped.render(other) == []
 
 
 def test_assemble_suffix_layout_and_masks() -> None:

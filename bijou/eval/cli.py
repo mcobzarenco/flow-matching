@@ -33,6 +33,7 @@ from typing import Any
 import numpy as np
 import torch
 
+from ..aux_text import AuxDecodeMode
 from ..data import EpisodeSplit, select_datasets
 from ..model import SamplingMethod
 from .metrics import (
@@ -183,6 +184,15 @@ def parse_args() -> argparse.Namespace:
         choices=[m.value for m in SamplingMethod],
         default=SamplingMethod.HEUN.value,
     )
+    parser.add_argument(
+        "--aux-mode",
+        choices=[m.value for m in AuxDecodeMode],
+        default=AuxDecodeMode.ACT.value,
+        help="ar_backbone decode mode: 'act' scores the deployment fast "
+        "path (comparable to aux-less arms); 'free' generates the aux "
+        "text first (aux-trained checkpoints only). Other decoder kinds "
+        "ignore it",
+    )
     parser.add_argument("--device", default="cuda")
     parser.add_argument(
         "--output-json",
@@ -279,6 +289,7 @@ def main() -> int:
             seed=args.seed,
             sample_steps=args.sample_steps,
             method=SamplingMethod(args.sample_method),
+            aux_mode=AuxDecodeMode(args.aux_mode),
         )
         if policy.info.chunk_size != args.chunk_size:
             raise SystemExit(

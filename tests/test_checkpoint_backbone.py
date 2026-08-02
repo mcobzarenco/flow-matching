@@ -113,6 +113,7 @@ def make_args(save_dir: Path) -> TrainArgs:
         fast_tokenizer=None,
         aux_fields=None,
         aux_loss_weight=0.5,
+        aux_dropout=0.0,
         decoder_hidden=64,
         decoder_heads=2,
         decoder_intermediate=128,
