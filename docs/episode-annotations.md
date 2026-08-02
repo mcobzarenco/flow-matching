@@ -170,7 +170,10 @@ ds[index]["annotation.progress"]  # tensor([p_now, p_next]) — NaN where unsamp
 
 Two vectors per frame — is the task object / the gripper visible in
 each camera — with one slot per camera. Slot order is the feature's
-`names` (sorted camera short names); NaN-masked like the scalars:
+`names` (sorted camera short names); NaN-masked like the scalars.
+Single-camera datasets store these as plain scalars (lerobot's feature
+convention casts shape-(1,) features to scalar values, not length-1
+lists — items yield a 0-d tensor there):
 
 ```python
 names = ds.meta.features["annotation.visible_object"][

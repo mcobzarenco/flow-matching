@@ -294,6 +294,17 @@ def _fixed_size_list_array(matrix: np.ndarray) -> pa.Array:
     return pa.FixedSizeListArray.from_arrays(values, width)
 
 
+def _per_camera_array(matrix: np.ndarray) -> pa.Array:
+    """(n, n_cameras) -> the arrow column lerobot's feature convention
+    expects: shape (1,) features cast as scalar Values, so single-camera
+    visibility must be a plain float column — fixed_size_list[1] fails
+    LeRobotDataset's schema cast (measured: every 1-camera dataset in the
+    corpus). Multi-camera stays fixed_size_list[n], like 'action'."""
+    if matrix.shape[1] == 1:
+        return pa.array(matrix[:, 0], type=pa.float32())
+    return _fixed_size_list_array(matrix)
+
+
 def materialize_annotation_columns(
     root: Path,
     judgments: dict[int, EpisodeJudgment],
@@ -355,11 +366,11 @@ def materialize_annotation_columns(
         )
         table = table.append_column(
             ANNOTATION_VISIBLE_OBJECT,
-            _fixed_size_list_array(visible_object),
+            _per_camera_array(visible_object),
         )
         table = table.append_column(
             ANNOTATION_VISIBLE_GRIPPER,
-            _fixed_size_list_array(visible_gripper),
+            _per_camera_array(visible_gripper),
         )
         # Atomic replace, preserving the one-row-group-per-episode layout
         # (plain pq.write_table would collapse row groups and break the

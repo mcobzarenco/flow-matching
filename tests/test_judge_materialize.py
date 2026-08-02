@@ -8,10 +8,12 @@ annotations.
 from __future__ import annotations
 
 import numpy as np
+import pyarrow as pa
 import pytest
 
 from bijou.judge.materialize import (
     ANNOTATION_COLUMNS,
+    _per_camera_array,
     annotation_feature_info,
     episode_annotation_arrays,
 )
@@ -78,6 +80,16 @@ def test_unknown_visibility_camera_is_loud() -> None:
             ["front"],  # judge answered for a camera the dataset lacks
             [annotation(1, 0.5, holding=False)],
         )
+
+
+def test_per_camera_encoding_matches_lerobot_feature_convention() -> None:
+    """lerobot casts shape-(1,) features to scalar Values — a length-1
+    fixed_size_list breaks every single-camera dataset's schema cast
+    (measured corpus-wide before the fix)."""
+    single = _per_camera_array(np.zeros((4, 1), dtype=np.float32))
+    assert single.type == pa.float32()
+    multi = _per_camera_array(np.zeros((4, 2), dtype=np.float32))
+    assert multi.type == pa.list_(pa.float32(), 2)
 
 
 def test_feature_info_shapes_and_names() -> None:
