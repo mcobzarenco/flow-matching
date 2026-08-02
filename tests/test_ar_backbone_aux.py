@@ -163,9 +163,11 @@ def test_free_decode_is_budgeted_and_always_yields_chunks() -> None:
     loaded = codec()
     sample = batch(loaded)
     memory = encode_memory(backbone)
-    chunks, generations = decoder.predict_chunk_with_text(backbone, memory, sample)
-    assert chunks.shape == (BATCH, loaded.time_horizon, loaded.action_dim)
-    assert bool(torch.isfinite(chunks).all())
+    prediction = decoder.predict_chunk(backbone, memory, sample)
+    generations = prediction.generations
+    assert generations is not None
+    assert prediction.chunks.shape == (BATCH, loaded.time_horizon, loaded.action_dim)
+    assert bool(torch.isfinite(prediction.chunks).all())
     for generation in generations:
         # Free ids decode as text (char stub): never block ids, bounded.
         assert len(generation.text) <= MAX_FREE_TOKENS
@@ -175,17 +177,19 @@ def test_free_decode_is_budgeted_and_always_yields_chunks() -> None:
 def test_zero_budget_forces_boa_and_counts_fallback(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    # Patch the DECODER module's binding (predict_chunk_with_text reads
-    # its own global, not aux_text's).
+    # Patch the DECODER module's binding (predict_chunk reads its own
+    # global, not aux_text's).
     monkeypatch.setattr(bijou.decoders.ar_backbone, "MAX_FREE_TOKENS", 0)
     backbone, decoder = build_with_aux()
     loaded = codec()
-    chunks, generations = decoder.predict_chunk_with_text(
+    prediction = decoder.predict_chunk(
         backbone,
         encode_memory(backbone),
         batch(loaded),
     )
-    assert chunks.shape[1] == loaded.time_horizon
+    generations = prediction.generations
+    assert generations is not None
+    assert prediction.chunks.shape[1] == loaded.time_horizon
     # Budget 0: no free text possible; fallback fired for any row whose
     # first pick wasn't already BOA.
     assert all(generation.text == "" for generation in generations)

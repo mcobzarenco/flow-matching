@@ -29,7 +29,7 @@ from typing import Any, Protocol, Self
 import torch
 from torch import Tensor
 
-from .aux_text import AuxSpec, assemble_suffix
+from .aux_text import AuxGeneration, AuxSpec, assemble_suffix
 from .fast.codec import ActionCodec
 from .gemma4.cache import KVCache
 from .nn import RopeParameters
@@ -67,6 +67,21 @@ class MemoryStream:
 
     key: Tensor
     value: Tensor
+
+
+@dataclass(frozen=True, slots=True)
+class ChunkPrediction:
+    """A decoder's chunk-space inference result, crossing the seam back
+    to the caller: RAW-unit action chunks plus, for decoders with a text
+    surface (ar_backbone), one :class:`AuxGeneration` per row. ``None``
+    generations = this decoder kind produces no text (flow, ar_fast);
+    ar_backbone always returns the list — rows are empty-text when the
+    model went straight to BOA.
+
+    Shapes: chunks [B, chunk, action_dim] (raw action units)."""
+
+    chunks: Tensor
+    generations: list[AuxGeneration] | None
 
 
 @dataclass(frozen=True, slots=True)

@@ -35,7 +35,7 @@ from .decoders.ar_fast import ARFastDecoder, ar_fast_loss
 from .decoders.flow import FlowDecoder, SamplingMethod, flow_matching_loss
 from .encoders.gemma4 import GemmaEncoder, GemmaInputs
 from .gemma4.model import Gemma4Model
-from .interface import CollatedBatch, ObservationMemory
+from .interface import ChunkPrediction, CollatedBatch, ObservationMemory
 
 
 class BijouModel(nn.Module):
@@ -155,12 +155,14 @@ class BijouModel(nn.Module):
         noise: Tensor | None = None,
         num_steps: int = 5,
         method: SamplingMethod = SamplingMethod.HEUN,
-    ) -> Tensor:
-        """Collated batch → RAW-unit action chunk [B, chunk, action_dim]:
-        encode the observation (no grad) and run the decoder's chunk-space
-        inference with the batch's per-sample stats. ``num_steps``/
-        ``method``/``noise`` are flow solver knobs; an AR decoder decodes
-        greedily and ignores them (``noise`` must then be None)."""
+    ) -> ChunkPrediction:
+        """Collated batch → :class:`ChunkPrediction` (RAW-unit chunks
+        [B, chunk, action_dim] + per-row aux generations for decoders
+        with a text surface): encode the observation (no grad) and run
+        the decoder's chunk-space inference with the batch's per-sample
+        stats. ``num_steps``/``method``/``noise`` are flow solver knobs;
+        an AR decoder decodes greedily and ignores them (``noise`` must
+        then be None)."""
         memory = self.encode(batch.encoder_inputs, with_grad=False)
         decoder = self.decoder
         match decoder:

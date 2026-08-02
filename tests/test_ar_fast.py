@@ -196,9 +196,10 @@ def test_predict_chunk_constrained_decode_always_valid() -> None:
     decoder, _ = build()
     decoder.eval()
     sample = batch(loaded=decoder.codec)
-    chunks = decoder.predict_chunk(memory(), sample)
-    assert chunks.shape == (BATCH, CHUNK, DIM)
-    assert torch.isfinite(chunks).all()
+    prediction = decoder.predict_chunk(memory(), sample)
+    assert prediction.generations is None  # ar_fast has no text surface
+    assert prediction.chunks.shape == (BATCH, CHUNK, DIM)
+    assert torch.isfinite(prediction.chunks).all()
     with pytest.raises(ValueError, match="no noise"):
         decoder.predict_chunk(memory(), sample, noise=torch.zeros(1))
 

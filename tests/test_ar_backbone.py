@@ -266,9 +266,10 @@ def test_teacher_forced_matches_incremental_decode_path() -> None:
 def test_predict_chunk_constrained_decode_always_valid() -> None:
     backbone, decoder, loaded = build()
     sample = batch(loaded)
-    chunks = decoder.predict_chunk(backbone, encode_memory(backbone), sample)
-    assert chunks.shape == (BATCH, loaded.time_horizon, loaded.action_dim)
-    assert bool(torch.isfinite(chunks).all())
+    prediction = decoder.predict_chunk(backbone, encode_memory(backbone), sample)
+    assert prediction.chunks.shape == (BATCH, loaded.time_horizon, loaded.action_dim)
+    assert bool(torch.isfinite(prediction.chunks).all())
+    assert prediction.generations is not None  # ar_backbone always has text
 
 
 def test_missing_cache_fails_loudly() -> None:

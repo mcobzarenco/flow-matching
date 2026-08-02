@@ -35,7 +35,7 @@ predict constants and are IGNOREd; BOA IS predicted (the decision
 point's target on aux-less samples, the aux segment's terminator
 otherwise); PAD is batch padding only and always ignored; there is no
 EOA (action length is fixed by the FAST grammar). Decoding is the ONE
-free-until-BOA path (:meth:`ARBackboneDecoder.predict_chunk_with_text`):
+free-until-BOA path (:meth:`ARBackboneDecoder.predict_chunk`):
 text-or-BOA mask under a token budget, then the ar_fast-style
 grammar-constrained greedy mask by remaining symbol budget.
 """
@@ -61,7 +61,7 @@ from ..aux_text import (
 from ..fast.codec import ActionCodec
 from ..gemma4.config import Gemma4TextConfig
 from ..gemma4.model import Gemma4Model
-from ..interface import CollatedBatch, ObservationMemory
+from ..interface import ChunkPrediction, CollatedBatch, ObservationMemory
 from ..nn import DeviceLike
 from .ar_fast import IGNORE_INDEX
 
@@ -436,26 +436,11 @@ class ARBackboneDecoder(nn.Module):
         *,
         generator: torch.Generator | None = None,
         noise: Tensor | None = None,
-    ) -> Tensor:
-        """RAW-unit chunks via the ONE decode path (see
-        :meth:`predict_chunk_with_text`); the generated aux text is
-        dropped here. Deterministic greedy; ``generator``/``noise``
-        unused/must be None."""
-        if noise is not None:
-            raise ValueError("ARBackboneDecoder.predict_chunk takes no noise")
-        chunks, _ = self.predict_chunk_with_text(backbone, memory, batch)
-        return chunks
-
-    @torch.no_grad()
-    def predict_chunk_with_text(
-        self,
-        backbone: Gemma4Model,
-        memory: ObservationMemory,
-        batch: CollatedBatch[Any],
-    ) -> tuple[Tensor, list[AuxGeneration]]:
+    ) -> ChunkPrediction:
         """Free-until-BOA, then grammar-constrained actions — the single
         decode path for every ar_backbone checkpoint, batched with
-        per-row phases.
+        per-row phases. Deterministic greedy; ``generator``/``noise``
+        unused/must be None.
 
         Feed ``[state][opener]``, then per row: FREE phase (text ids and
         BOA only — the rest of the FAST block is masked; budget
@@ -465,9 +450,11 @@ class ARBackboneDecoder(nn.Module):
         once finished, inert). An aux-less-trained model emits BOA at
         the first free step — same path, one extra forward.
 
-        Returns (chunks [B, chunk, action_dim] raw units, one
-        AuxGeneration per row — empty text when the model went straight
-        to BOA)."""
+        Returns a ChunkPrediction: chunks [B, chunk, action_dim] raw
+        units + one AuxGeneration per row (empty text when the model
+        went straight to BOA)."""
+        if noise is not None:
+            raise ValueError("ARBackboneDecoder.predict_chunk takes no noise")
         stats = batch.action_stats
         if stats.q01 is None or stats.q99 is None:
             raise SystemExit(
@@ -578,7 +565,10 @@ class ARBackboneDecoder(nn.Module):
             )
             for ids in free_ids
         ]
-        return torch.stack(chunks).to(device), generations
+        return ChunkPrediction(
+            chunks=torch.stack(chunks).to(device),
+            generations=generations,
+        )
 
     def _step(
         self,

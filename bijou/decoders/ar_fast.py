@@ -28,6 +28,7 @@ from torch.nn import functional as F
 
 from ..fast.codec import ActionCodec
 from ..interface import (
+    ChunkPrediction,
     CollatedBatch,
     MemoryStream,
     ObservationMemory,
@@ -328,9 +329,10 @@ class ARFastDecoder(nn.Module):
         *,
         generator: torch.Generator | None = None,
         noise: Tensor | None = None,
-    ) -> Tensor:
+    ) -> ChunkPrediction:
         """CONSTRAINED greedy decode, then detokenize + denormalize with
-        the batch's per-sample q01/q99. Deterministic: ``generator``/
+        the batch's per-sample q01/q99 (ChunkPrediction, generations None
+        — ar_fast has no text surface). Deterministic: ``generator``/
         ``noise`` are unused (greedy has no randomness) and ``noise`` must
         be None. Always emits exactly one chunk.
 
@@ -402,7 +404,10 @@ class ARFastDecoder(nn.Module):
             ).float()
             for row_index, row in enumerate(token_rows)
         ]
-        return torch.stack(chunks).to(device)
+        return ChunkPrediction(
+            chunks=torch.stack(chunks).to(device),
+            generations=None,
+        )
 
 
 def ar_fast_loss(

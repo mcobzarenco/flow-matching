@@ -141,10 +141,10 @@ class BijouPolicy:
                     for index in indices
                 ],
             ).to(self.device)
-        raw = self.model.predict_chunk(
+        prediction = self.model.predict_chunk(
             batch,
             noise=noise,
             num_steps=self.sample_steps,
             method=self.method,
         )
-        return [prediction.cpu() for prediction in raw]
+        return [chunk.cpu() for chunk in prediction.chunks]

@@ -598,7 +598,11 @@ def validate(
         # integration error well below model error; 0.018 vs 0.05 mean
         # deviation at the Heun-5 deployment default), AR decodes greedily
         # and ignores the solver knobs. Raw units either way.
-        sampled = model.predict_chunk(batch, generator=generator, num_steps=10)
+        sampled = model.predict_chunk(
+            batch,
+            generator=generator,
+            num_steps=10,
+        ).chunks
         truth = batch.actions.float()
         valid = ~batch.action_is_pad
         error = (sampled - truth).abs()
@@ -625,20 +629,24 @@ def validate(
     if wandb_run is not None and probe.rich_items and collator is not None:
         # Aux generations (ar_backbone) ride IN the samples table as two
         # raw-string columns — the whole generated aux segment next to
-        # what the labels would render — computed up front so the column
-        # set is known. Rank-0-only, no collectives, bounded to the rich
-        # subset (one extra free-until-BOA decode over ≤ EVAL_TABLE_ROWS).
+        # what the labels would render. The table's OWN decode supplies
+        # BOTH its chunks and its text (self-consistent rows); the scalar
+        # pass above is a separate measurement. Rank-0-only, no
+        # collectives, bounded to the rich subset (≤ EVAL_TABLE_ROWS).
         decoder = model.decoder
         generations: list[AuxGeneration] | None = None
+        rich_chunks: Tensor | None = None
         aux_fields: tuple[AuxField, ...] = ()
         if isinstance(decoder, ARBackboneDecoder):
             rich_batch = collator(probe.rich_items).to(device)
             rich_memory = model.encode(rich_batch.encoder_inputs, with_grad=False)
-            _, generations = decoder.predict_chunk_with_text(
+            rich_prediction = decoder.predict_chunk(
                 model.backbone,
                 rich_memory,
                 rich_batch,
             )
+            generations = rich_prediction.generations
+            rich_chunks = rich_prediction.chunks.cpu()
             if collator.aux is not None:
                 aux_fields = collator.aux.fields
         # Cameras vary per sample across mixed datasets: generic positional
@@ -668,8 +676,9 @@ def validate(
                 for camera in cams
             ]
             images += [None] * (n_slots - len(cams))
+            sampled_row = rich_chunks[i] if rich_chunks is not None else row.sampled
             figure = _chunk_plot(
-                row.sampled,
+                sampled_row,
                 row.truth,
                 row.valid,
                 row.state,
@@ -689,7 +698,7 @@ def validate(
                 *images,
                 str(item["task"]),
                 state_str,
-                float((row.sampled - row.truth).abs()[row.valid].mean()),
+                float((sampled_row - row.truth).abs()[row.valid].mean()),
                 wandb.Image(figure),
                 *aux_columns,
             )

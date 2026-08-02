@@ -44,6 +44,7 @@ import torch
 from torch import Tensor, nn
 
 from ..interface import (
+    ChunkPrediction,
     CollatedBatch,
     MemoryStream,
     ObservationMemory,
@@ -528,11 +529,12 @@ class FlowDecoder(nn.Module):
         noise: Tensor | None = None,
         num_steps: int = 5,
         method: SamplingMethod = SamplingMethod.HEUN,
-    ) -> Tensor:
-        """RAW-unit chunk prediction [B, chunk, action_dim]: normalize the
-        batch's state with its per-sample stats, integrate the field, and
-        unnormalize with the action stats. ``num_steps``/``method`` are
-        flow-specific solver knobs (other decoder kinds have none)."""
+    ) -> ChunkPrediction:
+        """RAW-unit chunk prediction (ChunkPrediction, generations None —
+        flow has no text surface): normalize the batch's state with its
+        per-sample stats, integrate the field, and unnormalize with the
+        action stats. ``num_steps``/``method`` are flow-specific solver
+        knobs (other decoder kinds have none)."""
         state = (batch.state - batch.state_stats.mean) / batch.state_stats.std
         sampled = self.sample_actions(
             memory,
@@ -542,10 +544,11 @@ class FlowDecoder(nn.Module):
             noise=noise,
             generator=generator,
         )
-        return (
+        chunks = (
             sampled.float() * batch.action_stats.std[:, None, :]
             + batch.action_stats.mean[:, None, :]
         )
+        return ChunkPrediction(chunks=chunks, generations=None)
 
 
 def flow_matching_loss(
