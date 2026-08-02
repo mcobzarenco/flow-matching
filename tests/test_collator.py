@@ -86,6 +86,8 @@ def collator(**overrides: Any) -> Collator[FakeInputs]:
         "aux": None,
         "camera_kind_dropout": 0.0,
         "instruction_augment": 0.0,
+        "condition_fields": (),
+        "condition_dropout": 0.0,
     }
     kwargs.update(overrides)
     return Collator(**kwargs)
@@ -195,6 +197,65 @@ def test_instruction_augment_samples_judge_rewrites() -> None:
     assert [
         again([dict(judged)]).encoder_inputs.samples[0].instruction for _ in range(32)
     ] == sequence  # seeded determinism
+
+
+def test_condition_fields_render_hindsight_labels() -> None:
+    """Configured fields render as trailing brackets from the item's
+    labels, template order; None labels render nothing; dropout-0 is
+    the TRUE-label probe context; override happens item-side (policy)."""
+    from bijou.annotations import ConditionField
+
+    fields = (ConditionField.OUTCOME, ConditionField.SMOOTHNESS)
+    labeled = item(with_quantiles=True)
+    labeled["condition_outcome"] = "failure"
+    labeled["condition_smoothness"] = "medium"
+    batch = collator(condition_fields=fields)([labeled])
+    (prompt,) = batch.encoder_inputs.samples
+    assert prompt.condition_text == "[outcome: failure][smoothness: medium]"
+
+    partial = item(with_quantiles=True)
+    partial["condition_outcome"] = "success"  # smoothness unlabeled
+    batch = collator(condition_fields=fields)([partial])
+    assert batch.encoder_inputs.samples[0].condition_text == "[outcome: success]"
+
+    unlabeled = item(with_quantiles=True)
+    batch = collator(condition_fields=fields)([unlabeled])
+    assert batch.encoder_inputs.samples[0].condition_text == ""
+    # Fields off: labels present but nothing renders.
+    batch = collator()([dict(labeled)])
+    assert batch.encoder_inputs.samples[0].condition_text == ""
+    # Template order is enforced.
+    with pytest.raises(ValueError, match="template order"):
+        collator(
+            condition_fields=(ConditionField.SMOOTHNESS, ConditionField.OUTCOME),
+        )
+
+
+def test_condition_dropout_is_seeded_per_field() -> None:
+    from bijou.annotations import ConditionField
+
+    labeled = item(with_quantiles=True)
+    labeled["condition_outcome"] = "success"
+    labeled["condition_smoothness"] = "high"
+    fields = (ConditionField.OUTCOME, ConditionField.SMOOTHNESS)
+    torch.manual_seed(3)
+    half = collator(condition_fields=fields, condition_dropout=0.5)
+    rendered = [
+        half([dict(labeled)]).encoder_inputs.samples[0].condition_text
+        for _ in range(32)
+    ]
+    assert (
+        "" in rendered
+        or "[outcome: success]" in rendered
+        or ("[smoothness: high]" in rendered)
+    )  # some field dropped somewhere
+    assert "[outcome: success][smoothness: high]" in rendered  # and some kept
+    torch.manual_seed(3)
+    again = collator(condition_fields=fields, condition_dropout=0.5)
+    assert [
+        again([dict(labeled)]).encoder_inputs.samples[0].condition_text
+        for _ in range(32)
+    ] == rendered
 
 
 def test_camera_kind_dropout_is_seeded_and_bounded() -> None:

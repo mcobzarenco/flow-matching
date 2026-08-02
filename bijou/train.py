@@ -67,6 +67,7 @@ import wandb
 from safetensors.torch import load_file, save_file
 from torch import Tensor
 
+from .annotations import ConditionField
 from .aux_text import (
     AUX_MODE,
     AUX_TEMPLATE_VERSION,
@@ -143,6 +144,8 @@ class TrainArgs:
     aux_prompt_hash: str | None
     camera_kind_dropout: float
     instruction_augment: float
+    condition_fields: tuple[str, ...] | None
+    condition_dropout: float
     decoder_hidden: int
     decoder_heads: int
     decoder_intermediate: int
@@ -465,6 +468,14 @@ class ProbeSet:
     batches: list[CollatedBatch[GemmaInputs]]
     rich_items: list[dict[str, Any]]
     rich_positions: tuple[int, ...]
+    # Per shard item (streaming order): the episode's hindsight outcome
+    # label (None = unlabeled) — the Q2 slicing key: per-outcome MAE
+    # buckets, with the success slice as the open-loop deployment proxy
+    # and the unlabeled slice as the continuity anchor.
+    outcomes: tuple[str | None, ...]
+
+
+OUTCOME_BUCKETS = ("success", "partial", "failure", "unlabeled")
 
 
 def build_probe_set(
@@ -503,6 +514,7 @@ def build_probe_set(
         batches=batches,
         rich_items=rich_items,
         rich_positions=rich_positions,
+        outcomes=tuple(item.get("condition_outcome") for item in items),
     )
 
 
@@ -597,6 +609,7 @@ def validate(
     per-joint predicted-vs-truth plots."""
     totals = torch.zeros(2, device=device)  # [abs-error sum, valid elements]
     rich_rows: list[RichRow] = []
+    slice_totals = torch.zeros(len(OUTCOME_BUCKETS), 2, device=device)
     wanted = iter(probe.rich_positions)
     next_rich = next(wanted, None)
     base = 0
@@ -621,6 +634,21 @@ def validate(
         error = (sampled - truth).abs()
         totals[0] += error[valid].sum()
         totals[1] += valid.sum() * error.shape[-1]
+        # Q2 slices: per-frame error bucketed by the episode's hindsight
+        # outcome (probes condition on TRUE labels, so the success slice
+        # is the open-loop deployment proxy and the unlabeled slice the
+        # continuity anchor). Fixed [4, 2] tensor — collective-aligned.
+        frame_error = (error * valid[..., None]).sum(dim=(1, 2))
+        frame_count = valid.sum(dim=1) * error.shape[-1]
+        for i in range(sampled.shape[0]):
+            outcome = probe.outcomes[base + i]
+            bucket = (
+                OUTCOME_BUCKETS.index(outcome)
+                if outcome in OUTCOME_BUCKETS
+                else OUTCOME_BUCKETS.index("unlabeled")
+            )
+            slice_totals[bucket, 0] += frame_error[i]
+            slice_totals[bucket, 1] += frame_count[i]
         # Batches stream in shard order: pick off the rich positions
         # (matching probe.rich_items one-to-one) as they pass.
         while next_rich is not None and next_rich < base + sampled.shape[0]:
@@ -637,7 +665,25 @@ def validate(
         base += sampled.shape[0]
     if distributed:
         torch.distributed.all_reduce(totals)
+        torch.distributed.all_reduce(slice_totals)
     mae = float(totals[0] / totals[1].clamp(min=1))
+    metric_prefix = table_key.split("/")[0]
+    if wandb_run is not None:
+        # Labeled buckets only (all-unlabeled probes log nothing extra);
+        # skip the redundant all-in-one-bucket case.
+        labeled = {
+            bucket: float(slice_totals[i, 0] / slice_totals[i, 1])
+            for i, bucket in enumerate(OUTCOME_BUCKETS)
+            if float(slice_totals[i, 1]) > 0
+        }
+        if len(labeled) > 1:
+            wandb_run.log(
+                {
+                    f"{metric_prefix}/chunk_mae_{bucket}": value
+                    for bucket, value in labeled.items()
+                },
+                step=step,
+            )
 
     if wandb_run is not None and probe.rich_items and collator is not None:
         # Aux generations (ar_backbone) ride IN the samples table as two
@@ -739,6 +785,45 @@ def validate(
                         {f"{table_key}_holding_acc": accuracy},
                         step=step,
                     )
+
+        # Q3 — conditioning sensitivity, THE tripwire for silent
+        # conditioning collapse: on labeled non-success rich rows, decode
+        # once more with outcome overridden to "success" and log the mean
+        # |Δ| against the true-conditioned scalar-pass predictions.
+        # Pre-registered: > 0 and growing; ≈ 0 means the model ignores
+        # the label and the failed-demo mass trained as-if-good.
+        if ConditionField.OUTCOME in collator.condition_fields:
+            flipped = [
+                (i, item)
+                for i, item in enumerate(probe.rich_items)
+                if item.get("condition_outcome") not in (None, "success")
+            ]
+            if flipped:
+                override_items = [
+                    {**item, "condition_outcome": "success"} for _, item in flipped
+                ]
+                override_batch = collator(override_items).to(device)
+                override_prediction = model.predict_chunk(
+                    override_batch,
+                    generator=generator,
+                    num_steps=10,
+                    aux_mode=AuxDecodeMode.ACT,
+                )
+                deltas = [
+                    float(
+                        (override_prediction.actions[j].cpu() - rich_rows[i].sampled)
+                        .abs()[rich_rows[i].valid]
+                        .mean(),
+                    )
+                    for j, (i, _) in enumerate(flipped)
+                ]
+                wandb_run.log(
+                    {
+                        f"{metric_prefix}/condition_sensitivity": sum(deltas)
+                        / len(deltas),
+                    },
+                    step=step,
+                )
     return mae
 
 
@@ -861,6 +946,7 @@ def save_checkpoint(
             exports=model.encoder.exports,
             max_soft_tokens=args.max_soft_tokens,
             camera_tags=model.encoder.camera_tags,
+            condition_fields=tuple(args.condition_fields or ()),
         ),
         decoder=decoder_schema_dict(model.decoder),
         normalization=aggregate_stats(normalizers),
@@ -1116,6 +1202,26 @@ def parse_args() -> TrainArgs:
         "Probes always score the recorded instruction",
     )
     parser.add_argument(
+        "--condition-fields",
+        nargs="*",
+        choices=[f.value for f in ConditionField],
+        default=None,
+        help="outcome conditioning: render these hindsight labels as the "
+        "user turn's trailing bracket block ([outcome: success]"
+        "[smoothness: high]) — failed/partial demos train under their "
+        "own label instead of as-if-good, and inference asks for the "
+        "behavior it wants. Unlabeled episodes render nothing",
+    )
+    parser.add_argument(
+        "--condition-dropout",
+        type=float,
+        default=None,
+        help="per-field probability a conditioning label renders nothing "
+        "at train time (keeps the unconditioned marginal trained). "
+        "Default 0.1 when --condition-fields is on; requires "
+        "--condition-fields",
+    )
+    parser.add_argument(
         "--fast-tokenizer",
         default=None,
         help="FAST tokenizer artifact: a local directory or "
@@ -1343,6 +1449,26 @@ def parse_args() -> TrainArgs:
         parser.error(
             f"--instruction-augment {raw.instruction_augment} outside [0, 1]",
         )
+    if raw.condition_fields is not None and not raw.condition_fields:
+        parser.error("--condition-fields given with no fields — omit the flag")
+    if raw.condition_fields is not None:
+        ordered = [f.value for f in ConditionField if f.value in raw.condition_fields]
+        if list(raw.condition_fields) != ordered:
+            parser.error(
+                f"--condition-fields must keep template order {ordered} "
+                f"(got {list(raw.condition_fields)})",
+            )
+    if raw.condition_dropout is not None and raw.condition_fields is None:
+        parser.error("--condition-dropout requires --condition-fields")
+    if raw.condition_dropout is not None and not 0.0 <= raw.condition_dropout < 1.0:
+        parser.error(
+            f"--condition-dropout {raw.condition_dropout} outside [0, 1)",
+        )
+    condition_dropout = (
+        raw.condition_dropout
+        if raw.condition_dropout is not None
+        else (0.1 if raw.condition_fields is not None else 0.0)
+    )
     aux_dropout = (
         raw.aux_dropout
         if raw.aux_dropout is not None
@@ -1406,6 +1532,10 @@ def parse_args() -> TrainArgs:
         aux_prompt_hash=raw.aux_prompt_hash,
         camera_kind_dropout=raw.camera_kind_dropout,
         instruction_augment=raw.instruction_augment,
+        condition_fields=(
+            tuple(raw.condition_fields) if raw.condition_fields is not None else None
+        ),
+        condition_dropout=condition_dropout,
         decoder_hidden=raw.decoder_hidden,
         decoder_heads=raw.decoder_heads,
         decoder_intermediate=raw.decoder_intermediate,
@@ -1492,7 +1622,9 @@ def main() -> int:
         split_seed=args.split_seed,
         allowed_fps=args.fps,
         required_prompt_hash=args.aux_prompt_hash,
-        load_suggested_instructions=args.instruction_augment > 0,
+        load_episode_annotations=(
+            args.instruction_augment > 0 or args.condition_fields is not None
+        ),
     )
     action_dim, state_dim = selection.action_dim, selection.state_dim
     per_dataset_stats = selection.per_dataset_stats
@@ -1604,12 +1736,20 @@ def main() -> int:
         aux=aux_spec,
         camera_kind_dropout=args.camera_kind_dropout,
         instruction_augment=args.instruction_augment,
+        condition_fields=tuple(
+            ConditionField(f) for f in (args.condition_fields or ())
+        ),
+        condition_dropout=args.condition_dropout,
     )
-    if is_main and args.instruction_augment > 0:
-        with_rewrites = sum(len(dataset.suggestions) for dataset in selection.datasets)
+    if is_main and (args.instruction_augment > 0 or args.condition_fields):
+        labeled_episodes = sum(
+            len(dataset.episode_annotations) for dataset in selection.datasets
+        )
         print(
-            f"instruction augment: p={args.instruction_augment}, "
-            f"{with_rewrites} episode(s) carry judge rewrites",
+            f"episode annotations: {labeled_episodes} labeled episode(s); "
+            f"instruction augment p={args.instruction_augment}, "
+            f"conditioning {list(args.condition_fields or [])} "
+            f"(dropout {args.condition_dropout})",
             flush=True,
         )
     if is_main and selection.camera_kinds:
@@ -1630,6 +1770,9 @@ def main() -> int:
         ),
         camera_kind_dropout=0.0,
         instruction_augment=0.0,
+        # dropout-0 conditioning = TRUE-label conditioning (Q1: score
+        # against truth ⇒ condition on truth).
+        condition_dropout=0.0,
     )
     # The explicit generator (both modes) makes the shuffle order and the
     # dataloader worker base-seeds a pure function of (--seed, rank) —

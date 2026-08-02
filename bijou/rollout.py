@@ -45,7 +45,7 @@ import torch
 from lerobot.cameras.opencv import OpenCVCameraConfig
 from lerobot.robots.so_follower import SOFollower, SOFollowerRobotConfig
 
-from .annotations import CAMERA_KINDS
+from .annotations import CAMERA_KINDS, ConditionField
 from .aux_text import AuxDecodeMode
 from .data import DatasetStats
 from .eval.policies import BijouPolicy
@@ -117,6 +117,20 @@ def parse_args() -> argparse.Namespace:
         "'free' = generate the aux text (subgoal etc.) before each chunk "
         "(aux-trained checkpoints only; costs ~30-45 extra suffix "
         "forwards per replan)",
+    )
+    parser.add_argument(
+        "--outcome",
+        choices=["success", "partial", "failure"],
+        default="success",
+        help="outcome conditioning at deployment (condition-trained "
+        "checkpoints render it; others ignore it): ask for the behavior "
+        "you want",
+    )
+    parser.add_argument(
+        "--smoothness",
+        choices=["high", "medium", "low"],
+        default="high",
+        help="smoothness conditioning at deployment (as --outcome)",
     )
     parser.add_argument(
         "--max-relative-target",
@@ -191,6 +205,7 @@ def observation_to_item(
     stats: DatasetStats,
     chunk_size: int,
     camera_kinds: dict[str, str],
+    condition_values: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Robot observation -> the item shape BijouPolicy consumes (mirrors a
     StatsAttachedDataset item, including the stats tensors). Ground-truth
@@ -209,6 +224,12 @@ def observation_to_item(
         # Kinds travel with the item, like the stats (the collator reads
         # item["camera_kinds"] — see rollout.camera_kinds_from_names).
         "camera_kinds": camera_kinds,
+        # Deployment conditioning values (rendered only for fields the
+        # checkpoint trained — the collator's condition_fields gate).
+        **{
+            f"condition_{field}": value
+            for field, value in (condition_values or {}).items()
+        },
         "observation.state": state,
         "action": torch.zeros(chunk_size, len(SO_MOTORS)),
         "action_is_pad": torch.zeros(chunk_size, dtype=torch.bool),
@@ -228,6 +249,10 @@ def main() -> int:
     device = torch.device(args.device)
 
     rig_kinds = camera_kinds_from_names(spec.partition("=")[0] for spec in args.camera)
+    condition_values = {
+        ConditionField.OUTCOME.value: args.outcome,
+        ConditionField.SMOOTHNESS.value: args.smoothness,
+    }
 
     policy = BijouPolicy(
         args.checkpoint,
@@ -293,6 +318,7 @@ def main() -> int:
                 stats,
                 chunk_size,
                 rig_kinds,
+                condition_values,
             )
             start = time.perf_counter()
             chunk = policy.predict([item], [replans])[0]

@@ -114,6 +114,26 @@ def decode(ids: list[int]) -> str:
     return "".join(chr(i) for i in ids)
 
 
+def test_condition_value_mappings() -> None:
+    """Hindsight labels → requestable conditioning values: UNCLEAR is
+    unlabeled (not a requestable behavior); smoothness buckets are
+    8-10/5-7/1-4 (recorded thresholds — v0 base rates in the doc)."""
+    from bijou.annotations import TaskCompletion, outcome_text, smoothness_bucket
+
+    assert outcome_text(TaskCompletion.YES) == "success"
+    assert outcome_text(TaskCompletion.PARTIAL) == "partial"
+    assert outcome_text(TaskCompletion.NO) == "failure"
+    assert outcome_text(TaskCompletion.UNCLEAR) is None
+    assert [smoothness_bucket(s) for s in (10, 8, 7, 5, 4, 1)] == [
+        "high",
+        "high",
+        "medium",
+        "medium",
+        "low",
+        "low",
+    ]
+
+
 def test_event_style_is_registered_by_the_contract_leaf() -> None:
     """bijou.annotations registers the style at import — the one
     definition the judge writer and the training readers share (the

@@ -149,7 +149,10 @@ chat-templated user turn, **LEFT-padded** across a batch with per-sample
 LOGICAL position ids (cumsum of the real-token mask); rendered exactly
 (E2B template, verified 2026-08-02):
 
-    <bos><|turn>user\n{task}[top camera]<imgs>[wrist camera]<imgs>{task}<turn|>\n
+    <bos><|turn>user\n{task}[top camera]<imgs>[wrist camera]<imgs>{task}[outcome: success][smoothness: high]<turn|>\n
+
+The trailing bracket block is OUTCOME CONDITIONING (below); it is empty
+for unconditioned runs/episodes.
 
 Each camera contributes a bracket-delimited semantic tag before its
 soft tokens — bracketed on purpose: the Gemma chat template TRIMS every
@@ -502,6 +505,35 @@ don't compose by averaging; extremes regress toward the median, measured
 quantiles by `ldtools.backfill_quantile_stats`. mean/std/min/max compose
 correctly and are untainted.
 
+**Outcome conditioning** (`--condition-fields outcome smoothness`,
+default off; `--condition-dropout` 0.1): hindsight labels from each
+episode's verdict render as the user turn's trailing bracket block —
+`outcome ∈ {success, partial, failure}` from `task_completion_visible`
+(`unclear` renders nothing), `smoothness ∈ {high, medium, low}` from
+the 1–10 score bucketed 8–10/5–7/1–4. Train-time, failed/partial demos
+train under their own label instead of as-if-good — on
+community_curated_v0 that is 13.7% partial + 4.1% failure of 56,328
+judged episodes (≈10k episodes made usable); deployment asks for the
+behavior it wants (rollout `--outcome success --smoothness high`
+defaults). Per-field dropout keeps the unconditioned marginal trained;
+encoder-side placement makes it work for every decoder kind (a suffix
+placement would be ar_backbone-only). The checkpoint's `prompt` section
+records `condition_fields`; loaders render matching conditioning.
+**Eval semantics (three questions, three measurements):** Q1 fit —
+probes/eval condition on each frame's TRUE labels (scoring against
+recorded actions while conditioned on "success" would penalize exactly
+the trained deviation from failures); Q2 deployment proxy — the same
+pass sliced per outcome (`eval/chunk_mae_success` ≈ open-loop
+deployment, `_unlabeled` = continuity anchor vs pre-conditioning
+checkpoints; zero extra compute); Q3 conditioning sensitivity — THE
+tripwire for silent conditioning collapse: on labeled non-success rich
+rows, decode again with outcome forced to "success" and log mean
+|Δprediction| (`eval/condition_sensitivity`; pre-registered: > 0 and
+growing — ≈ 0 means the label is ignored and the failed-demo mass
+trained as-if-good after all). Offline, `bijou.eval
+--condition-override outcome=success` runs the full counterfactual.
+Never compare numbers across conditioning contexts.
+
 **Instruction augmentation** (`--instruction-augment P`, default 0.0):
 with probability P a judged episode's recorded task string swaps for a
 uniformly drawn judge-suggested rewrite (2–3 grounded alternatives per
@@ -567,7 +599,9 @@ the [ACT] mode-dropout rate (default 0.1); `--aux-prompt-hash` is the
 opt-in provenance pin (§2.4); `--camera-kind-dropout` (default 0.1,
 all decoder kinds) is the prompt-side kind→unknown dropout (§1);
 `--instruction-augment` (default 0.0, all decoder kinds) samples
-judge-suggested task rewrites (§4). Train step returns
+judge-suggested task rewrites (§4); `--condition-fields` /
+`--condition-dropout` (default off / 0.1) render hindsight
+outcome/smoothness conditioning (§4). Train step returns
 component losses; `train/loss_action` + `train/loss_aux` log beside
 `train/loss` on aux runs (aux aggregates as CE-sum/token-count across
 the window and all ranks — a position-weighted mean, immune to the

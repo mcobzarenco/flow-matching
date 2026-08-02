@@ -19,6 +19,7 @@ from typing import Any, Protocol
 import torch
 from torch import Tensor
 
+from ..annotations import ConditionField
 from ..aux_text import AuxDecodeMode
 from ..decoders.flow import FlowDecoder
 from ..interface import Collator
@@ -103,6 +104,7 @@ class BijouPolicy:
         method: SamplingMethod = SamplingMethod.HEUN,
         expert_dtype: torch.dtype = torch.float32,
         aux_mode: AuxDecodeMode = AuxDecodeMode.ACT,
+        condition_override: dict[str, str] | None = None,
     ) -> None:
         self.name = f"bijou@{checkpoint.name.removeprefix('step_').lstrip('0') or '0'}"
         self.device = device
@@ -117,6 +119,19 @@ class BijouPolicy:
             device=device,
             expert_dtype=expert_dtype,
         )
+        # Counterfactual conditioning (the Q3 diagnostic): force given
+        # fields to a value regardless of the items' hindsight labels.
+        # Only meaningful on condition-trained checkpoints — loud
+        # otherwise (the --aux-mode free precedent).
+        self.condition_override = condition_override or {}
+        unknown = set(self.condition_override) - set(self.info.condition_fields)
+        if unknown:
+            raise SystemExit(
+                f"--condition-override for {sorted(unknown)}, but the "
+                f"checkpoint trained condition fields "
+                f"{list(self.info.condition_fields) or 'NONE'} — overriding "
+                "an untrained field would render text the model never saw",
+            )
         self.collator = Collator(
             inputs=self.model.encoder.inputs_collator(),
             instruction=None,
@@ -131,13 +146,31 @@ class BijouPolicy:
             # them; rollout items carry an explicit map); never dropped
             # at inference — dropout is a train-time regularizer. Same
             # for instruction augmentation: inference scores/serves the
-            # instruction it was GIVEN.
+            # instruction it was GIVEN. Conditioning renders the fields
+            # the checkpoint trained, from each item's TRUE labels
+            # (dropout 0 — score against truth ⇒ condition on truth)
+            # unless condition_override forces a value.
             camera_kind_dropout=0.0,
             instruction_augment=0.0,
+            condition_fields=tuple(
+                ConditionField(f) for f in self.info.condition_fields
+            ),
+            condition_dropout=0.0,
         )
 
     @torch.no_grad()
     def predict(self, items: list[dict[str, Any]], indices: list[int]) -> list[Tensor]:
+        if self.condition_override:
+            items = [
+                {
+                    **item,
+                    **{
+                        f"condition_{field}": value
+                        for field, value in self.condition_override.items()
+                    },
+                }
+                for item in items
+            ]
         batch = self.collator(items).to(self.device)
         # Flow integrates from per-item seeded noise (deterministic and
         # batch-composition-independent); AR decodes greedily and takes

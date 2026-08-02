@@ -37,7 +37,13 @@ import torch
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
 from torch import Tensor
 
-from .annotations import CAMERA_KINDS, TaskCompletion, load_sidecar
+from .annotations import (
+    CAMERA_KINDS,
+    TaskCompletion,
+    load_sidecar,
+    outcome_text,
+    smoothness_bucket,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -216,12 +222,12 @@ class StatsAttachedDataset(torch.utils.data.Dataset[dict[str, Any]]):
         dataset: LeRobotDataset,
         stats: DatasetStats,
         camera_kinds: dict[str, str],
-        suggestions: dict[int, tuple[str, ...]],
+        episode_annotations: dict[int, EpisodeAnnotations],
     ) -> None:
         self.dataset = dataset
         self.stats = stats
         self.camera_kinds = camera_kinds
-        self.suggestions = suggestions
+        self.episode_annotations = episode_annotations
         self.failed_fetches = 0
 
     def __len__(self) -> int:
@@ -232,10 +238,10 @@ class StatsAttachedDataset(torch.utils.data.Dataset[dict[str, Any]]):
         item = self._fetch_with_substitution(index, self._MAX_ATTEMPTS)
         item["repo_id"] = self.dataset.repo_id
         item["camera_kinds"] = self.camera_kinds
-        item["suggested_instructions"] = self.suggestions.get(
-            int(item["episode_index"]),
-            (),
-        )
+        episode = self.episode_annotations.get(int(item["episode_index"]))
+        item["suggested_instructions"] = episode.suggestions if episode else ()
+        item["condition_outcome"] = episode.outcome if episode else None
+        item["condition_smoothness"] = episode.smoothness if episode else None
         item.update(self.stats.item_tensors())
         return item
 
@@ -455,23 +461,32 @@ def annotation_stamp(
     return AnnotationStamp(prompt_hash=stamp_hash, judge_model=str(model))
 
 
-def episode_suggestions_of(
+@dataclass(frozen=True, slots=True)
+class EpisodeAnnotations:
+    """One episode's training-consumable sidecar fields: instruction
+    rewrites (suggested_instructions + observed_task on visibly-complete
+    episodes — hindsight relabeling gated to successes so
+    instruction-following never trains on failure-describing text
+    without the outcome label explaining it) and the outcome/smoothness
+    conditioning values (None = unlabeled: UNCLEAR completion renders
+    nothing)."""
+
+    suggestions: tuple[str, ...]
+    outcome: str | None
+    smoothness: str | None
+
+
+def episode_annotations_of(
     dataset_dir: Path,
     repo_id: str,
     stamp: AnnotationStamp,
-) -> dict[int, tuple[str, ...]]:
-    """Per-episode judge-suggested instruction rewrites (2-3 grounded
-    alternatives, present on every judged episode — plus the judge's
-    ``observed_task`` description on episodes whose completion is
-    visibly YES: hindsight relabeling to what actually happened, gated
-    to successes so instruction-following never trains on
-    failure-describing text until outcome conditioning ships), from the
-    sidecar records matching the dataset's own stamp. Typed end to end
-    via the bijou.annotations contract; records that fail validation
-    under the current schema are skipped with one loud per-dataset
-    summary (a guard for older-stamp corpora — today every stamp is
-    current)."""
-    suggestions: dict[int, tuple[str, ...]] = {}
+) -> dict[int, EpisodeAnnotations]:
+    """Per-episode sidecar fields (see :class:`EpisodeAnnotations`), from
+    the records matching the dataset's own stamp. Typed end to end via
+    the bijou.annotations contract; records that fail validation under
+    the current schema are skipped with one loud per-dataset summary (a
+    guard for older-stamp corpora — today every stamp is current)."""
+    annotations: dict[int, EpisodeAnnotations] = {}
     skipped = 0
     records = [
         record
@@ -493,16 +508,18 @@ def episode_suggestions_of(
             and judgment.observed_task.strip()
         ):
             rewrites.append(judgment.observed_task.strip())
-        if rewrites:
-            suggestions[record.episode_index] = tuple(rewrites)
+        annotations[record.episode_index] = EpisodeAnnotations(
+            suggestions=tuple(rewrites),
+            outcome=outcome_text(judgment.task_completion_visible),
+            smoothness=smoothness_bucket(judgment.scores.smoothness),
+        )
     if skipped:
         print(
-            f"[instructions] {repo_id}: {skipped} sidecar record(s) failed "
-            "schema validation — their episodes keep the recorded "
-            "instruction",
+            f"[annotations] {repo_id}: {skipped} sidecar record(s) failed "
+            "schema validation — their episodes train unlabeled",
             flush=True,
         )
-    return suggestions
+    return annotations
 
 
 def camera_kinds_of(
@@ -560,7 +577,7 @@ def select_datasets(
     allowed_fps: tuple[float, ...] | None = None,
     required_prompt_hash: str | None = None,
     *,
-    load_suggested_instructions: bool = False,
+    load_episode_annotations: bool = False,
 ) -> DataSelection:
     """Discover, validate and wrap datasets; drop the incompatible loudly.
 
@@ -708,16 +725,18 @@ def select_datasets(
             continue
         stamp = annotation_stamp(dataset_dir, repo_id, required_prompt_hash)
         kinds: dict[str, str] = {}
-        suggestions: dict[int, tuple[str, ...]] = {}
+        episode_notes: dict[int, EpisodeAnnotations] = {}
         if stamp is not None:
             annotated_repos.add(repo_id)
             annotation_stamps.add(stamp)
             kinds = camera_kinds_of(dataset_dir, repo_id, stamp)
             if kinds:
                 camera_kinds[repo_id] = kinds
-            if load_suggested_instructions:
-                suggestions = episode_suggestions_of(dataset_dir, repo_id, stamp)
-        datasets.append(StatsAttachedDataset(sub_dataset, stats, kinds, suggestions))
+            if load_episode_annotations:
+                episode_notes = episode_annotations_of(dataset_dir, repo_id, stamp)
+        datasets.append(
+            StatsAttachedDataset(sub_dataset, stats, kinds, episode_notes),
+        )
         selected_dirs[repo_id] = dataset_dir
         per_dataset_stats[repo_id] = stats
         lerobot_stats[repo_id] = sub_dataset.meta.stats

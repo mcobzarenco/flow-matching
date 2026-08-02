@@ -29,6 +29,7 @@ from typing import Any, Protocol, Self, override
 import torch
 from torch import Tensor
 
+from .annotations import ConditionField
 from .aux_text import AuxGeneration, AuxSpec, assemble_suffix
 from .fast.codec import ActionCodec
 from .gemma4.cache import KVCache
@@ -270,11 +271,15 @@ class CameraFrame:
 @dataclass(frozen=True, slots=True)
 class PromptInputs:
     """One sample's prompt-side payload, assembled by the shared Collator
-    (instruction override + camera policy applied). Extension point for
-    future prompt-side signals (e.g. discretized state as text)."""
+    (instruction override + camera policy + outcome conditioning
+    applied). ``condition_text`` is the trailing bracket block of the
+    user turn ("[outcome: success][smoothness: high]", "" when
+    unconditioned) — already rendered, so encoder strategies just append
+    it after the closing instruction."""
 
     instruction: str
     cameras: tuple[CameraFrame, ...]
+    condition_text: str
 
 
 class InputsCollator[I: BatchInputs](Protocol):
@@ -331,6 +336,15 @@ class Collator[I: BatchInputs]:
     # augmentation. The CLI --instruction override always wins; probes
     # run an augment-0 clone (evals score the recorded instruction).
     instruction_augment: float
+    # Outcome conditioning (§C1): fields rendered as the user turn's
+    # trailing bracket block from the item's hindsight labels
+    # (condition_outcome/condition_smoothness — None renders nothing);
+    # per-field dropout keeps the unconditioned marginal trained.
+    # Probes run dropout-0 clones = TRUE-label conditioning (score
+    # against truth ⇒ condition on truth; deployment asks for what it
+    # wants).
+    condition_fields: tuple[ConditionField, ...]
+    condition_dropout: float
     _generator: torch.Generator | None = dataclasses.field(
         default=None,
         repr=False,
@@ -345,6 +359,17 @@ class Collator[I: BatchInputs]:
         if not 0.0 <= self.instruction_augment <= 1.0:
             raise ValueError(
                 f"instruction augment {self.instruction_augment} outside [0, 1]",
+            )
+        ordered = tuple(f for f in ConditionField if f in self.condition_fields)
+        if ordered != self.condition_fields:
+            raise ValueError(
+                f"condition fields must keep template order "
+                f"{[f.value for f in ConditionField]}; got "
+                f"{[f.value for f in self.condition_fields]}",
+            )
+        if not 0.0 <= self.condition_dropout < 1.0:
+            raise ValueError(
+                f"condition dropout {self.condition_dropout} outside [0, 1)",
             )
 
     @override
@@ -366,6 +391,23 @@ class Collator[I: BatchInputs]:
         ):
             return "unknown"
         return kind
+
+    def _condition_text(self, item: dict[str, Any]) -> str:
+        """The user turn's trailing conditioning block: one bracket per
+        configured field whose hindsight label exists and survives the
+        per-field dropout draw. Bracket-delimited (the chat template
+        trims text-part edge whitespace)."""
+        parts: list[str] = []
+        for field_name in self.condition_fields:
+            value = item.get(f"condition_{field_name.value}")
+            if value is None:
+                continue
+            if self.condition_dropout > 0.0 and (
+                float(torch.rand((), generator=self._rng())) < self.condition_dropout
+            ):
+                continue
+            parts.append(f"[{field_name.value}: {value}]")
+        return "".join(parts)
 
     def _instruction(self, item: dict[str, Any]) -> str:
         """The prompt instruction for one item: CLI override > sampled
@@ -477,6 +519,7 @@ class Collator[I: BatchInputs]:
         samples = [
             PromptInputs(
                 instruction=self._instruction(item),
+                condition_text=self._condition_text(item),
                 cameras=tuple(
                     CameraFrame(
                         name=(name := key.removeprefix(_IMAGE_KEY_PREFIX)),

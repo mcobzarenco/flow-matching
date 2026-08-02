@@ -167,7 +167,12 @@ class GemmaInputsCollator:
                 content.append(
                     {"type": "image", "image": self._to_pil(camera.image)},
                 )
-            content.append({"type": "text", "text": sample.instruction})
+            # Closing instruction + the (possibly empty) conditioning
+            # block, one text part — brackets self-delimit under the
+            # template's edge-whitespace trim.
+            content.append(
+                {"type": "text", "text": sample.instruction + sample.condition_text},
+            )
             conversations.append([{"role": "user", "content": content}])
 
         batch = self._processor.apply_chat_template(

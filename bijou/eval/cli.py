@@ -193,6 +193,17 @@ def parse_args() -> argparse.Namespace:
         "text first (aux-trained checkpoints only). Other decoder kinds "
         "ignore it",
     )
+    parser.add_argument(
+        "--condition-override",
+        nargs="*",
+        default=[],
+        metavar="FIELD=VALUE",
+        help="counterfactual conditioning (e.g. outcome=success): force "
+        "the field(s) instead of each item's true hindsight label — the "
+        "Q3 sensitivity diagnostic. Default: TRUE-label conditioning "
+        "(score against truth, condition on truth). Condition-trained "
+        "checkpoints only",
+    )
     parser.add_argument("--device", default="cuda")
     parser.add_argument(
         "--output-json",
@@ -253,6 +264,9 @@ def main() -> int:
         holdout_fraction=args.holdout_episodes,
         split_seed=args.split_seed,
         allowed_fps=tuple(args.fps) if args.fps else None,
+        # Condition-trained checkpoints render each item's TRUE labels;
+        # loading them costs seconds and is harmless for older models.
+        load_episode_annotations=args.checkpoint is not None,
     )
     dataset = selection.concat()
     print(
@@ -283,6 +297,14 @@ def main() -> int:
         NormalizedStateCopyPolicy(args.chunk_size),
     ]
     if args.checkpoint is not None:
+        overrides: dict[str, str] = {}
+        for pair in args.condition_override:
+            field, _, value = pair.partition("=")
+            if not value:
+                raise SystemExit(
+                    f"--condition-override expects FIELD=VALUE, got {pair!r}",
+                )
+            overrides[field] = value
         policy = BijouPolicy(
             args.checkpoint,
             device=device,
@@ -290,6 +312,7 @@ def main() -> int:
             sample_steps=args.sample_steps,
             method=SamplingMethod(args.sample_method),
             aux_mode=AuxDecodeMode(args.aux_mode),
+            condition_override=overrides,
         )
         if policy.info.chunk_size != args.chunk_size:
             raise SystemExit(

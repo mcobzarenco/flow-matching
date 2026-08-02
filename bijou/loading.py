@@ -118,6 +118,11 @@ class GemmaPromptConfig:
     # annotations, "unknown" fallback). Absent in old checkpoints =
     # False (tag-less prompts, rendered byte-identically forever).
     camera_tags: bool
+    # Outcome-conditioning fields trained into the user turn's trailing
+    # bracket block (empty = unconditioned; absent in old checkpoints).
+    # Inference must render matching conditioning — BijouPolicy reads
+    # this to configure its collator.
+    condition_fields: tuple[str, ...]
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -125,6 +130,7 @@ class GemmaPromptConfig:
             "exports": list(self.exports),
             "max_soft_tokens": self.max_soft_tokens,
             "camera_tags": self.camera_tags,
+            "condition_fields": list(self.condition_fields),
         }
 
     @classmethod
@@ -133,6 +139,9 @@ class GemmaPromptConfig:
             exports=tuple(int(layer) for layer in data["exports"]),
             max_soft_tokens=int(data["max_soft_tokens"]),
             camera_tags=bool(data.get("camera_tags", False)),
+            condition_fields=tuple(
+                str(field) for field in data.get("condition_fields", [])
+            ),
         )
 
     @property
@@ -557,6 +566,10 @@ class CheckpointInfo:
     step: int
     normalization: DatasetStats
     per_dataset_normalization: dict[str, DatasetStats]
+    # The prompt-side conditioning the checkpoint trained with (empty =
+    # none/pre-conditioning checkpoint) — inference collators must
+    # render matching fields.
+    condition_fields: tuple[str, ...]
 
     @property
     def chunk_size(self) -> int:
@@ -815,6 +828,9 @@ def from_checkpoint(
     sections = checkpoint_sections(meta)
     info = CheckpointInfo(
         backbone=sections.backbone.id,
+        condition_fields=(
+            sections.prompt.condition_fields if sections.prompt is not None else ()
+        ),
         train_args=CheckpointTrainArgs.from_dict(meta["train_args"]),
         step=int(meta["step"]),
         normalization=DatasetStats.from_state_dict(meta["normalization"]),

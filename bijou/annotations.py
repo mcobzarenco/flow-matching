@@ -100,6 +100,45 @@ class CameraKind(StrEnum):
 CAMERA_KINDS = frozenset(kind.value for kind in CameraKind)
 
 
+class ConditionField(StrEnum):
+    """Prompt-side outcome-conditioning fields, fixed template order.
+    Rendered as trailing bracket blocks of the user turn
+    (``[outcome: success][smoothness: high]``): train-time values are
+    hindsight labels from the episode's verdict; inference asks for the
+    behavior it wants."""
+
+    OUTCOME = "outcome"
+    SMOOTHNESS = "smoothness"
+
+
+def outcome_text(completion: TaskCompletion) -> str | None:
+    """Conditioning value for an episode's visible completion; UNCLEAR
+    renders nothing (unlabeled — 'unclear' is not a requestable
+    behavior)."""
+    match completion:
+        case TaskCompletion.YES:
+            return "success"
+        case TaskCompletion.PARTIAL:
+            return "partial"
+        case TaskCompletion.NO:
+            return "failure"
+        case TaskCompletion.UNCLEAR:
+            return None
+
+
+# Smoothness buckets (measured on community_curated_v0, 56,328 judged
+# episodes: high 23.4% / medium 75.8% / low 0.8%) — buckets over raw
+# 1-10 scores so inference never asks for a rare extreme.
+def smoothness_bucket(score: int) -> str:
+    """1-10 smoothness score → requestable bucket (8-10 high, 5-7
+    medium, 1-4 low)."""
+    if score >= 8:
+        return "high"
+    if score >= 5:
+        return "medium"
+    return "low"
+
+
 def _score_1_10(data: dict[str, Any], field: str) -> int:
     """1-10 integer score, strictly — what a jsonschema 'integer' + bounds
     would check, without a second schema document to keep in sync.
