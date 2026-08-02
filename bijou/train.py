@@ -1278,6 +1278,7 @@ def main() -> int:
         camera_filter=args.cameras,
         max_cameras=args.max_cameras,
         action_codec=action_codec,
+        aux=None,
     )
     # The explicit generator (both modes) makes the shuffle order and the
     # dataloader worker base-seeds a pure function of (--seed, rank) —

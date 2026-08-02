@@ -29,6 +29,7 @@ from typing import Any, Protocol, Self
 import torch
 from torch import Tensor
 
+from .aux_text import AuxSpec, assemble_suffix
 from .fast.codec import ActionCodec
 from .gemma4.cache import KVCache
 from .nn import RopeParameters
@@ -176,9 +177,16 @@ class CollatedBatch[I: BatchInputs]:
     # PAD-padded to the batch max — no EOA: sequence length is fixed by
     # the FAST grammar), present iff the Collator was built with an
     # ActionCodec (AR decoders). No separate mask: PAD is a reserved id,
-    # exclusions derive from it, and right padding + causal attention
-    # hides PAD from real positions.
+    # exclusions derive from it, and causal attention plus PAD-position
+    # loss masking hide it from real positions.
     action_tokens: Tensor | None
+    # Aux-augmented suffix in BACKBONE id space ([aux text ids]
+    # [block_base+BOA..actions], block-PAD-padded) + the aux-position
+    # mask, present iff the Collator was built with an AuxSpec
+    # (ar_backbone aux training). None keeps every non-aux path
+    # byte-identical.
+    suffix_tokens: Tensor | None
+    suffix_is_aux: Tensor | None
 
     def all_tensors(self) -> list[Tensor]:
         """Every tensor in the batch, nested fields included (stream-sync
@@ -188,6 +196,8 @@ class CollatedBatch[I: BatchInputs]:
             self.actions,
             self.action_is_pad,
             *([self.action_tokens] if self.action_tokens is not None else []),
+            *([self.suffix_tokens] if self.suffix_tokens is not None else []),
+            *([self.suffix_is_aux] if self.suffix_is_aux is not None else []),
             *self.action_stats.tensors().values(),
             *self.state_stats.tensors().values(),
             *self.encoder_inputs.tensors().values(),
@@ -280,6 +290,8 @@ class Collator[I: BatchInputs]:
     camera_filter: tuple[str, ...] | None
     max_cameras: int | None
     action_codec: ActionCodec | None
+    # Aux text rendering (ar_backbone only); requires action_codec.
+    aux: AuxSpec | None
 
     def _action_tokens(self, items: list[dict[str, Any]]) -> Tensor | None:
         """Tokenize each item's action chunk (worker-side CPU), PAD-pad to
@@ -382,6 +394,21 @@ class Collator[I: BatchInputs]:
             )
             for item in items
         ]
+        action_tokens = self._action_tokens(items)
+        suffix_tokens: Tensor | None = None
+        suffix_is_aux: Tensor | None = None
+        if self.aux is not None:
+            if action_tokens is None or self.action_codec is None:
+                raise ValueError(
+                    "aux rendering requires an ActionCodec (aux rides the "
+                    "AR suffix) — build the Collator with both or neither",
+                )
+            suffix_tokens, suffix_is_aux = assemble_suffix(
+                [self.aux.render(item) for item in items],
+                action_tokens,
+                block_base=self.aux.block_base,
+                codec_pad=self.action_codec.pad,
+            )
         return CollatedBatch(
             encoder_inputs=self.inputs(samples),
             state=torch.stack([item["observation.state"] for item in items]),
@@ -389,5 +416,7 @@ class Collator[I: BatchInputs]:
             action_is_pad=torch.stack([item["action_is_pad"] for item in items]),
             action_stats=self._stats(items, "action"),
             state_stats=self._stats(items, "state"),
-            action_tokens=self._action_tokens(items),
+            action_tokens=action_tokens,
+            suffix_tokens=suffix_tokens,
+            suffix_is_aux=suffix_is_aux,
         )

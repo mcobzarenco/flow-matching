@@ -123,6 +123,7 @@ class BijouPolicy:
             # batch quantiles; CE eval during training uses the train
             # collator, which does carry the codec.
             action_codec=None,
+            aux=None,
         )
 
     @torch.no_grad()

@@ -137,6 +137,8 @@ def batch(loaded: ActionCodec) -> CollatedBatch[FakeInputs]:
             q99=None,
         ),
         action_tokens=tokens,
+        suffix_tokens=None,
+        suffix_is_aux=None,
     )
 
 

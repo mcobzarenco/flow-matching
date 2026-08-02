@@ -1,0 +1,200 @@
+"""Auxiliary text targets from judge annotations (ar_backbone suffix).
+
+Renders a judged frame's annotations into the aux text segment that
+precedes BOA in the ar_backbone suffix:
+
+    subgoal: reach toward the toy boat\n
+    holding: no\n
+    progress: 30%\n
+
+Presence-based: a field appears iff its label exists at this frame
+(subgoal on every frame of a judged episode; holding/progress only on
+judge-sampled frames — the finite mask IS the sampled-frame set, per
+docs/episode-annotations.md). Unjudged samples produce no aux at all,
+so their suffix stays exactly the pretrain format ``[state][BOA][a...]``
+— an aux-enabled fine-tune extends the base rather than fighting it.
+
+The template is VERSIONED (:data:`AUX_TEMPLATE_VERSION`) and recorded in
+the checkpoint's decoder section: inference elicits fields by forcing
+these exact header strings, so a byte-level template change on an
+existing checkpoint silently breaks decoding — version it instead.
+
+Field order is fixed (subgoal, holding, progress); ``fields`` selects a
+subset but never reorders. Aux token ids are ordinary text-vocabulary
+ids (the full-vocab head was chosen for exactly this); action ids live
+in the FAST block. The collator assembles both into one suffix tensor
+in BACKBONE id space.
+
+``PINNED_PROMPT_HASH`` is deliberately a literal, not an import from
+``bijou.judge`` (the documented import DAG points judge → data, never
+the reverse): tests assert it equals the live ``PROMPT_HASH``, so a
+judge-prompt change fails check.py instead of silently mixing label
+distributions.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from enum import StrEnum
+from typing import Any, Protocol, override
+
+import torch
+from lerobot.datasets.language_render import active_at
+from torch import Tensor
+
+# Must equal bijou.judge.PROMPT_HASH (test-gated: tests/test_aux_text.py).
+PINNED_PROMPT_HASH = "9b796de"
+
+AUX_TEMPLATE_VERSION = 1
+FIELD_TERMINATOR = "\n"
+SUBGOAL_HEADER = "subgoal: "
+HOLDING_HEADER = "holding: "
+PROGRESS_HEADER = "progress: "
+HOLDING_VALUES = ("no", "yes")  # indexed by the 0/1 label
+
+
+class AuxField(StrEnum):
+    """Aux fields in their fixed template order."""
+
+    SUBGOAL = "subgoal"
+    HOLDING = "holding"
+    PROGRESS = "progress"
+
+
+class TextTokenizer(Protocol):
+    """The slice of a HF tokenizer the aux renderer uses (tests inject a
+    stub; runtime uses AutoTokenizer)."""
+
+    def encode(self, text: str, *, add_special_tokens: bool = ...) -> list[int]: ...
+
+
+@dataclass
+class AuxSpec:
+    """Aux-rendering configuration + the lazy text tokenizer.
+
+    Pickled into spawned dataloader workers — the tokenizer is built
+    lazily and dropped in ``__getstate__`` (the GemmaInputsCollator
+    convention). ``annotated_repos`` are the repo ids whose annotation
+    stamps were verified at selection time (stale-hash datasets are
+    treated as unjudged, loudly, by selection — not here).
+    ``block_base`` maps codec ids into backbone id space for the
+    assembled suffix."""
+
+    tokenizer_dir: str
+    fields: tuple[AuxField, ...]
+    annotated_repos: frozenset[str]
+    block_base: int
+    max_subgoal_tokens: int = 16
+    _tokenizer: Any = field(default=None, repr=False, compare=False)
+
+    def __post_init__(self) -> None:
+        ordered = tuple(f for f in AuxField if f in self.fields)
+        if ordered != self.fields:
+            raise ValueError(
+                f"aux fields must keep template order {[f.value for f in AuxField]}; "
+                f"got {[f.value for f in self.fields]}",
+            )
+        if not self.fields:
+            raise ValueError("aux enabled with no fields — pass aux=None instead")
+
+    @override
+    def __getstate__(self) -> dict[str, Any]:
+        return {**self.__dict__, "_tokenizer": None}
+
+    def tokenizer(self) -> TextTokenizer:
+        if self._tokenizer is None:
+            # Lazy import cost lives in transformers itself (already a
+            # collator dependency); the tokenizer files are the processor
+            # dir's.
+            import transformers  # heavy; workers only
+
+            self._tokenizer = transformers.AutoTokenizer.from_pretrained(
+                self.tokenizer_dir,
+            )
+        return self._tokenizer
+
+    def _encode(self, text: str) -> list[int]:
+        return self.tokenizer().encode(text, add_special_tokens=False)
+
+    def render_field(
+        self,
+        aux_field: AuxField,
+        item: dict[str, Any],
+    ) -> list[int] | None:
+        """Token ids of one field's ``header value\\n`` string, or None
+        when the label does not exist at this frame."""
+        match aux_field:
+            case AuxField.SUBGOAL:
+                row = active_at(
+                    float(item["timestamp"]),
+                    persistent=item.get("language_persistent") or [],
+                    style="subtask",
+                )
+                if row is None or not row.get("content"):
+                    return None
+                header = self._encode(SUBGOAL_HEADER)
+                body = self._encode(str(row["content"]))
+                if len(body) > self.max_subgoal_tokens:
+                    print(
+                        f"[aux] truncating subgoal ({len(body)} > "
+                        f"{self.max_subgoal_tokens} tokens): {row['content']!r}",
+                        flush=True,
+                    )
+                    body = body[: self.max_subgoal_tokens]
+                return header + body + self._encode(FIELD_TERMINATOR)
+            case AuxField.HOLDING:
+                value = item.get("annotation.holding")
+                if value is None or not bool(torch.isfinite(value)):
+                    return None
+                text = HOLDING_HEADER + HOLDING_VALUES[int(value)] + FIELD_TERMINATOR
+                return self._encode(text)
+            case AuxField.PROGRESS:
+                value = item.get("annotation.progress")
+                if value is None or not bool(torch.isfinite(value)):
+                    return None
+                percent = round(float(value) * 100)
+                return self._encode(f"{PROGRESS_HEADER}{percent}%{FIELD_TERMINATOR}")
+
+    def render(self, item: dict[str, Any]) -> list[int]:
+        """All present fields' token ids, template order. Empty for
+        unjudged frames and for datasets whose stamp failed verification."""
+        if item.get("repo_id") not in self.annotated_repos:
+            return []
+        ids: list[int] = []
+        for aux_field in self.fields:
+            rendered = self.render_field(aux_field, item)
+            if rendered is not None:
+                ids.extend(rendered)
+        return ids
+
+
+def assemble_suffix(
+    aux_ids: list[list[int]],
+    action_tokens: Tensor,
+    *,
+    block_base: int,
+    codec_pad: int,
+) -> tuple[Tensor, Tensor]:
+    """Per-sample ``[aux text ids][block_base+BOA..actions]`` rows, padded
+    to the batch max with the block PAD id.
+
+    ``action_tokens``: the collator's ``[BOA, t_1..t_k]`` codec-id rows,
+    already PAD-padded to their own max (PAD-padding is preserved — the
+    loss ignores PAD wherever it sits). Returns (suffix_tokens [B, W]
+    long, suffix_is_aux [B, W] bool), both in BACKBONE id space.
+    """
+    batch = action_tokens.shape[0]
+    if len(aux_ids) != batch:
+        raise ValueError(f"{len(aux_ids)} aux rows for batch {batch}")
+    blocks = action_tokens + block_base
+    pad_id = block_base + codec_pad
+    widths = [len(aux) + blocks.shape[1] for aux in aux_ids]
+    width = max(widths)
+    suffix = torch.full((batch, width), pad_id, dtype=torch.long)
+    is_aux = torch.zeros((batch, width), dtype=torch.bool)
+    for i, aux in enumerate(aux_ids):
+        if aux:
+            suffix[i, : len(aux)] = torch.tensor(aux, dtype=torch.long)
+            is_aux[i, : len(aux)] = True
+        suffix[i, len(aux) : len(aux) + blocks.shape[1]] = blocks[i]
+    return suffix, is_aux
