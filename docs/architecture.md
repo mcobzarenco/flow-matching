@@ -296,7 +296,7 @@ sparsely-labeled corpora don't dilute `train/loss_aux` toward 0.
   aux-saturated smoke arm).
 - `FREE` — feed `[state][opener][AUX]`, then the FREE phase where only
   text ids and BOA are legal (mode ids and the rest of the FAST block
-  are masked) under a `MAX_FREE_TOKENS = 48` budget — exhaustion
+  are masked) under a `MAX_FREE_TOKENS = 72` budget — exhaustion
   forces BOA, loudly, and increments a cumulative `fallback_count` (a
   persistent rate means the model stopped closing its aux segment) —
   then the ACTION phase. Conditioned on [AUX] the model has never seen
@@ -316,22 +316,31 @@ precedent set by image soft tokens).
 ### 2.4 Auxiliary text tasks (`bijou/aux_text.py`)
 
 Trained text outputs rendered from the LLM-judge annotations
-(`docs/episode-annotations.md`), emitted before BOA in the format-2
-suffix:
+(`docs/episode-annotations.md`), emitted before BOA under [AUX]:
 
     subgoal: reach toward the toy boat\n
     holding: no\n
     progress: 30%\n
+    event: object dropped from gripper\n
 
 - **Presence-based rendering, mode-conditioned.** A field appears iff
   its label exists at the frame: subgoal on every frame of a judged
   episode (piecewise-constant `language_persistent` rows);
   holding/progress only on judge-sampled frames (the finite mask IS
-  the sampled-frame set — never interpolated). A sample with ≥1
+  the sampled-frame set — never interpolated); event only on its exact
+  firing frame (`language_events` is frame-local; positives-only — the
+  implicit negative is the trained transition past the field wherever
+  labels exist, matching the contract that unsampled frames are
+  *unknown*, not negative). A sample with ≥1
   rendered field feeds [AUX]; unjudged/dropped samples render nothing
   and feed [ACT] — mixed sparsely-annotated corpora train one format,
   the mode explains label presence away, and an aux fine-tune extends
   a pretrained base rather than fighting it.
+- **The "event" lerobot language style is registered by `aux_text`**
+  (idempotent import-time set-adds) — the DAG leaf under both the
+  judge writer and the training reader, so either import order
+  resolves event rows; a test asserts the two modules' constants
+  agree.
 - **Mode dropout** (`--aux-dropout`, default 0.1 on aux runs): a
   labeled sample trains as [ACT] with probability p — keeps the
   deployment fast path trained even at 100% annotation coverage.
@@ -340,24 +349,31 @@ suffix:
   collator runs a dropout-0 clone so eval tables always show true
   labels.
 - **Field set and order.** `--aux-fields` selects a subset of
-  {subgoal, holding, progress} but never reorders (template order is
-  validated at the CLI boundary and re-guarded in `AuxSpec`); subgoal
-  text is truncated at `max_subgoal_tokens` (16), loudly.
+  {subgoal, holding, progress, event} but never reorders (template
+  order is validated at the CLI boundary and re-guarded in `AuxSpec`);
+  free-text values (subgoal, event) are truncated at 16 tokens,
+  loudly. The FREE-decode budget (`MAX_FREE_TOKENS = 72`) covers the
+  worst-case full template with slack.
 - **Template versioning.** `AUX_TEMPLATE_VERSION` (2) rides in the
   checkpoint's decoder section (`AuxDecodeConfig`: version, fields,
   prompt hash, judge model); loading a version this code doesn't know
   is a loud error — a byte-level header change on an existing
   checkpoint would silently break elicitation, so headers change only
   with a version bump.
-- **Label provenance is pinned.** `aux_text.PINNED_PROMPT_HASH` is a
-  literal (the import DAG points judge → data, never the reverse),
-  test-asserted equal to `bijou.judge.PROMPT_HASH` — a judge-prompt
-  change fails check.py instead of silently mixing label
-  distributions. At selection time, `data.verified_annotation_stamp`
-  admits a dataset's annotation surfaces only when its
-  `meta/judge_annotations.json` stamp matches the pin; stale/absent
-  stamps train as unjudged, loudly. `--aux-fields` with zero verified
-  datasets is a startup error.
+- **Label provenance is the dataset's own stamp** (revised 2026-08-02
+  with docs/episode-annotations.md: the stamp is the in-band blessed
+  materialization, and a code-level pin was wrong-by-construction —
+  `bijou.judge.PROMPT_HASH` advances with the judging code, not with
+  materialized labels, so the old tripwire would have silently
+  disowned every existing corpus at the next judge-prompt change). At
+  selection time `data.annotation_stamp` parses each dataset's
+  `meta/judge_annotations.json`; absent/unparseable ⇒ trains as
+  unjudged, loudly. The checkpoint records the DISTINCT stamps
+  (`AuxDecodeConfig.prompt_hash`/`judge_model`, "+"-joined); mixed
+  stamps across a corpus are legitimate (each dataset's labels match
+  its own stamp). `--aux-prompt-hash` is the opt-in per-run pin for
+  sweeps that must fail loudly on a mid-sweep re-materialization.
+  `--aux-fields` with zero stamped datasets is a startup error.
 - **Id spaces.** Aux ids are ordinary text-vocabulary ids — the
   full-vocab head exists for exactly this; the collator
   (`assemble_suffix`) builds one mixed suffix tensor in backbone id
@@ -612,8 +628,9 @@ prompt slots; task string must match the recorded instruction. Deployment
 always fine-tunes on rig data first (zero-shot cross-rig transfer is the
 wall, §7) — so the operative metric for any change is fine-tuned-then-
 scored rig MAE, not zero-shot. All decoder kinds serve `predict_chunk`
-behind one policy interface, returning a `ChunkPrediction` (chunks +
-aux generations); ar_backbone picks its decode mode via `--aux-mode
+behind one policy interface, returning a `BijouPrediction` (`actions`,
+mirroring the batch's ground-truth field, + aux `generations`);
+ar_backbone picks its decode mode via `--aux-mode
 {act,free}` on eval and rollout (§2.3: act = fast path, free = speak
 first, ~30–45 extra suffix forwards per replan; no suffix KV-cache
 reuse across replans yet — the known optimization if it deploys), and

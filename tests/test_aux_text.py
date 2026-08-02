@@ -1,11 +1,13 @@
-"""Aux text rendering + suffix assembly (commit ① of the aux feature).
+"""Aux text rendering + suffix assembly.
 
 Pure CPU/synthetic: a stub tokenizer (1 token per character) stands in
 for the HF tokenizer, and items mirror the REAL annotated rig-v2
-surfaces (language_persistent row dicts, NaN-masked float32 scalars) as
-audited 2026-08-02. The prompt-hash pin is the drift tripwire: it must
-equal bijou.judge.PROMPT_HASH so a judge-prompt change fails here
-instead of silently mixing label distributions.
+surfaces (language_persistent/language_events row dicts, NaN-masked
+float32 scalars) as audited 2026-08-02. Label provenance is the
+dataset's own stamp (no code-level prompt-hash pin — see
+docs/episode-annotations.md); the cross-module tripwire here is the
+EVENT_STYLE constant, which must match the judge materializer's (both
+register/consume the same lerobot language style).
 """
 
 from __future__ import annotations
@@ -15,15 +17,16 @@ from typing import Any
 
 import pytest
 import torch
+from lerobot.datasets.language import EVENT_ONLY_STYLES, STYLE_REGISTRY
 
 from bijou.aux_text import (
     AUX_TEMPLATE_VERSION,
-    PINNED_PROMPT_HASH,
+    EVENT_STYLE,
     AuxField,
     AuxSpec,
     assemble_suffix,
 )
-from bijou.judge import PROMPT_HASH
+from bijou.judge.materialize import EVENT_STYLE as JUDGE_EVENT_STYLE
 
 
 class CharTokenizer:
@@ -41,11 +44,12 @@ class CharTokenizer:
 def spec(**overrides: Any) -> AuxSpec:
     kwargs: dict[str, Any] = {
         "tokenizer_dir": "unused",
-        "fields": (AuxField.SUBGOAL, AuxField.HOLDING, AuxField.PROGRESS),
+        "fields": tuple(AuxField),
         "annotated_repos": frozenset({"mcobzarenco/so101_pick_place_v2"}),
         "block_base": 1000,
         "dropout": 0.0,
         "max_subgoal_tokens": 16,
+        "max_event_tokens": 16,
     }
     kwargs.update(overrides)
     built = AuxSpec(**kwargs)
@@ -58,9 +62,28 @@ def judged_item(
     holding: float = 1.0,
     progress: float = 0.3,
     subgoal: str = "grasp the boat",
+    event: str | None = None,
 ) -> dict[str, Any]:
     """Mirrors the real item surfaces (row-dict language columns,
-    NaN-masked scalars, repo_id attached by StatsAttachedDataset)."""
+    NaN-masked scalars, repo_id attached by StatsAttachedDataset).
+    ``language_events`` is FRAME-LOCAL in lerobot items — a row is
+    present iff an event fired on this exact frame (emitted_at ignores
+    event-row timestamps by design) — so ``event`` here simulates "this
+    frame is the firing frame"."""
+    events = (
+        [
+            {
+                "role": "assistant",
+                "content": event,
+                "style": EVENT_STYLE,
+                "timestamp": 6.0,
+                "camera": None,
+                "tool_calls": None,
+            },
+        ]
+        if event is not None
+        else []
+    )
     return {
         "repo_id": "mcobzarenco/so101_pick_place_v2",
         "timestamp": torch.tensor(6.0),
@@ -82,7 +105,7 @@ def judged_item(
                 "tool_calls": None,
             },
         ],
-        "language_events": [],
+        "language_events": events,
         "annotation.holding": torch.tensor(holding),
         "annotation.progress": torch.tensor(progress),
     }
@@ -92,16 +115,39 @@ def decode(ids: list[int]) -> str:
     return "".join(chr(i) for i in ids)
 
 
-def test_pinned_hash_tracks_judge_prompt() -> None:
-    """THE drift tripwire: a judge-prompt change must fail loudly here,
-    not silently mix label distributions in training."""
-    assert PINNED_PROMPT_HASH == PROMPT_HASH
-    assert AUX_TEMPLATE_VERSION == 2  # the opener-prefixed suffix format
+def test_event_style_matches_the_judge_materializer() -> None:
+    """Writer (judge) and reader (aux) speak one lerobot style; aux_text
+    registers it as the DAG leaf, so either import order resolves event
+    rows."""
+    assert EVENT_STYLE == JUDGE_EVENT_STYLE
+    assert EVENT_STYLE in STYLE_REGISTRY
+    assert EVENT_STYLE in EVENT_ONLY_STYLES
+    assert AUX_TEMPLATE_VERSION == 2  # header bytes unchanged since v2
 
 
 def test_render_all_fields_in_template_order() -> None:
     text = decode(spec().render(judged_item()))
     assert text == "subgoal: grasp the boat\nholding: yes\nprogress: 30%\n"
+    with_event = judged_item(event="boat dropped")
+    assert decode(spec().render(with_event)) == (
+        "subgoal: grasp the boat\nholding: yes\nprogress: 30%\nevent: boat dropped\n"
+    )
+
+
+def test_event_is_positives_only() -> None:
+    """An event renders iff the frame carries a row (language_events is
+    frame-local); frames without one render no event field at all — the
+    negative is implicit in the trained transition past the field."""
+    firing = judged_item(event="boat dropped")
+    assert "event: boat dropped\n" in decode(spec().render(firing))
+    assert "event" not in decode(spec().render(judged_item()))
+
+
+def test_event_truncation_is_bounded() -> None:
+    long = judged_item(event="z" * 100)
+    text = decode(spec(max_event_tokens=8).render(long))
+    assert "event: " + "z" * 8 + "\n" in text
+    assert text.count("z") == 8
 
 
 def test_presence_based_fields() -> None:

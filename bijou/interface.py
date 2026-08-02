@@ -70,17 +70,19 @@ class MemoryStream:
 
 
 @dataclass(frozen=True, slots=True)
-class ChunkPrediction:
-    """A decoder's chunk-space inference result, crossing the seam back
-    to the caller: RAW-unit action chunks plus, for decoders with a text
-    surface (ar_backbone), one :class:`AuxGeneration` per row. ``None``
+class BijouPrediction:
+    """Everything the model predicts for one observation batch, crossing
+    the seam back to the caller: one action chunk per sample (RAW units
+    — the field mirrors ``CollatedBatch.actions``, the ground truth it
+    is scored against) plus, for decoders with a text surface
+    (ar_backbone), one :class:`AuxGeneration` per row. ``None``
     generations = this decoder kind produces no text (flow, ar_fast);
-    ar_backbone always returns the list — rows are empty-text when the
-    model went straight to BOA.
+    ar_backbone always returns the list — rows are empty-text under ACT
+    decode.
 
-    Shapes: chunks [B, chunk, action_dim] (raw action units)."""
+    Shapes: actions [B, chunk, action_dim] (raw action units)."""
 
-    chunks: Tensor
+    actions: Tensor
     generations: list[AuxGeneration] | None
 
 

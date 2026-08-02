@@ -259,7 +259,9 @@ def test_teacher_forced_matches_incremental_decode_path() -> None:
     # is the same prediction point (position 0 of one_shot is the state
     # slot's prediction, stepwise[0] is BOA's = one_shot position 1).
     for j, step_logits in enumerate(stepwise):
-        delta = float((one_shot[:, j + 1, :] - step_logits).abs().max())
+        # detach: the forwards ran with grad enabled (module params
+        # require grad) and float() on a graph tensor warns.
+        delta = float((one_shot[:, j + 1, :] - step_logits).detach().abs().max())
         assert delta < 1e-4, f"step {j}: incremental diverges by {delta}"
 
 
@@ -269,8 +271,8 @@ def test_predict_chunk_constrained_decode_always_valid() -> None:
     backbone, decoder, loaded = build()
     sample = batch(loaded)
     prediction = decoder.predict_chunk(backbone, encode_memory(backbone), sample)
-    assert prediction.chunks.shape == (BATCH, loaded.time_horizon, loaded.action_dim)
-    assert bool(torch.isfinite(prediction.chunks).all())
+    assert prediction.actions.shape == (BATCH, loaded.time_horizon, loaded.action_dim)
+    assert bool(torch.isfinite(prediction.actions).all())
     assert prediction.generations is not None  # ar_backbone always has text
     assert all(generation.text == "" for generation in prediction.generations)
 

@@ -114,6 +114,7 @@ def make_args(save_dir: Path) -> TrainArgs:
         aux_fields=None,
         aux_loss_weight=0.5,
         aux_dropout=0.0,
+        aux_prompt_hash=None,
         decoder_hidden=64,
         decoder_heads=2,
         decoder_intermediate=128,

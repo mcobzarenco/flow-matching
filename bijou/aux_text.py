@@ -6,30 +6,41 @@ precedes BOA in the ar_backbone suffix:
     subgoal: reach toward the toy boat\n
     holding: no\n
     progress: 30%\n
+    event: object dropped from gripper\n
 
 Presence-based: a field appears iff its label exists at this frame
 (subgoal on every frame of a judged episode; holding/progress only on
-judge-sampled frames — the finite mask IS the sampled-frame set, per
-docs/episode-annotations.md). Unjudged samples produce no aux at all,
-so their suffix stays exactly the pretrain format ``[state][BOA][a...]``
-— an aux-enabled fine-tune extends the base rather than fighting it.
+judge-sampled frames — the finite mask IS the sampled-frame set;
+event only on the exact firing frame, positives-only — the implicit
+negative is the trained transition past it wherever labels exist; per
+docs/episode-annotations.md). Unjudged samples produce no aux at all
+and train mode [ACT] — an aux-enabled fine-tune extends the base
+rather than fighting it.
+
+Label provenance is the dataset's own ``meta/judge_annotations.json``
+stamp — the blessed materialization, consumed as-is (selection records
+each dataset's stamp; the checkpoint carries the distinct set). There
+is deliberately NO code-level prompt-hash pin: the judge prompt
+advances with the judging code, not with materialized labels — pin
+per-run via ``--aux-prompt-hash`` when a sweep must fail loudly on a
+mid-sweep re-materialization.
 
 The template is VERSIONED (:data:`AUX_TEMPLATE_VERSION`) and recorded in
 the checkpoint's decoder section: inference elicits fields by forcing
 these exact header strings, so a byte-level template change on an
 existing checkpoint silently breaks decoding — version it instead.
 
-Field order is fixed (subgoal, holding, progress); ``fields`` selects a
-subset but never reorders. Aux token ids are ordinary text-vocabulary
-ids (the full-vocab head was chosen for exactly this); action ids live
-in the FAST block. The collator assembles both into one suffix tensor
-in BACKBONE id space.
+Field order is fixed (subgoal, holding, progress, event); ``fields``
+selects a subset but never reorders. Aux token ids are ordinary
+text-vocabulary ids (the full-vocab head was chosen for exactly this);
+action ids live in the FAST block. The collator assembles both into one
+suffix tensor in BACKBONE id space.
 
-``PINNED_PROMPT_HASH`` is deliberately a literal, not an import from
-``bijou.judge`` (the documented import DAG points judge → data, never
-the reverse): tests assert it equals the live ``PROMPT_HASH``, so a
-judge-prompt change fails check.py instead of silently mixing label
-distributions.
+This module also owns the project-local lerobot "event" language style
+registration (idempotent set-adds on lerobot's documented import-time
+hook) — it is the DAG leaf both the judge (writer) and training
+(reader) sit above, so importing either side makes event rows
+resolvable.
 """
 
 from __future__ import annotations
@@ -40,11 +51,21 @@ from typing import Any, Protocol, override
 
 import torch
 import transformers
-from lerobot.datasets.language_render import active_at
+from lerobot.datasets.language import (
+    EVENT_ONLY_STYLES,
+    EXTENDED_STYLES,
+    STYLE_REGISTRY,
+)
+from lerobot.datasets.language_render import active_at, emitted_at
 from torch import Tensor
 
-# Must equal bijou.judge.PROMPT_HASH (test-gated: tests/test_aux_text.py).
-PINNED_PROMPT_HASH = "9b796de"
+# The project-local lerobot language style event rows are stored under.
+# bijou.judge.materialize writes rows with its own equal constant —
+# test-gated in tests/test_aux_text.py.
+EVENT_STYLE = "event"
+EXTENDED_STYLES.add(EVENT_STYLE)
+EVENT_ONLY_STYLES.add(EVENT_STYLE)
+STYLE_REGISTRY.add(EVENT_STYLE)
 
 AUX_TEMPLATE_VERSION = 2
 # Suffix format 3 (the only trained format going forward): every
@@ -68,13 +89,14 @@ ACT_MODE = 0
 AUX_MODE = 1
 NUM_MODES = 2
 # Free-phase token budget at decode: worst-case configured template
-# (headers ~12 + subgoal 16 + holding 4 + progress 5) with slack; the
-# fallback (force BOA, count it) fires past this.
-MAX_FREE_TOKENS = 48
+# (headers ~14 + subgoal 16 + holding 4 + progress 5 + event 16) with
+# slack; the fallback (force BOA, count it) fires past this.
+MAX_FREE_TOKENS = 72
 FIELD_TERMINATOR = "\n"
 SUBGOAL_HEADER = "subgoal: "
 HOLDING_HEADER = "holding: "
 PROGRESS_HEADER = "progress: "
+EVENT_HEADER = "event: "
 HOLDING_VALUES = ("no", "yes")  # indexed by the 0/1 label
 
 
@@ -84,6 +106,7 @@ class AuxField(StrEnum):
     SUBGOAL = "subgoal"
     HOLDING = "holding"
     PROGRESS = "progress"
+    EVENT = "event"
 
 
 class AuxDecodeMode(StrEnum):
@@ -180,6 +203,7 @@ def build_aux_runtime(
         AuxField.SUBGOAL: encode(SUBGOAL_HEADER),
         AuxField.HOLDING: encode(HOLDING_HEADER),
         AuxField.PROGRESS: encode(PROGRESS_HEADER),
+        AuxField.EVENT: encode(EVENT_HEADER),
     }
     candidates: dict[AuxField, tuple[tuple[int, ...], ...]] = {
         # Constrained value set; first-token argmax picks the candidate,
@@ -205,6 +229,7 @@ class AuxGeneration:
     subgoal: str | None
     holding: bool | None
     progress: float | None
+    event: str | None
 
 
 @dataclass
@@ -233,6 +258,7 @@ class AuxSpec:
     block_base: int
     dropout: float
     max_subgoal_tokens: int = 16
+    max_event_tokens: int = 16
     _tokenizer: Any = field(default=None, repr=False, compare=False)
     _generator: torch.Generator | None = field(default=None, repr=False, compare=False)
 
@@ -302,6 +328,25 @@ class AuxSpec:
                     return None
                 percent = round(float(value) * 100)
                 return self._encode(f"{PROGRESS_HEADER}{percent}%{FIELD_TERMINATOR}")
+            case AuxField.EVENT:
+                row = emitted_at(
+                    float(item["timestamp"]),
+                    persistent=item.get("language_persistent") or [],
+                    events=item.get("language_events") or [],
+                    style=EVENT_STYLE,
+                )
+                if row is None or not row.get("content"):
+                    return None
+                header = self._encode(EVENT_HEADER)
+                body = self._encode(str(row["content"]))
+                if len(body) > self.max_event_tokens:
+                    print(
+                        f"[aux] truncating event ({len(body)} > "
+                        f"{self.max_event_tokens} tokens): {row['content']!r}",
+                        flush=True,
+                    )
+                    body = body[: self.max_event_tokens]
+                return header + body + self._encode(FIELD_TERMINATOR)
 
     def render(self, item: dict[str, Any]) -> list[int]:
         """All present fields' token ids, template order. Empty for
@@ -351,6 +396,15 @@ def aux_label_text(item: dict[str, Any], fields: tuple[AuxField, ...]) -> str:
                         f"{PROGRESS_HEADER}{round(float(value) * 100)}%"
                         f"{FIELD_TERMINATOR}",
                     )
+            case AuxField.EVENT:
+                row = emitted_at(
+                    float(item["timestamp"]),
+                    persistent=item.get("language_persistent") or [],
+                    events=item.get("language_events") or [],
+                    style=EVENT_STYLE,
+                )
+                if row is not None and row.get("content"):
+                    parts.append(f"{EVENT_HEADER}{row['content']}{FIELD_TERMINATOR}")
     return "".join(parts)
 
 

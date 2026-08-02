@@ -69,7 +69,7 @@ from ..aux_text import (
 from ..fast.codec import ActionCodec
 from ..gemma4.config import Gemma4TextConfig
 from ..gemma4.model import Gemma4Model
-from ..interface import ChunkPrediction, CollatedBatch, ObservationMemory
+from ..interface import BijouPrediction, CollatedBatch, ObservationMemory
 from ..nn import DeviceLike
 from .ar_fast import IGNORE_INDEX
 
@@ -497,7 +497,7 @@ class ARBackboneDecoder(nn.Module):
         mode: AuxDecodeMode = AuxDecodeMode.ACT,
         generator: torch.Generator | None = None,
         noise: Tensor | None = None,
-    ) -> ChunkPrediction:
+    ) -> BijouPrediction:
         """The single decode path for every ar_backbone checkpoint,
         batched with per-row phases. Deterministic greedy;
         ``generator``/``noise`` unused/must be None.
@@ -515,7 +515,7 @@ class ARBackboneDecoder(nn.Module):
         ignore ``mode`` and decode their own trained format:
         ``[state][opener?]`` then free-until-BOA.
 
-        Returns a ChunkPrediction: chunks [B, chunk, action_dim] raw
+        Returns a BijouPrediction: chunks [B, chunk, action_dim] raw
         units + one AuxGeneration per row (empty text under ACT and
         whenever the model went straight to BOA)."""
         if noise is not None:
@@ -655,8 +655,8 @@ class ARBackboneDecoder(nn.Module):
             )
             for ids in free_ids
         ]
-        return ChunkPrediction(
-            chunks=torch.stack(chunks).to(device),
+        return BijouPrediction(
+            actions=torch.stack(chunks).to(device),
             generations=generations,
         )
 
@@ -682,7 +682,7 @@ def _parse_aux(text: str) -> AuxGeneration:
     verbatim for reports (parse failures are None, never exceptions)."""
     values: dict[str, str] = {}
     for line in text.splitlines():
-        for field_name in ("subgoal", "holding", "progress"):
+        for field_name in ("subgoal", "holding", "progress", "event"):
             prefix = f"{field_name}: "
             if line.startswith(prefix):
                 values[field_name] = line[len(prefix) :].strip()
@@ -699,6 +699,7 @@ def _parse_aux(text: str) -> AuxGeneration:
         subgoal=values.get("subgoal"),
         holding=None if holding is None else holding == "yes",
         progress=parsed_progress,
+        event=values.get("event"),
     )
 
 

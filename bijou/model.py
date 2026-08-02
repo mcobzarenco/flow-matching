@@ -36,7 +36,7 @@ from .decoders.ar_fast import ARFastDecoder, ar_fast_loss
 from .decoders.flow import FlowDecoder, SamplingMethod, flow_matching_loss
 from .encoders.gemma4 import GemmaEncoder, GemmaInputs
 from .gemma4.model import Gemma4Model
-from .interface import ChunkPrediction, CollatedBatch, ObservationMemory
+from .interface import BijouPrediction, CollatedBatch, ObservationMemory
 
 
 class BijouModel(nn.Module):
@@ -164,8 +164,8 @@ class BijouModel(nn.Module):
         num_steps: int = 5,
         method: SamplingMethod = SamplingMethod.HEUN,
         aux_mode: AuxDecodeMode = AuxDecodeMode.ACT,
-    ) -> ChunkPrediction:
-        """Collated batch → :class:`ChunkPrediction` (RAW-unit chunks
+    ) -> BijouPrediction:
+        """Collated batch → :class:`BijouPrediction` (RAW-unit chunks
         [B, chunk, action_dim] + per-row aux generations for decoders
         with a text surface): encode the observation (no grad) and run
         the decoder's chunk-space inference with the batch's per-sample

@@ -28,7 +28,7 @@ from torch.nn import functional as F
 
 from ..fast.codec import ActionCodec
 from ..interface import (
-    ChunkPrediction,
+    BijouPrediction,
     CollatedBatch,
     MemoryStream,
     ObservationMemory,
@@ -329,9 +329,9 @@ class ARFastDecoder(nn.Module):
         *,
         generator: torch.Generator | None = None,
         noise: Tensor | None = None,
-    ) -> ChunkPrediction:
+    ) -> BijouPrediction:
         """CONSTRAINED greedy decode, then detokenize + denormalize with
-        the batch's per-sample q01/q99 (ChunkPrediction, generations None
+        the batch's per-sample q01/q99 (BijouPrediction, generations None
         — ar_fast has no text surface). Deterministic: ``generator``/
         ``noise`` are unused (greedy has no randomness) and ``noise`` must
         be None. Always emits exactly one chunk.
@@ -404,8 +404,8 @@ class ARFastDecoder(nn.Module):
             ).float()
             for row_index, row in enumerate(token_rows)
         ]
-        return ChunkPrediction(
-            chunks=torch.stack(chunks).to(device),
+        return BijouPrediction(
+            actions=torch.stack(chunks).to(device),
             generations=None,
         )
 

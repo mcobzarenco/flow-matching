@@ -151,4 +151,4 @@ class BijouPolicy:
             method=self.method,
             aux_mode=self.aux_mode,
         )
-        return [chunk.cpu() for chunk in prediction.chunks]
+        return [chunk.cpu() for chunk in prediction.actions]

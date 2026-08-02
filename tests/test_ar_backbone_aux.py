@@ -192,8 +192,8 @@ def test_free_decode_is_budgeted_and_always_yields_chunks() -> None:
     )
     generations = prediction.generations
     assert generations is not None
-    assert prediction.chunks.shape == (BATCH, loaded.time_horizon, loaded.action_dim)
-    assert bool(torch.isfinite(prediction.chunks).all())
+    assert prediction.actions.shape == (BATCH, loaded.time_horizon, loaded.action_dim)
+    assert bool(torch.isfinite(prediction.actions).all())
     for generation in generations:
         # Free ids decode as text (char stub): never block ids, bounded.
         assert len(generation.text) <= MAX_FREE_TOKENS
@@ -216,7 +216,7 @@ def test_zero_budget_forces_boa_and_counts_fallback(
     )
     generations = prediction.generations
     assert generations is not None
-    assert prediction.chunks.shape[1] == loaded.time_horizon
+    assert prediction.actions.shape[1] == loaded.time_horizon
     # Budget 0: no free text possible; fallback fired for any row whose
     # first pick wasn't already BOA.
     assert all(generation.text == "" for generation in generations)

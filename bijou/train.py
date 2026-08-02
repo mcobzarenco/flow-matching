@@ -70,7 +70,6 @@ from torch import Tensor
 from .aux_text import (
     AUX_MODE,
     AUX_TEMPLATE_VERSION,
-    PINNED_PROMPT_HASH,
     SUFFIX_FORMAT,
     AuxDecodeConfig,
     AuxDecodeMode,
@@ -141,6 +140,7 @@ class TrainArgs:
     aux_fields: tuple[str, ...] | None
     aux_loss_weight: float
     aux_dropout: float
+    aux_prompt_hash: str | None
     decoder_hidden: int
     decoder_heads: int
     decoder_intermediate: int
@@ -613,7 +613,7 @@ def validate(
             generator=generator,
             num_steps=10,
             aux_mode=AuxDecodeMode.ACT,
-        ).chunks
+        ).actions
         truth = batch.actions.float()
         valid = ~batch.action_is_pad
         error = (sampled - truth).abs()
@@ -646,7 +646,7 @@ def validate(
         # collectives, bounded to the rich subset (≤ EVAL_TABLE_ROWS).
         decoder = model.decoder
         generations: list[AuxGeneration] | None = None
-        rich_chunks: Tensor | None = None
+        rich_actions: Tensor | None = None
         aux_fields: tuple[AuxField, ...] = ()
         if isinstance(decoder, ARBackboneDecoder) and decoder.config.aux is not None:
             # FREE-mode decode: the aux-capable table shows what the
@@ -662,7 +662,7 @@ def validate(
                 mode=AuxDecodeMode.FREE,
             )
             generations = rich_prediction.generations
-            rich_chunks = rich_prediction.chunks.cpu()
+            rich_actions = rich_prediction.actions.cpu()
             if collator.aux is not None:
                 aux_fields = collator.aux.fields
         # Cameras vary per sample across mixed datasets: generic positional
@@ -692,7 +692,7 @@ def validate(
                 for camera in cams
             ]
             images += [None] * (n_slots - len(cams))
-            sampled_row = rich_chunks[i] if rich_chunks is not None else row.sampled
+            sampled_row = rich_actions[i] if rich_actions is not None else row.sampled
             figure = _chunk_plot(
                 sampled_row,
                 row.truth,
@@ -1085,6 +1085,16 @@ def parse_args() -> TrainArgs:
         "--aux-fields",
     )
     parser.add_argument(
+        "--aux-prompt-hash",
+        default=None,
+        help="optional per-run pin: datasets whose annotation stamp was "
+        "materialized under any other judge prompt hash train as "
+        "unjudged, loudly (default: every materialized stamp is the "
+        "blessed selection and is consumed as-is; the checkpoint records "
+        "the distinct stamps). Pin during sweeps that must fail loudly "
+        "on a mid-sweep re-materialization",
+    )
+    parser.add_argument(
         "--fast-tokenizer",
         default=None,
         help="FAST tokenizer artifact: a local directory or "
@@ -1300,6 +1310,8 @@ def parse_args() -> TrainArgs:
         parser.error("--aux-loss-weight must be > 0 (omit --aux-fields to disable)")
     if raw.aux_dropout is not None and raw.aux_fields is None:
         parser.error("--aux-dropout requires --aux-fields (it drops aux labels)")
+    if raw.aux_prompt_hash is not None and raw.aux_fields is None:
+        parser.error("--aux-prompt-hash requires --aux-fields (it gates aux labels)")
     if raw.aux_dropout is not None and not 0.0 <= raw.aux_dropout < 1.0:
         parser.error(f"--aux-dropout {raw.aux_dropout} outside [0, 1)")
     aux_dropout = (
@@ -1362,6 +1374,7 @@ def parse_args() -> TrainArgs:
         aux_fields=tuple(raw.aux_fields) if raw.aux_fields is not None else None,
         aux_loss_weight=raw.aux_loss_weight,
         aux_dropout=aux_dropout,
+        aux_prompt_hash=raw.aux_prompt_hash,
         decoder_hidden=raw.decoder_hidden,
         decoder_heads=raw.decoder_heads,
         decoder_intermediate=raw.decoder_intermediate,
@@ -1447,6 +1460,7 @@ def main() -> int:
         holdout_fraction=args.holdout_episodes,
         split_seed=args.split_seed,
         allowed_fps=args.fps,
+        required_prompt_hash=args.aux_prompt_hash,
     )
     action_dim, state_dim = selection.action_dim, selection.state_dim
     per_dataset_stats = selection.per_dataset_stats
@@ -1503,15 +1517,29 @@ def main() -> int:
         assert action_codec is not None  # parse_args guard (ar_backbone-only)
         if not selection.annotated_repos:
             raise SystemExit(
-                "--aux-fields but NO selected dataset carries annotations at "
-                f"the pinned prompt hash — nothing to supervise (see the "
-                f"[aux] lines above; pinned {PINNED_PROMPT_HASH})",
+                "--aux-fields but NO selected dataset carries a materialized "
+                "annotation stamp — nothing to supervise (see the [aux] "
+                "lines above"
+                + (
+                    f"; required prompt hash {args.aux_prompt_hash}"
+                    if args.aux_prompt_hash is not None
+                    else ""
+                )
+                + ")",
             )
+        # The stamps ARE the label provenance (the in-band blessed
+        # selection); the checkpoint records the distinct set. Mixed
+        # stamps in one corpus are legitimate (each dataset's labels
+        # match its own stamp) — pin --aux-prompt-hash to refuse them.
         aux_decode_config = AuxDecodeConfig(
             template_version=AUX_TEMPLATE_VERSION,
             fields=tuple(AuxField(f) for f in args.aux_fields),
-            prompt_hash=PINNED_PROMPT_HASH,
-            judge_model="+".join(selection.judge_models),
+            prompt_hash="+".join(
+                sorted({s.prompt_hash for s in selection.annotation_stamps}),
+            ),
+            judge_model="+".join(
+                sorted({s.judge_model for s in selection.annotation_stamps}),
+            ),
         )
         aux_spec = AuxSpec(
             tokenizer_dir=str(checkpoint_dir),
@@ -1525,7 +1553,8 @@ def main() -> int:
         if is_main:
             print(
                 f"aux: {len(selection.annotated_repos)} annotated dataset(s) "
-                f"@ {PINNED_PROMPT_HASH} (judges: {aux_decode_config.judge_model}), "
+                f"@ {aux_decode_config.prompt_hash} "
+                f"(judges: {aux_decode_config.judge_model}), "
                 f"fields {list(args.aux_fields)}, loss weight "
                 f"{args.aux_loss_weight}, mode dropout {args.aux_dropout}",
                 flush=True,
