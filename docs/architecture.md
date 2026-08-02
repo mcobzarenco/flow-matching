@@ -1,12 +1,20 @@
 # Bijou architecture
 
-Bijou is a vision-language-action model for SO-100/101 arms: a **frozen,
-truncated Gemma-4 E2B-IT** encodes camera images + a language instruction
-once per observation and exports the K/V of a few of its layers; a
-**404M fp32 flow-matching action expert** cross-attends that K/V and
-denoises a 50-step action chunk. Per-dataset normalization makes ~1000
-miscalibrated community rigs trainable together; the ultimate target is
-the owner's physical SO-101.
+Bijou is a vision-language-action model for SO-100/101 arms built on
+**Gemma-4 E2B-IT**, with one prompt side and two trained action-path
+families. The **cross-attention family**: a truncated backbone (layers
+0–14) encodes camera images + a language instruction once per
+observation and exports the K/V of a few of its layers; a **404M fp32
+flow-matching action expert** (or a narrow AR FAST decoder) cross-attends
+that K/V and emits a 50-step action chunk. The **decoder-only path
+(`ar_backbone`)**: the FULL backbone plays both roles — the same prompt
+is prefill-encoded once, then the backbone itself continues the suffix
+autoregressively into FAST action tokens (and, when trained with judge
+annotations, an auxiliary text segment first — subgoal / holding /
+progress) under full-vocabulary CE through its own tied LM head.
+Per-dataset normalization makes ~1000 miscalibrated community rigs
+trainable together; the ultimate target is the owner's physical SO-101.
+The decoder-only path holds the current ledger best (§7).
 
 This document is the deep reference for the model and training system as
 they exist, the measured results that shaped them (§7), and the proposed
@@ -14,17 +22,20 @@ changes under evaluation (§8). Per-module contracts live in docstrings;
 code conventions in `code-styleguide.md`; collaboration/operating
 conventions in `working-together.md`. Transient state (in-flight runs,
 machine inventory) lives in wandb, the HF hub, and the chat — not in
-docs. Package layout (strict downward-only imports):
-`train`/`eval`/`rollout` → `loading` → `model` →
+Package layout (strict downward-only imports):
+`train`/`eval`/`rollout`/`judge` → `loading` → `model` →
 `encoders`/`decoders` → `interface` → `gemma4` (`data` beside `model`,
-imported by `loading`), with `interface.py` as the encoder×decoder seam
+imported by `loading`; `judge` touches only `data`; `aux_text` is a
+leaf beside `gemma4`, imported by `interface`/`data` and above), with
+`interface.py` as the encoder×decoder seam
 and `model.py` the composition root: `BijouModel` owns the backbone
 ONCE and composes a prompt-side encoder strategy (which receives the
-backbone as an argument) with an action decoder — one network can serve
+backbone as an argument) with an action decoder — one network serves
 several roles (prefix encoder for the cross-attention decoders; prefix +
-suffix runner for the planned decoder-only path). The root also owns the
-objective dispatch (`BijouModel.loss`) and the named trainable-group
-routing (`param_groups`: decoder / backbone_text / backbone_vision).
+suffix runner for the decoder-only path). The root also owns the
+objective dispatch (`BijouModel.loss` / `loss_components`) and the named
+trainable-group routing (`param_groups`: decoder / backbone_text /
+backbone_vision).
 Naming: **backbone** is the one identifier for the Gemma network — the
 pretrained artifact (`--backbone`, `BackboneConfig.id`,
 `backbone.safetensors`) and the mounted module (`model.backbone`) alike;
@@ -32,20 +43,20 @@ pretrained artifact (`--backbone`, `BackboneConfig.id`,
 
 ```
 [instruction][cam_1]..[cam_k][instruction]     chat-templated user turn
-      │  frozen truncated E2B: layers 0..14 (bf16), no grad
+      │  E2B prefix: layers 0..14 (bf16), LEFT-padded batches
       ▼
-  K/V of GLOBAL prefix layers {4, 9, 14}   ObservationMemory, encoded once
-      │  cross-attention (query-only, backbone geometry)
-      ▼
-FlowDecoder (404M fp32): 16 layers, each =
-  cross-attn(one scheduled stream) → self-attn([state][a_1..a_50]) → MLP
-      │  velocity of the chunk at flow time τ
-      ▼
-Heun integration τ: 1 → 0  →  50-action chunk
-
-(An autoregressive FAST-token decoder shares the seam and the sandwich
-blocks — suffix `[state][BOA][t_1..t_k]`, grammar-constrained greedy
-decode; §8.3.)
+  prefix K/V — ObservationMemory, encoded once per observation
+      │
+      ├─ cross-attention family: exported GLOBAL streams {4, 9, 14}
+      │    FlowDecoder (404M fp32), 16 layers, each =
+      │      cross-attn(one stream) → self-attn([state][a_1..a_50]) → MLP
+      │      → velocity at flow time τ → Heun integration τ: 1 → 0
+      │    (ARFastDecoder: same blocks, FAST tokens, constrained greedy)
+      │
+      └─ decoder-only (ar_backbone): the FULL E2B continues the suffix
+           [state][<start_of_turn>model\n][aux text?][BOA][t_1..t_k]
+           through all 35 layers against the retained prefix cache;
+           ~11M new params; free-until-BOA, then FAST-grammar decode
 ```
 
 ## 0. Tensor dimension notation
@@ -64,8 +75,9 @@ Batch & sequence:
 - `P` — memory width: the encoded-observation tokens the decoder
   cross-attends (the `ObservationMemory` width; for the Gemma trunk this
   is the prompt length)
-- `suffix` — expert token count `= 1 + chunk` (the `[state][a_1..a_chunk]`
-  sequence; the expert's `S`)
+- `suffix` — decoder-side token count: the expert's `[state][a_1..a_chunk]`
+  (`= 1 + chunk`); variable-width for ar_backbone
+  (`[state][opener][aux?][BOA][tokens]`)
 - `chunk` — action-chunk length in timesteps (`chunk_size`, default 50)
 - `images` — camera images in a batch, summed over samples (Σ per-sample
   cameras — NOT `B`: samples contribute variable camera counts and the
@@ -92,17 +104,27 @@ Inline literals where an axis is a fixed small constant: `2` = the (x, y)
 spatial pair in `image_position_ids`; `head_dim/2` = RoPE inverse-freq
 length; `3·patch_size²` = a raw-RGB vision patch row.
 
-## 1. Prefix encoder — frozen truncated Gemma-4 E2B
+## 1. Prompt side — the Gemma-4 E2B prefix encode
 
-**Why truncated.** Gemma-4 E-series layers ≥15 (E2B, of 35) carry no K/V
-weights — the deep half runs query-only against the K/V produced at
-layer 13/14. Bijou truncates exactly at that boundary
+**One backbone, mounted at a depth.** `BackboneConfig.depth ∈ {prefix,
+full}`: the cross-attention decoders mount layers 0–14 only
+(**truncated**); `ar_backbone` mounts the full 35-layer stack (its
+suffix runs the KV-shared deep half). Either way the prompt encode
+itself runs layers 0–14 and produces the same prefix K/V.
+
+**Why truncation is exact.** Gemma-4 E-series layers ≥15 (E2B, of 35)
+carry no K/V weights — the deep half runs query-only against the K/V
+produced at layer 13/14. Bijou truncates exactly at that boundary
 (`first_kv_shared_layer_idx = 35 − num_kv_shared_layers(20) = 15`), so it
 keeps layers 0–14 (~2.1–2.55B params vs 5.2B) and the exported streams
 are **bitwise-identical to a full forward**. The expert is then, in
 effect, "more KV-shared layers" grafted on with the backbone's own
-geometry. `bijou/gemma4/` is a pure-torch reimplementation, bit-exact vs
-HF on greedy text+image generation (`verify_parity.py`).
+geometry — and the same argument makes the ar_backbone prefill exact:
+no loss is taken on prompt positions and nothing consumes prompt hidden
+states above layer 14, so prompts NEVER need the deep half (the
+dead-half argument is per-token). `bijou/gemma4/` is a pure-torch
+reimplementation, bit-exact vs HF on greedy text+image generation
+(`verify_parity.py`).
 
 **Exported streams = global-attention prefix layers {4, 9, 14}.** Gemma-4
 uses a hybrid 5-period schedule (every 5th layer is FULL/global, the rest
@@ -117,12 +139,26 @@ in-place writes), so this same path is autograd-transparent when the
 trunk is trained (§8.1).
 
 **Prompt = instruction sandwich** `[task][cam_1..N][task]` in one
-chat-templated user turn, right-padded across a batch. Under causal
-attention this yields instruction-conditioned image K/V *and*
-image-conditioned instruction K/V for a few extra tokens. Camera NAMES
-are positional slots (sorted); community image/image2 keys carry no
-reliable wrist-vs-scene semantics (SmolVLA precedent), so slot order is
-the only camera signal.
+chat-templated user turn, **LEFT-padded** across a batch with per-sample
+LOGICAL position ids (cumsum of the real-token mask). Left padding is
+load-bearing (decided 2026-08-01, test-gated in
+`tests/test_backbone_continuation.py`): Gemma's sliding-window masks are
+physical-index, so right padding puts a suffix appended after the batch
+max at DIFFERENT physical distances per sample and silently corrupts
+windowed attention for any suffix continuation; with left padding every
+sample's suffix is physically adjacent to its real prompt. Correct for
+the cross-attention consumers too (they read positions from the mask).
+Under causal attention the sandwich yields instruction-conditioned image
+K/V *and* image-conditioned instruction K/V for a few extra tokens.
+Camera NAMES are positional slots (sorted); community image/image2 keys
+carry no reliable wrist-vs-scene semantics (SmolVLA precedent), so slot
+order is the only camera signal.
+
+**What the decoders consume.** The cross-attention family reads the
+exported streams of an `ObservationMemory`; `ar_backbone` additionally
+retains the FULL prefix `KVCache` on the memory (`retain_cache=True`,
+set by `BijouModel.encode` from the decoder kind — the exported streams
+are zero-copy views into it) and extends it in place while decoding.
 
 **Vision geometry** (encoder-free E-series tower, 768 hidden, 16-px
 patches, 3×3 spatial pool): a 640×480 frame → resized 624×480 → 39×30
@@ -133,15 +169,20 @@ the tower output* (8.4 px linear readout) and degrades through the LM
 layers — the pool is not the bottleneck; the text stack's handling of
 visual tokens is.
 
-## 2. Action expert — flow-matching decoder
+## 2. Action decoders
+
+Three decoder kinds share the seam (`--decoder flow | ar_fast |
+ar_backbone`); a checkpoint's `decoder.kind` tags which one it carries.
+
+### 2.1 Flow-matching expert (cross-attention)
 
 A narrow decoder over the suffix `[state][a_1..a_50]` (`suffix_length =
 1 + chunk_size`). Default shape: **hidden 1024, 8 self-attn heads
 (head_dim 128), intermediate 4096 (GLU), 8 cross-attn heads, 16 layers,
 ~404M fp32**. Freshly initialized, never loaded from the backbone.
 
-Each `SuffixBlock` (`bijou/decoders/blocks.py`, shared with the AR
-decoder) is a Gemma-style sandwich of three sublayers, each
+Each `SuffixBlock` (`bijou/decoders/blocks.py`, shared with ar_fast) is
+a Gemma-style sandwich of three sublayers, each
 `residual → pre_RMSNorm → sublayer → post_RMSNorm → +residual`:
 
 - **Cross-attention** over one exported stream. Queries adopt the
@@ -174,6 +215,142 @@ implemented and under evaluation (§8.2).
 
 Params live ~50% in the MLPs, ~33% in cross-attention (8 heads × 512
 over the residual 1024), ~17% in self-attention.
+
+### 2.2 AR FAST decoder (cross-attention)
+
+`ARFastDecoder` (`bijou/decoders/ar_fast.py`): the same sandwich blocks
+over suffix `[state][BOA][t_1..t_k]`, fully causal, teacher-forced CE
+over the FAST token vocabulary (state/PAD positions ignored), greedy
+decode constrained by the FAST grammar. Tokenizer artifact story and
+results: §8.3.
+
+### 2.3 Decoder-only path (`ar_backbone`)
+
+`ARBackboneDecoder` (`bijou/decoders/ar_backbone.py`): the FULL backbone
+is the decoder — the prompt is prefill-encoded once (layers 0–14, cache
+retained), then the suffix runs ALL 35 layers against that cache, and
+next-token logits come from the backbone's own frozen tied LM head over
+the **full vocabulary**. There is no separate decoder network; the
+module owns only **~11M new parameters** at E2B scale:
+
+- `state_proj` — the normalized state enters as suffix position 0 via a
+  **zero-initialized** linear projection (an inert token at init: the
+  prompt-conditioned computation starts undisturbed, gradients flow
+  through its K/V use). State stays out of the VLM *prompt* (π0 layout,
+  as in §2.1) — the prompt cache stays replan-reusable and
+  in-distribution.
+- `fast_embed` / `fast_ple` — input-embedding and per-layer-embedding
+  rows for the FAST block, scaled like the backbone's own tables (√dim).
+  Warm-started around the real tables' row mean + 0.02 noise
+  (`init_tables_from_backbone`) so block logits start near the average
+  text logit under full-vocab CE.
+
+**FAST block placement.** The action vocabulary (BPE + BOA + PAD,
+`vocab_total` = 1026 for fast_tokenizer_v2) is TAIL-anchored at
+`block_base = vocab_size − vocab_total` — E2B: ids 261118..262143,
+inside the 3259-id reserved-unused run starting at 258885. No embedding
+resize, no magic constant, adapts to any backbone; recorded in the
+checkpoint's decoder section. The backbone never consumes FAST ids as
+ids (suffix tokens enter as embeddings); the ids exist so actions and
+text share ONE softmax: `lm_head` logits are computed, the block's
+columns are overwritten from the patch, and the softcap is applied
+AFTER the overwrite (block capped identically to text).
+
+**Suffix format 2** (`aux_text.SUFFIX_FORMAT`, recorded per checkpoint;
+format-1 = pre-opener legacy, loadable for warm starts with a loud
+warning):
+
+    [state][<start_of_turn>model\n][aux text — if labeled][BOA][t_1..t_k]
+
+The opener is the IT chat template's own generation prompt, so the
+trained "speak or act" DECISION POINT sits on the single most
+reinforced transition instruction tuning built. Teacher-forced
+full-vocabulary CE: state and all-but-the-last opener positions are
+IGNOREd; the last opener position is trained (first aux token on
+labeled samples, BOA otherwise — an aux-less run trains it to BOA on
+every sample); PAD is batch padding, always ignored; no EOA (action
+length is fixed by the FAST grammar). Loss components: `total = action
++ w·aux` with per-position mean CE split by the collator's aux mask
+(`--aux-loss-weight`, default 0.5; batches without a labeled sample
+contribute aux = 0 — collective-safe, but it dilutes the logged
+`train/loss_aux` toward 0 on sparsely-judged corpora; compare that
+metric only between runs on the same judged fraction).
+
+**Decoding is ONE path** (`predict_chunk_with_text`, free-until-BOA),
+for aux and aux-less checkpoints alike: feed `[state][opener]`, then a
+FREE phase where only text ids and BOA are legal (the rest of the FAST
+block is masked) under a `MAX_FREE_TOKENS = 48` budget — exhaustion
+forces BOA, loudly, and increments a cumulative `fallback_count` (a
+persistent rate means the model stopped closing its aux segment) —
+then the ACTION phase under the ar_fast grammar mask (each step masks
+to tokens whose BPE symbol expansion fits the remaining chunk×dim
+budget; a full-length chunk is guaranteed by construction). An aux-less
+model emits BOA at the first free step: same path, one extra forward.
+Forced-scaffold decoding was measured OOD on aux-saturated checkpoints
+(18.2 vs 13.5 MAE on the 300-step smoke arm) — never compare numbers
+across decode formats.
+
+Prompt-side geometry is what makes the suffix exact: left padding +
+logical positions (§1) put every suffix token physically adjacent to
+its sample's real prompt, positions continuing after each sample's real
+prefix length; the state slot borrows the pad token's PLE row (the
+precedent set by image soft tokens).
+
+### 2.4 Auxiliary text tasks (`bijou/aux_text.py`)
+
+Trained text outputs rendered from the LLM-judge annotations
+(`docs/episode-annotations.md`), emitted before BOA in the format-2
+suffix:
+
+    subgoal: reach toward the toy boat\n
+    holding: no\n
+    progress: 30%\n
+
+- **Presence-based rendering.** A field appears iff its label exists at
+  the frame: subgoal on every frame of a judged episode
+  (piecewise-constant `language_persistent` rows); holding/progress
+  only on judge-sampled frames (the finite mask IS the sampled-frame
+  set — never interpolated). Unjudged samples render nothing — their
+  suffix is `[state][opener][BOA][actions]`, so mixed corpora train one
+  format and an aux fine-tune extends a pretrained base rather than
+  fighting it.
+- **Field set and order.** `--aux-fields` selects a subset of
+  {subgoal, holding, progress} but never reorders (template order is
+  validated at the CLI boundary and re-guarded in `AuxSpec`); subgoal
+  text is truncated at `max_subgoal_tokens` (16), loudly.
+- **Template versioning.** `AUX_TEMPLATE_VERSION` (2) rides in the
+  checkpoint's decoder section (`AuxDecodeConfig`: version, fields,
+  prompt hash, judge model); loading a version this code doesn't know
+  is a loud error — a byte-level header change on an existing
+  checkpoint would silently break elicitation, so headers change only
+  with a version bump.
+- **Label provenance is pinned.** `aux_text.PINNED_PROMPT_HASH` is a
+  literal (the import DAG points judge → data, never the reverse),
+  test-asserted equal to `bijou.judge.PROMPT_HASH` — a judge-prompt
+  change fails check.py instead of silently mixing label
+  distributions. At selection time, `data.verified_annotation_stamp`
+  admits a dataset's annotation surfaces only when its
+  `meta/judge_annotations.json` stamp matches the pin; stale/absent
+  stamps train as unjudged, loudly. `--aux-fields` with zero verified
+  datasets is a startup error.
+- **Id spaces.** Aux ids are ordinary text-vocabulary ids — the
+  full-vocab head exists for exactly this; the collator
+  (`assemble_suffix`) builds one mixed suffix tensor in backbone id
+  space (guarded: aux ids must sit below `block_base`) plus the
+  aux-position mask the loss splits on.
+- **Metrics.** Component losses `train/loss_action` / `train/loss_aux`;
+  in-run eval logs the free-decode generations as raw-string columns
+  (`aux_generated` vs `aux_label`) inside the `eval/samples` wandb
+  table, and `eval/samples_holding_acc` — teacher-forced likelihood
+  accuracy p(yes) vs p(no) at the holding value position under the
+  label context (sparse fields are rarely elicited by free decode from
+  arbitrary frames; likelihood scoring measures them anyway). Labels
+  are weak supervision (~80% inter-judge agreement on holding, ±15%
+  progress MAE): weight modestly, expect an accuracy ceiling near the
+  label noise.
+- **Owed:** the offline `bijou.eval` report has no aux section yet
+  (generations + aux metrics in HTML/JSON); in-run wandb is the current
+  surface.
 
 ## 3. Flow matching — objective and sampling
 
@@ -253,7 +430,10 @@ DDP via torchrun, per-rank batch/workers; loss and MAE probes all-reduced,
 checkpoints/logging on rank 0. Optimizer AdamW (0.9, 0.95), fused on CUDA
 (CPU keeps the reference path so the loss oracle is stable), cosine
 schedule to 10% after linear warmup, grad-clip 10.0 (a never-bites safety
-net; a tighter clip renormalizes most steps and injects moment noise).
+net; a tighter clip renormalizes most steps and injects moment noise) —
+except ar_backbone, whose full-vocab CE runs larger grad norms:
+convention is `--grad-clip 100` there (step-1 norms in the 10^4 range
+are softcap saturation, clipped in practice).
 
 **Component learning rates.** `--decoder-lr` (always > 0), plus optional
 `--backbone-text-lr` / `--backbone-vision-lr` — omitting a component's
@@ -271,17 +451,34 @@ so a single DDP wrapper (`static_graph`) hooks everything trained;
 single-process frozen math is byte-identical to the historical
 decoder-only wrap (oracle-exact), multi-rank frozen runs changed
 gradient bucketing composition at the 2026-08-01 refactor (declared
-re-baseline). See §9.1.
+re-baseline). See §8.1.
+
+**Decoder-kind CLI semantics.** flow accepts the `--decoder-*` shape
+flags and `--stream-counts`; AR decoders require `--fast-tokenizer
+<artifact>`; **ar_backbone rejects the shape flags and stream counts**
+(the backbone IS the architecture — flags describing a model the run
+doesn't build are errors, not ignored). `--aux-fields` (ar_backbone
+only) enables aux text training (§2.4); `--aux-loss-weight` sets w
+(default 0.5 — the labels are weak supervision). Train step returns
+component losses; `train/loss_action` + `train/loss_aux` log beside
+`train/loss` on aux runs (the aux window mean is collective-safe by
+including label-less batches as 0 — see the dilution caveat in §2.4).
 
 **In-training probes.** `--eval-samples N` sizes two MAE probes
 (eval_chunk_mae on holdout, train_mae on train), drawn exactly as
 `bijou.eval --seed` would, sharded and all-reduced, CPU-resident.
+ar_backbone probes decode through the unified free-until-BOA path, so
+in-run MAE and offline eval agree (~0.02 at 100k); aux runs add the
+generations table columns and holding likelihood accuracy (§2.4),
+rank-0-only, bounded to the rich table rows.
 
 **Checkpoint schema** (`loading.py` dataclasses): `expert.safetensors` +
 `bijou_config.json` (format 3: role-sectioned — `backbone` {id,
 depth: prefix|full}, `prompt` {kind, exports, max_soft_tokens},
-`decoder` = the tagged config with stream-name schedules — plus
-per-dataset + aggregate stats, train args, step);
+`decoder` = the tagged config with stream-name schedules; ar_backbone's
+records the tokenizer artifact ref, block placement, `suffix_format`
+and the `aux` provenance record (§2.4; absent keys parse as format 1 /
+no aux) — plus per-dataset + aggregate stats, train args, step);
 `optimizer.pt` for lossless `--resume`; and `backbone.safetensors`
 (bf16 trunk snapshot) **iff the checkpoint's trunk differs from pristine
 HF — trained in-run OR inherited frozen from an adapted `--init-from`**
@@ -292,7 +489,11 @@ self-contained: loading one must need no other directory. Format-1/2
 checkpoints load forever via `checkpoint_sections`' read-side synthesis
 (format 1 through the train-args synthesizer), no file conversion;
 guarded by state-dict key fixtures and cross-format section tests. `--init-from` = warm
-start (decoder config-guarded, loud SystemExit; NOT guarded:
+`--init-from` = warm
+start (decoder config-guarded, loud SystemExit — except the zero-
+parameter DATA-side keys {aux, suffix_format}, which may differ with a
+printed note: enabling aux / adopting the opener format on an older
+base is the sanctioned warm-start pattern; NOT guarded:
 `--max-soft-tokens`, `--backbone` — known footguns); `--resume` =
 lossless continuation (CLI lr ignored, printed; cosine re-evaluated
 over the new `--steps`, so extending re-heats LR — accepted when
@@ -346,7 +547,14 @@ fwd 4.6% / bwd 15.4% / opt 0.7%. The frozen backbone forward dominates —
 expert width is nearly free wall-clock; the perf wins are prefix-side
 (§8.8). Unfrozen-text steps run ~2× frozen at matched batch; live-trunk
 DDP runs measured 69–79 GB/rank (batch 32–64, H100) —
-`PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` helps.
+`PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` helps. ar_backbone
+trains one teacher-forced pass over a ~30–80-token suffix instead of a
+404M-expert denoise: the 100k mainline measured **median 0.444 s/step**
+at B11/rank ×4×H100 with live text trunk. Its VRAM is
+composition-dependent (3–4-camera community samples spike past 2-camera
+estimates): B16/rank OOM'd twice on the community mix; **B11/rank holds
+(~75.6 GiB peak)**; standing rule — OOM ⇒ `--resume` latest checkpoint
+at B10.
 
 **Hard-won library constraints** (do not re-learn): lerobot workers
 spawn, never fork (torchcodec is fork-unsafe); decoder cache capped
@@ -369,7 +577,12 @@ tick rate limiter (not a safety system); camera names are positional
 prompt slots; task string must match the recorded instruction. Deployment
 always fine-tunes on rig data first (zero-shot cross-rig transfer is the
 wall, §7) — so the operative metric for any change is fine-tuned-then-
-scored rig MAE, not zero-shot.
+scored rig MAE, not zero-shot. All decoder kinds serve `predict_chunk`
+behind one policy interface; ar_backbone decodes through the unified
+free-until-BOA path (§2.3; no suffix KV-cache reuse across replans yet
+— the known optimization if it deploys), and AR checkpoints need the
+deployment rig's exact q01/q99 quantiles (the tokenizer's fit
+normalization), which old-format stats tables don't carry.
 
 **Artifacts.** Checkpoints + tokenizers:
 [`mcobzarenco/bijou-checkpoints`](https://huggingface.co/mcobzarenco/bijou-checkpoints)
@@ -404,16 +617,29 @@ run narratives live in git history.
 |  … resumed 100k | 7.11 h10 / 6.92 h30 | 14.55 | train 7.14 ≈ holdout: zero episode-fit gap when trunk frozen |
 | AR FAST v2, frozen trunk, 10k | 8.34 | — | ≈ flow@40k quality in 10k steps; plateaued ~8.0 |
 | **AR FAST v2 + live text trunk, 50k** (`bijou_ar_fast_v2_unftext2_50k_ddp2`) | **5.96** (first_mae 2.06) | **11.69** (first_mae 3.99) | decoder 1e-4 / text 2.5e-5; first pretrain to beat copy on rig holdout; train probe ~4.9 = episode-fit gap (live trunk memorizes scenes) |
+| **ar_backbone 100k** (`bijou_arb_fullvocab_100k_ddp4`) | **5.656** (first_mae 1.951) | 12.458 vs copy 11.973† | decoder-only path, decoder 1e-4 / text 2.5e-5, B11×4, clip 100; suffix format 1 (pre-opener) — warm-start seed, not an inference target |
+|  … rig ft 5k (`bijou_arb_ft_rig_5k_ddp4`) | — | min **11.48 @ step 250**† | decoder 2e-5 / text 1e-5; crosses copy at 250 then memorizes (same episode-fit arc as the AR ft round) |
 
-The live-trunk AR line is the project's strongest evidence: −14% vs
-the flow lineage's best on ¼ the samples, `first_mae` beating copy on
-community (2.06 vs 2.73), and the frozen-trunk AR plateau at ~8.0
+† Rig rows above the dagger line scored the pre-rename `marius/*` split
+("rig-holdout-3403"); the daggered rows scored the post-rename
+`mcobzarenco/so101_pick_place_{v2,clean}` holdout (0.1/seed 0 — repo id
+enters the split hash, so the rename IS a new frame set; its copy
+baseline is 11.973). Rig comparisons cross the dagger only coarsely.
+
+The live-trunk AR lines are the project's strongest evidence: the
+ar_backbone 100k row is the ledger best (−5% vs the ar_fast line on
+community holdout, first_mae 1.951 vs copy 2.726), and the decoder-only
+path gets there with ~11M new params instead of a 404M expert — though
+steps/architecture confound the margin over ar_fast-50k. The
+frozen-trunk AR plateau at ~8.0
 locates the gain in the trunk, not the decoder. Attribution is still
 2-factor (live trunk × AR objective; flow-side unfreeze at 2e-5 was
 only a modest win — legacy table below). LR sensitivity is extreme:
 6e-4/3e-4 destroyed a warm 8.34 init to 15.95 within 1k steps (worse
 than from-scratch at matched steps — the trunk outran the decoder);
-1e-4/2.5e-5 dipped to 10.07 then delivered.
+1e-4/2.5e-5 dipped to 10.07 then delivered. Zero-shot rig transfer
+remains the wall for every pretrain (12.458 loses to copy; the ft
+crosses it within 250 steps).
 
 Rig fine-tunes from the AR-unftext 50k base (5k steps, decoder 2e-5,
 frozen-vs-1e-5 trunk arms): **no measurable holdout headroom** — both
@@ -500,18 +726,20 @@ localize the bottleneck in the text stack's use of visual tokens, not the
 expert; π0/SmolVLA both train their trunks. **Numerics/plumbing.** fp32
 masters + bf16 autocast; `BijouTrainStep` + single DDP wrap
 (static_graph); `backbone.safetensors` rides in the checkpoint; frozen
-path stays byte-identical (oracle exact). **Status/finding.** First A/B
+path stays byte-identical (oracle exact).
 **Status/finding.** With the flow objective, text-lr 2e-5 from cont45k
 was a modest monotone win (§7 legacy ledger). With the **AR CE
-objective** the same flags produced the project's best result (§7:
-5.96 comm holdout, first rig copy-crossing) — next-token CE through the
-exported-K/V pathway shapes the trunk far better than flow MSE did.
+objective** the same flags produced the project's best results (§7:
+ar_fast 5.96, then ar_backbone 5.656 comm holdout; first rig
+copy-crossings) — next-token CE
+shapes the trunk far better than flow MSE did, through the exported-K/V
+pathway and natively in the decoder-only path alike.
 LR regime is narrow: decoder at its native LR, trunk ≤2.5e-5; hotter
 (3e-4) churns features faster than any decoder tracks and lands below
 from-scratch. **Open dials.** freeze-then-thaw; ZeRO-1 / activation
 checkpointing for batch; whether a flow decoder trained on the FROZEN
-adapted trunk inherits the win (the decisive attribution test — needs
-only `--init-from` the adapted checkpoint with flags off).
+adapted trunk inherits the win — the decisive attribution test, now
+specced as stage-2 (§8.11).
 
 ### 8.2 adaRMS time conditioning (IMPLEMENTED; signature confirmed)
 
@@ -543,7 +771,7 @@ residual blocks. **Cost.** +~101M (~+25%), few % step time (expert is
 ~20% of the step). **Pre-registered signature.** Shrinks the Heun-5→30
 gap and the mid-τ bump; chunk-MAE −0.1..−0.4; rig zero-shot unchanged
 (grounding ≠ conditioning). Param-confounded (win = modulation OR
-capacity) until a bottleneck-head follow-up. **Status.** Additive stays
+capacity) until a bottleneck-head follow-up.
 **Status.** Additive stays
 default and byte-identical. The adarms lineage (bidirectional, h1536,
 fps-30, 40k→100k) delivered the pre-registered signature — Heun-10→30
@@ -554,20 +782,19 @@ would isolate the conditioning effect. Forward-compat: if AR co-training
 ever shares the expert (§8.3 option A), modulation must be MASKED to the
 flow positions (per-position gating, not per-sample broadcast).
 
-### 8.3 Autoregressive FAST decoding (decoder + tokenizer SHIPPED; co-training proposed)
+### 8.3 Autoregressive FAST decoding (SHIPPED — ar_fast §2.2, ar_backbone §2.3; tokenizer artifact story here)
 
-**Shipped: `ARFastDecoder`** (`bijou/decoders/ar_fast.py`) — a full
-seam-native decoder over the shared sandwich blocks: suffix
-`[state][BOA][t_1..t_k]`, fully causal, teacher-forced CE (state/PAD
-positions ignored), **grammar-constrained greedy decode** — a valid
-sequence expands to exactly chunk×dim quantized DCT coefficients, so
-there is NO EOA and no malformed generations by construction (each step
-masks to tokens whose BPE symbol-expansion fits the remaining budget).
-Train: `--decoder ar_fast --fast-tokenizer <artifact>`; eval/rollout
-work unchanged via `predict_chunk` (greedy — no Heun knobs); AR
-inference additionally needs quantile stats (rides the checkpoint's
-per-dataset table). Results in §7: frozen-trunk plateau ~8.0 at 10k
-(≈ flow@40k quality); with the live trunk, the project's best.
+**Shipped decoders.** `ARFastDecoder` (§2.2): grammar-constrained
+greedy decode — a valid sequence expands to exactly chunk×dim quantized
+DCT coefficients, so there is NO EOA and no malformed generations by
+construction (each step masks to tokens whose BPE symbol-expansion fits
+the remaining budget). `ARBackboneDecoder` (§2.3) reuses the same
+grammar mask for its action phase. Train: `--decoder ar_fast|ar_backbone
+--fast-tokenizer <artifact>`; eval/rollout work unchanged via
+`predict_chunk` (greedy — no Heun knobs); AR inference additionally
+needs quantile stats (rides the checkpoint's per-dataset table).
+Results in §7: frozen-trunk plateau ~8.0 at 10k (≈ flow@40k quality);
+with the live trunk, the project's best lines.
 **Tokenizer:** owned DCT+BPE (`bijou/fast/`, arXiv:2501.09747), fit on
 1040 datasets / 4.9M chunks. **Use `fast_tokenizer_v2`**
 (`mcobzarenco/bijou-checkpoints/fast_tokenizer_v2`: alphabet 159 + 865
@@ -585,30 +812,15 @@ converts to our format (`outputs/convert_pi_fast.py`; ByteLevel
 mid-character merges drop, ~24%) — a cross-embodiment ablation arm and
 an independent cross-check of the implementation.
 
-**Proposed next: co-training** — mix causal FAST CE with the flow loss
-on one backbone, π0.5/knowledge-insulation style: CE shapes the trunk;
-the flow expert stays the fast deployed decoder, its K/V
-stop-gradient-insulated so the objectives touch disjoint params and the
-mixture weight collapses into component LRs. The live-trunk AR result
-(§7) is strong evidence for the premise; what co-training adds over
-train-AR-then-freeze is a single run producing both heads.
-**Architecture options for sharing:**
-
-| option | trunk-shaping | expert interference | new params | AR decode | note |
-|---|---|---|---|---|---|
-| A shared expert | K/V cross-attn (needs --backbone-text-lr) | real risk | ~3M | ~50–100 ms | smallest diff; duplicate the state token so flow/AR masks don't leak |
-| B separate 6-layer decoder | K/V cross-attn | none | ~85–150M | ~50 ms | escape hatch; weakest prior |
-| C full VLM (KV-sharing) | native LM circuit (π0.5-faithful) | none by construction | ~5M | ~150–250 ms | primary; deep half runs query-only against the cached layer-14 K/V — prefix never runs it, checkpoint/rollout unchanged |
-
-C's frozen deep half is the risk (late layers are most language-
-specialized; suffix tokens carry pad-PLE identity they never trained on).
-Resolve by a **thaw dial** measured with cheap CE-convergence probes:
-C0 frozen → C1 +deep RMSNorm scales (Lu-et-al. trick, proposed default) →
-C2 +top-5 layers → C3 LoRA → C4 full (ZeRO-1). The live-trunk AR win
-through exported K/V alone weakens C's motivation: the K/V pathway is
-demonstrably sufficient for trunk-shaping. **Deployed inference stays
-flow** (AR decode is ~30–60 sequential decoder forwards — no suffix KV
-cache yet, the known optimization if it ever deploys).
+**Co-training resolution.** The once-proposed CE+flow mixture on one
+backbone (π0.5/knowledge-insulation style) was overtaken by its own
+"option C": the full-VLM path shipped as the standalone `ar_backbone`
+decoder (§2.3) — trained with the deep half LIVE under
+`--backbone-text-lr` rather than frozen-with-thaw-dial, which dissolved
+the frozen-deep-half risk the option table worried about. What remains
+of the co-training idea is the two-stage form: §8.11 (flow decoder on
+the frozen AR-pretrained trunk). A literal joint-loss run stays
+available if stage-2 disappoints, but no code path for it exists today.
 
 ### 8.4 Cross-attention stream schedule re-test
 
@@ -670,3 +882,51 @@ landed. Expert-side autocast is dead (expert is only ~20%).
   rig.
 - **Symmetric bidirectional self-attention** — catastrophic cross-rig in
   the ablation; being re-tested only as one factor inside the adaRMS run.
+
+### 8.10 Aux text tasks (IMPLEMENTED §2.4; value measurement next)
+
+**Status.** Rendering, loss, decode, metrics and provenance pinning all
+shipped (§2.4), validated on the annotated rig v2 dataset: the 300-step
+aux smoke arm drove loss_aux 22.3 → 0.07 with coherent self-emitted
+subgoals and ZERO free-phase budget fallbacks; the matched aux-less arm
+emitted BOA immediately on 16/16 probe rows (the decision point trains
+cleanly in both regimes). Aux labels exist on rig v2 only today; the
+community-corpus judging pass is the data-side dependency for aux at
+pretrain scale.
+**Next: the paired value experiment** — aux-on vs aux-off fine-tunes
+from the 100k base on rig v2, matched seed/steps/LRs (5k, eval every
+250, decoder 2e-5 / text 1e-5), one variable. Pre-registered: aux-on
+action MAE within probe noise (±0.3) of aux-off at matched steps (aux
+as free interpretability), holding likelihood accuracy approaching but
+not exceeding the ~0.8 label-noise ceiling, both minima vs copy 11.973.
+The interesting outcome in either direction: a measurable action-MAE
+WIN would motivate aux at pretrain scale; a LOSS bounds the
+task-interference cost.
+**Owed alongside:** the offline `bijou.eval` aux report section
+(generations + aux metrics in HTML/JSON; wandb is the only surface
+today).
+
+### 8.11 Stage-2: flow decoder on the frozen AR-pretrained backbone
+
+**Change.** Train a flow expert (§2.1) against the FROZEN backbone of
+an ar_backbone pretrain: slice a full-depth snapshot to the prefix
+layers, then `--init-backbone-from` it with unfreeze flags off. The
+decisive attribution test from §8.1 (does the AR-shaped trunk transfer
+through exported K/V?) and the deployment answer if AR decode latency
+ever binds (flow replans in ~233 ms; AR is ~30–80 sequential backbone
+forwards). **Status.** Parked pending §8.10; needs the snapshot-slicing
++ init plumbing (small, loading-side) before any run.
+
+### 8.12 Multi-turn action context (K interaction pairs)
+
+**Design sketch (chat history, 2026-08-02).** Format each chunk
+generation as a (user, assistant) pair — observation turns and action
+turns interleaved, ≤K pairs retained, Δt embeddings between pairs,
+trained with a mixture of step offsets to match replan cadence. The
+KV-sharing horizon makes it cheap: observation tokens never need layers
+15–34 (no loss on them, nothing consumes prompt hidden states above 14
+— the dead-half argument is per-token), so the interleaved forward is
+layers 0–14 over everything, 15–34 over action-turn tokens only:
+deep-half compute independent of context length, total step cost
+≈2–2.5× single-turn at K=3. **Status.** Parked — design only; revisit
+after aux value is measured.

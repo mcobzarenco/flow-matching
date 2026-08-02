@@ -111,7 +111,10 @@ not a test.
   `train`/`eval`/`rollout`/`judge` → `loading` → `model` →
   `encoders`/`decoders` → `interface` → `gemma4`, importing downward
   only; `data` sits beside `model` (loading imports both; `judge`
-  touches only `data`). No module imports its importer.
+  touches only `data`); `aux_text` is a leaf beside `gemma4` (imported
+  by `interface`, `data` and everything above — its judge-prompt pin is
+  a literal, test-asserted against `bijou.judge.PROMPT_HASH`, exactly
+  so judge → data never reverses). No module imports its importer.
   (`loading` owns the checkpoint schema — both the write side,
   `CheckpointMetadata`, and the read side, `CheckpointInfo`/
   `checkpoint_sections` — because `train` and `eval` both sit above it.)
