@@ -64,7 +64,9 @@ from .claude import (
     DEFAULT_MAX_TOKENS,
     DEFAULT_MODEL,
     DEFAULT_NUM_FRAMES,
+    NUM_FRAMES_HELP,
 )
+from .evidence import adaptive_num_timesteps
 from .schema import PROMPT_HASH
 from .store import JudgmentRecord, discover_datasets, load_sidecar, write_sidecar
 from .worker import JudgeTask, judge_one
@@ -99,6 +101,7 @@ class DatasetPlan:
     repo_id: str
     cameras: int
     to_judge: list[int]
+    timesteps: dict[int, int]  # episode -> sampled timestep count
     skipped: list[tuple[int, int]]  # (episode, length) below --min-frames
 
 
@@ -106,17 +109,21 @@ def plan_dataset(
     dataset_dir: Path,
     min_frames: int,
     episodes_per_dataset: int | None,
+    num_frames: int | None,
 ) -> DatasetPlan:
     """Choose episodes to judge from metadata only (no video access).
 
     Episodes below ``min_frames`` are skipped with a reason. When
     ``episodes_per_dataset`` is set, eligible episodes are subsampled evenly
     across the episode index range (deterministic, covers session drift
-    within a recording day better than the first N).
+    within a recording day better than the first N). ``num_frames=None``
+    sizes each episode's evidence adaptively from its duration — resolved
+    here, at plan time, so the cost estimate prices the real image count.
     """
     info = json.loads((dataset_dir / "meta" / "info.json").read_text())
     features: dict[str, Any] = info.get("features") or {}
     cameras = sum(1 for feature in features.values() if feature.get("dtype") == "video")
+    fps = float(info["fps"])
     parquets = sorted((dataset_dir / "meta" / "episodes").rglob("*.parquet"))
     if not parquets:
         raise ValueError(f"{repo_id_of(dataset_dir)}: no meta/episodes/**/*.parquet")
@@ -125,6 +132,7 @@ def plan_dataset(
     ).sort_values("episode_index")
 
     eligible: list[int] = []
+    lengths: dict[int, int] = {}
     skipped: list[tuple[int, int]] = []
     for episode, length in zip(
         episodes["episode_index"],
@@ -135,6 +143,7 @@ def plan_dataset(
             skipped.append((int(episode), int(length)))
         else:
             eligible.append(int(episode))
+            lengths[int(episode)] = int(length)
 
     if episodes_per_dataset is not None and len(eligible) > episodes_per_dataset:
         picks = np.unique(
@@ -147,6 +156,14 @@ def plan_dataset(
         repo_id=repo_id_of(dataset_dir),
         cameras=cameras,
         to_judge=eligible,
+        timesteps={
+            episode: (
+                num_frames
+                if num_frames is not None
+                else adaptive_num_timesteps(lengths[episode], fps)
+            )
+            for episode in eligible
+        },
         skipped=skipped,
     )
 
@@ -303,8 +320,7 @@ def parse_args() -> argparse.Namespace:
         "--num-frames",
         type=int,
         default=DEFAULT_NUM_FRAMES,
-        help="Sampled timesteps per episode, each shown for every camera "
-        "(default: %(default)s).",
+        help=NUM_FRAMES_HELP,
     )
     parser.add_argument(
         "--max-image-dim",
@@ -444,7 +460,12 @@ def main() -> None:
     for dataset_dir in dataset_dirs:
         try:
             plans.append(
-                plan_dataset(dataset_dir, args.min_frames, args.episodes_per_dataset),
+                plan_dataset(
+                    dataset_dir,
+                    args.min_frames,
+                    args.episodes_per_dataset,
+                    args.num_frames,
+                ),
             )
         except Exception as error:  # noqa: BLE001 - record and continue planning
             plan_failures.append((repo_id_of(dataset_dir), str(error)))
@@ -473,7 +494,7 @@ def main() -> None:
                     root=str(plan.root),
                     repo_id=plan.repo_id,
                     episode=episode,
-                    num_timesteps=args.num_frames,
+                    num_timesteps=plan.timesteps[episode],
                     max_image_dim=args.max_image_dim,
                     model=args.model,
                     max_tokens=args.max_tokens,
@@ -483,7 +504,7 @@ def main() -> None:
     if args.max_episodes is not None and len(tasks) > args.max_episodes:
         tasks = tasks[: args.max_episodes]
     total_images = sum(
-        args.num_frames * cameras_by_repo[task.repo_id] for task in tasks
+        task.num_timesteps * cameras_by_repo[task.repo_id] for task in tasks
     )
 
     planned = sum(len(p.to_judge) for p in plans)

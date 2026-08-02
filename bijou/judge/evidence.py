@@ -18,6 +18,29 @@ import torch
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
 from PIL import Image
 
+# Length-adaptive evidence sizing: one sampled timestep per
+# SECONDS_PER_TIMESTEP of episode, clipped to [MIN, MAX]. Calibrated on
+# the 52,507 curated_v0 episodes (2026-08-02): T=1.5s -> mean 10.12
+# timesteps/episode (median 9, 13% at floor, 8% at cap) — cost-neutral
+# vs the old fixed 10 while resolving long episodes ~2x finer and not
+# wasting near-duplicate frames on short ones. 1.5s/timestep is also
+# roughly one frame per 50-step action chunk (1.67s @ 30fps).
+SECONDS_PER_TIMESTEP = 1.5
+MIN_TIMESTEPS = 5
+MAX_TIMESTEPS = 20
+
+
+def adaptive_num_timesteps(num_frames: int, fps: float) -> int:
+    """Episode length -> sampled timestep count (pure; both judges of a
+    cross-model comparison compute the same count by construction)."""
+    return int(
+        np.clip(
+            round(num_frames / fps / SECONDS_PER_TIMESTEP),
+            MIN_TIMESTEPS,
+            MAX_TIMESTEPS,
+        ),
+    )
+
 
 def short_camera(key: str) -> str:
     """Dataset camera names without the feature-key boilerplate.
@@ -117,12 +140,14 @@ def load_episode_summary(
     repo_id: str,
     episode: int,
     *,
-    num_timesteps: int,
+    num_timesteps: int | None,
     max_image_dim: int,
     cameras: list[str] | None = None,
 ) -> EpisodeSummary:
     """Decode evidence for one episode (sampled frames only, full-episode
-    trajectory statistics from parquet)."""
+    trajectory statistics from parquet). ``num_timesteps=None`` sizes the
+    sample adaptively from the episode's duration
+    (``adaptive_num_timesteps``)."""
     dataset = LeRobotDataset(repo_id, root=str(root))
     if not 0 <= episode < dataset.num_episodes:
         raise SystemExit(
@@ -169,6 +194,9 @@ def load_episode_summary(
     # Deterministic anonymous labels: sorted by dataset name, then A, B, …
     camera_keys = sorted(camera_keys, key=short_camera)
     camera_labels = [chr(ord("A") + i) for i in range(len(camera_keys))]
+
+    if num_timesteps is None:
+        num_timesteps = adaptive_num_timesteps(num_frames, fps)
 
     # Evenly spaced timesteps, always including the first and last frame.
     picks = np.unique(np.linspace(0, num_frames - 1, num_timesteps).round().astype(int))

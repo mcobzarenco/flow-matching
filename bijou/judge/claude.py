@@ -29,14 +29,27 @@ from anthropic import Anthropic
 from anthropic.types import ImageBlockParam, TextBlockParam
 from PIL import Image
 
-from .evidence import EpisodeSummary, load_episode_summary
+from .evidence import (
+    MAX_TIMESTEPS,
+    MIN_TIMESTEPS,
+    SECONDS_PER_TIMESTEP,
+    EpisodeSummary,
+    load_episode_summary,
+)
 from .schema import SYSTEM_PROMPT, EpisodeJudgment
 
 # CLI defaults. Named so bijou.judge.sweep (which drives this judge over
 # whole collections) shares the exact same knobs instead of re-hardcoding
 # them; help strings render the live values via argparse's %(default)s.
 DEFAULT_MODEL = "claude-opus-4-8"  # $5/$25 per MTok (2026-07)
-DEFAULT_NUM_FRAMES = 10  # sampled timesteps per episode
+# None = length-adaptive timestep count (evidence.adaptive_num_timesteps).
+DEFAULT_NUM_FRAMES: int | None = None
+NUM_FRAMES_HELP = (
+    "Sampled timesteps per episode, each shown for every camera "
+    f"(default: adaptive — one per {SECONDS_PER_TIMESTEP:g}s of episode, "
+    f"clipped to [{MIN_TIMESTEPS}, {MAX_TIMESTEPS}]; calibrated to average "
+    "~10 over curated_v0)."
+)
 DEFAULT_MAX_IMAGE_DIM = 512  # px, longer side after downscaling
 DEFAULT_JPEG_QUALITY = 90
 # Response cap, not a charge (billing is per generated token). The verdict
@@ -234,8 +247,7 @@ def main() -> None:
         "--num-frames",
         type=int,
         default=DEFAULT_NUM_FRAMES,
-        help="Number of timesteps to sample, each shown for every camera "
-        "(default: %(default)s).",
+        help=NUM_FRAMES_HELP,
     )
     parser.add_argument(
         "--cameras",
