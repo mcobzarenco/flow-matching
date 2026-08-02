@@ -385,6 +385,18 @@ class BijouTrainStep(torch.nn.Module):
             enabled=device_type == "cuda" and self.backbone_trained,
         ):
             memory = self.model.encode(inputs, with_grad=self.backbone_trained)
+            if isinstance(self.model.decoder, ARBackboneDecoder):
+                # ar_backbone's "decoder" IS the backbone: its suffix
+                # forward belongs in the same regime as the prefix —
+                # live runs (fp32 masters) run it under bf16 autocast,
+                # matching frozen-run numerics and HALVING every
+                # loss-side tensor incl. the [B, S, 262k] logits (fp32
+                # suffix forwards OOM'd the first full-recipe run at
+                # B11); the CE itself upcasts to fp32 inside the loss.
+                # Frozen runs construct this context disabled — a no-op,
+                # byte-identical to the historical path (oracle-exact).
+                return self.model.loss_components(memory, batch)
+        # Cross-attention decoders are fp32-by-design OUTSIDE autocast.
         return self.model.loss_components(memory, batch)
 
 

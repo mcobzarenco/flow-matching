@@ -392,15 +392,26 @@ class ARBackboneDecoder(nn.Module):
         """Full-vocabulary logits with the FAST block's columns computed
         from the trainable patch, softcapped AFTER the overwrite so the
         block is capped identically to text (Gemma4Model.forward
-        semantics). hidden [B, S, hidden] → [B, S, vocab_size]."""
+        semantics). hidden [B, S, hidden] → [B, S, vocab_size].
+
+        Memory discipline (a [B, S, 262k] tensor is ~1.2 GiB fp32 at
+        B10 — an out-of-place chain here OOM'd the first full-recipe
+        run): the block columns are written IN PLACE (identical values
+        and gradient routing to the old cat splice — the overwritten
+        head columns received no gradient there either); the softcap's
+        div runs in place (scalar backward saves nothing) and tanh_ in
+        place, but the trailing scale must be OUT-of-place — tanh_
+        saves its output for backward, and a further in-place op on it
+        trips the version counter (measured, not theorized). Two
+        full-vocab tensors live instead of the old ~four."""
         base = self.config.block_base
         end = base + self.config.vocab_total
         logits = backbone.lm_head(hidden)
         block = hidden @ self.fast_embed.weight.to(hidden.dtype).T
-        logits = torch.cat([logits[..., :base], block, logits[..., end:]], dim=-1)
+        logits[..., base:end] = block
         softcap = backbone.config.text.final_logit_softcapping
         if softcap is not None:
-            logits = torch.tanh(logits / softcap) * softcap
+            logits = logits.div_(softcap).tanh_() * softcap
         return logits
 
     def _continue_suffix(
