@@ -7,17 +7,31 @@ annotations.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 import pyarrow as pa
 import pytest
+from lerobot.annotations.steerable_pipeline.reader import EpisodeRecord
 
 from bijou.judge.materialize import (
     ANNOTATION_COLUMNS,
+    EVENT_STYLE,
+    _event_rows,
     _per_camera_array,
     annotation_feature_info,
     episode_annotation_arrays,
 )
-from bijou.judge.schema import CameraVisibility, FrameAnnotation
+from bijou.judge.schema import (
+    CameraVisibility,
+    EpisodeJudgment,
+    FrameAnnotation,
+    InstructionQuality,
+    Scores,
+    Subgoal,
+    TaskCompletion,
+    Verdict,
+)
 
 
 def annotation(
@@ -26,6 +40,7 @@ def annotation(
     *,
     holding: bool,
     front_object: bool = True,
+    events: tuple[str, ...] = (),
 ) -> FrameAnnotation:
     return FrameAnnotation(
         frame=frame,
@@ -35,8 +50,70 @@ def annotation(
             "front": CameraVisibility(task_object=front_object, gripper=False),
             "wrist": CameraVisibility(task_object=True, gripper=True),
         },
-        events=(),
+        events=events,
     )
+
+
+def judgment_with(annotations: tuple[FrameAnnotation, ...]) -> EpisodeJudgment:
+    return EpisodeJudgment(
+        overall_score=7,
+        verdict=Verdict.KEEP,
+        task_completion_visible=TaskCompletion.YES,
+        scores=Scores(visual_quality=7, smoothness=7, efficiency=7, camera_framing=7),
+        instruction_quality=InstructionQuality.GOOD,
+        observed_task="a task",
+        suggested_instructions=("do it",),
+        subgoals=(Subgoal(until_frame=10, subgoal="do it"),),
+        frame_annotations=annotations,
+        camera_kinds={},  # not consulted by the event projection
+        issues=(),
+        summary="",
+    )
+
+
+def episode_record(num_frames: int) -> EpisodeRecord:
+    return EpisodeRecord(
+        episode_index=0,
+        episode_task="a task",
+        frame_timestamps=tuple(i / 30 for i in range(num_frames)),
+        frame_indices=tuple(range(num_frames)),
+        data_path=Path("unused.parquet"),
+        row_offset=0,
+        row_count=num_frames,
+    )
+
+
+def test_multi_event_frame_yields_one_row_per_event_never_merged() -> None:
+    """Several events legitimately anchor to one sampled frame (0.15% of
+    corpus frames); each must become its own language_events row at the
+    frame's exact timestamp — the class that crashed single-row consumers
+    and must never be silently joined or dropped."""
+    judgment = judgment_with(
+        (
+            annotation(1, 0.0, holding=False),
+            annotation(3, 0.5, holding=True, events=("box toppled", "reset begins")),
+            annotation(10, 1.0, holding=False, events=("task completed",)),
+        ),
+    )
+    rows = _event_rows(judgment, episode_record(10))
+    assert [row["content"] for row in rows] == [
+        "box toppled",
+        "reset begins",
+        "task completed",
+    ]
+    # Both same-frame rows anchor to the SAME timestamp (frame 3, 0-based 2).
+    assert rows[0]["timestamp"] == rows[1]["timestamp"] == 2 / 30
+    assert rows[2]["timestamp"] == 9 / 30
+    assert all(row["style"] == EVENT_STYLE for row in rows)
+    assert all(row["role"] == "assistant" for row in rows)
+
+
+def test_event_beyond_episode_length_is_loud() -> None:
+    judgment = judgment_with(
+        (annotation(11, 0.5, holding=False, events=("ghost event",)),),
+    )
+    with pytest.raises(ValueError, match="beyond"):
+        _event_rows(judgment, episode_record(10))
 
 
 def test_placement_and_nan_mask() -> None:
