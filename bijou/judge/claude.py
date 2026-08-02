@@ -53,10 +53,13 @@ NUM_FRAMES_HELP = (
 DEFAULT_MAX_IMAGE_DIM = 512  # px, longer side after downscaling
 DEFAULT_JPEG_QUALITY = 90
 # Response cap, not a charge (billing is per generated token). The verdict
-# scales with timesteps x cameras via frame_annotations: 10 frames / 2 cams
-# ran ~1.45k tokens, and 1500 truncated a 20-frame run mid-JSON — loudly,
-# as a parse failure. Sized for ~30 frames of dense annotations with slack.
-DEFAULT_MAX_TOKENS = 4096
+# scales with timesteps x cameras via frame_annotations, and with the
+# model's verbosity: opus-4-8 averaged ~1.45k out per verdict, opus-5
+# ~2.33k — and 4096 truncated 3.4% of the opus-5 pilot mid-JSON at
+# adaptive evidence sizes (parse failures at ~char 4000, measured
+# 2026-08-02 over 1,962 episodes). 8192 gives dense 20-timestep verdicts
+# comfortable headroom.
+DEFAULT_MAX_TOKENS = 8192
 
 
 def image_to_jpeg_b64(image: Image.Image, quality: int) -> str:

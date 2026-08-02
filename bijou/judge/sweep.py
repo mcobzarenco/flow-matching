@@ -90,9 +90,10 @@ MODEL_PRICES = {
 # Older tokenizers run ~10% lighter on the text part; rough by design.
 EST_TOKENS_PER_IMAGE = 305
 EST_TEXT_TOKENS = 1464
-# Measured on the rig v2 test sweep (12 eps, 10 timesteps / 2 cams, dense
-# frame_annotations): 17,257/12 ≈ 1.4k out per episode.
-EST_OUTPUT_TOKENS = 1450
+# Measured on the opus-5 pilot (1,962 episodes, adaptive timesteps):
+# 4.56M out / 1,962 ≈ 2.33k per episode — opus-5 writes ~60% longer
+# verdicts than opus-4-8 (1.45k, rig v2 sweep) at identical prompts.
+EST_OUTPUT_TOKENS = 2350
 
 
 @dataclass(frozen=True, slots=True)
@@ -363,6 +364,16 @@ def parse_args() -> argparse.Namespace:
         "anything new is submitted.",
     )
     parser.add_argument(
+        "--wave-episodes",
+        type=int,
+        default=None,
+        help="With --batch: build, submit and poll in waves of at most N "
+        "episodes, folding results and updating sidecars between waves. "
+        "Bounds build memory (~1.3 MB/episode measured on the pilot) and "
+        "surfaces systematic failures in the first wave instead of after "
+        "the full build (default: everything in one wave).",
+    )
+    parser.add_argument(
         "--retry-failed",
         action="store_true",
         help="Re-attempt episodes whose journal record has status=failed.",
@@ -379,7 +390,12 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Plan and estimate only.",
     )
-    return parser.parse_args()
+    args = parser.parse_args()
+    if args.wave_episodes is not None and not args.batch:
+        parser.error("--wave-episodes requires --batch")
+    if args.wave_episodes is not None and args.wave_episodes < 1:
+        parser.error(f"--wave-episodes must be positive, got {args.wave_episodes}")
+    return args
 
 
 def run_batch_mode(
@@ -418,20 +434,40 @@ def run_batch_mode(
         )
         not in pending_keys
     ]
+    waves = (
+        [tasks]
+        if args.wave_episodes is None
+        else [
+            tasks[start : start + args.wave_episodes]
+            for start in range(0, len(tasks), args.wave_episodes)
+        ]
+    )
     with args.output.open("a") as journal:
         if pending:
             print(f"resuming {len(pending)} submitted episode(s) from {manifest_path}")
             poll_and_fold(client, pending, journal=journal, stats=stats)
-        if tasks:
+            merge_journal(args.output, dirs_by_repo)
+        for number, wave in enumerate(waves, start=1):
+            if not wave:
+                continue
+            if len(waves) > 1:
+                print(
+                    f"=== wave {number}/{len(waves)}: {len(wave)} episode(s) "
+                    f"(totals so far ok={stats.ok} failed={stats.failed})",
+                    flush=True,
+                )
             entries = submit_tasks(
                 client,
-                tasks,
+                wave,
                 workers=args.workers,
                 manifest_path=manifest_path,
                 journal=journal,
                 stats=stats,
             )
             poll_and_fold(client, entries, journal=journal, stats=stats)
+            # Fold into sidecars between waves: progress survives anything,
+            # and mid-run aggregation over the sidecars stays meaningful.
+            merge_journal(args.output, dirs_by_repo)
     if not pending and not tasks:
         print("nothing to judge")
     merge_journal(args.output, dirs_by_repo)
