@@ -84,7 +84,7 @@ ACT_MODE = 0
 AUX_MODE = 1
 NUM_MODES = 2
 # Free-phase token budget at decode: worst-case configured template
-# (headers ~18 + subgoal 16 + holding 4 + progress 5 + event 24 +
+# (headers ~18 + subgoal 20 + holding 4 + progress 5 + event 24 +
 # visible ~14) with slack; the fallback (force BOA, count it) fires
 # past this.
 MAX_FREE_TOKENS = 96
@@ -258,7 +258,10 @@ class AuxSpec:
     annotated_repos: frozenset[str]
     block_base: int
     dropout: float
-    max_subgoal_tokens: int = 16
+    # 16 truncated frequently on the curated corpus's judge subgoals
+    # (observed in the first full-recipe run's logs); 20 still fits the
+    # MAX_FREE_TOKENS worst case.
+    max_subgoal_tokens: int = 20
     # Wider than subgoal: multi-event frames join with "; " (still
     # inside the MAX_FREE_TOKENS worst case).
     max_event_tokens: int = 24
