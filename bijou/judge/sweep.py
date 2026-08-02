@@ -49,8 +49,16 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+from anthropic import Anthropic
 
 from ..data import repo_id_of
+from .batch import (
+    FoldStats,
+    load_manifest,
+    manifest_path_for,
+    poll_and_fold,
+    submit_tasks,
+)
 from .claude import (
     DEFAULT_MAX_IMAGE_DIM,
     DEFAULT_MAX_TOKENS,
@@ -229,14 +237,17 @@ def load_journal_done(
     return ok, failed
 
 
-def estimate_cost(episodes: int, images: int, model: str) -> str:
+def estimate_cost(episodes: int, images: int, model: str, *, batch: bool) -> str:
     input_tokens = images * EST_TOKENS_PER_IMAGE + episodes * EST_TEXT_TOKENS
     output_tokens = episodes * EST_OUTPUT_TOKENS
     tokens = f"~{input_tokens:,} in / ~{output_tokens:,} out tokens"
+    factor, label = (0.5, ", batch 50% off") if batch else (1.0, "")
     for prefix, (in_price, out_price) in MODEL_PRICES.items():
         if model.startswith(prefix):
-            dollars = (input_tokens * in_price + output_tokens * out_price) / 1e6
-            return f"{tokens}, ~${dollars:,.2f} ({model}, rough)"
+            dollars = (
+                (input_tokens * in_price + output_tokens * out_price) * factor / 1e6
+            )
+            return f"{tokens}, ~${dollars:,.2f} ({model}{label}, rough)"
     return f"{tokens} (no price table for {model})"
 
 
@@ -319,7 +330,16 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=DEFAULT_WORKERS,
         help="Concurrent judge processes; each decodes frames and holds one API "
-        "call in flight (default: %(default)s).",
+        "call in flight (with --batch: evidence-build pool only) "
+        "(default: %(default)s).",
+    )
+    parser.add_argument(
+        "--batch",
+        action="store_true",
+        help="Use the Message Batches API: flat 50%% off, results within 24h "
+        "(typically much sooner). Resumable: submitted-but-unfolded episodes "
+        "are tracked in a manifest next to --output and folded before "
+        "anything new is submitted.",
     )
     parser.add_argument(
         "--retry-failed",
@@ -339,6 +359,69 @@ def parse_args() -> argparse.Namespace:
         help="Plan and estimate only.",
     )
     return parser.parse_args()
+
+
+def run_batch_mode(
+    args: argparse.Namespace,
+    tasks: list[JudgeTask],
+    journal_ok: set[tuple[str, int, str, str]],
+    journal_failed: set[tuple[str, int]],
+    dirs_by_repo: dict[str, Path],
+) -> None:
+    """Batch transport: fold pending manifest batches first (resume), then
+    submit the remaining tasks and poll. Journal, sidecars and idempotency
+    are shared with sync mode."""
+    client = Anthropic()
+    manifest_path = manifest_path_for(args.output)
+    stats = FoldStats()
+
+    # Manifest entries not yet in the journal are in-flight (or lost)
+    # batches from an earlier run: fold them before submitting anything.
+    pending = [
+        entry
+        for entry in load_manifest(manifest_path)
+        if entry.journal_key() not in journal_ok
+        and (entry.repo_id, entry.episode) not in journal_failed
+    ]
+    pending_keys = {entry.journal_key() for entry in pending}
+    tasks = [
+        task
+        for task in tasks
+        if (task.repo_id, task.episode, task.model, PROMPT_HASH) not in pending_keys
+    ]
+    with args.output.open("a") as journal:
+        if pending:
+            print(f"resuming {len(pending)} submitted episode(s) from {manifest_path}")
+            poll_and_fold(client, pending, journal=journal, stats=stats)
+        if tasks:
+            entries = submit_tasks(
+                client,
+                tasks,
+                workers=args.workers,
+                manifest_path=manifest_path,
+                journal=journal,
+                stats=stats,
+            )
+            poll_and_fold(client, entries, journal=journal, stats=stats)
+    if not pending and not tasks:
+        print("nothing to judge")
+    merge_journal(args.output, dirs_by_repo)
+    for prefix, (in_price, out_price) in MODEL_PRICES.items():
+        if args.model.startswith(prefix):
+            spent = (
+                (stats.input_tokens * in_price + stats.output_tokens * out_price)
+                * 0.5
+                / 1e6
+            )
+            print(
+                f"spent: ~${spent:,.2f} ({stats.input_tokens:,} in / "
+                f"{stats.output_tokens:,} out tokens, batch 50% off, rough)",
+            )
+            break
+    print(
+        f"done: {{'ok': {stats.ok}, 'failed': {stats.failed}}} -> "
+        f"{args.output} + sidecars",
+    )
 
 
 def main() -> None:
@@ -411,7 +494,9 @@ def main() -> None:
         f"{already} already judged for ({args.model}, {PROMPT_HASH}) | "
         f"{len(tasks)} to judge now | {len(plan_failures)} datasets failed to plan",
     )
-    print(f"cost: {estimate_cost(len(tasks), total_images, args.model)}")
+    print(
+        f"cost: {estimate_cost(len(tasks), total_images, args.model, batch=args.batch)}",
+    )
     if args.dry_run:
         for repo_id, error in plan_failures:
             print(f"  plan failure: {repo_id}: {error}")
@@ -421,6 +506,9 @@ def main() -> None:
         raise SystemExit("ANTHROPIC_API_KEY is not set (required unless --dry-run)")
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
+    if args.batch:
+        run_batch_mode(args, tasks, journal_ok, journal_failed, dirs_by_repo)
+        return
     if not tasks:
         print("nothing to judge")
         # Still fold: the journal may hold results from an interrupted run.

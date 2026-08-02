@@ -20,6 +20,27 @@ from .claude import build_user_content, request_verdict
 from .evidence import load_episode_summary
 from .schema import PROMPT_HASH, EpisodeJudgment
 
+
+def validated_judgment(
+    raw: str,
+    *,
+    camera_labels: list[str],
+    camera_names: list[str],
+    sampled_frames: list[int],
+    num_frames: int,
+) -> EpisodeJudgment:
+    """Parse + run every verdict check + translate anonymous camera labels
+    back to dataset names. The single validation path for sync and batch
+    results — a verdict is not a verdict until it passed this."""
+    judgment = EpisodeJudgment.from_response_text(raw)
+    judgment.check_cameras(camera_labels)
+    judgment.check_subgoals(num_frames)
+    judgment.check_frame_annotations(sampled_frames, camera_labels)
+    return judgment.rename_cameras(
+        dict(zip(camera_labels, camera_names, strict=True)),
+    )
+
+
 _client_cache: Anthropic | None = None
 
 
@@ -62,12 +83,12 @@ def judge_one(task: JudgeTask) -> dict[str, Any]:
         )
         content = build_user_content(summary)
         raw, usage = request_verdict(_client(), task.model, task.max_tokens, content)
-        judgment = EpisodeJudgment.from_response_text(raw)
-        judgment.check_cameras(summary.camera_labels)
-        judgment.check_subgoals(summary.num_frames)
-        judgment.check_frame_annotations(summary.sampled_frames, summary.camera_labels)
-        judgment = judgment.rename_cameras(
-            dict(zip(summary.camera_labels, summary.camera_names, strict=True)),
+        judgment = validated_judgment(
+            raw,
+            camera_labels=summary.camera_labels,
+            camera_names=summary.camera_names,
+            sampled_frames=summary.sampled_frames,
+            num_frames=summary.num_frames,
         )
         record.update(
             status="ok",
