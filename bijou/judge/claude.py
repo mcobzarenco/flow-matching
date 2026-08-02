@@ -41,7 +41,7 @@ from .schema import SYSTEM_PROMPT, EpisodeJudgment
 # CLI defaults. Named so bijou.judge.sweep (which drives this judge over
 # whole collections) shares the exact same knobs instead of re-hardcoding
 # them; help strings render the live values via argparse's %(default)s.
-DEFAULT_MODEL = "claude-opus-4-8"  # $5/$25 per MTok (2026-07)
+DEFAULT_MODEL = "claude-opus-5"  # $5/$25 per MTok, same as opus-4-8 (2026-08)
 # None = length-adaptive timestep count (evidence.adaptive_num_timesteps).
 DEFAULT_NUM_FRAMES: int | None = None
 NUM_FRAMES_HELP = (
