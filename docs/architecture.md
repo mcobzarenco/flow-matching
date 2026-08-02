@@ -45,7 +45,8 @@ pretrained artifact (`--backbone`, `BackboneConfig.id`,
 "trunk" survives only as informal prose.
 
 ```
-[instruction][cam_1]..[cam_k][instruction]     chat-templated user turn
+[task][kind-tagged cams][task][conditioning]   chat-templated user turn
+  e.g. {task}[top camera]<imgs>{task}[subgoal: …][outcome: success][smoothness: high]
       │  E2B prefix: layers 0..14 (bf16), LEFT-padded batches
       ▼
   prefix K/V — ObservationMemory, encoded once per observation
@@ -57,7 +58,8 @@ pretrained artifact (`--backbone`, `BackboneConfig.id`,
       │    (ARFastDecoder: same blocks, FAST tokens, constrained greedy)
       │
       └─ decoder-only (ar_backbone): the FULL E2B continues the suffix
-           [state][<start_of_turn>model\n][MODE][aux text?][BOA][t_1..t_k]
+           [state][<|turn>model\n][MODE][aux text?][BOA][t_1..t_k]
+           (aux: subgoal/holding/progress/event/visible — judge labels)
            through all 35 layers against the retained prefix cache;
            ~11M new params; fed [ACT]|[AUX] mode commands speak-vs-act;
            free-until-BOA under [AUX], then FAST-grammar decode
@@ -190,7 +192,8 @@ are zero-copy views into it) and extends it in place while decoding.
 **Vision geometry** (encoder-free E-series tower, 768 hidden, 16-px
 patches, 3×3 spatial pool): a 640×480 frame → resized 624×480 → 39×30
 patches → **130 soft tokens** (13×10, one per 48×48-px cell), under the
-140-token/camera budget. Prompt ≈ 292 tokens for 2 cameras; padded
+140-token/camera budget. Prompt ≈ 292 tokens for 2 cameras tag-less
+(+~3.5/camera for kind tags, +~5–25 for the conditioning block); padded
 batches reach ~452. The acuity probe (§8) found position is *sharpest at
 the tower output* (8.4 px linear readout) and degrades through the LM
 layers — the pool is not the bottleneck; the text stack's handling of
@@ -567,9 +570,14 @@ expected, not a regression.
 
 **Robustness.** Workers spawn (never fork — torchcodec is fork-unsafe);
 decoder cache capped (default OOMs hosts); `tolerance_s = 0.5/fps` (v3
-concatenated files break 1e-4 tolerance); corrupt community videos are
-substituted with a far index from the same dataset, loudly, with bounded
-retries (two such runs were killed before this guard).
+concatenated files break 1e-4 tolerance — and 80× above the
+timestamp-desync drift class the curation census found, which only
+trips lerobot's default); unfetchable items (corrupt videos, desynced
+frames) are substituted with a far index from the same dataset, loudly,
+with bounded retries (two runs died before this guard), and a
+**circuit breaker** aborts when a (worker, dataset)'s failure rate
+exceeds 5% over ≥100 fetches — substitution absorbs rare pathologies,
+it must not paper over systematic breakage or a bad refactor.
 
 ## 5. Training system
 
@@ -755,12 +763,19 @@ the kind vocabulary IS its kind, anything else tags `unknown` with a
 LOUD warning — name cameras by viewpoint (top/wrist/front/side) to
 give the model the signal. Kinds ride each item
 (`item["camera_kinds"]`), so no policy-level plumbing exists.
+Conditioning at rollout: `--outcome success --smoothness high`
+defaults (ask for the behavior you want; rendered only by
+condition-trained checkpoints) and optional `--subgoal "…"` for
+planner/operator hints — omitted, the dropout-trained unconditioned
+context applies.
 
 **Artifacts.** Checkpoints + tokenizers:
 [`mcobzarenco/bijou-checkpoints`](https://huggingface.co/mcobzarenco/bijou-checkpoints)
 (seed checkpoints keep `optimizer.pt`, the rest are weights-only).
-Datasets: three community collections + the two rig repos
-(`mcobzarenco/so101_pick_place_{v2,clean}`, private) — all with
+Datasets: `mcobzarenco/community_curated_v0` (judge-filtered v1∪v2∪v3:
+981 datasets, ~52.5k episodes fully materialized @ one stamp — the
+pretrain corpus), the three raw community collections, and the two rig
+repos (`mcobzarenco/so101_pick_place_{v2,clean}`, private) — all with
 backfilled exact quantiles; boxes mirror them under
 `~/datasets/mcobzarenco/`. Runs log to wandb `bijou-dev`
 (entity `aristotle1337`). Laptop dev data:
@@ -1057,29 +1072,37 @@ landed. Expert-side autocast is dead (expert is only ~20%).
 
 ### 8.10 Aux text tasks (IMPLEMENTED §2.4; value measurement next)
 
-**Status.** Rendering, loss, decode, metrics and provenance pinning all
-shipped (§2.4). Format-2 smokes on the annotated rig v2 dataset
-validated the mechanism (aux arm: loss_aux 22.3 → 0.07, coherent
-self-emitted subgoals, zero budget fallbacks; aux-less arm: BOA
-immediately on 16/16 probe rows); **suffix format 3** (the fed mode
-token + `--aux-dropout`, built for sparsely-annotated corpora — §2.3)
-supersedes those arms and needs its own smoke before the value
-experiment. Aux labels exist on rig v2 only today; the
-community-corpus judging pass is the data-side dependency for aux at
-pretrain scale.
-**Next: the paired value experiment, ON FORMAT 3** — aux-on vs aux-off
-fine-tunes
-from the 100k base on rig v2, matched seed/steps/LRs (5k, eval every
-250, decoder 2e-5 / text 1e-5), one variable. Pre-registered: aux-on
-action MAE within probe noise (±0.3) of aux-off at matched steps (aux
-as free interpretability), holding likelihood accuracy approaching but
-not exceeding the ~0.8 label-noise ceiling, both minima vs copy 11.973.
-The interesting outcome in either direction: a measurable action-MAE
-WIN would motivate aux at pretrain scale; a LOSS bounds the
-task-interference cost.
+**Status.** The full annotation stack shipped 2026-08-02 — five aux
+fields (§2.4: subgoal/holding/progress/event/visible), prompt
+conditioning (§4: camera kind tags, subgoal hint with anti-copy
+coupling, hindsight outcome/smoothness), instruction augmentation
+(rewrites + success-gated observed_task), suffix format 4 (real
+Gemma-4 opener) — on the fully-materialized curated corpus (981
+datasets, ~52.5k labeled episodes at one stamp). Format-2 smokes on
+rig v2 validated the aux mechanism (loss_aux 22.3 → 0.07, coherent
+self-emitted subgoals, zero budget fallbacks; aux-less arm: BOA on
+16/16); the first full-recipe 100k pretrain is the corpus-scale
+read-out — its in-flight numbers live in wandb, its ledger row lands
+in §7 when eval'd.
+**Value attribution stays the paired experiment** (aux-on vs aux-off
+fine-tunes from a common base on rig v2, matched seed/steps/LRs, one
+variable at a time — the full recipe is deliberately multivariate, so
+single-factor claims need these arms). Pre-registered: aux-on action
+MAE within probe noise (±0.3) of aux-off at matched steps (aux as free
+interpretability), holding likelihood accuracy approaching but not
+exceeding the ~0.8 label-noise ceiling, `condition_sensitivity`
+climbing off zero (§4's Q3 — ≈0 means conditioning collapsed).
+**Queued follow-ups:** un-gate `observed_task` rewrites for failure
+episodes once Q3 validates; `[quality: …]` conditioning if smoothness
+shows signal; next-subgoal aux (A2 — planning signal for chunk endings
+crossing segment boundaries); camera-kind prediction under kind-dropout
+(predict the true kind of `unknown`-tagged views — the C2 anti-copy
+pattern applied to viewpoints); the self-conditioning rollout loop
+(feed the aux-generated subgoal into the next replan's `--subgoal`).
 **Owed alongside:** the offline `bijou.eval` aux report section
 (generations + aux metrics in HTML/JSON; wandb is the only surface
-today).
+today); a wandb series for the free-decode fallback counter (log-grep
+only today); "vision frozen" wording in the model-summary line.
 
 ### 8.11 Stage-2: flow decoder on the frozen AR-pretrained backbone
 
