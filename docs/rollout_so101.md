@@ -39,9 +39,13 @@ We deliberately did NOT (yet) implement a lerobot policy plugin
    first try; walk toward 000250 if behavior looks memorized/brittle, toward
    002000 if it looks undertrained.
 2. Rig normalization stats, one of:
-   - `--stats-repo-id marius/so101_pick_place_clean` — looked up in the
+   - `--stats-repo-id mcobzarenco/so101_pick_place_clean` — looked up in the
      checkpoint's `per_dataset_normalization` table (present in any
-     checkpoint whose training data included the rig).
+     checkpoint whose training data included the rig). NOTE: the rig
+     datasets were renamed `marius/*` → `mcobzarenco/*` (2026-08-02,
+     canonical hub ids); checkpoints trained BEFORE that keep the old
+     key in their table — pass `--stats-repo-id marius/so101_pick_place_clean`
+     for those, matching what the checkpoint recorded, not today's name.
    - `--stats-dataset <path>` — read from a local LeRobot dataset dir
      (`meta/stats.json`).
 3. Follower arm calibrated under a lerobot robot id (`--robot-id`).
@@ -54,7 +58,7 @@ exits without touching the robot:
 ```sh
 uv run python -m bijou.rollout \
     --checkpoint outputs/train/bijou_ft_marius_2k/step_001000 \
-    --stats-repo-id marius/so101_pick_place_clean \
+    --stats-repo-id mcobzarenco/so101_pick_place_clean \
     --port /dev/ttyACM0 --robot-id follower0 \
     --camera front=/dev/video6 --camera wrist=/dev/video4 \
     --task "Pick up the toy boat and place it on the wooden disk." \

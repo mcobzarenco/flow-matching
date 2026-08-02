@@ -21,7 +21,7 @@ Usage::
 
     uv run python -m bijou.rollout \
         --checkpoint outputs/train/bijou_ft_marius_2k/step_002000 \
-        --stats-repo-id marius/so101_pick_place_clean \
+        --stats-repo-id mcobzarenco/so101_pick_place_clean \
         --port /dev/ttyACM0 --robot-id my_follower \
         --camera front=/dev/video0 --camera wrist=/dev/video2 \
         --task "Pick up the cube and place it in the box" \

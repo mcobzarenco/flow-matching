@@ -162,9 +162,9 @@ uv run lerobot-record \
   --teleop.port=/dev/ttyACM1 \
   --teleop.id=leader0 \
   --display_data=true \
-  --dataset.repo_id=marius/so101_pick_place \
+  --dataset.repo_id=mcobzarenco/so101_pick_place \
   --dataset.single_task="Pick up the red cube and place it in the box." \
-  --dataset.root=/home/marius/w/my_datasets/marius/so101_pick_place \
+  --dataset.root=/home/marius/w/my_datasets/mcobzarenco/so101_pick_place \
   --dataset.push_to_hub=false \
   --dataset.num_episodes=50 \
   --dataset.episode_time_s=30 \
@@ -231,8 +231,8 @@ Exactly the format the rest of this repo's tooling already handles.
 
 ```bash
 uv run lerobot-dataset-viz \
-  --repo-id marius/so101_pick_place \
-  --root /home/marius/w/my_datasets/marius/so101_pick_place \
+  --repo-id mcobzarenco/so101_pick_place \
+  --root /home/marius/w/my_datasets/mcobzarenco/so101_pick_place \
   --episode-index 0
 ```
 
@@ -257,7 +257,7 @@ Serve the datasets root and browse at `localhost:3000`:
 cd ~/w/lerobot-dataset-visualizer
 bun scripts/serve-local-datasets.ts /home/marius/w/my_datasets 8000
 DATASET_URL=http://localhost:8000 bun dev
-# → http://localhost:3000/marius/so101_pick_place/episode_0
+# → http://localhost:3000/mcobzarenco/so101_pick_place/episode_0
 ```
 
 Since the recording is v3.0 and `robot_type` is `so101_follower`, the
@@ -277,8 +277,8 @@ first:
 ```bash
 uv run lerobot-replay \
   --robot.type=so101_follower --robot.port=/dev/ttyACM0 --robot.id=follower0 \
-  --dataset.repo_id=marius/so101_pick_place \
-  --dataset.root=/home/marius/w/my_datasets/marius/so101_pick_place \
+  --dataset.repo_id=mcobzarenco/so101_pick_place \
+  --dataset.root=/home/marius/w/my_datasets/mcobzarenco/so101_pick_place \
   --dataset.episode=0
 ```
 
@@ -291,8 +291,8 @@ uv run lerobot-train \
   --policy.path=lerobot/smolvla_base \
   --policy.push_to_hub=false \
   --policy.device=cuda \
-  --dataset.repo_id=marius/so101_pick_place \
-  --dataset.root=/home/marius/w/my_datasets/marius/so101_pick_place \
+  --dataset.repo_id=mcobzarenco/so101_pick_place \
+  --dataset.root=/home/marius/w/my_datasets/mcobzarenco/so101_pick_place \
   --output_dir=outputs/train/smolvla_so101_pick_place \
   --job_name=smolvla_so101_pick_place \
   --batch_size=4 \
@@ -328,7 +328,7 @@ fine-tuned checkpoint self-contained, unlike `smolvla_base`).
 
 ```bash
 uv run python -m bijou.eval \
-  --data /home/marius/w/my_datasets/marius/so101_pick_place \
+  --data /home/marius/w/my_datasets/mcobzarenco/so101_pick_place \
   --smolvla outputs/train/smolvla_so101_pick_place/checkpoints/last/pretrained_model \
   --num-samples 256 --output-json eval_finetuned.json
 ```
@@ -351,8 +351,8 @@ uv run lerobot-rollout \
   --robot.type=so101_follower --robot.port=/dev/ttyACM0 --robot.id=follower0 \
   --robot.cameras="{ front: {type: opencv, index_or_path: /dev/video0, width: 640, height: 480, fps: 30}, wrist: {type: opencv, index_or_path: /dev/video2, width: 640, height: 480, fps: 30}}" \
   --policy.path=outputs/train/smolvla_so101_pick_place/checkpoints/last/pretrained_model \
-  --dataset.repo_id=marius/eval_so101_pick_place \
-  --dataset.root=/home/marius/w/my_datasets/marius/eval_so101_pick_place \
+  --dataset.repo_id=mcobzarenco/eval_so101_pick_place \
+  --dataset.root=/home/marius/w/my_datasets/mcobzarenco/eval_so101_pick_place \
   --dataset.push_to_hub=false \
   --dataset.single_task="Pick up the red cube and place it in the box." \
   --dataset.num_episodes=10 \

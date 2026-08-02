@@ -13,7 +13,7 @@ open-loop evaluation (no robot, no simulator). For held-out scoring, point
 Usage::
 
     uv run python -m bijou.eval \
-        --data ~/datasets/marius/so101_pick_place_clean \
+        --data ~/datasets/mcobzarenco/so101_pick_place_clean \
         --checkpoint outputs/train/<run>/step_040000 \
         --smolvla lerobot/smolvla_base \
         --num-samples 256 --device cuda --output-json eval.json
