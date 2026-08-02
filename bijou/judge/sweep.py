@@ -54,6 +54,7 @@ from anthropic import Anthropic
 
 from ..data import repo_id_of
 from .batch import (
+    BatchEntry,
     FoldStats,
     load_manifest,
     manifest_path_for,
@@ -369,9 +370,11 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="With --batch: build, submit and poll in waves of at most N "
         "episodes, folding results and updating sidecars between waves. "
-        "Bounds build memory (~1.3 MB/episode measured on the pilot) and "
-        "surfaces systematic failures in the first wave instead of after "
-        "the full build (default: everything in one wave).",
+        "Waves are double-buffered — wave N+1 builds while wave N processes "
+        "server-side — so wall time approaches pure build time. Bounds build "
+        "memory (~1.3 MB/episode measured on the pilot) and surfaces "
+        "systematic failures in the first wave instead of after the full "
+        "build (default: everything in one wave).",
     )
     parser.add_argument(
         "--retry-failed",
@@ -447,6 +450,11 @@ def run_batch_mode(
             print(f"resuming {len(pending)} submitted episode(s) from {manifest_path}")
             poll_and_fold(client, pending, journal=journal, stats=stats)
             merge_journal(args.output, dirs_by_repo)
+        # Double-buffered waves: submit wave N, build wave N+1 while N
+        # processes server-side, fold N only then. Server processing hides
+        # behind the next build, so wall time approaches pure build time
+        # instead of build + poll (measured ~50/50 split when sequential).
+        in_flight: list[BatchEntry] = []
         for number, wave in enumerate(waves, start=1):
             if not wave:
                 continue
@@ -464,10 +472,14 @@ def run_batch_mode(
                 journal=journal,
                 stats=stats,
             )
-            poll_and_fold(client, entries, journal=journal, stats=stats)
-            # Fold into sidecars between waves: progress survives anything,
-            # and mid-run aggregation over the sidecars stays meaningful.
-            merge_journal(args.output, dirs_by_repo)
+            if in_flight:
+                poll_and_fold(client, in_flight, journal=journal, stats=stats)
+                # Fold into sidecars between waves: progress survives
+                # anything, and mid-run aggregation stays meaningful.
+                merge_journal(args.output, dirs_by_repo)
+            in_flight = entries
+        if in_flight:
+            poll_and_fold(client, in_flight, journal=journal, stats=stats)
     if not pending and not tasks:
         print("nothing to judge")
     merge_journal(args.output, dirs_by_repo)
