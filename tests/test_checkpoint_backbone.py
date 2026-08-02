@@ -120,6 +120,7 @@ def make_args(save_dir: Path) -> TrainArgs:
         instruction_augment=0.0,
         condition_fields=None,
         condition_dropout=0.0,
+        subgoal_dropout=0.0,
         decoder_hidden=64,
         decoder_heads=2,
         decoder_intermediate=128,

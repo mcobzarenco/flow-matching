@@ -161,6 +161,16 @@ def test_event_is_positives_only() -> None:
     assert "event" not in decode(spec().render(judged_item()))
 
 
+def test_render_suppresses_subgoal_for_prompt_conditioning() -> None:
+    """Anti-copy coupling (C2): when the collator put the subgoal in
+    the PROMPT, the aux segment must not train to predict it — the
+    remaining fields render unchanged."""
+    item = judged_item()
+    text = decode(spec().render(item, suppress_subgoal=True))
+    assert "subgoal" not in text
+    assert "holding: yes\n" in text and "progress: 30%\n" in text
+
+
 def test_multi_event_frames_render_all_events() -> None:
     """Two events can fire on ONE frame (drop + progress regression —
     real corpus data; the single-row resolver crashed a corpus run on

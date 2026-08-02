@@ -88,6 +88,7 @@ def collator(**overrides: Any) -> Collator[FakeInputs]:
         "instruction_augment": 0.0,
         "condition_fields": (),
         "condition_dropout": 0.0,
+        "subgoal_condition_dropout": 0.0,
     }
     kwargs.update(overrides)
     return Collator(**kwargs)
@@ -229,6 +230,58 @@ def test_condition_fields_render_hindsight_labels() -> None:
         collator(
             condition_fields=(ConditionField.SMOOTHNESS, ConditionField.OUTCOME),
         )
+
+
+def test_subgoal_condition_resolves_per_frame_with_own_dropout() -> None:
+    """C2: the subgoal bracket resolves from the frame's segment label
+    (language_persistent), an explicit condition_subgoal override wins
+    (planner/CLI), and it drops at its OWN rate — deployment mostly
+    runs planner-less."""
+    from bijou.annotations import ConditionField
+
+    fields = (ConditionField.SUBGOAL,)
+    framed = item(with_quantiles=True)
+    framed["timestamp"] = torch.tensor(6.0)
+    framed["language_persistent"] = [
+        {
+            "role": "assistant",
+            "content": "reach toward the boat",
+            "style": "subtask",
+            "timestamp": 0.0,
+            "camera": None,
+            "tool_calls": None,
+        },
+    ]
+    batch = collator(condition_fields=fields)([dict(framed)])
+    assert (
+        batch.encoder_inputs.samples[0].condition_text
+        == "[subgoal: reach toward the boat]"
+    )
+    framed["condition_subgoal"] = "place it on the disk"
+    batch = collator(condition_fields=fields)([dict(framed)])
+    assert (
+        batch.encoder_inputs.samples[0].condition_text
+        == "[subgoal: place it on the disk]"
+    )
+    # No segment label and no override: nothing renders.
+    bare = item(with_quantiles=True)
+    bare["timestamp"] = torch.tensor(6.0)
+    batch = collator(condition_fields=fields)([bare])
+    assert batch.encoder_inputs.samples[0].condition_text == ""
+    # Its own dropout rate: outcome survives while subgoal drops.
+    both = dict(framed)
+    both["condition_outcome"] = "success"
+    torch.manual_seed(5)
+    dropped = collator(
+        condition_fields=(ConditionField.SUBGOAL, ConditionField.OUTCOME),
+        subgoal_condition_dropout=0.9,
+    )
+    rendered = [
+        dropped([dict(both)]).encoder_inputs.samples[0].condition_text
+        for _ in range(24)
+    ]
+    assert "[outcome: success]" in rendered  # subgoal dropped, outcome kept
+    assert any("subgoal" in text for text in rendered)  # but not always
 
 
 def test_condition_dropout_is_seeded_per_field() -> None:

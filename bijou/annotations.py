@@ -101,12 +101,16 @@ CAMERA_KINDS = frozenset(kind.value for kind in CameraKind)
 
 
 class ConditionField(StrEnum):
-    """Prompt-side outcome-conditioning fields, fixed template order.
-    Rendered as trailing bracket blocks of the user turn
-    (``[outcome: success][smoothness: high]``): train-time values are
-    hindsight labels from the episode's verdict; inference asks for the
-    behavior it wants."""
+    """Prompt-side conditioning fields, fixed template order. Rendered
+    as trailing bracket blocks of the user turn (``[subgoal: reach
+    toward the boat][outcome: success][smoothness: high]``): subgoal is
+    the frame's CURRENT segment label (hierarchical execution hint — an
+    operator/planner supplies it at deployment, or nothing does and the
+    dropout-trained unconditioned context applies); outcome/smoothness
+    are hindsight labels from the episode's verdict — inference asks
+    for the behavior it wants."""
 
+    SUBGOAL = "subgoal"
     OUTCOME = "outcome"
     SMOOTHNESS = "smoothness"
 

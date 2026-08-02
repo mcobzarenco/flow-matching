@@ -302,19 +302,15 @@ class AuxSpec:
         when the label does not exist at this frame."""
         match aux_field:
             case AuxField.SUBGOAL:
-                row = active_at(
-                    float(item["timestamp"]),
-                    persistent=item.get("language_persistent") or [],
-                    style="subtask",
-                )
-                if row is None or not row.get("content"):
+                text = subgoal_text(item)
+                if text is None:
                     return None
                 header = self._encode(SUBGOAL_HEADER)
-                body = self._encode(str(row["content"]))
+                body = self._encode(text)
                 if len(body) > self.max_subgoal_tokens:
                     print(
                         f"[aux] truncating subgoal ({len(body)} > "
-                        f"{self.max_subgoal_tokens} tokens): {row['content']!r}",
+                        f"{self.max_subgoal_tokens} tokens): {text!r}",
                         flush=True,
                     )
                     body = body[: self.max_subgoal_tokens]
@@ -352,15 +348,26 @@ class AuxSpec:
                 # Bounded by camera count — no truncation cap needed.
                 return self._encode(f"{VISIBLE_HEADER}{text}{FIELD_TERMINATOR}")
 
-    def render(self, item: dict[str, Any]) -> list[int]:
+    def render(
+        self,
+        item: dict[str, Any],
+        *,
+        suppress_subgoal: bool = False,
+    ) -> list[int]:
         """All present fields' token ids, template order. Empty for
         unjudged frames, for datasets whose stamp failed verification,
         and — with probability ``dropout`` — for labeled samples (mode
-        dropout: the sample then trains as [ACT])."""
+        dropout: the sample then trains as [ACT]). ``suppress_subgoal``
+        skips the subgoal FIELD (anti-copy coupling: when the collator
+        put the subgoal in the PROMPT, predicting it in the aux segment
+        would train copying — prompt-conditioning and aux-prediction
+        are exact complements)."""
         if item.get("repo_id") not in self.annotated_repos:
             return []
         ids: list[int] = []
         for aux_field in self.fields:
+            if suppress_subgoal and aux_field is AuxField.SUBGOAL:
+                continue
             rendered = self.render_field(aux_field, item)
             if rendered is not None:
                 ids.extend(rendered)
@@ -370,6 +377,20 @@ class AuxSpec:
             if float(torch.rand((), generator=self._generator)) < self.dropout:
                 return []
         return ids
+
+
+def subgoal_text(item: dict[str, Any]) -> str | None:
+    """The frame's current subgoal segment label (piecewise-constant
+    coverage on judged episodes), or None. Shared by the aux renderer
+    (prediction target) and the collator's prompt conditioning (C2)."""
+    row = active_at(
+        float(item["timestamp"]),
+        persistent=item.get("language_persistent") or [],
+        style="subtask",
+    )
+    if row is None or not row.get("content"):
+        return None
+    return str(row["content"])
 
 
 def visibility_text(item: dict[str, Any]) -> str | None:
@@ -438,13 +459,9 @@ def aux_label_text(item: dict[str, Any], fields: tuple[AuxField, ...]) -> str:
     for aux_field in fields:
         match aux_field:
             case AuxField.SUBGOAL:
-                row = active_at(
-                    float(item["timestamp"]),
-                    persistent=item.get("language_persistent") or [],
-                    style="subtask",
-                )
-                if row is not None and row.get("content"):
-                    parts.append(f"{SUBGOAL_HEADER}{row['content']}{FIELD_TERMINATOR}")
+                text = subgoal_text(item)
+                if text is not None:
+                    parts.append(f"{SUBGOAL_HEADER}{text}{FIELD_TERMINATOR}")
             case AuxField.HOLDING:
                 value = item.get("annotation.holding")
                 if value is not None and bool(torch.isfinite(value)):

@@ -156,6 +156,7 @@ class BijouPolicy:
                 ConditionField(f) for f in self.info.condition_fields
             ),
             condition_dropout=0.0,
+            subgoal_condition_dropout=0.0,
         )
 
     @torch.no_grad()

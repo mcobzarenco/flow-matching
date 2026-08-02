@@ -146,6 +146,7 @@ class TrainArgs:
     instruction_augment: float
     condition_fields: tuple[str, ...] | None
     condition_dropout: float
+    subgoal_dropout: float
     decoder_hidden: int
     decoder_heads: int
     decoder_intermediate: int
@@ -1216,10 +1217,21 @@ def parse_args() -> TrainArgs:
         "--condition-dropout",
         type=float,
         default=None,
-        help="per-field probability a conditioning label renders nothing "
-        "at train time (keeps the unconditioned marginal trained). "
-        "Default 0.1 when --condition-fields is on; requires "
+        help="per-field probability an outcome/smoothness label renders "
+        "nothing at train time (keeps the unconditioned marginal "
+        "trained). Default 0.1 when --condition-fields is on; requires "
         "--condition-fields",
+    )
+    parser.add_argument(
+        "--subgoal-dropout",
+        type=float,
+        default=None,
+        help="probability the subgoal PROMPT hint renders nothing (its "
+        "own rate: deployment mostly runs planner-less, so the "
+        "unconditioned context must stay well-trained — and on dropped "
+        "draws the aux segment predicts the subgoal instead, the exact "
+        "complement). Default 0.5 when subgoal is in --condition-fields; "
+        "requires it",
     )
     parser.add_argument(
         "--fast-tokenizer",
@@ -1469,6 +1481,18 @@ def parse_args() -> TrainArgs:
         if raw.condition_dropout is not None
         else (0.1 if raw.condition_fields is not None else 0.0)
     )
+    subgoal_conditioned = raw.condition_fields is not None and (
+        "subgoal" in raw.condition_fields
+    )
+    if raw.subgoal_dropout is not None and not subgoal_conditioned:
+        parser.error("--subgoal-dropout requires subgoal in --condition-fields")
+    if raw.subgoal_dropout is not None and not 0.0 <= raw.subgoal_dropout < 1.0:
+        parser.error(f"--subgoal-dropout {raw.subgoal_dropout} outside [0, 1)")
+    subgoal_dropout = (
+        raw.subgoal_dropout
+        if raw.subgoal_dropout is not None
+        else (0.5 if subgoal_conditioned else 0.0)
+    )
     aux_dropout = (
         raw.aux_dropout
         if raw.aux_dropout is not None
@@ -1536,6 +1560,7 @@ def parse_args() -> TrainArgs:
             tuple(raw.condition_fields) if raw.condition_fields is not None else None
         ),
         condition_dropout=condition_dropout,
+        subgoal_dropout=subgoal_dropout,
         decoder_hidden=raw.decoder_hidden,
         decoder_heads=raw.decoder_heads,
         decoder_intermediate=raw.decoder_intermediate,
@@ -1740,6 +1765,7 @@ def main() -> int:
             ConditionField(f) for f in (args.condition_fields or ())
         ),
         condition_dropout=args.condition_dropout,
+        subgoal_condition_dropout=args.subgoal_dropout,
     )
     if is_main and (args.instruction_augment > 0 or args.condition_fields):
         labeled_episodes = sum(
@@ -1749,7 +1775,8 @@ def main() -> int:
             f"episode annotations: {labeled_episodes} labeled episode(s); "
             f"instruction augment p={args.instruction_augment}, "
             f"conditioning {list(args.condition_fields or [])} "
-            f"(dropout {args.condition_dropout})",
+            f"(dropout {args.condition_dropout}, subgoal "
+            f"{args.subgoal_dropout})",
             flush=True,
         )
     if is_main and selection.camera_kinds:
@@ -1771,8 +1798,11 @@ def main() -> int:
         camera_kind_dropout=0.0,
         instruction_augment=0.0,
         # dropout-0 conditioning = TRUE-label conditioning (Q1: score
-        # against truth ⇒ condition on truth).
+        # against truth ⇒ condition on truth; the subgoal hint always
+        # present in probes — the probe measures the CONDITIONED fit
+        # for subgoal-conditioned runs).
         condition_dropout=0.0,
+        subgoal_condition_dropout=0.0,
     )
     # The explicit generator (both modes) makes the shuffle order and the
     # dataloader worker base-seeds a pure function of (--seed, rank) —

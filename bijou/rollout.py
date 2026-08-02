@@ -133,6 +133,14 @@ def parse_args() -> argparse.Namespace:
         help="smoothness conditioning at deployment (as --outcome)",
     )
     parser.add_argument(
+        "--subgoal",
+        default=None,
+        help="subgoal conditioning at deployment (free text, e.g. from a "
+        "planner): rendered only by subgoal-condition-trained "
+        "checkpoints; omit to run the (well-trained) unconditioned "
+        "context",
+    )
+    parser.add_argument(
         "--max-relative-target",
         type=float,
         default=None,
@@ -253,6 +261,8 @@ def main() -> int:
         ConditionField.OUTCOME.value: args.outcome,
         ConditionField.SMOOTHNESS.value: args.smoothness,
     }
+    if args.subgoal is not None:
+        condition_values[ConditionField.SUBGOAL.value] = args.subgoal
 
     policy = BijouPolicy(
         args.checkpoint,

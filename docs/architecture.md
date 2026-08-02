@@ -149,9 +149,9 @@ chat-templated user turn, **LEFT-padded** across a batch with per-sample
 LOGICAL position ids (cumsum of the real-token mask); rendered exactly
 (E2B template, verified 2026-08-02):
 
-    <bos><|turn>user\n{task}[top camera]<imgs>[wrist camera]<imgs>{task}[outcome: success][smoothness: high]<turn|>\n
+    <bos><|turn>user\n{task}[top camera]<imgs>[wrist camera]<imgs>{task}[subgoal: reach toward the boat][outcome: success][smoothness: high]<turn|>\n
 
-The trailing bracket block is OUTCOME CONDITIONING (below); it is empty
+The trailing bracket block is PROMPT CONDITIONING (below); it is empty
 for unconditioned runs/episodes.
 
 Each camera contributes a bracket-delimited semantic tag before its
@@ -505,9 +505,21 @@ don't compose by averaging; extremes regress toward the median, measured
 quantiles by `ldtools.backfill_quantile_stats`. mean/std/min/max compose
 correctly and are untainted.
 
-**Outcome conditioning** (`--condition-fields outcome smoothness`,
-default off; `--condition-dropout` 0.1): hindsight labels from each
-episode's verdict render as the user turn's trailing bracket block —
+**Prompt conditioning** (`--condition-fields subgoal outcome
+smoothness`, default off): the user turn's trailing bracket block.
+**Subgoal-conditioned execution** (C2): the frame's current segment
+label renders as `[subgoal: …]` with its OWN dropout
+(`--subgoal-dropout`, default 0.5 — deployment mostly runs
+planner-less, so the unconditioned context must stay well-trained),
+resolvable from a planner/operator at inference (`rollout --subgoal`,
+or an explicit `item["condition_subgoal"]`); **anti-copy coupling**:
+when the subgoal rides the prompt, the aux segment SUPPRESSES its
+subgoal field — prompt-conditioning and aux-prediction are exact
+complements, so `loss_aux` never trains or scores copying, and the
+self-conditioning loop (feed the aux-generated subgoal into the next
+replan's prompt) stays a rollout-side option. **Outcome conditioning**
+(C1; `--condition-dropout` 0.1): hindsight labels from each
+episode's verdict —
 `outcome ∈ {success, partial, failure}` from `task_completion_visible`
 (`unclear` renders nothing), `smoothness ∈ {high, medium, low}` from
 the 1–10 score bucketed 8–10/5–7/1–4. Train-time, failed/partial demos
@@ -600,8 +612,9 @@ opt-in provenance pin (§2.4); `--camera-kind-dropout` (default 0.1,
 all decoder kinds) is the prompt-side kind→unknown dropout (§1);
 `--instruction-augment` (default 0.0, all decoder kinds) samples
 judge-suggested task rewrites (§4); `--condition-fields` /
-`--condition-dropout` (default off / 0.1) render hindsight
-outcome/smoothness conditioning (§4). Train step returns
+`--condition-dropout` / `--subgoal-dropout` (default off / 0.1 / 0.5)
+render prompt conditioning — subgoal hint + hindsight
+outcome/smoothness (§4). Train step returns
 component losses; `train/loss_action` + `train/loss_aux` log beside
 `train/loss` on aux runs (aux aggregates as CE-sum/token-count across
 the window and all ranks — a position-weighted mean, immune to the
