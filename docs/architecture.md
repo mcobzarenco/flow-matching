@@ -326,13 +326,16 @@ must reproduce **flow 1.8896 / 1.7237** exactly; with `--decoder ar_fast
 --fast-tokenizer tests/fixtures/tiny_fast_tokenizer` added, **AR
 4.8803 / 4.8656**; with `--decoder ar_backbone --fast-tokenizer
 tests/fixtures/tiny_fast_tokenizer` (and the `--decoder-*` shape flags
-OMITTED — ar_backbone rejects them), **27.7661 / 27.8015** (random tiny
+OMITTED — ar_backbone rejects them), **27.8116 / 27.8348** (random tiny
 weights under full-vocabulary CE — an anchor, not a quality signal; the
-huge step-1 grad norm is softcap saturation, clipped in practice).
+huge step-1 grad norm is softcap saturation, clipped in practice;
+re-baselined 2026-08-02 for suffix format 2 — the opener-prefixed
+sequence — from 27.7661/27.8015).
 Flags-on (unfreeze) oracles live in
 `outputs/probe_unfreeze_gradflow.py` (flow 1.5528, AR 4.8689,
-ar_backbone 27.7619 with the FULL-depth partition checks — asserted
-in the probe). Regenerate the tiny backbone with
+ar_backbone 27.8836 — format-2 re-baseline — with the FULL-depth
+partition checks, asserted in the probe). Regenerate the tiny backbone
+with
 `uv run python -m bijou.gemma4.testing --output outputs/tiny-gemma4`
 (per checkout; changing it re-baselines every oracle). gemma4 changes
 additionally gate on `verify_parity` (needs a big GPU). Any new

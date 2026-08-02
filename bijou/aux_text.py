@@ -45,7 +45,19 @@ from torch import Tensor
 # Must equal bijou.judge.PROMPT_HASH (test-gated: tests/test_aux_text.py).
 PINNED_PROMPT_HASH = "9b796de"
 
-AUX_TEMPLATE_VERSION = 1
+AUX_TEMPLATE_VERSION = 2
+# Suffix format 2 (the only trained format going forward): every
+# ar_backbone suffix — aux or not — is [state][GENERATION_OPENER][aux
+# text when labeled][BOA][actions]. The opener is the IT chat template's
+# own generation prompt, so the trained decision point ("speak or act")
+# sits on the single most reinforced transition instruction tuning
+# built. Aux-less runs train the decision point to BOA directly.
+SUFFIX_FORMAT = 2
+GENERATION_OPENER = "<start_of_turn>model\n"
+# Free-phase token budget at decode: worst-case configured template
+# (headers ~12 + subgoal 16 + holding 4 + progress 5) with slack; the
+# fallback (force BOA, count it) fires past this.
+MAX_FREE_TOKENS = 48
 FIELD_TERMINATOR = "\n"
 SUBGOAL_HEADER = "subgoal: "
 HOLDING_HEADER = "holding: "

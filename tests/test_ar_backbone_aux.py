@@ -24,6 +24,7 @@ from test_ar_backbone import (
     codec,
     decoder_config,
     encode_memory,
+    gemma_config,
 )
 from test_aux_text import CharTokenizer
 
@@ -155,33 +156,58 @@ def test_aux_on_loss_components_and_weighting() -> None:
     assert torch.allclose(total, action + 0.5 * aux)
 
 
-def test_decode_with_aux_structure_and_constraints() -> None:
+def test_free_decode_is_budgeted_and_always_yields_chunks() -> None:
+    """The ONE decode path: free phase bounded by MAX_FREE_TOKENS (block
+    ids masked out of it), then a full grammar-valid chunk per row —
+    regardless of whether the (random) model deigns to emit BOA."""
     backbone, decoder = build_with_aux()
     loaded = codec()
     sample = batch(loaded)
     memory = encode_memory(backbone)
-    chunks, generations = decoder.decode_with_aux(backbone, memory, sample)
+    chunks, generations = decoder.predict_chunk_with_text(backbone, memory, sample)
     assert chunks.shape == (BATCH, loaded.time_horizon, loaded.action_dim)
     assert bool(torch.isfinite(chunks).all())
+    from bijou.aux_text import MAX_FREE_TOKENS
+
     for generation in generations:
-        # Forced scaffold: every field header present, template order.
-        assert (
-            generation.text.index("subgoal: ")
-            < generation.text.index(
-                "holding: ",
-            )
-            < generation.text.index("progress: ")
+        # Free ids decode as text (char stub): never block ids, bounded.
+        assert len(generation.text) <= MAX_FREE_TOKENS
+        assert all(ord(c) < decoder.config.block_base for c in generation.text)
+
+
+def test_zero_budget_forces_boa_and_counts_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import bijou.decoders.ar_backbone as module
+
+    monkeypatch.setattr(module, "MAX_FREE_TOKENS", 0)
+    backbone, decoder = build_with_aux()
+    loaded = codec()
+    chunks, generations = decoder.predict_chunk_with_text(
+        backbone,
+        encode_memory(backbone),
+        batch(loaded),
+    )
+    assert chunks.shape[1] == loaded.time_horizon
+    # Budget 0: no free text possible; fallback fired for any row whose
+    # first pick wasn't already BOA.
+    assert all(generation.text == "" for generation in generations)
+    assert decoder.fallback_count >= 0
+
+
+def test_format2_requires_tokenizer() -> None:
+    loaded = codec()
+    with pytest.raises(ValueError, match="text tokenizer"):
+        ARBackboneDecoder(
+            decoder_config(loaded),
+            gemma_config().text,
+            loaded,
+            tokenizer=None,
         )
-        # Constrained value: holding parsed from {yes,no} — never None.
-        assert generation.holding in (True, False)
-        # Free-decoded values never contain block ids (masked): the
-        # char-stub decodes every id below block_base, so decode() not
-        # raising on chr() of a block id is implied by construction; the
-        # explicit check is that text splits into template lines.
-        assert generation.text.endswith("\n") or "progress: " in generation.text
 
 
-def test_decode_with_aux_without_runtime_fails_loudly() -> None:
-    backbone, decoder, loaded = build()
-    with pytest.raises(SystemExit, match="aux_runtime"):
-        decoder.decode_with_aux(backbone, encode_memory(backbone), batch(loaded))
+def test_opener_ids_tokenize_the_template_opener() -> None:
+    from bijou.aux_text import GENERATION_OPENER
+
+    _, decoder = build_with_aux()
+    assert decoder.opener_ids == tuple(ord(c) for c in GENERATION_OPENER)

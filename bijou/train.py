@@ -70,6 +70,7 @@ from torch import Tensor
 from .aux_text import (
     AUX_TEMPLATE_VERSION,
     PINNED_PROMPT_HASH,
+    SUFFIX_FORMAT,
     AuxDecodeConfig,
     AuxField,
     AuxSpec,
@@ -499,6 +500,63 @@ def build_probe_set(
 
 
 @torch.no_grad()
+def holding_likelihood_accuracy(
+    model: BijouModel,
+    decoder: ARBackboneDecoder,
+    items: list[dict[str, Any]],
+    collator: Collator[GemmaInputs],
+    device: torch.device,
+    aux_spec: AuxSpec,
+) -> float | None:
+    """Teacher-forced likelihood accuracy for ``holding`` over the items
+    that carry the label: score p(yes) vs p(no) at the value position
+    under the LABEL context (opener + rendered subgoal field + holding
+    header) — no generation involved, so it measures the sparse field
+    free decoding rarely elicits. Returns None when no item is labeled.
+
+    Row loop over ≤ EVAL_TABLE_ROWS items: single-item re-collation +
+    encode per labeled row (multimodal batches cannot be row-sliced —
+    pixel rows are Σ cameras, not B-indexed — and each scoring pass
+    appends to its memory's cache, so rows need fresh encodes anyway)."""
+    runtime = decoder.aux_runtime
+    assert runtime is not None  # caller-gated
+    candidates = runtime.value_candidates.get(AuxField.HOLDING)
+    if candidates is None:
+        return None
+    correct = 0
+    labeled = 0
+    for item in items:
+        value = item.get("annotation.holding")
+        if value is None or not bool(torch.isfinite(value)):
+            continue
+        prefix = list(decoder.opener_ids)
+        subgoal_ids = aux_spec.render_field(AuxField.SUBGOAL, item)
+        if subgoal_ids is not None:
+            prefix.extend(subgoal_ids)
+        prefix.extend(runtime.header_ids[AuxField.HOLDING])
+        row_batch = collator([item]).to(device)
+        row_memory = model.encode(row_batch.encoder_inputs, with_grad=False)
+        state = (
+            row_batch.state - row_batch.state_stats.mean
+        ) / row_batch.state_stats.std
+        tokens = torch.tensor([prefix], dtype=torch.long, device=device)
+        logits = decoder.forward_backbone_ids(
+            model.backbone,
+            row_memory,
+            state,
+            tokens,
+        )[0, -1, :]
+        firsts = [c[0] for c in candidates]
+        pick = int(torch.argmax(logits[firsts]))
+        # HOLDING_VALUES order: index 0 = "no", 1 = "yes" (label 0/1).
+        correct += int(pick == int(value))
+        labeled += 1
+    if labeled == 0:
+        return None
+    return correct / labeled
+
+
+@torch.no_grad()
 def validate(
     model: BijouModel,
     probe: ProbeSet,
@@ -606,20 +664,20 @@ def validate(
             plt.close(figure)
         wandb_run.log({table_key: table}, step=step)
 
-        # Aux generations vs labels, rank-0-only (no collectives inside):
-        # the qualitative surface for the aux tasks. Row-loop decode over
-        # the (bounded) rich subset — EVAL_TABLE_ROWS x ~55 single-token
-        # forwards.
+        # Aux generations vs labels + holding likelihood, rank-0-only
+        # (no collectives inside): the qualitative + quantitative aux
+        # surfaces, bounded to the rich subset.
         decoder = model.decoder
-        if isinstance(decoder, ARBackboneDecoder) and decoder.aux_runtime is not None:
+        if isinstance(decoder, ARBackboneDecoder):
             rich_batch = collator(probe.rich_items).to(device)
             memory = model.encode(rich_batch.encoder_inputs, with_grad=False)
-            _, generations = decoder.decode_with_aux(
+            _, generations = decoder.predict_chunk_with_text(
                 model.backbone,
                 memory,
                 rich_batch,
             )
-            fields = decoder.aux_runtime.config.fields
+            aux_spec = collator.aux
+            fields = aux_spec.fields if aux_spec is not None else ()
             aux_table = wandb.Table(
                 columns=["sample", "task", "generated", "label"],
             )
@@ -630,9 +688,23 @@ def validate(
                     i,
                     str(item["task"]),
                     generation.text,
-                    aux_label_text(item, fields),
+                    aux_label_text(item, fields) if fields else "",
                 )
             wandb_run.log({f"{table_key}_aux": aux_table}, step=step)
+            if decoder.aux_runtime is not None and aux_spec is not None:
+                accuracy = holding_likelihood_accuracy(
+                    model,
+                    decoder,
+                    probe.rich_items,
+                    collator,
+                    device,
+                    aux_spec,
+                )
+                if accuracy is not None:
+                    wandb_run.log(
+                        {f"{table_key}_holding_acc": accuracy},
+                        step=step,
+                    )
     return mae
 
 
@@ -1485,18 +1557,22 @@ def main() -> int:
             state_dim=state_dim,
             chunk_size=args.chunk_size,
             action_dim=action_dim,
+            suffix_format=SUFFIX_FORMAT,
             aux=aux_decode_config,
         )
-        aux_runtime = None
-        if aux_decode_config is not None:
-            aux_runtime = build_aux_runtime(
-                aux_decode_config,
-                transformers.AutoTokenizer.from_pretrained(str(checkpoint_dir)),
-            )
+        text_tokenizer = transformers.AutoTokenizer.from_pretrained(
+            str(checkpoint_dir),
+        )
+        aux_runtime = (
+            build_aux_runtime(aux_decode_config, text_tokenizer)
+            if aux_decode_config is not None
+            else None
+        )
         ar_backbone_decoder = ARBackboneDecoder(
             ar_backbone_config,
             backbone_config.text,
             action_codec,
+            tokenizer=text_tokenizer,
             aux_runtime=aux_runtime,
             aux_loss_weight=args.aux_loss_weight,
             device=device,

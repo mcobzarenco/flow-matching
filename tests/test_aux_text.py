@@ -95,7 +95,7 @@ def test_pinned_hash_tracks_judge_prompt() -> None:
     """THE drift tripwire: a judge-prompt change must fail loudly here,
     not silently mix label distributions in training."""
     assert PINNED_PROMPT_HASH == PROMPT_HASH
-    assert AUX_TEMPLATE_VERSION == 1
+    assert AUX_TEMPLATE_VERSION == 2  # the opener-prefixed suffix format
 
 
 def test_render_all_fields_in_template_order() -> None:

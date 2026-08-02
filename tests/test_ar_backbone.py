@@ -21,9 +21,11 @@ from pathlib import Path
 import numpy as np
 import pytest
 import torch
+from test_aux_text import CharTokenizer
 from test_backbone_continuation import tiny_text_config
 from torch import Tensor
 
+from bijou.aux_text import SUFFIX_FORMAT
 from bijou.decoders.ar_backbone import (
     ARBackboneConfig,
     ARBackboneDecoder,
@@ -74,6 +76,7 @@ def decoder_config(loaded: ActionCodec) -> ARBackboneConfig:
         state_dim=loaded.action_dim,
         chunk_size=loaded.time_horizon,
         action_dim=loaded.action_dim,
+        suffix_format=SUFFIX_FORMAT,
         aux=None,
     )
 
@@ -88,6 +91,7 @@ def build() -> tuple[Gemma4Model, ARBackboneDecoder, ActionCodec]:
         decoder_config(loaded),
         gemma_config().text,
         loaded,
+        tokenizer=CharTokenizer(),
         device="cpu",
         dtype=torch.float32,
     )
@@ -288,4 +292,9 @@ def test_truncated_backbone_is_rejected() -> None:
         num_kv_shared_layers=0,
     )
     with pytest.raises(ValueError, match="FULL backbone"):
-        ARBackboneDecoder(decoder_config(loaded), truncated, loaded)
+        ARBackboneDecoder(
+            decoder_config(loaded),
+            truncated,
+            loaded,
+            tokenizer=CharTokenizer(),
+        )

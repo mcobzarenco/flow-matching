@@ -34,7 +34,6 @@ symbol expansion fits the remaining chunk*dim budget.
 
 from __future__ import annotations
 
-import dataclasses
 from dataclasses import dataclass
 from typing import Any, override
 
@@ -42,12 +41,19 @@ import torch
 from torch import Tensor, nn
 from torch.nn import functional as F
 
-from ..aux_text import AuxDecodeConfig, AuxField, AuxGeneration, AuxRuntime
+from ..aux_text import (
+    GENERATION_OPENER,
+    MAX_FREE_TOKENS,
+    SUFFIX_FORMAT,
+    AuxDecodeConfig,
+    AuxGeneration,
+    AuxRuntime,
+    TextTokenizer,
+)
 from ..fast.codec import ActionCodec
-from ..gemma4.cache import KVCache
 from ..gemma4.config import Gemma4TextConfig
 from ..gemma4.model import Gemma4Model
-from ..interface import CollatedBatch, MemoryStream, NormStats, ObservationMemory
+from ..interface import CollatedBatch, ObservationMemory
 from ..nn import DeviceLike
 from .ar_fast import IGNORE_INDEX
 
@@ -71,8 +77,13 @@ class ARBackboneConfig:
     state_dim: int
     chunk_size: int
     action_dim: int
+    # Suffix format (aux_text.SUFFIX_FORMAT when written): 2 = the
+    # opener-prefixed format every new run trains; parsed 1 = a legacy
+    # checkpoint (pre-opener) — loadable for warm starts, decode quality
+    # under the unified path is undefined (loud warning).
+    suffix_format: int
     # Aux text record: template version + fields + label provenance
-    # (None = trained without aux; forced-scaffold decode then refuses).
+    # (None = trained without aux — the decision point trains to BOA).
     aux: AuxDecodeConfig | None
 
     def __post_init__(self) -> None:
@@ -98,6 +109,7 @@ class ARBackboneDecoder(nn.Module):
         text_config: Gemma4TextConfig,
         codec: ActionCodec,
         *,
+        tokenizer: TextTokenizer | None,
         aux_runtime: AuxRuntime | None = None,
         aux_loss_weight: float = 1.0,
         device: DeviceLike = None,
@@ -106,10 +118,33 @@ class ARBackboneDecoder(nn.Module):
         super().__init__()
         self.config = config
         self.codec = codec
-        # Runtime resources, not modules (the codec convention): scaffold
-        # ids for forced-field decoding + the aux loss mixture weight.
+        # Runtime resources, not modules (the codec convention): the text
+        # tokenizer (opener ids, generation text), aux metrics runtime,
+        # and the aux loss mixture weight.
+        self.tokenizer = tokenizer
         self.aux_runtime = aux_runtime
         self.aux_loss_weight = aux_loss_weight
+        # Cumulative free-phase budget exhaustions (decode health metric).
+        self.fallback_count = 0
+        if config.suffix_format >= SUFFIX_FORMAT:
+            if tokenizer is None:
+                raise ValueError(
+                    "suffix format 2 needs the backbone's text tokenizer "
+                    "(the generation opener is tokenized at construction)",
+                )
+            self.opener_ids: tuple[int, ...] = tuple(
+                tokenizer.encode(GENERATION_OPENER, add_special_tokens=False),
+            )
+        else:
+            print(
+                "[ar_backbone] LEGACY suffix format "
+                f"{config.suffix_format} checkpoint: decode under the "
+                "unified free-until-BOA path is untrained for it — "
+                "fine for --init-from warm starts, re-fine-tune before "
+                "trusting inference",
+                flush=True,
+            )
+            self.opener_ids = ()
         if codec.vocab_total != config.vocab_total:
             raise ValueError(
                 f"codec vocab_total {codec.vocab_total} != config "
@@ -393,16 +428,37 @@ class ARBackboneDecoder(nn.Module):
         generator: torch.Generator | None = None,
         noise: Tensor | None = None,
     ) -> Tensor:
-        """CONSTRAINED greedy decode, then detokenize + denormalize with
-        the batch's per-sample q01/q99 (the ar_fast contract: grammar
-        mask by remaining symbol budget, no EOA, exactly one chunk,
-        deterministic — ``generator``/``noise`` unused/must be None).
-
-        Incremental: the first feed is ``[state][BOA]``, every later step
-        feeds ONE token against the growing cache — the payoff of running
-        the suffix natively on the backbone."""
+        """RAW-unit chunks via the ONE decode path (see
+        :meth:`predict_chunk_with_text`); the generated aux text is
+        dropped here. Deterministic greedy; ``generator``/``noise``
+        unused/must be None."""
         if noise is not None:
             raise ValueError("ARBackboneDecoder.predict_chunk takes no noise")
+        chunks, _ = self.predict_chunk_with_text(backbone, memory, batch)
+        return chunks
+
+    @torch.no_grad()
+    def predict_chunk_with_text(
+        self,
+        backbone: Gemma4Model,
+        memory: ObservationMemory,
+        batch: CollatedBatch[Any],
+    ) -> tuple[Tensor, list[AuxGeneration]]:
+        """Free-until-BOA, then grammar-constrained actions — the single
+        decode path for every ar_backbone checkpoint, batched with
+        per-row phases.
+
+        Feed ``[state][opener]``, then per row: FREE phase (text ids and
+        BOA only — the rest of the FAST block is masked; budget
+        MAX_FREE_TOKENS, exhaustion forces BOA and increments
+        ``fallback_count``, printed loudly) until BOA, then the ACTION
+        phase (the ar_fast grammar mask by remaining symbol budget; PAD
+        once finished, inert). An aux-less-trained model emits BOA at
+        the first free step — same path, one extra forward.
+
+        Returns (chunks [B, chunk, action_dim] raw units, one
+        AuxGeneration per row — empty text when the model went straight
+        to BOA)."""
         stats = batch.action_stats
         if stats.q01 is None or stats.q99 is None:
             raise SystemExit(
@@ -414,53 +470,106 @@ class ARBackboneDecoder(nn.Module):
         config = self.config
         batch_size = state.shape[0]
         device = state.device
+        base = config.block_base
+        boa_backbone = base + self.codec.boa
+        pad_backbone = base + self.codec.pad
         lengths = self.symbol_lengths.to(device)
         total_symbols = config.chunk_size * config.action_dim
-        remaining = torch.full(
-            (batch_size,),
-            total_symbols,
-            dtype=torch.long,
-            device=device,
-        )
-        boa = self.codec.boa
-        pad = self.codec.pad
-        tokens = torch.full((batch_size, 1), boa, dtype=torch.long, device=device)
         min_value: float = torch.finfo(torch.float32).min
-        base = config.block_base
-        feed = tokens + base  # first feed carries [state][BOA]
+
+        # Static free-phase mask: text ids + BOA allowed, the rest of the
+        # block (and beyond) illegal before BOA.
+        vocab = base + config.vocab_total
+        free_allowed = torch.zeros(vocab, dtype=torch.bool, device=device)
+        free_allowed[:base] = True
+        free_allowed[boa_backbone] = True
+
+        in_action = torch.zeros(batch_size, dtype=torch.bool, device=device)
+        remaining = torch.full((batch_size,), total_symbols, device=device)
+        free_spent = 0
+        free_ids: list[list[int]] = [[] for _ in range(batch_size)]
+        action_ids: list[list[int]] = [[] for _ in range(batch_size)]
+
+        opener = torch.tensor([self.opener_ids], dtype=torch.long, device=device)
+        feed = opener.expand(batch_size, -1)
         feed_state: Tensor | None = state
         fed = 0
-        for _ in range(total_symbols):
-            if bool((remaining == 0).all()):
+        fallback_count = 0
+        for _ in range(MAX_FREE_TOKENS + total_symbols + 1):
+            if bool(in_action.all()) and bool((remaining == 0).all()):
                 break
             logits, fed = self._step(backbone, memory, feed_state, feed, fed)
-            # Grammar mask over the block slice: greedy never leaves the
-            # block after BOA (aux text decoding runs the pre-BOA segment
-            # over the text vocabulary instead — decode_with_aux).
-            block = logits[:, base : base + config.vocab_total]
-            allowed = (lengths[None, :] > 0) & (lengths[None, :] <= remaining[:, None])
-            allowed[:, pad] = remaining == 0
-            block = block.masked_fill(~allowed, min_value)
-            next_token = block.argmax(dim=-1)
-            tokens = torch.cat([tokens, next_token[:, None]], dim=1)
-            remaining = remaining - lengths[next_token]
-            feed = (next_token + base)[:, None]
             feed_state = None
+            logits = logits[:, :vocab]
+            # Per-row mask by phase.
+            action_allowed = (lengths[None, :] > 0) & (
+                lengths[None, :] <= remaining[:, None]
+            )
+            action_allowed = torch.cat(
+                [
+                    torch.zeros(
+                        (batch_size, base),
+                        dtype=torch.bool,
+                        device=device,
+                    ),
+                    action_allowed,
+                ],
+                dim=1,
+            )
+            action_allowed[:, pad_backbone] = remaining == 0
+            allowed = torch.where(
+                in_action[:, None],
+                action_allowed,
+                free_allowed[None, :],
+            )
+            next_ids = logits.masked_fill(~allowed, min_value).argmax(dim=-1)
+            if free_spent >= MAX_FREE_TOKENS:
+                # Budget exhausted: force BOA on rows still talking.
+                forced = ~in_action & (next_ids != boa_backbone)
+                fallback_count += int(forced.sum())
+                next_ids = torch.where(
+                    forced,
+                    torch.full_like(next_ids, boa_backbone),
+                    next_ids,
+                )
+            free_spent += int((~in_action).any())
+            rows = next_ids.tolist()
+            for row, next_id in enumerate(rows):
+                if in_action[row]:
+                    codec_id = next_id - base
+                    if codec_id != self.codec.pad:
+                        action_ids[row].append(codec_id)
+                        remaining[row] -= int(lengths[codec_id])
+                elif next_id == boa_backbone:
+                    in_action[row] = True
+                else:
+                    free_ids[row].append(next_id)
+            feed = next_ids[:, None]
+        if fallback_count:
+            self.fallback_count += fallback_count
+            print(
+                f"[ar_backbone] free-phase budget exhausted on "
+                f"{fallback_count} row(s) — BOA forced (cumulative "
+                f"{self.fallback_count}); a persistent rate means the "
+                "model stopped closing its aux segment",
+                flush=True,
+            )
 
         q01 = stats.q01.cpu().numpy()
         q99 = stats.q99.cpu().numpy()
-        token_rows = tokens.cpu().tolist()
         chunks = [
             torch.from_numpy(
-                self.codec.decode(
-                    [t for t in row[1:] if t != pad],  # drop seed BOA
-                    q01[row_index],
-                    q99[row_index],
-                ),
+                self.codec.decode(row_ids, q01[row], q99[row]),
             ).float()
-            for row_index, row in enumerate(token_rows)
+            for row, row_ids in enumerate(action_ids)
         ]
-        return torch.stack(chunks).to(device)
+        generations = [
+            _parse_aux(
+                self.tokenizer.decode(ids) if self.tokenizer is not None else "",
+            )
+            for ids in free_ids
+        ]
+        return torch.stack(chunks).to(device), generations
 
     def _step(
         self,
@@ -478,144 +587,18 @@ class ARBackboneDecoder(nn.Module):
         logits = self._patched_logits(backbone, hidden)[:, -1, :].float()
         return logits, fed + embeds.shape[1]
 
-    @torch.no_grad()
-    def decode_with_aux(
-        self,
-        backbone: Gemma4Model,
-        memory: ObservationMemory,
-        batch: CollatedBatch[Any],
-    ) -> tuple[Tensor, list[AuxGeneration]]:
-        """Forced-scaffold aux decode, then grammar-constrained actions —
-        actions here are CONDITIONED on the self-generated aux text (the
-        deliberate contrast with :meth:`predict_chunk`, which forces BOA
-        immediately; comparing the two MAEs measures whether the
-        scratchpad helps). Row-at-a-time (value lengths are ragged and
-        forced headers must not interleave across rows); batch the
-        callers, not this loop.
 
-        Requires ``aux_runtime`` (a checkpoint trained without aux has
-        nothing to elicit — loud error)."""
-        runtime = self.aux_runtime
-        if runtime is None:
-            raise SystemExit(
-                "decode_with_aux on a decoder without aux_runtime — the "
-                "checkpoint's decoder config carries no aux section (it "
-                "was trained before/without aux)",
-            )
-        chunks: list[Tensor] = []
-        generations: list[AuxGeneration] = []
-        for row in range(batch.state.shape[0]):
-            row_batch = _row_slice(batch, row)
-            row_memory = _row_memory(memory, row)
-            chunk, generation = self._decode_row_with_aux(
-                backbone,
-                row_memory,
-                row_batch,
-                runtime,
-            )
-            chunks.append(chunk[0])
-            generations.append(generation)
-        return torch.stack(chunks), generations
-
-    def _decode_row_with_aux(
-        self,
-        backbone: Gemma4Model,
-        memory: ObservationMemory,
-        batch: CollatedBatch[Any],
-        runtime: AuxRuntime,
-    ) -> tuple[Tensor, AuxGeneration]:
-        state = (batch.state - batch.state_stats.mean) / batch.state_stats.std
-        device = state.device
-        base = self.config.block_base
-        min_value: float = torch.finfo(torch.float32).min
-        fed = 0
-        generated: list[int] = []
-        feed_state: Tensor | None = state
-        pending = torch.empty((1, 0), dtype=torch.long, device=device)
-
-        def feed_ids(ids: list[int]) -> None:
-            nonlocal pending
-            pending = torch.cat(
-                [pending, torch.tensor([ids], dtype=torch.long, device=device)],
-                dim=1,
-            )
-
-        def step() -> Tensor:
-            """Flush pending feed (+state on the first call), return
-            last-position logits."""
-            nonlocal fed, feed_state, pending
-            logits, fed = self._step(backbone, memory, feed_state, pending, fed)
-            feed_state = None
-            pending = torch.empty((1, 0), dtype=torch.long, device=device)
-            return logits
-
-        caps = {
-            AuxField.SUBGOAL: MAX_SUBGOAL_DECODE_TOKENS,
-            AuxField.PROGRESS: MAX_PROGRESS_DECODE_TOKENS,
-        }
-        for aux_field in runtime.config.fields:
-            header = list(runtime.header_ids[aux_field])
-            generated.extend(header)
-            feed_ids(header)
-            candidates = runtime.value_candidates.get(aux_field)
-            if candidates is not None:
-                logits = step()
-                firsts = [c[0] for c in candidates]
-                pick = int(torch.argmax(logits[0, firsts]))
-                value = list(candidates[pick])
-                generated.extend(value)
-                feed_ids(value)
-            else:
-                for _ in range(caps[aux_field]):
-                    logits = step()
-                    # Aux values are TEXT: the FAST block (and beyond)
-                    # is masked out during free decoding.
-                    logits[0, base:] = min_value
-                    next_id = int(logits[0].argmax())
-                    if next_id == runtime.terminator_id:
-                        break
-                    generated.append(next_id)
-                    feed_ids([next_id])
-            generated.append(runtime.terminator_id)
-            feed_ids([runtime.terminator_id])
-        # Aux done: force BOA, then the standard grammar-masked loop.
-        feed_ids([base + self.codec.boa])
-        lengths = self.symbol_lengths.to(device)
-        remaining = self.config.chunk_size * self.config.action_dim
-        action_ids: list[int] = []
-        while remaining > 0:
-            logits = step()
-            block = logits[:, base : base + self.config.vocab_total]
-            allowed = (lengths > 0) & (lengths <= remaining)
-            block = block.masked_fill(~allowed[None, :], min_value)
-            next_token = int(block[0].argmax())
-            action_ids.append(next_token)
-            remaining -= int(lengths[next_token])
-            feed_ids([base + next_token])
-        stats = batch.action_stats
-        assert stats.q01 is not None and stats.q99 is not None  # caller-checked
-        chunk = torch.from_numpy(
-            self.codec.decode(
-                action_ids,
-                stats.q01[0].cpu().numpy(),
-                stats.q99[0].cpu().numpy(),
-            ),
-        ).float()[None]
-        text = runtime.tokenizer.decode(generated)
-        return chunk.to(device), _parse_aux(text, runtime.config.fields)
-
-
-def _parse_aux(text: str, fields: tuple[AuxField, ...]) -> AuxGeneration:
+def _parse_aux(text: str) -> AuxGeneration:
     """Lenient field parsing of the generated aux text; raw text is kept
     verbatim for reports (parse failures are None, never exceptions)."""
-    values: dict[AuxField, str] = {}
+    values: dict[str, str] = {}
     for line in text.splitlines():
-        for aux_field in fields:
-            prefix = f"{aux_field.value}: "
+        for field_name in ("subgoal", "holding", "progress"):
+            prefix = f"{field_name}: "
             if line.startswith(prefix):
-                values[aux_field] = line[len(prefix) :].strip()
-    holding = values.get(AuxField.HOLDING)
-    progress = values.get(AuxField.PROGRESS, "")
+                values[field_name] = line[len(prefix) :].strip()
+    holding = values.get("holding")
+    progress = values.get("progress", "")
     parsed_progress: float | None = None
     if progress.endswith("%"):
         try:
@@ -624,63 +607,9 @@ def _parse_aux(text: str, fields: tuple[AuxField, ...]) -> AuxGeneration:
             parsed_progress = None
     return AuxGeneration(
         text=text,
-        subgoal=values.get(AuxField.SUBGOAL),
+        subgoal=values.get("subgoal"),
         holding=None if holding is None else holding == "yes",
         progress=parsed_progress,
-    )
-
-
-def _row_slice(batch: CollatedBatch[Any], row: int) -> CollatedBatch[Any]:
-    """One-sample view of a collated batch (stats/state sliced; encoder
-    inputs irrelevant post-encode)."""
-
-    def cut(stats: NormStats) -> NormStats:
-        return NormStats(
-            mean=stats.mean[row : row + 1],
-            std=stats.std[row : row + 1],
-            q01=None if stats.q01 is None else stats.q01[row : row + 1],
-            q99=None if stats.q99 is None else stats.q99[row : row + 1],
-        )
-
-    return dataclasses.replace(
-        batch,
-        state=batch.state[row : row + 1],
-        actions=batch.actions[row : row + 1],
-        action_is_pad=batch.action_is_pad[row : row + 1],
-        action_stats=cut(batch.action_stats),
-        state_stats=cut(batch.state_stats),
-    )
-
-
-def _row_memory(memory: ObservationMemory, row: int) -> ObservationMemory:
-    """One-sample view of an encoded memory: streams sliced, the prefix
-    cache RE-SLICED per layer (decode appends to it, so each row gets its
-    own copy of the cache structure over row-sliced tensors)."""
-    cache = memory.cache
-    if cache is None:
-        raise ValueError(
-            "ObservationMemory carries no prefix cache — encode with "
-            "retain_cache=True (BijouModel does this for ar_backbone)",
-        )
-    sliced = KVCache(cache.config)
-    for idx, layer in enumerate(cache.layers):
-        if layer.keys is not None and layer.values is not None:
-            sliced.layers[idx].keys = layer.keys[row : row + 1]
-            sliced.layers[idx].values = layer.values[row : row + 1]
-    sliced.seen_tokens = cache.seen_tokens
-    return ObservationMemory(
-        streams={
-            name: MemoryStream(
-                key=s.key[row : row + 1],
-                value=s.value[row : row + 1],
-            )
-            for name, s in memory.streams.items()
-        },
-        length=memory.length,
-        padding_mask=(
-            None if memory.padding_mask is None else memory.padding_mask[row : row + 1]
-        ),
-        cache=sliced,
     )
 
 
@@ -690,50 +619,61 @@ def ar_backbone_losses(
     memory: ObservationMemory,
     batch: CollatedBatch[Any],
 ) -> tuple[Tensor, Tensor, Tensor | None]:
-    """Teacher-forced FULL-VOCABULARY cross-entropy — (total, action
+    """Teacher-forced FULL-VOCABULARY cross-entropy over the format-2
+    suffix ``[state][opener][aux?][BOA][actions]`` — (total, action
     component, aux component | None).
 
-    Without aux (``batch.suffix_tokens`` None) this is EXACTLY the
-    pre-aux objective, single-call CE, byte-identical (oracle-gated):
-    inputs ``action_tokens[:, :-1]``, targets ``block_base + codec_id``,
-    the state position's constant seed BOA and PADs IGNOREd.
-
-    With aux, the suffix is the collator's mixed-id assembly and the
-    loss is componentized: ``action`` = mean CE over action targets
-    (same scale as the pretrain objective — curves stay comparable),
-    ``aux`` = mean CE over aux-text targets (0-sample-safe), total =
-    ``action + aux_loss_weight · aux``. The state position stays IGNOREd
-    in both modes: whether aux follows depends on LABEL AVAILABILITY,
-    which pixels cannot predict — training it would inject pipeline
-    noise. Inference forces the scaffold instead.
+    The opener is prepended HERE (the collator supplies content only):
+    state and all-but-the-last opener positions predict constants and
+    are IGNOREd; the last opener position is the trained DECISION POINT
+    — first aux token on labeled samples, BOA otherwise (aux-less runs
+    train it to BOA on every sample). Component split: ``action`` = mean
+    CE over action targets (pretrain scale), ``aux`` = mean CE over
+    aux-text targets (None when the batch has no aux capability), total
+    = action + aux_loss_weight * aux.
     """
     state = (batch.state - batch.state_stats.mean) / batch.state_stats.std
-    if batch.suffix_tokens is None:
+    base = decoder.config.block_base
+    if batch.suffix_tokens is not None:
+        is_aux_content = batch.suffix_is_aux
+        assert is_aux_content is not None  # collator invariant
+        content = batch.suffix_tokens
+    else:
         tokens = batch.action_tokens
         if tokens is None:
             raise SystemExit(
                 "batch carries no action_tokens — build the Collator with "
                 "an ActionCodec (--fast-tokenizer) to train an AR decoder",
             )
-        logits = decoder(backbone, memory, state, tokens[:, :-1])
-        targets = tokens + decoder.config.block_base
-        targets[:, 0] = IGNORE_INDEX  # the seed BOA, a constant
-        targets[tokens == decoder.codec.pad] = IGNORE_INDEX
+        content = tokens + base
+        is_aux_content = None
+    opener = torch.tensor(
+        [decoder.opener_ids],
+        dtype=torch.long,
+        device=content.device,
+    ).expand(content.shape[0], -1)
+    full = torch.cat([opener, content], dim=1)
+    logits = decoder.forward_backbone_ids(backbone, memory, state, full[:, :-1])
+    pad_id = base + decoder.codec.pad
+    targets = full.clone()
+    # State + opener-constant positions carry no signal; the LAST opener
+    # position (targets index len(opener)-1... its target is full[len]
+    # = content[0]) is the decision point and stays trained. Note the
+    # shift: logits[j] predicts full[j], so IGNORE full[0..len-1] keeps
+    # exactly the constant opener targets out and content[0] in.
+    targets[:, : opener.shape[1]] = IGNORE_INDEX
+    targets[full == pad_id] = IGNORE_INDEX
+    if is_aux_content is None:
         action = F.cross_entropy(
             logits.reshape(-1, logits.shape[-1]).float(),
             targets.reshape(-1),
             ignore_index=IGNORE_INDEX,
         )
         return action, action, None
-
-    suffix = batch.suffix_tokens
-    is_aux = batch.suffix_is_aux
-    assert is_aux is not None  # collator invariant: the fields travel together
-    logits = decoder.forward_backbone_ids(backbone, memory, state, suffix[:, :-1])
-    pad_id = decoder.config.block_base + decoder.codec.pad
-    targets = suffix.clone()
-    targets[:, 0] = IGNORE_INDEX
-    targets[suffix == pad_id] = IGNORE_INDEX
+    is_aux = torch.cat(
+        [torch.zeros_like(opener, dtype=torch.bool), is_aux_content],
+        dim=1,
+    )
     elementwise = F.cross_entropy(
         logits.reshape(-1, logits.shape[-1]).float(),
         targets.reshape(-1),

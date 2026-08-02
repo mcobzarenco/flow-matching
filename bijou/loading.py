@@ -26,7 +26,7 @@ from huggingface_hub import snapshot_download
 from safetensors.torch import load_file
 from torch import Tensor
 
-from .aux_text import AuxDecodeConfig, build_aux_runtime
+from .aux_text import SUFFIX_FORMAT, AuxDecodeConfig, build_aux_runtime
 from .data import DatasetStats
 from .decoders.ar_backbone import ARBackboneConfig, ARBackboneDecoder
 from .decoders.ar_fast import ARFastConfig, ARFastDecoder
@@ -250,6 +250,7 @@ def ar_backbone_config_to_dict(config: ARBackboneConfig) -> dict[str, Any]:
         "state_dim": config.state_dim,
         "chunk_size": config.chunk_size,
         "action_dim": config.action_dim,
+        "suffix_format": config.suffix_format,
         "aux": None if config.aux is None else config.aux.to_dict(),
     }
 
@@ -263,6 +264,8 @@ def ar_backbone_config_from_dict(data: dict[str, Any]) -> ARBackboneConfig:
         state_dim=int(data["state_dim"]),
         chunk_size=int(data["chunk_size"]),
         action_dim=int(data["action_dim"]),
+        # Absent = legacy pre-opener checkpoint (format 1).
+        suffix_format=int(data.get("suffix_format", 1)),
         aux=None if aux is None else AuxDecodeConfig.from_dict(aux),
     )
 
@@ -843,19 +846,24 @@ def from_checkpoint(
                 dtype=expert_dtype,
             )
         else:
-            aux_runtime = None
-            if decoder_config.aux is not None:
-                # The scaffold tokenizes from the backbone checkpoint's
-                # own tokenizer files — the same artifact the collator
-                # rendered training text with.
-                aux_runtime = build_aux_runtime(
-                    decoder_config.aux,
-                    transformers.AutoTokenizer.from_pretrained(str(checkpoint_dir)),
-                )
+            # The backbone checkpoint's own tokenizer — the artifact the
+            # collator rendered training text with (opener + aux metrics).
+            text_tokenizer = (
+                transformers.AutoTokenizer.from_pretrained(str(checkpoint_dir))
+                if decoder_config.suffix_format >= SUFFIX_FORMAT
+                or decoder_config.aux is not None
+                else None
+            )
+            aux_runtime = (
+                build_aux_runtime(decoder_config.aux, text_tokenizer)
+                if decoder_config.aux is not None and text_tokenizer is not None
+                else None
+            )
             decoder = ARBackboneDecoder(
                 decoder_config,
                 backbone_config.text,
                 resolve_action_codec(decoder_config.tokenizer),
+                tokenizer=text_tokenizer,
                 aux_runtime=aux_runtime,
                 device=device,
                 dtype=expert_dtype,
