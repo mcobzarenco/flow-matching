@@ -2,12 +2,14 @@
 bijou/rollout.py).
 
 Same inference path as the physical rollouts — BijouPolicy + the real
-``observation_to_item`` — with SO101Sim in place of SOFollower. The sim's
-top camera is fed under the name "front", matching the rig dataset's
-(mislabelled) camera key.
+``observation_to_item`` — with SO101Sim in place of SOFollower. The sim
+models a TOP and a WRIST camera and names them exactly that (kind tags
+derive from the names via the shared rollout helper, no privileged
+mapping; that the rig teleop dataset recorded its top view under a
+"front" key is a data-side mislabel to fix in the data, not here).
 
 Runs one episode per seed (policy loaded once), writes a full-resolution
-side-by-side (front|wrist) H.264 video per seed to
+side-by-side (top|wrist) H.264 video per seed to
 outputs/sim/rollout_seed<NNN>.mp4, and prints a per-seed summary table:
 initial/min/final benchy->disk distance and success.
 
@@ -28,10 +30,14 @@ import torch
 
 from bijou.decoders.flow import SamplingMethod
 from bijou.eval.policies import BijouPolicy
-from bijou.rollout import SO_MOTORS, observation_to_item
+from bijou.rollout import SO_MOTORS, camera_kinds_from_names, observation_to_item
 
 from . import OUTPUT_DIR
 from .so101_sim import CONTROL_HZ, SimObservation, SO101Sim
+
+# The sim's cameras, named for what they ARE (both names sit inside the
+# semantic kind vocabulary, so the tags follow for free).
+SIM_CAMERAS = ("top", "wrist")
 
 STATS_REPO_ID = "mcobzarenco/so101_pick_place_v2"
 TASK = "Pick up the toy boat and place it on the wooden disk."
@@ -79,8 +85,9 @@ def to_observation(obs: SimObservation) -> dict[str, object]:
     observation: dict[str, object] = {
         f"{motor}.pos": float(obs.state[index]) for index, motor in enumerate(SO_MOTORS)
     }
-    observation["front"] = obs.top
-    observation["wrist"] = obs.wrist
+    top, wrist = SIM_CAMERAS
+    observation[top] = obs.top
+    observation[wrist] = obs.wrist
     return observation
 
 
@@ -116,7 +123,13 @@ def run_episode(
     success_tick: int | None = None
 
     for replan in range(replans):
-        item = observation_to_item(to_observation(obs), TASK, stats, chunk_size)
+        item = observation_to_item(
+            to_observation(obs),
+            TASK,
+            stats,
+            chunk_size,
+            camera_kinds_from_names(SIM_CAMERAS),
+        )
         start = time.perf_counter()
         chunk = policy.predict([item], [replan])[0]
         latency = time.perf_counter() - start

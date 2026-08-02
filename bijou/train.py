@@ -141,6 +141,7 @@ class TrainArgs:
     aux_loss_weight: float
     aux_dropout: float
     aux_prompt_hash: str | None
+    camera_kind_dropout: float
     decoder_hidden: int
     decoder_heads: int
     decoder_intermediate: int
@@ -858,6 +859,7 @@ def save_checkpoint(
         prompt=GemmaPromptConfig(
             exports=model.encoder.exports,
             max_soft_tokens=args.max_soft_tokens,
+            camera_tags=model.encoder.camera_tags,
         ),
         decoder=decoder_schema_dict(model.decoder),
         normalization=aggregate_stats(normalizers),
@@ -1095,6 +1097,15 @@ def parse_args() -> TrainArgs:
         "on a mid-sweep re-materialization",
     )
     parser.add_argument(
+        "--camera-kind-dropout",
+        type=float,
+        default=0.1,
+        help="probability a camera's semantic kind tag renders as "
+        "'unknown' at train time (per camera per visit): keeps unjudged "
+        "rigs in-distribution at inference. Probes always render true "
+        "kinds",
+    )
+    parser.add_argument(
         "--fast-tokenizer",
         default=None,
         help="FAST tokenizer artifact: a local directory or "
@@ -1314,6 +1325,10 @@ def parse_args() -> TrainArgs:
         parser.error("--aux-prompt-hash requires --aux-fields (it gates aux labels)")
     if raw.aux_dropout is not None and not 0.0 <= raw.aux_dropout < 1.0:
         parser.error(f"--aux-dropout {raw.aux_dropout} outside [0, 1)")
+    if not 0.0 <= raw.camera_kind_dropout < 1.0:
+        parser.error(
+            f"--camera-kind-dropout {raw.camera_kind_dropout} outside [0, 1)",
+        )
     aux_dropout = (
         raw.aux_dropout
         if raw.aux_dropout is not None
@@ -1375,6 +1390,7 @@ def parse_args() -> TrainArgs:
         aux_loss_weight=raw.aux_loss_weight,
         aux_dropout=aux_dropout,
         aux_prompt_hash=raw.aux_prompt_hash,
+        camera_kind_dropout=raw.camera_kind_dropout,
         decoder_hidden=raw.decoder_hidden,
         decoder_heads=raw.decoder_heads,
         decoder_intermediate=raw.decoder_intermediate,
@@ -1560,20 +1576,35 @@ def main() -> int:
                 flush=True,
             )
     collator = Collator(
-        inputs=GemmaInputsCollator(str(checkpoint_dir), args.max_soft_tokens),
+        inputs=GemmaInputsCollator(
+            str(checkpoint_dir),
+            args.max_soft_tokens,
+            camera_tags=True,
+        ),
         instruction=args.instruction,
         camera_filter=args.cameras,
         max_cameras=args.max_cameras,
         action_codec=action_codec,
         aux=aux_spec,
+        camera_kind_dropout=args.camera_kind_dropout,
     )
-    # Probes and eval tables always see the TRUE labels: mode dropout is
-    # a training-time regularizer, so the probe-side collator runs a
-    # dropout-0 clone of the aux spec.
-    probe_collator = (
-        dataclasses.replace(collator, aux=dataclasses.replace(aux_spec, dropout=0.0))
-        if aux_spec is not None and aux_spec.dropout > 0.0
-        else collator
+    if is_main and selection.camera_kinds:
+        tagged = sum(len(v) for v in selection.camera_kinds.values())
+        print(
+            f"camera kinds: {tagged} tagged camera(s) across "
+            f"{len(selection.camera_kinds)} dataset(s); untagged render "
+            f"'unknown' (kind dropout {args.camera_kind_dropout})",
+            flush=True,
+        )
+    # Probes and eval tables always see the TRUE labels: aux-mode and
+    # camera-kind dropout are training-time regularizers, so the
+    # probe-side collator runs dropout-0 clones.
+    probe_collator = dataclasses.replace(
+        collator,
+        aux=(
+            dataclasses.replace(aux_spec, dropout=0.0) if aux_spec is not None else None
+        ),
+        camera_kind_dropout=0.0,
     )
     # The explicit generator (both modes) makes the shuffle order and the
     # dataloader worker base-seeds a pure function of (--seed, rank) —
@@ -1649,6 +1680,7 @@ def main() -> int:
             backbone_config,
             exports=(stop,),
             max_soft_tokens=args.max_soft_tokens,
+            camera_tags=True,
             device=device,
             dtype=backbone_dtype,
             depth=BackboneDepth.FULL,
@@ -1723,6 +1755,7 @@ def main() -> int:
             backbone_config,
             exports=exports,
             max_soft_tokens=args.max_soft_tokens,
+            camera_tags=True,
             device=device,
             dtype=backbone_dtype,
         )

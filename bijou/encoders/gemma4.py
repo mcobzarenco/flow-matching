@@ -103,12 +103,32 @@ class GemmaInputs:
         )
 
 
-class GemmaInputsCollator:
-    """InputsCollator for the Gemma backbone (see the module docstring)."""
+def camera_tag_text(kind: str) -> str:
+    """The per-camera prompt tag preceding each image (prompt format 2),
+    e.g. "[wrist camera]". Bracket-delimited on purpose: the Gemma chat
+    template TRIMS every text part's edge whitespace (measured — a
+    leading "\\n" separator vanished), so the tag must self-delimit.
+    The exact bytes are a trained contract — change only with a prompt
+    format bump."""
+    return f"[{kind} camera]"
 
-    def __init__(self, checkpoint: str, max_soft_tokens: int) -> None:
+
+class GemmaInputsCollator:
+    """InputsCollator for the Gemma backbone (see the module docstring).
+    ``camera_tags`` selects prompt format 2 (per-camera semantic tags
+    from CameraFrame.kind, sandwich otherwise unchanged); False renders
+    the historical tag-less format-1 prompt byte-identically."""
+
+    def __init__(
+        self,
+        checkpoint: str,
+        max_soft_tokens: int,
+        *,
+        camera_tags: bool,
+    ) -> None:
         self.checkpoint = checkpoint
         self.max_soft_tokens = max_soft_tokens
+        self.camera_tags = camera_tags
         self._processor: Any = None
 
     @override
@@ -139,10 +159,14 @@ class GemmaInputsCollator:
             content: list[dict[str, Any]] = [
                 {"type": "text", "text": sample.instruction},
             ]
-            content.extend(
-                {"type": "image", "image": self._to_pil(camera.image)}
-                for camera in sample.cameras
-            )
+            for camera in sample.cameras:
+                if self.camera_tags:
+                    content.append(
+                        {"type": "text", "text": camera_tag_text(camera.kind)},
+                    )
+                content.append(
+                    {"type": "image", "image": self._to_pil(camera.image)},
+                )
             content.append({"type": "text", "text": sample.instruction})
             conversations.append([{"role": "user", "content": content}])
 
@@ -188,12 +212,14 @@ class GemmaEncoder(nn.Module):
         exports: tuple[int, ...],
         processor_dir: str,
         max_soft_tokens: int,
+        camera_tags: bool,
     ) -> None:
         super().__init__()
         self.config = config
         self.exports = exports
         self.processor_dir = processor_dir
         self.max_soft_tokens = max_soft_tokens
+        self.camera_tags = camera_tags
 
     def stream_geometries(self) -> dict[str, StreamGeometry]:
         """Static geometry per stream name; keys and order match every
@@ -209,7 +235,11 @@ class GemmaEncoder(nn.Module):
     def inputs_collator(self) -> InputsCollator[GemmaInputs]:
         """The encoder-specific half of collation (pickleable into
         dataloader workers)."""
-        return GemmaInputsCollator(self.processor_dir, self.max_soft_tokens)
+        return GemmaInputsCollator(
+            self.processor_dir,
+            self.max_soft_tokens,
+            camera_tags=self.camera_tags,
+        )
 
     def encode_tensors(
         self,

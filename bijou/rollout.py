@@ -37,6 +37,7 @@ import argparse
 import json
 import sys
 import time
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
@@ -44,7 +45,7 @@ import torch
 from lerobot.cameras.opencv import OpenCVCameraConfig
 from lerobot.robots.so_follower import SOFollower, SOFollowerRobotConfig
 
-from .aux_text import AuxDecodeMode
+from .aux_text import CAMERA_KINDS, AuxDecodeMode
 from .data import DatasetStats
 from .eval.policies import BijouPolicy
 from .model import SamplingMethod
@@ -163,11 +164,32 @@ def rig_stats(args: argparse.Namespace, policy: BijouPolicy) -> DatasetStats:
     raise SystemExit("pass --stats-repo-id or --stats-dataset")
 
 
+def camera_kinds_from_names(names: Iterable[str]) -> dict[str, str]:
+    """Per-camera semantic kinds from the operator's own camera names: a
+    name inside the judge vocabulary IS its kind; anything else renders
+    "unknown" (trained in-distribution via kind dropout) with a LOUD
+    warning — name cameras by viewpoint to give the model the signal."""
+    kinds: dict[str, str] = {}
+    for name in names:
+        if name in CAMERA_KINDS:
+            kinds[name] = name
+        else:
+            print(
+                f"WARNING: camera name {name!r} is not in the semantic "
+                f"kind vocabulary {sorted(CAMERA_KINDS)} — its prompt tag "
+                "renders as 'unknown'",
+                flush=True,
+            )
+            kinds[name] = "unknown"
+    return kinds
+
+
 def observation_to_item(
     observation: dict[str, Any],
     task: str,
     stats: DatasetStats,
     chunk_size: int,
+    camera_kinds: dict[str, str],
 ) -> dict[str, Any]:
     """Robot observation -> the item shape BijouPolicy consumes (mirrors a
     StatsAttachedDataset item, including the stats tensors). Ground-truth
@@ -183,6 +205,9 @@ def observation_to_item(
     state = torch.tensor([float(observation[f"{m}.pos"]) for m in SO_MOTORS])
     item: dict[str, Any] = {
         "task": task,
+        # Kinds travel with the item, like the stats (the collator reads
+        # item["camera_kinds"] — see rollout.camera_kinds_from_names).
+        "camera_kinds": camera_kinds,
         "observation.state": state,
         "action": torch.zeros(chunk_size, len(SO_MOTORS)),
         "action_is_pad": torch.zeros(chunk_size, dtype=torch.bool),
@@ -200,6 +225,8 @@ def main() -> int:
     args = parse_args()
     torch.set_float32_matmul_precision("high")
     device = torch.device(args.device)
+
+    rig_kinds = camera_kinds_from_names(spec.partition("=")[0] for spec in args.camera)
 
     policy = BijouPolicy(
         args.checkpoint,
@@ -259,7 +286,13 @@ def main() -> int:
     try:
         while time.perf_counter() < deadline:
             observation = robot.get_observation()
-            item = observation_to_item(observation, args.task, stats, chunk_size)
+            item = observation_to_item(
+                observation,
+                args.task,
+                stats,
+                chunk_size,
+                rig_kinds,
+            )
             start = time.perf_counter()
             chunk = policy.predict([item], [replans])[0]
             latency = time.perf_counter() - start

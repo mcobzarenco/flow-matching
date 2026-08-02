@@ -114,12 +114,17 @@ class GemmaPromptConfig:
 
     exports: tuple[int, ...]
     max_soft_tokens: int
+    # Prompt format dial: per-camera semantic tags (kind from the judge
+    # annotations, "unknown" fallback). Absent in old checkpoints =
+    # False (tag-less prompts, rendered byte-identically forever).
+    camera_tags: bool
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "kind": PromptKind.GEMMA4.value,
             "exports": list(self.exports),
             "max_soft_tokens": self.max_soft_tokens,
+            "camera_tags": self.camera_tags,
         }
 
     @classmethod
@@ -127,6 +132,7 @@ class GemmaPromptConfig:
         return cls(
             exports=tuple(int(layer) for layer in data["exports"]),
             max_soft_tokens=int(data["max_soft_tokens"]),
+            camera_tags=bool(data.get("camera_tags", False)),
         )
 
     @property
@@ -397,9 +403,12 @@ def from_backbone(
     expert_dtype: torch.dtype | None = None,
     attn_backend: AttentionBackend = DEFAULT_ATTENTION_BACKEND,
     max_soft_tokens: int = 140,
+    camera_tags: bool = True,
 ) -> BijouModel:
     """Build a Bijou model (GemmaEncoder + FlowDecoder) from a Gemma 4
-    checkpoint.
+    checkpoint. ``camera_tags`` selects the prompt format (True = the
+    current per-camera semantic tags; loaders of tag-less checkpoints
+    pass the recorded False).
 
     Pass either a full ``expert_config`` or just ``action_dim``/``state_dim``
     to use :func:`default_expert_config`. The backbone is truncated to its
@@ -439,6 +448,7 @@ def from_backbone(
         config,
         exports=expert_config.streams,
         max_soft_tokens=max_soft_tokens,
+        camera_tags=camera_tags,
         device=device,
         dtype=dtype,
         attn_backend=attn_backend,
@@ -458,6 +468,7 @@ def build_gemma_encoder(
     *,
     exports: tuple[int, ...],
     max_soft_tokens: int,
+    camera_tags: bool,
     device: DeviceLike,
     dtype: torch.dtype | None,
     attn_backend: AttentionBackend = DEFAULT_ATTENTION_BACKEND,
@@ -482,6 +493,7 @@ def build_gemma_encoder(
         exports=exports,
         processor_dir=str(checkpoint_dir),
         max_soft_tokens=max_soft_tokens,
+        camera_tags=camera_tags,
     )
     return backbone, encoder
 
@@ -830,6 +842,7 @@ def from_checkpoint(
             backbone_config,
             exports=sections.prompt.exports,
             max_soft_tokens=sections.prompt.max_soft_tokens,
+            camera_tags=sections.prompt.camera_tags,
             device=device,
             dtype=dtype,
             attn_backend=attn_backend,
@@ -897,6 +910,10 @@ def from_checkpoint(
             expert_dtype=expert_dtype,
             attn_backend=attn_backend,
             max_soft_tokens=info.max_soft_tokens,
+            # Format-1 checkpoints predate the prompt section = tag-less.
+            camera_tags=(
+                sections.prompt.camera_tags if sections.prompt is not None else False
+            ),
         )
     # CPU-load + copy-in for the same transient-memory reason as
     # load_adapted_backbone (the expert file is 1.6 GB fp32).

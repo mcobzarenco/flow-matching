@@ -55,14 +55,22 @@ def stats(*, with_quantiles: bool) -> DatasetStats:
     )
 
 
-def item(*, with_quantiles: bool, cameras: tuple[str, ...] = ("front",)) -> dict:
+def item(
+    *,
+    with_quantiles: bool,
+    cameras: tuple[str, ...] = ("front",),
+    camera_kinds: dict[str, str] | None = None,
+) -> dict:
     payload: dict[str, Any] = {
         "task": "pick up the cube",
+        "repo_id": "user/rig",
         "observation.state": torch.zeros(DIM),
         "action": torch.zeros(CHUNK, DIM),
         "action_is_pad": torch.zeros(CHUNK, dtype=torch.bool),
         **stats(with_quantiles=with_quantiles).item_tensors(),
     }
+    if camera_kinds is not None:
+        payload["camera_kinds"] = camera_kinds
     for name in cameras:
         payload[f"observation.images.{name}"] = torch.rand(3, 8, 8)
     return payload
@@ -76,6 +84,7 @@ def collator(**overrides: Any) -> Collator[FakeInputs]:
         "max_cameras": None,
         "action_codec": None,
         "aux": None,
+        "camera_kind_dropout": 0.0,
     }
     kwargs.update(overrides)
     return Collator(**kwargs)
@@ -122,6 +131,55 @@ def test_camera_filter_matches_bare_names() -> None:
     batch = collator(camera_filter=("wrist",))([sample_item])
     (prompt,) = batch.encoder_inputs.samples
     assert tuple(camera.name for camera in prompt.cameras) == ("wrist",)
+
+
+def test_camera_kinds_resolve_with_unknown_fallback() -> None:
+    """Kinds ride the ITEM (the stats convention); missing map/camera ⇒
+    unknown; ORDER stays the sorted camera keys regardless of kind
+    (multiple unknowns keep a stable key-derived order)."""
+    kinds = {"front": "front", "gripper_cam": "wrist"}
+    sample_item = item(
+        with_quantiles=True,
+        cameras=("zed", "front", "gripper_cam", "aux2"),
+        camera_kinds=kinds,
+    )
+    batch = collator()([sample_item])
+    (prompt,) = batch.encoder_inputs.samples
+    assert [(c.name, c.kind) for c in prompt.cameras] == [
+        ("aux2", "unknown"),
+        ("front", "front"),
+        ("gripper_cam", "wrist"),
+        ("zed", "unknown"),
+    ]
+    bare = item(with_quantiles=True)  # no camera_kinds key at all
+    batch = collator()([bare])
+    (prompt,) = batch.encoder_inputs.samples
+    assert prompt.cameras[0].kind == "unknown"
+
+
+def test_camera_kind_dropout_is_seeded_and_bounded() -> None:
+    kinds = {"front": "front"}
+    torch.manual_seed(7)
+    dropped = collator(camera_kind_dropout=0.5)
+    pattern = [
+        dropped([item(with_quantiles=True, camera_kinds=kinds)])
+        .encoder_inputs.samples[0]
+        .cameras[0]
+        .kind
+        for _ in range(32)
+    ]
+    assert "unknown" in pattern and "front" in pattern  # both outcomes
+    torch.manual_seed(7)
+    again = collator(camera_kind_dropout=0.5)
+    assert [
+        again([item(with_quantiles=True, camera_kinds=kinds)])
+        .encoder_inputs.samples[0]
+        .cameras[0]
+        .kind
+        for _ in range(32)
+    ] == pattern
+    with pytest.raises(ValueError, match="outside"):
+        collator(camera_kind_dropout=1.0)
 
 
 def test_dataset_stats_quantile_lifecycle() -> None:

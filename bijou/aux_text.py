@@ -56,7 +56,7 @@ from lerobot.datasets.language import (
     EXTENDED_STYLES,
     STYLE_REGISTRY,
 )
-from lerobot.datasets.language_render import active_at, emitted_at
+from lerobot.datasets.language_render import active_at
 from torch import Tensor
 
 # The project-local lerobot language style event rows are stored under.
@@ -68,20 +68,31 @@ EVENT_ONLY_STYLES.add(EVENT_STYLE)
 STYLE_REGISTRY.add(EVENT_STYLE)
 
 AUX_TEMPLATE_VERSION = 2
-# Suffix format 3 (the only trained format going forward): every
+# Suffix format 4 (the only trained format going forward): every
 # ar_backbone suffix — aux or not — is [state][GENERATION_OPENER][MODE]
-# [aux text when labeled][BOA][actions]. The opener is the IT chat
-# template's own generation prompt (introduced by format 2, which
-# OPENER_SUFFIX_FORMAT marks for per-feature legacy gating); the MODE
+# [aux text when labeled][BOA][actions]. The opener is Gemma-4's OWN
+# generation prompt — the exact string apply_chat_template appends with
+# add_generation_prompt=True, `<|turn>model\n` = ids [105, 4368, 107]
+# on E2B (verified against the real checkpoint 2026-08-02; formats 2–3
+# mistakenly used the Gemma-3 string "<start_of_turn>model\n", which
+# tokenizes as 9 PLAIN-TEXT pieces — self-consistent but not the
+# reinforced IT transition). The MODE
 # token is FED, never predicted — [AUX] on samples that carry aux
 # supervision, [ACT] otherwise — so "speak vs act" is commanded by the
 # caller instead of learned as a marginal over whichever frames a judge
 # happened to label (label presence is explained away; vision features
 # are never asked to predict judged-ness). Aux-less runs feed [ACT] on
-# every sample.
-SUFFIX_FORMAT = 3
+# every sample. Feature gates: opener ≥ OPENER_SUFFIX_FORMAT, mode
+# token ≥ MODE_SUFFIX_FORMAT; anything < SUFFIX_FORMAT is legacy
+# (loadable for warm starts, decode warned).
+SUFFIX_FORMAT = 4
+MODE_SUFFIX_FORMAT = 3
 OPENER_SUFFIX_FORMAT = 2
-GENERATION_OPENER = "<start_of_turn>model\n"
+GENERATION_OPENER = "<|turn>model\n"
+# The judge's semantic camera-kind vocabulary (episode-annotations.md):
+# per-dataset majority vote; "unknown" doubles as the missing/tie/
+# dropout value, so prompts render one format everywhere.
+CAMERA_KINDS = frozenset({"wrist", "top", "front", "side", "unknown"})
 # Mode token offsets: backbone id = (block_base − NUM_MODES) + offset —
 # directly below the FAST block, inside the same reserved-unused tail,
 # embedded through the decoder's trainable mode tables.
@@ -258,7 +269,9 @@ class AuxSpec:
     block_base: int
     dropout: float
     max_subgoal_tokens: int = 16
-    max_event_tokens: int = 16
+    # Wider than subgoal: multi-event frames join with "; " (still
+    # inside the MAX_FREE_TOKENS worst case).
+    max_event_tokens: int = 24
     _tokenizer: Any = field(default=None, repr=False, compare=False)
     _generator: torch.Generator | None = field(default=None, repr=False, compare=False)
 
@@ -329,20 +342,15 @@ class AuxSpec:
                 percent = round(float(value) * 100)
                 return self._encode(f"{PROGRESS_HEADER}{percent}%{FIELD_TERMINATOR}")
             case AuxField.EVENT:
-                row = emitted_at(
-                    float(item["timestamp"]),
-                    persistent=item.get("language_persistent") or [],
-                    events=item.get("language_events") or [],
-                    style=EVENT_STYLE,
-                )
-                if row is None or not row.get("content"):
+                text = events_text(item)
+                if text is None:
                     return None
                 header = self._encode(EVENT_HEADER)
-                body = self._encode(str(row["content"]))
+                body = self._encode(text)
                 if len(body) > self.max_event_tokens:
                     print(
                         f"[aux] truncating event ({len(body)} > "
-                        f"{self.max_event_tokens} tokens): {row['content']!r}",
+                        f"{self.max_event_tokens} tokens): {text!r}",
                         flush=True,
                     )
                     body = body[: self.max_event_tokens]
@@ -366,6 +374,23 @@ class AuxSpec:
             if float(torch.rand((), generator=self._generator)) < self.dropout:
                 return []
         return ids
+
+
+def events_text(item: dict[str, Any]) -> str | None:
+    """All events that fired on this frame, "; "-joined, or None.
+    ``language_events`` is FRAME-LOCAL in lerobot items, so every
+    event-style row in it belongs to this exact frame — read directly
+    rather than through ``emitted_at``, whose single-row resolver raises
+    on multi-event frames (drop + regression on one frame is real data;
+    it killed a corpus run on 2026-08-02)."""
+    contents = [
+        str(row["content"])
+        for row in item.get("language_events") or []
+        if row.get("style") == EVENT_STYLE and row.get("content")
+    ]
+    if not contents:
+        return None
+    return "; ".join(contents)
 
 
 def aux_label_text(item: dict[str, Any], fields: tuple[AuxField, ...]) -> str:
@@ -397,14 +422,9 @@ def aux_label_text(item: dict[str, Any], fields: tuple[AuxField, ...]) -> str:
                         f"{FIELD_TERMINATOR}",
                     )
             case AuxField.EVENT:
-                row = emitted_at(
-                    float(item["timestamp"]),
-                    persistent=item.get("language_persistent") or [],
-                    events=item.get("language_events") or [],
-                    style=EVENT_STYLE,
-                )
-                if row is not None and row.get("content"):
-                    parts.append(f"{EVENT_HEADER}{row['content']}{FIELD_TERMINATOR}")
+                text = events_text(item)
+                if text is not None:
+                    parts.append(f"{EVENT_HEADER}{text}{FIELD_TERMINATOR}")
     return "".join(parts)
 
 

@@ -57,6 +57,7 @@ from ..aux_text import (
     AUX_MODE,
     GENERATION_OPENER,
     MAX_FREE_TOKENS,
+    MODE_SUFFIX_FORMAT,
     NUM_MODES,
     OPENER_SUFFIX_FORMAT,
     SUFFIX_FORMAT,
@@ -88,11 +89,11 @@ class ARBackboneConfig:
     state_dim: int
     chunk_size: int
     action_dim: int
-    # Suffix format (aux_text.SUFFIX_FORMAT when written): 3 = the
-    # opener+mode format every new run trains; parsed 2 (opener, no
-    # mode) / 1 (pre-opener) = legacy checkpoints — loadable for warm
-    # starts (fresh mode rows), decoded via their own mode-less path
-    # with a loud warning.
+    # Suffix format (aux_text.SUFFIX_FORMAT when written): 4 = the
+    # real-Gemma-4-opener + mode format every new run trains; parsed
+    # 1–3 = legacy checkpoints (3 trained a plain-text Gemma-3-style
+    # opener; ≤2 additionally predate the mode token) — loadable for
+    # warm starts, decode warned.
     suffix_format: int
     # Aux text record: template version + fields + label provenance
     # (None = trained without aux — the decision point trains to BOA).
@@ -109,7 +110,7 @@ class ARBackboneConfig:
                 "text shipped WITH the opener format — no such checkpoint "
                 "exists, and the decode path could not elicit it",
             )
-        if self.suffix_format >= SUFFIX_FORMAT and self.block_base < NUM_MODES:
+        if self.suffix_format >= MODE_SUFFIX_FORMAT and self.block_base < NUM_MODES:
             raise ValueError(
                 f"block_base {self.block_base} leaves no room for the "
                 f"{NUM_MODES} mode ids directly below the FAST block",
@@ -156,9 +157,11 @@ class ARBackboneDecoder(nn.Module):
         # Cumulative free-phase budget exhaustions (decode health metric).
         self.fallback_count = 0
         # Per-feature format gating: the opener arrived with format 2,
-        # the mode token with format 3 — a format-2 checkpoint keeps its
-        # trained opener and decodes via the mode-less legacy path.
-        self.uses_modes = config.suffix_format >= SUFFIX_FORMAT
+        # the mode token with format 3, the REAL Gemma-4 opener bytes
+        # with format 4 — pre-4 checkpoints load for warm starts but
+        # decode with the current opener bytes, which differ from what
+        # they trained (warned below).
+        self.uses_modes = config.suffix_format >= MODE_SUFFIX_FORMAT
         if config.suffix_format >= OPENER_SUFFIX_FORMAT:
             if tokenizer is None:
                 raise ValueError(
@@ -171,12 +174,13 @@ class ARBackboneDecoder(nn.Module):
             )
         else:
             self.opener_ids = ()
-        if not self.uses_modes:
+        if config.suffix_format < SUFFIX_FORMAT:
             print(
                 "[ar_backbone] LEGACY suffix format "
-                f"{config.suffix_format} checkpoint (pre-mode): decoding "
-                "uses its own mode-less path — fine for --init-from warm "
-                "starts, re-fine-tune before trusting inference",
+                f"{config.suffix_format} checkpoint: it trained "
+                f"{'without the mode token and ' if not self.uses_modes else ''}"
+                "with the old plain-text opener — fine for --init-from "
+                "warm starts, re-fine-tune before trusting inference",
                 flush=True,
             )
         if codec.vocab_total != config.vocab_total:

@@ -49,7 +49,7 @@ def spec(**overrides: Any) -> AuxSpec:
         "block_base": 1000,
         "dropout": 0.0,
         "max_subgoal_tokens": 16,
-        "max_event_tokens": 16,
+        "max_event_tokens": 24,
     }
     kwargs.update(overrides)
     built = AuxSpec(**kwargs)
@@ -141,6 +141,27 @@ def test_event_is_positives_only() -> None:
     firing = judged_item(event="boat dropped")
     assert "event: boat dropped\n" in decode(spec().render(firing))
     assert "event" not in decode(spec().render(judged_item()))
+
+
+def test_multi_event_frames_render_all_events() -> None:
+    """Two events can fire on ONE frame (drop + progress regression —
+    real corpus data; the single-row resolver crashed a corpus run on
+    2026-08-02): render them all, joined."""
+    both = judged_item(event="boat dropped")
+    both["language_events"].append(
+        {
+            "role": "assistant",
+            "content": "progress regressed",
+            "style": EVENT_STYLE,
+            "timestamp": 6.0,
+            "camera": None,
+            "tool_calls": None,
+        },
+    )
+    # CharTokenizer is 1 token/char — use a generous cap so the joined
+    # text survives (the real tokenizer packs ~4 chars/token).
+    text = decode(spec(max_event_tokens=64).render(both))
+    assert "event: boat dropped; progress regressed\n" in text
 
 
 def test_event_truncation_is_bounded() -> None:

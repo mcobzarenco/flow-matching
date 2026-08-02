@@ -37,6 +37,8 @@ import torch
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
 from torch import Tensor
 
+from .aux_text import CAMERA_KINDS
+
 
 @dataclass(frozen=True, slots=True)
 class DatasetStats:
@@ -192,7 +194,10 @@ class DatasetStats:
 class StatsAttachedDataset(torch.utils.data.Dataset[dict[str, Any]]):
     """Wraps one LeRobot dataset so every item carries its dataset's stats
     (per-dataset normalization: between-rig calibration offsets must not
-    survive into the training targets) and its ``repo_id``. Tensors are
+    survive into the training targets), its ``repo_id``, and its semantic
+    ``camera_kinds`` (short name → kind; per-dataset judge data travels
+    WITH the items, like the stats — the collator never needs a repo
+    lookup). Tensors are
     materialized per item, in the worker — see the DatasetStats docstring.
 
     Unfetchable items (e.g. a corrupt video packet — killed two multi-hour
@@ -206,9 +211,15 @@ class StatsAttachedDataset(torch.utils.data.Dataset[dict[str, Any]]):
     _RETRY_STRIDE = 9973
     _MAX_ATTEMPTS = 5
 
-    def __init__(self, dataset: LeRobotDataset, stats: DatasetStats) -> None:
+    def __init__(
+        self,
+        dataset: LeRobotDataset,
+        stats: DatasetStats,
+        camera_kinds: dict[str, str],
+    ) -> None:
         self.dataset = dataset
         self.stats = stats
+        self.camera_kinds = camera_kinds
         self.failed_fetches = 0
 
     def __len__(self) -> int:
@@ -218,6 +229,7 @@ class StatsAttachedDataset(torch.utils.data.Dataset[dict[str, Any]]):
     def __getitem__(self, index: int) -> dict[str, Any]:
         item = self._fetch_with_substitution(index, self._MAX_ATTEMPTS)
         item["repo_id"] = self.dataset.repo_id
+        item["camera_kinds"] = self.camera_kinds
         item.update(self.stats.item_tensors())
         return item
 
@@ -381,6 +393,11 @@ class DataSelection:
     # loudly) — and the distinct stamps, for checkpoint provenance.
     annotated_repos: frozenset[str]
     annotation_stamps: tuple[AnnotationStamp, ...]
+    # Per-repo semantic camera kinds (short name → wrist|top|front|side|
+    # unknown) from meta/camera_kinds.json, present only for stamped
+    # datasets whose kinds file matches their own stamp's prompt hash;
+    # missing repos/cameras render "unknown" in the prompt.
+    camera_kinds: dict[str, dict[str, str]]
 
     def concat(self) -> torch.utils.data.ConcatDataset[dict[str, Any]]:
         return torch.utils.data.ConcatDataset(self.datasets)
@@ -430,6 +447,51 @@ def annotation_stamp(
         return None
     model = stamp.get("model_filter") or (stamp.get("models") or ["<unknown>"])[0]
     return AnnotationStamp(prompt_hash=stamp_hash, judge_model=str(model))
+
+
+def camera_kinds_of(
+    dataset_dir: Path,
+    repo_id: str,
+    stamp: AnnotationStamp,
+) -> dict[str, str]:
+    """The dataset's semantic camera kinds (short name → kind), or {}
+    with a loud reason. The kinds file must have been materialized under
+    the SAME prompt hash as the dataset's own annotation stamp
+    (docs/episode-annotations.md's consistency assert); off-vocabulary
+    kinds degrade to "unknown", loudly."""
+    kinds_path = dataset_dir / "meta" / "camera_kinds.json"
+    if not kinds_path.exists():
+        return {}
+    try:
+        payload = json.loads(kinds_path.read_text())
+    except json.JSONDecodeError as error:
+        print(
+            f"[camera-kinds] {repo_id}: unparseable camera_kinds.json "
+            f"({error}) — cameras render as unknown",
+            flush=True,
+        )
+        return {}
+    kinds_hash = payload.get("prompt_hash")
+    if kinds_hash != stamp.prompt_hash:
+        print(
+            f"[camera-kinds] {repo_id}: kinds at prompt hash {kinds_hash!r} "
+            f"!= the dataset's annotation stamp {stamp.prompt_hash!r} — "
+            "cameras render as unknown (re-materialize to adopt)",
+            flush=True,
+        )
+        return {}
+    kinds: dict[str, str] = {}
+    for camera, entry in (payload.get("cameras") or {}).items():
+        kind = str(entry.get("kind", "unknown"))
+        if kind not in CAMERA_KINDS:
+            print(
+                f"[camera-kinds] {repo_id}: camera {camera!r} has "
+                f"off-vocabulary kind {kind!r} — rendering as unknown",
+                flush=True,
+            )
+            kind = "unknown"
+        kinds[str(camera)] = kind
+    return kinds
 
 
 def select_datasets(
@@ -486,6 +548,7 @@ def select_datasets(
     dropped: list[str] = []
     annotated_repos: set[str] = set()
     annotation_stamps: set[AnnotationStamp] = set()
+    camera_kinds: dict[str, dict[str, str]] = {}
     total_episodes = 0
     held_out_total = 0
     held_out_datasets = 0
@@ -585,12 +648,16 @@ def select_datasets(
         if not stats.is_finite():
             dropped.append(f"{repo_id} (non-finite action/state stats)")
             continue
-        datasets.append(StatsAttachedDataset(sub_dataset, stats))
-        selected_dirs[repo_id] = dataset_dir
         stamp = annotation_stamp(dataset_dir, repo_id, required_prompt_hash)
+        kinds: dict[str, str] = {}
         if stamp is not None:
             annotated_repos.add(repo_id)
             annotation_stamps.add(stamp)
+            kinds = camera_kinds_of(dataset_dir, repo_id, stamp)
+            if kinds:
+                camera_kinds[repo_id] = kinds
+        datasets.append(StatsAttachedDataset(sub_dataset, stats, kinds))
+        selected_dirs[repo_id] = dataset_dir
         per_dataset_stats[repo_id] = stats
         lerobot_stats[repo_id] = sub_dataset.meta.stats
         camera_census[info.cameras] += 1
@@ -612,6 +679,7 @@ def select_datasets(
                 key=lambda s: (s.prompt_hash, s.judge_model),
             ),
         ),
+        camera_kinds=camera_kinds,
         datasets=datasets,
         per_dataset_stats=per_dataset_stats,
         lerobot_stats=lerobot_stats,

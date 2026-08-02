@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import dataclasses
 from dataclasses import dataclass
-from typing import Any, Protocol, Self
+from typing import Any, Protocol, Self, override
 
 import torch
 from torch import Tensor
@@ -255,11 +255,15 @@ class CollatedBatch[I: BatchInputs]:
 class CameraFrame:
     """One camera's frame with its slot name (post-filter, sorted — e.g.
     "front", "wrist"; community datasets carry generic image/image2 names
-    with no reliable semantics, rig datasets carry real ones). Encoder
-    strategies MAY render the name into the prompt or ignore it (the
-    Gemma collator's positional behavior)."""
+    with no reliable semantics, rig datasets carry real ones) and its
+    semantic KIND (judge camera-kind vocabulary; "unknown" when the
+    dataset is unjudged, the camera is untagged, or kind dropout fired).
+    Slot ORDER is always the sorted camera keys — kinds never reorder,
+    so multiple "unknown" cameras keep a stable, key-derived order.
+    Encoder strategies render the kind (camera tags) or ignore both."""
 
     name: str
+    kind: str
     image: Tensor  # [3, height, width], float, [0, 1]
 
 
@@ -300,7 +304,18 @@ class Collator[I: BatchInputs]:
     """The ONE backbone-agnostic collator: stacks state/actions/targets,
     attaches per-sample NormStats, applies the camera-selection policy and
     the instruction override, and delegates encoder-input production to the
-    encoder's strategy. Never subclassed per encoder."""
+    encoder's strategy. Never subclassed per encoder.
+
+    Camera kinds travel WITH the items (``item["camera_kinds"]``: short
+    name → semantic kind, attached per dataset by StatsAttachedDataset —
+    the same convention as the stats — or handed to
+    ``rollout.observation_to_item`` as a plain per-camera dict); a
+    missing map or camera ⇒ "unknown". ``camera_kind_dropout`` replaces
+    a resolved kind with "unknown" per camera per visit (train-time
+    regularizer — inference on unjudged rigs stays in-distribution; the
+    probe-side collator runs a dropout-0 clone). Draws come from a
+    per-process generator seeded from ``torch.initial_seed()`` (the
+    AuxSpec convention)."""
 
     inputs: InputsCollator[I]
     instruction: str | None
@@ -309,6 +324,34 @@ class Collator[I: BatchInputs]:
     action_codec: ActionCodec | None
     # Aux text rendering (ar_backbone only); requires action_codec.
     aux: AuxSpec | None
+    camera_kind_dropout: float
+    _generator: torch.Generator | None = dataclasses.field(
+        default=None,
+        repr=False,
+        compare=False,
+    )
+
+    def __post_init__(self) -> None:
+        if not 0.0 <= self.camera_kind_dropout < 1.0:
+            raise ValueError(
+                f"camera kind dropout {self.camera_kind_dropout} outside [0, 1)",
+            )
+
+    @override
+    def __getstate__(self) -> dict[str, Any]:
+        # Generators don't pickle; spawned workers re-seed lazily.
+        return {**self.__dict__, "_generator": None}
+
+    def _camera_kind(self, item: dict[str, Any], camera: str) -> str:
+        kind = (item.get("camera_kinds") or {}).get(camera, "unknown")
+        if kind != "unknown" and self.camera_kind_dropout > 0.0:
+            if self._generator is None:
+                self._generator = torch.Generator().manual_seed(torch.initial_seed())
+            if float(torch.rand((), generator=self._generator)) < (
+                self.camera_kind_dropout
+            ):
+                return "unknown"
+        return kind
 
     def _action_tokens(self, items: list[dict[str, Any]]) -> Tensor | None:
         """Tokenize each item's action chunk (worker-side CPU), PAD-pad to
@@ -403,7 +446,8 @@ class Collator[I: BatchInputs]:
                 instruction=self.instruction or str(item["task"]),
                 cameras=tuple(
                     CameraFrame(
-                        name=key.removeprefix(_IMAGE_KEY_PREFIX),
+                        name=(name := key.removeprefix(_IMAGE_KEY_PREFIX)),
+                        kind=self._camera_kind(item, name),
                         image=item[key],
                     )
                     for key in self.cameras_of(item)

@@ -109,6 +109,7 @@ def encode_memory(backbone: Gemma4Model) -> ObservationMemory:
         exports=(stop,),
         processor_dir="unused",
         max_soft_tokens=1,
+        camera_tags=False,
     )
     generator = torch.Generator().manual_seed(7)
     width = max(PROMPT_LENGTHS)

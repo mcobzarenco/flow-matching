@@ -139,9 +139,28 @@ if the schedule stops lower). `KVCache.update()` is functional (no
 in-place writes), so this same path is autograd-transparent when the
 trunk is trained (§8.1).
 
-**Prompt = instruction sandwich** `[task][cam_1..N][task]` in one
+**Prompt = instruction sandwich with camera tags** (prompt format 2,
+`prompt.camera_tags` in the checkpoint; format 1 = the tag-less
+historical prompt, rendered byte-identically for old checkpoints). One
 chat-templated user turn, **LEFT-padded** across a batch with per-sample
-LOGICAL position ids (cumsum of the real-token mask). Left padding is
+LOGICAL position ids (cumsum of the real-token mask); rendered exactly
+(E2B template, verified 2026-08-02):
+
+    <bos><|turn>user\n{task}[top camera]<imgs>[wrist camera]<imgs>{task}<turn|>\n
+
+Each camera contributes a bracket-delimited semantic tag before its
+soft tokens — bracketed on purpose: the Gemma chat template TRIMS every
+text part's edge whitespace, so separators must self-delimit (~3.5
+tokens/camera). Kinds come from the judge's per-dataset
+`meta/camera_kinds.json` (majority vote, verified against the dataset's
+own annotation stamp) and travel WITH the items
+(`item["camera_kinds"]`, attached by StatsAttachedDataset exactly like
+the stats); a missing file/camera/tie renders `unknown`, and
+`--camera-kind-dropout` (default 0.1) replaces resolved kinds with
+`unknown` per camera per visit at train time so unjudged rigs stay
+in-distribution at inference (probes render true kinds). Camera slot
+ORDER never depends on kinds: always the sorted camera keys — multiple
+unknown-kind cameras keep a stable, key-derived order. Left padding is
 load-bearing (decided 2026-08-01, test-gated in
 `tests/test_backbone_continuation.py`): Gemma's sliding-window masks are
 physical-index, so right padding puts a suffix appended after the batch
@@ -150,10 +169,11 @@ windowed attention for any suffix continuation; with left padding every
 sample's suffix is physically adjacent to its real prompt. Correct for
 the cross-attention consumers too (they read positions from the mask).
 Under causal attention the sandwich yields instruction-conditioned image
-K/V *and* image-conditioned instruction K/V for a few extra tokens.
-Camera NAMES are positional slots (sorted); community image/image2 keys
-carry no reliable wrist-vs-scene semantics (SmolVLA precedent), so slot
-order is the only camera signal.
+K/V *and* image-conditioned instruction K/V for a few extra tokens, and
+each tag precedes its image so the image K/V is tag-conditioned.
+Camera NAMES remain positional slots (sorted; community image/image2
+keys carry no reliable wrist-vs-scene semantics — SmolVLA precedent);
+the kind TAG is the first reliable viewpoint signal.
 
 **What the decoders consume.** The cross-attention family reads the
 exported streams of an `ObservationMemory`; `ar_backbone` additionally
@@ -257,15 +277,20 @@ text share ONE softmax: `lm_head` logits are computed, the block's
 columns are overwritten from the patch, and the softcap is applied
 AFTER the overwrite (block capped identically to text).
 
-**Suffix format 3** (`aux_text.SUFFIX_FORMAT`, recorded per checkpoint;
-formats 1–2 = legacy, loadable for warm starts — the mode tables
-fresh-init loudly — and decoded via their own trained sequence with a
-loud warning):
+**Suffix format 4** (`aux_text.SUFFIX_FORMAT`, recorded per checkpoint;
+formats 1–3 = legacy, loadable for warm starts — the mode tables
+fresh-init loudly where absent — decode warned):
 
-    [state][<start_of_turn>model\n][MODE][aux text — iff AUX][BOA][t_1..t_k]
+    [state][<|turn>model\n][MODE][aux text — iff AUX][BOA][t_1..t_k]
 
-The opener is the IT chat template's own generation prompt (format 2's
-contribution). `MODE ∈ {[ACT], [AUX]}` is **fed, never predicted**:
+The opener is Gemma-4's REAL generation prompt — the exact 3 tokens
+(`[105, 4368, 107]` on E2B) `apply_chat_template(...,
+add_generation_prompt=True)` appends, verified against the real
+checkpoint 2026-08-02. (Formats 2–3 mistakenly used the Gemma-3 string
+`<start_of_turn>model\n`, which tokenizes as 9 plain-text pieces —
+self-consistent within those checkpoints but not the reinforced IT
+transition; format 4 fixes the design intent.) `MODE ∈ {[ACT], [AUX]}`
+is **fed, never predicted**:
 two reserved ids directly below the FAST block (`mode_base =
 block_base − 2` — E2B: 261116/261117, same unused tail), embedded
 through their own tiny patch tables. A row feeds [AUX] iff it carries
@@ -327,11 +352,16 @@ Trained text outputs rendered from the LLM-judge annotations
   its label exists at the frame: subgoal on every frame of a judged
   episode (piecewise-constant `language_persistent` rows);
   holding/progress only on judge-sampled frames (the finite mask IS
-  the sampled-frame set — never interpolated); event only on its exact
+  sampled-frame set — never interpolated); event only on its exact
   firing frame (`language_events` is frame-local; positives-only — the
   implicit negative is the trained transition past the field wherever
   labels exist, matching the contract that unsampled frames are
-  *unknown*, not negative). A sample with ≥1
+  *unknown*, not negative). Multi-event frames are real data (441 in
+  community_curated_v0 — e.g. drop + reset on one sampled frame) and
+  render ALL events "; "-joined; reading the frame-local list directly
+  matters — lerobot's single-row `emitted_at` resolver RAISES on such
+  frames (it killed a corpus run 2026-08-02 before the fix; reported
+  upstream to the judging pipeline). A sample with ≥1
   rendered field feeds [AUX]; unjudged/dropped samples render nothing
   and feed [ACT] — mixed sparsely-annotated corpora train one format,
   the mode explains label presence away, and an aux fine-tune extends
@@ -505,7 +535,9 @@ flags and `--stream-counts`; AR decoders require `--fast-tokenizer
 doesn't build are errors, not ignored). `--aux-fields` (ar_backbone
 only) enables aux text training (§2.4); `--aux-loss-weight` sets w
 (default 0.5 — the labels are weak supervision); `--aux-dropout` sets
-the [ACT] mode-dropout rate (default 0.1). Train step returns
+the [ACT] mode-dropout rate (default 0.1); `--aux-prompt-hash` is the
+opt-in provenance pin (§2.4); `--camera-kind-dropout` (default 0.1,
+all decoder kinds) is the prompt-side kind→unknown dropout (§1). Train step returns
 component losses; `train/loss_action` + `train/loss_aux` log beside
 `train/loss` on aux runs (aux aggregates as CE-sum/token-count across
 the window and all ranks — a position-weighted mean, immune to the
@@ -573,18 +605,22 @@ re-baseline loudly):
       --save-every 1000 --eval-samples 4 --device cpu --seed 0 \
       --save-dir outputs/train/oracle_tmp
 
-must reproduce **flow 1.8896 / 1.7237** exactly; with `--decoder ar_fast
+must reproduce **flow 1.8896 / 1.7237** exactly (numerically unmoved by
+the prompt-format-2 re-baseline at 4dp — its grad_norm moved, proving
+the tags are live); with `--decoder ar_fast
 --fast-tokenizer tests/fixtures/tiny_fast_tokenizer` added, **AR
-4.8803 / 4.8656**; with `--decoder ar_backbone --fast-tokenizer
+4.8917 / 4.8683**; with `--decoder ar_backbone --fast-tokenizer
 tests/fixtures/tiny_fast_tokenizer` (and the `--decoder-*` shape flags
-OMITTED — ar_backbone rejects them), **27.7622 / 27.7245** (random tiny
+OMITTED — ar_backbone rejects them), **27.7483 / 27.7840** (random tiny
 weights under full-vocabulary CE — an anchor, not a quality signal; the
 huge step-1 grad norm is softcap saturation, clipped in practice;
-re-baselined 2026-08-02 for suffix format 3 — the fed mode token —
-from format 2's 27.8116/27.8348).
+re-baselined 2026-08-02 for prompt format 2 — camera tags, all
+decoders — and suffix format 4 — the real Gemma-4 opener; prior
+anchors: format-3 27.7622/27.7245, format-2 27.8116/27.8348, ar_fast
+pre-tags 4.8803/4.8656).
 Flags-on (unfreeze) oracles live in
-`outputs/probe_unfreeze_gradflow.py` (flow 1.5528, AR 4.8689,
-ar_backbone 27.6946 — format-3 re-baseline — with the FULL-depth
+`outputs/probe_unfreeze_gradflow.py` (flow 1.5825, AR 4.8345,
+ar_backbone 27.7346 — same re-baseline — with the FULL-depth
 partition checks, asserted in the probe). Regenerate the tiny backbone
 with
 `uv run python -m bijou.gemma4.testing --output outputs/tiny-gemma4`
@@ -636,7 +672,12 @@ first, ~30–45 extra suffix forwards per replan; no suffix KV-cache
 reuse across replans yet — the known optimization if it deploys), and
 AR checkpoints need the deployment rig's exact q01/q99 quantiles (the
 tokenizer's fit normalization), which old-format stats tables don't
-carry.
+carry. Camera kinds at rollout derive from the operator's own
+`--camera` names via `rollout.camera_kinds_from_names`: a name inside
+the kind vocabulary IS its kind, anything else tags `unknown` with a
+LOUD warning — name cameras by viewpoint (top/wrist/front/side) to
+give the model the signal. Kinds ride each item
+(`item["camera_kinds"]`), so no policy-level plumbing exists.
 
 **Artifacts.** Checkpoints + tokenizers:
 [`mcobzarenco/bijou-checkpoints`](https://huggingface.co/mcobzarenco/bijou-checkpoints)

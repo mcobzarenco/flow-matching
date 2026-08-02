@@ -84,6 +84,7 @@ def test_prompt_decoder_bridge_roundtrips_expert_config() -> None:
     prompt = GemmaPromptConfig(
         exports=expert_config.streams,
         max_soft_tokens=140,
+        camera_tags=False,
     )
     decoder = flow_decoder_config_from_expert(expert_config)
     assert decoder.schedule[:5] == ("kv4", "kv4", "kv4", "kv4", "kv9")
@@ -96,6 +97,7 @@ def test_config_dicts_roundtrip_through_json() -> None:
     prompt = GemmaPromptConfig(
         exports=(4, 9, 14),
         max_soft_tokens=140,
+        camera_tags=False,
     )
     decoder = flow_decoder_config_from_expert(expert_config)
     prompt_parsed = parse_prompt_config(json.loads(json.dumps(prompt.to_dict())))
@@ -110,6 +112,7 @@ def test_unknown_stream_and_unused_export_fail_loudly() -> None:
     prompt = GemmaPromptConfig(
         exports=(4, 9),  # kv14 missing => schedule references unknown stream
         max_soft_tokens=140,
+        camera_tags=False,
     )
     with pytest.raises(SystemExit, match="unknown stream"):
         expert_config_from_architecture(prompt, decoder, e2b_config())
@@ -121,6 +124,7 @@ def test_unknown_stream_and_unused_export_fail_loudly() -> None:
     prompt_full = GemmaPromptConfig(
         exports=(4, 9, 14),
         max_soft_tokens=140,
+        camera_tags=False,
     )
     with pytest.raises(SystemExit, match="not consumed"):
         expert_config_from_architecture(prompt_full, decoder_unused, e2b_config())
@@ -149,6 +153,7 @@ def format3_meta() -> dict:
         prompt=GemmaPromptConfig(
             exports=expert_config.streams,
             max_soft_tokens=140,
+            camera_tags=False,
         ),
         decoder=flow_decoder_config_from_expert(expert_config).to_dict(),
         normalization=tiny_stats(),

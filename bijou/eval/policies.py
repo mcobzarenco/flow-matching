@@ -127,6 +127,10 @@ class BijouPolicy:
             # collator, which does carry the codec.
             action_codec=None,
             aux=None,
+            # Kinds travel with the items (StatsAttachedDataset attaches
+            # them; rollout items carry an explicit map); never dropped
+            # at inference — dropout is a train-time regularizer.
+            camera_kind_dropout=0.0,
         )
 
     @torch.no_grad()
