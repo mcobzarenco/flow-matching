@@ -144,6 +144,54 @@ def request_verdict(
     return raw, usage
 
 
+def format_judgment(judgment: EpisodeJudgment) -> str:
+    """Human-readable verdict body — shared by the live CLI report and
+    bijou.judge.show (stored verdicts)."""
+    lines = [
+        f"overall  : {judgment.overall_score}/10  ->  {judgment.verdict.value}",
+        f"task done: {judgment.task_completion_visible.value}",
+    ]
+    scores = judgment.scores
+    lines.append(
+        "scores   : "
+        f"visual_quality={scores.visual_quality}  smoothness={scores.smoothness}  "
+        f"efficiency={scores.efficiency}  camera_framing={scores.camera_framing}",
+    )
+    lines.append(f"instr    : {judgment.instruction_quality.value}")
+    lines.append(f'observed : "{judgment.observed_task}"')
+    start = 1
+    for segment in judgment.subgoals:
+        lines.append(
+            f'  frames {start:>4}-{segment.until_frame:<4}: "{segment.subgoal}"',
+        )
+        start = segment.until_frame + 1
+    for annotation in judgment.frame_annotations:
+        visibility = " ".join(
+            f"{camera}[{'O' if vis.task_object else '-'}{'G' if vis.gripper else '-'}]"
+            for camera, vis in sorted(annotation.visible.items())
+        )
+        events = (
+            f"  events: {'; '.join(annotation.events)}" if annotation.events else ""
+        )
+        lines.append(
+            f"  f{annotation.frame:>4} prog {annotation.progress:4.2f} "
+            f"hold {'Y' if annotation.holding else '-'} {visibility}{events}",
+        )
+    lines.append(
+        "cameras  : "
+        + "  ".join(
+            f"{name}={kind.value}"
+            for name, kind in sorted(judgment.camera_kinds.items())
+        ),
+    )
+    lines.extend(f'  suggest: "{text}"' for text in judgment.suggested_instructions)
+    lines.append("issues   : " + ("none noted" if not judgment.issues else ""))
+    lines.extend(f"  - {issue}" for issue in judgment.issues)
+    if judgment.summary:
+        lines.append(f"summary  : {judgment.summary}")
+    return "\n".join(lines)
+
+
 def print_report(
     summary: EpisodeSummary,
     judgment: EpisodeJudgment | None,
@@ -182,46 +230,7 @@ def print_report(
         print("could not parse JSON verdict; raw response:")
         print(raw)
         return
-    print(f"overall  : {judgment.overall_score}/10  ->  {judgment.verdict.value}")
-    print(f"task done: {judgment.task_completion_visible.value}")
-    scores = judgment.scores
-    print(
-        "scores   : "
-        f"visual_quality={scores.visual_quality}  smoothness={scores.smoothness}  "
-        f"efficiency={scores.efficiency}  camera_framing={scores.camera_framing}",
-    )
-    print(f"instr    : {judgment.instruction_quality.value}")
-    print(f'observed : "{judgment.observed_task}"')
-    start = 1
-    for segment in judgment.subgoals:
-        print(f'  frames {start:>4}-{segment.until_frame:<4}: "{segment.subgoal}"')
-        start = segment.until_frame + 1
-    for annotation in judgment.frame_annotations:
-        visibility = " ".join(
-            f"{camera}[{'O' if vis.task_object else '-'}{'G' if vis.gripper else '-'}]"
-            for camera, vis in sorted(annotation.visible.items())
-        )
-        events = (
-            f"  events: {'; '.join(annotation.events)}" if annotation.events else ""
-        )
-        print(
-            f"  f{annotation.frame:>4} prog {annotation.progress:4.2f} "
-            f"hold {'Y' if annotation.holding else '-'} {visibility}{events}",
-        )
-    print(
-        "cameras  : "
-        + "  ".join(
-            f"{name}={kind.value}"
-            for name, kind in sorted(judgment.camera_kinds.items())
-        ),
-    )
-    for instruction in judgment.suggested_instructions:
-        print(f'  suggest: "{instruction}"')
-    print("issues   : " + ("none noted" if not judgment.issues else ""))
-    for issue in judgment.issues:
-        print(f"  - {issue}")
-    if judgment.summary:
-        print(f"summary  : {judgment.summary}")
+    print(format_judgment(judgment))
 
 
 def main() -> None:
