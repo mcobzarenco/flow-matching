@@ -74,6 +74,7 @@ def decoder_config(loaded: ActionCodec) -> ARBackboneConfig:
         state_dim=loaded.action_dim,
         chunk_size=loaded.time_horizon,
         action_dim=loaded.action_dim,
+        aux=None,
     )
 
 

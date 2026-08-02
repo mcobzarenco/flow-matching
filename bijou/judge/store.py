@@ -2,7 +2,8 @@
 
 The envelope is ``{"judgments": [record, ...]}``; each record is a
 ``JudgmentRecord`` — provenance plus the verdict — keyed by
-(episode_index, model, prompt_hash). Deliberately JSON, not parquet:
+(episode_index, model, prompt_hash, num_timesteps, max_image_dim).
+Deliberately JSON, not parquet:
 verdicts are nested, per-dataset counts are tiny (median ~60 episodes),
 and JSON round-trips through the schema-validating dataclasses with no
 flattening layer to maintain.
@@ -49,10 +50,14 @@ def discover_datasets(roots: list[Path]) -> list[Path]:
 class JudgmentRecord:
     """One stored verdict: identity, evidence provenance, and the judgment.
 
-    ``key()`` — (episode_index, model, prompt_hash) — is what makes
-    verdicts comparable and sweeps idempotent: the prompt hash is
-    content-derived (schema.PROMPT_HASH), so editing the prompt re-judges
-    automatically and nothing is bumped by hand.
+    ``key()`` — (episode_index, model, prompt_hash, num_timesteps,
+    max_image_dim) — is what makes verdicts comparable and sweeps
+    idempotent. The prompt hash is content-derived (schema.PROMPT_HASH),
+    so editing the prompt re-judges automatically and nothing is bumped
+    by hand; the two evidence fields identify the image selection (the
+    RESOLVED timestep count — fixed and adaptive runs that sample the
+    same frames share a key) and resolution, so changing what the judge
+    sees re-judges just as deliberately.
     """
 
     episode_index: int
@@ -70,8 +75,14 @@ class JudgmentRecord:
     # the records whose prompt_hash matches the schema they understand.
     judgment: dict[str, Any]
 
-    def key(self) -> tuple[int, str, str]:
-        return (self.episode_index, self.model, self.prompt_hash)
+    def key(self) -> tuple[int, str, str, int, int]:
+        return (
+            self.episode_index,
+            self.model,
+            self.prompt_hash,
+            self.num_timesteps,
+            self.max_image_dim,
+        )
 
     def parsed_judgment(self) -> EpisodeJudgment:
         """Validate + parse the payload under the CURRENT schema — call on

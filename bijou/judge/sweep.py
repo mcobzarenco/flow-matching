@@ -10,11 +10,12 @@ episodes in parallel. Two storage layers:
   (auto-merge at the end of every run, or --merge-only to fold a crashed
   run's journal).
 
-Idempotency is keyed on (episode_index, model, prompt_hash): re-running the
-same configuration skips everything already judged (on any machine that has
-the sidecars); switching model re-judges deliberately, and editing the
-prompt changes its hash — stale verdicts invalidate themselves, nothing is
-bumped by hand. Failures stay journal-local — they cost nothing to retry
+Idempotency is keyed on (episode_index, model, prompt_hash, num_timesteps,
+max_image_dim): re-running the same configuration skips everything already
+judged (on any machine that has the sidecars); switching model, editing the
+prompt (content hash), or changing the evidence — the resolved timestep
+count or image resolution — re-judges deliberately, nothing is bumped by
+hand. Failures stay journal-local — they cost nothing to retry
 (evidence gathering fails before any API spend) and a fresh machine should
 retry transient ones. Episodes shorter than --min-frames are recomputed at
 plan time (pure function of episode length), skipped loudly, never stored.
@@ -180,7 +181,7 @@ def merge_journal(journal: Path, dirs_by_repo: dict[str, Path]) -> None:
     if not journal.exists():
         print(f"merge: no journal at {journal}, nothing to fold")
         return
-    by_repo: dict[str, dict[tuple[int, str, str], JudgmentRecord]] = {}
+    by_repo: dict[str, dict[tuple[int, str, str, int, int], JudgmentRecord]] = {}
     with journal.open() as f:
         for line in f:
             if not line.strip():
@@ -226,13 +227,14 @@ def load_journal_done(
     output: Path,
     *,
     retry_failed: bool,
-) -> tuple[set[tuple[str, int, str, str]], set[tuple[str, int]]]:
+) -> tuple[set[tuple[str, int, str, str, int, int]], set[tuple[str, int]]]:
     """Journal-side skip sets: ok keys (dataset, episode, model, prompt
-    hash) — covering results not yet folded into sidecars — and failed
-    (dataset, episode) pairs (empty when retrying; failure skip is
-    model-agnostic because failures are overwhelmingly evidence-side, e.g.
-    corrupt video, and would fail identically under any judge)."""
-    ok: set[tuple[str, int, str, str]] = set()
+    hash, num_timesteps, max_image_dim) — covering results not yet folded
+    into sidecars — and failed (dataset, episode) pairs (empty when
+    retrying; failure skip is model- and evidence-agnostic because
+    failures are overwhelmingly evidence-side, e.g. corrupt video, and
+    would fail identically under any judge)."""
+    ok: set[tuple[str, int, str, str, int, int]] = set()
     failed: set[tuple[str, int]] = set()
     if not output.exists():
         return ok, failed
@@ -248,6 +250,8 @@ def load_journal_done(
                         int(record["episode"]),
                         str(record["model"]),
                         str(record["prompt_hash"]),
+                        int(record["num_timesteps"]),
+                        int(record["max_image_dim"]),
                     ),
                 )
             elif record.get("status") == "failed" and not retry_failed:
@@ -381,7 +385,7 @@ def parse_args() -> argparse.Namespace:
 def run_batch_mode(
     args: argparse.Namespace,
     tasks: list[JudgeTask],
-    journal_ok: set[tuple[str, int, str, str]],
+    journal_ok: set[tuple[str, int, str, str, int, int]],
     journal_failed: set[tuple[str, int]],
     dirs_by_repo: dict[str, Path],
 ) -> None:
@@ -404,7 +408,15 @@ def run_batch_mode(
     tasks = [
         task
         for task in tasks
-        if (task.repo_id, task.episode, task.model, PROMPT_HASH) not in pending_keys
+        if (
+            task.repo_id,
+            task.episode,
+            task.model,
+            PROMPT_HASH,
+            task.num_timesteps,
+            task.max_image_dim,
+        )
+        not in pending_keys
     ]
     with args.output.open("a") as journal:
         if pending:
@@ -483,9 +495,11 @@ def main() -> None:
     for plan in plans:
         sidecar_keys = {record.key() for record in load_sidecar(plan.root)}
         for episode in plan.to_judge:
+            timesteps = plan.timesteps[episode]
+            evidence_key = (args.model, PROMPT_HASH, timesteps, args.max_image_dim)
             if (
-                (episode, args.model, PROMPT_HASH) in sidecar_keys
-                or (plan.repo_id, episode, args.model, PROMPT_HASH) in journal_ok
+                (episode, *evidence_key) in sidecar_keys
+                or (plan.repo_id, episode, *evidence_key) in journal_ok
                 or (plan.repo_id, episode) in journal_failed
             ):
                 already += 1
@@ -513,7 +527,8 @@ def main() -> None:
     print(
         f"plan: {len(plans)} datasets | {planned} episodes eligible | "
         f"{skipped_total} below {args.min_frames} frames | "
-        f"{already} already judged for ({args.model}, {PROMPT_HASH}) | "
+        f"{already} already judged for ({args.model}, {PROMPT_HASH}, "
+        f"planned evidence) | "
         f"{len(tasks)} to judge now | {len(plan_failures)} datasets failed to plan",
     )
     print(

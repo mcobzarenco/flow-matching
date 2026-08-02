@@ -34,6 +34,9 @@ class CharTokenizer:
         assert not add_special_tokens
         return [ord(c) for c in text]
 
+    def decode(self, ids: list[int]) -> str:
+        return "".join(chr(i) for i in ids)
+
 
 def spec(**overrides: Any) -> AuxSpec:
     kwargs: dict[str, Any] = {

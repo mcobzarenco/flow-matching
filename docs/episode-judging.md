@@ -91,7 +91,7 @@ Two layers with different lifetimes:
   idempotent, writes are atomic). Records keep `EpisodeJudgment.to_dict()`
   verbatim under `"judgment"` plus provenance (model, prompt hash,
   evidence parameters, token usage), keyed by
-  `(episode_index, model, prompt_hash)`.
+  `(episode_index, model, prompt_hash, num_timesteps, max_image_dim)`.
 
 The sidecar lives *inside* the dataset directory on purpose: hub
 upload/download carries it, any machine holding the dataset holds its
@@ -105,7 +105,11 @@ records by `prompt_hash` first.
 Consequences of the key choice: re-running the same configuration is a
 no-op on any machine with the sidecars; switching model re-judges
 deliberately (cascades, cross-model calibration — multiple models'
-verdicts coexist per episode); prompt edits re-judge automatically.
+verdicts coexist per episode); prompt edits re-judge automatically; so
+does changing the evidence — the resolved timestep count (fixed and
+adaptive runs that sample identical frames share a key) or the image
+resolution. Consumers collapse coexisting records per episode by latest
+`judged_at` (materialize, aggregate).
 Failures stay journal-local: retrying costs nothing (evidence gathering
 fails before any API spend), so fresh machines retry transient failures
 instead of inheriting stale quarantines. Mechanical skips (episodes

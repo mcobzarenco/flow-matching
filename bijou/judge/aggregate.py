@@ -51,7 +51,7 @@ import numpy as np
 
 from ..data import repo_id_of
 from .schema import PROMPT_HASH, CameraKind, EpisodeJudgment, TaskCompletion, Verdict
-from .store import discover_datasets, load_sidecar
+from .store import JudgmentRecord, discover_datasets, load_sidecar
 
 CAMERA_KINDS_RELPATH = Path("meta") / "camera_kinds.json"
 
@@ -166,11 +166,16 @@ def load_verdicts(
     Returns (verdicts, datasets_with_records, records_skipped_by_hash).
     Records at other hashes are skipped by design (they obey their own
     prompt's schema); a payload at OUR hash failing to parse is a bug,
-    not data — let it raise.
+    not data — let it raise. One verdict per (dataset, episode, model):
+    the store keys records on evidence parameters too, so re-judging at
+    different evidence legitimately coexists — the latest ``judged_at``
+    wins here, and the collapse is reported loudly.
     """
-    verdicts: list[EpisodeVerdict] = []
+    chosen: dict[tuple[str, int, str], JudgmentRecord] = {}
+    repo_of_key: dict[tuple[str, int, str], str] = {}
     datasets_with_records = 0
     skipped_by_hash = 0
+    duplicates = 0
     for dataset_dir in dataset_dirs:
         records = load_sidecar(dataset_dir)
         if not records:
@@ -182,16 +187,30 @@ def load_verdicts(
                 skipped_by_hash += 1
                 continue
             matched = True
-            verdicts.append(
-                EpisodeVerdict(
-                    repo_id=repo_id,
-                    episode=record.episode_index,
-                    model=record.model,
-                    judgment=record.parsed_judgment(),
-                ),
-            )
+            key = (repo_id, record.episode_index, record.model)
+            current = chosen.get(key)
+            if current is not None:
+                duplicates += 1
+                if record.judged_at <= current.judged_at:
+                    continue
+            chosen[key] = record
+            repo_of_key[key] = repo_id
         if matched:
             datasets_with_records += 1
+    if duplicates:
+        print(
+            f"note: {duplicates} record(s) superseded by a later judgment of the "
+            "same (dataset, episode, model) at different evidence parameters",
+        )
+    verdicts = [
+        EpisodeVerdict(
+            repo_id=repo_of_key[key],
+            episode=key[1],
+            model=key[2],
+            judgment=record.parsed_judgment(),
+        )
+        for key, record in sorted(chosen.items())
+    ]
     return verdicts, datasets_with_records, skipped_by_hash
 
 

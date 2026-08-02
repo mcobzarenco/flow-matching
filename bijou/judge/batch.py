@@ -58,11 +58,27 @@ def manifest_path_for(journal: Path) -> Path:
     return journal.with_suffix(".manifest.jsonl")
 
 
-def custom_id_for(repo_id: str, episode: int, model: str, prompt_hash: str) -> str:
+def custom_id_for(
+    repo_id: str,
+    episode: int,
+    model: str,
+    prompt_hash: str,
+    num_timesteps: int,
+    max_image_dim: int,
+) -> str:
     """Deterministic, charset-safe batch custom_id (the API caps it at 64
     chars and repo ids can exceed that; the manifest owns the mapping
-    back)."""
-    key = "\x00".join((repo_id, str(episode), model, prompt_hash))
+    back). Mirrors the idempotency key, evidence fields included."""
+    key = "\x00".join(
+        (
+            repo_id,
+            str(episode),
+            model,
+            prompt_hash,
+            str(num_timesteps),
+            str(max_image_dim),
+        ),
+    )
     return hashlib.sha256(key.encode()).hexdigest()[:32]
 
 
@@ -87,8 +103,15 @@ class BatchEntry:
     camera_names: list[str]
     sampled_frames: list[int]
 
-    def journal_key(self) -> tuple[str, int, str, str]:
-        return (self.repo_id, self.episode, self.model, self.prompt_hash)
+    def journal_key(self) -> tuple[str, int, str, str, int, int]:
+        return (
+            self.repo_id,
+            self.episode,
+            self.model,
+            self.prompt_hash,
+            self.num_timesteps,
+            self.max_image_dim,
+        )
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> BatchEntry:
@@ -166,7 +189,14 @@ def build_request(task: JudgeTask) -> BuiltRequest:
         "system": SYSTEM_PROMPT,
         "messages": [{"role": "user", "content": content}],
     }
-    custom_id = custom_id_for(task.repo_id, task.episode, task.model, PROMPT_HASH)
+    custom_id = custom_id_for(
+        task.repo_id,
+        task.episode,
+        task.model,
+        PROMPT_HASH,
+        task.num_timesteps,
+        task.max_image_dim,
+    )
     return BuiltRequest(
         custom_id=custom_id,
         params=params,

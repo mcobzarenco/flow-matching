@@ -25,9 +25,10 @@ B, …) so recorded names cannot bias the viewpoint call, and are
 translated back to dataset names after validation.
 
 Raw verdicts land in a per-dataset sidecar, `meta/judgments.json`,
-keyed by `(episode_index, model, prompt_hash)` — the prompt hash is
-content-derived, so verdicts are comparable exactly when both keys
-match. A separate materialization step projects one pinned selection of
+keyed by `(episode_index, model, prompt_hash, num_timesteps,
+max_image_dim)` — the prompt hash is content-derived, and the evidence
+fields identify the image selection shown to the judge, so re-judging
+under a different configuration coexists rather than overwrites. A separate materialization step projects one pinned selection of
 those verdicts into native LeRobot surfaces (feature columns and
 language rows), which is what training code consumes; the sidecar
 remains the provenance store and the only home of episode-level fields.
@@ -83,12 +84,12 @@ records = [
 by_episode = {r.episode_index: r.parsed_judgment() for r in records}
 
 j = by_episode[0]  # EpisodeJudgment — typed, validated on parse
-j.verdict.value              # "keep" | "review" | "discard"
-j.overall_score              # 1..10 (j.scores.* for the four subscores)
-j.task_completion_visible    # yes | partial | no | unclear
+j.verdict.value  # "keep" | "review" | "discard"
+j.overall_score  # 1..10 (j.scores.* for the four subscores)
+j.task_completion_visible  # yes | partial | no | unclear
 j.instruction_quality.value  # good | vague | mismatched | placeholder
-j.suggested_instructions     # 2-3 grounded rewrites, always present
-j.issues                     # free-text problem list, often empty
+j.suggested_instructions  # 2-3 grounded rewrites, always present
+j.issues  # free-text problem list, often empty
 ```
 
 `parsed_judgment()` validates under the *current* schema — records at
@@ -133,7 +134,7 @@ item = ds[index]
 
 mask = torch.isfinite(item["annotation.progress"])  # supervise only where True
 item["annotation.progress"]  # task-completion fraction at this frame
-item["annotation.holding"]   # 0.0 / 1.0: gripper physically holds the object
+item["annotation.holding"]  # 0.0 / 1.0: gripper physically holds the object
 ```
 
 Unjudged episodes carry the columns too (all-NaN), so one code path
@@ -157,8 +158,10 @@ each camera — with one slot per camera. Slot order is the feature's
 `names` (sorted camera short names); NaN-masked like the scalars:
 
 ```python
-names = ds.meta.features["annotation.visible_object"]["names"]  # e.g. ['overhead', 'wrist']
-item["annotation.visible_object"]   # tensor with one 0/1/NaN slot per camera
+names = ds.meta.features["annotation.visible_object"][
+    "names"
+]  # e.g. ['overhead', 'wrist']
+item["annotation.visible_object"]  # tensor with one 0/1/NaN slot per camera
 item["annotation.visible_gripper"]  # same layout for the gripper
 ```
 

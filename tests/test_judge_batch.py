@@ -19,7 +19,7 @@ from bijou.judge.schema import PROMPT_HASH
 
 def built(repo_id: str, episode: int, nbytes: int) -> BuiltRequest:
     return BuiltRequest(
-        custom_id=custom_id_for(repo_id, episode, "m", PROMPT_HASH),
+        custom_id=custom_id_for(repo_id, episode, "m", PROMPT_HASH, 10, 512),
         params={},
         nbytes=nbytes,
         meta={"repo_id": repo_id, "episode": episode},
@@ -28,7 +28,7 @@ def built(repo_id: str, episode: int, nbytes: int) -> BuiltRequest:
 
 def entry(**overrides: object) -> BatchEntry:
     fields: dict[str, object] = {
-        "custom_id": custom_id_for("u/d", 3, "claude-opus-4-8", PROMPT_HASH),
+        "custom_id": custom_id_for("u/d", 3, "claude-opus-4-8", PROMPT_HASH, 2, 512),
         "batch_id": "msgbatch_test",
         "repo_id": "u/d",
         "episode": 3,
@@ -49,11 +49,27 @@ def entry(**overrides: object) -> BatchEntry:
 
 
 def test_custom_id_deterministic_distinct_and_safe() -> None:
-    a = custom_id_for("u/d", 0, "m", "h")
-    assert a == custom_id_for("u/d", 0, "m", "h")
-    assert a != custom_id_for("u/d", 1, "m", "h")
-    assert a != custom_id_for("u/d", 0, "m2", "h")
+    a = custom_id_for("u/d", 0, "m", "h", 10, 512)
+    assert a == custom_id_for("u/d", 0, "m", "h", 10, 512)
+    assert a != custom_id_for("u/d", 1, "m", "h", 10, 512)
+    assert a != custom_id_for("u/d", 0, "m2", "h", 10, 512)
+    # Evidence identity is part of the key: different image selection
+    # (timestep count) or resolution re-judges deliberately.
+    assert a != custom_id_for("u/d", 0, "m", "h", 15, 512)
+    assert a != custom_id_for("u/d", 0, "m", "h", 10, 768)
     assert len(a) == 32 and a.isalnum()
+
+
+def test_journal_key_carries_evidence_identity() -> None:
+    assert entry().journal_key() == (
+        "u/d",
+        3,
+        "claude-opus-4-8",
+        PROMPT_HASH,
+        2,
+        512,
+    )
+    assert entry(num_timesteps=15).journal_key() != entry().journal_key()
 
 
 def test_chunking_respects_count_and_bytes_in_order() -> None:

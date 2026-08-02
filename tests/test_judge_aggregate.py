@@ -2,14 +2,19 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 from bijou.judge.aggregate import (
     EpisodeVerdict,
     compare_models,
+    load_verdicts,
     majority_camera_vote,
     review_worksheet,
     rule_impact,
 )
 from bijou.judge.schema import (
+    PROMPT_HASH,
     CameraKind,
     CameraVisibility,
     EpisodeJudgment,
@@ -121,6 +126,39 @@ def test_compare_models_pairs_by_episode_and_frame() -> None:
     assert comparison.camera_kind_agreement == 0.0
     # Single paired episode: correlation undefined, not fabricated.
     assert comparison.overall_pearson is None
+
+
+def test_load_verdicts_latest_wins_across_evidence_sizes(tmp_path: Path) -> None:
+    """The store keys on evidence parameters, so one (episode, model) can
+    hold several records; aggregation must collapse to the latest."""
+    dataset_dir = tmp_path / "u" / "ds"
+    (dataset_dir / "meta").mkdir(parents=True)
+    record = {
+        "episode_index": 0,
+        "model": "m",
+        "prompt_hash": PROMPT_HASH,
+        "num_timesteps": 10,
+        "max_image_dim": 512,
+        "usage": {"input_tokens": 1, "output_tokens": 1},
+    }
+    older = {
+        **record,
+        "judged_at": "2026-08-01 00:00:00",
+        "judgment": judgment(overall=3).to_dict(),
+    }
+    newer = {
+        **record,
+        "num_timesteps": 15,
+        "judged_at": "2026-08-02 00:00:00",
+        "judgment": judgment(overall=9).to_dict(),
+    }
+    (dataset_dir / "meta" / "judgments.json").write_text(
+        json.dumps({"judgments": [newer, older]}),
+    )
+    verdicts, datasets, skipped = load_verdicts([dataset_dir], PROMPT_HASH)
+    assert (datasets, skipped) == (1, 0)
+    assert len(verdicts) == 1
+    assert verdicts[0].judgment.overall_score == 9  # latest judged_at won
 
 
 def test_review_worksheet_stratifies_and_is_seeded() -> None:
