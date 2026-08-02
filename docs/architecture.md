@@ -45,8 +45,8 @@ pretrained artifact (`--backbone`, `BackboneConfig.id`,
 "trunk" survives only as informal prose.
 
 ```
-[task][kind-tagged cams][task][conditioning]   chat-templated user turn
-  e.g. {task}[top camera]<imgs>{task}[subgoal: …][outcome: success][smoothness: high]
+[task][{kind_i} camera]<imgs_i>..[task][conditioning]   chat-templated user
+  turn — kinds/conditioning fill per sample from the judge annotations (§1)
       │  E2B prefix: layers 0..14 (bf16), LEFT-padded batches
       ▼
   prefix K/V — ObservationMemory, encoded once per observation
@@ -148,13 +148,22 @@ trunk is trained (§8.1).
 `prompt.camera_tags` in the checkpoint; format 1 = the tag-less
 historical prompt, rendered byte-identically for old checkpoints). One
 chat-templated user turn, **LEFT-padded** across a batch with per-sample
-LOGICAL position ids (cumsum of the real-token mask); rendered exactly
-(E2B template, verified 2026-08-02):
+LOGICAL position ids (cumsum of the real-token mask). The structure
+(E2B chat template, verified 2026-08-02) — every `{…}` slot fills
+PER SAMPLE from the data:
 
-    <bos><|turn>user\n{task}[top camera]<imgs>[wrist camera]<imgs>{task}[subgoal: reach toward the boat][outcome: success][smoothness: high]<turn|>\n
+    <bos><|turn>user\n{task}[{kind_1} camera]<imgs_1>..[{kind_k} camera]<imgs_k>{task}{conditioning}<turn|>\n
 
-The trailing bracket block is PROMPT CONDITIONING (below); it is empty
-for unconditioned runs/episodes.
+`{kind_i}` is camera i's judged semantic kind, resolved per dataset
+from its `meta/camera_kinds.json` (vocabulary wrist|top|front|side|
+unknown — dataset-specific ASSIGNMENT over a fixed global vocabulary,
+never dataset names or free text); `{conditioning}` is the sample's
+prompt-conditioning block (below), empty for unconditioned
+runs/episodes. A rig-v2 sample renders e.g.:
+
+    …{task}[top camera]<imgs>[wrist camera]<imgs>{task}[subgoal: reach toward the boat][outcome: success][smoothness: high]<turn|>\n
+
+(its recorded `front` camera key is judged kind `top`).
 
 Each camera contributes a bracket-delimited semantic tag before its
 soft tokens — bracketed on purpose: the Gemma chat template TRIMS every
