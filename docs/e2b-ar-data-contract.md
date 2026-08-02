@@ -1,39 +1,50 @@
-# Episode annotations — what exists on disk and how to read it
+# Episode annotations from the LLM judges
 
-Judge-produced annotations ride *inside* each LeRobot dataset: nothing
-here needs the judging stacks, the Anthropic API, or a GPU — a plain
-`LeRobotDataset` plus two small JSON files carries everything. This
-document is the mechanical consumption contract: what each annotation
-means, where it lives, and the exact code that reads it. Every snippet
-below was run verbatim against the reference dataset before landing in
-this file.
+Datasets that went through the judging pipeline carry a set of
+annotations beyond what teleoperation recorded: an episode-quality
+verdict, relabeled task instructions, semantic camera tags, subgoal
+segments, and sparse per-frame labels (progress, holding, visibility,
+events). They ride *inside* the dataset — reading them needs a plain
+`LeRobotDataset`, two small JSON files, and no GPU, no API, and none of
+the judging stacks. This is the how-to for augmenting a training run
+with them: what each annotation means, where it lives, and the code
+that reads it.
 
-Reference dataset with all surfaces live:
-**`mcobzarenco/so101_pick_place_v2`** (12 judged episodes, materialized
-2026-08-02). How labels get produced and validated is
-`episode-judging.md`'s territory; train-time *usage* policy (weighting,
-dropout, curricula) is deliberately out of scope here.
+## How the annotations are produced
 
-## Provenance model (read this first)
+An LLM judge (vision-capable) sees, per episode: the stored task
+instruction, evenly spaced frames from every camera (one timestep per
+~1.5 s of episode, clipped to 5–20, first and last frame always
+included), and full-trajectory motor statistics computed from the
+parquet. It returns one strict-JSON verdict that is parsed and
+validated before storage — frame annotations must cover exactly the
+sampled timesteps, subgoal segments must cover exactly the episode,
+progress regressions require an explaining event; anything else is
+rejected, not repaired. Cameras are shown under anonymous labels (A,
+B, …) so recorded names cannot bias the viewpoint call, and are
+translated back to dataset names after validation.
 
-- `meta/judgments.json` (the **sidecar**) is the source of truth: raw
-  verdicts keyed by `(episode_index, model, prompt_hash)`. Several
-  models' verdicts coexist per episode; a consumer pins one pair.
-- Everything per-frame is a **regenerable projection** of one pinned
-  selection, materialized into native LeRobot surfaces by
-  `python -m bijou.judge.materialize` (full-dataset rewrite,
-  idempotent).
-- `meta/judge_annotations.json` stamps which selection the projections
-  were built from. Check it against your pin and fail loudly on
-  mismatch — never assume columns match the sidecar records you happen
-  to be reading:
+Raw verdicts land in a per-dataset sidecar, `meta/judgments.json`,
+keyed by `(episode_index, model, prompt_hash)` — the prompt hash is
+content-derived, so verdicts are comparable exactly when both keys
+match. A separate materialization step projects one pinned selection of
+those verdicts into native LeRobot surfaces (feature columns and
+language rows), which is what training code consumes; the sidecar
+remains the provenance store and the only home of episode-level fields.
+
+## Provenance and pinning
+
+`meta/judge_annotations.json` stamps which `(model, prompt_hash)`
+selection the materialized surfaces were built from. Pin both in your
+training config, verify the stamp, and fail loudly on mismatch — a
+silent prompt-version mix corrupts every label downstream:
 
 ```python
 import json
 from pathlib import Path
 from bijou.judge import PROMPT_HASH
 
-root = Path("~/w/datasets/marius/so101_pick_place_v2").expanduser()
+root = Path("/path/to/dataset")  # contains meta/, data/, videos/
 stamp = json.loads((root / "meta/judge_annotations.json").read_text())
 assert stamp["prompt_hash"] == PROMPT_HASH, (
     f"columns built at {stamp['prompt_hash']}, loader pins {PROMPT_HASH}"
@@ -41,7 +52,7 @@ assert stamp["prompt_hash"] == PROMPT_HASH, (
 judge_model = stamp["model_filter"] or stamp["models"][0]
 ```
 
-## Inventory
+## What is available
 
 | annotation | granularity | lives in | read via |
 |---|---|---|---|
@@ -53,11 +64,12 @@ judge_model = stamp["model_filter"] or stamp["models"][0]
 | holding ∈ {0,1} | judge-sampled frames only | `annotation.holding` float32 column, NaN elsewhere | item + `isfinite` mask |
 | object/gripper visibility per camera | judge-sampled frames only | `annotation.visible_object` / `annotation.visible_gripper` float32 vectors, NaN elsewhere | item + feature `names` |
 
-## 1. Episode-level fields (sidecar)
+## Episode-level fields (sidecar)
 
-Verdict/scores for filtering and weighting; `instruction_quality` +
-`suggested_instructions` for task-string relabeling. The sidecar is
-plain JSON next to the rest of the metadata, so the hub carries it:
+Verdict and scores drive filtering and sample weighting;
+`instruction_quality` and `suggested_instructions` drive task-string
+relabeling and instruction augmentation. The sidecar is plain JSON next
+to the rest of the metadata, so hub upload/download carries it:
 
 ```python
 from bijou.judge import PROMPT_HASH
@@ -83,81 +95,87 @@ j.issues                     # free-text problem list, often empty
 other prompt hashes obey their own prompt's schema, which is why the
 hash filter comes first.
 
-## 2. Camera kinds (dataset-level majority vote)
+## Camera kinds
 
-Per-episode tags flip on ambiguous views, so consume the majority-vote
-map, not individual verdicts (`python -m bijou.judge.aggregate
---write-camera-maps` produces it). Ties resolve to `"unknown"` and are
-flagged — on the reference dataset the overhead camera is a true 6–6
-`front`/`top` tie:
+Each camera gets a semantic tag: `wrist | top | front | side |
+unknown`. Single-episode tags flip on ambiguous views, so the
+per-dataset **majority vote** across judged episodes is the consumable
+form; ties resolve to `unknown` (which doubles as a natural train-time
+dropout target for camera tags) and are flagged so genuine ambiguity
+stays visible:
 
 ```python
 kinds = json.loads((root / "meta/camera_kinds.json").read_text())
 assert kinds["prompt_hash"] == PROMPT_HASH
 {cam: v["kind"] for cam, v in kinds["cameras"].items()}
-# {'front': 'unknown', 'wrist': 'wrist'}   <- kind ∈ wrist|top|front|side|unknown
-kinds["cameras"]["front"]["tie"]  # True — vote detail kept for consumers
+# e.g. {'overhead': 'top', 'gripper_cam': 'wrist'}
+kinds["cameras"]["overhead"]["tie"]  # True on a genuine split vote
 ```
 
-Camera keys here are short names (`"front"`, not
-`"observation.images.front"`), matching every other annotation surface.
+Camera keys are short names (`"overhead"`, not
+`"observation.images.overhead"`) — the same convention as every other
+annotation surface.
 
-## 3. Per-frame scalars: progress and holding
+## Progress and holding (per-frame scalars)
 
 Ordinary float32 feature columns; **NaN means the judge never saw that
-frame**. The finite mask IS the judge's sampled-frame set (~5–20
-evenly-spaced frames per judged episode). Never interpolate between
-sampled frames — the frames in between were not observed:
+frame**. The finite mask IS the judge's sampled-frame set (5–20 evenly
+spaced frames per judged episode). Supervise through the mask and never
+interpolate between sampled frames — the frames in between were not
+observed:
 
 ```python
 import torch
-from bijou.judge.materialize import EVENT_STYLE  # registers style="event" (needed once, see §5)
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
 
-ds = LeRobotDataset("marius/so101_pick_place_v2", root=str(root))
-item = ds[0]
+ds = LeRobotDataset(repo_id, root=str(root))
+item = ds[index]
 
 mask = torch.isfinite(item["annotation.progress"])  # supervise only where True
-item["annotation.progress"]  # 0.0  (fraction of task complete at this frame)
+item["annotation.progress"]  # task-completion fraction at this frame
 item["annotation.holding"]   # 0.0 / 1.0: gripper physically holds the object
 ```
 
 Unjudged episodes carry the columns too (all-NaN), so one code path
-serves the whole corpus. The columns compose with `delta_timestamps`
-like any other feature — e.g. progress now and one action-chunk ahead:
+serves mixed corpora. The columns compose with `delta_timestamps` like
+any other feature — e.g. progress now and one 50-step action chunk
+ahead at 30 fps:
 
 ```python
 ds = LeRobotDataset(
-    "marius/so101_pick_place_v2",
+    repo_id,
     root=str(root),
     delta_timestamps={"annotation.progress": [0.0, 50 / 30]},
 )
-ds[0]["annotation.progress"]  # tensor([0., nan]) — future frame unsampled here
+ds[index]["annotation.progress"]  # tensor([p_now, p_next]) — NaN where unsampled
 ```
 
-## 4. Visibility vectors
+## Visibility (per-frame, per-camera)
 
-Two vectors per frame, one slot per camera; slot order is the feature's
-`names` (sorted camera short names — same order everywhere). NaN-masked
-like the scalars:
+Two vectors per frame — is the task object / the gripper visible in
+each camera — with one slot per camera. Slot order is the feature's
+`names` (sorted camera short names); NaN-masked like the scalars:
 
 ```python
-names = ds.meta.features["annotation.visible_object"]["names"]  # ['front', 'wrist']
-item["annotation.visible_object"]   # tensor([0., 0.]) — task object visible per camera
+names = ds.meta.features["annotation.visible_object"]["names"]  # e.g. ['overhead', 'wrist']
+item["annotation.visible_object"]   # tensor with one 0/1/NaN slot per camera
 item["annotation.visible_gripper"]  # same layout for the gripper
 ```
 
-## 5. Subgoals and events (language columns)
+## Subgoals and events (language columns)
 
-**Subgoals** are piecewise-constant text covering *every* frame of a
-judged episode: `language_persistent` rows (`style="subtask"`) activate
-at their segment's first frame and persist until superseded. This is
-also what the online dataset visualizer's Annotations tab renders.
+**Subgoals** split an episode into temporal segments ("reach toward the
+object", "place it on the target", …) and are piecewise-constant text
+covering *every* frame of a judged episode: `language_persistent` rows
+(`style="subtask"`) activate at their segment's first frame and persist
+until superseded. This is also the form the online dataset visualizer's
+Annotations tab renders. Because coverage is every-frame, subgoal
+conditioning or prediction is not restricted to sampled frames.
 
 **Events** (drops, resets, interventions, progress regressions) are
 momentary rows in `language_events` (`style="event"`) stored on the
-exact firing frame. The `"event"` style is project-local — import
-`bijou.judge.materialize` (anywhere, once) before using lerobot's
+exact frame where they fired. The `"event"` style is project-local —
+import `bijou.judge.materialize` once, anywhere, before using lerobot's
 resolvers on it, or they reject the unknown style:
 
 ```python
@@ -166,7 +184,7 @@ from lerobot.datasets.language_render import active_at, emitted_at
 
 t = float(item["timestamp"])
 subgoal = active_at(t, persistent=item["language_persistent"], style="subtask")
-subgoal["content"]  # 'reach toward the toy boat' — non-None on every judged frame
+subgoal["content"]  # non-None on every frame of a judged episode
 
 event = emitted_at(
     t,
@@ -180,35 +198,25 @@ Event negatives are only defined on judge-sampled frames: a sampled
 frame (finite `annotation.progress`) with no event row is a true "no
 event"; an unsampled frame is *unknown*, not negative.
 
-## Coverage (2026-08-02)
-
-| where | sidecar | columns + language + camera map |
-|---|---|---|
-| rig `so101_pick_place_v2` | 12/50 episodes (opus) | ✅ materialized (the reference) |
-| `curated_v0` on curation-1 (981 datasets / 52.5k episodes) | 2 episodes/dataset, opus + haiku (calibration pilot) | ❌ not yet — materialization happens during the curation merge (TODO 6), which rewrites every parquet anyway |
-| `mcobzarenco/community_curated_v1` (hub) | ships fully judged + materialized | not yet built |
-
-Until the curated collection ships, corpus-wide code must tolerate
-missing sidecars (`load_sidecar` → `[]`), missing `annotation.*`
-features, and missing `camera_kinds.json` — presence of
-`meta/judge_annotations.json` is the cheap "materialized?" probe.
-
 ## Invariants
 
-- **Indexing**: judge fields (`until_frame`, `frame`) are 1-based
-  inclusive; lerobot `frame_index` is 0-based. The materializer resolves
-  this once — consumers of the columns/language rows never touch judge
-  frame numbers. Only sidecar-direct consumers (episode-level fields)
-  need care, and those fields carry no frame numbers.
+- **Indexing**: judge-side frame numbers are 1-based inclusive; lerobot
+  `frame_index` is 0-based. The materializer resolves this once —
+  consumers of the columns and language rows never touch judge frame
+  numbers. Sidecar-direct consumers read episode-level fields only,
+  which carry none.
 - **Pinning**: one `(model, prompt_hash)` per training run's labels;
-  verify via `meta/judge_annotations.json` (§ provenance) rather than
-  re-deriving from sidecar records.
-- **Renumbering invalidates**: any episode-renumbering rewrite (merge
-  tools) must remap sidecars and re-materialize; consume post-merge
-  datasets only after that happened (the merge tool's job — check the
-  stamp's `written_at` if in doubt).
-- **Weak supervision** (measured on rig, gripper-aperture channel as
-  ground truth): `holding` ≈ 75–85% per-frame agreement with a
-  systematic open-hover→true bias; cross-model (opus/haiku, 18.7k paired
-  frames) holding agreement 80.7%, progress MAE 0.15. Mask losses,
-  weight modestly, and re-measure before trusting more.
+  verify via `meta/judge_annotations.json` rather than re-deriving from
+  sidecar records. Multiple judges' verdicts legitimately coexist in a
+  sidecar — the stamp says which one the surfaces reflect.
+- **Renumbering invalidates**: any episode-renumbering rewrite (dataset
+  merges, episode deletion) must remap the sidecar and re-materialize;
+  consume post-rewrite datasets only after that happened. The stamp's
+  `written_at` postdates the rewrite when it did.
+- **Weak supervision**: treat per-frame labels as noisy. Measured
+  against a rig dataset's gripper-aperture channel as ground truth,
+  `holding` agrees on ~75–85% of sampled frames with a systematic
+  open-gripper-hover→true bias; on ~1.9k episodes judged independently
+  by two models, holding agreement was 80.7% and progress MAE 0.15
+  (r 0.73) over 18.7k paired frames. Mask losses, weight modestly, and
+  re-measure against your own ground truth before trusting more.
