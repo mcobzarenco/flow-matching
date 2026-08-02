@@ -160,10 +160,12 @@ Cost scales with images × per-image tokens; measure, don't guess: the
 free `count_tokens` endpoint prices real payloads exactly (the in-code
 estimate constants were calibrated that way and say so). Levers, in
 decreasing order of impact: model choice (opus : sonnet : haiku pricing
-spans ~7:1), batch submission (flat 50% off), corpus scoping (e.g.
-trainable-dims + dominant-fps datasets only), evidence size
-(timesteps × cameras × resolution). Camera count varies per dataset
-(1–4), so per-episode cost does too.
+spans ~7:1), batch submission (`sweep --batch`: the Message Batches
+API, flat 50% off, results within 24h and typically much sooner — a
+manifest next to the journal makes runs resumable without
+double-submitting), corpus scoping (e.g. trainable-dims + dominant-fps
+datasets only), evidence size (timesteps × cameras × resolution).
+Camera count varies per dataset (1–4), so per-episode cost does too.
 
 ## Calibration before trust
 
