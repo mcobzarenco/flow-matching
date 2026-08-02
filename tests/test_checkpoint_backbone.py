@@ -111,6 +111,8 @@ def make_args(save_dir: Path) -> TrainArgs:
         time_conditioning="additive",
         decoder="flow",
         fast_tokenizer=None,
+        aux_fields=None,
+        aux_loss_weight=0.5,
         decoder_hidden=64,
         decoder_heads=2,
         decoder_intermediate=128,

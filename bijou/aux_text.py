@@ -271,6 +271,37 @@ class AuxSpec:
         return ids
 
 
+def aux_label_text(item: dict[str, Any], fields: tuple[AuxField, ...]) -> str:
+    """The template text the LABELS would render for this item — the
+    reference column next to generations in eval tables. Pure strings
+    (no tokenizer); presence rules identical to :meth:`AuxSpec.render`."""
+    parts: list[str] = []
+    for aux_field in fields:
+        match aux_field:
+            case AuxField.SUBGOAL:
+                row = active_at(
+                    float(item["timestamp"]),
+                    persistent=item.get("language_persistent") or [],
+                    style="subtask",
+                )
+                if row is not None and row.get("content"):
+                    parts.append(f"{SUBGOAL_HEADER}{row['content']}{FIELD_TERMINATOR}")
+            case AuxField.HOLDING:
+                value = item.get("annotation.holding")
+                if value is not None and bool(torch.isfinite(value)):
+                    parts.append(
+                        HOLDING_HEADER + HOLDING_VALUES[int(value)] + FIELD_TERMINATOR,
+                    )
+            case AuxField.PROGRESS:
+                value = item.get("annotation.progress")
+                if value is not None and bool(torch.isfinite(value)):
+                    parts.append(
+                        f"{PROGRESS_HEADER}{round(float(value) * 100)}%"
+                        f"{FIELD_TERMINATOR}",
+                    )
+    return "".join(parts)
+
+
 def assemble_suffix(
     aux_ids: list[list[int]],
     action_tokens: Tensor,

@@ -62,10 +62,20 @@ from typing import Any, TextIO, override
 import matplotlib
 import matplotlib.pyplot as plt
 import torch
+import transformers
 import wandb
 from safetensors.torch import load_file, save_file
 from torch import Tensor
 
+from .aux_text import (
+    AUX_TEMPLATE_VERSION,
+    PINNED_PROMPT_HASH,
+    AuxDecodeConfig,
+    AuxField,
+    AuxSpec,
+    aux_label_text,
+    build_aux_runtime,
+)
 from .data import (
     DatasetStats,
     EpisodeSplit,
@@ -124,6 +134,8 @@ class TrainArgs:
     time_conditioning: str
     decoder: str
     fast_tokenizer: str | None
+    aux_fields: tuple[str, ...] | None
+    aux_loss_weight: float
     decoder_hidden: int
     decoder_heads: int
     decoder_intermediate: int
@@ -346,8 +358,13 @@ class BijouTrainStep(torch.nn.Module):
         self.backbone_trained = backbone_trained
 
     @override
-    def forward(self, batch: CollatedBatch[GemmaInputs]) -> Tensor:
-        """Batch (shapes in CollatedBatch's docstring) -> scalar loss."""
+    def forward(
+        self,
+        batch: CollatedBatch[GemmaInputs],
+    ) -> tuple[Tensor, Tensor, Tensor | None]:
+        """Batch (shapes in CollatedBatch's docstring) -> (total loss with
+        graph, detached action component, detached aux component | None).
+        Single-component objectives return (loss, loss.detach(), None)."""
         inputs = batch.encoder_inputs
         device_type = inputs.input_ids.device.type
         with torch.autocast(
@@ -356,7 +373,7 @@ class BijouTrainStep(torch.nn.Module):
             enabled=device_type == "cuda" and self.backbone_trained,
         ):
             memory = self.model.encode(inputs, with_grad=self.backbone_trained)
-        return self.model.loss(memory, batch)
+        return self.model.loss_components(memory, batch)
 
 
 def _chunk_plot(
@@ -588,6 +605,34 @@ def validate(
             )
             plt.close(figure)
         wandb_run.log({table_key: table}, step=step)
+
+        # Aux generations vs labels, rank-0-only (no collectives inside):
+        # the qualitative surface for the aux tasks. Row-loop decode over
+        # the (bounded) rich subset — EVAL_TABLE_ROWS x ~55 single-token
+        # forwards.
+        decoder = model.decoder
+        if isinstance(decoder, ARBackboneDecoder) and decoder.aux_runtime is not None:
+            rich_batch = collator(probe.rich_items).to(device)
+            memory = model.encode(rich_batch.encoder_inputs, with_grad=False)
+            _, generations = decoder.decode_with_aux(
+                model.backbone,
+                memory,
+                rich_batch,
+            )
+            fields = decoder.aux_runtime.config.fields
+            aux_table = wandb.Table(
+                columns=["sample", "task", "generated", "label"],
+            )
+            for i, (item, generation) in enumerate(
+                zip(probe.rich_items, generations, strict=True),
+            ):
+                aux_table.add_data(
+                    i,
+                    str(item["task"]),
+                    generation.text,
+                    aux_label_text(item, fields),
+                )
+            wandb_run.log({f"{table_key}_aux": aux_table}, step=step)
     return mae
 
 
@@ -755,6 +800,19 @@ def ensure_matching_decoder_config(
             "cannot initialize a non-flow decoder",
         )
     if current != saved:
+        # Aux is data-side (zero parameters): an aux-only difference is
+        # the sanctioned warm-start pattern (enable aux on an aux-less
+        # base, or continue without it) — loud note, not an error.
+        current_core = {k: v for k, v in current.items() if k != "aux"}
+        saved_core = {k: v for k, v in saved.items() if k != "aux"}
+        if current_core == saved_core:
+            print(
+                f"note: aux config differs from {checkpoint} (checkpoint "
+                f"{saved.get('aux')}, cli {current.get('aux')}) — aux adds "
+                "no parameters, warm start proceeds with the CLI's aux",
+                flush=True,
+            )
+            return
         raise SystemExit(
             f"decoder config mismatch vs {checkpoint}:\n"
             f"  checkpoint: {json.dumps(saved, sort_keys=True)}\n"
@@ -885,6 +943,24 @@ def parse_args() -> TrainArgs:
         "~11M vocabulary patch, usually with --backbone-text-lr). AR "
         "decoders require --fast-tokenizer; the --decoder-* shape flags "
         "size flow/ar_fast only",
+    )
+    parser.add_argument(
+        "--aux-fields",
+        nargs="*",
+        choices=[f.value for f in AuxField],
+        default=None,
+        help="train aux text generation from judge annotations (ar_backbone "
+        "only): fields rendered before BOA in template order; datasets "
+        "whose annotation stamp is absent/stale train as unjudged, loudly. "
+        "Omit to train actions only (the historical objective)",
+    )
+    parser.add_argument(
+        "--aux-loss-weight",
+        type=float,
+        default=0.5,
+        help="weight of the aux-text CE component (total = action + "
+        "w*aux); labels are weak supervision (~80%% judge agreement), "
+        "hence the modest default",
     )
     parser.add_argument(
         "--fast-tokenizer",
@@ -1085,6 +1161,12 @@ def parse_args() -> TrainArgs:
         parser.error(
             "--time-conditioning is flow-only (AR decoders have no \u03c4)",
         )
+    if raw.aux_fields is not None and raw.decoder != "ar_backbone":
+        parser.error("--aux-fields is ar_backbone-only (aux rides its suffix)")
+    if raw.aux_fields is not None and not raw.aux_fields:
+        parser.error("--aux-fields given with no fields — omit the flag instead")
+    if raw.aux_loss_weight <= 0:
+        parser.error("--aux-loss-weight must be > 0 (omit --aux-fields to disable)")
     if raw.decoder == "ar_backbone":
         # The backbone IS the architecture: decoder shape flags and the
         # cross-attention schedule describe models this run doesn't build.
@@ -1137,6 +1219,8 @@ def parse_args() -> TrainArgs:
         time_conditioning=raw.time_conditioning,
         decoder=raw.decoder,
         fast_tokenizer=raw.fast_tokenizer,
+        aux_fields=tuple(raw.aux_fields) if raw.aux_fields is not None else None,
+        aux_loss_weight=raw.aux_loss_weight,
         decoder_hidden=raw.decoder_hidden,
         decoder_heads=raw.decoder_heads,
         decoder_intermediate=raw.decoder_intermediate,
@@ -1272,13 +1356,45 @@ def main() -> int:
         if args.fast_tokenizer is not None
         else None
     )
+    aux_decode_config: AuxDecodeConfig | None = None
+    aux_spec: AuxSpec | None = None
+    if args.aux_fields is not None:
+        assert action_codec is not None  # parse_args guard (ar_backbone-only)
+        if not selection.annotated_repos:
+            raise SystemExit(
+                "--aux-fields but NO selected dataset carries annotations at "
+                f"the pinned prompt hash — nothing to supervise (see the "
+                f"[aux] lines above; pinned {PINNED_PROMPT_HASH})",
+            )
+        aux_decode_config = AuxDecodeConfig(
+            template_version=AUX_TEMPLATE_VERSION,
+            fields=tuple(AuxField(f) for f in args.aux_fields),
+            prompt_hash=PINNED_PROMPT_HASH,
+            judge_model="+".join(selection.judge_models),
+        )
+        aux_spec = AuxSpec(
+            tokenizer_dir=str(checkpoint_dir),
+            fields=aux_decode_config.fields,
+            annotated_repos=selection.annotated_repos,
+            block_base=(
+                load_config(checkpoint_dir).text.vocab_size - action_codec.vocab_total
+            ),
+        )
+        if is_main:
+            print(
+                f"aux: {len(selection.annotated_repos)} annotated dataset(s) "
+                f"@ {PINNED_PROMPT_HASH} (judges: {aux_decode_config.judge_model}), "
+                f"fields {list(args.aux_fields)}, loss weight "
+                f"{args.aux_loss_weight}",
+                flush=True,
+            )
     collator = Collator(
         inputs=GemmaInputsCollator(str(checkpoint_dir), args.max_soft_tokens),
         instruction=args.instruction,
         camera_filter=args.cameras,
         max_cameras=args.max_cameras,
         action_codec=action_codec,
-        aux=None,
+        aux=aux_spec,
     )
     # The explicit generator (both modes) makes the shuffle order and the
     # dataloader worker base-seeds a pure function of (--seed, rank) —
@@ -1369,12 +1485,20 @@ def main() -> int:
             state_dim=state_dim,
             chunk_size=args.chunk_size,
             action_dim=action_dim,
-            aux=None,
+            aux=aux_decode_config,
         )
+        aux_runtime = None
+        if aux_decode_config is not None:
+            aux_runtime = build_aux_runtime(
+                aux_decode_config,
+                transformers.AutoTokenizer.from_pretrained(str(checkpoint_dir)),
+            )
         ar_backbone_decoder = ARBackboneDecoder(
             ar_backbone_config,
             backbone_config.text,
             action_codec,
+            aux_runtime=aux_runtime,
+            aux_loss_weight=args.aux_loss_weight,
             device=device,
             dtype=torch.float32,
         )
@@ -1718,6 +1842,8 @@ def main() -> int:
     # sync per log_every steps instead of one per step. (grad_norm is
     # identical on all ranks after DDP's gradient sync — no reduce needed.)
     window: list[Tensor] = []
+    window_action: list[Tensor] = []
+    window_aux: list[Tensor] = []
     grad_norm = torch.zeros((), device=device)
     prefetcher = DevicePrefetcher(loader, device)
     epoch = 0
@@ -1729,7 +1855,7 @@ def main() -> int:
         for batch in prefetcher:
             if step >= args.steps:
                 break
-            loss = train_step(batch)
+            loss, action_component, aux_component = train_step(batch)
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
             grad_norm = torch.nn.utils.clip_grad_norm_(
@@ -1740,15 +1866,30 @@ def main() -> int:
             scheduler.step()
             step += 1
             window.append(loss.detach())
+            window_action.append(action_component)
+            if aux_component is not None:
+                window_aux.append(aux_component)
 
             if step % args.log_every == 0:
                 # All ranks participate in the reduce (they hit the same
                 # step in lockstep); only rank 0 syncs to host and reports.
+                # Aux batches without a single judged sample still carry an
+                # aux term (0-safe mean) — every rank appends every step, so
+                # the collective stays aligned.
                 window_mean = torch.stack(window).mean()
+                action_mean = torch.stack(window_action).mean()
+                aux_mean = torch.stack(window_aux).mean() if window_aux else None
                 window.clear()
+                window_action.clear()
+                window_aux.clear()
                 if distributed:
                     torch.distributed.all_reduce(window_mean)
                     window_mean /= world_size
+                    torch.distributed.all_reduce(action_mean)
+                    action_mean /= world_size
+                    if aux_mean is not None:
+                        torch.distributed.all_reduce(aux_mean)
+                        aux_mean /= world_size
                 dt = (time.perf_counter() - t_last) / args.log_every
                 t_last = time.perf_counter()
                 if is_main:
@@ -1760,6 +1901,9 @@ def main() -> int:
                         "samples": step * args.batch_size * world_size,
                         "s_per_step": round(dt, 3),
                     }
+                    if aux_mean is not None:
+                        record["loss_action"] = round(action_mean.item(), 4)
+                        record["loss_aux"] = round(aux_mean.item(), 4)
                     if args.backbone_trained:
                         # Group 1 is the first backbone group (same cosine
                         # shape as the expert's, scaled to its base lr).
@@ -1769,16 +1913,17 @@ def main() -> int:
                     log_file.write(json.dumps(record) + "\n")
                     log_file.flush()
                     if wandb_run is not None:
-                        wandb_run.log(
-                            {
-                                "train/loss": record["loss"],
-                                "train/grad_norm": record["grad_norm"],
-                                "train/lr": record["lr"],
-                                "train/samples": record["samples"],
-                                "train/s_per_step": record["s_per_step"],
-                            },
-                            step=step,
-                        )
+                        wandb_metrics = {
+                            "train/loss": record["loss"],
+                            "train/grad_norm": record["grad_norm"],
+                            "train/lr": record["lr"],
+                            "train/samples": record["samples"],
+                            "train/s_per_step": record["s_per_step"],
+                        }
+                        if "loss_aux" in record:
+                            wandb_metrics["train/loss_action"] = record["loss_action"]
+                            wandb_metrics["train/loss_aux"] = record["loss_aux"]
+                        wandb_run.log(wandb_metrics, step=step)
 
             if train_probe is not None and step % args.eval_every == 0:
                 # Collective: every rank scores its shards, the MAE sums

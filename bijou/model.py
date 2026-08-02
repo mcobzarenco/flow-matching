@@ -30,7 +30,7 @@ from typing import override
 import torch
 from torch import Tensor, nn
 
-from .decoders.ar_backbone import ARBackboneDecoder, ar_backbone_loss
+from .decoders.ar_backbone import ARBackboneDecoder, ar_backbone_losses
 from .decoders.ar_fast import ARFastDecoder, ar_fast_loss
 from .decoders.flow import FlowDecoder, SamplingMethod, flow_matching_loss
 from .encoders.gemma4 import GemmaEncoder, GemmaInputs
@@ -100,14 +100,32 @@ class BijouModel(nn.Module):
         """Scalar training loss of this model's decoder for one batch
         against its observation memory — the objective dispatch (each
         decoder kind's objective is a module-level function beside it)."""
+        return self.loss_components(memory, batch)[0]
+
+    def loss_components(
+        self,
+        memory: ObservationMemory,
+        batch: CollatedBatch[GemmaInputs],
+    ) -> tuple[Tensor, Tensor, Tensor | None]:
+        """(total, action component, aux component | None) — the total
+        carries the graph; components arrive detached for logging. Flow
+        and ar_fast have a single-component objective (aux None)."""
         decoder = self.decoder
         match decoder:
             case FlowDecoder():
-                return flow_matching_loss(decoder, memory, batch)
+                total = flow_matching_loss(decoder, memory, batch)
+                return total, total.detach(), None
             case ARFastDecoder():
-                return ar_fast_loss(decoder, memory, batch)
+                total = ar_fast_loss(decoder, memory, batch)
+                return total, total.detach(), None
             case ARBackboneDecoder():
-                return ar_backbone_loss(self.backbone, decoder, memory, batch)
+                total, action, aux = ar_backbone_losses(
+                    self.backbone,
+                    decoder,
+                    memory,
+                    batch,
+                )
+                return total, action.detach(), None if aux is None else aux.detach()
 
     def encode_observation(
         self,

@@ -37,6 +37,8 @@ import torch
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
 from torch import Tensor
 
+from .aux_text import PINNED_PROMPT_HASH
+
 
 @dataclass(frozen=True, slots=True)
 class DatasetStats:
@@ -375,9 +377,46 @@ class DataSelection:
     episode_split: EpisodeSplit
     held_out_episodes: int
     held_out_datasets: int
+    # Repo ids whose judge-annotation stamp matches the pinned prompt
+    # hash (aux training consumes ONLY these datasets' annotation
+    # surfaces; stale/absent stamps are treated as unjudged, loudly) —
+    # and the judge model(s) those stamps declare, for checkpoint
+    # provenance.
+    annotated_repos: frozenset[str]
+    judge_models: tuple[str, ...]
 
     def concat(self) -> torch.utils.data.ConcatDataset[dict[str, Any]]:
         return torch.utils.data.ConcatDataset(self.datasets)
+
+
+def verified_annotation_stamp(dataset_dir: Path, repo_id: str) -> str | None:
+    """The judge model of ``meta/judge_annotations.json`` when the stamp's
+    prompt hash matches the pinned one; None (with a loud reason) for
+    absent, unparseable or stale stamps — the dataset then trains as
+    unjudged rather than mixing label distributions."""
+    stamp_path = dataset_dir / "meta" / "judge_annotations.json"
+    if not stamp_path.exists():
+        return None
+    try:
+        stamp = json.loads(stamp_path.read_text())
+    except json.JSONDecodeError as error:
+        print(
+            f"[aux] {repo_id}: unparseable judge_annotations.json "
+            f"({error}) — training as unjudged",
+            flush=True,
+        )
+        return None
+    stamp_hash = stamp.get("prompt_hash")
+    if stamp_hash != PINNED_PROMPT_HASH:
+        print(
+            f"[aux] {repo_id}: annotation stamp at prompt hash "
+            f"{stamp_hash!r} != pinned {PINNED_PROMPT_HASH!r} — training "
+            "as unjudged (re-materialize to adopt)",
+            flush=True,
+        )
+        return None
+    model = stamp.get("model_filter") or (stamp.get("models") or ["<unknown>"])[0]
+    return str(model)
 
 
 def select_datasets(
@@ -431,6 +470,8 @@ def select_datasets(
     lerobot_stats: dict[str, dict[str, Any]] = {}
     camera_census: Counter[tuple[str, ...]] = Counter()
     dropped: list[str] = []
+    annotated_repos: set[str] = set()
+    judge_models: set[str] = set()
     total_episodes = 0
     held_out_total = 0
     held_out_datasets = 0
@@ -532,6 +573,10 @@ def select_datasets(
             continue
         datasets.append(StatsAttachedDataset(sub_dataset, stats))
         selected_dirs[repo_id] = dataset_dir
+        judge_model = verified_annotation_stamp(dataset_dir, repo_id)
+        if judge_model is not None:
+            annotated_repos.add(repo_id)
+            judge_models.add(judge_model)
         per_dataset_stats[repo_id] = stats
         lerobot_stats[repo_id] = sub_dataset.meta.stats
         camera_census[info.cameras] += 1
@@ -546,6 +591,8 @@ def select_datasets(
         raise ValueError(f"no compatible datasets selected; dropped:\n{reasons}")
 
     return DataSelection(
+        annotated_repos=frozenset(annotated_repos),
+        judge_models=tuple(sorted(judge_models)),
         datasets=datasets,
         per_dataset_stats=per_dataset_stats,
         lerobot_stats=lerobot_stats,
