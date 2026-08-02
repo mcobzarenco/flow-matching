@@ -36,22 +36,38 @@ remains the provenance store and the only home of episode-level fields.
 ## Provenance and pinning
 
 `meta/judge_annotations.json` stamps which `(model, prompt_hash)`
-selection the materialized surfaces were built from. Pin both in your
-training config, verify the stamp, and fail loudly on mismatch — a
-silent prompt-version mix corrupts every label downstream:
+selection the materialized surfaces were built from. The stamp is the
+blessed selection, and it ships in-band: consumers of the columns and
+language rows need no hash knowledge at all — there is exactly one
+materialization at a time. What the stamp is *for*:
+
+- **log it with every training run** (config/W&B), so runs are
+  comparable and a re-materialized corpus is visible in the record;
+- **filter sidecar reads by its fields** (§ episode-level fields), so
+  episode-level labels provably match the per-frame columns;
+- optionally **pin a literal** in a training config when a sweep must
+  fail loudly if the corpus is re-materialized under a newer prompt
+  mid-sweep. (Asserting against the imported `bijou.judge.PROMPT_HASH`
+  is only right when trainer and judge run from the same checkout —
+  the constant advances with the code, not with your labels.)
 
 ```python
 import json
 from pathlib import Path
-from bijou.judge import PROMPT_HASH
 
 root = Path("/path/to/dataset")  # contains meta/, data/, videos/
 stamp = json.loads((root / "meta/judge_annotations.json").read_text())
-assert stamp["prompt_hash"] == PROMPT_HASH, (
-    f"columns built at {stamp['prompt_hash']}, loader pins {PROMPT_HASH}"
-)
+run_config["judge_labels"] = stamp  # provenance travels with the run
 judge_model = stamp["model_filter"] or stamp["models"][0]
 ```
+
+Dataset-wide statistics are independent of all of this by design:
+`meta/stats.json` derives from robot data only, and annotation columns
+carry no stats entries (nothing normalizes labels; NaN would poison
+stats aggregation). Re-judging or re-materializing never changes
+normalization — the two only meet at curation time, when judge-gated
+episode filtering changes the episode set and the merge tool recomputes
+stats for what survives.
 
 ## What is available
 
@@ -73,13 +89,12 @@ relabeling and instruction augmentation. The sidecar is plain JSON next
 to the rest of the metadata, so hub upload/download carries it:
 
 ```python
-from bijou.judge import PROMPT_HASH
 from bijou.judge.store import load_sidecar
 
 records = [
     r
     for r in load_sidecar(root)  # [] when the dataset was never judged
-    if r.prompt_hash == PROMPT_HASH and r.model == judge_model
+    if r.prompt_hash == stamp["prompt_hash"] and r.model == judge_model
 ]
 by_episode = {r.episode_index: r.parsed_judgment() for r in records}
 
@@ -107,7 +122,7 @@ stays visible:
 
 ```python
 kinds = json.loads((root / "meta/camera_kinds.json").read_text())
-assert kinds["prompt_hash"] == PROMPT_HASH
+assert kinds["prompt_hash"] == stamp["prompt_hash"], (kinds, stamp)
 {cam: v["kind"] for cam, v in kinds["cameras"].items()}
 # e.g. {'overhead': 'top', 'gripper_cam': 'wrist'}
 kinds["cameras"]["overhead"]["tie"]  # True on a genuine split vote
