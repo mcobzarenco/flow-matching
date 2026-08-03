@@ -30,7 +30,14 @@ import torch
 from torch import Tensor
 
 from .annotations import ConditionField
-from .aux_text import AuxGeneration, AuxSpec, assemble_suffix, subgoal_text
+from .aux_text import (
+    IMAGE_KEY_PREFIX,
+    AuxGeneration,
+    AuxSpec,
+    assemble_suffix,
+    camera_prompt_order,
+    subgoal_text,
+)
 from .fast.codec import ActionCodec
 from .gemma4.cache import KVCache
 from .nn import RopeParameters
@@ -301,7 +308,7 @@ class InputsCollator[I: BatchInputs](Protocol):
 # ``ar_fast_loss``, ``ar_backbone_loss``), and ``predict_chunk`` returns
 # RAW-unit chunks [B, chunk, action_dim] (per-sample stats applied inside).
 
-_IMAGE_KEY_PREFIX = "observation.images."
+_IMAGE_KEY_PREFIX = IMAGE_KEY_PREFIX
 
 
 @dataclass
@@ -380,6 +387,15 @@ class Collator[I: BatchInputs]:
                 f"subgoal condition dropout {self.subgoal_condition_dropout} "
                 "outside [0, 1)",
             )
+        if self.aux is not None and (
+            self.camera_filter is not None or self.max_cameras is not None
+        ):
+            raise ValueError(
+                "aux rendering with camera selection: the 'visible' "
+                "field's indices are positions in the FULL sorted camera "
+                "set — camera_filter/max_cameras would silently shift "
+                "them; train aux without camera selection",
+            )
 
     @override
     def __getstate__(self) -> dict[str, Any]:
@@ -412,7 +428,18 @@ class Collator[I: BatchInputs]:
         subgoal_rendered = False
         for field_name in self.condition_fields:
             if field_name is ConditionField.SUBGOAL:
-                value = item.get("condition_subgoal") or subgoal_text(item)
+                # Explicit None handling, no truthiness: an operator's
+                # EMPTY-string override means "no hint" and must not
+                # fall through to the frame label it suppresses (the
+                # `or` form did exactly that, and KeyError'd on
+                # label-less rollout items; 2026-08-03).
+                override = item.get("condition_subgoal")
+                if override is None:
+                    value = subgoal_text(item)
+                elif override.strip() == "":
+                    value = None
+                else:
+                    value = override
                 dropout = self.subgoal_condition_dropout
             else:
                 value = item.get(f"condition_{field_name.value}")
@@ -479,10 +506,25 @@ class Collator[I: BatchInputs]:
         )
 
     def cameras_of(self, item: dict[str, Any]) -> list[str]:
-        """Sorted camera keys of one sample; prompt slots are positional (the
-        community collections' generic image/image2 keys carry no reliable
-        wrist-vs-scene semantics — SmolVLA precedent)."""
-        cameras = sorted(k for k in item if k.startswith(_IMAGE_KEY_PREFIX))
+        """Camera keys of one sample in PROMPT order: sorted by
+        (semantic kind, short name) via :func:`camera_prompt_order` —
+        RAW kinds from the item's map, so same-kind rigs order
+        identically regardless of their private short names, and a
+        kind-dropout draw (applied to the TAG TEXT downstream) can
+        never reorder images. Untagged datasets degenerate to plain
+        short-name order (the community collections' generic
+        image/image2 keys carry no reliable wrist-vs-scene semantics —
+        SmolVLA precedent)."""
+        kinds = item.get("camera_kinds") or {}
+        short_names = [
+            k.removeprefix(_IMAGE_KEY_PREFIX)
+            for k in item
+            if k.startswith(_IMAGE_KEY_PREFIX)
+        ]
+        cameras = [
+            _IMAGE_KEY_PREFIX + name
+            for name in camera_prompt_order(kinds, sorted(short_names))
+        ]
         if self.camera_filter is not None:
             allowed = set(self.camera_filter)
             cameras = [

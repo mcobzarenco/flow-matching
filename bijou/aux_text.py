@@ -3,10 +3,11 @@
 Renders a judged frame's annotations into the aux text segment that
 precedes BOA in the ar_backbone suffix:
 
-    subgoal: reach toward the toy boat\n
-    holding: no\n
-    progress: 30%\n
-    event: object dropped from gripper\n
+    [subgoal]reach toward the toy boat\n
+    [holding]no\n
+    [progress]30%\n
+    [event]object dropped from gripper\n
+    [visible]object 0,1; gripper 1\n
 
 Presence-based: a field appears iff its label exists at this frame
 (subgoal on every frame of a judged episode; holding/progress only on
@@ -55,7 +56,19 @@ from torch import Tensor
 
 from .annotations import EVENT_STYLE
 
-AUX_TEMPLATE_VERSION = 2
+# v3 (2026-08-03): bracket headers ``[field]value\n`` and positional
+# visibility. Chosen for the FORCED-SCAFFOLD property: every split
+# point we force at (header|value) must fall on a BPE merge boundary
+# (part-encoding a line = encoding it jointly, id for id). The
+# v2 form ``field: value`` violated it — the trailing space merged
+# into word-valued first tokens (" yes" = one id), so forced headers
+# put the model off-manifold (the samples_holding_acc bug). ``[``/``]``
+# are single Gemma ids (236840/236842) that never cross-merge with
+# letters, digits or ``\n`` (measured on the real E2B tokenizer,
+# 2026-08-03, incl. across field boundaries ``\n[``);
+# :func:`build_aux_runtime` asserts the property at construction so a
+# tokenizer swap that breaks it fails loudly, not silently.
+AUX_TEMPLATE_VERSION = 3
 # Suffix format 4 (the only trained format going forward): every
 # ar_backbone suffix — aux or not — is [state][GENERATION_OPENER][MODE]
 # [aux text when labeled][BOA][actions]. The opener is Gemma-4's OWN
@@ -84,17 +97,20 @@ ACT_MODE = 0
 AUX_MODE = 1
 NUM_MODES = 2
 # Free-phase token budget at decode: worst-case configured template
-# (headers ~18 + subgoal 20 + holding 4 + progress 5 + event 24 +
-# visible ~14) with slack; the fallback (force BOA, count it) fires
-# past this.
+# (headers ~16 + subgoal 20 + holding 1 + progress 5 + event 24 +
+# visible ~10 + terminators 5) with slack; the fallback (force BOA,
+# count it) fires past this.
 MAX_FREE_TOKENS = 96
 FIELD_TERMINATOR = "\n"
-SUBGOAL_HEADER = "subgoal: "
-HOLDING_HEADER = "holding: "
-PROGRESS_HEADER = "progress: "
-EVENT_HEADER = "event: "
-VISIBLE_HEADER = "visible: "
+SUBGOAL_HEADER = "[subgoal]"
+HOLDING_HEADER = "[holding]"
+PROGRESS_HEADER = "[progress]"
+EVENT_HEADER = "[event]"
+VISIBLE_HEADER = "[visible]"
 HOLDING_VALUES = ("no", "yes")  # indexed by the 0/1 label
+# LeRobot's camera-frame key convention — single-sourced here (the DAG
+# leaf); the collator imports it.
+IMAGE_KEY_PREFIX = "observation.images."
 
 
 class AuxField(StrEnum):
@@ -109,8 +125,8 @@ class AuxField(StrEnum):
 
 
 class AuxDecodeMode(StrEnum):
-    """Inference-time mode selection for the format-3 decode: which mode
-    token is fed after the opener. ACT — feed [ACT][BOA], straight to
+    """Inference-time mode selection for mode-format (≥3) decodes: which
+    mode token is fed after the opener. ACT — feed [ACT][BOA], straight to
     grammar-constrained actions (the deployment fast path). FREE — feed
     [AUX], free-until-BOA text generation first (requires an
     aux-trained checkpoint: [AUX] is untrained otherwise)."""
@@ -180,6 +196,18 @@ class AuxRuntime:
     terminator_id: int
 
 
+# Representative first-values per field for the boundary tripwire below
+# (HOLDING checks its REAL candidates; the rest one typical value each —
+# a letter-initial phrase, a digit, positional indices).
+_BOUNDARY_PROBES: dict[AuxField, tuple[str, ...]] = {
+    AuxField.SUBGOAL: ("reach toward the object",),
+    AuxField.HOLDING: HOLDING_VALUES,
+    AuxField.PROGRESS: ("85%",),
+    AuxField.EVENT: ("object dropped",),
+    AuxField.VISIBLE: ("object 0,1; gripper none",),
+}
+
+
 def build_aux_runtime(
     config: AuxDecodeConfig,
     tokenizer: TextTokenizer,
@@ -187,7 +215,16 @@ def build_aux_runtime(
     """Tokenize the versioned template's scaffold. The field terminator
     must be a single token (true for \\n under the Gemma tokenizer and
     the test stub) — anything else is a loud error, since value decoding
-    detects termination by one id."""
+    detects termination by one id.
+
+    Construction also asserts the template's FORCED-SCAFFOLD property
+    on every configured field: ``encode(header) + encode(value) +
+    encode(\\n) == encode(header + value + \\n)`` for representative
+    values (the real candidates for constrained fields). Training
+    encodes lines JOINTLY, so a violation means forced headers would
+    condition the model off-manifold — the v2 ``field: `` template
+    failed exactly this way (space merged into " yes") and shipped a
+    silently-wrong holding metric."""
 
     def encode(text: str) -> tuple[int, ...]:
         return tuple(tokenizer.encode(text, add_special_tokens=False))
@@ -205,6 +242,26 @@ def build_aux_runtime(
         AuxField.EVENT: encode(EVENT_HEADER),
         AuxField.VISIBLE: encode(VISIBLE_HEADER),
     }
+    header_of = {
+        AuxField.SUBGOAL: SUBGOAL_HEADER,
+        AuxField.HOLDING: HOLDING_HEADER,
+        AuxField.PROGRESS: PROGRESS_HEADER,
+        AuxField.EVENT: EVENT_HEADER,
+        AuxField.VISIBLE: VISIBLE_HEADER,
+    }
+    for aux_field in config.fields:
+        for value in _BOUNDARY_PROBES[aux_field]:
+            split = headers[aux_field] + encode(value) + terminator
+            joint = encode(header_of[aux_field] + value + FIELD_TERMINATOR)
+            if split != tuple(joint):
+                raise SystemExit(
+                    f"aux template boundary broken for {aux_field.value!r}: "
+                    f"part-encoding {list(split)} != joint {list(joint)} — "
+                    "this tokenizer merges across the header/value split, "
+                    "so forced-scaffold decoding would condition the model "
+                    "off-manifold; the template must change with the "
+                    "tokenizer (AUX_TEMPLATE_VERSION bump)",
+                )
     candidates: dict[AuxField, tuple[tuple[int, ...], ...]] = {
         # Constrained value set; first-token argmax picks the candidate,
         # its remaining ids are forced.
@@ -385,9 +442,14 @@ class AuxSpec:
 def subgoal_text(item: dict[str, Any]) -> str | None:
     """The frame's current subgoal segment label (piecewise-constant
     coverage on judged episodes), or None. Shared by the aux renderer
-    (prediction target) and the collator's prompt conditioning (C2)."""
+    (prediction target) and the collator's prompt conditioning (C2).
+    Rollout/policy items carry no timestamp (they are not dataset
+    frames) — that is "no label", not an error."""
+    timestamp = item.get("timestamp")
+    if timestamp is None:
+        return None
     row = active_at(
-        float(item["timestamp"]),
+        float(timestamp),
         persistent=item.get("language_persistent") or [],
         style="subtask",
     )
@@ -396,22 +458,68 @@ def subgoal_text(item: dict[str, Any]) -> str | None:
     return str(row["content"])
 
 
+def camera_prompt_order(kinds: dict[str, str], names: list[str]) -> list[str]:
+    """Camera short names in PROMPT order: sorted by (semantic kind,
+    short name), kinds RAW from the dataset's map (missing ⇒
+    "unknown") — never the dropout-applied kind, so a kind-dropout
+    draw retags but can never reorder images. The single source of
+    camera order for the prompt (Collator.cameras_of) and the
+    positional ``visible`` indices; untagged datasets (empty map)
+    degenerate to plain short-name order — the pre-tag behavior."""
+    return sorted(names, key=lambda name: (kinds.get(name, "unknown"), name))
+
+
+# Loud-once bookkeeping for visibility surface disagreements (per
+# worker process): a broken dataset prints one reason, not one line per
+# frame — the StatsAttachedDataset substitution-print precedent.
+_VISIBILITY_MISMATCH_WARNED: set[str] = set()
+
+
+def _visibility_mismatch(repo_id: str, reason: str) -> None:
+    if repo_id not in _VISIBILITY_MISMATCH_WARNED:
+        _VISIBILITY_MISMATCH_WARNED.add(repo_id)
+        print(
+            f"[aux] {repo_id}: {reason} — the 'visible' field is skipped "
+            "for this dataset's frames until its camera kinds and "
+            "annotation columns are re-materialized in sync (printed "
+            "once per dataset per worker)",
+            flush=True,
+        )
+
+
 def visibility_text(item: dict[str, Any]) -> str | None:
-    """``object top,wrist; gripper top`` — which cameras can see the task
-    object and the gripper on this frame, or None when the frame wasn't
+    """``object 0,1; gripper 1`` — which cameras can see the task object
+    and the gripper on this frame, or None when the frame wasn't
     judge-sampled (NaN mask) or no camera map travels with the item.
-    Slot order is the feature's convention (sorted camera short names —
-    the same sort as the item's camera_kinds keys); cameras are labeled
-    by semantic kind, falling back to the short name where the kind is
-    unknown, deduplicated in slot order. Cameras seeing nothing render
-    "none" — a TRUE negative on sampled frames (occlusion is signal).
-    Slot-count mismatches (kinds map ≠ visibility vector) render
-    nothing: the two surfaces disagree, a data issue to surface
-    upstream, not to guess through."""
+    Cameras are referenced by their PROMPT POSITION (ascending indices
+    into :func:`camera_prompt_order`) — positional on purpose: kind
+    names collide (two "unknown" cameras), short names are
+    dataset-internal vocabulary the prompt never shows, and indices
+    stay invariant under camera-kind dropout. Slots are read in the
+    feature's storage order (sorted short names). Cameras seeing
+    nothing render "none" — a TRUE negative on sampled frames
+    (occlusion is signal). Surface disagreements (kinds map ≠ vector
+    slots ≠ the item's cameras) render nothing, LOUDLY once per
+    dataset: guessing through misaligned slots would label the wrong
+    cameras."""
     kinds = item.get("camera_kinds") or {}
-    if not kinds:
+    if len(kinds) == 0:
         return None
     names = sorted(kinds)
+    item_cameras = sorted(
+        key.removeprefix(IMAGE_KEY_PREFIX)
+        for key in item
+        if key.startswith(IMAGE_KEY_PREFIX)
+    )
+    if len(item_cameras) > 0 and item_cameras != names:
+        _visibility_mismatch(
+            str(item.get("repo_id", "<unknown>")),
+            f"camera kinds map covers {names} but the item carries "
+            f"cameras {item_cameras}",
+        )
+        return None
+    order = camera_prompt_order(kinds, names)
+    index_of = {name: i for i, name in enumerate(order)}
     parts: list[str] = []
     for label, key in (
         ("object", "annotation.visible_object"),
@@ -423,16 +531,20 @@ def visibility_text(item: dict[str, Any]) -> str | None:
         # Single-camera datasets store shape-(1,) features as scalars
         # (lerobot convention) — normalize before the slot walk.
         vector = torch.atleast_1d(value)
-        if vector.numel() != len(names) or not bool(torch.isfinite(vector).all()):
+        if vector.numel() != len(names):
+            _visibility_mismatch(
+                str(item.get("repo_id", "<unknown>")),
+                f"{key} has {vector.numel()} slot(s) for {len(names)} camera kind(s)",
+            )
             return None
-        seen = [
-            kinds.get(name, "unknown")
-            if kinds.get(name, "unknown") != "unknown"
-            else name
+        if not bool(torch.isfinite(vector).all()):
+            return None  # not judge-sampled — the normal sparse case
+        seen = sorted(
+            index_of[name]
             for name, slot in zip(names, vector.tolist(), strict=True)
             if slot >= 0.5
-        ]
-        cameras = ",".join(dict.fromkeys(seen)) or "none"
+        )
+        cameras = ",".join(str(i) for i in seen) if len(seen) > 0 else "none"
         parts.append(f"{label} {cameras}")
     return "; ".join(parts)
 
@@ -457,7 +569,10 @@ def events_text(item: dict[str, Any]) -> str | None:
 def aux_label_text(item: dict[str, Any], fields: tuple[AuxField, ...]) -> str:
     """The template text the LABELS would render for this item — the
     reference column next to generations in eval tables. Pure strings
-    (no tokenizer); presence rules identical to :meth:`AuxSpec.render`."""
+    (no tokenizer); presence rules identical to :meth:`AuxSpec.render`,
+    EXCEPT truncation: render's token caps (max_subgoal/event_tokens)
+    need a tokenizer, so this column shows the full label — on capped
+    fields the trained target may be a shortened prefix of it."""
     parts: list[str] = []
     for aux_field in fields:
         match aux_field:
@@ -515,14 +630,17 @@ def assemble_suffix(
     is_aux = torch.zeros((batch, width), dtype=torch.bool)
     for i, aux in enumerate(aux_ids):
         if aux:
-            # Text ids must stay below the block: an id inside the
-            # reserved run would silently alias an action token in the
-            # loss/decode routing (never produced by a real tokenizer,
+            # Text ids must stay below the ENTIRE reserved tail — the
+            # two mode ids directly under the block included: an id in
+            # [mode_base, block_base) would silently embed as
+            # [ACT]/[AUX] AND become a CE target, training the model to
+            # predict a mode token (never produced by a real tokenizer,
             # but "never" is what asserts are for).
-            if max(aux) >= block_base:
+            if max(aux) >= block_base - NUM_MODES:
                 raise ValueError(
-                    f"aux row {i} contains id {max(aux)} >= block_base "
-                    f"{block_base} — aux ids must be text-vocabulary ids",
+                    f"aux row {i} contains id {max(aux)} >= mode_base "
+                    f"{block_base - NUM_MODES} — aux ids must be "
+                    "text-vocabulary ids below the mode/FAST reserved tail",
                 )
             suffix[i, : len(aux)] = torch.tensor(aux, dtype=torch.long)
             is_aux[i, : len(aux)] = True

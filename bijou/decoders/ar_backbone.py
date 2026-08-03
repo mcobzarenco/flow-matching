@@ -1,13 +1,14 @@
 """Decoder-only action decoder: the backbone's suffix role (ar_backbone).
 
 The prompt is prefill-encoded once (the ObservationMemory retains the
-full prefix KV cache); this decoder continues the suffix-format-3
-sequence ``[state][<start_of_turn>model\\n][MODE][aux text?][BOA]
+full prefix KV cache); this decoder continues the suffix-format-4
+sequence ``[state][<|turn>model\\n][MODE][aux text?][BOA]
 [t_1..t_k]`` through ALL backbone layers — the KV-shared deep half
 included — and reads FULL-VOCABULARY logits from the frozen tied LM
 head with the FAST block's columns supplied by a trainable patch. Aux
-text (subgoal / holding / progress rendered from judge annotations,
-bijou.aux_text) and action tokens share that one softmax. The MODE
+text (template-v3 bracket fields — ``[subgoal]…\\n[holding]…\\n`` —
+rendered from judge annotations, bijou.aux_text) and action tokens
+share that one softmax. The MODE
 token ([ACT] | [AUX]) is FED, never predicted: whether a sample speaks
 is decided by its label presence (and aux dropout) at collation, so
 the model is never asked to infer judged-ness from appearance, and
@@ -713,12 +714,13 @@ class ARBackboneDecoder(nn.Module):
 
 
 def _parse_aux(text: str) -> AuxGeneration:
-    """Lenient field parsing of the generated aux text; raw text is kept
-    verbatim for reports (parse failures are None, never exceptions)."""
+    """Lenient field parsing of the generated aux text (template v3
+    bracket headers); raw text is kept verbatim for reports (parse
+    failures are None, never exceptions)."""
     values: dict[str, str] = {}
     for line in text.splitlines():
         for field_name in ("subgoal", "holding", "progress", "event", "visible"):
-            prefix = f"{field_name}: "
+            prefix = f"[{field_name}]"
             if line.startswith(prefix):
                 values[field_name] = line[len(prefix) :].strip()
     holding = values.get("holding")
@@ -745,7 +747,7 @@ def ar_backbone_losses(
     memory: ObservationMemory,
     batch: CollatedBatch[Any],
 ) -> tuple[Tensor, Tensor, Tensor | None, Tensor | None]:
-    """Teacher-forced FULL-VOCABULARY cross-entropy over the format-3
+    """Teacher-forced FULL-VOCABULARY cross-entropy over the format-4
     suffix ``[state][opener][MODE][aux?][BOA][actions]`` — (total with
     graph, action component, aux CE SUM | None, aux position count |
     None). Aux rides as sum+count (not a mean) so the train loop can

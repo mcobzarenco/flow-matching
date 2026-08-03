@@ -1,27 +1,73 @@
 # Bijou architecture
 
-Bijou is a vision-language-action model for SO-100/101 arms built on
-**Gemma-4 E2B-IT**, with one prompt side and two trained action-path
-families. The **cross-attention family**: a truncated backbone (layers
-0–14) encodes camera images + a language instruction once per
-observation and exports the K/V of a few of its layers; a **404M fp32
-flow-matching action expert** (or a narrow AR FAST decoder) cross-attends
-that K/V and emits a 50-step action chunk. The **decoder-only path
-(`ar_backbone`)**: the FULL backbone plays both roles — the same prompt
-is prefill-encoded once, then the backbone itself continues the suffix
-autoregressively into FAST action tokens (and, when trained with judge
-annotations, an auxiliary text segment first — subgoal / holding /
-progress) under full-vocabulary CE through its own tied LM head.
-Per-dataset normalization makes ~1000 miscalibrated community rigs
-trainable together; the ultimate target is the owner's physical SO-101.
-The decoder-only path holds the current ledger best (§7).
+Bijou is a vision-language-action (VLA) model for SO-100/101 robot
+arms, built from ONE pretrained multimodal transformer — **Gemma-4
+E2B-IT** (vision tower + 35-layer text stack, 262k vocabulary,
+per-layer input embeddings, ~5.2B parameters) — reused in every role
+it can serve. Each observation (a task instruction, a variable set of
+camera frames, the arm's proprioceptive state) is rendered as one
+chat-templated user turn and prefill-encoded once per control step;
+action generation then follows one of two trained families:
 
-This document is the deep reference for the model and training system as
-they exist, the measured results that shaped them (§7), and the proposed
-changes under evaluation (§8). Per-module contracts live in docstrings;
-code conventions in `code-styleguide.md`; collaboration/operating
-conventions in `working-together.md`. Transient state (in-flight runs,
-machine inventory) lives in wandb, the HF hub, and the chat — not in
+- **Decoder-only (`ar_backbone`) — the mainline, and the current
+  ledger best (§2.3, §7).** The full backbone simply continues its
+  own prefill as a model turn: a projected state token, Gemma's real
+  generation opener, a fed `[ACT]`/`[AUX]` mode token, then — under
+  full-vocabulary cross-entropy through the frozen tied LM head — an
+  optional auxiliary TEXT segment (subgoal / holding / progress /
+  event / per-camera visibility: weak labels from the LLM judging
+  pipeline) closed by `[BOA]`, and the action chunk as **FAST
+  tokens** (BPE over quantized DCT coefficients of the 50-step
+  chunk), which occupy a ~1k-id reserved-unused block at the tail of
+  the vocabulary. New parameters: ~11M (the state projection + the
+  block's embedding/PLE rows); everything else is the backbone
+  itself fine-tuning at low LR (bf16 autocast, fp32 masters).
+  Inference COMMANDS speak-vs-act: `[ACT]` goes straight to
+  grammar-constrained greedy action decoding (the deployment fast
+  path); `[AUX]` lets the model narrate freely until it emits
+  `[BOA]`, then act.
+
+- **Cross-attention (§2.1–2.2).** The backbone truncated at layer 14
+  (2.55B) encodes the prompt — E-series KV sharing makes the deep
+  half query-only, so the truncated prefix's exported K/V is
+  bitwise-identical to a full forward — and a separate **404M fp32
+  flow-matching expert** cross-attends the exported global-layer
+  streams {4, 9, 14} and denoises the chunk (τ: 1 → 0, Heun
+  integration); an AR FAST decoder over the same blocks is the
+  token-based variant. This family is also the planned stage 2:
+  a flow expert over a frozen AR-pretrained backbone (§8.11).
+
+The prompt side is shared and annotation-aware (§1, §2.4): every
+camera is tagged with its judge-voted semantic kind (`[wrist
+camera]`, `[top camera]`, … `[unknown camera]`; per-camera dropout to
+"unknown"), the instruction appears both before and after the images
+(the "sandwich": causal attention then yields instruction-conditioned
+image K/V and image-conditioned instruction K/V), instructions are
+stochastically swapped for judge-suggested rewrites, and the turn
+closes with a bracket conditioning block — `[subgoal: …]` (an
+operator/planner hint, heavily dropped out so the planner-less
+context stays the well-trained default) and hindsight
+`[outcome: success|partial|failure][smoothness: high|medium|low]`
+from the episode verdict — so inference can ask for the behavior it
+wants instead of the corpus marginal.
+
+Data is a curated union of ~1000 community LeRobot datasets recorded
+on miscalibrated hobbyist rigs, plus the owner's own SO-101 rig
+datasets; per-dataset normalization (§4) removes the between-rig
+calibration offsets images cannot see, and the LLM judge pipeline
+(docs/episode-annotations.md) supplies the episode verdicts,
+relabeled instructions, camera kinds, subgoal segments and sparse
+frame labels that the paragraphs above consume. The deployment
+target is the owner's physical SO-101 (§6).
+
+This document is the deep reference for the model and training system
+as they exist, the measured results that shaped them (§7), and the
+directions under evaluation (§8). Per-module contracts live in
+docstrings; code conventions in `code-styleguide.md`;
+collaboration/operating conventions in `working-together.md`.
+Transient state (in-flight runs, machine inventory, the queue) lives
+in wandb, the HF hub, and `reports/` — not in docs.
+
 Package layout (strict downward-only imports):
 `train`/`eval`/`rollout`/`judge` → `loading` → `model` →
 `encoders`/`decoders` → `interface` → `gemma4` (`data` beside `model`,
@@ -176,8 +222,16 @@ the stats); a missing file/camera/tie renders `unknown`, and
 `--camera-kind-dropout` (default 0.1) replaces resolved kinds with
 `unknown` per camera per visit at train time so unjudged rigs stay
 in-distribution at inference (probes render true kinds). Camera slot
-ORDER never depends on kinds: always the sorted camera keys — multiple
-unknown-kind cameras keep a stable, key-derived order. Left padding is
+ORDER is **(semantic kind, short name)** — `camera_prompt_order`, the
+single source shared with the positional `visible` indices (§2.4):
+same-kind rigs order identically whatever their private key names,
+and the sort uses RAW kinds so a kind-dropout draw retags but can
+never reorder images; untagged datasets degenerate to plain
+short-name order, and multiple unknown-kind cameras keep a stable,
+key-derived sub-order. (Changed 2026-08-03 from name-only sorting,
+with template v3; checkpoints trained before it see a shifted camera
+order for some multi-cam datasets under new code — accepted, the
+stalled fullstack run was the last v2 artifact.) Left padding is
 load-bearing (decided 2026-08-01, test-gated in
 `tests/test_backbone_continuation.py`): Gemma's sliding-window masks are
 physical-index, so right padding puts a suffix appended after the batch
@@ -359,12 +413,31 @@ precedent set by image soft tokens).
 ### 2.4 Auxiliary text tasks (`bijou/aux_text.py`)
 
 Trained text outputs rendered from the LLM-judge annotations
-(`docs/episode-annotations.md`), emitted before BOA under [AUX]:
+(`docs/episode-annotations.md`), emitted before BOA under [AUX]
+(template v3, bracket headers):
 
-    subgoal: reach toward the toy boat\n
-    holding: no\n
-    progress: 30%\n
-    event: object dropped from gripper\n
+    [subgoal]reach toward the toy boat\n
+    [holding]no\n
+    [progress]30%\n
+    [event]object dropped from gripper\n
+    [visible]object 0,1; gripper 1\n
+
+- **The template satisfies the forced-scaffold property**: every split
+  point inference forces at (header|value) falls on a BPE merge
+  boundary — part-encoding a line equals encoding it jointly, id for
+  id (measured on the real E2B tokenizer 2026-08-03: `[`/`]` are
+  single ids 236840/236842 with no cross-merges into letters, digits
+  or `\n`, including across field boundaries `\n[`).
+  `build_aux_runtime` asserts the property at construction over every
+  configured field (the real candidates for constrained fields), so a
+  tokenizer swap that breaks it fails loudly at load, never silently
+  off-manifold. The v2 form `field: value` violated it — the header's
+  trailing space merged into word-valued first tokens (`" yes"` = one
+  id), so the forced-header holding probe scored ids the model never
+  trained at that position (the samples_holding_acc bug, found in
+  review 2026-08-03; v2 shipped it silently because the char-level
+  test stub cannot represent merges — the tripwire test now injects a
+  merging stub).
 
 - **Presence-based rendering, mode-conditioned.** A field appears iff
   its label exists at the frame: subgoal on every frame of a judged
@@ -400,15 +473,24 @@ Trained text outputs rendered from the LLM-judge annotations
   {subgoal, holding, progress, event, visible} but never reorders
   (template order is validated at the CLI boundary and re-guarded in
   `AuxSpec`; new fields APPEND so trained prefixes stay stable);
-  free-text values are truncated loudly (subgoal 16, event 24 —
+  free-text values are truncated loudly (subgoal 20, event 24 —
   multi-event joins). `visible` renders which cameras see the task
-  object and the gripper (`visible: object top; gripper top,wrist`),
-  labeled by semantic kind — view-binding is the most directly
+  object and the gripper as PROMPT POSITIONS
+  (`[visible]object 0,1; gripper 1` — ascending indices into the §1
+  camera order): positional on purpose, since kind names collide (two
+  unknown-kind cameras), short names are dataset-internal vocabulary
+  the prompt never shows (the v2 fallback leaked them as
+  unpredictable targets), and indices stay invariant under
+  camera-kind dropout. View-binding is the most directly
   grounding-targeted label available; "none" on a sampled frame is a
-  TRUE negative (occlusion is signal). The FREE-decode budget
-  (`MAX_FREE_TOKENS = 96`) covers the worst-case full template with
-  slack.
-- **Template versioning.** `AUX_TEMPLATE_VERSION` (2) rides in the
+  TRUE negative (occlusion is signal). Surface disagreements (kinds
+  map ≠ vector slots ≠ item cameras) skip the field LOUDLY once per
+  dataset per worker (guessing through misaligned slots would label
+  the wrong cameras); aux training rejects `--cameras`/`--max-cameras`
+  outright — camera selection would silently shift every index. The
+  FREE-decode budget (`MAX_FREE_TOKENS = 96`) covers the worst-case
+  full template with slack.
+- **Template versioning.** `AUX_TEMPLATE_VERSION` (3) rides in the
   checkpoint's decoder section (`AuxDecodeConfig`: version, fields,
   prompt hash, judge model); loading a version this code doesn't know
   is a loud error — a byte-level header change on an existing

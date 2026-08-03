@@ -34,6 +34,19 @@ not a test.
   types make impossible (`reportUnnecessary*`) mean either the code or the
   annotation is wrong. Non-exhaustive `match` over enums is an error
   (`reportMatchNotExhaustive`) — cover every variant, like a Rust `match`.
+- **Truthiness is reserved for `bool`.** `if x:` / `x or y` only when
+  `x: bool`; everything else compares explicitly (`is None`,
+  `== ""`, `len(x) == 0`) — truthiness conflates None with the empty
+  string/list/0, which are usually DIFFERENT states in our data
+  ("unlabeled" vs "labeled empty"). Exception: idiomatic
+  collection-emptiness checks (`if parts:`) where None is impossible
+  by type. No linter enforces this (ruff has no such rule as of 0.16;
+  the closest families — pylint C1802/1803, refurb FURB110 — push the
+  OPPOSITE way, toward implicit truthiness; `FURB` stays off the
+  select list for that reason), so it's a review convention. (Added
+  2026-08-03: `item.get("condition_subgoal") or subgoal_text(item)`
+  sent an operator's empty-string subgoal override to the frame-label
+  fallback — the exact state the override existed to suppress.)
 
 ## Data: dataclasses over dicts
 

@@ -153,7 +153,7 @@ def test_aux_on_loss_components_and_weighting() -> None:
     tokens = sample.action_tokens
     assert tokens is not None
     # Hand-assembled mixed suffix: a short aux text before the actions.
-    aux_ids = [[ord(c) for c in "holding: yes\n"], []]
+    aux_ids = [[ord(c) for c in "[holding]yes\n"], []]
     suffix, is_aux = assemble_suffix(
         aux_ids,
         tokens,
@@ -169,7 +169,7 @@ def test_aux_on_loss_components_and_weighting() -> None:
     )
     assert aux_sum is not None and aux_count is not None
     assert torch.isfinite(aux_sum) and torch.isfinite(action)
-    # Row 0 carries exactly len("holding: yes\n") aux positions; row 1
+    # Row 0 carries exactly len("[holding]yes\n") aux positions; row 1
     # none — the count IS the labeled-token count, and the total applies
     # the position-weighted mean.
     assert int(aux_count) == len(aux_ids[0])
@@ -257,7 +257,7 @@ def test_mixed_batch_derives_mode_per_row() -> None:
     sample = batch(loaded)
     tokens = sample.action_tokens
     assert tokens is not None
-    aux_ids = [[ord(c) for c in "holding: no\n"], []]
+    aux_ids = [[ord(c) for c in "[holding]no\n"], []]
     suffix, is_aux = assemble_suffix(
         aux_ids,
         tokens,

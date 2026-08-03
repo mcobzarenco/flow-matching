@@ -13,7 +13,7 @@ these renderers import), which also registers the lerobot style.
 from __future__ import annotations
 
 import math
-from typing import Any
+from typing import Any, override
 
 import pytest
 import torch
@@ -22,9 +22,11 @@ from lerobot.datasets.language import EVENT_ONLY_STYLES, STYLE_REGISTRY
 from bijou.annotations import EVENT_STYLE
 from bijou.aux_text import (
     AUX_TEMPLATE_VERSION,
+    AuxDecodeConfig,
     AuxField,
     AuxSpec,
     assemble_suffix,
+    build_aux_runtime,
 )
 
 
@@ -140,15 +142,17 @@ def test_event_style_is_registered_by_the_contract_leaf() -> None:
     old mirrored-constant parity test dissolved with the move)."""
     assert EVENT_STYLE in STYLE_REGISTRY
     assert EVENT_STYLE in EVENT_ONLY_STYLES
-    assert AUX_TEMPLATE_VERSION == 2  # header bytes unchanged since v2
+    # v3 = bracket headers + positional visibility (forced-scaffold
+    # boundary property; measured on the real E2B tokenizer 2026-08-03).
+    assert AUX_TEMPLATE_VERSION == 3
 
 
 def test_render_all_fields_in_template_order() -> None:
     text = decode(spec().render(judged_item()))
-    assert text == "subgoal: grasp the boat\nholding: yes\nprogress: 30%\n"
+    assert text == "[subgoal]grasp the boat\n[holding]yes\n[progress]30%\n"
     with_event = judged_item(event="boat dropped")
     assert decode(spec().render(with_event)) == (
-        "subgoal: grasp the boat\nholding: yes\nprogress: 30%\nevent: boat dropped\n"
+        "[subgoal]grasp the boat\n[holding]yes\n[progress]30%\n[event]boat dropped\n"
     )
 
 
@@ -157,7 +161,7 @@ def test_event_is_positives_only() -> None:
     frame-local); frames without one render no event field at all — the
     negative is implicit in the trained transition past the field."""
     firing = judged_item(event="boat dropped")
-    assert "event: boat dropped\n" in decode(spec().render(firing))
+    assert "[event]boat dropped\n" in decode(spec().render(firing))
     assert "event" not in decode(spec().render(judged_item()))
 
 
@@ -168,7 +172,7 @@ def test_render_suppresses_subgoal_for_prompt_conditioning() -> None:
     item = judged_item()
     text = decode(spec().render(item, suppress_subgoal=True))
     assert "subgoal" not in text
-    assert "holding: yes\n" in text and "progress: 30%\n" in text
+    assert "[holding]yes\n" in text and "[progress]30%\n" in text
 
 
 def test_multi_event_frames_render_all_events() -> None:
@@ -189,57 +193,87 @@ def test_multi_event_frames_render_all_events() -> None:
     # CharTokenizer is 1 token/char — use a generous cap so the joined
     # text survives (the real tokenizer packs ~4 chars/token).
     text = decode(spec(max_event_tokens=64).render(both))
-    assert "event: boat dropped; progress regressed\n" in text
+    assert "[event]boat dropped; progress regressed\n" in text
 
 
 def test_event_truncation_is_bounded() -> None:
     long = judged_item(event="z" * 100)
     text = decode(spec(max_event_tokens=8).render(long))
-    assert "event: " + "z" * 8 + "\n" in text
+    assert "[event]" + "z" * 8 + "\n" in text
     assert text.count("z") == 8
 
 
-def test_visibility_renders_kind_labels_and_true_negatives() -> None:
-    """Sampled frames render which cameras see object/gripper, labeled
-    by semantic kind (short-name fallback for unknown); all-zeros is a
-    TRUE 'none' (occlusion is signal); NaN frames render nothing."""
+def test_visibility_renders_prompt_positions_and_true_negatives() -> None:
+    """Sampled frames render which cameras see object/gripper as PROMPT
+    POSITIONS — indices into the (kind, short name) camera order, never
+    kind or short-name text (names collide and leak dataset-internal
+    vocabulary); all-zeros is a TRUE 'none' (occlusion is signal); NaN
+    frames render nothing."""
     item = judged_item()
-    # Slot order = sorted short names: gripper_cam, overhead.
+    # Slot (storage) order = sorted short names: gripper_cam, overhead.
+    # PROMPT order sorts by (kind, name): overhead(top)=0,
+    # gripper_cam(wrist)=1 — deliberately the REVERSE of storage order.
     item["camera_kinds"] = {"overhead": "top", "gripper_cam": "wrist"}
     item["annotation.visible_object"] = torch.tensor([0.0, 1.0])
     item["annotation.visible_gripper"] = torch.tensor([1.0, 1.0])
     text = decode(spec().render(item))
-    assert "visible: object top; gripper wrist,top\n" in text
+    assert "[visible]object 0; gripper 0,1\n" in text
 
     item["annotation.visible_object"] = torch.tensor([0.0, 0.0])
-    assert "visible: object none; gripper wrist,top\n" in decode(spec().render(item))
+    assert "[visible]object none; gripper 0,1\n" in decode(spec().render(item))
 
     item["annotation.visible_object"] = torch.tensor([math.nan, math.nan])
     assert "visible" not in decode(spec().render(item))
 
 
-def test_visibility_handles_single_camera_scalars_and_mismatch() -> None:
+def test_visibility_handles_single_camera_scalars_and_mismatch(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     # lerobot stores shape-(1,) features as 0-d scalars.
     item = judged_item()
     item["camera_kinds"] = {"cam": "front"}
     item["annotation.visible_object"] = torch.tensor(1.0)
     item["annotation.visible_gripper"] = torch.tensor(0.0)
-    assert "visible: object front; gripper none\n" in decode(spec().render(item))
+    assert "[visible]object 0; gripper none\n" in decode(spec().render(item))
     # Kinds/vector slot-count disagreement renders nothing (data issue,
-    # not guessed through).
+    # not guessed through) — LOUDLY, once per dataset per worker.
     item["camera_kinds"] = {"cam": "front", "ghost": "top"}
-    assert "visible" not in decode(spec().render(item))
+    item["repo_id"] = "someone/mismatched"
+    mismatched = spec(annotated_repos=frozenset({"someone/mismatched"}))
+    assert "visible" not in decode(mismatched.render(item))
+    assert "visible" not in decode(mismatched.render(item))
+    out = capsys.readouterr().out
+    assert out.count("someone/mismatched") == 1  # once, not per frame
+    assert "re-materialized" in out
+
+
+def test_visibility_indices_follow_kind_order_and_dropout_cannot_move_them() -> None:
+    """Prompt order = (kind, short name): a wrist camera whose short
+    name sorts FIRST still renders at the LAST index; camera_prompt_order
+    ignores dropout by construction (it takes the raw map)."""
+    from bijou.aux_text import camera_prompt_order
+
+    kinds = {"a_wrist": "wrist", "z_top": "top"}
+    assert camera_prompt_order(kinds, sorted(kinds)) == ["z_top", "a_wrist"]
+    item = judged_item()
+    item["camera_kinds"] = kinds
+    # Storage order (sorted names): a_wrist slot 0, z_top slot 1.
+    item["annotation.visible_object"] = torch.tensor([1.0, 0.0])
+    item["annotation.visible_gripper"] = torch.tensor([0.0, 1.0])
+    text = decode(spec().render(item))
+    # a_wrist is prompt index 1 (wrist sorts after top), z_top index 0.
+    assert "[visible]object 1; gripper 0\n" in text
 
 
 def test_presence_based_fields() -> None:
     # Unsampled frame: holding/progress NaN -> subgoal only.
     item = judged_item(holding=math.nan, progress=math.nan)
-    assert decode(spec().render(item)) == "subgoal: grasp the boat\n"
+    assert decode(spec().render(item)) == "[subgoal]grasp the boat\n"
     # holding=0 renders "no"; progress rounds to whole percent.
     item = judged_item(holding=0.0, progress=0.666)
     text = decode(spec().render(item))
-    assert "holding: no\n" in text
-    assert "progress: 67%\n" in text
+    assert "[holding]no\n" in text
+    assert "[progress]67%\n" in text
 
 
 def test_unjudged_sources_render_nothing() -> None:
@@ -258,7 +292,7 @@ def test_unjudged_sources_render_nothing() -> None:
 def test_subgoal_truncation_is_bounded() -> None:
     long = judged_item(subgoal="x" * 100)
     text = decode(spec(max_subgoal_tokens=8).render(long))
-    assert text.startswith("subgoal: " + "x" * 8)
+    assert text.startswith("[subgoal]" + "x" * 8)
     assert text.count("x") == 8
 
 
@@ -300,7 +334,7 @@ def test_mode_dropout_drops_whole_samples_deterministically() -> None:
 
 
 def test_assemble_suffix_layout_and_masks() -> None:
-    aux_rows = [[ord(c) for c in "holding: yes\n"], []]
+    aux_rows = [[ord(c) for c in "[holding]yes\n"], []]
     action_tokens = torch.tensor(
         [[128, 5, 7, 129], [128, 3, 129, 129]],
     )  # BOA=128 PAD=129
@@ -313,7 +347,7 @@ def test_assemble_suffix_layout_and_masks() -> None:
     width = len(aux_rows[0]) + 4
     assert suffix.shape == (2, width)
     # Row 0: aux text ids then block-offset actions.
-    assert decode(suffix[0, : len(aux_rows[0])].tolist()) == "holding: yes\n"
+    assert decode(suffix[0, : len(aux_rows[0])].tolist()) == "[holding]yes\n"
     assert suffix[0, len(aux_rows[0]) :].tolist() == [1128, 1005, 1007, 1129]
     assert (
         is_aux[0, : len(aux_rows[0])].all() and not is_aux[0, len(aux_rows[0]) :].any()
@@ -322,3 +356,60 @@ def test_assemble_suffix_layout_and_masks() -> None:
     assert suffix[1, :4].tolist() == [1128, 1003, 1129, 1129]
     assert (suffix[1, 4:] == 1129).all()
     assert not is_aux[1].any()
+
+
+def test_assemble_suffix_rejects_reserved_tail_ids() -> None:
+    """Aux ids must stay below the WHOLE reserved tail: an id in the
+    mode strip [block_base−2, block_base) would silently embed as
+    [ACT]/[AUX] and become a CE target (train mode prediction)."""
+    for bad in (998, 999, 1000):  # both mode ids and the block base
+        with pytest.raises(ValueError, match="mode_base"):
+            assemble_suffix(
+                [[bad]],
+                torch.tensor([[128]]),
+                block_base=1000,
+                codec_pad=129,
+            )
+
+
+class MergingTokenizer(CharTokenizer):
+    """CharTokenizer with ONE BPE-style merge, ']'+'y' → a single id —
+    the v2 ``" yes"`` boundary merge relocated to the v3 template, so
+    the tripwire has something to trip on."""
+
+    MERGED = 700  # any id outside the ASCII range the base stub emits
+
+    @override
+    def encode(self, text: str, *, add_special_tokens: bool = False) -> list[int]:
+        ids = super().encode(text, add_special_tokens=add_special_tokens)
+        out: list[int] = []
+        i = 0
+        while i < len(ids):
+            if i + 1 < len(ids) and ids[i] == ord("]") and ids[i + 1] == ord("y"):
+                out.append(self.MERGED)
+                i += 2
+            else:
+                out.append(ids[i])
+                i += 1
+        return out
+
+
+def test_build_aux_runtime_asserts_the_boundary_property() -> None:
+    """The forced-scaffold property (encode(header) + encode(value) ==
+    encode(header + value)) is asserted at construction — the v2 bug
+    class (samples_holding_acc scored off-manifold ids) can only recur
+    as a LOUD construction error under a future tokenizer swap."""
+    config = AuxDecodeConfig(
+        template_version=AUX_TEMPLATE_VERSION,
+        fields=(AuxField.SUBGOAL, AuxField.HOLDING),
+        prompt_hash="hash",
+        judge_model="judge",
+    )
+    runtime = build_aux_runtime(config, CharTokenizer())
+    assert runtime.header_ids[AuxField.HOLDING] == tuple(ord(c) for c in "[holding]")
+    assert runtime.value_candidates[AuxField.HOLDING] == (
+        tuple(ord(c) for c in "no"),
+        tuple(ord(c) for c in "yes"),
+    )
+    with pytest.raises(SystemExit, match="boundary"):
+        build_aux_runtime(config, MergingTokenizer())

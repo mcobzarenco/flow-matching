@@ -139,8 +139,8 @@ def test_camera_filter_matches_bare_names() -> None:
 
 def test_camera_kinds_resolve_with_unknown_fallback() -> None:
     """Kinds ride the ITEM (the stats convention); missing map/camera ⇒
-    unknown; ORDER stays the sorted camera keys regardless of kind
-    (multiple unknowns keep a stable key-derived order)."""
+    unknown; ORDER is (kind, short name) — unknowns group together,
+    stably sub-ordered by their keys."""
     kinds = {"front": "front", "gripper_cam": "wrist"}
     sample_item = item(
         with_quantiles=True,
@@ -150,15 +150,64 @@ def test_camera_kinds_resolve_with_unknown_fallback() -> None:
     batch = collator()([sample_item])
     (prompt,) = batch.encoder_inputs.samples
     assert [(c.name, c.kind) for c in prompt.cameras] == [
-        ("aux2", "unknown"),
         ("front", "front"),
-        ("gripper_cam", "wrist"),
+        ("aux2", "unknown"),
         ("zed", "unknown"),
+        ("gripper_cam", "wrist"),
     ]
     bare = item(with_quantiles=True)  # no camera_kinds key at all
     batch = collator()([bare])
     (prompt,) = batch.encoder_inputs.samples
     assert prompt.cameras[0].kind == "unknown"
+
+
+def test_camera_prompt_order_sorts_by_kind_then_name() -> None:
+    """Prompt order = (semantic kind, short name), RAW kinds: same-kind
+    rigs order identically whatever their private short names, and a
+    kind-dropout draw retags but can never reorder images (the sort
+    ignores dropout by construction). Untagged items keep plain
+    short-name order — the pre-tag behavior."""
+    # a_wrist sorts FIRST by name but LAST by kind — the kind wins.
+    sample = item(
+        with_quantiles=True,
+        cameras=("a_wrist", "z_top"),
+        camera_kinds={"a_wrist": "wrist", "z_top": "top"},
+    )
+    assert collator().cameras_of(sample) == [
+        "observation.images.z_top",
+        "observation.images.a_wrist",
+    ]
+    # Kind dropout rewrites TAGS, never order: with dropout ≈1 every
+    # tag degrades to unknown while the image order stays kind-sorted.
+    torch.manual_seed(0)
+    batch = collator(camera_kind_dropout=0.999)([sample])
+    prompt = batch.encoder_inputs.samples[0]
+    assert [c.name for c in prompt.cameras] == ["z_top", "a_wrist"]
+    assert [c.kind for c in prompt.cameras] == ["unknown", "unknown"]
+    # No kinds map: short-name order.
+    bare = item(with_quantiles=True, cameras=("b", "a"))
+    assert collator().cameras_of(bare) == [
+        "observation.images.a",
+        "observation.images.b",
+    ]
+
+
+def test_aux_rejects_camera_selection() -> None:
+    """The 'visible' indices are positions in the full sorted camera
+    set — camera_filter/max_cameras would silently shift them."""
+    from bijou.aux_text import AuxField, AuxSpec
+
+    aux = AuxSpec(
+        tokenizer_dir="unused",
+        fields=(AuxField.SUBGOAL,),
+        annotated_repos=frozenset(),
+        block_base=1000,
+        dropout=0.0,
+    )
+    with pytest.raises(ValueError, match="camera selection"):
+        collator(aux=aux, camera_filter=("front",))
+    with pytest.raises(ValueError, match="camera selection"):
+        collator(aux=aux, max_cameras=1)
 
 
 def test_instruction_augment_samples_judge_rewrites() -> None:
@@ -263,6 +312,20 @@ def test_subgoal_condition_resolves_per_frame_with_own_dropout() -> None:
         batch.encoder_inputs.samples[0].condition_text
         == "[subgoal: place it on the disk]"
     )
+    # An EMPTY override means "no hint": it must render nothing — not
+    # fall through to the frame label it suppresses (regression: the
+    # old `or` truthiness did, and KeyError'd on label-less rollout
+    # items).
+    silenced = dict(framed)
+    silenced["condition_subgoal"] = ""
+    batch = collator(condition_fields=fields)([silenced])
+    assert batch.encoder_inputs.samples[0].condition_text == ""
+    # Rollout-shaped items (no timestamp/label surfaces) with no
+    # override resolve to no label, not a KeyError.
+    policy_item = item(with_quantiles=True)
+    policy_item.pop("timestamp", None)
+    batch = collator(condition_fields=fields)([policy_item])
+    assert batch.encoder_inputs.samples[0].condition_text == ""
     # No segment label and no override: nothing renders.
     bare = item(with_quantiles=True)
     bare["timestamp"] = torch.tensor(6.0)

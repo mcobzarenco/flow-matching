@@ -1459,6 +1459,12 @@ def parse_args() -> TrainArgs:
             )
     if raw.aux_loss_weight <= 0:
         parser.error("--aux-loss-weight must be > 0 (omit --aux-fields to disable)")
+    if raw.aux_fields is not None and (raw.cameras or raw.max_cameras is not None):
+        # The 'visible' aux indices are positions in the full sorted
+        # camera set; camera selection would silently shift them (the
+        # Collator re-guards, but that fires only after dataset
+        # selection).
+        parser.error("--aux-fields cannot combine with --cameras/--max-cameras")
     if raw.aux_dropout is not None and raw.aux_fields is None:
         parser.error("--aux-dropout requires --aux-fields (it drops aux labels)")
     if raw.aux_prompt_hash is not None and raw.aux_fields is None:
