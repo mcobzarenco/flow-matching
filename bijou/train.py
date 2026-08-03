@@ -111,9 +111,11 @@ from .loading import (
 from .model import BijouModel
 
 DEFAULT_BACKBONE = "google/gemma-4-e2b-it"
-# Rows in the wandb probe table (each costs camera images + a matplotlib
-# figure per eval): a spot check, deliberately not scaled to the probe size.
-EVAL_TABLE_ROWS = 32
+# Rows in the wandb probe tables (each costs camera images + a
+# matplotlib figure per eval — TWICE for aux runs, the fast-path table
+# and the all-fields table): a spot check, deliberately small — 32 rows
+# of figures were a measured ~34s/eval rank-0 straggler (2026-08-03).
+EVAL_TABLE_ROWS = 12
 
 
 @dataclass(frozen=True, slots=True)
@@ -121,6 +123,7 @@ class TrainArgs:
     train_data: tuple[Path, ...]
     exclude: tuple[str, ...]
     fps: tuple[float, ...] | None
+    camera_counts: tuple[int, ...] | None
     holdout_episodes: float
     split_seed: int
     backbone: str
@@ -658,18 +661,68 @@ def validate(
             )
 
     if wandb_run is not None and probe.rich_items and collator is not None:
-        # Aux generations (ar_backbone) ride IN the samples table as two
-        # display-string columns — the generated values next to what the
-        # labels hold. The table's OWN decode supplies BOTH its chunks
-        # and its text (self-consistent rows, all trained fields
-        # requested via a generate_override re-collation); the scalar
-        # pass above is a separate measurement (the [generate|actions]
-        # fast path — comparable across aux-on/off arms). Rank-0-only,
-        # no collectives, bounded to the rich subset (≤ EVAL_TABLE_ROWS).
+        # Two tables, each self-consistent (rank-0-only, no collectives,
+        # bounded to the rich subset ≤ EVAL_TABLE_ROWS):
+        #   {table_key}            — fast-path rows straight off the
+        #     scalar pass (chunk_mae comparable to the logged scalar; no
+        #     extra decode);
+        #   {table_key}_all_fields — the SAME samples re-collated with
+        #     generate_override = every trained field and decoded once:
+        #     generations next to labels, plus the action chart of the
+        #     chunk that followed the model's own generated context
+        #     (its chunk_mae is a different measurement condition —
+        #     rendered for eyeballs, never compared to the scalar).
+        # Cameras vary per sample across mixed datasets: generic positional
+        # columns, padded with None where a sample has fewer cameras.
+        per_item_cameras = [collator.cameras_of(item) for item in probe.rich_items]
+        n_slots = max(len(cams) for cams in per_item_cameras)
+
+        def row_images(item: dict[str, Any], cams: list[str]) -> list[Any]:
+            images: list[Any] = [
+                wandb.Image(
+                    (item[camera].clamp(0, 1) * 255)
+                    .to(torch.uint8)
+                    .permute(1, 2, 0)
+                    .numpy(),
+                    caption=camera.removeprefix("observation.images."),
+                )
+                for camera in cams
+            ]
+            return images + [None] * (n_slots - len(cams))
+
+        def state_str(item: dict[str, Any]) -> str:
+            return ", ".join(f"{x:.1f}" for x in item["observation.state"].tolist())
+
+        table = wandb.Table(
+            columns=[
+                "sample",
+                *(f"camera_{i}" for i in range(n_slots)),
+                "task",
+                "state",
+                "chunk_mae",
+                "pred_vs_truth",
+            ],
+        )
+        for i, (item, row) in enumerate(zip(probe.rich_items, rich_rows, strict=True)):
+            figure = _chunk_plot(
+                row.sampled,
+                row.truth,
+                row.valid,
+                row.state,
+                action_names or [],
+            )
+            table.add_data(
+                i,
+                *row_images(item, per_item_cameras[i]),
+                str(item["task"]),
+                state_str(item),
+                float((row.sampled - row.truth).abs()[row.valid].mean()),
+                wandb.Image(figure),
+            )
+            plt.close(figure)
+        wandb_run.log({table_key: table}, step=step)
+
         decoder = model.decoder
-        generations: list[AuxGeneration] | None = None
-        rich_actions: Tensor | None = None
-        aux_fields: tuple[AuxField, ...] = ()
         if isinstance(decoder, ARBackboneDecoder) and decoder.config.aux is not None:
             aux_fields = decoder.config.aux.fields
             table_collator = dataclasses.replace(
@@ -685,70 +738,46 @@ def validate(
                 generate=aux_fields,
             )
             generations = rich_prediction.generations
+            assert generations is not None  # ar_backbone always generates
             rich_actions = rich_prediction.actions.cpu()
-        # Cameras vary per sample across mixed datasets: generic positional
-        # columns, padded with None where a sample has fewer cameras.
-        per_item_cameras = [collator.cameras_of(item) for item in probe.rich_items]
-        n_slots = max(len(cams) for cams in per_item_cameras)
-        columns: list[Any] = [
-            "sample",
-            *(f"camera_{i}" for i in range(n_slots)),
-            "task",
-            "state",
-            "chunk_mae",
-            "pred_vs_truth",
-            *(["aux_generated", "aux_label"] if generations is not None else []),
-        ]
-        table = wandb.Table(columns=columns)
-        for i, (item, row) in enumerate(zip(probe.rich_items, rich_rows, strict=True)):
-            cams = per_item_cameras[i]
-            images: list[Any] = [
-                wandb.Image(
-                    (item[camera].clamp(0, 1) * 255)
-                    .to(torch.uint8)
-                    .permute(1, 2, 0)
-                    .numpy(),
-                    caption=camera.removeprefix("observation.images."),
+            all_fields = wandb.Table(
+                columns=[
+                    "sample",
+                    *(f"camera_{i}" for i in range(n_slots)),
+                    "task",
+                    "aux_generated",
+                    "aux_label",
+                    "pred_vs_truth",
+                ],
+            )
+            for i, (item, row) in enumerate(
+                zip(probe.rich_items, rich_rows, strict=True),
+            ):
+                figure = _chunk_plot(
+                    rich_actions[i],
+                    row.truth,
+                    row.valid,
+                    row.state,
+                    action_names or [],
                 )
-                for camera in cams
-            ]
-            images += [None] * (n_slots - len(cams))
-            sampled_row = rich_actions[i] if rich_actions is not None else row.sampled
-            figure = _chunk_plot(
-                sampled_row,
-                row.truth,
-                row.valid,
-                row.state,
-                action_names or [],
-            )
-            state_str = ", ".join(
-                f"{x:.1f}" for x in item["observation.state"].tolist()
-            )
-            aux_columns: tuple[str, ...] = ()
-            if generations is not None:
-                aux_columns = (
+                all_fields.add_data(
+                    i,
+                    *row_images(item, per_item_cameras[i]),
+                    str(item["task"]),
                     generations[i].text,
-                    aux_label_text(item, aux_fields) if aux_fields else "",
+                    aux_label_text(item, aux_fields),
+                    wandb.Image(figure),
                 )
-            table.add_data(
-                i,
-                *images,
-                str(item["task"]),
-                state_str,
-                float((sampled_row - row.truth).abs()[row.valid].mean()),
-                wandb.Image(figure),
-                *aux_columns,
-            )
-            plt.close(figure)
-        wandb_run.log({table_key: table}, step=step)
+                plt.close(figure)
+            wandb_run.log({f"{table_key}_all_fields": all_fields}, step=step)
 
-        if generations is not None and AuxField.HOLDING in aux_fields:
-            accuracy = holding_accuracy(generations, probe.rich_items)
-            if accuracy is not None:
-                wandb_run.log(
-                    {f"{table_key}_holding_acc": accuracy},
-                    step=step,
-                )
+            if AuxField.HOLDING in aux_fields:
+                accuracy = holding_accuracy(generations, probe.rich_items)
+                if accuracy is not None:
+                    wandb_run.log(
+                        {f"{table_key}_holding_acc": accuracy},
+                        step=step,
+                    )
 
         # Q3 — conditioning sensitivity, THE tripwire for silent
         # conditioning collapse: on labeled non-success rich rows, decode
@@ -1027,6 +1056,17 @@ def parse_args() -> TrainArgs:
         "behavior. Filtering changes the concatenated frame indexing, so "
         "eval numbers are only comparable between runs with the same "
         "filter",
+    )
+    parser.add_argument(
+        "--camera-counts",
+        type=int,
+        nargs="+",
+        default=None,
+        help="keep only datasets with one of these camera COUNTS (e.g. "
+        "--camera-counts 1 2): prompt length is ~160 + 140/camera, so "
+        "mixed counts in a batch pad short prompts to the longest "
+        "(wasted prefix compute + rank stragglers). Default keeps all. "
+        "Same eval-comparability caveat as --fps",
     )
     parser.add_argument(
         "--holdout-episodes",
@@ -1527,6 +1567,7 @@ def parse_args() -> TrainArgs:
         train_data=tuple(raw.train_data),
         exclude=tuple(raw.exclude),
         fps=tuple(raw.fps) if raw.fps else None,
+        camera_counts=tuple(raw.camera_counts) if raw.camera_counts else None,
         holdout_episodes=raw.holdout_episodes,
         split_seed=raw.split_seed,
         backbone=raw.backbone,
@@ -1639,6 +1680,7 @@ def main() -> int:
         holdout_fraction=args.holdout_episodes,
         split_seed=args.split_seed,
         allowed_fps=args.fps,
+        allowed_camera_counts=args.camera_counts,
         required_prompt_hash=args.aux_prompt_hash,
         load_episode_annotations=(
             args.instruction_augment > 0 or args.condition_fields is not None
@@ -2217,6 +2259,7 @@ def main() -> int:
                 holdout_fraction=args.holdout_episodes,
                 split_seed=args.split_seed,
                 allowed_fps=args.fps,
+                allowed_camera_counts=args.camera_counts,
                 # The eval probe needs the SAME per-episode labels the
                 # train side loads: Q1 conditions probe frames on their
                 # true labels, Q2 slices by outcome, Q3 flips it — all

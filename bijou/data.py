@@ -597,6 +597,7 @@ def select_datasets(
     holdout_fraction: float = 0.0,
     split_seed: int = 0,
     allowed_fps: tuple[float, ...] | None = None,
+    allowed_camera_counts: tuple[int, ...] | None = None,
     required_prompt_hash: str | None = None,
     *,
     load_episode_annotations: bool = False,
@@ -616,7 +617,12 @@ def select_datasets(
 
     ``allowed_fps`` drops datasets recorded at any other frame rate (the
     chunk spans ``chunk_size`` NATIVE frames, so mixed-fps corpora mix
-    wall-clock horizons — 11.9% of community frames are non-30fps). None =
+    wall-clock horizons — 11.9% of community frames are non-30fps).
+    ``allowed_camera_counts`` drops datasets by camera COUNT (prompt
+    length is ~160 + 140/camera, so mixed counts in one batch pad the
+    short prompts to the longest — on community_curated_v0, ≤2 cameras
+    keeps 878/981 datasets, 81.7% of episodes, 83.6% of frames;
+    measured 2026-08-03). None =
     keep all (the historical behavior). NOTE: any filter changes the
     concatenated frame indexing, so eval scores are only comparable
     between runs using the same filter.
@@ -672,6 +678,15 @@ def select_datasets(
         if allowed_fps is not None and info.fps not in allowed_fps:
             allowed = ", ".join(f"{fps:g}" for fps in allowed_fps)
             dropped.append(f"{repo_id} (fps {info.fps:g} not in {{{allowed}}})")
+            continue
+        if (
+            allowed_camera_counts is not None
+            and len(info.cameras) not in allowed_camera_counts
+        ):
+            counts = ", ".join(str(count) for count in allowed_camera_counts)
+            dropped.append(
+                f"{repo_id} ({len(info.cameras)} cameras not in {{{counts}}})",
+            )
             continue
 
         held_out = (

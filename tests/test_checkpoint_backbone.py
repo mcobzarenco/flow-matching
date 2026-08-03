@@ -112,6 +112,7 @@ def make_args(save_dir: Path) -> TrainArgs:
         train_data=(Path("/unused"),),
         exclude=(),
         fps=None,
+        camera_counts=None,
         holdout_episodes=0.0,
         split_seed=0,
         backbone="google/gemma-4-e2b-it",

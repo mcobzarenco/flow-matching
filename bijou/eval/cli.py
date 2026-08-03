@@ -148,6 +148,15 @@ def parse_args() -> argparse.Namespace:
         "frame indexing and thus the sampled eval frames)",
     )
     parser.add_argument(
+        "--camera-counts",
+        type=int,
+        nargs="+",
+        default=None,
+        help="keep only datasets with one of these camera counts; must "
+        "match the training run's --camera-counts (same comparability "
+        "caveat as --fps)",
+    )
+    parser.add_argument(
         "--checkpoint",
         type=Path,
         default=None,
@@ -266,6 +275,9 @@ def main() -> int:
         holdout_fraction=args.holdout_episodes,
         split_seed=args.split_seed,
         allowed_fps=tuple(args.fps) if args.fps else None,
+        allowed_camera_counts=(
+            tuple(args.camera_counts) if args.camera_counts else None
+        ),
         # Condition-trained checkpoints render each item's TRUE labels;
         # loading them costs seconds and is harmless for older models.
         load_episode_annotations=args.checkpoint is not None,

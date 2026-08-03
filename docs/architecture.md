@@ -605,7 +605,15 @@ function of (S, repo_id, count, F) — reproducible train/eval agreement
 with no persisted files; every ≥2-episode dataset contributes ≥1 holdout.
 `--fps` optionally keeps only datasets at given frame rates (the 50-step
 chunk spans a fps-dependent wall-clock horizon; ~88% of community frames
-are 30fps).
+are 30fps). `--camera-counts` optionally keeps only datasets with the
+given camera COUNTS: prompt length is ~160 + 140/camera, so mixed
+counts inside a batch pad every short prompt to the longest (wasted
+prefix compute + DDP rank stragglers — the measured 65–97% util
+spread); on community_curated_v0, `--camera-counts 1 2` keeps 878/981
+datasets, 42,872/52,507 episodes (81.7%), 83.6% of frames (measured
+2026-08-03 from per-dataset info.json). Both filters change the
+concatenated frame indexing — eval numbers are only comparable between
+runs with identical filters.
 
 **Per-dataset MEAN_STD normalization (load-bearing).** 59–95% of the
 aggregate action variance across community rigs is between-rig calibration
@@ -752,14 +760,20 @@ sparse-batch dilution a mean-of-means would suffer).
 `bijou.eval --seed` would, sharded and all-reduced, CPU-resident.
 ar_backbone probe prompts render `[generate|actions]`
 (`generate_override=()`) and decode the fast path, so scalar MAE is
-comparable across aux-on/off arms and agrees with offline eval; aux
-runs re-collate the rich table rows with `generate_override = the
-trained fields` and decode them in one scaffolded pass — the table's
-chunks, its `aux_generated`/`aux_label` display columns AND
+comparable across aux-on/off arms and agrees with offline eval. Two
+rank-0 wandb tables over the same EVAL_TABLE_ROWS = 12 rich rows
+(down from 32 — the matplotlib figures were a measured ~34s/eval
+rank-0 straggler): `eval/samples` = fast-path rows straight off the
+scalar pass (chunk_mae column matches the scalar's measurement
+condition; zero extra decode); `eval/samples_all_fields` (aux runs) =
+the SAME rows re-collated with `generate_override = the trained
+fields` and decoded once — `aux_generated` vs `aux_label` display
+columns, the action chart of the chunk that followed the model's own
+generated context (a different measurement condition, rendered for
+eyeballs, never compared to the scalar), and
 `eval/samples_holding_acc` (generated holding vs label over labeled
 rows — the constrained value in the MAIN decode; the separate
-likelihood probe dissolved with request conditioning) all come from
-that one decode, rank-0-only, bounded to the rich table rows.
+likelihood probe dissolved with request conditioning).
 
 **Checkpoint schema** (`loading.py` dataclasses): `expert.safetensors` +
 `bijou_config.json` (format 3: role-sectioned — `backbone` {id,
