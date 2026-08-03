@@ -69,11 +69,9 @@ from torch import Tensor
 
 from .annotations import ConditionField
 from .aux_text import (
-    AUX_MODE,
     AUX_TEMPLATE_VERSION,
     SUFFIX_FORMAT,
     AuxDecodeConfig,
-    AuxDecodeMode,
     AuxField,
     AuxGeneration,
     AuxSpec,
@@ -93,7 +91,7 @@ from .decoders.flow import (
     SelfAttentionMode,
     TimeConditioning,
 )
-from .encoders.gemma4 import GemmaInputs, GemmaInputsCollator
+from .encoders.gemma4 import PROMPT_FORMAT, GemmaInputs, GemmaInputsCollator
 from .gemma4.loading import load_config, resolve_checkpoint_dir
 from .interface import CollatedBatch, Collator, kv_stream_name
 from .loading import (
@@ -141,6 +139,7 @@ class TrainArgs:
     aux_fields: tuple[str, ...] | None
     aux_loss_weight: float
     aux_dropout: float
+    field_dropout: float
     aux_prompt_hash: str | None
     camera_kind_dropout: float
     instruction_augment: float
@@ -531,65 +530,25 @@ def build_probe_set(
     )
 
 
-@torch.no_grad()
-def holding_likelihood_accuracy(
-    model: BijouModel,
-    decoder: ARBackboneDecoder,
+def holding_accuracy(
+    generations: list[AuxGeneration],
     items: list[dict[str, Any]],
-    collator: Collator[GemmaInputs],
-    device: torch.device,
-    aux_spec: AuxSpec,
 ) -> float | None:
-    """Teacher-forced likelihood accuracy for ``holding`` over the items
-    that carry the label: score p(yes) vs p(no) at the value position
-    under the LABEL context (opener + the trained fields preceding
-    holding in template order, as the labels render them + holding
-    header) — no generation involved, so it measures the sparse field
-    free decoding rarely elicits. Returns None when no item is labeled.
-
-    Row loop over ≤ EVAL_TABLE_ROWS items: single-item re-collation +
-    encode per labeled row (multimodal batches cannot be row-sliced —
-    pixel rows are Σ cameras, not B-indexed — and each scoring pass
-    appends to its memory's cache, so rows need fresh encodes anyway)."""
-    runtime = decoder.aux_runtime
-    assert runtime is not None  # caller-gated
-    candidates = runtime.value_candidates.get(AuxField.HOLDING)
-    if candidates is None:
-        return None
+    """Generated-vs-label holding accuracy over the labeled table rows —
+    read straight off the table decode (the request-conditioned format
+    elicits every requested field, so a separate likelihood probe is no
+    longer needed: the constrained value in the MAIN decode is the
+    measurement, in exactly the training context). None when no row is
+    labeled."""
     correct = 0
     labeled = 0
-    for item in items:
+    for generation, item in zip(generations, items, strict=True):
         value = item.get("annotation.holding")
         if value is None or not bool(torch.isfinite(value)):
             continue
-        prefix = list(decoder.opener_ids)
-        # Context = exactly what training put before holding: the [AUX]
-        # mode token, then the run's OWN fields in template order (a
-        # field the run never trained would make the scoring context
-        # OOD).
-        if decoder.uses_modes:
-            prefix.append(decoder.config.mode_base + AUX_MODE)
-        if AuxField.SUBGOAL in aux_spec.fields:
-            subgoal_ids = aux_spec.render_field(AuxField.SUBGOAL, item)
-            if subgoal_ids is not None:
-                prefix.extend(subgoal_ids)
-        prefix.extend(runtime.header_ids[AuxField.HOLDING])
-        row_batch = collator([item]).to(device)
-        row_memory = model.encode(row_batch.encoder_inputs, with_grad=False)
-        state = (
-            row_batch.state - row_batch.state_stats.mean
-        ) / row_batch.state_stats.std
-        tokens = torch.tensor([prefix], dtype=torch.long, device=device)
-        logits = decoder.forward_backbone_ids(
-            model.backbone,
-            row_memory,
-            state,
-            tokens,
-        )[0, -1, :]
-        firsts = [c[0] for c in candidates]
-        pick = int(torch.argmax(logits[firsts]))
-        # HOLDING_VALUES order: index 0 = "no", 1 = "yes" (label 0/1).
-        correct += int(pick == int(value))
+        if generation.holding is None:
+            continue
+        correct += int(generation.holding == bool(int(value)))
         labeled += 1
     if labeled == 0:
         return None
@@ -640,7 +599,7 @@ def validate(
             batch,
             generator=generator,
             num_steps=10,
-            aux_mode=AuxDecodeMode.ACT,
+            generate=(),
         ).actions
         truth = batch.actions.float()
         valid = ~batch.action_is_pad
@@ -700,32 +659,33 @@ def validate(
 
     if wandb_run is not None and probe.rich_items and collator is not None:
         # Aux generations (ar_backbone) ride IN the samples table as two
-        # raw-string columns — the whole generated aux segment next to
-        # what the labels would render. The table's OWN decode supplies
-        # BOTH its chunks and its text (self-consistent rows); the scalar
-        # pass above is a separate measurement. Rank-0-only, no
-        # collectives, bounded to the rich subset (≤ EVAL_TABLE_ROWS).
+        # display-string columns — the generated values next to what the
+        # labels hold. The table's OWN decode supplies BOTH its chunks
+        # and its text (self-consistent rows, all trained fields
+        # requested via a generate_override re-collation); the scalar
+        # pass above is a separate measurement (the [generate|actions]
+        # fast path — comparable across aux-on/off arms). Rank-0-only,
+        # no collectives, bounded to the rich subset (≤ EVAL_TABLE_ROWS).
         decoder = model.decoder
         generations: list[AuxGeneration] | None = None
         rich_actions: Tensor | None = None
         aux_fields: tuple[AuxField, ...] = ()
         if isinstance(decoder, ARBackboneDecoder) and decoder.config.aux is not None:
-            # FREE-mode decode: the aux-capable table shows what the
-            # model says AND the chunk that follows its own aux context
-            # (self-consistent rows); aux-less checkpoints keep the
-            # scalar pass's ACT rows and no aux columns.
-            rich_batch = collator(probe.rich_items).to(device)
+            aux_fields = decoder.config.aux.fields
+            table_collator = dataclasses.replace(
+                collator,
+                generate_override=aux_fields,
+            )
+            rich_batch = table_collator(probe.rich_items).to(device)
             rich_memory = model.encode(rich_batch.encoder_inputs, with_grad=False)
             rich_prediction = decoder.predict_chunk(
                 model.backbone,
                 rich_memory,
                 rich_batch,
-                mode=AuxDecodeMode.FREE,
+                generate=aux_fields,
             )
             generations = rich_prediction.generations
             rich_actions = rich_prediction.actions.cpu()
-            if collator.aux is not None:
-                aux_fields = collator.aux.fields
         # Cameras vary per sample across mixed datasets: generic positional
         # columns, padded with None where a sample has fewer cameras.
         per_item_cameras = [collator.cameras_of(item) for item in probe.rich_items]
@@ -782,22 +742,13 @@ def validate(
             plt.close(figure)
         wandb_run.log({table_key: table}, step=step)
 
-        if isinstance(decoder, ARBackboneDecoder):
-            aux_spec = collator.aux
-            if decoder.aux_runtime is not None and aux_spec is not None:
-                accuracy = holding_likelihood_accuracy(
-                    model,
-                    decoder,
-                    probe.rich_items,
-                    collator,
-                    device,
-                    aux_spec,
+        if generations is not None and AuxField.HOLDING in aux_fields:
+            accuracy = holding_accuracy(generations, probe.rich_items)
+            if accuracy is not None:
+                wandb_run.log(
+                    {f"{table_key}_holding_acc": accuracy},
+                    step=step,
                 )
-                if accuracy is not None:
-                    wandb_run.log(
-                        {f"{table_key}_holding_acc": accuracy},
-                        step=step,
-                    )
 
         # Q3 — conditioning sensitivity, THE tripwire for silent
         # conditioning collapse: on labeled non-success rich rows, decode
@@ -820,7 +771,7 @@ def validate(
                     override_batch,
                     generator=generator,
                     num_steps=10,
-                    aux_mode=AuxDecodeMode.ACT,
+                    generate=(),
                 )
                 deltas = [
                     float(
@@ -922,6 +873,9 @@ def save_checkpoint(
     checkpoint_dir = args.save_dir / f"step_{step:06d}"
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
     save_file(model.decoder.state_dict(), str(checkpoint_dir / "expert.safetensors"))
+    # Prompt-side parameters (state_proj) — always present at prompt
+    # format 3.
+    save_file(model.encoder.state_dict(), str(checkpoint_dir / "prompt.safetensors"))
     if args.backbone_trained:
         # Adapted backbones ride along; from_checkpoint/--init-from detect the
         # file by presence. Frozen-pristine runs write exactly the
@@ -958,7 +912,8 @@ def save_checkpoint(
         prompt=GemmaPromptConfig(
             exports=model.encoder.exports,
             max_soft_tokens=args.max_soft_tokens,
-            camera_tags=model.encoder.camera_tags,
+            format=PROMPT_FORMAT,
+            state_dim=model.encoder.state_dim,
             condition_fields=tuple(args.condition_fields or ()),
         ),
         decoder=decoder_schema_dict(model.decoder),
@@ -1008,12 +963,12 @@ def ensure_matching_decoder_config(
             "cannot initialize a non-flow decoder",
         )
     if current != saved:
-        # Aux and the suffix format are data-side format dials: a
-        # difference confined to them is the sanctioned warm-start
-        # pattern (enable aux / adopt a newer suffix format on an older
-        # base — the weight loader fresh-inits format-added params,
-        # loudly) — note, not an error.
-        data_side = ("aux", "suffix_format")
+        # Aux is a data-side format dial: a difference confined to it
+        # is the sanctioned warm-start pattern (enable aux on an
+        # aux-less format-5 base — same parameter set) — note, not an
+        # error. suffix_format differences are hard errors: pre-5
+        # parameter sets no longer exist.
+        data_side = ("aux",)
         current_core = {k: v for k, v in current.items() if k not in data_side}
         saved_core = {k: v for k, v in saved.items() if k not in data_side}
         if current_core == saved_core:
@@ -1180,10 +1135,20 @@ def parse_args() -> TrainArgs:
         "--aux-dropout",
         type=float,
         default=None,
-        help="probability a LABELED sample trains as [ACT] with its aux "
-        "text dropped (mode dropout): keeps the deployment fast path "
-        "trained under dense annotation and decouples the mode from "
-        "appearance. Default 0.1 when --aux-fields is on; requires "
+        help="probability a LABELED sample's request set collapses to "
+        "[generate|actions] (its value lines dropped): keeps the "
+        "deployment fast path trained under dense annotation. Default "
+        "0.1 when --aux-fields is on; requires --aux-fields",
+    )
+    parser.add_argument(
+        "--field-dropout",
+        type=float,
+        default=None,
+        help="per labeled field, independent probability of dropping it "
+        "from the sample's request set (request and target move "
+        "together), so all SUBSETS of the labeled set appear in "
+        "training and inference-time partial requests stay "
+        "in-distribution. Default 0.1 when --aux-fields is on; requires "
         "--aux-fields",
     )
     parser.add_argument(
@@ -1516,6 +1481,15 @@ def parse_args() -> TrainArgs:
         if raw.aux_dropout is not None
         else (0.1 if raw.aux_fields is not None else 0.0)
     )
+    if raw.field_dropout is not None and raw.aux_fields is None:
+        parser.error("--field-dropout requires --aux-fields (it drops requests)")
+    if raw.field_dropout is not None and not 0.0 <= raw.field_dropout < 1.0:
+        parser.error(f"--field-dropout {raw.field_dropout} outside [0, 1)")
+    field_dropout = (
+        raw.field_dropout
+        if raw.field_dropout is not None
+        else (0.1 if raw.aux_fields is not None else 0.0)
+    )
     if raw.decoder == "ar_backbone":
         # The backbone IS the architecture: decoder shape flags and the
         # cross-attention schedule describe models this run doesn't build.
@@ -1571,6 +1545,7 @@ def parse_args() -> TrainArgs:
         aux_fields=tuple(raw.aux_fields) if raw.aux_fields is not None else None,
         aux_loss_weight=raw.aux_loss_weight,
         aux_dropout=aux_dropout,
+        field_dropout=field_dropout,
         aux_prompt_hash=raw.aux_prompt_hash,
         camera_kind_dropout=raw.camera_kind_dropout,
         instruction_augment=raw.instruction_augment,
@@ -1756,6 +1731,7 @@ def main() -> int:
                 load_config(checkpoint_dir).text.vocab_size - action_codec.vocab_total
             ),
             dropout=args.aux_dropout,
+            field_dropout=args.field_dropout,
         )
         if is_main:
             print(
@@ -1763,20 +1739,22 @@ def main() -> int:
                 f"@ {aux_decode_config.prompt_hash} "
                 f"(judges: {aux_decode_config.judge_model}), "
                 f"fields {list(args.aux_fields)}, loss weight "
-                f"{args.aux_loss_weight}, mode dropout {args.aux_dropout}",
+                f"{args.aux_loss_weight}, request dropout {args.aux_dropout}, "
+                f"field dropout {args.field_dropout}",
                 flush=True,
             )
     collator = Collator(
         inputs=GemmaInputsCollator(
             str(checkpoint_dir),
             args.max_soft_tokens,
-            camera_tags=True,
         ),
         instruction=args.instruction,
         camera_filter=args.cameras,
         max_cameras=args.max_cameras,
         action_codec=action_codec,
         aux=aux_spec,
+        generate_bracket=args.decoder == "ar_backbone",
+        generate_override=None,
         camera_kind_dropout=args.camera_kind_dropout,
         instruction_augment=args.instruction_augment,
         condition_fields=tuple(
@@ -1811,8 +1789,15 @@ def main() -> int:
     probe_collator = dataclasses.replace(
         collator,
         aux=(
-            dataclasses.replace(aux_spec, dropout=0.0) if aux_spec is not None else None
+            dataclasses.replace(aux_spec, dropout=0.0, field_dropout=0.0)
+            if aux_spec is not None
+            else None
         ),
+        # Probe prompts run the deployment fast path ([generate|
+        # actions]) so the scalar chunk_mae is comparable across
+        # aux-on/off arms; the samples table re-collates its rich rows
+        # with generate_override = the trained fields (validate).
+        generate_override=(() if args.decoder == "ar_backbone" else None),
         camera_kind_dropout=0.0,
         instruction_augment=0.0,
         # dropout-0 conditioning = TRUE-label conditioning for the
@@ -1904,7 +1889,7 @@ def main() -> int:
             backbone_config,
             exports=(stop,),
             max_soft_tokens=args.max_soft_tokens,
-            camera_tags=True,
+            state_dim=state_dim,
             device=device,
             dtype=backbone_dtype,
             depth=BackboneDepth.FULL,
@@ -1917,7 +1902,6 @@ def main() -> int:
             tokenizer=args.fast_tokenizer,
             vocab_total=action_codec.vocab_total,
             block_base=backbone_config.text.vocab_size - action_codec.vocab_total,
-            state_dim=state_dim,
             chunk_size=args.chunk_size,
             action_dim=action_dim,
             suffix_format=SUFFIX_FORMAT,
@@ -1979,7 +1963,7 @@ def main() -> int:
             backbone_config,
             exports=exports,
             max_soft_tokens=args.max_soft_tokens,
-            camera_tags=True,
+            state_dim=state_dim,
             device=device,
             dtype=backbone_dtype,
         )
@@ -2089,7 +2073,7 @@ def main() -> int:
     adapted_backbone_source: Path | None = None
     checkpoint_to_load = args.init_from or args.resume
     if checkpoint_to_load is not None:
-        saved_decoder = ensure_matching_decoder_config(
+        ensure_matching_decoder_config(
             model.decoder,
             checkpoint_to_load,
         )
@@ -2100,37 +2084,20 @@ def main() -> int:
             str(checkpoint_to_load / "expert.safetensors"),
             device="cpu",
         )
-        if (
-            args.init_from is not None
-            and isinstance(model.decoder, ARBackboneDecoder)
-            and int(saved_decoder.get("suffix_format", 1)) < SUFFIX_FORMAT
-        ):
-            # Format migration on warm start: format 3 added the mode
-            # tables — EXACTLY those keys may be absent (fresh-init,
-            # loudly); anything else missing is corruption. --resume
-            # stays strict (the optimizer state predates the params;
-            # never resume across a format change).
-            missing, unexpected = model.decoder.load_state_dict(
-                expert_state,
-                strict=False,
-            )
-            allowed_missing = {"mode_embed.weight", "mode_ple.weight"}
-            if unexpected or not set(missing) <= allowed_missing:
-                raise SystemExit(
-                    f"expert.safetensors of {checkpoint_to_load} does not "
-                    f"match the decoder beyond the known format migration "
-                    f"(missing {sorted(missing)}, unexpected "
-                    f"{sorted(unexpected)})",
-                )
-            if is_main:
-                print(
-                    f"note: {sorted(missing)} initialized fresh (checkpoint "
-                    f"suffix format {saved_decoder.get('suffix_format', 1)} "
-                    f"predates the mode tables)",
-                    flush=True,
-                )
-        else:
-            model.decoder.load_state_dict(expert_state, strict=True)
+        # Strict always: pre-format-5 checkpoints carry parameters this
+        # code deleted (mode tables, suffix state_proj) and are refused
+        # by the key mismatch — no migration path (owner call,
+        # 2026-08-03).
+        model.decoder.load_state_dict(expert_state, strict=True)
+        # Prompt-side parameters (state_proj) — format-3-prompt
+        # checkpoints always write the file.
+        model.encoder.load_state_dict(
+            load_file(
+                str(checkpoint_to_load / "prompt.safetensors"),
+                device="cpu",
+            ),
+            strict=True,
+        )
         if is_main:
             print(f"loaded expert weights from {checkpoint_to_load}", flush=True)
         # Backbone-trained checkpoints carry the adapted file; plain ones

@@ -83,7 +83,7 @@ def tiny_model() -> BijouModel:
         exports=(4, 9, 14),
         processor_dir="unused",
         max_soft_tokens=140,
-        camera_tags=False,
+        state_dim=6,
     )
     return BijouModel(
         backbone=Gemma4Model(config, device="meta"),
@@ -115,6 +115,7 @@ def make_args(save_dir: Path) -> TrainArgs:
         aux_fields=None,
         aux_loss_weight=0.5,
         aux_dropout=0.0,
+        field_dropout=0.0,
         aux_prompt_hash=None,
         camera_kind_dropout=0.0,
         instruction_augment=0.0,

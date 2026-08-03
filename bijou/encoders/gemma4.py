@@ -60,19 +60,26 @@ class GemmaInputs:
     itself) is decided at collate time and carried by ``input_ids``;
     ``has_padding`` is computed CPU-side in the dataloader workers so the
     training loop never needs a device→host sync to decide whether to
-    build padding masks.
+    build padding masks. ``state`` is the normalized proprioceptive
+    vector whose projection overwrites the placeholder embedding at
+    ``state_slot`` (a NEGATIVE index — the slot sits at a fixed offset
+    from the sequence end under left padding, just inside the user-turn
+    close; the collator verifies the template tail at construction).
 
     Shapes (``images`` = Σ per-sample camera images, not B):
       - input_ids: [B, P]
       - attention_mask: [B, P]  (1 = real token, 0 = left padding)
       - pixel_values: [images, patches, 3·patch_size²]  (RGB in [0, 1])
       - image_position_ids: [images, patches, 2]  ((x, y) spatial ids)
+      - state: [B, state_dim]  (normalized)
     """
 
     input_ids: Tensor
     attention_mask: Tensor
     pixel_values: Tensor
     image_position_ids: Tensor
+    state: Tensor
+    state_slot: int
     has_padding: bool
 
     def tensors(self) -> dict[str, Tensor]:
@@ -103,33 +110,42 @@ class GemmaInputs:
         )
 
 
+PROMPT_FORMAT = 3
+
+
 def camera_tag_text(kind: str) -> str:
-    """The per-camera prompt tag preceding each image (prompt format 2),
-    e.g. "[wrist camera]". Bracket-delimited on purpose: the Gemma chat
-    template TRIMS every text part's edge whitespace (measured — a
-    leading "\\n" separator vanished), so the tag must self-delimit.
-    The exact bytes are a trained contract — change only with a prompt
-    format bump."""
-    return f"[{kind} camera]"
+    """The per-camera prompt tag OPENING each image's bracket group
+    (prompt format 3), e.g. "[wrist camera|" — the group is closed by
+    the next text part's leading "]". Bracket-delimited on purpose: the
+    Gemma chat template TRIMS every text part's edge whitespace
+    (measured — a leading "\\n" separator vanished), so tags must
+    self-delimit. The exact bytes are a trained contract — change only
+    with a prompt format bump."""
+    return f"[{kind} camera|"
 
 
 class GemmaInputsCollator:
-    """InputsCollator for the Gemma backbone (see the module docstring).
-    ``camera_tags`` selects prompt format 2 (per-camera semantic tags
-    from CameraFrame.kind, sandwich otherwise unchanged); False renders
-    the historical tag-less format-1 prompt byte-identically."""
+    """InputsCollator for the Gemma backbone: prompt format 3 — the
+    extended sandwich
+    ``{task}[kind₁ camera|<imgs₁>]..[cond][generate|…]{task}⟨state⟩``
+    with every bracket group pipe-delimited and one soft state token
+    spliced just inside the user-turn close (see GemmaInputs). Text
+    parts chunk AROUND images only, so bracket groups span part
+    boundaries (hard token boundaries by construction)."""
 
     def __init__(
         self,
         checkpoint: str,
         max_soft_tokens: int,
-        *,
-        camera_tags: bool,
     ) -> None:
         self.checkpoint = checkpoint
         self.max_soft_tokens = max_soft_tokens
-        self.camera_tags = camera_tags
         self._processor: Any = None
+        # The user-turn close ids, recorded at processor build by
+        # tokenizing a probe conversation — the state slot is spliced
+        # just inside this tail, so its bytes are a load-bearing
+        # contract (verified, not assumed).
+        self._turn_close: tuple[int, ...] | None = None
 
     @override
     def __getstate__(self) -> dict[str, Any]:
@@ -143,39 +159,78 @@ class GemmaInputsCollator:
         array = (image.clamp(0, 1) * 255).to(torch.uint8).permute(1, 2, 0).numpy()
         return Image.fromarray(array)
 
+    def _build_processor(self) -> None:
+        # Lazy construction (not import): the collator is pickled into
+        # spawned dataloader workers, each of which rebuilds it.
+        self._processor = transformers.AutoProcessor.from_pretrained(
+            self.checkpoint,
+        )
+        # LEFT padding (see the module docstring): correct for every
+        # consumer, required by backbone suffix continuation.
+        self._processor.tokenizer.padding_side = "left"
+        # Record the user-turn close: everything the template appends
+        # after our last content text. The state slot is spliced just
+        # inside it, so a template change that alters the tail must
+        # fail loudly here, not shift the slot silently.
+        probe = self._processor.apply_chat_template(
+            [[{"role": "user", "content": [{"type": "text", "text": "x"}]}]],
+            add_generation_prompt=False,
+            tokenize=True,
+            return_dict=True,
+            return_tensors="pt",
+        )
+        ids = probe["input_ids"][0].tolist()
+        marker = self._processor.tokenizer.encode("x", add_special_tokens=False)
+        if len(marker) != 1 or marker[0] not in ids:
+            raise SystemExit(
+                f"cannot locate the probe text in the templated ids {ids} — "
+                "the chat template changed shape; re-verify the state-slot "
+                "splice before training",
+            )
+        tail = tuple(ids[ids.index(marker[0]) + 1 :])
+        if len(tail) == 0 or len(tail) > 4:
+            raise SystemExit(
+                f"user-turn close {tail} has unexpected length — the chat "
+                "template changed; re-verify the state-slot splice",
+            )
+        self._turn_close = tail
+
     def __call__(self, samples: list[PromptInputs]) -> GemmaInputs:
         if self._processor is None:
-            # Lazy construction (not import): the collator is pickled into
-            # spawned dataloader workers, each of which rebuilds it.
-            self._processor = transformers.AutoProcessor.from_pretrained(
-                self.checkpoint,
-            )
-            # LEFT padding (see the module docstring): correct for every
-            # consumer, required by backbone suffix continuation.
-            self._processor.tokenizer.padding_side = "left"
+            self._build_processor()
+        processor = self._processor
+        assert processor is not None  # _build_processor sets it
 
         conversations = []
         for sample in samples:
             content: list[dict[str, Any]] = [
                 {"type": "text", "text": sample.instruction},
             ]
-            for camera in sample.cameras:
-                if self.camera_tags:
-                    content.append(
-                        {"type": "text", "text": camera_tag_text(camera.kind)},
-                    )
+            for i, camera in enumerate(sample.cameras):
+                # "]" closing camera i-1's group + camera i's opening
+                # tag form ONE text part between images.
+                tag = camera_tag_text(camera.kind)
+                content.append(
+                    {"type": "text", "text": tag if i == 0 else "]" + tag},
+                )
                 content.append(
                     {"type": "image", "image": self._to_pil(camera.image)},
                 )
-            # Closing instruction + the (possibly empty) conditioning
-            # block, one text part — brackets self-delimit under the
-            # template's edge-whitespace trim.
+            # "]" closing the last camera group + conditioning (value
+            # brackets and [generate|…]) INSIDE the sandwich + the
+            # closing instruction copy, one text part — brackets
+            # self-delimit under the template's edge-whitespace trim;
+            # the state slot is spliced after tokenization (soft token,
+            # not text).
             content.append(
-                {"type": "text", "text": sample.instruction + sample.condition_text},
+                {
+                    "type": "text",
+                    "text": "]" + sample.condition_text + sample.instruction,
+                },
             )
             conversations.append([{"role": "user", "content": content}])
 
-        batch = self._processor.apply_chat_template(
+        batch = processor.apply_chat_template(
             conversations,
             add_generation_prompt=False,
             tokenize=True,
@@ -189,13 +244,47 @@ class GemmaInputsCollator:
                 "padding": True,
             },
         )
+        input_ids = batch["input_ids"]
+        attention_mask = batch["attention_mask"]
+        close = self._turn_close
+        assert close is not None  # _build_processor ran
+        if input_ids.shape[1] < len(close) or not bool(
+            (input_ids[:, -len(close) :] == torch.tensor([close])).all(),
+        ):
+            raise SystemExit(
+                f"templated prompts do not end with the verified user-turn "
+                f"close {close} — the chat template changed; the state slot "
+                "cannot be spliced safely",
+            )
+        # Splice the state placeholder just inside the turn close. The
+        # placeholder id is the pad token; its embedding is overwritten
+        # by the state projection (GemmaEncoder.encode_tensors), and its
+        # attention-mask 1 distinguishes it from actual left padding.
+        batch_size = input_ids.shape[0]
+        pad_id = processor.tokenizer.pad_token_id
+        placeholder = torch.full((batch_size, 1), pad_id, dtype=input_ids.dtype)
+        split = input_ids.shape[1] - len(close)
+        input_ids = torch.cat(
+            [input_ids[:, :split], placeholder, input_ids[:, split:]],
+            dim=1,
+        )
+        attention_mask = torch.cat(
+            [
+                attention_mask[:, :split],
+                torch.ones((batch_size, 1), dtype=attention_mask.dtype),
+                attention_mask[:, split:],
+            ],
+            dim=1,
+        )
         return GemmaInputs(
-            input_ids=batch["input_ids"],
-            attention_mask=batch["attention_mask"],
+            input_ids=input_ids,
+            attention_mask=attention_mask,
             pixel_values=batch["pixel_values"],
             image_position_ids=batch["image_position_ids"],
+            state=torch.stack([sample.state for sample in samples]),
+            state_slot=-(len(close) + 1),
             # Decided here (CPU, in the worker) so the train loop never syncs.
-            has_padding=bool((batch["attention_mask"] == 0).any()),
+            has_padding=bool((attention_mask == 0).any()),
         )
 
 
@@ -205,10 +294,13 @@ class GemmaEncoder(nn.Module):
     the global layers whose K/V become the memory streams.
 
     The backbone itself is NOT owned here — BijouModel owns it once and
-    passes it into the compute methods; this module carries only
-    prompt-side parameters (none today; a projected-state slot is the
-    anticipated first). ``config`` is the backbone's (truncated) architecture
-    — enough to declare stream geometries without the weights."""
+    passes it into the compute methods; this module carries exactly the
+    prompt-side parameters: ``state_proj`` (prompt format 3's soft state
+    token — ZERO-initialized so the prompt starts undisturbed; it still
+    receives gradients through its K/V use), serialized as the
+    checkpoint's ``prompt.safetensors`` and routed with the decoder LR
+    group. ``config`` is the backbone's (truncated) architecture —
+    enough to declare stream geometries without the weights."""
 
     def __init__(
         self,
@@ -217,14 +309,31 @@ class GemmaEncoder(nn.Module):
         exports: tuple[int, ...],
         processor_dir: str,
         max_soft_tokens: int,
-        camera_tags: bool,
+        state_dim: int,
+        device: torch.device | str | None = None,
+        dtype: torch.dtype | None = None,
     ) -> None:
         super().__init__()
         self.config = config
         self.exports = exports
         self.processor_dir = processor_dir
         self.max_soft_tokens = max_soft_tokens
-        self.camera_tags = camera_tags
+        self.state_dim = state_dim
+        self.state_proj = nn.Linear(
+            state_dim,
+            config.text.hidden_size,
+            bias=True,
+            device=device,
+            dtype=dtype,
+        )
+        if device is None or torch.device(device).type != "meta":
+            self.reset_parameters()
+
+    @torch.no_grad()
+    def reset_parameters(self) -> None:
+        nn.init.zeros_(self.state_proj.weight)
+        assert self.state_proj.bias is not None
+        nn.init.zeros_(self.state_proj.bias)
 
     def stream_geometries(self) -> dict[str, StreamGeometry]:
         """Static geometry per stream name; keys and order match every
@@ -243,7 +352,6 @@ class GemmaEncoder(nn.Module):
         return GemmaInputsCollator(
             self.processor_dir,
             self.max_soft_tokens,
-            camera_tags=self.camera_tags,
         )
 
     def encode_tensors(
@@ -254,12 +362,20 @@ class GemmaEncoder(nn.Module):
         pixel_values: Tensor | None = None,
         image_position_ids: Tensor | None = None,
         padding_mask: Tensor | None = None,
+        state: Tensor | None = None,
+        state_slot: int | None = None,
         retain_cache: bool = False,
     ) -> ObservationMemory:
         """Run the truncated backbone over the multimodal prefix and export
         the memory streams (grad-transparent — callers choose no_grad).
         Cache the result across flow steps (and, if the observation is
         unchanged, across replans).
+
+        ``state``/``state_slot``: the prompt's soft state token — the
+        placeholder embedding at ``state_slot`` (negative, from the
+        sequence end) is overwritten with ``state_proj(state)`` before
+        the forward (the image-soft-token precedent: injected at the
+        embedding level, invisible to the tokenizer). Both or neither.
 
         ``retain_cache`` keeps the full prefix KVCache on the returned
         memory (the exported streams are views into it either way);
@@ -278,14 +394,21 @@ class GemmaEncoder(nn.Module):
           - pixel_values: [images, patches, 3·patch_size²]
           - image_position_ids: [images, patches, 2]  ((x, y) spatial ids)
           - padding_mask (when present): [B, P]  (True = real token)
+          - state (when present): [B, state_dim]  (normalized)
           - returns ObservationMemory: streams["kv{layer}"].key/value each
             [B, kv_heads, P, head_dim]; padding_mask [B, P] or None
         """
+        if (state is None) != (state_slot is None):
+            raise ValueError("state and state_slot travel together")
         inputs_embeds, per_layer_inputs = backbone.embed_multimodal(
             input_ids,
             pixel_values=pixel_values,
             image_position_ids=image_position_ids,
         )
+        if state is not None and state_slot is not None:
+            inputs_embeds[:, state_slot, :] = self.state_proj(
+                state.to(self.state_proj.weight.dtype),
+            ).to(inputs_embeds.dtype)
         # Logical positions: pads (masked everywhere) clamp to 0; real
         # tokens count 0..L−1 regardless of which side the padding is on.
         position_ids = (
@@ -340,6 +463,8 @@ class GemmaEncoder(nn.Module):
                 pixel_values=inputs.pixel_values,
                 image_position_ids=inputs.image_position_ids,
                 padding_mask=padding_mask,
+                state=inputs.state,
+                state_slot=inputs.state_slot,
                 retain_cache=retain_cache,
             )
 

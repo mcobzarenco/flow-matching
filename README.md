@@ -8,16 +8,19 @@ chunk. Trained on the LeRobot community corpora (1000+ SO-100 datasets),
 fine-tuned and deployed on a physical SO-101.
 
 ```
-[instruction][cam_1]..[cam_k][instruction]      chat-templated user turn
-        │  frozen truncated backbone: layers 0..14 only (E2B, bf16)
+{task}[{kind} camera|<imgs>]..[cond|v][generate|fields actions]{task}⟨state⟩
+        │  one chat-templated user turn (per-camera semantic kinds,
+        │  [key|value] conditioning, request set, soft state token)
         ▼
-  KV streams of the GLOBAL prefix layers {4, 9, 14}    PrefixKV, encoded
-        │  cross-attention                             once per observation
-        ▼
-ActionExpert (fp32): 16 narrow layers, each =
-  cross-attn(one scheduled stream) → self-attn([state][a_1..a_50]) → MLP
-        ▼
-velocity at flow time τ   →   Heun integration τ: 1 → 0
+  E2B prefix (layers 0..14, bf16) → prefix K/V, encoded once per obs
+        │
+        ├─ decoder-only MAINLINE (ar_backbone): the FULL E2B continues
+        │    [<|turn>model\n][value\n per requested][BOA][FAST actions]
+        │    through all 35 layers; full-vocab CE; ~11M new params
+        │
+        └─ cross-attention family: exported GLOBAL streams {4, 9, 14};
+             FlowDecoder (404M fp32) cross-attends and denoises the
+             50-step chunk (velocity at τ → Heun, τ: 1 → 0)
 ```
 
 ## Why this shape

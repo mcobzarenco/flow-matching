@@ -32,10 +32,12 @@ from torch import Tensor
 from .annotations import ConditionField
 from .aux_text import (
     IMAGE_KEY_PREFIX,
+    AuxField,
     AuxGeneration,
     AuxSpec,
     assemble_suffix,
     camera_prompt_order,
+    generate_text,
     subgoal_text,
 )
 from .fast.codec import ActionCodec
@@ -261,14 +263,14 @@ class CollatedBatch[I: BatchInputs]:
 
 @dataclass(frozen=True, slots=True)
 class CameraFrame:
-    """One camera's frame with its slot name (post-filter, sorted — e.g.
+    """One camera's frame with its slot name (post-filter — e.g.
     "front", "wrist"; community datasets carry generic image/image2 names
     with no reliable semantics, rig datasets carry real ones) and its
     semantic KIND (judge camera-kind vocabulary; "unknown" when the
     dataset is unjudged, the camera is untagged, or kind dropout fired).
-    Slot ORDER is always the sorted camera keys — kinds never reorder,
-    so multiple "unknown" cameras keep a stable, key-derived order.
-    Encoder strategies render the kind (camera tags) or ignore both."""
+    Slot ORDER is (raw kind, short name) — camera_prompt_order; dropout
+    retags but never reorders. Encoder strategies render the kind
+    (camera tags) or ignore both."""
 
     name: str
     kind: str
@@ -278,15 +280,19 @@ class CameraFrame:
 @dataclass(frozen=True, slots=True)
 class PromptInputs:
     """One sample's prompt-side payload, assembled by the shared Collator
-    (instruction override + camera policy + outcome conditioning
-    applied). ``condition_text`` is the trailing bracket block of the
-    user turn ("[outcome: success][smoothness: high]", "" when
-    unconditioned) — already rendered, so encoder strategies just append
-    it after the closing instruction."""
+    (instruction override + camera policy + conditioning applied).
+    ``condition_text`` is the bracket block between the cameras and the
+    closing instruction copy — value conditioning plus the always-
+    present ``[generate|…]`` request (prompt format 3), e.g.
+    ``"[outcome|success][generate|subgoal actions]"`` — already
+    rendered, so encoder strategies just place it. ``state`` is the
+    NORMALIZED proprioceptive vector for the prompt's trailing soft
+    state token (per-sample stats applied at collation)."""
 
     instruction: str
     cameras: tuple[CameraFrame, ...]
     condition_text: str
+    state: Tensor  # [state_dim], normalized
 
 
 class InputsCollator[I: BatchInputs](Protocol):
@@ -336,6 +342,15 @@ class Collator[I: BatchInputs]:
     action_codec: ActionCodec | None
     # Aux text rendering (ar_backbone only); requires action_codec.
     aux: AuxSpec | None
+    # Render the [generate|…] request bracket (ar_backbone prompts —
+    # aux or not: [generate|actions] is the fast path and is ALWAYS
+    # present for that family; other decoders never see it).
+    generate_bracket: bool
+    # Inference/probe override: force THIS request on every row's
+    # prompt (template order, 'actions' implied) instead of the per-row
+    # training draw; suffix targets are then not assembled (decode-only
+    # batches). () = the deployment fast path.
+    generate_override: tuple[AuxField, ...] | None
     camera_kind_dropout: float
     # With probability p, swap the recorded task string for a uniformly
     # drawn judge-suggested rewrite (item["suggested_instructions"],
@@ -396,6 +411,23 @@ class Collator[I: BatchInputs]:
                 "set — camera_filter/max_cameras would silently shift "
                 "them; train aux without camera selection",
             )
+        if self.generate_override is not None:
+            if not self.generate_bracket:
+                raise ValueError(
+                    "generate_override requires generate_bracket — the "
+                    "override is rendered INTO the prompt's [generate|…]",
+                )
+            ordered = tuple(f for f in AuxField if f in self.generate_override)
+            if ordered != self.generate_override:
+                raise ValueError(
+                    f"generate_override must keep template order; got "
+                    f"{[f.value for f in self.generate_override]}",
+                )
+        if self.aux is not None and not self.generate_bracket:
+            raise ValueError(
+                "aux rendering without the generate bracket: the request "
+                "set IS prompt conditioning — they ship together",
+            )
 
     @override
     def __getstate__(self) -> dict[str, Any]:
@@ -418,11 +450,12 @@ class Collator[I: BatchInputs]:
         return kind
 
     def _condition_text(self, item: dict[str, Any]) -> tuple[str, bool]:
-        """The user turn's trailing conditioning block (one bracket per
+        """The user turn's value-conditioning block, ``[key|value]`` per
         configured field whose value exists and survives its dropout
-        draw; bracket-delimited — the chat template trims text-part
-        edge whitespace), plus whether the SUBGOAL rendered — the aux
-        renderer suppresses its subgoal field then (anti-copy
+        draw (bracket-delimited — the chat template trims text-part
+        edge whitespace; the [generate|…] request is appended by
+        __call__ after the aux draw), plus whether the SUBGOAL rendered
+        — the aux draw suppresses the subgoal field then (anti-copy
         coupling)."""
         parts: list[str] = []
         subgoal_rendered = False
@@ -452,7 +485,7 @@ class Collator[I: BatchInputs]:
                 continue
             if field_name is ConditionField.SUBGOAL:
                 subgoal_rendered = True
-            parts.append(f"[{field_name.value}: {value}]")
+            parts.append(f"[{field_name.value}|{value}]")
         return "".join(parts), subgoal_rendered
 
     def _instruction(self, item: dict[str, Any]) -> str:
@@ -578,10 +611,27 @@ class Collator[I: BatchInputs]:
           - task: str  (overridden by ``instruction`` when set)
         """
         samples: list[PromptInputs] = []
-        subgoal_in_prompt: list[bool] = []
+        aux_rows: list[list[int]] = []
         for item in items:
             condition_text, subgoal_rendered = self._condition_text(item)
-            subgoal_in_prompt.append(subgoal_rendered)
+            # The request draw feeds BOTH surfaces: the prompt's
+            # [generate|…] bracket and the suffix targets — one draw,
+            # always consistent (request ⊆ labeled by construction).
+            if self.generate_override is not None:
+                request: tuple[AuxField, ...] = self.generate_override
+                aux_rows.append([])
+            elif self.aux is not None:
+                request, ids = self.aux.draw(
+                    item,
+                    suppress_subgoal=subgoal_rendered,
+                )
+                aux_rows.append(ids)
+            else:
+                request = ()
+                aux_rows.append([])
+            if self.generate_bracket:
+                condition_text += generate_text(request)
+            state = item["observation.state"]
             samples.append(
                 PromptInputs(
                     instruction=self._instruction(item),
@@ -594,22 +644,20 @@ class Collator[I: BatchInputs]:
                         )
                         for key in self.cameras_of(item)
                     ),
+                    state=(state - item["state_mean"]) / item["state_std"],
                 ),
             )
         action_tokens = self._action_tokens(items)
         suffix_tokens: Tensor | None = None
         suffix_is_aux: Tensor | None = None
-        if self.aux is not None:
+        if self.aux is not None and self.generate_override is None:
             if action_tokens is None or self.action_codec is None:
                 raise ValueError(
                     "aux rendering requires an ActionCodec (aux rides the "
                     "AR suffix) — build the Collator with both or neither",
                 )
             suffix_tokens, suffix_is_aux = assemble_suffix(
-                [
-                    self.aux.render(item, suppress_subgoal=in_prompt)
-                    for item, in_prompt in zip(items, subgoal_in_prompt, strict=True)
-                ],
+                aux_rows,
                 action_tokens,
                 block_base=self.aux.block_base,
                 codec_pad=self.action_codec.pad,

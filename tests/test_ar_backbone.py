@@ -8,10 +8,10 @@ starting at 258885). Covers: config
 round-trip, the patched full-vocabulary head (text columns = the tied
 head's, block columns = the patch's, softcap after overwrite),
 teacher-forced-vs-incremental consistency (the decode loop's cache path
-against the one-shot forward), the CE contract (state/PAD ignored,
-targets offset into the block), constrained decode validity, the
-zero-init state projection, and the loud guards (no cache; truncated
-backbone)."""
+against the one-shot forward), the CE contract (opener/PAD ignored,
+targets offset into the block), request-scaffolded decode validity,
+and the loud guards (no cache; truncated backbone; pre-5 suffix
+formats)."""
 
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ from test_aux_text import CharTokenizer
 from test_backbone_continuation import tiny_text_config
 from torch import Tensor
 
-from bijou.aux_text import ACT_MODE, AUX_MODE, NUM_MODES, SUFFIX_FORMAT
+from bijou.aux_text import SUFFIX_FORMAT, AuxField
 from bijou.decoders.ar_backbone import (
     ARBackboneConfig,
     ARBackboneDecoder,
@@ -74,7 +74,6 @@ def decoder_config(loaded: ActionCodec) -> ARBackboneConfig:
         tokenizer=str(FIXTURE),
         vocab_total=loaded.vocab_total,
         block_base=VOCAB - loaded.vocab_total,  # tail placement, like E2B
-        state_dim=loaded.action_dim,
         chunk_size=loaded.time_horizon,
         action_dim=loaded.action_dim,
         suffix_format=SUFFIX_FORMAT,
@@ -109,7 +108,7 @@ def encode_memory(backbone: Gemma4Model) -> ObservationMemory:
         exports=(stop,),
         processor_dir="unused",
         max_soft_tokens=1,
-        camera_tags=False,
+        state_dim=codec().action_dim,
     )
     generator = torch.Generator().manual_seed(7)
     width = max(PROMPT_LENGTHS)
@@ -179,17 +178,13 @@ def test_config_roundtrips_through_schema_json() -> None:
     assert parse_decoder_config(payload) == config
 
 
-def test_state_projection_is_zero_initialized() -> None:
-    _, decoder, _ = build()
-    assert torch.equal(
-        decoder.state_proj.weight,
-        torch.zeros_like(decoder.state_proj.weight),
-    )
-    assert decoder.state_proj.bias is not None
-    assert torch.equal(
-        decoder.state_proj.bias,
-        torch.zeros_like(decoder.state_proj.bias),
-    )
+def test_pre5_suffix_formats_are_refused() -> None:
+    """Formats ≤ 4 trained mode tokens/suffix state/header bytes this
+    code no longer implements — construction refuses them outright."""
+    loaded = codec()
+    for legacy in (1, 2, 3, 4):
+        with pytest.raises(ValueError, match="no back-compat"):
+            dataclasses.replace(decoder_config(loaded), suffix_format=legacy)
 
 
 def test_init_tables_from_backbone_centers_on_row_means() -> None:
@@ -217,7 +212,7 @@ def test_patched_head_places_the_block_and_softcaps() -> None:
     assert float(logits.abs().max()) <= cap
 
 
-def test_loss_is_finite_and_ignores_state_and_pad() -> None:
+def test_loss_is_finite_and_ignores_opener_and_pad() -> None:
     backbone, decoder, loaded = build()
     sample = batch(loaded)
     loss = ar_backbone_loss(backbone, decoder, encode_memory(backbone), sample)
@@ -238,37 +233,29 @@ def test_teacher_forced_matches_incremental_decode_path() -> None:
     sample = batch(loaded)
     tokens = sample.action_tokens
     assert tokens is not None
-    forced = tokens[:, : 6 + 1]  # [BOA, t1..t6]
-    state = sample.state  # stats are identity in the fixture
+    forced = tokens[:, : 6 + 1] + decoder.config.block_base  # [BOA, t1..t6]
 
-    one_shot = decoder(backbone, encode_memory(backbone), state, forced)
+    one_shot = decoder(backbone, encode_memory(backbone), forced)
 
     memory = encode_memory(backbone)
     stepwise: list[Tensor] = []
     fed = 0
-    feed = forced[:, :1]
-    feed_state: Tensor | None = state
     for j in range(forced.shape[1]):
-        embeds, per_layer = decoder._suffix_inputs(backbone, feed_state, feed)
-        hidden = decoder._continue_suffix(backbone, memory, embeds, per_layer, fed)
-        fed += embeds.shape[1]
-        stepwise.append(decoder._patched_logits(backbone, hidden)[:, -1, :])
-        if j + 1 < forced.shape[1]:
-            feed = forced[:, j + 1 : j + 2]
-            feed_state = None
-    # one_shot position j+1 predicts after [state][BOA..t_j] — stepwise j
-    # is the same prediction point (position 0 of one_shot is the state
-    # slot's prediction, stepwise[0] is BOA's = one_shot position 1).
+        feed = forced[:, j : j + 1]
+        logits, fed = decoder._step(backbone, memory, feed, fed)
+        stepwise.append(logits)
+    # one_shot position j predicts suffix position j+1 — stepwise[j] is
+    # the same prediction point (logits after feeding token j).
     for j, step_logits in enumerate(stepwise):
         # detach: the forwards ran with grad enabled (module params
         # require grad) and float() on a graph tensor warns.
-        delta = float((one_shot[:, j + 1, :] - step_logits).detach().abs().max())
+        delta = float((one_shot[:, j, :] - step_logits).detach().abs().max())
         assert delta < 1e-4, f"step {j}: incremental diverges by {delta}"
 
 
-def test_predict_chunk_constrained_decode_always_valid() -> None:
-    """Default ACT mode: [state][opener][ACT][BOA] prefill, straight to
-    the grammar phase — a full valid chunk and empty generations."""
+def test_predict_chunk_fast_path_always_valid() -> None:
+    """generate=(): [opener][BOA] prefill, straight to the grammar
+    phase — a full valid chunk and empty generations."""
     backbone, decoder, loaded = build()
     sample = batch(loaded)
     prediction = decoder.predict_chunk(backbone, encode_memory(backbone), sample)
@@ -278,26 +265,15 @@ def test_predict_chunk_constrained_decode_always_valid() -> None:
     assert all(generation.text == "" for generation in prediction.generations)
 
 
-def test_mode_ids_route_through_the_mode_tables() -> None:
-    """The two ids below the block embed through mode_embed/mode_ple
-    (scaled like the backbone's own tying), not the frozen text tables
-    — and block routing is unchanged around them."""
-    backbone, decoder, _ = build()
-    config = decoder.config
-    assert config.mode_base == config.block_base - NUM_MODES
-    ids = torch.tensor(
-        [[config.mode_base + ACT_MODE, config.mode_base + AUX_MODE]],
-    )
-    embeds, ple = decoder._suffix_inputs_backbone_ids(backbone, None, ids)
-    reference = decoder.mode_embed(torch.tensor([[0, 1]])) * decoder.embed_scale
-    assert torch.equal(embeds, reference)
-    ple_reference = (decoder.mode_ple(torch.tensor([[0, 1]])) * decoder.ple_scale).view(
-        1,
-        2,
-        decoder.num_layers,
-        decoder.ple_dim,
-    )
-    assert torch.equal(ple, ple_reference)
+def test_generate_on_auxless_checkpoint_is_rejected() -> None:
+    backbone, decoder, loaded = build()
+    with pytest.raises(ValueError, match="trained aux fields"):
+        decoder.predict_chunk(
+            backbone,
+            encode_memory(backbone),
+            batch(loaded),
+            generate=(AuxField.HOLDING,),
+        )
 
 
 def test_missing_cache_fails_loudly() -> None:

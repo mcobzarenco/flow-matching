@@ -26,7 +26,7 @@ from huggingface_hub import snapshot_download
 from safetensors.torch import load_file
 from torch import Tensor
 
-from .aux_text import OPENER_SUFFIX_FORMAT, AuxDecodeConfig, build_aux_runtime
+from .aux_text import AuxDecodeConfig, build_aux_runtime
 from .data import DatasetStats
 from .decoders.ar_backbone import ARBackboneConfig, ARBackboneDecoder
 from .decoders.ar_fast import ARFastConfig, ARFastDecoder
@@ -36,7 +36,7 @@ from .decoders.flow import (
     SelfAttentionMode,
     TimeConditioning,
 )
-from .encoders.gemma4 import GemmaEncoder
+from .encoders.gemma4 import PROMPT_FORMAT, GemmaEncoder
 from .fast.codec import ActionCodec
 from .gemma4.config import Gemma4Config, LayerType
 from .gemma4.loading import load_config, load_model, resolve_checkpoint_dir
@@ -110,18 +110,22 @@ class GemmaPromptConfig:
 
     ``exports`` are backbone layer indices whose K/V become the memory
     streams (named ``kv{layer}`` — backbone internals live HERE, never in
-    decoder configs)."""
+    decoder configs). ``format`` is the prompt layout version
+    (encoders.gemma4.PROMPT_FORMAT when written; 1 = tag-less legacy,
+    2 = bracket camera tags, 3 = pipe-unified extended sandwich with
+    the [generate|…] request and the soft state token — whose
+    projection width is ``state_dim``). Loading REFUSES formats < 3:
+    the prompt-side parameter set (state_proj) does not exist there
+    and no checkpoint worth preserving does either (owner call,
+    2026-08-03)."""
 
     exports: tuple[int, ...]
     max_soft_tokens: int
-    # Prompt format dial: per-camera semantic tags (kind from the judge
-    # annotations, "unknown" fallback). Absent in old checkpoints =
-    # False (tag-less prompts, rendered byte-identically forever).
-    camera_tags: bool
-    # Outcome-conditioning fields trained into the user turn's trailing
-    # bracket block (empty = unconditioned; absent in old checkpoints).
-    # Inference must render matching conditioning — BijouPolicy reads
-    # this to configure its collator.
+    format: int
+    state_dim: int
+    # Value-conditioning fields trained into the user turn's bracket
+    # block (empty = unconditioned). Inference must render matching
+    # conditioning — BijouPolicy reads this to configure its collator.
     condition_fields: tuple[str, ...]
 
     def to_dict(self) -> dict[str, Any]:
@@ -129,16 +133,31 @@ class GemmaPromptConfig:
             "kind": PromptKind.GEMMA4.value,
             "exports": list(self.exports),
             "max_soft_tokens": self.max_soft_tokens,
-            "camera_tags": self.camera_tags,
+            "format": self.format,
+            "state_dim": self.state_dim,
             "condition_fields": list(self.condition_fields),
         }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> GemmaPromptConfig:
+        # Pre-format-3 checkpoints recorded camera_tags: bool (or
+        # nothing): parse to their format int, refuse at load below.
+        if "format" in data:
+            format_version = int(data["format"])
+        else:
+            format_version = 2 if bool(data.get("camera_tags", False)) else 1
+        if format_version < PROMPT_FORMAT:
+            raise SystemExit(
+                f"checkpoint prompt format {format_version} < "
+                f"{PROMPT_FORMAT}: pre-3 prompts (no [generate|…], no soft "
+                "state token, colon conditioning) are refused — retrain "
+                "(no back-compat, 2026-08-03)",
+            )
         return cls(
             exports=tuple(int(layer) for layer in data["exports"]),
             max_soft_tokens=int(data["max_soft_tokens"]),
-            camera_tags=bool(data.get("camera_tags", False)),
+            format=format_version,
+            state_dim=int(data["state_dim"]),
             condition_fields=tuple(
                 str(field) for field in data.get("condition_fields", [])
             ),
@@ -262,7 +281,6 @@ def ar_backbone_config_to_dict(config: ARBackboneConfig) -> dict[str, Any]:
         "tokenizer": config.tokenizer,
         "vocab_total": config.vocab_total,
         "block_base": config.block_base,
-        "state_dim": config.state_dim,
         "chunk_size": config.chunk_size,
         "action_dim": config.action_dim,
         "suffix_format": config.suffix_format,
@@ -276,10 +294,10 @@ def ar_backbone_config_from_dict(data: dict[str, Any]) -> ARBackboneConfig:
         tokenizer=str(data["tokenizer"]),
         vocab_total=int(data["vocab_total"]),
         block_base=int(data["block_base"]),
-        state_dim=int(data["state_dim"]),
         chunk_size=int(data["chunk_size"]),
         action_dim=int(data["action_dim"]),
-        # Absent = legacy pre-opener checkpoint (format 1).
+        # Absent = legacy pre-opener checkpoint (format 1) — refused by
+        # ARBackboneConfig (formats < 5 have incompatible parameters).
         suffix_format=int(data.get("suffix_format", 1)),
         aux=None if aux is None else AuxDecodeConfig.from_dict(aux),
     )
@@ -412,12 +430,9 @@ def from_backbone(
     expert_dtype: torch.dtype | None = None,
     attn_backend: AttentionBackend = DEFAULT_ATTENTION_BACKEND,
     max_soft_tokens: int = 140,
-    camera_tags: bool = True,
 ) -> BijouModel:
     """Build a Bijou model (GemmaEncoder + FlowDecoder) from a Gemma 4
-    checkpoint. ``camera_tags`` selects the prompt format (True = the
-    current per-camera semantic tags; loaders of tag-less checkpoints
-    pass the recorded False).
+    checkpoint (prompt format 3 — the only implemented layout).
 
     Pass either a full ``expert_config`` or just ``action_dim``/``state_dim``
     to use :func:`default_expert_config`. The backbone is truncated to its
@@ -457,7 +472,7 @@ def from_backbone(
         config,
         exports=expert_config.streams,
         max_soft_tokens=max_soft_tokens,
-        camera_tags=camera_tags,
+        state_dim=expert_config.state_dim,
         device=device,
         dtype=dtype,
         attn_backend=attn_backend,
@@ -477,7 +492,7 @@ def build_gemma_encoder(
     *,
     exports: tuple[int, ...],
     max_soft_tokens: int,
-    camera_tags: bool,
+    state_dim: int,
     device: DeviceLike,
     dtype: torch.dtype | None,
     attn_backend: AttentionBackend = DEFAULT_ATTENTION_BACKEND,
@@ -485,7 +500,9 @@ def build_gemma_encoder(
 ) -> tuple[Gemma4Model, GemmaEncoder]:
     """The Gemma backbone (frozen; truncated to its non-KV-shared layer
     prefix at the default PREFIX depth, whole stack at FULL) plus its
-    prompt-side encoder strategy — the pair BijouModel composes."""
+    prompt-side encoder strategy — the pair BijouModel composes. The
+    encoder's state_proj is freshly zero-initialized; checkpoint loads
+    overwrite it from prompt.safetensors."""
     backbone = load_model(
         checkpoint_dir,
         device="cpu" if device is None else device,
@@ -502,7 +519,12 @@ def build_gemma_encoder(
         exports=exports,
         processor_dir=str(checkpoint_dir),
         max_soft_tokens=max_soft_tokens,
-        camera_tags=camera_tags,
+        state_dim=state_dim,
+        device=device,
+        # The prompt-side params are "new parameters": fp32 like the
+        # decoder's, whatever the backbone dtype (autocast covers the
+        # forward).
+        dtype=torch.float32,
     )
     return backbone, encoder
 
@@ -858,7 +880,7 @@ def from_checkpoint(
             backbone_config,
             exports=sections.prompt.exports,
             max_soft_tokens=sections.prompt.max_soft_tokens,
-            camera_tags=sections.prompt.camera_tags,
+            state_dim=sections.prompt.state_dim,
             device=device,
             dtype=dtype,
             attn_backend=attn_backend,
@@ -876,18 +898,14 @@ def from_checkpoint(
             )
         else:
             # The backbone checkpoint's own tokenizer — the artifact the
-            # collator rendered training text with (opener + aux metrics).
-            # Keyed off the OPENER format: every format ≥ 2 trained the
-            # opener and needs it tokenized at construction.
-            text_tokenizer = (
-                transformers.AutoTokenizer.from_pretrained(str(checkpoint_dir))
-                if decoder_config.suffix_format >= OPENER_SUFFIX_FORMAT
-                or decoder_config.aux is not None
-                else None
+            # collator rendered training text with (opener + value
+            # lines); format 5 always needs it at construction.
+            text_tokenizer = transformers.AutoTokenizer.from_pretrained(
+                str(checkpoint_dir),
             )
             aux_runtime = (
                 build_aux_runtime(decoder_config.aux, text_tokenizer)
-                if decoder_config.aux is not None and text_tokenizer is not None
+                if decoder_config.aux is not None
                 else None
             )
             decoder = ARBackboneDecoder(
@@ -901,23 +919,18 @@ def from_checkpoint(
             )
         model = BijouModel(backbone=backbone, encoder=encoder, decoder=decoder)
     else:
-        if sections.decoder is not None:
-            assert sections.prompt is not None  # tagged formats carry it
-            expert_config = expert_config_from_architecture(
-                sections.prompt,
-                sections.decoder,
-                load_config(checkpoint_dir),
+        if sections.decoder is None:
+            raise SystemExit(
+                f"{checkpoint} is a format-1 (pre-prompt-section) "
+                "checkpoint — refused with the pre-format-3 prompts "
+                "(no back-compat, 2026-08-03)",
             )
-        else:
-            # Format 1: synthesize from the recorded train args (the legacy
-            # path every pre-format-2 checkpoint takes, kept indefinitely;
-            # format 1 predates AR decoders, so it is always flow).
-            expert_config = expert_config_from_train_args(
-                load_config(checkpoint_dir),
-                info.train_args,
-                action_dim=len(info.normalization.action_mean),
-                state_dim=len(info.normalization.state_mean),
-            )
+        assert sections.prompt is not None  # tagged formats carry it
+        expert_config = expert_config_from_architecture(
+            sections.prompt,
+            sections.decoder,
+            load_config(checkpoint_dir),
+        )
         model = from_backbone(
             checkpoint_dir,
             expert_config,
@@ -926,15 +939,17 @@ def from_checkpoint(
             expert_dtype=expert_dtype,
             attn_backend=attn_backend,
             max_soft_tokens=info.max_soft_tokens,
-            # Format-1 checkpoints predate the prompt section = tag-less.
-            camera_tags=(
-                sections.prompt.camera_tags if sections.prompt is not None else False
-            ),
         )
     # CPU-load + copy-in for the same transient-memory reason as
     # load_adapted_backbone (the expert file is 1.6 GB fp32).
     model.decoder.load_state_dict(
         load_file(str(checkpoint / "expert.safetensors"), device="cpu"),
+        strict=True,
+    )
+    # Prompt-side parameters (state_proj) — format-3 checkpoints always
+    # carry them.
+    model.encoder.load_state_dict(
+        load_file(str(checkpoint / "prompt.safetensors"), device="cpu"),
         strict=True,
     )
     # Trunk-trained checkpoints (any --unfreeze-*-lr > 0) carry the adapted

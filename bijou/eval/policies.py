@@ -20,7 +20,8 @@ import torch
 from torch import Tensor
 
 from ..annotations import ConditionField
-from ..aux_text import AuxDecodeMode
+from ..aux_text import AuxField
+from ..decoders.ar_backbone import ARBackboneDecoder
 from ..decoders.flow import FlowDecoder
 from ..interface import Collator
 from ..loading import CheckpointInfo, from_checkpoint
@@ -103,7 +104,7 @@ class BijouPolicy:
         sample_steps: int = 10,
         method: SamplingMethod = SamplingMethod.HEUN,
         expert_dtype: torch.dtype = torch.float32,
-        aux_mode: AuxDecodeMode = AuxDecodeMode.ACT,
+        generate: tuple[AuxField, ...] = (),
         condition_override: dict[str, str] | None = None,
         include_subgoal_condition: bool = False,
     ) -> None:
@@ -112,7 +113,7 @@ class BijouPolicy:
         self.seed = seed
         self.sample_steps = sample_steps
         self.method = method
-        self.aux_mode = aux_mode
+        self.generate = generate
         self.model: BijouModel
         self.info: CheckpointInfo
         self.model, self.info = from_checkpoint(
@@ -120,6 +121,13 @@ class BijouPolicy:
             device=device,
             expert_dtype=expert_dtype,
         )
+        is_ar_backbone = isinstance(self.model.decoder, ARBackboneDecoder)
+        if generate and not is_ar_backbone:
+            raise SystemExit(
+                "--generate is ar_backbone-only (the request rides its "
+                "prompt); this checkpoint's decoder is "
+                f"{type(self.model.decoder).__name__}",
+            )
         # Counterfactual conditioning (the Q3 diagnostic): force given
         # fields to a value regardless of the items' hindsight labels.
         # Only meaningful on condition-trained checkpoints — loud
@@ -143,6 +151,11 @@ class BijouPolicy:
             # collator, which does carry the codec.
             action_codec=None,
             aux=None,
+            # ar_backbone prompts always carry [generate|…]; the request
+            # is the caller's ask (() = the fast path) and must match
+            # the decode's ``generate`` — same tuple, one source.
+            generate_bracket=is_ar_backbone,
+            generate_override=generate if is_ar_backbone else None,
             # Kinds travel with the items (StatsAttachedDataset attaches
             # them; rollout items carry an explicit map); never dropped
             # at inference — dropout is a train-time regularizer. Same
@@ -197,6 +210,6 @@ class BijouPolicy:
             noise=noise,
             num_steps=self.sample_steps,
             method=self.method,
-            aux_mode=self.aux_mode,
+            generate=self.generate,
         )
         return [chunk.cpu() for chunk in prediction.actions]

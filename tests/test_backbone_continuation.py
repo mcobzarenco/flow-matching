@@ -268,7 +268,7 @@ def test_encode_is_padding_orientation_invariant() -> None:
         exports=(stop,),
         processor_dir="unused",
         max_soft_tokens=1,
-        camera_tags=False,
+        state_dim=6,
     )
     prompts = [prompt_ids(length, seed=i) for i, length in enumerate(PROMPT_LENGTHS)]
     width = max(int(p.shape[0]) for p in prompts)

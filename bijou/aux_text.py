@@ -1,22 +1,28 @@
 """Auxiliary text targets from judge annotations (ar_backbone suffix).
 
-Renders a judged frame's annotations into the aux text segment that
-precedes BOA in the ar_backbone suffix:
+Draws a judged frame's REQUEST SET (which fields the prompt's
+``[generate|…]`` conditioning asks for) and renders the corresponding
+HEADERLESS value lines that precede BOA in the ar_backbone suffix —
+for ``[generate|subgoal holding progress event actions]`` e.g.:
 
-    [subgoal]reach toward the toy boat\n
-    [holding]no\n
-    [progress]30%\n
-    [event]object dropped from gripper\n
-    [visible]object 0,1; gripper 1\n
+    reach toward the toy boat\n
+    no\n
+    30%\n
+    none\n
 
-Presence-based: a field appears iff its label exists at this frame
-(subgoal on every frame of a judged episode; holding/progress only on
-judge-sampled frames — the finite mask IS the sampled-frame set;
-event only on the exact firing frame, positives-only — the implicit
-negative is the trained transition past it wherever labels exist; per
-docs/episode-annotations.md). Unjudged samples produce no aux at all
-and train mode [ACT] — an aux-enabled fine-tune extends the base
-rather than fighting it.
+Which field a line answers is pinned by request order (template order
+always), not by generated header bytes. Requested ⊆ labeled, always:
+subgoal exists on every frame of a judged episode;
+holding/progress/visible only on judge-sampled frames — the finite
+mask IS the sampled-frame set; event wherever its status is KNOWN
+(firing frames → the text; sampled no-event frames → the explicit
+``none`` — unsampled frames are unknown, never requested; per
+docs/episode-annotations.md). The model therefore learns
+p(value | observation, asked) — label PRESENCE is conditioning, never
+a prediction target (no field ever asks "was this frame judged").
+Unjudged samples request nothing and train the ``[generate|actions]``
+fast path — an aux-enabled fine-tune extends the base rather than
+fighting it.
 
 Label provenance is the dataset's own ``meta/judge_annotations.json``
 stamp — the blessed materialization, consumed as-is (selection records
@@ -27,9 +33,10 @@ per-run via ``--aux-prompt-hash`` when a sweep must fail loudly on a
 mid-sweep re-materialization.
 
 The template is VERSIONED (:data:`AUX_TEMPLATE_VERSION`) and recorded in
-the checkpoint's decoder section: inference elicits fields by forcing
-these exact header strings, so a byte-level template change on an
-existing checkpoint silently breaks decoding — version it instead.
+the checkpoint's decoder section: inference decodes values under this
+line protocol (\\n-terminated, request-ordered), so a byte-level
+convention change on an existing checkpoint silently breaks decoding —
+version it instead.
 
 Field order is fixed (subgoal, holding, progress, event); ``fields``
 selects a subset but never reorders. Aux token ids are ordinary
@@ -56,58 +63,48 @@ from torch import Tensor
 
 from .annotations import EVENT_STYLE
 
-# v3 (2026-08-03): bracket headers ``[field]value\n`` and positional
-# visibility. Chosen for the FORCED-SCAFFOLD property: every split
-# point we force at (header|value) must fall on a BPE merge boundary
-# (part-encoding a line = encoding it jointly, id for id). The
-# v2 form ``field: value`` violated it — the trailing space merged
-# into word-valued first tokens (" yes" = one id), so forced headers
-# put the model off-manifold (the samples_holding_acc bug). ``[``/``]``
-# are single Gemma ids (236840/236842) that never cross-merge with
-# letters, digits or ``\n`` (measured on the real E2B tokenizer,
-# 2026-08-03, incl. across field boundaries ``\n[``);
-# :func:`build_aux_runtime` asserts the property at construction so a
-# tokenizer swap that breaks it fails loudly, not silently.
-AUX_TEMPLATE_VERSION = 3
-# Suffix format 4 (the only trained format going forward): every
-# ar_backbone suffix — aux or not — is [state][GENERATION_OPENER][MODE]
-# [aux text when labeled][BOA][actions]. The opener is Gemma-4's OWN
-# generation prompt — the exact string apply_chat_template appends with
+# v4 (2026-08-03): HEADERLESS values. The suffix carries only the
+# requested fields' VALUES, ``\n``-terminated, in request order — which
+# field a line answers is pinned by the prompt's ``[generate|…]`` list,
+# not by generated header bytes (they were fully predictable given the
+# request: pure padding). Values are \n-sanitized at render — a stray
+# newline inside a judge string would shift every later line's
+# supervision (with v3 headers that was a local parse failure;
+# headerless it would be silent misalignment). Training assembles the
+# suffix from PER-FIELD encodings (never one joint string), so
+# cross-line merges cannot exist by construction; the remaining
+# tokenizer contract — ``enc(value) + enc(\n) == enc(value + \n)`` — is
+# asserted by :func:`build_aux_runtime` (measured to hold on the real
+# E2B tokenizer for every field's value class, 2026-08-03).
+AUX_TEMPLATE_VERSION = 4
+# Suffix format 5: ``[GENERATION_OPENER][value\n per requested][BOA]
+# [t_1..t_k]``. The opener is Gemma-4's OWN generation prompt — the
+# exact string apply_chat_template appends with
 # add_generation_prompt=True, `<|turn>model\n` = ids [105, 4368, 107]
-# on E2B (verified against the real checkpoint 2026-08-02; formats 2–3
-# mistakenly used the Gemma-3 string "<start_of_turn>model\n", which
-# tokenizes as 9 PLAIN-TEXT pieces — self-consistent but not the
-# reinforced IT transition). The MODE
-# token is FED, never predicted — [AUX] on samples that carry aux
-# supervision, [ACT] otherwise — so "speak vs act" is commanded by the
-# caller instead of learned as a marginal over whichever frames a judge
-# happened to label (label presence is explained away; vision features
-# are never asked to predict judged-ness). Aux-less runs feed [ACT] on
-# every sample. Feature gates: opener ≥ OPENER_SUFFIX_FORMAT, mode
-# token ≥ MODE_SUFFIX_FORMAT; anything < SUFFIX_FORMAT is legacy
-# (loadable for warm starts, decode warned).
-SUFFIX_FORMAT = 4
-MODE_SUFFIX_FORMAT = 3
-OPENER_SUFFIX_FORMAT = 2
+# on E2B (verified against the real checkpoint 2026-08-02). What speaks
+# is commanded by the PROMPT's ``[generate|…]`` conditioning (always
+# present, ``actions`` always terminal): label presence is explained
+# away per FIELD — the model learns p(value | obs, asked), never
+# "was this frame judged". BOA survives as the action block's own
+# begin-marker (single-id constrained-decode anchor; codec output
+# consumed verbatim; ar_fast convention unchanged). Formats < 5 (fed
+# [ACT]/[AUX] mode tokens, state as suffix position 0, v≤3 header
+# bytes) are REFUSED — no trained artifact worth loading exists
+# (owner call, 2026-08-03).
+SUFFIX_FORMAT = 5
 GENERATION_OPENER = "<|turn>model\n"
-# Mode token offsets: backbone id = (block_base − NUM_MODES) + offset —
-# directly below the FAST block, inside the same reserved-unused tail,
-# embedded through the decoder's trainable mode tables.
-ACT_MODE = 0
-AUX_MODE = 1
-NUM_MODES = 2
-# Free-phase token budget at decode: worst-case configured template
-# (headers ~16 + subgoal 20 + holding 1 + progress 5 + event 24 +
-# visible ~10 + terminators 5) with slack; the fallback (force BOA,
-# count it) fires past this.
-MAX_FREE_TOKENS = 96
 FIELD_TERMINATOR = "\n"
-SUBGOAL_HEADER = "[subgoal]"
-HOLDING_HEADER = "[holding]"
-PROGRESS_HEADER = "[progress]"
-EVENT_HEADER = "[event]"
-VISIBLE_HEADER = "[visible]"
 HOLDING_VALUES = ("no", "yes")  # indexed by the 0/1 label
+# The explicit event negative: requested on judge-sampled no-event
+# frames (a TRUE "nothing happened" — unsampled frames are unknown and
+# never requested), so event presence is read from the VALUE, not from
+# whether the model chose to emit a line.
+EVENT_NONE = "none"
+# The generate-list key and its terminal word ([generate|subgoal …
+# actions]): every sample's prompt carries it — actions are always
+# requested and always last, so the list fully describes the suffix.
+GENERATE_KEY = "generate"
+ACTIONS_WORD = "actions"
 # LeRobot's camera-frame key convention — single-sourced here (the DAG
 # leaf); the collator imports it.
 IMAGE_KEY_PREFIX = "observation.images."
@@ -124,15 +121,26 @@ class AuxField(StrEnum):
     VISIBLE = "visible"
 
 
-class AuxDecodeMode(StrEnum):
-    """Inference-time mode selection for mode-format (≥3) decodes: which
-    mode token is fed after the opener. ACT — feed [ACT][BOA], straight to
-    grammar-constrained actions (the deployment fast path). FREE — feed
-    [AUX], free-until-BOA text generation first (requires an
-    aux-trained checkpoint: [AUX] is untrained otherwise)."""
+# Per-field VALUE token budgets at decode (terminator excluded):
+# free-text fields match the render-side truncation caps; constrained/
+# short fields get their worst case with slack. Exhaustion forces the
+# terminator and counts a fallback.
+VALUE_BUDGETS: dict[AuxField, int] = {
+    AuxField.SUBGOAL: 20,
+    AuxField.HOLDING: 2,
+    AuxField.PROGRESS: 6,
+    AuxField.EVENT: 24,
+    AuxField.VISIBLE: 16,
+}
 
-    ACT = "act"
-    FREE = "free"
+
+def generate_text(request: tuple[AuxField, ...]) -> str:
+    """The prompt's ``[generate|…]`` conditioning bracket for one
+    sample: requested fields in template order, ``actions`` terminal
+    and unconditional — ``[generate|actions]`` is the deployment fast
+    path."""
+    words = [f.value for f in request] + [ACTIONS_WORD]
+    return f"[{GENERATE_KEY}|{' '.join(words)}]"
 
 
 class TextTokenizer(Protocol):
@@ -148,9 +156,9 @@ class TextTokenizer(Protocol):
 class AuxDecodeConfig:
     """The aux record a checkpoint carries in its decoder section —
     everything inference needs to elicit the fields the model trained on,
-    plus label provenance. ``template_version`` pins the exact header
-    bytes (AUX_TEMPLATE_VERSION when written); a version this code does
-    not know is a loud error, never a guess."""
+    plus label provenance. ``template_version`` pins the value/terminator
+    byte conventions (AUX_TEMPLATE_VERSION when written); a version this
+    code does not know is a loud error, never a guess."""
 
     template_version: int
     fields: tuple[AuxField, ...]
@@ -171,8 +179,8 @@ class AuxDecodeConfig:
         if version != AUX_TEMPLATE_VERSION:
             raise SystemExit(
                 f"checkpoint aux template_version {version} != this code's "
-                f"{AUX_TEMPLATE_VERSION} — forced-scaffold decoding would "
-                "elicit a format the model never trained on",
+                f"{AUX_TEMPLATE_VERSION} — decoding would elicit a format "
+                "the model never trained on",
             )
         return cls(
             template_version=version,
@@ -184,26 +192,25 @@ class AuxDecodeConfig:
 
 @dataclass(frozen=True, slots=True)
 class AuxRuntime:
-    """Tokenized scaffold for forced-field decoding, built once from the
-    checkpoint's text tokenizer (:func:`build_aux_runtime`). Header ids
-    are FED (never predicted); value ids are decoded under per-field
-    constraints; ``terminator_id`` ends every field's value."""
+    """Tokenized decode constants, built once from the checkpoint's text
+    tokenizer (:func:`build_aux_runtime`). Value ids are decoded under
+    per-field budgets/constraints; ``terminator_id`` ends every field's
+    value line."""
 
     config: AuxDecodeConfig
     tokenizer: TextTokenizer
-    header_ids: dict[AuxField, tuple[int, ...]]
     value_candidates: dict[AuxField, tuple[tuple[int, ...], ...]]
     terminator_id: int
 
 
-# Representative first-values per field for the boundary tripwire below
-# (HOLDING checks its REAL candidates; the rest one typical value each —
+# Representative values per field for the boundary tripwire below
+# (HOLDING checks its REAL candidates, EVENT its explicit negative —
 # a letter-initial phrase, a digit, positional indices).
 _BOUNDARY_PROBES: dict[AuxField, tuple[str, ...]] = {
     AuxField.SUBGOAL: ("reach toward the object",),
     AuxField.HOLDING: HOLDING_VALUES,
     AuxField.PROGRESS: ("85%",),
-    AuxField.EVENT: ("object dropped",),
+    AuxField.EVENT: ("object dropped", EVENT_NONE),
     AuxField.VISIBLE: ("object 0,1; gripper none",),
 }
 
@@ -212,19 +219,20 @@ def build_aux_runtime(
     config: AuxDecodeConfig,
     tokenizer: TextTokenizer,
 ) -> AuxRuntime:
-    """Tokenize the versioned template's scaffold. The field terminator
-    must be a single token (true for \\n under the Gemma tokenizer and
-    the test stub) — anything else is a loud error, since value decoding
-    detects termination by one id.
+    """Tokenize the versioned template's decode constants. The field
+    terminator must be a single token (true for \\n under the Gemma
+    tokenizer and the test stub) — anything else is a loud error, since
+    value decoding detects termination by one id.
 
-    Construction also asserts the template's FORCED-SCAFFOLD property
-    on every configured field: ``encode(header) + encode(value) +
-    encode(\\n) == encode(header + value + \\n)`` for representative
-    values (the real candidates for constrained fields). Training
-    encodes lines JOINTLY, so a violation means forced headers would
-    condition the model off-manifold — the v2 ``field: `` template
-    failed exactly this way (space merged into " yes") and shipped a
-    silently-wrong holding metric."""
+    Construction also asserts the headerless template's one remaining
+    tokenizer contract on every configured field:
+    ``encode(value) + encode(\\n) == encode(value + \\n)`` for
+    representative values (the real candidates for constrained fields).
+    Training assembles suffixes from per-field encodings, so a violation
+    means the decode-side forced terminator would sit off the training
+    manifold — the v2 header template broke the equivalent property
+    (space merged into " yes") and shipped a silently-wrong holding
+    metric."""
 
     def encode(text: str) -> tuple[int, ...]:
         return tuple(tokenizer.encode(text, add_special_tokens=False))
@@ -235,32 +243,18 @@ def build_aux_runtime(
             f"aux field terminator {FIELD_TERMINATOR!r} tokenizes to "
             f"{len(terminator)} ids — single-token terminator required",
         )
-    headers = {
-        AuxField.SUBGOAL: encode(SUBGOAL_HEADER),
-        AuxField.HOLDING: encode(HOLDING_HEADER),
-        AuxField.PROGRESS: encode(PROGRESS_HEADER),
-        AuxField.EVENT: encode(EVENT_HEADER),
-        AuxField.VISIBLE: encode(VISIBLE_HEADER),
-    }
-    header_of = {
-        AuxField.SUBGOAL: SUBGOAL_HEADER,
-        AuxField.HOLDING: HOLDING_HEADER,
-        AuxField.PROGRESS: PROGRESS_HEADER,
-        AuxField.EVENT: EVENT_HEADER,
-        AuxField.VISIBLE: VISIBLE_HEADER,
-    }
     for aux_field in config.fields:
         for value in _BOUNDARY_PROBES[aux_field]:
-            split = headers[aux_field] + encode(value) + terminator
-            joint = encode(header_of[aux_field] + value + FIELD_TERMINATOR)
+            split = encode(value) + terminator
+            joint = encode(value + FIELD_TERMINATOR)
             if split != tuple(joint):
                 raise SystemExit(
                     f"aux template boundary broken for {aux_field.value!r}: "
                     f"part-encoding {list(split)} != joint {list(joint)} — "
-                    "this tokenizer merges across the header/value split, "
-                    "so forced-scaffold decoding would condition the model "
-                    "off-manifold; the template must change with the "
-                    "tokenizer (AUX_TEMPLATE_VERSION bump)",
+                    "this tokenizer merges values into the terminator, so "
+                    "decode-forced terminators would sit off the training "
+                    "manifold; the template must change with the tokenizer "
+                    "(AUX_TEMPLATE_VERSION bump)",
                 )
     candidates: dict[AuxField, tuple[tuple[int, ...], ...]] = {
         # Constrained value set; first-token argmax picks the candidate,
@@ -270,7 +264,6 @@ def build_aux_runtime(
     return AuxRuntime(
         config=config,
         tokenizer=tokenizer,
-        header_ids={f: headers[f] for f in config.fields},
         value_candidates={f: candidates[f] for f in config.fields if f in candidates},
         terminator_id=terminator[0],
     )
@@ -302,12 +295,16 @@ class AuxSpec:
     not here). ``block_base`` maps codec ids into backbone id space for
     the assembled suffix.
 
-    ``dropout``: probability a LABELED sample renders as unlabeled
-    (trains [ACT] + BOA with its aux text dropped) — keeps the fast
-    path trained under dense annotation. Draws come from a per-process
-    generator seeded from ``torch.initial_seed()`` (in a dataloader
-    worker: a pure function of --seed, rank and worker id — same seed,
-    same dropout pattern; probe collators run a dropout-0 clone so eval
+    ``dropout``: probability a LABELED sample's request set collapses to
+    ``{actions}`` (the deployment fast path stays trained under dense
+    annotation). ``field_dropout``: per labeled field, independent
+    probability of dropping it from the request set — request and
+    target always move together, so all SUBSETS of the labeled set
+    appear in the data distribution (inference-time partial requests
+    stay in-distribution). Draws come from a per-process generator
+    seeded from ``torch.initial_seed()`` (in a dataloader worker: a
+    pure function of --seed, rank and worker id — same seed, same
+    dropout pattern; probe collators run dropout-0 clones so eval
     always sees the true labels)."""
 
     tokenizer_dir: str
@@ -315,12 +312,12 @@ class AuxSpec:
     annotated_repos: frozenset[str]
     block_base: int
     dropout: float
+    field_dropout: float
     # 16 truncated frequently on the curated corpus's judge subgoals
-    # (observed in the first full-recipe run's logs); 20 still fits the
-    # MAX_FREE_TOKENS worst case.
+    # (observed in the first full-recipe run's logs); 20 = the decode
+    # VALUE_BUDGETS cap.
     max_subgoal_tokens: int = 20
-    # Wider than subgoal: multi-event frames join with "; " (still
-    # inside the MAX_FREE_TOKENS worst case).
+    # Wider than subgoal: multi-event frames join with "; ".
     max_event_tokens: int = 24
     _tokenizer: Any = field(default=None, repr=False, compare=False)
     _generator: torch.Generator | None = field(default=None, repr=False, compare=False)
@@ -336,6 +333,10 @@ class AuxSpec:
             raise ValueError("aux enabled with no fields — pass aux=None instead")
         if not 0.0 <= self.dropout < 1.0:
             raise ValueError(f"aux dropout {self.dropout} outside [0, 1)")
+        if not 0.0 <= self.field_dropout < 1.0:
+            raise ValueError(
+                f"aux field dropout {self.field_dropout} outside [0, 1)",
+            )
 
     @override
     def __getstate__(self) -> dict[str, Any]:
@@ -353,90 +354,112 @@ class AuxSpec:
     def _encode(self, text: str) -> list[int]:
         return self.tokenizer().encode(text, add_special_tokens=False)
 
-    def render_field(
+    def _rng(self) -> torch.Generator:
+        if self._generator is None:
+            self._generator = torch.Generator().manual_seed(torch.initial_seed())
+        return self._generator
+
+    def field_value(
         self,
         aux_field: AuxField,
         item: dict[str, Any],
-    ) -> list[int] | None:
-        """Token ids of one field's ``header value\\n`` string, or None
-        when the label does not exist at this frame."""
+    ) -> str | None:
+        """One field's VALUE text at this frame, or None when its label
+        does not exist (the field is then never requested). Values are
+        \\n-sanitized — headerless lines mean a stray newline would
+        shift every later line's supervision."""
         match aux_field:
             case AuxField.SUBGOAL:
                 text = subgoal_text(item)
-                if text is None:
-                    return None
-                header = self._encode(SUBGOAL_HEADER)
-                body = self._encode(text)
-                if len(body) > self.max_subgoal_tokens:
-                    print(
-                        f"[aux] truncating subgoal ({len(body)} > "
-                        f"{self.max_subgoal_tokens} tokens): {text!r}",
-                        flush=True,
-                    )
-                    body = body[: self.max_subgoal_tokens]
-                return header + body + self._encode(FIELD_TERMINATOR)
+                return None if text is None else _sanitize(text)
             case AuxField.HOLDING:
                 value = item.get("annotation.holding")
                 if value is None or not bool(torch.isfinite(value)):
                     return None
-                text = HOLDING_HEADER + HOLDING_VALUES[int(value)] + FIELD_TERMINATOR
-                return self._encode(text)
+                return HOLDING_VALUES[int(value)]
             case AuxField.PROGRESS:
                 value = item.get("annotation.progress")
                 if value is None or not bool(torch.isfinite(value)):
                     return None
-                percent = round(float(value) * 100)
-                return self._encode(f"{PROGRESS_HEADER}{percent}%{FIELD_TERMINATOR}")
+                return f"{round(float(value) * 100)}%"
             case AuxField.EVENT:
                 text = events_text(item)
-                if text is None:
-                    return None
-                header = self._encode(EVENT_HEADER)
-                body = self._encode(text)
-                if len(body) > self.max_event_tokens:
-                    print(
-                        f"[aux] truncating event ({len(body)} > "
-                        f"{self.max_event_tokens} tokens): {text!r}",
-                        flush=True,
-                    )
-                    body = body[: self.max_event_tokens]
-                return header + body + self._encode(FIELD_TERMINATOR)
+                if text is not None:
+                    return _sanitize(text)
+                # Explicit negative on judge-sampled frames only: the
+                # finite progress mask IS the sampled-frame set; event
+                # status elsewhere is unknown, never "none".
+                sampled = item.get("annotation.progress")
+                if sampled is not None and bool(torch.isfinite(sampled)):
+                    return EVENT_NONE
+                return None
             case AuxField.VISIBLE:
-                text = visibility_text(item)
-                if text is None:
-                    return None
-                # Bounded by camera count — no truncation cap needed.
-                return self._encode(f"{VISIBLE_HEADER}{text}{FIELD_TERMINATOR}")
+                return visibility_text(item)
 
-    def render(
+    def value_ids(self, aux_field: AuxField, value: str) -> list[int]:
+        """``value\\n`` token ids, truncation-capped for the free-text
+        fields (loudly — a capped target is a shortened prefix of the
+        label)."""
+        body = self._encode(value)
+        cap = {
+            AuxField.SUBGOAL: self.max_subgoal_tokens,
+            AuxField.EVENT: self.max_event_tokens,
+        }.get(aux_field)
+        if cap is not None and len(body) > cap:
+            print(
+                f"[aux] truncating {aux_field.value} ({len(body)} > "
+                f"{cap} tokens): {value!r}",
+                flush=True,
+            )
+            body = body[:cap]
+        return body + self._encode(FIELD_TERMINATOR)
+
+    def draw(
         self,
         item: dict[str, Any],
         *,
         suppress_subgoal: bool = False,
-    ) -> list[int]:
-        """All present fields' token ids, template order. Empty for
-        unjudged frames, for datasets whose stamp failed verification,
-        and — with probability ``dropout`` — for labeled samples (mode
-        dropout: the sample then trains as [ACT]). ``suppress_subgoal``
-        skips the subgoal FIELD (anti-copy coupling: when the collator
-        put the subgoal in the PROMPT, predicting it in the aux segment
-        would train copying — prompt-conditioning and aux-prediction
-        are exact complements)."""
+    ) -> tuple[tuple[AuxField, ...], list[int]]:
+        """One sample's (request set, target value ids) — always
+        consistent by construction: a field is requested iff its label
+        exists AND it survives the dropout draws, and exactly the
+        requested fields' ``value\\n`` ids are supervised, in template
+        order. Empty request for unjudged frames, datasets whose stamp
+        failed verification, and — with probability ``dropout`` — for
+        labeled samples (the sample then trains the ``[generate|
+        actions]`` fast path). ``suppress_subgoal`` excludes the subgoal
+        FIELD (anti-copy coupling: when the collator put the subgoal in
+        the PROMPT, requesting it would train copying —
+        prompt-conditioning and prediction are exact complements)."""
         if item.get("repo_id") not in self.annotated_repos:
-            return []
+            return (), []
+        request: list[AuxField] = []
         ids: list[int] = []
         for aux_field in self.fields:
             if suppress_subgoal and aux_field is AuxField.SUBGOAL:
                 continue
-            rendered = self.render_field(aux_field, item)
-            if rendered is not None:
-                ids.extend(rendered)
-        if ids and self.dropout > 0.0:
-            if self._generator is None:
-                self._generator = torch.Generator().manual_seed(torch.initial_seed())
-            if float(torch.rand((), generator=self._generator)) < self.dropout:
-                return []
-        return ids
+            value = self.field_value(aux_field, item)
+            if value is None:
+                continue
+            if self.field_dropout > 0.0 and (
+                float(torch.rand((), generator=self._rng())) < self.field_dropout
+            ):
+                continue
+            request.append(aux_field)
+            ids.extend(self.value_ids(aux_field, value))
+        if (
+            request
+            and self.dropout > 0.0
+            and float(torch.rand((), generator=self._rng())) < self.dropout
+        ):
+            return (), []
+        return tuple(request), ids
+
+
+def _sanitize(value: str) -> str:
+    """Newlines inside a value would break the headerless line protocol
+    (every later line shifts one field) — collapse them to spaces."""
+    return " ".join(value.split())
 
 
 def subgoal_text(item: dict[str, Any]) -> str | None:
@@ -566,42 +589,56 @@ def events_text(item: dict[str, Any]) -> str | None:
     return "; ".join(contents)
 
 
-def aux_label_text(item: dict[str, Any], fields: tuple[AuxField, ...]) -> str:
-    """The template text the LABELS would render for this item — the
-    reference column next to generations in eval tables. Pure strings
-    (no tokenizer); presence rules identical to :meth:`AuxSpec.render`,
-    EXCEPT truncation: render's token caps (max_subgoal/event_tokens)
-    need a tokenizer, so this column shows the full label — on capped
-    fields the trained target may be a shortened prefix of it."""
-    parts: list[str] = []
+def label_values(
+    item: dict[str, Any],
+    fields: tuple[AuxField, ...],
+) -> dict[AuxField, str]:
+    """The LABEL value per configured field where one exists at this
+    frame — presence rules identical to :meth:`AuxSpec.field_value`
+    minus tokenization concerns (pure strings, no truncation caps, no
+    \\n sanitization — on capped fields the trained target may be a
+    shortened prefix of what this shows)."""
+    values: dict[AuxField, str] = {}
     for aux_field in fields:
         match aux_field:
             case AuxField.SUBGOAL:
                 text = subgoal_text(item)
                 if text is not None:
-                    parts.append(f"{SUBGOAL_HEADER}{text}{FIELD_TERMINATOR}")
+                    values[aux_field] = text
             case AuxField.HOLDING:
                 value = item.get("annotation.holding")
                 if value is not None and bool(torch.isfinite(value)):
-                    parts.append(
-                        HOLDING_HEADER + HOLDING_VALUES[int(value)] + FIELD_TERMINATOR,
-                    )
+                    values[aux_field] = HOLDING_VALUES[int(value)]
             case AuxField.PROGRESS:
                 value = item.get("annotation.progress")
                 if value is not None and bool(torch.isfinite(value)):
-                    parts.append(
-                        f"{PROGRESS_HEADER}{round(float(value) * 100)}%"
-                        f"{FIELD_TERMINATOR}",
-                    )
+                    values[aux_field] = f"{round(float(value) * 100)}%"
             case AuxField.EVENT:
                 text = events_text(item)
                 if text is not None:
-                    parts.append(f"{EVENT_HEADER}{text}{FIELD_TERMINATOR}")
+                    values[aux_field] = text
+                else:
+                    sampled = item.get("annotation.progress")
+                    if sampled is not None and bool(torch.isfinite(sampled)):
+                        values[aux_field] = EVENT_NONE
             case AuxField.VISIBLE:
                 text = visibility_text(item)
                 if text is not None:
-                    parts.append(f"{VISIBLE_HEADER}{text}{FIELD_TERMINATOR}")
-    return "".join(parts)
+                    values[aux_field] = text
+    return values
+
+
+def display_text(values: dict[AuxField, str]) -> str:
+    """Human-readable ``field: value`` lines for report tables — the
+    DISPLAY layer re-attaches field names; the model's suffix bytes are
+    headerless values only."""
+    return "".join(f"{f.value}: {v}\n" for f, v in values.items())
+
+
+def aux_label_text(item: dict[str, Any], fields: tuple[AuxField, ...]) -> str:
+    """The display-form label reference column next to generations in
+    eval tables (see :func:`label_values`/:func:`display_text`)."""
+    return display_text(label_values(item, fields))
 
 
 def assemble_suffix(
@@ -630,17 +667,14 @@ def assemble_suffix(
     is_aux = torch.zeros((batch, width), dtype=torch.bool)
     for i, aux in enumerate(aux_ids):
         if aux:
-            # Text ids must stay below the ENTIRE reserved tail — the
-            # two mode ids directly under the block included: an id in
-            # [mode_base, block_base) would silently embed as
-            # [ACT]/[AUX] AND become a CE target, training the model to
-            # predict a mode token (never produced by a real tokenizer,
+            # Text ids must stay below the block: an id inside the
+            # reserved run would silently alias an action token in the
+            # loss/decode routing (never produced by a real tokenizer,
             # but "never" is what asserts are for).
-            if max(aux) >= block_base - NUM_MODES:
+            if max(aux) >= block_base:
                 raise ValueError(
-                    f"aux row {i} contains id {max(aux)} >= mode_base "
-                    f"{block_base - NUM_MODES} — aux ids must be "
-                    "text-vocabulary ids below the mode/FAST reserved tail",
+                    f"aux row {i} contains id {max(aux)} >= block_base "
+                    f"{block_base} — aux ids must be text-vocabulary ids",
                 )
             suffix[i, : len(aux)] = torch.tensor(aux, dtype=torch.long)
             is_aux[i, : len(aux)] = True

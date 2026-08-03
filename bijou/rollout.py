@@ -46,7 +46,7 @@ from lerobot.cameras.opencv import OpenCVCameraConfig
 from lerobot.robots.so_follower import SOFollower, SOFollowerRobotConfig
 
 from .annotations import CAMERA_KINDS, ConditionField
-from .aux_text import AuxDecodeMode
+from .aux_text import AuxField
 from .data import DatasetStats
 from .eval.policies import BijouPolicy
 from .model import SamplingMethod
@@ -110,13 +110,14 @@ def parse_args() -> argparse.Namespace:
         default=SamplingMethod.HEUN.value,
     )
     parser.add_argument(
-        "--aux-mode",
-        choices=[m.value for m in AuxDecodeMode],
-        default=AuxDecodeMode.ACT.value,
-        help="ar_backbone decode mode: 'act' = actions only (fast path), "
-        "'free' = generate the aux text (subgoal etc.) before each chunk "
-        "(aux-trained checkpoints only; costs ~30-45 extra suffix "
-        "forwards per replan)",
+        "--generate",
+        nargs="*",
+        choices=[f.value for f in AuxField],
+        default=None,
+        help="ar_backbone request set: fields to elicit before each chunk "
+        "(template order; 'actions' implicit and terminal; aux-trained "
+        "checkpoints only; ~1 extra suffix forward per requested field "
+        "plus its value tokens per replan). Omit for the fast path",
     )
     parser.add_argument(
         "--outcome",
@@ -271,7 +272,7 @@ def main() -> int:
         sample_steps=args.sample_steps,
         method=SamplingMethod(args.sample_method),
         expert_dtype=getattr(torch, args.expert_dtype),
-        aux_mode=AuxDecodeMode(args.aux_mode),
+        generate=tuple(AuxField(f) for f in (args.generate or ())),
         include_subgoal_condition=args.subgoal is not None,
     )
     stats = rig_stats(args, policy)

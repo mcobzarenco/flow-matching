@@ -33,7 +33,7 @@ from typing import Any
 import numpy as np
 import torch
 
-from ..aux_text import AuxDecodeMode
+from ..aux_text import AuxField
 from ..data import EpisodeSplit, select_datasets
 from ..model import SamplingMethod
 from .metrics import (
@@ -185,13 +185,15 @@ def parse_args() -> argparse.Namespace:
         default=SamplingMethod.HEUN.value,
     )
     parser.add_argument(
-        "--aux-mode",
-        choices=[m.value for m in AuxDecodeMode],
-        default=AuxDecodeMode.ACT.value,
-        help="ar_backbone decode mode: 'act' scores the deployment fast "
-        "path (comparable to aux-less arms); 'free' generates the aux "
-        "text first (aux-trained checkpoints only). Other decoder kinds "
-        "ignore it",
+        "--generate",
+        nargs="*",
+        choices=[f.value for f in AuxField],
+        default=None,
+        help="ar_backbone request set: fields to elicit before the "
+        "actions (template order; 'actions' is implicit and terminal). "
+        "Omit for the deployment fast path [generate|actions] — "
+        "comparable to aux-less arms. Requires an aux-trained "
+        "checkpoint; other decoder kinds reject it",
     )
     parser.add_argument(
         "--condition-override",
@@ -311,7 +313,7 @@ def main() -> int:
             seed=args.seed,
             sample_steps=args.sample_steps,
             method=SamplingMethod(args.sample_method),
-            aux_mode=AuxDecodeMode(args.aux_mode),
+            generate=tuple(AuxField(f) for f in (args.generate or ())),
             condition_override=overrides,
             # Subgoal conditioning renders only when explicitly forced
             # (it is an operator input, not a hindsight label — the

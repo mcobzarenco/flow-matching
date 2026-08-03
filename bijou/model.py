@@ -30,7 +30,7 @@ from typing import override
 import torch
 from torch import Tensor, nn
 
-from .aux_text import AuxDecodeMode
+from .aux_text import AuxField
 from .decoders.ar_backbone import ARBackboneDecoder, ar_backbone_losses
 from .decoders.ar_fast import ARFastDecoder, ar_fast_loss
 from .decoders.flow import FlowDecoder, SamplingMethod, flow_matching_loss
@@ -56,14 +56,18 @@ class BijouModel(nn.Module):
 
     def param_groups(self) -> dict[str, list[nn.Parameter]]:
         """Named trainable-parameter groups — the routing vocabulary for
-        component learning rates: ``"decoder"`` (always trained),
-        ``"backbone_text"``/``"backbone_vision"`` (unfreezable backbone
-        subsets; see GemmaEncoder.param_groups for the exactness
-        contract). Groups are disjoint by construction — the decoder owns
-        only its own parameters."""
+        component learning rates: ``"decoder"`` (always trained: the
+        decoder's own parameters PLUS the encoder's prompt-side ones —
+        state_proj — which are "new parameters" in the same sense and
+        want the same LR), ``"backbone_text"``/``"backbone_vision"``
+        (unfreezable backbone subsets; see GemmaEncoder.param_groups for
+        the exactness contract). Groups are disjoint by construction —
+        the encoder module carries only prompt-side parameters, never
+        backbone ones (the backbone is passed as an argument)."""
         backbone_groups = self.encoder.param_groups(self.backbone)
         return {
-            "decoder": list(self.decoder.parameters()),
+            "decoder": list(self.decoder.parameters())
+            + list(self.encoder.parameters()),
             "backbone_text": backbone_groups["text"],
             "backbone_vision": backbone_groups["vision"],
         }
@@ -142,6 +146,8 @@ class BijouModel(nn.Module):
         pixel_values: Tensor | None = None,
         image_position_ids: Tensor | None = None,
         padding_mask: Tensor | None = None,
+        state: Tensor | None = None,
+        state_slot: int | None = None,
     ) -> ObservationMemory:
         """Tensor-level observation encode (shapes in
         GemmaEncoder.encode_tensors);
@@ -152,6 +158,8 @@ class BijouModel(nn.Module):
             pixel_values=pixel_values,
             image_position_ids=image_position_ids,
             padding_mask=padding_mask,
+            state=state,
+            state_slot=state_slot,
         )
 
     @torch.no_grad()
@@ -163,7 +171,7 @@ class BijouModel(nn.Module):
         noise: Tensor | None = None,
         num_steps: int = 5,
         method: SamplingMethod = SamplingMethod.HEUN,
-        aux_mode: AuxDecodeMode = AuxDecodeMode.ACT,
+        generate: tuple[AuxField, ...] = (),
     ) -> BijouPrediction:
         """Collated batch → :class:`BijouPrediction` (RAW-unit chunks
         [B, chunk, action_dim] + per-row aux generations for decoders
@@ -171,9 +179,10 @@ class BijouModel(nn.Module):
         the decoder's chunk-space inference with the batch's per-sample
         stats. ``num_steps``/``method``/``noise`` are flow solver knobs;
         an AR decoder decodes greedily and ignores them (``noise`` must
-        then be None). ``aux_mode`` is ar_backbone's decode mode (ACT =
-        straight to actions, FREE = aux text first; ignored by other
-        decoder kinds)."""
+        then be None). ``generate`` is ar_backbone's request set — it
+        must match the request the batch's prompts were collated with
+        (Collator.generate_override); () = the deployment fast path;
+        ignored by other decoder kinds."""
         memory = self.encode(batch.encoder_inputs, with_grad=False)
         decoder = self.decoder
         match decoder:
@@ -198,7 +207,7 @@ class BijouModel(nn.Module):
                     self.backbone,
                     memory,
                     batch,
-                    mode=aux_mode,
+                    generate=generate,
                     generator=generator,
                     noise=noise,
                 )

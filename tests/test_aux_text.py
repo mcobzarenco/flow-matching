@@ -27,6 +27,8 @@ from bijou.aux_text import (
     AuxSpec,
     assemble_suffix,
     build_aux_runtime,
+    generate_text,
+    visibility_text,
 )
 
 
@@ -49,6 +51,7 @@ def spec(**overrides: Any) -> AuxSpec:
         "annotated_repos": frozenset({"mcobzarenco/so101_pick_place_v2"}),
         "block_base": 1000,
         "dropout": 0.0,
+        "field_dropout": 0.0,
         "max_subgoal_tokens": 16,
         "max_event_tokens": 24,
     }
@@ -142,37 +145,77 @@ def test_event_style_is_registered_by_the_contract_leaf() -> None:
     old mirrored-constant parity test dissolved with the move)."""
     assert EVENT_STYLE in STYLE_REGISTRY
     assert EVENT_STYLE in EVENT_ONLY_STYLES
-    # v3 = bracket headers + positional visibility (forced-scaffold
-    # boundary property; measured on the real E2B tokenizer 2026-08-03).
-    assert AUX_TEMPLATE_VERSION == 3
+    # v4 = headerless request-ordered value lines + event's explicit
+    # 'none' negative (the request set rides the prompt's [generate|…]).
+    assert AUX_TEMPLATE_VERSION == 4
 
 
-def test_render_all_fields_in_template_order() -> None:
-    text = decode(spec().render(judged_item()))
-    assert text == "[subgoal]grasp the boat\n[holding]yes\n[progress]30%\n"
-    with_event = judged_item(event="boat dropped")
-    assert decode(spec().render(with_event)) == (
-        "[subgoal]grasp the boat\n[holding]yes\n[progress]30%\n[event]boat dropped\n"
+def test_generate_text_lists_request_then_actions() -> None:
+    assert generate_text(()) == "[generate|actions]"
+    assert (
+        generate_text((AuxField.SUBGOAL, AuxField.VISIBLE))
+        == "[generate|subgoal visible actions]"
     )
 
 
-def test_event_is_positives_only() -> None:
-    """An event renders iff the frame carries a row (language_events is
-    frame-local); frames without one render no event field at all — the
-    negative is implicit in the trained transition past the field."""
+def test_draw_requests_labeled_fields_and_renders_values_in_order() -> None:
+    # The default judged item is a SAMPLED frame (finite progress), so
+    # event status is known: requested, with the explicit 'none'.
+    request, ids = spec().draw(judged_item())
+    assert request == (
+        AuxField.SUBGOAL,
+        AuxField.HOLDING,
+        AuxField.PROGRESS,
+        AuxField.EVENT,
+    )
+    assert decode(ids) == "grasp the boat\nyes\n30%\nnone\n"
+    with_event = judged_item(event="boat dropped")
+    request, ids = spec().draw(with_event)
+    assert request == (
+        AuxField.SUBGOAL,
+        AuxField.HOLDING,
+        AuxField.PROGRESS,
+        AuxField.EVENT,
+    )
+    assert decode(ids) == "grasp the boat\nyes\n30%\nboat dropped\n"
+
+
+def test_event_requested_where_status_known_with_explicit_none() -> None:
+    """Event is requested on firing frames (the text) AND on
+    judge-sampled no-event frames (the explicit 'none' — a TRUE
+    negative); unsampled no-event frames never request it (status
+    unknown, per the annotations contract)."""
     firing = judged_item(event="boat dropped")
-    assert "[event]boat dropped\n" in decode(spec().render(firing))
-    assert "event" not in decode(spec().render(judged_item()))
+    request, ids = spec().draw(firing)
+    assert AuxField.EVENT in request
+    assert decode(ids).endswith("boat dropped\n")
+    sampled_quiet = judged_item()  # finite progress = judge-sampled
+    request, ids = spec().draw(sampled_quiet)
+    assert AuxField.EVENT in request
+    assert decode(ids).endswith("none\n")
+    unsampled = judged_item(holding=math.nan, progress=math.nan)
+    request, ids = spec().draw(unsampled)
+    assert AuxField.EVENT not in request
+    assert decode(ids) == "grasp the boat\n"
 
 
-def test_render_suppresses_subgoal_for_prompt_conditioning() -> None:
+def test_values_are_newline_sanitized() -> None:
+    """Headerless lines: a stray newline inside a judge string would
+    shift every later line's field assignment — collapse to spaces."""
+    item = judged_item(subgoal="grasp\nthe boat")
+    request, ids = spec().draw(item)
+    assert AuxField.SUBGOAL in request
+    assert decode(ids).startswith("grasp the boat\n")
+
+
+def test_draw_suppresses_subgoal_for_prompt_conditioning() -> None:
     """Anti-copy coupling (C2): when the collator put the subgoal in
-    the PROMPT, the aux segment must not train to predict it — the
-    remaining fields render unchanged."""
+    the PROMPT, requesting it would train copying — the remaining
+    fields draw unchanged."""
     item = judged_item()
-    text = decode(spec().render(item, suppress_subgoal=True))
-    assert "subgoal" not in text
-    assert "[holding]yes\n" in text and "[progress]30%\n" in text
+    request, ids = spec().draw(item, suppress_subgoal=True)
+    assert AuxField.SUBGOAL not in request
+    assert decode(ids) == "yes\n30%\nnone\n"
 
 
 def test_multi_event_frames_render_all_events() -> None:
@@ -192,14 +235,15 @@ def test_multi_event_frames_render_all_events() -> None:
     )
     # CharTokenizer is 1 token/char — use a generous cap so the joined
     # text survives (the real tokenizer packs ~4 chars/token).
-    text = decode(spec(max_event_tokens=64).render(both))
-    assert "[event]boat dropped; progress regressed\n" in text
+    _, ids = spec(max_event_tokens=64).draw(both)
+    assert "boat dropped; progress regressed\n" in decode(ids)
 
 
 def test_event_truncation_is_bounded() -> None:
     long = judged_item(event="z" * 100)
-    text = decode(spec(max_event_tokens=8).render(long))
-    assert "[event]" + "z" * 8 + "\n" in text
+    _, ids = spec(max_event_tokens=8).draw(long)
+    text = decode(ids)
+    assert "z" * 8 + "\n" in text
     assert text.count("z") == 8
 
 
@@ -216,14 +260,15 @@ def test_visibility_renders_prompt_positions_and_true_negatives() -> None:
     item["camera_kinds"] = {"overhead": "top", "gripper_cam": "wrist"}
     item["annotation.visible_object"] = torch.tensor([0.0, 1.0])
     item["annotation.visible_gripper"] = torch.tensor([1.0, 1.0])
-    text = decode(spec().render(item))
-    assert "[visible]object 0; gripper 0,1\n" in text
+    assert visibility_text(item) == "object 0; gripper 0,1"
 
     item["annotation.visible_object"] = torch.tensor([0.0, 0.0])
-    assert "[visible]object none; gripper 0,1\n" in decode(spec().render(item))
+    assert visibility_text(item) == "object none; gripper 0,1"
 
     item["annotation.visible_object"] = torch.tensor([math.nan, math.nan])
-    assert "visible" not in decode(spec().render(item))
+    assert visibility_text(item) is None
+    request, _ = spec().draw(item)
+    assert AuxField.VISIBLE not in request
 
 
 def test_visibility_handles_single_camera_scalars_and_mismatch(
@@ -234,14 +279,13 @@ def test_visibility_handles_single_camera_scalars_and_mismatch(
     item["camera_kinds"] = {"cam": "front"}
     item["annotation.visible_object"] = torch.tensor(1.0)
     item["annotation.visible_gripper"] = torch.tensor(0.0)
-    assert "[visible]object 0; gripper none\n" in decode(spec().render(item))
+    assert visibility_text(item) == "object 0; gripper none"
     # Kinds/vector slot-count disagreement renders nothing (data issue,
     # not guessed through) — LOUDLY, once per dataset per worker.
     item["camera_kinds"] = {"cam": "front", "ghost": "top"}
     item["repo_id"] = "someone/mismatched"
-    mismatched = spec(annotated_repos=frozenset({"someone/mismatched"}))
-    assert "visible" not in decode(mismatched.render(item))
-    assert "visible" not in decode(mismatched.render(item))
+    assert visibility_text(item) is None
+    assert visibility_text(item) is None
     out = capsys.readouterr().out
     assert out.count("someone/mismatched") == 1  # once, not per frame
     assert "re-materialized" in out
@@ -260,46 +304,48 @@ def test_visibility_indices_follow_kind_order_and_dropout_cannot_move_them() -> 
     # Storage order (sorted names): a_wrist slot 0, z_top slot 1.
     item["annotation.visible_object"] = torch.tensor([1.0, 0.0])
     item["annotation.visible_gripper"] = torch.tensor([0.0, 1.0])
-    text = decode(spec().render(item))
     # a_wrist is prompt index 1 (wrist sorts after top), z_top index 0.
-    assert "[visible]object 1; gripper 0\n" in text
+    assert visibility_text(item) == "object 1; gripper 0"
 
 
 def test_presence_based_fields() -> None:
     # Unsampled frame: holding/progress NaN -> subgoal only.
     item = judged_item(holding=math.nan, progress=math.nan)
-    assert decode(spec().render(item)) == "[subgoal]grasp the boat\n"
+    request, ids = spec().draw(item)
+    assert request == (AuxField.SUBGOAL,)
+    assert decode(ids) == "grasp the boat\n"
     # holding=0 renders "no"; progress rounds to whole percent.
     item = judged_item(holding=0.0, progress=0.666)
-    text = decode(spec().render(item))
-    assert "[holding]no\n" in text
-    assert "[progress]67%\n" in text
+    _, ids = spec().draw(item)
+    assert "no\n" in decode(ids)
+    assert "67%\n" in decode(ids)
 
 
-def test_unjudged_sources_render_nothing() -> None:
+def test_unjudged_sources_request_nothing() -> None:
     # Dataset whose stamp failed verification (not in annotated_repos).
     other = judged_item()
     other["repo_id"] = "someone/unjudged"
-    assert spec().render(other) == []
+    assert spec().draw(other) == ((), [])
     # Annotated repo but no columns at all (community mixed corpus).
     bare = {
         "repo_id": "mcobzarenco/so101_pick_place_v2",
         "timestamp": torch.tensor(1.0),
     }
-    assert spec().render(bare) == []
+    assert spec().draw(bare) == ((), [])
 
 
 def test_subgoal_truncation_is_bounded() -> None:
     long = judged_item(subgoal="x" * 100)
-    text = decode(spec(max_subgoal_tokens=8).render(long))
-    assert text.startswith("[subgoal]" + "x" * 8)
+    _, ids = spec(max_subgoal_tokens=8).draw(long)
+    text = decode(ids)
+    assert text.startswith("x" * 8)
     assert text.count("x") == 8
 
 
 def test_field_subset_keeps_order_and_rejects_reorder() -> None:
     only = spec(fields=(AuxField.SUBGOAL, AuxField.HOLDING))
-    text = decode(only.render(judged_item()))
-    assert "progress" not in text
+    request, _ = only.draw(judged_item())
+    assert AuxField.PROGRESS not in request
     with pytest.raises(ValueError, match="template order"):
         AuxSpec(
             tokenizer_dir="unused",
@@ -307,30 +353,56 @@ def test_field_subset_keeps_order_and_rejects_reorder() -> None:
             annotated_repos=frozenset(),
             block_base=1000,
             dropout=0.0,
+            field_dropout=0.0,
         )
 
 
-def test_mode_dropout_drops_whole_samples_deterministically() -> None:
-    """dropout=p renders a labeled sample as unlabeled with probability
-    p (the sample then trains [ACT]); draws come from a generator seeded
-    from torch.initial_seed(), so a fixed torch seed fixes the pattern."""
+def test_request_dropout_collapses_whole_samples_deterministically() -> None:
+    """dropout=p collapses a labeled sample's request to () with
+    probability p (the sample then trains [generate|actions]); draws
+    come from a generator seeded from torch.initial_seed(), so a fixed
+    torch seed fixes the pattern."""
     item = judged_item()
     # Boundary values need no seeding: 0 keeps everything (the probe
     # collator's clone), and dropout=1 is rejected outright.
-    assert spec(dropout=0.0).render(item) != []
+    assert spec(dropout=0.0).draw(item)[0] != ()
     with pytest.raises(ValueError, match="outside"):
         spec(dropout=1.0)
     torch.manual_seed(1234)
     dropped = spec(dropout=0.5)
-    pattern = [dropped.render(item) == [] for _ in range(32)]
+    pattern = [dropped.draw(item) == ((), []) for _ in range(32)]
     assert any(pattern) and not all(pattern)  # both outcomes occur
     torch.manual_seed(1234)
     again = spec(dropout=0.5)
-    assert [again.render(item) == [] for _ in range(32)] == pattern
+    assert [again.draw(item) == ((), []) for _ in range(32)] == pattern
     # Unlabeled sources are unaffected (already empty).
     other = judged_item()
     other["repo_id"] = "someone/unjudged"
-    assert dropped.render(other) == []
+    assert dropped.draw(other) == ((), [])
+
+
+def test_field_dropout_yields_consistent_subsets() -> None:
+    """Per-field dropout: request and target ids always move TOGETHER
+    (a requested field is always supervised and vice versa), and over
+    draws both full and partial subsets occur — the compositional
+    coverage inference-time partial requests rely on."""
+    item = judged_item()
+    torch.manual_seed(7)
+    partial = spec(field_dropout=0.4)
+    sizes = set()
+    for _ in range(64):
+        request, ids = partial.draw(item)
+        sizes.add(len(request))
+        # Consistency: exactly the requested fields' values render, in
+        # template order (values here are unique per field).
+        expected = {
+            AuxField.SUBGOAL: "grasp the boat",
+            AuxField.HOLDING: "yes",
+            AuxField.PROGRESS: "30%",
+            AuxField.EVENT: "none",
+        }
+        assert decode(ids) == "".join(f"{expected[f]}\n" for f in request)
+    assert len(sizes) > 1  # both fuller and thinner subsets occurred
 
 
 def test_assemble_suffix_layout_and_masks() -> None:
@@ -358,24 +430,22 @@ def test_assemble_suffix_layout_and_masks() -> None:
     assert not is_aux[1].any()
 
 
-def test_assemble_suffix_rejects_reserved_tail_ids() -> None:
-    """Aux ids must stay below the WHOLE reserved tail: an id in the
-    mode strip [block_base−2, block_base) would silently embed as
-    [ACT]/[AUX] and become a CE target (train mode prediction)."""
-    for bad in (998, 999, 1000):  # both mode ids and the block base
-        with pytest.raises(ValueError, match="mode_base"):
-            assemble_suffix(
-                [[bad]],
-                torch.tensor([[128]]),
-                block_base=1000,
-                codec_pad=129,
-            )
+def test_assemble_suffix_rejects_block_ids() -> None:
+    """Aux ids must stay below the block: an id inside the reserved run
+    would silently alias an action token in the loss/decode routing."""
+    with pytest.raises(ValueError, match="block_base"):
+        assemble_suffix(
+            [[1000]],
+            torch.tensor([[128]]),
+            block_base=1000,
+            codec_pad=129,
+        )
 
 
 class MergingTokenizer(CharTokenizer):
-    """CharTokenizer with ONE BPE-style merge, ']'+'y' → a single id —
-    the v2 ``" yes"`` boundary merge relocated to the v3 template, so
-    the tripwire has something to trip on."""
+    """CharTokenizer with ONE BPE-style merge, 's'+'\\n' → a single id —
+    the v2 ``" yes"`` boundary-merge bug class relocated to the v4
+    value|terminator seam, so the tripwire has something to trip on."""
 
     MERGED = 700  # any id outside the ASCII range the base stub emits
 
@@ -385,7 +455,7 @@ class MergingTokenizer(CharTokenizer):
         out: list[int] = []
         i = 0
         while i < len(ids):
-            if i + 1 < len(ids) and ids[i] == ord("]") and ids[i + 1] == ord("y"):
+            if i + 1 < len(ids) and ids[i] == ord("s") and ids[i + 1] == ord("\n"):
                 out.append(self.MERGED)
                 i += 2
             else:
@@ -395,8 +465,8 @@ class MergingTokenizer(CharTokenizer):
 
 
 def test_build_aux_runtime_asserts_the_boundary_property() -> None:
-    """The forced-scaffold property (encode(header) + encode(value) ==
-    encode(header + value)) is asserted at construction — the v2 bug
+    """The terminator-boundary property (encode(value) + encode(\\n) ==
+    encode(value + \\n)) is asserted at construction — the v2 bug
     class (samples_holding_acc scored off-manifold ids) can only recur
     as a LOUD construction error under a future tokenizer swap."""
     config = AuxDecodeConfig(
@@ -406,10 +476,10 @@ def test_build_aux_runtime_asserts_the_boundary_property() -> None:
         judge_model="judge",
     )
     runtime = build_aux_runtime(config, CharTokenizer())
-    assert runtime.header_ids[AuxField.HOLDING] == tuple(ord(c) for c in "[holding]")
     assert runtime.value_candidates[AuxField.HOLDING] == (
         tuple(ord(c) for c in "no"),
         tuple(ord(c) for c in "yes"),
     )
+    assert runtime.terminator_id == ord("\n")
     with pytest.raises(SystemExit, match="boundary"):
         build_aux_runtime(config, MergingTokenizer())

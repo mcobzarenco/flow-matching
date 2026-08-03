@@ -11,21 +11,21 @@ action generation then follows one of two trained families:
 
 - **Decoder-only (`ar_backbone`) — the mainline, and the current
   ledger best (§2.3, §7).** The full backbone simply continues its
-  own prefill as a model turn: a projected state token, Gemma's real
-  generation opener, a fed `[ACT]`/`[AUX]` mode token, then — under
-  full-vocabulary cross-entropy through the frozen tied LM head — an
-  optional auxiliary TEXT segment (subgoal / holding / progress /
-  event / per-camera visibility: weak labels from the LLM judging
-  pipeline) closed by `[BOA]`, and the action chunk as **FAST
-  tokens** (BPE over quantized DCT coefficients of the 50-step
-  chunk), which occupy a ~1k-id reserved-unused block at the tail of
-  the vocabulary. New parameters: ~11M (the state projection + the
-  block's embedding/PLE rows); everything else is the backbone
-  itself fine-tuning at low LR (bf16 autocast, fp32 masters).
-  Inference COMMANDS speak-vs-act: `[ACT]` goes straight to
-  grammar-constrained greedy action decoding (the deployment fast
-  path); `[AUX]` lets the model narrate freely until it emits
-  `[BOA]`, then act.
+  own prefill as a model turn: Gemma's real generation opener, then —
+  under full-vocabulary cross-entropy through the frozen tied LM head
+  — one headerless VALUE line per field the prompt's `[generate|…]`
+  conditioning requested (subgoal / holding / progress / event /
+  per-camera visibility: weak labels from the LLM judging pipeline),
+  then `[BOA]` and the action chunk as **FAST tokens** (BPE over
+  quantized DCT coefficients of the 50-step chunk), which occupy a
+  ~1k-id reserved-unused block at the tail of the vocabulary. New
+  parameters: ~11M (the prompt-side state projection + the block's
+  embedding/PLE rows); everything else is the backbone itself
+  fine-tuning at low LR (bf16 autocast, fp32 masters). What speaks is
+  COMMANDED by the prompt: the model learns p(value | observation,
+  asked) — never "was this frame judged" — and inference requests
+  exactly the fields it wants (`[generate|actions]` = the deployment
+  fast path, straight to grammar-constrained greedy action decoding).
 
 - **Cross-attention (§2.1–2.2).** The backbone truncated at layer 14
   (2.55B) encodes the prompt — E-series KV sharing makes the deep
@@ -38,18 +38,24 @@ action generation then follows one of two trained families:
   a flow expert over a frozen AR-pretrained backbone (§8.11).
 
 The prompt side is shared and annotation-aware (§1, §2.4): every
-camera is tagged with its judge-voted semantic kind (`[wrist
-camera]`, `[top camera]`, … `[unknown camera]`; per-camera dropout to
-"unknown"), the instruction appears both before and after the images
-(the "sandwich": causal attention then yields instruction-conditioned
-image K/V and image-conditioned instruction K/V), instructions are
-stochastically swapped for judge-suggested rewrites, and the turn
-closes with a bracket conditioning block — `[subgoal: …]` (an
-operator/planner hint, heavily dropped out so the planner-less
-context stays the well-trained default) and hindsight
-`[outcome: success|partial|failure][smoothness: high|medium|low]`
-from the episode verdict — so inference can ask for the behavior it
-wants instead of the corpus marginal.
+camera's image block is tagged with its judge-voted semantic kind
+(`[wrist camera|…]`, `[top camera|…]`, … `[unknown camera|…]`;
+per-camera dropout to "unknown"), the instruction appears both before
+and after the content (the extended "sandwich": causal attention then
+yields instruction-conditioned image/conditioning K/V and
+content-conditioned instruction K/V), instructions are stochastically
+swapped for judge-suggested rewrites, and the sandwich wraps a
+`[key|value]` conditioning block — `[subgoal|…]` (an operator/planner
+hint, heavily dropped out so the planner-less context stays the
+well-trained default), hindsight
+`[outcome|success∣partial∣failure][smoothness|high∣medium∣low]` from
+the episode verdict, and the always-present `[generate|…]` request —
+so inference asks for the behavior AND the outputs it wants instead
+of the corpus marginal. The user turn ends with one soft **state
+token** (the normalized proprioceptive vector through a
+zero-initialized projection, injected like an image soft token) —
+state rides the prefix, where stage 2 and the multi-turn direction
+want it.
 
 Data is a curated union of ~1000 community LeRobot datasets recorded
 on miscalibrated hobbyist rigs, plus the owner's own SO-101 rig
@@ -91,8 +97,9 @@ pretrained artifact (`--backbone`, `BackboneConfig.id`,
 "trunk" survives only as informal prose.
 
 ```
-[task][{kind_i} camera]<imgs_i>..[task][conditioning]   chat-templated user
-  turn — kinds/conditioning fill per sample from the judge annotations (§1)
+{task}[{kind_i} camera|<imgs_i>]..[{cond}|{v}][generate|{fields} actions]{task}⟨state⟩
+  one chat-templated user turn — kinds/conditioning/request fill per
+  sample from the judge annotations (§1); ⟨state⟩ = soft token
       │  E2B prefix: layers 0..14 (bf16), LEFT-padded batches
       ▼
   prefix K/V — ObservationMemory, encoded once per observation
@@ -104,11 +111,12 @@ pretrained artifact (`--backbone`, `BackboneConfig.id`,
       │    (ARFastDecoder: same blocks, FAST tokens, constrained greedy)
       │
       └─ decoder-only (ar_backbone): the FULL E2B continues the suffix
-           [state][<|turn>model\n][MODE][aux text?][BOA][t_1..t_k]
-           (aux: subgoal/holding/progress/event/visible — judge labels)
+           [<|turn>model\n][value\n per requested field][BOA][t_1..t_k]
+           (fields: subgoal/holding/progress/event/visible — judge
+           labels, headerless — request order pins line meaning)
            through all 35 layers against the retained prefix cache;
-           ~11M new params; fed [ACT]|[AUX] mode commands speak-vs-act;
-           free-until-BOA under [AUX], then FAST-grammar decode
+           ~11M new params; decode scaffolds the request: value lines
+           under per-field budgets, forced BOA, FAST-grammar chunk
 ```
 
 ## 0. Tensor dimension notation
@@ -190,33 +198,41 @@ if the schedule stops lower). `KVCache.update()` is functional (no
 in-place writes), so this same path is autograd-transparent when the
 trunk is trained (§8.1).
 
-**Prompt = instruction sandwich with camera tags** (prompt format 2,
-`prompt.camera_tags` in the checkpoint; format 1 = the tag-less
-historical prompt, rendered byte-identically for old checkpoints). One
-chat-templated user turn, **LEFT-padded** across a batch with per-sample
-LOGICAL position ids (cumsum of the real-token mask). The structure
-(E2B chat template, verified 2026-08-02) — every `{…}` slot fills
-PER SAMPLE from the data:
+**Prompt = extended instruction sandwich, pipe-unified brackets, soft
+state token** (prompt format 3, `prompt.format` + `prompt.state_dim`
+in the checkpoint; formats < 3 — colon conditioning, no `[generate|…]`,
+no state token — are REFUSED at load: their prompt-side parameter set
+does not exist and no artifact predating 2026-08-03 is preserved). One
+chat-templated user turn, **LEFT-padded** across a batch with
+per-sample LOGICAL position ids (cumsum of the real-token mask). The
+structure (verified byte-for-byte against the real E2B processor,
+2026-08-03) — every `{…}` slot fills PER SAMPLE from the data:
 
-    <bos><|turn>user\n{task}[{kind_1} camera]<imgs_1>..[{kind_k} camera]<imgs_k>{task}{conditioning}<turn|>\n
+    <bos><|turn>user\n{task}[{kind_1} camera|<imgs_1>]..[{kind_k} camera|<imgs_k>][subgoal|{v}]?[outcome|{v}]?[smoothness|{v}]?[generate|{fields}]{task}⟨state⟩<turn|>\n
 
 `{kind_i}` is camera i's judged semantic kind, resolved per dataset
 from its `meta/camera_kinds.json` (vocabulary wrist|top|front|side|
 unknown — dataset-specific ASSIGNMENT over a fixed global vocabulary,
-never dataset names or free text); `{conditioning}` is the sample's
-prompt-conditioning block (below), empty for unconditioned
-runs/episodes. A rig-v2 sample renders e.g.:
+never dataset names or free text); the conditioning brackets are the
+sample's value conditioning (§2.4) — every part `[key|value]`;
+`[generate|…]` is ALWAYS present (`actions` terminal). A rig-v2 sample
+renders e.g.:
 
-    …{task}[top camera]<imgs>[wrist camera]<imgs>{task}[subgoal: reach toward the boat][outcome: success][smoothness: high]<turn|>\n
+    …{task}[top camera|<imgs>][wrist camera|<imgs>][subgoal|reach toward the boat][outcome|success][generate|holding progress actions]{task}⟨state⟩<turn|>\n
 
 (its recorded `front` camera key is judged kind `top`).
 
-Each camera contributes a bracket-delimited semantic tag before its
-soft tokens — bracketed on purpose: the Gemma chat template TRIMS every
-text part's edge whitespace, so separators must self-delimit (~3.5
-tokens/camera). Kinds come from the judge's per-dataset
-`meta/camera_kinds.json` (majority vote, verified against the dataset's
-own annotation stamp) and travel WITH the items
+Each camera's soft tokens live INSIDE its kind-tagged bracket group —
+bracketed on purpose: the Gemma chat template TRIMS every text part's
+edge whitespace, so groups must self-delimit (~4.5 tokens/camera).
+Tokenizer discipline: `[`/`]`/`|` are single ids that never
+cross-merge into letters/digits/`\n` (measured 2026-08-03); adjacent
+`][` seams merge (id 2585) but the prompt is always jointly encoded —
+merges are deterministic compression, never a train/decode split
+hazard (those live suffix-side, §2.4); angle brackets are BANNED
+inside our bracket syntax (`|<`/`>]` merge). Kinds come from the
+judge's per-dataset `meta/camera_kinds.json` (majority vote, verified
+against the dataset's own annotation stamp) and travel WITH the items
 (`item["camera_kinds"]`, attached by StatsAttachedDataset exactly like
 the stats); a missing file/camera/tie renders `unknown`, and
 `--camera-kind-dropout` (default 0.1) replaces resolved kinds with
@@ -228,10 +244,25 @@ same-kind rigs order identically whatever their private key names,
 and the sort uses RAW kinds so a kind-dropout draw retags but can
 never reorder images; untagged datasets degenerate to plain
 short-name order, and multiple unknown-kind cameras keep a stable,
-key-derived sub-order. (Changed 2026-08-03 from name-only sorting,
-with template v3; checkpoints trained before it see a shifted camera
-order for some multi-cam datasets under new code — accepted, the
-stalled fullstack run was the last v2 artifact.) Left padding is
+key-derived sub-order.
+
+The **soft state token** ends the user turn: the per-sample-normalized
+proprioceptive vector through `GemmaEncoder.state_proj`
+(zero-initialized — inert at start, gradients via its K/V use; the
+prompt-side "new parameter", `prompt.safetensors` in checkpoints,
+decoder-LR group). Mechanically the collator splices one
+attention-masked-in pad id just inside the user-turn close (fixed
+offset from the sequence end under left padding) and the encoder
+overwrites that position's embedding — the image-soft-token precedent;
+the templated tail is verified at collator construction against a
+probe conversation, so a template change breaks loudly, never shifts
+the slot silently. State-in-prompt puts proprioception in the prefix
+K/V — exactly where stage 2 (frozen-backbone flow expert, §8.11) and
+the multi-turn direction (§8.12) need it; the flow decoder ALSO keeps
+its own suffix state token (redundant conditioning, harmless, a
+stronger direct path under frozen backbones).
+
+Left padding is
 load-bearing (decided 2026-08-01, test-gated in
 `tests/test_backbone_continuation.py`): Gemma's sliding-window masks are
 physical-index, so right padding puts a suffix appended after the batch
@@ -239,10 +270,11 @@ max at DIFFERENT physical distances per sample and silently corrupts
 windowed attention for any suffix continuation; with left padding every
 sample's suffix is physically adjacent to its real prompt. Correct for
 the cross-attention consumers too (they read positions from the mask).
-Under causal attention the sandwich yields instruction-conditioned image
-K/V *and* image-conditioned instruction K/V for a few extra tokens, and
-each tag precedes its image so the image K/V is tag-conditioned.
-Camera NAMES remain positional slots (sorted; community image/image2
+Under causal attention the extended sandwich (conditioning INSIDE the
+task copies) yields instruction-conditioned image/conditioning K/V
+*and* content-conditioned instruction K/V for a few extra tokens, and
+each tag opens its image group so the image K/V is tag-conditioned.
+Camera NAMES remain positional slots (community image/image2
 keys carry no reliable wrist-vs-scene semantics — SmolVLA precedent);
 the kind TAG is the first reliable viewpoint signal.
 
@@ -320,23 +352,23 @@ results: §8.3.
 ### 2.3 Decoder-only path (`ar_backbone`)
 
 `ARBackboneDecoder` (`bijou/decoders/ar_backbone.py`): the FULL backbone
-is the decoder — the prompt is prefill-encoded once (layers 0–14, cache
-retained), then the suffix runs ALL 35 layers against that cache, and
-next-token logits come from the backbone's own frozen tied LM head over
-the **full vocabulary**. There is no separate decoder network; the
-module owns only **~11M new parameters** at E2B scale:
+is the decoder — the prompt (which carries the `[generate|…]` request
+and the soft state token, §1) is prefill-encoded once (layers 0–14,
+cache retained), then the suffix runs ALL 35 layers against that
+cache, and next-token logits come from the backbone's own frozen tied
+LM head over the **full vocabulary**. There is no separate decoder
+network; the module owns only **~11M new parameters** at E2B scale:
 
-- `state_proj` — the normalized state enters as suffix position 0 via a
-  **zero-initialized** linear projection (an inert token at init: the
-  prompt-conditioned computation starts undisturbed, gradients flow
-  through its K/V use). State stays out of the VLM *prompt* (π0 layout,
-  as in §2.1) — the prompt cache stays replan-reusable and
-  in-distribution.
 - `fast_embed` / `fast_ple` — input-embedding and per-layer-embedding
   rows for the FAST block, scaled like the backbone's own tables (√dim).
   Warm-started around the real tables' row mean + 0.02 noise
   (`init_tables_from_backbone`) so block logits start near the average
   text logit under full-vocab CE.
+
+(The state projection moved PROMPT-side with format 3 —
+`GemmaEncoder.state_proj`, §1 — and the format-4 mode tables are
+deleted: the request conditioning subsumed the fed `[ACT]`/`[AUX]`
+mode.)
 
 **FAST block placement.** The action vocabulary (BPE + BOA + PAD,
 `vocab_total` = 1026 for fast_tokenizer_v2) is TAIL-anchored at
@@ -349,153 +381,146 @@ text share ONE softmax: `lm_head` logits are computed, the block's
 columns are overwritten from the patch, and the softcap is applied
 AFTER the overwrite (block capped identically to text).
 
-**Suffix format 4** (`aux_text.SUFFIX_FORMAT`, recorded per checkpoint;
-formats 1–3 = legacy, loadable for warm starts — the mode tables
-fresh-init loudly where absent — decode warned):
+**Suffix format 5** (`aux_text.SUFFIX_FORMAT`, recorded per checkpoint;
+formats ≤ 4 — fed mode tokens, suffix state slot, header bytes — are
+REFUSED: their parameter sets are incompatible and no artifact worth
+loading exists, owner call 2026-08-03):
 
-    [state][<|turn>model\n][MODE][aux text — iff AUX][BOA][t_1..t_k]
+    [<|turn>model\n][value\n per requested field][BOA][t_1..t_k]
 
 The opener is Gemma-4's REAL generation prompt — the exact 3 tokens
 (`[105, 4368, 107]` on E2B) `apply_chat_template(...,
 add_generation_prompt=True)` appends, verified against the real
-checkpoint 2026-08-02. (Formats 2–3 mistakenly used the Gemma-3 string
-`<start_of_turn>model\n`, which tokenizes as 9 plain-text pieces —
-self-consistent within those checkpoints but not the reinforced IT
-transition; format 4 fixes the design intent.) `MODE ∈ {[ACT], [AUX]}`
-is **fed, never predicted**:
-two reserved ids directly below the FAST block (`mode_base =
-block_base − 2` — E2B: 261116/261117, same unused tail), embedded
-through their own tiny patch tables. A row feeds [AUX] iff it carries
-aux supervision (label presence × aux dropout, decided at collation),
-so "speak vs act" is COMMANDED, never inferred: the model is never
-asked to predict from appearance whether a judge happened to label a
-frame, and both conditionals — p(actions | ACT) and p(aux, actions |
-AUX) — train on their own sample mass. Teacher-forced full-vocabulary
-CE: state, opener and the fed MODE position are IGNOREd; the MODE
-position's own logits are the trained transition (first aux token
-under [AUX], BOA under [ACT] — aux-less runs feed [ACT] everywhere);
-PAD is batch padding, always ignored; no EOA (action length is fixed
-by the FAST grammar). Loss components: `total = action + w·aux` with
-per-position mean CE split by the collator's aux mask
-(`--aux-loss-weight`, default 0.5); aux is logged as a
+checkpoint 2026-08-02. What follows is exactly what the prompt's
+`[generate|…]` requested (§2.4): one HEADERLESS `value\n` line per
+requested field, in request (= template) order, then **BOA** —
+retained as the action block's own single-id begin-marker
+(constrained-decode anchor; codec output consumed verbatim; ar_fast
+convention unchanged) — then the FAST tokens. "What speaks" is
+COMMANDED by the prompt, per field: the model learns
+p(value | observation, asked) and is never asked to predict from
+appearance whether a judge happened to label a frame; the fast path
+`[generate|actions]` trains on its own sample mass (unjudged frames +
+request dropout). Teacher-forced full-vocabulary CE: opener positions
+are IGNOREd except the last (its target is the first value token, or
+BOA on `[generate|actions]` rows); PAD is batch padding, always
+ignored; no EOA (action length is fixed by the FAST grammar). Loss
+components: `total = action + w·aux` with per-position mean CE split
+by the collator's aux mask — value lines are aux, BOA + block tokens
+action (`--aux-loss-weight`, default 0.5); aux is logged as a
 position-weighted mean (CE sum / token count, all-reduced), so
 sparsely-labeled corpora don't dilute `train/loss_aux` toward 0.
 
-**Decoding is ONE loop with two entry modes** (`predict_chunk`):
-
-- `ACT` — feed `[state][opener][ACT][BOA]` in a single prefill (BOA is
-  the only trained continuation of [ACT], so it is fed, not sampled),
-  then the ACTION phase under the ar_fast grammar mask (each step
-  masks to tokens whose BPE symbol expansion fits the remaining
-  chunk×dim budget; a full-length chunk is guaranteed by
-  construction). The deployment fast path — and a TRAINED context,
-  unlike format 2's force-BOA (measured OOD 18.2 vs 13.5 on the
-  aux-saturated smoke arm).
-- `FREE` — feed `[state][opener][AUX]`, then the FREE phase where only
-  text ids and BOA are legal (mode ids and the rest of the FAST block
-  are masked) under a `MAX_FREE_TOKENS = 72` budget — exhaustion
-  forces BOA, loudly, and increments a cumulative `fallback_count` (a
-  persistent rate means the model stopped closing its aux segment) —
-  then the ACTION phase. Conditioned on [AUX] the model has never seen
-  immediate BOA, so the aux fields come out at every frame — not at
-  the labeled-frame frequency. FREE on an aux-less checkpoint is a
-  loud error ([AUX] is untrained there).
-
-Never compare numbers across decode modes — they are different
-measurement conditions by design.
+**Decoding is fully scaffolded by the request**
+(`predict_chunk(generate=…)`, which must equal the request the
+prompt was collated with — `Collator.generate_override`, one tuple,
+one source): per requested field in order — constrained fields
+(holding) are pure classification (score the candidates' first ids
+once, force the winner + terminator); free-text fields decode
+greedily over text ids under the field's `VALUE_BUDGETS` cap until
+the `\n` terminator (exhaustion forces it, loudly, incrementing the
+cumulative `fallback_count`) — then **BOA is FORCED** (its target is
+trained; its identity is not a decision) and the ACTION phase runs
+the ar_fast grammar mask (each step masks to tokens whose BPE symbol
+expansion fits the remaining chunk×dim budget; a full-length chunk is
+guaranteed by construction). `generate=()` IS the deployment fast
+path — forced `[opener][BOA]` prefill, straight to actions.
+Requesting a field the checkpoint never trained is a loud error.
+Never compare chunk numbers across different request sets — they are
+different measurement conditions by design (probes score
+`generate=()`; the samples table decodes all trained fields).
 
 Prompt-side geometry is what makes the suffix exact: left padding +
 logical positions (§1) put every suffix token physically adjacent to
 its sample's real prompt, positions continuing after each sample's real
-prefix length; the state slot borrows the pad token's PLE row (the
-precedent set by image soft tokens).
+prefix length.
 
 ### 2.4 Auxiliary text tasks (`bijou/aux_text.py`)
 
 Trained text outputs rendered from the LLM-judge annotations
-(`docs/episode-annotations.md`), emitted before BOA under [AUX]
-(template v3, bracket headers):
+(`docs/episode-annotations.md`): the collator draws each sample's
+REQUEST SET (which fields the prompt's `[generate|…]` asks for,
+requested ⊆ labeled always) and the matching HEADERLESS value lines
+(template v4). For `[generate|subgoal holding progress event actions]`:
 
-    [subgoal]reach toward the toy boat\n
-    [holding]no\n
-    [progress]30%\n
-    [event]object dropped from gripper\n
-    [visible]object 0,1; gripper 1\n
+    reach toward the toy boat\n
+    no\n
+    30%\n
+    none\n
 
-- **The template satisfies the forced-scaffold property**: every split
-  point inference forces at (header|value) falls on a BPE merge
-  boundary — part-encoding a line equals encoding it jointly, id for
-  id (measured on the real E2B tokenizer 2026-08-03: `[`/`]` are
-  single ids 236840/236842 with no cross-merges into letters, digits
-  or `\n`, including across field boundaries `\n[`).
-  `build_aux_runtime` asserts the property at construction over every
-  configured field (the real candidates for constrained fields), so a
-  tokenizer swap that breaks it fails loudly at load, never silently
-  off-manifold. The v2 form `field: value` violated it — the header's
-  trailing space merged into word-valued first tokens (`" yes"` = one
-  id), so the forced-header holding probe scored ids the model never
-  trained at that position (the samples_holding_acc bug, found in
-  review 2026-08-03; v2 shipped it silently because the char-level
-  test stub cannot represent merges — the tripwire test now injects a
-  merging stub).
-
-- **Presence-based rendering, mode-conditioned.** A field appears iff
-  its label exists at the frame: subgoal on every frame of a judged
-  episode (piecewise-constant `language_persistent` rows);
-  holding/progress only on judge-sampled frames (the finite mask IS
-  sampled-frame set — never interpolated); event only on its exact
-  firing frame (`language_events` is frame-local; positives-only — the
-  implicit negative is the trained transition past the field wherever
-  labels exist, matching the contract that unsampled frames are
-  *unknown*, not negative). Multi-event frames are real data (441 in
-  community_curated_v0 — e.g. drop + reset on one sampled frame) and
-  render ALL events "; "-joined; reading the frame-local list directly
-  matters — lerobot's single-row `emitted_at` resolver RAISES on such
-  frames (it killed a corpus run 2026-08-02 before the fix; reported
-  upstream to the judging pipeline). A sample with ≥1
-  rendered field feeds [AUX]; unjudged/dropped samples render nothing
-  and feed [ACT] — mixed sparsely-annotated corpora train one format,
-  the mode explains label presence away, and an aux fine-tune extends
-  a pretrained base rather than fighting it.
-- **The "event" lerobot language style is registered by `aux_text`**
-  (idempotent import-time set-adds) — the DAG leaf under both the
-  judge writer and the training reader, so either import order
-  resolves event rows; a test asserts the two modules' constants
-  agree.
-- **Mode dropout** (`--aux-dropout`, default 0.1 on aux runs): a
-  labeled sample trains as [ACT] with probability p — keeps the
-  deployment fast path trained even at 100% annotation coverage.
-  Draws are per-visit from a generator seeded by the dataloader worker
-  seed (pure function of --seed, rank, worker); the probe-side
-  collator runs a dropout-0 clone so eval tables always show true
-  labels.
+- **Request-conditioned, per field.** Which field a line answers is
+  pinned by request order (template order always), not by generated
+  header bytes — v3's `[field]` headers were fully predictable given
+  the request, i.e. pure padding, and were dropped (owner call
+  2026-08-03; parsing zips lines with the request; report tables
+  re-attach field names at the DISPLAY layer). Label availability:
+  subgoal exists on every frame of a judged episode
+  (piecewise-constant `language_persistent` rows);
+  holding/progress/visible only on judge-sampled frames (the finite
+  mask IS the sampled-frame set — never interpolated); event wherever
+  its status is KNOWN — the firing frame's text (multi-event frames
+  are real data, 441 in community_curated_v0, rendered "; "-joined;
+  lerobot's single-row `emitted_at` RAISES on them — it killed a
+  corpus run 2026-08-02) or the **explicit `none`** on judge-sampled
+  no-event frames (a TRUE negative; unsampled frames are unknown and
+  never requested). Label PRESENCE is conditioning, never a
+  prediction target — the model learns p(value | obs, asked), and at
+  inference any trained field can be requested on any frame.
+  Unjudged samples request nothing and train the fast path — mixed
+  sparsely-annotated corpora train one format, and an aux fine-tune
+  extends a pretrained base rather than fighting it.
+- **Tokenizer contract** (the v2 scar, one seam left): training
+  assembles suffixes from PER-FIELD encodings (never one joint
+  string), so cross-line merges cannot exist by construction; the one
+  remaining split point — value|`\n` terminator — is asserted at
+  `build_aux_runtime` construction (`enc(value) + enc(\n) ==
+  enc(value + \n)`, real candidates for constrained fields; measured
+  to hold on E2B for every field's value class). Values are
+  \n-SANITIZED at render: headerless lines mean a stray newline in a
+  judge string would silently shift every later line's supervision
+  (with v3 headers that was a local parse failure). The v2
+  `field: value` template broke the equivalent property (`" yes"`
+  merged) and shipped a silently-wrong holding metric — the tripwire
+  test injects a merging stub so the class can only recur loudly.
+- **The "event" lerobot language style is registered by
+  `bijou.annotations`** (idempotent import-time set-adds) — the DAG
+  leaf under both the judge writer and the training reader, so either
+  import order resolves event rows.
+- **Request dropout** (`--aux-dropout`, default 0.1 on aux runs): a
+  labeled sample's request collapses to `{actions}` with probability
+  p — keeps the deployment fast path trained even at 100% annotation
+  coverage. **Field dropout** (`--field-dropout`, default 0.1):
+  each labeled field independently drops from the request (request
+  and target move together — a requested field is always supervised
+  and vice versa), so all SUBSETS of the labeled set appear in
+  training and inference-time partial requests stay in-distribution.
+  Draws are per-visit from a generator seeded by the dataloader
+  worker seed (pure function of --seed, rank, worker); probe-side
+  collators run dropout-0 clones.
 - **Field set and order.** `--aux-fields` selects a subset of
   {subgoal, holding, progress, event, visible} but never reorders
   (template order is validated at the CLI boundary and re-guarded in
-  `AuxSpec`; new fields APPEND so trained prefixes stay stable);
-  free-text values are truncated loudly (subgoal 20, event 24 —
-  multi-event joins). `visible` renders which cameras see the task
-  object and the gripper as PROMPT POSITIONS
-  (`[visible]object 0,1; gripper 1` — ascending indices into the §1
-  camera order): positional on purpose, since kind names collide (two
+  `AuxSpec`; new fields APPEND); free-text values are truncated
+  loudly (subgoal 20, event 24 — multi-event joins; the same numbers
+  are the decode-side `VALUE_BUDGETS`). `visible` renders which
+  cameras see the task object and the gripper as PROMPT POSITIONS
+  (`object 0,1; gripper 1` — ascending indices into the §1 camera
+  order): positional on purpose, since kind names collide (two
   unknown-kind cameras), short names are dataset-internal vocabulary
-  the prompt never shows (the v2 fallback leaked them as
-  unpredictable targets), and indices stay invariant under
+  the prompt never shows, and indices stay invariant under
   camera-kind dropout. View-binding is the most directly
   grounding-targeted label available; "none" on a sampled frame is a
   TRUE negative (occlusion is signal). Surface disagreements (kinds
   map ≠ vector slots ≠ item cameras) skip the field LOUDLY once per
   dataset per worker (guessing through misaligned slots would label
   the wrong cameras); aux training rejects `--cameras`/`--max-cameras`
-  outright — camera selection would silently shift every index. The
-  FREE-decode budget (`MAX_FREE_TOKENS = 96`) covers the worst-case
-  full template with slack.
-- **Template versioning.** `AUX_TEMPLATE_VERSION` (3) rides in the
+  outright — camera selection would silently shift every index.
+- **Template versioning.** `AUX_TEMPLATE_VERSION` (4) rides in the
   checkpoint's decoder section (`AuxDecodeConfig`: version, fields,
   prompt hash, judge model); loading a version this code doesn't know
-  is a loud error — a byte-level header change on an existing
-  checkpoint would silently break elicitation, so headers change only
-  with a version bump.
+  is a loud error — a byte-level convention change on an existing
+  checkpoint would silently break decoding, so conventions change
+  only with a version bump.
 - **Label provenance is the dataset's own stamp** (revised 2026-08-02
   with docs/episode-annotations.md: the stamp is the in-band blessed
   materialization, and a code-level pin was wrong-by-construction —
@@ -517,18 +542,19 @@ Trained text outputs rendered from the LLM-judge annotations
   aux-position mask the loss splits on.
 - **Metrics.** Component losses `train/loss_action` / `train/loss_aux`
   (the aux mean is position-weighted across batches and ranks);
-  in-run eval logs the FREE-decode generations as raw-string columns
-  (`aux_generated` vs `aux_label`) inside the `eval/samples` wandb
-  table — the table's chunks and text come from the same decode
-  (self-consistent rows), while the scalar MAE probes score the ACT
-  fast path (comparable across aux-on/off/less arms) — and
-  `eval/samples_holding_acc`: teacher-forced likelihood accuracy
-  p(yes) vs p(no) at the holding value position under the label
-  context ([AUX] + preceding trained fields; sparse fields appear in
-  free decode at every frame now, but likelihood scoring stays the
-  clean per-field measurement). Labels are weak supervision (~80%
-  inter-judge agreement on holding, ±15% progress MAE): weight
-  modestly, expect an accuracy ceiling near the label noise.
+  in-run eval logs the all-trained-fields scaffolded decode as
+  display-string columns (`aux_generated` vs `aux_label`, field names
+  re-attached) inside the `eval/samples` wandb table — the table's
+  chunks and text come from that one decode (self-consistent rows),
+  while the scalar MAE probes score the `[generate|actions]` fast
+  path (comparable across aux-on/off/less arms) — and
+  `eval/samples_holding_acc`: the constrained holding value of the
+  table decode vs the label over labeled rows (request conditioning
+  elicits every requested field in its training context, so the old
+  separate likelihood probe dissolved into the main path). Labels are
+  weak supervision (~80% inter-judge agreement on holding, ±15%
+  progress MAE): weight modestly, expect an accuracy ceiling near the
+  label noise.
 - **Owed:** the offline `bijou.eval` report has no aux section yet
   (generations + aux metrics in HTML/JSON); in-run wandb is the current
   surface.
@@ -600,17 +626,17 @@ quantiles by `ldtools.backfill_quantile_stats`. mean/std/min/max compose
 correctly and are untainted.
 
 **Prompt conditioning** (`--condition-fields subgoal outcome
-smoothness`, default off): the user turn's trailing bracket block.
-**Subgoal-conditioned execution** (C2): the frame's current segment
-label renders as `[subgoal: …]` with its OWN dropout
+smoothness`, default off): the `[key|value]` bracket block inside the
+sandwich (§1). **Subgoal-conditioned execution** (C2): the frame's
+current segment label renders as `[subgoal|…]` with its OWN dropout
 (`--subgoal-dropout`, default 0.5 — deployment mostly runs
 planner-less, so the unconditioned context must stay well-trained),
 resolvable from a planner/operator at inference (`rollout --subgoal`,
 or an explicit `item["condition_subgoal"]`); **anti-copy coupling**:
-when the subgoal rides the prompt, the aux segment SUPPRESSES its
-subgoal field — prompt-conditioning and aux-prediction are exact
+when the subgoal rides the prompt, the aux draw EXCLUDES it from the
+request set — prompt-conditioning and prediction are exact
 complements, so `loss_aux` never trains or scores copying, and the
-self-conditioning loop (feed the aux-generated subgoal into the next
+self-conditioning loop (feed the generated subgoal into the next
 replan's prompt) stays a rollout-side option. **Outcome conditioning**
 (C1; `--condition-dropout` 0.1): hindsight labels from each
 episode's verdict —
@@ -704,10 +730,12 @@ flags and `--stream-counts`; AR decoders require `--fast-tokenizer
 <artifact>`; **ar_backbone rejects the shape flags and stream counts**
 (the backbone IS the architecture — flags describing a model the run
 doesn't build are errors, not ignored). `--aux-fields` (ar_backbone
-only) enables aux text training (§2.4); `--aux-loss-weight` sets w
-(default 0.5 — the labels are weak supervision); `--aux-dropout` sets
-the [ACT] mode-dropout rate (default 0.1); `--aux-prompt-hash` is the
-opt-in provenance pin (§2.4); `--camera-kind-dropout` (default 0.1,
+only; incompatible with `--cameras`/`--max-cameras` — positional
+visible indices) enables aux text training (§2.4);
+`--aux-loss-weight` sets w (default 0.5 — the labels are weak
+supervision); `--aux-dropout` sets the request-collapse rate and
+`--field-dropout` the per-field request dropout (defaults 0.1/0.1);
+`--aux-prompt-hash` is the opt-in provenance pin (§2.4); `--camera-kind-dropout` (default 0.1,
 all decoder kinds) is the prompt-side kind→unknown dropout (§1);
 `--instruction-augment` (default 0.0, all decoder kinds) samples
 judge-suggested task rewrites (§4); `--condition-fields` /
@@ -722,10 +750,16 @@ sparse-batch dilution a mean-of-means would suffer).
 **In-training probes.** `--eval-samples N` sizes two MAE probes
 (eval_chunk_mae on holdout, train_mae on train), drawn exactly as
 `bijou.eval --seed` would, sharded and all-reduced, CPU-resident.
-ar_backbone probes decode through the unified free-until-BOA path, so
-in-run MAE and offline eval agree (~0.02 at 100k); aux runs add the
-generations table columns and holding likelihood accuracy (§2.4),
-rank-0-only, bounded to the rich table rows.
+ar_backbone probe prompts render `[generate|actions]`
+(`generate_override=()`) and decode the fast path, so scalar MAE is
+comparable across aux-on/off arms and agrees with offline eval; aux
+runs re-collate the rich table rows with `generate_override = the
+trained fields` and decode them in one scaffolded pass — the table's
+chunks, its `aux_generated`/`aux_label` display columns AND
+`eval/samples_holding_acc` (generated holding vs label over labeled
+rows — the constrained value in the MAIN decode; the separate
+likelihood probe dissolved with request conditioning) all come from
+that one decode, rank-0-only, bounded to the rich table rows.
 
 **Checkpoint schema** (`loading.py` dataclasses): `expert.safetensors` +
 `bijou_config.json` (format 3: role-sectioned — `backbone` {id,
@@ -741,16 +775,15 @@ HF — trained in-run OR inherited frozen from an adapted `--init-from`**
 on trained-in-this-run-only once shipped fine-tunes that silently loaded
 the pristine trunk — the invariant is test-gated). Directories are
 self-contained: loading one must need no other directory. Format-1/2
-checkpoints load forever via `checkpoint_sections`' read-side synthesis
-(format 1 through the train-args synthesizer), no file conversion;
-guarded by state-dict key fixtures and cross-format section tests. `--init-from` = warm
-`--init-from` = warm
+checkpoints: pre-format-3 prompts and pre-format-5 ar_backbone
+suffixes are REFUSED at load (2026-08-03, no back-compat — their
+parameter sets no longer exist: state_proj moved prompt-side, mode
+tables deleted); schema parsing is guarded by state-dict key fixtures
+and section tests. `--init-from` = warm
 start (decoder config-guarded, loud SystemExit — except the data-side
-format keys {aux, suffix_format}, which may differ with a printed
-note: enabling aux / adopting a newer suffix format on an older base
-is the sanctioned warm-start pattern, and format-added params — the
-mode tables, for pre-format-3 checkpoints — fresh-init loudly with an
-exact allowed-missing-keys check; NOT guarded: `--max-soft-tokens`,
+format keys {aux}, which may differ with a printed note: enabling aux
+on an aux-less format-5 base
+is the sanctioned warm-start pattern; NOT guarded: `--max-soft-tokens`,
 `--backbone` — known footguns); `--resume` =
 lossless continuation (CLI lr ignored, printed; cosine re-evaluated
 over the new `--steps`, so extending re-heats LR — accepted when
@@ -781,17 +814,17 @@ re-baseline loudly):
       --save-every 1000 --eval-samples 4 --device cpu --seed 0 \
       --save-dir outputs/train/oracle_tmp
 
-must reproduce **flow 1.8896 / 1.7237** exactly (numerically unmoved by
-the prompt-format-2 re-baseline at 4dp — its grad_norm moved, proving
-the tags are live); with `--decoder ar_fast
+must reproduce **flow 1.7766 / 1.6235** exactly; with `--decoder ar_fast
 --fast-tokenizer tests/fixtures/tiny_fast_tokenizer` added, **AR
-4.8917 / 4.8683**; with `--decoder ar_backbone --fast-tokenizer
+4.8795 / 4.8750**; with `--decoder ar_backbone --fast-tokenizer
 tests/fixtures/tiny_fast_tokenizer` (and the `--decoder-*` shape flags
-OMITTED — ar_backbone rejects them), **27.7483 / 27.7840** (random tiny
-weights under full-vocabulary CE — an anchor, not a quality signal; the
-huge step-1 grad norm is softcap saturation, clipped in practice;
-re-baselined 2026-08-02 for prompt format 2 — camera tags, all
-decoders — and suffix format 4 — the real Gemma-4 opener; prior
+OMITTED — ar_backbone rejects them), **27.8513 / 27.7803** (random tiny
+weights under full-vocabulary CE — an anchor, not a quality signal;
+re-baselined 2026-08-03 for prompt format 3 — pipe cameras, extended
+sandwich, [generate|…], soft state token, ALL decoders move — and
+suffix format 5 — headerless values, no mode token, no suffix state;
+prior anchors: format-2+4 flow 1.8896/1.7237, ar_fast 4.8917/4.8683,
+ar_backbone 27.7483/27.7840; earlier
 anchors: format-3 27.7622/27.7245, format-2 27.8116/27.8348, ar_fast
 pre-tags 4.8803/4.8656).
 Flags-on (unfreeze) oracles live in
@@ -840,12 +873,14 @@ prompt slots; task string must match the recorded instruction. Deployment
 always fine-tunes on rig data first (zero-shot cross-rig transfer is the
 wall, §7) — so the operative metric for any change is fine-tuned-then-
 scored rig MAE, not zero-shot. All decoder kinds serve `predict_chunk`
+All decoder kinds serve `predict_chunk`
 behind one policy interface, returning a `BijouPrediction` (`actions`,
 mirroring the batch's ground-truth field, + aux `generations`);
-ar_backbone picks its decode mode via `--aux-mode
-{act,free}` on eval and rollout (§2.3: act = fast path, free = speak
-first, ~30–45 extra suffix forwards per replan; no suffix KV-cache
-reuse across replans yet — the known optimization if it deploys), and
+ar_backbone picks its request set via `--generate [fields…]` on eval
+and rollout (§2.3: omitted = the `[generate|actions]` fast path;
+requested fields cost ~1 suffix forward per field plus its value
+tokens per replan; no suffix KV-cache reuse across replans yet — the
+known optimization if it deploys), and
 AR checkpoints need the deployment rig's exact q01/q99 quantiles (the
 tokenizer's fit normalization), which old-format stats tables don't
 carry. Camera kinds at rollout derive from the operator's own

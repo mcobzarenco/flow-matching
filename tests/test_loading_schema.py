@@ -84,7 +84,8 @@ def test_prompt_decoder_bridge_roundtrips_expert_config() -> None:
     prompt = GemmaPromptConfig(
         exports=expert_config.streams,
         max_soft_tokens=140,
-        camera_tags=False,
+        format=3,
+        state_dim=6,
         condition_fields=(),
     )
     decoder = flow_decoder_config_from_expert(expert_config)
@@ -98,7 +99,8 @@ def test_config_dicts_roundtrip_through_json() -> None:
     prompt = GemmaPromptConfig(
         exports=(4, 9, 14),
         max_soft_tokens=140,
-        camera_tags=False,
+        format=3,
+        state_dim=6,
         condition_fields=(),
     )
     decoder = flow_decoder_config_from_expert(expert_config)
@@ -114,7 +116,8 @@ def test_unknown_stream_and_unused_export_fail_loudly() -> None:
     prompt = GemmaPromptConfig(
         exports=(4, 9),  # kv14 missing => schedule references unknown stream
         max_soft_tokens=140,
-        camera_tags=False,
+        format=3,
+        state_dim=6,
         condition_fields=(),
     )
     with pytest.raises(SystemExit, match="unknown stream"):
@@ -127,7 +130,8 @@ def test_unknown_stream_and_unused_export_fail_loudly() -> None:
     prompt_full = GemmaPromptConfig(
         exports=(4, 9, 14),
         max_soft_tokens=140,
-        camera_tags=False,
+        format=3,
+        state_dim=6,
         condition_fields=(),
     )
     with pytest.raises(SystemExit, match="not consumed"):
@@ -157,7 +161,8 @@ def format3_meta() -> dict:
         prompt=GemmaPromptConfig(
             exports=expert_config.streams,
             max_soft_tokens=140,
-            camera_tags=False,
+            format=3,
+            state_dim=6,
             condition_fields=(),
         ),
         decoder=flow_decoder_config_from_expert(expert_config).to_dict(),
@@ -211,14 +216,18 @@ def test_metadata_writes_format3_and_reads_back() -> None:
     assert rebuilt == legacy_expert_config()
 
 
-def test_sections_synthesized_identically_across_formats() -> None:
-    """Formats 1/2/3 of the same checkpoint must parse to the same
-    sections (modulo format 1's absent tagged configs)."""
-    from_format3 = checkpoint_sections(format3_meta())
-    from_format2 = checkpoint_sections(format2_meta())
-    assert from_format2 == from_format3
+def test_pre3_prompt_sections_are_refused() -> None:
+    """Schema-format-2 checkpoints carry pre-format-3 prompts (no
+    [generate|…], no soft state token) whose parameter set this code
+    no longer implements — parsing refuses them loudly (no back-compat,
+    2026-08-03). Schema format 1 has no prompt section at all: its
+    metadata still parses (sections None), and the model LOAD refuses
+    it instead."""
+    with pytest.raises(SystemExit, match="no back-compat"):
+        checkpoint_sections(format2_meta())
 
     from_format1 = checkpoint_sections(legacy_meta())
+    from_format3 = checkpoint_sections(format3_meta())
     assert from_format1.backbone == from_format3.backbone
     assert from_format1.prompt is None
     assert from_format1.decoder is None

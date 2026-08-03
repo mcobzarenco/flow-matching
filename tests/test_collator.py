@@ -88,6 +88,8 @@ def collator(**overrides: Any) -> Collator[FakeInputs]:
         "instruction_augment": 0.0,
         "condition_fields": (),
         "condition_dropout": 0.0,
+        "generate_bracket": False,
+        "generate_override": None,
         "subgoal_condition_dropout": 0.0,
     }
     kwargs.update(overrides)
@@ -203,11 +205,12 @@ def test_aux_rejects_camera_selection() -> None:
         annotated_repos=frozenset(),
         block_base=1000,
         dropout=0.0,
+        field_dropout=0.0,
     )
     with pytest.raises(ValueError, match="camera selection"):
-        collator(aux=aux, camera_filter=("front",))
+        collator(aux=aux, generate_bracket=True, camera_filter=("front",))
     with pytest.raises(ValueError, match="camera selection"):
-        collator(aux=aux, max_cameras=1)
+        collator(aux=aux, generate_bracket=True, max_cameras=1)
 
 
 def test_instruction_augment_samples_judge_rewrites() -> None:
@@ -261,12 +264,12 @@ def test_condition_fields_render_hindsight_labels() -> None:
     labeled["condition_smoothness"] = "medium"
     batch = collator(condition_fields=fields)([labeled])
     (prompt,) = batch.encoder_inputs.samples
-    assert prompt.condition_text == "[outcome: failure][smoothness: medium]"
+    assert prompt.condition_text == "[outcome|failure][smoothness|medium]"
 
     partial = item(with_quantiles=True)
     partial["condition_outcome"] = "success"  # smoothness unlabeled
     batch = collator(condition_fields=fields)([partial])
-    assert batch.encoder_inputs.samples[0].condition_text == "[outcome: success]"
+    assert batch.encoder_inputs.samples[0].condition_text == "[outcome|success]"
 
     unlabeled = item(with_quantiles=True)
     batch = collator(condition_fields=fields)([unlabeled])
@@ -304,13 +307,13 @@ def test_subgoal_condition_resolves_per_frame_with_own_dropout() -> None:
     batch = collator(condition_fields=fields)([dict(framed)])
     assert (
         batch.encoder_inputs.samples[0].condition_text
-        == "[subgoal: reach toward the boat]"
+        == "[subgoal|reach toward the boat]"
     )
     framed["condition_subgoal"] = "place it on the disk"
     batch = collator(condition_fields=fields)([dict(framed)])
     assert (
         batch.encoder_inputs.samples[0].condition_text
-        == "[subgoal: place it on the disk]"
+        == "[subgoal|place it on the disk]"
     )
     # An EMPTY override means "no hint": it must render nothing — not
     # fall through to the frame label it suppresses (regression: the
@@ -343,7 +346,7 @@ def test_subgoal_condition_resolves_per_frame_with_own_dropout() -> None:
         dropped([dict(both)]).encoder_inputs.samples[0].condition_text
         for _ in range(24)
     ]
-    assert "[outcome: success]" in rendered  # subgoal dropped, outcome kept
+    assert "[outcome|success]" in rendered  # subgoal dropped, outcome kept
     assert any("subgoal" in text for text in rendered)  # but not always
 
 
@@ -362,10 +365,10 @@ def test_condition_dropout_is_seeded_per_field() -> None:
     ]
     assert (
         "" in rendered
-        or "[outcome: success]" in rendered
-        or ("[smoothness: high]" in rendered)
+        or "[outcome|success]" in rendered
+        or ("[smoothness|high]" in rendered)
     )  # some field dropped somewhere
-    assert "[outcome: success][smoothness: high]" in rendered  # and some kept
+    assert "[outcome|success][smoothness|high]" in rendered  # and some kept
     torch.manual_seed(3)
     again = collator(condition_fields=fields, condition_dropout=0.5)
     assert [
