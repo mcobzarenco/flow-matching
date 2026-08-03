@@ -94,6 +94,12 @@ inherit the scar tissue without the scars.
   check.
 - **Kills wait for save boundaries**: the eval line, the `saved …`
   line, and a training line past them, before any signal is sent.
+- **Restarts need a training-semantics reason**: data, objective,
+  batch/LR, or a format the checkpoints inherit — never eval-side
+  cosmetics (metrics, tables, logging), which deploy at the next
+  natural boundary instead. (2026-08-03: a 40-minute-old 100k run was
+  killed to pick up a wandb-table column layout; the owner's call was
+  that it did not warrant the restart.)
 - **Machine deletion gets an explicit inventory** — what is preserved,
   where, verified — before the all-clear.
 - `MALLOC_ARENA_MAX=2 MALLOC_MMAP_THRESHOLD_=131072` on every

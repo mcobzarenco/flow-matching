@@ -758,36 +758,25 @@ def validate(
         wandb_run.log({table_key: table}, step=step)
 
         if generations is not None and rich_actions is not None:
-            all_fields = wandb.Table(
-                columns=[
-                    "sample",
-                    *(f"camera_{i}" for i in range(n_slots)),
-                    "task",
-                    "aux_generated",
-                    "aux_label",
-                    "pred_vs_truth",
-                ],
+            # Paired signal, free (the decode already ran for the aux
+            # columns): masked MAE of the chunks that followed the
+            # model's SELF-GENERATED field lines, same 12 rows as the
+            # fast-path table — does narration help or hurt the
+            # actions? Small-n, directional only; never compared to
+            # the full-probe scalar. (The dedicated all-fields table
+            # was dropped 2026-08-03 — visually a subset of the main
+            # table once it regained the aux columns.)
+            all_fields_mae = [
+                float((rich_actions[i] - row.truth).abs()[row.valid].mean())
+                for i, row in enumerate(rich_rows)
+            ]
+            wandb_run.log(
+                {
+                    f"{table_key}_all_fields_mae": sum(all_fields_mae)
+                    / len(all_fields_mae),
+                },
+                step=step,
             )
-            for i, (item, row) in enumerate(
-                zip(probe.rich_items, rich_rows, strict=True),
-            ):
-                figure = _chunk_plot(
-                    rich_actions[i],
-                    row.truth,
-                    row.valid,
-                    row.state,
-                    action_names or [],
-                )
-                all_fields.add_data(
-                    i,
-                    *row_images(item, per_item_cameras[i]),
-                    str(item["task"]),
-                    generations[i].text,
-                    aux_label_text(item, aux_fields),
-                    wandb.Image(figure),
-                )
-                plt.close(figure)
-            wandb_run.log({f"{table_key}_all_fields": all_fields}, step=step)
 
             if AuxField.HOLDING in aux_fields:
                 accuracy = holding_accuracy(generations, probe.rich_items)

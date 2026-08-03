@@ -761,19 +761,20 @@ sparse-batch dilution a mean-of-means would suffer).
 ar_backbone probe prompts render `[generate|actions]`
 (`generate_override=()`) and decode the fast path, so scalar MAE is
 comparable across aux-on/off arms and agrees with offline eval. Two
-rank-0 wandb tables over the same EVAL_TABLE_ROWS = 12 rich rows
-(down from 32 — the matplotlib figures were a measured ~34s/eval
-rank-0 straggler): `eval/samples` = chunk columns straight off the
-scalar pass (fast path — actions condition on the user message only,
-no aux text in the suffix; chunk_mae matches the scalar's measurement
+one rank-0 wandb table over EVAL_TABLE_ROWS = 12 rich rows (down from
+32 — the matplotlib figures were a measured ~34s/eval rank-0
+straggler): `eval/samples` = chunk columns straight off the scalar
+pass (fast path — actions condition on the user message only, no aux
+text in the suffix; chunk_mae matches the scalar's measurement
 condition) PLUS `aux_generated`/`aux_label` side-channel columns from
 the all-fields decode of the same items (what the model says for this
 observation next to the fast-path chunk — deliberately mixed
-conditions, owner-requested pairing); `eval/samples_all_fields` (aux
-runs) = the all-fields decode's own rows — generations vs labels plus
-the action chart of the chunk that followed the model's
-self-generated context (a different measurement condition, rendered
-for eyeballs, never compared to the scalar) — and
+conditions, owner-requested pairing). The all-fields decode also
+yields `eval/samples_all_fields_mae` — masked MAE of the chunks that
+followed the model's SELF-generated field lines over those 12 rows
+(paired does-narration-help signal; small-n, directional, never
+compared to the full-probe scalar; a dedicated all-fields table was
+dropped 2026-08-03 as visually redundant) — and
 `eval/samples_holding_acc` (generated holding vs label over labeled
 rows — the constrained value in the MAIN decode; the separate
 likelihood probe dissolved with request conditioning).
