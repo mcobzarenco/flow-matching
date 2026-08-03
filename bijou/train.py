@@ -661,17 +661,44 @@ def validate(
             )
 
     if wandb_run is not None and probe.rich_items and collator is not None:
-        # Two tables, each self-consistent (rank-0-only, no collectives,
-        # bounded to the rich subset ≤ EVAL_TABLE_ROWS):
-        #   {table_key}            — fast-path rows straight off the
-        #     scalar pass (chunk_mae comparable to the logged scalar; no
-        #     extra decode);
-        #   {table_key}_all_fields — the SAME samples re-collated with
-        #     generate_override = every trained field and decoded once:
-        #     generations next to labels, plus the action chart of the
-        #     chunk that followed the model's own generated context
-        #     (its chunk_mae is a different measurement condition —
-        #     rendered for eyeballs, never compared to the scalar).
+        # Two tables over the same rich rows (rank-0-only, no
+        # collectives, bounded to EVAL_TABLE_ROWS):
+        #   {table_key} — chunk columns straight off the scalar pass
+        #     (fast path: prompt says [generate|actions], the suffix
+        #     carries NO aux text — actions condition on the user
+        #     message only; chunk_mae matches the logged scalar's
+        #     measurement condition). The aux_generated/aux_label
+        #     columns are a SIDE-CHANNEL from the all-fields decode of
+        #     the same items — what the model says for this observation
+        #     next to the fast-path chunk, deliberately mixed
+        #     conditions, labeled here so nobody rediscovers it as a
+        #     bug (owner-requested pairing, 2026-08-03).
+        #   {table_key}_all_fields — the all-fields decode's OWN rows:
+        #     generations vs labels plus the chunk that followed the
+        #     model's self-generated context (never compared to the
+        #     scalar).
+        decoder = model.decoder
+        generations: list[AuxGeneration] | None = None
+        rich_actions: Tensor | None = None
+        aux_fields: tuple[AuxField, ...] = ()
+        if isinstance(decoder, ARBackboneDecoder) and decoder.config.aux is not None:
+            aux_fields = decoder.config.aux.fields
+            table_collator = dataclasses.replace(
+                collator,
+                generate_override=aux_fields,
+            )
+            rich_batch = table_collator(probe.rich_items).to(device)
+            rich_memory = model.encode(rich_batch.encoder_inputs, with_grad=False)
+            rich_prediction = decoder.predict_chunk(
+                model.backbone,
+                rich_memory,
+                rich_batch,
+                generate=aux_fields,
+            )
+            generations = rich_prediction.generations
+            assert generations is not None  # ar_backbone always generates
+            rich_actions = rich_prediction.actions.cpu()
+
         # Cameras vary per sample across mixed datasets: generic positional
         # columns, padded with None where a sample has fewer cameras.
         per_item_cameras = [collator.cameras_of(item) for item in probe.rich_items]
@@ -701,6 +728,7 @@ def validate(
                 "state",
                 "chunk_mae",
                 "pred_vs_truth",
+                *(["aux_generated", "aux_label"] if generations is not None else []),
             ],
         )
         for i, (item, row) in enumerate(zip(probe.rich_items, rich_rows, strict=True)):
@@ -711,6 +739,12 @@ def validate(
                 row.state,
                 action_names or [],
             )
+            aux_columns: tuple[str, ...] = ()
+            if generations is not None:
+                aux_columns = (
+                    generations[i].text,
+                    aux_label_text(item, aux_fields),
+                )
             table.add_data(
                 i,
                 *row_images(item, per_item_cameras[i]),
@@ -718,28 +752,12 @@ def validate(
                 state_str(item),
                 float((row.sampled - row.truth).abs()[row.valid].mean()),
                 wandb.Image(figure),
+                *aux_columns,
             )
             plt.close(figure)
         wandb_run.log({table_key: table}, step=step)
 
-        decoder = model.decoder
-        if isinstance(decoder, ARBackboneDecoder) and decoder.config.aux is not None:
-            aux_fields = decoder.config.aux.fields
-            table_collator = dataclasses.replace(
-                collator,
-                generate_override=aux_fields,
-            )
-            rich_batch = table_collator(probe.rich_items).to(device)
-            rich_memory = model.encode(rich_batch.encoder_inputs, with_grad=False)
-            rich_prediction = decoder.predict_chunk(
-                model.backbone,
-                rich_memory,
-                rich_batch,
-                generate=aux_fields,
-            )
-            generations = rich_prediction.generations
-            assert generations is not None  # ar_backbone always generates
-            rich_actions = rich_prediction.actions.cpu()
+        if generations is not None and rich_actions is not None:
             all_fields = wandb.Table(
                 columns=[
                     "sample",

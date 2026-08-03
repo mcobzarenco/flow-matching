@@ -763,14 +763,17 @@ ar_backbone probe prompts render `[generate|actions]`
 comparable across aux-on/off arms and agrees with offline eval. Two
 rank-0 wandb tables over the same EVAL_TABLE_ROWS = 12 rich rows
 (down from 32 — the matplotlib figures were a measured ~34s/eval
-rank-0 straggler): `eval/samples` = fast-path rows straight off the
-scalar pass (chunk_mae column matches the scalar's measurement
-condition; zero extra decode); `eval/samples_all_fields` (aux runs) =
-the SAME rows re-collated with `generate_override = the trained
-fields` and decoded once — `aux_generated` vs `aux_label` display
-columns, the action chart of the chunk that followed the model's own
-generated context (a different measurement condition, rendered for
-eyeballs, never compared to the scalar), and
+rank-0 straggler): `eval/samples` = chunk columns straight off the
+scalar pass (fast path — actions condition on the user message only,
+no aux text in the suffix; chunk_mae matches the scalar's measurement
+condition) PLUS `aux_generated`/`aux_label` side-channel columns from
+the all-fields decode of the same items (what the model says for this
+observation next to the fast-path chunk — deliberately mixed
+conditions, owner-requested pairing); `eval/samples_all_fields` (aux
+runs) = the all-fields decode's own rows — generations vs labels plus
+the action chart of the chunk that followed the model's
+self-generated context (a different measurement condition, rendered
+for eyeballs, never compared to the scalar) — and
 `eval/samples_holding_acc` (generated holding vs label over labeled
 rows — the constrained value in the MAIN decode; the separate
 likelihood probe dissolved with request conditioning).
