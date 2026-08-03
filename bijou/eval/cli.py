@@ -313,6 +313,10 @@ def main() -> int:
             method=SamplingMethod(args.sample_method),
             aux_mode=AuxDecodeMode(args.aux_mode),
             condition_override=overrides,
+            # Subgoal conditioning renders only when explicitly forced
+            # (it is an operator input, not a hindsight label — the
+            # deployment default is planner-less).
+            include_subgoal_condition="subgoal" in overrides,
         )
         if policy.info.chunk_size != args.chunk_size:
             raise SystemExit(

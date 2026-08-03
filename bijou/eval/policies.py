@@ -105,6 +105,7 @@ class BijouPolicy:
         expert_dtype: torch.dtype = torch.float32,
         aux_mode: AuxDecodeMode = AuxDecodeMode.ACT,
         condition_override: dict[str, str] | None = None,
+        include_subgoal_condition: bool = False,
     ) -> None:
         self.name = f"bijou@{checkpoint.name.removeprefix('step_').lstrip('0') or '0'}"
         self.device = device
@@ -146,14 +147,20 @@ class BijouPolicy:
             # them; rollout items carry an explicit map); never dropped
             # at inference — dropout is a train-time regularizer. Same
             # for instruction augmentation: inference scores/serves the
-            # instruction it was GIVEN. Conditioning renders the fields
-            # the checkpoint trained, from each item's TRUE labels
-            # (dropout 0 — score against truth ⇒ condition on truth)
-            # unless condition_override forces a value.
+            # instruction it was GIVEN. Conditioning renders the
+            # HINDSIGHT fields the checkpoint trained from each item's
+            # TRUE labels (dropout 0 — score against truth ⇒ condition
+            # on truth); the SUBGOAL hint is an operator INPUT, not a
+            # hindsight label — eval runs the deployment-default
+            # (planner-less) context unless an item carries an explicit
+            # condition_subgoal (rollout --subgoal / condition_override).
             camera_kind_dropout=0.0,
             instruction_augment=0.0,
             condition_fields=tuple(
-                ConditionField(f) for f in self.info.condition_fields
+                ConditionField(f)
+                for f in self.info.condition_fields
+                if ConditionField(f) is not ConditionField.SUBGOAL
+                or include_subgoal_condition
             ),
             condition_dropout=0.0,
             subgoal_condition_dropout=0.0,

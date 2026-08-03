@@ -1809,10 +1809,18 @@ def main() -> int:
         ),
         camera_kind_dropout=0.0,
         instruction_augment=0.0,
-        # dropout-0 conditioning = TRUE-label conditioning (Q1: score
-        # against truth ⇒ condition on truth; the subgoal hint always
-        # present in probes — the probe measures the CONDITIONED fit
-        # for subgoal-conditioned runs).
+        # dropout-0 conditioning = TRUE-label conditioning for the
+        # HINDSIGHT fields (Q1: score against truth ⇒ condition on
+        # truth). The SUBGOAL hint is an operator/planner INPUT, not a
+        # hindsight label — probes run the deployment-default
+        # (planner-less) context, which also lets the samples table
+        # exercise subgoal PREDICTION (with it always prompt-fed, the
+        # anti-copy coupling correctly suppressed every generated
+        # subgoal and the table looked broken — found on the first
+        # full-recipe run).
+        condition_fields=tuple(
+            f for f in collator.condition_fields if f is not ConditionField.SUBGOAL
+        ),
         condition_dropout=0.0,
         subgoal_condition_dropout=0.0,
     )

@@ -272,6 +272,7 @@ def main() -> int:
         method=SamplingMethod(args.sample_method),
         expert_dtype=getattr(torch, args.expert_dtype),
         aux_mode=AuxDecodeMode(args.aux_mode),
+        include_subgoal_condition=args.subgoal is not None,
     )
     stats = rig_stats(args, policy)
     chunk_size = policy.info.chunk_size
