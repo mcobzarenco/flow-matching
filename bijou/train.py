@@ -1995,6 +1995,22 @@ def main() -> int:
         )
         schedule_desc = str(ar_schedule)
     backbone_counts = unfreeze_backbone(model, args)
+    if not args.backbone_trained:
+        # Frozen runs encode the prefix under no_grad (BijouTrainStep),
+        # so the prompt-side state projection CANNOT receive gradients
+        # there — freeze it rather than hand DDP a grad-less trainable
+        # (static_graph errors on the first backward otherwise). The
+        # zero init makes the state token exactly inert: frozen-backbone
+        # behavior matches the pre-state-token model. Training it under
+        # a frozen backbone (stage 2) needs a grad-transparent prefix —
+        # a deliberate future change, not a default.
+        model.encoder.state_proj.requires_grad_(False)
+        if is_main:
+            print(
+                "prompt state token INERT (frozen backbone: no gradient "
+                "path to state_proj through a no-grad prefix encode)",
+                flush=True,
+            )
     n_trainable = sum(p.numel() for p in model.decoder.parameters())
     if is_main:
         backbone_desc = (

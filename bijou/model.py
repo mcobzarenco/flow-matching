@@ -63,11 +63,15 @@ class BijouModel(nn.Module):
         (unfreezable backbone subsets; see GemmaEncoder.param_groups for
         the exactness contract). Groups are disjoint by construction —
         the encoder module carries only prompt-side parameters, never
-        backbone ones (the backbone is passed as an argument)."""
+        backbone ones (the backbone is passed as an argument). Encoder
+        params are filtered by ``requires_grad``: frozen-backbone runs
+        freeze state_proj (no gradient path through a no-grad prefix
+        encode — train.py sets this, loudly), and DDP's exactness
+        contract needs it OUT of the group there."""
         backbone_groups = self.encoder.param_groups(self.backbone)
         return {
             "decoder": list(self.decoder.parameters())
-            + list(self.encoder.parameters()),
+            + [p for p in self.encoder.parameters() if p.requires_grad],
             "backbone_text": backbone_groups["text"],
             "backbone_vision": backbone_groups["vision"],
         }

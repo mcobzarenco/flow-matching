@@ -92,6 +92,21 @@ def tiny_model() -> BijouModel:
     )
 
 
+def test_frozen_state_proj_leaves_the_decoder_group() -> None:
+    """Frozen-backbone runs freeze state_proj (no gradient path through
+    a no-grad prefix encode) — param_groups must then EXCLUDE it, or
+    DDP's every-trainable-gets-a-grad contract breaks on the first
+    backward; live runs keep it in the decoder group."""
+    model = tiny_model()
+    encoder_params = set(model.encoder.parameters())
+    live = set(model.param_groups()["decoder"])
+    assert encoder_params <= live  # trainable by default (live runs)
+    model.encoder.state_proj.requires_grad_(False)  # train.py, frozen runs
+    frozen = set(model.param_groups()["decoder"])
+    assert not (encoder_params & frozen)
+    assert frozen == live - encoder_params
+
+
 def make_args(save_dir: Path) -> TrainArgs:
     return TrainArgs(
         train_data=(Path("/unused"),),
