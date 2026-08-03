@@ -51,6 +51,7 @@ from typing import Any, override
 import torch
 from torch import Tensor, nn
 from torch.nn import functional as F
+from torch.nn.attention import SDPBackend, sdpa_kernel
 
 from ..aux_text import (
     ACT_MODE,
@@ -453,13 +454,32 @@ class ARBackboneDecoder(nn.Module):
         else:
             positions = torch.full((batch, 1), memory.length, device=device) + offsets
             full_mask = None
-        return backbone.language_model(
-            inputs_embeds=embeds,
-            per_layer_inputs=per_layer,
-            position_ids=positions,
-            padding_mask=full_mask,
-            cache=cache,
-        )
+        # cuDNN's fused-attention graph intermittently fails to EXECUTE
+        # its backward on the suffix geometry (bf16 head_dim-512 queries
+        # at ragged lengths against the prefix cache) — the
+        # pytorch/pytorch#122695 'mha_graph.execute is_good()' assert
+        # family. It killed the fullstack run twice (steps 10440,
+        # ~20500) starting exactly when the suffix went bf16 and thus
+        # became cuDNN-eligible; the TORCH_CUDNN_SDPA_ENABLED env var is
+        # NOT honored by this torch (2.11) — verified the hard way. Pin
+        # THIS call to the non-cuDNN kernels (the backend chosen at
+        # forward time also selects the backward); the prefix encode —
+        # ~80% of compute, crash-free for >100k steps — keeps the full
+        # dispatcher including cuDNN. No-op on CPU/eager paths.
+        with sdpa_kernel(
+            [
+                SDPBackend.FLASH_ATTENTION,
+                SDPBackend.EFFICIENT_ATTENTION,
+                SDPBackend.MATH,
+            ],
+        ):
+            return backbone.language_model(
+                inputs_embeds=embeds,
+                per_layer_inputs=per_layer,
+                position_ids=positions,
+                padding_mask=full_mask,
+                cache=cache,
+            )
 
     @override
     def forward(
