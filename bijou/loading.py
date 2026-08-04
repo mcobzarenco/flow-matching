@@ -514,6 +514,7 @@ def build_gemma_encoder(
     dtype: torch.dtype | None,
     attn_backend: AttentionBackend = DEFAULT_ATTENTION_BACKEND,
     depth: BackboneDepth = BackboneDepth.PREFIX,
+    offload_ple: bool = False,
 ) -> tuple[Gemma4Model, GemmaEncoder]:
     """The Gemma backbone (frozen; truncated to its non-KV-shared layer
     prefix at the default PREFIX depth, whole stack at FULL) plus its
@@ -530,6 +531,7 @@ def build_gemma_encoder(
             if depth is BackboneDepth.PREFIX
             else None
         ),
+        offload_ple=offload_ple,
     )
     encoder = GemmaEncoder(
         backbone.config,
@@ -891,12 +893,16 @@ def from_checkpoint(
     dtype: torch.dtype | None = None,
     expert_dtype: torch.dtype = torch.float32,
     attn_backend: AttentionBackend = DEFAULT_ATTENTION_BACKEND,
+    offload_ple: bool = False,
 ) -> tuple[BijouModel, CheckpointInfo]:
     """Load a bijou training checkpoint directory (as written by
     bijou.train.save_checkpoint): backbone resolved from the recorded id,
     expert config rebuilt from the recorded train args, expert weights
     loaded strictly. Returns the eval-mode model plus checkpoint metadata
-    (normalization stats table etc.)."""
+    (normalization stats table etc.). ``offload_ple`` parks the PLE
+    token table in host RAM (full-depth ar_backbone checkpoints on
+    small GPUs — see gemma4.loading.load_model); prefix-depth
+    checkpoints refuse it loudly rather than ignore it."""
     checkpoint = Path(checkpoint)
     meta = json.loads((checkpoint / "bijou_config.json").read_text())
     sections = checkpoint_sections(meta)
@@ -940,6 +946,7 @@ def from_checkpoint(
             dtype=dtype,
             attn_backend=attn_backend,
             depth=sections.backbone.depth,
+            offload_ple=offload_ple,
         )
         decoder: ARFastDecoder | ARBackboneDecoder
         if isinstance(decoder_config, ARFastConfig):
@@ -979,6 +986,12 @@ def from_checkpoint(
                 f"{checkpoint} is a format-1 (pre-prompt-section) "
                 "checkpoint — refused with the pre-format-3 prompts "
                 "(no back-compat, 2026-08-03)",
+            )
+        if offload_ple:
+            raise SystemExit(
+                "--offload-ple targets full-depth ar_backbone checkpoints "
+                "(9.6 GB bf16); this prefix-depth checkpoint fits small "
+                "GPUs without it — drop the flag",
             )
         assert sections.prompt is not None  # tagged formats carry it
         expert_config = expert_config_from_architecture(

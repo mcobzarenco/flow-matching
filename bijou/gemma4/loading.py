@@ -43,6 +43,11 @@ _PLE_PACKED_KEYS = {
     "language_model.embed_tokens_per_layer.weight": 1,
     "language_model.per_layer_model_projection.weight": 0,
 }
+# The fused per-layer-embedding TABLE (offload target): 262k x L*ple_dim
+# — half the full model's bytes on E2B (4.7 GB bf16 at L=35) and
+# lookup-only at inference (per_layer_model_projection is a matmul
+# weight and stays on the compute device).
+_PLE_TABLE_KEY = "language_model.embed_tokens_per_layer.weight"
 
 
 def resolve_checkpoint_dir(model_id_or_path: str | Path) -> Path:
@@ -133,6 +138,7 @@ def load_model(
     attn_backend: AttentionBackend = DEFAULT_ATTENTION_BACKEND,
     config: Gemma4Config | None = None,
     truncate_layers: int | None = None,
+    offload_ple: bool = False,
 ) -> Gemma4Model:
     """Load a checkpoint, materializing weights directly on ``device``.
 
@@ -141,9 +147,16 @@ def load_model(
     towers. With ``truncate_layers=N`` only the first N decoder layers are
     instantiated and loaded — including only the first N slices of the packed
     per-layer-embedding (PLE) tensors — e.g. the Bijou prefix encoder keeps
-    just the non-KV-shared prefix (see :func:`truncated_config`). The model
-    is returned in eval mode with gradients disabled; for training, re-enable
-    with ``model.requires_grad_(True)`` / ``model.train()``.
+    just the non-KV-shared prefix (see :func:`truncated_config`). With
+    ``offload_ple=True`` the PLE token table (`_PLE_TABLE_KEY`) is
+    materialized and KEPT in host RAM — never transiting ``device`` — and
+    ``TextModel.get_per_layer_inputs`` hops ids/rows across per lookup:
+    the full-depth E2B otherwise cannot serve inference on ≤8 GiB GPUs
+    (measured: 9.6 GB bf16 of weights, 4.7 GB of which is this table).
+    The model is returned in eval mode with gradients disabled; for
+    training, re-enable with ``model.requires_grad_(True)`` /
+    ``model.train()`` (training never offloads — the table would train
+    at PCIe speed).
     """
     checkpoint_dir = resolve_checkpoint_dir(model_id_or_path)
     if config is None:
@@ -176,7 +189,21 @@ def load_model(
                     truncate_layers,
                 ):
                     continue
-                if ple_slice_dim and (axis := _PLE_PACKED_KEYS.get(name)) is not None:
+                if offload_ple and name == _PLE_TABLE_KEY:
+                    # Host-RAM materialization via a CPU-side handle —
+                    # the table must never transit the accelerator (the
+                    # whole point is that it doesn't fit next to the
+                    # rest of the model).
+                    with safe_open(
+                        weight_file,
+                        framework="pt",
+                        device="cpu",
+                    ) as f_cpu:
+                        if ple_slice_dim:
+                            tensor = f_cpu.get_slice(key)[:, :ple_slice_dim]
+                        else:
+                            tensor = f_cpu.get_tensor(key)
+                elif ple_slice_dim and (axis := _PLE_PACKED_KEYS.get(name)) is not None:
                     # Read only the kept slices from disk.
                     tensor_slice = f.get_slice(key)
                     if axis == 0:
@@ -195,10 +222,29 @@ def load_model(
     model.load_state_dict(state_dict, strict=True, assign=True)
     model.eval()
     model.requires_grad_(False)
-    # Parameters are already on the target device; this sweeps over the small
-    # computed buffers (rope inv_freq, embed scales), which meta construction
-    # materializes on CPU (see bijou.nn.buffer_device).
-    return model.to(device)
+    if not offload_ple:
+        # Parameters are already on the target device; this sweeps over
+        # the small computed buffers (rope inv_freq, embed scales), which
+        # meta construction materializes on CPU (see bijou.nn.buffer_device).
+        return model.to(device)
+    # Offloaded: a whole-model .to(device) would drag the deliberately
+    # CPU-parked table onto the accelerator — sweep the buffers only
+    # (parameters carry the per-key placement from assign=True), and
+    # skip the parked module itself: its embed_scale buffer must stay
+    # co-located with its CPU weight (moving it produced a cuda-vs-cpu
+    # mismatch INSIDE the table's forward — caught by rollout --check).
+    target = torch.device(device)
+    parked = model.language_model.embed_tokens_per_layer
+    for module in model.modules():
+        if module is parked:
+            continue
+        # _buffers assignment is the standard idiom for moving a
+        # registered buffer in place (register_buffer would reset
+        # persistence flags).
+        for name, buffer in list(module._buffers.items()):
+            if buffer is not None and buffer.device != target:
+                module._buffers[name] = buffer.to(target)
+    return model
 
 
 @dataclass(frozen=True, slots=True)

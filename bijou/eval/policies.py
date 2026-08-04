@@ -108,6 +108,7 @@ class BijouPolicy:
         generate: tuple[AuxField, ...] = (),
         condition_override: dict[str, str] | None = None,
         include_subgoal_condition: bool = False,
+        offload_ple: bool = False,
     ) -> None:
         self.name = f"bijou@{checkpoint.name.removeprefix('step_').lstrip('0') or '0'}"
         self.device = device
@@ -121,6 +122,7 @@ class BijouPolicy:
             checkpoint,
             device=device,
             expert_dtype=expert_dtype,
+            offload_ple=offload_ple,
         )
         is_ar_backbone = isinstance(self.model.decoder, ARBackboneDecoder)
         if generate and not is_ar_backbone:

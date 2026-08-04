@@ -151,6 +151,14 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--device", default="cuda")
     parser.add_argument(
+        "--offload-ple",
+        action="store_true",
+        help="park the backbone's per-layer-embedding token table in "
+        "host RAM (4.7 GB of the full-depth ar_backbone's 9.6 GB bf16 "
+        "weights, lookup-only at inference) — fits ≤8 GiB GPUs at "
+        "negligible latency cost",
+    )
+    parser.add_argument(
         "--expert-dtype",
         choices=["float32", "bfloat16"],
         default="float32",
@@ -300,6 +308,7 @@ def main() -> int:
         expert_dtype=getattr(torch, args.expert_dtype),
         generate=tuple(AuxField(f) for f in (args.generate or ())),
         include_subgoal_condition=args.subgoal is not None,
+        offload_ple=args.offload_ple,
     )
     stats = rig_stats(args, policy)
     chunk_size = policy.info.chunk_size

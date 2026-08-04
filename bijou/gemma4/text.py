@@ -538,9 +538,18 @@ class TextModel(nn.Module):
         self.per_layer_model_projection_scale = config.hidden_size**-0.5
 
     def get_per_layer_inputs(self, input_ids: Tensor) -> Tensor:
-        """Token-identity component of PLE: [B, S] -> [B, S, L, ple_dim]."""
+        """Token-identity component of PLE: [B, S] -> [B, S, L, ple_dim].
+
+        The table may live on CPU while the model computes on an
+        accelerator (load_model(offload_ple=True): at 262k x L*ple_dim
+        it is half the full model's bytes, and it is lookup-only) — ids
+        hop to the table's device and the gathered rows hop back. Both
+        ``.to`` calls are no-ops when devices already match, so the
+        resident path is untouched."""
         config = self.config
-        return self.embed_tokens_per_layer(input_ids).reshape(
+        table = self.embed_tokens_per_layer
+        rows = table(input_ids.to(table.weight.device))
+        return rows.to(input_ids.device).reshape(
             *input_ids.shape,
             config.num_hidden_layers,
             config.hidden_size_per_layer_input,
