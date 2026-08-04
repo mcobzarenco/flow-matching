@@ -919,11 +919,15 @@ def main() -> int:
                 ),
             )
         policy_names = [s.name for s in summaries]
+        # Worst-first by the evaluated policy's MAE (the actionable tail
+        # on top); the baseline sorts it when no checkpoint was given.
+        sort_policy = bijou_policy.name if bijou_policy is not None else policy_names[0]
         collapsible_tables = [
             ReportTable(
                 title=(
                     f"Per-dataset chunk MAE ({len(per_dataset)} datasets; "
-                    "rows with few frames are noise-dominated)"
+                    f"sorted by {sort_policy} MAE, worst first; rows with "
+                    "few frames are noise-dominated)"
                 ),
                 header=["dataset", "frames", *policy_names],
                 rows=[
@@ -935,7 +939,10 @@ def main() -> int:
                             for name in policy_names
                         ),
                     ]
-                    for repo_id, dataset_slice in per_dataset.items()
+                    for repo_id, dataset_slice in sorted(
+                        per_dataset.items(),
+                        key=lambda pair: -pair[1].chunk_mae[sort_policy],
+                    )
                 ],
             ),
         ]
