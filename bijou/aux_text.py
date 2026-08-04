@@ -572,6 +572,30 @@ def visibility_text(item: dict[str, Any]) -> str | None:
     return "; ".join(parts)
 
 
+def parse_visibility(text: str) -> tuple[frozenset[int], frozenset[int]] | None:
+    """Lenient inverse of :func:`visibility_text`: ``object 0,1; gripper
+    none`` -> ({0, 1}, {}) as (object slots, gripper slots) in prompt
+    positions, or None when the text doesn't parse (a malformed
+    generation — callers skip, they never guess). Order-insensitive:
+    ``0,1`` and ``1,0`` parse equal, so set equality is the comparison."""
+    parts = [part.strip() for part in text.split(";")]
+    if len(parts) != 2:
+        return None
+    slots: list[frozenset[int]] = []
+    for prefix, part in zip(("object", "gripper"), parts, strict=True):
+        if not part.startswith(prefix):
+            return None
+        rest = part.removeprefix(prefix).strip()
+        if rest == "none":
+            slots.append(frozenset())
+            continue
+        try:
+            slots.append(frozenset(int(token) for token in rest.split(",")))
+        except ValueError:
+            return None
+    return slots[0], slots[1]
+
+
 def events_text(item: dict[str, Any]) -> str | None:
     """All events that fired on this frame, "; "-joined, or None.
     ``language_events`` is FRAME-LOCAL in lerobot items, so every

@@ -56,6 +56,11 @@ class ShardResults:
     outcomes: dict[int, str | None]
     holding_labels: dict[int, float]
     progress_labels: dict[int, float]
+    # Display-form label strings (aux_text.label_values semantics):
+    # event carries the explicit "none" on judge-sampled no-event
+    # frames; visible is the positional "object …; gripper …" line.
+    event_labels: dict[int, str]
+    visible_labels: dict[int, str]
     sensitivity_deltas: list[float]
     report_samples: dict[int, ReportSample]
     generations: dict[int, AuxGeneration]
@@ -97,6 +102,10 @@ def merge_shards(shards: list[ShardResults]) -> ShardResults:
         },
         progress_labels={
             k: v for shard in shards for k, v in shard.progress_labels.items()
+        },
+        event_labels={k: v for shard in shards for k, v in shard.event_labels.items()},
+        visible_labels={
+            k: v for shard in shards for k, v in shard.visible_labels.items()
         },
         sensitivity_deltas=[
             delta for shard in shards for delta in shard.sensitivity_deltas

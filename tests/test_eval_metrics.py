@@ -72,6 +72,8 @@ def _shard(
         outcomes=dict.fromkeys(frame_ids, outcome),
         holding_labels={frame_ids[0]: 1.0},
         progress_labels={frame_ids[0]: 0.5},
+        event_labels={frame_ids[0]: "none"},
+        visible_labels={frame_ids[0]: "object 0; gripper none"},
         sensitivity_deltas=[float(len(frame_ids))],
         report_samples={},
         generations={},
@@ -99,6 +101,11 @@ def test_merge_shards_sorts_and_is_world_size_invariant() -> None:
     ]
     assert merged.outcomes == {0: "success", 5: "success", 3: None, 8: None}
     assert merged.holding_labels == {0: 1.0, 3: 1.0}
+    assert merged.event_labels == {0: "none", 3: "none"}
+    assert merged.visible_labels == {
+        0: "object 0; gripper none",
+        3: "object 0; gripper none",
+    }
     assert sorted(merged.sensitivity_deltas) == [2.0, 2.0]
     # Dump rows follow the same global index order, all fields aligned.
     assert merged.dump_index == [0, 3, 5, 8]

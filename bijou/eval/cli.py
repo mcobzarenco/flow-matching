@@ -43,7 +43,13 @@ from typing import Any
 import numpy as np
 import torch
 
-from ..aux_text import AuxField, aux_label_text
+from ..aux_text import (
+    EVENT_NONE,
+    AuxField,
+    aux_label_text,
+    label_values,
+    parse_visibility,
+)
 from ..data import EpisodeSplit, select_datasets
 from ..model import SamplingMethod
 from .metrics import (
@@ -69,6 +75,7 @@ from .policies import (
 # sliced by their episode's TRUE outcome label; unlabeled = no
 # requestable outcome (UNCLEAR completion or unjudged dataset).
 OUTCOME_BUCKETS = ("success", "partial", "failure", "unlabeled")
+from .plan import SamplePlan, build_plan, resolve_plan, validate_plan
 from .report import THEMES, ReportSample, ReportTable, render_report
 from .sharding import ShardResults, merge_shards
 from .smolvla import SmolVLAEvalPolicy
@@ -103,11 +110,24 @@ class EvalReport:
     condition_sensitivity: float | None
     condition_sensitivity_frames: int
     # Narrated-pass aux metrics vs the (weak) judge labels over ALL
-    # labeled sampled frames (None = no narrated pass).
+    # labeled sampled frames (None = no narrated pass). Event accuracy
+    # is presence detection ("none" vs any event); visible accuracy is
+    # exact set-match of the parsed positional slots.
     holding_accuracy: float | None
     holding_frames: int
     progress_mae: float | None
     progress_frames: int
+    event_accuracy: float | None
+    event_frames: int
+    visible_accuracy: float | None
+    visible_frames: int
+    # Sample-plan provenance (None/0 when sampling was uniform): the
+    # headline summaries cover core_frames; labeled_frames rode along
+    # for the aux metrics only.
+    sample_plan: str | None
+    plan_seed: int | None
+    core_frames: int
+    labeled_frames: int
     # Per-dataset breakdown, ordered by frame count descending (see
     # metrics.slice_by_dataset for the small-n caveat).
     per_dataset: dict[str, DatasetSlice]
@@ -134,6 +154,14 @@ class EvalReport:
             "holding_frames": self.holding_frames,
             "progress_mae": self.progress_mae,
             "progress_frames": self.progress_frames,
+            "event_accuracy": self.event_accuracy,
+            "event_frames": self.event_frames,
+            "visible_accuracy": self.visible_accuracy,
+            "visible_frames": self.visible_frames,
+            "sample_plan": self.sample_plan,
+            "plan_seed": self.plan_seed,
+            "core_frames": self.core_frames,
+            "labeled_frames": self.labeled_frames,
             "per_dataset": {
                 repo_id: dataset_slice.to_dict()
                 for repo_id, dataset_slice in self.per_dataset.items()
@@ -223,7 +251,41 @@ def parse_args() -> argparse.Namespace:
         help="frames sampled without replacement across the selection; "
         "omit to score every frame of the selection (mind the size: "
         "large holdouts are hours even multi-GPU — the printed "
-        "'eval data' line has the frame count)",
+        "'eval data' line has the frame count). Mutually exclusive "
+        "with --sample-plan",
+    )
+    parser.add_argument(
+        "--sample-plan",
+        type=Path,
+        default=None,
+        help="stratified panel artifact (JSON): per-episode core frames "
+        "drive the headline metrics, oversampled judge-labeled frames "
+        "feed the aux metrics. Loads the file when it exists (a frozen "
+        "panel — cross-checkpoint comparisons become paired); builds "
+        "and writes it deterministically when it does not",
+    )
+    parser.add_argument(
+        "--plan-seed",
+        type=int,
+        default=0,
+        help="seed for building a NEW sample plan (ignored when loading; "
+        "deliberately distinct from --seed, which keeps governing "
+        "policy noise)",
+    )
+    parser.add_argument(
+        "--frames-per-episode",
+        type=int,
+        default=4,
+        help="core-panel frames drawn uniformly per episode when "
+        "building a new sample plan (ignored when loading)",
+    )
+    parser.add_argument(
+        "--labeled-per-episode",
+        type=int,
+        default=2,
+        help="additional judge-labeled frames per episode when building "
+        "a new sample plan (ignored when loading); scored but excluded "
+        "from headline aggregation — they feed the aux metrics",
     )
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--chunk-size", type=int, default=50)
@@ -303,7 +365,13 @@ def parse_args() -> argparse.Namespace:
         default="dark",
         help="report color scheme",
     )
-    return parser.parse_args()
+    args = parser.parse_args()
+    if args.sample_plan is not None and args.num_samples is not None:
+        parser.error(
+            "--sample-plan and --num-samples are mutually exclusive: the "
+            "plan IS the sample",
+        )
+    return args
 
 
 def main() -> int:
@@ -373,12 +441,71 @@ def main() -> int:
             for reason in selection.dropped:
                 print(f"  - {reason}", flush=True)
 
-    num_samples = (
-        len(dataset)
-        if args.num_samples is None
-        else min(args.num_samples, len(dataset))
-    )
-    indices = sorted(random.Random(args.seed).sample(range(len(dataset)), num_samples))
+    plan: SamplePlan | None = None
+    if args.sample_plan is not None:
+        if args.sample_plan.exists():
+            plan = SamplePlan.load(args.sample_plan)
+            validate_plan(
+                plan,
+                episodes=args.episodes,
+                holdout_episodes=args.holdout_episodes,
+                split_seed=args.split_seed,
+                fps=list(args.fps) if args.fps else None,
+                camera_counts=(
+                    list(args.camera_counts) if args.camera_counts else None
+                ),
+            )
+            if is_main:
+                print(
+                    f"sample plan LOADED from {args.sample_plan} "
+                    f"(plan seed {plan.plan_seed}, "
+                    f"{plan.frames_per_episode}/episode core + "
+                    f"≤{plan.labeled_per_episode}/episode labeled, "
+                    f"created {plan.created_at})",
+                    flush=True,
+                )
+        else:
+            # Deterministic: every rank builds the identical plan; only
+            # rank 0 writes it.
+            plan = build_plan(
+                selection,
+                plan_seed=args.plan_seed,
+                frames_per_episode=args.frames_per_episode,
+                labeled_per_episode=args.labeled_per_episode,
+                episodes=args.episodes,
+                holdout_episodes=args.holdout_episodes,
+                split_seed=args.split_seed,
+                fps=list(args.fps) if args.fps else None,
+                camera_counts=(
+                    list(args.camera_counts) if args.camera_counts else None
+                ),
+            )
+            if is_main:
+                plan.save(args.sample_plan)
+                print(
+                    f"sample plan BUILT and written to {args.sample_plan} "
+                    f"(plan seed {args.plan_seed})",
+                    flush=True,
+                )
+        indices, core_indices = resolve_plan(plan, selection)
+        num_samples = len(indices)
+        if is_main:
+            print(
+                f"panel: {len(core_indices)} core frames (headline) + "
+                f"{num_samples - len(core_indices)} labeled-oversample "
+                "frames (aux metrics only)",
+                flush=True,
+            )
+    else:
+        num_samples = (
+            len(dataset)
+            if args.num_samples is None
+            else min(args.num_samples, len(dataset))
+        )
+        indices = sorted(
+            random.Random(args.seed).sample(range(len(dataset)), num_samples),
+        )
+        core_indices = set(indices)
     # Round-robin over the SORTED indices: every rank sees a near-even
     # spread across datasets, and shard membership is a pure function of
     # (seed, world_size).
@@ -483,6 +610,8 @@ def main() -> int:
     outcomes: dict[int, str | None] = {}
     holding_labels: dict[int, float] = {}
     progress_labels: dict[int, float] = {}
+    event_labels: dict[int, str] = {}
+    visible_labels: dict[int, str] = {}
     # Q3: measured iff outcome-conditioning is trained AND the run isn't
     # already a manual counterfactual.
     q3 = (
@@ -503,6 +632,13 @@ def main() -> int:
                 value = item.get(key)
                 if value is not None and bool(torch.isfinite(value)):
                     store[index] = float(value)
+            # Event/visible labels via the shared presence rules (event
+            # carries the explicit "none" on judge-sampled frames).
+            texts = label_values(item, (AuxField.EVENT, AuxField.VISIBLE))
+            if (event := texts.get(AuxField.EVENT)) is not None:
+                event_labels[index] = event
+            if (visible := texts.get(AuxField.VISIBLE)) is not None:
+                visible_labels[index] = visible
         batch_predictions: dict[str, list[torch.Tensor]] = {}
         for policy in policies:
             start = time.perf_counter()
@@ -598,6 +734,8 @@ def main() -> int:
         outcomes=outcomes,
         holding_labels=holding_labels,
         progress_labels=progress_labels,
+        event_labels=event_labels,
+        visible_labels=visible_labels,
         sensitivity_deltas=sensitivity_deltas,
         report_samples=report_samples,
         generations=(
@@ -625,32 +763,43 @@ def main() -> int:
             "valid": torch.stack(results.dump_valid).numpy(),
             "index": np.array(results.dump_index),
             "repo_id": np.array(results.dump_repo),
+            # Core-panel membership (all-True without a sample plan).
+            "core": np.array([i in core_indices for i in results.dump_index]),
         }
         for name, chunks in results.dump_predictions.items():
             payload[f"pred:{name}"] = torch.stack(chunks).numpy()
         np.savez_compressed(args.dump_predictions, allow_pickle=False, **payload)
         print(f"dumped predictions to {args.dump_predictions}", flush=True)
 
+    # Headline aggregation (summaries, per-dataset, Q2, paired) runs over
+    # the CORE panel only — under a sample plan the labeled-oversample
+    # frames would bias every frame-mean toward judged frames. Aux
+    # metrics and Q3 read ALL scored frames: that oversampling is their
+    # reason to exist. Without a plan, core == everything.
+    core_scores = {
+        name: [score for score in frame_scores if score.index in core_indices]
+        for name, frame_scores in results.scores.items()
+    }
     summaries = [
-        summarize(name, frame_scores) for name, frame_scores in results.scores.items()
+        summarize(name, frame_scores) for name, frame_scores in core_scores.items()
     ]
     motor_names = selection.action_names or [
         f"motor_{i}" for i in range(selection.action_dim)
     ]
-    per_dataset = slice_by_dataset(results.scores)
+    per_dataset = slice_by_dataset(core_scores)
 
     # Q2: chunk MAE sliced by TRUE outcome (a bucketing of the one
     # true-label-conditioned pass — the same semantics as the in-run
     # eval/chunk_mae_* series; not a counterfactual). Buckets align with
     # the merged (index-sorted) score lists via the outcome-by-index map.
-    reference_scores = next(iter(results.scores.values()))
+    reference_scores = next(iter(core_scores.values()))
     buckets = [
         outcome if outcome in OUTCOME_BUCKETS else "unlabeled"
         for outcome in (results.outcomes[score.index] for score in reference_scores)
     ]
     outcome_slices: dict[str, dict[str, float]] = {}
     if len(set(buckets)) > 1:
-        for name, frame_scores in results.scores.items():
+        for name, frame_scores in core_scores.items():
             outcome_slices[name] = {}
             for bucket in OUTCOME_BUCKETS:
                 subset = [
@@ -667,6 +816,10 @@ def main() -> int:
     holding_frames = 0
     progress_mae: float | None = None
     progress_frames = 0
+    event_accuracy: float | None = None
+    event_frames = 0
+    visible_accuracy: float | None = None
+    visible_frames = 0
     if narrated_policy is not None:
         holding_hits = [
             int(generation.holding == bool(int(label)))
@@ -686,6 +839,32 @@ def main() -> int:
         if progress_errors:
             progress_frames = len(progress_errors)
             progress_mae = sum(progress_errors) / progress_frames
+        # Event: presence detection (generated "none" vs any event) —
+        # free-text match would punish paraphrase, presence is the
+        # decision that matters. Negatives exist only on judge-sampled
+        # frames (explicit-"none" labels).
+        event_hits = [
+            int((generation.event.strip() == EVENT_NONE) == (label == EVENT_NONE))
+            for index, label in results.event_labels.items()
+            if (generation := results.generations.get(index)) is not None
+            and generation.event is not None
+        ]
+        if event_hits:
+            event_frames = len(event_hits)
+            event_accuracy = sum(event_hits) / event_frames
+        # Visibility: set-equality of the parsed positional slots (both
+        # object and gripper must match exactly; order-insensitive).
+        visible_hits = [
+            int(generated_slots == label_slots)
+            for index, label in results.visible_labels.items()
+            if (generation := results.generations.get(index)) is not None
+            and generation.visible is not None
+            and (generated_slots := parse_visibility(generation.visible)) is not None
+            and (label_slots := parse_visibility(label)) is not None
+        ]
+        if visible_hits:
+            visible_frames = len(visible_hits)
+            visible_accuracy = sum(visible_hits) / visible_frames
 
     print("\n== chunk metrics (raw action units, pad-masked) ==", flush=True)
     print(
@@ -747,14 +926,19 @@ def main() -> int:
             "(outcome forced to 'success' vs true-label conditioning)",
             flush=True,
         )
-    if holding_accuracy is not None or progress_mae is not None:
+    if narrated_policy is not None and holding_frames + progress_frames > 0:
+        nan = float("nan")
         print(
-            f"\n== aux vs weak labels ({narrated_policy.name if narrated_policy else ''}) == "
+            f"\n== aux vs weak labels ({narrated_policy.name}) == "
             f"holding acc "
-            f"{holding_accuracy if holding_accuracy is not None else float('nan'):.3f} "
+            f"{holding_accuracy if holding_accuracy is not None else nan:.3f} "
             f"(n={holding_frames}), progress MAE "
-            f"{progress_mae if progress_mae is not None else float('nan'):.3f} "
-            f"(n={progress_frames})",
+            f"{progress_mae if progress_mae is not None else nan:.3f} "
+            f"(n={progress_frames}), event acc "
+            f"{event_accuracy if event_accuracy is not None else nan:.3f} "
+            f"(n={event_frames}), visible acc "
+            f"{visible_accuracy if visible_accuracy is not None else nan:.3f} "
+            f"(n={visible_frames})",
             flush=True,
         )
 
@@ -762,9 +946,9 @@ def main() -> int:
     comparisons = [
         compare_paired(
             s.name,
-            results.scores[s.name],
+            core_scores[s.name],
             baseline,
-            results.scores[baseline],
+            core_scores[baseline],
         )
         for s in summaries[1:]
     ]
@@ -773,9 +957,9 @@ def main() -> int:
         comparisons.append(
             compare_paired(
                 narrated_policy.name,
-                results.scores[narrated_policy.name],
+                core_scores[narrated_policy.name],
                 bijou_policy.name,
-                results.scores[bijou_policy.name],
+                core_scores[bijou_policy.name],
             ),
         )
     if comparisons:
@@ -823,6 +1007,14 @@ def main() -> int:
             holding_frames=holding_frames,
             progress_mae=progress_mae,
             progress_frames=progress_frames,
+            event_accuracy=event_accuracy,
+            event_frames=event_frames,
+            visible_accuracy=visible_accuracy,
+            visible_frames=visible_frames,
+            sample_plan=str(args.sample_plan) if args.sample_plan else None,
+            plan_seed=plan.plan_seed if plan is not None else None,
+            core_frames=len(core_indices),
+            labeled_frames=num_samples - len(core_indices),
             per_dataset=per_dataset,
         )
         args.output_json.parent.mkdir(parents=True, exist_ok=True)
@@ -855,6 +1047,14 @@ def main() -> int:
             f"fps filter: {args.fps or 'all'}",
             f"camera-count filter: {args.camera_counts or 'all'}",
             f"generate: {args.generate if args.generate is not None else '(fast path)'}",
+            (
+                f"sample plan: {args.sample_plan} (plan seed {plan.plan_seed}, "
+                f"{len(core_indices)} core + "
+                f"{num_samples - len(core_indices)} labeled frames; headline "
+                "metrics = core panel only)"
+                if plan is not None
+                else "sample plan: none (uniform frame sampling)"
+            ),
         ]
         extra_tables: list[ReportTable] = []
         if outcome_slices:
@@ -908,6 +1108,22 @@ def main() -> int:
                     "progress MAE vs weak labels (narrated pass)",
                     f"{progress_mae:.3f}",
                     str(progress_frames),
+                ],
+            )
+        if event_accuracy is not None:
+            diagnostics.append(
+                [
+                    "event presence accuracy vs weak labels (narrated pass)",
+                    f"{event_accuracy:.3f}",
+                    str(event_frames),
+                ],
+            )
+        if visible_accuracy is not None:
+            diagnostics.append(
+                [
+                    "visibility slot-set accuracy vs weak labels (narrated pass)",
+                    f"{visible_accuracy:.3f}",
+                    str(visible_frames),
                 ],
             )
         if diagnostics:
