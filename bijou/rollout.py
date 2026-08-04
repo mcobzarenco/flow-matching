@@ -41,12 +41,13 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import torch
 from lerobot.cameras.opencv import OpenCVCameraConfig
 from lerobot.robots.so_follower import SOFollower, SOFollowerRobotConfig
 
 from .annotations import CAMERA_KINDS, ConditionField
-from .aux_text import AuxField
+from .aux_text import AuxField, AuxGeneration
 from .data import DatasetStats
 from .eval.policies import BijouPolicy
 from .model import SamplingMethod
@@ -252,6 +253,31 @@ def observation_to_item(
     return item
 
 
+def print_generation(
+    generations: list[AuxGeneration] | None,
+    requested: tuple[AuxField, ...],
+) -> None:
+    """One stdout line per replan with the decode's aux field values
+    (parsed form; the raw bytes follow when a lenient parse failed —
+    they are the ground truth)."""
+    if generations is None or not requested:
+        return
+    generation = generations[0]
+    parts: list[str] = []
+    unparsed = False
+    for aux_field in requested:
+        value: str | bool | float | None = getattr(generation, aux_field.value)
+        if value is None:
+            unparsed = True
+        parts.append(
+            f"{aux_field.value}: {value if value is not None else '<unparsed>'}",
+        )
+    print(f"  aux | {' | '.join(parts)}", flush=True)
+    if unparsed:
+        raw = generation.text.strip().replace("\n", " \\n ")
+        print(f"  aux (raw) | {raw}", flush=True)
+
+
 def main() -> int:
     args = parse_args()
     torch.set_float32_matmul_precision("high")
@@ -304,7 +330,34 @@ def main() -> int:
         f"{args.duration:.0f}s, max_relative_target={args.max_relative_target}",
     )
     if args.check:
-        print("check mode: not connecting to the robot")
+        # Exercise the FULL inference path on a synthetic observation
+        # (prompt collation with conditioning + [generate|…], prefix
+        # encode, decode, aux parse) — everything except the robot. A
+        # checkpoint/flag combination that would die mid-rollout dies
+        # here instead.
+        print("check mode: one synthetic-observation predict, no robot")
+        synthetic: dict[str, Any] = {f"{m}.pos": 0.0 for m in SO_MOTORS}
+        for name in cameras:
+            synthetic[name] = np.zeros(
+                (args.camera_height, args.camera_width, 3),
+                dtype=np.uint8,
+            )
+        item = observation_to_item(
+            synthetic,
+            args.task,
+            stats,
+            chunk_size,
+            rig_kinds,
+            condition_values,
+        )
+        start = time.perf_counter()
+        chunks, generations = policy.predict_with_text([item], [0])
+        latency = time.perf_counter() - start
+        print(
+            f"predict ok: chunk {tuple(chunks[0].shape)} in {latency * 1000:.0f} ms",
+            flush=True,
+        )
+        print_generation(generations, policy.generate)
         return 0
 
     robot = SOFollower(
@@ -333,7 +386,8 @@ def main() -> int:
                 condition_values,
             )
             start = time.perf_counter()
-            chunk = policy.predict([item], [replans])[0]
+            chunks, generations = policy.predict_with_text([item], [replans])
+            chunk = chunks[0]
             latency = time.perf_counter() - start
             replans += 1
             print(
@@ -341,6 +395,7 @@ def main() -> int:
                 f"{[round(float(x), 1) for x in item['observation.state']]}",
                 flush=True,
             )
+            print_generation(generations, policy.generate)
             next_tick = time.perf_counter()
             for step in range(horizon):
                 if time.perf_counter() >= deadline:

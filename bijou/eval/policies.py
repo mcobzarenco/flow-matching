@@ -206,7 +206,15 @@ class BijouPolicy:
         ]
 
     @torch.no_grad()
-    def predict(self, items: list[dict[str, Any]], indices: list[int]) -> list[Tensor]:
+    def predict_with_text(
+        self,
+        items: list[dict[str, Any]],
+        indices: list[int],
+    ) -> tuple[list[Tensor], list[AuxGeneration] | None]:
+        """Chunks plus the decode's aux generations — one per item for
+        ar_backbone (empty-text on the fast path), None for decoders
+        that generate no text. Rollout prints these live; eval's
+        ChunkPolicy protocol keeps consuming ``predict``."""
         items = self.apply_overrides(items)
         batch = self.collator(items).to(self.device)
         # Flow integrates from per-item seeded noise (deterministic and
@@ -228,7 +236,12 @@ class BijouPolicy:
             method=self.method,
             generate=self.generate,
         )
-        return [chunk.cpu() for chunk in prediction.actions]
+        return [chunk.cpu() for chunk in prediction.actions], prediction.generations
+
+    @torch.no_grad()
+    def predict(self, items: list[dict[str, Any]], indices: list[int]) -> list[Tensor]:
+        chunks, _generations = self.predict_with_text(items, indices)
+        return chunks
 
 
 class NarratedBijouPolicy:
