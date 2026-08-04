@@ -952,11 +952,34 @@ run narratives live in git history. Detailed setup + fit narratives for
 mainline runs live in "Experiment reports" at the end of this section —
 the ledger tables are the index, those are the record.
 
-### Ledger — fps-30 + ≤2-camera frame set (current mainline; copy 10.46 holdout / 10.35 norm-copy, 1024 frames)
+### Leaderboard — best checkpoint per family, community holdout
+
+| family | best checkpoint | frame set (copy baseline, frames) | chunk_mae | ×copy | first_mae (copy) |
+|---|---|---|---|---|---|
+| **ar_backbone, request-conditioned** | `bijou_arb_rcond_100k_ddp4` @100k | fps-30 ≤2-cam (10.88, 16384) | **5.640** | 0.52 | **2.11** (2.56) |
+| ar_backbone, full-vocab (suffix fmt 1) | `bijou_arb_fullvocab_100k_ddp4` @100k | fps-30 (11.50, 256) | 5.656 | 0.49 | 1.95 (2.73) |
+| ar_fast, live text trunk | `bijou_ar_fast_v2_unftext2_50k_ddp2` @50k | fps-30 (11.50, 256) | 5.96 | 0.52 | 2.06 (2.73) |
+| flow, adaRMS frozen trunk | `bijou_adarms_bidir_h1536` @100k | fps-30 (11.50, 256) | 6.92 (Heun-30) | 0.60 | — |
+| flow, legacy mainline + unftext r2 | r2 @15k | legacy (10.30, 256) | 6.47 | 0.63 | — |
+
+How to read it: rows come from the per-frame-set ledgers below (same
+measurements, not re-runs); **×copy is the only column that crosses
+frame sets, and only coarsely** — the 0.52-vs-0.49 inversion between
+the two ar_backbone rows is within cross-set distortion (the ≤2-cam
+filter drops hard multi-camera scenes AND lowers the copy baseline;
+they never met on a shared frame set, and pre-format-3 checkpoints are
+refused by current code, so they can't). The **mainline** is the
+request-conditioned row: current-format, on the hub with optimizer,
+scored at 16× the sample size of every other row, and the only row
+whose first_mae beats its own copy baseline. Flow rows are
+frozen-trunk-family bests, kept for the stage-2 plan (§8.11), not as
+deployment candidates.
+
+### Ledger — fps-30 + ≤2-camera frame set (current mainline; copy 10.88 holdout / 10.81 norm-copy, 16,384 frames)
 
 | checkpoint | comm holdout | note |
 |---|---|---|
-| **ar_backbone request-conditioned 100k** (`bijou_arb_rcond_100k_ddp4`) | **5.328** (first_mae 2.057, p50 3.93, p90 10.70) | prompt fmt 3 / suffix fmt 5 / aux v4; decoder 1e-4 / backbone 2e-5; B12→10 @20k; **project best**, −49% vs copy, first_mae beats copy's 2.593; narrated pass +0.242 (45% win) — see the report below |
+| **ar_backbone request-conditioned 100k** (`bijou_arb_rcond_100k_ddp4`) | **5.640** (first_mae 2.113, p50 4.08, p90 11.51) | prompt fmt 3 / suffix fmt 5 / aux v4; decoder 1e-4 / backbone 2e-5; B12→10 @20k; **project best**, −48% vs copy, first_mae beats copy's 2.557; narrated pass +0.043 (46% win) — see the report below. (Earlier 1024-frame read: 5.328 vs copy 10.463 — a slightly easy draw; the 16k numbers supersede it) |
 
 This set drops 3–4-camera datasets (99 + 4 of 981; 18.0% of episodes),
 which also lowers the copy baseline (10.46 vs 11.50 on the all-camera
@@ -1113,17 +1136,21 @@ uv run torchrun --standalone --nproc-per-node=4 -m bijou.train \
     --save-dir outputs/train/bijou_arb_rcond_100k_ddp4
 ```
 
-and the eval that produced the table below:
+and the eval that produced the table below (4-GPU sharded, 22m50s;
+the earlier single-GPU 1024-frame read lives in
+`reports/eval_rcond_100k_holdout.*` — kept because in-run probes were
+compared against it, superseded for decisions):
 
 ```sh
-uv run python -m bijou.eval \
+uv run torchrun --standalone --nproc-per-node=4 -m bijou.eval \
     --data ~/datasets/mcobzarenco/community_curated_v0 \
     --episodes holdout --holdout-episodes 0.1 --split-seed 0 \
     --fps 30 --camera-counts 1 2 \
     --checkpoint outputs/train/bijou_arb_rcond_100k_ddp4/step_100000 \
-    --num-samples 1024 --batch-size 24 --num-workers 8 --seed 0 \
-    --output-json reports/eval_rcond_100k_holdout.json \
-    --report reports/eval_rcond_100k_holdout.html
+    --num-samples 16384 --batch-size 24 --num-workers 8 --seed 0 \
+    --report-samples 32 \
+    --output-json reports/eval_rcond_100k_holdout_16k.json \
+    --report reports/eval_rcond_100k_holdout_16k.html
 ```
 
 **Interruption.** Rank-2 CUDA OOM at step 20,160 (77.5 of 79.2 GiB, a
@@ -1165,35 +1192,48 @@ never engaged); `condition_sensitivity` peaked 2.28 @40.5k. Reading
 implies**, which compounds autoregressively at decode — hence a large
 eval move with almost no teacher-forced CE move, and no grad spike
 expected under that mechanism. Not data or optimizer (no loader event,
-smooth cosine, B-seam was 20k). It resolved productively: partial
-finished the **best** slice (4.93 in-run, 4.72 offline).
+smooth cosine, B-seam was 20k). It resolved: the partial slice
+repriced back to trend. (The 1024-frame eval's "partial finished
+best" read did not survive 16× the sample — see the correction below.)
 
-**Offline eval** — 1024 holdout frames, seed 0, identical
-split/filters, `bijou.eval` with the narrated pass auto-enabled:
+**Offline eval** — 16,384 holdout frames, seed 0, identical
+split/filters, 4-GPU sharded `bijou.eval` with the narrated pass
+auto-enabled:
 
 | policy | chunk_mae | p50 | p90 | first_mae | chunk_mse | ms/frame |
 |---|---|---|---|---|---|---|
-| state-copy | 10.463 | 7.81 | 21.82 | 2.593 | 393.2 | 0 |
-| state-copy-norm | 10.345 | 7.60 | 21.71 | 2.359 | 387.8 | 0 |
-| **bijou@100000** | **5.328** | **3.93** | **10.70** | **2.057** | **115.9** | 91 |
-| bijou@100000+fields | 5.572 | 3.90 | 11.66 | 2.095 | 167.2 | 136 |
+| state-copy | 10.882 | 8.24 | 22.98 | 2.557 | 450.8 | 0 |
+| state-copy-norm | 10.813 | 8.14 | 22.92 | 2.369 | 450.0 | 0 |
+| **bijou@100000** | **5.640** | **4.08** | **11.51** | **2.113** | **141.3** | 107 |
+| bijou@100000+fields | 5.684 | 4.08 | 11.53 | 2.146 | 147.0 | 149 |
 
-Paired: bijou vs copy **−4.878** mean Δ, p50 −2.400, **77% win rate**;
-narrated vs fast path **+0.242**, p50 +0.000, 45% — self-generated
-narration does NOT help the actions at this scale (interpretability
-surface, not an accuracy lever; the fast path stays the deployment
-default and the headline metric). Q2 slices (true-label conditioning,
-bucketed by verdict): success 5.408 (n=788), **partial 4.721** (n=162),
-failure 6.712 (n=25, noisy), unlabeled 5.435 (n=49). Q3 sensitivity
-**1.391** mean |Δ| over 187 labeled non-success frames — conditioning
+Paired: bijou vs copy **−5.018** mean Δ, p50 −2.544, **77% win rate**;
+narrated vs fast path **+0.043**, p50 +0.000, 46% — self-generated
+narration does NOT help the actions at this scale, but costs even less
+than the 1024-frame read suggested (that +0.242 was small-n plus
+batch-composition numerics; see `bijou/eval/sharding.py`). The fast
+path stays the deployment default and the headline metric. Q2 slices
+(true-label conditioning, bucketed by verdict): success 5.527
+(n=12536), partial 5.994 (n=2458), failure 7.006 (n=498), unlabeled
+5.500 (n=892) — **small-n corrections**: "partial best slice" (4.72 at
+n=162) inverted at n=2458 (partial sits +0.47 above success — the
+difficulty ordering is success < unlabeled < partial < failure, which
+matches intuition: messier executions are harder to clone), and
+failure's 6.712@n=25 firmed up to 7.006@n=498. Q3 sensitivity
+**1.609** mean |Δ| over 2956 labeled non-success frames — conditioning
 is decisively live offline. Aux vs the weak judge labels (narrated
-generations, every labeled sampled frame): **holding accuracy 0.880**
-(n=25 — at the ~0.80–0.85 inter-judge ceiling), **progress MAE 0.053**
-(n=25 — well inside the ±0.15 inter-judge noise).
+generations, every labeled sampled frame): **holding accuracy 0.805**
+(n=365 — exactly at the 0.807 inter-judge agreement ceiling; the
+1024-frame 0.880@n=25 was a lucky draw), **progress MAE 0.066**
+(n=365 — well inside the ±0.15 inter-judge noise). The report's
+per-dataset table (869 datasets, median 13 frames each) puts the
+worst residuals at `willnorris/bbox-2` (47.8 vs copy 111.1 — an
+extreme-motion outlier both policies fail) and a tail of
+hard-manipulation sets at 13–26; best sets sit at 1.5–1.8.
 
 **Takeaways.** (1) The request-conditioned format trains stably
-end-to-end and clears the format-4 plateau decisively — 5.33 vs copy
-10.46 (−49%), with `first_mae` 2.057 **beating** copy's 2.593 (the
+end-to-end and clears the format-4 plateau decisively — 5.64 vs copy
+10.88 (−48%), with `first_mae` 2.113 **beating** copy's 2.557 (the
 initial-placement measure that used to be the wall). (2) Narration is
 free of action cost but of no action benefit; keep it for the aux
 metrics. (3) Aux heads track the judge as closely as judges track each
@@ -1397,12 +1437,13 @@ Format-2 smokes on
 rig v2 validated the aux mechanism (loss_aux 22.3 → 0.07, coherent
 self-emitted subgoals, zero budget fallbacks; aux-less arm: BOA on
 16/16). **Corpus-scale read-out: `bijou_arb_rcond_100k_ddp4` (§7
-experiment reports).** Measured there: aux quality sits AT the
-weak-label ceiling (holding 0.880, progress MAE 0.053 vs the judge),
-conditioning is live (Q3 1.391), and narrating costs actions nothing
-but buys them nothing either (+0.242 MAE, 45% win over 1024 frames) —
-so aux is confirmed as free interpretability, which is what the
-pre-registration asked.
+experiment reports; 16,384-frame numbers).** Measured there: aux
+quality sits AT the weak-label ceiling (holding 0.805 at n=365 — the
+inter-judge agreement is 0.807; progress MAE 0.066 vs the judge),
+conditioning is live (Q3 1.609, n=2956), and narrating costs actions
+nothing but buys them nothing either (+0.043 MAE, 46% win over 16,384
+frames) — so aux is confirmed as free interpretability, which is what
+the pre-registration asked.
 **Value attribution STILL stays the paired experiment** (aux-on vs
 aux-off fine-tunes from a common base on rig v2, matched
 seed/steps/LRs, one variable at a time): the 100k run answers "does
@@ -1411,9 +1452,9 @@ representation" — the recipe is deliberately multivariate, so that
 claim needs the arms. Pre-registered: aux-on action
 MAE within probe noise (±0.3) of aux-off at matched steps (aux as free
 interpretability), holding accuracy approaching but not
-exceeding the ~0.8 label-noise ceiling (met: 0.880),
+exceeding the ~0.8 label-noise ceiling (met: 0.805 at n=365),
 `condition_sensitivity` climbing off zero (§4's Q3 — ≈0 means
-conditioning collapsed; met: 1.391 offline).
+conditioning collapsed; met: 1.609 offline).
 **Queued follow-ups:** un-gate `observed_task` rewrites for failure
 episodes once Q3 validates; `[quality: …]` conditioning if smoothness
 shows signal; next-subgoal aux (A2 — planning signal for chunk endings
