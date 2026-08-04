@@ -939,15 +939,31 @@ oracle corpus).
 All numbers: open-loop chunk MAE, raw degrees, 256 frames, seed 0
 (Heun-10 for flow; AR decodes greedily), state-copy baselines scored on
 the identical frames. **Comparability rules**: numbers only compare
-within one frame set — the fps-30-filtered set and the unfiltered
-legacy set index frames differently; token-level metrics never cross
+within one frame set — the three sets below (fps-30 + ≤2-camera;
+fps-30; unfiltered legacy) index frames differently, and EVERY
+selection filter defines a new set (`--camera-counts` changes the
+concatenated indexing exactly as `--fps` does); token-level metrics
+never cross
 tokenizer versions; the 256-frame probe has a ±0.3 noise floor and the
 in-run probe matches offline eval to ~0.01 when settings agree (per-
 rank sharding once read ~0.3 high on the unftext r2 lineage — trust
 offline for decisions). Full reports/JSONs in `reports/`; superseded
-run narratives live in git history.
+run narratives live in git history. Detailed setup + fit narratives for
+mainline runs live in "Experiment reports" at the end of this section —
+the ledger tables are the index, those are the record.
 
-### Ledger — fps-30 frame set (current mainline; copy 11.50 holdout / 10.72 train / 12.00 rig-holdout-3403)
+### Ledger — fps-30 + ≤2-camera frame set (current mainline; copy 10.46 holdout / 10.35 norm-copy, 1024 frames)
+
+| checkpoint | comm holdout | note |
+|---|---|---|
+| **ar_backbone request-conditioned 100k** (`bijou_arb_rcond_100k_ddp4`) | **5.328** (first_mae 2.057, p50 3.93, p90 10.70) | prompt fmt 3 / suffix fmt 5 / aux v4; decoder 1e-4 / backbone 2e-5; B12→10 @20k; **project best**, −49% vs copy, first_mae beats copy's 2.593; narrated pass +0.242 (45% win) — see the report below |
+
+This set drops 3–4-camera datasets (99 + 4 of 981; 18.0% of episodes),
+which also lowers the copy baseline (10.46 vs 11.50 on the all-camera
+fps-30 set) — the ratio to copy, not the absolute, is what carries
+across the two sets.
+
+### Ledger — fps-30 frame set (all camera counts; copy 11.50 holdout / 10.72 train / 12.00 rig-holdout-3403)
 
 | checkpoint | comm holdout | rig holdout (3403) | note |
 |---|---|---|---|
@@ -1042,6 +1058,152 @@ frame-set identity before any cross-ledger rig comparison.)
   is whatever the pretrain didn't bank (see the AR ft arc above). §8
   changes are judged by fine-tuned-then-scored rig MAE, with rollout as
   the final arbiter.
+
+### Experiment reports
+
+One block per mainline run: the exact setup (so it can be re-run), the
+fit narrative including what went wrong, and the offline eval that
+scored it. Ledger rows above are the index; these are the record.
+Superseded runs stay in git history.
+
+#### `bijou_arb_rcond_100k_ddp4` — request-conditioned ar_backbone, 100k (2026-08-03/04)
+
+First run of the request-conditioned stack (prompt format 3, suffix
+format 5, aux template v4 — §1/§2.3/§2.4). **Project best**; the
+checkpoint is on the hub at
+`mcobzarenco/bijou-checkpoints/bijou_arb_rcond_100k_ddp4/step_100000`
+(backbone + expert + prompt + optimizer), reports in
+`reports/eval_rcond_100k_holdout.{html,json,log}`.
+
+**Setup.** Code `68c762b` (eval-table split `d51a3b5` applied from 20k).
+Corpus `community_curated_v0` @ `--fps 30 --camera-counts 1 2` ⇒ 878 of
+981 datasets, 42,853 labeled episodes (annotation stamp `9b796de`,
+judge opus-5), `--holdout-episodes 0.1 --split-seed 0`. Decoder
+`ar_backbone` + `fast_tokenizer_v2`; aux fields subgoal, holding,
+progress, event, visible; `--aux-dropout 0.0 --field-dropout 0.1`;
+conditioning `--condition-fields subgoal outcome smoothness
+--condition-dropout 0.1 --subgoal-dropout 0.5`;
+`--instruction-augment 0.5 --camera-kind-dropout 0.1`. LRs
+`--decoder-lr 1e-4 --backbone-text-lr 2e-5`, `--grad-clip 100`,
+`--warmup-steps 1000`, 4×H100 DDP, `--num-workers 20
+--prefetch-factor 4`, `--eval-samples 256 --eval-every 500
+--save-every 2500 --log-every 20 --seed 0`. Batch 12 → **10** (see
+below). Wall ~13.5 h; 0.46–0.49 s/step at B12, 0.42–0.47 at B10.
+Verbatim (the `MALLOC_*`/`PYTORCH_CUDA_ALLOC_CONF` env is the standard
+box preamble from `docs/init_gpu_machine.md`):
+
+```sh
+uv run torchrun --standalone --nproc-per-node=4 -m bijou.train \
+    --train-data ~/datasets/mcobzarenco/community_curated_v0 \
+    --fps 30 --camera-counts 1 2 \
+    --holdout-episodes 0.1 --split-seed 0 \
+    --decoder ar_backbone \
+    --fast-tokenizer mcobzarenco/bijou-checkpoints/fast_tokenizer_v2 \
+    --aux-fields subgoal holding progress event visible \
+    --aux-dropout 0.0 --field-dropout 0.1 \
+    --condition-fields subgoal outcome smoothness \
+    --condition-dropout 0.1 --subgoal-dropout 0.5 \
+    --instruction-augment 0.5 --camera-kind-dropout 0.1 \
+    --decoder-lr 1e-4 --backbone-text-lr 2e-5 --grad-clip 100 \
+    --steps 100000 --warmup-steps 1000 --batch-size 12 \
+    --num-workers 20 --prefetch-factor 4 \
+    --eval-samples 256 --eval-every 500 --save-every 2500 --log-every 20 \
+    --seed 0 --wandb-project bijou-dev \
+    --wandb-run-name bijou_arb_rcond_100k_ddp4 \
+    --save-dir outputs/train/bijou_arb_rcond_100k_ddp4
+```
+
+and the eval that produced the table below:
+
+```sh
+uv run python -m bijou.eval \
+    --data ~/datasets/mcobzarenco/community_curated_v0 \
+    --episodes holdout --holdout-episodes 0.1 --split-seed 0 \
+    --fps 30 --camera-counts 1 2 \
+    --checkpoint outputs/train/bijou_arb_rcond_100k_ddp4/step_100000 \
+    --num-samples 1024 --batch-size 24 --num-workers 8 --seed 0 \
+    --output-json reports/eval_rcond_100k_holdout.json \
+    --report reports/eval_rcond_100k_holdout.html
+```
+
+**Interruption.** Rank-2 CUDA OOM at step 20,160 (77.5 of 79.2 GiB, a
+1.78 GiB allocation) — the pre-registered B12 gamble; `step_020000`
+had just been written, so the run resumed there at B10 with the SAME
+`--seed 0` (optimizer/scheduler restored; only batch composition
+shifted). Effective batch 48 → 40 mid-run is a visible seam at 20k in
+the wandb curves. Per the launcher's pre-registration, batch roulette
+ends here: the structural fix for headroom is the output-vocab
+shortlist head (§8.8-adjacent, queued), not another batch guess.
+
+**Fit.** In-run `eval_chunk_mae` (256-frame probe): 31.4 @500 → 9.43
+@5k → 7.54 @10k → 7.33 @20k → **6.57 @30k** (pre-registered gate
+"clearly below 7.8 by 30k": passed) → 6.03 @40k → 5.79 @50k → 5.86
+@60k → 5.60 @75k → 5.54 @90k → 5.55 @100k, best **5.29 @99.5k**.
+Final loss 2.60 = action 2.51 + 0.5·aux 0.174; train_mae 4.41 vs
+holdout 5.55 (healthy gap — the killed format-4 predecessor was
+plateaued at 7.8–8.8 with a memorization signature). Run hygiene over
+100k steps: **1** loader substitution, **0** value-budget fallbacks, 4
+subgoal-truncation prints, no cuDNN asserts. Aux/conditioning
+sub-metrics @100k: `chunk_mae_{success,partial,failure,unlabeled}` =
+5.66 / 4.93 / 6.12 / 5.78; `samples_all_fields_mae` 5.70 vs 5.55
+fast-path; `condition_sensitivity` 0.235 final (>0 all run = no
+conditioning collapse, but it is a ≤12-row metric — read the trend,
+not the point). `samples_holding_acc` never logged: the 12 fixed rich
+rows contained no judge-sampled (holding-labeled) frame — fixed
+offline by the full-sample aux metrics below; stratified rich-row
+selection is queued for in-run.
+
+**The 40.5k–45.5k excursion** (recorded because the mechanism is
+reusable diagnostic knowledge). Eval-led and slice-localized:
+`chunk_mae_partial` blew out 5.9 → **11.26 @41k** and stayed ~8.7
+through 44.5k while success (6.15→6.45) and failure (~5.5) barely
+moved; headline eval followed (6.03 → 7.41 @41.5k); rolling train loss
+rose only +0.15 and **3.5k steps later** (44.1k); grad norms stayed
+flat (6.1–6.8 in-window; post-30k mean 7.35, max 22.9 — clip@100
+never engaged); `condition_sensitivity` peaked 2.28 @40.5k. Reading
+(inference, not proof): a **repricing of what `[outcome|partial]`
+implies**, which compounds autoregressively at decode — hence a large
+eval move with almost no teacher-forced CE move, and no grad spike
+expected under that mechanism. Not data or optimizer (no loader event,
+smooth cosine, B-seam was 20k). It resolved productively: partial
+finished the **best** slice (4.93 in-run, 4.72 offline).
+
+**Offline eval** — 1024 holdout frames, seed 0, identical
+split/filters, `bijou.eval` with the narrated pass auto-enabled:
+
+| policy | chunk_mae | p50 | p90 | first_mae | chunk_mse | ms/frame |
+|---|---|---|---|---|---|---|
+| state-copy | 10.463 | 7.81 | 21.82 | 2.593 | 393.2 | 0 |
+| state-copy-norm | 10.345 | 7.60 | 21.71 | 2.359 | 387.8 | 0 |
+| **bijou@100000** | **5.328** | **3.93** | **10.70** | **2.057** | **115.9** | 91 |
+| bijou@100000+fields | 5.572 | 3.90 | 11.66 | 2.095 | 167.2 | 136 |
+
+Paired: bijou vs copy **−4.878** mean Δ, p50 −2.400, **77% win rate**;
+narrated vs fast path **+0.242**, p50 +0.000, 45% — self-generated
+narration does NOT help the actions at this scale (interpretability
+surface, not an accuracy lever; the fast path stays the deployment
+default and the headline metric). Q2 slices (true-label conditioning,
+bucketed by verdict): success 5.408 (n=788), **partial 4.721** (n=162),
+failure 6.712 (n=25, noisy), unlabeled 5.435 (n=49). Q3 sensitivity
+**1.391** mean |Δ| over 187 labeled non-success frames — conditioning
+is decisively live offline. Aux vs the weak judge labels (narrated
+generations, every labeled sampled frame): **holding accuracy 0.880**
+(n=25 — at the ~0.80–0.85 inter-judge ceiling), **progress MAE 0.053**
+(n=25 — well inside the ±0.15 inter-judge noise).
+
+**Takeaways.** (1) The request-conditioned format trains stably
+end-to-end and clears the format-4 plateau decisively — 5.33 vs copy
+10.46 (−49%), with `first_mae` 2.057 **beating** copy's 2.593 (the
+initial-placement measure that used to be the wall). (2) Narration is
+free of action cost but of no action benefit; keep it for the aux
+metrics. (3) Aux heads track the judge as closely as judges track each
+other — the weak-label ceiling, not the model, is now the limit there.
+(4) Still improving at 100k (75k→100k bought 0.05–0.3 depending on
+smoothing) — longer runs remain the cheapest known win. Open flags:
+the partial-slice repricing event class (watch for recurrence), ≤12-row
+in-run conditioning metrics, FAST clip rate ~1.94% of chunks (≤4 of
+300 coefficients; tokenizer predates curated-v0's exact quantiles —
+refit queued).
 
 ## 8. Directions under evaluation and proposed changes
 
@@ -1222,28 +1384,36 @@ landed. Expert-side autocast is dead (expert is only ~20%).
 - **Symmetric bidirectional self-attention** — catastrophic cross-rig in
   the ablation; being re-tested only as one factor inside the adaRMS run.
 
-### 8.10 Aux text tasks (IMPLEMENTED §2.4; value measurement next)
+### 8.10 Aux text tasks (IMPLEMENTED §2.4; first corpus-scale read-out in §7, paired attribution still owed)
 
 **Status.** The full annotation stack shipped 2026-08-02 — five aux
 fields (§2.4: subgoal/holding/progress/event/visible), prompt
 conditioning (§4: camera kind tags, subgoal hint with anti-copy
 coupling, hindsight outcome/smoothness), instruction augmentation
-(rewrites + success-gated observed_task), suffix format 4 (real
-Gemma-4 opener) — on the fully-materialized curated corpus (981
-datasets, ~52.5k labeled episodes at one stamp). Format-2 smokes on
+(rewrites + success-gated observed_task) — on the fully-materialized
+curated corpus, superseded 2026-08-03 by request conditioning (the fed
+mode token became the prompt's `[generate|…]` list; §2.3/§2.4).
+Format-2 smokes on
 rig v2 validated the aux mechanism (loss_aux 22.3 → 0.07, coherent
 self-emitted subgoals, zero budget fallbacks; aux-less arm: BOA on
-16/16); the first full-recipe 100k pretrain is the corpus-scale
-read-out — its in-flight numbers live in wandb, its ledger row lands
-in §7 when eval'd.
-**Value attribution stays the paired experiment** (aux-on vs aux-off
-fine-tunes from a common base on rig v2, matched seed/steps/LRs, one
-variable at a time — the full recipe is deliberately multivariate, so
-single-factor claims need these arms). Pre-registered: aux-on action
+16/16). **Corpus-scale read-out: `bijou_arb_rcond_100k_ddp4` (§7
+experiment reports).** Measured there: aux quality sits AT the
+weak-label ceiling (holding 0.880, progress MAE 0.053 vs the judge),
+conditioning is live (Q3 1.391), and narrating costs actions nothing
+but buys them nothing either (+0.242 MAE, 45% win over 1024 frames) —
+so aux is confirmed as free interpretability, which is what the
+pre-registration asked.
+**Value attribution STILL stays the paired experiment** (aux-on vs
+aux-off fine-tunes from a common base on rig v2, matched
+seed/steps/LRs, one variable at a time): the 100k run answers "does
+narrating at inference help" but NOT "does aux supervision shape the
+representation" — the recipe is deliberately multivariate, so that
+claim needs the arms. Pre-registered: aux-on action
 MAE within probe noise (±0.3) of aux-off at matched steps (aux as free
-interpretability), holding likelihood accuracy approaching but not
-exceeding the ~0.8 label-noise ceiling, `condition_sensitivity`
-climbing off zero (§4's Q3 — ≈0 means conditioning collapsed).
+interpretability), holding accuracy approaching but not
+exceeding the ~0.8 label-noise ceiling (met: 0.880),
+`condition_sensitivity` climbing off zero (§4's Q3 — ≈0 means
+conditioning collapsed; met: 1.391 offline).
 **Queued follow-ups:** un-gate `observed_task` rewrites for failure
 episodes once Q3 validates; `[quality: …]` conditioning if smoothness
 shows signal; next-subgoal aux (A2 — planning signal for chunk endings
