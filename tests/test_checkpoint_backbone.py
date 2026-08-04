@@ -122,6 +122,7 @@ def make_args(save_dir: Path) -> TrainArgs:
         init_from=None,
         resume=None,
         backbone_init_from=None,
+        prompt_generate_bracket=False,
         instruction=None,
         cameras=None,
         max_cameras=None,

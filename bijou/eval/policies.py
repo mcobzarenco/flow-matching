@@ -152,10 +152,13 @@ class BijouPolicy:
             # collator, which does carry the codec.
             action_codec=None,
             aux=None,
-            # ar_backbone prompts always carry [generate|…]; the request
-            # is the caller's ask (() = the fast path) and must match
-            # the decode's ``generate`` — same tuple, one source.
-            generate_bracket=is_ar_backbone,
+            # ar_backbone prompts always carry [generate|…] (the
+            # request is the caller's ask; () = the fast path and must
+            # match the decode's ``generate`` — same tuple, one
+            # source). Other decoders render it iff training did
+            # (info.generate_bracket — the --prompt-generate-bracket
+            # record; inference reproduces the training prompt).
+            generate_bracket=is_ar_backbone or self.info.generate_bracket,
             generate_override=generate if is_ar_backbone else None,
             # Kinds travel with the items (StatsAttachedDataset attaches
             # them; rollout items carry an explicit map); never dropped

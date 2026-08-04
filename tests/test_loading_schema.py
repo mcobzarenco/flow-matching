@@ -87,6 +87,7 @@ def test_prompt_decoder_bridge_roundtrips_expert_config() -> None:
         format=3,
         state_dim=6,
         condition_fields=(),
+        generate_bracket=False,
     )
     decoder = flow_decoder_config_from_expert(expert_config)
     assert decoder.schedule[:5] == ("kv4", "kv4", "kv4", "kv4", "kv9")
@@ -102,12 +103,29 @@ def test_config_dicts_roundtrip_through_json() -> None:
         format=3,
         state_dim=6,
         condition_fields=(),
+        generate_bracket=True,  # the non-default: must survive the trip
     )
     decoder = flow_decoder_config_from_expert(expert_config)
     prompt_parsed = parse_prompt_config(json.loads(json.dumps(prompt.to_dict())))
     decoder_parsed = parse_decoder_config(json.loads(json.dumps(decoder.to_dict())))
     assert prompt_parsed == prompt
     assert decoder_parsed == decoder
+
+
+def test_prompt_config_bracket_defaults_false_on_old_checkpoints() -> None:
+    """Checkpoints written before 2026-08-04 carry no generate_bracket
+    key: those flow prompts had no bracket (ar_backbone consumers OR
+    the parsed value with their decoder kind, where it is implied)."""
+    payload = GemmaPromptConfig(
+        exports=(4, 9, 14),
+        max_soft_tokens=140,
+        format=3,
+        state_dim=6,
+        condition_fields=(),
+        generate_bracket=True,
+    ).to_dict()
+    del payload["generate_bracket"]
+    assert parse_prompt_config(payload).generate_bracket is False
 
 
 def test_unknown_stream_and_unused_export_fail_loudly() -> None:
@@ -119,6 +137,7 @@ def test_unknown_stream_and_unused_export_fail_loudly() -> None:
         format=3,
         state_dim=6,
         condition_fields=(),
+        generate_bracket=False,
     )
     with pytest.raises(SystemExit, match="unknown stream"):
         expert_config_from_architecture(prompt, decoder, e2b_config())
@@ -133,6 +152,7 @@ def test_unknown_stream_and_unused_export_fail_loudly() -> None:
         format=3,
         state_dim=6,
         condition_fields=(),
+        generate_bracket=False,
     )
     with pytest.raises(SystemExit, match="not consumed"):
         expert_config_from_architecture(prompt_full, decoder_unused, e2b_config())
@@ -164,6 +184,7 @@ def format3_meta() -> dict:
             format=3,
             state_dim=6,
             condition_fields=(),
+            generate_bracket=False,
         ),
         decoder=flow_decoder_config_from_expert(expert_config).to_dict(),
         normalization=tiny_stats(),

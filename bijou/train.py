@@ -135,6 +135,9 @@ class TrainArgs:
     # state_proj from a checkpoint; the decoder builds fresh — decoder
     # family/config deliberately unconstrained by the source checkpoint.
     backbone_init_from: Path | None
+    # Render [generate|actions] in prompts for non-AR decoders (implied
+    # and always-on for ar_backbone): stage-2 trunk consistency.
+    prompt_generate_bracket: bool
     instruction: str | None
     cameras: tuple[str, ...] | None
     max_cameras: int | None
@@ -956,6 +959,9 @@ def save_checkpoint(
             format=PROMPT_FORMAT,
             state_dim=model.encoder.state_dim,
             condition_fields=tuple(args.condition_fields or ()),
+            generate_bracket=(
+                args.decoder == "ar_backbone" or args.prompt_generate_bracket
+            ),
         ),
         decoder=decoder_schema_dict(model.decoder),
         normalization=aggregate_stats(normalizers),
@@ -1414,6 +1420,15 @@ def parse_args() -> TrainArgs:
         "config is ignored",
     )
     parser.add_argument(
+        "--prompt-generate-bracket",
+        action="store_true",
+        help="render [generate|actions] in prompts for non-AR decoders "
+        "(stage-2 trunk consistency: an AR-pretrained trunk shaped its "
+        "conditioning/state positions WITH the bracket). ar_backbone "
+        "always renders it — passing this there is an error, not a "
+        "no-op",
+    )
+    parser.add_argument(
         "--device",
         default="cuda",
         help="torch device (cuda, cuda:N, cpu)",
@@ -1458,6 +1473,11 @@ def parse_args() -> TrainArgs:
         parser.error(
             "--backbone-init-from is mutually exclusive with --init-from/"
             "--resume (those load the decoder too)",
+        )
+    if raw.prompt_generate_bracket and raw.decoder == "ar_backbone":
+        parser.error(
+            "--prompt-generate-bracket is implied (always on) for "
+            "ar_backbone — drop the flag so runs have one spelling",
         )
     if not 0.0 <= raw.holdout_episodes < 1.0:
         parser.error("--holdout-episodes must be in [0, 1)")
@@ -1604,6 +1624,7 @@ def parse_args() -> TrainArgs:
         init_from=raw.init_from,
         resume=raw.resume,
         backbone_init_from=raw.backbone_init_from,
+        prompt_generate_bracket=raw.prompt_generate_bracket,
         instruction=raw.instruction,
         cameras=tuple(raw.cameras) if raw.cameras else None,
         max_cameras=raw.max_cameras,
@@ -1825,7 +1846,7 @@ def main() -> int:
         max_cameras=args.max_cameras,
         action_codec=action_codec,
         aux=aux_spec,
-        generate_bracket=args.decoder == "ar_backbone",
+        generate_bracket=args.decoder == "ar_backbone" or args.prompt_generate_bracket,
         generate_override=None,
         camera_kind_dropout=args.camera_kind_dropout,
         instruction_augment=args.instruction_augment,

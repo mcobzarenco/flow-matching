@@ -132,6 +132,13 @@ class GemmaPromptConfig:
     # block (empty = unconditioned). Inference must render matching
     # conditioning — BijouPolicy reads this to configure its collator.
     condition_fields: tuple[str, ...]
+    # Whether prompts carried the [generate|…] bracket. Implied for
+    # ar_backbone (the request IS its interface); opt-in for other
+    # decoders (--prompt-generate-bracket — stage-2 trunk consistency:
+    # an AR-pretrained trunk shaped its conditioning/state positions
+    # WITH the bracket present). Inference must render what training
+    # rendered.
+    generate_bracket: bool
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -141,6 +148,7 @@ class GemmaPromptConfig:
             "format": self.format,
             "state_dim": self.state_dim,
             "condition_fields": list(self.condition_fields),
+            "generate_bracket": self.generate_bracket,
         }
 
     @classmethod
@@ -166,6 +174,10 @@ class GemmaPromptConfig:
             condition_fields=tuple(
                 str(field) for field in data.get("condition_fields", [])
             ),
+            # Absent on checkpoints predating the flag (2026-08-04):
+            # those flow prompts carried no bracket; ar_backbone
+            # consumers OR this with their decoder kind.
+            generate_bracket=bool(data.get("generate_bracket", False)),
         )
 
     @property
@@ -597,6 +609,10 @@ class CheckpointInfo:
     # none/pre-conditioning checkpoint) — inference collators must
     # render matching fields.
     condition_fields: tuple[str, ...]
+    # Whether training prompts carried [generate|…] (False on
+    # checkpoints predating the flag — ar_backbone consumers OR with
+    # their decoder kind, where the bracket is implied).
+    generate_bracket: bool
 
     @property
     def chunk_size(self) -> int:
@@ -888,6 +904,9 @@ def from_checkpoint(
         backbone=sections.backbone.id,
         condition_fields=(
             sections.prompt.condition_fields if sections.prompt is not None else ()
+        ),
+        generate_bracket=(
+            sections.prompt.generate_bracket if sections.prompt is not None else False
         ),
         train_args=CheckpointTrainArgs.from_dict(meta["train_args"]),
         step=int(meta["step"]),
