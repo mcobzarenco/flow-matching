@@ -1,10 +1,11 @@
 """Open-loop evaluation CLI (invoked via ``python -m bijou.eval``).
 
-Samples K frames (without replacement, seeded) from a dataset selection and
-scores every requested policy on the SAME frames: the trivial state-copy
-baseline always, a bijou checkpoint when ``--checkpoint`` is given, and a
-SmolVLA policy when ``--smolvla`` is given. Reports pad-masked chunk metrics
-in raw action units plus paired per-frame comparisons against the baseline.
+Samples K frames (without replacement, seeded; default = every frame of
+the selection) from a dataset selection and scores every requested policy
+on the SAME frames: the trivial state-copy baseline always, a bijou
+checkpoint when ``--checkpoint`` is given, and a SmolVLA policy when
+``--smolvla`` is given. Reports pad-masked chunk metrics in raw action
+units plus paired per-frame comparisons against the baseline.
 
 Ground truth is the recorded action chunk at each frame — this is offline /
 open-loop evaluation (no robot, no simulator). For held-out scoring, point
@@ -17,6 +18,13 @@ Usage::
         --checkpoint outputs/train/<run>/step_040000 \
         --smolvla lerobot/smolvla_base \
         --num-samples 256 --device cuda --output-json eval.json
+
+Multi-GPU: launch under torchrun and the sampled frames are sharded
+round-robin across ranks (rank 0 aggregates, prints and writes exactly
+the single-process outputs — see ``sharding.py`` for the determinism
+contract)::
+
+    uv run torchrun --standalone --nproc-per-node=4 -m bijou.eval ...
 """
 
 from __future__ import annotations
@@ -25,6 +33,7 @@ import argparse
 import dataclasses
 import datetime
 import json
+import os
 import random
 import time
 from dataclasses import dataclass
@@ -61,6 +70,7 @@ from .policies import (
 # requestable outcome (UNCLEAR completion or unjudged dataset).
 OUTCOME_BUCKETS = ("success", "partial", "failure", "unlabeled")
 from .report import THEMES, ReportSample, ReportTable, render_report
+from .sharding import ShardResults, merge_shards
 from .smolvla import SmolVLAEvalPolicy
 
 
@@ -209,8 +219,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--num-samples",
         type=int,
-        default=256,
-        help="frames sampled without replacement across the selection",
+        default=None,
+        help="frames sampled without replacement across the selection; "
+        "omit to score every frame of the selection (mind the size: "
+        "large holdouts are hours even multi-GPU — the printed "
+        "'eval data' line has the frame count)",
     )
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--chunk-size", type=int, default=50)
@@ -301,7 +314,22 @@ def main() -> int:
     # storage and blows the 1024-fd ulimit -> 'received 0 items of ancdata'.
     # The file_system strategy shares via named files instead.
     torch.multiprocessing.set_sharing_strategy("file_system")
+
+    # Multi-GPU sharding (torchrun): gloo, not nccl — eval's only
+    # collective is one object gather at the end, and gloo gathers
+    # pickled CPU objects directly (nccl would stage the report tensors
+    # through the GPU). Inference still runs on cuda:LOCAL_RANK per rank.
+    world_size = int(os.environ.get("WORLD_SIZE", "1"))
+    distributed = world_size > 1
+    rank = 0
     device = torch.device(args.device)
+    if distributed:
+        torch.distributed.init_process_group("gloo")
+        rank = torch.distributed.get_rank()
+        if device.type == "cuda":
+            device = torch.device("cuda", int(os.environ["LOCAL_RANK"]))
+            torch.cuda.set_device(device)
+    is_main = rank == 0
 
     episode_split = EpisodeSplit(args.episodes)
     if episode_split is not EpisodeSplit.ALL and args.holdout_episodes <= 0:
@@ -322,28 +350,49 @@ def main() -> int:
         load_episode_annotations=args.checkpoint is not None,
     )
     dataset = selection.concat()
-    print(
-        f"eval data: {len(selection.datasets)} datasets, "
-        f"{selection.total_episodes} episodes, {len(dataset)} frames, "
-        f"action/state dim {selection.action_dim}/{selection.state_dim}",
-        flush=True,
-    )
-    if episode_split is not EpisodeSplit.ALL:
+    if is_main:
         print(
-            f"episode split: {episode_split.value} "
-            f"(fraction {args.holdout_episodes}, split seed {args.split_seed}; "
-            f"{selection.held_out_episodes} held-out episodes across "
-            f"{selection.held_out_datasets} datasets)",
+            f"eval data: {len(selection.datasets)} datasets, "
+            f"{selection.total_episodes} episodes, {len(dataset)} frames, "
+            f"action/state dim {selection.action_dim}/{selection.state_dim}",
             flush=True,
         )
-    if selection.dropped:
-        print(f"dropped {len(selection.dropped)} incompatible datasets:", flush=True)
-        for reason in selection.dropped:
-            print(f"  - {reason}", flush=True)
+        if episode_split is not EpisodeSplit.ALL:
+            print(
+                f"episode split: {episode_split.value} "
+                f"(fraction {args.holdout_episodes}, split seed {args.split_seed}; "
+                f"{selection.held_out_episodes} held-out episodes across "
+                f"{selection.held_out_datasets} datasets)",
+                flush=True,
+            )
+        if selection.dropped:
+            print(
+                f"dropped {len(selection.dropped)} incompatible datasets:",
+                flush=True,
+            )
+            for reason in selection.dropped:
+                print(f"  - {reason}", flush=True)
 
-    num_samples = min(args.num_samples, len(dataset))
+    num_samples = (
+        len(dataset)
+        if args.num_samples is None
+        else min(args.num_samples, len(dataset))
+    )
     indices = sorted(random.Random(args.seed).sample(range(len(dataset)), num_samples))
-    print(f"sampling {num_samples} frames (seed {args.seed})", flush=True)
+    # Round-robin over the SORTED indices: every rank sees a near-even
+    # spread across datasets, and shard membership is a pure function of
+    # (seed, world_size).
+    shard_indices = indices[rank::world_size]
+    if is_main:
+        print(
+            f"sampling {num_samples} frames (seed {args.seed})"
+            + (
+                f", sharded over {world_size} ranks (~{len(shard_indices)}/rank)"
+                if distributed
+                else ""
+            ),
+            flush=True,
+        )
 
     policies: list[ChunkPolicy] = [
         StateCopyPolicy(args.chunk_size),
@@ -407,7 +456,7 @@ def main() -> int:
     # main process may hold CUDA state and torchcodec is fork-unsafe) and
     # stream it through every policy so comparisons stay paired.
     loader = torch.utils.data.DataLoader(
-        torch.utils.data.Subset(dataset, indices),
+        torch.utils.data.Subset(dataset, shard_indices),
         batch_size=args.batch_size,
         shuffle=False,
         num_workers=args.num_workers,
@@ -428,9 +477,9 @@ def main() -> int:
     dump_valid: list[torch.Tensor] = []
     dump_repo: list[str] = []
     dump_index: list[int] = []
-    # Frame-aligned label records for Q2 slices and the aux metrics
-    # (None = unlabeled at that frame).
-    outcomes: list[str | None] = []
+    # Frame-aligned label records for Q2 slices and the aux metrics,
+    # keyed by global frame index (None = unlabeled at that frame).
+    outcomes: dict[int, str | None] = {}
     holding_labels: dict[int, float] = {}
     progress_labels: dict[int, float] = {}
     # Q3: measured iff outcome-conditioning is trained AND the run isn't
@@ -443,9 +492,9 @@ def main() -> int:
     sensitivity_deltas: list[float] = []
     done = 0
     for batch_number, items in enumerate(loader):
-        batch_indices = indices[done : done + len(items)]
+        batch_indices = shard_indices[done : done + len(items)]
         for item, index in zip(items, batch_indices, strict=True):
-            outcomes.append(item.get("condition_outcome"))
+            outcomes[index] = item.get("condition_outcome")
             for key, store in (
                 ("annotation.holding", holding_labels),
                 ("annotation.progress", progress_labels),
@@ -533,36 +582,74 @@ def main() -> int:
                     )
                     sensitivity_deltas.append(float(delta))
         done += len(items)
-        if batch_number % 5 == 0:
-            print(f"  scored {done}/{num_samples} frames", flush=True)
+        if is_main and batch_number % 5 == 0:
+            print(
+                f"  scored {done}/{len(shard_indices)} frames"
+                + (" (rank 0 shard)" if distributed else ""),
+                flush=True,
+            )
+
+    # One downstream path for any world size: gather every rank's shard,
+    # merge on rank 0 (index-sorted, so results are world-size-invariant
+    # for AR decodes — sharding.py has the flow caveat), others exit.
+    local = ShardResults(
+        scores=scores,
+        outcomes=outcomes,
+        holding_labels=holding_labels,
+        progress_labels=progress_labels,
+        sensitivity_deltas=sensitivity_deltas,
+        report_samples=report_samples,
+        generations=(
+            narrated_policy.generations if narrated_policy is not None else {}
+        ),
+        dump_predictions=dump_predictions,
+        dump_truth=dump_truth,
+        dump_valid=dump_valid,
+        dump_repo=dump_repo,
+        dump_index=dump_index,
+    )
+    if distributed:
+        gathered: list[ShardResults | None] = [None] * world_size
+        torch.distributed.all_gather_object(gathered, local)
+        torch.distributed.destroy_process_group()
+        if not is_main:
+            return 0
+        results = merge_shards([shard for shard in gathered if shard is not None])
+    else:
+        results = merge_shards([local])
 
     if args.dump_predictions is not None:
         payload: dict[str, np.ndarray] = {
-            "truth": torch.stack(dump_truth).numpy(),
-            "valid": torch.stack(dump_valid).numpy(),
-            "index": np.array(dump_index),
-            "repo_id": np.array(dump_repo),
+            "truth": torch.stack(results.dump_truth).numpy(),
+            "valid": torch.stack(results.dump_valid).numpy(),
+            "index": np.array(results.dump_index),
+            "repo_id": np.array(results.dump_repo),
         }
-        for name, chunks in dump_predictions.items():
+        for name, chunks in results.dump_predictions.items():
             payload[f"pred:{name}"] = torch.stack(chunks).numpy()
         np.savez_compressed(args.dump_predictions, allow_pickle=False, **payload)
         print(f"dumped predictions to {args.dump_predictions}", flush=True)
 
-    summaries = [summarize(name, frame_scores) for name, frame_scores in scores.items()]
+    summaries = [
+        summarize(name, frame_scores) for name, frame_scores in results.scores.items()
+    ]
     motor_names = selection.action_names or [
         f"motor_{i}" for i in range(selection.action_dim)
     ]
-    per_dataset = slice_by_dataset(scores)
+    per_dataset = slice_by_dataset(results.scores)
 
     # Q2: chunk MAE sliced by TRUE outcome (a bucketing of the one
     # true-label-conditioned pass — the same semantics as the in-run
-    # eval/chunk_mae_* series; not a counterfactual).
+    # eval/chunk_mae_* series; not a counterfactual). Buckets align with
+    # the merged (index-sorted) score lists via the outcome-by-index map.
+    reference_scores = next(iter(results.scores.values()))
     buckets = [
-        outcome if outcome in OUTCOME_BUCKETS else "unlabeled" for outcome in outcomes
+        outcome if outcome in OUTCOME_BUCKETS else "unlabeled"
+        for outcome in (results.outcomes[score.index] for score in reference_scores)
     ]
     outcome_slices: dict[str, dict[str, float]] = {}
     if len(set(buckets)) > 1:
-        for name, frame_scores in scores.items():
+        for name, frame_scores in results.scores.items():
             outcome_slices[name] = {}
             for bucket in OUTCOME_BUCKETS:
                 subset = [
@@ -582,8 +669,8 @@ def main() -> int:
     if narrated_policy is not None:
         holding_hits = [
             int(generation.holding == bool(int(label)))
-            for index, label in holding_labels.items()
-            if (generation := narrated_policy.generations.get(index)) is not None
+            for index, label in results.holding_labels.items()
+            if (generation := results.generations.get(index)) is not None
             and generation.holding is not None
         ]
         if holding_hits:
@@ -591,8 +678,8 @@ def main() -> int:
             holding_accuracy = sum(holding_hits) / holding_frames
         progress_errors = [
             abs(generation.progress - label)
-            for index, label in progress_labels.items()
-            if (generation := narrated_policy.generations.get(index)) is not None
+            for index, label in results.progress_labels.items()
+            if (generation := results.generations.get(index)) is not None
             and generation.progress is not None
         ]
         if progress_errors:
@@ -650,11 +737,12 @@ def main() -> int:
             ),
             flush=True,
         )
-    if q3 and sensitivity_deltas:
+    if q3 and results.sensitivity_deltas:
+        deltas = results.sensitivity_deltas
         print(
             f"\n== Q3: condition sensitivity == mean |Δ| "
-            f"{sum(sensitivity_deltas) / len(sensitivity_deltas):.4f} over "
-            f"{len(sensitivity_deltas)} labeled non-success frames "
+            f"{sum(deltas) / len(deltas):.4f} over "
+            f"{len(deltas)} labeled non-success frames "
             "(outcome forced to 'success' vs true-label conditioning)",
             flush=True,
         )
@@ -671,7 +759,12 @@ def main() -> int:
 
     baseline = policies[0].name
     comparisons = [
-        compare_paired(s.name, scores[s.name], baseline, scores[baseline])
+        compare_paired(
+            s.name,
+            results.scores[s.name],
+            baseline,
+            results.scores[baseline],
+        )
         for s in summaries[1:]
     ]
     if narrated_policy is not None and bijou_policy is not None:
@@ -679,9 +772,9 @@ def main() -> int:
         comparisons.append(
             compare_paired(
                 narrated_policy.name,
-                scores[narrated_policy.name],
+                results.scores[narrated_policy.name],
                 bijou_policy.name,
-                scores[bijou_policy.name],
+                results.scores[bijou_policy.name],
             ),
         )
     if comparisons:
@@ -720,11 +813,11 @@ def main() -> int:
             motor_names=motor_names,
             outcome_slices=outcome_slices,
             condition_sensitivity=(
-                sum(sensitivity_deltas) / len(sensitivity_deltas)
-                if sensitivity_deltas
+                sum(results.sensitivity_deltas) / len(results.sensitivity_deltas)
+                if results.sensitivity_deltas
                 else None
             ),
-            condition_sensitivity_frames=len(sensitivity_deltas),
+            condition_sensitivity_frames=len(results.sensitivity_deltas),
             holding_accuracy=holding_accuracy,
             holding_frames=holding_frames,
             progress_mae=progress_mae,
@@ -792,12 +885,12 @@ def main() -> int:
                 ),
             )
         diagnostics: list[list[str]] = []
-        if sensitivity_deltas:
+        if results.sensitivity_deltas:
             diagnostics.append(
                 [
                     "Q3 condition sensitivity (mean |Δ|, outcome→success)",
-                    f"{sum(sensitivity_deltas) / len(sensitivity_deltas):.4f}",
-                    str(len(sensitivity_deltas)),
+                    f"{sum(results.sensitivity_deltas) / len(results.sensitivity_deltas):.4f}",
+                    str(len(results.sensitivity_deltas)),
                 ],
             )
         if holding_accuracy is not None:
@@ -845,14 +938,14 @@ def main() -> int:
                 ],
             ),
         ]
-        samples = [report_samples[i] for i in sorted(report_samples)]
+        samples = [results.report_samples[i] for i in sorted(results.report_samples)]
         if narrated_policy is not None:
             samples = [
                 dataclasses.replace(
                     sample,
                     aux_generated=(
                         generation.text or "(empty)"
-                        if (generation := narrated_policy.generations.get(sample.index))
+                        if (generation := results.generations.get(sample.index))
                         is not None
                         else None
                     ),

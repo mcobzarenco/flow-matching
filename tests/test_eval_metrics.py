@@ -1,9 +1,11 @@
-"""Eval aggregation surfaces: per-dataset slices and report rendering.
+"""Eval aggregation surfaces: per-dataset slices, shard merging, report
+rendering.
 
 Pure CPU/synthetic. Covers the per-dataset breakdown added for the
-offline report (slice_by_dataset ordering + exact aggregation) and
-that render_report emits the collapsible block without touching real
-model outputs (matplotlib Agg, tiny tensors).
+offline report (slice_by_dataset ordering + exact aggregation), the
+multi-GPU shard merge (index-sorted, world-size-invariant), and that
+render_report emits the collapsible block without touching real model
+outputs (matplotlib Agg, tiny tensors).
 """
 
 from __future__ import annotations
@@ -14,6 +16,7 @@ import torch
 
 from bijou.eval.metrics import FrameScore, slice_by_dataset
 from bijou.eval.report import THEMES, ReportSample, ReportTable, render_report
+from bijou.eval.sharding import ShardResults, merge_shards
 
 
 def _score(index: int, repo_id: str, abs_error: float) -> FrameScore:
@@ -53,6 +56,69 @@ def test_slice_by_dataset_orders_and_aggregates() -> None:
     assert per_dataset["user/b"].chunk_mae == {"copy": 4.0, "bijou": 2.0}
     assert per_dataset["user/a"].chunk_mae == {"copy": 4.0, "bijou": 2.0}
     assert per_dataset["user/c"].chunk_mae == {"copy": 1.0, "bijou": 0.5}
+
+
+def _shard(
+    frame_ids: list[int],
+    repo_id: str,
+    outcome: str | None,
+) -> ShardResults:
+    scores = {
+        name: [_score(i, repo_id, float(i)) for i in frame_ids]
+        for name in ("copy", "bijou")
+    }
+    return ShardResults(
+        scores=scores,
+        outcomes=dict.fromkeys(frame_ids, outcome),
+        holding_labels={frame_ids[0]: 1.0},
+        progress_labels={frame_ids[0]: 0.5},
+        sensitivity_deltas=[float(len(frame_ids))],
+        report_samples={},
+        generations={},
+        dump_predictions={"bijou": [torch.full((2, 3), float(i)) for i in frame_ids]},
+        dump_truth=[torch.zeros(2, 3) for _ in frame_ids],
+        dump_valid=[torch.ones(2, dtype=torch.bool) for _ in frame_ids],
+        dump_repo=[repo_id for _ in frame_ids],
+        dump_index=list(frame_ids),
+    )
+
+
+def test_merge_shards_sorts_and_is_world_size_invariant() -> None:
+    # Round-robin sharding of sorted indices [0, 3, 5, 8]: rank 0 gets
+    # 0, 5; rank 1 gets 3, 8.
+    rank0 = _shard([0, 5], "user/a", "success")
+    rank1 = _shard([3, 8], "user/b", None)
+    merged = merge_shards([rank0, rank1])
+
+    for frame_scores in merged.scores.values():
+        assert [s.index for s in frame_scores] == [0, 3, 5, 8]
+    # Paired-comparison contract: every policy covers the same frames in
+    # the same order.
+    assert [s.index for s in merged.scores["copy"]] == [
+        s.index for s in merged.scores["bijou"]
+    ]
+    assert merged.outcomes == {0: "success", 5: "success", 3: None, 8: None}
+    assert merged.holding_labels == {0: 1.0, 3: 1.0}
+    assert sorted(merged.sensitivity_deltas) == [2.0, 2.0]
+    # Dump rows follow the same global index order, all fields aligned.
+    assert merged.dump_index == [0, 3, 5, 8]
+    assert merged.dump_repo == ["user/a", "user/b", "user/a", "user/b"]
+    assert [float(t[0, 0]) for t in merged.dump_predictions["bijou"]] == [
+        0.0,
+        3.0,
+        5.0,
+        8.0,
+    ]
+
+    # Gather order must not matter (all_gather_object order is rank
+    # order, but nothing downstream may depend on it).
+    flipped = merge_shards([rank1, rank0])
+    assert [s.index for s in flipped.scores["copy"]] == [0, 3, 5, 8]
+    assert flipped.dump_repo == merged.dump_repo
+
+    # World size 1 (the single-process path) gives the same view.
+    single = merge_shards([_shard([0, 3, 5, 8], "user/a", "success")])
+    assert [s.index for s in single.scores["copy"]] == [0, 3, 5, 8]
 
 
 def test_render_report_emits_collapsible_table(tmp_path: Path) -> None:

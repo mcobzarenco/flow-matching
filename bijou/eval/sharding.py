@@ -1,0 +1,102 @@
+"""Multi-GPU eval sharding: one rank's results, and their merge.
+
+The eval runner shards the sampled frame indices round-robin across
+ranks (``indices[rank::world_size]`` — indices are sorted, so each rank
+gets a near-equal spread across datasets), scores its shard, and
+gathers one ``ShardResults`` per rank to rank 0 via
+``all_gather_object``. ``merge_shards`` restores the single-process
+view: every per-policy score list re-sorted by global frame index, so
+the paired-comparison contract (same frames, same order, across
+policies) holds for any world size. The single-process path uses the
+same merge on a one-element list — one downstream code path.
+
+Determinism note: AR decodes are greedy and per-frame, so sharded
+results are bitwise-identical to single-process. Flow decoders consume
+noise draws in shard order, so their numbers reproduce only at a fixed
+``(seed, world_size)`` — same caveat as training's per-rank RNG streams.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from torch import Tensor
+
+from ..aux_text import AuxGeneration
+from .metrics import FrameScore
+from .report import ReportSample
+
+
+@dataclass(frozen=True, slots=True)
+class ShardResults:
+    """Everything one rank produced while scoring its shard.
+
+    ``outcomes``/``holding_labels``/``progress_labels`` are keyed by
+    global frame index (an outcome of None = frame has no requestable
+    outcome label). ``generations`` holds the narrated pass's per-frame
+    output ({} when no narrated pass ran). The ``dump_*`` fields carry
+    the --dump-predictions payload row-aligned with ``dump_index``
+    ([] when dumping is off).
+    """
+
+    scores: dict[str, list[FrameScore]]
+    outcomes: dict[int, str | None]
+    holding_labels: dict[int, float]
+    progress_labels: dict[int, float]
+    sensitivity_deltas: list[float]
+    report_samples: dict[int, ReportSample]
+    generations: dict[int, AuxGeneration]
+    dump_predictions: dict[str, list[Tensor]]
+    dump_truth: list[Tensor]
+    dump_valid: list[Tensor]
+    dump_repo: list[str]
+    dump_index: list[int]
+
+
+def merge_shards(shards: list[ShardResults]) -> ShardResults:
+    """Merge per-rank results; score lists and dump rows sorted by index.
+
+    Sorting makes the output independent of world size and of gather
+    order, so downstream aggregation, JSON payloads and .npz dumps are
+    stable across single- and multi-GPU invocations of the same eval.
+    """
+    scores: dict[str, list[FrameScore]] = {}
+    dump_predictions: dict[str, list[Tensor]] = {}
+    for shard in shards:
+        for name, frame_scores in shard.scores.items():
+            scores.setdefault(name, []).extend(frame_scores)
+        for name, chunks in shard.dump_predictions.items():
+            dump_predictions.setdefault(name, []).extend(chunks)
+    for frame_scores in scores.values():
+        frame_scores.sort(key=lambda score: score.index)
+
+    dump_index = [index for shard in shards for index in shard.dump_index]
+    order = sorted(range(len(dump_index)), key=dump_index.__getitem__)
+
+    def permuted[T](rows: list[T]) -> list[T]:
+        return [rows[i] for i in order]
+
+    return ShardResults(
+        scores=scores,
+        outcomes={k: v for shard in shards for k, v in shard.outcomes.items()},
+        holding_labels={
+            k: v for shard in shards for k, v in shard.holding_labels.items()
+        },
+        progress_labels={
+            k: v for shard in shards for k, v in shard.progress_labels.items()
+        },
+        sensitivity_deltas=[
+            delta for shard in shards for delta in shard.sensitivity_deltas
+        ],
+        report_samples={
+            k: v for shard in shards for k, v in shard.report_samples.items()
+        },
+        generations={k: v for shard in shards for k, v in shard.generations.items()},
+        dump_predictions={
+            name: permuted(chunks) for name, chunks in dump_predictions.items()
+        },
+        dump_truth=permuted([t for shard in shards for t in shard.dump_truth]),
+        dump_valid=permuted([t for shard in shards for t in shard.dump_valid]),
+        dump_repo=permuted([r for shard in shards for r in shard.dump_repo]),
+        dump_index=permuted(dump_index),
+    )
