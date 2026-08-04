@@ -100,6 +100,31 @@ def truncated_config(config: Gemma4Config, num_layers: int) -> Gemma4Config:
     return dataclasses.replace(config, text=text)
 
 
+def truncate_backbone_state(
+    state: dict[str, torch.Tensor],
+    config: Gemma4Config,
+) -> dict[str, torch.Tensor]:
+    """Adapt a backbone state dict saved at FULL depth to a truncated
+    build: drop layer weights at indices >= the build's depth and slice
+    the packed per-layer-embedding tensors (one slice per layer, fused
+    along one dim — `_PLE_PACKED_KEYS`) to the kept layers. A no-op
+    when depths already match. Lossless by construction for the kept
+    layers: slices are layer-major, so prefix layers keep exactly their
+    own rows/columns — this is the in-memory twin of load_model's
+    on-disk truncated read."""
+    num_layers = config.text.num_hidden_layers
+    ple_width = num_layers * config.text.hidden_size_per_layer_input
+    result: dict[str, torch.Tensor] = {}
+    for key, value in state.items():
+        if _is_truncated_layer_key(key, num_layers):
+            continue
+        axis = _PLE_PACKED_KEYS.get(key)
+        if axis is not None and value.shape[axis] > ple_width:
+            value = value.narrow(axis, 0, ple_width)
+        result[key] = value
+    return result
+
+
 def load_model(
     model_id_or_path: str | Path,
     *,

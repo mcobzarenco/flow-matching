@@ -238,9 +238,14 @@ def test_inherited_source_must_exist(tmp_path: Path) -> None:
         run_save(tmp_path, adapted_backbone_source=tmp_path / "missing.safetensors")
 
 
-def tiny_cpu_model(decoder_hidden: int, seed: int) -> BijouModel:
+def tiny_cpu_model(
+    decoder_hidden: int,
+    seed: int,
+    truncate: int | None = None,
+) -> BijouModel:
     """Real-tensor (non-meta) tiny model: --backbone-init-from actually
-    copies weights, so the backbone must exist on CPU."""
+    copies weights, so the backbone must exist on CPU. ``truncate``
+    builds the prefix-encoder shape (the flow arms' backbone)."""
     torch.manual_seed(seed)
     config = Gemma4Config(
         text=tiny_text_config(),
@@ -252,6 +257,8 @@ def tiny_cpu_model(decoder_hidden: int, seed: int) -> BijouModel:
         eoi_token_id=995,
         dtype=torch.float32,
     )
+    if truncate is not None:
+        config = truncated_config(config, truncate)
     encoder = GemmaEncoder(
         config,
         exports=(4,),
@@ -316,6 +323,55 @@ def test_backbone_init_from_loads_trunk_and_prompt_only(tmp_path: Path) -> None:
     # Decoder: untouched fresh build.
     for key, value in target.decoder.state_dict().items():
         assert torch.equal(value, decoder_before[key]), key
+
+
+def test_backbone_init_from_full_depth_into_truncated(tmp_path: Path) -> None:
+    """Stage-2's real shape: the source trunk is FULL depth (ar_backbone
+    trains all layers), the target is the truncated prefix encoder —
+    deeper layers drop and the fused per-layer-embedding tensors slice
+    to the kept layers' width (the [262144, 35x256] vs [262144, 15x256]
+    mismatch that killed ablation arm B on 2026-08-04). Values must be
+    the source's own leading slices — packing is layer-major."""
+    source = tiny_cpu_model(decoder_hidden=64, seed=0)  # full 8 layers
+    optimizer = torch.optim.AdamW(source.decoder.parameters(), lr=1e-4)
+    scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lambda _: 1.0)
+    checkpoint = save_checkpoint(
+        source,
+        args=dataclasses.replace(make_args(tmp_path), backbone_text_lr=2e-5),
+        normalizers=Normalizers(
+            action=Normalizer(mean=torch.zeros(DIM), std=torch.ones(DIM)),
+            state=Normalizer(mean=torch.zeros(DIM), std=torch.ones(DIM)),
+        ),
+        per_dataset_stats={},
+        optimizer=optimizer,
+        scheduler=scheduler,
+        step=5,
+        adapted_backbone_source=None,
+    )
+
+    # Tiny config: 8 layers, KV-shared last 2 => prefix depth 6 (ends on
+    # a full-attention layer), mirroring E2B's 35 -> 15.
+    target = tiny_cpu_model(decoder_hidden=32, seed=1, truncate=6)
+    load_backbone_init(target, checkpoint)
+
+    snapshot = load_file(str(checkpoint / "backbone.safetensors"), device="cpu")
+    target_state = target.backbone.state_dict()
+    kept = "language_model.layers.5.mlp.down_proj.weight"
+    assert torch.equal(target_state[kept], snapshot[kept].to(torch.float32))
+    ple_width = 6 * 4  # kept layers x hidden_size_per_layer_input
+    assert torch.equal(
+        target_state["language_model.embed_tokens_per_layer.weight"],
+        snapshot["language_model.embed_tokens_per_layer.weight"][:, :ple_width].to(
+            torch.float32,
+        ),
+    )
+    assert torch.equal(
+        target_state["language_model.per_layer_model_projection.weight"],
+        snapshot["language_model.per_layer_model_projection.weight"][
+            :ple_width,
+            :,
+        ].to(torch.float32),
+    )
 
 
 def test_backbone_init_from_refuses_pristine_checkpoints(tmp_path: Path) -> None:

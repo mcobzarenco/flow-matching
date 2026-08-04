@@ -39,7 +39,12 @@ from .decoders.flow import (
 from .encoders.gemma4 import PROMPT_FORMAT, GemmaEncoder
 from .fast.codec import ActionCodec
 from .gemma4.config import Gemma4Config, LayerType
-from .gemma4.loading import load_config, load_model, resolve_checkpoint_dir
+from .gemma4.loading import (
+    load_config,
+    load_model,
+    resolve_checkpoint_dir,
+    truncate_backbone_state,
+)
 from .gemma4.model import Gemma4Model
 from .interface import kv_stream_name
 from .model import BijouModel
@@ -821,8 +826,13 @@ def load_adapted_backbone(
     (~4.3 GB) next to the built one, which OOMed the 8 GiB laptop GPU at
     rollout. The same copy semantics cast the bf16 snapshot into whatever
     dtype the backbone was built with (bf16 for eval/rollout, fp32 masters
-    for a live-backbone continuation)."""
+    for a live-backbone continuation). Snapshots saved at FULL depth load
+    into truncated builds (stage-2: a flow prefix encoder inheriting an
+    ar_backbone trunk): deeper layers are dropped and the packed
+    per-layer-embedding tensors sliced to the kept layers — a no-op at
+    matching depth."""
     state = load_file(str(checkpoint / "backbone.safetensors"), device="cpu")
+    state = truncate_backbone_state(state, model.backbone.config)
     missing, unexpected = model.backbone.load_state_dict(state, strict=False)
     problems = [name for name in missing if name not in BACKBONE_UNSAVED_KEYS]
     if problems or unexpected:
