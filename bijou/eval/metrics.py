@@ -112,6 +112,50 @@ def summarize(name: str, scores: list[FrameScore]) -> PolicySummary:
 
 
 @dataclass(frozen=True, slots=True)
+class DatasetSlice:
+    """One dataset's share of an eval: frame count plus each policy's
+    chunk MAE over exactly those frames (policy name -> MAE; the policy
+    set is genuinely dynamic — it depends on the CLI flags — so a dict
+    is the right shape there)."""
+
+    frames: int
+    chunk_mae: dict[str, float]
+
+    def to_dict(self) -> dict[str, object]:
+        return {"frames": self.frames, "chunk_mae": self.chunk_mae}
+
+
+def slice_by_dataset(scores: dict[str, list[FrameScore]]) -> dict[str, DatasetSlice]:
+    """Per-dataset breakdown across policies: repo_id -> DatasetSlice.
+
+    Every policy must have scored the same frames (the runner guarantees
+    this — same contract as ``compare_paired``). Iteration order is frame
+    count descending, repo_id tie-break, so renderers can emit rows
+    without re-sorting. Small-n caveat travels with the numbers: a
+    1024-frame eval leaves 1-3 frames on most of a 900-dataset corpus —
+    those rows are noise-dominated.
+    """
+    per_policy: dict[str, dict[str, list[FrameScore]]] = {}
+    for name, frame_scores in scores.items():
+        groups: dict[str, list[FrameScore]] = {}
+        for score in frame_scores:
+            groups.setdefault(score.repo_id, []).append(score)
+        per_policy[name] = groups
+    reference = next(iter(per_policy.values()))
+    ordered = sorted(reference.items(), key=lambda pair: (-len(pair[1]), pair[0]))
+    return {
+        repo_id: DatasetSlice(
+            frames=len(subset),
+            chunk_mae={
+                name: summarize(name, per_policy[name][repo_id]).chunk_mae
+                for name in per_policy
+            },
+        )
+        for repo_id, subset in ordered
+    }
+
+
+@dataclass(frozen=True, slots=True)
 class PairedComparison:
     """Per-frame paired deltas of a policy against a reference policy."""
 

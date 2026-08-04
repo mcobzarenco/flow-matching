@@ -64,6 +64,9 @@ pre {{ background: {self.pre_bg}; padding: 0.8em; font-size: 13px;
 .cams img {{ margin-right: 8px; border: 1px solid {self.table_border}; }}
 .meta {{ color: {self.meta}; font-size: 14px; }}
 img.chart {{ max-width: 100%; }}
+details {{ margin: 0.8em 0; }}
+details > summary {{ cursor: pointer; color: {self.heading};
+                    font-size: 1.17em; font-weight: bold; }}
 """
 
 
@@ -100,6 +103,16 @@ THEMES: dict[str, ReportTheme] = {
         mpl_style="dark_background",
     ),
 }
+
+
+@dataclass(frozen=True, slots=True)
+class ReportTable:
+    """One titled table section of the report (rows are pre-formatted
+    strings — formatting decisions stay at the construction site)."""
+
+    title: str
+    header: list[str]
+    rows: list[list[str]]
 
 
 @dataclass(frozen=True, slots=True)
@@ -253,11 +266,15 @@ def render_report(
     samples: list[ReportSample],
     total_scored: int,
     theme: ReportTheme,
-    extra_tables: list[tuple[str, list[str], list[list[str]]]],
+    extra_tables: list[ReportTable],
+    collapsible_tables: list[ReportTable],
 ) -> None:
-    """``extra_tables``: (section title, header, rows) blocks rendered
-    between the paired table and the per-motor table — the Q2/Q3/aux
-    surfaces ride here without reshaping this signature again."""
+    """``extra_tables``: blocks rendered between the paired table and the
+    per-motor table — the Q2/Q3/aux surfaces ride here without reshaping
+    this signature again. ``collapsible_tables``: rendered closed inside
+    a <details> element after the per-motor table — for long breakdowns
+    (e.g. per-dataset chunk metrics) that would drown the headline
+    tables if open by default."""
     summary_table = _table(
         ["policy", "chunk_mae", "p50", "p90", "first_mae", "chunk_mse", "ms/frame"],
         [
@@ -293,8 +310,13 @@ def render_report(
     blocks = "\n".join(_sample_block(sample, motor_names, theme) for sample in samples)
     config = html.escape("\n".join(config_lines))
     extra = "".join(
-        f"<h2>{html.escape(title)}</h2>{_table(header, rows)}"
-        for title, header, rows in extra_tables
+        f"<h2>{html.escape(table.title)}</h2>{_table(table.header, table.rows)}"
+        for table in extra_tables
+    )
+    collapsible = "".join(
+        f"<details><summary>{html.escape(table.title)}</summary>"
+        f"{_table(table.header, table.rows)}</details>"
+        for table in collapsible_tables
     )
     document = (
         "<!doctype html><html><head><meta charset='utf-8'>"
@@ -304,7 +326,8 @@ def render_report(
         + (f"<h2>Paired comparisons</h2>{paired_table}" if comparisons else "")
         + extra
         + f"<h2>Per-motor chunk MAE</h2>{motor_table}"
-        f"<h2>Sample predictions ({len(samples)} of {total_scored} scored "
+        + collapsible
+        + f"<h2>Sample predictions ({len(samples)} of {total_scored} scored "
         f"frames)</h2>{blocks}"
         "</body></html>"
     )

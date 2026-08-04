@@ -38,12 +38,14 @@ from ..aux_text import AuxField, aux_label_text
 from ..data import EpisodeSplit, select_datasets
 from ..model import SamplingMethod
 from .metrics import (
+    DatasetSlice,
     FrameScore,
     PairedComparison,
     PolicySummary,
     compare_paired,
     format_table,
     score_frame,
+    slice_by_dataset,
     summarize,
 )
 from .policies import (
@@ -58,7 +60,7 @@ from .policies import (
 # sliced by their episode's TRUE outcome label; unlabeled = no
 # requestable outcome (UNCLEAR completion or unjudged dataset).
 OUTCOME_BUCKETS = ("success", "partial", "failure", "unlabeled")
-from .report import THEMES, ReportSample, render_report
+from .report import THEMES, ReportSample, ReportTable, render_report
 from .smolvla import SmolVLAEvalPolicy
 
 
@@ -96,6 +98,9 @@ class EvalReport:
     holding_frames: int
     progress_mae: float | None
     progress_frames: int
+    # Per-dataset breakdown, ordered by frame count descending (see
+    # metrics.slice_by_dataset for the small-n caveat).
+    per_dataset: dict[str, DatasetSlice]
 
     def to_json_dict(self) -> dict[str, Any]:
         return {
@@ -119,6 +124,10 @@ class EvalReport:
             "holding_frames": self.holding_frames,
             "progress_mae": self.progress_mae,
             "progress_frames": self.progress_frames,
+            "per_dataset": {
+                repo_id: dataset_slice.to_dict()
+                for repo_id, dataset_slice in self.per_dataset.items()
+            },
         }
 
 
@@ -543,6 +552,7 @@ def main() -> int:
     motor_names = selection.action_names or [
         f"motor_{i}" for i in range(selection.action_dim)
     ]
+    per_dataset = slice_by_dataset(scores)
 
     # Q2: chunk MAE sliced by TRUE outcome (a bucketing of the one
     # true-label-conditioned pass — the same semantics as the in-run
@@ -719,6 +729,7 @@ def main() -> int:
             holding_frames=holding_frames,
             progress_mae=progress_mae,
             progress_frames=progress_frames,
+            per_dataset=per_dataset,
         )
         args.output_json.parent.mkdir(parents=True, exist_ok=True)
         args.output_json.write_text(json.dumps(report.to_json_dict(), indent=2))
@@ -751,7 +762,7 @@ def main() -> int:
             f"camera-count filter: {args.camera_counts or 'all'}",
             f"generate: {args.generate if args.generate is not None else '(fast path)'}",
         ]
-        extra_tables: list[tuple[str, list[str], list[list[str]]]] = []
+        extra_tables: list[ReportTable] = []
         if outcome_slices:
             slice_counts = {
                 bucket: buckets.count(bucket)
@@ -759,16 +770,16 @@ def main() -> int:
                 if bucket in buckets
             }
             extra_tables.append(
-                (
-                    "Q2: chunk MAE by TRUE outcome label",
-                    [
+                ReportTable(
+                    title="Q2: chunk MAE by TRUE outcome label",
+                    header=[
                         "policy",
                         *(
                             f"{bucket} (n={slice_counts.get(bucket, 0)})"
                             for bucket in OUTCOME_BUCKETS
                         ),
                     ],
-                    [
+                    rows=[
                         [
                             name,
                             *(
@@ -807,12 +818,33 @@ def main() -> int:
             )
         if diagnostics:
             extra_tables.append(
-                (
-                    "Conditioning & aux diagnostics",
-                    ["metric", "value", "n"],
-                    diagnostics,
+                ReportTable(
+                    title="Conditioning & aux diagnostics",
+                    header=["metric", "value", "n"],
+                    rows=diagnostics,
                 ),
             )
+        policy_names = [s.name for s in summaries]
+        collapsible_tables = [
+            ReportTable(
+                title=(
+                    f"Per-dataset chunk MAE ({len(per_dataset)} datasets; "
+                    "rows with few frames are noise-dominated)"
+                ),
+                header=["dataset", "frames", *policy_names],
+                rows=[
+                    [
+                        repo_id,
+                        str(dataset_slice.frames),
+                        *(
+                            f"{dataset_slice.chunk_mae[name]:.3f}"
+                            for name in policy_names
+                        ),
+                    ]
+                    for repo_id, dataset_slice in per_dataset.items()
+                ],
+            ),
+        ]
         samples = [report_samples[i] for i in sorted(report_samples)]
         if narrated_policy is not None:
             samples = [
@@ -837,6 +869,7 @@ def main() -> int:
             total_scored=num_samples,
             theme=THEMES[args.report_theme],
             extra_tables=extra_tables,
+            collapsible_tables=collapsible_tables,
         )
         print(f"wrote {args.report}", flush=True)
     return 0
