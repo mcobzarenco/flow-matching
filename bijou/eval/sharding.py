@@ -10,10 +10,15 @@ the paired-comparison contract (same frames, same order, across
 policies) holds for any world size. The single-process path uses the
 same merge on a one-element list — one downstream code path.
 
-Determinism note: AR decodes are greedy and per-frame, so sharded
-results are bitwise-identical to single-process. Flow decoders consume
-noise draws in shard order, so their numbers reproduce only at a fixed
-``(seed, world_size)`` — same caveat as training's per-rank RNG streams.
+Determinism note: results reproduce exactly at fixed ``(seed,
+world_size, batch_size)``. Across world sizes they match only to
+batch-composition numerics: sharding regroups frames into different
+batches, kernel reduction order varies with batch shape, and a greedy
+AR decode occasionally flips a token (measured on the rcond-100k
+1024-frame holdout eval, 1 vs 4 GPUs: chunk MAE 5.328 vs 5.315, 0.25%;
+state-copy baselines match exactly). Flow decoders additionally consume
+noise draws in shard order — same caveat as training's per-rank RNG
+streams.
 """
 
 from __future__ import annotations

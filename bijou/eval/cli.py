@@ -437,11 +437,12 @@ def main() -> int:
             # already narrates — no second pass then.
             narrated_policy = NarratedBijouPolicy(bijou_policy)
             policies.append(narrated_policy)
-            print(
-                f"narrated pass ON: {narrated_policy.name} requests "
-                f"{[f.value for f in narrated_policy.fields]}",
-                flush=True,
-            )
+            if is_main:
+                print(
+                    f"narrated pass ON: {narrated_policy.name} requests "
+                    f"{[f.value for f in narrated_policy.fields]}",
+                    flush=True,
+                )
     if args.smolvla is not None:
         policies.append(
             SmolVLAEvalPolicy(
