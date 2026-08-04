@@ -12,13 +12,21 @@ same merge on a one-element list — one downstream code path.
 
 Determinism note: results reproduce exactly at fixed ``(seed,
 world_size, batch_size)``. Across world sizes they match only to
-batch-composition numerics: sharding regroups frames into different
-batches, kernel reduction order varies with batch shape, and a greedy
-AR decode occasionally flips a token (measured on the rcond-100k
-1024-frame holdout eval, 1 vs 4 GPUs: chunk MAE 5.328 vs 5.315, 0.25%;
-state-copy baselines match exactly). Flow decoders additionally consume
-noise draws in shard order — same caveat as training's per-rank RNG
-streams.
+batch-composition numerics (measured on the rcond-100k 1024-frame
+holdout eval, 1 vs 4 GPUs: bijou chunk MAE 5.328 vs 5.315, 0.25%;
+state-copy baselines match exactly). Root-caused via
+``outputs/probe_batch_invariance.py`` (2026-08-04): decode SEMANTICS
+are exactly batch-invariant — cpu/fp32 and cuda/fp32 reproduce the
+same actions under four batch groupings including ragged padding and
+the round-robin interleave — but under the production bf16 backbone a
+batch-shape-dependent kernel path flips near-tie greedy argmaxes
+(observed even at identical padding width), and one flipped token
+cascades autoregressively (max 4.34 raw units on the probe row). The
+narrated pass additionally has a designed composition dependence (the
+lockstep value phase's repeat-terminators, see ar_backbone.py) —
+hence its slightly larger Q3/paired drift. Flow decoders additionally
+consume noise draws in shard order — same caveat as training's
+per-rank RNG streams.
 """
 
 from __future__ import annotations
