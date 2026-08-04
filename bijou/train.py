@@ -105,6 +105,7 @@ from .loading import (
     default_expert_config,
     from_backbone,
     load_adapted_backbone,
+    load_backbone_init,
     prefix_global_layers,
     resolve_action_codec,
 )
@@ -130,6 +131,10 @@ class TrainArgs:
     save_dir: Path
     init_from: Path | None
     resume: Path | None
+    # Stage-2: inherit ONLY the (frozen or re-trained) backbone + prompt
+    # state_proj from a checkpoint; the decoder builds fresh — decoder
+    # family/config deliberately unconstrained by the source checkpoint.
+    backbone_init_from: Path | None
     instruction: str | None
     cameras: tuple[str, ...] | None
     max_cameras: int | None
@@ -1399,6 +1404,16 @@ def parse_args() -> TrainArgs:
         "checkpoint directory (--steps counts total, including resumed)",
     )
     parser.add_argument(
+        "--backbone-init-from",
+        type=Path,
+        default=None,
+        help="stage-2 warm start: load ONLY backbone.safetensors + "
+        "prompt.safetensors from this checkpoint (any decoder family), "
+        "build the decoder fresh — e.g. a new flow expert reading an "
+        "AR-pretrained trunk. Unlike --init-from, the source's decoder "
+        "config is ignored",
+    )
+    parser.add_argument(
         "--device",
         default="cuda",
         help="torch device (cuda, cuda:N, cpu)",
@@ -1437,6 +1452,13 @@ def parse_args() -> TrainArgs:
     raw = parser.parse_args()
     if raw.init_from is not None and raw.resume is not None:
         parser.error("--init-from and --resume are mutually exclusive")
+    if raw.backbone_init_from is not None and (
+        raw.init_from is not None or raw.resume is not None
+    ):
+        parser.error(
+            "--backbone-init-from is mutually exclusive with --init-from/"
+            "--resume (those load the decoder too)",
+        )
     if not 0.0 <= raw.holdout_episodes < 1.0:
         parser.error("--holdout-episodes must be in [0, 1)")
     if raw.holdout_episodes > 0 and raw.eval_samples is None:
@@ -1581,6 +1603,7 @@ def parse_args() -> TrainArgs:
         save_dir=raw.save_dir,
         init_from=raw.init_from,
         resume=raw.resume,
+        backbone_init_from=raw.backbone_init_from,
         instruction=raw.instruction,
         cameras=tuple(raw.cameras) if raw.cameras else None,
         max_cameras=raw.max_cameras,
@@ -2055,9 +2078,14 @@ def main() -> int:
         # a deliberate future change, not a default.
         model.encoder.state_proj.requires_grad_(False)
         if is_main:
+            # Zero-init => exactly inert; a --backbone-init-from load
+            # replaces the zeros with the source's TRAINED projection,
+            # which then rides frozen (live token, matched to the
+            # inherited trunk).
             print(
-                "prompt state token INERT (frozen backbone: no gradient "
-                "path to state_proj through a no-grad prefix encode)",
+                "prompt state token FROZEN (no gradient path through a "
+                "no-grad prefix encode): inert at zero init, live if "
+                "--backbone-init-from supplies a trained projection",
                 flush=True,
             )
     n_trainable = sum(p.numel() for p in model.decoder.parameters())
@@ -2181,6 +2209,19 @@ def main() -> int:
                     f"{'fp32 masters' if args.backbone_trained else 'bf16'})",
                     flush=True,
                 )
+    elif args.backbone_init_from is not None:
+        # Stage-2: trunk (+ prompt state_proj) inherited, decoder fresh.
+        load_backbone_init(model, args.backbone_init_from)
+        if not args.backbone_trained:
+            adapted_backbone_source = args.backbone_init_from / "backbone.safetensors"
+        if is_main:
+            print(
+                f"stage-2 init: ADAPTED backbone + prompt state_proj from "
+                f"{args.backbone_init_from} "
+                f"({'fp32 masters' if args.backbone_trained else 'frozen bf16'}); "
+                "decoder built fresh",
+                flush=True,
+            )
     if args.resume is not None:
         optimizer_path = args.resume / "optimizer.pt"
         if not optimizer_path.exists():

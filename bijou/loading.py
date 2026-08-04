@@ -832,6 +832,32 @@ def load_adapted_backbone(
         )
 
 
+def load_backbone_init(model: BijouModel, checkpoint: Path) -> None:
+    """Stage-2 warm start: inherit ONLY the backbone and the prompt-side
+    parameters (state_proj) from a checkpoint, leaving the decoder as
+    built — the point is mounting a DIFFERENT decoder family (e.g. a
+    fresh flow expert) on an adapted trunk, so there is deliberately no
+    decoder-config match check here. Loud when the checkpoint carries no
+    adapted backbone: inheriting a pristine trunk would silently run the
+    stock-backbone arm of an ablation twice."""
+    snapshot = checkpoint / "backbone.safetensors"
+    if not snapshot.exists():
+        raise SystemExit(
+            f"--backbone-init-from {checkpoint}: no backbone.safetensors — "
+            "that checkpoint's backbone is pristine HF, so there is nothing "
+            "to inherit (for a stock backbone simply omit the flag)",
+        )
+    load_adapted_backbone(model, checkpoint)
+    # Prompt-side parameters (state_proj) travel with the trunk: the
+    # backbone was adapted WITH this projection feeding its prompt —
+    # loading one without the other would shift the trunk's input
+    # distribution. Format-3 checkpoints always write the file.
+    model.encoder.load_state_dict(
+        load_file(str(checkpoint / "prompt.safetensors"), device="cpu"),
+        strict=True,
+    )
+
+
 def from_checkpoint(
     checkpoint: str | Path,
     *,

@@ -14,12 +14,14 @@ materialized backbone weights, which is probe territory.
 
 from __future__ import annotations
 
+import dataclasses
 import json
 from pathlib import Path
 
 import pytest
 import torch
 from safetensors.torch import load_file, save_file
+from test_backbone_continuation import tiny_text_config
 
 from bijou.decoders.flow import (
     ExpertConfig,
@@ -28,10 +30,10 @@ from bijou.decoders.flow import (
     TimeConditioning,
 )
 from bijou.encoders.gemma4 import GemmaEncoder
-from bijou.gemma4.config import e2b_config
+from bijou.gemma4.config import Gemma4Config, e2b_config
 from bijou.gemma4.loading import truncated_config
 from bijou.gemma4.model import Gemma4Model
-from bijou.loading import BackboneDepth, checkpoint_sections
+from bijou.loading import BackboneDepth, checkpoint_sections, load_backbone_init
 from bijou.model import BijouModel
 from bijou.nn import RopeParameters, RopeType
 from bijou.train import (
@@ -45,9 +47,9 @@ from bijou.train import (
 DIM = 6
 
 
-def tiny_decoder() -> FlowDecoder:
+def tiny_decoder(hidden_size: int = 64) -> FlowDecoder:
     config = ExpertConfig(
-        hidden_size=64,
+        hidden_size=hidden_size,
         num_attention_heads=2,
         intermediate_size=128,
         hidden_activation="gelu_pytorch_tanh",
@@ -119,6 +121,7 @@ def make_args(save_dir: Path) -> TrainArgs:
         save_dir=save_dir,
         init_from=None,
         resume=None,
+        backbone_init_from=None,
         instruction=None,
         cameras=None,
         max_cameras=None,
@@ -233,3 +236,91 @@ def test_frozen_inherited_backbone_rides_along(tmp_path: Path) -> None:
 def test_inherited_source_must_exist(tmp_path: Path) -> None:
     with pytest.raises(FileNotFoundError):
         run_save(tmp_path, adapted_backbone_source=tmp_path / "missing.safetensors")
+
+
+def tiny_cpu_model(decoder_hidden: int, seed: int) -> BijouModel:
+    """Real-tensor (non-meta) tiny model: --backbone-init-from actually
+    copies weights, so the backbone must exist on CPU."""
+    torch.manual_seed(seed)
+    config = Gemma4Config(
+        text=tiny_text_config(),
+        vision=None,
+        image_token_id=999,
+        video_token_id=998,
+        audio_token_id=997,
+        boi_token_id=996,
+        eoi_token_id=995,
+        dtype=torch.float32,
+    )
+    encoder = GemmaEncoder(
+        config,
+        exports=(4,),
+        processor_dir="unused",
+        max_soft_tokens=4,
+        state_dim=DIM,
+    )
+    return BijouModel(
+        backbone=Gemma4Model(config, device="cpu"),
+        encoder=encoder,
+        decoder=tiny_decoder(hidden_size=decoder_hidden),
+    )
+
+
+def test_backbone_init_from_loads_trunk_and_prompt_only(tmp_path: Path) -> None:
+    """Stage-2 inheritance: backbone + state_proj come from the source
+    checkpoint (bf16 snapshot semantics), the decoder keeps its fresh
+    build — across DIFFERENT decoder configs, which --init-from refuses."""
+    source = tiny_cpu_model(decoder_hidden=64, seed=0)
+    # A trained-looking prompt projection (zero init would make the
+    # copy assertion vacuous).
+    torch.nn.init.normal_(source.encoder.state_proj.weight, std=0.1)
+    optimizer = torch.optim.AdamW(source.decoder.parameters(), lr=1e-4)
+    scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lambda _: 1.0)
+    checkpoint = save_checkpoint(
+        source,
+        # backbone_text_lr set => the writer snapshots the live backbone.
+        args=dataclasses.replace(make_args(tmp_path), backbone_text_lr=2e-5),
+        normalizers=Normalizers(
+            action=Normalizer(mean=torch.zeros(DIM), std=torch.ones(DIM)),
+            state=Normalizer(mean=torch.zeros(DIM), std=torch.ones(DIM)),
+        ),
+        per_dataset_stats={},
+        optimizer=optimizer,
+        scheduler=scheduler,
+        step=5,
+        adapted_backbone_source=None,
+    )
+
+    target = tiny_cpu_model(decoder_hidden=32, seed=1)  # ≠ seed, ≠ decoder
+    decoder_before = {k: v.clone() for k, v in target.decoder.state_dict().items()}
+    canary = "language_model.layers.0.mlp.down_proj.weight"
+    assert not torch.equal(
+        target.backbone.state_dict()[canary],
+        source.backbone.state_dict()[canary],
+    )
+
+    load_backbone_init(target, checkpoint)
+
+    # Backbone: the snapshot's bf16 values, exactly (bf16 -> fp32 is lossless).
+    snapshot = load_file(str(checkpoint / "backbone.safetensors"), device="cpu")
+    for key, value in snapshot.items():
+        assert torch.equal(
+            target.backbone.state_dict()[key],
+            value.to(torch.float32),
+        ), key
+    # Prompt: exact copy of the trained projection.
+    assert torch.equal(
+        target.encoder.state_proj.weight,
+        source.encoder.state_proj.weight,
+    )
+    # Decoder: untouched fresh build.
+    for key, value in target.decoder.state_dict().items():
+        assert torch.equal(value, decoder_before[key]), key
+
+
+def test_backbone_init_from_refuses_pristine_checkpoints(tmp_path: Path) -> None:
+    """A checkpoint without backbone.safetensors has nothing to inherit —
+    silently proceeding would run an ablation's stock arm twice."""
+    checkpoint = run_save(tmp_path, adapted_backbone_source=None)
+    with pytest.raises(SystemExit, match=r"no backbone\.safetensors"):
+        load_backbone_init(tiny_cpu_model(decoder_hidden=32, seed=1), checkpoint)
