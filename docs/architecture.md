@@ -555,9 +555,17 @@ requested ⊆ labeled always) and the matching HEADERLESS value lines
   weak supervision (~80% inter-judge agreement on holding, ±15%
   progress MAE): weight modestly, expect an accuracy ceiling near the
   label noise.
-- **Owed:** the offline `bijou.eval` report has no aux section yet
-  (generations + aux metrics in HTML/JSON); in-run wandb is the current
-  surface.
+- **Offline eval surfaces** (shipped 2026-08-04): `bijou.eval` runs a
+  NARRATED PASS automatically on aux-trained checkpoints (a second
+  policy sharing the loaded model, prompt requesting every trained
+  field) — its paired chunk MAE vs the fast path is the full-sample
+  does-narration-help answer; generations feed holding-accuracy and
+  progress-MAE vs the weak labels over every labeled sampled frame
+  (the proper-n version of the in-run 12-row probes) and appear next
+  to labels in the HTML sample blocks. Q2 outcome slices and the Q3
+  sensitivity counterfactual ride the same run (JSON + HTML + stdout;
+  Q3 auto-measures when outcome conditioning is trained and no manual
+  --condition-override is given).
 
 ## 3. Flow matching — objective and sampling
 
@@ -1243,9 +1251,7 @@ crossing segment boundaries); camera-kind prediction under kind-dropout
 (predict the true kind of `unknown`-tagged views — the C2 anti-copy
 pattern applied to viewpoints); the self-conditioning rollout loop
 (feed the aux-generated subgoal into the next replan's `--subgoal`).
-**Owed alongside:** the offline `bijou.eval` aux report section
-(generations + aux metrics in HTML/JSON; wandb is the only surface
-today); a wandb series for the free-decode fallback counter (log-grep
+**Owed alongside:** a wandb series for the value-budget fallback counter (log-grep
 only today); "vision frozen" wording in the model-summary line.
 
 ### 8.11 Stage-2: flow decoder on the frozen AR-pretrained backbone

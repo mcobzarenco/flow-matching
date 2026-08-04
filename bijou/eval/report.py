@@ -122,6 +122,11 @@ class ReportSample:
     truth: Tensor
     valid: Tensor
     predictions: dict[str, Tensor]
+    # Narrated-pass text for this frame (display form, field names
+    # re-attached) and what the labels hold; None = no narrated pass /
+    # no labels at this frame.
+    aux_generated: str | None
+    aux_label: str | None
 
 
 def _image_data_uri(image: Tensor, height: int = 220) -> str:
@@ -221,6 +226,11 @@ def _sample_block(
         f'title="{html.escape(name)}">'
         for name, image in sorted(sample.cameras.items())
     )
+    aux_block = ""
+    if sample.aux_generated is not None or sample.aux_label is not None:
+        generated = html.escape(sample.aux_generated or "(none)")
+        label = html.escape(sample.aux_label or "(no labels at this frame)")
+        aux_block = f"<pre>generated:\n{generated}\nlabels:\n{label}</pre>"
     return (
         f'<div class="sample">'
         f"<h3>{html.escape(sample.repo_id)} &mdash; episode {sample.episode}, "
@@ -228,6 +238,7 @@ def _sample_block(
         f'<p class="meta">task: {html.escape(sample.task)}<br>'
         f"state: [{state_line}]<br>chunk MAE &mdash; {html.escape(mae_line)}</p>"
         f'<div class="cams">{cameras}</div>'
+        f"{aux_block}"
         f'<img class="chart" src="{_chart_data_uri(sample, motor_names, theme)}">'
         f"</div>"
     )
@@ -242,7 +253,11 @@ def render_report(
     samples: list[ReportSample],
     total_scored: int,
     theme: ReportTheme,
+    extra_tables: list[tuple[str, list[str], list[list[str]]]],
 ) -> None:
+    """``extra_tables``: (section title, header, rows) blocks rendered
+    between the paired table and the per-motor table — the Q2/Q3/aux
+    surfaces ride here without reshaping this signature again."""
     summary_table = _table(
         ["policy", "chunk_mae", "p50", "p90", "first_mae", "chunk_mse", "ms/frame"],
         [
@@ -263,10 +278,11 @@ def render_report(
         [[s.name, *(f"{v:.2f}" for v in s.per_motor_mae)] for s in summaries],
     )
     paired_table = _table(
-        ["policy", "mean_delta_mae", "delta_p50", "win_rate"],
+        ["policy", "vs", "mean_delta_mae", "delta_p50", "win_rate"],
         [
             [
                 c.policy,
+                c.reference,
                 f"{c.mean_delta:+.3f}",
                 f"{c.delta_p50:+.3f}",
                 f"{100 * c.win_rate:.0f}%",
@@ -276,12 +292,17 @@ def render_report(
     )
     blocks = "\n".join(_sample_block(sample, motor_names, theme) for sample in samples)
     config = html.escape("\n".join(config_lines))
+    extra = "".join(
+        f"<h2>{html.escape(title)}</h2>{_table(header, rows)}"
+        for title, header, rows in extra_tables
+    )
     document = (
         "<!doctype html><html><head><meta charset='utf-8'>"
         f"<title>bijou eval report</title><style>{theme.css()}</style></head><body>"
         f"<h1>bijou eval report</h1><pre>{config}</pre>"
         f"<h2>Chunk metrics (raw action units, pad-masked)</h2>{summary_table}"
-        + (f"<h2>Paired vs baseline</h2>{paired_table}" if comparisons else "")
+        + (f"<h2>Paired comparisons</h2>{paired_table}" if comparisons else "")
+        + extra
         + f"<h2>Per-motor chunk MAE</h2>{motor_table}"
         f"<h2>Sample predictions ({len(samples)} of {total_scored} scored "
         f"frames)</h2>{blocks}"

@@ -22,6 +22,7 @@ Usage::
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import datetime
 import json
 import random
@@ -33,7 +34,7 @@ from typing import Any
 import numpy as np
 import torch
 
-from ..aux_text import AuxField
+from ..aux_text import AuxField, aux_label_text
 from ..data import EpisodeSplit, select_datasets
 from ..model import SamplingMethod
 from .metrics import (
@@ -48,9 +49,15 @@ from .metrics import (
 from .policies import (
     BijouPolicy,
     ChunkPolicy,
+    NarratedBijouPolicy,
     NormalizedStateCopyPolicy,
     StateCopyPolicy,
 )
+
+# Q2 buckets, the train-side convention (train.OUTCOME_BUCKETS): frames
+# sliced by their episode's TRUE outcome label; unlabeled = no
+# requestable outcome (UNCLEAR completion or unjudged dataset).
+OUTCOME_BUCKETS = ("success", "partial", "failure", "unlabeled")
 from .report import THEMES, ReportSample, render_report
 from .smolvla import SmolVLAEvalPolicy
 
@@ -67,6 +74,7 @@ class EvalReport:
     holdout_episodes: float
     split_seed: int
     fps: list[float] | None
+    camera_counts: list[int] | None
     num_samples: int
     seed: int
     checkpoint: str | None
@@ -74,6 +82,20 @@ class EvalReport:
     summaries: list[PolicySummary]
     paired: list[PairedComparison]
     motor_names: list[str]
+    # Q2: per-policy chunk MAE sliced by the episode's TRUE outcome
+    # label ({} when the eval carries no labels).
+    outcome_slices: dict[str, dict[str, float]]
+    # Q3: mean |Δ prediction| on labeled non-success frames when outcome
+    # is counterfactually forced to "success" (None = not measured:
+    # no condition-trained checkpoint, or a manual --condition-override).
+    condition_sensitivity: float | None
+    condition_sensitivity_frames: int
+    # Narrated-pass aux metrics vs the (weak) judge labels over ALL
+    # labeled sampled frames (None = no narrated pass).
+    holding_accuracy: float | None
+    holding_frames: int
+    progress_mae: float | None
+    progress_frames: int
 
     def to_json_dict(self) -> dict[str, Any]:
         return {
@@ -82,6 +104,7 @@ class EvalReport:
             "holdout_episodes": self.holdout_episodes,
             "split_seed": self.split_seed,
             "fps": self.fps,
+            "camera_counts": self.camera_counts,
             "num_samples": self.num_samples,
             "seed": self.seed,
             "checkpoint": self.checkpoint,
@@ -89,6 +112,13 @@ class EvalReport:
             "summaries": [s.to_dict() for s in self.summaries],
             "paired": [c.to_dict() for c in self.paired],
             "motor_names": self.motor_names,
+            "outcome_slices": self.outcome_slices,
+            "condition_sensitivity": self.condition_sensitivity,
+            "condition_sensitivity_frames": self.condition_sensitivity_frames,
+            "holding_accuracy": self.holding_accuracy,
+            "holding_frames": self.holding_frames,
+            "progress_mae": self.progress_mae,
+            "progress_frames": self.progress_frames,
         }
 
 
@@ -310,6 +340,8 @@ def main() -> int:
         StateCopyPolicy(args.chunk_size),
         NormalizedStateCopyPolicy(args.chunk_size),
     ]
+    bijou_policy: BijouPolicy | None = None
+    narrated_policy: NarratedBijouPolicy | None = None
     if args.checkpoint is not None:
         overrides: dict[str, str] = {}
         for pair in args.condition_override:
@@ -319,7 +351,7 @@ def main() -> int:
                     f"--condition-override expects FIELD=VALUE, got {pair!r}",
                 )
             overrides[field] = value
-        policy = BijouPolicy(
+        bijou_policy = BijouPolicy(
             args.checkpoint,
             device=device,
             seed=args.seed,
@@ -332,12 +364,26 @@ def main() -> int:
             # deployment default is planner-less).
             include_subgoal_condition="subgoal" in overrides,
         )
-        if policy.info.chunk_size != args.chunk_size:
+        if bijou_policy.info.chunk_size != args.chunk_size:
             raise SystemExit(
-                f"checkpoint chunk size {policy.info.chunk_size} != "
+                f"checkpoint chunk size {bijou_policy.info.chunk_size} != "
                 f"--chunk-size {args.chunk_size}",
             )
-        policies.append(policy)
+        policies.append(bijou_policy)
+        if bijou_policy.aux_fields and args.generate is None:
+            # The narrated pass rides automatically on aux-trained
+            # checkpoints (shared model, ~2x bijou inference): its
+            # paired chunk MAE is the full-sample does-narration-help
+            # answer, and its generations feed the aux metrics + report
+            # blocks. An explicit --generate means the MAIN policy
+            # already narrates — no second pass then.
+            narrated_policy = NarratedBijouPolicy(bijou_policy)
+            policies.append(narrated_policy)
+            print(
+                f"narrated pass ON: {narrated_policy.name} requests "
+                f"{[f.value for f in narrated_policy.fields]}",
+                flush=True,
+            )
     if args.smolvla is not None:
         policies.append(
             SmolVLAEvalPolicy(
@@ -373,13 +419,37 @@ def main() -> int:
     dump_valid: list[torch.Tensor] = []
     dump_repo: list[str] = []
     dump_index: list[int] = []
+    # Frame-aligned label records for Q2 slices and the aux metrics
+    # (None = unlabeled at that frame).
+    outcomes: list[str | None] = []
+    holding_labels: dict[int, float] = {}
+    progress_labels: dict[int, float] = {}
+    # Q3: measured iff outcome-conditioning is trained AND the run isn't
+    # already a manual counterfactual.
+    q3 = (
+        bijou_policy is not None
+        and "outcome" in bijou_policy.info.condition_fields
+        and not bijou_policy.condition_override
+    )
+    sensitivity_deltas: list[float] = []
     done = 0
     for batch_number, items in enumerate(loader):
         batch_indices = indices[done : done + len(items)]
+        for item, index in zip(items, batch_indices, strict=True):
+            outcomes.append(item.get("condition_outcome"))
+            for key, store in (
+                ("annotation.holding", holding_labels),
+                ("annotation.progress", progress_labels),
+            ):
+                value = item.get(key)
+                if value is not None and bool(torch.isfinite(value)):
+                    store[index] = float(value)
+        batch_predictions: dict[str, list[torch.Tensor]] = {}
         for policy in policies:
             start = time.perf_counter()
             predictions = policy.predict(items, batch_indices)
             elapsed = (time.perf_counter() - start) / len(items)
+            batch_predictions[policy.name] = predictions
             for item, index, predicted in zip(
                 items,
                 batch_indices,
@@ -421,9 +491,38 @@ def main() -> int:
                         truth=truth.float(),
                         valid=~item["action_is_pad"],
                         predictions={},
+                        aux_generated=None,
+                        aux_label=(
+                            aux_label_text(item, bijou_policy.aux_fields) or None
+                            if bijou_policy is not None
+                            else None
+                        ),
                     )
                     sample.predictions[policy.name] = predicted
                     report_samples[index] = sample
+        if q3:
+            assert bijou_policy is not None  # q3 construction
+            flipped = [
+                (position, item)
+                for position, item in enumerate(items)
+                if item.get("condition_outcome") not in (None, "success")
+            ]
+            if flipped:
+                forced_items = [
+                    {**item, "condition_outcome": "success"} for _, item in flipped
+                ]
+                forced_indices = [batch_indices[position] for position, _ in flipped]
+                forced = bijou_policy.predict(forced_items, forced_indices)
+                for (position, item), prediction in zip(flipped, forced, strict=True):
+                    base = batch_predictions[bijou_policy.name][position]
+                    valid = ~item["action_is_pad"]
+                    length = item["action"].shape[0]
+                    delta = (
+                        (prediction[:length].float() - base[:length].float())
+                        .abs()[valid]
+                        .mean()
+                    )
+                    sensitivity_deltas.append(float(delta))
         done += len(items)
         if batch_number % 5 == 0:
             print(f"  scored {done}/{num_samples} frames", flush=True)
@@ -444,6 +543,51 @@ def main() -> int:
     motor_names = selection.action_names or [
         f"motor_{i}" for i in range(selection.action_dim)
     ]
+
+    # Q2: chunk MAE sliced by TRUE outcome (a bucketing of the one
+    # true-label-conditioned pass — the same semantics as the in-run
+    # eval/chunk_mae_* series; not a counterfactual).
+    buckets = [
+        outcome if outcome in OUTCOME_BUCKETS else "unlabeled" for outcome in outcomes
+    ]
+    outcome_slices: dict[str, dict[str, float]] = {}
+    if len(set(buckets)) > 1:
+        for name, frame_scores in scores.items():
+            outcome_slices[name] = {}
+            for bucket in OUTCOME_BUCKETS:
+                subset = [
+                    s for s, b in zip(frame_scores, buckets, strict=True) if b == bucket
+                ]
+                if subset:
+                    outcome_slices[name][bucket] = summarize(name, subset).chunk_mae
+
+    # Aux metrics: narrated generations vs the (weak) judge labels over
+    # every labeled sampled frame — the proper-n version of the in-run
+    # 12-row probes. Weak supervision (~80% inter-judge holding
+    # agreement, ±15% progress MAE): ceilings sit near the label noise.
+    holding_accuracy: float | None = None
+    holding_frames = 0
+    progress_mae: float | None = None
+    progress_frames = 0
+    if narrated_policy is not None:
+        holding_hits = [
+            int(generation.holding == bool(int(label)))
+            for index, label in holding_labels.items()
+            if (generation := narrated_policy.generations.get(index)) is not None
+            and generation.holding is not None
+        ]
+        if holding_hits:
+            holding_frames = len(holding_hits)
+            holding_accuracy = sum(holding_hits) / holding_frames
+        progress_errors = [
+            abs(generation.progress - label)
+            for index, label in progress_labels.items()
+            if (generation := narrated_policy.generations.get(index)) is not None
+            and generation.progress is not None
+        ]
+        if progress_errors:
+            progress_frames = len(progress_errors)
+            progress_mae = sum(progress_errors) / progress_frames
 
     print("\n== chunk metrics (raw action units, pad-masked) ==", flush=True)
     print(
@@ -474,25 +618,77 @@ def main() -> int:
         flush=True,
     )
 
+    if outcome_slices:
+        print("\n== Q2: chunk MAE by TRUE outcome label ==", flush=True)
+        counts = {b: buckets.count(b) for b in OUTCOME_BUCKETS if b in buckets}
+        print(
+            format_table(
+                [
+                    [
+                        name,
+                        *(
+                            f"{slices[b]:.3f}" if b in slices else "-"
+                            for b in OUTCOME_BUCKETS
+                        ),
+                    ]
+                    for name, slices in outcome_slices.items()
+                ],
+                [
+                    "policy",
+                    *(f"{b} (n={counts.get(b, 0)})" for b in OUTCOME_BUCKETS),
+                ],
+            ),
+            flush=True,
+        )
+    if q3 and sensitivity_deltas:
+        print(
+            f"\n== Q3: condition sensitivity == mean |Δ| "
+            f"{sum(sensitivity_deltas) / len(sensitivity_deltas):.4f} over "
+            f"{len(sensitivity_deltas)} labeled non-success frames "
+            "(outcome forced to 'success' vs true-label conditioning)",
+            flush=True,
+        )
+    if holding_accuracy is not None or progress_mae is not None:
+        print(
+            f"\n== aux vs weak labels ({narrated_policy.name if narrated_policy else ''}) == "
+            f"holding acc "
+            f"{holding_accuracy if holding_accuracy is not None else float('nan'):.3f} "
+            f"(n={holding_frames}), progress MAE "
+            f"{progress_mae if progress_mae is not None else float('nan'):.3f} "
+            f"(n={progress_frames})",
+            flush=True,
+        )
+
     baseline = policies[0].name
     comparisons = [
         compare_paired(s.name, scores[s.name], baseline, scores[baseline])
         for s in summaries[1:]
     ]
+    if narrated_policy is not None and bijou_policy is not None:
+        # The full-sample does-narration-help pairing, first class.
+        comparisons.append(
+            compare_paired(
+                narrated_policy.name,
+                scores[narrated_policy.name],
+                bijou_policy.name,
+                scores[bijou_policy.name],
+            ),
+        )
     if comparisons:
-        print(f"\n== paired vs {baseline} (negative delta = better) ==", flush=True)
+        print("\n== paired comparisons (negative delta = better) ==", flush=True)
         print(
             format_table(
                 [
                     [
                         c.policy,
+                        c.reference,
                         f"{c.mean_delta:+.3f}",
                         f"{c.delta_p50:+.3f}",
                         f"{100 * c.win_rate:.0f}%",
                     ]
                     for c in comparisons
                 ],
-                ["policy", "mean_delta_mae", "delta_p50", "win_rate"],
+                ["policy", "vs", "mean_delta_mae", "delta_p50", "win_rate"],
             ),
             flush=True,
         )
@@ -504,6 +700,7 @@ def main() -> int:
             holdout_episodes=args.holdout_episodes,
             split_seed=args.split_seed,
             fps=list(args.fps) if args.fps else None,
+            camera_counts=list(args.camera_counts) if args.camera_counts else None,
             num_samples=num_samples,
             seed=args.seed,
             checkpoint=str(args.checkpoint) if args.checkpoint else None,
@@ -511,6 +708,17 @@ def main() -> int:
             summaries=summaries,
             paired=comparisons,
             motor_names=motor_names,
+            outcome_slices=outcome_slices,
+            condition_sensitivity=(
+                sum(sensitivity_deltas) / len(sensitivity_deltas)
+                if sensitivity_deltas
+                else None
+            ),
+            condition_sensitivity_frames=len(sensitivity_deltas),
+            holding_accuracy=holding_accuracy,
+            holding_frames=holding_frames,
+            progress_mae=progress_mae,
+            progress_frames=progress_frames,
         )
         args.output_json.parent.mkdir(parents=True, exist_ok=True)
         args.output_json.write_text(json.dumps(report.to_json_dict(), indent=2))
@@ -540,16 +748,95 @@ def main() -> int:
             f"smolvla: {args.smolvla or '-'}",
             f"sampler: {args.sample_method}-{args.sample_steps}",
             f"fps filter: {args.fps or 'all'}",
+            f"camera-count filter: {args.camera_counts or 'all'}",
+            f"generate: {args.generate if args.generate is not None else '(fast path)'}",
         ]
+        extra_tables: list[tuple[str, list[str], list[list[str]]]] = []
+        if outcome_slices:
+            slice_counts = {
+                bucket: buckets.count(bucket)
+                for bucket in OUTCOME_BUCKETS
+                if bucket in buckets
+            }
+            extra_tables.append(
+                (
+                    "Q2: chunk MAE by TRUE outcome label",
+                    [
+                        "policy",
+                        *(
+                            f"{bucket} (n={slice_counts.get(bucket, 0)})"
+                            for bucket in OUTCOME_BUCKETS
+                        ),
+                    ],
+                    [
+                        [
+                            name,
+                            *(
+                                f"{slices[bucket]:.3f}" if bucket in slices else "-"
+                                for bucket in OUTCOME_BUCKETS
+                            ),
+                        ]
+                        for name, slices in outcome_slices.items()
+                    ],
+                ),
+            )
+        diagnostics: list[list[str]] = []
+        if sensitivity_deltas:
+            diagnostics.append(
+                [
+                    "Q3 condition sensitivity (mean |Δ|, outcome→success)",
+                    f"{sum(sensitivity_deltas) / len(sensitivity_deltas):.4f}",
+                    str(len(sensitivity_deltas)),
+                ],
+            )
+        if holding_accuracy is not None:
+            diagnostics.append(
+                [
+                    "holding accuracy vs weak labels (narrated pass)",
+                    f"{holding_accuracy:.3f}",
+                    str(holding_frames),
+                ],
+            )
+        if progress_mae is not None:
+            diagnostics.append(
+                [
+                    "progress MAE vs weak labels (narrated pass)",
+                    f"{progress_mae:.3f}",
+                    str(progress_frames),
+                ],
+            )
+        if diagnostics:
+            extra_tables.append(
+                (
+                    "Conditioning & aux diagnostics",
+                    ["metric", "value", "n"],
+                    diagnostics,
+                ),
+            )
+        samples = [report_samples[i] for i in sorted(report_samples)]
+        if narrated_policy is not None:
+            samples = [
+                dataclasses.replace(
+                    sample,
+                    aux_generated=(
+                        generation.text or "(empty)"
+                        if (generation := narrated_policy.generations.get(sample.index))
+                        is not None
+                        else None
+                    ),
+                )
+                for sample in samples
+            ]
         render_report(
             args.report,
             config_lines,
             summaries,
             comparisons,
             motor_names,
-            [report_samples[i] for i in sorted(report_samples)],
+            samples,
             total_scored=num_samples,
             theme=THEMES[args.report_theme],
+            extra_tables=extra_tables,
         )
         print(f"wrote {args.report}", flush=True)
     return 0

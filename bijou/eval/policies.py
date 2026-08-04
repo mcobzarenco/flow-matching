@@ -13,6 +13,7 @@ composition, evaluation order and device.
 
 from __future__ import annotations
 
+import dataclasses
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -20,7 +21,7 @@ import torch
 from torch import Tensor
 
 from ..annotations import ConditionField
-from ..aux_text import AuxField
+from ..aux_text import AuxField, AuxGeneration
 from ..decoders.ar_backbone import ARBackboneDecoder
 from ..decoders.flow import FlowDecoder
 from ..interface import Collator
@@ -179,19 +180,34 @@ class BijouPolicy:
             subgoal_condition_dropout=0.0,
         )
 
+    @property
+    def aux_fields(self) -> tuple[AuxField, ...]:
+        """The aux fields this checkpoint trained (empty for aux-less /
+        non-ar_backbone) — what a narrated pass can request."""
+        decoder = self.model.decoder
+        if isinstance(decoder, ARBackboneDecoder) and decoder.config.aux is not None:
+            return decoder.config.aux.fields
+        return ()
+
+    def apply_overrides(self, items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """The counterfactual-conditioning item rewrite (shared with the
+        narrated pass so both decode under identical conditioning)."""
+        if not self.condition_override:
+            return items
+        return [
+            {
+                **item,
+                **{
+                    f"condition_{field}": value
+                    for field, value in self.condition_override.items()
+                },
+            }
+            for item in items
+        ]
+
     @torch.no_grad()
     def predict(self, items: list[dict[str, Any]], indices: list[int]) -> list[Tensor]:
-        if self.condition_override:
-            items = [
-                {
-                    **item,
-                    **{
-                        f"condition_{field}": value
-                        for field, value in self.condition_override.items()
-                    },
-                }
-                for item in items
-            ]
+        items = self.apply_overrides(items)
         batch = self.collator(items).to(self.device)
         # Flow integrates from per-item seeded noise (deterministic and
         # batch-composition-independent); AR decodes greedily and takes
@@ -212,4 +228,47 @@ class BijouPolicy:
             method=self.method,
             generate=self.generate,
         )
+        return [chunk.cpu() for chunk in prediction.actions]
+
+
+class NarratedBijouPolicy:
+    """The all-fields pass of an already-loaded BijouPolicy: same model,
+    same conditioning, but the prompt requests every trained aux field
+    (``[generate|… actions]``) and the actions follow the model's OWN
+    generated value lines. Slots into the runner as one more policy —
+    its chunk MAE vs the base policy IS the full-sample-size
+    does-narration-help comparison — and retains per-frame generations
+    (``self.generations[index]``) for the aux metrics (holding/progress
+    vs weak labels) and the report blocks. No second model load: shares
+    ``base.model``; the collator is a generate_override clone."""
+
+    def __init__(self, base: BijouPolicy) -> None:
+        fields = base.aux_fields
+        if not fields:
+            raise SystemExit(
+                "narrated pass on a checkpoint without trained aux fields "
+                "— nothing to request",
+            )
+        self.base = base
+        self.fields = fields
+        self.name = f"{base.name}+fields"
+        self.collator = dataclasses.replace(
+            base.collator,
+            generate_override=fields,
+        )
+        self.generations: dict[int, AuxGeneration] = {}
+
+    @torch.no_grad()
+    def predict(self, items: list[dict[str, Any]], indices: list[int]) -> list[Tensor]:
+        items = self.base.apply_overrides(items)
+        batch = self.collator(items).to(self.base.device)
+        prediction = self.base.model.predict_chunk(
+            batch,
+            num_steps=self.base.sample_steps,
+            method=self.base.method,
+            generate=self.fields,
+        )
+        assert prediction.generations is not None  # ar_backbone always generates
+        for index, generation in zip(indices, prediction.generations, strict=True):
+            self.generations[index] = generation
         return [chunk.cpu() for chunk in prediction.actions]
