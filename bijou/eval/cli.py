@@ -75,7 +75,13 @@ from .policies import (
 # sliced by their episode's TRUE outcome label; unlabeled = no
 # requestable outcome (UNCLEAR completion or unjudged dataset).
 OUTCOME_BUCKETS = ("success", "partial", "failure", "unlabeled")
-from .plan import SamplePlan, build_plan, resolve_plan, validate_plan
+from .plan import (
+    SamplePlan,
+    build_plan,
+    episode_tables,
+    resolve_plan,
+    validate_plan,
+)
 from .report import THEMES, ReportSample, ReportTable, render_report
 from .sharding import ShardResults, merge_shards
 from .smolvla import SmolVLAEvalPolicy
@@ -443,6 +449,9 @@ def main() -> int:
 
     plan: SamplePlan | None = None
     if args.sample_plan is not None:
+        # One column scan serves both build and resolve (~8 min on
+        # curated-v0 — measured when it ran twice).
+        tables = episode_tables(selection)
         if args.sample_plan.exists():
             plan = SamplePlan.load(args.sample_plan)
             validate_plan(
@@ -468,7 +477,7 @@ def main() -> int:
             # Deterministic: every rank builds the identical plan; only
             # rank 0 writes it.
             plan = build_plan(
-                selection,
+                tables,
                 plan_seed=args.plan_seed,
                 frames_per_episode=args.frames_per_episode,
                 labeled_per_episode=args.labeled_per_episode,
@@ -487,7 +496,7 @@ def main() -> int:
                     f"(plan seed {args.plan_seed})",
                     flush=True,
                 )
-        indices, core_indices = resolve_plan(plan, selection)
+        indices, core_indices = resolve_plan(plan, tables)
         num_samples = len(indices)
         if is_main:
             print(

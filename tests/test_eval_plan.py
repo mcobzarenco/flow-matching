@@ -16,7 +16,13 @@ import pytest
 
 from bijou.aux_text import parse_visibility
 from bijou.data import DataSelection, StatsAttachedDataset
-from bijou.eval.plan import SamplePlan, build_plan, resolve_plan, validate_plan
+from bijou.eval.plan import (
+    SamplePlan,
+    build_plan,
+    episode_tables,
+    resolve_plan,
+    validate_plan,
+)
 
 NAN = math.nan
 
@@ -30,6 +36,9 @@ class StubTable:
 
     def __getitem__(self, key: str) -> list[float]:
         return self._columns[key]
+
+    def with_format(self, _format: str) -> StubTable:
+        return self
 
 
 class StubLeRobot:
@@ -74,7 +83,7 @@ def _stub_b() -> StubDataset:
 
 def _build(selection: DataSelection) -> SamplePlan:
     return build_plan(
-        selection,
+        episode_tables(selection),
         plan_seed=0,
         frames_per_episode=2,
         labeled_per_episode=2,
@@ -120,7 +129,7 @@ def test_build_is_deterministic_and_stratified(tmp_path: Path) -> None:
 def test_resolve_maps_to_concat_indices_and_splits_core() -> None:
     selection = _selection([_stub_a(), _stub_b()])
     plan = _build(selection)
-    indices, core = resolve_plan(plan, selection)
+    indices, core = resolve_plan(plan, episode_tables(selection))
     assert indices == sorted(indices)
     assert core <= set(indices)
     # user/b's frames live at concat offset 8 (after user/a's 8 rows).
@@ -133,7 +142,7 @@ def test_resolve_maps_to_concat_indices_and_splits_core() -> None:
 def test_resolve_fails_loudly_on_missing_episode() -> None:
     plan = _build(_selection([_stub_a(), _stub_b()]))
     with pytest.raises(SystemExit, match="missing from the selection"):
-        resolve_plan(plan, _selection([_stub_a()]))  # user/b gone
+        resolve_plan(plan, episode_tables(_selection([_stub_a()])))  # user/b gone
 
 
 def test_validate_rejects_filter_mismatch() -> None:

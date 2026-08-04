@@ -44,7 +44,7 @@ from typing import Any
 
 import numpy as np
 
-from ..data import DataSelection, StatsAttachedDataset
+from ..data import DataSelection
 
 PLAN_VERSION = 1
 
@@ -145,25 +145,53 @@ class SamplePlan:
         return cls.from_dict(json.loads(path.read_text()))
 
 
-def _episode_table(
-    dataset: StatsAttachedDataset,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray | None]:
-    """(episode ids, first-row offset per episode, labeled mask) from the
-    underlying LeRobot arrow table — column reads only, no video decode.
-    The labeled mask is None when the dataset carries no materialized
-    ``annotation.progress`` column (never judged)."""
-    table = dataset.dataset.hf_dataset
-    episode_column = np.asarray(table["episode_index"])
-    episode_ids, starts = np.unique(episode_column, return_index=True)
-    labeled: np.ndarray | None = None
-    if "annotation.progress" in table.column_names:
-        progress = np.asarray(table["annotation.progress"], dtype=np.float32)
-        labeled = np.isfinite(progress)
-    return episode_ids, starts, labeled
+@dataclass(frozen=True, slots=True)
+class EpisodeTable:
+    """One dataset's episode layout, scanned once from the arrow table
+    (column reads only, no video decode). ``labeled`` is None when the
+    dataset carries no materialized ``annotation.progress`` column
+    (never judged); otherwise the judge's sampled-frame mask."""
+
+    offset: int  # global concat offset of the dataset's first row
+    length: int
+    episode_ids: np.ndarray
+    starts: np.ndarray  # dataset-local first-row offset per episode
+    labeled: np.ndarray | None
+
+
+def episode_tables(selection: DataSelection) -> dict[str, EpisodeTable]:
+    """Scan every dataset's episode layout ONCE — shared by build and
+    resolve (the scan reads two columns of ~900 arrow tables and is the
+    dominant cost; measured ~8 min on curated-v0, so it must not run
+    twice). ``with_format("numpy")`` bypasses the per-row torch
+    formatter for whole-column reads."""
+    tables: dict[str, EpisodeTable] = {}
+    offset = 0
+    for dataset in selection.datasets:
+        repo_id = str(dataset.dataset.repo_id)
+        table = dataset.dataset.hf_dataset.with_format("numpy")
+        episode_column = np.asarray(table["episode_index"])
+        episode_ids, starts = np.unique(episode_column, return_index=True)
+        assert bool(np.all(np.diff(starts) > 0)), (
+            f"{repo_id}: episode rows not grouped in ascending order"
+        )
+        labeled: np.ndarray | None = None
+        if "annotation.progress" in table.column_names:
+            progress = np.asarray(table["annotation.progress"], dtype=np.float32)
+            labeled = np.isfinite(progress)
+        tables[repo_id] = EpisodeTable(
+            offset=offset,
+            length=len(dataset),
+            episode_ids=episode_ids,
+            starts=starts,
+            labeled=labeled,
+        )
+        offset += len(dataset)
+    return tables
 
 
 def build_plan(
-    selection: DataSelection,
+    tables: dict[str, EpisodeTable],
     *,
     plan_seed: int,
     frames_per_episode: int,
@@ -174,15 +202,13 @@ def build_plan(
     fps: list[float] | None,
     camera_counts: list[int] | None,
 ) -> SamplePlan:
-    """Stratified panel over every episode of the selection (see module
-    docstring for the draw semantics)."""
+    """Stratified panel over every episode of the scanned selection (see
+    module docstring for the draw semantics)."""
     core: list[PlanFrame] = []
     labeled_frames: list[PlanFrame] = []
-    for dataset in selection.datasets:
-        repo_id = str(dataset.dataset.repo_id)
-        episode_ids, starts, labeled_mask = _episode_table(dataset)
-        bounds = [*starts.tolist(), len(dataset)]
-        for position, episode in enumerate(episode_ids.tolist()):
+    for repo_id, table in tables.items():
+        bounds = [*table.starts.tolist(), table.length]
+        for position, episode in enumerate(table.episode_ids.tolist()):
             start, end = bounds[position], bounds[position + 1]
             length = end - start
             rng = random.Random(f"{plan_seed}:{repo_id}:{episode}")
@@ -191,11 +217,11 @@ def build_plan(
                 PlanFrame(repo_id=repo_id, episode_index=episode, frame_index=frame)
                 for frame in picks
             )
-            if labeled_mask is None or labeled_per_episode == 0:
+            if table.labeled is None or labeled_per_episode == 0:
                 continue
             candidates = [
                 frame
-                for frame in np.flatnonzero(labeled_mask[start:end]).tolist()
+                for frame in np.flatnonzero(table.labeled[start:end]).tolist()
                 if frame not in picks
             ]
             extra = sorted(
@@ -253,21 +279,11 @@ def validate_plan(
 
 def resolve_plan(
     plan: SamplePlan,
-    selection: DataSelection,
+    tables: dict[str, EpisodeTable],
 ) -> tuple[list[int], set[int]]:
     """(sorted global concat indices of every planned frame, the subset
-    that is the core panel). Fails loudly when the selection is missing
-    anything the plan references."""
-    offsets: dict[str, int] = {}
-    tables: dict[str, tuple[np.ndarray, np.ndarray]] = {}
-    offset = 0
-    for dataset in selection.datasets:
-        repo_id = str(dataset.dataset.repo_id)
-        episode_ids, starts, _ = _episode_table(dataset)
-        offsets[repo_id] = offset
-        tables[repo_id] = (episode_ids, starts)
-        offset += len(dataset)
-
+    that is the core panel). Fails loudly when the scanned selection is
+    missing anything the plan references."""
     missing: list[str] = []
 
     def resolve(frame: PlanFrame) -> int | None:
@@ -275,12 +291,14 @@ def resolve_plan(
         if table is None:
             missing.append(f"{frame.repo_id} (dataset absent)")
             return None
-        episode_ids, starts = table
-        position = int(np.searchsorted(episode_ids, frame.episode_index))
-        if position >= len(episode_ids) or episode_ids[position] != frame.episode_index:
+        position = int(np.searchsorted(table.episode_ids, frame.episode_index))
+        if (
+            position >= len(table.episode_ids)
+            or table.episode_ids[position] != frame.episode_index
+        ):
             missing.append(f"{frame.repo_id} episode {frame.episode_index}")
             return None
-        return offsets[frame.repo_id] + int(starts[position]) + frame.frame_index
+        return table.offset + int(table.starts[position]) + frame.frame_index
 
     core = [resolve(frame) for frame in plan.core]
     labeled = [resolve(frame) for frame in plan.labeled]
