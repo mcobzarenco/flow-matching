@@ -37,14 +37,25 @@ information × cheapness. Status tags: `queued` / `screening` /
   first_mae barely. Score the draws-10 run per-step, not just
   pooled.
 
-## 2. Throughput: bucketed batching + torch.compile on the frozen prefix — `queued`, natural first
+## 2. Throughput: bucketed batching + torch.compile on the frozen prefix — `screening` (2a landed 2026-08-05; GPU A/B conditional)
 
 - **Hypothesis:** length-bucketed batching + `torch.compile` of the
   prefix encode (79% of step time) buys ≥20% step-time on 1×H100 —
   compounding interest on every later run.
-- **Cost:** a day of implementation + measured A/B on a short run.
-  No GPU-idle risk (screens run at run boundaries).
-- **Falsification:** measured s/step and samples/s on identical
+- **2a LANDED (2026-08-05, [post](posts/2026-08-05-bucketing-impl-sim.md)):**
+  `--bucket-by-length` (default OFF) — `LengthBucketedBatchSampler`,
+  camera-count keys, oracle-gated (3 CPU oracles bit-exact, gradflow
+  green, 6 unit tests). **Sim finding: under the current recipe
+  (`--camera-counts 1 2`) padding inflation is only +5.09% → ceiling
+  ~3.6% step-time — below the <5% deprioritize line ⇒ NO GPU screen
+  for current lineages.** Full-corpus census (3–4-cam datasets in):
+  +32.55% → −23.8% padded tokens, ~19% ceiling. Conditional pre-reg
+  in the post: first widened-selection run family runs the 1k-step
+  A/B before adopting; paired arms must share the flag.
+- **Cost remaining:** 2b (compile) — real implementation vs the
+  blocker map below; decoupled from bucketing under narrow census
+  (shape variance is text-jitter ⇒ pad-to-fixed-length).
+- **Falsification (2b):** measured s/step and samples/s on identical
   configs, before/after, on THIS box. If <10% combined, bank the
   numbers and deprioritize.
 - **Implementation notes (deep-dive 2026-08-05):** compile blockers

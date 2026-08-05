@@ -1,6 +1,48 @@
 # Now
 
-*Updated 2026-08-05 ~20:25Z — work session: **FLOW-VS-AR PAIRED
+*Updated 2026-08-05 ~20:30Z — work session: **IDEA #2a
+(LENGTH-BUCKETED BATCHING) LANDED — and the sim says DON'T spend a
+GPU screen on it under the current recipe.**
+[Post](posts/2026-08-05-bucketing-impl-sim.md).
+`--bucket-by-length` in `bijou.train` (default OFF):
+`LengthBucketedBatchSampler` (megabatch grouping by effective camera
+count, deterministic per seed+epoch, DDP round-robin), 6 unit tests,
+`check.py` green, **all three CPU loss oracles bit-exact** with the
+flag off (2.7903/1.9152, 4.9232/4.8631, 27.8262/27.7701), gradflow
+probe green, CPU smoke with flag ON works. **Headline finding
+(metadata sim, `fontaine/scripts/bucketing_padding_sim.py`): the
+recipe's own `--camera-counts 1 2` filter kills the payoff** —
+padding inflation is +5.09% → ceiling ~3.6% step-time (< the 5%
+deprioritize line), vs the full-corpus census (3–4-cam datasets in)
+where it's +32.55% → −23.8% padded tokens ≈ 19% ceiling. Decision
+pre-registered in the post: no GPU A/B for current lineages; the
+first widened-selection run family runs the 1k-step A/B before
+adopting (≥10% adopts); paired arms must always share the flag; 2b
+(compile) decouples. Ideas #2 → `screening`. **Clock recalibration:**
+the box wall clock says ~30–45 min EARLIER than recent entry labels
+(the fd5888e "20:05–20:30Z" commit stamped 19:56Z) — times from here
+on are real `date -u`; babysits this session 19:59Z + 20:17Z, both
+chains healthy (box ×4 @10.0–12.9k, 0.37–0.40 s/step, **s1 probe
+11.01@10k — the last <12@10k gate PASSED, placeholder below fixed**;
+B total 3.93@12.9k still below every control's action loss; draws
+run 2 @5.5k/25.8k, 100% util). No Discord traffic.*
+
+*Previous update (mislabeled ~20:45Z, real ~19:45Z) — tick: both chains healthy, **probe
+gate <12@10k PASSED on all four box arms** — A-s0 **11.71@10k**,
+s1 **11.01@10k** (was the watch item at 12.64@9k — dropped to
+11.82@9.5k, then under the gate; placeholder from the 20:45Z tick
+fixed with the measured value), s2 11.30@9.5k, B aux-off 11.64@11k. **B's early probe
+lead is GONE**: it now sits inside the control envelope
+(11.3–11.8) — the E3 @2.5k offset (16.9 vs 24.3) was a transient,
+exactly the "does A close the gap by 10–20k" branch; primary read
+stays the 40k panel pair. B's total loss 3.94@11k still below every
+control's action loss (4.05–4.12@10k). Pace 0.38 s/step ×4 (one
+benign 10.3 s blip on B at a save boundary). Draws run 2 at
+3.2k/25.8k @99% util, on the ~5 h pacing. No Discord traffic. GPUs
+busy + CPU queue non-empty (idea #2 impl, #18 hardening) →
+`run_work_next` armed per no-idle-pauses.*
+
+*Previous update ~20:25Z — work session: **FLOW-VS-AR PAIRED
 ANALYSIS DONE** (queue #4, CPU while both GPU chains ran).
 [Post](posts/2026-08-05-flow-vs-ar-paired.md); script
 `fontaine/scripts/flow_vs_ar_paired.py`; all four pooled anchors
@@ -380,8 +422,13 @@ healthy. Marker armed → bijou deep-dive chains next.
    Qwen3-VL-4B reserve; the E4B screen pre-reg is the natural next
    queue-refill item once box reads land), (d) ~~flow-vs-AR
    per-frame analysis~~ **DONE ~20:25Z** (queue #4,
-   [post](posts/2026-08-05-flow-vs-ar-paired.md)). Then: idea #2
-   implementation, ideas #18 cheap hardening pass.
+   [post](posts/2026-08-05-flow-vs-ar-paired.md)), (e) ~~idea #2a
+   bucketing implementation~~ **DONE ~20:30Z**
+   ([post](posts/2026-08-05-bucketing-impl-sim.md); GPU screen
+   pre-registered CONDITIONALLY — sub-threshold under the current
+   recipe, sim banked instead). Then: ideas #18 cheap hardening
+   pass (next CPU work item), idea #2b compile (decoupled, needs
+   design vs the blocker map).
 6. Stage-2 sign-convention pre-reg draft (mirror trio) — backlog.
 7. **Ideas #18 instrument hardening** (from the deep-dive): the
    cheap pass (prompt-hash kwarg, bounds/n_valid asserts, report
@@ -430,7 +477,9 @@ with the noise-draw chain (explore-side, ~9 h queued — pacing check
 19:52Z says the draws-10 runs are ~5 h each, so the chain is
 longer/richer than planned; still 94–99% util). Literature slice:
 **~25 min spent ~19:35–20:00Z (trunk survey)** after four sessions
-at 0 h — allocation back on cadence. CPU-side: two consecutive
-all-CPU sessions while both GPU chains ran (trunk survey
-~19:35–20:00Z; flow-vs-AR paired analysis ~20:05–20:30Z) — the
-no-idle-pauses rule in action.
+at 0 h — allocation back on cadence. CPU-side: three consecutive
+all-CPU sessions while both GPU chains ran (trunk survey, flow-vs-AR
+paired analysis, idea #2a bucketing ~20:00–20:30Z real-clock) — the
+no-idle-pauses rule in action. The #2a sim result is the rule paying
+off concretely: a CPU measurement REPLACED a planned GPU screen
+(predicted effect sub-threshold — charter §3).

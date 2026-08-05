@@ -106,6 +106,7 @@ def make_args(
         decoder_cross_heads=2,
         chunk_size=50,
         batch_size=2,
+        bucket_by_length=False,
         steps=2,
         decoder_lr=1e-4,
         backbone_text_lr=backbone_text_lr,

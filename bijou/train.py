@@ -82,6 +82,8 @@ from .aux_text import (
 from .data import (
     DatasetStats,
     EpisodeSplit,
+    LengthBucketedBatchSampler,
+    StatsAttachedDataset,
     select_datasets,
     worker_init,
 )
@@ -164,6 +166,9 @@ class TrainArgs:
     decoder_cross_heads: int
     chunk_size: int
     batch_size: int
+    # Length-grouped batches (throughput; changes batch composition —
+    # paired arms must share the flag).
+    bucket_by_length: bool
     steps: int
     decoder_lr: float
     backbone_text_lr: float | None
@@ -1058,6 +1063,30 @@ def lr_lambda(step: int, args: TrainArgs, resume_step: int = 0) -> float:
     return base
 
 
+def length_bucket_keys(
+    datasets: list[StatsAttachedDataset],
+    collator: Collator[Any],
+) -> list[int]:
+    """Per-index prompt-length key for ``--bucket-by-length``: the
+    EFFECTIVE camera count (the collator's own selection policy applied
+    to each dataset's camera metadata — filter, truncation, prompt
+    order). Camera count dominates prompt length (``--max-soft-tokens``
+    per camera vs tens of tokens of text that also vary per draw), and
+    a bucketing key only needs to order the lengths. Metadata-only: no
+    item is fetched, no video touched.
+    """
+    keys: list[int] = []
+    for sub in datasets:
+        # A synthetic item carrying exactly what cameras_of consumes:
+        # the image keys and the per-dataset camera-kind map.
+        probe_item: dict[str, Any] = dict.fromkeys(
+            sub.dataset.meta.camera_keys,
+        )
+        probe_item["camera_kinds"] = sub.camera_kinds
+        keys.extend([len(collator.cameras_of(probe_item))] * len(sub))
+    return keys
+
+
 def parse_args() -> TrainArgs:
     parser = argparse.ArgumentParser(
         prog="python -m bijou.train",
@@ -1325,6 +1354,13 @@ def parse_args() -> TrainArgs:
         type=int,
         default=8,
         help="per rank under torchrun (global batch = batch-size x world size)",
+    )
+    parser.add_argument(
+        "--bucket-by-length",
+        action="store_true",
+        help="group batches by prompt length (effective camera count) so "
+        "rows pad ~nothing instead of to the batch max — throughput only; "
+        "changes batch composition, so paired arms must share the flag",
     )
     parser.add_argument("--steps", type=int, default=200, help="total optimizer steps")
     parser.add_argument(
@@ -1681,6 +1717,7 @@ def parse_args() -> TrainArgs:
         decoder_cross_heads=raw.decoder_cross_heads,
         chunk_size=raw.chunk_size,
         batch_size=raw.batch_size,
+        bucket_by_length=raw.bucket_by_length,
         steps=raw.steps,
         decoder_lr=raw.decoder_lr,
         backbone_text_lr=raw.backbone_text_lr,
@@ -1942,35 +1979,64 @@ def main() -> int:
     # dataloader worker base-seeds a pure function of (--seed, rank) —
     # otherwise they'd draw from the global RNG and entangle batch order
     # with how much randomness model init happened to consume.
-    sampler: torch.utils.data.DistributedSampler[Any] | None = None
-    if distributed:
-        sampler = torch.utils.data.DistributedSampler(
-            dataset,
-            shuffle=True,
-            seed=args.seed,
-            drop_last=True,
-        )
-    loader = torch.utils.data.DataLoader(
-        dataset,
-        batch_size=args.batch_size,
-        shuffle=sampler is None,
-        sampler=sampler,
-        generator=torch.Generator().manual_seed(args.seed + rank),
-        num_workers=args.num_workers,
-        collate_fn=collator,
-        drop_last=True,
-        persistent_workers=args.num_workers > 0,
-        worker_init_fn=worker_init if args.num_workers > 0 else None,
+    common_loader_kwargs: dict[str, Any] = {
+        "generator": torch.Generator().manual_seed(args.seed + rank),
+        "num_workers": args.num_workers,
+        "collate_fn": collator,
+        "persistent_workers": args.num_workers > 0,
+        "worker_init_fn": worker_init if args.num_workers > 0 else None,
         # Spawned (not forked) workers: the parent holds live CUDA state and
         # has decoded video in-process (the eval batch), and torchcodec/ffmpeg
         # deadlock or throw "Could not push packet to decoder" in forked
         # children (verified empirically on the H100 box).
-        multiprocessing_context="spawn" if args.num_workers > 0 else None,
+        "multiprocessing_context": "spawn" if args.num_workers > 0 else None,
         # Pinned batches make DevicePrefetcher's H2D copies truly async; a
         # deeper prefetch queue absorbs the variance of GOP-boundary decodes.
-        pin_memory=device.type == "cuda",
-        prefetch_factor=args.prefetch_factor if args.num_workers > 0 else None,
-    )
+        "pin_memory": device.type == "cuda",
+        "prefetch_factor": args.prefetch_factor if args.num_workers > 0 else None,
+    }
+    sampler: torch.utils.data.DistributedSampler[Any] | None = None
+    bucket_sampler: LengthBucketedBatchSampler | None = None
+    if args.bucket_by_length:
+        # Replaces BOTH the plain shuffle and the DistributedSampler:
+        # every rank derives the same global batch list from (--seed,
+        # epoch) and takes its round-robin slice.
+        bucket_sampler = LengthBucketedBatchSampler(
+            length_bucket_keys(selection.datasets, collator),
+            batch_size=args.batch_size,
+            seed=args.seed,
+            rank=rank,
+            world_size=world_size,
+        )
+        if is_main:
+            census = torch.bincount(bucket_sampler.keys)
+            print(
+                "length bucketing: frames per camera count "
+                f"{ {k: int(n) for k, n in enumerate(census) if n} } "
+                f"({len(bucket_sampler)} batches/rank/epoch)",
+                flush=True,
+            )
+        loader = torch.utils.data.DataLoader(
+            dataset,
+            batch_sampler=bucket_sampler,
+            **common_loader_kwargs,
+        )
+    else:
+        if distributed:
+            sampler = torch.utils.data.DistributedSampler(
+                dataset,
+                shuffle=True,
+                seed=args.seed,
+                drop_last=True,
+            )
+        loader = torch.utils.data.DataLoader(
+            dataset,
+            batch_size=args.batch_size,
+            shuffle=sampler is None,
+            sampler=sampler,
+            drop_last=True,
+            **common_loader_kwargs,
+        )
 
     # -- model -----------------------------------------------------------
     # A live backbone needs fp32 master weights (bf16 updates at backbone
@@ -2464,6 +2530,9 @@ def main() -> int:
         if sampler is not None:
             # Fresh coordinated shuffle each pass over the data.
             sampler.set_epoch(epoch)
+        elif bucket_sampler is not None:
+            # Same convention: reshuffle + regroup each pass.
+            bucket_sampler.set_epoch(epoch)
         for batch in prefetcher:
             if step >= args.steps:
                 break

@@ -16,3 +16,4 @@
   - [2026-08-05 — Bijou code deep-dive: ranked findings](posts/2026-08-05-bijou-deep-dive.md)
   - [2026-08-05 — Trunk survey: open-weights VLM candidates](posts/2026-08-05-trunk-survey.md)
   - [2026-08-05 — Flow vs AR paired per-frame: a horizon story](posts/2026-08-05-flow-vs-ar-paired.md)
+  - [2026-08-05 — Idea #2a: length bucketing landed; sim says don't screen yet](posts/2026-08-05-bucketing-impl-sim.md)

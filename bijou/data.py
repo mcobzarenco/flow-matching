@@ -27,6 +27,7 @@ import math
 import random
 import sys
 from collections import Counter
+from collections.abc import Iterator, Sequence
 from dataclasses import dataclass
 from enum import Enum
 from fnmatch import fnmatch
@@ -816,3 +817,86 @@ def worker_init(_worker_id: int) -> None:
     # Keep dataloader workers single-threaded: N workers x M torch threads
     # oversubscribes the host.
     torch.set_num_threads(1)
+
+
+class LengthBucketedBatchSampler(torch.utils.data.Sampler[list[int]]):
+    """Length-grouped batching over per-index length keys: shuffle
+    globally, cut the permutation into megabatches of ``batch_size x
+    megabatch_factor``, stable-sort each megabatch by key (within a key
+    the shuffled order survives), emit consecutive batches, then shuffle
+    the batch ORDER — no length-vs-step trend, and under DDP every rank
+    draws length-i.i.d. batches.
+
+    Prompt length is dominated by the per-camera soft-token block
+    (``--max-soft-tokens`` tokens per camera), so batches whose members
+    share a camera count pad ~nothing, while a mixed batch pads every
+    shorter row up to its longest; keys only need to ORDER the lengths,
+    so the effective camera count suffices.
+
+    Deterministic: the batch list is a pure function of (keys,
+    batch_size, seed, epoch) — ``set_epoch`` reshuffles, the
+    DistributedSampler convention. Every rank computes the same global
+    list and takes a round-robin slice truncated to equal counts; one
+    epoch drops the sub-batch tail of the final megabatch plus at most
+    ``world_size - 1`` trailing batches (the drop_last analogue).
+    """
+
+    def __init__(
+        self,
+        keys: Sequence[int],
+        batch_size: int,
+        seed: int,
+        rank: int = 0,
+        world_size: int = 1,
+        megabatch_factor: int = 64,
+    ) -> None:
+        if batch_size < 1 or megabatch_factor < 1:
+            raise ValueError(
+                f"batch_size {batch_size} and megabatch_factor "
+                f"{megabatch_factor} must be >= 1",
+            )
+        if world_size < 1 or not 0 <= rank < world_size:
+            raise ValueError(f"rank {rank} outside world of {world_size}")
+        n_full, tail = divmod(len(keys), batch_size * megabatch_factor)
+        total_batches = n_full * megabatch_factor + tail // batch_size
+        if total_batches < world_size:
+            raise ValueError(
+                f"{len(keys)} samples yield {total_batches} batch(es) of "
+                f"{batch_size} — fewer than {world_size} rank(s)",
+            )
+        self.keys = torch.as_tensor(keys, dtype=torch.long)
+        self.batch_size = batch_size
+        self.seed = seed
+        self.rank = rank
+        self.world_size = world_size
+        self.megabatch_factor = megabatch_factor
+        self.epoch = 0
+        self._per_rank = total_batches // world_size
+
+    def set_epoch(self, epoch: int) -> None:
+        self.epoch = epoch
+
+    def __len__(self) -> int:
+        return self._per_rank
+
+    @override
+    def __iter__(self) -> Iterator[list[int]]:
+        generator = torch.Generator().manual_seed(self.seed + self.epoch)
+        perm = torch.randperm(len(self.keys), generator=generator)
+        megabatch = self.batch_size * self.megabatch_factor
+        batches: list[list[int]] = []
+        for start in range(0, len(perm), megabatch):
+            chunk = perm[start : start + megabatch]
+            chunk = chunk[torch.argsort(self.keys[chunk], stable=True)]
+            batches.extend(
+                chunk[offset : offset + self.batch_size].tolist()
+                for offset in range(
+                    0,
+                    len(chunk) - self.batch_size + 1,
+                    self.batch_size,
+                )
+            )
+        order = torch.randperm(len(batches), generator=generator)
+        limit = self._per_rank * self.world_size
+        batches = [batches[i] for i in order[:limit]]
+        yield from batches[self.rank :: self.world_size]

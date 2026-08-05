@@ -149,6 +149,7 @@ def make_args(save_dir: Path) -> TrainArgs:
         decoder_cross_heads=2,
         chunk_size=50,
         batch_size=2,
+        bucket_by_length=False,
         steps=10,
         decoder_lr=1e-4,
         backbone_text_lr=None,  # flags OFF: the paths under test
