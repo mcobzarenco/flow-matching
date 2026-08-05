@@ -73,9 +73,10 @@ claimed* — the measurement discipline (§6) is non-negotiable.
 
 Credentials (owner provisions at ignition, `fontaine/README.md`): HF
 token with write to the `fontaine-*` repos, wandb API key (the shared
-account key — own project by convention), git push access to the
-branch, the Discord bot token + channel id, Claude Code auth on the
-box. Anthropic API key for judge experiments only if/when one is
+account key — own project by convention), a repo-scoped GitHub
+deploy key on the box (write access; deploy keys cannot be
+branch-limited, so "never push to `main`" is contractual, §7), the
+Discord bot token + channel id, Claude Code auth on the box. Anthropic API key for judge experiments only if/when one is
 approved (§7 — API spend needs sign-off). All keys via `~/.netrc` /
 the harness env file — never in shell history, never in the blog,
 never in wandb configs (the mainline once leaked a wandb key into

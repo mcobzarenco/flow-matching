@@ -36,7 +36,28 @@ runbook (ignition + day-to-day) and the map of the directory.
    git push -u origin fontaine
    ```
 
-3. **Discord** — the auth model is a *bot token over plain REST*
+3. **Git push credential** — Fontaine's sessions fire from a systemd
+   timer with no SSH session and no forwarded agent, so the box
+   needs its own key. A **repo-scoped deploy key** fits the safety
+   model (one repo, nothing else on the account):
+
+   ```sh
+   ssh-keygen -t ed25519 -f ~/.ssh/id_fontaine -N "" -C "fontaine deploy key (flow-matching)"
+   printf 'Host github.com\n    IdentityFile ~/.ssh/id_fontaine\n    IdentitiesOnly yes\n' > ~/.ssh/config
+   chmod 600 ~/.ssh/config
+   cd ~/flow-matching
+   git config user.name "Fontaine"
+   git config user.email "fontaine-agent@users.noreply.github.com"
+   ```
+
+   Add `~/.ssh/id_fontaine.pub` on GitHub: repo → Settings → Deploy
+   keys → Add deploy key → check **Allow write access**. Verify with
+   `ssh -T git@github.com` (a deploy key greets with the repo name,
+   not a username). Two notes: deploy keys cannot be branch-limited,
+   so "never push to `main`" stays contractual (charter §7); and
+   with `IdentitiesOnly`, interactive pushes from the box use this
+   key too.
+4. **Discord** — the auth model is a *bot token over plain REST*
    (`harness/discord.py` is the whole integration):
    - discord.com/developers → **New Application** → **Bot** →
      **Reset Token** → copy the bot token (treat it as a password).
@@ -50,7 +71,7 @@ runbook (ignition + day-to-day) and the map of the directory.
    - In your client: Settings → Advanced → **Developer Mode** on;
      right-click the channel → **Copy Channel ID**; right-click your
      avatar → **Copy User ID** (used for @mention escalations).
-4. **Claude Code** — install and authenticate on the box:
+5. **Claude Code** — install and authenticate on the box:
 
    ```sh
    curl -fsSL https://claude.ai/install.sh | bash   # or: npm install -g @anthropic-ai/claude-code
@@ -64,7 +85,7 @@ runbook (ignition + day-to-day) and the map of the directory.
    Alternatives: `claude setup-token` (mints a long-lived token for
    headless boxes), or an `ANTHROPIC_API_KEY` in the env file
    (API billing instead of the subscription).
-5. **Env file** `~/.config/fontaine/env` (mode 600, never committed):
+6. **Env file** `~/.config/fontaine/env` (mode 600, never committed):
 
    ```sh
    DISCORD_BOT_TOKEN=...
@@ -91,7 +112,7 @@ runbook (ignition + day-to-day) and the map of the directory.
    account offers and the exact id — use that id in `FONTAINE_MODEL`
    if the `fable` alias doesn't resolve).
 
-6. **Start it**:
+7. **Start it**:
 
    ```sh
    ~/flow-matching/fontaine/harness/fontaine-session.sh bootstrap
@@ -143,7 +164,9 @@ connection — nothing to keep alive, nothing to crash.
 
 Credential scope IS the blast radius: the HF token writes only
 `fontaine-*`, wandb is scoped to its project by convention, the
-Discord bot sees one channel, git pushes only the branch. The box is
+Discord bot sees one channel, the git deploy key writes one
+repository (branch discipline is contractual — deploy keys cannot be
+branch-limited). The box is
 single-purpose, so headless sessions run with tool permissions
 skipped *inside* that scope — the charter's §7 boundaries are
 contractual, and the credentials make the important ones physical.
