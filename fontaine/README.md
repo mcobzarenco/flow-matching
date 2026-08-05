@@ -69,10 +69,27 @@ runbook (ignition + day-to-day) and the map of the directory.
    ```sh
    DISCORD_BOT_TOKEN=...
    DISCORD_CHANNEL_ID=...
-   DISCORD_OWNER_ID=...        # optional, for @mentions
-   WANDB_API_KEY=...           # shared account key; project `fontaine`
-   # FONTAINE_MODEL=...        # optional model override for sessions
+   DISCORD_OWNER_ID=...         # optional, for @mentions
+   WANDB_API_KEY=...            # shared account key; project `fontaine`
+   FONTAINE_MODEL=fable         # pin the agent's model (→ claude --model);
+                                # verify the resolved id after auth (below)
+   # MAX_THINKING_TOKENS=31999  # harness default; raise only if the
+                                # CLI/model accepts more
    ```
+
+   Pinning model + thinking: `FONTAINE_MODEL` is passed to every
+   session as `--model`; the harness exports
+   `MAX_THINKING_TOKENS=31999` (Claude Code's max "ultrathink"
+   budget) unless the env file overrides it. After authenticating,
+   verify the pin resolves to Fable 5:
+
+   ```sh
+   claude -p "say OK" --model fable --output-format json | grep -o "claude[a-z0-9.-]*" | sort -u
+   ```
+
+   (or run `/model` inside interactive `claude` to list what the
+   account offers and the exact id — use that id in `FONTAINE_MODEL`
+   if the `fable` alias doesn't resolve).
 
 6. **Start it**:
 

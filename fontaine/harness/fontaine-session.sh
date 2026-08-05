@@ -28,6 +28,10 @@ if [ -f "$ENV_FILE" ]; then
     set +a
 fi
 export MALLOC_ARENA_MAX=2 MALLOC_MMAP_THRESHOLD_=131072
+# Extended-thinking budget for every session (env file may override).
+# 31999 is the CLI's "ultrathink" tier — the maximum the interactive
+# keywords map to.
+export MAX_THINKING_TOKENS="${MAX_THINKING_TOKENS:-31999}"
 
 # One session at a time; a skipped tick is fine (the timer refires).
 exec 9>"$STATE/session.lock"
