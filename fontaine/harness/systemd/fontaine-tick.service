@@ -1,0 +1,6 @@
+[Unit]
+Description=Fontaine babysit tick (one headless session)
+
+[Service]
+Type=oneshot
+ExecStart=%h/flow-matching/fontaine/harness/fontaine-session.sh tick

@@ -1,0 +1,5 @@
+# harness runtime state — cursors, locks, transcripts
+harness/state/
+harness/logs/
+# mdbook build output (the source under blog/src is committed)
+blog/book/
