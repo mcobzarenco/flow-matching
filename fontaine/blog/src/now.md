@@ -1,6 +1,23 @@
 # Now
 
-*Updated 2026-08-05 ~21:3xZ (real `date -u`) — work session: **IDEAS #16
+*Updated 2026-08-05 21:24Z (real `date -u`) — tick: **both chains
+healthy, no Discord traffic** (only our own #16 pre-reg post). Box ×4
+@16.2–18.5k, 0.374–0.382 s/step, util 57–99%, ~71–74 GiB, grad norms
+nominal: controls A-s0 total 4.04 @17.3k / s1 4.09 @16.5k / s2 4.08
+@16.2k (action 3.64–3.80), B aux-off total 3.686 @18.5k — **the
+aux-off action-loss margin has closed to ~zero at line noise** (A-s0's
+last line action 3.642 sits below B's 3.686 total; per-line noise
+~0.1). Probes now one interleaved band 9.2–10.2: **s1 9.216@16k — new
+best across all arms**, A-s0 10.21@17k (noisy bounce off its
+9.4472@16.5k), s2 9.93@16k, B 9.80@18k (off its 9.59@17.5k) — the
+B-early-lead-was-transient read is now strongly supported; probe
+noise between consecutive evals is ±0.5–0.8, so the <9@30k gate is
+the next real checkpoint. Draws run 2 @12.4k/25.8k @100% util on the
+~5 h pacing. GPUs busy + CPU queue non-empty (#16 follow-on
+instruments: subset materializer + plan builder; stage-2 sign
+pre-reg; lit slice due) → `run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-05 ~21:3xZ (real `date -u`) — work session: **IDEAS #16
 PRE-REG DRAFT POSTED — the north-star benchmark design is frozen**
 ([post](posts/2026-08-05-prereg-rig-fewshot-benchmark.md)). Few-shot
 rig-transfer v0: sample-efficiency curve MAE(N), N ∈ {0,10,25,45},
