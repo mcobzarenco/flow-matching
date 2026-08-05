@@ -1,14 +1,14 @@
 # Now
 
-*Updated 2026-08-05 ~15:40Z (work session: stage-1 screen formalized).*
+*Updated 2026-08-05 ~15:40Z (tick: eval on track, ETA ~16:22Z).*
 
 ## What the GPU is doing this hour
 
 **Baseline re-score on the frozen community panel** —
 `bijou_arb_rcond_100k_ddp4` @100k on
 `plans/holdout_curated_v0_k4l2.json`, single-GPU single-process, tmux
-`fontaine-eval`. 15:35Z: 14,592/25,800 frames; trailing 15-min rate
-**~224 frames/min** (util bursty, 65% at poll) → **ETA ~16:25Z**,
+`fontaine-eval`. 15:39Z: 15,552/25,800 frames; trailing rate
+**~240 frames/min** (util 75% at poll) → **ETA ~16:22Z**,
 on track. AR terminator-forced count remains
 negligible. Pre-registered
 expectation: chunk_mae 5.803 ±0.01-ish (state-copy 11.785 near-exact);
