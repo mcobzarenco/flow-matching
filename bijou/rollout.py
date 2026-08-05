@@ -97,7 +97,7 @@ def parse_args() -> argparse.Namespace:
         help="rig stats from a local LeRobot dataset directory (meta/stats.json)",
     )
     parser.add_argument(
-        "--fps",
+        "--control-fps",
         type=int,
         default=30,
         help="control-loop rate (actions/s). The chunks are 30 Hz data: "
@@ -108,7 +108,7 @@ def parse_args() -> argparse.Namespace:
         "--camera-fps",
         type=int,
         default=30,
-        help="camera capture rate — independent of --fps (cameras often "
+        help="camera capture rate — independent of --control-fps (cameras often "
         "support only their native rates; observations are snapshots of "
         "the latest frame, so capture may run faster than control)",
     )
@@ -374,7 +374,7 @@ def main() -> int:
     print(f"cameras (prompt order): {sorted(cameras)}")
     print(f"state stats mean: {[round(x, 1) for x in stats.state_mean]}")
     print(
-        f"loop: {args.fps} Hz, execute {horizon}/{chunk_size} per replan, "
+        f"loop: {args.control_fps} Hz, execute {horizon}/{chunk_size} per replan, "
         f"{args.duration:.0f}s, max_relative_target={args.max_relative_target}",
     )
     if args.check:
@@ -414,11 +414,11 @@ def main() -> int:
                 lambda one, index: policy.predict_with_text([one], [index]),
             )
             planner.warmup(item, replan_index=0)
-            latency_ticks = planner.latency_ticks(args.fps)
+            latency_ticks = planner.latency_ticks(args.control_fps)
             trigger_at = horizon - latency_ticks - args.trigger_margin_ticks
             fine = sustainable(chunk_size, latency_ticks, args.trigger_margin_ticks)
             print(
-                f"async: warm latency {latency_ticks} ticks @ {args.fps} Hz "
+                f"async: warm latency {latency_ticks} ticks @ {args.control_fps} Hz "
                 f"(+{args.trigger_margin_ticks} margin) → trigger at action "
                 f"{max(trigger_at, 0)}/{horizon} — "
                 + (
@@ -428,7 +428,7 @@ def main() -> int:
                         "UNSUSTAINABLE: each plan arrives one latency "
                         f"stale, leaving {max(chunk_size - latency_ticks, 0)} "
                         f"fresh rows per {latency_ticks}-tick cycle — the "
-                        "loop WILL starve. Use sync mode, lower --fps, or "
+                        "loop WILL starve. Use sync mode, lower --control-fps, or "
                         "shrink latency"
                     )
                 ),
@@ -448,7 +448,7 @@ def main() -> int:
     robot.connect()
     print("robot connected; ctrl-c to stop", flush=True)
 
-    tick = 1.0 / args.fps
+    tick = 1.0 / args.control_fps
     deadline = time.perf_counter() + args.duration
     try:
         if args.async_inference:
@@ -571,7 +571,7 @@ def run_async_loop(
     executor = AsyncExecutor(
         chunk_size=chunk_size,
         execute_horizon=horizon,
-        fps=args.fps,
+        fps=args.control_fps,
         margin_ticks=args.trigger_margin_ticks,
         blend_ticks=args.switch_blend,
     )
@@ -579,15 +579,15 @@ def run_async_loop(
         # Cold start: synchronous first plan (arm idle, staleness-free)
         # + kernel warmup, before the first tick.
         first = planner.warmup(snapshot(), replan_index=0)
-        latency_ticks = planner.latency_ticks(args.fps)
+        latency_ticks = planner.latency_ticks(args.control_fps)
         if not sustainable(chunk_size, latency_ticks, args.trigger_margin_ticks):
             raise SystemExit(
                 f"async refused: measured latency {latency_ticks} ticks at "
-                f"{args.fps} Hz needs 2·{latency_ticks}+"
+                f"{args.control_fps} Hz needs 2·{latency_ticks}+"
                 f"{args.trigger_margin_ticks} ≤ chunk {chunk_size} — each "
                 "plan would arrive one latency stale and the loop would "
                 "starve into hold-lunge cycles (field-tested 2026-08-05). "
-                "Run sync mode, lower --fps, or shrink latency "
+                "Run sync mode, lower --control-fps, or shrink latency "
                 "(power profile, batch-free GPU).",
             )
         executor.start(first)
@@ -602,7 +602,7 @@ def run_async_loop(
         next_tick = time.perf_counter()
         while time.perf_counter() < deadline:
             if executor.wants_plan(
-                planner.latency_ticks(args.fps),
+                planner.latency_ticks(args.control_fps),
                 in_flight=planner.in_flight,
             ):
                 planner.submit(snapshot(), replans)
