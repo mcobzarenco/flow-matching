@@ -63,9 +63,10 @@ import matplotlib
 import matplotlib.pyplot as plt
 import torch
 import transformers
-import wandb
 from safetensors.torch import load_file, save_file
 from torch import Tensor
+
+import wandb
 
 from .annotations import ConditionField
 from .aux_text import (
