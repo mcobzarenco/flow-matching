@@ -51,6 +51,7 @@ from .aux_text import AuxField, AuxGeneration
 from .data import DatasetStats
 from .eval.policies import BijouPolicy
 from .model import SamplingMethod
+from .rollout_async import AsyncExecutor, AsyncPlanner
 
 # Canonical SO-100/101 joint order (bus order; dataset motor names are these
 # with the ".pos" suffix).
@@ -104,6 +105,29 @@ def parse_args() -> argparse.Namespace:
         "(< chunk size leaves reaction headroom)",
     )
     parser.add_argument("--duration", type=float, default=60.0, help="seconds")
+    parser.add_argument(
+        "--async-inference",
+        action="store_true",
+        help="overlap planning with execution: infer the next chunk "
+        "while the current one's tail executes, switch at the horizon "
+        "boundary with a skip-ahead — removes the per-replan freeze "
+        "(~625 ms on the 8 GiB laptop) at identical replan cadence",
+    )
+    parser.add_argument(
+        "--trigger-margin-ticks",
+        type=int,
+        default=3,
+        help="async: extra control ticks of slack on top of measured "
+        "p95 inference latency when scheduling the next plan",
+    )
+    parser.add_argument(
+        "--switch-blend",
+        type=int,
+        default=0,
+        help="async: crossfade this many ticks between the outgoing and "
+        "incoming chunk at a switch (0 = hard switch; "
+        "max_relative_target stays the hard safety clamp)",
+    )
     parser.add_argument("--sample-steps", type=int, default=5)
     parser.add_argument(
         "--sample-method",
@@ -367,6 +391,29 @@ def main() -> int:
             flush=True,
         )
         print_generation(generations, policy.generate)
+        if args.async_inference:
+            # Async dry-run: measure the warm path and report the slack
+            # arithmetic the trigger will run on — a starvation-prone
+            # configuration is visible here, before the arm moves.
+            planner = AsyncPlanner(
+                lambda one, index: policy.predict_with_text([one], [index]),
+            )
+            planner.warmup(item, replan_index=0)
+            latency_ticks = planner.latency_ticks(args.fps)
+            slack = chunk_size - horizon
+            trigger_at = horizon - latency_ticks - args.trigger_margin_ticks
+            print(
+                f"async: warm latency {latency_ticks} ticks @ {args.fps} Hz "
+                f"(+{args.trigger_margin_ticks} margin) → trigger at action "
+                f"{max(trigger_at, 0)}/{horizon}; tail slack {slack} ticks — "
+                + (
+                    "OK (freeze-free at this latency)"
+                    if latency_ticks + args.trigger_margin_ticks <= horizon + slack
+                    else "STARVATION RISK: latency exceeds horizon + tail"
+                ),
+                flush=True,
+            )
+            planner.shutdown()
         return 0
 
     robot = SOFollower(
@@ -382,48 +429,190 @@ def main() -> int:
 
     tick = 1.0 / args.fps
     deadline = time.perf_counter() + args.duration
-    replans = 0
     try:
-        while time.perf_counter() < deadline:
-            observation = robot.get_observation()
-            item = observation_to_item(
-                observation,
-                args.task,
+        if args.async_inference:
+            run_async_loop(
+                args,
+                robot,
+                policy,
                 stats,
-                chunk_size,
                 rig_kinds,
                 condition_values,
+                chunk_size=chunk_size,
+                horizon=horizon,
+                tick=tick,
+                deadline=deadline,
             )
-            start = time.perf_counter()
-            chunks, generations = policy.predict_with_text([item], [replans])
-            chunk = chunks[0]
-            latency = time.perf_counter() - start
-            replans += 1
-            print(
-                f"replan {replans}: {latency * 1000:.0f} ms | state "
-                f"{[round(float(x), 1) for x in item['observation.state']]}",
-                flush=True,
+        else:
+            run_sync_loop(
+                args,
+                robot,
+                policy,
+                stats,
+                rig_kinds,
+                condition_values,
+                chunk_size=chunk_size,
+                horizon=horizon,
+                tick=tick,
+                deadline=deadline,
             )
-            print_generation(generations, policy.generate)
-            next_tick = time.perf_counter()
-            for step in range(horizon):
-                if time.perf_counter() >= deadline:
-                    break
-                action = {
-                    f"{motor}.pos": float(chunk[step, j])
-                    for j, motor in enumerate(SO_MOTORS)
-                }
-                robot.send_action(action)
-                next_tick += tick
-                delay = next_tick - time.perf_counter()
-                if delay > 0:
-                    time.sleep(delay)
     except KeyboardInterrupt:
         print("\nstopping (keyboard interrupt)")
     finally:
         robot.disconnect()
         print("robot disconnected")
     return 0
+
+
+def run_sync_loop(
+    args: argparse.Namespace,
+    robot: SOFollower,
+    policy: BijouPolicy,
+    stats: DatasetStats,
+    rig_kinds: dict[str, str],
+    condition_values: dict[str, str],
+    *,
+    chunk_size: int,
+    horizon: int,
+    tick: float,
+    deadline: float,
+) -> None:
+    """The original serial loop: observe → predict (arm frozen) →
+    execute horizon actions → repeat. Byte-identical behavior to the
+    pre-async rollout."""
+    replans = 0
+    while time.perf_counter() < deadline:
+        observation = robot.get_observation()
+        item = observation_to_item(
+            observation,
+            args.task,
+            stats,
+            chunk_size,
+            rig_kinds,
+            condition_values,
+        )
+        start = time.perf_counter()
+        chunks, generations = policy.predict_with_text([item], [replans])
+        chunk = chunks[0]
+        latency = time.perf_counter() - start
+        replans += 1
+        print(
+            f"replan {replans}: {latency * 1000:.0f} ms | state "
+            f"{[round(float(x), 1) for x in item['observation.state']]}",
+            flush=True,
+        )
+        print_generation(generations, policy.generate)
+        next_tick = time.perf_counter()
+        for step in range(horizon):
+            if time.perf_counter() >= deadline:
+                break
+            action = {
+                f"{motor}.pos": float(chunk[step, j])
+                for j, motor in enumerate(SO_MOTORS)
+            }
+            robot.send_action(action)
+            next_tick += tick
+            delay = next_tick - time.perf_counter()
+            if delay > 0:
+                time.sleep(delay)
+
+
+def run_async_loop(
+    args: argparse.Namespace,
+    robot: SOFollower,
+    policy: BijouPolicy,
+    stats: DatasetStats,
+    rig_kinds: dict[str, str],
+    condition_values: dict[str, str],
+    *,
+    chunk_size: int,
+    horizon: int,
+    tick: float,
+    deadline: float,
+) -> None:
+    """Overlapped loop: one action per tick, planning in the background,
+    switches at the horizon boundary with skip-ahead (design:
+    rollout_async module docstring)."""
+
+    def snapshot() -> dict[str, Any]:
+        return observation_to_item(
+            robot.get_observation(),
+            args.task,
+            stats,
+            chunk_size,
+            rig_kinds,
+            condition_values,
+        )
+
+    planner = AsyncPlanner(
+        lambda one, index: policy.predict_with_text([one], [index]),
+    )
+    executor = AsyncExecutor(
+        chunk_size=chunk_size,
+        execute_horizon=horizon,
+        fps=args.fps,
+        margin_ticks=args.trigger_margin_ticks,
+        blend_ticks=args.switch_blend,
+    )
+    try:
+        # Cold start: synchronous first plan (arm idle, staleness-free)
+        # + kernel warmup, before the first tick.
+        first = planner.warmup(snapshot(), replan_index=0)
+        executor.start(first)
+        print(
+            f"async: warm latency {planner.latency_ticks(args.fps)} ticks "
+            f"(+{args.trigger_margin_ticks} margin)",
+            flush=True,
+        )
+        print_generation(first.generations, policy.generate)
+        replans = 1
+        held_before = 0
+        next_tick = time.perf_counter()
+        while time.perf_counter() < deadline:
+            if executor.wants_plan(
+                planner.latency_ticks(args.fps),
+                in_flight=planner.in_flight,
+            ):
+                planner.submit(snapshot(), replans)
+                replans += 1
+            executor.offer(planner.poll())
+            adopted = executor.maybe_switch(time.perf_counter())
+            if adopted is not None:
+                held = executor.held_ticks - held_before
+                held_before = executor.held_ticks
+                print(
+                    f"switch {executor.switches}: replan "
+                    f"{adopted.replan_index} adopted at action "
+                    f"{executor.last_skip_ahead}/{chunk_size}"
+                    + (f" after {held} HELD ticks" if held > 0 else ""),
+                    flush=True,
+                )
+                print_generation(adopted.generations, policy.generate)
+            action_row, starved = executor.next_action()
+            if starved and executor.held_ticks == held_before + 1:
+                print(
+                    "STARVED: chunk exhausted before the next plan "
+                    "arrived — holding position (inference too slow for "
+                    "horizon + tail at this fps)",
+                    flush=True,
+                )
+            action = {
+                f"{motor}.pos": float(action_row[j])
+                for j, motor in enumerate(SO_MOTORS)
+            }
+            robot.send_action(action)
+            next_tick += tick
+            delay = next_tick - time.perf_counter()
+            if delay > 0:
+                time.sleep(delay)
+        print(
+            f"async summary: {executor.switches} switches, "
+            f"{executor.held_ticks} held ticks, last skip-ahead "
+            f"{executor.last_skip_ahead}",
+            flush=True,
+        )
+    finally:
+        planner.shutdown()
 
 
 if __name__ == "__main__":
