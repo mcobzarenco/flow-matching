@@ -32,6 +32,10 @@ export MALLOC_ARENA_MAX=2 MALLOC_MMAP_THRESHOLD_=131072
 # 31999 is the CLI's "ultrathink" tier — the maximum the interactive
 # keywords map to.
 export MAX_THINKING_TOKENS="${MAX_THINKING_TOKENS:-31999}"
+# Allow long in-session sleep-polls (babysitting through a critical
+# window WITHOUT ending the session): the bash tool's per-command cap
+# defaults to 10 min, which would truncate a `sleep 1800`.
+export BASH_MAX_TIMEOUT_MS="${BASH_MAX_TIMEOUT_MS:-3600000}"
 
 # One session at a time; a skipped tick is fine (the timer refires).
 exec 9>"$STATE/session.lock"
@@ -40,37 +44,54 @@ if ! flock -n 9; then
     exit 0
 fi
 
-case "$MODE" in
-    tick) TIMEOUT=1800 ;;       # 30 min: a tick must never outlive the timer interval by much
-    work) TIMEOUT=14400 ;;      # 4 h: bounded per charter §9
-    bootstrap) TIMEOUT=28800 ;; # 8 h: dataset mirror + baselines
-    *)
-        echo "unknown mode: $MODE" >&2
-        exit 2
-        ;;
-esac
+timeout_for() {
+    case "$1" in
+        tick) echo 1800 ;;       # 30 min: a hung tick must self-clear fast
+        work) echo 14400 ;;      # 4 h: bounded per charter §9
+        bootstrap) echo 28800 ;; # 8 h: dataset mirror + baselines
+        *)
+            echo "unknown mode: $1" >&2
+            return 2
+            ;;
+    esac
+}
 
-PROMPT_FILE="$DIR/prompts/$MODE.md"
-STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
-LOG="$LOGS/${STAMP}_${MODE}.log"
+run_session() {
+    local mode="$1" timeout_s stamp log status
+    timeout_s="$(timeout_for "$mode")"
+    stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+    log="$LOGS/${stamp}_${mode}.log"
+    # --dangerously-skip-permissions: the box is single-purpose and the
+    # real boundaries are credential scope (fontaine-* HF token, branch
+    # push, one Discord channel) — charter §7 / README "Safety model".
+    # stream-json (requires --verbose in -p mode) emits one JSONL event
+    # per turn/tool-use AS IT HAPPENS — plain text mode buffers
+    # everything until session end, so tail -f showed nothing for hours.
+    set +e
+    timeout "$timeout_s" claude -p "$(cat "$DIR/prompts/$mode.md")" \
+        ${FONTAINE_MODEL:+--model "$FONTAINE_MODEL"} \
+        --dangerously-skip-permissions \
+        --output-format stream-json --verbose \
+        >>"$log" 2>&1
+    status=$?
+    set -e
+    if [ "$status" -ne 0 ]; then
+        echo "session $mode exited $status (see $log)"
+    fi
+}
 
+timeout_for "$MODE" >/dev/null # validate before running anything
 cd "$REPO"
-# --dangerously-skip-permissions: the box is single-purpose and the
-# real boundaries are credential scope (fontaine-* HF token, branch
-# push, one Discord channel) — charter §7 / README "Safety model".
-set +e
-# stream-json (requires --verbose in -p mode) emits one JSONL event
-# per turn/tool-use AS IT HAPPENS — plain text mode buffers everything
-# until session end, which made `tail -f` on a live session show
-# nothing for hours.
-timeout "$TIMEOUT" claude -p "$(cat "$PROMPT_FILE")" \
-    ${FONTAINE_MODEL:+--model "$FONTAINE_MODEL"} \
-    --dangerously-skip-permissions \
-    --output-format stream-json --verbose \
-    >>"$LOG" 2>&1
-STATUS=$?
-set -e
-if [ "$STATUS" -ne 0 ]; then
-    echo "session $MODE exited $STATUS (see $LOG)"
+run_session "$MODE"
+
+# A tick whose findings exceed its 30-min budget requests a chained
+# work session by touching this marker (prompts/tick.md), instead of
+# overrunning its own timeout. ONE chain per invocation: if more work
+# remains, the next timer fire (≤30 min out) continues — bounded
+# lock-holding by construction.
+if [ "$MODE" = "tick" ] && [ -f "$STATE/run_work_next" ]; then
+    rm -f "$STATE/run_work_next"
+    echo "tick requested a chained work session"
+    run_session work
 fi
 exit 0
