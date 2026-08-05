@@ -1,6 +1,21 @@
 # Now
 
-*Updated 2026-08-05 ~19:10Z — work session: **bijou deep-dive DONE**
+*Updated 2026-08-05 ~19:25Z — tick: **harness alert diagnosed — the
+19:08Z work session (trunk survey) died on the USAGE CAP** (429
+"session limit, resets 19:40Z"; not auth — one-off, no repeat
+expected after reset). Survey draft (rubric + method skeleton,
+candidates empty) is on disk uncommitted → committed this tick;
+chained work session resumes it after 19:40Z (tick holds open past
+the reset so the chain doesn't 429 on launch). **Draws chain E1
+gate PASSED**: run 1 (N=1 heun-30) chunk_mae **6.624** vs owner box
+6.6232 (Δ0.001, band ±0.03), first_mae 1.933 ≡ owner's 1.9331 —
+cross-box instrument reproducibility confirmed; chain advanced to
+draws=10 (run 2/5, ~1.5–2 h each, chain done ~03:30Z). Box healthy
+×4 @7.0–8.3k, 0.38 s/step: controls 4.60–4.67 (action 4.23–4.24),
+**B aux-off 4.169 total — still below every control's action loss
+at 8k**. Posted in-channel.*
+
+*Previous update ~19:10Z — work session: **bijou deep-dive DONE**
 (owner 16:17Z steer). All 57 files / 22.3k lines reviewed (6 parallel
 subsystem readers, headline claims hand-verified, one reviewer claim
 refuted). **No P0 — the measurement core survives adversarial
@@ -97,6 +112,12 @@ launcher itself stops the chain if E1 fails (N=1 must reproduce
 `~/eval__bijou_flow_artrunk...draws{N}_{solver}.log`. Babysit: chain
 liveness + per-run E1/E3 numbers as they land; unimodality probe
 (per-draw dumps) runs before the results post, next work session.
+- **19:20Z: E1 GATE PASSED** — run 1 chunk_mae **6.624** (owner box
+  6.6232, Δ0.001 ≪ ±0.03 band), first_mae 1.933; state-copy 11.785;
+  Q3 condition sensitivity 0.898 over 5,070 labeled non-success
+  frames. Report + html in local `reports/`. Chain on run 2
+  (draws=10 heun-30) — load phase at 19:19Z, util confirmed
+  post-load this tick.
 
 ## Sealed-panel anchors — BANKED 18:24Z (posted in-channel)
 
@@ -293,10 +314,13 @@ healthy. Marker armed → bijou deep-dive chains next.
    ~~rules/prompts full pass~~ **DONE ~19:00Z** (charter v1.1), (b)
    ~~bijou deep-dive~~ **DONE ~19:10Z**
    ([ranked post](posts/2026-08-05-bijou-deep-dive.md); fix queue =
-   ideas #18), (c) **trunk survey** (**next, marker armed**;
-   open-weights, <7B ideally ~3B, video-trained preferred; arXiv
-   paper + HF config per candidate; Ministral 3 3B + Gemma 4
-   E2B/E4B seed the list; ranked doc on the blog; doubles as the
+   ideas #18), (c) **trunk survey** (**IN PROGRESS — interrupted by
+   the 19:08Z usage-cap kill**; draft
+   [posts/2026-08-05-trunk-survey.md](posts/2026-08-05-trunk-survey.md)
+   has framing + rubric + method note, candidate sections empty —
+   resume from the web deep-reads; open-weights, <7B ideally ~3B,
+   video-trained preferred; arXiv paper + HF config per candidate;
+   Ministral 3 3B + Gemma 4 E2B/E4B seed the list; doubles as the
    overdue literature slice). Then: flow-vs-AR per-frame analysis
    (queue #4), idea #2 implementation, ideas #18 hardening pass.
 6. Stage-2 sign-convention pre-reg draft (mirror trio) — backlog.
@@ -321,6 +345,14 @@ Box babysit one-liner (tick or work):
 Known safe-to-ignore: `wandb/` untracked at repo root (smoke
 scratch); owner tmux sessions on the box (`5`, `rigjudge`,
 `watchdog`) — theirs, do not touch.
+
+Usage-cap note (19:12Z alert): session limits can 429-kill a
+session mid-work (`terminal_reason: api_error, 429`, reset time in
+the alert/log tail). Diagnosis path: tail the named harness log,
+look at the last `result` JSON. Uncommitted work survives on disk —
+commit it in the next session. If a chain marker is armed just
+before a reset boundary, prefer holding the live session past the
+reset so the chained session doesn't die on launch.
 
 ## Utilization footer
 
