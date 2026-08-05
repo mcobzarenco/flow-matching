@@ -108,6 +108,50 @@ inherit the scar tissue without the scars.
 - In-flight host RAM for dataloaders = workers × prefetch × batch;
   scale prefetch inversely with batch (64/8 and 128/4 proven).
 
+## Launching a training run (checklist)
+
+Run through this before every launch; each line is a past incident.
+
+1. **Box code at the launch commit, check.py green, no live run**
+   (sync-under-a-live-run corrupts workers; concurrent work gets its
+   own clone).
+2. **GPUs clear + no stale tmux session** — the launcher guards both;
+   after a pkill, GPU memory takes ~20 s to drain before the guard
+   passes.
+3. **Launcher header pre-registers**: expectations with numbers, gates,
+   known seams (batch/world-size changes, format changes, LR restarts),
+   and the failure read that would stop the run.
+4. **Resume semantics** — three separate traps:
+   - `--resume` = continuation (Adam moments + scheduler + step;
+     CLI LRs ignored); `--init-from` = warm start (fresh optimizer,
+     step 0, new save-dir). Extensions re-raising LR off the cosine
+     floor take `--rewarmup-steps` (ramp anchors at the resume step;
+     `--warmup-steps` anchors at 0 and also sets the cosine phase).
+   - **A resume with the unchanged `--seed` REPLAYS the original data
+     order**: the train loop restarts at epoch 0, index 0 — it never
+     fast-forwards to the resumed step — and one epoch of the curated
+     corpus is ~97k steps at eff-192, so extension segments replay the
+     original run's frames AND its τ/noise draws exactly. Pass a fresh
+     `--seed` on every extension until sampler fast-forward exists.
+     (Caught by the owner 2026-08-05, 3k steps into a replayed
+     extension; the rcond B10 resume also replayed its first stretch,
+     unknowingly.)
+   - `--steps` counts TOTAL including resumed steps; "nothing to do"
+     means it was left at the old total.
+5. **Effective batch bookkeeping** when world size changes: per-rank
+   batch × ranks, stated in the header (96×2 → 48×4 kept eff-192; the
+   B12→B10 OOM resume changed it and is a recorded seam).
+6. **Disk estimate**: checkpoint size × (steps / save-every) against
+   `df` (24 GB × 20 saves fit; it was checked, not assumed).
+7. **First-poll verification, not vibes**: the `resumed optimizer …
+   (lr …)` line, the model line (param counts, LRs, frozen/live), the
+   stage-2 init line when inheriting a trunk, data-selection counts
+   against expectation, and — after an LR-schedule change — one
+   closed-form LR check against a logged step.
+8. **wandb naming**: resumes keep the display name (new attempt id);
+   reports pin run IDs, never display names — a resumed attempt
+   shadows its predecessor under name queries.
+
 ## Babysitting runs
 
 - Poll every 30–60 min when stable; tighter around the first eval
