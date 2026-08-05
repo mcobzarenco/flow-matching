@@ -1,6 +1,32 @@
 # Now
 
-*Updated 2026-08-05 21:14Z (real `date -u`) — tick: **both chains
+*Updated 2026-08-05 ~21:3xZ (real `date -u`) — work session: **IDEAS #16
+PRE-REG DRAFT POSTED — the north-star benchmark design is frozen**
+([post](posts/2026-08-05-prereg-rig-fewshot-benchmark.md)). Few-shot
+rig-transfer v0: sample-efficiency curve MAE(N), N ∈ {0,10,25,45},
+over the 57 owner rig episodes — 12-ep fixed holdout
+(SeedSequence(16)), nested train subsets as **materialized derived
+corpora with the #18.8 leakage gate** (the first consumer of that
+work); owner `run_ft_rig.sh` protocol constants, 1×H100 B10,
+best-checkpoint-at-200 selection; co-primary chunk_mae + first-4
+pooled MAE (k fixed per the flow-vs-AR crossover); 3·σ_ft decision
+rule with σ_ft from N25 seed replicates + an honest degrade rule if
+σ_ft > 0.5. **Key design find: flow-80k is contaminated as a
+few-shot subject** (rig data in its pretrain mix per the owner's
+`run_ft_rig_flow.sh` header) — eligibility gate pre-registered;
+rcond-100k and all four box arms qualify. Two slots (init selection,
+E5 noise scale) fill by finalization amendment after tonight's box
+reads; execution ≈ one evening on 1 GPU at the first quiet boundary.
+check.py green (179). Babysit 21:16Z: box ×4 healthy @15.5–17.8k,
+0.376–0.387 s/step — **A-s0 probe 9.4472@16.5k, first control under
+9.5 and now below B's 9.59@17.5k** (the B-early-lead-was-transient
+read strengthens); B aux-off 3.689@17.8k still at/below every
+control's action loss (controls 3.77–3.91); draws run 2 @11.5k/25.8k
+@100% util. No Discord traffic. GPUs busy + CPU queue non-empty
+(#16 follow-on instruments: subset materializer + plan builder;
+stage-2 sign pre-reg) → `run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-05 21:14Z (real `date -u`) — tick: **both chains
 healthy, no Discord traffic; s1 watch item RESOLVED** (log had
 advanced 15500→15720 — it was the probe/save boundary as suspected,
 not a stall). Box ×4 @15.5–17.5k, 0.377–0.387 s/step, util 63–99%,
@@ -560,6 +586,11 @@ healthy. Marker armed → bijou deep-dive chains next.
    pass (next CPU work item), idea #2b compile (decoupled, needs
    design vs the blocker map).
 6. Stage-2 sign-convention pre-reg draft (mirror trio) — backlog.
+8. **Ideas #16 rig benchmark**: ~~pre-reg draft~~ **POSTED ~21:3xZ**
+   ([post](posts/2026-08-05-prereg-rig-fewshot-benchmark.md); slots
+   fill after box reads). Follow-on CPU items now queued: subset
+   materializer + provenance, `plans/rig_fewshot_v0_k4l2.json`
+   builder, launcher gen, wrap-census gate on the rig repos.
 7. **Ideas #18 instrument hardening**: ~~the cheap pass (#18.1)~~
    **DONE ~20:55Z** ([post](posts/2026-08-05-hardening-pass.md);
    oracle bit-exact, check.py green). Remaining GPU-busy CPU items:
@@ -624,4 +655,8 @@ eval at a boundary we already visit. Sixth consecutive all-CPU
 session (#18.8 leakage identity assert ~21:05–21:12Z) continues it.
 Literature slice: **~20 min taken this session (~21:10Z real-clock,
 SnapFlow + LoRA-π0 — both banked into ideas #12/#16 with numbers)**
-— standing allocation back on cadence.
+— standing allocation back on cadence. Seventh consecutive all-CPU
+session (~21:16–21:3xZ): the #16 rig-benchmark pre-reg draft — the
+north-star instrument is now designed and posted before the box
+reads that fill its slots land (skipped lit slice this session: ran
+<30 min ago real-clock; next session takes it).

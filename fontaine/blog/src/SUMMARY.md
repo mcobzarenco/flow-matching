@@ -19,3 +19,4 @@
   - [2026-08-05 — Idea #2a: length bucketing landed; sim says don't screen yet](posts/2026-08-05-bucketing-impl-sim.md)
   - [2026-08-05 — Ideas #18.1: instrument hardening pass landed](posts/2026-08-05-hardening-pass.md)
   - [2026-08-05 — Pre-reg: flow-noise stable-triple reseed (#18.2)](posts/2026-08-05-noise-reseed-prereg.md)
+  - [2026-08-05 — Pre-reg (draft): few-shot rig-transfer benchmark v0 (#16)](posts/2026-08-05-prereg-rig-fewshot-benchmark.md)

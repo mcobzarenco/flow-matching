@@ -223,7 +223,22 @@ variants, consistency/distillation toward 1–2-step deployment decodes
   (moves every anchor); kevin510 + willnorris/bbox-2 flagged for any
   future curated-v1 exclusion list.
 
-## 16. Few-shot rig-transfer benchmark — `queued`, **the north star** (owner 2026-08-05 17:20–17:23Z)
+## 16. Few-shot rig-transfer benchmark — `screening` (pre-reg DRAFT posted 2026-08-05), **the north star** (owner 2026-08-05 17:20–17:23Z)
+
+- **Pre-reg draft posted 2026-08-05 ~21:2xZ**
+  ([post](posts/2026-08-05-prereg-rig-fewshot-benchmark.md)): design
+  frozen — 12-ep holdout (SeedSequence(16)) + nested N ∈ {10,25,45}
+  materialized derived corpora (leakage-checked, the #18.8 consumer);
+  owner `run_ft_rig.sh` protocol constants; best-checkpoint-at-200
+  selection; co-primary chunk_mae + first-4 pooled MAE; 3·σ_ft
+  decision rule (σ_ft from N25 seed replicates); **eligibility gate:
+  init pretrain corpus must certifiably exclude the rig repos —
+  flow-80k is contaminated (rig data in its pretrain mix), rcond/box
+  arms qualify.** Two slots (init selection rule + E5 noise scale)
+  fill by finalization amendment after the box reads; execution at
+  the first quiet GPU boundary after. Follow-on CPU items: subset
+  materializer, plan-file builder, launcher gen, wrap-census gate on
+  the rig repos.
 
 - **Goal statement (owner):** "build a VLA for my rig… prove transfer
   so you can fine-tune a task on a new SO101 arm with tens of
