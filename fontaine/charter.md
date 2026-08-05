@@ -515,13 +515,15 @@ timer + a small driver script, versioned in `fontaine/harness/`
 (reference implementation committed; the agent refines it) and kept
 deliberately boring (a clever harness that crashes strands the GPU):
 
-- **tick sessions** — the timer fires every 30 min; the prompt
+- **tick sessions** — the timer fires every 15 min; the prompt
   (`fontaine/prompts/tick.md`) no-ops cheaply when nothing needs
-  attention, so the effective cadence is 30 min under a live run and
+  attention, so the effective cadence is 15 min under a live run and
   lighter when idle: the babysit checklist — liveness (pgrep/GPU
   memory, never log tails), curve vs pre-registered anchors, Discord
   poll, `now.md` update, launch/kill/escalate decisions. Short and
-  cheap; tick frequency is the main token-cost dial.
+  cheap; tick frequency is the main token-cost dial (each session
+  keeps a 30-min wall-clock cap — a hung tick self-clears while
+  intervening fires skip off the lock).
 - **work sessions** (`fontaine/prompts/work.md`), event-driven (run
   finished, queue below depth 2, owner message, planning): analysis,
   eval bursts, launcher prep, blog writing. Longer budget (4 h cap),
@@ -532,8 +534,8 @@ deliberately boring (a clever harness that crashes strands the GPU):
   bounded by construction).
 - **overlap and in-session polling semantics**: a lock serializes
   sessions — timer fires that land on a held lock skip harmlessly
-  (exit 0) and the timer keeps firing every 30 min, so the first
-  fire after a long session releases the lock is ≤30 min out;
+  (exit 0) and the timer keeps firing every 15 min, so the first
+  fire after a long session releases the lock is ≤15 min out;
   `Persistent=true` replays fires missed across reboots. A session
   MAY hold the lock and babysit in-session with sleep polls through
   a critical window (fresh launch, first eval boundary, pending kill
@@ -541,7 +543,14 @@ deliberately boring (a clever harness that crashes strands the GPU):
   `BASH_MAX_TIMEOUT_MS`): context is preserved and no tokens burn
   while sleeping. Stable stretches belong to fresh ticks instead —
   cheaper, and crash-proof: a dead session's watch resumes from the
-  timer within 30 min, which is exactly the babysit cadence.
+  timer within 15 min, tighter than the inherited 30–60 min babysit
+  convention requires.
+- **the harness itself alerts on session failure** (driver-level,
+  model-free): a non-zero session exit posts to Discord via the
+  stdlib helper with a 1-h cooldown — the case it exists for is the
+  one the model cannot report (usage cap, expired auth, broken
+  install), where every session dies at birth and the box would
+  otherwise just go silent.
 - implementation: **headless Claude Code** (`claude -p`) driven by
   `fontaine/harness/fontaine-session.sh` — mature tool loop,
   permission control, and the whole harness stays one shell script +
@@ -570,7 +579,7 @@ recorded in `now.md`, honored at the next decision point. The agent
 posts launches, results (headline numbers + blog/wandb links), and
 escalations (§7, with an @mention), and answers questions in-thread.
 Substance always flows through the blog; the channel is for
-steering. **Conversational mode**: the 30-min tick is the FLOOR of
+steering. **Conversational mode**: the 15-min tick is the FLOOR of
 responsiveness, never the ceiling — when the owner is actively
 chatting, the live session stays open and sleep-polls the channel at
 chat cadence (30–120 s, stretching as the exchange quiets, handing
@@ -658,9 +667,10 @@ Settled with the owner (2026-08-05) — nothing is open:
   **literature review is chartered work** with web tools enabled in
   the harness (§4/§9); **no standing retro** (§9).
 - **Comms: Discord** (private channel, REST-polled by every tick,
-  §9). **Harness: headless Claude Code** under a 30-min systemd user
-  timer (§9). Everything that defines and runs the agent lives in
-  **`fontaine/`** (charter, prompts, harness, blog).
+  §9). **Harness: headless Claude Code** under a 15-min systemd user
+  timer (§9; 30 min at ignition, halved 2026-08-05 owner call).
+  Everything that defines and runs the agent lives in **`fontaine/`**
+  (charter, prompts, harness, blog).
 - Judge-API spend per-proposal; the box is **always on**, never
   stopped for cost, and its (rare, Lambda-initiated) loss is
   survivable by construction (push discipline + the recovery runbook
