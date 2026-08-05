@@ -94,9 +94,13 @@ def sample_noise(seed: int, shape: tuple[int, ...]) -> Tensor:
 # Draw d of item i seeds sample_noise(seed + i + d·STRIDE): draw 0 is
 # byte-identical to the historical single-draw path (paired
 # comparisons against every prior flow eval stay valid), and the
-# stride sits far above any frame index (~2e7 on curated-v0), so no
-# draw of one item can reuse another item's draw-0 noise.
-DRAW_SEED_STRIDE = 2**32
+# stride sits above any frame index (~2e7 on curated-v0), so no draw
+# of one item can reuse another item's draw-0 noise. 2**26, NOT a
+# 64-bit stride: torch's CPU Generator.manual_seed ignores bits ≥32
+# (measured 2026-08-05 — manual_seed(s) == manual_seed(s + 2**32)
+# stream-for-stream), so a wider stride silently collapses every draw
+# to draw 0; the tripwire test would catch a recurrence.
+DRAW_SEED_STRIDE = 2**26
 
 
 def draw_noise(seed: int, index: int, draw: int, shape: tuple[int, ...]) -> Tensor:

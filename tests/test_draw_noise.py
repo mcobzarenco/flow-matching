@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import torch
 
-from bijou.eval.policies import draw_noise, sample_noise
+from bijou.eval.policies import DRAW_SEED_STRIDE, draw_noise, sample_noise
 
 SHAPE = (50, 6)
 
@@ -31,6 +31,25 @@ def test_draws_are_deterministic_and_distinct() -> None:
 
 def test_draw_seeds_cannot_collide_with_frame_indices() -> None:
     """A draw>0 seed of one item must never equal the draw-0 seed of
-    another item at realistic corpus sizes (~2x10^7 frames)."""
-    max_index = 50_000_000
-    assert draw_noise(0, 0, 1, (1,)).ne(draw_noise(0, max_index, 0, (1,))).any()
+    another item at realistic corpus sizes (~2x10^7 frames < the
+    2**26 stride; curated-v0 has 20,719,389)."""
+    max_index = 25_000_000
+    assert torch.equal(
+        draw_noise(0, 0, 1, SHAPE),
+        draw_noise(0, DRAW_SEED_STRIDE, 0, SHAPE),
+    )  # the collision DOES exist beyond the stride — documents the bound
+    assert not torch.equal(
+        draw_noise(0, 0, 1, SHAPE),
+        draw_noise(0, max_index, 0, SHAPE),
+    )
+
+
+def test_stride_survives_torch_seed_truncation() -> None:
+    """torch CPU Generator.manual_seed ignores bits >= 32 (measured
+    2026-08-05): 10 draws of one item must be 10 DISTINCT tensors —
+    the silent failure mode is every draw collapsing to draw 0 and the
+    'ensemble' averaging N identical chunks."""
+    draws = [draw_noise(0, 123, d, SHAPE) for d in range(10)]
+    for i in range(len(draws)):
+        for j in range(i + 1, len(draws)):
+            assert not torch.equal(draws[i], draws[j]), (i, j)
