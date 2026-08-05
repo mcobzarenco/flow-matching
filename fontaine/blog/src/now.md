@@ -65,6 +65,17 @@ own-baseline arm `fontaine_arb_rcond_100k_1xh100`
 - 2026-08-05 14:40Z: owner is committing the laptop-local probe
   scripts + reports (e.g. `probe_unfreeze_gradflow.py`) — fold their
   anchors in as they land.
+- 2026-08-05 14:55Z (discussion, no evidence yet): owner worries some
+  community datasets may encode joint angles with flipped sign
+  conventions (esp. wrist roll / mirrored wrist-cam mounts); floated
+  estimating actions from optical flow to check cross-dataset
+  consistency. Replied with a two-stage plan: (1) free CPU-side
+  detector — slice the panel-eval outputs per-dataset per-dim for
+  sign-structured outlier MAE (catches action/state mismatches);
+  (2) if candidates flagged, optical-flow curl vs wrist-velocity sign
+  as a pre-registered probe (catches internally-consistent
+  mirror-world datasets that (1) can't). Stage (1) can run off the
+  eval finishing ~16:40Z.
 
 ## Queue (depth 2, both pre-registered)
 
