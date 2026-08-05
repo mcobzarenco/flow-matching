@@ -1,14 +1,15 @@
 # Now
 
-*Updated 2026-08-05 ~16:40Z (work session: smoke PASSED E1–E4, sealed
-score running, wrap census done → unwrap arm killed, paired aux-off
-pre-reg posted, launcher ready).*
+*Updated 2026-08-05 ~16:45Z (tick: sealed eval healthy — 1,464/25,800
+@ ~254 f/min, util 66–100%, ETA ~18:20Z; no Discord traffic).*
 
 ## What the GPU is doing this hour
 
 **Sealed-panel baseline score running** (tmux `fontaine-eval`,
-launched 16:33Z, `~/eval_baseline_sealed.sh`, ~1.7 h → ETA ~18:15Z,
-log `~/eval_baseline_sealed.log`). Expectations in the script header:
+launched 16:33Z, `~/eval_baseline_sealed.sh`, ~1.7 h → ETA ~18:20Z,
+log `~/eval_baseline_sealed.log`). First-poll check 16:45Z: 254 f/min
+(healthy band), util 66–100%, VRAM 12 GiB — workers 8 is not
+starving this run. Expectations in the script header:
 chunk_mae within ~0.15 of the primary read (5.8017), state-copy near
 11.785.
 
