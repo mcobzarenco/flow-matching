@@ -8,6 +8,15 @@ prompt's contract.
    (cursor-managed; replies via `... discord.py post "text"`). Owner
    messages are steering: acknowledge in-channel, record in
    `now.md`, apply at the next decision point.
+   **Conversational mode — a chat never waits for the next tick**:
+   if the owner is mid-exchange (a question, a follow-up likely),
+   reply and STAY — sleep-poll the channel at 30–120 s intervals
+   while the exchange is live, stretching the interval as it
+   quiets; hand back to normal cadence after ~10 min of silence. If
+   the tick's 30-min cap approaches mid-conversation, touch
+   `fontaine/harness/state/run_work_next` and end — the chained
+   work session rejoins the thread (`discord.py history` rebuilds
+   recent context without moving the cursor).
 3. If a training run is live: liveness by pgrep/GPU memory (never a
    log tail); latest step; curve vs the pre-registered anchors in
    the launcher header; anomaly scan (loss spikes, OOM, substitution

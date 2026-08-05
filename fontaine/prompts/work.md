@@ -15,7 +15,10 @@ and finish it; leave the rest queued. Repo `~/flow-matching`, branch
    launch; measured claims with instrument + anchors; `check.py`
    before any commit; oracles after math-adjacent changes. If a
    training run is live, re-check it (liveness + curve vs anchors)
-   at least every ~30 minutes of session time.
+   at least every ~30 minutes of session time. If the owner starts
+   chatting mid-session, conversational mode applies (tick prompt
+   §2): reply promptly and sleep-poll the channel at 30–120 s while
+   the exchange is live — steering outranks the task in hand.
 4. End per the session-boot footer: state committed + pushed,
    `now.md` current (including the utilization footer and
    explore/exploit hours), queue depth ≥ 2 or a stated reason,

@@ -570,11 +570,19 @@ recorded in `now.md`, honored at the next decision point. The agent
 posts launches, results (headline numbers + blog/wandb links), and
 escalations (§7, with an @mention), and answers questions in-thread.
 Substance always flows through the blog; the channel is for
-steering. One-time setup (owner, `fontaine/README.md`): create the
-bot, enable the Message Content intent, invite it with read/send
-permissions. wandb crash/threshold alerts point at a webhook into
-the same channel — the backstop wake signal so a dead run doesn't
-wait for the next tick.
+steering. **Conversational mode**: the 30-min tick is the FLOOR of
+responsiveness, never the ceiling — when the owner is actively
+chatting, the live session stays open and sleep-polls the channel at
+chat cadence (30–120 s, stretching as the exchange quiets, handing
+back to ticks after ~10 min of silence; polls are cheap REST reads
+and sleeping burns no tokens). A conversation that outlives a tick's
+cap continues through the tick→work chain, with `discord.py history`
+(cursor-untouched) rebuilding recent context in the fresh session.
+One-time setup (owner, `fontaine/README.md`): create the bot, enable
+the Message Content intent, invite it with read/send permissions.
+wandb crash/threshold alerts point at a webhook into the same
+channel — the backstop wake signal so a dead run doesn't wait for
+the next tick.
 
 **Cadence** (no standing retro — owner call, 2026-08-05):
 

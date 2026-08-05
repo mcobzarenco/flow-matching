@@ -17,6 +17,12 @@ file; optional DISCORD_OWNER_ID for @mentions):
         blog). To @mention the owner in an escalation, include
         <@$DISCORD_OWNER_ID> in the text.
 
+    uv run python fontaine/harness/discord.py history -n 20
+        Print the channel's most recent messages (oldest first)
+        WITHOUT touching the cursor — context rebuild for a fresh
+        session joining an ongoing conversation (e.g. after a
+        tick→work chain mid-chat).
+
 Auth model: a Discord BOT token (developer portal → New Application →
 Bot → Reset Token), invited to the private server with View Channel +
 Send Messages + Read Message History, and the privileged **Message
@@ -84,6 +90,18 @@ def _request(method: str, path: str, payload: dict[str, Any] | None = None) -> A
     raise SystemExit(f"discord {method} {path}: rate-limited twice, giving up")
 
 
+def _print_messages(messages: Any) -> None:
+    for message in reversed(messages):  # the API returns newest first
+        author = message["author"]
+        name = author.get("global_name")
+        if name is None or name == "":
+            name = author["username"]
+        flag = " [BOT]" if author.get("bot", False) else ""
+        print(f"{message['timestamp']} {name}{flag}: {message['content']}")
+        for attachment in message.get("attachments", []):
+            print(f"    attachment: {attachment['url']}")
+
+
 def read() -> None:
     channel = _env("DISCORD_CHANNEL_ID")
     if not CURSOR_PATH.exists():
@@ -101,18 +119,22 @@ def read() -> None:
     if len(messages) == 0:
         print("[discord] no new messages")
         return
-    for message in reversed(messages):  # the API returns newest first
-        author = message["author"]
-        name = author.get("global_name")
-        if name is None or name == "":
-            name = author["username"]
-        flag = " [BOT]" if author.get("bot", False) else ""
-        print(f"{message['timestamp']} {name}{flag}: {message['content']}")
-        for attachment in message.get("attachments", []):
-            print(f"    attachment: {attachment['url']}")
+    _print_messages(messages)
     newest = max(int(message["id"]) for message in messages)
     CURSOR_PATH.write_text(str(newest))
     print(f"[discord] {len(messages)} new message(s); cursor -> {newest}")
+
+
+def history(count: int) -> None:
+    if count < 1 or count > 100:
+        raise SystemExit(f"history count must be 1..100 (got {count})")
+    channel = _env("DISCORD_CHANNEL_ID")
+    messages = _request("GET", f"/channels/{channel}/messages?limit={count}")
+    if len(messages) == 0:
+        print("[discord] channel is empty")
+        return
+    _print_messages(messages)
+    print(f"[discord] last {len(messages)} message(s); cursor untouched")
 
 
 def post(text: str) -> None:
@@ -135,11 +157,18 @@ def main() -> int:
     subparsers.add_parser("read", help="print messages newer than the cursor")
     post_parser = subparsers.add_parser("post", help="post to the channel")
     post_parser.add_argument("text", help="message content (<=2000 chars)")
+    history_parser = subparsers.add_parser(
+        "history",
+        help="print the last N messages without moving the cursor",
+    )
+    history_parser.add_argument("-n", "--count", type=int, default=20)
     args = parser.parse_args()
     if args.command == "read":
         read()
-    else:
+    elif args.command == "post":
         post(args.text)
+    else:
+        history(args.count)
     return 0
 
 
