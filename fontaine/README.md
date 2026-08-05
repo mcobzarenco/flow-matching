@@ -9,11 +9,11 @@ runbook (ignition + day-to-day) and the map of the directory.
 |---|---|
 | `charter.md` | the charter: mission, metric, discipline, boundaries, agenda |
 | `prompts/bootstrap.md` | the first-ever session: executes charter §10 |
-| `prompts/tick.md` | the 30-minute babysit tick |
+| `prompts/tick.md` | the 15-minute babysit tick |
 | `prompts/work.md` | a bounded work session (analysis, launches, writing) |
 | `harness/fontaine-session.sh` | runs ONE headless session (`tick`\|`work`\|`bootstrap`) |
 | `harness/discord.py` | the Discord "tool": REST read/post + cursor (stdlib, no deps) |
-| `harness/systemd/` | user units: the 30-min tick timer |
+| `harness/systemd/` | user units: the 15-min tick timer |
 | `harness/state/` | session lock + Discord cursor (gitignored) |
 | `harness/logs/` | session transcripts (gitignored) |
 | `blog/` | the mdbook lab notebook (created by the agent at bootstrap; built site gitignored) |
@@ -159,6 +159,11 @@ connection — nothing to keep alive, nothing to crash.
   Liveness = a `claude` process (`pgrep -af claude`) or a growing
   transcript under `~/.claude/projects/`; an empty log with no
   process means the session ended — check its tail for the exit.
+- **If sessions themselves stop running** (Anthropic usage cap,
+  expired auth): the driver posts a model-free "harness alert" to
+  `#fontaine` on any non-zero session exit (1-h cooldown). The other
+  tells: `now.md`'s timestamp goes stale and `harness/logs/` shows
+  short, repeating failed sessions.
 - **Read the blog** for substance:
   `https://huggingface.co/spaces/mcobzarenco/fontaine-blog`
   (`now.md` = what the GPU is doing this hour and why).

@@ -56,6 +56,25 @@ timeout_for() {
     esac
 }
 
+# Harness-level failure alert, posted WITHOUT the model: if sessions
+# themselves cannot run (usage cap, expired auth, broken install),
+# the model cannot report its own outage — this can. discord.py is
+# stdlib-only on purpose; plain python3, no venv. 1-h cooldown so a
+# persistent failure doesn't post once per timer fire.
+alert_failure() {
+    local mode="$1" status="$2" log="$3" now last
+    now="$(date +%s)"
+    last="$(cat "$STATE/last_failure_alert" 2>/dev/null || echo 0)"
+    if [ $((now - last)) -lt 3600 ]; then
+        return 0
+    fi
+    if python3 "$DIR/harness/discord.py" post \
+        "harness alert: $mode session exited $status (log ${log##*/}). If this repeats, sessions may be unable to run at all — usage cap or auth. Check the box." \
+        >/dev/null 2>&1; then
+        echo "$now" >"$STATE/last_failure_alert"
+    fi
+}
+
 run_session() {
     local mode="$1" timeout_s stamp log status
     timeout_s="$(timeout_for "$mode")"
@@ -77,6 +96,7 @@ run_session() {
     set -e
     if [ "$status" -ne 0 ]; then
         echo "session $mode exited $status (see $log)"
+        alert_failure "$mode" "$status" "$log"
     fi
 }
 
@@ -84,11 +104,11 @@ timeout_for "$MODE" >/dev/null # validate before running anything
 cd "$REPO"
 run_session "$MODE"
 
-# A tick whose findings exceed its 30-min budget requests a chained
-# work session by touching this marker (prompts/tick.md), instead of
-# overrunning its own timeout. ONE chain per invocation: if more work
-# remains, the next timer fire (≤30 min out) continues — bounded
-# lock-holding by construction.
+# A tick whose findings exceed its 30-min session cap requests a
+# chained work session by touching this marker (prompts/tick.md),
+# instead of overrunning its own timeout. ONE chain per invocation:
+# if more work remains, the next timer fire (≤15 min out) continues
+# — bounded lock-holding by construction.
 if [ "$MODE" = "tick" ] && [ -f "$STATE/run_work_next" ]; then
     rm -f "$STATE/run_work_next"
     echo "tick requested a chained work session"
