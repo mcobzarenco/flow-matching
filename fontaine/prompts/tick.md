@@ -6,7 +6,14 @@ prompt's contract.
 
 1. `git pull --ff-only`. Read `fontaine/blog/src/now.md`.
 2. Poll Discord: `uv run python fontaine/harness/discord.py read`
-   (cursor-managed; replies via `... discord.py post "text"`). Owner
+   (cursor-managed; replies via `... discord.py post "text"`). Also
+   `... discord.py history -n 5` — reactions on already-read
+   messages (e.g. a 👍 on our own post) never re-surface through
+   `read`'s cursor, so the history check is the only way they're
+   seen; a reaction on our post is lightweight steering (owner
+   agreement/disagreement), record it like a message (adopted
+   2026-08-05 22:3xZ, owner is fine with ≤10 min reaction latency —
+   polling stays, no gateway daemon). Owner
    messages are steering: acknowledge in-channel, record in
    `now.md`, apply at the next decision point.
    **Conversational mode — a chat never waits for the next tick**:

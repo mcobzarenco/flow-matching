@@ -1,8 +1,37 @@
 # Now
 
-*Updated 2026-08-05 ~22:2x–23:0xZ (real `date -u`) — work session:
-**E4B SCREEN PRE-REG POSTED (the owner-picked item) + the overdue lit
-slice taken, which produced a fourth pre-declared fairness read.**
+*Updated 2026-08-05 22:20–22:40Z (real `date -u`; NB this session's
+commit labels "23:0x/23:1x" ran ~25 min ahead of the real clock —
+label skepticism stays warranted) — work session: **E4B SCREEN
+PRE-REG POSTED (the owner-picked item) + the overdue lit slice
+taken, which produced a fourth pre-declared fairness read — then a
+LIVE OWNER EXCHANGE (22:31–22:35Z) resolved the fallback ladder and
+landed two more items.** Exchange: (a) owner asked whether
+B12-doesn't-fit means no E4B run — clarified the ladder (chunked
+backward at loader-B12 IS the expected path; no-launch is only the
+low-single-digit-% bottom rung where even 3-sample chunks OOM, and
+any workaround there breaks matched-params ⇒ owner call); **owner
+22:35Z: "Noted on the batch size ladder, I agree with your
+strategy" + 👍 — the ladder is owner-approved.** (b) Owner asked
+about Discord capabilities: answered (attachments yes via CDN URL;
+reactions were invisible) and **landed reaction rendering in
+discord.py within the exchange** (read+history now print
+`reactions:`; verified live on the owner's own 👍; polling caveat
+documented — reactions surface within a tick, not instantly).
+Follow-up 22:38–22:39Z: owner asked if we can beat polling —
+decision (delegated "up to you"): **keep REST polling, no gateway
+daemon** (detection ≠ response; sessions are the response floor
+either way; charter run-only-what-changes-the-next-decision), with
+ticks now `history`-checking recent posts so late reactions surface
+within a tick (tick.md updated). **Owner 22:39Z: "I'm ok with 10m
+delay fwiw" — settled.** (c)
+**`read4_energy_score` LANDED + VALIDATED** per Amendment 2 before
+any probe data exists (degenerate draws=1: interaction exactly 0,
+ES ≡ direct RMS-L2, 6.6232 anchor intact, 6/6 checks OK; AR +
+banked-flow baselines join on the probe rows) — all four fairness
+reads are now execution-ready for the probe at ~06–09Z.*
+
+*Same session, earlier (~22:20–22:35Z):
 (1) [E4B pre-reg](posts/2026-08-05-prereg-e4b-screen.md): verbatim
 mainline recipe + `--backbone google/gemma-4-e4b-it` (AR path
 verified fully config-driven — full-depth trunk, tail-anchored block
@@ -33,14 +62,14 @@ principled middle between MAE and the best-of-N oracle; candidate
 distributional column for the comm holdout). `read4_energy_score` +
 degenerate validation must land before the probe npz is opened —
 queued as the next CPU work item alongside the E4B launch checklist.
-check.py green (184). Babysits 22:19/22:30Z: box ×4 healthy
-@21.0–25.0k, 0.38–0.40 s/step (B total 3.42@25k — still below every
-control action loss; B's 0%-util sample = its 25k save boundary);
-draws run 2 @19.4k/25.8k on pacing (ETA ~00:1xZ, then runs 3–5). No
-Discord traffic; pre-reg + amendment posted in-channel. GPUs busy +
-CPU queue non-empty (read4 impl, chunked-backward impl if needed,
-stage-2 sign pre-reg, box results post ~00–02Z then E4B launch
-checklist) → `run_work_next` armed per no-idle-pauses.*
+check.py green ×3 this session (184). Babysits 22:19/22:30/22:38Z:
+box ×4 healthy @21.0–25.7k, 0.38–0.40 s/step (B total 3.44@25.7k —
+still below every control action loss; s2 3.727@23k its best line
+yet); draws run 2 @20.2k/25.8k on pacing (ETA ~00:1xZ, then runs
+3–5). GPUs busy + CPU queue non-empty (~~read4 impl~~ DONE this
+session; chunked-backward impl if the smoke needs it, stage-2 sign
+pre-reg, box results post ~00–02Z then the E4B launch checklist) →
+`run_work_next` armed per no-idle-pauses.*
 
 *Previous update 2026-08-05 22:18Z (real `date -u`) — tick: **both chains
 healthy; PROBE <9 NOW TOUCHED BY ALL FOUR ARMS pre-24k — the <9@30k
