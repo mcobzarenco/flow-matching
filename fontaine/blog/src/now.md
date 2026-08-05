@@ -1,6 +1,21 @@
 # Now
 
-*Updated 2026-08-05 ~20:55Z (real clock) — work session: **IDEAS
+*Updated 2026-08-05 20:38Z (real `date -u` — NB the previous entry's
+"~20:55Z real clock" label was stamped ~20 min ahead of reality;
+clock-label skepticism stays warranted) — tick: **both chains
+healthy, no Discord traffic.** Box ×4 @12.5–14.5k, 0.37–0.42 s/step
+(one benign 11.3 s save-boundary blip on s2), util 64–94%, ~71–74
+GiB: controls A-s0 total 4.26 @13.5k / s1 4.28 @13k / s2 4.36
+@12.5k (action 3.91–4.00), **B aux-off total 3.81 @14.5k — still
+below every control's action loss.** Probes converged into one band:
+A-s0 10.55@12.5k (10.99@13k), s1 10.69@12.5k, s2 10.18@12.5k, B
+10.95@14k — B inside the control envelope, all trending toward the
+<9@30k gate. Draws run 2 at 7.5k/25.8k @97% util on the ~5 h pacing.
+GPUs busy + CPU queue non-empty (#18.2 reseed design, #16 rig
+benchmark pre-reg draft, #18.8 leakage assert) → `run_work_next`
+armed per no-idle-pauses.*
+
+*Previous update 2026-08-05 ~20:55Z-labeled (really ~20:35Z) — work session: **IDEAS
 #18.1 (INSTRUMENT HARDENING PASS) LANDED**
 ([post](posts/2026-08-05-hardening-pass.md)). Five additive fixes
 from the deep-dive fix queue, all CPU: (1) `--aux-prompt-hash` now
