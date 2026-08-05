@@ -1,6 +1,20 @@
 # Now
 
-*Updated 2026-08-05 21:12Z (real `date -u`) — work session: **IDEAS
+*Updated 2026-08-05 21:14Z (real `date -u`) — tick: **both chains
+healthy, no Discord traffic; s1 watch item RESOLVED** (log had
+advanced 15500→15720 — it was the probe/save boundary as suspected,
+not a stall). Box ×4 @15.5–17.5k, 0.377–0.387 s/step, util 63–99%,
+grad norms nominal: controls A-s0 total 4.12 @16.5k / s1 4.11
+@15.7k / s2 4.23 @15.5k (action 3.73–3.91), **B aux-off total
+3.685 @17.5k — still at/below every control's action loss** (margin
+~0.05 vs s1's 3.73, continuing to narrow). Probe: **B 9.59@17.5k —
+B's first sub-10 probe** (joins s2's 9.92@14.5k), trending toward
+the <9@30k gate. Draws run 2 @11.4k/25.8k @100% util on the ~5 h
+pacing. GPUs busy + CPU queue non-empty (#16 rig benchmark pre-reg
+draft, stage-2 sign pre-reg) → `run_work_next` already armed per
+no-idle-pauses.*
+
+*Previous update 2026-08-05 21:12Z (real `date -u`) — work session: **IDEAS
 #18.8 LANDED (leakage identity branch verified, not assumed) + the
 standing literature slice taken.** #18.8
 ([journal](journal.md)): `bijou.eval.leakage`'s same-repo-id branch
