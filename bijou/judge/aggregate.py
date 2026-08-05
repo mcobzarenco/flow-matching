@@ -1,8 +1,8 @@
 """Aggregate judge sidecars into calibration evidence (run: ``python -m bijou.judge.aggregate``).
 
 Consumes ``meta/judgments.json`` sidecars across collection roots and
-produces the numbers the calibration decisions (curation TODO step 4)
-are made from:
+produces the numbers judge-calibration decisions are made from (the
+methodology and the decisions it produced: docs/data-curation.md):
 
 - **Per-model summaries** (pinned to one prompt hash): verdict /
   completion / instruction-quality distributions, score histograms,
@@ -55,7 +55,8 @@ from .store import JudgmentRecord, discover_datasets, load_sidecar
 
 CAMERA_KINDS_RELPATH = Path("meta") / "camera_kinds.json"
 
-# Candidate judge-gated filter rules (curation TODO step 6). Names are
+# Candidate judge-gated filter rules (consumed by train-time filtering
+# policies — docs/data-curation.md "Decisions of record"). Names are
 # report keys; predicates see one parsed judgment. Evaluated per model so
 # the paired report shows how the choice of judge moves each rule.
 FILTER_RULES: tuple[tuple[str, Callable[[EpisodeJudgment], bool]], ...] = (
