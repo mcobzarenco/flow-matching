@@ -9,6 +9,7 @@ wheels/
 # data
 outputs
 reports
+launchers
 
 # virtual environments
 .venv

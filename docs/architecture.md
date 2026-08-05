@@ -858,10 +858,21 @@ retired corpus: 2026-08-03 formats 3+5 flow 1.7766/1.6235, ar_fast
 earlier: format-3 27.7622/27.7245, format-2 27.8116/27.8348, ar_fast
 pre-tags 4.8803/4.8656.
 Flags-on (unfreeze) oracles live in
-`outputs/probe_unfreeze_gradflow.py` (flow 1.5825, AR 4.8345,
-ar_backbone 27.7346 — measured 2026-08-03 on the RETIRED corpus; the
-probe is gitignored and lives on the laptop, so its rig-v2 anchors
-are pending a re-run there — until then its numbers gate nothing). Regenerate the tiny backbone
+`probes/probe_unfreeze_gradflow.py` — COMMITTED 2026-08-05: the
+gitignored laptop copy had rotted invisibly two ways (TrainArgs
+drift; the state_proj partition check still looked decoder-side
+after the format-3 prompt-side move), so doc-cited instruments now
+graduate to `probes/`, inside ruff + pyright's blast radius. Anchors
+on the rig-v2 oracle corpus, re-recorded 2026-08-05 and
+bitwise-reproduced twice: **flow 1.6948, AR 4.8395, ar_backbone
+27.8546**, asserted in the probe alongside the FULL-depth partition
+checks (retired-corpus asserts were 1.5966/4.8269/27.8524; the
+1.5825/4.8345/27.7346 this paragraph cited before were stale
+transcriptions of an earlier probe revision — prose copies rot, the
+asserts are the source of truth). Cross-machine portability was
+MEASURED, not assumed, during the corpus migration: the laptop
+reproduces the box-recorded base flow oracle 2.7903/1.9152 bitwise,
+so these CPU anchors are machine-portable. Regenerate the tiny backbone
 with
 `uv run python -m bijou.gemma4.testing --output outputs/tiny-gemma4`
 (per checkout; changing it re-baselines every oracle). gemma4 changes
