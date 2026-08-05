@@ -22,12 +22,20 @@ valid-element-weighted, matching the report's chunk_mae):
      mean over elements of the across-draw std) vs the paired
      flow-minus-AR deficit; the unfair-penalty signature is deficit
      concentrating in the high-dispersion quartiles.
+  4. energy score (Amendment 2, pre-declared before any per-draw
+     data) — per frame ES = (1/N)·Σ d(a_i, y) − (1/2N²)·Σ d(a_i, a_j)
+     with d = valid-element L2 / sqrt(m) (RMS-normalized so frames of
+     different valid counts compare); pooled across frames weighted
+     by m. A strictly proper scoring rule: neither mode-averaging nor
+     scatter wins for free. AR's banked prediction is the degenerate
+     N=1 baseline (interaction term zero).
 
 --validate runs the same code path in the degenerate draws=1 case
 (the banked flow-80k npz as a 1-draw stack): reads 1 and 2 must
-reproduce the 6.6232 anchor and every dispersion must be exactly 0 —
-the CPU oracle for the read implementations, runnable before any
-probe data exists.
+reproduce the 6.6232 anchor, every dispersion must be exactly 0, and
+read 4's interaction term must be exactly 0 with ES equal to the
+directly computed RMS-normalized L2 — the CPU oracle for the read
+implementations, runnable before any probe data exists.
 
 Pure CPU, read-only on the npzs. JSON out:
 reports/analysis__draws_fairness_k4l2.json (or _validate.json).
@@ -107,6 +115,9 @@ def fairness_reads(
     dispersion = (std * mask).sum(axis=(1, 2)) / np.maximum(mask.sum(axis=(1, 2)), 1)
     dispersion_steps = step_curve(std * mask, valid)
 
+    # Read 4 — the energy score (Amendment 2 definitions).
+    es, es_truth_term, es_interaction = energy_score(draws, truth, mask)
+
     return {
         "n_frames": int(n_frames),
         "n_draws": int(n_draws),
@@ -145,9 +156,51 @@ def fairness_reads(
             ],
             "dispersion": [round(v, 4) for v in dispersion_steps],
         },
+        "read4_energy_score": {
+            "flow_es": round(pooled_by_valid(es, mask), 6),
+            "flow_single_draw_es": round(pooled_by_valid(es_truth_term, mask), 6),
+            "interaction_term": round(pooled_by_valid(es_interaction, mask), 6),
+        },
         "_dispersion": dispersion,  # stripped before JSON; read-3 join input
         "_frame_mae_draw0": per_draw_frame[0],
+        "_es_interaction_max": float(np.abs(es_interaction).max()),
     }
+
+
+def frame_rms_dist(a: np.ndarray, b: np.ndarray, mask: np.ndarray) -> np.ndarray:
+    """Per-frame d(u, v) = ||u − v||_2 / sqrt(m) over valid elements —
+    the Amendment-2 RMS normalization (positive scaling, propriety kept)."""
+    m = np.maximum(mask.sum(axis=(1, 2)), 1)
+    sq = (((a - b) * mask) ** 2).sum(axis=(1, 2))
+    return np.sqrt(sq / m)
+
+
+def energy_score(
+    draws: np.ndarray,
+    truth: np.ndarray,
+    mask: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Per-frame (ES, truth term, interaction term) on a
+    [frames, N, chunk, dim] stack. ES = truth_term − interaction, with
+    interaction = (1/2N²)·Σ over ordered pairs (i=j terms are zero, so
+    the i<j sum enters twice)."""
+    n_draws = draws.shape[1]
+    truth_term = np.stack(
+        [frame_rms_dist(draws[:, d], truth, mask) for d in range(n_draws)],
+    ).mean(axis=0)
+    pair_sum = np.zeros(draws.shape[0])
+    for i in range(n_draws):
+        for j in range(i + 1, n_draws):
+            pair_sum += frame_rms_dist(draws[:, i], draws[:, j], mask)
+    interaction = pair_sum / (n_draws * n_draws)
+    return truth_term - interaction, truth_term, interaction
+
+
+def pooled_by_valid(per_frame: np.ndarray, mask: np.ndarray) -> float:
+    """Frame scalars pooled with valid-element-count weights (the
+    Amendment-2 pooling convention for read 4)."""
+    m = mask.sum(axis=(1, 2)).astype(np.float64)
+    return float((per_frame * m).sum() / m.sum())
 
 
 def spearman(a: np.ndarray, b: np.ndarray) -> float:
@@ -181,6 +234,9 @@ def main() -> None:
         reads = fairness_reads(draws, truth, valid)
         dispersion = reads.pop("_dispersion")
         reads.pop("_frame_mae_draw0")
+        es_interaction_max = reads.pop("_es_interaction_max")
+        mask = element_mask(truth, valid)
+        direct_rms_l2 = pooled_by_valid(frame_rms_dist(draws[:, 0], truth, mask), mask)
         checks = {
             "mean_of_1_hits_anchor": abs(
                 reads["mean_of_draws"]["chunk_mae"] - FLOW_ANCHOR,
@@ -193,6 +249,11 @@ def main() -> None:
             )
             < 5e-3,
             "dispersion_exactly_zero": bool((dispersion == 0).all()),
+            "es_interaction_exactly_zero": es_interaction_max == 0.0,
+            "es_equals_rms_l2": abs(
+                reads["read4_energy_score"]["flow_es"] - round(direct_rms_l2, 6),
+            )
+            < 1e-12,
         }
         reads["validate_checks"] = checks
         out_path = Path("reports/analysis__draws_fairness_k4l2_validate.json")
@@ -216,6 +277,7 @@ def main() -> None:
     reads = fairness_reads(draws, truth, valid)
     dispersion = reads.pop("_dispersion")
     frame_mae_draw0 = reads.pop("_frame_mae_draw0")
+    reads.pop("_es_interaction_max")
 
     # Read 3 — join the probe rows to the full-panel paired deficit.
     panel_pos = {int(ix): i for i, ix in enumerate(flow["index"])}
@@ -228,6 +290,23 @@ def main() -> None:
     fl_frame = frame_mae(flow["pred:bijou@80000"][rows], truth, mask)
     ar_frame = frame_mae(ar["pred:bijou@100000"][rows], truth, mask)
     deficit = fl_frame - ar_frame  # >0 = flow worse
+    # Read 4 baselines on the identical probe frames: AR (deterministic,
+    # degenerate N=1 — interaction term zero by definition) and the
+    # banked flow single draw, both through the same d(·,·).
+    reads["read4_energy_score"]["ar_es"] = round(
+        pooled_by_valid(
+            frame_rms_dist(ar["pred:bijou@100000"][rows], truth, mask),
+            mask,
+        ),
+        6,
+    )
+    reads["read4_energy_score"]["flow_banked_single_es"] = round(
+        pooled_by_valid(
+            frame_rms_dist(flow["pred:bijou@80000"][rows], truth, mask),
+            mask,
+        ),
+        6,
+    )
     # Instrument drift check: probe draw 0 should re-decode the banked
     # single-draw prediction (same noise key/seed; cross-box numerics
     # may drift a little — report it, gate loosely).
