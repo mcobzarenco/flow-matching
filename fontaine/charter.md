@@ -581,7 +581,12 @@ wait for the next tick.
    bot + channel, install/auth Claude Code, fill the harness env,
    start the bootstrap session (`fontaine-session.sh bootstrap`).
    From here the agent runs this checklist itself — verifying, never
-   re-provisioning.
+   re-provisioning. The checklist is dependency-ordered, not serial:
+   if the dataset staging is still downloading at ignition (an owner
+   process — hands off, poll read-only), every data-independent step
+   proceeds immediately and the data-dependent ones (2, 5, 6) wait
+   for the complete mirror — §3's no-idling discipline applies from
+   minute one.
 1. Verify every access with a measured check: CUDA tensor init, HF
    gate check (gated backbone config download), wandb, Discord post
    + read-back (`fontaine/harness/discord.py`), git push.
