@@ -1,6 +1,33 @@
 # Now
 
-*Updated 2026-08-05 ~19:30Z — tick: **owner 19:19Z: the 429 was an
+*Updated 2026-08-05 ~20:00Z — work session: **TRUNK SURVEY DONE**
+(owner mandate 17:50–18:01Z; resumed from the 429-killed draft).
+Six parallel web deep-reads + one follow-up, per the owner's method
+(arXiv paper + fetched `config.json` per candidate, post-cutoff
+epistemics). [Post](posts/2026-08-05-trunk-survey.md); ranked queue
+mirrored into ideas #17. **Headline finds:** (1) Molmo2-4B (Ai2,
+Dec 2025 — surfaced by the completeness sweep, not the seed list):
+best-in-tier 15-bench avg 62.8 vs Qwen3-VL-4B 58.1, video-trained
+*with spatio-temporal pointing/tracking*, Apache weights. (2)
+**Molmo2-4B, InternVL3.5-4B and Qwen3-VL-4B share one decoder**
+(Qwen3-4B, 36/2560/GQA 32:8/head_dim 128) — one port + parity
+harness amortizes across all three. (3) InternVL3.5 ships a true
+`-Pretrained` base ckpt — the only modern-4B vehicle for idea #10.
+(4) V-JEPA **2.1** (Mar 2026) trains mid-layers predictive (deep
+self-supervision) — tailor-made for export-stream reads; 2-AC =
+<62 h robot video → zero-shot Franka. (5) Owner-flagged Ministral 3
+3B: clean arch + base ckpt but **images-only** — screened out.
+Verdict: E4B rung first (zero cost), then Molmo2-4B, then
+InternVL3.5-4B (base-vs-IT), V-JEPA 2.1 arm in parallel;
+Qwen3-VL-4B reserve. No Qwen3.5-VL exists (checked). Babysits
+en route: box healthy ×4 @8.0–9.1k (B aux-off 4.043 @9.1k, still
+below every control's action loss); draws run 2 healthy @94–99%
+util but pacing ~1.4 frames/s ⇒ **~5 h for the draws-10 run, not
+~1.5–2 h — chain-done estimate slips from ~03:30Z to ~09Z-ish**
+(util pegged; it's just 10× sampling compute — noted, not a
+problem).*
+
+*Previous update ~19:30Z — tick: **owner 19:19Z: the 429 was an
 Anthropic credit run-out, now topped up — "shouldn't be an issue any
 longer."** So the usage-cap kill is fully explained (not a session
 limit pattern to plan around) and the chained work session needn't
@@ -301,10 +328,10 @@ healthy. Marker armed → bijou deep-dive chains next.
 - 16:17Z bijou code deep-dive: **DONE ~19:10Z** —
   [ranked post](posts/2026-08-05-bijou-deep-dive.md); no P0, fix
   queue in ideas #18.
-- 16:19Z literature slice (~20–30 min most sessions): **not spent
-  this session either** (consumed by the box launch chain) — two
-  sessions running; the next work session should start with it
-  unless a run needs surgery.
+- 16:19Z literature slice (~20–30 min most sessions): **SPENT
+  ~19:35–20:00Z** — the trunk survey (a full literature item) closed
+  the four-session gap; standing allocation resumes normal cadence
+  next session.
 
 ## Queue (depth 5)
 
@@ -325,15 +352,13 @@ healthy. Marker armed → bijou deep-dive chains next.
    ~~rules/prompts full pass~~ **DONE ~19:00Z** (charter v1.1), (b)
    ~~bijou deep-dive~~ **DONE ~19:10Z**
    ([ranked post](posts/2026-08-05-bijou-deep-dive.md); fix queue =
-   ideas #18), (c) **trunk survey** (**IN PROGRESS — interrupted by
-   the 19:08Z usage-cap kill**; draft
-   [posts/2026-08-05-trunk-survey.md](posts/2026-08-05-trunk-survey.md)
-   has framing + rubric + method note, candidate sections empty —
-   resume from the web deep-reads; open-weights, <7B ideally ~3B,
-   video-trained preferred; arXiv paper + HF config per candidate;
-   Ministral 3 3B + Gemma 4 E2B/E4B seed the list; doubles as the
-   overdue literature slice). Then: flow-vs-AR per-frame analysis
-   (queue #4), idea #2 implementation, ideas #18 hardening pass.
+   ideas #18), (c) ~~trunk survey~~ **DONE ~20:00Z**
+   ([post](posts/2026-08-05-trunk-survey.md); ranked queue in ideas
+   #17: E4B → Molmo2-4B → InternVL3.5-4B → V-JEPA 2.1 arm;
+   Qwen3-VL-4B reserve; the E4B screen pre-reg is the natural next
+   queue-refill item once box reads land). Then: flow-vs-AR
+   per-frame analysis (queue #4), idea #2 implementation, ideas #18
+   hardening pass.
 6. Stage-2 sign-convention pre-reg draft (mirror trio) — backlog.
 7. **Ideas #18 instrument hardening** (from the deep-dive): the
    cheap pass (prompt-hash kwarg, bounds/n_valid asserts, report
@@ -346,7 +371,11 @@ Sealed handoff EXECUTED 18:24–18:27Z (anchors banked/posted, draws
 chain launched, first-poll passed). Tick loop now watches two
 things: the box batch (one-liner below) and the draws chain
 (`tmux has-session -t fontaine-eval-draws`; latest
-`~/eval__*draws*.log` tail; ~1.5–2 h per run — if the chain stopped
+`~/eval__*draws*.log` tail; **measured pacing 19:52Z: draws-10 runs
+are ~5 h each, not the planned ~1.5–2 h** — chain-done ~09Z-ish; a
+long-running run 2 is healthy, don't diagnose. Log lines land in
+~160-frame batches ~45 s apart and util can sample 0% between
+batches — check twice before calling a stall. If the chain stopped
 early, check whether the E1 gate tripped: that is a *finding*, post
 it, don't relaunch).
 
@@ -374,10 +403,10 @@ Trailing-7-day GPU-hours on experiments / total: local **~3.5 / ~3.7**
 queued today: 2 exploit-attribution arms + 2 instrument replicates).
 Explore/exploit: aux-off arm B + noise-floor replicates ≈
 instrument/attribution (exploit-side); explore hours proper started
-with the noise-draw chain (explore-side, ~9 h). Literature slice:
-0 h four sessions running — deliberate (owner 18:36Z fixed the
-order: rules pass → bijou deep-dive → trunk survey; the trunk
-survey IS a literature item and is now next, so the slice resumes
-with the very next work session). CPU-side: this session was
-all-CPU review while both GPU chains ran — the no-idle-pauses rule
-in action.
+with the noise-draw chain (explore-side, ~9 h queued — pacing check
+19:52Z says the draws-10 runs are ~5 h each, so the chain is
+longer/richer than planned; still 94–99% util). Literature slice:
+**~25 min spent ~19:35–20:00Z (trunk survey)** after four sessions
+at 0 h — allocation back on cadence. CPU-side: this session was
+all-CPU web research while both GPU chains ran — the
+no-idle-pauses rule in action.

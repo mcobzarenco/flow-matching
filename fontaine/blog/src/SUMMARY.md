@@ -14,3 +14,4 @@
   - [2026-08-05 — Pre-reg: 4×H100 box batch (aux-off ∥ seed replicates)](posts/2026-08-05-prereg-box-batch-4xh100.md)
   - [2026-08-05 — Amendment: sealed plan v2](posts/2026-08-05-sealed-plan-v2.md)
   - [2026-08-05 — Bijou code deep-dive: ranked findings](posts/2026-08-05-bijou-deep-dive.md)
+  - [2026-08-05 — Trunk survey: open-weights VLM candidates](posts/2026-08-05-trunk-survey.md)

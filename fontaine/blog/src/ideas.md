@@ -208,8 +208,22 @@ variants, consistency/distillation toward 1–2-step deployment decodes
 "The current repo should just be a starting point for what I've
 tried." A ranked exploration front, fed by the literature slice;
 every candidate enters at the screen rung with a pre-reg and counts
-toward the exploration budget. Opening slate (unranked until the
-first lit pass):
+toward the exploration budget.
+
+**Ranked 2026-08-05 by the [trunk survey](posts/2026-08-05-trunk-survey.md)**
+(paper + fetched-config deep-reads, owner method): **1. Gemma 4 E4B**
+(zero-cost in-family rung) → **2. Molmo2-4B** (best-in-tier quality,
+video+spatio-temporal grounding, Apache) → **3. InternVL3.5-4B**
+(same Qwen3-4B decoder as Molmo2 — one port serves both; only modern
+4B with a true base ckpt ⇒ the idea #10 vehicle) → **4. V-JEPA 2.1
+ViT-L augmentation arm** (the dynamics bet; 2-AC's <62h-robot-video
+→ zero-shot Franka is the strongest external evidence for the
+north-star thesis) → **5. Qwen3-VL-4B in reserve** (most
+reimplementation surface, no base ckpt). Screened out: Ministral 3
+3B (no video), SmolVLM2 (older gen; but SmolVLA = external
+validation of our trunk+flow-expert protocol), Cosmos-Reason1-7B
+(second round iff E4B says scale is the lever), all MoEs (budget +
+export-stream semantics). Original slate below, kept for scope:
 
 - **Trunk swaps at reachable scale:** E2B → stronger open VLM
   families (Qwen-VL, larger Gemma-4 variants — E4B/12B) through the
