@@ -615,8 +615,9 @@ def run_async_loop(
                 held_before = executor.held_ticks
                 print(
                     f"switch {executor.switches}: replan "
-                    f"{adopted.replan_index} adopted at action "
-                    f"{executor.last_skip_ahead}/{chunk_size}"
+                    f"{adopted.replan_index} → entering its chunk at row "
+                    f"{executor.last_skip_ahead}/{chunk_size} (its "
+                    f"observation is {executor.last_skip_ahead} ticks old)"
                     + (f" after {held} HELD ticks" if held > 0 else "")
                     + (
                         f" (wall-vs-executed skew {executor.last_staleness_skew} ticks)"
