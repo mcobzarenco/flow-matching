@@ -146,6 +146,15 @@ the `[B·S, 262k]` fp32 logits (~1 GiB at B10,
 `ar_backbone.py:743-748`). Decode-side: action-phase argmax over
 block columns only is exact (grammar mask + monotone softcap).
 
+- **Owner measurement (2026-08-05 21:52Z, in-channel + html
+  attachment): FAST round-trip error is barely measurable** —
+  quantization is not the binding limit of the AR approach, and AR
+  "definitely trains faster". Consistent with the paired analysis
+  (AR wins the late horizon — a codec-bound model wouldn't): the
+  limit is upstream of the codec, in trunk/grounding. Strengthens
+  the AR-side weighting of the attribution front (owner steer
+  21:48Z).
+
 ## 9. Data levers — `queued`
 
 `--trim-leading-idle` (~6.7% of frames), state-noise augmentation,
@@ -319,6 +328,21 @@ variants, consistency/distillation toward 1–2-step deployment decodes
 tried." A ranked exploration front, fed by the literature slice;
 every candidate enters at the screen rung with a pre-reg and counts
 toward the exploration budget.
+
+- **OWNER PICK (2026-08-05 21:57Z): E4B screen confirmed as the next
+  pre-reg** — AR-100k on the freed 4×H100, **matched parameters with
+  the E2B AR-100k run** (verified from the recipe: `--batch-size 12`
+  /GPU on DDP4 = effective 48, decoder-lr 1e-4, backbone-text-lr
+  2e-5, grad-clip 100, seed 0, same aux/condition/dropout flags; if
+  E4B OOMs at 12/GPU, grad-accumulate to the same effective 48 —
+  stated in the pre-reg, batch semantics never change
+  mid-comparison). **Gates = the MAE curve over time, not the
+  endpoint**: matched-cadence in-run probes vs the banked E2B curve
+  + mid-run panel evals (~25k/50k) with pre-registered bands so a
+  losing rung dies early. **Owner 21:58Z: image (embedding) budget
+  is the follow-on ablation arm** on the winning trunk — one
+  variable per rung, trunk first, then image token budget (pairs
+  with #11's grounding read).
 
 **Ranked 2026-08-05 by the [trunk survey](posts/2026-08-05-trunk-survey.md)**
 (paper + fetched-config deep-reads, owner method): **1. Gemma 4 E4B**

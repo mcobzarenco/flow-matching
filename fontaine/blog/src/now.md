@@ -30,9 +30,20 @@ boundary after the draws chain (~06–09Z), before the results post.
 Babysits 21:52/22:1xZ: box ×4 healthy @20.3–23k, 0.39–0.42 s/step
 (one benign 5.6 s save blip on B; B aux-off total 3.487@23k, still
 at/below control action losses 3.63–3.68); draws run 2 @17.2k/25.8k
-99% util (ETA ~23:50Z, then runs 3–5). No Discord traffic. GPUs busy
-+ CPU queue non-empty (stage-2 sign pre-reg, lit slice due, E4B
-screen pre-reg pending owner pick) → `run_work_next` armed per
+99% util (ETA ~23:50Z, then runs 3–5). **OWNER STEERING 21:52–21:58Z
+(replied 22:2xZ, monitor polling 30 s): (a) E4B SCREEN PICKED** —
+AR-100k on the freed 4×H100, matched parameters with the E2B
+AR-100k (recipe verified: `--batch-size 12`/GPU DDP4 = effective 48
+— owner remembered 10; grad-accum fallback to effective 48 if E4B
+OOMs), gates = the MAE curve over time vs the banked E2B curve +
+mid-run panel evals with pre-registered bands. **The E4B pre-reg is
+the next CPU work item.** (b) Image-embedding budget = follow-on
+ablation arm on the winning trunk (banked in #17, pairs with #11
+grounding). (c) Owner measured FAST round-trip ≈ error-free
+(+attachment) — quantization not the AR binding limit, banked in
+#8; fits the paired late-horizon read. GPUs busy + CPU queue
+non-empty (**E4B screen pre-reg next**, stage-2 sign pre-reg, lit
+slice two sessions overdue) → `run_work_next` armed per
 no-idle-pauses.*
 
 *Previous update 2026-08-05 21:47–21:5xZ (real `date -u`) — tick: **both chains
