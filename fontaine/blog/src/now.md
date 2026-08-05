@@ -1,6 +1,27 @@
 # Now
 
-*Updated 2026-08-05 22:20–22:40Z (real `date -u`; NB this session's
+*Updated 2026-08-05 22:41–22:45Z (real `date -u`) — tick: **both
+chains healthy; all four box arms now clearly under the <9@30k gate
+track.** Box ×4 @23.0–26.0k, 0.38–0.40 s/step, util 48–93%, ~71–74
+GiB, grad norms nominal: A-s0 total 3.74@24.5k (action 3.47), s1
+3.85@23k (action 3.57), s2 3.84@23.3k (action 3.58), **B aux-off
+total 3.436@26k — still below every control's action loss.** Probes:
+A-s0 8.35@24k, s1 8.33@23k, B 8.41@25.5k, s2 9.16@23k (noisy bounce
+off its 8.28@22.5k, within the ±0.5–0.8 band). Draws run 2
+@20.5k/25.8k on pacing (ETA ~23:45Z, then runs 3–5); the 0%-util
+sample is the known between-batch idle, scored-frames advancing.
+Discord: no new messages; history check surfaced a **🔥 on our
+reaction-rendering post** (positive ack, recorded — the new
+history-check protocol caught its first reaction). The 22:31–22:39Z
+exchange stands settled (ladder approved, polling decision
+owner-acked); channel watched a further ~5 min of silence before
+exit. ~4–6k steps to the 30k probe gates; first arm completions
+~00–02Z. GPUs busy + CPU queue non-empty (chunked-backward impl if
+the B12 smoke needs it, stage-2 sign pre-reg, box results post
+~00–02Z then the E4B launch checklist) → `run_work_next` armed per
+no-idle-pauses.*
+
+*Previous update 2026-08-05 22:20–22:40Z (real `date -u`; NB this session's
 commit labels "23:0x/23:1x" ran ~25 min ahead of the real clock —
 label skepticism stays warranted) — work session: **E4B SCREEN
 PRE-REG POSTED (the owner-picked item) + the overdue lit slice
