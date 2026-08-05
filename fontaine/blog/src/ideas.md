@@ -236,9 +236,21 @@ variants, consistency/distillation toward 1–2-step deployment decodes
   flow-80k is contaminated (rig data in its pretrain mix), rcond/box
   arms qualify.** Two slots (init selection rule + E5 noise scale)
   fill by finalization amendment after the box reads; execution at
-  the first quiet GPU boundary after. Follow-on CPU items: subset
-  materializer, plan-file builder, launcher gen, wrap-census gate on
-  the rig repos.
+  the first quiet GPU boundary after.
+- **Instruments LANDED 2026-08-05 ~21:5xZ (Amendment 1 on the
+  pre-reg):** plan frozen (`plans/rig_fewshot_v0_k4l2.json`, 12 eps /
+  48 core + 24 labeled; holdout = native split 0.212/seed 16 → v2
+  {1,2,3,6,11,15,20,24,25,30,41} + clean {2} — mechanism amendment:
+  the draft's bespoke SeedSequence draw could not feed the leakage
+  checker); subsets materialized + verified
+  (`~/datasets/rig_fewshot_v0/`, n10 6,223 / n25 15,881 / n45 29,107
+  frames, videos hardlinked bit-identical, judgments remapped, stats
+  recomputed w/ oracle worst |Δ| 1.2e-4); **leakage certs PASSED ×3**
+  (#18.8 provenance path, doctored-provenance negative control fails
+  loud); loader smoke bit-exact incl. shifted mid-file video decode;
+  **wrap census CLEAN on both rig repos** (hygiene gate 1). Remaining
+  before launch: launcher gen + finalization amendment (slots 1–2)
+  after the box reads.
 
 - **Goal statement (owner):** "build a VLA for my rig… prove transfer
   so you can fine-tune a task on a new SO101 arm with tens of

@@ -3,6 +3,35 @@
 Rolling dated notes that don't merit a post. Anomalies land here too
 (the surprise log, charter §3).
 
+## 2026-08-05 — rig few-shot instruments landed; the pre-reg met the leakage checker (~21:55Z)
+
+The #16 follow-on instruments are done and certified
+([Amendment 1](posts/2026-08-05-prereg-rig-fewshot-benchmark.md) on
+the pre-reg). One honest design collision worth recording: the draft
+pre-registered the 12-episode holdout as a bespoke `SeedSequence(16)`
+uniform draw — and the leakage checker *rejected the concept*, by
+design. `bijou.eval.leakage` recomputes the radioactive set from the
+plan header through the codebase-native `holdout_episodes()` split;
+a plan whose episodes aren't that split's holdout side trips the
+checker's own self-check (#18.8's anti-drift assert). The instrument
+disciplined the design, which is exactly what it's for: the holdout
+is now the native split at fraction 0.212 / seed 16, which rounds
+per-repo to the pre-registered 11+1=12 exactly, amendment posted
+before any model number existed. Materializer notes for future
+corpus rewrites: lerobot indexes `meta/episodes` POSITIONALLY (a
+renumbering gap silently reads a neighbour's video pointers);
+`judgments.json` is keyed by episode and read whenever
+`--instruction-augment > 0`, so a verbatim copy attaches the wrong
+judge records after renumbering — remap it (the `write_sidecar`
+docstring even warns about this); hardlinking video files whole and
+keeping the pointer columns gives bit-identical pixels with zero
+re-encode (verified: shifted mid-file episode decode bitwise on both
+cameras) where `delete_episodes` would re-extract streams. Oracles:
+stats recompute vs both shipped stats.json (worst |Δ| 1.2e-4),
+leakage certs ×3 PASSED + doctored-provenance negative control
+FAILS, wrap census clean on both rig repos. The benchmark is now
+gated only on tonight's box reads (slots) + launcher gen.
+
 ## 2026-08-05 — literature slice: one-step flow distillation is cheap now; LoRA facts for the rig pre-reg (~21:15Z)
 
 Standing-allocation slice (~20 min, targeted at the active fronts).

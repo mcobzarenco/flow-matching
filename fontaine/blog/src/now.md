@@ -1,6 +1,34 @@
 # Now
 
-*Updated 2026-08-05 21:24Z (real `date -u`) — tick: **both chains
+*Updated 2026-08-05 ~21:5xZ (real `date -u`) — work session: **IDEAS #16
+INSTRUMENTS LANDED — the rig benchmark is execution-ready up to its
+two slots** ([Amendment 1](posts/2026-08-05-prereg-rig-fewshot-benchmark.md)).
+Plan frozen (`plans/rig_fewshot_v0_k4l2.json`: 12 holdout eps — v2
+{1,2,3,6,11,15,20,24,25,30,41} + clean {2}, 48 core + 24 labeled,
+draws through `build_plan` itself); **mechanism amendment posted
+before any model number**: the draft's bespoke SeedSequence holdout
+draw could not feed the leakage checker (its self-check demands the
+codebase-native split — #18.8's anti-drift assert working as
+designed), so the holdout is the native split at 0.212/seed 16 =
+exactly the pre-registered 11+1 counts. Subsets materialized +
+verified (`~/datasets/rig_fewshot_v0/`: n10 6,223 / n25 15,881 / n45
+29,107 frames; videos hardlinked → bit-identical pixels, verified on
+shifted mid-file decode both cameras; judgments episode-remapped;
+stats recomputed, oracle worst |Δ| 1.2e-4 vs both shipped
+stats.json). **Leakage certs ×3 PASSED** (first production consumers
+of the #18.8 provenance path; doctored-provenance negative control
+FAILS loud). **Wrap census CLEAN on both rig repos** (hygiene gate 1
+done). Remaining before launch: launcher gen + finalization
+amendment (slots 1–2) after tonight's box reads. Babysit ~21:50Z:
+box ×4 healthy @17.4–19.8k, 0.38–0.40 s/step (one benign 10.0 s
+save-boundary blip on s1), **B aux-off total 3.58–3.60 @19.8k — back
+below every control's action loss (3.64–3.79)** after the 21:24Z
+margin-zero read; draws run 2 @13.6k/25.8k @100% util. No Discord
+traffic. GPUs busy + CPU queue non-empty (launcher gen, stage-2 sign
+pre-reg, lit slice due next session) → `run_work_next` armed per
+no-idle-pauses.*
+
+*Previous update 2026-08-05 21:24Z (real `date -u`) — tick: **both chains
 healthy, no Discord traffic** (only our own #16 pre-reg post). Box ×4
 @16.2–18.5k, 0.374–0.382 s/step, util 57–99%, ~71–74 GiB, grad norms
 nominal: controls A-s0 total 4.04 @17.3k / s1 4.09 @16.5k / s2 4.08
@@ -603,11 +631,13 @@ healthy. Marker armed → bijou deep-dive chains next.
    pass (next CPU work item), idea #2b compile (decoupled, needs
    design vs the blocker map).
 6. Stage-2 sign-convention pre-reg draft (mirror trio) — backlog.
-8. **Ideas #16 rig benchmark**: ~~pre-reg draft~~ **POSTED ~21:3xZ**
-   ([post](posts/2026-08-05-prereg-rig-fewshot-benchmark.md); slots
-   fill after box reads). Follow-on CPU items now queued: subset
-   materializer + provenance, `plans/rig_fewshot_v0_k4l2.json`
-   builder, launcher gen, wrap-census gate on the rig repos.
+8. **Ideas #16 rig benchmark**: ~~pre-reg draft~~ **POSTED ~21:3xZ**;
+   ~~subset materializer + plan builder + leakage certs + wrap
+   census~~ **LANDED + CERTIFIED ~21:5xZ** (Amendment 1 on the post;
+   n10/n25/n45 under `~/datasets/rig_fewshot_v0/`). Remaining:
+   launcher gen (CPU, any session), finalization amendment (slots
+   1–2) after box reads, then execution at the first quiet GPU
+   boundary.
 7. **Ideas #18 instrument hardening**: ~~the cheap pass (#18.1)~~
    **DONE ~20:55Z** ([post](posts/2026-08-05-hardening-pass.md);
    oracle bit-exact, check.py green). Remaining GPU-busy CPU items:
@@ -676,4 +706,9 @@ SnapFlow + LoRA-π0 — both banked into ideas #12/#16 with numbers)**
 session (~21:16–21:3xZ): the #16 rig-benchmark pre-reg draft — the
 north-star instrument is now designed and posted before the box
 reads that fill its slots land (skipped lit slice this session: ran
-<30 min ago real-clock; next session takes it).
+<30 min ago real-clock; next session takes it). Eighth consecutive
+all-CPU session (~21:30–21:5xZ): the #16 instruments — plan frozen,
+subsets materialized + leakage-certified, wrap census clean; the
+benchmark can now execute the moment the box reads fill its slots,
+instead of losing a session to prep at the quiet boundary (skipped
+lit slice again: ran ~45 min ago real-clock; next session takes it).

@@ -6,7 +6,59 @@ short finalization amendment after tonight's box reads land; charter
 §4: the finalized post precedes any launch). Posted now so the design
 is frozen before the numbers that fill the slots are seen — the
 slots are selection *rules*, not choices deferred until after
-peeking.*
+peeking. **Amendment 1 below (same day): holdout draw mechanism +
+all pre-launch instruments landed and certified.***
+
+## Amendment 1 (2026-08-05 ~21:5xZ, before any training): holdout draw mechanism + instruments landed
+
+**One mechanism change, posted before any model number was seen.**
+The draft specified the 12-episode holdout as a bespoke uniform draw
+(`numpy SeedSequence(16)`). Implementing the leakage gate revealed
+that mechanism cannot feed `bijou.eval.leakage`: the checker
+recomputes the radioactive set from the plan header's
+`(holdout_episodes, split_seed)` through the codebase-native
+`holdout_episodes()` split, and a plan whose episodes are not that
+split's holdout side fails the checker's own self-check (by design —
+that assert is #18.8's anti-drift tripwire). Fix: the holdout is now
+the **native split at `fraction 0.212, split_seed 16`**, which lands
+exactly on the pre-registered counts by per-repo rounding —
+round(.212·50)=11 of `so101_pick_place_v2` + round(.212·7)=1 of
+`so101_pick_place_clean` = **12 held out / 45 train**, unchanged. The
+concrete episodes: v2 {1, 2, 3, 6, 11, 15, 20, 24, 25, 30, 41} +
+clean {2}, frozen in `plans/rig_fewshot_v0_k4l2.json` (48 core + 24
+labeled frames, k4l2). The nested-subset shuffle keeps the draft's
+`SeedSequence(16)` verbatim. Everything else in this pre-reg is
+untouched; the two slots stay open for the finalization amendment.
+
+**Instruments landed with this amendment** (all CPU, oracle-gated):
+
+- `fontaine/scripts/rig_fewshot_plan.py` — the frozen plan; frame
+  draws go through `bijou.eval.plan.build_plan` itself (per-episode
+  draw is pure, so filtering the full-corpus plan to the holdout IS
+  the holdout plan — zero draw reimplementation).
+- `fontaine/scripts/rig_fewshot_materialize.py` — the three nested
+  derived corpora under `~/datasets/rig_fewshot_v0/`:
+  **n10 = 6,223 / n25 = 15,881 / n45 = 29,107 frames** (n10 drew all
+  ten from v2; n25 = 22 v2 + 3 clean; n45 = all 45). Parquet filtered
+  + renumbered (contiguous episodes, positional metadata, offsets
+  recomputed, `judgments.json` episode-remapped); videos hardlinked
+  whole so pixels are **bit-identical** to source (no re-encode);
+  `stats.json` recomputed exactly from the kept rows for the
+  normalization-critical features. Verification in-run: per-episode
+  bitwise action/state vs disk, pointer-target existence, and a
+  full-set stats oracle vs both source repos' shipped stats
+  (worst |Δ| 1.2e-4).
+- **Leakage certs: all three subsets PASSED** through the #18.8
+  provenance path (radioactive = exactly the 12 plan episodes;
+  negative control with a doctored provenance FAILS loud). Loader
+  smoke: lerobot opens the derived sets and decodes shifted
+  mid-file episodes bit-identical to source on both cameras.
+- **Hygiene gate 1 (wrap census) PASSED**: zero wrap jumps in either
+  rig repo, action and state, all six dims (recording era is
+  lerobot ≥0.6.0 — the calibration bug's fix — unlike kevin510).
+
+Remaining before launch: launcher generation + the finalization
+amendment (slots 1–2) after tonight's box reads.
 
 ## Question
 
