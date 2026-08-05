@@ -3,6 +3,26 @@
 Rolling dated notes that don't merit a post. Anomalies land here too
 (the surprise log, charter §3).
 
+## 2026-08-05 — literature slice: one-step flow distillation is cheap now; LoRA facts for the rig pre-reg (~21:15Z)
+
+Standing-allocation slice (~20 min, targeted at the active fronts).
+Two keepers, both banked into ideas with numbers:
+**SnapFlow** (arXiv:2604.05656) — plug-and-play SELF-distillation of
+flow-matching VLAs to 1-NFE, no external teacher, ~12 h on one GPU,
+no architecture change; π0.5-3B one-step matches its 10-step teacher
+on LIBERO (98.75% vs 97.75%, 274→83 ms) and it's validated on
+SmolVLA-500M — the closest published analogue to our
+trunk+flow-expert stack. This makes ideas #12's distillation leg an
+in-budget weekend arm rather than a research project, and it
+compounds with #1 (1-step draws make mean-of-N nearly free at
+deployment). **LoRA-for-π0** (arXiv:2607.10172) — r=32 saturation,
+FFT no significant advantage, and freezing/LoRA-restricting the
+vision encoder significantly degrades — external support for the
+grounding-bottleneck read (#11) and a concrete ft-protocol arm for
+the #16 rig benchmark (LoRA-r32 + full vision ft; 36.2→10.8 GiB
+static VRAM). Pointers parked unread: OFP (from-scratch one-step),
+GoldenStart (initial-noise structure — touches #1's draw keying).
+
 ## 2026-08-05 — leakage checker's identity branch now verified, not assumed (#18.8, ~21:20Z)
 
 Deep-dive finding 6b closed (the last quick item on the #18 fix

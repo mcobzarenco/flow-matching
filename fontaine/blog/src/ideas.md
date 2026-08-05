@@ -168,6 +168,23 @@ variants, consistency/distillation toward 1–2-step deployment decodes
   [post](posts/2026-08-05-flow-vs-ar-paired.md)). Score solver arms
   per-step: a solver fixing only late-horizon costs nothing at
   first_mae; pooled-only scoring would misread it.
+- **Literature (2026-08-05 slice): SnapFlow (arXiv:2604.05656) is
+  the distillation-leg recipe to try first.** Plug-and-play
+  SELF-distillation for flow-matching VLAs — no external teacher:
+  mixes standard flow-matching samples with consistency samples
+  whose targets are two-step Euler shortcut velocities from the
+  model's own marginal predictions; zero-init target-time embedding
+  switches velocity-estimation vs one-step modes in one network.
+  Claimed: ~12 h on ONE GPU, no arch changes; π0.5-3B 1-NFE matches
+  the 10-step teacher (98.75% vs 97.75% LIBERO, 274→83 ms); **tested
+  on SmolVLA-500M too** (−8.3% MSE, 3.56× e2e) — the closest
+  external analogue to our trunk+flow-expert protocol. Cheapest
+  falsification here: distill flow-80k, score the panel at 1-NFE vs
+  Heun-30 (band: within the σ_draw noise floor of 6.6232). Also
+  pairs with #1 (a distilled 1-step model makes mean-of-N nearly
+  free). Related pointers, not yet read: OFP one-step flow policy
+  (self-distill from scratch), GoldenStart (initial-noise structure
+  for one-step — touches #1's draw-keying too).
 
 ## 13. Sign-convention detection & repair (owner hypothesis) — `screening`
 
@@ -232,6 +249,14 @@ variants, consistency/distillation toward 1–2-step deployment decodes
   to chunk_mae — the flow-vs-AR ranking *flips* at k≤3 vs k≥5
   ([post](posts/2026-08-05-flow-vs-ar-paired.md)); chunk_mae alone
   is the most AR-favorable point on that axis.
+- **Literature (2026-08-05 slice): the ft-protocol arm should
+  include LoRA-r32 + full vision-encoder ft** (arXiv:2607.10172,
+  π0 on UR5e precision assembly): LoRA saturates at r=32 with no
+  significant FFT advantage; **freezing or LoRA-restricting the
+  vision encoder significantly degrades** (independent external
+  support for our grounding-bottleneck reads, idea #11); static
+  peak VRAM 36.2→10.8 GiB — on 1×H100 that headroom converts
+  directly to batch for the few-shot fine-tunes.
 
 ## 17. New trunks / new architectures — standing owner mandate (2026-08-05 17:24Z)
 

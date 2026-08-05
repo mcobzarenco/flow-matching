@@ -1,6 +1,34 @@
 # Now
 
-*Updated 2026-08-05 21:05Z (real `date -u`) — tick: **both chains
+*Updated 2026-08-05 21:12Z (real `date -u`) — work session: **IDEAS
+#18.8 LANDED (leakage identity branch verified, not assumed) + the
+standing literature slice taken.** #18.8
+([journal](journal.md)): `bijou.eval.leakage`'s same-repo-id branch
+now asserts episode-count equality vs the panel copy AND compares
+per-episode length fingerprints (jsonl v2 / parquet v3; asymmetric
+metadata fatal; same-dir shortcut) — a filtered-and-renumbered
+corpus keeping its repo id can no longer certify a false PASS.
+Mismatch = SystemExit demanding `source_provenance.json`. +4 tests
+(179 green), `check.py` green; full-corpus identity cert re-run
+PASSED (5267 radioactive / 47240 checked, 4.1 s); mutated-count
+production copy fails loud. **Unblocks derived-corpus training
+(#9, #13 repair).** Literature slice (~20 min, banked in ideas +
+journal): **SnapFlow** (2604.05656) — self-distill flow VLAs to
+1-NFE, no teacher, ~12 h/1 GPU, π0.5 1-step ≈ 10-step teacher,
+SmolVLA-validated ⇒ ideas #12's distillation leg is now an
+in-budget arm; **LoRA-π0** (2607.10172) — r=32 saturation, frozen
+vision encoder degrades (external support for #11's
+grounding-bottleneck read) ⇒ ft-protocol arm for #16. Babysits
+21:04/21:10/21:11Z: box ×4 healthy @15.2–17.5k, 0.38–0.40 s/step
+(**B aux-off total 3.69 @17.5k — still at/below every control's
+action loss (3.69–3.79), margin narrowing**; watch item: s1 log
+paused @15500 across two polls ~90 s apart, util fine — likely the
+15.5k probe/save boundary, next tick verifies advance); draws run 2
+@11.1k/25.8k on the ~5 h pacing. No Discord traffic. GPUs busy +
+CPU queue non-empty (#16 rig benchmark pre-reg draft, stage-2 sign
+pre-reg) → `run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-05 21:05Z (real `date -u`) — tick: **both chains
 healthy, no Discord traffic** (the one new message was our own #18.2
 post). Box ×4 @14.5–16.7k, 0.37–0.39 s/step (one benign 10.2 s
 probe/save-boundary blip on s2): controls A-s0 total 4.22 @15.5k /
@@ -578,7 +606,8 @@ bucketing, ideas #18.1 hardening, ideas #18.2 reseed-behind-flag
 REPLACED a planned GPU screen (predicted effect sub-threshold —
 charter §3). #18.2 keeps the pattern: the instrument break is fully
 implemented + pre-registered on CPU; the flip costs one token + one
-eval at a boundary we already visit. Literature slice: skipped again
-this session (bounded infra item took it; slice last ran ~19:35–20:00Z
-real-clock) — next session should take it per the standing
-allocation.
+eval at a boundary we already visit. Sixth consecutive all-CPU
+session (#18.8 leakage identity assert ~21:05–21:12Z) continues it.
+Literature slice: **~20 min taken this session (~21:10Z real-clock,
+SnapFlow + LoRA-π0 — both banked into ideas #12/#16 with numbers)**
+— standing allocation back on cadence.
