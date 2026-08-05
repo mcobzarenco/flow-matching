@@ -51,7 +51,7 @@ from .aux_text import AuxField, AuxGeneration
 from .data import DatasetStats
 from .eval.policies import BijouPolicy
 from .model import SamplingMethod
-from .rollout_async import AsyncExecutor, AsyncPlanner
+from .rollout_async import AsyncExecutor, AsyncPlanner, sustainable
 
 # Canonical SO-100/101 joint order (bus order; dataset motor names are these
 # with the ".pos" suffix).
@@ -400,16 +400,22 @@ def main() -> int:
             )
             planner.warmup(item, replan_index=0)
             latency_ticks = planner.latency_ticks(args.fps)
-            slack = chunk_size - horizon
             trigger_at = horizon - latency_ticks - args.trigger_margin_ticks
+            fine = sustainable(chunk_size, latency_ticks, args.trigger_margin_ticks)
             print(
                 f"async: warm latency {latency_ticks} ticks @ {args.fps} Hz "
                 f"(+{args.trigger_margin_ticks} margin) → trigger at action "
-                f"{max(trigger_at, 0)}/{horizon}; tail slack {slack} ticks — "
+                f"{max(trigger_at, 0)}/{horizon} — "
                 + (
-                    "OK (freeze-free at this latency)"
-                    if latency_ticks + args.trigger_margin_ticks <= horizon + slack
-                    else "STARVATION RISK: latency exceeds horizon + tail"
+                    "SUSTAINABLE (2·latency + margin ≤ chunk)"
+                    if fine
+                    else (
+                        "UNSUSTAINABLE: each plan arrives one latency "
+                        f"stale, leaving {max(chunk_size - latency_ticks, 0)} "
+                        f"fresh rows per {latency_ticks}-tick cycle — the "
+                        "loop WILL starve. Use sync mode, lower --fps, or "
+                        "shrink latency"
+                    )
                 ),
                 flush=True,
             )
@@ -558,10 +564,21 @@ def run_async_loop(
         # Cold start: synchronous first plan (arm idle, staleness-free)
         # + kernel warmup, before the first tick.
         first = planner.warmup(snapshot(), replan_index=0)
+        latency_ticks = planner.latency_ticks(args.fps)
+        if not sustainable(chunk_size, latency_ticks, args.trigger_margin_ticks):
+            raise SystemExit(
+                f"async refused: measured latency {latency_ticks} ticks at "
+                f"{args.fps} Hz needs 2·{latency_ticks}+"
+                f"{args.trigger_margin_ticks} ≤ chunk {chunk_size} — each "
+                "plan would arrive one latency stale and the loop would "
+                "starve into hold-lunge cycles (field-tested 2026-08-05). "
+                "Run sync mode, lower --fps, or shrink latency "
+                "(power profile, batch-free GPU).",
+            )
         executor.start(first)
         print(
-            f"async: warm latency {planner.latency_ticks(args.fps)} ticks "
-            f"(+{args.trigger_margin_ticks} margin)",
+            f"async: warm latency {latency_ticks} ticks "
+            f"(+{args.trigger_margin_ticks} margin) — sustainable",
             flush=True,
         )
         print_generation(first.generations, policy.generate)
@@ -574,6 +591,7 @@ def run_async_loop(
                 in_flight=planner.in_flight,
             ):
                 planner.submit(snapshot(), replans)
+                executor.note_submit()
                 replans += 1
             executor.offer(planner.poll())
             adopted = executor.maybe_switch(time.perf_counter())
@@ -584,7 +602,12 @@ def run_async_loop(
                     f"switch {executor.switches}: replan "
                     f"{adopted.replan_index} adopted at action "
                     f"{executor.last_skip_ahead}/{chunk_size}"
-                    + (f" after {held} HELD ticks" if held > 0 else ""),
+                    + (f" after {held} HELD ticks" if held > 0 else "")
+                    + (
+                        f" (wall-vs-executed skew {executor.last_staleness_skew} ticks)"
+                        if executor.last_staleness_skew > 2
+                        else ""
+                    ),
                     flush=True,
                 )
                 print_generation(adopted.generations, policy.generate)

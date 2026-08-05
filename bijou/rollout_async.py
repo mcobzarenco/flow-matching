@@ -14,12 +14,25 @@ Two pieces, split for testability:
   from observed predictions and drives the trigger. Thread exceptions
   re-raise at ``poll()`` — a dead planner must kill the rollout loudly,
   not starve it silently.
-- :class:`AsyncExecutor` — the tick-level state machine (clock passed
-  in, no I/O): when to trigger a plan, when to switch chunks (at the
-  horizon boundary, never on arrival — the replan cadence stays
-  identical to sync mode, only the freeze disappears), the skip-ahead
-  index that re-aligns a fresh chunk with the time that passed since
-  its observation, starvation holds, and the optional switch crossfade.
+- :class:`AsyncExecutor` — the tick-level state machine (no I/O): when
+  to trigger a plan, when to switch chunks (at the horizon boundary,
+  never on arrival — the replan cadence stays identical to sync mode,
+  only the freeze disappears), the skip-ahead index that re-aligns a
+  fresh chunk with the arm's actual progress, starvation holds, and
+  the optional switch crossfade.
+
+Skip-ahead counts EXECUTED motion ticks since the plan's observation,
+not wall time: held ticks advance the clock but not the arm, and a
+wall-clock skip after holds adopts far-future rows the arm never
+traveled toward — field-tested 2026-08-05 as a max_relative_target
+clamp storm ("chaotic fast motion"): 42-tick latency at 30 Hz produced
+switches at rows 45-47/50 with 38-43 held ticks between.
+
+Sustainability: a plan is one latency stale on arrival, so each chunk
+yields ``chunk_size - latency_ticks`` fresh rows per latency —
+freeze-free 30 Hz needs ``2*latency + margin <= chunk_size`` (~0.75 s
+at chunk 50). Above that NO schedule works at full fps; async refuses
+to start (sync mode or a lower --fps are the remedies).
 
 Deployment shift note: a chunk is consumed from index
 ``round(latency x fps)`` — the model trained on chunks executed from
@@ -183,7 +196,12 @@ class AsyncExecutor:
         self.switches = 0
         self.held_ticks = 0
         self.last_skip_ahead = 0
+        self.last_staleness_skew = 0
         self._blend_rows: deque[Tensor] = deque()
+        # Motion ticks executed since the in-flight plan's observation
+        # (holds excluded) — the skip-ahead basis; None = nothing
+        # submitted yet.
+        self._executed_since_submit: int | None = None
 
     def start(self, planned: PlannedChunk) -> None:
         """Cold start: the episode's first chunk executes from index 0
@@ -199,6 +217,11 @@ class AsyncExecutor:
         remaining = self.execute_horizon - self.index
         return remaining <= latency_ticks + self.margin_ticks
 
+    def note_submit(self) -> None:
+        """Start counting executed motion against the just-submitted
+        plan's observation (call alongside planner.submit)."""
+        self._executed_since_submit = 0
+
     def offer(self, planned: PlannedChunk | None) -> None:
         """Park a finished plan until the horizon boundary — early
         arrivals wait so the replan cadence matches sync mode."""
@@ -206,14 +229,21 @@ class AsyncExecutor:
             self.pending = planned
 
     def maybe_switch(self, now: float) -> PlannedChunk | None:
-        """At/after the horizon boundary, adopt the pending chunk at its
-        skip-ahead index; returns the adopted plan (for logging)."""
+        """At/after the horizon boundary, adopt the pending chunk at the
+        EXECUTED-ticks skip (the arm's actual progress since the plan's
+        observation — holds advance wall time but not the arm; wall-
+        clock skipping after holds lunges at far-future rows). The
+        wall-vs-executed skew is kept for logging: persistent skew =
+        the loop is not holding its fps."""
         if self.pending is None or self.index < self.execute_horizon:
             return None
         planned = self.pending
         self.pending = None
-        skip = round((now - planned.planned_at) * self.fps)
-        self.last_skip_ahead = max(0, min(skip, self.chunk_size - 1))
+        executed = self._executed_since_submit or 0
+        self._executed_since_submit = None
+        wall = round((now - planned.planned_at) * self.fps)
+        self.last_skip_ahead = max(0, min(executed, self.chunk_size - 1))
+        self.last_staleness_skew = wall - executed
         if self.blend_ticks > 0 and self.chunk is not None:
             self._stage_blend(planned.actions)
         self.chunk = planned.actions
@@ -239,14 +269,26 @@ class AsyncExecutor:
     def next_action(self) -> tuple[Tensor, bool]:
         """(action row, starved). Starved = the chunk is fully exhausted
         and no replacement arrived: hold the last row (the arm keeps its
-        position) and count the tick — callers print loudly."""
+        position) and count the tick — callers print loudly. Held ticks
+        do NOT count as executed motion (the skip-ahead basis)."""
         assert self.chunk is not None  # start() precedes the loop
         if self._blend_rows:
             self.index += 1
+            if self._executed_since_submit is not None:
+                self._executed_since_submit += 1
             return self._blend_rows.popleft(), False
         if self.index >= self.chunk_size:
             self.held_ticks += 1
             return self.chunk[self.chunk_size - 1], True
         row = self.chunk[self.index]
         self.index += 1
+        if self._executed_since_submit is not None:
+            self._executed_since_submit += 1
         return row, False
+
+
+def sustainable(chunk_size: int, latency_ticks: int, margin_ticks: int) -> bool:
+    """Freeze-free pipelining bound: a plan is one latency stale on
+    arrival, so each chunk yields chunk_size - latency fresh rows per
+    latency of execution."""
+    return 2 * latency_ticks + margin_ticks <= chunk_size

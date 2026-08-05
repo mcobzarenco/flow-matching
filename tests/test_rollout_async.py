@@ -14,7 +14,12 @@ import pytest
 import torch
 from torch import Tensor
 
-from bijou.rollout_async import AsyncExecutor, AsyncPlanner, PlannedChunk
+from bijou.rollout_async import (
+    AsyncExecutor,
+    AsyncPlanner,
+    PlannedChunk,
+    sustainable,
+)
 
 CHUNK, DIM, FPS = 50, 6, 30.0
 
@@ -64,13 +69,16 @@ def test_trigger_fires_exactly_at_latency_plus_margin() -> None:
 def test_early_arrival_waits_for_the_horizon_boundary() -> None:
     executor = make_executor()
     executor.start(planned(0.0, planned_at=0.0, replan_index=0))
-    executor.offer(planned(1.0, planned_at=1.0))
+    for _ in range(25):
+        executor.next_action()
+    executor.note_submit()  # observation taken at row 25
+    executor.offer(planned(1.0, planned_at=25 / FPS))
     while executor.index < 40:
         assert executor.maybe_switch(now=1.3) is None  # cadence held
         executor.next_action()
-    adopted = executor.maybe_switch(now=1.5)
+    adopted = executor.maybe_switch(now=40 / FPS)
     assert adopted is not None
-    # Skip-ahead: (1.5 - 1.0) s * 30 Hz = 15.
+    # Skip-ahead = EXECUTED rows since submit: rows 25..40 = 15.
     assert executor.last_skip_ahead == 15
     assert executor.index == 15
     row, starved = executor.next_action()
@@ -81,11 +89,45 @@ def test_early_arrival_waits_for_the_horizon_boundary() -> None:
 def test_skip_ahead_clamps_to_chunk_end() -> None:
     executor = make_executor()
     executor.start(planned(0.0, planned_at=0.0, replan_index=0))
-    for _ in range(40):
+    executor.note_submit()
+    for _ in range(CHUNK + 10):  # execute everything, then hold
         executor.next_action()
     executor.offer(planned(1.0, planned_at=0.0))
-    executor.maybe_switch(now=10.0)  # absurd staleness
+    executor.maybe_switch(now=10.0)
     assert executor.last_skip_ahead == CHUNK - 1
+
+
+def test_holds_do_not_inflate_skip_ahead() -> None:
+    """The 2026-08-05 field failure: 42-tick latency starved the chunk,
+    and WALL-CLOCK skipping then adopted rows 45-47/50 — far-future
+    targets from a held (stationary) arm = a max_relative_target clamp
+    storm. Executed-ticks skipping adopts adjacent rows instead."""
+    executor = make_executor()
+    executor.start(planned(0.0, planned_at=0.0, replan_index=0))
+    for _ in range(45):
+        executor.next_action()  # rows 0..44 executed
+    executor.note_submit()  # trigger late: 5 rows left in the chunk
+    for _ in range(5):
+        executor.next_action()  # rows 45..49 — chunk exhausted
+    for _ in range(40):
+        _, starved = executor.next_action()  # the arm HOLDS 40 ticks
+        assert starved
+    executor.offer(planned(1.0, planned_at=45 / FPS))
+    adopted = executor.maybe_switch(now=90 / FPS)  # 45 wall ticks later
+    assert adopted is not None
+    # 5 executed + 40 held: adopt at row 5, not row 45.
+    assert executor.last_skip_ahead == 5
+    assert executor.last_staleness_skew == 40
+    row, starved = executor.next_action()
+    assert not starved
+    assert torch.equal(row, make_chunk(1.0)[5])
+
+
+def test_sustainability_bound() -> None:
+    # 625 ms at 30 Hz (19 ticks): 2*19+3 = 41 ≤ 50 — the laptop's good
+    # power state squeaks under. 1.4 s (42 ticks): 87 > 50 — refused.
+    assert sustainable(CHUNK, 19, 3)
+    assert not sustainable(CHUNK, 42, 3)
 
 
 def test_starvation_holds_last_row_and_counts() -> None:
@@ -100,12 +142,13 @@ def test_starvation_holds_last_row_and_counts() -> None:
     executor.next_action()
     assert executor.held_ticks == 2
     # Recovery: a plan arriving mid-starvation switches immediately
-    # (index is already past the horizon).
+    # (index is already past the horizon); with no note_submit the
+    # skip defaults to 0 — the chunk plays from its own observation.
     executor.offer(planned(3.0, planned_at=2.0))
     assert executor.maybe_switch(now=2.5) is not None
     row, starved = executor.next_action()
     assert not starved
-    assert torch.equal(row, make_chunk(3.0)[15])
+    assert torch.equal(row, make_chunk(3.0)[0])
 
 
 def test_switch_blend_crossfades_and_advances() -> None:
