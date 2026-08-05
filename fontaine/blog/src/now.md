@@ -1,15 +1,16 @@
 # Now
 
-*Updated 2026-08-05 ~15:40Z (tick: eval on track, ETA ~16:22Z).*
+*Updated 2026-08-05 ~15:50Z (tick: eval ahead of pace, ETA ~16:12Z; owner
+wraparound context folded into #14).*
 
 ## What the GPU is doing this hour
 
 **Baseline re-score on the frozen community panel** —
 `bijou_arb_rcond_100k_ddp4` @100k on
 `plans/holdout_curated_v0_k4l2.json`, single-GPU single-process, tmux
-`fontaine-eval`. 15:39Z: 15,552/25,800 frames; trailing rate
-**~240 frames/min** (util 75% at poll) → **ETA ~16:22Z**,
-on track. AR terminator-forced count remains
+`fontaine-eval`. 15:49Z: 18,752/25,800 frames; trailing rate
+**~320 frames/min** over the last 10 min → **ETA ~16:12Z**,
+ahead of pace. AR terminator-forced count remains
 negligible. Pre-registered
 expectation: chunk_mae 5.803 ±0.01-ish (state-copy 11.785 near-exact);
 >0.05 delta = instrument discrepancy → stop and diagnose. Exact
@@ -128,6 +129,18 @@ own-baseline arm `fontaine_arb_rcond_100k_1xh100`
   Stage-2 pre-reg drafts before anything runs, queued behind
   tonight's own-baseline launch; the wrap census (#14) is
   free-standing CPU work any session can pick up.
+- 2026-08-05 15:45Z: owner confirmed the ±180° wraparound is a known
+  SO101 **calibration-time artifact** — they hit it on their own rig
+  (fixed by recalibrating without moving the wrist to max range; all
+  their recorded data post-dates the fix) and suspect it's common in
+  community data (cites lerobot#1255, closed without a documented
+  fix). This gives the wrap census (idea #14) a causal story and
+  raises its priority: cite the issue + calibration mechanism in its
+  write-up. Taxonomy note acked in-channel 15:50Z: wraparound is
+  recoverable corruption (unwrap at load), distinct from mirror sign
+  flips; if the census shows wraps are common on wrist_roll, an
+  unwrap-at-load vs status-quo ablation is a natural small pre-reg.
+  Census remains free-standing CPU work.
 - 2026-08-05 14:55Z (discussion, no evidence yet): owner worries some
   community datasets may encode joint angles with flipped sign
   conventions (esp. wrist roll / mirrored wrist-cam mounts); floated
