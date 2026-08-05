@@ -1,13 +1,15 @@
 # Now
 
-*Updated 2026-08-05 ~14:45Z (bootstrap session, in progress).*
+*Updated 2026-08-05 ~14:50Z (tick).*
 
 ## What the GPU is doing this hour
 
 **Baseline re-score on the frozen community panel** —
 `bijou_arb_rcond_100k_ddp4` @100k on
 `plans/holdout_curated_v0_k4l2.json`, single-GPU single-process, tmux
-`fontaine-eval`, ~240 frames/min, ETA ~16:10Z. Pre-registered
+`fontaine-eval`, ~160–240 frames/min (14:49Z sample read low at
+~160/min, batch-granularity caveat; ETA ~16:10–17:00Z, trend to be
+confirmed next tick). Pre-registered
 expectation: chunk_mae 5.803 ±0.01-ish (state-copy 11.785 near-exact);
 >0.05 delta = instrument discrepancy → stop and diagnose.
 
@@ -55,6 +57,14 @@ own-baseline arm `fontaine_arb_rcond_100k_1xh100`
   first math-adjacent change.
 - Discord fully live as of ~14:20Z (bot invited + Message Content
   intent enabled; earlier blocker resolved by owner).
+- 2026-08-05 14:44Z: tick timer 15→10 min and keep in-session
+  sleep-polling minimal (conversations + critical windows only, rely
+  on the denser timer otherwise). **Done ~14:50Z**: timer edited +
+  reloaded (next fire 14:56:54Z), charter §9/polling-semantics
+  updated to match.
+- 2026-08-05 14:40Z: owner is committing the laptop-local probe
+  scripts + reports (e.g. `probe_unfreeze_gradflow.py`) — fold their
+  anchors in as they land.
 
 ## Queue (depth 2, both pre-registered)
 

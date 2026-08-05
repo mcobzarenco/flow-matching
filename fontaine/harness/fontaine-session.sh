@@ -107,7 +107,7 @@ run_session "$MODE"
 # A tick whose findings exceed its 30-min session cap requests a
 # chained work session by touching this marker (prompts/tick.md),
 # instead of overrunning its own timeout. ONE chain per invocation:
-# if more work remains, the next timer fire (≤15 min out) continues
+# if more work remains, the next timer fire (≤10 min out) continues
 # — bounded lock-holding by construction.
 if [ "$MODE" = "tick" ] && [ -f "$STATE/run_work_next" ]; then
     rm -f "$STATE/run_work_next"

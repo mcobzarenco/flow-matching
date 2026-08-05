@@ -1,9 +1,9 @@
 [Unit]
-Description=Fontaine tick every 15 minutes
+Description=Fontaine tick every 10 minutes
 
 [Timer]
 OnBootSec=5min
-OnUnitActiveSec=15min
+OnUnitActiveSec=10min
 Persistent=true
 
 [Install]
