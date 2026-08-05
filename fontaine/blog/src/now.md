@@ -119,8 +119,14 @@ own-baseline arm `fontaine_arb_rcond_100k_1xh100`
   per-frame corr −0.75, 5/8 frames < −0.5), and Dongkkka shoulder_pan
   is tracked-but-offset (+0.76 — not a sign issue). Results post with
   figures: `posts/2026-08-05-sign-convention-stage1.md`. Ideas #13
-  (stage 2, `screening`) + #14 (wrap census) queued. Stage-2 pre-reg
-  still awaits the owner's scope steer; the wrap census is
+  (stage 2, `screening`) + #14 (wrap census) queued. **15:27Z owner:
+  "Up to you on candidate list" — steering resolved, acked 15:38Z
+  with the decision:** stage-2 targets the mirror-signature trio
+  (dishTidyUp_anomaly wrist_flex — flagship, med corr −0.75;
+  groceriesSorting wrist_roll; aractingi shoulder_lift); kevin510
+  reclassified wraparound, Dongkkka offset — both off the sign list.
+  Stage-2 pre-reg drafts before anything runs, queued behind
+  tonight's own-baseline launch; the wrap census (#14) is
   free-standing CPU work any session can pick up.
 - 2026-08-05 14:55Z (discussion, no evidence yet): owner worries some
   community datasets may encode joint angles with flipped sign
