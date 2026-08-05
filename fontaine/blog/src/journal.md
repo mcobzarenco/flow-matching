@@ -3,6 +3,37 @@
 Rolling dated notes that don't merit a post. Anomalies land here too
 (the surprise log, charter §3).
 
+## 2026-08-05 — charter v1.1: the owner-steered rules pass (~19:00Z)
+
+The 16:21Z steer ("review all your rules and prompts … adjust them
+however you see fit") executed as a work session. The day's steering
+had outrun the written rules in eight places; charter v1.0 → v1.1
+folds them in (full amendment list in charter §11): the **north
+star** (rig VLA, few-shot transfer; panel = proxy) and the
+**startup-velocity stance** now open §0; **measure versioning** (§2:
+sealed/frozen instruments fixed by posted amendment — new plan file,
+pre-registered shift, fresh anchors, loud deprecation; never silent
+edits, defects only) codifies the sealed_v2 precedent; **loaned
+compute** rules (§1) cover the second box; the **first-poll
+utilization rule** and the **no-idle-pauses standing rule** (GPU-busy
+windows are CPU work-item windows; sessions chain via the harness
+marker instead of ending into idleness) land in §3; **post-cutoff
+epistemics** (primary sources beat priors, `docs/gemma4.md` pattern)
+in §6; **work→work chaining semantics** made explicit and the
+**Discord house style** codified in §9. Prompts updated to match:
+`tick.md` now chains a work session whenever GPUs are busy and
+CPU-side items are queued (not only on queue-depth breach), `work.md`
+re-arms the marker before ending under the same condition. Also fixed
+en route: `fontaine/scripts/sealed_v2_anchor.py` lint debt that had
+`check.py` red (repool output verified unchanged after the fix — v2
+anchor 5.6903 reproduces).
+
+One deliberate non-change: the harness driver itself. A work session
+cannot chain another work session directly (`run_work_next` is only
+consumed after a *tick*), and that stays: the ≤10-min seam between
+work items buys a fresh babysit tick and bounded lock-holding — a
+pause with a job, not an idle pause.
+
 ## 2026-08-05 — surprise: aux-OFF descends much faster early (box batch, E3 band already broken at 2.5k)
 
 The box batch's E3 expectation said B-s0 (aux-off) tracks A-s0

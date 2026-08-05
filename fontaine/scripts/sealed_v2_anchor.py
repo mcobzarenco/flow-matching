@@ -14,6 +14,7 @@ Usage: python fontaine/scripts/sealed_v2_anchor.py <report.json>
 
 import json
 import sys
+from pathlib import Path
 
 REMOVED = [
     "kevin510/lerobot-cat-toy-placement",
@@ -23,7 +24,8 @@ REMOVED = [
 
 
 def main(path: str) -> None:
-    r = json.load(open(path))
+    with Path(path).open() as f:
+        r = json.load(f)
     pd = r["per_dataset"]
     missing = [d for d in REMOVED if d not in pd]
     if missing:
@@ -40,13 +42,14 @@ def main(path: str) -> None:
         v1_mae = v1_sum / total_frames
         v2_mae = (v1_sum - rm_sum) / (total_frames - rm_frames)
         summary = next(
-            (s["chunk_mae"] for s in r["summaries"] if s["policy"] == pol), None
+            (s["chunk_mae"] for s in r["summaries"] if s["policy"] == pol),
+            None,
         )
         drift = abs(v1_mae - summary) if summary is not None else float("nan")
         print(
             f"  {pol}: v1 {v1_mae:.4f} (summary {summary:.4f}, "
             f"repool-check {drift:.2e}) -> v2 {v2_mae:.4f} "
-            f"on {total_frames - rm_frames} frames (-{rm_frames})"
+            f"on {total_frames - rm_frames} frames (-{rm_frames})",
         )
 
 

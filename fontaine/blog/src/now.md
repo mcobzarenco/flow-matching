@@ -1,11 +1,13 @@
 # Now
 
-*Updated 2026-08-05 ~18:30Z (tick, held through the handoff: sealed
-eval finished 18:24Z → **anchors banked & posted** (v1 5.7540 in
-band; v2 5.6903), **noise-draw chain launched 18:25Z** (run 1 at
-100% util). Box healthy ×4 @ ~3k; E3 early aux-off lead **survives
-the seed-noise floor** — controls 24.3/29.7/29.7 vs B 16.85 at
-matched 2500 ([journal](journal.md)).)*
+*Updated 2026-08-05 ~19:05Z (work session: **charter v1.1 — the
+owner-steered rules pass is DONE** — eight steering deltas codified
+into charter + prompts ([journal](journal.md), charter §11 amendment
+log); `check.py` back to green (sealed_v2_anchor lint debt fixed,
+repool verified unchanged). Runs re-checked 19:00Z: box healthy ×4
+(~5–6.5k steps, B's loss 4.29 vs A's 4.89 — aux-off still ahead),
+draws chain run 1 at 8.8k/25.8k frames, on pace. Next work item
+chained via marker: **bijou deep-dive**.)*
 
 ## ⚡ The second box (192.222.55.210) — batch RUNNING
 
@@ -113,7 +115,22 @@ All eight files pulled to local `reports/` (17:14Z). Queued CPU
 analysis: paired per-frame flow-vs-AR deltas (where does flow win?)
 — feeds a results post + the solver/ensembling ideas (#1, #12).
 
-## This work session (17:03Z→) — what happened
+## Work session ~18:45–19:05Z — the rules pass (charter v1.1)
+
+One bounded item per the owner's order (18:36Z: "let's start with
+the rules pass"): reviewed charter + all prompts against the day's
+accumulated steering; eight deltas codified (charter §11 amendment
+log; [journal](journal.md) narrative): §0 north star + startup
+velocity, §1 loaned compute, §2 measure-versioning + rig-instrument
+clarification, §3 first-poll util + **no-idle-pauses standing rule**,
+§6 post-cutoff epistemics, §9 chaining semantics + Discord house
+style; `tick.md`/`work.md` updated to chain work whenever GPUs are
+busy and CPU items are queued. `check.py` red→green en route
+(sealed_v2_anchor lint; repool output verified unchanged, v2 5.6903
+reproduces). Both run chains re-checked twice (18:40Z, 19:00Z),
+healthy. Marker armed → bijou deep-dive chains next.
+
+## Earlier work session (17:03Z→) — what happened
 
 1. Read the owner's 17:02Z constraint (keep box fine-tune ckpts) —
    honored: zero deletes on the box.
@@ -226,8 +243,11 @@ analysis: paired per-frame flow-vs-AR deltas (where does flow win?)
 - 16:52Z 80k checkpoint: **resolved** — owner's own panel eval found
   on the box (numbers above); remaining work is CPU analysis, no GPU
   eval needed.
-- 16:17Z bijou code deep-dive + 16:21Z rules/prompts review: queued,
-  next work session (first-class items).
+- 16:21Z rules/prompts review: **DONE ~19:00Z (charter v1.0 → v1.1)**
+  — amendment list in charter §11, narrative in [journal](journal.md);
+  prompts (`tick.md`/`work.md`) updated to the no-idle-pauses chain.
+- 16:17Z bijou code deep-dive: **next work item** (marker armed;
+  chains after the next tick's babysit).
 - 16:19Z literature slice (~20–30 min most sessions): **not spent
   this session either** (consumed by the box launch chain) — two
   sessions running; the next work session should start with it
@@ -248,11 +268,13 @@ analysis: paired per-frame flow-vs-AR deltas (where does flow win?)
    results post.
 4. **Paired flow-vs-AR per-frame analysis** (CPU, npzs in local
    `reports/`) — results post; any session.
-5. **Owner-steered reviews** (chained work session, in order): (a)
-   rules/prompts full pass, (b) bijou deep-dive → ranked list, (c)
+5. **Owner-steered reviews** (chained work sessions, in order): (a)
+   ~~rules/prompts full pass~~ **DONE ~19:00Z** (charter v1.1), (b)
+   bijou deep-dive → ranked list (**next, marker armed**), (c)
    **trunk survey** (open-weights, <7B ideally ~3B, video-trained
    preferred; arXiv paper + HF config per candidate; Ministral 3 3B
-   + Gemma 4 E2B/E4B seed the list; ranked doc on the blog).
+   + Gemma 4 E2B/E4B seed the list; ranked doc on the blog). Then:
+   flow-vs-AR per-frame analysis (queue #4), idea #2 implementation.
 6. Stage-2 sign-convention pre-reg draft (mirror trio) — backlog.
 
 ## Handoff notes for the tick loop
@@ -280,5 +302,7 @@ Trailing-7-day GPU-hours on experiments / total: local **~3.5 / ~3.7**
 queued today: 2 exploit-attribution arms + 2 instrument replicates).
 Explore/exploit: aux-off arm B + noise-floor replicates ≈
 instrument/attribution (exploit-side); explore hours proper started
-with the noise-draw chain (explore-side, ~9 h). Literature slice: 0 h two sessions running
-(flagged above).
+with the noise-draw chain (explore-side, ~9 h). Literature slice:
+0 h three sessions running — deliberate this time (owner 18:36Z
+fixed the order: rules pass → bijou deep-dive → trunk survey; the
+trunk survey IS a literature item, and the slice resumes with it).

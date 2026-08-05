@@ -31,9 +31,15 @@ prompt's contract.
    tick's 30-min cap: do the urgent part, `touch
    fontaine/harness/state/run_work_next`, and end the session — the
    driver chains straight into a work session with a 4-h budget.
-5. If idle and the queue is healthy: exit quickly — do NOT invent
-   work. If the queue is below depth 2: touch the `run_work_next`
-   marker (see 4) so the chained work session refills it.
+5. Queue check (charter §3 no-idle-pauses, owner standing rule
+   2026-08-05): if GPUs are busy and CPU-side work items are queued
+   in `now.md` (reviews, analysis, writing, implementation,
+   literature slice), touch the `run_work_next` marker (see 4) —
+   GPU-busy windows are work-item windows, never idle waits. Same if
+   the queue is below depth 2 (the chained work session refills it).
+   Only when the GPUs are idle-by-design AND the CPU-side queue is
+   empty does the tick simply exit — and never invents GPU work to
+   look busy.
 6. Judgment call — holding the session open: through a critical
    window (fresh launch's first steps, an approaching eval boundary,
    a kill decision pending) you MAY babysit in-session with sleep

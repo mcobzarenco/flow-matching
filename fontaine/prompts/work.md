@@ -27,3 +27,9 @@ and finish it; leave the rest queued. Repo `~/flow-matching`, branch
    `now.md` current (including the utilization footer and
    explore/exploit hours), queue depth ≥ 2 or a stated reason,
    Discord replied to, blog built + Space updated if content moved.
+5. Before ending (charter §3 no-idle-pauses, owner standing rule
+   2026-08-05): if GPUs are still busy and CPU-side work items
+   remain queued, touch `fontaine/harness/state/run_work_next` — the
+   next timer fire's tick (≤10 min out) babysits, then chains
+   straight into the next work item. A work session never ends into
+   idleness while the CPU-side queue is non-empty.
