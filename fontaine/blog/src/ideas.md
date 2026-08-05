@@ -342,7 +342,18 @@ toward the exploration budget.
   losing rung dies early. **Owner 21:58Z: image (embedding) budget
   is the follow-on ablation arm** on the winning trunk — one
   variable per rung, trunk first, then image token budget (pairs
-  with #11's grounding read).
+  with #11's grounding read). **Pre-reg POSTED 2026-08-05 ~22:4xZ**
+  ([post](posts/2026-08-05-prereg-e4b-screen.md)): verbatim mainline
+  recipe + `--backbone google/gemma-4-e4b-it` (AR path verified
+  fully config-driven), eff-48 with a pre-registered
+  chunked-backward fallback ladder (bijou.train has no grad-accum
+  today — impl + oracles is a pre-launch CPU item if the memory
+  smoke says B12 doesn't fit; E2B B12 peaked 77.5 GiB, E4B text
+  ~2.2× params), probe-curve gates @30k/50k (±0.5 floor) + mid-run
+  panels @25k/50k on the local GPU, endpoint adopt rule bound to
+  tonight's E5 σ_seed via finalization amendment. Launch blocked on:
+  box free + e4b checkpoint download (not in box cache) + parity
+  spot-check + memory smoke + amendment.
 
 **Ranked 2026-08-05 by the [trunk survey](posts/2026-08-05-trunk-survey.md)**
 (paper + fetched-config deep-reads, owner method): **1. Gemma 4 E4B**
