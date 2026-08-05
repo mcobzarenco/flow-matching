@@ -142,6 +142,17 @@ analysis: paired per-frame flow-vs-AR deltas (where does flow win?)
 
 ## Owner steering log (active items)
 
+- 18:32–18:36Z (conversational, replied in-channel): **(a)** owner
+  interested in idea #2 results (bucketed batching + torch.compile
+  prefix) — status given (impl any work session, A/B needs a quiet
+  GPU boundary ⇒ after box reads land); **(b) keep review order,
+  rules pass first** (confirmed); **(c) STANDING RULE: no idle
+  pauses while GPUs are busy** — owner: "we should be able to do a
+  lot of work items while the GPUs are busy… unnecessary pauses
+  right now." Adopted: GPU-busy windows = CPU work-item windows;
+  `run_work_next` touched 18:38Z, work session chains immediately
+  (order: rules pass → bijou deep-dive → trunk survey → flow-vs-AR
+  analysis → idea #2 impl). Save to memory.
 - 17:50–18:01Z (conversational, replied in-channel): **(a) trunk
   survey mandate** — deep review of in-scope open-weights models:
   budget **<7B, ideally ~3B**, video-trained preferred; method per
