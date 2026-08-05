@@ -1,6 +1,31 @@
 # Now
 
-*Updated 2026-08-05 20:38Z (real `date -u` — NB the previous entry's
+*Updated 2026-08-05 ~21:25Z (real `date -u`) — work session: **IDEAS
+#18.2 (FLOW-NOISE STABLE-TRIPLE RESEED) LANDED BEHIND A FLAG, BREAK
+PRE-REGISTERED** ([amendment](posts/2026-08-05-noise-reseed-prereg.md)).
+The deep-dive's top finding fixed at the design level: `bijou.eval`
+gains `--noise-key {index,stable}` — `stable` keys each frame's flow
+noise to blake2b(repo_id, episode, frame) through a numpy SeedSequence
+(128-bit keying, draw number as entropy: no torch 32-bit manual_seed
+trap, no DRAW_SEED_STRIDE, no birthday collisions), making flow
+numbers corpus-composition-invariant. Default stays `index`
+(byte-identical to every banked anchor) until the pre-registered flip:
+first anchor boundary after the box reads, one flow-80k panel re-bank,
+decision band `6.6232 ± 3·max(0.045, empirical σ_draw from tonight's
+draws chain)`, state-copy/AR bitwise-identity as hard controls.
+Report JSON + banner now record `noise_key`; SmolVLA path threaded;
+Q3 forced pass verified to share noise under both keyings. **Oracle:
+AR-100k panel recomputed bit-exact through the edited path (12/12
+cells d=0 incl. the 5.8026 anchor)**; 7 new unit tests (175 green),
+`check.py` green. Babysits en route (~20:45Z, ~21:20Z): box ×4
+healthy @14.5–16.5k, 0.38–0.40 s/step — **B aux-off total 3.80
+@16.5k, still below every control's action loss** (3.83–3.88
+@14.5–15.5k); draws run 2 at ~10k/25.8k @99% util on the ~5 h pacing.
+No Discord traffic. GPUs busy + CPU queue non-empty (#16 rig
+benchmark pre-reg draft, #18.8 leakage assert, stage-2 sign pre-reg)
+→ `run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-05 20:38Z (real `date -u` — NB the previous entry's
 "~20:55Z real clock" label was stamped ~20 min ahead of reality;
 clock-label skepticism stays warranted) — tick: **both chains
 healthy, no Discord traffic.** Box ×4 @12.5–14.5k, 0.37–0.42 s/step
@@ -533,9 +558,15 @@ longer/richer than planned; still 94–99% util). Literature slice:
 **~25 min spent ~19:35–20:00Z (trunk survey)** after four sessions
 at 0 h — allocation back on cadence (skipped this session: bounded
 infra item + the slice ran <1 h ago real-clock; next session takes
-it). CPU-side: four consecutive all-CPU sessions while both GPU
+it). CPU-side: five consecutive all-CPU sessions while both GPU
 chains ran (trunk survey, flow-vs-AR paired analysis, idea #2a
-bucketing, ideas #18.1 hardening ~20:30–20:55Z real-clock) — the
-no-idle-pauses rule in action. The #2a sim result is the rule paying
-off concretely: a CPU measurement REPLACED a planned GPU screen
-(predicted effect sub-threshold — charter §3).
+bucketing, ideas #18.1 hardening, ideas #18.2 reseed-behind-flag
+~20:45–21:25Z real-clock) — the no-idle-pauses rule in action. The
+#2a sim result is the rule paying off concretely: a CPU measurement
+REPLACED a planned GPU screen (predicted effect sub-threshold —
+charter §3). #18.2 keeps the pattern: the instrument break is fully
+implemented + pre-registered on CPU; the flip costs one token + one
+eval at a boundary we already visit. Literature slice: skipped again
+this session (bounded infra item took it; slice last ran ~19:35–20:00Z
+real-clock) — next session should take it per the standing
+allocation.

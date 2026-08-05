@@ -18,3 +18,4 @@
   - [2026-08-05 — Flow vs AR paired per-frame: a horizon story](posts/2026-08-05-flow-vs-ar-paired.md)
   - [2026-08-05 — Idea #2a: length bucketing landed; sim says don't screen yet](posts/2026-08-05-bucketing-impl-sim.md)
   - [2026-08-05 — Ideas #18.1: instrument hardening pass landed](posts/2026-08-05-hardening-pass.md)
+  - [2026-08-05 — Pre-reg: flow-noise stable-triple reseed (#18.2)](posts/2026-08-05-noise-reseed-prereg.md)

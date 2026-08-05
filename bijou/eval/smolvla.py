@@ -23,7 +23,7 @@ from lerobot.processor import PolicyProcessorPipeline
 from lerobot.types import PolicyAction
 from torch import Tensor
 
-from .policies import sample_noise
+from .policies import noise_for_item
 
 PreprocessorPipeline = PolicyProcessorPipeline[dict[str, Any], dict[str, Any]]
 PostprocessorPipeline = PolicyProcessorPipeline[PolicyAction, PolicyAction]
@@ -68,11 +68,13 @@ class SmolVLAEvalPolicy:
         device: torch.device,
         seed: int,
         lerobot_stats: dict[str, dict[str, Any]],
+        noise_key: str = "index",
     ) -> None:
         self.name = f"smolvla:{policy_path.rsplit('/', 1)[-1]}"
         self.policy_path = policy_path
         self.device = device
         self.seed = seed
+        self.noise_key = noise_key
         self.lerobot_stats = lerobot_stats
         self.policy = LerobotSmolVLA.from_pretrained(policy_path)
         self.policy.to(device)
@@ -139,8 +141,12 @@ class SmolVLAEvalPolicy:
                 k: v for k, v in item.items() if k.startswith("observation.")
             }
             observation["task"] = item["task"]
-            noise = sample_noise(
-                self.seed + index,
+            noise = noise_for_item(
+                self.noise_key,
+                self.seed,
+                item,
+                index,
+                0,
                 (1, self.chunk_size, int(self.policy.config.max_action_dim)),
             ).to(self.device)
             batch = processors.preprocessor(observation)

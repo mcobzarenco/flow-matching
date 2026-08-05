@@ -289,9 +289,16 @@ queue, in leverage order (details + file:line in the post):
    recomputed bit-exact (12/12 cells, d=0) through the edited
    scoring path; 3 new unit tests; check.py green. NOT included:
    deep-dive finding 6b — now item 8 below.
-2. Flow-noise stable-triple seeding — **versioned instrument break**
-   (sealed_v3-style amendment + re-banked flow anchors); until then
-   flow anchors are valid only at frozen corpus composition.
+2. Flow-noise stable-triple seeding — **implemented behind
+   `--noise-key` 2026-08-05 ~21:20Z, break pre-registered**
+   ([amendment](posts/2026-08-05-noise-reseed-prereg.md)): `stable`
+   keys noise to blake2b(repo_id, episode, frame) via numpy
+   SeedSequence (128-bit, no torch 32-bit trap, no draw stride);
+   default stays `index` (byte-identical, oracle 12/12 d=0) until the
+   flip executes at the first anchor boundary after the box reads —
+   one flow-80k panel re-bank, decision band pre-registered off the
+   draws chain's empirical σ_draw. Until then flow anchors remain
+   valid only at frozen corpus composition.
 3. Q3 tripwire noise fix (reuse scalar-pass noise) — before any
    conditioned flow run.
 4. Resume hardening (fresh-seed enforcement + bf16-snap warning) —

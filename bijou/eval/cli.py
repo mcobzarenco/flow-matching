@@ -64,6 +64,7 @@ from .metrics import (
     summarize,
 )
 from .policies import (
+    NOISE_KEYS,
     BijouPolicy,
     ChunkPolicy,
     NarratedBijouPolicy,
@@ -113,6 +114,7 @@ class EvalReport:
     sample_steps: int
     sample_method: str
     sample_draws: int
+    noise_key: str
     generate: list[str] | None
     condition_override: list[str]
     batch_size: int
@@ -168,6 +170,7 @@ class EvalReport:
             "sample_steps": self.sample_steps,
             "sample_method": self.sample_method,
             "sample_draws": self.sample_draws,
+            "noise_key": self.noise_key,
             "generate": self.generate,
             "condition_override": self.condition_override,
             "batch_size": self.batch_size,
@@ -325,6 +328,17 @@ def parse_args() -> argparse.Namespace:
         "from headline aggregation — they feed the aux metrics",
     )
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument(
+        "--noise-key",
+        choices=list(NOISE_KEYS),
+        default="index",
+        help="flow-noise derivation: 'index' (legacy, corpus-relative "
+        "concat index — comparable only at frozen corpus composition) "
+        "or 'stable' (frame-identity triple — corpus-composition-"
+        "invariant; a DIFFERENT draw, so numbers are not comparable "
+        "across keyings). Default stays 'index' until the reseed "
+        "amendment executes and flow anchors are re-banked",
+    )
     parser.add_argument("--chunk-size", type=int, default=50)
     parser.add_argument(
         "--batch-size",
@@ -594,6 +608,7 @@ def main() -> int:
             sample_steps=args.sample_steps,
             method=SamplingMethod(args.sample_method),
             sample_draws=args.sample_draws,
+            noise_key=args.noise_key,
             generate=tuple(AuxField(f) for f in (args.generate or ())),
             condition_override=overrides,
             # Subgoal conditioning renders only when explicitly forced
@@ -629,6 +644,7 @@ def main() -> int:
                 device=device,
                 seed=args.seed,
                 lerobot_stats=selection.lerobot_stats,
+                noise_key=args.noise_key,
             ),
         )
 
@@ -1061,6 +1077,7 @@ def main() -> int:
             sample_steps=args.sample_steps,
             sample_method=args.sample_method,
             sample_draws=args.sample_draws,
+            noise_key=args.noise_key,
             generate=list(args.generate) if args.generate is not None else None,
             condition_override=list(args.condition_override),
             batch_size=args.batch_size,
@@ -1116,6 +1133,7 @@ def main() -> int:
             f"checkpoint: {args.checkpoint or '-'}",
             f"smolvla: {args.smolvla or '-'}",
             f"sampler: {args.sample_method}-{args.sample_steps}",
+            f"noise key: {args.noise_key}",
             f"fps filter: {args.fps or 'all'}",
             f"camera-count filter: {args.camera_counts or 'all'}",
             f"generate: {args.generate if args.generate is not None else '(fast path)'}",

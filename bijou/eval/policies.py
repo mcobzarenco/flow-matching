@@ -14,9 +14,11 @@ composition, evaluation order and device.
 from __future__ import annotations
 
 import dataclasses
+import hashlib
 from pathlib import Path
 from typing import Any, Protocol
 
+import numpy as np
 import torch
 from torch import Tensor
 
@@ -109,6 +111,71 @@ def draw_noise(seed: int, index: int, draw: int, shape: tuple[int, ...]) -> Tens
     return sample_noise(seed + index + draw * DRAW_SEED_STRIDE, shape)
 
 
+# "index" keys noise to the corpus-relative concat index, so ANY change
+# to eval-corpus composition (a dataset added, removed, or regrown)
+# silently redraws every flow policy's noise downstream of the edit —
+# flow numbers are only comparable at frozen corpus composition.
+# "stable" keys each draw to the frame's identity triple
+# (repo_id, episode_index, frame_index): blake2b of the triple feeds a
+# numpy SeedSequence together with the run seed and draw number, giving
+# 128-bit keying — no birthday collisions across the panel, and no
+# torch manual_seed involved (its CPU generator ignores seed bits ≥32,
+# which is what forced DRAW_SEED_STRIDE above to stay narrow).
+# Flipping the default is a versioned instrument break (posted
+# amendment + re-banked flow anchors); until that executes, "index"
+# stays the default and is byte-identical to the historical path.
+NOISE_KEYS = ("index", "stable")
+
+
+def stable_noise(
+    seed: int,
+    repo_id: str,
+    episode_index: int,
+    frame_index: int,
+    draw: int,
+    shape: tuple[int, ...],
+) -> Tensor:
+    """Per-(frame-identity, draw) flow noise — invariant to corpus
+    composition, evaluation order, batch composition and device."""
+    digest = hashlib.blake2b(
+        f"{repo_id}\x1f{episode_index}\x1f{frame_index}".encode(),
+        digest_size=16,
+    ).digest()
+    words = [int.from_bytes(digest[i : i + 4], "little") for i in range(0, 16, 4)]
+    sequence = np.random.SeedSequence([seed, draw, *words])
+    values = np.random.Generator(np.random.PCG64(sequence)).standard_normal(
+        shape,
+        dtype=np.float32,
+    )
+    return torch.from_numpy(values)
+
+
+def noise_for_item(
+    noise_key: str,
+    seed: int,
+    item: dict[str, Any],
+    index: int,
+    draw: int,
+    shape: tuple[int, ...],
+) -> Tensor:
+    """One frame's noise for one draw under the chosen keying scheme.
+
+    Under "index" this is byte-identical to the historical path:
+    draw 0 reproduces ``sample_noise(seed + index)`` exactly."""
+    if noise_key == "stable":
+        return stable_noise(
+            seed,
+            str(item["repo_id"]),
+            int(item["episode_index"]),
+            int(item["frame_index"]),
+            draw,
+            shape,
+        )
+    if noise_key != "index":
+        raise ValueError(f"unknown noise key {noise_key!r} (choose from {NOISE_KEYS})")
+    return draw_noise(seed, index, draw, shape)
+
+
 class BijouPolicy:
     """A bijou training checkpoint. Normalization is per dataset with the
     stats attached to each item (identical to training; works on held-out
@@ -128,6 +195,7 @@ class BijouPolicy:
         condition_override: dict[str, str] | None = None,
         include_subgoal_condition: bool = False,
         offload_ple: bool = False,
+        noise_key: str = "index",
     ) -> None:
         self.name = f"bijou@{checkpoint.name.removeprefix('step_').lstrip('0') or '0'}"
         if sample_draws > 1:
@@ -141,6 +209,11 @@ class BijouPolicy:
         self.method = method
         self.sample_draws = sample_draws
         self.generate = generate
+        if noise_key not in NOISE_KEYS:
+            raise SystemExit(
+                f"--noise-key must be one of {NOISE_KEYS}, got {noise_key!r}",
+            )
+        self.noise_key = noise_key
         self.model: BijouModel
         self.info: CheckpointInfo
         self.model, self.info = from_checkpoint(
@@ -270,8 +343,15 @@ class BijouPolicy:
                         batch,
                         noise=torch.stack(
                             [
-                                draw_noise(self.seed, index, draw, shape)
-                                for index in indices
+                                noise_for_item(
+                                    self.noise_key,
+                                    self.seed,
+                                    item,
+                                    index,
+                                    draw,
+                                    shape,
+                                )
+                                for item, index in zip(items, indices, strict=True)
                             ],
                         ).to(self.device),
                         num_steps=self.sample_steps,
@@ -286,11 +366,11 @@ class BijouPolicy:
         # none.
         noise: Tensor | None = None
         if isinstance(decoder, FlowDecoder):
-            chunk = batch.actions.shape[1]
+            shape = (batch.actions.shape[1], batch.actions.shape[2])
             noise = torch.stack(
                 [
-                    sample_noise(self.seed + index, (chunk, batch.actions.shape[2]))
-                    for index in indices
+                    noise_for_item(self.noise_key, self.seed, item, index, 0, shape)
+                    for item, index in zip(items, indices, strict=True)
                 ],
             ).to(self.device)
         prediction = self.model.predict_chunk(
