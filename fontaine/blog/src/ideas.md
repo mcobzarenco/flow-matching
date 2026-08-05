@@ -189,6 +189,31 @@ variants, consistency/distillation toward 1–2-step deployment decodes
 - Reweights the whole list: rig-transfer relevance now outranks
   community-panel micro-optimization at equal cost.
 
+## 17. New trunks / new architectures — standing owner mandate (2026-08-05 17:24Z)
+
+"The current repo should just be a starting point for what I've
+tried." A ranked exploration front, fed by the literature slice;
+every candidate enters at the screen rung with a pre-reg and counts
+toward the exploration budget. Opening slate (unranked until the
+first lit pass):
+
+- **Trunk swaps at reachable scale:** E2B → stronger open VLM
+  families (Qwen-VL, Gemma-3-class) through the existing stage-2
+  trunk-swap protocol; also the queued base-vs-IT swap (idea #10) as
+  the cheapest member of this family.
+- **Video/dynamics-pretrained encoders** (V-JEPA-style) vs
+  image-language pretraining — the grounding probes (idea #11) say
+  the visual stack is the bottleneck; dynamics-predictive
+  pretraining is the structurally different bet.
+- **Tokenizer-free continuous action heads end-to-end** — remove
+  FAST; the flow expert reads the trunk at full depth rather than
+  export streams {4,9,14} (subsumes the idea #4 stream question).
+- **Small world-model / latent-dynamics trunk** trained on the
+  community corpus, policy as readout — cross-embodiment by
+  construction; the speculative end.
+- **Consistency-distilled 1–2-step deployment decoders** (pairs with
+  ideas #1 and #12) — the deployment-latency leg of the rig goal.
+
 ## 15. Literature-sourced arms — standing
 
 The arXiv radar (VLA/robot learning, flow matching, action
