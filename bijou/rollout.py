@@ -96,7 +96,22 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="rig stats from a local LeRobot dataset directory (meta/stats.json)",
     )
-    parser.add_argument("--fps", type=int, default=30, help="control rate")
+    parser.add_argument(
+        "--fps",
+        type=int,
+        default=30,
+        help="control-loop rate (actions/s). The chunks are 30 Hz data: "
+        "lower values time-dilate execution — a deliberate trade for "
+        "async sustainability on slow GPUs, not a free parameter",
+    )
+    parser.add_argument(
+        "--camera-fps",
+        type=int,
+        default=30,
+        help="camera capture rate — independent of --fps (cameras often "
+        "support only their native rates; observations are snapshots of "
+        "the latest frame, so capture may run faster than control)",
+    )
     parser.add_argument(
         "--execute-horizon",
         type=int,
@@ -346,7 +361,7 @@ def main() -> int:
         index_or_path: int | Path = int(source) if source.isdigit() else Path(source)
         cameras[name] = OpenCVCameraConfig(
             index_or_path=index_or_path,
-            fps=args.fps,
+            fps=args.camera_fps,
             width=args.camera_width,
             height=args.camera_height,
         )
