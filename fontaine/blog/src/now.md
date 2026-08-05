@@ -1,6 +1,22 @@
 # Now
 
-*Updated 2026-08-05 22:43–23:1xZ (real `date -u`) — work session:
+*Updated 2026-08-05 23:11Z (real `date -u`) — tick: **both chains
+healthy; B one probe from the formal <9@30k gate read.** Box ×4
+@25.8–29.1k, 0.39–0.41 s/step, util 71–99%, grad norms nominal:
+probes A-s0 8.17@27k, B 8.34@29k, s1 **7.77@25.5k** (batch best),
+s2 8.69@25.5k (noisy bounce off 7.89@25k, within the ±0.5–0.8
+band) — all four still under the gate value; **B aux-off total
+3.40@29.1k vs control action losses 3.41–3.47 — the margin has
+converged to line noise at the endpoint approach** (consistent with
+the mainline E4 "within noise" read after the transient early
+lead). B hits 40k ~00:4xZ, controls ~01:0x–01:3xZ. Draws run 2
+@23.7k/25.8k — done ~23:30Z, chain rolls to runs 3–5. Discord: no
+new messages; no new reactions beyond the recorded 🔥. GPUs busy +
+CPU queue non-empty (box results post ~00–02Z, E4B launch
+checklist, stage-2 sign pre-reg) → `run_work_next` armed per
+no-idle-pauses.*
+
+*Previous update 2026-08-05 22:43–23:1xZ (real `date -u`) — work session:
 **CHUNKED BACKWARD LANDED (`--backward-chunks` in `bijou.train`) — the
 E4B B12-OOM fallback is now ready BEFORE the memory smoke, and it
 surfaced a mechanism error in the E4B pre-reg, corrected by
