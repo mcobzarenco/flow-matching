@@ -524,9 +524,24 @@ deliberately boring (a clever harness that crashes strands the GPU):
   cheap; tick frequency is the main token-cost dial.
 - **work sessions** (`fontaine/prompts/work.md`), event-driven (run
   finished, queue below depth 2, owner message, planning): analysis,
-  eval bursts, launcher prep, blog writing. Longer budget, still
-  bounded. A tick that finds real work continues into one; a lock
-  serializes sessions so they never overlap.
+  eval bursts, launcher prep, blog writing. Longer budget (4 h cap),
+  still bounded. A tick whose findings exceed its own 30-min cap
+  requests one by touching `harness/state/run_work_next` and ending
+  — the driver chains straight into the work session, ONE chain per
+  timer fire (more work waits for the next fire; lock-holding stays
+  bounded by construction).
+- **overlap and in-session polling semantics**: a lock serializes
+  sessions — timer fires that land on a held lock skip harmlessly
+  (exit 0) and the timer keeps firing every 30 min, so the first
+  fire after a long session releases the lock is ≤30 min out;
+  `Persistent=true` replays fires missed across reboots. A session
+  MAY hold the lock and babysit in-session with sleep polls through
+  a critical window (fresh launch, first eval boundary, pending kill
+  decision; single commands may run up to 1 h — the driver raises
+  `BASH_MAX_TIMEOUT_MS`): context is preserved and no tokens burn
+  while sleeping. Stable stretches belong to fresh ticks instead —
+  cheaper, and crash-proof: a dead session's watch resumes from the
+  timer within 30 min, which is exactly the babysit cadence.
 - implementation: **headless Claude Code** (`claude -p`) driven by
   `fontaine/harness/fontaine-session.sh` — mature tool loop,
   permission control, and the whole harness stays one shell script +
@@ -555,11 +570,19 @@ recorded in `now.md`, honored at the next decision point. The agent
 posts launches, results (headline numbers + blog/wandb links), and
 escalations (§7, with an @mention), and answers questions in-thread.
 Substance always flows through the blog; the channel is for
-steering. One-time setup (owner, `fontaine/README.md`): create the
-bot, enable the Message Content intent, invite it with read/send
-permissions. wandb crash/threshold alerts point at a webhook into
-the same channel — the backstop wake signal so a dead run doesn't
-wait for the next tick.
+steering. **Conversational mode**: the 30-min tick is the FLOOR of
+responsiveness, never the ceiling — when the owner is actively
+chatting, the live session stays open and sleep-polls the channel at
+chat cadence (30–120 s, stretching as the exchange quiets, handing
+back to ticks after ~10 min of silence; polls are cheap REST reads
+and sleeping burns no tokens). A conversation that outlives a tick's
+cap continues through the tick→work chain, with `discord.py history`
+(cursor-untouched) rebuilding recent context in the fresh session.
+One-time setup (owner, `fontaine/README.md`): create the bot, enable
+the Message Content intent, invite it with read/send permissions.
+wandb crash/threshold alerts point at a webhook into the same
+channel — the backstop wake signal so a dead run doesn't wait for
+the next tick.
 
 **Cadence** (no standing retro — owner call, 2026-08-05):
 

@@ -8,6 +8,15 @@ prompt's contract.
    (cursor-managed; replies via `... discord.py post "text"`). Owner
    messages are steering: acknowledge in-channel, record in
    `now.md`, apply at the next decision point.
+   **Conversational mode — a chat never waits for the next tick**:
+   if the owner is mid-exchange (a question, a follow-up likely),
+   reply and STAY — sleep-poll the channel at 30–120 s intervals
+   while the exchange is live, stretching the interval as it
+   quiets; hand back to normal cadence after ~10 min of silence. If
+   the tick's 30-min cap approaches mid-conversation, touch
+   `fontaine/harness/state/run_work_next` and end — the chained
+   work session rejoins the thread (`discord.py history` rebuilds
+   recent context without moving the cursor).
 3. If a training run is live: liveness by pgrep/GPU memory (never a
    log tail); latest step; curve vs the pre-registered anchors in
    the launcher header; anomaly scan (loss spikes, OOM, substitution
@@ -17,11 +26,20 @@ prompt's contract.
    escalate per charter §7 when warranted.
 4. If the run finished or died: post-process per charter §4 (panel
    score, reports, blog post, ledger row, artifact uploads), then
-   launch the next queued pre-registered run. If that exceeds a tick
-   budget, continue as a work session (`fontaine/prompts/work.md`
-   defines it — you may keep going in this session).
+   launch the next queued pre-registered run. If that exceeds this
+   tick's 30-min cap: do the urgent part, `touch
+   fontaine/harness/state/run_work_next`, and end the session — the
+   driver chains straight into a work session with a 4-h budget.
 5. If idle and the queue is healthy: exit quickly — do NOT invent
-   work. If the queue is below depth 2: continue into a work session
-   to refill it.
-6. End: commit + push state (`now.md` always; blog build + Space
+   work. If the queue is below depth 2: touch the `run_work_next`
+   marker (see 4) so the chained work session refills it.
+6. Judgment call — holding the session open: through a critical
+   window (fresh launch's first steps, an approaching eval boundary,
+   a kill decision pending) you MAY babysit in-session with sleep
+   polls (`sleep 900` etc.; single commands may run up to 1 h) —
+   context is preserved and overlapping timer fires skip harmlessly
+   off the lock. Mind the mode's wall-clock cap; for stable
+   stretches prefer exiting — the timer's fresh sessions are cheaper
+   and crash-proof.
+7. End: commit + push state (`now.md` always; blog build + Space
    upload only if reader-visible content changed).
