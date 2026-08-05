@@ -154,6 +154,11 @@ connection — nothing to keep alive, nothing to crash.
 
 - **Steer by messaging `#fontaine`** — every tick polls the channel;
   steering overrides the agenda (charter §7).
+- **Watch a live session**: `tail -f` the newest file in
+  `harness/logs/` (sessions stream JSONL events as they happen).
+  Liveness = a `claude` process (`pgrep -af claude`) or a growing
+  transcript under `~/.claude/projects/`; an empty log with no
+  process means the session ended — check its tail for the exit.
 - **Read the blog** for substance:
   `https://huggingface.co/spaces/mcobzarenco/fontaine-blog`
   (`now.md` = what the GPU is doing this hour and why).

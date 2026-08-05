@@ -59,9 +59,14 @@ cd "$REPO"
 # real boundaries are credential scope (fontaine-* HF token, branch
 # push, one Discord channel) — charter §7 / README "Safety model".
 set +e
+# stream-json (requires --verbose in -p mode) emits one JSONL event
+# per turn/tool-use AS IT HAPPENS — plain text mode buffers everything
+# until session end, which made `tail -f` on a live session show
+# nothing for hours.
 timeout "$TIMEOUT" claude -p "$(cat "$PROMPT_FILE")" \
     ${FONTAINE_MODEL:+--model "$FONTAINE_MODEL"} \
     --dangerously-skip-permissions \
+    --output-format stream-json --verbose \
     >>"$LOG" 2>&1
 STATUS=$?
 set -e
