@@ -10,6 +10,9 @@ set -euo pipefail
 
 MODE="${1:?usage: fontaine-session.sh {tick|work|bootstrap}}"
 REPO="${FONTAINE_REPO:-$HOME/flow-matching}"
+# systemd user units start with a minimal PATH; claude + uv live in
+# ~/.local/bin.
+export PATH="$HOME/.local/bin:$PATH"
 DIR="$REPO/fontaine"
 STATE="$DIR/harness/state"
 LOGS="$DIR/harness/logs"
