@@ -1,9 +1,11 @@
 # Now
 
-*Updated 2026-08-05 ~17:42Z (tick: box batch healthy at step
-1000–1320 ×4 @ 0.38 s/step; sealed eval 14.4k/25.8k, rate eased to
-~235 f/min ⇒ ETA ~18:25Z; owner steering 17:31Z — Gemma 4 lineage
-researched from the HF blog, `docs/gemma4.md` extended).*
+*Updated 2026-08-05 ~17:50Z (tick: box batch healthy at step
+1500–2000 ×4 @ 0.38–0.39 s/step, B-s0 action loss tracks A-s0 within
+noise; sealed eval 16.9k/25.8k @ ~315 f/min ⇒ ETA ~18:16Z; owner
+17:42Z conversational — 26B-A4B training cost discussed, replied
+(MoE saves FLOPs not memory; QLoRA the realistic path; E4B/12B the
+practical full-FT trunks).*
 
 ## ⚡ The second box (192.222.55.210) — batch RUNNING
 
@@ -113,6 +115,22 @@ analysis: paired per-frame flow-vs-AR deltas (where does flow win?)
 
 ## Owner steering log (active items)
 
+- 17:50–18:01Z (conversational, replied in-channel): **(a) trunk
+  survey mandate** — deep review of in-scope open-weights models:
+  budget **<7B, ideally ~3B**, video-trained preferred; method per
+  owner 18:01Z: read the **arXiv paper** (if any) + HF config per
+  candidate, not just model cards. Multi-turn = later-stage research
+  area (noted, not started). → queued in the owner-steered reviews
+  block (item 5c). **(b) Ministral 3 3B** flagged by owner —
+  first-read posted (3.4B LM + 0.4B vision enc, 256k ctx, Apache
+  2.0, Dec 2025 = post-cutoff; images only, no video/audio on the
+  card; arch details undisclosed → config read needed). Candidate on
+  size/license; misses the video-trained preference. **(c) owner
+  asked after the rules/prompts + bijou reviews** — answered
+  honestly (not done; eaten by box launch + Gemma 4 docs);
+  **committed in-channel to a chained work session**
+  (`run_work_next` touched 17:58Z) with order: rules/prompts pass →
+  bijou deep-dive → trunk survey → literature slice.
 - 17:31Z: **research the Gemma 4 lineage** (owner: PLE only on
   E2B/E4B, 12B unified-multimodal no-audio, "MoE I think?"; read
   the HF blog) → **DONE this tick**: blog read, `docs/gemma4.md`
@@ -137,7 +155,13 @@ analysis: paired per-frame flow-vs-AR deltas (where does flow win?)
   13 eps, labeled −26; [amendment posted](posts/2026-08-05-sealed-plan-v2.md);
   v1 deprecated; v2 anchor re-pools from the v1 report's per-dataset
   means when the running eval lands — note: sealed run has NO npz
-  dump, the recompute is exact frame-mean arithmetic from the JSON).
+  dump; the recompute (`fontaine/scripts/sealed_v2_anchor.py`,
+  sanity-checked against the primary report) is **approximate, not
+  exact as earlier claimed** — the pooled summary weights by valid
+  chunk elements, not frames, so re-pooling per-dataset means
+  reproduces it only to ~5e-3 (bijou) / ~4e-2 (state-copy); method
+  error ~15× smaller than the −0.07 v1→v2 shift, negligible vs the
+  0.15 band, quoted with the anchor).
   (3) **North star declared: a VLA for the owner's rig — prove
   few-shot transfer (new SO101 arm, tens of episodes)** → saved to
   memory + ideas.md #16 (benchmark pre-reg to write after the box
@@ -184,8 +208,11 @@ analysis: paired per-frame flow-vs-AR deltas (where does flow win?)
    run per pre-reg. Draw-spread unimodality check first (in pre-reg).
 4. **Paired flow-vs-AR per-frame analysis** (CPU, npzs in local
    `reports/`) — results post; any session.
-5. **Owner-steered reviews** (next work session, in order): (a)
-   rules/prompts full pass, (b) bijou deep-dive → ranked list.
+5. **Owner-steered reviews** (chained work session, in order): (a)
+   rules/prompts full pass, (b) bijou deep-dive → ranked list, (c)
+   **trunk survey** (open-weights, <7B ideally ~3B, video-trained
+   preferred; arXiv paper + HF config per candidate; Ministral 3 3B
+   + Gemma 4 E2B/E4B seed the list; ranked doc on the blog).
 6. Stage-2 sign-convention pre-reg draft (mirror trio) — backlog.
 
 ## Data-blocked / handoff notes for the tick loop
