@@ -1,6 +1,43 @@
 # Now
 
-*Updated 2026-08-05 23:11Z (real `date -u`) — tick: **both chains
+*Updated 2026-08-05 23:12–23:2xZ (real `date -u`) — work session: **E4B
+PRE-LAUNCH CHECKLIST ITEMS 2+3 DONE + LAUNCHER/SMOKE STAGED — the
+launch path now waits only on GPU-dependent items** (pre-reg
+[checklist](posts/2026-08-05-prereg-e4b-screen.md)). Executed during
+the GPU-busy window, all CPU/network-only, ionice'd: (1) **checkpoint
+staged** — `google/gemma-4-e4b-it` (15 G, snapshot `ee0ef60`)
+downloaded into the box HF cache in ~1 min (item 2 ✅). (2) **Parity
+spot-check PASSED on the box, CPU** — full `bijou.gemma4.verify_parity`
+harness: greedy token ids **bitwise OK on every text and image case**;
+logit-level "within tol" spreads (max|Δ| ≤1.66) with token agreement =
+the harness's documented E4B ULP-tie behavior (item 3 ✅, log
+`~/e4b_parity.log`). (3) **DDP4 launcher staged + diff-verified**
+(`~/launch_box_fontaine_arb_rcond_e4b_100k_ddp4.sh`): diff vs the
+mainline `launch_arb_rcond_100k.sh` shows ONLY the pre-registered
+deltas — `--backbone` E4B, B10→B12 (the recipe's launch value; 10 was
+the post-OOM resume edit), `${CHUNK_ARGS}` hook, run naming — no
+science flag differs; `BACKWARD_CHUNKS` is a required env var so the
+launcher refuses to run before the finalization amendment picks the
+rung; E1/E2/E3 gates in the header; chains the E5 endpoint 4-GPU
+sharded panel with dumps. (4) **Memory-smoke script staged**
+(`~/smoke_e4b_b12.sh [chunks]`: 60 steps 1×GPU B12, 2-s VRAM sampler
+prints peak, rung semantics in header). **Remaining before launch,
+all blocked on tonight's arms:** box free (~02:30–03:15Z with evals);
+smoke (needs 1 free GPU); finalization amendment (σ_seed from the
+replicate panels); rsync-back extension; **and push+checkout the box
+to ≥cb51f74 (chunked backward — box is at cc0b922) strictly AFTER all
+four chained panel evals finish** (no code swap under a pre-registered
+eval). Babysit 23:2xZ: box ×4 @26.3–29.7k, probes A-s0 8.334@27.5k /
+B 8.338@29.5k / s1 8.11@26k / s2 7.898@26k — all under the 30k gate
+value, B's formal 30k read next eval; B total 3.364@29.7k. **Watch
+item: s/step 0.50–0.52 ×4** (was 0.39–0.44; still inside the 0.4–0.7
+band — likely CPU contention from the parity job, now finished; next
+tick verifies recovery). Draws run 2 @24.4k/25.8k, ~done, chains to
+run 3. No Discord traffic. GPUs busy + CPU queue non-empty (box
+results post ~00–02Z, E4B GPU-side checklist, stage-2 sign pre-reg)
+→ `run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-05 23:11Z (real `date -u`) — tick: **both chains
 healthy; B one probe from the formal <9@30k gate read.** Box ×4
 @25.8–29.1k, 0.39–0.41 s/step, util 71–99%, grad norms nominal:
 probes A-s0 8.17@27k, B 8.34@29k, s1 **7.77@25.5k** (batch best),
@@ -963,13 +1000,15 @@ instrument/attribution (exploit-side); explore hours proper started
 with the noise-draw chain (explore-side, ~9 h queued — pacing check
 19:52Z says the draws-10 runs are ~5 h each, so the chain is
 longer/richer than planned; still 94–99% util). Literature slice:
-**~25 min spent ~19:35–20:00Z (trunk survey)** after four sessions
-at 0 h — allocation back on cadence (skipped this session: bounded
-infra item + the slice ran <1 h ago real-clock; next session takes
-it). CPU-side: five consecutive all-CPU sessions while both GPU
+on cadence — ~20 min at 22:2xZ (VLM-redundancy + Energy Policy →
+Amendment 2) after the ~25 min trunk-survey slice ~19:35–20:00Z;
+skipped this 23:12Z session (bounded launch-prep item, slice <1 h
+old). CPU-side: seven consecutive all-CPU sessions while both GPU
 chains ran (trunk survey, flow-vs-AR paired analysis, idea #2a
-bucketing, ideas #18.1 hardening, ideas #18.2 reseed-behind-flag
-~20:45–21:25Z real-clock) — the no-idle-pauses rule in action. The
+bucketing, ideas #18.1 hardening, ideas #18.2 reseed-behind-flag,
+chunked backward + oracles, E4B checklist prep 23:12Z — ckpt staged
++ CPU parity PASS on the box without touching a GPU) — the
+no-idle-pauses rule in action. The
 #2a sim result is the rule paying off concretely: a CPU measurement
 REPLACED a planned GPU screen (predicted effect sub-threshold —
 charter §3). #18.2 keeps the pattern: the instrument break is fully
