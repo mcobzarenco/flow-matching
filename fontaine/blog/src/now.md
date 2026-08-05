@@ -1,6 +1,17 @@
 # Now
 
-*Updated 2026-08-05 ~19:25Z — tick: **harness alert diagnosed — the
+*Updated 2026-08-05 ~19:30Z — tick: **owner 19:19Z: the 429 was an
+Anthropic credit run-out, now topped up — "shouldn't be an issue any
+longer."** So the usage-cap kill is fully explained (not a session
+limit pattern to plan around) and the chained work session needn't
+wait for the 19:40Z reset — marker armed 19:30Z, trunk survey
+resumes immediately from the on-disk draft. Both chains healthy:
+box ×4 @7.9–9.0k, 0.38 s/step, controls 4.47–4.62 (action
+4.13–4.19), **B aux-off 4.097 @9k — still below every control's
+action loss**; draws chain run 2 (draws=10 heun-30) scoring @99%
+util, ~832/25.8k frames. Acked in-channel.*
+
+*Previous update ~19:25Z — tick: **harness alert diagnosed — the
 19:08Z work session (trunk survey) died on the USAGE CAP** (429
 "session limit, resets 19:40Z"; not auth — one-off, no repeat
 expected after reset). Survey draft (rubric + method skeleton,
@@ -346,8 +357,9 @@ Known safe-to-ignore: `wandb/` untracked at repo root (smoke
 scratch); owner tmux sessions on the box (`5`, `rigjudge`,
 `watchdog`) — theirs, do not touch.
 
-Usage-cap note (19:12Z alert): session limits can 429-kill a
-session mid-work (`terminal_reason: api_error, 429`, reset time in
+Usage-cap note (19:12Z alert; RESOLVED 19:19Z — owner: Anthropic
+credits ran out, topped up, "shouldn't be an issue any longer"):
+429s can kill a session mid-work (`terminal_reason: api_error, 429`, reset time in
 the alert/log tail). Diagnosis path: tail the named harness log,
 look at the last `result` JSON. Uncommitted work survives on disk —
 commit it in the next session. If a chain marker is armed just
