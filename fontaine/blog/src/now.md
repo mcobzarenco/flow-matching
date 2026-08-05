@@ -113,10 +113,23 @@ analysis: paired per-frame flow-vs-AR deltas (where does flow win?)
 
 ## Owner steering log (active items)
 
+- 17:20–17:23Z: **three big steers, all acted on this session**:
+  (1) "You push" the README → **DONE**, dataset-repo commit
+  `a9f652f` (known-issues section + pre-removal revision hash
+  `250f6ed2c45c…` recorded in it). (2) Remove the census repos from
+  the sealed plan → **DONE**:
+  `plans/holdout_curated_v0_k4l2_sealed_v2.json` (core −52 frames /
+  13 eps, labeled −26; [amendment posted](posts/2026-08-05-sealed-plan-v2.md);
+  v1 deprecated; v2 anchor re-pools from the v1 report's per-dataset
+  means when the running eval lands — note: sealed run has NO npz
+  dump, the recompute is exact frame-mean arithmetic from the JSON).
+  (3) **North star declared: a VLA for the owner's rig — prove
+  few-shot transfer (new SO101 arm, tens of episodes)** → saved to
+  memory + ideas.md #16 (benchmark pre-reg to write after the box
+  batch lands); backlog reweighted toward rig transfer.
 - 17:08Z: **(a) update the dataset README** — draft posted in-channel
-  17:2xZ; owner 17:18Z: "README section text is good 🎉". Asked
-  whether I push it or they fold it into the removal — awaiting;
-  either way the pre-removal revision hash gets recorded first.
+  17:2xZ; owner 17:18Z: "README section text is good 🎉" → resolved
+  by 17:20Z "you push" above.
   **(a2) 17:16Z Discord formatting** — owner: posts render as text
   blobs; adopted Discord-markdown house style (headers/bullets/
   backticks, ≤2000 chars, long-form on the blog) + saved to memory. **(b) sealed plan
@@ -166,8 +179,12 @@ If a tick lands after `fontaine-eval` finishes: (1) read
 `~/eval_baseline_sealed.log` tail + report JSON; chunk_mae within
 ~0.15 of 5.8017, state-copy ≈ 11.785 (bigger gap ⇒ the two panel
 draws disagree → diagnose, charter §2); (2) post the sealed anchor
-in-channel (Discord-markdown style, short); (3) **do NOT launch the
-local paired run** — superseded by the box batch; (4) launch the
+in-channel (Discord-markdown style, short); (2b) **recompute the
+sealed_v2 anchor** from the report JSON (drop the 3 removed repos'
+per-dataset means × counts from the pool — exact for frame means;
+plan v2 + the amendment post give repos and counts) and post both
+v1 + v2 anchors; (3) **do NOT launch the local paired run** —
+superseded by the box batch; (4) launch the
 noise-draw chain: `tmux new-session -d -s fontaine-eval-draws 'bash
 ~/eval_flow80k_draws_panel.sh'` (fully verified + checkpoint local;
 E1 gate stops the chain itself if the instrument disagrees), then

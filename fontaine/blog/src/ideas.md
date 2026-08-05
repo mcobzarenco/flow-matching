@@ -167,6 +167,28 @@ variants, consistency/distillation toward 1–2-step deployment decodes
   (moves every anchor); kevin510 + willnorris/bbox-2 flagged for any
   future curated-v1 exclusion list.
 
+## 16. Few-shot rig-transfer benchmark — `queued`, **the north star** (owner 2026-08-05 17:20–17:23Z)
+
+- **Goal statement (owner):** "build a VLA for my rig… prove transfer
+  so you can fine-tune a task on a new SO101 arm with tens of
+  examples." Community-panel MAE is the proxy; **the
+  sample-efficiency curve is the product metric.**
+- **Design sketch (pre-reg to write after the box batch lands):**
+  fine-tune the best lineage on N ∈ {10, 25, 50} episodes of a
+  held-out rig task; measure panel-style MAE on that task's holdout
+  (and eventually rollout success) vs N. Protocol precedent: the
+  owner's ft-rig lineage (4–5k-step fine-tunes, `run_ft_rig*.sh` on
+  the second box, both AR and flow variants).
+- **Dependencies:** tonight's aux-off answer + seed-noise floor pick
+  the trunk and set the minimum detectable effect for paired ft
+  comparisons; sign/calibration hygiene (ideas #13, #14) bites
+  hardest on a new arm — keep them warm.
+- **Falsification:** the curve itself — if MAE at N=50 is no better
+  than zero-shot, transfer is not proven and the pretraining recipe
+  (not the ft protocol) is the suspect.
+- Reweights the whole list: rig-transfer relevance now outranks
+  community-panel micro-optimization at equal cost.
+
 ## 15. Literature-sourced arms — standing
 
 The arXiv radar (VLA/robot learning, flow matching, action
