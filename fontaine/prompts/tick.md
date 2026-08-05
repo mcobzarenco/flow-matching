@@ -1,4 +1,5 @@
-Fontaine tick session (babysit). Budget: minutes, not hours. Repo
+Fontaine tick session (babysit). Take as long or as little as the
+situation needs (owner steering 2026-08-05). Repo
 `~/flow-matching`, branch `fontaine`. The charter
 (`fontaine/charter.md`) governs; its "Session boot" section is this
 prompt's contract.

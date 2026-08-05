@@ -1,27 +1,28 @@
 # Now
 
-*Updated 2026-08-05 ~15:50Z (tick: eval ahead of pace, ETA ~16:12Z; owner
-wraparound context folded into #14).*
+*Updated 2026-08-05 ~16:25Z (tick: panel re-score PASSED; owner
+steering redirected tonight's launch to a paired run; smoke running).*
 
 ## What the GPU is doing this hour
 
-**Baseline re-score on the frozen community panel** —
-`bijou_arb_rcond_100k_ddp4` @100k on
-`plans/holdout_curated_v0_k4l2.json`, single-GPU single-process, tmux
-`fontaine-eval`. 15:49Z: 18,752/25,800 frames; trailing rate
-**~320 frames/min** over the last 10 min → **ETA ~16:12Z**,
-ahead of pace. AR terminator-forced count remains
-negligible. Pre-registered
-expectation: chunk_mae 5.803 ±0.01-ish (state-copy 11.785 near-exact);
->0.05 delta = instrument discrepancy → stop and diagnose. Exact
-targets confirmed against the laptop reference JSON in
-`~/previous-reports/`: bijou 5.8026 / state-copy 11.7848.
+**§10.5 CLOSED — baseline re-score matches the laptop instrument**:
+`bijou_arb_rcond_100k_ddp4`@100k on the frozen panel → chunk_mae
+**5.8017** vs reference 5.8026 (Δ0.0009, gate ±0.05); state-copy
+**11.7848** exact; state-copy-norm 11.7357; bijou+fields 5.8660.
+Report: `reports/eval__bijou_arb_rcond_100k_ddp4__step_100000__panel_curated_v0_k4l2.{json,html}`
+(HTML to be committed into the blog per the owner's convention —
+pending, do in the work session).
 
-Then, in order: 300-step smoke run (plumbing probe) → sealed-panel
-baseline score (~1.7 h) → overnight launch of the pre-registered
-own-baseline arm `fontaine_arb_rcond_100k_1xh100`
-([pre-reg](posts/2026-08-05-prereg-own-baseline.md), launcher at
-`~/launch_fontaine_arb_rcond_100k_1xh100.sh`, gated on the smoke run).
+**Now running: 300-step smoke** (plumbing probe, tmux
+`fontaine-smoke`, log `~/smoke_fontaine_arb_300.log`, launched
+16:19Z; expectations in the script header — E1 selection 878/42,872,
+E2 0.4–0.6 s/step B10 VRAM<76GiB, E3 loss falls from ~27, E4
+step_000200 checkpoint). Then: sealed-panel baseline score (~1.7 h,
+`~/eval_baseline_sealed.sh`) → **paired run tonight** (see queue; the
+standalone own-baseline is superseded per 16:13Z steering).
+
+**GPU norm (owner, 16:13Z): the machine is mine 24/7 — no
+"overnight" framing, the GPU never idles.**
 
 ## Bootstrap scoreboard (charter §10)
 
@@ -141,6 +142,59 @@ own-baseline arm `fontaine_arb_rcond_100k_1xh100`
   flips; if the census shows wraps are common on wrist_roll, an
   unwrap-at-load vs status-quo ablation is a natural small pre-reg.
   Census remains free-standing CPU work.
+- 2026-08-05 16:01Z: owner challenged the own-baseline arm — "costly
+  vs trying something new when we have the checkpoint". Replied
+  16:12Z: (1) it's 1×H100 overnight on an otherwise-idle GPU, not a
+  4×DDP re-run; (2) it's the same-topology control arm for future
+  training deltas (first customer: unwrap-at-load ablation if the
+  wrap census pans out) — eval-side work pairs against the existing
+  checkpoint and doesn't need it; (3) offered a cheaper amendment:
+  cap at 40k (~5–6h, early ablations pair at ≤40k, resume later if
+  needed) vs skip-and-let-first-ablation's-control-double. Leaning
+  40k cap; **launch decision pending owner reply** — amend pre-reg
+  before launch if changed.
+- 2026-08-05 16:13Z: owner doubled down: (a) "make something else
+  ready" instead of a standalone baseline; (b) **"overnight is not a
+  thing for you — the machine is just yours, use it non-stop"**
+  (standing norm: GPU never idles; no human-schedule framing).
+  Replied 16:17Z with the revised plan, now adopted: **run the wrap
+  census (#14) on CPU immediately; if wraps are non-trivial, pre-reg
+  a PAIRED run tonight** — arm A recipe-as-is (doubles as the
+  topology control), arm B + unwrap-at-load, both 1×H100 @ 40k
+  (~5.5h each). If census says wraps are rare: negative result for
+  the census post, and arm B becomes the next-best treatment (bring
+  candidates). Own-baseline pre-reg to be marked SUPERSEDED (not
+  edited), replaced by the paired pre-reg citing the census.
+  `run_work_next` touched — chained work session does census +
+  pre-reg during the sealed-panel score.
+- 2026-08-05 16:16Z: owner asked for web research on the wraparound
+  issue's prevalence. **Done 16:20Z, posted in-channel**: cluster of
+  lerobot issues, all wrist_roll — #1255 (encoder wrap at 0–4095,
+  closed no fix), PR #777 (removed the ±180° software wrap guards →
+  mid-range-zero calibration, creating the exposure), #3193
+  (v0.5.1 calibration broken: 'Magnitude exceeds 2047',
+  leader/follower zero mismatch, set_half_turn_homings() root
+  cause), #1296 (same error family), #2924; properly fixed only in
+  release 0.6.0 (Mar 2026, 'fix wrist_roll calibration +
+  use_degrees default'). Exposure window ~Jun 2025→Mar 2026 ≈ the
+  community-dataset recording era; mechanism singles out wrist_roll
+  (continuous-rotation joint), matching stage-1's 4/9 wrist_roll
+  candidates. **Census write-up must cite these; correlate wrap
+  rate with codebase_version if present in repo metadata.**
+- 2026-08-05 16:17Z: owner: do an in-depth review of ALL bijou code
+  to source small low-hanging-fruit/high-impact ideas. **Queued as
+  first-class work-session item**; deliverable = ranked list, posted
+  in-channel + ideas.md.
+- 2026-08-05 16:19Z: owner (meta): spend recurring time reading
+  web/literature for ideas. **Made durable 16:22Z**: standing
+  ~20–30 min slice in most work sessions, added to
+  `fontaine/prompts/work.md` (was bottom-of-ladder filler before);
+  acked in-channel.
+- 2026-08-05 16:11Z: owner: tick prompt should not say "Budget:
+  minutes, not hours" — take as long/little as needed. **Done
+  16:14Z**: `fontaine/prompts/tick.md` edited. Driver's 30-min hard
+  timeout (crash protection + work-session chaining) left as-is;
+  offered to raise it in-channel.
 - 2026-08-05 14:55Z (discussion, no evidence yet): owner worries some
   community datasets may encode joint angles with flipped sign
   conventions (esp. wrist roll / mirrored wrist-cam mounts); floated
@@ -155,17 +209,24 @@ own-baseline arm `fontaine_arb_rcond_100k_1xh100`
   order** — acked in-channel 15:07Z; stage (1) is sanctioned
   follow-on CPU work once the panel eval's per-sample outputs land.
 
-## Queue (depth 2, both pre-registered)
+## Queue (revised 16:17Z per owner steering — see 16:13Z entry)
 
-1. **Own-baseline arm** `fontaine_arb_rcond_100k_1xh100` —
-   [pre-reg](posts/2026-08-05-prereg-own-baseline.md); launcher
-   written; launches tonight gated on smoke.
-2. **Noise-draw ensembling probe** (unconstrained class) —
+1. **Wrap census (#14)** — CPU, immediate, in the chained work
+   session. Output: per-repo per-dim wraparound rates + write-up
+   citing the SO101 calibration mechanism and lerobot#1255.
+2. **Paired run tonight** (pre-reg to be written, gated on census):
+   arm A = recipe as-is @40k 1×H100 (doubles as topology control),
+   arm B = + unwrap-at-load @40k. If census shows wraps are rare,
+   arm B is replaced by the next-best treatment (candidates TBD in
+   the work session). Supersedes the standalone
+   [own-baseline pre-reg](posts/2026-08-05-prereg-own-baseline.md)
+   (to be marked superseded, not edited; launcher header updated to
+   match the new pre-reg).
+3. **Noise-draw ensembling probe** (unconstrained class) —
    [pre-reg](posts/2026-08-05-prereg-noise-draw-ensembling.md);
    needs ~20 eval-side lines (`--sample-draws`); checkpoint
    `bijou_flow_artrunk_h1024_40k_ddp2/step_080000` already mirrored;
-   runs at the next GPU boundary (own-baseline's first save window or
-   its completion).
+   runs at the next GPU boundary (a save window or run completion).
 
 ## Data-blocked / handoff notes for the tick loop
 

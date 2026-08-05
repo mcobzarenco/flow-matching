@@ -10,7 +10,11 @@ and finish it; leave the rest queued. Repo `~/flow-matching`, branch
    finished run → launching the next pre-registered run →
    integrity/infra debt → analysis or screens (charter §3 ladder) →
    literature radar → blog/ledger writing → queue refill (new
-   pre-registrations, charter §4).
+   pre-registrations, charter §4). Standing allocation (owner
+   steering 2026-08-05): beyond the ladder, spend a recurring slice
+   of most work sessions (~20–30 min) reading the web/literature for
+   ideas worth trying — this is sanctioned time, not queue-empty
+   filler; feed findings into `ideas.md`.
 3. Execute per the charter: pre-registration posted before any
    launch; measured claims with instrument + anchors; `check.py`
    before any commit; oracles after math-adjacent changes. If a
