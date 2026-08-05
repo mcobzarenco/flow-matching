@@ -223,7 +223,22 @@ variants, consistency/distillation toward 1–2-step deployment decodes
   (moves every anchor); kevin510 + willnorris/bbox-2 flagged for any
   future curated-v1 exclusion list.
 
-## 16. Few-shot rig-transfer benchmark — `screening` (pre-reg DRAFT posted 2026-08-05), **the north star** (owner 2026-08-05 17:20–17:23Z)
+## 16. Few-shot rig-transfer benchmark — `parked` for execution (owner 2026-08-05 21:43Z), instruments banked; **the north star** (owner 2026-08-05 17:20–17:23Z)
+
+- **OWNER STEER 2026-08-05 21:43Z — execution PARKED, priorities
+  reweighted:** the rig datasets are small/noisy and a 12-ep fixed
+  holdout is high-variance ("really depends on which episodes you
+  choose"); owner will collect a better rig dataset later. **Short
+  term: improve MAE on the comm holdout and/or attribute where the
+  limit comes from** (bigger trunk? bigger image embeddings?
+  video-trained trunk? is the flow expert needed at all vs pure AR?).
+  Empirical anchor from the owner: lower comm-holdout MAE has always
+  translated to good rig fine-tunes; current failure mode is gripper
+  *placement* accuracy (grounding), motion is fine; aux tasks
+  generalize strikingly (4k ft on AR-100k produced sensible subgoals
+  for a fully-OOD instruction — "coiled USB-C cable", "glass pot").
+  The instruments below stay banked: they are corpus-agnostic and
+  re-run on the future dataset in minutes.
 
 - **Pre-reg draft posted 2026-08-05 ~21:2xZ**
   ([post](posts/2026-08-05-prereg-rig-fewshot-benchmark.md)): design

@@ -502,6 +502,24 @@ healthy. Marker armed → bijou deep-dive chains next.
 
 ## Owner steering log (active items)
 
+- **21:43Z (conversational, replied 21:45Z, exchange live): MAJOR
+  REWEIGHT — #16 rig-benchmark execution PARKED, short-term focus =
+  comm-holdout MAE + limit attribution.** Owner: rig datasets
+  small/noisy, 12-ep holdout high-variance; a better rig dataset
+  comes later; "lower MAE on the comm holdout always translated to
+  good fine-tunes on my rig." Attribution questions to attack:
+  bigger trunk / bigger image embeddings / video-trained trunk /
+  is flow even needed vs pure AR — these map to ideas #17 (E4B →
+  Molmo2 → InternVL3.5, V-JEPA 2.1), #11 (grounding; owner's
+  failure anecdote is gripper *placement*, i.e. grounding), #12/#1
+  (flow-vs-AR + ensembling). Aux anecdote banked: 4k ft on AR-100k
+  produced sensible subgoals for a fully-OOD instruction (USB-C
+  cable / terrarium) — the language-generalization north-star
+  behavior exists already. Proposed in-channel: E4B trunk-swap
+  screen as the next pre-reg after box reads (or grounding arms —
+  awaiting owner pick). #16 instruments stay banked
+  (corpus-agnostic, minutes to re-run on the future dataset).
+
 - 18:32–18:36Z (conversational, replied in-channel): **(a)** owner
   interested in idea #2 results (bucketed batching + torch.compile
   prefix) — status given (impl any work session, A/B needs a quiet
@@ -634,10 +652,13 @@ healthy. Marker armed → bijou deep-dive chains next.
 8. **Ideas #16 rig benchmark**: ~~pre-reg draft~~ **POSTED ~21:3xZ**;
    ~~subset materializer + plan builder + leakage certs + wrap
    census~~ **LANDED + CERTIFIED ~21:5xZ** (Amendment 1 on the post;
-   n10/n25/n45 under `~/datasets/rig_fewshot_v0/`). Remaining:
-   launcher gen (CPU, any session), finalization amendment (slots
-   1–2) after box reads, then execution at the first quiet GPU
-   boundary.
+   n10/n25/n45 under `~/datasets/rig_fewshot_v0/`). **EXECUTION
+   PARKED per owner 21:43Z** (instruments banked, corpus-agnostic);
+   launcher gen + finalization deferred until the better rig dataset.
+9. **NEW (owner 21:43Z): comm-MAE limit-attribution front** — next
+   pre-reg after the box reads: E4B trunk-swap screen proposed
+   in-channel (alternative: #11 grounding arms — owner pick
+   pending). The freed 4×H100 at ~02Z goes here, not to rig ft.
 7. **Ideas #18 instrument hardening**: ~~the cheap pass (#18.1)~~
    **DONE ~20:55Z** ([post](posts/2026-08-05-hardening-pass.md);
    oracle bit-exact, check.py green). Remaining GPU-busy CPU items:
