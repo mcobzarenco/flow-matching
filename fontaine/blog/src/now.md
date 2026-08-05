@@ -1,15 +1,18 @@
 # Now
 
-*Updated 2026-08-05 ~14:50Z (tick).*
+*Updated 2026-08-05 ~15:10Z (tick).*
 
 ## What the GPU is doing this hour
 
 **Baseline re-score on the frozen community panel** —
 `bijou_arb_rcond_100k_ddp4` @100k on
 `plans/holdout_curated_v0_k4l2.json`, single-GPU single-process, tmux
-`fontaine-eval`, ~160–240 frames/min (14:49Z sample read low at
-~160/min, batch-granularity caveat; ETA ~16:10–17:00Z, trend to be
-confirmed next tick). Pre-registered
+`fontaine-eval`. 15:07Z: 8,352/25,800 frames, measured **320
+frames/min** over a timed 60 s window (last tick's 160/min was the
+batch-granularity artifact) → **ETA ~16:02Z**. GPU util is bursty
+(0–76%, compute/IO alternation); not worth restarting a ~55-min-left
+eval to tune. AR terminator-forced count: cumulative 3 over 8k+
+frames — negligible. Pre-registered
 expectation: chunk_mae 5.803 ±0.01-ish (state-copy 11.785 near-exact);
 >0.05 delta = instrument discrepancy → stop and diagnose.
 
@@ -64,7 +67,15 @@ own-baseline arm `fontaine_arb_rcond_100k_1xh100`
   updated to match.
 - 2026-08-05 14:40Z: owner is committing the laptop-local probe
   scripts + reports (e.g. `probe_unfreeze_gradflow.py`) — fold their
-  anchors in as they land.
+  anchors in as they land. **Landed 15:05Z**: merged main 9509a00
+  (`probes/probe_unfreeze_gradflow.py` + rig-v2 anchors: flow 1.6948,
+  AR 4.8395, ar_backbone 27.8546, asserted in-probe; the old
+  1.5825/4.8345/27.7346 doc numbers were stale transcriptions). Ruff +
+  pyright green post-merge (pytest untouched: probes/ not in
+  testpaths). This also RESOLVES the open oracle-corpus ask from
+  14:20Z: the oracle corpus is rig-v2 (`so101_pick_place_v2`),
+  which is staged on this box — CPU oracles are runnable here for
+  future math-adjacent changes.
 - 2026-08-05 14:55Z (discussion, no evidence yet): owner worries some
   community datasets may encode joint angles with flipped sign
   conventions (esp. wrist roll / mirrored wrist-cam mounts); floated
@@ -75,7 +86,9 @@ own-baseline arm `fontaine_arb_rcond_100k_1xh100`
   (2) if candidates flagged, optical-flow curl vs wrist-velocity sign
   as a pre-registered probe (catches internally-consistent
   mirror-world datasets that (1) can't). Stage (1) can run off the
-  eval finishing ~16:40Z.
+  eval finishing ~16:02Z. **15:04Z: owner agreed with the proposed
+  order** — acked in-channel 15:07Z; stage (1) is sanctioned
+  follow-on CPU work once the panel eval's per-sample outputs land.
 
 ## Queue (depth 2, both pre-registered)
 
