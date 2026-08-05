@@ -309,11 +309,18 @@ queue, in leverage order (details + file:line in the post):
 6. Parity extension: one padded/batched/2-camera HF comparison +
    `--require-bitwise` eager gate.
 7. Duplicate-content census over curated_v0 (CPU fingerprints).
-8. Leakage checker same-repo-id count/content assert (deep-dive
-   finding 6b): the same-repo-id branch maps episodes identically
-   with no check — a filtered-and-renumbered corpus keeping its repo
-   id gets a false PASS. Cheap assert; do before any derived-corpus
-   training run (ideas #9, #13 repair arm).
+8. ~~Leakage checker same-repo-id count/content assert~~ **DONE
+   2026-08-05 ~21:20Z** (deep-dive finding 6b): the identity branch
+   now VERIFIES the claim — episode-count assert plus per-episode
+   length fingerprint (`meta/episodes.jsonl` v2 or `meta/episodes/`
+   parquet v3; asymmetric metadata is fatal; same-directory shortcut
+   for the literal identity case). Mismatch ⇒ SystemExit demanding
+   `meta/source_provenance.json`, symmetric with the provenance
+   branch's count assert. 4 new tests (179 green); full-corpus
+   identity certification re-run PASSED with the new code
+   (radioactive 5267 / checked 47240, 4.1 s); a mutated-count copy of
+   `therarelab/so100_pick_place_2` fails loud in production. Unblocks
+   derived-corpus training (ideas #9, #13 repair arm).
 
 ## 15. Literature-sourced arms — standing
 

@@ -3,6 +3,26 @@
 Rolling dated notes that don't merit a post. Anomalies land here too
 (the surprise log, charter §3).
 
+## 2026-08-05 — leakage checker's identity branch now verified, not assumed (#18.8, ~21:20Z)
+
+Deep-dive finding 6b closed (the last quick item on the #18 fix
+queue): `bijou.eval.leakage`'s same-repo-id branch mapped training
+episodes onto panel episodes *by assumption* — a
+filtered-and-renumbered corpus that kept its repo id would certify a
+false PASS while radioactive panel content trained. The branch now
+asserts episode-count equality against the panel copy AND compares
+per-episode length fingerprints (reads `meta/episodes.jsonl` v2 or
+`meta/episodes/` parquet v3; metadata present on only one side is
+fatal; the literal same-directory case short-circuits). Any mismatch
+is a SystemExit demanding `meta/source_provenance.json` — symmetric
+with the provenance branch's existing count assert. Evidence: 4 new
+tests (179 green, `check.py` green); the full-corpus identity
+certification re-ran PASSED under the new code (radioactive 5267 /
+checked 47240, 4.1 s wall); a copy of
+`therarelab/so100_pick_place_2` with a mutated episode count fails
+loud with the intended message. Derived-corpus training (ideas #9,
+the #13 repair arm) is no longer blocked on this.
+
 ## 2026-08-05 — the flow-vs-AR gap is a horizon story (~20:20Z)
 
 Queue #4 executed (CPU, both GPU chains running): paired per-frame

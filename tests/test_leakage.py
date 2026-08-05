@@ -19,7 +19,12 @@ HOLDOUT_FRACTION = 0.5
 SPLIT_SEED = 0
 
 
-def _write_dataset(root: Path, repo_id: str, total_episodes: int) -> Path:
+def _write_dataset(
+    root: Path,
+    repo_id: str,
+    total_episodes: int,
+    lengths: list[int] | None = None,
+) -> Path:
     dataset_dir = root / repo_id
     (dataset_dir / "meta").mkdir(parents=True)
     info = {
@@ -32,6 +37,13 @@ def _write_dataset(root: Path, repo_id: str, total_episodes: int) -> Path:
         },
     }
     (dataset_dir / "meta" / "info.json").write_text(json.dumps(info))
+    if lengths is not None:
+        (dataset_dir / "meta" / "episodes.jsonl").write_text(
+            "\n".join(
+                json.dumps({"episode_index": index, "length": length})
+                for index, length in enumerate(lengths)
+            ),
+        )
     return dataset_dir
 
 
@@ -148,6 +160,86 @@ def test_unattributable_dataset_fails(
     )
     assert not report.passed
     assert report.unattributable == ("fontaine/unknown-origin",)
+
+
+def test_same_repo_id_count_mismatch_is_fatal(
+    panel: tuple[Path, Path, Episode],
+    tmp_path: Path,
+) -> None:
+    """Finding 6b: a filtered-and-renumbered corpus keeping its repo id
+    must not map through the identity to a false PASS."""
+    panel_root, plan_path, _ = panel
+    filtered_root = tmp_path / "filtered"
+    _write_dataset(filtered_root, "alice/cubes", 7)
+    with pytest.raises(SystemExit, match="identity mapping is invalid"):
+        check_leakage(
+            plan_path=plan_path,
+            panel_data=(panel_root,),
+            train_data=(filtered_root,),
+            holdout_fraction=HOLDOUT_FRACTION,
+            split_seed=SPLIT_SEED,
+        )
+
+
+def test_same_repo_id_length_mismatch_is_fatal(
+    panel: tuple[Path, Path, Episode],
+    tmp_path: Path,
+) -> None:
+    """Same episode count but different content (per-episode lengths):
+    the identity claim fails the fingerprint check."""
+    panel_root, plan_path, _ = panel
+    panel_lengths = list(range(100, 110))
+    _write_dataset(tmp_path / "panel2", "carol/stack", 10, lengths=panel_lengths)
+    swapped = [*panel_lengths[:5], 999, *panel_lengths[6:]]
+    mutated_root = tmp_path / "mutated"
+    _write_dataset(mutated_root, "carol/stack", 10, lengths=swapped)
+    with pytest.raises(SystemExit, match="per-episode lengths differ"):
+        check_leakage(
+            plan_path=plan_path,
+            panel_data=(panel_root, tmp_path / "panel2"),
+            train_data=(mutated_root,),
+            holdout_fraction=HOLDOUT_FRACTION,
+            split_seed=SPLIT_SEED,
+        )
+
+
+def test_same_repo_id_asymmetric_length_metadata_is_fatal(
+    panel: tuple[Path, Path, Episode],
+    tmp_path: Path,
+) -> None:
+    panel_root, plan_path, _ = panel
+    _write_dataset(tmp_path / "panel2", "carol/stack", 10, lengths=list(range(10)))
+    bare_root = tmp_path / "bare"
+    _write_dataset(bare_root, "carol/stack", 10)
+    with pytest.raises(SystemExit, match="one side only"):
+        check_leakage(
+            plan_path=plan_path,
+            panel_data=(panel_root, tmp_path / "panel2"),
+            train_data=(bare_root,),
+            holdout_fraction=HOLDOUT_FRACTION,
+            split_seed=SPLIT_SEED,
+        )
+
+
+def test_same_repo_id_faithful_copy_passes(
+    panel: tuple[Path, Path, Episode],
+    tmp_path: Path,
+) -> None:
+    """A distinct-directory but bit-faithful mirror of a panel dataset
+    passes the verified identity path (count + lengths both match)."""
+    panel_root, plan_path, _ = panel
+    lengths = list(range(200, 210))
+    _write_dataset(tmp_path / "panel2", "carol/stack", 10, lengths=lengths)
+    mirror_root = tmp_path / "mirror"
+    _write_dataset(mirror_root, "carol/stack", 10, lengths=lengths)
+    report = check_leakage(
+        plan_path=plan_path,
+        panel_data=(panel_root, tmp_path / "panel2"),
+        train_data=(mirror_root,),
+        holdout_fraction=HOLDOUT_FRACTION,
+        split_seed=SPLIT_SEED,
+    )
+    assert report.passed
 
 
 def test_plan_outside_recomputed_holdout_is_fatal(

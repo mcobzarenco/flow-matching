@@ -23,7 +23,13 @@ What is checked, conservatively:
    - a dataset with a ``meta/source_provenance.json`` (the derived-
      corpus contract, below) maps through its recorded provenance;
    - a dataset whose repo id exists in the panel corpus maps
-     identically (same repo id = same episodes by construction);
+     identically — and the identity claim is VERIFIED, not assumed:
+     episode counts must match and, when either side ships per-episode
+     length metadata (``meta/episodes.jsonl`` or ``meta/episodes/``
+     parquet), the per-episode length sequences must be identical. A
+     filtered-and-renumbered corpus that kept its repo id would
+     otherwise map through the identity to a false PASS while
+     radioactive panel content trains (deep-dive finding 6b);
    - a dataset with neither is an ERROR — unattributable episodes
      cannot be certified (fail loud, never assume disjoint).
 
@@ -149,9 +155,79 @@ def _provenance_episodes(path: Path, repo_id: str) -> list[Episode]:
     ]
 
 
+def _episode_lengths(dataset_dir: Path) -> dict[int, int] | None:
+    """Per-episode frame lengths from a dataset's metadata, or None when
+    the dataset ships neither ``meta/episodes.jsonl`` (v2 layout) nor a
+    ``meta/episodes/`` parquet tree (v3 layout)."""
+    jsonl_path = dataset_dir / "meta" / "episodes.jsonl"
+    if jsonl_path.exists():
+        lengths: dict[int, int] = {}
+        for line in jsonl_path.read_text().splitlines():
+            if not line.strip():
+                continue
+            record = json.loads(line)
+            lengths[int(record["episode_index"])] = int(record["length"])
+        return lengths
+    parquet_dir = dataset_dir / "meta" / "episodes"
+    if parquet_dir.is_dir():
+        import pyarrow.parquet as pq
+
+        lengths = {}
+        for path in sorted(parquet_dir.rglob("*.parquet")):
+            table = pq.read_table(path, columns=["episode_index", "length"])
+            for index, length in zip(
+                table.column("episode_index").to_pylist(),
+                table.column("length").to_pylist(),
+                strict=True,
+            ):
+                lengths[int(index)] = int(length)
+        return lengths
+    return None
+
+
+def _assert_identity(dataset_dir: Path, panel_dir: Path, repo_id: str) -> None:
+    """Verify a same-repo-id training dataset really is the panel dataset
+    (finding 6b: the identity claim was previously unchecked — a
+    filtered/renumbered corpus keeping its repo id got a false PASS)."""
+    if dataset_dir.resolve() == panel_dir.resolve():
+        return  # literally the same directory
+    train_info = DatasetInfo.from_json(dataset_dir / "meta" / "info.json")
+    panel_info = DatasetInfo.from_json(panel_dir / "meta" / "info.json")
+    if train_info.total_episodes != panel_info.total_episodes:
+        raise SystemExit(
+            f"{repo_id}: training copy declares {train_info.total_episodes} "
+            f"episodes, panel corpus has {panel_info.total_episodes} — the "
+            f"identity mapping is invalid; a filtered/renumbered corpus must "
+            f"ship meta/{PROVENANCE_FILE}",
+        )
+    train_lengths = _episode_lengths(dataset_dir)
+    panel_lengths = _episode_lengths(panel_dir)
+    if train_lengths is None and panel_lengths is None:
+        return  # no length metadata on either side; count check stands alone
+    if train_lengths is None or panel_lengths is None:
+        missing = dataset_dir if train_lengths is None else panel_dir
+        raise SystemExit(
+            f"{repo_id}: episode-length metadata present on one side only "
+            f"(missing under {missing}/meta) — identity cannot be verified; "
+            f"mirror the metadata or ship meta/{PROVENANCE_FILE}",
+        )
+    if train_lengths != panel_lengths:
+        differing = sorted(
+            index
+            for index in train_lengths.keys() | panel_lengths.keys()
+            if train_lengths.get(index) != panel_lengths.get(index)
+        )
+        raise SystemExit(
+            f"{repo_id}: per-episode lengths differ from the panel corpus at "
+            f"{len(differing)} episode(s) (e.g. {differing[:5]}) — the "
+            f"identity mapping is invalid; a re-encoded/renumbered corpus "
+            f"must ship meta/{PROVENANCE_FILE}",
+        )
+
+
 def trainable_episodes(
     train_data: tuple[Path, ...],
-    panel_repo_counts: dict[str, int],
+    panel_datasets: dict[str, Path],
     holdout_fraction: float,
     split_seed: int,
 ) -> tuple[frozenset[Episode], tuple[str, ...]]:
@@ -188,7 +264,8 @@ def trainable_episodes(
                     f"info.json declares {info.total_episodes}",
                 )
             checked.update(mapped[index] for index in trained_indices)
-        elif repo_id in panel_repo_counts:
+        elif repo_id in panel_datasets:
+            _assert_identity(dataset_dir, panel_datasets[repo_id], repo_id)
             checked.update(
                 Episode(repo_id=repo_id, episode_index=index)
                 for index in trained_indices
@@ -217,13 +294,12 @@ def check_leakage(
             f"the recomputed holdout side (e.g. {sample}) — the plan and "
             "the panel corpus disagree; do not train, diagnose first",
         )
-    panel_repo_counts = {
-        repo_id_of(d): DatasetInfo.from_json(d / "meta" / "info.json").total_episodes
-        for d in discover_datasets(panel_data, exclude=())
+    panel_datasets = {
+        repo_id_of(d): d for d in discover_datasets(panel_data, exclude=())
     }
     checked, unattributable = trainable_episodes(
         train_data,
-        panel_repo_counts,
+        panel_datasets,
         holdout_fraction,
         split_seed,
     )
