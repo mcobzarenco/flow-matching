@@ -8,7 +8,7 @@
 # thinking. The agent may refine this; keep it a short shell script.
 set -euo pipefail
 
-MODE="${1:?usage: fontaine-session.sh {tick|work|bootstrap}}"
+MODE="${1:?usage: fontaine-session.sh tick|work|bootstrap}"
 REPO="${FONTAINE_REPO:-$HOME/flow-matching}"
 # systemd user units start with a minimal PATH; claude + uv live in
 # ~/.local/bin.
