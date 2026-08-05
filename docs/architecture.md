@@ -1096,7 +1096,8 @@ format 5, aux template v4 — §1/§2.3/§2.4). **Project best**; the
 checkpoint is on the hub at
 `mcobzarenco/bijou-checkpoints/bijou_arb_rcond_100k_ddp4/step_100000`
 (backbone + expert + prompt + optimizer), reports in
-`reports/eval_rcond_100k_holdout.{html,json,log}`.
+`reports/eval__bijou_arb_rcond_100k_ddp4__step_100000__*` (naming
+rule: docs/working-together.md § Artifacts).
 
 **Setup.** Code `68c762b` (eval-table split `d51a3b5` applied from 20k).
 Corpus `community_curated_v0` @ `--fps 30 --camera-counts 1 2` ⇒ 878 of
@@ -1138,8 +1139,9 @@ uv run torchrun --standalone --nproc-per-node=4 -m bijou.train \
 
 and the eval that produced the table below (4-GPU sharded, 22m50s;
 the earlier single-GPU 1024-frame read lives in
-`reports/eval_rcond_100k_holdout.*` — kept because in-run probes were
-compared against it, superseded for decisions):
+`reports/eval__bijou_arb_rcond_100k_ddp4__step_100000__1024.*` — kept
+because in-run probes were compared against it, superseded for
+decisions):
 
 ```sh
 uv run torchrun --standalone --nproc-per-node=4 -m bijou.eval \
@@ -1149,8 +1151,8 @@ uv run torchrun --standalone --nproc-per-node=4 -m bijou.eval \
     --checkpoint outputs/train/bijou_arb_rcond_100k_ddp4/step_100000 \
     --num-samples 16384 --batch-size 24 --num-workers 8 --seed 0 \
     --report-samples 32 \
-    --output-json reports/eval_rcond_100k_holdout_16k.json \
-    --report reports/eval_rcond_100k_holdout_16k.html
+    --output-json reports/eval__bijou_arb_rcond_100k_ddp4__step_100000__16384.json \
+    --report reports/eval__bijou_arb_rcond_100k_ddp4__step_100000__16384.html
 ```
 
 **Interruption.** Rank-2 CUDA OOM at step 20,160 (77.5 of 79.2 GiB, a

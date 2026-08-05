@@ -160,4 +160,14 @@ inherit the scar tissue without the scars.
 - Models record what they trained with (tokenizer ref, per-dataset
   stats); artifacts carry their own fit/fidelity reports.
 - Uploads before deletions. `optimizer.pt` is kept for checkpoints that
-  seed future runs and pruned for the rest.
+seed future runs and pruned for the rest.
+- **Eval reports are named after the checkpoint they scored**:
+`reports/eval__<run_name>__step_<N>__<variant>.{html,json,log}` —
+run-dir name and zero-padded step verbatim from the checkpoint path,
+`<variant>` for the eval config (frame count, `panel_<id>`,
+`heun30`, …). The report records its provenance internally, but the
+filename is what survives an `ls`, an scp, and a six-week-old
+download folder. (Added 2026-08-05 after `eval_flow40k_1024.html`
+needed the session log to disambiguate which flow-40k it scored;
+legacy `report_*`/short-named files keep their names — the ledger
+prose cites them, and renaming history would detach those citations.)
