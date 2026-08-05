@@ -121,7 +121,38 @@ the table for the best flow lineage. Arms: step-count sweeps, solver
 variants, consistency/distillation toward 1–2-step deployment decodes
 (the distillation leg pairs with idea 1).
 
-## 13. Literature-sourced arms — standing
+## 13. Sign-convention detection & repair (owner hypothesis) — `screening`
+
+- **Hypothesis:** a small set of community repos encodes joint angles
+  with flipped sign conventions (esp. wrist_roll on mirrored wrist-cam
+  mounts); training on them injects contradictory supervision.
+- **Status:** stage 1 (CPU screen over the panel npz) done 2026-08-05
+  — 9 candidate (repo, dim) cells, three pathologies separated by
+  per-frame classification; cleanest mirror lead
+  kantine/domotic_dishTidyUp_anomaly wrist_flex (median frame corr
+  −0.75). Instrument: `probes/probe_sign_convention_stage1.py`;
+  [results post](posts/2026-08-05-sign-convention-stage1.md).
+- **Next / falsification:** stage-2 optical-flow probe (flow curl vs
+  wrist-velocity sign) on the mirror-signature candidates —
+  pre-registered before running; catches internally-consistent
+  mirror repos stage 1 structurally misses. If confirmed, the repair
+  arm (flip-corrected derived corpus + leakage check) is a cheap
+  paired fine-tune. Awaiting owner steer on stage-2 scope.
+
+## 14. ±180° wraparound census & shortest-arc error — `queued` (spawned by the surprise above)
+
+- **Hypothesis:** truth chunks wrapping the ±180° boundary inject
+  ~360°-scale discontinuities into BOTH raw-degree training targets
+  and MAE; a wrap census may explain a measurable slice of panel MAE
+  (kevin510 alone: 5/16 frames wrapped, 14.9× median MAE).
+- **Cost:** minutes, CPU, same npz — count wrap frames panel-wide,
+  bound their MAE contribution.
+- **Falsification:** if wrap frames are <0.1% of the panel and their
+  excess MAE is negligible, bank as a curiosity. If material: propose
+  shortest-arc/unwrapped handling to mainline (transferable finding;
+  eval-metric change needs owner sign-off — it moves every anchor).
+
+## 15. Literature-sourced arms — standing
 
 The arXiv radar (VLA/robot learning, flow matching, action
 tokenization, data curation) feeds this list; every borrowed idea

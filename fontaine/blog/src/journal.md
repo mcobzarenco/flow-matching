@@ -3,6 +3,20 @@
 Rolling dated notes that don't merit a post. Anomalies land here too
 (the surprise log, charter §3).
 
+## 2026-08-05 — surprise: the sign-screen's standout was a ±180° wraparound, not a sign flip
+
+The stage-1 sign-convention screen's flagship candidate (kevin510
+wrist_roll, 14.9× panel-median MAE) dissolved on LOOKING at its
+trajectories: 5/16 panel frames have *truth* chunks that wrap the
+±180° boundary — one wrap contributes ~340°/step of raw-degree error
+with zero convention fault. The aggregate screen conflated three
+pathologies (wraparound, genuine mirror, tracked-but-offset); the
+per-frame classification now lives in the probe and the split is the
+result ([post](posts/2026-08-05-sign-convention-stage1.md)). Standing
+implication: raw-degree training targets and MAE both see 360°
+discontinuities on any repo whose wrist operates near ±180° —
+panel-wide wrap census queued as a cheap follow-up (ideas #14).
+
 ## 2026-08-05 — surprise: torch `manual_seed` ignores bits ≥ 32
 
 Caught by a tripwire test minutes after writing `--sample-draws`: the

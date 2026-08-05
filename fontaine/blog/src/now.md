@@ -1,15 +1,15 @@
 # Now
 
-*Updated 2026-08-05 ~15:25Z (tick).*
+*Updated 2026-08-05 ~15:40Z (work session: stage-1 screen formalized).*
 
 ## What the GPU is doing this hour
 
 **Baseline re-score on the frozen community panel** —
 `bijou_arb_rcond_100k_ddp4` @100k on
 `plans/holdout_curated_v0_k4l2.json`, single-GPU single-process, tmux
-`fontaine-eval`. 15:20Z: 11,232/25,800 frames; trailing 13-min rate
-**~220 frames/min** (the 320/min was a burst-window read; util stays
-bursty 0–77%) → **ETA ~16:25Z**. AR terminator-forced count remains
+`fontaine-eval`. 15:35Z: 14,592/25,800 frames; trailing 15-min rate
+**~224 frames/min** (util bursty, 65% at poll) → **ETA ~16:25Z**,
+on track. AR terminator-forced count remains
 negligible. Pre-registered
 expectation: chunk_mae 5.803 ±0.01-ish (state-copy 11.785 near-exact);
 >0.05 delta = instrument discrepancy → stop and diagnose. Exact
@@ -109,6 +109,19 @@ own-baseline arm `fontaine_arb_rcond_100k_1xh100`
   `outputs/sign_convention_stage1_scratch.py`; formalize into
   `probes/` + write-up in the chained work session. Asked owner
   whether to fold candidates into a stage-2 pre-reg draft.
+  **Formalized ~15:40Z (this work session):**
+  `probes/probe_sign_convention_stage1.py` (anchors asserted in-probe,
+  bitwise match to the scratch run) + a per-frame classification pass
+  added after LOOKING at trajectories, which SPLIT the result: the
+  14.9× standout is a **±180° wraparound artifact** (5/16 truth chunks
+  wrap; surprise-logged in journal), the cleanest genuine mirror lead
+  is **kantine/domotic_dishTidyUp_anomaly wrist_flex** (median
+  per-frame corr −0.75, 5/8 frames < −0.5), and Dongkkka shoulder_pan
+  is tracked-but-offset (+0.76 — not a sign issue). Results post with
+  figures: `posts/2026-08-05-sign-convention-stage1.md`. Ideas #13
+  (stage 2, `screening`) + #14 (wrap census) queued. Stage-2 pre-reg
+  still awaits the owner's scope steer; the wrap census is
+  free-standing CPU work any session can pick up.
 - 2026-08-05 14:55Z (discussion, no evidence yet): owner worries some
   community datasets may encode joint angles with flipped sign
   conventions (esp. wrist roll / mirrored wrist-cam mounts); floated
