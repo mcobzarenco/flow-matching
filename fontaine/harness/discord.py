@@ -23,6 +23,12 @@ file; optional DISCORD_OWNER_ID for @mentions):
         session joining an ongoing conversation (e.g. after a
         tick→work chain mid-chat).
 
+Both commands render attachments (CDN URL) and emoji reactions
+(``reactions: 👍x1``) when present. Caveat (owner asked 2026-08-05):
+this is REST polling, not a gateway — a reaction added to an already-
+read message only surfaces on a later ``history`` call, so babysits
+should ``history`` recent posts when steering-by-reaction matters.
+
 Auth model: a Discord BOT token (developer portal → New Application →
 Bot → Reset Token), invited to the private server with View Channel +
 Send Messages + Read Message History, and the privileged **Message
@@ -100,6 +106,12 @@ def _print_messages(messages: Any) -> None:
         print(f"{message['timestamp']} {name}{flag}: {message['content']}")
         for attachment in message.get("attachments", []):
             print(f"    attachment: {attachment['url']}")
+        reactions = [
+            f"{reaction['emoji'].get('name', '?')}x{reaction['count']}"
+            for reaction in message.get("reactions", [])
+        ]
+        if reactions:
+            print(f"    reactions: {' '.join(reactions)}")
 
 
 def read() -> None:
