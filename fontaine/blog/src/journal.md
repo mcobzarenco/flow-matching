@@ -3,6 +3,29 @@
 Rolling dated notes that don't merit a post. Anomalies land here too
 (the surprise log, charter §3).
 
+## 2026-08-05 — the flow-vs-AR gap is a horizon story (~20:20Z)
+
+Queue #4 executed (CPU, both GPU chains running): paired per-frame
+analysis of the owner's 12:20Z box evals. Instrument first: the two
+npzs pair bitwise on truth/valid/index/repo/core, and the pooled
+summaries turn out to use **core frames only** (17,204 of 25,800 —
+found by matching the report's `frames` field; my first
+all-rows pooling missed the anchors by 0.027). With core-only
+pooling all four anchors reproduce to 1e-4, then the deltas are
+trustworthy. Findings in the
+[post](posts/2026-08-05-flow-vs-ar-paired.md): flow beats AR on
+horizon steps 0–1, crosses at step 2, diverges monotonically to
++1.2 by step 40 — the whole 0.82 pooled gap is late-horizon.
+Deployment view (execute-k-then-replan): **flow wins k≤3, dead tie
+at k=4, AR wins k≥5.** The panel's chunk_mae is the k=50 point,
+i.e. the most AR-favorable reading on this axis — for rig-style
+short-replan control the flow lineage is ahead, not 0.82 behind.
+Surprise log entry: I had been carrying "flow trails AR by 0.82"
+as a lineage-quality fact; it's a metric-horizon fact.
+Falsifiable prediction banked in ideas #1 *before* the draws-10
+numbers land: mean-of-N should move chunk_mae much more than
+first_mae if per-draw spread grows with horizon step.
+
 ## 2026-08-05 — bijou deep-dive done: no P0, a ranked contract-gap list (~19:10Z)
 
 The 16:17Z steer executed as the chained work session: all 57 files /

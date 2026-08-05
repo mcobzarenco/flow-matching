@@ -1,6 +1,27 @@
 # Now
 
-*Updated 2026-08-05 ~20:00Z — work session: **TRUNK SURVEY DONE**
+*Updated 2026-08-05 ~20:25Z — work session: **FLOW-VS-AR PAIRED
+ANALYSIS DONE** (queue #4, CPU while both GPU chains ran).
+[Post](posts/2026-08-05-flow-vs-ar-paired.md); script
+`fontaine/scripts/flow_vs_ar_paired.py`; all four pooled anchors
+reproduced to 1e-4 first (pooling = **core frames only**, 17,204 —
+the report's `frames` field gave it away). **Headline: the 0.82
+pooled gap is a horizon story** — flow beats AR at horizon steps
+0–1, crosses at step 2, diverges monotonically to +1.2 by step 40.
+Deployment view (execute-k-then-replan): **flow wins k≤3, tie at
+k=4, AR wins k≥5** — chunk_mae is the k=50 (most AR-favorable)
+point, so for short-replan rig control flow-80k is *ahead* today.
+Cuts: flow win rate 36.5% of frames; deficit grows with motion
+(+0.59 still → +0.92 top quartile); 57/366 repos flow-favorable,
+per-repo spread ±2–4 dwarfs the mean. Prediction banked in ideas #1
+before the draws numbers land: ensembling should move chunk_mae ≫
+first_mae; scoring note in #12 (score solver arms per-step); metric
+note in #16 (rig pre-reg must fix k). Babysits en route: box
+healthy ×4 @9.5–10.2k (probe convergence — B's early lead is gone:
+A-s0 11.77@9.5k / s2 11.86@8.5k / B 11.83@10k; s1 12.64@9k
+trending down, watch vs the <12@10k gate; B aux-off total 3.99–4.08
+@10.2k still below every control's action loss); draws run 2 at
+~2.1k/25.8k frames, util sampling 59–95% healthy.*
 (owner mandate 17:50–18:01Z; resumed from the 429-killed draft).
 Six parallel web deep-reads + one follow-up, per the owner's method
 (arXiv paper + fetched `config.json` per candidate, post-cutoff
@@ -346,8 +367,9 @@ healthy. Marker armed → bijou deep-dive chains next.
 3. ~~Noise-draw chain launch~~ **RUNNING** (launched 18:25Z; see
    local-GPU section). Remaining: unimodality probe before the
    results post.
-4. **Paired flow-vs-AR per-frame analysis** (CPU, npzs in local
-   `reports/`) — results post; any session.
+4. ~~Paired flow-vs-AR per-frame analysis~~ **DONE ~20:25Z** —
+   [post](posts/2026-08-05-flow-vs-ar-paired.md); horizon-crossover
+   finding; predictions banked into ideas #1/#12/#16.
 5. **Owner-steered reviews** (chained work sessions, in order): (a)
    ~~rules/prompts full pass~~ **DONE ~19:00Z** (charter v1.1), (b)
    ~~bijou deep-dive~~ **DONE ~19:10Z**
@@ -356,9 +378,10 @@ healthy. Marker armed → bijou deep-dive chains next.
    ([post](posts/2026-08-05-trunk-survey.md); ranked queue in ideas
    #17: E4B → Molmo2-4B → InternVL3.5-4B → V-JEPA 2.1 arm;
    Qwen3-VL-4B reserve; the E4B screen pre-reg is the natural next
-   queue-refill item once box reads land). Then: flow-vs-AR
-   per-frame analysis (queue #4), idea #2 implementation, ideas #18
-   hardening pass.
+   queue-refill item once box reads land), (d) ~~flow-vs-AR
+   per-frame analysis~~ **DONE ~20:25Z** (queue #4,
+   [post](posts/2026-08-05-flow-vs-ar-paired.md)). Then: idea #2
+   implementation, ideas #18 cheap hardening pass.
 6. Stage-2 sign-convention pre-reg draft (mirror trio) — backlog.
 7. **Ideas #18 instrument hardening** (from the deep-dive): the
    cheap pass (prompt-hash kwarg, bounds/n_valid asserts, report
@@ -407,6 +430,7 @@ with the noise-draw chain (explore-side, ~9 h queued — pacing check
 19:52Z says the draws-10 runs are ~5 h each, so the chain is
 longer/richer than planned; still 94–99% util). Literature slice:
 **~25 min spent ~19:35–20:00Z (trunk survey)** after four sessions
-at 0 h — allocation back on cadence. CPU-side: this session was
-all-CPU web research while both GPU chains ran — the
+at 0 h — allocation back on cadence. CPU-side: two consecutive
+all-CPU sessions while both GPU chains ran (trunk survey
+~19:35–20:00Z; flow-vs-AR paired analysis ~20:05–20:30Z) — the
 no-idle-pauses rule in action.

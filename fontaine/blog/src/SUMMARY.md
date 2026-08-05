@@ -15,3 +15,4 @@
   - [2026-08-05 — Amendment: sealed plan v2](posts/2026-08-05-sealed-plan-v2.md)
   - [2026-08-05 — Bijou code deep-dive: ranked findings](posts/2026-08-05-bijou-deep-dive.md)
   - [2026-08-05 — Trunk survey: open-weights VLM candidates](posts/2026-08-05-trunk-survey.md)
+  - [2026-08-05 — Flow vs AR paired per-frame: a horizon story](posts/2026-08-05-flow-vs-ar-paired.md)

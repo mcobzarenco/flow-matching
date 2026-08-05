@@ -28,6 +28,14 @@ information × cheapness. Status tags: `queued` / `screening` /
   `bijou.eval --sample-draws N` (a16e65a) — verify its semantics
   (independent draws? mean-of-N in action space?) before writing any
   code; the pre-reg's eval-side work may reduce to a flag.
+- **Paired-analysis prediction (2026-08-05 ~20:15Z, before the
+  draws-10 numbers land):** flow's deficit vs AR is a monotone
+  horizon-divergence (crossover at step 2; +1.2 by step 40 —
+  [post](posts/2026-08-05-flow-vs-ar-paired.md)). If per-draw
+  spread grows along the horizon, mean-of-N should close the
+  *late-horizon* deficit preferentially: chunk_mae moves a lot,
+  first_mae barely. Score the draws-10 run per-step, not just
+  pooled.
 
 ## 2. Throughput: bucketed batching + torch.compile on the frozen prefix — `queued`, natural first
 
@@ -144,6 +152,12 @@ the table for the best flow lineage. Arms: step-count sweeps, solver
 variants, consistency/distillation toward 1–2-step deployment decodes
 (the distillation leg pairs with idea 1).
 
+- **Scoring note (2026-08-05 paired analysis):** flow's deficit is
+  ~all late-horizon (crossover step 2, monotone to +1.2 @40 —
+  [post](posts/2026-08-05-flow-vs-ar-paired.md)). Score solver arms
+  per-step: a solver fixing only late-horizon costs nothing at
+  first_mae; pooled-only scoring would misread it.
+
 ## 13. Sign-convention detection & repair (owner hypothesis) — `screening`
 
 - **Hypothesis:** a small set of community repos encodes joint angles
@@ -202,6 +216,11 @@ variants, consistency/distillation toward 1–2-step deployment decodes
   (not the ft protocol) is the suspect.
 - Reweights the whole list: rig-transfer relevance now outranks
   community-panel micro-optimization at equal cost.
+- **Metric note (2026-08-05 paired analysis):** the pre-reg must fix
+  the deployment replan interval k and quote first-k pooled MAE next
+  to chunk_mae — the flow-vs-AR ranking *flips* at k≤3 vs k≥5
+  ([post](posts/2026-08-05-flow-vs-ar-paired.md)); chunk_mae alone
+  is the most AR-favorable point on that axis.
 
 ## 17. New trunks / new architectures — standing owner mandate (2026-08-05 17:24Z)
 
