@@ -91,6 +91,20 @@ def sample_noise(seed: int, shape: tuple[int, ...]) -> Tensor:
     return torch.randn(shape, generator=generator, dtype=torch.float32)
 
 
+# Draw d of item i seeds sample_noise(seed + i + d·STRIDE): draw 0 is
+# byte-identical to the historical single-draw path (paired
+# comparisons against every prior flow eval stay valid), and the
+# stride sits far above any frame index (~2e7 on curated-v0), so no
+# draw of one item can reuse another item's draw-0 noise.
+DRAW_SEED_STRIDE = 2**32
+
+
+def draw_noise(seed: int, index: int, draw: int, shape: tuple[int, ...]) -> Tensor:
+    """Per-(item, draw) flow noise — deterministic, batch-composition-
+    independent, draw 0 identical to the single-draw convention."""
+    return sample_noise(seed + index + draw * DRAW_SEED_STRIDE, shape)
+
+
 class BijouPolicy:
     """A bijou training checkpoint. Normalization is per dataset with the
     stats attached to each item (identical to training; works on held-out
@@ -104,6 +118,7 @@ class BijouPolicy:
         seed: int,
         sample_steps: int = 10,
         method: SamplingMethod = SamplingMethod.HEUN,
+        sample_draws: int = 1,
         expert_dtype: torch.dtype = torch.float32,
         generate: tuple[AuxField, ...] = (),
         condition_override: dict[str, str] | None = None,
@@ -111,10 +126,16 @@ class BijouPolicy:
         offload_ple: bool = False,
     ) -> None:
         self.name = f"bijou@{checkpoint.name.removeprefix('step_').lstrip('0') or '0'}"
+        if sample_draws > 1:
+            # The name carries the draw count: an ensembled number must
+            # never be mistakable for a deployment-class read in a
+            # report or ledger row (charter §2 budget classes).
+            self.name += f"_draws{sample_draws}"
         self.device = device
         self.seed = seed
         self.sample_steps = sample_steps
         self.method = method
+        self.sample_draws = sample_draws
         self.generate = generate
         self.model: BijouModel
         self.info: CheckpointInfo
@@ -130,6 +151,14 @@ class BijouPolicy:
                 "--generate is ar_backbone-only (the request rides its "
                 "prompt); this checkpoint's decoder is "
                 f"{type(self.model.decoder).__name__}",
+            )
+        if sample_draws < 1:
+            raise SystemExit(f"--sample-draws must be >= 1, got {sample_draws}")
+        if sample_draws > 1 and not isinstance(self.model.decoder, FlowDecoder):
+            raise SystemExit(
+                "--sample-draws > 1 averages flow noise draws; this "
+                f"checkpoint's decoder is {type(self.model.decoder).__name__} "
+                "(greedy AR decode has no noise to draw)",
             )
         # Counterfactual conditioning (the Q3 diagnostic): force given
         # fields to a value regardless of the items' hindsight labels.
@@ -222,11 +251,37 @@ class BijouPolicy:
         ChunkPolicy protocol keeps consuming ``predict``."""
         items = self.apply_overrides(items)
         batch = self.collator(items).to(self.device)
+        decoder = self.model.decoder
+        if isinstance(decoder, FlowDecoder) and self.sample_draws > 1:
+            # Unconstrained-class noise-draw ensembling (charter §8
+            # item 1): encode the prefix ONCE, integrate one chunk per
+            # draw against the shared memory, average in raw degrees
+            # (unnormalization is affine, so the mean commutes with it).
+            memory = self.model.encode(batch.encoder_inputs, with_grad=False)
+            shape = (batch.actions.shape[1], batch.actions.shape[2])
+            stacked = torch.stack(
+                [
+                    decoder.predict_chunk(
+                        memory,
+                        batch,
+                        noise=torch.stack(
+                            [
+                                draw_noise(self.seed, index, draw, shape)
+                                for index in indices
+                            ],
+                        ).to(self.device),
+                        num_steps=self.sample_steps,
+                        method=self.method,
+                    ).actions
+                    for draw in range(self.sample_draws)
+                ],
+            )
+            return [row.cpu() for row in stacked.mean(dim=0)], None
         # Flow integrates from per-item seeded noise (deterministic and
         # batch-composition-independent); AR decodes greedily and takes
         # none.
         noise: Tensor | None = None
-        if isinstance(self.model.decoder, FlowDecoder):
+        if isinstance(decoder, FlowDecoder):
             chunk = batch.actions.shape[1]
             noise = torch.stack(
                 [

@@ -314,6 +314,16 @@ def parse_args() -> argparse.Namespace:
         default=SamplingMethod.HEUN.value,
     )
     parser.add_argument(
+        "--sample-draws",
+        type=int,
+        default=1,
+        help="flow-only: average this many noise draws per frame "
+        "(prefix encoded once; draw 0 reproduces the single-draw "
+        "numbers exactly). >1 is UNCONSTRAINED-class inference — the "
+        "policy name gains a _drawsN suffix so ensembled numbers can "
+        "never pass as deployment reads",
+    )
+    parser.add_argument(
         "--generate",
         nargs="*",
         choices=[f.value for f in AuxField],
@@ -551,6 +561,7 @@ def main() -> int:
             seed=args.seed,
             sample_steps=args.sample_steps,
             method=SamplingMethod(args.sample_method),
+            sample_draws=args.sample_draws,
             generate=tuple(AuxField(f) for f in (args.generate or ())),
             condition_override=overrides,
             # Subgoal conditioning renders only when explicitly forced
