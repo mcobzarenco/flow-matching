@@ -596,3 +596,37 @@ def flow_matching_loss(
 
     velocity = decoder(memory, state, noisy_actions, tau)
     return (velocity.float() - target.float()).pow(2).mean()
+
+
+def flow_matching_loss_sums(
+    decoder: FlowDecoder,
+    memory: ObservationMemory,
+    batch: CollatedBatch[Any],
+) -> tuple[Tensor, Tensor]:
+    """Sum-form objective for chunked backward: (squared-error SUM with
+    graph, element count). Dividing by the FULL-batch element count and
+    summing over chunks reproduces :func:`flow_matching_loss`'s mean
+    over ``[B, chunk, action_dim]`` exactly (up to fp reduction order)
+    — every element weighs equally, so the count is just numel. Noise
+    and tau draw per CALL: a chunked step consumes the RNG stream in
+    chunk-shaped draws (a different, equally-distributed realization
+    than one full-batch draw — same law, not the same bytes)."""
+    actions = (
+        batch.actions - batch.action_stats.mean[:, None, :]
+    ) / batch.action_stats.std[:, None, :]
+    state = (batch.state - batch.state_stats.mean) / batch.state_stats.std
+
+    noise = torch.randn_like(actions)
+    tau = (
+        torch.distributions.Beta(1.5, 1.0)
+        .sample((actions.shape[0],))
+        .to(actions.device)
+    )
+    tau = tau * 0.999 + 0.001
+    tau_ = tau[:, None, None]
+    noisy_actions = tau_ * noise + (1 - tau_) * actions
+    target = noise - actions
+
+    velocity = decoder(memory, state, noisy_actions, tau)
+    squared = (velocity.float() - target.float()).pow(2)
+    return squared.sum(), torch.tensor(squared.numel(), device=squared.device)

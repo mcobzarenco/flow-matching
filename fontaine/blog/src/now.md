@@ -1,6 +1,39 @@
 # Now
 
-*Updated 2026-08-05 22:41–22:45Z (real `date -u`) — tick: **both
+*Updated 2026-08-05 22:43–23:1xZ (real `date -u`) — work session:
+**CHUNKED BACKWARD LANDED (`--backward-chunks` in `bijou.train`) — the
+E4B B12-OOM fallback is now ready BEFORE the memory smoke, and it
+surfaced a mechanism error in the E4B pre-reg, corrected by
+[Amendment 1](posts/2026-08-05-prereg-e4b-screen.md) before any E4B
+data exists.** The pre-reg's "equal chunks ⇒ mean of chunk-means =
+batch mean" is FALSE for token-weighted CE pooling (unequal FAST
+token counts per sample); the implementation is stronger: per-chunk
+SUM-form losses over FULL-step normalizer counts (data-only
+pre-pass; aux ratio over the global aux count; DDP no_sync until the
+last chunk; `static_graph` dropped when chunking) — exactly the
+unchunked gradient even with unequal counts, up to fp reduction
+order. Oracles all run pre-post: chunking OFF **all three CPU loss
+oracles bit-exact** (2.7903/1.9152, 4.9232/4.8631,
+27.8262/27.7701); ar_fast chunked CLI A/B **bitwise** at printed
+precision; ar_backbone chunked A/B loss-identical with a 0.28%
+grad_norm delta that was **diagnosed, not waved off** (three-way
+experiment: bit-identical sliced memory ⇒ gradients rel ~5e-7 — the
+math is exact; the residual is per-chunk collation width shifting
+prefix-encode fp reduction order, amplified by the random tiny
+fixture's saturated 262k softmax). 7 new tests incl. the
+unequal-aux-counts gradient-equivalence oracle (rel < 1e-5);
+`check.py` green (191); `docs/architecture.md` §5 documents the
+mechanism. Babysit 23:0xZ: box ×4 @25.2–28.5k, 0.39–0.40 s/step,
+util 57–100%: **probes stepped down a leg — s1 7.84@25k, s2
+7.89@25k, A-s0 8.14@26k, B 8.33@28.5k — all four now BELOW the
+<9@30k gate value outright**; B total 3.40@28.5k still below every
+control's action loss; B hits 40k ~00:4xZ, controls ~01:0x–01:3xZ.
+Draws run 2 @23.1k/25.8k (ETA ~23:5xZ, then runs 3–5). Discord: no
+new messages. GPUs busy + CPU queue non-empty (box results post at
+~00–02Z + E4B launch checklist, stage-2 sign pre-reg) →
+`run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-05 22:41–22:45Z (real `date -u`) — tick: **both
 chains healthy; all four box arms now clearly under the <9@30k gate
 track.** Box ×4 @23.0–26.0k, 0.38–0.40 s/step, util 48–93%, ~71–74
 GiB, grad norms nominal: A-s0 total 3.74@24.5k (action 3.47), s1
@@ -855,13 +888,16 @@ healthy. Marker armed → bijou deep-dive chains next.
 9. **Comm-MAE limit-attribution front (owner 21:43Z)** — ~~E4B
    screen pre-reg~~ **POSTED ~22:4xZ**
    ([post](posts/2026-08-05-prereg-e4b-screen.md)). The freed 4×H100
-   at ~02Z goes here. Remaining before launch: results post for the
-   box batch, e4b ckpt download, parity spot-check, B12 memory smoke
-   (+ chunked-backward impl + oracles if it OOMs), finalization
-   amendment (σ_seed from the E5 reads + ladder rung). Also queued:
-   `read4_energy_score` in `draws_fairness.py`
-   ([Amendment 2](posts/2026-08-05-draws-fairness-amendment2.md)) —
-   must land before the draws probe npz is opened.
+   at ~02Z goes here. ~~Chunked-backward impl + oracles~~ **LANDED
+   ~23:0xZ unconditionally** (`--backward-chunks`; Amendment 1 on the
+   pre-reg corrects the chunk-mean sketch — global-count
+   normalization, exact for unequal token counts; check.py 191
+   green): an OOM at the smoke now costs zero launch delay.
+   Remaining before launch: results post for the box batch, e4b ckpt
+   download, parity spot-check, B12 memory smoke, finalization
+   amendment (σ_seed from the E5 reads + ladder rung).
+   ~~`read4_energy_score`~~ **LANDED 23:0xZ-labeled session (real
+   ~22:15Z)** — all four fairness reads execution-ready.
 7. **Ideas #18 instrument hardening**: ~~the cheap pass (#18.1)~~
    **DONE ~20:55Z** ([post](posts/2026-08-05-hardening-pass.md);
    oracle bit-exact, check.py green). Remaining GPU-busy CPU items:
@@ -948,4 +984,10 @@ owner-picked E4B pre-reg posted before the box that will run it is
 even free, **and the overdue lit slice TAKEN (~20 min: 2606.31382
 backbone-redundancy prior banked in #17; Energy Policy 2510.12483 →
 the energy-score read pre-declared as Amendment 2 before its data
-exists)** — allocation back on cadence.
+exists)** — allocation back on cadence. Eleventh consecutive all-CPU
+session (22:43–23:1xZ real-clock): chunked backward landed
+unconditionally BEFORE the smoke that decides whether it's needed —
+the E4B launch path now has no CPU work left on its critical path;
+the pre-reg's chunk-mean sketch was corrected by amendment before
+any E4B data exists (skipped lit slice: taken last session
+real-clock ~22:30Z; next session eligible).

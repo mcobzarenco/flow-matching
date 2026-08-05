@@ -31,9 +31,24 @@ import torch
 from torch import Tensor, nn
 
 from .aux_text import AuxField
-from .decoders.ar_backbone import ARBackboneDecoder, ar_backbone_losses
-from .decoders.ar_fast import ARFastDecoder, ar_fast_loss
-from .decoders.flow import FlowDecoder, SamplingMethod, flow_matching_loss
+from .decoders.ar_backbone import (
+    ARBackboneDecoder,
+    ar_backbone_counts,
+    ar_backbone_loss_sums,
+    ar_backbone_losses,
+)
+from .decoders.ar_fast import (
+    ARFastDecoder,
+    ar_fast_counts,
+    ar_fast_loss,
+    ar_fast_loss_sums,
+)
+from .decoders.flow import (
+    FlowDecoder,
+    SamplingMethod,
+    flow_matching_loss,
+    flow_matching_loss_sums,
+)
 from .encoders.gemma4 import GemmaEncoder, GemmaInputs
 from .gemma4.model import Gemma4Model
 from .interface import BijouPrediction, CollatedBatch, ObservationMemory
@@ -142,6 +157,55 @@ class BijouModel(nn.Module):
                     None if aux_sum is None else aux_sum.detach(),
                     aux_count,
                 )
+
+    def loss_count_normalizers(
+        self,
+        batch: CollatedBatch[GemmaInputs],
+    ) -> tuple[Tensor, Tensor | None]:
+        """(action normalizer count, aux normalizer count | None) for one
+        batch — data-only tensor ops, NO model forward. Chunked backward
+        sums these over all chunks BEFORE the first forward, so each
+        chunk's sum-form loss divides by the full-batch normalizer (the
+        exact unchunked gradient; see loss_component_sums)."""
+        decoder = self.decoder
+        match decoder:
+            case FlowDecoder():
+                # Every element of [B, chunk, action_dim] weighs equally.
+                return (
+                    torch.tensor(
+                        batch.actions.numel(),
+                        device=batch.actions.device,
+                    ),
+                    None,
+                )
+            case ARFastDecoder():
+                return ar_fast_counts(decoder, batch), None
+            case ARBackboneDecoder():
+                return ar_backbone_counts(decoder, batch)
+
+    def loss_component_sums(
+        self,
+        memory: ObservationMemory,
+        batch: CollatedBatch[GemmaInputs],
+    ) -> tuple[Tensor, Tensor, Tensor | None, Tensor | None]:
+        """Sum-form objective for chunked backward: (action loss SUM with
+        graph, action count, aux CE SUM with graph | None, aux count |
+        None). With A/X the FULL-batch normalizers from
+        loss_count_normalizers, summing ``action_sum / A +
+        aux_loss_weight * aux_sum / max(X, 1)`` over chunks reproduces
+        loss_components' total exactly (up to fp reduction order) — the
+        chunk decomposition is exact even when chunks carry unequal
+        valid-token counts, which a plain mean-of-chunk-means is not."""
+        decoder = self.decoder
+        match decoder:
+            case FlowDecoder():
+                loss_sum, count = flow_matching_loss_sums(decoder, memory, batch)
+                return loss_sum, count, None, None
+            case ARFastDecoder():
+                loss_sum, count = ar_fast_loss_sums(decoder, memory, batch)
+                return loss_sum, count, None, None
+            case ARBackboneDecoder():
+                return ar_backbone_loss_sums(self.backbone, decoder, memory, batch)
 
     def encode_observation(
         self,

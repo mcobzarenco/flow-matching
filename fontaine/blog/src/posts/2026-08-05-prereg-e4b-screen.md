@@ -186,3 +186,54 @@ One 4×H100 run, 26–31 h wall if it goes the distance, ~9 h if the
 the endpoint panel (~30 min sharded). Charter §3: the run answers an
 owner-ranked attribution question with a pre-registered kill that
 bounds the downside.
+
+---
+
+## Amendment 1 (2026-08-05 ~23:0xZ, before the memory smoke): chunked backward LANDED — with one mechanism correction
+
+Checklist item 4's conditional impl is now unconditional and done
+(`--backward-chunks N` in `bijou.train`, default 1 = byte-identical
+path), so an OOM at the smoke costs zero launch delay. Landing it
+surfaced one error in this pre-reg's mechanism sketch, corrected here
+**before any E4B data exists**:
+
+**The sketch said "equal chunks ⇒ mean of chunk-means = batch mean."
+That is false for this objective.** `ar_backbone`'s CE pools over
+valid TOKEN positions (sum/count), and FAST token counts differ per
+sample — equal-sample chunks still carry unequal token counts, so a
+mean of chunk means weights tokens unequally (same for the aux ratio,
+which is a global sum/count). The implementation therefore does
+something strictly stronger than the sketch: each chunk backwards its
+**sum-form loss normalized by the FULL step's counts** (computed
+data-only before any forward; aux term over the global aux count),
+which reproduces the unchunked gradient **exactly** — unequal counts
+and all — up to fp reduction order. DDP syncs on the last chunk only;
+`static_graph` is dropped when chunking (plain DDP is the well-trodden
+accumulation path); sample composition, effective batch 48 and every
+schedule constant remain invariant as pre-registered.
+
+Oracles, all run before this amendment posted:
+
+- **Chunking OFF (the running lineages' path): all three CPU loss
+  oracles bit-exact** — flow 2.7903/1.9152, ar_fast 4.9232/4.8631,
+  ar_backbone 27.8262/27.7701.
+- **Chunking ON, ar_fast CLI A/B (2×1 vs B2):** loss AND grad_norm
+  bitwise at printed precision on both steps.
+- **Chunking ON, ar_backbone CLI A/B:** loss identical (27.8262),
+  grad_norm 41.576 vs 41.459 (0.28%). Diagnosed, not waved off: with
+  **bit-identical prefix memory** the chunk decomposition reproduces
+  gradients to rel ~5e-7 (the math is exact); the residual comes from
+  per-chunk collation width shifting the prefix-encode fp reduction
+  order, amplified through the RANDOM tiny fixture's saturated 262k
+  softmax (forward matches to 1e-6). Same math, different fp
+  realization — within the pre-registered "up to fp reduction order"
+  contract, and far below the bf16 autocast noise the real run
+  carries anyway.
+- **Gradient-equivalence test committed** (`tests/test_chunked_backward.py`,
+  7 tests): the aux case with UNEQUAL per-chunk aux counts (8 vs 0)
+  asserts chunked ≡ unchunked at rel < 1e-5 — the exact case the
+  original sketch got wrong. `check.py` green (191).
+
+The finalization amendment still records the chosen rung after the
+smoke; rung semantics (B12 direct / 2×6 / 3×4 / 4×3 / no-launch) are
+unchanged.

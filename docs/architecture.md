@@ -741,6 +741,29 @@ decoder-only wrap (oracle-exact), multi-rank frozen runs changed
 gradient bucketing composition at the 2026-08-01 refactor (declared
 re-baseline). See §8.1.
 
+**Chunked backward (`--backward-chunks N`, default 1).** The memory
+fallback when a loader batch doesn't fit (E4B screen pre-reg
+2026-08-05): each step's item list splits at COLLATE time into N equal
+sub-batches (each pads to its own max — position ids are padding-mask
+cumsums, so width is inert to the math), forward/backward runs per
+chunk with DDP `no_sync` on all but the last, and each chunk backwards
+its SUM-form loss divided by the FULL-step normalizer counts
+(`loss_count_normalizers`: data-only, computed before any forward).
+Global-count normalization — not a mean of chunk means — makes the
+accumulated gradient exactly the unchunked one even when chunks carry
+unequal valid-token counts (token-weighted CE pooling; the aux ratio
+uses the global aux count the same way). Sample composition, effective
+batch and the LR schedule are invariant; must divide `--batch-size`;
+N > 1 drops `static_graph` (plain DDP is the well-trodden
+accumulation path). Equivalence contract: "equal up to fp reduction
+order" — measured 2026-08-05 on the tiny CPU fixture: chunk math with
+bit-identical memory reproduces gradients to rel ~5e-7; per-chunk
+collation widths shift the prefix-encode fp realization, amplifying to
+rel ~2e-4 on the RANDOM saturated fixture (forward identical to 1e-6;
+ar_fast CLI A/B bitwise at printed precision, flow draws chunk-shaped
+noise — same law, different realization). The N=1 path is byte-exact
+(loss oracles reproduced). Tests: `tests/test_chunked_backward.py`.
+
 **Decoder-kind CLI semantics.** flow accepts the `--decoder-*` shape
 flags and `--stream-counts`; AR decoders require `--fast-tokenizer
 <artifact>`; **ar_backbone rejects the shape flags and stream counts**

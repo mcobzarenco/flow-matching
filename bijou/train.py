@@ -47,6 +47,7 @@ from __future__ import annotations
 
 import argparse
 import dataclasses
+import itertools
 import json
 import math
 import os
@@ -55,6 +56,7 @@ import shutil
 import sys
 import time
 from collections.abc import Iterable, Iterator
+from contextlib import nullcontext
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, TextIO, override
@@ -96,7 +98,7 @@ from .decoders.flow import (
 )
 from .encoders.gemma4 import PROMPT_FORMAT, GemmaInputs, GemmaInputsCollator
 from .gemma4.loading import load_config, resolve_checkpoint_dir
-from .interface import CollatedBatch, Collator, kv_stream_name
+from .interface import CollatedBatch, Collator, ObservationMemory, kv_stream_name
 from .loading import (
     BackboneConfig,
     BackboneDepth,
@@ -169,6 +171,13 @@ class TrainArgs:
     # Length-grouped batches (throughput; changes batch composition —
     # paired arms must share the flag).
     bucket_by_length: bool
+    # Forward/backward each loader batch in this many equal sample
+    # chunks with gradient accumulation (1 = the byte-identical
+    # unchunked path). Memory fallback only: sample composition,
+    # effective batch and the LR schedule are invariant, and the
+    # per-step gradient equals the unchunked one up to fp reduction
+    # order (sum-form losses over full-batch normalizers).
+    backward_chunks: int
     steps: int
     decoder_lr: float
     backbone_text_lr: float | None
@@ -211,13 +220,13 @@ class DevicePrefetcher:
 
     def __init__(
         self,
-        loader: Iterable[CollatedBatch[GemmaInputs]],
+        loader: Iterable[CollatedBatch[GemmaInputs] | ChunkedBatch],
         device: torch.device,
     ) -> None:
         self.loader = loader
         self.device = device
 
-    def __iter__(self) -> Iterator[CollatedBatch[GemmaInputs]]:
+    def __iter__(self) -> Iterator[CollatedBatch[GemmaInputs] | ChunkedBatch]:
         if self.device.type != "cuda":
             for batch in self.loader:
                 yield batch.to(self.device)
@@ -227,7 +236,7 @@ class DevicePrefetcher:
         compute_stream = torch.cuda.current_stream(self.device)
         batches = iter(self.loader)
 
-        def preload() -> CollatedBatch[GemmaInputs] | None:
+        def preload() -> CollatedBatch[GemmaInputs] | ChunkedBatch | None:
             cpu_batch = next(batches, None)
             if cpu_batch is None:
                 return None
@@ -243,6 +252,60 @@ class DevicePrefetcher:
                 tensor.record_stream(compute_stream)
             yield batch  # consumer enqueues the step's compute, then returns
             batch = preload()  # blocks on workers while the GPU crunches
+
+
+@dataclass(frozen=True, slots=True)
+class ChunkedBatch:
+    """One optimizer step's samples, collated as ``--backward-chunks``
+    equal sub-batches for chunked backward. Splitting happens at COLLATE
+    time (each chunk pads to its own max length — position ids are
+    padding-mask cumsums, so padding width is inert to the math), which
+    also shrinks the per-forward activation footprint below a sliced
+    full-width batch. Duck-types CollatedBatch's transfer surface for
+    the DataLoader pin hook and DevicePrefetcher."""
+
+    chunks: tuple[CollatedBatch[GemmaInputs], ...]
+
+    def all_tensors(self) -> list[Tensor]:
+        return [t for chunk in self.chunks for t in chunk.all_tensors()]
+
+    def pin_memory(self) -> ChunkedBatch:
+        return ChunkedBatch(tuple(c.pin_memory() for c in self.chunks))
+
+    def to(
+        self,
+        device: torch.device | str,
+        *,
+        non_blocking: bool = False,
+    ) -> ChunkedBatch:
+        return ChunkedBatch(
+            tuple(c.to(device, non_blocking=non_blocking) for c in self.chunks),
+        )
+
+
+@dataclass
+class ChunkingCollator:
+    """Train-loader collate for chunked backward: split the step's item
+    list into ``chunks`` contiguous, size-balanced sub-lists (equal by
+    construction — --backward-chunks divides --batch-size and the train
+    loaders drop last; a short straggler batch would still split
+    near-evenly and stay exact, since normalization is by global
+    counts) and collate each separately. Sample composition per step is
+    identical to the unchunked loader's; the probe collator is never
+    wrapped."""
+
+    collator: Collator[GemmaInputs]
+    chunks: int
+
+    def __call__(self, samples: list[Any]) -> ChunkedBatch:
+        bounds = [(len(samples) * i) // self.chunks for i in range(self.chunks + 1)]
+        return ChunkedBatch(
+            tuple(
+                self.collator(samples[start:stop])
+                for start, stop in itertools.pairwise(bounds)
+                if stop > start
+            ),
+        )
 
 
 class Normalizer:
@@ -391,11 +454,21 @@ class BijouTrainStep(torch.nn.Module):
     def forward(
         self,
         batch: CollatedBatch[GemmaInputs],
+        normalizers: tuple[Tensor, Tensor | None] | None = None,
     ) -> tuple[Tensor, Tensor, Tensor | None, Tensor | None]:
         """Batch (shapes in CollatedBatch's docstring) -> (total loss with
         graph, detached action component, detached aux CE sum | None,
         aux position count | None). Single-component objectives return
-        (loss, loss.detach(), None, None)."""
+        (loss, loss.detach(), None, None).
+
+        ``normalizers`` switches to chunked-backward sum form: ``batch``
+        is one chunk, the tuple is the FULL step's (action count, aux
+        count | None) summed over all chunks, and the return is (this
+        chunk's normalized loss share with graph, detached action loss
+        SUM, detached aux CE sum | None, aux position count | None) —
+        the shares sum over chunks to exactly the unchunked total (up
+        to fp reduction order), so backwarding each share accumulates
+        the unchunked gradient."""
         inputs = batch.encoder_inputs
         device_type = inputs.input_ids.device.type
         with torch.autocast(
@@ -414,9 +487,37 @@ class BijouTrainStep(torch.nn.Module):
                 # B11); the CE itself upcasts to fp32 inside the loss.
                 # Frozen runs construct this context disabled — a no-op,
                 # byte-identical to the historical path (oracle-exact).
-                return self.model.loss_components(memory, batch)
+                if normalizers is None:
+                    return self.model.loss_components(memory, batch)
+                return self._chunk_share(memory, batch, normalizers)
         # Cross-attention decoders are fp32-by-design OUTSIDE autocast.
-        return self.model.loss_components(memory, batch)
+        if normalizers is None:
+            return self.model.loss_components(memory, batch)
+        return self._chunk_share(memory, batch, normalizers)
+
+    def _chunk_share(
+        self,
+        memory: ObservationMemory,
+        batch: CollatedBatch[GemmaInputs],
+        normalizers: tuple[Tensor, Tensor | None],
+    ) -> tuple[Tensor, Tensor, Tensor | None, Tensor | None]:
+        action_norm, aux_norm = normalizers
+        action_sum, _, aux_sum, aux_count = self.model.loss_component_sums(
+            memory,
+            batch,
+        )
+        loss = action_sum / action_norm
+        if aux_sum is not None:
+            decoder = self.model.decoder
+            assert isinstance(decoder, ARBackboneDecoder)
+            assert aux_norm is not None
+            loss = loss + decoder.aux_loss_weight * (aux_sum / aux_norm.clamp(min=1))
+        return (
+            loss,
+            action_sum.detach(),
+            None if aux_sum is None else aux_sum.detach(),
+            aux_count,
+        )
 
 
 def _chunk_plot(
@@ -1362,6 +1463,17 @@ def parse_args() -> TrainArgs:
         "rows pad ~nothing instead of to the batch max — throughput only; "
         "changes batch composition, so paired arms must share the flag",
     )
+    parser.add_argument(
+        "--backward-chunks",
+        type=int,
+        default=1,
+        help="split each optimizer step's forward/backward into this many "
+        "equal sample chunks with gradient accumulation (memory fallback "
+        "when the loader batch doesn't fit; sample composition, effective "
+        "batch and every LR constant are invariant — the gradient equals "
+        "the unchunked one up to fp reduction order). Must divide "
+        "--batch-size; 1 = the byte-identical unchunked path",
+    )
     parser.add_argument("--steps", type=int, default=200, help="total optimizer steps")
     parser.add_argument(
         "--decoder-lr",
@@ -1718,6 +1830,7 @@ def parse_args() -> TrainArgs:
         chunk_size=raw.chunk_size,
         batch_size=raw.batch_size,
         bucket_by_length=raw.bucket_by_length,
+        backward_chunks=raw.backward_chunks,
         steps=raw.steps,
         decoder_lr=raw.decoder_lr,
         backbone_text_lr=raw.backbone_text_lr,
@@ -1754,6 +1867,12 @@ def main() -> int:
     # time here, but the main process only decodes the small eval set once.)
     if args.video_decoder_cache < 1:
         raise SystemExit("--video-decoder-cache must be >= 1")
+    if args.backward_chunks < 1 or args.batch_size % args.backward_chunks != 0:
+        raise SystemExit(
+            f"--backward-chunks {args.backward_chunks} must be >= 1 and "
+            f"divide --batch-size {args.batch_size} (equal chunks — the "
+            "pre-registered ladder rungs)",
+        )
     os.environ["LEROBOT_VIDEO_DECODER_CACHE_SIZE"] = str(args.video_decoder_cache)
 
     # TF32 for fp32 matmuls (torch's default is full-IEEE "highest"): the
@@ -1982,7 +2101,14 @@ def main() -> int:
     common_loader_kwargs: dict[str, Any] = {
         "generator": torch.Generator().manual_seed(args.seed + rank),
         "num_workers": args.num_workers,
-        "collate_fn": collator,
+        # Chunked backward wraps the TRAIN collate only (probe batches
+        # eval whole); batch composition per step is unchanged — the
+        # sampler side never sees the chunking.
+        "collate_fn": (
+            ChunkingCollator(collator, args.backward_chunks)
+            if args.backward_chunks > 1
+            else collator
+        ),
         "persistent_workers": args.num_workers > 0,
         "worker_init_fn": worker_init if args.num_workers > 0 else None,
         # Spawned (not forked) workers: the parent holds live CUDA state and
@@ -2233,6 +2359,14 @@ def main() -> int:
                 f"{args.num_workers} dataloader workers/rank",
                 flush=True,
             )
+        if args.backward_chunks > 1:
+            print(
+                f"chunked backward: {args.backward_chunks} x "
+                f"{args.batch_size // args.backward_chunks} per rank per "
+                f"step (loader batch {args.batch_size} unchanged; gradient "
+                "== unchunked up to fp reduction order)",
+                flush=True,
+            )
 
     # Fixed-key dicts, deliberately: this is torch's optimizer param-group
     # API format (a third-party boundary), consumed by AdamW below. The
@@ -2407,7 +2541,13 @@ def main() -> int:
             # graph never changes.
             broadcast_buffers=False,
             gradient_as_bucket_view=True,
-            static_graph=True,
+            # Chunked backward runs n forwards + a no_sync accumulation
+            # per step; the graph is still static per iteration, but the
+            # static_graph fast path's interplay with no_sync is not a
+            # risk worth carrying for a memory-fallback rung — plain DDP
+            # is the well-trodden grad-accumulation path. Unchunked runs
+            # keep the historical flag (and its recorded-graph perf).
+            static_graph=args.backward_chunks == 1,
         )
 
     # Fixed MAE probe sets, independent of the training batch size, fetched
@@ -2542,9 +2682,55 @@ def main() -> int:
         for batch in prefetcher:
             if step >= args.steps:
                 break
-            loss, action_component, aux_sum, aux_count = train_step(batch)
-            optimizer.zero_grad(set_to_none=True)
-            loss.backward()
+            if isinstance(batch, ChunkedBatch):
+                # Chunked backward (--backward-chunks > 1): normalize
+                # each chunk's sum-form loss by the FULL step's counts
+                # (data-only, computed before any forward) and
+                # accumulate gradients, syncing DDP only on the last
+                # chunk — the accumulated gradient and every logged
+                # quantity match the unchunked step up to fp reduction
+                # order, at one chunk's activation footprint.
+                counts = [model.loss_count_normalizers(c) for c in batch.chunks]
+                action_norm = torch.stack([c[0] for c in counts]).sum()
+                aux_norm = (
+                    torch.stack([n for c in counts if (n := c[1]) is not None]).sum()
+                    if counts[0][1] is not None
+                    else None
+                )
+                optimizer.zero_grad(set_to_none=True)
+                loss = torch.zeros((), device=device)
+                action_sum_total = torch.zeros((), device=device)
+                aux_sum = None
+                aux_count = None
+                for i, chunk in enumerate(batch.chunks):
+                    if distributed and i < len(batch.chunks) - 1:
+                        assert isinstance(
+                            train_step,
+                            torch.nn.parallel.DistributedDataParallel,
+                        )
+                        sync_ctx = train_step.no_sync()
+                    else:
+                        sync_ctx = nullcontext()
+                    with sync_ctx:
+                        share, share_action, share_aux, share_aux_count = train_step(
+                            chunk,
+                            normalizers=(action_norm, aux_norm),
+                        )
+                        share.backward()
+                    loss = loss + share.detach()
+                    action_sum_total = action_sum_total + share_action
+                    if share_aux is not None and share_aux_count is not None:
+                        aux_sum = share_aux if aux_sum is None else aux_sum + share_aux
+                        aux_count = (
+                            share_aux_count
+                            if aux_count is None
+                            else aux_count + share_aux_count
+                        )
+                action_component = action_sum_total / action_norm
+            else:
+                loss, action_component, aux_sum, aux_count = train_step(batch)
+                optimizer.zero_grad(set_to_none=True)
+                loss.backward()
             grad_norm = torch.nn.utils.clip_grad_norm_(
                 clipped_parameters,
                 args.grad_clip,

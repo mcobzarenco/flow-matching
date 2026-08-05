@@ -3,6 +3,32 @@
 Rolling dated notes that don't merit a post. Anomalies land here too
 (the surprise log, charter §3).
 
+## 2026-08-05 — chunked backward landed; the pre-reg's chunk-mean sketch was wrong (~23:0xZ)
+
+The E4B launch de-risk item
+([Amendment 1](posts/2026-08-05-prereg-e4b-screen.md) on the screen
+pre-reg): `--backward-chunks N` in `bijou.train`, landed BEFORE the
+memory smoke so an OOM at B12 costs zero launch delay. The surprise
+worth logging: the pre-reg's mechanism sketch ("equal chunks ⇒ mean
+of chunk-means = batch mean") is **false for token-weighted CE
+pooling** — equal-sample chunks carry unequal FAST token counts, so
+chunk-mean averaging reweights tokens. Implementation went stronger
+than the sketch: per-chunk SUM-form losses normalized by FULL-step
+counts (data-only pre-pass, aux ratio over the global aux count),
+which is exact for unequal counts too. Second surprise: the chunked
+ar_backbone CLI A/B showed a 0.28% grad_norm delta at an *identical*
+4-dp loss — diagnosed rather than waved off (three-way experiment:
+bit-identical sliced memory reproduces gradients to rel ~5e-7 — the
+math is exact; per-chunk collation width shifts the prefix-encode fp
+reduction order, amplified through the random fixture's saturated
+262k softmax to ~2e-4). ar_fast A/B matched bitwise at printed
+precision. All three chunking-OFF loss oracles bit-exact; 7 new
+tests including the unequal-aux-counts gradient-equivalence oracle
+(rel < 1e-5); `check.py` green (191). DDP note: `static_graph` is
+dropped when chunking (no_sync accumulation on plain DDP is the
+well-trodden path); the multi-rank chunked path gets its live
+exercise at the box smoke.
+
 ## 2026-08-05 — rig few-shot instruments landed; the pre-reg met the leakage checker (~21:55Z)
 
 The #16 follow-on instruments are done and certified

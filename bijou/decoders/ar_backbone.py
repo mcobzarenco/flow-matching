@@ -675,6 +675,103 @@ def _parse_aux(
     )
 
 
+def suffix_targets(
+    decoder: ARBackboneDecoder,
+    batch: CollatedBatch[Any],
+) -> tuple[Tensor, Tensor, Tensor | None]:
+    """(full suffix ids [B, 1+S], shifted CE targets [B, S], aux-position
+    mask [B, S] | None) — the data-only half of the objective (no model
+    forward), shared by the loss and by chunked backward's normalizer
+    counts. Semantics in :func:`ar_backbone_losses`'s docstring."""
+    base = decoder.config.block_base
+    if batch.suffix_tokens is not None:
+        is_aux_content = batch.suffix_is_aux
+        assert is_aux_content is not None  # collator invariant
+        content = batch.suffix_tokens
+    else:
+        tokens = batch.action_tokens
+        if tokens is None:
+            raise SystemExit(
+                "batch carries no action_tokens — build the Collator with "
+                "an ActionCodec (--fast-tokenizer) to train an AR decoder",
+            )
+        content = tokens + base
+        is_aux_content = None
+    prefix = torch.tensor(
+        [decoder.opener_ids],
+        dtype=torch.long,
+        device=content.device,
+    ).expand(content.shape[0], -1)
+    full = torch.cat([prefix, content], dim=1)
+    pad_id = base + decoder.codec.pad
+    # forward: position j predicts suffix position j + 1, so
+    # logits[:, j] pairs with full[:, j + 1] — targets are the SHIFTED
+    # sequence. Opener tokens are constants: ignore every target that
+    # IS an opener token (shifted indices 0..len(prefix)−2); the last
+    # opener position's target — content[0], the first value token or
+    # BOA on [generate|actions] rows — stays trained.
+    targets = full[:, 1:].clone()
+    targets[:, : prefix.shape[1] - 1] = IGNORE_INDEX
+    targets[targets == pad_id] = IGNORE_INDEX
+    if is_aux_content is None:
+        return full, targets, None
+    is_aux = torch.cat(
+        [torch.zeros_like(prefix, dtype=torch.bool), is_aux_content],
+        dim=1,
+    )[:, 1:]
+    return full, targets, is_aux
+
+
+def ar_backbone_counts(
+    decoder: ARBackboneDecoder,
+    batch: CollatedBatch[Any],
+) -> tuple[Tensor, Tensor | None]:
+    """(action target count, aux target count | None) for one batch —
+    cheap tensor ops only, no backbone forward: chunked backward reads
+    the FULL-batch normalizers off every chunk before the first
+    forward, so per-chunk sums divide by global counts (exactly the
+    unchunked token-weighted mean, not a chunk-mean-of-means)."""
+    _, targets, is_aux = suffix_targets(decoder, batch)
+    valid = targets != IGNORE_INDEX
+    if is_aux is None:
+        return valid.sum(), None
+    return (valid & ~is_aux).sum(), (valid & is_aux).sum()
+
+
+def ar_backbone_loss_sums(
+    backbone: Gemma4Model,
+    decoder: ARBackboneDecoder,
+    memory: ObservationMemory,
+    batch: CollatedBatch[Any],
+) -> tuple[Tensor, Tensor, Tensor | None, Tensor | None]:
+    """Sum-form objective for chunked backward: (action CE SUM with
+    graph, action target count, aux CE SUM with graph | None, aux
+    target count | None). The caller owns normalization — dividing by
+    FULL-batch counts and summing over chunks reproduces
+    :func:`ar_backbone_losses`'s token-weighted means exactly (up to fp
+    reduction order). The mean-form stays the single-batch path
+    untouched (its reductions are byte-anchored by the loss oracles)."""
+    full, targets, is_aux = suffix_targets(decoder, batch)
+    logits = decoder(backbone, memory, full[:, :-1])
+    elementwise = F.cross_entropy(
+        logits.reshape(-1, logits.shape[-1]).float(),
+        targets.reshape(-1),
+        ignore_index=IGNORE_INDEX,
+        reduction="none",
+    ).reshape(targets.shape)
+    valid = targets != IGNORE_INDEX
+    if is_aux is None:
+        return elementwise[valid].sum(), valid.sum(), None, None
+    aux_positions = valid & is_aux
+    action_positions = valid & ~is_aux
+    return (
+        elementwise[action_positions].sum(),
+        action_positions.sum(),
+        elementwise[aux_positions].sum(),
+        aux_positions.sum(),
+    )
+
+
 def ar_backbone_losses(
     backbone: Gemma4Model,
     decoder: ARBackboneDecoder,
@@ -698,48 +795,15 @@ def ar_backbone_losses(
     aux_count) — batch-mean semantics, 0-safe when a batch has no
     labeled sample.
     """
-    base = decoder.config.block_base
-    if batch.suffix_tokens is not None:
-        is_aux_content = batch.suffix_is_aux
-        assert is_aux_content is not None  # collator invariant
-        content = batch.suffix_tokens
-    else:
-        tokens = batch.action_tokens
-        if tokens is None:
-            raise SystemExit(
-                "batch carries no action_tokens — build the Collator with "
-                "an ActionCodec (--fast-tokenizer) to train an AR decoder",
-            )
-        content = tokens + base
-        is_aux_content = None
-    prefix = torch.tensor(
-        [decoder.opener_ids],
-        dtype=torch.long,
-        device=content.device,
-    ).expand(content.shape[0], -1)
-    full = torch.cat([prefix, content], dim=1)
+    full, targets, is_aux = suffix_targets(decoder, batch)
     logits = decoder(backbone, memory, full[:, :-1])
-    pad_id = base + decoder.codec.pad
-    # forward: position j predicts suffix position j + 1, so
-    # logits[:, j] pairs with full[:, j + 1] — targets are the SHIFTED
-    # sequence. Opener tokens are constants: ignore every target that
-    # IS an opener token (shifted indices 0..len(prefix)−2); the last
-    # opener position's target — content[0], the first value token or
-    # BOA on [generate|actions] rows — stays trained.
-    targets = full[:, 1:].clone()
-    targets[:, : prefix.shape[1] - 1] = IGNORE_INDEX
-    targets[targets == pad_id] = IGNORE_INDEX
-    if is_aux_content is None:
+    if is_aux is None:
         action = F.cross_entropy(
             logits.reshape(-1, logits.shape[-1]).float(),
             targets.reshape(-1),
             ignore_index=IGNORE_INDEX,
         )
         return action, action, None, None
-    is_aux = torch.cat(
-        [torch.zeros_like(prefix, dtype=torch.bool), is_aux_content],
-        dim=1,
-    )[:, 1:]
     elementwise = F.cross_entropy(
         logits.reshape(-1, logits.shape[-1]).float(),
         targets.reshape(-1),

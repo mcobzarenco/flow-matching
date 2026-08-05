@@ -429,20 +429,63 @@ def ar_fast_loss(
     IGNORE_INDEX. CE averages over real target tokens, so longer token
     sequences weigh proportionally more — standard LM behavior.
     """
+    tokens, targets = ar_fast_targets(decoder, batch)
+    state = (batch.state - batch.state_stats.mean) / batch.state_stats.std
+    logits = decoder(memory, state, tokens[:, :-1])
+    return F.cross_entropy(
+        logits.reshape(-1, logits.shape[-1]).float(),
+        targets.reshape(-1),
+        ignore_index=IGNORE_INDEX,
+    )
+
+
+def ar_fast_targets(
+    decoder: ARFastDecoder,
+    batch: CollatedBatch[Any],
+) -> tuple[Tensor, Tensor]:
+    """(action tokens [B, T], CE targets [B, T]) — the data-only half of
+    the objective (no forward), shared by the loss and by chunked
+    backward's normalizer counts. PAD is the last id by convention
+    (``codec.pad == vocab_total - 1``, the head's final column)."""
     tokens = batch.action_tokens
     if tokens is None:
         raise SystemExit(
             "batch carries no action_tokens — build the Collator with an "
             "ActionCodec (--fast-tokenizer) to train an AR decoder",
         )
-    state = (batch.state - batch.state_stats.mean) / batch.state_stats.std
-    logits = decoder(memory, state, tokens[:, :-1])
     targets = tokens.clone()
     targets[:, 0] = IGNORE_INDEX  # the seed BOA, a constant
-    pad_id = int(logits.shape[-1] - 1)  # PAD is the last id by convention
-    targets[targets == pad_id] = IGNORE_INDEX
-    return F.cross_entropy(
+    targets[targets == decoder.codec.pad] = IGNORE_INDEX
+    return tokens, targets
+
+
+def ar_fast_counts(
+    decoder: ARFastDecoder,
+    batch: CollatedBatch[Any],
+) -> Tensor:
+    """Real-target-token count for one batch (no forward) — chunked
+    backward's FULL-batch normalizer (see ar_backbone_counts)."""
+    _, targets = ar_fast_targets(decoder, batch)
+    return (targets != IGNORE_INDEX).sum()
+
+
+def ar_fast_loss_sums(
+    decoder: ARFastDecoder,
+    memory: ObservationMemory,
+    batch: CollatedBatch[Any],
+) -> tuple[Tensor, Tensor]:
+    """Sum-form objective for chunked backward: (CE SUM with graph,
+    target count). Dividing by the FULL-batch count and summing over
+    chunks reproduces :func:`ar_fast_loss`'s token-weighted mean exactly
+    (up to fp reduction order); the mean-form single-batch path stays
+    untouched (byte-anchored by the loss oracles)."""
+    tokens, targets = ar_fast_targets(decoder, batch)
+    state = (batch.state - batch.state_stats.mean) / batch.state_stats.std
+    logits = decoder(memory, state, tokens[:, :-1])
+    elementwise = F.cross_entropy(
         logits.reshape(-1, logits.shape[-1]).float(),
         targets.reshape(-1),
         ignore_index=IGNORE_INDEX,
+        reduction="none",
     )
+    return elementwise.sum(), (targets != IGNORE_INDEX).sum()
