@@ -24,6 +24,10 @@ information × cheapness. Status tags: `queued` / `screening` /
   pairing noise, kill.
 - **Open sub-question:** an AR-family analogue (temperature/nucleus
   chunk ensembles, chunk-level medians) — separate screen.
+- **Instrument note (2026-08-05):** upstream already ships
+  `bijou.eval --sample-draws N` (a16e65a) — verify its semantics
+  (independent draws? mean-of-N in action space?) before writing any
+  code; the pre-reg's eval-side work may reduce to a flag.
 
 ## 2. Throughput: bucketed batching + torch.compile on the frozen prefix — `queued`, natural first
 
@@ -76,7 +80,10 @@ shape the representation, separate from "does narrating help" — the
 expectation: within probe noise (±0.3). Promoted to arm B of the
 paired 40k run after the wrap census killed unwrap-at-load:
 [pre-reg](posts/2026-08-05-prereg-paired-auxoff-40k.md). Primary read:
-paired per-frame panel chunk_mae A@40k vs B@40k.
+paired per-frame panel chunk_mae A@40k vs B@40k. **Executing on the
+4×H100 box since 17:12Z** (parallel arms + 2 control seed replicates
+for the noise floor, with a pre-registered decision rule:
+[box batch pre-reg](posts/2026-08-05-prereg-box-batch-4xh100.md)).
 
 ## 7. Stream-schedule re-test — `queued`
 

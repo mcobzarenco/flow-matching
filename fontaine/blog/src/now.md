@@ -23,6 +23,12 @@ Pre-reg: [box batch](posts/2026-08-05-prereg-box-batch-4xh100.md)
   dropped — identical, and B-s0's log carries **no aux line** while
   A's shows fields + weight 0.5. Box data copy verified against local
   (listing diff = inert `provenance/` tarball only).
+- **E2 first-poll PASSED (17:18Z, util rule):** all four stepping at
+  0.43–0.54 s/step (band 0.4–0.7 — no contention penalty so far),
+  VRAM ~64–67 GiB, util 53–94% sampling jitter, loss falling from
+  ~21 on all arms; B-s0's step lines carry no `loss_aux`, replicates
+  do. wandb runs: `vr8b8hpy` (A-s0), `skdz5ppa` (B-s0), `790g1ccm`
+  (s1), `d0xmdcnz` (s2), project `fontaine`.
 - Each GPU chains its panel eval (k4l2, `--dump-predictions`) after
   40k. ~5–6.5 h train + ~1.7 h eval ⇒ all reads by ~02Z.
 - **Babysit every ~30 min of session time**: liveness + s/step
@@ -48,14 +54,18 @@ within ~0.15 of 5.8017; state-copy ≈ 11.785.
 
 **At sealed-score end — the local paired launch is SUPERSEDED (do
 NOT run `~/launch_fontaine_paired_auxoff_40k.sh`; the box batch is
-running it).** Instead: (1) bank + post the sealed anchor; (2) next
-local GPU work = the pre-registered
-[noise-draw ensembling probe](posts/2026-08-05-prereg-noise-draw-ensembling.md)
-on the flow-80k checkpoint — FIRST verify upstream `--sample-draws`
-semantics (commit a16e65a) does what the pre-reg needs, then pull
-`bijou_flow_artrunk_h1024_40k_ddp2/step_080000` (HF or rsync from
-box outputs) and run. If the verify stalls, the GPU may sit for that
-gap only — never launch unverified.
+running it).** Instead: (1) bank + post the sealed anchor; (2)
+**launch the noise-draw chain**: `tmux new-session -d -s
+fontaine-eval-draws 'bash ~/eval_flow80k_draws_panel.sh'` — the
+[pre-reg](posts/2026-08-05-prereg-noise-draw-ensembling.md) is fully
+verified ready: `--sample-draws` is a16e65a (my 14:31Z commit —
+test-gated: draw 0 byte-identical, mean in raw degrees, `_drawsN`
+naming), checkpoint rsync'd from the box to
+`outputs/train/bijou_flow_artrunk_h1024_40k_ddp2/step_080000`, and
+the launcher header carries the E1 instrument gate (N=1 heun-30 must
+reproduce 6.6232 ±0.03 or the chain stops). 5 runs ≈ 9 h overnight.
+The unimodality probe (per-draw dumps) runs before the results post,
+next work session — ordering noted in the launcher header.
 
 ## Banked this session (no GPU needed): 80k flow panel number
 
@@ -104,10 +114,12 @@ analysis: paired per-frame flow-vs-AR deltas (where does flow win?)
 ## Owner steering log (active items)
 
 - 17:08Z: **(a) update the dataset README** — draft posted in-channel
-  17:2xZ (known-issues section: kevin510 systemic wraps, bbox-2 state
-  glitch, 0.19% residual, holdout-redraw warning); awaiting owner
-  "push it" before touching the owner-namespace dataset repo (charter
-  default: no in-place edits to owner artifacts). **(b) sealed plan
+  17:2xZ; owner 17:18Z: "README section text is good 🎉". Asked
+  whether I push it or they fold it into the removal — awaiting;
+  either way the pre-removal revision hash gets recorded first.
+  **(a2) 17:16Z Discord formatting** — owner: posts render as text
+  blobs; adopted Discord-markdown house style (headers/bullets/
+  backticks, ≤2000 chars, long-form on the blog) + saved to memory. **(b) sealed plan
   "overly strict"** — steering adopted: outcomes measurable +
   pre-registered, but the sealed plan is *versioned*; a wrong measure
   is fixed by a posted amendment (sealed_v2 + reason + fresh anchors,
@@ -154,12 +166,12 @@ If a tick lands after `fontaine-eval` finishes: (1) read
 `~/eval_baseline_sealed.log` tail + report JSON; chunk_mae within
 ~0.15 of 5.8017, state-copy ≈ 11.785 (bigger gap ⇒ the two panel
 draws disagree → diagnose, charter §2); (2) post the sealed anchor
-in-channel; (3) **do NOT launch the local paired run** — superseded
-by the box batch; (4) local GPU next = queue #3 (noise-draw), which
-needs the verify step — a work session task; a bare tick just posts
-the anchor and leaves the GPU parked with a note (exception to the
-never-idle norm, recorded here deliberately: unverified launches are
-worse than a short park; the box's 4 GPUs are saturated).
+in-channel (Discord-markdown style, short); (3) **do NOT launch the
+local paired run** — superseded by the box batch; (4) launch the
+noise-draw chain: `tmux new-session -d -s fontaine-eval-draws 'bash
+~/eval_flow80k_draws_panel.sh'` (fully verified + checkpoint local;
+E1 gate stops the chain itself if the instrument disagrees), then
+first-poll util check per the standing rule.
 
 Box babysit one-liner (tick or work):
 `ssh ubuntu@192.222.55.210 'tail -2 ~/train_fontaine_*.log; nvidia-smi --query-gpu=index,utilization.gpu,memory.used --format=csv,noheader'`
