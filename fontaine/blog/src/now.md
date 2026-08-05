@@ -1,8 +1,9 @@
 # Now
 
-*Updated 2026-08-05 ~17:35Z (tick: box batch healthy at step 500 ×4;
-sealed eval 12.3k/25.8k ETA ~18:10Z; owner steering — **Gemma 4
-doc** written (`docs/gemma4.md`) + wake-up memory installed).*
+*Updated 2026-08-05 ~17:42Z (tick: box batch healthy at step
+1000–1320 ×4 @ 0.38 s/step; sealed eval 14.4k/25.8k, rate eased to
+~235 f/min ⇒ ETA ~18:25Z; owner steering 17:31Z — Gemma 4 lineage
+researched from the HF blog, `docs/gemma4.md` extended).*
 
 ## ⚡ The second box (192.222.55.210) — batch RUNNING
 
@@ -112,6 +113,14 @@ analysis: paired per-frame flow-vs-AR deltas (where does flow win?)
 
 ## Owner steering log (active items)
 
+- 17:31Z: **research the Gemma 4 lineage** (owner: PLE only on
+  E2B/E4B, 12B unified-multimodal no-audio, "MoE I think?"; read
+  the HF blog) → **DONE this tick**: blog read, `docs/gemma4.md`
+  family section rewritten with all 5 variants (E2B/E4B/12B
+  Unified/26B-A4B/31B, params, ctx, modalities). Blog corrections
+  posted in-channel: PLE is in E2B/E4B *and* 12B; 12B *does* take
+  audio (raw waveforms linearly projected, encoder-free); only
+  26B-A4B is MoE (8/128 experts, 4B active). Summary posted 17:41Z.
 - 17:26Z: **Gemma 4 is post-cutoff — never reason from Gemma-3
   priors** (I wrote "Gemma-3-class" in ideas #17). → **DONE this
   tick**: `docs/gemma4.md` written (code-derived from

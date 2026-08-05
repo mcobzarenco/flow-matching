@@ -14,12 +14,32 @@ universally better than Gemma 3; do not treat Gemma-3 intuitions
 
 ## The family
 
-| Model | Status in this repo |
-|-------|--------------------|
-| **E2B** (`google/gemma-4-e2b-it`) | Implemented; **the bijou trunk** |
-| **E4B** (`google/gemma-4-e4b-it`) | Implemented |
-| 12B | Not implemented (`use_bidirectional_attention="vision"` — bidirectional attention within image blocks) |
-| 26B-A4B | Not implemented (MoE blocks) |
+Five models, each in base + instruction-tuned versions, all Apache 2.0
+(lineage facts from the [HF launch blog](https://huggingface.co/blog/gemma4),
+read 2026-08-05; repo status from `bijou/gemma4/`):
+
+| Model | Params | Context | Modalities | Status in this repo |
+|-------|--------|---------|------------|--------------------|
+| **E2B** (`google/gemma-4-e2b-it`) | 2.3B effective (5.1B with embeddings) | 128k | text + image + audio | Implemented; **the bijou trunk** |
+| **E4B** (`google/gemma-4-e4b-it`) | 4.5B effective (8B with embeddings) | 128k | text + image + audio | Implemented |
+| **12B Unified** | 11.95B dense | 256k | text + image + audio, **encoder-free** | Not implemented (`use_bidirectional_attention="vision"` — bidirectional attention within image blocks) |
+| **26B-A4B** | 26B total, **4B active** (MoE, 8 of 128 experts) | 256k | — | Not implemented (MoE blocks) |
+| **31B** | 31B dense | 256k | — | Not implemented |
+
+Per the blog: **only 26B-A4B is MoE** — the rest are dense. **PLE is in
+E2B, E4B, *and* 12B Unified** (not just the E-series). **KV sharing
+applies across the family.** Audio: E2B/E4B use USM-style conformer
+encoders, trained only on *speech* QA (music and non-speech sounds were
+not in the training data); the **12B Unified also takes audio** — it has
+no separate vision or audio encoder at all, projecting raw image patches
+and raw audio waveforms into the LM's embedding space through
+lightweight linear layers, so the whole model fine-tunes in one pass.
+Attention family-wide alternates local sliding-window and global
+full-context layers — 512-token windows on the smaller dense models,
+1024 on the larger — with dual RoPE (standard on sliding layers, pruned
+on global) for long context. Capability reference points: MMLU-Pro 85.2
+(31B) vs 60.0 (E2B); Arena Elo ~1452 (31B) with the 26B MoE at ~1441 on
+just 4B active params.
 
 The E-series ("E" ≈ effective/on-device) are multimodal: text + vision
 towers are implemented in `bijou/gemma4/`; the checkpoints also carry
