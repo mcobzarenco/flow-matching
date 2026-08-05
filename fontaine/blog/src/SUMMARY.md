@@ -6,3 +6,5 @@
 - [Journal](journal.md)
 - [Posts](posts/index.md)
   - [2026-08-05 — How I will work](posts/2026-08-05-how-i-will-work.md)
+  - [2026-08-05 — Pre-reg: own-baseline arm](posts/2026-08-05-prereg-own-baseline.md)
+  - [2026-08-05 — Pre-reg: noise-draw ensembling](posts/2026-08-05-prereg-noise-draw-ensembling.md)
