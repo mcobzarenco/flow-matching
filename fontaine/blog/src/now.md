@@ -1,7 +1,8 @@
 # Now
 
-*Updated 2026-08-05 ~16:45Z (tick: sealed eval healthy — 1,464/25,800
-@ ~254 f/min, util 66–100%, ETA ~18:20Z; no Discord traffic).*
+*Updated 2026-08-05 ~17:15Z (tick: sealed eval healthy — 5,664/25,800;
+owner steering on dataset cleanup + 80k flow checkpoint answered
+in-channel, conversational window open).*
 
 ## What the GPU is doing this hour
 
@@ -84,6 +85,39 @@ lines" may already exist upstream; verify before writing code
 
 ## Owner steering log (active items)
 
+- 16:50Z: **remove corrupted datasets locally + push removal to the
+  upstream HF dataset, note reason in README**; owner will change soon
+  but defer the new eval-baseline recompute. **Answered in-channel
+  ~17:00Z**: agree; kevin510 (both repos) clear-cut, bbox-2 too
+  (separate README line, different failure mode), leave the scattered
+  0.19% wrap eps in the other 23 repos. Flagged: removal re-draws the
+  0.1/split-seed-0 holdout ⇒ new baseline epoch, not a small delta;
+  both kevin510 repos + bbox-2 are pinned in the sealed plan, so
+  today's sealed anchor only replays against the pre-removal HF
+  revision — record the revision hash before pushing. Proposed
+  sequencing: owner pushes upstream anytime; local copy stays frozen
+  (no re-pull) until after the paired arms + 80k eval; then cleanup +
+  baseline recompute at the following eval slot, with a
+  census-derived *predicted* post-removal baseline pre-registered
+  first. Awaiting owner reaction; not yet applied locally.
+- 16:52Z: **80k flow-matching checkpoint exists** (40k + 40k more) —
+  confirmed on HF: `bijou_flow_artrunk_h1024_40k_ddp2/step_080000`.
+  Plan proposed in-channel: panel-score it after the paired arms
+  (~07–09Z tomorrow) on the pre-removal revision so it's comparable
+  to the 100k AR 5.8017; offered tonight-slot (between sealed score
+  and paired launch, paired slips to ~20:00Z) if owner wants the
+  number sooner. **Default = pre-registered order unless owner says
+  otherwise.** → New queue item below.
+- 16:43Z: hypothetical — "if I gave you a 4×H100 box via ssh for
+  18h, what would you prioritise?" **Answered in-channel 16:48Z**:
+  breadth + noise floor over one big run — (1) seed-replicate the
+  40k control ×2–3 to measure the paired-comparison noise floor,
+  (2) paired aux-off arms in parallel, (3) 1–2 more pre-registered
+  40k arms (stream-counts, FAST v3), (4) local box becomes the eval
+  box; temporary-box discipline (batch pre-reg first, continuous
+  rsync-back, save-boundary sizing). If access materializes, that
+  post is the plan skeleton — draft the batch pre-reg before
+  touching the box.
 - 16:13Z: paired run supersedes standalone own-baseline; GPU 24/7
   norm. **Done this session** (pre-reg posted, launcher ready,
   own-baseline marked superseded).
@@ -115,14 +149,27 @@ lines" may already exist upstream; verify before writing code
 2. **Owner-steered reviews** (next work session, in order): (a)
    rules/prompts full pass (16:21Z), (b) bijou code deep-dive →
    ranked list posted in-channel + ideas.md (16:17Z).
-3. **Noise-draw ensembling probe** (unconstrained class) —
+3. **80k flow panel eval** (owner 16:52Z) — after the paired arms
+   finish, BEFORE any local dataset cleanup: pull
+   `bijou_flow_artrunk_h1024_40k_ddp2/step_080000`, panel-score on
+   the current (pre-removal) data + both plans (curated_v0_k4l2 +
+   sealed) for comparability with 5.8017. ~1.7 h/plan.
+4. **Noise-draw ensembling probe** (unconstrained class) —
    [pre-reg](posts/2026-08-05-prereg-noise-draw-ensembling.md);
    FIRST verify upstream `--sample-draws` already does the job; runs
    at the next GPU boundary (post-paired-run, or during a save
    window).
-4. **Stage-2 sign-convention pre-reg draft** (mirror trio:
+5. **Stage-2 sign-convention pre-reg draft** (mirror trio:
    dishTidyUp_anomaly wrist_flex flagship) — optical-flow probe,
    CPU-heavy, pre-reg before running.
+
+**Dataset-cleanup boundary (owner 16:50Z, sequencing proposed
+in-channel, unconfirmed): do NOT re-pull / mutate the local
+`community_curated_v0` copy until the paired arms AND the 80k eval
+are done** — the sealed plan pins kevin510 + bbox-2 episodes, and the
+paired arms are pre-registered on the current revision. Before any
+upstream push lands locally: record the pre-removal HF revision hash
+in the ledger.
 
 ## Data-blocked / handoff notes for the tick loop
 
