@@ -833,30 +833,35 @@ line only). The **loss oracles** — a 2-step tiny-backbone CPU run after
 any change near the math (tied to the current tiny-gemma4; regenerate ⇒
 re-baseline loudly):
 
-    uv run python -m bijou.train --train-data /home/marius/w/community_dataset_v1_v3 \
+    uv run python -m bijou.train --train-data ~/datasets/mcobzarenco/so101_pick_place_v2 \
       --backbone outputs/tiny-gemma4 --decoder-hidden 64 --decoder-heads 2 \
       --decoder-intermediate 128 --decoder-cross-heads 2 --stream-counts 1 1 2 \
       --steps 2 --batch-size 2 --num-workers 2 --log-every 1 --eval-every 5 \
       --save-every 1000 --eval-samples 4 --device cpu --seed 0 \
       --save-dir outputs/train/oracle_tmp
 
-must reproduce **flow 1.7766 / 1.6235** exactly; with `--decoder ar_fast
+must reproduce **flow 2.7903 / 1.9152** exactly; with `--decoder ar_fast
 --fast-tokenizer tests/fixtures/tiny_fast_tokenizer` added, **AR
-4.8795 / 4.8750**; with `--decoder ar_backbone --fast-tokenizer
+4.9232 / 4.8631**; with `--decoder ar_backbone --fast-tokenizer
 tests/fixtures/tiny_fast_tokenizer` (and the `--decoder-*` shape flags
-OMITTED — ar_backbone rejects them), **27.8513 / 27.7803** (random tiny
-weights under full-vocabulary CE — an anchor, not a quality signal;
-re-baselined 2026-08-03 for prompt format 3 — pipe cameras, extended
-sandwich, [generate|…], soft state token, ALL decoders move — and
-suffix format 5 — headerless values, no mode token, no suffix state;
-prior anchors: format-2+4 flow 1.8896/1.7237, ar_fast 4.8917/4.8683,
-ar_backbone 27.7483/27.7840; earlier
-anchors: format-3 27.7622/27.7245, format-2 27.8116/27.8348, ar_fast
-pre-tags 4.8803/4.8656).
+OMITTED — ar_backbone rejects them), **27.8262 / 27.7701** (random tiny
+weights under full-vocabulary CE — an anchor, not a quality signal).
+Re-baselined 2026-08-05: the oracle corpus is now the rig v2 dataset
+`so101_pick_place_v2` at its standard box-mirror path — staged on
+every machine, unlike the laptop-only `community_dataset_v1_v3` the
+oracles used before (owner call, #fontaine; the corpus change moves
+every anchor, same code — verified bitwise-reproducible twice on the
+fontaine box at ML-code parity with main). Prior anchors on the
+retired corpus: 2026-08-03 formats 3+5 flow 1.7766/1.6235, ar_fast
+4.8795/4.8750, ar_backbone 27.8513/27.7803; format-2+4 flow
+1.8896/1.7237, ar_fast 4.8917/4.8683, ar_backbone 27.7483/27.7840;
+earlier: format-3 27.7622/27.7245, format-2 27.8116/27.8348, ar_fast
+pre-tags 4.8803/4.8656.
 Flags-on (unfreeze) oracles live in
 `outputs/probe_unfreeze_gradflow.py` (flow 1.5825, AR 4.8345,
-ar_backbone 27.7346 — same re-baseline — with the FULL-depth
-partition checks, asserted in the probe). Regenerate the tiny backbone
+ar_backbone 27.7346 — measured 2026-08-03 on the RETIRED corpus; the
+probe is gitignored and lives on the laptop, so its rig-v2 anchors
+are pending a re-run there — until then its numbers gate nothing). Regenerate the tiny backbone
 with
 `uv run python -m bijou.gemma4.testing --output outputs/tiny-gemma4`
 (per checkout; changing it re-baselines every oracle). gemma4 changes
