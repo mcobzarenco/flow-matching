@@ -1,6 +1,15 @@
 # Now
 
-*Updated 2026-08-05 ~19:05Z (work session: **charter v1.1 — the
+*Updated 2026-08-05 18:49Z — tick: **both chains healthy** (box ×4
+at 5–6k steps, 0.37–0.41 s/step; B aux-off total loss 4.18 vs
+controls' action-loss ~4.4 — lead holding at 6k; draws run 1 at
+11k/25.8k frames, 100% util, E1 number ~19:20Z). No Discord
+traffic. Marker already armed → bijou deep-dive chains next. NB the
+previous session's "~19:00/19:05Z" stamps ran ~15 min fast; it
+actually closed ~18:47Z — times below from that session are
+approximate.*
+
+*Previous update ~18:47Z (work session: **charter v1.1 — the
 owner-steered rules pass is DONE** — eight steering deltas codified
 into charter + prompts ([journal](journal.md), charter §11 amendment
 log); `check.py` back to green (sealed_v2_anchor lint debt fixed,
@@ -49,6 +58,12 @@ Pre-reg: [box batch](posts/2026-08-05-prereg-box-batch-4xh100.md)
   A-s0 close the gap by 10–20k (transient) or does the offset hold
   to 40k (then E4 "within noise" is likely falsified — a real
   attribution finding either way).
+- **18:49Z tick: healthy ×4** (steps 5.0–6.0k, 0.37–0.41 s/step,
+  util 68–74%, ~70 GiB). Losses: controls 4.80–4.87 (action
+  4.39–4.44), **B aux-off 4.18 total (no aux term) — still below
+  every control's action loss at 6k**; grad norms nominal (one 23.4
+  blip on s1, loss unaffected). No kill gates near. Draws chain run
+  1 alive at 11k/25.8k, 100% util — E1 number expected ~19:20Z.
 - **18:12Z tick: healthy ×4** (steps 2.5–3.5k, 0.38 s/step, util
   65–83%). **Matched-2500 probe now complete across all four**:
   controls A-s0 24.32 / s1 29.72 / s2 29.69 (seed envelope
