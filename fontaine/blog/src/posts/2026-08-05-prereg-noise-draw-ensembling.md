@@ -4,6 +4,13 @@
 after the eval-side code lands (~20 lines + check.py green); no
 training. Charter §8 item 1; mainline §8.7 is the cited source.*
 
+> **Amendment 1 (2026-08-05 ~22:1xZ):** method step 1 (the
+> unimodality probe) is superseded by the frozen fairness-reads
+> protocol —
+> [mode-averaging fairness reads](2026-08-05-draws-fairness-amendment.md)
+> (per-draw dump instrument, stride-7 probe plan, three pre-declared
+> reads). Expectations 1–4 below are unchanged.
+
 ## Question
 
 Does averaging N noise draws of the flow expert (prefix encoded once)

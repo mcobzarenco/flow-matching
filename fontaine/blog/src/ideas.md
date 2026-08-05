@@ -36,6 +36,19 @@ information × cheapness. Status tags: `queued` / `screening` /
   *late-horizon* deficit preferentially: chunk_mae moves a lot,
   first_mae barely. Score the draws-10 run per-step, not just
   pooled.
+- **Fairness reads pre-registered (2026-08-05 ~22:1xZ,
+  [Amendment 1](posts/2026-08-05-draws-fairness-amendment.md)),
+  from the owner's 21:49Z is-MAE-unfair-to-flow challenge:**
+  instrument finding — per-draw chunks never left the process
+  (`--dump-predictions` stores the post-average), so
+  `bijou.eval --dump-draws` landed (tests + bit-exact scoring
+  oracle), a 2,458-frame stride-7 probe plan + launcher
+  (`~/eval_flow80k_drawsprobe_dump.sh`, ~30 min 1×GPU) is frozen,
+  and `fontaine/scripts/draws_fairness.py` computes the three
+  pre-declared reads (mean-of-draws / best-of-N / dispersion-
+  conditioned deficit; degenerate draws=1 validation reproduces
+  6.6232 exactly). Launch at the first quiet local-GPU boundary
+  after the draws chain.
 
 ## 2. Throughput: bucketed batching + torch.compile on the frozen prefix — `screening` (2a landed 2026-08-05; GPU A/B conditional)
 

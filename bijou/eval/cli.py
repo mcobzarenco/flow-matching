@@ -407,6 +407,16 @@ def parse_args() -> argparse.Namespace:
         "DCT-truncation sweep) instead of re-implementing them",
     )
     parser.add_argument(
+        "--dump-draws",
+        type=Path,
+        default=None,
+        help="flow-only, requires --sample-draws > 1: write the bijou "
+        "policy's PRE-AVERAGE per-draw chunks [frames, draws, chunk, dim] "
+        "(plus truth/valid/frame identity) as a compressed .npz — the "
+        "per-draw data that ensembling otherwise averages away (draw "
+        "dispersion, best-of-N bounds); the prediction path is untouched",
+    )
+    parser.add_argument(
         "--report",
         type=Path,
         default=None,
@@ -431,6 +441,15 @@ def parse_args() -> argparse.Namespace:
         parser.error(
             "--sample-plan and --num-samples are mutually exclusive: the "
             "plan IS the sample",
+        )
+    if args.dump_draws is not None and (
+        args.checkpoint is None or args.sample_draws <= 1
+    ):
+        parser.error(
+            "--dump-draws needs a bijou checkpoint ensembling flow draws "
+            "(--checkpoint plus --sample-draws > 1): at draws=1 there is "
+            "no per-draw stack to dump — that run's prediction IS the "
+            "single draw, --dump-predictions already covers it",
         )
     return args
 
@@ -668,7 +687,11 @@ def main() -> int:
     report_samples: dict[int, ReportSample] = {}
 
     scores: dict[str, list[FrameScore]] = {p.name: [] for p in policies}
+    # Identity/truth columns are shared by both dump flavors; the heavy
+    # per-policy and per-draw payloads fill only when their flag asks.
+    dumping = args.dump_predictions is not None or args.dump_draws is not None
     dump_predictions: dict[str, list[torch.Tensor]] = {p.name: [] for p in policies}
+    dump_draws: list[torch.Tensor] = []
     dump_truth: list[torch.Tensor] = []
     dump_valid: list[torch.Tensor] = []
     dump_repo: list[str] = []
@@ -715,6 +738,20 @@ def main() -> int:
             predictions = policy.predict(items, batch_indices)
             elapsed = (time.perf_counter() - start) / len(items)
             batch_predictions[policy.name] = predictions
+            if (
+                args.dump_draws is not None
+                and bijou_policy is not None
+                and policy is bijou_policy
+            ):
+                # Collected before the narrated/Q3 passes can call
+                # predict again and overwrite the policy's last batch.
+                assert bijou_policy.last_draws is not None  # draws > 1
+                for item, row in zip(
+                    items,
+                    bijou_policy.last_draws,
+                    strict=True,
+                ):
+                    dump_draws.append(row[:, : item["action"].shape[0]].float())
             for item, index, predicted in zip(
                 items,
                 batch_indices,
@@ -735,13 +772,13 @@ def main() -> int:
                 )
                 if args.dump_predictions is not None:
                     dump_predictions[policy.name].append(predicted)
-                    if policy is policies[0]:
-                        dump_truth.append(truth.float())
-                        dump_valid.append(~item["action_is_pad"])
-                        dump_repo.append(str(item["repo_id"]))
-                        dump_index.append(index)
-                        dump_episode.append(int(item["episode_index"]))
-                        dump_frame.append(int(item["frame_index"]))
+                if dumping and policy is policies[0]:
+                    dump_truth.append(truth.float())
+                    dump_valid.append(~item["action_is_pad"])
+                    dump_repo.append(str(item["repo_id"]))
+                    dump_index.append(index)
+                    dump_episode.append(int(item["episode_index"]))
+                    dump_frame.append(int(item["frame_index"]))
                 if args.report is not None and index in report_indices:
                     sample = report_samples.get(index) or ReportSample(
                         index=index,
@@ -820,6 +857,7 @@ def main() -> int:
         dump_index=dump_index,
         dump_episode=dump_episode,
         dump_frame=dump_frame,
+        dump_draws=dump_draws,
     )
     if distributed:
         gathered: list[ShardResults | None] = [None] * world_size
@@ -831,8 +869,9 @@ def main() -> int:
     else:
         results = merge_shards([local])
 
-    if args.dump_predictions is not None:
-        payload: dict[str, np.ndarray] = {
+    def dump_identity() -> dict[str, np.ndarray]:
+        """Truth + frame-identity columns shared by both dump flavors."""
+        return {
             "truth": torch.stack(results.dump_truth).numpy(),
             "valid": torch.stack(results.dump_valid).numpy(),
             "index": np.array(results.dump_index),
@@ -845,10 +884,32 @@ def main() -> int:
             # Core-panel membership (all-True without a sample plan).
             "core": np.array([i in core_indices for i in results.dump_index]),
         }
+
+    if args.dump_predictions is not None:
+        payload: dict[str, np.ndarray] = dump_identity()
         for name, chunks in results.dump_predictions.items():
             payload[f"pred:{name}"] = torch.stack(chunks).numpy()
         np.savez_compressed(args.dump_predictions, allow_pickle=False, **payload)
         print(f"dumped predictions to {args.dump_predictions}", flush=True)
+    if args.dump_draws is not None:
+        assert bijou_policy is not None  # parse_args enforced
+        np.savez_compressed(
+            args.dump_draws,
+            allow_pickle=False,
+            **dump_identity(),
+            # [frames, draws, chunk, dim] pre-average stacks; mean over
+            # axis 1 reproduces pred:<policy> up to float32 rounding.
+            draws=torch.stack(results.dump_draws).numpy(),
+            # Scoring semantics, so the npz stays interpretable standalone
+            # (the report JSON records the full set — #18.1 precedent).
+            policy=np.array(bijou_policy.name),
+            sample_steps=np.array(args.sample_steps),
+            sample_method=np.array(args.sample_method),
+            sample_draws=np.array(args.sample_draws),
+            noise_key=np.array(args.noise_key),
+            seed=np.array(args.seed),
+        )
+        print(f"dumped per-draw chunks to {args.dump_draws}", flush=True)
 
     # Headline aggregation (summaries, per-dataset, Q2, paired) runs over
     # the CORE panel only — under a sample plan the labeled-oversample

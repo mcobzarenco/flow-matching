@@ -86,6 +86,8 @@ def _shard(
         # Synthetic identity: episode = frame id, frame-in-episode = 10x.
         dump_episode=list(frame_ids),
         dump_frame=[10 * i for i in frame_ids],
+        # Per-draw stacks: [draws=4, chunk=2, dim=3], filled with the id.
+        dump_draws=[torch.full((4, 2, 3), float(i)) for i in frame_ids],
     )
 
 
@@ -122,6 +124,7 @@ def test_merge_shards_sorts_and_is_world_size_invariant() -> None:
         5.0,
         8.0,
     ]
+    assert [float(t[0, 0, 0]) for t in merged.dump_draws] == [0.0, 3.0, 5.0, 8.0]
 
     # Gather order must not matter (all_gather_object order is rank
     # order, but nothing downstream may depend on it).

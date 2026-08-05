@@ -75,6 +75,9 @@ class ShardResults:
     # corpus composition changes.
     dump_episode: list[int]
     dump_frame: list[int]
+    # --dump-draws: the bijou policy's per-frame [draws, chunk, dim]
+    # pre-average stacks, row-aligned with dump_index ([] when off).
+    dump_draws: list[Tensor]
 
 
 def merge_shards(shards: list[ShardResults]) -> ShardResults:
@@ -129,4 +132,5 @@ def merge_shards(shards: list[ShardResults]) -> ShardResults:
         dump_index=permuted(dump_index),
         dump_episode=permuted([e for shard in shards for e in shard.dump_episode]),
         dump_frame=permuted([f for shard in shards for f in shard.dump_frame]),
+        dump_draws=permuted([d for shard in shards for d in shard.dump_draws]),
     )

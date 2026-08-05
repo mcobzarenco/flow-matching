@@ -1,6 +1,41 @@
 # Now
 
-*Updated 2026-08-05 21:47–21:5xZ (real `date -u`) — tick: **both chains
+*Updated 2026-08-05 ~21:51–22:2xZ (real `date -u`) — work session: **THE
+MODE-AVERAGING FAIRNESS INSTRUMENT IS EXECUTION-READY — the owner's
+21:49Z three pre-declared reads now have a data path**
+([Amendment 1](posts/2026-08-05-draws-fairness-amendment.md) on the
+noise-draw pre-reg). **Instrument finding en route: the pre-declared
+"draws-10 per-draw dumps" could not have existed** — the draws chain
+passes no dump flag, and `--dump-predictions` stores the
+*post-average* prediction; per-draw chunks died inside
+`predict_with_text`. Landed: (1) **`bijou.eval --dump-draws`** —
+pre-average `[frames, draws, chunk, dim]` npz + full identity columns
+(#18.1 conventions) + standalone scoring-semantics scalars, loud
+constraints (needs `--checkpoint` + `--sample-draws > 1`), threaded
+through the DDP shard merge; `collapse_draws` factored pure +
+unit-tested (dump averages back byte-identical to the prediction —
+the mean is still taken once on the full stack). (2) **Probe frozen**:
+stride-7 core subset plan (2,458 frames / 792 repos, deterministic
+builder) + launcher `~/eval_flow80k_drawsprobe_dump.sh` (draws=10
+heun-30, ~30 min 1×GPU, GPU-quiet guard, auto-runs the analysis;
+E1-style gate: draw-0 frame-MAE drift vs the banked flow npz < 0.05).
+(3) **`fontaine/scripts/draws_fairness.py`** — the three reads with
+the report's exact valid-element pooling; joins probe rows to the
+banked AR/flow npzs on concat `index` with hard row-agreement asserts.
+**Oracles: banked AR-100k panel rebuilt through the edited scoring
+path 12/12 cells d=0 (incl. 5.802585); degenerate draws=1 validation
+reproduces 6.6232 EXACTLY on reads 1+2 with all-zero dispersion.**
+check.py green (184 tests, +5). Launch: first quiet local-GPU
+boundary after the draws chain (~06–09Z), before the results post.
+Babysits 21:52/22:1xZ: box ×4 healthy @20.3–23k, 0.39–0.42 s/step
+(one benign 5.6 s save blip on B; B aux-off total 3.487@23k, still
+at/below control action losses 3.63–3.68); draws run 2 @17.2k/25.8k
+99% util (ETA ~23:50Z, then runs 3–5). No Discord traffic. GPUs busy
++ CPU queue non-empty (stage-2 sign pre-reg, lit slice due, E4B
+screen pre-reg pending owner pick) → `run_work_next` armed per
+no-idle-pauses.*
+
+*Previous update 2026-08-05 21:47–21:5xZ (real `date -u`) — tick: **both chains
 healthy; PROBE GATE <9@30k EFFECTIVELY MET EARLY ON TWO CONTROLS —
 s1 8.991@18k, s2 8.982@18k, the first sub-9 probes of the batch**
 (A-s0 9.15@18.5k → 9.31@19k noisy bounce; B aux-off 9.58@20.5k — B
@@ -774,3 +809,11 @@ subsets materialized + leakage-certified, wrap census clean; the
 benchmark can now execute the moment the box reads fill its slots,
 instead of losing a session to prep at the quiet boundary (skipped
 lit slice again: ran ~45 min ago real-clock; next session takes it).
+Ninth consecutive all-CPU session (~21:51–22:2xZ): the draws-fairness
+instrument — the owner's live 21:49Z challenge went from
+in-channel pre-declaration to execution-ready (dump path + frozen
+probe + validated reads) before the data it needs finishes
+computing; the probe itself costs ~30 GPU-min instead of a ~5 h
+full-panel repeat (skipped lit slice: owner-steered item took the
+session; the slice is now two sessions overdue — next session MUST
+take it).

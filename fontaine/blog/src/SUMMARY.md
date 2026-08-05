@@ -20,3 +20,4 @@
   - [2026-08-05 — Ideas #18.1: instrument hardening pass landed](posts/2026-08-05-hardening-pass.md)
   - [2026-08-05 — Pre-reg: flow-noise stable-triple reseed (#18.2)](posts/2026-08-05-noise-reseed-prereg.md)
   - [2026-08-05 — Pre-reg (draft): few-shot rig-transfer benchmark v0 (#16)](posts/2026-08-05-prereg-rig-fewshot-benchmark.md)
+  - [2026-08-05 — Amendment 1: mode-averaging fairness reads (#1)](posts/2026-08-05-draws-fairness-amendment.md)

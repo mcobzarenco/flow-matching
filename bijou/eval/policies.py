@@ -176,6 +176,18 @@ def noise_for_item(
     return draw_noise(seed, index, draw, shape)
 
 
+def collapse_draws(stacked: Tensor) -> tuple[list[Tensor], list[Tensor]]:
+    """Split a [draws, batch, chunk, dim] stack into the per-item ensemble
+    means (the policy's prediction — the mean commutes with the affine
+    unnormalization, so raw-degree averaging is exact) and the per-item
+    [draws, chunk, dim] stacks that --dump-draws persists. The mean is
+    taken once, on the full stack, so dumping cannot perturb the
+    prediction path."""
+    means = [row.cpu() for row in stacked.mean(dim=0)]
+    per_item = [row.cpu() for row in stacked.permute(1, 0, 2, 3)]
+    return means, per_item
+
+
 class BijouPolicy:
     """A bijou training checkpoint. Normalization is per dataset with the
     stats attached to each item (identical to training; works on held-out
@@ -208,6 +220,11 @@ class BijouPolicy:
         self.sample_steps = sample_steps
         self.method = method
         self.sample_draws = sample_draws
+        # Per-item [draws, chunk, dim] stacks from the LAST ensembled
+        # batch (--dump-draws reads them right after predict; one batch
+        # of chunks, so retention is trivial). None until the first
+        # ensembled batch — and always None at draws=1.
+        self.last_draws: list[Tensor] | None = None
         self.generate = generate
         if noise_key not in NOISE_KEYS:
             raise SystemExit(
@@ -360,7 +377,8 @@ class BijouPolicy:
                     for draw in range(self.sample_draws)
                 ],
             )
-            return [row.cpu() for row in stacked.mean(dim=0)], None
+            means, self.last_draws = collapse_draws(stacked)
+            return means, None
         # Flow integrates from per-item seeded noise (deterministic and
         # batch-composition-independent); AR decodes greedily and takes
         # none.

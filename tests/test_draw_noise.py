@@ -1,10 +1,16 @@
-"""Noise-draw ensembling seed derivation (bijou.eval.policies.draw_noise)."""
+"""Noise-draw ensembling seed derivation (bijou.eval.policies.draw_noise)
+and the ensemble collapse that --dump-draws taps."""
 
 from __future__ import annotations
 
 import torch
 
-from bijou.eval.policies import DRAW_SEED_STRIDE, draw_noise, sample_noise
+from bijou.eval.policies import (
+    DRAW_SEED_STRIDE,
+    collapse_draws,
+    draw_noise,
+    sample_noise,
+)
 
 SHAPE = (50, 6)
 
@@ -53,3 +59,20 @@ def test_stride_survives_torch_seed_truncation() -> None:
     for i in range(len(draws)):
         for j in range(i + 1, len(draws)):
             assert not torch.equal(draws[i], draws[j]), (i, j)
+
+
+def test_collapse_draws_mean_matches_and_keeps_every_draw() -> None:
+    """The dumped per-draw stacks must (a) contain every draw verbatim and
+    (b) average back to exactly the chunks the policy predicts — the dump
+    is a pure tap, never a second computation of the ensemble."""
+    stacked = torch.randn(3, 4, 5, 6)  # [draws, batch, chunk, dim]
+    means, per_item = collapse_draws(stacked)
+    assert len(means) == 4 and len(per_item) == 4
+    for i in range(4):
+        assert means[i].shape == (5, 6)
+        assert per_item[i].shape == (3, 5, 6)
+        for d in range(3):
+            assert torch.equal(per_item[i][d], stacked[d, i])
+        # Byte-identical to the pre-tap prediction path: one mean over the
+        # full stack, taken before any per-item split.
+        assert torch.equal(means[i], stacked.mean(dim=0)[i])
