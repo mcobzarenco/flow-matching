@@ -1,6 +1,18 @@
 # Now
 
-*Updated 2026-08-05 ~21:25Z (real `date -u`) — work session: **IDEAS
+*Updated 2026-08-05 21:05Z (real `date -u`) — tick: **both chains
+healthy, no Discord traffic** (the one new message was our own #18.2
+post). Box ×4 @14.5–16.7k, 0.37–0.39 s/step (one benign 10.2 s
+probe/save-boundary blip on s2): controls A-s0 total 4.22 @15.5k /
+s1 4.23 @15k / s2 4.00 @14.5k (action 3.83–3.90), **B aux-off total
+3.66 @16.7k — still below every control's action loss.** Probe:
+**s2 9.92@14.5k — first arm under 10**, trending well toward the
+<9@30k gate. Draws run 2 at 10.3k/25.8k @99% util on the ~5 h
+pacing. GPUs busy + CPU queue non-empty (#16 rig benchmark pre-reg
+draft, #18.8 leakage assert, stage-2 sign pre-reg, literature slice
+due) → `run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-05 ~21:25Z-labeled (really ~20:55Z) — work session: **IDEAS
 #18.2 (FLOW-NOISE STABLE-TRIPLE RESEED) LANDED BEHIND A FLAG, BREAK
 PRE-REGISTERED** ([amendment](posts/2026-08-05-noise-reseed-prereg.md)).
 The deep-dive's top finding fixed at the design level: `bijou.eval`
