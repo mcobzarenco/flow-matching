@@ -198,8 +198,9 @@ toward the exploration budget. Opening slate (unranked until the
 first lit pass):
 
 - **Trunk swaps at reachable scale:** E2B → stronger open VLM
-  families (Qwen-VL, Gemma-3-class) through the existing stage-2
-  trunk-swap protocol; also the queued base-vs-IT swap (idea #10) as
+  families (Qwen-VL, larger Gemma-4 variants — E4B/12B) through the
+  existing stage-2 trunk-swap protocol; also the queued base-vs-IT
+  swap (idea #10) as
   the cheapest member of this family.
 - **Video/dynamics-pretrained encoders** (V-JEPA-style) vs
   image-language pretraining — the grounding probes (idea #11) say

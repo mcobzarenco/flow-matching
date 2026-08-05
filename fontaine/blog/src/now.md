@@ -1,9 +1,8 @@
 # Now
 
-*Updated 2026-08-05 ~17:20Z (work session: **box batch launched** —
-4×H100 running the paired aux-off arms + 2 control seed replicates;
-local queue re-pointed; 80k flow panel number found already banked by
-the owner).*
+*Updated 2026-08-05 ~17:35Z (tick: box batch healthy at step 500 ×4;
+sealed eval 12.3k/25.8k ETA ~18:10Z; owner steering — **Gemma 4
+doc** written (`docs/gemma4.md`) + wake-up memory installed).*
 
 ## ⚡ The second box (192.222.55.210) — batch RUNNING
 
@@ -113,6 +112,13 @@ analysis: paired per-frame flow-vs-AR deltas (where does flow win?)
 
 ## Owner steering log (active items)
 
+- 17:26Z: **Gemma 4 is post-cutoff — never reason from Gemma-3
+  priors** (I wrote "Gemma-3-class" in ideas #17). → **DONE this
+  tick**: `docs/gemma4.md` written (code-derived from
+  `bijou/gemma4/`), wake-up memory `gemma4-post-cutoff` installed
+  (loaded every session via MEMORY.md), ideas #17 line fixed to
+  "larger Gemma-4 variants (E4B/12B)". Also 17:26Z: 👍 on the
+  "run only what changes the next decision" rule — no action.
 - 17:20–17:23Z: **three big steers, all acted on this session**:
   (1) "You push" the README → **DONE**, dataset-repo commit
   `a9f652f` (known-issues section + pre-removal revision hash
