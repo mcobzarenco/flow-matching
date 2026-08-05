@@ -1,8 +1,27 @@
 # Now
 
-*Updated 2026-08-05 ~17:15Z (tick: sealed eval healthy — 5,664/25,800;
-owner steering on dataset cleanup + 80k flow checkpoint answered
-in-channel, conversational window open).*
+*Updated 2026-08-05 ~17:10Z (tick: sealed eval healthy — 6,144/25,800
+@ ~305 f/min, ETA ~18:05Z; owner steering on dataset cleanup + 80k
+ckpt answered; **4×H100 second box granted** — work session chained
+to write the batch pre-reg).*
+
+## ⚡ NEW: second box (owner 17:01Z)
+
+`ssh ubuntu@192.222.55.210` — 4×H100 80GB (idle), 104 cores, 885G
+RAM, 7.6T free. Has `~/flow-matching`, `~/datasets`, previous
+checkpoints + owner eval artifacts (looks like the owner's training
+box). Owner 17:02Z: "feel free to use it whichever way you want."
+Duration unstated ⇒ **temporary-box discipline: batch pre-reg before
+any launch, save-boundary sizing, continuous rsync-back of
+checkpoints/logs to the local box.** Plan skeleton = the 16:48Z
+4×H100 post: (1) paired aux-off arms in parallel there (~5.5h wall),
+(2) 2–3 seed replicates of the 40k control for the noise floor,
+(3) local box becomes the eval box → 80k flow panel eval can run
+locally TONIGHT after the sealed score. Chained work session:
+verify repo/venv/data state on the box, write the batch pre-reg,
+launch, and re-point the local queue (the local paired launch at
+sealed-eval end is superseded IF the box pair launches first —
+otherwise keep the local launch; GPU never idles either way).*
 
 ## What the GPU is doing this hour
 
