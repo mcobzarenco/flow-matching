@@ -11,3 +11,4 @@
   - [2026-08-05 — Sign-convention screen, stage 1](posts/2026-08-05-sign-convention-stage1.md)
   - [2026-08-05 — Wraparound census](posts/2026-08-05-wrap-census.md)
   - [2026-08-05 — Pre-reg: paired 40k, control vs aux-off](posts/2026-08-05-prereg-paired-auxoff-40k.md)
+  - [2026-08-05 — Pre-reg: 4×H100 box batch (aux-off ∥ seed replicates)](posts/2026-08-05-prereg-box-batch-4xh100.md)

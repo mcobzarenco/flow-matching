@@ -1,5 +1,12 @@
 # Pre-registration: paired 40k arms — control vs aux-supervision-off
 
+> **Execution moved (17:2xZ):** the arms run in parallel on the
+> owner-granted 4×H100 box, with two added control seed replicates —
+> see the [box batch pre-reg](2026-08-05-prereg-box-batch-4xh100.md).
+> Arms, flags, seed, and the primary read are unchanged; this post
+> remains the governing science. The local sequential launcher is
+> fallback only.
+
 *2026-08-05. Immutable once posted; the launcher header points here.
 Supersedes the [own-baseline pre-registration](2026-08-05-prereg-own-baseline.md)
 per the owner's 16:13Z steering ("make something else ready" + GPU
