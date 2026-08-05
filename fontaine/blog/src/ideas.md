@@ -49,6 +49,15 @@ information × cheapness. Status tags: `queued` / `screening` /
   conditioned deficit; degenerate draws=1 validation reproduces
   6.6232 exactly). Launch at the first quiet local-GPU boundary
   after the draws chain.
+- **FIRST DRAWS-10 PANEL READ (2026-08-05 23:31Z, run 2 of the
+  chain, full 25.8k-frame panel): chunk_mae 5.365 / first_mae 1.424**
+  vs single-draw 6.6232/1.9331 (−19%/−26%) — **mean-of-10 flow beats
+  the AR-100k anchor (5.8026/2.1431) on both columns** (unconstrained
+  class: 10× NFE; charter §2 caveat until distilled — #12 SnapFlow
+  leg). Banked-prediction check: "chunk_mae moves a lot" ✅;
+  "first_mae barely" ❌ — first_mae moved 26%, so the gain is NOT
+  purely late-horizon; per-step decomposition promoted to a required
+  read in the results post (after runs 3–5 + the fairness probe).
 - **Read 4 pre-declared (2026-08-05 ~22:5xZ,
   [Amendment 2](posts/2026-08-05-draws-fairness-amendment2.md), from
   the lit slice):** the **energy score** (RMS-normalized, valid-
@@ -232,12 +241,23 @@ variants, consistency/distillation toward 1–2-step deployment decodes
   kantine/domotic_dishTidyUp_anomaly wrist_flex (median frame corr
   −0.75). Instrument: `probes/probe_sign_convention_stage1.py`;
   [results post](posts/2026-08-05-sign-convention-stage1.md).
-- **Next / falsification:** stage-2 optical-flow probe (flow curl vs
-  wrist-velocity sign) on the mirror-signature candidates —
-  pre-registered before running; catches internally-consistent
-  mirror repos stage 1 structurally misses. If confirmed, the repair
-  arm (flip-corrected derived corpus + leakage check) is a cheap
-  paired fine-tune. Awaiting owner steer on stage-2 scope.
+- **Stage 2 PRE-REGISTERED (2026-08-05 ~23:3xZ,
+  [pre-reg](posts/2026-08-05-prereg-sign-stage2.md)):** optical-flow
+  cross-check on the three mirror-signature cells (dishTidyUp_anomaly
+  wrist_flex, groceriesSorting_expert wrist_roll, aractingi
+  shoulder_lift), CPU-only (~20–40 min spare cores). Frozen: Farneback
+  params, isolated-motion pair selection (|v_d| ≥ 0.5°/frame, 2×
+  dominance), ego-cam identification rule (cams are unlabeled),
+  15-repo so100 reference population with an 80% sign-consistency
+  validity gate, MIRRORED/NORMAL/INCONCLUSIVE bootstrap rules,
+  synthetic-flip hard validation gate before candidate cells open,
+  Dongkkka + kevin510 as specificity controls, and the stream-
+  consistency read (calibration-mirror vs action-only flip).
+  Feasibility verified pre-post: all repos local, torchcodec decodes
+  the AV1 videos, state+action parquet intact. Execution = a later
+  work session; if ≥1 MIRRORED, the repair arm (flip-corrected
+  derived corpus through #18.8 certs + paired screen) gets its own
+  pre-reg.
 
 ## 14. ±180° wraparound census & shortest-arc error — `confirmed`/banked (measured 2026-08-05)
 

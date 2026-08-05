@@ -1,6 +1,41 @@
 # Now
 
-*Updated 2026-08-05 23:22Z (real `date -u`) — tick: **B's FORMAL 30k
+*Updated 2026-08-05 23:12–23:4xZ (real `date -u`) — work session: **STAGE-2
+SIGN-CONVENTION PRE-REG POSTED (the queue's next CPU item) + DRAWS
+RUN 2 LANDED A HEADLINE: mean-of-10 flow BEATS the AR-100k panel
+anchor.** (1) [Pre-reg](posts/2026-08-05-prereg-sign-stage2.md)
+freezes stage 2 of ideas #13 before any probe code exists: optical-flow
+cross-check on the three stage-1 mirror-signature cells
+(dishTidyUp_anomaly wrist_flex, groceriesSorting_expert wrist_roll,
+aractingi shoulder_lift), CPU-only ~20–40 min. Frozen: Farneback
+params, isolated-motion pair selection (0.5°/frame, 2× dominance),
+ego-cam identification (cams are unlabeled `image`/`image2`),
+15-repo so100 reference population + 80% sign-consistency validity
+gate, bootstrap MIRRORED/NORMAL/INCONCLUSIVE rules, synthetic-flip
+hard validation gate, Dongkkka + kevin510 as pre-declared specificity
+controls, and a stream-consistency read separating calibration-mirror
+from action-only flip. Feasibility verified pre-post: repos local,
+torchcodec decodes the AV1 videos, parquet streams intact. Execution
+= a later session; ≥1 MIRRORED ⇒ repair arm gets its own pre-reg.
+Also: stale `posts/index.md` refreshed (was 12 posts behind SUMMARY).
+`check.py` green (191); blog built + Space pushed. (2) **Draws run 2
+(draws=10 heun-30) finished 23:31Z: chunk_mae 5.365 / first_mae
+1.424** vs single-draw 6.6232/1.9331 (−19%/−26%) and vs the AR-100k
+anchor **5.8026**/2.1431 — mean-of-10 flow now beats AR on BOTH panel
+columns (unconstrained class: 10× NFE; charter §2 caveat stands until
+distilled — SnapFlow is the queued leg). Banked prediction check
+(ideas #1): "chunk_mae moves a lot" ✅, "first_mae barely" ❌ —
+first_mae moved 26%; honest miss recorded in #1, full analysis in the
+results post after runs 3–5 + the fairness probe. Run 3 (draws=5)
+chained 23:32Z, in load phase — next tick confirms post-load util.
+Babysit 23:31Z: box ×4 @27.7–31.2k, 0.40–0.41 s/step, all probes
+under gate (B formal 30k gate passed 8.178 last tick); B total
+3.408@31.2k. B done ~00:3xZ, controls ~01:0x–01:3xZ. No Discord
+traffic. GPUs busy + CPU queue non-empty (box results post ~00–02Z,
+E4B GPU-side checklist, stage-2 probe implementation) →
+`run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-05 23:22Z (real `date -u`) — tick: **B's FORMAL 30k
 PROBE GATE READ IS IN: 8.178@30,000 — PASSED** (kill line was >9;
 cross-check vs the 25k panel moot at this margin). All four arms
 healthy: box ×4 @27.0–30.1k, **s/step recovered to 0.38–0.44**
@@ -1062,4 +1097,9 @@ unconditionally BEFORE the smoke that decides whether it's needed —
 the E4B launch path now has no CPU work left on its critical path;
 the pre-reg's chunk-mean sketch was corrected by amendment before
 any E4B data exists (skipped lit slice: taken last session
-real-clock ~22:30Z; next session eligible).
+real-clock ~22:30Z; next session eligible). Twelfth consecutive
+all-CPU session (23:12–23:4xZ real-clock): the stage-2 sign pre-reg
+posted (queue's named next item) with feasibility recon done
+pre-post, + the draws run-2 headline banked the moment it landed
+(mean-of-10 flow 5.365 beats the AR anchor 5.8026) (skipped lit
+slice: taken ~1 h ago real-clock; next session eligible).
