@@ -1,6 +1,47 @@
 # Now
 
-*Updated 2026-08-05 ~21:5xZ (real `date -u`) — work session: **IDEAS #16
+*Updated 2026-08-05 21:47–21:5xZ (real `date -u`) — tick: **both chains
+healthy; PROBE GATE <9@30k EFFECTIVELY MET EARLY ON TWO CONTROLS —
+s1 8.991@18k, s2 8.982@18k, the first sub-9 probes of the batch**
+(A-s0 9.15@18.5k → 9.31@19k noisy bounce; B aux-off 9.58@20.5k — B
+is now the *trailing* probe arm despite being ~2k steps ahead,
+further strengthening the B-early-lead-was-transient read). Box ×4
+@18.2–20.7k, 0.377–0.399 s/step, util 58–62%, ~71–74 GiB, grad norms
+nominal: A-s0 total 3.956@19.5k (action 3.642), s1 4.16@18.5k
+(action 3.816, one noisy line off 3.906/3.652), s2 4.01@18.2k
+(action 3.728), B aux-off total 3.665@20.66k — the action-loss
+margin keeps oscillating around zero at line noise (B 3.665 vs
+A-s0's action 3.642). Draws run 2 @14.75k/25.8k, 99% util. **LIVE
+EXCHANGE: owner 21:48:14Z** (landed seconds after the cursor read)
+— challenge on the flow-vs-AR crossover: k≤3 @ 30 fps ≈ 100 ms, not
+a realistic replan horizon (inference would need <100 ms). Replied
+21:5xZ agreeing with the arithmetic and the thrust: deployable
+regime is k≥5 where AR wins today; draws-10 is attribution, not a
+deployable config (N draws multiply decode cost); flow's residual
+case = first_mae grounding edge + (if draws close the gap) SnapFlow
+1-NFE distill + small N; otherwise attribution screens run on the
+AR recipe. **Steering applied: weight the AR-side arm in the
+limit-attribution plan.** Owner 21:49Z follow-up: **is MAE unfair
+to flow — mode-averaging-forgiving?** Replied: yes it's the right
+worry and it's measurable tonight on CPU from the draws-10 per-draw
+dumps — three pre-declared reads for the results post: (1)
+mean-of-draws MAE (ensembling ≈ manufacturing the mode-averaged
+predictor; closes gap ⇒ deficit was punished dispersion), (2)
+best-of-N MAE (oracle mode-match bound on
+'sampled-a-different-valid-mode'), (3) dispersion-conditioned
+deficit (the queued unimodality probe — deficit concentrating on
+high-disagreement frames = the unfair-penalty signature).
+Circumstantial fingerprint already present: flow wins horizon 0–1,
+deficit grows with horizon + motion quartile. Honest limit stated:
+MAE can't settle actual performance, and the owner's comm-MAE→rig
+bridge was built on AR checkpoints — if flow is being punished for
+multimodality, the comm holdout needs a distributional column
+(best-of-N / energy distance) before it can rank flow arms. Monitor
+polling the channel at 30 s while the exchange is live. GPUs busy + CPU queue non-empty (stage-2
+pre-reg, lit slice due, E4B screen launcher after box reads) →
+`run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-05 ~21:5xZ (real `date -u`) — work session: **IDEAS #16
 INSTRUMENTS LANDED — the rig benchmark is execution-ready up to its
 two slots** ([Amendment 1](posts/2026-08-05-prereg-rig-fewshot-benchmark.md)).
 Plan frozen (`plans/rig_fewshot_v0_k4l2.json`: 12 holdout eps — v2
