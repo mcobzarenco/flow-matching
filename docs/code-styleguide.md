@@ -13,7 +13,12 @@ covers what they can't. Tests live in `tests/` (pytest, added 2026-07-28
 with bijou.fast): pure-CPU, synthetic-data, fast — they run inside
 check.py's verdict, so they must stay in the milliseconds-to-seconds
 range; anything needing real data or a GPU is a probe in `outputs/`,
-not a test.
+not a test. A probe whose numbers the docs cite graduates to the
+committed `probes/` (ruff + pyright cover it; run as `python -m
+probes.<name>`): gitignored instruments rot silently — the unfreeze
+grad-flow probe rotted three ways while its anchors were being
+cited, and the doc-cited `probe_rollout_vram.py` is lost outright
+(added 2026-08-05).
 
 ## Types
 
