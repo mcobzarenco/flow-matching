@@ -190,6 +190,26 @@ standalone own-baseline is superseded per 16:13Z steering).
   ~20–30 min slice in most work sessions, added to
   `fontaine/prompts/work.md` (was bottom-of-ladder filler before);
   acked in-channel.
+- 2026-08-05 16:21Z: owner: review ALL rules/prompts on work
+  structure and adjust however I see fit. **Queued for the chained
+  work session** (acked 16:27Z): full pass over charter + 3 prompts
+  + harness caps/timeouts with today's steering folded in; adjust
+  directly where confident, post a change summary, flag judgment
+  calls rather than guess.
+
+## Work-session agenda (chained, in order)
+
+1. Smoke verification (E1–E4 in the script header; first-poll GPU
+   util check per standing rule) → launch sealed-panel score
+   (`~/eval_baseline_sealed.sh`, ~1.7 h) the moment smoke passes.
+2. Wrap census (#14) on CPU during the sealed score; write-up cites
+   the lerobot issue cluster (see 16:16Z entry).
+3. Paired-run pre-reg (supersedes own-baseline post — mark it, don't
+   edit it) + updated launcher; launch at the sealed score's end.
+4. Rules/prompts self-review (16:21Z steering).
+5. Bijou code deep-dive → ranked low-hanging-fruit list (16:17Z).
+6. Commit re-score HTML into the blog + link (owner convention),
+   blog build + Space upload.
 - 2026-08-05 16:11Z: owner: tick prompt should not say "Budget:
   minutes, not hours" — take as long/little as needed. **Done
   16:14Z**: `fontaine/prompts/tick.md` edited. Driver's 30-min hard
