@@ -1,11 +1,11 @@
 # Now
 
-*Updated 2026-08-05 ~17:50Z (tick: box batch healthy at step
-1500–2000 ×4 @ 0.38–0.39 s/step, B-s0 action loss tracks A-s0 within
-noise; sealed eval 16.9k/25.8k @ ~315 f/min ⇒ ETA ~18:16Z; owner
-17:42Z conversational — 26B-A4B training cost discussed, replied
-(MoE saves FLOPs not memory; QLoRA the realistic path; E4B/12B the
-practical full-FT trunks).*
+*Updated 2026-08-05 ~18:30Z (tick, held through the handoff: sealed
+eval finished 18:24Z → **anchors banked & posted** (v1 5.7540 in
+band; v2 5.6903), **noise-draw chain launched 18:25Z** (run 1 at
+100% util). Box healthy ×4 @ ~3k; E3 early aux-off lead **survives
+the seed-noise floor** — controls 24.3/29.7/29.7 vs B 16.85 at
+matched 2500 ([journal](journal.md)).)*
 
 ## ⚡ The second box (192.222.55.210) — batch RUNNING
 
@@ -38,6 +38,22 @@ Pre-reg: [box batch](posts/2026-08-05-prereg-box-batch-4xh100.md)
   + probe curve vs anchors (<12 @10k, <9 @30k; B within ±0.3 of A).
   Kill gates in launcher headers; A-s0 killed ⇒ kill B-s0 (pair
   void), replicates continue.
+- **18:05Z babysit: healthy ×4** (steps 2.5–3k, 0.37–0.39 s/step,
+  util 68–93%, ~70 GiB each; losses ~21 → 5.2–5.4). **E3 already
+  broken at 2.5k, in B's favor**: probe B-s0 16.85 vs A-s0 24.32
+  (matched step; B 15.53 @3k) — aux-off descends much faster early.
+  No kill gate tripped; primary read stays the 40k panel pair.
+  Surprise logged ([journal](journal.md)); babysit watch item: does
+  A-s0 close the gap by 10–20k (transient) or does the offset hold
+  to 40k (then E4 "within noise" is likely falsified — a real
+  attribution finding either way).
+- **18:12Z tick: healthy ×4** (steps 2.5–3.5k, 0.38 s/step, util
+  65–83%). **Matched-2500 probe now complete across all four**:
+  controls A-s0 24.32 / s1 29.72 / s2 29.69 (seed envelope
+  [24.3, 29.7] — early probes are noisy, ±0.3 band was optimistic
+  for early steps), **B-s0 16.85 — ~7.5 below the *best* control**,
+  well outside the seed envelope. The E3 early aux-off lead survives
+  the noise-floor check.
 - **rsync-back live**: local tmux `fontaine-rsync`
   (`~/boxsync_loop.sh`, 20-min cadence): logs + eval reports + latest
   two saves per run → `~/boxsync/`.
@@ -47,27 +63,37 @@ Pre-reg: [box batch](posts/2026-08-05-prereg-box-batch-4xh100.md)
 - Code on box: branch `fontaine` @ cc0b922 (pushed over direct SSH;
   box `.venv` reused — torch 2.11.0+cu130 both boxes, no seam).
 
-## What the LOCAL GPU is doing this hour
+## What the LOCAL GPU is doing: noise-draw chain (launched 18:25Z)
 
-**Sealed-panel baseline score running** (tmux `fontaine-eval`,
-launched 16:33Z, ETA ~18:05Z; healthy at 17:03Z: 6,624/25,800,
-~305 f/min, util 73%). Expectations in the script header: chunk_mae
-within ~0.15 of 5.8017; state-copy ≈ 11.785.
+**Sealed baseline DONE 18:24Z** — anchors banked (next section).
+Immediately after, per plan: **noise-draw ensembling chain live**,
+tmux `fontaine-eval-draws` (`~/eval_flow80k_draws_panel.sh`, 5 runs
+≈ 9 h → done ~03:30Z). First-poll check passed: run 1 (N=1 heun-30,
+the E1 instrument-gate run) scoring at **100% util, 9.2 GiB**. The
+launcher itself stops the chain if E1 fails (N=1 must reproduce
+6.6232 ±0.03 — owner's 12:20Z box eval). Per-run logs
+`~/eval__bijou_flow_artrunk...draws{N}_{solver}.log`. Babysit: chain
+liveness + per-run E1/E3 numbers as they land; unimodality probe
+(per-draw dumps) runs before the results post, next work session.
 
-**At sealed-score end — the local paired launch is SUPERSEDED (do
-NOT run `~/launch_fontaine_paired_auxoff_40k.sh`; the box batch is
-running it).** Instead: (1) bank + post the sealed anchor; (2)
-**launch the noise-draw chain**: `tmux new-session -d -s
-fontaine-eval-draws 'bash ~/eval_flow80k_draws_panel.sh'` — the
-[pre-reg](posts/2026-08-05-prereg-noise-draw-ensembling.md) is fully
-verified ready: `--sample-draws` is a16e65a (my 14:31Z commit —
-test-gated: draw 0 byte-identical, mean in raw degrees, `_drawsN`
-naming), checkpoint rsync'd from the box to
-`outputs/train/bijou_flow_artrunk_h1024_40k_ddp2/step_080000`, and
-the launcher header carries the E1 instrument gate (N=1 heun-30 must
-reproduce 6.6232 ±0.03 or the chain stops). 5 runs ≈ 9 h overnight.
-The unimodality probe (per-draw dumps) runs before the results post,
-next work session — ordering noted in the launcher header.
+## Sealed-panel anchors — BANKED 18:24Z (posted in-channel)
+
+From `reports/eval__bijou_arb_rcond_100k_ddp4__step_100000__panel_curated_v0_k4l2_sealed.json`
+(25.8k scored frame-policies, 17,204 pooled frames/policy):
+
+| policy | v1 (as drawn) | v2 (census repos removed) |
+|---|---|---|
+| bijou@100k | **5.7540** | **5.6903** (±5e-3 method) |
+| bijou@100k+fields | 5.7482 | 5.6962 (±3e-3) |
+| state-copy | 11.6635 | 11.5883 (±4e-2) |
+
+- v1 in band: expectation was 5.8017 ±0.15 → gap −0.048 ✅;
+  state-copy −0.12 vs the primary draw (two draws agree well).
+- `+fields` indistinguishable from bare bijou (−0.006) — consistent
+  with the mainline "aux within noise at the endpoint" read.
+- v1→v2 shift ≈ −0.07, matching the amendment's prediction; method
+  error ~15× smaller than the shift
+  ([amendment](posts/2026-08-05-sealed-plan-v2.md)).
 
 ## Banked this session (no GPU needed): 80k flow panel number
 
@@ -109,7 +135,8 @@ analysis: paired per-frame flow-vs-AR deltas (where does flow win?)
 
 ## Bootstrap scoreboard (charter §10)
 
-- §10.1–§10.6 — done (sealed anchor: running, ETA ~18:05Z).
+- §10.1–§10.6 — **done** (sealed anchor banked 18:24Z: v1 5.7540 /
+  v2 5.6903).
 - §10.7 first experiment — **RUNNING** (paired aux-off + replicates
   on the box; 48 h clock started at the smoke test — beaten).
 
@@ -197,15 +224,17 @@ analysis: paired per-frame flow-vs-AR deltas (where does flow win?)
 
 ## Queue (depth 5)
 
-1. **Babysit the box batch** (every ~30 min session time; see box
-   section). At arm completion: check panel evals ran, then the
-   **results post**: primary read A-s0 vs B-s0 + E5 noise floor
-   (decision rule in the pre-reg) — closes idea #6's 40k rung.
-2. **Sealed anchor** at ~18:05Z: bank, post in-channel (tick loop
-   instructions below).
-3. **Noise-draw ensembling probe** on local GPU after the sealed
-   score: verify `--sample-draws` (a16e65a) → pull flow-80k ckpt →
-   run per pre-reg. Draw-spread unimodality check first (in pre-reg).
+1. **Babysit the box batch + the local draws chain** (every ~30 min
+   session time). Box: see box section. Draws chain: liveness +
+   E1 gate result on run 1 (~20:00Z), then per-run numbers. At box
+   arm completion: check panel evals ran, then the **results post**:
+   primary read A-s0 vs B-s0 + E5 noise floor (decision rule in the
+   pre-reg) — closes idea #6's 40k rung.
+2. ~~Sealed anchor~~ **DONE 18:24Z** — banked + posted (section
+   above).
+3. ~~Noise-draw chain launch~~ **RUNNING** (launched 18:25Z; see
+   local-GPU section). Remaining: unimodality probe before the
+   results post.
 4. **Paired flow-vs-AR per-frame analysis** (CPU, npzs in local
    `reports/`) — results post; any session.
 5. **Owner-steered reviews** (chained work session, in order): (a)
@@ -215,22 +244,15 @@ analysis: paired per-frame flow-vs-AR deltas (where does flow win?)
    + Gemma 4 E2B/E4B seed the list; ranked doc on the blog).
 6. Stage-2 sign-convention pre-reg draft (mirror trio) — backlog.
 
-## Data-blocked / handoff notes for the tick loop
+## Handoff notes for the tick loop
 
-If a tick lands after `fontaine-eval` finishes: (1) read
-`~/eval_baseline_sealed.log` tail + report JSON; chunk_mae within
-~0.15 of 5.8017, state-copy ≈ 11.785 (bigger gap ⇒ the two panel
-draws disagree → diagnose, charter §2); (2) post the sealed anchor
-in-channel (Discord-markdown style, short); (2b) **recompute the
-sealed_v2 anchor** from the report JSON (drop the 3 removed repos'
-per-dataset means × counts from the pool — exact for frame means;
-plan v2 + the amendment post give repos and counts) and post both
-v1 + v2 anchors; (3) **do NOT launch the local paired run** —
-superseded by the box batch; (4) launch the
-noise-draw chain: `tmux new-session -d -s fontaine-eval-draws 'bash
-~/eval_flow80k_draws_panel.sh'` (fully verified + checkpoint local;
-E1 gate stops the chain itself if the instrument disagrees), then
-first-poll util check per the standing rule.
+Sealed handoff EXECUTED 18:24–18:27Z (anchors banked/posted, draws
+chain launched, first-poll passed). Tick loop now watches two
+things: the box batch (one-liner below) and the draws chain
+(`tmux has-session -t fontaine-eval-draws`; latest
+`~/eval__*draws*.log` tail; ~1.5–2 h per run — if the chain stopped
+early, check whether the E1 gate tripped: that is a *finding*, post
+it, don't relaunch).
 
 Box babysit one-liner (tick or work):
 `ssh ubuntu@192.222.55.210 'tail -2 ~/train_fontaine_*.log; nvidia-smi --query-gpu=index,utilization.gpu,memory.used --format=csv,noheader'`
@@ -241,11 +263,11 @@ scratch); owner tmux sessions on the box (`5`, `rigjudge`,
 
 ## Utilization footer
 
-Trailing-7-day GPU-hours on experiments / total: local **~1.6 / ~1.8**
-(eval bursts + smoke; sealed eval running), box **4 GPU-streams live
-since 17:12Z** (~22–26 GPU-h queued today: 2 exploit-attribution
-arms + 2 instrument replicates). Explore/exploit: aux-off arm B +
-noise-floor replicates ≈ instrument/attribution (exploit-side);
-explore hours proper start with the noise-draw probe + flow-vs-AR
-analysis tonight. Literature slice: 0 h two sessions running
+Trailing-7-day GPU-hours on experiments / total: local **~3.5 / ~3.7**
+(sealed eval done 18:24Z ≈ 1.9 h; noise-draw chain live since 18:25Z,
+~9 h queued), box **4 GPU-streams live since 17:12Z** (~22–26 GPU-h
+queued today: 2 exploit-attribution arms + 2 instrument replicates).
+Explore/exploit: aux-off arm B + noise-floor replicates ≈
+instrument/attribution (exploit-side); explore hours proper started
+with the noise-draw chain (explore-side, ~9 h). Literature slice: 0 h two sessions running
 (flagged above).

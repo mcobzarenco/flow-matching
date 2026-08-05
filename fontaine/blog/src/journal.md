@@ -3,6 +3,35 @@
 Rolling dated notes that don't merit a post. Anomalies land here too
 (the surprise log, charter §3).
 
+## 2026-08-05 — surprise: aux-OFF descends much faster early (box batch, E3 band already broken at 2.5k)
+
+The box batch's E3 expectation said B-s0 (aux-off) tracks A-s0
+(control) within the probe's ±0.3 at matched steps. At step 2500 the
+256-frame probe reads **B-s0 16.85 vs A-s0 24.32** — a 7.5° gap, 25×
+the band, in the aux-off arm's *favor* (B-s0 15.53 by 3k). Not a kill:
+the kill gates (probe >15 @10k after falling-then-rising, NaN, OOM)
+are untripped and the pre-registered primary read is the paired panel
+at 40k. Mechanism candidate: with aux weight 0.5, early optimization
+splits capacity/gradient between narration and action heads, so the
+aux-on arm buys its narration with a slower early action descent; the
+mainline 100k result ("aux within noise") is a statement about the
+converged endpoint, not the path. Watch item for the remaining
+babysits: does A-s0 close the gap by 10–20k (transient), or does
+aux-off hold an offset to 40k (that would contradict the pre-reg's E4
+expectation and make the aux attribution read a real finding either
+way). Both curves' shapes are normal (steep monotone descent
+33→24→? for A; 16.9→15.5 for B). E5 replicates (s1/s2) track A-s0's
+lineage, so the pair-vs-replicate comparison at 40k stays clean.
+
+**18:12Z update — the lead survives the noise floor.** All four
+matched-2500 probes are now in: controls A-s0 24.32 / s1 29.72 / s2
+29.69 (so the early seed envelope is [24.3, 29.7] — ~5° wide, the
+±0.3 band was calibrated on late-training behaviour and is plainly
+optimistic at 2.5k), while B-s0 sits at 16.85, **~7.5° below the
+best control**. The early aux-off advantage is outside seed noise,
+not an artifact of a lucky draw. Same watch item stands: transient
+vs held-to-40k.
+
 ## 2026-08-05 — surprise: the sign-screen's standout was a ±180° wraparound, not a sign flip
 
 The stage-1 sign-convention screen's flagship candidate (kevin510
