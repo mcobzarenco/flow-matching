@@ -35,33 +35,23 @@ From the machine that has the script (repo root):
 
 ```sh
 scp init-vm-gpu.sh ubuntu@<ip>:
-ssh -A ubuntu@<ip> ./init-vm-gpu.sh                   # normal case
-ssh -A ubuntu@<ip> ./init-vm-gpu.sh --install-driver  # bare image only
+ssh -A ubuntu@<ip> ./init-vm-gpu.sh
 ```
 
-Idempotent-ish; safe to re-run. **The default run never touches the
-NVIDIA stack and never reboots**: it apt-mark HOLDs every installed
-nvidia\*/libnvidia\*/fabricmanager package FIRST, then dist-upgrades
-(with the hold in place), installs zsh + oh-my-zsh as default shell,
-tmux, **ffmpeg (required: torchcodec links against system libav\*)**,
-uv, clones the repo to `~/flow-matching`, and runs `uv sync`.
-`--install-driver` is for bare images only: it installs the pinned
-**matched** driver + fabric manager pair (`nvidia-driver-580-open` +
-`nvidia-fabricmanager=580.173.02` — bump both together, never one) and
-reboots into it.
+Idempotent-ish; safe to re-run; never reboots. It dist-upgrades,
+installs zsh + oh-my-zsh as default shell, tmux, **ffmpeg (required:
+torchcodec links against system libav\*)**, uv, clones the repo to
+`~/flow-matching`, and runs `uv sync`.
 
-Why the paranoia (measured, 2×H100 VM): a dist-upgrade once pulled the
-595 driver over Lambda's preinstalled 580 pair. Driver 595 put the
-NVLinked GPUs into a fabric-probe state (`nvidia-smi -q`: "Fabric
-State: In Progress") gated on a fabric manager that cannot run on
-these VMs (no NVSwitch devices exposed — FM exits with
-NV_WARN_NOTHING_TO_DO), so every CUDA init failed with **"Error 802:
-system not yet initialized"** — while `nvidia-smi` kept answering
-normally. Remedy for a mismatched box: purge `nvidia-*` `libnvidia-*`,
-install the pinned 580 set, hold, reboot.
+**NVIDIA drivers are out of the script's scope** (2026-08-05: driver
+handling is decided per box, by hand — the script neither installs,
+upgrades, holds, nor verifies them). The consequence: a dist-upgrade
+CAN replace a preinstalled driver, so verify the GPU right after
+running it — and see §6 for the known driver failure modes and the
+matched-pair remedy before touching anything by hand.
 
 Afterwards, verify — both lines; `nvidia-smi` alone does NOT prove
-CUDA works (see above):
+CUDA works (§6):
 
 ```sh
 nvidia-smi        # all GPUs listed, driver loaded
@@ -235,13 +225,19 @@ config + weights + optimizer. Delete `outputs/train/smoke_test` after.
 - **CUDA "Error 802: system not yet initialized" while `nvidia-smi`
   answers** (H100 VMs) → a driver newer than Lambda's matched pair
   fabric-probes NVLinked GPUs and gates CUDA on nvidia-fabricmanager,
-  which cannot run without an exposed NVSwitch. Fix: purge nvidia-*,
-  install the matched `nvidia-driver-580-open` + fabricmanager pair,
-  `apt-mark hold` both; if fabric registration never completes, add
-  `NVreg_NvLinkDisable=1` (GPUs become PCIe peers; NCCL allreduce
-  verified bit-exact). A dead fabricmanager does NOT silently break
-  DDP — collectives complete or fail loudly. `init-vm-gpu.sh` holds
-  the NVIDIA stack before dist-upgrade for exactly this reason.
+  which cannot run without an exposed NVSwitch (measured on a 2×H100
+  VM after a dist-upgrade pulled 595 over the preinstalled matched
+  580 pair). Fix: purge nvidia-*, install a matched driver +
+  fabricmanager pair (`nvidia-driver-580-open` +
+  `nvidia-fabricmanager=580.173.02` was the known-good pair — bump
+  both together, never one), optionally `apt-mark hold` both, reboot;
+  if fabric registration never completes, add `NVreg_NvLinkDisable=1`
+  (GPUs become PCIe peers; NCCL allreduce verified bit-exact). A dead
+  fabricmanager does NOT silently break DDP — collectives complete or
+  fail loudly. NOTE: `init-vm-gpu.sh` deliberately does not manage
+  the NVIDIA stack (per-box decision), so its dist-upgrade can
+  surface exactly this class — always re-verify CUDA after running
+  it.
 - 401/403 fetching the backbone → token's account hasn't accepted the
   Gemma license (§2).
 - `wandb.init` permission error despite a correct `~/.netrc` → the
