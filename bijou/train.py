@@ -2432,6 +2432,12 @@ def main() -> int:
                 split_seed=args.split_seed,
                 allowed_fps=args.fps,
                 allowed_camera_counts=args.camera_counts,
+                # The probe must see the SAME judged/unjudged partition
+                # as training: without the pin, a stamp-mismatched
+                # dataset trains as unjudged but probes with full tags —
+                # train and instrument silently disagree on the prompt
+                # distribution.
+                required_prompt_hash=args.aux_prompt_hash,
                 # The eval probe needs the SAME per-episode labels the
                 # train side loads: Q1 conditions probe frames on their
                 # true labels, Q2 slices by outcome, Q3 flips it — all

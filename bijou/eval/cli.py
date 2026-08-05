@@ -104,6 +104,19 @@ class EvalReport:
     seed: int
     checkpoint: str | None
     smolvla: str | None
+    # Scoring semantics — everything else that shapes the numbers.
+    # Exact reproduction additionally needs batch_size and world_size:
+    # batch composition perturbs bf16 decodes (see sharding.py), and a
+    # condition_override run is a counterfactual, not a deployment read.
+    exclude: list[str]
+    aux_prompt_hash: str | None
+    sample_steps: int
+    sample_method: str
+    sample_draws: int
+    generate: list[str] | None
+    condition_override: list[str]
+    batch_size: int
+    world_size: int
     summaries: list[PolicySummary]
     paired: list[PairedComparison]
     motor_names: list[str]
@@ -150,6 +163,15 @@ class EvalReport:
             "seed": self.seed,
             "checkpoint": self.checkpoint,
             "smolvla": self.smolvla,
+            "exclude": self.exclude,
+            "aux_prompt_hash": self.aux_prompt_hash,
+            "sample_steps": self.sample_steps,
+            "sample_method": self.sample_method,
+            "sample_draws": self.sample_draws,
+            "generate": self.generate,
+            "condition_override": self.condition_override,
+            "batch_size": self.batch_size,
+            "world_size": self.world_size,
             "summaries": [s.to_dict() for s in self.summaries],
             "paired": [c.to_dict() for c in self.paired],
             "motor_names": self.motor_names,
@@ -238,6 +260,15 @@ def parse_args() -> argparse.Namespace:
         help="keep only datasets with one of these camera counts; must "
         "match the training run's --camera-counts (same comparability "
         "caveat as --fps)",
+    )
+    parser.add_argument(
+        "--aux-prompt-hash",
+        default=None,
+        help="pin: datasets whose judge-annotation stamp carries any other "
+        "prompt hash render as unjudged, loudly — pass the training run's "
+        "pin so eval and training agree on the prompt distribution "
+        "(without it a pinned run's eval renders full tags for datasets "
+        "the run trained as unjudged)",
     )
     parser.add_argument(
         "--checkpoint",
@@ -429,6 +460,7 @@ def main() -> int:
         allowed_camera_counts=(
             tuple(args.camera_counts) if args.camera_counts else None
         ),
+        required_prompt_hash=args.aux_prompt_hash,
         # Condition-trained checkpoints render each item's TRUE labels;
         # loading them costs seconds and is harmless for older models.
         load_episode_annotations=args.checkpoint is not None,
@@ -625,6 +657,8 @@ def main() -> int:
     dump_valid: list[torch.Tensor] = []
     dump_repo: list[str] = []
     dump_index: list[int] = []
+    dump_episode: list[int] = []
+    dump_frame: list[int] = []
     # Frame-aligned label records for Q2 slices and the aux metrics,
     # keyed by global frame index (None = unlabeled at that frame).
     outcomes: dict[int, str | None] = {}
@@ -690,6 +724,8 @@ def main() -> int:
                         dump_valid.append(~item["action_is_pad"])
                         dump_repo.append(str(item["repo_id"]))
                         dump_index.append(index)
+                        dump_episode.append(int(item["episode_index"]))
+                        dump_frame.append(int(item["frame_index"]))
                 if args.report is not None and index in report_indices:
                     sample = report_samples.get(index) or ReportSample(
                         index=index,
@@ -766,6 +802,8 @@ def main() -> int:
         dump_valid=dump_valid,
         dump_repo=dump_repo,
         dump_index=dump_index,
+        dump_episode=dump_episode,
+        dump_frame=dump_frame,
     )
     if distributed:
         gathered: list[ShardResults | None] = [None] * world_size
@@ -783,6 +821,11 @@ def main() -> int:
             "valid": torch.stack(results.dump_valid).numpy(),
             "index": np.array(results.dump_index),
             "repo_id": np.array(results.dump_repo),
+            # Dataset-local identity: 'index' is a CONCAT index, valid
+            # only under this eval's exact selection — these two keep
+            # rows addressable when the corpus composition changes.
+            "episode_index": np.array(results.dump_episode),
+            "frame_index": np.array(results.dump_frame),
             # Core-panel membership (all-True without a sample plan).
             "core": np.array([i in core_indices for i in results.dump_index]),
         }
@@ -1013,6 +1056,15 @@ def main() -> int:
             seed=args.seed,
             checkpoint=str(args.checkpoint) if args.checkpoint else None,
             smolvla=args.smolvla,
+            exclude=list(args.exclude),
+            aux_prompt_hash=args.aux_prompt_hash,
+            sample_steps=args.sample_steps,
+            sample_method=args.sample_method,
+            sample_draws=args.sample_draws,
+            generate=list(args.generate) if args.generate is not None else None,
+            condition_override=list(args.condition_override),
+            batch_size=args.batch_size,
+            world_size=world_size,
             summaries=summaries,
             paired=comparisons,
             motor_names=motor_names,

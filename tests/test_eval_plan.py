@@ -9,6 +9,7 @@ and len()).
 from __future__ import annotations
 
 import math
+from dataclasses import replace
 from pathlib import Path
 from typing import cast
 
@@ -17,6 +18,7 @@ import pytest
 from bijou.aux_text import parse_visibility
 from bijou.data import DataSelection, StatsAttachedDataset
 from bijou.eval.plan import (
+    PlanFrame,
     SamplePlan,
     build_plan,
     episode_tables,
@@ -143,6 +145,20 @@ def test_resolve_fails_loudly_on_missing_episode() -> None:
     plan = _build(_selection([_stub_a(), _stub_b()]))
     with pytest.raises(SystemExit, match="missing from the selection"):
         resolve_plan(plan, episode_tables(_selection([_stub_a()])))  # user/b gone
+
+
+def test_resolve_fails_loudly_on_out_of_range_frame() -> None:
+    # user/a episode 0 has 5 rows; a plan built against a longer episode
+    # (frame 5) must not silently score episode 1's first row — the
+    # truncated/re-encoded-episode trap.
+    plan = _build(_selection([_stub_a(), _stub_b()]))
+    truncated = replace(
+        plan,
+        core=[PlanFrame(repo_id="user/a", episode_index=0, frame_index=5)],
+        labeled=[],
+    )
+    with pytest.raises(SystemExit, match="missing from the selection"):
+        resolve_plan(truncated, episode_tables(_selection([_stub_a(), _stub_b()])))
 
 
 def test_validate_rejects_filter_mismatch() -> None:

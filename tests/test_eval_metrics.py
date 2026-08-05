@@ -12,9 +12,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 import torch
 
-from bijou.eval.metrics import FrameScore, slice_by_dataset
+from bijou.eval.metrics import FrameScore, score_frame, slice_by_dataset
 from bijou.eval.report import THEMES, ReportSample, ReportTable, render_report
 from bijou.eval.sharding import ShardResults, merge_shards
 
@@ -82,6 +83,9 @@ def _shard(
         dump_valid=[torch.ones(2, dtype=torch.bool) for _ in frame_ids],
         dump_repo=[repo_id for _ in frame_ids],
         dump_index=list(frame_ids),
+        # Synthetic identity: episode = frame id, frame-in-episode = 10x.
+        dump_episode=list(frame_ids),
+        dump_frame=[10 * i for i in frame_ids],
     )
 
 
@@ -110,6 +114,8 @@ def test_merge_shards_sorts_and_is_world_size_invariant() -> None:
     # Dump rows follow the same global index order, all fields aligned.
     assert merged.dump_index == [0, 3, 5, 8]
     assert merged.dump_repo == ["user/a", "user/b", "user/a", "user/b"]
+    assert merged.dump_episode == [0, 3, 5, 8]
+    assert merged.dump_frame == [0, 30, 50, 80]
     assert [float(t[0, 0]) for t in merged.dump_predictions["bijou"]] == [
         0.0,
         3.0,
@@ -126,6 +132,20 @@ def test_merge_shards_sorts_and_is_world_size_invariant() -> None:
     # World size 1 (the single-process path) gives the same view.
     single = merge_shards([_shard([0, 3, 5, 8], "user/a", "success")])
     assert [s.index for s in single.scores["copy"]] == [0, 3, 5, 8]
+
+
+def test_score_frame_refuses_zero_valid_frames() -> None:
+    # Through the max(divisor, 1) guards a zero-valid frame would score
+    # a perfect 0.0 — it must fail loudly instead.
+    with pytest.raises(AssertionError, match="no valid chunk steps"):
+        score_frame(
+            index=7,
+            repo_id="user/a",
+            predicted=torch.zeros(2, 3),
+            truth=torch.zeros(2, 3),
+            valid=torch.zeros(2, dtype=torch.bool),
+            inference_seconds=0.0,
+        )
 
 
 def test_render_report_emits_collapsible_table(tmp_path: Path) -> None:

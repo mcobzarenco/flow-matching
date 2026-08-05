@@ -298,7 +298,22 @@ def resolve_plan(
         ):
             missing.append(f"{frame.repo_id} episode {frame.episode_index}")
             return None
-        return table.offset + int(table.starts[position]) + frame.frame_index
+        start = int(table.starts[position])
+        end = (
+            int(table.starts[position + 1])
+            if position + 1 < len(table.starts)
+            else table.length
+        )
+        # A truncated/re-encoded episode must not silently score its
+        # neighbour's rows: a planned frame beyond the episode's end is
+        # missing, not offset arithmetic.
+        if not 0 <= frame.frame_index < end - start:
+            missing.append(
+                f"{frame.repo_id} episode {frame.episode_index} frame "
+                f"{frame.frame_index} (episode has {end - start} rows)",
+            )
+            return None
+        return table.offset + start + frame.frame_index
 
     core = [resolve(frame) for frame in plan.core]
     labeled = [resolve(frame) for frame in plan.labeled]

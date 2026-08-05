@@ -273,16 +273,22 @@ export-stream semantics). Original slate below, kept for scope:
 - **Consistency-distilled 1–2-step deployment decoders** (pairs with
   ideas #1 and #12) — the deployment-latency leg of the rig goal.
 
-## 18. Instrument & infra hardening — `queued` (deep-dive 2026-08-05)
+## 18. Instrument & infra hardening — `screening` (item 1 done 2026-08-05)
 
 The [bijou deep-dive](posts/2026-08-05-bijou-deep-dive.md)'s fix
 queue, in leverage order (details + file:line in the post):
 
-1. Hardening pass (CPU, additive, oracle-gated): aux-prompt-hash →
-   probe/eval selection; `resolve_plan` bounds assert; `score_frame`
-   n_valid assert; report JSON records full scoring semantics
-   (sample_steps/method/generate/exclude/condition_override/batch/
-   world); npz gains episode/frame identity columns.
+1. ~~Hardening pass~~ **DONE 2026-08-05 ~20:55Z**
+   ([post](posts/2026-08-05-hardening-pass.md)): aux-prompt-hash →
+   probe/eval selection (`bijou.eval --aux-prompt-hash` new flag);
+   `resolve_plan` bounds assert; `score_frame` n_valid assert;
+   report JSON records full scoring semantics
+   (exclude/aux_prompt_hash/sample_steps/method/draws/generate/
+   condition_override/batch/world); npz gains episode_index/
+   frame_index identity columns. Oracle: banked AR-100k panel
+   recomputed bit-exact (12/12 cells, d=0) through the edited
+   scoring path; 3 new unit tests; check.py green. NOT included:
+   deep-dive finding 6b — now item 8 below.
 2. Flow-noise stable-triple seeding — **versioned instrument break**
    (sealed_v3-style amendment + re-banked flow anchors); until then
    flow anchors are valid only at frozen corpus composition.
@@ -296,6 +302,11 @@ queue, in leverage order (details + file:line in the post):
 6. Parity extension: one padded/batched/2-camera HF comparison +
    `--require-bitwise` eager gate.
 7. Duplicate-content census over curated_v0 (CPU fingerprints).
+8. Leakage checker same-repo-id count/content assert (deep-dive
+   finding 6b): the same-repo-id branch maps episodes identically
+   with no check — a filtered-and-renumbered corpus keeping its repo
+   id gets a false PASS. Cheap assert; do before any derived-corpus
+   training run (ideas #9, #13 repair arm).
 
 ## 15. Literature-sourced arms — standing
 

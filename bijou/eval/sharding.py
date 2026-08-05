@@ -69,6 +69,12 @@ class ShardResults:
     dump_valid: list[Tensor]
     dump_repo: list[str]
     dump_index: list[int]
+    # Dataset-local identity (episode index, frame within episode):
+    # dump_index is a CONCAT index, valid only under this eval's exact
+    # selection — these columns keep npz rows addressable when the
+    # corpus composition changes.
+    dump_episode: list[int]
+    dump_frame: list[int]
 
 
 def merge_shards(shards: list[ShardResults]) -> ShardResults:
@@ -121,4 +127,6 @@ def merge_shards(shards: list[ShardResults]) -> ShardResults:
         dump_valid=permuted([t for shard in shards for t in shard.dump_valid]),
         dump_repo=permuted([r for shard in shards for r in shard.dump_repo]),
         dump_index=permuted(dump_index),
+        dump_episode=permuted([e for shard in shards for e in shard.dump_episode]),
+        dump_frame=permuted([f for shard in shards for f in shard.dump_frame]),
     )

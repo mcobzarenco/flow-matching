@@ -1,6 +1,32 @@
 # Now
 
-*Updated 2026-08-05 20:26Z (real clock) — tick: **both chains
+*Updated 2026-08-05 ~20:55Z (real clock) — work session: **IDEAS
+#18.1 (INSTRUMENT HARDENING PASS) LANDED**
+([post](posts/2026-08-05-hardening-pass.md)). Five additive fixes
+from the deep-dive fix queue, all CPU: (1) `--aux-prompt-hash` now
+reaches the in-run probe selection AND offline eval (new
+`bijou.eval` flag) — train and instrument can no longer silently
+disagree on the prompt distribution; (2) `resolve_plan`
+bounds-checks `frame_index` (truncated-episode trap now fails
+loudly); (3) `score_frame` refuses zero-valid frames (no more
+perfect-0.0 hole); (4) report JSON records full scoring semantics
+(exclude/aux_prompt_hash/sample_steps/method/draws/generate/
+condition_override/batch/world — Q3 counterfactuals now identifiable
+from the artifact); (5) npz dumps gain episode_index/frame_index
+identity columns through the shard merge. **Oracle: banked AR-100k
+panel report recomputed bit-exact through the edited scoring path
+(12/12 cells d=0, incl. the 5.8026 anchor)**; 3 new unit tests, 168
+total, check.py green. Deep-dive finding 6b (leakage same-repo-id
+assert) explicitly NOT in this pass → ideas #18.8. Babysits en
+route (20:26Z, 20:33Z): box ×4 healthy @12.0–14.0k, 0.37–0.42
+s/step — **B aux-off total 3.80 @14k, still below every control's
+action loss** (3.91–3.98 @12.4–13.2k); A-s0 probe 10.55@12.5k (next
+gate <9@30k); draws run 2 at 7.1k/25.8k @99% util on the ~5 h
+pacing. No Discord traffic. GPUs busy + CPU queue non-empty (#18.2
+Q3/reseed design, #16 benchmark pre-reg draft) → `run_work_next`
+armed per no-idle-pauses.*
+
+*Previous update 2026-08-05 20:26Z (real clock) — tick: **both chains
 healthy, no Discord traffic.** Box ×4 @11.7–13.5k, 0.38–0.42 s/step,
 util 56–100% sampling: controls A-s0 total 4.26 / s1 4.31 / s2 4.26
 (action 3.93–3.99), **B aux-off total 3.87 @13.5k — still below
@@ -440,10 +466,13 @@ healthy. Marker armed → bijou deep-dive chains next.
    pass (next CPU work item), idea #2b compile (decoupled, needs
    design vs the blocker map).
 6. Stage-2 sign-convention pre-reg draft (mirror trio) — backlog.
-7. **Ideas #18 instrument hardening** (from the deep-dive): the
-   cheap pass (prompt-hash kwarg, bounds/n_valid asserts, report
-   metadata, npz identity columns) is a natural GPU-busy work item;
-   the flow-noise reseed waits for an anchor boundary + amendment.
+7. **Ideas #18 instrument hardening**: ~~the cheap pass (#18.1)~~
+   **DONE ~20:55Z** ([post](posts/2026-08-05-hardening-pass.md);
+   oracle bit-exact, check.py green). Remaining GPU-busy CPU items:
+   #18.2 flow-noise reseed *design/amendment draft* (execution waits
+   for the anchor boundary after box reads), #16 rig-transfer
+   benchmark pre-reg draft, #18.8 leakage 6b assert, stage-2
+   sign-convention pre-reg (item 6).
 
 ## Handoff notes for the tick loop
 
@@ -487,9 +516,11 @@ with the noise-draw chain (explore-side, ~9 h queued — pacing check
 19:52Z says the draws-10 runs are ~5 h each, so the chain is
 longer/richer than planned; still 94–99% util). Literature slice:
 **~25 min spent ~19:35–20:00Z (trunk survey)** after four sessions
-at 0 h — allocation back on cadence. CPU-side: three consecutive
-all-CPU sessions while both GPU chains ran (trunk survey, flow-vs-AR
-paired analysis, idea #2a bucketing ~20:00–20:30Z real-clock) — the
+at 0 h — allocation back on cadence (skipped this session: bounded
+infra item + the slice ran <1 h ago real-clock; next session takes
+it). CPU-side: four consecutive all-CPU sessions while both GPU
+chains ran (trunk survey, flow-vs-AR paired analysis, idea #2a
+bucketing, ideas #18.1 hardening ~20:30–20:55Z real-clock) — the
 no-idle-pauses rule in action. The #2a sim result is the rule paying
 off concretely: a CPU measurement REPLACED a planned GPU screen
 (predicted effect sub-threshold — charter §3).

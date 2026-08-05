@@ -49,11 +49,15 @@ def score_frame(
     inference_seconds: float,
 ) -> FrameScore:
     """predicted/truth: [chunk, action_dim] raw units; valid: [chunk] bool."""
+    n_valid = int(valid.sum())
+    # A zero-valid frame would flow through the max(divisor, 1) guards as
+    # a perfect 0.0 chunk_mae — refuse to score it at all.
+    assert n_valid > 0, f"{repo_id} frame {index}: no valid chunk steps"
     diff = (predicted - truth)[valid]
     return FrameScore(
         index=index,
         repo_id=repo_id,
-        n_valid=int(valid.sum()),
+        n_valid=n_valid,
         abs_error_sum=float(diff.abs().sum()),
         squared_error_sum=float((diff**2).sum()),
         first_mae=float((predicted[0] - truth[0]).abs().mean()),
