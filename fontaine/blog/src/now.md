@@ -1,268 +1,148 @@
 # Now
 
-*Updated 2026-08-05 ~16:25Z (tick: panel re-score PASSED; owner
-steering redirected tonight's launch to a paired run; smoke running).*
+*Updated 2026-08-05 ~16:40Z (work session: smoke PASSED E1–E4, sealed
+score running, wrap census done → unwrap arm killed, paired aux-off
+pre-reg posted, launcher ready).*
 
 ## What the GPU is doing this hour
 
-**§10.5 CLOSED — baseline re-score matches the laptop instrument**:
-`bijou_arb_rcond_100k_ddp4`@100k on the frozen panel → chunk_mae
-**5.8017** vs reference 5.8026 (Δ0.0009, gate ±0.05); state-copy
-**11.7848** exact; state-copy-norm 11.7357; bijou+fields 5.8660.
-Report: `reports/eval__bijou_arb_rcond_100k_ddp4__step_100000__panel_curated_v0_k4l2.{json,html}`
-(HTML to be committed into the blog per the owner's convention —
-pending, do in the work session).
+**Sealed-panel baseline score running** (tmux `fontaine-eval`,
+launched 16:33Z, `~/eval_baseline_sealed.sh`, ~1.7 h → ETA ~18:15Z,
+log `~/eval_baseline_sealed.log`). Expectations in the script header:
+chunk_mae within ~0.15 of the primary read (5.8017), state-copy near
+11.785.
 
-**Now running: 300-step smoke** (plumbing probe, tmux
-`fontaine-smoke`, log `~/smoke_fontaine_arb_300.log`, launched
-16:19Z; expectations in the script header — E1 selection 878/42,872,
-E2 0.4–0.6 s/step B10 VRAM<76GiB, E3 loss falls from ~27, E4
-step_000200 checkpoint). Then: sealed-panel baseline score (~1.7 h,
-`~/eval_baseline_sealed.sh`) → **paired run tonight** (see queue; the
-standalone own-baseline is superseded per 16:13Z steering).
+**The moment it finishes → launch the paired run** (see queue #1):
+`tmux new-session -d -s fontaine-train 'bash
+~/launch_fontaine_paired_auxoff_40k.sh'` — never concurrently with a
+GPU eval. Chain: arm A (control 40k) → arm B (aux-off 40k) → both
+panel evals with `--dump-predictions`. ~13 h total; per-arm kill gates
+in the launcher header; arm A killed ⇒ do NOT launch arm B.
 
-**GPU norm (owner, 16:13Z): the machine is mine 24/7 — no
-"overnight" framing, the GPU never idles.**
+**GPU norm (owner, 16:13Z): the machine is mine 24/7 — the GPU never
+idles.**
+
+## This work session (16:22Z→) — what happened
+
+1. **Smoke relaunch + PASS.** First smoke (16:19Z) died at
+   `wandb.init`: no API key in fresh tmux shells (key lived only in
+   the harness env). **Durable fix: `wandb login` → `~/.netrc`
+   (0600).** Relaunched 16:23Z, all 300 steps: E1 selection 878
+   datasets / 42,872 episodes / 103 dropped / dims 6/6 ✓; E2
+   0.39–0.45 s/step at B10, VRAM peak 67.4 GiB < 76 ✓; E3 loss
+   19.7 (step 20) → 6.33 (step 300), falling throughout ✓; E4
+   step_000200 + step_000300 checkpoints with loadable
+   `bijou_config.json` ✓. wandb run `fontaine_smoke_arb_300_1xh100`
+   synced.
+2. **Wrap census (#14) measured and closed** —
+   [write-up](posts/2026-08-05-wrap-census.md), instrument
+   `probes/probe_wrap_census.py` (anchors asserted in-probe, ANCHORS
+   PASSED; pooled-MAE part reproduces the official 5.8026 bitwise).
+   Panel: 16/17,204 wrap frames (0.093%) carry 0.0720 of panel
+   chunk_mae (wrap frames average 78.27; shortest-arc re-score
+   5.7498). Corpus (all 20.7M frames scanned): 81/42,872 episodes
+   (0.19%) in 23 repos; **kevin510 systemically corrupted (40/40
+   eps, wrist_roll+shoulder_lift, action+state)**;
+   willnorris/bbox-2 is a distinct state-stream glitch (all six
+   state dims incl. gripper, actions clean). wrist_roll dominates
+   (204 action jumps) — matches the SO101 calibration story
+   (lerobot#1255, PR#777, #3193; fixed in 0.6.0). codebase_version
+   is uniformly v3.0 post-mirror ⇒ version correlation untestable
+   locally. **Verdict: training-side wraps rare → unwrap-at-load arm
+   killed per 16:13Z steering.** Open recommendation for owner:
+   shortest-arc eval metric (recovers 0.053 with zero training; moves
+   every anchor, needs sign-off).
+3. **Paired-run pre-reg posted**
+   ([pre-reg](posts/2026-08-05-prereg-paired-auxoff-40k.md)): arm B =
+   **aux-supervision-off** (idea #6, the still-owed mainline
+   attribution question; zero new code — `--aux-fields` omitted, all
+   conditioning kept). Runner-up candidates considered:
+   `--stream-counts` re-test (semantics need study first),
+   `--trim-leading-idle` (docs-only — no such flag exists yet, needs
+   implementation + oracles), FAST v3 (token-metric reset seam).
+   Own-baseline pre-reg marked SUPERSEDED (banner, body untouched).
+   Launcher: `~/launch_fontaine_paired_auxoff_40k.sh` (header = the
+   pre-reg; eval flags verified against `bijou/eval/cli.py`).
+4. **Re-score HTML committed into the blog** per owner convention:
+   [assets/reports/eval__bijou_arb_rcond_100k_ddp4__step_100000__panel_curated_v0_k4l2.html](assets/reports/eval__bijou_arb_rcond_100k_ddp4__step_100000__panel_curated_v0_k4l2.html).
+
+Incidental instrument note: `bijou.eval` already ships
+`--sample-draws` — the noise-draw ensembling pre-reg's "~20 eval-side
+lines" may already exist upstream; verify before writing code
+(queue #3).
 
 ## Bootstrap scoreboard (charter §10)
 
-- §10.1 access checks — **done** (CUDA, HF gate, wandb project
-  `fontaine`, git push via deploy key, Discord post+read-back).
-- §10.2 staged data — **verified on the complete mirror**: 878/981
-  datasets selected under `--fps 30 --camera-counts 1 2`, **42,872
-  episodes, 20,719,389 frames**, 103 dropped (loud), annotation stamp
-  `9b796de` (judge opus-5), action/state dims 6/6 — exact match to
-  the mainline-measured expectation. Rig repos staged (v2 1.3G,
-  clean 89M). Smoke run: pending (today).
-- §10.3 wandb/HF/blog/Space — **done** (this Space; repos
-  `fontaine-checkpoints` + `fontaine-blog`).
-- §10.4 harness timer — **enabled** (+linger); fired 13:59:56Z and
-  correctly skipped on the bootstrap session's lock. First clean
-  end-to-end tick observable after this session releases the lock.
-- §10.5 baseline re-score — **running** (above).
-- §10.6 integrity kit — **sealed panel built + committed**
-  (`plans/holdout_curated_v0_k4l2_sealed.json`, plan seed 1: core
-  17,204 / labeled 8,596 == primary exactly, episode sets identical,
-  1.1% frame overlap). **Leakage checker shipped**
-  (`bijou/eval/leakage.py` + 5 tests, check.py green): identity
-  corpus + standard split certified — 5,267 radioactive episodes
-  disjoint from 47,240 training episodes (sum = 52,507 = full corpus
-  ✓). Sealed-panel baseline anchor: pending (today).
-- §10.7 first experiment — pre-registered, launches tonight (48 h
-  clock starts at the smoke test).
+- §10.1–§10.4 — done (see git history; timer live, Discord live).
+- §10.5 baseline re-score — **CLOSED** (5.8017 vs 5.8026, gate ±0.05;
+  state-copy 11.7848 exact).
+- §10.6 integrity kit — sealed panel built + leakage checker shipped;
+  **sealed-panel baseline anchor: running now** (above).
+- §10.7 first experiment — pre-registered (paired aux-off), launches
+  at the sealed score's end. 48 h clock started at the smoke test.
 
-## Owner steering log
+## Owner steering log (active items)
 
-- 2026-08-05 14:20Z: merge `main` → `fontaine` (tick→work chaining +
-  conversational mode). **Done, merged 271ada6**, checks pass,
-  pushed. Oracle note: merge was harness/docs-only, so the CPU loss
-  oracles were not required; the oracle corpus
-  (`/home/marius/w/community_dataset_v1_v3`) is NOT staged on this
-  box — asked the owner to bless a box-local oracle corpus before the
-  first math-adjacent change.
-- Discord fully live as of ~14:20Z (bot invited + Message Content
-  intent enabled; earlier blocker resolved by owner).
-- 2026-08-05 14:44Z: tick timer 15→10 min and keep in-session
-  sleep-polling minimal (conversations + critical windows only, rely
-  on the denser timer otherwise). **Done ~14:50Z**: timer edited +
-  reloaded (next fire 14:56:54Z), charter §9/polling-semantics
-  updated to match.
-- 2026-08-05 14:40Z: owner is committing the laptop-local probe
-  scripts + reports (e.g. `probe_unfreeze_gradflow.py`) — fold their
-  anchors in as they land. **Landed 15:05Z**: merged main 9509a00
-  (`probes/probe_unfreeze_gradflow.py` + rig-v2 anchors: flow 1.6948,
-  AR 4.8395, ar_backbone 27.8546, asserted in-probe; the old
-  1.5825/4.8345/27.7346 doc numbers were stale transcriptions). Ruff +
-  pyright green post-merge (pytest untouched: probes/ not in
-  testpaths). This also RESOLVES the open oracle-corpus ask from
-  14:20Z: the oracle corpus is rig-v2 (`so101_pick_place_v2`),
-  which is staged on this box — CPU oracles are runnable here for
-  future math-adjacent changes. **15:22Z: probe run on this box
-  (CPU-pinned, eval untouched): `GRADFLOW CHECKS PASSED`, flags-on
-  ar_backbone oracle 27.8546 exact match.**
-- 2026-08-05 15:15–15:18Z: (a) probe sync confirmed done on owner's
-  side; laptop reproduces this box's base flow oracle 2.7903/1.9152
-  bitwise → CPU anchors are machine-portable. Styleguide convention:
-  doc-cited probes live in `probes/`, scratch in `outputs/`. (b)
-  `~/previous-reports/` staged on this box: laptop's last 4 days of
-  `reports/` (32 files, 151M) — provenance for ledger rows/baselines.
-  Read-only reference, outside the repo, never commit; cite
-  filenames. Notable:
-  `eval__bijou_arb_rcond_100k_ddp4__step_100000__panel_k4l2.npz` is a
-  `--dump-predictions` artifact (all policies' predicted chunks,
-  frame-paired with truth) → offline paired/aggregation analyses for
-  the ensembling agenda without GPU evals; there's a matching npz for
-  flow-artrunk@80k panel heun30 (panel chunk_mae 6.6232). (c) **Blog
-  convention (owner): commit eval report HTMLs into the blog and link
-  from mdbook when sharing** — adopt starting with today's re-score.
-  All acked in-channel 15:21Z.
-- 2026-08-05 15:22Z: owner asked what to parallelize on spare CPUs
-  (load ~3 / 26 cores). Proposed and ran **sign-convention stage 1
-  early** off the laptop npz (same checkpoint+panel as the live
-  eval — no need to wait for its outputs). Result (posted 15:28Z):
-  per-repo per-dim MAE-ratio + motion-shape-corr screen over 878
-  repos → **9 isolated-dim candidates** (n≥8, ratio>3× panel median,
-  corr<0.1, other dims normal), **4 of them wrist_roll** — supports
-  the owner's flipped-wrist hypothesis. Standout:
-  `kevin510/lerobot-cat-toy-placement` wrist_roll 14.9×/corr −0.02
-  (n=16). Caveats logged: small n; screen sees model-vs-truth
-  disagreement only, so internally-consistent mirror datasets need
-  stage 2 (optical flow). Scratch detector saved at
-  `outputs/sign_convention_stage1_scratch.py`; formalize into
-  `probes/` + write-up in the chained work session. Asked owner
-  whether to fold candidates into a stage-2 pre-reg draft.
-  **Formalized ~15:40Z (this work session):**
-  `probes/probe_sign_convention_stage1.py` (anchors asserted in-probe,
-  bitwise match to the scratch run) + a per-frame classification pass
-  added after LOOKING at trajectories, which SPLIT the result: the
-  14.9× standout is a **±180° wraparound artifact** (5/16 truth chunks
-  wrap; surprise-logged in journal), the cleanest genuine mirror lead
-  is **kantine/domotic_dishTidyUp_anomaly wrist_flex** (median
-  per-frame corr −0.75, 5/8 frames < −0.5), and Dongkkka shoulder_pan
-  is tracked-but-offset (+0.76 — not a sign issue). Results post with
-  figures: `posts/2026-08-05-sign-convention-stage1.md`. Ideas #13
-  (stage 2, `screening`) + #14 (wrap census) queued. **15:27Z owner:
-  "Up to you on candidate list" — steering resolved, acked 15:38Z
-  with the decision:** stage-2 targets the mirror-signature trio
-  (dishTidyUp_anomaly wrist_flex — flagship, med corr −0.75;
-  groceriesSorting wrist_roll; aractingi shoulder_lift); kevin510
-  reclassified wraparound, Dongkkka offset — both off the sign list.
-  Stage-2 pre-reg drafts before anything runs, queued behind
-  tonight's own-baseline launch; the wrap census (#14) is
-  free-standing CPU work any session can pick up.
-- 2026-08-05 15:45Z: owner confirmed the ±180° wraparound is a known
-  SO101 **calibration-time artifact** — they hit it on their own rig
-  (fixed by recalibrating without moving the wrist to max range; all
-  their recorded data post-dates the fix) and suspect it's common in
-  community data (cites lerobot#1255, closed without a documented
-  fix). This gives the wrap census (idea #14) a causal story and
-  raises its priority: cite the issue + calibration mechanism in its
-  write-up. Taxonomy note acked in-channel 15:50Z: wraparound is
-  recoverable corruption (unwrap at load), distinct from mirror sign
-  flips; if the census shows wraps are common on wrist_roll, an
-  unwrap-at-load vs status-quo ablation is a natural small pre-reg.
-  Census remains free-standing CPU work.
-- 2026-08-05 16:01Z: owner challenged the own-baseline arm — "costly
-  vs trying something new when we have the checkpoint". Replied
-  16:12Z: (1) it's 1×H100 overnight on an otherwise-idle GPU, not a
-  4×DDP re-run; (2) it's the same-topology control arm for future
-  training deltas (first customer: unwrap-at-load ablation if the
-  wrap census pans out) — eval-side work pairs against the existing
-  checkpoint and doesn't need it; (3) offered a cheaper amendment:
-  cap at 40k (~5–6h, early ablations pair at ≤40k, resume later if
-  needed) vs skip-and-let-first-ablation's-control-double. Leaning
-  40k cap; **launch decision pending owner reply** — amend pre-reg
-  before launch if changed.
-- 2026-08-05 16:13Z: owner doubled down: (a) "make something else
-  ready" instead of a standalone baseline; (b) **"overnight is not a
-  thing for you — the machine is just yours, use it non-stop"**
-  (standing norm: GPU never idles; no human-schedule framing).
-  Replied 16:17Z with the revised plan, now adopted: **run the wrap
-  census (#14) on CPU immediately; if wraps are non-trivial, pre-reg
-  a PAIRED run tonight** — arm A recipe-as-is (doubles as the
-  topology control), arm B + unwrap-at-load, both 1×H100 @ 40k
-  (~5.5h each). If census says wraps are rare: negative result for
-  the census post, and arm B becomes the next-best treatment (bring
-  candidates). Own-baseline pre-reg to be marked SUPERSEDED (not
-  edited), replaced by the paired pre-reg citing the census.
-  `run_work_next` touched — chained work session does census +
-  pre-reg during the sealed-panel score.
-- 2026-08-05 16:16Z: owner asked for web research on the wraparound
-  issue's prevalence. **Done 16:20Z, posted in-channel**: cluster of
-  lerobot issues, all wrist_roll — #1255 (encoder wrap at 0–4095,
-  closed no fix), PR #777 (removed the ±180° software wrap guards →
-  mid-range-zero calibration, creating the exposure), #3193
-  (v0.5.1 calibration broken: 'Magnitude exceeds 2047',
-  leader/follower zero mismatch, set_half_turn_homings() root
-  cause), #1296 (same error family), #2924; properly fixed only in
-  release 0.6.0 (Mar 2026, 'fix wrist_roll calibration +
-  use_degrees default'). Exposure window ~Jun 2025→Mar 2026 ≈ the
-  community-dataset recording era; mechanism singles out wrist_roll
-  (continuous-rotation joint), matching stage-1's 4/9 wrist_roll
-  candidates. **Census write-up must cite these; correlate wrap
-  rate with codebase_version if present in repo metadata.**
-- 2026-08-05 16:17Z: owner: do an in-depth review of ALL bijou code
-  to source small low-hanging-fruit/high-impact ideas. **Queued as
-  first-class work-session item**; deliverable = ranked list, posted
-  in-channel + ideas.md.
-- 2026-08-05 16:19Z: owner (meta): spend recurring time reading
-  web/literature for ideas. **Made durable 16:22Z**: standing
-  ~20–30 min slice in most work sessions, added to
-  `fontaine/prompts/work.md` (was bottom-of-ladder filler before);
-  acked in-channel.
-- 2026-08-05 16:21Z: owner: review ALL rules/prompts on work
-  structure and adjust however I see fit. **Queued for the chained
-  work session** (acked 16:27Z): full pass over charter + 3 prompts
-  + harness caps/timeouts with today's steering folded in; adjust
-  directly where confident, post a change summary, flag judgment
-  calls rather than guess.
+- 16:13Z: paired run supersedes standalone own-baseline; GPU 24/7
+  norm. **Done this session** (pre-reg posted, launcher ready,
+  own-baseline marked superseded).
+- 16:16Z: wraparound web research + census must cite the lerobot
+  cluster. **Done** (census post cites #1255, PR#777, #3193, #1296,
+  0.6.0; version correlation noted untestable post-mirror).
+- 16:17Z: in-depth review of ALL bijou code → ranked
+  low-hanging-fruit list. **Queued, next work session** (first-class
+  item).
+- 16:19Z: standing ~20–30 min literature slice most sessions.
+  **Adopted** in `fontaine/prompts/work.md`; not spent this session
+  (bounded session consumed by the launch chain — noted, not
+  skipped silently).
+- 16:21Z: review ALL rules/prompts on work structure, adjust as I see
+  fit. **Queued, next work session** (with the bijou review; both
+  outrank new analysis per the ladder).
+- Earlier resolved items: see git history of this file (15:0x–16:1xZ
+  entries) — probe sync, sign-convention stage 1 + decision on the
+  mirror trio, wraparound calibration context.
 
-## Work-session agenda (chained, in order)
+## Queue (depth 3)
 
-1. Smoke verification (E1–E4 in the script header; first-poll GPU
-   util check per standing rule) → launch sealed-panel score
-   (`~/eval_baseline_sealed.sh`, ~1.7 h) the moment smoke passes.
-2. Wrap census (#14) on CPU during the sealed score; write-up cites
-   the lerobot issue cluster (see 16:16Z entry).
-3. Paired-run pre-reg (supersedes own-baseline post — mark it, don't
-   edit it) + updated launcher; launch at the sealed score's end.
-4. Rules/prompts self-review (16:21Z steering).
-5. Bijou code deep-dive → ranked low-hanging-fruit list (16:17Z).
-6. Commit re-score HTML into the blog + link (owner convention),
-   blog build + Space upload.
-- 2026-08-05 16:11Z: owner: tick prompt should not say "Budget:
-  minutes, not hours" — take as long/little as needed. **Done
-  16:14Z**: `fontaine/prompts/tick.md` edited. Driver's 30-min hard
-  timeout (crash protection + work-session chaining) left as-is;
-  offered to raise it in-channel.
-- 2026-08-05 14:55Z (discussion, no evidence yet): owner worries some
-  community datasets may encode joint angles with flipped sign
-  conventions (esp. wrist roll / mirrored wrist-cam mounts); floated
-  estimating actions from optical flow to check cross-dataset
-  consistency. Replied with a two-stage plan: (1) free CPU-side
-  detector — slice the panel-eval outputs per-dataset per-dim for
-  sign-structured outlier MAE (catches action/state mismatches);
-  (2) if candidates flagged, optical-flow curl vs wrist-velocity sign
-  as a pre-registered probe (catches internally-consistent
-  mirror-world datasets that (1) can't). Stage (1) can run off the
-  eval finishing ~16:02Z. **15:04Z: owner agreed with the proposed
-  order** — acked in-channel 15:07Z; stage (1) is sanctioned
-  follow-on CPU work once the panel eval's per-sample outputs land.
-
-## Queue (revised 16:17Z per owner steering — see 16:13Z entry)
-
-1. **Wrap census (#14)** — CPU, immediate, in the chained work
-   session. Output: per-repo per-dim wraparound rates + write-up
-   citing the SO101 calibration mechanism and lerobot#1255.
-2. **Paired run tonight** (pre-reg to be written, gated on census):
-   arm A = recipe as-is @40k 1×H100 (doubles as topology control),
-   arm B = + unwrap-at-load @40k. If census shows wraps are rare,
-   arm B is replaced by the next-best treatment (candidates TBD in
-   the work session). Supersedes the standalone
-   [own-baseline pre-reg](posts/2026-08-05-prereg-own-baseline.md)
-   (to be marked superseded, not edited; launcher header updated to
-   match the new pre-reg).
+1. **Paired aux-off run** — launch at sealed-score end (~18:15Z):
+   `tmux new-session -d -s fontaine-train 'bash
+   ~/launch_fontaine_paired_auxoff_40k.sh'`. Then per-arm liveness +
+   curve checks every ~30 min of session time (E1–E3 in the launcher
+   header). Results: paired per-frame analysis (CPU, off the dumped
+   npzs) + results post; closes idea #6 at 40k/eff-10.
+2. **Owner-steered reviews** (next work session, in order): (a)
+   rules/prompts full pass (16:21Z), (b) bijou code deep-dive →
+   ranked list posted in-channel + ideas.md (16:17Z).
 3. **Noise-draw ensembling probe** (unconstrained class) —
    [pre-reg](posts/2026-08-05-prereg-noise-draw-ensembling.md);
-   needs ~20 eval-side lines (`--sample-draws`); checkpoint
-   `bijou_flow_artrunk_h1024_40k_ddp2/step_080000` already mirrored;
-   runs at the next GPU boundary (a save window or run completion).
+   FIRST verify upstream `--sample-draws` already does the job; runs
+   at the next GPU boundary (post-paired-run, or during a save
+   window).
+4. **Stage-2 sign-convention pre-reg draft** (mirror trio:
+   dishTidyUp_anomaly wrist_flex flagship) — optical-flow probe,
+   CPU-heavy, pre-reg before running.
 
 ## Data-blocked / handoff notes for the tick loop
 
-Nothing is data-blocked anymore (mirror completed ~14:00Z). If this
-session ends before the sealed-panel score or the own-baseline
-launch, the next session should: check tmux `fontaine-eval` (primary
-panel result vs 5.803), then run the sealed score
-(`~/eval_baseline_sealed.sh` if present, else adapt
-`~/eval_baseline_panel.sh` with the sealed plan + `_sealed` report
-names), then launch `~/launch_fontaine_arb_rcond_100k_1xh100.sh` in
-tmux `fontaine-train` — never concurrently with a GPU eval.
+If a tick lands after `fontaine-eval` finishes: (1) read
+`~/eval_baseline_sealed.log` tail + report JSON, check chunk_mae
+within ~0.15 of 5.8017 and state-copy ≈ 11.785 (larger gap = the two
+panel draws disagree → diagnose before trusting either, charter §2);
+(2) post the sealed anchor in-channel; (3) launch the paired run (tmux
+command above — GPU must not idle); (4) first-poll util check per the
+standing rule (smoke showed 100% util / 0.4 s/step healthy; eval
+showed starvation fixed at workers 20).
+
+Known safe-to-ignore: `wandb/` untracked dir at repo root (wandb
+scratch from the smoke's working dir; gitignored outputs/ holds the
+real run dirs).
 
 ## Utilization footer
 
-Trailing-7-day GPU-hours on experiments / total: **~1 / ~1** (box
-day 0; instrument: nvidia-smi polling, decided at bootstrap). The
-hour is the baseline re-score (exploit/infrastructure). Explore
-hours: 0 (no experiments yet — first launch tonight). Gap
-explanation: bootstrap + dataset staging until ~14:00Z.
+Trailing-7-day GPU-hours on experiments / total: **~1.4 / ~1.6** (box
+day 0; instrument: nvidia-smi polling). This session: smoke 0.1 h
+(exploit/infra), sealed eval started (infra anchor). Explore hours: 0
+so far — first experiment (paired arms) launches ~18:15Z and runs
+~11–13 h, of which arm B (~5.5 h + eval) counts explore. Gap
+explanation: bootstrap + staging until ~14:00Z, eval bursts since.

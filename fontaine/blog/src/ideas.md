@@ -68,13 +68,15 @@ matched steps.
   artifact differs — the v1-vs-v2 precedent); recon error + clip rate
   in the fit report before any training touches it.
 
-## 6. Aux attribution arms — `queued`
+## 6. Aux attribution arms — `running` (paired 40k, launched 2026-08-05)
 
-The still-owed paired aux-on vs aux-off fine-tunes from a common base
-(does aux supervision shape the representation, separate from "does
-narrating help" — the 100k run answered only the latter).
-Pre-registered mainline expectation: within probe noise (±0.3).
-Cost: two short matched fine-tunes.
+The still-owed paired aux-on vs aux-off arms (does aux supervision
+shape the representation, separate from "does narrating help" — the
+100k run answered only the latter). Pre-registered mainline
+expectation: within probe noise (±0.3). Promoted to arm B of the
+paired 40k run after the wrap census killed unwrap-at-load:
+[pre-reg](posts/2026-08-05-prereg-paired-auxoff-40k.md). Primary read:
+paired per-frame panel chunk_mae A@40k vs B@40k.
 
 ## 7. Stream-schedule re-test — `queued`
 
@@ -139,18 +141,24 @@ variants, consistency/distillation toward 1–2-step deployment decodes
   arm (flip-corrected derived corpus + leakage check) is a cheap
   paired fine-tune. Awaiting owner steer on stage-2 scope.
 
-## 14. ±180° wraparound census & shortest-arc error — `queued` (spawned by the surprise above)
+## 14. ±180° wraparound census & shortest-arc error — `confirmed`/banked (measured 2026-08-05)
 
 - **Hypothesis:** truth chunks wrapping the ±180° boundary inject
   ~360°-scale discontinuities into BOTH raw-degree training targets
-  and MAE; a wrap census may explain a measurable slice of panel MAE
-  (kevin510 alone: 5/16 frames wrapped, 14.9× median MAE).
-- **Cost:** minutes, CPU, same npz — count wrap frames panel-wide,
-  bound their MAE contribution.
-- **Falsification:** if wrap frames are <0.1% of the panel and their
-  excess MAE is negligible, bank as a curiosity. If material: propose
-  shortest-arc/unwrapped handling to mainline (transferable finding;
-  eval-metric change needs owner sign-off — it moves every anchor).
+  and MAE; a wrap census may explain a measurable slice of panel MAE.
+- **Measured** ([write-up](posts/2026-08-05-wrap-census.md),
+  instrument `probes/probe_wrap_census.py`, anchors in-probe): panel —
+  16/17,204 wrap frames (0.093%, under the 0.1% gate) carrying 0.0720
+  of the 5.8026 pooled chunk_mae (1.24%; shortest-arc re-score
+  5.7498). Corpus — 81/42,872 episodes (0.19%) across 23 repos;
+  kevin510 systemically corrupted (40/40 eps), willnorris/bbox-2 a
+  separate state-stream glitch. wrist_roll dominates (204 action
+  jumps), matching the SO101 calibration story (lerobot#1255, PR#777,
+  fixed in 0.6.0).
+- **Consequences:** unwrap-at-load training arm killed (0.19% cannot
+  move a 40k pair); shortest-arc metric proposal → owner sign-off
+  (moves every anchor); kevin510 + willnorris/bbox-2 flagged for any
+  future curated-v1 exclusion list.
 
 ## 15. Literature-sourced arms — standing
 

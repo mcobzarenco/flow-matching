@@ -1,5 +1,11 @@
 # Pre-registration: own-baseline arm (`fontaine_arb_rcond_100k_1xh100`)
 
+> **SUPERSEDED 2026-08-05 16:13Z, never launched** — owner steering
+> replaced the standalone baseline with a
+> [paired 40k design](2026-08-05-prereg-paired-auxoff-40k.md) whose
+> arm A is this recipe at 40k and doubles as the own-topology control.
+> Body below preserved verbatim per the immutability convention.
+
 *2026-08-05. Immutable once posted; the launcher header carries the
 same content. Launches tonight after the bootstrap eval bursts, gated
 on the smoke run passing.*
