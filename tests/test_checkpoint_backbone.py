@@ -41,6 +41,7 @@ from bijou.train import (
     Normalizers,
     TrainArgs,
     link_or_copy,
+    lr_lambda,
     save_checkpoint,
 )
 
@@ -153,6 +154,7 @@ def make_args(save_dir: Path) -> TrainArgs:
         backbone_text_lr=None,  # flags OFF: the paths under test
         backbone_vision_lr=None,
         warmup_steps=1,
+        rewarmup_steps=0,
         weight_decay=1e-5,
         grad_clip=10.0,
         log_every=1,
@@ -381,3 +383,36 @@ def test_backbone_init_from_refuses_pristine_checkpoints(tmp_path: Path) -> None
     checkpoint = run_save(tmp_path, adapted_backbone_source=None)
     with pytest.raises(SystemExit, match=r"no backbone\.safetensors"):
         load_backbone_init(tiny_cpu_model(decoder_hidden=32, seed=1), checkpoint)
+
+
+def test_lr_lambda_rewarmup_anchors_at_resume_step() -> None:
+    """Extension runs: the re-warmup ramp starts ~0 AT the resume step,
+    recovers the plain schedule after ``rewarmup_steps``, and never
+    touches the schedule when off — the initial warmup anchors at step
+    0 and is long past by any resume."""
+    args = dataclasses.replace(
+        make_args(Path("/unused")),
+        steps=80_000,
+        warmup_steps=500,
+        rewarmup_steps=1_000,
+    )
+    plain = dataclasses.replace(args, rewarmup_steps=0)
+    resume = 40_000
+
+    # Ramp start: ~0 at the seam, exactly base/1000 (step-resume+1 = 1).
+    assert lr_lambda(resume, args, resume) == pytest.approx(
+        lr_lambda(resume, plain, resume) / 1_000,
+    )
+    # Mid-ramp: half the base.
+    assert lr_lambda(resume + 499, args, resume) == pytest.approx(
+        lr_lambda(resume + 499, plain, resume) / 2,
+    )
+    # Ramp done: identical to the plain schedule from there on.
+    assert lr_lambda(resume + 1_000, args, resume) == pytest.approx(
+        lr_lambda(resume + 1_000, plain, resume),
+    )
+    assert lr_lambda(79_999, args, resume) == pytest.approx(
+        lr_lambda(79_999, plain, resume),
+    )
+    # Off = bit-identical old behavior, including the floor at 10%.
+    assert lr_lambda(79_999, plain, resume) == pytest.approx(0.1, abs=1e-6)

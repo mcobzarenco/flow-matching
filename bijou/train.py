@@ -168,6 +168,9 @@ class TrainArgs:
     backbone_text_lr: float | None
     backbone_vision_lr: float | None
     warmup_steps: int
+    # Linear LR ramp anchored at the RESUME step (0 = off; requires
+    # --resume): the extension-run warm restart.
+    rewarmup_steps: int
     weight_decay: float
     grad_clip: float
 
@@ -1036,11 +1039,22 @@ def ensure_matching_decoder_config(
     return saved
 
 
-def lr_lambda(step: int, args: TrainArgs) -> float:
+def lr_lambda(step: int, args: TrainArgs, resume_step: int = 0) -> float:
+    """Cosine with linear warmup, flooring at 10% of peak. With
+    ``rewarmup_steps`` and a resume, a second linear ramp anchors at the
+    RESUME step: an extension that re-raises the LR off the floor (e.g.
+    --steps 40k→80k jumps ~1e-5→5.5e-5) would otherwise shock a model
+    whose first moments were accumulated in the floor-LR regime — the
+    ramp rebuilds update magnitudes gradually while keeping the (LR-
+    independent, well-estimated) second moments. Re-warm + re-decay,
+    the continued-pretraining recipe."""
     if step < args.warmup_steps:
         return (step + 1) / args.warmup_steps
     progress = (step - args.warmup_steps) / max(args.steps - args.warmup_steps, 1)
-    return 0.1 + 0.9 * 0.5 * (1 + math.cos(math.pi * min(progress, 1.0)))
+    base = 0.1 + 0.9 * 0.5 * (1 + math.cos(math.pi * min(progress, 1.0)))
+    if args.rewarmup_steps > 0 and step >= resume_step:
+        base *= min(1.0, (step - resume_step + 1) / args.rewarmup_steps)
+    return base
 
 
 def parse_args() -> TrainArgs:
@@ -1346,6 +1360,15 @@ def parse_args() -> TrainArgs:
         help="linear warmup steps to --lr",
     )
     parser.add_argument(
+        "--rewarmup-steps",
+        type=int,
+        default=0,
+        help="extension runs (--resume with a larger --steps): ramp the "
+        "LR linearly from ~0 over this many steps AT the resume point "
+        "before following the new cosine — the schedule's own warmup is "
+        "anchored at step 0 and cannot re-warm a resume",
+    )
+    parser.add_argument(
         "--weight-decay",
         type=float,
         default=1e-5,
@@ -1478,6 +1501,11 @@ def parse_args() -> TrainArgs:
         parser.error(
             "--prompt-generate-bracket is implied (always on) for "
             "ar_backbone — drop the flag so runs have one spelling",
+        )
+    if raw.rewarmup_steps > 0 and raw.resume is None:
+        parser.error(
+            "--rewarmup-steps anchors at the resume step — it requires "
+            "--resume (fresh runs use --warmup-steps)",
         )
     if not 0.0 <= raw.holdout_episodes < 1.0:
         parser.error("--holdout-episodes must be in [0, 1)")
@@ -1657,6 +1685,7 @@ def parse_args() -> TrainArgs:
         backbone_text_lr=raw.backbone_text_lr,
         backbone_vision_lr=raw.backbone_vision_lr,
         warmup_steps=raw.warmup_steps,
+        rewarmup_steps=raw.rewarmup_steps,
         weight_decay=raw.weight_decay,
         grad_clip=raw.grad_clip,
         log_every=raw.log_every,
@@ -2178,9 +2207,16 @@ def main() -> int:
     clipped_parameters: list[torch.nn.Parameter] = [
         p for group in param_groups for p in group["params"]
     ]
+    # The re-warmup ramp needs the resume step BEFORE the scheduler
+    # state loads — read it from the checkpoint's metadata.
+    resume_step = (
+        int(json.loads((args.resume / "bijou_config.json").read_text())["step"])
+        if args.resume is not None
+        else 0
+    )
     scheduler = torch.optim.lr_scheduler.LambdaLR(
         optimizer,
-        lambda step: lr_lambda(step, args),
+        lambda step: lr_lambda(step, args, resume_step),
     )
 
     start_step = 0
