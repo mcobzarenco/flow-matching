@@ -1,6 +1,16 @@
 # Now
 
-*Updated 2026-08-05 ~20:30Z — work session: **IDEA #2a
+*Updated 2026-08-05 20:26Z (real clock) — tick: **both chains
+healthy, no Discord traffic.** Box ×4 @11.7–13.5k, 0.38–0.42 s/step,
+util 56–100% sampling: controls A-s0 total 4.26 / s1 4.31 / s2 4.26
+(action 3.93–3.99), **B aux-off total 3.87 @13.5k — still below
+every control's action loss**; A-s0 probe 10.55@12.5k (next gate
+<9@30k), grad norms nominal. Draws run 2 at 6.3k/25.8k @99% util,
+~24% in ~1.1 h — consistent with the ~5 h pacing, ETA ~00:1xZ.
+GPUs busy + CPU queue non-empty (ideas #18 cheap hardening pass) →
+`run_work_next` armed per no-idle-pauses.*
+
+*Previous update ~20:30Z — work session: **IDEA #2a
 (LENGTH-BUCKETED BATCHING) LANDED — and the sim says DON'T spend a
 GPU screen on it under the current recipe.**
 [Post](posts/2026-08-05-bucketing-impl-sim.md).
