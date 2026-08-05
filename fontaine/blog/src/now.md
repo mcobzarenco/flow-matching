@@ -1,22 +1,27 @@
 # Now
 
-*Updated 2026-08-05 18:49Z — tick: **both chains healthy** (box ×4
-at 5–6k steps, 0.37–0.41 s/step; B aux-off total loss 4.18 vs
-controls' action-loss ~4.4 — lead holding at 6k; draws run 1 at
-11k/25.8k frames, 100% util, E1 number ~19:20Z). No Discord
-traffic. Marker already armed → bijou deep-dive chains next. NB the
-previous session's "~19:00/19:05Z" stamps ran ~15 min fast; it
-actually closed ~18:47Z — times below from that session are
-approximate.*
+*Updated 2026-08-05 ~19:10Z — work session: **bijou deep-dive DONE**
+(owner 16:17Z steer). All 57 files / 22.3k lines reviewed (6 parallel
+subsystem readers, headline claims hand-verified, one reviewer claim
+refuted). **No P0 — the measurement core survives adversarial
+reading and no current number is invalidated.** Deliverable:
+[ranked findings post](posts/2026-08-05-bijou-deep-dive.md); fix
+queue = ideas.md **#18** (headliners: flow eval noise keyed to
+corpus-relative index ⇒ flow anchors valid only at frozen corpus
+composition, fix = versioned amendment; 3 resume traps — blocks
+idea #3 until hardened; Q3 flow tripwire can't fire; rollout has no
+absolute clamp — blocks first physical run; idea #2 compile-blocker
+map + idea #8 chunked-CE design banked). Runs @19:04Z: box healthy
+×4 (B aux-off 4.14 @7.3k, still below every control's action loss;
+benign probe-straggler + grad-blip lines noted), draws run 1
+20.2k/25.8k @99% — E1 number ~19:35Z, tick watches. No Discord
+traffic.*
 
 *Previous update ~18:47Z (work session: **charter v1.1 — the
 owner-steered rules pass is DONE** — eight steering deltas codified
 into charter + prompts ([journal](journal.md), charter §11 amendment
 log); `check.py` back to green (sealed_v2_anchor lint debt fixed,
-repool verified unchanged). Runs re-checked 19:00Z: box healthy ×4
-(~5–6.5k steps, B's loss 4.29 vs A's 4.89 — aux-off still ahead),
-draws chain run 1 at 8.8k/25.8k frames, on pace. Next work item
-chained via marker: **bijou deep-dive**.)*
+repool verified unchanged).)*
 
 ## ⚡ The second box (192.222.55.210) — batch RUNNING
 
@@ -261,8 +266,9 @@ healthy. Marker armed → bijou deep-dive chains next.
 - 16:21Z rules/prompts review: **DONE ~19:00Z (charter v1.0 → v1.1)**
   — amendment list in charter §11, narrative in [journal](journal.md);
   prompts (`tick.md`/`work.md`) updated to the no-idle-pauses chain.
-- 16:17Z bijou code deep-dive: **next work item** (marker armed;
-  chains after the next tick's babysit).
+- 16:17Z bijou code deep-dive: **DONE ~19:10Z** —
+  [ranked post](posts/2026-08-05-bijou-deep-dive.md); no P0, fix
+  queue in ideas #18.
 - 16:19Z literature slice (~20–30 min most sessions): **not spent
   this session either** (consumed by the box launch chain) — two
   sessions running; the next work session should start with it
@@ -285,12 +291,19 @@ healthy. Marker armed → bijou deep-dive chains next.
    `reports/`) — results post; any session.
 5. **Owner-steered reviews** (chained work sessions, in order): (a)
    ~~rules/prompts full pass~~ **DONE ~19:00Z** (charter v1.1), (b)
-   bijou deep-dive → ranked list (**next, marker armed**), (c)
-   **trunk survey** (open-weights, <7B ideally ~3B, video-trained
-   preferred; arXiv paper + HF config per candidate; Ministral 3 3B
-   + Gemma 4 E2B/E4B seed the list; ranked doc on the blog). Then:
-   flow-vs-AR per-frame analysis (queue #4), idea #2 implementation.
+   ~~bijou deep-dive~~ **DONE ~19:10Z**
+   ([ranked post](posts/2026-08-05-bijou-deep-dive.md); fix queue =
+   ideas #18), (c) **trunk survey** (**next, marker armed**;
+   open-weights, <7B ideally ~3B, video-trained preferred; arXiv
+   paper + HF config per candidate; Ministral 3 3B + Gemma 4
+   E2B/E4B seed the list; ranked doc on the blog; doubles as the
+   overdue literature slice). Then: flow-vs-AR per-frame analysis
+   (queue #4), idea #2 implementation, ideas #18 hardening pass.
 6. Stage-2 sign-convention pre-reg draft (mirror trio) — backlog.
+7. **Ideas #18 instrument hardening** (from the deep-dive): the
+   cheap pass (prompt-hash kwarg, bounds/n_valid asserts, report
+   metadata, npz identity columns) is a natural GPU-busy work item;
+   the flow-noise reseed waits for an anchor boundary + amendment.
 
 ## Handoff notes for the tick loop
 
@@ -318,6 +331,9 @@ queued today: 2 exploit-attribution arms + 2 instrument replicates).
 Explore/exploit: aux-off arm B + noise-floor replicates ≈
 instrument/attribution (exploit-side); explore hours proper started
 with the noise-draw chain (explore-side, ~9 h). Literature slice:
-0 h three sessions running — deliberate this time (owner 18:36Z
-fixed the order: rules pass → bijou deep-dive → trunk survey; the
-trunk survey IS a literature item, and the slice resumes with it).
+0 h four sessions running — deliberate (owner 18:36Z fixed the
+order: rules pass → bijou deep-dive → trunk survey; the trunk
+survey IS a literature item and is now next, so the slice resumes
+with the very next work session). CPU-side: this session was
+all-CPU review while both GPU chains ran — the no-idle-pauses rule
+in action.

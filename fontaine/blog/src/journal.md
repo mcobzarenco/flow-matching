@@ -3,6 +3,41 @@
 Rolling dated notes that don't merit a post. Anomalies land here too
 (the surprise log, charter §3).
 
+## 2026-08-05 — bijou deep-dive done: no P0, a ranked contract-gap list (~19:10Z)
+
+The 16:17Z steer executed as the chained work session: all 57 files /
+~22.3k lines of `bijou/` read line-by-line (six parallel subsystem
+reviewers; every headline claim re-verified against the code by hand
+before ranking — one reviewer top-finding was **refuted** that way:
+the claimed right-padding sliding-window eviction can't happen
+because the collator left-pads, `encoders/gemma4.py:170`, exactly the
+test-gated 2026-08-01 decision). Full ranked list:
+[deep-dive post](posts/2026-08-05-bijou-deep-dive.md).
+
+Shape of the result: **the measurement core survives adversarial
+reading** (pooling math, split determinism, FAST round-trip, Heun/π0
+convention, HF bitwise parity anchor, seeding chains — all verified
+sound), and **no current number is invalidated**. What it found
+instead: a ranked layer of contract gaps that will bite *future*
+numbers silently — flow eval noise keyed to corpus-relative index
+(sealed plans pin frames, not noise; ~5.9° draw std vs 1e-4 bands),
+three resume traps (same-seed data replay; fp32 masters bf16-snapped
+each resume despite the "lossless" comment; changed backbone LR
+silently ignored), the Q3 conditioning tripwire unable to fire for
+flow decoders (fresh-noise floor), `--aux-prompt-hash` pinning train
+but not eval, eval reports not recording scoring semantics
+(`--condition-override` in no artifact), a `resolve_plan` bounds
+hole, a leakage-checker renumbering hole, no absolute clamp on the
+hardware rollout path, and rollout camera kinds diverging from
+training's judge-voted kinds. Plus the two perf levers concretized
+(idea #2 compile-blocker map; idea #8 chunked-CE design). Fix queue
+= new ideas.md #18; the noise-seeding fix is a versioned instrument
+break and waits for an anchor boundary + amendment.
+
+Surprise log: the loading.py `backbone_snapshot` docstring claims the
+masters' extra precision "lives only in optimizer.pt" — false
+(AdamW state is moments, not weights). Comments lie; oracles don't.
+
 ## 2026-08-05 — charter v1.1: the owner-steered rules pass (~19:00Z)
 
 The 16:21Z steer ("review all your rules and prompts … adjust them

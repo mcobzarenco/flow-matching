@@ -39,6 +39,15 @@ information × cheapness. Status tags: `queued` / `screening` /
 - **Falsification:** measured s/step and samples/s on identical
   configs, before/after, on THIS box. If <10% combined, bank the
   numbers and deprioritize.
+- **Implementation notes (deep-dive 2026-08-05):** compile blockers
+  on the prefix path: `pooled[valid_mask]` dynamic shape
+  (vision.py:606), host syncs + `masked_scatter` (masks.py:132,
+  model.py:196-204), KVCache `torch.cat` mutation, dense additive
+  masks. No prefix attention takes the flash path today (sliding =
+  always-masked, global head_dim 512 > fused cap). Bucketing is a
+  compile prerequisite. Bonus levers: skip K/V writes for
+  non-exported layers when `retain_cache=False`; cache frozen-run
+  probe prefix encodes (bit-identical across evals).
 
 ## 3. Longer training on the best recipe — `queued`
 
@@ -98,7 +107,12 @@ The 262k-vocab CE softmax is the VRAM headroom eater; a shortlist
 head raises feasible batch on 1×H100 (mainline queued it as the
 structural fix after the B12 OOM). Cost: real code + an equivalence
 check (loss oracle moves → loud re-baseline). Payoff multiplies every
-future ar_backbone run on this box.
+future ar_backbone run on this box. **Design concretized (deep-dive
+2026-08-05):** chunked/fused linear-CE (logsumexp vs `lm_head.weight`
++ the 1026-row patch; elementwise softcap fuses) — never materialize
+the `[B·S, 262k]` fp32 logits (~1 GiB at B10,
+`ar_backbone.py:743-748`). Decode-side: action-phase argmax over
+block columns only is exact (grammar mask + monotone softcap).
 
 ## 9. Data levers — `queued`
 
@@ -214,6 +228,30 @@ first lit pass):
   construction; the speculative end.
 - **Consistency-distilled 1–2-step deployment decoders** (pairs with
   ideas #1 and #12) — the deployment-latency leg of the rig goal.
+
+## 18. Instrument & infra hardening — `queued` (deep-dive 2026-08-05)
+
+The [bijou deep-dive](posts/2026-08-05-bijou-deep-dive.md)'s fix
+queue, in leverage order (details + file:line in the post):
+
+1. Hardening pass (CPU, additive, oracle-gated): aux-prompt-hash →
+   probe/eval selection; `resolve_plan` bounds assert; `score_frame`
+   n_valid assert; report JSON records full scoring semantics
+   (sample_steps/method/generate/exclude/condition_override/batch/
+   world); npz gains episode/frame identity columns.
+2. Flow-noise stable-triple seeding — **versioned instrument break**
+   (sealed_v3-style amendment + re-banked flow anchors); until then
+   flow anchors are valid only at frozen corpus composition.
+3. Q3 tripwire noise fix (reuse scalar-pass noise) — before any
+   conditioned flow run.
+4. Resume hardening (fresh-seed enforcement + bf16-snap warning) —
+   **blocks idea #3** (longer training) until done.
+5. Rig-rollout safety gate (mandatory clamp, first-obs stats
+   envelope assert, rollout reads `camera_kinds.json`) — **blocks
+   the first physical run** (idea #16).
+6. Parity extension: one padded/batched/2-camera HF comparison +
+   `--require-bitwise` eager gate.
+7. Duplicate-content census over curated_v0 (CPU fingerprints).
 
 ## 15. Literature-sourced arms — standing
 
