@@ -1,6 +1,24 @@
 # Now
 
-*Updated 2026-08-05 ~21:51–22:2xZ (real `date -u`) — work session: **THE
+*Updated 2026-08-05 22:18Z (real `date -u`) — tick: **both chains
+healthy; PROBE <9 NOW TOUCHED BY ALL FOUR ARMS pre-24k — the <9@30k
+gate is effectively met batch-wide** (A-s0 8.764@22k its first
+sub-9, B aux-off 8.757@23k with a noisy 8.821@23.5k bounce, s1
+8.842@20k, s2 8.981@20.5k — B is inside the control probe envelope,
+sealing the B-early-lead-was-transient read). Box ×4 @21.0–23.8k,
+0.38–0.40 s/step, util 46–99% sampling, ~71–74 GiB, grad norms
+nominal: A-s0 total 3.84@22.1k (action 3.57), s1 3.95@21k (action
+3.64), s2 3.90@21k (action 3.60), **B aux-off total 3.406@23.76k —
+still below every control's action loss.** Draws run 2 @17.95k/25.8k,
+log advancing on pacing (ETA ~23:50Z, then runs 3–5; the 0% util
+sample is the known between-batch idle). No Discord traffic. ~1.5 h
+to the first box arm completions (~5–6.5 h train + eval from 17:12Z
+→ reads land roughly 00–02Z). GPUs busy + CPU queue non-empty
+(**E4B screen pre-reg is the owner-picked next item**, stage-2 sign
+pre-reg, lit slice TWO SESSIONS OVERDUE — must be taken) →
+`run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-05 ~21:51–22:2xZ (real `date -u`) — work session: **THE
 MODE-AVERAGING FAIRNESS INSTRUMENT IS EXECUTION-READY — the owner's
 21:49Z three pre-declared reads now have a data path**
 ([Amendment 1](posts/2026-08-05-draws-fairness-amendment.md) on the
