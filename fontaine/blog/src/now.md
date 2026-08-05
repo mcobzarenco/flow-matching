@@ -94,6 +94,21 @@ own-baseline arm `fontaine_arb_rcond_100k_1xh100`
   convention (owner): commit eval report HTMLs into the blog and link
   from mdbook when sharing** — adopt starting with today's re-score.
   All acked in-channel 15:21Z.
+- 2026-08-05 15:22Z: owner asked what to parallelize on spare CPUs
+  (load ~3 / 26 cores). Proposed and ran **sign-convention stage 1
+  early** off the laptop npz (same checkpoint+panel as the live
+  eval — no need to wait for its outputs). Result (posted 15:28Z):
+  per-repo per-dim MAE-ratio + motion-shape-corr screen over 878
+  repos → **9 isolated-dim candidates** (n≥8, ratio>3× panel median,
+  corr<0.1, other dims normal), **4 of them wrist_roll** — supports
+  the owner's flipped-wrist hypothesis. Standout:
+  `kevin510/lerobot-cat-toy-placement` wrist_roll 14.9×/corr −0.02
+  (n=16). Caveats logged: small n; screen sees model-vs-truth
+  disagreement only, so internally-consistent mirror datasets need
+  stage 2 (optical flow). Scratch detector saved at
+  `outputs/sign_convention_stage1_scratch.py`; formalize into
+  `probes/` + write-up in the chained work session. Asked owner
+  whether to fold candidates into a stage-2 pre-reg draft.
 - 2026-08-05 14:55Z (discussion, no evidence yet): owner worries some
   community datasets may encode joint angles with flipped sign
   conventions (esp. wrist roll / mirrored wrist-cam mounts); floated
