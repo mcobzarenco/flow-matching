@@ -49,6 +49,19 @@ information × cheapness. Status tags: `queued` / `screening` /
   conditioned deficit; degenerate draws=1 validation reproduces
   6.6232 exactly). Launch at the first quiet local-GPU boundary
   after the draws chain.
+- **Read 4 pre-declared (2026-08-05 ~22:5xZ,
+  [Amendment 2](posts/2026-08-05-draws-fairness-amendment2.md), from
+  the lit slice):** the **energy score** (RMS-normalized, valid-
+  element mask, N=10 vs AR's degenerate N=1) — a strictly proper
+  scoring rule where neither mode-averaging nor scatter wins for
+  free; the principled middle between MAE and the best-of-N oracle
+  bound, and the candidate distributional column for ranking flow
+  arms on the comm holdout. Source: Energy Policy
+  ([2510.12483](https://arxiv.org/abs/2510.12483)) trains on it;
+  we take the metric, computable on CPU from the same
+  `--dump-draws` npz. `read4_energy_score` in `draws_fairness.py` +
+  degenerate draws=1 validation must land BEFORE the probe npz is
+  opened (next CPU work item alongside the E4B launch checklist).
 
 ## 2. Throughput: bucketed batching + torch.compile on the frozen prefix — `screening` (2a landed 2026-08-05; GPU A/B conditional)
 
@@ -354,6 +367,16 @@ toward the exploration budget.
   tonight's E5 σ_seed via finalization amendment. Launch blocked on:
   box free + e4b checkpoint download (not in box cache) + parity
   spot-check + memory smoke + amendment.
+- **External prior (lit slice 2026-08-05 ~22:5xZ):**
+  [2606.31382](https://arxiv.org/pdf/2606.31382) (VLM-to-VLA
+  parameter redundancy) reports **bigger VLM backbones do NOT
+  consistently improve action performance after adaptation** (their
+  ablations; skim-depth read via a fast-model summary — re-read
+  before citing numbers). Direction: strengthens the E4B screen's
+  kill branch as a live outcome, not a formality — and raises the
+  prior on #11 (grounding/adaptation quality, not trunk scale, as
+  the binding limit). The screen runs regardless: our recipe, our
+  corpus, pre-registered either way.
 
 **Ranked 2026-08-05 by the [trunk survey](posts/2026-08-05-trunk-survey.md)**
 (paper + fetched-config deep-reads, owner method): **1. Gemma 4 E4B**

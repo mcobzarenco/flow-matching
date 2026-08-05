@@ -1,6 +1,48 @@
 # Now
 
-*Updated 2026-08-05 22:18Z (real `date -u`) — tick: **both chains
+*Updated 2026-08-05 ~22:2x–23:0xZ (real `date -u`) — work session:
+**E4B SCREEN PRE-REG POSTED (the owner-picked item) + the overdue lit
+slice taken, which produced a fourth pre-declared fairness read.**
+(1) [E4B pre-reg](posts/2026-08-05-prereg-e4b-screen.md): verbatim
+mainline recipe + `--backbone google/gemma-4-e4b-it` (AR path
+verified fully config-driven — full-depth trunk, tail-anchored block
+base adapts, no expert/stream surface); eff-48 as owner-picked with
+a pre-registered **chunked-backward fallback ladder** (B12 direct →
+2×6 → 3×4 → 4×3 at loader-B12, gradient ≡ B12 up to fp reduction
+order) because `bijou.train` has **no grad-accum today** and E2B B12
+peaked 77.5 GiB with E4B text ~2.2× params — the impl + oracles is a
+pre-launch CPU item if the memory smoke OOMs. Both seams stated up
+front: the E2B reference's own 48→40@20k batch seam (E4B holds +15%
+samples ⇒ kills conservative-valid, adopts carry the caveat) and the
+Δ19-episode probe-corpus seam (probe read at ±0.5 floor; the k4l2
+panel — scored on this box copy by the owner today — is the seam-free
+decision instrument). Gates: @10k record-only, @30k kill if probe >
+7.07 with 25k-panel cross-check, @50k re-check (>6.29), endpoint
+adopt iff panel beats 5.8026 by max(3·σ_seed, 0.15) with σ_seed
+from tonight's E5 replicate reads via **finalization amendment**.
+Launch blocked on: box free + e4b ckpt download (NOT in box cache,
+~16 GB) + parity spot-check + B12 memory smoke + amendment. (2) Lit
+slice (~20 min, was 2× overdue): **[2606.31382] VLM-to-VLA parameter
+redundancy — bigger backbones do NOT consistently help action
+performance after adaptation** (banked in #17: the kill branch is a
+live outcome; raises #11's prior), and **Energy Policy [2510.12483]
+→ [Amendment 2](posts/2026-08-05-draws-fairness-amendment2.md)
+posted before any per-draw data: read 4 = the energy score**
+(RMS-normalized, valid-element mask, proper scoring rule — the
+principled middle between MAE and the best-of-N oracle; candidate
+distributional column for the comm holdout). `read4_energy_score` +
+degenerate validation must land before the probe npz is opened —
+queued as the next CPU work item alongside the E4B launch checklist.
+check.py green (184). Babysits 22:19/22:30Z: box ×4 healthy
+@21.0–25.0k, 0.38–0.40 s/step (B total 3.42@25k — still below every
+control action loss; B's 0%-util sample = its 25k save boundary);
+draws run 2 @19.4k/25.8k on pacing (ETA ~00:1xZ, then runs 3–5). No
+Discord traffic; pre-reg + amendment posted in-channel. GPUs busy +
+CPU queue non-empty (read4 impl, chunked-backward impl if needed,
+stage-2 sign pre-reg, box results post ~00–02Z then E4B launch
+checklist) → `run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-05 22:18Z (real `date -u`) — tick: **both chains
 healthy; PROBE <9 NOW TOUCHED BY ALL FOUR ARMS pre-24k — the <9@30k
 gate is effectively met batch-wide** (A-s0 8.764@22k its first
 sub-9, B aux-off 8.757@23k with a noisy 8.821@23.5k bounce, s1
@@ -760,10 +802,16 @@ healthy. Marker armed → bijou deep-dive chains next.
    n10/n25/n45 under `~/datasets/rig_fewshot_v0/`). **EXECUTION
    PARKED per owner 21:43Z** (instruments banked, corpus-agnostic);
    launcher gen + finalization deferred until the better rig dataset.
-9. **NEW (owner 21:43Z): comm-MAE limit-attribution front** — next
-   pre-reg after the box reads: E4B trunk-swap screen proposed
-   in-channel (alternative: #11 grounding arms — owner pick
-   pending). The freed 4×H100 at ~02Z goes here, not to rig ft.
+9. **Comm-MAE limit-attribution front (owner 21:43Z)** — ~~E4B
+   screen pre-reg~~ **POSTED ~22:4xZ**
+   ([post](posts/2026-08-05-prereg-e4b-screen.md)). The freed 4×H100
+   at ~02Z goes here. Remaining before launch: results post for the
+   box batch, e4b ckpt download, parity spot-check, B12 memory smoke
+   (+ chunked-backward impl + oracles if it OOMs), finalization
+   amendment (σ_seed from the E5 reads + ladder rung). Also queued:
+   `read4_energy_score` in `draws_fairness.py`
+   ([Amendment 2](posts/2026-08-05-draws-fairness-amendment2.md)) —
+   must land before the draws probe npz is opened.
 7. **Ideas #18 instrument hardening**: ~~the cheap pass (#18.1)~~
    **DONE ~20:55Z** ([post](posts/2026-08-05-hardening-pass.md);
    oracle bit-exact, check.py green). Remaining GPU-busy CPU items:
@@ -845,4 +893,9 @@ probe + validated reads) before the data it needs finishes
 computing; the probe itself costs ~30 GPU-min instead of a ~5 h
 full-panel repeat (skipped lit slice: owner-steered item took the
 session; the slice is now two sessions overdue — next session MUST
-take it).
+take it). Tenth consecutive all-CPU session (~22:2x–23:0xZ): the
+owner-picked E4B pre-reg posted before the box that will run it is
+even free, **and the overdue lit slice TAKEN (~20 min: 2606.31382
+backbone-redundancy prior banked in #17; Energy Policy 2510.12483 →
+the energy-score read pre-declared as Amendment 2 before its data
+exists)** — allocation back on cadence.

@@ -22,3 +22,4 @@
   - [2026-08-05 — Pre-reg (draft): few-shot rig-transfer benchmark v0 (#16)](posts/2026-08-05-prereg-rig-fewshot-benchmark.md)
   - [2026-08-05 — Amendment 1: mode-averaging fairness reads (#1)](posts/2026-08-05-draws-fairness-amendment.md)
   - [2026-08-05 — Pre-reg: E4B trunk-swap screen (matched-params AR-100k)](posts/2026-08-05-prereg-e4b-screen.md)
+  - [2026-08-05 — Amendment 2: energy-score read (#1)](posts/2026-08-05-draws-fairness-amendment2.md)
