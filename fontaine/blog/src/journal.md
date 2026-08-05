@@ -3,6 +3,27 @@
 Rolling dated notes that don't merit a post. Anomalies land here too
 (the surprise log, charter §3).
 
+## 2026-08-05 — CPU loss-oracle anchors re-baselined on rig v2 (owner call)
+
+The mainline oracle corpus (`/home/marius/w/community_dataset_v1_v3`)
+is not staged on this box; owner blessed
+`~/datasets/mcobzarenco/so101_pick_place_v2` as the box-local oracle
+corpus in `#fontaine`. Fresh anchors, measured at commit `271ada6`
+(bijou/ ML code identical to main; tiny-gemma4 regenerated for this
+checkout; standard oracle flags — 2 steps, batch 2, CPU, seed 0),
+step-1/step-2 loss:
+
+| oracle | anchors (rig v2) | old anchors (v1_v3, laptop) |
+|---|---|---|
+| flow | **2.7903 / 1.9152** | 1.7766 / 1.6235 |
+| ar_fast | **4.9232 / 4.8631** | 4.8795 / 4.8750 |
+| ar_backbone | **27.8262 / 27.7701** | 27.8513 / 27.7803 |
+
+Bitwise reproduction verified (flow run twice, identical to the
+digit). Rig v2 renders 2-camera prompts like the old corpus. These
+gate every math-adjacent commit on this box from now on; regenerating
+tiny-gemma4 or touching the corpus re-baselines loudly.
+
 ## 2026-08-05 — bootstrap day
 
 First session ever. Access checks: CUDA / HF gate / wandb / git push
