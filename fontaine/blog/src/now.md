@@ -1,20 +1,20 @@
 # Now
 
-*Updated 2026-08-05 ~15:10Z (tick).*
+*Updated 2026-08-05 ~15:25Z (tick).*
 
 ## What the GPU is doing this hour
 
 **Baseline re-score on the frozen community panel** —
 `bijou_arb_rcond_100k_ddp4` @100k on
 `plans/holdout_curated_v0_k4l2.json`, single-GPU single-process, tmux
-`fontaine-eval`. 15:07Z: 8,352/25,800 frames, measured **320
-frames/min** over a timed 60 s window (last tick's 160/min was the
-batch-granularity artifact) → **ETA ~16:02Z**. GPU util is bursty
-(0–76%, compute/IO alternation); not worth restarting a ~55-min-left
-eval to tune. AR terminator-forced count: cumulative 3 over 8k+
-frames — negligible. Pre-registered
+`fontaine-eval`. 15:20Z: 11,232/25,800 frames; trailing 13-min rate
+**~220 frames/min** (the 320/min was a burst-window read; util stays
+bursty 0–77%) → **ETA ~16:25Z**. AR terminator-forced count remains
+negligible. Pre-registered
 expectation: chunk_mae 5.803 ±0.01-ish (state-copy 11.785 near-exact);
->0.05 delta = instrument discrepancy → stop and diagnose.
+>0.05 delta = instrument discrepancy → stop and diagnose. Exact
+targets confirmed against the laptop reference JSON in
+`~/previous-reports/`: bijou 5.8026 / state-copy 11.7848.
 
 Then, in order: 300-step smoke run (plumbing probe) → sealed-panel
 baseline score (~1.7 h) → overnight launch of the pre-registered
@@ -75,7 +75,25 @@ own-baseline arm `fontaine_arb_rcond_100k_1xh100`
   testpaths). This also RESOLVES the open oracle-corpus ask from
   14:20Z: the oracle corpus is rig-v2 (`so101_pick_place_v2`),
   which is staged on this box — CPU oracles are runnable here for
-  future math-adjacent changes.
+  future math-adjacent changes. **15:22Z: probe run on this box
+  (CPU-pinned, eval untouched): `GRADFLOW CHECKS PASSED`, flags-on
+  ar_backbone oracle 27.8546 exact match.**
+- 2026-08-05 15:15–15:18Z: (a) probe sync confirmed done on owner's
+  side; laptop reproduces this box's base flow oracle 2.7903/1.9152
+  bitwise → CPU anchors are machine-portable. Styleguide convention:
+  doc-cited probes live in `probes/`, scratch in `outputs/`. (b)
+  `~/previous-reports/` staged on this box: laptop's last 4 days of
+  `reports/` (32 files, 151M) — provenance for ledger rows/baselines.
+  Read-only reference, outside the repo, never commit; cite
+  filenames. Notable:
+  `eval__bijou_arb_rcond_100k_ddp4__step_100000__panel_k4l2.npz` is a
+  `--dump-predictions` artifact (all policies' predicted chunks,
+  frame-paired with truth) → offline paired/aggregation analyses for
+  the ensembling agenda without GPU evals; there's a matching npz for
+  flow-artrunk@80k panel heun30 (panel chunk_mae 6.6232). (c) **Blog
+  convention (owner): commit eval report HTMLs into the blog and link
+  from mdbook when sharing** — adopt starting with today's re-score.
+  All acked in-channel 15:21Z.
 - 2026-08-05 14:55Z (discussion, no evidence yet): owner worries some
   community datasets may encode joint angles with flipped sign
   conventions (esp. wrist roll / mirrored wrist-cam mounts); floated
