@@ -1,6 +1,21 @@
 # Now
 
-*Updated 2026-08-06 02:24–02:4xZ (real `date -u`) — work session: **Q3 TRIPWIRE
+*Updated 2026-08-06 02:37–02:4xZ (real `date -u`) — tick: **all chains
+healthy; box endgame past the halfway mark.** Box: three control
+evals scoring — A-s0 @13.6k, s1 @10.1k, s2 @10.8k of 25.8k, all
+advancing since the 02:3x poll, reads on pace ~03:4x–04:1xZ; B
+complete (pulled 02:09Z); GPU1 idle as decided (smoke at the
+boundary). Local draws run 4 @10.1k/25.8k, log fresh 02:37Z, on
+pacing ~04:0x–04:1xZ. Discord: no new messages; history-checked —
+no new reactions beyond the recorded 👍/❤️; panel-v2 (3 decisions)
++ stage-2b still await owner steer. Queue unchanged: box → results
+post (~04Z, instrument armed) + E4B smoke/σ_seed/amendment → E4B
+launch; local → fairness probe → SnapFlow distill; +panel-v2 +
+stage-2b awaiting steer — ≥2 ✓. **Lit slice remains a MUST for the
+next work session** (7 sessions since 00:14Z). GPUs busy + CPU
+queue non-empty → `run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-06 02:24–02:4xZ (real `date -u`) — work session: **Q3 TRIPWIRE
 NOISE FIX LANDED (#18.3, deep-dive finding 3) — the conditioning-collapse
 alarm now measures conditioning, not sampling variance, closed before
 the SnapFlow distill launch (the next conditioned flow run,
