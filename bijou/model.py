@@ -41,6 +41,7 @@ from torch import Tensor, nn
 from .aux_text import AuxField
 from .decoders.ar_backbone import (
     ARBackboneDecoder,
+    ARSuffixDecoder,
     ar_backbone_counts,
     ar_backbone_loss_sums,
     ar_backbone_losses,
@@ -128,7 +129,7 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
             self.backbone,
             inputs,
             with_grad=with_grad,
-            retain_cache=isinstance(self.decoder, ARBackboneDecoder),
+            retain_cache=isinstance(self.decoder, ARSuffixDecoder),
         )
         if isinstance(self.decoder, FlowDecoder):
             memory = self.decoder.attach_residual_streams(memory)

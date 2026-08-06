@@ -45,6 +45,7 @@ decodes the chunk by remaining symbol budget.
 
 from __future__ import annotations
 
+import abc
 from dataclasses import dataclass
 from typing import Any, override
 
@@ -112,27 +113,42 @@ class ARBackboneConfig:
             )
 
 
-class ARBackboneDecoder(nn.Module):
-    """The backbone's suffix role (see the module docstring).
+class ARSuffixDecoder[B: nn.Module](nn.Module, abc.ABC):
+    """Trunk-generic half of the backbone-suffix role: the format-5
+    scaffold (opener, value lines, BOA, grammar-masked action decode),
+    the codec/config guards, and the teacher-forced forward shape.
+
+    Generic over the trunk type ``B``: the trunk-specific compute — how
+    suffix ids become embeddings, how they continue through the stack
+    against the prefix cache, and how full-id-space logits are read —
+    lives in the three abstract methods. The Gemma concrete is
+    :class:`ARBackboneDecoder`; the Molmo2 concrete rides the same
+    scaffold (checkpoint decoder kind stays ``ar_backbone`` — the trunk
+    axis is the PROMPT kind).
 
     ``codec`` is a runtime resource (BPE + quantile glue), not a module;
-    checkpoints reference the tokenizer artifact by id. ``text_config``
-    is the FULL backbone architecture — construction validates the block
-    placement and that the KV-shared deep half is present (a truncated
-    backbone has none; this decoder is definitionally the full stack's
-    suffix role)."""
+    checkpoints reference the tokenizer artifact by id. ``opener_text``
+    is the trunk's assistant-turn opener bytes (Gemma:
+    ``aux_text.GENERATION_OPENER``; ChatML trunks pass their own).
+
+    ``newline_carrier_ids``: text ids whose decoded bytes CONTAIN the
+    field terminator (``\\n``) without being it — banned during value
+    decoding so termination is always the single trained terminator id.
+    Empty for Gemma (its tokenizer satisfies the split==joint boundary
+    contract on every probe value, so the ban would be a no-op risk);
+    tokenizers with merged ``…\\n`` pieces (Qwen's ``'%\\n'``) populate
+    it and skip the boundary SystemExit instead."""
 
     def __init__(
         self,
         config: ARBackboneConfig,
-        text_config: Gemma4TextConfig,
         codec: ActionCodec,
         *,
         tokenizer: TextTokenizer | None,
+        opener_text: str,
         aux_runtime: AuxRuntime | None = None,
         aux_loss_weight: float = 1.0,
-        device: DeviceLike = None,
-        dtype: torch.dtype | None = None,
+        newline_carrier_ids: frozenset[int] = frozenset(),
     ) -> None:
         super().__init__()
         self.config = config
@@ -148,10 +164,11 @@ class ARBackboneDecoder(nn.Module):
         self.tokenizer: TextTokenizer = tokenizer
         self.aux_runtime = aux_runtime
         self.aux_loss_weight = aux_loss_weight
+        self.newline_carrier_ids = newline_carrier_ids
         # Cumulative value-budget exhaustions (decode health metric).
         self.fallback_count = 0
         self.opener_ids: tuple[int, ...] = tuple(
-            tokenizer.encode(GENERATION_OPENER, add_special_tokens=False),
+            tokenizer.encode(opener_text, add_special_tokens=False),
         )
         if codec.vocab_total != config.vocab_total:
             raise ValueError(
@@ -168,6 +185,354 @@ class ARBackboneDecoder(nn.Module):
                 f"{codec.action_dim}) != decoder chunk/action_dim "
                 f"({config.chunk_size}, {config.action_dim})",
             )
+        # Constrained decoding needs each token's symbol expansion length
+        # (one BPE piece = a run of quantized DCT coefficients). Specials
+        # stay 0 and are handled explicitly in the decode mask. Plain
+        # attribute, not a buffer: derived from the codec, never saved.
+        symbol_lengths = torch.zeros(config.vocab_total, dtype=torch.long)
+        for token_id in range(codec.tokenizer.vocab_size):
+            piece = codec.tokenizer.bpe.id_to_token(token_id)
+            assert piece is not None, f"BPE id {token_id} has no piece"
+            symbol_lengths[token_id] = len(piece)
+        if not bool((symbol_lengths == 1).any()):
+            raise ValueError(
+                "BPE vocabulary has no single-symbol token — exact fill "
+                "(and decode termination) cannot be guaranteed",
+            )
+        self.symbol_lengths = symbol_lengths
+
+    @abc.abstractmethod
+    def init_tables_from_backbone(self, backbone: B) -> None:
+        """Re-init the trainable FAST tables around the trunk's REAL
+        tables' statistics (see each concrete) — full-vocabulary CE
+        competes block logits against text priors, so an arbitrary
+        offset start matters."""
+
+    @abc.abstractmethod
+    def _suffix_hidden(
+        self,
+        backbone: B,
+        memory: ObservationMemory,
+        tokens: Tensor,
+        fed: int,
+    ) -> Tensor:
+        """Embed BACKBONE-id suffix ``tokens`` [B, T] (text ids through
+        the frozen tables, block ids through the trainable patch) and run
+        them through ALL trunk layers against the prefix cache (which
+        they extend in place). ``fed`` = suffix positions already in the
+        cache from previous calls (decode loop). Returns final-normed
+        hidden states [B, T, hidden]."""
+
+    @abc.abstractmethod
+    def _logits(self, backbone: B, hidden: Tensor) -> Tensor:
+        """Full-id-space logits [B, T, V] for suffix hidden states — the
+        FAST block's columns computed from the trainable patch, text
+        columns from the trunk's (frozen) head; every id in
+        ``[0, block_base + vocab_total)`` must be a valid column."""
+
+    @override
+    def forward(
+        self,
+        backbone: B,
+        memory: ObservationMemory,
+        tokens: Tensor,
+    ) -> Tensor:
+        """Next-token logits over the suffix (BACKBONE ids — mixed value
+        lines + FAST block).
+
+        CONSUMES the memory's cache (suffix K/V are appended): encode a
+        fresh memory per call — training does, and the decode loop is
+        exactly the incremental consumer this enables.
+
+        Shapes:
+          - memory.cache: the trunk-private prefix cache
+          - tokens: [B, T]  (long; backbone ids)
+          - returns: [B, T, V]  (full id space incl. the FAST block;
+            position j predicts suffix position j + 1)
+        """
+        hidden = self._suffix_hidden(backbone, memory, tokens, fed=0)
+        return self._logits(backbone, hidden)
+
+    @torch.no_grad()
+    def predict_chunk(
+        self,
+        backbone: B,
+        memory: ObservationMemory,
+        batch: CollatedBatch[Any],
+        *,
+        generate: tuple[AuxField, ...] = (),
+        generator: torch.Generator | None = None,
+        noise: Tensor | None = None,
+    ) -> BijouPrediction:
+        """The single decode path, fully scaffolded by the request set.
+        Deterministic greedy; ``generator``/``noise`` unused/must be
+        None.
+
+        ``generate`` must equal the request the PROMPT was collated with
+        (the collator's ``generate_override``; the memory was encoded
+        from that prompt — mismatched scaffolds would sit off the
+        conditioning). Per requested field, in order: greedy text-id
+        decode under the field's VALUE_BUDGETS cap until the ``\\n``
+        terminator (budget exhaustion forces it and counts a loud
+        fallback; HOLDING constrains the first token to its candidate
+        set). After the last field — immediately, for ``generate=()``,
+        the deployment fast path — BOA is FORCED (its target is trained;
+        its identity is not a decision) and the ar_fast grammar mask
+        decodes the chunk by remaining symbol budget, PAD once finished.
+
+        Requires an aux-trained checkpoint for non-empty ``generate``
+        (requested-but-untrained fields would be elicited off-manifold).
+
+        Returns a BijouPrediction: chunks [B, chunk, action_dim] raw
+        units + one AuxGeneration per row (empty for ``generate=()``)."""
+        if noise is not None:
+            raise ValueError("ARBackboneDecoder.predict_chunk takes no noise")
+        config = self.config
+        if generate:
+            trained = () if config.aux is None else config.aux.fields
+            untrained = [f.value for f in generate if f not in trained]
+            if untrained:
+                raise ValueError(
+                    f"generate={untrained} requested, but the checkpoint "
+                    f"trained aux fields {[f.value for f in trained] or 'NONE'} "
+                    "— an untrained field would be elicited off-manifold",
+                )
+            ordered = tuple(f for f in AuxField if f in generate)
+            if ordered != generate:
+                raise ValueError(
+                    f"generate must keep template order; got "
+                    f"{[f.value for f in generate]}",
+                )
+        stats = batch.action_stats
+        if stats.q01 is None or stats.q99 is None:
+            raise SystemExit(
+                "batch stats carry no action quantiles — AR decoding needs "
+                "the exact q01/q99 the tokenizer was fitted under (old "
+                "checkpoint stats tables cannot drive AR inference)",
+            )
+        batch_size = batch.state.shape[0]
+        device = batch.state.device
+        base = config.block_base
+        boa_backbone = base + self.codec.boa
+        pad_backbone = base + self.codec.pad
+        lengths = self.symbol_lengths.to(device)
+        total_symbols = config.chunk_size * config.action_dim
+        min_value: float = torch.finfo(torch.float32).min
+        runtime = self.aux_runtime
+        if generate and runtime is None:
+            raise ValueError(
+                "aux fields requested but the decoder has no AuxRuntime — "
+                "loading built the model without the aux record",
+            )
+
+        # Text-only mask for value decoding (block ids illegal — the
+        # terminator ends a value, BOA is forced by the scaffold).
+        vocab = base + config.vocab_total
+        text_allowed = torch.zeros(vocab, dtype=torch.bool, device=device)
+        text_allowed[:base] = True
+        if self.newline_carrier_ids:
+            # Ban text ids whose decoded bytes carry the terminator
+            # inside a merged piece (e.g. Qwen's '%\n') — termination
+            # must always be the single trained terminator id.
+            text_allowed[
+                torch.tensor(
+                    sorted(self.newline_carrier_ids),
+                    dtype=torch.long,
+                    device=device,
+                )
+            ] = False
+
+        fed = 0
+        fallback_count = 0
+        value_ids: list[list[list[int]]] = [[] for _ in range(batch_size)]
+
+        # Value phase: rows decode in lockstep, one requested field at a
+        # time — rows that terminate early keep feeding the terminator
+        # until the batch max (their cache gains benign repeat-\n
+        # positions; never recorded — the accepted imprecision of the
+        # old free phase's PAD-after-finish, and rollout's B=1 never
+        # hits it).
+        feed: Tensor = (
+            torch.tensor([list(self.opener_ids)], dtype=torch.long, device=device)
+            .expand(batch_size, -1)
+            .contiguous()
+        )
+        for aux_field in generate:
+            assert runtime is not None  # guarded above
+            terminator = runtime.terminator_id
+            candidates = runtime.value_candidates.get(aux_field)
+            if candidates is not None:
+                # Constrained field = classification: score the
+                # candidates' first ids once, then FORCE the winning
+                # candidate + terminator (deterministic length, exactly
+                # the trained bytes — no free phase to wander in).
+                logits, fed = self._step(backbone, memory, feed, fed)
+                firsts = torch.tensor(
+                    [c[0] for c in candidates],
+                    dtype=torch.long,
+                    device=device,
+                )
+                picks = logits[:, firsts].argmax(dim=-1).tolist()
+                width = max(len(c) for c in candidates) + 1
+                forced_rows = torch.full(
+                    (batch_size, width),
+                    terminator,
+                    dtype=torch.long,
+                    device=device,
+                )
+                for row, pick in enumerate(picks):
+                    chosen = [*candidates[pick], terminator]
+                    forced_rows[row, : len(chosen)] = torch.tensor(
+                        chosen,
+                        dtype=torch.long,
+                        device=device,
+                    )
+                    value_ids[row].append(list(candidates[pick]))
+                feed = forced_rows
+                continue
+            budget = VALUE_BUDGETS[aux_field]
+            done = torch.zeros(batch_size, dtype=torch.bool, device=device)
+            row_ids: list[list[int]] = [[] for _ in range(batch_size)]
+            for step in range(budget + 1):
+                logits, fed = self._step(backbone, memory, feed, fed)
+                logits = logits[:, :vocab].masked_fill(~text_allowed, min_value)
+                next_ids = logits.argmax(dim=-1)
+                if step == budget:
+                    # Budget exhausted: force the terminator on rows
+                    # still talking.
+                    forced = ~done & (next_ids != terminator)
+                    fallback_count += int(forced.sum())
+                    next_ids = torch.where(
+                        forced,
+                        torch.full_like(next_ids, terminator),
+                        next_ids,
+                    )
+                # Early-terminated rows keep feeding the terminator.
+                next_ids = torch.where(
+                    done,
+                    torch.full_like(next_ids, terminator),
+                    next_ids,
+                )
+                for row, next_id in enumerate(next_ids.tolist()):
+                    if not done[row] and next_id != terminator:
+                        row_ids[row].append(next_id)
+                done |= next_ids == terminator
+                feed = next_ids[:, None]
+                if bool(done.all()):
+                    break
+            for row in range(batch_size):
+                value_ids[row].append(row_ids[row])
+
+        # Action phase: BOA forced (the scaffold's transition — its
+        # target is trained, its identity is not a decision), fed
+        # together with the not-yet-consumed last feed (the final
+        # terminator, or the whole opener when generate=()).
+        boa = torch.full(
+            (batch_size, 1),
+            boa_backbone,
+            dtype=torch.long,
+            device=device,
+        )
+        feed = torch.cat([feed, boa], dim=1)
+        remaining = torch.full((batch_size,), total_symbols, device=device)
+        action_ids: list[list[int]] = [[] for _ in range(batch_size)]
+        while not bool((remaining == 0).all()):
+            logits, fed = self._step(backbone, memory, feed, fed)
+            logits = logits[:, :vocab]
+            action_allowed = (lengths[None, :] > 0) & (
+                lengths[None, :] <= remaining[:, None]
+            )
+            action_allowed = torch.cat(
+                [
+                    torch.zeros(
+                        (batch_size, base),
+                        dtype=torch.bool,
+                        device=device,
+                    ),
+                    action_allowed,
+                ],
+                dim=1,
+            )
+            action_allowed[:, pad_backbone] = remaining == 0
+            next_ids = logits.masked_fill(~action_allowed, min_value).argmax(dim=-1)
+            for row, next_id in enumerate(next_ids.tolist()):
+                codec_id = next_id - base
+                if codec_id != self.codec.pad:
+                    action_ids[row].append(codec_id)
+                    remaining[row] -= int(lengths[codec_id])
+            feed = next_ids[:, None]
+        if fallback_count:
+            self.fallback_count += fallback_count
+            print(
+                f"[ar_backbone] value budget exhausted on "
+                f"{fallback_count} field value(s) — terminator forced "
+                f"(cumulative {self.fallback_count}); a persistent rate "
+                "means the model stopped closing its value lines",
+                flush=True,
+            )
+
+        q01 = stats.q01.cpu().numpy()
+        q99 = stats.q99.cpu().numpy()
+        chunks = [
+            torch.from_numpy(
+                self.codec.decode(row_ids, q01[row], q99[row]),
+            ).float()
+            for row, row_ids in enumerate(action_ids)
+        ]
+        generations = [
+            _parse_aux(
+                generate,
+                [self.tokenizer.decode(ids) for ids in row],
+            )
+            for row in value_ids
+        ]
+        return BijouPrediction(
+            actions=torch.stack(chunks).to(device),
+            generations=generations,
+        )
+
+    def _step(
+        self,
+        backbone: B,
+        memory: ObservationMemory,
+        feed: Tensor,
+        fed: int,
+    ) -> tuple[Tensor, int]:
+        """Feed BACKBONE-id tokens against the growing cache; returns
+        (last-position fp32 logits [B, vocab], new fed count)."""
+        hidden = self._suffix_hidden(backbone, memory, feed, fed)
+        logits = self._logits(backbone, hidden)[:, -1, :].float()
+        return logits, fed + feed.shape[1]
+
+
+class ARBackboneDecoder(ARSuffixDecoder[Gemma4Model]):
+    """The Gemma backbone's suffix role (see the module docstring).
+
+    ``text_config`` is the FULL backbone architecture — construction
+    validates the block placement and that the KV-shared deep half is
+    present (a truncated backbone has none; this decoder is
+    definitionally the full stack's suffix role)."""
+
+    def __init__(
+        self,
+        config: ARBackboneConfig,
+        text_config: Gemma4TextConfig,
+        codec: ActionCodec,
+        *,
+        tokenizer: TextTokenizer | None,
+        aux_runtime: AuxRuntime | None = None,
+        aux_loss_weight: float = 1.0,
+        device: DeviceLike = None,
+        dtype: torch.dtype | None = None,
+    ) -> None:
+        super().__init__(
+            config,
+            codec,
+            tokenizer=tokenizer,
+            opener_text=GENERATION_OPENER,
+            aux_runtime=aux_runtime,
+            aux_loss_weight=aux_loss_weight,
+        )
         if config.block_base + config.vocab_total > text_config.vocab_size:
             raise ValueError(
                 f"FAST block [{config.block_base}, "
@@ -199,21 +564,6 @@ class ARBackboneDecoder(nn.Module):
             device=device,
             dtype=dtype,
         )
-        # Constrained decoding needs each token's symbol expansion length
-        # (one BPE piece = a run of quantized DCT coefficients). Specials
-        # stay 0 and are handled explicitly in the decode mask. Plain
-        # attribute, not a buffer: derived from the codec, never saved.
-        symbol_lengths = torch.zeros(config.vocab_total, dtype=torch.long)
-        for token_id in range(codec.tokenizer.vocab_size):
-            piece = codec.tokenizer.bpe.id_to_token(token_id)
-            assert piece is not None, f"BPE id {token_id} has no piece"
-            symbol_lengths[token_id] = len(piece)
-        if not bool((symbol_lengths == 1).any()):
-            raise ValueError(
-                "BPE vocabulary has no single-symbol token — exact fill "
-                "(and decode termination) cannot be guaranteed",
-            )
-        self.symbol_lengths = symbol_lengths
         if device is None or torch.device(device).type != "meta":
             self.reset_parameters()
 
@@ -226,6 +576,7 @@ class ARBackboneDecoder(nn.Module):
         nn.init.normal_(self.fast_ple.weight, mean=0.0, std=0.02)
 
     @torch.no_grad()
+    @override
     def init_tables_from_backbone(self, backbone: Gemma4Model) -> None:
         """Re-init the patch rows around the REAL tables' row mean
         (+0.02 noise) — the block's logits then start near the average
@@ -383,269 +734,19 @@ class ARBackboneDecoder(nn.Module):
             )
 
     @override
-    def forward(
+    def _suffix_hidden(
         self,
         backbone: Gemma4Model,
         memory: ObservationMemory,
         tokens: Tensor,
-    ) -> Tensor:
-        """Next-token logits over the suffix (BACKBONE ids — mixed value
-        lines + FAST block).
-
-        CONSUMES the memory's cache (suffix K/V are appended): encode a
-        fresh memory per call — training does, and the decode loop is
-        exactly the incremental consumer this enables.
-
-        Shapes:
-          - memory.cache: prefix K/V of every non-shared layer, [B, ...]
-          - tokens: [B, T]  (long; backbone ids)
-          - returns: [B, T, vocab_size]  (FULL backbone vocabulary;
-            position j predicts suffix position j + 1)
-        """
-        embeds, per_layer = self._suffix_inputs_backbone_ids(backbone, tokens)
-        hidden = self._continue_suffix(backbone, memory, embeds, per_layer, fed=0)
-        return self._patched_logits(backbone, hidden)
-
-    @torch.no_grad()
-    def predict_chunk(
-        self,
-        backbone: Gemma4Model,
-        memory: ObservationMemory,
-        batch: CollatedBatch[Any],
-        *,
-        generate: tuple[AuxField, ...] = (),
-        generator: torch.Generator | None = None,
-        noise: Tensor | None = None,
-    ) -> BijouPrediction:
-        """The single decode path, fully scaffolded by the request set.
-        Deterministic greedy; ``generator``/``noise`` unused/must be
-        None.
-
-        ``generate`` must equal the request the PROMPT was collated with
-        (the collator's ``generate_override``; the memory was encoded
-        from that prompt — mismatched scaffolds would sit off the
-        conditioning). Per requested field, in order: greedy text-id
-        decode under the field's VALUE_BUDGETS cap until the ``\\n``
-        terminator (budget exhaustion forces it and counts a loud
-        fallback; HOLDING constrains the first token to its candidate
-        set). After the last field — immediately, for ``generate=()``,
-        the deployment fast path — BOA is FORCED (its target is trained;
-        its identity is not a decision) and the ar_fast grammar mask
-        decodes the chunk by remaining symbol budget, PAD once finished.
-
-        Requires an aux-trained checkpoint for non-empty ``generate``
-        (requested-but-untrained fields would be elicited off-manifold).
-
-        Returns a BijouPrediction: chunks [B, chunk, action_dim] raw
-        units + one AuxGeneration per row (empty for ``generate=()``)."""
-        if noise is not None:
-            raise ValueError("ARBackboneDecoder.predict_chunk takes no noise")
-        config = self.config
-        if generate:
-            trained = () if config.aux is None else config.aux.fields
-            untrained = [f.value for f in generate if f not in trained]
-            if untrained:
-                raise ValueError(
-                    f"generate={untrained} requested, but the checkpoint "
-                    f"trained aux fields {[f.value for f in trained] or 'NONE'} "
-                    "— an untrained field would be elicited off-manifold",
-                )
-            ordered = tuple(f for f in AuxField if f in generate)
-            if ordered != generate:
-                raise ValueError(
-                    f"generate must keep template order; got "
-                    f"{[f.value for f in generate]}",
-                )
-        stats = batch.action_stats
-        if stats.q01 is None or stats.q99 is None:
-            raise SystemExit(
-                "batch stats carry no action quantiles — AR decoding needs "
-                "the exact q01/q99 the tokenizer was fitted under (old "
-                "checkpoint stats tables cannot drive AR inference)",
-            )
-        batch_size = batch.state.shape[0]
-        device = batch.state.device
-        base = config.block_base
-        boa_backbone = base + self.codec.boa
-        pad_backbone = base + self.codec.pad
-        lengths = self.symbol_lengths.to(device)
-        total_symbols = config.chunk_size * config.action_dim
-        min_value: float = torch.finfo(torch.float32).min
-        runtime = self.aux_runtime
-        if generate and runtime is None:
-            raise ValueError(
-                "aux fields requested but the decoder has no AuxRuntime — "
-                "loading built the model without the aux record",
-            )
-
-        # Text-only mask for value decoding (block ids illegal — the
-        # terminator ends a value, BOA is forced by the scaffold).
-        vocab = base + config.vocab_total
-        text_allowed = torch.zeros(vocab, dtype=torch.bool, device=device)
-        text_allowed[:base] = True
-
-        fed = 0
-        fallback_count = 0
-        value_ids: list[list[list[int]]] = [[] for _ in range(batch_size)]
-
-        # Value phase: rows decode in lockstep, one requested field at a
-        # time — rows that terminate early keep feeding the terminator
-        # until the batch max (their cache gains benign repeat-\n
-        # positions; never recorded — the accepted imprecision of the
-        # old free phase's PAD-after-finish, and rollout's B=1 never
-        # hits it).
-        feed: Tensor = (
-            torch.tensor([list(self.opener_ids)], dtype=torch.long, device=device)
-            .expand(batch_size, -1)
-            .contiguous()
-        )
-        for aux_field in generate:
-            assert runtime is not None  # guarded above
-            terminator = runtime.terminator_id
-            candidates = runtime.value_candidates.get(aux_field)
-            if candidates is not None:
-                # Constrained field = classification: score the
-                # candidates' first ids once, then FORCE the winning
-                # candidate + terminator (deterministic length, exactly
-                # the trained bytes — no free phase to wander in).
-                logits, fed = self._step(backbone, memory, feed, fed)
-                firsts = torch.tensor(
-                    [c[0] for c in candidates],
-                    dtype=torch.long,
-                    device=device,
-                )
-                picks = logits[:, firsts].argmax(dim=-1).tolist()
-                width = max(len(c) for c in candidates) + 1
-                forced_rows = torch.full(
-                    (batch_size, width),
-                    terminator,
-                    dtype=torch.long,
-                    device=device,
-                )
-                for row, pick in enumerate(picks):
-                    chosen = [*candidates[pick], terminator]
-                    forced_rows[row, : len(chosen)] = torch.tensor(
-                        chosen,
-                        dtype=torch.long,
-                        device=device,
-                    )
-                    value_ids[row].append(list(candidates[pick]))
-                feed = forced_rows
-                continue
-            budget = VALUE_BUDGETS[aux_field]
-            done = torch.zeros(batch_size, dtype=torch.bool, device=device)
-            row_ids: list[list[int]] = [[] for _ in range(batch_size)]
-            for step in range(budget + 1):
-                logits, fed = self._step(backbone, memory, feed, fed)
-                logits = logits[:, :vocab].masked_fill(~text_allowed, min_value)
-                next_ids = logits.argmax(dim=-1)
-                if step == budget:
-                    # Budget exhausted: force the terminator on rows
-                    # still talking.
-                    forced = ~done & (next_ids != terminator)
-                    fallback_count += int(forced.sum())
-                    next_ids = torch.where(
-                        forced,
-                        torch.full_like(next_ids, terminator),
-                        next_ids,
-                    )
-                # Early-terminated rows keep feeding the terminator.
-                next_ids = torch.where(
-                    done,
-                    torch.full_like(next_ids, terminator),
-                    next_ids,
-                )
-                for row, next_id in enumerate(next_ids.tolist()):
-                    if not done[row] and next_id != terminator:
-                        row_ids[row].append(next_id)
-                done |= next_ids == terminator
-                feed = next_ids[:, None]
-                if bool(done.all()):
-                    break
-            for row in range(batch_size):
-                value_ids[row].append(row_ids[row])
-
-        # Action phase: BOA forced (the scaffold's transition — its
-        # target is trained, its identity is not a decision), fed
-        # together with the not-yet-consumed last feed (the final
-        # terminator, or the whole opener when generate=()).
-        boa = torch.full(
-            (batch_size, 1),
-            boa_backbone,
-            dtype=torch.long,
-            device=device,
-        )
-        feed = torch.cat([feed, boa], dim=1)
-        remaining = torch.full((batch_size,), total_symbols, device=device)
-        action_ids: list[list[int]] = [[] for _ in range(batch_size)]
-        while not bool((remaining == 0).all()):
-            logits, fed = self._step(backbone, memory, feed, fed)
-            logits = logits[:, :vocab]
-            action_allowed = (lengths[None, :] > 0) & (
-                lengths[None, :] <= remaining[:, None]
-            )
-            action_allowed = torch.cat(
-                [
-                    torch.zeros(
-                        (batch_size, base),
-                        dtype=torch.bool,
-                        device=device,
-                    ),
-                    action_allowed,
-                ],
-                dim=1,
-            )
-            action_allowed[:, pad_backbone] = remaining == 0
-            next_ids = logits.masked_fill(~action_allowed, min_value).argmax(dim=-1)
-            for row, next_id in enumerate(next_ids.tolist()):
-                codec_id = next_id - base
-                if codec_id != self.codec.pad:
-                    action_ids[row].append(codec_id)
-                    remaining[row] -= int(lengths[codec_id])
-            feed = next_ids[:, None]
-        if fallback_count:
-            self.fallback_count += fallback_count
-            print(
-                f"[ar_backbone] value budget exhausted on "
-                f"{fallback_count} field value(s) — terminator forced "
-                f"(cumulative {self.fallback_count}); a persistent rate "
-                "means the model stopped closing its value lines",
-                flush=True,
-            )
-
-        q01 = stats.q01.cpu().numpy()
-        q99 = stats.q99.cpu().numpy()
-        chunks = [
-            torch.from_numpy(
-                self.codec.decode(row_ids, q01[row], q99[row]),
-            ).float()
-            for row, row_ids in enumerate(action_ids)
-        ]
-        generations = [
-            _parse_aux(
-                generate,
-                [self.tokenizer.decode(ids) for ids in row],
-            )
-            for row in value_ids
-        ]
-        return BijouPrediction(
-            actions=torch.stack(chunks).to(device),
-            generations=generations,
-        )
-
-    def _step(
-        self,
-        backbone: Gemma4Model,
-        memory: ObservationMemory,
-        feed: Tensor,
         fed: int,
-    ) -> tuple[Tensor, int]:
-        """Feed BACKBONE-id tokens against the growing cache; returns
-        (last-position fp32 logits [B, vocab], new fed count)."""
-        embeds, per_layer = self._suffix_inputs_backbone_ids(backbone, feed)
-        hidden = self._continue_suffix(backbone, memory, embeds, per_layer, fed)
-        logits = self._patched_logits(backbone, hidden)[:, -1, :].float()
-        return logits, fed + embeds.shape[1]
+    ) -> Tensor:
+        embeds, per_layer = self._suffix_inputs_backbone_ids(backbone, tokens)
+        return self._continue_suffix(backbone, memory, embeds, per_layer, fed)
+
+    @override
+    def _logits(self, backbone: Gemma4Model, hidden: Tensor) -> Tensor:
+        return self._patched_logits(backbone, hidden)
 
 
 def _parse_aux(
@@ -684,7 +785,7 @@ def _parse_aux(
 
 
 def suffix_targets(
-    decoder: ARBackboneDecoder,
+    decoder: ARSuffixDecoder[Any],
     batch: CollatedBatch[Any],
 ) -> tuple[Tensor, Tensor, Tensor | None]:
     """(full suffix ids [B, 1+S], shifted CE targets [B, S], aux-position
@@ -731,7 +832,7 @@ def suffix_targets(
 
 
 def ar_backbone_counts(
-    decoder: ARBackboneDecoder,
+    decoder: ARSuffixDecoder[Any],
     batch: CollatedBatch[Any],
 ) -> tuple[Tensor, Tensor | None]:
     """(action target count, aux target count | None) for one batch —
@@ -746,9 +847,9 @@ def ar_backbone_counts(
     return (valid & ~is_aux).sum(), (valid & is_aux).sum()
 
 
-def ar_backbone_loss_sums(
-    backbone: Gemma4Model,
-    decoder: ARBackboneDecoder,
+def ar_backbone_loss_sums[B: nn.Module](
+    backbone: B,
+    decoder: ARSuffixDecoder[B],
     memory: ObservationMemory,
     batch: CollatedBatch[Any],
 ) -> tuple[Tensor, Tensor, Tensor | None, Tensor | None]:
@@ -780,9 +881,9 @@ def ar_backbone_loss_sums(
     )
 
 
-def ar_backbone_losses(
-    backbone: Gemma4Model,
-    decoder: ARBackboneDecoder,
+def ar_backbone_losses[B: nn.Module](
+    backbone: B,
+    decoder: ARSuffixDecoder[B],
     memory: ObservationMemory,
     batch: CollatedBatch[Any],
 ) -> tuple[Tensor, Tensor, Tensor | None, Tensor | None]:
@@ -828,9 +929,9 @@ def ar_backbone_losses(
     return total, action, aux_sum, aux_count
 
 
-def ar_backbone_loss(
-    backbone: Gemma4Model,
-    decoder: ARBackboneDecoder,
+def ar_backbone_loss[B: nn.Module](
+    backbone: B,
+    decoder: ARSuffixDecoder[B],
     memory: ObservationMemory,
     batch: CollatedBatch[Any],
 ) -> Tensor:

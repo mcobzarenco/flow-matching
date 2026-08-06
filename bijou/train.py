@@ -89,7 +89,11 @@ from .data import (
     select_datasets,
     worker_init,
 )
-from .decoders.ar_backbone import ARBackboneConfig, ARBackboneDecoder
+from .decoders.ar_backbone import (
+    ARBackboneConfig,
+    ARBackboneDecoder,
+    ARSuffixDecoder,
+)
 from .decoders.ar_fast import ARFastConfig, ARFastDecoder
 from .decoders.flow import (
     SNAPFLOW_ALPHA,
@@ -517,7 +521,7 @@ class BijouTrainStep[I: BatchInputs](torch.nn.Module):
             enabled=device_type == "cuda" and self.backbone_trained,
         ):
             memory = self.model.encode(inputs, with_grad=self.backbone_trained)
-            if isinstance(self.model.decoder, ARBackboneDecoder):
+            if isinstance(self.model.decoder, ARSuffixDecoder):
                 # ar_backbone's "decoder" IS the backbone: its suffix
                 # forward belongs in the same regime as the prefix —
                 # live runs (fp32 masters) run it under bf16 autocast,
@@ -549,7 +553,7 @@ class BijouTrainStep[I: BatchInputs](torch.nn.Module):
         loss = action_sum / action_norm
         if aux_sum is not None:
             decoder = self.model.decoder
-            assert isinstance(decoder, ARBackboneDecoder)
+            assert isinstance(decoder, ARSuffixDecoder)
             assert aux_norm is not None
             loss = loss + decoder.aux_loss_weight * (aux_sum / aux_norm.clamp(min=1))
         return (
@@ -848,7 +852,7 @@ def validate[I: BatchInputs](
         generations: list[AuxGeneration] | None = None
         rich_actions: Tensor | None = None
         aux_fields: tuple[AuxField, ...] = ()
-        if isinstance(decoder, ARBackboneDecoder) and decoder.config.aux is not None:
+        if isinstance(decoder, ARSuffixDecoder) and decoder.config.aux is not None:
             aux_fields = decoder.config.aux.fields
             table_collator = dataclasses.replace(
                 collator,
