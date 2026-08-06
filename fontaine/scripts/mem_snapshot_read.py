@@ -16,6 +16,7 @@ from __future__ import annotations
 import collections
 import pickle
 import sys
+from pathlib import Path
 
 
 def frames_of(block: dict) -> list[dict]:
@@ -43,7 +44,7 @@ def site(frames: list[dict], *, project_first: bool) -> str:
 def main() -> int:
     path = sys.argv[1]
     top_n = int(sys.argv[2]) if len(sys.argv) > 2 else 25
-    with open(path, "rb") as fh:
+    with Path(path).open("rb") as fh:
         snap = pickle.load(fh)
 
     by_project: collections.Counter[str] = collections.Counter()
