@@ -1,6 +1,39 @@
 # Now
 
-*Updated 2026-08-06 17:1x–18:1xZ (real `date -u`) — work session (bounded, then
+*Updated 2026-08-06 18:09–18:2xZ (real `date -u`) — tick (conversational): **OWNER
+STEERED THE SCHEDULE LIVE (18:10:13Z): "I want to run molmo2 tonight,
+let's delay arm A" — ARM A IS HELD; the box belongs to Molmo2 AR
+tonight.** The 18:1xZ plan ("arm A tonight, Molmo2 tomorrow") is
+overridden at the decision point before any launch. Also answered the
+owner's 18:09:30Z freezing question (both asked mid-window, caught by
+the 45-s conversational poll): **for the original vocab BOTH sides
+freeze** — `wte.embedding` [151,936] + shipped `wte.new_embedding`
+[128 image specials] + all original-vocab `lm_head` rows (Gemma
+rationale, gemma4.py:532; Qwen3's untied head makes the implicit
+Gemma choice explicit) — trainable = the NEW FAST extension block
+(embedding rows [152,064, 153,090) + fresh untied head rows) +
+decoder layers + `ln_f`; aux-text reads the frozen shipped head,
+grads flow through it into the trunk. Replied 18:12Z with the split +
+the tonight plan: **critical path compresses into the chained
+sessions — WP3 ChatML collator + FAST extension anchoring + AR
+decoder arm + memory smoke + pre-reg, gates HELD (smoke before
+launch; 4.85B live trunk × 4 ranks), pre-reg + launch tonight iff
+oracles + smoke green, else the diagnosis.** Box state: arm C panel
+eval @22,432/25,800 at 18:11Z (~200 f/min → panel read ~18:3xZ,
+masked eval chains → GPU 0 free ~19:0x–19:3xZ; GPUs 1–3 ALREADY idle
+— the smoke need not wait). Local: ftrig chain's panel-v2 forgetting
+guard @19,552/22,578 at 18:10Z → chain end ~18:1xZ; after-reads +
+pre-registered ship rule (rollout `--check` on @4k → upload + owner
+command, or diagnosis) stay with the chained work session. Queue
+(REORDERED per steering): **next (chained work session) → Molmo2 WP3
+collator + FAST anchoring + AR decoder arm + smoke + pre-reg (AR
+4×DDP TONIGHT — top priority) + ftrig after-reads/ship-rule + arm C
+statedrop reads at its boundary; arm A img280 HELD (launcher banked,
+pre-reg intact — launches only on a fresh owner go); π0.5 deep-read
+post + blog reorg (low-prio)**. GPUs busy ×2 + CPU queue deep →
+`run_work_next` armed (18:06) per no-idle-pauses.*
+
+*Previous update 2026-08-06 17:1x–18:1xZ (real `date -u`) — work session (bounded, then
 extended by TWO OWNER STEERING BURSTS, conversational mode held):
 **MOLMO2 WP1 + WP2 BOTH LANDED WITH FULL HF PARITY IN ONE SESSION —
 the port is text+vision parity-clean and the owner has re-aimed phase 1
