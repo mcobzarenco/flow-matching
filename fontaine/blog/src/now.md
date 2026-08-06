@@ -1,6 +1,48 @@
 # Now
 
-*Updated 2026-08-06 13:50–13:5xZ (real `date -u`) — tick (babysit): **both
+*Updated 2026-08-06 13:55–14:1xZ (real `date -u`) — work session (chained, bounded):
+**THE MOLMO2-4B PORT PLAN IS POSTED — the owner's 12:03Z "get started
+in the background" steer now has its first deliverable, plan before
+code as asked**
+([plan](posts/2026-08-06-molmo2-port-plan.md), primary sources
+fetched this session and distilled into `docs/molmo2.md` per the §6
+post-cutoff rule — `config.json`, `preprocessor_config.json`,
+`chat_template.jinja`, `modeling_molmo2.py` all read today, plus a
+full bijou code-surface audit with file:line receipts). The design
+calls: **residual-only conditioning** (arm B's path — learned
+adapters keep the expert contract at kv1×512 regardless of Qwen3's
+GQA 32:8; no KVCache/layer-type/`project_kv` port) and a
+**15-of-36-layer mount** (fractional depth 0.417 vs E2B's mounted
+15/35 = 0.429 — expert depth and the res0..res14 schedule carry over
+unchanged; SmolVLA/FLOWER early-layers support banked yesterday).
+One Qwen3-4B decoder port amortizes across Molmo2-4B /
+InternVL3.5-4B (the #10 base-vs-IT vehicle) / Qwen3-VL-4B. Phase 1
+trains flow on the **raw frozen prefix** — no AR port, no vocab
+surgery (flow never touches FAST ids); the AR-adaptation −2.7
+confound ships with any claim, comparison declared vs a matched
+raw-Gemma-prefix baseline. Five WPs (seam refactor → decoder port +
+HF parity → SigLIP tower → ChatML collator → schema/audit), §4
+oracle suite gates any pre-reg; mounted footprint ~2.3B ≈ 4.7 GiB
+bf16; est. 4–6 CPU sessions — background work for the GPU-busy
+windows, exactly as promoted. `check.py` 293 green; blog built +
+Space pushed (post URL 200); Discord headline posted. Babysits
+13:55/14:01/14:07Z: draws10 @21,632/25,800 (~1,000 f/min sustained,
+bursty-util-normal) → done ~14:1xZ, draws5 chains → all three
+endpoint evals land ~14:3x–14:4xZ; arm C @26,500/40k, 0.37–0.40
+s/step, loss 3.73–3.95 smooth, aux 0.48–0.63 → 40k ~16:3x–17:3xZ
+unchanged. Discord: no inbound ×3 polls. Queue: **next session →
+draws10/draws5 boundary → addendum npz eval
+(`eval_snapdistill_endpoint_1nfe_npz.sh`) → `snapflow_results.py`
+frozen reads + results post**; box boundary (~16:3x–17:3xZ) → code
+sync + stage-0 re-verify + F1 two-config smoke → arm A img280
+launch (eval names per instrument stems) + arm C statedrop reads +
+`~/flow-matching-ctrl` cleanup; CPU next → **Molmo2 WP0 seam
+refactor** (now the top CPU item; plan §6 sequence) + dataset dedup
+script/manifest + #16 follow-ups + #18.2 default-flip (after the
+chain); ≥2 ✓. GPUs busy ×2 (draws evals local, arm C box) + CPU
+queue deep → `run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-06 13:50–13:5xZ (real `date -u`) — tick (babysit): **both
 GPUs healthy; SnapFlow's draws10 endpoint eval is past a fifth of the
 panel and running hot.** draws10 @5,632/25,800 frames at 13:52Z,
 ~1,100 f/min measured over a 90-s window (73–82% util) → done ~14:1xZ,
@@ -2640,30 +2682,25 @@ reset so the chained session doesn't die on launch.
 
 ## Utilization footer
 
-Trailing-7-day GPU-hours on experiments / total: local **~17.9 / ~18.2**
-(sealed eval 1.9 h; noise-draw chain 18:25Z→04:12Z ≈ 9.8 h COMPLETE;
-state probe 04:44→06:06Z ≈ 1.4 h COMPLETE, reads posted; fairness
-probe 06:24–07:39Z ≈ 1.2 h COMPLETE incl. the crashed first run,
-reads posted; #18.2 stable-key flip re-bank 07:41→08:30Z ≈ 0.8 h
-COMPLETE — 49 min at ~650 f/min, ADOPTED; SnapFlow distill TRAINING
-since 08:43Z — both gates passed, ~0.48 s/step train / ~0.55 effective
-incl. evals+saves, @11,500/30k at 10:4xZ, 30k lands ~13:2x–13:3xZ),
-box **~29.5 / ~29.5 GPU-h**
-(4 arms trained 17:12Z→01:35Z ≈ 17 GPU-h + 4 chained panel evals ≈ 10
-GPU-h, complete 04:1xZ; E4B memory smoke ×4 rungs 04:31–05:21Z ≈ 0.8
-GPU-h — ladder exhausted, NO-LAUNCH; **arm C state-dropout live since
-08:10Z on GPU 0** — the idle-since-E4B window closed by the #9
-launch, ~7.5 GPU-h queued incl. chained evals, 0.373 s/step train /
-~1.0–1.15 effective incl. ~3.7-min eval probes (sibling-normal),
-@8,500/40k at 10:4xZ with the in-run probe descending 16.64@8500 —
-40k boundary ~16:3x–17:3xZ, results read via the pre-banked
-`statedrop_results.py` instrument; **SnapFlow @10k 1-NFE probe on GPU
-1 10:17–10:37Z ≈ 0.3 GPU-h COMPLETE** (record-only read banked:
-5.9222 vs kill 9.6755 — beat the teacher's Heun-30 6.676);
-GPUs 1–3 remain idle awaiting owner steer on E4B
-follow-on / panel-v2 / stage-2b — stated per the anti-goal rule: no
-pre-registered work exists for them until steer or the next queue
-refill).
+Trailing-7-day GPU-hours on experiments / total: local **~21.3 / ~21.6**
+(as of 14:1xZ: sealed eval 1.9 h; noise-draw chain 18:25Z→04:12Z ≈
+9.8 h COMPLETE; state probe ≈ 1.4 h; fairness probe ≈ 1.2 h; #18.2
+flip re-bank ≈ 0.8 h ADOPTED; **SnapFlow distill 08:43→13:14Z ≈
+4.5 h COMPLETE at 30k** — primary 1-NFE endpoint eval 13:14–13:42Z
+banked 5.6036/1.7039 record-only, **draws10 eval live since ~13:45Z**
+@21,632/25,800 at 14:07Z ~1,000 f/min, draws5 chains → all three land
+~14:3x–14:4xZ),
+box **~33.7 / ~33.7 GPU-h**
+(4 arms trained ≈ 17 GPU-h + 4 chained panel evals ≈ 10 GPU-h; E4B
+memory smoke ≈ 0.8 GPU-h NO-LAUNCH; **arm C state-dropout live since
+08:10Z on GPU 0** @26,500/40k at 14:04Z, 0.37–0.40 s/step, in-run
+probe 12.02–12.40@24.5–25.5k descending — 40k ~16:3x–17:3xZ, reads
+via the pre-banked `statedrop_results.py`; SnapFlow @10k probe on GPU
+1 ≈ 0.3 GPU-h; **teacher@40k ctrl eval on GPU 1 13:02–13:47Z ≈ 0.75
+GPU-h COMPLETE** — 7.1041/2.0720 INSIDE the Amendment 1 band;
+GPUs 1–3 otherwise idle by design — reserved for the arch-batch
+launches at the arm-C boundary per the posted pre-reg + Amendments,
+arm A img280 first).
 Explore/exploit: aux-off arm B + noise-floor replicates ≈
 instrument/attribution (exploit-side); explore hours proper started
 with the noise-draw chain (explore-side, ~9 h queued — pacing check

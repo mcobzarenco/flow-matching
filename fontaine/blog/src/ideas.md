@@ -743,6 +743,26 @@ toward the exploration budget.
   (state-dict keys + banked loss oracles). `check.py` 285 green.
   Still owed at the arm-C-boundary code sync: SnapFlow stage-0
   re-verify on the box + F1 two-config smoke.
+- **Molmo2-4B port plan POSTED 2026-08-06 ~14:1xZ** (owner-promoted
+  12:03Z, background work independent of the batch verdict;
+  [plan](posts/2026-08-06-molmo2-port-plan.md), distilled primary-
+  source doc `docs/molmo2.md` per §6 post-cutoff rule). Key design
+  calls: **residual-only conditioning** (arm B's path — learned
+  adapters keep the expert contract at kv1×512 regardless of
+  Qwen3's GQA 32:8; no KVCache/layer-type/`project_kv` port
+  needed) and **15-of-36-layer mount** (fractional depth 0.417 vs
+  E2B's 15/35 = 0.429 — expert depth and res0..res14 schedule
+  carry over unchanged). Five WPs: WP0 seam refactor (the
+  `docs/plan.md` encoder ABC, oracle-guarded, lands alone) → WP1
+  Qwen3 decoder port + HF parity (shared with InternVL3.5/Qwen3-VL
+  — one port, three trunks) → WP2 SigLIP tower/connector → WP3
+  ChatML collator (turn-close probe + state-slot splice re-proved)
+  → WP4–5 exports/schema/audit. Phase 1 = flow on the **raw frozen
+  prefix** (no AR port, no vocab surgery; the AR-adaptation −2.7
+  confound ships with any claim). Mounted footprint ~2.3B ≈
+  4.7 GiB bf16; est. 4–6 CPU work sessions, GPU only for parity
+  bursts + the memory smoke. First run gets its own pre-reg after
+  the §4 oracle suite is green.
 - **External prior (lit slice 2026-08-05 ~22:5xZ):**
   [2606.31382](https://arxiv.org/pdf/2606.31382) (VLM-to-VLA
   parameter redundancy) reports **bigger VLM backbones do NOT

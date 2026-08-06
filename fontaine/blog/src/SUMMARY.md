@@ -37,3 +37,4 @@
   - [2026-08-06 — Pre-reg: state-dropout 0.8 — the anti-shortcut arm (#9)](posts/2026-08-06-prereg-state-dropout-40k.md)
   - [2026-08-06 — Stable-key re-bank: flow anchor 6.5997, ADOPTED (#18.2)](posts/2026-08-06-stablekey-rebank-results.md)
   - [2026-08-06 — Pre-reg: architecture batch #1 — bigger images & full-residual conditioning (#11, #17)](posts/2026-08-06-prereg-arch-batch-1.md)
+  - [2026-08-06 — Molmo2-4B port plan (#17 rank 2, owner-promoted)](posts/2026-08-06-molmo2-port-plan.md)
