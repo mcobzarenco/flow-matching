@@ -1,6 +1,45 @@
 # Now
 
-*Updated 2026-08-06 15:11–15:2xZ (real `date -u`) — tick (babysit): **THE SNAPFLOW
+*Updated 2026-08-06 15:13–15:3xZ (real `date -u`) — work session (chained, bounded): **THE
+SNAPFLOW RESULTS POST IS PUBLISHED — the #12 distillation arc closes
+public: parity-adopt + deployment headline, live on the Space,
+Discord'd with the owner adoption ask**
+([results](posts/2026-08-06-snapflow-results.md)). All six TODO
+cells filled from the frozen analysis JSON (no judgment at write
+time): draws5 row 5.3918/1.6056; diversity read — mean-of-5 banks
+~90% of the student's total averaging gain (same fractional shape as
+the teacher's 87%, at **one-fifth the amplitude**, 0.236 vs 1.258),
+student mean-of-5 already beats teacher mean-of-5 (5.3918 vs
+5.5235), mean10 0.03 below the modal band per the report's
+`inside_modal_band: false`; per-step horizon read — student below
+teacher at ALL 50 steps (`crossover_step: null`), delta widening
+monotonically −0.229@1 → −1.554@50, i.e. distillation compressed
+late-horizon error hardest (mean-collapse operating where draw
+spread is largest — the 08-05 flow-vs-AR divergence does NOT
+transfer to student-vs-teacher); v2 descriptive column
+5.6711/1.7059 vs teacher 6.7151/1.9453 — margin −1.04,
+keying-robust; npz addendum ~27 min (14:43→15:10Z); adoption cell
+quotes the instrument verbatim + the concrete proposal (single draw
+= latency floor at 1 expert eval, mean-of-10 = quality mode at ~10,
+still 3× under one Heun-30 draw). Final s=t 7.6601 VERIFIED in the
+train log before shipping (step-30000 line). `check.py` 293 green →
+commit 119e12e → blog built + Space pushed → post URL live with
+draws5 numbers curl-verified → **Discord headline + owner adoption
+ask posted 15:2xZ**. Arm C babysit 15:1xZ: @35,000/40k, pgrep
+alive, 73.8 GiB, 0.373–0.385 s/step, probe **11.1057@35000**
+(11.11–11.58@34–35k, plateau band unchanged, K1 margin far) → 40k
+~16:3xZ; the 0%-util instant was the step-35000 eval/save boundary,
+rate on-band. Discord: no inbound ×2 polls (boot + post-publish).
+Queue: **next (chained) → Molmo2 WP0 seam refactor (top CPU item) +
+#18.2 `--noise-key` default-flip (NOW UNBLOCKED — the SnapFlow chain
+and addendum are complete)**; box boundary (~16:3xZ) → code sync +
+stage-0 re-verify + F1 two-config smoke → arm A img280 launch + arm
+C statedrop reads + `~/flow-matching-ctrl` cleanup. Owner watch
+item: the adoption decision requested in-channel — any reply is
+steering. GPU busy ×1 (arm C box; local idle-by-design) + CPU queue
+deep → `run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-06 15:11–15:2xZ (real `date -u`) — tick (babysit): **THE SNAPFLOW
 FROZEN VERDICT IS IN — `snapflow_results.py` ran this tick on the
 complete input set (npz addendum banked 15:0xZ, local GPU idle at
 poll) and the pre-registered decision assembly fires PARITY /
@@ -2782,19 +2821,20 @@ reset so the chained session doesn't die on launch.
 
 ## Utilization footer
 
-Trailing-7-day GPU-hours on experiments / total: local **~21.3 / ~21.6**
-(as of 14:1xZ: sealed eval 1.9 h; noise-draw chain 18:25Z→04:12Z ≈
+Trailing-7-day GPU-hours on experiments / total: local **~22.7 / ~23.0**
+(as of 15:2xZ: sealed eval 1.9 h; noise-draw chain 18:25Z→04:12Z ≈
 9.8 h COMPLETE; state probe ≈ 1.4 h; fairness probe ≈ 1.2 h; #18.2
 flip re-bank ≈ 0.8 h ADOPTED; **SnapFlow distill 08:43→13:14Z ≈
-4.5 h COMPLETE at 30k** — primary 1-NFE endpoint eval 13:14–13:42Z
-banked 5.6036/1.7039 record-only, **draws10 eval live since ~13:45Z**
-@21,632/25,800 at 14:07Z ~1,000 f/min, draws5 chains → all three land
-~14:3x–14:4xZ),
-box **~33.7 / ~33.7 GPU-h**
+4.5 h COMPLETE at 30k**; **SnapFlow endpoint-eval arc COMPLETE
+13:14–15:10Z ≈ 1.8 h** — draws1 5.6036/1.7039, draws10
+5.3675/1.5927, draws5 5.3918/1.6056, npz addendum 14:43–15:10Z —
+frozen verdict PARITY-ADOPT published; **local GPU idle-by-design
+since 15:10Z** — next local GPU work only via a new pre-reg),
+box **~34.9 / ~34.9 GPU-h**
 (4 arms trained ≈ 17 GPU-h + 4 chained panel evals ≈ 10 GPU-h; E4B
 memory smoke ≈ 0.8 GPU-h NO-LAUNCH; **arm C state-dropout live since
-08:10Z on GPU 0** @26,500/40k at 14:04Z, 0.37–0.40 s/step, in-run
-probe 12.02–12.40@24.5–25.5k descending — 40k ~16:3x–17:3xZ, reads
+08:10Z on GPU 0** @35,000/40k at 15:1xZ (≈7.1 h so far), 0.373–0.385
+s/step, in-run probe 11.1057@35000 plateau band — 40k ~16:3xZ, reads
 via the pre-banked `statedrop_results.py`; SnapFlow @10k probe on GPU
 1 ≈ 0.3 GPU-h; **teacher@40k ctrl eval on GPU 1 13:02–13:47Z ≈ 0.75
 GPU-h COMPLETE** — 7.1041/2.0720 INSIDE the Amendment 1 band;
@@ -2989,3 +3029,10 @@ slice TAKEN (~15 min) — the two-session debt is CLEARED**: the
 one-step fallback menu (OFP / MeanFlow-VLA / Let-It-Be-Simple)
 banked into #12 ahead of the endpoint read it may steer. Explore
 hours: the probe's 0.3 GPU-h is explore-side (SnapFlow chain).
+Session 15:13–15:3xZ: the ladder item was post-processing (rung 2) —
+the SnapFlow results post filled from the frozen JSON and PUBLISHED
+(Space + Discord + owner adoption ask), closing the #12 arc public;
+all-CPU (local GPU idle-by-design since the npz addendum banked).
+Arm C babysat mid-session with a Discord poll at the checkpoint per
+the class fix. Lit slice skipped — bounded publish item, the 13:12Z
+session's ~15 min slice is <3 h old; balance carries.
