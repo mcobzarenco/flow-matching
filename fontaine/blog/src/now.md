@@ -1,6 +1,43 @@
 # Now
 
-*Updated 2026-08-06 00:55–00:57Z (real `date -u`) — tick: **B COMPLETED 40k
+*Updated 2026-08-06 00:57–01:1xZ (real `date -u`) — work session: **RESUME
+HARDENING LANDED (#18.4, deep-dive finding 2 — all three traps closed
+before the E4B 100k launch opens its crash+resume risk window; idea
+#3 longer-training unblocked).** (a) The fresh-seed-on-resume
+convention is now ENFORCED, not assumed: `--resume` with the
+checkpoint's recorded `train_args.seed` dies loud at startup —
+before data/model build, all ranks — because the epoch-0 restart
+replays exactly the batches and τ/ε draws already trained on;
+`--allow-same-seed-resume` is the explicit reproduction-only escape
+hatch (parse-guarded to `--resume`), and checkpoints predating
+train_args recording warn instead of dying. (b) Live-backbone
+resume now prints an honest WARNING: fp32 masters restart snapped
+to the bf16 grid (sub-bf16 updates discarded at every boundary —
+masters are never serialized); the stale "lossless continuation"
+comment in `save_checkpoint` corrected to frozen-backbone-only.
+(c) The resume hyperparameter note covers EVERY optimizer param
+group (was group 0 only — a changed `--backbone-*-lr` on resume was
+silently ignored): CLI intent captured per group at construction,
+compared against restored `initial_lr` so a schedule-decayed lr
+can't fake a mismatch. 11 new tests (`tests/test_resume_guards.py`),
+`check.py` green (212); live oracle on the real flow-80k
+`step_080000`: same-seed refused / fresh-seed proceeds in order.
+Coupling handled: `snapflow_recipe_verify` POST_TEACHER_DEFAULTS
+extended (new TrainArgs field at inert default), stage 0 re-run
+green (51 fields verbatim, 11 deltas). Babysits 01:07/01:10Z: box
+×4 healthy — **all three control probes now sub-7** (A-s0
+6.955@39k, s1 6.926@37k, s2 6.973@37.5k), A-s0 @39.5k hits 40k
+~01:14Z, s1/s2 @37.5–37.6k ~01:26Z, 0.39–0.40 s/step, grad norms
+nominal; B's chained panel eval LIVE @3.9k/25.8k frames (~175
+frames/min ⇒ read lands ~03:1xZ, controls' evals queue behind their
+40k boundaries). Draws run 3 @16.8k/25.8k on pacing (~01:50Z, then
+runs 4–5). No Discord traffic; stage-2b still awaiting owner steer.
+Queue depth: box → E4B (GPU-side only); local → fairness probe →
+SnapFlow distill (launch-ready) — ≥2 ✓. GPUs busy + CPU queue
+non-empty (box results post when the four panel reads land, E4B
+GPU-side checklist) → `run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-06 00:55–00:57Z (real `date -u`) — tick: **B COMPLETED 40k
 AND ITS PANEL EVAL CHAIN FIRED — watched through the boundary.** B
 (aux-off) finished at ~00:54Z: final loss 3.307, formal final probe
 **7.702@40k** (gate <9, passed with margin), `step_040000` saved and
@@ -1376,4 +1413,8 @@ one GPU-busy window, with validation gate (a) executed on the real
 checkpoint and the recipe diff-verified through the real parser —
 the run needs only a quiet GPU and the σ_draw amendment (skipped
 lit slice: taken last session as the work item itself; next session
-eligible).
+eligible). Seventeenth consecutive all-CPU session (00:57–01:1xZ
+real-clock): resume hardening (#18.4) — the enforcement landed in
+the ~2 h gap before the E4B 100k launch is the first run long
+enough to plausibly need a mid-run resume (skipped lit slice: taken
+two sessions ago as the work item; next session eligible).

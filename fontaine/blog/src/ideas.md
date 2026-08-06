@@ -497,7 +497,7 @@ export-stream semantics). Original slate below, kept for scope:
 - **Consistency-distilled 1–2-step deployment decoders** (pairs with
   ideas #1 and #12) — the deployment-latency leg of the rig goal.
 
-## 18. Instrument & infra hardening — `screening` (item 1 done 2026-08-05)
+## 18. Instrument & infra hardening — `screening` (items 1+8 done 2026-08-05, 2 flag-landed, 4 done 2026-08-06)
 
 The [bijou deep-dive](posts/2026-08-05-bijou-deep-dive.md)'s fix
 queue, in leverage order (details + file:line in the post):
@@ -525,8 +525,26 @@ queue, in leverage order (details + file:line in the post):
    valid only at frozen corpus composition.
 3. Q3 tripwire noise fix (reuse scalar-pass noise) — before any
    conditioned flow run.
-4. Resume hardening (fresh-seed enforcement + bf16-snap warning) —
-   **blocks idea #3** (longer training) until done.
+4. ~~Resume hardening~~ **DONE 2026-08-06 ~01:1xZ** (deep-dive
+   finding 2, all three traps): (a) fresh-seed-on-resume is now
+   ENFORCED — `--resume` with the checkpoint's recorded
+   `train_args.seed` dies loud at startup (before data/model build;
+   the epoch-0 restart replays the same batches + τ/ε draws), with
+   `--allow-same-seed-resume` as the explicit reproduction-only
+   escape hatch and a warn-not-die path for pre-recording
+   checkpoints; (b) live-backbone resume prints a WARNING that fp32
+   masters restart snapped to the bf16 grid (the "lossless
+   continuation" comment corrected — lossless only in the
+   frozen-backbone regime); (c) the resume hyperparameter note now
+   covers EVERY optimizer param group via CLI-intent capture at
+   group construction (was group 0 only — a changed
+   `--backbone-*-lr` on resume was silently ignored), reading
+   `initial_lr` so schedule-decayed lr can't fake a mismatch. 11 new
+   tests (`tests/test_resume_guards.py`), live oracle on the real
+   flow-80k checkpoint: same-seed refused / fresh-seed proceeds;
+   `snapflow_recipe_verify` extended (new field at inert default,
+   stage 0 re-run green, 51 verbatim). **Unblocks idea #3, and lands
+   before the E4B 100k launch opens its crash+resume risk window.**
 5. Rig-rollout safety gate (mandatory clamp, first-obs stats
    envelope assert, rollout reads `camera_kinds.json`) — **blocks
    the first physical run** (idea #16).

@@ -64,6 +64,7 @@ POST_TEACHER_DEFAULTS = {
     "backward_chunks": 1,
     "target_time_embed": True,  # overridden in EXPECTED_DELTAS anyway
     "distill": "snapflow",
+    "allow_same_seed_resume": False,  # resume-hardening flag, 2026-08-06
 }
 
 

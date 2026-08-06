@@ -55,7 +55,7 @@ import random
 import shutil
 import sys
 import time
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable, Iterator, Sequence
 from contextlib import nullcontext
 from dataclasses import dataclass
 from pathlib import Path
@@ -138,6 +138,12 @@ class TrainArgs:
     save_dir: Path
     init_from: Path | None
     resume: Path | None
+    # --resume restarts the data stream (epoch 0 shuffle, per-rank τ/ε
+    # streams) under --seed, so a same-seed resume replays exactly the
+    # batches and noise draws the checkpoint already trained on. The
+    # fresh-seed convention is enforced at startup; this flag is the
+    # explicit reproduction-only escape hatch.
+    allow_same_seed_resume: bool
     # Stage-2: inherit ONLY the (frozen or re-trained) backbone + prompt
     # state_proj from a checkpoint; the decoder builds fresh — decoder
     # family/config deliberately unconstrained by the source checkpoint.
@@ -1053,8 +1059,11 @@ def save_checkpoint(
             adapted_backbone_source,
             checkpoint_dir / "backbone.safetensors",
         )
-    # Adam moments etc. (~2x expert params) make --resume a lossless
-    # continuation; --init-from ignores this file.
+    # Adam moments etc. (~2x expert params); --init-from ignores this
+    # file. NB --resume is a lossless continuation only in the
+    # frozen-backbone regime: a live backbone's fp32 masters round-trip
+    # through the bf16 snapshot above, discarding sub-bf16-resolution
+    # updates at every resume boundary (loud warning at resume load).
     train_state = TrainState(
         optimizer=optimizer.state_dict(),
         scheduler=scheduler.state_dict(),
@@ -1200,6 +1209,79 @@ def lr_lambda(step: int, args: TrainArgs, resume_step: int = 0) -> float:
     if args.rewarmup_steps > 0 and step >= resume_step:
         base *= min(1.0, (step - resume_step + 1) / args.rewarmup_steps)
     return base
+
+
+def check_resume_seed(resume: Path, seed: int, *, allow_same_seed: bool) -> str:
+    """The fresh-seed-on-resume convention, enforced. Nothing restores the
+    data-stream position on --resume: the loop restarts at epoch 0 with
+    the --seed shuffle and per-rank τ/ε streams, so resuming with the
+    checkpoint's own seed replays exactly the batches and noise draws it
+    already trained on. Returns the line to log; raises SystemExit on a
+    same-seed resume unless --allow-same-seed-resume (reproduction of a
+    historical run) was passed explicitly."""
+    config_path = resume / "bijou_config.json"
+    try:
+        recorded = json.loads(config_path.read_text())
+    except FileNotFoundError:
+        raise SystemExit(
+            f"{config_path} missing — not a checkpoint directory",
+        ) from None
+    checkpoint_seed = recorded.get("train_args", {}).get("seed")
+    if checkpoint_seed is None:
+        return (
+            "WARNING: resume seed check skipped — checkpoint predates "
+            "train_args seed recording; the fresh-seed-on-resume "
+            "convention cannot be verified, make sure --seed differs "
+            "from the original run's"
+        )
+    if int(checkpoint_seed) != seed:
+        return (
+            f"resume seed check: fresh --seed {seed} (checkpoint trained "
+            f"with {checkpoint_seed})"
+        )
+    if allow_same_seed:
+        return (
+            f"WARNING: same-seed resume (--seed {seed}) allowed by "
+            "--allow-same-seed-resume — the epoch-0 shuffle and τ/ε "
+            "draws REPLAY batches the checkpoint already trained on"
+        )
+    raise SystemExit(
+        f"--resume with the checkpoint's own --seed {seed}: resume "
+        "restarts the data stream at epoch 0, so the same seed replays "
+        "exactly the batches and τ/ε draws already trained on. Pass a "
+        "fresh --seed (any value the run's segments have not used), or "
+        "--allow-same-seed-resume to reproduce a historical run.",
+    )
+
+
+def resume_hyperparameter_notes(
+    optimizer: torch.optim.Optimizer,
+    cli_groups: Sequence[tuple[str, float, float]],
+) -> list[str]:
+    """After optimizer.load_state_dict on --resume the checkpoint's
+    hyperparameters win and CLI values are ignored — surface EVERY
+    ignored difference. (The historical note checked param group 0 only:
+    a changed --backbone-*-lr on resume was silently ignored.)
+    ``cli_groups`` carries (name, lr, weight_decay) per param group, in
+    construction order."""
+    assert len(optimizer.param_groups) == len(cli_groups)
+    notes: list[str] = []
+    for group, (name, cli_lr, cli_decay) in zip(
+        optimizer.param_groups,
+        cli_groups,
+        strict=True,
+    ):
+        base_lr = float(group.get("initial_lr", group["lr"]))
+        if base_lr != cli_lr:
+            notes.append(
+                f"{name}: base lr {base_lr:.2e} (CLI {cli_lr:.2e} ignored)",
+            )
+        if float(group["weight_decay"]) != cli_decay:
+            notes.append(
+                f"{name}: weight decay {group['weight_decay']} "
+                f"(CLI {cli_decay} ignored)",
+            )
+    return notes
 
 
 def length_bucket_keys(
@@ -1635,7 +1717,16 @@ def parse_args() -> TrainArgs:
         type=Path,
         default=None,
         help="full resume: weights + optimizer/scheduler/step from this "
-        "checkpoint directory (--steps counts total, including resumed)",
+        "checkpoint directory (--steps counts total, including resumed); "
+        "demands a --seed the checkpoint was not trained with (see "
+        "--allow-same-seed-resume)",
+    )
+    parser.add_argument(
+        "--allow-same-seed-resume",
+        action="store_true",
+        help="resume with the checkpoint's own --seed anyway, replaying "
+        "the same epoch-0 shuffle and τ/ε draws it already trained on — "
+        "reproduction of a historical run only; the default refuses",
     )
     parser.add_argument(
         "--backbone-init-from",
@@ -1711,6 +1802,11 @@ def parse_args() -> TrainArgs:
         parser.error(
             "--rewarmup-steps anchors at the resume step — it requires "
             "--resume (fresh runs use --warmup-steps)",
+        )
+    if raw.allow_same_seed_resume and raw.resume is None:
+        parser.error(
+            "--allow-same-seed-resume only applies to --resume "
+            "(fresh runs and --init-from have no seed to collide with)",
         )
     if not 0.0 <= raw.holdout_episodes < 1.0:
         parser.error("--holdout-episodes must be in [0, 1)")
@@ -1863,6 +1959,7 @@ def parse_args() -> TrainArgs:
         save_dir=raw.save_dir,
         init_from=raw.init_from,
         resume=raw.resume,
+        allow_same_seed_resume=raw.allow_same_seed_resume,
         backbone_init_from=raw.backbone_init_from,
         prompt_generate_bracket=raw.prompt_generate_bracket,
         instruction=raw.instruction,
@@ -1962,6 +2059,18 @@ def main() -> int:
             device = torch.device("cuda", int(os.environ["LOCAL_RANK"]))
             torch.cuda.set_device(device)
     is_main = rank == 0
+
+    # Fail fast, before data/model build: the fresh-seed-on-resume
+    # convention (all ranks read the same file — every rank raises or
+    # none does).
+    if args.resume is not None:
+        seed_note = check_resume_seed(
+            args.resume,
+            args.seed,
+            allow_same_seed=args.allow_same_seed_resume,
+        )
+        if is_main:
+            print(seed_note, flush=True)
 
     # Per-rank RNG stream (τ and ε draws must decorrelate across ranks).
     # Dataloader worker seeds derive from this deterministically: torch
@@ -2450,6 +2559,11 @@ def main() -> int:
     param_groups: list[dict[str, Any]] = [
         {"params": named_groups["decoder"], "lr": args.decoder_lr},
     ]
+    # CLI intent per param group, in construction order — what --resume's
+    # restored optimizer state is checked against (hyperparameter notes).
+    cli_groups: list[tuple[str, float, float]] = [
+        ("decoder", args.decoder_lr, args.weight_decay),
+    ]
     for group_name, group_lr in (
         ("backbone_text", args.backbone_text_lr),
         ("backbone_vision", args.backbone_vision_lr),
@@ -2459,6 +2573,7 @@ def main() -> int:
         assert named_groups[group_name]  # unfreeze_backbone validated
         decayed, undecayed = decay_split(named_groups[group_name])
         param_groups.append({"params": decayed, "lr": group_lr})
+        cli_groups.append((f"{group_name} (decayed)", group_lr, args.weight_decay))
         param_groups.append(
             {
                 "params": undecayed,
@@ -2466,6 +2581,7 @@ def main() -> int:
                 "weight_decay": 0.0,
             },
         )
+        cli_groups.append((f"{group_name} (no decay)", group_lr, 0.0))
     optimizer = torch.optim.AdamW(
         param_groups,
         lr=args.decoder_lr,
@@ -2567,6 +2683,16 @@ def main() -> int:
                     f"{'fp32 masters' if args.backbone_trained else 'bf16'})",
                     flush=True,
                 )
+            if args.resume is not None and args.backbone_trained and is_main:
+                print(
+                    "WARNING: live-backbone resume is NOT lossless — "
+                    "checkpoints hold a bf16 backbone snapshot, so the "
+                    "fp32 masters restart snapped to the bf16 grid and "
+                    "sub-bf16-resolution updates accumulated before this "
+                    "boundary are discarded (Adam moments are restored; "
+                    "masters are never serialized)",
+                    flush=True,
+                )
     elif args.backbone_init_from is not None:
         # Stage-2: trunk (+ prompt state_proj) inherited, decoder fresh.
         load_backbone_init(model, args.backbone_init_from)
@@ -2604,19 +2730,17 @@ def main() -> int:
                 f"(lr {scheduler.get_last_lr()[0]:.2e})",
                 flush=True,
             )
-        restored = optimizer.param_groups[0]
-        base_lr = float(restored.get("initial_lr", restored["lr"]))
-        if is_main and (
-            base_lr != args.decoder_lr
-            or float(restored["weight_decay"]) != args.weight_decay
-        ):
+        hyper_notes = resume_hyperparameter_notes(optimizer, cli_groups)
+        if is_main and hyper_notes:
             print(
                 "note: --resume keeps the checkpoint's optimizer "
-                f"hyperparameters (base lr {base_lr:.2e}, weight decay "
-                f"{restored['weight_decay']}); CLI --decoder-lr/--weight-decay "
-                "are ignored, --steps/--warmup-steps still shape the schedule",
+                "hyperparameters — CLI lr/weight-decay flags are ignored "
+                "for every param group (--steps/--warmup-steps/"
+                "--rewarmup-steps still shape the schedule):",
                 flush=True,
             )
+            for line in hyper_notes:
+                print(f"  {line}", flush=True)
 
     # DDP wiring: ONE train-step module owns prefix encode + objective, so
     # a single wrapper hooks gradients of everything trained, for both the
