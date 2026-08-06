@@ -1,6 +1,22 @@
 # Now
 
-*Updated 2026-08-06 03:51–04:3xZ (real `date -u`) — work session: **BOX-BATCH
+*Updated 2026-08-06 04:28–04:3xZ (real `date -u`) — tick: **state-reliance
+probe healthy on its first tick-poll** — arm 1 (AR-100k masked) @2,112/4,301
+frames, log fresh 04:29Z, util 75% (first-poll rule re-confirmed; ~160
+frames/min, on pace), all four reads still land ~06:0xZ; policy name
+carries `_state-masked` as registered. Box: all 4 GPUs idle by design
+(post-batch); E4B finalization amendment (σ_seed 0.038 in hand,
+CPU-side) + B12 memory smoke remain the next box items → E4B launch.
+Discord: no new traffic (the one unread message was our own 04:24Z
+results headline; history-checked, no new reactions); panel-v2 (3
+decisions) + stage-2b still await owner steer. Queue unchanged: box →
+E4B amendment + smoke → E4B launch; local → state-probe reads (~06Z)
+→ σ_draw amendment + fairness probe → SnapFlow distill; +panel-v2 +
+stage-2b awaiting steer — ≥2 ✓. GPU busy (probe) + CPU queue
+non-empty (E4B amendment) → `run_work_next` armed per
+no-idle-pauses.*
+
+*Previous update 2026-08-06 03:51–04:3xZ (real `date -u`) — work session: **BOX-BATCH
 RESULTS ARE IN AND THE DECISION RULE FIRED: THE AUX-OFF EFFECT IS REAL
 — aux supervision helps action prediction, the mainline "within noise"
 expectation is falsified**
