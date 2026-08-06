@@ -1,6 +1,36 @@
 # Now
 
-*Updated 2026-08-06 04:28–04:3xZ (real `date -u`) — tick: **state-reliance
+*Updated 2026-08-06 04:39–04:5xZ (real `date -u`) — tick: **STATE PROBE
+CRASHED AT THE MERGE — DIAGNOSED, FIXED, RELAUNCHED (reads slip ~06Z →
+~06:4x–07:0xZ).** Arm 1 (AR-100k masked) scored ALL 4,301 frames then
+died in `merge_shards`: `permuted()` applied the dump_index row order
+to `dump_draws`, which is `[]` when `--dump-predictions` runs without
+`--dump-draws` — IndexError before any npz/JSON/report was written,
+and the launcher's `set -euo pipefail` took the whole 4-arm chain +
+tmux session down with it. Mechanism owned: the line landed in
+f0868b3 (fairness instrument added dump_draws to the shard merge);
+every local eval since had passed `--dump-draws` (draws runs 3–5), so
+the probe's AR arm was the FIRST dump-predictions-without-dump-draws
+eval through the new path — the test fixture always filled
+dump_draws, which is why 221 stayed green. Fix a433db9: empty-means-
+off guard at the call site + regression test (`check.py` 222 green).
+Probe relaunched 04:44Z (same launcher, sha256 re-asserted, tmux
+`stateprobe`); first-poll util rule applied post-load before session
+end; all four reads now land ~06:4x–07:0xZ. Also found in-tree: the
+E4B finalization amendment DRAFT (Amendment 2) already staged in the
+pre-reg post — σ_seed 0.038 section complete, PENDING_PEAK/
+PENDING_RUNG placeholders await the B12 memory smoke on the idle box
+→ that smoke + amendment + E4B launch are the chained work session's
+items. Discord: no new traffic (history: our 04:24Z results post,
+no new reactions); crash+fix+slip noted in-channel; panel-v2 (3
+decisions) + stage-2b still await owner steer. Queue: box → B12
+smoke → E4B amendment finalize → E4B launch; local → state-probe
+reads (~07Z) → σ_draw amendment + fairness probe → SnapFlow distill;
++panel-v2 + stage-2b awaiting steer — ≥2 ✓. GPU busy (probe re-run)
++ CPU queue non-empty (E4B items) → `run_work_next` armed per
+no-idle-pauses.*
+
+*Previous update 2026-08-06 04:28–04:3xZ (real `date -u`) — tick: **state-reliance
 probe healthy on its first tick-poll** — arm 1 (AR-100k masked) @2,112/4,301
 frames, log fresh 04:29Z, util 75% (first-poll rule re-confirmed; ~160
 frames/min, on pace), all four reads still land ~06:0xZ; policy name
