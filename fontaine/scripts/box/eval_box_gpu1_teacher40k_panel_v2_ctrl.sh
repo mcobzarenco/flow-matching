@@ -12,13 +12,18 @@
 #   stable are all passed, never inherited from defaults.
 # EXECUTION (charter §3): box GPU 1 — arm C owns GPU 0; never
 #   co-locates (CUDA_VISIBLE_DEVICES pins it; quiet-GPU guard).
-#   Box code bcbf101 suffices: stable keying + panel-v2 plan predate
-#   it (plan JSON is a data artifact, already on box). No code sync
-#   under live arm C.
-# COST: heun-30 draws=1 over the 25.8k-frame panel ~1-2 GPU-h.
+#   CODE: runs from the THROWAWAY checkout ~/flow-matching-ctrl
+#   (current fontaine HEAD, rsynced) — the "box code bcbf101
+#   suffices" claim was WRONG (first live v2-plan consumption:
+#   SamplePlan refused version 2; fixed at 59dac60). The live
+#   ~/flow-matching stays bcbf101 under arm C per never-sync-under-
+#   live-run; cwd shadows the installed package for the shared .venv
+#   interpreter. Same code class as the arms' future endpoint evals.
+#   Cleanup: remove ~/flow-matching-ctrl at the arm-C boundary sync.
+# COST: heun-30 draws=1 over the 15.1k-core-frame v2 panel ~1-2 GPU-h.
 set -euo pipefail
 export PATH=/home/ubuntu/.local/bin:/usr/local/bin:/usr/bin:/bin
-cd /home/ubuntu/flow-matching
+cd /home/ubuntu/flow-matching-ctrl
 export MALLOC_ARENA_MAX=2 MALLOC_MMAP_THRESHOLD_=131072
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 export CUDA_VISIBLE_DEVICES=1
@@ -29,7 +34,7 @@ if [ "$mem" -gt 1024 ]; then echo "GPU 1 busy (${mem} MiB) — abort"; exit 1; f
 RUN=bijou_flow_artrunk_h1024_40k_ddp2
 CKPT=outputs/train/${RUN}/step_040000
 name="eval__${RUN}__step_040000__panel_v2_ctrl_heun30_draws1_stable"
-.venv/bin/python -m bijou.eval \
+/home/ubuntu/flow-matching/.venv/bin/python -m bijou.eval \
     --data /home/ubuntu/datasets/mcobzarenco/community_curated_v0 \
     --episodes holdout --holdout-episodes 0.1 --split-seed 0 \
     --fps 30 --camera-counts 1 2 \

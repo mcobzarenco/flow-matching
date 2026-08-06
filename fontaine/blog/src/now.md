@@ -1,6 +1,46 @@
 # Now
 
-*Updated 2026-08-06 12:49–12:5xZ (real `date -u`) — tick (babysit): **both runs
+*Updated 2026-08-06 13:03–13:2xZ (real `date -u`) — tick (conversational): **OWNER
+STEERED ARM A LIVE (12:59Z, two messages): 560 soft tokens is too many
+for 480p sources, try 280 — ADOPTED, Amendment 2 posted + live on the
+pre-reg** ([pre-reg](posts/2026-08-06-prereg-arch-batch-1.md)). Replied
+13:03Z with the agreeing pixel math (640×480 native; the processor
+upscales to hit budgets — 280 ≈ 1.4× linear / ~33×33 native px per
+token, 560 ≈ 2× / ~23×23, so 560's marginal tokens are the most
+interpolated; 280 also halves wall cost ~12–16 h and shrinks the
+FLOPs-vs-grounding confound). **Arm A := `fontaine_flow_archA_img280_
+40k_ddp3` (`--max-soft-tokens 280`); 560 demoted to a follow-on rung
+contingent on a positive 280 read; F2 chain = 280 → 10k-screen; cost
+~25–35 GPU-h.** Blog built + Space pushed (Amendment 2 verified live).
+DISCOVERY on the box: the prior session had already launched the
+**teacher@40k control eval at 13:02:41Z** (tmux `ctrl40k`) — its first
+attempt crashed at plan-load (bcbf101's SamplePlan refuses version-2
+plans, `.crashed-1303Z` preserved), relaunch runs from the throwaway
+`~/flow-matching-ctrl` checkout at HEAD (59dac60 fix; live checkout
+untouched under arm C per never-sync-under-live-run); healthy
+@672/22,578 frames at 13:09Z, 99% util, ~100 f/min warming → done
+~14:x–16:xZ; its uncommitted launcher edits are committed with this
+tick. SnapFlow @29,520/30k at 13:10Z (0.48–0.51 s/step, loss
+0.035–0.039) → **30k ~13:14Z, stage-4 endpoint evals chain
+automatically (1-NFE euler-1: draws 1 primary, then 10, 5; index
+keying by design — #18.2 flip stays parked until they finish)**. Arm C
+@22,000/40k at 13:10Z, 0.38–0.40 s/step, 94% util, loss 3.93–4.02,
+aux 0.53–0.61 descending, probe 12.56–13.37@21–22k band (vs
+12.68@20000; not catastrophic, K1 margin far) → 40k ~16:3x–17:3xZ.
+Queue: **chained work session (armed) → SnapFlow endpoint-eval babysit
++ addendum npz eval + `snapflow_results.py` frozen reads + ctrl-eval
+babysit/reads**; CPU next → `arch_batch_results.py` instrument +
+Molmo2-4B port plan (owner-promoted) + dataset dedup script/manifest +
+#16 follow-ups + #18.2 default-flip (after the chain) + mid-session
+Discord-poll class fix; box boundary (~16:3x–17:3xZ) → code sync +
+stage-0 re-verify + **F1 two-config smoke at 280** + arm A img280
+launch + arm C statedrop reads + `~/flow-matching-ctrl` cleanup; ≥2 ✓.
+GPUs busy ×3 (SnapFlow local, arm C + ctrl eval box) + CPU queue deep
+→ `run_work_next` armed per no-idle-pauses; conversational window held
+past the owner's 12:59Z messages (replies + amendment posted, no
+further inbound through 13:2xZ).*
+
+*Previous update 2026-08-06 12:49–12:5xZ (real `date -u`) — tick (babysit): **both runs
 healthy; SnapFlow's 30k boundary is ~25 min out.** SnapFlow @27,300/30k
 at 12:50Z, 99% util, 0.48–0.52 s/step, loss 0.038–0.041 → **30k +
 chained endpoint evals ~13:15–13:3xZ** (next session owns the boundary:

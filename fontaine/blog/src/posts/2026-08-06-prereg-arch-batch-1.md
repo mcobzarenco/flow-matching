@@ -53,6 +53,28 @@ per the 11:46Z exchange; proceeding unless steered.*
 > *promotes* the swap to the next multi-GPU pre-reg; the port work
 > just no longer waits for it).
 
+> **Amendment 2 (2026-08-06 ~13:0xZ, owner steering 12:59Z,
+> pre-launch — no arm data exists).** Owner: "Given image sources are
+> 480p … 560 soft tokens is too many visual tokens vs trying just
+> 280 … At 280, we'd also be able to run the experiment more
+> quickly." Adopted — **arm A's primary rung becomes 280**
+> (`fontaine_flow_archA_img280_40k_ddp3`, `--max-soft-tokens 280`);
+> 560 is demoted from primary to a *follow-on rung, contingent on a
+> positive 280 read*. Rationale (agreed in-channel 13:0xZ): sources
+> are 640×480 and the processor reaches higher budgets by upscaling —
+> 280 ≈ 1.4× linear (each soft token pools ~33×33 native px vs ~47×47
+> at 140), 560 ≈ 2× — so 560's marginal tokens are the most
+> interpolated ones; 280 keeps most of the finer-pooling gain, halves
+> the wall cost (~12–16 h projected vs 20–28 h), and shrinks the
+> more-tokens-more-FLOPs confound on the grounding attribution.
+> Dose–response branch: 280 moves Δfirst ⇒ 560 is a justified
+> follow-on on this same instrument; 280 null ⇒ 560 is presumed null
+> at 480p (no launch without new steering). **F2's fallback chain
+> updates: primary 280; if 280 projects > 30 h at smoke, arm A
+> reduces to a 10k screen at 280** (the old 560→280 fallback is moot).
+> All frozen reads unchanged with "arm A" := img280. Cost estimate
+> improves to ~25–35 GPU-h total.
+
 ## Question
 
 The grounding evidence says vision is the binding limit of the
@@ -98,7 +120,7 @@ exactly where both levers live.
 | arm | run name | delta vs arm 0 |
 |---|---|---|
 | 0 | `fontaine_flow_arch0_base_40k_ddp3` | — (own-baseline, teacher recipe verbatim) |
-| A | `fontaine_flow_archA_img560_40k_ddp3` | `--max-soft-tokens 560` (fallback rung 280, gate F2) |
+| A | `fontaine_flow_archA_img280_40k_ddp3` | `--max-soft-tokens 280` (primary per Amendment 2; 560 demoted to contingent follow-on) |
 | B | `fontaine_flow_archB_fullresid_40k_ddp3` | residual-stream conditioning res0..res14 replaces kv4/9/14 |
 
 Common recipe (teacher-verbatim except where stated): 3 corpora
@@ -184,13 +206,12 @@ closes #4's caveat with data.
   (batch semantics never change mid-comparison). Expected fit: B64
   flow was ~40 GiB on 1×H100; arm A's 4× prefix and arm B's 15
   streams are the unknowns the smoke exists for.
-- **F2 (rate, arm A):** if the smoke rate projects arm A's 40k > 30 h
-  wall, drop 560 → 280 and re-smoke (pre-registered rung, still 2×
-  tokens); if 280 also projects > 30 h, arm A reduces to a 10k screen
-  at 280 and the result is labeled screen-rung. Estimates (measured
-  at smoke, these are priors): arms 0/B ~0.7–0.9 s/step ⇒ ~8–10 h
-  each; arm A at 560 ~2–3× arm 0 (prefix encode was 79% of step time
-  at 140 tokens) ⇒ ~20–28 h.
+- **F2 (rate, arm A):** *(chain updated by Amendment 2 — primary rung
+  is now 280)* if the smoke rate projects arm A's 40k > 30 h wall at
+  280, arm A reduces to a 10k screen at 280 and the result is labeled
+  screen-rung. Estimates (measured at smoke, these are priors): arms
+  0/B ~0.7–0.9 s/step ⇒ ~8–10 h each; arm A at 280 ~1.5–2× arm 0
+  (prefix encode was 79% of step time at 140 tokens) ⇒ ~12–16 h.
 - **K1 (in-run kill, arms A/B):** 256-frame probe > (arm 0's probe at
   the matched step) + 3.0 at any eval ≥ step 5k ⇒ kill at the next
   save boundary (catastrophic-only; the probe's ±0.3 floor makes
