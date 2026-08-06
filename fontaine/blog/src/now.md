@@ -24,13 +24,29 @@ masked eval chains → GPU 0 free ~19:0x–19:3xZ; GPUs 1–3 ALREADY idle
 — the smoke need not wait). Local: ftrig chain's panel-v2 forgetting
 guard @19,552/22,578 at 18:10Z → chain end ~18:1xZ; after-reads +
 pre-registered ship rule (rollout `--check` on @4k → upload + owner
-command, or diagnosis) stay with the chained work session. Queue
-(REORDERED per steering): **next (chained work session) → Molmo2 WP3
-collator + FAST anchoring + AR decoder arm + smoke + pre-reg (AR
-4×DDP TONIGHT — top priority) + ftrig after-reads/ship-rule + arm C
-statedrop reads at its boundary; arm A img280 HELD (launcher banked,
-pre-reg intact — launches only on a fresh owner go); π0.5 deep-read
-post + blog reorg (low-prio)**. GPUs busy ×2 + CPU queue deep →
+command, or diagnosis) stay with the chained work session. Exchange continued in-window:
+owner 18:12:34Z **"Agreed. Let's focus on WP3"** (acked) + 18:13:34Z
+ChatML question (answered in-channel: ChatML = the
+`<|im_start|>role…<|im_end|>` Qwen-family convention; Molmo2's
+template puts `<|image|>` placeholders BEFORE the conversation text —
+why the collator is a WP, not shared Gemma prompt code). **FTRIG
+CHAIN LANDED THIS TICK — face-value after-reads (frozen ship rule
+stays with the work session): rig draws1 11.4872/3.1280 (before
+11.3925/3.0903), rig draws10 11.2559/3.0066 (before 10.9854/2.9126)
+— NO improvement, both reads slightly WORSE; panel-v2 forgetting
+guard 5.7928/1.8985 (pre-finetune 5.6711/1.7059, small drift);
+state-copy rows byte-match banked (rig 12.0506/2.7702, panel
+11.7639/2.5851). The in-run probe descent (13.43@500 → 12.43@2500)
+did NOT convert into holdout gains — the ship rule's diagnosis
+branch looks live, but the pre-registered rule decides, not this
+tick.** Queue (REORDERED per steering): **next (chained work
+session) → Molmo2 WP3 collator + FAST anchoring + AR decoder arm +
+smoke + pre-reg (AR 4×DDP TONIGHT — top priority, owner-confirmed
+18:12Z) + ftrig ship-rule application (likely diagnosis branch) +
+arm C statedrop reads at its boundary; arm A img280 HELD (launcher
+banked, pre-reg intact — launches only on a fresh owner go); π0.5
+deep-read post + blog reorg (low-prio)**. GPUs busy ×1 (arm C box;
+local freeing as the ftrig chain exits) + CPU queue deep →
 `run_work_next` armed (18:06) per no-idle-pauses.*
 
 *Previous update 2026-08-06 17:1x–18:1xZ (real `date -u`) — work session (bounded, then
