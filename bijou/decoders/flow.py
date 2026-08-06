@@ -126,6 +126,12 @@ class ExpertConfig:
     chunk_size: int
     time_embed_dim: int
     time_conditioning: TimeConditioning
+    # SnapFlow φ_s: a zero-initialized target-time embedding added to the
+    # τ embedding, enabling shortcut (s=0, one-step) conditioning. Default
+    # off — checkpoints predating the field load unchanged, and the
+    # zero-init makes an extended model exactly the unextended one until
+    # trained (the distill warm-start identity).
+    target_time_embed: bool = False
 
     def __post_init__(self) -> None:
         if not self.cross_attention_schedule:
@@ -240,6 +246,27 @@ class FlowDecoder(nn.Module):
         )
         self.time_act = nn.SiLU()
 
+        # SnapFlow φ_s target-time MLP (config.target_time_embed): same
+        # two-layer shape as the τ path, output zero-initialized (see
+        # reset_parameters) so s has no effect until trained.
+        self.target_time_in_proj: nn.Linear | None = None
+        self.target_time_out_proj: nn.Linear | None = None
+        if config.target_time_embed:
+            self.target_time_in_proj = nn.Linear(
+                config.time_embed_dim,
+                hidden,
+                bias=True,
+                device=device,
+                dtype=dtype,
+            )
+            self.target_time_out_proj = nn.Linear(
+                hidden,
+                hidden,
+                bias=True,
+                device=device,
+                dtype=dtype,
+            )
+
         self.layers = nn.ModuleList(
             SuffixBlock(
                 hidden_size=hidden,
@@ -331,6 +358,15 @@ class FlowDecoder(nn.Module):
             nn.init.zeros_(head.weight)
             assert head.bias is not None
             nn.init.zeros_(head.bias)
+        # φ_s output layer zero-initialized: the target-time embedding
+        # contributes exactly 0 at init, so an extended model loaded from
+        # an unextended checkpoint IS that checkpoint (the SnapFlow
+        # warm-start identity; the in_proj keeps its normal init so
+        # gradients reach it through the zero out_proj immediately).
+        if self.target_time_out_proj is not None:
+            nn.init.zeros_(self.target_time_out_proj.weight)
+            assert self.target_time_out_proj.bias is not None
+            nn.init.zeros_(self.target_time_out_proj.bias)
 
     def _self_attention_mask(
         self,
@@ -362,6 +398,7 @@ class FlowDecoder(nn.Module):
         state: Tensor,
         noisy_actions: Tensor,
         time: Tensor,
+        target_time: Tensor | None = None,
     ) -> Tensor:
         """Velocity of the action chunk at flow time τ; returns
         [B, chunk, action_dim].
@@ -369,12 +406,18 @@ class FlowDecoder(nn.Module):
         Inputs and memory streams are cast to the expert's own dtype (the
         backbone may run in a different precision, e.g. bf16 vs fp32 expert).
 
+        ``target_time`` (SnapFlow shortcut conditioning, φ_s-extended
+        models only): the time s the caller intends to jump to — None
+        means s=t, the standard forward; s=0 is one-step mode. Refused
+        loudly on models without the embedding.
+
         Shapes:
           - memory.streams[name].key/value: [B, kv_heads, P, head_dim]
           - memory.padding_mask (when present): [B, P]  (True = real token)
           - state: [B, state_dim]
           - noisy_actions: [B, chunk, action_dim]
           - time: [B]  (flow times in [0, 1])
+          - target_time (when given): [B]  (target times in [0, 1])
         """
         config = self.config
         batch = state.shape[0]
@@ -391,6 +434,21 @@ class FlowDecoder(nn.Module):
         time_embeds = self.time_out_proj(
             self.time_act(self.time_in_proj(time_embeds.to(dtype))),
         )
+        if self.target_time_in_proj is not None:
+            assert self.target_time_out_proj is not None
+            target = time if target_time is None else target_time
+            target_embeds = sinusoidal_time_embedding(
+                target,
+                config.time_embed_dim,
+            )
+            time_embeds = time_embeds + self.target_time_out_proj(
+                self.time_act(self.target_time_in_proj(target_embeds.to(dtype))),
+            )
+        elif target_time is not None:
+            raise ValueError(
+                "target_time conditioning requires a φ_s-extended decoder "
+                "(config target_time_embed); this checkpoint has none",
+            )
         # ADDITIVE: fold τ into the action tokens, layers unconditioned.
         # ADARMS: τ conditions each layer's scale/gate head instead.
         adarms = config.time_conditioning is TimeConditioning.ADARMS
@@ -464,6 +522,7 @@ class FlowDecoder(nn.Module):
         method: SamplingMethod = SamplingMethod.HEUN,
         noise: Tensor | None = None,
         generator: torch.Generator | None = None,
+        target_time: float | None = None,
     ) -> Tensor:
         """Integrate the velocity field from τ=1 (noise) to τ=0.
 
@@ -482,6 +541,11 @@ class FlowDecoder(nn.Module):
         Pass ``noise`` (or a seeded ``generator``) for deterministic
         evaluation. ``state`` and the returned chunk are NORMALIZED units
         (the raw-unit wrapper is :meth:`predict_chunk`).
+
+        ``target_time`` (φ_s-extended models only): constant SnapFlow
+        shortcut conditioning s passed to every solver forward; None =
+        standard s=t. The 1-NFE read is ``target_time=0.0`` with
+        Euler/1 — from pure noise, ``x̂ = ε − F(ε, s=0, t=1)``.
 
         Shapes:
           - memory.streams[name].key/value: [B, kv_heads, P, head_dim]
@@ -503,6 +567,11 @@ class FlowDecoder(nn.Module):
                 generator=generator,
             )
         actions = noise
+        target = (
+            None
+            if target_time is None
+            else torch.full((batch,), target_time, dtype=dtype, device=device)
+        )
         for k in range(num_steps):
             # Exact endpoints (no accumulated float drift): τ goes
             # 1 -> 1-1/n -> ... -> 0.
@@ -510,11 +579,11 @@ class FlowDecoder(nn.Module):
             t_next = 1.0 - (k + 1) / num_steps
             dt = t_next - t
             time = torch.full((batch,), t, dtype=dtype, device=device)
-            velocity = self(memory, state, actions, time)
+            velocity = self(memory, state, actions, time, target)
             if method is SamplingMethod.HEUN:
                 predicted = actions + dt * velocity.to(actions.dtype)
                 time_next = torch.full((batch,), t_next, dtype=dtype, device=device)
-                velocity_next = self(memory, state, predicted, time_next)
+                velocity_next = self(memory, state, predicted, time_next, target)
                 velocity = 0.5 * (velocity + velocity_next)
             actions = actions + dt * velocity.to(actions.dtype)
         return actions
@@ -529,12 +598,13 @@ class FlowDecoder(nn.Module):
         noise: Tensor | None = None,
         num_steps: int = 5,
         method: SamplingMethod = SamplingMethod.HEUN,
+        target_time: float | None = None,
     ) -> BijouPrediction:
         """RAW-unit chunk prediction (BijouPrediction, generations None —
         flow has no text surface): normalize the batch's state with its
         per-sample stats, integrate the field, and unnormalize with the
-        action stats. ``num_steps``/``method`` are flow-specific solver
-        knobs (other decoder kinds have none)."""
+        action stats. ``num_steps``/``method``/``target_time`` are
+        flow-specific solver knobs (other decoder kinds have none)."""
         state = (batch.state - batch.state_stats.mean) / batch.state_stats.std
         sampled = self.sample_actions(
             memory,
@@ -543,6 +613,7 @@ class FlowDecoder(nn.Module):
             method=method,
             noise=noise,
             generator=generator,
+            target_time=target_time,
         )
         chunks = (
             sampled.float() * batch.action_stats.std[:, None, :]
@@ -630,3 +701,111 @@ def flow_matching_loss_sums(
     velocity = decoder(memory, state, noisy_actions, tau)
     squared = (velocity.float() - target.float()).pow(2)
     return squared.sum(), torch.tensor(squared.numel(), device=squared.device)
+
+
+# SnapFlow (arXiv:2604.05656) loss mix, frozen by the 2026-08-06 distill
+# pre-registration: L = α·L_FM + (1−α)·λ·L_shortcut.
+SNAPFLOW_ALPHA = 0.5
+SNAPFLOW_LAMBDA = 0.1
+
+
+def _snapflow_squared_errors(
+    decoder: FlowDecoder,
+    memory: ObservationMemory,
+    batch: CollatedBatch[Any],
+) -> tuple[Tensor, Tensor]:
+    """Per-element squared errors of the two SnapFlow terms, each
+    [B, chunk, action_dim]: (flow-matching, shortcut). Shared machinery
+    of the mean- and sum-form objectives so they consume RNG identically.
+
+    L_FM is the standard objective (s=t forwards — φ_s trained, not
+    bypassed). L_shortcut regresses the one-step field at the pure-noise
+    end (the 1-NFE deployment point, t=1): a fresh ε ~ N(0, I), a
+    stop-gradient two-step-Euler estimate of the full-jump mean velocity
+    — no EMA teacher, the model distills from itself —
+      x_mid    = ε − ½·sg F(ε,     s=1, t=1)      (midpoint, τ=½)
+      v_target = ½·[sg F(ε, s=1, t=1) + sg F(x_mid, s=½, t=½)]
+      L        = ‖F(ε, s=0, t=1) − v_target‖²
+    so 1-NFE inference is exactly ``x̂ = ε − F(ε, s=0, t=1)``. Three
+    expert forwards (2 sg + 1 grad) per shortcut sample, all against the
+    ONE observation memory the caller encoded — the prefix encode is
+    shared across every term."""
+    actions = (
+        batch.actions - batch.action_stats.mean[:, None, :]
+    ) / batch.action_stats.std[:, None, :]
+    state = (batch.state - batch.state_stats.mean) / batch.state_stats.std
+
+    # Flow-matching term: identical draws/machinery to flow_matching_loss.
+    noise = torch.randn_like(actions)
+    tau = (
+        torch.distributions.Beta(1.5, 1.0)
+        .sample((actions.shape[0],))
+        .to(actions.device)
+    )
+    tau = tau * 0.999 + 0.001
+    tau_ = tau[:, None, None]
+    noisy_actions = tau_ * noise + (1 - tau_) * actions
+    target = noise - actions
+    velocity = decoder(memory, state, noisy_actions, tau)
+    fm_squared = (velocity.float() - target.float()).pow(2)
+
+    # Shortcut term.
+    batch_size = actions.shape[0]
+    epsilon = torch.randn_like(actions)
+    ones = torch.ones(batch_size, device=actions.device, dtype=tau.dtype)
+    halves = torch.full_like(ones, 0.5)
+    zeros = torch.zeros_like(ones)
+    with torch.no_grad():
+        v_start = decoder(memory, state, epsilon, ones, ones)
+        x_mid = epsilon - 0.5 * v_start.to(epsilon.dtype)
+        v_mid = decoder(memory, state, x_mid, halves, halves)
+        v_target = 0.5 * (v_start.float() + v_mid.float())
+    v_one_step = decoder(memory, state, epsilon, ones, zeros)
+    shortcut_squared = (v_one_step.float() - v_target).pow(2)
+    return fm_squared, shortcut_squared
+
+
+def snapflow_distill_loss(
+    decoder: FlowDecoder,
+    memory: ObservationMemory,
+    batch: CollatedBatch[Any],
+) -> Tensor:
+    """SnapFlow self-distillation objective (mean form):
+    ``SNAPFLOW_ALPHA·mean(fm) + (1−SNAPFLOW_ALPHA)·SNAPFLOW_LAMBDA·
+    mean(shortcut)``. Requires a φ_s-extended decoder (the s=0 forward
+    refuses otherwise). Same contract as :func:`flow_matching_loss`."""
+    fm_squared, shortcut_squared = _snapflow_squared_errors(
+        decoder,
+        memory,
+        batch,
+    )
+    return (
+        SNAPFLOW_ALPHA * fm_squared.mean()
+        + (1 - SNAPFLOW_ALPHA) * SNAPFLOW_LAMBDA * shortcut_squared.mean()
+    )
+
+
+def snapflow_distill_loss_sums(
+    decoder: FlowDecoder,
+    memory: ObservationMemory,
+    batch: CollatedBatch[Any],
+) -> tuple[Tensor, Tensor]:
+    """Sum-form SnapFlow objective for chunked backward: (weighted
+    squared-error SUM with graph, element count). Both terms share one
+    element count (each is a full [B, chunk, action_dim] grid), so
+    ``sum over chunks / full-batch count`` reproduces
+    :func:`snapflow_distill_loss` exactly (up to fp reduction order) —
+    the same contract as :func:`flow_matching_loss_sums`."""
+    fm_squared, shortcut_squared = _snapflow_squared_errors(
+        decoder,
+        memory,
+        batch,
+    )
+    weighted_sum = (
+        SNAPFLOW_ALPHA * fm_squared.sum()
+        + (1 - SNAPFLOW_ALPHA) * SNAPFLOW_LAMBDA * shortcut_squared.sum()
+    )
+    return weighted_sum, torch.tensor(
+        fm_squared.numel(),
+        device=fm_squared.device,
+    )

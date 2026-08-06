@@ -1,6 +1,60 @@
 # Now
 
-*Updated 2026-08-06 00:25Z (real `date -u`) — tick: **both chains healthy;
+*Updated 2026-08-06 00:26–00:5xZ (real `date -u`) — work session: **SNAPFLOW
+DISTILL IMPLEMENTATION COMPLETE — all five pre-launch checklist items
+landed in one session; the launch path is now zero-CPU and gate (a)
+is already PASSED on the real checkpoint**
+([pre-reg](posts/2026-08-06-prereg-snapflow-distill.md), ideas #12).
+(1) **φ_s target-time embedding** in `FlowDecoder` behind
+`target_time_embed` (two-layer MLP mirroring the τ path, output
+zero-init ⇒ inert until trained), serialized through
+`bijou_config.json` with absent-key back-compat; `--init-from` gains
+a sanctioned "φ_s extension" branch (config guard allows exactly the
+False→True direction; loader tolerates exactly the four fresh φ_s
+keys — reverse direction and any other diff stay hard errors). (2)
+**`bijou.train --distill snapflow`**: `L = α·L_FM +
+(1−α)·λ·L_shortcut` with α=0.5/λ=0.1 frozen as code constants,
+stop-gradient two-step-Euler shortcut targets at the pure-noise end
+(x_mid = ε − ½·sg F(ε,1,1); v_target = ½[sg F(ε,1,1) + sg
+F(x_mid,½,½)]; grad forward at s=0), one shared prefix encode, both
+mean- and sum-form (chunked backward stays available); flow-only
+guards; `--distill snapflow` implies the embedding. (3) **1-NFE eval
+switch**: `bijou.eval --target-time {t,zero}` — loud, never inferred
+from step count, refused on non-φ_s checkpoints, threaded through
+single-draw AND `--sample-draws` paths, recorded in report JSON +
+npz scalars + banner. (4) **Oracles: 10 new tests** (extension adds
+exactly the φ_s keys; zero-init identity bit-exact incl. s=0;
+loss ≡ frozen mix with closed-form zero-field value; sums
+reconstruct mean; 1-NFE sampling ≡ ε − F(ε,s=0,t=1); config
+round-trip; guard direction test) — `check.py` green (201). **Gate
+(a) EXECUTED on the real flow-80k step_080000: 6/6 forwards
+bit-exact, PASSED** (`fontaine/scripts/snapflow_identity_oracle.py`,
+CPU). (5) **Launcher staged + diff-verified through the real
+`parse_args`** (`fontaine/scripts/launch_local_snapflow_distill_30k_1xh100.sh`,
+copies in `~`): stage-0 recipe verify proves launcher == teacher
+train_args + pre-registered deltas ONLY (50 fields verbatim, 11
+deltas: steps 30k, LR 2.5e-5, clip 1.0, B24 1×GPU, init-from,
+distill flags, bookkeeping); stages chain gate (a) → gate (b)
+(step-0 extended checkpoint materializer +
+`snapflow_drift_gate.py` vs the banked flow npz, needs GPU) →
+training → endpoint 1-NFE panels (draws 1/5/10). @10k record-only
+probe staged (`probe_snapflow_10k_1nfe.sh`) with the charter §3
+no-co-location note: runs on a quiet GPU (box push or retro), kill
+line is catastrophic-only; in-run eval_chunk_mae is the live watch.
+Launch waits ONLY on: local GPU quiet (draws chain + fairness probe
+~06–09Z) + the σ_draw finalization amendment (draws runs 3–5).
+Babysits 00:36/00:52Z: box ×4 healthy — B @39.7k (~00:54Z hits 40k,
+auto-chains panel eval; total 3.27, probe 7.679@38k well under
+gate), A-s0 @37.5k (action 3.28), s1 @35.7k, s2 @35.8k, 0.38–0.40
+s/step, grad norms nominal; controls done ~01:0x–01:3xZ. Draws run 3
+@13.8k/25.8k on pacing. No Discord traffic; stage-2b still awaiting
+owner steer. Queue depth: box → E4B (GPU-side only); local →
+fairness probe → SnapFlow distill (NOW launch-ready) — ≥2 ✓. GPUs
+busy + CPU queue non-empty (box results post when panel reads land
+~01–02:3xZ, E4B GPU-side items) → `run_work_next` armed per
+no-idle-pauses.*
+
+*Previous update 2026-08-06 00:25Z (real `date -u`) — tick: **both chains healthy;
 B ~20 min from 40k.** Box ×4: A-s0 @34.9k, B @36.9k, s1 @33.0k, s2
 @33.1k — 0.38–0.40 s/step, util 58–100%, ~71–75 GiB, grad norms
 nominal. Probes all stepping down well under the closed gates: A-s0
@@ -1296,4 +1350,10 @@ real-clock): **the lit slice WAS the work item** — a targeted
 deep-read (SnapFlow recipe extraction + both flagged pointer reads)
 converted directly into the #12 SnapFlow distill pre-reg, refilling
 the local-GPU queue before its ~09–10Z boundary; allocation on
-cadence.
+cadence. Sixteenth consecutive all-CPU session (00:26–00:5xZ
+real-clock): the entire SnapFlow impl checklist (5 items) closed in
+one GPU-busy window, with validation gate (a) executed on the real
+checkpoint and the recipe diff-verified through the real parser —
+the run needs only a quiet GPU and the σ_draw amendment (skipped
+lit slice: taken last session as the work item itself; next session
+eligible).

@@ -1,0 +1,15 @@
+{
+  "os":  "Linux-6.8.0-1060-nvidia-x86_64-with-glibc2.39",
+  "python":  "CPython 3.13.14",
+  "startedAt":  "2026-08-05T13:53:38.325861Z",
+  "program":  "<python with no main file>",
+  "git":  {
+    "remote":  "git@github.com:mcobzarenco/flow-matching.git",
+    "commit":  "f8ad47bbe6419e3fd4dae4ba38e375b77a679c75"
+  },
+  "email":  "marius.cobzarenco@gmail.com",
+  "root":  "/home/ubuntu/flow-matching",
+  "host":  "68-209-75-143",
+  "executable":  "/home/ubuntu/flow-matching/.venv/bin/python3",
+  "writerId":  "mzdgwbiqo5gx8isscjjwylf76sh8hc0u"
+}

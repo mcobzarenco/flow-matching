@@ -202,6 +202,7 @@ class BijouPolicy:
         sample_steps: int = 10,
         method: SamplingMethod = SamplingMethod.HEUN,
         sample_draws: int = 1,
+        target_time: float | None = None,
         expert_dtype: torch.dtype = torch.float32,
         generate: tuple[AuxField, ...] = (),
         condition_override: dict[str, str] | None = None,
@@ -220,6 +221,10 @@ class BijouPolicy:
         self.sample_steps = sample_steps
         self.method = method
         self.sample_draws = sample_draws
+        # SnapFlow shortcut conditioning s (None = standard s=t): passed
+        # to every flow solver forward; validated against the checkpoint
+        # below (needs φ_s).
+        self.target_time = target_time
         # Per-item [draws, chunk, dim] stacks from the LAST ensembled
         # batch (--dump-draws reads them right after predict; one batch
         # of chunks, so retention is trivial). None until the first
@@ -254,6 +259,20 @@ class BijouPolicy:
                 f"checkpoint's decoder is {type(self.model.decoder).__name__} "
                 "(greedy AR decode has no noise to draw)",
             )
+        if target_time is not None:
+            decoder_module = self.model.decoder
+            if not isinstance(decoder_module, FlowDecoder):
+                raise SystemExit(
+                    "--target-time zero drives the flow shortcut field; "
+                    "this checkpoint's decoder is "
+                    f"{type(decoder_module).__name__}",
+                )
+            if not decoder_module.config.target_time_embed:
+                raise SystemExit(
+                    "--target-time zero requires a φ_s-extended checkpoint "
+                    "(config target_time_embed); this checkpoint has none — "
+                    "only SnapFlow-distilled models take shortcut reads",
+                )
         # Counterfactual conditioning (the Q3 diagnostic): force given
         # fields to a value regardless of the items' hindsight labels.
         # Only meaningful on condition-trained checkpoints — loud
@@ -373,6 +392,7 @@ class BijouPolicy:
                         ).to(self.device),
                         num_steps=self.sample_steps,
                         method=self.method,
+                        target_time=self.target_time,
                     ).actions
                     for draw in range(self.sample_draws)
                 ],
@@ -396,6 +416,7 @@ class BijouPolicy:
             noise=noise,
             num_steps=self.sample_steps,
             method=self.method,
+            target_time=self.target_time,
             generate=self.generate,
         )
         return [chunk.cpu() for chunk in prediction.actions], prediction.generations

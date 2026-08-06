@@ -208,6 +208,9 @@ class FlowDecoderConfig:
     chunk_size: int
     time_embed_dim: int
     time_conditioning: TimeConditioning
+    # SnapFlow φ_s target-time embedding; absent in checkpoints predating
+    # the field (from_dict defaults False — they load unchanged).
+    target_time_embed: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -226,6 +229,7 @@ class FlowDecoderConfig:
             "chunk_size": self.chunk_size,
             "time_embed_dim": self.time_embed_dim,
             "time_conditioning": self.time_conditioning.value,
+            "target_time_embed": self.target_time_embed,
         }
 
     @classmethod
@@ -245,6 +249,7 @@ class FlowDecoderConfig:
             chunk_size=int(data["chunk_size"]),
             time_embed_dim=int(data["time_embed_dim"]),
             time_conditioning=TimeConditioning(data["time_conditioning"]),
+            target_time_embed=bool(data.get("target_time_embed", False)),
         )
 
 
@@ -396,6 +401,7 @@ def default_expert_config(
     self_attention_mode: SelfAttentionMode = SelfAttentionMode.CAUSAL_ACTIONS,
     self_attention_rope_theta: float = 10_000.0,
     time_conditioning: TimeConditioning = TimeConditioning.ADDITIVE,
+    target_time_embed: bool = False,
 ) -> ExpertConfig:
     """Expert config with a blocks cross-attention schedule.
 
@@ -433,6 +439,7 @@ def default_expert_config(
         chunk_size=chunk_size,
         time_embed_dim=time_embed_dim,
         time_conditioning=time_conditioning,
+        target_time_embed=target_time_embed,
     )
 
 
@@ -760,6 +767,7 @@ def flow_decoder_config_from_expert(expert_config: ExpertConfig) -> FlowDecoderC
         chunk_size=expert_config.chunk_size,
         time_embed_dim=expert_config.time_embed_dim,
         time_conditioning=expert_config.time_conditioning,
+        target_time_embed=expert_config.target_time_embed,
     )
 
 
@@ -804,6 +812,7 @@ def expert_config_from_architecture(
         chunk_size=decoder.chunk_size,
         time_embed_dim=decoder.time_embed_dim,
         time_conditioning=decoder.time_conditioning,
+        target_time_embed=decoder.target_time_embed,
     )
 
 

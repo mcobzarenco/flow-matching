@@ -92,6 +92,8 @@ from .data import (
 from .decoders.ar_backbone import ARBackboneConfig, ARBackboneDecoder
 from .decoders.ar_fast import ARFastConfig, ARFastDecoder
 from .decoders.flow import (
+    SNAPFLOW_ALPHA,
+    SNAPFLOW_LAMBDA,
     FlowDecoder,
     SelfAttentionMode,
     TimeConditioning,
@@ -150,6 +152,14 @@ class TrainArgs:
     stream_counts: tuple[int, ...]
     self_attention_mode: str
     time_conditioning: str
+    # SnapFlow φ_s target-time embedding on the flow decoder (implied by
+    # --distill snapflow; loadable over an unextended checkpoint — the
+    # sanctioned additive warm start).
+    target_time_embed: bool
+    # Training objective variant: None = the decoder's standard
+    # objective; "snapflow" = the self-distillation loss mix (flow only,
+    # α/λ frozen in bijou.decoders.flow).
+    distill: str | None
     decoder: str
     fast_tokenizer: str | None
     aux_fields: tuple[str, ...] | None
@@ -1104,6 +1114,10 @@ def ensure_matching_decoder_config(
     if "decoder" in meta:
         saved = meta["decoder"]
         current = decoder_schema_dict(decoder)
+        if isinstance(decoder, FlowDecoder):
+            # Back-compat: checkpoints predating the φ_s field carry no
+            # key; absent means unextended.
+            saved.setdefault("target_time_embed", False)
     elif isinstance(decoder, FlowDecoder):
         saved = meta["expert_config"]
         # Back-compat: fields added to ExpertConfig after a checkpoint was
@@ -1111,6 +1125,7 @@ def ensure_matching_decoder_config(
         # so an unchanged run still matches. A pre-adaRMS checkpoint is
         # additive.
         saved.setdefault("time_conditioning", TimeConditioning.ADDITIVE.value)
+        saved.setdefault("target_time_embed", False)
         current = json.loads(
             json.dumps(dataclasses.asdict(decoder.config), default=str),
         )
@@ -1125,6 +1140,29 @@ def ensure_matching_decoder_config(
         # aux-less format-5 base — same parameter set) — note, not an
         # error. suffix_format differences are hard errors: pre-5
         # parameter sets no longer exist.
+        # φ_s target-time extension (SnapFlow distill warm start): a CLI
+        # True over a saved False is sanctioned — the embedding is purely
+        # additive and zero-initialized, so step 0 IS the checkpoint; the
+        # weight loader tolerates exactly the fresh φ_s keys (keyed off
+        # the returned saved config). The reverse direction would DROP
+        # trained parameters and stays a hard error.
+        extension = ("target_time_embed",)
+        current_ext = {k: v for k, v in current.items() if k not in extension}
+        saved_ext = {k: v for k, v in saved.items() if k not in extension}
+        if (
+            current_ext == saved_ext
+            and current.get("target_time_embed")
+            and not saved.get("target_time_embed")
+        ):
+            print(
+                f"note: φ_s target-time extension over {checkpoint} "
+                "(saved decoder has no target-time embedding) — the new "
+                "parameters initialize fresh with zero-initialized output "
+                "(step-0 model ≡ checkpoint), sanctioned distill warm "
+                "start, proceeding",
+                flush=True,
+            )
+            return saved
         data_side = ("aux",)
         current_core = {k: v for k, v in current.items() if k not in data_side}
         saved_core = {k: v for k, v in saved.items() if k not in data_side}
@@ -1303,6 +1341,24 @@ def parse_args() -> TrainArgs:
         "input add, the default) or 'adarms' (DiT-style per-layer scale/"
         "gate, identity at init). adarms changes the architecture — a fresh "
         "decoder only (cannot --init-from an additive checkpoint)",
+    )
+    parser.add_argument(
+        "--target-time-embed",
+        action="store_true",
+        help="extend the flow decoder with the SnapFlow φ_s target-time "
+        "embedding (zero-initialized output: inert until trained; may "
+        "--init-from an unextended checkpoint — step 0 is then exactly "
+        "that checkpoint). Implied by --distill snapflow",
+    )
+    parser.add_argument(
+        "--distill",
+        choices=["snapflow"],
+        default=None,
+        help="training objective variant: 'snapflow' = self-distillation "
+        "toward 1-NFE decoding (L = α·L_FM + (1−α)·λ·L_shortcut with "
+        "stop-gradient two-step-Euler shortcut targets; α=0.5, λ=0.1 "
+        "frozen in code per the 2026-08-06 pre-registration). Flow "
+        "decoder only; enables --target-time-embed",
     )
     parser.add_argument(
         "--decoder",
@@ -1675,6 +1731,13 @@ def parse_args() -> TrainArgs:
         parser.error(
             "--time-conditioning is flow-only (AR decoders have no \u03c4)",
         )
+    if raw.decoder != "flow" and raw.distill is not None:
+        parser.error("--distill is flow-only (it distills the velocity field)")
+    if raw.decoder != "flow" and raw.target_time_embed:
+        parser.error("--target-time-embed is flow-only (\u03c6_s conditions \u03c4)")
+    if raw.distill == "snapflow":
+        # The shortcut term forwards at s=0 \u2014 \u03c6_s is required, not optional.
+        raw.target_time_embed = True
     if raw.aux_fields is not None and raw.decoder != "ar_backbone":
         parser.error("--aux-fields is ar_backbone-only (aux rides its suffix)")
     if raw.aux_fields is not None and not raw.aux_fields:
@@ -1809,6 +1872,8 @@ def parse_args() -> TrainArgs:
         stream_counts=tuple(raw.stream_counts),
         self_attention_mode=raw.self_attention_mode,
         time_conditioning=raw.time_conditioning,
+        target_time_embed=raw.target_time_embed,
+        distill=raw.distill,
         decoder=raw.decoder,
         fast_tokenizer=raw.fast_tokenizer,
         aux_fields=tuple(raw.aux_fields) if raw.aux_fields is not None else None,
@@ -2183,6 +2248,7 @@ def main() -> int:
             chunk_size=args.chunk_size,
             self_attention_mode=SelfAttentionMode(args.self_attention_mode),
             time_conditioning=TimeConditioning(args.time_conditioning),
+            target_time_embed=args.target_time_embed,
         )
         model = from_backbone(
             checkpoint_dir,
@@ -2331,6 +2397,14 @@ def main() -> int:
                 "--backbone-init-from supplies a trained projection",
                 flush=True,
             )
+    model.distill = args.distill
+    if args.distill is not None and is_main:
+        print(
+            f"distill: {args.distill} objective "
+            f"(α={SNAPFLOW_ALPHA}, λ={SNAPFLOW_LAMBDA}, stop-gradient "
+            "two-step-Euler shortcut targets, no EMA teacher)",
+            flush=True,
+        )
     n_trainable = sum(p.numel() for p in model.decoder.parameters())
     if is_main:
         backbone_desc = (
@@ -2424,7 +2498,7 @@ def main() -> int:
     adapted_backbone_source: Path | None = None
     checkpoint_to_load = args.init_from or args.resume
     if checkpoint_to_load is not None:
-        ensure_matching_decoder_config(
+        saved_decoder_config = ensure_matching_decoder_config(
             model.decoder,
             checkpoint_to_load,
         )
@@ -2438,8 +2512,34 @@ def main() -> int:
         # Strict always: pre-format-5 checkpoints carry parameters this
         # code deleted (mode tables, suffix state_proj) and are refused
         # by the key mismatch — no migration path (owner call,
-        # 2026-08-03).
-        model.decoder.load_state_dict(expert_state, strict=True)
+        # 2026-08-03). One sanctioned exception: the φ_s target-time
+        # extension (config guard above) may miss EXACTLY the fresh φ_s
+        # keys, which keep their built init (zero-init output => step-0
+        # model ≡ checkpoint).
+        phi_s_extension = (
+            isinstance(model.decoder, FlowDecoder)
+            and model.decoder.config.target_time_embed
+            and not saved_decoder_config.get("target_time_embed", False)
+        )
+        if phi_s_extension:
+            phi_s_keys = {
+                key
+                for key in model.decoder.state_dict()
+                if key.startswith(("target_time_in_proj.", "target_time_out_proj."))
+            }
+            missing, unexpected = model.decoder.load_state_dict(
+                expert_state,
+                strict=False,
+            )
+            if set(missing) != phi_s_keys or unexpected:
+                raise SystemExit(
+                    f"expert.safetensors mismatch at {checkpoint_to_load} "
+                    f"beyond the φ_s extension: missing {sorted(missing)} "
+                    f"(expected exactly {sorted(phi_s_keys)}), unexpected "
+                    f"{sorted(unexpected)}",
+                )
+        else:
+            model.decoder.load_state_dict(expert_state, strict=True)
         # Prompt-side parameters (state_proj) — format-3-prompt
         # checkpoints always write the file.
         model.encoder.load_state_dict(

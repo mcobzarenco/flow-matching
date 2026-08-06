@@ -114,6 +114,10 @@ class EvalReport:
     sample_steps: int
     sample_method: str
     sample_draws: int
+    # Flow target-time conditioning s: "t" = standard s=t forwards;
+    # "zero" = the SnapFlow one-step shortcut field (φ_s checkpoints
+    # only) — with euler/1 this is the 1-NFE read.
+    target_time: str
     noise_key: str
     generate: list[str] | None
     condition_override: list[str]
@@ -170,6 +174,7 @@ class EvalReport:
             "sample_steps": self.sample_steps,
             "sample_method": self.sample_method,
             "sample_draws": self.sample_draws,
+            "target_time": self.target_time,
             "noise_key": self.noise_key,
             "generate": self.generate,
             "condition_override": self.condition_override,
@@ -357,6 +362,17 @@ def parse_args() -> argparse.Namespace:
         "--sample-method",
         choices=[m.value for m in SamplingMethod],
         default=SamplingMethod.HEUN.value,
+    )
+    parser.add_argument(
+        "--target-time",
+        choices=["t", "zero"],
+        default="t",
+        help="flow target-time conditioning s (SnapFlow φ_s checkpoints "
+        "only): 't' = standard s=t forwards (the default; also the only "
+        "valid value for unextended checkpoints); 'zero' = one-step "
+        "shortcut mode — combine with --sample-method euler "
+        "--sample-steps 1 for the 1-NFE read. Never inferred from step "
+        "count: 1-NFE claims require this flag explicitly",
     )
     parser.add_argument(
         "--sample-draws",
@@ -609,6 +625,13 @@ def main() -> int:
         StateCopyPolicy(args.chunk_size),
         NormalizedStateCopyPolicy(args.chunk_size),
     ]
+    # "zero" = SnapFlow one-step shortcut conditioning; BijouPolicy
+    # validates the checkpoint carries φ_s.
+    target_time = 0.0 if args.target_time == "zero" else None
+    if target_time is not None and args.checkpoint is None:
+        raise SystemExit(
+            "--target-time zero conditions the flow expert — it requires --checkpoint",
+        )
     bijou_policy: BijouPolicy | None = None
     narrated_policy: NarratedBijouPolicy | None = None
     if args.checkpoint is not None:
@@ -627,6 +650,7 @@ def main() -> int:
             sample_steps=args.sample_steps,
             method=SamplingMethod(args.sample_method),
             sample_draws=args.sample_draws,
+            target_time=target_time,
             noise_key=args.noise_key,
             generate=tuple(AuxField(f) for f in (args.generate or ())),
             condition_override=overrides,
@@ -906,6 +930,7 @@ def main() -> int:
             sample_steps=np.array(args.sample_steps),
             sample_method=np.array(args.sample_method),
             sample_draws=np.array(args.sample_draws),
+            target_time=np.array(args.target_time),
             noise_key=np.array(args.noise_key),
             seed=np.array(args.seed),
         )
@@ -1138,6 +1163,7 @@ def main() -> int:
             sample_steps=args.sample_steps,
             sample_method=args.sample_method,
             sample_draws=args.sample_draws,
+            target_time=args.target_time,
             noise_key=args.noise_key,
             generate=list(args.generate) if args.generate is not None else None,
             condition_override=list(args.condition_override),
@@ -1194,6 +1220,12 @@ def main() -> int:
             f"checkpoint: {args.checkpoint or '-'}",
             f"smolvla: {args.smolvla or '-'}",
             f"sampler: {args.sample_method}-{args.sample_steps}",
+            "target time: "
+            + (
+                "zero (SnapFlow one-step shortcut field)"
+                if args.target_time == "zero"
+                else "t (standard)"
+            ),
             f"noise key: {args.noise_key}",
             f"fps filter: {args.fps or 'all'}",
             f"camera-count filter: {args.camera_counts or 'all'}",

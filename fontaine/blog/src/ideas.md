@@ -254,6 +254,19 @@ variants, consistency/distillation toward 1–2-step deployment decodes
   slot after the draws chain + fairness probe; pre-launch impl
   checklist (φ_s, `--distill snapflow`, 1-NFE eval switch, oracles)
   = CPU work items.
+- **IMPLEMENTATION COMPLETE (2026-08-06 ~00:3x–01:0xZ session): all
+  five pre-launch checklist items landed; the launch path is
+  zero-CPU.** φ_s config-flagged + checkpoint-compat (sanctioned
+  additive warm start in the --init-from guard/loader);
+  `--distill snapflow` (α/λ frozen in code, mean- and sum-form so
+  chunked backward stays available); `bijou.eval --target-time
+  {t,zero}` loud 1-NFE switch recorded through report/npz/banner; 10
+  new oracles (validation gate (a) also RUN on the real checkpoint:
+  6/6 forwards bit-exact, PASSED); launcher staged + recipe
+  diff-verified through the real parse_args (50 teacher fields
+  verbatim, 11 pre-registered deltas), chains gates (a)+(b) then
+  training then the endpoint 1-NFE panels (1/5/10 draws). Gate (b)
+  drift eval + @10k probe script wait on GPU only. check.py 201.
 - **Pointer reads closed (lit slice 2026-08-06):** OFP
   ([2603.12480](https://arxiv.org/abs/2603.12480)) — *from-scratch*
   one-step self-distillation (self-consistency + self-guided

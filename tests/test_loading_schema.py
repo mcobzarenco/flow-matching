@@ -73,6 +73,10 @@ def test_legacy_synthesizer_reproduces_recorded_expert_config() -> None:
     checkpoint actually recorded (same normalization ensure_matching
     applies: json round-trip stringifies enums)."""
     recorded = legacy_meta()["expert_config"]
+    # Same back-compat normalization ensure_matching applies: fields
+    # added to ExpertConfig after format-1 checkpoints were written are
+    # absent from their serialized configs and default-filled on read.
+    recorded.setdefault("target_time_embed", False)
     synthesized = json.loads(
         json.dumps(dataclasses.asdict(legacy_expert_config()), default=str),
     )

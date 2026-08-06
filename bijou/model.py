@@ -48,6 +48,8 @@ from .decoders.flow import (
     SamplingMethod,
     flow_matching_loss,
     flow_matching_loss_sums,
+    snapflow_distill_loss,
+    snapflow_distill_loss_sums,
 )
 from .encoders.gemma4 import GemmaEncoder, GemmaInputs
 from .gemma4.model import Gemma4Model
@@ -68,6 +70,11 @@ class BijouModel(nn.Module):
         self.backbone = backbone
         self.encoder = encoder
         self.decoder = decoder
+        # Training-only objective variant (bijou.train --distill): None =
+        # each decoder's standard objective; "snapflow" = the SnapFlow
+        # self-distillation mix (flow decoders with φ_s only). Never
+        # serialized — a run property, not a checkpoint property.
+        self.distill: str | None = None
 
     def param_groups(self) -> dict[str, list[nn.Parameter]]:
         """Named trainable-parameter groups — the routing vocabulary for
@@ -139,7 +146,12 @@ class BijouModel(nn.Module):
         decoder = self.decoder
         match decoder:
             case FlowDecoder():
-                total = flow_matching_loss(decoder, memory, batch)
+                objective = (
+                    snapflow_distill_loss
+                    if self.distill == "snapflow"
+                    else flow_matching_loss
+                )
+                total = objective(decoder, memory, batch)
                 return total, total.detach(), None, None
             case ARFastDecoder():
                 total = ar_fast_loss(decoder, memory, batch)
@@ -199,7 +211,12 @@ class BijouModel(nn.Module):
         decoder = self.decoder
         match decoder:
             case FlowDecoder():
-                loss_sum, count = flow_matching_loss_sums(decoder, memory, batch)
+                sums = (
+                    snapflow_distill_loss_sums
+                    if self.distill == "snapflow"
+                    else flow_matching_loss_sums
+                )
+                loss_sum, count = sums(decoder, memory, batch)
                 return loss_sum, count, None, None
             case ARFastDecoder():
                 loss_sum, count = ar_fast_loss_sums(decoder, memory, batch)
@@ -239,13 +256,15 @@ class BijouModel(nn.Module):
         noise: Tensor | None = None,
         num_steps: int = 5,
         method: SamplingMethod = SamplingMethod.HEUN,
+        target_time: float | None = None,
         generate: tuple[AuxField, ...] = (),
     ) -> BijouPrediction:
         """Collated batch → :class:`BijouPrediction` (RAW-unit chunks
         [B, chunk, action_dim] + per-row aux generations for decoders
         with a text surface): encode the observation (no grad) and run
         the decoder's chunk-space inference with the batch's per-sample
-        stats. ``num_steps``/``method``/``noise`` are flow solver knobs;
+        stats. ``num_steps``/``method``/``noise``/``target_time`` are
+        flow solver knobs;
         an AR decoder decodes greedily and ignores them (``noise`` must
         then be None). ``generate`` is ar_backbone's request set — it
         must match the request the batch's prompts were collated with
@@ -262,6 +281,7 @@ class BijouModel(nn.Module):
                     noise=noise,
                     num_steps=num_steps,
                     method=method,
+                    target_time=target_time,
                 )
             case ARFastDecoder():
                 return decoder.predict_chunk(

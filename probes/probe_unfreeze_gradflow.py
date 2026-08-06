@@ -88,6 +88,8 @@ def make_args(
         stream_counts=(1, 1, 2),
         self_attention_mode="causal_actions",
         time_conditioning="additive",
+        target_time_embed=False,
+        distill=None,
         decoder=decoder,
         fast_tokenizer=(str(FIXTURE_TOKENIZER) if decoder != "flow" else None),
         aux_fields=None,
