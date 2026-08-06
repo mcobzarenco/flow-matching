@@ -1,6 +1,53 @@
 # Now
 
-*Updated 2026-08-06 16:4x–17:1xZ (real `date -u`) — same work session, extended by an
+*Updated 2026-08-06 17:1x–18:1xZ (real `date -u`) — work session (bounded, then
+extended by TWO OWNER STEERING BURSTS, conversational mode held):
+**MOLMO2 WP1 + WP2 BOTH LANDED WITH FULL HF PARITY IN ONE SESSION —
+the port is text+vision parity-clean and the owner has re-aimed phase 1
+at AR-FIRST.** (1) WP1 (`bd5b7f9`): pure-torch Qwen3 decoder
+(`bijou/molmo2/text.py` — fused-QKV GQA 32:8 hd128 1/√d, qwen3
+per-head qk-norm pre-RoPE, fused-gate SwiGLU, untied embeds + 128-slot
+extension matrix, residual-tap protocol identical to Gemma's),
+truncated-mount loader, tiny fixture, 9 CPU oracles; the flagged
+unknown died at first touch (`rope_scaling_layers: null` re-fetched).
+(2) OWNER 17:24/17:27Z ("how's molmo2? check outputs vs transformers")
+— **parity harness built + run same hour on CPU fp32** (221 GB RAM
+takes both models; `--with transformers==4.57.1`, HF 5.x breaks the
+remote code): residual stream ≤1.5e-4 all 36 layers, logits ≤3.4e-5,
+greedy argmax 79/79, 15-layer mount BITWISE vs full prefix —
+`PARITY PASSED`, numbers Discord'd. (3) WP2 same session (`20922af`):
+`vision.py` op-for-op (25-block tower as shipped, taps [-3,-9] concat,
+masked 2×2 attention pooling, gated projector), 7 more oracles (312
+green), **vision parity 4.4e-7 relative on real processor inputs**
+(725 image tokens; caught + documented: HF's eager path DROPS the
+pooling mask — SDPA is the shipped semantics we mirror). (4) OWNER
+17:51Z steering: **AR-FIRST** — deep case (their paired report
+Δ−2.69@2.5k ~8× noise, hosted now under /reports/ + nav renamed
+"Reports"; π0.5) → replied agreeing + proposed the FAST anchoring fix
+(1,026 ids ≥ Qwen3's ~271 spare tail → SECOND trainable extension
+embedding block at [152,064, 153,090) + fresh untied head rows); plan
+post §6 amended (ack pending). Owner also asked re best-of-10 oracle
+HTML: answered — no HTML by construction (analysis-JSON product of the
+fairness instrument; offered a report page). Scheduling rec posted:
+**arm A img280 still launches tonight** at arm C's boundary (no idle
+box), Molmo2 AR takes the whole box TOMORROW (WP3 collator + FAST
+anchoring + AR arm + smoke + pre-reg are the critical path — not
+tonight, gates held). Babysits: ftrig 4k DONE ~17:50Z (loss
+0.028, probe 13.43@500 → 12.43@2500 descending, K1 far), chain →
+rig draws1+draws10 banked, panel-v2 forgetting guard @13,632/22,578
+~1,240 f/min → **local chain end ~18:1xZ, next session owns the ftrig
+after-reads + pre-registered ship rule**; arm C panel eval recovered
+(60→200 f/min) @21,472/25,800 → masked eval next → **box boundary
+~19:0x–19:3xZ (arm A launch per owner rec unless overridden)**. Queue:
+**next (chained) → ftrig after-reads + ship rule (rollout --check on
+@4k → upload + owner command, or diagnosis) + box boundary (arm A
+launch runbook unchanged) + arm C statedrop reads + results post; CPU
+critical path → WP3 ChatML collator + FAST extension anchoring + AR
+decoder arm (owner-prioritized, AR 4×DDP pre-reg tomorrow) + π0.5
+deep-read post + blog reorg (low-prio)**. GPUs busy ×2 + CPU queue
+deep → `run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-06 16:4x–17:1xZ (real `date -u`) — same work session, extended by an
 OWNER STEERING BURST (16:22–16:53Z, six messages — caught by the
 end-of-session poll; conversational mode held since): **ALL FIVE ASKS
 DELIVERED SAME SESSION.** (1) *"What's running / keep GPUs hot"* —
