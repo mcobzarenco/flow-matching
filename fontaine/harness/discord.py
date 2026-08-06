@@ -15,7 +15,9 @@ file; optional DISCORD_OWNER_ID for @mentions):
     uv run python fontaine/harness/discord.py post "message text"
         Post to the channel (≤2000 chars — substance belongs in the
         blog). To @mention the owner in an escalation, include
-        <@$DISCORD_OWNER_ID> in the text.
+        <@$DISCORD_OWNER_ID> in the text. ``--attach FILE`` uploads
+        one file with the message (≤10 MB, the bot upload cap on an
+        unboosted server); recipients get a CDN URL.
 
     uv run python fontaine/harness/discord.py history -n 20
         Print the channel's most recent messages (oldest first)
@@ -50,12 +52,14 @@ import sys
 import time
 import urllib.error
 import urllib.request
+import uuid
 from pathlib import Path
 from typing import Any
 
 API = "https://discord.com/api/v10"
 CURSOR_PATH = Path(__file__).resolve().parent / "state" / "discord_cursor"
 MAX_CONTENT = 2000
+MAX_ATTACHMENT = 10 * 1024 * 1024  # the bot upload cap on an unboosted server
 
 
 def _env(name: str) -> str:
@@ -68,9 +72,21 @@ def _env(name: str) -> str:
     return value
 
 
-def _request(method: str, path: str, payload: dict[str, Any] | None = None) -> Any:
-    """One API call; a single bounded retry on rate limit (429)."""
-    body = None if payload is None else json.dumps(payload).encode()
+def _request(
+    method: str,
+    path: str,
+    payload: dict[str, Any] | None = None,
+    *,
+    body: bytes | None = None,
+    content_type: str = "application/json",
+) -> Any:
+    """One API call; a single bounded retry on rate limit (429).
+
+    ``payload`` is the JSON convenience path; ``body``/``content_type``
+    is the raw path (multipart uploads) — mutually exclusive."""
+    assert payload is None or body is None
+    if payload is not None:
+        body = json.dumps(payload).encode()
     for attempt in (1, 2):
         request = urllib.request.Request(
             f"{API}{path}",
@@ -78,7 +94,7 @@ def _request(method: str, path: str, payload: dict[str, Any] | None = None) -> A
             method=method,
             headers={
                 "Authorization": f"Bot {_env('DISCORD_BOT_TOKEN')}",
-                "Content-Type": "application/json",
+                "Content-Type": content_type,
                 "User-Agent": "fontaine-harness (flow-matching, v1)",
             },
         )
@@ -149,14 +165,54 @@ def history(count: int) -> None:
     print(f"[discord] last {len(messages)} message(s); cursor untouched")
 
 
-def post(text: str) -> None:
+def post(text: str, attach: Path | None = None) -> None:
     if len(text) > MAX_CONTENT:
         raise SystemExit(
             f"message is {len(text)} chars (limit {MAX_CONTENT}) — split it, "
             "or put the substance in the blog and post the link",
         )
     channel = _env("DISCORD_CHANNEL_ID")
-    message = _request("POST", f"/channels/{channel}/messages", {"content": text})
+    if attach is None:
+        message = _request("POST", f"/channels/{channel}/messages", {"content": text})
+    else:
+        if not attach.is_file():
+            raise SystemExit(f"attachment not found: {attach}")
+        data = attach.read_bytes()
+        if len(data) > MAX_ATTACHMENT:
+            raise SystemExit(
+                f"attachment is {len(data) / 1e6:.1f} MB (bot cap "
+                f"{MAX_ATTACHMENT / 1e6:.0f} MB on an unboosted server) — "
+                "compress it or host it on the blog",
+            )
+        # Discord's multipart shape: a payload_json field plus files[N]
+        # parts, each declared in payload_json's attachments list.
+        payload = json.dumps(
+            {
+                "content": text,
+                "attachments": [{"id": 0, "filename": attach.name}],
+            },
+        )
+        boundary = f"----fontaine{uuid.uuid4().hex}"
+        body = (
+            (
+                f"--{boundary}\r\n"
+                'Content-Disposition: form-data; name="payload_json"\r\n'
+                "Content-Type: application/json\r\n\r\n"
+                f"{payload}\r\n"
+                f"--{boundary}\r\n"
+                'Content-Disposition: form-data; name="files[0]"; '
+                f'filename="{attach.name}"\r\n'
+                "Content-Type: application/octet-stream\r\n\r\n"
+            ).encode()
+            + data
+            + f"\r\n--{boundary}--\r\n".encode()
+        )
+        message = _request(
+            "POST",
+            f"/channels/{channel}/messages",
+            body=body,
+            content_type=f"multipart/form-data; boundary={boundary}",
+        )
     print(f"[discord] posted, id {message['id']}")
 
 
@@ -169,6 +225,12 @@ def main() -> int:
     subparsers.add_parser("read", help="print messages newer than the cursor")
     post_parser = subparsers.add_parser("post", help="post to the channel")
     post_parser.add_argument("text", help="message content (<=2000 chars)")
+    post_parser.add_argument(
+        "--attach",
+        type=Path,
+        default=None,
+        help="upload one file with the message (<=10 MB)",
+    )
     history_parser = subparsers.add_parser(
         "history",
         help="print the last N messages without moving the cursor",
@@ -178,7 +240,7 @@ def main() -> int:
     if args.command == "read":
         read()
     elif args.command == "post":
-        post(args.text)
+        post(args.text, args.attach)
     else:
         history(args.count)
     return 0
