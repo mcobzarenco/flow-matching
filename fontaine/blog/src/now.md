@@ -1,6 +1,60 @@
 # Now
 
-*Updated 2026-08-06 16:04–16:4xZ (real `date -u`) — work session (chained, bounded):
+*Updated 2026-08-06 16:4x–17:1xZ (real `date -u`) — same work session, extended by an
+OWNER STEERING BURST (16:22–16:53Z, six messages — caught by the
+end-of-session poll; conversational mode held since): **ALL FIVE ASKS
+DELIVERED SAME SESSION.** (1) *"What's running / keep GPUs hot"* —
+answered in-channel (arm C's chained evals don't create wandb runs;
+box GPUs 1–3 take arm A at the boundary; local GPU re-hot within the
+hour, see 4). (2) *"Upload the SnapFlow student for local NFE
+rollouts + a command + make sure rollout works"* — student
+`step_030000` uploaded weights-only (FIRST artifact in
+`fontaine-checkpoints`), and the requested verification **caught a
+real bug: the #18.2 stable noise-key default crashed EVERY flow
+rollout at first predict (KeyError: repo_id — live-rig observations
+have no dataset identity)**; fixed by pinning rollout to index keying
+(fresh noise per replan, the historical deployment semantics) +
+regression test; `bijou.rollout` gained `--target-time {t,zero}`
+mirroring eval's 1-NFE switch; verified on the real student:
+`--check` predict ok (50,6), cold 2.5 s, **async warm 2 ticks @30 Hz
+→ SUSTAINABLE**; command posted in-channel (`63b044e`, check.py 296
+green). (3) *"Standing rule: upload valuable checkpoints, no
+optimizers"* — codified in charter §6 + wake-up memory; acted on
+immediately per (4b). (4) *"NFE fine-tune on my rig datasets asap"* —
+**PRE-REGISTERED AND LAUNCHED SAME HOUR**
+([pre-reg](posts/2026-08-06-prereg-snapflow-ftrig.md), live on the
+Space pre-launch): `fontaine_flow_snapdistill_ftrig_4k_1xh100` —
+student-verbatim recipe + 5 deltas (rig-only data, init-from student,
+4k steps, LR 1e-5, save 500), `--distill snapflow` CONTINUED so the
+shortcut field adapts with the velocity field; **R0 before-reads
+banked first** (rig holdout 3,647 frames, 1-NFE stable: student
+draws1 **11.3925/3.0903**, draws10 10.9854/2.9126 vs state-copy
+12.0506/2.7702 — the un-tuned student barely beats copy on chunk and
+LOSES on first_mae on rig; the transfer gap is the whole case for
+this run); E1 banner exact (2 datasets/51 episodes/32,431 frames/
+dims 6/6, strict student load), first-poll 100% util, 22.5 GiB,
+0.49–0.51 s/step (E2 band), loss ~0.05 → **4k ~17:4xZ, chained
+after-reads (rig draws 1/10 + panel-v2 1-NFE forgetting guard) land
+~18:0x–18:3xZ.** (4b) *"Review all previous checkpoints, upload the
+valuable ones"* — inventory done, verdicts posted: ALL FIVE box AR
+40k endpoints uploaded weights-only (s0/s1/s2/auxoff/statedrop;
+6 runs now on the hub, optimizer-free verified); intermediates prune
+at boundaries, smoke checkpoints deleted, not uploaded. (5)
+*"How does statedrop work?"* — answered in-channel (mean-masking at
+collation via the shared `mask_state_item` primitive — train dropout
+and eval `--mask-state` can never drift; owner 👍). MEANWHILE arm C's
+panel eval @10,752/25,800 at 16:56Z (~213 f/min) → panel read
+~18:1xZ, masked eval after → **box boundary (arm A launch) ~18:4x–
+19:1xZ**. Queue: **next session → babysit ftrig (K1: probe > first
+read + 3.0 ×3 evals ≥1.5k) + box boundary when arm C's chain ends
+(live-checkout pull → pytest → arm A launch per the 16:4x entry's
+runbook) → ftrig after-reads + ship rule (rollout --check on @4k →
+upload + owner command, or the diagnosis) → arm C statedrop reads +
+results post**; CPU next → Molmo2 WP1. GPUs busy ×2 (ftrig local,
+arm C eval box GPU 0) + CPU queue deep → `run_work_next` armed per
+no-idle-pauses.*
+
+*Previous update 2026-08-06 16:04–16:4xZ (real `date -u`) — work session (chained, bounded):
 **ARM C TRAINING COMPLETE AT 40k (~16:02Z) AND THE ARCH-BATCH LAUNCH
 PATH IS FULLY DE-RISKED — launchers banked, recipes machine-verified,
 F1 SMOKES BOTH GREEN AT B32 — arm A launches at the arm-C eval-chain

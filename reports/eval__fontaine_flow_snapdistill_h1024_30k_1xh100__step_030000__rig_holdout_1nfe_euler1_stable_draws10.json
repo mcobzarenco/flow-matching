@@ -1,0 +1,160 @@
+{
+  "data": [
+    "/home/ubuntu/datasets/mcobzarenco/so101_pick_place_v2",
+    "/home/ubuntu/datasets/mcobzarenco/so101_pick_place_clean"
+  ],
+  "episodes": "holdout",
+  "holdout_episodes": 0.1,
+  "split_seed": 0,
+  "fps": [
+    30.0
+  ],
+  "camera_counts": [
+    1,
+    2
+  ],
+  "num_samples": 3647,
+  "seed": 0,
+  "checkpoint": "outputs/train/fontaine_flow_snapdistill_h1024_30k_1xh100/step_030000",
+  "smolvla": null,
+  "exclude": [],
+  "aux_prompt_hash": null,
+  "sample_steps": 1,
+  "sample_method": "euler",
+  "sample_draws": 10,
+  "target_time": "zero",
+  "noise_key": "stable",
+  "mask_state": false,
+  "generate": null,
+  "condition_override": [],
+  "batch_size": 32,
+  "world_size": 1,
+  "summaries": [
+    {
+      "policy": "state-copy",
+      "frames": 3647,
+      "chunk_mae": 12.050564223659833,
+      "chunk_mse": 637.9887593089552,
+      "first_mae": 2.770190755332827,
+      "per_motor_mae": [
+        4.32175373632976,
+        15.473912540242331,
+        11.84073834980011,
+        16.89310135688782,
+        17.02995797278268,
+        6.743921454674857
+      ],
+      "mae_p50": 8.294572830200195,
+      "mae_p90": 27.377038955688477,
+      "seconds_per_frame": 1.220994156680992e-05
+    },
+    {
+      "policy": "state-copy-norm",
+      "frames": 3647,
+      "chunk_mae": 12.213813962873731,
+      "chunk_mse": 640.2764940537303,
+      "first_mae": 2.8735714714870997,
+      "per_motor_mae": [
+        4.312463913045611,
+        15.426126924612863,
+        12.214593373979842,
+        17.02273542175293,
+        17.03260881349836,
+        7.274355282152721
+      ],
+      "mae_p50": 8.505204200744629,
+      "mae_p90": 27.15898895263672,
+      "seconds_per_frame": 1.2564277777873227e-05
+    },
+    {
+      "policy": "bijou@30000_draws10",
+      "frames": 3647,
+      "chunk_mae": 10.985409604117075,
+      "chunk_mse": 431.2139585879998,
+      "first_mae": 2.9125681375563226,
+      "per_motor_mae": [
+        5.416348090989249,
+        13.54727831262861,
+        9.630811177989415,
+        15.290837420894078,
+        17.39177330830165,
+        4.635409297571182
+      ],
+      "mae_p50": 8.973837852478027,
+      "mae_p90": 20.267440795898438,
+      "seconds_per_frame": 0.04401954267040209
+    }
+  ],
+  "paired": [
+    {
+      "policy": "state-copy-norm",
+      "reference": "state-copy",
+      "frames": 3647,
+      "mean_delta_mae": 0.18104858696460724,
+      "win_rate": 0.327940773238278,
+      "delta_mae_p50": 0.24326008558273315
+    },
+    {
+      "policy": "bijou@30000_draws10",
+      "reference": "state-copy",
+      "frames": 3647,
+      "mean_delta_mae": -1.004002332687378,
+      "win_rate": 0.5064436523169729,
+      "delta_mae_p50": -0.0634244754910469
+    }
+  ],
+  "motor_names": [
+    "shoulder_pan.pos",
+    "shoulder_lift.pos",
+    "elbow_flex.pos",
+    "wrist_flex.pos",
+    "wrist_roll.pos",
+    "gripper.pos"
+  ],
+  "outcome_slices": {
+    "state-copy": {
+      "success": 12.428428512305008,
+      "failure": 6.115659966920232
+    },
+    "state-copy-norm": {
+      "success": 12.567203018209923,
+      "failure": 6.663328585385707
+    },
+    "bijou@30000_draws10": {
+      "success": 11.319812620939024,
+      "failure": 5.733127375703628
+    }
+  },
+  "condition_sensitivity": 0.5608362868810312,
+  "condition_sensitivity_frames": 234,
+  "holding_accuracy": null,
+  "holding_frames": 0,
+  "progress_mae": null,
+  "progress_frames": 0,
+  "event_accuracy": null,
+  "event_frames": 0,
+  "visible_accuracy": null,
+  "visible_frames": 0,
+  "sample_plan": null,
+  "plan_seed": null,
+  "core_frames": 3647,
+  "labeled_frames": 0,
+  "per_dataset": {
+    "mcobzarenco/so101_pick_place_v2": {
+      "frames": 3274,
+      "chunk_mae": {
+        "state-copy": 12.218600589435063,
+        "state-copy-norm": 12.372116052211071,
+        "bijou@30000_draws10": 11.441920580675326
+      }
+    },
+    "mcobzarenco/so101_pick_place_clean": {
+      "frames": 373,
+      "chunk_mae": {
+        "state-copy": 10.531004376484411,
+        "state-copy-norm": 10.782281582539074,
+        "bijou@30000_draws10": 6.8571618491003585
+      }
+    }
+  }
+}

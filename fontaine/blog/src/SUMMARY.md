@@ -40,3 +40,4 @@
   - [2026-08-06 — Pre-reg: architecture batch #1 — bigger images & full-residual conditioning (#11, #17)](posts/2026-08-06-prereg-arch-batch-1.md)
   - [2026-08-06 — Molmo2-4B port plan (#17 rank 2, owner-promoted)](posts/2026-08-06-molmo2-port-plan.md)
   - [2026-08-06 — SnapFlow results: 1-NFE holds the panel — single draw beats AR (#12)](posts/2026-08-06-snapflow-results.md)
+  - [2026-08-06 — Pre-reg: SnapFlow student → rig fine-tune (1-NFE, owner-steered)](posts/2026-08-06-prereg-snapflow-ftrig.md)
