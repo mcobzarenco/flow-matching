@@ -1,6 +1,37 @@
 # Now
 
-*Updated 2026-08-06 15:41–15:4xZ (real `date -u`) — tick (babysit): **arm C
+*Updated 2026-08-06 15:43–16:0xZ (real `date -u`) — work session (chained, bounded):
+**TWO DELIVERABLES — (1) #18.2 `--noise-key` DEFAULT FLIPPED to
+`stable` (`d77ed58`): the hold expired when the SnapFlow chain's
+index-keyed stage-4 evals + npz addendum completed — CLI +
+`BijouPolicy`/`SmolVLAEvalPolicy` ctors now default `stable`, `index`
+retained permanently behind an explicit flag for historical
+reproduction, new default-pin regression test, check.py 295 green;
+arm A/B launchers written at the box boundary inherit `stable` as the
+arch-batch pre-reg requires. (2) OWNER STEERING 15:49Z (mid-session
+Discord poll caught it 6 s after posting — the class fix earning its
+keep): eval reports linked from posts + hosted on the Space —
+DELIVERED SAME SESSION (`bbafaee`): all 21 banked HTML eval reports +
+9 frozen analysis JSONs uploaded to the blog Space under `/reports/`
+(154 MB, curl-verified 200), new [reports index](reports.md) page in
+the nav grouping every report by run, inline report links added to 6
+results posts (SnapFlow ×3 endpoint reports, stable-key re-bank,
+box-batch, draws-fairness ×2, state-probe, flow-vs-AR), blog built +
+Space pushed, Discord headline with direct links posted 15:58Z; owner
+👍'd the plan reply.** Arm C babysits 15:50/15:55Z: @38,500→39,060/40k,
+TRAIN-ALIVE (pgrep 2), 66–78% util, 73.8 GiB, 0.374–0.384 s/step,
+loss 3.59–3.74 smooth, aux 0.50–0.57, LR decayed to 1.01e-5 exactly
+on schedule → **40k ~16:1xZ — the next chained session owns the
+boundary: code sync + stage-0 re-verify + F1 two-config smoke → arm A
+img280 launch + arm C statedrop reads + `~/flow-matching-ctrl`
+cleanup.** Local GPU idle-by-design. Discord: owner inbound 15:49Z
+(the reports ask, answered + delivered); no further inbound through
+16:0xZ. Queue: **box boundary (~16:1xZ, next session) → the launch
+sequence above; CPU next → Molmo2 WP1 Qwen3 decoder port
+(`bijou/molmo2/text.py`, plan §3, top CPU item)**. GPU busy ×1 (arm C
+box) + CPU queue deep → `run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-06 15:41–15:4xZ (real `date -u`) — tick (babysit): **arm C
 inside the final 2.5k — @37,620/40k at 15:41Z, TRAIN-ALIVE (pgrep 2),
 65% util (eval window), 73.8 GiB, 0.37–0.39 s/step, loss 3.58–3.74
 smooth, aux 0.43–0.54, in-run probe holding the descended band:
@@ -3110,3 +3141,9 @@ all-CPU (local GPU idle-by-design since the npz addendum banked).
 Arm C babysat mid-session with a Discord poll at the checkpoint per
 the class fix. Lit slice skipped — bounded publish item, the 13:12Z
 session's ~15 min slice is <3 h old; balance carries.
+Session 15:43–16:0xZ: the ladder pick was integrity debt (#18.2
+default flip, rung 4, ~15 min) — then owner steering (rung 1)
+arrived mid-session via the babysit-checkpoint Discord poll and took
+the rest: eval-reports hosting + linking, delivered and verified
+live in ~35 min. All-CPU (arm C babysat ×2 with polls). Lit slice
+skipped — owner-steered session; the 13:12Z slice balance carries.
