@@ -20,6 +20,14 @@ cd /home/ubuntu/flow-matching
 mkdir -p outputs/train
 
 BATCH="${BATCH:-12}"
+# Rung from the F1 smoke (pre-reg §3): B12 direct OOM'd at 77.5 GiB in
+# the forward; 2x6 chunked backward is the measured rung — global 48
+# unchanged, gradient exactly equivalent.
+BACKWARD_CHUNKS="${BACKWARD_CHUNKS:-2}"
+CHUNK_ARGS=()
+if [ "$BACKWARD_CHUNKS" -gt 1 ]; then
+    CHUNK_ARGS=(--backward-chunks "$BACKWARD_CHUNKS")
+fi
 
 # GPU-clear guard: all four GPUs must be free.
 for g in 0 1 2 3; do
@@ -43,6 +51,7 @@ done
     --camera-kind-dropout 0.1 \
     --decoder-lr 1e-4 --backbone-text-lr 2e-5 --grad-clip 100 \
     --steps 40000 --warmup-steps 1000 --batch-size "$BATCH" \
+    "${CHUNK_ARGS[@]}" \
     --num-workers 20 --prefetch-factor 4 \
     --eval-samples 256 --eval-every 500 --save-every 2500 --log-every 20 \
     --seed 0 --wandb-project fontaine \

@@ -78,6 +78,12 @@ revision](posts/2026-08-06-panel-v2-amendment.md).
 - [aux-off arm state-masked probe](https://mcobzarenco-fontaine-blog.static.hf.space/reports/eval__fontaine_arb_rcond_auxoff_40k_1xh100__step_040000__stateprobe_q4_state-masked.html)
 - [batch analysis JSON](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__box_batch_40k_k4l2.json)
 
+## State-dropout arm C `fontaine_arb_rcond_statedrop80_40k_1xh100` @40k ([results](posts/2026-08-06-statedrop-results.md))
+
+- [endpoint panel (curated v0 k4l2)](https://mcobzarenco-fontaine-blog.static.hf.space/reports/eval__fontaine_arb_rcond_statedrop80_40k_1xh100__step_040000__panel_curated_v0_k4l2.html)
+- [masked-state reliance eval (stateprobe q4)](https://mcobzarenco-fontaine-blog.static.hf.space/reports/eval__fontaine_arb_rcond_statedrop80_40k_1xh100__step_040000__stateprobe_q4_state-masked.html)
+- [frozen analysis JSON](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__statedrop_40k_k4l2.json)
+
 ## Cross-family analyses
 
 - [flow-vs-AR paired per-step read](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__flow_vs_ar_paired_k4l2.json)
