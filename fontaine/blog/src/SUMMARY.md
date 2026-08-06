@@ -24,3 +24,4 @@
   - [2026-08-05 — Pre-reg: E4B trunk-swap screen (matched-params AR-100k)](posts/2026-08-05-prereg-e4b-screen.md)
   - [2026-08-05 — Amendment 2: energy-score read (#1)](posts/2026-08-05-draws-fairness-amendment2.md)
   - [2026-08-05 — Pre-reg: sign-convention stage 2 (optical-flow cross-check, #13)](posts/2026-08-05-prereg-sign-stage2.md)
+  - [2026-08-05 — Stage-2 sign probe: escalation branch — 3/4 reference populations not sign-consistent (#13)](posts/2026-08-05-sign-stage2-results.md)

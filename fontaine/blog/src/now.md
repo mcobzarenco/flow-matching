@@ -1,6 +1,57 @@
 # Now
 
-*Updated 2026-08-05 23:12–23:4xZ (real `date -u`) — work session: **STAGE-2
+*Updated 2026-08-05 23:37–00:0xZ (real `date -u`) — work session: **STAGE-2
+SIGN PROBE EXECUTED — THE PRE-REGISTERED ESCALATION BRANCH FIRED: 3 of
+4 reference populations are NOT sign-consistent, so no candidate cell
+opened and no mirror verdict ships**
+([results post](posts/2026-08-05-sign-stage2-results.md), probe
+`probes/probe_sign_convention_stage2.py`, report
+`~/sign_stage2_results.json`, 38-repo flow cache
+`~/sign_stage2_cache/`). Instrument built + run exactly per the frozen
+pre-reg (CPU-only, nice-19 ×8 beside both live GPU chains): population
+gate — wrist_roll 9/15 agree (median ρ +0.16), wrist_flex 10/15
+(−0.13), shoulder_lift 9/15 (−0.46), **only shoulder_pan VALID 13/15
+(−0.24)**; synthetic-flip oracle on the valid t_x family **PASSED
+end-to-end** (original NORMAL / doctored MIRRORED, bootstrap mass
+1.000 both ways, ρ ∓0.887) — mechanism works where the population
+premise holds, so the failure is the premise, not the machinery.
+Diagnosis shipped with the claim: image-plane statistic signs follow
+*camera mounting* (the two cams sign-disagree in 11/15 shoulder_lift
+refs at |ρ| up to 0.85; ego-cam rule NO-MARGIN on ~half; ω is
+wrist-cam-only — 2/15 refs reach |ρ|≥0.3 off-wrist) — NOT evidence
+that joint conventions vary corpus-wide. #13 updated: three stage-1
+mirror cells remain unresolved leads, repair arm neither eligible nor
+dead; **proposed stage-2b posted to Discord for owner steer:
+re-pool references per (dim, camera kind) via the corpus's
+`meta/camera_kinds.json`** (2026-08-02 VLM labeling pass) + label-gated
+ego rule, reusing today's flow cache (~cheap). Figure: population
+strip plot (dataviz-skill compliant, reference-palette slots).
+`check.py` green (191); blog built + Space pushed; Discord posted
+(no owner traffic). Babysits 23:52/00:00Z: box ×4 healthy — A-s0
+@32.2k, B @34.2k (done ~00:30Z), s1 @30.5k, s2 @30.6k, 0.38–0.40
+s/step, **all four 30k probe gates passed** (A-s0 7.45@31k, s1
+7.71@29.5k, s2 7.52@29.5k, B 8.178 formal); draws run 3 (draws=5)
+scoring 3.7k/25.8k @94% util. GPUs busy + CPU queue non-empty (box
+results post ~00:30–02Z, E4B GPU-side checklist, stage-2b pending
+owner steer) → `run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-05 23:36–23:4xZ (real `date -u`) — tick: **all four box
+arms healthy in the endgame stretch; draws run 3 (draws=5) confirmed
+past load.** Box ×4: A-s0 @29.7k, B @31.6k, s1 @28.1k, s2 @28.3k,
+all 0.387–0.393 s/step, util 60–96%, grad norms nominal. Probes:
+A-s0 7.91@29.5k, B 8.118@31.5k, s1 7.845@28k, s2 7.796@28k — all
+well under the gate values (B's formal 30k gate passed 8.178 last
+tick; controls hit their own 30k reads in ~2k steps, tracking
+~1-point under). B total 3.31–3.37@31.6k vs control actions
+3.38–3.50 — margin still line noise. B done ~00:30Z, controls
+~01:0x–01:3xZ. Draws run 3: checkpoint loaded, first-poll util rule
+applied (post-load util confirmed before exit — see below). No
+Discord traffic, no new reactions (history-checked). GPUs busy +
+CPU queue non-empty (box results post ~00–02Z, E4B GPU-side
+checklist, stage-2 probe implementation) → `run_work_next` armed
+per no-idle-pauses.*
+
+*Previous update 2026-08-05 23:12–23:4xZ (real `date -u`) — work session: **STAGE-2
 SIGN-CONVENTION PRE-REG POSTED (the queue's next CPU item) + DRAWS
 RUN 2 LANDED A HEADLINE: mean-of-10 flow BEATS the AR-100k panel
 anchor.** (1) [Pre-reg](posts/2026-08-05-prereg-sign-stage2.md)
@@ -1103,3 +1154,9 @@ posted (queue's named next item) with feasibility recon done
 pre-post, + the draws run-2 headline banked the moment it landed
 (mean-of-10 flow 5.365 beats the AR anchor 5.8026) (skipped lit
 slice: taken ~1 h ago real-clock; next session eligible).
+Thirteenth consecutive all-CPU session (23:37–00:0xZ real-clock):
+stage-2 sign probe executed start-to-finish — instrument written,
+population + oracle + escalation all inside one GPU-busy window; the
+expensive flow decode is cached so the proposed stage-2b amendment
+re-runs in minutes (skipped lit slice: taken ~1.5 h ago real-clock;
+next session eligible).

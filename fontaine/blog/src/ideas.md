@@ -258,6 +258,24 @@ variants, consistency/distillation toward 1–2-step deployment decodes
   work session; if ≥1 MIRRORED, the repair arm (flip-corrected
   derived corpus through #18.8 certs + paired screen) gets its own
   pre-reg.
+- **Stage 2 EXECUTED 2026-08-05 ~23:5xZ — the escalation branch fired**
+  ([results post](posts/2026-08-05-sign-stage2-results.md), probe
+  `probes/probe_sign_convention_stage2.py`): 3 of 4 reference
+  populations FAILED the 80% sign-consistency gate (wrist_roll 9/15,
+  wrist_flex 10/15, shoulder_lift 9/15; only shoulder_pan valid at
+  13/15) ⇒ hard gate failed, **candidate cells never opened, no
+  verdicts**. The t_x oracle PASSED end-to-end (mass 1.000 both
+  directions) — the mechanism works where the population premise
+  holds. Diagnosis: image-plane statistic signs follow *camera
+  mounting* (cams sign-disagree in 11/15 shoulder_lift refs; ego-cam
+  rule NO-MARGIN on ~half; ω underpowered off-wrist-cam) — not
+  evidence that joint conventions vary corpus-wide. The three stage-1
+  mirror cells remain unresolved leads; repair arm neither eligible
+  nor dead. **Next (owner steer wanted): stage-2b amendment
+  conditioning reference populations on `meta/camera_kinds.json`**
+  (the 2026-08-02 VLM cam-labeling pass: wrist/front/side/top) — t_y
+  from front cams, ω from wrist cams, label-gated ego rule; reuses
+  the 38-repo flow cache, so it is cheap.
 
 ## 14. ±180° wraparound census & shortest-arc error — `confirmed`/banked (measured 2026-08-05)
 
