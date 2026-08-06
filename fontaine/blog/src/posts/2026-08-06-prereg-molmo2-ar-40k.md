@@ -54,10 +54,14 @@ Mainline `arb_rcond` recipe verbatim where the trunk allows it:
 
 - F1 memory smoke (DDP4, 150 steps of the exact recipe, owner-asked):
   rc=0 AND peak ≤ ~75 GiB/GPU. Ladder: B12 direct → B12 chunked 2×6 →
-  B8 chunked 2×4. **Rung 1 (B12 direct): OOM at 77.5 GiB in the
+  B12 chunked 6×2. **Rung 1 (B12 direct): OOM at 77.5 GiB in the
   forward (MLP intermediates; measured 19:5xZ) — REJECTED. Rung 2
-  (B12 chunked 2×6, global 48 unchanged, gradient exactly equivalent):
-  TODO_SMOKE_PEAK MiB peak, TODO_SMOKE_RATE s/step (last 5), rc=TODO_RC.**
+  (B12 chunked 2×6): OOM at step 2's forward once Adam materialized —
+  measured static budget = masters 19.4 + grad buckets 14.6 + Adam
+  29.1 ≈ 63 GiB, leaving ~16 GiB for activations at ~2.4 GiB/sample —
+  REJECTED. Rung 3 (B12 chunked 6×2 — global 48 unchanged, gradient
+  exactly equivalent): TODO_SMOKE_PEAK MiB peak, TODO_SMOKE_RATE
+  s/step (last 5), rc=TODO_RC.**
 - F2 wall: 40k × rate ≤ 30 h ⇒ full 40k; else this pre-reg SHRINKS to
   a 10k screen (label changes to `_10k`), no mid-run change.
   **Projected: TODO_WALL h.**

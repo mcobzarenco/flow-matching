@@ -42,4 +42,5 @@
   - [2026-08-06 — SnapFlow results: 1-NFE holds the panel — single draw beats AR (#12)](posts/2026-08-06-snapflow-results.md)
   - [2026-08-06 — Pre-reg: SnapFlow student → rig fine-tune (1-NFE, owner-steered)](posts/2026-08-06-prereg-snapflow-ftrig.md)
   - [2026-08-06 — State-dropout 0.8 results: mechanism worked, actions paid — adopt nothing (#9)](posts/2026-08-06-statedrop-results.md)
+  - [2026-08-06 — SnapFlow rig fine-tune @4k: diagnosis, no upload](posts/2026-08-06-ftrig-diagnosis.md)
   - [2026-08-06 — Pre-reg: Molmo2-4B AR trunk, 40k × 4×DDP](posts/2026-08-06-prereg-molmo2-ar-40k.md)

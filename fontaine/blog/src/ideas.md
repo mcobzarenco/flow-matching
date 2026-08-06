@@ -1001,6 +1001,20 @@ queue, in leverage order (details + file:line in the post):
    `therarelab/so100_pick_place_2` fails loud in production. Unblocks
    derived-corpus training (ideas #9, #13 repair arm).
 
+## 20. Activation checkpointing for live-trunk training — `queued` (measured need 2026-08-06)
+
+The Molmo2 AR smoke measured the wall: fp32 masters + DDP grad
+buckets + Adam on a 3.7B trainable set ≈ 63 GiB static on an 80 GiB
+card, and at ~2.4 GiB/sample of saved activations (820 image tokens ×
+36 layers × 9,728-wide MLP) only ~2-sample chunks fit. Chunked
+backward works (gradient-exact) but 6 passes/step taxes throughput.
+torch.utils.checkpoint over the decoder blocks would cut saved
+activations to ~1 layer's worth for ~30% recompute — the standard
+trade at this scale. Scope: the Molmo2 transformer first (uniform
+blocks make it trivial), Gemma later if a live-trunk E4B+ run recurs.
+Gate: keystone oracle (checkpointed ≡ plain forward/backward, loss
+bit-close) + a measured chunk-size ladder re-run.
+
 ## 19. AR sampled-draws eval (mean-of-samples) — `queued` (owner ask 2026-08-06 19:15Z)
 
 Greedy decode is the AR family's single-draw voice; the flow family's
