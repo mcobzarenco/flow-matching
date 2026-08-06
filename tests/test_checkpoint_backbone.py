@@ -158,6 +158,7 @@ def make_args(save_dir: Path) -> TrainArgs:
         bucket_by_length=False,
         backward_chunks=1,
         zero1=False,
+        chunk_grad_allreduce=False,
         steps=10,
         decoder_lr=1e-4,
         backbone_text_lr=None,  # flags OFF: the paths under test

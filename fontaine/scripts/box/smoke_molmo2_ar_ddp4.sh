@@ -7,16 +7,19 @@
 #   (probe decode + wandb table path, WANDB offline so the full metric
 #   assembly runs without polluting the project), save at step 100
 #   (Molmo2PromptConfig writer + full-trunk snapshot).
-# Usage: ./smoke_molmo2_ar_ddp4.sh [batch] [backward_chunks] [zero1]
-#   (defaults 12 2 1 — B12 chunked 2x6 with ZeRO-1; the suffix CE vocab
-#   is 153k vs Gemma's 262k, so loss-side tensors are ~40% lighter at
-#   matched B).
+# Usage: ./smoke_molmo2_ar_ddp4.sh [batch] [backward_chunks] [zero1] [gradreduce]
+#   (defaults 12 6 1 1 — B12 chunked 6x2, ZeRO-1, explicit grad
+#   allreduce; the suffix CE vocab is 153k vs Gemma's 262k, so
+#   loss-side tensors are ~40% lighter at matched B).
 # Pass rule: rc=0 AND peak <= ~75000 MiB (>=5 GiB headroom on 80 GiB).
-#   History: the no-zero1 chunk ladder is EXHAUSTED (B12 direct 77.5
-#   GiB at first step; 2x6 and 6x2 both OOM — static budget ~76-77
-#   GiB/rank, measured 19:5x-20:0xZ). ZeRO-1 (--zero1) shards Adam
-#   moments 29.1 -> ~7.3 GiB/rank => static ~55 GiB, ~24 GiB headroom;
-#   optimizer semantics exact.
+#   History (rungs 1-5, 2026-08-06 19:5x-20:4xZ): the no-zero1 chunk
+#   ladder is EXHAUSTED (static ~76-77 GiB once Adam materializes);
+#   zero1 alone still OOMs in STEP 1's backward — under no_sync
+#   accumulation DDP's reducer buckets duplicate the fp32 grads
+#   (+14.6 GiB transient at the sync chunk; rungs 3 AND 5 both peaked
+#   81 GiB there, rung 3's step-1 "pass" was fragmentation luck).
+#   --chunk-grad-allreduce keeps every chunk in no_sync and allreduces
+#   param.grad in-place — reducer buckets never materialize.
 #   Rate: record s/step (last 5 windows); projected 40k wall must be
 #   < 30 h or the pre-reg takes a shorter schedule.
 set -euo pipefail
@@ -27,8 +30,9 @@ export WANDB_MODE=offline
 cd /home/ubuntu/flow-matching
 
 BATCH="${1:-12}"
-BACKWARD_CHUNKS="${2:-2}"
+BACKWARD_CHUNKS="${2:-6}"
 ZERO1="${3:-1}"
+GRADREDUCE="${4:-1}"
 TAG="molmo2_ar_ddp4_b${BATCH}"
 CHUNK_ARGS=()
 if [ "$BACKWARD_CHUNKS" -gt 1 ]; then
@@ -38,6 +42,10 @@ fi
 if [ "$ZERO1" -eq 1 ]; then
     CHUNK_ARGS+=(--zero1)
     TAG="${TAG}z1"
+fi
+if [ "$GRADREDUCE" -eq 1 ]; then
+    CHUNK_ARGS+=(--chunk-grad-allreduce)
+    TAG="${TAG}ga"
 fi
 
 for gpu in 0 1 2 3; do

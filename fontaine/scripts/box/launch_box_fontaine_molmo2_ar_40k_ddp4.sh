@@ -21,17 +21,18 @@ cd /home/ubuntu/flow-matching
 mkdir -p outputs/train
 
 BATCH="${BATCH:-12}"
-# Rung from the F1 smoke (pre-reg §3 rung 5): ZeRO-1 optimizer
-# sharding (--zero1, Adam moments ~1/4 per rank, semantics exact) +
-# 6x2 chunked backward. 2-sample chunks are required — with DDP fp32
-# grads resident after the first chunk's backward, a 6-sample chunk's
-# forward (~17 GiB activations + ~9.7 GiB autocast bf16 cache) OOMs
-# even with zero1 (rung-4 measurement). Global 48 unchanged, gradient
-# exactly equivalent.
+# Rung from the F1 smoke (pre-reg §3 rung 6): 6x2 chunked backward +
+# ZeRO-1 (--zero1, Adam moments ~1/4 per rank, semantics exact) +
+# --chunk-grad-allreduce (every chunk in no_sync, one explicit
+# in-place grad allreduce — DDP's reducer buckets, a full fp32 grad
+# duplicate that OOM'd rungs 3 AND 5 in step 1's backward, never
+# materialize; gradient equal up to fp reduction order). 2-sample
+# chunks keep each forward in budget (rung-4 measurement). Global 48
+# unchanged, gradient exactly equivalent.
 BACKWARD_CHUNKS="${BACKWARD_CHUNKS:-6}"
 CHUNK_ARGS=(--zero1)
 if [ "$BACKWARD_CHUNKS" -gt 1 ]; then
-    CHUNK_ARGS+=(--backward-chunks "$BACKWARD_CHUNKS")
+    CHUNK_ARGS+=(--backward-chunks "$BACKWARD_CHUNKS" --chunk-grad-allreduce)
 fi
 
 # GPU-clear guard: all four GPUs must be free.

@@ -236,6 +236,16 @@ class TrainArgs:
     # shards are broadcast after each step — only the per-rank memory
     # changes. Requires torchrun (world > 1).
     zero1: bool
+    # With --backward-chunks > 1 under DDP: keep EVERY chunk's backward
+    # in no_sync (grads accumulate in param.grad only) and allreduce the
+    # accumulated fp32 gradients in-place once per step, instead of
+    # syncing the last chunk through DDP's reducer. The reducer's bucket
+    # buffers never materialize — under no_sync-first accumulation they
+    # DUPLICATE the fp32 gradients at the sync chunk's backward
+    # (gradient_as_bucket_view cannot help: autograd allocates plain
+    # tensors while the reducer is bypassed). Gradient identical to the
+    # DDP sync up to fp reduction order (same sum / world).
+    chunk_grad_allreduce: bool
     steps: int
     decoder_lr: float
     backbone_text_lr: float | None
@@ -364,6 +374,33 @@ class ChunkingCollator[I: BatchInputs]:
                 if stop > start
             ),
         )
+
+
+def allreduce_gradients(parameters: list[torch.nn.Parameter]) -> None:
+    """The ``--chunk-grad-allreduce`` gradient sync: one explicit
+    in-place allreduce of every accumulated ``param.grad`` (sum, then
+    divide by world — DDP's averaging semantics, differing only in fp
+    reduction order). Runs after the full chunk loop, so no reducer
+    bucket buffers ever coexist with the accumulated gradients. Every
+    parameter handed in must carry a gradient (the same trainable-
+    partition contract DDP's static bucketing relies on); a missing one
+    dies loudly rather than letting replicas desynchronize."""
+    grads: list[torch.Tensor] = []
+    for p in parameters:
+        if p.grad is None:
+            raise RuntimeError(
+                "chunk-grad-allreduce: a trainable parameter has no "
+                f"gradient after the chunk loop (shape {tuple(p.shape)}) "
+                "— the every-parameter-gets-gradients contract is broken",
+            )
+        grads.append(p.grad)
+    handles = [torch.distributed.all_reduce(g, async_op=True) for g in grads]
+    for handle in handles:
+        assert handle is not None  # async_op=True always returns a Work
+        handle.wait()
+    world = float(torch.distributed.get_world_size())
+    for g in grads:
+        g.div_(world)
 
 
 class Normalizer:
@@ -1753,6 +1790,17 @@ def parse_args() -> TrainArgs:
         "update semantics exact, per-rank optimizer memory ~1/world. "
         "Requires torchrun with world size > 1",
     )
+    parser.add_argument(
+        "--chunk-grad-allreduce",
+        action="store_true",
+        help="with --backward-chunks > 1 under DDP, accumulate every "
+        "chunk's gradients in no_sync and allreduce param.grad in-place "
+        "once per step instead of syncing the final chunk through DDP's "
+        "reducer — the reducer's bucket buffers (a full fp32 gradient "
+        "copy) never materialize. Gradient equals the DDP sync up to fp "
+        "reduction order. Requires torchrun with world size > 1 and "
+        "--backward-chunks > 1",
+    )
     parser.add_argument("--steps", type=int, default=200, help="total optimizer steps")
     parser.add_argument(
         "--decoder-lr",
@@ -2157,6 +2205,7 @@ def parse_args() -> TrainArgs:
         bucket_by_length=raw.bucket_by_length,
         backward_chunks=raw.backward_chunks,
         zero1=raw.zero1,
+        chunk_grad_allreduce=raw.chunk_grad_allreduce,
         steps=raw.steps,
         decoder_lr=raw.decoder_lr,
         backbone_text_lr=raw.backbone_text_lr,
@@ -2217,6 +2266,13 @@ def main() -> int:
             "--zero1 shards optimizer state across ranks and needs "
             "torchrun with world size > 1 (a single-process run has "
             "nothing to shard across)",
+        )
+    if args.chunk_grad_allreduce and (not distributed or args.backward_chunks < 2):
+        raise SystemExit(
+            "--chunk-grad-allreduce replaces DDP's final-chunk gradient "
+            "sync and needs torchrun with world size > 1 AND "
+            "--backward-chunks > 1 (without both there is no reducer "
+            "sync to replace)",
         )
     device = torch.device(args.device)
     rank = 0
@@ -2861,7 +2917,13 @@ def main() -> int:
                 f"chunked backward: {args.backward_chunks} x "
                 f"{args.batch_size // args.backward_chunks} per rank per "
                 f"step (loader batch {args.batch_size} unchanged; gradient "
-                "== unchunked up to fp reduction order)",
+                "== unchunked up to fp reduction order"
+                + (
+                    "; grad sync: explicit in-place allreduce, no DDP reducer buckets"
+                    if args.chunk_grad_allreduce
+                    else ""
+                )
+                + ")",
                 flush=True,
             )
 
@@ -3255,7 +3317,14 @@ def main() -> int:
                 aux_sum = None
                 aux_count = None
                 for i, chunk in enumerate(batch.chunks):
-                    if distributed and i < len(batch.chunks) - 1:
+                    if distributed and (
+                        args.chunk_grad_allreduce or i < len(batch.chunks) - 1
+                    ):
+                        # --chunk-grad-allreduce: the LAST chunk stays in
+                        # no_sync too — DDP's reducer never runs (its
+                        # bucket buffers would duplicate the fp32 grads
+                        # accumulated by the earlier chunks); the explicit
+                        # allreduce below is the whole gradient sync.
                         assert isinstance(
                             train_step,
                             torch.nn.parallel.DistributedDataParallel,
@@ -3278,6 +3347,8 @@ def main() -> int:
                             if aux_count is None
                             else aux_count + share_aux_count
                         )
+                if distributed and args.chunk_grad_allreduce:
+                    allreduce_gradients(clipped_parameters)
                 action_component = action_sum_total / action_norm
             else:
                 loss, action_component, aux_sum, aux_count = train_step(batch)

@@ -51,7 +51,9 @@ Mainline `arb_rcond` recipe verbatim where the trunk allows it:
   ablation. Warmup 1000, seed 0, save 2500, eval 500.
 - Memory plumbing (no semantic content): `--backward-chunks 6` (6×2,
   gradient exactly equivalent) + `--zero1` (ZeRO-1 optimizer sharding,
-  exact — §3 rung-5 amendment).
+  exact) + `--chunk-grad-allreduce` (explicit in-place gradient
+  allreduce instead of DDP's reducer, equal up to fp reduction order —
+  §3 rung-6 amendment).
 
 ## 3. Gates before launch
 
@@ -97,6 +99,39 @@ Mainline `arb_rcond` recipe verbatim where the trunk allows it:
   bf16 cache + ~5.7 activations ≈ 71–73 GiB (~6 GiB margin, inside
   the ≤~75 GiB pass rule). Fallbacks if rejected: 12×1 chunks
   (~3 GiB more margin), then bf16 grad buckets (−7.3 GiB, composable).
+  **Measured (20:28–20:3xZ): OOM in STEP 1's backward, 77.0–77.15 GiB
+  allocated on ALL FOUR ranks — REJECTED, and the trace comparison
+  closes the mechanism: rung 3's trace ALSO peaked 81 GiB (nvidia-smi)
+  in step 1's final-chunk backward; its "completed step 1" was
+  fragmentation luck at the wall, not margin. The block the arithmetic
+  missed: under no_sync-first chunk accumulation, autograd allocates
+  plain fp32 grad tensors (+14.6 GiB) — then the final SYNCED chunk
+  materializes DDP's reducer bucket buffers (+14.6 GiB more, a full
+  duplicate; `gradient_as_bucket_view=True` is already set but cannot
+  help — the views only exist while the reducer owns the backward,
+  and with `zero_grad(set_to_none=True)` the duplicate recurs every
+  step). Step-1 sync-chunk backward ≈ 33.9 init + 14.6 grads + 14.6
+  buckets + 9.7 saved bf16 casts + ~5 activations ≈ 78 GiB — the
+  measured wall, zero1-independent.**
+- **Amendment (F1 rung 6, pre-declared before its smoke, 20:5xZ): B12
+  chunked 6×2 + `--zero1` + `--chunk-grad-allreduce` (commit at
+  launch): every chunk's backward stays in no_sync and the accumulated
+  fp32 grads allreduce IN-PLACE once per step — DDP's reducer buckets
+  never materialize, removing the 14.6 GiB duplicate exactly.
+  Semantics: sum/world, identical to DDP's average up to fp reduction
+  order (the tolerance `--backward-chunks` already declares);
+  machine-checked by a 2-process gloo oracle — flag path == DDP-sync
+  path == single-process global-batch reference to 1e-12 over 3
+  optimizer steps (`tests/test_chunk_grad_allreduce.py`; check.py 342
+  green). Predicted peaks: step 1 ≈ 33.9 + 14.6 grads + 9.7 casts +
+  ~5.7 act ≈ 64 GiB; steady state adds sharded Adam +7.3 ≈ 71 GiB
+  worst (~6 GiB margin, inside the ≤~75 GiB rule). The declared 12×1
+  fallback is SKIPPED with reason: it shrinks only activations
+  (~−2.8 GiB → predicted ~75 GiB, inside the measured death band
+  77±1 with batch-length variance over 40k steps — a smoke could pass
+  and the run still die at a heavy batch); rung 6 removes the
+  measured largest transient instead. Fallback if rung 6 is rejected:
+  rung 6 + 12×1 (composable, −2.8 GiB).
   **Measured: TODO_SMOKE_PEAK MiB peak, TODO_SMOKE_RATE s/step
   (last 5), rc=TODO_RC.**
 - F2 wall: 40k × rate ≤ 30 h ⇒ full 40k; else this pre-reg SHRINKS to
