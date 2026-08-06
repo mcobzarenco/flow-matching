@@ -1,6 +1,63 @@
 # Now
 
-*Updated 2026-08-06 23:03–23:1xZ (real `date -u`) — tick (babysit +
+*Updated 2026-08-06 23:06–23:3xZ (real `date -u`) — work session
+(bounded, conversational mid-session): **THE AR SAMPLED-DRAWS EVAL
+INSTRUMENT IS LANDED + PRE-REGISTERED (ideas #19, the owner's 19:15Z
+fairness ask) — the GPU-busy window's queued CPU item, delivered
+whole in one session.** The build (`78c9f56`):
+`--ar-temperature T --sample-draws N` temperature-samples the AR
+action block N times per frame and means the decoded chunks — the
+flow ensembling's mirror. Mechanics: Gumbel-max over the
+grammar-masked softmax (exact masked-softmax sampling, illegal ids
+can never win; aux value lines stay GREEDY), per-row CPU RNG streams
+keyed by frame identity + draw (`stable_sample_rng`,
+domain-separated from flow noise; corpus/batch/shard/device
+invariant), draws share ONE prefill via reference cache
+snapshot/restore (`ARSuffixDecoder.cache_snapshot`, sound under the
+append-only cache contract, restored ≡ fresh bit-exact) — covers
+Gemma AND Molmo2 trunks through the shared `ARSuffixDecoder`.
+Policy row `_drawsN_tT`, `ar_temperature` in report JSON, narrated
+pass skipped under sampling, loud guards everywhere; 9 CPU oracles
+(T→0 limit ≡ greedy; hot draws valid/deterministic/distinct;
+sampler batch-permutation invariance; mask escape impossible;
+prefill-reuse bit-exactness; keying component-sensitivity + domain
+separation; guard trips) — **check.py 351 green.**
+[Pre-reg posted](posts/2026-08-06-prereg-ar-sampled-draws.md)
+(`754f4cb`): **T=1.0 pinned/untuned as primary** (fairness rule:
+flow's draws are untuned noise ⇒ AR samples its own untuned
+softmax; the #19 fit-on-probe option resolved AGAINST fitting),
+arms = A-s0 `_draws10_t1` (local GPU) + molmo2 AR 40k endpoint
+(same stems, ~08-08), anchors = flow teacher 6.6232→5.365 / AR
+greedy 5.8026, cost gate = rate-measure ~200 frames → q4-subset
+fallback for BOTH arms if full-panel projects >24 GPU-h,
+falsified-if Δ_AR > +0.1. Blog built + Space pushed —
+**link-fix lesson: the Space serves at
+`mcobzarenco-fontaine-blog.static.hf.space` (the bare `.hf.space`
+domain 404s); first Discord link was wrong, corrected in-channel
+23:26Z.** BABYSIT 23:23Z (molmo2 AR 40k): step 540/40k, loss
+**5.653** (ahead of the smoke's 8.0@150 shape), **2.186 s/step**
+live (better than the 2.55 smoke bound → ~24 h to 40k),
+vram_alloc_peak 66.67 GiB FLAT (rule ≤71), reserved ~71.3 GiB
+steady, grad norm 11.4, LR warming on schedule, 4 ranks alive,
+util 41–100%. OWNER EXCHANGE (caught at the babysit poll, both
+answered 23:25Z, conversational hold + 45-s Discord monitor since):
+23:09Z "is 2.5 s per B12, i.e. 6× microbatches of 2?" → yes —
+s_per_step = one optimizer step = global batch 48; each rank runs
+B12 as 6 sequential 2-sample forward+backwards then the chunked
+allreduce + Adam (and live it beats the smoke at 2.19); 23:20Z
+"what's a good use of the local GPU while molmo2 trains?" →
+recommended THIS instrument's A-s0 arm (`draws10_t1`, pre-reg
+above) — **launch in the next chained work session unless the owner
+redirects; any reply is steering.** Queue: **next (chained work
+session) → A-s0 AR draws10_t1 launch on the local GPU per the
+pre-reg (cost gate first ~200 frames); then π0.5 deep-read post
+(low-prio); arm A img280 HELD (fresh owner go required); molmo2
+endpoint gets the same stems at its ~08-08 boundary.** GPUs busy ×4
+(box 40k, healthy) + local idle-pending-launch + CPU queue live →
+`run_work_next` armed; babysits on normal cadence, K1 anchors
+unchanged (launcher header + smoke shape).*
+
+*Previous update 2026-08-06 23:03–23:1xZ (real `date -u`) — tick (babysit +
 conversational): **THE MOLMO2 AR 40k IS LIVE — launched 22:57:08Z
 (`fontaine_molmo2_ar_40k_ddp4`, box tmux `molmo2ar40k`, wandb
 we57e8dh) and first-poll healthy: E1 banner EXACT (878 datasets /
@@ -3357,8 +3414,21 @@ reset so the chained session doesn't die on launch.
 
 ## Utilization footer
 
-Trailing-7-day GPU-hours on experiments / total: local **~24.0 / ~24.3**,
-box **~37.2 / ~37.2** (as of 18:1xZ: local — SnapFlow ftrig fine-tune
+Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
+box **~42.9 / ~42.9** (as of 23:3xZ: box — masked q4 reliance eval
+COMPLETE ~19:05Z ≈ 0.5 h; the rung 4→8 memory-ladder smokes
+19:3x–22:5xZ ≈ 3 GPU-h (four OOM rungs died in minutes each; rung 7
+trained to its verdict; rung 8 smoke green); **molmo2 AR 40k LIVE
+since 22:57Z on all 4 GPUs** ≈ 2.2 GPU-h so far at 23:3xZ, step
+540/40k, 2.19 s/step → ~24 h to 40k. Local — untrained-gen probe
+≈ 0.1 h; otherwise idle-by-design since 18:1xZ; **next local
+consumer pre-registered: A-s0 AR draws10_t1** — launch next chained
+session. Explore/exploit: this session all-CPU exploit on the
+GPU-busy window's queued instrument (ideas #19, owner ask); lit
+slice skipped — instrument critical path, 16:04Z slice balance
+carries.)
+Stale detail below is the 18:1xZ snapshot:
+(as of 18:1xZ: local — SnapFlow ftrig fine-tune
 17:02→17:50Z ≈ 0.8 h COMPLETE at 4k + chained after-reads (rig draws
 1/10 + panel-v2 guard) ≈ 0.6 h ending ~18:1xZ; box — arm C 40k
 COMPLETE 16:02Z, its chained panel eval on GPU 0 live since 16:05Z
