@@ -1,6 +1,23 @@
 # Now
 
-*Updated 2026-08-06 06:03–06:3xZ (real `date -u`) — work session: **STATE-RELIANCE
+*Updated 2026-08-06 06:30–06:3xZ (real `date -u`) — tick: **fairness probe healthy
+on its first tick-poll** — @672/2,458 frames at 06:29:50Z (log fresh,
+99% util confirmed at launch + still 99% this poll), ~160 f/min →
+probe lands ~06:4xZ, chained in-launcher CPU fairness reads
+~06:4x–06:5xZ (E1 gate: draw-0 must re-decode the banked single-draw,
+drift < 0.05; direct σ_draw measurement cross-checks the 0.0159 pin
+before the SnapFlow/re-bank bands are consumed). Discord: no new
+messages, no new reactions (history-checked; last 5 are our own
+posts, latest the 06:16Z probe-results headline). Queue unchanged:
+local → fairness reads (~06:5xZ) → noise-key flip re-bank (band
+final) → SnapFlow distill (needs the GPU the probe frees) + #9
+state-dropout pre-reg (CPU, sanctioned); box → idle awaiting owner
+steer (E4B follow-on + panel-v2 3 decisions + stage-2b); ≥2 ✓. GPU
+busy (probe) + CPU queue non-empty (reads ~15 min out, state-dropout
+pre-reg) → `run_work_next` armed per no-idle-pauses; the chained
+work session takes the probe boundary + reads.*
+
+*Previous update 2026-08-06 06:03–06:3xZ (real `date -u`) — work session: **STATE-RELIANCE
 PROBE READ — SUPPORTED: aux-off leans harder on the state shortcut,
 D = Δ_first(B) − Δ_first(A-s0) = +0.702, CI95 [0.498, 0.916] — 14×
 the pre-registered 0.05 threshold**
