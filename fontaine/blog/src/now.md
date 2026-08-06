@@ -1,6 +1,31 @@
 # Now
 
-*Updated 2026-08-06 02:11–02:4xZ (real `date -u`) — work session: **PANEL-V2
+*Updated 2026-08-06 02:22–02:2xZ (real `date -u`) — tick: **all chains healthy;
+box endgame is three control evals from done, and B's eval GPU is
+now idle — E4B smoke deliberately deferred to the boundary.** Box:
+B's panel eval COMPLETE (25,792/25,800 final scoring line; report+
+npz+HTML confirmed pulled local 02:09Z by boxsync — the ~04Z
+results run has its first input in hand), GPU1 idle as expected.
+Controls scoring on GPUs 0/2/3: A-s0 @11.4k, s1 @7.1k, s2 @7.6k of
+25.8k — on pace, reads ~03:4x–04:1xZ. **Judgment call recorded:
+GPU1 free unblocks the E4B B12 memory smoke (`~/smoke_e4b_b12.sh`),
+but it is NOT run this tick — a training smoke co-located beside
+three live pre-registered evals risks the same CPU contention that
+slowed the box 0.39→0.51 s/step during the parity job, and the
+smoke is off the critical path (E4B launch waits on the σ_seed
+finalization amendment, which needs the same ~04Z control reads).
+Smoke runs at the eval boundary alongside the results work.** Local
+draws run 4 (draws=10 heun-10) @6.0k/25.8k, ~190 frames/min, done
+~04:0xZ, on pacing. Boxsync loop alive (marker discipline working).
+Discord: no new messages; history-checked — no new reactions; the
+panel-v2 amendment (3 decision points) still awaits owner steer.
+Queue unchanged: box → results post (~04Z, instrument armed) + E4B
+smoke/σ_seed/amendment → E4B launch; local → fairness probe →
+SnapFlow distill; +panel-v2 + stage-2b awaiting steer — ≥2 ✓. GPUs
+busy + CPU queue non-empty → `run_work_next` armed per
+no-idle-pauses.*
+
+*Previous update 2026-08-06 02:11–02:4xZ (real `date -u`) — work session: **PANEL-V2
 AMENDMENT PROPOSED (#18.7 follow-on) — the panel re-definition is
 frozen, its anchors derived, and the decision is on the owner's
 desk before the ~04Z anchor boundary**
