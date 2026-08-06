@@ -7,11 +7,12 @@
 #   (probe decode + wandb table path, WANDB offline so the full metric
 #   assembly runs without polluting the project), save at step 100
 #   (Molmo2PromptConfig writer + full-trunk snapshot).
-# Usage: ./smoke_molmo2_ar_ddp4.sh [batch]   (batch default 12 — the
-#   e4b-DDP4 rung; the suffix CE vocab is 153k vs Gemma's 262k, so the
-#   loss-side tensors are ~40% lighter at matched batch).
+# Usage: ./smoke_molmo2_ar_ddp4.sh [batch] [backward_chunks]
+#   (defaults 12 1 — the e4b-DDP4 rung; the suffix CE vocab is 153k vs
+#   Gemma's 262k, so loss-side tensors are ~40% lighter at matched B).
 # Pass rule: rc=0 AND peak <= ~75000 MiB (>=5 GiB headroom on 80 GiB).
-#   Any OOM => retry at the next rung down: B12 chunked 2x6, then B8.
+#   Ladder on OOM: B12 direct -> B12 chunked 2x6 -> B8 chunked 2x4.
+#   (B12 direct MEASURED OOM 19:5xZ: 77.5 GiB allocated at first step.)
 #   Rate: record s/step (last 5 windows); projected 40k wall must be
 #   < 30 h or the pre-reg takes a shorter schedule.
 set -euo pipefail
@@ -22,7 +23,13 @@ export WANDB_MODE=offline
 cd /home/ubuntu/flow-matching
 
 BATCH="${1:-12}"
+BACKWARD_CHUNKS="${2:-1}"
 TAG="molmo2_ar_ddp4_b${BATCH}"
+CHUNK_ARGS=()
+if [ "$BACKWARD_CHUNKS" -gt 1 ]; then
+    CHUNK_ARGS=(--backward-chunks "$BACKWARD_CHUNKS")
+    TAG="${TAG}c${BACKWARD_CHUNKS}"
+fi
 
 for gpu in 0 1 2 3; do
   mem=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits -i "$gpu")
@@ -56,6 +63,7 @@ set +e
     --camera-kind-dropout 0.1 \
     --decoder-lr 1e-4 --backbone-text-lr 2e-5 --grad-clip 100 \
     --steps 150 --warmup-steps 1000 --batch-size "$BATCH" \
+    "${CHUNK_ARGS[@]}" \
     --num-workers 20 --prefetch-factor 4 \
     --eval-samples 64 --eval-every 100 --save-every 100 --log-every 20 \
     --seed 0 --wandb-project fontaine \

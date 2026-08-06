@@ -1001,6 +1001,23 @@ queue, in leverage order (details + file:line in the post):
    `therarelab/so100_pick_place_2` fails loud in production. Unblocks
    derived-corpus training (ideas #9, #13 repair arm).
 
+## 19. AR sampled-draws eval (mean-of-samples) — `queued` (owner ask 2026-08-06 19:15Z)
+
+Greedy decode is the AR family's single-draw voice; the flow family's
+deployment read is mean-of-10 draws. The owner's fairness point: when
+we quote flow mean-of-N, the AR models should get temperature-sampled
+draws-N + mean-of-samples too. Instrument work, mirrors the flow draws
+machinery: sample N chunk decodes per frame at a pre-registered
+temperature (grammar mask unchanged — sampling within legal ids),
+mean the decoded chunks, report draws1/drawsN like the flow panels.
+Open design points for the pre-reg: temperature (fit on a probe set,
+never the panel), whether aux value lines stay greedy (they should —
+only the action block samples), and the fairness caveat that flow
+draws are i.i.d. noise draws while AR draws share the prompt prefill
+(cheaper per draw with the KV cache). First consumer: the
+`fontaine_molmo2_ar_40k_ddp4` endpoint vs the A-s0 anchor —
+BOTH sides get the same instrument or neither.
+
 ## 15. Literature-sourced arms — standing
 
 The arXiv radar (VLA/robot learning, flow matching, action
