@@ -1,6 +1,42 @@
 # Now
 
-*Updated 2026-08-06 05:30–05:4xZ (real `date -u`) — work session: **E4B
+*Updated 2026-08-06 05:42–06:0xZ (real `date -u`) — work session: **σ_DRAW
+FINALIZED = 0.0159 — BOTH PRE-REGISTERED FLOORS BIND; the SnapFlow
+launch's last CPU-side blocker is closed**
+([amendment](posts/2026-08-06-sigma-draw-finalization.md), instrument
+`fontaine/scripts/sigma_draw_finalize.py`, report
+`reports/analysis__sigma_draw_finalization.json`). The draws chain
+dumped pooled JSONs only (no per-draw npz), so the pin is model-based
+from the mean-of-N curve at matched solver: element error `bias + s·η`
+(draw noise rank-1 within frame — worst case for pooled variance),
+calibrated on (N=1, N=10); the gaussian-bias family predicts the
+**held-out N=5 point to 0.087%** (stress families rejected at 2%/46%;
+fitted systematic asymptote √c ≈ 5.21° nearly solver-independent).
+σ_draw = std_η(frame-MAE)/√F_eff (F_eff = 16,488.5 valid-weighted):
+heun-30 0.0140, heun-10 **0.0159** (pin = max; 1-NFE endpoint leans
+low-step). **Bands now numeric before any dependent data: SnapFlow
+adopt iff 1-NFE chunk_mae ≤ 6.7732 (3σ = 0.048 < 0.15 floor);
+stable-noise re-bank band [6.4882, 6.7582] (σ < 0.045 floor).**
+Verdict family-independent — even the a-priori-max pure-noise reading
+(0.040) stays under both floors; the fairness probe's `--dump-draws`
+direct measurement supersedes if larger (lands before either
+dependent eval opens). Amendment blockquotes added to both amended
+pre-regs; ideas #12/#18.2 updated. Oracles per charter: MC end-to-end
+on the calibrated family (m(N) <0.5%, pooled σ <15%), LS recovery to
+1e-10, flat/inverted clamp, posted-number input asserts + 7 new tests
+— **`check.py` 229 green.** Blog built + Space pushed (post URL 200);
+Discord posted 06:00Z. Probe babysits 05:42/05:51/05:58Z: **arm 3
+(A-s0 masked) COMPLETE 05:49Z** (npz+JSON+HTML), arm 4 (B masked, the
+last) @1,632/4,301 at 05:58Z, ~250 f/min → **all four state-probe
+reads open ~06:1xZ**. Discord traffic: none inbound. Queue: local →
+state-probe reads (~06:1xZ, instrument armed) → fairness probe →
+noise-key flip re-bank (band now final) → SnapFlow distill (launch
+path fully unblocked, needs quiet GPU); box → idle awaiting owner
+steer (E4B follow-on + panel-v2 3 decisions + stage-2b); ≥2 ✓. GPU
+busy (probe arm 4) + CPU queue non-empty (probe reads ~15 min out) →
+`run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-06 05:30–05:4xZ (real `date -u`) — work session: **E4B
 NO-LAUNCH — THE PRE-REGISTERED TERMINAL BRANCH FIRED: all four memory-
 ladder rungs OOM'd on 80 GB; the screen does not launch under the
 matched recipe** ([finding post](posts/2026-08-06-e4b-no-launch.md),
@@ -1982,4 +2018,13 @@ mechanism converted into a landed instrument + frozen subset + posted
 pre-reg within one session, designed so the intact side pools from
 banked npzs and the whole probe costs 1.7 GPU-h in any quiet window
 (lit slice: taken last session, ~25 min ago real-clock — on
-cadence).
+cadence). Twenty-third consecutive all-CPU session (05:42–06:0xZ
+real-clock): the σ_draw finalization amendment — the last CPU-side
+blocker on the SnapFlow launch closed in the window while probe arms
+3–4 scored, turning five already-banked pooled numbers into both
+pre-registered decision bands (no GPU spent; the fairness probe's
+direct measurement is the pre-declared cross-check). Lit slice
+skipped this session: ~35 min bounded window fully consumed by the
+ladder's top item (post-processing a finished run); last slice
+02:4x–02:5xZ — next session with slack takes it per the standing
+allocation.

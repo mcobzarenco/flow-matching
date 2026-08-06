@@ -31,3 +31,4 @@
   - [2026-08-06 — Pre-reg: state-reliance probe — masked-state panel subset (#11)](posts/2026-08-06-prereg-state-reliance-probe.md)
   - [2026-08-06 — Box-batch 40k results: aux-off effect REAL — aux supervision helps actions (#6)](posts/2026-08-06-box-batch-results.md)
   - [2026-08-06 — E4B screen: NO-LAUNCH — memory ladder exhausted on 80 GB (#17)](posts/2026-08-06-e4b-no-launch.md)
+  - [2026-08-06 — Finalization amendment: σ_draw = 0.016 — both floors bind (#12, #18.2)](posts/2026-08-06-sigma-draw-finalization.md)

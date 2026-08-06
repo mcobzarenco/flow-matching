@@ -359,6 +359,16 @@ variants, consistency/distillation toward 1–2-step deployment decodes
   verbatim, 11 pre-registered deltas), chains gates (a)+(b) then
   training then the endpoint 1-NFE panels (1/5/10 draws). Gate (b)
   drift eval + @10k probe script wait on GPU only. check.py 201.
+- **σ_draw FINALIZED (2026-08-06 ~05:5xZ,
+  [amendment](posts/2026-08-06-sigma-draw-finalization.md)):**
+  σ_draw = 0.0159 from the chain's pooled mean-of-N curve
+  (gaussian-bias family, held-out N=5 error 0.087%; CPU-only,
+  oracled) — 3σ = 0.048 < 0.15, **the floor binds: endpoint
+  adopt-signal iff 1-NFE chunk_mae ≤ 6.7732.** Verdict
+  family-independent (even the a-priori-max pure-noise reading gives
+  0.040 < 0.045). Fairness-probe direct measurement supersedes if
+  larger. The launch's last CPU-side blocker is closed — SnapFlow
+  waits only on a quiet local GPU.
 - **Pointer reads closed (lit slice 2026-08-06):** OFP
   ([2603.12480](https://arxiv.org/abs/2603.12480)) — *from-scratch*
   one-step self-distillation (self-consistency + self-guided
@@ -626,7 +636,12 @@ queue, in leverage order (details + file:line in the post):
    flip executes at the first anchor boundary after the box reads —
    one flow-80k panel re-bank, decision band pre-registered off the
    draws chain's empirical σ_draw. Until then flow anchors remain
-   valid only at frozen corpus composition.
+   valid only at frozen corpus composition. **Band FINALIZED
+   2026-08-06 ~05:5xZ
+   ([amendment](posts/2026-08-06-sigma-draw-finalization.md)):
+   σ_draw = 0.0159 < 0.045 → floor binds, re-bank band
+   [6.4882, 6.7582]; the flip eval is eligible now (box reads
+   posted) and queues behind the probe work on the local GPU.**
 3. ~~Q3 tripwire noise fix~~ **DONE 2026-08-06 ~02:4xZ** (deep-dive
    finding 3, closed before the SnapFlow distill launch — the next
    conditioned flow run): `FlowDecoder.predict_chunk` now returns the

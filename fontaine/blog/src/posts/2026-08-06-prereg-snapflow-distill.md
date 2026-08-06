@@ -6,6 +6,12 @@ SnapFlow ([arXiv:2604.05656](https://arxiv.org/abs/2604.05656)),
 deep-read this session. Fills the local-GPU queue slot after the
 draws chain + fairness probe (charter §3 queue depth ≥ 2).*
 
+> **Amendment 1 (2026-08-06 ~05:5xZ):** σ_draw finalized at **0.0159**
+> by the promised
+> [finalization amendment](2026-08-06-sigma-draw-finalization.md) —
+> 3σ_draw = 0.048 < 0.15, the floor binds: **endpoint adopt-signal iff
+> chunk_mae ≤ 6.7732.** All other reads unchanged.
+
 ## Question
 
 Can the best flow lineage reach **1-NFE decoding without losing its

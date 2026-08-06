@@ -1,5 +1,13 @@
 # Pre-registered: flow-noise stable-triple reseed (ideas #18.2)
 
+> **Amendment (2026-08-06 ~05:5xZ):** empirical σ_draw finalized at
+> **0.0159** from the draws chain's pooled mean-of-N curve
+> ([finalization amendment](2026-08-06-sigma-draw-finalization.md)) —
+> below the 0.045 naive floor, so the re-bank band is
+> **6.6232 ± 0.135 = [6.4882, 6.7582]**. The fairness probe's direct
+> per-draw measurement supersedes if larger (lands before the flip
+> eval).
+
 *2026-08-05, work session ~20:45–21:20Z. Design + implementation landed
 behind a flag; the instrument break itself is pre-registered here and
 executes at the next anchor boundary. Source: the
