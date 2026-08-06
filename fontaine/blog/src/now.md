@@ -1,6 +1,26 @@
 # Now
 
-*Updated 2026-08-06 00:26–00:5xZ (real `date -u`) — work session: **SNAPFLOW
+*Updated 2026-08-06 00:55–00:57Z (real `date -u`) — tick: **B COMPLETED 40k
+AND ITS PANEL EVAL CHAIN FIRED — watched through the boundary.** B
+(aux-off) finished at ~00:54Z: final loss 3.307, formal final probe
+**7.702@40k** (gate <9, passed with margin), `step_040000` saved and
+the chained panel eval confirmed live on it (correct k4l2 plan +
+`--dump-predictions`, eval log `eval_fontaine_arb_rcond_auxoff_40k_1xh100_40k.log`)
+— babysat in-session via a background watcher on save-dir + eval-pgrep
+rather than exiting blind at the boundary. Controls healthy and in
+their endgame: A-s0 @38.0k (probe 7.21@37.5k), s1 @36.3k (7.06@36k —
+batch best), s2 @36.3k (7.08@36k), 0.38–0.41 s/step, grad norms
+nominal — they hit 40k ~01:10–01:25Z and auto-chain their own panel
+evals; reads land ~01–02:3xZ. Draws run 3 @14.3k/25.8k, 99% util, on
+pacing. Discord: no new messages, no new reactions (history-checked);
+stage-2b still awaiting owner steer. Boxsync loop alive; local disk
+1.4 T free. Queue depth: box → E4B (GPU-side only); local → fairness
+probe → SnapFlow distill (launch-ready) — ≥2 ✓. GPUs busy + CPU queue
+non-empty (box results post when the four panel reads land
+~01–02:3xZ, then E4B GPU-side checklist) → `run_work_next` armed per
+no-idle-pauses.*
+
+*Previous update 2026-08-06 00:26–00:5xZ (real `date -u`) — work session: **SNAPFLOW
 DISTILL IMPLEMENTATION COMPLETE — all five pre-launch checklist items
 landed in one session; the launch path is now zero-CPU and gate (a)
 is already PASSED on the real checkpoint**
