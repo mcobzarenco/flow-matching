@@ -4,7 +4,7 @@
 - [Ledger](ledger.md)
 - [Ideas](ideas.md)
 - [Journal](journal.md)
-- [Eval reports](reports.md)
+- [Reports](reports.md)
 - [Posts](posts/index.md)
   - [2026-08-05 — How I will work](posts/2026-08-05-how-i-will-work.md)
   - [2026-08-05 — Pre-reg: own-baseline arm](posts/2026-08-05-prereg-own-baseline.md)

@@ -126,14 +126,100 @@ class Molmo2TextConfig:
         )
 
 
+def _refuse_dropout(data: dict[str, Any], *keys: str) -> None:
+    for key in keys:
+        if float(data.get(key, 0.0)) != 0.0:
+            raise NotImplementedError(f"{key} != 0 is not implemented")
+
+
+@dataclass(frozen=True, slots=True)
+class Molmo2VitConfig:
+    """SigLIP-so400m-class vision tower (``vit_config``). The released
+    checkpoint ships the tower already truncated to the deepest adapter tap
+    (25 of 27 blocks); ``num_hidden_layers`` here is the ARCHITECTURAL
+    depth — the backbone truncates at build time exactly like the
+    reference."""
+
+    hidden_size: int
+    intermediate_size: int
+    num_hidden_layers: int
+    num_attention_heads: int
+    num_key_value_heads: int
+    head_dim: int
+    hidden_act: str
+    layer_norm_eps: float
+    image_patch_size: int
+    image_num_pos: int
+    float32_attention: bool
+
+    @property
+    def patch_dim(self) -> int:
+        """Flattened pixel count per patch (the patch-embedding input)."""
+        return self.image_patch_size * self.image_patch_size * 3
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Self:
+        _refuse_dropout(data, "attention_dropout", "residual_dropout")
+        return cls(
+            hidden_size=int(data["hidden_size"]),
+            intermediate_size=int(data["intermediate_size"]),
+            num_hidden_layers=int(data["num_hidden_layers"]),
+            num_attention_heads=int(data["num_attention_heads"]),
+            num_key_value_heads=int(data["num_key_value_heads"]),
+            head_dim=int(data["head_dim"]),
+            hidden_act=str(data["hidden_act"]),
+            layer_norm_eps=float(data["layer_norm_eps"]),
+            image_patch_size=int(data["image_patch_size"]),
+            image_num_pos=int(data["image_num_pos"]),
+            float32_attention=bool(data["float32_attention"]),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class Molmo2AdapterConfig:
+    """Vision->text connector (``adapter_config``): 2x2 attention pooling
+    over concatenated tower taps, then a gated MLP into text hidden."""
+
+    hidden_size: int
+    intermediate_size: int
+    num_attention_heads: int
+    num_key_value_heads: int
+    head_dim: int
+    hidden_act: str
+    text_hidden_size: int
+    vit_layers: tuple[int, ...]
+    float32_attention: bool
+    pooling_attention_mask: bool
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Self:
+        _refuse_dropout(data, "attention_dropout", "residual_dropout")
+        if float(data.get("image_feature_dropout", 0.0)) != 0.0:
+            raise NotImplementedError("image_feature_dropout != 0 is not implemented")
+        return cls(
+            hidden_size=int(data["hidden_size"]),
+            intermediate_size=int(data["intermediate_size"]),
+            num_attention_heads=int(data["num_attention_heads"]),
+            num_key_value_heads=int(data["num_key_value_heads"]),
+            head_dim=int(data["head_dim"]),
+            hidden_act=str(data["hidden_act"]),
+            text_hidden_size=int(data["text_hidden_size"]),
+            vit_layers=tuple(int(i) for i in data["vit_layers"]),
+            float32_attention=bool(data["float32_attention"]),
+            pooling_attention_mask=bool(data["pooling_attention_mask"]),
+        )
+
+
 @dataclass(frozen=True, slots=True)
 class Molmo2Config:
-    """Top-level Molmo2 checkpoint config. WP1 consumes only the text
-    decoder; the vision tower (``vit_config``) and connector
-    (``adapter_config``) parse in WP2, the image special token ids with
-    them."""
+    """Top-level Molmo2 checkpoint config. WP1 consumes the text decoder;
+    WP2 adds the vision tower + connector and the image-patch id (the
+    scatter target). Prompt assembly ids land with WP3."""
 
     text: Molmo2TextConfig
+    vit: Molmo2VitConfig | None
+    adapter: Molmo2AdapterConfig | None
+    image_patch_id: int
     dtype: torch.dtype
 
     @classmethod
@@ -145,11 +231,23 @@ class Molmo2Config:
         dtype = getattr(torch, data["dtype"])
         if not isinstance(dtype, torch.dtype):
             raise TypeError(f"invalid dtype {data['dtype']!r}")
+        vit_data = data.get("vit_config")
+        adapter_data = data.get("adapter_config")
+        # Treat a config as vision-less unless BOTH sections are
+        # substantive (a placeholder vit_config with no fields is allowed).
+        vit = None
+        adapter = None
+        if vit_data and "hidden_size" in vit_data and adapter_data:
+            vit = Molmo2VitConfig.from_dict(vit_data)
+            adapter = Molmo2AdapterConfig.from_dict(adapter_data)
         return cls(
             text=Molmo2TextConfig.from_dict(
                 data["text_config"],
                 tie_word_embeddings=bool(data["tie_word_embeddings"]),
             ),
+            vit=vit,
+            adapter=adapter,
+            image_patch_id=int(data.get("image_patch_id", -1)),
             dtype=dtype,
         )
 

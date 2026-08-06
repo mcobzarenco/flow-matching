@@ -30,6 +30,7 @@ import argparse
 import sys
 import time
 from dataclasses import dataclass
+from pathlib import Path
 
 import torch
 from torch import Tensor
@@ -98,6 +99,14 @@ def main() -> int:
         help="also gate the truncated 15-layer mount bitwise vs the full prefix",
     )
     parser.add_argument("--mount-layers", type=int, default=15)
+    parser.add_argument(
+        "--vision",
+        action="store_true",
+        help="also gate the vision backbone on real processor inputs "
+        "(WP2); the HF reference runs SDPA there — its eager path drops "
+        "the pooling attention mask, SDPA is the shipped semantics our "
+        "implementation mirrors",
+    )
     args = parser.parse_args()
     dtype = getattr(torch, args.dtype)
     device = torch.device(args.device)
@@ -216,12 +225,92 @@ def main() -> int:
                 ),
             )
 
+    if args.vision:
+        comparisons += verify_vision(
+            checkpoint_dir,
+            dtype=dtype,
+            device=device,
+            tolerance=args.tolerance,
+        )
+
     print()
     for comparison in comparisons:
         print(comparison.report())
     ok = all(c.passed for c in comparisons)
     print("PARITY PASSED" if ok else "PARITY FAILED")
     return 0 if ok else 1
+
+
+def verify_vision(
+    checkpoint_dir: Path,
+    *,
+    dtype: torch.dtype,
+    device: torch.device,
+    tolerance: float,
+) -> list[Comparison]:
+    """Gate the vision backbone on REAL processor inputs.
+
+    The processor builds the crop set + ``pooled_patches_idx`` for the
+    synthetic test image; the reference's own ``build_batched_images``
+    converts to the backbone's batched inputs (crop geometry stays the
+    reference's job until WP3), then both backbones run the same tensors.
+    A fresh SDPA reference is loaded for this: the shipped semantics apply
+    the pooling attention mask, which the HF eager path silently drops.
+    """
+    from transformers import AutoProcessor
+
+    from ..gemma4.testing import synthetic_test_image
+    from .loading import load_vision_backbone
+
+    processor = AutoProcessor.from_pretrained(checkpoint_dir, trust_remote_code=True)
+    reference = AutoModelForImageTextToText.from_pretrained(
+        checkpoint_dir,
+        trust_remote_code=True,
+        dtype=dtype,
+        attn_implementation="sdpa",
+    )
+    reference.eval().requires_grad_(False)
+    reference.to(device)  # pyright: ignore[reportArgumentType] — HF stub quirk
+    ours = load_vision_backbone(checkpoint_dir, device=device, dtype=dtype)
+
+    # The placeholder is load-bearing: without it the processor emits no
+    # image tokens and the reference's build_batched_images sees 0 images.
+    inputs = processor(
+        images=[synthetic_test_image()],
+        text="<|image|> What is in this image?",
+        return_tensors="pt",
+    ).to(device)
+    with torch.no_grad():
+        images, pooled_patches_idx = reference.model.build_batched_images(
+            input_ids=inputs["input_ids"],
+            pixel_values=inputs["pixel_values"],
+            image_token_pooling=inputs["image_token_pooling"],
+            image_grids=inputs["image_grids"],
+            image_num_crops=inputs["image_num_crops"],
+        )
+        hf_features = reference.model.vision_backbone(images, pooled_patches_idx)
+        our_features = ours(images, pooled_patches_idx)
+
+    # The projector output scale is O(1e4) (measured max ≈ 2.7e4), so an
+    # absolute gate is meaningless here — gate RELATIVE to the feature
+    # scale. Measured (fp32, our eager vs HF SDPA): ≤ 5e-7 relative, with
+    # every partial (crop-edge) pooling group agreeing exactly — the mask
+    # semantics gate.
+    diff = max_abs(hf_features, our_features)
+    scale = hf_features.abs().max().item()
+    relative = diff / scale if scale else diff
+    detail = (
+        f"rel={relative:.3e} over scale {scale:.3g}; "
+        f"{tuple(our_features.shape)} image tokens (crops + global view)"
+    )
+    return [
+        Comparison(
+            name="vision backbone [synthetic 640x480]",
+            passed=our_features.shape == hf_features.shape and relative <= tolerance,
+            max_abs_diff=diff,
+            detail=detail,
+        ),
+    ]
 
 
 if __name__ == "__main__":

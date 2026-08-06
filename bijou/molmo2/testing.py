@@ -26,6 +26,7 @@ from safetensors.torch import save_file
 
 from .config import Molmo2Config
 from .text import Molmo2TextModel
+from .vision import Molmo2VisionBackbone
 
 
 def tiny_config_json() -> dict[str, Any]:
@@ -62,7 +63,42 @@ def tiny_config_json() -> dict[str, Any]:
             "embedding_dropout": 0.0,
             "residual_dropout": 0.0,
         },
-        "vit_config": {"model_type": "molmo2"},
+        "vit_config": {
+            "model_type": "molmo2",
+            "hidden_size": 32,
+            "intermediate_size": 64,
+            "num_hidden_layers": 4,
+            "num_attention_heads": 2,
+            "num_key_value_heads": 2,
+            "head_dim": 16,
+            "hidden_act": "gelu_pytorch_tanh",
+            "layer_norm_eps": 1e-6,
+            "image_patch_size": 2,
+            "image_num_pos": 9,
+            "float32_attention": True,
+            "attention_dropout": 0.0,
+            "residual_dropout": 0.0,
+        },
+        # vit_layers (-2, -4) leaves the last block untapped, so the
+        # build-time tower truncation (25-of-27 on the real checkpoint) is
+        # exercised: only 3 of 4 blocks exist.
+        "adapter_config": {
+            "model_type": "molmo2",
+            "hidden_size": 32,
+            "intermediate_size": 64,
+            "num_attention_heads": 2,
+            "num_key_value_heads": 2,
+            "head_dim": 16,
+            "hidden_act": "silu",
+            "text_hidden_size": 64,
+            "vit_layers": [-2, -4],
+            "float32_attention": True,
+            "pooling_attention_mask": True,
+            "attention_dropout": 0.0,
+            "residual_dropout": 0.0,
+            "image_feature_dropout": 0.0,
+        },
+        "image_patch_id": 514,
     }
 
 
@@ -85,7 +121,11 @@ def write_tiny_text_checkpoint(output_dir: Path | str, *, seed: int = 0) -> Path
         (name if name == "lm_head.weight" else f"model.{name}"): tensor.contiguous()
         for name, tensor in model.state_dict().items()
     }
-    state_dict["model.vision_backbone.dummy"] = torch.zeros(1, dtype=config.dtype)
+    assert config.vit is not None and config.adapter is not None
+    vision = Molmo2VisionBackbone(config.vit, config.adapter, device="cpu")
+    vision = vision.to(config.dtype)
+    for name, tensor in vision.state_dict().items():
+        state_dict[f"model.vision_backbone.{name}"] = tensor.contiguous()
     save_file(state_dict, str(output / "model.safetensors"))
     return output
 

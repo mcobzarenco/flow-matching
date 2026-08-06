@@ -306,9 +306,35 @@ oracles:
    adapters absorb scale; it would be dead config with one legal value.
    Gates held: check.py 294 green, loss oracles bit-exact, no
    state-dict key changes.
-3. WP1 decoder port + weights parity.
-4. WP2–WP3 vision/processor + end-to-end encode parity.
+3. ~~WP1 decoder port + weights parity~~ — DONE 2026-08-06
+   (`bd5b7f9`): pure-torch Qwen3 decoder (`bijou/molmo2/text.py`) +
+   truncated-mount loader + tiny fixture, 9 CPU oracles;
+   `rope_scaling_layers` confirmed null in the 4B SKU. **HF parity
+   PASSED same day** (`verify_parity.py`, CPU fp32/eager): residual
+   stream ≤1.5e-4 over all 36 layers, logits ≤3.4e-5, greedy argmax
+   79/79, 15-layer mount bitwise vs the full prefix.
+4. ~~WP2 vision tower + connector~~ — DONE 2026-08-06 (same session):
+   `bijou/molmo2/vision.py` (25-block tower as shipped, taps [-3,-9]
+   concat, masked 2x2 attention pooling, gated projector), 7 CPU
+   oracles; **vision parity PASSED** on real processor inputs
+   (synthetic 640x480, 725 image tokens): 4.4e-7 relative vs the HF
+   SDPA reference, every partial crop-edge pooling group exact.
+   WP3 processor/prompt assembly is next.
 5. WP4–WP5 + the §4 suite green + `check.py` green.
+
+**Proposed amendment (2026-08-06 17:51Z owner steering, reply
+posted, owner ack pending): AR-FIRST.** The owner's paired two-arm
+report ([hosted](../reports.md), Δ−2.69/−20% @2.5k, ~8× noise floor)
+plus π0.5 flip the §3 non-goal: phase 1 becomes a Molmo2-4B **AR run**
+(FAST + aux-text, full trunk live, 4×DDP box) with a shot at a new
+best MAE; phase 2 = flow expert on the frozen AR-adapted prefix —
+which also kills the −2.7 confound this section previously had to
+ship. Vocab anchoring: FAST's 1,026 ids do NOT fit Qwen3's ~271-row
+unused tail; they get a **second trainable extension embedding
+matrix** (Molmo2's own pattern for its 128 image specials) at ids
+[152,064, 153,090) + fresh untied lm-head rows — no collision, no
+tail archaeology, recorded in the schema. π0.5 deep-read + relevance
+post queued.
 6. **Then and only then**: pre-registration of the first run — flow
    stage-2 screen on the frozen raw Molmo2 15-layer mount,
    panel-v2/stable keying, vs a matched **raw-Gemma-prefix

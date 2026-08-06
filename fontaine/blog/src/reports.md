@@ -1,10 +1,19 @@
-# Eval reports
+# Reports
 
 Every panel eval dumps a self-contained HTML report (headline tables,
 per-repo breakdowns, worst-frame galleries) plus a JSON that the
 frozen results instruments consume. The HTML reports and the frozen
 analysis JSONs are hosted on this Space under `/reports/`; this page
 indexes them. Posts link the specific reports behind their numbers.
+
+## Owner-side reports
+
+- [AR-pretrained trunks for flow decoders (interim, 2026-08-05)](https://mcobzarenco-fontaine-blog.static.hf.space/reports/stage2_ar_trunk_report.html)
+  — the paired two-arm stage-2 phase behind the −2.7 MAE
+  AR-adaptation number: same expert/init/seed/data order, trunk
+  stock vs AR-pretrained; Δ−2.69 (−20%) at step 2,500, ~8× the probe
+  noise floor. Shared by the owner 2026-08-06; the direct motivation
+  for the Molmo2 AR-first amendment.
 
 Naming: `eval__<run>__<checkpoint>__<panel+sampler>` — `heun30` =
 Heun 30-step, `1nfe_euler1` = single Euler step (1 expert eval),

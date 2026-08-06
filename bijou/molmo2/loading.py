@@ -29,6 +29,7 @@ from ..gemma4.loading import resolve_checkpoint_dir
 from ..nn import DEFAULT_ATTENTION_BACKEND, AttentionBackend
 from .config import Molmo2Config, Molmo2TextConfig
 from .text import Molmo2TextModel
+from .vision import Molmo2VisionBackbone
 
 _VISION_PREFIX = "model.vision_backbone."
 _LM_HEAD_KEY = "lm_head.weight"
@@ -119,4 +120,45 @@ def load_text_model(
     # Parameters are already on the target device; this sweeps over the
     # small computed buffers (rope inv_freq), which meta construction
     # materializes on CPU (see bijou.nn.buffer_device).
+    return model.to(device)
+
+
+def load_vision_backbone(
+    model_id_or_path: str | Path,
+    *,
+    device: torch.device | str = "cpu",
+    dtype: torch.dtype | None = None,
+) -> Molmo2VisionBackbone:
+    """Load the vision tower + connector of a Molmo2 checkpoint.
+
+    Standalone (WP2): the WP4 encoder assembles it with the text mount; the
+    parity harness gates it at this boundary against the reference module.
+    """
+    checkpoint_dir = resolve_checkpoint_dir(model_id_or_path)
+    config = load_config(checkpoint_dir)
+    if config.vit is None or config.adapter is None:
+        raise ValueError(f"{checkpoint_dir} has no vision tower")
+    if dtype is None:
+        dtype = config.dtype
+
+    model = Molmo2VisionBackbone(config.vit, config.adapter, device="meta")
+
+    state_dict: dict[str, torch.Tensor] = {}
+    weight_files = sorted(checkpoint_dir.glob("*.safetensors"))
+    if not weight_files:
+        raise FileNotFoundError(f"no *.safetensors files in {checkpoint_dir}")
+    for weight_file in weight_files:
+        with safe_open(weight_file, framework="pt", device=str(device)) as f:
+            # it exposes .keys() but not iteration/__contains__.
+            for key in f.keys():  # noqa: SIM118
+                if not key.startswith(_VISION_PREFIX):
+                    continue
+                tensor = f.get_tensor(key)
+                if tensor.is_floating_point():
+                    tensor = tensor.to(dtype)
+                state_dict[key.removeprefix(_VISION_PREFIX)] = tensor
+
+    model.load_state_dict(state_dict, strict=True, assign=True)
+    model.eval()
+    model.requires_grad_(False)
     return model.to(device)
