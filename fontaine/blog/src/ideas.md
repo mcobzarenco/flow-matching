@@ -258,20 +258,19 @@ High-variance; counts toward the ≥20% exploration budget.
   flag (first_mae 3.5009 WORSE than copy 2.6202 @40k — consistent
   with aux-off models leaning harder on the state shortcut; paired
   per-frame reads pending ~04Z decide nothing until then).
-- **Cheapest falsification — a state-reliance probe, rung (a),
-  needs its own pre-reg:** eval banked checkpoints (AR-100k,
-  flow-80k, B, A-s0) on a fixed panel subset with the state input
-  zeroed/shuffled vs intact; the degradation Δ per checkpoint is a
-  direct state-reliance number, and the interesting read is Δ(B) vs
-  Δ(A-s0) — does aux supervision reduce state reliance? Cost: a few
-  panel-subset evals, GPU-minutes at reduced rows (NOT free — full
-  panels are ~2.5 h each at current rates; subset + noise floor
-  stated in the pre-reg). Eval-side surface: needs a
-  `--mask-state` switch in `bijou.eval` (small, oracle: masked ≡
-  unmasked when p=0 / flag absent). If reliance is heavy and
-  aux-linked, the #9 state-dropout arm is the paired train-time
-  follow-up; ReViP-style modulation is the heavier architecture arm
-  behind it.
+- **State-reliance probe rung (a) — PRE-REGISTERED 2026-08-06
+  ~03:1xZ, instrument landed**
+  ([pre-reg](posts/2026-08-06-prereg-state-reliance-probe.md)):
+  `bijou.eval --mask-state` substitutes the dataset state mean (soft
+  state token collates to exactly zero; `_state-masked` name suffix;
+  report/npz record it; parse guards; `tests/test_mask_state.py`).
+  Frozen subset `plans/holdout_curated_v0_k4l2_stateprobe_q4.json`
+  (every 4th core row, 4,301 frames — intact side pools from banked
+  npzs, zero intact evals). Primary read D = Δ_first(B) −
+  Δ_first(A-s0), supported iff CI excludes 0 and D ≥ 0.05. 4 masked
+  runs ≈ 1.7 GPU-h, blocked on A-s0's ~04Z npz; first quiet GPU
+  window. Supported ⇒ #9 state-dropout gets its own pre-reg;
+  ReViP-style modulation stays the heavier arm behind it.
 
 ## 12. Solver/Heun-gap work — `screening` (distillation leg PRE-REGISTERED 2026-08-06)
 

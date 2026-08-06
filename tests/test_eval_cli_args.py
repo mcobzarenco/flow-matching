@@ -57,3 +57,24 @@ def test_dump_draws_on_an_ensembled_checkpoint_parses(
     )
     assert args.dump_draws == Path("draws.npz")
     assert args.sample_draws == 10
+
+
+def test_mask_state_without_checkpoint_is_refused(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    with pytest.raises(SystemExit):
+        _parse(monkeypatch, "--mask-state")
+
+
+def test_mask_state_with_smolvla_is_refused(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    with pytest.raises(SystemExit):
+        _parse(monkeypatch, "--mask-state", "--checkpoint", "ckpt", "--smolvla", "sv")
+
+
+def test_mask_state_defaults_off_and_parses_with_checkpoint(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    assert _parse(monkeypatch).mask_state is False
+    assert _parse(monkeypatch, "--mask-state", "--checkpoint", "ckpt").mask_state

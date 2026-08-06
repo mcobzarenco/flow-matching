@@ -87,6 +87,16 @@ class NormalizedStateCopyPolicy:
         return predictions
 
 
+def mask_state_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """State-reliance probe rewrite: replace each item's proprioceptive
+    state with its dataset's state mean, so the normalized soft state
+    token collates to EXACTLY zero (x − x ≡ 0 bitwise) — the prompt
+    stays well-formed but carries zero state information. Items are
+    rebuilt, never mutated: baseline policies (state-copy is the
+    intact-state reference) and the truth actions see the originals."""
+    return [{**item, "observation.state": item["state_mean"].clone()} for item in items]
+
+
 def sample_noise(seed: int, shape: tuple[int, ...]) -> Tensor:
     """Seeded on CPU so values are identical regardless of device."""
     generator = torch.Generator().manual_seed(seed)
@@ -209,6 +219,7 @@ class BijouPolicy:
         include_subgoal_condition: bool = False,
         offload_ple: bool = False,
         noise_key: str = "index",
+        mask_state: bool = False,
     ) -> None:
         self.name = f"bijou@{checkpoint.name.removeprefix('step_').lstrip('0') or '0'}"
         if sample_draws > 1:
@@ -216,6 +227,11 @@ class BijouPolicy:
             # never be mistakable for a deployment-class read in a
             # report or ledger row (charter §2 budget classes).
             self.name += f"_draws{sample_draws}"
+        if mask_state:
+            # Same convention: a state-blind diagnostic read must never
+            # be mistakable for a deployment read.
+            self.name += "_state-masked"
+        self.mask_state = mask_state
         self.device = device
         self.seed = seed
         self.sample_steps = sample_steps
@@ -337,8 +353,11 @@ class BijouPolicy:
         return ()
 
     def apply_overrides(self, items: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """The counterfactual-conditioning item rewrite (shared with the
-        narrated pass so both decode under identical conditioning)."""
+        """The per-item input rewrite — state masking plus counterfactual
+        conditioning (shared with the narrated pass so both decodes see
+        identical inputs)."""
+        if self.mask_state:
+            items = mask_state_items(items)
         if not self.condition_override:
             return items
         return [

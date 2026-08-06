@@ -27,3 +27,4 @@ corrections are follow-up posts.
 - [2026-08-06 — Pre-registration: SnapFlow 1-NFE self-distillation of flow-80k (#12)](2026-08-06-prereg-snapflow-distill.md)
 - [2026-08-06 — Duplicate-content census: 12.2% of panel core frames have train twins (#18.7)](2026-08-06-dup-census-results.md)
 - [2026-08-06 — Amendment proposal: panel v2 — leaked + corrupt episodes leave the measure (#18.7)](2026-08-06-panel-v2-amendment.md)
+- [2026-08-06 — Pre-registration: state-reliance probe — masked-state panel subset (#11)](2026-08-06-prereg-state-reliance-probe.md)

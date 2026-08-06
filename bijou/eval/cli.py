@@ -119,6 +119,10 @@ class EvalReport:
     # only) — with euler/1 this is the 1-NFE read.
     target_time: str
     noise_key: str
+    # State-reliance probe: bijou policy fed the dataset state mean
+    # (zero-information soft state token) — a diagnostic, never a
+    # deployment read; the policy name carries _state-masked too.
+    mask_state: bool
     generate: list[str] | None
     condition_override: list[str]
     batch_size: int
@@ -176,6 +180,7 @@ class EvalReport:
             "sample_draws": self.sample_draws,
             "target_time": self.target_time,
             "noise_key": self.noise_key,
+            "mask_state": self.mask_state,
             "generate": self.generate,
             "condition_override": self.condition_override,
             "batch_size": self.batch_size,
@@ -396,6 +401,17 @@ def parse_args() -> argparse.Namespace:
         "checkpoint; other decoder kinds reject it",
     )
     parser.add_argument(
+        "--mask-state",
+        action="store_true",
+        help="state-reliance probe: feed the bijou policy its dataset's "
+        "state MEAN instead of each frame's true state (the normalized "
+        "soft state token collates to exactly zero — no information, "
+        "in-distribution magnitude). The policy name gains a "
+        "_state-masked suffix; baselines keep the intact state "
+        "(state-copy stays the reference). Diagnostic only — never a "
+        "deployment read",
+    )
+    parser.add_argument(
         "--condition-override",
         nargs="*",
         default=[],
@@ -457,6 +473,17 @@ def parse_args() -> argparse.Namespace:
         parser.error(
             "--sample-plan and --num-samples are mutually exclusive: the "
             "plan IS the sample",
+        )
+    if args.mask_state and args.checkpoint is None:
+        parser.error(
+            "--mask-state rewrites the bijou policy's state input — it "
+            "requires --checkpoint",
+        )
+    if args.mask_state and args.smolvla is not None:
+        parser.error(
+            "--mask-state applies only to the bijou policy; a panel "
+            "mixing a masked bijou with an intact smolvla would compare "
+            "different inputs — run them separately",
         )
     if args.dump_draws is not None and (
         args.checkpoint is None or args.sample_draws <= 1
@@ -652,6 +679,7 @@ def main() -> int:
             sample_draws=args.sample_draws,
             target_time=target_time,
             noise_key=args.noise_key,
+            mask_state=args.mask_state,
             generate=tuple(AuxField(f) for f in (args.generate or ())),
             condition_override=overrides,
             # Subgoal conditioning renders only when explicitly forced
@@ -932,6 +960,7 @@ def main() -> int:
             sample_draws=np.array(args.sample_draws),
             target_time=np.array(args.target_time),
             noise_key=np.array(args.noise_key),
+            mask_state=np.array(args.mask_state),
             seed=np.array(args.seed),
         )
         print(f"dumped per-draw chunks to {args.dump_draws}", flush=True)
@@ -1165,6 +1194,7 @@ def main() -> int:
             sample_draws=args.sample_draws,
             target_time=args.target_time,
             noise_key=args.noise_key,
+            mask_state=args.mask_state,
             generate=list(args.generate) if args.generate is not None else None,
             condition_override=list(args.condition_override),
             batch_size=args.batch_size,
@@ -1227,6 +1257,12 @@ def main() -> int:
                 else "t (standard)"
             ),
             f"noise key: {args.noise_key}",
+            "state: "
+            + (
+                "MASKED to dataset mean (state-reliance probe)"
+                if args.mask_state
+                else "intact"
+            ),
             f"fps filter: {args.fps or 'all'}",
             f"camera-count filter: {args.camera_counts or 'all'}",
             f"generate: {args.generate if args.generate is not None else '(fast path)'}",
