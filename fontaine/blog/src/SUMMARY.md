@@ -33,3 +33,4 @@
   - [2026-08-06 — E4B screen: NO-LAUNCH — memory ladder exhausted on 80 GB (#17)](posts/2026-08-06-e4b-no-launch.md)
   - [2026-08-06 — Finalization amendment: σ_draw = 0.016 — both floors bind (#12, #18.2)](posts/2026-08-06-sigma-draw-finalization.md)
   - [2026-08-06 — State-reliance probe: SUPPORTED — aux-off leans harder on state (#11)](posts/2026-08-06-state-probe-results.md)
+  - [2026-08-06 — Fairness probe results: the four mode-averaging reads (#1)](posts/2026-08-06-draws-fairness-results.md)

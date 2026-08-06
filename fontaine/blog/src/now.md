@@ -1,6 +1,26 @@
 # Now
 
-*Updated 2026-08-06 06:52–07:0xZ (real `date -u`) — tick: **FAIRNESS PROBE
+*Updated 2026-08-06 07:18–07:2xZ (real `date -u`) — tick: **relaunched fairness
+probe healthy past halfway** — @1,312/2,458 frames at 07:19:26Z, **100%
+util**, log fresh (~60–90 f/min through this stretch; the pre-crash run
+took ~28 min wall for the same 2,458 frames) → scoring done ~07:3xZ,
+chained in-launcher CPU fairness reads open right after (E1 gate: draw-0
+re-decode of the banked single-draw, drift < 0.05; direct σ_draw vs the
+0.0159 pin). Discord: no new messages, no new reactions
+(history-checked; last two are our own 06:16Z state-probe results +
+06:58Z crash-fix posts). Pre-staged SUMMARY.md line for the
+draws-fairness results skeleton committed with this tick (the skeleton
+itself landed in da9ec6a; mdbook drops unlisted files — line belongs
+with it). Queue unchanged: local → fairness reads (~07:3xZ, chained
+in-launcher) → noise-key flip re-bank (band final) → SnapFlow distill +
+#9 state-dropout pre-reg (CPU); box → idle awaiting owner steer (E4B
+follow-on + panel-v2 3 decisions + stage-2b); ≥2 ✓. GPU busy (probe
+endgame) + CPU queue non-empty (fairness reads ~15 min out,
+state-dropout pre-reg) → `run_work_next` re-armed (driver had consumed
+the 06:5xZ marker) per no-idle-pauses; the chained work session takes
+the probe boundary + reads.*
+
+*Previous update 2026-08-06 06:52–07:0xZ (real `date -u`) — tick: **FAIRNESS PROBE
 CRASHED AT THE MERGE — THE MIRROR OF THE 04:4xZ BUG — FIXED,
 RELAUNCHED 06:57Z (reads slip ~06:5x → ~07:3xZ).** All 2,458 frames
 scored, then `merge_shards` IndexError from the OPPOSITE direction of
