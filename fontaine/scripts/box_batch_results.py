@@ -19,11 +19,13 @@ Implements exactly the frozen reads of the box batch pre-reg
     chunk_mae -> feeds the two finalization amendments: E4B adopt band
     max(3*sigma_seed, 0.15) and rig-benchmark slot 2
 
-Column selection is mechanical, not assumed: each arm's report JSON is
-given alongside its npz, and the pred column whose pooled chunk_mae
-reproduces the report's headline (|d| < 5e-3) is the headline column for
-that arm; all four arms must resolve to the same column name pattern
-(bare vs +fields) or the script aborts.
+Headline column = the bare ``pred:bijou@STEP`` (the anchor-convention
+column that 5.8026/6.6232 validate); ``+fields`` is reported as a
+secondary descriptive only. Each arm's ``--output-json`` report is a
+cross-check oracle, not a selector: the npz-recomputed pooled chunk_mae
+and first_mae must reproduce that report's ``summaries`` entry for the
+policy (|d| < 5e-3) or the run aborts — catching plan/scoring drift
+between the box eval and this analysis.
 
 Pooling semantics are byte-identical to flow_vs_ar_paired.py (validated
 against the AR-100k 5.8026/2.1431 and flow-80k 6.6232/1.9331 anchors).
@@ -103,25 +105,45 @@ def pick_headline(
     w: np.ndarray,
     label: str,
 ) -> tuple:
-    """Match the report's headline chunk_mae to a pred column, mechanically."""
+    """Pick the bare (anchor-convention) pred column; cross-check vs the report.
+
+    The headline is the bare ``pred:bijou@STEP`` column — the same column the
+    AR-100k 5.8026 / flow-80k 6.6232 anchors validate; ``+fields`` stays a
+    secondary descriptive. The arm's ``--output-json`` report is used as an
+    oracle, not a selector: our npz-recomputed pooled chunk_mae AND first_mae
+    must reproduce the report's ``summaries`` entry for that policy (|d| <
+    5e-3) or the run aborts — this catches plan/scoring drift between the box
+    eval and this analysis.
+    """
     scores = {}
     for k in pred_keys:
         err = np.abs(d[k] - truth)
         scores[k] = (pooled_chunk(err, core, w), pooled_first(err, valid, core))
+    bare = [k for k in pred_keys if not k.endswith("+fields")]
+    if len(bare) != 1:
+        sys.exit(f"{label}: expected exactly one bare pred:bijou@ column, got {bare}")
+    key = bare[0]
     if report_path is None:
-        # oracle mode: caller resolves the column itself
-        return scores, None
+        # oracle mode: no report to cross-check against
+        return scores, key
+    policy = key.removeprefix("pred:")
     rep = json.loads(Path(report_path).read_text())
-    want = rep.get("chunk_mae") or rep.get("summary", {}).get("chunk_mae")
-    if want is None:
-        sys.exit(f"{report_path}: no chunk_mae field found")
-    hits = [k for k, (c, _) in scores.items() if abs(c - want) < 5e-3]
-    if len(hits) != 1:
+    summ = [s for s in rep.get("summaries", []) if s.get("policy") == policy]
+    if len(summ) != 1:
         sys.exit(
-            f"{label}: report chunk_mae {want} matched {len(hits)} pred "
-            f"columns {hits} of {list(scores)} — refusing to guess",
+            f"{label}: report has {len(summ)} summaries for policy {policy!r} "
+            f"(have: {[s.get('policy') for s in rep.get('summaries', [])]})",
         )
-    return scores, hits[0]
+    gc, gf = scores[key]
+    wc, wf = summ[0]["chunk_mae"], summ[0]["first_mae"]
+    if abs(gc - wc) >= 5e-3 or abs(gf - wf) >= 5e-3:
+        sys.exit(
+            f"{label}: npz-recomputed chunk/first {gc:.4f}/{gf:.4f} do not "
+            f"reproduce the report's {wc:.4f}/{wf:.4f} for {policy} — "
+            f"plan/scoring drift, stop",
+        )
+    print(f"{label}: report cross-check OK ({policy} chunk {gc:.4f} first {gf:.4f})")
+    return scores, key
 
 
 def bootstrap_ci(deltas: np.ndarray, n: int = BOOT_N, seed: int = BOOT_SEED) -> tuple:
@@ -349,7 +371,25 @@ def oracle() -> None:
     print(
         f"oracle synthetic: 1.05x error inflation -> delta +{m:.5f}, B chunk {bc:.4f} = 1.05*anchor, real + coherent, correct sign OK",
     )
-    print("\nORACLE: all three checks PASSED")
+
+    # (d) report cross-check path on the real AR pair: bare column picked,
+    # npz-recomputed numbers must reproduce the report's summaries entry.
+    ar_json = "reports/eval__bijou_arb_rcond_100k_ddp4__step_100000__panel_k4l2.json"
+    truth, valid, core, w = masks(ar)
+    pred_keys = [k for k in ar.files if k.startswith("pred:bijou@")]
+    _scores, key = pick_headline(
+        ar,
+        pred_keys,
+        ar_json,
+        truth,
+        valid,
+        core,
+        w,
+        "oracle-ar",
+    )
+    assert key == "pred:bijou@100000", f"bare-column pick wrong: {key}"
+    print("oracle report cross-check: bare column picked + report reproduced OK")
+    print("\nORACLE: all four checks PASSED")
 
 
 def main() -> None:
@@ -371,7 +411,6 @@ def main() -> None:
             "need exactly four --arm LABEL NPZ REPORT_JSON (A-s0, A-s1, A-s2, B — in that order)",
         )
     arms = {}
-    headline_kinds = set()
     for label, npz_path, report_path in a.arm:
         d, pred_keys, _ = load_arm(npz_path, report_path)
         truth, valid, core, w = masks(d)
@@ -386,13 +425,8 @@ def main() -> None:
             label,
         )
         arms[label] = (d, key)
-        headline_kinds.add("+fields" if key.endswith("+fields") else "bare")
         print(
-            f"{label}: headline column {key} (candidates: { {k: round(c, 4) for k, (c, _) in scores.items()} })",
-        )
-    if len(headline_kinds) != 1:
-        sys.exit(
-            f"arms resolved to MIXED column kinds {headline_kinds} — refusing to compare",
+            f"{label}: headline column {key} (all columns: { {k: round(c, 4) for k, (c, _) in scores.items()} })",
         )
     analyze(arms, a.out)
 
