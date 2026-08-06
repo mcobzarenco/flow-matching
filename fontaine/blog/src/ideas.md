@@ -215,7 +215,7 @@ block columns only is exact (grammar mask + monotone softcap).
   the AR-side weighting of the attribution front (owner steer
   21:48Z).
 
-## 9. Data levers — `queued`
+## 9. Data levers — `queued` (state-DROPOUT promoted 2026-08-06: owed its own pre-reg)
 
 `--trim-leading-idle` (~6.7% of frames), state-noise augmentation,
 judge-score-weighted sampling (never yet run). Each is a cheap paired
@@ -233,7 +233,15 @@ check (charter §2) before training touches it.
   better spatial generalization. If the #11 reliance probe shows
   heavy state reliance, the paired arm here is `--state-dropout p`
   (train-time masking, eval unchanged) — config-only surface, screen
-  rung. (Skim-depth, same pass:
+  rung. **PROMOTED 2026-08-06 06:1xZ: the #11 probe came back
+  SUPPORTED (D = +0.702 [0.498, 0.916],
+  [results](posts/2026-08-06-state-probe-results.md)) — the branch
+  rule fires and state-dropout is owed its own pre-reg** (design
+  notes: p per 2506.23944's 0.8 vs a lower screen value is the one
+  free parameter; the probe's masked-eval instrument doubles as the
+  reliance readout for the trained arm; GAP-style phase-guided
+  gradient scaling stays the follow-on if dropout helps but
+  plateaus). (Skim-depth, same pass:
   [2602.09722](https://arxiv.org/abs/2602.09722) "Rethinking VLA
   scaling" — pooling heterogeneous robot data induces negative
   transfer; selective mixture + regularization beat full pooling.
@@ -286,6 +294,19 @@ High-variance; counts toward the ≥20% exploration budget.
   runs ≈ 1.7 GPU-h, blocked on A-s0's ~04Z npz; first quiet GPU
   window. Supported ⇒ #9 state-dropout gets its own pre-reg;
   ReViP-style modulation stays the heavier arm behind it.
+- **Rung (a) RESULT 2026-08-06 06:1xZ — SUPPORTED**
+  ([results](posts/2026-08-06-state-probe-results.md), instrument
+  `fontaine/scripts/state_probe_results.py`, report
+  `reports/analysis__state_probe_q4.json`): **D = Δ_first(B) −
+  Δ_first(A-s0) = +0.702, CI95 [0.498, 0.916]** — 14× the 0.05
+  threshold; chunk secondary agrees (+0.389 [0.106, 0.674]). B's
+  better intact first_mae is bought with heavier state reliance.
+  All three banked expectations came true (Δ_chunk +15.3–16.4 on
+  every arm; no masked arm beats intact state-copy first; D > 0).
+  Absolute Δs stay descriptive (OOD masking — masked levels ~2×
+  worse than state-copy). Branch rule fired: #9 state-DROPOUT
+  promoted to its own pre-reg. The grounding gap keeps re-anchor +
+  acuity live for the residual intact-state gap.
 - **Lit radar 2026-08-06 ~03:2xZ — the mechanism gets a training-
   dynamics CAUSE: [GAP](https://arxiv.org/abs/2602.12032) (ICLR
   2026)** shows proprioception dominates because it offers *faster
