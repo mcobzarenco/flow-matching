@@ -352,14 +352,45 @@ High-variance; counts toward the ≥20% exploration budget.
   steering 11:44Z: multi-GPU run on fundamental architecture
   changes)** ([pre-reg](posts/2026-08-06-prereg-arch-batch-1.md)):
   paired arms on the stage-2 family, DDP3 on box GPUs 1–3, panel-v2 +
-  stable keying, 40k eff-96 — **arm A `--max-soft-tokens 560`** (4×
-  visual tokens/camera, the acuity lever; processor-native rung,
-  fallback 280) and **arm B full-residual conditioning** (res0..res14
-  hidden-state streams with learned K/V projections replace kv4/9/14;
-  ~23.6M new params; impl + 5 oracles owed pre-launch), plus arm 0
-  own-baseline (teacher recipe verbatim). Adopt-lever iff paired
-  Δchunk ≤ −0.15 CI-excl-0; grounding read Δfirst ≤ −0.10. Both-null
-  branch promotes the Molmo2-4B trunk swap. Explore class.
+  stable keying, 40k eff-96 — **arm A `--max-soft-tokens 280`**
+  (2× visual tokens/camera, the acuity lever; Amendment 2, owner
+  12:59Z: 480p sources make 560's marginal tokens the most
+  interpolated — 560 demoted to a follow-on rung contingent on a
+  positive 280 read) and **arm B full-residual conditioning**
+  (res0..res14 hidden-state streams with learned K/V projections
+  replace kv4/9/14; ~23.6M params; impl + 5 oracles landed 12:2xZ)
+  vs **control := teacher@40k** (Amendment 1; arm 0 dropped).
+  Adopt-lever iff paired Δchunk ≤ −0.15 CI-excl-0; grounding read
+  Δfirst ≤ −0.10. Both-null branch promotes the Molmo2-4B trunk
+  swap. **Results instrument `arch_batch_results.py` banked before
+  any data 13:4xZ (5th oracle-before-data application): 5 oracles
+  green incl. v2 anchors + K1 gate vs the teacher's banked probe
+  curve.** Explore class.
+- **Lit slice 2026-08-06 ~13:3xZ — independent support for the
+  early-layers story (arm B context, banked before its data):**
+  [SmolVLA](https://learnopencv.com/smolvla-lerobot-vision-language-action-model/)
+  conditions its action expert on features from ~L/2 of the VLM
+  (not the last layer), and
+  [FLOWER](https://arxiv.org/html/2509.04996v1) prunes up to 50% of
+  the deep LLM layers outright and reallocates the capacity to the
+  diffusion head — both consistent with our acuity probe (position
+  info sharpest at the vision-tower output, degrading through the
+  LM stack). Read for arm B: if full-residual res0..res14 nulls,
+  the cheap follow-on is an EARLY-ONLY schedule (res0..res7, or
+  vision-tower output as a direct stream) rather than more layers —
+  the literature's winning configs concentrate conditioning at or
+  below mid-stack. Also
+  [SCALE](https://arxiv.org/pdf/2602.04208) (self-uncertainty
+  conditioned adaptive looking) as arm-A-adjacent: token budget
+  spent adaptively rather than uniformly; parked unless arm A
+  reads positive. Trunk-swap caveat from the
+  [ICLR 2026 VLA survey](https://mbreuss.github.io/blog_post_iclr_26_vla.html):
+  VLM4VLA finds downstream VLA performance has NO correlation with
+  the VLM's standard-benchmark scores — the Molmo2-4B port's case
+  must rest on its vision-tower/grounding properties (pointing-
+  pretrained, our acuity story), not on benchmark superiority;
+  frame the port plan's success criteria accordingly.
+  (Abstract-depth reads.)
 - **Lit radar 2026-08-06 ~03:2xZ — the mechanism gets a training-
   dynamics CAUSE: [GAP](https://arxiv.org/abs/2602.12032) (ICLR
   2026)** shows proprioception dominates because it offers *faster
