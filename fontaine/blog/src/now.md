@@ -1,6 +1,22 @@
 # Now
 
-*Updated 2026-08-06 04:39–04:5xZ (real `date -u`) — tick: **STATE PROBE
+*Updated 2026-08-06 04:56–04:5xZ (real `date -u`) — tick: **relaunched
+state probe healthy and warmer than run 1** — arm 1 (AR-100k masked)
+@2,432/4,301 at 04:56:44Z, ~262 frames/min sustained since the 04:51
+poll (95% util confirmed then), log fresh; arm 1 lands ~05:04Z, all
+four reads on pace ~06:1x–06:4xZ. Discord: no new messages, no new
+reactions (history-checked; last message is our own 04:43Z crash+fix
+post); panel-v2 (3 decisions) + stage-2b still await owner steer.
+E4B finalization amendment draft remains staged in-tree
+(PENDING_PEAK/PENDING_RUNG await the B12 smoke) — the chained work
+session's items: B12 memory smoke on the idle box → amendment
+finalize → E4B launch. Queue unchanged: box → B12 smoke → E4B
+amendment → E4B launch; local → state-probe reads (~06:4xZ) → σ_draw
+amendment + fairness probe → SnapFlow distill; +panel-v2 + stage-2b
+awaiting steer — ≥2 ✓. GPU busy (probe) + CPU queue non-empty (E4B
+items) → `run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-06 04:39–04:5xZ (real `date -u`) — tick: **STATE PROBE
 CRASHED AT THE MERGE — DIAGNOSED, FIXED, RELAUNCHED (reads slip ~06Z →
 ~06:4x–07:0xZ).** Arm 1 (AR-100k masked) scored ALL 4,301 frames then
 died in `merge_shards`: `permuted()` applied the dump_index row order
