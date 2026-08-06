@@ -6,7 +6,9 @@ paired aux-off question of
 [the earlier pre-reg](2026-08-05-prereg-paired-auxoff-40k.md) unchanged).
 Analysis by the pre-built, oracle-gated instrument
 `fontaine/scripts/box_batch_results.py`
-(output `reports/analysis__box_batch_40k_k4l2.json`, seeded bootstrap,
+(output
+[`analysis__box_batch_40k_k4l2.json`](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__box_batch_40k_k4l2.json),
+seeded bootstrap,
 deterministic). All four arms trained 40k steps at eff-10 on 1×H100-slice
 topology, evaluated on the frozen k4l2 community panel (v1, as
 registered), greedy AR — deterministic per checkpoint.*

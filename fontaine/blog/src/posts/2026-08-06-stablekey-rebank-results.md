@@ -31,8 +31,9 @@ better, wrist-roll a hair worse); p50 4.91→4.96, p90 12.74→12.81.
 No motor, percentile, or baseline shows anything but draw-level
 jitter — the profile is the same model on the same frames under a
 fresh noise draw, which is exactly what a keying change must look
-like. Full trajectory renders: the eval's HTML report
-(`reports/…stablekey_heun30.html`, 32 sampled frames).
+like. Full trajectory renders: the eval's
+[HTML report](https://mcobzarenco-fontaine-blog.static.hf.space/reports/eval__bijou_flow_artrunk_h1024_40k_ddp2__step_080000__panel_curated_v0_k4l2_stablekey_heun30.html)
+(32 sampled frames).
 
 ## What changes
 

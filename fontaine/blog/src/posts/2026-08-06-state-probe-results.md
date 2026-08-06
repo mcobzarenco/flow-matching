@@ -6,7 +6,9 @@ rung (a)). Four masked-state subset evals (4,301 frozen rows, plan
 sha256 asserted at launch and at read), intact side pooled from the
 banked full-panel npzs — zero intact re-evals. Analysis by the
 oracle-gated instrument `fontaine/scripts/state_probe_results.py`
-(output `reports/analysis__state_probe_q4.json`, seeded bootstrap,
+(output
+[`analysis__state_probe_q4.json`](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__state_probe_q4.json),
+seeded bootstrap,
 deterministic; oracle mode passed before the real read: degenerate
 all-zero, synthetic known-effect + common-effect cancellation,
 misaligned-index abort).*
