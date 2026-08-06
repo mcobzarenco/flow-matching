@@ -167,6 +167,29 @@ Mainline `arb_rcond` recipe verbatim where the trunk allows it:
   instrument, OOM-moment attribution) and B (12×1, 30 steps,
   true-allocated peaks via the new per-step vram log fields) decide
   the next rung.**
+- **Forensics verdict (21:5xZ, snapshot banked
+  `reports/mem_forensics/`): the block three fixes never touched is
+  DDP's reducer bucket buffers, allocated AT CONSTRUCTION
+  (train.py DDP wrap → 13.56 GiB measured), not at first sync.
+  Measured OOM-moment ledger (rank 0, live 71.0 / reserved 77.5 —
+  ~6.5 GiB allocator fragmentation): fp32 params 18.1 + DDP buckets
+  13.6 + accumulated fp32 grads 13.6 + autocast bf16 casts 9.7 +
+  activations ~8.8 (2-sample chunk; the arithmetic said 5.7) +
+  sharded Adam 6.8.**
+- **Amendment (F1 rung 8, pre-declared before its smoke, 22:0xZ): B12
+  chunked 6×2 + `--zero1` + `--chunk-grad-allreduce`, where the flag
+  now skips the DDP wrapper ENTIRELY — `broadcast_module_states`
+  replicates the constructor's rank-0 broadcast, plain autograd
+  accumulates chunk gradients, the explicit in-place allreduce stays
+  the whole per-step sync. Removes the measured 13.6 GiB bucket
+  block. Oracle re-verified: bare-module path from deliberately
+  rank-divergent init == DDP-sync path == single-process global-batch
+  reference to 1e-12 (2-proc gloo). Predicted live peak ≈ 57.5 GiB,
+  reserved ≈ 64–66 — and the pass rule is UPGRADED to the true
+  metric now that it exists: rc=0 AND max `vram_alloc_peak_gib`
+  (torch max_memory_allocated, logged per step) ≤ 71 GiB (≥8 GiB
+  allocated headroom), nvidia-smi recorded as context only.
+  **Measured: TODO_SMOKE_PEAK, TODO_SMOKE_RATE s/step, rc=TODO_RC.**
 - F2 wall: 40k × rate ≤ 30 h ⇒ full 40k; else this pre-reg SHRINKS to
   a 10k screen (label changes to `_10k`), no mid-run change.
   **Projected: TODO_WALL h.**

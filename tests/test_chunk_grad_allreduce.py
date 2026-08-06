@@ -1,21 +1,20 @@
 """Explicit chunked-gradient allreduce (``--chunk-grad-allreduce``):
-the memory fix for the Molmo2 AR 4xDDP rung's step-1 wall. Under
-no_sync-first chunk accumulation, autograd allocates plain fp32
-gradient tensors while DDP's reducer is bypassed; the final synced
-chunk then materializes the reducer's bucket buffers ON TOP of them —
-a full duplicate of the fp32 gradients (~14.6 GiB/rank on that rung,
-measured across smoke rungs 3-5, 2026-08-06), which
-gradient_as_bucket_view cannot deduplicate because the views only
-exist while the reducer owns the backward. The flag keeps EVERY chunk
-in no_sync and replaces the reducer with one explicit in-place
-allreduce (sum / world — DDP's averaging semantics, differing only in
-fp reduction order), so the buckets never materialize.
+the memory fix for the Molmo2 AR 4xDDP rung's step-1 wall. The OOM
+snapshot (2026-08-06, rungs 3-7) showed DDP's reducer bucket buffers —
+a full fp32 gradient copy — are allocated AT CONSTRUCTION, so merely
+bypassing the sync (the first version of this flag) removed nothing.
+The flag now skips the DDP wrapper entirely: rank-0 state broadcast at
+init (``broadcast_module_states`` — the one thing DDP's constructor
+provided besides the reducer), plain autograd gradient accumulation
+across chunks, one explicit in-place allreduce per step (sum / world —
+DDP's averaging semantics, differing only in fp reduction order).
 
 Verified on a real 2-process gloo group over a float64 model with
 rank-distinct data and sum-form losses normalized by the global count
 (the train loop's chunked semantics):
 
-* gradient/update oracle — N optimizer steps under the flag ==
+* gradient/update oracle — N optimizer steps under the flag (bare
+  module, broadcast init from DELIBERATELY rank-divergent weights) ==
   N steps under DDP's final-chunk sync == the single-process
   reference whose loss is the global-batch objective, params equal to
   1e-12 on both ranks;
@@ -35,7 +34,7 @@ import pytest
 import torch
 from torch.multiprocessing.spawn import spawn
 
-from bijou.train import allreduce_gradients
+from bijou.train import allreduce_gradients, broadcast_module_states
 
 WORLD = 2
 STEPS = 3
@@ -48,8 +47,8 @@ LR = 0.1
 NORMALIZER = WORLD * PER_RANK * OUT_DIM
 
 
-def build_model() -> torch.nn.Sequential:
-    torch.manual_seed(0)
+def build_model(seed: int = 0) -> torch.nn.Sequential:
+    torch.manual_seed(seed)
     return torch.nn.Sequential(
         torch.nn.Linear(IN_DIM, HIDDEN, dtype=torch.float64),
         torch.nn.Tanh(),
@@ -92,14 +91,23 @@ def ddp_worker(rank: int, tmp: str) -> None:
     )
     results: dict[str, list[torch.Tensor]] = {}
     for mode in ("ddp_sync", "allreduce"):
-        model = build_model()
-        ddp = torch.nn.parallel.DistributedDataParallel(
-            model,
-            # The train loop's chunked-path DDP shape (static_graph off,
-            # buffers unbroadcast, grads as bucket views).
-            broadcast_buffers=False,
-            gradient_as_bucket_view=True,
-        )
+        if mode == "ddp_sync":
+            model = build_model()
+            step_module: torch.nn.Module = torch.nn.parallel.DistributedDataParallel(
+                model,
+                # The train loop's DDP-path shape (static_graph off,
+                # buffers unbroadcast, grads as bucket views).
+                broadcast_buffers=False,
+                gradient_as_bucket_view=True,
+            )
+        else:
+            # The flag's path: NO DDP wrapper. Deliberately divergent
+            # per-rank init — broadcast_module_states must be the thing
+            # that synchronizes the replicas, exactly like DDP's
+            # construction-time broadcast would have.
+            model = build_model(seed=rank)
+            broadcast_module_states(model)
+            step_module = model
         params = list(model.parameters())
         optimizer = torch.optim.SGD(params, lr=LR)
         for step in range(STEPS):
@@ -111,10 +119,12 @@ def ddp_worker(rank: int, tmp: str) -> None:
                 ys = y[c * per_chunk : (c + 1) * per_chunk]
                 last = c == CHUNKS - 1
                 sync_ctx = (
-                    nullcontext() if (mode == "ddp_sync" and last) else ddp.no_sync()
+                    nullcontext()
+                    if (mode == "allreduce" or last)
+                    else step_module.no_sync()  # type: ignore[union-attr]
                 )
                 with sync_ctx:
-                    (((ddp(xs) - ys) ** 2).sum() / NORMALIZER).backward()
+                    (((step_module(xs) - ys) ** 2).sum() / NORMALIZER).backward()
             if mode == "allreduce":
                 allreduce_gradients(params)
             optimizer.step()
