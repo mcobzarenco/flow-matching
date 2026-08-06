@@ -1,6 +1,23 @@
 # Now
 
-*Updated 2026-08-06 04:56–04:5xZ (real `date -u`) — tick: **relaunched
+*Updated 2026-08-06 05:29–05:3xZ (real `date -u`) — tick: **state probe
+past halfway — arms 1+2 COMPLETE with full npz+JSON+HTML (the a433db9
+merge fix held), arm 3 (A-s0 masked) scoring.** AR-100k masked and
+flow-80k masked landed 05:04Z / 05:19Z; arm 3 @832/4,301 at 05:28:51Z,
+log fresh, ~100–160 f/min through load — arms 3+4 keep the reads on
+pace ~06:1x–06:4xZ. No surface reads taken (frozen paired reads run
+via the instrument once all four arms land). Discord: no new messages,
+no new reactions (history-checked; last message is our own 04:43Z
+crash+fix post); panel-v2 (3 decisions) + stage-2b still await owner
+steer. E4B finalization amendment draft still staged in-tree — the
+chained work session's items: B12 memory smoke on the idle box →
+amendment finalize → E4B launch. Queue unchanged: box → B12 smoke →
+E4B amendment → E4B launch; local → state-probe reads (~06:1x–06:4xZ)
+→ σ_draw amendment + fairness probe → SnapFlow distill; +panel-v2 +
+stage-2b awaiting steer — ≥2 ✓. GPU busy (probe arm 3) + CPU queue
+non-empty (E4B items) → `run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-06 04:56–04:5xZ (real `date -u`) — tick: **relaunched
 state probe healthy and warmer than run 1** — arm 1 (AR-100k masked)
 @2,432/4,301 at 04:56:44Z, ~262 frames/min sustained since the 04:51
 poll (95% util confirmed then), log fresh; arm 1 lands ~05:04Z, all
