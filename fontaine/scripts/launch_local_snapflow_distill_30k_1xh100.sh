@@ -48,7 +48,11 @@ mem=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits)
 if [ "$mem" -gt 1024 ]; then echo "GPU busy (${mem} MiB) — abort"; exit 1; fi
 
 TEACHER=outputs/train/bijou_flow_artrunk_h1024_40k_ddp2/step_080000
-RUN=bijou_flow_snapdistill_h1024_30k_1xh100
+# Charter §1 bookkeeping (caught pre-launch 2026-08-06 08:2xZ): the
+# first draft inherited the TEACHER's wandb project (bijou-dev,
+# READ-ONLY mainline) and bijou_ name prefix via the teacher-verbatim
+# copy — agent runs live in project `fontaine` under fontaine_* names.
+RUN=fontaine_flow_snapdistill_h1024_30k_1xh100
 STEP0="${TEACHER}_snapflow_step0"
 
 # ---- stage 0: recipe diff-verify (teacher train_args vs this launcher,
@@ -111,7 +115,7 @@ uv run python -m bijou.train \
     --log-every 20 --eval-every 500 --save-every 2500 \
     --num-workers 20 --prefetch-factor 4 --video-decoder-cache 4 \
     --seed 1 --eval-samples 256 --eval-seed 0 \
-    --wandb-project bijou-dev --wandb-run-name "$RUN" \
+    --wandb-project fontaine --wandb-run-name "$RUN" \
     2>&1 | tee "/home/ubuntu/train_${RUN}.log"
 
 # ---- stage 4: endpoint evals (primary + deployment headline) ----

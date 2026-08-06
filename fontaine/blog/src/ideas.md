@@ -261,7 +261,17 @@ check (charter §2) before training touches it.
   paired vs A-s0's banked npz, band 0.15; chained masked-subset
   reliance eval; `--state-dropout` landed with the pre-reg (shared
   `mask_state_item` primitive with the eval probe, p=0 bitwise-inert,
-  oracles green).** (Skim-depth, same pass:
+  oracles green).**
+- **Lit check at pre-reg time (2026-08-06 08:1xZ, skim-depth — re-read
+  before citing numbers):** the masking lever keeps accumulating
+  neighbors: [ThinkProprio, 2602.06575](https://arxiv.org/abs/2602.06575)
+  goes the OPPOSITE direction (proprioception as text tokens fused at
+  the prompt input rather than late conditioning — relevant to our
+  soft-state-token placement question, #11 discussion);
+  [Cloak, 2606.22836](https://arxiv.org/pdf/2606.22836) masks the
+  END-EFFECTOR VISUALLY for zero-shot cross-embodiment — a different
+  masking axis (vision-side, not state-side) that would matter for
+  the rig-transfer north star if arm C's mechanism reads clean. (Skim-depth, same pass:
   [2602.09722](https://arxiv.org/abs/2602.09722) "Rethinking VLA
   scaling" — pooling heterogeneous robot data induces negative
   transfer; selective mixture + regularization beat full pooling.

@@ -22,7 +22,7 @@ export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 mem=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits)
 if [ "$mem" -gt 1024 ]; then echo "GPU busy (${mem} MiB) — abort"; exit 1; fi
 
-CKPT=${1:-outputs/train/bijou_flow_snapdistill_h1024_30k_1xh100/step_010000}
+CKPT=${1:-outputs/train/fontaine_flow_snapdistill_h1024_30k_1xh100/step_010000}
 STEP=$(basename "$CKPT")
 name="eval__snapdistill__${STEP}__probe_s7_1nfe_euler1"
 uv run python -m bijou.eval \

@@ -23,7 +23,7 @@ from bijou.train import parse_args
 
 TEACHER = Path("outputs/train/bijou_flow_artrunk_h1024_40k_ddp2/step_080000")
 LAUNCHER = Path(__file__).parent / "launch_local_snapflow_distill_30k_1xh100.sh"
-RUN = "bijou_flow_snapdistill_h1024_30k_1xh100"
+RUN = "fontaine_flow_snapdistill_h1024_30k_1xh100"
 
 # The pre-registered science deltas + run bookkeeping. Everything else
 # must match the teacher's recorded train_args exactly.
@@ -39,6 +39,9 @@ EXPECTED_DELTAS = {
     "target_time_embed": True,
     "save_dir": f"outputs/train/{RUN}",
     "wandb_run_name": RUN,
+    # Charter §1: agent runs NEVER write the teacher's bijou-dev
+    # project (read-only mainline) — caught pre-launch 2026-08-06.
+    "wandb_project": "fontaine",
 }
 
 
