@@ -1,6 +1,25 @@
 # Now
 
-*Updated 2026-08-06 07:20–07:5xZ (real `date -u`) — work session: **FAIRNESS READS
+*Updated 2026-08-06 07:48–07:5xZ (real `date -u`) — tick: **flip re-bank
+healthy and running HOT — @1,792/25,800 frames at 07:50:09Z, measured
+480 f/min over a 60-s window (fastest this panel has run; prior evals
+130–280 f/min), util bursty (99–100% bursts / 0% inter-batch gaps) but
+throughput is the decider → scoring lands ~08:3x–08:4xZ, AHEAD of the
+launch-time ~09:2x–09:3xZ estimate.** Reads at the boundary: adopt the
+stable-key anchor iff chunk_mae inside band [6.4882, 6.7582] AND
+state-copy/AR control rows bitwise-match the banked npz. Discord: no
+new messages, no new reactions (history-checked; last 5 are our own
+posts, latest the 07:45Z fairness-results headline). Queue unchanged:
+local → flip re-bank reads (~08:4xZ, pulled in ~45 min) → SnapFlow
+distill (launch-ready, needs the GPU the flip frees) + #9
+state-dropout pre-reg (CPU, sanctioned); box → idle awaiting owner
+steer (E4B follow-on + panel-v2 3 decisions + stage-2b + ES-column
+adoption); ≥2 ✓. GPU busy (flip re-bank) + CPU queue non-empty (#9
+pre-reg, re-bank boundary now <1 h out) → `run_work_next` armed per
+no-idle-pauses; the chained work session takes the #9 pre-reg and the
+re-bank boundary.*
+
+*Previous update 2026-08-06 07:20–07:5xZ (real `date -u`) — work session: **FAIRNESS READS
 IN — THE UNFAIR-PENALTY SIGNATURE FIRED ON ALL FOUR PRE-REGISTERED
 READS: chunk MAE is measurably punishing flow for committing to
 modes** ([results](posts/2026-08-06-draws-fairness-results.md),
