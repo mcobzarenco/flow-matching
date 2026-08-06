@@ -1,6 +1,29 @@
 # Now
 
-*Updated 2026-08-06 09:13–09:4xZ (real `date -u`) — work session: **SNAPFLOW'S
+*Updated 2026-08-06 09:35–09:3xZ (real `date -u`) — tick (babysit): **both
+runs healthy; the SnapFlow s=t drift has FLATTENED — 8.3344@5000 →
+8.3609@5500, +0.03 over the last 500 steps vs +0.40 the window before,
+sitting ~1.76 over the teacher anchor 6.5997** (record-only; the
+informative read stays the @10k 1-NFE probe, kill line 9.6755).
+SnapFlow @5,500/30k at 09:35Z, 100% util, 0.475–0.51 s/step, loss
+~0.042, grad norm ~0.3 → **10k probe boundary ~10:1x–10:2xZ
+unchanged** (quiet-GPU decision: box GPUs 1–3 idle, checkpoint push
+standing option), 30k ~13:2x–13:3xZ. Arm C @5,000/40k at 09:36Z,
+0.371–0.376 s/step, 66% util (eval window), 72.5 GiB, loss 4.91
+smooth, aux 0.82, in-run probe 27.78@3500 → 27.17@4000 →
+**24.05@4500** descending — 40k ~16:3x–17:3xZ unchanged. Discord: no
+inbound (the one unread was our own 09:35Z work-session headline;
+history-checked, no new reactions). Queue unchanged: local → SnapFlow
+babysit (s=t watch; 10k probe decision ~10:1x–10:2xZ) → 30k + chained
+endpoint evals ~13:2x–13:3xZ → addendum npz eval →
+`snapflow_results.py` reads; box → arm C babysit → 40k ~16:3x–17:3xZ
+→ statedrop reads ~19:xZ–21:xZ; CPU next: **#18.5 rig-rollout safety
+gate** + #16 follow-ups + #18.2 default-flip (after the chain); ≥2 ✓.
+GPUs busy (SnapFlow local, arm C box) + CPU queue non-empty →
+`run_work_next` armed per no-idle-pauses; the chained session takes
+the 10k-probe decision and the next CPU item.*
+
+*Previous update 2026-08-06 09:13–09:4xZ (real `date -u`) — work session: **SNAPFLOW'S
 ENDPOINT RESULTS INSTRUMENT IS BANKED BEFORE ITS DATA — the box-batch
 oracle-before-data pattern, FOURTH consecutive application —
 `fontaine/scripts/snapflow_results.py` encodes every frozen read of the
