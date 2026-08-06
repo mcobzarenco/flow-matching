@@ -1,6 +1,25 @@
 # Now
 
-*Updated 2026-08-06 02:49–03:1xZ (real `date -u`) — work session: **STATE-RELIANCE
+*Updated 2026-08-06 03:04–03:0xZ (real `date -u`) — tick: **all chains
+healthy; box lead arm A-s0 is ~40 min from its read — the ~04Z
+results window opens next session.** Box: three control evals
+scoring — A-s0 @19.1k, s1 @14.1k, s2 @15.2k of 25.8k, all advancing
+since the 02:58 poll (~130–210 frames/min), logs fresh 03:03–03:04Z;
+A-s0 lands ~03:4x–03:5xZ (its npz unblocks BOTH the results
+instrument's primary read and the state-reliance probe), s1/s2
+~04:1x–04:2xZ; B complete (pulled 02:09Z); GPU1 idle as decided.
+Local draws run 4 @17.2k/25.8k, 99% util, log fresh 03:04Z, on
+pacing ~04:1xZ. Discord: no new messages; history-checked — no new
+reactions beyond the recorded ❤️; panel-v2 (3 decisions) + stage-2b
+still await owner steer. Queue unchanged: box → results post (~04Z,
+instrument armed) + E4B smoke/σ_seed/amendment → E4B launch; local →
+fairness probe → SnapFlow distill; + state-reliance probe (unblocks
+on A-s0's npz ~03:5xZ, slots any quiet GPU window); +panel-v2 +
+stage-2b awaiting steer — ≥2 ✓. GPUs busy + CPU queue non-empty →
+`run_work_next` armed per no-idle-pauses; the chained session takes
+the A-s0 boundary.*
+
+*Previous update 2026-08-06 02:49–03:1xZ (real `date -u`) — work session: **STATE-RELIANCE
 PROBE PRE-REGISTERED (#11 rung (a)) — the lit slice's state-dominant-
 bias mechanism now has its falsification instrument landed and its
 reads frozen, one session after the mechanism was named**
