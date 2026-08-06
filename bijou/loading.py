@@ -99,6 +99,11 @@ class PromptKind(StrEnum):
     inside it; format 3 moves the id to the backbone section.)"""
 
     GEMMA4 = "gemma4"
+    # The Molmo2-4B trunk port (Molmo2 port plan, 2026-08-06). The tag
+    # is reserved so checkpoints written by port work packages have a
+    # stable identity from day one; loading dispatches once the Molmo2
+    # prompt config lands (WP4).
+    MOLMO2 = "molmo2"
 
 
 class DecoderKind(StrEnum):
@@ -274,6 +279,12 @@ def parse_prompt_config(data: dict[str, Any]) -> GemmaPromptConfig:
     match kind:
         case PromptKind.GEMMA4:
             return GemmaPromptConfig.from_dict(data)
+        case PromptKind.MOLMO2:
+            raise SystemExit(
+                "this checkpoint's prompt strategy is molmo2 — the Molmo2 "
+                "prompt config loader lands with port WP4; this build "
+                "cannot load it",
+            )
 
 
 def ar_fast_config_to_dict(config: ARFastConfig) -> dict[str, Any]:

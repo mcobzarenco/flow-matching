@@ -288,9 +288,11 @@ def test_backbone_init_from_loads_trunk_and_prompt_only(tmp_path: Path) -> None:
     checkpoint (bf16 snapshot semantics), the decoder keeps its fresh
     build — across DIFFERENT decoder configs, which --init-from refuses."""
     source = tiny_cpu_model(decoder_hidden=64, seed=0)
+    source_encoder = source.encoder
+    assert isinstance(source_encoder, GemmaEncoder)  # narrow the seam type
     # A trained-looking prompt projection (zero init would make the
     # copy assertion vacuous).
-    torch.nn.init.normal_(source.encoder.state_proj.weight, std=0.1)
+    torch.nn.init.normal_(source_encoder.state_proj.weight, std=0.1)
     optimizer = torch.optim.AdamW(source.decoder.parameters(), lr=1e-4)
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lambda _: 1.0)
     checkpoint = save_checkpoint(
@@ -326,9 +328,11 @@ def test_backbone_init_from_loads_trunk_and_prompt_only(tmp_path: Path) -> None:
             value.to(torch.float32),
         ), key
     # Prompt: exact copy of the trained projection.
+    target_encoder = target.encoder
+    assert isinstance(target_encoder, GemmaEncoder)
     assert torch.equal(
-        target.encoder.state_proj.weight,
-        source.encoder.state_proj.weight,
+        target_encoder.state_proj.weight,
+        source_encoder.state_proj.weight,
     )
     # Decoder: untouched fresh build.
     for key, value in target.decoder.state_dict().items():

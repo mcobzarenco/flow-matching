@@ -22,12 +22,13 @@ runner for the decoder-only path).
 
 from __future__ import annotations
 
+import abc
 import dataclasses
 from dataclasses import dataclass
 from typing import Any, Protocol, Self, override
 
 import torch
-from torch import Tensor
+from torch import Tensor, nn
 
 from .annotations import ConditionField
 from .aux_text import (
@@ -41,15 +42,14 @@ from .aux_text import (
     subgoal_text,
 )
 from .fast.codec import ActionCodec
-from .gemma4.cache import KVCache
 from .nn import RopeParameters
 
 
 def kv_stream_name(layer_idx: int) -> str:
     """The Gemma backbone's stream-naming convention: K/V of backbone layer
-    ``layer_idx`` is exported as ``"kv{layer_idx}"``. Shared by the
-    producer (observation encode) and the consumer (the flow decoder's
-    int-schedule config) until the encoder abstraction owns it."""
+    ``layer_idx`` is exported as ``"kv{layer_idx}"``. Lives at module
+    level because producer (observation encode) and consumer (the flow
+    decoder's int-schedule config) both spell it."""
     return f"kv{layer_idx}"
 
 
@@ -126,7 +126,11 @@ class ObservationMemory:
     views — retained only when the decoder consumes the whole prefix
     state (the decoder-only backbone path continues the suffix through it);
     None for stream-consuming decoders, freeing the non-exported layers.
-    Consumers that need it check for None and fail fast.
+    Its concrete type is a TRUNK-private contract between the producing
+    encoder and the decoder that continues the trunk (the Gemma path's
+    ``gemma4.cache.KVCache``) — opaque at this seam so the seam depends
+    on no trunk. Consumers check for None and isinstance-narrow to their
+    trunk's cache type, failing fast on either mismatch.
 
     ``residuals`` are RAW residual-stream taps (hidden state after backbone
     layer i, [B, P, backbone_hidden], keyed ``res{i}``) — exported by the
@@ -139,7 +143,7 @@ class ObservationMemory:
     streams: dict[str, MemoryStream]
     length: int
     padding_mask: Tensor | None
-    cache: KVCache | None = None
+    cache: object | None = None
     residuals: dict[str, Tensor] | None = None
 
     @property
@@ -329,6 +333,55 @@ class InputsCollator[I: BatchInputs](Protocol):
     ``__getstate__``."""
 
     def __call__(self, samples: list[PromptInputs]) -> I: ...
+
+
+class ObservationEncoder[I: BatchInputs, B: nn.Module](nn.Module, abc.ABC):
+    """ABC of a trunk's prompt-side strategy (``docs/plan.md``): the
+    inputs-collation strategy, the prefix encode, and the trunk's
+    unfreeze surface. Generic over its collated-inputs type ``I`` and
+    its trunk type ``B`` — the composition root (BijouModel) owns the
+    trunk network once and passes it into the compute methods, pairing
+    trunk and encoder consistently by construction.
+
+    The module carries exactly the PROMPT-side parameters (e.g. the
+    Gemma strategy's soft-state projection), never trunk ones — trunk
+    subsets are exposed through :meth:`param_groups` instead, so the
+    root can route component learning rates without owning the split."""
+
+    @abc.abstractmethod
+    def stream_geometries(self) -> dict[str, StreamGeometry]:
+        """Static geometry per stream name; keys and order match every
+        ObservationMemory this encoder produces. Names are the encoder's
+        vocabulary (``kv{i}``/``res{i}`` today); decoder schedules
+        reference them and composition validates the references."""
+
+    @abc.abstractmethod
+    def inputs_collator(self) -> InputsCollator[I]:
+        """The encoder-specific half of collation (pickleable into
+        spawned dataloader workers)."""
+
+    @abc.abstractmethod
+    def encode(
+        self,
+        backbone: B,
+        inputs: I,
+        *,
+        with_grad: bool,
+        retain_cache: bool = False,
+    ) -> ObservationMemory:
+        """Run the trunk over one collated batch's multimodal prefix and
+        export the memory streams. ``with_grad=False`` runs under
+        no_grad (eval/rollout/frozen training); True leaves autograd on
+        for live-trunk training. ``retain_cache`` keeps the trunk's full
+        prefix cache on the returned memory (ObservationMemory.cache)
+        for decoders that continue the trunk through it."""
+
+    @abc.abstractmethod
+    def param_groups(self, backbone: B) -> dict[str, list[nn.Parameter]]:
+        """Named unfreezable trunk subsets (e.g. ``"text"``/``"vision"``)
+        — the component-lr flags route here. Groups must be EXACT (only
+        parameters that participate in a forward): DDP requires every
+        grad-enabled parameter to receive gradients each step."""
 
 
 # Action decoders are plain nn.Modules; the composition contract lives in

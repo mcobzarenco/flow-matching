@@ -38,7 +38,7 @@ from bijou.data import EpisodeSplit, select_datasets
 from bijou.decoders.ar_backbone import ARBackboneConfig, ARBackboneDecoder
 from bijou.decoders.ar_fast import ARFastConfig, ARFastDecoder
 from bijou.decoders.flow import FlowDecoder
-from bijou.encoders.gemma4 import GemmaInputsCollator
+from bijou.encoders.gemma4 import GemmaEncoder, GemmaInputsCollator
 from bijou.fast.codec import ActionCodec
 from bijou.gemma4.loading import load_config
 from bijou.gemma4.text import DecoderLayer
@@ -279,13 +279,13 @@ def check_text_partition(step: BijouTrainStep, label: str) -> None:
         "ple projection": grad_state(text.per_layer_model_projection.weight)
         == "nonzero",
         "embed_vision": grad_state(
-            next(iter(backbone.embed_vision.parameters())),  # type: ignore[union-attr]
+            next(iter(backbone.embed_vision.parameters())),
         )
         == "nonzero",
         "embed_tokens frozen": text.embed_tokens.weight.grad is None,
         "ple tables frozen": text.embed_tokens_per_layer.weight.grad is None,
         "vision tower frozen": next(
-            iter(backbone.vision_tower.parameters()),  # type: ignore[union-attr]
+            iter(backbone.vision_tower.parameters()),
         ).grad
         is None,
     }
@@ -416,6 +416,8 @@ def main() -> None:
     text = backbone.language_model
     decoder = step.model.decoder
     assert isinstance(decoder, ARBackboneDecoder)
+    encoder = step.model.encoder
+    assert isinstance(encoder, GemmaEncoder)  # narrow the seam type
     last = text.layers[len(text.layers) - 1]
     assert isinstance(last, DecoderLayer)
     checks = {
@@ -425,7 +427,7 @@ def main() -> None:
         # it now); same invariant — zero-init yet grad-reachable through
         # its K/V use — tested at its new home.
         "prompt state_proj grads (zero-init, K/V-reachable)": grad_state(
-            step.model.encoder.state_proj.weight,
+            encoder.state_proj.weight,
         )
         == "nonzero",
         # FULL-depth partition: the KV-shared deep half trains (it runs

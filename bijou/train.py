@@ -98,9 +98,15 @@ from .decoders.flow import (
     SelfAttentionMode,
     TimeConditioning,
 )
-from .encoders.gemma4 import PROMPT_FORMAT, GemmaInputs, GemmaInputsCollator
+from .encoders.gemma4 import PROMPT_FORMAT, GemmaEncoder, GemmaInputsCollator
 from .gemma4.loading import load_config, resolve_checkpoint_dir
-from .interface import CollatedBatch, Collator, ObservationMemory, kv_stream_name
+from .interface import (
+    BatchInputs,
+    CollatedBatch,
+    Collator,
+    ObservationMemory,
+    kv_stream_name,
+)
 from .loading import (
     BackboneConfig,
     BackboneDepth,
@@ -234,7 +240,7 @@ class TrainArgs:
         return self.backbone_text_lr is not None or self.backbone_vision_lr is not None
 
 
-class DevicePrefetcher:
+class DevicePrefetcher[I: BatchInputs]:
     """One-batch-lookahead host->device transfer on a side CUDA stream.
 
     Centralizes every H2D copy of the training pipeline: the loop receives
@@ -247,13 +253,13 @@ class DevicePrefetcher:
 
     def __init__(
         self,
-        loader: Iterable[CollatedBatch[GemmaInputs] | ChunkedBatch],
+        loader: Iterable[CollatedBatch[I] | ChunkedBatch[I]],
         device: torch.device,
     ) -> None:
         self.loader = loader
         self.device = device
 
-    def __iter__(self) -> Iterator[CollatedBatch[GemmaInputs] | ChunkedBatch]:
+    def __iter__(self) -> Iterator[CollatedBatch[I] | ChunkedBatch[I]]:
         if self.device.type != "cuda":
             for batch in self.loader:
                 yield batch.to(self.device)
@@ -263,7 +269,7 @@ class DevicePrefetcher:
         compute_stream = torch.cuda.current_stream(self.device)
         batches = iter(self.loader)
 
-        def preload() -> CollatedBatch[GemmaInputs] | ChunkedBatch | None:
+        def preload() -> CollatedBatch[I] | ChunkedBatch[I] | None:
             cpu_batch = next(batches, None)
             if cpu_batch is None:
                 return None
@@ -282,7 +288,7 @@ class DevicePrefetcher:
 
 
 @dataclass(frozen=True, slots=True)
-class ChunkedBatch:
+class ChunkedBatch[I: BatchInputs]:
     """One optimizer step's samples, collated as ``--backward-chunks``
     equal sub-batches for chunked backward. Splitting happens at COLLATE
     time (each chunk pads to its own max length — position ids are
@@ -291,12 +297,12 @@ class ChunkedBatch:
     full-width batch. Duck-types CollatedBatch's transfer surface for
     the DataLoader pin hook and DevicePrefetcher."""
 
-    chunks: tuple[CollatedBatch[GemmaInputs], ...]
+    chunks: tuple[CollatedBatch[I], ...]
 
     def all_tensors(self) -> list[Tensor]:
         return [t for chunk in self.chunks for t in chunk.all_tensors()]
 
-    def pin_memory(self) -> ChunkedBatch:
+    def pin_memory(self) -> ChunkedBatch[I]:
         return ChunkedBatch(tuple(c.pin_memory() for c in self.chunks))
 
     def to(
@@ -304,14 +310,14 @@ class ChunkedBatch:
         device: torch.device | str,
         *,
         non_blocking: bool = False,
-    ) -> ChunkedBatch:
+    ) -> ChunkedBatch[I]:
         return ChunkedBatch(
             tuple(c.to(device, non_blocking=non_blocking) for c in self.chunks),
         )
 
 
 @dataclass
-class ChunkingCollator:
+class ChunkingCollator[I: BatchInputs]:
     """Train-loader collate for chunked backward: split the step's item
     list into ``chunks`` contiguous, size-balanced sub-lists (equal by
     construction — --backward-chunks divides --batch-size and the train
@@ -321,10 +327,10 @@ class ChunkingCollator:
     identical to the unchunked loader's; the probe collator is never
     wrapped."""
 
-    collator: Collator[GemmaInputs]
+    collator: Collator[I]
     chunks: int
 
-    def __call__(self, samples: list[Any]) -> ChunkedBatch:
+    def __call__(self, samples: list[Any]) -> ChunkedBatch[I]:
         bounds = [(len(samples) * i) // self.chunks for i in range(self.chunks + 1)]
         return ChunkedBatch(
             tuple(
@@ -454,7 +460,7 @@ def decay_split(
     return decayed, undecayed
 
 
-class BijouTrainStep(torch.nn.Module):
+class BijouTrainStep[I: BatchInputs](torch.nn.Module):
     """One training forward — prefix encode + decoder objective — as a
     single module, so ONE DDP wrapper hooks gradients of everything a run
     trains (frozen-backbone runs simply carry no trainable backbone parameters).
@@ -472,7 +478,12 @@ class BijouTrainStep(torch.nn.Module):
     streams to its own dtype.
     """
 
-    def __init__(self, model: BijouModel, *, backbone_trained: bool) -> None:
+    def __init__(
+        self,
+        model: BijouModel[I, Any],
+        *,
+        backbone_trained: bool,
+    ) -> None:
         super().__init__()
         self.model = model
         self.backbone_trained = backbone_trained
@@ -480,7 +491,7 @@ class BijouTrainStep(torch.nn.Module):
     @override
     def forward(
         self,
-        batch: CollatedBatch[GemmaInputs],
+        batch: CollatedBatch[I],
         normalizers: tuple[Tensor, Tensor | None] | None = None,
     ) -> tuple[Tensor, Tensor, Tensor | None, Tensor | None]:
         """Batch (shapes in CollatedBatch's docstring) -> (total loss with
@@ -497,7 +508,9 @@ class BijouTrainStep(torch.nn.Module):
         to fp reduction order), so backwarding each share accumulates
         the unchunked gradient."""
         inputs = batch.encoder_inputs
-        device_type = inputs.input_ids.device.type
+        # Any batch tensor names the device; the inputs protocol has no
+        # per-field surface (trunk-generic).
+        device_type = next(iter(inputs.tensors().values())).device.type
         with torch.autocast(
             device_type,
             torch.bfloat16,
@@ -525,7 +538,7 @@ class BijouTrainStep(torch.nn.Module):
     def _chunk_share(
         self,
         memory: ObservationMemory,
-        batch: CollatedBatch[GemmaInputs],
+        batch: CollatedBatch[I],
         normalizers: tuple[Tensor, Tensor | None],
     ) -> tuple[Tensor, Tensor, Tensor | None, Tensor | None]:
         action_norm, aux_norm = normalizers
@@ -618,7 +631,7 @@ class RichRow:
 
 
 @dataclass(frozen=True, slots=True)
-class ProbeSet:
+class ProbeSet[I: BatchInputs]:
     """This rank's shard of a seeded MAE probe, CPU-resident between evals.
 
     ``total`` is the global probe size across ranks. ``rich_items`` are raw
@@ -628,7 +641,7 @@ class ProbeSet:
     """
 
     total: int
-    batches: list[CollatedBatch[GemmaInputs]]
+    batches: list[CollatedBatch[I]]
     rich_items: list[dict[str, Any]]
     rich_positions: tuple[int, ...]
     # Per shard item (streaming order): the episode's hindsight outcome
@@ -641,9 +654,9 @@ class ProbeSet:
 OUTCOME_BUCKETS = ("success", "partial", "failure", "unlabeled")
 
 
-def build_probe_set(
+def build_probe_set[I: BatchInputs](
     dataset: torch.utils.data.ConcatDataset[dict[str, Any]],
-    collator: Collator[GemmaInputs],
+    collator: Collator[I],
     num_samples: int,
     seed: int,
     rank: int,
@@ -651,7 +664,7 @@ def build_probe_set(
     batch_size: int,
     *,
     keep_rich: bool,
-) -> ProbeSet:
+) -> ProbeSet[I]:
     """Draw, fetch and collate one probe set's shard for this rank.
 
     The frame draw is exactly bijou.eval's: seeded sampling without
@@ -707,15 +720,15 @@ def holding_accuracy(
 
 
 @torch.no_grad()
-def validate(
-    model: BijouModel,
-    probe: ProbeSet,
+def validate[I: BatchInputs](
+    model: BijouModel[I, Any],
+    probe: ProbeSet[I],
     device: torch.device,
     seed: int,
     *,
     distributed: bool = False,
     wandb_run: Any = None,
-    collator: Collator[GemmaInputs] | None = None,
+    collator: Collator[I] | None = None,
     action_names: list[str] | None = None,
     step: int = 0,
     table_key: str = "eval/samples",
@@ -1104,6 +1117,14 @@ def save_checkpoint(
         step=step,
     )
     torch.save(train_state.to_payload(), checkpoint_dir / "optimizer.pt")
+    encoder = model.encoder
+    if not isinstance(encoder, GemmaEncoder):
+        # The prompt section's schema is per-trunk; this writer speaks
+        # Gemma's (per-encoder dispatch lands with the Molmo2 port WPs).
+        raise TypeError(
+            "save_checkpoint writes the Gemma prompt config; the mounted "
+            f"encoder is {type(encoder).__name__}",
+        )
     metadata = CheckpointMetadata(
         backbone=BackboneConfig(
             id=args.backbone,
@@ -1117,11 +1138,11 @@ def save_checkpoint(
             ),
         ),
         prompt=GemmaPromptConfig(
-            exports=model.encoder.exports,
-            residual_exports=model.encoder.residual_exports,
+            exports=encoder.exports,
+            residual_exports=encoder.residual_exports,
             max_soft_tokens=args.max_soft_tokens,
             format=PROMPT_FORMAT,
-            state_dim=model.encoder.state_dim,
+            state_dim=encoder.state_dim,
             condition_fields=tuple(args.condition_fields or ()),
             generate_bracket=(
                 args.decoder == "ar_backbone" or args.prompt_generate_bracket

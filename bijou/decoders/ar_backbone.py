@@ -65,6 +65,7 @@ from ..aux_text import (
     display_text,
 )
 from ..fast.codec import ActionCodec
+from ..gemma4.cache import KVCache
 from ..gemma4.config import Gemma4TextConfig
 from ..gemma4.model import Gemma4Model
 from ..interface import BijouPrediction, CollatedBatch, ObservationMemory
@@ -326,6 +327,13 @@ class ARBackboneDecoder(nn.Module):
             raise ValueError(
                 "ObservationMemory carries no prefix cache — encode with "
                 "retain_cache=True (BijouModel does this for ar_backbone)",
+            )
+        if not isinstance(cache, KVCache):
+            # The seam types the cache opaquely (trunk-private contract);
+            # this decoder continues the GEMMA stack through it.
+            raise TypeError(
+                f"ar_backbone continues the Gemma prefix cache; the memory "
+                f"carries {type(cache).__name__}",
             )
         batch, seq_len, _ = embeds.shape
         device = embeds.device

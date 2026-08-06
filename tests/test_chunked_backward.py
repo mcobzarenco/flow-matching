@@ -50,6 +50,7 @@ from bijou.decoders.flow import (
     flow_matching_loss,
     flow_matching_loss_sums,
 )
+from bijou.gemma4.cache import KVCache
 from bijou.interface import CollatedBatch, MemoryStream, NormStats, ObservationMemory
 from bijou.train import ChunkedBatch, ChunkingCollator
 
@@ -89,6 +90,7 @@ def slice_memory(memory: ObservationMemory, i: int) -> ObservationMemory:
     comparisons isolate the chunk decomposition itself."""
     cache = memory.cache
     if cache is not None:
+        assert isinstance(cache, KVCache)  # opaque at the seam; Gemma here
         sliced = copy.copy(cache)
         sliced.layers = []
         for layer in cache.layers:

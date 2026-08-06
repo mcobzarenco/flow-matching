@@ -44,6 +44,7 @@ from ..gemma4.text import DecoderLayer
 from ..interface import (
     InputsCollator,
     MemoryStream,
+    ObservationEncoder,
     ObservationMemory,
     PromptInputs,
     StreamGeometry,
@@ -289,7 +290,7 @@ class GemmaInputsCollator:
         )
 
 
-class GemmaEncoder(nn.Module):
+class GemmaEncoder(ObservationEncoder[GemmaInputs, Gemma4Model]):
     """The Gemma prompt-side strategy: collation, prefix encoding, and the
     backbone's unfreeze surface (see the module docstring). ``exports`` are
     the global layers whose K/V become the memory streams;
@@ -347,6 +348,7 @@ class GemmaEncoder(nn.Module):
         assert self.state_proj.bias is not None
         nn.init.zeros_(self.state_proj.bias)
 
+    @override
     def stream_geometries(self) -> dict[str, StreamGeometry]:
         """Static geometry per stream name; keys and order match every
         ObservationMemory this encoder produces."""
@@ -358,6 +360,7 @@ class GemmaEncoder(nn.Module):
         )
         return {kv_stream_name(layer): geometry for layer in self.exports}
 
+    @override
     def inputs_collator(self) -> InputsCollator[GemmaInputs]:
         """The encoder-specific half of collation (pickleable into
         dataloader workers)."""
@@ -475,6 +478,7 @@ class GemmaEncoder(nn.Module):
             ),
         )
 
+    @override
     def encode(
         self,
         backbone: Gemma4Model,
@@ -568,6 +572,7 @@ class GemmaEncoder(nn.Module):
         assert backbone.embed_vision is not None
         yield from backbone.embed_vision.parameters()
 
+    @override
     def param_groups(self, backbone: Gemma4Model) -> dict[str, list[nn.Parameter]]:
         """Named unfreezable backbone subsets — the component-lr flags route
         here. Groups are exact: DDP requires every grad-enabled parameter

@@ -261,6 +261,14 @@ def test_pre3_prompt_sections_are_refused() -> None:
     assert from_format1.decoder is None
 
 
+def test_molmo2_prompt_kind_reserved_but_not_loadable() -> None:
+    """The molmo2 tag is reserved (port WP0) so port-era checkpoints have
+    a stable identity, but no loader exists until WP4 — parsing refuses
+    it loudly instead of misreading it as a Gemma section."""
+    with pytest.raises(SystemExit, match="molmo2"):
+        parse_prompt_config({"kind": "molmo2"})
+
+
 def meta_decoder(config: ExpertConfig) -> FlowDecoder:
     """An e2b-sized decoder on the meta device: no allocation, and the
     config guard only reads ``.config``."""

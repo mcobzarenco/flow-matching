@@ -1,9 +1,10 @@
 """Bijou: one backbone, a prompt-side encoder strategy, an action decoder.
 
-The composition root: ``BijouModel`` owns the backbone network ONCE (the
-truncated Gemma), plus one prompt-side encoder strategy (the collation +
-prefix-encode + unfreeze surface, which receives the backbone as an
-argument) and one action decoder. The observation
+The composition root: ``BijouModel`` owns the backbone network ONCE
+(today the truncated Gemma; the seam is trunk-generic), plus one
+prompt-side encoder strategy (the collation + prefix-encode + unfreeze
+surface, which receives the backbone as an argument) and one action
+decoder. The observation
 (chat-templated instruction + camera images) is encoded once and cached
 as an :class:`ObservationMemory`; the decoder then denoises a chunk of
 actions against it, with fresh robot state, at ~10 model evaluations per
@@ -16,7 +17,14 @@ The root is the one place with every role in scope, so it also owns the
 objective dispatch (:meth:`loss`) and the trainable-group routing
 (:meth:`param_groups`).
 
-Naming: "backbone" is the ONE word for the Gemma network, in both its
+The root is generic over the encoder's collated-inputs type ``I`` and
+the trunk type ``B`` (``ObservationEncoder[I, B]`` pairs them by
+construction). Decoder kinds that run the trunk ITSELF (ar_backbone's
+suffix continuation) are Gemma-only today and narrow loudly at their
+dispatch arms — composing them over another trunk is a wiring bug, not
+a silent fallback.
+
+Naming: "backbone" is the ONE word for the trunk network, in both its
 senses — the pretrained artifact (``--backbone``, ``BackboneConfig.id``,
 ``backbone.safetensors``) and the mounted module (``model.backbone``).
 ``expert`` is the decoder's historical name (checkpoint file
@@ -51,19 +59,25 @@ from .decoders.flow import (
     snapflow_distill_loss,
     snapflow_distill_loss_sums,
 )
-from .encoders.gemma4 import GemmaEncoder, GemmaInputs
+from .encoders.gemma4 import GemmaEncoder
 from .gemma4.model import Gemma4Model
-from .interface import BijouPrediction, CollatedBatch, ObservationMemory
+from .interface import (
+    BatchInputs,
+    BijouPrediction,
+    CollatedBatch,
+    ObservationEncoder,
+    ObservationMemory,
+)
 
 
-class BijouModel(nn.Module):
+class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
     """One backbone + one encoder strategy + one decoder (see the module
     docstring)."""
 
     def __init__(
         self,
-        backbone: Gemma4Model,
-        encoder: GemmaEncoder,
+        backbone: B,
+        encoder: ObservationEncoder[I, B],
         decoder: FlowDecoder | ARFastDecoder | ARBackboneDecoder,
     ) -> None:
         super().__init__()
@@ -82,8 +96,8 @@ class BijouModel(nn.Module):
         decoder's own parameters PLUS the encoder's prompt-side ones —
         state_proj — which are "new parameters" in the same sense and
         want the same LR), ``"backbone_text"``/``"backbone_vision"``
-        (unfreezable backbone subsets; see GemmaEncoder.param_groups for
-        the exactness contract). Groups are disjoint by construction —
+        (unfreezable backbone subsets; see ObservationEncoder.param_groups
+        for the exactness contract). Groups are disjoint by construction —
         the encoder module carries only prompt-side parameters, never
         backbone ones (the backbone is passed as an argument). Encoder
         params are filtered by ``requires_grad``: frozen-backbone runs
@@ -98,7 +112,7 @@ class BijouModel(nn.Module):
             "backbone_vision": backbone_groups["vision"],
         }
 
-    def encode(self, inputs: GemmaInputs, *, with_grad: bool) -> ObservationMemory:
+    def encode(self, inputs: I, *, with_grad: bool) -> ObservationMemory:
         """Encode one collated batch of encoder inputs against the
         backbone. ``with_grad=False`` runs under no_grad (eval/rollout/
         frozen training); True leaves autograd on for live-backbone
@@ -132,10 +146,23 @@ class BijouModel(nn.Module):
             )
         return self.decoder
 
+    def _gemma_backbone(self) -> Gemma4Model:
+        """Narrow the generic trunk for the operations that run the Gemma
+        stack itself (ar_backbone's suffix continuation, the tensor-level
+        Gemma encode) — Gemma-only paths today, loud if composed over
+        another trunk."""
+        backbone = self.backbone
+        if not isinstance(backbone, Gemma4Model):
+            raise TypeError(
+                "this operation runs the Gemma trunk; the mounted backbone "
+                f"is {type(backbone).__name__}",
+            )
+        return backbone
+
     def loss(
         self,
         memory: ObservationMemory,
-        batch: CollatedBatch[GemmaInputs],
+        batch: CollatedBatch[I],
     ) -> Tensor:
         """Scalar training loss of this model's decoder for one batch
         against its observation memory — the objective dispatch (each
@@ -145,7 +172,7 @@ class BijouModel(nn.Module):
     def loss_components(
         self,
         memory: ObservationMemory,
-        batch: CollatedBatch[GemmaInputs],
+        batch: CollatedBatch[I],
     ) -> tuple[Tensor, Tensor, Tensor | None, Tensor | None]:
         """(total, action component, aux CE sum | None, aux position
         count | None) — the total carries the graph; the rest arrive
@@ -167,7 +194,7 @@ class BijouModel(nn.Module):
                 return total, total.detach(), None, None
             case ARBackboneDecoder():
                 total, action, aux_sum, aux_count = ar_backbone_losses(
-                    self.backbone,
+                    self._gemma_backbone(),
                     decoder,
                     memory,
                     batch,
@@ -181,7 +208,7 @@ class BijouModel(nn.Module):
 
     def loss_count_normalizers(
         self,
-        batch: CollatedBatch[GemmaInputs],
+        batch: CollatedBatch[I],
     ) -> tuple[Tensor, Tensor | None]:
         """(action normalizer count, aux normalizer count | None) for one
         batch — data-only tensor ops, NO model forward. Chunked backward
@@ -207,7 +234,7 @@ class BijouModel(nn.Module):
     def loss_component_sums(
         self,
         memory: ObservationMemory,
-        batch: CollatedBatch[GemmaInputs],
+        batch: CollatedBatch[I],
     ) -> tuple[Tensor, Tensor, Tensor | None, Tensor | None]:
         """Sum-form objective for chunked backward: (action loss SUM with
         graph, action count, aux CE SUM with graph | None, aux count |
@@ -231,7 +258,12 @@ class BijouModel(nn.Module):
                 loss_sum, count = ar_fast_loss_sums(decoder, memory, batch)
                 return loss_sum, count, None, None
             case ARBackboneDecoder():
-                return ar_backbone_loss_sums(self.backbone, decoder, memory, batch)
+                return ar_backbone_loss_sums(
+                    self._gemma_backbone(),
+                    decoder,
+                    memory,
+                    batch,
+                )
 
     def encode_observation(
         self,
@@ -246,9 +278,18 @@ class BijouModel(nn.Module):
         """Tensor-level observation encode (shapes in
         GemmaEncoder.encode_tensors);
         grad-transparent — training wraps it in autocast, eval in no_grad.
-        Residual taps are attached exactly as in :meth:`encode`."""
-        memory = self.encoder.encode_tensors(
-            self.backbone,
+        Residual taps are attached exactly as in :meth:`encode`. The
+        signature is Gemma's tensor-level convention — a convenience for
+        Gemma compositions, loud otherwise (encode_tensors is not seam
+        surface; the seam-level path is :meth:`encode`)."""
+        encoder = self.encoder
+        if not isinstance(encoder, GemmaEncoder):
+            raise TypeError(
+                "encode_observation speaks the Gemma tensor-level encode "
+                f"convention; the mounted encoder is {type(encoder).__name__}",
+            )
+        memory = encoder.encode_tensors(
+            self._gemma_backbone(),
             input_ids,
             pixel_values=pixel_values,
             image_position_ids=image_position_ids,
@@ -263,7 +304,7 @@ class BijouModel(nn.Module):
     @torch.no_grad()
     def predict_chunk(
         self,
-        batch: CollatedBatch[GemmaInputs],
+        batch: CollatedBatch[I],
         *,
         generator: torch.Generator | None = None,
         noise: Tensor | None = None,
@@ -305,7 +346,7 @@ class BijouModel(nn.Module):
                 )
             case ARBackboneDecoder():
                 return decoder.predict_chunk(
-                    self.backbone,
+                    self._gemma_backbone(),
                     memory,
                     batch,
                     generate=generate,
