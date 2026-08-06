@@ -20,13 +20,15 @@ cd /home/ubuntu/flow-matching
 mkdir -p outputs/train
 
 BATCH="${BATCH:-12}"
-# Rung from the F1 smoke (pre-reg §3): B12 direct OOM'd at 77.5 GiB in
-# the forward; 2x6 chunked backward is the measured rung — global 48
-# unchanged, gradient exactly equivalent.
+# Rung from the F1 smoke (pre-reg §3): the no-zero1 chunk ladder is
+# exhausted (static budget ~76-77 GiB/rank, measured) — the run takes
+# ZeRO-1 optimizer sharding (--zero1, Adam moments ~1/4 per rank,
+# semantics exact) + 2x6 chunked backward. Global 48 unchanged,
+# gradient exactly equivalent.
 BACKWARD_CHUNKS="${BACKWARD_CHUNKS:-2}"
-CHUNK_ARGS=()
+CHUNK_ARGS=(--zero1)
 if [ "$BACKWARD_CHUNKS" -gt 1 ]; then
-    CHUNK_ARGS=(--backward-chunks "$BACKWARD_CHUNKS")
+    CHUNK_ARGS+=(--backward-chunks "$BACKWARD_CHUNKS")
 fi
 
 # GPU-clear guard: all four GPUs must be free.

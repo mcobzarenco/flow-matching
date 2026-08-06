@@ -67,6 +67,7 @@ import torch
 import transformers
 from safetensors.torch import load_file, save_file
 from torch import Tensor
+from torch.distributed.optim import ZeroRedundancyOptimizer
 
 import wandb
 
@@ -229,6 +230,12 @@ class TrainArgs:
     # per-step gradient equals the unchunked one up to fp reduction
     # order (sum-form losses over full-batch normalizers).
     backward_chunks: int
+    # Shard optimizer state across DDP ranks (ZeRO stage 1,
+    # ZeroRedundancyOptimizer). Update semantics are exact — each
+    # parameter's Adam state lives on exactly one rank and the updated
+    # shards are broadcast after each step — only the per-rank memory
+    # changes. Requires torchrun (world > 1).
+    zero1: bool
     steps: int
     decoder_lr: float
     backbone_text_lr: float | None
@@ -1737,6 +1744,15 @@ def parse_args() -> TrainArgs:
         "the unchunked one up to fp reduction order). Must divide "
         "--batch-size; 1 = the byte-identical unchunked path",
     )
+    parser.add_argument(
+        "--zero1",
+        action="store_true",
+        help="shard optimizer state across DDP ranks (ZeRO-1, "
+        "torch ZeroRedundancyOptimizer): Adam moments live on one rank "
+        "per parameter and updated shards broadcast after each step — "
+        "update semantics exact, per-rank optimizer memory ~1/world. "
+        "Requires torchrun with world size > 1",
+    )
     parser.add_argument("--steps", type=int, default=200, help="total optimizer steps")
     parser.add_argument(
         "--decoder-lr",
@@ -2140,6 +2156,7 @@ def parse_args() -> TrainArgs:
         batch_size=raw.batch_size,
         bucket_by_length=raw.bucket_by_length,
         backward_chunks=raw.backward_chunks,
+        zero1=raw.zero1,
         steps=raw.steps,
         decoder_lr=raw.decoder_lr,
         backbone_text_lr=raw.backbone_text_lr,
@@ -2195,6 +2212,12 @@ def main() -> int:
     # run — identical behavior to before DDP support existed.
     world_size = int(os.environ.get("WORLD_SIZE", "1"))
     distributed = world_size > 1
+    if args.zero1 and not distributed:
+        raise SystemExit(
+            "--zero1 shards optimizer state across ranks and needs "
+            "torchrun with world size > 1 (a single-process run has "
+            "nothing to shard across)",
+        )
     device = torch.device(args.device)
     rank = 0
     if distributed:
@@ -2873,16 +2896,30 @@ def main() -> int:
             },
         )
         cli_groups.append((f"{group_name} (no decay)", group_lr, 0.0))
-    optimizer = torch.optim.AdamW(
-        param_groups,
-        lr=args.decoder_lr,
-        betas=(0.9, 0.95),
-        weight_decay=args.weight_decay,
+    adamw_kwargs: dict[str, Any] = {
+        "lr": args.decoder_lr,
+        "betas": (0.9, 0.95),
+        "weight_decay": args.weight_decay,
         # One kernel launch per param group instead of the foreach chain;
         # CUDA only (CPU runs keep the reference path, which also keeps
         # the CPU loss oracle stable).
-        fused=device.type == "cuda",
-    )
+        "fused": device.type == "cuda",
+    }
+    optimizer: torch.optim.Optimizer
+    if args.zero1:
+        # ZeRO-1: each parameter's Adam state lives on exactly one rank
+        # (greedy size-balanced partition per group); after each local
+        # step the updated shards broadcast so every replica sees the
+        # same weights DDP's gradient allreduce already guarantees the
+        # same update for. Exact, not approximate — only per-rank
+        # optimizer memory changes (~1/world of the moments).
+        optimizer = ZeroRedundancyOptimizer(
+            param_groups,
+            optimizer_class=torch.optim.AdamW,
+            **adamw_kwargs,
+        )
+    else:
+        optimizer = torch.optim.AdamW(param_groups, **adamw_kwargs)
     # Everything the optimizer updates, for the gradient clip: the frozen
     # path clips exactly the expert (unchanged behavior); a live backbone is
     # clipped jointly with it (one global norm).
@@ -3376,7 +3413,15 @@ def main() -> int:
                     if wandb_run is not None:
                         wandb_run.log(probe_metrics, step=step)
 
-            if (step % args.save_every == 0 or step == args.steps) and is_main:
+            save_boundary = step % args.save_every == 0 or step == args.steps
+            if save_boundary and args.zero1:
+                # Collective — every rank streams its optimizer shard to
+                # rank 0 BEFORE the is_main-gated save below reads
+                # state_dict() (which raises unconsolidated). Transient:
+                # one remote shard on-device at a time.
+                assert isinstance(optimizer, ZeroRedundancyOptimizer)
+                optimizer.consolidate_state_dict(to=0)
+            if save_boundary and is_main:
                 path = save_checkpoint(
                     model,
                     args=args,

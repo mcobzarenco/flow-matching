@@ -114,6 +114,7 @@ def make_args(
         batch_size=2,
         bucket_by_length=False,
         backward_chunks=1,
+        zero1=False,
         steps=2,
         decoder_lr=1e-4,
         backbone_text_lr=backbone_text_lr,
