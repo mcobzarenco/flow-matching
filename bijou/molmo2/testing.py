@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -27,6 +28,38 @@ from safetensors.torch import save_file
 from .config import Molmo2Config
 from .text import Molmo2TextModel
 from .vision import Molmo2VisionBackbone
+
+
+@dataclass(frozen=True, slots=True)
+class GoldenCase:
+    """One processor golden fixture: deterministic synthetic input images
+    (``sizes`` are (width, height) for ``synthetic_test_image``) with
+    camera kinds, at one ``max_crops`` setting. Shared by the banking
+    script (reference side) and ``tests/test_molmo2_processor.py``
+    (native side) so both always process identical inputs."""
+
+    name: str
+    sizes: tuple[tuple[int, int], ...]
+    kinds: tuple[str, ...]
+    max_crops: int
+
+
+def golden_cases() -> tuple[GoldenCase, ...]:
+    return (
+        # The operating point: 480p rig frame, crops off (1x1 tiling).
+        GoldenCase("single_640x480_mc1", ((640, 480),), ("wrist",), 1),
+        # Two cameras (the rig layout): multi-image hoist + labels + the
+        # per-image pooling-index offsets.
+        GoldenCase(
+            "two_images_mc1",
+            ((640, 480), (320, 240)),
+            ("wrist", "overhead"),
+            1,
+        ),
+        # Full multi-crop tiling (2x2 at 640x480): margin masking, the
+        # crop-window transpose, partial edge pooling groups.
+        GoldenCase("single_640x480_mc8", ((640, 480),), ("wrist",), 8),
+    )
 
 
 def tiny_config_json() -> dict[str, Any]:

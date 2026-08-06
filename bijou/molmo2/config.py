@@ -70,6 +70,19 @@ class Molmo2TextConfig:
     def total_vocab_size(self) -> int:
         return self.vocab_size + self.additional_vocab_size
 
+    @property
+    def fast_block_base(self) -> int:
+        """First backbone id of the FAST action block (AR-first amendment,
+        2026-08-06): the 1,026 FAST ids (1,024 BPE + BOA + PAD) do NOT fit
+        Qwen3's ~271-id unused tail, so they anchor as a SECOND extension
+        block directly after the image specials — ids
+        [vocab + additional, vocab + additional + vocab_total), i.e.
+        [152,064, 153,090) for the 4B SKU. The trunk carries no rows for
+        them: the embedding rows and the fresh untied head rows are
+        decoder-owned trainable parameters (Molmo2's own new_embedding
+        pattern), while ``wte`` and the shipped ``lm_head`` stay frozen."""
+        return self.total_vocab_size
+
     @classmethod
     def from_dict(cls, data: dict[str, Any], *, tie_word_embeddings: bool) -> Self:
         """Parse an HF ``text_config`` dict (``model_type: molmo2_text``).

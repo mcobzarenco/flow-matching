@@ -319,11 +319,32 @@ oracles:
    oracles; **vision parity PASSED** on real processor inputs
    (synthetic 640x480, 725 image tokens): 4.4e-7 relative vs the HF
    SDPA reference, every partial crop-edge pooling group exact.
-   WP3 processor/prompt assembly is next.
-5. WP4–WP5 + the §4 suite green + `check.py` green.
+5. ~~WP3 processor/prompt assembly~~ — DONE 2026-08-06 (evening
+   session): NATIVE processor + collator (`bijou/molmo2/processor.py`,
+   `bijou/encoders/molmo2.py`) — the shipped processor is
+   trust_remote_code pinned to transformers 4.x, so crops/tiling/
+   pooling-index/token-layout are reimplemented op-for-op and gated
+   **byte-exact against the reference processor** via golden fixtures
+   banked from its own 4.57 side-env
+   (`bank_processor_goldens.py`; ids, token-type mask, grids, pooling
+   indices, pixels — 3 cases incl. the two-camera rig layout and 2x2
+   multi-crop). Prompt format namespaced (MOLMO2_PROMPT_FORMAT 1):
+   images hoisted per the shipped template bytes, `[kind camera|
+   Image i]` bracket groups bind kinds to the shipped labels, soft
+   state token spliced inside the `(<|im_end|>, \n)` turn close, LEFT
+   padding, bos = `<|im_end|>` (the checkpoint's own convention).
+   Operating point `max_crops=1` → 410 image tokens/camera, the
+   smallest layout inside the shipped distribution. **FAST anchoring
+   recorded in the schema**: block base 152,064
+   (`Molmo2TextConfig.fast_block_base` — the second extension block
+   after the 128 image specials; embedding + fresh untied head rows
+   are decoder-owned trainables). 10 new CPU oracles; check.py 322
+   green.
+6. WP4–WP5 + the §4 suite green + `check.py` green.
 
-**Proposed amendment (2026-08-06 17:51Z owner steering, reply
-posted, owner ack pending): AR-FIRST.** The owner's paired two-arm
+**Amendment (2026-08-06 17:51Z owner steering; CONFIRMED by owner
+18:12Z "Agreed. Let's focus on WP3" + 18:10Z "run molmo2 tonight"):
+AR-FIRST.** The owner's paired two-arm
 report ([hosted](../reports.md), Δ−2.69/−20% @2.5k, ~8× noise floor)
 plus π0.5 flip the §3 non-goal: phase 1 becomes a Molmo2-4B **AR run**
 (FAST + aux-text, full trunk live, 4×DDP box) with a shot at a new
@@ -335,7 +356,7 @@ matrix** (Molmo2's own pattern for its 128 image specials) at ids
 [152,064, 153,090) + fresh untied lm-head rows — no collision, no
 tail archaeology, recorded in the schema. π0.5 deep-read + relevance
 post queued.
-6. **Then and only then**: pre-registration of the first run — flow
+7. **Then and only then**: pre-registration of the first run — flow
    stage-2 screen on the frozen raw Molmo2 15-layer mount,
    panel-v2/stable keying, vs a matched **raw-Gemma-prefix
    baseline arm** (whether the §8.11 controlled-phase artifact is
