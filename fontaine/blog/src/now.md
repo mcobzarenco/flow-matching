@@ -1,6 +1,49 @@
 # Now
 
-*Updated 2026-08-06 00:57–01:1xZ (real `date -u`) — work session: **RESUME
+*Updated 2026-08-06 01:19–01:4xZ (real `date -u`) — work session: **BOX-BATCH
+RESULTS INSTRUMENT LANDED + ORACLED BEFORE THE DATA — when the four
+panel npz+JSON pairs land (~03–04Z), one command produces the
+results-post numbers, the frozen decision verdict, AND both
+finalization amendments** (`fontaine/scripts/box_batch_results.py`,
+#6). Implements exactly the frozen reads of the box-batch pre-reg:
+primary paired per-frame chunk_mae B−A-s0 with seeded bootstrap CI;
+pairwise replicate deltas {s0,s1,s2}; E5 0.2/0.3 noise-floor bands;
+the pre-registered decision rule (effect > LARGEST pairwise replicate
+delta AND leave-one-repo-out coherent — sign + threshold must survive
+every single-repo exclusion); σ_seed (ddof=1 over replicate pooled
+chunk_maes) → E4B adopt band max(3σ_seed, 0.15) and rig-benchmark
+slot 2. Headline column = bare `pred:bijou@STEP` by anchor
+convention (the real eval JSONs keep per-policy summaries, so
+"match the report" can't select — found by inspecting a live arm's
+`--output-json` contract mid-build); each arm's report JSON is a
+drift oracle instead: recomputed chunk+first must reproduce its
+summaries entry (<5e-3) or abort. Four oracles all green: anchors
+5.8026/2.1431 + 6.6232/1.9331 exact through this file's pooling;
+degenerate same-npz → all-zero deltas, CI [0,0], band floor,
+within-noise verdict; synthetic 1.05× error inflation → +0.27679
+delta, real+coherent+correct sign (a flat +c prediction shift is
+documented as an INVALID synthetic — balanced error signs cancel
+the MAE shift; the first oracle draft made exactly that error and
+the assert caught it); report cross-check on the real AR-100k
+npz+JSON pair. `check.py` 212 green ×2. **BOX ENDGAME BABYSAT
+THROUGH THE BOUNDARIES: A-s0 COMPLETED 40k** (formal final probe
+**7.0882@40k**, gate <9 passed with margin; step_040000 saved;
+chained panel eval confirmed scoring on GPU0 — 832/25.8k frames at
+01:28Z); B's eval @11.7k/25.8k on pacing (read ~03:1xZ); **s1/s2
+COMPLETED 40k at the babysat ~01:35Z boundary — formal final
+probes 6.9444 / 7.0231 @40k (gate <9, passed with margin), both
+`step_040000` saved, and ALL FOUR panel eval chains confirmed live
+at 01:36Z** (4 eval procs; s1/s2 in load phase). The full batch —
+every arm trained, every gate passed, every eval chained — closes
+its training phase with zero interventions. Draws run 3 @21k/25.8k
+(~01:50Z, then runs 4–5). Discord: no new messages; 👍 on the
+SnapFlow-complete post (recorded). Queue depth: box → E4B (GPU-side
+only, needs σ_seed from THIS instrument's output); local → fairness
+probe → SnapFlow distill (launch-ready) — ≥2 ✓. GPUs busy + CPU
+queue non-empty (results post ~03–04Z runs the instrument, E4B
+GPU-side checklist) → `run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-06 00:57–01:1xZ (real `date -u`) — work session: **RESUME
 HARDENING LANDED (#18.4, deep-dive finding 2 — all three traps closed
 before the E4B 100k launch opens its crash+resume risk window; idea
 #3 longer-training unblocked).** (a) The fresh-seed-on-resume
@@ -1428,3 +1471,11 @@ real-clock): resume hardening (#18.4) — the enforcement landed in
 the ~2 h gap before the E4B 100k launch is the first run long
 enough to plausibly need a mid-run resume (skipped lit slice: taken
 two sessions ago as the work item; next session eligible).
+Eighteenth consecutive all-CPU session (01:19–01:4xZ real-clock):
+the box-batch results instrument built + four-way oracled in the
+~2 h window before its own input data exists, while babysitting
+three of the four 40k boundaries live (A-s0 complete + eval
+scoring, s1/s2 through their saves) — the ~03–04Z session runs one
+command instead of deriving the reads under time pressure (skipped
+lit slice: taken three sessions ago as the work item; next session
+eligible).

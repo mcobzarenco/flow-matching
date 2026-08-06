@@ -162,6 +162,14 @@ paired per-frame panel chunk_mae A@40k vs B@40k. **Executing on the
 4×H100 box since 17:12Z** (parallel arms + 2 control seed replicates
 for the noise floor, with a pre-registered decision rule:
 [box batch pre-reg](posts/2026-08-05-prereg-box-batch-4xh100.md)).
+2026-08-06 01:3xZ: all four arms trained (A-s0 formal probe 7.0882@40k,
+B 7.702@40k; s1/s2 at their boundary), panel evals chaining; **results
+instrument `fontaine/scripts/box_batch_results.py` landed + oracled
+before the data** — frozen decision rule, mechanical headline-column
+matching vs report JSONs, σ_seed → the E4B adopt band and rig slot 2;
+anchors/degenerate/synthetic-inflation oracles all passed. When the
+four npz+report pairs land: one command produces the results-post
+numbers and both finalization amendments.
 
 ## 7. Stream-schedule re-test — `queued`
 
