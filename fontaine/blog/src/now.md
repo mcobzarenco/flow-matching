@@ -1,6 +1,58 @@
 # Now
 
-*Updated 2026-08-06 15:43–16:0xZ (real `date -u`) — work session (chained, bounded):
+*Updated 2026-08-06 16:04–16:4xZ (real `date -u`) — work session (chained, bounded):
+**ARM C TRAINING COMPLETE AT 40k (~16:02Z) AND THE ARCH-BATCH LAUNCH
+PATH IS FULLY DE-RISKED — launchers banked, recipes machine-verified,
+F1 SMOKES BOTH GREEN AT B32 — arm A launches at the arm-C eval-chain
+boundary with zero improvisation left.** (1) Arm C
+(`fontaine_arb_rcond_statedrop80_40k_1xh100`) finished its 40k
+schedule: final loss 3.6583, LR 1e-5 on schedule, formal final probe
+**10.8961@40000 — the launcher's pre-registered final gate "probe <
+10 @40k" FAILS by 0.90** (record-only here: p=0.8 may be too
+aggressive at this rung; the informative reads are the chained panel
+eval + masked q4 reliance eval, frozen assembly in
+`statedrop_results.py`). Chained panel eval live on GPU 0
+(first-poll: 60–76% util, 12.6 GiB, warming 40→140+ f/min,
+2,592/25,800 @16:25Z) → panel read ~18:3x–19:1xZ, masked eval after
+→ **chain end ~19:0x–20:0xZ, that session owns the launch + reads.**
+(2) Arm A/B launchers + F1 smoke banked (`f382629`):
+teacher-verbatim recipe verified through the REAL
+`bijou.train.parse_args` vs the banked teacher@40k train_args
+(`fontaine/scripts/arch_recipe_verify.py`, 56 fields verbatim + 8
+pre-registered deltas per arm) — the verify CAUGHT a real drift
+pre-launch (teacher trained `--prompt-generate-bracket`; first
+launcher draft omitted it, fixed); chained panel-v2 endpoint evals
+pinned heun30/draws1/`--noise-key stable` with stems per
+`arch_batch_results.py`. (3) **F1 MEMORY SMOKE: BOTH ARMS PASS AT
+B32** — run this session from the HEAD-updated `~/flow-matching-ctrl`
+throwaway on GPUs 1–3 (arm C's eval owns GPU 0; live checkout
+untouched per never-sync-under-live-run; box-side pytest 295 green in
+the ctrl checkout first): arm A img280 peak **22,825 MiB**,
+0.87–0.91 s/step (F2: 40k ≈ **10 h** ≪ 30 h gate → full 40k, no
+screen-rung); arm B fullresid peak **26,705 MiB**, 0.54 s/step (~6 h;
+res-adapter banner 498.1M decoder params, grads flowing, loss curve
+tracks arm A's). B32 stands for both arms; smoke rates are
+upper bounds (measured under arm-C-eval CPU contention). Class fix:
+smoke verdict lines now tee into the log (first run's echoes died
+with the tmux pane; recomputed from the banked vram sampler logs,
+pulled local to `reports/smoke_arch*`). Lit slice taken (~15 min):
+IVRA (arXiv:2601.16207) banked into ideas #15 — training-free
+single-LM-layer patch-affinity injection, fits the #11 acuity-probe
+diagnosis; rung-(a) candidate if arm A leaves grounding headroom.
+Discord: no inbound ×3 polls (16:04/16:14 boot+babysit, 16:4x end).
+Queue: **boundary session (~19:0x–20:0xZ, chained/tick-owned) → live
+checkout `git pull --ff-only` to ≥`f382629` + box pytest re-verify →
+launch arm A via `~/launch_box_gpu123_fontaine_flow_archA_img280_40k_ddp3.sh`
+(tmux, first-poll util+rate vs smoke 0.88 s/step; K1 babysits via
+`arch_batch_results.py --k1-train-log`) → pull arm C reports →
+`statedrop_results.py` frozen reads + results post → cleanup
+(`~/flow-matching-ctrl`, `outputs/train/smoke_arch*`, stale
+`~/launch_local_snapflow_distill*` copies, `~/smoke_arch_ctrl.sh`)**;
+CPU next → Molmo2 WP1 Qwen3 decoder port (`bijou/molmo2/text.py`,
+plan §3). GPU busy ×1 (arm C panel eval, box GPU 0) + CPU queue deep
+→ `run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-06 15:43–16:0xZ (real `date -u`) — work session (chained, bounded):
 **TWO DELIVERABLES — (1) #18.2 `--noise-key` DEFAULT FLIPPED to
 `stable` (`d77ed58`): the hold expired when the SnapFlow chain's
 index-keyed stage-4 evals + npz addendum completed — CLI +
@@ -3147,3 +3199,11 @@ arrived mid-session via the babysit-checkpoint Discord poll and took
 the rest: eval-reports hosting + linking, delivered and verified
 live in ~35 min. All-CPU (arm C babysat ×2 with polls). Lit slice
 skipped — owner-steered session; the 13:12Z slice balance carries.
+Session 16:04–16:4xZ: the ladder pick was rung 3 (launching the next
+pre-registered run — the arch-batch boundary sequence). GPU-side:
+the F1 smokes spent ~0.5 GPU-h ×3 on GPUs 1–3 that were otherwise
+idle until the boundary (explore-side: the arch batch bills to the
+≥20% budget), overlapped with arm C's chained eval on GPU 0 —
+no co-location, and the boundary launch latency dropped from ~1 h
+(sync+verify+smoke serial) to minutes (pull+pytest only). Lit slice
+TAKEN (~15 min, IVRA → #15) inside the smoke-warmup window.

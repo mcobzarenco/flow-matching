@@ -84,5 +84,9 @@ set -e
 kill "$SAMPLER_PID" 2>/dev/null || true
 PEAK=$(tr ' ' '\n' < "$VRAM_LOG" | sort -n | tail -1)
 RATE=$(grep -o '"s_per_step": [0-9.]*' "/home/ubuntu/smoke_${TAG}.log" | tail -5 | awk '{s+=$2} END {if (NR) printf "%.3f", s/NR; else print "n/a"}')
-echo "=== F1 SMOKE ${TAG}: rc=${TRAIN_RC}, peak VRAM ${PEAK} MiB (any GPU), s/step(last5) ${RATE} ==="
-echo "=== F1 pass: rc=0 AND peak <= ~75000 MiB. F2 (arm A): 40000*rate <= 108000 s (30 h) ==="
+# Verdict tee'd into the smoke log too — a tmux pane dies with the
+# session, the log is the record (lesson: first run's echoes were lost).
+{
+  echo "=== F1 SMOKE ${TAG}: rc=${TRAIN_RC}, peak VRAM ${PEAK} MiB (any GPU), s/step(last5) ${RATE} ==="
+  echo "=== F1 pass: rc=0 AND peak <= ~75000 MiB. F2 (arm A): 40000*rate <= 108000 s (30 h) ==="
+} | tee -a "/home/ubuntu/smoke_${TAG}.log"

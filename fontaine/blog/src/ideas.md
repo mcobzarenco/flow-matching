@@ -1008,3 +1008,18 @@ tokenization, data curation) feeds this list; every borrowed idea
 cites its source in the pre-registration; every "novel" idea gets a
 search first. Local canon: π0, π0.5, SmolVLA, FAST
 (arXiv:2501.09747).
+
+- **IVRA (arXiv:2601.16207, lit slice 2026-08-06 16:2xZ)** —
+  training-free, inference-side: VLAs flatten patches to 1D and lose
+  2D spatial cues; IVRA injects vision-encoder patch-affinity signals
+  into ONE LM layer ("where instance-level features reside"), no
+  retraining, +4.2% on VIMA low-data / consistent LIBERO gains across
+  LLaRA/OpenVLA/FLOWER. Fits #11's diagnosis exactly (acuity probe:
+  position info sharpest at tower output, degraded through LM layers).
+  Our analogue: bias trunk attention over soft tokens with
+  tower-output affinities at eval — rung (a), zero training, panel
+  first_mae is the readout. Cheapest falsification: single-layer
+  injection on the flow teacher, panel-v2 first_mae vs banked
+  2.0720 ctrl. Worth a probe if arm A's img280 read leaves grounding
+  headroom on the table (interacts: more tokens vs better-used
+  tokens are the same front, opposite ends).
