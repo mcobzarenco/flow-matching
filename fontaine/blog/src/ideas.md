@@ -518,6 +518,8 @@ variants, consistency/distillation toward 1–2-step deployment decodes
   addendum `eval_snapdistill_endpoint_1nfe_npz.sh` staged (noise-key
   pinned `index` explicitly). Standing hold: the `--noise-key`
   default stays `index` until the chain's endpoint evals run at 30k.
+  **Hold RELEASED — default flipped to `stable` 2026-08-06 ~15:5xZ
+  (#18.2 follow-on, see item 2 in the deep-dive list).**
 - **Pointer reads closed (lit slice 2026-08-06):** OFP
   ([2603.12480](https://arxiv.org/abs/2603.12480)) — *from-scratch*
   one-step self-distillation (self-consistency + self-guided
@@ -848,7 +850,14 @@ queue, in leverage order (details + file:line in the post):
    bitwise ✓, stable-key chunk 6.5997 INSIDE the band (Δ −0.0242 ≈
    1σ_draw), first 1.9355. `stable` is now the quoted keying for all
    new flow numbers; ledger anchor re-banked. The #18.2 chain is
-   closed.**
+   closed.** **DEFAULT FLIPPED 2026-08-06 ~15:5xZ:** the code default
+   (`bijou.eval` CLI + `BijouPolicy`/`SmolVLAEvalPolicy` ctors) is now
+   `stable` — the hold expired when the SnapFlow chain's index-keyed
+   stage-4 endpoint evals + npz addendum completed (15:10Z). `index`
+   retained permanently behind an explicit flag for historical
+   reproduction; new default-pin regression test; check.py 295 green.
+   Arm A/B launchers written at the box boundary inherit `stable`, as
+   the arch-batch pre-reg requires.
 3. ~~Q3 tripwire noise fix~~ **DONE 2026-08-06 ~02:4xZ** (deep-dive
    finding 3, closed before the SnapFlow distill launch — the next
    conditioned flow run): `FlowDecoder.predict_chunk` now returns the

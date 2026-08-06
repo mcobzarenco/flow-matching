@@ -4,10 +4,14 @@ corpus-composition-invariant scheme behind ``--noise-key stable``
 
 from __future__ import annotations
 
+import inspect
+import sys
+
 import pytest
 import torch
 
 from bijou.eval.policies import (
+    BijouPolicy,
     noise_for_item,
     sample_noise,
     stable_noise,
@@ -21,9 +25,9 @@ def _item(repo: str, episode: int, frame: int) -> dict[str, object]:
 
 
 def test_index_keying_is_byte_identical_to_history() -> None:
-    """The default path must reproduce the historical noise exactly —
-    every banked flow anchor depends on it until the reseed amendment
-    executes."""
+    """The legacy path must reproduce the historical noise exactly —
+    every index-keyed banked report stays reproducible under an
+    explicit ``--noise-key index`` forever."""
     for index in (0, 7, 20_719_388):
         assert torch.equal(
             noise_for_item("index", 3, _item("any/repo", 0, 0), index, 0, SHAPE),
@@ -92,3 +96,23 @@ def test_stable_noise_is_standard_normal() -> None:
 def test_unknown_noise_key_fails_loudly() -> None:
     with pytest.raises(ValueError, match="unknown noise key"):
         noise_for_item("typo", 0, _item("r", 0, 0), 0, 0, SHAPE)
+
+
+def test_default_keying_is_stable() -> None:
+    """The #18.2 default flip (executed 2026-08-06 after the SnapFlow
+    chain's index-keyed endpoint evals completed): 'stable' is the
+    quoted keying for all new flow numbers, on the CLI and on every
+    policy constructor. Index-keyed comparisons must opt in
+    explicitly."""
+    from bijou.eval.cli import parse_args
+    from bijou.eval.smolvla import SmolVLAEvalPolicy
+
+    argv = sys.argv
+    sys.argv = ["bijou.eval", "--data", "unused"]
+    try:
+        assert parse_args().noise_key == "stable"
+    finally:
+        sys.argv = argv
+    for ctor in (BijouPolicy, SmolVLAEvalPolicy):
+        params = inspect.signature(ctor.__init__).parameters
+        assert params["noise_key"].default == "stable", ctor.__name__

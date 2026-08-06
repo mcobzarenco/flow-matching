@@ -68,7 +68,7 @@ class SmolVLAEvalPolicy:
         device: torch.device,
         seed: int,
         lerobot_stats: dict[str, dict[str, Any]],
-        noise_key: str = "index",
+        noise_key: str = "stable",
     ) -> None:
         self.name = f"smolvla:{policy_path.rsplit('/', 1)[-1]}"
         self.policy_path = policy_path

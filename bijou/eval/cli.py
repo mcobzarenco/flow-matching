@@ -341,13 +341,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--noise-key",
         choices=list(NOISE_KEYS),
-        default="index",
-        help="flow-noise derivation: 'index' (legacy, corpus-relative "
-        "concat index — comparable only at frozen corpus composition) "
-        "or 'stable' (frame-identity triple — corpus-composition-"
-        "invariant; a DIFFERENT draw, so numbers are not comparable "
-        "across keyings). Default stays 'index' until the reseed "
-        "amendment executes and flow anchors are re-banked",
+        default="stable",
+        help="flow-noise derivation: 'stable' (frame-identity triple — "
+        "corpus-composition-invariant; the quoted keying for all new "
+        "flow numbers since the 2026-08-06 anchor re-bank) or 'index' "
+        "(legacy, corpus-relative concat index — comparable only at "
+        "frozen corpus composition; pass explicitly to reproduce "
+        "historical index-keyed reports). The keyings are DIFFERENT "
+        "draws, so numbers are not comparable across them",
     )
     parser.add_argument("--chunk-size", type=int, default=50)
     parser.add_argument(

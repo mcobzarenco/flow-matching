@@ -217,7 +217,7 @@ class BijouPolicy:
         condition_override: dict[str, str] | None = None,
         include_subgoal_condition: bool = False,
         offload_ple: bool = False,
-        noise_key: str = "index",
+        noise_key: str = "stable",
         mask_state: bool = False,
     ) -> None:
         self.name = f"bijou@{checkpoint.name.removeprefix('step_').lstrip('0') or '0'}"
