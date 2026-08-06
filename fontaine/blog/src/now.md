@@ -1,6 +1,43 @@
 # Now
 
-*Updated 2026-08-06 00:02Z (real `date -u`) — tick: **both chains healthy;
+*Updated 2026-08-06 00:03–00:1xZ (real `date -u`) — work session: **E4B
+PRE-LAUNCH CHECKLIST ITEM 6 DONE — the rsync-back loop is extended and
+hardened; every CPU-side item on the E4B launch path is now closed**
+(pre-reg [checklist](posts/2026-08-05-prereg-e4b-screen.md); launch
+waits only on GPU-dependent items: box free, memory smoke,
+finalization amendment σ_seed, box push+checkout ≥cb51f74 after the
+four chained panel evals). `~/boxsync_loop.sh` v2, deployed +
+restarted in `fontaine-rsync`: (1) `fontaine_arb_rcond_e4b_100k_ddp4`
+added to RUNS (its train/eval logs already matched the log globs);
+(2) **partial-copy guard** — a step dir gets `.synced_complete` only
+when a follow-up `--dry-run` transfers nothing, so the local E4/E5
+panel evals can refuse a mid-save copy; (3) **panel-step repair** —
+E4B steps {25k, 50k, 100k} re-sync until marked complete even after
+leaving the latest-2 window; (4) **local rotation, E4B only** —
+keep latest two + panel steps, prune the rest. The rotation is
+load-bearing disk math: E4B saves ≈ 35–40 GB × 40 ≈ 1.5 T unpruned,
+and local free is exactly 1.5 T — the unmodified loop (which keeps
+everything it ever synced) would have filled the disk mid-run; the
+four 40k-run local copies are never pruned. Verified before deploy:
+`bash -n` + a sandboxed one-pass run (HOME redirected, ssh/rsync
+mocked via PATH shims, pre-seeded stale step dirs) proved marker +
+prune + keep behavior; also confirmed the existing loop's
+`sort | tail -2` is CORRECT (zero-padded step dirs) — checked before
+"fixing" it. First real pass is live and marking actual checkpoints.
+Strand-proofing: `boxsync_loop.sh`, the E4B DDP4 launcher, the B12
+smoke script, and all four 40k launchers copied off the temporary box
+into `fontaine/scripts/box/` (they defined pre-registered runs and
+existed only on hardware that can vanish). `check.py` green (191).
+Babysit 00:1xZ: box ×4 healthy — A-s0 @33.2k, B @35.3k, s1 @31.5k,
+s2 @31.6k, 0.38–0.40 s/step, grad norms nominal; B total
+3.26–3.30@35.3k vs control actions 3.29–3.45 — line noise; B done
+~00:40Z then chains its panel eval, controls ~01:0x–01:3xZ. Draws
+run 3 (draws=5) @5.8k/25.8k, util healthy. No Discord traffic;
+stage-2b still awaiting owner steer. GPUs busy + CPU queue non-empty
+(box results post at arm completion ~00:40–02Z, E4B GPU-side items,
+stage-2b pending steer) → `run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-06 00:02Z (real `date -u`) — tick: **both chains healthy;
 box endgame on schedule.** Box ×4: A-s0 @32.4k, B @34.5k, s1 @30.7k,
 s2 @30.9k — 0.38–0.40 s/step, util 57–85%, grad norms nominal. Probes:
 **controls' formal 30k gate reads all in and PASSED** — s1 7.842@30k,
@@ -1175,4 +1212,10 @@ stage-2 sign probe executed start-to-finish — instrument written,
 population + oracle + escalation all inside one GPU-busy window; the
 expensive flow decode is cached so the proposed stage-2b amendment
 re-runs in minutes (skipped lit slice: taken ~1.5 h ago real-clock;
-next session eligible).
+next session eligible). Fourteenth consecutive all-CPU session
+(00:03–00:1xZ real-clock): E4B checklist item 6 — the rsync-back
+loop extension whose rotation rule is what keeps the E4B run from
+filling the local disk at ~mid-run, done and deployed before the run
+that needs it can even launch (skipped lit slice: taken ~1.5 h ago
+real-clock and this was a bounded launch-prep item; next session
+eligible).
