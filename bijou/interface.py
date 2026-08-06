@@ -325,6 +325,18 @@ class InputsCollator[I: BatchInputs](Protocol):
 _IMAGE_KEY_PREFIX = IMAGE_KEY_PREFIX
 
 
+def mask_state_item(item: dict[str, Any]) -> dict[str, Any]:
+    """Replace the item's proprioceptive state with its dataset's state
+    mean, so the normalized soft state token collates to EXACTLY zero
+    (x − x ≡ 0 bitwise) — the prompt stays well-formed but carries zero
+    state information. The ONE masking primitive, shared by the
+    eval-side reliance probe (``--mask-state``) and the train-time
+    ``--state-dropout`` regularizer so their semantics can never drift.
+    Items are rebuilt, never mutated: baselines (state-copy is the
+    intact-state reference) and the truth actions see the originals."""
+    return {**item, "observation.state": item["state_mean"].clone()}
+
+
 @dataclass
 class Collator[I: BatchInputs]:
     """The ONE backbone-agnostic collator: stacks state/actions/targets,
@@ -379,6 +391,14 @@ class Collator[I: BatchInputs]:
     condition_fields: tuple[ConditionField, ...]
     condition_dropout: float
     subgoal_condition_dropout: float
+    # With probability p per sample, mask proprioceptive state to the
+    # dataset mean (``mask_state_item`` — the reliance probe's exact
+    # semantics: normalized token ≡ 0): the anti-shortcut regularizer
+    # from the causal-confusion line (arXiv:2506.23944). Train-time
+    # only; probes and inference score intact state (dropout-0 clones).
+    # Default 0.0 so every non-train construction site stays inert, and
+    # p=0 draws nothing from the RNG (existing streams byte-identical).
+    state_dropout: float = 0.0
     _generator: torch.Generator | None = dataclasses.field(
         default=None,
         repr=False,
@@ -409,6 +429,10 @@ class Collator[I: BatchInputs]:
             raise ValueError(
                 f"subgoal condition dropout {self.subgoal_condition_dropout} "
                 "outside [0, 1)",
+            )
+        if not 0.0 <= self.state_dropout < 1.0:
+            raise ValueError(
+                f"state dropout {self.state_dropout} outside [0, 1)",
             )
         if self.aux is not None and (
             self.camera_filter is not None or self.max_cameras is not None
@@ -618,6 +642,17 @@ class Collator[I: BatchInputs]:
             (attached by StatsAttachedDataset)
           - task: str  (overridden by ``instruction`` when set)
         """
+        if self.state_dropout > 0.0:
+            # Item-level rewrite so EVERY downstream state consumer —
+            # the normalized prompt token below AND the raw
+            # CollatedBatch.state the decoder conditions on — sees the
+            # masked value; actions/targets are untouched.
+            items = [
+                mask_state_item(item)
+                if float(torch.rand((), generator=self._rng())) < self.state_dropout
+                else item
+                for item in items
+            ]
         samples: list[PromptInputs] = []
         aux_rows: list[list[int]] = []
         for item in items:

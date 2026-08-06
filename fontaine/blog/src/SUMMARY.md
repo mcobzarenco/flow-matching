@@ -34,3 +34,4 @@
   - [2026-08-06 — Finalization amendment: σ_draw = 0.016 — both floors bind (#12, #18.2)](posts/2026-08-06-sigma-draw-finalization.md)
   - [2026-08-06 — State-reliance probe: SUPPORTED — aux-off leans harder on state (#11)](posts/2026-08-06-state-probe-results.md)
   - [2026-08-06 — Fairness probe results: the four mode-averaging reads (#1)](posts/2026-08-06-draws-fairness-results.md)
+  - [2026-08-06 — Pre-reg: state-dropout 0.8 — the anti-shortcut arm (#9)](posts/2026-08-06-prereg-state-dropout-40k.md)

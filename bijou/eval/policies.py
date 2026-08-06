@@ -26,7 +26,7 @@ from ..annotations import ConditionField
 from ..aux_text import AuxField, AuxGeneration
 from ..decoders.ar_backbone import ARBackboneDecoder
 from ..decoders.flow import FlowDecoder
-from ..interface import Collator
+from ..interface import Collator, mask_state_item
 from ..loading import CheckpointInfo, from_checkpoint
 from ..model import BijouModel, SamplingMethod
 
@@ -88,13 +88,12 @@ class NormalizedStateCopyPolicy:
 
 
 def mask_state_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """State-reliance probe rewrite: replace each item's proprioceptive
-    state with its dataset's state mean, so the normalized soft state
-    token collates to EXACTLY zero (x − x ≡ 0 bitwise) — the prompt
-    stays well-formed but carries zero state information. Items are
-    rebuilt, never mutated: baseline policies (state-copy is the
-    intact-state reference) and the truth actions see the originals."""
-    return [{**item, "observation.state": item["state_mean"].clone()} for item in items]
+    """State-reliance probe rewrite: every item through
+    ``mask_state_item`` (the shared masking primitive — see its
+    docstring; ``--state-dropout`` applies the same rewrite per sample
+    at train time, so probe and regularizer semantics can never
+    drift)."""
+    return [mask_state_item(item) for item in items]
 
 
 def sample_noise(seed: int, shape: tuple[int, ...]) -> Tensor:

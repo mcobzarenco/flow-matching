@@ -178,6 +178,10 @@ class TrainArgs:
     condition_fields: tuple[str, ...] | None
     condition_dropout: float
     subgoal_dropout: float
+    # Anti-shortcut regularizer (arXiv:2506.23944): probability a
+    # sample's proprioceptive state is masked to its dataset mean at
+    # collation (normalized token ≡ 0). Probes score intact state.
+    state_dropout: float
     decoder_hidden: int
     decoder_heads: int
     decoder_intermediate: int
@@ -1544,6 +1548,17 @@ def parse_args() -> TrainArgs:
         "Probes always score the recorded instruction",
     )
     parser.add_argument(
+        "--state-dropout",
+        type=float,
+        default=0.0,
+        help="probability a sample's proprioceptive state is masked to "
+        "its dataset mean at collation (normalized state token exactly "
+        "zero — the eval --mask-state semantics): trains the policy to "
+        "act from vision when state is uninformative, against the "
+        "proprioception shortcut (arXiv:2506.23944). Probes always "
+        "score intact state",
+    )
+    parser.add_argument(
         "--condition-fields",
         nargs="*",
         choices=[f.value for f in ConditionField],
@@ -1892,6 +1907,8 @@ def parse_args() -> TrainArgs:
         parser.error(
             f"--instruction-augment {raw.instruction_augment} outside [0, 1]",
         )
+    if not 0.0 <= raw.state_dropout < 1.0:
+        parser.error(f"--state-dropout {raw.state_dropout} outside [0, 1)")
     if raw.condition_fields is not None and not raw.condition_fields:
         parser.error("--condition-fields given with no fields — omit the flag")
     if raw.condition_fields is not None:
@@ -2008,6 +2025,7 @@ def parse_args() -> TrainArgs:
         ),
         condition_dropout=condition_dropout,
         subgoal_dropout=subgoal_dropout,
+        state_dropout=raw.state_dropout,
         decoder_hidden=raw.decoder_hidden,
         decoder_heads=raw.decoder_heads,
         decoder_intermediate=raw.decoder_intermediate,
@@ -2238,7 +2256,15 @@ def main() -> int:
         ),
         condition_dropout=args.condition_dropout,
         subgoal_condition_dropout=args.subgoal_dropout,
+        state_dropout=args.state_dropout,
     )
+    if is_main and args.state_dropout > 0:
+        print(
+            f"state dropout: p={args.state_dropout} — proprioceptive state "
+            "masked to the dataset mean per sample (train-time "
+            "regularizer; probes score intact state)",
+            flush=True,
+        )
     if is_main and (args.instruction_augment > 0 or args.condition_fields):
         labeled_episodes = sum(
             len(dataset.episode_annotations) for dataset in selection.datasets
@@ -2290,6 +2316,9 @@ def main() -> int:
         ),
         condition_dropout=0.0,
         subgoal_condition_dropout=0.0,
+        # Probes score deployment conditions: intact state (the masked
+        # readout is the offline --mask-state reliance probe).
+        state_dropout=0.0,
     )
     # The explicit generator (both modes) makes the shuffle order and the
     # dataloader worker base-seeds a pure function of (--seed, rank) —

@@ -229,7 +229,7 @@ block columns only is exact (grammar mask + monotone softcap).
   the AR-side weighting of the attribution front (owner steer
   21:48Z).
 
-## 9. Data levers — `queued` (state-DROPOUT promoted 2026-08-06: owed its own pre-reg)
+## 9. Data levers — `screening` (state-DROPOUT arm PRE-REGISTERED 2026-08-06 ~08:1xZ)
 
 `--trim-leading-idle` (~6.7% of frames), state-noise augmentation,
 judge-score-weighted sampling (never yet run). Each is a cheap paired
@@ -255,7 +255,13 @@ check (charter §2) before training touches it.
   free parameter; the probe's masked-eval instrument doubles as the
   reliance readout for the trained arm; GAP-style phase-guided
   gradient scaling stays the follow-on if dropout helps but
-  plateaus). (Skim-depth, same pass:
+  plateaus). **PRE-REGISTERED 2026-08-06 ~08:1xZ
+  ([pre-reg](posts/2026-08-06-prereg-state-dropout-40k.md)): arm C =
+  A-s0 recipe + `--state-dropout 0.8`, seed 0, 40k, box GPU 0 —
+  paired vs A-s0's banked npz, band 0.15; chained masked-subset
+  reliance eval; `--state-dropout` landed with the pre-reg (shared
+  `mask_state_item` primitive with the eval probe, p=0 bitwise-inert,
+  oracles green).** (Skim-depth, same pass:
   [2602.09722](https://arxiv.org/abs/2602.09722) "Rethinking VLA
   scaling" — pooling heterogeneous robot data induces negative
   transfer; selective mixture + regularization beat full pooling.

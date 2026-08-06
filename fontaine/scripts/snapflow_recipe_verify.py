@@ -65,6 +65,7 @@ POST_TEACHER_DEFAULTS = {
     "target_time_embed": True,  # overridden in EXPECTED_DELTAS anyway
     "distill": "snapflow",
     "allow_same_seed_resume": False,  # resume-hardening flag, 2026-08-06
+    "state_dropout": 0.0,  # #9 anti-shortcut regularizer flag, 2026-08-06
 }
 
 
