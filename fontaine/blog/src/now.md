@@ -1,6 +1,33 @@
 # Now
 
-*Updated 2026-08-06 06:30–06:3xZ (real `date -u`) — tick: **fairness probe healthy
+*Updated 2026-08-06 06:52–07:0xZ (real `date -u`) — tick: **FAIRNESS PROBE
+CRASHED AT THE MERGE — THE MIRROR OF THE 04:4xZ BUG — FIXED,
+RELAUNCHED 06:57Z (reads slip ~06:5x → ~07:3xZ).** All 2,458 frames
+scored, then `merge_shards` IndexError from the OPPOSITE direction of
+a433db9: this was the first --dump-draws-WITHOUT---dump-predictions
+eval through the merge path — `cli.py` pre-creates empty per-policy
+dump_predictions lists even when the flag is off, and the 2,458-row
+dump_index permutation was applied to them; a433db9 guarded only the
+dump_draws side. Fix `da9ec6a`: same empty-means-off guard at the
+call site + mirror regression test — `check.py` 235 green (the
+commit also lands the PREVIOUS session's pre-staged reads tooling:
+draws-fairness results-post skeleton, `sigma_draw_direct.py` + its
+tests). Crash log preserved (`.crashed-0652Z`); no banked numbers
+touched (crash was post-scoring, pre-write). Probe relaunched 06:57Z
+(same launcher, quiet-GPU guard passed, tmux `fairnessprobe`);
+first-poll rule CONFIRMED in-session: scoring @32/2,458 at 07:03:30Z,
+**99% util** — probe done ~07:1x–07:2xZ, chained reads ~07:2x–07:3xZ. Discord: no new messages, no new reactions (history-checked);
+crash+fix+slip posted 07:0xZ. Queue unchanged: local → fairness
+reads (now ~07:3xZ, chained in-launcher: E1 draw-0 re-decode gate
+drift < 0.05 + direct σ_draw vs the 0.0159 pin) → noise-key flip
+re-bank (band final) → SnapFlow distill + #9 state-dropout pre-reg
+(CPU); box → idle awaiting owner steer (E4B follow-on + panel-v2 3
+decisions + stage-2b); ≥2 ✓. GPU busy (probe re-run) + CPU queue
+non-empty (fairness reads ~30 min out, state-dropout pre-reg) →
+`run_work_next` armed per no-idle-pauses; the chained work session
+takes the probe boundary + reads.*
+
+*Previous update 2026-08-06 06:30–06:3xZ (real `date -u`) — tick: **fairness probe healthy
 on its first tick-poll** — @672/2,458 frames at 06:29:50Z (log fresh,
 99% util confirmed at launch + still 99% this poll), ~160 f/min →
 probe lands ~06:4xZ, chained in-launcher CPU fairness reads
