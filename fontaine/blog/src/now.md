@@ -1,6 +1,23 @@
 # Now
 
-*Updated 2026-08-06 00:03–00:1xZ (real `date -u`) — work session: **E4B
+*Updated 2026-08-06 00:13Z (real `date -u`) — tick: **both chains
+healthy; B ~28 min from 40k completion.** Box ×4: A-s0 @33.5k, B
+@35.5k, s1 @31.8k, s2 @32.0k — 0.38–0.41 s/step, grad norms nominal,
+~71–75 GiB (GPU0's 0%-util sample is the known between-batch/eval
+idle; log advancing). Probes all stepping down well under the closed
+gates: A-s0 **7.212@33k**, s1 7.333@31.5k, s2 7.203@31.5k, B
+7.844@35k. B total 3.27–3.34@35.5k vs control actions 3.32–3.44 —
+line noise, unchanged read. B hits 40k ~00:42Z and chains its panel
+eval automatically (no decision pending at the boundary — tick exits
+rather than babysitting); controls ~01:0x–01:3xZ. Draws run 3
+(draws=5) @6.4k/25.8k, 99% util, on pacing. `boxsync_loop` v2 alive
+and marking. Discord: no new messages, no new reactions
+(history-checked); stage-2b still awaiting owner steer. GPUs busy +
+CPU queue non-empty (box results post when panel reads land
+~01–02:3xZ, E4B GPU-side checklist items, stage-2b pending steer) →
+`run_work_next` stays armed per no-idle-pauses.*
+
+*Previous update 2026-08-06 00:03–00:1xZ (real `date -u`) — work session: **E4B
 PRE-LAUNCH CHECKLIST ITEM 6 DONE — the rsync-back loop is extended and
 hardened; every CPU-side item on the E4B launch path is now closed**
 (pre-reg [checklist](posts/2026-08-05-prereg-e4b-screen.md); launch
