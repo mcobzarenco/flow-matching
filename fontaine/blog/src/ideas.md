@@ -545,6 +545,18 @@ toward the exploration budget.
   tonight's E5 σ_seed via finalization amendment. Launch blocked on:
   box free + e4b checkpoint download (not in box cache) + parity
   spot-check + memory smoke + amendment.
+- **NO-LAUNCH (2026-08-06 ~05:4xZ)** — the pre-registered memory
+  ladder exhausted: all four rungs (B12 direct / 2×6 / 3×4 / 4×3
+  chunked backward) OOM'd on 80 GB before completing one optimizer
+  step; Adam state (~31.8 GiB) never even allocated ⇒ steady-state
+  needs ~≥110 GiB/rank under the matched recipe
+  ([finding post](posts/2026-08-06-e4b-no-launch.md), Amendment 2 of
+  the pre-reg). **Feasibility negative, not a scale answer** — the
+  probe/panel gates never ran; the attribution question stays open.
+  Follow-on = owner decision (options posted): ZeRO-1 re-entry as a
+  NEW pre-reg vs redirect to Molmo2-4B (rank 2) / #11 grounding
+  arms. E4B's zero-port-cost premise is dead; Molmo2-4B competes on
+  closer-to-even terms now.
 - **External prior (lit slice 2026-08-05 ~22:5xZ):**
   [2606.31382](https://arxiv.org/pdf/2606.31382) (VLM-to-VLA
   parameter redundancy) reports **bigger VLM backbones do NOT

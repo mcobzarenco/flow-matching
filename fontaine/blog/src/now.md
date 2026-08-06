@@ -1,6 +1,36 @@
 # Now
 
-*Updated 2026-08-06 05:29–05:3xZ (real `date -u`) — tick: **state probe
+*Updated 2026-08-06 05:30–05:4xZ (real `date -u`) — work session: **E4B
+NO-LAUNCH — THE PRE-REGISTERED TERMINAL BRANCH FIRED: all four memory-
+ladder rungs OOM'd on 80 GB; the screen does not launch under the
+matched recipe** ([finding post](posts/2026-08-06-e4b-no-launch.md),
+Amendment 2 finalized in the
+[pre-reg](posts/2026-08-05-prereg-e4b-screen.md)). The chained
+session's smoke had already run rungs 2–4 (2×6 / 3×4 / 4×3 chunked
+backward, correct banners, box code 9ddcfe3): peaks 81,035–81,059 of
+81,559 MiB, every rung dead in the FIRST train_step — **zero
+optimizer steps ⇒ Adam fp32 m/v (~31.8 GiB for 3,975.3M live params)
+never allocated, so the true need is ~≥110 GiB/rank, not a near-miss**
+(consistency: E2B ran 71–75 GiB at ~2.2× fewer live params). Read:
+feasibility negative, NOT a scale answer — probe/panel gates never
+ran, attribution question stays open; E4B's zero-port-cost premise is
+dead, so Molmo2-4B (survey rank 2) competes near-even with any
+ZeRO-1 re-entry (which would be a NEW pre-reg). Follow-on decision
+posted to the owner with 4 options + recommendation (drop E4B →
+box to #11 grounding arms after the probe read; ZeRO-1 re-entry
+queued as a candidate). Blog built + Space pushed (post URL 200;
+link-fix follow-up posted after a wrong hostname in the first
+Discord message). `check.py` 222 green. Probe babysits 05:30/05:38Z:
+arm 3 (A-s0 masked) @1,152→2,432/4,301, 83% util, ~160 f/min — arm 3
+lands ~05:5xZ, arm 4 keeps reads on pace **~06:1x–06:4xZ**. Discord:
+no new messages. Queue: local → state-probe reads (~06:1x–06:4xZ) →
+σ_draw amendment (CPU-ready: draws runs 3–5 all in) + fairness probe
+→ SnapFlow distill; box → idle awaiting owner steer (E4B follow-on
+NEW + panel-v2 3 decisions + stage-2b); ≥2 ✓. GPU busy (probe arms
+3–4) + CPU queue non-empty (σ_draw amendment, probe reads) →
+`run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-06 05:29–05:3xZ (real `date -u`) — tick: **state probe
 past halfway — arms 1+2 COMPLETE with full npz+JSON+HTML (the a433db9
 merge fix held), arm 3 (A-s0 masked) scoring.** AR-100k masked and
 flow-80k masked landed 05:04Z / 05:19Z; arm 3 @832/4,301 at 05:28:51Z,
@@ -1823,10 +1853,11 @@ reset so the chained session doesn't die on launch.
 
 Trailing-7-day GPU-hours on experiments / total: local **~13.6 / ~13.9**
 (sealed eval 1.9 h; noise-draw chain 18:25Z→04:12Z ≈ 9.8 h COMPLETE;
-state probe live since 04:2xZ, ~1.7 h queued), box **~27 / ~27 GPU-h**
+state probe live since 04:2xZ, ~1.7 h queued), box **~28 / ~28 GPU-h**
 (4 arms trained 17:12Z→01:35Z ≈ 17 GPU-h + 4 chained panel evals ≈ 10
-GPU-h, all complete 04:1xZ; GPUs idle since — E4B smoke + launch are
-the refill, amendment CPU-side in queue).
+GPU-h, complete 04:1xZ; E4B memory smoke ×4 rungs 04:31–05:21Z ≈ 0.8
+GPU-h — ladder exhausted, NO-LAUNCH; box idle awaiting owner steer on
+the E4B follow-on / #11 grounding arms).
 Explore/exploit: aux-off arm B + noise-floor replicates ≈
 instrument/attribution (exploit-side); explore hours proper started
 with the noise-draw chain (explore-side, ~9 h queued — pacing check

@@ -237,3 +237,77 @@ Oracles, all run before this amendment posted:
 The finalization amendment still records the chosen rung after the
 smoke; rung semantics (B12 direct / 2×6 / 3×4 / 4×3 / no-launch) are
 unchanged.
+
+---
+
+## Amendment 2 — finalization (2026-08-06 ~05:4xZ): σ_seed filled, ladder EXHAUSTED — **NO-LAUNCH**
+
+Checklist item 5, posted after the box-batch replicate reads and the
+B12 memory smoke. Every constant below is measured, none invented.
+**The pre-registered ladder's terminal branch fired: all four rungs
+OOM, so per the pre-reg ("if even 4×3 doesn't fit: do not launch")
+E4B does not launch under this recipe.** The finding and the
+follow-on decision go to the owner
+([finding post](2026-08-06-e4b-no-launch.md)).
+
+**E5 adopt band (σ_seed filled).** The three replicate panels
+(A-s0/s1/s2 @40k) pooled chunk_maes **7.7966 / 7.8052 / 7.7355** ⇒
+σ_seed(chunk) = **0.038** (ddof=1, computed by
+`box_batch_results.py`, `reports/analysis__box_batch_40k_k4l2.json`).
+Adopt rule as pre-registered: E4B@100k panel chunk_mae must beat
+5.8026 by more than max(3·σ_seed, 0.15) = max(0.114, 0.15) = **0.15
+— the floor binds**. Adopt threshold: **panel chunk_mae < 5.6526**.
+Context: the largest pairwise replicate pooled |Δ| was 0.0697;
+σ_seed(first) = 0.0992 is recorded for the first_mae secondary read
+(descriptive, no gate). These constants are recorded for any future
+E4B-class screen even though this launch does not happen; the band
+derivation is recipe-independent.
+
+**Ladder rung (memory smoke).** `smoke_e4b_b12.sh` — 1×H100, the
+exact recipe, 60 steps at loader B12, 2-s VRAM sampler, run once per
+rung until one fits. **None fit:**
+
+- **Rung 1 (B12 direct): OOM** — 04:31–04:38Z, sampler peak 81,035
+  MiB of 81,559, `torch.OutOfMemoryError` at a 78 MiB allocation
+  before the first logged step, with expandable segments on. Not
+  close to the ≥3 GiB headroom bar.
+- **Rung 2 (2×6 chunked backward): OOM** — 04:54–05:00Z, peak
+  81,059 MiB; died in the forward SDPA of the first train_step with
+  78.16 GiB torch-allocated (20 MiB free, 20 MiB requested).
+- **Rung 3 (3×4): OOM** — ~05:05Z, peak 81,035 MiB; died in the
+  backward of the first train_step (44 MiB free, 100 MiB requested).
+- **Rung 4 (4×3): OOM** — ~05:19Z, peak 81,049 MiB; died in the
+  backward of the first train_step with 78.05 GiB torch-allocated
+  (30 MiB free, 50 MiB requested).
+
+Each rung's log carries the correct chunked-backward banner (2×6 /
+3×4 / 4×3, loader batch 12 unchanged), so the ladder was exercised
+as registered, on box code `9ddcfe3` (includes the Amendment-1
+chunked-backward impl + oracles). **No rung completed a single
+optimizer step — every traceback starts at the first `train_step`
+call — so Adam's fp32 exp_avg/exp_avg_sq for the 3,975.3M live text
+params (~2 × 15.9 GiB ≈ 31.8 GiB) were never even allocated.** The
+deficit is therefore not the ~0.1 GiB the OOM margins suggest:
+steady-state training needs roughly ≥110 GiB/rank under this recipe
+(fp32 masters + fp32 grads + bf16 weights + frozen tables ≈ high-40s
+GiB, + ~32 GiB Adam, + activations that alone overflow the remainder
+even at 3-sample chunks). Chunking the batch further cannot close a
+fixed-cost gap of that size — the ladder's terminal branch is the
+correct read, not bad luck at rung 4.
+
+**Smoke E1 lines (match the four box arms, identical across all
+four rungs).** Selection: 878 datasets, 38,571 train + 4,301 holdout
+= 42,872 episodes, dims 6/6. Model: E4B geometry confirmed — 42
+layers, text 3,975.3M params (~2.2× E2B), fp32 masters + bf16
+autocast, fp32 ar_backbone decoder.
+
+**Checklist state at termination:** (1) box free ✓; (2) e4b
+checkpoint in box cache ✓ (snapshot `ee0ef60`); (3) parity
+spot-check passed ✓ (`~/e4b_parity.log`); (4) smoke ✓ — ladder
+exhausted; (5) this amendment — **outcome: NO-LAUNCH per the
+pre-registered terminal branch**; (6) rsync-back loop extended ✓
+(E4B rotation now dormant). The follow-on decision — whether to
+re-enter E4B under a changed memory recipe (which would be a NEW
+pre-reg, not an amendment) or to redirect the box — is the owner's,
+posted with options in the
+[finding post](2026-08-06-e4b-no-launch.md).

@@ -30,3 +30,4 @@
   - [2026-08-06 — Amendment proposal: panel v2 — leaked + corrupt episodes leave the measure (#18.7)](posts/2026-08-06-panel-v2-amendment.md)
   - [2026-08-06 — Pre-reg: state-reliance probe — masked-state panel subset (#11)](posts/2026-08-06-prereg-state-reliance-probe.md)
   - [2026-08-06 — Box-batch 40k results: aux-off effect REAL — aux supervision helps actions (#6)](posts/2026-08-06-box-batch-results.md)
+  - [2026-08-06 — E4B screen: NO-LAUNCH — memory ladder exhausted on 80 GB (#17)](posts/2026-08-06-e4b-no-launch.md)
