@@ -64,6 +64,9 @@ SAMPLER_PID=$!
 trap 'kill "$SAMPLER_PID" 2>/dev/null || true' EXIT
 
 set +e
+# Memory forensics: per-rank allocation-history snapshot dumped at OOM
+# (smoke-only instrument; the launcher never sets this).
+export BIJOU_MEM_SNAPSHOT="/home/ubuntu/smoke_${TAG}_mem"
 .venv/bin/torchrun --standalone --nproc-per-node=4 -m bijou.train \
     --train-data /home/ubuntu/datasets/mcobzarenco/community_curated_v0 \
     --fps 30 --camera-counts 1 2 \

@@ -132,6 +132,27 @@ Mainline `arb_rcond` recipe verbatim where the trunk allows it:
   and the run still die at a heavy batch); rung 6 removes the
   measured largest transient instead. Fallback if rung 6 is rejected:
   rung 6 + 12×1 (composable, −2.8 GiB).
+  **Measured (20:49–20:56Z): OOM in step 1's backward AGAIN, 77.0
+  GiB allocated — REJECTED. The new sync path verifiably ran (banner)
+  and the peak did not move: three rungs have now each removed a real
+  block (Adam sharded −21.8, reducer duplicate −14.6) without moving
+  the ~77 GiB step-1 backward wall ⇒ the component arithmetic is
+  missing ≥10 GiB common to all rungs, and further arithmetic-driven
+  rungs are not admissible evidence.**
+- **Amendment (F1 rung 7, pre-declared before its smoke, 21:0xZ):
+  the declared rung-6 fallback — B12 chunked 12×1 + `--zero1` +
+  `--chunk-grad-allreduce` — PLUS a measurement instrument:
+  `BIJOU_MEM_SNAPSHOT` (env-gated
+  `torch.cuda.memory._record_memory_history` from process start,
+  per-rank snapshot pickle dumped at OOM; smoke-only, never set on a
+  launch). Predicted peak ~74 GiB by the (now discredited)
+  arithmetic — the PASS RULE stays rc=0 AND peak ≤ ~75 GiB, but
+  whatever the outcome, the snapshot replaces arithmetic with
+  measured allocation attribution for the next decision. If rung 7
+  is rejected, the ladder PAUSES for the snapshot read: the next
+  rung is chosen by the measured largest removable block
+  (candidates: activation checkpointing #20, bf16 frozen params,
+  loss-region chunking), posted before its smoke.
   **Measured: TODO_SMOKE_PEAK MiB peak, TODO_SMOKE_RATE s/step
   (last 5), rc=TODO_RC.**
 - F2 wall: 40k × rate ≤ 30 h ⇒ full 40k; else this pre-reg SHRINKS to

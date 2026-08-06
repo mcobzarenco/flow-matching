@@ -2286,6 +2286,21 @@ def main() -> int:
             torch.cuda.set_device(device)
     is_main = rank == 0
 
+    # Memory forensics (BIJOU_MEM_SNAPSHOT=<path prefix>): record every
+    # CUDA allocation with its python stack from process start; the
+    # __main__ epilogue dumps a per-rank snapshot pickle if the run
+    # dies OOM (analyze with torch.cuda._memory_viz or fontaine's
+    # reader). Measurement instrument for smoke rungs — never set on a
+    # real launch (host-side overhead per allocation).
+    if os.environ.get("BIJOU_MEM_SNAPSHOT") and device.type == "cuda":
+        torch.cuda.memory._record_memory_history(max_entries=250_000)
+        if is_main:
+            print(
+                "mem-snapshot: recording allocation history "
+                f"(dump prefix {os.environ['BIJOU_MEM_SNAPSHOT']})",
+                flush=True,
+            )
+
     # Fail fast, before data/model build: the fresh-seed-on-resume
     # convention (all ranks read the same file — every rank raises or
     # none does).
@@ -3518,4 +3533,14 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except torch.OutOfMemoryError:
+        # The whole point of the recording: bank the allocation history
+        # BEFORE the process dies, one pickle per rank.
+        prefix = os.environ.get("BIJOU_MEM_SNAPSHOT")
+        if prefix:
+            path = f"{prefix}_rank{os.environ.get('RANK', '0')}.pickle"
+            torch.cuda.memory._dump_snapshot(path)
+            print(f"mem-snapshot: OOM — dumped {path}", flush=True)
+        raise

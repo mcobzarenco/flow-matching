@@ -163,6 +163,15 @@ matched steps.
 - **Falsification:** paired arms (same seed/data/arch, only the
   artifact differs — the v1-vs-v2 precedent); recon error + clip rate
   in the fit report before any training touches it.
+- **Lit radar (2026-08-06 20:5xZ):** FASTer (arXiv:2512.04952)
+  replaces DCT+BPE with a learned VQ tokenizer ("FASTerVQ" — action
+  chunks encoded as single-channel images, global spatio-temporal
+  dependencies) + block-wise AR decoding; claims better token
+  utilization/reconstruction and SOTA-beating speed+success vs
+  FAST-style AR VLAs. If v3's quantile refit leaves clip/recon
+  headroom on curated-v0, a learned-VQ arm is the natural rung after
+  it (same paired-arm falsification; token metrics reset applies
+  either way).
 
 ## 6. Aux attribution arms — `confirmed` (aux HELPS actions; results 2026-08-06)
 
