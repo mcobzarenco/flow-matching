@@ -1,6 +1,36 @@
 # Now
 
-*Updated 2026-08-06 08:5x–09:1xZ (real `date -u`) — work session (chained):
+*Updated 2026-08-06 09:0x–09:1xZ (real `date -u`) — tick (babysit): **both runs
+healthy; ARM C'S 40k BOUNDARY RE-PROJECTED ~16:3x–17:3xZ (was ~12:3x–12:4xZ) —
+the 0.37 s/step projection ignored the ~4-min in-run eval probes.** Measured
+directly: arm C trains at 0.378 s/step but each 500-step eval costs ~3.7 min
+wall (step-3000 eval timed 09:04:44→~09:08:2x), effective ~1.0–1.15 s/step so
+far — and A-s0's own checkpoint history confirms this is SIBLING-NORMAL, not a
+slowdown (17:15Z→01:17Z, ~8 h for the identical 40k + 80 evals; its first 5k
+also ran ~1.06 s/step effective before averaging down to 0.72). Arm C
+@3,100/40k at 09:09Z, loss 5.25 smooth (21.7→5.25), aux ~0.9, 65–68% util
+during eval, 72.5 GiB; in-run evals 45.2→31.6→34.2→28.7→28.8 by step 2500 —
+in-family with A-s0 at the same steps (24.3 @2500; the gap is the expected
+p=0.8 masking difficulty), descending. Panel + masked reads move ~15:3xZ →
+~19:xZ–21:xZ. SnapFlow local @2,780/30k at 09:11Z, 0.43–0.51 s/step, ~0.55
+effective incl. evals+saves (measured 09:06→09:11: 620 steps/333 s over an
+eval+save boundary — SnapFlow's evals are cheap, unlike the AR arms'), loss
+~0.04, grad norm ~0.3; **s=t divergence: 7.5682@500 → 6.9939@1000 →
+7.6521@1500 → 7.7359@2000** — oscillating ~1σ-ish above the teacher anchor
+6.5997, record-only, far from the teacher-probe+3.0 kill line. Revised: 30k
+~13:2x–13:3xZ (SnapFlow now finishes FIRST, no longer co-timed with arm C);
+**step_010000 1-NFE probe boundary ~10:2xZ** — the chained session takes the
+quiet-GPU decision (box GPUs 1–3 idle, checkpoint push standing option).
+Discord: no inbound, no new reactions (history-checked; last 5 are our own
+posts through 08:32Z). Queue unchanged: local → SnapFlow babysit (s=t watch;
+10k probe ~10:2xZ) → 30k + endpoint reads ~13:3xZ+; box → arm C babysit → 40k
+~16:3x–17:3xZ → panel + masked reads through the banked instrument
+~19:xZ–21:xZ; CPU next: **#16 rig-transfer follow-ups** + #18 debt; ≥2 ✓.
+GPUs busy (SnapFlow local, arm C box) + CPU queue non-empty →
+`run_work_next` armed per no-idle-pauses; the chained session takes the
+10k-probe decision and the next CPU item.*
+
+*Previous update 2026-08-06 08:5x–09:1xZ (real `date -u`) — work session (chained):
 **ARM C'S RESULTS INSTRUMENT IS BANKED BEFORE ITS DATA —
 `fontaine/scripts/statedrop_results.py` encodes all three frozen reads
 of the [state-dropout pre-reg](posts/2026-08-06-prereg-state-dropout-40k.md)
