@@ -1,6 +1,44 @@
 # Now
 
-*Updated 2026-08-06 11:2x–11:4xZ (same work session, extended) — **OWNER
+*Updated 2026-08-06 11:44–11:5xZ (real `date -u`) — tick: **OWNER REPLIED
+AT 11:44:18Z (4 s before the poll) — THE 5-DECISION LIST IS ANSWERED +
+NEW STEERING: a multi-GPU run aimed at FUNDAMENTAL ARCHITECTURE CHANGES
+(owner examples: new trunk / full residual streams rather than few
+exported layers / bigger images = more tokens per image — "really just
+examples").** Decisions: (1) E4B **paused** (owner floated smaller
+batch/no-accum as alternative — answered in-channel: batch-independent
+floor ~110 GiB/rank, Adam m/v never allocated at peak 81.0/81.6; ZeRO-1
+is the real lever, queued behind the architecture run); (2) **panel-v2
+ADOPTED for all new pre-regs** + owner asks: dedup the whole dataset and
+upload to hub? — replied: yes, as a versioned NEW dataset
+(`community_curated_v1_dedup`, no overwrite), dedup script + manifest
+staged as a CPU item, deltas posted before upload, one paired train arm
+before it becomes default recipe; (3) **ES ADOPTED as diagnostic
+column** — "why never headline" answered (deployment consumes one draw;
+AR's ES degenerates to ~MAE so cross-family ES headlines flatter the
+stochastic family); (4) stage-2b not addressed → stays parked behind
+#11 per our rec; (5) GPUs 1–3 tenancy SUPERSEDED by the architecture
+ask. Explained #11 in-channel (grounding front; owner's examples ARE
+#11, bolder) and proposed: **next pre-reg = paired arms (a) bigger
+images/more visual tokens + (b) full-residual conditioning, same trunk,
+DDP on box GPUs 1–3, panel-v2; trunk swap (Molmo2-4B) as its own
+follow-on; pre-reg posted for a look before launch** — owner asked for
+preference-or-proceed, proceeding with 1+2 unless steered. Babysits
+11:44–11:46Z: SnapFlow @20,160/30k, loss ~0.04, 0.48–0.50 s/step → 30k
++ chained endpoint evals ~13:2x–13:3xZ unchanged; arm C @14,620/40k,
+0.374–0.377 s/step, 72% util, 73.8 GiB, loss 4.28 smooth, aux 0.60
+descending → 40k ~16:3x–17:3xZ unchanged. Queue (NEW ORDER, steering-
+driven): CPU next → **architecture pre-reg draft (arms a+b, THE
+work item)** + **dataset dedup script/manifest (staged, deltas before
+upload)** + #16 follow-ups + #18.2 default-flip (after the chain) +
+mid-session Discord-poll prompt fix (class debt); local → SnapFlow 30k
+boundary ~13:2x–13:3xZ → addendum npz eval → `snapflow_results.py`
+frozen reads; box → arm C 40k ~16:3x–17:3xZ → statedrop reads; box
+GPUs 1–3 → architecture run once pre-reg posted (+ owner look). ≥2 ✓.
+GPUs busy + CPU queue deep → `run_work_next` armed; conversational
+mode held ~10 min past last owner message per the boot contract.*
+
+*Previous update 2026-08-06 11:2x–11:4xZ (same work session, extended) — **OWNER
 STEERING CAUGHT LATE AND ANSWERED: two 10:15–10:16Z messages (GPU-
 utilization question + request for a pending-decisions list + overnight
 summary) surfaced only at the 11:25Z end-of-session poll — this session
