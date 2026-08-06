@@ -1,6 +1,42 @@
 # Now
 
-*Updated 2026-08-06 02:37–02:4xZ (real `date -u`) — tick: **all chains
+*Updated 2026-08-06 02:39–02:5xZ (real `date -u`) — work session: **THE
+OVERDUE LIT SLICE TAKEN (the flagged MUST — 7 sessions deferred) —
+and it named a candidate mechanism for the batch's biggest open
+flag: state-dominant bias.** Targeted pass on distillation, data
+curation, and grounding. Bankings (ideas #11 + #9): (1)
+**[ReViP](https://arxiv.org/abs/2601.16667)** diagnoses VLA "false
+completion" as modality imbalance — policies over-rely on
+proprioceptive state progression and under-use vision (+26% over π0
+via progress-aware FiLM rebalance; abstract-depth). The causal-
+confusion line ([2506.23944](https://arxiv.org/abs/2506.23944)
+p=0.8 state masking; [2509.18644](https://arxiv.org/abs/2509.18644)
+state-FREE policy) agrees: proprioception is the shortcut, vision
+generalizes. Direct hit on our grounding gap AND on **B's pending
+first_mae 3.5009 > copy 2.6202 flag** — aux-off leaning harder on
+the state shortcut is now a named, testable hypothesis. (2)
+Cheapest falsification queued in #11: a **state-reliance probe**
+(panel-subset eval with state zeroed vs intact on AR-100k/flow-80k/
+B/A-s0; Δ(B) vs Δ(A-s0) is the read; needs `--mask-state` +
+its own pre-reg). (3) #9's "state-noise" sharpened to **state
+DROPOUT** (the literature's lever) as the paired train-time arm.
+Skim-depth: [2602.09722](https://arxiv.org/abs/2602.09722)
+(heterogeneous pooling → negative transfer; supports selective
+mixture) and the [data-engine survey](https://arxiv.org/abs/2604.23001)
+(dedup/contamination = THE bottleneck — the #18.7 census is exactly
+this). No new launch implied; the probe idea feeds the ~04Z results
+read's discussion, not its frozen numbers. `check.py` 215 green.
+Babysits 02:39/02:42Z: box controls A-s0 @14.6k, s1 @10.9k, s2
+@11.4k of 25.8k — advancing, reads ~03:4x–04:1xZ; B complete
+(pulled); GPU1 idle as decided. Local draws run 4 @11.4k/25.8k, log
+fresh, on pacing ~04:0x–04:1xZ. Discord: no new messages. Queue
+unchanged: box → results post (~04Z, instrument armed) + E4B
+smoke/σ_seed/amendment → E4B launch; local → fairness probe →
+SnapFlow distill; +panel-v2 + stage-2b awaiting steer — ≥2 ✓. GPUs
+busy + CPU queue non-empty → `run_work_next` armed per
+no-idle-pauses.*
+
+*Previous update 2026-08-06 02:37–02:4xZ (real `date -u`) — tick: **all chains
 healthy; box endgame past the halfway mark.** Box: three control
 evals scoring — A-s0 @13.6k, s1 @10.1k, s2 @10.8k of 25.8k, all
 advancing since the 02:3x poll, reads on pace ~03:4x–04:1xZ; B
@@ -1574,7 +1610,11 @@ longer/richer than planned; still 94–99% util). Literature slice:
 on cadence — ~20 min at 22:2xZ (VLM-redundancy + Energy Policy →
 Amendment 2) after the ~25 min trunk-survey slice ~19:35–20:00Z;
 skipped this 23:12Z session (bounded launch-prep item, slice <1 h
-old). CPU-side: seven consecutive all-CPU sessions while both GPU
+old); then deferred 7 consecutive sessions (00:14–02:4xZ — each had
+a ladder-superior item with a launch-path deadline) and **taken
+02:4x–02:5xZ (~15 min): ReViP state-dominant-bias mechanism +
+state-reliance probe + state-dropout lever banked into #11/#9** —
+back on cadence. CPU-side: seven consecutive all-CPU sessions while both GPU
 chains ran (trunk survey, flow-vs-AR paired analysis, idea #2a
 bucketing, ideas #18.1 hardening, ideas #18.2 reseed-behind-flag,
 chunked backward + oracles, E4B checklist prep 23:12Z — ckpt staged

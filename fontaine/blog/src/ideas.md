@@ -207,6 +207,27 @@ judge-score-weighted sampling (never yet run). Each is a cheap paired
 arm at the screen rung. Any derived corpus ships with the leakage
 check (charter §2) before training touches it.
 
+- **Lit slice 2026-08-06 ~02:5xZ — state-noise sharpened to state
+  DROPOUT:** the shortcut-learning literature's standard lever is
+  random state *masking*, not noise —
+  [Adapt Your Body](https://arxiv.org/abs/2506.23944) masks
+  proprioception to zeros with p=0.8 and reports it effective
+  against proprioception-shortcut overfitting;
+  [2509.18644](https://arxiv.org/abs/2509.18644) goes further
+  (state-FREE policy, relative EE actions, vision-only) and reports
+  better spatial generalization. If the #11 reliance probe shows
+  heavy state reliance, the paired arm here is `--state-dropout p`
+  (train-time masking, eval unchanged) — config-only surface, screen
+  rung. (Skim-depth, same pass:
+  [2602.09722](https://arxiv.org/abs/2602.09722) "Rethinking VLA
+  scaling" — pooling heterogeneous robot data induces negative
+  transfer; selective mixture + regularization beat full pooling.
+  Directionally supports judge-score-weighted sampling and the
+  census's fork findings; re-read before citing numbers. The
+  [data-engine survey](https://arxiv.org/abs/2604.23001) frames
+  dedup/contamination checks as THE underexamined bottleneck — our
+  #18.7 census is exactly this; no new action.)
+
 ## 10. E2B base-vs-IT swap — `queued`
 
 Pre-registered mainline prediction ±0.2 MAE; backbone-swap arm, tests
@@ -221,6 +242,36 @@ bottleneck. Arms: trunk shaping, schedules, vision-side aux tasks —
 chartered on the community panel; `first_mae` is the
 grounding-sensitive column (2.143 vs copy 2.620 — headroom).
 High-variance; counts toward the ≥20% exploration budget.
+
+- **Lit slice 2026-08-06 ~02:5xZ — mechanism story named: state-
+  dominant bias.** [ReViP](https://arxiv.org/abs/2601.16667)
+  diagnoses "false completion" in VLAs as modality imbalance —
+  policies over-rely on internal state progression and under-use
+  visual evidence (their fix: a progress-aware observer that FiLM-
+  modulates the vision/proprioception coupling; +26% over π0 on
+  their perturbation suite; abstract-depth read). The causal-
+  confusion line ([2506.23944](https://arxiv.org/abs/2506.23944),
+  [2509.18644](https://arxiv.org/abs/2509.18644)) says the same:
+  proprioception is the shortcut, vision is what generalizes. This
+  is a candidate mechanism for BOTH our standing grounding gap
+  (first_mae barely ahead of state-copy) AND B's pending aux-off
+  flag (first_mae 3.5009 WORSE than copy 2.6202 @40k — consistent
+  with aux-off models leaning harder on the state shortcut; paired
+  per-frame reads pending ~04Z decide nothing until then).
+- **Cheapest falsification — a state-reliance probe, rung (a),
+  needs its own pre-reg:** eval banked checkpoints (AR-100k,
+  flow-80k, B, A-s0) on a fixed panel subset with the state input
+  zeroed/shuffled vs intact; the degradation Δ per checkpoint is a
+  direct state-reliance number, and the interesting read is Δ(B) vs
+  Δ(A-s0) — does aux supervision reduce state reliance? Cost: a few
+  panel-subset evals, GPU-minutes at reduced rows (NOT free — full
+  panels are ~2.5 h each at current rates; subset + noise floor
+  stated in the pre-reg). Eval-side surface: needs a
+  `--mask-state` switch in `bijou.eval` (small, oracle: masked ≡
+  unmasked when p=0 / flag absent). If reliance is heavy and
+  aux-linked, the #9 state-dropout arm is the paired train-time
+  follow-up; ReViP-style modulation is the heavier architecture arm
+  behind it.
 
 ## 12. Solver/Heun-gap work — `screening` (distillation leg PRE-REGISTERED 2026-08-06)
 
