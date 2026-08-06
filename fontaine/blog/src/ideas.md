@@ -150,7 +150,22 @@ matched steps.
   artifact differs — the v1-vs-v2 precedent); recon error + clip rate
   in the fit report before any training touches it.
 
-## 6. Aux attribution arms — `running` (paired 40k, launched 2026-08-05)
+## 6. Aux attribution arms — `confirmed` (aux HELPS actions; results 2026-08-06)
+
+**ANSWERED 2026-08-06 04:2xZ
+([results post](posts/2026-08-06-box-batch-results.md)): the
+pre-registered decision rule fired REAL — aux-off costs +0.462 panel
+chunk MAE (CI [0.387, 0.537], 7.5× the 0.061 replicate threshold,
+leave-one-repo-out coherent). The mainline "within noise" expectation
+is falsified: aux supervision shapes the action representation.**
+Arms: A-s0/s1/s2 7.7966/7.8052/7.7355, B 8.2989; σ_seed(chunk) 0.038
+→ E4B adopt band = 0.15 (floor binds). Twist held up: B's first_mae
+3.5009 BEATS aux-on (3.94–4.11) with cond-sensitivity 1.13 vs
+1.86–2.00 and predictions 8% closer to state-copy — consistent with
+the #11 state-shortcut mechanism; the state-reliance probe is the
+falsification instrument (all four npzs now banked). Standing rule:
+**aux stays ON in every future recipe; an aux-off arm needs a new
+pre-reg citing this result.**
 
 The still-owed paired aux-on vs aux-off arms (does aux supervision
 shape the representation, separate from "does narrating help" — the

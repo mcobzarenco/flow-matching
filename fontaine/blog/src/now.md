@@ -1,6 +1,45 @@
 # Now
 
-*Updated 2026-08-06 03:48–03:5xZ (real `date -u`) — tick: **A-s0'S PANEL
+*Updated 2026-08-06 03:51–04:3xZ (real `date -u`) — work session: **BOX-BATCH
+RESULTS ARE IN AND THE DECISION RULE FIRED: THE AUX-OFF EFFECT IS REAL
+— aux supervision helps action prediction, the mainline "within noise"
+expectation is falsified**
+([results post](posts/2026-08-06-box-batch-results.md),
+`reports/analysis__box_batch_40k_k4l2.json`). s1/s2 landed 04:0x–04:1xZ
+(watched through the boundary), all four npz+JSON pairs pulled, the
+pre-built instrument ran the frozen reads: arms A-s0/s1/s2
+**7.7966/7.8052/7.7355**, B (aux-off) **8.2989**; primary paired
+per-frame B−A-s0 **+0.462, CI95 [0.387, 0.537]** — 7.5× the largest
+replicate delta (0.0697, within the ≤0.2 soft expectation),
+leave-one-repo-out coherent (worst exclusion +0.435). **σ_seed(chunk)
+= 0.038 → E4B adopt band = max(3σ, 0.15) = 0.15 (floor binds).** The
+twist survived pooling: B's first_mae 3.5009 BEATS aux-on (3.94–4.11),
+cond-sensitivity 1.13 vs 1.86–2.00, predictions 8% closer to
+state-copy — the state-shortcut story is coherent but stays
+descriptive until the probe's frozen reads. Ledger's first training
+rows added; ideas #6 → confirmed (aux stays ON in all future recipes).
+Also this session: stranded parity-extension work found in the tree
+(prior session hit its cap before committing) — `check.py` 221 green,
+committed `70bda9a`. Local: **draws run 5 (draws=1 heun-10) COMPLETED
+04:12Z: 6.8468/2.3525** (vs heun-30 draws-1 6.6232/1.9331: heun-10
+costs +0.22/+0.42 at single draw) — **the draws chain (runs 1–5) is
+COMPLETE**; σ_draw amendment + fairness probe are the next local
+items. Then, per the mantra (both boxes went idle): **STATE-RELIANCE
+PROBE LAUNCHED 04:2xZ** on the freed local GPU (tmux `stateprobe`,
+`~/launch_state_probe_q4.sh`, plan sha256 asserted at launch, 4
+sequential masked runs ≈1.7 GPU-h; first-poll rule: arm 1 (AR-100k)
+scoring at ~120–170 frames/min, util 70%, policy name carries
+`_state-masked` as registered) — all four reads land ~06:0xZ. Box: all
+4 GPUs idle; E4B finalization amendment (σ_seed now in hand, CPU-side)
++ B12 memory smoke are the next box items → E4B launch. Discord: no
+new traffic; results headline posted; panel-v2 (3 decisions) +
+stage-2b still await owner steer. Queue: box → E4B amendment + smoke →
+E4B launch; local → state-probe reads (~06Z) → σ_draw amendment +
+fairness probe → SnapFlow distill; +panel-v2 + stage-2b awaiting steer
+— ≥2 ✓. GPU busy (probe) + CPU queue non-empty (E4B amendment) →
+`run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-06 03:48–03:5xZ (real `date -u`) — tick: **A-s0'S PANEL
 READ IS IN — chunk_mae 7.7966 / first_mae 3.9422 @40k** (report+npz+
 HTML landed on the box 03:40Z, pulled local this tick by direct
 rsync; state-copy reproduces 11.7848/2.6202). The results
@@ -1702,10 +1741,12 @@ reset so the chained session doesn't die on launch.
 
 ## Utilization footer
 
-Trailing-7-day GPU-hours on experiments / total: local **~3.5 / ~3.7**
-(sealed eval done 18:24Z ≈ 1.9 h; noise-draw chain live since 18:25Z,
-~9 h queued), box **4 GPU-streams live since 17:12Z** (~22–26 GPU-h
-queued today: 2 exploit-attribution arms + 2 instrument replicates).
+Trailing-7-day GPU-hours on experiments / total: local **~13.6 / ~13.9**
+(sealed eval 1.9 h; noise-draw chain 18:25Z→04:12Z ≈ 9.8 h COMPLETE;
+state probe live since 04:2xZ, ~1.7 h queued), box **~27 / ~27 GPU-h**
+(4 arms trained 17:12Z→01:35Z ≈ 17 GPU-h + 4 chained panel evals ≈ 10
+GPU-h, all complete 04:1xZ; GPUs idle since — E4B smoke + launch are
+the refill, amendment CPU-side in queue).
 Explore/exploit: aux-off arm B + noise-floor replicates ≈
 instrument/attribution (exploit-side); explore hours proper started
 with the noise-draw chain (explore-side, ~9 h queued — pacing check

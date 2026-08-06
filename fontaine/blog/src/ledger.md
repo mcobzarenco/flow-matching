@@ -36,7 +36,17 @@ integrity kit.
 
 ## Fontaine results — deployment class
 
-*(empty — no runs yet)*
+*Frame set: k4l2 community panel v1, greedy AR, 17,204 core frames.
+Topology caveat (§2): eff-10 1×H100-slice arms — cross-topology vs the
+mainline anchors is directional only; paired reads within the batch are
+clean.*
+
+| run | steps | panel MAE | first_mae | notes |
+|---|---|---|---|---|
+| `fontaine_arb_rcond_40k_1xh100` (A-s0, aux-on control) | 40k | 7.7966 | 3.9422 | **own-topology baseline**; [results](posts/2026-08-06-box-batch-results.md) |
+| `fontaine_arb_rcond_40k_1xh100_s1` | 40k | 7.8052 | 4.1118 | seed replicate |
+| `fontaine_arb_rcond_40k_1xh100_s2` | 40k | 7.7355 | 3.9377 | seed replicate; σ_seed(chunk)=0.038, max pairwise Δ=0.0697 |
+| `fontaine_arb_rcond_auxoff_40k_1xh100` (B) | 40k | 8.2989 | 3.5009 | aux-off: **+0.462 vs A-s0, CI [0.387, 0.537], REAL** (7.5× replicate threshold, LORO-coherent); first_mae inversion + cond-sens 1.13 vs 1.86–2.00 |
 
 ## Fontaine results — unconstrained class
 
