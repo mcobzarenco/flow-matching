@@ -151,6 +151,27 @@ def test_merge_shards_tolerates_empty_dump_draws() -> None:
     assert merged.dump_index == [0, 3, 5, 8]
 
 
+def test_merge_shards_tolerates_empty_dump_predictions() -> None:
+    # --dump-draws without --dump-predictions: the per-policy prediction
+    # lists stay [] while dump_index carries one row per frame — the
+    # exact mirror of the dump_draws case above (2026-08-06 fairness
+    # probe crashed at merge on this shape after scoring all frames).
+    import dataclasses
+
+    rank0 = dataclasses.replace(
+        _shard([0, 5], "user/a", "success"),
+        dump_predictions={"bijou": []},
+    )
+    rank1 = dataclasses.replace(
+        _shard([3, 8], "user/b", None),
+        dump_predictions={"bijou": []},
+    )
+    merged = merge_shards([rank0, rank1])
+    assert merged.dump_predictions == {"bijou": []}
+    assert merged.dump_index == [0, 3, 5, 8]
+    assert [d[0, 0, 0].item() for d in merged.dump_draws] == [0.0, 3.0, 5.0, 8.0]
+
+
 def test_score_frame_refuses_zero_valid_frames() -> None:
     # Through the max(divisor, 1) guards a zero-valid frame would score
     # a perfect 0.0 — it must fail loudly instead.

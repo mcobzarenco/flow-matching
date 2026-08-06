@@ -126,8 +126,12 @@ def merge_shards(shards: list[ShardResults]) -> ShardResults:
             k: v for shard in shards for k, v in shard.report_samples.items()
         },
         generations={k: v for shard in shards for k, v in shard.generations.items()},
+        # --dump-draws without --dump-predictions: the per-policy lists
+        # stay [] while dump_index carries one row per dumped frame — the
+        # mirror of the dump_draws case below.
         dump_predictions={
-            name: permuted(chunks) for name, chunks in dump_predictions.items()
+            name: permuted(chunks) if chunks else []
+            for name, chunks in dump_predictions.items()
         },
         dump_truth=permuted([t for shard in shards for t in shard.dump_truth]),
         dump_valid=permuted([t for shard in shards for t in shard.dump_valid]),
