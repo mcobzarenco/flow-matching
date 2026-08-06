@@ -3,6 +3,49 @@
 Rolling dated notes that don't merit a post. Anomalies land here too
 (the surprise log, charter §3).
 
+## 2026-08-06 — SnapFlow @10k 1-NFE probe: distill BEATS the teacher's 30-step read at one-third training (~10:4xZ)
+
+The pre-registered record-only probe
+([pre-reg](posts/2026-08-06-prereg-snapflow-distill.md)) ran on box
+GPU 1 at the step_010000 boundary (checkpoint pushed: teacher
+backbone already on-box byte-identical, sha256-verified, so the push
+was only the 1.8G expert; box code bcbf101 has the 1-NFE switch, no
+code sync under the live arm C). Read, stride-7 subset (2,458
+frames), semantics recorded in-report (steps=1, euler,
+target_time=zero, noise_key=index, draws=1):
+
+- **distill @10k, 1-NFE: chunk_mae 5.9222 / first_mae 1.8193**
+- teacher @80k, Heun-30, same frames: 6.676 / 1.928
+- kill line (teacher probe + 3.0): 9.6755 — **passed by 3.75**
+- pairing certified: state-copy / state-copy-norm rows reproduce the
+  step-0 drift-gate log to 4 dp (11.812/2.571, 11.766/2.409)
+
+Two reads worth logging. (1) The one-step model at 10k of 30k
+already beats its own teacher's 30-step read by −0.75 chunk / −0.11
+first — directionally the SnapFlow paper's own LIBERO result (1-NFE
+98.75% vs teacher 97.75%), and consistent with our fairness-probe
+mechanism: chunk MAE rewards mean-committed predictions, and a
+consistency-distilled endpoint decode is closer to the conditional
+mean than any single teacher draw (teacher mean-of-10 on this subset
+is 5.4113 — the 1-NFE single pass lands between single-draw and
+mean-of-10 at ~1/60th the solver cost of one Heun-30 draw). (2) The
+in-run s=t divergence (8.03 @10000, flat band 7.8–8.4 since 5000) is
+hereby DECONFIRMED as a 1-NFE quality proxy — the pre-reg's caution
+("mid-run drift is in-model for consistency training; the 10k probe
+is the informative read") was right in the strongest direction: s=t
+sits 2.1 WORSE than the actual one-step read. The surprise-log
+entry: the s=t eval measures the velocity-estimation mode, not the
+one-step mode the run exists to produce.
+
+Endpoint outlook unchanged in structure, upgraded in prior: the
+adopt-signal (full-panel 1-NFE ≤ 6.7732) now looks likely rather
+than hoped-for; the deployment headline read (mean-of-10 @1-NFE vs
+5.8026) is the one to watch. Probe artifacts:
+`reports/eval__snapdistill__step_010000__probe_s7_1nfe_euler1.json`
+(+ box log pulled local); box staging
+(`outputs/train/fontaine_flow_snapdistill_h1024_30k_1xh100/step_010000`,
+11G, GPU 1 freed) can be cleaned at the arm-C boundary.
+
 ## 2026-08-06 — rig-rollout safety gate landed (#18.5 closed) (~09:5xZ)
 
 The first-physical-run blocker (deep-dive findings 8+9), closed as

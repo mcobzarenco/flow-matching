@@ -1,6 +1,50 @@
 # Now
 
-*Updated 2026-08-06 09:35–09:3xZ (real `date -u`) — tick (babysit): **both
+*Updated 2026-08-06 09:4x–10:5xZ (real `date -u`) — work session: **TWO
+DELIVERABLES — (1) #18.5 RIG-ROLLOUT SAFETY GATE LANDED (the
+first-physical-run blocker, deep-dive findings 8+9): new lerobot-free
+`bijou/rollout_safety.py` wired into `bijou.rollout` — clamp mandatory
+(`--max-relative-target` positive/finite or the arm does not move;
+`--unclamped` explicit opt-out; contradiction dies), first-obs
+envelope assert (per-joint q01..q99 half-band-widened, 15° floor,
+mean±3σ fallback; wrong stats / ticks-vs-degrees / uncalibrated arm
+die loud with a per-joint table; dim≠6 = wrong-embodiment),
+camera kinds now MIRROR TRAINING (`annotation_stamp` +
+`camera_kinds_of` via `--stats-dataset`; unstamped/hash-mismatch →
+"unknown" exactly as training rendered; `--camera-kind NAME=KIND`
+validated override; the name heuristic survives only datasetless) —
+22 new CPU tests, `--check` exercised on the real flow-80k checkpoint,
+`check.py` 274 green (`e95b9ef`). (2) SNAPFLOW @10k 1-NFE PROBE READ
+(record-only, pre-registered): chunk_mae 5.9222 / first_mae 1.8193 on
+the stride-7 subset — kill line 9.6755 passed by 3.75, and the 1-NFE
+distill at ONE-THIRD training BEATS the teacher's own Heun-30 read
+(6.676/1.928, same frames, pairing certified by state-copy rows to 4
+dp). The s=t drift (8.03@10000, flat 7.8–8.4 band) is DECONFIRMED as
+a 1-NFE proxy — it measures the velocity mode, not the one-step
+mode.** Probe ran on box GPU 1 (expert-only 1.8G push — teacher
+backbone already on-box byte-identical, sha256-verified; box code
+bcbf101 has the 1-NFE switch, no code sync under live arm C; one
+relaunch after a tmux-PATH miss, ~20 min wall total); artifacts pulled
+local (`reports/eval__snapdistill__step_010000__probe_s7_1nfe_euler1.json`).
+Lit slice TAKEN (~15 min, debt cleared): one-step fallback menu banked
+into #12 — OFP self-distillation, MeanFlow-VLA (2603.01469, kills the
+consistency constraint), "Let It Be Simple" (2606.05737, high-noise
+training alone). Babysits through the session: SnapFlow @11,500+/30k,
+~0.49 s/step, loss ~0.04, s=t 8.17@11500 → 30k + chained endpoint
+evals ~13:2x–13:3xZ unchanged; arm C @8,500+/40k, ~0.37 s/step train,
+in-run probe 24.05@4500 → 22.29@5000 → **16.64@8500** descending,
+40k ~16:3x–17:3xZ unchanged. Discord: no inbound. Queue: local →
+SnapFlow babysit → 30k + chained endpoint evals ~13:2x–13:3xZ →
+addendum npz eval → `snapflow_results.py` frozen reads (endpoint
+adopt-signal ≤ 6.7732 now LIKELY on the probe prior); box → arm C
+babysit → 40k ~16:3x–17:3xZ → statedrop reads ~19:xZ–21:xZ (box
+step_010000 staging cleanable at that boundary); CPU next: **#16
+follow-ups + #18.2 default-flip (after the chain)**; ≥2 ✓. GPUs busy
+(SnapFlow local, arm C box) + CPU queue non-empty → `run_work_next`
+armed per no-idle-pauses; the chained session babysits to the 30k
+boundary.*
+
+*Previous update 2026-08-06 09:35–09:3xZ (real `date -u`) — tick (babysit): **both
 runs healthy; the SnapFlow s=t drift has FLATTENED — 8.3344@5000 →
 8.3609@5500, +0.03 over the last 500 steps vs +0.40 the window before,
 sitting ~1.76 over the teacher anchor 6.5997** (record-only; the
@@ -2263,24 +2307,26 @@ reset so the chained session doesn't die on launch.
 
 ## Utilization footer
 
-Trailing-7-day GPU-hours on experiments / total: local **~16.8 / ~17.1**
+Trailing-7-day GPU-hours on experiments / total: local **~17.9 / ~18.2**
 (sealed eval 1.9 h; noise-draw chain 18:25Z→04:12Z ≈ 9.8 h COMPLETE;
 state probe 04:44→06:06Z ≈ 1.4 h COMPLETE, reads posted; fairness
 probe 06:24–07:39Z ≈ 1.2 h COMPLETE incl. the crashed first run,
 reads posted; #18.2 stable-key flip re-bank 07:41→08:30Z ≈ 0.8 h
 COMPLETE — 49 min at ~650 f/min, ADOPTED; SnapFlow distill TRAINING
 since 08:43Z — both gates passed, ~0.48 s/step train / ~0.55 effective
-incl. evals+saves, @5,000/30k at 09:31Z, 30k lands ~13:2x–13:3xZ),
-box **~28.4 / ~28.4 GPU-h**
+incl. evals+saves, @11,500/30k at 10:4xZ, 30k lands ~13:2x–13:3xZ),
+box **~29.5 / ~29.5 GPU-h**
 (4 arms trained 17:12Z→01:35Z ≈ 17 GPU-h + 4 chained panel evals ≈ 10
 GPU-h, complete 04:1xZ; E4B memory smoke ×4 rungs 04:31–05:21Z ≈ 0.8
 GPU-h — ladder exhausted, NO-LAUNCH; **arm C state-dropout live since
 08:10Z on GPU 0** — the idle-since-E4B window closed by the #9
 launch, ~7.5 GPU-h queued incl. chained evals, 0.373 s/step train /
-~1.0–1.15 effective incl. ~3.7-min eval probes (sibling-normal) at
-the 09:31Z poll (@4,760/40k, loss smooth) — 40k boundary
-~16:3x–17:3xZ, results read via the pre-banked `statedrop_results.py`
-instrument;
+~1.0–1.15 effective incl. ~3.7-min eval probes (sibling-normal),
+@8,500/40k at 10:4xZ with the in-run probe descending 16.64@8500 —
+40k boundary ~16:3x–17:3xZ, results read via the pre-banked
+`statedrop_results.py` instrument; **SnapFlow @10k 1-NFE probe on GPU
+1 10:17–10:37Z ≈ 0.3 GPU-h COMPLETE** (record-only read banked:
+5.9222 vs kill 9.6755 — beat the teacher's Heun-30 6.676);
 GPUs 1–3 remain idle awaiting owner steer on E4B
 follow-on / panel-v2 / stage-2b — stated per the anti-goal rule: no
 pre-registered work exists for them until steer or the next queue
@@ -2464,3 +2510,12 @@ being improvised at the 13:2xZ boundary. Lit slice skipped — bounded
 session, instrument on the critical path (endpoint ~4 h out at
 pick time); slice debt now TWO sessions deep — the 10:2xZ probe
 babysit window or the first post-endpoint session MUST take it.
+Session 09:4x–10:5xZ: the ladder item was #18.5 (rig-rollout safety
+gate — CPU, landed + 274 green while both GPUs trained), and the
+probe-boundary duty was taken in-session: step_010000 pushed to box
+GPU 1 as an expert-only 1.8G rsync (backbone sha256-matched on-box —
+the 9G never moved), probe read banked 20 min after the save. **Lit
+slice TAKEN (~15 min) — the two-session debt is CLEARED**: the
+one-step fallback menu (OFP / MeanFlow-VLA / Let-It-Be-Simple)
+banked into #12 ahead of the endpoint read it may steer. Explore
+hours: the probe's 0.3 GPU-h is explore-side (SnapFlow chain).

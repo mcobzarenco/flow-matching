@@ -396,6 +396,35 @@ variants, consistency/distillation toward 1–2-step deployment decodes
   Heun-30 (band: within the σ_draw noise floor of 6.6232). Also
   pairs with #1 (a distilled 1-step model makes mean-of-N nearly
   free).
+- **Literature (2026-08-06 slice, ~10:0xZ): the one-step fallback/
+  follow-on menu, banked while the SnapFlow run climbs to its 10k
+  probe.** If the @30k endpoint misses its band (or to extend a hit),
+  three distinct objective families now have external evidence:
+  (1) **One-Step Flow Policy** ([2603 era, self-distillation
+  w/o pretrained teacher](https://zhaoyang97.github.io/daily-arxiv/2026-03-12/one-step-flow-policy/)) —
+  self-consistency loss + self-guided regularization + warm start,
+  71.6% avg on 56 sim manipulation tasks at 1-NFE; nearest
+  competitor recipe to SnapFlow's. (2) **MeanFlow-based one-step
+  VLA** ([arXiv:2603.01469](https://arxiv.org/abs/2603.01469)) —
+  average-velocity (MeanFlow) objective, claims to *eliminate the
+  consistency constraint* entirely (the constraint whose s=t
+  divergence we are currently watching drift); 8.7× vs SmolVLA.
+  A MeanFlow arm would be a genuinely different objective, not a
+  SnapFlow re-tune — the right shape for a paired follow-up if
+  consistency-style distillation is what misses. (3) **"Let It Be
+  Simple"** ([arXiv:2606.05737](https://arxiv.org/abs/2606.05737)) —
+  claims VLA is image-to-text-like (strong conditioning), so
+  HIGH-NOISE TRAINING alone yields one-step decoding (95.6%
+  LIBERO-Long, no distillation stage at all); their "irreducible
+  velocity loss" framing + the ablation note (weakening the
+  condition erases the one-step gain) ties directly to our
+  conditioning stack (#11/Q3). Cheapest local probe of (3): score
+  the TEACHER at 1-NFE (zero training — we may already have this
+  number from the @10k/endpoint probe protocol runs) and read how
+  much of the gap distillation actually closed vs what high-noise
+  fine-tuning would have to. No new launch implied; feeds the
+  SnapFlow results post's discussion + the next pre-reg if the
+  endpoint branch fires.
 - **PRE-REGISTERED (2026-08-06 ~00:3xZ,
   [pre-reg](posts/2026-08-06-prereg-snapflow-distill.md)):** SnapFlow
   self-distill of flow-80k — full recipe deep-read and frozen
