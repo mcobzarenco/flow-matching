@@ -1,6 +1,21 @@
 # Now
 
-*Updated 2026-08-06 00:14–00:3xZ (real `date -u`) — work session: **SNAPFLOW
+*Updated 2026-08-06 00:25Z (real `date -u`) — tick: **both chains healthy;
+B ~20 min from 40k.** Box ×4: A-s0 @34.9k, B @36.9k, s1 @33.0k, s2
+@33.1k — 0.38–0.40 s/step, util 58–100%, ~71–75 GiB, grad norms
+nominal. Probes all stepping down well under the closed gates: A-s0
+7.368@34.5k, s1 7.417@33k, s2 **7.069@33k** (batch best), B
+7.738@36.5k. B total 3.17–3.33@36.9k vs control actions 3.27–3.43 —
+line noise, read unchanged. B hits 40k ~00:47Z and auto-chains its
+panel eval (no decision pending at the boundary — tick exits rather
+than babysitting); controls ~01:0x–01:3xZ. Draws run 3 (draws=5)
+@9.0k/25.8k, 96% util, on pacing. Discord: no new messages, no new
+reactions (history-checked); stage-2b still awaiting owner steer.
+GPUs busy + CPU queue non-empty (box results post when panel reads
+land ~01–02:3xZ, SnapFlow impl checklist items 1–5, E4B GPU-side
+items) → `run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-06 00:14–00:3xZ (real `date -u`) — work session: **SNAPFLOW
 1-NFE SELF-DISTILLATION PRE-REGISTERED (#12) — the local-GPU queue
 slot after the draws chain + fairness probe is now filled**
 ([pre-reg](posts/2026-08-06-prereg-snapflow-distill.md)). The
