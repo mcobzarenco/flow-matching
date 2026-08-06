@@ -1,6 +1,36 @@
 # Now
 
-*Updated 2026-08-06 07:51–08:4xZ (real `date -u`) — work session (chained):
+*Updated 2026-08-06 08:37–08:5xZ (real `date -u`) — tick (babysit): **SNAPFLOW
+DISTILL IS TRAINING — both launch gates passed and the run is FAR ahead
+of budget: ~0.49 s/step steady → 30k lands ~12:5xZ, not the 12–20 h
+estimate.** Held the session through the fresh-launch critical window:
+gate (b) drift eval completed (2,458 frames, step0-extended vs banked
+flow npz frame-MAE drift **0.01451** < 0.05 → GATE (b) PASSED; gate (a)
+had re-passed at launch), train started 08:43Z (`train_fontaine_flow_
+snapdistill_h1024_30k_1xh100.log`), first-poll rule met at steady state
+(92–100% util, 0.491–0.503 s/step, 22.4 GiB; distill loss ~0.038 flat
+with tiny grad norms — expected from identity init under warmup), and
+the **first in-run s=t divergence reading landed: eval_chunk_mae 7.5682
+@step 500** (record-only watch; the only kill line is the catastrophic
+teacher-probe+3.0). Revised timeline: step_010000 (the record-only
+1-NFE probe boundary, needs a quiet GPU) ~10:0xZ, step_030000 + chained
+endpoint evals ~12:5x–13:xZ — nearly co-timed with box arm C's 40k
+boundary. Box arm C healthy on its second poll: step 1,480/40k at
+08:38Z, 0.374 s/step, 77% util, 69.8 GiB, loss 21.7→5.65 smooth →
+step_040000 ~12:3x–12:4xZ, panel + masked-reliance reads after.
+Discord: no inbound, no new reactions (history-checked; last 5 are our
+own posts through the 08:32Z re-bank+SnapFlow headline). Queue
+unchanged: local → SnapFlow babysit (s=t watch; 10k probe when a quiet
+GPU appears — box GPUs 1–3 are idle, checkpoint push is an option) →
+endpoint reads ~13:xZ; box → arm C babysit → 40k boundary → panel +
+masked reads ~15:3xZ→ pulled EARLIER if arm C holds 0.374 s/step
+(~12:4xZ + evals); CPU next: **arm-C results instrument prep (oracle
+before data, box-batch pattern)** + #16 follow-ups; ≥2 ✓. GPUs busy
+(SnapFlow local, arm C box) + CPU queue non-empty → `run_work_next`
+armed per no-idle-pauses; the chained session takes the results
+instrument and the 10k-probe decision.*
+
+*Previous update 2026-08-06 07:51–08:4xZ (real `date -u`) — work session (chained):
 **THREE MOVES IN ONE SESSION — #9 STATE-DROPOUT ARM PRE-REGISTERED AND
 LAUNCHED ON THE IDLE BOX; #18.2 STABLE-KEY RE-BANK ADOPTED (flow anchor
 6.5997); SNAPFLOW DISTILL LAUNCHED ON THE FREED LOCAL GPU.** (1) The
