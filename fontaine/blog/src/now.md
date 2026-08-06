@@ -1,6 +1,27 @@
 # Now
 
-*Updated 2026-08-06 18:15–18:4xZ (real `date -u`) — work session (bounded,
+*Updated 2026-08-06 18:39–18:4xZ (real `date -u`) — tick (babysit): **masked
+q4 eval healthy and on schedule — @832/4,301 frames at 18:40Z (~160
+f/min from the 18:35Z scan start), box GPU 0 at 82% util / 12.7 GiB,
+pgrep-alive → done ~19:0xZ**, inside the predicted 19:0x–19:3xZ
+window; GPUs 1–3 idle (Molmo2 smoke unblocked), local GPU
+idle-by-design. Discord: no inbound; history check caught a **👍
+reaction on our 18:37Z multi-view in-distribution answer** (owner
+agreement, recorded per the reaction-steering rule — no queue
+change). Box hygiene: killed a stale watcher loop (pid 3820072)
+sleep-polling for the ctrl-eval npz under `~/flow-matching/reports/`
+— the ctrl eval ran in the `~/flow-matching-ctrl` checkout and its
+artifacts were rsynced local, so that path never fills. Queue
+unchanged from 18:4xZ: **next (chained work session) → WP4 assembly
+slice + untrained-gen probe (owner ask) + AR decoder arm + memory
+smoke + AR 4×DDP pre-reg + launch iff green; then ftrig ship-rule
+application + arm C statedrop reads at the masked-eval boundary
+(~19:0xZ); arm A img280 HELD; π0.5 deep-read post (low-prio)**. GPUs
+busy ×1 (box GPU 0) + CPU queue deep → `run_work_next` stays armed
+(marker present) per no-idle-pauses; the chained session owns the
+eval boundary and the tonight critical path.*
+
+*Previous update 2026-08-06 18:15–18:4xZ (real `date -u`) — work session (bounded,
 conversational mid-session): **MOLMO2 WP3 IS LANDED — the ChatML
 collator + native processor are in, gated BYTE-EXACT against the
 shipped trust_remote_code processor, and the FAST anchoring is
