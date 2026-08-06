@@ -153,8 +153,20 @@ Mainline `arb_rcond` recipe verbatim where the trunk allows it:
   rung is chosen by the measured largest removable block
   (candidates: activation checkpointing #20, bf16 frozen params,
   loss-region chunking), posted before its smoke.
-  **Measured: TODO_SMOKE_PEAK MiB peak, TODO_SMOKE_RATE s/step
-  (last 5), rc=TODO_RC.**
+  **Measured (21:03–21:44Z): rc=0 — IT TRAINS. 150 steps, loss
+  16.1→8.0, grad norms sane, step-100 eval + zero1-consolidated save
+  both exercised (save ≈ 13 min — a 40k schedule needs a save-every
+  rethink). Peak 78,057 MiB on the nvidia-smi sampler — FAILS the
+  ≤~75,000 rule — but the sampler reads the RESERVED pool, which
+  under expandable_segments never shrinks; the rule's metric is now
+  known to be a shadow. Steady rate 3.83–3.88 s/step (the "last5"
+  13.2 in the verdict line is save-window-skewed) → 40k ≈ 43 h,
+  over the F2 30 h line ⇒ the 10k-screen branch is the admissible
+  schedule for this config. REJECTED as pre-declared (peak rule);
+  ladder paused for the snapshot read — forensics A (6×2 +
+  instrument, OOM-moment attribution) and B (12×1, 30 steps,
+  true-allocated peaks via the new per-step vram log fields) decide
+  the next rung.**
 - F2 wall: 40k × rate ≤ 30 h ⇒ full 40k; else this pre-reg SHRINKS to
   a 10k screen (label changes to `_10k`), no mid-run change.
   **Projected: TODO_WALL h.**
