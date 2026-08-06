@@ -262,7 +262,18 @@ check (charter §2) before training touches it.
   reliance eval; `--state-dropout` landed with the pre-reg (shared
   `mask_state_item` primitive with the eval probe, p=0 bitwise-inert,
   oracles green).**
-- **Lit check at pre-reg time (2026-08-06 08:1xZ, skim-depth — re-read
+- **Results instrument banked BEFORE the data (2026-08-06 ~09:0xZ,
+  box-batch pattern): `fontaine/scripts/statedrop_results.py`** — all
+  three frozen reads + the E3 probe gate + the verdict assembly
+  (adopt-default / hardening-lever / mechanism-inert-kill / p=0.3
+  branch / falsified) encoded and oracled against the banked A-s0
+  panel npz: anchors 7.7966/3.9422 + state-copy 11.7848/2.6202 +
+  subset state-copy first 2.4316 all reproduce through its pooling;
+  degenerate zeros; synthetic COSTS/HELPS/inert/strong known-effect
+  cases; misaligned-index abort. 4 CPU tests under `check.py` (244
+  green). Arm C's ~12:3x–12:4xZ boundary read is now
+  zero-improvisation: defaults point at the chained eval's output
+  names; pass `--probe-final` from the train log's last in-run probe.
   before citing numbers):** the masking lever keeps accumulating
   neighbors: [ThinkProprio, 2602.06575](https://arxiv.org/abs/2602.06575)
   goes the OPPOSITE direction (proprioception as text tokens fused at

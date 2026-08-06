@@ -1,6 +1,45 @@
 # Now
 
-*Updated 2026-08-06 08:37–08:5xZ (real `date -u`) — tick (babysit): **SNAPFLOW
+*Updated 2026-08-06 08:5x–09:1xZ (real `date -u`) — work session (chained):
+**ARM C'S RESULTS INSTRUMENT IS BANKED BEFORE ITS DATA —
+`fontaine/scripts/statedrop_results.py` encodes all three frozen reads
+of the [state-dropout pre-reg](posts/2026-08-06-prereg-state-dropout-40k.md)
+plus the E3 probe gate and the full verdict assembly (adopt-default /
+free-hardening-lever / mechanism-inert-kill / p=0.3-screen branch /
+falsified), oracled on the banked A-s0 npz with zero arm-C bytes in
+existence.** The box-batch pattern, third time: oracle (a) anchor
+reproduction through this file's own pooling (A-s0 7.7966/3.9422,
+panel state-copy 11.7848/2.6202, q4-subset state-copy first 2.4316 —
+all three sibling-instrument semantics confirmed byte-compatible);
+(b) degenerate C:=A-s0 → read 1 exactly 0 / CI [0,0] and the
+neutral-adopt path composes; (c) synthetic known effects — 1.05×
+error inflation → COSTS verdict at the exact predicted +0.05×frame-MAE
+delta with the p=0.3 branch, 0.95× → HELPS, 6.2× masked inflation →
+capability "failed" ≥15 → the pre-declared MECHANISM-INERT kill, 1.5×
+→ strong+sanity → hardening-lever adoption, probe-final 10.5 → E3
+gate blocks all adoption; (d) misaligned masked index → hard abort.
+4 new CPU tests (`tests/test_statedrop_results.py` — capability
+boundaries, every verdict branch incl. the inclusive band edges,
+known-delta and degenerate analyze math); **`check.py` 244 green.**
+The ~12:3x–12:4xZ arm-C boundary is now zero-improvisation: defaults
+point at the chained eval's output names, `--probe-final` takes the
+train log's last in-run probe. Babysits 08:53/09:03Z: SnapFlow
+@1,800/30k, 0.47–0.48 s/step, 87–98% util, loss ~0.043; **in-run s=t
+divergence: 7.5682@500 → 6.9939@1000 → 7.6521@1500** — oscillating
+around the teacher's level (stable-key anchor 6.5997), record-only,
+far from the teacher-probe+3.0 kill line. Arm C @2,760/40k, 0.37
+s/step, 73% util, loss 21.7→5.38 smooth, aux ~0.9. Discord: no
+inbound ×2 polls. Queue: local → SnapFlow babysit (s=t watch; **10k
+record-only 1-NFE probe ~10:0xZ needs a quiet GPU — box GPUs 1–3
+idle, checkpoint push is the standing option**) → endpoint reads
+~13:xZ; box → arm C babysit → 40k boundary → panel + masked reads
+through the NEW instrument ~15:3xZ (pulled earlier at 0.37 s/step:
+~12:4xZ + evals); CPU next: **#16 rig-transfer follow-ups** + #18
+debt; ≥2 ✓. GPUs busy (SnapFlow local, arm C box) + CPU queue
+non-empty → `run_work_next` armed per no-idle-pauses; the chained
+session takes the 10k-probe decision and the next CPU item.*
+
+*Previous update 2026-08-06 08:37–08:5xZ (real `date -u`) — tick (babysit): **SNAPFLOW
 DISTILL IS TRAINING — both launch gates passed and the run is FAR ahead
 of budget: ~0.49 s/step steady → 30k lands ~12:5xZ, not the 12–20 h
 estimate.** Held the session through the fresh-launch critical window:
@@ -2130,15 +2169,18 @@ Trailing-7-day GPU-hours on experiments / total: local **~16.8 / ~17.1**
 state probe 04:44→06:06Z ≈ 1.4 h COMPLETE, reads posted; fairness
 probe 06:24–07:39Z ≈ 1.2 h COMPLETE incl. the crashed first run,
 reads posted; #18.2 stable-key flip re-bank 07:41→08:30Z ≈ 0.8 h
-COMPLETE — 49 min at ~650 f/min, ADOPTED; SnapFlow distill live since
-08:30Z, ~12–20 h queued, gates (a) ✓ / (b) scoring at update time),
+COMPLETE — 49 min at ~650 f/min, ADOPTED; SnapFlow distill TRAINING
+since 08:43Z — both gates passed, 0.47–0.49 s/step, 30k lands
+~12:5xZ, far ahead of the 12–20 h estimate),
 box **~28.4 / ~28.4 GPU-h**
 (4 arms trained 17:12Z→01:35Z ≈ 17 GPU-h + 4 chained panel evals ≈ 10
 GPU-h, complete 04:1xZ; E4B memory smoke ×4 rungs 04:31–05:21Z ≈ 0.8
 GPU-h — ladder exhausted, NO-LAUNCH; **arm C state-dropout live since
 08:10Z on GPU 0** — the idle-since-E4B window closed by the #9
-launch, ~7.5 GPU-h queued incl. chained evals, 91% util / 0.39 s/step
-at first poll; GPUs 1–3 remain idle awaiting owner steer on E4B
+launch, ~7.5 GPU-h queued incl. chained evals, 0.37 s/step steady at
+the 09:03Z poll (@2,760/40k, loss smooth) — 40k boundary ~12:4xZ,
+results read via the pre-banked `statedrop_results.py` instrument;
+GPUs 1–3 remain idle awaiting owner steer on E4B
 follow-on / panel-v2 / stage-2b — stated per the anti-goal rule: no
 pre-registered work exists for them until steer or the next queue
 refill).
@@ -2305,3 +2347,10 @@ catch worth the surprise log: the SnapFlow launcher's teacher-verbatim
 copy had silently inherited a READ-ONLY mainline wandb write target —
 the class fix (verify-script pins wandb_project as a named delta) is
 in `d9dd385`.
+Session 08:5x–09:1xZ: all-CPU while both GPUs trained — the arm-C
+results instrument banked before its data (the box-batch
+oracle-before-data pattern, third consecutive application:
+box-batch → state-probe → state-dropout), so the ~12:4xZ boundary
+read is frozen code, not judgment at read time. Lit slice skipped —
+bounded session, instrument was the declared queue head; the ~20–30
+min standing slice carries to the next session with slack.
