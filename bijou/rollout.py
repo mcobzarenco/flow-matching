@@ -163,6 +163,15 @@ def parse_args() -> argparse.Namespace:
         default=SamplingMethod.HEUN.value,
     )
     parser.add_argument(
+        "--target-time",
+        choices=["t", "zero"],
+        default="t",
+        help="flow target-time conditioning s (SnapFlow φ_s checkpoints "
+        "only): 't' = standard s=t forwards; 'zero' = the 1-NFE endpoint "
+        "decode (pair with --sample-steps 1 --sample-method euler); "
+        "loud, never inferred from step count — mirrors bijou.eval",
+    )
+    parser.add_argument(
         "--generate",
         nargs="*",
         choices=[f.value for f in AuxField],
@@ -371,6 +380,13 @@ def main() -> int:
         seed=args.seed if args.seed is not None else int(time.time()),
         sample_steps=args.sample_steps,
         method=SamplingMethod(args.sample_method),
+        # Stable noise keying is an eval instrument — it keys draws by
+        # dataset identity (repo_id/episode/frame), which a live rig
+        # observation does not have. Index keying with the replan counter
+        # as the index IS the deployment semantics: fresh noise per
+        # replan, reproducible under a fixed --seed.
+        noise_key="index",
+        target_time=0.0 if args.target_time == "zero" else None,
         expert_dtype=getattr(torch, args.expert_dtype),
         generate=tuple(AuxField(f) for f in (args.generate or ())),
         include_subgoal_condition=args.subgoal is not None,
@@ -394,9 +410,12 @@ def main() -> int:
             height=args.camera_height,
         )
 
+    decode_tag = f"{args.sample_method}-{args.sample_steps}"
+    if args.target_time == "zero":
+        decode_tag += "-s0"  # 1-NFE endpoint decode (SnapFlow shortcut)
     print(
         f"policy: {policy.name} (chunk {chunk_size}, "
-        f"{args.sample_method}-{args.sample_steps}, {args.expert_dtype} expert)",
+        f"{decode_tag}, {args.expert_dtype} expert)",
     )
     print(f"task: {args.task!r}")
     print(f"cameras (prompt order): {sorted(cameras)}")

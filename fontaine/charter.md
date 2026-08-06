@@ -448,7 +448,13 @@ Agent-specific additions:
   `bijou_config.json` provenance intact; anything trained on the
   branch records the branch commit. Seed checkpoints keep
   `optimizer.pt`; the rest are weights-only; disk estimate vs `df`
-  before every long run (inherited).
+  before every long run (inherited). **Valuable checkpoints upload
+  proactively, not just before deletion (owner steer, 2026-08-06
+  16:33Z):** any endpoint a claim rests on, or that the owner may
+  consume, goes to the hub when it is banked — weights-only unless
+  it seeds further training (optimizer states are large and stay
+  local otherwise). The box is replaceable by construction; a
+  checkpoint that exists only on one machine is exposure.
 - **Batch/VRAM reference points** (measured, mainline): ar_backbone
   live-trunk B11 ≈ 75.6 GiB peak, B12 OOMs on the community mix at
   ~20k; flow frozen-trunk B64 ≈ 1.1–1.5 s/step on H100. Standing rule

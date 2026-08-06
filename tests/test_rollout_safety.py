@@ -210,3 +210,22 @@ def test_kinds_override_wins_over_dataset(tmp_path: Path) -> None:
     dataset = write_rig_dataset(tmp_path)
     kinds = resolve_camera_kinds(CAMERAS, {"front": "side"}, dataset)
     assert kinds == {"front": "side", "wrist": "wrist"}
+
+
+def test_rollout_noise_keying_is_index_not_stable() -> None:
+    """Live-rig observations carry no dataset identity (repo_id/episode/
+    frame), so stable noise keying cannot apply — bijou.rollout must pin
+    noise_key="index" (fresh noise per replan via the replan counter).
+    Regression: the #18.2 stable default flip crashed every flow rollout
+    at the first predict (KeyError: 'repo_id'), caught by --check."""
+    import inspect
+
+    from bijou import rollout
+    from bijou.eval.policies import noise_for_item
+
+    rig_item = {"state": [0.0] * 6}  # no repo_id/episode_index/frame_index
+    noise = noise_for_item("index", 0, rig_item, 3, 0, (50, 6))
+    assert noise.shape == (50, 6)
+    with pytest.raises(KeyError):
+        noise_for_item("stable", 0, rig_item, 3, 0, (50, 6))
+    assert 'noise_key="index"' in inspect.getsource(rollout)
