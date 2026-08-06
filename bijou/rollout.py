@@ -15,7 +15,14 @@ dataset directory (``--stats-dataset``).
 Camera naming matters: prompt slots are positional over SORTED camera keys,
 so the ``--camera`` names must sort the same way as the training dataset's
 camera keys (e.g. a dataset recorded with front/wrist must roll out with
---camera front=... --camera wrist=...).
+--camera front=... --camera wrist=...). Camera *kinds* (the semantic prompt
+tags) mirror training: the rig dataset's stamped ``meta/camera_kinds.json``
+when ``--stats-dataset`` is given, ``--camera-kind name=kind`` to override.
+
+Safety gates before the arm moves (``bijou.rollout_safety``):
+``--max-relative-target`` is mandatory (``--unclamped`` opts out,
+explicitly), and the first observation must lie inside the rig stats'
+per-joint envelope (``--skip-envelope-check`` opts out).
 
 Usage::
 
@@ -37,7 +44,6 @@ import argparse
 import json
 import sys
 import time
-from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
@@ -46,12 +52,19 @@ import torch
 from lerobot.cameras.opencv import OpenCVCameraConfig
 from lerobot.robots.so_follower import SOFollower, SOFollowerRobotConfig
 
-from .annotations import CAMERA_KINDS, ConditionField
+from .annotations import ConditionField
 from .aux_text import AuxField, AuxGeneration
 from .data import DatasetStats
 from .eval.policies import BijouPolicy
 from .model import SamplingMethod
 from .rollout_async import AsyncExecutor, AsyncPlanner, sustainable
+from .rollout_safety import (
+    envelope_violations,
+    parse_camera_kind_overrides,
+    require_clamp,
+    resolve_camera_kinds,
+    state_envelope,
+)
 
 # Canonical SO-100/101 joint order (bus order; dataset motor names are these
 # with the ".pos" suffix).
@@ -185,8 +198,33 @@ def parse_args() -> argparse.Namespace:
         "--max-relative-target",
         type=float,
         default=None,
-        help="safety clamp on per-tick joint motion (lerobot SOFollower "
-        "feature; strongly recommended for first runs, e.g. 20)",
+        help="safety clamp on per-tick joint motion in degrees (lerobot "
+        "SOFollower feature) — MANDATORY: it is the only limiter between "
+        "a bad chunk and full-speed arbitrary servo motion; start with "
+        "e.g. 20. --unclamped is the explicit opt-out",
+    )
+    parser.add_argument(
+        "--unclamped",
+        action="store_true",
+        help="explicitly run without --max-relative-target (nothing limits "
+        "per-tick joint motion — not for first runs)",
+    )
+    parser.add_argument(
+        "--camera-kind",
+        action="append",
+        default=[],
+        metavar="NAME=KIND",
+        help="repeatable; override a camera's semantic kind in the prompt "
+        "(the training-time tag). Default resolution mirrors training: "
+        "the rig dataset's stamped meta/camera_kinds.json when "
+        "--stats-dataset is given, else the name-is-kind heuristic",
+    )
+    parser.add_argument(
+        "--skip-envelope-check",
+        action="store_true",
+        help="proceed even when the first observation falls outside the "
+        "stats envelope (deliberately unusual start pose only — the check "
+        "exists to catch wrong stats and ticks-vs-degrees mismatches)",
     )
     parser.add_argument("--device", default="cuda")
     parser.add_argument(
@@ -236,26 +274,6 @@ def rig_stats(args: argparse.Namespace, policy: BijouPolicy) -> DatasetStats:
     raise SystemExit("pass --stats-repo-id or --stats-dataset")
 
 
-def camera_kinds_from_names(names: Iterable[str]) -> dict[str, str]:
-    """Per-camera semantic kinds from the operator's own camera names: a
-    name inside the judge vocabulary IS its kind; anything else renders
-    "unknown" (trained in-distribution via kind dropout) with a LOUD
-    warning — name cameras by viewpoint to give the model the signal."""
-    kinds: dict[str, str] = {}
-    for name in names:
-        if name in CAMERA_KINDS:
-            kinds[name] = name
-        else:
-            print(
-                f"WARNING: camera name {name!r} is not in the semantic "
-                f"kind vocabulary {sorted(CAMERA_KINDS)} — its prompt tag "
-                "renders as 'unknown'",
-                flush=True,
-            )
-            kinds[name] = "unknown"
-    return kinds
-
-
 def observation_to_item(
     observation: dict[str, Any],
     task: str,
@@ -279,7 +297,7 @@ def observation_to_item(
     item: dict[str, Any] = {
         "task": task,
         # Kinds travel with the item, like the stats (the collator reads
-        # item["camera_kinds"] — see rollout.camera_kinds_from_names).
+        # item["camera_kinds"] — see rollout_safety.resolve_camera_kinds).
         "camera_kinds": camera_kinds,
         # Deployment conditioning values (rendered only for fields the
         # checkpoint trained — the collator's condition_fields gate).
@@ -330,7 +348,16 @@ def main() -> int:
     torch.set_float32_matmul_precision("high")
     device = torch.device(args.device)
 
-    rig_kinds = camera_kinds_from_names(spec.partition("=")[0] for spec in args.camera)
+    # Safety gates fail before the (slow) policy load; the clamp gate
+    # runs in --check mode too, so checking the exact command you will
+    # run catches a missing clamp early.
+    require_clamp(args.max_relative_target, unclamped=args.unclamped)
+    camera_names = [spec.partition("=")[0] for spec in args.camera]
+    rig_kinds = resolve_camera_kinds(
+        camera_names,
+        parse_camera_kind_overrides(args.camera_kind, camera_names),
+        args.stats_dataset,
+    )
     condition_values = {
         ConditionField.OUTCOME.value: args.outcome,
         ConditionField.SMOOTHNESS.value: args.smoothness,
@@ -350,6 +377,7 @@ def main() -> int:
         offload_ple=args.offload_ple,
     )
     stats = rig_stats(args, policy)
+    envelope = state_envelope(stats, expected_dim=len(SO_MOTORS))
     chunk_size = policy.info.chunk_size
     horizon = min(args.execute_horizon, chunk_size)
 
@@ -372,7 +400,15 @@ def main() -> int:
     )
     print(f"task: {args.task!r}")
     print(f"cameras (prompt order): {sorted(cameras)}")
+    print(f"camera kinds (prompt tags): {rig_kinds}")
     print(f"state stats mean: {[round(x, 1) for x in stats.state_mean]}")
+    print(
+        "first-obs envelope: "
+        + ", ".join(
+            f"{motor} [{lo:.1f}, {hi:.1f}]"
+            for motor, lo, hi in zip(SO_MOTORS, *envelope, strict=True)
+        ),
+    )
     print(
         f"loop: {args.control_fps} Hz, execute {horizon}/{chunk_size} per replan, "
         f"{args.duration:.0f}s, max_relative_target={args.max_relative_target}",
@@ -447,6 +483,36 @@ def main() -> int:
     )
     robot.connect()
     print("robot connected; ctrl-c to stop", flush=True)
+
+    # First-observation envelope gate: no action is sent until the arm's
+    # reported state is plausible under the rig stats it will be
+    # normalized with.
+    first_state = [float(robot.get_observation()[f"{m}.pos"]) for m in SO_MOTORS]
+    out = envelope_violations(first_state, envelope)
+    lo, hi = envelope
+    for j, motor in enumerate(SO_MOTORS):
+        print(
+            f"  first-obs | {motor}: {first_state[j]:.1f} in "
+            f"[{lo[j]:.1f}, {hi[j]:.1f}] " + ("OUT" if j in out else "ok"),
+            flush=True,
+        )
+    if out:
+        joints = ", ".join(SO_MOTORS[j] for j in out)
+        if args.skip_envelope_check:
+            print(
+                f"WARNING: first observation outside the stats envelope "
+                f"({joints}) — proceeding under --skip-envelope-check",
+                flush=True,
+            )
+        else:
+            robot.disconnect()
+            raise SystemExit(
+                f"first observation outside the stats envelope ({joints}): "
+                "wrong --stats-repo-id/--stats-dataset, a ticks-vs-degrees "
+                "mismatch, or an uncalibrated arm. Fix the stats source, or "
+                "pass --skip-envelope-check for a deliberately unusual "
+                "start pose.",
+            )
 
     tick = 1.0 / args.control_fps
     deadline = time.perf_counter() + args.duration

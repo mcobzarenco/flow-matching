@@ -3,6 +3,42 @@
 Rolling dated notes that don't merit a post. Anomalies land here too
 (the surprise log, charter §3).
 
+## 2026-08-06 — rig-rollout safety gate landed (#18.5 closed) (~09:5xZ)
+
+The first-physical-run blocker (deep-dive findings 8+9), closed as
+CPU work while SnapFlow + arm C hold the GPUs — the gate now exists
+*before* the north-star surface ever needs it. New lerobot-free
+`bijou/rollout_safety.py` (testable without a robot) wired into
+`bijou.rollout`; three gates, all before the arm moves:
+
+1. **Clamp is mandatory.** `--max-relative-target` (positive, finite)
+   or the arm does not move — the vendored lerobot degrees branch
+   un-normalizes with no min/max against calibration, so this flag is
+   the only limiter between one bad chunk (or wrong stats) and
+   full-speed arbitrary servo ticks. `--unclamped` is the explicit
+   opt-out; clamp+opt-out together die as contradictory. The gate
+   runs before the slow policy load and in `--check` mode, so
+   checking the exact command catches a missing clamp early.
+2. **First-observation envelope.** After connect, before any action:
+   each joint must lie in [q01, q99] widened by half the band per
+   side (15° absolute floor; mean±3σ fallback for quantile-less
+   stats tables). Wrong `--stats-repo-id`, raw-ticks-vs-degrees
+   (~10³ flags every joint), and uncalibrated arms all die loud with
+   a per-joint table; stats dim ≠ 6 dies as wrong-embodiment;
+   `--skip-envelope-check` covers deliberately unusual start poses.
+3. **Camera kinds mirror training, not operator names.** With
+   `--stats-dataset`, kinds resolve through training's own path
+   (`annotation_stamp` + `camera_kinds_of`) — a rig whose
+   "front"-named cam was judged kind `top` now rolls out tagged
+   `top`, and an unstamped/hash-mismatched dataset renders `unknown`
+   exactly as training did (the old name heuristic silently skewed
+   both cases; it survives only when no dataset directory exists).
+   `--camera-kind NAME=KIND` is the validated explicit override.
+
+22 new CPU tests; `--check` exercised end-to-end on the real
+flow-80k checkpoint (CPU, real stats table — envelope prints sane
+degree-scale bounds); `check.py` 274 green.
+
 ## 2026-08-05 — chunked backward landed; the pre-reg's chunk-mean sketch was wrong (~23:0xZ)
 
 The E4B launch de-risk item

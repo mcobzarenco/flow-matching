@@ -30,7 +30,8 @@ import torch
 
 from bijou.decoders.flow import SamplingMethod
 from bijou.eval.policies import BijouPolicy
-from bijou.rollout import SO_MOTORS, camera_kinds_from_names, observation_to_item
+from bijou.rollout import SO_MOTORS, observation_to_item
+from bijou.rollout_safety import camera_kinds_from_names
 
 from . import OUTPUT_DIR
 from .so101_sim import CONTROL_HZ, SimObservation, SO101Sim

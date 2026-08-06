@@ -767,9 +767,31 @@ queue, in leverage order (details + file:line in the post):
    `snapflow_recipe_verify` extended (new field at inert default,
    stage 0 re-run green, 51 verbatim). **Unblocks idea #3, and lands
    before the E4B 100k launch opens its crash+resume risk window.**
-5. Rig-rollout safety gate (mandatory clamp, first-obs stats
-   envelope assert, rollout reads `camera_kinds.json`) — **blocks
-   the first physical run** (idea #16).
+5. ~~Rig-rollout safety gate~~ **DONE 2026-08-06 ~09:5xZ** (deep-dive
+   findings 8+9, the first-physical-run blocker, closed while #16
+   execution is parked so the gate exists before it is ever needed):
+   new lerobot-free `bijou/rollout_safety.py` + wiring in
+   `bijou.rollout`. (a) **Clamp mandatory** — `--max-relative-target`
+   (positive, finite) required before the arm moves, `--unclamped` is
+   the explicit opt-out, clamp+unclamped together die as
+   contradictory; gate runs before the (slow) policy load and in
+   `--check` mode too. (b) **First-obs envelope** — after connect, the
+   first observation must lie inside per-joint bounds from the rig
+   stats (q01..q99 widened by half-band, 15° absolute floor;
+   mean±3σ fallback for quantile-less checkpoint tables; stats
+   dim ≠ 6 joints dies as wrong-embodiment). Catches wrong
+   `--stats-repo-id`, ticks-vs-degrees (~10³ ticks flags every
+   joint), uncalibrated arms; `--skip-envelope-check` for deliberate
+   unusual starts; per-joint table printed every run, envelope shown
+   in `--check`. (c) **Camera kinds mirror training** — with
+   `--stats-dataset`, kinds resolve through training's own path
+   (`annotation_stamp` + `camera_kinds_of`: stamped+hash-matched
+   file, else "unknown" — never the name heuristic, which stays only
+   for the no-dataset case); `--camera-kind NAME=KIND` explicit
+   override, validated against the vocabulary (deep-dive's wild case
+   "front-named cam judged top" covered by test). 22 new CPU tests
+   (`tests/test_rollout_safety.py`); `--check` exercised end-to-end
+   on the real flow-80k checkpoint (CPU); `check.py` 274 green.
 6. ~~Parity extension~~ **DONE 2026-08-06 ~03:4xZ** (deep-dive
    finding 7): `verify_parity` gains (a) a default-on **padded
    2-sample × 2-image batch check** — mixed-length prompts through
