@@ -1,6 +1,53 @@
 # Now
 
-*Updated 2026-08-06 18:39–18:4xZ (real `date -u`) — tick (babysit): **masked
+*Updated 2026-08-06 18:41–19:0xZ (real `date -u`) — work session (chained, bounded):
+**MOLMO2 WP4 ASSEMBLY SLICE LANDED + THE UNTRAINED-GEN PROBE (owner
+ask 18:18Z) ANSWERED SAME SESSION — the full multimodal compose
+works end-to-end on the real checkpoint, and the grounding read is a
+strong POSITIVE.** The build (`bijou/molmo2/model.py`): (1)
+`build_multimodal_mask` — causal OR image-block, the shipped
+`or_mask_function` composition re-read from `modeling_molmo2.py`
+this session (any two image-typed positions mutually visible, THEN
+key padding excluded); (2) `Molmo2Model` compose — additive vision
+injection (`+=` at `<im_patch>` positions ONLY, count die-loud vs
+the backbone's valid-token output, exactly the reference
+`build_input_embeddings`), logical positions under left padding;
+(3) cache-free `greedy_generate` (no KV cache exists under D1 —
+probe/parity tool); (4) `load_model` full-checkpoint loader. 5 new
+CPU oracles (mask vs brute-force reference semantics; additive
+injection; count-mismatch die-loud; **left-pad invariance
+end-to-end** — pad must leak through neither causal nor the
+bidirectional image block; greedy = own argmax + stop ids) —
+**check.py 327 green.** PROBE
+(`fontaine/scripts/molmo2_untrained_gen.py`, local idle GPU, bf16,
+real pipeline rig-frame → Collator → WP3 collator → WP4 compose,
+878-id prompt / 820 image-typed at max_crops 1): raw continuation
+at the training position = `[wrist camera|Image 2]<|im_end|>` — a
+9-token FORMAT ECHO of our bracket syntax, NO refusal (same under
+the full aux request); with the `<|im_start|>assistant` opener the
+raw trunk gives an accurate scene description — "stack of wooden
+coasters" = the disk stack ✓, "person holding a black electronic
+device with wires" = the operator's hand on the teleop leader arm
+✓, "two plastic objects" = orange boat + gripper finger ✓ — it
+declines the task only because it doesn't share our naming ("toy
+boat"). Second frame (15000, overexposed) same shape.
+Night-and-day vs gemma4's refusals; frames posted to Discord
+(composites banked `reports/molmo2_probe_frame{100,15000}.png`).
+Babysits 18:42/18:57Z: masked q4 eval @992→@3,872/4,301, ~160
+f/min, box GPU 0 82% util → **done ~19:0xZ, on schedule**; GPUs 1–3
+idle (smoke path clear); Discord polled ×3 (boot + checkpoint +
+close), no inbound. Queue: **next (chained work session) → AR
+decoder arm (fast_embed + fresh head rows on the
+frozen-original-vocab split per the 18:1xZ freezing answer) +
+memory smoke (4.85B live trunk × 4 ranks, B32 gate) + AR 4×DDP
+pre-reg + launch iff green; then ftrig ship-rule application +
+arm C statedrop reads at the masked-eval boundary (~19:0xZ); arm A
+img280 HELD; π0.5 deep-read post (low-prio)**. GPUs busy ×1 (box
+GPU 0 finishing) + CPU queue deep → `run_work_next` armed per
+no-idle-pauses; the chained session owns the eval boundary + the
+AR-arm critical path.*
+
+*Previous update 2026-08-06 18:39–18:4xZ (real `date -u`) — tick (babysit): **masked
 q4 eval healthy and on schedule — @832/4,301 frames at 18:40Z (~160
 f/min from the 18:35Z scan start), box GPU 0 at 82% util / 12.7 GiB,
 pgrep-alive → done ~19:0xZ**, inside the predicted 19:0x–19:3xZ
@@ -3455,3 +3502,12 @@ scan-warmup, not a stall — 0% GPU was the warmup, checked before
 assuming). Lit slice skipped — owner-steered critical-path session
 (the 16:04Z slice is <3 h old; balance carries). Explore hours: 0
 GPU-h this session; WP3 is exploit-side critical path.
+Session 18:41–19:0xZ: the ladder pick was rung 1/2 continuation
+(owner-confirmed tonight critical path — WP4 assembly slice + the
+18:18Z untrained-gen probe ask). GPU-side: the probe spent ~0.1
+GPU-h on the otherwise-idle local GPU (inference burst, the plan's
+"parity bursts" allowance — no pre-reg needed, no training). Masked
+eval babysat ×2 with Discord polls at boot/checkpoint/close. Lit
+slice skipped — critical-path session (the 16:04Z slice balance
+carries; tonight's chain outranks). Explore hours: ~0.1 GPU-h,
+exploit-side (Molmo2 port is the owner-promoted critical path).

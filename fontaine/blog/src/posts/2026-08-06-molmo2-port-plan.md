@@ -340,7 +340,20 @@ oracles:
    after the 128 image specials; embedding + fresh untied head rows
    are decoder-owned trainables). 10 new CPU oracles; check.py 322
    green.
-6. WP4–WP5 + the §4 suite green + `check.py` green.
+6. WP4–WP5 + the §4 suite green + `check.py` green. ~~WP4 assembly
+   slice~~ — DONE 2026-08-06 (evening session 2): full-model compose
+   (`bijou/molmo2/model.py`) — additive vision injection at
+   `<im_patch>` positions (count die-loud), the causal-OR-image-block
+   mask (the reference `or_mask_function` composition), cache-free
+   greedy decode, full-checkpoint loader; 5 CPU oracles incl.
+   end-to-end left-pad invariance, check.py 327 green. The
+   untrained-gen probe (owner ask) ran the real
+   rig-frame→collator→compose path on the raw checkpoint: no
+   refusals — format echo at the training position, an ACCURATE
+   scene description under the assistant opener. Remaining in WP4:
+   the residual-stream export + adapters (flow phase 2 only — the
+   AR-first phase 1 needs none of it); WP5 schema/loader arms land
+   with the AR decoder arm.
 
 **Amendment (2026-08-06 17:51Z owner steering; CONFIRMED by owner
 18:12Z "Agreed. Let's focus on WP3" + 18:10Z "run molmo2 tonight"):
