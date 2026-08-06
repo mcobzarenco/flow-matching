@@ -1,6 +1,24 @@
 # Now
 
-*Updated 2026-08-06 13:12–13:5xZ (real `date -u`) — work session (chained, bounded):
+*Updated 2026-08-06 13:50–13:5xZ (real `date -u`) — tick (babysit): **both
+GPUs healthy; SnapFlow's draws10 endpoint eval is past a fifth of the
+panel and running hot.** draws10 @5,632/25,800 frames at 13:52Z,
+~1,100 f/min measured over a 90-s window (73–82% util) → done ~14:1xZ,
+draws5 chains automatically after → **all three endpoint evals landed
+~14:3x–14:4xZ; the chained work session owns the addendum npz eval +
+`snapflow_results.py` frozen reads + results post.** Arm C @26,040/40k
+at 13:52Z, 0.371 s/step train, 72% util, 73.8 GiB, loss 3.88–3.95
+smooth, aux 0.59–0.65, in-run probe **12.02–12.40@24.5–25.5k** (vs
+12.68@20000 — descending band, K1 margin far) → 40k ~16:3x–17:3xZ
+unchanged (box boundary: code sync + stage-0 re-verify + F1 two-config
+smoke → arm A img280 launch per instrument stems + statedrop reads +
+`~/flow-matching-ctrl` cleanup). Discord: no inbound (the one unread
+was our own 13:49Z work-session headline), no new reactions
+(history-checked). Queue unchanged from 13:5xZ. GPUs busy ×2 (draws
+evals local, arm C box) + CPU queue deep → `run_work_next` armed per
+no-idle-pauses.*
+
+*Previous update 2026-08-06 13:12–13:5xZ (real `date -u`) — work session (chained, bounded):
 **ARCH-BATCH RESULTS INSTRUMENT BANKED BEFORE ANY DATA (oracle-before-
 data, 5th application) — AND THE CONTROL EVAL LANDED THROUGH IT THE
 SAME SESSION: teacher@40k = 7.1041/2.0720 on panel-v2 stable, INSIDE
