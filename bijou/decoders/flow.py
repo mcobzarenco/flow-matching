@@ -606,6 +606,18 @@ class FlowDecoder(nn.Module):
         action stats. ``num_steps``/``method``/``target_time`` are
         flow-specific solver knobs (other decoder kinds have none)."""
         state = (batch.state - batch.state_stats.mean) / batch.state_stats.std
+        if noise is None:
+            # The identical draw sample_actions would make (same shape/
+            # dtype/device/generator ⇒ bit-exact result and generator
+            # consumption) — made here so the prediction can carry it.
+            noise = torch.randn(
+                state.shape[0],
+                self.config.chunk_size,
+                self.config.action_dim,
+                dtype=state.dtype,
+                device=state.device,
+                generator=generator,
+            )
         sampled = self.sample_actions(
             memory,
             state,
@@ -619,7 +631,7 @@ class FlowDecoder(nn.Module):
             sampled.float() * batch.action_stats.std[:, None, :]
             + batch.action_stats.mean[:, None, :]
         )
-        return BijouPrediction(actions=chunks, generations=None)
+        return BijouPrediction(actions=chunks, generations=None, noise=noise)
 
 
 def flow_matching_loss(

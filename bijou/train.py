@@ -595,12 +595,15 @@ def _chunk_plot(
 
 @dataclass(frozen=True, slots=True)
 class RichRow:
-    """One probe sample's prediction, kept (CPU-side) for the wandb table."""
+    """One probe sample's prediction, kept (CPU-side) for the wandb table.
+    ``noise`` is the flow draw the prediction integrated (None for AR) —
+    the Q3 tripwire re-decodes these rows and must reuse it."""
 
     sampled: Tensor
     truth: Tensor
     valid: Tensor
     state: Tensor
+    noise: Tensor | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -732,12 +735,13 @@ def validate(
         # ar_backbone scores the ACT fast path here (comparable across
         # aux-on / aux-off arms); the rich table below is the FREE-mode
         # surface for aux-capable checkpoints.
-        sampled = model.predict_chunk(
+        prediction = model.predict_chunk(
             batch,
             generator=generator,
             num_steps=10,
             generate=(),
-        ).actions
+        )
+        sampled = prediction.actions
         truth = batch.actions.float()
         valid = ~batch.action_is_pad
         error = (sampled - truth).abs()
@@ -768,6 +772,11 @@ def validate(
                     truth=truth[i].cpu(),
                     valid=valid[i].cpu(),
                     state=batch.state[i].cpu(),
+                    noise=(
+                        prediction.noise[i].cpu()
+                        if prediction.noise is not None
+                        else None
+                    ),
                 ),
             )
             next_rich = next(wanted, None)
@@ -925,7 +934,11 @@ def validate(
         # once more with outcome overridden to "success" and log the mean
         # |Δ| against the true-conditioned scalar-pass predictions.
         # Pre-registered: > 0 and growing; ≈ 0 means the model ignores
-        # the label and the failed-demo mass trained as-if-good.
+        # the label and the failed-demo mass trained as-if-good. The
+        # override decode reuses each row's scalar-pass noise: with a
+        # fresh draw, a flow decoder's |Δ| has a floor at the sampling
+        # variance even when the model is conditioning-blind — the exact
+        # state this alarm exists to catch (deep-dive finding 3).
         if ConditionField.OUTCOME in collator.condition_fields:
             flipped = [
                 (i, item)
@@ -937,9 +950,19 @@ def validate(
                     {**item, "condition_outcome": "success"} for _, item in flipped
                 ]
                 override_batch = collator(override_items).to(device)
+                flipped_noise = [
+                    row
+                    for row in (rich_rows[i].noise for i, _ in flipped)
+                    if row is not None
+                ]
                 override_prediction = model.predict_chunk(
                     override_batch,
                     generator=generator,
+                    noise=(
+                        torch.stack(flipped_noise).to(device)
+                        if len(flipped_noise) == len(flipped)
+                        else None
+                    ),
                     num_steps=10,
                     generate=(),
                 )

@@ -1,6 +1,45 @@
 # Now
 
-*Updated 2026-08-06 02:22–02:2xZ (real `date -u`) — tick: **all chains healthy;
+*Updated 2026-08-06 02:24–02:4xZ (real `date -u`) — work session: **Q3 TRIPWIRE
+NOISE FIX LANDED (#18.3, deep-dive finding 3) — the conditioning-collapse
+alarm now measures conditioning, not sampling variance, closed before
+the SnapFlow distill launch (the next conditioned flow run,
+`--condition-fields subgoal outcome smoothness`).** The tripwire's
+override decode re-used the *advanced* generator — fresh noise — so
+for a flow decoder mean|Δ| vs the scalar pass had a floor at the
+sampling variance even for a fully conditioning-blind model, the
+exact state the alarm was registered to catch. Fix:
+`FlowDecoder.predict_chunk` now returns the noise it integrated
+(`BijouPrediction.noise`; fallback draw moved from `sample_actions`
+into `predict_chunk` — the identical randn), `validate()` captures it
+per rich row, and the Q3 override decode reuses each flipped row's
+scalar-pass noise, so |Δ| isolates the conditioning effect; AR path
+byte-unchanged (noise None, greedy — was already exact). Oracles:
+pre-edit banked reference on a seeded fixture reproduced bit-exact
+post-edit (actions AND generator end-state — in-run probe curves
+stay comparable across the change); noise round-trip bitwise;
+eval/panel paths structurally untouched (eval always passes explicit
+per-item noise — verified at both `policies.py` call sites). 3 new
+tests (`tests/test_condition_tripwire.py`), `check.py` 215 green.
+Semantics note recorded in ideas #18.3: flow-run
+`condition_sensitivity` not comparable to mainline's historical
+values (which carried the floor). Babysit 02:3xZ: box ×3 control
+evals scoring A-s0 @13.2k, s1 @9.5k, s2 @10.1k of 25.8k — frames
+advancing, on pace ~03:4x–04:1xZ; B complete (pulled 02:09Z); GPU1
+idle as decided (smoke at the boundary). Local draws run 4 @9.5k/
+25.8k, 99% util, on pacing ~04:0xZ. Discord: no new messages;
+panel-v2 + stage-2b still await owner steer. Queue unchanged: box →
+results post (~04Z, instrument armed) + E4B smoke/σ_seed/amendment →
+E4B launch; local → fairness probe → SnapFlow distill (its
+conditioned-run path now unblocked by this fix); +panel-v2 +
+stage-2b awaiting steer — ≥2 ✓. Lit slice skipped again (6 sessions
+since 00:14Z — #18.3 was the ladder's top unblocked item with a
+launch-path deadline; the pure-babysit window before ~04Z or the
+first post-results session takes the slice, stated as a MUST). GPUs
+busy + CPU queue non-empty → `run_work_next` armed per
+no-idle-pauses.*
+
+*Previous update 2026-08-06 02:22–02:2xZ (real `date -u`) — tick: **all chains healthy;
 box endgame is three control evals from done, and B's eval GPU is
 now idle — E4B smoke deliberately deferred to the boundary.** Box:
 B's panel eval COMPLETE (25,792/25,800 final scoring line; report+
@@ -1620,3 +1659,10 @@ becomes possible (skipped lit slice AGAIN — five sessions since
 had a real deadline at the ~04Z anchor boundary. The slice is now
 firmly overdue: the first session after the box results post MUST
 take it as its work item or a named part of one).
+Twenty-first consecutive all-CPU session (02:24–02:4xZ real-clock):
+the #18.3 Q3 tripwire noise fix — the last deep-dive integrity item
+standing on the SnapFlow launch path — landed with a pre-edit banked
+bit-exactness oracle in the window before the ~04Z control reads
+(lit slice skipped a sixth time; the pure-babysit stretch before
+~04Z or the first post-results session takes it — that commitment
+stands).

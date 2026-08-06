@@ -505,7 +505,7 @@ export-stream semantics). Original slate below, kept for scope:
 - **Consistency-distilled 1–2-step deployment decoders** (pairs with
   ideas #1 and #12) — the deployment-latency leg of the rig goal.
 
-## 18. Instrument & infra hardening — `screening` (items 1+8 done 2026-08-05, 2 flag-landed, 4+7 done 2026-08-06)
+## 18. Instrument & infra hardening — `screening` (items 1+8 done 2026-08-05, 2 flag-landed, 3+4+7 done 2026-08-06)
 
 The [bijou deep-dive](posts/2026-08-05-bijou-deep-dive.md)'s fix
 queue, in leverage order (details + file:line in the post):
@@ -531,8 +531,23 @@ queue, in leverage order (details + file:line in the post):
    one flow-80k panel re-bank, decision band pre-registered off the
    draws chain's empirical σ_draw. Until then flow anchors remain
    valid only at frozen corpus composition.
-3. Q3 tripwire noise fix (reuse scalar-pass noise) — before any
-   conditioned flow run.
+3. ~~Q3 tripwire noise fix~~ **DONE 2026-08-06 ~02:4xZ** (deep-dive
+   finding 3, closed before the SnapFlow distill launch — the next
+   conditioned flow run): `FlowDecoder.predict_chunk` now returns the
+   noise it integrated (`BijouPrediction.noise`; the fallback draw
+   moved from `sample_actions` into `predict_chunk` — same randn
+   call, proven bit-exact incl. generator consumption against a
+   pre-edit banked reference), `validate()` captures it per rich row,
+   and the Q3 override decode reuses each row's scalar-pass noise —
+   |Δ| is now purely the conditioning effect (was floored at sampling
+   variance for a conditioning-blind flow model, the exact state the
+   alarm exists to catch). AR path byte-unchanged (noise None,
+   greedy). Eval/panel paths untouched structurally: eval always
+   supplies per-item noise explicitly. 3 new tests
+   (`tests/test_condition_tripwire.py`); `check.py` 215 green.
+   Semantics note: `condition_sensitivity` for flow runs is not
+   comparable to mainline's historical values (which carried the
+   variance floor).
 4. ~~Resume hardening~~ **DONE 2026-08-06 ~01:1xZ** (deep-dive
    finding 2, all three traps): (a) fresh-seed-on-resume is now
    ENFORCED — `--resume` with the checkpoint's recorded

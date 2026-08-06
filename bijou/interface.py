@@ -90,10 +90,18 @@ class BijouPrediction:
     ar_backbone always returns the list — rows are empty-text under ACT
     decode.
 
-    Shapes: actions [B, chunk, action_dim] (raw action units)."""
+    ``noise`` is the initial noise the flow solver actually integrated
+    (supplied or drawn), kept so a paired re-decode can reuse it — the
+    Q3 conditioning tripwire needs |Δ| against the SAME draw, or the
+    sampling variance floors the signal for a conditioning-blind model.
+    None for decoders that draw none (ar_fast, ar_backbone).
+
+    Shapes: actions [B, chunk, action_dim] (raw action units);
+    noise [B, chunk, action_dim] (normalized units)."""
 
     actions: Tensor
     generations: list[AuxGeneration] | None
+    noise: Tensor | None = None
 
 
 @dataclass(frozen=True, slots=True)
