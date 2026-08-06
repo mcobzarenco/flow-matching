@@ -1,6 +1,22 @@
 # Now
 
-*Updated 2026-08-05 23:37–00:0xZ (real `date -u`) — work session: **STAGE-2
+*Updated 2026-08-06 00:02Z (real `date -u`) — tick: **both chains healthy;
+box endgame on schedule.** Box ×4: A-s0 @32.4k, B @34.5k, s1 @30.7k,
+s2 @30.9k — 0.38–0.40 s/step, util 57–85%, grad norms nominal. Probes:
+**controls' formal 30k gate reads all in and PASSED** — s1 7.842@30k,
+s2 7.206@30k (A-s0's passed last session; B's formal 8.178 earlier) —
+every pre-registered probe gate in the batch is now closed. Latest:
+A-s0 7.557@32k, B 7.916@34k, s1 7.350@30.5k, s2 7.221@30.5k. B total
+3.30@34.5k vs control actions 3.33–3.47 — margin line noise, as read.
+B hits 40k ~00:40Z then chains its panel eval; controls ~01:0x–01:3xZ.
+Draws run 3 (draws=5) @4.2k/25.8k, 100% util, on pacing. Discord: no
+owner traffic (only our stage-2 results post), no new reactions
+(history-checked); stage-2b still awaiting owner steer. GPUs busy +
+CPU queue non-empty (box results post at arm completion ~00:40–02Z,
+E4B GPU-side checklist, stage-2b pending steer) → `run_work_next`
+armed per no-idle-pauses.*
+
+*Previous update 2026-08-05 23:37–00:0xZ (real `date -u`) — work session: **STAGE-2
 SIGN PROBE EXECUTED — THE PRE-REGISTERED ESCALATION BRANCH FIRED: 3 of
 4 reference populations are NOT sign-consistent, so no candidate cell
 opened and no mirror verdict ships**
