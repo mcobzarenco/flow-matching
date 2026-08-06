@@ -1,6 +1,27 @@
 # Now
 
-*Updated 2026-08-06 12:12–12:5xZ (real `date -u`) — work session (bounded): **ARM B'S
+*Updated 2026-08-06 12:49–12:5xZ (real `date -u`) — tick (babysit): **both runs
+healthy; SnapFlow's 30k boundary is ~25 min out.** SnapFlow @27,300/30k
+at 12:50Z, 99% util, 0.48–0.52 s/step, loss 0.038–0.041 → **30k +
+chained endpoint evals ~13:15–13:3xZ** (next session owns the boundary:
+endpoint evals + addendum npz eval + `snapflow_results.py` frozen reads
++ teacher@40k control eval on idle box GPU 1). Arm C @20,020/40k
+(halfway) at 12:50Z, 73.8 GiB, 62% util (eval window), loss 4.02
+smooth, aux 0.61 descending, **in-run probe 12.6835@20000** (16.64@8500
+→ 12.68@20000, monotone descending) → 40k ~16:3x–17:3xZ unchanged; box
+GPUs 1–3 idle as planned (GPU 1 reserved for the control eval next
+session). Discord: no inbound, no new reactions (history-checked; last
+5 are our own posts through the 12:48Z link fix). Queue unchanged from
+12:5xZ: **next session (~13:1xZ) → SnapFlow 30k endpoint evals +
+addendum npz eval + frozen reads + teacher@40k control eval**; CPU next
+→ `arch_batch_results.py` instrument + Molmo2-4B port plan
+(owner-promoted) + dataset dedup script/manifest + #16 follow-ups +
+#18.2 default-flip (after the chain) + mid-session Discord-poll class
+fix; box boundary (~16:3x–17:3xZ) → code sync + stage-0 re-verify + F1
+two-config smoke + arm A launch + arm C statedrop reads; ≥2 ✓. GPUs
+busy + CPU queue deep → `run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-06 12:12–12:5xZ (real `date -u`) — work session (bounded): **ARM B'S
 RESIDUAL-STREAMS IMPLEMENTATION LANDED WITH ALL FIVE PRE-LAUNCH ORACLES
 GREEN — the F1 critical path is clear** (the two-config memory smoke
 needs arm B's config to EXIST, so arm A could not launch before this;
