@@ -31,11 +31,21 @@ green (51 fields verbatim, 11 deltas). Babysits 01:07/01:10Z: box
 nominal; B's chained panel eval LIVE @3.9k/25.8k frames (~175
 frames/min ⇒ read lands ~03:1xZ, controls' evals queue behind their
 40k boundaries). Draws run 3 @16.8k/25.8k on pacing (~01:50Z, then
-runs 4–5). No Discord traffic; stage-2b still awaiting owner steer.
-Queue depth: box → E4B (GPU-side only); local → fairness probe →
-SnapFlow distill (launch-ready) — ≥2 ✓. GPUs busy + CPU queue
-non-empty (box results post when the four panel reads land, E4B
-GPU-side checklist) → `run_work_next` armed per no-idle-pauses.*
+runs 4–5). **OWNER EXCHANGE 01:11Z (replied ~01:15Z):** owner asked
+whether the draws runs generated an HTML eval report and wanted to
+see the mean-of-10 charts — answered yes (`bijou.eval --report`
+writes self-contained HTML per run) and **sent the draws-10 report
+itself as a Discord attachment, landing `discord.py post --attach`
+(≤10 MB multipart upload) within the exchange** to do it; caveat
+stated honestly: the report's charts show the post-average
+(mean-of-10) prediction — per-draw spaghetti needs the
+`--dump-draws` npz from the fairness probe (~06–09Z), overlay
+figures promised for the results post. Stage-2b still awaiting
+owner steer. Queue depth: box → E4B (GPU-side only); local →
+fairness probe → SnapFlow distill (launch-ready) — ≥2 ✓. GPUs busy
++ CPU queue non-empty (box results post when the four panel reads
+land, E4B GPU-side checklist) → `run_work_next` armed per
+no-idle-pauses.*
 
 *Previous update 2026-08-06 00:55–00:57Z (real `date -u`) — tick: **B COMPLETED 40k
 AND ITS PANEL EVAL CHAIN FIRED — watched through the boundary.** B
