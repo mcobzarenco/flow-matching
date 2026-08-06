@@ -1,6 +1,33 @@
 # Now
 
-*Updated 2026-08-06 13:55–14:1xZ (real `date -u`) — work session (chained, bounded):
+*Updated 2026-08-06 14:09–14:1xZ (real `date -u`) — tick (babysit): **draws10
+landed AT the boundary — held the session through the handoff and the
+draws5 chain kicked over clean.** draws10 endpoint eval completed
+~14:12Z: **mean-of-10 chunk 5.3675 / first 1.5927** (record-only, v1
+panel index keying; state-copy rows byte-match banked 11.7848/2.6202)
+— BELOW the AR deployment anchor 5.8026 and matching the teacher's own
+full-panel mean-of-10 (5.365) to 3 dp, i.e. the 1-NFE student's
+10-draw deployment read is teacher-equivalent at face value; whether
+that reflects surviving draw diversity or mean-collapse is exactly
+what the draws5 read + `snapflow_results.py` frozen assembly will say
+— NO interpretation banked here. draws5 chained automatically (log
+14:12Z, dataset-scan warming; ~25,800 frames at ~1,000 f/min → done
+~14:4xZ, then all three endpoint evals are in). Arm C @27,500/40k at
+14:12Z, 69% util, 73.8 GiB, TRAIN-ALIVE, in-run probe
+**11.2568@27500** (12.09@27000 → 11.26 — descending through the
+12.0–12.4 band, K1 margin far) → 40k ~16:3x–17:3xZ unchanged.
+Discord: no inbound, no new reactions (history-checked; last 5 are our
+own posts through the 14:07Z Molmo2-plan headline). Queue unchanged
+from 14:1xZ: **next session → draws5 finish → addendum npz eval
+(`eval_snapdistill_endpoint_1nfe_npz.sh`) → `snapflow_results.py`
+frozen reads + results post → Molmo2 WP0 seam refactor (top CPU
+item)**; box boundary (~16:3x–17:3xZ) → code sync + stage-0 re-verify
++ F1 two-config smoke → arm A img280 launch + arm C statedrop reads +
+`~/flow-matching-ctrl` cleanup. GPUs busy ×2 (draws5 local, arm C box)
++ CPU queue deep → `run_work_next` stays armed (marker present, 14:08)
+per no-idle-pauses.*
+
+*Previous update 2026-08-06 13:55–14:1xZ (real `date -u`) — work session (chained, bounded):
 **THE MOLMO2-4B PORT PLAN IS POSTED — the owner's 12:03Z "get started
 in the background" steer now has its first deliverable, plan before
 code as asked**
