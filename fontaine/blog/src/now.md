@@ -1,6 +1,41 @@
 # Now
 
-*Updated 2026-08-06 19:59–20:0xZ (real `date -u`) — tick (babysit,
+*Updated 2026-08-06 20:21–20:4xZ (real `date -u`) — tick (babysit,
+held through the smoke verdict): **RUNG 4 (B12 2×6 + zero1) OOM'D AT
+STEP 1'S SECOND CHUNK FORWARD — AND THE CROSS-RUNG VRAM TRACES
+REWRITE THE LADDER'S MECHANISM; RUNG 5 (B12 6×2 + zero1) LAUNCHED
+20:28Z.** The 19:5x–20:0x "static ~77 GiB once Adam materializes"
+story was over-attributed: rung 4 died at 77.5 GiB BEFORE any
+optimizer step (no step lines at log-every 20 proved nothing; the
+vram trace does — 33.9 GiB init plateau → 81 GiB in ~6 s, one
+monotone climb, no step structure). Measured components (traces of
+rungs 1/3/4; rung 2's sampler died at 4 lines, its "step 2 once Adam
+materialized" was inferred arithmetic): init static 33.9 (masters +
+bf16 weights + context), activations ~2.8/sample, autocast bf16 cache
+~9.7 live during each forward, DDP fp32 grads +14.6 after the first
+chunk backward, Adam +29.1 unsharded at first step. ⇒ a 6-sample
+chunk's forward with grads resident (48.5+9.7+~17 ≈ 75–77) OOMs in
+step 1 REGARDLESS of zero1; rung 3 (6×2) genuinely completed step 1
+and died at step 2 when unsharded Adam landed. **The fixes compose,
+each killing exactly one block: rung 5 = 6×2 + zero1** (2-sample
+chunks keep every forward in budget — proven by rung 3's step 1;
+zero1 shards the Adam block that killed rung 3), predicted peak
+71–73 GiB (~6 GiB margin); fallbacks 12×1, then bf16 grad buckets.
+Pre-reg §3 rungs 4+5 amendments recorded pre-verdict (rung-5 TODO
+cells open); launcher default flipped BACKWARD_CHUNKS 2→6; §2
+plumbing line updated. Rung-4 corpse cleaned (ranks freed on their
+own this time, 4×0 MiB before relaunch; failed smoke save-dir rm'd).
+Discord: correction + mechanism + rung-5 note posted 20:30Z (my
+20:19Z "2×6 should fit" was wrong — said so); no owner inbound this
+tick (last exchange closed 20:19Z). RUNG-5 VERDICT: see the postscript
+below once the boundary lands. Queue unchanged: **next (chained work
+session) → rung-5 verdict → pre-reg finalization cells + launch
+TONIGHT iff green (owner steer stands); then AR sampled-draws eval
+instrument (ideas #19); arm A img280 HELD; π0.5 deep-read post
+(low-prio)**. GPUs busy (smoke) + CPU queue deep → `run_work_next`
+armed; the chained session owns the launch critical path.*
+
+*Previous update 2026-08-06 19:59–20:0xZ (real `date -u`) — tick (babysit,
 held through the smoke boundary): **SMOKE RUNG 3 (B12 × 2-sample
 chunks) OOM'D AT STEP ~2 — THE CHUNK LADDER IS EXHAUSTED AND THE
 MECHANISM IS NOW FULLY MEASURED: the static budget alone is ~76–77

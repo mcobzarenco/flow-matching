@@ -7,7 +7,8 @@
 #   --backbone allenai/Molmo2-4B --max-crops 1, e4b-screen scale-out
 #   (4xDDP, B12/rank, global 48). One trunk variable + declared
 #   batch confound (pre-reg §2).
-# E1 hard gate: selection 878 datasets / 42,872 episodes / dims 6/6.
+# E1 hard gate (train banner): 878 datasets / 38,571 episodes /
+#   18,636,749 frames / dims 6/6 (42,872 episodes pre-holdout).
 #   Any deviation => abort before step 1.
 # K1 kill line (pre-reg §4): NaN/inf loss; probe not below its own
 #   @2500 value by 10k; probe > 25 sustained x3 evals after 5k.
@@ -20,12 +21,14 @@ cd /home/ubuntu/flow-matching
 mkdir -p outputs/train
 
 BATCH="${BATCH:-12}"
-# Rung from the F1 smoke (pre-reg §3): the no-zero1 chunk ladder is
-# exhausted (static budget ~76-77 GiB/rank, measured) — the run takes
-# ZeRO-1 optimizer sharding (--zero1, Adam moments ~1/4 per rank,
-# semantics exact) + 2x6 chunked backward. Global 48 unchanged,
-# gradient exactly equivalent.
-BACKWARD_CHUNKS="${BACKWARD_CHUNKS:-2}"
+# Rung from the F1 smoke (pre-reg §3 rung 5): ZeRO-1 optimizer
+# sharding (--zero1, Adam moments ~1/4 per rank, semantics exact) +
+# 6x2 chunked backward. 2-sample chunks are required — with DDP fp32
+# grads resident after the first chunk's backward, a 6-sample chunk's
+# forward (~17 GiB activations + ~9.7 GiB autocast bf16 cache) OOMs
+# even with zero1 (rung-4 measurement). Global 48 unchanged, gradient
+# exactly equivalent.
+BACKWARD_CHUNKS="${BACKWARD_CHUNKS:-6}"
 CHUNK_ARGS=(--zero1)
 if [ "$BACKWARD_CHUNKS" -gt 1 ]; then
     CHUNK_ARGS+=(--backward-chunks "$BACKWARD_CHUNKS")

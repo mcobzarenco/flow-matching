@@ -49,6 +49,9 @@ Mainline `arb_rcond` recipe verbatim where the trunk allows it:
   1×GPU B10 E2B mainline: global batch 48 vs 10 — the e4b screen
   carries the same one, and the comparison is a screen, not a paired
   ablation. Warmup 1000, seed 0, save 2500, eval 500.
+- Memory plumbing (no semantic content): `--backward-chunks 6` (6×2,
+  gradient exactly equivalent) + `--zero1` (ZeRO-1 optimizer sharding,
+  exact — §3 rung-5 amendment).
 
 ## 3. Gates before launch
 
@@ -57,11 +60,45 @@ Mainline `arb_rcond` recipe verbatim where the trunk allows it:
   B12 chunked 6×2. **Rung 1 (B12 direct): OOM at 77.5 GiB in the
   forward (MLP intermediates; measured 19:5xZ) — REJECTED. Rung 2
   (B12 chunked 2×6): OOM at step 2's forward once Adam materialized —
-  measured static budget = masters 19.4 + grad buckets 14.6 + Adam
-  29.1 ≈ 63 GiB, leaving ~16 GiB for activations at ~2.4 GiB/sample —
-  REJECTED. Rung 3 (B12 chunked 6×2 — global 48 unchanged, gradient
-  exactly equivalent): TODO_SMOKE_PEAK MiB peak, TODO_SMOKE_RATE
-  s/step (last 5), rc=TODO_RC.**
+  REJECTED. Rung 3 (B12 chunked 6×2): OOM at a forward RMSNorm with
+  77.46 GiB already allocated — the chunk ladder is EXHAUSTED, and the
+  mechanism is fully measured: per-rank STATIC budget once Adam
+  materializes = bf16 weight copy 9.7 + fp32 masters 19.4 + DDP fp32
+  grad buckets 14.6 + Adam moments 29.1 ≈ 73 GiB + CUDA/NCCL context ≈
+  76–77 GiB on a 79.18 GiB card (~2 GiB activation headroom) — no
+  chunk size closes a static gap; REJECTED.**
+- **Amendment (F1 rung 4): B12 chunked 2×6 + `--zero1` (ZeRO-1,
+  `ZeroRedundancyOptimizer`, commit `a08db04`).** NOT a recipe change:
+  update semantics are exact (each parameter's Adam state lives on one
+  rank; updated shards broadcast per step), machine-checked by a
+  2-process oracle — ZRO(AdamW) bit-equal to plain AdamW over this
+  run's param-group shape with a stepping scheduler, checkpoint
+  round-trips into both sharded and un-sharded resume
+  (`tests/test_zero1.py`). Global 48 and every LR constant unchanged.
+  **Measured (20:16–20:23Z): OOM at step 1's SECOND chunk forward,
+  77.5 GiB allocated — REJECTED, and the vram traces across rungs
+  rewrite the §3 mechanism: the "static ~77 GiB once Adam
+  materializes" story was over-attributed. Measured components:
+  init static 33.9 GiB (masters + bf16 weights + context); activations
+  ~2.8 GiB/sample; autocast bf16 weight cache ~9.7 GiB live during
+  each forward; DDP fp32 grads +14.6 GiB after the first chunk
+  backward; Adam +29.1 GiB (unsharded) at the first optimizer step.
+  So a 6-sample chunk's forward with grads resident (48.5 + 9.7 + ~17
+  ≈ 75–77 GiB) OOMs in step 1 REGARDLESS of optimizer sharding —
+  rung 2 died there too (its "step 2 once Adam materialized" reading
+  was inferred from arithmetic, its vram sampler had died); rung 3
+  (6×2) is the one that genuinely completed step 1 and died at step 2
+  when unsharded Adam (+29.1) landed.**
+- **Amendment (F1 rung 5, pre-declared before its smoke, 20:2xZ): B12
+  chunked 6×2 + `--zero1` — the two fixes compose: 2-sample chunks
+  keep every forward inside the budget (proven by rung 3's completed
+  step 1), zero1 removes the Adam block that killed rung 3 (29.1 →
+  ~7.3 GiB/rank). Predicted steady-state peak ≈ 55.8 static + 9.7
+  bf16 cache + ~5.7 activations ≈ 71–73 GiB (~6 GiB margin, inside
+  the ≤~75 GiB pass rule). Fallbacks if rejected: 12×1 chunks
+  (~3 GiB more margin), then bf16 grad buckets (−7.3 GiB, composable).
+  **Measured: TODO_SMOKE_PEAK MiB peak, TODO_SMOKE_RATE s/step
+  (last 5), rc=TODO_RC.**
 - F2 wall: 40k × rate ≤ 30 h ⇒ full 40k; else this pre-reg SHRINKS to
   a 10k screen (label changes to `_10k`), no mid-run change.
   **Projected: TODO_WALL h.**
