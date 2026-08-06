@@ -10,6 +10,49 @@ best lineage; the trunk swap (Molmo2-4B, survey rank 2) is its own
 follow-on pre-reg either way. Posted for an owner look before launch
 per the 11:46Z exchange; proceeding unless steered.*
 
+> **Amendment 1 (2026-08-06 ~12:1xZ, owner steering 12:02–12:05Z,
+> pre-launch — no arm data exists).** Owner: agreed on arms A+B; on
+> arm 0 — "we have a good enough control in ar 100k, I wouldn't spend
+> more time to train almost the same thing from scratch." Adopted,
+> with one substitution: the paired reads need a *same-family* control
+> (the AR↔flow gap dwarfs the ±0.15 threshold), so **arm 0 is DROPPED
+> and the control becomes the teacher's own `step_040000` checkpoint**
+> — verified on the box before this amendment: a *completed* 40k
+> schedule (`train_args.steps = 40000`, LR decayed to 1e-5 at step
+> 40000; step_080000 was a resume-extension), **seed 0, matched to the
+> arms — the "teacher used seed 1" line below was WRONG (seed 1 is the
+> SnapFlow distill run); struck by this amendment**, batch 48×2 =
+> eff-96 (same samples/step as the arms' 32×3). Changes, one variable
+> each:
+> - **Control read:** one panel-v2 endpoint eval of teacher@40k
+>   (Heun-30, draws=1, stable keying, seed 0, `--dump-predictions`
+>   npz), run before arm A's endpoint reads open — replaces the
+>   8–10 GPU-h arm-0 retrain with ~1–2 GPU-h. All frozen reads
+>   (1)–(4) unchanged with "arm 0" := teacher@40k. Residual control
+>   deltas vs a true arm 0 (DDP2×48 vs DDP3×32 topology; mainline
+>   code version) are seed-class noise — the 0.15 adopt floor is
+>   ≈4σ_seed and absorbs them.
+> - **K1 kill gate** re-anchors to the teacher's banked in-run probe
+>   curve (its `train_log.jsonl`, 256-frame evals every 500 steps —
+>   verified present, e.g. 9.1306 @5000): arm probe >
+>   teacher@matched-step + 3.0 at any eval ≥ 5k ⇒ kill at next save
+>   boundary. Seam: the arms' probe rides our code, the teacher's
+>   rode mainline's — acceptable at a catastrophic-only +3.0 margin.
+> - **F1 memory smoke** shrinks to the two remaining configs (A, B);
+>   same drop-together rule.
+> - **Expectations:** the arm-0 band (chunk ∈ [6.7, 7.9], first ∈
+>   [1.90, 2.35]) now applies to the teacher@40k control eval.
+> - **Cost:** ~25–40 GPU-h, ~1–1.5 days wall (one training run
+>   fewer); launch order A → B.
+>
+> Second owner steer, same exchange: **Molmo2-4B port starts in the
+> background now** ("especially it's quite an involved implementation
+> piece") — promoted to the CPU queue independent of this batch's
+> verdict; first deliverable is a port plan, posted before code. The
+> both-null branch rule in reads (4) is unchanged (both-null still
+> *promotes* the swap to the next multi-GPU pre-reg; the port work
+> just no longer waits for it).
+
 ## Question
 
 The grounding evidence says vision is the binding limit of the

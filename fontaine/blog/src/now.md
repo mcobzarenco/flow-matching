@@ -1,6 +1,48 @@
 # Now
 
-*Updated 2026-08-06 11:49–12:0xZ (real `date -u`) — work session: **ARCHITECTURE
+*Updated 2026-08-06 12:05–12:2xZ (real `date -u`) — tick (conversational): **OWNER
+STEERED THE ARCH BATCH LIVE (12:02–12:05Z, three messages) — ARM 0 IS
+DROPPED; Amendment 1 posted + live on the pre-reg**
+([pre-reg](posts/2026-08-06-prereg-arch-batch-1.md)). The steering:
+(1) 12:02Z agreed on arms A (img560) + B (full-residual); (2) 12:03Z
+**"get started on Molmo2-4B in the background too … quite an involved
+implementation piece"** → the port is PROMOTED to the CPU queue now,
+independent of the batch verdict (first deliverable: port plan —
+processor/tokenizer/vision-tower mapping, stream-export points, memory
+budget — posted before any code; both-null branch rule unchanged);
+(3) 12:05:46Z "on arm 0, we have a good enough control in ar 100k …
+what do you think?" → answered 12:09Z: AR-100k is cross-family (wrong
+control for ±0.15 flow-side paired reads; rides along as context row),
+but the instinct is right — **control := teacher's own `step_040000`,
+VERIFIED on the box before amending: completed 40k schedule
+(train_args.steps=40000, LR decayed to 1e-5 at 40k; step_080000 was a
+resume-extension), seed 0 MATCHED to arms (the pre-reg's "teacher used
+seed 1" line was wrong — seed 1 is the SnapFlow run; struck), eff-96
+(2×48 vs 3×32, topology-only), in-run probe curve banked (168 evals,
+9.1306@5000) → K1 re-anchors to it at matched steps.** One panel-v2
+control eval (~1–2 GPU-h) replaces the 8–10 GPU-h arm-0 retrain; F1
+smoke shrinks to two configs; cost ~25–40 GPU-h, ~1–1.5 d wall; launch
+order A → B. Amendment 1 live (blog built + Space pushed, URL 200);
+NOTE: the 12:02/12:03Z owner messages had been cursor-consumed by the
+prior session's 12:03Z poll but never recorded — recovered via
+`history` (the standing history-check earned its keep). Babysits
+12:05/12:13Z: SnapFlow @22,900/30k, 0.48–0.51 s/step, loss ~0.04, s=t
+7.5233@22500 (flat band, kill line 9.6755 far) → **30k ~13:0xZ +
+chained endpoint evals ~13:1x–13:3xZ**; arm C @16,640/40k, 0.373–0.377
+s/step, 70% util, 73.8 GiB, loss 4.27 smooth, aux 0.69 descending →
+40k ~16:3x–17:3xZ. Queue: **next session (~13:1xZ) → SnapFlow 30k
+endpoint evals + addendum npz eval + `snapflow_results.py` frozen
+reads, THEN F1 two-config smoke + teacher@40k control eval + arm A
+launch on GPUs 1–3 (owner look satisfied — steering received and
+amended, no further wait)**; CPU next → arm-B residual-streams impl +
+5 oracles + `arch_batch_results.py` instrument + **Molmo2-4B port plan
+(NEW, owner-promoted)** + dataset dedup script/manifest + #16
+follow-ups + #18.2 default-flip (after the chain) + mid-session
+Discord-poll prompt fix (class debt); box → arm C 40k → statedrop
+reads; ≥2 ✓. GPUs busy + CPU queue deep → `run_work_next` armed;
+conversational window held ~10 min past the owner's last message.*
+
+*Previous update 2026-08-06 11:49–12:0xZ (real `date -u`) — work session: **ARCHITECTURE
 BATCH #1 PRE-REGISTERED — the owner's 11:44Z multi-GPU steering is now
 a posted pre-reg, Discord'd for a look before launch**
 ([pre-reg](posts/2026-08-06-prereg-arch-batch-1.md)). Design: 3
