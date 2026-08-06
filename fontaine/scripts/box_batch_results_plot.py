@@ -16,6 +16,7 @@ sign_stage2_plot.py.
 """
 
 import json
+from pathlib import Path
 
 import matplotlib
 
@@ -46,7 +47,7 @@ AR_ANCHOR = 5.8026
 CLIP = 12.0
 
 
-def per_frame(d):
+def per_frame(d: "np.lib.npyio.NpzFile") -> tuple[np.ndarray, np.ndarray]:
     truth, valid = d["truth"], d["valid"]
     pred = d["pred:bijou@40000"]
     err = np.abs(pred - truth)
@@ -56,8 +57,8 @@ def per_frame(d):
     return pf, d["core"]
 
 
-def main():
-    an = json.load(open(ANALYSIS))
+def main() -> None:
+    an = json.loads(Path(ANALYSIS).read_text())
     pooled = an["pooled"]
     prim = an["primary_B_minus_As0"]
 
@@ -72,7 +73,7 @@ def main():
             "svg.fonttype": "none",
             "figure.facecolor": SURFACE,
             "axes.facecolor": SURFACE,
-        }
+        },
     )
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4.4))
 
@@ -82,16 +83,47 @@ def main():
     colors = [BLUE, BLUE, BLUE, ORANGE]
     x = np.arange(len(arms))
     ax1.bar(x, vals, width=0.55, color=colors, zorder=3)
-    for xi, v in zip(x, vals):
-        ax1.text(xi, v + 0.15, f"{v:.3f}", ha="center", va="bottom", fontsize=9, color=INK_2)
+    for xi, v in zip(x, vals, strict=True):
+        ax1.text(
+            xi,
+            v + 0.15,
+            f"{v:.3f}",
+            ha="center",
+            va="bottom",
+            fontsize=9,
+            color=INK_2,
+        )
     ax1.axhline(STATE_COPY, color=BASELINE, lw=1.4, ls="--", zorder=2)
-    ax1.text(3.55, STATE_COPY + 0.12, f"state-copy {STATE_COPY:.2f}", ha="right", fontsize=8.5, color=MUTED)
+    ax1.text(
+        3.55,
+        STATE_COPY + 0.12,
+        f"state-copy {STATE_COPY:.2f}",
+        ha="right",
+        fontsize=8.5,
+        color=MUTED,
+    )
     ax1.axhline(AR_ANCHOR, color=MUTED, lw=1.2, ls=":", zorder=2)
-    ax1.text(3.55, AR_ANCHOR - 0.55, f"mainline AR-100k 4×H100 {AR_ANCHOR:.2f}", ha="right", fontsize=8.5, color=MUTED)
-    ax1.set_xticks(x, [f"{a}\n(aux-on)" if a.startswith("A") else f"{a}\n(aux-off)" for a in arms], fontsize=9)
+    ax1.text(
+        3.55,
+        AR_ANCHOR - 0.55,
+        f"mainline AR-100k 4xH100 {AR_ANCHOR:.2f}",
+        ha="right",
+        fontsize=8.5,
+        color=MUTED,
+    )
+    ax1.set_xticks(
+        x,
+        [f"{a}\n(aux-on)" if a.startswith("A") else f"{a}\n(aux-off)" for a in arms],
+        fontsize=9,
+    )
     ax1.set_ylabel("panel chunk MAE (deg)", fontsize=9.5, color=INK_2)
     ax1.set_ylim(0, 13.2)
-    ax1.set_title("40k @ eff-10, pooled panel chunk MAE", fontsize=10.5, color=INK, pad=10)
+    ax1.set_title(
+        "40k @ eff-10, pooled panel chunk MAE",
+        fontsize=10.5,
+        color=INK,
+        pad=10,
+    )
 
     # ---- right: per-frame delta histogram -----------------------------
     clipped = np.clip(dlt, -CLIP, CLIP)
@@ -113,8 +145,23 @@ def main():
         color=INK,
         va="top",
     )
-    ax2.text(-CLIP + 0.4, ax2.get_ylim()[1] * 0.93, "← B better", fontsize=9, color=BLUE, va="top")
-    ax2.text(CLIP - 0.4, ax2.get_ylim()[1] * 0.80, "B worse →", fontsize=9, color=RED, va="top", ha="right")
+    ax2.text(
+        -CLIP + 0.4,
+        ax2.get_ylim()[1] * 0.93,
+        "← B better",
+        fontsize=9,
+        color=BLUE,
+        va="top",
+    )
+    ax2.text(
+        CLIP - 0.4,
+        ax2.get_ylim()[1] * 0.80,
+        "B worse →",
+        fontsize=9,
+        color=RED,
+        va="top",
+        ha="right",
+    )
     ax2.set_xlabel("per-frame Δ chunk MAE, B − A-s0 (deg)", fontsize=9.5, color=INK_2)
     ax2.set_ylabel("core frames", fontsize=9.5, color=INK_2)
     ax2.set_title(
