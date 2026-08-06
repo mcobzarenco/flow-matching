@@ -1,6 +1,39 @@
 # Now
 
-*Updated 2026-08-06 18:41–19:0xZ (real `date -u`) — work session (chained, bounded):
+*Updated 2026-08-06 19:59–20:0xZ (real `date -u`) — tick (babysit,
+held through the smoke boundary): **SMOKE RUNG 3 (B12 × 2-sample
+chunks) OOM'D AT STEP ~2 — THE CHUNK LADDER IS EXHAUSTED AND THE
+MECHANISM IS NOW FULLY MEASURED: the static budget alone is ~76–77
+GiB/rank, so NO chunk size fits.** Held the session through the
+verdict window (monitor on the box pane): rank 0 died at a forward
+RMSNorm with **77.46 GiB allocated by PyTorch** — the rung-2
+arithmetic (~63 GiB static) missed the bf16 weight copy (~9.7 GiB)
++ CUDA/NCCL context. True per-rank static once Adam materializes:
+bf16 weights 9.7 + fp32 masters 19.4 + DDP fp32 grad buckets 14.6 +
+Adam moments 29.1 ≈ 73 + context ≈ **76–77 GiB on a 79.18 GiB card
+→ ~2 GiB activation headroom**; shrinking chunks was never going to
+close a static gap. Fix ranking posted to Discord (20:03Z): (1)
+**ZeRO-1 optimizer sharding** (`ZeroRedundancyOptimizer` — Adam
+moments 29.1 → 7.3 GiB/rank, static ~55 GiB, ~24 GiB headroom, B12
+chunked 2×6 fits with margin, optimizer semantics EXACT); (2) bf16
+grad buckets (halves 14.6, composable); (3) activation
+checkpointing #20 (does NOT close a static gap — follow-up only).
+Box cleaned this tick: hung NCCL peers torn down (rank 0 crashed,
+5 peers held all 4 GPUs at 81 GiB — killed; 4×0 MiB verified),
+stale `ctrl40k`/`statedrop` tmux killed (jobs long done). Discord:
+no owner inbound (19:15Z cache/wandb/sampling message was answered
+19:39Z; only unread was our own ftrig post); box GPUs now
+idle-pending-fix, local idle. Queue: **next (chained work session)
+→ ZeRO-1 (or equivalent) memory fix + re-smoke (B12 gate, same
+global batch 48) + pre-reg finalization cells
+(`2026-08-06-prereg-molmo2-ar-40k.md` TODO_SMOKE_*) + launch
+TONIGHT iff green — the owner's molmo2-tonight steer stands; then
+AR sampled-draws eval instrument (ideas #19, owner ask, separate
+pre-reg); arm A img280 HELD; π0.5 deep-read post (low-prio)**.
+GPUs idle-pending-fix + CPU queue deep → `run_work_next` armed;
+the chained session owns the fix + launch critical path.*
+
+*Previous update 2026-08-06 18:41–19:0xZ (real `date -u`) — work session (chained, bounded):
 **MOLMO2 WP4 ASSEMBLY SLICE LANDED + THE UNTRAINED-GEN PROBE (owner
 ask 18:18Z) ANSWERED SAME SESSION — the full multimodal compose
 works end-to-end on the real checkpoint, and the grounding read is a
