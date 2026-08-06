@@ -49,6 +49,7 @@ import abc
 from dataclasses import dataclass
 from typing import Any, override
 
+import numpy as np
 import torch
 from torch import Tensor, nn
 from torch.nn import functional as F
@@ -111,6 +112,51 @@ class ARBackboneConfig:
                 "bytes this code no longer implements — retrain (no "
                 "back-compat, 2026-08-03)",
             )
+
+
+@dataclass(frozen=True)
+class ARSampling:
+    """Action-block temperature sampling for ONE decode call: one CPU
+    RNG per batch row, each consuming one Gumbel vector per decode
+    step. Only the action block samples — value lines stay greedy (a
+    value read is a classification, not a distribution read). CPU-side
+    noise keeps sampled ids identical regardless of device, mirroring
+    eval's CPU-seeded flow noise convention; per-row streams make each
+    row's ids independent of batch composition (the logits themselves
+    carry sharding.py's bf16 batch-shape caveat). Callers key the RNGs
+    per (frame identity, draw) — eval's ``stable_sample_rng``."""
+
+    temperature: float
+    rngs: tuple[np.random.Generator, ...]
+
+    def __post_init__(self) -> None:
+        if not self.temperature > 0:
+            raise ValueError(
+                f"sampling temperature must be > 0, got {self.temperature} "
+                "(greedy is sampling=None, not a temperature limit)",
+            )
+
+
+def _sample_action_ids(
+    logits: Tensor,
+    allowed: Tensor,
+    sampling: ARSampling,
+) -> Tensor:
+    """One categorical draw per row from softmax(logits/T) restricted
+    to the grammar mask, via Gumbel-max: argmax(logits/T + G) with G
+    i.i.d. Gumbel(0,1) samples the masked softmax exactly; illegal ids
+    sit at -inf and can never win. Gumbel noise G = -log(E), E ~ Exp(1)
+    drawn fp32 from each row's own CPU RNG (clamped away from 0 —
+    torch/numpy exponentials may return exact zeros)."""
+    scaled = (logits / sampling.temperature).masked_fill(~allowed, float("-inf"))
+    exponential = np.stack(
+        [
+            rng.standard_exponential(scaled.shape[1], dtype=np.float32)
+            for rng in sampling.rngs
+        ],
+    )
+    gumbel = -np.log(np.maximum(exponential, np.finfo(np.float32).tiny))
+    return (scaled + torch.from_numpy(gumbel).to(scaled.device)).argmax(dim=-1)
 
 
 class ARSuffixDecoder[B: nn.Module](nn.Module, abc.ABC):
@@ -263,10 +309,13 @@ class ARSuffixDecoder[B: nn.Module](nn.Module, abc.ABC):
         generate: tuple[AuxField, ...] = (),
         generator: torch.Generator | None = None,
         noise: Tensor | None = None,
+        sampling: ARSampling | None = None,
     ) -> BijouPrediction:
         """The single decode path, fully scaffolded by the request set.
-        Deterministic greedy; ``generator``/``noise`` unused/must be
-        None.
+        Deterministic greedy by default; ``sampling`` switches the
+        ACTION block (only) to per-row temperature sampling — the
+        sampled-draws eval instrument. ``generator``/``noise``
+        unused/must be None.
 
         ``generate`` must equal the request the PROMPT was collated with
         (the collator's ``generate_override``; the memory was encoded
@@ -311,6 +360,11 @@ class ARSuffixDecoder[B: nn.Module](nn.Module, abc.ABC):
                 "checkpoint stats tables cannot drive AR inference)",
             )
         batch_size = batch.state.shape[0]
+        if sampling is not None and len(sampling.rngs) != batch_size:
+            raise ValueError(
+                f"sampling carries {len(sampling.rngs)} row RNGs for a "
+                f"batch of {batch_size} — one keyed stream per row",
+            )
         device = batch.state.device
         base = config.block_base
         boa_backbone = base + self.codec.boa
@@ -454,7 +508,16 @@ class ARSuffixDecoder[B: nn.Module](nn.Module, abc.ABC):
                 dim=1,
             )
             action_allowed[:, pad_backbone] = remaining == 0
-            next_ids = logits.masked_fill(~action_allowed, min_value).argmax(dim=-1)
+            if sampling is None:
+                next_ids = logits.masked_fill(~action_allowed, min_value).argmax(
+                    dim=-1,
+                )
+            else:
+                # Finished rows have only PAD legal, so they keep
+                # sampling PAD; their recorded ids are already fixed,
+                # and each active row's ids depend only on its OWN
+                # stream position — batch-composition-independent.
+                next_ids = _sample_action_ids(logits, action_allowed, sampling)
             for row, next_id in enumerate(next_ids.tolist()):
                 codec_id = next_id - base
                 if codec_id != self.codec.pad:
@@ -503,6 +566,42 @@ class ARSuffixDecoder[B: nn.Module](nn.Module, abc.ABC):
         hidden = self._suffix_hidden(backbone, memory, feed, fed)
         logits = self._logits(backbone, hidden)[:, -1, :].float()
         return logits, fed + feed.shape[1]
+
+    @staticmethod
+    def cache_snapshot(
+        memory: ObservationMemory,
+    ) -> tuple[int, list[tuple[Tensor | None, Tensor | None]]]:
+        """Capture the prefix cache by REFERENCE so N sampled decodes
+        share one prefill (draws differ only in suffix K/V — the
+        cheaper-per-draw fairness caveat of the sampled-draws
+        instrument, made literal). Sound because every trunk cache is
+        append-only: ``update()`` rebinds ``layer.keys``/``values`` to
+        NEW tensors (cat/slice) and never writes into stored ones, so
+        restoring the old references recovers the exact prefill state
+        at zero copy cost. A future in-place (preallocated) cache
+        breaks this contract — its snapshot must copy."""
+        cache: Any = memory.cache
+        if cache is None:
+            raise ValueError(
+                "cache_snapshot on a memory without a retained prefix "
+                "cache — encode with an ARSuffixDecoder composed",
+            )
+        return cache.seen_tokens, [(layer.keys, layer.values) for layer in cache.layers]
+
+    @staticmethod
+    def cache_restore(
+        memory: ObservationMemory,
+        snapshot: tuple[int, list[tuple[Tensor | None, Tensor | None]]],
+    ) -> None:
+        """Rewind the memory's cache to a :meth:`cache_snapshot` — the
+        suffix K/V appended since are dropped by rebinding."""
+        cache: Any = memory.cache
+        if cache is None:
+            raise ValueError("cache_restore on a memory without a cache")
+        seen_tokens, layers = snapshot
+        cache.seen_tokens = seen_tokens
+        for layer, (keys, values) in zip(cache.layers, layers, strict=True):
+            layer.keys, layer.values = keys, values
 
 
 class ARBackboneDecoder(ARSuffixDecoder[Gemma4Model]):

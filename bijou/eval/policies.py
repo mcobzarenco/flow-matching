@@ -24,7 +24,7 @@ from torch import Tensor
 
 from ..annotations import ConditionField
 from ..aux_text import AuxField, AuxGeneration
-from ..decoders.ar_backbone import ARBackboneDecoder
+from ..decoders.ar_backbone import ARBackboneDecoder, ARSampling, ARSuffixDecoder
 from ..decoders.flow import FlowDecoder
 from ..interface import Collator, mask_state_item
 from ..loading import CheckpointInfo, from_checkpoint
@@ -159,6 +159,36 @@ def stable_noise(
     return torch.from_numpy(values)
 
 
+# AR sampled-draws RNGs reuse the stable frame-identity keying
+# UNCONDITIONALLY — the instrument is new (2026-08-06), so there is no
+# legacy index-keyed AR path to preserve and corpus-composition
+# invariance costs nothing; --noise-key governs flow noise only. The
+# domain constant separates these streams from stable_noise's (same
+# frame, same seed, same draw must not replay the flow bitstream).
+AR_SAMPLE_DOMAIN = 0x41525344  # "ARSD"
+
+
+def stable_sample_rng(
+    seed: int,
+    repo_id: str,
+    episode_index: int,
+    frame_index: int,
+    draw: int,
+) -> np.random.Generator:
+    """One frame's action-sampling stream for one draw — invariant to
+    corpus composition, evaluation order, batch composition and device
+    (the RNG is consumed CPU-side; see ARSampling). Unlike flow noise
+    the consumption LENGTH is decode-dependent, so this returns the
+    generator itself, not a fixed-shape tensor."""
+    digest = hashlib.blake2b(
+        f"{repo_id}\x1f{episode_index}\x1f{frame_index}".encode(),
+        digest_size=16,
+    ).digest()
+    words = [int.from_bytes(digest[i : i + 4], "little") for i in range(0, 16, 4)]
+    sequence = np.random.SeedSequence([AR_SAMPLE_DOMAIN, seed, draw, *words])
+    return np.random.Generator(np.random.PCG64(sequence))
+
+
 def noise_for_item(
     noise_key: str,
     seed: int,
@@ -211,6 +241,7 @@ class BijouPolicy:
         sample_steps: int = 10,
         method: SamplingMethod = SamplingMethod.HEUN,
         sample_draws: int = 1,
+        ar_temperature: float | None = None,
         target_time: float | None = None,
         expert_dtype: torch.dtype = torch.float32,
         generate: tuple[AuxField, ...] = (),
@@ -226,6 +257,10 @@ class BijouPolicy:
             # never be mistakable for a deployment-class read in a
             # report or ledger row (charter §2 budget classes).
             self.name += f"_draws{sample_draws}"
+        if ar_temperature is not None:
+            # Same convention: a temperature-sampled AR read is a
+            # different voice from the greedy deployment decode.
+            self.name += f"_t{ar_temperature:g}"
         if mask_state:
             # Same convention: a state-blind diagnostic read must never
             # be mistakable for a deployment read.
@@ -268,11 +303,29 @@ class BijouPolicy:
             )
         if sample_draws < 1:
             raise SystemExit(f"--sample-draws must be >= 1, got {sample_draws}")
-        if sample_draws > 1 and not isinstance(self.model.decoder, FlowDecoder):
+        if ar_temperature is not None:
+            if not ar_temperature > 0:
+                raise SystemExit(
+                    f"--ar-temperature must be > 0, got {ar_temperature} "
+                    "(the greedy read is the default, not a temperature "
+                    "limit)",
+                )
+            if not isinstance(self.model.decoder, ARSuffixDecoder):
+                raise SystemExit(
+                    "--ar-temperature samples the backbone-suffix AR "
+                    "action decode; this checkpoint's decoder is "
+                    f"{type(self.model.decoder).__name__}",
+                )
+        self.ar_temperature = ar_temperature
+        if sample_draws > 1 and not (
+            isinstance(self.model.decoder, FlowDecoder) or ar_temperature is not None
+        ):
             raise SystemExit(
-                "--sample-draws > 1 averages flow noise draws; this "
-                f"checkpoint's decoder is {type(self.model.decoder).__name__} "
-                "(greedy AR decode has no noise to draw)",
+                "--sample-draws > 1 needs a stochastic decode: flow noise "
+                "draws, or an ar_backbone checkpoint with --ar-temperature; "
+                f"this checkpoint's decoder is "
+                f"{type(self.model.decoder).__name__} (greedy AR decode has "
+                "no noise to draw)",
             )
         if target_time is not None:
             decoder_module = self.model.decoder
@@ -417,6 +470,47 @@ class BijouPolicy:
             )
             means, self.last_draws = collapse_draws(stacked)
             return means, None
+        if self.ar_temperature is not None and isinstance(decoder, ARSuffixDecoder):
+            # AR sampled-draws instrument (the flow ensembling's mirror,
+            # ideas #19): encode the prefix ONCE, snapshot the cache,
+            # temperature-sample one chunk per draw against the restored
+            # prefill, average the decoded chunks in raw units. Value
+            # lines stay greedy, so generations are draw-invariant —
+            # draw 0's are returned.
+            memory = self.model.encode(batch.encoder_inputs, with_grad=False)
+            snapshot = decoder.cache_snapshot(memory)
+            draws: list[Tensor] = []
+            generations: list[AuxGeneration] | None = None
+            for draw in range(self.sample_draws):
+                if draw:
+                    decoder.cache_restore(memory, snapshot)
+                sampling = ARSampling(
+                    temperature=self.ar_temperature,
+                    rngs=tuple(
+                        stable_sample_rng(
+                            self.seed,
+                            str(item["repo_id"]),
+                            int(item["episode_index"]),
+                            int(item["frame_index"]),
+                            draw,
+                        )
+                        for item in items
+                    ),
+                )
+                prediction = self.model.ar_predict_sampled(
+                    memory,
+                    batch,
+                    generate=self.generate,
+                    sampling=sampling,
+                )
+                if generations is None:
+                    generations = prediction.generations
+                draws.append(prediction.actions)
+            stacked = torch.stack(draws)
+            if self.sample_draws > 1:
+                means, self.last_draws = collapse_draws(stacked)
+                return means, generations
+            return [chunk.cpu() for chunk in stacked[0]], generations
         # Flow integrates from per-item seeded noise (deterministic and
         # batch-composition-independent); AR decodes greedily and takes
         # none.

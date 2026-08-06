@@ -114,6 +114,11 @@ class EvalReport:
     sample_steps: int
     sample_method: str
     sample_draws: int
+    # AR sampled-draws instrument: the action-block sampling
+    # temperature (None = greedy — every AR eval before 2026-08-06).
+    # With sample_draws > 1 the bijou row is the mean-of-samples read,
+    # the AR mirror of flow noise-draw ensembling.
+    ar_temperature: float | None
     # Flow target-time conditioning s: "t" = standard s=t forwards;
     # "zero" = the SnapFlow one-step shortcut field (φ_s checkpoints
     # only) — with euler/1 this is the 1-NFE read.
@@ -178,6 +183,7 @@ class EvalReport:
             "sample_steps": self.sample_steps,
             "sample_method": self.sample_method,
             "sample_draws": self.sample_draws,
+            "ar_temperature": self.ar_temperature,
             "target_time": self.target_time,
             "noise_key": self.noise_key,
             "mask_state": self.mask_state,
@@ -384,11 +390,27 @@ def parse_args() -> argparse.Namespace:
         "--sample-draws",
         type=int,
         default=1,
-        help="flow-only: average this many noise draws per frame "
-        "(prefix encoded once; draw 0 reproduces the single-draw "
-        "numbers exactly). >1 is UNCONSTRAINED-class inference — the "
-        "policy name gains a _drawsN suffix so ensembled numbers can "
-        "never pass as deployment reads",
+        help="average this many stochastic decodes per frame: flow "
+        "noise draws (prefix encoded once; draw 0 reproduces the "
+        "single-draw numbers exactly), or — with --ar-temperature — "
+        "temperature-sampled AR chunk decodes sharing one prefill. "
+        ">1 is UNCONSTRAINED-class inference — the policy name gains "
+        "a _drawsN suffix so ensembled numbers can never pass as "
+        "deployment reads",
+    )
+    parser.add_argument(
+        "--ar-temperature",
+        type=float,
+        default=None,
+        help="ar_backbone sampled-draws instrument (the flow "
+        "ensembling's mirror): temperature-sample the ACTION block "
+        "(Gumbel-max over the grammar-masked softmax; aux value lines "
+        "stay greedy) — combine with --sample-draws N for the "
+        "mean-of-samples read. The policy name gains a _tT suffix. "
+        "Draw RNGs are always frame-identity keyed (a new instrument "
+        "has no legacy index path; --noise-key governs flow noise "
+        "only). The narrated pass is skipped under sampling — its "
+        "greedy voice would pair a different inference class",
     )
     parser.add_argument(
         "--generate",
@@ -443,7 +465,7 @@ def parse_args() -> argparse.Namespace:
         "--dump-draws",
         type=Path,
         default=None,
-        help="flow-only, requires --sample-draws > 1: write the bijou "
+        help="requires --sample-draws > 1: write the bijou "
         "policy's PRE-AVERAGE per-draw chunks [frames, draws, chunk, dim] "
         "(plus truth/valid/frame identity) as a compressed .npz — the "
         "per-draw data that ensembling otherwise averages away (draw "
@@ -490,10 +512,15 @@ def parse_args() -> argparse.Namespace:
         args.checkpoint is None or args.sample_draws <= 1
     ):
         parser.error(
-            "--dump-draws needs a bijou checkpoint ensembling flow draws "
+            "--dump-draws needs a bijou checkpoint ensembling draws "
             "(--checkpoint plus --sample-draws > 1): at draws=1 there is "
             "no per-draw stack to dump — that run's prediction IS the "
             "single draw, --dump-predictions already covers it",
+        )
+    if args.ar_temperature is not None and args.checkpoint is None:
+        parser.error(
+            "--ar-temperature samples the bijou policy's AR action "
+            "decode — it requires --checkpoint",
         )
     return args
 
@@ -678,6 +705,7 @@ def main() -> int:
             sample_steps=args.sample_steps,
             method=SamplingMethod(args.sample_method),
             sample_draws=args.sample_draws,
+            ar_temperature=args.ar_temperature,
             target_time=target_time,
             noise_key=args.noise_key,
             mask_state=args.mask_state,
@@ -694,13 +722,20 @@ def main() -> int:
                 f"--chunk-size {args.chunk_size}",
             )
         policies.append(bijou_policy)
-        if bijou_policy.aux_fields and args.generate is None:
+        if (
+            bijou_policy.aux_fields
+            and args.generate is None
+            and args.ar_temperature is None
+        ):
             # The narrated pass rides automatically on aux-trained
             # checkpoints (shared model, ~2x bijou inference): its
             # paired chunk MAE is the full-sample does-narration-help
             # answer, and its generations feed the aux metrics + report
             # blocks. An explicit --generate means the MAIN policy
-            # already narrates — no second pass then.
+            # already narrates — no second pass then. Skipped under
+            # --ar-temperature too: the narrated pass decodes greedily,
+            # and pairing it against a sampled base row would compare
+            # different inference classes.
             narrated_policy = NarratedBijouPolicy(bijou_policy)
             policies.append(narrated_policy)
             if is_main:
@@ -1193,6 +1228,7 @@ def main() -> int:
             sample_steps=args.sample_steps,
             sample_method=args.sample_method,
             sample_draws=args.sample_draws,
+            ar_temperature=args.ar_temperature,
             target_time=args.target_time,
             noise_key=args.noise_key,
             mask_state=args.mask_state,

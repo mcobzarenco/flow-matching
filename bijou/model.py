@@ -41,6 +41,7 @@ from torch import Tensor, nn
 from .aux_text import AuxField
 from .decoders.ar_backbone import (
     ARBackboneDecoder,
+    ARSampling,
     ARSuffixDecoder,
     ar_backbone_counts,
     ar_backbone_loss_sums,
@@ -398,6 +399,45 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                     generate=generate,
                     generator=generator,
                     noise=noise,
+                )
+
+    @torch.no_grad()
+    def ar_predict_sampled(
+        self,
+        memory: ObservationMemory,
+        batch: CollatedBatch[I],
+        *,
+        generate: tuple[AuxField, ...] = (),
+        sampling: ARSampling,
+    ) -> BijouPrediction:
+        """AR suffix decode against an ALREADY-ENCODED memory with the
+        action block temperature-sampled — the sampled-draws eval
+        instrument's per-draw call: the caller encodes once, snapshots
+        the prefix cache, and restores between draws
+        (:meth:`ARSuffixDecoder.cache_snapshot`/``cache_restore``), so
+        N draws share one prefill. Loud on decoders without a suffix
+        cache to share (flow samples noise; ar_fast has no trunk)."""
+        match self.decoder:
+            case ARBackboneDecoder():
+                return self.decoder.predict_chunk(
+                    self._gemma_backbone(),
+                    memory,
+                    batch,
+                    generate=generate,
+                    sampling=sampling,
+                )
+            case Molmo2ARDecoder():
+                return self.decoder.predict_chunk(
+                    self._molmo2_backbone(),
+                    memory,
+                    batch,
+                    generate=generate,
+                    sampling=sampling,
+                )
+            case _:
+                raise TypeError(
+                    "sampled AR decode continues a trunk suffix; the "
+                    f"loaded decoder is {type(self.decoder).__name__}",
                 )
 
     @torch.no_grad()
