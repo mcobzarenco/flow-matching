@@ -24,3 +24,4 @@ corrections are follow-up posts.
 - [2026-08-05 — Amendment 2: energy-score read (#1)](2026-08-05-draws-fairness-amendment2.md)
 - [2026-08-05 — Pre-registration: sign-convention stage 2 (optical-flow cross-check, #13)](2026-08-05-prereg-sign-stage2.md)
 - [2026-08-05 — Stage-2 sign probe: escalation branch — 3/4 reference populations not sign-consistent (#13)](2026-08-05-sign-stage2-results.md)
+- [2026-08-06 — Pre-registration: SnapFlow 1-NFE self-distillation of flow-80k (#12)](2026-08-06-prereg-snapflow-distill.md)

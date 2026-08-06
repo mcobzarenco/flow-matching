@@ -71,6 +71,21 @@ information × cheapness. Status tags: `queued` / `screening` /
   `--dump-draws` npz. `read4_energy_score` in `draws_fairness.py` +
   degenerate draws=1 validation must land BEFORE the probe npz is
   opened (next CPU work item alongside the E4B launch checklist).
+- **Golden-ticket noise search (lit slice 2026-08-06,
+  [2603.15757](https://arxiv.org/html/2603.15757v1) "You've Got a
+  Golden Ticket"):** a *single searched noise vector* (Monte Carlo
+  over candidate tickets, weights frozen, inference-only) improved
+  38/43 tasks across diffusion/flow policies incl. SmolVLA-LIBERO,
+  with gains *growing at fewer solver steps*. Their search needs env
+  rollouts; **our panel gives the offline criterion they lack** —
+  score M candidate tickets by probe-subset MAE via
+  `sample_actions(noise=...)` (the hook already exists), then
+  validate the winner on the full panel. Caveats to carry: their
+  LIBERO-Spatial cell *regressed* (−3%), tickets showed limited
+  cross-task universality, and a fixed ticket makes the policy
+  deterministic. Pairs with #12's 1-NFE distill (fewer-steps trend)
+  and with mean-of-N (ticket vs mean-of-10 vs both). Cheap eval-side
+  screen; needs its own pre-reg before any number is read.
 
 ## 2. Throughput: bucketed batching + torch.compile on the frozen prefix — `screening` (2a landed 2026-08-05; GPU A/B conditional)
 
@@ -199,7 +214,7 @@ chartered on the community panel; `first_mae` is the
 grounding-sensitive column (2.143 vs copy 2.620 — headroom).
 High-variance; counts toward the ≥20% exploration budget.
 
-## 12. Solver/Heun-gap work — `queued`, re-opened by a surprise
+## 12. Solver/Heun-gap work — `screening` (distillation leg PRE-REGISTERED 2026-08-06)
 
 The h1536 adaRMS Heun-gap collapse did NOT transfer to h1024-on-AR-trunk
 (measured −0.28 at 10→30, first_mae −0.46): sampler quality is back on
@@ -226,9 +241,29 @@ variants, consistency/distillation toward 1–2-step deployment decodes
   falsification here: distill flow-80k, score the panel at 1-NFE vs
   Heun-30 (band: within the σ_draw noise floor of 6.6232). Also
   pairs with #1 (a distilled 1-step model makes mean-of-N nearly
-  free). Related pointers, not yet read: OFP one-step flow policy
-  (self-distill from scratch), GoldenStart (initial-noise structure
-  for one-step — touches #1's draw-keying too).
+  free).
+- **PRE-REGISTERED (2026-08-06 ~00:3xZ,
+  [pre-reg](posts/2026-08-06-prereg-snapflow-distill.md)):** SnapFlow
+  self-distill of flow-80k — full recipe deep-read and frozen
+  (α=0.5/λ=0.1 mix, sg two-step-Euler shortcut targets, zero-init
+  φ_s target-time embedding, 30k steps LR 2.5e-5 cosine, trunk
+  frozen, ~12–20 h 1×H100). Primary: full panel at 1-NFE vs 6.6232
+  (+max(3σ_draw, 0.15) band, σ_draw by finalization amendment from
+  draws runs 3–5); deployment headline: mean-of-10@1-NFE vs the AR
+  anchor 5.8026 at ~one-Heun-5-draw cost. Fills the local-GPU queue
+  slot after the draws chain + fairness probe; pre-launch impl
+  checklist (φ_s, `--distill snapflow`, 1-NFE eval switch, oracles)
+  = CPU work items.
+- **Pointer reads closed (lit slice 2026-08-06):** OFP
+  ([2603.12480](https://arxiv.org/abs/2603.12480)) — *from-scratch*
+  one-step self-distillation (self-consistency + self-guided
+  regularization + warm-start from temporal action correlations);
+  π0.5 one-step beats the 10-step teacher on RoboTwin 2.0 — the
+  reserve recipe if SnapFlow misses expectation 2, and its
+  warm-start trick touches #1's noise structure. GoldenStart
+  (2603.14245) — Q-guided VAE priors + entropy control for *online
+  RL* distillation — screened out (needs Q-functions/rollouts; not
+  our offline setting). Golden Ticket noise search banked in #1.
 
 ## 13. Sign-convention detection & repair (owner hypothesis) — `screening`
 

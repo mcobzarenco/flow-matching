@@ -1,6 +1,47 @@
 # Now
 
-*Updated 2026-08-06 00:13Z (real `date -u`) — tick: **both chains
+*Updated 2026-08-06 00:14–00:3xZ (real `date -u`) — work session: **SNAPFLOW
+1-NFE SELF-DISTILLATION PRE-REGISTERED (#12) — the local-GPU queue
+slot after the draws chain + fairness probe is now filled**
+([pre-reg](posts/2026-08-06-prereg-snapflow-distill.md)). The
+session's one item = the sanctioned lit slice taken as a *targeted*
+deep-read (SnapFlow full recipe + the two flagged unread pointers),
+feeding straight into the pre-reg: SnapFlow (2604.05656) recipe
+frozen — α=0.5/λ=0.1 loss mix, stop-gradient two-step-Euler shortcut
+targets (no EMA teacher), zero-init φ_s target-time embedding (only
+new params; step-0 model ≡ teacher exactly — that's the hard
+validation oracle), 30k steps LR 2.5e-5 cosine/500 warmup, trunk
+frozen, ~12–20 h 1×H100. Subject flow-80k `step_080000` (verified
+local); primary read = full panel at 1-NFE vs 6.6232 with
++max(3σ_draw, 0.15) band (σ_draw via finalization amendment from
+draws runs 3–5); **deployment headline read: mean-of-10@1-NFE vs the
+AR anchor 5.8026 at ~one-Heun-5-draw cost — if it holds, the charter
+§2 "unconstrained class" caveat on the draws win closes** (this is
+the owner's 21:48Z pre-stated branch, executed). Feasibility
+verified pre-post: euler solver + `sample_actions(noise=…)` +
+cosine/warmup + `--init-from` all native; impl checklist (φ_s,
+`--distill snapflow`, loud 1-NFE eval switch, oracles) = queued CPU
+items. Pointer reads closed into ideas: OFP (2603.12480) banked as
+the reserve recipe; GoldenStart screened out (online-RL setting);
+**Golden Ticket (2603.15757) banked in #1 — single searched noise
+vector, inference-only, gains grow at fewer steps; our panel gives
+the offline search criterion the paper lacks** (pairs with 1-NFE +
+mean-of-N; needs its own pre-reg). `check.py` green (191). Babysits
+00:2xZ: box ×4 healthy — A-s0 @34.5k (action 3.34), B @36.5k (total
+3.42 — single-line read *above* controls' action 3.29–3.34 this
+poll: the margin keeps oscillating at line noise, read unchanged),
+s1 @32.6k, s2 @32.8k, 0.39–0.41 s/step, grad norms nominal; B hits
+40k ~00:45Z then auto-chains its panel eval, controls ~01:0x–01:3xZ.
+Draws run 3 @8.5k/25.8k, 96% util. No Discord traffic; stage-2b
+still awaiting owner steer. Queue depth after this session: box →
+E4B (pre-registered, GPU-side items only); local GPU → fairness
+probe (pre-registered) then SnapFlow distill (pre-registered,
+impl checklist pending) — ≥2 ✓. GPUs busy + CPU queue non-empty
+(box results post when panel reads land ~01–02:3xZ, SnapFlow impl
+checklist items 1–5, E4B GPU-side items) → `run_work_next` armed
+per no-idle-pauses.*
+
+*Previous update 2026-08-06 00:13Z (real `date -u`) — tick: **both chains
 healthy; B ~28 min from 40k completion.** Box ×4: A-s0 @33.5k, B
 @35.5k, s1 @31.8k, s2 @32.0k — 0.38–0.41 s/step, grad norms nominal,
 ~71–75 GiB (GPU0's 0%-util sample is the known between-batch/eval
@@ -1235,4 +1276,9 @@ loop extension whose rotation rule is what keeps the E4B run from
 filling the local disk at ~mid-run, done and deployed before the run
 that needs it can even launch (skipped lit slice: taken ~1.5 h ago
 real-clock and this was a bounded launch-prep item; next session
-eligible).
+eligible). Fifteenth consecutive all-CPU session (00:14–00:3xZ
+real-clock): **the lit slice WAS the work item** — a targeted
+deep-read (SnapFlow recipe extraction + both flagged pointer reads)
+converted directly into the #12 SnapFlow distill pre-reg, refilling
+the local-GPU queue before its ~09–10Z boundary; allocation on
+cadence.
