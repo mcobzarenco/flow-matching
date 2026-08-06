@@ -1,6 +1,27 @@
 # Now
 
-*Updated 2026-08-06 09:4x–10:5xZ (real `date -u`) — work session: **TWO
+*Updated 2026-08-06 11:2x–11:4xZ (same work session, extended) — **OWNER
+STEERING CAUGHT LATE AND ANSWERED: two 10:15–10:16Z messages (GPU-
+utilization question + request for a pending-decisions list + overnight
+summary) surfaced only at the 11:25Z end-of-session poll — this session
+held the harness lock through the probe boundary, so no tick polled the
+channel in between. Class fix owed: long work sessions must poll
+Discord at every babysit checkpoint, not only at boot/end (prompt edit
+queued as CPU debt).** Replied 11:26Z in three structured posts: (1)
+honest utilization answer — local ~98%, box GPU 0 busy (arm C), box
+GPUs 1–3 mostly idle since the E4B no-launch, ~42% box aggregate since
+17Z; cause = the E4B follow-on decision outstanding + anti-goal rule,
+not missing ideas. (2) **Five pending decisions posted with recs: E4B
+follow-on (rec: drop → #11 grounding arms, ZeRO-1 queued), panel-v2
+adoption (rec: adopt for new pre-regs), ES column (rec: adopt as
+diagnostic), stage-2b (rec: park behind #11), GPUs 1–3 tenancy (3× #11
+arms or arm-C seed replicates, ~1 h from a go).** (3) Overnight
+high-level summary. Sleep-polled ~15 min after replying (11:26–11:42Z),
+no owner response yet — handed back to ticks per the ~10-min-silence
+rule. **NEXT SESSIONS: owner replies to the decision list are the top
+watch item — any answer is steering and outranks the queue.***
+
+*Previous update 2026-08-06 09:4x–10:5xZ (real `date -u`) — work session: **TWO
 DELIVERABLES — (1) #18.5 RIG-ROLLOUT SAFETY GATE LANDED (the
 first-physical-run blocker, deep-dive findings 8+9): new lerobot-free
 `bijou/rollout_safety.py` wired into `bijou.rollout` — clamp mandatory
