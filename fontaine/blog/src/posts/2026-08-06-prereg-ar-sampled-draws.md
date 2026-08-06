@@ -75,8 +75,24 @@ re-pick T post hoc.
 
 | arm | checkpoint | rows |
 |---|---|---|
-| A-s0 (gemma4 AR aux-on 40k) | `fontaine_arb_rcond_40k_1xh100/step_040000` | greedy (banked, 5.8026) + `_draws10_t1` |
+| ~~A-s0 (gemma4 AR aux-on 40k)~~ AR-100k (gemma4 AR, the deployment anchor) | ~~`fontaine_arb_rcond_40k_1xh100/step_040000`~~ `bijou_arb_rcond_100k_ddp4/step_100000` | greedy (banked, 5.8026) + `_draws10_t1` |
 | molmo2 AR 40k | `fontaine_molmo2_ar_40k_ddp4/step_040000` (endpoint, lands ~2026-08-08) | greedy + `_draws10_t1`, same command stems |
+
+**Amendment (pre-launch, 2026-08-06 23:4xZ, before any data):** the
+arms table as first posted paired the label "A-s0" and the checkpoint
+path `fontaine_arb_rcond_40k_1xh100/step_040000` with the banked
+greedy anchor 5.8026 — but 5.8026 belongs to **AR-100k**
+(`bijou_arb_rcond_100k_ddp4/step_100000`, the owner's 08-05 panel
+eval, npz banked); A-s0's banked greedy panel is 7.7966
+([box-batch results](2026-08-06-box-batch-results.md)). Every frozen
+read and expectation in this pre-reg is written against the 5.8026
+deployment anchor and the flow-teacher comparison, so the gemma4 arm
+executes on the checkpoint that owns that anchor: **AR-100k**. No
+read, expectation, threshold, or the falsifier changes — this is a
+label/path correction recorded before launch, not a re-aim. Row
+pairing is guaranteed by the shared plan file
+(`plans/holdout_curated_v0_k4l2.json`, the greedy run's own
+`sample_plan`).
 
 Anchors (no new GPU): flow teacher draws1 6.6232 / draws10 5.365,
 teacher draws10-heun30 5.3645/1.4242, SnapFlow student mean-of-10
