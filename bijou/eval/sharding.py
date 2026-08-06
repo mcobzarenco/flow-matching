@@ -99,6 +99,9 @@ def merge_shards(shards: list[ShardResults]) -> ShardResults:
 
     dump_index = [index for shard in shards for index in shard.dump_index]
     order = sorted(range(len(dump_index)), key=dump_index.__getitem__)
+    # --dump-predictions without --dump-draws: dump_draws stays [] while
+    # the other dump_* fields carry one row per dumped frame.
+    dump_draws = [d for shard in shards for d in shard.dump_draws]
 
     def permuted[T](rows: list[T]) -> list[T]:
         return [rows[i] for i in order]
@@ -132,5 +135,5 @@ def merge_shards(shards: list[ShardResults]) -> ShardResults:
         dump_index=permuted(dump_index),
         dump_episode=permuted([e for shard in shards for e in shard.dump_episode]),
         dump_frame=permuted([f for shard in shards for f in shard.dump_frame]),
-        dump_draws=permuted([d for shard in shards for d in shard.dump_draws]),
+        dump_draws=permuted(dump_draws) if dump_draws else [],
     )

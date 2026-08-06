@@ -137,6 +137,20 @@ def test_merge_shards_sorts_and_is_world_size_invariant() -> None:
     assert [s.index for s in single.scores["copy"]] == [0, 3, 5, 8]
 
 
+def test_merge_shards_tolerates_empty_dump_draws() -> None:
+    # --dump-predictions without --dump-draws: dump_draws is [] while the
+    # other dump_* fields carry one row per frame. The merge must not
+    # apply the row permutation to the empty list (2026-08-06 state-probe
+    # arm 1 crashed at merge on exactly this shape).
+    import dataclasses
+
+    rank0 = dataclasses.replace(_shard([0, 5], "user/a", "success"), dump_draws=[])
+    rank1 = dataclasses.replace(_shard([3, 8], "user/b", None), dump_draws=[])
+    merged = merge_shards([rank0, rank1])
+    assert merged.dump_draws == []
+    assert merged.dump_index == [0, 3, 5, 8]
+
+
 def test_score_frame_refuses_zero_valid_frames() -> None:
     # Through the max(divisor, 1) guards a zero-valid frame would score
     # a perfect 0.0 — it must fail loudly instead.
