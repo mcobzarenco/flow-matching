@@ -1,6 +1,62 @@
 # Now
 
-*Updated 2026-08-06 18:09–18:2xZ (real `date -u`) — tick (conversational): **OWNER
+*Updated 2026-08-06 18:15–18:4xZ (real `date -u`) — work session (bounded,
+conversational mid-session): **MOLMO2 WP3 IS LANDED — the ChatML
+collator + native processor are in, gated BYTE-EXACT against the
+shipped trust_remote_code processor, and the FAST anchoring is
+recorded in the schema** (`4113167`; the tonight critical path's
+first block, owner-confirmed 18:12Z). The build: (1)
+`bijou/molmo2/processor.py` — op-for-op native port of the 4.x-pinned
+image pipeline (crop tiling + overlap margins + 2x2 pooling index +
+token layout under the shipped options: cols on high-res rows only,
+`<low_res_im_start>` marker); (2) `bijou/encoders/molmo2.py` —
+`Molmo2Inputs` + `Molmo2InputsCollator`, prompt format namespaced
+MOLMO2_PROMPT_FORMAT 1: images hoisted per the shipped template
+bytes, `[kind camera|Image i]` bracket groups bind camera kinds to
+the shipped labels, soft state token spliced inside the
+`(<|im_end|>, \n)` close, LEFT padding, bos=`<|im_end|>` (checkpoint
+convention), native `tokenizers` backend (segment assembly PROVEN
+equivalent to whole-string tokenization); (3) golden fixtures banked
+from the reference processor in its own transformers-4.57 side env
+(`bank_processor_goldens.py`, 3 cases: 480p mc1, two-camera rig,
+mc8 2x2 tiling) — **ids / token-type mask / grids / pooling indices
+/ pixels ALL EXACT**; (4) FAST block base 152,064
+(`fast_block_base`) recorded — the second extension block after the
+128 image specials, embedding + fresh untied head rows
+decoder-owned. Operating point `max_crops=1` → 410 image
+tokens/camera (the smallest layout inside the shipped
+distribution). 10 new CPU oracles, **check.py 322 green**, plan
+post §6 struck through for WP3. OWNER EXCHANGE (three messages,
+caught at the babysit poll + answered in-window): 18:18Z "show me
+what the UNTRAINED model generates on our exact training-formatted
+prompt (gemma4 gave refusals)" → acked, queued as the first
+consumer of the WP4 assembly slice (it doubles as the end-to-end
+prompt-path test); 18:34Z "is same-time multi-view in-distribution
+given video pretraining?" → answered with template receipts
+(separate image branch — `Image N` labels + 2x2 pooling, no
+timestamps — and the style list's multi_image_* + mantis_instruct
+training tasks ⇒ non-sequential multi-image is trained; caveat:
+same-timestamp cross-VIEW binding is what the probes measure, not
+assume); 18:35Z "good luck with WP4" 🍀. Box state: arm C panel
+eval COMPLETED + banked ~18:2xZ (reports pulled at the boundary by
+the chained session; frozen reads stay with
+`statedrop_results.py`), masked q4 eval running on GPU 0
+(@32/4,301 scan-warmup 18:35Z → done ~19:0x–19:3xZ), **GPUs 1–3
+idle — the Molmo2 smoke is unblocked**. Local GPU idle (ftrig chain
+complete; ship-rule application queued). Queue: **next (chained
+work session) → WP4 assembly slice (vision injection +
+bidirectional image mask + full-model compose) + untrained-gen
+probe (owner ask, post generations) + AR decoder arm (fast_embed +
+fresh head rows on the frozen-original-vocab split per the 18:1xZ
+freezing answer) + memory smoke (4.85B live trunk × 4 ranks, B32
+gate) + AR 4×DDP pre-reg + launch iff green; then ftrig ship-rule
+application (likely diagnosis branch) + arm C statedrop reads at
+the masked-eval boundary; arm A img280 HELD (fresh owner go
+required); π0.5 deep-read post (low-prio)**. GPUs busy ×1 (box GPU
+0 masked eval) + CPU queue deep → `run_work_next` armed per
+no-idle-pauses.*
+
+*Previous update 2026-08-06 18:09–18:2xZ (real `date -u`) — tick (conversational): **OWNER
 STEERED THE SCHEDULE LIVE (18:10:13Z): "I want to run molmo2 tonight,
 let's delay arm A" — ARM A IS HELD; the box belongs to Molmo2 AR
 tonight.** The 18:1xZ plan ("arm A tonight, Molmo2 tomorrow") is
@@ -3367,3 +3423,14 @@ idle until the boundary (explore-side: the arch batch bills to the
 no co-location, and the boundary launch latency dropped from ~1 h
 (sync+verify+smoke serial) to minutes (pull+pytest only). Lit slice
 TAKEN (~15 min, IVRA → #15) inside the smoke-warmup window.
+Session 18:15–18:4xZ: the ladder pick was rung 1 (owner steering —
+Molmo2 WP3, confirmed 18:12Z as tonight's critical path); all-CPU
+(local GPU idle by design, box GPU 0 on arm C's chained masked
+eval). Babysit checkpoint taken mid-session WITH its Discord poll
+(class fix holding): caught the owner's 18:18Z probe ask and the
+18:34Z multi-image question, both answered in-window; the panel-eval
+completion was verified at the same checkpoint (masked eval alive in
+scan-warmup, not a stall — 0% GPU was the warmup, checked before
+assuming). Lit slice skipped — owner-steered critical-path session
+(the 16:04Z slice is <3 h old; balance carries). Explore hours: 0
+GPU-h this session; WP3 is exploit-side critical path.
