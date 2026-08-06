@@ -1,6 +1,52 @@
 # Now
 
-*Updated 2026-08-06 09:0x–09:1xZ (real `date -u`) — tick (babysit): **both runs
+*Updated 2026-08-06 09:13–09:4xZ (real `date -u`) — work session: **SNAPFLOW'S
+ENDPOINT RESULTS INSTRUMENT IS BANKED BEFORE ITS DATA — the box-batch
+oracle-before-data pattern, FOURTH consecutive application —
+`fontaine/scripts/snapflow_results.py` encodes every frozen read of the
+[SnapFlow pre-reg](posts/2026-08-06-prereg-snapflow-distill.md) +
+Amendment 1: the @10k probe kill line (teacher probe 6.6755 + 3.0 =
+9.6755, strictly >), endpoint adopt-signal (1-NFE chunk ≤ 6.7732),
+falsification (> 7.1232), grounding edge (first ≤ 1.9831), deployment
+headline (mean-of-10 ≤ 5.8026, modal band [5.4, 5.6]), the per-step
+horizon read (flow_vs_ar_paired protocol — oracled to byte-match its
+banked curve) and the panel-v2 descriptive column (reproduces
+6.7151/1.9453 from the teacher npz).** Banking early caught a REAL gap:
+the running launcher's chained stage-4 endpoint evals dump JSON+HTML
+only — no npz — so the pre-reg's promised per-step read had NO data
+source; editing a live bash script is unsafe, so the addendum
+`eval_snapdistill_endpoint_1nfe_npz.sh` (staged, quiet-GPU-guarded,
+`--noise-key index` pinned explicitly per the d9dd385 lesson) re-runs
+the primary with `--dump-predictions` at the boundary after the chain
+(~30–40 min). Strict semantics guards refuse doctored endpoint JSONs
+(steps≠1 / heun / target_time t / stable keying / draws mismatch /
+subset-as-panel all die loud); oracles (a)–(e) all green on banked data
+with zero SnapFlow endpoint bytes in existence; 8 new CPU tests;
+**`check.py` 252 green** (`4d48120`). STANDING NOTE: `bijou.eval`'s
+`--noise-key` default must stay `index` until the SnapFlow chain's
+stage-4 evals execute at 30k (they inherit the default at run time and
+the registered comparators are index-keyed); the default flip is #18.2
+follow-on debt for AFTER the chain. Babysits 09:13/09:31Z: SnapFlow
+@5,000/30k, 100% util, ~0.48 s/step, step_005000 saved → **10k probe
+boundary ~10:1x–10:2xZ**; s=t divergence **7.74@2000 → 7.12@4000 →
+7.93@4500 → 8.33@5000 — drifting up ~1.7 above the teacher anchor,
+record-only but now the top watch item** (kill line 9.6755 is probe-@10k
+1-NFE, not this s=t read; SnapFlow's claim is endpoint parity, mid-run
+drift is in-model for consistency training — the 10k probe is the
+informative read). Arm C @4,760/40k, 0.373 s/step, 86% util, loss 4.98
+smooth, aux 0.82, in-run probe 27.8→27.2→24.1 descending — 40k
+~16:3x–17:3xZ unchanged. Discord: no inbound ×2 polls. Queue: local →
+SnapFlow babysit (s=t watch; 10k probe decision ~10:1x–10:2xZ — box
+GPUs 1–3 idle, checkpoint push standing option) → 30k + chained
+endpoint evals ~13:2x–13:3xZ → addendum npz eval → `snapflow_results.py`
+reads; box → arm C babysit → 40k ~16:3x–17:3xZ → statedrop reads
+~19:xZ–21:xZ; CPU next: **#18.5 rig-rollout safety gate** + #16
+follow-ups + #18.2 default-flip (after the chain); ≥2 ✓. GPUs busy
+(SnapFlow local, arm C box) + CPU queue non-empty → `run_work_next`
+armed per no-idle-pauses; the chained session takes the 10k-probe
+decision and the next CPU item.*
+
+*Previous update 2026-08-06 09:0x–09:1xZ (real `date -u`) — tick (babysit): **both runs
 healthy; ARM C'S 40k BOUNDARY RE-PROJECTED ~16:3x–17:3xZ (was ~12:3x–12:4xZ) —
 the 0.37 s/step projection ignored the ~4-min in-run eval probes.** Measured
 directly: arm C trains at 0.378 s/step but each 500-step eval costs ~3.7 min
@@ -2200,16 +2246,18 @@ state probe 04:44→06:06Z ≈ 1.4 h COMPLETE, reads posted; fairness
 probe 06:24–07:39Z ≈ 1.2 h COMPLETE incl. the crashed first run,
 reads posted; #18.2 stable-key flip re-bank 07:41→08:30Z ≈ 0.8 h
 COMPLETE — 49 min at ~650 f/min, ADOPTED; SnapFlow distill TRAINING
-since 08:43Z — both gates passed, 0.47–0.49 s/step, 30k lands
-~12:5xZ, far ahead of the 12–20 h estimate),
+since 08:43Z — both gates passed, ~0.48 s/step train / ~0.55 effective
+incl. evals+saves, @5,000/30k at 09:31Z, 30k lands ~13:2x–13:3xZ),
 box **~28.4 / ~28.4 GPU-h**
 (4 arms trained 17:12Z→01:35Z ≈ 17 GPU-h + 4 chained panel evals ≈ 10
 GPU-h, complete 04:1xZ; E4B memory smoke ×4 rungs 04:31–05:21Z ≈ 0.8
 GPU-h — ladder exhausted, NO-LAUNCH; **arm C state-dropout live since
 08:10Z on GPU 0** — the idle-since-E4B window closed by the #9
-launch, ~7.5 GPU-h queued incl. chained evals, 0.37 s/step steady at
-the 09:03Z poll (@2,760/40k, loss smooth) — 40k boundary ~12:4xZ,
-results read via the pre-banked `statedrop_results.py` instrument;
+launch, ~7.5 GPU-h queued incl. chained evals, 0.373 s/step train /
+~1.0–1.15 effective incl. ~3.7-min eval probes (sibling-normal) at
+the 09:31Z poll (@4,760/40k, loss smooth) — 40k boundary
+~16:3x–17:3xZ, results read via the pre-banked `statedrop_results.py`
+instrument;
 GPUs 1–3 remain idle awaiting owner steer on E4B
 follow-on / panel-v2 / stage-2b — stated per the anti-goal rule: no
 pre-registered work exists for them until steer or the next queue
@@ -2384,3 +2432,12 @@ box-batch → state-probe → state-dropout), so the ~12:4xZ boundary
 read is frozen code, not judgment at read time. Lit slice skipped —
 bounded session, instrument was the declared queue head; the ~20–30
 min standing slice carries to the next session with slack.
+Session 09:13–09:4xZ: all-CPU again — the SnapFlow ENDPOINT results
+instrument (fourth oracle-before-data application), and the pattern
+paid immediately: banking the reads exposed that the live launcher's
+chained evals dump no npz, so the pre-reg's per-step horizon read
+had no data source — the addendum npz eval is now staged instead of
+being improvised at the 13:2xZ boundary. Lit slice skipped — bounded
+session, instrument on the critical path (endpoint ~4 h out at
+pick time); slice debt now TWO sessions deep — the 10:2xZ probe
+babysit window or the first post-endpoint session MUST take it.

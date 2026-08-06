@@ -435,6 +435,17 @@ variants, consistency/distillation toward 1–2-step deployment decodes
   0.071 < 0.15 → the floor still binds, adopt band ≤ 6.7732
   UNCHANGED.** SnapFlow queues behind the #18.2 flip eval
   (~09:2xZ boundary) on the local GPU.
+- **RESULTS INSTRUMENT BANKED BEFORE THE DATA (2026-08-06 ~09:3xZ,
+  `4d48120`):** `fontaine/scripts/snapflow_results.py` — every frozen
+  read (probe kill 9.6755, adopt ≤ 6.7732, falsify > 7.1232, edge
+  ≤ 1.9831, deploy ≤ 5.8026, per-step horizon read + v2 column),
+  oracles (a)–(e) green on banked data only, strict semantics guards
+  (1-NFE/euler/target_time/draws/index-keying/full-panel all
+  asserted). **Gap caught by banking early: the chained stage-4
+  endpoint evals dump no npz** → per-step read had no data source;
+  addendum `eval_snapdistill_endpoint_1nfe_npz.sh` staged (noise-key
+  pinned `index` explicitly). Standing hold: the `--noise-key`
+  default stays `index` until the chain's endpoint evals run at 30k.
 - **Pointer reads closed (lit slice 2026-08-06):** OFP
   ([2603.12480](https://arxiv.org/abs/2603.12480)) — *from-scratch*
   one-step self-distillation (self-consistency + self-guided
