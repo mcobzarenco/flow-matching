@@ -3078,7 +3078,17 @@ reset so the chained session doesn't die on launch.
 
 ## Utilization footer
 
-Trailing-7-day GPU-hours on experiments / total: local **~22.7 / ~23.0**
+Trailing-7-day GPU-hours on experiments / total: local **~24.0 / ~24.3**,
+box **~37.2 / ~37.2** (as of 18:1xZ: local — SnapFlow ftrig fine-tune
+17:02→17:50Z ≈ 0.8 h COMPLETE at 4k + chained after-reads (rig draws
+1/10 + panel-v2 guard) ≈ 0.6 h ending ~18:1xZ; box — arm C 40k
+COMPLETE 16:02Z, its chained panel eval on GPU 0 live since 16:05Z
+≈ 2.2 h @21,472/25,800, masked eval next → boundary ~19:0x–19:3xZ;
+GPUs 1–3 idle pending the arm A launch call (owner rec posted:
+arm A tonight, Molmo2 AR 4×DDP takes the box tomorrow). CPU-side this
+session was the Molmo2 port sprint: WP1+WP2+full HF parity in one
+session, all CPU — the no-idle-pauses rule at its best.)
+Stale detail below is the 15:2xZ snapshot:
 (as of 15:2xZ: sealed eval 1.9 h; noise-draw chain 18:25Z→04:12Z ≈
 9.8 h COMPLETE; state probe ≈ 1.4 h; fairness probe ≈ 1.2 h; #18.2
 flip re-bank ≈ 0.8 h ADOPTED; **SnapFlow distill 08:43→13:14Z ≈
