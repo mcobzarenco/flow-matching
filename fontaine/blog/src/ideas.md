@@ -271,6 +271,25 @@ High-variance; counts toward the ≥20% exploration budget.
   runs ≈ 1.7 GPU-h, blocked on A-s0's ~04Z npz; first quiet GPU
   window. Supported ⇒ #9 state-dropout gets its own pre-reg;
   ReViP-style modulation stays the heavier arm behind it.
+- **Lit radar 2026-08-06 ~03:2xZ — the mechanism gets a training-
+  dynamics CAUSE: [GAP](https://arxiv.org/abs/2602.12032) (ICLR
+  2026)** shows proprioception dominates because it offers *faster
+  loss reduction early in training*, suppressing visual learning
+  specifically during motion-transition phases (target
+  localization); their fix adaptively shrinks proprioceptive
+  gradients during those phases (phase detection via proprio state
+  estimation; sim+real, single+dual arm, works on VLAs).
+  Consequences for us: (1) if the state-reliance probe supports the
+  mechanism, the #9 train-time arm has TWO candidate levers —
+  state DROPOUT (input-side, cheap, the current pick) vs GAP-style
+  phase-guided gradient scaling (optimizer-side, no input
+  corruption); dropout stays first (simpler, matches
+  [2506.23944]'s p=0.8 masking evidence), GAP banked as the
+  follow-on if dropout helps but plateaus. (2) GAP predicts the
+  grounding gap concentrates in motion-transition frames —
+  testable for free in the probe's npz by conditioning Δ_first on
+  progress-within-episode; noted for the probe's discussion
+  section, not its frozen reads. (Abstract-depth read.)
 
 ## 12. Solver/Heun-gap work — `screening` (distillation leg PRE-REGISTERED 2026-08-06)
 
@@ -621,8 +640,39 @@ queue, in leverage order (details + file:line in the post):
 5. Rig-rollout safety gate (mandatory clamp, first-obs stats
    envelope assert, rollout reads `camera_kinds.json`) — **blocks
    the first physical run** (idea #16).
-6. Parity extension: one padded/batched/2-camera HF comparison +
-   `--require-bitwise` eager gate.
+6. ~~Parity extension~~ **DONE 2026-08-06 ~03:4xZ** (deep-dive
+   finding 7): `verify_parity` gains (a) a default-on **padded
+   2-sample × 2-image batch check** — mixed-length prompts through
+   the processor's `padding=True` path (natively LEFT-padded on
+   transformers 5.14 — measured, not assumed), HF attention mask +
+   per-sample logical position_ids (the `encode_tensors`
+   convention, passed to HF too since its forward defaults to
+   arange), gated per sample at its last REAL position against HF
+   on the same padded batch AND against HF's unpadded per-sample
+   forwards; **both padding orientations** run (the native side +
+   the per-row roll to the other — the ar_backbone prompt path
+   collates left, the token-identity of each row vs its solo
+   tokenization is asserted). (b) **`--require-bitwise`** —
+   escalates every same-shape HF comparison from tolerance to
+   bitwise (the measured eager/H100 contract, previously printed
+   but never enforced) and refuses near-tie token forks;
+   cross-shape (padded-row vs unpadded) comparisons stay
+   tolerance-only, labeled as such. Validated on the real E2B (CPU
+   eager): full harness PASS — **ours-vs-HF-padded BITWISE on all
+   real positions in both orientations**; solo cross-checks ≤0.44
+   (GEMM-shape fp noise, tol 2.0). **Falsification oracle taught a
+   scope lesson worth recording:** an arange-doctored run passes
+   WITHIN TOL in any orientation, because in a single forward
+   positions enter only through RoPE, which is *relative* — arange
+   vs logical is a per-sample constant shift, visible only as
+   fp-rotation noise (~0.6). So this check pins mask + padding +
+   multi-image semantics vs HF; the position CHAIN (where the
+   convention genuinely bites — cached continuation) stays pinned
+   by `tests/test_backbone_continuation.py`. Oracle (corrected to
+   a genuine corruption): real=PASS, zero-positions=FAIL,
+   mask-dropped=FAIL. Remaining honest gap: state-token splice and
+   15-layer truncation/`kv_stop_layer` have no HF counterpart
+   (bijou self-consistency tests cover them).
 7. ~~Duplicate-content census over curated_v0~~ **DONE 2026-08-06
    ~02:0xZ** ([results
    post](posts/2026-08-06-dup-census-results.md)): the corpus is

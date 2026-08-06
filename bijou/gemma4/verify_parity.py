@@ -32,15 +32,29 @@ implementations are bitwise-identical and run-to-run stable.
 
 Checks: full prefill forward, cached stepwise greedy decode, end-to-end
 ``generate()``, an image prompt (vision path; a deterministic synthetic image
-by default, ``--image`` to use a file) and optional ``--long-context``
-(sliding-window coverage). Prompts are wrapped in the checkpoint's chat
-template by default (the correct instruct usage — generations should be
-coherent); pass ``--raw`` to feed prompts verbatim instead. ``--attn-backend``
-selects our attention implementation (the HF reference always runs eager).
+by default, ``--image`` to use a file), a **padded 2-sample x 2-image batch**
+(the production-encode regime: mixed-length prompts, HF attention mask,
+per-sample logical position_ids — gated against HF on the same padded batch
+AND against HF's unpadded per-sample forwards; ``--skip-padded-batch`` to
+omit) and optional ``--long-context`` (sliding-window coverage). Prompts are
+wrapped in the checkpoint's chat template by default (the correct instruct
+usage — generations should be coherent); pass ``--raw`` to feed prompts
+verbatim instead. ``--attn-backend`` selects our attention implementation
+(the HF reference always runs eager).
+
+``--require-bitwise`` escalates every same-shape HF comparison from the
+tolerance gate to bitwise equality — the measured eager/H100 contract (the
+docstring's "bitwise today" anchor, previously printed but never enforced).
+Near-tie token forks are likewise refused under the flag: bitwise logits
+cannot fork. Cross-shape comparisons (a padded batch row vs HF's unpadded
+forward run different GEMM shapes, so fp reduction order legitimately
+differs) stay tolerance-gated and say so in their name.
 
 Usage::
 
     uv run python -m bijou.gemma4.verify_parity --device cuda --max-new-tokens 32
+    uv run python -m bijou.gemma4.verify_parity --device cuda --attn-backend eager \
+        --require-bitwise
     uv run python -m bijou.gemma4.verify_parity --device cuda --attn-backend sdpa \
         --long-context 600
 """
@@ -64,7 +78,7 @@ from .cache import KVCache
 from .generation import GenerationResult, generate
 from .loading import load_generation_defaults, load_model, resolve_checkpoint_dir
 from .model import Gemma4Model, set_attention_backend
-from .testing import load_test_image
+from .testing import load_test_image, synthetic_test_image
 
 DEFAULT_MODEL = "google/gemma-4-e2b-it"
 DEFAULT_PROMPTS = (
@@ -103,14 +117,23 @@ class Comparison:
         return f"  {self.name:<42} {status:<16} max|Δ|={self.max_abs_diff:.3e}{detail}"
 
 
-def compare(name: str, ours: Tensor, theirs: Tensor, tolerance: float) -> Comparison:
+def compare(
+    name: str,
+    ours: Tensor,
+    theirs: Tensor,
+    tolerance: float,
+    *,
+    require_bitwise: bool = False,
+) -> Comparison:
     if ours.shape != theirs.shape:
         raise AssertionError(
             f"{name}: shape {tuple(ours.shape)} != {tuple(theirs.shape)}",
         )
     bitwise = bool(torch.equal(ours, theirs))
     diff = 0.0 if bitwise else (ours.float() - theirs.float()).abs().max().item()
-    return Comparison(name, diff <= tolerance, bitwise, diff)
+    passed = bitwise if require_bitwise else diff <= tolerance
+    detail = "(bitwise required)" if require_bitwise and not bitwise else ""
+    return Comparison(name, passed, bitwise, diff, detail)
 
 
 def check_all(comparisons: list[Comparison]) -> bool:
@@ -127,10 +150,14 @@ def compare_generated_tokens(
     hf_output: Any,
     prompt_len: int,
     tolerance: float,
+    *,
+    require_bitwise: bool = False,
 ) -> Comparison:
     """Token-level comparison of our generate() vs HF generate(). Sequences
     must match exactly, except a single fork at a near-tie step is accepted
-    (comparison stops there — post-fork continuations legitimately differ)."""
+    (comparison stops there — post-fork continuations legitimately differ).
+    Under ``require_bitwise`` the near-tie escape is refused: bitwise-equal
+    logits cannot fork, so any disagreement is a failure."""
     ours_tokens: list[int] = result.sequences[0, prompt_len:].tolist()
     theirs_tokens: list[int] = hf_output.sequences[0, prompt_len:].tolist()
     if ours_tokens == theirs_tokens:
@@ -152,7 +179,7 @@ def compare_generated_tokens(
             f"(forked at step {step}: token {ours_token} vs {theirs_token}, "
             f"top-2 gap {gap:.3f})"
         )
-        return Comparison(name, near, False, gap, detail)
+        return Comparison(name, near and not require_bitwise, False, gap, detail)
     return Comparison(
         name,
         False,
@@ -219,6 +246,18 @@ def main() -> int:
         metavar="N",
         help="also check an N-token synthetic prompt (exercises the sliding "
         "window and its cache once N + decoded tokens exceed 512)",
+    )
+    parser.add_argument(
+        "--require-bitwise",
+        action="store_true",
+        help="escalate same-shape HF comparisons from the tolerance gate to "
+        "bitwise equality (the measured eager/H100 contract); near-tie token "
+        "forks are refused too",
+    )
+    parser.add_argument(
+        "--skip-padded-batch",
+        action="store_true",
+        help="skip the padded 2-sample x 2-image batch check",
     )
     args = parser.parse_args()
 
@@ -305,6 +344,7 @@ def run_checks(
                 ours.logits,
                 theirs.logits,
                 args.tolerance,
+                require_bitwise=args.require_bitwise,
             ),
         )
         watch.lap("prefill compared")
@@ -317,6 +357,7 @@ def run_checks(
                 input_ids,
                 args.max_new_tokens,
                 args.tolerance,
+                require_bitwise=args.require_bitwise,
             ),
         )
         watch.lap("stepwise decode compared")
@@ -347,6 +388,7 @@ def run_checks(
                 hf_output,
                 input_ids.shape[1],
                 args.tolerance,
+                require_bitwise=args.require_bitwise,
             ),
         )
         print(f"  generated: {ours_text!r}")
@@ -371,6 +413,7 @@ def run_checks(
                 ours.logits,
                 theirs.logits,
                 args.tolerance,
+                require_bitwise=args.require_bitwise,
             ),
         )
         watch.lap("long-context prefill compared")
@@ -381,12 +424,17 @@ def run_checks(
                 input_ids,
                 args.max_new_tokens,
                 args.tolerance,
+                require_bitwise=args.require_bitwise,
             ),
         )
         watch.lap("long-context stepwise decode compared")
         all_ok &= check_all(comparisons)
 
     all_ok &= run_image_check(args, checkpoint_dir, model, hf_model, device)
+
+    if not args.skip_padded_batch:
+        all_ok &= run_padded_batch_check(args, checkpoint_dir, model, hf_model, device)
+        watch.lap("padded batch compared")
 
     return all_ok
 
@@ -397,6 +445,8 @@ def stepwise_decode_comparisons(
     input_ids: Tensor,
     max_new_tokens: int,
     tolerance: float,
+    *,
+    require_bitwise: bool = False,
 ) -> list[Comparison]:
     """Drive both models manually one token at a time.
 
@@ -424,6 +474,7 @@ def stepwise_decode_comparisons(
                 ours.logits,
                 theirs.logits,
                 tolerance,
+                require_bitwise=require_bitwise,
             ),
         )
 
@@ -453,7 +504,7 @@ def stepwise_decode_comparisons(
                     int(hf_token.item()),
                     tolerance,
                 )
-                tokens_match = near
+                tokens_match = near and not require_bitwise
                 detail = (
                     f"(forked at step {step}, top-2 gap {gap:.3f}"
                     f"{', near-tie' if near else ''})"
@@ -469,10 +520,13 @@ def stepwise_decode_comparisons(
 
     if not detail and first_divergent is not None:
         detail = f"(first drift at step {first_divergent})"
+    passed = tokens_match and (bitwise or not require_bitwise)
+    if require_bitwise and tokens_match and not bitwise:
+        detail = f"(bitwise required) {detail}".rstrip()
     comparisons.append(
         Comparison(
             f"decode tokens agree ({steps_run} steps)",
-            tokens_match,
+            passed,
             bitwise,
             max_drift,
             detail,
@@ -531,6 +585,7 @@ def run_image_check(
             ours.logits[:, -1:, :],
             theirs.logits[:, -1:, :],
             args.tolerance,
+            require_bitwise=args.require_bitwise,
         ),
     ]
     all_diff = (ours.logits.float() - theirs.logits.float()).abs().max().item()
@@ -562,6 +617,7 @@ def run_image_check(
             hf_output,
             batch["input_ids"].shape[1],
             args.tolerance,
+            require_bitwise=args.require_bitwise,
         ),
     )
     tokenizer = transformers.AutoTokenizer.from_pretrained(checkpoint_dir)
@@ -569,6 +625,195 @@ def run_image_check(
         f"  generated: {tokenizer.decode(result.sequences[0, batch['input_ids'].shape[1] :])!r}",
     )
     return check_all(comparisons)
+
+
+PADDED_BATCH_PROMPTS = (
+    "Describe both images in one sentence.",
+    (
+        "You see two camera views of a robot workspace, one overhead and "
+        "one wrist-mounted. Compare what each camera shows, then plan how "
+        "to pick up the red cube and place it in the bin, step by step."
+    ),
+)
+
+
+def run_padded_batch_check(
+    args: argparse.Namespace,
+    checkpoint_dir: Path,
+    model: Gemma4Model,
+    hf_model: Any,
+    device: torch.device,
+) -> bool:
+    """The production-encode regime (deep-dive finding 7): a padded batch of
+    two mixed-length prompts with TWO images each, forwarded with the HF
+    attention mask and per-sample logical position_ids (cumsum of the mask —
+    exactly ``GemmaEncoder.encode_tensors``'s convention, passed to HF too
+    since its forward defaults to arange).
+
+    BOTH padding orientations are checked: the processor's native side and
+    the per-row roll to the opposite side (the production collator uses the
+    processor's native padding; the ar_backbone prompt path collates LEFT —
+    both must agree with HF's padded-multimodal conventions). Scope note:
+    in a single full forward, positions enter only through RoPE, which is
+    relative — so logical-vs-arange is a per-sample constant shift here,
+    distinguishable only at fp-rotation-noise scale, and this check gates
+    mask + padding + multi-image semantics rather than the position CHAIN;
+    position-chain correctness across cached continuation (where the
+    convention does bite) is pinned by ``tests/test_backbone_continuation``.
+
+    Gates, per sample at its last REAL position:
+      - vs HF on the *same padded batch* (same shapes — bitwise-eligible
+        under ``--require-bitwise``);
+      - vs HF's *unpadded single-sample* forward (cross-shape: different
+        GEMM shapes ⇒ tolerance only) — pins that padding + mask + logical
+        positions reproduce the canonical unpadded answer, not merely that
+        both implementations share a convention. The last REAL position is
+        deliberately the gate: deep-early positions of a long padded row
+        legitimately diverge from the unpadded forward on sliding-window
+        layers (physical-index windows lose real context to pad slots — the
+        same documented effect as right-padded continuation).
+
+    Token identity of each sample against its solo tokenization is asserted
+    first (also fixes the padding orientation without assuming one). The
+    state-token splice has no HF counterpart and stays covered by bijou's
+    own tests."""
+    processor = transformers.AutoProcessor.from_pretrained(checkpoint_dir)
+    cameras = (synthetic_test_image(), synthetic_test_image(320, 240))
+    conversations = [
+        [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "image", "image": cameras[0]},
+                    {"type": "image", "image": cameras[1]},
+                    {"type": "text", "text": text},
+                ],
+            },
+        ]
+        for text in PADDED_BATCH_PROMPTS
+    ]
+    batch = processor.apply_chat_template(
+        conversations,
+        add_generation_prompt=True,
+        tokenize=True,
+        return_dict=True,
+        return_tensors="pt",
+        # transformers 5.14: per-call processor kwargs must be nested (the
+        # production collator's verified pattern).
+        processor_kwargs={"padding": True},
+    ).to(device)
+    input_ids = batch["input_ids"]
+    padding_mask = batch["attention_mask"]
+    if not bool((padding_mask == 0).any()):
+        raise AssertionError(
+            "padded-batch check: prompts tokenized to equal lengths — no "
+            "padding exercised; make the prompts more different",
+        )
+    real = padding_mask.to(torch.bool)
+    n_images = batch["pixel_values"].shape[0]
+    n_pad = int((padding_mask == 0).sum())
+    print(
+        f"\n=== padded batch: {input_ids.shape[0]} samples x 2 images "
+        f"({n_images} images total, seq {input_ids.shape[1]}, "
+        f"{n_pad} pad tokens)",
+    )
+
+    # Per-sample unpadded HF reference (also proves padding kept token
+    # identity: the batch's real tokens must equal the solo tokenization).
+    solo_last_logits: list[Tensor] = []
+    for i, conversation in enumerate(conversations):
+        solo = processor.apply_chat_template(
+            [conversation],
+            add_generation_prompt=True,
+            tokenize=True,
+            return_dict=True,
+            return_tensors="pt",
+        ).to(device)
+        if not torch.equal(solo["input_ids"][0], input_ids[i][real[i]]):
+            raise AssertionError(
+                f"padded-batch check: sample {i}'s real tokens differ from "
+                "its solo tokenization — padding changed token identity",
+            )
+        with torch.no_grad():
+            solo_out = hf_model(
+                input_ids=solo["input_ids"],
+                pixel_values=solo["pixel_values"],
+                image_position_ids=solo["image_position_ids"],
+            )
+        solo_last_logits.append(solo_out.logits[:, -1, :])
+
+    def orientation_pass(side: str, ids: Tensor, mask: Tensor) -> bool:
+        # Logical positions, exactly as GemmaEncoder.encode_tensors builds
+        # them; passed to HF too (its forward defaults to arange).
+        position_ids = (mask.long().cumsum(-1) - 1).clamp(min=0)
+        with torch.no_grad():
+            ours = model(
+                ids,
+                pixel_values=batch["pixel_values"],
+                image_position_ids=batch["image_position_ids"],
+                padding_mask=mask,
+                position_ids=position_ids,
+            )
+            theirs = hf_model(
+                input_ids=ids,
+                attention_mask=mask,
+                position_ids=position_ids,
+                pixel_values=batch["pixel_values"],
+                image_position_ids=batch["image_position_ids"],
+            )
+        last_real = mask.long().cumsum(-1).argmax(-1)
+        rows = torch.arange(ids.shape[0], device=device)
+        ours_last = ours.logits[rows, last_real, :]
+        theirs_last = theirs.logits[rows, last_real, :]
+        comparisons = [
+            compare(
+                f"{side}-padded batch logits (last real position)",
+                ours_last,
+                theirs_last,
+                args.tolerance,
+                require_bitwise=args.require_bitwise,
+            ),
+        ]
+        real_cols = mask.to(torch.bool)
+        real_diff = (
+            (ours.logits.float() - theirs.logits.float()).abs()[real_cols].max().item()
+        )
+        print(f"  ({side}) all-real-positions max|Δ|={real_diff:.3e}")
+        for i, solo_logits in enumerate(solo_last_logits):
+            comparisons.append(
+                compare(
+                    f"{side}: sample {i} vs unpadded HF (last position, tol only)",
+                    ours_last[i : i + 1],
+                    solo_logits,
+                    args.tolerance,
+                ),
+            )
+        return check_all(comparisons)
+
+    pads_per_row = (~real).long().sum(-1)
+    right_padded = bool(real[:, 0].all())
+    native = "native-right" if right_padded else "native-left"
+    ok = orientation_pass(native, input_ids, padding_mask)
+
+    # The opposite orientation, by rolling each row's pads to the other
+    # side (images stay put — image tokens are real tokens and keep their
+    # relative order, so pixel_values/image_position_ids are unchanged).
+    direction = 1 if right_padded else -1
+    flipped_ids = torch.stack(
+        [
+            row.roll(direction * int(k))
+            for row, k in zip(input_ids, pads_per_row, strict=True)
+        ],
+    )
+    flipped_mask = torch.stack(
+        [
+            row.roll(direction * int(k))
+            for row, k in zip(padding_mask, pads_per_row, strict=True)
+        ],
+    )
+    other = "left" if right_padded else "right"
+    ok &= orientation_pass(other, flipped_ids, flipped_mask)
+    return ok
 
 
 if __name__ == "__main__":
