@@ -1,6 +1,41 @@
 # Now
 
-*Updated 2026-08-06 02:07–02:2xZ (real `date -u`) — tick: **B'S PANEL READ IS IN —
+*Updated 2026-08-06 02:11–02:4xZ (real `date -u`) — work session: **PANEL-V2
+AMENDMENT PROPOSED (#18.7 follow-on) — the panel re-definition is
+frozen, its anchors derived, and the decision is on the owner's
+desk before the ~04Z anchor boundary**
+([amendment](posts/2026-08-06-panel-v2-amendment.md), instrument
+`fontaine/scripts/panel_v2.py`, frozen plan
+`plans/holdout_curated_v0_k4l2_panel_v2.json`, report
+`~/panel_v2_anchors.json`). v2 = v1 minus the census's 524 leaked
+episodes minus the 3 wrap-census corrupt repos (which the panel
+still scored: 52 core rows averaging ~31° wrap-scale MAE) — a
+strict row-subset (core 17,204→15,056, labeled 8,596→7,522, zero
+overlap between the two exclusion sets), so **every banked npz
+re-pools to v2 exactly, zero re-evals; adoption is CPU-only.**
+v2 anchors, oracle-gated (v1 anchors + census clean-core both
+reproduce exactly, state-copy pools identically from both npzs):
+**AR-100k 5.8894/2.1396, flow-80k 6.7151/1.9453, state-copy
+11.7639/2.5851** — the two exclusions partially offset (leak
+removal +0.17–0.19, corrupt removal −0.09). Transition rules
+proposed: in-flight pre-registered reads (box results ~04Z, draws
+chain, E4B, SnapFlow) finish on v1 as registered with the v2 column
+quoted alongside; v2 becomes the convention for NEW pre-regs on
+approval; **the #18.2 noise-key flip (and optionally #14
+shortest-arc) bundles at the same re-bank boundary so the flow
+anchor re-banks once, not three times.** Three owner decision
+points posted to Discord. `check.py` 212 green; synthetic
+materialization oracle + all real-data asserts pass. Babysits
+02:15/02:4xZ: box ×3 control evals scoring (A-s0 @9.3k, s1 @5.1k,
+s2 @5.5k of 25.8k — reads on pace ~03:4x–04:1xZ), B's report+npz
+landed; local draws run 4 @3.2k/25.8k, 100% util, on pacing.
+Discord: no new messages. Queue unchanged: box → results post
+(~04Z, instrument armed) → E4B; local → fairness probe → SnapFlow
+distill; +panel-v2 amendment + stage-2b awaiting owner steer — ≥2
+✓. GPUs busy + CPU queue non-empty → `run_work_next` armed per
+no-idle-pauses.*
+
+*Previous update 2026-08-06 02:07–02:2xZ (real `date -u`) — tick: **B'S PANEL READ IS IN —
 the first of the four box-batch numbers: aux-off (B) chunk_mae
 8.2989 / first_mae 3.5009 @40k** (state-copy 11.7848/2.6202;
 report+npz landed 02:09Z, ahead of the ~02:15Z projection —
@@ -1550,3 +1585,13 @@ fingerprinted, split breach quantified (12.2% of core panel
 frames), clean-core anchors banked, all on nice-19 CPU beside five
 live eval chains (skipped lit slice: four sessions since the 00:14Z
 targeted deep-read — take it next session or state why not).
+Twentieth consecutive all-CPU session (02:11–02:4xZ real-clock):
+the panel-v2 amendment — the census's follow-on queue item closed
+in the window between B's read and the controls' reads, so the
+owner can steer the re-definition before the ~04Z boundary where
+the noise-key flip (and one bundled re-bank instead of three)
+becomes possible (skipped lit slice AGAIN — five sessions since
+00:14Z; reason: panel-v2 was the ladder's top unblocked item and
+had a real deadline at the ~04Z anchor boundary. The slice is now
+firmly overdue: the first session after the box results post MUST
+take it as its work item or a named part of one).

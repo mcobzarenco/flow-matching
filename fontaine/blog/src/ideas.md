@@ -579,11 +579,20 @@ queue, in leverage order (details + file:line in the post):
    suite, split mirror proven on all 878 plan repos, collision guard),
    `dup_census_anchor_impact.py` (join content-checked vs raw
    parquet). Exclusion list frozen in `~/dup_census_report.json`.
-   **Follow-on queue item: panel-v2 amendment** — excluding the 524
-   leaked episodes is a panel re-definition (re-bank every anchor);
-   needs its own pre-reg + owner steer. Until then results posts quote
-   full-panel (anchor convention) with the clean-core column
-   alongside.
+   **Panel-v2 amendment PROPOSED 2026-08-06 ~02:3xZ, awaiting owner
+   steer** ([amendment](posts/2026-08-06-panel-v2-amendment.md),
+   instrument `fontaine/scripts/panel_v2.py`): v2 = v1 minus the 524
+   leaked episodes minus the 3 wrap-census corrupt repos, strict
+   row-subset (core 17,204→15,056, labeled 8,596→7,522) so every
+   banked npz re-pools exactly with zero re-evals. v2 anchors
+   derived + oracle-gated: **AR-100k 5.8894/2.1396, flow-80k
+   6.7151/1.9453, state-copy 11.7639/2.5851** (frozen plan
+   `plans/holdout_curated_v0_k4l2_panel_v2.json`, embeds exclusions).
+   Transition proposal: in-flight pre-registered reads finish on v1;
+   v2 for every new pre-reg on approval; bundle the #18.2 noise-key
+   flip (+ optionally #14 shortest-arc) at the same re-bank boundary
+   so the flow anchor re-banks once. Until steer, results posts quote
+   full-panel (anchor convention) with the v2 column alongside.
 8. ~~Leakage checker same-repo-id count/content assert~~ **DONE
    2026-08-05 ~21:20Z** (deep-dive finding 6b): the identity branch
    now VERIFIES the claim — episode-count assert plus per-episode

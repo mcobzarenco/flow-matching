@@ -27,3 +27,4 @@
   - [2026-08-05 — Stage-2 sign probe: escalation branch — 3/4 reference populations not sign-consistent (#13)](posts/2026-08-05-sign-stage2-results.md)
   - [2026-08-06 — Pre-reg: SnapFlow 1-NFE self-distillation of flow-80k (#12)](posts/2026-08-06-prereg-snapflow-distill.md)
   - [2026-08-06 — Duplicate-content census: 12.2% of panel core frames have train twins (#18.7)](posts/2026-08-06-dup-census-results.md)
+  - [2026-08-06 — Amendment proposal: panel v2 — leaked + corrupt episodes leave the measure (#18.7)](posts/2026-08-06-panel-v2-amendment.md)
