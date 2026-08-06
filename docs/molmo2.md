@@ -112,7 +112,41 @@ Gemma's `<start_of_turn>` — prompt-assembly code cannot be shared.
 Tokenizer is Qwen2-family BPE (`tokenizer.json` 11.5 MB). One
 non-stock decoder detail to check at port time: separate rotary
 embeddings for `rope_scaling_layers` (per-layer dynamic RoPE) —
-confirm whether the 4B SKU uses it (config shows plain theta 5M).
+**RESOLVED at WP1 (2026-08-06, re-fetched `config.json`):
+`rope_scaling: null` and `rope_scaling_layers: null` in the 4B SKU —
+the remote code then builds a single plain `Molmo2RotaryEmbedding`
+for all layers (θ=5e6, full head_dim). The bijou port implements
+only this path and refuses configs where either field is set.**
+
+## Decoder conventions pinned at WP1 (re-verified against raw files)
+
+Fetched 2026-08-06 from `modeling_molmo2.py` + the safetensors index
+(exact key strings, not paraphrase):
+
+- Pre-norm layer (`norm_after: false`): `x = x + attn(attn_norm(x))`;
+  `x = x + mlp(ff_norm(x))` — two norms per layer, no Gemma-style
+  post-norms. All dropouts 0.0 in the 4B config.
+- Attention: **fused QKV** `self_attn.att_proj` (out 6144 = q 4096 +
+  k 1024 + v 1024, split in that order), output proj
+  `self_attn.attn_out`; scaling `head_dim**-0.5`; qwen3 qk-norm =
+  RMSNorm(head_dim=128) applied per-head **after** the head reshape,
+  **before** RoPE, on q and k.
+- MLP: **fused gate** `mlp.ff_proj` (out 2×9728), forward is
+  `x, gate = chunk(2); ff_out(act(gate) * x)` — the FIRST half is the
+  multiplicand ("up"), the SECOND half is gated. `mlp.ff_out` down.
+- RMSNorm: fp32 compute, `x * w` convention (bijou's `RMSNorm`
+  matches), eps inside the sqrt, weights init 1.0.
+- Embeddings: `wte.embedding` [151936, 2560] + `wte.new_embedding`
+  [128, 2560], concatenated for lookup (ids ≥ 151936 hit the
+  extension matrix). Untied; `lm_head` separate.
+- Exact checkpoint keys (block 0): `model.transformer.wte.embedding`,
+  `model.transformer.wte.new_embedding`,
+  `model.transformer.blocks.0.{self_attn.{att_proj,attn_out,q_norm,k_norm},attn_norm,ff_norm,mlp.{ff_proj,ff_out}}.weight`,
+  `model.transformer.ln_f.weight`, `lm_head.weight` (top-level, no
+  `model.` prefix); vision under `model.vision_backbone.*`.
+- Top-level config: `model_type: "molmo2"`, nested `text_config` /
+  `vit_config` / `adapter_config`, `dtype: "float32"`, image special
+  ids at top level (`image_patch_id` 151938 etc.).
 
 ## Port status
 
