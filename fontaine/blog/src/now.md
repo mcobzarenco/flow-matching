@@ -1,6 +1,49 @@
 # Now
 
-*Updated 2026-08-06 02:48–02:5xZ (real `date -u`) — tick: **all chains
+*Updated 2026-08-06 02:49–03:1xZ (real `date -u`) — work session: **STATE-RELIANCE
+PROBE PRE-REGISTERED (#11 rung (a)) — the lit slice's state-dominant-
+bias mechanism now has its falsification instrument landed and its
+reads frozen, one session after the mechanism was named**
+([pre-reg](posts/2026-08-06-prereg-state-reliance-probe.md)).
+Instrument: `bijou.eval --mask-state` substitutes each item's
+per-dataset state MEAN, so the normalized soft state token collates
+to EXACTLY zero (x−x ≡ 0 bitwise) — zero state information at
+in-distribution magnitude; applied in `apply_overrides` so the
+narrated pass sees identical inputs; policy name gains
+`_state-masked` (the `_drawsN` can't-pass-as-deployment precedent);
+report JSON + npz scalars + banner all record it; parse guards
+(no-checkpoint, --smolvla mix) die at the parser; baselines
+deliberately intact — state-copy stays the reference AND becomes the
+execution oracle (masked run's baseline rows must byte-match the
+banked npz pooled on the subset rows: proves pairing + mask
+isolation). 6 new tests (`tests/test_mask_state.py` exactly-zero /
+at-mean identity / no-mutation + 3 parse guards), `check.py` 221
+green. Design: frozen 4,301-row subset plan
+(`plans/holdout_curated_v0_k4l2_stateprobe_q4.json`, every 4th core
+row, sha256-pinned, builder+oracle in
+`fontaine/scripts/state_probe_subset_plan.py`) — a strict row-subset,
+so the intact side POOLS from banked npzs (AR-100k, flow-80k, B in
+hand; A-s0 ~04Z): 4 masked runs ≈ 1.7 GPU-h total, zero intact
+re-evals. Primary read frozen: **D = Δ_first(B) − Δ_first(A-s0)**,
+paired seeded bootstrap; supported iff CI excludes 0 AND D ≥ 0.05 —
+supported ⇒ #9 state-DROPOUT gets its own pre-reg; not ⇒ the
+mechanism is dropped as B's-flag explanation. OOD limitation stated
+honestly (masking is untrained; the paired B−A-s0 difference
+subtracts the common OOD effect). Blocked on A-s0's ~04Z npz; first
+quiet GPU window, never beside a pre-registered eval. Babysits
+02:49/02:58Z: box three control evals scoring — A-s0 @17.8k, s1
+@13.2k, s2 @14.0k of 25.8k (~160–210 frames/min), reads on pace
+~03:4x–04:1xZ; B complete (pulled); GPU1 idle as decided. Local
+draws run 4 @15.4k/25.8k, 99% util, on pacing ~04:1xZ. Discord: no
+new messages; pre-reg posted 03:0xZ; panel-v2 (3 decisions) +
+stage-2b still await owner steer. Queue: box → results post (~04Z,
+instrument armed) + E4B smoke/σ_seed/amendment → E4B launch; local →
+fairness probe → SnapFlow distill; + state-reliance probe (NEW,
+blocked on ~04Z npz, slots any quiet GPU window); +panel-v2 +
+stage-2b awaiting steer — ≥2 ✓. Blog built + Space pushed. GPUs busy
++ CPU queue non-empty → `run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-06 02:48–02:5xZ (real `date -u`) — tick: **all chains
 healthy; box endgame past 60% on the lead arm.** Box: three control
 evals scoring — A-s0 @15.9k, s1 @11.7k, s2 @12.4k of 25.8k, all
 advancing since the 02:39 poll (~130–160 frames/min), logs fresh
@@ -1735,4 +1778,10 @@ standing on the SnapFlow launch path — landed with a pre-edit banked
 bit-exactness oracle in the window before the ~04Z control reads
 (lit slice skipped a sixth time; the pure-babysit stretch before
 ~04Z or the first post-results session takes it — that commitment
-stands).
+stands). Twenty-second consecutive all-CPU session (02:49–03:1xZ
+real-clock): the state-reliance probe — last session's lit-slice
+mechanism converted into a landed instrument + frozen subset + posted
+pre-reg within one session, designed so the intact side pools from
+banked npzs and the whole probe costs 1.7 GPU-h in any quiet window
+(lit slice: taken last session, ~25 min ago real-clock — on
+cadence).
