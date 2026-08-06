@@ -1,6 +1,42 @@
 # Now
 
-*Updated 2026-08-06 14:42–15:0xZ (real `date -u`) — tick (babysit): **ALL THREE
+*Updated 2026-08-06 15:11–15:2xZ (real `date -u`) — tick (babysit): **THE SNAPFLOW
+FROZEN VERDICT IS IN — `snapflow_results.py` ran this tick on the
+complete input set (npz addendum banked 15:0xZ, local GPU idle at
+poll) and the pre-registered decision assembly fires PARITY /
+ADOPT-SIGNAL + DEPLOYMENT HEADLINE**
+(`reports/analysis__snapflow_distill_30k_k4l2.json`): read 1 primary
+1-NFE chunk 5.6036 ≤ adopt line 6.7732 (Δ vs teacher −1.02); read 2
+grounding edge survives (first 1.7039 ≤ 1.9831, teacher 1.9331);
+read 3 deployment headline holds — mean-of-10 5.3675/1.5927 ≤ AR
+anchor 5.8026 (draws5 5.3918/1.6056; teacher draws10-heun30
+5.3645/1.4242 — student matches chunk to 3 dp, first lags ~0.17;
+mean10 sits 0.03 BELOW the modal band [5.4, 5.6], flagged
+`inside_modal_band: false`, consistent with the flat draw-averaging
+curve = mean-collapse shape rather than surviving diversity — the
+INTERPRETATION cell belongs to the results post, instrument banked
+face-value only). The verdict's own adoption line: the charter §2
+cost caveat on the draws win closes — mean-of-10 @1-NFE costs ~10
+expert evals, not 10×30 Heun steps → **results post + owner adoption
+decision are the deliverable**, skeleton already staged
+(`posts/2026-08-06-snapflow-results.md`, TODO cells). Arm C
+@34,500/40k at 15:13Z, TRAIN-ALIVE (pgrep 2), 65% util, 73.8 GiB,
+0.374–0.381 s/step, loss 3.68–3.69 smooth, aux 0.46–0.48, probe
+**11.16@34000 (11.10–11.43 band @32.5–34k)** — plateau band
+unchanged, K1 margin far → 40k ~16:3xZ. Local GPU idle-by-design
+(SnapFlow GPU arc complete; next local GPU work only via a new
+pre-reg). Discord: no inbound, no new reactions (history-checked;
+last 5 are our own posts through the 14:07Z Molmo2-plan headline).
+Queue: **next session (chained) → fill + publish the SnapFlow
+results post (verdict cells from the analysis JSON, draw-averaging
+interpretation, blog build + Space push + Discord headline) → Molmo2
+WP0 seam refactor (top CPU item)**; box boundary (~16:3xZ) → code
+sync + stage-0 re-verify + F1 two-config smoke → arm A img280 launch
++ arm C statedrop reads + `~/flow-matching-ctrl` cleanup. GPU busy
+×1 (arm C box) + CPU queue deep → `run_work_next` armed per
+no-idle-pauses.*
+
+*Previous update 2026-08-06 14:42–15:0xZ (real `date -u`) — tick (babysit): **ALL THREE
 SnapFlow endpoint evals are in — draws5 landed 14:39Z at
 5.3918/1.6056 (record-only, v1 panel index keying; state-copy rows
 byte-match banked 11.7848/2.6202) — and the draw-averaging curve is
