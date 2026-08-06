@@ -31,7 +31,12 @@ from torch.nn import functional as F
 from bijou.molmo2.config import Molmo2Config, Molmo2TextConfig
 from bijou.molmo2.loading import load_text_model, truncated_config
 from bijou.molmo2.testing import tiny_config_json, write_tiny_text_checkpoint
-from bijou.molmo2.text import DecoderLayer, Molmo2TextModel, Molmo2Transformer
+from bijou.molmo2.text import (
+    DecoderLayer,
+    Molmo2Embedding,
+    Molmo2TextModel,
+    Molmo2Transformer,
+)
 from bijou.nn import AttentionBackend
 
 
@@ -227,3 +232,16 @@ def test_fused_projection_split_convention() -> None:
     assert attn.fused_dims == (q_dim, kv_dim, kv_dim)
     assert attn.att_proj.weight.shape == (q_dim + 2 * kv_dim, config.hidden_size)
     assert attn.scaling == pytest.approx(config.head_dim**-0.5)
+
+
+def test_embedding_row_select_matches_cat_lookup() -> None:
+    """The perf rewrite (no full-table cat per call) must be bitwise the
+    reference semantics: rows are selected, never computed."""
+    torch.manual_seed(11)
+    embedding = Molmo2Embedding(16, 4, 8)
+    ids = torch.tensor([[0, 15, 16, 19, 3], [19, 0, 1, 17, 15]])
+    reference = torch.nn.functional.embedding(
+        ids,
+        torch.cat([embedding.embedding, embedding.new_embedding], dim=0),
+    )
+    assert torch.equal(embedding(ids), reference)

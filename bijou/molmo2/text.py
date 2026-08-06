@@ -84,13 +84,26 @@ class Molmo2Embedding(nn.Module):
     def forward(self, input_ids: Tensor) -> Tensor:
         """Embed token ids.
 
+        Row-select against the two matrices directly instead of the
+        reference's ``cat`` lookup: concatenating materializes a full
+        [vocab+ext, hidden] copy (~1.5 GB fp32 at 4B scale) on EVERY
+        call — twice per training step and once per decode step.
+        Lookup semantics are bitwise-identical (rows are selected, never
+        computed); the WP1/WP2 parity suites gate that equivalence.
+
         Shapes:
           - input_ids: [B, S]  (returns [B, S, embedding_dim])
         """
-        return F.embedding(
-            input_ids,
-            torch.cat([self.embedding, self.new_embedding], dim=0),
-        )
+        base_rows = self.embedding.shape[0]
+        embeds = F.embedding(input_ids.clamp(max=base_rows - 1), self.embedding)
+        is_extension = input_ids >= base_rows
+        if bool(is_extension.any()):
+            extension = F.embedding(
+                (input_ids - base_rows).clamp(min=0),
+                self.new_embedding,
+            )
+            embeds = torch.where(is_extension[..., None], extension, embeds)
+        return embeds
 
 
 class Molmo2RotaryEmbedding(nn.Module):
