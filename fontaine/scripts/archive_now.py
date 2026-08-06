@@ -34,7 +34,7 @@ SUMMARY = SRC / "SUMMARY.md"
 
 ENTRY_RE = re.compile(r"^\*(?:Updated|Previous update)\b")
 ENTRY_DATE_RE = re.compile(
-    r"^\*(?:Updated|Previous update) (\d{4}-\d{2}-\d{2})"
+    r"^\*(?:Updated|Previous update) (\d{4}-\d{2}-\d{2})",
 )
 POINTER_RE = re.compile(r"^\*Older entries: see the \[now archive\]")
 
@@ -56,15 +56,9 @@ def split_entries(text: str) -> tuple[str, list[tuple[str, str]], str]:
     starts = [i for i, ln in enumerate(lines) if ENTRY_RE.match(ln)]
     if not starts:
         sys.exit("no entries found — refusing to touch now.md")
-    header = "".join(
-        ln for ln in lines[: starts[0]] if not POINTER_RE.match(ln)
-    )
+    header = "".join(ln for ln in lines[: starts[0]] if not POINTER_RE.match(ln))
     tail_start = next(
-        (
-            i
-            for i, ln in enumerate(lines)
-            if i > starts[0] and ln.startswith("## ")
-        ),
+        (i for i, ln in enumerate(lines) if i > starts[0] and ln.startswith("## ")),
         len(lines),
     )
     tail = "".join(lines[tail_start:])
@@ -72,7 +66,7 @@ def split_entries(text: str) -> tuple[str, list[tuple[str, str]], str]:
     starts = [i for i in starts if i < tail_start]
     entries = []
     date = None
-    for a, b in zip(starts, starts[1:] + [len(lines)]):
+    for a, b in zip(starts, [*starts[1:], len(lines)], strict=False):
         m = ENTRY_DATE_RE.match(lines[a])
         # a few early entries predate the dated-marker convention;
         # they inherit the date of the newer entry above them
@@ -89,7 +83,7 @@ def demote(entry: str) -> str:
     return entry.replace("*Updated ", "*Previous update ", 1)
 
 
-def append_to_page(date: str, new_entries: list[str], dry: bool) -> Path:
+def append_to_page(date: str, new_entries: list[str], *, dry: bool) -> Path:
     page = ARCHIVE_DIR / f"now-{date}.md"
     block = "\n".join(demote(e) for e in new_entries)
     if page.exists():
@@ -106,7 +100,7 @@ def append_to_page(date: str, new_entries: list[str], dry: bool) -> Path:
     return page
 
 
-def update_summary(pages: list[Path], dry: bool) -> None:
+def update_summary(pages: list[Path], *, dry: bool) -> None:
     text = SUMMARY.read_text()
     lines = [
         f"  - [{p.stem.removeprefix('now-')}](archive/{p.name})"
@@ -120,7 +114,7 @@ def update_summary(pages: list[Path], dry: bool) -> None:
         if not dry:
             (ARCHIVE_DIR / "index.md").write_text(
                 "# Now archive\n\nDated pages of aged now.md entries; "
-                "see the sidebar.\n"
+                "see the sidebar.\n",
             )
     for ln in lines:
         if ln not in text:
@@ -153,10 +147,9 @@ def main() -> int:
         by_date.setdefault(date, []).append(entry)
 
     pages = [
-        append_to_page(date, chunk, args.dry_run)
-        for date, chunk in by_date.items()
+        append_to_page(date, chunk, dry=args.dry_run) for date, chunk in by_date.items()
     ]
-    update_summary(pages, args.dry_run)
+    update_summary(pages, dry=args.dry_run)
 
     pointer = (
         "*Older entries: see the [now archive](archive/index.md) — "
@@ -173,7 +166,7 @@ def main() -> int:
         f"kept {len(kept)}, archived {total} across "
         f"{len(by_date)} page(s): "
         + ", ".join(p.name for p in pages)
-        + (" [dry-run]" if args.dry_run else "")
+        + (" [dry-run]" if args.dry_run else ""),
     )
     return 0
 
