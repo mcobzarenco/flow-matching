@@ -189,10 +189,20 @@ Mainline `arb_rcond` recipe verbatim where the trunk allows it:
   metric now that it exists: rc=0 AND max `vram_alloc_peak_gib`
   (torch max_memory_allocated, logged per step) ≤ 71 GiB (≥8 GiB
   allocated headroom), nvidia-smi recorded as context only.
-  **Measured: TODO_SMOKE_PEAK, TODO_SMOKE_RATE s/step, rc=TODO_RC.**
+  **Measured (smoke 21:59–22:4xZ, 150 steps): rc=0; max
+  `vram_alloc_peak_gib` 66.67 flat from step 20 on — PASSES the ≤71
+  rule with 12.5 GiB allocated headroom (reserved 67.78; nvidia-smi
+  sampler peak 71,345 MiB incl. context — vs ~78,000 on every dead
+  rung); steady rate 2.517–2.55 s/step (last5 11.8 is
+  save-window-skewed, as rung 7's was); loss 16.1 → 8.0, grad norms
+  sane; step-100 eval + consolidated save AND the step-150 endpoint
+  save both exercised on the no-DDP path (consolidation ≈ 15 min per
+  save boundary — ~16 saves ≈ +3.5 h wall on a 40k, accepted).**
 - F2 wall: 40k × rate ≤ 30 h ⇒ full 40k; else this pre-reg SHRINKS to
   a 10k screen (label changes to `_10k`), no mid-run change.
-  **Projected: TODO_WALL h.**
+  **Projected: 40k × 2.55 = 28.3 h ≤ 30 h ⇒ FULL 40k stands** (+ ~3.5
+  h of save-boundary consolidation on top, outside the F2 metric as
+  declared at rung 7).
 - Box pytest green at the launch commit (337 passed, run 19:4xZ ✓);
   the smoke also exercises eval/probe decode + the wandb metric path
   (offline) + the Molmo2 checkpoint writer at step 100.
@@ -235,7 +245,7 @@ Chained after 40k, 4-GPU sharded, the family voice:
 
 ## 6. Cost
 
-~40k × TODO_SMOKE_RATE s/step ≈ TODO_WALL h on 4×H100 + ~2 h panel
+~40k × 2.55 s/step ≈ 28.3 h (+ ~3.5 h saves) on 4×H100 + ~2 h panel
 eval. Checkpoints: full-trunk snapshots (~9.7 GB bf16) every 2500 —
 ~160 GB transient, pruned to milestones at the boundary (disk 6.6 T
 free).
@@ -244,3 +254,13 @@ free).
 
 Filled from the smoke before `torchrun` fires; the launch commit hash
 and the filled numbers are the launch record.
+
+**Finalized 2026-08-06 22:5xZ.** Rung 8 (B12 = 6×2 chunks + `--zero1`
++ `--chunk-grad-allreduce` with no DDP wrapper) is the launch config:
+smoke rc=0, true allocated peak 66.67 GiB (≤71 rule, 12.5 GiB
+headroom), 2.52–2.55 s/step ⇒ full 40k ≈ 28.3 h + ~3.5 h saves.
+Launcher `fontaine/scripts/box/launch_box_fontaine_molmo2_ar_40k_ddp4.sh`
+at its defaults (STEPS=40000, BATCH=12, BACKWARD_CHUNKS=6); run name
+`fontaine_molmo2_ar_40k_ddp4`. Box pytest 337 green at `fd8bc0e`
+(19:4xZ); the launcher-only delta to `4d530a1` touches no Python.
+Launch commit: this post's finalization commit.
