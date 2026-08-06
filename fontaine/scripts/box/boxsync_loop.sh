@@ -17,9 +17,17 @@
 #   would exhaust local free space. The four 40k-run copies are never
 #   pruned.
 BOX=ubuntu@192.222.55.210
-RUNS="fontaine_arb_rcond_40k_1xh100 fontaine_arb_rcond_auxoff_40k_1xh100 fontaine_arb_rcond_40k_1xh100_s1 fontaine_arb_rcond_40k_1xh100_s2 fontaine_arb_rcond_e4b_100k_ddp4"
+# 2026-08-06 23:4xZ: e4b dropped from RUNS — its box dir is gone
+# (retired screen; every pass emitted a remote glob error). molmo2 AR
+# 40k added (live run, saves every 2,500 from ~00:4xZ) with an
+# E4B-style local rotation: latest two + the 40k endpoint, pruned
+# otherwise (consolidated zero1 saves are large; the endpoint also
+# uploads to fontaine-checkpoints at the boundary per standing rule).
+RUNS="fontaine_arb_rcond_40k_1xh100 fontaine_arb_rcond_auxoff_40k_1xh100 fontaine_arb_rcond_40k_1xh100_s1 fontaine_arb_rcond_40k_1xh100_s2 fontaine_molmo2_ar_40k_ddp4"
 E4B=fontaine_arb_rcond_e4b_100k_ddp4
 E4B_KEEP="step_025000 step_050000 step_100000"
+MOLMO2=fontaine_molmo2_ar_40k_ddp4
+MOLMO2_KEEP="step_040000"
 
 sync_step() { # sync_step <run> <box_step_dir>
   local r=$1 d=$2 s
@@ -57,6 +65,16 @@ while true; do
       s=$(basename "$p")
       case " $E4B_KEEP " in *" $s "*) continue ;; esac
       echo "$keep" | grep -qx "$p" || { echo "  prune local $E4B/$s"; rm -rf "$p"; }
+    done
+  fi
+  # molmo2 local rotation: latest two + the endpoint, everything else
+  # pruned (same shape as the E4B rotation above).
+  if [ -d ~/boxsync/outputs/$MOLMO2 ]; then
+    keep="$(ls -d ~/boxsync/outputs/$MOLMO2/step_* 2>/dev/null | sort | tail -2)"
+    for p in $(ls -d ~/boxsync/outputs/$MOLMO2/step_* 2>/dev/null); do
+      s=$(basename "$p")
+      case " $MOLMO2_KEEP " in *" $s "*) continue ;; esac
+      echo "$keep" | grep -qx "$p" || { echo "  prune local $MOLMO2/$s"; rm -rf "$p"; }
     done
   fi
   sleep 1200
