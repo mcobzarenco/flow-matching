@@ -1,6 +1,21 @@
 # Now
 
-*Updated 2026-08-06 02:39–02:5xZ (real `date -u`) — work session: **THE
+*Updated 2026-08-06 02:48–02:5xZ (real `date -u`) — tick: **all chains
+healthy; box endgame past 60% on the lead arm.** Box: three control
+evals scoring — A-s0 @15.9k, s1 @11.7k, s2 @12.4k of 25.8k, all
+advancing since the 02:39 poll (~130–160 frames/min), logs fresh
+02:47–02:48Z, reads on pace ~03:4x–04:1xZ; B complete (pulled
+02:09Z); GPU1 idle as decided (E4B smoke at the boundary). Local
+draws run 4 @12.8k/25.8k, 91% util, log fresh 02:48Z, on pacing
+~04:1xZ. Discord: no new messages; history-checked — no new
+reactions beyond the recorded 👍/❤️; panel-v2 (3 decisions) +
+stage-2b still await owner steer. Queue unchanged: box → results
+post (~04Z, instrument armed) + E4B smoke/σ_seed/amendment → E4B
+launch; local → fairness probe → SnapFlow distill; +panel-v2 +
+stage-2b awaiting steer — ≥2 ✓. GPUs busy + CPU queue non-empty →
+`run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-06 02:39–02:5xZ (real `date -u`) — work session: **THE
 OVERDUE LIT SLICE TAKEN (the flagged MUST — 7 sessions deferred) —
 and it named a candidate mechanism for the batch's biggest open
 flag: state-dominant bias.** Targeted pass on distillation, data
