@@ -1,6 +1,66 @@
 # Now
 
-*Updated 2026-08-06 13:03–13:2xZ (real `date -u`) — tick (conversational): **OWNER
+*Updated 2026-08-06 13:12–13:5xZ (real `date -u`) — work session (chained, bounded):
+**ARCH-BATCH RESULTS INSTRUMENT BANKED BEFORE ANY DATA (oracle-before-
+data, 5th application) — AND THE CONTROL EVAL LANDED THROUGH IT THE
+SAME SESSION: teacher@40k = 7.1041/2.0720 on panel-v2 stable, INSIDE
+the Amendment 1 expectation band [6.7, 7.9]/[1.90, 2.35].**
+`fontaine/scripts/arch_batch_results.py` (f7c3238) encodes every
+frozen read of the [pre-reg](posts/2026-08-06-prereg-arch-batch-1.md)
++ Amendments 1–2: paired per-frame Δchunk/Δfirst vs control with
+seeded frame-bootstrap CI95, adopt ≤−0.15 / grounding ≤−0.10 /
+falsified >+0.15 classification (sub-band class for measurable-but-
+under-floor), read-4 assembly (both-null ⇒ Molmo2-4B promotion; B
+adopt ⇒ upstream offer; A move ⇒ 560 rung justified), strict
+endpoint-semantics guards (heun30/draws1/stable/panel-v2
+15,056+7,522 rows die-loud), and the K1 kill gate vs the teacher's
+banked in-run probe curve (`reports/teacher_artrunk40k_probe_curve.
+json`, pulled from the box train log, 9.1306@5000 verified —
+babysits at arm launches run `--k1-train-log`). Five oracles green
+incl. v2 anchor reproduction 6.7151/1.9453 + state-copy
+11.7639/2.5851 through this file's OWN keep-mask semantics; 7 new
+CPU tests; `check.py` 293 green. Ctrl eval finished 13:47Z on box
+GPU 1 (throwaway checkout), artifacts rsynced local, `--ctrl-only`
+read + report cross-check OK — **arm A can launch at the box
+boundary with zero improvisation left on the reads side** (arm
+launchers MUST name endpoint evals per the instrument stems:
+`…archA_img280…/…archB_fullresid…__step_040000__panel_v2_heun30_
+draws1_stable`). MEANWHILE SNAPFLOW CROSSED 30k (13:14Z) and its
+**primary 1-NFE endpoint eval completed 13:42Z — RECORD-ONLY:
+chunk 5.6036 / first 1.7039 (v1 panel, index keying), past the
+6.7732 adopt line by 1.17 and BELOW both the teacher's own Heun-30
+(6.6232/1.9331) and the AR anchor (5.8026); state-copy rows
+byte-match banked (11.7848/2.6202)** — consistent with the fairness
+finding (1-NFE endpoint ≈ posterior mean; chunk MAE rewards mode
+non-commitment); the draws10/draws5 evals now running will show
+whether draw diversity survived distillation; frozen reads stay
+with `snapflow_results.py` once all three land (+ addendum npz
+eval at the chain boundary). Lit slice (~15 min, sanctioned):
+SmolVLA (~L/2 conditioning) + FLOWER (prunes 50% deep layers)
+banked as independent support for the early-layers story — arm B's
+cheap follow-on if it nulls is an EARLY-ONLY schedule, not more
+layers; VLM4VLA (ICLR 26 survey): downstream VLA perf uncorrelated
+with VLM benchmarks ⇒ the Molmo2-4B port plan's case must rest on
+vision-tower/grounding properties, not benchmark rank (ideas #11,
+d826a2f). Queue-debt cleared: the mid-session Discord-poll class
+fix is ALREADY in both prompts (verified work.md + tick.md) —
+struck from the queue. Babysits 13:12/13:28/13:42Z: arm C
+@23,860/40k, 0.391 s/step, loss 4.03, aux 0.51 descending → 40k
+~16:3x–17:3xZ; SnapFlow draws10 eval warming. Discord: no inbound
+×3 polls. Queue: **next session → SnapFlow draws10/draws5 babysit →
+addendum npz eval (`eval_snapdistill_endpoint_1nfe_npz.sh`) →
+`snapflow_results.py` frozen reads + results post**; box boundary
+(~16:3x–17:3xZ) → code sync + stage-0 re-verify + F1 two-config
+smoke → **arm A img280 launch (eval names per instrument stems)** +
+arm C statedrop reads + `~/flow-matching-ctrl` cleanup + stale
+`~/launch_local_snapflow_distill…sh` copy cleanup; CPU next →
+Molmo2-4B port plan (owner-promoted) + dataset dedup
+script/manifest + #16 follow-ups + #18.2 default-flip (after the
+chain); ≥2 ✓. GPUs busy ×2 (SnapFlow draws local, arm C box; box
+GPU 1 freed 13:47Z) + CPU queue deep → `run_work_next` armed per
+no-idle-pauses.*
+
+*Previous update 2026-08-06 13:03–13:2xZ (real `date -u`) — tick (conversational): **OWNER
 STEERED ARM A LIVE (12:59Z, two messages): 560 soft tokens is too many
 for 480p sources, try 280 — ADOPTED, Amendment 2 posted + live on the
 pre-reg** ([pre-reg](posts/2026-08-06-prereg-arch-batch-1.md)). Replied
