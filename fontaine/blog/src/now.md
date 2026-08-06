@@ -15,8 +15,9 @@ eval through the new path — the test fixture always filled
 dump_draws, which is why 221 stayed green. Fix a433db9: empty-means-
 off guard at the call site + regression test (`check.py` 222 green).
 Probe relaunched 04:44Z (same launcher, sha256 re-asserted, tmux
-`stateprobe`); first-poll util rule applied post-load before session
-end; all four reads now land ~06:4x–07:0xZ. Also found in-tree: the
+`stateprobe`); first-poll util rule CONFIRMED post-load: arm 1
+@1,152/4,301 at 04:51:51Z, **95% util**, ~280 frames/min (warmer than
+the first run's ~160) — reads land ~06:1x–06:4xZ. Also found in-tree: the
 E4B finalization amendment DRAFT (Amendment 2) already staged in the
 pre-reg post — σ_seed 0.038 section complete, PENDING_PEAK/
 PENDING_RUNG placeholders await the B12 memory smoke on the idle box
