@@ -71,6 +71,20 @@ information × cheapness. Status tags: `queued` / `screening` /
   `--dump-draws` npz. `read4_energy_score` in `draws_fairness.py` +
   degenerate draws=1 validation must land BEFORE the probe npz is
   opened (next CPU work item alongside the E4B launch checklist).
+- **FAIRNESS READS IN (2026-08-06 ~07:4xZ,
+  [results](posts/2026-08-06-draws-fairness-results.md)) — the
+  unfair-penalty signature FIRED on every declared criterion:** E1
+  gate passed (draw-0 drift 0.0145 < 0.05); dispersion-quartile
+  deficit monotone 0.23→0.60→0.87→1.42 (Spearman +0.13, q4 = 6.2×
+  q1); best-of-10 3.8597 is 2.01 BELOW AR's paired 5.8680;
+  **energy score (read 4): flow 5.9308 vs AR 8.7696 — flow wins the
+  proper score while losing single-draw MAE**. Honest residual:
+  deficit positive even in the tight quartile (+0.23), win rate
+  < 0.5 everywhere — partly artifact, not wholly; ES is now the
+  candidate distributional column (owner decision to adopt).
+  **σ_draw direct = 0.02367 SUPERSEDES the 0.0159 pin** (floors
+  0.045/0.05 still bind → both live bands numerically unchanged;
+  `sigma_draw_direct.py`, cross-estimator inside the χ²₉ band).
 - **Golden-ticket noise search (lit slice 2026-08-06,
   [2603.15757](https://arxiv.org/html/2603.15757v1) "You've Got a
   Golden Ticket"):** a *single searched noise vector* (Monte Carlo
@@ -389,7 +403,11 @@ variants, consistency/distillation toward 1–2-step deployment decodes
   family-independent (even the a-priori-max pure-noise reading gives
   0.040 < 0.045). Fairness-probe direct measurement supersedes if
   larger. The launch's last CPU-side blocker is closed — SnapFlow
-  waits only on a quiet local GPU.
+  waits only on a quiet local GPU. **Direct measurement IN
+  (2026-08-06 ~07:4xZ): σ_draw = 0.02367 supersedes the pin; 3σ =
+  0.071 < 0.15 → the floor still binds, adopt band ≤ 6.7732
+  UNCHANGED.** SnapFlow queues behind the #18.2 flip eval
+  (~09:2xZ boundary) on the local GPU.
 - **Pointer reads closed (lit slice 2026-08-06):** OFP
   ([2603.12480](https://arxiv.org/abs/2603.12480)) — *from-scratch*
   one-step self-distillation (self-consistency + self-guided
@@ -663,6 +681,11 @@ queue, in leverage order (details + file:line in the post):
    σ_draw = 0.0159 < 0.045 → floor binds, re-bank band
    [6.4882, 6.7582]; the flip eval is eligible now (box reads
    posted) and queues behind the probe work on the local GPU.**
+   **FLIP EVAL LAUNCHED 2026-08-06 ~07:41Z** (tmux `stablekeyrebank`,
+   `~/eval_flow80k_stablekey_rebank.sh`) after the fairness probe's
+   direct σ_draw = 0.02367 kept the floors (`reopen_floors: false`
+   asserted in-launcher); band [6.4882, 6.7582] + bitwise
+   state-copy/AR controls read at the ~09:2xZ boundary.
 3. ~~Q3 tripwire noise fix~~ **DONE 2026-08-06 ~02:4xZ** (deep-dive
    finding 3, closed before the SnapFlow distill launch — the next
    conditioned flow run): `FlowDecoder.predict_chunk` now returns the

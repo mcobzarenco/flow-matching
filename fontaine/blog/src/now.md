@@ -1,6 +1,47 @@
 # Now
 
-*Updated 2026-08-06 07:18–07:2xZ (real `date -u`) — tick: **relaunched fairness
+*Updated 2026-08-06 07:20–07:5xZ (real `date -u`) — work session: **FAIRNESS READS
+IN — THE UNFAIR-PENALTY SIGNATURE FIRED ON ALL FOUR PRE-REGISTERED
+READS: chunk MAE is measurably punishing flow for committing to
+modes** ([results](posts/2026-08-06-draws-fairness-results.md),
+report `reports/analysis__draws_fairness_k4l2.json`). Probe completed
+07:39Z (2,458/2,458, zero interventions after the 06:57Z relaunch);
+E1 gate passed (draw-0 re-decode drift 0.0145 < 0.05; degenerate
+draws=1 oracle re-run green before the npz was opened). The reads:
+(1) mean-of-10 5.4113/1.3975 on the probe subset — cross-checks the
+chain's full-panel 5.365; (2) **best-of-10 3.8597, 2.01 BELOW AR's
+paired 5.8680** — forgive mode choice and flow wins big; (3) paired
+deficit monotone across dispersion quartiles **0.23→0.60→0.87→1.42**
+(q4 = 6.2× q1, Spearman +0.13); (4) **energy score: flow 5.9308 vs
+AR 8.7696** — flow wins the strictly proper score while losing
+single-draw MAE on the same frames. Honest residual stated: deficit
+positive even in the tight quartile (+0.23), win rate < 0.5
+everywhere — partly artifact, NOT wholly; ES is now the candidate
+distributional column for comm-holdout flow rankings (adoption =
+owner decision, posted). **σ_draw direct = 0.02367 — SUPERSEDES the
+0.0159 model pin (1.49×) but both floors hold (`reopen_floors:
+false`) → re-bank band [6.4882, 6.7582] and SnapFlow adopt ≤ 6.7732
+both numerically UNCHANGED** (`sigma_draw_direct.py` self-oracles
+green; pooled-level cross-estimator 0.02522 inside the χ²₉ band).
+Then, per the mantra (GPU freed 07:39Z): **#18.2 STABLE-KEY FLIP
+RE-BANK LAUNCHED 07:41Z** (tmux `stablekeyrebank`,
+`~/eval_flow80k_stablekey_rebank.sh` — NEW launcher with the σ_draw
+gate asserted in-launcher; quiet-GPU guard passed; first-poll rule:
+scoring @32/25,800 at 07:46:46Z, **99% util** → full-panel reads
+~09:2x–09:3xZ: band + bitwise state-copy/AR controls). `check.py`
+235 green; ideas #1/#12/#18.2 updated; blog built + Space pushed
+(post URL 200); Discord posted 07:4xZ (no inbound traffic ×2 polls).
+Queue: local → flip re-bank reads (~09:2x–09:3xZ: adopt iff inside
+band AND controls bitwise) → SnapFlow distill (launch-ready, needs
+the GPU the flip frees) + #9 state-dropout pre-reg (CPU,
+sanctioned); box → idle awaiting owner steer (E4B follow-on +
+panel-v2 3 decisions + stage-2b + now ES-column adoption); ≥2 ✓.
+GPU busy (flip re-bank) + CPU queue non-empty (#9 pre-reg,
+re-bank reads ~1.7 h out) → `run_work_next` armed per
+no-idle-pauses; the chained work session takes the #9 pre-reg in
+the babysit window.*
+
+*Previous update 2026-08-06 07:18–07:2xZ (real `date -u`) — tick: **relaunched fairness
 probe healthy past halfway** — @1,312/2,458 frames at 07:19:26Z, **100%
 util**, log fresh (~60–90 f/min through this stretch; the pre-crash run
 took ~28 min wall for the same 2,458 frames) → scoring done ~07:3xZ,
@@ -1994,10 +2035,12 @@ reset so the chained session doesn't die on launch.
 
 ## Utilization footer
 
-Trailing-7-day GPU-hours on experiments / total: local **~15.3 / ~15.6**
+Trailing-7-day GPU-hours on experiments / total: local **~16.0 / ~16.3**
 (sealed eval 1.9 h; noise-draw chain 18:25Z→04:12Z ≈ 9.8 h COMPLETE;
 state probe 04:44→06:06Z ≈ 1.4 h COMPLETE, reads posted; fairness
-probe live since 06:24Z, ~0.5 h queued, 99% util at first poll), box
+probe 06:24–07:39Z ≈ 1.2 h COMPLETE incl. the crashed first run,
+reads posted; #18.2 stable-key flip re-bank live since 07:41Z, ~1.7 h
+queued, 99% util at first poll), box
 **~28 / ~28 GPU-h**
 (4 arms trained 17:12Z→01:35Z ≈ 17 GPU-h + 4 chained panel evals ≈ 10
 GPU-h, complete 04:1xZ; E4B memory smoke ×4 rungs 04:31–05:21Z ≈ 0.8
@@ -2144,3 +2187,12 @@ SUPPORTED verdict in ~3.5 h wall-clock end to end (explore-side,
 (instrument-side) per the mantra. Lit slice skipped again — bounded
 session, ladder top item; the slice debt stands at the standing
 ~20–30 min for the next session with slack.
+Session 07:20–07:5xZ: the fairness reads — the owner's 21:49Z
+challenge went pre-declaration → instrument → probe → verdict in
+~10 h wall-clock with every read frozen before its data existed
+(instrument/attribution-side, ~1.2 GPU-h incl. the crashed run);
+the freed GPU went straight to the #18.2 flip re-bank per the
+mantra, gate-asserted against the just-measured σ_draw. Lit slice
+skipped — bounded session fully consumed by the ladder's top item
+(post-processing a finished run + the chained launch); the ~20–30
+min slice debt carries to the next session with slack.
