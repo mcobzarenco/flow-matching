@@ -1,6 +1,44 @@
 # Now
 
-*Updated 2026-08-06 15:22–15:2xZ (real `date -u`) — tick (babysit): **arm C healthy
+*Updated 2026-08-06 15:23–15:4xZ (real `date -u`) — work session (chained, bounded):
+**MOLMO2 WP0 IS LANDED — the port's first work package, one session
+after the plan, exactly as sequenced (`7409df0`): the trunk seam is
+extracted.** The build: `ObservationEncoder[I: BatchInputs, B:
+nn.Module]` ABC now lives at the seam (`bijou/interface.py` —
+stream_geometries / inputs_collator / encode / param_groups, the
+`docs/plan.md` contract with the backbone passed by the composition
+root); `KVCache` is OUT of the seam (`ObservationMemory.cache` is
+opaque — trunk-private contract, ar_backbone isinstance-narrows);
+`BijouModel[I, B]` + the whole train-loop surface
+(DevicePrefetcher/ChunkedBatch/ChunkingCollator/ProbeSet/
+build_probe_set/validate/BijouTrainStep) de-Gemma-typed, Gemma-only
+paths (ar_backbone suffix continuation, tensor-level
+encode_observation, save_checkpoint's prompt schema) narrow LOUDLY;
+`PromptKind.MOLMO2` reserved beside GEMMA4 with a refuse-until-WP4
+loader arm (+ test). Impl-time decision the plan left open:
+`StreamGeometry` grows NO `scaling` field — under D1 the adapters
+absorb scale, it would be dead config with one legal value. Gates
+held exactly as pre-declared: **check.py 294 green (was 293 + the
+new MOLMO2 refusal test), three CPU loss oracles bit-exact, no
+state-dict key changes, pyright clean.** Plan post §6 sequence
+struck-through for WP0 (blog built + Space pushed); **WP1 (Qwen3
+decoder port) is now the top CPU item.** Arm C babysits 15:24/15:38Z:
+@35,820→37,160/40k, TRAIN-ALIVE (pgrep 2), 73–99% util, 73.8 GiB,
+0.374–0.39 s/step, loss 3.61–3.73 smooth, aux 0.45–0.49, and the
+in-run probe DESCENDED below the plateau band — **10.85@36000 →
+10.96@36500 → 10.83@37000** (vs 11.1–11.58@34–35.5k; K1 margin far)
+→ 40k ~16:1x–16:3xZ. Local GPU idle-by-design. Discord: no inbound
+×2 polls (boot + 15:38Z babysit; history-checked) — **the owner
+adoption ask from the SnapFlow results post is still open; any reply
+is steering.** Queue: **next (chained) → #18.2 `--noise-key`
+default-flip (small, unblocked) + Molmo2 WP1 decoder port
+(`bijou/molmo2/text.py`, plan §3)**; box boundary (~16:1x–16:3xZ) →
+code sync + stage-0 re-verify + F1 two-config smoke → arm A img280
+launch + arm C statedrop reads + `~/flow-matching-ctrl` cleanup. GPU
+busy ×1 (arm C box) + CPU queue deep → `run_work_next` armed per
+no-idle-pauses.*
+
+*Previous update 2026-08-06 15:22–15:2xZ (real `date -u`) — tick (babysit): **arm C healthy
 and inside the final 5k — @35,540/40k at 15:23Z, TRAIN-ALIVE (pgrep),
 73.8 GiB, 68% util, 0.38 s/step, loss 3.70–3.81 smooth, aux
 0.47–0.51, probe 11.3304@35500 (11.11–11.58 plateau band @34–35.5k
@@ -2850,8 +2888,9 @@ since 15:10Z** — next local GPU work only via a new pre-reg),
 box **~34.9 / ~34.9 GPU-h**
 (4 arms trained ≈ 17 GPU-h + 4 chained panel evals ≈ 10 GPU-h; E4B
 memory smoke ≈ 0.8 GPU-h NO-LAUNCH; **arm C state-dropout live since
-08:10Z on GPU 0** @35,000/40k at 15:1xZ (≈7.1 h so far), 0.373–0.385
-s/step, in-run probe 11.1057@35000 plateau band — 40k ~16:3xZ, reads
+08:10Z on GPU 0** @37,160/40k at 15:38Z (≈7.5 h so far), 0.374–0.39
+s/step, in-run probe DESCENDED to 10.83–10.96@36–37k (below the
+11.1–11.58 plateau band) — 40k ~16:1x–16:3xZ, reads
 via the pre-banked `statedrop_results.py`; SnapFlow @10k probe on GPU
 1 ≈ 0.3 GPU-h; **teacher@40k ctrl eval on GPU 1 13:02–13:47Z ≈ 0.75
 GPU-h COMPLETE** — 7.1041/2.0720 INSIDE the Amendment 1 band;

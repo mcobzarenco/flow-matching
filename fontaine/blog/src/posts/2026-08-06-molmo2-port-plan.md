@@ -298,7 +298,14 @@ oracles:
 
 1. ~~Plan post + `docs/molmo2.md` distilled doc~~ — DONE this
    session.
-2. WP0 seam refactor (oracle-guarded, zero behavior change).
+2. ~~WP0 seam refactor (oracle-guarded, zero behavior change)~~ —
+   DONE 2026-08-06 (`7409df0`): `ObservationEncoder[I, B]` ABC at the
+   seam, `KVCache` opaque there, `BijouModel`/train loop de-Gemma-typed,
+   `PromptKind.MOLMO2` reserved (refuses to load until WP4). Decided at
+   impl time: `StreamGeometry` grows NO `scaling` field — under D1 the
+   adapters absorb scale; it would be dead config with one legal value.
+   Gates held: check.py 294 green, loss oracles bit-exact, no
+   state-dict key changes.
 3. WP1 decoder port + weights parity.
 4. WP2–WP3 vision/processor + end-to-end encode parity.
 5. WP4–WP5 + the §4 suite green + `check.py` green.
