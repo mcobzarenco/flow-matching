@@ -8,6 +8,7 @@ and len()).
 
 from __future__ import annotations
 
+import json
 import math
 from dataclasses import replace
 from pathlib import Path
@@ -126,6 +127,26 @@ def test_build_is_deterministic_and_stratified(tmp_path: Path) -> None:
     path = tmp_path / "plan.json"
     plan.save(path)
     assert SamplePlan.load(path) == plan
+
+
+def test_v2_plan_loads_rows_identically_and_v3_refused(tmp_path: Path) -> None:
+    # panel_v2.py plans: version 2 = the v1 payload + exclusions
+    # metadata the loader never reads. Rows must parse identically to
+    # v1 (first caught live 2026-08-06: the frozen panel-v2 plan was
+    # unreadable by every SamplePlan consumer).
+    plan = _build(_selection([_stub_a(), _stub_b()]))
+    v2 = plan.to_dict()
+    v2["version"] = 2
+    v2["derived_from"] = "plan.json (v1, byte-identical rows)"
+    v2["exclusions"] = {"leaked_episodes": [], "corrupt_repos": [], "counts": {}}
+    path = tmp_path / "plan_v2.json"
+    path.write_text(json.dumps(v2))
+    assert SamplePlan.load(path) == plan
+
+    v3 = dict(v2, version=3)
+    path.write_text(json.dumps(v3))
+    with pytest.raises(ValueError, match="sample plan version 3"):
+        SamplePlan.load(path)
 
 
 def test_resolve_maps_to_concat_indices_and_splits_core() -> None:

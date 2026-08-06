@@ -47,6 +47,10 @@ import numpy as np
 from ..data import DataSelection
 
 PLAN_VERSION = 1
+# v2 plans (fontaine/scripts/panel_v2.py) carry the same row payload +
+# selection-filter provenance as v1 and add exclusions metadata this
+# loader never reads; the rows parse identically. Writes stay v1.
+SUPPORTED_PLAN_VERSIONS = (1, 2)
 
 
 @dataclass(frozen=True, slots=True)
@@ -103,9 +107,9 @@ class SamplePlan:
     def from_dict(cls, data: dict[str, Any]) -> SamplePlan:
         """Validating parse at the JSON edge ("parse, don't validate")."""
         version = data["version"]
-        if version != PLAN_VERSION:
+        if version not in SUPPORTED_PLAN_VERSIONS:
             raise ValueError(
-                f"sample plan version {version} != supported {PLAN_VERSION}",
+                f"sample plan version {version} != supported {SUPPORTED_PLAN_VERSIONS}",
             )
 
         def frames(key: str) -> list[PlanFrame]:

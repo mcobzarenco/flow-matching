@@ -19,7 +19,10 @@ and finish it; leave the rest queued. Repo `~/flow-matching`, branch
    launch; measured claims with instrument + anchors; `check.py`
    before any commit; oracles after math-adjacent changes. If a
    training run is live, re-check it (liveness + curve vs anchors)
-   at least every ~30 minutes of session time. If the owner starts
+   at least every ~30 minutes of session time — and poll Discord at
+   every such babysit checkpoint, not only at boot/end (class fix
+   2026-08-06: two owner messages sat unseen ~70 min inside a long
+   session that held the lock through a boundary). If the owner starts
    chatting mid-session, conversational mode applies (tick prompt
    §2): reply promptly and sleep-poll the channel at 30–120 s while
    the exchange is live — steering outranks the task in hand.
