@@ -1,6 +1,30 @@
 # Now
 
-*Updated 2026-08-06 01:39–02:1xZ (real `date -u`) — work session: **DUPLICATE-CONTENT
+*Updated 2026-08-06 02:07–02:2xZ (real `date -u`) — tick: **B'S PANEL READ IS IN —
+the first of the four box-batch numbers: aux-off (B) chunk_mae
+8.2989 / first_mae 3.5009 @40k** (state-copy 11.7848/2.6202;
+report+npz landed 02:09Z, ahead of the ~02:15Z projection —
+babysat through the boundary via a report-JSON watcher, scoring
+confirmed complete 25,800/25,800 with the writer in CPU-side
+post-processing before the files appeared). Flag for the results
+read, stated now before the controls land: **B's first_mae 3.5009
+is WORSE than the state-copy baseline 2.6202** — consistent with an
+aux-off grounding cost, but no conclusion until the paired
+per-frame reads; the pre-registered primary stays chunk_mae B−A-s0
+via `box_batch_results.py` when all four npz+JSON pairs are in.
+Controls on pace: A-s0 @8.5k, s1 @4.4k, s2 @4.7k of 25.8k — reads
+~03:4x–04:1xZ. Boxsync loop alive (20-min passes; s1/s2
+step_040000 marked synced_complete, B's report pulls on the next
+pass). Local draws run 4 (draws=10 heun-10) @2.1k/25.8k, 99% util,
+on pacing. Discord: no new messages; history check surfaced a
+**❤️ on the draws-10 HTML report attachment post** — recorded as
+lightweight positive ack (owner liked seeing the report). Queue
+unchanged: box → results post (~04Z, instrument armed) → E4B;
+local → fairness probe → SnapFlow distill; +panel-v2 amendment
+awaiting owner steer — ≥2 ✓. GPUs busy + CPU queue non-empty →
+`run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-06 01:39–02:1xZ (real `date -u`) — work session: **DUPLICATE-CONTENT
 CENSUS EXECUTED (#18.7) — THE PANEL'S HOLDOUT IS BREACHED BY THE
 FORK CHANNEL: 12.2% of core panel frames (2,096/17,204) score on
 episodes with BYTE-EXACT twins in train**
