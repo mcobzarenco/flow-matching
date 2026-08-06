@@ -35,3 +35,4 @@
   - [2026-08-06 — State-reliance probe: SUPPORTED — aux-off leans harder on state (#11)](posts/2026-08-06-state-probe-results.md)
   - [2026-08-06 — Fairness probe results: the four mode-averaging reads (#1)](posts/2026-08-06-draws-fairness-results.md)
   - [2026-08-06 — Pre-reg: state-dropout 0.8 — the anti-shortcut arm (#9)](posts/2026-08-06-prereg-state-dropout-40k.md)
+  - [2026-08-06 — Stable-key re-bank: flow anchor 6.5997, ADOPTED (#18.2)](posts/2026-08-06-stablekey-rebank-results.md)

@@ -1,6 +1,47 @@
 # Now
 
-*Updated 2026-08-06 07:48–07:5xZ (real `date -u`) — tick: **flip re-bank
+*Updated 2026-08-06 07:51–08:4xZ (real `date -u`) — work session (chained):
+**THREE MOVES IN ONE SESSION — #9 STATE-DROPOUT ARM PRE-REGISTERED AND
+LAUNCHED ON THE IDLE BOX; #18.2 STABLE-KEY RE-BANK ADOPTED (flow anchor
+6.5997); SNAPFLOW DISTILL LAUNCHED ON THE FREED LOCAL GPU.** (1) The
+state-probe branch rule cashed in: `--state-dropout` landed
+(`bcbf101` — shared `mask_state_item` primitive with the eval probe so
+semantics can never drift; p=0 bitwise-inert, all three CPU loss
+oracles exact, `check.py` 240 green, SnapFlow stage-0 re-verified),
+[pre-reg posted](posts/2026-08-06-prereg-state-dropout-40k.md), then
+**arm C `fontaine_arb_rcond_statedrop80_40k_1xh100` launched 08:10Z on
+box GPU 0** (idle since the E4B no-launch; A-s0 recipe verbatim +
+`--state-dropout 0.8`, seed 0, 40k; E1 selection lines byte-match
+A-s0's, banner `p=0.8` ✓; first-poll: 91% util, 66.3 GiB, 0.386–0.395
+s/step steady — E2 met; loss 21.7→6.5 by step 500; step_040000
+~12:2xZ, chained panel + masked-reliance evals land reads ~15:3xZ).
+(2) **Flip re-bank ADOPTED at the 08:30Z boundary**
+([results](posts/2026-08-06-stablekey-rebank-results.md)): controls
+bitwise ✓, stable-key chunk **6.5997** inside [6.4882, 6.7582]
+(Δ −0.0242 ≈ 1σ_draw), first 1.9355; `stable` is now the quoted
+keying for all new flow numbers, ledger re-banked, #18.2 closed.
+(3) **SnapFlow distill launched 08:30Z** (tmux `snapdistill`) on the
+GPU the flip freed — after a pre-launch catch: the launcher had
+inherited the TEACHER's `bijou-dev` wandb project (READ-ONLY mainline,
+§7) + `bijou_` name prefix via the teacher-verbatim copy; fixed to
+`fontaine`/`fontaine_flow_snapdistill_h1024_30k_1xh100` with
+wandb_project pinned as a named verify delta (`d9dd385`) so
+teacher-verbatim can never silently re-inherit a mainline write
+target. Gate (a) identity oracle 6/6 bit-exact ✓; gate (b) drift eval
+scoring at session end (train starts on pass; ~12–20 h wall to 30k +
+endpoint evals). Discord: no inbound ×3 polls; pre-reg + re-bank
+headlines posted. Lit slice ~10 min taken (ThinkProprio 2602.06575,
+Cloak 2606.22836 → banked into #9/#11). Queue: local → SnapFlow
+babysit (in-run s=t divergence watch; 10k record-only probe when a
+quiet GPU appears; endpoint reads ~tomorrow) → draws-fairness ES
+column + panel-v2 + stage-2b + E4B follow-on awaiting owner steer;
+box → arm C babysit → 40k boundary ~12:2xZ → panel + masked reads
+~15:3xZ (results instrument prep = next CPU work item, oracle before
+data per the box-batch pattern); ≥2 ✓. GPUs busy (SnapFlow local, arm
+C box) + CPU queue non-empty (arm-C results instrument, #16 follow-ups)
+→ `run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-06 07:48–07:5xZ (real `date -u`) — tick: **flip re-bank
 healthy and running HOT — @1,792/25,800 frames at 07:50:09Z, measured
 480 f/min over a 60-s window (fastest this panel has run; prior evals
 130–280 f/min), util bursty (99–100% bursts / 0% inter-batch gaps) but
@@ -2054,17 +2095,23 @@ reset so the chained session doesn't die on launch.
 
 ## Utilization footer
 
-Trailing-7-day GPU-hours on experiments / total: local **~16.0 / ~16.3**
+Trailing-7-day GPU-hours on experiments / total: local **~16.8 / ~17.1**
 (sealed eval 1.9 h; noise-draw chain 18:25Z→04:12Z ≈ 9.8 h COMPLETE;
 state probe 04:44→06:06Z ≈ 1.4 h COMPLETE, reads posted; fairness
 probe 06:24–07:39Z ≈ 1.2 h COMPLETE incl. the crashed first run,
-reads posted; #18.2 stable-key flip re-bank live since 07:41Z, ~1.7 h
-queued, 99% util at first poll), box
-**~28 / ~28 GPU-h**
+reads posted; #18.2 stable-key flip re-bank 07:41→08:30Z ≈ 0.8 h
+COMPLETE — 49 min at ~650 f/min, ADOPTED; SnapFlow distill live since
+08:30Z, ~12–20 h queued, gates (a) ✓ / (b) scoring at update time),
+box **~28.4 / ~28.4 GPU-h**
 (4 arms trained 17:12Z→01:35Z ≈ 17 GPU-h + 4 chained panel evals ≈ 10
 GPU-h, complete 04:1xZ; E4B memory smoke ×4 rungs 04:31–05:21Z ≈ 0.8
-GPU-h — ladder exhausted, NO-LAUNCH; box idle awaiting owner steer on
-the E4B follow-on / #11 grounding arms).
+GPU-h — ladder exhausted, NO-LAUNCH; **arm C state-dropout live since
+08:10Z on GPU 0** — the idle-since-E4B window closed by the #9
+launch, ~7.5 GPU-h queued incl. chained evals, 91% util / 0.39 s/step
+at first poll; GPUs 1–3 remain idle awaiting owner steer on E4B
+follow-on / panel-v2 / stage-2b — stated per the anti-goal rule: no
+pre-registered work exists for them until steer or the next queue
+refill).
 Explore/exploit: aux-off arm B + noise-floor replicates ≈
 instrument/attribution (exploit-side); explore hours proper started
 with the noise-draw chain (explore-side, ~9 h queued — pacing check
@@ -2215,3 +2262,16 @@ mantra, gate-asserted against the just-measured σ_draw. Lit slice
 skipped — bounded session fully consumed by the ladder's top item
 (post-processing a finished run + the chained launch); the ~20–30
 min slice debt carries to the next session with slack.
+Session 07:51–08:4xZ: the queue-refill work session — #9 state-dropout
+went instrument → oracles → pre-reg → LAUNCH in one session (arm C is
+**explore-side, ~7.5 GPU-h queued**: real mechanism story, modal
+outcome "within band", tail = vision-reliant policy); the re-bank
+boundary was taken in-session (ADOPT, anchor 6.5997) and the freed
+GPU went straight to SnapFlow (explore-side, ~12–20 h) per the
+mantra — both GPUs left busy on explore-class arms. Lit slice: ~10
+min taken in the eval-wait window (ThinkProprio + Cloak → #9/#11) —
+the standing debt partially serviced; balance carries. Pre-launch
+catch worth the surprise log: the SnapFlow launcher's teacher-verbatim
+copy had silently inherited a READ-ONLY mainline wandb write target —
+the class fix (verify-script pins wandb_project as a named delta) is
+in `d9dd385`.

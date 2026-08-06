@@ -702,6 +702,12 @@ queue, in leverage order (details + file:line in the post):
    direct σ_draw = 0.02367 kept the floors (`reopen_floors: false`
    asserted in-launcher); band [6.4882, 6.7582] + bitwise
    state-copy/AR controls read at the ~09:2xZ boundary.
+   **DONE — ADOPTED 2026-08-06 08:3xZ
+   ([results](posts/2026-08-06-stablekey-rebank-results.md)): controls
+   bitwise ✓, stable-key chunk 6.5997 INSIDE the band (Δ −0.0242 ≈
+   1σ_draw), first 1.9355. `stable` is now the quoted keying for all
+   new flow numbers; ledger anchor re-banked. The #18.2 chain is
+   closed.**
 3. ~~Q3 tripwire noise fix~~ **DONE 2026-08-06 ~02:4xZ** (deep-dive
    finding 3, closed before the SnapFlow distill launch — the next
    conditioned flow run): `FlowDecoder.predict_chunk` now returns the

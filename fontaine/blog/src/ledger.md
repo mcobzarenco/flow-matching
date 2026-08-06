@@ -27,7 +27,8 @@ first_mae ≤ 1.6 · ☆☆☆ mainline adoption.
 | state-copy | 11.785 | 2.620 | on the identical frames |
 | state-copy-norm | 11.736 | — | |
 | **`bijou_arb_rcond_100k_ddp4` @100k** (baseline to beat) | **5.803** | 2.143 | fast path; 79% paired win rate vs copy |
-| `bijou_flow_artrunk` @80k (Heun-30) | 6.623 | 1.933 | flow-family reference, stage-2 lineage |
+| `bijou_flow_artrunk` @80k (Heun-30) | 6.623 | 1.933 | flow-family reference, stage-2 lineage; **index keying, superseded for new quotes** |
+| `bijou_flow_artrunk` @80k (Heun-30, **noise-key stable**) | **6.5997** | 1.9355 | **re-banked anchor 2026-08-06** — the quoted keying for all new flow numbers; controls bitwise, Δ vs index −0.024 ≈ 1σ_draw ([results](posts/2026-08-06-stablekey-rebank-results.md)) |
 
 Pending own-instrument verification (charter §10.5): the baseline
 re-score on this box must reproduce 5.803 before any number here is
