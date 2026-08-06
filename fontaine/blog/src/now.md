@@ -1,6 +1,24 @@
 # Now
 
-*Updated 2026-08-06 15:23–15:4xZ (real `date -u`) — work session (chained, bounded):
+*Updated 2026-08-06 15:41–15:4xZ (real `date -u`) — tick (babysit): **arm C
+inside the final 2.5k — @37,620/40k at 15:41Z, TRAIN-ALIVE (pgrep 2),
+65% util (eval window), 73.8 GiB, 0.37–0.39 s/step, loss 3.58–3.74
+smooth, aux 0.43–0.54, in-run probe holding the descended band:
+10.85@36000 → 10.96@36500 → 10.83@37000 → 11.00@37500** (vs the
+11.1–11.58 plateau @34–35.5k; K1 margin far), zero substitution lines
+→ **40k ~16:1x–16:2xZ**. Local GPU idle-by-design. Discord: no owner
+inbound (only unread was our own 15:40Z WP0 headline;
+history-checked, no new reactions) — **the SnapFlow adoption ask
+stays open; any reply is steering.** Queue unchanged from 15:4xZ:
+**next (chained) → #18.2 `--noise-key` default-flip + Molmo2 WP1
+Qwen3 decoder port (top CPU item)**; box boundary (~16:1x–16:2xZ) →
+code sync + stage-0 re-verify + F1 two-config smoke → arm A img280
+launch + arm C statedrop reads + `~/flow-matching-ctrl` cleanup. GPU
+busy ×1 (arm C box) + CPU queue deep → `run_work_next` armed (marker
+present, 15:40) per no-idle-pauses; the chained session owns the 40k
+boundary.*
+
+*Previous update 2026-08-06 15:23–15:4xZ (real `date -u`) — work session (chained, bounded):
 **MOLMO2 WP0 IS LANDED — the port's first work package, one session
 after the plan, exactly as sequenced (`7409df0`): the trunk seam is
 extracted.** The build: `ObservationEncoder[I: BatchInputs, B:
