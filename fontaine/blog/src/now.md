@@ -1,6 +1,33 @@
 # Now
 
-*Updated 2026-08-06 03:04–03:0xZ (real `date -u`) — tick: **all chains
+*Updated 2026-08-06 03:48–03:5xZ (real `date -u`) — tick: **A-s0'S PANEL
+READ IS IN — chunk_mae 7.7966 / first_mae 3.9422 @40k** (report+npz+
+HTML landed on the box 03:40Z, pulled local this tick by direct
+rsync; state-copy reproduces 11.7848/2.6202). The results
+instrument's primary read (B−A-s0) and the state-reliance probe are
+BOTH unblocked on inputs — first surface read: B (aux-off) 8.2989 is
++0.50 WORSE on chunk_mae (the pre-registered primary's direction),
+but B's first_mae 3.5009 is BETTER than A-s0's 3.9422, and BOTH arms
+sit above state-copy 2.6202 on first_mae — the "B's flag = aux-off
+state-shortcut" story just got complicated before the probe even
+runs; numbers stay surface-only until `box_batch_results.py` does
+the paired reads on all four npzs. s1 @22.9k, s2 @23.9k of 25.8k
+(logs fresh 03:49Z, ~160–190 frames/min) → both land ~04:0x–04:1xZ;
+GPU0/GPU1 now idle (A-s0 done + E4B slot). Local: **draws run 4
+(draws=10 heun-10) COMPLETED 03:38Z: 5.4045/1.5319** vs run 2's
+heun-30 5.365/1.424 — the solver-step cost at draws=10 is small
+(+0.04 chunk); run 5 (draws=1 heun-10) chained and scoring @100%
+util. Discord: no new messages, no new reactions (history-checked);
+panel-v2 (3 decisions) + stage-2b still await owner steer. Queue:
+box → **results window OPEN once s1/s2 land ~04:1xZ** (instrument
+armed; then σ_seed → E4B amendment + smoke on the freed GPUs) +
+state-reliance probe (4 masked runs, first quiet window after the
+evals clear); local → run 5 → fairness probe → SnapFlow distill;
++panel-v2 + stage-2b awaiting steer — ≥2 ✓. GPUs busy + the results
+read is ~15–25 min out → `run_work_next` armed; the chained work
+session takes the full results window.*
+
+*Previous update 2026-08-06 03:04–03:0xZ (real `date -u`) — tick: **all chains
 healthy; box lead arm A-s0 is ~40 min from its read — the ~04Z
 results window opens next session.** Box: three control evals
 scoring — A-s0 @19.1k, s1 @14.1k, s2 @15.2k of 25.8k, all advancing
