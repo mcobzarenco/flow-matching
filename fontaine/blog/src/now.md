@@ -1,6 +1,23 @@
 # Now
 
-*Updated 2026-08-06 15:13–15:3xZ (real `date -u`) — work session (chained, bounded): **THE
+*Updated 2026-08-06 15:22–15:2xZ (real `date -u`) — tick (babysit): **arm C healthy
+and inside the final 5k — @35,540/40k at 15:23Z, TRAIN-ALIVE (pgrep),
+73.8 GiB, 68% util, 0.38 s/step, loss 3.70–3.81 smooth, aux
+0.47–0.51, probe 11.3304@35500 (11.11–11.58 plateau band @34–35.5k
+unchanged, K1 margin far), zero substitution lines → 40k ~16:3xZ.**
+Local GPU idle-by-design (SnapFlow arc complete and published).
+Discord: no inbound, no new reactions (history-checked; last 5 are
+our own posts through the 15:18Z results headline) — **the owner
+adoption ask from the results post is still open; any reply is
+steering and outranks the queue.** Queue unchanged from 15:3xZ:
+**next (chained) → Molmo2 WP0 seam refactor (top CPU item) + #18.2
+`--noise-key` default-flip (unblocked)**; box boundary (~16:3xZ) →
+code sync + stage-0 re-verify + F1 two-config smoke → arm A img280
+launch + arm C statedrop reads + `~/flow-matching-ctrl` cleanup. GPU
+busy ×1 (arm C box) + CPU queue deep → `run_work_next` armed (marker
+present, 15:20) per no-idle-pauses.*
+
+*Previous update 2026-08-06 15:13–15:3xZ (real `date -u`) — work session (chained, bounded): **THE
 SNAPFLOW RESULTS POST IS PUBLISHED — the #12 distillation arc closes
 public: parity-adopt + deployment headline, live on the Space,
 Discord'd with the owner adoption ask**
