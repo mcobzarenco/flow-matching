@@ -1,6 +1,49 @@
 # Now
 
-*Updated 2026-08-06 05:42–06:0xZ (real `date -u`) — work session: **σ_DRAW
+*Updated 2026-08-06 06:03–06:3xZ (real `date -u`) — work session: **STATE-RELIANCE
+PROBE READ — SUPPORTED: aux-off leans harder on the state shortcut,
+D = Δ_first(B) − Δ_first(A-s0) = +0.702, CI95 [0.498, 0.916] — 14×
+the pre-registered 0.05 threshold**
+([results](posts/2026-08-06-state-probe-results.md), instrument
+`fontaine/scripts/state_probe_results.py`, report
+`reports/analysis__state_probe_q4.json`). Arm 4 (B masked) landed
+06:06Z; the reads instrument was built + 3-way oracled in the ~15-min
+window before it (degenerate all-zero/CI[0,0]; synthetic 1.10×
+inflation → known-magnitude D detected AND common-effect cancellation
+proven; misaligned-index abort — first oracle draft's "row shuffle"
+was itself caught as NOT a pairing break, since pairing is by index).
+All pre-registered execution oracles green at read time: state-copy/
+-norm byte-match banked on all 4 arms (pairing + mask isolation
+bitwise), truth/valid byte-identical, mask_state recorded, plan
+sha256 asserted. Secondary chunk read agrees (+0.389 [0.106,
+0.674]); all three banked expectations came true (Δ_chunk +15.3–16.4
+every arm — absolute Δs stay descriptive per the stated OOD
+limitation; no masked arm beats intact state-copy first; D > 0).
+**Story now coherent with box-batch: B's better intact first_mae
+(3.43 vs 3.87 subset) is bought with heavier state reliance — aux
+supervision shifts representation toward vision. Branch rule fired:
+#9 state-DROPOUT promoted, owed its own pre-reg** (ideas #9/#11
+updated; GAP progress-conditioned Δ_first cut noted as discussion
+material). `check.py` 229 green; blog built + Space pushed (post URL
+200; post added to SUMMARY.md — mdbook silently drops unlisted
+files, caught at the 404); Discord posted 06:2xZ. Then, per the
+mantra (GPU went idle 06:06Z): **FAIRNESS PROBE LAUNCHED 06:24Z**
+(tmux `fairnessprobe`, `~/eval_flow80k_drawsprobe_dump.sh`, quiet-GPU
+guard passed; draws=10 heun-30 stride-7 2,458 frames + `--dump-draws`;
+first-poll rule: 99% util, ~160 f/min → probe + chained CPU fairness
+reads land ~06:4x–06:5xZ; E1 gate: draw-0 must re-decode banked
+single-draw, drift < 0.05; its direct σ_draw measurement is the
+pre-declared cross-check on the 0.0159 pin). Discord: no inbound.
+Queue: local → fairness reads (~06:5xZ, chained in-launcher) →
+noise-key flip re-bank (band final) → SnapFlow distill (launch-ready,
+needs the GPU the fairness probe frees); **NEW queue-refill item: #9
+state-dropout pre-reg (CPU, sanctioned by the fired branch rule)**;
+box → idle awaiting owner steer (E4B follow-on + panel-v2 3 decisions
++ stage-2b); ≥2 ✓. GPU busy (fairness probe) + CPU queue non-empty
+(fairness reads ~20 min out, state-dropout pre-reg) →
+`run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-06 05:42–06:0xZ (real `date -u`) — work session: **σ_DRAW
 FINALIZED = 0.0159 — BOTH PRE-REGISTERED FLOORS BIND; the SnapFlow
 launch's last CPU-side blocker is closed**
 ([amendment](posts/2026-08-06-sigma-draw-finalization.md), instrument
@@ -1887,9 +1930,11 @@ reset so the chained session doesn't die on launch.
 
 ## Utilization footer
 
-Trailing-7-day GPU-hours on experiments / total: local **~13.6 / ~13.9**
+Trailing-7-day GPU-hours on experiments / total: local **~15.3 / ~15.6**
 (sealed eval 1.9 h; noise-draw chain 18:25Z→04:12Z ≈ 9.8 h COMPLETE;
-state probe live since 04:2xZ, ~1.7 h queued), box **~28 / ~28 GPU-h**
+state probe 04:44→06:06Z ≈ 1.4 h COMPLETE, reads posted; fairness
+probe live since 06:24Z, ~0.5 h queued, 99% util at first poll), box
+**~28 / ~28 GPU-h**
 (4 arms trained 17:12Z→01:35Z ≈ 17 GPU-h + 4 chained panel evals ≈ 10
 GPU-h, complete 04:1xZ; E4B memory smoke ×4 rungs 04:31–05:21Z ≈ 0.8
 GPU-h — ladder exhausted, NO-LAUNCH; box idle awaiting owner steer on
@@ -2028,3 +2073,10 @@ skipped this session: ~35 min bounded window fully consumed by the
 ladder's top item (post-processing a finished run); last slice
 02:4x–02:5xZ — next session with slack takes it per the standing
 allocation.
+Session 06:03–06:3xZ: the state-probe read itself — the 02:4xZ lit
+slice's mechanism went pre-reg → instrument → 4 masked runs →
+SUPPORTED verdict in ~3.5 h wall-clock end to end (explore-side,
+~1.4 GPU-h); the freed GPU went straight to the fairness probe
+(instrument-side) per the mantra. Lit slice skipped again — bounded
+session, ladder top item; the slice debt stands at the standing
+~20–30 min for the next session with slack.
