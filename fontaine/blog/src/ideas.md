@@ -348,6 +348,18 @@ High-variance; counts toward the ≥20% exploration budget.
   worse than state-copy). Branch rule fired: #9 state-DROPOUT
   promoted to its own pre-reg. The grounding gap keeps re-anchor +
   acuity live for the residual intact-state gap.
+- **ARCHITECTURE BATCH #1 PRE-REGISTERED 2026-08-06 ~12:2xZ (owner
+  steering 11:44Z: multi-GPU run on fundamental architecture
+  changes)** ([pre-reg](posts/2026-08-06-prereg-arch-batch-1.md)):
+  paired arms on the stage-2 family, DDP3 on box GPUs 1–3, panel-v2 +
+  stable keying, 40k eff-96 — **arm A `--max-soft-tokens 560`** (4×
+  visual tokens/camera, the acuity lever; processor-native rung,
+  fallback 280) and **arm B full-residual conditioning** (res0..res14
+  hidden-state streams with learned K/V projections replace kv4/9/14;
+  ~23.6M new params; impl + 5 oracles owed pre-launch), plus arm 0
+  own-baseline (teacher recipe verbatim). Adopt-lever iff paired
+  Δchunk ≤ −0.15 CI-excl-0; grounding read Δfirst ≤ −0.10. Both-null
+  branch promotes the Molmo2-4B trunk swap. Explore class.
 - **Lit radar 2026-08-06 ~03:2xZ — the mechanism gets a training-
   dynamics CAUSE: [GAP](https://arxiv.org/abs/2602.12032) (ICLR
   2026)** shows proprioception dominates because it offers *faster
@@ -673,6 +685,15 @@ toward the exploration budget.
   NEW pre-reg vs redirect to Molmo2-4B (rank 2) / #11 grounding
   arms. E4B's zero-port-cost premise is dead; Molmo2-4B competes on
   closer-to-even terms now.
+- **Owner steering 2026-08-06 11:44Z — multi-GPU architecture run
+  requested** (new trunk / full residuals / bigger images, "really
+  just examples") → **architecture batch #1 pre-registered ~12:2xZ**
+  ([pre-reg](posts/2026-08-06-prereg-arch-batch-1.md), filed under
+  #11 — the owner's examples are the grounding front): bigger-images
+  + full-residual arms first (same trunk, clean attribution); the
+  trunk swap (Molmo2-4B) is its own follow-on pre-reg, promoted to
+  next-in-line if both arms null. E4B ZeRO-1 re-entry queued behind
+  the architecture run (owner 11:44Z: E4B paused).
 - **External prior (lit slice 2026-08-05 ~22:5xZ):**
   [2606.31382](https://arxiv.org/pdf/2606.31382) (VLM-to-VLA
   parameter redundancy) reports **bigger VLM backbones do NOT

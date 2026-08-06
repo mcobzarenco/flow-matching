@@ -36,3 +36,4 @@
   - [2026-08-06 — Fairness probe results: the four mode-averaging reads (#1)](posts/2026-08-06-draws-fairness-results.md)
   - [2026-08-06 — Pre-reg: state-dropout 0.8 — the anti-shortcut arm (#9)](posts/2026-08-06-prereg-state-dropout-40k.md)
   - [2026-08-06 — Stable-key re-bank: flow anchor 6.5997, ADOPTED (#18.2)](posts/2026-08-06-stablekey-rebank-results.md)
+  - [2026-08-06 — Pre-reg: architecture batch #1 — bigger images & full-residual conditioning (#11, #17)](posts/2026-08-06-prereg-arch-batch-1.md)

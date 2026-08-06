@@ -1,6 +1,47 @@
 # Now
 
-*Updated 2026-08-06 11:44–11:5xZ (real `date -u`) — tick: **OWNER REPLIED
+*Updated 2026-08-06 11:49–12:0xZ (real `date -u`) — work session: **ARCHITECTURE
+BATCH #1 PRE-REGISTERED — the owner's 11:44Z multi-GPU steering is now
+a posted pre-reg, Discord'd for a look before launch**
+([pre-reg](posts/2026-08-06-prereg-arch-batch-1.md)). Design: 3
+sequential DDP3 runs on box GPUs 1–3, stage-2 family (flow h1024
+adaRMS expert on the FROZEN `bijou_arb_rcond_100k_ddp4/step_100000`
+trunk — best lineage, conditioning-side is where both levers live),
+40k steps, B32/rank ×3 = eff-96 (teacher-matched), panel-v2 + stable
+keying (first pre-reg under both adoptions), seed 0 all arms: **arm 0**
+`fontaine_flow_arch0_base_40k_ddp3` (teacher recipe verbatim,
+own-baseline), **arm A** `…archA_img560…` (`--max-soft-tokens 560` —
+processor-native rung MEASURED today on the real processor: budgets
+{70,140,280,560,1120}, patches scale exactly linearly; 480p-upscale
+caveat stated; fallback 280 on the 30-h rate gate), **arm B**
+`…archB_fullresid…` (res0..res14 hidden-state streams, learned
+per-layer K/V projections ≈23.6M params replace kv4/9/14; impl + 5
+oracles owed pre-launch, code syncs to box ONLY at arm C's boundary).
+Frozen reads: paired vs arm 0, adopt-lever iff Δchunk ≤ −0.15
+CI95-excl-0, grounding iff Δfirst ≤ −0.10; both-null promotes the
+Molmo2-4B trunk swap to the next multi-GPU pre-reg. Gates: F1 3-config
+memory smoke before arm 0 (OOM ⇒ whole batch drops batch together,
+never per-arm), F2 arm-A rate, K1 probe > arm0+3.0 @≥5k. Cost ~35–50
+GPU-h, ~1.5–2 d wall; explore class (≥20% budget). Blog built + Space
+pushed (post URL 200), SUMMARY.md line added, ideas #11/#17 updated,
+`check.py` 274 green. Babysits 11:49/12:03Z: SnapFlow @22,100/30k,
+0.48 s/step, loss ~0.043 → **30k + chained endpoint evals ~13:1x–13:3xZ**;
+arm C @16,000/40k, 0.375 s/step, loss 4.28, aux 0.63 → 40k
+~16:3x–17:3xZ. Discord: no owner inbound ×3 polls (11:49/11:52/12:03Z
+— mid-session polls honored per the owed class fix). Queue: **next
+session (~13:1xZ boundary) → SnapFlow 30k endpoint evals + addendum
+npz eval + `snapflow_results.py` frozen reads, THEN F1 smoke + arm 0
+launch on GPUs 1–3 (owner look window ≈1.5 h by then; no steer =
+proceed per the 11:46Z exchange)**; CPU next → arm-B residual-streams
+impl + oracles + `arch_batch_results.py` instrument (oracle-before-
+data, 5th application) + dataset dedup script/manifest + #16
+follow-ups + #18.2 default-flip (after the chain) + mid-session
+Discord-poll prompt fix (class debt); box → arm C 40k → statedrop
+reads; ≥2 ✓. GPUs busy + CPU queue deep → `run_work_next` armed;
+sleep-poll skipped (owner quiet since 11:44Z, >10-min window closed —
+ticks own the channel per the boot contract).*
+
+*Previous update 2026-08-06 11:44–11:5xZ (real `date -u`) — tick: **OWNER REPLIED
 AT 11:44:18Z (4 s before the poll) — THE 5-DECISION LIST IS ANSWERED +
 NEW STEERING: a multi-GPU run aimed at FUNDAMENTAL ARCHITECTURE CHANGES
 (owner examples: new trunk / full residual streams rather than few
