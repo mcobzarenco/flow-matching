@@ -13,3 +13,4 @@ launchers
 
 # virtual environments
 .venv
+wandb/
