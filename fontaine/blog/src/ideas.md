@@ -505,7 +505,7 @@ export-stream semantics). Original slate below, kept for scope:
 - **Consistency-distilled 1–2-step deployment decoders** (pairs with
   ideas #1 and #12) — the deployment-latency leg of the rig goal.
 
-## 18. Instrument & infra hardening — `screening` (items 1+8 done 2026-08-05, 2 flag-landed, 4 done 2026-08-06)
+## 18. Instrument & infra hardening — `screening` (items 1+8 done 2026-08-05, 2 flag-landed, 4+7 done 2026-08-06)
 
 The [bijou deep-dive](posts/2026-08-05-bijou-deep-dive.md)'s fix
 queue, in leverage order (details + file:line in the post):
@@ -558,7 +558,32 @@ queue, in leverage order (details + file:line in the post):
    the first physical run** (idea #16).
 6. Parity extension: one padded/batched/2-camera HF comparison +
    `--require-bitwise` eager gate.
-7. Duplicate-content census over curated_v0 (CPU fingerprints).
+7. ~~Duplicate-content census over curated_v0~~ **DONE 2026-08-06
+   ~02:0xZ** ([results
+   post](posts/2026-08-06-dup-census-results.md)): the corpus is
+   heavily forked — 6,935 of 52,507 episodes (2.67M frames) in 3,348
+   cross-repo BYTE-EXACT clusters (action+state streams identical;
+   quantized tier adds nothing). **The split is breached: 524 holdout
+   episodes across 79 repos have byte-exact twins in train — 2,096 of
+   17,204 core panel rows (12.2%) score on leaked episodes**, all via
+   the cross-repo fork channel the repo-id dedup can't see. Anchor
+   impact (validated partition, anchors reproduce exactly): leaked
+   frames score ~1.3–1.6 better than clean on BOTH banked models —
+   **clean-core anchors: AR-100k 5.9761/2.1695, flow-80k
+   6.8137/1.9714** (published 5.8026/2.1431, 6.6232/1.9331 are
+   ~0.17–0.19 optimistic in level; content-difficulty confound stated
+   honestly). Paired within-corpus deltas (box batch, E4B, draws
+   chain) UNAFFECTED — every model shares the same train corpus and
+   the same leaked frames. Instruments:
+   `fontaine/scripts/dup_content_census.py` (+`--oracle` 7-case
+   suite, split mirror proven on all 878 plan repos, collision guard),
+   `dup_census_anchor_impact.py` (join content-checked vs raw
+   parquet). Exclusion list frozen in `~/dup_census_report.json`.
+   **Follow-on queue item: panel-v2 amendment** — excluding the 524
+   leaked episodes is a panel re-definition (re-bank every anchor);
+   needs its own pre-reg + owner steer. Until then results posts quote
+   full-panel (anchor convention) with the clean-core column
+   alongside.
 8. ~~Leakage checker same-repo-id count/content assert~~ **DONE
    2026-08-05 ~21:20Z** (deep-dive finding 6b): the identity branch
    now VERIFIES the claim — episode-count assert plus per-episode

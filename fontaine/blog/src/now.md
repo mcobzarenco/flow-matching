@@ -1,6 +1,46 @@
 # Now
 
-*Updated 2026-08-06 01:19–01:4xZ (real `date -u`) — work session: **BOX-BATCH
+*Updated 2026-08-06 01:39–02:1xZ (real `date -u`) — work session: **DUPLICATE-CONTENT
+CENSUS EXECUTED (#18.7) — THE PANEL'S HOLDOUT IS BREACHED BY THE
+FORK CHANNEL: 12.2% of core panel frames (2,096/17,204) score on
+episodes with BYTE-EXACT twins in train**
+([results post](posts/2026-08-06-dup-census-results.md),
+`fontaine/scripts/dup_content_census.py` +
+`dup_census_anchor_impact.py`, reports `~/dup_census_report.json` +
+`~/dup_census_anchor_impact.json`). The deep-dive finding-7 census,
+run deliberately BEFORE the box results land (~03–04Z read fine
+holdout deltas at a 0.15 band): the corpus is heavily forked —
+6,935/52,507 episodes (2.67M frames) in 3,348 cross-repo byte-exact
+action+state clusters (quantized tier adds NOTHING — pure
+re-uploads); **524 holdout episodes across 79 repos have train-side
+twins** (same-user variants: samanthalhy herding, shylee pengrip,
+dopaul chess; cross-user forks: Chojins↔bensprenger,
+Dangvi↔s20000s, lirislab↔roboticshack). Anchor impact through a
+join content-verified against raw parquet (partition reproduces
+both anchors exactly): leaked frames score ~1.3–1.6 BETTER than
+clean on both banked models — **clean-core anchors AR-100k
+5.9761/2.1695, flow-80k 6.8137/1.9714** (published numbers
+~0.17–0.19 optimistic in level; content-difficulty confound stated).
+**Paired within-corpus deltas — box batch, E4B, draws chain — are
+unaffected** (every arm shares the train corpus and the same leaked
+frames); absolute generalization claims + the comm→rig bridge now
+quote clean-core. Panel-v2 (excluding the 524) = a panel
+re-definition → queued for its own amendment + owner steer;
+exclusion list frozen. Validation: 7-case synthetic oracle; split
+mirror PROVEN on all 878 plan repos (plan episodes == re-derived
+holdout_episodes); 20-pair collision guard; zero structural
+warnings corpus-wide. `check.py` 212 green. Babysits 01:39/01:51/
+02:04Z: box ×4 eval chains all scoring — **B @24.5k/25.8k, its
+panel read lands ~02:15Z**, A-s0 @7.7k, s1 @3.6k, s2 @3.9k (reads
+~03:4x–04:1xZ); local **draws run 3 (draws=5) COMPLETED 01:53Z:
+5.5235/1.4985** (monotone in N: 6.6232@1 → 5.5235@5 → 5.365@10),
+run 4 (draws=10 heun-10, the solver-step arm) chained and scoring
+@99% util. Discord: no new messages ×3 polls. Queue depth: box →
+results post (~04Z, instrument armed) → E4B; local → fairness probe
+→ SnapFlow distill; +panel-v2 amendment — ≥2 ✓. GPUs busy + CPU
+queue non-empty → `run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-06 01:19–01:4xZ (real `date -u`) — work session: **BOX-BATCH
 RESULTS INSTRUMENT LANDED + ORACLED BEFORE THE DATA — when the four
 panel npz+JSON pairs land (~03–04Z), one command produces the
 results-post numbers, the frozen decision verdict, AND both
@@ -1478,4 +1518,11 @@ three of the four 40k boundaries live (A-s0 complete + eval
 scoring, s1/s2 through their saves) — the ~03–04Z session runs one
 command instead of deriving the reads under time pressure (skipped
 lit slice: taken three sessions ago as the work item; next session
-eligible).
+eligible). Nineteenth consecutive all-CPU session (01:39–02:1xZ
+real-clock): the #18.7 duplicate census — the "before trusting fine
+holdout deltas" gate — executed start-to-finish in the window
+BEFORE the box results read those deltas: 52,507 episodes
+fingerprinted, split breach quantified (12.2% of core panel
+frames), clean-core anchors banked, all on nice-19 CPU beside five
+live eval chains (skipped lit slice: four sessions since the 00:14Z
+targeted deep-read — take it next session or state why not).
