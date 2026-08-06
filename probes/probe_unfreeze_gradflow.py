@@ -85,6 +85,7 @@ def make_args(
         instruction=None,
         cameras=None,
         max_cameras=None,
+        max_crops=1,
         max_soft_tokens=140,
         stream_counts=(1, 1, 2),
         conditioning_streams="kv",

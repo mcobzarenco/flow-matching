@@ -35,16 +35,25 @@ string, because the specials are added tokens that always split first
 
 from __future__ import annotations
 
+import contextlib
 import dataclasses
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, override
 
 import torch
-from torch import Tensor
+from torch import Tensor, nn
 
 from ..gemma4.loading import resolve_checkpoint_dir
-from ..interface import PromptInputs
+from ..interface import (
+    InputsCollator,
+    ObservationEncoder,
+    ObservationMemory,
+    PromptInputs,
+    StreamGeometry,
+)
+from ..molmo2.cache import Molmo2KVCache
+from ..molmo2.model import Molmo2Model, build_multimodal_mask
 from ..molmo2.processor import (
     IMAGE_TYPE_IDS,
     ImageCrops,
@@ -289,3 +298,141 @@ class Molmo2InputsCollator:
             state_slot=-3,  # just inside the (<|im_end|>, \n) close
             has_padding=bool((attention_mask == 0).any()),
         )
+
+
+class Molmo2Encoder(ObservationEncoder[Molmo2Inputs, Molmo2Model]):
+    """The Molmo2 prompt-side strategy: collation, multimodal prefix
+    encoding, and the trunk's unfreeze surface.
+
+    Phase 1 is AR-first (port plan §6 amendment): the encoder exports NO
+    memory streams — its whole product is the prefix KV cache the suffix
+    decoder continues (``retain_cache=True``). The flow-phase residual
+    taps land with their own pre-registration.
+
+    The trunk is NOT owned here — BijouModel owns it once and passes it
+    into the compute methods; this module carries exactly the prompt-side
+    parameters: ``state_proj`` (the soft state token spliced just inside
+    the user-turn close, ZERO-initialized so the prompt starts
+    undisturbed), serialized as ``prompt.safetensors``.
+
+    Unfreeze surface (the 2026-08-06 18:1xZ freezing split): ``"text"``
+    = decoder blocks + ``ln_f``; ``"vision"`` = the vision tower +
+    connector. ``wte.embedding``, ``wte.new_embedding`` and the shipped
+    ``lm_head`` stay frozen BY DESIGN (few rows touched per batch, dense
+    Adam state for a 152k vocab is waste, frozen embeddings are the
+    cheapest forgetting control; the FAST extension block owns its own
+    trainable rows decoder-side)."""
+
+    def __init__(
+        self,
+        checkpoint: str,
+        *,
+        max_crops: int,
+        state_dim: int,
+        hidden_size: int,
+        device: torch.device | str | None = None,
+        dtype: torch.dtype | None = None,
+    ) -> None:
+        super().__init__()
+        self.checkpoint = checkpoint
+        self.max_crops = max_crops
+        self.state_dim = state_dim
+        self.state_proj = nn.Linear(
+            state_dim,
+            hidden_size,
+            bias=True,
+            device=device,
+            dtype=dtype,
+        )
+        if device is None or torch.device(device).type != "meta":
+            self.reset_parameters()
+
+    @torch.no_grad()
+    def reset_parameters(self) -> None:
+        nn.init.zeros_(self.state_proj.weight)
+        assert self.state_proj.bias is not None
+        nn.init.zeros_(self.state_proj.bias)
+
+    @override
+    def stream_geometries(self) -> dict[str, StreamGeometry]:
+        """No streams in the AR-first phase — the prefix cache is the
+        whole export (see the class docstring)."""
+        return {}
+
+    @override
+    def inputs_collator(self) -> InputsCollator[Molmo2Inputs]:
+        return Molmo2InputsCollator(self.checkpoint, self.max_crops)
+
+    @override
+    def encode(
+        self,
+        backbone: Molmo2Model,
+        inputs: Molmo2Inputs,
+        *,
+        with_grad: bool,
+        retain_cache: bool = False,
+    ) -> ObservationMemory:
+        """Run the full multimodal prefix (vision inject + state splice +
+        causal-OR-image-block mask) and retain the prefix KV cache when
+        asked. The final-norm output is discarded — the cache is the
+        product; ``with_grad=True`` leaves autograd on so suffix
+        gradients flow back through the cached prefix K/V into the live
+        trunk."""
+        padding_mask = inputs.attention_mask if inputs.has_padding else None
+        with torch.no_grad() if not with_grad else contextlib.nullcontext():
+            embeds = backbone.build_input_embeddings(
+                inputs.input_ids,
+                crops=inputs.crops,
+                pooled_patches_idx=inputs.pooled_patches_idx,
+            )
+            # The soft state token: overwrite the placeholder embedding
+            # just inside the turn close (physical index — left padding
+            # aligns every row's tail).
+            embeds[:, inputs.state_slot, :] = self.state_proj(
+                inputs.state.to(self.state_proj.weight.dtype),
+            ).to(embeds.dtype)
+            position_ids = (
+                Molmo2Model.logical_positions(inputs.attention_mask)
+                if padding_mask is not None
+                else None
+            )
+            mask = build_multimodal_mask(
+                image_type_mask=inputs.image_type_mask,
+                padding_mask=padding_mask,
+                dtype=embeds.dtype,
+                device=embeds.device,
+            )
+            cache = (
+                Molmo2KVCache(len(backbone.text.transformer.blocks))
+                if retain_cache
+                else None
+            )
+            backbone.text.transformer(
+                inputs_embeds=embeds,
+                position_ids=position_ids,
+                attention_mask=mask,
+                cache=cache,
+            )
+        return ObservationMemory(
+            streams={},
+            length=inputs.input_ids.shape[1],
+            padding_mask=padding_mask,
+            cache=cache,
+        )
+
+    @override
+    def param_groups(self, backbone: Molmo2Model) -> dict[str, list[nn.Parameter]]:
+        """Named unfreezable trunk subsets (exactness contract in the
+        ABC): ``"text"`` = every decoder block + ``ln_f`` (the suffix
+        runs all of them and ln_f feeds the head; the prefix feeds the
+        suffix through the cache, so every block receives gradients);
+        ``"vision"`` = tower + connector. Embedding matrices and the
+        shipped lm_head stay out — frozen by design (class docstring)."""
+        text: list[nn.Parameter] = []
+        for block in backbone.text.transformer.blocks:
+            text.extend(block.parameters())
+        text.extend(backbone.text.transformer.ln_f.parameters())
+        return {
+            "text": text,
+            "vision": list(backbone.vision.parameters()),
+        }

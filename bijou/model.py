@@ -52,6 +52,7 @@ from .decoders.ar_fast import (
     ar_fast_loss,
     ar_fast_loss_sums,
 )
+from .decoders.ar_molmo2 import Molmo2ARDecoder
 from .decoders.flow import (
     FlowDecoder,
     SamplingMethod,
@@ -69,6 +70,7 @@ from .interface import (
     ObservationEncoder,
     ObservationMemory,
 )
+from .molmo2.model import Molmo2Model
 
 
 class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
@@ -79,7 +81,7 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
         self,
         backbone: B,
         encoder: ObservationEncoder[I, B],
-        decoder: FlowDecoder | ARFastDecoder | ARBackboneDecoder,
+        decoder: FlowDecoder | ARFastDecoder | ARBackboneDecoder | Molmo2ARDecoder,
     ) -> None:
         super().__init__()
         self.backbone = backbone
@@ -136,7 +138,9 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
         return memory
 
     @property
-    def expert(self) -> FlowDecoder | ARFastDecoder | ARBackboneDecoder:
+    def expert(
+        self,
+    ) -> FlowDecoder | ARFastDecoder | ARBackboneDecoder | Molmo2ARDecoder:
         return self.decoder
 
     def _flow_decoder(self) -> FlowDecoder:
@@ -146,6 +150,18 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                 f"loaded decoder is {type(self.decoder).__name__}",
             )
         return self.decoder
+
+    def _molmo2_backbone(self) -> Molmo2Model:
+        """Narrow the generic trunk for the operations that run the
+        Molmo2 stack itself (its suffix continuation) — loud if composed
+        over another trunk."""
+        backbone = self.backbone
+        if not isinstance(backbone, Molmo2Model):
+            raise TypeError(
+                "this operation runs the Molmo2 trunk; the mounted backbone "
+                f"is {type(backbone).__name__}",
+            )
+        return backbone
 
     def _gemma_backbone(self) -> Gemma4Model:
         """Narrow the generic trunk for the operations that run the Gemma
@@ -206,6 +222,19 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                     None if aux_sum is None else aux_sum.detach(),
                     aux_count,
                 )
+            case Molmo2ARDecoder():
+                total, action, aux_sum, aux_count = ar_backbone_losses(
+                    self._molmo2_backbone(),
+                    decoder,
+                    memory,
+                    batch,
+                )
+                return (
+                    total,
+                    action.detach(),
+                    None if aux_sum is None else aux_sum.detach(),
+                    aux_count,
+                )
 
     def loss_count_normalizers(
         self,
@@ -229,7 +258,7 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                 )
             case ARFastDecoder():
                 return ar_fast_counts(decoder, batch), None
-            case ARBackboneDecoder():
+            case ARBackboneDecoder() | Molmo2ARDecoder():
                 return ar_backbone_counts(decoder, batch)
 
     def loss_component_sums(
@@ -261,6 +290,13 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
             case ARBackboneDecoder():
                 return ar_backbone_loss_sums(
                     self._gemma_backbone(),
+                    decoder,
+                    memory,
+                    batch,
+                )
+            case Molmo2ARDecoder():
+                return ar_backbone_loss_sums(
+                    self._molmo2_backbone(),
                     decoder,
                     memory,
                     batch,
@@ -348,6 +384,15 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
             case ARBackboneDecoder():
                 return decoder.predict_chunk(
                     self._gemma_backbone(),
+                    memory,
+                    batch,
+                    generate=generate,
+                    generator=generator,
+                    noise=noise,
+                )
+            case Molmo2ARDecoder():
+                return decoder.predict_chunk(
+                    self._molmo2_backbone(),
                     memory,
                     batch,
                     generate=generate,

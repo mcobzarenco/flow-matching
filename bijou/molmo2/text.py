@@ -45,6 +45,7 @@ from ..nn import (
     rope_cos_sin,
     rope_inv_freq_from_params,
 )
+from .cache import Molmo2KVCache
 from .config import Molmo2TextConfig
 
 
@@ -133,28 +134,34 @@ def build_causal_mask(
     padding_mask: Tensor | None,
     dtype: torch.dtype,
     device: torch.device,
+    seen: int = 0,
 ) -> MaskSpec:
-    """Full causal attention mask for one no-cache forward.
+    """Full causal attention mask for one forward.
 
-    ``padding_mask``: [B, S], True/1 = real token. The additive tensor is
+    ``padding_mask``: [B, T] (T = seen + q_len), True/1 = real token.
+    ``seen`` > 0 is the cache-continuation case (the AR suffix role):
+    the q_len query positions sit at logical offsets seen..seen+q_len−1
+    and attend causally over all T key positions. The additive tensor is
     always materialized (the eager backend consumes only it); without
-    padding the pattern is exactly lower-triangular and ``is_causal`` lets
-    SDPA take its native causal path instead (the gemma4 convention).
+    padding or a cache the pattern is exactly lower-triangular and
+    ``is_causal`` lets SDPA take its native causal path instead (the
+    gemma4 convention).
     """
-    q_idx = torch.arange(q_len, device=device)[None, None, :, None]
-    kv_idx = torch.arange(q_len, device=device)[None, None, None, :]
+    kv_len = seen + q_len
+    q_idx = torch.arange(q_len, device=device)[None, None, :, None] + seen
+    kv_idx = torch.arange(kv_len, device=device)[None, None, None, :]
     allowed = kv_idx <= q_idx
     if padding_mask is not None:
         cols = padding_mask.to(device=device, dtype=torch.bool)
         allowed = allowed & cols[:, None, None, :]
-    allowed = allowed.expand(batch_size, 1, q_len, q_len)
+    allowed = allowed.expand(batch_size, 1, q_len, kv_len)
     return MaskSpec(
         tensor=torch.where(
             allowed,
             torch.tensor(0.0, device=device, dtype=dtype),
             torch.finfo(dtype).min,
         ),
-        is_causal=padding_mask is None,
+        is_causal=padding_mask is None and seen == 0,
     )
 
 
@@ -215,13 +222,18 @@ class TextAttention(nn.Module):
         hidden_states: Tensor,
         position_embeddings: tuple[Tensor, Tensor],
         attention_mask: MaskSpec,
+        cache: Molmo2KVCache | None = None,
     ) -> Tensor:
         """Grouped-query self-attention; returns [B, S, hidden].
+
+        With a ``cache``, this forward's (post-RoPE) K/V are appended to
+        the layer's entry and attention runs over the full T = seen + S
+        key positions (the mask must then be [B, 1, S, T]).
 
         Shapes:
           - hidden_states: [B, S, hidden]
           - position_embeddings: (cos, sin), each [B, S, head_dim]
-          - attention_mask.tensor (when present): [B, 1, S, S]
+          - attention_mask.tensor (when present): [B, 1, S, T]
         """
         batch, seq_len, _ = hidden_states.shape
         hidden_shape = (batch, seq_len, -1, self.head_dim)
@@ -235,6 +247,8 @@ class TextAttention(nn.Module):
         key = apply_rotary_pos_emb(key, cos, sin, unsqueeze_dim=2)
         key = key.transpose(1, 2)
         value = value.view(hidden_shape).transpose(1, 2)
+        if cache is not None:
+            key, value = cache.update(self.layer_idx, key, value)
 
         attn_output = attention(
             self.attn_backend,
@@ -331,12 +345,14 @@ class DecoderLayer(nn.Module):
         hidden_states: Tensor,
         position_embeddings: tuple[Tensor, Tensor],
         attention_mask: MaskSpec,
+        cache: Molmo2KVCache | None = None,
     ) -> Tensor:
         """self-attn -> MLP with pre-norms; returns [B, S, hidden]."""
         hidden_states = hidden_states + self.self_attn(
             self.attn_norm(hidden_states),
             position_embeddings,
             attention_mask,
+            cache,
         )
         return hidden_states + self.mlp(self.ff_norm(hidden_states))
 
@@ -389,6 +405,7 @@ class Molmo2Transformer(nn.Module):
         position_ids: Tensor | None = None,
         attention_mask: MaskSpec | None = None,
         padding_mask: Tensor | None = None,
+        cache: Molmo2KVCache | None = None,
         residual_taps: Sequence[int] = (),
         residual_sink: dict[int, Tensor] | None = None,
     ) -> Tensor:
@@ -398,14 +415,19 @@ class Molmo2Transformer(nn.Module):
         (``inputs_embeds`` is the multimodal path — WP2 adds image features
         into the embedding sequence before calling this).
 
+        ``cache``: prefill/continuation for the AR suffix role — each
+        layer appends its (post-RoPE) K/V and attends over the full
+        T = seen + S keys. With a non-empty cache and no explicit
+        ``attention_mask``, the default mask is the shifted-causal
+        continuation mask; ``padding_mask`` is then [B, T] (the prompt's
+        real-token mask extended with ones for fed suffix positions).
+        Explicit ``position_ids`` are required under left padding either
+        way (logical positions of the real tokens).
+
         ``residual_taps``/``residual_sink``: record the hidden state AFTER
         each listed layer (post both residual adds — the residual stream the
         next layer consumes, WITHOUT ``ln_f``) into the caller's sink dict,
         [B, S, hidden] per tap. Both or neither.
-
-        Left-padded inputs must pass explicit ``position_ids`` (logical
-        positions of the real tokens) alongside ``padding_mask`` [B, S]
-        (True = real token) — same contract as the gemma4 encode path.
         """
         if (input_ids is None) == (inputs_embeds is None):
             raise ValueError("specify exactly one of input_ids or inputs_embeds")
@@ -414,10 +436,14 @@ class Molmo2Transformer(nn.Module):
         assert inputs_embeds is not None
 
         batch, q_len, _ = inputs_embeds.shape
+        seen = cache.seen_tokens if cache is not None else 0
         if position_ids is None:
-            position_ids = torch.arange(
-                q_len,
-                device=inputs_embeds.device,
+            position_ids = (
+                torch.arange(
+                    q_len,
+                    device=inputs_embeds.device,
+                )
+                + seen
             ).unsqueeze(0)
         if attention_mask is None:
             attention_mask = build_causal_mask(
@@ -426,6 +452,7 @@ class Molmo2Transformer(nn.Module):
                 padding_mask=padding_mask,
                 dtype=inputs_embeds.dtype,
                 device=inputs_embeds.device,
+                seen=seen,
             )
 
         if bool(residual_taps) != (residual_sink is not None):
@@ -440,10 +467,17 @@ class Molmo2Transformer(nn.Module):
         position_embeddings = self.rotary_emb(position_ids, inputs_embeds.dtype)
         hidden_states = inputs_embeds
         for i, block in enumerate(self.blocks):
-            hidden_states = block(hidden_states, position_embeddings, attention_mask)
+            hidden_states = block(
+                hidden_states,
+                position_embeddings,
+                attention_mask,
+                cache,
+            )
             if i in taps:
                 assert residual_sink is not None  # validated above
                 residual_sink[i] = hidden_states
+        if cache is not None:
+            cache.advance(q_len)
 
         return self.ln_f(hidden_states)
 

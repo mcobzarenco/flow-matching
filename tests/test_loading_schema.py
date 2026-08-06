@@ -26,6 +26,7 @@ from bijou.loading import (
     CheckpointTrainArgs,
     FlowDecoderConfig,
     GemmaPromptConfig,
+    Molmo2PromptConfig,
     checkpoint_sections,
     expert_config_from_architecture,
     expert_config_from_train_args,
@@ -234,7 +235,7 @@ def test_metadata_writes_format3_and_reads_back() -> None:
     assert meta["decoder"]["kind"] == "flow"
     sections = checkpoint_sections(meta)
     assert sections.backbone.depth is BackboneDepth.PREFIX
-    assert sections.prompt is not None
+    assert isinstance(sections.prompt, GemmaPromptConfig)
     assert isinstance(sections.decoder, FlowDecoderConfig)
     rebuilt = expert_config_from_architecture(
         sections.prompt,
@@ -261,12 +262,20 @@ def test_pre3_prompt_sections_are_refused() -> None:
     assert from_format1.decoder is None
 
 
-def test_molmo2_prompt_kind_reserved_but_not_loadable() -> None:
-    """The molmo2 tag is reserved (port WP0) so port-era checkpoints have
-    a stable identity, but no loader exists until WP4 — parsing refuses
-    it loudly instead of misreading it as a Gemma section."""
-    with pytest.raises(SystemExit, match="molmo2"):
-        parse_prompt_config({"kind": "molmo2"})
+def test_molmo2_prompt_config_round_trips() -> None:
+    """The molmo2 prompt section (WP5, landed with the AR decoder arm)
+    parses to its own config class — never misread as a Gemma section —
+    and survives a to_dict/from_dict round trip."""
+    config = Molmo2PromptConfig(
+        max_crops=1,
+        format=1,
+        state_dim=6,
+        condition_fields=("subgoal", "outcome"),
+        generate_bracket=True,
+    )
+    parsed = parse_prompt_config(config.to_dict())
+    assert isinstance(parsed, Molmo2PromptConfig)
+    assert parsed == config
 
 
 def meta_decoder(config: ExpertConfig) -> FlowDecoder:

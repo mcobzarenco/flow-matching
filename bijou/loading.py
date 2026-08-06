@@ -30,6 +30,7 @@ from .aux_text import AuxDecodeConfig, build_aux_runtime
 from .data import DatasetStats
 from .decoders.ar_backbone import ARBackboneConfig, ARBackboneDecoder
 from .decoders.ar_fast import ARFastConfig, ARFastDecoder
+from .decoders.ar_molmo2 import Molmo2ARDecoder
 from .decoders.flow import (
     ExpertConfig,
     FlowDecoder,
@@ -37,6 +38,7 @@ from .decoders.flow import (
     TimeConditioning,
 )
 from .encoders.gemma4 import PROMPT_FORMAT, GemmaEncoder
+from .encoders.molmo2 import Molmo2Encoder
 from .fast.codec import ActionCodec
 from .gemma4.config import Gemma4Config, LayerType
 from .gemma4.loading import (
@@ -48,6 +50,10 @@ from .gemma4.loading import (
 from .gemma4.model import Gemma4Model
 from .interface import kv_stream_name, residual_stream_name
 from .model import BijouModel
+from .molmo2.loading import load_config as load_molmo2_config
+from .molmo2.model import Molmo2Model
+from .molmo2.model import load_model as load_molmo2_model
+from .molmo2.tokenizer import Molmo2TextTokenizer, newline_carrier_ids
 from .nn import DEFAULT_ATTENTION_BACKEND, AttentionBackend, DeviceLike
 
 # bijou_config.json schema version. Format 3 sections the metadata by
@@ -207,6 +213,46 @@ class GemmaPromptConfig:
 
 
 @dataclass(frozen=True, slots=True)
+class Molmo2PromptConfig:
+    """The Molmo2 prompt-side strategy as recorded in a checkpoint
+    (WP5; port plan §6). ``max_crops`` is the trunk's one image-budget
+    knob (its dial is crops, not Gemma's ``max_soft_tokens`` — the two
+    are deliberately not conflated); ``format`` is
+    ``encoders.molmo2.MOLMO2_PROMPT_FORMAT`` (namespaced per trunk, not
+    a Gemma bump). ``state_dim``/``condition_fields``/
+    ``generate_bracket`` mirror the Gemma fields — BijouPolicy reads
+    them to configure inference collation."""
+
+    max_crops: int
+    format: int
+    state_dim: int
+    condition_fields: tuple[str, ...]
+    generate_bracket: bool
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "kind": PromptKind.MOLMO2.value,
+            "max_crops": self.max_crops,
+            "format": self.format,
+            "state_dim": self.state_dim,
+            "condition_fields": list(self.condition_fields),
+            "generate_bracket": self.generate_bracket,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Molmo2PromptConfig:
+        return cls(
+            max_crops=int(data["max_crops"]),
+            format=int(data["format"]),
+            state_dim=int(data["state_dim"]),
+            condition_fields=tuple(
+                str(field) for field in data.get("condition_fields", [])
+            ),
+            generate_bracket=bool(data.get("generate_bracket", False)),
+        )
+
+
+@dataclass(frozen=True, slots=True)
 class FlowDecoderConfig:
     """The flow-matching action decoder as recorded in a checkpoint.
 
@@ -274,17 +320,15 @@ class FlowDecoderConfig:
         )
 
 
-def parse_prompt_config(data: dict[str, Any]) -> GemmaPromptConfig:
+def parse_prompt_config(
+    data: dict[str, Any],
+) -> GemmaPromptConfig | Molmo2PromptConfig:
     kind = PromptKind(data["kind"])
     match kind:
         case PromptKind.GEMMA4:
             return GemmaPromptConfig.from_dict(data)
         case PromptKind.MOLMO2:
-            raise SystemExit(
-                "this checkpoint's prompt strategy is molmo2 — the Molmo2 "
-                "prompt config loader lands with port WP4; this build "
-                "cannot load it",
-            )
+            return Molmo2PromptConfig.from_dict(data)
 
 
 def ar_fast_config_to_dict(config: ARFastConfig) -> dict[str, Any]:
@@ -366,16 +410,18 @@ def parse_decoder_config(
 
 
 def decoder_schema_dict(
-    decoder: FlowDecoder | ARFastDecoder | ARBackboneDecoder,
+    decoder: FlowDecoder | ARFastDecoder | ARBackboneDecoder | Molmo2ARDecoder,
 ) -> dict[str, Any]:
     """The checkpoint-schema dict of a built decoder (write side + the
-    --init-from config guard)."""
+    --init-from config guard). The Molmo2 suffix decoder records the SAME
+    ar_backbone section (identical config shape) — the trunk axis lives
+    in the PROMPT section's kind."""
     match decoder:
         case FlowDecoder():
             return flow_decoder_config_from_expert(decoder.config).to_dict()
         case ARFastDecoder():
             return ar_fast_config_to_dict(decoder.config)
-        case ARBackboneDecoder():
+        case ARBackboneDecoder() | Molmo2ARDecoder():
             return ar_backbone_config_to_dict(decoder.config)
 
 
@@ -766,7 +812,7 @@ class CheckpointMetadata:
     """
 
     backbone: BackboneConfig
-    prompt: GemmaPromptConfig
+    prompt: GemmaPromptConfig | Molmo2PromptConfig
     decoder: dict[str, Any]
     normalization: DatasetStats
     per_dataset_normalization: dict[str, DatasetStats]
@@ -805,7 +851,7 @@ class CheckpointSections:
     beyond max_soft_tokens, which lives in train_args)."""
 
     backbone: BackboneConfig
-    prompt: GemmaPromptConfig | None
+    prompt: GemmaPromptConfig | Molmo2PromptConfig | None
     decoder: FlowDecoderConfig | ARFastConfig | ARBackboneConfig | None
 
 
@@ -999,6 +1045,17 @@ def load_adapted_backbone(
     per-layer-embedding tensors sliced to the kept layers — a no-op at
     matching depth."""
     state = load_file(str(checkpoint / "backbone.safetensors"), device="cpu")
+    if isinstance(model.backbone, Molmo2Model):
+        # Molmo2 snapshots are full-model (untied head included — its
+        # key is not the Gemma alias) and always full-depth; no
+        # truncation arm exists.
+        missing, unexpected = model.backbone.load_state_dict(state, strict=False)
+        if missing or unexpected:
+            raise SystemExit(
+                f"backbone.safetensors mismatch at {checkpoint}: "
+                f"missing {list(missing)}, unexpected {list(unexpected)}",
+            )
+        return
     state = truncate_backbone_state(state, model.backbone.config)
     missing, unexpected = model.backbone.load_state_dict(state, strict=False)
     problems = [name for name in missing if name not in BACKBONE_UNSAVED_KEYS]
@@ -1072,9 +1129,71 @@ def from_checkpoint(
         },
     )
     checkpoint_dir = resolve_checkpoint_dir(info.backbone)
-    if isinstance(sections.decoder, ARFastConfig | ARBackboneConfig):
+    if isinstance(sections.prompt, Molmo2PromptConfig):
+        if not isinstance(sections.decoder, ARBackboneConfig):
+            raise SystemExit(
+                f"{checkpoint} is a molmo2 checkpoint with a "
+                f"{type(sections.decoder).__name__} decoder — phase 1 "
+                "supports the ar_backbone (suffix) decoder only",
+            )
+        if offload_ple:
+            raise SystemExit(
+                "--offload-ple parks Gemma's PLE token table; molmo2 has "
+                "no PLE — drop the flag",
+            )
+        molmo2_config = load_molmo2_config(checkpoint_dir)
+        # The release ships fp32; bf16 is the mount convention for
+        # eval/rollout (an explicit dtype — fp32 masters for a
+        # continuation — wins).
+        backbone = load_molmo2_model(
+            checkpoint_dir,
+            device="cpu" if device is None else device,
+            dtype=torch.bfloat16 if dtype is None else dtype,
+        )
+        encoder = Molmo2Encoder(
+            info.backbone,
+            max_crops=sections.prompt.max_crops,
+            state_dim=sections.prompt.state_dim,
+            hidden_size=molmo2_config.text.hidden_size,
+            device=device,
+            dtype=expert_dtype,
+        )
+        molmo2_tokenizer = Molmo2TextTokenizer(info.backbone)
+        carriers = newline_carrier_ids(
+            molmo2_tokenizer,
+            text_vocab_size=molmo2_config.text.vocab_size,
+            terminator_id=molmo2_tokenizer.encode(
+                "\n",
+                add_special_tokens=False,
+            )[0],
+        )
+        molmo2_aux_runtime = (
+            build_aux_runtime(
+                sections.decoder.aux,
+                molmo2_tokenizer,
+                newline_carrier_ban=True,
+            )
+            if sections.decoder.aux is not None
+            else None
+        )
+        molmo2_decoder = Molmo2ARDecoder(
+            sections.decoder,
+            molmo2_config.text,
+            resolve_action_codec(sections.decoder.tokenizer),
+            tokenizer=molmo2_tokenizer,
+            aux_runtime=molmo2_aux_runtime,
+            newline_carrier_ids=carriers,
+            device=device,
+            dtype=expert_dtype,
+        )
+        model = BijouModel(
+            backbone=backbone,
+            encoder=encoder,
+            decoder=molmo2_decoder,
+        )
+    elif isinstance(sections.decoder, ARFastConfig | ARBackboneConfig):
         decoder_config = sections.decoder
-        assert sections.prompt is not None  # tagged formats carry it
+        assert isinstance(sections.prompt, GemmaPromptConfig)  # molmo2 handled above
         backbone_config = load_config(checkpoint_dir)
         if (
             isinstance(decoder_config, ARBackboneConfig)
@@ -1142,7 +1261,7 @@ def from_checkpoint(
                 "(9.6 GB bf16); this prefix-depth checkpoint fits small "
                 "GPUs without it — drop the flag",
             )
-        assert sections.prompt is not None  # tagged formats carry it
+        assert isinstance(sections.prompt, GemmaPromptConfig)  # molmo2 handled above
         expert_config = expert_config_from_architecture(
             sections.prompt,
             sections.decoder,

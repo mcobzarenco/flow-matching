@@ -95,6 +95,7 @@ from .decoders.ar_backbone import (
     ARSuffixDecoder,
 )
 from .decoders.ar_fast import ARFastConfig, ARFastDecoder
+from .decoders.ar_molmo2 import Molmo2ARDecoder
 from .decoders.flow import (
     SNAPFLOW_ALPHA,
     SNAPFLOW_LAMBDA,
@@ -103,7 +104,14 @@ from .decoders.flow import (
     TimeConditioning,
 )
 from .encoders.gemma4 import PROMPT_FORMAT, GemmaEncoder, GemmaInputsCollator
+from .encoders.molmo2 import (
+    MOLMO2_PROMPT_FORMAT,
+    Molmo2Encoder,
+    Molmo2InputsCollator,
+)
+from .gemma4.config import Gemma4Config
 from .gemma4.loading import load_config, resolve_checkpoint_dir
+from .gemma4.model import Gemma4Model
 from .interface import (
     BatchInputs,
     CollatedBatch,
@@ -116,6 +124,7 @@ from .loading import (
     BackboneDepth,
     CheckpointMetadata,
     GemmaPromptConfig,
+    Molmo2PromptConfig,
     backbone_snapshot,
     build_gemma_encoder,
     decoder_schema_dict,
@@ -128,6 +137,10 @@ from .loading import (
     resolve_action_codec,
 )
 from .model import BijouModel
+from .molmo2.loading import load_config as load_molmo2_config
+from .molmo2.model import Molmo2Model
+from .molmo2.model import load_model as load_molmo2_model
+from .molmo2.tokenizer import Molmo2TextTokenizer, newline_carrier_ids
 
 DEFAULT_BACKBONE = "google/gemma-4-e2b-it"
 # Rows in the wandb probe tables (each costs camera images + a
@@ -166,6 +179,7 @@ class TrainArgs:
     cameras: tuple[str, ...] | None
     max_cameras: int | None
     max_soft_tokens: int
+    max_crops: int
     stream_counts: tuple[int, ...]
     # Conditioning surface of the flow expert: "kv" = exported K/V of the
     # global prefix layers (the shipped default, scheduled by
@@ -1122,26 +1136,9 @@ def save_checkpoint(
     )
     torch.save(train_state.to_payload(), checkpoint_dir / "optimizer.pt")
     encoder = model.encoder
-    if not isinstance(encoder, GemmaEncoder):
-        # The prompt section's schema is per-trunk; this writer speaks
-        # Gemma's (per-encoder dispatch lands with the Molmo2 port WPs).
-        raise TypeError(
-            "save_checkpoint writes the Gemma prompt config; the mounted "
-            f"encoder is {type(encoder).__name__}",
-        )
-    metadata = CheckpointMetadata(
-        backbone=BackboneConfig(
-            id=args.backbone,
-            # Structural fact of the built model: a truncated backbone has
-            # its KV-shared region cut away (truncated_config), a full one
-            # keeps it — no plumbing to drift.
-            depth=(
-                BackboneDepth.FULL
-                if model.backbone.config.text.num_kv_shared_layers > 0
-                else BackboneDepth.PREFIX
-            ),
-        ),
-        prompt=GemmaPromptConfig(
+    prompt_config: GemmaPromptConfig | Molmo2PromptConfig
+    if isinstance(encoder, GemmaEncoder):
+        prompt_config = GemmaPromptConfig(
             exports=encoder.exports,
             residual_exports=encoder.residual_exports,
             max_soft_tokens=args.max_soft_tokens,
@@ -1151,7 +1148,40 @@ def save_checkpoint(
             generate_bracket=(
                 args.decoder == "ar_backbone" or args.prompt_generate_bracket
             ),
+        )
+        # Structural fact of the built model: a truncated backbone has
+        # its KV-shared region cut away (truncated_config), a full one
+        # keeps it — no plumbing to drift.
+        backbone_config = model.backbone.config
+        assert isinstance(backbone_config, Gemma4Config)
+        depth = (
+            BackboneDepth.FULL
+            if backbone_config.text.num_kv_shared_layers > 0
+            else BackboneDepth.PREFIX
+        )
+    elif isinstance(encoder, Molmo2Encoder):
+        prompt_config = Molmo2PromptConfig(
+            max_crops=encoder.max_crops,
+            format=MOLMO2_PROMPT_FORMAT,
+            state_dim=encoder.state_dim,
+            condition_fields=tuple(args.condition_fields or ()),
+            generate_bracket=(
+                args.decoder == "ar_backbone" or args.prompt_generate_bracket
+            ),
+        )
+        # The Molmo2 AR trunk is always mounted full-depth (36 layers —
+        # the suffix reads the shipped head).
+        depth = BackboneDepth.FULL
+    else:
+        raise TypeError(
+            f"save_checkpoint has no prompt-config writer for {type(encoder).__name__}",
+        )
+    metadata = CheckpointMetadata(
+        backbone=BackboneConfig(
+            id=args.backbone,
+            depth=depth,
         ),
+        prompt=prompt_config,
         decoder=decoder_schema_dict(model.decoder),
         normalization=aggregate_stats(normalizers),
         per_dataset_normalization=per_dataset_stats,
@@ -1168,7 +1198,7 @@ def save_checkpoint(
 
 
 def ensure_matching_decoder_config(
-    decoder: FlowDecoder | ARFastDecoder | ARBackboneDecoder,
+    decoder: FlowDecoder | ARFastDecoder | ARBackboneDecoder | Molmo2ARDecoder,
     checkpoint: Path,
 ) -> dict[str, Any]:
     """Loud, early failure when a checkpoint's decoder differs from the
@@ -1463,7 +1493,16 @@ def parse_args() -> TrainArgs:
         "--max-soft-tokens",
         type=int,
         default=140,
-        help="vision soft-token budget per camera in the prompt",
+        help="vision soft-token budget per camera in the prompt "
+        "(Gemma trunks; molmo2 trunks use --max-crops)",
+    )
+    parser.add_argument(
+        "--max-crops",
+        type=int,
+        default=1,
+        help="molmo2 trunks: crops per camera image (1 = the port plan's "
+        "operating point, 410 image tokens/camera — the smallest layout "
+        "inside the shipped distribution); ignored for Gemma trunks",
     )
     parser.add_argument(
         "--stream-counts",
@@ -2071,6 +2110,7 @@ def parse_args() -> TrainArgs:
         cameras=tuple(raw.cameras) if raw.cameras else None,
         max_cameras=raw.max_cameras,
         max_soft_tokens=raw.max_soft_tokens,
+        max_crops=raw.max_crops,
         stream_counts=tuple(raw.stream_counts),
         conditioning_streams=raw.conditioning_streams,
         self_attention_mode=raw.self_attention_mode,
@@ -2188,6 +2228,21 @@ def main() -> int:
     torch.manual_seed(args.seed + rank)
 
     checkpoint_dir = resolve_checkpoint_dir(args.backbone)
+    # Trunk dispatch: the backbone family is a structural fact of the
+    # checkpoint (its own config.json), not a CLI axis.
+    molmo2_trunk = (
+        json.loads((checkpoint_dir / "config.json").read_text()).get(
+            "model_type",
+            "",
+        )
+        == "molmo2"
+    )
+    if molmo2_trunk and args.decoder != "ar_backbone":
+        raise SystemExit(
+            "molmo2 backbones support --decoder ar_backbone only (the "
+            "AR-first phase 1, port plan §6 amendment; the flow phase "
+            "lands with its own pre-registration)",
+        )
 
     # -- datasets --------------------------------------------------------
     selection = select_datasets(
@@ -2288,10 +2343,14 @@ def main() -> int:
             fields=aux_decode_config.fields,
             annotated_repos=selection.annotated_repos,
             block_base=(
-                load_config(checkpoint_dir).text.vocab_size - action_codec.vocab_total
+                load_molmo2_config(checkpoint_dir).text.fast_block_base
+                if molmo2_trunk
+                else load_config(checkpoint_dir).text.vocab_size
+                - action_codec.vocab_total
             ),
             dropout=args.aux_dropout,
             field_dropout=args.field_dropout,
+            native_backend=molmo2_trunk,
         )
         if is_main:
             print(
@@ -2304,9 +2363,13 @@ def main() -> int:
                 flush=True,
             )
     collator = Collator(
-        inputs=GemmaInputsCollator(
-            str(checkpoint_dir),
-            args.max_soft_tokens,
+        inputs=(
+            Molmo2InputsCollator(str(checkpoint_dir), args.max_crops)
+            if molmo2_trunk
+            else GemmaInputsCollator(
+                str(checkpoint_dir),
+                args.max_soft_tokens,
+            )
         ),
         instruction=args.instruction,
         camera_filter=args.cameras,
@@ -2462,6 +2525,7 @@ def main() -> int:
     # under bf16 autocast in BijouTrainStep. Frozen runs keep the
     # checkpoint dtype (bf16) exactly as before the unfreeze flags.
     backbone_dtype = torch.float32 if args.backbone_trained else None
+    model: BijouModel[Any, Any]
     if args.decoder == "flow":
         if args.conditioning_streams == "residual":
             expert_config = residual_expert_config(
@@ -2504,6 +2568,81 @@ def main() -> int:
             "learned adapters)"
             if expert_config.residual_streams
             else str(expert_config.cross_attention_schedule)
+        )
+    elif args.decoder == "ar_backbone" and molmo2_trunk:
+        assert args.fast_tokenizer is not None  # parse_args guard
+        assert action_codec is not None
+        molmo2_config = load_molmo2_config(checkpoint_dir)
+        # Full multimodal model (decoder + untied head + vision tower);
+        # live runs get fp32 masters, frozen runs the bf16 mount
+        # convention (the release ships fp32 — never mount that raw).
+        molmo2_backbone = load_molmo2_model(
+            checkpoint_dir,
+            device=device,
+            dtype=(backbone_dtype if backbone_dtype is not None else torch.bfloat16),
+        )
+        molmo2_encoder = Molmo2Encoder(
+            str(checkpoint_dir),
+            max_crops=args.max_crops,
+            state_dim=state_dim,
+            hidden_size=molmo2_config.text.hidden_size,
+            device=device,
+            dtype=torch.float32,
+        )
+        ar_backbone_config = ARBackboneConfig(
+            tokenizer=args.fast_tokenizer,
+            vocab_total=action_codec.vocab_total,
+            # The SECOND extension block, directly after the 128 image
+            # specials — Qwen3's ~271-id unused tail cannot hold the
+            # 1,026 FAST ids (port plan §6 amendment; the embedding and
+            # fresh untied head rows are decoder-owned trainables).
+            block_base=molmo2_config.text.fast_block_base,
+            chunk_size=args.chunk_size,
+            action_dim=action_dim,
+            suffix_format=SUFFIX_FORMAT,
+            aux=aux_decode_config,
+        )
+        molmo2_text_tokenizer = Molmo2TextTokenizer(str(checkpoint_dir))
+        carriers = newline_carrier_ids(
+            molmo2_text_tokenizer,
+            text_vocab_size=molmo2_config.text.vocab_size,
+            terminator_id=molmo2_text_tokenizer.encode(
+                "\n",
+                add_special_tokens=False,
+            )[0],
+        )
+        molmo2_aux_runtime = (
+            build_aux_runtime(
+                aux_decode_config,
+                molmo2_text_tokenizer,
+                newline_carrier_ban=True,
+            )
+            if aux_decode_config is not None
+            else None
+        )
+        molmo2_decoder = Molmo2ARDecoder(
+            ar_backbone_config,
+            molmo2_config.text,
+            action_codec,
+            tokenizer=molmo2_text_tokenizer,
+            aux_runtime=molmo2_aux_runtime,
+            aux_loss_weight=args.aux_loss_weight,
+            newline_carrier_ids=carriers,
+            device=device,
+            dtype=torch.float32,
+        )
+        # Block logits/embeddings start near the frozen tables' row means
+        # (full-vocab CE competes against text priors); DDP's
+        # construction broadcast makes rank 0's draw authoritative.
+        molmo2_decoder.init_tables_from_backbone(molmo2_backbone)
+        model = BijouModel(
+            backbone=molmo2_backbone,
+            encoder=molmo2_encoder,
+            decoder=molmo2_decoder,
+        )
+        schedule_desc = (
+            f"molmo2 full-depth suffix, FAST extension block @ "
+            f"{ar_backbone_config.block_base}"
         )
     elif args.decoder == "ar_backbone":
         assert args.fast_tokenizer is not None  # parse_args guard
@@ -2665,14 +2804,23 @@ def main() -> int:
                 "embeddings/PLE tables frozen; fp32 masters, bf16 autocast)"
             )
         )
-        streams_desc = (
-            f"residual taps {model.encoder.residual_exports}"
-            if model.encoder.residual_exports
-            else str(model.encoder.exports)
-        )
+        banner_encoder = model.encoder
+        banner_backbone = model.backbone
+        if isinstance(banner_encoder, GemmaEncoder):
+            streams_desc = (
+                f"residual taps {banner_encoder.residual_exports}"
+                if banner_encoder.residual_exports
+                else str(banner_encoder.exports)
+            )
+            assert isinstance(banner_backbone, Gemma4Model)
+            n_backbone_layers = len(banner_backbone.language_model.layers)
+        else:
+            assert isinstance(banner_backbone, Molmo2Model)
+            streams_desc = "prefix cache (AR suffix)"
+            n_backbone_layers = len(banner_backbone.text.transformer.blocks)
         print(
             f"model: {backbone_desc} "
-            f"({len(model.backbone.language_model.layers)} "
+            f"({n_backbone_layers} "
             f"layers, streams {streams_desc}) + fp32 "
             f"{args.decoder} decoder ({n_trainable / 1e6:.1f}M params, "
             f"schedule {schedule_desc})",

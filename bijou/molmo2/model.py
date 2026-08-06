@@ -24,6 +24,7 @@ Faithful to the checkpoint's ``modeling_molmo2.py`` (conventions re-read
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import override
 
 import torch
@@ -217,7 +218,7 @@ class Molmo2Model(nn.Module):
 
 
 def load_model(
-    model_id_or_path: str,
+    model_id_or_path: str | Path,
     *,
     device: torch.device | str = "cpu",
     dtype: torch.dtype | None = None,

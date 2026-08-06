@@ -218,6 +218,8 @@ _BOUNDARY_PROBES: dict[AuxField, tuple[str, ...]] = {
 def build_aux_runtime(
     config: AuxDecodeConfig,
     tokenizer: TextTokenizer,
+    *,
+    newline_carrier_ban: bool = False,
 ) -> AuxRuntime:
     """Tokenize the versioned template's decode constants. The field
     terminator must be a single token (true for \\n under the Gemma
@@ -232,7 +234,14 @@ def build_aux_runtime(
     means the decode-side forced terminator would sit off the training
     manifold — the v2 header template broke the equivalent property
     (space merged into " yes") and shipped a silently-wrong holding
-    metric."""
+    metric.
+
+    ``newline_carrier_ban``: the caller's decoder bans every text id
+    whose decoded bytes carry a newline during value decoding
+    (ARSuffixDecoder.newline_carrier_ids), which restores the trained
+    split-form termination by construction — the boundary probe then
+    downgrades to a note (Qwen's BPE merges ``'%\\n'`` and fails the
+    probe; Gemma passes it and keeps the strict contract)."""
 
     def encode(text: str) -> tuple[int, ...]:
         return tuple(tokenizer.encode(text, add_special_tokens=False))
@@ -248,6 +257,16 @@ def build_aux_runtime(
             split = encode(value) + terminator
             joint = encode(value + FIELD_TERMINATOR)
             if split != tuple(joint):
+                if newline_carrier_ban:
+                    print(
+                        f"[aux] boundary probe differs for "
+                        f"{aux_field.value!r} (part {list(split)} != joint "
+                        f"{list(joint)}) — tolerated: the decoder bans "
+                        "newline-carrier ids, so decode terminates on the "
+                        "trained split-form terminator",
+                        flush=True,
+                    )
+                    continue
                 raise SystemExit(
                     f"aux template boundary broken for {aux_field.value!r}: "
                     f"part-encoding {list(split)} != joint {list(joint)} — "
@@ -313,6 +332,11 @@ class AuxSpec:
     block_base: int
     dropout: float
     field_dropout: float
+    # Build the text tokenizer from the checkpoint's own tokenizer.json
+    # (tokenizers backend) instead of AutoTokenizer — required for
+    # trust_remote_code-pinned checkpoints (Molmo2), whose AutoTokenizer
+    # load prompts interactively and cannot run in dataloader workers.
+    native_backend: bool = False
     # 16 truncated frequently on the curated corpus's judge subgoals
     # (observed in the first full-recipe run's logs); 20 = the decode
     # VALUE_BUDGETS cap.
@@ -346,9 +370,14 @@ class AuxSpec:
         if self._tokenizer is None:
             # Built lazily worker-side (the instance is dropped by
             # __getstate__); the tokenizer files are the processor dir's.
-            self._tokenizer = transformers.AutoTokenizer.from_pretrained(
-                self.tokenizer_dir,
-            )
+            if self.native_backend:
+                from .molmo2.tokenizer import Molmo2TextTokenizer
+
+                self._tokenizer = Molmo2TextTokenizer(self.tokenizer_dir)
+            else:
+                self._tokenizer = transformers.AutoTokenizer.from_pretrained(
+                    self.tokenizer_dir,
+                )
         return self._tokenizer
 
     def _encode(self, text: str) -> list[int]:

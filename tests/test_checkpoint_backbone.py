@@ -129,6 +129,7 @@ def make_args(save_dir: Path) -> TrainArgs:
         cameras=None,
         max_cameras=None,
         max_soft_tokens=140,
+        max_crops=1,
         stream_counts=(4, 4, 8),
         conditioning_streams="kv",
         self_attention_mode="causal_actions",
