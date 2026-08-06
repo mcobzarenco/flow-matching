@@ -114,6 +114,7 @@ from .loading import (
     load_adapted_backbone,
     load_backbone_init,
     prefix_global_layers,
+    residual_expert_config,
     resolve_action_codec,
 )
 from .model import BijouModel
@@ -156,6 +157,12 @@ class TrainArgs:
     max_cameras: int | None
     max_soft_tokens: int
     stream_counts: tuple[int, ...]
+    # Conditioning surface of the flow expert: "kv" = exported K/V of the
+    # global prefix layers (the shipped default, scheduled by
+    # --stream-counts); "residual" = FULL residual streams — hidden state
+    # after every prefix layer through learned decoder-side adapters,
+    # expert layer i reading trunk layer i (arch-batch-1 arm B).
+    conditioning_streams: str
     self_attention_mode: str
     time_conditioning: str
     # SnapFlow φ_s target-time embedding on the flow decoder (implied by
@@ -1111,6 +1118,7 @@ def save_checkpoint(
         ),
         prompt=GemmaPromptConfig(
             exports=model.encoder.exports,
+            residual_exports=model.encoder.residual_exports,
             max_soft_tokens=args.max_soft_tokens,
             format=PROMPT_FORMAT,
             state_dim=model.encoder.state_dim,
@@ -1162,6 +1170,10 @@ def ensure_matching_decoder_config(
         # additive.
         saved.setdefault("time_conditioning", TimeConditioning.ADDITIVE.value)
         saved.setdefault("target_time_embed", False)
+        # Pre-residual-conditioning checkpoints are K/V-conditioned.
+        saved.setdefault("residual_streams", False)
+        saved.setdefault("residual_stream_dim", None)
+        saved.setdefault("cross_attention_kv_heads", None)
         current = json.loads(
             json.dumps(dataclasses.asdict(decoder.config), default=str),
         )
@@ -1435,6 +1447,17 @@ def parse_args() -> TrainArgs:
         default=[4, 4, 7],
         help="decoder cross-attention layers per backbone KV stream, "
         "shallow to deep (0 skips a stream)",
+    )
+    parser.add_argument(
+        "--conditioning-streams",
+        choices=["kv", "residual"],
+        default="kv",
+        help="flow-expert conditioning surface: 'kv' = exported K/V of the "
+        "global prefix layers (default; scheduled by --stream-counts), "
+        "'residual' = FULL residual streams — the hidden state after every "
+        "prefix layer via learned decoder-side adapters, expert layer i "
+        "reading trunk layer i (flow decoder only; --stream-counts must "
+        "stay at its default — the schedule is structural)",
     )
     parser.add_argument(
         "--self-attention-mode",
@@ -1970,6 +1993,23 @@ def parse_args() -> TrainArgs:
                     f"{flag} sizes the flow/ar_fast decoders; ar_backbone "
                     "IS the backbone — drop the flag",
                 )
+    if raw.conditioning_streams == "residual":
+        # Residual conditioning is a flow-expert architecture: the schedule
+        # is structural (layer i reads trunk layer i), so the K/V schedule
+        # knob has nothing to size.
+        if raw.decoder != "flow":
+            parser.error(
+                "--conditioning-streams residual is a flow-expert "
+                f"architecture; --decoder {raw.decoder} conditions on "
+                "K/V exports only",
+            )
+        if raw.stream_counts != parser.get_default("stream_counts"):
+            parser.error(
+                "--stream-counts schedules K/V conditioning; under "
+                "--conditioning-streams residual the schedule is structural "
+                "(one stream per prefix layer, 1:1 ascending) — drop the "
+                "flag",
+            )
     for name, value in (
         ("--backbone-text-lr", raw.backbone_text_lr),
         ("--backbone-vision-lr", raw.backbone_vision_lr),
@@ -2007,6 +2047,7 @@ def parse_args() -> TrainArgs:
         max_cameras=raw.max_cameras,
         max_soft_tokens=raw.max_soft_tokens,
         stream_counts=tuple(raw.stream_counts),
+        conditioning_streams=raw.conditioning_streams,
         self_attention_mode=raw.self_attention_mode,
         time_conditioning=raw.time_conditioning,
         target_time_embed=raw.target_time_embed,
@@ -2397,20 +2438,35 @@ def main() -> int:
     # checkpoint dtype (bf16) exactly as before the unfreeze flags.
     backbone_dtype = torch.float32 if args.backbone_trained else None
     if args.decoder == "flow":
-        expert_config = default_expert_config(
-            load_config(checkpoint_dir),
-            action_dim=action_dim,
-            state_dim=state_dim,
-            stream_counts=args.stream_counts,
-            hidden_size=args.decoder_hidden,
-            num_attention_heads=args.decoder_heads,
-            intermediate_size=args.decoder_intermediate,
-            cross_attention_heads=args.decoder_cross_heads,
-            chunk_size=args.chunk_size,
-            self_attention_mode=SelfAttentionMode(args.self_attention_mode),
-            time_conditioning=TimeConditioning(args.time_conditioning),
-            target_time_embed=args.target_time_embed,
-        )
+        if args.conditioning_streams == "residual":
+            expert_config = residual_expert_config(
+                load_config(checkpoint_dir),
+                action_dim=action_dim,
+                state_dim=state_dim,
+                hidden_size=args.decoder_hidden,
+                num_attention_heads=args.decoder_heads,
+                intermediate_size=args.decoder_intermediate,
+                cross_attention_heads=args.decoder_cross_heads,
+                chunk_size=args.chunk_size,
+                self_attention_mode=SelfAttentionMode(args.self_attention_mode),
+                time_conditioning=TimeConditioning(args.time_conditioning),
+                target_time_embed=args.target_time_embed,
+            )
+        else:
+            expert_config = default_expert_config(
+                load_config(checkpoint_dir),
+                action_dim=action_dim,
+                state_dim=state_dim,
+                stream_counts=args.stream_counts,
+                hidden_size=args.decoder_hidden,
+                num_attention_heads=args.decoder_heads,
+                intermediate_size=args.decoder_intermediate,
+                cross_attention_heads=args.decoder_cross_heads,
+                chunk_size=args.chunk_size,
+                self_attention_mode=SelfAttentionMode(args.self_attention_mode),
+                time_conditioning=TimeConditioning(args.time_conditioning),
+                target_time_embed=args.target_time_embed,
+            )
         model = from_backbone(
             checkpoint_dir,
             expert_config,
@@ -2418,7 +2474,12 @@ def main() -> int:
             dtype=backbone_dtype,
             expert_dtype=torch.float32,
         )
-        schedule_desc = str(expert_config.cross_attention_schedule)
+        schedule_desc = (
+            f"residual res0..res{max(expert_config.streams)} (1:1 ascending, "
+            "learned adapters)"
+            if expert_config.residual_streams
+            else str(expert_config.cross_attention_schedule)
+        )
     elif args.decoder == "ar_backbone":
         assert args.fast_tokenizer is not None  # parse_args guard
         assert action_codec is not None
@@ -2579,10 +2640,15 @@ def main() -> int:
                 "embeddings/PLE tables frozen; fp32 masters, bf16 autocast)"
             )
         )
+        streams_desc = (
+            f"residual taps {model.encoder.residual_exports}"
+            if model.encoder.residual_exports
+            else str(model.encoder.exports)
+        )
         print(
             f"model: {backbone_desc} "
             f"({len(model.backbone.language_model.layers)} "
-            f"layers, streams {model.encoder.exports}) + fp32 "
+            f"layers, streams {streams_desc}) + fp32 "
             f"{args.decoder} decoder ({n_trainable / 1e6:.1f}M params, "
             f"schedule {schedule_desc})",
             flush=True,

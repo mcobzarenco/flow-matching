@@ -53,6 +53,14 @@ def kv_stream_name(layer_idx: int) -> str:
     return f"kv{layer_idx}"
 
 
+def residual_stream_name(layer_idx: int) -> str:
+    """Residual-stream conditioning naming: the hidden state AFTER backbone
+    layer ``layer_idx`` travels as the raw tap ``"res{layer_idx}"``; the
+    flow decoder's learned adapter projects it into a MemoryStream of the
+    same name (arch-batch-1 arm B, 2026-08-06)."""
+    return f"res{layer_idx}"
+
+
 @dataclass(frozen=True, slots=True)
 class StreamGeometry:
     """Static per-stream contract, known at construction time.
@@ -118,17 +126,28 @@ class ObservationMemory:
     views — retained only when the decoder consumes the whole prefix
     state (the decoder-only backbone path continues the suffix through it);
     None for stream-consuming decoders, freeing the non-exported layers.
-    Consumers that need it check for None and fail fast."""
+    Consumers that need it check for None and fail fast.
+
+    ``residuals`` are RAW residual-stream taps (hidden state after backbone
+    layer i, [B, P, backbone_hidden], keyed ``res{i}``) — exported by the
+    encoder but NOT yet conditioning streams: the flow decoder's learned
+    adapters project them into ``streams`` entries of the same name
+    (FlowDecoder.attach_residual_streams), OUTSIDE the possibly-no-grad
+    prefix encode so the adapters train under a frozen backbone. None once
+    attached (or when the model has no residual conditioning)."""
 
     streams: dict[str, MemoryStream]
     length: int
     padding_mask: Tensor | None
     cache: KVCache | None = None
+    residuals: dict[str, Tensor] | None = None
 
     @property
     def batch_size(self) -> int:
-        first = next(iter(self.streams.values()))
-        return first.key.shape[0]
+        if self.streams:
+            return next(iter(self.streams.values())).key.shape[0]
+        assert self.residuals is not None  # one of the two always exists
+        return next(iter(self.residuals.values())).shape[0]
 
 
 class BatchInputs(Protocol):

@@ -18,6 +18,7 @@ Faithful reimplementation of HF's ``Gemma4TextModel``:
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import override
 
 import torch
@@ -587,6 +588,8 @@ class TextModel(nn.Module):
         padding_mask: Tensor | None = None,
         cache: KVCache | None = None,
         kv_stop_layer: int | None = None,
+        residual_taps: Sequence[int] = (),
+        residual_sink: dict[int, Tensor] | None = None,
     ) -> Tensor:
         """Returns the final hidden states [B, S, hidden].
 
@@ -599,6 +602,13 @@ class TextModel(nn.Module):
         only the layer's input). Requires ``cache``; the return value is
         then the stop layer's input WITHOUT the final norm — only the cache
         contents are meaningful.
+
+        ``residual_taps``/``residual_sink``: record the hidden state AFTER
+        each listed layer (post both residual adds — the residual stream the
+        next layer consumes) into the caller's sink dict, [B, S, hidden] per
+        tap. A tapped layer must run FULLY, so every tap must sit strictly
+        below ``kv_stop_layer`` when one is set (the stop layer runs only
+        its K/V projection). Both or neither.
 
         Shapes (T = seen + S; = S without a cache):
           - input_ids: [B, S]
@@ -656,6 +666,20 @@ class TextModel(nn.Module):
                     f"kv_stop_layer {kv_stop_layer} outside the stack "
                     f"({len(self.layers)} layers)",
                 )
+        if bool(residual_taps) != (residual_sink is not None):
+            raise ValueError("residual_taps and residual_sink travel together")
+        taps = frozenset(residual_taps)
+        for tap in taps:
+            if not 0 <= tap < len(self.layers):
+                raise ValueError(
+                    f"residual tap {tap} outside the stack ({len(self.layers)} layers)",
+                )
+            if kv_stop_layer is not None and tap >= kv_stop_layer:
+                raise ValueError(
+                    f"residual tap {tap} at/after kv_stop_layer "
+                    f"{kv_stop_layer} — the stop layer never runs fully, so "
+                    "its output does not exist",
+                )
 
         hidden_states = inputs_embeds
         shared_kv: SharedKV = {}
@@ -682,6 +706,9 @@ class TextModel(nn.Module):
                 shared_kv,
                 cache,
             )
+            if i in taps:
+                assert residual_sink is not None  # validated above
+                residual_sink[i] = hidden_states
         if cache is not None:
             cache.advance(q_len)
 

@@ -130,6 +130,7 @@ def make_args(save_dir: Path) -> TrainArgs:
         max_cameras=None,
         max_soft_tokens=140,
         stream_counts=(4, 4, 8),
+        conditioning_streams="kv",
         self_attention_mode="causal_actions",
         time_conditioning="additive",
         target_time_embed=False,

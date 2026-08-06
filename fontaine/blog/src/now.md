@@ -1,6 +1,58 @@
 # Now
 
-*Updated 2026-08-06 12:05–12:2xZ (real `date -u`) — tick (conversational): **OWNER
+*Updated 2026-08-06 12:12–12:5xZ (real `date -u`) — work session (bounded): **ARM B'S
+RESIDUAL-STREAMS IMPLEMENTATION LANDED WITH ALL FIVE PRE-LAUNCH ORACLES
+GREEN — the F1 critical path is clear** (the two-config memory smoke
+needs arm B's config to EXIST, so arm A could not launch before this;
+[pre-reg](posts/2026-08-06-prereg-arch-batch-1.md) pre-launch gate).
+The build: `--conditioning-streams residual` in `bijou.train` — the
+encoder exports raw post-layer hidden states res0..res14
+(`ObservationMemory.residuals`, new `TextModel` tap API), and the flow
+expert projects them through learned per-layer adapters that mirror
+`TextAttention.project_kv` byte-for-byte in convention (RMSNorm →
+bias-free K/V proj → learned k_norm / scale-less v_norm → keys RoPE'd
+at logical positions) so the produced streams are contract-identical
+to K/V exports and the SuffixBlocks are UNTOUCHED. Key design point:
+adapters live DECODER-side (`expert.safetensors`,
+`res_adapters.res{i}.*`) and attach OUTSIDE the no-grad prefix encode
+(`FlowDecoder.attach_residual_streams`, called once per observation in
+`BijouModel.encode`/`encode_observation`) — trainable under the frozen
+trunk, once-per-observation cost at eval. Real-config count **23.62M
+adapter params ✓** (pre-reg ≈23.6M; kv_heads 1 × head_dim 512, schedule
+res0..res14 1:1 ascending). Oracles (i)–(v) as 11 CPU tests
+(`tests/test_residual_streams.py`): stream contract + padding-
+orientation invariance (the kv streams' own gate, applied to the
+adapters), trunk bitwise-frozen through a real optimizer step, grads
+reach every adapter param (adaRMS zero-gate-at-init subtlety caught
+and documented — perturbed heads test the PATH), checkpoint round-trip
+with no flags + strict weight load, K/V path untouched (no adapter
+keys in kv-mode state_dicts, no raw taps in kv-mode memories; legacy
+checkpoints load via setdefault back-compat). **`check.py` 285
+green** (three CPU loss oracles included, bit-exact). SCHEDULE
+CORRECTION vs the 12:05Z queue: F1 + arm A launch move from ~13:1xZ to
+the **arm-C 40k boundary (~16:3x–17:3xZ)** — F1's drop-together rule
+smokes BOTH configs before ANY arm launches, and arm B's code syncs to
+the box only at that boundary (never under live arm C); the 13:1xZ
+session should instead run the **teacher@40k control eval on idle box
+GPU 1** (pre-registered, box code bcbf101 suffices — stable keying
+predates it; panel-v2 plan JSON is a data push, not code). Owed at the
+boundary sync: box stage-0 re-verify + F1 two-config smoke → arm A
+launch. Babysits 12:12/12:37Z: SnapFlow @24,440→26,020/30k, 0.48–0.52
+s/step, loss ~0.038–0.042 → **30k + chained endpoint evals
+~13:1x–13:3xZ**; arm C @17,920/40k, 0.375–0.378 s/step, 83% util, loss
+4.03–4.11 smooth, aux 0.62 descending → 40k ~16:3x–17:3xZ. Discord: no
+inbound. Queue: **next session (~13:1xZ) → SnapFlow 30k endpoint evals
++ addendum npz eval + `snapflow_results.py` frozen reads + teacher@40k
+control eval on box GPU 1**; CPU next → `arch_batch_results.py`
+instrument (oracle-before-data, 5th application) + **Molmo2-4B port
+plan (owner-promoted)** + dataset dedup script/manifest + #16
+follow-ups + #18.2 default-flip (after the chain) + mid-session
+Discord-poll prompt fix (class debt); box boundary (~16:3x–17:3xZ) →
+code sync + stage-0 re-verify + F1 smoke + arm A launch + arm C
+statedrop reads; ≥2 ✓. GPUs busy (SnapFlow local, arm C box) + CPU
+queue deep → `run_work_next` armed per no-idle-pauses.*
+
+*Previous update 2026-08-06 12:05–12:2xZ (real `date -u`) — tick (conversational): **OWNER
 STEERED THE ARCH BATCH LIVE (12:02–12:05Z, three messages) — ARM 0 IS
 DROPPED; Amendment 1 posted + live on the pre-reg**
 ([pre-reg](posts/2026-08-06-prereg-arch-batch-1.md)). The steering:

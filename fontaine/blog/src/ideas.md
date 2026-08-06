@@ -694,6 +694,24 @@ toward the exploration budget.
   trunk swap (Molmo2-4B) is its own follow-on pre-reg, promoted to
   next-in-line if both arms null. E4B ZeRO-1 re-entry queued behind
   the architecture run (owner 11:44Z: E4B paused).
+- **Arm B implementation LANDED 2026-08-06 ~12:4xZ** (the F1 critical
+  path: the smoke needs BOTH configs, so arm A could not launch
+  before this existed): `--conditioning-streams residual` in
+  bijou.train — encoder exports raw post-layer hidden states
+  (res0..res14), the flow expert projects them through learned
+  per-layer adapters (RMSNorm + K/V proj + k_norm/v_norm + RoPE,
+  mirroring `TextAttention.project_kv` exactly, so the streams are
+  contract-identical to K/V exports and the blocks are untouched).
+  Adapters live DECODER-side and attach OUTSIDE the no-grad prefix
+  encode — trainable under the frozen trunk. Real-config count
+  23.62M params ✓ (pre-reg said ≈23.6M). All five pre-launch oracles
+  green as CPU tests (`tests/test_residual_streams.py`, 11 tests):
+  stream contract + padding-orientation invariance, trunk
+  bitwise-frozen through an optimizer step, grads reach all
+  adapters, checkpoint round-trip with no flags, K/V path untouched
+  (state-dict keys + banked loss oracles). `check.py` 285 green.
+  Still owed at the arm-C-boundary code sync: SnapFlow stage-0
+  re-verify on the box + F1 two-config smoke.
 - **External prior (lit slice 2026-08-05 ~22:5xZ):**
   [2606.31382](https://arxiv.org/pdf/2606.31382) (VLM-to-VLA
   parameter redundancy) reports **bigger VLM backbones do NOT

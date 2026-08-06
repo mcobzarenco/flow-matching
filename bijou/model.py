@@ -103,13 +103,22 @@ class BijouModel(nn.Module):
         backbone. ``with_grad=False`` runs under no_grad (eval/rollout/
         frozen training); True leaves autograd on for live-backbone
         training. The full prefix cache is retained iff this model's
-        decoder consumes it (the ar_backbone suffix role)."""
-        return self.encoder.encode(
+        decoder consumes it (the ar_backbone suffix role).
+
+        Residual-conditioned flow experts project the encoder's raw taps
+        into conditioning streams HERE — after the (possibly no-grad)
+        prefix encode, in the caller's grad context, once per observation
+        — so the adapters train under a frozen backbone and eval pays the
+        projection once, not per velocity evaluation."""
+        memory = self.encoder.encode(
             self.backbone,
             inputs,
             with_grad=with_grad,
             retain_cache=isinstance(self.decoder, ARBackboneDecoder),
         )
+        if isinstance(self.decoder, FlowDecoder):
+            memory = self.decoder.attach_residual_streams(memory)
+        return memory
 
     @property
     def expert(self) -> FlowDecoder | ARFastDecoder | ARBackboneDecoder:
@@ -236,8 +245,9 @@ class BijouModel(nn.Module):
     ) -> ObservationMemory:
         """Tensor-level observation encode (shapes in
         GemmaEncoder.encode_tensors);
-        grad-transparent — training wraps it in autocast, eval in no_grad."""
-        return self.encoder.encode_tensors(
+        grad-transparent — training wraps it in autocast, eval in no_grad.
+        Residual taps are attached exactly as in :meth:`encode`."""
+        memory = self.encoder.encode_tensors(
             self.backbone,
             input_ids,
             pixel_values=pixel_values,
@@ -246,6 +256,9 @@ class BijouModel(nn.Module):
             state=state,
             state_slot=state_slot,
         )
+        if isinstance(self.decoder, FlowDecoder):
+            memory = self.decoder.attach_residual_streams(memory)
+        return memory
 
     @torch.no_grad()
     def predict_chunk(
