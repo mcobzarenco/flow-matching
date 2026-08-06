@@ -3425,6 +3425,20 @@ def main() -> int:
                         "samples": step * args.batch_size * world_size,
                         "s_per_step": round(dt, 3),
                     }
+                    if device.type == "cuda":
+                        # True torch-side peaks since process start —
+                        # nvidia-smi only sees the reserved pool, which
+                        # under expandable_segments never shrinks (the
+                        # molmo2 smoke-ladder lesson: reserved shadows
+                        # hid the live/steady-state gap entirely).
+                        record["vram_alloc_peak_gib"] = round(
+                            torch.cuda.max_memory_allocated(device) / 2**30,
+                            2,
+                        )
+                        record["vram_reserved_gib"] = round(
+                            torch.cuda.memory_reserved(device) / 2**30,
+                            2,
+                        )
                     if aux_totals is not None:
                         record["loss_action"] = round(action_mean.item(), 4)
                         if float(aux_totals[1]) > 0:
@@ -3453,6 +3467,22 @@ def main() -> int:
                         if "loss_aux" in record:
                             wandb_metrics["train/loss_aux"] = record["loss_aux"]
                         wandb_run.log(wandb_metrics, step=step)
+
+            if (
+                os.environ.get("BIJOU_MEM_SNAPSHOT")
+                and device.type == "cuda"
+                and step == int(os.environ.get("BIJOU_MEM_SNAPSHOT_STEP", "0"))
+            ):
+                # Forensics without an OOM: every rank dumps its
+                # allocation history at this step — the history covers
+                # everything since process start (incl. the step-1
+                # transient peak), not just live blocks.
+                path = (
+                    f"{os.environ['BIJOU_MEM_SNAPSHOT']}_step{step}"
+                    f"_rank{os.environ.get('RANK', '0')}.pickle"
+                )
+                torch.cuda.memory._dump_snapshot(path)
+                print(f"mem-snapshot: step {step} — dumped {path}", flush=True)
 
             if train_probe is not None and step % args.eval_every == 0:
                 # Collective: every rank scores its shards, the MAE sums
