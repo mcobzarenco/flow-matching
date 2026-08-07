@@ -91,3 +91,23 @@
   (p=1.000); SigLIP frozen 0.14 / SigLIP-LoRA 0.43 vs 0.74 fully
   trainable; metric is ATP (sub-goal progress), not success rates;
   plateau beyond r=32 may partly be the α=r scaling rule.
+- **Proxy-validity slice (2026-08-07,
+  [page](../papers/offline-validation.md), 5 sources): our metric
+  class is measured.** CI-MSE (2606.29898) correlated raw
+  validation MSE against real+sim rollout success over 27 VLA
+  checkpoints (π0.5, X-VLA, GR00T N1.7): Spearman −0.61 — and in
+  their data-scale family raw MSE ranked checkpoints *backwards*
+  (+0.90). Their repair (score only task-critical frames +
+  rollout-like alignment) reaches −0.87. **New rung banked —
+  critical-frame re-pooling, CPU-only:** our aux labels
+  (event/holding transitions, subgoal boundaries) mark the critical
+  frames CI-MSE pays a VLM to find, and every leaderboard eval
+  already dumps per-frame npz — re-pool existing dumps over
+  critical frames and check whether any published ranking reorders.
+  Cheapest possible proxy early-warning; needs a small pre-reg
+  (frame-selection rule frozen before any number is read). Also
+  banked: MMRV (SIMPLER 2405.05941) as the scoring rule for any
+  future proxy-vs-rig audit, weighted by real margins rather than
+  Pearson; AutoEval's (2503.24278) caveat that proxy fidelity is
+  policy-dependent — a proxy validated on one family doesn't
+  transfer free to the next.

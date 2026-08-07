@@ -3,7 +3,76 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-07 16:37–16:5xZ (real `date -u`) — work session:
+**attach-launch-save-cadence-prep LANDED** (`c4555d4`: both attach
+launchers `--save-every 2500 → 1250` matched + pre-reg amendment 2;
+pinned-buffer refinement deliberately deferred) + the standing lit
+slice with same-session papers page
+([offline-validation](papers/offline-validation.md) — our panel's
+metric class measured at ρ −0.61 vs rollout success; a cheap
+critical-frame re-pooling screen banked to #16). Queue refilled to
+depth 3. Both runs green.*
+
+**Status** (babysit 16:50Z):
+- box molmo2 AR 40k — 24700/40k, loss 3.034, 2.172 s/step, vram
+  67.07 ≤ 71, 30.1 steps/min window. Probe 6.81@24500 (in-band, no
+  ≥7.5 pair). Gate margin 4.93. ~9.2 h to 40k → endpoint ~08-08
+  morning.
+- local **ar100k_tsens_q4 rung t0.5** — 1472/4301 @ 30.1 f/min
+  window, cumulative 28.1 f/min → ~1.7 h remaining, projection
+  2.6 ≤ 12 gate. Rung roll t0.5 → t0.7 ~18:3xZ (repoint the babysit
+  `log` stem at the first tick after); all rungs ~00Z 08-08.
+
+**Steering**: none (polls 16:37 / 16:45 / 16:50Z all clean).
+
+**Done**: this session —
+(1) **attach-launch-save-cadence-prep** (`c4555d4`, queue item from
+the #18.9 checkpointing hooks): both attach-screen launchers now
+save every 1250 (was 2500) — async saves (`e3bdc93`) removed the
+step-stall side of the trade, so halving the interval halves
+worst-case driver-kill recovery loss (~108 → ~54 min wall at K's
+est rate; 3 kill incidents on 08-07 made that concrete) for seconds
+of capture stall per extra save and ~40 GB/extra K save vs 6.3 T
+free on the box (F saves small — frozen backbone hardlinks). Every
+posted judgment boundary (5000/7500 kill evals, 10k endpoint,
+5k-downshift matched read) stays a save boundary; matched BOTH
+arms, seam still the only contrast. Codified as **pre-reg
+amendment 2** (operational, pre-launch) on the attach-screen post;
+prepared babysit entries updated. **Pinned-buffer refinement
+(DataStates) DEFERRED** — capture stall is seconds against a
+≥26-min interval (<0.2% overhead); not worth touching the
+oracle-gated save path the day before a 50–70 GPU-h screen. Stays
+banked on #18.9. check.py 460 green.
+(2) **Lit slice + papers page**
+([offline-validation](papers/offline-validation.md), 5 sources):
+the proxy question under the whole leaderboard, measured — CI-MSE
+(2606.29898) puts raw validation MSE at Spearman −0.61 vs rollout
+success over 27 VLA checkpoints, with a sign-flip case (data-scale
+family ranked backwards); their repair (critical-frame pooling +
+rollout-like alignment) reaches −0.87. Transfers banked: a CPU-only
+**critical-frame re-pooling screen** over existing npz dumps (aux
+labels give us the critical frames CI-MSE pays a VLM for) → new
+queue item; MMRV as the metric for any future proxy-vs-rig audit;
+the collector-mismatch caveat for future rig eval sets. Non-flip
+humility clause written into the page (their sign flip is not
+evidence ours flips).
+(3) Queue: save-cadence prep → done; refilled
+`idea16-critical-frame-repooling` + `idea1-golden-ticket-prereg-draft`
+(both CPU, GPU-busy-window class); validate green depth 3.
+
+**Next**: `queue_cli.py next` → the queued CPU items
+(critical-frame re-pooling pre-reg, golden-ticket pre-reg draft) in
+GPU-busy windows; **idea19-tsens-dt-read-execution** opens at rungs
+completion ~00Z 08-08 (reads land against the decode-temperature
+page's written prior). Dated boundaries: tsens rung roll ~18:3xZ
+(babysit stem repoint t0.5 → t0.7) → rungs complete ~00Z 08-08 (dT
+read, record-only); molmo2 endpoint ~08-08 morning → #19 box
+obligations → K smoke ladder → attach-screen window (first save
+validates async ckpt in production, now at 1250 cadence). **Every
+GPU launch goes through `run_detached.sh`.**
 
 *Updated 2026-08-07 16:34–16:4xZ (real `date -u`) — tick (babysit):
 both runs green, no steering, no incident — first clean poll since
@@ -111,56 +180,6 @@ attach-screen window (first save validates async ckpt in
 production; save-cadence prep item now queued for that launch).
 **Every GPU launch from here goes through `run_detached.sh`.**
 
-*Updated 2026-08-07 15:56–16:2xZ (real `date -u`) — tick (babysit +
-incident + owner q): **tsens q4 DEAD AGAIN at poll — THIRD
-driver-background-task-guard incident, ROOT CAUSE UPGRADED**: the
-15:13:44Z setsid relaunch was killed ~15:54–15:56Z when
-`fontaine-tick.service` finished (journalctl: unit stopped 15:56:18Z
-→ systemd killed its whole **cgroup**; setsid escapes the terminal
-session, NOT the cgroup). **Relaunched 15:58:26Z via `systemd-run
---user --unit=fontaine-tsens-q4`** — its own transient unit, actually
-outside the driver's cgroup. Owner question 15:48Z ("what is tsens
-t0.5?") answered in-channel 15:57Z. molmo2 green.*
-
-**Status** (babysit 15:56Z):
-- box molmo2 AR 40k — 23240/40k, loss 3.0747, 2.229 s/step, vram
-  67.07 ≤ 71, 26.3 steps/min window. Probe 5.97@22500 → 6.05@23000.
-  Gate margin 4.93. ~10.4 h stepping + saves → endpoint ~08-08
-  morning.
-- local **ar100k_tsens_q4 3rd launch** — rung t0.5 restarted from
-  frame 0 (992 frames = ~40 min lost from the 2nd kill). Launch
-  sequence: draws10_t1 registry entry temp-restored from `85cdc0a` →
-  primary gate re-passed 12.7 ≤ 24 → entry re-pruned; first
-  `systemd-run` attempt died exit 127 (`uv` not on the clean unit's
-  PATH — fixed with `--setenv=PATH/HOME`); gate + rung T=0.5 start
-  confirmed in `journalctl --user -u fontaine-tsens-q4`. babysit
-  started_utc repointed 15:58:26Z. Rung roll t0.5 → t0.7 now ~19:1xZ
-  (repoint the babysit `log` stem); all rungs ~01:3xZ 08-08.
-
-**Steering**: owner 15:48Z asked what tsens t0.5 is — answered
-15:57Z (T-sensitivity rung definition + record-only framing) in the
-same post as the third-incident report; no further reply by close.
-
-**Done**: tick — babysit (molmo2 green; tsens dead-run diagnosed to
-the CGROUP mechanism via journalctl, not a compliance failure of the
-setsid rule); tsens relaunched in a transient unit + gate re-passed +
-registry dance executed + started_utc repointed; queue item
-`driver-background-task-guard` gained third-incident evidence + the
-systemd-run codification ask; memory file
-no-end-turn-waiting-on-notifications REWRITTEN (setsid insufficient
-by mechanism; systemd-run pattern + PATH gotcha); owner q answered;
-`queue_cli.py validate` green (depth 2, 12 open); run_work_next
-already armed.
-
-**Next**: chained work session → **driver-background-task-guard**
-(now with the true mechanism in hand: codify systemd-run as the
-required GPU-launch wrapper, consider KillMode=process for the tick
-service, driver test). Boundaries: tsens rung roll ~19:1xZ (babysit
-stem repoint) → rungs complete ~01:3xZ 08-08 (dT read, record-only);
-molmo2 endpoint ~08-08 morning → #19 box obligations → K smoke
-ladder → attach-screen window (first save validates async ckpt in
-production).
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -175,6 +194,15 @@ the tick-service cgroup teardown (+~0.7 GPU-h lost, 992 frames),
 accruing from the 15:58:26Z systemd-run 3rd launch, ≤12 GPU-h gate). Older dated
 snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
+
+Session 16:37–16:5xZ: all-CPU work session, 0 GPU-h new (tsens +
+molmo2 accruing under their own gates) — exploit/infra + sanctioned
+lit: attach-launch-save-cadence-prep landed (`c4555d4`, save-every
+2500→1250 both arms + pre-reg amendment 2; pinned-buffer deferred
+with stated arithmetic) + the offline-validation lit slice with
+same-session papers page (5 sources; panel proxy measured ρ −0.61,
+critical-frame re-pooling rung banked to #16); queue 1 done, 2
+refilled, depth 3.
 
 Session 16:06–17:3xZ: all-CPU work session, 0 GPU-h new (tsens +
 molmo2 accruing under their own gates) — exploit/infra + sanctioned

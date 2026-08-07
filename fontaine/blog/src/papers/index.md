@@ -37,6 +37,7 @@ same session it is banked.
 | [The initialization thread](vla-initialization.md) | 2605.25802, 2601.03309 | #17 trunk criterion, #4 — F's frozen-vision caveat + the vision-first diagnostic |
 | [Checkpointing without stalling](checkpointing-systems.md) | CheckFreq, Gemini, 2406.10707, 2511.07035, 2605.17821, 2512.24511 | #18.9 async saves (landed `e3bdc93`) — design corroborated; pinned-buffer + save-frequency hooks banked |
 | [Decode-time stochasticity](decode-temperature.md) | 2605.22493, 2605.29766, 2603.20538, 2605.30660, 2508.20072 | #19 — the dT read's directional prior; 2nd strike on cheap probe selectors; q-token theory anchor |
+| [Offline validation: does the panel predict the robot?](offline-validation.md) | 2606.29898, 2605.00066, 2405.05941, 2503.24278, 2602.12691 | #16 — raw-MSE proxy measured at ρ −0.61 (sign flips exist); critical-frame re-pooling rung banked; MMRV for future proxy audits |
 
 ## Retroactive backlog
 

@@ -42,7 +42,10 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
 - **`rig-benchmark` [#16 Few-shot rig-transfer benchmark](ideas/16-rig-transfer-benchmark.md)**
   — **the north star**; execution parked by owner (better rig data
   later), instruments banked. Short-term proxy: comm-holdout MAE +
-  attribution.
+  attribution. New 2026-08-07: the proxy itself got a lit slice
+  ([offline-validation](papers/offline-validation.md) — raw MSE
+  measured at ρ −0.61 vs rollout success, sign flips exist);
+  critical-frame re-pooling rung banked (CPU, existing npz dumps).
 - **`lit-arms` [#15 Literature-sourced arms](ideas/15-literature-arms.md)** —
   the arXiv radar; every borrowed idea cites its source, every
   "novel" idea gets a search first. Feeds the Papers section.
