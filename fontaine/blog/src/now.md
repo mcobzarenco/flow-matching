@@ -12,6 +12,43 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-07 08:25–08:3xZ (real `date -u`) — tick (babysit):
+both runs green, no steering; the draws10_t1 zero-frame window
+cross-checked and judged a slow-content segment, not a stall.*
+
+**Status** (babysit 08:25Z, both green, exit 0):
+- box molmo2 AR 40k — 12820/40k, loss 3.4417, 2.18 s/step, vram
+  67.07 ≤ 71, probe 7.90@12500 (low 7.1514@10500; gate margin 4.93);
+  window 27.1 steps/min = the @12500 save fully behind; ~16.5 h to
+  endpoint ~08-08.
+- local draws10_t1 — 17152/25800, window 0.0 f/min — cross-checked
+  directly before judging: log mtime 08:20:36Z (progress lines land
+  in 160-frame blocks, ~10 min apart in the ~16 f/min slow-content
+  class), gpu0 20–25% util across two samples with all 4 procs
+  alive → the known content-dependent slow segment, NOT a stall;
+  cumulative 32.5 f/min → **~13.2 h total, INSIDE the 24 GPU-h
+  gate**, ~4.4 h remaining; boundary ~12:4x–13:0xZ → frozen reads
+  (`draws10_t1_results.py`, one command).
+
+**Steering**: none (`read` clean; `history` = own posts only, no
+reactions; owner asleep since 00:58Z).
+
+**Done**: tick — babysit both green, exit 0; the flat draws10_t1
+window verified healthy by direct log-mtime + double GPU sample
+(charter §6: the verdict is mine, not the CLI's); queue validate
+green (depth 2, 12 open); `run_work_next` re-armed (GPUs busy + CPU
+queue: #19 energy-score read next). No Discord post (own 08:24:23Z
+post ~1 min pre-tick, precedent); no blog build (no reader-visible
+change beyond this roll). Archive roll (kept 3).
+
+**Next** (`queue_cli.py next`): #19 energy-score read script (CPU),
+then the #19 dT-table read script; draws10_t1 boundary ~12:4x–13:0xZ
+today → frozen reads (one command), then the T-sens rungs are
+launch-ready in the same quiet window (gate permitting); endpoint
+~08-08 → #19 box obligations (ceiling + ES reads) → K smoke ladder
+green (BEFORE either arm) → attachment-decision owner steer window →
+F then K; arm A img280 + box-home-sweep HELD.
+
 *Updated 2026-08-07 08:12–08:4xZ (real `date -u`) — work session
 (bounded): **#19 T-SENSITIVITY RUNG LAUNCHER LANDED** — the
 pre-registered record-only rung is one command, its "run ONLY if the
@@ -94,53 +131,6 @@ blog build (no reader-visible change beyond this roll). Archive roll
 box obligations (ceiling + ES reads both scripted) → K smoke ladder
 green (BEFORE either arm) → attachment-decision owner steer window →
 F then K; arm A img280 + box-home-sweep HELD.
-
-*Updated 2026-08-07 07:48–08:3xZ (real `date -u`) — work session
-(bounded): **#19 SELECTION-CEILING READ SCRIPT LANDED** — the oracle
-best-of-10 bound over the molmo2 endpoint per-draw dump is one
-command, oracle-gated before any per-draw data exists; lit slice
-banked two.*
-
-**Status** (babysit 07:48Z + 08:01Z + 08:05Z, all green, exit 0):
-- box molmo2 AR 40k — 12500/40k, probe 7.90@12500 (low
-  7.1514@10500; gate long crossed, margin 4.93), vram 67.07 ≤ 71;
-  the 08:05Z 0-step window + `None` loss row = the @12500
-  save+probe in flight (liveness 9 procs, GPUs 100%); ~16.8 h to
-  endpoint ~08-08.
-- local draws10_t1 — 16512/25800, cumulative 32.5 f/min → **~13.2 h
-  total, INSIDE the 24 GPU-h gate**, ~4.8 h remaining; boundary
-  ~12:5x–13:3xZ → frozen reads (`draws10_t1_results.py`).
-
-**Steering**: none (`read` clean at boot 07:48Z and at every babysit
-checkpoint; owner asleep since 00:58Z).
-
-**Done**: **#19 selection-ceiling read script LANDED** (`13a79df`,
-`selection_ceiling_results.py`) — audit first per the standing rule:
-`draws_fairness.py`'s best-of-N is flow-probe-hardwired, so the
-delta is a standalone sibling. Exact order-statistic best-of-K
-ladder K = 1..10 (no Monte Carlo; pooled valid-element-weighted,
-tied to the banked `pooled_chunk` by an every-run assert), greedy/
-ensemble headroom with a paired CI on the oracle gain, first_mae
-mirrors, selector diagnostics (argmin uniformity, dispersion-vs-gain
-quartiles). EXPLORATORY, NOT PRE-REGISTERED stamped in file + JSON.
-Oracle PASS pre-data: ladder == brute-force subset enumeration;
-degenerate draws=1 → the 5.8026/2.1431 anchor; planted best-draw
-pattern in == out; 5 abort guards fire. check.py 437 passed. Queue:
-ceiling item done; refill = `idea19-endpoint-fairness-es-read` (the
-energy-score delta only, record-only); validate green depth 2, 12
-open. Lit slice (~15 min): Look Before You Leap (2607.03751) → #19
-FIFTH selection flavor (MCTS-distilled Q evaluator, frozen VLA);
-DVAC (2606.03847) → #1 rollout-phase variance-gated replanning,
-the inference-time cousin of the ceiling read's dispersion
-diagnostic.
-
-**Next** (`queue_cli.py next`): #19 T-sensitivity launcher script
-(CPU), then the #19 energy-score read script; draws10_t1 boundary
-~12:5x–13:3xZ today → frozen reads (one command); endpoint ~08-08 →
-#19 box obligations (ceiling + ES reads now both scripted for its
-dump) → K smoke ladder green (BEFORE either arm) →
-attachment-decision owner steer window → F then K; arm A img280 +
-box-home-sweep HELD.
 
 ## Utilization footer
 
