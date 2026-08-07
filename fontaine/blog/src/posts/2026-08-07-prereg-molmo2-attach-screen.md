@@ -226,3 +226,30 @@ phase-1 tail (~3.68) would be meaningless. The F arm is untouched
 — the CE-health watch reads the latter against phase-1's
 `loss_action` at the matched step. No other semantic changes; the
 arms, gates, frozen reads and decision rule stand as posted.
+
+## Amendment 2 (2026-08-07 ~17:0xZ, pre-launch — save cadence)
+
+Operational, not a measurement change. The recipe constants above
+say "save every 2500" — that number was chosen when a save stalled
+stepping ~15.5 min on the 4×DDP box (the sync consolidate-and-write
+path), balancing step-stall against recovery loss. Async checkpoint
+saves landed after this post (`e3bdc93`, 08-07): capture is seconds
+on the step path and the gather+write runs on a background thread,
+so the stall side of that trade is gone. **Both arms save every
+1250** (matched — the seam stays the only contrast). Every
+save-boundary the post's judgment rules name is preserved: 1250
+divides 2500, so the kill-rule boundaries (5000, 7500), the 10k
+endpoint, and the 5k-downshift matched-read checkpoint
+(`step_005000`) all remain save boundaries; the change only adds
+midpoints. Motivation: three driver-kill incidents on 08-07 made
+worst-case recovery loss concrete — halving the interval halves it
+(~108 → ~54 min wall at the K arm's estimated rate) for seconds of
+capture stall per extra save and ~40 GB disk per extra K save
+against 6.3 T free (F saves are small: the frozen backbone is
+hardlinked, only expert + optimizer are written fresh). Also
+decided here: the DataStates pinned-buffer refinement stays banked
+(#18.9) — the capture stall is seconds against a ≥26-minute save
+interval (<0.2% overhead), and touching the oracle-gated save path
+the day before a 50–70 GPU-h screen buys ~a minute total across a
+run. Gates, arms, frozen reads and the decision rule stand as
+posted.

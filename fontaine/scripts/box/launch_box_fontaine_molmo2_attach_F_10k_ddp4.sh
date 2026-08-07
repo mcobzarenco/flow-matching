@@ -7,7 +7,10 @@
 #   structural from the pinned tap rule: 12 taps @ stride 3, layers
 #   2,5,...,35) reading residual taps off the HARD-FROZEN molmo2 40k
 #   endpoint trunk via --backbone-init-from. Data/topology = phase 1:
-#   eff-48 (B12 x 4), same split/seed, eval 256 @ 500, save @ 2500.
+#   eff-48 (B12 x 4), same split/seed, eval 256 @ 500, save @ 1250
+#   (pre-reg amendment 2: async saves landed post-pre-reg; cadence
+#   halved from 2500, matched BOTH arms — every posted judgment
+#   boundary stays a save boundary).
 # OPENS STRICTLY AFTER (pre-reg order): endpoint saved -> chained
 #   greedy endpoint eval + #19 draws arm done -> instrument oracles
 #   green at HEAD -> attachment-decision owner steer window passed.
@@ -78,7 +81,7 @@ launch_train() { # $1 = steps; backgrounds torchrun, sets RUN + TRAIN_PID
         --steps "$1" --batch-size "$BATCH" \
         --zero1 --backward-chunks "$BACKWARD_CHUNKS" --chunk-grad-allreduce \
         --num-workers 20 --prefetch-factor 4 \
-        --eval-samples 256 --eval-every 500 --save-every 2500 --log-every 20 \
+        --eval-samples 256 --eval-every 500 --save-every 1250 --log-every 20 \
         --seed 0 --eval-seed 0 \
         --wandb-project fontaine --wandb-run-name "$RUN" \
         --save-dir "outputs/train/$RUN" \

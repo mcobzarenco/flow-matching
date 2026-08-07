@@ -23,7 +23,7 @@
 # COST GATE (attach_rate_gate.py): projected batch total > 70 GPU-h =>
 #   5k matched downshift BOTH arms (marker below; if F already ran 10k,
 #   its matched read re-evals from F's step_005000 checkpoint — save
-#   every 2500 makes 5000 a save boundary). Extra term pinned here:
+#   every 1250 keeps 5000 a save boundary). Extra term pinned here:
 #   F actual ~14 GPU-h (replace with the measured number at launch) +
 #   panel evals ~4 x 2 + drift AR panel ~3 => EXTRA_GPU_HOURS ~= 25.
 # K1-STYLE KILL: probe > phase-1 curve at matched step + 3.0 at any
@@ -101,7 +101,7 @@ launch_train() { # $1 = steps; backgrounds torchrun, sets RUN + TRAIN_PID
         --zero1 --backward-chunks "$BACKWARD_CHUNKS" --chunk-grad-allreduce \
         --activation-checkpointing \
         --num-workers 20 --prefetch-factor 4 \
-        --eval-samples 256 --eval-every 500 --save-every 2500 --log-every 20 \
+        --eval-samples 256 --eval-every 500 --save-every 1250 --log-every 20 \
         --seed 0 --eval-seed 0 \
         --wandb-project fontaine --wandb-run-name "$RUN" \
         --save-dir "outputs/train/$RUN" \

@@ -107,7 +107,7 @@ value = 12.0                       # 3 × q4 draws10 ≈ 12 GPU-h worst case
 # total_steps = 10000
 # probe_key = "eval_chunk_mae"
 # vram_key = "vram_alloc_peak_gib"
-# boundary = "10k at F-rate TBD at launch; saves every 2500, probes every 500; K launches after"
+# boundary = "10k at F-rate TBD at launch; saves every 1250, probes every 500; K launches after"
 # anchors = [
 #     "kill rule: probe > phase-1 curve at matched step + 3.0 at any eval >= 5k, kill at next save boundary",
 #     "Delta_seam frozen read at matched endpoints (panel_v2 heun30/draws1/stable, paired CI); state-copy 11.785 must be beaten decisively or the screen is void",
@@ -140,7 +140,7 @@ value = 12.0                       # 3 × q4 draws10 ≈ 12 GPU-h worst case
 # total_steps = 10000
 # probe_key = "eval_chunk_mae"
 # vram_key = "vram_alloc_peak_gib"
-# boundary = "10k at K-rate TBD at launch (est 2.4-2.8 s/step); saves every 2500, probes every 500; chains panel_v2 + AR-view drift panel"
+# boundary = "10k at K-rate TBD at launch (est 2.4-2.8 s/step); saves every 1250, probes every 500; chains panel_v2 + AR-view drift panel"
 # anchors = [
 #     "kill rule: probe > phase-1 curve at matched step + 3.0 at any eval >= 5k, kill at next save boundary",
 #     "CE-health watch (record): jsonl loss_aux vs phase-1 loss_action at matched step — rising CE under stop-grad = AEGIS drift signal",
