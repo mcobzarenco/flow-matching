@@ -255,6 +255,15 @@
       "boundary": "DONE 08-07: run_detached.sh is the required launch path for anything that must outlive a session"
     },
     {
+      "id": "lit-slice-decode-temperature",
+      "title": "Standing lit slice (~25 min, owner allocation 2026-08-05): decode-time stochasticity for tokenized-action policies, timed to the #19 tsens rungs scoring tonight — EXECUTED SAME SESSION 2026-08-07 ~17:1xZ, papers page landed per the permanent rule (papers/decode-temperature.md, 5 sources: 2605.22493 multimodal-failure anchor, MARS 2605.29766, action-quantization theory 2603.20538, BOKBO 2605.30660, DDVLA temp ablation 2508.20072 — Table 7 verified at source after the search digest misquoted 96.8 for the real 97.4): dT read gains a written directional prior BEFORE the rungs land (near-flat with asymmetry against T=1.3 on a unimodal-dominated panel); BOKBO banked as the 2nd independent strike on cheap probe selectors (#19 selection rung); q-token+CE trunk gains its sample-complexity-optimality citation; DDVLA temperature-SCHEDULE hook parked, opens only on real dT sensitivity. ideas.md #19 bullet + index/SUMMARY rows",
+      "class": "cpu",
+      "status": "done",
+      "prereg": null,
+      "owner_hold": false,
+      "boundary": "DONE 08-07 same-session; the dT read (tonight) consumes the prior"
+    },
+    {
       "id": "attach-launch-save-cadence-prep",
       "title": "Attach-screen launch prep: save-cadence call + pinned-buffer hook decision (the two #18.9 transfers banked from the checkpointing-systems lit slice 08-07): now async saves are ~free off the step path, decide --save-every for the F/K 10k arms (halving it halves worst-case driver-kill recovery loss — CheckFreq's auto-tune argument; today's 3 driver-kill incidents are the live motivation) and whether the DataStates pre-allocated reusable pinned-buffer refinement is worth landing before the 50-70 GPU-h screen; output = the chosen flags baked into the two attach launchers + a short note (no new pre-reg needed — cadence is operational, not a measured claim)",
       "class": "cpu",

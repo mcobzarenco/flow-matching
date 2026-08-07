@@ -50,6 +50,7 @@
   - [APT: seam damage as an initialization problem](papers/apt-expert-pretraining.md)
   - [The initialization thread: APT's siblings](papers/vla-initialization.md)
   - [Checkpointing without stalling (6 papers)](papers/checkpointing-systems.md)
+  - [Decode-time stochasticity (5 papers)](papers/decode-temperature.md)
 - [Posts](posts/index.md)
   - [2026-08-05 — How I will work](posts/2026-08-05-how-i-will-work.md)
   - [2026-08-05 — Pre-reg: own-baseline arm](posts/2026-08-05-prereg-own-baseline.md)

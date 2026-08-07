@@ -2,7 +2,80 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-07 16:06–17:3xZ (real `date -u`) — work session:
+**driver-background-task-guard LANDED** (`96522b9`, the item that
+killed 3 GPU runs in one day) — four live-verified defense layers:
+`run_detached.sh` required launch wrapper, KillMode=process on the
+tick service, babysit DRIVER-CGROUP surfacing at every poll,
+post-session cgroup guard with Discord alert; the kill signature is
+now reproduced in tests with real transient units. Plus the standing
+lit slice with same-session papers page
+([decode-temperature](papers/decode-temperature.md)) — a written
+directional prior for tonight's dT read. Both runs green.*
+
+**Status** (babysit 17:20Z):
+- box molmo2 AR 40k — 24180/40k, loss 3.009, 2.16 s/step, vram
+  67.07 ≤ 71, 25.1 steps/min window. Probe 6.86@24000 (in-band,
+  no ≥7.5 pair). Gate margin 4.93. ~9.5 h to 40k → endpoint ~08-08
+  morning.
+- local **ar100k_tsens_q4 rung t0.5** — 832/4301 @ 44.6 f/min
+  window, cumulative 25.1 f/min → ~2.9 h/rung, ~2.3 h remaining on
+  t0.5. The 16:06 boot-poll "18.5 h" gate crossing was the startup
+  artifact again (model-load contaminating a 2-min cumulative) —
+  adjudicated CLEAN, projection now 2.9 ≤ 12. Rung roll t0.5 → t0.7
+  ~19:4xZ (repoint the babysit `log` stem); all rungs ~00–01Z 08-08.
+
+**Steering**: none new (polls 16:06 / 16:44 / 17:20Z all clean).
+
+**Done**: this session —
+(1) **driver-background-task-guard** (`96522b9`, owner 13:05Z item,
+3 incidents' evidence consumed): `fontaine/scripts/run_detached.sh`
+= the codified REQUIRED wrapper for any job that must outlive a
+session (systemd-run --user + PATH/HOME setenv + a grace-window
+launch-death check that surfaces the exit-127 class);
+`KillMode=process` on fontaine-tick.service (installed symlink =
+repo file, daemon-reload applied — noncompliant launches survive
+unit stop as stragglers instead of dying silently); babysit now
+surfaces **DRIVER-CGROUP** at every poll when a registered run's
+processes sit inside the driver cgroup — fires BEFORE the kill; two
+self-match false-positive classes were found live and excluded
+(probe ancestor chain; the `| sort -u` pipeline fork inheriting the
+pattern-bearing cmdline); `driver_guard.py` post-session cgroup
+scan wired into the driver with a 1-h-cooldown Discord alert.
+Driver test: `tests/test_driver_guard.py` reproduces the incident-3
+kill live (default KillMode kills a setsid child; KillMode=process
+spares it; a run_detached job survives parent-unit teardown), plus
+fake-/proc scan oracles + unit-file regression guard; babysit
+oracles extended and both directions verified live on the running
+tsens run (decoy straggler → SURFACED; compliant unit → clean).
+check.py 460 green. Charter harness section, memory file, and 6
+local launcher headers codified.
+(2) **Lit slice + papers page**
+([decode-temperature](papers/decode-temperature.md), 5 sources):
+the dT read now has a pre-written directional prior (near-flat
+table with asymmetry against T=1.3 on a unimodal-dominated panel —
+2605.22493's deterministic-beats-generative-on-unimodal result +
+MARS); BOKBO banked as the second independent strike on cheap
+probe selectors (#19 selection rung); the q-token+CE trunk gains
+its sample-complexity-optimality citation (2603.20538); DDVLA's
+temperature-schedule hook parked (verified at source: 97.4 decay
+vs 96.4/96.2 fixed/argmax — the search digest misquoted it).
+(3) Queue: driver guard + lit slice → done; refill
+`attach-launch-save-cadence-prep` (the #18.9 hooks become the
+attach launchers' save-every call); validate green depth 2.
+
+**Next**: `queue_cli.py next` → **idea19-tsens-dt-read-execution**
+(opens at rungs completion ~00–01Z 08-08; the read now lands
+against the papers page's written prior). Dated boundaries: tsens
+rung roll ~19:4xZ (babysit stem repoint t0.5 → t0.7) → rungs
+complete ~00–01Z 08-08 (dT read, record-only); molmo2 endpoint
+~08-08 morning → #19 box obligations → K smoke ladder →
+attach-screen window (first save validates async ckpt in
+production; save-cadence prep item now queued for that launch).
+**Every GPU launch from here goes through `run_detached.sh`.**
 
 *Updated 2026-08-07 15:56–16:2xZ (real `date -u`) — tick (babysit +
 incident + owner q): **tsens q4 DEAD AGAIN at poll — THIRD
@@ -122,58 +195,6 @@ attach-screen window — **first save of that launch validates the
 async path in production: look for the `captured in Xs` +
 `saved ... (async, Xs behind the boundary)` lines at first babysit**.
 
-*Updated 2026-08-07 15:11–15:3xZ (real `date -u`) — tick (babysit +
-incident): **tsens q4 was DEAD at first poll — killed ~15:07–15:11Z
-by the driver's turn-completion teardown, the SECOND
-driver-background-task-guard incident in one day** (the work session
-launched it 15:01:40Z as a session task, not setsid-detached);
-**relaunched setsid-detached 15:13:44Z**, primary gate re-passed,
-rung t0.5 restarted from frame 0 (32 frames lost, ~6 min compute).
-molmo2 green.*
-
-**Status** (babysit 15:11Z):
-- box molmo2 AR 40k — 22460/40k, loss 3.0866, 2.198 s/step, vram
-  67.07 ≤ 71, 27.4 steps/min window. Probe 6.22@20500 → 6.55@21000 →
-  7.18@21500 → 6.93@22000 (bouncy inside the band, no ≥7.5 pair,
-  watch not tripped). Gate margin 4.93. ~10.7 h stepping + saves →
-  endpoint ~08-08 morning.
-- local **ar100k_tsens_q4 incident + relaunch**: first poll found
-  GPU 0 empty, 1 pgrep match (my own shell), log frozen at "scored
-  32/4301" (mtime 15:07), NO traceback, NO OOM (dmesg + journalctl
-  clean) — external SIGKILL signature, timed at the 13:04Z work
-  session's end (~15:11Z close post). Same mechanism as 12:56Z: the
-  driver kills session background tasks at turn completion; the
-  launch was NOT setsid-detached despite the memory-file mitigation.
-  **Relaunched 15:13:44Z `setsid nohup`** — required temporarily
-  restoring the pruned draws10_t1 registry entry (the launcher's
-  PRIMARY GATE reads its started_utc; restored from `85cdc0a`, gate
-  re-passed 12.7 ≤ 24, entry re-pruned). Rung t0.5 scoring verified
-  live (first progress line + GPU fed) before commit; babysit
-  started_utc repointed to 15:13:44Z (the 22.7 h "gate crossing" at
-  first poll was the dead run's elapsed-vs-32-frames artifact, not a
-  real cost breach — voided by the relaunch). Second-incident
-  evidence appended to the `driver-background-task-guard` queue item.
-
-**Steering**: none new (`read` = our own 15:11Z close post; `history
--n 5` shows nothing unrecorded — 13:35Z 👍 "Great stuff" and 13:58Z
-async-ckpt HIGH already in the 13:04Z entry).
-
-**Done**: tick — babysit (molmo2 green; tsens dead-run adjudicated
-to a measured verdict: driver teardown, not crash/OOM); tsens
-relaunched detached + verified scoring; draws10_t1 entry
-restore→gate→re-prune dance executed; queue item updated with
-second-incident evidence; `queue_cli.py validate` green (depth 3, 12
-open); `run_work_next` already armed (async-checkpoint-saves HIGH
-next). No blog build (no reader-visible content change).
-
-**Next**: chained work session → **async-checkpoint-saves** (owner
-HIGH, target before the attach-screen launch) — and
-`driver-background-task-guard` just earned its second incident;
-consider pulling it forward, it is now killing GPU runs at a rate of
-two per day. Boundaries: tsens rungs roll (repoint babysit log stem
-t0.5 → t0.7 → t1.3); molmo2 endpoint ~08-08 morning → #19 box
-obligations → K smoke ladder → attachment steer window.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -188,6 +209,16 @@ the tick-service cgroup teardown (+~0.7 GPU-h lost, 992 frames),
 accruing from the 15:58:26Z systemd-run 3rd launch, ≤12 GPU-h gate). Older dated
 snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
+
+Session 16:06–17:3xZ: all-CPU work session, 0 GPU-h new (tsens +
+molmo2 accruing under their own gates) — exploit/infra + sanctioned
+lit: driver-background-task-guard landed (`96522b9`, 4 defense
+layers, kill signature reproduced in tests with live transient
+units; the 3-incidents-in-one-day class is mechanized away) + the
+decode-temperature lit slice with same-session papers page (5
+sources; dT directional prior + 2nd probe-selector strike banked to
+#19); tsens boot-poll gate scare adjudicated startup artifact
+(measured 2.9 h projection ≤ 12); queue: 2 done, 1 refilled.
 
 Session 15:22–16:2xZ: all-CPU work session, 0 GPU-h new (tsens +
 molmo2 accruing under their own gates) — exploit/infra + sanctioned

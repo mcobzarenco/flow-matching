@@ -195,3 +195,20 @@ between these two priors on our own panel before any escalation.
   so the q4 fallback stays closed. Next: the T-sensitivity q4 rung
   (`eval_ar100k_tsens_q4_draws10.sh`, record-only), then the molmo2
   arm at its endpoint.
+- **Lit slice 2026-08-07 ([decode-temperature
+  page](../papers/decode-temperature.md), 5 sources): a directional
+  prior for the dT read, written down BEFORE the rungs land** — the
+  multimodal-failure analysis (2605.22493: deterministic beats every
+  generative variant on near-unimodal tasks; coverage ≠ success) plus
+  MARS (2605.29766: stochasticity pays only in genuinely diverse
+  phases) predict a near-flat dT table with mild asymmetry against
+  T=1.3 on our unimodal-dominated panel. Also banked: BOKBO
+  (2605.30660) measures policy-internal confidence correlating poorly
+  with violations — the SECOND independent strike (after the rollout
+  caveat) that any post-ceiling selector needs trained scoring, not a
+  free confidence readout; and 2603.20538 gives the q-token + CE
+  trunk its sample-complexity-optimality citation. Hook parked, not
+  armed: DDVLA's temperature *schedule* (decay 1→0 beats both fixed
+  extremes, 97.4 vs 96.4/96.2 LIBERO-Goal) is an unexplored axis in
+  AR-VLA decoding — nothing opens unless the dT table shows real
+  sensitivity.
