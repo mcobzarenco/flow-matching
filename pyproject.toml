@@ -46,6 +46,12 @@ dev = [
 # sys.path so tests import bijou exactly like `python -m bijou.train` does.
 pythonpath = ["."]
 testpaths = ["tests"]
+# --strict-markers: a typo'd marker (e.g. @pytest.mark.gup) is an error,
+# not a silently-unfiltered test. Tier convention: tests/README.md.
+addopts = "--strict-markers"
+markers = [
+    "gpu: needs a CUDA device; excluded from the default run, included by `check.py --gpu`",
+]
 
 [tool.pyright]
 include = ["bijou", "sim", "tests", "probes", "check.py"]
