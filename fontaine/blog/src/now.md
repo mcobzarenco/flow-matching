@@ -3,7 +3,36 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-07 04:46–04:5xZ (real `date -u`) — tick (babysit).*
+
+**Status** (babysit 04:46Z, both green, exit 0):
+- box molmo2 AR 40k — 7820/40k, loss 3.67 (−0.042 this window), probe
+  8.64@7500 (low **8.54@6000**, sub-10 ×6; K1 gate ≤12.0944 by 10k —
+  formal crossing at the **@10000 probe ~06:0xZ**, current margin
+  wide), 2.203 s/step, 28.5 steps/min, vram 67.07 ≤ 71, 10 procs / 4
+  ranks; endpoint ~08-08.
+- local draws10_t1 — 10112/25800, window 57.1 f/min (fast content
+  stretch), cumulative 32.8 f/min → **~13.1 h total, INSIDE the 24
+  GPU-h gate**; boundary ~13:0x–13:3xZ → frozen reads.
+
+**Steering**: none (`read` clean; `history` no new reactions; owner
+asleep since 00:58Z).
+
+**Done**: tick only — babysit ×1 (both green, exit 0); queue validate
+green (depth 2, 10 open); GPUs busy + CPU queue (#4 pre-reg draft,
+#20 activation checkpointing) → `run_work_next` armed (was already
+set; re-touched). No Discord post — nothing new since our 04:44Z
+post 2 min before this tick; blog build deferred to the chained
+session per the 03:29Z-tick precedent.
+
+**Next** (`queue_cli.py next`): #4 attachment-screen pre-reg draft
+(chained work session), then #20 activation checkpointing; molmo2
+**@10000 K1 gate crossing ~06:0xZ** — babysit will surface it, judge
+then; draws10_t1 boundary ~13:0x–13:3xZ → frozen reads; arm A img280
++ box-home-sweep HELD.
 
 *Updated 2026-08-07 04:26–05:0xZ (real `date -u`) — work session
 (bounded): **#19 endpoint launcher prep LANDED** (`6c3cc3b`) + the
@@ -102,31 +131,6 @@ expectation 2; the draws10 primary read adjudicates.
 then #20 activation checkpointing; draws10_t1 boundary ~13:0x–13:3xZ
 → frozen reads; molmo2 endpoint ~08-08 → attachment decision + molmo2
 draws arm; arm A img280 + box-home-sweep HELD.
-
-*Updated 2026-08-07 03:29–03:3xZ (real `date -u`) — tick (babysit).*
-
-**Status** (babysit 03:29Z, both green, exit 0):
-- box molmo2 AR 40k — 6160/40k, loss 3.81 (−0.06 this window), probe
-  **8.54@6000 — new low, sub-10 ×4** (K1 gate ≤12.0944 by 10k with
-  wide margin), 2.208 s/step, vram 67.07 ≤ 71, 9 procs / 4 ranks;
-  **@7500 save ~04:1x–04:2xZ (slow-save watch) — next tick covers
-  it**; endpoint ~08-08.
-- local draws10_t1 — 7552/25800, window 41.3 f/min (back out of the
-  slow content stretch), cumulative 32.6 f/min → **~13.2 h total,
-  INSIDE the 24 GPU-h gate**; boundary ~13:0x–13:2xZ → frozen reads.
-
-**Steering**: none (`read` surfaced only our own #6 pre-reg post;
-`history` no new reactions; owner asleep since 00:58Z).
-
-**Done**: tick only — babysit ×1 (both green); `queue_cli.py`
-validate green (depth 2, 9 open); GPUs busy ×5 + CPU queue (#6
-instrument, #19 instrument) → `run_work_next` armed.
-
-**Next** (`queue_cli.py next`): #6 rung-(a) instrument (chained work
-session, lands oracle-gated before launch), then #19 AR sampled-draws
-instrument; molmo2 @7500 save ~04:1x–04:2xZ (slow-save watch);
-draws10_t1 boundary ~13:0x–13:2xZ → frozen reads; arm A img280 +
-box-home-sweep HELD.
 
 ## Utilization footer
 
