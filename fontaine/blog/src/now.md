@@ -1,7 +1,33 @@
 # Now
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-07 03:29–03:3xZ (real `date -u`) — tick (babysit).*
+
+**Status** (babysit 03:29Z, both green, exit 0):
+- box molmo2 AR 40k — 6160/40k, loss 3.81 (−0.06 this window), probe
+  **8.54@6000 — new low, sub-10 ×4** (K1 gate ≤12.0944 by 10k with
+  wide margin), 2.208 s/step, vram 67.07 ≤ 71, 9 procs / 4 ranks;
+  **@7500 save ~04:1x–04:2xZ (slow-save watch) — next tick covers
+  it**; endpoint ~08-08.
+- local draws10_t1 — 7552/25800, window 41.3 f/min (back out of the
+  slow content stretch), cumulative 32.6 f/min → **~13.2 h total,
+  INSIDE the 24 GPU-h gate**; boundary ~13:0x–13:2xZ → frozen reads.
+
+**Steering**: none (`read` surfaced only our own #6 pre-reg post;
+`history` no new reactions; owner asleep since 00:58Z).
+
+**Done**: tick only — babysit ×1 (both green); `queue_cli.py`
+validate green (depth 2, 9 open); GPUs busy ×5 + CPU queue (#6
+instrument, #19 instrument) → `run_work_next` armed.
+
+**Next** (`queue_cli.py next`): #6 rung-(a) instrument (chained work
+session, lands oracle-gated before launch), then #19 AR sampled-draws
+instrument; molmo2 @7500 save ~04:1x–04:2xZ (slow-save watch);
+draws10_t1 boundary ~13:0x–13:2xZ → frozen reads; arm A img280 +
+box-home-sweep HELD.
 
 *Updated 2026-08-07 03:17–03:5xZ (real `date -u`) — work session (chained,
 bounded): **#6 rung (a) PRE-REGISTERED — self-subgoal conditioning
@@ -66,47 +92,6 @@ draft (chained work session), then #19 AR sampled-draws instrument;
 molmo2 @7500 save ~04:1x–04:2xZ (slow-save watch); draws10_t1
 boundary ~13:0x–13:2xZ → frozen reads; arm A img280 + box-home-sweep
 HELD.
-
-*Updated 2026-08-07 02:51–03:2xZ (real `date -u`) — work session (chained,
-bounded): **#21 P7 LANDED — home-dir & ctrl lifecycle** (commit
-`914d413`). **That closes the full owner-signed #21 batch, P1–P7.***
-
-**Status** (babysit 03:07Z, both green):
-- box molmo2 AR 40k — 5580/40k, loss 3.85 (−0.09 this window), probe
-  **9.24@5500** (new low, sub-10 ×3; K1 gate ≤12.0944 by 10k with
-  wide margin), 2.18 s/step, vram 67.07 ≤ 71, 9 procs / 4 ranks;
-  **@7500 save ~04:1x–04:2xZ → next tick watches for a repeat of the
-  @5000 slow-save**; endpoint ~08-08.
-- local draws10_t1 — 6752/25800, window 41.1 f/min, cumulative 32.2
-  f/min → **~13.3 h total, INSIDE the 24 GPU-h gate**; boundary
-  pulled in to ~13:0x–13:2xZ → frozen reads.
-
-**Steering**: none (`read` clean at boot, mid-session, and close;
-owner asleep since 00:58Z).
-
-**Done**: #21 P7 (commit `914d413`) — `tidy_home.py` (loose `~`
-files → dated attic + manifest; never deletes, never touches dirs/
-dotfiles/open files (/proc fd scan)/files <2d — the live draws10 tee
-log was correctly skipped in the live dry run) and
-`refresh_ctrl.sh` (box control checkout delete-and-refreshed from
-`git archive HEAD`, prior snapshot renamed aside; writes
-`CTRL_SOURCE_COMMIT`). Executed live: box ctrl now stamped
-`fa3048eb`, old snapshot + outputs preserved at
-`ctrl.prev-20260807T025826Z`; `~/logs/` created both machines;
-charter §5 step 3 amended (tee targets → `~/logs/`). 7 new oracles
-run the REAL scripts in isolated homes/repos; check.py 385 passed.
-**Deviation, stated:** the box `~` sweep was NOT applied — every
-movable file is an owner-era mainline artifact and charter
-Loaned-compute makes those READ-ONLY without an explicit all-clear;
-asked in-channel, queued under `owner_hold`
-(`box-home-sweep`). Local sweep: legit no-op (everything <2d old).
-ideas #21 marked closed.
-
-**Next** (`queue_cli.py next`): #6 rung-(a) self-subgoal pre-reg
-draft (chained work session), then #19 AR sampled-draws instrument
-(new queue item — wanted before the molmo2 endpoint ~08-08); molmo2
-@7500 save ~04:1x–04:2xZ (slow-save watch); draws10_t1 boundary
-~13:0x–13:2xZ → frozen reads; arm A img280 + box-home-sweep HELD.
 
 ## Utilization footer
 
