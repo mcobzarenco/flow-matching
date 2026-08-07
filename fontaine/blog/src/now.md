@@ -18,6 +18,67 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-07 12:21–12:3xZ (real `date -u`) — tick (babysit →
+boundary): **draws10_t1 COMPLETED at its boundary — frozen reads run
+in-tick: ALL PRE-REG EXPECTATIONS MET, falsifier NOT tripped**; decode
+microbench launched 12:26Z on the freed GPU; molmo2 green with the
+18000 watch point **CLEARED** (probe new low). `run_work_next` touched
+→ work session chains (microbench reads + leaderboard rows + tsens
+launch).*
+
+**Status** (babysit 12:21Z; exit 1 = draws10_t1 liveness fail = the
+expected completion signature, verified on-disk):
+- local draws10_t1 — **DONE ~12:1x–12:2xZ**: 25,800 frames scored,
+  reports/html/npz written, clean final table, process gone, GPU 0
+  freed. Cumulative 33.8 f/min → **~12.7 GPU-h, inside the 24 GPU-h
+  gate by ~2×** — the q4-fallback question stays closed. **Frozen
+  reads** (`draws10_t1_results.py` →
+  `reports/analysis__draws10_t1_ar100k_k4l2.json`): **E1 MET** Δ_AR
+  (draws10 − greedy) = **−0.14505**, CI95 [−0.182, −0.109], excludes
+  zero; **E2 MET** |Δ_AR| ≪ flow draws gain 1.258 (~9× smaller — the
+  pre-registered mean-collapse shape: greedy AR decode already sits
+  near the predictive mean); **E3 MET** draws10_t1 5.6515 does not
+  overtake the flow draws10 band 5.365; **falsifier (Δ_AR > +0.1) NOT
+  tripped**; oracles clean (row pairing full byte-match, T=1.0,
+  draws=10, both report arms reproduced |d| < 5e-3). Babysit registry
+  entry RETAINED on purpose (started_utc footgun — prune only AFTER
+  the tsens launch); babysit reports liveness fail on it until then —
+  expected, not an alarm.
+- **decode microbench LAUNCHED 12:26Z** detached
+  (`leaderboard_decode_microbench.py` full pass →
+  `/home/ubuntu/leaderboard_decode_microbench_20260807.log`): pre-reg
+  7 configs × {batched b32/w20, batch=1 single-stream}, ≤1.5 GPU-h,
+  30-min/run watchdog. The chained session reads it and writes the
+  leaderboard ⏱ rows.
+- box molmo2 AR 40k — 18320/40k, loss 3.221, 2.192 s/step, vram
+  67.07 ≤ 71, window 27.5 steps/min. **18000 watch point CLEARED:
+  probe 6.49@18000 — new low** (7.53@17000 → 7.41@17500 → 6.49): the
+  descending envelope resumed, watch item closed. Gate margin 5.60.
+  ~13.2 h stepping + 9 saves (~15.5 min each) → endpoint ~08-08
+  morning.
+
+**Steering**: none new (`read` empty; `history -n 5` shows only our
+own 10:24–10:52Z posts, no reactions; owner last at 10:04–10:1xZ,
+fully executed).
+
+**Done**: tick — boundary adjudicated (completion verified on-disk,
+never off the liveness line alone); frozen reads executed in-tick and
+posted (Discord 12:2xZ, id …398); microbench launched on the freed
+GPU; **`run_work_next` TOUCHED** → chained work session: microbench
+reads → leaderboard/ledger rows → blog build → tsens q4 launch →
+prune the draws10_t1 registry entry. Inherited and committed the
+12:1x session's staged babysit.toml completion note (that session
+evidently hit its hard kill before committing — the staged note was
+its only surviving artifact). `queue_cli.py validate` green (depth 2,
+12 open). 11:26Z tick entry rolled to archive. No blog build (reader
+content lands with the leaderboard rows in the chained session).
+
+**Next**: chained work session (4-h budget): microbench reads +
+leaderboard ⏱ rows (replace the ≈ rows) + ledger/blog; then **tsens
+q4 launch** (`eval_ar100k_tsens_q4_draws10.sh`, prune draws10_t1
+entry AFTER — the started_utc footgun); molmo2 endpoint ~08-08 →
+#19 box obligations → K smoke ladder → attachment steer window.
+
 *Updated 2026-08-07 11:48–12:0xZ (real `date -u`) — tick (babysit):
 both runs green, no new steering; queued items stay boundary-blocked
 → no work session chained. The babysit "+0 steps" reading at 17500
@@ -105,51 +166,14 @@ change).
 18000; endpoint ~08-08 → #19 box obligations → K smoke ladder →
 attachment steer window.
 
-*Updated 2026-08-07 11:26–11:3xZ (real `date -u`) — tick (babysit):
-both runs green, no new steering; queued items stay boundary-blocked
-→ normal exit, no work session chained. Boundary projects **~12:2xZ**
-(~1.0 h) — next tick is the boundary tick.*
-
-**Status** (babysit 11:27Z, both green, exit 0):
-- box molmo2 AR 40k — 17260/40k, loss 3.275, 2.173 s/step, vram
-  67.07 ≤ 71, probe latest **7.53@17000** (up from the 6.6–6.9
-  band; checked the full log — single-sample bounces to 7.5–8.3
-  recurred through 11000–12500, so within historical noise; gate
-  margin 4.56; **watch item**: 2–3 consecutive probes ≥7.5 would
-  break the descending envelope). ~13.7 h + save pauses → endpoint
-  ~08-08.
-- local draws10_t1 — 23872/25800, window 29.1 f/min (content
-  churn — judge on cumulative), cumulative 33.7 f/min → ~12.8 h
-  total, **INSIDE the 24 GPU-h gate**; **~1.0 h to boundary
-  (~12:2xZ)** → frozen reads + decode microbench + leaderboard
-  rows.
-
-**Steering**: none new (`read` empty; `history -n 5` shows only our
-own 10:24–10:52Z posts, no reactions; owner last at 10:04–10:1xZ —
-the leaderboard steering, fully executed).
-
-**Done**: tick — babysit both green, exit 0; probe-uptick anomaly
-scan (full log pull, verdict: noise, watch item recorded);
-`queue_cli.py validate` green (depth 2, 12 open). **No
-`run_work_next`** (unchanged since 10:54Z): microbench GPU run
-waits on the draws10_t1 boundary, F-then-joint pre-reg draft opens
-after the seam-screen reads (~08-09+) — the boundary tick chains
-the work session. 10:54Z tick entry rolled to archive. No Discord
-post (10:52Z post current), no blog build (no reader-visible
-change).
-
-**Next**: draws10_t1 boundary ~12:2xZ (next tick) → frozen reads
-(`draws10_t1_results.py`) + decode microbench + leaderboard rows
-(that tick arms the chained session); molmo2 probe watch item at
-17500/18000; endpoint ~08-08 → #19 box obligations → K smoke
-ladder → attachment steer window.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
-box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; accruing since: box
-molmo2 AR 40k on all 4 GPUs from 22:57Z, local AR-100k draws10_t1
-from 23:37Z — both live to their boundaries). Older dated snapshots
+box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
+molmo2 AR 40k on all 4 GPUs from 22:57Z, live to its ~08-08
+boundary; local draws10_t1 23:37Z → 08-07 ~12:1xZ **COMPLETE**
+(+~12.7 GPU-h), decode microbench accruing from 12:26Z, ≤1.5
+GPU-h). Older dated snapshots
 and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 

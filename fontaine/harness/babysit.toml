@@ -27,6 +27,11 @@ step = 10000                        # K1 kill-line (owner-set 08-07) — crossed
 kind = "vram_max_gib"
 value = 71.0
 
+# NOTE (12:1xZ 08-07): run COMPLETED at its boundary — entry RETAINED
+# on purpose (documented footgun, git-audit 10:24Z): the tsens
+# primary gate consumes this entry's started_utc; prune only AFTER
+# the tsens launch. Until then babysit will report liveness fail on
+# this entry — expected, not an alarm.
 [[run]]
 name = "draws10_t1"
 kind = "progress-log"
