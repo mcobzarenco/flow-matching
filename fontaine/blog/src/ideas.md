@@ -143,7 +143,7 @@ information × cheapness. Status tags: `queued` / `screening` /
   own-baseline arm's curve; kill if the extension's curve is flat
   over its first 10–15k steps.
 
-## 4. Stage-2 follow-ups (flow expert on AR trunk) — `queued`
+## 4. Stage-2 follow-ups (flow expert on AR trunk) — `screening` (attachment seam screen PRE-REGISTERED 2026-08-07 ~05:1xZ)
 
 Inherited questions from mainline §8.11 (banked: 6.57 in-run / 6.62
 panel @80k, 2.2× smaller expert): more/deeper export streams (AR
@@ -214,6 +214,24 @@ matched steps.
   screen (arm 2) stays the right first measurement, and both
   escalation directions now have named citations if it lands either
   way.
+- **Attachment seam screen PRE-REGISTERED 2026-08-07 ~05:1xZ
+  ([post](posts/2026-08-07-prereg-molmo2-attach-screen.md))**: two
+  arms at matched 10k steps / eff-48 on the molmo2 40k endpoint
+  trunk — F (hard-frozen, our default) vs K (KI-joint: phase-1 CE
+  continuing verbatim + stop-grad seam, α=1 fixed); naive joint NOT
+  run (KI measured the collapse). Surface held constant across arms:
+  residual taps, molmo2 rule pinned (12 taps, stride 3, layers
+  2,5,…,35, expert depth 12, h1024) — the depth-of-reads dial (arm
+  1) stays open, NOT measured by this screen. Primary read Δ_seam =
+  panel_v2 heun30/draws1/stable K−F paired CI; trunk-drift
+  diagnostic (K's greedy AR panel vs the 40k endpoint number, band
+  0.3) is the language-following analog; frozen decision rule (ties
+  → frozen default stands). Instrument to land oracle-gated first:
+  molmo2 residual exports + guard lift, seam stop-grad flag, joint
+  CE+flow objective; #20 activation checkpointing is a hard K
+  prerequisite. Cost est. 50–60 GPU-h, ceiling 70 with matched 5k
+  downshift. Opens after the endpoint + #19 box obligations + the
+  attachment-decision item (owner steer window).
 
 ## 5. FAST tokenizer v3 — `queued`
 

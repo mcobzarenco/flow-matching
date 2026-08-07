@@ -1,5 +1,5 @@
 {
-  "updated_utc": "2026-08-07T04:45:00+00:00",
+  "updated_utc": "2026-08-07T05:17:00+00:00",
   "depth_reason": null,
   "items": [
     {
@@ -48,13 +48,22 @@
       "boundary": "opens at molmo2_ar40k endpoint (~2026-08-08); box GPUs busy until then"
     },
     {
-      "id": "idea4-attachment-screen-prereg-draft",
-      "title": "#4 stage-2 attachment screen pre-reg DRAFT (CPU): frozen-baseline vs KI-joint (trunk CE continuing + stop-grad seam) on the molmo2 endpoint trunk — arms, matched-step screen rungs, frozen reads + falsifier, cost gate; lit basis banked in ideas #4 (pi0.5/KI + LabVLA for the seam, AEGIS 2604.16067 + Wall-OSS-0.5 2605.30877 mapping both escalation directions)",
+      "id": "idea4-attach-screen-instrument",
+      "title": "#4 attachment-screen instrument (CPU, oracle-gated, semantics frozen in the pre-reg): (1) Molmo2Encoder residual exports + stream_geometries at the pinned taps (12 @ stride 3, layers 2,5,...,35) + lift the ar_backbone-only guard; (2) seam stop-grad flag (flow-loss grads into trunk exactly zero, CE grads nonzero — naive-joint exists only as this oracle's negative control); (3) joint CE+flow objective with alpha-edge oracles (flow-only+frozen == F-arm step; CE-only == phase-1 trunk grads on fixtures). #20 activation checkpointing is a separate hard K-arm prerequisite",
       "class": "cpu",
       "status": "queued",
-      "prereg": null,
+      "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-molmo2-attach-screen.md",
       "owner_hold": false,
-      "boundary": "wanted before molmo2_ar40k endpoint (~2026-08-08) so the attachment decision is executable when it opens"
+      "boundary": "wanted before the attachment-screen launch window (molmo2_ar40k endpoint ~2026-08-08 + #19 box obligations); order-independent of #20"
+    },
+    {
+      "id": "idea4-attach-screen-execution",
+      "title": "#4 attachment seam screen execution (box, 4xDDP, sequential F then K): F frozen-trunk vs K KI-joint (phase-1 CE verbatim + stop-grad seam, alpha=1) at matched 10k steps / eff-48 from the 40k endpoint; residual surface constant; gates vram<=71, K1-style probe kill (phase-1 curve + 3.0 at >=5k), 70 GPU-h ceiling w/ matched 5k downshift; frozen reads Delta_seam paired CI + K trunk-drift band 0.3",
+      "class": "gpu-box",
+      "status": "blocked",
+      "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-molmo2-attach-screen.md",
+      "owner_hold": false,
+      "boundary": "opens strictly after: molmo2_ar40k endpoint saves -> chained greedy + #19 draws arm (that pre-reg's box obligations first) -> instrument items + #20 landed oracle-gated -> molmo2-stage2-attachment-decision opens (owner steer window)"
     },
     {
       "id": "idea20-activation-checkpointing",
@@ -67,7 +76,7 @@
     },
     {
       "id": "molmo2-stage2-attachment-decision",
-      "title": "Molmo2 stage-2 attachment decision at endpoint — carries the pi0.5 deep-read's two named arms (all-layer KV reads; trunk CE under stop-grad vs hard freeze)",
+      "title": "Molmo2 stage-2 attachment decision at endpoint — now EXECUTABLE via the seam-screen pre-reg (2026-08-07-prereg-molmo2-attach-screen.md: frozen vs KI-joint is the first measurement; the depth-of-reads arm stays open for its own screen); owner steer window before the screen launches",
       "class": "cpu",
       "status": "blocked",
       "prereg": null,
