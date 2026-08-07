@@ -316,7 +316,19 @@ matched steps.
   band edge inclusive; misaligned index + wrong-plan JSONs hard
   abort. check.py 437 passed. Remaining: the screen itself (~08-08).
 
-## 5. FAST tokenizer v3 — `queued`
+- **Lit slice 2026-08-07 ~08:3xZ — a scale-transfer caveat on
+  reading Δ_seam:** Encoder Winners Do Not Reliably Transfer Across
+  VLA Backbone Scale ([2606.14153](https://arxiv.org/abs/2606.14153))
+  — frozen-backbone grafting diagnostic (swap the component, freeze
+  the rest, one trainable projector): component RANKINGS flip with
+  backbone scale (SigLIP wins at SmolVLA-450M, DINOv2-small at
+  pi0.5-3.3B; 40 grafting runs, two LIBERO suites), and the wrapper
+  itself has opposing effects across backbones. Two takes for the
+  screen: (i) methodological validation — cheap frozen-graft screens
+  as a pre-commit diagnostic is exactly the F-arm's role; (ii) the
+  caveat to write into the read — the F-vs-K verdict is a
+  molmo2-at-this-scale fact, not a family-wide law; re-screen, don't
+  extrapolate, if the trunk or its scale changes (#17 trunks).
 
 - **Hypothesis:** refitting on curated-v0's exact quantiles removes
   the ~1.94%-of-chunks clip rate; small but real MAE effect on
@@ -1475,6 +1487,35 @@ between these two priors on our own panel before any escalation.
   (`idea19-endpoint-fairness-es-read`): the energy-score delta —
   the strictly-proper-scoring-rule AR-vs-flow comparison from the
   same npz, record-only.
+
+- **Launcher landed 2026-08-07 ~08:3xZ** (`0cb8cf8`,
+  `eval_ar100k_tsens_q4_draws10.sh`): the pre-registered RECORD-ONLY
+  T-sensitivity rung is one command — 3 sequential q4 rungs
+  T ∈ {0.5, 0.7, 1.3}, draws 10, with the pre-reg's "run ONLY if the
+  primary lands inside the gate" clause mechanized (full-panel report
+  + registered semantics + elapsed GPU-h from the babysit
+  `started_utc` ≤ 24.0; five abort branches oracle-checked).
+  `--dump-draws` retention per the endpoint precedent, so
+  dispersion-vs-T and the per-T ceiling come free later. Follow-on
+  queued (`idea19-tsens-dt-read`): the dT table — a T-parameterized
+  sibling loader (the frozen-read script hard-pins T = 1.0 by
+  design), no decision branches.
+
+- **Lit slice 2026-08-07 ~08:3xZ — a SIXTH selection flavor, the
+  cheapest trained one:** What Frozen VLAs Already Know About Success
+  ([2605.28527](https://arxiv.org/abs/2605.28527)) — LINEAR probes on
+  frozen VLA features (OpenVLA, pi0.5) recover value-like success
+  structure their imitation objective never asked for (~92% pairwise
+  success-ordering on LIBERO-Goal, beating progress/time-to-go/
+  proprioception baselines), and the probe used as a selector over
+  sampled action prefixes lifts push-plate success 26.7% → 44.3%
+  (gains not universal, costs inference compute). Slots between
+  MG-Select (verifier-free) and VLA-ATTC/CoVer (trained critics): a
+  one-linear-layer trained selector over representations we already
+  compute. Same gate as flavors 1–5: the oracle best-of-10 ceiling
+  read decides if ANY of this is worth building on our panel. Also
+  independent evidence for the #6/#17 prior that frozen trunks carry
+  more task structure than their action head uses.
 
 ## 15. Literature-sourced arms — standing
 
