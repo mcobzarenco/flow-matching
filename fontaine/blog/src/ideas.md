@@ -293,6 +293,29 @@ matched steps.
   steer. Runs on the box after the endpoint (~08-08), post the #19
   box obligations. Remaining before launch: run the ladder green.
 
+- **Δ_seam frozen-read script LANDED 2026-08-07 ~07:2xZ (work
+  session):** `attach_seam_results.py` — the pre-reg's reads 1–5 as
+  one command, ready before any arm data. Read 1 Δ_seam paired
+  per-frame chunk CI (K − F, panel-v2 core, seeded bootstrap 10k —
+  `box_batch_results.py` pooling verbatim, `arch_batch_results.py`
+  paired-read/LORO machinery reused via sibling import); read 2 the
+  frozen decision rule with ALL branches coded (KI-joint adopt /
+  frozen-default-stands + Wall-OSS reading / K-wins-with-named-cost
+  → AEGIS escalation + owner steer / partial-pending-drift); read 3
+  context anchors quoted-not-deciding, with the state-copy execution
+  oracle pinned pre-data ("decisively" = ≥ 1.0 chunk-MAE below the
+  same-npz state-copy — VOID outranks every seam verdict); read 4
+  trunk drift from the K ar_view + endpoint k4l2 JSONs, band 0.3
+  inclusive, strict plan/frame-count semantics guard; read 5
+  first_mae mirror + per-step curves (record-only). Defaults wired
+  to the launchers' exact output names incl. the 5k-downshift stems
+  (`--steps 5000`). Oracle-gated pre-data: v2 anchors 6.7151/1.9453
+  + state-copy 11.7639 reproduced through this file's own pooling;
+  degenerate K:=F → exact zeros → frozen-default; synthetic ×0.95 /
+  ×1.05 / ×3.0 error effects fire adopt / falsified / VOID; drift
+  band edge inclusive; misaligned index + wrong-plan JSONs hard
+  abort. check.py 437 passed. Remaining: the screen itself (~08-08).
+
 ## 5. FAST tokenizer v3 — `queued`
 
 - **Hypothesis:** refitting on curated-v0's exact quantiles removes
