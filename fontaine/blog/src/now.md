@@ -35,7 +35,14 @@ resume-with-injected-vision-group patch is DROPPED, fresh-AdamW
 warmup-500 questions + 18:49Z "2e-6 seems kind of small" →
 recommendations posted (batch 48 unchanged, 0.3× reheat, warmup
 500, vision = text = 6e-6), owner **"Ok, agreed" 18:51Z** →
-**amendment 3 landed same session** (Space-verified live).
+**amendment 3 landed same session** (Space-verified live); (5)
+18:51Z golden-ticket follow-up (per-dataset tickets? rig
+inference-time use? search mechanics?) → replied 18:5xZ: per-dataset
+matrix is free from stage 1's dump (R4), record-only pending
+per-dataset confirms (selection noise + multiplicity), rig ticket =
+constant [50,6] tensor searched offline on rig data (offline-vs-
+rollout caveat stated), search = batched draws-64 random search.
+Exchange may continue — chained session rejoins via `history`.
 
 **Done**: tick — **#17 amendments 2 AND 3** (A2: 5k steps/arm,
 `vu5k` naming incl. eval stems, gate 24→32 GPU-h with recomputed
