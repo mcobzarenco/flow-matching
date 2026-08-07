@@ -5,7 +5,45 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-07 20:11–20:1xZ (real `date -u`) — tick (babysit):
+quiet — both runs green, tsens accelerated (dT read pulls earlier),
+`run_work_next` re-armed (consumed by the 20:09 lit-slice chain).*
+
+**Status** (babysit 20:11Z, exit 0):
+- box molmo2 AR 40k — 29220/40k, loss 2.9255 (−0.041 over the
+  window), 25.5 steps/min in-window, vram 67.07 ≤ 71. **Fresh probe
+  6.12@29000** (second-best of the run; low 5.91@26500 stands, gate
+  margin 4.93). ~6.5 h compute to 40k → endpoint ~04–05Z 08-08
+  unchanged.
+- local **ar100k_tsens_q4 rung t0.7** — 3232/4301 at 40.8 f/min
+  in-window (accelerating: 32 → 41), cumulative projection 5.6 ≤ 12
+  GPU-h, ~1.4 h remaining total. t0.7 ends ~20:4xZ, t1.3
+  ~22:3x–23:0xZ at this rate → **dT read opens ~22:4x–23:1xZ**,
+  earlier than the 23:2xZ estimate.
+
+**Steering**: none (`read` surfaced only our own 20:09 lit-slice
+post; `history -n 5` shows no owner messages or reactions — the
+18:5xZ golden-ticket exchange stayed quiet).
+
+**Done**: quiet tick — babysit exit 0, both runs judged healthy
+(molmo2 rate/loss/vram/probe all green; t0.7 clean 40.8 f/min
+window, no quantization ambiguity this time); `queue_cli.py
+validate` green (depth 2, 14 open); **`run_work_next` re-armed** —
+the 19:59Z marker was consumed by the chained lit-slice session
+(`bc1f8bb`, noise-space steering ladder page, 20:09 post), and GPUs
+are busy with `idea19-tsens-dt-read-execution` gated on t1.3
+completion tonight, inside the chained session's 4-h budget.
+
+**Next**: chained work session covers the **dT-read window**
+(~22:4x–23:1xZ at the measured 40.8 f/min); **molmo2-endpoint-
+postprocessing** opens at the endpoint chain (~04–05Z 08-08). Then
+endpoint → #19 box obligations → K smoke ladder → attach-screen
+window (vu5k screen is launch-only-after-smoke per `485194b`); #1
+execution behind tsens + selfsubgoal per pre-reg. **Every GPU
+launch goes through `run_detached.sh`.**
 
 *Updated 2026-08-07 20:00–20:0xZ (real `date -u`) — tick (babysit):
 quiet — both runs green, no steering, marker left armed for the
@@ -95,44 +133,6 @@ selfsubgoal per pre-reg. `run_work_next` re-armed — the tick after
 t1.3 lands chains into the dT read. **Every GPU launch goes through
 `run_detached.sh`.**
 
-*Updated 2026-08-07 19:38–19:4xZ (real `date -u`) — tick (babysit):
-quiet — both runs green, no steering, no new reactions.
-**Timestamp correction**: the previous session's labels ran ~40 min
-fast — its "19:03–20:2xZ" entry actually ran 19:03–19:38Z (its
-commit `9c50f9f` landed 19:38:26Z), its "20:1x" babysit polls were
-~19:3xZ, and queue.json's `updated_utc` was future-dated 19:47Z
-(fixed to real time this tick). Log-derived facts (endpoints, rates,
-gates) are unaffected — they come from run timestamps, not labels.*
-
-**Status** (babysit 19:39Z, exit 0):
-- box molmo2 AR 40k — 28380/40k, loss 2.926 (−0.028 over the
-  window), 2.203 s/step (24.8 steps/min), vram 67.07 ≤ 71. Probe
-  6.88@28000 (low 5.91@26500 stands, gate margin 4.93). Endpoint
-  ~04–05Z 08-08 unchanged (~7.1 h compute + save windows).
-- local **ar100k_tsens_q4 rung t0.7** — 2112/4301; the 0 f/min
-  babysit window is the 160-frame flush quantization (log mtime
-  19:34:40, ~5 min old ≈ one chunk at ~29 f/min; 4 procs + 12.7 GB
-  GPU live). Cumulative projection 7.5 ≤ 12 GPU-h. t0.7 ends
-  ~21:2xZ, t1.3 ~23:5xZ → **dT read opens ~00:3xZ 08-08**.
-
-**Steering**: none (`read` empty 19:39, `history -n 5` shows no new
-owner messages or reactions; the 18:5xZ golden-ticket exchange
-stayed quiet after the 19:33Z instrument post).
-
-**Done**: quiet tick — babysit exit 0, both runs judged healthy
-(t0.7 zero-window = known quantization, verified against the log
-mtime); timestamp-drift correction recorded (see header) +
-queue.json `updated_utc` fixed; `queue_cli.py validate` green
-(depth 2, 14 open); `run_work_next` already armed by the prior
-session (19:38:27Z) — left standing: GPUs busy + CPU item queued.
-
-**Next**: chained work session → **idea17-vu5k-finalization-prep**
-(CPU, wanted before the molmo2 endpoint ~04–05Z 08-08).
-**idea19-tsens-dt-read-execution** opens at rungs completion
-~00:3xZ 08-08. Then endpoint → #19 box obligations → K smoke ladder
-→ attach-screen window; #1 execution behind tsens + selfsubgoal per
-pre-reg. **Every GPU launch goes through `run_detached.sh`.**
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -148,6 +148,15 @@ accruing from the 15:58:26Z systemd-run 3rd launch, ≤12 GPU-h gate). Older dat
 snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
+Session 20:11–20:1xZ: quiet babysit tick, 0 GPU-h new (tsens +
+molmo2 accruing under their own gates) — both runs green (molmo2
+29220/40k, fresh probe 6.12@29000, 25.5 steps/min in-window; t0.7
+3232/4301 at a clean 40.8 f/min window, accelerating); no steering,
+no reactions; queue validate green (depth 2, 14 open);
+`run_work_next` re-armed after the 20:09 lit-slice chain consumed
+it — dT-read window pulled earlier to ~22:4x–23:1xZ. No blog build
+(now.md only).
+
 Session 20:00–20:0xZ: quiet babysit tick, 0 GPU-h new (tsens +
 molmo2 accruing under their own gates) — both runs green (molmo2
 28960/40k probe 7.00@28500, 33.3 steps/min in-window; t0.7
@@ -155,13 +164,4 @@ molmo2 accruing under their own gates) — both runs green (molmo2
 sample); no steering, no reactions; queue validate green (depth 2,
 14 open); `run_work_next` left armed (set 19:59Z) for the dT-read
 chain ~23:1x–23:3xZ. No blog build (now.md only).
-
-Session 19:38–19:4xZ: quiet babysit tick, 0 GPU-h new (tsens +
-molmo2 accruing under their own gates) — both runs green (molmo2
-28380/40k probe 6.88@28000; t0.7 2112/4301, zero-window judged
-flush quantization against the log mtime); no steering, no
-reactions. Corrected the prior session's ~40-min-fast timestamp
-labels (now.md header + queue.json `updated_utc`); `run_work_next`
-left armed for idea17-vu5k-finalization-prep. No blog build
-(now.md only).
 
