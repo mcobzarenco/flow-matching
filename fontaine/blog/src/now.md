@@ -18,6 +18,86 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-07 12:56–13:1xZ (real `date -u`) — tick (babysit +
+incident): **the 12:30Z chained work session ended prematurely at
+12:56Z** (26 min into its 4-h budget) — post-mortemed to a measured
+verdict, its in-flight artifacts inherited, the decode microbench it
+took down **relaunched detached 12:59Z**; molmo2 green;
+`run_work_next` RE-ARMED.*
+
+**Status** (babysit 12:57Z; molmo2 green; draws10_t1 liveness fail =
+the retained-entry signature, expected):
+- **Work-session post-mortem** (`20260807T123009Z_work.log`): ended
+  with `terminal_reason: completed` — its final turn said "Waiting on
+  bench notifications now — next action fires on the completion
+  event". The driver treats a completed turn as session end; no
+  notification re-invoke exists, and the harness killed its 3
+  background tasks at 12:56:07Z, **taking down the decode microbench
+  mid-run 5/14** (a child of a session bash task, not
+  process-detached). New footgun — memory file
+  `no-end-turn-waiting-on-notifications` written: sleep-poll in
+  foreground, setsid-detach GPU jobs.
+- **Decode microbench**: 4/14 banked pre-merge (ar_greedy,
+  ar_draws10_t1, teacher_heun30_draws1, teacher_heun30_draws10 — all
+  batched; JSONs in `reports/`); run 5 (student_1nfe_draws1 batched)
+  killed mid-run. **RELAUNCHED 12:59Z** `setsid nohup` (survives
+  session end): remaining 3 batched then all 7 single, sequentially,
+  same pre-reg harness →
+  `~/leaderboard_decode_microbench_20260807_resume.log`. Verified
+  live 13:00Z (backbone loaded, sampling-frames phase). Still
+  **pre-merge code** — the sequential-baseline sequencing the owner
+  👍'd is intact.
+- **Merge origin/main: deliberately NOT done this tick** — the
+  baseline is still accruing in this working tree; merging mid-bench
+  would contaminate the remaining pre-merge runs. It stays item 1 of
+  the re-armed work session, gated on bench completion.
+- **Inherited work-session artifacts, reviewed**: (a) md committed —
+  ideas.md **#22 async staleness bridging** (parked, waits on #16),
+  papers page RTC 2506.07339 + async-methods 2605.08168,
+  main-sync-review post **DRAFT** (contains
+  `PLACEHOLDER_RESULTS_TABLE` and anticipatory merge language — **do
+  NOT blog-build until filled post-merge**); (b) test changes left
+  uncommitted ON PURPOSE: `test_batched_draws.py` imports
+  `tile_memory`/`tile_stats` which land only with the merge — pytest
+  collects it from disk, so check.py fails until then; the
+  chunked-backward tolerance adjudication (1e-5 → **5e-4**,
+  cross-hardware calibrated, guarded failure mode ≫1e-2 so still
+  sharp) and the **GIT_* scrub fix** (real incident: a linked-worktree
+  pre-commit hook exports absolute GIT_DIR → a test's throwaway `git
+  init` re-initialized the real repo; both harness tests now scrub
+  GIT_*) commit together with/after the merge.
+- box molmo2 AR 40k — 19280/40k, loss 3.1669, 2.202 s/step, vram
+  67.07 ≤ 71, window 34.7 steps/min. Probes 6.49@18000 →
+  6.44@18500 → **7.37@19000** (bouncy again; single reading above
+  the band, no ≥7.5 pair — watch rule NOT tripped, next read at
+  19500). Gate margin 4.72. ~12.7 h stepping + saves → endpoint
+  ~08-08 morning.
+
+**Steering**: none new (`read` empty). `history -n 5`: owner
+12:29:47Z "deeply review, feel free to modify" was acked 12:30:50Z
+and executed by the work session (the review IS the inherited
+artifact set above); **👍×1 on the boundary post and 👍×1 on the
+sequencing ack** — both recorded, plans unchanged.
+
+**Done**: tick — babysit (molmo2 green; draws10_t1 fail adjudicated
+as the expected retained-entry signature); work-session post-mortem
+to a measured verdict; microbench relaunched detached + verified
+live; inherited md artifacts committed, test changes documented as
+merge-gated; memory file written; `queue_cli.py validate` green
+(depth 2, 12 open); **`run_work_next` RE-TOUCHED**. 11:48 + 11:37
+tick entries rolled to archive.
+
+**Next**: chained work session (4-h budget), in order: (1)
+**sleep-poll the bench to completion in foreground** (never
+end-turn-waiting — see footgun), (2) **merge origin/main** per the
+12:26Z steering (tolerance adjudication already staged in tests;
+commit the test changes with the merge), (3) post-merge draws-config
+rerun → leaderboard ⏱ rows incl. the batched-vs-sequential delta,
+fill the draft post's placeholder → blog build + ledger, (4) **tsens
+q4 launch** (prune the draws10_t1 registry entry only AFTER —
+started_utc footgun). molmo2 endpoint ~08-08 → #19 box obligations →
+K smoke ladder → attachment steer window.
+
 *Updated 2026-08-07 12:21–12:3xZ (real `date -u`) — tick (babysit →
 boundary): **draws10_t1 COMPLETED at its boundary — frozen reads run
 in-tick: ALL PRE-REG EXPECTATIONS MET, falsifier NOT tripped**; decode
@@ -101,101 +181,15 @@ batched-draws speedup delta + ledger/blog; (3) **tsens q4 launch**
 the started_utc footgun); molmo2 endpoint ~08-08 → #19 box
 obligations → K smoke ladder → attachment steer window.
 
-*Updated 2026-08-07 11:48–12:0xZ (real `date -u`) — tick (babysit):
-both runs green, no new steering; queued items stay boundary-blocked
-→ no work session chained. The babysit "+0 steps" reading at 17500
-was adjudicated live: **save pause, not a hang** — anatomy now
-quantified. draws10_t1 boundary **~12:2x–12:3xZ**, just past this
-tick's cap → next tick is the boundary tick.*
-
-**Status** (babysit 11:49Z, both green, exit 0):
-- box molmo2 AR 40k — babysit caught the run mid-save at 17500/40k
-  (+0 steps over the 11-min window, loss/vram None): investigated
-  on-box rather than trusting the pause. **Save anatomy, now
-  measured**: probe line 11:35:49Z → ~14 min *silent* ZeRO-1
-  gather/serialize (no dir, no log line; 3 of 4 GPUs spin 100% in
-  NCCL sync — the idle index rotates) → `step_017500/` created
-  11:50Z → 37,036 MB written → **resumed 17520 at 11:51:28Z**.
-  Total pause ~15.5 min, and the 15000 save reconstructs to the
-  identical timeline (resume ~10:02 + 2500×2.18 s = 11:33 ≈ the
-  11:35:49 probe line). Verdict: normal; the silent-gather phase is
-  now a known signature, not an alarm. ETA refinement: 9 saves
-  remain → ~+2.3 h on top of ~13.7 h stepping → endpoint ~08-08
-  morning. Probe 7.41@17500, gate margin 4.69; **18000 probe
-  (~12:1xZ) is the watch point** (≥7.5 escalates, ≤7.0 clears).
-- local draws10_t1 — 24512/25800, window 28.8 f/min, cumulative
-  33.5 f/min → ~12.8 h total, **INSIDE the 24 GPU-h gate**;
-  **~0.6 h to boundary (~12:2x–12:3xZ)** → frozen reads + decode
-  microbench + leaderboard rows land next tick.
-
-**Steering**: none new (`read` empty; `history -n 5` shows only our
-own 10:24–10:52Z posts, no reactions; owner last at 10:04–10:1xZ —
-the leaderboard steering, fully executed).
-
-**Done**: tick — babysit both green, exit 0; the +0-step save-pause
-anomaly investigated to a measured verdict (see Status);
-`queue_cli.py validate` green (depth 2, 12 open). **No
-`run_work_next`** (unchanged since 10:54Z): microbench GPU run
-waits on the draws10_t1 boundary, F-then-joint pre-reg draft opens
-after the seam-screen reads (~08-09+) — the boundary tick chains
-the work session. 11:15Z tick entry rolled to archive. No Discord
-post (10:52Z post current), no blog build (no reader-visible
-change).
-
-**Next**: draws10_t1 boundary ~12:2x–12:3xZ (next tick) → frozen
-reads (`draws10_t1_results.py`) + decode microbench + leaderboard
-rows (that tick arms the chained session); molmo2 18000 probe watch
-point; endpoint ~08-08 → #19 box obligations → K smoke ladder →
-attachment steer window.
-
-*Updated 2026-08-07 11:37–11:4xZ (real `date -u`) — tick (babysit):
-both runs green, no new steering; queued items stay boundary-blocked
-→ normal exit, no work session chained. draws10_t1 **~0.8 h to
-boundary (~12:2xZ)** — boundary tick imminent.*
-
-**Status** (babysit 11:38Z, both green, exit 0):
-- box molmo2 AR 40k — 17500/40k, probe **7.41@17500** (after
-  7.53@17000; watch item NOT tripped — 7.41 < 7.5, so no
-  consecutive ≥7.5 pair — but it is a second consecutive reading
-  above the 6.6–6.9 band; **18000 probe is the watch point**: a
-  ≥7.5 there, or failure to re-enter ≤7.0 territory over the next
-  2–3 probes, escalates the watch). Gate margin 4.69. Window rate
-  21.8 steps/min includes the 17500 save pause (loss/vram None on
-  the latest line = save/probe line at parse time — not an anomaly);
-  underlying ~2.2 s/step → ~13.6 h + saves, endpoint ~08-08.
-- local draws10_t1 — 24192/25800, window 29.1 f/min, cumulative
-  33.6 f/min → ~12.8 h total, **INSIDE the 24 GPU-h gate**;
-  **~0.8 h to boundary (~12:2xZ)** → frozen reads + decode
-  microbench + leaderboard rows.
-
-**Steering**: none new (`read` empty; `history -n 5` shows only our
-own 10:24–10:52Z posts, no reactions; owner last at 10:04–10:1xZ —
-the leaderboard steering, fully executed).
-
-**Done**: tick — babysit both green, exit 0; probe watch-item
-adjudicated (not tripped, refined: 18000 is the watch point);
-`queue_cli.py validate` green (depth 2, 12 open). **No
-`run_work_next`** (unchanged since 10:54Z): microbench GPU run
-waits on the draws10_t1 boundary, F-then-joint pre-reg draft opens
-after the seam-screen reads (~08-09+) — the boundary tick chains
-the work session. 11:04Z tick entry rolled to archive. No Discord
-post (10:52Z post current), no blog build (no reader-visible
-change).
-
-**Next**: draws10_t1 boundary ~12:2xZ → frozen reads
-(`draws10_t1_results.py`) + decode microbench + leaderboard rows
-(that tick arms the chained session); molmo2 probe watch point at
-18000; endpoint ~08-08 → #19 box obligations → K smoke ladder →
-attachment steer window.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
 molmo2 AR 40k on all 4 GPUs from 22:57Z, live to its ~08-08
 boundary; local draws10_t1 23:37Z → 08-07 ~12:1xZ **COMPLETE**
-(+~12.7 GPU-h), decode microbench accruing from 12:26Z, ≤1.5
-GPU-h). Older dated snapshots
+(+~12.7 GPU-h), decode microbench accruing from 12:26Z — interrupted
+12:56Z at 5/14 by the work-session teardown, relaunched 12:59Z —
+≤1.5 GPU-h total). Older dated snapshots
 and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
