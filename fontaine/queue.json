@@ -229,7 +229,7 @@
   },
   {
    "id": "driver-background-task-guard",
-   "title": "OWNER STEERING 08-07 13:05Z (tooling follow-up to the 12:56Z premature-session-end incident): harden the session driver so a completed turn cannot silently kill live work \u2014 audit fontaine/harness session-driver lifecycle; add a guard that (a) refuses to treat turn-completion as session end while registered background tasks are live (re-prompt instead), or at minimum (b) never tears down setsid-detached/registered jobs; add a driver test reproducing the 12:56Z signature (terminal_reason completed + live bg tasks). Memory-file mitigation (no-end-turn-waiting-on-notifications) already in place; this mechanizes it.",
+   "title": "OWNER STEERING 08-07 13:05Z (tooling follow-up to the 12:56Z premature-session-end incident): harden the session driver so a completed turn cannot silently kill live work \u2014 audit fontaine/harness session-driver lifecycle; add a guard that (a) refuses to treat turn-completion as session end while registered background tasks are live (re-prompt instead), or at minimum (b) never tears down setsid-detached/registered jobs; add a driver test reproducing the 12:56Z signature (terminal_reason completed + live bg tasks). Memory-file mitigation (no-end-turn-waiting-on-notifications) already in place; this mechanizes it. SECOND INCIDENT 08-07 15:0x-15:1xZ: the 13:04Z work session's tsens q4 launch (15:01:40Z, not setsid-detached despite the memory file) was killed by the same turn-completion teardown when that session ended ~15:11Z \u2014 32/4301 frames lost, relaunched setsid-detached 15:13:44Z by the tick. Priority evidence: two GPU runs killed by the same driver behavior in one day.",
    "class": "cpu",
    "status": "queued",
    "prereg": null,

@@ -1,5 +1,59 @@
 # Now
 
+*Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-07 15:11–15:3xZ (real `date -u`) — tick (babysit +
+incident): **tsens q4 was DEAD at first poll — killed ~15:07–15:11Z
+by the driver's turn-completion teardown, the SECOND
+driver-background-task-guard incident in one day** (the work session
+launched it 15:01:40Z as a session task, not setsid-detached);
+**relaunched setsid-detached 15:13:44Z**, primary gate re-passed,
+rung t0.5 restarted from frame 0 (32 frames lost, ~6 min compute).
+molmo2 green.*
+
+**Status** (babysit 15:11Z):
+- box molmo2 AR 40k — 22460/40k, loss 3.0866, 2.198 s/step, vram
+  67.07 ≤ 71, 27.4 steps/min window. Probe 6.22@20500 → 6.55@21000 →
+  7.18@21500 → 6.93@22000 (bouncy inside the band, no ≥7.5 pair,
+  watch not tripped). Gate margin 4.93. ~10.7 h stepping + saves →
+  endpoint ~08-08 morning.
+- local **ar100k_tsens_q4 incident + relaunch**: first poll found
+  GPU 0 empty, 1 pgrep match (my own shell), log frozen at "scored
+  32/4301" (mtime 15:07), NO traceback, NO OOM (dmesg + journalctl
+  clean) — external SIGKILL signature, timed at the 13:04Z work
+  session's end (~15:11Z close post). Same mechanism as 12:56Z: the
+  driver kills session background tasks at turn completion; the
+  launch was NOT setsid-detached despite the memory-file mitigation.
+  **Relaunched 15:13:44Z `setsid nohup`** — required temporarily
+  restoring the pruned draws10_t1 registry entry (the launcher's
+  PRIMARY GATE reads its started_utc; restored from `85cdc0a`, gate
+  re-passed 12.7 ≤ 24, entry re-pruned). Rung t0.5 scoring verified
+  live (first progress line + GPU fed) before commit; babysit
+  started_utc repointed to 15:13:44Z (the 22.7 h "gate crossing" at
+  first poll was the dead run's elapsed-vs-32-frames artifact, not a
+  real cost breach — voided by the relaunch). Second-incident
+  evidence appended to the `driver-background-task-guard` queue item.
+
+**Steering**: none new (`read` = our own 15:11Z close post; `history
+-n 5` shows nothing unrecorded — 13:35Z 👍 "Great stuff" and 13:58Z
+async-ckpt HIGH already in the 13:04Z entry).
+
+**Done**: tick — babysit (molmo2 green; tsens dead-run adjudicated
+to a measured verdict: driver teardown, not crash/OOM); tsens
+relaunched detached + verified scoring; draws10_t1 entry
+restore→gate→re-prune dance executed; queue item updated with
+second-incident evidence; `queue_cli.py validate` green (depth 3, 12
+open); `run_work_next` already armed (async-checkpoint-saves HIGH
+next). No blog build (no reader-visible content change).
+
+**Next**: chained work session → **async-checkpoint-saves** (owner
+HIGH, target before the attach-screen launch) — and
+`driver-background-task-guard` just earned its second incident;
+consider pulling it forward, it is now killing GPU runs at a rate of
+two per day. Boundaries: tsens rungs roll (repoint babysit log stem
+t0.5 → t0.7 → t1.3); molmo2 endpoint ~08-08 morning → #19 box
+obligations → K smoke ladder → attachment steer window.
+
 *Updated 2026-08-07 13:04–15:2xZ (real `date -u`) — work session:
 **merge chain executed end-to-end** (pre-merge baseline banked →
 origin/main MERGED `85cdc0a` → post-merge speedup measured 9.1× →
@@ -83,7 +137,6 @@ obligations → K smoke ladder → attachment steer window.
 
 
 
-*Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
 *Updated 2026-08-07 12:56–13:1xZ (real `date -u`) — tick (babysit +
 incident): **the 12:30Z chained work session ended prematurely at
@@ -165,89 +218,6 @@ q4 launch** (prune the draws10_t1 registry entry only AFTER —
 started_utc footgun). molmo2 endpoint ~08-08 → #19 box obligations →
 K smoke ladder → attachment steer window.
 
-*Updated 2026-08-07 12:21–12:3xZ (real `date -u`) — tick (babysit →
-boundary): **draws10_t1 COMPLETED at its boundary — frozen reads run
-in-tick: ALL PRE-REG EXPECTATIONS MET, falsifier NOT tripped**; decode
-microbench launched 12:26Z on the freed GPU; molmo2 green with the
-18000 watch point **CLEARED** (probe new low). `run_work_next` touched
-→ work session chains (microbench reads + leaderboard rows + tsens
-launch).*
-
-**Status** (babysit 12:21Z; exit 1 = draws10_t1 liveness fail = the
-expected completion signature, verified on-disk):
-- local draws10_t1 — **DONE ~12:1x–12:2xZ**: 25,800 frames scored,
-  reports/html/npz written, clean final table, process gone, GPU 0
-  freed. Cumulative 33.8 f/min → **~12.7 GPU-h, inside the 24 GPU-h
-  gate by ~2×** — the q4-fallback question stays closed. **Frozen
-  reads** (`draws10_t1_results.py` →
-  `reports/analysis__draws10_t1_ar100k_k4l2.json`): **E1 MET** Δ_AR
-  (draws10 − greedy) = **−0.14505**, CI95 [−0.182, −0.109], excludes
-  zero; **E2 MET** |Δ_AR| ≪ flow draws gain 1.258 (~9× smaller — the
-  pre-registered mean-collapse shape: greedy AR decode already sits
-  near the predictive mean); **E3 MET** draws10_t1 5.6515 does not
-  overtake the flow draws10 band 5.365; **falsifier (Δ_AR > +0.1) NOT
-  tripped**; oracles clean (row pairing full byte-match, T=1.0,
-  draws=10, both report arms reproduced |d| < 5e-3). Babysit registry
-  entry RETAINED on purpose (started_utc footgun — prune only AFTER
-  the tsens launch); babysit reports liveness fail on it until then —
-  expected, not an alarm.
-- **decode microbench LAUNCHED 12:26Z** detached
-  (`leaderboard_decode_microbench.py` full pass →
-  `/home/ubuntu/leaderboard_decode_microbench_20260807.log`): pre-reg
-  7 configs × {batched b32/w20, batch=1 single-stream}, ≤1.5 GPU-h,
-  30-min/run watchdog. The chained session reads it and writes the
-  leaderboard ⏱ rows.
-- box molmo2 AR 40k — 18320/40k, loss 3.221, 2.192 s/step, vram
-  67.07 ≤ 71, window 27.5 steps/min. **18000 watch point CLEARED:
-  probe 6.49@18000 — new low** (7.53@17000 → 7.41@17500 → 6.49): the
-  descending envelope resumed, watch item closed. Gate margin 5.60.
-  ~13.2 h stepping + 9 saves (~15.5 min each) → endpoint ~08-08
-  morning.
-
-**Steering**: **NEW — owner 12:26:40Z** (caught on the end-of-tick
-poll, acknowledged in-channel 12:4xZ): merge the missing main changes
-into fontaine — main was **rebased onto our snapshot `42a202a`**
-(our work through mem-snapshot/vram-peaks is now mainline) + 3
-commits on top; read `docs/notes/2026-08-06-main-sync-for-fontaine.md`
-first (done, from origin/main). Contents: (1) `2ee2be5` batched
-noise-draw ensembling — `sample_draws` via one solver call at
-draws×B, **5.6× bf16** (576 ms mean-of-10 on the rig), draws-major so
-`collapse_draws`/`--dump-draws` layouts stay byte-compatible; fp32
-seq-vs-batched max Δ 9.2e-5°; (2) `36570c0` `--return-home` cosine
-glide via our `rollout_safety.home_trajectory`; (3) known:
-`test_chunked_backward` aux rel-err 1.0004e-4 vs 1e-4 — OUR tolerance
-call (passes on this box; pin down before touching the bound); (4)
-`bijou/train.py` import reorder only. **Sequencing** (posted): the
-in-flight microbench finishes pre-merge as the sequential baseline
-(matches the banked evals the ≈ rows measured) → merge origin/main
-(normal merge, not ff) → rerun the draws configs post-merge → the
-batched-vs-sequential speedup lands on the leaderboard as a measured
-delta. Merge = FIRST item of the chained work session. **Owner 👍 on
-the ack post** (seen 12:4xZ) — sequencing plan agreed, no further
-reply needed.
-
-**Done**: tick — boundary adjudicated (completion verified on-disk,
-never off the liveness line alone); frozen reads executed in-tick and
-posted (Discord 12:2xZ, id …398); microbench launched on the freed
-GPU; **`run_work_next` TOUCHED** → chained work session: microbench
-reads → leaderboard/ledger rows → blog build → tsens q4 launch →
-prune the draws10_t1 registry entry. Inherited and committed the
-12:1x session's staged babysit.toml completion note (that session
-evidently hit its hard kill before committing — the staged note was
-its only surviving artifact). `queue_cli.py validate` green (depth 2,
-12 open). 11:26Z tick entry rolled to archive. No blog build (reader
-content lands with the leaderboard rows in the chained session).
-
-**Next**: chained work session (4-h budget), in order: (1) **merge
-origin/main per the owner's 12:26Z steering + sync note** (after the
-in-flight microbench completes its pre-merge sequential baseline;
-adjudicate the test_chunked_backward tolerance call); (2) microbench
-reads + post-merge draws-config rerun → leaderboard ⏱ rows incl. the
-batched-draws speedup delta + ledger/blog; (3) **tsens q4 launch**
-(`eval_ar100k_tsens_q4_draws10.sh`, prune draws10_t1 entry AFTER —
-the started_utc footgun); molmo2 endpoint ~08-08 → #19 box
-obligations → K smoke ladder → attachment steer window.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -256,7 +226,9 @@ molmo2 AR 40k on all 4 GPUs from 22:57Z, live to its ~08-08
 boundary; local draws10_t1 23:37Z → 08-07 ~12:1xZ COMPLETE (+~12.7
 GPU-h); decode microbench 12:26–15:00Z incl. incident relaunch, the
 pre-merge redo cell and post-merge reruns (+~2 GPU-h total);
-ar100k_tsens_q4 accruing from 15:01Z, ≤12 GPU-h gate). Older dated
+ar100k_tsens_q4 first launch 15:01Z killed ~15:07Z by the driver
+teardown (+~0.1 GPU-h lost), accruing from the 15:13:44Z detached
+relaunch, ≤12 GPU-h gate). Older dated
 snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
