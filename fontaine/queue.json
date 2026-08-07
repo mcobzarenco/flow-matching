@@ -18,7 +18,7 @@
       "status": "live",
       "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-ar-sampled-draws.md",
       "owner_hold": false,
-      "boundary": "~14:0x-14:3xZ 2026-08-07 (cumulative 29.9 f/min at 01:47Z -> ~14.4 h total, re-projected each babysit; 24 GPU-h gate)"
+      "boundary": "~13:3x-14:0xZ 2026-08-07 (cumulative 30.8 f/min at 02:09Z -> ~14.0 h total, re-projected each babysit; 24 GPU-h gate)"
     },
     {
       "id": "draws10-frozen-reads",
@@ -27,7 +27,7 @@
       "status": "blocked",
       "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-ar-sampled-draws.md",
       "owner_hold": false,
-      "boundary": "opens at draws10_t1 completion (~14:0x-14:3xZ 2026-08-07); reads are frozen in the pre-reg"
+      "boundary": "opens at draws10_t1 completion (~13:3x-14:0xZ 2026-08-07); reads are frozen in the pre-reg"
     },
     {
       "id": "p6-checkpy-tiers",
