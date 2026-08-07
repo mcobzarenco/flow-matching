@@ -1,4 +1,4 @@
-# 18. Instrument & infra hardening — `screening` (items 1+8 done 2026-08-05, 2 flag-landed, 3+4+7 done 2026-08-06)
+# 18. Instrument & infra hardening — `screening` (items 1+8 done 2026-08-05, 2 flag-landed, 3+4+7 done 2026-08-06, 9 async-saves done 2026-08-07)
 
 *Tag: `infra-hardening` · idea #18 · [index](../ideas.md)*
 
@@ -191,3 +191,24 @@ queue, in leverage order (details + file:line in the post):
    (radioactive 5267 / checked 47240, 4.1 s); a mutated-count copy of
    `therarelab/so100_pick_place_2` fails loud in production. Unblocks
    derived-corpus training (ideas #9, #13 repair arm).
+9. ~~Async checkpoint saves~~ **DONE 2026-08-07 ~15:4xZ**
+   (`e3bdc93`; owner HIGH 13:58Z — not from the deep-dive queue but
+   the same oracle-shaped class): the molmo2 AR run measured ~15.5
+   min/save every ~92 min stepping (~14% of wall), ~14 min of it
+   torch's ZeRO-1 `consolidate_state_dict` serially pickling whole
+   shards over the *training* NCCL group. Now default-on
+   (`--sync-save` = legacy escape): device→CPU capture at the
+   boundary (seconds), background `gather_object` over a dedicated
+   gloo group, exact `ZRO.state_dict()` merge replica, atomic
+   `.tmp`-dir rename publish, final save joined pre-teardown.
+   Keystone oracle: async `optimizer.pt` BYTE-identical to the sync
+   consolidate path on a live 2-rank group at consecutive
+   boundaries (pickle memoization of the shared betas tuple +
+   `gather_object` key de-interning both pinned in tests); plus
+   dir-level byte-identity, resume round-trip, crash atomicity,
+   loud background-failure surfacing. Payoff target: the #4 attach
+   screen's 50–70 GPU-h (launchers inherit the default, zero flag
+   churn). Lit grounding + two banked follow-up hooks
+   (pinned-buffer reuse; save-frequency retuning now that saves are
+   ~free):
+   [checkpointing systems cluster](../papers/checkpointing-systems.md).

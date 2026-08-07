@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-07T10:20:00+00:00",
+ "updated_utc": "2026-08-07T15:50:00+00:00",
  "depth_reason": null,
  "items": [
   {
@@ -31,12 +31,12 @@
   },
   {
    "id": "async-checkpoint-saves",
-   "title": "OWNER STEERING 08-07 13:58Z, HIGH PRIORITY: async checkpoint serialization for bijou.train \u2014 molmo2 measures ~15.5 min/save (~14 min silent ZeRO-1 gather, 3/4 GPUs idle-spinning NCCL, + 37 GB write) every ~92 min stepping = ~14% wall-time waste. Design: fast device->CPU pinned snapshot at the save step, background thread does gather+serialize+write while stepping resumes; must compose with zero1 + chunked backward + DDP. Oracles: byte-identical checkpoint vs sync path; resume-from-async-save loss-curve equivalence; a mid-write crash leaves the previous checkpoint intact (atomic rename). TARGET: lands oracle-gated BEFORE the attach-screen launch (~08-08) so F/K's 50-70 GPU-h get the ~14% back.",
+   "title": "OWNER STEERING 08-07 13:58Z, HIGH PRIORITY: async checkpoint serialization for bijou.train \u2014 molmo2 measures ~15.5 min/save (~14 min silent ZeRO-1 gather = consolidate_state_dict's serial whole-shard pickle broadcast over the TRAINING NCCL group, + 37 GB write) every ~92 min stepping = ~14% wall-time waste \u2014 LANDED 08-07 ~15:4xZ (e3bdc93), oracle-gated, DEFAULT-ON (--sync-save = legacy escape): bijou/async_save.py capture (device->CPU at boundary, seconds) + background gather_object over a DEDICATED gloo group + exact ZRO.state_dict() merge replica + atomic .tmp-dir rename publish; train.py save_checkpoint refactored capture/metadata/write (sync path now atomic too); final save joined before group teardown (endpoint chaining safe). Oracles green in check.py 446: 2-rank byte-identity keystone vs consolidate at consecutive boundaries w/ gather overlapping main-thread collectives (pickle-memoization of shared betas tuple + gather_object key-de-interning both pinned), dir-level byte-identity, weights_only resume round-trip, crash atomicity (no step dir published, .tmp debris only), loud background-failure surfacing. Attach-screen launchers pick it up with zero flag churn. NOTE: loop wiring validated by unit oracles only (no main() e2e exists repo-wide); first real-run validation = first save of the next training launch \u2014 check the 'captured in Xs' + 'saved ... (async, Xs behind the boundary)' lines at first babysit; representational note: non-zero1 GPU runs' optimizer.pt now stores CPU-tagged tensors (load path re-homes).",
    "class": "cpu",
-   "status": "queued",
+   "status": "done",
    "prereg": null,
    "owner_hold": false,
-   "boundary": "before attach-screen launch at the molmo2 endpoint (~08-08)"
+   "boundary": "DONE 08-07 before the attach-screen launch (~08-08) as targeted; verify async-save lines at that launch's first babysit"
   },
   {
    "id": "blog-now-archive-sort",
@@ -222,14 +222,32 @@
    "id": "idea4-f-then-joint-prereg-draft",
    "title": "#4 F-then-joint escalation rung \u2014 pre-reg DRAFT (CPU; the APT-named recipe, papers/apt-expert-pretraining.md): warm-start a joint run (unfrozen trunk, seam per readout) from the F arm's converged expert instead of from noise; APT grid says +8..+26 pts over frozen in their regime, and an F~K tie makes this the next discriminating contrast (initialization, not seam). Draft ONLY after the seam screen reads out: matched steps/effective batch vs the screen arms, Delta vs both F and K endpoints, trunk-drift band inherited from K's read 4",
    "class": "cpu",
-   "status": "queued",
+   "status": "blocked",
    "prereg": null,
    "owner_hold": false,
    "boundary": "opens after the #4 attach-screen frozen reads (~08-09+); the draft is CPU work at any GPU-busy window AFTER Delta_seam is banked; execution needs its own posted pre-reg + owner-visible queue entry"
   },
   {
+   "id": "idea19-tsens-dt-read-execution",
+   "title": "#19 dT diagnostic read EXECUTION (CPU, minutes): run tsens_dt_results.py over the three landed rung report/npz stems (stateprobe_q4_draws10_t{0.5,0.7,1.3}) once ar100k_tsens_q4 completes — one RECORD-ONLY dT table (pre-reg sensitivity clause: never a headline, never a license to re-pick T), ledger/blog note + Discord line; then prune the ar100k_tsens_q4 babysit entry (retained-entry liveness-fail footgun) and confirm the local GPU is free for the selfsubgoal probe window",
+   "class": "cpu",
+   "status": "queued",
+   "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-ar-sampled-draws.md",
+   "owner_hold": false,
+   "boundary": "opens at ar100k_tsens_q4 completion (~18-19Z 08-07 at the measured ~26 f/min, 3 rungs); script landed + oracle-gated (idea19-tsens-dt-read)"
+  },
+  {
+   "id": "lit-slice-async-training-systems",
+   "title": "Standing lit slice (~20-30 min, owner allocation 2026-08-05): async/overlapped-checkpointing + training-systems efficiency cluster, timed to the just-landed async_save.py (e3bdc93) — EXECUTED SAME SESSION 2026-08-07 ~16:1xZ: 6-source cluster read (CheckFreq FAST'21, Gemini SOSP'23, DataStates-LLM 2406.10707, GoCkpt 2511.07035, TierCheck 2605.17821, checkpoint-I/O study 2512.24511), papers page landed per the permanent rule (papers/checkpointing-systems.md): our two-phase design corroborated (DataStates = our shape + 2 refinements); 3 transfers banked as hooks on #18.9 (pinned-buffer reuse across saves — DataStates pre-allocates ONE reusable pinned buffer; save-frequency retuning now saves are ~free — CheckFreq auto-tune, relevant given 2 driver-kill recoveries today; CheckFreq's data-iterator-state gap our --resume shares, named with citation); 3 honest non-transfers (memory tiers = node-loss fault model we don't have; multi-step spreading = snapshot >> step slack, not our regime; per-rank sharded format = kills the gather but breaks the consolidated read-side contract byte-identity deliberately preserved). ideas.md #18 hook + index/SUMMARY rows",
+   "class": "cpu",
+   "status": "done",
+   "prereg": null,
+   "owner_hold": false,
+   "boundary": "DONE 08-07 before the attach-screen launch; save-cadence call (follow-up hook) belongs to attach launch prep"
+  },
+  {
    "id": "driver-background-task-guard",
-   "title": "OWNER STEERING 08-07 13:05Z (tooling follow-up to the 12:56Z premature-session-end incident): harden the session driver so a completed turn cannot silently kill live work \u2014 audit fontaine/harness session-driver lifecycle; add a guard that (a) refuses to treat turn-completion as session end while registered background tasks are live (re-prompt instead), or at minimum (b) never tears down setsid-detached/registered jobs; add a driver test reproducing the 12:56Z signature (terminal_reason completed + live bg tasks). Memory-file mitigation (no-end-turn-waiting-on-notifications) already in place; this mechanizes it. SECOND INCIDENT 08-07 15:0x-15:1xZ: the 13:04Z work session's tsens q4 launch (15:01:40Z, not setsid-detached despite the memory file) was killed by the same turn-completion teardown when that session ended ~15:11Z \u2014 32/4301 frames lost, relaunched setsid-detached 15:13:44Z by the tick. Priority evidence: two GPU runs killed by the same driver behavior in one day.",
+   "title": "OWNER STEERING 08-07 13:05Z (tooling follow-up to the 12:56Z premature-session-end incident), PULLED FORWARD 08-07 15:4xZ = NEXT CPU ITEM (async-ckpt done; 2 GPU runs killed by this in one day): harden the session driver so a completed turn cannot silently kill live work \u2014 audit fontaine/harness session-driver lifecycle; add a guard that (a) refuses to treat turn-completion as session end while registered background tasks are live (re-prompt instead), or at minimum (b) never tears down setsid-detached/registered jobs; add a driver test reproducing the 12:56Z signature (terminal_reason completed + live bg tasks). Memory-file mitigation (no-end-turn-waiting-on-notifications) already in place; this mechanizes it. SECOND INCIDENT 08-07 15:0x-15:1xZ: the 13:04Z work session's tsens q4 launch (15:01:40Z, not setsid-detached despite the memory file) was killed by the same turn-completion teardown when that session ended ~15:11Z \u2014 32/4301 frames lost, relaunched setsid-detached 15:13:44Z by the tick.",
    "class": "cpu",
    "status": "queued",
    "prereg": null,

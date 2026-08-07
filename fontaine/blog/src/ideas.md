@@ -48,7 +48,10 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   "novel" idea gets a search first. Feeds the Papers section.
 - **`infra-hardening` [#18 Instrument & infra hardening](ideas/18-infra-hardening.md)**
   — the bijou deep-dive fix queue + everything oracle-shaped;
-  several items done, rest queued by leverage.
+  several items done, rest queued by leverage. New 2026-08-07: item
+  9 async checkpoint saves LANDED (owner HIGH; byte-identical
+  oracle, ~14% wall-time payoff at the attach screen) + its
+  [checkpointing-systems lit page](papers/checkpointing-systems.md).
 
 ## On ice — queued or parked, each with its named trigger
 

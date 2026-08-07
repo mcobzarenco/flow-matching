@@ -1,6 +1,75 @@
 # Now
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-07 15:22–16:1xZ (real `date -u`) — work session:
+**async checkpoint saves LANDED** (owner HIGH 13:58Z; `e3bdc93`,
+oracle-gated BYTE-identical, default-on for every future train run) +
+the checkpointing-systems lit slice with its same-session papers
+page; tsens q4's first-poll gate scare adjudicated to a startup
+artifact (measured ~3.3 h/rung, well inside the 12 GPU-h gate);
+molmo2 green.*
+
+**Status** (babysit 15:52Z):
+- box molmo2 AR 40k — 23140/40k, loss 3.0727, 2.165 s/step, vram
+  67.07 ≤ 71, 25.5 steps/min window. Probe **5.97@22500 (NEW LOW)** →
+  6.05@23000. Gate margin 4.93. ~10.1 h stepping + saves → endpoint
+  ~08-08 morning.
+- local **ar100k_tsens_q4 rung t0.5** — 832/4301 @ 21–27 f/min
+  (four timestamped inter-batch measurements 15:20→15:44 + babysit
+  windows). The 15:22Z babysit surfaced a 19.3 h > 12 GPU-h gate
+  crossing — **adjudicated startup artifact** (cumulative rate was
+  contaminated by the ~6-min model-load before the first progress
+  line); measured projection ~3.3 h/rung → ~10 GPU-h for all three
+  rungs, gate PASS. Rung roll t0.5 → t0.7 ~18:3xZ (repoint the
+  babysit `log` stem at the first tick after the roll); all rungs
+  complete ~01:0xZ 08-08 → the queued dT-read item opens.
+
+**Steering**: none new (polls 15:22 / 15:45 / 15:52Z all clean;
+15:46Z landing post + this close post are ours).
+
+**Done**: this session —
+(1) **async-checkpoint-saves** (`e3bdc93`, the queue's owner-HIGH
+item): `bijou/async_save.py` + train.py refactor. Root cause
+measured-then-fixed: ~14 of the ~15.5 min/save was
+`consolidate_state_dict` serially pickling whole optimizer shards
+over the TRAINING NCCL group; now device→CPU capture at the boundary
+(seconds), background `gather_object` over a dedicated gloo group,
+exact `ZRO.state_dict()` merge replica, atomic `.tmp`-dir rename,
+final save joined before teardown. Default ON (`--sync-save`
+escape). Oracles (check.py 446 green): 2-rank BYTE-identity vs the
+consolidate path at consecutive boundaries with the gather
+overlapping main-thread collectives — two byte-level subtleties
+pinned (pickle memoization of the shared betas tuple → identity-
+memoized snapshot copies; `gather_object` de-interning rank 0's own
+dict keys → keep the local capture object) — plus dir-level
+byte-identity, `weights_only` resume round-trip, crash atomicity,
+loud background-failure surfacing. Sync path is now atomic too.
+(2) **Lit slice + papers page**
+([checkpointing-systems](papers/checkpointing-systems.md), 6
+sources): design corroborated (the CheckFreq/DataStates two-phase
+shape); transfers banked as #18.9 hooks (pinned-buffer reuse,
+save-frequency retune now saves are ~free, the data-iterator-state
+resume gap named); non-transfers stated honestly (memory tiers,
+multi-step spreading, sharded formats). ideas.md #18 item 9 + hook,
+papers index + SUMMARY rows.
+(3) Queue maintenance: async item + lit item → done;
+`idea4-f-then-joint-prereg-draft` corrected queued→blocked (its
+boundary needs Δ_seam); **driver-background-task-guard pulled
+forward = next CPU item** (2 kills today); refills:
+`idea19-tsens-dt-read-execution` (opens at rungs completion),
+validate green depth 2.
+
+**Next**: `queue_cli.py next` → **driver-background-task-guard**
+(mechanize the turn-completion teardown fix — 2 GPU runs killed by
+it today; run_work_next armed, next tick chains into it). Dated
+boundaries: tsens rung roll ~18:3xZ (babysit stem repoint) → rungs
+complete ~01:0xZ 08-08 (dT read, record-only); molmo2 endpoint
+~08-08 morning → #19 box obligations → K smoke ladder →
+attach-screen window — **first save of that launch validates the
+async path in production: look for the `captured in Xs` +
+`saved ... (async, Xs behind the boundary)` lines at first babysit**.
 
 *Updated 2026-08-07 15:11–15:3xZ (real `date -u`) — tick (babysit +
 incident): **tsens q4 was DEAD at first poll — killed ~15:07–15:11Z
@@ -121,103 +190,6 @@ roll (repoint babysit log stem; reads via `tsens_dt_results.py` at
 completion, record-only); molmo2 endpoint ~08-08 morning → #19 box
 obligations → K smoke ladder → attachment steer window.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-*Updated 2026-08-07 12:56–13:1xZ (real `date -u`) — tick (babysit +
-incident): **the 12:30Z chained work session ended prematurely at
-12:56Z** (26 min into its 4-h budget) — post-mortemed to a measured
-verdict, its in-flight artifacts inherited, the decode microbench it
-took down **relaunched detached 12:59Z**; molmo2 green;
-`run_work_next` RE-ARMED.*
-
-**Status** (babysit 12:57Z; molmo2 green; draws10_t1 liveness fail =
-the retained-entry signature, expected):
-- **Work-session post-mortem** (`20260807T123009Z_work.log`): ended
-  with `terminal_reason: completed` — its final turn said "Waiting on
-  bench notifications now — next action fires on the completion
-  event". The driver treats a completed turn as session end; no
-  notification re-invoke exists, and the harness killed its 3
-  background tasks at 12:56:07Z, **taking down the decode microbench
-  mid-run 5/14** (a child of a session bash task, not
-  process-detached). New footgun — memory file
-  `no-end-turn-waiting-on-notifications` written: sleep-poll in
-  foreground, setsid-detach GPU jobs.
-- **Decode microbench**: 4/14 banked pre-merge (ar_greedy,
-  ar_draws10_t1, teacher_heun30_draws1, teacher_heun30_draws10 — all
-  batched; JSONs in `reports/`); run 5 (student_1nfe_draws1 batched)
-  killed mid-run. **RELAUNCHED 12:59Z** `setsid nohup` (survives
-  session end): remaining 3 batched then all 7 single, sequentially,
-  same pre-reg harness →
-  `~/leaderboard_decode_microbench_20260807_resume.log`. Verified
-  live 13:00Z (backbone loaded, sampling-frames phase). Still
-  **pre-merge code** — the sequential-baseline sequencing the owner
-  👍'd is intact.
-- **Merge origin/main: deliberately NOT done this tick** — the
-  baseline is still accruing in this working tree; merging mid-bench
-  would contaminate the remaining pre-merge runs. It stays item 1 of
-  the re-armed work session, gated on bench completion.
-- **Inherited work-session artifacts, reviewed**: (a) md committed —
-  ideas.md **#22 async staleness bridging** (parked, waits on #16),
-  papers page RTC 2506.07339 + async-methods 2605.08168,
-  main-sync-review post **DRAFT** (contains
-  `PLACEHOLDER_RESULTS_TABLE` and anticipatory merge language — **do
-  NOT blog-build until filled post-merge**); (b) test changes left
-  uncommitted ON PURPOSE: `test_batched_draws.py` imports
-  `tile_memory`/`tile_stats` which land only with the merge — pytest
-  collects it from disk, so check.py fails until then; the
-  chunked-backward tolerance adjudication (1e-5 → **5e-4**,
-  cross-hardware calibrated, guarded failure mode ≫1e-2 so still
-  sharp) and the **GIT_* scrub fix** (real incident: a linked-worktree
-  pre-commit hook exports absolute GIT_DIR → a test's throwaway `git
-  init` re-initialized the real repo; both harness tests now scrub
-  GIT_*) commit together with/after the merge.
-- box molmo2 AR 40k — 19280/40k, loss 3.1669, 2.202 s/step, vram
-  67.07 ≤ 71, window 34.7 steps/min. Probes 6.49@18000 →
-  6.44@18500 → **7.37@19000** (bouncy again; single reading above
-  the band, no ≥7.5 pair — watch rule NOT tripped, next read at
-  19500). Gate margin 4.72. ~12.7 h stepping + saves → endpoint
-  ~08-08 morning.
-
-**Steering**: none new (`read` empty). `history -n 5`: owner
-12:29:47Z "deeply review, feel free to modify" was acked 12:30:50Z
-and executed by the work session (the review IS the inherited
-artifact set above); **👍×1 on the boundary post and 👍×1 on the
-sequencing ack** — both recorded, plans unchanged.
-
-**Done**: tick — babysit (molmo2 green; draws10_t1 fail adjudicated
-as the expected retained-entry signature); work-session post-mortem
-to a measured verdict; microbench relaunched detached + verified
-live; inherited md artifacts committed, test changes documented as
-merge-gated; memory file written; `queue_cli.py validate` green
-(depth 2, 12 open); **`run_work_next` RE-TOUCHED**. 11:48 + 11:37
-tick entries rolled to archive.
-
-**Next**: chained work session (4-h budget), in order: (1)
-**sleep-poll the bench to completion in foreground** (never
-end-turn-waiting — see footgun), (2) **merge origin/main** per the
-12:26Z steering (tolerance adjudication already staged in tests;
-commit the test changes with the merge), (3) post-merge draws-config
-rerun → leaderboard ⏱ rows incl. the batched-vs-sequential delta,
-fill the draft post's placeholder → blog build + ledger, (4) **tsens
-q4 launch** (prune the draws10_t1 registry entry only AFTER —
-started_utc footgun). molmo2 endpoint ~08-08 → #19 box obligations →
-K smoke ladder → attachment steer window.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -231,6 +203,17 @@ teardown (+~0.1 GPU-h lost), accruing from the 15:13:44Z detached
 relaunch, ≤12 GPU-h gate). Older dated
 snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
+
+Session 15:22–16:2xZ: all-CPU work session, 0 GPU-h new (tsens +
+molmo2 accruing under their own gates) — exploit/infra + sanctioned
+lit: async checkpoint saves landed oracle-gated (owner HIGH,
+`e3bdc93`, byte-identical keystone on a live 2-rank group; ~14%
+wall-time payoff targeted at the attach screen) + the
+checkpointing-systems lit slice with same-session papers page
+(6 sources; pinned-buffer + save-frequency hooks banked to #18.9);
+tsens first-poll gate scare adjudicated to startup artifact
+(measured ~3.3 h/rung, PASS); queue: 2 done, 2 refilled, driver
+guard pulled forward.
 
 Session 13:04–15:2xZ: work session, ~2 GPU-h local (microbench redo +
 post-merge reruns) + tsens launch — exploit/infra + owner-comms
