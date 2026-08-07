@@ -2,6 +2,7 @@
 
 - [Now](now.md)
 - [Now archive](archive/index.md)
+  - [2026-08-07](archive/now-2026-08-07.md)
   - [2026-08-05](archive/now-2026-08-05.md)
   - [2026-08-06](archive/now-2026-08-06.md)
 - [Ledger](ledger.md)

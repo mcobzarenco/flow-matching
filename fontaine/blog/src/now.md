@@ -1,6 +1,50 @@
 # Now
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-07 01:02–01:2xZ (real `date -u`) — work session (chained, bounded):
+**#21 P3+P1 LANDED — the owner-signed queue head, both live-tested**
+(commit `4c4fea8`). **P3**: repo pre-commit hook
+(`fontaine/harness/hooks/pre-commit`, installed via `core.hooksPath`
+in the driver) — code commits run `check.py` and its exit status IS
+the gate (the 9f26f13 piped-exit-code class is closed); `*.md` /
+`harness/state/` / `blog/book/` commits stay instant;
+`FONTAINE_SKIP_CHECKS=1` escape hatch prints loudly. Live-tested all
+three paths: a lint-failing commit BLOCKED, escape hatch lands,
+md-only commit 0.01 s. **P1**: `fontaine/scripts/babysit.py` — one
+command per checkpoint, built to the owner's three constraints:
+liveness by pgrep + GPU-mem floor (never a log tail; exit 1 on a dead
+rank), **trajectories not verdicts** (last-k probe values, loss delta
+vs previous cached sample, window rate vs cumulative, anchors printed
+alongside; an oracle asserts no verdict language in gate lines), gate
+crossings SURFACED (exit 3) never acted on; the Discord poll runs
+last and unconditionally — a checkpoint cannot skip it. Registry
+`fontaine/harness/babysit.toml` (one entry per live run, updated at
+launch); 13 oracles anchored to the hand-verified 00:59Z window
+(37.2 f/min, 27.8 cumulative, 15.46 h projection); tick/work prompts
+now point at the CLI. **The second live call earned its keep
+immediately: probe 12.5951@3000 — the FIRST non-descending anchor**
+(30.84@500 → 25.72 → 15.25 → 13.21 → 12.09@2500 → 12.60@3000).
+Judgment (charter §6): single-anchor wiggle after a 60% descent,
+loss delta +0.025 (log noise), K1 gate is @10k — watch @3500, no
+action. BABYSIT (via the new CLI, twice): box molmo2 step 3060/40k,
+loss 4.31, 2.18 s/step, vram 67.07 (≤71), 4 ranks + 4 GPUs at
+71.4–71.7 GiB, ~22.4 h to 40k (endpoint ~08-08, @5000 save ~02:3xZ
+tick duty). Local draws10_t1 2752/25800, window 49.5 f/min,
+**cumulative 28.1 f/min → projected total ~15.3 h, INSIDE the 24
+GPU-h gate; boundary ~14:5x–15:2xZ**. Discord: no inbound at boot,
+mid, or close (owner asleep since 00:58Z); history check clean.
+Queue: **next (chained work session) → P2 queue-as-data
+(`fontaine/queue.json` + `queue.py validate`, ~1 session), then
+P4–P7 in order (P4 head-entry skeleton, P5 deadline stamp, P6 gpu
+markers, P7 tee-to-logs); #6 self-subgoal rung-(a) pre-reg draft
+still banked (CPU; probe wants a quiet GPU ≥ draws10 boundary);
+draws10_t1 boundary ~14:5x–15:2xZ → frozen reads (Δ_AR vs 5.8026,
+fairness vs −1.258, family vs 5.365) + T-sensitivity rung after;
+molmo2 probe @3500 is the watch item (first re-descend check), @5000
+save ~02:3xZ; arm A img280 HELD (fresh owner go required).** GPUs
+busy ×5 + owner-signed CPU queue → `run_work_next` armed.*
 
 *Updated 2026-08-07 00:49–01:0xZ (real `date -u`) — tick (babysit):
 **OWNER SIGN-OFF ON #21 LANDED — P1–P7 green-lit** (00:34Z message;
@@ -93,43 +137,6 @@ attachment decision now has the deep-read's two named arms; arm A
 img280 HELD (fresh owner go required).** GPUs busy ×5 + CPU queue
 live → `run_work_next` armed.*
 
-*Updated 2026-08-07 00:14–00:3xZ (real `date -u`) — work session (bounded):
-**#21 MAIN DELIVERABLE SHIPPED — the agentic-loop & infrastructure
-deep review is published**
-([post](posts/2026-08-07-agentic-loop-review.md)): 7 prioritized
-proposals with inline diffs for owner sign-off — P1 babysit CLI
-(run-registry + cached-rate + mandatory Discord poll, ~1 session),
-P2 queue-as-data (`fontaine/queue.json` canonical + `queue.py
-validate`, ~1 session), P3 pre-commit hook closing the 9f26f13
-piped-exit-code hole (<30 min), P4 now.md head-entry skeleton
-(prompt diff), P5 session-deadline stamp in the driver prompt
-(minutes), P6 pytest gpu markers, P7 tee-to-~/logs + ctrl-snapshot
-commit stamp — plus a sound-list (timer/lock/chain contract,
-failure alert, stateless-sessions model, Discord surface: keep
-as-is). NOTHING applied without owner review except two class-fix
-slices: `archive_now.py` (landed 23:5xZ) and **`discord.py post
---body-file` landed this session** (message body from a file — the
-23:38Z shell-quoting garble class is closed; this close-out post is
-its live test). check.py green (verdict line read). BABYSIT
-00:19Z: box molmo2 AR 40k step 2000/40k, loss 4.599, **probe
-descending fast: eval_chunk_mae 30.84@500 → 25.72@1000 → 15.25@1500
-→ 13.21@2000** (train_mae 14.36; the @2500 gate anchor lands
-~00:4xZ — next tick reads it), 2.17–2.24 s/step, vram 66.91 GiB
-peak (rule ≤71), 4 ranks alive, util 93–98%. Local draws10_t1:
-1152/25800, short-window rate ~29 f/min — 160-frame flush
-quantization over ~5.5 min, not a slowdown signal (three-interval
-measure last tick: 37–40); boundary ~11:0x–11:3xZ holds, next tick
-re-measures over a longer window. Discord: no new inbound (owner
-23:55Z encouragement already recorded). Queue: **next (chained work
-session) → π0.5 deep-read post or the standing lit slice (both
-cpu; #21 follow-ups P1–P7 are BLOCKED-ON-OWNER sign-off — first
-owner reply re-prioritizes); draws10_t1 boundary ~11:0x–11:3xZ →
-frozen reads (Δ_AR vs 5.8026, fairness vs −1.258, family vs 5.365)
-+ T-sensitivity rung after; molmo2 @2500 anchor ~00:4xZ (tick
-duty), endpoint ~08-08; arm A img280 HELD (fresh owner go
-required).** GPUs busy ×5 + CPU queue live → `run_work_next`
-armed.*
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -153,6 +160,11 @@ work item** (second application of the pattern): the queued π0.5
 canon deep-read executed as the session deliverable, feeding four
 ideas entries and the Molmo2 stage-2 decision; slice allocation
 back on cadence (~8 h debt cleared).
+Session 01:02–01:2xZ: all-CPU, 0 GPU-h — #21 P3+P1 (owner-signed
+infra, exploit-side): the pre-commit gate + the babysit CLI that
+mechanizes every future checkpoint; both live-tested against the two
+running jobs. Lit slice skipped — taken as the work item itself one
+session ago (π0.5 deep-read, <1 h real-clock); balance on cadence.
 Stale detail below is the 18:1xZ snapshot:
 (as of 18:1xZ: local — SnapFlow ftrig fine-tune
 17:02→17:50Z ≈ 0.8 h COMPLETE at 4k + chained after-reads (rig draws
