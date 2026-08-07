@@ -1622,6 +1622,22 @@ between these two priors on our own panel before any escalation.
   sibling loader (the frozen-read script hard-pins T = 1.0 by
   design), no decision branches.
 
+- **dT-table read script LANDED 2026-08-07 ~10:0xZ**
+  (`tsens_dt_results.py`): the T-parameterized sibling loader the
+  tsens launcher's follow-up named — registered T set
+  {0.5, 0.7, 1.0, 1.3} only, one record-only dT table (pooled
+  chunk/first per T on the same frozen q4 rows; the T=1.0 row
+  re-pooled from the full-panel primary npz via the `join_rows`
+  subset join), NO decision branches per the pre-reg sensitivity
+  clause. Oracle PASS pre-data: a synthetic T=1.0 rung fixture
+  reproduces the primary's q4 re-pool EXACTLY; ×0.93/×0.98/×1.07
+  rungs land at exactly factor × re-pool; 11 guard aborts
+  (unregistered T, wrong plan/draws/ar_temperature, policy+stem tag
+  mismatch, rung-row disagreement, full-panel-as-rung, state-copy
+  drift, checkpoint mismatch, report drift). Defaults = the
+  launcher's exact stems; the read is one command once the rungs
+  land (which gate on the primary landing inside 24 GPU-h).
+
 - **Energy-score read script LANDED 2026-08-07 ~09:0xZ**
   (`energy_score_results.py`): the strictly-proper-scoring-rule
   AR-vs-flow comparison from banked data — endpoint draws ES vs the

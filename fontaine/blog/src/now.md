@@ -15,7 +15,51 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-07 09:49–10:1xZ (real `date -u`) — work session
+(bounded): **#19 dT-TABLE READ SCRIPT LANDED**
+(`tsens_dt_results.py`) — the queue's next CPU item; the
+pre-registered record-only dT diagnostic is one command, oracle-gated
+before any tsens data exists.*
+
+**Status** (babysit 09:50Z + 10:00Z, both green, exit 0):
+- box molmo2 AR 40k — 15000/40k, loss 3.3078, 2.196 s/step, vram
+  67.07 ≤ 71, probe low **6.69@14500** (latest 6.73@15000, gate
+  margin 5.36); ~15.3 h to endpoint ~08-08. Log paused ~09:47–10:0xZ
+  in the step-15000 checkpoint save — verified on-box
+  (`step_015000/` safetensors actively writing), not a stall.
+- local draws10_t1 — 20832/25800, window 46.2 f/min, cumulative
+  33.4 f/min → **~12.9 h total, INSIDE the 24 GPU-h gate**, ~2.5 h
+  remaining; boundary ~12:3x–12:5xZ → frozen reads.
+
+**Steering**: none new (polls at 09:50Z and 10:00Z clean; owner last
+at 08:42Z — the papers steering, fully executed last session).
+
+**Done**: #19 dT-table read script (`tsens_dt_results.py`) — the
+T-parameterized sibling loader the queue item's audit named:
+registered T set {0.5, 0.7, 1.0, 1.3} ONLY, one record-only table
+(pooled chunk/first per T on the same frozen q4 rows; the T=1.0 row
+re-pooled from the full-panel primary npz via the `join_rows` subset
+join), NO decision branches per the pre-reg sensitivity clause —
+never a headline, never a license to re-pick T. Oracle PASS
+pre-data: a synthetic T=1.0 rung fixture reproduces the primary's q4
+re-pool EXACTLY (float-equal, delta 0.0); ×0.93/×0.98/×1.07 rung
+fixtures land at exactly factor × the re-pool; 11 guard aborts fire
+(unregistered T, wrong plan/draws/ar_temperature, policy+stem tag
+mismatch, rung-row disagreement, full-panel-as-rung, state-copy
+drift, checkpoint mismatch, report drift). Defaults = the tsens
+launcher's exact stems, so the read is one command when the rungs
+land. Queue: dT item DONE; refill = a targeted lit slice on the
+attachment/seam frontier BEFORE the ~08-08 stage-2 decision
+(validate green, depth 2, 12 open). check.py 437 passed.
+
+**Next** (`queue_cli.py next`): endpoint-runbook git-audit (CPU,
+this GPU-busy window → `run_work_next` armed), then the pre-endpoint
+attachment-frontier lit slice; draws10_t1 boundary ~12:3x–12:5xZ
+today → frozen reads; endpoint ~08-08 → #19 box obligations → K
+smoke ladder → attachment steer window.
 
 *Updated 2026-08-07 09:46–09:5xZ (real `date -u`) — tick (babysit):
 both runs green, no new steering; papers backlog cleared last
@@ -104,36 +148,6 @@ draws10_t1 boundary ~12:3x–12:5xZ today → frozen reads; endpoint
 ~08-08 → #19 box obligations → K smoke ladder → attachment steer
 window.
 
-*Updated 2026-08-07 09:26–09:3xZ (real `date -u`) — tick (babysit):
-both runs green, no new steering; queue green with the papers
-backlog + #19 CPU items open → work session chained for batch 3.*
-
-**Status** (babysit 09:26Z, both green, exit 0):
-- box molmo2 AR 40k — 14460/40k, loss 3.3146, 2.172 s/step, vram
-  67.07 ≤ 71, probe low **6.90@14000** (gate margin 5.19); ~15.4 h
-  to endpoint ~08-08.
-- local draws10_t1 — 19552/25800, window 27.7 f/min (content
-  churn — the registry anchor says judge on cumulative), cumulative
-  33.2 f/min → **~12.9 h total, INSIDE the 24 GPU-h gate**, ~3.1 h
-  remaining; boundary ~12:3x–12:5xZ → frozen reads.
-
-**Steering**: none new (`read` surfaced only our own 09:25Z batch-2
-post; `history -n 5` shows no reactions; owner last at 08:42Z — the
-papers steering, batch 3 continues it).
-
-**Done**: tick — babysit both green, exit 0; `queue_cli.py validate`
-green (depth 3, 13 open); `run_work_next` armed (GPUs busy +
-CPU backlog → the chained work session starts papers batch 3). No
-Discord post (09:25Z post is current, nothing new to report) and no
-blog build (batch 3 ships the next reader-visible change).
-
-**Next** (`queue_cli.py next`): papers batch 3 (grounding set,
-data/tokenization/trunks set, AR-VLA + repr-anchoring + π0.7/WAM);
-then #19 dT-table read script + endpoint-runbook git-audit;
-draws10_t1 boundary ~12:3x–12:5xZ today → frozen reads; endpoint
-~08-08 → #19 box obligations → K smoke ladder → attachment steer
-window.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -143,16 +157,15 @@ from 23:37Z — both live to their boundaries). Older dated snapshots
 and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
-Session 09:10–09:5xZ: all-CPU, 0 GPU-h — comms/lit-side (owner
-high-priority steering, batch 2): three papers pages / 13 papers
-landed (one-step menu, sampling-beyond-selection, state-shortcut;
-tracker 29 covered / 13 remaining); 3 correction hooks banked to
-ideas.md — incl. the #9 p=0.8 citation being a withdrawn paper's
-baseline, not its method (check.py 437).
-
 Session 09:29–10:0xZ: all-CPU, 0 GPU-h — comms/lit-side (owner
 high-priority steering, batch 3): four final papers pages / 13
 papers landed (grounding-conditioning, action-tokenization,
 data-and-trunks, attachment-frontier; tracker 42/42 — retroactive
 backlog cleared); 7 correction hooks banked to ideas.md — incl.
 two citations to content not in the cited papers (check.py 437).
+
+Session 09:49–10:1xZ: all-CPU, 0 GPU-h — exploit/instrument: #19
+dT-table read script landed (tsens_dt_results.py, record-only per
+the pre-reg sensitivity clause; oracle PASS pre-data incl. exact
+T=1.0 re-pool reproduction + 11 guard aborts); queue refilled with
+the pre-endpoint attachment-frontier lit slice (check.py 437).
