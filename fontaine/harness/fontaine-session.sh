@@ -102,6 +102,9 @@ run_session() {
 
 timeout_for "$MODE" >/dev/null # validate before running anything
 cd "$REPO"
+# #21 P3 (owner-signed): versioned pre-commit hook — check.py gates
+# code commits; md/state/blog-book commits stay instant. Idempotent.
+git config core.hooksPath fontaine/harness/hooks
 run_session "$MODE"
 
 # A tick whose findings exceed its 30-min session cap requests a

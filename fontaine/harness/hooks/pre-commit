@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# Fontaine pre-commit hook (#21 P3, owner-signed 2026-08-07).
+#
+# Closes the 9f26f13 class: check.py's exit code consumed by a shell
+# pipeline let a lint-failing commit land. The hook runs check.py
+# directly — no pipe, its exit status IS the gate.
+#
+# Installed via `git config core.hooksPath fontaine/harness/hooks`
+# (done by fontaine-session.sh at boot; idempotent).
+set -uo pipefail
+
+# State rolls, blog builds, and prose commit in seconds, as before:
+# skip when the staged diff touches only md / harness state / built blog.
+exempt=1
+while IFS= read -r f; do
+    case "$f" in
+        *.md | fontaine/harness/state/* | fontaine/blog/book/*) ;;
+        *)
+            exempt=0
+            break
+            ;;
+    esac
+done < <(git diff --cached --name-only)
+
+if [ "$exempt" -eq 1 ]; then
+    exit 0
+fi
+
+if [ "${FONTAINE_SKIP_CHECKS:-0}" = "1" ]; then
+    echo "pre-commit: FONTAINE_SKIP_CHECKS=1 — CHECKS SKIPPED (emergency escape hatch; justify in the session log)" >&2
+    exit 0
+fi
+
+echo "pre-commit: staged diff touches code — running check.py (exempt classes: *.md, harness/state/, blog/book/)" >&2
+cd "$(git rev-parse --show-toplevel)"
+uv run check.py
+status=$?
+if [ "$status" -ne 0 ]; then
+    echo "pre-commit: check.py exited $status — COMMIT BLOCKED (fix, or FONTAINE_SKIP_CHECKS=1 for emergencies)" >&2
+fi
+exit "$status"

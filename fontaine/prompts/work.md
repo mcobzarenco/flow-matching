@@ -18,9 +18,12 @@ and finish it; leave the rest queued. Repo `~/flow-matching`, branch
 3. Execute per the charter: pre-registration posted before any
    launch; measured claims with instrument + anchors; `check.py`
    before any commit; oracles after math-adjacent changes. If a
-   training run is live, re-check it (liveness + curve vs anchors)
-   at least every ~30 minutes of session time — and poll Discord at
-   every such babysit checkpoint, not only at boot/end (class fix
+   training run is live, re-check it at least every ~30 minutes of
+   session time via `uv run python fontaine/scripts/babysit.py` (#21
+   P1: liveness + trajectories + gate facts in one command, Discord
+   poll forced last; registry `fontaine/harness/babysit.toml` updated
+   at every launch) — the poll at every babysit checkpoint, not only
+   at boot/end, is the point (class fix
    2026-08-06: two owner messages sat unseen ~70 min inside a long
    session that held the lock through a boundary). If the owner starts
    chatting mid-session, conversational mode applies (tick prompt

@@ -25,13 +25,20 @@ prompt's contract.
    `fontaine/harness/state/run_work_next` and end — the chained
    work session rejoins the thread (`discord.py history` rebuilds
    recent context without moving the cursor).
-3. If a training run is live: liveness by pgrep/GPU memory (never a
-   log tail); latest step; curve vs the pre-registered anchors in
-   the launcher header; anomaly scan (loss spikes, OOM, substitution
-   flood, utilization collapse). Healthy → update `now.md`, exit.
-   Anomalous → diagnose the mechanism (charter §6 discipline); kill
+3. If a run is live: `uv run python fontaine/scripts/babysit.py`
+   (#21 P1, owner-signed 2026-08-07) — one command does liveness by
+   pgrep/GPU memory (never a log tail), step/loss/probe trajectories,
+   rate window vs cumulative, gate facts, and ends with the Discord
+   poll (step 2 stays for the reply/conversational contract; the CLI
+   makes skipping the poll impossible). Registry:
+   `fontaine/harness/babysit.toml` — update it at every launch, prune
+   at completion; keep its anchors in sync with the pre-reg. The CLI
+   prints trajectories, NOT verdicts: the healthy/anomalous/escalate
+   call is yours (charter §6). Exit 1 = liveness/poll failure —
+   diagnose; exit 3 = a gate crossing was surfaced — judge it. Kill
    only at a save boundary and only per the pre-registered gates;
-   escalate per charter §7 when warranted.
+   escalate per charter §7 when warranted. Anomaly scan beyond the
+   CLI's facts (loss spikes, substitution flood) stays your job.
 4. If the run finished or died: post-process per charter §4 (panel
    score, reports, blog post, ledger row, artifact uploads), then
    launch the next queued pre-registered run. If that exceeds this

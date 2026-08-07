@@ -1,0 +1,48 @@
+# Babysit run registry (#21 P1). One entry per LIVE run; update at
+# launch time, prune at completion. Schema: fontaine/scripts/babysit.py.
+
+[[run]]
+name = "molmo2_ar40k"
+kind = "train-jsonl"
+host = "192.222.55.210"
+pgrep = "fontaine_molmo2_ar_40k_ddp4"
+pgrep_min = 4                       # 4 DDP ranks
+gpu_indices = [0, 1, 2, 3]
+gpu_mem_min_mib = 30000
+jsonl = "/home/ubuntu/flow-matching/outputs/train/fontaine_molmo2_ar_40k_ddp4/train_log.jsonl"
+total_steps = 40000
+probe_key = "eval_chunk_mae"
+vram_key = "vram_alloc_peak_gib"
+boundary = "40k ~08-08 at ~2.2 s/step; saves every 2500, probes every 500"
+anchors = [
+    "probe reference: 30.84@500 -> 25.72@1000 -> 15.25@1500 -> 13.21@2000 -> 12.09@2500 (descending each anchor)",
+    "stage-2 attachment decision at endpoint carries the pi0.5 deep-read's two named arms",
+]
+[[run.gates]]
+kind = "probe_below_by_step"
+value = 12.0944
+step = 10000                        # K1 kill-line reference (owner-set 08-07)
+[[run.gates]]
+kind = "vram_max_gib"
+value = 71.0
+
+[[run]]
+name = "draws10_t1"
+kind = "progress-log"
+host = "local"
+pgrep = "panel_k4l2_draws10_t1"
+pgrep_min = 2                       # launcher bash + eval python (tee rides along)
+gpu_indices = [0]
+gpu_mem_min_mib = 8000
+log = "/home/ubuntu/eval__bijou_arb_rcond_100k_ddp4__step_100000__panel_k4l2_draws10_t1.log"
+progress_re = "scored [0-9]+/[0-9]+ frames"
+started_utc = "2026-08-06T23:37:42Z"
+gpu_hours_per_wall_hour = 1.0       # single local GPU
+boundary = "content-dependent rate; re-project from cumulative each call"
+anchors = [
+    "frozen reads at completion: delta_AR vs 5.8026, fairness vs -1.258, family vs 5.365",
+    "rate is content-dependent (37-40 -> 16 -> 37 f/min measured); judge on the cumulative line",
+]
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 24.0                        # pre-reg gate; breach reopens the q4-fallback question
