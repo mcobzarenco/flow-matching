@@ -33,10 +33,13 @@ import argparse
 import dataclasses
 import json
 import random
+import sys
 from collections import Counter, deque
 from pathlib import Path
 
 import torch
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from bijou.data import EpisodeSplit, select_datasets
 from bijou.eval.cli import eval_worker_init, identity_collate

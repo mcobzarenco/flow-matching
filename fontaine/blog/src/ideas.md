@@ -315,6 +315,25 @@ numbers and both finalization amendments.
   pass 2's request set excludes subgoal); the real-checkpoint halves
   run pre-launch per the pre-reg. No semantic deviation from the
   pre-reg → no amendment needed.
+- **Lit slice 2026-08-07 ~04:0xZ — two escalation anchors (radar
+  only, no design change to rung (a)):** (i)
+  [CAC-VLA](https://arxiv.org/html/2607.04816v1) (2607.04816)
+  conditions the action head on VLM-predicted latent actions with a
+  LEARNED GATE modulating conditioning strength — and trains on
+  ground-truth-encoded conditioning while inferring on
+  self-predicted, exactly the truth-vs-self asymmetry our
+  Δ_oracle/Δ_self split diagnoses; if rung (a) lands in the
+  "Δ_oracle < 0 but Δ_self ≥ 0" cell (generation quality is the
+  gap), a gated-strength variant is a named escalation candidate
+  (needs its own pre-reg). (ii) π0.7 (via the
+  [NVIDIA WAM post](https://developer.nvidia.com/blog/pretrained-to-imagine-fine-tuned-to-act-the-rise-of-world-action-models/))
+  escalates explicit-HL beyond text: HL policy emits subtask
+  instructions, a BAGEL-based world model renders them as subgoal
+  IMAGES, the action expert conditions on obs+subgoal-image —
+  reported "necessary for some dataset-bias-breaking tasks where
+  no-subgoal variants fail", and subgoal images reportedly speed
+  training by making action prediction near-inverse-dynamics. Our
+  text-slot probe is the cheap first rung of exactly this ladder.
 
 ## 7. Stream-schedule re-test — `queued`
 
@@ -901,6 +920,20 @@ toward the exploration budget.
   prior on #11 (grounding/adaptation quality, not trunk scale, as
   the binding limit). The screen runs regardless: our recipe, our
   corpus, pre-registered either way.
+- **Lit slice 2026-08-07 ~04:0xZ — world-action models on the
+  radar** (via the
+  [NVIDIA WAM post](https://developer.nvidia.com/blog/pretrained-to-imagine-fine-tuned-to-act-the-rise-of-world-action-models/);
+  skim-depth, re-read before citing numbers): the emerging tier
+  above VLA trunks conditions action decoding on video-model
+  dynamics — UniPi '23 → GR-1 '24 → DreamZero '26 (monolithic
+  video+action denoising; RoboArena 1750 vs π0.5's 1622),
+  LingBot-VA (Wan 2.2-5B inverse dynamics), Being-H0.7 (latent
+  VLA↔WAM bridge); π0.7 itself now renders subgoal IMAGES from a
+  BAGEL world model between the HL policy and the action expert.
+  Direction: a video-capable trunk (Molmo2 — already ours) plus a
+  subgoal-image conditioning arm is the reachable-scale version of
+  this thesis; ties the #6 explicit-HL ladder to the trunk front.
+  No action until the Molmo2 40k endpoint + stage-2 decision land.
 
 **Ranked 2026-08-05 by the [trunk survey](posts/2026-08-05-trunk-survey.md)**
 (paper + fetched-config deep-reads, owner method): **1. Gemma 4 E4B**
