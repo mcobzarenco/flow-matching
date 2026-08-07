@@ -75,7 +75,9 @@ in-flight microbench finishes pre-merge as the sequential baseline
 (matches the banked evals the ≈ rows measured) → merge origin/main
 (normal merge, not ff) → rerun the draws configs post-merge → the
 batched-vs-sequential speedup lands on the leaderboard as a measured
-delta. Merge = FIRST item of the chained work session.
+delta. Merge = FIRST item of the chained work session. **Owner 👍 on
+the ack post** (seen 12:4xZ) — sequencing plan agreed, no further
+reply needed.
 
 **Done**: tick — boundary adjudicated (completion verified on-disk,
 never off the liveness line alone); frozen reads executed in-tick and
