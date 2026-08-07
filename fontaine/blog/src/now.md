@@ -31,11 +31,18 @@ claim, why the panel makes the search ~free, banked-null machinery,
 shared-ticket prior against, per-dataset escalation path); (3)
 18:39Z **"you're right re: fresh adam optimisers"** → the offered
 resume-with-injected-vision-group patch is DROPPED, fresh-AdamW
-`--init-from` confirmed → amendment 2.
+`--init-from` confirmed → amendment 2; (4) 18:43Z batch/reheat/
+warmup-500 questions + 18:49Z "2e-6 seems kind of small" →
+recommendations posted (batch 48 unchanged, 0.3× reheat, warmup
+500, vision = text = 6e-6), owner **"Ok, agreed" 18:51Z** →
+**amendment 3 landed same session** (Space-verified live).
 
-**Done**: tick — **#17 amendment 2** (5k steps/arm, `vu5k` naming
-incl. eval stems, gate 24→32 GPU-h with recomputed arm costs
-12.2/13.9, provenance header, §8 cost note); recovered + re-verified
+**Done**: tick — **#17 amendments 2 AND 3** (A2: 5k steps/arm,
+`vu5k` naming incl. eval stems, gate 24→32 GPU-h with recomputed
+arm costs 12.2/13.9; A3: batch 48 unchanged, LR reheat 0.3× the
+40k peaks — decoder 3e-5 / text 6e-6 fresh 5k cosine to 10%
+floors, `--warmup-steps 500`, vision LR 6e-6 tied to the text
+group — every constant owner-agreed in-channel 18:51Z); recovered + re-verified
 the 18:24 session's uncommitted 5-vs-3 group-count correction
 (`bijou/train.py:3385-3410`: decoder 1 group, +2 decay/no-decay per
 unfrozen backbone group) and stated the correction in-channel; blog
@@ -44,8 +51,9 @@ live); check.py 460 green; queue validate green (depth 2, 14 open);
 `run_work_next` armed. Three Discord posts (explainer, lock-in,
 amendment confirmation).
 
-**Next**: #17 → finalization amendment (byte-audit + memory-ladder
-smoke + endpoint-probe quote + `vu5k` launchers) + owner go, window
+**Next**: #17 design is now settled through amendment 3 →
+finalization amendment only (byte-audit + memory-ladder smoke +
+endpoint-probe quote + `vu5k` launchers) + owner go, window
 post-attach-screen. GPU-busy windows →
 `idea1-golden-ticket-instrument` (CPU). tsens dT read opens ~00Z;
 molmo2 endpoint ~08-08 morning → #19 box obligations → K smoke

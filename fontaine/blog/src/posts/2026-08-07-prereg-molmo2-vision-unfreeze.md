@@ -13,7 +13,14 @@ fresh-AdamW `--init-from` route is now owner-confirmed** — a
 resume-with-injected-vision-group patch was offered in-channel and
 declined ("you're right re: fresh adam optimisers", 18:39Z); seed
 and rewarmup steering from 18:31Z was already satisfied by
-`--seed 1` and `--warmup-steps 200`. **STATUS: DRAFT — this is not
+`--seed 1` and `--warmup-steps 200`. **Amendment 3, 2026-08-07
+18:5xZ (owner exchange 18:43–18:51Z, "Ok, agreed" 18:51Z): batch
+unchanged (global 48), LR reheat to 0.3× the 40k peaks (decoder
+3e-5 / text 6e-6, fresh 5k cosine down), warmup 200 → 500, vision
+LR 2e-6 → 6e-6 tied to the text group** — rationale: pure tail LRs
+bias a 5k late thaw toward a null on exactly the axis §1 worries
+about; overshoot is the covered direction (§4 kill lines).
+**STATUS: DRAFT — this is not
 yet a posted pre-registration.**
 Execution is blocked on: (a) the finalization amendment below, (b)
 an owner go, (c) a box window after the attach-screen chain
@@ -69,10 +76,12 @@ deltas pinned below, identical across arms except exactly one flag:
   move the number, so nothing is readable against the 40k endpoint
   without it.
 - **Thawed-continue** (`fontaine_molmo2_ar_vu5k_thawed_ddp4`) — plus
-  **`--backbone-vision-lr 2e-6`** (frozen at the draft's value; an
-  LR sweep is a different pre-reg). Drafted as 0.1× the original
-  text peak (2e-5); in this continuation it equals the text *tail*
-  LR — stated, not re-picked.
+  **`--backbone-vision-lr 6e-6`** (amendment 3; the draft's 2e-6 =
+  0.1× original text peak was judged too small for a 5k window —
+  owner 18:49Z + reply, agreed 18:51Z). Stated relation, not a free
+  constant: **vision LR = text LR through the whole schedule**
+  (6e-6 reheat peak, annealing together). An LR rung above this is
+  its own pre-reg, only after a positive.
 
 Continuation deltas (both arms, identical):
 
@@ -87,16 +96,23 @@ Continuation deltas (both arms, identical):
   the warm-restart transient is common-mode in the paired read. The
   tower has no optimizer state at 40k in any case; fresh moments +
   a short ramp is the standard late-unfreeze mechanic).
-- `--steps 5000 --warmup-steps 200`: 5k continuation steps (amendment 2; was 3k — owner 18:31Z, more room for the late-thaw co-adaptation §1 worries about), 200-step
-  linear ramp (the "short tower warmup"; the ramp is global — all
-  groups share it, symmetric across arms). Cosine floors at 10% of
-  peak; endpoint `step_005000` always saves (`bijou.train`
-  save-boundary rule), cadence 2500 kept verbatim.
-- **LRs = the 40k tail values**: `--decoder-lr 1e-5
-  --backbone-text-lr 2e-6` (the 40k cosine floors at 10% of peaks
-  1e-4/2e-5, so these are the LRs the run ends at — "text side
-  continues at tail LR"). The fresh 5k cosine anneals from there;
-  schedule shape is common-mode in the paired read.
+- `--steps 5000 --warmup-steps 500`: 5k continuation steps
+  (amendment 2; was 3k — owner 18:31Z, more room for the late-thaw
+  co-adaptation §1 worries about), 500-step linear ramp (amendment
+  3; was 200 — fresh Adam second moments are noisy early and the
+  reheat adds energy, so 10% of the run is cheap symmetric cover;
+  the ramp is global — all groups share it, symmetric across arms).
+  Cosine floors at 10% of peak; endpoint `step_005000` always saves
+  (`bijou.train` save-boundary rule), cadence 2500 kept verbatim.
+- **LRs = a 0.3× reheat of the 40k peaks** (amendment 3; was the
+  tail values 1e-5/2e-6): `--decoder-lr 3e-5 --backbone-text-lr
+  6e-6`, fresh 5k cosine annealing to the 10% floors (3e-6/6e-7).
+  Rationale: at pure tail LRs the thawed decoder may not co-adapt
+  to shifting vision features inside 5k steps — a null-bias; the
+  churn risk of reheating a converged decoder is common-mode (the
+  frozen arm reheats identically) and the §4 frozen-arm sanity
+  line vs the banked endpoint catches real damage. Schedule shape
+  is common-mode in the paired read.
 - `--seed 1` (fresh vs the 40k run's seed 0; same seed both arms →
   identical batches and τ/ε streams, so the arms differ in the one
   flag and nothing else).
@@ -215,7 +231,8 @@ backbone has no tower, so a silent no-op unfreeze cannot happen).
 ## 7. What this draft does NOT license
 
 No launch before the finalization amendment + owner go. No post-hoc
-LR re-pick (2e-6 frozen; a sweep is its own pre-reg). No
+LR re-pick (6e-6 frozen per amendment 3; a sweep is its own
+pre-reg). No
 LoRA-on-SigLIP, ever. No MAPS leash or dual-encoder anchor in this
 rung. No batch-semantics change under any memory pressure. No
 reading the thawed arm without the frozen control landing first.
