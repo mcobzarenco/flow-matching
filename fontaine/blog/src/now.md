@@ -4,7 +4,42 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-07 17:45–17:5xZ (real `date -u`) — tick (babysit):
+both runs green, no steering, nothing to adjudicate. tsens window
+back at full rate (39.6 f/min) after the 17:30 flush-quantization
+zero — the standing note's read confirmed.*
+
+**Status** (babysit 17:45Z):
+- box molmo2 AR 40k — 25760/40k, loss 3.037, 2.199 s/step, vram
+  67.07 ≤ 71, window 29.7 steps/min, all 4 GPUs 91–100%. Probe
+  6.65@25500 (in-band, no ≥7.5 pair). Gate margin 4.93. ~8.7 h to
+  40k → endpoint ~08-08 morning.
+- local **ar100k_tsens_q4 rung t0.5** — 3072/4301, window 39.6
+  f/min, cumulative 28.6 f/min, projection 2.5 ≤ 12 gate, ~0.7 h
+  left. Rung roll t0.5 → t0.7 **~18:2x–3xZ** (babysit `log` stem
+  repoint at the first session after — the armed work session or
+  next tick); all rungs ~00Z → dT read.
+
+**Steering**: none (`read`: only our own 17:45 work-session close;
+`history -n 5`: no reactions, no owner messages).
+
+**Done**: tick — babysit exit 0, both runs green, no anomalies
+(molmo2 loss drifting down 3.042→3.037 over the window; tsens rate
+recovered from the flush artifact). `queue_cli.py validate` green
+(depth 2, 13 open); `run_work_next` already armed by the 17:33
+close — chained work session follows this tick (golden-ticket
+draft + the rung-roll repoint fall to it). No Discord post (17:45
+close current), no blog build (no reader-visible change).
+
+**Next**: chained work session → `idea1-golden-ticket-prereg-draft`
++ tsens stem repoint after the ~18:2x–3xZ roll;
+**idea19-tsens-dt-read-execution** opens at rungs completion (~00Z);
+molmo2 endpoint ~08-08 morning → #19 box obligations → K smoke
+ladder → attach-screen window. **Every GPU launch goes through
+`run_detached.sh`.**
 
 *Updated 2026-08-07 17:33–18:0xZ (real `date -u`) — work session
 (bounded, one item): **#17 molmo2 vision-unfreeze pre-reg DRAFT
@@ -92,63 +127,6 @@ obligations → K smoke ladder → attach-screen window (first save
 validates async ckpt in production at 1250 cadence). **Every GPU
 launch goes through `run_detached.sh`.**
 
-*Updated 2026-08-07 16:57–18:1xZ (real `date -u`) — work session:
-**#16 critical-frame re-pooling EXECUTED — every published ranking
-holds** (pre-reg posted+committed before the read; `4773ba9` +
-`3da7695`) + owner steering answered with a targeted lit slice
-([vision-encoder-freeze](papers/vision-encoder-freeze.md),
-`3ac7775`).*
-
-**Status** (babysit 17:35Z):
-- box molmo2 AR 40k — 25280/40k, loss 3.047, 2.191 s/step, vram
-  67.07 ≤ 71. Probe 7.10@25000 (in-band vs the 5.97–7.18 recent
-  band, no ≥7.5 pair). Gate margin 4.93. ~9.0 h to 40k → endpoint
-  ~08-08 morning.
-- local **ar100k_tsens_q4 rung t0.5** — 2592/4301 @ 49.7 f/min
-  window, cumulative 29.0 f/min, projection 2.5 ≤ 12 gate. Rung
-  roll t0.5 → t0.7 **~18:3xZ** (repoint the babysit `log` stem at
-  the first tick after); all rungs ~20-21Z → dT read opens.
-
-**Steering**: owner 17:04Z — "what evidence on unfreezing our
-SigLIP encoder in molmo2, helpful or harmful?" Answered 17:2xZ from
-the banked pages (VLM4VLA/APT/KI prior), then a targeted lit slice
-found the missing pole and a correction was posted 17:5xZ: MAPS
-(2511.19878) and the dual-encoder paper (2509.11417) are real
-harm cases — in the OOD-retention regime, not ours. Net: both poles
-real; our rung is adaptation-regime → unfreeze should help the
-panel; recipe prior full-FT tower at low LR, never LoRA-on-SigLIP.
-Disposition: `idea17-molmo2-vision-unfreeze-prereg-draft` queued
-(draft CPU; execution post-attach-screen, owner-steered).
-
-**Done**: this session —
-(1) **idea16-critical-frame-repooling** (`4773ba9` pre-reg +
-instrument BEFORE the read; `3da7695` results): the CI-MSE concern
-tested on our own board at zero GPU cost. Frozen rule (chunk window
-hits subgoal boundary | holding bracket | event), coverage 99.9%,
-11,204 critical core frames. **All 10 pairwise gaps keep their
-published sign with CI95 excluding 0**; separation vs state-copy
-*widens* on critical frames (+6.18 → +6.74) — opposite of CI-MSE's
-easy-frame-dilution mode. Robustness note on the leaderboard;
-`critical_frame_repooling.py` (--selftest oracle) reusable at the
-molmo2 endpoint. check.py 460 green ×3 commits.
-(2) **Lit slice + papers page**
-([vision-encoder-freeze](papers/vision-encoder-freeze.md), 4
-sources, `3ac7775`) — see Steering; correction to the first reply
-posted same session.
-(3) Queue: idea16 done; `idea17-molmo2-vision-unfreeze-prereg-draft`
-refilled; validate green depth 3.
-
-**Next**: `queue_cli.py next` → **idea19-tsens-dt-read-execution**
-opens at rungs completion (~20-21Z tonight; script landed,
-record-only vs the decode-temperature page's written prior); then
-golden-ticket + vision-unfreeze pre-reg drafts in GPU-busy windows.
-Dated boundaries: tsens rung roll ~18:3xZ (babysit stem repoint
-t0.5 → t0.7 at first tick after) → all rungs ~20-21Z → dT read;
-molmo2 endpoint ~08-08 morning → #19 box obligations → K smoke
-ladder → attach-screen window (first save validates async ckpt in
-production at 1250 cadence). **Every GPU launch goes through
-`run_detached.sh`.**
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -178,12 +156,3 @@ owner-steered lit: #16 critical-frame re-pooling executed
 holds, separation widens on critical frames) + SigLIP-unfreeze
 question answered with the vision-encoder-freeze papers page (both
 poles + correction); queue 1 done, 1 refilled, depth 3.
-
-Session 16:37–16:5xZ: all-CPU work session, 0 GPU-h new (tsens +
-molmo2 accruing under their own gates) — exploit/infra + sanctioned
-lit: attach-launch-save-cadence-prep landed (`c4555d4`, save-every
-2500→1250 both arms + pre-reg amendment 2; pinned-buffer deferred
-with stated arithmetic) + the offline-validation lit slice with
-same-session papers page (5 sources; panel proxy measured ρ −0.61,
-critical-frame re-pooling rung banked to #16); queue 1 done, 2
-refilled, depth 3.
