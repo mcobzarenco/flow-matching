@@ -1,10 +1,10 @@
 {
-  "updated_utc": "2026-08-07T05:42:07+00:00",
+  "updated_utc": "2026-08-07T06:10:30+00:00",
   "depth_reason": null,
   "items": [
     {
       "id": "molmo2_ar40k",
-      "title": "Molmo2 AR 40k trunk run (box, 4xDDP) \u2014 probe low 8.54@6000 (8.64@7500 latest, sub-10 \u00d76); @7500 save in flight 04:2xZ (slow-save watch, next check confirms steps rolling)",
+      "title": "Molmo2 AR 40k trunk run (box, 4xDDP) \u2014 K1 GATE CROSSED GREEN 08-07 06:0xZ: probe 7.1652@10000 vs bar 12.0944 (margin 4.93, new low); run continues to 40k endpoint",
       "class": "gpu-box",
       "status": "live",
       "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-molmo2-ar-40k.md",
@@ -48,22 +48,13 @@
       "boundary": "opens at molmo2_ar40k endpoint (~2026-08-08); box GPUs busy until then"
     },
     {
-      "id": "idea4-attach-screen-launchers",
-      "title": "#4 attach-screen launch prep (CPU): F/K launch scripts (sequential F-first, babysit.toml entries, pinned plans, first-poll util check) + the joint-checkpoint AR-view materializer for read 4 (trunk-drift greedy AR panel: synthesize an ar_backbone-view bijou_config from the joint_ce section + link joint_ce.safetensors as expert.safetensors, oracle: materialized view loads via from_checkpoint and greedy-decodes on the tiny fixture) \u2014 instrument itself LANDED oracle-gated 08-07 ~06:0xZ (residual exports + seam stop-grad + joint CE+flow, 13 oracles, check.py 423; pre-reg amendment appended: rider tables continue from endpoint expert.safetensors)",
-      "class": "cpu",
-      "status": "queued",
-      "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-molmo2-attach-screen.md",
-      "owner_hold": false,
-      "boundary": "wanted before the attachment-screen launch window (molmo2_ar40k endpoint ~2026-08-08 + #19 box obligations); order-independent of #20"
-    },
-    {
       "id": "idea4-attach-screen-execution",
-      "title": "#4 attachment seam screen execution (box, 4xDDP, sequential F then K): F frozen-trunk vs K KI-joint (phase-1 CE verbatim + stop-grad seam, alpha=1) at matched 10k steps / eff-48 from the 40k endpoint; residual surface constant; gates vram<=71, K1-style probe kill (phase-1 curve + 3.0 at >=5k), 70 GPU-h ceiling w/ matched 5k downshift; frozen reads Delta_seam paired CI + K trunk-drift band 0.3 \u2014 INSTRUMENT LANDED 08-07 ~06:0xZ (flags: --conditioning-streams residual, --seam-stop-grad, --joint-ce; amendment: K rider tables continue from endpoint expert.safetensors)",
+      "title": "#4 attachment seam screen execution (box, 4xDDP, sequential F then K): F frozen-trunk vs K KI-joint (phase-1 CE verbatim + stop-grad seam, alpha=1) at matched 10k steps / eff-48 from the 40k endpoint; residual surface constant; gates vram<=71, K1-style probe kill (phase-1 curve + 3.0 at >=5k; bars 12.6394@5000, 11.6356@7500 in babysit.toml prepared entries), 70 GPU-h ceiling w/ matched 5k downshift; frozen reads Delta_seam paired CI + K trunk-drift band 0.3 \u2014 INSTRUMENT LANDED 08-07 ~06:0xZ; LAUNCH PREP LANDED 08-07 ~06:1xZ (launch_box_fontaine_molmo2_attach_{F,K}_10k_ddp4.sh: mechanized attach_rate_gate.py 70 GPU-h gate + 5k-downshift marker both launchers honor, sha256-pinned plans, chained panel_v2 evals; K chains materialize_joint_ar_view.py + greedy k4l2 drift panel; K_MEM_READY guard refuses blind K launch; 10 new oracles, check.py 433)",
       "class": "gpu-box",
       "status": "blocked",
       "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-molmo2-attach-screen.md",
       "owner_hold": false,
-      "boundary": "opens strictly after: molmo2_ar40k endpoint saves -> chained greedy + #19 draws arm (that pre-reg's box obligations first) -> #20 + launch prep landed oracle-gated -> molmo2-stage2-attachment-decision opens (owner steer window)"
+      "boundary": "opens strictly after: molmo2_ar40k endpoint saves -> chained greedy + #19 draws arm (that pre-reg's box obligations first) -> #20 + K smoke ladder green -> molmo2-stage2-attachment-decision opens (owner steer window)"
     },
     {
       "id": "idea20-activation-checkpointing",
@@ -73,6 +64,15 @@
       "prereg": null,
       "owner_hold": false,
       "boundary": "wanted before the next live-trunk training launch (molmo2 stage-2 attachment, endpoint ~2026-08-08)"
+    },
+    {
+      "id": "idea4-attach-k-smoke-ladder",
+      "title": "#4 K-arm smoke memory ladder script (F1-style, pre-reg instrument item 4): smoke_attach_k_ddp4.sh measuring vram_alloc_peak at B12 eff-48 with #20 checkpointing on, short-step run, echoes the peak vs the 71 GiB gate; K_MEM_READY=1 (the K launcher's guard) is set only on a green ladder; if K cannot fit eff-48 checkpointed, BOTH arms downshift batch together (matched, loudly echoed)",
+      "class": "cpu",
+      "status": "queued",
+      "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-molmo2-attach-screen.md",
+      "owner_hold": false,
+      "boundary": "script is CPU work now; the ladder RUNS on the box after #20 lands + box frees (endpoint ~2026-08-08); required before the K arm launches"
     },
     {
       "id": "molmo2-stage2-attachment-decision",

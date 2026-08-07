@@ -16,12 +16,13 @@ vram_key = "vram_alloc_peak_gib"
 boundary = "40k ~08-08 at ~2.2 s/step; saves every 2500, probes every 500"
 anchors = [
     "probe reference: 30.84@500 -> 25.72@1000 -> 15.25@1500 -> 13.21@2000 -> 12.09@2500 (descending each anchor)",
+    "K1 gate CROSSED GREEN 08-07 06:0xZ: 7.1652@10000 vs 12.0944 (margin 4.93, new low)",
     "stage-2 attachment decision at endpoint carries the pi0.5 deep-read's two named arms",
 ]
 [[run.gates]]
 kind = "probe_below_by_step"
 value = 12.0944
-step = 10000                        # K1 kill-line reference (owner-set 08-07)
+step = 10000                        # K1 kill-line (owner-set 08-07) — crossed green 06:0xZ, kept for the record
 [[run.gates]]
 kind = "vram_max_gib"
 value = 71.0
@@ -74,3 +75,82 @@ value = 24.0                        # pre-reg gate; breach reopens the q4-fallba
 # [[run.gates]]
 # kind = "gpu_hours_max"
 # value = 24.0                      # same pre-reg gate as the AR-100k arm
+
+# PREPARED — attach-screen arms (#4, sequential F then K; pre-reg
+# 2026-08-07-prereg-molmo2-attach-screen.md). Uncomment ONE at a time
+# at its launch (prune the finished run's entry). If the 5k downshift
+# marker fired, total_steps and the jsonl run-name segment become 5k
+# (fontaine_molmo2_flow_*_5k_ddp4). Probe-kill bars are phase-1 curve
+# at the matched step + 3.0, judged at save boundaries (kill rule);
+# the @10000 bar is phase-1's @10000 probe + 3.0 (the K1 crossing
+# value, in now.md 2026-08-07). K only:
+# CE-health watch (record, not gate) — jsonl loss_aux vs phase-1
+# loss_action at the matched step; rising CE under stop-grad is the
+# AEGIS drift signal, it feeds read 4.
+#
+# [[run]]
+# name = "attach_F"
+# kind = "train-jsonl"
+# host = "192.222.55.210"
+# pgrep = "fontaine_molmo2_flow_frozen_10k_ddp4"
+# pgrep_min = 4                     # 4 DDP ranks
+# gpu_indices = [0, 1, 2, 3]
+# gpu_mem_min_mib = 30000
+# jsonl = "/home/ubuntu/flow-matching/outputs/train/fontaine_molmo2_flow_frozen_10k_ddp4/train_log.jsonl"
+# total_steps = 10000
+# probe_key = "eval_chunk_mae"
+# vram_key = "vram_alloc_peak_gib"
+# boundary = "10k at F-rate TBD at launch; saves every 2500, probes every 500; K launches after"
+# anchors = [
+#     "kill rule: probe > phase-1 curve at matched step + 3.0 at any eval >= 5k, kill at next save boundary",
+#     "Delta_seam frozen read at matched endpoints (panel_v2 heun30/draws1/stable, paired CI); state-copy 11.785 must be beaten decisively or the screen is void",
+# ]
+# [[run.gates]]
+# kind = "probe_below_by_step"
+# value = 12.6394                   # phase-1 9.6394@5000 + 3.0
+# step = 5000
+# [[run.gates]]
+# kind = "probe_below_by_step"
+# value = 11.6356                   # phase-1 8.6356@7500 + 3.0
+# step = 7500
+# [[run.gates]]
+# kind = "probe_below_by_step"
+# value = 10.1652                   # phase-1 7.1652@10000 + 3.0 (K1 crossing green 08-07 06:0xZ)
+# step = 10000
+# [[run.gates]]
+# kind = "vram_max_gib"
+# value = 71.0
+#
+# [[run]]
+# name = "attach_K"
+# kind = "train-jsonl"
+# host = "192.222.55.210"
+# pgrep = "fontaine_molmo2_flow_kijoint_10k_ddp4"
+# pgrep_min = 4                     # 4 DDP ranks
+# gpu_indices = [0, 1, 2, 3]
+# gpu_mem_min_mib = 30000
+# jsonl = "/home/ubuntu/flow-matching/outputs/train/fontaine_molmo2_flow_kijoint_10k_ddp4/train_log.jsonl"
+# total_steps = 10000
+# probe_key = "eval_chunk_mae"
+# vram_key = "vram_alloc_peak_gib"
+# boundary = "10k at K-rate TBD at launch (est 2.4-2.8 s/step); saves every 2500, probes every 500; chains panel_v2 + AR-view drift panel"
+# anchors = [
+#     "kill rule: probe > phase-1 curve at matched step + 3.0 at any eval >= 5k, kill at next save boundary",
+#     "CE-health watch (record): jsonl loss_aux vs phase-1 loss_action at matched step — rising CE under stop-grad = AEGIS drift signal",
+#     "read 4 at endpoint: AR-view greedy panel vs 40k endpoint AR number, band |Delta_AR| <= 0.3",
+# ]
+# [[run.gates]]
+# kind = "probe_below_by_step"
+# value = 12.6394                   # phase-1 9.6394@5000 + 3.0
+# step = 5000
+# [[run.gates]]
+# kind = "probe_below_by_step"
+# value = 11.6356                   # phase-1 8.6356@7500 + 3.0
+# step = 7500
+# [[run.gates]]
+# kind = "probe_below_by_step"
+# value = 10.1652                   # phase-1 7.1652@10000 + 3.0 (K1 crossing green 08-07 06:0xZ)
+# step = 10000
+# [[run.gates]]
+# kind = "vram_max_gib"
+# value = 71.0

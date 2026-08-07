@@ -72,6 +72,12 @@ fi
 
 draws_eval() { # $1 = plan path, $2 = stem; log + reports carry the stem
     local name="eval__${RUN}__step_${STEP}__$2"
+    # --dump-draws (added pre-launch 08-07, data retention only — no
+    # registered read changes): the per-draw stack makes the #19
+    # selection-rung reads (MG-Select-style score, oracle best-of-10
+    # ceiling) offline-computable from this same compute. The AR-100k
+    # arm launched without it — its per-draw reads need a re-run;
+    # this arm's don't (~310 MB).
     .venv/bin/torchrun --standalone --nproc-per-node=4 -m bijou.eval \
         --data /home/ubuntu/datasets/mcobzarenco/community_curated_v0 \
         --episodes holdout --holdout-episodes 0.1 --split-seed 0 \
@@ -83,6 +89,7 @@ draws_eval() { # $1 = plan path, $2 = stem; log + reports carry the stem
         --report-samples 0 \
         --output-json "reports/${name}.json" \
         --dump-predictions "reports/${name}.npz" \
+        --dump-draws "reports/${name}_draws.npz" \
         --report "reports/${name}.html" \
         > "$HOME/logs/${name}.log" 2>&1
 }

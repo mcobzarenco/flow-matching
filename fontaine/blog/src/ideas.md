@@ -259,6 +259,23 @@ matched steps.
   activation checkpointing (hard K prerequisite), F/K launch
   scripts + the joint-checkpoint AR-view materializer for read 4.
 
+- **Launch prep LANDED 2026-08-07 ~06:1xZ (work session):** both arm
+  launchers exist (`launch_box_fontaine_molmo2_attach_{F,K}_10k_ddp4.sh`
+  — sequential F-first, sha256-pinned plans, chained panel_v2 evals;
+  K chains `materialize_joint_ar_view.py` + the greedy k4l2 drift
+  panel for read 4, and a `K_MEM_READY` guard refuses a blind K
+  launch before #20 + the smoke ladder). The 70 GPU-h cost gate is
+  mechanized (`attach_rate_gate.py`, median-s/step projection with
+  the batch's extra term; 5k-downshift marker BOTH launchers honor —
+  matched, never one arm alone). Probe-kill bars pinned in
+  babysit.toml prepared entries: 12.6394@5000, 11.6356@7500,
+  10.1652@10000 (phase-1 curve + 3.0; the @10000 value from the K1
+  crossing, green at 7.1652 vs ≤12.0944). AR-view materializer
+  oracle-gated against the REAL `save_checkpoint` write side (rider
+  bitwise, adapted trunk, taps stripped, greedy decode via
+  `from_checkpoint` on the tiny fixture). 10 new oracles; check.py
+  433. Remaining before launch: #20 + the K smoke memory ladder.
+
 ## 5. FAST tokenizer v3 — `queued`
 
 - **Hypothesis:** refitting on curated-v0's exact quantiles removes
@@ -1341,6 +1358,26 @@ verifier-free score is noise. Both papers frame greedy as the
 precision bottleneck — the OPPOSITE of our expectation 2
 (greedy ≈ posterior mean); the draws10 primary read adjudicates
 between these two priors on our own panel before any escalation.
+
+- **Lit slice 2026-08-07 ~06:1xZ:** a THIRD selection flavor with a
+  scaling claim — CoVer
+  ([2602.12281](https://arxiv.org/abs/2602.12281)): scaling test-time
+  VERIFICATION beats scaling policy pre-training for VLA-instruction
+  alignment (contrastive verifier over rephrased-instruction ×
+  candidate-action pairs; +22% ID / +13% OOD SIMPLER, +45% real) —
+  independent adoption evidence that the field's compute is moving to
+  the selection side; RoboMonkey
+  ([2506.17811](https://arxiv.org/abs/2506.17811)) is the same bet
+  with a VLM verifier + majority voting. Cheapest next read named:
+  **oracle best-of-10 ceiling** — per-frame best draw vs ground truth
+  from a per-draw stack bounds what ANY selector (verifier-free or
+  trained) could buy on our panel before we build one. Retention
+  gap found and fixed: the live AR-100k draws10 run dumps only the
+  pooled predictions (per-draw reads there need a re-run — accepted,
+  mean-of-samples is the registered read), but the molmo2 endpoint
+  draws launcher now carries `--dump-draws` (added pre-launch,
+  data-retention only, ~310 MB) so its selection-rung reads come free
+  from the ~08-08 compute.
 
 ## 15. Literature-sourced arms — standing
 
