@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-07T10:02:00+00:00",
+ "updated_utc": "2026-08-07T10:20:00+00:00",
  "depth_reason": null,
  "items": [
   {
@@ -163,6 +163,15 @@
    "prereg": null,
    "owner_hold": false,
    "boundary": "CPU work at any GPU-busy window; highest value before the ~08-08 stage-2 attachment decision opens"
+  },
+  {
+   "id": "leaderboard-decode-cost-microbench",
+   "title": "Leaderboard compute-column micro-benchmark PREP (owner steering 08-07 10:04Z follow-up; CPU now): write the timing script + its short pre-reg post \u2014 one script, same batch size / workers / dtype, times every leaderboard decode config (AR greedy, AR draws10-T1, teacher heun30 draws{1,10}, student 1-NFE draws{1,5,10}) on a fixed panel slice on the local 1xH100, plus single-stream batch=1 latency per config as the deployment-facing number (#16 hook); replaces the mtime-derived ~= ms/frame leaderboard entries with apples-to-apples numbers. Record-only, no headline claims; the ~15-min GPU run executes at the boundary under the posted pre-reg",
+   "class": "cpu",
+   "status": "queued",
+   "prereg": null,
+   "owner_hold": false,
+   "boundary": "runs when draws10_t1 frees the local GPU (boundary ~12:3x-12:5xZ 2026-08-07) and before the next local launch; script prep is CPU work at any GPU-busy window"
   }
  ]
 }

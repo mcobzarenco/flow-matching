@@ -9,3 +9,6 @@ after = ["links"]
 
 [output.html]
 git-repository-url = "https://github.com/mcobzarenco/flow-matching/tree/fontaine"
+
+[output.html.redirect]
+"/ledger.html" = "leaderboard.html"
