@@ -1,10 +1,10 @@
 {
-  "updated_utc": "2026-08-07T02:10:00+00:00",
+  "updated_utc": "2026-08-07T02:52:00+00:00",
   "depth_reason": null,
   "items": [
     {
       "id": "molmo2_ar40k",
-      "title": "Molmo2 AR 40k trunk run (box, 4xDDP) \u2014 probe 10.49@3500 re-descended (@3000 wiggle closed); @5000 save ~02:3xZ tick duty",
+      "title": "Molmo2 AR 40k trunk run (box, 4xDDP) \u2014 probe 9.64@5000 (sub-10 \u00d72); @5000 save landed SLOW (~14 min pre-save stall, resumed 02:48Z) \u2014 watch @7500 ~04:1x-04:2xZ for a repeat",
       "class": "gpu-box",
       "status": "live",
       "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-molmo2-ar-40k.md",
@@ -18,7 +18,7 @@
       "status": "live",
       "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-ar-sampled-draws.md",
       "owner_hold": false,
-      "boundary": "~13:3x-14:0xZ 2026-08-07 (cumulative 30.8 f/min at 02:09Z -> ~14.0 h total, re-projected each babysit; 24 GPU-h gate)"
+      "boundary": "~13:1x-13:4xZ 2026-08-07 (cumulative 31.4 f/min at 02:42Z -> ~13.7 h total, re-projected each babysit; 24 GPU-h gate)"
     },
     {
       "id": "draws10-frozen-reads",
@@ -27,16 +27,7 @@
       "status": "blocked",
       "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-ar-sampled-draws.md",
       "owner_hold": false,
-      "boundary": "opens at draws10_t1 completion (~13:3x-14:0xZ 2026-08-07); reads are frozen in the pre-reg"
-    },
-    {
-      "id": "p6-checkpy-tiers",
-      "title": "#21 P6 \u2014 check.py tiers / pytest gpu markers (<30 min)",
-      "class": "cpu",
-      "status": "queued",
-      "prereg": null,
-      "owner_hold": false,
-      "boundary": null
+      "boundary": "opens at draws10_t1 completion (~13:1x-13:4xZ 2026-08-07); reads are frozen in the pre-reg"
     },
     {
       "id": "p7-tee-to-logs",

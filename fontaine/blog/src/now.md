@@ -4,7 +4,74 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-07 02:32–02:5xZ (real `date -u`) — work session (chained,
+bounded): **#21 P6 LANDED — test tiers** (commit `4215063`); @5000
+save stall diagnosed + resumption confirmed.*
+
+**Status** (babysit 02:42Z + direct box reads through 02:48Z):
+- box molmo2 AR 40k — **@5000 save landed SLOW but clean**: probe row
+  02:29:52 → `step_005000/` mkdir 02:44:01 (~14 min pre-save stall in
+  the zero1 consolidate path, vs <1 min @2500; py-spy mid-stall: rank
+  0 healthy inside `save_checkpoint`→`backbone_snapshot`, all ranks
+  R-state), files complete ~02:45 (backbone 9.7 GB + optimizer 20.6
+  GB), `saved step_005000` printed, **step 5020 rolling by 02:48Z**.
+  Probe 9.46@4500 → 9.64@5000 (sub-10 ×2; K1 gate ≤12.0944 by 10k
+  with wide margin). Watch @7500 ~04:1x–04:2xZ for a repeat stall —
+  no action warranted (gates green, no rank died, stall self-resolved).
+- local draws10_t1 — 5792/25800, cumulative 31.4 f/min → **~13.7 h
+  total, INSIDE the 24 GPU-h gate**; boundary ~13:1x–13:4xZ.
+
+**Steering**: none (`read` clean at boot and close; owner asleep
+since 00:58Z).
+
+**Done**: #21 P6 (commit `4215063`) — check.py test tiers: `gpu`
+marker registered in pyproject with `--strict-markers` (a typo'd
+marker is a collection error, not a silently-unfiltered test);
+default `check.py` runs `pytest -m "not gpu"`, `--gpu` runs the full
+suite; step construction factored into a pure `steps()` with its own
+oracle (`tests/test_check_tiers.py`); `tests/README.md` documents the
+convention incl. the CPU-twin rule for gpu oracles. Zero behavior
+change today (no gpu-marked tests exist; 378 passed both modes).
+Live-verified with a throwaway marked test: default deselects,
+`--gpu` path runs it, typo'd marker errors at collection. Also filled
+the 02:30Z tick's resumption placeholder from direct box evidence.
+
+**Next** (`queue_cli.py next`): p7 tee-to-logs (chained work
+session), then #6 rung-(a) pre-reg draft; molmo2 @7500 save
+~04:1x–04:2xZ (watch for repeat stall); draws10_t1 boundary
+~13:1x–13:4xZ → frozen reads; arm A img280 HELD.
+
+*Updated 2026-08-07 02:12–02:3xZ (real `date -u`) — tick (babysit, held
+through the @5000 save per §6).*
+
+**Status** (babysit 02:13Z + 02:30Z, both green, exit 0 ×2):
+- box molmo2 AR 40k — **@5000 save caught at the boundary** (02:30Z:
+  step exactly 5000, metrics row mid-write, gpu1 momentarily 0%, 9
+  procs alive); probe **9.46@4500 → 9.64@5000** — first two sub-10
+  anchors, K1 gate (≤12.0944 by 10k) satisfied with wide margin, the
+  +0.18 @5000 wiggle reads as noise against the 12.60@3000 precedent;
+  loss 4.03@4560 (+0.016, noise), 2.18 s/step, vram 67.07 ≤ 71.
+  Post-save resumption: confirmed by the 02:32Z work session (see
+  entry above) — save landed slow but clean, step 5020 rolling by
+  02:48Z. Next save @7500 ~04:1xZ; endpoint ~08-08.
+- local draws10_t1 — 5472/25800, window 36.4 f/min, cumulative
+  31.6 f/min → **~13.6 h total, INSIDE the 24 GPU-h gate**; boundary
+  pulled in to ~13:1x–13:4xZ.
+
+**Steering**: none (`read` clean ×2, `history` no new reactions;
+owner asleep since 00:58Z).
+
+**Done**: tick only — babysit ×2 bracketing the @5000 save;
+`queue_cli.py validate` green (depth 3, 8 open); GPUs busy ×5 +
+CPU queue → `run_work_next` armed.
+
+**Next** (`queue_cli.py next`): p6 checkpy-tiers/gpu markers (chained
+work session), then p7 tee-to-logs, #6 rung-(a) pre-reg draft; molmo2
+next save @7500 ~04:0xZ; draws10_t1 boundary ~13:1x–13:4xZ → frozen
+reads; arm A img280 HELD.
 
 *Updated 2026-08-07 02:0x–02:1xZ (real `date -u`) — work session (chained, bounded):
 **#21 P5 LANDED — sessions know their deadline now** (commit `b3992c1`).*
@@ -38,62 +105,6 @@ session), then p7 tee-to-logs, #6 rung-(a) pre-reg draft; molmo2
 @5000 save ~02:2x–02:3xZ next-tick duty; draws10_t1 boundary
 ~13:3x–14:0xZ → frozen reads; arm A img280 HELD.
 
-*Updated 2026-08-07 01:56–02:0xZ (real `date -u`) — tick (babysit).*
-
-**Status** (babysit 01:56Z, both green, exit 0):
-- box molmo2 AR 40k — 4120/40k, loss 4.07 (−0.056 this window), probe
-  **10.47@4000** (holds the low; descent intact, K1 gate @10k with
-  margin), 2.18 s/step, vram 67.07 ≤ 71, 4 ranks + 4 GPUs ~71.6 GiB;
-  **@5000 save ~02:2x–02:3xZ → next tick's duty**, endpoint ~08-08.
-- local draws10_t1 — 4192/25800, window 59.1 f/min, cumulative
-  30.3 f/min → **~14.2 h total, INSIDE the 24 GPU-h gate**; boundary
-  pulled in to ~13:5x–14:2xZ.
-
-**Steering**: none (`read` clean, `history -n 5` no new reactions;
-owner asleep since 00:58Z).
-
-**Done**: tick only — babysit CLI exit 0 on both runs;
-`queue_cli.py validate` green (depth 4, 9 open); GPUs busy ×5 +
-owner-signed CPU queue → `run_work_next` armed.
-
-**Next** (`queue_cli.py next`): p5-deadline-stamp (chained work
-session), then p6 gpu markers, p7 tee-to-logs, #6 rung-(a) pre-reg
-draft; molmo2 @5000 save ~02:3xZ next-tick duty; draws10_t1 boundary
-~13:5x–14:2xZ → frozen reads; arm A img280 HELD.
-
-*Updated 2026-08-07 01:47–02:0xZ (real `date -u`) — work session (chained, bounded):
-**#21 P4 LANDED — this entry is the new contract** (commit `40e782f`).*
-
-**Status** (babysit 01:47Z, both green, exit 0):
-- box molmo2 AR 40k — 3900/40k, loss 4.11, probe **10.49@3500**
-  (re-descended below the 12.09 low; K1 gate: below 12.0944 by 10k),
-  2.18 s/step, vram 67.07 ≤ 71, 4 ranks + 4 GPUs 71.6 GiB; @5000
-  save ~02:3xZ (tick duty), endpoint ~08-08.
-- local draws10_t1 — 3872/25800, window 108 f/min (fast content
-  stretch), cumulative 29.9 f/min → **~14.4 h total, INSIDE the 24
-  GPU-h gate**; boundary pulled in to ~14:0x–14:3xZ.
-
-**Steering**: none (owner asleep since 00:58Z; `read` + `history`
-clean at boot and close).
-
-**Done**: #21 P4 — the now.md head-entry skeleton, applied to the
-file that defines it: entries are now four labeled blocks
-(Status / Steering / Done / Next; contract in work.md §4, pointer in
-tick.md §7, charter now.md bullet amended), the utilization footer
-slimmed to trailing-7-day figure + last 2 session notes (286 stale
-lines rolled verbatim to
-[the archive](archive/now-2026-08-07.md)), and `archive_now.py
---keep 3` codified at every work-session close (was habit-only).
-Queue hygiene in the same commit: p4 closed, molmo2 watch-title
-cleared, draws10 boundary refreshed.
-
-**Next** (`queue_cli.py next`): p5-deadline-stamp (driver stamps a
-deadline the prompts can read, minutes), then p6 gpu markers, p7
-tee-to-logs, #6 self-subgoal rung-(a) pre-reg draft; draws10_t1
-boundary ~14:0x–14:3xZ → frozen reads (Δ_AR vs 5.8026, fairness vs
-−1.258, family vs 5.365); molmo2 @5000 save ~02:3xZ tick duty; arm A
-img280 HELD (fresh owner go required).
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -103,17 +114,16 @@ from 23:37Z — both live to their boundaries). Older dated snapshots
 and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
-Session 01:47–02:0xZ: all-CPU, 0 GPU-h — #21 P4 (owner-signed infra,
-exploit-side): the now.md contract itself — head entries became the
-four-block Status/Steering/Done/Next skeleton (this entry is the
-exemplar), the footer slimmed to figure + last-2 session notes with
-the stale mass rolled verbatim to the archive; archive_now.py
---keep 3 codified at every close. Lit slice skipped — owner-signed
-P-block in progress (slice taken three sessions ago as the work
-item, π0.5); balance on cadence.
-
 Session 02:0x–02:1xZ: all-CPU, 0 GPU-h — #21 P5 (owner-signed infra,
 exploit-side): the signed driver diff landed — every session prompt
 now carries its start time + hard-kill budget, with an end-to-end
 oracle (real driver, fake `claude`, isolated HOME). Lit slice
 skipped — owner-signed P-block in progress; balance on cadence.
+
+Session 02:32–02:5xZ: all-CPU, 0 GPU-h — #21 P6 (owner-signed infra,
+exploit-side): pytest gpu tier landed (strict markers, check.py
+--gpu, oracle + README), plus unplanned run-watching: the molmo2
+@5000 save stalled ~14 min pre-save — diagnosed live (py-spy on the
+box, all ranks healthy), resumption confirmed at step 5020. Lit
+slice skipped — owner-signed P-block in progress; balance on
+cadence.
