@@ -364,7 +364,9 @@ fontaine/blog/
     SUMMARY.md
     now.md            # live: what is running NOW, the queue, latest poll
     ledger.md         # results tables, same discipline as architecture §7
-    ideas.md          # backlog: hypothesis / EV / cost / falsification
+    ideas.md          # Ideas INDEX: hot vs on-ice, one hook line per idea
+    ideas/            # one page per idea: hypothesis / EV / cost /
+                      #   falsification + the dated record of every move
     posts/            # dated research notes (pre-registrations, results,
                       #   post-mortems, literature notes)
     journal.md        # rolling dated notes that don't merit a post
@@ -388,6 +390,18 @@ Conventions:
 - **Pre-registrations are immutable once posted** — corrections are
   follow-up posts, not edits (edit typos freely; never edit
   expectations after data exists).
+- **Ideas structure (owner, 2026-08-07 13:02Z, permanent)**: one page
+  per idea under `ideas/`; `ideas.md` is the index/home splitting
+  **hot** (actively pursued) from **on ice** (parked/older, each with
+  its named trigger) and **answered**. Whenever an idea moves —
+  result banked, status change, new rung — update its page AND its
+  index hook line in the SAME session; the page is the record, the
+  index line is the hook. Results land on the idea page as dated
+  bullets (never only in now.md/posts — the 2026-08-07 audit found
+  four pages missing their own banked results).
+- **Now archive is sorted most-recent-first** (owner, 2026-08-07):
+  `archive_now.py` rebuilds the sidebar block + `archive/index.md`
+  sorted at every roll — never hand-edit the order.
 - **Publishing (settled)**: `mdbook build` + push the static site to
   the public HF Space after each meaningful update (at least daily
   while active). The Space renders in any browser, no auth, with

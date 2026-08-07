@@ -208,6 +208,15 @@
    "prereg": null,
    "owner_hold": false,
    "boundary": "opens after the #4 attach-screen frozen reads (~08-09+); the draft is CPU work at any GPU-busy window AFTER Delta_seam is banked; execution needs its own posted pre-reg + owner-visible queue entry"
+  },
+  {
+   "id": "driver-background-task-guard",
+   "title": "OWNER STEERING 08-07 13:05Z (tooling follow-up to the 12:56Z premature-session-end incident): harden the session driver so a completed turn cannot silently kill live work \u2014 audit fontaine/harness session-driver lifecycle; add a guard that (a) refuses to treat turn-completion as session end while registered background tasks are live (re-prompt instead), or at minimum (b) never tears down setsid-detached/registered jobs; add a driver test reproducing the 12:56Z signature (terminal_reason completed + live bg tasks). Memory-file mitigation (no-end-turn-waiting-on-notifications) already in place; this mechanizes it.",
+   "class": "cpu",
+   "status": "queued",
+   "prereg": null,
+   "owner_hold": false,
+   "boundary": "before the next long GPU-wait session ideally; CPU work-item window"
   }
  ]
 }
