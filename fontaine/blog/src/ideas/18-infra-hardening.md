@@ -1,5 +1,7 @@
 # 18. Instrument & infra hardening — `screening` (items 1+8 done 2026-08-05, 2 flag-landed, 3+4+7 done 2026-08-06)
 
+*Tag: `infra-hardening` · idea #18 · [index](../ideas.md)*
+
 The [bijou deep-dive](../posts/2026-08-05-bijou-deep-dive.md)'s fix
 queue, in leverage order (details + file:line in the post):
 

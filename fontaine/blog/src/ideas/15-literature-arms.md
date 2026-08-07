@@ -1,5 +1,7 @@
 # 15. Literature-sourced arms — standing
 
+*Tag: `lit-arms` · idea #15 · [index](../ideas.md)*
+
 The arXiv radar (VLA/robot learning, flow matching, action
 tokenization, data curation) feeds this list; every borrowed idea
 cites its source in the pre-registration; every "novel" idea gets a

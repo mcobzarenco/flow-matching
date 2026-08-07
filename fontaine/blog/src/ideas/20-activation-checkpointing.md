@@ -1,5 +1,7 @@
 # 20. Activation checkpointing for live-trunk training — `confirmed`/landed (wrap + keystone oracles 2026-08-07; GPU ladder = the K smoke item)
 
+*Tag: `activation-ckpt` · idea #20 · [index](../ideas.md)*
+
 The Molmo2 AR smoke measured the wall: fp32 masters + DDP grad
 buckets + Adam on a 3.7B trainable set ≈ 63 GiB static on an 80 GiB
 card, and at ~2.4 GiB/sample of saved activations (820 image tokens ×

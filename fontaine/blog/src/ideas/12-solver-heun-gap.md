@@ -1,5 +1,7 @@
 # 12. Solver/Heun-gap work — `screening` (1-NFE student BANKED 2026-08-06; rig-ft diagnosis branch — next rung waits on rig data, #16)
 
+*Tag: `one-step` · idea #12 · [index](../ideas.md)*
+
 The h1536 adaRMS Heun-gap collapse did NOT transfer to h1024-on-AR-trunk
 (measured −0.28 at 10→30, first_mae −0.46): sampler quality is back on
 the table for the best flow lineage. Arms: step-count sweeps, solver

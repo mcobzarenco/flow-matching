@@ -1,5 +1,7 @@
 # 11. Visual grounding arms — `queued`, the open front
 
+*Tag: `visual-grounding` · idea #11 · [index](../ideas.md)*
+
 Re-anchor probe: error is frame-dependent level mis-estimation;
 acuity probe: the text stack's use of visual tokens is the
 bottleneck. Arms: trunk shaping, schedules, vision-side aux tasks —

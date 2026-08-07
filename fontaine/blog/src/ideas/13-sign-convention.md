@@ -1,5 +1,7 @@
 # 13. Sign-convention detection & repair (owner hypothesis) — `screening`
 
+*Tag: `sign-convention` · idea #13 · [index](../ideas.md)*
+
 - **Hypothesis:** a small set of community repos encodes joint angles
   with flipped sign conventions (esp. wrist_roll on mirrored wrist-cam
   mounts); training on them injects contradictory supervision.

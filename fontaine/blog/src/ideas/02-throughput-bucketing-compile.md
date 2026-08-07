@@ -1,5 +1,7 @@
 # 2. Throughput: bucketed batching + torch.compile on the frozen prefix — `screening` (2a landed 2026-08-05; GPU A/B conditional)
 
+*Tag: `throughput-compile` · idea #2 · [index](../ideas.md)*
+
 - **Hypothesis:** length-bucketed batching + `torch.compile` of the
   prefix encode (79% of step time) buys ≥20% step-time on 1×H100 —
   compounding interest on every later run.

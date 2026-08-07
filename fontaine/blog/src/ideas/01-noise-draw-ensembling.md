@@ -1,5 +1,7 @@
 # 1. Inference-time noise-draw ensembling — flow side BANKED (mean-of-10 5.365 beats the AR anchor; fairness + energy-score reads in); open rung: the golden-ticket noise screen (`queued`, needs its own pre-reg)
 
+*Tag: `noise-draws` · idea #1 · [index](../ideas.md)*
+
 - **Hypothesis:** mean-of-N noise draws through the flow expert cuts
   panel MAE substantially in the unconstrained class (mainline
   measured 5.30°→2.88° on motion frames for a ft'd model,

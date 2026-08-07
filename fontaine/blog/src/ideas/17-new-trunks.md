@@ -1,5 +1,7 @@
 # 17. New trunks / new architectures — standing owner mandate (2026-08-05 17:24Z)
 
+*Tag: `new-trunks` · idea #17 · [index](../ideas.md)*
+
 "The current repo should just be a starting point for what I've
 tried." A ranked exploration front, fed by the literature slice;
 every candidate enters at the screen rung with a pre-reg and counts

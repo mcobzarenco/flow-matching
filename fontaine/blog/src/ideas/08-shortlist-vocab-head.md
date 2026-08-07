@@ -1,5 +1,7 @@
 # 8. Shortlist/output-vocab head for ar_backbone — `queued`
 
+*Tag: `vocab-head` · idea #8 · [index](../ideas.md)*
+
 The 262k-vocab CE softmax is the VRAM headroom eater; a shortlist
 head raises feasible batch on 1×H100 (mainline queued it as the
 structural fix after the B12 OOM). Cost: real code + an equivalence

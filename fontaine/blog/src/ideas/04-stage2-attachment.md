@@ -1,5 +1,7 @@
 # 4. Stage-2 follow-ups (flow expert on AR trunk) — `screening` (attachment seam screen PRE-REGISTERED 2026-08-07 ~05:1xZ)
 
+*Tag: `seam-screen` · idea #4 · [index](../ideas.md)*
+
 Inherited questions from mainline §8.11 (banked: 6.57 in-run / 6.62
 panel @80k, 2.2× smaller expert): more/deeper export streams (AR
 adaptation lives in all 35 layers; the expert reads {4,9,14} —

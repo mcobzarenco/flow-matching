@@ -13,80 +13,80 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
 
 ## Hot — actively pursued
 
-- **[#19 AR sampled-draws eval](ideas/19-ar-sampled-draws.md)** —
+- **`ar-draws` [#19 AR sampled-draws eval](ideas/19-ar-sampled-draws.md)** —
   `screening`. The AR side of the draws fairness programme.
   draws10_t1 read out 2026-08-07: all three pre-registered
   expectations met (Δ_AR −0.145, ~9× smaller than the flow gain —
   the mean-collapse shape). Next: T-sensitivity q4 rung (launcher
   ready), then the molmo2 arm at its endpoint.
-- **[#4 Stage-2 attachment seam](ideas/04-stage2-attachment.md)** —
+- **`seam-screen` [#4 Stage-2 attachment seam](ideas/04-stage2-attachment.md)** —
   `screening`. F (frozen) vs K (KI-joint) screen pre-registered;
   instruments, launchers, smoke ladder and frozen-read script all
   landed oracle-gated. Launches at the molmo2 40k endpoint (~08-08).
-- **[#17 New trunks / architectures](ideas/17-new-trunks.md)** —
+- **`new-trunks` [#17 New trunks / architectures](ideas/17-new-trunks.md)** —
   standing owner mandate; the Molmo2-4B AR 40k trunk run is LIVE on
   the box (endpoint ~08-08), K1 gate crossed green.
-- **[#6 Aux attribution](ideas/06-aux-attribution.md)** —
+- **`aux-subgoals` [#6 Aux attribution](ideas/06-aux-attribution.md)** —
   `confirmed` (aux HELPS actions, +0.462 cost when off), and its
   rung-(a) self-subgoal probe is pre-registered, waiting on the next
   quiet local-GPU window.
-- **[#1 Noise-draw ensembling](ideas/01-noise-draw-ensembling.md)** —
+- **`noise-draws` [#1 Noise-draw ensembling](ideas/01-noise-draw-ensembling.md)** —
   flow mean-of-10 banked (5.365, beats the AR anchor on both
   columns); fairness + energy-score reads in. Next candidate rung:
   the golden-ticket noise screen (needs its own pre-reg).
 
 ## Standing
 
-- **[#16 Few-shot rig-transfer benchmark](ideas/16-rig-transfer-benchmark.md)**
+- **`rig-benchmark` [#16 Few-shot rig-transfer benchmark](ideas/16-rig-transfer-benchmark.md)**
   — **the north star**; execution parked by owner (better rig data
   later), instruments banked. Short-term proxy: comm-holdout MAE +
   attribution.
-- **[#15 Literature-sourced arms](ideas/15-literature-arms.md)** —
+- **`lit-arms` [#15 Literature-sourced arms](ideas/15-literature-arms.md)** —
   the arXiv radar; every borrowed idea cites its source, every
   "novel" idea gets a search first. Feeds the Papers section.
-- **[#18 Instrument & infra hardening](ideas/18-infra-hardening.md)**
+- **`infra-hardening` [#18 Instrument & infra hardening](ideas/18-infra-hardening.md)**
   — the bijou deep-dive fix queue + everything oracle-shaped;
   several items done, rest queued by leverage.
 
 ## On ice — queued or parked, each with its named trigger
 
-- **[#2 Throughput: bucketing + compile](ideas/02-throughput-bucketing-compile.md)**
+- **`throughput-compile` [#2 Throughput: bucketing + compile](ideas/02-throughput-bucketing-compile.md)**
   — 2a landed; GPU A/B conditional on a widened-selection corpus
   (padding ceiling too small under the current recipe).
-- **[#3 Longer training](ideas/03-longer-training.md)** — needs the
+- **`longer-training` [#3 Longer training](ideas/03-longer-training.md)** — needs the
   own-baseline reference arm first.
-- **[#5 FAST tokenizer v3](ideas/05-fast-tokenizer-v3.md)** — CPU
+- **`tokenizer-v3` [#5 FAST tokenizer v3](ideas/05-fast-tokenizer-v3.md)** — CPU
   refit on curated-v0 quantiles; token metrics reset; entropy/
   utilization gate before any learned-VQ arm.
-- **[#7 Stream-schedule re-test](ideas/07-stream-schedule.md)** —
+- **`stream-schedule` [#7 Stream-schedule re-test](ideas/07-stream-schedule.md)** —
   enters at the short-run screen rung.
-- **[#8 Shortlist/output-vocab head](ideas/08-shortlist-vocab-head.md)**
+- **`vocab-head` [#8 Shortlist/output-vocab head](ideas/08-shortlist-vocab-head.md)**
   — VRAM lever for ar_backbone; design concretized, unbuilt.
-- **[#9 Data levers](ideas/09-data-levers.md)** — state-dropout arm
+- **`data-levers` [#9 Data levers](ideas/09-data-levers.md)** — state-dropout arm
   C answered "adopt nothing"; p=0.3 branch survives on our own
   branch rule only; calibrated-noise/GAP are the literature levers.
-- **[#10 E2B base-vs-IT swap](ideas/10-e2b-base-vs-it.md)** —
+- **`base-vs-it` [#10 E2B base-vs-IT swap](ideas/10-e2b-base-vs-it.md)** —
   backbone-swap arm, pre-registered prediction ±0.2.
-- **[#11 Visual grounding arms](ideas/11-visual-grounding.md)** —
+- **`visual-grounding` [#11 Visual grounding arms](ideas/11-visual-grounding.md)** —
   the open front; arch batch #1 pre-registered, arm A (img280) HELD
   for a fresh owner go.
-- **[#12 Solver/Heun-gap + 1-NFE distill](ideas/12-solver-heun-gap.md)**
+- **`one-step` [#12 Solver/Heun-gap + 1-NFE distill](ideas/12-solver-heun-gap.md)**
   — SnapFlow 1-NFE student banked (holds the panel, single draw
   beats AR); rig fine-tune diagnosed, next rung opens with rig data
   (#16).
-- **[#13 Sign-convention repair](ideas/13-sign-convention.md)** —
+- **`sign-convention` [#13 Sign-convention repair](ideas/13-sign-convention.md)** —
   stage 2 hit the escalation branch (3/4 reference populations not
   sign-consistent); parked pending a decision on the reference set.
-- **[#22 Async staleness bridging](ideas/22-async-staleness.md)** —
+- **`async-staleness` [#22 Async staleness bridging](ideas/22-async-staleness.md)** —
   RTC-class rollout question; parked, waits on #16 (closed-loop by
   construction).
 
 ## Answered — banked results
 
-- **[#14 ±180° wraparound census](ideas/14-wraparound-census.md)** —
+- **`wrap-census` [#14 ±180° wraparound census](ideas/14-wraparound-census.md)** —
   measured: 1.24% of pooled panel MAE; under the gate, banked.
-- **[#20 Activation checkpointing](ideas/20-activation-checkpointing.md)**
+- **`activation-ckpt` [#20 Activation checkpointing](ideas/20-activation-checkpointing.md)**
   — landed + oracle-gated; the GPU ladder lives on as #4's K smoke
   item.
-- **[#21 Agentic-loop deep review](ideas/21-agentic-loop-review.md)**
+- **`loop-review` [#21 Agentic-loop deep review](ideas/21-agentic-loop-review.md)**
   — CLOSED: P1–P7 all landed, owner-signed.

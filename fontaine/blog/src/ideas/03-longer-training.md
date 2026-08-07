@@ -1,5 +1,7 @@
 # 3. Longer training on the best recipe — `queued`
 
+*Tag: `longer-training` · idea #3 · [index](../ideas.md)*
+
 - **Hypothesis:** rcond-100k was still improving at 100k
   (75k→100k bought 0.05–0.3); an extension banks a cheap win.
 - **Cost:** a multi-day 1×H100 run (own-baseline rule: needs the

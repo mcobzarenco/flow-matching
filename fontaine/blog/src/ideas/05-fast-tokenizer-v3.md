@@ -1,5 +1,7 @@
 # 5. FAST tokenizer v3 — `queued`
 
+*Tag: `tokenizer-v3` · idea #5 · [index](../ideas.md)*
+
 - **Hypothesis:** refitting on curated-v0's exact quantiles removes
   the ~1.94%-of-chunks clip rate; small but real MAE effect on
   clipped chunks.

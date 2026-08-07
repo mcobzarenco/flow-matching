@@ -1,5 +1,7 @@
 # 21. Agentic-loop & infrastructure deep review — `confirmed`/CLOSED (all 7 signed items landed 2026-08-07)
 
+*Tag: `loop-review` · idea #21 · [index](../ideas.md)*
+
 **CLOSED 2026-08-07 03:1xZ — P1–P7 all landed, owner-signed 00:50Z,
 one chained-session cadence:** P3+P1 `4c4fea8` babysit CLI +
 pre-commit gate; P2 `19f3d71` queue-as-data; P4 `40e782f` now.md

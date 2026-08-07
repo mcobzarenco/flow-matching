@@ -1,5 +1,7 @@
 # 14. ±180° wraparound census & shortest-arc error — `confirmed`/banked (measured 2026-08-05)
 
+*Tag: `wrap-census` · idea #14 · [index](../ideas.md)*
+
 - **Hypothesis:** truth chunks wrapping the ±180° boundary inject
   ~360°-scale discontinuities into BOTH raw-degree training targets
   and MAE; a wrap census may explain a measurable slice of panel MAE.

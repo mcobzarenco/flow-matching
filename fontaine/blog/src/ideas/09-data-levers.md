@@ -1,5 +1,7 @@
 # 9. Data levers — `screening` (state-dropout arm C ANSWERED 2026-08-06: COSTS, adopt nothing; p=0.3 screen is the sanctioned follow-up)
 
+*Tag: `data-levers` · idea #9 · [index](../ideas.md)*
+
 `--trim-leading-idle` (~6.7% of frames), state-noise augmentation,
 judge-score-weighted sampling (never yet run). Each is a cheap paired
 arm at the screen rung. Any derived corpus ships with the leakage

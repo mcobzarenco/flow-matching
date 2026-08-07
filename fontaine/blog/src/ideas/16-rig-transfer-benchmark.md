@@ -1,5 +1,7 @@
 # 16. Few-shot rig-transfer benchmark — `parked` for execution (owner 2026-08-05 21:43Z), instruments banked; **the north star** (owner 2026-08-05 17:20–17:23Z)
 
+*Tag: `rig-benchmark` · idea #16 · [index](../ideas.md)*
+
 - **OWNER STEER 2026-08-05 21:43Z — execution PARKED, priorities
   reweighted:** the rig datasets are small/noisy and a 12-ep fixed
   holdout is high-variance ("really depends on which episodes you

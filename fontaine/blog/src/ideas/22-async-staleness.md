@@ -1,5 +1,7 @@
 # 22. Async staleness bridging for rollout (RTC / A2C2 / TT-RTC) — `parked` (waits on #16)
 
+*Tag: `async-staleness` · idea #22 · [index](../ideas.md)*
+
 - **Hypothesis:** at real deployment latencies, naive async chunk
   switching (our `--async-inference`) loses task quality to
   observation staleness — and the loss is *decode-dependent*:

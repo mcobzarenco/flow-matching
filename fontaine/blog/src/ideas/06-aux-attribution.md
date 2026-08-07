@@ -1,5 +1,7 @@
 # 6. Aux attribution arms — `confirmed` (aux HELPS actions; results 2026-08-06)
 
+*Tag: `aux-subgoals` · idea #6 · [index](../ideas.md)*
+
 **ANSWERED 2026-08-06 04:2xZ
 ([results post](../posts/2026-08-06-box-batch-results.md)): the
 pre-registered decision rule fired REAL — aux-off costs +0.462 panel

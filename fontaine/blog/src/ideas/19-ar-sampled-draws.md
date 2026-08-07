@@ -1,5 +1,7 @@
 # 19. AR sampled-draws eval (mean-of-samples) — `screening` (AR-100k draws10_t1 READ OUT 2026-08-07, all expectations met; tsens rung next; molmo2 arm waits on its endpoint)
 
+*Tag: `ar-draws` · idea #19 · [index](../ideas.md)*
+
 Greedy decode is the AR family's single-draw voice; the flow family's
 deployment read is mean-of-10 draws. The owner's fairness point
 (2026-08-06 19:15Z): when we quote flow mean-of-N, the AR models get
