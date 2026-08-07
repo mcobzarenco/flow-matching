@@ -57,9 +57,25 @@ expected completion signature, verified on-disk):
   ~13.2 h stepping + 9 saves (~15.5 min each) → endpoint ~08-08
   morning.
 
-**Steering**: none new (`read` empty; `history -n 5` shows only our
-own 10:24–10:52Z posts, no reactions; owner last at 10:04–10:1xZ,
-fully executed).
+**Steering**: **NEW — owner 12:26:40Z** (caught on the end-of-tick
+poll, acknowledged in-channel 12:4xZ): merge the missing main changes
+into fontaine — main was **rebased onto our snapshot `42a202a`**
+(our work through mem-snapshot/vram-peaks is now mainline) + 3
+commits on top; read `docs/notes/2026-08-06-main-sync-for-fontaine.md`
+first (done, from origin/main). Contents: (1) `2ee2be5` batched
+noise-draw ensembling — `sample_draws` via one solver call at
+draws×B, **5.6× bf16** (576 ms mean-of-10 on the rig), draws-major so
+`collapse_draws`/`--dump-draws` layouts stay byte-compatible; fp32
+seq-vs-batched max Δ 9.2e-5°; (2) `36570c0` `--return-home` cosine
+glide via our `rollout_safety.home_trajectory`; (3) known:
+`test_chunked_backward` aux rel-err 1.0004e-4 vs 1e-4 — OUR tolerance
+call (passes on this box; pin down before touching the bound); (4)
+`bijou/train.py` import reorder only. **Sequencing** (posted): the
+in-flight microbench finishes pre-merge as the sequential baseline
+(matches the banked evals the ≈ rows measured) → merge origin/main
+(normal merge, not ff) → rerun the draws configs post-merge → the
+batched-vs-sequential speedup lands on the leaderboard as a measured
+delta. Merge = FIRST item of the chained work session.
 
 **Done**: tick — boundary adjudicated (completion verified on-disk,
 never off the liveness line alone); frozen reads executed in-tick and
@@ -73,11 +89,15 @@ its only surviving artifact). `queue_cli.py validate` green (depth 2,
 12 open). 11:26Z tick entry rolled to archive. No blog build (reader
 content lands with the leaderboard rows in the chained session).
 
-**Next**: chained work session (4-h budget): microbench reads +
-leaderboard ⏱ rows (replace the ≈ rows) + ledger/blog; then **tsens
-q4 launch** (`eval_ar100k_tsens_q4_draws10.sh`, prune draws10_t1
-entry AFTER — the started_utc footgun); molmo2 endpoint ~08-08 →
-#19 box obligations → K smoke ladder → attachment steer window.
+**Next**: chained work session (4-h budget), in order: (1) **merge
+origin/main per the owner's 12:26Z steering + sync note** (after the
+in-flight microbench completes its pre-merge sequential baseline;
+adjudicate the test_chunked_backward tolerance call); (2) microbench
+reads + post-merge draws-config rerun → leaderboard ⏱ rows incl. the
+batched-draws speedup delta + ledger/blog; (3) **tsens q4 launch**
+(`eval_ar100k_tsens_q4_draws10.sh`, prune draws10_t1 entry AFTER —
+the started_utc footgun); molmo2 endpoint ~08-08 → #19 box
+obligations → K smoke ladder → attachment steer window.
 
 *Updated 2026-08-07 11:48–12:0xZ (real `date -u`) — tick (babysit):
 both runs green, no new steering; queued items stay boundary-blocked
