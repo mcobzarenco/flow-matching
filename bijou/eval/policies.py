@@ -26,7 +26,14 @@ from ..annotations import ConditionField
 from ..aux_text import AuxField, AuxGeneration
 from ..decoders.ar_backbone import ARBackboneDecoder
 from ..decoders.flow import FlowDecoder
-from ..interface import Collator, mask_state_item
+from ..interface import (
+    CollatedBatch,
+    Collator,
+    MemoryStream,
+    NormStats,
+    ObservationMemory,
+    mask_state_item,
+)
 from ..loading import CheckpointInfo, from_checkpoint
 from ..model import BijouModel, SamplingMethod
 
@@ -183,6 +190,54 @@ def noise_for_item(
     if noise_key != "index":
         raise ValueError(f"unknown noise key {noise_key!r} (choose from {NOISE_KEYS})")
     return draw_noise(seed, index, draw, shape)
+
+
+def tile_memory(memory: ObservationMemory, draws: int) -> ObservationMemory:
+    """Draws-major tiling of an encoded observation for batched
+    ensembling: every K/V stream and the padding mask repeat along the
+    batch dim ([B, …] → [draws·B, …], whole-batch-major, so row
+    d·B + i is (draw d, item i) — the collapse_draws layout). A KV
+    cache cannot be tiled (AR-only surface) and must be absent."""
+    if memory.cache is not None:
+        raise ValueError("cannot tile an ObservationMemory carrying a KV cache")
+    return dataclasses.replace(
+        memory,
+        streams={
+            name: MemoryStream(
+                key=stream.key.repeat(draws, 1, 1, 1),
+                value=stream.value.repeat(draws, 1, 1, 1),
+            )
+            for name, stream in memory.streams.items()
+        },
+        padding_mask=(
+            memory.padding_mask.repeat(draws, 1)
+            if memory.padding_mask is not None
+            else None
+        ),
+    )
+
+
+def tile_stats(batch: CollatedBatch[Any], draws: int) -> CollatedBatch[Any]:
+    """The FLOW-DECODE view of a batch at draws×B: only the fields
+    FlowDecoder.predict_chunk reads — ``state`` and the two stats — are
+    tiled (draws-major, matching :func:`tile_memory`). Every other
+    field keeps its B rows and must not be consumed at draws scale."""
+
+    def tile(stats: NormStats) -> NormStats:
+        return dataclasses.replace(
+            stats,
+            mean=stats.mean.repeat(draws, 1),
+            std=stats.std.repeat(draws, 1),
+            q01=stats.q01.repeat(draws, 1) if stats.q01 is not None else None,
+            q99=stats.q99.repeat(draws, 1) if stats.q99 is not None else None,
+        )
+
+    return dataclasses.replace(
+        batch,
+        state=batch.state.repeat(draws, 1),
+        action_stats=tile(batch.action_stats),
+        state_stats=tile(batch.state_stats),
+    )
 
 
 def collapse_draws(stacked: Tensor) -> tuple[list[Tensor], list[Tensor]]:
@@ -385,36 +440,41 @@ class BijouPolicy:
         decoder = self.model.decoder
         if isinstance(decoder, FlowDecoder) and self.sample_draws > 1:
             # Unconstrained-class noise-draw ensembling (charter §8
-            # item 1): encode the prefix ONCE, integrate one chunk per
-            # draw against the shared memory, average in raw degrees
-            # (unnormalization is affine, so the mean commutes with it).
+            # item 1): encode the prefix ONCE, then integrate ALL draws
+            # in ONE solver call at batch draws×B — draws are
+            # independent batch rows, and at rollout's B=1 a sequential
+            # loop leaves the GPU starved (N×num_steps tiny forwards).
+            # Draws-major tiling keeps collapse_draws/--dump-draws
+            # layouts unchanged. Average in raw degrees (unnormalization
+            # is affine, so the mean commutes with it).
             memory = self.model.encode(batch.encoder_inputs, with_grad=False)
             shape = (batch.actions.shape[1], batch.actions.shape[2])
-            stacked = torch.stack(
+            noise = torch.cat(
                 [
-                    decoder.predict_chunk(
-                        memory,
-                        batch,
-                        noise=torch.stack(
-                            [
-                                noise_for_item(
-                                    self.noise_key,
-                                    self.seed,
-                                    item,
-                                    index,
-                                    draw,
-                                    shape,
-                                )
-                                for item, index in zip(items, indices, strict=True)
-                            ],
-                        ).to(self.device),
-                        num_steps=self.sample_steps,
-                        method=self.method,
-                        target_time=self.target_time,
-                    ).actions
+                    torch.stack(
+                        [
+                            noise_for_item(
+                                self.noise_key,
+                                self.seed,
+                                item,
+                                index,
+                                draw,
+                                shape,
+                            )
+                            for item, index in zip(items, indices, strict=True)
+                        ],
+                    )
                     for draw in range(self.sample_draws)
                 ],
-            )
+            ).to(self.device)
+            stacked = decoder.predict_chunk(
+                tile_memory(memory, self.sample_draws),
+                tile_stats(batch, self.sample_draws),
+                noise=noise,
+                num_steps=self.sample_steps,
+                method=self.method,
+                target_time=self.target_time,
+            ).actions.reshape(self.sample_draws, len(items), *shape)
             means, self.last_draws = collapse_draws(stacked)
             return means, None
         # Flow integrates from per-item seeded noise (deterministic and

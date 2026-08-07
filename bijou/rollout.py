@@ -60,6 +60,7 @@ from .model import SamplingMethod
 from .rollout_async import AsyncExecutor, AsyncPlanner, sustainable
 from .rollout_safety import (
     envelope_violations,
+    home_trajectory,
     parse_camera_kind_overrides,
     require_clamp,
     resolve_camera_kinds,
@@ -133,6 +134,31 @@ def parse_args() -> argparse.Namespace:
         "(< chunk size leaves reaction headroom)",
     )
     parser.add_argument("--duration", type=float, default=60.0, help="seconds")
+    parser.add_argument(
+        "--return-home",
+        action="store_true",
+        help="on ctrl-c (or the duration ending), glide the arm back to "
+        "its start-of-rollout position over ~1.5 s before "
+        "disconnecting; a SECOND ctrl-c during the glide cancels it "
+        "(the arm holds where it is)",
+    )
+    parser.add_argument(
+        "--return-home-seconds",
+        type=float,
+        default=1.5,
+        help="duration of the --return-home glide",
+    )
+    parser.add_argument(
+        "--sample-draws",
+        type=int,
+        default=1,
+        help="flow checkpoints: integrate this many noise draws per "
+        "replan (prefix encoded once) and execute their raw-degree "
+        "mean — the measured offline lever (mean-of-10: 5.30→2.88 on "
+        "motion frames). Latency and expert VRAM scale with N; the "
+        "async warmup verdict re-measures sustainability. AR "
+        "checkpoints reject it",
+    )
     parser.add_argument(
         "--async-inference",
         action="store_true",
@@ -384,8 +410,10 @@ def main() -> int:
         # dataset identity (repo_id/episode/frame), which a live rig
         # observation does not have. Index keying with the replan counter
         # as the index IS the deployment semantics: fresh noise per
-        # replan, reproducible under a fixed --seed.
+        # replan (and per draw at --sample-draws > 1), reproducible
+        # under a fixed --seed.
         noise_key="index",
+        sample_draws=args.sample_draws,
         target_time=0.0 if args.target_time == "zero" else None,
         expert_dtype=getattr(torch, args.expert_dtype),
         generate=tuple(AuxField(f) for f in (args.generate or ())),
@@ -413,6 +441,8 @@ def main() -> int:
     decode_tag = f"{args.sample_method}-{args.sample_steps}"
     if args.target_time == "zero":
         decode_tag += "-s0"  # 1-NFE endpoint decode (SnapFlow shortcut)
+    if args.sample_draws > 1:
+        decode_tag += f"-mean{args.sample_draws}"
     print(
         f"policy: {policy.name} (chunk {chunk_size}, "
         f"{decode_tag}, {args.expert_dtype} expert)",
@@ -565,9 +595,51 @@ def main() -> int:
     except KeyboardInterrupt:
         print("\nstopping (keyboard interrupt)")
     finally:
+        if args.return_home:
+            return_home(
+                robot,
+                home=first_state,
+                seconds=args.return_home_seconds,
+                fps=args.control_fps,
+            )
         robot.disconnect()
         print("robot disconnected")
     return 0
+
+
+def return_home(
+    robot: SOFollower,
+    *,
+    home: list[float],
+    seconds: float,
+    fps: float,
+) -> None:
+    """Glide back to the start-of-rollout pose (cosine-eased linear
+    interpolation from the CURRENT pose, ~1-2 s). A ctrl-c during the
+    glide cancels it — the arm holds where it is; errors (a dead bus,
+    an unplugged arm) abort the glide but never mask the disconnect in
+    the caller's finally."""
+    try:
+        current = [float(robot.get_observation()[f"{m}.pos"]) for m in SO_MOTORS]
+        print(
+            f"returning home over {seconds:.1f}s (ctrl-c again to cancel)",
+            flush=True,
+        )
+        tick = 1.0 / fps
+        next_tick = time.perf_counter()
+        for row in home_trajectory(current, home, seconds=seconds, fps=fps):
+            robot.send_action(
+                {f"{motor}.pos": row[j] for j, motor in enumerate(SO_MOTORS)},
+            )
+            next_tick += tick
+            delay = next_tick - time.perf_counter()
+            if delay > 0:
+                time.sleep(delay)
+        print("home", flush=True)
+    except KeyboardInterrupt:
+        print("\nreturn-home CANCELLED (arm holds position)", flush=True)
+    except Exception as error:  # noqa: BLE001 — never mask the disconnect
+        print(f"return-home aborted: {type(error).__name__}: {error}", flush=True)
 
 
 def run_sync_loop(
