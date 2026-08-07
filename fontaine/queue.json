@@ -1,0 +1,96 @@
+{
+  "updated_utc": "2026-08-07T01:26:00+00:00",
+  "depth_reason": null,
+  "items": [
+    {
+      "id": "molmo2_ar40k",
+      "title": "Molmo2 AR 40k trunk run (box, 4xDDP) — probe watch @3500 (first re-descend check after 12.60@3000), @5000 save ~02:3xZ tick duty",
+      "class": "gpu-box",
+      "status": "live",
+      "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-molmo2-ar-40k.md",
+      "owner_hold": false,
+      "boundary": "40k endpoint ~2026-08-08 at ~2.2 s/step; K1 gate: probe below 12.0944 by step 10000"
+    },
+    {
+      "id": "draws10_t1",
+      "title": "AR-100k draws10 T=1 panel eval (local GPU)",
+      "class": "gpu-local",
+      "status": "live",
+      "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-ar-sampled-draws.md",
+      "owner_hold": false,
+      "boundary": "~14:5x-15:2xZ 2026-08-07 (cumulative-rate projection ~15.1 h total, re-projected each babysit; 24 GPU-h gate)"
+    },
+    {
+      "id": "draws10-frozen-reads",
+      "title": "draws10_t1 frozen reads (delta_AR vs 5.8026, fairness vs -1.258, family vs 5.365) + T-sensitivity rung after",
+      "class": "gpu-local",
+      "status": "blocked",
+      "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-ar-sampled-draws.md",
+      "owner_hold": false,
+      "boundary": "opens at draws10_t1 completion (~15:0xZ 2026-08-07); reads are frozen in the pre-reg"
+    },
+    {
+      "id": "p4-head-entry-skeleton",
+      "title": "#21 P4 — now.md head-entry skeleton (prompt diff only; the remaining half of #21.5)",
+      "class": "cpu",
+      "status": "queued",
+      "prereg": null,
+      "owner_hold": false,
+      "boundary": null
+    },
+    {
+      "id": "p5-deadline-stamp",
+      "title": "#21 P5 — session deadline awareness (driver stamps a deadline the prompts can read; minutes)",
+      "class": "cpu",
+      "status": "queued",
+      "prereg": null,
+      "owner_hold": false,
+      "boundary": null
+    },
+    {
+      "id": "p6-checkpy-tiers",
+      "title": "#21 P6 — check.py tiers / pytest gpu markers (<30 min)",
+      "class": "cpu",
+      "status": "queued",
+      "prereg": null,
+      "owner_hold": false,
+      "boundary": null
+    },
+    {
+      "id": "p7-tee-to-logs",
+      "title": "#21 P7 — tee session output to ~/logs + ctrl-checkout commit stamp (<30 min)",
+      "class": "cpu",
+      "status": "queued",
+      "prereg": null,
+      "owner_hold": false,
+      "boundary": null
+    },
+    {
+      "id": "idea6-selfsubgoal-prereg-draft",
+      "title": "#6 self-subgoal rung-(a) pre-reg draft (zero-training probe: self-generated subgoal -> [subgoal|...] -> panel vs 5.8026, validity table first); the probe itself wants a quiet GPU >= draws10 boundary",
+      "class": "cpu",
+      "status": "queued",
+      "prereg": null,
+      "owner_hold": false,
+      "boundary": null
+    },
+    {
+      "id": "molmo2-stage2-attachment-decision",
+      "title": "Molmo2 stage-2 attachment decision at endpoint — carries the pi0.5 deep-read's two named arms (all-layer KV reads; trunk CE under stop-grad vs hard freeze)",
+      "class": "cpu",
+      "status": "blocked",
+      "prereg": null,
+      "owner_hold": false,
+      "boundary": "opens at molmo2_ar40k endpoint (~2026-08-08)"
+    },
+    {
+      "id": "arm-a-img280",
+      "title": "arch-batch arm A img280 40k (box) — HELD: fresh owner go required before launch",
+      "class": "gpu-box",
+      "status": "blocked",
+      "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-arch-batch-1.md",
+      "owner_hold": true,
+      "boundary": "box GPUs occupied by molmo2_ar40k until ~2026-08-08 regardless of hold"
+    }
+  ]
+}

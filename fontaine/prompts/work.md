@@ -3,7 +3,8 @@ and finish it; leave the rest queued. Repo `~/flow-matching`, branch
 `fontaine`. The charter (`fontaine/charter.md`) governs.
 
 1. Boot per the charter's "Session boot": `git pull --ff-only`, read
-   `fontaine/blog/src/now.md`, poll Discord (`uv run python
+   `fontaine/blog/src/now.md`, `fontaine/queue.json` (canonical
+   queue), poll Discord (`uv run python
    fontaine/harness/discord.py read`; reply with `... post`), read
    `ideas.md`.
 2. Pick, in priority order: owner steering → post-processing a
@@ -31,7 +32,8 @@ and finish it; leave the rest queued. Repo `~/flow-matching`, branch
    the exchange is live — steering outranks the task in hand.
 4. End per the session-boot footer: state committed + pushed,
    `now.md` current (including the utilization footer and
-   explore/exploit hours), queue depth ≥ 2 or a stated reason,
+   explore/exploit hours), `queue.json` updated + `queue_cli.py
+   validate` green (depth ≥ 2 or a stated reason),
    Discord replied to, blog built + Space updated if content moved.
 5. Before ending (charter §3 no-idle-pauses, owner standing rule
    2026-08-05): if GPUs are still busy and CPU-side work items

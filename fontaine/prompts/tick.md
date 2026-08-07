@@ -46,8 +46,10 @@ prompt's contract.
    fontaine/harness/state/run_work_next`, and end the session — the
    driver chains straight into a work session with a 4-h budget.
 5. Queue check (charter §3 no-idle-pauses, owner standing rule
-   2026-08-05): if GPUs are busy and CPU-side work items are queued
-   in `now.md` (reviews, analysis, writing, implementation,
+   2026-08-05): run `uv run python fontaine/scripts/queue_cli.py
+   validate` (canonical queue: `fontaine/queue.json`; now.md carries
+   narrative only). If GPUs are busy and CPU-side items are queued
+   (reviews, analysis, writing, implementation,
    literature slice), touch the `run_work_next` marker (see 4) —
    GPU-busy windows are work-item windows, never idle waits. Same if
    the queue is below depth 2 (the chained work session refills it).

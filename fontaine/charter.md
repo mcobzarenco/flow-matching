@@ -227,6 +227,8 @@ The box exists to run experiments. Operationalized:
   next runs (launcher written, expectations numbered) sit in the queue
   (`fontaine/blog/src/now.md`). When a run finishes or dies, post-process and
   launch the next — target < 1 h of GPU gap, including the eval burst.
+  The queue's canonical form is `fontaine/queue.json` (validated by
+  `fontaine/scripts/queue_cli.py validate`); `now.md` narrates it.
 - **Overnight is for training.** Long runs launch in the evening;
   interactive work (evals, probes, data prep) fills daytime gaps.
 - **Never co-locate a GPU eval with a live training run** — an OOM
