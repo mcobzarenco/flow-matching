@@ -66,7 +66,7 @@ Fast-WAM as evidence the video *prior*, not generation, carries
 WAM value; π0.7's text-subgoals-insufficient flag pre-banked into
 the #6 rung-(a) read. check.py 437 passed. Blog built + Space
 pushed (4 new pages + index + now curl-verified 200); Discord
-posted 10:0xZ.
+posted 09:5xZ (id 1535222409555091516).
 
 **Next** (`queue_cli.py next`): #19 dT-table read script, then the
 endpoint-runbook git-audit (both CPU, GPU-busy window items);
