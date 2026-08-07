@@ -51,11 +51,6 @@ molmo2 endpoint ~08-08 morning → #19 box obligations → K smoke
 ladder → attach-screen window. **Every GPU launch goes through
 `run_detached.sh`.**
 
-
-
-
-*Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
-
 *Updated 2026-08-07 17:47–18:0xZ (real `date -u`) — work session
 (bounded, one item): **#1 golden-ticket noise screen pre-reg
 POSTED** ([pre-reg](posts/2026-08-07-prereg-golden-ticket-screen.md),
