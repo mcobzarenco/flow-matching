@@ -157,9 +157,9 @@
   },
   {
    "id": "lit-slice-attachment-frontier-pre-endpoint",
-   "title": "Standing lit slice (~20-30 min, owner allocation 2026-08-05) targeted at the #4 attachment/seam frontier BEFORE the molmo2 endpoint stage-2 attachment decision (~08-08, carries the pi0.5 deep-read's two named arms): sweep for new seam-recipe / knowledge-insulation / co-training evidence since the last radar pass (Anchor-Align and Wall-OSS-0.5 are the current poles; anything that re-ranks K-vs-F lands before the decision, not after) \u2014 PERMANENT RULE (owner 08-07 08:42Z): the slice lands its Papers-section page(s) on the blog in the SAME session; the ideas.md one-liner is the index hook only",
+   "title": "Standing lit slice (~20-30 min, owner allocation 2026-08-05) targeted at the #4 attachment/seam frontier BEFORE the molmo2 endpoint stage-2 attachment decision (~08-08, carries the pi0.5 deep-read's two named arms): sweep for new seam-recipe / knowledge-insulation / co-training evidence since the last radar pass (Anchor-Align and Wall-OSS-0.5 are the current poles; anything that re-ranks K-vs-F lands before the decision, not after) \u2014 PERMANENT RULE (owner 08-07 08:42Z): the slice lands its Papers-section page(s) on the blog in the SAME session; the ideas.md one-liner is the index hook only \u2014 EXECUTED 2026-08-07 ~11:2xZ: APT (2606.12366) deep-read, papers page landed SAME SESSION per the permanent rule (papers/apt-expert-pretraining.md): seam damage located in the expert's RANDOM INIT (language-imbalance shortcut); with a pretrained expert the best published recipe unfreezes everything with NO stop-grad (98/84/92/58 vs KI+pretrain 96/74/90/62) \u2014 K's seam corroborated for our random-init regime, screen unchanged pre-readout; NEW named escalation rung F-then-joint (warm-start joint from the F checkpoint's expert = free Stage-1 capital); F-tie-K gains a published interpretation. ideas.md #4 bullet + index/SUMMARY rows. Radar hooks banked unread: 2605.25802, 2601.03309",
    "class": "cpu",
-   "status": "queued",
+   "status": "done",
    "prereg": null,
    "owner_hold": false,
    "boundary": "CPU work at any GPU-busy window; highest value before the ~08-08 stage-2 attachment decision opens"
@@ -172,6 +172,15 @@
    "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-leaderboard-decode-microbench.md",
    "owner_hold": false,
    "boundary": "GPU run executes when draws10_t1 frees the local GPU (boundary ~12:3x-12:5xZ 2026-08-07), before the next local launch; consistency anchor: ar_greedy batched ~88.7 ms/frame"
+  },
+  {
+   "id": "lit-slice-vla-initialization",
+   "title": "Standing lit slice: the VLA-initialization thread APT opened (radar hooks banked 2026-08-07): 2605.25802 (Rethinking VLM Representation for VLA Initialization) + 2601.03309 (VLM4VLA) \u2014 does the init-not-seam diagnosis replicate outside APT's group, and does either name a cheap probe for our residual-tap surface? Feeds #4 escalation map (F-then-joint rung) + #17 trunk mandate. PERMANENT RULE: papers page(s) land the same session",
+   "class": "cpu",
+   "status": "queued",
+   "prereg": null,
+   "owner_hold": false,
+   "boundary": "CPU work at any GPU-busy window; most valuable before any F-then-joint escalation arm is drafted (post-screen, ~08-09+)"
   }
  ]
 }

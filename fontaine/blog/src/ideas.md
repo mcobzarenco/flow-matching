@@ -229,6 +229,26 @@ matched steps.
   not indict KI-in-posttraining, but it is the strongest published
   counter-evidence to stop-grad-as-free-lunch; AEGIS re-read:
   preservation-only, NO closed-loop success table at all.**
+- **Lit slice 2026-08-07 ~11:2xZ (pre-endpoint, the last look before
+  the stage-2 decision) — APT
+  ([2606.12366](https://arxiv.org/abs/2606.12366),
+  [page](../papers/apt-expert-pretraining.md)): the seam damage is an
+  INITIALIZATION problem.** Random-init experts learn the
+  language-imbalance shortcut and their noisy early gradients are
+  what wreck the trunk; pretrain the expert first (language-masked,
+  frozen trunk — structurally our F arm) and the best published
+  recipe then unfreezes EVERYTHING with no stop-grad at all
+  (pick-place grid: expert-pretrain+joint 98/84/92/58 vs KI+pretrain
+  96/74/90/62 vs π0.5's 84/70/86/50; "stop-gradient is not a
+  necessary condition"). Net for the screen: NOTHING changes
+  pre-readout (K's seam is corroborated for the random-init regime
+  we are actually in); the escalation map gains a named rung —
+  **F-then-joint**, warm-starting a joint run from the F
+  checkpoint's expert (free Stage-1 capital) — and an F≈K tie now
+  has a published interpretation (two working guards; the next
+  contrast is initialization, not the seam). Radar hooks banked
+  unread: 2605.25802 (VLA init representations), 2601.03309
+  (VLM4VLA).
 - **Attachment seam screen PRE-REGISTERED 2026-08-07 ~05:1xZ
   ([post](posts/2026-08-07-prereg-molmo2-attach-screen.md))**: two
   arms at matched 10k steps / eff-48 on the molmo2 40k endpoint

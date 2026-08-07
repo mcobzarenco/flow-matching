@@ -33,6 +33,7 @@ same session it is banked.
 | [Action tokenization](action-tokenization.md) | 2501.09747, 2512.04952 | #5 — the v3 refit spec + the learned-VQ falsifiers |
 | [Data & trunks](data-and-trunks.md) | 2602.09722, 2604.23001, 2606.31382, 2607.10172 | #9, #16, #17, #18.7 — two skim-banked claims corrected loudly |
 | [The attachment frontier](attachment-frontier.md) | 2603.10126, 2607.13429, NVIDIA WAM post | #4, #6, #17 — expert memory, the anchoring third recipe, π0.7 |
+| [APT — seam damage as initialization](apt-expert-pretraining.md) | 2606.12366 | #4 — why random-init experts wreck trunks; the F-then-joint escalation rung |
 
 ## Retroactive backlog
 
