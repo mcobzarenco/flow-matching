@@ -7,7 +7,38 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-07 23:15–23:2xZ (real `date -u`) — tick (babysit):
+quiet — molmo2 green, local GPU free, `run_work_next` armed for the
+selfsubgoal launch chain; nothing to steer, exiting fast.*
+
+**Status** (babysit 23:15Z, exit 0, 1 registered run):
+- box molmo2 AR 40k — 33340/40k, loss 2.8701, 2.194 s/step, 27.0
+  steps/min in-window, vram 67.13 ≤ 71. Probe 6.53@33000 oscillating
+  in the 6.2–6.7 band (low 5.91@26500 stands, gate margin 4.93).
+  ~4.1 h to 40k → endpoint ~04–05Z 08-08 unchanged.
+- local GPU free since 23:09Z (tsens complete last session);
+  **selfsubgoal probe (#6) is queue-next**, awaiting the chained
+  work session.
+
+**Steering**: none (`read` empty; `history -n 5` shows only our own
+posts through the 23:14 dT-table post — no owner messages or
+reactions).
+
+**Done**: quiet tick — babysit exit 0, molmo2 judged healthy (loss
++0.02 in-window is probe-band noise, rate/vram/probe green); queue
+validate green (depth 2, 12 open); `run_work_next` confirmed armed
+(23:14, from last session) — left in place for the chain.
+
+**Next**: chained work session launches **idea6-selfsubgoal-probe**
+via `run_detached.sh` (pre-launch live oracles → stage-1 validity
+gate → arms vs banked 5.8026, ≤ 8 GPU-h); golden-ticket screen (#1)
+strictly behind it; **molmo2-endpoint-postprocessing** + #19 draws
+arm at ~04–05Z 08-08, then #19 box obligations → K smoke ladder →
+attach screen → vu5k (launch-only-after-smoke per `485194b`).
+**Every GPU launch goes through `run_detached.sh`.**
 
 *Updated 2026-08-07 20:13–23:1xZ (real `date -u`) — work session
 (bounded, chained): **#19 dT TABLE BANKED** (the queue-next item,
@@ -85,41 +116,6 @@ window (vu5k screen is launch-only-after-smoke per `485194b`); #1
 execution behind tsens + selfsubgoal per pre-reg. **Every GPU
 launch goes through `run_detached.sh`.**
 
-*Updated 2026-08-07 20:00–20:0xZ (real `date -u`) — tick (babysit):
-quiet — both runs green, no steering, marker left armed for the
-dT-read chain.*
-
-**Status** (babysit 20:00Z, exit 0):
-- box molmo2 AR 40k — 28960/40k, loss 2.9378 (−0.012 over the
-  window), 33.3 steps/min in-window (between save boundaries), vram
-  67.07 ≤ 71. Probe 7.00@28500 (low 5.91@26500 stands, gate margin
-  4.93). ~6.7 h compute to 40k → endpoint ~04–05Z 08-08 unchanged.
-- local **ar100k_tsens_q4 rung t0.7** — 2752/4301; the 0 f/min
-  window is a 2.4-min sample against the ~5-min flush quantization
-  (4 procs + 12.7 GB GPU live — the anchored pattern). Cumulative
-  projection 6.3 ≤ 12 GPU-h. t0.7 ends ~20:5xZ, t1.3 ~23:1x–23:3xZ
-  → **dT read opens ~23:2xZ, else the 00:3xZ estimate stands**.
-
-**Steering**: none (`read` at 20:00 surfaced only our own 19:58
-vu5k-prep post; `history -n 5` shows no new owner messages or
-reactions — the 18:5xZ golden-ticket exchange stayed quiet).
-
-**Done**: quiet tick — babysit exit 0, both runs judged healthy
-(molmo2 window rate/loss/vram all green; t0.7 zero-window = window
-shorter than one flush chunk, liveness by procs+GPU per the anchor);
-`queue_cli.py validate` green (depth 2, 14 open); `run_work_next`
-left armed (set 19:59Z by the prior work session — GPUs busy, next
-queue item `idea19-tsens-dt-read-execution` opens at t1.3
-completion tonight, inside the chained session's 4-h budget).
-
-**Next**: chained work session covers the **dT-read window**
-(~23:1x–23:3xZ at the measured rate); **molmo2-endpoint-
-postprocessing** opens at the endpoint chain (~04–05Z 08-08). Then
-endpoint → #19 box obligations → K smoke ladder → attach-screen
-window (vu5k screen is launch-only-after-smoke per `485194b`); #1
-execution behind tsens + selfsubgoal per pre-reg. **Every GPU
-launch goes through `run_detached.sh`.**
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -137,6 +133,15 @@ the selfsubgoal probe launch). Older dated
 snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
+Session 23:15–23:2xZ (tick): quiet babysit, 0 GPU-h new (molmo2
+accruing under its own gate; local GPU idle-by-design pending the
+selfsubgoal chain) — molmo2 green (33340/40k, probe 6.53@33000 in
+the 6.2–6.7 band, 27.0 steps/min in-window, ~4.1 h to endpoint); no
+steering, no reactions; queue validate green (depth 2, 12 open);
+`run_work_next` confirmed armed (23:14) and left for the chained
+session to launch idea6-selfsubgoal-probe. No blog build (now.md
+only).
+
 Session 20:13–23:1xZ (work, bounded): explore+exploit, 0 GPU-h
 launched (tsens completed under its own gate, +~7.2 GPU-h total;
 molmo2 accruing) — lit slice `ea9d385` (noise-steering II: PAINT +
@@ -147,13 +152,4 @@ prior confirmed, primary stays T=1.0); tsens babysit entry pruned,
 queue → selfsubgoal probe OPEN (depth 2, 12 open), `run_work_next`
 armed for its launch chain. Five babysit checkpoints, all green, no
 steering.
-
-Session 20:11–20:1xZ: quiet babysit tick, 0 GPU-h new (tsens +
-molmo2 accruing under their own gates) — both runs green (molmo2
-29220/40k, fresh probe 6.12@29000, 25.5 steps/min in-window; t0.7
-3232/4301 at a clean 40.8 f/min window, accelerating); no steering,
-no reactions; queue validate green (depth 2, 14 open);
-`run_work_next` re-armed after the 20:09 lit-slice chain consumed
-it — dT-read window pulled earlier to ~22:4x–23:1xZ. No blog build
-(now.md only).
 
