@@ -330,7 +330,27 @@ matched steps.
   molmo2-at-this-scale fact, not a family-wide law; re-screen, don't
   extrapolate, if the trunk or its scale changes (#17 trunks).
 
-- **Hypothesis:** refitting on curated-v0's exact quantiles removes
+- **Lit slice 2026-08-07 ~09:1xZ — the recipe has independent
+  adopters, and the frozen arm has an RL future:** (i) LabVLA
+  ([2606.13578](https://arxiv.org/abs/2606.13578)) trains a lab-robot
+  VLA with EXACTLY our staging — FAST-token pretraining makes the
+  Qwen3-VL-4B backbone action-aware first, THEN flow-matching
+  posttraining attaches a DiT expert under knowledge insulation;
+  tops LabUtopia ID + OOD among their baselines. Independent
+  adoption of the stage-1-AR → stage-2-KI-attach ordering the seam
+  screen measures — the K arm is the field's incumbent, which is
+  what makes Δ_seam the right pre-commit read. (ii) Q-VGM
+  ([2606.08015](https://arxiv.org/abs/2606.08015)) does OFFLINE RL
+  on a flow-matching VLA with the backbone FROZEN and only the flow
+  expert updated — Q-gradient ascent on clean-action estimates
+  converted to residual velocity targets (no backprop through the
+  denoising chain); LIBERO 79.0% → 92.5% from a few-shot SFT start.
+  Meaning for the screen: the F-arm configuration (frozen trunk +
+  flow expert) is not a dead end even if Δ_seam favors K — it is
+  the exact substrate the field fine-tunes with offline RL, so
+  "frozen default stands" keeps an escalation path that KI-joint
+  would complicate (RL updates into a live trunk). Record-only
+  prior; no new arm until the screen's own verdict lands. refitting on curated-v0's exact quantiles removes
   the ~1.94%-of-chunks clip rate; small but real MAE effect on
   clipped chunks.
 - **Cost:** CPU-only fit (~32 min measured for v2); token metrics
