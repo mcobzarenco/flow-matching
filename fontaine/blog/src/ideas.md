@@ -1501,6 +1501,25 @@ between these two priors on our own panel before any escalation.
   sibling loader (the frozen-read script hard-pins T = 1.0 by
   design), no decision branches.
 
+- **Energy-score read script LANDED 2026-08-07 ~09:0xZ**
+  (`energy_score_results.py`): the strictly-proper-scoring-rule
+  AR-vs-flow comparison from banked data — endpoint draws ES vs the
+  paired greedy arm as the degenerate N=1 baseline (interaction term
+  zero by definition; ES gain + paired per-frame CI), plus the
+  flow-side comparison via index-join to the banked drawsprobe_s7
+  stack (2,458 rows × 10 draws): both families get the SAME
+  instrument on identical frames — N-draw ES, matched truth terms,
+  paired per-frame ES delta. Audit honored: mean/best/dispersion stay
+  in `selection_ceiling_results.py`; this file is ES only
+  (`draws_fairness.energy_score` reused verbatim). Oracle PASS
+  pre-data: degenerate draws=1 → interaction exactly 0 + ES == direct
+  RMS-L2 (< 1e-12); the banked read-4 numbers
+  (5.930763/9.882476/3.951713/8.769585) reproduced EXACTLY through
+  this file's own join + pooling; N=2 hand fixture exact; residual
+  ×3 homogeneity; 5 abort guards. Defaults = the endpoint launcher's
+  exact stems; the tsens q4 dumps run via explicit paths
+  (extending-policy guard is T-agnostic).
+
 - **Lit slice 2026-08-07 ~08:3xZ — a SIXTH selection flavor, the
   cheapest trained one:** What Frozen VLAs Already Know About Success
   ([2605.28527](https://arxiv.org/abs/2605.28527)) — LINEAR probes on

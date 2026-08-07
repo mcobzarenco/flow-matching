@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-07T08:18:26+00:00",
+ "updated_utc": "2026-08-07T08:39:28+00:00",
  "depth_reason": null,
  "items": [
   {
@@ -121,9 +121,9 @@
   },
   {
    "id": "idea19-endpoint-fairness-es-read",
-   "title": "#19 energy-score + fairness reads on the molmo2 endpoint draws dump (CPU script now, exploratory record-only \u2014 the pre-declared draws_fairness reads were registered for the FLOW probe; applying them to the AR endpoint dump is a diagnostic, not a registered claim): wire draws_fairness.py's read 1/2/4 machinery (mean-of-draws, best-of-N, energy score with the AR-as-degenerate-N=1 baseline) to the endpoint _draws.npz stems \u2014 the strictly-proper-scoring-rule comparison AR-vs-flow comes free from banked data; AUDIT FIRST: selection_ceiling_results.py already covers mean/best/dispersion \u2014 extend ONLY the energy-score delta + flow-side comparison; oracle: degenerate draws=1 -> interaction term exactly 0, ES == direct RMS-L2 (the draws_fairness --validate pattern on the AR-100k npz)",
+   "title": "#19 energy-score + fairness reads on the molmo2 endpoint draws dump (CPU script now, exploratory record-only \u2014 the pre-declared draws_fairness reads were registered for the FLOW probe; applying them to the AR endpoint dump is a diagnostic, not a registered claim): wire draws_fairness.py's read 1/2/4 machinery (mean-of-draws, best-of-N, energy score with the AR-as-degenerate-N=1 baseline) to the endpoint _draws.npz stems \u2014 the strictly-proper-scoring-rule comparison AR-vs-flow comes free from banked data; AUDIT FIRST: selection_ceiling_results.py already covers mean/best/dispersion \u2014 extend ONLY the energy-score delta + flow-side comparison; oracle: degenerate draws=1 -> interaction term exactly 0, ES == direct RMS-L2 (the draws_fairness --validate pattern on the AR-100k npz) \u2014 LANDED 08-07 ~09:0xZ (energy_score_results.py: ES delta vs the degenerate N=1 greedy baseline + paired per-frame CI, flow-side comparison via index-join to the banked drawsprobe_s7 stack (both families same instrument on identical frames); audit honored \u2014 mean/best/dispersion left to selection_ceiling_results.py, ES only; oracle PASS pre-data: degenerate draws=1 -> interaction exactly 0 + ES == direct RMS-L2, banked read-4 numbers (5.930763/9.882476/3.951713/8.769585) reproduced exactly through this file's join+pooling, N=2 hand fixture exact, 5 abort guards; defaults = the endpoint launcher's exact stems, tsens q4 dumps via explicit paths)",
    "class": "cpu",
-   "status": "queued",
+   "status": "done",
    "prereg": null,
    "owner_hold": false,
    "boundary": "script is CPU work at any GPU-busy window; the read runs after the molmo2 endpoint draws arm lands its npz (~2026-08-08)"
@@ -136,6 +136,15 @@
    "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-ar-sampled-draws.md",
    "owner_hold": false,
    "boundary": "script is CPU work at any GPU-busy window; the read runs only after the tsens rungs land (which themselves gate on the primary landing inside 24 GPU-h, boundary ~13Z 2026-08-07)"
+  },
+  {
+   "id": "endpoint-runbook-git-audit",
+   "title": "Pre-endpoint runbook git-audit (CPU, integrity class \u2014 the audit-queue-items-against-git standing practice applied BEFORE the highest-stakes window opens): for every blocked endpoint-chain item (idea19-molmo2-draws-arm, selection-ceiling + energy-score reads, tsens chain, idea4-attach-k-smoke-ladder, idea4-attach-screen-execution), verify at HEAD: referenced scripts exist; launcher output stems == read-script defaults == babysit.toml prepared entries (the stem-vs-reader disagreement class the %g tsens fix caught); prepared pgrep patterns match the launchers' actual process names; every flag the launchers pass still exists in the bijou CLIs (--help grep). Output: short audit note (now.md + Discord); any mismatch becomes its own fix item BEFORE the endpoint opens",
+   "class": "cpu",
+   "status": "queued",
+   "prereg": null,
+   "owner_hold": false,
+   "boundary": "run before the molmo2_ar40k endpoint (~2026-08-08) opens the box chain; CPU work at any GPU-busy window"
   }
  ]
 }
