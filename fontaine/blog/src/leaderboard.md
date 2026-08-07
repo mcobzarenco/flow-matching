@@ -95,6 +95,17 @@ npz + report in `reports/`; the `draws10_t1_results.py` and
 the raw npz on every run). Sealed-panel anchors land with the
 integrity kit.
 
+**Critical-frame robustness (2026-08-07,
+[pre-reg + results](posts/2026-08-07-prereg-critical-frame-repooling.md)):
+every published ranking holds when the panel is re-pooled over
+task-critical frames only** (judge-labeled subgoal boundaries,
+holding transitions, events — the CI-MSE 2606.29898 concern, tested
+with our own labels at zero GPU cost). All 10 pairwise gaps keep
+their sign with CI95 excluding 0, and the model-vs-state-copy
+separation *widens* on critical frames — the board's ordering is not
+an easy-frame artifact. Offline-vs-rollout remains open until a rig
+benchmark exists (#16).
+
 ## Anchors (mainline-measured, inherited 2026-08-05)
 
 | checkpoint | panel MAE | first_mae | notes |

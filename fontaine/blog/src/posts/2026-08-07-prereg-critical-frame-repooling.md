@@ -109,3 +109,54 @@ the critical-frame pool as a candidate scoring rule. Escalation
 beyond that (e.g. re-weighting the headline metric) needs its own
 pre-reg. Cost: CPU minutes; oracle (`--selftest`) green before the
 real read.
+
+---
+
+## Results (2026-08-07 ~17:5xZ, same session — read run after the pre-reg committed)
+
+**Every published ranking holds on the critical pool.** All 10
+pairwise gaps keep their published sign with CI95 excluding 0; no
+pair is even ambiguous. Validity gates all green: coverage **99.9%**
+of the 17,204 core frames (12 uncovered), critical pool **11,204**
+frames, every overall re-pool reproduced its published number to
+4 dp, recombination exact. Data:
+`reports/analysis__critical_frame_repooling.json`.
+
+| row | published | critical | complement |
+|---|---|---|---|
+| student 1-NFE single | 5.6036 | 6.0327 | 4.6766 |
+| AR-100k draws-10 T=1 | 5.6515 | 6.1149 | 4.6530 |
+| AR-100k greedy | 5.8026 | 6.2835 | 4.7608 |
+| teacher Heun-30 stable-key | 6.5997 | 7.1052 | 5.5069 |
+| state-copy | 11.7847 | 12.8679 | 9.4680 |
+| A-s0 / s1 / s2 (descriptive) | 7.7966 / 7.8052 / 7.7355 | 8.4725 / 8.4571 / 8.3249 | 6.35 / 6.40 / 6.47 |
+| statedrop80 (descriptive) | 10.5024 | 11.3435 | 8.6952 |
+
+Adjacent-pair paired deltas on the critical pool (CI95): student →
+draws10 **+0.079** [0.025, 0.133]; draws10 → greedy **+0.165**
+[0.118, 0.214]; greedy → teacher **+0.810** [0.728, 0.893]; teacher
+→ state-copy **+5.683** [5.515, 5.852]. Seed-trio critical null
+scale (max pairwise |Δ|) 0.1476 — about 2× its overall-pool 0.0697,
+and every cross-family gap clears it by an order of magnitude except
+student-vs-draws10, which is CI-clean but inside the trio scale
+(that pair was already called a statistical tie's neighbor on the
+board; nothing new).
+
+**The interesting shape: the signal *strengthens* on critical
+frames.** Critical frames are uniformly harder (+0.4–0.5 MAE for
+models, +1.1 for state-copy), and every model's edge over state-copy
+*widens* there (student +6.18 published → +6.74 critical) — the
+leaderboard's separation is not carried by easy cruise frames. The
+draws-10 gain over greedy also survives (+0.165 critical vs +0.151
+overall). This is the opposite of the CI-MSE failure mode (easy-frame
+dilution hiding critical-frame differences): our pooled MAE and a
+critical-frame MAE tell the same story on every published pair.
+
+**Honest caveats.** The rule is broad — a 50-frame window over
+subgoal-boundary-dense episodes marks 65% of core frames critical,
+so this is a robustness check against frame-weighting, not a
+high-contrast "grasp-moments-only" metric; and CI-MSE's ultimate
+referee is rollout success, which no offline re-pool can supply —
+the proxy-vs-rig question stays open until #16's rig benchmark
+exists. Verdict per the pre-reg: **robustness citation banked**;
+leaderboard note lands with this post; no escalation.

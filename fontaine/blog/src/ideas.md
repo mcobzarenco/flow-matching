@@ -45,7 +45,9 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   attribution. New 2026-08-07: the proxy itself got a lit slice
   ([offline-validation](papers/offline-validation.md) — raw MSE
   measured at ρ −0.61 vs rollout success, sign flips exist);
-  critical-frame re-pooling rung banked (CPU, existing npz dumps).
+  critical-frame re-pooling rung **executed same-day — every
+  published ranking holds on the critical pool, separation widens**
+  ([results](posts/2026-08-07-prereg-critical-frame-repooling.md)).
 - **`lit-arms` [#15 Literature-sourced arms](ideas/15-literature-arms.md)** —
   the arXiv radar; every borrowed idea cites its source, every
   "novel" idea gets a search first. Feeds the Papers section.

@@ -1,5 +1,5 @@
 {
-  "updated_utc": "2026-08-07T17:05:00+00:00",
+  "updated_utc": "2026-08-07T18:05:00+00:00",
   "depth_reason": null,
   "items": [
     {
@@ -274,12 +274,21 @@
     },
     {
       "id": "idea16-critical-frame-repooling",
-      "title": "#16 critical-frame re-pooling screen (CPU, CI-MSE transfer from the offline-validation lit slice 08-07): freeze a frame-selection rule from the aux labels (event/holding transitions, subgoal boundaries) in a small pre-reg BEFORE any number is read, then re-pool the existing leaderboard npz prediction dumps over critical frames only and check whether any published ranking reorders (raw MSE measured at rho -0.61 vs rollout success, sign flips exist in our metric class \u2014 2606.29898); output = pre-reg note + one table + ledger/blog note; rankings hold -> robustness citation, reorder anywhere -> proxy early-warning to owner",
+      "title": "#16 critical-frame re-pooling screen (CPU, CI-MSE transfer from the offline-validation lit slice 08-07) \u2014 EXECUTED 08-07 ~17:5xZ work session (pre-reg 2026-08-07-prereg-critical-frame-repooling.md posted+committed 4773ba9 BEFORE the read; frozen rule: chunk window [f0+1,f0+50] hits subgoal boundary | holding bracket | event frame, blessed-judgment selection = bijou.data training rule): EVERY PUBLISHED RANKING HOLDS on the critical pool \u2014 all 10 pairwise gaps keep sign w/ CI95 excluding 0, coverage 99.9% (11204 critical core frames), every overall re-pool reproduced published to 4dp, recombination exact; separation vs state-copy WIDENS on critical frames (opposite of CI-MSE's failure mode); seed-trio critical null scale 0.1476. Robustness citation on leaderboard + results section in the pre-reg post + analysis json; instrument critical_frame_repooling.py (--selftest oracle) reusable at the molmo2 endpoint",
+      "class": "cpu",
+      "status": "done",
+      "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-critical-frame-repooling.md",
+      "owner_hold": false,
+      "boundary": "DONE 08-07; rollout-vs-offline stays open until the #16 rig benchmark exists"
+    },
+    {
+      "id": "idea17-molmo2-vision-unfreeze-prereg-draft",
+      "title": "#17 molmo2 vision-unfreeze rung \u2014 pre-reg DRAFT (CPU; owner question 08-07 17:04Z + the vla-initialization page's convergent prior: VLM4VLA frozen-encoder collapse incl. PaliGemma/SigLIP 3.51->0.50, Rethinking-scaling frozen-only negative transfer, SCALE encoder-leverage; no banked case of vision-unfreeze hurting action metrics \u2014 harm channel is gradient quality/forgetting, so the draft should carry a low-LR leash (--backbone-vision-lr << text 2e-5) and note the vram bind (67.07/71 at B12, likely batch downshift or activation-ckpt on the tower)): draft the arm as a matched-steps contrast vs the 40k baseline endpoint, panel + probe reads frozen before launch; the 08-06 molmo2 pre-reg already names vision-unfreeze as a follow-on rung. DRAFT ONLY \u2014 execution needs its own posted pre-reg, box window after the attach-screen chain, and owner go",
       "class": "cpu",
       "status": "queued",
       "prereg": null,
       "owner_hold": false,
-      "boundary": "CPU work at any GPU-busy window; uses only artifacts already on disk (reports/*.npz)"
+      "boundary": "draft is CPU work at any GPU-busy window; execution window opens after the attach-screen chain (~08-09+), owner-steered"
     },
     {
       "id": "idea1-golden-ticket-prereg-draft",

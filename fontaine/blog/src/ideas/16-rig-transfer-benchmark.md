@@ -98,14 +98,17 @@
   checkpoints (π0.5, X-VLA, GR00T N1.7): Spearman −0.61 — and in
   their data-scale family raw MSE ranked checkpoints *backwards*
   (+0.90). Their repair (score only task-critical frames +
-  rollout-like alignment) reaches −0.87. **New rung banked —
-  critical-frame re-pooling, CPU-only:** our aux labels
-  (event/holding transitions, subgoal boundaries) mark the critical
-  frames CI-MSE pays a VLM to find, and every leaderboard eval
-  already dumps per-frame npz — re-pool existing dumps over
-  critical frames and check whether any published ranking reorders.
-  Cheapest possible proxy early-warning; needs a small pre-reg
-  (frame-selection rule frozen before any number is read). Also
+  rollout-like alignment) reaches −0.87. **Rung EXECUTED 2026-08-07
+  same-day
+  ([pre-reg + results](../posts/2026-08-07-prereg-critical-frame-repooling.md)):
+  every published ranking HOLDS on the critical-frame pool** — all
+  10 pairwise gaps keep their sign with CI95 excluding 0, coverage
+  99.9%, and the model-vs-state-copy separation *widens* on critical
+  frames (the opposite of CI-MSE's easy-frame-dilution failure
+  mode). Robustness citation banked on the leaderboard; instrument
+  `critical_frame_repooling.py` reusable for future rows (molmo2
+  endpoint). Rollout-vs-offline stays open until the rig benchmark
+  exists. Also
   banked: MMRV (SIMPLER 2405.05941) as the scoring rule for any
   future proxy-vs-rig audit, weighted by real margins rather than
   Pearson; AutoEval's (2503.24278) caveat that proxy fidelity is
