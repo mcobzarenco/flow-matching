@@ -21,6 +21,24 @@
    "boundary": "~13:0x-13:2xZ 2026-08-07 (cumulative 32.2 f/min at 03:07Z -> ~13.3 h total, re-projected each babysit; 24 GPU-h gate)"
   },
   {
+   "id": "blog-now-archive-sort",
+   "title": "OWNER STEERING 08-07 13:02Z: sort the Now-archive per-date pages most-recent-first (SUMMARY sidebar + archive/index.md) and fix archive_now.py so every roll maintains the order automatically",
+   "class": "cpu",
+   "status": "queued",
+   "owner_hold": false,
+   "boundary": "execute in the 08-07 13:04Z work session's bench-wait window",
+   "prereg": null
+  },
+  {
+   "id": "blog-ideas-refactor",
+   "title": "OWNER STEERING 08-07 13:02Z: refactor Ideas \u2014 one page per idea (content copied as-is first), then an Ideas index/home page splitting hot (actively pursued) vs on ice (parked/older); index and pages updated regularly as the programme moves; after the split, audit each idea page for up-to-date details",
+   "class": "cpu",
+   "status": "queued",
+   "owner_hold": false,
+   "boundary": "mechanical split + index in the 08-07 13:04Z session; per-page details audit may roll to a follow-up item if the merge chain preempts",
+   "prereg": null
+  },
+  {
    "id": "draws10-frozen-reads",
    "title": "draws10_t1 frozen reads (delta_AR vs 5.8026, fairness vs -1.258, family vs 5.365) + T-sensitivity rung after \u2014 READ SCRIPT LANDED 2026-08-07 ~07:5xZ (draws10_t1_results.py, one command, oracle-gated; defaults = the local launcher's exact stems)",
    "class": "gpu-local",

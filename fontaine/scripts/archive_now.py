@@ -101,29 +101,44 @@ def append_to_page(date: str, new_entries: list[str], *, dry: bool) -> Path:
 
 
 def update_summary(pages: list[Path], *, dry: bool) -> None:
+    """Rebuild the Now-archive block: every page on disk, newest first.
+
+    Rebuilt (not incrementally inserted) each run so the sidebar order
+    is always most-recent-first regardless of batch/run history.
+    """
     text = SUMMARY.read_text()
-    lines = [
-        f"  - [{p.stem.removeprefix('now-')}](archive/{p.name})"
-        for p in sorted(pages, reverse=True)
-    ]
     if "- [Now archive]" not in text:
         text = text.replace(
             "- [Now](now.md)",
             "- [Now](now.md)\n- [Now archive](archive/index.md)",
         )
-        if not dry:
-            (ARCHIVE_DIR / "index.md").write_text(
-                "# Now archive\n\nDated pages of aged now.md entries; "
-                "see the sidebar.\n",
-            )
-    for ln in lines:
-        if ln not in text:
-            text = text.replace(
-                "- [Now archive](archive/index.md)",
-                "- [Now archive](archive/index.md)\n" + ln,
-            )
+    all_pages = sorted(
+        {*pages, *ARCHIVE_DIR.glob("now-*.md")},
+        key=lambda p: p.name,
+        reverse=True,
+    )
+    lines = [
+        f"  - [{p.stem.removeprefix('now-')}](archive/{p.name})" for p in all_pages
+    ]
+    text = "\n".join(
+        ln
+        for ln in text.splitlines()
+        if not re.match(r"^  - \[\d{4}-\d{2}-\d{2}\]\(archive/now-", ln)
+    )
+    text = (
+        text.replace(
+            "- [Now archive](archive/index.md)",
+            "\n".join(["- [Now archive](archive/index.md)", *lines]),
+        )
+        + "\n"
+    )
+    index = (
+        "# Now archive\n\nDated pages of aged now.md entries, most recent first:\n\n"
+        + "".join(f"- [{p.stem.removeprefix('now-')}]({p.name})\n" for p in all_pages)
+    )
     if not dry:
         SUMMARY.write_text(text)
+        (ARCHIVE_DIR / "index.md").write_text(index)
 
 
 def main() -> int:
