@@ -1243,7 +1243,7 @@ queue, in leverage order (details + file:line in the post):
    `therarelab/so100_pick_place_2` fails loud in production. Unblocks
    derived-corpus training (ideas #9, #13 repair arm).
 
-## 20. Activation checkpointing for live-trunk training — `queued` (measured need 2026-08-06)
+## 20. Activation checkpointing for live-trunk training — `confirmed`/landed (wrap + keystone oracles 2026-08-07; GPU ladder = the K smoke item)
 
 The Molmo2 AR smoke measured the wall: fp32 masters + DDP grad
 buckets + Adam on a 3.7B trainable set ≈ 63 GiB static on an 80 GiB
@@ -1256,6 +1256,25 @@ trade at this scale. Scope: the Molmo2 transformer first (uniform
 blocks make it trivial), Gemma later if a live-trunk E4B+ run recurs.
 Gate: keystone oracle (checkpointed ≡ plain forward/backward, loss
 bit-close) + a measured chunk-size ladder re-run.
+
+**LANDED 2026-08-07 ~06:4xZ** — `--activation-checkpointing` in
+`bijou.train`: non-reentrant `torch.utils.checkpoint` per decoder
+block in `Molmo2Transformer`, with a single-layer KV shim so the live
+cache is never mutated inside the checkpointed region (backward
+recompute would double-append the layer's K/V and break the replay
+against the [B,1,S,T] mask); the real append happens once, outside,
+with the escaped graph-connected K/V — suffix CE gradients still
+reach the prefix through the cache. Engages only under grad: no-grad
+encodes, eval and generation take the plain path untouched (the F arm
+is bitwise unaffected even with the flag on). 4 keystone oracles
+(`tests/test_molmo2_activation_checkpointing.py`): the joint K-step
+and a transformer-level prefill+cached-suffix pass are BITWISE the
+plain step (loss + every param grad, cache contents included), with a
+call spy pinning that checkpointing actually engaged (2×blocks calls
+— no vacuous equality); no-grad and F-arm paths never enter
+checkpoint. The K launcher carries the flag. Still open: the measured
+chunk-size ladder re-run on the box = the queued K smoke-ladder item
+(vram_alloc_peak at B12 eff-48 checkpointed vs the 71 GiB gate).
 
 ## 21. Agentic-loop & infrastructure deep review — `confirmed`/CLOSED (all 7 signed items landed 2026-08-07)
 

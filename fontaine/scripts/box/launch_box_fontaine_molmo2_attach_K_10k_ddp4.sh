@@ -97,6 +97,7 @@ launch_train() { # $1 = steps; backgrounds torchrun, sets RUN + TRAIN_PID
         --grad-clip 100 \
         --steps "$1" --batch-size "$BATCH" \
         --zero1 --backward-chunks "$BACKWARD_CHUNKS" --chunk-grad-allreduce \
+        --activation-checkpointing \
         --num-workers 20 --prefetch-factor 4 \
         --eval-samples 256 --eval-every 500 --save-every 2500 --log-every 20 \
         --seed 0 --eval-seed 0 \

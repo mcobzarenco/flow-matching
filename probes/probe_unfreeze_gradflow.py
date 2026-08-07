@@ -118,6 +118,7 @@ def make_args(
         backward_chunks=1,
         zero1=False,
         chunk_grad_allreduce=False,
+        activation_checkpointing=False,
         steps=2,
         decoder_lr=1e-4,
         backbone_text_lr=backbone_text_lr,

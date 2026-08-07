@@ -27,6 +27,7 @@ from collections.abc import Sequence
 from typing import override
 
 import torch
+import torch.utils.checkpoint
 from torch import Tensor, nn
 from torch.nn import functional as F
 
@@ -178,6 +179,39 @@ def build_causal_mask(
     )
 
 
+class _CheckpointLayerKV:
+    """Single-layer stand-in for ``Molmo2KVCache`` inside a checkpointed
+    block (``Molmo2Transformer._checkpointed_block``): the live cache
+    must not be mutated inside the region — backward recompute replays
+    the block, and a replayed ``cache.update`` would append the layer's
+    K/V a second time. The block's ``update`` lands here instead: the
+    NEW (post-RoPE) K/V are recorded for the outer append, and the full
+    states are returned exactly as the real ``update`` would return
+    them (same cat, same operand order — the checkpointed forward must
+    stay bitwise the plain one). Recompute overwrites ``new_kv``;
+    nothing reads it after the outer append, so that is harmless."""
+
+    def __init__(self, past: tuple[Tensor, Tensor] | None) -> None:
+        self.past = past
+        self.new_kv: tuple[Tensor, Tensor] | None = None
+
+    def update(
+        self,
+        layer_idx: int,
+        keys: Tensor,
+        values: Tensor,
+    ) -> tuple[Tensor, Tensor]:
+        del layer_idx
+        self.new_kv = (keys, values)
+        if self.past is None:
+            return keys, values
+        past_keys, past_values = self.past
+        return (
+            torch.cat([past_keys, keys], dim=-2),
+            torch.cat([past_values, values], dim=-2),
+        )
+
+
 class TextAttention(nn.Module):
     """Grouped-query attention with fused QKV and qwen3 qk-norm."""
 
@@ -235,7 +269,7 @@ class TextAttention(nn.Module):
         hidden_states: Tensor,
         position_embeddings: tuple[Tensor, Tensor],
         attention_mask: MaskSpec,
-        cache: Molmo2KVCache | None = None,
+        cache: Molmo2KVCache | _CheckpointLayerKV | None = None,
     ) -> Tensor:
         """Grouped-query self-attention; returns [B, S, hidden].
 
@@ -358,7 +392,7 @@ class DecoderLayer(nn.Module):
         hidden_states: Tensor,
         position_embeddings: tuple[Tensor, Tensor],
         attention_mask: MaskSpec,
-        cache: Molmo2KVCache | None = None,
+        cache: Molmo2KVCache | _CheckpointLayerKV | None = None,
     ) -> Tensor:
         """self-attn -> MLP with pre-norms; returns [B, S, hidden]."""
         hidden_states = hidden_states + self.self_attn(
@@ -408,6 +442,14 @@ class Molmo2Transformer(nn.Module):
             dtype=dtype,
         )
         self.rotary_emb = Molmo2RotaryEmbedding(config, device=device)
+        # Activation checkpointing over the decoder blocks (#20):
+        # recompute each block in backward instead of retaining its
+        # interior activations. Runtime toggle (bijou.train
+        # --activation-checkpointing), not config — memory only, the
+        # gradient is oracle-pinned bitwise to the plain step. Engaged
+        # only where gradients are enabled, so no-grad encodes and
+        # generation take the plain path untouched.
+        self.gradient_checkpointing = False
 
     @override
     def forward(
@@ -479,13 +521,24 @@ class Molmo2Transformer(nn.Module):
 
         position_embeddings = self.rotary_emb(position_ids, inputs_embeds.dtype)
         hidden_states = inputs_embeds
+        checkpointing = self.gradient_checkpointing and torch.is_grad_enabled()
         for i, block in enumerate(self.blocks):
-            hidden_states = block(
-                hidden_states,
-                position_embeddings,
-                attention_mask,
-                cache,
-            )
+            if checkpointing:
+                hidden_states = self._checkpointed_block(
+                    block,
+                    i,
+                    hidden_states,
+                    position_embeddings,
+                    attention_mask,
+                    cache,
+                )
+            else:
+                hidden_states = block(
+                    hidden_states,
+                    position_embeddings,
+                    attention_mask,
+                    cache,
+                )
             if i in taps:
                 assert residual_sink is not None  # validated above
                 residual_sink[i] = hidden_states
@@ -493,6 +546,53 @@ class Molmo2Transformer(nn.Module):
             cache.advance(q_len)
 
         return self.ln_f(hidden_states)
+
+    def _checkpointed_block(
+        self,
+        block: nn.Module,  # DecoderLayer (ModuleList iteration erases the type)
+        layer_idx: int,
+        hidden_states: Tensor,
+        position_embeddings: tuple[Tensor, Tensor],
+        attention_mask: MaskSpec,
+        cache: Molmo2KVCache | None,
+    ) -> Tensor:
+        """One block under non-reentrant ``torch.utils.checkpoint``.
+
+        The live cache never crosses the checkpoint boundary: backward
+        recompute replays the block, and a replayed ``cache.update``
+        would append the layer's K/V a second time (the doubled T then
+        breaks the replay itself against the [B, 1, S, T] mask). The
+        block writes into a single-layer shim instead — past K/V fed in
+        read-only — and the real append happens exactly once, out here,
+        with the ESCAPED new K/V. Those stay graph-connected to the
+        region, so suffix gradients arriving through the cache trigger
+        the same recompute as gradients on the hidden output; the
+        retained memory per block is its boundary hidden state plus the
+        K/V any cached forward keeps anyway.
+        """
+        shim: _CheckpointLayerKV | None = None
+        if cache is not None:
+            layer = cache.layers[layer_idx]
+            past = (
+                (layer.keys, layer.values)
+                if layer.keys is not None and layer.values is not None
+                else None
+            )
+            shim = _CheckpointLayerKV(past)
+        out = torch.utils.checkpoint.checkpoint(
+            block,
+            hidden_states,
+            position_embeddings,
+            attention_mask,
+            shim,
+            use_reentrant=False,
+        )
+        if cache is not None:
+            assert shim is not None
+            assert shim.new_kv is not None, "checkpointed block skipped its update"
+            cache.update(layer_idx, *shim.new_kv)
+        assert isinstance(out, Tensor)
+        return out
 
 
 class Molmo2TextModel(nn.Module):

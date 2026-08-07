@@ -257,6 +257,13 @@ class TrainArgs:
     # the molmo2 smoke-ladder snapshot. Gradient identical to the DDP
     # sync up to fp reduction order (same sum / world).
     chunk_grad_allreduce: bool
+    # Activation checkpointing over the molmo2 decoder blocks (#20):
+    # recompute each block in backward instead of retaining its
+    # interior activations (measured need 2026-08-06: ~2.4 GiB/sample
+    # saved activations on the live-trunk prefix). Memory only — the
+    # gradient is oracle-pinned bitwise to the plain step; engages
+    # wherever the trunk runs under grad, no-grad paths untouched.
+    activation_checkpointing: bool
     steps: int
     decoder_lr: float
     backbone_text_lr: float | None
@@ -1925,6 +1932,16 @@ def parse_args() -> TrainArgs:
         "equals the DDP sync up to fp reduction order. Requires torchrun "
         "with world size > 1 and --backward-chunks > 1",
     )
+    parser.add_argument(
+        "--activation-checkpointing",
+        action="store_true",
+        help="activation checkpointing over the molmo2 decoder blocks "
+        "(#20): recompute each block in backward instead of retaining "
+        "its interior activations — memory only, the gradient is "
+        "oracle-pinned bitwise to the plain step. Engages wherever the "
+        "trunk runs under grad (live-trunk prefix encode + CE suffix); "
+        "no-grad paths are untouched. Molmo2 trunks only",
+    )
     parser.add_argument("--steps", type=int, default=200, help="total optimizer steps")
     parser.add_argument(
         "--decoder-lr",
@@ -2376,6 +2393,7 @@ def parse_args() -> TrainArgs:
         backward_chunks=raw.backward_chunks,
         zero1=raw.zero1,
         chunk_grad_allreduce=raw.chunk_grad_allreduce,
+        activation_checkpointing=raw.activation_checkpointing,
         steps=raw.steps,
         decoder_lr=raw.decoder_lr,
         backbone_text_lr=raw.backbone_text_lr,
@@ -3132,6 +3150,19 @@ def main() -> int:
         )
         schedule_desc = str(ar_schedule)
     backbone_counts = unfreeze_backbone(model, args)
+    if args.activation_checkpointing:
+        if not isinstance(model.backbone, Molmo2Model):
+            raise SystemExit(
+                "--activation-checkpointing is wired for the molmo2 decoder stack only",
+            )
+        model.backbone.text.transformer.gradient_checkpointing = True
+        if is_main:
+            print(
+                "activation checkpointing ON (molmo2 decoder blocks: "
+                "recompute in backward, gradient-identical; engages only "
+                "where the trunk runs under grad)",
+                flush=True,
+            )
     if not args.backbone_trained:
         # Frozen runs encode the prefix under no_grad (BijouTrainStep),
         # so the prompt-side state projection CANNOT receive gradients
