@@ -229,3 +229,25 @@ def test_rollout_noise_keying_is_index_not_stable() -> None:
     with pytest.raises(KeyError):
         noise_for_item("stable", 0, rig_item, 3, 0, (50, 6))
     assert 'noise_key="index"' in inspect.getsource(rollout)
+
+
+def test_home_trajectory_eases_and_lands_exactly() -> None:
+    """Return-home glide: ends EXACTLY at home, cosine-eased (boundary
+    steps smaller than mid-glide steps), tick count = seconds x fps."""
+    from bijou.rollout_safety import home_trajectory
+
+    current, home = [0.0, 10.0, -20.0], [30.0, 10.0, 40.0]
+    rows = home_trajectory(current, home, seconds=1.5, fps=30.0)
+    assert len(rows) == 45
+    assert rows[-1] == pytest.approx(home)
+    # Monotone approach on the moving joints.
+    gaps = [abs(row[0] - home[0]) for row in rows]
+    assert gaps == sorted(gaps, reverse=True)
+    # Ease-in/out: first and last steps far smaller than the largest.
+    steps = [abs(b[0] - a[0]) for a, b in zip([current, *rows[:-1]], rows, strict=True)]
+    assert steps[0] < max(steps) / 3
+    assert steps[-1] < max(steps) / 3
+    # The stationary joint never wobbles.
+    assert all(row[1] == pytest.approx(10.0) for row in rows)
+    # Degenerate short glide still lands home.
+    assert home_trajectory([0.0], [1.0], seconds=0.01, fps=30.0)[-1] == [1.0]
