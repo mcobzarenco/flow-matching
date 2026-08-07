@@ -123,4 +123,26 @@ if [ "$MODE" = "tick" ] && [ -f "$STATE/run_work_next" ]; then
     echo "tick requested a chained work session"
     run_session work
 fi
+
+# driver-background-task-guard (owner 08-07 13:05Z; 3 incidents
+# 2026-08-07): a completed turn must never silently kill live work.
+# KillMode=process on the unit keeps noncompliant launches alive past
+# unit stop; this scan makes them LOUD — anything left in our cgroup
+# that is not the driver's own tree was launched as a session child
+# instead of via scripts/run_detached.sh. Stdlib python3 (no venv),
+# never blocks the driver, 1-h alert cooldown like alert_failure.
+guard_out="$(python3 "$DIR/scripts/driver_guard.py" --driver-pid $$ 2>&1)" \
+    && guard_status=0 || guard_status=$?
+echo "$guard_out"
+if [ "$guard_status" -eq 1 ]; then
+    now="$(date +%s)"
+    last="$(cat "$STATE/last_straggler_alert" 2>/dev/null || echo 0)"
+    if [ $((now - last)) -ge 3600 ]; then
+        if python3 "$DIR/harness/discord.py" post \
+            "driver guard: straggler process(es) found in the driver cgroup at session end — they survive (KillMode=process) but were NOT launched via run_detached.sh; next session should verify/relaunch them. ${guard_out:0:1500}" \
+            >/dev/null 2>&1; then
+            echo "$now" >"$STATE/last_straggler_alert"
+        fi
+    fi
+fi
 exit 0

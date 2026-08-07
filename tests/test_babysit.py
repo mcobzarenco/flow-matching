@@ -112,6 +112,16 @@ class TestParsing:
         assert len(sections["@@GPU"]) == 2
         assert sections["@@TAIL"] == ["row1"]
 
+    def test_split_sections_cgroup(self) -> None:
+        out = (
+            "@@PGREP\n4\n@@CGROUP\n"
+            "0::/user.slice/user-1000.slice/user@1000.service/app.slice"
+            "/fontaine-tsens-q4.service\n@@GPU\n0, 12675, 23\n"
+        )
+        sections = babysit.split_sections(out)
+        assert len(sections["@@CGROUP"]) == 1
+        assert sections["@@GPU"] == ["0, 12675, 23"]
+
     def test_real_registry_loads(self) -> None:
         runs = babysit.load_registry(babysit.REGISTRY)
         assert len(runs) >= 1
@@ -211,6 +221,45 @@ class TestPerRunChecks:
         assert report.gate_crossed
         assert report.alive  # a crossed gate is surfaced, never a liveness kill
         assert "SURFACED" in "\n".join(report.lines)
+
+    def test_driver_cgroup_surfaced(self) -> None:
+        # driver-background-task-guard (3 incidents 2026-08-07): a run
+        # inside the driver unit's cgroup is surfaced BEFORE the kill —
+        # surfaced-fact semantics (exit 3 class), never a liveness kill.
+        run = self._train_run()
+        report = babysit.Report()
+        sections = {
+            "@@CGROUP": [
+                (
+                    "0::/user.slice/user-1000.slice/user@1000.service"
+                    "/app.slice/fontaine-tick.service"
+                ),
+            ],
+        }
+        babysit.check_driver_cgroup(run, sections, report)
+        assert report.gate_crossed
+        assert report.alive
+        text = "\n".join(report.lines)
+        assert "DRIVER-CGROUP SURFACED" in text
+        assert "run_detached.sh" in text
+
+    def test_driver_cgroup_clean_for_own_unit(self) -> None:
+        # A job in its OWN transient unit (the compliant launch) must
+        # not be flagged; nor an empty section (box hosts).
+        run = self._train_run()
+        report = babysit.Report()
+        sections = {
+            "@@CGROUP": [
+                (
+                    "0::/user.slice/user-1000.slice/user@1000.service"
+                    "/app.slice/fontaine-tsens-q4.service"
+                ),
+            ],
+        }
+        babysit.check_driver_cgroup(run, sections, report)
+        babysit.check_driver_cgroup(run, {}, report)
+        assert not report.gate_crossed
+        assert report.lines == []
 
     def test_progress_log_projection(self) -> None:
         run = babysit.Run(

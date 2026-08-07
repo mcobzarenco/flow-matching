@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# LAUNCH VIA fontaine/scripts/run_detached.sh <unit-name> bash <this script>:
+# sessions run inside the tick unit's cgroup — a bare or setsid launch
+# dies at session/unit teardown (3 incidents 2026-08-07, driver guard).
 # fontaine — SnapFlow 1-NFE self-distillation of flow-80k (LOCAL 1×H100).
 # PRE-REG (immutable): fontaine/blog/src/posts/2026-08-06-prereg-snapflow-distill.md
 #   Subject: flow-80k step_080000 (local copy, verified). Recipe: the

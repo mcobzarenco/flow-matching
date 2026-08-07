@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# LAUNCH VIA fontaine/scripts/run_detached.sh <unit-name> bash <this script>:
+# sessions run inside the tick unit's cgroup — a bare or setsid launch
+# dies at session/unit teardown (3 incidents 2026-08-07, driver guard).
 # fontaine — AR sampled-draws eval, gemma4 arm (ideas #19).
 # Pre-reg: fontaine/blog/src/posts/2026-08-06-prereg-ar-sampled-draws.md
 #   (incl. the pre-launch amendment: the arm runs on AR-100k

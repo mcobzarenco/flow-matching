@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# LAUNCH VIA fontaine/scripts/run_detached.sh <unit-name> bash <this script>:
+# sessions run inside the tick unit's cgroup — a bare or setsid launch
+# dies at session/unit teardown (3 incidents 2026-08-07, driver guard).
 # fontaine — SnapFlow endpoint 1-NFE primary, npz-dump addendum.
 # WHY THIS EXISTS: the launcher's chained stage-4 endpoint evals
 #   (launch_local_snapflow_distill_30k_1xh100.sh) dump JSON+HTML only —

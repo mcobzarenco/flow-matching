@@ -4,3 +4,13 @@ Description=Fontaine babysit tick (one headless session)
 [Service]
 Type=oneshot
 ExecStart=%h/flow-matching/fontaine/harness/fontaine-session.sh tick
+# driver-background-task-guard (3 incidents 2026-08-07): the default
+# KillMode=control-group SIGKILLs every process left in the unit's
+# cgroup when the oneshot finishes — that is what killed the
+# setsid-detached tsens eval at 15:56:18Z (setsid escapes the terminal
+# session, not the cgroup). KillMode=process signals only the main
+# process at stop, so a noncompliant launch survives as a straggler
+# (loud via driver_guard.py) instead of dying silently. Compliant
+# launches use fontaine/scripts/run_detached.sh (own transient unit)
+# and never depend on this.
+KillMode=process

@@ -54,6 +54,13 @@ SENTINEL_PGREP = "@@PGREP"
 SENTINEL_GPU = "@@GPU"
 SENTINEL_PROBE = "@@PROBE"
 SENTINEL_TAIL = "@@TAIL"
+SENTINEL_CGROUP = "@@CGROUP"
+# driver-background-task-guard (3 incidents 2026-08-07): a registered
+# run whose processes live inside the driver unit's cgroup was launched
+# as a session child — not teardown-safe (turn completion kills session
+# tasks; unit stop used to kill the whole cgroup). Surface it at every
+# poll, BEFORE the kill, so the session can relaunch via run_detached.sh.
+DRIVER_UNIT = "fontaine-tick.service"
 
 
 @dataclass
@@ -119,6 +126,23 @@ def batched_probe_cmd(run: Run) -> str:
     parts = [
         f"echo {SENTINEL_PGREP}",
         f"pgrep -fc '{run.pgrep}' || true",
+        f"echo {SENTINEL_CGROUP}",
+        # Two self-match exclusions, both measured live 08-07 16:2xZ:
+        # (1) the probe shell's ancestor chain — a compound session
+        # command mentioning the run's stem (a log grep on the same
+        # line) matches the pattern from inside the driver's cgroup;
+        # (2) NO pipeline around the for-loop — `| sort -u` forks the
+        # loop into a subshell that inherits this bash -c's cmdline
+        # (which contains the pattern) and is alive during its own
+        # pgrep: a guaranteed false hit. Dedupe happens Python-side.
+        (
+            'anc=$$; ex=" "; while [ "$anc" -gt 1 ]; do ex="$ex$anc "; '
+            "anc=$(awk '/^PPid:/{print $2}' /proc/$anc/status 2>/dev/null || echo 0);"
+            " done; "
+            f"for p in $(pgrep -f '{run.pgrep}'); do "
+            'case "$ex" in *" $p "*) ;; *) cat /proc/$p/cgroup 2>/dev/null;; esac; '
+            "done || true"
+        ),
         f"echo {SENTINEL_GPU}",
         (
             "nvidia-smi --query-gpu=index,memory.used,utilization.gpu"
@@ -145,7 +169,13 @@ def split_sections(out: str) -> dict[str, list[str]]:
     current = ""
     for line in out.splitlines():
         stripped = line.strip()
-        if stripped in (SENTINEL_PGREP, SENTINEL_GPU, SENTINEL_PROBE, SENTINEL_TAIL):
+        if stripped in (
+            SENTINEL_PGREP,
+            SENTINEL_GPU,
+            SENTINEL_PROBE,
+            SENTINEL_TAIL,
+            SENTINEL_CGROUP,
+        ):
             current = stripped
             sections[current] = []
         elif current:
@@ -252,6 +282,27 @@ def check_liveness(run: Run, sections: dict[str, list[str]], report: Report) -> 
         report.alive = False
         report.add(
             f"  LIVENESS FAILURE: gpu(s) {bad_gpus} below {run.gpu_mem_min_mib} MiB floor",
+        )
+
+
+def check_driver_cgroup(
+    run: Run,
+    sections: dict[str, list[str]],
+    report: Report,
+) -> None:
+    """Surface run processes living inside the driver unit's cgroup —
+    launched as session children, not teardown-safe (incidents 1-3,
+    2026-08-07). Surfaced-fact semantics like a gate crossing: the
+    relaunch call stays with the session (via run_detached.sh)."""
+    doomed = sorted(
+        {ln for ln in sections.get(SENTINEL_CGROUP, []) if DRIVER_UNIT in ln},
+    )
+    if doomed:
+        report.gate_crossed = True
+        report.add(
+            f"  DRIVER-CGROUP SURFACED: {len(doomed)} cgroup line(s) under"
+            f" {DRIVER_UNIT} — run was launched as a session child, not"
+            " teardown-safe; relaunch via fontaine/scripts/run_detached.sh",
         )
 
 
@@ -387,6 +438,7 @@ def babysit_run(
         return report, {}
     sections = split_sections(out)
     check_liveness(run, sections, report)
+    check_driver_cgroup(run, sections, report)
     sample: dict[str, Any] = {}
     if run.kind == "train-jsonl":
         sample = check_train_jsonl(run, sections, prev, now, report)

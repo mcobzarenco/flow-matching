@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# LAUNCH VIA fontaine/scripts/run_detached.sh <unit-name> bash <this script>:
+# sessions run inside the tick unit's cgroup — a bare or setsid launch
+# dies at session/unit teardown (3 incidents 2026-08-07, driver guard).
 # fontaine — SnapFlow student -> rig fine-tune (1-NFE, owner-steered
 #   16:35Z "queue asap"), local 1xH100.
 # PRE-REG: fontaine/blog/src/posts/2026-08-06-prereg-snapflow-ftrig.md

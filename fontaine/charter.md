@@ -649,6 +649,19 @@ deliberately boring (a clever harness that crashes strands the GPU):
   one the model cannot report (usage cap, expired auth, broken
   install), where every session dies at birth and the box would
   otherwise just go silent.
+- **GPU/long-job launches use `fontaine/scripts/run_detached.sh`**
+  (driver-background-task-guard, 3 incidents 2026-08-07): sessions
+  run inside the tick unit's cgroup, so a job launched as a session
+  child dies at turn completion, and even `setsid` does not escape
+  the cgroup at unit stop. The wrapper puts the job in its own
+  transient unit (`systemd-run --user` + PATH/HOME, launch-death
+  check). Defense in depth behind it: `KillMode=process` on the tick
+  service (stragglers survive instead of dying silently), a babysit
+  `DRIVER-CGROUP SURFACED` line whenever a registered run's
+  processes sit inside the driver cgroup (fires BEFORE the kill),
+  and a post-session `driver_guard.py` cgroup scan that alerts on
+  noncompliant launches. Oracles: `tests/test_driver_guard.py`
+  reproduces the kill signature live with transient units.
 - implementation: **headless Claude Code** (`claude -p`) driven by
   `fontaine/harness/fontaine-session.sh` — mature tool loop,
   permission control, and the whole harness stays one shell script +
