@@ -18,6 +18,39 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-07 11:04–11:1xZ (real `date -u`) — tick (babysit):
+both runs green, no new steering; same picture as 10:54Z — the only
+queued items stay boundary-blocked → normal exit, no work session
+chained. Boundary now projects **~12:2x–12:3xZ** (~1.3 h).*
+
+**Status** (babysit 11:05Z, both green, exit 0):
+- box molmo2 AR 40k — 16680/40k, loss 3.3092, 2.162 s/step, vram
+  67.07 ≤ 71, probe low **6.64@16000** (latest 6.81@16500, gate
+  margin 5.29; 6.6–6.9 oscillation band, normal); ~14.0 h + save
+  pauses → endpoint ~08-08.
+- local draws10_t1 — 23232/25800, window 29.3 f/min (content
+  churn — judge on cumulative), cumulative 33.8 f/min → ~12.7 h
+  total, **INSIDE the 24 GPU-h gate**; **~1.3 h to boundary
+  (~12:2x–12:3xZ)** → frozen reads + decode microbench +
+  leaderboard rows.
+
+**Steering**: none new (`read` empty; `history -n 5` shows only our
+own 10:24–10:52Z posts, no reactions; owner last at 10:04–10:1xZ —
+the leaderboard steering, fully executed).
+
+**Done**: tick — babysit both green, exit 0; `queue_cli.py
+validate` green (depth 2, 12 open). **No `run_work_next`**
+(unchanged from 10:54Z): the queued microbench GPU run waits on the
+draws10_t1 boundary and the F-then-joint pre-reg draft opens after
+the seam-screen reads (~08-09+) — the boundary tick chains the work
+session; never invent work to look busy. No Discord post (10:52Z
+post is current), no blog build (no reader-visible change).
+
+**Next**: draws10_t1 boundary ~12:2x–12:3xZ → frozen reads
+(`draws10_t1_results.py`) + decode microbench + leaderboard rows
+(that tick arms the chained session); endpoint ~08-08 → #19 box
+obligations → K smoke ladder → attachment steer window.
+
 *Updated 2026-08-07 10:54–11:0xZ (real `date -u`) — tick (babysit):
 both runs green, no new steering; no actionable CPU items this
 window (both boundary-blocked) → normal exit, no work session
@@ -119,36 +152,6 @@ prep + the attachment-frontier lit slice; draws10_t1 boundary
 ~12:3x–12:5xZ today → frozen reads land as leaderboard row; endpoint
 ~08-08 (save-pause-aware) → #19 box obligations → K smoke ladder →
 attachment steer window.
-
-*Updated 2026-08-07 09:46–09:5xZ (real `date -u`) — tick (babysit):
-both runs green, no new steering; papers backlog cleared last
-session, #19 CPU items open → work session chained.*
-
-**Status** (babysit 09:46Z, both green, exit 0):
-- box molmo2 AR 40k — 15000/40k, loss 3.3078, 2.196 s/step, vram
-  67.07 ≤ 71, probe low **6.69@14500** (gate margin 5.40); ~15.3 h
-  to endpoint ~08-08.
-- local draws10_t1 — 20352/25800, window 59.4 f/min (content
-  churn — judge on cumulative per the registry anchor), cumulative
-  33.4 f/min → **~12.9 h total, INSIDE the 24 GPU-h gate**, ~2.7 h
-  remaining; boundary ~12:3x–12:5xZ → frozen reads.
-
-**Steering**: none new (`read` surfaced only our own 09:45Z batch-3
-post; `history -n 5` shows no reactions; owner last at 08:42Z — the
-papers steering, now fully executed).
-
-**Done**: tick — babysit both green, exit 0; `queue_cli.py
-validate` green (depth 2, 12 open); `run_work_next` armed (GPUs
-busy + CPU queue non-empty → the chained work session takes #19
-dT-table read script, then the endpoint-runbook git-audit). No
-Discord post (09:45Z batch-3 post is current) and no blog build
-(next reader-visible change ships with the chained session).
-
-**Next** (`queue_cli.py next`): #19 dT-table read script, then the
-endpoint-runbook git-audit (both CPU, chained work session);
-draws10_t1 boundary ~12:3x–12:5xZ today → frozen reads; endpoint
-~08-08 → #19 box obligations → K smoke ladder → attachment steer
-window.
 
 ## Utilization footer
 
