@@ -17,6 +17,36 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-07 09:46–09:5xZ (real `date -u`) — tick (babysit):
+both runs green, no new steering; papers backlog cleared last
+session, #19 CPU items open → work session chained.*
+
+**Status** (babysit 09:46Z, both green, exit 0):
+- box molmo2 AR 40k — 15000/40k, loss 3.3078, 2.196 s/step, vram
+  67.07 ≤ 71, probe low **6.69@14500** (gate margin 5.40); ~15.3 h
+  to endpoint ~08-08.
+- local draws10_t1 — 20352/25800, window 59.4 f/min (content
+  churn — judge on cumulative per the registry anchor), cumulative
+  33.4 f/min → **~12.9 h total, INSIDE the 24 GPU-h gate**, ~2.7 h
+  remaining; boundary ~12:3x–12:5xZ → frozen reads.
+
+**Steering**: none new (`read` surfaced only our own 09:45Z batch-3
+post; `history -n 5` shows no reactions; owner last at 08:42Z — the
+papers steering, now fully executed).
+
+**Done**: tick — babysit both green, exit 0; `queue_cli.py
+validate` green (depth 2, 12 open); `run_work_next` armed (GPUs
+busy + CPU queue non-empty → the chained work session takes #19
+dT-table read script, then the endpoint-runbook git-audit). No
+Discord post (09:45Z batch-3 post is current) and no blog build
+(next reader-visible change ships with the chained session).
+
+**Next** (`queue_cli.py next`): #19 dT-table read script, then the
+endpoint-runbook git-audit (both CPU, chained work session);
+draws10_t1 boundary ~12:3x–12:5xZ today → frozen reads; endpoint
+~08-08 → #19 box obligations → K smoke ladder → attachment steer
+window.
+
 *Updated 2026-08-07 09:29–10:0xZ (real `date -u`) — work session
 (bounded): **PAPERS SECTION BATCH 3 — RETROACTIVE BACKLOG CLEARED**
 — four final theme pages / 13 papers, all 42 tracker sources now
@@ -104,52 +134,6 @@ draws10_t1 boundary ~12:3x–12:5xZ today → frozen reads; endpoint
 ~08-08 → #19 box obligations → K smoke ladder → attachment steer
 window.
 
-*Updated 2026-08-07 09:10–09:5xZ (real `date -u`) — work session
-(bounded): **PAPERS SECTION BATCH 2** — three more theme pages / 13
-papers (one-step menu, sampling-beyond-selection, state-shortcut
-set), 29 of the tracker now covered; the deep re-reads corrected
-three banked claims, including one that re-frames a completed
-experiment.*
-
-**Status** (babysit 09:11Z + 09:20Z, both green, exit 0):
-- box molmo2 AR 40k — 14300/40k, loss 3.3427, 2.174 s/step, vram
-  67.07 ≤ 71, probe low **6.90@14000** (gate margin 5.19); ~15.5 h
-  to endpoint ~08-08.
-- local draws10_t1 — 19392/25800, window 51.6 f/min, cumulative
-  33.3 f/min → **~12.9 h total, INSIDE the 24 GPU-h gate**, ~3.2 h
-  remaining; boundary ~12:3x–12:5xZ → frozen reads.
-
-**Steering**: none new (polls at 09:11Z and 09:20Z clean; owner last
-at 08:42Z — the papers steering, this session executes batch 2 of
-it).
-
-**Done**: papers batch 2 —
-[one-step menu](papers/one-step-menu.md) (OFP, MeanFlow-VLA, Let It
-Be Simple, GoldenStart), [sampling beyond
-selection](papers/sampling-beyond-selection.md) (Golden Ticket,
-DVAC, Energy Policy), [the state
-shortcut](papers/state-shortcut.md) (Adapt Your Body, state-free,
-ReViP, GAP, ThinkProprio, Cloak); index tracker 29 covered / 13
-remaining. Full-text re-reads corrected three banked claims
-(hooks in ideas.md, record on the pages): **#9's p=0.8 zero-masking
-was the *baseline* of a since-WITHDRAWN paper, not its method** —
-arm C tested the family's weakest member, and the cross-paper
-consensus is modulate-don't-amputate; #1's Golden Ticket bank was
-v1-stale (v3: 46/51; per-task tickets always gain, only *shared*
-tickets regress); #12's MeanFlow hook missed that its 8.7× speedup
-loses accuracy (78% vs 84.5%), and Let It Be Simple's one-step win
-is state-carried and degrades 10-step decoding. check.py 437
-passed. Blog built + Space pushed (3 new pages + index + now
-curl-verified 200); Discord posted 09:5xZ
-(id 1535217206403792936).
-
-**Next** (`queue_cli.py next`): papers batch 3 (grounding set,
-data/tokenization/trunks set, AR-VLA + repr-anchoring + π0.7/WAM)
-next work session; #19 dT-table read script + endpoint-runbook
-git-audit remain queued; draws10_t1 boundary ~12:3x–12:5xZ today →
-frozen reads; endpoint ~08-08 → #19 box obligations → K smoke
-ladder → attachment steer window.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -159,16 +143,16 @@ from 23:37Z — both live to their boundaries). Older dated snapshots
 and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
-Session 08:51–09:2xZ: all-CPU, 0 GPU-h — comms/lit-side (owner
-high-priority steering): Papers section batch 1 landed (`44eb032`,
-8 pages / 16 papers + index tracker; 2 correction hooks banked to
-ideas.md from the deep re-reads; check.py 437). No lit-slice
-increment beyond the section itself — the whole session was the
-literature record.
-
 Session 09:10–09:5xZ: all-CPU, 0 GPU-h — comms/lit-side (owner
 high-priority steering, batch 2): three papers pages / 13 papers
 landed (one-step menu, sampling-beyond-selection, state-shortcut;
 tracker 29 covered / 13 remaining); 3 correction hooks banked to
 ideas.md — incl. the #9 p=0.8 citation being a withdrawn paper's
 baseline, not its method (check.py 437).
+
+Session 09:29–10:0xZ: all-CPU, 0 GPU-h — comms/lit-side (owner
+high-priority steering, batch 3): four final papers pages / 13
+papers landed (grounding-conditioning, action-tokenization,
+data-and-trunks, attachment-frontier; tracker 42/42 — retroactive
+backlog cleared); 7 correction hooks banked to ideas.md — incl.
+two citations to content not in the cited papers (check.py 437).
