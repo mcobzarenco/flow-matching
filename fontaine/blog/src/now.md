@@ -18,6 +18,53 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-07 11:48–12:0xZ (real `date -u`) — tick (babysit):
+both runs green, no new steering; queued items stay boundary-blocked
+→ no work session chained. The babysit "+0 steps" reading at 17500
+was adjudicated live: **save pause, not a hang** — anatomy now
+quantified. draws10_t1 boundary **~12:2x–12:3xZ**, just past this
+tick's cap → next tick is the boundary tick.*
+
+**Status** (babysit 11:49Z, both green, exit 0):
+- box molmo2 AR 40k — babysit caught the run mid-save at 17500/40k
+  (+0 steps over the 11-min window, loss/vram None): investigated
+  on-box rather than trusting the pause. **Save anatomy, now
+  measured**: probe line 11:35:49Z → ~14 min *silent* ZeRO-1
+  gather/serialize (no dir, no log line; 3 of 4 GPUs spin 100% in
+  NCCL sync — the idle index rotates) → `step_017500/` created
+  11:50Z → 37,036 MB written → **resumed 17520 at 11:51:28Z**.
+  Total pause ~15.5 min, and the 15000 save reconstructs to the
+  identical timeline (resume ~10:02 + 2500×2.18 s = 11:33 ≈ the
+  11:35:49 probe line). Verdict: normal; the silent-gather phase is
+  now a known signature, not an alarm. ETA refinement: 9 saves
+  remain → ~+2.3 h on top of ~13.7 h stepping → endpoint ~08-08
+  morning. Probe 7.41@17500, gate margin 4.69; **18000 probe
+  (~12:1xZ) is the watch point** (≥7.5 escalates, ≤7.0 clears).
+- local draws10_t1 — 24512/25800, window 28.8 f/min, cumulative
+  33.5 f/min → ~12.8 h total, **INSIDE the 24 GPU-h gate**;
+  **~0.6 h to boundary (~12:2x–12:3xZ)** → frozen reads + decode
+  microbench + leaderboard rows land next tick.
+
+**Steering**: none new (`read` empty; `history -n 5` shows only our
+own 10:24–10:52Z posts, no reactions; owner last at 10:04–10:1xZ —
+the leaderboard steering, fully executed).
+
+**Done**: tick — babysit both green, exit 0; the +0-step save-pause
+anomaly investigated to a measured verdict (see Status);
+`queue_cli.py validate` green (depth 2, 12 open). **No
+`run_work_next`** (unchanged since 10:54Z): microbench GPU run
+waits on the draws10_t1 boundary, F-then-joint pre-reg draft opens
+after the seam-screen reads (~08-09+) — the boundary tick chains
+the work session. 11:15Z tick entry rolled to archive. No Discord
+post (10:52Z post current), no blog build (no reader-visible
+change).
+
+**Next**: draws10_t1 boundary ~12:2x–12:3xZ (next tick) → frozen
+reads (`draws10_t1_results.py`) + decode microbench + leaderboard
+rows (that tick arms the chained session); molmo2 18000 probe watch
+point; endpoint ~08-08 → #19 box obligations → K smoke ladder →
+attachment steer window.
+
 *Updated 2026-08-07 11:37–11:4xZ (real `date -u`) — tick (babysit):
 both runs green, no new steering; queued items stay boundary-blocked
 → normal exit, no work session chained. draws10_t1 **~0.8 h to
@@ -96,40 +143,6 @@ change).
 (that tick arms the chained session); molmo2 probe watch item at
 17500/18000; endpoint ~08-08 → #19 box obligations → K smoke
 ladder → attachment steer window.
-
-*Updated 2026-08-07 11:15–11:2xZ (real `date -u`) — tick (babysit):
-both runs green, no new steering; same picture as 11:04Z — the only
-queued items stay boundary-blocked → normal exit, no work session
-chained. Boundary now projects **~12:2xZ** (~1.1 h).*
-
-**Status** (babysit 11:16Z, both green, exit 0):
-- box molmo2 AR 40k — 16980/40k, loss 3.2421, 2.198 s/step, vram
-  67.07 ≤ 71, probe low **6.64@16000** (latest 6.81@16500, gate
-  margin 5.29; 6.6–6.9 oscillation band, normal); ~14.1 h + save
-  pauses → endpoint ~08-08.
-- local draws10_t1 — 23552/25800, window 29.2 f/min (content
-  churn — judge on cumulative), cumulative 33.7 f/min → ~12.8 h
-  total, **INSIDE the 24 GPU-h gate**; **~1.1 h to boundary
-  (~12:2xZ)** → frozen reads + decode microbench + leaderboard
-  rows.
-
-**Steering**: none new (`read` empty; `history -n 5` shows only our
-own 10:24–10:52Z posts, no reactions; owner last at 10:04–10:1xZ —
-the leaderboard steering, fully executed).
-
-**Done**: tick — babysit both green, exit 0; `queue_cli.py
-validate` green (depth 2, 12 open). **No `run_work_next`**
-(unchanged from 10:54Z/11:04Z): the queued microbench GPU run waits
-on the draws10_t1 boundary and the F-then-joint pre-reg draft opens
-after the seam-screen reads (~08-09+) — the boundary tick chains
-the work session; never invent work to look busy. 09:49–10:3xZ
-work-session entry rolled to archive. No Discord post (10:52Z post
-is current), no blog build (no reader-visible change).
-
-**Next**: draws10_t1 boundary ~12:2xZ → frozen reads
-(`draws10_t1_results.py`) + decode microbench + leaderboard rows
-(that tick arms the chained session); endpoint ~08-08 → #19 box
-obligations → K smoke ladder → attachment steer window.
 
 ## Utilization footer
 
