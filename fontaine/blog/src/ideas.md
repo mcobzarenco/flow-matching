@@ -32,8 +32,10 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   quiet local-GPU window.
 - **`noise-draws` [#1 Noise-draw ensembling](ideas/01-noise-draw-ensembling.md)** —
   flow mean-of-10 banked (5.365, beats the AR anchor on both
-  columns); fairness + energy-score reads in. Next candidate rung:
-  the golden-ticket noise screen (needs its own pre-reg).
+  columns); fairness + energy-score reads in; batched draws merged
+  2026-08-07 — mean-of-N at single-draw latency (teacher 9.1×,
+  student 2.5× single-stream). Next candidate rung: the
+  golden-ticket noise screen (needs its own pre-reg).
 
 ## Standing
 

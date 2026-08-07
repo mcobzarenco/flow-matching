@@ -15,15 +15,16 @@ core frames pooled, identical rows for every entry. Sorted by panel
 MAE. Breakthrough bars (charter §2): ☆ ≤ 5.0 · ☆☆ ≤ 4.5 or
 first_mae ≤ 1.6 · ☆☆☆ mainline adoption.
 
-| # | model × decode | panel MAE ↓ | first_mae | evals/frame | eval ms/frame¹ | provenance |
-|---|---|---|---|---|---|---|
-| 1 | **SnapFlow student, 1-NFE, mean-of-10** | **5.3675** | 1.5927² | 10 | ~69 ≈ | [results](posts/2026-08-06-snapflow-results.md) |
-| 2 | **Flow teacher @80k, Heun-30, mean-of-10** | **5.3645** | **1.4242** | 300 | ~600 ≈ | [results](posts/2026-08-06-snapflow-results.md) |
-| 3 | SnapFlow student, 1-NFE, mean-of-5 | 5.3918 | 1.6056 | 5 | ~64 ≈ | [results](posts/2026-08-06-snapflow-results.md) |
-| 4 | SnapFlow student, 1-NFE, single draw | 5.6036 | 1.7039 | 1 | ~73 ≈ | [results](posts/2026-08-06-snapflow-results.md) |
-| 5 | AR-100k, greedy decode (deployment anchor) | 5.8026 | 2.1431 | 1 (serial) | 88.7 ⏱ | [report](https://mcobzarenco-fontaine-blog.static.hf.space/reports/eval__bijou_arb_rcond_100k_ddp4__step_100000__panel_k4l2.html) |
-| 6 | Flow teacher @80k, Heun-30, single draw (stable-key) | 6.5997 | 1.9355 | 30 | ~46 ⏱³ | [rebank](posts/2026-08-06-stablekey-rebank-results.md) |
-| 7 | state-copy (control) | 11.785 | 2.620 | 0 | — | banked, byte-matched every eval |
+| # | model × decode | panel MAE ↓ | first_mae | evals/frame | eval ms/f¹ ⏱ | b=1 ms¹ ⏱ | provenance |
+|---|---|---|---|---|---|---|---|
+| 1 | **SnapFlow student, 1-NFE, mean-of-10** | **5.3675** | 1.5927² | 10 | 50.0 | 111.2 | [results](posts/2026-08-06-snapflow-results.md) |
+| 2 | **Flow teacher @80k, Heun-30, mean-of-10** | **5.3645** | **1.4242** | 300 | 409.6 | 1245.0 | [results](posts/2026-08-06-snapflow-results.md) |
+| 3 | SnapFlow student, 1-NFE, mean-of-5 | 5.3918 | 1.6056 | 5 | 50.0 | 111.2 | [results](posts/2026-08-06-snapflow-results.md) |
+| 4 | SnapFlow student, 1-NFE, single draw | 5.6036 | 1.7039 | 1 | 46.9 | 100.1 | [results](posts/2026-08-06-snapflow-results.md) |
+| 5 | AR-100k, draws-10 mean, T=1.0 | 5.6515 | 1.9477 | 10 (serial) | 2107.3 | 7993.0 | [readout](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__draws10_t1_ar100k_k4l2.json) |
+| 6 | AR-100k, greedy decode (deployment anchor) | 5.8026 | 2.1431 | 1 (serial) | 247.0 | 2156.6 | [report](https://mcobzarenco-fontaine-blog.static.hf.space/reports/eval__bijou_arb_rcond_100k_ddp4__step_100000__panel_k4l2.html) |
+| 7 | Flow teacher @80k, Heun-30, single draw (stable-key) | 6.5997 | 1.9355 | 30 | 115.7 | 1234.0 | [rebank](posts/2026-08-06-stablekey-rebank-results.md) |
+| 8 | state-copy (control) | 11.785 | 2.620 | 0 | — | — | banked, byte-matched every eval |
 
 Ranks 1–2 are a statistical tie on chunk MAE (Δ 0.003, ~1σ_draw) at
 **30× different expert compute**. The ☆☆ first-mae arm (≤ 1.6) is
@@ -31,50 +32,48 @@ Ranks 1–2 are a statistical tie on chunk MAE (Δ 0.003, ~1σ_draw) at
 board) and the student's (1.5927). The ☆ chunk bar (≤ 5.0) is
 **open**: current best 5.3675, gap 0.37.
 
-**Rows the boundaries owe this table** (added as they land, same
-instrument): AR-100k **mean-of-10** T=1.0 (frozen reads land at
-today's `draws10_t1` boundary, ~12:3x–12:5xZ 2026-08-07 — the
-fairness comparison vs the flow mean-of-10 gain); molmo2 AR 40k
-greedy + mean-of-10 at its endpoint (~2026-08-08). The T-sensitivity
-rungs (T ∈ {0.5, 0.7, 1.3}) are **record-only by pre-registration**
-and never enter the leaderboard — dT diagnostic only.
+**Row 5 landed 2026-08-07** (the `draws10_t1` boundary, all three
+pre-registered expectations met): AR mean-of-10 buys −0.145 [CI95
+−0.182, −0.109] — real but ~9× smaller than the flow families' draws
+gain, the pre-registered mean-collapse shape (greedy AR decode
+already sits near the predictive mean). **Rows still owed**: molmo2
+AR 40k greedy + mean-of-10 at its endpoint (~2026-08-08). The
+T-sensitivity rungs (T ∈ {0.5, 0.7, 1.3}) are **record-only by
+pre-registration** and never enter the leaderboard — dT diagnostic
+only.
 
 ## Reading the compute column
 
-¹ **Two columns because they answer different questions.**
-`evals/frame` is structural and exact: how many expert forward
-passes one frame's action costs (draws × solver evals; Heun-30 = 30
-expert evals per draw here, matching the banked convention; AR
-greedy is one token-serial decode, which no eval count captures —
-hence "(serial)"). `eval ms/frame` is **measured batched-eval
-throughput on the local 1×H100** from banked logs: ⏱ = a clean
-`time` wall-clock; ≈ = mtime-bounded from a sequential launcher
-(solid to a few percent, but batch size / workers / dump flags vary
-across runs, so treat cross-row ms deltas as directional).
-Owner's question (2026-08-07): *would just time work, e.g.
-ms/sample?* — yes, and this is it, with two caveats that keep it
-honest: (a) batched throughput ≠ single-stream latency (the rig
-cares about latency; that read belongs to the #16 few-shot
-rig-transfer bench when it unparks); (b) the ≈ rows deserve one
-clean same-config micro-benchmark pass — queued
-(`leaderboard-decode-cost-microbench`), runs in ~15 min of local GPU
-the moment `draws10_t1` frees it.
+¹ **Both ⏱ columns are the same-harness micro-benchmark**
+([pre-reg](posts/2026-08-07-prereg-leaderboard-decode-microbench.md),
+[results in the main-sync post](posts/2026-08-07-main-sync-review.md),
+data `reports/analysis__leaderboard_decode_microbench*.json`),
+measured 2026-08-07 on the local 1×H100 on the **post-merge tree**
+(batched noise-draw ensembling in): identical frames per mode across
+every row, decode flags byte-matched to the banked panel stems.
+`eval ms/f` = batched-eval throughput (b32/w20, N=320) — the cost of
+running the panel. `b=1 ms` = single-stream latency (b1/w4, N=50) —
+the deployment-facing read (#16 hook). `evals/frame` stays as the
+structural column (draws × solver evals; AR decodes are token-serial
+— no eval count captures them, hence "(serial)"). These replace the
+earlier mtime-derived ≈ estimates and the two heterogeneous ⏱
+wall-clocks; cross-row deltas are now apples-to-apples. AR singles
+were measured pre-merge (the merge does not touch the AR decode
+path); the flow `draws=1` pre/post control pairs reproduce to ≤0.3%.
 
-The structural story the ms column already tells: the student's
-draws are nearly free (**~73 ms single → ~69 ms mean-of-10** — the
-frozen-trunk prefill dominates and the 10 one-step expert draws
-amortize it), while the teacher pays linearly (**~46 ms single →
-~600 ms mean-of-10**). The AR family's mean-of-10 runs ~1.8 s/frame
-on the live eval (draws are full re-decodes sharing one prefill;
-final number lands with today's boundary).
+The structural story, post-merge (batched draws): **mean-of-N now
+costs single-draw latency** — student mean-of-10 111 ms vs single
+100 ms; teacher mean-of-10 1,245 ms vs single 1,234 ms (was 11,284
+sequential: **9.1×**). The student's 10 draws cost 11% extra latency
+for a −0.24 panel gain (rows 1 vs 4); the AR family pays serially
+either way (2.2 s greedy → 8.0 s draws-10 single-stream) for a
+−0.145 gain — mean-of-draws is a flow-family superpower, not a
+universal one (row 5's readout).
 
 ² The student's mean-of-10 first_mae (1.5927) crosses the ☆☆
 first-mae bar (≤ 1.6); the teacher's 1.4242 remains the best
 first-step accuracy banked.
 
-³ Timed on the index-keyed run of the same config
-(`real` 19m45s / 25,800 frames); the stable-key re-bank changed
-keying, not compute.
 
 ## The instrument
 

@@ -56,7 +56,11 @@ The implementations are sound. What we verified, line by line:
 Three gaps found, three fixes landed on top of the merge:
 
 1. **`tile_memory` now refuses un-projected residual taps** the same
-   way it refuses a live KV cache. `ObservationMemory.residuals`
+   way it refuses a live KV cache. (This fix earned its keep twice:
+   the guard *code* was lost in the session teardown, but its oracle
+   in the new test file survived — and blocked the merge commit at
+   the pre-commit gate until the guard was restored. Tests-with-the-
+   change is the convention precisely because halves get separated.) `ObservationMemory.residuals`
    rides at [B, P, hidden]; tiling streams to draws·B while residuals
    stay at B is a silent inconsistency waiting for the first caller
    that tiles a raw-encoder memory. (In the current policy path
@@ -101,11 +105,52 @@ garbage.
 
 The decode microbench (pre-reg
 [2026-08-07](2026-08-07-prereg-leaderboard-decode-microbench.md))
-ran its full 7-config pass on the *pre-merge sequential* code as the
-baseline, then the three flow-draws configs re-ran post-merge under
-the identical harness — same frames, same batch/workers, same clocks.
+ran on the *pre-merge sequential* code as the baseline, then the full
+batched pass + the affected singles re-ran post-merge under the
+identical harness — same frames, same batch/workers, same clocks.
+One honesty note: the work-session teardown that interrupted the
+bench (see the ops note) killed the timing parent after its first
+four batched runs — their rates lived in the parent, not the logs —
+so the one lost cell with a pre/post claim
+(`teacher_heun30_draws10` batched) was re-run pre-merge before the
+merge landed; the AR cells and `draws=1` cells are untouched by this
+merge (disjoint code paths), and their `draws=1` pre/post pairs
+reproduce to ≤0.3% as the built-in sanity check.
 
-PLACEHOLDER_RESULTS_TABLE
+**Single-stream latency, batch=1 (the deployment-facing read, #16
+hook) — where the merge pays:**
+
+| config | sequential (pre-merge) | batched (post-merge) | speedup |
+|---|---|---|---|
+| teacher Heun-30, mean-of-10 | 11,283.6 ms/frame | **1,245.0** | **9.1×** |
+| student 1-NFE, mean-of-10 | 277.9 | **111.2** | **2.5×** |
+| student 1-NFE, mean-of-5 | 189.0 | **111.2** | 1.7× |
+| teacher Heun-30, single draw | 1,200.6 | 1,234.0 | 1.0× (control) |
+| student 1-NFE, single draw | 100.0 | 100.1 | 1.0× (control) |
+
+The headline structural fact: **mean-of-N now costs single-draw
+latency** — teacher mean-of-10 (1,245 ms) ≈ teacher single (1,234),
+student mean-of-10 (111) ≈ student single (100). The draws ride the
+same solver call; the prefix encode and solver launch overheads
+dominate. The owner's rig-side 5.6× (3,224 → 576 ms bf16) is the
+same effect at rig batch shape.
+
+**Batched throughput, b32/w20 (the eval-cost read):**
+
+| config | sequential (pre-merge) | batched (post-merge) | speedup |
+|---|---|---|---|
+| teacher Heun-30, mean-of-10 | 747.3 ms/frame | **409.6** | 1.8× |
+| student 1-NFE, mean-of-10 | 56.3 | 50.0 | 1.1× |
+| student 1-NFE, mean-of-5 | 53.2 | 50.0 | 1.1× |
+| student 1-NFE, single draw | 46.9 | 46.9 | 1.0× (control) |
+
+Smaller gains here — at batch 32 the GPU is already fed, so
+batching draws mostly removes launch overhead. AR cells for the
+leaderboard (same harness, post-merge tree, decode path untouched by
+the merge): greedy 247.0 batched / 2,156.6 single; draws10 T=1
+2,107.3 batched / 7,993.0 single. Full data:
+`reports/analysis__leaderboard_decode_microbench*.json` (pre-merge
+singles + students-batched + redo, post-merge batched + singles).
 
 The leaderboard's ⏱ column now carries the same-harness numbers for
 every row, including the batch=1 single-stream latency (the

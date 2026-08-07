@@ -27,32 +27,6 @@ step = 10000                        # K1 kill-line (owner-set 08-07) — crossed
 kind = "vram_max_gib"
 value = 71.0
 
-# NOTE (12:1xZ 08-07): run COMPLETED at its boundary — entry RETAINED
-# on purpose (documented footgun, git-audit 10:24Z): the tsens
-# primary gate consumes this entry's started_utc; prune only AFTER
-# the tsens launch. Until then babysit will report liveness fail on
-# this entry — expected, not an alarm.
-[[run]]
-name = "draws10_t1"
-kind = "progress-log"
-host = "local"
-pgrep = "panel_k4l2_draws10_t1"
-pgrep_min = 2                       # launcher bash + eval python (tee rides along)
-gpu_indices = [0]
-gpu_mem_min_mib = 8000
-log = "/home/ubuntu/eval__bijou_arb_rcond_100k_ddp4__step_100000__panel_k4l2_draws10_t1.log"
-progress_re = "scored [0-9]+/[0-9]+ frames"
-started_utc = "2026-08-06T23:37:42Z"
-gpu_hours_per_wall_hour = 1.0       # single local GPU
-boundary = "content-dependent rate; re-project from cumulative each call"
-anchors = [
-    "frozen reads at completion: delta_AR vs 5.8026, fairness vs -1.258, family vs 5.365",
-    "rate is content-dependent (37-40 -> 16 -> 37 f/min measured); judge on the cumulative line",
-]
-[[run.gates]]
-kind = "gpu_hours_max"
-value = 24.0                        # pre-reg gate; breach reopens the q4-fallback question
-
 # PREPARED — molmo2 endpoint draws arm (#19). Uncomment + fill
 # started_utc when eval_box_molmo2_endpoint_draws10_t1.sh launches
 # (prune molmo2_ar40k at the same time — the train run is over).
@@ -88,26 +62,26 @@ value = 24.0                        # pre-reg gate; breach reopens the q4-fallba
 # guard consumed its started_utc first). Each rung logs to its own
 # stem — repoint `log` (t0.5 → t0.7 → t1.3) as rungs roll.
 #
-# [[run]]
-# name = "ar100k_tsens_q4"
-# kind = "progress-log"
-# host = "local"
-# pgrep = "stateprobe_q4_draws10_t"  # matches all three rung stems
-# pgrep_min = 2                      # launcher bash + eval python
-# gpu_indices = [0]
-# gpu_mem_min_mib = 8000
-# log = "/home/ubuntu/eval__bijou_arb_rcond_100k_ddp4__step_100000__stateprobe_q4_draws10_t0.5.log"
-# progress_re = "scored [0-9]+/[0-9]+ frames"
-# started_utc = "FILL-AT-LAUNCH"
-# gpu_hours_per_wall_hour = 1.0      # single local GPU
-# boundary = "4,301 rows/rung, 3 rungs sequential; ~12 GPU-h worst case total (pre-reg cost clause)"
-# anchors = [
-#     "RECORD-ONLY dT diagnostic (pre-reg): never a headline, never a license to re-pick T; primary stays T=1.0",
-#     "reads re-pool via draws10_t1_results.py's q4 subset join (T-guard delta is a follow-up read item)",
-# ]
-# [[run.gates]]
-# kind = "gpu_hours_max"
-# value = 12.0                       # 3 × q4 draws10 ≈ 12 GPU-h worst case
+[[run]]
+name = "ar100k_tsens_q4"
+kind = "progress-log"
+host = "local"
+pgrep = "stateprobe_q4_draws10_t"  # matches all three rung stems
+pgrep_min = 2                      # launcher bash + eval python
+gpu_indices = [0]
+gpu_mem_min_mib = 8000
+log = "/home/ubuntu/eval__bijou_arb_rcond_100k_ddp4__step_100000__stateprobe_q4_draws10_t0.5.log"
+progress_re = "scored [0-9]+/[0-9]+ frames"
+started_utc = "2026-08-07T15:01:40Z"
+gpu_hours_per_wall_hour = 1.0      # single local GPU
+boundary = "4,301 rows/rung, 3 rungs sequential; ~12 GPU-h worst case total (pre-reg cost clause)"
+anchors = [
+    "RECORD-ONLY dT diagnostic (pre-reg): never a headline, never a license to re-pick T; primary stays T=1.0",
+    "reads re-pool via draws10_t1_results.py's q4 subset join (T-guard delta is a follow-up read item)",
+]
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 12.0                       # 3 × q4 draws10 ≈ 12 GPU-h worst case
 
 # PREPARED — attach-screen arms (#4, sequential F then K; pre-reg
 # 2026-08-07-prereg-molmo2-attach-screen.md). Uncomment ONE at a time

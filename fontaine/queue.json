@@ -3,6 +3,15 @@
  "depth_reason": null,
  "items": [
   {
+   "id": "ar100k-tsens-q4-live",
+   "title": "#19 T-sensitivity q4 rungs LIVE (launched 08-07 15:01:40Z, gate PASS 12.7<=24 GPU-h): 3 sequential rungs T in {0.5,0.7,1.3}, draws10, frozen q4 subset 4301 rows; RECORD-ONLY dT diagnostic; babysit entry active (12 GPU-h gate); reads via tsens_dt_results.py at completion",
+   "class": "gpu-local",
+   "status": "live",
+   "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-ar-sampled-draws.md",
+   "owner_hold": false,
+   "boundary": "~12 GPU-h worst case -> boundary ~08-08 morning at worst; repoint babysit log stem as rungs roll (t0.5->t0.7->t1.3)"
+  },
+  {
    "id": "molmo2_ar40k",
    "title": "Molmo2 AR 40k trunk run (box, 4xDDP) \u2014 K1 GATE CROSSED GREEN 08-07 06:0xZ: probe 7.1652@10000 vs bar 12.0944 (margin 4.93, new low); run continues to 40k endpoint",
    "class": "gpu-box",
@@ -13,9 +22,9 @@
   },
   {
    "id": "draws10_t1",
-   "title": "AR-100k draws10 T=1 panel eval (local GPU)",
+   "title": "AR-100k draws10 T=1 panel eval (local GPU) \u2014 COMPLETE 08-07 ~12:1xZ, frozen reads ALL EXPECTATIONS MET (delta_AR -0.14505 CI excl 0; ~9x smaller than flow gain; no overtake); leaderboard row 5 landed 08-07 work session",
    "class": "gpu-local",
-   "status": "live",
+   "status": "done",
    "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-ar-sampled-draws.md",
    "owner_hold": false,
    "boundary": "~13:0x-13:2xZ 2026-08-07 (cumulative 32.2 f/min at 03:07Z -> ~13.3 h total, re-projected each babysit; 24 GPU-h gate)"
@@ -31,27 +40,27 @@
   },
   {
    "id": "blog-now-archive-sort",
-   "title": "OWNER STEERING 08-07 13:02Z: sort the Now-archive per-date pages most-recent-first (SUMMARY sidebar + archive/index.md) and fix archive_now.py so every roll maintains the order automatically",
+   "title": "OWNER STEERING 08-07 13:02Z: sort the Now-archive per-date pages most-recent-first (SUMMARY sidebar + archive/index.md) and fix archive_now.py so every roll maintains the order automatically \u2014 EXECUTED 08-07 work session (4f18582): archive_now.py rebuilds sorted; files fixed",
    "class": "cpu",
-   "status": "queued",
+   "status": "done",
    "owner_hold": false,
    "boundary": "execute in the 08-07 13:04Z work session's bench-wait window",
    "prereg": null
   },
   {
    "id": "blog-ideas-refactor",
-   "title": "OWNER STEERING 08-07 13:02Z: refactor Ideas \u2014 one page per idea (content copied as-is first), then an Ideas index/home page splitting hot (actively pursued) vs on ice (parked/older); index and pages updated regularly as the programme moves; after the split, audit each idea page for up-to-date details",
+   "title": "OWNER STEERING 08-07 13:02Z: refactor Ideas \u2014 one page per idea (content copied as-is first), then an Ideas index/home page splitting hot (actively pursued) vs on ice (parked/older); index and pages updated regularly as the programme moves; after the split, audit each idea page for up-to-date details \u2014 EXECUTED 08-07 work session (4f18582 + b6b5ff0 tags): 22 pages + hot/ice index + details audit (2 corruptions repaired, 4 stale pages refreshed); charter codified (bd1aea8)",
    "class": "cpu",
-   "status": "queued",
+   "status": "done",
    "owner_hold": false,
    "boundary": "mechanical split + index in the 08-07 13:04Z session; per-page details audit may roll to a follow-up item if the merge chain preempts",
    "prereg": null
   },
   {
    "id": "draws10-frozen-reads",
-   "title": "draws10_t1 frozen reads (delta_AR vs 5.8026, fairness vs -1.258, family vs 5.365) + T-sensitivity rung after \u2014 READ SCRIPT LANDED 2026-08-07 ~07:5xZ (draws10_t1_results.py, one command, oracle-gated; defaults = the local launcher's exact stems)",
+   "title": "draws10_t1 frozen reads (delta_AR vs 5.8026, fairness vs -1.258, family vs 5.365) + T-sensitivity rung after \u2014 READ SCRIPT LANDED 2026-08-07 ~07:5xZ (draws10_t1_results.py, one command, oracle-gated; defaults = the local launcher's exact stems) \u2014 EXECUTED at the 12:2x boundary tick; leaderboard + ledger rows landed 08-07 ~15:0xZ work session",
    "class": "gpu-local",
-   "status": "blocked",
+   "status": "done",
    "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-ar-sampled-draws.md",
    "owner_hold": false,
    "boundary": "opens at draws10_t1 completion (~13:0x-13:2xZ 2026-08-07); reads are frozen in the pre-reg"
@@ -193,9 +202,9 @@
   },
   {
    "id": "leaderboard-decode-cost-microbench",
-   "title": "Leaderboard compute-column micro-benchmark PREP (owner steering 08-07 10:04Z follow-up; CPU now): write the timing script + its short pre-reg post \u2014 one script, same batch size / workers / dtype, times every leaderboard decode config (AR greedy, AR draws10-T1, teacher heun30 draws{1,10}, student 1-NFE draws{1,5,10}) on a fixed panel slice on the local 1xH100, plus single-stream batch=1 latency per config as the deployment-facing number (#16 hook); replaces the mtime-derived ~= ms/frame leaderboard entries with apples-to-apples numbers. Record-only, no headline claims; the ~15-min GPU run executes at the boundary under the posted pre-reg \u2014 PREP DONE 2026-08-07 ~11:0xZ: leaderboard_decode_microbench.py landed (7 configs x {batched b32/w20 N320, single b1/w4 N50}, decode flags byte-matched to banked stems, progress-line rate rule excludes startup/warmup, watchdog 30 min/run) + --selftest oracle PASS (exact rate arithmetic, 4 guard aborts, parser fixtures) + pre-reg posted (2026-08-07-prereg-leaderboard-decode-microbench.md). REMAINING: the ~30-min GPU run at the draws10_t1 boundary, before any next local launch",
+   "title": "Leaderboard compute-column micro-benchmark PREP (owner steering 08-07 10:04Z follow-up; CPU now): write the timing script + its short pre-reg post \u2014 one script, same batch size / workers / dtype, times every leaderboard decode config (AR greedy, AR draws10-T1, teacher heun30 draws{1,10}, student 1-NFE draws{1,5,10}) on a fixed panel slice on the local 1xH100, plus single-stream batch=1 latency per config as the deployment-facing number (#16 hook); replaces the mtime-derived ~= ms/frame leaderboard entries with apples-to-apples numbers. Record-only, no headline claims; the ~15-min GPU run executes at the boundary under the posted pre-reg \u2014 PREP DONE 2026-08-07 ~11:0xZ: leaderboard_decode_microbench.py landed (7 configs x {batched b32/w20 N320, single b1/w4 N50}, decode flags byte-matched to banked stems, progress-line rate rule excludes startup/warmup, watchdog 30 min/run) + --selftest oracle PASS (exact rate arithmetic, 4 guard aborts, parser fixtures) + pre-reg posted (2026-08-07-prereg-leaderboard-decode-microbench.md). REMAINING: the ~30-min GPU run at the draws10_t1 boundary, before any next local launch \u2014 EXECUTED 08-07: pre-merge 14-cell baseline + redo cell + post-merge reruns; leaderboard measured-column rewrite + main-sync post tables live",
    "class": "gpu-local",
-   "status": "queued",
+   "status": "done",
    "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-leaderboard-decode-microbench.md",
    "owner_hold": false,
    "boundary": "GPU run executes when draws10_t1 frees the local GPU (boundary ~12:3x-12:5xZ 2026-08-07), before the next local launch; consistency anchor: ar_greedy batched ~88.7 ms/frame"

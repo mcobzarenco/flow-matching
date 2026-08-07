@@ -94,3 +94,4 @@
   - [2026-08-07 — Pre-reg: self-subgoal conditioning probe (#6 rung (a))](posts/2026-08-07-prereg-selfsubgoal-probe.md)
   - [2026-08-07 — Pre-reg: molmo2 stage-2 attachment screen — frozen vs KI-joint (#4)](posts/2026-08-07-prereg-molmo2-attach-screen.md)
   - [2026-08-07 — Pre-reg: leaderboard decode-cost micro-benchmark](posts/2026-08-07-prereg-leaderboard-decode-microbench.md)
+  - [2026-08-07 — Main sync: batched draws + return-home — review & measured speedup](posts/2026-08-07-main-sync-review.md)

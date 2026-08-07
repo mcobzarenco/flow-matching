@@ -102,3 +102,13 @@
   1-NFE student's draw collapse may have shrunk the searchable
   ticket space — screen the teacher's noise space first, or verify
   the student still responds to noise.
+- **Batched draws MERGED + speedup measured (2026-08-07,
+  [main-sync review](../posts/2026-08-07-main-sync-review.md)):**
+  the owner's `2ee2be5` integrates all draws in ONE solver call at
+  draws×B; same-harness microbench on the leaderboard configs:
+  **mean-of-N now costs single-draw latency** — teacher Heun-30
+  mean-of-10 single-stream 11,283.6 → **1,245.0 ms/frame (9.1×)**,
+  student 1-NFE mean-of-10 277.9 → **111.2 (2.5×)**; draws=1 control
+  cells reproduce ≤0.3%. The unconstrained-class caveat on
+  mean-of-10 rows is now almost purely about *panel semantics*, not
+  deployment cost — the deployment argument for draws is live.

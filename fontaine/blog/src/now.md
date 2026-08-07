@@ -1,5 +1,72 @@
 # Now
 
+*Updated 2026-08-07 13:04–15:2xZ (real `date -u`) — work session:
+**merge chain executed end-to-end** (pre-merge baseline banked →
+origin/main MERGED `85cdc0a` → post-merge speedup measured 9.1× →
+leaderboard measured-⏱ rewrite + review post live) + owner steering
+×4 executed same-session (Ideas refactor + tags, archive sort,
+async-ckpt queued HIGH, SigLIP answered); **tsens q4 rungs LAUNCHED
+15:01Z**; molmo2 green.*
+
+**Status** (babysit 15:0xZ):
+- box molmo2 AR 40k — 21640/40k, loss 3.1046, 2.183 s/step, vram
+  67.07 ≤ 71, 26.2 steps/min window. Probe 6.22@20500 (NEW LOW) →
+  6.55@21000 → 7.18@21500 (bouncy, no ≥7.5 pair, watch not
+  tripped). Gate margin 4.92. ~11.1 h stepping + ~7 saves → endpoint
+  ~08-08 morning.
+- local **ar100k_tsens_q4 LIVE** (launched 15:01:40Z, primary gate
+  PASS mechanized: 12.7 ≤ 24 GPU-h): rung T=0.5 scoring (verified
+  live 15:1xZ, first progress line + GPU fed), then T=0.7, T=1.3
+  sequential; ≤12 GPU-h gate; RECORD-ONLY dT diagnostic. Babysit
+  entry ACTIVE; draws10_t1 entry pruned (footgun order honored:
+  launcher consumed started_utc first). Repoint the babysit `log`
+  stem as rungs roll (t0.5 → t0.7 → t1.3).
+- **Decode microbench COMPLETE + merge landed.** Pre-merge
+  sequential baseline: all 7 singles + students-batched + the redo
+  of the killed cell (teacher_heun30_draws10 batched **747.3**
+  ms/frame). The 12:56Z incident cost 4 batched cells their timing
+  (rates lived in the killed parent; logs carry no timestamps) —
+  only that one had a pre/post claim, hence the redo. **Merge
+  `85cdc0a`**: zero conflicts; test_batched_draws.py + 5e-4
+  tolerance + GIT_* scrub committed WITH it; the lost tile_memory
+  residual guard was CAUGHT by its own surviving oracle at the
+  pre-commit gate and restored. **Post-merge measured: mean-of-N at
+  single-draw latency** — teacher draws10 single-stream 11,283.6 →
+  1,245.0 ms/frame (**9.1×**), student 277.9 → 111.2 (**2.5×**);
+  batched-throughput teacher 747.3 → 409.6 (1.8×); draws=1 controls
+  reproduce ≤0.3%.
+
+**Steering** (owner active 13:02–13:58Z, all executed in-session):
+(1) 13:02Z blog improvements → **Ideas refactor DONE** (22 per-idea
+pages + hot/ice index at the old path; details audit repaired 2
+git-history corruptions — the lost `## 5` heading, #9's consumed
+bullet — and refreshed 4 stale pages) + **Now-archive sorted**
+most-recent-first (archive_now.py now rebuilds sorted every roll);
+(2) 13:05Z codify + tooling → charter §5 permanent rules (ideas
+structure + same-session index maintenance; sorted archive) +
+`driver-background-task-guard` queued; (3) 13:10Z SigLIP q →
+answered in-channel (frozen, no --backbone-vision-lr; VLM4VLA
+vision-unfreeze rung noted); (4) 13:26Z naming → two-word tags
+landed (`noise-draws` … `async-staleness`); (5) 13:58Z **async
+checkpoint saves → queued HIGH** (`async-checkpoint-saves`, molmo2
+measures ~14% wall in saves; target: lands before the attach-screen
+launch). Owner 👍 "Great stuff" 13:35Z.
+
+**Done**: this session — merge chain complete (baseline → redo →
+merge `85cdc0a` → post-merge reruns → leaderboard measured-⏱
+columns + AR draws10_t1 row 5 + main-sync review post filled with
+both speedup tables → blog + Space + report JSONs live); Ideas
+refactor + tags + archive sort (`4f18582`, `b6b5ff0`); charter
+codification (`bd1aea8`); tsens q4 launched + babysit entry
+activated + draws10_t1 entry pruned; queue: 5 items closed, 2 added
+(driver guard, async ckpt HIGH), tsens live item added.
+
+**Next**: `queue_cli.py next` → **async-checkpoint-saves** (owner
+HIGH, CPU, target before the attach screen). Boundaries: tsens rungs
+roll (repoint babysit log stem; reads via `tsens_dt_results.py` at
+completion, record-only); molmo2 endpoint ~08-08 morning → #19 box
+obligations → K smoke ladder → attachment steer window.
+
 
 
 
@@ -186,12 +253,21 @@ obligations → K smoke ladder → attachment steer window.
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
 molmo2 AR 40k on all 4 GPUs from 22:57Z, live to its ~08-08
-boundary; local draws10_t1 23:37Z → 08-07 ~12:1xZ **COMPLETE**
-(+~12.7 GPU-h), decode microbench accruing from 12:26Z — interrupted
-12:56Z at 5/14 by the work-session teardown, relaunched 12:59Z —
-≤1.5 GPU-h total). Older dated snapshots
-and session notes: rolled verbatim to the
+boundary; local draws10_t1 23:37Z → 08-07 ~12:1xZ COMPLETE (+~12.7
+GPU-h); decode microbench 12:26–15:00Z incl. incident relaunch, the
+pre-merge redo cell and post-merge reruns (+~2 GPU-h total);
+ar100k_tsens_q4 accruing from 15:01Z, ≤12 GPU-h gate). Older dated
+snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
+
+Session 13:04–15:2xZ: work session, ~2 GPU-h local (microbench redo +
+post-merge reruns) + tsens launch — exploit/infra + owner-comms
+heavy: merge chain end-to-end (pre-merge baseline banked, merge
+85cdc0a with review fixes, 9.1×/2.5× single-stream speedups
+measured, leaderboard measured-⏱ rewrite + row 5, review post
+live), Ideas refactor + tags + archive sort (owner 13:02/13:26Z),
+charter codification, async-ckpt queued HIGH (owner 13:58Z), tsens
+q4 launched at the freed GPU (gate PASS 12.7≤24).
 
 Session 09:49–10:3xZ: all-CPU, 0 GPU-h — exploit/instrument +
 owner-steered comms: #19 dT-table read script landed
