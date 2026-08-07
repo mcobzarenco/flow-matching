@@ -2,15 +2,56 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-07 19:03–20:2xZ (real `date -u`) — work session
+*Updated 2026-08-07 19:38–19:4xZ (real `date -u`) — tick (babysit):
+quiet — both runs green, no steering, no new reactions.
+**Timestamp correction**: the previous session's labels ran ~40 min
+fast — its "19:03–20:2xZ" entry actually ran 19:03–19:38Z (its
+commit `9c50f9f` landed 19:38:26Z), its "20:1x" babysit polls were
+~19:3xZ, and queue.json's `updated_utc` was future-dated 19:47Z
+(fixed to real time this tick). Log-derived facts (endpoints, rates,
+gates) are unaffected — they come from run timestamps, not labels.*
+
+**Status** (babysit 19:39Z, exit 0):
+- box molmo2 AR 40k — 28380/40k, loss 2.926 (−0.028 over the
+  window), 2.203 s/step (24.8 steps/min), vram 67.07 ≤ 71. Probe
+  6.88@28000 (low 5.91@26500 stands, gate margin 4.93). Endpoint
+  ~04–05Z 08-08 unchanged (~7.1 h compute + save windows).
+- local **ar100k_tsens_q4 rung t0.7** — 2112/4301; the 0 f/min
+  babysit window is the 160-frame flush quantization (log mtime
+  19:34:40, ~5 min old ≈ one chunk at ~29 f/min; 4 procs + 12.7 GB
+  GPU live). Cumulative projection 7.5 ≤ 12 GPU-h. t0.7 ends
+  ~21:2xZ, t1.3 ~23:5xZ → **dT read opens ~00:3xZ 08-08**.
+
+**Steering**: none (`read` empty 19:39, `history -n 5` shows no new
+owner messages or reactions; the 18:5xZ golden-ticket exchange
+stayed quiet after the 19:33Z instrument post).
+
+**Done**: quiet tick — babysit exit 0, both runs judged healthy
+(t0.7 zero-window = known quantization, verified against the log
+mtime); timestamp-drift correction recorded (see header) +
+queue.json `updated_utc` fixed; `queue_cli.py validate` green
+(depth 2, 14 open); `run_work_next` already armed by the prior
+session (19:38:27Z) — left standing: GPUs busy + CPU item queued.
+
+**Next**: chained work session → **idea17-vu5k-finalization-prep**
+(CPU, wanted before the molmo2 endpoint ~04–05Z 08-08).
+**idea19-tsens-dt-read-execution** opens at rungs completion
+~00:3xZ 08-08. Then endpoint → #19 box obligations → K smoke ladder
+→ attach-screen window; #1 execution behind tsens + selfsubgoal per
+pre-reg. **Every GPU launch goes through `run_detached.sh`.**
+
+*Updated 2026-08-07 19:03–19:38Z (times corrected from the
+mislabeled "19:03–20:2xZ"; real `date -u`) — work session
 (bounded): **#1 golden-ticket INSTRUMENT LANDED** (`0acabde`, all 4
 pre-reg oracles green, screen now launch-only) + a molmo2 stall
 false-alarm run to ground (save-window anatomy, babysit anchor) +
 lit slice (LAFM Papers page, same-session per the standing rule).*
 
-**Status** (babysit 19:04Z + 19:33Z + 20:1xZ):
+**Status** (babysit 19:04Z + 19:33Z + ~19:36Z — last label
+corrected from "20:1xZ", see the drift note above):
 - box molmo2 AR 40k — 28320/40k, loss 2.9539 (2.194 s/step, 26.8
   steps/min in-window), vram 67.07 ≤ 71, probe 6.8772@28000 (low
   5.91@26500 stands, gate margin 4.93). **Save-window anatomy
@@ -21,11 +62,11 @@ lit slice (LAFM Papers page, same-session per the standing rule).*
   jsonl mid-write). The 19:03 half-rate poll was THAT, not an
   incident; anchored in `babysit.toml`. Endpoint arithmetic
   sharpens: ~7.1 h compute + ~1.3 h saves → **~04–05Z 08-08**.
-- local **ar100k_tsens_q4 rung t0.7** — 2112/4301 at 20:1xZ, 29.2
+- local **ar100k_tsens_q4 rung t0.7** — 2112/4301 at ~19:36Z, 29.2
   f/min in-window, cumulative projection 7.4 ≤ 12 GPU-h. t0.7 ends
   ~21:2xZ, t1.3 ~23:5xZ → **dT read opens ~00:3xZ 08-08**.
 
-**Steering**: none (polled at boot 19:04, 19:33, 20:1x — the only
+**Steering**: none (polled at boot 19:04, 19:33, ~19:36 — the only
 new message was our own instrument post; the 18:5xZ golden-ticket
 exchange is quiet).
 
@@ -127,55 +168,6 @@ molmo2 endpoint ~08-08 morning → #19 box obligations → K smoke
 ladder → attach-screen window. **Every GPU launch goes through
 `run_detached.sh`.**
 
-*Updated 2026-08-07 18:00–18:2xZ (real `date -u`) — tick (babysit):
-**owner steering 18:02Z on #17** (warm-start the unfreeze from the
-40k checkpoint, two arms frozen/thawed — replied in-channel,
-agreed, amendment falls to the chained session) + **tsens rung roll
-t0.5 → t0.7 caught live 18:21Z**, babysit stem repointed.*
-
-**Status** (babysit 18:00Z + 18:21Z):
-- box molmo2 AR 40k — 26700/40k, loss 2.9714 (falling −0.038 over
-  the window), 2.181 s/step, vram 67.07 ≤ 71. Probe **5.91@26500 —
-  new low** (prior best 5.97@22500). Gate margin 4.93. ~8.1 h to
-  40k → endpoint ~08-08 morning.
-- local **ar100k_tsens_q4** — **rung t0.5 COMPLETE 4301/4301
-  ~18:21Z** (json + html + npz written); **t0.7 launched 18:21Z**
-  (`--ar-temperature 0.7` confirmed on the live process), babysit
-  `log` stem repointed t0.5 → t0.7 in `babysit.toml`. The 18:00
-  zero-window was the flush-quantization artifact again (log
-  flushes in 160-frame chunks; mtime 17:56 at 3552). Cumulative
-  gate projection 2.5 ≤ 12. t0.7 ends ~21Z, t1.3 ~23:3xZ → dT read
-  ~00Z.
-
-**Steering** (owner 18:02Z, replied 18:2xZ): on #17 — start from
-the 40k checkpoint, two arms frozen/thawed instead of the
-from-scratch 10k screen; "startup mindset, shortest time to high
-quality rollouts". **Agreed in the reply**: frozen-continue is the
-control (extra steps alone move the number), read = thawed vs
-frozen paired per-frame Δ; ~15 GPU-h (2 × ~3k steps) vs ~27, and
-it upgrades the deployment artifact directly. Caveat stated: late
-low-LR thaw can understate unfreeze-from-scratch (lit co-adapts
-vision from step 0) — asymmetric bet, acceptable. **#17 draft
-amendment = next chained-session item** (arms, steps, tower Adam
-warmup, kill lines; execution window unchanged post-attach-screen,
-still owner-held).
-
-**Done**: tick — babysit 18:00Z exit 0 both green; held the session
-through the rung boundary (charter §6), verified the roll on the
-live process list, repointed the stem; owner reply posted
-in-channel; `queue_cli.py validate` green (depth 2, 14 open);
-`run_work_next` armed (was already, 17:59). No blog build (Discord
-reply + now.md only).
-
-**Next**: chained work session → **#17 draft amendment to the
-warm-start two-arm design** (owner steering, jumps the queue) +
-rejoin the thread via `history`; then
-`idea1-golden-ticket-instrument` (CPU) in GPU-busy windows.
-**idea19-tsens-dt-read-execution** opens at rungs completion ~00Z.
-molmo2 endpoint ~08-08 morning → #19 box obligations → K smoke
-ladder → attach-screen window. **Every GPU launch goes through
-`run_detached.sh`.**
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -191,6 +183,15 @@ accruing from the 15:58:26Z systemd-run 3rd launch, ≤12 GPU-h gate). Older dat
 snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
+Session 19:38–19:4xZ: quiet babysit tick, 0 GPU-h new (tsens +
+molmo2 accruing under their own gates) — both runs green (molmo2
+28380/40k probe 6.88@28000; t0.7 2112/4301, zero-window judged
+flush quantization against the log mtime); no steering, no
+reactions. Corrected the prior session's ~40-min-fast timestamp
+labels (now.md header + queue.json `updated_utc`); `run_work_next`
+left armed for idea17-vu5k-finalization-prep. No blog build
+(now.md only).
+
 Session 18:37–19:0xZ: conversational tick, 0 GPU-h new (tsens +
 molmo2 accruing under their own gates) — owner live in-channel:
 #17 amendment 2 landed (5k/arm, gate 32, fresh-Adam
@@ -202,9 +203,3 @@ Note: the 18:24–18:4x work session (amendment 1 + seed/rewarmup
 reply) hit the hard cap before committing its last edit — its
 Discord posts are the record; the edit landed here.
 
-Session 17:47–18:0xZ: all-CPU bounded work session, 0 GPU-h new
-(tsens + molmo2 accruing under their own gates) — queue-refill/
-pre-reg: #1 golden-ticket screen pre-registered (design + nulls
-frozen entirely from banked data; staged kill line before any
-full-panel spend); queue 1 done + instrument/execution items added,
-depth 2.
