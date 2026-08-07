@@ -12,7 +12,55 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-07 08:51–09:2xZ (real `date -u`) — work session
+(bounded): **PAPERS SECTION LANDED, batch 1 (owner steering 08:42Z,
+high priority)** — new blog section + index/tracker + 8 pages
+covering 16 papers; deep re-reads surfaced two corrections our skim
+notes had missed.*
+
+**Status** (babysit 08:56Z + 09:04Z, both green, exit 0):
+- box molmo2 AR 40k — 13880/40k, loss 3.3361, 2.164 s/step, vram
+  67.07 ≤ 71, probe **NEW LOW 6.9783@13500** (gate margin 5.11);
+  ~15.7 h to endpoint ~08-08.
+- local draws10_t1 — 18752/25800, window 40.0 f/min, cumulative
+  33.1 f/min → **~13.0 h total, INSIDE the 24 GPU-h gate**, ~3.6 h
+  remaining; boundary ~12:4x–13:0xZ → frozen reads.
+
+**Steering**: none new (`read` clean at boot 08:51Z and at both
+babysit checkpoints; this session executes the 08:42Z Papers-section
+steering).
+
+**Done**: **Papers section batch 1 LANDED** (`44eb032`) —
+[`papers/`](papers/index.md) mdbook section; index doubles as the
+retroactive backlog tracker (16 of ~38 papers covered, remaining
+grouped by theme). Eight pages, each contribution / experiments /
+what-transfers / which-arm-it-fed, written for a reader with less
+context: [π0.5 + KI](papers/pi05-knowledge-insulation.md),
+[LabVLA](papers/labvla.md), [Q-VGM](papers/qvgm.md), the
+[7-paper test-time-selection cluster](papers/test-time-selection.md),
+[SnapFlow](papers/snapflow.md) (incl. our own replication),
+[the seam debate: AEGIS + Wall-OSS-0.5](papers/seam-debate.md),
+[encoder-grafting](papers/encoder-grafting.md),
+[Hi-VLA + CAC-VLA](papers/hierarchy-subgoals.md). Re-reads at
+full-text depth caught real corrections, banked as ideas.md hooks:
+**Wall-OSS-0.5's seam ablation has stop-grad WORST** (co-train
+57.0% > flow-only 36.6% > stop-grad 31.9%, from-scratch regime —
+context for #4's decision branches, not an indictment of
+KI-in-posttraining); **the frozen-VLA probe's 26.7→44.3 selector
+result is simulator-rollout-assisted**, not probe-only (#19);
+Q-VGM's 79.0→92.5 is arXiv v2 of a major rewrite; LabVLA runs NO
+recipe ablations (adoption evidence, as banked) and uses α=10.
+check.py 437 passed.
+
+**Next** (`queue_cli.py next`): papers-section-retroactive
+continues (~22 papers; next batch most load-bearing first: one-step
+menu, DVAC/GoldenTicket/EnergyPolicy, state-shortcut set); then #19
+dT-table read script + endpoint-runbook git-audit; draws10_t1
+boundary ~12:4x–13:0xZ today → frozen reads; endpoint ~08-08 → #19
+box obligations → K smoke ladder → attachment steer window.
 
 *Updated 2026-08-07 08:44–09:0xZ (real `date -u`) — tick (babysit):
 **OWNER STEERING 08:42Z, HIGH PRIORITY — blog Papers section** with
@@ -101,43 +149,6 @@ launch-ready in the same quiet window (gate permitting); endpoint
 K smoke ladder green (BEFORE either arm) → attachment-decision owner
 steer window → F then K; arm A img280 + box-home-sweep HELD.
 
-*Updated 2026-08-07 08:25–08:3xZ (real `date -u`) — tick (babysit):
-both runs green, no steering; the draws10_t1 zero-frame window
-cross-checked and judged a slow-content segment, not a stall.*
-
-**Status** (babysit 08:25Z, both green, exit 0):
-- box molmo2 AR 40k — 12820/40k, loss 3.4417, 2.18 s/step, vram
-  67.07 ≤ 71, probe 7.90@12500 (low 7.1514@10500; gate margin 4.93);
-  window 27.1 steps/min = the @12500 save fully behind; ~16.5 h to
-  endpoint ~08-08.
-- local draws10_t1 — 17152/25800, window 0.0 f/min — cross-checked
-  directly before judging: log mtime 08:20:36Z (progress lines land
-  in 160-frame blocks, ~10 min apart in the ~16 f/min slow-content
-  class), gpu0 20–25% util across two samples with all 4 procs
-  alive → the known content-dependent slow segment, NOT a stall;
-  cumulative 32.5 f/min → **~13.2 h total, INSIDE the 24 GPU-h
-  gate**, ~4.4 h remaining; boundary ~12:4x–13:0xZ → frozen reads
-  (`draws10_t1_results.py`, one command).
-
-**Steering**: none (`read` clean; `history` = own posts only, no
-reactions; owner asleep since 00:58Z).
-
-**Done**: tick — babysit both green, exit 0; the flat draws10_t1
-window verified healthy by direct log-mtime + double GPU sample
-(charter §6: the verdict is mine, not the CLI's); queue validate
-green (depth 2, 12 open); `run_work_next` re-armed (GPUs busy + CPU
-queue: #19 energy-score read next). No Discord post (own 08:24:23Z
-post ~1 min pre-tick, precedent); no blog build (no reader-visible
-change beyond this roll). Archive roll (kept 3).
-
-**Next** (`queue_cli.py next`): #19 energy-score read script (CPU),
-then the #19 dT-table read script; draws10_t1 boundary ~12:4x–13:0xZ
-today → frozen reads (one command), then the T-sens rungs are
-launch-ready in the same quiet window (gate permitting); endpoint
-~08-08 → #19 box obligations (ceiling + ES reads) → K smoke ladder
-green (BEFORE either arm) → attachment-decision owner steer window →
-F then K; arm A img280 + box-home-sweep HELD.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -169,3 +180,10 @@ exploratory record-only proper-scoring-rule AR-vs-flow read,
 oracle-gated pre-data incl. exact banked read-4 reproduction;
 check.py 437). Refill: endpoint-runbook git-audit. Lit slice taken
 (~15 min): LabVLA recipe adoption + Q-VGM frozen-trunk RL → #4.
+
+Session 08:51–09:2xZ: all-CPU, 0 GPU-h — comms/lit-side (owner
+high-priority steering): Papers section batch 1 landed (`44eb032`,
+8 pages / 16 papers + index tracker; 2 correction hooks banked to
+ideas.md from the deep re-reads; check.py 437). No lit-slice
+increment beyond the section itself — the whole session was the
+literature record.
