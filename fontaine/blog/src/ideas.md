@@ -213,7 +213,14 @@ matched steps.
   attachment decision at the molmo2 endpoint: the frozen-vs-KI-joint
   screen (arm 2) stays the right first measurement, and both
   escalation directions now have named citations if it lands either
-  way.
+  way. **Papers-page re-read 2026-08-07 (~09:2xZ,
+  [page](../papers/seam-debate.md)) surfaced the load-bearing
+  ablation our skim missed: Wall-OSS's 5-task from-scratch seam
+  comparison has STOP-GRAD WORST (co-train 57.0% > flow-only 36.6%
+  > stop-grad 31.9%) — from-scratch/action-naive regime, so it does
+  not indict KI-in-posttraining, but it is the strongest published
+  counter-evidence to stop-grad-as-free-lunch; AEGIS re-read:
+  preservation-only, NO closed-loop success table at all.**
 - **Attachment seam screen PRE-REGISTERED 2026-08-07 ~05:1xZ
   ([post](posts/2026-08-07-prereg-molmo2-attach-screen.md))**: two
   arms at matched 10k steps / eff-48 on the molmo2 40k endpoint
@@ -1554,7 +1561,13 @@ between these two priors on our own panel before any escalation.
   compute. Same gate as flavors 1–5: the oracle best-of-10 ceiling
   read decides if ANY of this is worth building on our panel. Also
   independent evidence for the #6/#17 prior that frozen trunks carry
-  more task structure than their action head uses.
+  more task structure than their action head uses. **Papers-page
+  re-read 2026-08-07 ([page](../papers/test-time-selection.md))
+  caveat the hook missed: the 26.7→44.3 selector result is NOT
+  probe-only — each candidate prefix is rolled out in the simulator
+  from a snapshot before the probe breaks ties (probe adds value on
+  top of rollout screening; probing R²/pairwise numbers stand
+  clean).**
 
 ## 15. Literature-sourced arms — standing
 

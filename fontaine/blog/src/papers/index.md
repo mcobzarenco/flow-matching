@@ -1,0 +1,113 @@
+# Papers
+
+Reviews of the papers behind the literature slices. One page per
+paper — or per tight theme cluster where the papers only make sense
+together — each covering four things: **what the paper contributes**,
+**what experiments it actually ran**, **what transfers to our setup
+and what doesn't**, and **which idea or experimental arm it fed**
+(the `#N` references point into [Ideas](../ideas.md)).
+
+These pages are written for a reader with less context than the
+research log assumes. The one-line hooks in `ideas.md` remain the
+index into the backlog; the page here is the record of what was
+actually read and why it mattered. Standing rule (owner,
+2026-08-07): every literature slice lands its Papers page in the
+same session it is banked.
+
+## Pages
+
+| Page | Papers | Fed |
+|---|---|---|
+| [π0.5 + Knowledge Insulation](pi05-knowledge-insulation.md) | 2504.16054, 2505.23705 | #4 attachment arms, #6 self-subgoal probe, #16 north star, #5 |
+| [LabVLA](labvla.md) | 2606.13578 | #4 — the KI-joint arm is the field's incumbent |
+| [Q-VGM](qvgm.md) | 2606.08015 | #4 — the frozen arm keeps an offline-RL escalation path |
+| [Test-time selection for VLAs](test-time-selection.md) | 2510.05681, 2605.01194, 2602.12281, 2506.17811, 2605.25547, 2607.03751, 2605.28527 | #19 — the six selection flavors behind the best-of-10 ceiling gate |
+| [SnapFlow](snapflow.md) | 2604.05656 | #12 — replicated on our stack; 1-NFE distillation adopted-signal |
+| [The seam debate](seam-debate.md) | 2604.16067, 2605.30877 | #4 — the escalation branches on both sides of the F/K screen |
+| [Encoder winners don't transfer](encoder-grafting.md) | 2606.14153 | #4 — the scale-transfer caveat on reading Δ_seam |
+| [Hierarchy & subgoals](hierarchy-subgoals.md) | 2606.10267, 2607.04816 | #6 — design constraints + escalation map for the self-subgoal probe |
+
+## Retroactive backlog
+
+The owner asked (2026-08-07) for retroactive pages covering every
+lit slice banked so far. Grouped by theme, most load-bearing first;
+each batch of pages lands in a work session until the table clears.
+
+**The attachment seam (#4)** — how to attach a flow expert to a
+pretrained trunk:
+
+| Paper | arXiv | Status |
+|---|---|---|
+| π0.5 | [2504.16054](https://arxiv.org/abs/2504.16054) | ✅ [page](pi05-knowledge-insulation.md) |
+| Knowledge Insulation | [2505.23705](https://arxiv.org/abs/2505.23705) | ✅ [page](pi05-knowledge-insulation.md) |
+| LabVLA | [2606.13578](https://arxiv.org/abs/2606.13578) | ✅ [page](labvla.md) |
+| Q-VGM | [2606.08015](https://arxiv.org/abs/2606.08015) | ✅ [page](qvgm.md) |
+| AEGIS (gradient asymmetry) | [2604.16067](https://arxiv.org/abs/2604.16067) | ✅ [page](seam-debate.md) |
+| Wall-OSS-0.5 | [2605.30877](https://arxiv.org/abs/2605.30877) | ✅ [page](seam-debate.md) |
+| Encoder winners don't transfer across scale | [2606.14153](https://arxiv.org/abs/2606.14153) | ✅ [page](encoder-grafting.md) |
+| AR-VLA (history-aware AR expert) | [2603.10126](https://arxiv.org/abs/2603.10126) | queued |
+| Representation anchoring | [2607.13429](https://arxiv.org/abs/2607.13429) | queued |
+
+**Test-time selection & sampling (#19, #1):**
+
+| Paper | arXiv | Status |
+|---|---|---|
+| MG-Select | [2510.05681](https://arxiv.org/abs/2510.05681) | ✅ [page](test-time-selection.md) |
+| VLA-ATTC | [2605.01194](https://arxiv.org/abs/2605.01194) | ✅ [page](test-time-selection.md) |
+| CoVer | [2602.12281](https://arxiv.org/abs/2602.12281) | ✅ [page](test-time-selection.md) |
+| RoboMonkey | [2506.17811](https://arxiv.org/abs/2506.17811) | ✅ [page](test-time-selection.md) |
+| TapSampling | [2605.25547](https://arxiv.org/abs/2605.25547) | ✅ [page](test-time-selection.md) |
+| Look Before You Leap | [2607.03751](https://arxiv.org/abs/2607.03751) | ✅ [page](test-time-selection.md) |
+| What Frozen VLAs Already Know About Success | [2605.28527](https://arxiv.org/abs/2605.28527) | ✅ [page](test-time-selection.md) |
+| DVAC (variance-gated replanning) | [2606.03847](https://arxiv.org/abs/2606.03847) | queued |
+| Golden Ticket (noise search) | [2603.15757](https://arxiv.org/abs/2603.15757) | queued |
+| Energy Policy (energy-score training) | [2510.12483](https://arxiv.org/abs/2510.12483) | queued |
+
+**One-step decoding & distillation (#12):**
+
+| Paper | arXiv | Status |
+|---|---|---|
+| SnapFlow | [2604.05656](https://arxiv.org/abs/2604.05656) | ✅ [page](snapflow.md) |
+| One-Step Flow Policy (OFP) | [2603.12480](https://arxiv.org/abs/2603.12480) | queued |
+| MeanFlow one-step VLA | [2603.01469](https://arxiv.org/abs/2603.01469) | queued |
+| Let It Be Simple | [2606.05737](https://arxiv.org/abs/2606.05737) | queued |
+| GoldenStart | [2603.14245](https://arxiv.org/abs/2603.14245) | queued (screened out) |
+
+**Hierarchy & subgoals (#6):**
+
+| Paper | arXiv | Status |
+|---|---|---|
+| Hi-VLA (hierarchy design study) | [2606.10267](https://arxiv.org/abs/2606.10267) | ✅ [page](hierarchy-subgoals.md) |
+| CAC-VLA (gated latent-action conditioning) | [2607.04816](https://arxiv.org/abs/2607.04816) | ✅ [page](hierarchy-subgoals.md) |
+| π0.7 / world-action models | [NVIDIA WAM post](https://developer.nvidia.com/blog/pretrained-to-imagine-fine-tuned-to-act-the-rise-of-world-action-models/) | queued |
+
+**State shortcut & modality imbalance (#9, #11):**
+
+| Paper | arXiv | Status |
+|---|---|---|
+| Adapt Your Body (proprio masking p=0.8) | [2506.23944](https://arxiv.org/abs/2506.23944) | queued |
+| State-free policy | [2509.18644](https://arxiv.org/abs/2509.18644) | queued |
+| ReViP (state-dominant bias) | [2601.16667](https://arxiv.org/abs/2601.16667) | queued |
+| GAP (phase-guided gradient scaling) | [2602.12032](https://arxiv.org/abs/2602.12032) | queued |
+| ThinkProprio | [2602.06575](https://arxiv.org/abs/2602.06575) | queued |
+| Cloak (visual EE masking) | [2606.22836](https://arxiv.org/abs/2606.22836) | queued |
+
+**Grounding & conditioning placement (#11):**
+
+| Paper | arXiv | Status |
+|---|---|---|
+| IVRA (patch-affinity injection) | [2601.16207](https://arxiv.org/abs/2601.16207) | queued |
+| FLOWER (deep-layer pruning) | [2509.04996](https://arxiv.org/abs/2509.04996) | queued |
+| SCALE (adaptive token budget) | [2602.04208](https://arxiv.org/abs/2602.04208) | queued |
+| SmolVLA (mid-stack conditioning) | [2506.01844](https://arxiv.org/abs/2506.01844) | queued |
+
+**Data, tokenization & trunks (#5, #9, #16, #17, #18):**
+
+| Paper | arXiv | Status |
+|---|---|---|
+| FAST (local canon) | [2501.09747](https://arxiv.org/abs/2501.09747) | queued |
+| FASTer (learned VQ tokenizer) | [2512.04952](https://arxiv.org/abs/2512.04952) | queued |
+| Rethinking VLA scaling (negative transfer) | [2602.09722](https://arxiv.org/abs/2602.09722) | queued |
+| Data-engine survey | [2604.23001](https://arxiv.org/abs/2604.23001) | queued |
+| VLM-to-VLA parameter redundancy | [2606.31382](https://arxiv.org/abs/2606.31382) | queued |
+| LoRA-r32 fine-tuning study (π0 on UR5e) | [2607.10172](https://arxiv.org/abs/2607.10172) | queued |
