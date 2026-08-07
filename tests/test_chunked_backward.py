@@ -254,7 +254,13 @@ def test_chunked_gradient_matches_unchunked_ar_backbone_aux() -> None:
     for name, grad in reference.items():
         scale = float(grad.norm()) or 1.0
         rel = float((accumulated[name] - grad).norm()) / scale
-        assert rel < 1e-5, f"{name}: chunked-vs-unchunked gradient rel {rel}"
+        # Bound calibrated cross-hardware (2026-08-07): <1e-5 on the
+        # H100 box, 1.0004e-4 on the owner's RTX 3000 Ada (same math,
+        # different kernels/reduction order — the module docstring's
+        # padding-width diagnostic measures ~2e-4 for same-math fp
+        # realizations). The guarded failure mode (mean-of-chunk-means
+        # normalization) shows rel ≫ 1e-2, so 5e-4 stays a sharp oracle.
+        assert rel < 5e-4, f"{name}: chunked-vs-unchunked gradient rel {rel}"
 
 
 def test_ar_fast_sums_reconstruct_mean() -> None:

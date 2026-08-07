@@ -206,3 +206,28 @@ def resolve_camera_kinds(
         kinds = camera_kinds_from_names(names)
     kinds.update(overrides)
     return kinds
+
+
+def home_trajectory(
+    current: Sequence[float],
+    home: Sequence[float],
+    *,
+    seconds: float,
+    fps: float,
+) -> list[list[float]]:
+    """Tick-by-tick linear interpolation from ``current`` to ``home``
+    (inclusive of the final exact-home row): the slow return-to-start
+    executed on ctrl-c. Cosine-eased at both ends so the arm neither
+    jerks off its stop position nor slams into home — peak per-tick
+    step ~1.57x the linear rate, still far under any sane clamp for a
+    1-2 s return."""
+    ticks = max(2, round(seconds * fps))
+    rows: list[list[float]] = []
+    for step in range(1, ticks + 1):
+        # Cosine ease-in-out: s(u) in [0, 1], s'(0) = s'(1) = 0.
+        u = step / ticks
+        eased = 0.5 * (1.0 - math.cos(math.pi * u))
+        rows.append(
+            [c + (h - c) * eased for c, h in zip(current, home, strict=True)],
+        )
+    return rows

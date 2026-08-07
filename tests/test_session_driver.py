@@ -9,6 +9,7 @@ are back to guessing their own wall-clock — the class P5 closed.
 
 from __future__ import annotations
 
+import os
 import re
 import shutil
 import stat
@@ -36,7 +37,14 @@ def _run_driver(tmp_path: Path, mode: str) -> str:
     shutil.copytree(FONTAINE / "harness", repo / "fontaine" / "harness")
     shutil.rmtree(repo / "fontaine" / "harness" / "state", ignore_errors=True)
     shutil.rmtree(repo / "fontaine" / "harness" / "logs", ignore_errors=True)
-    subprocess.run(["git", "-C", str(repo), "init", "-q"], check=True)
+    # GIT_* scrubbed for the same reason as test_refresh_ctrl._env:
+    # under a pre-commit hook in a linked worktree, an inherited
+    # ABSOLUTE GIT_DIR makes this init re-initialize the REAL repo.
+    subprocess.run(
+        ["git", "-C", str(repo), "init", "-q"],
+        check=True,
+        env={k: v for k, v in os.environ.items() if not k.startswith("GIT_")},
+    )
     fake = home / ".local" / "bin" / "claude"
     fake.write_text(FAKE_CLAUDE)
     fake.chmod(fake.stat().st_mode | stat.S_IXUSR)

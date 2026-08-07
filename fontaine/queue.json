@@ -21,6 +21,15 @@
    "boundary": "~13:0x-13:2xZ 2026-08-07 (cumulative 32.2 f/min at 03:07Z -> ~13.3 h total, re-projected each babysit; 24 GPU-h gate)"
   },
   {
+   "id": "async-checkpoint-saves",
+   "title": "OWNER STEERING 08-07 13:58Z, HIGH PRIORITY: async checkpoint serialization for bijou.train \u2014 molmo2 measures ~15.5 min/save (~14 min silent ZeRO-1 gather, 3/4 GPUs idle-spinning NCCL, + 37 GB write) every ~92 min stepping = ~14% wall-time waste. Design: fast device->CPU pinned snapshot at the save step, background thread does gather+serialize+write while stepping resumes; must compose with zero1 + chunked backward + DDP. Oracles: byte-identical checkpoint vs sync path; resume-from-async-save loss-curve equivalence; a mid-write crash leaves the previous checkpoint intact (atomic rename). TARGET: lands oracle-gated BEFORE the attach-screen launch (~08-08) so F/K's 50-70 GPU-h get the ~14% back.",
+   "class": "cpu",
+   "status": "queued",
+   "prereg": null,
+   "owner_hold": false,
+   "boundary": "before attach-screen launch at the molmo2 endpoint (~08-08)"
+  },
+  {
    "id": "blog-now-archive-sort",
    "title": "OWNER STEERING 08-07 13:02Z: sort the Now-archive per-date pages most-recent-first (SUMMARY sidebar + archive/index.md) and fix archive_now.py so every roll maintains the order automatically",
    "class": "cpu",

@@ -154,6 +154,13 @@ connection — nothing to keep alive, nothing to crash.
 
 - **Steer by messaging `#fontaine`** — every tick polls the channel;
   steering overrides the agenda (charter §7).
+- **Force a session now** (instead of waiting ≤15 min for the timer):
+  `systemctl --user start fontaine-tick.service` — detached,
+  systemd-managed, byte-identical to a timer fire; or run the driver
+  directly for a chosen mode (in tmux for long ones):
+  `~/flow-matching/fontaine/harness/fontaine-session.sh tick|work`.
+  Both are always safe: if a session is already live, the lock makes
+  the new invocation skip with exit 0.
 - **Watch a live session**: `tail -f` the newest file in
   `harness/logs/` (sessions stream JSONL events as they happen).
   Liveness = a `claude` process (`pgrep -af claude`) or a growing

@@ -9,6 +9,7 @@ class: control evals citing code no one can identify.
 
 from __future__ import annotations
 
+import os
 import subprocess
 from pathlib import Path
 
@@ -17,12 +18,28 @@ SCRIPT = (
 )
 
 
+def _env() -> dict[str, str]:
+    """The inherited environment with every ``GIT_*`` variable dropped.
+
+    Incident 2026-08-07: a `git commit` in a LINKED WORKTREE runs the
+    pre-commit hook (-> check.py -> this suite) with an ABSOLUTE
+    GIT_DIR + GIT_AUTHOR_* exported, so the throwaway repo's `git -C
+    ... init` re-initialized the REAL repo's git dir (core.worktree ->
+    a pytest tmp path, user t@t in the shared config) and `commit -qm
+    c1` landed on the real HEAD. In the main checkout GIT_DIR is
+    exported RELATIVE (`.git`), which re-resolves against the tmp cwd
+    — isolation held there by luck alone. Scrubbing GIT_* makes the
+    isolation unconditional."""
+    return {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+
+
 def _git(repo: Path, *args: str) -> str:
     return subprocess.run(
         ["git", "-C", str(repo), *args],
         check=True,
         capture_output=True,
         text=True,
+        env=_env(),
     ).stdout.strip()
 
 
@@ -48,6 +65,7 @@ def _refresh(repo: Path, dest: Path) -> subprocess.CompletedProcess:
         check=True,
         capture_output=True,
         text=True,
+        env=_env(),
     )
 
 
