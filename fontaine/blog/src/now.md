@@ -51,7 +51,9 @@ v1-stale (v3: 46/51; per-task tickets always gain, only *shared*
 tickets regress); #12's MeanFlow hook missed that its 8.7× speedup
 loses accuracy (78% vs 84.5%), and Let It Be Simple's one-step win
 is state-carried and degrades 10-step decoding. check.py 437
-passed.
+passed. Blog built + Space pushed (3 new pages + index + now
+curl-verified 200); Discord posted 09:5xZ
+(id 1535217206403792936).
 
 **Next** (`queue_cli.py next`): papers batch 3 (grounding set,
 data/tokenization/trunks set, AR-VLA + repr-anchoring + π0.7/WAM)
