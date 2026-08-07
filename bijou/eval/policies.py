@@ -23,7 +23,7 @@ import torch
 from torch import Tensor
 
 from ..annotations import ConditionField
-from ..aux_text import AuxField, AuxGeneration
+from ..aux_text import AuxField, AuxGeneration, subgoal_text
 from ..decoders.ar_backbone import ARBackboneDecoder, ARSampling, ARSuffixDecoder
 from ..decoders.flow import FlowDecoder
 from ..interface import Collator, mask_state_item
@@ -247,6 +247,7 @@ class BijouPolicy:
         generate: tuple[AuxField, ...] = (),
         condition_override: dict[str, str] | None = None,
         include_subgoal_condition: bool = False,
+        subgoal_mode: str | None = None,
         offload_ple: bool = False,
         noise_key: str = "stable",
         mask_state: bool = False,
@@ -265,6 +266,20 @@ class BijouPolicy:
             # Same convention: a state-blind diagnostic read must never
             # be mistakable for a deployment read.
             self.name += "_state-masked"
+        if subgoal_mode not in (None, "oracle", "self"):
+            raise SystemExit(
+                f"subgoal_mode must be None, 'oracle' or 'self', got {subgoal_mode!r}",
+            )
+        if subgoal_mode is not None and "subgoal" in (condition_override or {}):
+            raise SystemExit(
+                "--subgoal-mode and --condition-override subgoal=… are two "
+                "sources for the same prompt slot — pick one",
+            )
+        if subgoal_mode == "oracle":
+            # Same convention (charter §2): a truth-conditioned read must
+            # never pass as the planner-less deployment read.
+            self.name += "_oraclesubgoal"
+        self.subgoal_mode = subgoal_mode
         self.mask_state = mask_state
         self.device = device
         self.seed = seed
@@ -354,6 +369,31 @@ class BijouPolicy:
                 f"{list(self.info.condition_fields) or 'NONE'} — overriding "
                 "an untrained field would render text the model never saw",
             )
+        if subgoal_mode is not None:
+            # #6 rung (a): both modes need the trained [subgoal|…] slot;
+            # the self mode additionally decodes the model's own subgoal.
+            if ConditionField.SUBGOAL.value not in self.info.condition_fields:
+                raise SystemExit(
+                    "--subgoal-mode needs a checkpoint that trained the "
+                    "[subgoal|…] condition slot; this one trained "
+                    f"{list(self.info.condition_fields) or 'NONE'}",
+                )
+            if subgoal_mode == "self" and AuxField.SUBGOAL not in self.aux_fields:
+                raise SystemExit(
+                    "--subgoal-mode self decodes the model's OWN subgoal; "
+                    "this checkpoint trained aux fields "
+                    f"{[f.value for f in self.aux_fields] or 'NONE'} — no "
+                    "subgoal to generate",
+                )
+        # The oracle mode is per-frame TRUE-label conditioning: SUBGOAL
+        # joins the condition fields with no override, so each frame
+        # renders its judge segment label (label-less frames render
+        # nothing and decode identically to baseline). The self mode
+        # keeps the base collator PLANNER-LESS — pass 2 clones it with
+        # the slot added and feeds pass 1's text through the override.
+        include_subgoal_condition = (
+            include_subgoal_condition or subgoal_mode == "oracle"
+        )
         self.collator = Collator(
             inputs=self.model.encoder.inputs_collator(),
             instruction=None,
@@ -579,4 +619,150 @@ class NarratedBijouPolicy:
         assert prediction.generations is not None  # ar_backbone always generates
         for index, generation in zip(indices, prediction.generations, strict=True):
             self.generations[index] = generation
+        return [chunk.cpu() for chunk in prediction.actions]
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
+class SubgoalRecord:
+    """One frame's self-subgoal provenance row (#6 rung (a)): the frame
+    identity triple, the instruction, the TRUE segment label (None =
+    unjudged frame) and what pass 1 generated — machine-readable for
+    the stage-1 validity table and the results post's qualitative
+    block. ``generated_text`` is the raw generation (the ground truth
+    for reports); ``generated_subgoal`` is the parsed value line."""
+
+    index: int
+    repo_id: str
+    episode_index: int
+    frame_index: int
+    instruction: str
+    true_subgoal: str | None
+    generated_subgoal: str | None
+    generated_text: str
+
+
+class SelfSubgoalPass1Policy:
+    """Pass 1 of the self-subgoal probe (#6 rung (a)) — and the
+    narrated-subgoal-only arm, free: the PLANNER-LESS prompt requests
+    ``[generate|subgoal actions]``, the greedy decode's actions are
+    this policy's prediction, and each frame's generated subgoal is
+    retained (``records[index]``) for pass 2 to feed back through the
+    prompt slot. Shares the base policy's loaded model (the
+    NarratedBijouPolicy pattern); the collator is a generate_override
+    clone of the base's, which must EXCLUDE the SUBGOAL condition
+    field: training's anti-copy coupling suppressed the subgoal request
+    whenever the prompt rendered the hint, so condition-plus-generate
+    is a context the model never trained."""
+
+    def __init__(self, base: BijouPolicy) -> None:
+        if AuxField.SUBGOAL not in base.aux_fields:
+            raise SystemExit(
+                "self-subgoal pass 1 requests the model's own subgoal; "
+                "this checkpoint trained aux fields "
+                f"{[f.value for f in base.aux_fields] or 'NONE'} — no "
+                "subgoal to decode",
+            )
+        if ConditionField.SUBGOAL in base.collator.condition_fields:
+            raise SystemExit(
+                "self-subgoal pass 1 must collate the PLANNER-LESS "
+                "context, but the base collator renders the [subgoal|…] "
+                "condition — construct the base with subgoal_mode='self', "
+                "not 'oracle'",
+            )
+        self.base = base
+        self.name = f"{base.name}_narrsubgoal"
+        self.collator = dataclasses.replace(
+            base.collator,
+            generate_override=(AuxField.SUBGOAL,),
+        )
+        self.records: dict[int, SubgoalRecord] = {}
+
+    @torch.no_grad()
+    def predict(self, items: list[dict[str, Any]], indices: list[int]) -> list[Tensor]:
+        items = self.base.apply_overrides(items)
+        batch = self.collator(items).to(self.base.device)
+        prediction = self.base.model.predict_chunk(
+            batch,
+            num_steps=self.base.sample_steps,
+            method=self.base.method,
+            generate=(AuxField.SUBGOAL,),
+        )
+        assert prediction.generations is not None  # ar_backbone always generates
+        for item, index, generation in zip(
+            items,
+            indices,
+            prediction.generations,
+            strict=True,
+        ):
+            self.records[index] = SubgoalRecord(
+                index=index,
+                repo_id=str(item["repo_id"]),
+                episode_index=int(item["episode_index"]),
+                frame_index=int(item["frame_index"]),
+                instruction=str(item["task"]),
+                true_subgoal=subgoal_text(item),
+                generated_subgoal=generation.subgoal,
+                generated_text=generation.text,
+            )
+        return [chunk.cpu() for chunk in prediction.actions]
+
+
+class SelfSubgoalPolicy:
+    """Pass 2 — the self-subgoal arm: re-encode each frame with pass 1's
+    generated subgoal rendered through the trained ``[subgoal|…]``
+    prompt slot and decode actions on the deployment fast path
+    ``[generate|actions]``. The request NEVER includes subgoal
+    (condition-plus-generate is an untrained context — pre-reg oracle
+    iv); rendering goes through the one shared Collator path, never a
+    re-implementation (oracle iii). An empty or absent pass-1
+    generation renders nothing, so the prompt is byte-identical to the
+    planner-less baseline's (the no-hint limit — oracle i);
+    ``force_empty`` forces that limit on EVERY frame, the live
+    pre-launch check, and suffixes the name so a forced run can never
+    pass as the self arm."""
+
+    def __init__(
+        self,
+        base: BijouPolicy,
+        pass1: SelfSubgoalPass1Policy,
+        *,
+        force_empty: bool = False,
+    ) -> None:
+        self.base = base
+        self.pass1 = pass1
+        self.force_empty = force_empty
+        self.name = f"{base.name}_selfsubgoal" + ("_emptyhint" if force_empty else "")
+        self.collator = dataclasses.replace(
+            base.collator,
+            # The trained condition fields WITH the subgoal slot, in
+            # template order (the base excluded it — planner-less).
+            condition_fields=tuple(
+                f for f in ConditionField if f.value in set(base.info.condition_fields)
+            ),
+            generate_override=(),
+        )
+
+    @torch.no_grad()
+    def predict(self, items: list[dict[str, Any]], indices: list[int]) -> list[Tensor]:
+        items = self.base.apply_overrides(items)
+        conditioned: list[dict[str, Any]] = []
+        for item, index in zip(items, indices, strict=True):
+            record = self.pass1.records.get(index)
+            if record is None:
+                raise SystemExit(
+                    f"self-subgoal pass 2 reached frame {index} before "
+                    "pass 1 — the runner must score the pass-1 policy "
+                    "first in every batch",
+                )
+            text = "" if self.force_empty else (record.generated_subgoal or "")
+            # An explicit EMPTY override means "no hint" to the collator
+            # — it must never fall through to the frame's true label.
+            conditioned.append({**item, "condition_subgoal": text})
+        batch = self.collator(conditioned).to(self.base.device)
+        prediction = self.base.model.predict_chunk(
+            batch,
+            num_steps=self.base.sample_steps,
+            method=self.base.method,
+            generate=(),
+        )
         return [chunk.cpu() for chunk in prediction.actions]

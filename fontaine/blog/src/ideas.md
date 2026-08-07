@@ -294,10 +294,27 @@ numbers and both finalization amendments.
   `[subgoal|…]` / self-generated fed back through the slot /
   narrated-subgoal-only), validity table gated go/no-go BEFORE any
   scalar, frozen Δ-reads + horizon decomposition, ≤ 8 GPU-h with the
-  q4-subset fallback. Instrument (two-pass self-subgoal eval mode +
-  oracle-truth conditioning) does not exist yet — lands oracle-gated
-  before launch (queued); execution at the first quiet local-GPU
+  q4-subset fallback. Execution at the first quiet local-GPU
   window ≥ the draws10_t1 boundary + its frozen reads.
+- **Instrument LANDED 2026-08-07 ~04:3xZ (oracle-gated, this
+  commit):** `bijou.eval --subgoal-mode {oracle,self}` — oracle mode
+  renders per-frame TRUE labels through the trained slot (label-less
+  frames decode the baseline context); self mode is the two-pass
+  loop sharing one model load (pass 1 planner-less
+  `[generate|subgoal actions]` = the `_narrsubgoal` arm free, pass 2
+  feeds the text back through `[subgoal|…]` on the fast path =
+  `_selfsubgoal`). `--dump-subgoals` retains per-frame generations
+  (identity triple → text); `--selfsubgoal-force-empty` is the live
+  oracle-(i) no-hint-limit run (`_emptyhint`, never a self-arm
+  read); report JSON records the mode. Stage-1 validity table:
+  `fontaine/scripts/selfsubgoal_stage1.py` (60 stratified frames,
+  generation-only — NO scalars before the gate). The four
+  pre-registered oracles' CPU halves are pinned in
+  `tests/test_selfsubgoal.py` (prompt-byte equality of the no-hint
+  limit and label-less oracle frames; one shared rendering path;
+  pass 2's request set excludes subgoal); the real-checkpoint halves
+  run pre-launch per the pre-reg. No semantic deviation from the
+  pre-reg → no amendment needed.
 
 ## 7. Stream-schedule re-test — `queued`
 

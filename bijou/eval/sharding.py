@@ -37,6 +37,7 @@ from torch import Tensor
 
 from ..aux_text import AuxGeneration
 from .metrics import FrameScore
+from .policies import SubgoalRecord
 from .report import ReportSample
 
 
@@ -64,6 +65,9 @@ class ShardResults:
     sensitivity_deltas: list[float]
     report_samples: dict[int, ReportSample]
     generations: dict[int, AuxGeneration]
+    # Self-subgoal pass 1's per-frame provenance rows ({} when no
+    # subgoal-mode run) — --dump-subgoals serializes the merged map.
+    subgoal_records: dict[int, SubgoalRecord]
     dump_predictions: dict[str, list[Tensor]]
     dump_truth: list[Tensor]
     dump_valid: list[Tensor]
@@ -126,6 +130,9 @@ def merge_shards(shards: list[ShardResults]) -> ShardResults:
             k: v for shard in shards for k, v in shard.report_samples.items()
         },
         generations={k: v for shard in shards for k, v in shard.generations.items()},
+        subgoal_records={
+            k: v for shard in shards for k, v in shard.subgoal_records.items()
+        },
         # --dump-draws without --dump-predictions: the per-policy lists
         # stay [] while dump_index carries one row per dumped frame — the
         # mirror of the dump_draws case below.

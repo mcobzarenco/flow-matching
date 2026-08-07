@@ -69,6 +69,8 @@ from .policies import (
     ChunkPolicy,
     NarratedBijouPolicy,
     NormalizedStateCopyPolicy,
+    SelfSubgoalPass1Policy,
+    SelfSubgoalPolicy,
     StateCopyPolicy,
 )
 
@@ -128,6 +130,15 @@ class EvalReport:
     # (zero-information soft state token) — a diagnostic, never a
     # deployment read; the policy name carries _state-masked too.
     mask_state: bool
+    # #6 rung (a) subgoal-conditioning probe: None = every eval before
+    # 2026-08-07; "oracle" = per-frame TRUE-label [subgoal|…]
+    # conditioning; "self" = the two-pass self-subgoal arms (policy
+    # names carry _oraclesubgoal / _narrsubgoal / _selfsubgoal).
+    subgoal_mode: str | None
+    # Oracle-(i) live check: pass 2 ran with every generated subgoal
+    # forced EMPTY (must reproduce the baseline decode; the policy name
+    # carries _emptyhint) — never a self-arm read.
+    selfsubgoal_force_empty: bool
     generate: list[str] | None
     condition_override: list[str]
     batch_size: int
@@ -187,6 +198,8 @@ class EvalReport:
             "target_time": self.target_time,
             "noise_key": self.noise_key,
             "mask_state": self.mask_state,
+            "subgoal_mode": self.subgoal_mode,
+            "selfsubgoal_force_empty": self.selfsubgoal_force_empty,
             "generate": self.generate,
             "condition_override": self.condition_override,
             "batch_size": self.batch_size,
@@ -435,6 +448,39 @@ def parse_args() -> argparse.Namespace:
         "deployment read",
     )
     parser.add_argument(
+        "--subgoal-mode",
+        choices=["oracle", "self"],
+        default=None,
+        help="#6 rung (a) subgoal-conditioning probe (condition-trained "
+        "ar_backbone checkpoints): 'oracle' renders each frame's TRUE "
+        "segment label through the trained [subgoal|…] slot (label-less "
+        "frames decode identically to baseline; policy name gains "
+        "_oraclesubgoal); 'self' runs the two-pass loop — pass 1 "
+        "greedy-decodes the model's own subgoal on the planner-less "
+        "prompt ([generate|subgoal actions]; its actions are the "
+        "_narrsubgoal arm, free), pass 2 feeds that text back through "
+        "the prompt slot and decodes on the deployment fast path "
+        "(_selfsubgoal). Probe reads, never deployment reads; the "
+        "banked planner-less baseline is NOT re-run",
+    )
+    parser.add_argument(
+        "--dump-subgoals",
+        type=Path,
+        default=None,
+        help="requires --subgoal-mode self: write pass 1's per-frame "
+        "generations as JSON (frame identity triple, instruction, TRUE "
+        "segment label, generated text) — the stage-1 validity table "
+        "and the results post's qualitative block read this",
+    )
+    parser.add_argument(
+        "--selfsubgoal-force-empty",
+        action="store_true",
+        help="requires --subgoal-mode self: force pass 2's hint EMPTY on "
+        "every frame (the no-hint limit) — the pre-launch oracle (i) "
+        "run, which must reproduce the baseline decode bit-exact. The "
+        "policy name gains _emptyhint; never a self-arm read",
+    )
+    parser.add_argument(
         "--condition-override",
         nargs="*",
         default=[],
@@ -521,6 +567,49 @@ def parse_args() -> argparse.Namespace:
         parser.error(
             "--ar-temperature samples the bijou policy's AR action "
             "decode — it requires --checkpoint",
+        )
+    if args.subgoal_mode is not None:
+        if args.checkpoint is None:
+            parser.error(
+                "--subgoal-mode conditions/generates through a trained "
+                "checkpoint — it requires --checkpoint",
+            )
+        if args.generate is not None:
+            parser.error(
+                "--subgoal-mode owns the request set (pass 1 requests "
+                "exactly [generate|subgoal actions], pass 2 exactly "
+                "[generate|actions]) — drop --generate",
+            )
+        if args.ar_temperature is not None or args.sample_draws > 1:
+            parser.error(
+                "--subgoal-mode is a greedy deployment-fast-path probe; "
+                "mixing it with sampled/ensembled decodes would pair "
+                "different inference classes — run them separately",
+            )
+        if args.smolvla is not None:
+            parser.error(
+                "--subgoal-mode applies only to the bijou policy — run "
+                "smolvla separately (the --mask-state precedent)",
+            )
+        if args.mask_state:
+            parser.error(
+                "--subgoal-mode with --mask-state mixes two probes in "
+                "one read — not pre-registered; run them separately",
+            )
+        if any(pair.partition("=")[0] == "subgoal" for pair in args.condition_override):
+            parser.error(
+                "--subgoal-mode and --condition-override subgoal=… are "
+                "two sources for the same prompt slot — pick one",
+            )
+    if args.dump_subgoals is not None and args.subgoal_mode != "self":
+        parser.error(
+            "--dump-subgoals writes pass 1's generations — it requires "
+            "--subgoal-mode self",
+        )
+    if args.selfsubgoal_force_empty and args.subgoal_mode != "self":
+        parser.error(
+            "--selfsubgoal-force-empty forces pass 2's hint empty — it "
+            "requires --subgoal-mode self",
         )
     return args
 
@@ -689,6 +778,8 @@ def main() -> int:
         )
     bijou_policy: BijouPolicy | None = None
     narrated_policy: NarratedBijouPolicy | None = None
+    pass1_policy: SelfSubgoalPass1Policy | None = None
+    self_policy: SelfSubgoalPolicy | None = None
     if args.checkpoint is not None:
         overrides: dict[str, str] = {}
         for pair in args.condition_override:
@@ -715,17 +806,49 @@ def main() -> int:
             # (it is an operator input, not a hindsight label — the
             # deployment default is planner-less).
             include_subgoal_condition="subgoal" in overrides,
+            subgoal_mode=args.subgoal_mode,
         )
         if bijou_policy.info.chunk_size != args.chunk_size:
             raise SystemExit(
                 f"checkpoint chunk size {bijou_policy.info.chunk_size} != "
                 f"--chunk-size {args.chunk_size}",
             )
-        policies.append(bijou_policy)
+        if args.subgoal_mode == "self":
+            # The two-pass arms REPLACE the plain bijou row: the
+            # planner-less baseline is banked, never re-run (pre-reg).
+            # Pass 1 must sit before pass 2 in the list — the runner
+            # scores policies in order per batch, and pass 2 reads pass
+            # 1's generations for exactly those frames.
+            pass1_policy = SelfSubgoalPass1Policy(bijou_policy)
+            self_policy = SelfSubgoalPolicy(
+                bijou_policy,
+                pass1_policy,
+                force_empty=args.selfsubgoal_force_empty,
+            )
+            policies.extend([pass1_policy, self_policy])
+            if is_main:
+                print(
+                    f"subgoal mode SELF: {pass1_policy.name} (pass 1, "
+                    f"narrated-subgoal arm) feeds {self_policy.name} "
+                    "(pass 2, prompt-slot conditioning); plain bijou row "
+                    "skipped (baseline is banked)",
+                    flush=True,
+                )
+        else:
+            policies.append(bijou_policy)
+            if args.subgoal_mode == "oracle" and is_main:
+                print(
+                    f"subgoal mode ORACLE: {bijou_policy.name} renders "
+                    "each frame's TRUE segment label through the "
+                    "[subgoal|…] slot (label-less frames = baseline "
+                    "context)",
+                    flush=True,
+                )
         if (
             bijou_policy.aux_fields
             and args.generate is None
             and args.ar_temperature is None
+            and args.subgoal_mode is None
         ):
             # The narrated pass rides automatically on aux-trained
             # checkpoints (shared model, ~2x bijou inference): its
@@ -794,11 +917,14 @@ def main() -> int:
     event_labels: dict[int, str] = {}
     visible_labels: dict[int, str] = {}
     # Q3: measured iff outcome-conditioning is trained AND the run isn't
-    # already a manual counterfactual.
+    # already a manual counterfactual — nor a subgoal-mode probe (its
+    # rows are conditioned reads; flipping outcome on top would measure
+    # a compound counterfactual at double GPU cost).
     q3 = (
         bijou_policy is not None
         and "outcome" in bijou_policy.info.condition_fields
         and not bijou_policy.condition_override
+        and args.subgoal_mode is None
     )
     sensitivity_deltas: list[float] = []
     done = 0
@@ -938,6 +1064,7 @@ def main() -> int:
         generations=(
             narrated_policy.generations if narrated_policy is not None else {}
         ),
+        subgoal_records=(pass1_policy.records if pass1_policy is not None else {}),
         dump_predictions=dump_predictions,
         dump_truth=dump_truth,
         dump_valid=dump_valid,
@@ -1000,6 +1127,31 @@ def main() -> int:
             seed=np.array(args.seed),
         )
         print(f"dumped per-draw chunks to {args.dump_draws}", flush=True)
+    if args.dump_subgoals is not None:
+        # Sorted by global frame index — world-size-invariant like every
+        # other output; rows carry the dataset-local identity triple so
+        # they stay addressable when the corpus composition changes.
+        rows = [
+            dataclasses.asdict(record)
+            for _, record in sorted(results.subgoal_records.items())
+        ]
+        args.dump_subgoals.parent.mkdir(parents=True, exist_ok=True)
+        args.dump_subgoals.write_text(
+            json.dumps(
+                {
+                    "checkpoint": str(args.checkpoint),
+                    "subgoal_mode": args.subgoal_mode,
+                    "selfsubgoal_force_empty": args.selfsubgoal_force_empty,
+                    "seed": args.seed,
+                    "rows": rows,
+                },
+                indent=2,
+            ),
+        )
+        print(
+            f"dumped {len(rows)} per-frame subgoals to {args.dump_subgoals}",
+            flush=True,
+        )
 
     # Headline aggregation (summaries, per-dataset, Q2, paired) runs over
     # the CORE panel only — under a sample plan the labeled-oversample
@@ -1192,6 +1344,19 @@ def main() -> int:
                 core_scores[bijou_policy.name],
             ),
         )
+    if self_policy is not None and pass1_policy is not None:
+        # The channel read, paired in-eval: (nearly) the same text
+        # entering through the prompt slot (pass 2) vs the suffix voice
+        # (pass 1) — where the text enters, separated from whether text
+        # helps. The Δ-vs-banked-baseline reads stay offline (frozen).
+        comparisons.append(
+            compare_paired(
+                self_policy.name,
+                core_scores[self_policy.name],
+                pass1_policy.name,
+                core_scores[pass1_policy.name],
+            ),
+        )
     if comparisons:
         print("\n== paired comparisons (negative delta = better) ==", flush=True)
         print(
@@ -1232,6 +1397,8 @@ def main() -> int:
             target_time=args.target_time,
             noise_key=args.noise_key,
             mask_state=args.mask_state,
+            subgoal_mode=args.subgoal_mode,
+            selfsubgoal_force_empty=args.selfsubgoal_force_empty,
             generate=list(args.generate) if args.generate is not None else None,
             condition_override=list(args.condition_override),
             batch_size=args.batch_size,
@@ -1303,6 +1470,13 @@ def main() -> int:
             f"fps filter: {args.fps or 'all'}",
             f"camera-count filter: {args.camera_counts or 'all'}",
             f"generate: {args.generate if args.generate is not None else '(fast path)'}",
+            "subgoal mode: "
+            + (
+                args.subgoal_mode
+                + (" (FORCED-EMPTY hint)" if args.selfsubgoal_force_empty else "")
+                if args.subgoal_mode is not None
+                else "none (planner-less)"
+            ),
             (
                 f"sample plan: {args.sample_plan} (plan seed {plan.plan_seed}, "
                 f"{len(core_indices)} core + "
@@ -1393,7 +1567,13 @@ def main() -> int:
         policy_names = [s.name for s in summaries]
         # Worst-first by the evaluated policy's MAE (the actionable tail
         # on top); the baseline sorts it when no checkpoint was given.
-        sort_policy = bijou_policy.name if bijou_policy is not None else policy_names[0]
+        # In self mode the plain bijou row never ran — pass 2 sorts.
+        if self_policy is not None:
+            sort_policy = self_policy.name
+        elif bijou_policy is not None:
+            sort_policy = bijou_policy.name
+        else:
+            sort_policy = policy_names[0]
         collapsible_tables = [
             ReportTable(
                 title=(

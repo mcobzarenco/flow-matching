@@ -78,6 +78,7 @@ def _shard(
         sensitivity_deltas=[float(len(frame_ids))],
         report_samples={},
         generations={},
+        subgoal_records={},
         dump_predictions={"bijou": [torch.full((2, 3), float(i)) for i in frame_ids]},
         dump_truth=[torch.zeros(2, 3) for _ in frame_ids],
         dump_valid=[torch.ones(2, dtype=torch.bool) for _ in frame_ids],

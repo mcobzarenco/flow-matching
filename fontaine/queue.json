@@ -1,10 +1,10 @@
 {
-  "updated_utc": "2026-08-07T03:58:00+00:00",
+  "updated_utc": "2026-08-07T03:52:47+00:00",
   "depth_reason": null,
   "items": [
     {
       "id": "molmo2_ar40k",
-      "title": "Molmo2 AR 40k trunk run (box, 4xDDP) \u2014 probe 9.24@5500 (sub-10 \u00d73, new low); watch @7500 save ~04:1x-04:2xZ for a repeat of the @5000 slow-save",
+      "title": "Molmo2 AR 40k trunk run (box, 4xDDP) \u2014 probe low 8.54@6000 (8.94@6500 latest, sub-10 \u00d75); watch @7500 save ~04:1x-04:2xZ for a repeat of the @5000 slow-save",
       "class": "gpu-box",
       "status": "live",
       "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-molmo2-ar-40k.md",
@@ -30,22 +30,13 @@
       "boundary": "opens at draws10_t1 completion (~13:0x-13:2xZ 2026-08-07); reads are frozen in the pre-reg"
     },
     {
-      "id": "idea6-selfsubgoal-instrument",
-      "title": "#6 rung-(a) instrument: bijou.eval self-subgoal two-pass mode + oracle-truth [subgoal|...] conditioning, per-frame generation dump + validity table, 4 pre-registered oracles (pre-reg posted 08-07 03:5xZ; instrument must land oracle-gated before launch)",
-      "class": "cpu",
-      "status": "queued",
-      "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-selfsubgoal-probe.md",
-      "owner_hold": false,
-      "boundary": "wanted before the first quiet local-GPU window after draws10_t1 frozen reads"
-    },
-    {
       "id": "idea6-selfsubgoal-probe",
-      "title": "#6 rung-(a) self-subgoal probe execution: stage-1 validity table (go/no-go) then oracle/self/narrated arms vs banked 5.8026, <= 8 GPU-h",
+      "title": "#6 rung-(a) self-subgoal probe execution: pre-launch live oracles (force-empty bit-exact vs baseline rows, label-less oracle frames, state-copy byte-match), stage-1 validity table (go/no-go, NO scalars before the gate) then oracle/self/narrated arms vs banked 5.8026, <= 8 GPU-h (instrument LANDED oracle-gated 08-07 ~04:3xZ: --subgoal-mode, --dump-subgoals, selfsubgoal_stage1.py)",
       "class": "gpu-local",
       "status": "blocked",
       "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-selfsubgoal-probe.md",
       "owner_hold": false,
-      "boundary": "opens at first quiet local-GPU window >= draws10_t1 boundary (~13:0x-13:2xZ 2026-08-07) AND its frozen reads AND the instrument landing"
+      "boundary": "opens at first quiet local-GPU window >= draws10_t1 boundary (~13:0x-13:2xZ 2026-08-07) AND its frozen reads"
     },
     {
       "id": "idea19-ar-draws-instrument",
@@ -55,6 +46,15 @@
       "prereg": null,
       "owner_hold": false,
       "boundary": "instrument + pre-reg wanted before molmo2_ar40k endpoint (~2026-08-08)"
+    },
+    {
+      "id": "idea20-activation-checkpointing",
+      "title": "#20 activation checkpointing over the Molmo2 decoder blocks (measured need 2026-08-06: ~2.4 GiB/sample saved activations, only ~2-sample chunks fit): torch.utils.checkpoint wrap + CPU keystone oracle (checkpointed == plain forward/backward on the tiny fixture family); the measured chunk-size ladder re-run is a separate GPU follow-up",
+      "class": "cpu",
+      "status": "queued",
+      "prereg": null,
+      "owner_hold": false,
+      "boundary": "wanted before the next live-trunk training launch (molmo2 stage-2 attachment, endpoint ~2026-08-08)"
     },
     {
       "id": "molmo2-stage2-attachment-decision",
