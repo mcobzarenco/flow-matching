@@ -5,7 +5,53 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-07 06:46–07:0xZ (real `date -u`) — work session
+(bounded): **K SMOKE-LADDER SCRIPT LANDED** (`ab735ba`) — the last
+coded prerequisite before the attach screen's launch window; every
+remaining attach-screen step is now box execution, not code.*
+
+**Status** (babysit 06:47Z + 06:56Z, both green, exit 0):
+- box molmo2 AR 40k — 10880/40k, loss 3.5108, 2.194 s/step (last
+  tick's 4.068 headline confirmed as save-stall+probe averaging —
+  re-settled), vram 67.07 ≤ 71, probe low 7.1514@10500; endpoint
+  ~08-08 (~17.7 h).
+- local draws10_t1 — 14112/25800, window 33.6 f/min, cumulative 32.1
+  f/min → **~13.4 h total, INSIDE the 24 GPU-h gate**, ~6.1 h
+  remaining; boundary ~13:0x–13:3xZ → frozen reads.
+
+**Steering**: none (`read` clean at boot 06:46Z and close 06:56Z;
+owner asleep since 00:58Z).
+
+**Done**: **K smoke-ladder script LANDED** (`ab735ba`) —
+`smoke_attach_k_ddp4.sh`: the exact K recipe verbatim (endpoint
+warm-start, `--joint-ce --seam-stop-grad --activation-checkpointing`,
+zero1 + chunked backward), 150 steps/rung with eval@100 + save@100 so
+the probe-decode and joint-save memory shapes are exercised; ladder
+B12c6 → B8c4 → B6c3 at pinned chunk-microbatch 2; pass = rc 0 AND max
+`vram_alloc_peak_gib` ≤ 71.0 from the rung's jsonl (torch alloc peak,
+babysit's own key — not nvidia-smi reserved); green writes the
+`k_mem_ready` record + echoes the exact `K_MEM_READY=1 BATCH=
+BACKWARD_CHUNKS=` launch line; sub-B12 green = MATCHED DOWNSHIFT both
+arms, loudly — and the queue boundary now pins the ladder BEFORE
+EITHER arm (a downshift moves F too); all-red = no marker, owner
+steer. Pipefail-safe fact extraction (an OOMed rung can't kill the
+ladder), EXIT-trap sampler, per-rung mem-snapshot forensics. Flags
+verified against `bijou.train --help`; check.py **437 passed**. Queue:
+ladder item → blocked/script-landed (runs at the endpoint window);
+refill = **#19 selection-ceiling read script** (CPU: oracle best-of-10
+from the endpoint `--dump-draws` npz; audit `draws_fairness.py`
+best-of-N first; exploratory, not pre-registered); validate green
+(depth 2, 12 open). No lit slice (taken ~06:1xZ last session;
+cadence).
+
+**Next** (`queue_cli.py next`): Δ_seam frozen-read script (CPU), then
+the #19 selection-ceiling read script; draws10_t1 boundary
+~13:0x–13:3xZ → frozen reads; endpoint ~08-08 → #19 box obligations →
+K smoke ladder green (BEFORE either arm) → attachment-decision owner
+steer window → F then K; arm A img280 + box-home-sweep HELD.
 
 *Updated 2026-08-07 06:43–06:5xZ (real `date -u`) — tick (babysit):
 both runs green, no steering — a plain cadence tick.*
@@ -80,43 +126,6 @@ reads; endpoint ~08-08 → #19 box obligations → smoke ladder green →
 attachment-decision owner steer window → F then K; arm A img280 +
 box-home-sweep HELD.
 
-*Updated 2026-08-07 06:17–06:3xZ (real `date -u`) — tick (babysit),
-held briefly through the **@10000 save-resume check** (§6; archive
-precedent: the @5000 save stalled ~14 min, all ranks healthy).*
-
-**Status** (babysit 06:18Z, both green, exit 0):
-- box molmo2 AR 40k — 10000/40k, **@10000 save in flight since
-  ~06:10Z** (+0 steps at 06:18Z; the boundary rows are healthy: loss
-  3.2643, 2.191 s/step, vram 67.07 ≤ 71, probe 7.1652@10000 = the
-  crossed K1 gate). Save-resume verdict: PENDING at entry-write time
-  — filled below by the in-session watch. Endpoint ~08-08.
-- local draws10_t1 — 12832/25800, window 31.1 f/min, cumulative 32.1
-  f/min → **~13.4 h total, INSIDE the 24 GPU-h gate**; boundary
-  ~13:1x–13:3xZ → frozen reads.
-
-**Steering**: none (`read` = our own 06:14Z post only; `history` =
-own posts, no new reactions; owner asleep since 00:58Z).
-
-**Done**: tick — babysit both green; queue validate green (depth 2,
-11 open); `run_work_next` already armed (GPUs busy + CPU queue: #20
-activation checkpointing next) — left armed. Held for the save
-resume with a background step-watch (60 s poll, rank-drop coverage)
-instead of re-running babysit in a loop — repeated `read`s would
-move the Discord cursor and could swallow an owner message.
-SAVE-RESUME VERDICT: **RESUMED GREEN 06:33Z — 10260/40k, loss
-3.5381, 2.173 s/step, vram 67.07, all 4 GPUs busy** (~14 min stall,
-the @5000 precedent's shape; filled by the chained work session).
-No Discord post (own 06:14Z post 3 min
-pre-tick, precedent); blog build deferred to the chained session
-per tick precedent; archive roll (entry + oldest footer note).
-
-**Next** (`queue_cli.py next`): #20 activation checkpointing (CPU,
-hard K prerequisite, chained work session), then the K smoke-ladder
-script; draws10_t1 boundary ~13:1x–13:3xZ → frozen reads; endpoint
-~08-08 → #19 box obligations → #20 + ladder green →
-attachment-decision owner steer window → F then K; arm A img280 +
-box-home-sweep HELD.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -126,13 +135,6 @@ from 23:37Z — both live to their boundaries). Older dated snapshots
 and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
-Session 04:26–05:0xZ: all-CPU, 0 GPU-h — exploit-side: killed
-session's leftovers verified+committed, #19 endpoint launcher prep
-landed (one-command endpoint read, mechanized cost gate, 10 oracles).
-Lit slice TAKEN (~15 min): AEGIS + Wall-OSS-0.5 → #4's seam map now
-covers stop-grad / projection-repair / end-to-end corners; refill:
-#4 attachment-screen pre-reg draft queued.
-
 Session 05:48–06:2xZ: all-CPU, 0 GPU-h — exploit-side: #4
 attach-screen LAUNCH PREP landed (F/K one-command launchers, 70 GPU-h
 gate mechanized + matched 5k downshift, joint→AR-view materializer,
@@ -140,3 +142,12 @@ probe-kill bars pinned; 10 oracles, check.py 433); molmo2 K1 gate
 CROSSED GREEN in-session (7.1652@10000 vs ≤12.0944). Lit slice TAKEN
 (~15 min): CoVer banked to #19; `--dump-draws` retention fix
 pre-launch.
+
+Session 06:46–07:0xZ: all-CPU, 0 GPU-h — exploit-side: K smoke-ladder
+script landed (`smoke_attach_k_ddp4.sh`, exact K recipe, B12c6→B8c4→
+B6c3 vs the 71 GiB alloc-peak gate, green writes the `k_mem_ready`
+record; ladder pinned BEFORE either arm — a downshift is matched);
+the attach screen's remaining steps are all box execution. Refill:
+#19 selection-ceiling read script. Lit slice skipped (taken ~06:1xZ;
+cadence). (The 06:21–06:5xZ #20 session ran noteless — its facts are
+in the archived entries.)
