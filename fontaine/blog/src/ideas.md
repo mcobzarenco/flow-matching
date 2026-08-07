@@ -1485,3 +1485,28 @@ search first. Local canon: π0, π0.5, SmolVLA, FAST
   2.0720 ctrl. Worth a probe if arm A's img280 read leaves grounding
   headroom on the table (interacts: more tokens vs better-used
   tokens are the same front, opposite ends).
+
+- **Lit slice 2026-08-07 ~07:5xZ (session slice, two banked):**
+  (a) **TapSampling (arXiv:2605.25547)** — a FOURTH selection-rung
+  flavor for #19: inference-time sampling with a TASK-PROGRESS
+  verifier (learned progress-understanding score filters sampled
+  action candidates per step). Joins MG-Select (verifier-free KL) /
+  VLA-ATTC (trained pairwise critic) / CoVer (contrastive
+  instruction-alignment verifier) in the banked flavor list — all
+  wait behind the oracle best-of-10 ceiling read
+  (`idea19-selection-ceiling-read-script`): if the ceiling is small,
+  every one of these is dead on our panel; no selector gets built
+  before that number exists. (b) **AR-VLA (arXiv:2603.10126, RSS
+  2026)** — a standalone AR action EXPERT generating actions as a
+  continuous causal sequence over refreshable vision-language
+  prefixes, with its own persistent history — a third attachment
+  topology beside our F (frozen-trunk flow expert) and K (KI-joint):
+  the expert keeps cross-observation memory instead of resetting per
+  chunk. Not actionable while the #4 seam screen is the live
+  question (its F/K verdict comes first); banked to #17 as the
+  history-aware-expert direction if the attach screen leaves
+  headroom. Also seen: "representation anchoring" (arXiv:2607.13429,
+  frozen-copy distillation to keep OOD generalization during
+  finetuning) — context for the K named-cost branch's repair space,
+  recorded here only; AEGIS stays the single pre-registered
+  escalation (frozen decision rule untouched).
