@@ -3,7 +3,55 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-07 17:33–18:0xZ (real `date -u`) — work session
+(bounded, one item): **#17 molmo2 vision-unfreeze pre-reg DRAFT
+posted** ([draft](posts/2026-08-07-prereg-molmo2-vision-unfreeze.md),
+`3b6e0b8`) — the 17:04Z owner question's disposition, drafted while
+the lit slice is fresh.*
+
+**Status** (babysit 17:41Z):
+- box molmo2 AR 40k — 25640/40k, loss 3.042, 2.193 s/step, vram
+  67.07 ≤ 71. Probe 6.65@25500 (in-band, no ≥7.5 pair). Gate margin
+  4.93. ~8.7 h to 40k → endpoint ~08-08 morning.
+- local **ar100k_tsens_q4 rung t0.5** — 2912/4301, cumulative
+  28.2 f/min, projection 2.5 ≤ 12 gate, ~0.8 h left on the rung.
+  Rung roll t0.5 → t0.7 **~18:3xZ** (babysit `log` stem repoint at
+  the first tick after); at the cumulative rate t0.7 ends ~21:0xZ,
+  t1.3 ~23:3x–00Z → dT read opens late tonight (the 17:30 entry's
+  "20–21Z" was optimistic; 3 × 2.5 h from 15:58 launch says ~00Z).
+
+**Steering**: none (babysit-forced poll 17:41Z: no new messages;
+`history -n 5`: our own posts + the answered 17:04Z question).
+
+**Done**: this session — **#17 vision-unfreeze pre-reg DRAFT**
+(`3b6e0b8`, loud DRAFT banner, execution blocked on finalization
+amendment + owner go): one variable `--backbone-vision-lr 2e-6`
+(0.1× text; full-FT tower per 2607.10172, never LoRA-on-SigLIP);
+**primary = 10k screen** vs the banked baseline `step_010000`
+checkpoint (both panel-eval'd with the 40k launcher's chained eval
+verbatim; paired per-frame Δ CI95, null band 0.07 = seed-trio
+spread; critical-frame re-pool robustness via the #16 instrument),
+40k = escalation only (~110 GPU-h not spent before a ~27 GPU-h
+screen). Memory ladder pre-registered (chunks 6→12 → decoder
+activation-ckpt; matched downshift excluded — poisons the contrast;
+~3–4 GiB tower adder on 67.07/71 makes the 150-step smoke
+load-bearing). Declared blind spot: the panel can't see the MAPS
+OOD tax. check.py 460 green. Queue: draft item done,
+`idea17-molmo2-vision-unfreeze-execution` added (blocked,
+owner_hold, post-attach-screen ~08-09+); validate green depth 2.
+
+**Next**: `queue_cli.py next` → **idea19-tsens-dt-read-execution**
+opens at rungs completion (~23:3x–00Z tonight; script landed,
+record-only vs the decode-temperature page's written prior); then
+`idea1-golden-ticket-prereg-draft` in GPU-busy windows. Dated
+boundaries: tsens rung roll ~18:3xZ (babysit stem repoint t0.5 →
+t0.7 at first tick after) → all rungs ~00Z → dT read; molmo2
+endpoint ~08-08 morning → #19 box obligations → K smoke ladder →
+attach-screen window. **Every GPU launch goes through
+`run_detached.sh`.**
 
 *Updated 2026-08-07 17:30–17:3xZ (real `date -u`) — tick (babysit):
 both runs green, no steering. tsens window read 0.0 f/min again —
@@ -101,50 +149,6 @@ ladder → attach-screen window (first save validates async ckpt in
 production at 1250 cadence). **Every GPU launch goes through
 `run_detached.sh`.**
 
-*Updated 2026-08-07 16:53–17:0xZ (real `date -u`) — tick (babysit):
-both runs green, no steering. One anomaly chased and cleared: the
-tsens babysit window read 0.0 f/min — adjudicated log quantization
-(the progress log flushes every 160 frames, ~one line per 6 min at
-current rate, and the poll window was 3 min); verified healthy by
-watching the next line land on schedule.*
-
-**Status** (babysit 16:53Z):
-- box molmo2 AR 40k — 24780/40k, loss 3.020, 2.195 s/step, vram
-  67.07 ≤ 71, 27.7 steps/min window. Probe 6.81@24500 (in-band, no
-  ≥7.5 pair). Gate margin 4.93. ~9.3 h to 40k → endpoint ~08-08
-  morning.
-- local **ar100k_tsens_q4 rung t0.5** — babysit window 0.0 f/min
-  (1472→1472 over 3 min) — adjudicated HEALTHY, not a stall: the
-  log flushes in 160-frame chunks; the next line
-  (`scored 1632/4301`) landed 16:54:35Z, 5.6 min after its
-  predecessor → 28.5 f/min, on the cumulative rate. Cumulative
-  26.6 f/min, projection 2.7 ≤ 12 gate, ~1.6 h remaining. **Babysit
-  note for future ticks: a window <6 min can legitimately read
-  0.0 f/min on this run — judge on cumulative + log mtime.** Rung
-  roll t0.5 → t0.7 ~18:3xZ (repoint the babysit `log` stem at the
-  first tick after); all rungs ~00Z 08-08.
-
-**Steering**: none (`read`: only our own 16:52 close post;
-`history -n 5`: no reactions).
-
-**Done**: tick — babysit exit 0, molmo2 clean; tsens 0.0-window
-anomaly chased to the 160-frame flush quantization (verdict
-healthy, confirmed live); `queue_cli.py validate` green (depth 3,
-13 open); `run_work_next` already armed 16:53Z — chained work
-session follows (GPUs busy, CPU items queued: critical-frame
-re-pooling pre-reg, golden-ticket pre-reg draft). 16:34 tick +
-16:06 work entries + 15:22 footer note rolled to archive. No
-Discord post (16:52 close current), no blog build (no
-reader-visible change).
-
-**Next**: chained work session → next CPU queue item; tsens rung
-roll ~18:3xZ (babysit stem repoint t0.5 → t0.7) → all rungs ~00Z
-08-08 → dT read against the papers page's written prior
-(record-only); molmo2 endpoint ~08-08 morning → #19 box
-obligations → K smoke ladder → attach-screen window (first save
-validates async ckpt in production, now at 1250 cadence). **Every
-GPU launch goes through `run_detached.sh`.**
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -159,6 +163,13 @@ the tick-service cgroup teardown (+~0.7 GPU-h lost, 992 frames),
 accruing from the 15:58:26Z systemd-run 3rd launch, ≤12 GPU-h gate). Older dated
 snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
+
+Session 17:33–18:0xZ: all-CPU bounded work session, 0 GPU-h new
+(tsens + molmo2 accruing under their own gates) — queue-refill/
+pre-reg: #17 vision-unfreeze pre-reg DRAFT posted (10k-screen
+design vs baseline@10k, memory ladder, frozen reads incl.
+critical-frame re-pool; execution owner-held post-attach-screen);
+queue 1 done + 1 blocked execution item added, depth 2.
 
 Session 16:57–18:1xZ: all-CPU work session, 0 GPU-h new (tsens +
 molmo2 accruing under their own gates) — exploit/analysis +
