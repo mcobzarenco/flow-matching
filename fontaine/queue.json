@@ -1,5 +1,5 @@
 {
-  "updated_utc": "2026-08-07T18:05:00+00:00",
+  "updated_utc": "2026-08-07T17:55:00+00:00",
   "depth_reason": null,
   "items": [
     {
@@ -283,12 +283,21 @@
     },
     {
       "id": "idea17-molmo2-vision-unfreeze-prereg-draft",
-      "title": "#17 molmo2 vision-unfreeze rung \u2014 pre-reg DRAFT (CPU; owner question 08-07 17:04Z + the vla-initialization page's convergent prior: VLM4VLA frozen-encoder collapse incl. PaliGemma/SigLIP 3.51->0.50, Rethinking-scaling frozen-only negative transfer, SCALE encoder-leverage; no banked case of vision-unfreeze hurting action metrics \u2014 harm channel is gradient quality/forgetting, so the draft should carry a low-LR leash (--backbone-vision-lr << text 2e-5) and note the vram bind (67.07/71 at B12, likely batch downshift or activation-ckpt on the tower)): draft the arm as a matched-steps contrast vs the 40k baseline endpoint, panel + probe reads frozen before launch; the 08-06 molmo2 pre-reg already names vision-unfreeze as a follow-on rung. DRAFT ONLY \u2014 execution needs its own posted pre-reg, box window after the attach-screen chain, and owner go",
+      "title": "#17 molmo2 vision-unfreeze rung \u2014 pre-reg DRAFT \u2014 DRAFTED 08-07 ~17:5xZ work session (2026-08-07-prereg-molmo2-vision-unfreeze.md, loud DRAFT banner): one variable --backbone-vision-lr 2e-6 (0.1x text; full-FT tower per 2607.10172, never LoRA-on-SigLIP), PRIMARY = 10k screen vs the banked baseline step_010000 checkpoint (both panel-eval'd with the 40k launcher's chained eval verbatim; paired per-frame delta CI95, null band 0.07 = seed-trio spread; critical-frame re-pool robustness; probe overlay record-only), 40k = escalation rung only; memory ladder pre-registered (R0 as-is / R1 chunks 12 / R2 + decoder activation-ckpt; matched downshift EXCLUDED \u2014 poisons the contrast; ~3-4 GiB tower adder on 67.07/71 straddles the gate so the 150-step smoke is load-bearing); kill lines incl. probe > baseline+2.0 x3 evals; cost gate 40 GPU-h; declared blind spot: panel cannot see the MAPS OOD tax. Finalization checklist in the post converts DRAFT -> posted",
       "class": "cpu",
-      "status": "queued",
-      "prereg": null,
+      "status": "done",
+      "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-molmo2-vision-unfreeze.md",
       "owner_hold": false,
-      "boundary": "draft is CPU work at any GPU-busy window; execution window opens after the attach-screen chain (~08-09+), owner-steered"
+      "boundary": "DONE 08-07 (draft). Execution item queued separately; window opens after the attach-screen chain (~08-09+), owner-steered"
+    },
+    {
+      "id": "idea17-molmo2-vision-unfreeze-execution",
+      "title": "#17 molmo2 vision-unfreeze 10k screen EXECUTION (box, 4xDDP): run the finalization-amendment checklist in 2026-08-07-prereg-molmo2-vision-unfreeze.md (launcher byte-audit at HEAD, 150-step memory smoke -> ladder rung + peak/rate quoted, baseline probe values at 2500/5000/7500/10000 quoted, arm launcher + babysit.toml entry landed, owner go), post the amendment (DRAFT -> posted), then launch via run_detached.sh; reads frozen in the draft (paired delta vs baseline@step_010000, null band 0.07, critical-frame re-pool)",
+      "class": "gpu-box",
+      "status": "blocked",
+      "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-molmo2-vision-unfreeze.md",
+      "owner_hold": true,
+      "boundary": "opens after the attach-screen chain (~08-09+) AND an explicit owner go (owner-steered execution per the 17:04Z steering disposition); needs a free box window and the finalization amendment posted first"
     },
     {
       "id": "idea1-golden-ticket-prereg-draft",

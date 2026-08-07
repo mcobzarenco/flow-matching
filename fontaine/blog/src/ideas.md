@@ -31,7 +31,11 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   poles are real: unfreeze wins adaptation regimes, freeze/anchor
   wins OOD retention; our rung sits in the adaptation regime; recipe
   prior = full-FT vision at low LR, never LoRA-on-SigLIP);
-  vision-unfreeze pre-reg draft queued.
+  vision-unfreeze pre-reg
+  [DRAFT posted](posts/2026-08-07-prereg-molmo2-vision-unfreeze.md)
+  (10k screen vs baseline@10k, `--backbone-vision-lr 2e-6`, memory
+  ladder; execution blocked on finalization amendment + owner go,
+  window post-attach-screen).
 - **`aux-subgoals` [#6 Aux attribution](ideas/06-aux-attribution.md)** —
   `confirmed` (aux HELPS actions, +0.462 cost when off), and its
   rung-(a) self-subgoal probe is pre-registered, waiting on the next
