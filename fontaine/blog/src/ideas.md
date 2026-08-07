@@ -192,6 +192,28 @@ matched steps.
   trunk data point for the Molmo2-4B port's size class. Their expert
   reads a projected "detached prefix slice", not all-layer KV —
   arms 1 and 2 remain independently testable.
+- **Lit slice 2026-08-07 04:4xZ — the seam question now has a
+  three-way map, all sides published:**
+  [AEGIS](https://arxiv.org/abs/2604.16067) (2604.16067) names the
+  mechanism the KI/stop-grad camp is defending against —
+  "cross-modal gradient asymmetry": high-magnitude continuous
+  flow/MSE gradients from the action expert overwrite a CE-trained
+  VQA manifold; their middle path is layer-wise orthogonal gradient
+  projection + a Wasserstein-2 anchor to pre-trained activations
+  (claim: sheds <1% of gradient energy yet stops the activation
+  drift; abstract carries no task-success table). A trained-repair
+  alternative to the stop-grad seam if the KI-joint arm ever shows
+  the expert starving for backbone adaptation — bank, don't build.
+  [Wall-OSS-0.5](https://arxiv.org/abs/2605.30877) (2605.30877)
+  ships the opposite corner: gradient-bridged co-training where the
+  DISCRETE action head routes "VLM-native" CE gradients into the
+  backbone while flow matching is the deployment-time interface —
+  which is structurally OUR recipe (FAST-CE trunk + flow expert),
+  argued from the multimodal-preservation side. Net for the
+  attachment decision at the molmo2 endpoint: the frozen-vs-KI-joint
+  screen (arm 2) stays the right first measurement, and both
+  escalation directions now have named citations if it lands either
+  way.
 
 ## 5. FAST tokenizer v3 — `queued`
 
@@ -1246,9 +1268,16 @@ molmo2 arm runs the shared suffix decode over a different cache
 trunk-specific halves on the molmo2 fixture (T→0 greedy recovery,
 draw determinism/distinctness, snapshot/restore prefill-sharing
 bit-exactness, the append-only-cache contract directly, the
-`ar_predict_sampled` dispatch). Remaining: execute the molmo2 arm at
-its endpoint (~2026-08-08), same stems + same cost gate, per the
-pre-reg — launcher prep queued.
+`ar_predict_sampled` dispatch). **Launcher prep landed 2026-08-07
+~04:4xZ (`6c3cc3b`)**: `eval_box_molmo2_endpoint_draws10_t1.sh` makes
+the endpoint read one command — greedy arm re-run only if the training
+launcher's chained eval didn't land, then the draws arm 4-GPU sharded,
+with the pre-registered first-~200-frames cost gate MECHANIZED
+(`draws_rate_gate.py`, 10 oracles: rank-0-shard parsing, GPU-h
+projection, strict >24 threshold, timeout-with-partial-progress still
+decides) and the q4 fallback kill+relaunch automated; babysit.toml
+entry prepared (commented, fill `started_utc` at launch). Remaining:
+execute at the endpoint (~2026-08-08).
 
 **Lit-sourced escalation rung (banked 2026-08-07 ~04:4xZ, NOT
 pre-registered).** If the frozen mean-of-draws reads land small,

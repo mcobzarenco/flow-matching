@@ -1,5 +1,5 @@
 {
-  "updated_utc": "2026-08-07T04:11:56+00:00",
+  "updated_utc": "2026-08-07T04:45:00+00:00",
   "depth_reason": null,
   "items": [
     {
@@ -40,7 +40,7 @@
     },
     {
       "id": "idea19-molmo2-draws-arm",
-      "title": "#19 molmo2 sampled-draws arm execution at the 40k endpoint (pre-reg'd in ar-sampled-draws post: greedy + _draws10_t1 same stems, same cost gate w/ q4 fallback) — instrument landed 78c9f56 (08-06), molmo2 trunk-specific oracles landed 08-07 ~04:3xZ (tests/test_molmo2_ar_sampling.py: T→0 greedy recovery, snapshot/restore prefill-sharing over Molmo2KVCache, append-only contract, ar_predict_sampled dispatch); the stale 'instrument + pre-reg draft' framing closed — both existed since 08-06",
+      "title": "#19 molmo2 sampled-draws arm execution at the 40k endpoint (pre-reg'd in ar-sampled-draws post: greedy + _draws10_t1 same stems, same cost gate w/ q4 fallback) — instrument landed 78c9f56 (08-06), molmo2 trunk-specific oracles landed 08-07 ~04:3xZ (tests/test_molmo2_ar_sampling.py: T→0 greedy recovery, snapshot/restore prefill-sharing over Molmo2KVCache, append-only contract, ar_predict_sampled dispatch); the stale 'instrument + pre-reg draft' framing closed — both existed since 08-06; endpoint launcher + mechanized cost gate landed 6c3cc3b (one command: eval_box_molmo2_endpoint_draws10_t1.sh, greedy-if-missing + draws10_t1 + q4 fallback, babysit entry prepared)",
       "class": "gpu-box",
       "status": "blocked",
       "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-ar-sampled-draws.md",
@@ -48,13 +48,13 @@
       "boundary": "opens at molmo2_ar40k endpoint (~2026-08-08); box GPUs busy until then"
     },
     {
-      "id": "idea19-endpoint-launcher-prep",
-      "title": "#19 molmo2 endpoint eval launcher prep (CPU): box launcher script for the endpoint panel — greedy + draws10_t1 stems per the ar-sampled-draws pre-reg, first-200-frames rate measurement + pre-registered q4 fallback switch, babysit.toml registry entry — so the endpoint read is one command when the box frees",
+      "id": "idea4-attachment-screen-prereg-draft",
+      "title": "#4 stage-2 attachment screen pre-reg DRAFT (CPU): frozen-baseline vs KI-joint (trunk CE continuing + stop-grad seam) on the molmo2 endpoint trunk — arms, matched-step screen rungs, frozen reads + falsifier, cost gate; lit basis banked in ideas #4 (pi0.5/KI + LabVLA for the seam, AEGIS 2604.16067 + Wall-OSS-0.5 2605.30877 mapping both escalation directions)",
       "class": "cpu",
       "status": "queued",
-      "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-ar-sampled-draws.md",
+      "prereg": null,
       "owner_hold": false,
-      "boundary": "wanted before molmo2_ar40k endpoint (~2026-08-08)"
+      "boundary": "wanted before molmo2_ar40k endpoint (~2026-08-08) so the attachment decision is executable when it opens"
     },
     {
       "id": "idea20-activation-checkpointing",

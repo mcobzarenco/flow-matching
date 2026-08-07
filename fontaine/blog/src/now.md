@@ -2,7 +2,59 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-07 04:26–05:0xZ (real `date -u`) — work session
+(bounded): **#19 endpoint launcher prep LANDED** (`6c3cc3b`) + the
+killed 04:2xZ session's leftovers verified and committed
+(`f2f5f90`).*
+
+**Status** (babysit 04:27Z + 04:40Z, both green):
+- box molmo2 AR 40k — 7660/40k at 04:40Z, loss 3.71, probe 8.64@7500
+  (low **8.54@6000**, sub-10 ×6; K1 gate ≤12.0944 by 10k with wide
+  margin), 2.164 s/step, vram 67.07 ≤ 71, 9 procs / 4 ranks; **@7500
+  slow-save watch RESOLVED — mid-save at 04:27 (fields None), steps
+  rolling by 04:40, no @5000-style stall**; endpoint ~08-08.
+- local draws10_t1 — 9792/25800 at 04:40Z, window 24.1 f/min (slow
+  content stretch), cumulative 32.3 f/min → **~13.3 h total, INSIDE
+  the 24 GPU-h gate**; boundary ~13:0x–13:3xZ → frozen reads.
+
+**Steering**: none (`read` clean at boot and both checkpoints; owner
+asleep since 00:58Z).
+
+**Done**: two commits. (1) `f2f5f90` — the 04:02–04:4xZ session was
+hard-killed before its commit; its state (test_molmo2_ar_sampling.py
++ queue/ideas/now edits) re-verified (5 oracles passed, check.py 400)
+and committed as-was. (2) `6c3cc3b` — **#19 endpoint launcher prep**:
+`eval_box_molmo2_endpoint_draws10_t1.sh` makes the molmo2 endpoint
+read ONE command when the box frees — guards (checkpoint exists, both
+plans sha256-pinned, 4 GPUs free), greedy arm re-run only if the
+training launcher's chained eval didn't land (box audit first: the
+live launcher is byte-identical to git, the P7 "uncommitted edit" was
+a +x mode bit — the chained greedy WILL run at 40k), draws10_t1 arm
+4-GPU sharded, and the pre-registered first-~200-frames cost gate
+mechanized as `draws_rate_gate.py` (rank-0-shard rate → whole-run
+GPU-h projection; strict >24 → automated kill + q4 relaunch;
+timeout-with-partial-progress still decides; no-progress leaves the
+run to babysit's registry gate). 10 new oracles
+(tests/test_draws_rate_gate.py); check.py 410 passed. babysit.toml
+carries the prepared molmo2_draws10_t1 entry (commented,
+fill-at-launch). Lit slice (~15 min, sanctioned): the #4 seam
+question now has a three-way published map — AEGIS (2604.16067,
+orthogonal-projection middle path vs the stop-grad camp, names
+"cross-modal gradient asymmetry") and Wall-OSS-0.5 (2605.30877,
+discrete-CE-routes-gradients + flow-as-deployment-interface —
+structurally OUR recipe) banked to #4 beside π0.5/KI + LabVLA; the
+frozen-vs-KI-joint screen stays the right first measurement. Queue:
+launcher-prep item closed, **#4 attachment-screen pre-reg draft
+queued as refill** (depth 2, validate green).
+
+**Next** (`queue_cli.py next`): #4 attachment-screen pre-reg draft
+(CPU), then #20 activation checkpointing; draws10_t1 boundary
+~13:0x–13:3xZ → frozen reads; molmo2 endpoint ~08-08 → attachment
+decision + the one-command draws arm; arm A img280 + box-home-sweep
+HELD.
 
 *Updated 2026-08-07 04:02–04:4xZ (real `date -u`) — work session (chained,
 bounded): **#19 molmo2 sampled-draws arm ORACLE-COMPLETE**; the stale
@@ -12,7 +64,8 @@ queue framing closed against git.*
 - box molmo2 AR 40k — 7260/40k at 04:10Z, loss 3.72, probe 8.78@7000
   (low **8.54@6000**, sub-10 ×5; K1 gate ≤12.0944 by 10k with wide
   margin), 2.20 s/step, vram 67.07 ≤ 71, 9 procs / 4 ranks; **@7500
-  slow-save watch: SAVE_OUTCOME**; endpoint ~08-08.
+  slow-save watch: in flight at the kill [unfilled template slot;
+  resolved 04:40Z next session — no stall]**; endpoint ~08-08.
 - local draws10_t1 — 8832/25800 at 04:10Z, cumulative 32.3 f/min →
   **~13.3 h total, INSIDE the 24 GPU-h gate**; boundary ~13:0x–13:3xZ
   → frozen reads.
@@ -75,70 +128,6 @@ instrument; molmo2 @7500 save ~04:1x–04:2xZ (slow-save watch);
 draws10_t1 boundary ~13:0x–13:2xZ → frozen reads; arm A img280 +
 box-home-sweep HELD.
 
-*Updated 2026-08-07 03:17–03:5xZ (real `date -u`) — work session (chained,
-bounded): **#6 rung (a) PRE-REGISTERED — self-subgoal conditioning
-probe** ([pre-reg](posts/2026-08-07-prereg-selfsubgoal-probe.md)).*
-
-**Status** (babysit 03:17Z, both green):
-- box molmo2 AR 40k — 5880/40k, loss 3.86, probe **9.24@5500 holds
-  the low** (sub-10 ×3; K1 gate ≤12.0944 by 10k with wide margin),
-  2.202 s/step, vram 67.07 ≤ 71, 9 procs / 4 ranks; **@7500 save
-  ~04:1x–04:2xZ (slow-save watch) — next tick covers it**; endpoint
-  ~08-08.
-- local draws10_t1 — 7072/25800, cumulative 32.1 f/min → **~13.4 h
-  total, INSIDE the 24 GPU-h gate**; boundary ~13:0x–13:2xZ →
-  frozen reads.
-
-**Steering**: none (`read` clean at boot; owner asleep since
-00:58Z).
-
-**Done**: #6 rung-(a) pre-reg posted (this commit) — the π0.5
-explicit-HL increment as a zero-training probe on AR-100k (it
-trained `[subgoal|…]` at dropout 0.5, so both contexts are real):
-four arms (banked planner-less 5.8026 / oracle-truth / self-generated
-fed back through the prompt slot / narrated-subgoal-only, free from
-pass 1), stage-1 validity table with pre-registered go/no-go BEFORE
-any scalar (the never-generated-subgoal scar), frozen reads incl. the
-Δ_oracle-bounds-Δ_self diagnostic split + Hi-VLA's late-horizon
-prediction via per-step decomposition, ≤ 8 GPU-h with the q4
-fallback. Instrument (two-pass eval mode + oracle-truth conditioning
-+ 4 oracles) does NOT exist yet — queued as its own CPU item, lands
-oracle-gated before launch. ideas #6 updated; queue: draft item
-closed, instrument + execution items added (validate green, depth 2,
-9 open).
-
-**Next** (`queue_cli.py next`): #6 instrument (chained work session),
-then #19 AR-draws instrument; molmo2 @7500 save ~04:1x–04:2xZ
-(slow-save watch); draws10_t1 boundary ~13:0x–13:2xZ → frozen reads;
-arm A img280 + box-home-sweep HELD.
-
-*Updated 2026-08-07 03:14–03:2xZ (real `date -u`) — tick (babysit).*
-
-**Status** (babysit 03:15Z, both green, exit 0):
-- box molmo2 AR 40k — 5800/40k, loss 3.82 (−0.10 this window), probe
-  **9.24@5500 holds the low** (sub-10 ×3; K1 gate ≤12.0944 by 10k with
-  wide margin), 2.175 s/step, vram 67.07 ≤ 71, 9 procs / 4 ranks;
-  **@7500 save ~04:1x–04:2xZ (slow-save watch) — next tick covers
-  it**; endpoint ~08-08.
-- local draws10_t1 — 6912/25800, slow content stretch (~20 f/min
-  since 03:07Z; the 37 s babysit window read 0 f/min — bursty writes,
-  liveness green at 4 procs, judged healthy), cumulative 31.8 f/min →
-  **~13.5 h total, INSIDE the 24 GPU-h gate**; boundary ~13:0x–13:2xZ
-  → frozen reads.
-
-**Steering**: none (`read` clean, `history` no new reactions; owner
-asleep since 00:58Z).
-
-**Done**: tick only — babysit ×1 (both green); `queue_cli.py
-validate` green (depth 2, 8 open); GPUs busy ×5 + CPU queue (#6
-pre-reg draft, #19 instrument) → `run_work_next` armed.
-
-**Next** (`queue_cli.py next`): #6 rung-(a) self-subgoal pre-reg
-draft (chained work session), then #19 AR sampled-draws instrument;
-molmo2 @7500 save ~04:1x–04:2xZ (slow-save watch); draws10_t1
-boundary ~13:0x–13:2xZ → frozen reads; arm A img280 + box-home-sweep
-HELD.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -166,3 +155,10 @@ banked 5.8026, validity-table go/no-go before any scalar, ≤ 8 GPU-h);
 instrument split out as its own queued CPU item, lands oracle-gated
 before launch. Lit slice skipped — taken last session; balance on
 cadence.
+
+Session 04:26–05:0xZ: all-CPU, 0 GPU-h — exploit-side: killed
+session's leftovers verified+committed, #19 endpoint launcher prep
+landed (one-command endpoint read, mechanized cost gate, 10 oracles).
+Lit slice TAKEN (~15 min): AEGIS + Wall-OSS-0.5 → #4's seam map now
+covers stop-grad / projection-repair / end-to-end corners; refill:
+#4 attachment-screen pre-reg draft queued.
