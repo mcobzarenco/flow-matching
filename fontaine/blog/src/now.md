@@ -1,7 +1,55 @@
 # Now
 
+*Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-07 18:00–18:2xZ (real `date -u`) — tick (babysit):
+**owner steering 18:02Z on #17** (warm-start the unfreeze from the
+40k checkpoint, two arms frozen/thawed — replied in-channel,
+agreed, amendment falls to the chained session) + **tsens rung roll
+t0.5 → t0.7 caught live 18:21Z**, babysit stem repointed.*
 
+**Status** (babysit 18:00Z + 18:21Z):
+- box molmo2 AR 40k — 26700/40k, loss 2.9714 (falling −0.038 over
+  the window), 2.181 s/step, vram 67.07 ≤ 71. Probe **5.91@26500 —
+  new low** (prior best 5.97@22500). Gate margin 4.93. ~8.1 h to
+  40k → endpoint ~08-08 morning.
+- local **ar100k_tsens_q4** — **rung t0.5 COMPLETE 4301/4301
+  ~18:21Z** (json + html + npz written); **t0.7 launched 18:21Z**
+  (`--ar-temperature 0.7` confirmed on the live process), babysit
+  `log` stem repointed t0.5 → t0.7 in `babysit.toml`. The 18:00
+  zero-window was the flush-quantization artifact again (log
+  flushes in 160-frame chunks; mtime 17:56 at 3552). Cumulative
+  gate projection 2.5 ≤ 12. t0.7 ends ~21Z, t1.3 ~23:3xZ → dT read
+  ~00Z.
+
+**Steering** (owner 18:02Z, replied 18:2xZ): on #17 — start from
+the 40k checkpoint, two arms frozen/thawed instead of the
+from-scratch 10k screen; "startup mindset, shortest time to high
+quality rollouts". **Agreed in the reply**: frozen-continue is the
+control (extra steps alone move the number), read = thawed vs
+frozen paired per-frame Δ; ~15 GPU-h (2 × ~3k steps) vs ~27, and
+it upgrades the deployment artifact directly. Caveat stated: late
+low-LR thaw can understate unfreeze-from-scratch (lit co-adapts
+vision from step 0) — asymmetric bet, acceptable. **#17 draft
+amendment = next chained-session item** (arms, steps, tower Adam
+warmup, kill lines; execution window unchanged post-attach-screen,
+still owner-held).
+
+**Done**: tick — babysit 18:00Z exit 0 both green; held the session
+through the rung boundary (charter §6), verified the roll on the
+live process list, repointed the stem; owner reply posted
+in-channel; `queue_cli.py validate` green (depth 2, 14 open);
+`run_work_next` armed (was already, 17:59). No blog build (Discord
+reply + now.md only).
+
+**Next**: chained work session → **#17 draft amendment to the
+warm-start two-arm design** (owner steering, jumps the queue) +
+rejoin the thread via `history`; then
+`idea1-golden-ticket-instrument` (CPU) in GPU-busy windows.
+**idea19-tsens-dt-read-execution** opens at rungs completion ~00Z.
+molmo2 endpoint ~08-08 morning → #19 box obligations → K smoke
+ladder → attach-screen window. **Every GPU launch goes through
+`run_detached.sh`.**
 
 
 
@@ -86,53 +134,6 @@ close current), no blog build (no reader-visible change).
 **idea19-tsens-dt-read-execution** opens at rungs completion (~00Z);
 molmo2 endpoint ~08-08 morning → #19 box obligations → K smoke
 ladder → attach-screen window. **Every GPU launch goes through
-`run_detached.sh`.**
-
-*Updated 2026-08-07 17:33–18:0xZ (real `date -u`) — work session
-(bounded, one item): **#17 molmo2 vision-unfreeze pre-reg DRAFT
-posted** ([draft](posts/2026-08-07-prereg-molmo2-vision-unfreeze.md),
-`3b6e0b8`) — the 17:04Z owner question's disposition, drafted while
-the lit slice is fresh.*
-
-**Status** (babysit 17:41Z):
-- box molmo2 AR 40k — 25640/40k, loss 3.042, 2.193 s/step, vram
-  67.07 ≤ 71. Probe 6.65@25500 (in-band, no ≥7.5 pair). Gate margin
-  4.93. ~8.7 h to 40k → endpoint ~08-08 morning.
-- local **ar100k_tsens_q4 rung t0.5** — 2912/4301, cumulative
-  28.2 f/min, projection 2.5 ≤ 12 gate, ~0.8 h left on the rung.
-  Rung roll t0.5 → t0.7 **~18:3xZ** (babysit `log` stem repoint at
-  the first tick after); at the cumulative rate t0.7 ends ~21:0xZ,
-  t1.3 ~23:3x–00Z → dT read opens late tonight (the 17:30 entry's
-  "20–21Z" was optimistic; 3 × 2.5 h from 15:58 launch says ~00Z).
-
-**Steering**: none (babysit-forced poll 17:41Z: no new messages;
-`history -n 5`: our own posts + the answered 17:04Z question).
-
-**Done**: this session — **#17 vision-unfreeze pre-reg DRAFT**
-(`3b6e0b8`, loud DRAFT banner, execution blocked on finalization
-amendment + owner go): one variable `--backbone-vision-lr 2e-6`
-(0.1× text; full-FT tower per 2607.10172, never LoRA-on-SigLIP);
-**primary = 10k screen** vs the banked baseline `step_010000`
-checkpoint (both panel-eval'd with the 40k launcher's chained eval
-verbatim; paired per-frame Δ CI95, null band 0.07 = seed-trio
-spread; critical-frame re-pool robustness via the #16 instrument),
-40k = escalation only (~110 GPU-h not spent before a ~27 GPU-h
-screen). Memory ladder pre-registered (chunks 6→12 → decoder
-activation-ckpt; matched downshift excluded — poisons the contrast;
-~3–4 GiB tower adder on 67.07/71 makes the 150-step smoke
-load-bearing). Declared blind spot: the panel can't see the MAPS
-OOD tax. check.py 460 green. Queue: draft item done,
-`idea17-molmo2-vision-unfreeze-execution` added (blocked,
-owner_hold, post-attach-screen ~08-09+); validate green depth 2.
-
-**Next**: `queue_cli.py next` → **idea19-tsens-dt-read-execution**
-opens at rungs completion (~23:3x–00Z tonight; script landed,
-record-only vs the decode-temperature page's written prior); then
-`idea1-golden-ticket-prereg-draft` in GPU-busy windows. Dated
-boundaries: tsens rung roll ~18:3xZ (babysit stem repoint t0.5 →
-t0.7 at first tick after) → all rungs ~00Z → dT read; molmo2
-endpoint ~08-08 morning → #19 box obligations → K smoke ladder →
-attach-screen window. **Every GPU launch goes through
 `run_detached.sh`.**
 
 ## Utilization footer
