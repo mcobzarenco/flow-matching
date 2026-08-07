@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-07T19:40:00+00:00",
+ "updated_utc": "2026-08-07T19:49:00+00:00",
  "depth_reason": null,
  "items": [
   {
@@ -292,7 +292,7 @@
   },
   {
    "id": "idea17-molmo2-vision-unfreeze-execution",
-   "title": "#17 molmo2 vision-unfreeze warm-start two-arm screen EXECUTION (box, 4xDDP, sequential frozen-first): run the finalization-amendment checklist in 2026-08-07-prereg-molmo2-vision-unfreeze.md amendment-1 design (launcher byte-audit at HEAD incl. --init-from/--seed/tail-LR flags vs bijou.train CLI, 150-step thawed memory smoke FROM the endpoint checkpoint -> ladder rung + peak/rate + first async-save line quoted, banked 40k endpoint probe value quoted for the frozen-arm sanity line, two arm launchers vu3k_frozen/vu3k_thawed + babysit.toml entries landed, owner go), post the amendment (DRAFT -> posted), then launch via run_detached.sh; reads frozen in the draft (thawed@3000 - frozen@3000 paired delta, null band 0.07, critical-frame re-pool; arm-vs-endpoint record-only); gate 24 GPU-h",
+   "title": "#17 molmo2 vision-unfreeze warm-start two-arm screen EXECUTION (box, 4xDDP, sequential frozen-first) — LAUNCH-ONLY-AFTER-SMOKE as of 08-07 19:4xZ (prep item landed the byte-audit + both launchers + prepared babysit entries): remaining finalization cells need the box checkpoint: (1) 150-step thawed memory smoke FROM step_040000 -> ladder rung, write fontaine/harness/state/vu5k_mem_ready (RUNG/BACKWARD_CHUNKS/ACT_CKPT/VRAM_PEAK_GIB/SMOKE_UTC — the thawed launcher refuses without it), quote peak/rate + first async-save 'captured in Xs' line + tower param count ~4.3e8 in the banner; (2) quote the banked 40k endpoint probe -> fill the FILL-AT-FINALIZATION probe bars in babysit.toml vu5k entries; (3) POST the finalization amendment (DRAFT -> posted); (4) owner go; then launch frozen arm via run_detached.sh fontaine-vu5k-frozen, thawed after its endpoint + sanity line (launcher-mechanized ordering); reads frozen in the pre-reg (thawed@5000 - frozen@5000 paired delta, CI95 + null band 0.07, critical-frame re-pool; arm-vs-endpoint record-only); gate 32 GPU-h (amendment 2)",
    "class": "gpu-box",
    "status": "blocked",
    "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-molmo2-vision-unfreeze.md",
@@ -319,12 +319,21 @@
   },
   {
    "id": "idea17-vu5k-finalization-prep",
-   "title": "#17 vu5k finalization amendment PREP (CPU slice of the held execution item \u2014 mechanical per the owner-agreed amendment-3 design, NO launch and NO amendment POST from this item alone): byte-audit the amendment-3 flag set against bijou.train's CLI at HEAD (--init-from/--seed 1/--decoder-lr 3e-5/--backbone-text-lr 6e-6/--backbone-vision-lr 6e-6/--warmup-steps 500/5k cosine floors/batch 48), write the two arm launchers launch_box_fontaine_molmo2_vu5k_{frozen,thawed}_ddp4.sh (sha256-pinned plans, run_detached.sh, eval stems per amendment 2) + prepared babysit.toml entries; the remaining finalization cells (150-step thawed memory smoke FROM the 40k endpoint, endpoint-probe quote) stay with the execution item \u2014 they need the box checkpoint. Output: audit note + launchers committed, execution item updated to launch-only-after-smoke",
+   "title": "#17 vu5k finalization amendment PREP \u2014 EXECUTED 08-07 19:4xZ work session: byte-audit CLEAN at HEAD (all amendment-3 flags exist on bijou.train's CLI; --init-from verified weights-only fresh-AdamW loading expert+prompt+adapted-backbone bf16 snapshot with start_step 0, no seed-collision guard applies (init-from exempt), cosine-to-10%-floor confirmed at lr_lambda train.py:1552 shared multiplicatively by ALL groups so vision=text holds through the schedule, vision-group hard-abort at train.py:544-550 confirms no silent no-op unfreeze, --backbone-vision-lr requires --backbone-text-lr satisfied); two arm launchers LANDED launch_box_fontaine_molmo2_vu5k_{frozen,thawed}_ddp4.sh (base 40k recipe byte-identical \u2014 diff vs 40k launcher = exactly the pinned deltas; arm-vs-arm train-command diff = exactly --backbone-vision-lr 6e-6 + ladder knobs; plan sha af3f8546 pinned; eval stems = pre-reg \u00a72 verbatim; thawed REFUSES without frozen step_005000 (frozen-first mechanized) AND without fontaine/harness/state/vu5k_mem_ready (smoke record contract: RUNG/BACKWARD_CHUNKS/ACT_CKPT/VRAM_PEAK_GIB/SMOKE_UTC, documented in-header); run_detached.sh launch lines in both headers) + prepared babysit.toml vu5k_{frozen,thawed} entries (vram 71 gates, FILL-AT-FINALIZATION probe bars, x3-sustained judgment + async-save first-validation anchors; TOML parses, active entries untouched). check.py 467 green. Remaining finalization cells stay with the execution item (need the box checkpoint): 150-step thawed smoke -> vu5k_mem_ready, endpoint-probe quote -> probe bars, amendment POST, owner go",
    "class": "cpu",
-   "status": "queued",
+   "status": "done",
    "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-molmo2-vision-unfreeze.md",
    "owner_hold": false,
    "boundary": "CPU work at any GPU-busy window; wanted before the molmo2 endpoint (~04-05Z 08-08) so the finalization amendment can post same-session with the smoke once the box frees"
+  },
+  {
+   "id": "molmo2-endpoint-postprocessing",
+   "title": "molmo2 40k endpoint POST-PROCESSING (CPU, opens when the chained greedy panel eval lands ~04-05Z 08-08): read eval__fontaine_molmo2_ar_40k_ddp4__step_040000__panel_curated_v0_k4l2.json -> leaderboard row (measured decode-cost column caveat: molmo2 configs were NOT in the microbench set — mtime-derived number flagged as such or left blank), ledger entry vs the pre-reg's frozen reads (2026-08-06-prereg-molmo2-ar-40k.md), blog post + Discord line; prune/repoint babysit molmo2_ar40k entry at the same commit (the train run is over; the draws-arm prepared entry takes over per the registry comment); quote the endpoint probe value HERE for the vu5k finalization amendment's frozen-sanity bar (feeds idea17 execution cell 2); checkpoint upload per the upload-valuable-checkpoints standing rule (weights-only unless seeding)",
+   "class": "cpu",
+   "status": "queued",
+   "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-molmo2-ar-40k.md",
+   "owner_hold": false,
+   "boundary": "opens at the molmo2_ar40k endpoint chain landing (~04-05Z 08-08); the #19 draws-arm box launch (separate item) should not wait on this — post-processing is CPU-parallel"
   },
   {
    "id": "idea1-golden-ticket-screen-execution",

@@ -163,3 +163,80 @@ value = 12.0                       # 3 × q4 draws10 ≈ 12 GPU-h worst case
 # [[run.gates]]
 # kind = "vram_max_gib"
 # value = 71.0
+
+# PREPARED — #17 vision-unfreeze screen arms (vu5k, sequential FROZEN
+# FIRST; pre-reg 2026-08-07-prereg-molmo2-vision-unfreeze.md,
+# amendment-3 design — DRAFT until the finalization amendment posts;
+# launchers launch_box_fontaine_molmo2_vu5k_{frozen,thawed}_ddp4.sh).
+# Uncomment ONE at a time at its launch + fill the FILL markers (prune
+# the finished run's entry). FILL-AT-FINALIZATION probe bars = the
+# banked 40k endpoint probe + 2.0 (pre-reg §4 sanity/vision-damage
+# lines are "sustained x3 consecutive evals" — the static gates below
+# are the save-boundary backstop; the x3 judgment is the babysit
+# reader's). Async saves (#18.9) get their FIRST real-run validation
+# here: check the "captured in Xs" + "saved ... (async, ...)" lines at
+# the first 2500 boundary. Cost gate 32 GPU-h SCREENWIDE (frozen est
+# ~12.2 at 2.2 s/step + thawed est ~13.9 at 2.4-2.6 s/step + 2 panel
+# evals) — judged from wall clocks at each poll, kill at next save
+# boundary on projected overrun.
+#
+# [[run]]
+# name = "vu5k_frozen"
+# kind = "train-jsonl"
+# host = "192.222.55.210"
+# pgrep = "fontaine_molmo2_ar_vu5k_frozen_ddp4"
+# pgrep_min = 4                     # 4 DDP ranks
+# gpu_indices = [0, 1, 2, 3]
+# gpu_mem_min_mib = 30000
+# jsonl = "/home/ubuntu/flow-matching/outputs/train/fontaine_molmo2_ar_vu5k_frozen_ddp4/train_log.jsonl"
+# total_steps = 5000
+# probe_key = "eval_chunk_mae"
+# vram_key = "vram_alloc_peak_gib"
+# boundary = "5k at ~2.2 s/step ~= 3.1 h + chained panel eval; saves 2500/5000 (async), probes every 500; thawed arm launches after"
+# anchors = [
+#     "CONTROL ARM: frozen-sanity kill = probe > (banked 40k endpoint probe) + 2.0 sustained x3 evals => screen stops, NO thawed launch (pre-reg §4)",
+#     "arms differ in exactly one flag; this curve at each step is the thawed arm's matched-step kill reference",
+#     "seed 1 fresh-AdamW warm start: early probe transient is common-mode by design, judge the x3-sustained rule not single evals",
+# ]
+# [[run.gates]]
+# kind = "probe_below_by_step"
+# value = 0.0                       # FILL-AT-FINALIZATION: banked 40k endpoint probe + 2.0
+# step = 2500
+# [[run.gates]]
+# kind = "probe_below_by_step"
+# value = 0.0                       # FILL-AT-FINALIZATION: banked 40k endpoint probe + 2.0
+# step = 5000
+# [[run.gates]]
+# kind = "vram_max_gib"
+# value = 71.0
+#
+# [[run]]
+# name = "vu5k_thawed"
+# kind = "train-jsonl"
+# host = "192.222.55.210"
+# pgrep = "fontaine_molmo2_ar_vu5k_thawed_ddp4"
+# pgrep_min = 4                     # 4 DDP ranks
+# gpu_indices = [0, 1, 2, 3]
+# gpu_mem_min_mib = 30000
+# jsonl = "/home/ubuntu/flow-matching/outputs/train/fontaine_molmo2_ar_vu5k_thawed_ddp4/train_log.jsonl"
+# total_steps = 5000
+# probe_key = "eval_chunk_mae"
+# vram_key = "vram_alloc_peak_gib"
+# boundary = "5k at est 2.4-2.6 s/step ~= 3.4-3.6 h + chained panel eval; saves 2500/5000 (async), probes every 500; vram STRADDLES the gate — watch peak at first poll"
+# anchors = [
+#     "vision-damage kill (pre-reg §4): thawed probe > FROZEN-ARM probe at the matched continuation step + 2.0, sustained x3 evals, after step 1000 — read the frozen jsonl side by side",
+#     "memory ladder rung from fontaine/harness/state/vu5k_mem_ready (launcher refuses without it); projected peak 70-72 GiB vs 71 gate — the smoke's word is the license, the gate still kills",
+#     "trainable-param banner must count the tower (~4.3e8 vision params) — verify at first poll",
+#     "primary read at endpoint: thawed@5000 - frozen@5000 paired per-frame delta, CI95 + |Delta| > 0.07 band, critical-frame re-pool (pre-reg §5)",
+# ]
+# [[run.gates]]
+# kind = "probe_below_by_step"
+# value = 0.0                       # FILL-AT-FINALIZATION: frozen-arm probe@2500 + 2.0 (matched-step bar)
+# step = 2500
+# [[run.gates]]
+# kind = "probe_below_by_step"
+# value = 0.0                       # FILL-AT-FINALIZATION: frozen-arm probe@5000 + 2.0 (matched-step bar)
+# step = 5000
+# [[run.gates]]
+# kind = "vram_max_gib"
+# value = 71.0
