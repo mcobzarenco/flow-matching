@@ -5,6 +5,29 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-07 01:56–02:0xZ (real `date -u`) — tick (babysit).*
+
+**Status** (babysit 01:56Z, both green, exit 0):
+- box molmo2 AR 40k — 4120/40k, loss 4.07 (−0.056 this window), probe
+  **10.47@4000** (holds the low; descent intact, K1 gate @10k with
+  margin), 2.18 s/step, vram 67.07 ≤ 71, 4 ranks + 4 GPUs ~71.6 GiB;
+  **@5000 save ~02:2x–02:3xZ → next tick's duty**, endpoint ~08-08.
+- local draws10_t1 — 4192/25800, window 59.1 f/min, cumulative
+  30.3 f/min → **~14.2 h total, INSIDE the 24 GPU-h gate**; boundary
+  pulled in to ~13:5x–14:2xZ.
+
+**Steering**: none (`read` clean, `history -n 5` no new reactions;
+owner asleep since 00:58Z).
+
+**Done**: tick only — babysit CLI exit 0 on both runs;
+`queue_cli.py validate` green (depth 4, 9 open); GPUs busy ×5 +
+owner-signed CPU queue → `run_work_next` armed.
+
+**Next** (`queue_cli.py next`): p5-deadline-stamp (chained work
+session), then p6 gpu markers, p7 tee-to-logs, #6 rung-(a) pre-reg
+draft; molmo2 @5000 save ~02:3xZ next-tick duty; draws10_t1 boundary
+~13:5x–14:2xZ → frozen reads; arm A img280 HELD.
+
 *Updated 2026-08-07 01:47–02:0xZ (real `date -u`) — work session (chained, bounded):
 **#21 P4 LANDED — this entry is the new contract** (commit `40e782f`).*
 
