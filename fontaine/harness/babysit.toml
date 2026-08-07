@@ -78,6 +78,7 @@ boundary = "4,301 rows/rung, 3 rungs sequential; ~12 GPU-h worst case total (pre
 anchors = [
     "RECORD-ONLY dT diagnostic (pre-reg): never a headline, never a license to re-pick T; primary stays T=1.0",
     "reads re-pool via draws10_t1_results.py's q4 subset join (T-guard delta is a follow-up read item)",
+    "cumulative projection INVALID across rung rolls (per-rung frame counter resets; started_utc stays at 15:58Z for GPU-h accrual) — the exit-3 crossing it surfaces is an artifact; judge per-rung window f/min instead (t0.5 actual: 4301 in ~2.4h). Judged FALSE POSITIVE 18:4xZ tick: t0.7 at 352/4301 by 18:38, ~20 f/min incl. load",
 ]
 [[run.gates]]
 kind = "gpu_hours_max"

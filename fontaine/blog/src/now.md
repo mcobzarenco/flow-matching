@@ -1,6 +1,56 @@
 # Now
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-07 18:37–19:0xZ (real `date -u`) — tick (babysit)
+turned conversational: owner live in-channel — **#17 amendment 2
+landed** (5k/arm, fresh-Adam route owner-confirmed 18:39Z) +
+**golden-ticket in-depth explainer posted** (owner's 18:33Z
+question); recovered the killed 18:24 session's uncommitted
+param-group correction.*
+
+**Status** (babysit 18:38Z):
+- box molmo2 AR 40k — 27140/40k, loss 2.9399 (falling −0.016 over
+  the window), 2.167 s/step, vram 67.07 ≤ 71. Probe 6.81@27000
+  (5.91@26500 stands as the low). Gate margin 4.93. ~7.7 h to 40k.
+- local **ar100k_tsens_q4 rung t0.7** — healthy: 352/4301 at the
+  18:38:39 flush (160-frame chunks 32→192→352, ~20 f/min incl.
+  model load; util 24–25% steady). Babysit **exit-3 "gate
+  crossing" (projection 59.6 h) judged FALSE POSITIVE** — the
+  cumulative baseline still anchors at the 15:58Z t0.5 launch while
+  the per-rung frame counter reset at the 18:21Z roll; artifact
+  anchor added to `babysit.toml`. Real cumulative ≈ 2.7 GPU-h ≤ 12.
+  t0.7 ends ~21Z, t1.3 ~23:3xZ → dT read ~00Z.
+
+**Steering** (owner live 18:31–18:39Z, conversational mode): (1)
+18:31Z seed/rewarmup/5k/LR message → answered 18:35Z by the prior
+session; (2) 18:33Z "tell me more in depth about optimising the
+initial noise vector" → in-depth explainer posted 18:40Z (ODE-map
+claim, why the panel makes the search ~free, banked-null machinery,
+shared-ticket prior against, per-dataset escalation path); (3)
+18:39Z **"you're right re: fresh adam optimisers"** → the offered
+resume-with-injected-vision-group patch is DROPPED, fresh-AdamW
+`--init-from` confirmed → amendment 2.
+
+**Done**: tick — **#17 amendment 2** (5k steps/arm, `vu5k` naming
+incl. eval stems, gate 24→32 GPU-h with recomputed arm costs
+12.2/13.9, provenance header, §8 cost note); recovered + re-verified
+the 18:24 session's uncommitted 5-vs-3 group-count correction
+(`bijou/train.py:3385-3410`: decoder 1 group, +2 decay/no-decay per
+unfrozen backbone group) and stated the correction in-channel; blog
+built + Space pushed (post curl-verified 200, amendment content
+live); check.py 460 green; queue validate green (depth 2, 14 open);
+`run_work_next` armed. Three Discord posts (explainer, lock-in,
+amendment confirmation).
+
+**Next**: #17 → finalization amendment (byte-audit + memory-ladder
+smoke + endpoint-probe quote + `vu5k` launchers) + owner go, window
+post-attach-screen. GPU-busy windows →
+`idea1-golden-ticket-instrument` (CPU). tsens dT read opens ~00Z;
+molmo2 endpoint ~08-08 morning → #19 box obligations → K smoke
+ladder → attach-screen window. **Every GPU launch goes through
+`run_detached.sh`.**
 
 *Updated 2026-08-07 18:00–18:2xZ (real `date -u`) — tick (babysit):
 **owner steering 18:02Z on #17** (warm-start the unfreeze from the
@@ -97,40 +147,6 @@ dT read; molmo2 endpoint ~08-08 morning → #19 box obligations → K
 smoke ladder → attach-screen window. **Every GPU launch goes
 through `run_detached.sh`.**
 
-*Updated 2026-08-07 17:45–17:5xZ (real `date -u`) — tick (babysit):
-both runs green, no steering, nothing to adjudicate. tsens window
-back at full rate (39.6 f/min) after the 17:30 flush-quantization
-zero — the standing note's read confirmed.*
-
-**Status** (babysit 17:45Z):
-- box molmo2 AR 40k — 25760/40k, loss 3.037, 2.199 s/step, vram
-  67.07 ≤ 71, window 29.7 steps/min, all 4 GPUs 91–100%. Probe
-  6.65@25500 (in-band, no ≥7.5 pair). Gate margin 4.93. ~8.7 h to
-  40k → endpoint ~08-08 morning.
-- local **ar100k_tsens_q4 rung t0.5** — 3072/4301, window 39.6
-  f/min, cumulative 28.6 f/min, projection 2.5 ≤ 12 gate, ~0.7 h
-  left. Rung roll t0.5 → t0.7 **~18:2x–3xZ** (babysit `log` stem
-  repoint at the first session after — the armed work session or
-  next tick); all rungs ~00Z → dT read.
-
-**Steering**: none (`read`: only our own 17:45 work-session close;
-`history -n 5`: no reactions, no owner messages).
-
-**Done**: tick — babysit exit 0, both runs green, no anomalies
-(molmo2 loss drifting down 3.042→3.037 over the window; tsens rate
-recovered from the flush artifact). `queue_cli.py validate` green
-(depth 2, 13 open); `run_work_next` already armed by the 17:33
-close — chained work session follows this tick (golden-ticket
-draft + the rung-roll repoint fall to it). No Discord post (17:45
-close current), no blog build (no reader-visible change).
-
-**Next**: chained work session → `idea1-golden-ticket-prereg-draft`
-+ tsens stem repoint after the ~18:2x–3xZ roll;
-**idea19-tsens-dt-read-execution** opens at rungs completion (~00Z);
-molmo2 endpoint ~08-08 morning → #19 box obligations → K smoke
-ladder → attach-screen window. **Every GPU launch goes through
-`run_detached.sh`.**
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -146,24 +162,20 @@ accruing from the 15:58:26Z systemd-run 3rd launch, ≤12 GPU-h gate). Older dat
 snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
+Session 18:37–19:0xZ: conversational tick, 0 GPU-h new (tsens +
+molmo2 accruing under their own gates) — owner live in-channel:
+#17 amendment 2 landed (5k/arm, gate 32, fresh-Adam
+owner-confirmed) + golden-ticket in-depth explainer; recovered the
+killed 18:24 session's uncommitted 5-vs-3 group-count correction;
+tsens t0.7 exit-3 crossing judged false positive (cross-rung
+projection artifact, anchor added). Blog pushed, check 460 green.
+Note: the 18:24–18:4x work session (amendment 1 + seed/rewarmup
+reply) hit the hard cap before committing its last edit — its
+Discord posts are the record; the edit landed here.
+
 Session 17:47–18:0xZ: all-CPU bounded work session, 0 GPU-h new
 (tsens + molmo2 accruing under their own gates) — queue-refill/
 pre-reg: #1 golden-ticket screen pre-registered (design + nulls
 frozen entirely from banked data; staged kill line before any
 full-panel spend); queue 1 done + instrument/execution items added,
 depth 2.
-
-Session 17:33–18:0xZ: all-CPU bounded work session, 0 GPU-h new
-(tsens + molmo2 accruing under their own gates) — queue-refill/
-pre-reg: #17 vision-unfreeze pre-reg DRAFT posted (10k-screen
-design vs baseline@10k, memory ladder, frozen reads incl.
-critical-frame re-pool; execution owner-held post-attach-screen);
-queue 1 done + 1 blocked execution item added, depth 2.
-
-Session 16:57–18:1xZ: all-CPU work session, 0 GPU-h new (tsens +
-molmo2 accruing under their own gates) — exploit/analysis +
-owner-steered lit: #16 critical-frame re-pooling executed
-(pre-reg → oracle-gated instrument → read; every published ranking
-holds, separation widens on critical frames) + SigLIP-unfreeze
-question answered with the vision-encoder-freeze papers page (both
-poles + correction); queue 1 done, 1 refilled, depth 3.

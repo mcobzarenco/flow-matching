@@ -7,7 +7,14 @@ slice same day). **Amendment 1, 2026-08-07 18:xxZ (owner steering
 18:02Z): the from-scratch 10k screen is replaced by a warm-start
 two-arm continuation from the 40k endpoint** — frozen-continue vs
 thawed-continue; rationale in §2, the superseded design recorded in
-§8. **STATUS: DRAFT — this is not yet a posted pre-registration.**
+§8. **Amendment 2, 2026-08-07 18:4xZ (owner steering 18:31Z +
+18:39Z): 5k steps per arm (was 3k), gate 32 GPU-h (was 24); the
+fresh-AdamW `--init-from` route is now owner-confirmed** — a
+resume-with-injected-vision-group patch was offered in-channel and
+declined ("you're right re: fresh adam optimisers", 18:39Z); seed
+and rewarmup steering from 18:31Z was already satisfied by
+`--seed 1` and `--warmup-steps 200`. **STATUS: DRAFT — this is not
+yet a posted pre-registration.**
 Execution is blocked on: (a) the finalization amendment below, (b)
 an owner go, (c) a box window after the attach-screen chain
 (~08-09+). Nothing launches off this page as it stands.*
@@ -39,7 +46,7 @@ never LoRA-on-SigLIP** (2607.10172's 0.43 uncanny valley).
 **Honest caveat on the warm-start shape (stated in the 18:2xZ
 in-channel reply, frozen here)**: a late low-LR thaw can understate
 what unfreeze-from-*scratch* buys — the lit's ablations co-adapt
-vision from step 0, and 3k tail steps may not recover that
+vision from step 0, and 5k tail steps may not recover that
 co-adaptation. The bet is asymmetric: a positive upgrades the
 deployment artifact immediately at ~half the from-scratch screen's
 cost; a null leaves the from-scratch question open but cheap to
@@ -57,11 +64,11 @@ condition/dropout flags, B12/rank 4×DDP global 48, ZeRO-1 + 6×2
 chunked backward + `--chunk-grad-allreduce` — with the continuation
 deltas pinned below, identical across arms except exactly one flag:
 
-- **Frozen-continue** (`fontaine_molmo2_ar_vu3k_frozen_ddp4`) — the
+- **Frozen-continue** (`fontaine_molmo2_ar_vu5k_frozen_ddp4`) — the
   control. Tower stays frozen. The essential arm: extra steps alone
   move the number, so nothing is readable against the 40k endpoint
   without it.
-- **Thawed-continue** (`fontaine_molmo2_ar_vu3k_thawed_ddp4`) — plus
+- **Thawed-continue** (`fontaine_molmo2_ar_vu5k_thawed_ddp4`) — plus
   **`--backbone-vision-lr 2e-6`** (frozen at the draft's value; an
   LR sweep is a different pre-reg). Drafted as 0.1× the original
   text peak (2e-5); in this continuation it equals the text *tail*
@@ -71,22 +78,24 @@ Continuation deltas (both arms, identical):
 
 - `--init-from .../step_040000` (NOT `--resume`, on two grounds,
   both verified in `bijou/train.py` at HEAD: **mechanical** — the
-  thawed arm builds a third optimizer param group (`backbone_vision`),
-  and `optimizer.load_state_dict` against the 40k run's two-group
-  `optimizer.pt` raises on the group-count mismatch; **methodological**
+  thawed arm builds two extra optimizer param groups
+  (`backbone_vision` decayed/no-decay: five groups vs the 40k
+  checkpoint's three), and `optimizer.load_state_dict` against the
+  40k run's `optimizer.pt` raises on the group-count mismatch;
+  **methodological**
   — `--init-from` gives both arms the same fresh-AdamW treatment, so
   the warm-restart transient is common-mode in the paired read. The
   tower has no optimizer state at 40k in any case; fresh moments +
   a short ramp is the standard late-unfreeze mechanic).
-- `--steps 3000 --warmup-steps 200`: 3k continuation steps, 200-step
+- `--steps 5000 --warmup-steps 200`: 5k continuation steps (amendment 2; was 3k — owner 18:31Z, more room for the late-thaw co-adaptation §1 worries about), 200-step
   linear ramp (the "short tower warmup"; the ramp is global — all
   groups share it, symmetric across arms). Cosine floors at 10% of
-  peak; endpoint `step_003000` always saves (`bijou.train`
+  peak; endpoint `step_005000` always saves (`bijou.train`
   save-boundary rule), cadence 2500 kept verbatim.
 - **LRs = the 40k tail values**: `--decoder-lr 1e-5
   --backbone-text-lr 2e-6` (the 40k cosine floors at 10% of peaks
   1e-4/2e-5, so these are the LRs the run ends at — "text side
-  continues at tail LR"). The fresh 3k cosine anneals from there;
+  continues at tail LR"). The fresh 5k cosine anneals from there;
   schedule shape is common-mode in the paired read.
 - `--seed 1` (fresh vs the 40k run's seed 0; same seed both arms →
   identical batches and τ/ε streams, so the arms differ in the one
@@ -96,7 +105,7 @@ Continuation deltas (both arms, identical):
 - Chained endpoint panel eval per arm, the 40k launcher's eval
   command verbatim (plan `plans/holdout_curated_v0_k4l2.json`,
   `--report-samples 32`, dumps + json), stems
-  `eval__fontaine_molmo2_ar_vu3k_{frozen,thawed}_ddp4__step_003000__panel_curated_v0_k4l2.*`.
+  `eval__fontaine_molmo2_ar_vu5k_{frozen,thawed}_ddp4__step_005000__panel_curated_v0_k4l2.*`.
 
 **Order: frozen-continue first** (box arms are sequential on the 4
 GPUs). Its probe curve and endpoint bank become the thawed arm's
@@ -156,24 +165,24 @@ backbone has no tower, so a silent no-op unfreeze cannot happen).
   consecutive evals, any time after step 1000 → kill.
 - vram > 71.0 GiB sustained, or OOM → dead rung, ladder or stop (no
   mid-run batch surgery).
-- Cost gate: **≤ 24 GPU-h** for the screen (est. ~15 GPU-h train —
-  frozen ≈ 7.3 at the measured 2.2 s/step, thawed ≈ 8.5 at a
-  projected ~2.4–2.6 s/step with the tower backward — plus two
-  chained panel evals + smoke margin). Overrun projected at a
+- Cost gate: **≤ 32 GPU-h** for the screen (amendment 2; est. ~26
+  GPU-h train — frozen ≈ 12.2 at the measured 2.2 s/step, thawed ≈
+  13.9 at a projected ~2.4–2.6 s/step with the tower backward — plus
+  two chained panel evals + smoke margin). Overrun projected at a
   babysit check → kill at the next save boundary, partial reported
   as partial.
 
 ## 5. Frozen reads (before launch, per charter)
 
 1. **Primary**: paired per-frame Δ of chunk-pooled panel MAE,
-   **thawed@3000 − frozen@3000**, on the k4l2 plan, CI95 (the
+   **thawed@5000 − frozen@5000**, on the k4l2 plan, CI95 (the
    `draws10_t1_results.py` pairing convention). Expectation: Δ < 0.
    Bands: CI95 excluding 0 **and** |Δ| > 0.07 (the banked seed-trio
    spread — the empirical null scale for a pooled panel delta) →
    real effect; anything inside either bound → tie. Sign positive
    with CI excluding 0 and |Δ| > 0.07 → **harm, a real result**
    (report loud, feeds the MAPS-leash follow-on).
-2. **Record-only**: each arm@3000 vs the banked 40k endpoint panel —
+2. **Record-only**: each arm@5000 vs the banked 40k endpoint panel —
    the "extra steps alone" channel the frozen control exists to
    subtract, plus the warm-start transient; never a headline.
 3. Probe-curve overlay at matched continuation cadence (record-only;
@@ -190,14 +199,14 @@ backbone has no tower, so a silent no-op unfreeze cannot happen).
 
 ## 6. Decision rule
 
-- Screen **helps** (Δ < 0, real per §5.1) → the thawed@3000
+- Screen **helps** (Δ < 0, real per §5.1) → the thawed@5000
   checkpoint is the new deployment-artifact candidate (that is the
   point of the warm-start shape: the winner is kept, not re-derived);
   tower-unfrozen becomes the default for future trunk recipes,
   §5.6 caveat quoted. The from-scratch co-adaptation question (§1
   caveat) stays open as a named, deprioritized escalation.
 - **Tie** → rung dies; frozen tower stays the default at tail-thaw
-  scale. Recorded honestly as "a 3k late thaw doesn't move the
+  scale. Recorded honestly as "a 5k late thaw doesn't move the
   panel", NOT "unfreezing doesn't help" — the §1 caveat bounds the
   claim.
 - **Harm** → loud report; the MAPS-style L2-to-init leash becomes
@@ -218,7 +227,8 @@ recipe + the flag trained fresh to 10k, read against the banked
 baseline `step_010000` checkpoint (~27 GPU-h, ~40 GPU-h gate).
 Replaced by owner steering 2026-08-07 18:02Z ("startup mindset,
 shortest time to high quality rollouts"): the warm-start two-arm
-form is ~15 GPU-h train, upgrades the actual deployment artifact on
+form was ~15 GPU-h train at amendment 1's 3k/arm (amendment 2 took
+it to 5k/arm, ~26), upgrades the actual deployment artifact on
 a win, and replays none of the easy curriculum. What the swap gives
 up is stated in §1's caveat and §6's tie wording.
 
@@ -235,6 +245,6 @@ up is stated in §1's caveat and §6's tie wording.
 3. Quote the banked 40k endpoint probe value for §4's frozen-arm
    sanity line.
 4. Land the two arm launchers (siblings of the 40k script,
-   `vu3k_frozen`/`vu3k_thawed` naming, `run_detached.sh` wrapper) +
+   `vu5k_frozen`/`vu5k_thawed` naming, `run_detached.sh` wrapper) +
    prepared `babysit.toml` entries, frozen-first ordering explicit.
 5. Owner go + window confirmation (post-attach-screen chain).
