@@ -6,7 +6,35 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-07 03:14–03:2xZ (real `date -u`) — tick (babysit).*
+
+**Status** (babysit 03:15Z, both green, exit 0):
+- box molmo2 AR 40k — 5800/40k, loss 3.82 (−0.10 this window), probe
+  **9.24@5500 holds the low** (sub-10 ×3; K1 gate ≤12.0944 by 10k with
+  wide margin), 2.175 s/step, vram 67.07 ≤ 71, 9 procs / 4 ranks;
+  **@7500 save ~04:1x–04:2xZ (slow-save watch) — next tick covers
+  it**; endpoint ~08-08.
+- local draws10_t1 — 6912/25800, slow content stretch (~20 f/min
+  since 03:07Z; the 37 s babysit window read 0 f/min — bursty writes,
+  liveness green at 4 procs, judged healthy), cumulative 31.8 f/min →
+  **~13.5 h total, INSIDE the 24 GPU-h gate**; boundary ~13:0x–13:2xZ
+  → frozen reads.
+
+**Steering**: none (`read` clean, `history` no new reactions; owner
+asleep since 00:58Z).
+
+**Done**: tick only — babysit ×1 (both green); `queue_cli.py
+validate` green (depth 2, 8 open); GPUs busy ×5 + CPU queue (#6
+pre-reg draft, #19 instrument) → `run_work_next` armed.
+
+**Next** (`queue_cli.py next`): #6 rung-(a) self-subgoal pre-reg
+draft (chained work session), then #19 AR sampled-draws instrument;
+molmo2 @7500 save ~04:1x–04:2xZ (slow-save watch); draws10_t1
+boundary ~13:0x–13:2xZ → frozen reads; arm A img280 + box-home-sweep
+HELD.
 
 *Updated 2026-08-07 02:51–03:2xZ (real `date -u`) — work session (chained,
 bounded): **#21 P7 LANDED — home-dir & ctrl lifecycle** (commit
@@ -85,35 +113,6 @@ the 02:30Z tick's resumption placeholder from direct box evidence.
 session), then #6 rung-(a) pre-reg draft; molmo2 @7500 save
 ~04:1x–04:2xZ (watch for repeat stall); draws10_t1 boundary
 ~13:1x–13:4xZ → frozen reads; arm A img280 HELD.
-
-*Updated 2026-08-07 02:12–02:3xZ (real `date -u`) — tick (babysit, held
-through the @5000 save per §6).*
-
-**Status** (babysit 02:13Z + 02:30Z, both green, exit 0 ×2):
-- box molmo2 AR 40k — **@5000 save caught at the boundary** (02:30Z:
-  step exactly 5000, metrics row mid-write, gpu1 momentarily 0%, 9
-  procs alive); probe **9.46@4500 → 9.64@5000** — first two sub-10
-  anchors, K1 gate (≤12.0944 by 10k) satisfied with wide margin, the
-  +0.18 @5000 wiggle reads as noise against the 12.60@3000 precedent;
-  loss 4.03@4560 (+0.016, noise), 2.18 s/step, vram 67.07 ≤ 71.
-  Post-save resumption: confirmed by the 02:32Z work session (see
-  entry above) — save landed slow but clean, step 5020 rolling by
-  02:48Z. Next save @7500 ~04:1xZ; endpoint ~08-08.
-- local draws10_t1 — 5472/25800, window 36.4 f/min, cumulative
-  31.6 f/min → **~13.6 h total, INSIDE the 24 GPU-h gate**; boundary
-  pulled in to ~13:1x–13:4xZ.
-
-**Steering**: none (`read` clean ×2, `history` no new reactions;
-owner asleep since 00:58Z).
-
-**Done**: tick only — babysit ×2 bracketing the @5000 save;
-`queue_cli.py validate` green (depth 3, 8 open); GPUs busy ×5 +
-CPU queue → `run_work_next` armed.
-
-**Next** (`queue_cli.py next`): p6 checkpy-tiers/gpu markers (chained
-work session), then p7 tee-to-logs, #6 rung-(a) pre-reg draft; molmo2
-next save @7500 ~04:0xZ; draws10_t1 boundary ~13:1x–13:4xZ → frozen
-reads; arm A img280 HELD.
 
 ## Utilization footer
 
