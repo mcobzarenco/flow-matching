@@ -1024,7 +1024,18 @@ blocks make it trivial), Gemma later if a live-trunk E4B+ run recurs.
 Gate: keystone oracle (checkpointed ≡ plain forward/backward, loss
 bit-close) + a measured chunk-size ladder re-run.
 
-## 21. Agentic-loop & infrastructure deep review — `queued` (owner ask 2026-08-06 23:39Z)
+## 21. Agentic-loop & infrastructure deep review — `delivered`, awaiting owner sign-off (review published 2026-08-07 00:3xZ)
+
+**Status 2026-08-07:** the main deliverable is published —
+[the review post](posts/2026-08-07-agentic-loop-review.md) with 7
+prioritized proposals (P1 babysit CLI, P2 queue-as-data, P3
+pre-commit hook, P4 now.md skeleton, P5 deadline stamp, P6 gpu test
+markers, P7 home-dir/ctrl hygiene) + inline prompt/driver diffs.
+Applied as class fixes (no sign-off needed): `archive_now.py`
+(2026-08-06), `discord.py post --body-file` (2026-08-07). Everything
+else is **blocked on owner review** — first owner reply
+re-prioritizes; P3+P5+P6+P7 fit one work session, P1 and P2 one
+each.
 
 Owner steering, verbatim scope: "a deep review of your charter focus
 on optimising the way you work and your local infrastructure … The

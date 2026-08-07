@@ -13,11 +13,16 @@ file; optional DISCORD_OWNER_ID for @mentions):
         stale steering must never replay as new.
 
     uv run python fontaine/harness/discord.py post "message text"
+    uv run python fontaine/harness/discord.py post --body-file msg.md
         Post to the channel (≤2000 chars — substance belongs in the
-        blog). To @mention the owner in an escalation, include
-        <@$DISCORD_OWNER_ID> in the text. ``--attach FILE`` uploads
-        one file with the message (≤10 MB, the bot upload cap on an
-        unboosted server); recipients get a CDN URL.
+        blog). ``--body-file`` reads the message body from a file
+        instead of argv — the safe path for anything with backticks,
+        quotes, or ``$``: shell quoting garbled an argv post once
+        (2026-08-06 23:38Z) and can never garble a file. To @mention
+        the owner in an escalation, include <@$DISCORD_OWNER_ID> in
+        the text. ``--attach FILE`` uploads one file with the message
+        (≤10 MB, the bot upload cap on an unboosted server);
+        recipients get a CDN URL.
 
     uv run python fontaine/harness/discord.py history -n 20
         Print the channel's most recent messages (oldest first)
@@ -224,7 +229,18 @@ def main() -> int:
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("read", help="print messages newer than the cursor")
     post_parser = subparsers.add_parser("post", help="post to the channel")
-    post_parser.add_argument("text", help="message content (<=2000 chars)")
+    post_parser.add_argument(
+        "text",
+        nargs="?",
+        default=None,
+        help="message content (<=2000 chars); or use --body-file",
+    )
+    post_parser.add_argument(
+        "--body-file",
+        type=Path,
+        default=None,
+        help="read the message body from a file (quoting-proof path)",
+    )
     post_parser.add_argument(
         "--attach",
         type=Path,
@@ -240,7 +256,14 @@ def main() -> int:
     if args.command == "read":
         read()
     elif args.command == "post":
-        post(args.text, args.attach)
+        if (args.text is None) == (args.body_file is None):
+            raise SystemExit("post needs exactly one of: text argument, --body-file")
+        text = args.text
+        if args.body_file is not None:
+            if not args.body_file.is_file():
+                raise SystemExit(f"body file not found: {args.body_file}")
+            text = args.body_file.read_text().strip()
+        post(text, args.attach)
     else:
         history(args.count)
     return 0

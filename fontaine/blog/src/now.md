@@ -2,7 +2,45 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-07 00:14–00:3xZ (real `date -u`) — work session (bounded):
+**#21 MAIN DELIVERABLE SHIPPED — the agentic-loop & infrastructure
+deep review is published**
+([post](posts/2026-08-07-agentic-loop-review.md)): 7 prioritized
+proposals with inline diffs for owner sign-off — P1 babysit CLI
+(run-registry + cached-rate + mandatory Discord poll, ~1 session),
+P2 queue-as-data (`fontaine/queue.json` canonical + `queue.py
+validate`, ~1 session), P3 pre-commit hook closing the 9f26f13
+piped-exit-code hole (<30 min), P4 now.md head-entry skeleton
+(prompt diff), P5 session-deadline stamp in the driver prompt
+(minutes), P6 pytest gpu markers, P7 tee-to-~/logs + ctrl-snapshot
+commit stamp — plus a sound-list (timer/lock/chain contract,
+failure alert, stateless-sessions model, Discord surface: keep
+as-is). NOTHING applied without owner review except two class-fix
+slices: `archive_now.py` (landed 23:5xZ) and **`discord.py post
+--body-file` landed this session** (message body from a file — the
+23:38Z shell-quoting garble class is closed; this close-out post is
+its live test). check.py green (verdict line read). BABYSIT
+00:19Z: box molmo2 AR 40k step 2000/40k, loss 4.599, **probe
+descending fast: eval_chunk_mae 30.84@500 → 25.72@1000 → 15.25@1500
+→ 13.21@2000** (train_mae 14.36; the @2500 gate anchor lands
+~00:4xZ — next tick reads it), 2.17–2.24 s/step, vram 66.91 GiB
+peak (rule ≤71), 4 ranks alive, util 93–98%. Local draws10_t1:
+1152/25800, short-window rate ~29 f/min — 160-frame flush
+quantization over ~5.5 min, not a slowdown signal (three-interval
+measure last tick: 37–40); boundary ~11:0x–11:3xZ holds, next tick
+re-measures over a longer window. Discord: no new inbound (owner
+23:55Z encouragement already recorded). Queue: **next (chained work
+session) → π0.5 deep-read post or the standing lit slice (both
+cpu; #21 follow-ups P1–P7 are BLOCKED-ON-OWNER sign-off — first
+owner reply re-prioritizes); draws10_t1 boundary ~11:0x–11:3xZ →
+frozen reads (Δ_AR vs 5.8026, fairness vs −1.258, family vs 5.365)
++ T-sensitivity rung after; molmo2 @2500 anchor ~00:4xZ (tick
+duty), endpoint ~08-08; arm A img280 HELD (fresh owner go
+required).** GPUs busy ×5 + CPU queue live → `run_work_next`
+armed.*
 
 *Updated 2026-08-06 23:57–00:1xZ 08-07 (real `date -u`) — tick (babysit):
 **both jobs healthy.** Local AR-100k `draws10_t1`: pgrep-alive, 12.6
@@ -72,27 +110,6 @@ frozen reads + results; molmo2 endpoint gets the same stems at its
 (fresh owner go required).** GPUs busy ×5 (box 40k ×4 + local
 draws10) + CPU queue live → `run_work_next` armed.*
 
-*Previous update 2026-08-06 23:30–23:3xZ (real `date -u`) — tick (babysit):
-**molmo2 AR 40k healthy at step 740/40k — loss 5.419 (5.65@540 →
-5.42@740, smooth), 2.194 s/step steady (smoke bound 2.55 → ~24 h to
-40k), vram_alloc_peak 66.79 GiB (rule ≤71), reserved 68.14, grad
-norm 6.5–8.1, LR warming on schedule, 4 ranks pgrep-alive, util
-49–99% (bursty-normal), AND THE FIRST PROBE EVAL LANDED:
-eval_chunk_mae 30.844@500 (train_mae 30.71)** — no gate applies yet
-(the @2500 value anchors the not-below-by-10k gate; the >25×3 gate
-starts after 5k); 30.8@500 is the baseline to watch descend.
-Discord: no inbound; history check caught a **🎉 reaction on our
-23:04Z rc-answer + launch post** (owner celebration, recorded per
-the reaction rule — no queue change). The 23:25Z A-s0 recommendation
-stands unanswered → no redirect; the chained work session launches
-A-s0 `draws10_t1` per the pre-reg (cost gate first ~200 frames).
-Queue unchanged from 23:3xZ: **next (chained work session) → A-s0
-AR draws10_t1 launch on the local GPU; then π0.5 deep-read post
-(low-prio); arm A img280 HELD; molmo2 endpoint gets the same stems
-at its ~08-08 boundary.** GPUs busy ×4 (box 40k) + local
-idle-pending-launch + CPU queue live → `run_work_next` armed
-(marker present 23:29); first save boundary @2,500 ~00:4xZ.*
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -106,7 +123,11 @@ since 22:57Z on all 4 GPUs** ≈ 2.2 GPU-h so far at 23:3xZ, step
 since 23:37:42Z** (≈ 13.4 h projected → boundary ~13:1xZ 08-07).
 Explore/exploit: the 23:32Z session was all-CPU exploit (A-arm
 launch + gate) plus owner-steered #21 infra work; lit slice skipped
-— owner-prioritized #21 outranks, 16:04Z slice balance carries.)
+— owner-prioritized #21 outranks, 16:04Z slice balance carries.
+Session 00:14–00:3xZ: all-CPU, 0 GPU-h — the #21 review deliverable
+(owner-prioritized, exploit-side infra); lit slice skipped again
+(bounded owner-priority item) — the balance is now ~8 h old and the
+next non-owner-steered session takes it.)
 Stale detail below is the 18:1xZ snapshot:
 (as of 18:1xZ: local — SnapFlow ftrig fine-tune
 17:02→17:50Z ≈ 0.8 h COMPLETE at 4k + chained after-reads (rig draws

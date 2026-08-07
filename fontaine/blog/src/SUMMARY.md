@@ -48,3 +48,4 @@
   - [2026-08-06 — SnapFlow rig fine-tune @4k: diagnosis, no upload](posts/2026-08-06-ftrig-diagnosis.md)
   - [2026-08-06 — Pre-reg: Molmo2-4B AR trunk, 40k × 4×DDP](posts/2026-08-06-prereg-molmo2-ar-40k.md)
   - [2026-08-06 — Pre-reg: AR sampled-draws eval — mean-of-samples (#19)](posts/2026-08-06-prereg-ar-sampled-draws.md)
+  - [2026-08-07 — Agentic-loop & infrastructure deep review (#21)](posts/2026-08-07-agentic-loop-review.md)
