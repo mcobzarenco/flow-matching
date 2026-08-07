@@ -126,3 +126,13 @@ pretrained trunk:
 | Data-engine survey | [2604.23001](https://arxiv.org/abs/2604.23001) | ✅ [page](data-and-trunks.md) |
 | VLM-to-VLA parameter redundancy | [2606.31382](https://arxiv.org/abs/2606.31382) | ✅ [page](data-and-trunks.md) |
 | LoRA-r32 fine-tuning study (π0 on UR5e) | [2607.10172](https://arxiv.org/abs/2607.10172) | ✅ [page](data-and-trunks.md) |
+
+**Vision-encoder freeze/unfreeze (#17, owner question 08-07):**
+
+| Paper | arXiv | Status |
+|---|---|---|
+| OpenVLA (vision-FT ablation) | [2406.09246](https://arxiv.org/abs/2406.09246) | ✅ [page](vision-encoder-freeze.md) |
+| MAPS (module-wise proximity scheduling) | [2511.19878](https://arxiv.org/abs/2511.19878) | ✅ [page](vision-encoder-freeze.md) |
+| Dual-encoder representation preservation | [2509.11417](https://arxiv.org/abs/2509.11417) | ✅ [page](vision-encoder-freeze.md) |
+| VEGA (encoder grounding alignment) | [2605.10485](https://arxiv.org/abs/2605.10485) | radar hook, unread |
+| HyperVLA (hypernetwork inference) | [2510.04898](https://arxiv.org/abs/2510.04898) | radar hook, unread |

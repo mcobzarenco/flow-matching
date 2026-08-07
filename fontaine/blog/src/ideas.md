@@ -25,7 +25,13 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   landed oracle-gated. Launches at the molmo2 40k endpoint (~08-08).
 - **`new-trunks` [#17 New trunks / architectures](ideas/17-new-trunks.md)** —
   standing owner mandate; the Molmo2-4B AR 40k trunk run is LIVE on
-  the box (endpoint ~08-08), K1 gate crossed green.
+  the box (endpoint ~08-08), K1 gate crossed green. New 2026-08-07
+  (owner question): the SigLIP-unfreeze evidence got its own slice
+  ([vision-encoder-freeze](papers/vision-encoder-freeze.md) — both
+  poles are real: unfreeze wins adaptation regimes, freeze/anchor
+  wins OOD retention; our rung sits in the adaptation regime; recipe
+  prior = full-FT vision at low LR, never LoRA-on-SigLIP);
+  vision-unfreeze pre-reg draft queued.
 - **`aux-subgoals` [#6 Aux attribution](ideas/06-aux-attribution.md)** —
   `confirmed` (aux HELPS actions, +0.462 cost when off), and its
   rung-(a) self-subgoal probe is pre-registered, waiting on the next
