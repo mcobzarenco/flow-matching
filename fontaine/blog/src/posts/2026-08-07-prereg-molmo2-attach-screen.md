@@ -206,3 +206,23 @@ has had the chance to steer it. This post makes that decision
 executable, not automatic: the screen is the decision's first
 measurement, and the full-length attachment run gets its own
 pre-registration citing the screen's numbers.
+
+## Amendment (2026-08-07 ~06:0xZ, pre-launch — instrument landing)
+
+One under-specified corner surfaced at implementation and is pinned
+here per the amendment rule above. The "Shared recipe constants"
+section says the start is "`--backbone-init-from` (trunk + prompt
+only, decoder fresh)". **"Decoder fresh" means the flow expert.** The
+K arm's CE rider (the phase-1 `Molmo2ARDecoder` — FAST embedding/head
+tables, decoder-owned) additionally loads its tables from the
+endpoint checkpoint's `expert.safetensors`, strictly. Anything else
+contradicts the arms table's definition of K — "phase-1 CE objective
+continuing **verbatim**": a fresh-table CE branch would restart the
+action head at row-mean init and the CE-health read against the
+phase-1 tail (~3.68) would be meaningless. The F arm is untouched
+(no rider). Also pinned: the rider's tables train at `--decoder-lr`
+(their phase-1 routing), and the joint total logs the flow loss as
+`loss_action` and the CE branch's per-token action CE as `loss_aux`
+— the CE-health watch reads the latter against phase-1's
+`loss_action` at the matched step. No other semantic changes; the
+arms, gates, frozen reads and decision rule stand as posted.

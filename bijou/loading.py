@@ -40,7 +40,7 @@ from .decoders.flow import (
 from .encoders.gemma4 import PROMPT_FORMAT, GemmaEncoder
 from .encoders.molmo2 import Molmo2Encoder
 from .fast.codec import ActionCodec
-from .gemma4.config import Gemma4Config, LayerType
+from .gemma4.config import Gemma4Config, LayerType, RopeParameters, RopeType
 from .gemma4.loading import (
     load_config,
     load_model,
@@ -50,6 +50,7 @@ from .gemma4.loading import (
 from .gemma4.model import Gemma4Model
 from .interface import kv_stream_name, residual_stream_name
 from .model import BijouModel
+from .molmo2.config import Molmo2Config
 from .molmo2.loading import load_config as load_molmo2_config
 from .molmo2.model import Molmo2Model
 from .molmo2.model import load_model as load_molmo2_model
@@ -228,6 +229,12 @@ class Molmo2PromptConfig:
     state_dim: int
     condition_fields: tuple[str, ...]
     generate_bracket: bool
+    # Trunk layers whose post-layer hidden states are exported as raw
+    # residual taps (named ``res{layer}``, projected decoder-side — the
+    # flow-phase attachment surface, pre-registered 2026-08-07); () on
+    # every AR-phase checkpoint. Molmo2 has no K/V-export conditioning
+    # arm — the AR suffix reads the CACHE — so no ``exports`` mirror.
+    residual_exports: tuple[int, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -237,6 +244,7 @@ class Molmo2PromptConfig:
             "state_dim": self.state_dim,
             "condition_fields": list(self.condition_fields),
             "generate_bracket": self.generate_bracket,
+            "residual_exports": list(self.residual_exports),
         }
 
     @classmethod
@@ -249,7 +257,18 @@ class Molmo2PromptConfig:
                 str(field) for field in data.get("condition_fields", [])
             ),
             generate_bracket=bool(data.get("generate_bracket", False)),
+            # Absent on checkpoints predating the flow phase (2026-08-07)
+            # — those exported the prefix cache only.
+            residual_exports=tuple(
+                int(layer) for layer in data.get("residual_exports", [])
+            ),
         )
+
+    @property
+    def stream_names(self) -> tuple[str, ...]:
+        """Residual taps only — index-aligned with ``residual_exports``
+        (no K/V-export arm exists on this trunk)."""
+        return tuple(residual_stream_name(layer) for layer in self.residual_exports)
 
 
 @dataclass(frozen=True, slots=True)
@@ -568,6 +587,74 @@ def residual_expert_config(
     )
 
 
+# The pinned molmo2 tap rule (attach-screen pre-reg, 2026-08-07): gemma's
+# rule keys off first_kv_shared_layer_idx, a KV-share boundary molmo2's
+# uniform full-attention stack does not have — so the rule here is uniform
+# stride 3 with the LAST tap anchored on the final layer (the π0.5
+# full-stack-span direction). 36 layers ⇒ 12 taps at 2, 5, …, 35.
+MOLMO2_TAP_STRIDE = 3
+
+
+def molmo2_residual_taps(num_hidden_layers: int) -> tuple[int, ...]:
+    """Trunk layers exported as residual taps under the pinned rule
+    (module comment above): ascending, stride 3, last tap = final layer."""
+    start = (num_hidden_layers - 1) % MOLMO2_TAP_STRIDE
+    return tuple(range(start, num_hidden_layers, MOLMO2_TAP_STRIDE))
+
+
+def molmo2_residual_expert_config(
+    backbone: Molmo2Config,
+    *,
+    action_dim: int,
+    state_dim: int,
+    hidden_size: int = 1024,
+    num_attention_heads: int = 8,
+    intermediate_size: int = 4096,
+    cross_attention_heads: int = 8,
+    chunk_size: int = 50,
+    time_embed_dim: int = 256,
+    self_attention_mode: SelfAttentionMode = SelfAttentionMode.CAUSAL_ACTIONS,
+    self_attention_rope_theta: float = 10_000.0,
+    time_conditioning: TimeConditioning = TimeConditioning.ADDITIVE,
+    target_time_embed: bool = False,
+) -> ExpertConfig:
+    """Expert config for residual conditioning on a Molmo2 trunk: one
+    stream per pinned tap (``molmo2_residual_taps``), expert layer i
+    reading tap i, 1:1 ascending — expert depth = tap count (12 for the
+    4B's 36 layers). Adapter geometry mirrors the trunk's own attention
+    (kv_heads/head_dim, plain full-rotary RoPE at the trunk's theta —
+    the exact ``Molmo2RotaryEmbedding`` parameters), so the adapters
+    produce streams in the same contract as gemma's."""
+    text = backbone.text
+    return ExpertConfig(
+        hidden_size=hidden_size,
+        num_attention_heads=num_attention_heads,
+        intermediate_size=intermediate_size,
+        hidden_activation=text.hidden_act,
+        rms_norm_eps=text.layer_norm_eps,
+        self_attention_mode=self_attention_mode,
+        self_attention_rope_theta=self_attention_rope_theta,
+        cross_attention_heads=cross_attention_heads,
+        cross_attention_head_dim=text.head_dim,
+        cross_attention_rope=RopeParameters(
+            rope_type=RopeType.DEFAULT,
+            rope_theta=text.rope_theta,
+            factor=1.0,
+            partial_rotary_factor=1.0,
+        ),
+        cross_attention_schedule=molmo2_residual_taps(text.num_hidden_layers),
+        action_dim=action_dim,
+        state_dim=state_dim,
+        chunk_size=chunk_size,
+        time_embed_dim=time_embed_dim,
+        time_conditioning=time_conditioning,
+        target_time_embed=target_time_embed,
+        residual_streams=True,
+        residual_stream_dim=text.hidden_size,
+        cross_attention_kv_heads=text.num_key_value_heads,
+    )
+
+
 def from_backbone(
     model_id_or_path: str | Path,
     expert_config: ExpertConfig | None = None,
@@ -818,6 +905,11 @@ class CheckpointMetadata:
     per_dataset_normalization: dict[str, DatasetStats]
     train_args: dict[str, Any]
     step: int
+    # The K-arm CE rider's decoder schema (attach-screen pre-reg,
+    # 2026-08-07); its weights ride as ``joint_ce.safetensors``. None on
+    # every non-joint checkpoint — the key is then absent, so files
+    # round-trip byte-identically to the pre-field format.
+    joint_ce: dict[str, Any] | None = None
 
     def to_json_dict(self) -> dict[str, Any]:
         return {
@@ -825,6 +917,7 @@ class CheckpointMetadata:
             "backbone": self.backbone.to_dict(),
             "prompt": self.prompt.to_dict(),
             "decoder": self.decoder,
+            **({"joint_ce": self.joint_ce} if self.joint_ce is not None else {}),
             "step": self.step,
             "train_args": self.train_args,
             # Training normalized per dataset; inference must normalize
@@ -938,17 +1031,35 @@ def flow_decoder_config_from_expert(expert_config: ExpertConfig) -> FlowDecoderC
 
 
 def expert_config_from_architecture(
-    prompt: GemmaPromptConfig,
+    prompt: GemmaPromptConfig | Molmo2PromptConfig,
     decoder: FlowDecoderConfig,
-    backbone_config: Gemma4Config,
+    backbone_config: Gemma4Config | Molmo2Config,
 ) -> ExpertConfig:
     """Compose the prompt + decoder configs back into the expert's
     construction config: schedule names resolve to backbone layer
     indices against the prompt section's exports (K/V ``kv{i}`` and
     residual ``res{i}`` alike); cross-attention geometry comes from the
-    backbone's global layers. Validates the references — unknown stream
-    name, unconsumed export, or a schedule mixing conditioning kinds is
-    a config error."""
+    backbone's global layers (gemma) or its uniform attention geometry
+    (molmo2 — residual-only, no K/V arm). Validates the references —
+    unknown stream name, unconsumed export, or a schedule mixing
+    conditioning kinds is a config error."""
+    if isinstance(prompt, Molmo2PromptConfig) != isinstance(
+        backbone_config,
+        Molmo2Config,
+    ):
+        raise SystemExit(
+            f"prompt section {type(prompt).__name__} does not match "
+            f"backbone config {type(backbone_config).__name__} — the "
+            "checkpoint records one trunk family, the backbone id another",
+        )
+    if isinstance(prompt, Molmo2PromptConfig):
+        assert isinstance(backbone_config, Molmo2Config)  # paired above
+        return _molmo2_expert_config_from_architecture(
+            prompt,
+            decoder,
+            backbone_config,
+        )
+    assert isinstance(backbone_config, Gemma4Config)  # paired above
     all_exports = prompt.exports + prompt.residual_exports
     by_name = dict(zip(prompt.stream_names, all_exports, strict=True))
     unknown = [name for name in decoder.schedule if name not in by_name]
@@ -999,6 +1110,58 @@ def expert_config_from_architecture(
             if residual
             else None
         ),
+    )
+
+
+def _molmo2_expert_config_from_architecture(
+    prompt: Molmo2PromptConfig,
+    decoder: FlowDecoderConfig,
+    backbone_config: Molmo2Config,
+) -> ExpertConfig:
+    """The molmo2 half of ``expert_config_from_architecture``:
+    residual-only (this trunk exports no K/V streams), geometry derived
+    exactly as at construction (``molmo2_residual_expert_config``)."""
+    by_name = dict(zip(prompt.stream_names, prompt.residual_exports, strict=True))
+    unknown = [name for name in decoder.schedule if name not in by_name]
+    if unknown:
+        raise SystemExit(
+            f"decoder schedule references unknown stream(s) {sorted(set(unknown))}; "
+            f"the encoder exports {list(prompt.stream_names)} (molmo2 is "
+            "residual-only — no K/V streams exist on this trunk)",
+        )
+    unused = [name for name in prompt.stream_names if name not in decoder.schedule]
+    if unused:
+        raise SystemExit(
+            f"encoder export(s) {unused} are not consumed by the decoder "
+            "schedule — remove them from the encoder config or schedule them",
+        )
+    text = backbone_config.text
+    return ExpertConfig(
+        hidden_size=decoder.hidden_size,
+        num_attention_heads=decoder.num_attention_heads,
+        intermediate_size=decoder.intermediate_size,
+        hidden_activation=decoder.hidden_activation,
+        rms_norm_eps=decoder.rms_norm_eps,
+        self_attention_mode=decoder.self_attention_mode,
+        self_attention_rope_theta=decoder.self_attention_rope_theta,
+        cross_attention_heads=decoder.cross_attention_heads,
+        cross_attention_head_dim=text.head_dim,
+        cross_attention_rope=RopeParameters(
+            rope_type=RopeType.DEFAULT,
+            rope_theta=text.rope_theta,
+            factor=1.0,
+            partial_rotary_factor=1.0,
+        ),
+        cross_attention_schedule=tuple(by_name[name] for name in decoder.schedule),
+        action_dim=decoder.action_dim,
+        state_dim=decoder.state_dim,
+        chunk_size=decoder.chunk_size,
+        time_embed_dim=decoder.time_embed_dim,
+        time_conditioning=decoder.time_conditioning,
+        target_time_embed=decoder.target_time_embed,
+        residual_streams=True,
+        residual_stream_dim=text.hidden_size,
+        cross_attention_kv_heads=text.num_key_value_heads,
     )
 
 
@@ -1130,11 +1293,12 @@ def from_checkpoint(
     )
     checkpoint_dir = resolve_checkpoint_dir(info.backbone)
     if isinstance(sections.prompt, Molmo2PromptConfig):
-        if not isinstance(sections.decoder, ARBackboneConfig):
+        if not isinstance(sections.decoder, ARBackboneConfig | FlowDecoderConfig):
             raise SystemExit(
                 f"{checkpoint} is a molmo2 checkpoint with a "
-                f"{type(sections.decoder).__name__} decoder — phase 1 "
-                "supports the ar_backbone (suffix) decoder only",
+                f"{type(sections.decoder).__name__} decoder — this trunk "
+                "supports the ar_backbone (suffix) and flow (residual "
+                "conditioning) decoders only",
             )
         if offload_ple:
             raise SystemExit(
@@ -1155,42 +1319,62 @@ def from_checkpoint(
             max_crops=sections.prompt.max_crops,
             state_dim=sections.prompt.state_dim,
             hidden_size=molmo2_config.text.hidden_size,
+            residual_exports=sections.prompt.residual_exports,
             device=device,
             dtype=expert_dtype,
         )
-        molmo2_tokenizer = Molmo2TextTokenizer(info.backbone)
-        carriers = newline_carrier_ids(
-            molmo2_tokenizer,
-            text_vocab_size=molmo2_config.text.vocab_size,
-            terminator_id=molmo2_tokenizer.encode(
-                "\n",
-                add_special_tokens=False,
-            )[0],
-        )
-        molmo2_aux_runtime = (
-            build_aux_runtime(
-                sections.decoder.aux,
-                molmo2_tokenizer,
-                newline_carrier_ban=True,
+        if isinstance(sections.decoder, FlowDecoderConfig):
+            # Falls through to the common strict weight loads below —
+            # a residual flow checkpoint's expert.safetensors carries
+            # the res_adapters.* keys.
+            model = BijouModel(
+                backbone=backbone,
+                encoder=encoder,
+                decoder=FlowDecoder(
+                    expert_config_from_architecture(
+                        sections.prompt,
+                        sections.decoder,
+                        molmo2_config,
+                    ),
+                    attn_backend=attn_backend,
+                    device=device,
+                    dtype=expert_dtype,
+                ),
             )
-            if sections.decoder.aux is not None
-            else None
-        )
-        molmo2_decoder = Molmo2ARDecoder(
-            sections.decoder,
-            molmo2_config.text,
-            resolve_action_codec(sections.decoder.tokenizer),
-            tokenizer=molmo2_tokenizer,
-            aux_runtime=molmo2_aux_runtime,
-            newline_carrier_ids=carriers,
-            device=device,
-            dtype=expert_dtype,
-        )
-        model = BijouModel(
-            backbone=backbone,
-            encoder=encoder,
-            decoder=molmo2_decoder,
-        )
+        else:
+            molmo2_tokenizer = Molmo2TextTokenizer(info.backbone)
+            carriers = newline_carrier_ids(
+                molmo2_tokenizer,
+                text_vocab_size=molmo2_config.text.vocab_size,
+                terminator_id=molmo2_tokenizer.encode(
+                    "\n",
+                    add_special_tokens=False,
+                )[0],
+            )
+            molmo2_aux_runtime = (
+                build_aux_runtime(
+                    sections.decoder.aux,
+                    molmo2_tokenizer,
+                    newline_carrier_ban=True,
+                )
+                if sections.decoder.aux is not None
+                else None
+            )
+            molmo2_decoder = Molmo2ARDecoder(
+                sections.decoder,
+                molmo2_config.text,
+                resolve_action_codec(sections.decoder.tokenizer),
+                tokenizer=molmo2_tokenizer,
+                aux_runtime=molmo2_aux_runtime,
+                newline_carrier_ids=carriers,
+                device=device,
+                dtype=expert_dtype,
+            )
+            model = BijouModel(
+                backbone=backbone,
+                encoder=encoder,
+                decoder=molmo2_decoder,
+            )
     elif isinstance(sections.decoder, ARFastConfig | ARBackboneConfig):
         decoder_config = sections.decoder
         assert isinstance(sections.prompt, GemmaPromptConfig)  # molmo2 handled above

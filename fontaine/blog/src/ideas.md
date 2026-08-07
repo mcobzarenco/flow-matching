@@ -232,6 +232,32 @@ matched steps.
   prerequisite. Cost est. 50–60 GPU-h, ceiling 70 with matched 5k
   downshift. Opens after the endpoint + #19 box obligations + the
   attachment-decision item (owner steer window).
+- **Instrument LANDED 2026-08-07 ~06:0xZ, oracle-gated (this
+  commit)**: all three pre-reg parts. (1) `Molmo2Encoder` residual
+  exports (the trunk-side tap protocol existed since WP1 — the
+  encoder/config/loading wiring was the gap; queue-title audit paid
+  off again): `residual_exports` on encoder + `Molmo2PromptConfig`,
+  `molmo2_residual_taps` pins the rule (stride 3, last tap = final
+  layer; 36 ⇒ 12 taps at 2,5,…,35), `molmo2_residual_expert_config`
+  mirrors trunk geometry (GQA 8 kv-heads × head_dim 128, plain RoPE
+  θ=5e6), guard lifted for `--decoder flow --conditioning-streams
+  residual`, checkpoint load/save round-trips. (2) `--seam-stop-grad`
+  detaches taps pre-adapter in `BijouModel.encode`. (3) `--joint-ce`:
+  Molmo2ARDecoder rider on the model, CE sums inside autocast + fp32
+  flow outside, THREE-normalizer chunked-backward form, rider tables
+  at decoder-lr, saved as `joint_ce.safetensors` (+ config section),
+  rider continues from the endpoint's `expert.safetensors` under
+  `--backbone-init-from` (pre-reg AMENDMENT appended: "decoder
+  fresh" = the flow expert; a fresh-table CE branch contradicts
+  "continuing verbatim"). 13 new oracles in
+  `tests/test_molmo2_residual.py` — taps byte-match trunk hidden
+  states, cache bit-identical with/without taps, K/V contract +
+  padding invariance, stop-grad zero-vs-nonzero with naive-joint
+  negative control, and BOTH α-edges bitwise through the real
+  `BijouTrainStep` (flow half ≡ F-arm step; trunk grads ≡ phase-1 CE
+  step). check.py 423 passed. Remaining before launch: #20
+  activation checkpointing (hard K prerequisite), F/K launch
+  scripts + the joint-checkpoint AR-view materializer for read 4.
 
 ## 5. FAST tokenizer v3 — `queued`
 

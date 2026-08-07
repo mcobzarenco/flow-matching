@@ -1,7 +1,60 @@
 # Now
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-07 05:07–06:0xZ (real `date -u`) — work session
+(bounded): **#4 attach-screen instrument LANDED, oracle-gated** — all
+three pre-registered parts; the K arm is now launchable code.*
+
+**Status** (babysit 05:08Z boot + 05:34Z, both green, exit 0):
+- box molmo2 AR 40k — 9080/40k, loss 3.6347, probe **new low
+  7.67@8500** (8.26@9000, sub-10 ×10; K1 gate ≤12.0944 by 10k —
+  formal crossing at the **@10000 probe ~06:0xZ**, margin huge),
+  2.215 s/step, vram 67.07 ≤ 71; endpoint ~08-08.
+- local draws10_t1 — 11552/25800, cumulative 32.4 f/min → **~13.3 h
+  total, INSIDE the 24 GPU-h gate**; boundary ~13:0x–13:3xZ → frozen
+  reads.
+
+**Steering**: none (`read` clean at boot and both checkpoints; owner
+asleep since 00:58Z).
+
+**Done**: **#4 attachment-screen instrument LANDED** (this commit),
+all three parts oracle-gated per the pre-reg. (1) Molmo2 residual
+exports — the trunk-side tap protocol existed since WP1 (queue-title
+audit paid off); the wiring was the gap: `Molmo2Encoder
+residual_exports` + `Molmo2PromptConfig` field, `molmo2_residual_taps`
+pins the rule (stride 3, last tap = final layer; 36 ⇒ 2,5,…,35),
+`molmo2_residual_expert_config` mirrors trunk geometry, the
+ar_backbone-only guard lifted for `--decoder flow
+--conditioning-streams residual`, checkpoint save/load round-trips
+(molmo2 flow checkpoints now load via `from_checkpoint`). (2)
+`--seam-stop-grad` — taps detached before adapter projection in
+`BijouModel.encode`. (3) `--joint-ce` — the K arm: Molmo2ARDecoder
+rider beside the flow expert, CE suffix inside autocast + fp32 flow
+outside, three-normalizer chunked-backward form, rider tables at
+decoder-lr, saved as `joint_ce.safetensors`, and continued from the
+endpoint's `expert.safetensors` under `--backbone-init-from` — that
+last pinned in a **pre-reg AMENDMENT** ("decoder fresh" = the flow
+expert; fresh CE tables would contradict "continuing verbatim").
+13 new oracles (`tests/test_molmo2_residual.py`): taps byte-match
+trunk hidden states, cache bit-identical with/without taps, stream
+contract + padding invariance, stop-grad zero/nonzero with the
+naive-joint negative control, and both α-edges **bitwise through the
+real BijouTrainStep** (flow half ≡ F-arm step; trunk grads ≡ phase-1
+CE step). check.py 423 passed. Queue: instrument item closed;
+**launch-prep item queued** as refill (F/K scripts + the
+joint-checkpoint AR-view materializer for the trunk-drift read);
+validate green (depth 2, 11 open).
+
+**Next** (`queue_cli.py next`): #4 attach-screen launch prep (CPU),
+then #20 activation checkpointing (hard K prerequisite); molmo2
+**@10000 K1 gate crossing ~06:0xZ** — babysit surfaces it, judge
+then; draws10_t1 boundary ~13:0x–13:3xZ → frozen reads; screen
+execution opens at endpoint → #19 box obligations → #20 + launch prep
+→ attachment-decision owner steer window; arm A img280 +
+box-home-sweep HELD.
 
 *Updated 2026-08-07 05:04–05:1xZ (real `date -u`) — tick (babysit).*
 
@@ -80,34 +133,6 @@ then #20 activation checkpointing; molmo2 **@10000 K1 gate crossing
 ~13:0x–13:3xZ → frozen reads; screen execution opens at endpoint →
 #19 box obligations → instruments + #20 → attachment-decision owner
 steer window; arm A img280 + box-home-sweep HELD.
-
-*Updated 2026-08-07 04:46–04:5xZ (real `date -u`) — tick (babysit).*
-
-**Status** (babysit 04:46Z, both green, exit 0):
-- box molmo2 AR 40k — 7820/40k, loss 3.67 (−0.042 this window), probe
-  8.64@7500 (low **8.54@6000**, sub-10 ×6; K1 gate ≤12.0944 by 10k —
-  formal crossing at the **@10000 probe ~06:0xZ**, current margin
-  wide), 2.203 s/step, 28.5 steps/min, vram 67.07 ≤ 71, 10 procs / 4
-  ranks; endpoint ~08-08.
-- local draws10_t1 — 10112/25800, window 57.1 f/min (fast content
-  stretch), cumulative 32.8 f/min → **~13.1 h total, INSIDE the 24
-  GPU-h gate**; boundary ~13:0x–13:3xZ → frozen reads.
-
-**Steering**: none (`read` clean; `history` no new reactions; owner
-asleep since 00:58Z).
-
-**Done**: tick only — babysit ×1 (both green, exit 0); queue validate
-green (depth 2, 10 open); GPUs busy + CPU queue (#4 pre-reg draft,
-#20 activation checkpointing) → `run_work_next` armed (was already
-set; re-touched). No Discord post — nothing new since our 04:44Z
-post 2 min before this tick; blog build deferred to the chained
-session per the 03:29Z-tick precedent.
-
-**Next** (`queue_cli.py next`): #4 attachment-screen pre-reg draft
-(chained work session), then #20 activation checkpointing; molmo2
-**@10000 K1 gate crossing ~06:0xZ** — babysit will surface it, judge
-then; draws10_t1 boundary ~13:0x–13:3xZ → frozen reads; arm A img280
-+ box-home-sweep HELD.
 
 ## Utilization footer
 

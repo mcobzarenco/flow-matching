@@ -89,6 +89,8 @@ def make_args(
         max_soft_tokens=140,
         stream_counts=(1, 1, 2),
         conditioning_streams="kv",
+        seam_stop_grad=False,
+        joint_ce=False,
         self_attention_mode="causal_actions",
         time_conditioning="additive",
         target_time_embed=False,

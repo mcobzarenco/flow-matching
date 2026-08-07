@@ -33,6 +33,7 @@ senses — the pretrained artifact (``--backbone``, ``BackboneConfig.id``,
 
 from __future__ import annotations
 
+import dataclasses
 from typing import override
 
 import torch
@@ -93,6 +94,21 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
         # self-distillation mix (flow decoders with φ_s only). Never
         # serialized — a run property, not a checkpoint property.
         self.distill: str | None = None
+        # The KI-joint CE rider (attach-screen pre-reg, 2026-08-07, K
+        # arm): a Molmo2ARDecoder whose phase-1 CE objective continues
+        # verbatim beside the flow decoder's objective at fixed weight
+        # 1.0 (KI's no-tuning result — deliberately NOT a knob). None =
+        # every existing composition, byte-identical behavior. train.py's
+        # joint-ce flag assigns it post-construction, and module
+        # attribute assignment registers it, so DDP/param_groups/
+        # state_dict all see it.
+        self.joint_ce: Molmo2ARDecoder | None = None
+        # Stop-gradient on the expert→trunk seam (the π0.5/KI recipe):
+        # raw residual taps are detached before adapter projection, so
+        # flow-loss gradients into every trunk parameter are exactly
+        # zero while the (with_grad) trunk still receives CE gradients.
+        # Run property like ``distill`` — never serialized.
+        self.seam_stop_grad: bool = False
 
     def param_groups(self) -> dict[str, list[nn.Parameter]]:
         """Named trainable-parameter groups — the routing vocabulary for
@@ -110,7 +126,12 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
         contract needs it OUT of the group there."""
         backbone_groups = self.encoder.param_groups(self.backbone)
         return {
+            # The joint-CE rider's tables continue at the decoder LR —
+            # phase 1 trained them there (--decoder-lr), and "the CE
+            # objective continuing verbatim" includes its optimizer
+            # routing.
             "decoder": list(self.decoder.parameters())
+            + (list(self.joint_ce.parameters()) if self.joint_ce is not None else [])
             + [p for p in self.encoder.parameters() if p.requires_grad],
             "backbone_text": backbone_groups["text"],
             "backbone_vision": backbone_groups["vision"],
@@ -132,9 +153,24 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
             self.backbone,
             inputs,
             with_grad=with_grad,
-            retain_cache=isinstance(self.decoder, ARSuffixDecoder),
+            # The joint-CE rider is a suffix consumer too: its CE branch
+            # continues the prefix cache exactly like a phase-1 step.
+            retain_cache=isinstance(self.decoder, ARSuffixDecoder)
+            or self.joint_ce is not None,
         )
         if isinstance(self.decoder, FlowDecoder):
+            if self.seam_stop_grad and memory.residuals is not None:
+                # The stop-grad seam: taps enter the expert as constants.
+                # Detached HERE — before adapter projection — so the cut
+                # covers the whole tap-consumption path while the same
+                # live-trunk encode still carries CE gradients through
+                # the retained cache.
+                memory = dataclasses.replace(
+                    memory,
+                    residuals={
+                        name: tap.detach() for name, tap in memory.residuals.items()
+                    },
+                )
             memory = self.decoder.attach_residual_streams(memory)
         return memory
 
@@ -196,7 +232,14 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
         count | None) — the total carries the graph; the rest arrive
         detached for logging (aux as sum+count so the train loop can
         aggregate a position-weighted mean across batches and ranks).
-        Flow and ar_fast have a single-component objective (aux None)."""
+        Flow and ar_fast have a single-component objective (aux None).
+
+        The joint-CE arm (``joint_ce`` set) returns (CE total + flow
+        total, detached FLOW loss, detached CE ACTION component, count 1)
+        — the aux slots carry the CE branch's action CE (the phase-1
+        ``loss_action`` analog, the pre-registered CE-health read), not
+        the rider's own aux fields (those contribute to the total and
+        stay unlogged)."""
         decoder = self.decoder
         match decoder:
             case FlowDecoder():
@@ -206,6 +249,23 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                     else flow_matching_loss
                 )
                 total = objective(decoder, memory, batch)
+                if self.joint_ce is not None:
+                    # The phase-1 objective verbatim — ar_backbone_losses
+                    # is the exact function a phase-1 step calls, so the
+                    # CE-only α-edge oracle is bitwise by construction.
+                    # Weight 1.0 fixed (KI), deliberately not a knob.
+                    ce_total, ce_action, _, _ = ar_backbone_losses(
+                        self._molmo2_backbone(),
+                        self.joint_ce,
+                        memory,
+                        batch,
+                    )
+                    return (
+                        ce_total + total,
+                        total.detach(),
+                        ce_action.detach(),
+                        torch.ones((), device=ce_action.device),
+                    )
                 return total, total.detach(), None, None
             case ARFastDecoder():
                 total = ar_fast_loss(decoder, memory, batch)
@@ -302,6 +362,44 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                     memory,
                     batch,
                 )
+
+    def joint_loss_count_normalizers(
+        self,
+        batch: CollatedBatch[I],
+    ) -> tuple[Tensor, Tensor, Tensor | None]:
+        """(flow element count, CE action-token count, CE aux position
+        count | None) for one batch/chunk — the joint arm's three
+        normalizers (data-only, no model forward). The chunked-backward
+        contract mirrors ``loss_count_normalizers``: summed over chunks
+        BEFORE the first forward, each chunk's sum-form share divides by
+        the full-batch normalizers."""
+        joint_ce = self.joint_ce
+        assert joint_ce is not None  # joint-arm-only path (train.py routes)
+        ce_action_count, ce_aux_count = ar_backbone_counts(joint_ce, batch)
+        return (
+            torch.tensor(batch.actions.numel(), device=batch.actions.device),
+            ce_action_count,
+            ce_aux_count,
+        )
+
+    def joint_ce_loss_sums(
+        self,
+        memory: ObservationMemory,
+        batch: CollatedBatch[I],
+    ) -> tuple[Tensor, Tensor, Tensor | None, Tensor | None]:
+        """The joint arm's CE branch in sum form — exactly the phase-1
+        chunked objective (``ar_backbone_loss_sums`` on the rider), split
+        out so BijouTrainStep can run the suffix forward INSIDE the
+        autocast region (the [B, S, 153k] logits want bf16) while the
+        flow branch stays fp32-by-design outside it."""
+        joint_ce = self.joint_ce
+        assert joint_ce is not None  # joint-arm-only path (train.py routes)
+        return ar_backbone_loss_sums(
+            self._molmo2_backbone(),
+            joint_ce,
+            memory,
+            batch,
+        )
 
     def encode_observation(
         self,

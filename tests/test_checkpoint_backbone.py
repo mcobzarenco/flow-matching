@@ -132,6 +132,8 @@ def make_args(save_dir: Path) -> TrainArgs:
         max_crops=1,
         stream_counts=(4, 4, 8),
         conditioning_streams="kv",
+        seam_stop_grad=False,
+        joint_ce=False,
         self_attention_mode="causal_actions",
         time_conditioning="additive",
         target_time_embed=False,
