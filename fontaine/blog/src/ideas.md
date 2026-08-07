@@ -1382,6 +1382,17 @@ flow noise; `_drawsN_tT` provenance). Pre-registered the same night
 pinned untuned, frozen reads Δ_AR vs 5.8026 / fairness vs −1.258 /
 family vs 5.365, q4 cost fallback). **AR-100k arm running now**
 (`draws10_t1`, local GPU, boundary ~13Z 2026-08-07 → frozen reads).
+**Frozen-read script landed 2026-08-07 ~07:5xZ**
+(`draws10_t1_results.py`): the pre-reg's reads 1–5 as one command,
+oracle-gated on every branch before any draws data existed —
+degenerate self-pair → exact zeros, synthetic ×0.95/×1.005/×1.05/
+×0.75/×0.90 error effects land on the E1+E2 / null / E4-falsifier /
+E2-not-met / E3-overtake branches with magnitude checks, and 11
+hard-abort guards (state-copy byte-match, ar_temperature/plan/count
+semantics, `_draws10_t1` provenance, checkpoint pairing, report
+reproduction |d| < 5e-3). The q4 cost-fallback path is coded (index
+join + re-pool, flagged subset_mode) and the molmo2 arm reuses the
+same command with explicit paths at its endpoint.
 **Molmo2 arm oracle-complete 2026-08-07 ~04:3xZ**: the pre-reg's
 mechanics were oracle-pinned on the gemma trunk only while the
 molmo2 arm runs the shared suffix decode over a different cache

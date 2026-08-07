@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-07T07:30:00+00:00",
+ "updated_utc": "2026-08-07T07:55:00+00:00",
  "depth_reason": null,
  "items": [
   {
@@ -22,7 +22,7 @@
   },
   {
    "id": "draws10-frozen-reads",
-   "title": "draws10_t1 frozen reads (delta_AR vs 5.8026, fairness vs -1.258, family vs 5.365) + T-sensitivity rung after",
+   "title": "draws10_t1 frozen reads (delta_AR vs 5.8026, fairness vs -1.258, family vs 5.365) + T-sensitivity rung after \u2014 READ SCRIPT LANDED 2026-08-07 ~07:5xZ (draws10_t1_results.py, one command, oracle-gated; defaults = the local launcher's exact stems)",
    "class": "gpu-local",
    "status": "blocked",
    "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-ar-sampled-draws.md",
@@ -94,9 +94,9 @@
   },
   {
    "id": "draws10-t1-read-script",
-   "title": "draws10_t1 frozen-read script (pre-reg frozen reads 1-5 assembly): paired per-row bootstrap CI on the _draws10_t1 panel npz vs the banked AR-100k greedy npz (Delta_AR vs 5.8026, fairness vs flow's -1.258, family band vs 5.365, first_mae mirrors), execution oracles hard-abort (state-copy / state-copy-norm rows byte-match banked, report ar_temperature 1.0, policy carries _draws10_t1), expectation-4 falsifier line (Delta_AR > +0.1); one command emitting the verdict lines; CPU now, oracle-gated (degenerate self-pair -> exact zeros + synthetic known-delta fixtures, the attach_seam_results.py pattern)",
+   "title": "draws10_t1 frozen-read script \u2014 SCRIPT LANDED 2026-08-07 ~07:5xZ (draws10_t1_results.py: reads 1-5 one command, oracle-gated all branches + 11 hard-abort guards; q4-fallback index join + molmo2-arm explicit paths supported)",
    "class": "cpu",
-   "status": "queued",
+   "status": "done",
    "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-ar-sampled-draws.md",
    "owner_hold": false,
    "boundary": "wanted BEFORE the draws10_t1 boundary ~13:0x-13:3xZ 2026-08-07 (the draws10-frozen-reads item consumes it at completion)"
@@ -109,6 +109,15 @@
    "prereg": null,
    "owner_hold": false,
    "boundary": "script is CPU work now; the read runs after the molmo2 endpoint draws arm lands its npz (~2026-08-08); AR-100k draws10_t1 retained only pooled predictions (accepted 08-07) so this read is molmo2-endpoint-first"
+  },
+  {
+   "id": "idea19-t-sens-launcher-script",
+   "title": "#19 T-sensitivity rung launcher script (CPU now): the pre-registered RECORD-ONLY rung as one command \u2014 T in {0.5, 0.7, 1.3} at draws10 on the frozen q4 subset (plans/holdout_curated_v0_k4l2_stateprobe_q4.json, 4301 rows), local GPU, stateprobe_q4_draws10_tT stems, report-samples 0, GPU-free guard; runs ONLY if the primary draws10_t1 landed inside the 24 GPU-h gate (pre-reg cost clause, ~12 GPU-h worst case, 3 sequential rungs); quoted as a dT diagnostic, never a headline, never a license to re-pick T post hoc; reads re-pool through draws10_t1_results.py's q4 subset path",
+   "class": "cpu",
+   "status": "queued",
+   "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-ar-sampled-draws.md",
+   "owner_hold": false,
+   "boundary": "script is CPU work now; execution opens after the draws10_t1 boundary (~13:0x-13:3xZ 2026-08-07) and ONLY if the primary landed inside its gate; needs a quiet local-GPU window"
   }
  ]
 }
