@@ -1,6 +1,36 @@
 # Now
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-07 05:04–05:1xZ (real `date -u`) — tick (babysit).*
+
+**Status** (babysit 05:04Z, both green, exit 0):
+- box molmo2 AR 40k — 8300/40k, loss 3.704 (+0.06 this 100-step
+  window, jitter — trend intact), probe 8.64@8000 (low **8.54@6000**,
+  sub-10 ×7; K1 gate ≤12.0944 by 10k — formal crossing at the
+  **@10000 probe ~06:0xZ**, margin wide), 2.169 s/step, vram 67.07 ≤
+  71; endpoint ~08-08.
+- local draws10_t1 — 10752/25800, window 37.7 f/min, cumulative 32.9
+  f/min → **~13.1 h total, INSIDE the 24 GPU-h gate**; boundary
+  ~13:0x–13:3xZ → frozen reads.
+
+**Steering**: none (`read` surfaced only our own 05:03Z pre-reg post;
+`history` no new reactions; owner asleep since 00:58Z).
+
+**Done**: tick only — babysit ×1 (both green, exit 0); queue validate
+green (depth 2, 11 open); GPUs busy + CPU queue (#4 attach-screen
+instrument, #20 activation checkpointing) → `run_work_next` armed.
+Drive-by: `queue.json` `updated_utc` was future-dated 05:17Z by the
+previous session (committed 05:02Z) — corrected to real time. No
+Discord post — our pre-reg post landed 1 min before session start;
+blog build deferred to the chained session per tick precedent.
+
+**Next** (`queue_cli.py next`): #4 attach-screen instrument (CPU,
+chained work session), then #20 activation checkpointing; molmo2
+**@10000 K1 gate crossing ~06:0xZ** — babysit surfaces it, judge
+then; draws10_t1 boundary ~13:0x–13:3xZ → frozen reads; arm A img280
++ box-home-sweep HELD.
 
 *Updated 2026-08-07 04:48–05:1xZ (real `date -u`) — work session
 (bounded): **#4 attachment seam screen PRE-REGISTERED** — the
@@ -51,9 +81,6 @@ then #20 activation checkpointing; molmo2 **@10000 K1 gate crossing
 #19 box obligations → instruments + #20 → attachment-decision owner
 steer window; arm A img280 + box-home-sweep HELD.
 
-
-*Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
-
 *Updated 2026-08-07 04:46–04:5xZ (real `date -u`) — tick (babysit).*
 
 **Status** (babysit 04:46Z, both green, exit 0):
@@ -81,57 +108,6 @@ session per the 03:29Z-tick precedent.
 **@10000 K1 gate crossing ~06:0xZ** — babysit will surface it, judge
 then; draws10_t1 boundary ~13:0x–13:3xZ → frozen reads; arm A img280
 + box-home-sweep HELD.
-
-*Updated 2026-08-07 04:26–05:0xZ (real `date -u`) — work session
-(bounded): **#19 endpoint launcher prep LANDED** (`6c3cc3b`) + the
-killed 04:2xZ session's leftovers verified and committed
-(`f2f5f90`).*
-
-**Status** (babysit 04:27Z + 04:40Z, both green):
-- box molmo2 AR 40k — 7660/40k at 04:40Z, loss 3.71, probe 8.64@7500
-  (low **8.54@6000**, sub-10 ×6; K1 gate ≤12.0944 by 10k with wide
-  margin), 2.164 s/step, vram 67.07 ≤ 71, 9 procs / 4 ranks; **@7500
-  slow-save watch RESOLVED — mid-save at 04:27 (fields None), steps
-  rolling by 04:40, no @5000-style stall**; endpoint ~08-08.
-- local draws10_t1 — 9792/25800 at 04:40Z, window 24.1 f/min (slow
-  content stretch), cumulative 32.3 f/min → **~13.3 h total, INSIDE
-  the 24 GPU-h gate**; boundary ~13:0x–13:3xZ → frozen reads.
-
-**Steering**: none (`read` clean at boot and both checkpoints; owner
-asleep since 00:58Z).
-
-**Done**: two commits. (1) `f2f5f90` — the 04:02–04:4xZ session was
-hard-killed before its commit; its state (test_molmo2_ar_sampling.py
-+ queue/ideas/now edits) re-verified (5 oracles passed, check.py 400)
-and committed as-was. (2) `6c3cc3b` — **#19 endpoint launcher prep**:
-`eval_box_molmo2_endpoint_draws10_t1.sh` makes the molmo2 endpoint
-read ONE command when the box frees — guards (checkpoint exists, both
-plans sha256-pinned, 4 GPUs free), greedy arm re-run only if the
-training launcher's chained eval didn't land (box audit first: the
-live launcher is byte-identical to git, the P7 "uncommitted edit" was
-a +x mode bit — the chained greedy WILL run at 40k), draws10_t1 arm
-4-GPU sharded, and the pre-registered first-~200-frames cost gate
-mechanized as `draws_rate_gate.py` (rank-0-shard rate → whole-run
-GPU-h projection; strict >24 → automated kill + q4 relaunch;
-timeout-with-partial-progress still decides; no-progress leaves the
-run to babysit's registry gate). 10 new oracles
-(tests/test_draws_rate_gate.py); check.py 410 passed. babysit.toml
-carries the prepared molmo2_draws10_t1 entry (commented,
-fill-at-launch). Lit slice (~15 min, sanctioned): the #4 seam
-question now has a three-way published map — AEGIS (2604.16067,
-orthogonal-projection middle path vs the stop-grad camp, names
-"cross-modal gradient asymmetry") and Wall-OSS-0.5 (2605.30877,
-discrete-CE-routes-gradients + flow-as-deployment-interface —
-structurally OUR recipe) banked to #4 beside π0.5/KI + LabVLA; the
-frozen-vs-KI-joint screen stays the right first measurement. Queue:
-launcher-prep item closed, **#4 attachment-screen pre-reg draft
-queued as refill** (depth 2, validate green).
-
-**Next** (`queue_cli.py next`): #4 attachment-screen pre-reg draft
-(CPU), then #20 activation checkpointing; draws10_t1 boundary
-~13:0x–13:3xZ → frozen reads; molmo2 endpoint ~08-08 → attachment
-decision + the one-command draws arm; arm A img280 + box-home-sweep
-HELD.
 
 ## Utilization footer
 
