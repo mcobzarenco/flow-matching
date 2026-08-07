@@ -1,9 +1,35 @@
 # Now
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-06 23:32–23:5xZ (real `date -u`) — work session
+*Updated 2026-08-06 23:57–00:1xZ 08-07 (real `date -u`) — tick (babysit):
+**both jobs healthy.** Local AR-100k `draws10_t1`: pgrep-alive, 12.6
+GiB resident; measured a live window because the flushed progress
+line (352/25800 @23:54) looked under-gate — verdict: flush-lag
+illusion, the log flushes every 160 frames and three consecutive
+intervals clock **37–40 f/min** (512→672→832 over ~8.5 min), ABOVE
+the 32 f/min gate rate → remaining ~25k frames ≈ 11 h, **boundary
+now projects ~11:0x–11:3xZ 08-07** (earlier than the 13:1xZ
+estimate). Box molmo2 AR 40k: step 1480/40k, loss **4.904**
+(5.27@940 → 4.90@1480, smooth), 2.17–2.23 s/step, vram_alloc_peak
+66.91 GiB (rule ≤71), grad norm 4.7–11.5 (spikes-normal), LR on
+schedule, 4 ranks pgrep-alive (6 procs), util 67–98%; first gated
+probe anchor lands @2500 (~00:4xZ). Discord: cursor-new was only our
+own 23:56Z close-out; history confirms owner **"Amazing stuff, let's
+keep up the good work"** 23:55Z + 👍 on the #21 plan post —
+encouragement, no redirect; #21 stays top. Queue unchanged: **next
+(chained work session) → #21 main deliverable (review post +
+concrete diffs: queue-as-data, babysit CLI, Discord file-post
+helper, blog hierarchy, prompt/lock handling) — owner-prioritized;
+draws10_t1 boundary ~11:0x–11:3xZ → frozen reads (Δ_AR vs 5.8026,
+fairness vs −1.258, family vs 5.365) + T-sensitivity rung queues
+after; molmo2 @2500 probe anchor ~00:4xZ, endpoint ~08-08; π0.5
+deep-read post (low-prio); arm A img280 HELD (fresh owner go
+required).** GPUs busy ×5 + CPU queue live → `run_work_next` armed.*
+
+*Previous update 2026-08-06 23:32–23:5xZ (real `date -u`) — work session
 (bounded, conversational mid-session): **THE AR SAMPLED-DRAWS A-ARM
 IS LIVE AND INSIDE ITS COST GATE — launched 23:37:42Z on the local
 GPU (tmux `ardraws10`,
@@ -66,63 +92,6 @@ AR draws10_t1 launch on the local GPU; then π0.5 deep-read post
 at its ~08-08 boundary.** GPUs busy ×4 (box 40k) + local
 idle-pending-launch + CPU queue live → `run_work_next` armed
 (marker present 23:29); first save boundary @2,500 ~00:4xZ.*
-
-*Previous update 2026-08-06 23:06–23:3xZ (real `date -u`) — work session
-(bounded, conversational mid-session): **THE AR SAMPLED-DRAWS EVAL
-INSTRUMENT IS LANDED + PRE-REGISTERED (ideas #19, the owner's 19:15Z
-fairness ask) — the GPU-busy window's queued CPU item, delivered
-whole in one session.** The build (`78c9f56`):
-`--ar-temperature T --sample-draws N` temperature-samples the AR
-action block N times per frame and means the decoded chunks — the
-flow ensembling's mirror. Mechanics: Gumbel-max over the
-grammar-masked softmax (exact masked-softmax sampling, illegal ids
-can never win; aux value lines stay GREEDY), per-row CPU RNG streams
-keyed by frame identity + draw (`stable_sample_rng`,
-domain-separated from flow noise; corpus/batch/shard/device
-invariant), draws share ONE prefill via reference cache
-snapshot/restore (`ARSuffixDecoder.cache_snapshot`, sound under the
-append-only cache contract, restored ≡ fresh bit-exact) — covers
-Gemma AND Molmo2 trunks through the shared `ARSuffixDecoder`.
-Policy row `_drawsN_tT`, `ar_temperature` in report JSON, narrated
-pass skipped under sampling, loud guards everywhere; 9 CPU oracles
-(T→0 limit ≡ greedy; hot draws valid/deterministic/distinct;
-sampler batch-permutation invariance; mask escape impossible;
-prefill-reuse bit-exactness; keying component-sensitivity + domain
-separation; guard trips) — **check.py 351 green.**
-[Pre-reg posted](posts/2026-08-06-prereg-ar-sampled-draws.md)
-(`754f4cb`): **T=1.0 pinned/untuned as primary** (fairness rule:
-flow's draws are untuned noise ⇒ AR samples its own untuned
-softmax; the #19 fit-on-probe option resolved AGAINST fitting),
-arms = A-s0 `_draws10_t1` (local GPU) + molmo2 AR 40k endpoint
-(same stems, ~08-08), anchors = flow teacher 6.6232→5.365 / AR
-greedy 5.8026, cost gate = rate-measure ~200 frames → q4-subset
-fallback for BOTH arms if full-panel projects >24 GPU-h,
-falsified-if Δ_AR > +0.1. Blog built + Space pushed —
-**link-fix lesson: the Space serves at
-`mcobzarenco-fontaine-blog.static.hf.space` (the bare `.hf.space`
-domain 404s); first Discord link was wrong, corrected in-channel
-23:26Z.** BABYSIT 23:23Z (molmo2 AR 40k): step 540/40k, loss
-**5.653** (ahead of the smoke's 8.0@150 shape), **2.186 s/step**
-live (better than the 2.55 smoke bound → ~24 h to 40k),
-vram_alloc_peak 66.67 GiB FLAT (rule ≤71), reserved ~71.3 GiB
-steady, grad norm 11.4, LR warming on schedule, 4 ranks alive,
-util 41–100%. OWNER EXCHANGE (caught at the babysit poll, both
-answered 23:25Z, conversational hold + 45-s Discord monitor since):
-23:09Z "is 2.5 s per B12, i.e. 6× microbatches of 2?" → yes —
-s_per_step = one optimizer step = global batch 48; each rank runs
-B12 as 6 sequential 2-sample forward+backwards then the chunked
-allreduce + Adam (and live it beats the smoke at 2.19); 23:20Z
-"what's a good use of the local GPU while molmo2 trains?" →
-recommended THIS instrument's A-s0 arm (`draws10_t1`, pre-reg
-above) — **launch in the next chained work session unless the owner
-redirects; any reply is steering.** Queue: **next (chained work
-session) → A-s0 AR draws10_t1 launch on the local GPU per the
-pre-reg (cost gate first ~200 frames); then π0.5 deep-read post
-(low-prio); arm A img280 HELD (fresh owner go required); molmo2
-endpoint gets the same stems at its ~08-08 boundary.** GPUs busy ×4
-(box 40k, healthy) + local idle-pending-launch + CPU queue live →
-`run_work_next` armed; babysits on normal cadence, K1 anchors
-unchanged (launcher header + smoke shape).*
 
 ## Utilization footer
 
