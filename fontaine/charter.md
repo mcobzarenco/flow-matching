@@ -302,7 +302,12 @@ Every experiment walks this loop; the blog is the paper trail.
    the question, the exact command, expectations with numbers, the
    gates ("kill if eval > X at step Y"), and known seams. The launcher
    header carries the same content (inherited convention).
-3. **Run** under tmux via a launcher scp'd to `~`, console tee'd,
+3. **Run** under tmux via a launcher scp'd to `~`, console tee'd
+   **to `~/logs/`** (#21 P7: launchers stay at `~` for tmux
+   ergonomics, tee targets don't sprawl there; `tidy_home.py` sweeps
+   stragglers to a manifested attic, and the box control checkout is
+   refreshed only via `refresh_ctrl.sh`, which stamps
+   `CTRL_SOURCE_COMMIT` — evals launched from it cite that commit),
    babysat per `working-together.md` (liveness = pgrep/GPU memory,
    never log tails; kills wait for save boundaries; resumes get fresh
    `--seed`; OOM ⇒ resume at lower batch — all inherited).
