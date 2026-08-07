@@ -246,9 +246,19 @@ matched steps.
   **F-then-joint**, warm-starting a joint run from the F
   checkpoint's expert (free Stage-1 capital) — and an F≈K tie now
   has a published interpretation (two working guards; the next
-  contrast is initialization, not the seam). Radar hooks banked
-  unread: 2605.25802 (VLA init representations), 2601.03309
-  (VLM4VLA).
+  contrast is initialization, not the seam). **Siblings read same
+  session (~11:5xZ, [page](../papers/vla-initialization.md)):**
+  VLM4VLA (2601.03309) — frozen VISION ENCODER is the published
+  frozen-trunk failure mode (Qwen2.5VL-7B Calvin 4.057→2.823,
+  Paligemma 3.506→0.495; word-embedding freeze free; VQA scores
+  poorly predict VLA rank) → F-arm caveat softened for us (our
+  trunk is embodiment-adapted BEFORE the freeze) + the diagnostic
+  if F loses: look at vision-limited frames first; feeds #17 a
+  trunk-selection criterion (probe vision adaptability, not VQA
+  benches). 2605.25802 — LoRA > full-FT for VLA init ("overly
+  reshaping the pretrained representation weakens initialization");
+  reconciles with APT: what matters is what SHAPED the gradients
+  that move the trunk, not whether it moves.
 - **Attachment seam screen PRE-REGISTERED 2026-08-07 ~05:1xZ
   ([post](posts/2026-08-07-prereg-molmo2-attach-screen.md))**: two
   arms at matched 10k steps / eff-48 on the molmo2 40k endpoint
@@ -1081,6 +1091,18 @@ variants, consistency/distillation toward 1–2-step deployment decodes
 tried." A ranked exploration front, fed by the literature slice;
 every candidate enters at the screen rung with a pre-reg and counts
 toward the exploration budget.
+
+- **Lit feed 2026-08-07 ([page](../papers/vla-initialization.md)):
+  trunk-screening criterion from VLM4VLA (2601.03309)** — general
+  VQA-bench scores are POOR predictors of VLA rank (Kosmos-2 1.7B
+  beats 30B-class models on SimplerEnv; no model dominates across
+  suites); the load-bearing component is the VISION pathway
+  (frozen-encoder collapse 4.057→2.823 Calvin, worth +29 pts when
+  action supervision reaches it). Screening a candidate trunk =
+  probe its vision-pathway adaptability on OUR data, not its
+  benchmark card. Also: all 7 of their embodied-VQA co-training
+  mixes UNDERPERFORMED plain baselines — do not import aux-data
+  recipes on faith (compare against our own #6 measurements).
 
 - **OWNER PICK (2026-08-05 21:57Z): E4B screen confirmed as the next
   pre-reg** — AR-100k on the freed 4×H100, **matched parameters with

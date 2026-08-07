@@ -175,12 +175,21 @@
   },
   {
    "id": "lit-slice-vla-initialization",
-   "title": "Standing lit slice: the VLA-initialization thread APT opened (radar hooks banked 2026-08-07): 2605.25802 (Rethinking VLM Representation for VLA Initialization) + 2601.03309 (VLM4VLA) \u2014 does the init-not-seam diagnosis replicate outside APT's group, and does either name a cheap probe for our residual-tap surface? Feeds #4 escalation map (F-then-joint rung) + #17 trunk mandate. PERMANENT RULE: papers page(s) land the same session",
+   "title": "Standing lit slice: the VLA-initialization thread APT opened (radar hooks banked 2026-08-07): 2605.25802 (Rethinking VLM Representation for VLA Initialization) + 2601.03309 (VLM4VLA) \u2014 does the init-not-seam diagnosis replicate outside APT's group, and does either name a cheap probe for our residual-tap surface? Feeds #4 escalation map (F-then-joint rung) + #17 trunk mandate. PERMANENT RULE: papers page(s) land the same session \u2014 EXECUTED SAME SESSION 2026-08-07 ~11:5xZ (pulled forward, GPU-busy window): one-pass reads + theme page landed (papers/vla-initialization.md). VLM4VLA: frozen VISION ENCODER is the published frozen-trunk failure mode (4.057->2.823 Calvin; VQA benches poorly predict VLA rank; embodied-VQA mixes all underperformed) -> #17 trunk criterion + the F-loses diagnostic (vision-limited frames first) with the caveat stated (our trunk is embodiment-adapted pre-freeze). 2605.25802: LoRA > full-FT for init; reconciled with APT (what shaped the gradients matters, not whether the trunk moves). ideas.md #4+#17 bullets",
+   "class": "cpu",
+   "status": "done",
+   "prereg": null,
+   "owner_hold": false,
+   "boundary": "CPU work at any GPU-busy window; most valuable before any F-then-joint escalation arm is drafted (post-screen, ~08-09+)"
+  },
+  {
+   "id": "idea4-f-then-joint-prereg-draft",
+   "title": "#4 F-then-joint escalation rung \u2014 pre-reg DRAFT (CPU; the APT-named recipe, papers/apt-expert-pretraining.md): warm-start a joint run (unfrozen trunk, seam per readout) from the F arm's converged expert instead of from noise; APT grid says +8..+26 pts over frozen in their regime, and an F~K tie makes this the next discriminating contrast (initialization, not seam). Draft ONLY after the seam screen reads out: matched steps/effective batch vs the screen arms, Delta vs both F and K endpoints, trunk-drift band inherited from K's read 4",
    "class": "cpu",
    "status": "queued",
    "prereg": null,
    "owner_hold": false,
-   "boundary": "CPU work at any GPU-busy window; most valuable before any F-then-joint escalation arm is drafted (post-screen, ~08-09+)"
+   "boundary": "opens after the #4 attach-screen frozen reads (~08-09+); the draft is CPU work at any GPU-busy window AFTER Delta_seam is banked; execution needs its own posted pre-reg + owner-visible queue entry"
   }
  ]
 }
