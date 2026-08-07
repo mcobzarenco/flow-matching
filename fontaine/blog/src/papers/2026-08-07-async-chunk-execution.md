@@ -99,3 +99,21 @@ any method; the survey predicts a large quality gap at mean-of-10
 that single-draw doesn't have. If the gap is real, A2C2-style
 correction is the first arm (frozen base, small head, per-tick cost
 trivially affordable at 30 Hz).
+
+## Addendum 2026-08-07 (later session): PAINT re-orders the arms
+
+The method zoo above concluded that at our mean-of-10 staleness
+(≈18 ticks, chunk 50) inference-time RTC collapses and the surviving
+candidates were A2C2-style residual correction or a TT-RTC
+fine-tune. **PAINT**
+([2606.19774](https://arxiv.org/abs/2606.19774), read on
+[noise-space steering II](noise-space-steering-2.md)) adds a
+training-free option that was missing from the zoo: invert the flow
+ODE (backward Euler) to find the initial *noise* whose decoded chunk
+already agrees with the executed prefix, keep the fresh suffix
+noise, integrate forward — no gradients, no VJP per step, ~3N
+velocity calls per chunk, demonstrated on a chunk-50 π₀ and most
+robust on Kinetix as delay grows to d=4 (where IT-RTC has
+collapsed). It also composes with TT-RTC (CON 0.11→0.08 at d=4).
+**#22's arm order updates: PAINT first (zero training), then A2C2
+residual, then TT-RTC.** The screen and its #16 gate are unchanged.

@@ -125,3 +125,19 @@
   than DSRL-style RL (which stays gated on this benchmark existing).
   Joins VLA-Talker's evidence-injection few-shot hook; flow-family
   only (explicitly inapplicable to the AR trunk).
+- **Frozen-trunk rig lever #3 banked (2026-08-07 ~20:3xZ,
+  [noise-steering II page](../papers/noise-space-steering-2.md)):**
+  UniSteer (2605.10821) — human corrective actions converted to
+  noise-space supervision by per-step fixed-point inversion through
+  the frozen flow decoder (M=16 iterations, ~0.1 s/sample), then
+  SFT-then-RL on a lightweight noise actor. Real π₀/AgileX: 20%→90%
+  average over four tasks in ~66 min, vs DSRL 55% and DAgger 60%;
+  needed ~1 pure-human trajectory per round where DAgger needed 8;
+  **OOD positions 100% where DSRL drops to 0–25%** — the strongest
+  evidence yet that the *supervised* rungs of the noise ladder beat
+  pure noise-RL at small budgets. Ordering prior banked: SFT→RL 95%
+  vs RL-only 60% (corrections first, reward polish second). Needs
+  live teleop corrections — one step up the hardware ladder from
+  DSBC's 10 recorded demos (lever #2). The rig-time menu is now:
+  ticket (zero machinery) → DSBC (10 demos) → UniSteer (teleop
+  pedal + ~1 h/task) → DSRL (rewards + rollouts). Flow-family only.

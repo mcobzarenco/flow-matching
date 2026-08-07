@@ -75,7 +75,12 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   ‖ε‖ ≈ √300 shell), FRS's reverse-ODE noise recovery + 10-demo
   DSBC distillation (also a #16 rig lever). R4 per-dataset argmin
   disagreement would be LAFM's "fragmented action space" showing up
-  in our data; the whole ladder stays gated on stage-1 R1/R2.
+  in our data; the whole ladder stays gated on stage-1 R1/R2. Both
+  banked hooks closed same day
+  ([part II](papers/noise-space-steering-2.md) — PAINT + UniSteer):
+  a probeable prefix-locality property of our teacher noted
+  (record-only), the per-step fixed-point inversion primitive is
+  the numbers-backed default, no gate change.
 
 ## Standing
 
@@ -88,6 +93,10 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   critical-frame re-pooling rung **executed same-day — every
   published ranking holds on the critical pool, separation widens**
   ([results](posts/2026-08-07-prereg-critical-frame-repooling.md)).
+  Rig-time menu now four deep
+  ([noise-steering II](papers/noise-space-steering-2.md)): ticket →
+  DSBC (10 demos) → UniSteer (teleop corrections→noise, 20%→90% in
+  ~66 min, OOD-robust where DSRL isn't) → DSRL (rewards).
 - **`lit-arms` [#15 Literature-sourced arms](ideas/15-literature-arms.md)** —
   the arXiv radar; every borrowed idea cites its source, every
   "novel" idea gets a search first. Feeds the Papers section.
@@ -129,7 +138,11 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   sign-consistent); parked pending a decision on the reference set.
 - **`async-staleness` [#22 Async staleness bridging](ideas/22-async-staleness.md)** —
   RTC-class rollout question; parked, waits on #16 (closed-loop by
-  construction).
+  construction). New 2026-08-07: PAINT (2606.19774,
+  [noise-steering II page](papers/noise-space-steering-2.md)) —
+  training-free initial-noise selection matches RTC on a chunk-50
+  π₀ with no gradients; **arm order re-banked: PAINT → A2C2 →
+  TT-RTC**.
 
 ## Answered — banked results
 

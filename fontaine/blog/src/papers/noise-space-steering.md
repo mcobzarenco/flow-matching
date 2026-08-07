@@ -155,7 +155,7 @@ to our data reality than RL). No new arm pre-registered from this
 read: the screen's own R1/R2 verdicts stay the gate for the entire
 ladder.
 
-*Radar hooks banked unread: 2606.19774 (initial-noise selection for
-asynchronous execution — per-state noise choice as a latency lever;
-PDF fetched but unrenderable this session), 2605.10821 (Unified
-Noise Steering for human-guided VLA adaptation).*
+*Radar hooks: both closed 2026-08-07 (same day, later session) —
+2606.19774 (PAINT) and 2605.10821 (UniSteer) are read on
+[part II](noise-space-steering-2.md) (execution-time noise
+selection + human-guided noise supervision).*

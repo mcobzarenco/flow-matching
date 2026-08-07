@@ -25,3 +25,23 @@
 - **Gate:** parked until the #16 rig-transfer bench exists; the
   survey's regime table (delay-in-ticks × chunk length decides the
   winner) is the design input for any pre-reg here.
+
+## Record
+
+- **2026-08-07 ~20:3xZ — PAINT read, arm order re-banked**
+  ([noise-space steering II](../papers/noise-space-steering-2.md),
+  2606.19774): training-free initial-noise selection solves the
+  chunk-boundary problem without gradients — backward-Euler invert a
+  target endpoint (executed prefix + draft tail) to noise, keep only
+  the inverted *prefix* of ε, splice fresh suffix noise, integrate
+  forward (~3N calls). Matches/beats RTC on real tasks (0.85 vs
+  0.75 Toy-in-Drawer), most delay-robust method on Kinetix at d=4,
+  composes with TT-RTC, demonstrated on a chunk-50 π₀ — our regime.
+  **Arm order now: PAINT (zero training) → A2C2 residual → TT-RTC.**
+  Design note banked (ours, needs its own oracle if ever built):
+  shared inverted prefix + per-draw fresh suffixes should let PAINT
+  compose with mean-of-10 batched draws. Caveats: locality
+  assumption (prefix-of-ε ↔ prefix-of-chunk, OT-FM-encouraged, not
+  enforced — probeable with our draws machinery, noted on #1);
+  off-manifold executed prefixes invert poorly. Gate unchanged:
+  parked until #16's rig bench exists.

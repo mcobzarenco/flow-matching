@@ -153,3 +153,24 @@
   benchmark; DSBC needs 10 reference demos only → banked as a #16
   lever). Whole ladder stays gated on the screen's R1/R2 verdicts —
   no new arm from this read.
+- **Noise-steering part II read (2026-08-07 ~20:3xZ,
+  [papers page](../papers/noise-space-steering-2.md) — PAINT
+  2606.19774 + UniSteer 2605.10821, the two hooks the ladder page
+  banked):** PAINT uses initial-noise selection for *async
+  execution* (invert prefix, repaint suffix — fed #22, not this
+  ladder); UniSteer fills the FRS↔DSRL gap — human corrections
+  fixed-point-inverted into noise targets, SFT-then-RL on a tiny
+  noise actor over frozen π₀ (20%→90% avg in ~66 min; OOD 100% where
+  DSRL drops to 0–25%). **Banked here**: (a) PAINT's locality
+  assumption (prefix of ε controls prefix of chunk under OT flow
+  matching) is a *probeable property of our teacher* — fix a draw,
+  perturb ε[:d], measure chunk movement; free record-only diagnostic
+  that would mechanistically support (or salt) reading structure
+  into [50,6] tickets; (b) the inversion catalogue is three deep
+  (FRS full reverse-ODE / PAINT backward-Euler prefix / UniSteer
+  per-step fixed-point — the last wins its head-to-head 8/8 vs 4/8
+  at 500× less wall clock, the numbers-backed default if inversion
+  ever lands in `bijou.eval`); (c) UniSteer acknowledges its noise
+  targets drift slightly off-prior — LP-DS's warning surfacing in
+  practice, third citation for the CEM trust-region clause. No new
+  arm, no gate change; stage 1 R1/R2 still gate the entire ladder.
