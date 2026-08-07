@@ -7,6 +7,36 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-07 06:43–06:5xZ (real `date -u`) — tick (babysit):
+both runs green, no steering — a plain cadence tick.*
+
+**Status** (babysit 06:43Z, both green, exit 0):
+- box molmo2 AR 40k — 10520/40k, loss 3.5346, probe **new low
+  7.1514@10500**, live window 26.9 steps/min (≈2.23 s/step — the
+  headline 4.068 s/step is the @10000 save stall + @10500 probe eval
+  averaged in, not the live rate; watch it re-settle next tick), vram
+  67.07 ≤ 71; endpoint ~08-08.
+- local draws10_t1 — 13632/25800, cumulative 32.0 f/min → **~13.4 h
+  total, INSIDE the 24 GPU-h gate** (window 0.0 f/min = a 45-second
+  window artifact; liveness green, 4 procs); boundary ~13:1x–13:3xZ
+  → frozen reads.
+
+**Steering**: none (`read` clean; `history` = own posts only, latest
+06:43Z from the chained work session; owner asleep since 00:58Z).
+
+**Done**: tick — babysit both green, exit 0; queue validate green
+(depth 2, 11 open); `run_work_next` already armed (GPUs busy + CPU
+queue: K smoke-ladder script next) — left armed. No Discord post (own
+06:43Z post seconds pre-tick, precedent); no blog build (no
+reader-visible change beyond this roll; deferred to the chained
+session). Archive roll (kept 3).
+
+**Next** (`queue_cli.py next`): K smoke-ladder script (CPU), then the
+Δ_seam read script; draws10_t1 boundary ~13:1x–13:3xZ → frozen reads;
+endpoint ~08-08 → #19 box obligations → smoke ladder green →
+attachment-decision owner steer window → F then K; arm A img280 +
+box-home-sweep HELD.
+
 *Updated 2026-08-07 06:21–06:5xZ (real `date -u`) — work session
 (bounded): **#20 ACTIVATION CHECKPOINTING LANDED** oracle-gated — the
 K arm's hard memory prerequisite is code; the 06:17Z tick's held
@@ -87,59 +117,6 @@ script; draws10_t1 boundary ~13:1x–13:3xZ → frozen reads; endpoint
 attachment-decision owner steer window → F then K; arm A img280 +
 box-home-sweep HELD.
 
-*Updated 2026-08-07 05:48–06:2xZ (real `date -u`) — work session
-(bounded): **#4 attach-screen LAUNCH PREP LANDED** — both arms are one
-command each at the launch window; **molmo2 K1 gate CROSSED GREEN
-in-session** (the tick's held verdict slot, filled below and in that
-entry).*
-
-**Status** (babysit 05:49Z boot + 06:12Z, both green, exit 0):
-- box molmo2 AR 40k — 10000/40k, **K1 gate CROSSED GREEN: probe
-  7.1652@10000 vs ≤12.0944** (margin 4.93, a new run low; the
-  pre-registered gate resolves — run continues to the 40k endpoint,
-  ~18.2 h at 2.17 s/step, ~08-08); @10000 save in flight at 06:12Z,
-  vram 67.07 ≤ 71.
-- local draws10_t1 — 12672/25800, cumulative 32.1 f/min → **~13.4 h
-  total, INSIDE the 24 GPU-h gate**; boundary ~13:1x–13:3xZ → frozen
-  reads.
-
-**Steering**: none (`read` clean at boot, 05:59Z, and 06:12Z; owner
-asleep since 00:58Z).
-
-**Done**: **#4 attach-screen launch prep LANDED** (this commit) — the
-queue item's full scope: (1) F/K launchers
-(`launch_box_fontaine_molmo2_attach_{F,K}_10k_ddp4.sh`) — sequential
-F-first, sha256-pinned plans, chained panel_v2 evals, every recipe
-constant from the pre-reg (K: `--joint-ce --seam-stop-grad`, phase-1
-CE flags verbatim incl. grad-clip 100, `K_MEM_READY` guard refuses a
-blind K launch before #20 + the smoke ladder). (2) The 70 GPU-h cost
-gate mechanized — `attach_rate_gate.py` (median-s/step projection +
-batch extra term, draws_rate_gate exit-code contract) and a
-5k-downshift marker BOTH launchers honor (matched, never one arm).
-(3) `materialize_joint_ar_view.py` — read 4's instrument: joint
-checkpoint → ar_backbone-view (rider := decoder, taps stripped,
-adapted trunk required), oracle-gated against the REAL
-`save_checkpoint` write side incl. greedy decode via `from_checkpoint`
-on the tiny fixture. (4) babysit.toml prepared entries with pinned
-probe-kill bars 12.6394@5000 / 11.6356@7500 / 10.1652@10000 (phase-1
-curve + 3.0; the last from today's crossing). 10 new oracles
-(`tests/test_joint_ar_view.py`, `tests/test_attach_rate_gate.py`);
-check.py **433 passed**. Queue: launch-prep item closed; refill =
-**K smoke memory ladder script** (queued after #20). Lit slice TAKEN
-(~15 min): CoVer (2602.12281) banked to #19 — scaling test-time
-verification beats scaling policy pre-training, third selection
-flavor; retention gap found + fixed: molmo2 endpoint draws launcher
-now carries `--dump-draws` (data-retention only, pre-launch) so the
-selection-rung reads come free from the ~08-08 compute (the AR-100k
-arm's per-draw reads would need a re-run — accepted, mean-of-samples
-is its registered read).
-
-**Next** (`queue_cli.py next`): #20 activation checkpointing (CPU,
-hard K prerequisite), then the K smoke-ladder script; draws10_t1
-boundary ~13:1x–13:3xZ → frozen reads; endpoint ~08-08 → #19 box
-obligations → #20 + ladder green → attachment-decision owner steer
-window → F then K; arm A img280 + box-home-sweep HELD.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -149,16 +126,17 @@ from 23:37Z — both live to their boundaries). Older dated snapshots
 and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
-Session 03:17–03:5xZ: all-CPU, 0 GPU-h — explore-side: #6 rung-(a)
-self-subgoal conditioning probe pre-registered (four arms vs the
-banked 5.8026, validity-table go/no-go before any scalar, ≤ 8 GPU-h);
-instrument split out as its own queued CPU item, lands oracle-gated
-before launch. Lit slice skipped — taken last session; balance on
-cadence.
-
 Session 04:26–05:0xZ: all-CPU, 0 GPU-h — exploit-side: killed
 session's leftovers verified+committed, #19 endpoint launcher prep
 landed (one-command endpoint read, mechanized cost gate, 10 oracles).
 Lit slice TAKEN (~15 min): AEGIS + Wall-OSS-0.5 → #4's seam map now
 covers stop-grad / projection-repair / end-to-end corners; refill:
 #4 attachment-screen pre-reg draft queued.
+
+Session 05:48–06:2xZ: all-CPU, 0 GPU-h — exploit-side: #4
+attach-screen LAUNCH PREP landed (F/K one-command launchers, 70 GPU-h
+gate mechanized + matched 5k downshift, joint→AR-view materializer,
+probe-kill bars pinned; 10 oracles, check.py 433); molmo2 K1 gate
+CROSSED GREEN in-session (7.1652@10000 vs ≤12.0944). Lit slice TAKEN
+(~15 min): CoVer banked to #19; `--dump-draws` retention fix
+pre-launch.
