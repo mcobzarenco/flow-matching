@@ -196,6 +196,49 @@ def stable_sample_rng(
     return np.random.Generator(np.random.PCG64(sequence))
 
 
+# Golden-ticket noise mode (#1 screen, pre-reg 2026-08-07): a frozen
+# bank of candidate noise vectors replaces per-frame keying entirely —
+# draw d at EVERY frame integrates from tickets[d] (the defining
+# ticket property), so one batched draws-M eval scores every candidate
+# on every frame. The domain constant separates the bank's generation
+# stream from stable_noise's and stable_sample_rng's; the middle 0 in
+# [TICKET_DOMAIN, 0, m] reserves a family slot for any future bank.
+TICKET_DOMAIN = 0x54434B54  # "TCKT"
+
+
+def generate_tickets(count: int, shape: tuple[int, int]) -> np.ndarray:
+    """The candidate bank: ticket m ~ N(0, I) float32 [chunk, dim] from
+    SeedSequence [TICKET_DOMAIN, 0, m] — deterministic, generated once,
+    committed, sha-pinned (tests pin both the array bytes and the
+    committed file's sha256)."""
+    return np.stack(
+        [
+            np.random.Generator(
+                np.random.PCG64(np.random.SeedSequence([TICKET_DOMAIN, 0, m])),
+            ).standard_normal(shape, dtype=np.float32)
+            for m in range(count)
+        ],
+    )
+
+
+def load_tickets(path: Path) -> tuple[Tensor, str]:
+    """(bank [count, chunk, dim] float32, sha256 of the file bytes).
+    The sha is provenance: every ticket read quotes it — a ticket read
+    must never pass as a keyed-noise read."""
+    data = np.load(path, allow_pickle=False)
+    if "tickets" not in data.files:
+        raise SystemExit(
+            f"--noise-tickets {path} carries no 'tickets' array (keys: {data.files})",
+        )
+    bank = data["tickets"]
+    if bank.ndim != 3 or bank.dtype != np.float32:
+        raise SystemExit(
+            f"tickets must be float32 [count, chunk, dim], got "
+            f"{bank.dtype} {tuple(bank.shape)}",
+        )
+    return torch.from_numpy(bank), hashlib.sha256(path.read_bytes()).hexdigest()
+
+
 def noise_for_item(
     noise_key: str,
     seed: int,
@@ -314,6 +357,7 @@ class BijouPolicy:
         subgoal_mode: str | None = None,
         offload_ple: bool = False,
         noise_key: str = "stable",
+        tickets: Path | None = None,
         mask_state: bool = False,
     ) -> None:
         self.name = f"bijou@{checkpoint.name.removeprefix('step_').lstrip('0') or '0'}"
@@ -330,6 +374,14 @@ class BijouPolicy:
             # Same convention: a state-blind diagnostic read must never
             # be mistakable for a deployment read.
             self.name += "_state-masked"
+        self.tickets: Tensor | None = None
+        self.tickets_sha256: str | None = None
+        if tickets is not None:
+            # Same convention: a searched-noise read must never be
+            # mistakable for a keyed-noise read (the sha rides in the
+            # report/dump provenance).
+            self.tickets, self.tickets_sha256 = load_tickets(tickets)
+            self.name += "_ticket"
         if subgoal_mode not in (None, "oracle", "self"):
             raise SystemExit(
                 f"subgoal_mode must be None, 'oracle' or 'self', got {subgoal_mode!r}",
@@ -396,6 +448,25 @@ class BijouPolicy:
                     f"{type(self.model.decoder).__name__}",
                 )
         self.ar_temperature = ar_temperature
+        if self.tickets is not None:
+            if not isinstance(self.model.decoder, FlowDecoder):
+                raise SystemExit(
+                    "--noise-tickets substitutes flow initial noise; this "
+                    "checkpoint's decoder is "
+                    f"{type(self.model.decoder).__name__} (AR decodes take "
+                    "no flow noise)",
+                )
+            if sample_draws > self.tickets.shape[0]:
+                raise SystemExit(
+                    f"--sample-draws {sample_draws} > {self.tickets.shape[0]} "
+                    "tickets in the bank — each draw IS one ticket, so the "
+                    "draw count cannot exceed the bank",
+                )
+            if self.tickets.shape[1] != self.info.chunk_size:
+                raise SystemExit(
+                    f"tickets shaped for chunk {self.tickets.shape[1]}, "
+                    f"checkpoint chunk size {self.info.chunk_size}",
+                )
         if sample_draws > 1 and not (
             isinstance(self.model.decoder, FlowDecoder) or ar_temperature is not None
         ):
@@ -527,6 +598,48 @@ class BijouPolicy:
             for item in items
         ]
 
+    def _flow_noise(
+        self,
+        items: list[dict[str, Any]],
+        indices: list[int],
+        draws: int,
+        shape: tuple[int, int],
+    ) -> Tensor:
+        """Draws-major [draws·B, chunk, dim] flow noise (row d·B + i is
+        (draw d, item i) — the tile_memory/collapse_draws layout).
+        Ticket mode substitutes the bank row for the per-frame keying:
+        draw d at every frame IS tickets[d] — the golden-ticket oracles
+        assert this on the produced tensor, not by construction."""
+        if self.tickets is not None:
+            if draws > self.tickets.shape[0]:
+                raise SystemExit(
+                    f"{draws} draws > {self.tickets.shape[0]} tickets in the bank",
+                )
+            if tuple(self.tickets.shape[1:]) != shape:
+                raise SystemExit(
+                    f"tickets shaped {tuple(self.tickets.shape[1:])}, "
+                    f"batch actions shaped {shape}",
+                )
+            return self.tickets[:draws].repeat_interleave(len(items), dim=0)
+        return torch.cat(
+            [
+                torch.stack(
+                    [
+                        noise_for_item(
+                            self.noise_key,
+                            self.seed,
+                            item,
+                            index,
+                            draw,
+                            shape,
+                        )
+                        for item, index in zip(items, indices, strict=True)
+                    ],
+                )
+                for draw in range(draws)
+            ],
+        )
+
     @torch.no_grad()
     def predict_with_text(
         self,
@@ -551,23 +664,11 @@ class BijouPolicy:
             # is affine, so the mean commutes with it).
             memory = self.model.encode(batch.encoder_inputs, with_grad=False)
             shape = (batch.actions.shape[1], batch.actions.shape[2])
-            noise = torch.cat(
-                [
-                    torch.stack(
-                        [
-                            noise_for_item(
-                                self.noise_key,
-                                self.seed,
-                                item,
-                                index,
-                                draw,
-                                shape,
-                            )
-                            for item, index in zip(items, indices, strict=True)
-                        ],
-                    )
-                    for draw in range(self.sample_draws)
-                ],
+            noise = self._flow_noise(
+                items,
+                indices,
+                self.sample_draws,
+                shape,
             ).to(self.device)
             stacked = decoder.predict_chunk(
                 tile_memory(memory, self.sample_draws),
@@ -626,12 +727,7 @@ class BijouPolicy:
         noise: Tensor | None = None
         if isinstance(decoder, FlowDecoder):
             shape = (batch.actions.shape[1], batch.actions.shape[2])
-            noise = torch.stack(
-                [
-                    noise_for_item(self.noise_key, self.seed, item, index, 0, shape)
-                    for item, index in zip(items, indices, strict=True)
-                ],
-            ).to(self.device)
+            noise = self._flow_noise(items, indices, 1, shape).to(self.device)
         prediction = self.model.predict_chunk(
             batch,
             noise=noise,

@@ -18,6 +18,7 @@ anchors = [
     "probe reference: 30.84@500 -> 25.72@1000 -> 15.25@1500 -> 13.21@2000 -> 12.09@2500 (descending each anchor)",
     "K1 gate CROSSED GREEN 08-07 06:0xZ: 7.1652@10000 vs 12.0944 (margin 4.93, new low)",
     "stage-2 attachment decision at endpoint carries the pi0.5 deep-read's two named arms",
+    "SAVE WINDOWS STALL ~15.5 min: every save-every-2500 boundary writes ~38 GB (29 GB optimizer.pt) at ~42 MB/s synchronously — a poll inside the window shows a stuck step, halved window rate, one rank's GPU at 0%, and loss/vram None (mid-write jsonl). NOT an incident: check step %% 2500 == 0 and the step_0XXXXX dir mtime before alarming (every save 2500..27500 shows s_per_step ~48.6 on the following 20-step line; verified 08-07 19:0xZ after a full py-spy workup of the 27500 window). ETA arithmetic: ~4 h of the 40k wall clock is saves; endpoint ~04-05Z 08-08",
 ]
 [[run.gates]]
 kind = "probe_below_by_step"

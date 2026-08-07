@@ -126,6 +126,11 @@ class EvalReport:
     # only) — with euler/1 this is the 1-NFE read.
     target_time: str
     noise_key: str
+    # Golden-ticket mode (#1 screen): the tickets file and its sha256
+    # (None = keyed noise). A ticket read must never pass as a keyed
+    # read — consumers check these before pairing against keyed npzs.
+    noise_tickets: str | None
+    tickets_sha256: str | None
     # State-reliance probe: bijou policy fed the dataset state mean
     # (zero-information soft state token) — a diagnostic, never a
     # deployment read; the policy name carries _state-masked too.
@@ -197,6 +202,8 @@ class EvalReport:
             "ar_temperature": self.ar_temperature,
             "target_time": self.target_time,
             "noise_key": self.noise_key,
+            "noise_tickets": self.noise_tickets,
+            "tickets_sha256": self.tickets_sha256,
             "mask_state": self.mask_state,
             "subgoal_mode": self.subgoal_mode,
             "selfsubgoal_force_empty": self.selfsubgoal_force_empty,
@@ -368,6 +375,19 @@ def parse_args() -> argparse.Namespace:
         "frozen corpus composition; pass explicitly to reproduce "
         "historical index-keyed reports). The keyings are DIFFERENT "
         "draws, so numbers are not comparable across them",
+    )
+    parser.add_argument(
+        "--noise-tickets",
+        type=Path,
+        default=None,
+        help="golden-ticket noise mode (#1 screen): path to a committed "
+        "tickets npz ([count, chunk, dim] float32) replacing per-frame "
+        "flow-noise keying entirely — draw d at EVERY frame integrates "
+        "from tickets[d], so one --sample-draws M run scores every "
+        "candidate on every frame. Flow checkpoints only; --sample-draws "
+        "must not exceed the bank. The policy name gains _ticket and the "
+        "report/dump provenance carries the file's sha256 — a ticket "
+        "read must never pass as a keyed-noise (--noise-key) read",
     )
     parser.add_argument("--chunk-size", type=int, default=50)
     parser.add_argument(
@@ -568,6 +588,25 @@ def parse_args() -> argparse.Namespace:
             "--ar-temperature samples the bijou policy's AR action "
             "decode — it requires --checkpoint",
         )
+    if args.noise_tickets is not None:
+        if args.checkpoint is None:
+            parser.error(
+                "--noise-tickets substitutes the bijou flow policy's "
+                "initial noise — it requires --checkpoint",
+            )
+        if args.smolvla is not None:
+            parser.error(
+                "--noise-tickets applies only to the bijou policy; a "
+                "panel mixing a ticket bijou with a keyed-noise smolvla "
+                "would compare different noise modes — run them "
+                "separately",
+            )
+        if args.ar_temperature is not None:
+            parser.error(
+                "--noise-tickets substitutes flow initial noise; "
+                "--ar-temperature samples the AR decode — the modes are "
+                "disjoint",
+            )
     if args.subgoal_mode is not None:
         if args.checkpoint is None:
             parser.error(
@@ -799,6 +838,7 @@ def main() -> int:
             ar_temperature=args.ar_temperature,
             target_time=target_time,
             noise_key=args.noise_key,
+            tickets=args.noise_tickets,
             mask_state=args.mask_state,
             generate=tuple(AuxField(f) for f in (args.generate or ())),
             condition_override=overrides,
@@ -1123,6 +1163,11 @@ def main() -> int:
             sample_draws=np.array(args.sample_draws),
             target_time=np.array(args.target_time),
             noise_key=np.array(args.noise_key),
+            # Ticket-mode provenance (empty strings = keyed noise): the
+            # scorer refuses to pool a ticket npz against keyed anchors
+            # without these matching its expectations.
+            noise_tickets=np.array(str(args.noise_tickets or "")),
+            tickets_sha256=np.array(bijou_policy.tickets_sha256 or ""),
             mask_state=np.array(args.mask_state),
             seed=np.array(args.seed),
         )
@@ -1396,6 +1441,12 @@ def main() -> int:
             ar_temperature=args.ar_temperature,
             target_time=args.target_time,
             noise_key=args.noise_key,
+            noise_tickets=(
+                str(args.noise_tickets) if args.noise_tickets is not None else None
+            ),
+            tickets_sha256=(
+                bijou_policy.tickets_sha256 if bijou_policy is not None else None
+            ),
             mask_state=args.mask_state,
             subgoal_mode=args.subgoal_mode,
             selfsubgoal_force_empty=args.selfsubgoal_force_empty,
@@ -1460,7 +1511,13 @@ def main() -> int:
                 if args.target_time == "zero"
                 else "t (standard)"
             ),
-            f"noise key: {args.noise_key}",
+            f"noise key: {args.noise_key}"
+            + (
+                f" OVERRIDDEN by tickets {args.noise_tickets} (sha256 "
+                f"{bijou_policy.tickets_sha256})"
+                if bijou_policy is not None and bijou_policy.tickets_sha256
+                else ""
+            ),
             "state: "
             + (
                 "MASKED to dataset mean (state-reliance probe)"
