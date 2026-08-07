@@ -212,3 +212,27 @@ between these two priors on our own panel before any escalation.
   extremes, 97.4 vs 96.4/96.2 LIBERO-Goal) is an unexplored axis in
   AR-VLA decoding — nothing opens unless the dT table shows real
   sensitivity.
+- **T-SENSITIVITY dT TABLE BANKED (2026-08-07 23:09Z, record-only
+  per the pre-reg sensitivity clause —
+  `reports/analysis__tsens_dt_ar100k_q4.json` via
+  `tsens_dt_results.py`, all guards green, T=1.0 re-pooled from the
+  full-panel primary npz onto the same 4301 q4 rows):** chunk MAE
+  6.5004 / 6.5668 / 6.7812 / 7.1843 at T = 0.5 / 0.7 / 1.0 / 1.3
+  (dChunk −0.2808 / −0.2144 / 0 / +0.4032; first-MAE mirrors
+  −0.1710 / −0.1357 / 0 / +0.3654). Against the banked
+  decode-temperature prior ("near-flat with mild asymmetry against
+  T=1.3"): the T=1.3 asymmetry CONFIRMED (+0.40, the largest entry);
+  the low side is not flat but mildly **monotone toward T=0.5** —
+  mean-of-10 at cooler temperatures sits closer to the greedy mean,
+  the same mean-collapse shape as the primary read (draws add noise
+  that averaging removes; cooling adds less to remove). Total spread
+  ~0.68 on a 6.78 base over T ∈ [0.5, 1.3]. Per pre-reg this is
+  quoted as a dT diagnostic, never a headline, never a license to
+  re-pick T — **primary stays T=1.0**. DDVLA's temperature-schedule
+  hook stays parked: the table is its recorded input, and the
+  primary read already bounds draws-at-any-T as a small-effect axis
+  for this AR family. Rungs cost ~7.2 GPU-h ≤ 12 gate (t0.5 ~2.4 h,
+  t0.7 ~2.3 h, t1.3 ~2.4 h). Follow-up read item still open:
+  T-guard delta via the q4 subset join. Local GPU confirmed free
+  23:09Z (transient unit exited, 0 MiB) — the selfsubgoal probe
+  window is open.

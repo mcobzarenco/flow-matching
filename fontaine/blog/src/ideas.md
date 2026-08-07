@@ -17,8 +17,11 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   `screening`. The AR side of the draws fairness programme.
   draws10_t1 read out 2026-08-07: all three pre-registered
   expectations met (Δ_AR −0.145, ~9× smaller than the flow gain —
-  the mean-collapse shape). Next: T-sensitivity q4 rung (launcher
-  ready), then the molmo2 arm at its endpoint.
+  the mean-collapse shape). T-sensitivity dT table banked 23:09Z
+  same day (record-only): monotone in T — 6.50/6.57/6.78/7.18 at
+  T=0.5/0.7/1.0/1.3 on the q4 rows; the T=1.3 asymmetry prior
+  confirmed, primary stays T=1.0. Next: the molmo2 arm at its
+  endpoint (~04–05Z 08-08).
 - **`seam-screen` [#4 Stage-2 attachment seam](ideas/04-stage2-attachment.md)** —
   `screening`. F (frozen) vs K (KI-joint) screen pre-registered;
   instruments, launchers, smoke ladder and frozen-read script all

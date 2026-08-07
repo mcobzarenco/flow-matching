@@ -6,7 +6,47 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-07 20:13–23:1xZ (real `date -u`) — work session
+(bounded, chained): **#19 dT TABLE BANKED** (the queue-next item,
+executed at t1.3 completion 23:09Z inside the session) + lit slice
+(both banked noise-steering hooks closed, Papers page same
+session).*
+
+**Status** (babysit 23:11Z, exit 0, 1 registered run):
+- box molmo2 AR 40k — 33220/40k, loss 2.8484, 2.197 s/step, vram
+  67.13 ≤ 71. Probe 6.53@33000 (low 5.91@26500 stands, gate margin
+  4.93). ~4.1 h compute to 40k → endpoint ~04–05Z 08-08 unchanged.
+- local **ar100k_tsens_q4 — COMPLETE 23:09Z** (3/3 rungs, 4301 rows
+  each, ~7.2 GPU-h ≤ 12 gate). Babysit entry pruned; local GPU
+  confirmed free (0 MiB, transient unit exited).
+
+**Steering**: none (read at boot 20:14, every ~30-min babysit
+checkpoint, and close — only our own 20:24 lit-slice post surfaced).
+
+**Done**: `ea9d385` — lit slice: PAINT (2606.19774) + UniSteer
+(2605.10821), page `papers/noise-space-steering-2.md` (closes both
+banked radar hooks; #22 arm order re-banked PAINT→A2C2→TT-RTC, #16
+rig lever #3 + SFT-then-RL prior, #1 locality probe noted).
+`4268898` — babysit stem repoint at the 20:42Z t0.7→t1.3 roll.
+**dT read executed** (this commit): monotone table chunk
+6.5004/6.5668/6.7812/7.1843 at T=0.5/0.7/1.0/1.3 on the q4 rows
+(record-only per pre-reg — never a headline, no re-pick; T=1.3
+asymmetry prior confirmed, low side mildly monotone = mean-collapse
+shape; `reports/analysis__tsens_dt_ar100k_q4.json`, all guards
+green). Queue: both tsens items → done, **selfsubgoal probe (#6)
+OPEN** (depth 2, 12 open, validate green).
+
+**Next**: `queue_cli.py next` → **idea6-selfsubgoal-probe** (local
+GPU free NOW; `run_work_next` armed — the chained session launches
+it via `run_detached.sh`); golden-ticket screen (#1) strictly
+behind it per pre-reg; **molmo2-endpoint-postprocessing** + #19
+draws arm at the endpoint chain (~04–05Z 08-08), then #19 box
+obligations → K smoke ladder → attach screen → vu5k
+(launch-only-after-smoke per `485194b`). **Every GPU launch goes
+through `run_detached.sh`.**
 
 *Updated 2026-08-07 20:11–20:1xZ (real `date -u`) — tick (babysit):
 quiet — both runs green, tsens accelerated (dT read pulls earlier),
@@ -80,59 +120,6 @@ window (vu5k screen is launch-only-after-smoke per `485194b`); #1
 execution behind tsens + selfsubgoal per pre-reg. **Every GPU
 launch goes through `run_detached.sh`.**
 
-*Updated 2026-08-07 19:42–20:1xZ (real `date -u`) — work session
-(bounded, chained off the 19:4x tick's `run_work_next`): **#17 vu5k
-finalization PREP LANDED** (`485194b` — the flagged CPU item; screen
-now launch-only-after-smoke) + lit slice (two same-day releases feed
-tonight's selfsubgoal probe; Papers page same session per the
-standing rule).*
-
-**Status** (babysit 19:43Z + 19:58Z, both exit 0):
-- box molmo2 AR 40k — 28880/40k, loss 2.9498, 2.182 s/step (25.4
-  steps/min window), vram 67.07 ≤ 71. Probe 7.00@28500 (low
-  5.91@26500 stands, gate margin 4.93). Endpoint ~04–05Z 08-08.
-- local **ar100k_tsens_q4 rung t0.7** — 2752/4301 at 32.1 f/min
-  in-window, cumulative projection 6.2 ≤ 12 GPU-h. t0.7 ends
-  ~20:5xZ, t1.3 ~23:1x–23:3xZ at this rate → **dT read may open
-  ~23:2xZ, else the 00:3xZ estimate stands**.
-
-**Steering**: none (`read` empty at boot 19:43 and at 19:58; the
-18:5xZ golden-ticket exchange stayed quiet). Posted the vu5k-prep +
-lit-slice update 20:0xZ.
-
-**Done**: `485194b` — **idea17-vu5k-finalization-prep executed
-whole**: amendment-3 flag set byte-audited clean against
-`bijou.train` at HEAD (`--init-from` = weights-only fresh-AdamW
-loading expert+prompt+adapted-backbone; cosine-to-10%-floor shared
-by ALL LR groups → vision=text through the schedule; no-tower
-hard-abort → no silent no-op unfreeze); both arm launchers landed
-(`launch_box_fontaine_molmo2_vu5k_{frozen,thawed}_ddp4.sh` — base
-40k recipe byte-identical, arm-vs-arm diff exactly
-`--backbone-vision-lr 6e-6`, plan sha pinned; thawed refuses without
-the frozen endpoint AND the `vu5k_mem_ready` smoke record) +
-prepared babysit.toml entries (vram-71 gates,
-FILL-AT-FINALIZATION probe bars). check.py 467 green. queue.json:
-prep → done, execution → launch-only-after-smoke (4 cells: smoke,
-endpoint-probe quote, amendment POST, owner go),
-**+molmo2-endpoint-postprocessing** refill (depth 2 green).
-`fae8c5d` — lit slice: HiRoC (2608.05999) + VLA-Talker
-(2608.05738), both announced today, page
-`papers/subgoal-sourcing-post-training.md` — two directional priors
-for the selfsubgoal probe (Δ_self ≤ Δ_oracle cold-start prior;
-inject-vs-supervise 15.9-pt gap → narrated arm safe) + the honest
-tension with our aux-on +0.462 resolved as a flagged synthesis;
-#16 evidence-injection few-shot hook banked; stale #17 index bullet
-fixed. Blog built + Space pushed (page 200-verified).
-
-**Next**: `queue_cli.py next` → **idea19-tsens-dt-read-execution**
-(opens at t1.3 completion, revised ~23:1x–23:3xZ tonight);
-**molmo2-endpoint-postprocessing** opens at the endpoint chain
-(~04–05Z 08-08). Then endpoint → #19 box obligations → K smoke
-ladder → attach-screen window; #1 execution behind tsens +
-selfsubgoal per pre-reg. `run_work_next` re-armed — the tick after
-t1.3 lands chains into the dT read. **Every GPU launch goes through
-`run_detached.sh`.**
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -144,9 +131,22 @@ pre-merge redo cell and post-merge reruns (+~2 GPU-h total);
 ar100k_tsens_q4 first launch 15:01Z killed ~15:07Z by the driver
 teardown (+~0.1 GPU-h lost), 2nd launch 15:13:44Z killed ~15:56Z by
 the tick-service cgroup teardown (+~0.7 GPU-h lost, 992 frames),
-accruing from the 15:58:26Z systemd-run 3rd launch, ≤12 GPU-h gate). Older dated
+3rd launch 15:58:26Z systemd-run → **23:09Z 08-07 COMPLETE, 3/3
+rungs (+~7.2 GPU-h, ≤12 gate)**; local GPU free from 23:09Z pending
+the selfsubgoal probe launch). Older dated
 snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
+
+Session 20:13–23:1xZ (work, bounded): explore+exploit, 0 GPU-h
+launched (tsens completed under its own gate, +~7.2 GPU-h total;
+molmo2 accruing) — lit slice `ea9d385` (noise-steering II: PAINT +
+UniSteer, both banked hooks closed, page live); stem repoint
+`4268898` at the t0.7→t1.3 roll; **#19 dT table banked at t1.3
+completion 23:09Z** (record-only, monotone in T, T=1.3-asymmetry
+prior confirmed, primary stays T=1.0); tsens babysit entry pruned,
+queue → selfsubgoal probe OPEN (depth 2, 12 open), `run_work_next`
+armed for its launch chain. Five babysit checkpoints, all green, no
+steering.
 
 Session 20:11–20:1xZ: quiet babysit tick, 0 GPU-h new (tsens +
 molmo2 accruing under their own gates) — both runs green (molmo2
@@ -156,12 +156,4 @@ no reactions; queue validate green (depth 2, 14 open);
 `run_work_next` re-armed after the 20:09 lit-slice chain consumed
 it — dT-read window pulled earlier to ~22:4x–23:1xZ. No blog build
 (now.md only).
-
-Session 20:00–20:0xZ: quiet babysit tick, 0 GPU-h new (tsens +
-molmo2 accruing under their own gates) — both runs green (molmo2
-28960/40k probe 7.00@28500, 33.3 steps/min in-window; t0.7
-2752/4301, zero-window judged flush quantization at a 2.4-min
-sample); no steering, no reactions; queue validate green (depth 2,
-14 open); `run_work_next` left armed (set 19:59Z) for the dT-read
-chain ~23:1x–23:3xZ. No blog build (now.md only).
 
