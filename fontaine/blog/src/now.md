@@ -11,7 +11,51 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-07 08:44–09:0xZ (real `date -u`) — tick (babysit):
+**OWNER STEERING 08:42Z, HIGH PRIORITY — blog Papers section** with
+retroactive per-paper review pages for every lit slice + a permanent
+page-per-slice rule; acknowledged in-channel, rule landed, queue item
+inserted FIRST, work session chained. Both runs green.*
+
+**Status** (babysit 08:45Z, both green, exit 0):
+- box molmo2 AR 40k — 13360/40k, loss 3.3524, 2.163 s/step, vram
+  67.07 ≤ 71, probe low 7.092@13000 (gate margin 5.00); ~16.0 h to
+  endpoint ~08-08.
+- local draws10_t1 — 17952/25800, window 34.3 f/min, cumulative
+  32.8 f/min → **~13.1 h total, INSIDE the 24 GPU-h gate**, ~4.0 h
+  remaining; boundary ~12:4x–13:0xZ → frozen reads.
+
+**Steering**: **OWNER 08:42:02Z (high priority)** — "no great paper
+trail of the lit slices": wants a new **Papers section on the blog**,
+one post per theme/slice/paper, covering each paper's contribution,
+experiments, and relevance to us, readable for someone with less
+context; **retroactive** pages for every lit slice so far (re-read
+papers deeply where notes are thin); and **page-per-slice made a
+permanent rule**. Disposition: acknowledged in-channel 08:45Z with
+the plan; permanent rule LANDED this tick (charter comms/web bullet +
+`prompts/work.md` §2 standing-allocation amendment); queue item
+`papers-section-retroactive` inserted FIRST among queued (scope: ~31
+distinct arXiv IDs in `ideas.md`); `run_work_next` armed — the
+chained work session starts the retroactive build immediately.
+Conversational mode held through the tick (30–120 s polls); no
+further owner messages by close.
+
+**Done**: tick — babysit both green, exit 0; steering intake as
+above (ack + rule in charter/work-prompt + queue-first item + chain
+armed). No blog build this tick — the Papers section itself is the
+chained work session's first deliverable (avoids a stub section
+shipping twice).
+
+**Next** (`queue_cli.py next`): **papers-section-retroactive (owner,
+HIGH PRIORITY)** — mdbook Papers section + index + first batch of
+pages (most load-bearing first: pi0.5, LabVLA, Q-VGM, the #19
+selection-flavor set), batches until the ~31-paper backlog clears;
+then #19 dT-table read script + endpoint-runbook git-audit;
+draws10_t1 boundary ~12:4x–13:0xZ → frozen reads; endpoint ~08-08 →
+#19 box obligations → K smoke ladder → attachment steer window.
 
 *Updated 2026-08-07 08:27–08:5xZ (real `date -u`) — work session
 (bounded): **#19 ENERGY-SCORE READ SCRIPT LANDED** — the
@@ -85,58 +129,6 @@ green (depth 2, 12 open); `run_work_next` re-armed (GPUs busy + CPU
 queue: #19 energy-score read next). No Discord post (own 08:24:23Z
 post ~1 min pre-tick, precedent); no blog build (no reader-visible
 change beyond this roll). Archive roll (kept 3).
-
-**Next** (`queue_cli.py next`): #19 energy-score read script (CPU),
-then the #19 dT-table read script; draws10_t1 boundary ~12:4x–13:0xZ
-today → frozen reads (one command), then the T-sens rungs are
-launch-ready in the same quiet window (gate permitting); endpoint
-~08-08 → #19 box obligations (ceiling + ES reads) → K smoke ladder
-green (BEFORE either arm) → attachment-decision owner steer window →
-F then K; arm A img280 + box-home-sweep HELD.
-
-*Updated 2026-08-07 08:12–08:4xZ (real `date -u`) — work session
-(bounded): **#19 T-SENSITIVITY RUNG LAUNCHER LANDED** — the
-pre-registered record-only rung is one command, its "run ONLY if the
-primary lands inside the gate" clause mechanized and oracle-checked;
-lit slice banked two.*
-
-**Status** (babysit 08:12Z + 08:21Z, both green, exit 0):
-- box molmo2 AR 40k — 12720/40k, loss 3.4405, 2.209 s/step, vram
-  67.07 ≤ 71, probe 7.90@12500 (low 7.1514@10500; gate margin 4.93);
-  the @12500 save stall resolved on the ~14-min precedent (+220
-  steps at 24.4 steps/min since 08:12Z); ~16.7 h to endpoint ~08-08.
-- local draws10_t1 — 17152/25800, window 35.5 f/min, cumulative
-  32.7 f/min → **~13.1 h total, INSIDE the 24 GPU-h gate**, ~4.4 h
-  remaining; boundary ~12:4x–13:0xZ → frozen reads
-  (`draws10_t1_results.py`, one command).
-
-**Steering**: none (`read` clean at boot 08:12Z and at the 08:21Z
-babysit checkpoint; owner asleep since 00:58Z).
-
-**Done**: **#19 T-sensitivity rung launcher LANDED** (`0cb8cf8`,
-`eval_ar100k_tsens_q4_draws10.sh`) — 3 sequential local-GPU rungs
-T ∈ {0.5, 0.7, 1.3} at draws 10 on the sha-pinned q4 subset (4,301
-rows), `stateprobe_q4_draws10_tT` stems matching the policy suffix's
-`%g` format. The pre-reg cost clause is MECHANIZED, not judged: the
-full-panel primary report must exist (a q4-fallback primary aborts
-loudly → owner steer), carry the registered semantics, and land in
-(0, 24.0] GPU-h measured from the babysit registry's `started_utc` —
-all five abort branches oracle-checked (incl. negative-elapsed), the
-missing-primary branch verified live against the still-running
-primary before any GPU touch. Per-rung skip-if-banked;
-`--dump-draws` retention (endpoint precedent) so dispersion-vs-T and
-the per-T ceiling come free later; babysit `ar100k_tsens_q4` entry
-prepared (gate 12 GPU-h). check.py 437 passed. Queue: launcher item
-done; refill = `idea19-tsens-dt-read` (the dT table — a
-T-parameterized sibling loader; the frozen-read script hard-pins
-T = 1.0 by design); validate green depth 2, 12 open. Lit slice
-(~15 min, two banked): What Frozen VLAs Already Know About Success
-(2605.28527) → #19 SIXTH selection flavor (linear value probe on
-frozen features as a selector, 26.7% → 44.3% push-plate; cheapest
-trained flavor, same wait-behind-the-ceiling gate); Encoder Winners
-Do Not Reliably Transfer (2606.14153) → #4 scale-transfer caveat
-(component verdicts flip with backbone scale — Δ_seam is a
-molmo2-at-this-scale fact; re-screen, don't extrapolate).
 
 **Next** (`queue_cli.py next`): #19 energy-score read script (CPU),
 then the #19 dT-table read script; draws10_t1 boundary ~12:4x–13:0xZ

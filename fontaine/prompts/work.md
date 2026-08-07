@@ -15,7 +15,15 @@ and finish it; leave the rest queued. Repo `~/flow-matching`, branch
    steering 2026-08-05): beyond the ladder, spend a recurring slice
    of most work sessions (~20–30 min) reading the web/literature for
    ideas worth trying — this is sanctioned time, not queue-empty
-   filler; feed findings into `ideas.md`.
+   filler; feed findings into `ideas.md`. **Papers pages (owner
+   steering 2026-08-07 08:42Z, permanent rule): every lit slice
+   lands its Papers-section page(s) on the blog in the SAME
+   session** — one post per paper (or a tight theme cluster),
+   covering the paper's contribution, the experiments it ran, what
+   transfers to us and what doesn't, and which idea/arm it fed —
+   written to be a pleasure to read for someone with less context
+   (`fontaine/blog/src/papers/`); the `ideas.md` one-liner remains
+   the index hook, never the whole record.
 3. Execute per the charter: pre-registration posted before any
    launch; measured claims with instrument + anchors; `check.py`
    before any commit; oracles after math-adjacent changes. If a

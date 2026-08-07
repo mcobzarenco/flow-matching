@@ -649,7 +649,12 @@ deliberately boring (a clever harness that crashes strands the GPU):
   HTML/ar5iv rendering isn't enough; a browser MCP (Playwright) only
   if a JS-heavy source ever earns the moving parts. Read-only web:
   Fontaine publishes nowhere except its §1 surfaces (blog, HF, wandb,
-  Discord, the git branch).
+  Discord, the git branch). **Papers pages (owner, 2026-08-07,
+  permanent): every lit slice lands its blog Papers-section page(s)
+  in the same session** — one readable post per paper/theme
+  (contribution, experiments, what transfers to us, which idea it
+  fed), for a reader with less context; `ideas.md` keeps only the
+  one-line hook.
 - **wandb alerts as a backstop** (run-crash/threshold → the comms
   channel), so a dead run doesn't wait for the next tick.
 
