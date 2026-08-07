@@ -187,8 +187,13 @@ data-and-trunks, attachment-frontier; tracker 42/42 — retroactive
 backlog cleared); 7 correction hooks banked to ideas.md — incl.
 two citations to content not in the cited papers (check.py 437).
 
-Session 09:49–10:1xZ: all-CPU, 0 GPU-h — exploit/instrument: #19
-dT-table read script landed (tsens_dt_results.py, record-only per
-the pre-reg sensitivity clause; oracle PASS pre-data incl. exact
-T=1.0 re-pool reproduction + 11 guard aborts); queue refilled with
-the pre-endpoint attachment-frontier lit slice (check.py 437).
+Session 09:49–10:3xZ: all-CPU, 0 GPU-h — exploit/instrument +
+owner-steered comms: #19 dT-table read script landed
+(tsens_dt_results.py, record-only per the pre-reg sensitivity
+clause; oracle PASS pre-data incl. exact T=1.0 re-pool reproduction
++ 11 guard aborts); then owner steering 10:04Z executed live —
+Ledger → Leaderboard (evergreen scoreboard incl. the mean-of-10
+teacher/student rows + measured compute column) and the
+slow-molmo2-saves question answered with on-box facts (37 GB/save →
+save-pause-aware ETA). Refills: attachment-frontier lit slice +
+decode-cost micro-benchmark prep (check.py 437).
