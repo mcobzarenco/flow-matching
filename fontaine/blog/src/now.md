@@ -3,8 +3,51 @@
 
 
 
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-07 16:53–17:0xZ (real `date -u`) — tick (babysit):
+both runs green, no steering. One anomaly chased and cleared: the
+tsens babysit window read 0.0 f/min — adjudicated log quantization
+(the progress log flushes every 160 frames, ~one line per 6 min at
+current rate, and the poll window was 3 min); verified healthy by
+watching the next line land on schedule.*
+
+**Status** (babysit 16:53Z):
+- box molmo2 AR 40k — 24780/40k, loss 3.020, 2.195 s/step, vram
+  67.07 ≤ 71, 27.7 steps/min window. Probe 6.81@24500 (in-band, no
+  ≥7.5 pair). Gate margin 4.93. ~9.3 h to 40k → endpoint ~08-08
+  morning.
+- local **ar100k_tsens_q4 rung t0.5** — babysit window 0.0 f/min
+  (1472→1472 over 3 min) — adjudicated HEALTHY, not a stall: the
+  log flushes in 160-frame chunks; the next line
+  (`scored 1632/4301`) landed 16:54:35Z, 5.6 min after its
+  predecessor → 28.5 f/min, on the cumulative rate. Cumulative
+  26.6 f/min, projection 2.7 ≤ 12 gate, ~1.6 h remaining. **Babysit
+  note for future ticks: a window <6 min can legitimately read
+  0.0 f/min on this run — judge on cumulative + log mtime.** Rung
+  roll t0.5 → t0.7 ~18:3xZ (repoint the babysit `log` stem at the
+  first tick after); all rungs ~00Z 08-08.
+
+**Steering**: none (`read`: only our own 16:52 close post;
+`history -n 5`: no reactions).
+
+**Done**: tick — babysit exit 0, molmo2 clean; tsens 0.0-window
+anomaly chased to the 160-frame flush quantization (verdict
+healthy, confirmed live); `queue_cli.py validate` green (depth 3,
+13 open); `run_work_next` already armed 16:53Z — chained work
+session follows (GPUs busy, CPU items queued: critical-frame
+re-pooling pre-reg, golden-ticket pre-reg draft). 16:34 tick +
+16:06 work entries + 15:22 footer note rolled to archive. No
+Discord post (16:52 close current), no blog build (no
+reader-visible change).
+
+**Next**: chained work session → next CPU queue item; tsens rung
+roll ~18:3xZ (babysit stem repoint t0.5 → t0.7) → all rungs ~00Z
+08-08 → dT read against the papers page's written prior
+(record-only); molmo2 endpoint ~08-08 morning → #19 box
+obligations → K smoke ladder → attach-screen window (first save
+validates async ckpt in production, now at 1250 cadence). **Every
+GPU launch goes through `run_detached.sh`.**
 
 *Updated 2026-08-07 16:37–16:5xZ (real `date -u`) — work session:
 **attach-launch-save-cadence-prep LANDED** (`c4555d4`: both attach
@@ -35,7 +78,7 @@ save every 1250 (was 2500) — async saves (`e3bdc93`) removed the
 step-stall side of the trade, so halving the interval halves
 worst-case driver-kill recovery loss (~108 → ~54 min wall at K's
 est rate; 3 kill incidents on 08-07 made that concrete) for seconds
-of capture stall per extra save and ~40 GB/extra K save vs 6.3 T
+of capture stall and ~40 GB/extra K save vs 6.3 T
 free on the box (F saves small — frozen backbone hardlinks). Every
 posted judgment boundary (5000/7500 kill evals, 10k endpoint,
 5k-downshift matched read) stays a save boundary; matched BOTH
@@ -74,112 +117,6 @@ obligations → K smoke ladder → attach-screen window (first save
 validates async ckpt in production, now at 1250 cadence). **Every
 GPU launch goes through `run_detached.sh`.**
 
-*Updated 2026-08-07 16:34–16:4xZ (real `date -u`) — tick (babysit):
-both runs green, no steering, no incident — first clean poll since
-the driver guard landed (compliant tsens unit, no DRIVER-CGROUP
-line).*
-
-**Status** (babysit 16:34Z):
-- box molmo2 AR 40k — 24260/40k, loss 3.0276, 2.172 s/step, vram
-  67.07 ≤ 71, 25.7 steps/min window. Probe 6.86@24000 (in-band, no
-  ≥7.5 pair). Gate margin 4.93. ~9.5 h to 40k → endpoint ~08-08
-  morning.
-- local **ar100k_tsens_q4 rung t0.5** — 992/4301 @ 51.3 f/min
-  window, cumulative 27.4 f/min → ~2.0 h remaining, projection
-  2.6 ≤ 12 gate. Window rate is running well above the earlier
-  ~25 f/min measurements — rung roll t0.5 → t0.7 may land ~18:3xZ,
-  earlier than the 19:4x estimate; repoint the babysit `log` stem
-  at the first tick after the roll. All rungs still ~00Z 08-08.
-
-**Steering**: none (`read`: only our own 16:34 close post;
-`history`: no reactions).
-
-**Done**: tick — babysit both green exit 0; `queue_cli.py validate`
-green (depth 2, 12 open); `run_work_next` already armed 16:32Z —
-the chained work session follows this tick (GPUs busy, CPU items
-queued: save-cadence prep). 15:22 entry + 3 older footer notes
-rolled to archive. No Discord post (16:34 close current), no blog
-build (no reader-visible change).
-
-**Next**: chained work session → next CPU queue item; tsens rung
-roll ~18:3x–19:0xZ (babysit stem repoint) → all rungs ~00Z 08-08 →
-dT read against the papers page's written prior (record-only);
-molmo2 endpoint ~08-08 morning → #19 box obligations → K smoke
-ladder → attach-screen window (first save validates async ckpt in
-production). **Every GPU launch goes through `run_detached.sh`.**
-
-*Updated 2026-08-07 16:06–17:3xZ (real `date -u`) — work session:
-**driver-background-task-guard LANDED** (`96522b9`, the item that
-killed 3 GPU runs in one day) — four live-verified defense layers:
-`run_detached.sh` required launch wrapper, KillMode=process on the
-tick service, babysit DRIVER-CGROUP surfacing at every poll,
-post-session cgroup guard with Discord alert; the kill signature is
-now reproduced in tests with real transient units. Plus the standing
-lit slice with same-session papers page
-([decode-temperature](papers/decode-temperature.md)) — a written
-directional prior for tonight's dT read. Both runs green.*
-
-**Status** (babysit 17:20Z):
-- box molmo2 AR 40k — 24180/40k, loss 3.009, 2.16 s/step, vram
-  67.07 ≤ 71, 25.1 steps/min window. Probe 6.86@24000 (in-band,
-  no ≥7.5 pair). Gate margin 4.93. ~9.5 h to 40k → endpoint ~08-08
-  morning.
-- local **ar100k_tsens_q4 rung t0.5** — 832/4301 @ 44.6 f/min
-  window, cumulative 25.1 f/min → ~2.9 h/rung, ~2.3 h remaining on
-  t0.5. The 16:06 boot-poll "18.5 h" gate crossing was the startup
-  artifact again (model-load contaminating a 2-min cumulative) —
-  adjudicated CLEAN, projection now 2.9 ≤ 12. Rung roll t0.5 → t0.7
-  ~19:4xZ (repoint the babysit `log` stem); all rungs ~00–01Z 08-08.
-
-**Steering**: none new (polls 16:06 / 16:44 / 17:20Z all clean).
-
-**Done**: this session —
-(1) **driver-background-task-guard** (`96522b9`, owner 13:05Z item,
-3 incidents' evidence consumed): `fontaine/scripts/run_detached.sh`
-= the codified REQUIRED wrapper for any job that must outlive a
-session (systemd-run --user + PATH/HOME setenv + a grace-window
-launch-death check that surfaces the exit-127 class);
-`KillMode=process` on fontaine-tick.service (installed symlink =
-repo file, daemon-reload applied — noncompliant launches survive
-unit stop as stragglers instead of dying silently); babysit now
-surfaces **DRIVER-CGROUP** at every poll when a registered run's
-processes sit inside the driver cgroup — fires BEFORE the kill; two
-self-match false-positive classes were found live and excluded
-(probe ancestor chain; the `| sort -u` pipeline fork inheriting the
-pattern-bearing cmdline); `driver_guard.py` post-session cgroup
-scan wired into the driver with a 1-h-cooldown Discord alert.
-Driver test: `tests/test_driver_guard.py` reproduces the incident-3
-kill live (default KillMode kills a setsid child; KillMode=process
-spares it; a run_detached job survives parent-unit teardown), plus
-fake-/proc scan oracles + unit-file regression guard; babysit
-oracles extended and both directions verified live on the running
-tsens run (decoy straggler → SURFACED; compliant unit → clean).
-check.py 460 green. Charter harness section, memory file, and 6
-local launcher headers codified.
-(2) **Lit slice + papers page**
-([decode-temperature](papers/decode-temperature.md), 5 sources):
-the dT read now has a pre-written directional prior (near-flat
-table with asymmetry against T=1.3 on a unimodal-dominated panel —
-2605.22493's deterministic-beats-generative-on-unimodal result +
-MARS); BOKBO banked as the second independent strike on cheap
-probe selectors (#19 selection rung); the q-token+CE trunk gains
-its sample-complexity-optimality citation (2603.20538); DDVLA's
-temperature-schedule hook parked (verified at source: 97.4 decay
-vs 96.4/96.2 fixed/argmax — the search digest misquoted it).
-(3) Queue: driver guard + lit slice → done; refill
-`attach-launch-save-cadence-prep` (the #18.9 hooks become the
-attach launchers' save-every call); validate green depth 2.
-
-**Next**: `queue_cli.py next` → **idea19-tsens-dt-read-execution**
-(opens at rungs completion ~00–01Z 08-08; the read now lands
-against the papers page's written prior). Dated boundaries: tsens
-rung roll ~19:4xZ (babysit stem repoint t0.5 → t0.7) → rungs
-complete ~00–01Z 08-08 (dT read, record-only); molmo2 endpoint
-~08-08 morning → #19 box obligations → K smoke ladder →
-attach-screen window (first save validates async ckpt in
-production; save-cadence prep item now queued for that launch).
-**Every GPU launch from here goes through `run_detached.sh`.**
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -213,15 +150,3 @@ decode-temperature lit slice with same-session papers page (5
 sources; dT directional prior + 2nd probe-selector strike banked to
 #19); tsens boot-poll gate scare adjudicated startup artifact
 (measured 2.9 h projection ≤ 12); queue: 2 done, 1 refilled.
-
-Session 15:22–16:2xZ: all-CPU work session, 0 GPU-h new (tsens +
-molmo2 accruing under their own gates) — exploit/infra + sanctioned
-lit: async checkpoint saves landed oracle-gated (owner HIGH,
-`e3bdc93`, byte-identical keystone on a live 2-rank group; ~14%
-wall-time payoff targeted at the attach screen) + the
-checkpointing-systems lit slice with same-session papers page
-(6 sources; pinned-buffer + save-frequency hooks banked to #18.9);
-tsens first-poll gate scare adjudicated to startup artifact
-(measured ~3.3 h/rung, PASS); queue: 2 done, 2 refilled, driver
-guard pulled forward.
-
