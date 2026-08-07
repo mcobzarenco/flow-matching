@@ -26,6 +26,9 @@ same session it is banked.
 | [The seam debate](seam-debate.md) | 2604.16067, 2605.30877 | #4 — the escalation branches on both sides of the F/K screen |
 | [Encoder winners don't transfer](encoder-grafting.md) | 2606.14153 | #4 — the scale-transfer caveat on reading Δ_seam |
 | [Hierarchy & subgoals](hierarchy-subgoals.md) | 2606.10267, 2607.04816 | #6 — design constraints + escalation map for the self-subgoal probe |
+| [The one-step menu](one-step-menu.md) | 2603.12480, 2603.01469, 2606.05737, 2603.14245 | #12 — the fallback menu SnapFlow made moot, and why it worked |
+| [Sampling beyond selection](sampling-beyond-selection.md) | 2603.15757, 2606.03847, 2510.12483 | #1, #19 — noise tickets, variance gates, the adopted ES column |
+| [The state shortcut](state-shortcut.md) | 2506.23944, 2509.18644, 2601.16667, 2602.12032, 2602.06575, 2606.22836 | #9, #11 — the crutch we measured, and the mis-banked p=0.8 citation |
 
 ## Retroactive backlog
 
@@ -59,19 +62,19 @@ pretrained trunk:
 | TapSampling | [2605.25547](https://arxiv.org/abs/2605.25547) | ✅ [page](test-time-selection.md) |
 | Look Before You Leap | [2607.03751](https://arxiv.org/abs/2607.03751) | ✅ [page](test-time-selection.md) |
 | What Frozen VLAs Already Know About Success | [2605.28527](https://arxiv.org/abs/2605.28527) | ✅ [page](test-time-selection.md) |
-| DVAC (variance-gated replanning) | [2606.03847](https://arxiv.org/abs/2606.03847) | queued |
-| Golden Ticket (noise search) | [2603.15757](https://arxiv.org/abs/2603.15757) | queued |
-| Energy Policy (energy-score training) | [2510.12483](https://arxiv.org/abs/2510.12483) | queued |
+| DVAC (variance-gated replanning) | [2606.03847](https://arxiv.org/abs/2606.03847) | ✅ [page](sampling-beyond-selection.md) |
+| Golden Ticket (noise search) | [2603.15757](https://arxiv.org/abs/2603.15757) | ✅ [page](sampling-beyond-selection.md) |
+| Energy Policy (energy-score training) | [2510.12483](https://arxiv.org/abs/2510.12483) | ✅ [page](sampling-beyond-selection.md) |
 
 **One-step decoding & distillation (#12):**
 
 | Paper | arXiv | Status |
 |---|---|---|
 | SnapFlow | [2604.05656](https://arxiv.org/abs/2604.05656) | ✅ [page](snapflow.md) |
-| One-Step Flow Policy (OFP) | [2603.12480](https://arxiv.org/abs/2603.12480) | queued |
-| MeanFlow one-step VLA | [2603.01469](https://arxiv.org/abs/2603.01469) | queued |
-| Let It Be Simple | [2606.05737](https://arxiv.org/abs/2606.05737) | queued |
-| GoldenStart | [2603.14245](https://arxiv.org/abs/2603.14245) | queued (screened out) |
+| One-Step Flow Policy (OFP) | [2603.12480](https://arxiv.org/abs/2603.12480) | ✅ [page](one-step-menu.md) |
+| MeanFlow one-step VLA | [2603.01469](https://arxiv.org/abs/2603.01469) | ✅ [page](one-step-menu.md) |
+| Let It Be Simple | [2606.05737](https://arxiv.org/abs/2606.05737) | ✅ [page](one-step-menu.md) |
+| GoldenStart | [2603.14245](https://arxiv.org/abs/2603.14245) | ✅ [page](one-step-menu.md) (screened out) |
 
 **Hierarchy & subgoals (#6):**
 
@@ -85,12 +88,12 @@ pretrained trunk:
 
 | Paper | arXiv | Status |
 |---|---|---|
-| Adapt Your Body (proprio masking p=0.8) | [2506.23944](https://arxiv.org/abs/2506.23944) | queued |
-| State-free policy | [2509.18644](https://arxiv.org/abs/2509.18644) | queued |
-| ReViP (state-dominant bias) | [2601.16667](https://arxiv.org/abs/2601.16667) | queued |
-| GAP (phase-guided gradient scaling) | [2602.12032](https://arxiv.org/abs/2602.12032) | queued |
-| ThinkProprio | [2602.06575](https://arxiv.org/abs/2602.06575) | queued |
-| Cloak (visual EE masking) | [2606.22836](https://arxiv.org/abs/2606.22836) | queued |
+| Adapt Your Body (proprio masking p=0.8) | [2506.23944](https://arxiv.org/abs/2506.23944) | ✅ [page](state-shortcut.md) (withdrawn paper) |
+| State-free policy | [2509.18644](https://arxiv.org/abs/2509.18644) | ✅ [page](state-shortcut.md) |
+| ReViP (state-dominant bias) | [2601.16667](https://arxiv.org/abs/2601.16667) | ✅ [page](state-shortcut.md) |
+| GAP (phase-guided gradient scaling) | [2602.12032](https://arxiv.org/abs/2602.12032) | ✅ [page](state-shortcut.md) |
+| ThinkProprio | [2602.06575](https://arxiv.org/abs/2602.06575) | ✅ [page](state-shortcut.md) |
+| Cloak (visual EE masking) | [2606.22836](https://arxiv.org/abs/2606.22836) | ✅ [page](state-shortcut.md) |
 
 **Grounding & conditioning placement (#11):**
 

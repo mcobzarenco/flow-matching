@@ -13,7 +13,52 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-07 09:10–09:5xZ (real `date -u`) — work session
+(bounded): **PAPERS SECTION BATCH 2** — three more theme pages / 13
+papers (one-step menu, sampling-beyond-selection, state-shortcut
+set), 29 of the tracker now covered; the deep re-reads corrected
+three banked claims, including one that re-frames a completed
+experiment.*
+
+**Status** (babysit 09:11Z + 09:20Z, both green, exit 0):
+- box molmo2 AR 40k — 14300/40k, loss 3.3427, 2.174 s/step, vram
+  67.07 ≤ 71, probe low **6.90@14000** (gate margin 5.19); ~15.5 h
+  to endpoint ~08-08.
+- local draws10_t1 — 19392/25800, window 51.6 f/min, cumulative
+  33.3 f/min → **~12.9 h total, INSIDE the 24 GPU-h gate**, ~3.2 h
+  remaining; boundary ~12:3x–12:5xZ → frozen reads.
+
+**Steering**: none new (polls at 09:11Z and 09:20Z clean; owner last
+at 08:42Z — the papers steering, this session executes batch 2 of
+it).
+
+**Done**: papers batch 2 —
+[one-step menu](papers/one-step-menu.md) (OFP, MeanFlow-VLA, Let It
+Be Simple, GoldenStart), [sampling beyond
+selection](papers/sampling-beyond-selection.md) (Golden Ticket,
+DVAC, Energy Policy), [the state
+shortcut](papers/state-shortcut.md) (Adapt Your Body, state-free,
+ReViP, GAP, ThinkProprio, Cloak); index tracker 29 covered / 13
+remaining. Full-text re-reads corrected three banked claims
+(hooks in ideas.md, record on the pages): **#9's p=0.8 zero-masking
+was the *baseline* of a since-WITHDRAWN paper, not its method** —
+arm C tested the family's weakest member, and the cross-paper
+consensus is modulate-don't-amputate; #1's Golden Ticket bank was
+v1-stale (v3: 46/51; per-task tickets always gain, only *shared*
+tickets regress); #12's MeanFlow hook missed that its 8.7× speedup
+loses accuracy (78% vs 84.5%), and Let It Be Simple's one-step win
+is state-carried and degrades 10-step decoding. check.py 437
+passed.
+
+**Next** (`queue_cli.py next`): papers batch 3 (grounding set,
+data/tokenization/trunks set, AR-VLA + repr-anchoring + π0.7/WAM)
+next work session; #19 dT-table read script + endpoint-runbook
+git-audit remain queued; draws10_t1 boundary ~12:3x–12:5xZ today →
+frozen reads; endpoint ~08-08 → #19 box obligations → K smoke
+ladder → attachment steer window.
 
 *Updated 2026-08-07 09:07–09:1xZ (real `date -u`) — tick (babysit):
 both runs green, no new steering; queue green with the owner's
@@ -93,49 +138,6 @@ dT-table read script + endpoint-runbook git-audit; draws10_t1
 boundary ~12:4x–13:0xZ today → frozen reads; endpoint ~08-08 → #19
 box obligations → K smoke ladder → attachment steer window.
 
-*Updated 2026-08-07 08:44–09:0xZ (real `date -u`) — tick (babysit):
-**OWNER STEERING 08:42Z, HIGH PRIORITY — blog Papers section** with
-retroactive per-paper review pages for every lit slice + a permanent
-page-per-slice rule; acknowledged in-channel, rule landed, queue item
-inserted FIRST, work session chained. Both runs green.*
-
-**Status** (babysit 08:45Z, both green, exit 0):
-- box molmo2 AR 40k — 13360/40k, loss 3.3524, 2.163 s/step, vram
-  67.07 ≤ 71, probe low 7.092@13000 (gate margin 5.00); ~16.0 h to
-  endpoint ~08-08.
-- local draws10_t1 — 17952/25800, window 34.3 f/min, cumulative
-  32.8 f/min → **~13.1 h total, INSIDE the 24 GPU-h gate**, ~4.0 h
-  remaining; boundary ~12:4x–13:0xZ → frozen reads.
-
-**Steering**: **OWNER 08:42:02Z (high priority)** — "no great paper
-trail of the lit slices": wants a new **Papers section on the blog**,
-one post per theme/slice/paper, covering each paper's contribution,
-experiments, and relevance to us, readable for someone with less
-context; **retroactive** pages for every lit slice so far (re-read
-papers deeply where notes are thin); and **page-per-slice made a
-permanent rule**. Disposition: acknowledged in-channel 08:45Z with
-the plan; permanent rule LANDED this tick (charter comms/web bullet +
-`prompts/work.md` §2 standing-allocation amendment); queue item
-`papers-section-retroactive` inserted FIRST among queued (scope: ~31
-distinct arXiv IDs in `ideas.md`); `run_work_next` armed — the
-chained work session starts the retroactive build immediately.
-Conversational mode held through the tick (30–120 s polls); no
-further owner messages by close.
-
-**Done**: tick — babysit both green, exit 0; steering intake as
-above (ack + rule in charter/work-prompt + queue-first item + chain
-armed). No blog build this tick — the Papers section itself is the
-chained work session's first deliverable (avoids a stub section
-shipping twice).
-
-**Next** (`queue_cli.py next`): **papers-section-retroactive (owner,
-HIGH PRIORITY)** — mdbook Papers section + index + first batch of
-pages (most load-bearing first: pi0.5, LabVLA, Q-VGM, the #19
-selection-flavor set), batches until the ~31-paper backlog clears;
-then #19 dT-table read script + endpoint-runbook git-audit;
-draws10_t1 boundary ~12:4x–13:0xZ → frozen reads; endpoint ~08-08 →
-#19 box obligations → K smoke ladder → attachment steer window.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -145,16 +147,16 @@ from 23:37Z — both live to their boundaries). Older dated snapshots
 and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
-Session 08:27–08:5xZ: all-CPU, 0 GPU-h — explore-side: #19
-energy-score read script landed (`energy_score_results.py`,
-exploratory record-only proper-scoring-rule AR-vs-flow read,
-oracle-gated pre-data incl. exact banked read-4 reproduction;
-check.py 437). Refill: endpoint-runbook git-audit. Lit slice taken
-(~15 min): LabVLA recipe adoption + Q-VGM frozen-trunk RL → #4.
-
 Session 08:51–09:2xZ: all-CPU, 0 GPU-h — comms/lit-side (owner
 high-priority steering): Papers section batch 1 landed (`44eb032`,
 8 pages / 16 papers + index tracker; 2 correction hooks banked to
 ideas.md from the deep re-reads; check.py 437). No lit-slice
 increment beyond the section itself — the whole session was the
 literature record.
+
+Session 09:10–09:5xZ: all-CPU, 0 GPU-h — comms/lit-side (owner
+high-priority steering, batch 2): three papers pages / 13 papers
+landed (one-step menu, sampling-beyond-selection, state-shortcut;
+tracker 29 covered / 13 remaining); 3 correction hooks banked to
+ideas.md — incl. the #9 p=0.8 citation being a withdrawn paper's
+baseline, not its method (check.py 437).

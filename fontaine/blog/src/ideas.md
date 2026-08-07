@@ -100,6 +100,14 @@ information × cheapness. Status tags: `queued` / `screening` /
   deterministic. Pairs with #12's 1-NFE distill (fewer-steps trend)
   and with mean-of-N (ticket vs mean-of-10 vs both). Cheap eval-side
   screen; needs its own pre-reg before any number is read.
+  **Correction hooks (papers-page deep read 2026-08-07,
+  [page](papers/sampling-beyond-selection.md)):** the 38/43 figure
+  was v1 — v3 reports 46/51; "Spatial −3%" was imprecise — per-task
+  tickets always gain (+13 Spatial), it's the single *shared* ticket
+  per suite that regresses (−2.6 to −12). Design note banked: the
+  1-NFE student's draw collapse may have shrunk the searchable
+  ticket space — screen the teacher's noise space first, or verify
+  the student still responds to noise.
 
 ## 2. Throughput: bucketed batching + torch.compile on the frozen prefix — `screening` (2a landed 2026-08-05; GPU A/B conditional)
 
@@ -571,6 +579,19 @@ check (charter §2) before training touches it.
   green). Arm C's ~12:3x–12:4xZ boundary read is now
   zero-improvisation: defaults point at the chained eval's output
   names; pass `--probe-final` from the train log's last in-run probe.
+- **CORRECTION (papers-page deep read 2026-08-07,
+  [page](papers/state-shortcut.md)): the p=0.8 zero-masking recipe
+  was mis-banked** — in 2506.23944 it is the *Random Dropout
+  baseline*, not the method (NADA = Wasserstein-calibrated Gaussian
+  state NOISE, which beats p=0.8 masking on 6/9 tasks), and the
+  paper was **withdrawn** (v2 is a withdrawal notice). Cross-paper
+  consensus (ReViP masking study, GAP's dominated masking baseline,
+  our own arm C +2.64): *modulate, don't amputate*. The queued
+  p=0.3 screen survives on our own branch rule only; if the family
+  is revisited, calibrated noise (NADA-style) and GAP-style
+  gradient scaling are the literature-backed levers, and full
+  amputation needs the state-free paper's enablers (relative EE
+  actions + wide-FOV wrist cams) we don't have.
   before citing numbers):** the masking lever keeps accumulating
   neighbors: [ThinkProprio, 2602.06575](https://arxiv.org/abs/2602.06575)
   goes the OPPOSITE direction (proprioception as text tokens fused at
@@ -765,6 +786,16 @@ variants, consistency/distillation toward 1–2-step deployment decodes
   fine-tuning would have to. No new launch implied; feeds the
   SnapFlow results post's discussion + the next pre-reg if the
   endpoint branch fires.
+  **Correction hooks (papers-page deep read 2026-08-07,
+  [page](papers/one-step-menu.md)):** MeanFlow-VLA's 8.7× is
+  speed-for-accuracy (78% vs SmolVLA's 84.5% avg, loses 2/3 tasks;
+  NFE=1 config-sensitive down to 49% in their own sweep); Let It Be
+  Simple's one-step win is chiefly **state**-carried (no-state
+  ablation ~0% everywhere) and its α=4 schedule *degrades* 10-step
+  decoding to 63.4% — a specialization, not a free win; its
+  small-irreducible-loss theory retroactively explains our
+  student's draw collapse, and teacher-at-1-NFE stays the free
+  schedule-vs-distillation decomposition read.
 - **PRE-REGISTERED (2026-08-06 ~00:3xZ,
   [pre-reg](posts/2026-08-06-prereg-snapflow-distill.md)):** SnapFlow
   self-distill of flow-80k — full recipe deep-read and frozen

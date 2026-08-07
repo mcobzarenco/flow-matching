@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-07T09:10:00+00:00",
+ "updated_utc": "2026-08-07T09:45:00+00:00",
  "depth_reason": null,
  "items": [
   {
@@ -130,7 +130,7 @@
   },
   {
    "id": "papers-section-retroactive",
-   "title": "OWNER STEERING 08-07 08:42Z, HIGH PRIORITY: new Papers section on the blog — one post per paper (grouped/cross-linked by theme), covering contribution, experiments run, what transfers to us and what doesn't, which idea/arm it fed; written for a reader with less context, a pleasure to read. RETROACTIVE: review every lit slice so far, re-read papers deeply where notes are thin, add pages for all. Permanent page-per-slice rule landed 08-07 tick. BATCH 1 LANDED 08-07 ~09:1xZ (44eb032): section + index/tracker + 8 pages / 16 papers (pi0.5+KI, LabVLA, Q-VGM, 7-paper selection cluster, SnapFlow, AEGIS+Wall-OSS seam debate, encoder-grafting, Hi-VLA+CAC-VLA) — deep re-reads surfaced 2 correction hooks banked to ideas.md (#4 Wall-OSS stop-grad-worst ablation; #19 probe-selector rollout caveat). REMAINING ~22 papers by theme (index tracker is canonical): one-step menu (OFP/MeanFlow/LetItBeSimple/GoldenStart), selection stragglers (DVAC/GoldenTicket/EnergyPolicy), state-shortcut set (6), grounding set (4), data/tokenization/trunks set (6), AR-VLA + representation-anchoring; next batches most load-bearing first.",
+   "title": "OWNER STEERING 08-07 08:42Z, HIGH PRIORITY: new Papers section on the blog — one post per paper (grouped/cross-linked by theme), covering contribution, experiments run, what transfers to us and what doesn't, which idea/arm it fed; written for a reader with less context, a pleasure to read. RETROACTIVE: review every lit slice so far, re-read papers deeply where notes are thin, add pages for all. Permanent page-per-slice rule landed 08-07 tick. BATCH 1 LANDED 08-07 ~09:1xZ (44eb032): section + index/tracker + 8 pages / 16 papers (pi0.5+KI, LabVLA, Q-VGM, 7-paper selection cluster, SnapFlow, AEGIS+Wall-OSS seam debate, encoder-grafting, Hi-VLA+CAC-VLA) — deep re-reads surfaced 2 correction hooks banked to ideas.md (#4 Wall-OSS stop-grad-worst ablation; #19 probe-selector rollout caveat). BATCH 2 LANDED 08-07 ~09:4xZ: 3 more theme pages / 13 papers (one-step menu OFP+MeanFlow+LetItBeSimple+GoldenStart; sampling-beyond-selection GoldenTicket+DVAC+EnergyPolicy; state-shortcut set of 6) — 29 covered; deep re-reads surfaced 3 correction hooks banked to ideas.md (#9 p=0.8 was the BASELINE of a WITHDRAWN paper, not the method; #1 GoldenTicket v3 46/51 + shared-vs-per-task ticket fix; #12 MeanFlow speed-for-accuracy + LetItBeSimple state-carried caveat). REMAINING 13 by the index tracker: grounding set (IVRA/FLOWER/SCALE/SmolVLA), data/tokenization/trunks set (6), AR-VLA + representation-anchoring + pi0.7/WAM; batch 3 next work session.",
    "class": "cpu",
    "status": "queued",
    "prereg": null,
