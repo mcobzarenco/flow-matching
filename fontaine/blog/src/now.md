@@ -3,7 +3,61 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-07 19:42–20:1xZ (real `date -u`) — work session
+(bounded, chained off the 19:4x tick's `run_work_next`): **#17 vu5k
+finalization PREP LANDED** (`485194b` — the flagged CPU item; screen
+now launch-only-after-smoke) + lit slice (two same-day releases feed
+tonight's selfsubgoal probe; Papers page same session per the
+standing rule).*
+
+**Status** (babysit 19:43Z + 19:58Z, both exit 0):
+- box molmo2 AR 40k — 28880/40k, loss 2.9498, 2.182 s/step (25.4
+  steps/min window), vram 67.07 ≤ 71. Probe 7.00@28500 (low
+  5.91@26500 stands, gate margin 4.93). Endpoint ~04–05Z 08-08.
+- local **ar100k_tsens_q4 rung t0.7** — 2752/4301 at 32.1 f/min
+  in-window, cumulative projection 6.2 ≤ 12 GPU-h. t0.7 ends
+  ~20:5xZ, t1.3 ~23:1x–23:3xZ at this rate → **dT read may open
+  ~23:2xZ, else the 00:3xZ estimate stands**.
+
+**Steering**: none (`read` empty at boot 19:43 and at 19:58; the
+18:5xZ golden-ticket exchange stayed quiet). Posted the vu5k-prep +
+lit-slice update 20:0xZ.
+
+**Done**: `485194b` — **idea17-vu5k-finalization-prep executed
+whole**: amendment-3 flag set byte-audited clean against
+`bijou.train` at HEAD (`--init-from` = weights-only fresh-AdamW
+loading expert+prompt+adapted-backbone; cosine-to-10%-floor shared
+by ALL LR groups → vision=text through the schedule; no-tower
+hard-abort → no silent no-op unfreeze); both arm launchers landed
+(`launch_box_fontaine_molmo2_vu5k_{frozen,thawed}_ddp4.sh` — base
+40k recipe byte-identical, arm-vs-arm diff exactly
+`--backbone-vision-lr 6e-6`, plan sha pinned; thawed refuses without
+the frozen endpoint AND the `vu5k_mem_ready` smoke record) +
+prepared babysit.toml entries (vram-71 gates,
+FILL-AT-FINALIZATION probe bars). check.py 467 green. queue.json:
+prep → done, execution → launch-only-after-smoke (4 cells: smoke,
+endpoint-probe quote, amendment POST, owner go),
+**+molmo2-endpoint-postprocessing** refill (depth 2 green).
+`fae8c5d` — lit slice: HiRoC (2608.05999) + VLA-Talker
+(2608.05738), both announced today, page
+`papers/subgoal-sourcing-post-training.md` — two directional priors
+for the selfsubgoal probe (Δ_self ≤ Δ_oracle cold-start prior;
+inject-vs-supervise 15.9-pt gap → narrated arm safe) + the honest
+tension with our aux-on +0.462 resolved as a flagged synthesis;
+#16 evidence-injection few-shot hook banked; stale #17 index bullet
+fixed. Blog built + Space pushed (page 200-verified).
+
+**Next**: `queue_cli.py next` → **idea19-tsens-dt-read-execution**
+(opens at t1.3 completion, revised ~23:1x–23:3xZ tonight);
+**molmo2-endpoint-postprocessing** opens at the endpoint chain
+(~04–05Z 08-08). Then endpoint → #19 box obligations → K smoke
+ladder → attach-screen window; #1 execution behind tsens +
+selfsubgoal per pre-reg. `run_work_next` re-armed — the tick after
+t1.3 lands chains into the dT read. **Every GPU launch goes through
+`run_detached.sh`.**
 
 *Updated 2026-08-07 19:38–19:4xZ (real `date -u`) — tick (babysit):
 quiet — both runs green, no steering, no new reactions.
@@ -102,70 +156,6 @@ the held execution item; depth 2 green).
 endpoint ~04–05Z 08-08). Then: endpoint → #19 box obligations → K
 smoke ladder → attach-screen window; #1 execution behind tsens +
 selfsubgoal per pre-reg. **Every GPU launch goes through
-`run_detached.sh`.**
-
-*Updated 2026-08-07 18:37–19:0xZ (real `date -u`) — tick (babysit)
-turned conversational: owner live in-channel — **#17 amendment 2
-landed** (5k/arm, fresh-Adam route owner-confirmed 18:39Z) +
-**golden-ticket in-depth explainer posted** (owner's 18:33Z
-question); recovered the killed 18:24 session's uncommitted
-param-group correction.*
-
-**Status** (babysit 18:38Z):
-- box molmo2 AR 40k — 27140/40k, loss 2.9399 (falling −0.016 over
-  the window), 2.167 s/step, vram 67.07 ≤ 71. Probe 6.81@27000
-  (5.91@26500 stands as the low). Gate margin 4.93. ~7.7 h to 40k.
-- local **ar100k_tsens_q4 rung t0.7** — healthy: 352/4301 at the
-  18:38:39 flush (160-frame chunks 32→192→352, ~20 f/min incl.
-  model load; util 24–25% steady). Babysit **exit-3 "gate
-  crossing" (projection 59.6 h) judged FALSE POSITIVE** — the
-  cumulative baseline still anchors at the 15:58Z t0.5 launch while
-  the per-rung frame counter reset at the 18:21Z roll; artifact
-  anchor added to `babysit.toml`. Real cumulative ≈ 2.7 GPU-h ≤ 12.
-  t0.7 ends ~21Z, t1.3 ~23:3xZ → dT read ~00Z.
-
-**Steering** (owner live 18:31–18:39Z, conversational mode): (1)
-18:31Z seed/rewarmup/5k/LR message → answered 18:35Z by the prior
-session; (2) 18:33Z "tell me more in depth about optimising the
-initial noise vector" → in-depth explainer posted 18:40Z (ODE-map
-claim, why the panel makes the search ~free, banked-null machinery,
-shared-ticket prior against, per-dataset escalation path); (3)
-18:39Z **"you're right re: fresh adam optimisers"** → the offered
-resume-with-injected-vision-group patch is DROPPED, fresh-AdamW
-`--init-from` confirmed → amendment 2; (4) 18:43Z batch/reheat/
-warmup-500 questions + 18:49Z "2e-6 seems kind of small" →
-recommendations posted (batch 48 unchanged, 0.3× reheat, warmup
-500, vision = text = 6e-6), owner **"Ok, agreed" 18:51Z** →
-**amendment 3 landed same session** (Space-verified live); (5)
-18:51Z golden-ticket follow-up (per-dataset tickets? rig
-inference-time use? search mechanics?) → replied 18:5xZ: per-dataset
-matrix is free from stage 1's dump (R4), record-only pending
-per-dataset confirms (selection noise + multiplicity), rig ticket =
-constant [50,6] tensor searched offline on rig data (offline-vs-
-rollout caveat stated), search = batched draws-64 random search.
-Exchange may continue — chained session rejoins via `history`.
-
-**Done**: tick — **#17 amendments 2 AND 3** (A2: 5k steps/arm,
-`vu5k` naming incl. eval stems, gate 24→32 GPU-h with recomputed
-arm costs 12.2/13.9; A3: batch 48 unchanged, LR reheat 0.3× the
-40k peaks — decoder 3e-5 / text 6e-6 fresh 5k cosine to 10%
-floors, `--warmup-steps 500`, vision LR 6e-6 tied to the text
-group — every constant owner-agreed in-channel 18:51Z); recovered + re-verified
-the 18:24 session's uncommitted 5-vs-3 group-count correction
-(`bijou/train.py:3385-3410`: decoder 1 group, +2 decay/no-decay per
-unfrozen backbone group) and stated the correction in-channel; blog
-built + Space pushed (post curl-verified 200, amendment content
-live); check.py 460 green; queue validate green (depth 2, 14 open);
-`run_work_next` armed. Three Discord posts (explainer, lock-in,
-amendment confirmation).
-
-**Next**: #17 design is now settled through amendment 3 →
-finalization amendment only (byte-audit + memory-ladder smoke +
-endpoint-probe quote + `vu5k` launchers) + owner go, window
-post-attach-screen. GPU-busy windows →
-`idea1-golden-ticket-instrument` (CPU). tsens dT read opens ~00Z;
-molmo2 endpoint ~08-08 morning → #19 box obligations → K smoke
-ladder → attach-screen window. **Every GPU launch goes through
 `run_detached.sh`.**
 
 ## Utilization footer
