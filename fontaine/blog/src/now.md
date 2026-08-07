@@ -16,6 +16,36 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-07 09:26–09:3xZ (real `date -u`) — tick (babysit):
+both runs green, no new steering; queue green with the papers
+backlog + #19 CPU items open → work session chained for batch 3.*
+
+**Status** (babysit 09:26Z, both green, exit 0):
+- box molmo2 AR 40k — 14460/40k, loss 3.3146, 2.172 s/step, vram
+  67.07 ≤ 71, probe low **6.90@14000** (gate margin 5.19); ~15.4 h
+  to endpoint ~08-08.
+- local draws10_t1 — 19552/25800, window 27.7 f/min (content
+  churn — the registry anchor says judge on cumulative), cumulative
+  33.2 f/min → **~12.9 h total, INSIDE the 24 GPU-h gate**, ~3.1 h
+  remaining; boundary ~12:3x–12:5xZ → frozen reads.
+
+**Steering**: none new (`read` surfaced only our own 09:25Z batch-2
+post; `history -n 5` shows no reactions; owner last at 08:42Z — the
+papers steering, batch 3 continues it).
+
+**Done**: tick — babysit both green, exit 0; `queue_cli.py validate`
+green (depth 3, 13 open); `run_work_next` armed (GPUs busy +
+CPU backlog → the chained work session starts papers batch 3). No
+Discord post (09:25Z post is current, nothing new to report) and no
+blog build (batch 3 ships the next reader-visible change).
+
+**Next** (`queue_cli.py next`): papers batch 3 (grounding set,
+data/tokenization/trunks set, AR-VLA + repr-anchoring + π0.7/WAM);
+then #19 dT-table read script + endpoint-runbook git-audit;
+draws10_t1 boundary ~12:3x–12:5xZ today → frozen reads; endpoint
+~08-08 → #19 box obligations → K smoke ladder → attachment steer
+window.
+
 *Updated 2026-08-07 09:10–09:5xZ (real `date -u`) — work session
 (bounded): **PAPERS SECTION BATCH 2** — three more theme pages / 13
 papers (one-step menu, sampling-beyond-selection, state-shortcut
@@ -92,53 +122,6 @@ then #19 dT-table read script + endpoint-runbook git-audit;
 draws10_t1 boundary ~12:4x–13:0xZ today → frozen reads; endpoint
 ~08-08 → #19 box obligations → K smoke ladder → attachment steer
 window.
-
-*Updated 2026-08-07 08:51–09:2xZ (real `date -u`) — work session
-(bounded): **PAPERS SECTION LANDED, batch 1 (owner steering 08:42Z,
-high priority)** — new blog section + index/tracker + 8 pages
-covering 16 papers; deep re-reads surfaced two corrections our skim
-notes had missed.*
-
-**Status** (babysit 08:56Z + 09:04Z, both green, exit 0):
-- box molmo2 AR 40k — 13880/40k, loss 3.3361, 2.164 s/step, vram
-  67.07 ≤ 71, probe **NEW LOW 6.9783@13500** (gate margin 5.11);
-  ~15.7 h to endpoint ~08-08.
-- local draws10_t1 — 18752/25800, window 40.0 f/min, cumulative
-  33.1 f/min → **~13.0 h total, INSIDE the 24 GPU-h gate**, ~3.6 h
-  remaining; boundary ~12:4x–13:0xZ → frozen reads.
-
-**Steering**: none new (`read` clean at boot 08:51Z and at both
-babysit checkpoints; this session executes the 08:42Z Papers-section
-steering).
-
-**Done**: **Papers section batch 1 LANDED** (`44eb032`) —
-[`papers/`](papers/index.md) mdbook section; index doubles as the
-retroactive backlog tracker (16 of ~38 papers covered, remaining
-grouped by theme). Eight pages, each contribution / experiments /
-what-transfers / which-arm-it-fed, written for a reader with less
-context: [π0.5 + KI](papers/pi05-knowledge-insulation.md),
-[LabVLA](papers/labvla.md), [Q-VGM](papers/qvgm.md), the
-[7-paper test-time-selection cluster](papers/test-time-selection.md),
-[SnapFlow](papers/snapflow.md) (incl. our own replication),
-[the seam debate: AEGIS + Wall-OSS-0.5](papers/seam-debate.md),
-[encoder-grafting](papers/encoder-grafting.md),
-[Hi-VLA + CAC-VLA](papers/hierarchy-subgoals.md). Re-reads at
-full-text depth caught real corrections, banked as ideas.md hooks:
-**Wall-OSS-0.5's seam ablation has stop-grad WORST** (co-train
-57.0% > flow-only 36.6% > stop-grad 31.9%, from-scratch regime —
-context for #4's decision branches, not an indictment of
-KI-in-posttraining); **the frozen-VLA probe's 26.7→44.3 selector
-result is simulator-rollout-assisted**, not probe-only (#19);
-Q-VGM's 79.0→92.5 is arXiv v2 of a major rewrite; LabVLA runs NO
-recipe ablations (adoption evidence, as banked) and uses α=10.
-check.py 437 passed.
-
-**Next** (`queue_cli.py next`): papers-section-retroactive
-continues (~22 papers; next batch most load-bearing first: one-step
-menu, DVAC/GoldenTicket/EnergyPolicy, state-shortcut set); then #19
-dT-table read script + endpoint-runbook git-audit; draws10_t1
-boundary ~12:4x–13:0xZ today → frozen reads; endpoint ~08-08 → #19
-box obligations → K smoke ladder → attachment steer window.
 
 ## Utilization footer
 
