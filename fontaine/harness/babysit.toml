@@ -46,3 +46,31 @@ anchors = [
 [[run.gates]]
 kind = "gpu_hours_max"
 value = 24.0                        # pre-reg gate; breach reopens the q4-fallback question
+
+# PREPARED — molmo2 endpoint draws arm (#19). Uncomment + fill
+# started_utc when eval_box_molmo2_endpoint_draws10_t1.sh launches
+# (prune molmo2_ar40k at the same time — the train run is over).
+# Progress counts are the RANK-0 SHARD (~total/4, "scored N/M frames
+# (rank 0 shard)"); the fallback relaunch logs to the stateprobe_q4
+# stem — repoint `log` if the cost gate fired.
+#
+# [[run]]
+# name = "molmo2_draws10_t1"
+# kind = "progress-log"
+# host = "192.222.55.210"
+# pgrep = "draws10_t1"
+# pgrep_min = 4                     # torchrun + 4 rank workers match
+# gpu_indices = [0, 1, 2, 3]
+# gpu_mem_min_mib = 8000
+# log = "/home/ubuntu/logs/eval__fontaine_molmo2_ar_40k_ddp4__step_040000__panel_k4l2_draws10_t1.log"
+# progress_re = "scored [0-9]+/[0-9]+ frames"
+# started_utc = "FILL-AT-LAUNCH"
+# gpu_hours_per_wall_hour = 4.0     # 4-GPU sharded torchrun
+# boundary = "shard counts (~6450/rank full panel, ~1075 q4); launcher's rate gate decides q4 fallback inside the first ~30 min"
+# anchors = [
+#     "frozen reads at completion: molmo2 delta_AR (draws10 - greedy) paired on its own greedy npz; fairness vs -1.258; family vs 5.365",
+#     "greedy arm comes from the chained endpoint eval (panel_curated_v0_k4l2 stems); launcher re-runs it only if missing",
+# ]
+# [[run.gates]]
+# kind = "gpu_hours_max"
+# value = 24.0                      # same pre-reg gate as the AR-100k arm
