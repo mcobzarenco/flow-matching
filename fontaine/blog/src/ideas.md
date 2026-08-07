@@ -32,14 +32,27 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   wins OOD retention; our rung sits in the adaptation regime; recipe
   prior = full-FT vision at low LR, never LoRA-on-SigLIP);
   vision-unfreeze pre-reg
-  [DRAFT posted](posts/2026-08-07-prereg-molmo2-vision-unfreeze.md)
-  (10k screen vs baseline@10k, `--backbone-vision-lr 2e-6`, memory
-  ladder; execution blocked on finalization amendment + owner go,
-  window post-attach-screen).
+  [DRAFT](posts/2026-08-07-prereg-molmo2-vision-unfreeze.md) now at
+  the owner-agreed amendment-3 design (warm-start two-arm vu5k:
+  frozen-continue vs thawed-continue from the 40k endpoint, 5k
+  steps, 0.3× LR reheat, vision LR 6e-6 tied to text; superseded
+  10k-from-scratch form recorded in its §8); finalization PREP
+  landed 08-07 (`485194b`: byte-audit clean, both arm launchers +
+  prepared babysit entries) — execution is launch-only after the
+  150-step memory smoke + amendment post + owner go, window
+  post-attach-screen.
 - **`aux-subgoals` [#6 Aux attribution](ideas/06-aux-attribution.md)** —
   `confirmed` (aux HELPS actions, +0.462 cost when off), and its
   rung-(a) self-subgoal probe is pre-registered, waiting on the next
-  quiet local-GPU window.
+  quiet local-GPU window. New 2026-08-07 (radar, both papers
+  announced same day —
+  [subgoal-sourcing page](papers/subgoal-sourcing-post-training.md)):
+  two fresh directional priors before the read — HiRoC's
+  subgoal-source cold start (Δ_self ≤ Δ_oracle expected; its
+  alignment-SFT is a new named escalation) and VLA-Talker's
+  inject-vs-supervise 15.9-pt gap (predicts the narrated arm is
+  safe; tension with our aux-on result recorded + resolved on the
+  page).
 - **`noise-draws` [#1 Noise-draw ensembling](ideas/01-noise-draw-ensembling.md)** —
   flow mean-of-10 banked (5.365, beats the AR anchor on both
   columns); fairness + energy-score reads in; batched draws merged

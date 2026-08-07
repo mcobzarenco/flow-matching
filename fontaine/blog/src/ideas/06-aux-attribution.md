@@ -116,3 +116,28 @@ numbers and both finalization amendments.
   no-subgoal variants fail", and subgoal images reportedly speed
   training by making action prediction near-inverse-dynamics. Our
   text-slot probe is the cheap first rung of exactly this ladder.
+- **Lit slice 2026-08-07 ~20:0xZ — two same-day releases (both
+  announced Fri 08-07, read hours old; page:
+  [subgoal-sourcing](../papers/subgoal-sourcing-post-training.md))
+  land two fresh directional priors on rung (a) BEFORE its read
+  (no design change; the pre-reg is frozen):** (i) HiRoC
+  (2608.05999) shows subgoal-source misalignment is a
+  cold-start-scale effect — an executor trained to condition on
+  task instructions collapses on planner-generated subgoals until a
+  dedicated SFT alignment stage retrains it on (obs, subgoal,
+  chunk) triples; RL does not recover it. Prior for the probe:
+  Δ_self ≤ Δ_oracle; and if the probe lands "oracle helps, self
+  doesn't," HiRoC's alignment-SFT joins CAC-VLA's gate on the
+  named-escalation list (cheaper: an SFT recipe, no new
+  architecture). No oracle-vs-planner ablation in the paper — our
+  Δ_oracle/Δ_self split measures the decomposition they skipped.
+  (ii) VLA-Talker (2608.05738) at matched evidence: generate+
+  supervise text 81.5 / inject+supervise 89.7 / inject+action-only
+  97.4 on LIBERO — supervised language regeneration of available
+  evidence costs 15.9 pts + 4.6× latency. TENSION with our aux-on
+  +0.462 result, resolved (our synthesis, flagged as such): harm
+  mechanism = token imbalance + copy-work; our aux fields are
+  sparse predictions of latent task structure, not verbose copies —
+  "supervise sparse structure prediction, never verbose evidence
+  regeneration." Their result also predicts the narrated arm
+  (injected, never supervised) is safe-to-helpful.

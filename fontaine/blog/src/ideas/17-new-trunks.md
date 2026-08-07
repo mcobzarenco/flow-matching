@@ -41,6 +41,21 @@ toward the exploration budget.
   excluded). DRAFT status: execution blocked on finalization
   amendment (launcher byte-audit + memory smoke + endpoint probe
   quote) + owner go, window post-attach-screen (~08-09+).
+- **Amendments 2+3 (owner exchange 18:3x–18:51Z 2026-08-07, "Ok,
+  agreed") + finalization PREP landed same day (`485194b`)**: 5k
+  steps/arm (was 3k), gate 32 GPU-h; LRs = 0.3× reheat of the 40k
+  peaks (decoder 3e-5 / text 6e-6, fresh 5k cosine to the 10%
+  floors — pure tail LRs were judged a null-bias on exactly the
+  co-adaptation axis), warmup 200→500, **vision LR 6e-6 tied to the
+  text group** (was 2e-6). Prep item executed 19:4xZ: amendment-3
+  flag set byte-audited clean against `bijou.train` at HEAD, both
+  arm launchers landed
+  (`launch_box_fontaine_molmo2_vu5k_{frozen,thawed}_ddp4.sh` —
+  arm-vs-arm diff is exactly the one flag; thawed refuses without
+  the frozen endpoint AND the `vu5k_mem_ready` smoke record) +
+  prepared babysit entries. Remaining before launch: 150-step
+  thawed memory smoke from the endpoint checkpoint, endpoint-probe
+  quote, amendment POST, owner go.
 - **OWNER PICK (2026-08-05 21:57Z): E4B screen confirmed as the next
   pre-reg** — AR-100k on the freed 4×H100, **matched parameters with
   the E2B AR-100k run** (verified from the recipe: `--batch-size 12`

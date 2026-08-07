@@ -39,6 +39,7 @@ same session it is banked.
 | [Decode-time stochasticity](decode-temperature.md) | 2605.22493, 2605.29766, 2603.20538, 2605.30660, 2508.20072 | #19 — the dT read's directional prior; 2nd strike on cheap probe selectors; q-token theory anchor |
 | [Offline validation: does the panel predict the robot?](offline-validation.md) | 2606.29898, 2605.00066, 2405.05941, 2503.24278, 2602.12691 | #16 — raw-MSE proxy measured at ρ −0.61 (sign flips exist); critical-frame re-pooling rung banked; MMRV for future proxy audits |
 | [LAFM: learned prior libraries](latent-action-priors.md) | 2606.23420 | #1 — the rung above the ticket screen on the noise-structure ladder; R4's task-locality read reinterpreted; DSRL named as the next read if stage 1 CONFIRMs |
+| [Where should the words come from? HiRoC + VLA-Talker](subgoal-sourcing-post-training.md) | 2608.05999, 2608.05738 | #6 — two fresh directional priors for tonight's self-subgoal probe (cold-start misalignment; injected-vs-supervised language); #16 evidence-injection few-shot hook |
 
 ## Retroactive backlog
 
