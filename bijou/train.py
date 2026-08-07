@@ -55,7 +55,7 @@ import random
 import shutil
 import sys
 import time
-from collections.abc import Iterable, Iterator, Sequence
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from contextlib import nullcontext
 from dataclasses import dataclass
 from pathlib import Path
@@ -72,6 +72,11 @@ from torch.distributed.optim import ZeroRedundancyOptimizer
 import wandb
 
 from .annotations import ConditionField
+from .async_save import (
+    AsyncCheckpointSaver,
+    capture_optimizer_state,
+    copy_to_cpu,
+)
 from .aux_text import (
     AUX_TEMPLATE_VERSION,
     SUFFIX_FORMAT,
@@ -287,6 +292,16 @@ class TrainArgs:
     eval_seed: int
     wandb_project: str | None
     wandb_run_name: str | None
+    # Opt out of async checkpoint saves (--sync-save): block stepping for
+    # the full serialize+write — and under --zero1 for the rank-by-rank
+    # consolidate broadcast (~15.5 min/save measured on the molmo2 AR
+    # 4xDDP run, ~14% of wall time). The default captures a device->CPU
+    # snapshot at the boundary (seconds) and gathers/merges/writes on a
+    # background thread over a dedicated gloo group; the written bytes
+    # are oracle-pinned identical (tests/test_async_save.py). Defaulted
+    # (unlike every field above) so checkpoints predating the flag
+    # replay their train_args cleanly.
+    sync_save: bool = False
 
     @property
     def backbone_trained(self) -> bool:
@@ -1226,6 +1241,104 @@ def link_or_copy(source: Path, destination: Path) -> None:
         shutil.copyfile(source, destination)
 
 
+@dataclass(frozen=True, slots=True)
+class CheckpointTensors:
+    """The model-side CPU snapshot of one checkpoint — everything the
+    writer needs that came off the device. Captured on the main thread at
+    the save boundary (the copies are the boundary's values); consumed by
+    ``write_checkpoint`` on either the main thread (sync path) or the
+    async saver's background thread."""
+
+    expert: dict[str, Tensor]
+    prompt: dict[str, Tensor]
+    joint_ce: dict[str, Tensor] | None
+    # Trained backbones: the bf16 snapshot dict. Inherited-frozen ones:
+    # the source file to link/copy instead (see save_checkpoint's
+    # invariant note).
+    backbone: dict[str, Tensor] | None
+    backbone_source: Path | None
+
+
+def capture_checkpoint_tensors(
+    model: BijouModel,
+    *,
+    args: TrainArgs,
+    adapted_backbone_source: Path | None,
+) -> CheckpointTensors:
+    """Device->CPU copies of every tensor the checkpoint serializes.
+    ``copy=True`` even for CPU runs: the snapshot must not alias live
+    parameters the next optimizer step mutates."""
+
+    def snapshot(module: torch.nn.Module) -> dict[str, Tensor]:
+        return {
+            name: tensor.detach().to("cpu", copy=True).contiguous()
+            for name, tensor in module.state_dict().items()
+        }
+
+    return CheckpointTensors(
+        expert=snapshot(model.decoder),
+        prompt=snapshot(model.encoder),
+        joint_ce=snapshot(model.joint_ce) if model.joint_ce is not None else None,
+        # backbone_snapshot already lands host-side (the device-side cast
+        # would transiently cost ~4.3 GB VRAM — see its docstring).
+        backbone=backbone_snapshot(model) if args.backbone_trained else None,
+        backbone_source=(
+            adapted_backbone_source if not args.backbone_trained else None
+        ),
+    )
+
+
+def write_checkpoint(
+    checkpoint_dir: Path,
+    *,
+    tensors: CheckpointTensors,
+    metadata_json: str,
+    train_state_payload: dict[str, Any],
+) -> Path:
+    """Serialize one checkpoint ATOMICALLY: everything lands in a
+    sibling ``.tmp`` directory first and a single ``os.rename`` publishes
+    it — a crash mid-write leaves every earlier checkpoint intact and no
+    half-written ``step_*`` directory a resume/eval could mistake for a
+    real one (the ``.tmp`` debris is evidence, clobbered by the next
+    attempt). Pure CPU+disk — safe on the async saver's background
+    thread."""
+    staging_dir = checkpoint_dir.with_name(checkpoint_dir.name + ".tmp")
+    if staging_dir.exists():
+        shutil.rmtree(staging_dir)
+    staging_dir.mkdir(parents=True)
+    save_file(tensors.expert, str(staging_dir / "expert.safetensors"))
+    # Prompt-side parameters (state_proj) — always present at prompt
+    # format 3.
+    save_file(tensors.prompt, str(staging_dir / "prompt.safetensors"))
+    if tensors.joint_ce is not None:
+        # The K arm's CE rider (its continued FAST tables) — the
+        # trunk-drift read's AR view loads from here.
+        save_file(tensors.joint_ce, str(staging_dir / "joint_ce.safetensors"))
+    if tensors.backbone is not None:
+        # Adapted backbones ride along; from_checkpoint/--init-from detect the
+        # file by presence. Frozen-pristine runs write exactly the
+        # historical layout.
+        save_file(tensors.backbone, str(staging_dir / "backbone.safetensors"))
+    elif tensors.backbone_source is not None:
+        link_or_copy(
+            tensors.backbone_source,
+            staging_dir / "backbone.safetensors",
+        )
+    # Adam moments etc. (~2x expert params); --init-from ignores this
+    # file. NB --resume is a lossless continuation only in the
+    # frozen-backbone regime: a live backbone's fp32 masters round-trip
+    # through the bf16 snapshot above, discarding sub-bf16-resolution
+    # updates at every resume boundary (loud warning at resume load).
+    torch.save(train_state_payload, staging_dir / "optimizer.pt")
+    (staging_dir / "bijou_config.json").write_text(metadata_json)
+    if checkpoint_dir.exists():
+        # Re-saving the same step (same-boundary resume): replace the old
+        # directory wholesale rather than overwriting into it.
+        shutil.rmtree(checkpoint_dir)
+    staging_dir.rename(checkpoint_dir)
+    return checkpoint_dir
+
+
 def save_checkpoint(
     model: BijouModel,
     *,
@@ -1237,7 +1350,9 @@ def save_checkpoint(
     step: int,
     adapted_backbone_source: Path | None,
 ) -> Path:
-    """Write one self-contained checkpoint directory.
+    """Write one self-contained checkpoint directory (the synchronous
+    entry: capture + write inline; the async path drives the same capture
+    and writer from bijou.async_save).
 
     Invariant: ``backbone.safetensors`` is present iff the model's backbone
     differs from pristine ``HF(args.backbone)`` — either because this run
@@ -1248,43 +1363,39 @@ def save_checkpoint(
     re-serialized). Conditioning only on ``args.backbone_trained`` paired a
     decoder fine-tuned against adapted features with the pristine backbone on
     load — silently (found 2026-07-31, ft-rig arm F)."""
-    checkpoint_dir = args.save_dir / f"step_{step:06d}"
-    checkpoint_dir.mkdir(parents=True, exist_ok=True)
-    save_file(model.decoder.state_dict(), str(checkpoint_dir / "expert.safetensors"))
-    # Prompt-side parameters (state_proj) — always present at prompt
-    # format 3.
-    save_file(model.encoder.state_dict(), str(checkpoint_dir / "prompt.safetensors"))
-    if model.joint_ce is not None:
-        # The K arm's CE rider (its continued FAST tables) — the
-        # trunk-drift read's AR view loads from here.
-        save_file(
-            model.joint_ce.state_dict(),
-            str(checkpoint_dir / "joint_ce.safetensors"),
-        )
-    if args.backbone_trained:
-        # Adapted backbones ride along; from_checkpoint/--init-from detect the
-        # file by presence. Frozen-pristine runs write exactly the
-        # historical layout.
-        save_file(
-            backbone_snapshot(model),
-            str(checkpoint_dir / "backbone.safetensors"),
-        )
-    elif adapted_backbone_source is not None:
-        link_or_copy(
-            adapted_backbone_source,
-            checkpoint_dir / "backbone.safetensors",
-        )
-    # Adam moments etc. (~2x expert params); --init-from ignores this
-    # file. NB --resume is a lossless continuation only in the
-    # frozen-backbone regime: a live backbone's fp32 masters round-trip
-    # through the bf16 snapshot above, discarding sub-bf16-resolution
-    # updates at every resume boundary (loud warning at resume load).
     train_state = TrainState(
         optimizer=optimizer.state_dict(),
         scheduler=scheduler.state_dict(),
         step=step,
     )
-    torch.save(train_state.to_payload(), checkpoint_dir / "optimizer.pt")
+    return write_checkpoint(
+        args.save_dir / f"step_{step:06d}",
+        tensors=capture_checkpoint_tensors(
+            model,
+            args=args,
+            adapted_backbone_source=adapted_backbone_source,
+        ),
+        metadata_json=build_checkpoint_metadata(
+            model,
+            args=args,
+            normalizers=normalizers,
+            per_dataset_stats=per_dataset_stats,
+            step=step,
+        ),
+        train_state_payload=train_state.to_payload(),
+    )
+
+
+def build_checkpoint_metadata(
+    model: BijouModel,
+    *,
+    args: TrainArgs,
+    normalizers: Normalizers,
+    per_dataset_stats: dict[str, DatasetStats],
+    step: int,
+) -> str:
+    """The ``bijou_config.json`` text. Cheap and pure — runs at capture
+    time so the async writer holds no model references."""
     encoder = model.encoder
     prompt_config: GemmaPromptConfig | Molmo2PromptConfig
     if isinstance(encoder, GemmaEncoder):
@@ -1345,10 +1456,7 @@ def save_checkpoint(
         },
         step=step,
     )
-    (checkpoint_dir / "bijou_config.json").write_text(
-        json.dumps(metadata.to_json_dict(), indent=2, default=str),
-    )
-    return checkpoint_dir
+    return json.dumps(metadata.to_json_dict(), indent=2, default=str)
 
 
 def ensure_matching_decoder_config(
@@ -1922,6 +2030,16 @@ def parse_args() -> TrainArgs:
         "Requires torchrun with world size > 1",
     )
     parser.add_argument(
+        "--sync-save",
+        action="store_true",
+        help="write checkpoints synchronously (legacy path): stepping "
+        "blocks for the full serialize+write, and under --zero1 for the "
+        "rank-by-rank consolidate broadcast first. Default is async — "
+        "device->CPU snapshot at the boundary (seconds), then "
+        "gather+merge+write on a background thread over a dedicated "
+        "gloo group; written bytes identical (tests/test_async_save.py)",
+    )
+    parser.add_argument(
         "--chunk-grad-allreduce",
         action="store_true",
         help="with --backward-chunks > 1 under torchrun, train WITHOUT "
@@ -2392,6 +2510,7 @@ def parse_args() -> TrainArgs:
         bucket_by_length=raw.bucket_by_length,
         backward_chunks=raw.backward_chunks,
         zero1=raw.zero1,
+        sync_save=raw.sync_save,
         chunk_grad_allreduce=raw.chunk_grad_allreduce,
         activation_checkpointing=raw.activation_checkpointing,
         steps=raw.steps,
@@ -3331,6 +3450,24 @@ def main() -> int:
         lambda step: lr_lambda(step, args, resume_step),
     )
 
+    async_saver: AsyncCheckpointSaver | None = None
+    if not args.sync_save:
+        # The background shard gather must never share the training NCCL
+        # communicator (concurrent collectives on one comm are undefined)
+        # or touch the GPU — a dedicated CPU (gloo) group carries it.
+        # new_group is itself collective: every rank calls it here.
+        save_group = (
+            torch.distributed.new_group(backend="gloo")
+            if distributed and args.zero1
+            else None
+        )
+        async_saver = AsyncCheckpointSaver(
+            group=save_group,
+            is_main=is_main,
+            world_size=world_size,
+            zero1=args.zero1,
+        )
+
     start_step = 0
     adapted_backbone_source: Path | None = None
     checkpoint_to_load = args.init_from or args.resume
@@ -3919,27 +4056,104 @@ def main() -> int:
                         wandb_run.log(probe_metrics, step=step)
 
             save_boundary = step % args.save_every == 0 or step == args.steps
-            if save_boundary and args.zero1:
-                # Collective — every rank streams its optimizer shard to
-                # rank 0 BEFORE the is_main-gated save below reads
-                # state_dict() (which raises unconsolidated). Transient:
-                # one remote shard on-device at a time.
-                assert isinstance(optimizer, ZeroRedundancyOptimizer)
-                optimizer.consolidate_state_dict(to=0)
-            if save_boundary and is_main:
-                path = save_checkpoint(
-                    model,
-                    args=args,
-                    normalizers=normalizers,
-                    per_dataset_stats=per_dataset_stats,
-                    optimizer=optimizer,
-                    scheduler=scheduler,
-                    step=step,
-                    adapted_backbone_source=adapted_backbone_source,
-                )
-                print(f"saved {path}", flush=True)
+            if save_boundary and async_saver is not None:
+                # Async save: main-thread device->CPU capture (seconds),
+                # then gather+merge+write in the background while
+                # stepping resumes. Under zero1 every rank participates
+                # (the shard gather is collective on the side gloo
+                # group); otherwise only rank 0 has anything to do.
+                # submit() first joins the previous save — a boundary
+                # can never overtake the write before it.
+                if args.zero1 or is_main:
+                    capture_start = time.monotonic()
+                    optimizer_capture = capture_optimizer_state(
+                        optimizer,
+                        zero1=args.zero1,
+                        is_main=is_main,
+                    )
+                    write: Callable[[dict[str, Any]], Path] | None = None
+                    if is_main:
+                        checkpoint_dir = args.save_dir / f"step_{step:06d}"
+                        tensors = capture_checkpoint_tensors(
+                            model,
+                            args=args,
+                            adapted_backbone_source=adapted_backbone_source,
+                        )
+                        metadata_json = build_checkpoint_metadata(
+                            model,
+                            args=args,
+                            normalizers=normalizers,
+                            per_dataset_stats=per_dataset_stats,
+                            step=step,
+                        )
+                        # Captured now (copy_to_cpu doubles as a deep
+                        # copy): a later scheduler.step() must not leak
+                        # the next lr into this boundary's file.
+                        scheduler_state = copy_to_cpu(scheduler.state_dict())
+
+                        def write_async(
+                            optimizer_state: dict[str, Any],
+                            *,
+                            _dir: Path = checkpoint_dir,
+                            _tensors: CheckpointTensors = tensors,
+                            _metadata: str = metadata_json,
+                            _scheduler: dict[str, Any] = scheduler_state,
+                            _step: int = step,
+                            _started: float = capture_start,
+                        ) -> Path:
+                            path = write_checkpoint(
+                                _dir,
+                                tensors=_tensors,
+                                metadata_json=_metadata,
+                                train_state_payload=TrainState(
+                                    optimizer=optimizer_state,
+                                    scheduler=_scheduler,
+                                    step=_step,
+                                ).to_payload(),
+                            )
+                            print(
+                                f"saved {path} (async, "
+                                f"{time.monotonic() - _started:.1f}s "
+                                "behind the boundary)",
+                                flush=True,
+                            )
+                            return path
+
+                        write = write_async
+                        print(
+                            f"checkpoint step {step}: captured in "
+                            f"{time.monotonic() - capture_start:.1f}s; "
+                            "gather+write continue in background",
+                            flush=True,
+                        )
+                    async_saver.submit(capture=optimizer_capture, write=write)
+            elif save_boundary:
+                if args.zero1:
+                    # Collective — every rank streams its optimizer shard
+                    # to rank 0 BEFORE the is_main-gated save below reads
+                    # state_dict() (which raises unconsolidated).
+                    # Transient: one remote shard on-device at a time.
+                    assert isinstance(optimizer, ZeroRedundancyOptimizer)
+                    optimizer.consolidate_state_dict(to=0)
+                if is_main:
+                    path = save_checkpoint(
+                        model,
+                        args=args,
+                        normalizers=normalizers,
+                        per_dataset_stats=per_dataset_stats,
+                        optimizer=optimizer,
+                        scheduler=scheduler,
+                        step=step,
+                        adapted_backbone_source=adapted_backbone_source,
+                    )
+                    print(f"saved {path}", flush=True)
         epoch += 1
 
+    if async_saver is not None:
+        # The final boundary's write must land before the process (and
+        # under DDP the group) goes away — anything chained on this run
+        # reads the endpoint checkpoint the moment train exits.
+        async_saver.join()
     if log_file is not None:
         log_file.close()
     if wandb_run is not None:
