@@ -1,10 +1,10 @@
 {
- "updated_utc": "2026-08-07T07:55:00+00:00",
+ "updated_utc": "2026-08-07T08:03:15+00:00",
  "depth_reason": null,
  "items": [
   {
    "id": "molmo2_ar40k",
-   "title": "Molmo2 AR 40k trunk run (box, 4xDDP) \u2014 K1 GATE CROSSED GREEN 08-07 06:0xZ: probe 7.1652@10000 vs bar 12.0944 (margin 4.93, new low); run continues to 40k endpoint",
+   "title": "Molmo2 AR 40k trunk run (box, 4xDDP) — K1 GATE CROSSED GREEN 08-07 06:0xZ: probe 7.1652@10000 vs bar 12.0944 (margin 4.93, new low); run continues to 40k endpoint",
    "class": "gpu-box",
    "status": "live",
    "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-molmo2-ar-40k.md",
@@ -22,7 +22,7 @@
   },
   {
    "id": "draws10-frozen-reads",
-   "title": "draws10_t1 frozen reads (delta_AR vs 5.8026, fairness vs -1.258, family vs 5.365) + T-sensitivity rung after \u2014 READ SCRIPT LANDED 2026-08-07 ~07:5xZ (draws10_t1_results.py, one command, oracle-gated; defaults = the local launcher's exact stems)",
+   "title": "draws10_t1 frozen reads (delta_AR vs 5.8026, fairness vs -1.258, family vs 5.365) + T-sensitivity rung after — READ SCRIPT LANDED 2026-08-07 ~07:5xZ (draws10_t1_results.py, one command, oracle-gated; defaults = the local launcher's exact stems)",
    "class": "gpu-local",
    "status": "blocked",
    "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-ar-sampled-draws.md",
@@ -40,7 +40,7 @@
   },
   {
    "id": "idea19-molmo2-draws-arm",
-   "title": "#19 molmo2 sampled-draws arm execution at the 40k endpoint (pre-reg'd in ar-sampled-draws post: greedy + _draws10_t1 same stems, same cost gate w/ q4 fallback) \u2014 instrument landed 78c9f56 (08-06), molmo2 trunk-specific oracles landed 08-07 ~04:3xZ (tests/test_molmo2_ar_sampling.py: T\u21920 greedy recovery, snapshot/restore prefill-sharing over Molmo2KVCache, append-only contract, ar_predict_sampled dispatch); the stale 'instrument + pre-reg draft' framing closed \u2014 both existed since 08-06; endpoint launcher + mechanized cost gate landed 6c3cc3b (one command: eval_box_molmo2_endpoint_draws10_t1.sh, greedy-if-missing + draws10_t1 + q4 fallback, babysit entry prepared)",
+   "title": "#19 molmo2 sampled-draws arm execution at the 40k endpoint (pre-reg'd in ar-sampled-draws post: greedy + _draws10_t1 same stems, same cost gate w/ q4 fallback) — instrument landed 78c9f56 (08-06), molmo2 trunk-specific oracles landed 08-07 ~04:3xZ (tests/test_molmo2_ar_sampling.py: T→0 greedy recovery, snapshot/restore prefill-sharing over Molmo2KVCache, append-only contract, ar_predict_sampled dispatch); the stale 'instrument + pre-reg draft' framing closed — both existed since 08-06; endpoint launcher + mechanized cost gate landed 6c3cc3b (one command: eval_box_molmo2_endpoint_draws10_t1.sh, greedy-if-missing + draws10_t1 + q4 fallback, babysit entry prepared) ; selection-ceiling read script LANDED 08-07 ~08:1xZ (selection_ceiling_results.py, one command over this arm's _draws.npz dump)",
    "class": "gpu-box",
    "status": "blocked",
    "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-ar-sampled-draws.md",
@@ -49,7 +49,7 @@
   },
   {
    "id": "idea4-attach-screen-execution",
-   "title": "#4 attachment seam screen execution (box, 4xDDP, sequential F then K): F frozen-trunk vs K KI-joint (phase-1 CE verbatim + stop-grad seam, alpha=1) at matched 10k steps / eff-48 from the 40k endpoint; residual surface constant; gates vram<=71, K1-style probe kill (phase-1 curve + 3.0 at >=5k; bars 12.6394@5000, 11.6356@7500 in babysit.toml prepared entries), 70 GPU-h ceiling w/ matched 5k downshift; frozen reads Delta_seam paired CI + K trunk-drift band 0.3 (READ SCRIPT LANDED 08-07 ~07:2xZ: attach_seam_results.py, one command, oracle-gated all branches) \u2014 INSTRUMENT LANDED 08-07 ~06:0xZ; LAUNCH PREP LANDED 08-07 ~06:1xZ (launch_box_fontaine_molmo2_attach_{F,K}_10k_ddp4.sh: mechanized attach_rate_gate.py 70 GPU-h gate + 5k-downshift marker both launchers honor, sha256-pinned plans, chained panel_v2 evals; K chains materialize_joint_ar_view.py + greedy k4l2 drift panel; K_MEM_READY guard refuses blind K launch; 10 new oracles, check.py 433)",
+   "title": "#4 attachment seam screen execution (box, 4xDDP, sequential F then K): F frozen-trunk vs K KI-joint (phase-1 CE verbatim + stop-grad seam, alpha=1) at matched 10k steps / eff-48 from the 40k endpoint; residual surface constant; gates vram<=71, K1-style probe kill (phase-1 curve + 3.0 at >=5k; bars 12.6394@5000, 11.6356@7500 in babysit.toml prepared entries), 70 GPU-h ceiling w/ matched 5k downshift; frozen reads Delta_seam paired CI + K trunk-drift band 0.3 (READ SCRIPT LANDED 08-07 ~07:2xZ: attach_seam_results.py, one command, oracle-gated all branches) — INSTRUMENT LANDED 08-07 ~06:0xZ; LAUNCH PREP LANDED 08-07 ~06:1xZ (launch_box_fontaine_molmo2_attach_{F,K}_10k_ddp4.sh: mechanized attach_rate_gate.py 70 GPU-h gate + 5k-downshift marker both launchers honor, sha256-pinned plans, chained panel_v2 evals; K chains materialize_joint_ar_view.py + greedy k4l2 drift panel; K_MEM_READY guard refuses blind K launch; 10 new oracles, check.py 433)",
    "class": "gpu-box",
    "status": "blocked",
    "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-molmo2-attach-screen.md",
@@ -58,16 +58,16 @@
   },
   {
    "id": "idea4-attach-k-smoke-ladder",
-   "title": "#4 K-arm smoke memory ladder script \u2014 SCRIPT LANDED 08-07 ~06:5xZ (smoke_attach_k_ddp4.sh: exact K recipe verbatim incl. --activation-checkpointing, 150 steps/rung w/ eval+save exercised, rungs B12c6->B8c4->B6c3 at pinned chunk-microbatch 2, pass = rc0 AND max vram_alloc_peak_gib <= 71.0 from the jsonl, nvidia-smi peak advisory; green writes fontaine/harness/state/k_mem_ready record + echoes the K_MEM_READY=1 BATCH/BACKWARD_CHUNKS launch line; sub-B12 green = MATCHED DOWNSHIFT both arms loudly echoed; all-red = no marker, owner steer). REMAINING: RUN the ladder on the box after it frees",
+   "title": "#4 K-arm smoke memory ladder script — SCRIPT LANDED 08-07 ~06:5xZ (smoke_attach_k_ddp4.sh: exact K recipe verbatim incl. --activation-checkpointing, 150 steps/rung w/ eval+save exercised, rungs B12c6->B8c4->B6c3 at pinned chunk-microbatch 2, pass = rc0 AND max vram_alloc_peak_gib <= 71.0 from the jsonl, nvidia-smi peak advisory; green writes fontaine/harness/state/k_mem_ready record + echoes the K_MEM_READY=1 BATCH/BACKWARD_CHUNKS launch line; sub-B12 green = MATCHED DOWNSHIFT both arms loudly echoed; all-red = no marker, owner steer). REMAINING: RUN the ladder on the box after it frees",
    "class": "gpu-box",
    "status": "blocked",
    "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-molmo2-attach-screen.md",
    "owner_hold": false,
-   "boundary": "opens at molmo2_ar40k endpoint (~2026-08-08), after the #19 draws-arm box obligations; needs the endpoint checkpoint (warm-start is part of the measured shape); GREEN required BEFORE EITHER arm launches \u2014 the ladder's batch verdict is matched (a sub-B12 green downshifts F too, so F must not start at B12 first)"
+   "boundary": "opens at molmo2_ar40k endpoint (~2026-08-08), after the #19 draws-arm box obligations; needs the endpoint checkpoint (warm-start is part of the measured shape); GREEN required BEFORE EITHER arm launches — the ladder's batch verdict is matched (a sub-B12 green downshifts F too, so F must not start at B12 first)"
   },
   {
    "id": "molmo2-stage2-attachment-decision",
-   "title": "Molmo2 stage-2 attachment decision at endpoint \u2014 now EXECUTABLE via the seam-screen pre-reg (2026-08-07-prereg-molmo2-attach-screen.md: frozen vs KI-joint is the first measurement; the depth-of-reads arm stays open for its own screen); owner steer window before the screen launches",
+   "title": "Molmo2 stage-2 attachment decision at endpoint — now EXECUTABLE via the seam-screen pre-reg (2026-08-07-prereg-molmo2-attach-screen.md: frozen vs KI-joint is the first measurement; the depth-of-reads arm stays open for its own screen); owner steer window before the screen launches",
    "class": "cpu",
    "status": "blocked",
    "prereg": null,
@@ -76,7 +76,7 @@
   },
   {
    "id": "box-home-sweep",
-   "title": "Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era mainline artifacts) \u2014 HELD: charter Loaned-compute READ-ONLY rule; needs explicit owner all-clear (asked in-channel 03:1xZ 08-07)",
+   "title": "Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era mainline artifacts) — HELD: charter Loaned-compute READ-ONLY rule; needs explicit owner all-clear (asked in-channel 03:1xZ 08-07)",
    "class": "cpu",
    "status": "blocked",
    "prereg": null,
@@ -85,7 +85,7 @@
   },
   {
    "id": "arm-a-img280",
-   "title": "arch-batch arm A img280 40k (box) \u2014 HELD: fresh owner go required before launch",
+   "title": "arch-batch arm A img280 40k (box) — HELD: fresh owner go required before launch",
    "class": "gpu-box",
    "status": "blocked",
    "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-arch-batch-1.md",
@@ -94,7 +94,7 @@
   },
   {
    "id": "draws10-t1-read-script",
-   "title": "draws10_t1 frozen-read script \u2014 SCRIPT LANDED 2026-08-07 ~07:5xZ (draws10_t1_results.py: reads 1-5 one command, oracle-gated all branches + 11 hard-abort guards; q4-fallback index join + molmo2-arm explicit paths supported)",
+   "title": "draws10_t1 frozen-read script — SCRIPT LANDED 2026-08-07 ~07:5xZ (draws10_t1_results.py: reads 1-5 one command, oracle-gated all branches + 11 hard-abort guards; q4-fallback index join + molmo2-arm explicit paths supported)",
    "class": "cpu",
    "status": "done",
    "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-ar-sampled-draws.md",
@@ -103,21 +103,30 @@
   },
   {
    "id": "idea19-selection-ceiling-read-script",
-   "title": "#19 selection-rung ceiling read script (CPU now, banked lit rung \u2014 NOT pre-registered, exploratory read only, any escalation needs its own pre-reg): oracle best-of-10 ceiling per-frame from the molmo2 endpoint draws --dump-draws npz (the retention fixed 08-07 ~06:1xZ) \u2014 bounds what ANY selector (MG-Select / VLA-ATTC / CoVer flavors) could buy before building one; AUDIT FIRST per standing rule: draws_fairness.py already computes best-of-N on flow probe npz \u2014 verify its npz/stems contract against the AR draws dump and extend only the delta; oracle-gate on synthetic per-draw fixtures (known best-draw pattern in/out) + degenerate draws=1 must reproduce the greedy number",
+   "title": "#19 selection-rung ceiling read script (CPU now, banked lit rung — NOT pre-registered, exploratory read only, any escalation needs its own pre-reg): oracle best-of-10 ceiling per-frame from the molmo2 endpoint draws --dump-draws npz (the retention fixed 08-07 ~06:1xZ) — bounds what ANY selector (MG-Select / VLA-ATTC / CoVer flavors) could buy before building one; AUDIT FIRST per standing rule: draws_fairness.py already computes best-of-N on flow probe npz — verify its npz/stems contract against the AR draws dump and extend only the delta; oracle-gate on synthetic per-draw fixtures (known best-draw pattern in/out) + degenerate draws=1 must reproduce the greedy number — LANDED 08-07 ~08:1xZ (selection_ceiling_results.py: exact order-statistic best-of-K ladder K=1..10 + greedy/ensemble headroom + first mirrors + selector diagnostics (argmin uniformity, dispersion-vs-gain quartiles); oracle PASS pre-data incl. brute-force subset enumeration, planted best-draw pattern, degenerate draws=1 -> 5.8026/2.1431 anchor, 5 abort guards; defaults = the endpoint launcher's exact stems)",
    "class": "cpu",
-   "status": "queued",
+   "status": "done",
    "prereg": null,
    "owner_hold": false,
    "boundary": "script is CPU work now; the read runs after the molmo2 endpoint draws arm lands its npz (~2026-08-08); AR-100k draws10_t1 retained only pooled predictions (accepted 08-07) so this read is molmo2-endpoint-first"
   },
   {
    "id": "idea19-t-sens-launcher-script",
-   "title": "#19 T-sensitivity rung launcher script (CPU now): the pre-registered RECORD-ONLY rung as one command \u2014 T in {0.5, 0.7, 1.3} at draws10 on the frozen q4 subset (plans/holdout_curated_v0_k4l2_stateprobe_q4.json, 4301 rows), local GPU, stateprobe_q4_draws10_tT stems, report-samples 0, GPU-free guard; runs ONLY if the primary draws10_t1 landed inside the 24 GPU-h gate (pre-reg cost clause, ~12 GPU-h worst case, 3 sequential rungs); quoted as a dT diagnostic, never a headline, never a license to re-pick T post hoc; reads re-pool through draws10_t1_results.py's q4 subset path",
+   "title": "#19 T-sensitivity rung launcher script (CPU now): the pre-registered RECORD-ONLY rung as one command — T in {0.5, 0.7, 1.3} at draws10 on the frozen q4 subset (plans/holdout_curated_v0_k4l2_stateprobe_q4.json, 4301 rows), local GPU, stateprobe_q4_draws10_tT stems, report-samples 0, GPU-free guard; runs ONLY if the primary draws10_t1 landed inside the 24 GPU-h gate (pre-reg cost clause, ~12 GPU-h worst case, 3 sequential rungs); quoted as a dT diagnostic, never a headline, never a license to re-pick T post hoc; reads re-pool through draws10_t1_results.py's q4 subset path",
    "class": "cpu",
    "status": "queued",
    "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-ar-sampled-draws.md",
    "owner_hold": false,
    "boundary": "script is CPU work now; execution opens after the draws10_t1 boundary (~13:0x-13:3xZ 2026-08-07) and ONLY if the primary landed inside its gate; needs a quiet local-GPU window"
+  },
+  {
+   "id": "idea19-endpoint-fairness-es-read",
+   "title": "#19 energy-score + fairness reads on the molmo2 endpoint draws dump (CPU script now, exploratory record-only — the pre-declared draws_fairness reads were registered for the FLOW probe; applying them to the AR endpoint dump is a diagnostic, not a registered claim): wire draws_fairness.py's read 1/2/4 machinery (mean-of-draws, best-of-N, energy score with the AR-as-degenerate-N=1 baseline) to the endpoint _draws.npz stems — the strictly-proper-scoring-rule comparison AR-vs-flow comes free from banked data; AUDIT FIRST: selection_ceiling_results.py already covers mean/best/dispersion — extend ONLY the energy-score delta + flow-side comparison; oracle: degenerate draws=1 -> interaction term exactly 0, ES == direct RMS-L2 (the draws_fairness --validate pattern on the AR-100k npz)",
+   "class": "cpu",
+   "status": "queued",
+   "prereg": null,
+   "owner_hold": false,
+   "boundary": "script is CPU work at any GPU-busy window; the read runs after the molmo2 endpoint draws arm lands its npz (~2026-08-08)"
   }
  ]
 }

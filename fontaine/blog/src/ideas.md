@@ -1455,6 +1455,27 @@ between these two priors on our own panel before any escalation.
   synthetic per-draw fixtures; exploratory read, NOT pre-registered
   — escalation to any actual selector needs its own pre-reg).
 
+- **Ceiling read script LANDED 2026-08-07 ~08:1xZ**
+  (`selection_ceiling_results.py`): the audit found
+  `draws_fairness.py`'s best-of-N is flow-probe-hardwired (panel
+  joins + flow anchors), so the delta is a standalone sibling — the
+  exact order-statistic best-of-K ladder for K = 1..10 (sorted
+  per-frame draw MAEs weighted C(N−i, K−1)/C(N, K); no Monte Carlo),
+  greedy/ensemble headroom with a paired CI on the oracle gain,
+  first_mae mirrors, and selector diagnostics (argmin-draw
+  uniformity, dispersion-conditioned gain quartiles — where a
+  selector would buy most). Oracle PASS pre-data: ladder ==
+  brute-force enumeration over all K-subsets; degenerate draws=1
+  reproduces the 5.8026/2.1431 anchor through the ceiling path;
+  planted best-draw pattern recovered exactly with magnitude checks;
+  5 abort guards (sample_draws mismatch, non-extending policy,
+  draws=1 real mode, misaligned index, pooled-npz mean drift).
+  Defaults = the endpoint launcher's exact `_draws.npz` stems; runs
+  the moment the ~08-08 dump lands. Follow-on queued
+  (`idea19-endpoint-fairness-es-read`): the energy-score delta —
+  the strictly-proper-scoring-rule AR-vs-flow comparison from the
+  same npz, record-only.
+
 ## 15. Literature-sourced arms — standing
 
 The arXiv radar (VLA/robot learning, flow matching, action
@@ -1510,3 +1531,26 @@ search first. Local canon: π0, π0.5, SmolVLA, FAST
   finetuning) — context for the K named-cost branch's repair space,
   recorded here only; AEGIS stays the single pre-registered
   escalation (frozen decision rule untouched).
+
+- **Lit slice 2026-08-07 ~08:2xZ (session slice, two banked):**
+  (a) **Look Before You Leap (arXiv:2607.03751)** — a FIFTH
+  selection-rung flavor for #19: MCTS explores a FROZEN VLA's output
+  distribution offline, then distills the search into a Q-value
+  action evaluator used at test time (trained-critic family beside
+  VLA-ATTC, but the critic's labels come from tree search over the
+  policy's own distribution, no human/reward labels). Same gate as
+  the other four: waits behind the best-of-10 ceiling number — the
+  script for that is now landed, so the flavor list has its
+  adjudicator ready at the ~08-08 endpoint dump. (b) **DVAC
+  (arXiv:2606.03847)** — training-free, orthogonal to selection:
+  variance of the clean-action estimate over the FINAL DENOISING
+  STEPS of a flow/diffusion policy decides when to replan (execute
+  the stable low-variance prefix, replan before high-variance
+  tails); π0.5-based flow policies, LIBERO 94.75→98.00 with 43%
+  fewer replans. Banked to #1 as the inference-time cousin of our
+  dispersion machinery — our panel is offline chunk-MAE (replan
+  timing is invisible to it), so this is a ROLLOUT-phase lever for
+  the rig/sim stage; note the ceiling read's dispersion-vs-gain
+  quartiles are exactly the offline precursor (if oracle gain
+  concentrates in high-dispersion frames, both selection and
+  DVAC-style commit-gating draw from the same signal).
