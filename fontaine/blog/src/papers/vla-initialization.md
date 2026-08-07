@@ -81,7 +81,20 @@ on Calvin — consistent with 2605.25802's non-additivity.
   freeze lands. The transferable content is diagnostic, not a
   verdict: **if F loses the screen, look at vision-limited frames
   first** — the published failure mode of frozen trunks is visual
-  acuity, not language.
+  acuity, not language. *Addendum (08-07 second read, the
+  golden-ticket session): the paper quantifies exactly this caveat
+  in a staged Qwen3VL-4B cell — unfreezing the encoder during VLM
+  pre-training on robot-adjacent data (real BridgeV2) and THEN
+  freezing it for VLA training recovers +18.1 points over the
+  never-adapted freeze, most of the unfreeze-both gap. Control-
+  relevant supervision into the encoder before the freeze is what
+  matters, not the freeze itself — which is our F arm's situation
+  by construction, and it sharpens the same prior for #17's vu5k
+  screen: phase-1's 40k embodiment steps already bought the encoder
+  adaptation VLM4VLA says frozen encoders miss, so the thawed arm's
+  marginal gain over frozen-continue is honestly uncertain — the
+  screen is paying for a real answer, not confirming a foregone
+  one.*
 - **The seam-debate map gains a parameter axis.** Word embeddings
   free to freeze, vision encoder expensive to freeze, LoRA-over-full
   for the rest: if the post-screen escalation ever needs a partial

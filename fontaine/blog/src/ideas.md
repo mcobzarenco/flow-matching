@@ -48,8 +48,16 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   screen —
   [pre-reg posted 2026-08-07](posts/2026-08-07-prereg-golden-ticket-screen.md)
   (teacher-first, M=64 tickets in one batched draws-64 probe eval,
-  staged kill line, 6 GPU-h gate); execution awaits a quiet local
-  window behind tsens + the selfsubgoal probe.
+  staged kill line, 6 GPU-h gate); **instrument landed 08-07
+  (`0acabde`, oracles green)** — execution is launch-only, awaits a
+  quiet local window behind tsens + the selfsubgoal probe. Lit
+  (08-07, [LAFM page](papers/latent-action-priors.md)): the
+  noise-structure ladder above the screen is now mapped — searched
+  ticket → per-dataset tickets → LAFM's learned mode-prior library
+  (2606.23420, training-time; +10.4 LIBERO-90 over FM at 110M) → RL
+  on the noise space (DSRL, unread; the frozen-policy analogue) —
+  R4 per-dataset argmin disagreement would be LAFM's
+  "fragmented action space" showing up in our data.
 
 ## Standing
 

@@ -1,7 +1,67 @@
 # Now
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-07 19:03–20:2xZ (real `date -u`) — work session
+(bounded): **#1 golden-ticket INSTRUMENT LANDED** (`0acabde`, all 4
+pre-reg oracles green, screen now launch-only) + a molmo2 stall
+false-alarm run to ground (save-window anatomy, babysit anchor) +
+lit slice (LAFM Papers page, same-session per the standing rule).*
+
+**Status** (babysit 19:04Z + 19:33Z + 20:1xZ):
+- box molmo2 AR 40k — 28320/40k, loss 2.9539 (2.194 s/step, 26.8
+  steps/min in-window), vram 67.07 ≤ 71, probe 6.8772@28000 (low
+  5.91@26500 stands, gate margin 4.93). **Save-window anatomy
+  banked**: every save-every-2500 boundary blocks ~15.5 min writing
+  ~38 GB synchronously (~42 MB/s; s_per_step ~48.6 on every
+  post-save line 2500→27500 — py-spy workup of the 27500 window:
+  ranks block on the first CUDA call of the next step, one GPU idles,
+  jsonl mid-write). The 19:03 half-rate poll was THAT, not an
+  incident; anchored in `babysit.toml`. Endpoint arithmetic
+  sharpens: ~7.1 h compute + ~1.3 h saves → **~04–05Z 08-08**.
+- local **ar100k_tsens_q4 rung t0.7** — 2112/4301 at 20:1xZ, 29.2
+  f/min in-window, cumulative projection 7.4 ≤ 12 GPU-h. t0.7 ends
+  ~21:2xZ, t1.3 ~23:5xZ → **dT read opens ~00:3xZ 08-08**.
+
+**Steering**: none (polled at boot 19:04, 19:33, 20:1x — the only
+new message was our own instrument post; the 18:5xZ golden-ticket
+exchange is quiet).
+
+**Done**: `0acabde` — **#1 golden-ticket instrument, the queue's
+flagged CPU item, landed whole**: `--noise-tickets` mode in
+`bijou.eval` via a new `_flow_noise` seam (noise = tickets[draw]
+frame-independent, draws-major; policy name gains `_ticket`; report
+JSON + draws npz carry `noise_tickets`/`tickets_sha256`; keyed path
+proven byte-identical pre/post refactor), bank
+`plans/tickets_goldenticket_m64.npz` committed (64×[50,6] f32,
+SeedSequence [0x54434B54,0,m], file sha `9bb13bc4…`, content sha
+`a07c062a…`, generate-once + `--verify`), 7 pytest oracles
+(`tests/test_golden_ticket.py`: draws-1 contract bit-exact vs
+`sample_actions(noise=)`, cross-frame ticket property asserted
+in-process, two-run determinism, dual sha pins, loud refusals) +
+`ticket_scores.py` stage-1 scorer with frozen R1 kill line, R4a
+per-dataset matrix, and `--oracle` green (pooling reuse reproduces
+the banked 6.5997 and all 10 per-draw probe MAEs EXACTLY). check.py
+467 green (was 460). No semantic deviation → no amendment. Discord
+post up. This commit (blog): **LAFM Papers page**
+(`papers/latent-action-priors.md`, 2606.23420 — learned mode-prior
+libraries; the noise-structure ladder above the ticket screen now
+mapped in ideas #1, DSRL named as next read if stage 1 CONFIRMs) +
+VLM4VLA staged-cell addendum to `vla-initialization.md` (+18.1
+pre-freeze adaptation cell — sharpens the honest prior on #17's
+thawed-vs-frozen read). queue.json: instrument → done, execution →
+launch-only, **+idea17-vu5k-finalization-prep** (CPU carve-out of
+the held execution item; depth 2 green).
+
+**Next**: `queue_cli.py next` → **idea19-tsens-dt-read-execution**
+(opens at rungs completion ~00:3xZ 08-08); GPU-busy windows →
+**idea17-vu5k-finalization-prep** (CPU, wanted before the molmo2
+endpoint ~04–05Z 08-08). Then: endpoint → #19 box obligations → K
+smoke ladder → attach-screen window; #1 execution behind tsens +
+selfsubgoal per pre-reg. **Every GPU launch goes through
+`run_detached.sh`.**
 
 *Updated 2026-08-07 18:37–19:0xZ (real `date -u`) — tick (babysit)
 turned conversational: owner live in-channel — **#17 amendment 2
@@ -115,52 +175,6 @@ rejoin the thread via `history`; then
 molmo2 endpoint ~08-08 morning → #19 box obligations → K smoke
 ladder → attach-screen window. **Every GPU launch goes through
 `run_detached.sh`.**
-
-*Updated 2026-08-07 17:47–18:0xZ (real `date -u`) — work session
-(bounded, one item): **#1 golden-ticket noise screen pre-reg
-POSTED** ([pre-reg](posts/2026-08-07-prereg-golden-ticket-screen.md),
-`e162eb1`) — not a draft; every design constant pinned from banked
-data before posting.*
-
-**Status** (babysit 17:58Z):
-- box molmo2 AR 40k — 26080/40k, loss 2.9898 (falling −0.034 over
-  the window), 2.171 s/step, vram 67.07 ≤ 71. Probe 6.67@26000
-  (in-band, no ≥7.5 pair). Gate margin 4.93. ~8.4 h to 40k →
-  endpoint ~08-08 morning.
-- local **ar100k_tsens_q4 rung t0.5** — 3552/4301, window 43.9
-  f/min, cumulative 29.6 f/min, projection 2.4 ≤ 12 gate, ~0.4 h
-  left. Rung roll t0.5 → t0.7 **~18:2xZ** (babysit `log` stem
-  repoint at the first tick after); all rungs ~00Z → dT read.
-
-**Steering**: none (boot poll + babysit-forced poll 17:58Z: no new
-messages; `history -n 5`: our own posts only).
-
-**Done**: this session — **#1 golden-ticket screen pre-registered**
-(`e162eb1`): teacher-first (flow_artrunk@80k Heun-30; student =
-escalation amendment only), M=64 sha-pinned tickets scored as the
-draws of ONE batched draws-64 eval on drawsprobe_s7 (~1.5 GPU-h);
-null frozen from banked `sigma_draw_direct` (σ_probe 0.0669, null
-min₆₄ = mean − 0.157, MC-verified); R1 kill line BEFORE stage 2
-(sd > 0.0785 or min < mean − 0.22); R2 = winner on COMPLEMENT core
-rows paired vs the banked stable-key npz, adopt floor −0.05 = 2σ;
-R3 mean-of-top-10-tickets vs banked 5.3645 (tie band 0.02); R4 free
-per-dataset task-locality read (the paper's shared-ticket
-regression is the stated prior against). Instrument = a ticket
-noise-key mode at the `noise_for_item` seam, 4 oracles frozen in
-the post. check.py 460 green; posts/index.md drift fixed (4 missing
-entries added). Queue: draft item done, instrument item (CPU,
-queued) + execution item (gpu-local, blocked) added; validate green
-depth 2. Blog built + Space pushed (post curl-verified 200);
-Discord close post.
-
-**Next**: `queue_cli.py next` → **idea19-tsens-dt-read-execution**
-(opens at rungs completion ~00Z tonight); GPU-busy windows →
-**idea1-golden-ticket-instrument** (CPU: ticket mode + tickets npz
-+ 4 oracles). Dated boundaries: tsens rung roll ~18:2xZ (babysit
-stem repoint t0.5 → t0.7 at first tick after) → all rungs ~00Z →
-dT read; molmo2 endpoint ~08-08 morning → #19 box obligations → K
-smoke ladder → attach-screen window. **Every GPU launch goes
-through `run_detached.sh`.**
 
 ## Utilization footer
 
