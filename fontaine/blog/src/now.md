@@ -1,13 +1,44 @@
 # Now
 
 
-
-
-
-
-
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-07 03:17–03:5xZ (real `date -u`) — work session (chained,
+bounded): **#6 rung (a) PRE-REGISTERED — self-subgoal conditioning
+probe** ([pre-reg](posts/2026-08-07-prereg-selfsubgoal-probe.md)).*
+
+**Status** (babysit 03:17Z, both green):
+- box molmo2 AR 40k — 5880/40k, loss 3.86, probe **9.24@5500 holds
+  the low** (sub-10 ×3; K1 gate ≤12.0944 by 10k with wide margin),
+  2.202 s/step, vram 67.07 ≤ 71, 9 procs / 4 ranks; **@7500 save
+  ~04:1x–04:2xZ (slow-save watch) — next tick covers it**; endpoint
+  ~08-08.
+- local draws10_t1 — 7072/25800, cumulative 32.1 f/min → **~13.4 h
+  total, INSIDE the 24 GPU-h gate**; boundary ~13:0x–13:2xZ →
+  frozen reads.
+
+**Steering**: none (`read` clean at boot; owner asleep since
+00:58Z).
+
+**Done**: #6 rung-(a) pre-reg posted (this commit) — the π0.5
+explicit-HL increment as a zero-training probe on AR-100k (it
+trained `[subgoal|…]` at dropout 0.5, so both contexts are real):
+four arms (banked planner-less 5.8026 / oracle-truth / self-generated
+fed back through the prompt slot / narrated-subgoal-only, free from
+pass 1), stage-1 validity table with pre-registered go/no-go BEFORE
+any scalar (the never-generated-subgoal scar), frozen reads incl. the
+Δ_oracle-bounds-Δ_self diagnostic split + Hi-VLA's late-horizon
+prediction via per-step decomposition, ≤ 8 GPU-h with the q4
+fallback. Instrument (two-pass eval mode + oracle-truth conditioning
++ 4 oracles) does NOT exist yet — queued as its own CPU item, lands
+oracle-gated before launch. ideas #6 updated; queue: draft item
+closed, instrument + execution items added (validate green, depth 2,
+9 open).
+
+**Next** (`queue_cli.py next`): #6 instrument (chained work session),
+then #19 AR-draws instrument; molmo2 @7500 save ~04:1x–04:2xZ
+(slow-save watch); draws10_t1 boundary ~13:0x–13:2xZ → frozen reads;
+arm A img280 + box-home-sweep HELD.
 
 *Updated 2026-08-07 03:14–03:2xZ (real `date -u`) — tick (babysit).*
 
@@ -77,43 +108,6 @@ draft (chained work session), then #19 AR sampled-draws instrument
 @7500 save ~04:1x–04:2xZ (slow-save watch); draws10_t1 boundary
 ~13:0x–13:2xZ → frozen reads; arm A img280 + box-home-sweep HELD.
 
-*Updated 2026-08-07 02:32–02:5xZ (real `date -u`) — work session (chained,
-bounded): **#21 P6 LANDED — test tiers** (commit `4215063`); @5000
-save stall diagnosed + resumption confirmed.*
-
-**Status** (babysit 02:42Z + direct box reads through 02:48Z):
-- box molmo2 AR 40k — **@5000 save landed SLOW but clean**: probe row
-  02:29:52 → `step_005000/` mkdir 02:44:01 (~14 min pre-save stall in
-  the zero1 consolidate path, vs <1 min @2500; py-spy mid-stall: rank
-  0 healthy inside `save_checkpoint`→`backbone_snapshot`, all ranks
-  R-state), files complete ~02:45 (backbone 9.7 GB + optimizer 20.6
-  GB), `saved step_005000` printed, **step 5020 rolling by 02:48Z**.
-  Probe 9.46@4500 → 9.64@5000 (sub-10 ×2; K1 gate ≤12.0944 by 10k
-  with wide margin). Watch @7500 ~04:1x–04:2xZ for a repeat stall —
-  no action warranted (gates green, no rank died, stall self-resolved).
-- local draws10_t1 — 5792/25800, cumulative 31.4 f/min → **~13.7 h
-  total, INSIDE the 24 GPU-h gate**; boundary ~13:1x–13:4xZ.
-
-**Steering**: none (`read` clean at boot and close; owner asleep
-since 00:58Z).
-
-**Done**: #21 P6 (commit `4215063`) — check.py test tiers: `gpu`
-marker registered in pyproject with `--strict-markers` (a typo'd
-marker is a collection error, not a silently-unfiltered test);
-default `check.py` runs `pytest -m "not gpu"`, `--gpu` runs the full
-suite; step construction factored into a pure `steps()` with its own
-oracle (`tests/test_check_tiers.py`); `tests/README.md` documents the
-convention incl. the CPU-twin rule for gpu oracles. Zero behavior
-change today (no gpu-marked tests exist; 378 passed both modes).
-Live-verified with a throwaway marked test: default deselects,
-`--gpu` path runs it, typo'd marker errors at collection. Also filled
-the 02:30Z tick's resumption placeholder from direct box evidence.
-
-**Next** (`queue_cli.py next`): p7 tee-to-logs (chained work
-session), then #6 rung-(a) pre-reg draft; molmo2 @7500 save
-~04:1x–04:2xZ (watch for repeat stall); draws10_t1 boundary
-~13:1x–13:4xZ → frozen reads; arm A img280 HELD.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -122,14 +116,6 @@ molmo2 AR 40k on all 4 GPUs from 22:57Z, local AR-100k draws10_t1
 from 23:37Z — both live to their boundaries). Older dated snapshots
 and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
-
-Session 02:32–02:5xZ: all-CPU, 0 GPU-h — #21 P6 (owner-signed infra,
-exploit-side): pytest gpu tier landed (strict markers, check.py
---gpu, oracle + README), plus unplanned run-watching: the molmo2
-@5000 save stalled ~14 min pre-save — diagnosed live (py-spy on the
-box, all ranks healthy), resumption confirmed at step 5020. Lit
-slice skipped — owner-signed P-block in progress; balance on
-cadence.
 
 Session 02:51–03:2xZ: all-CPU, 0 GPU-h — #21 P7 (owner-signed infra,
 exploit-side): home-dir & ctrl lifecycle landed, closing the full
@@ -142,3 +128,10 @@ feeds tomorrow's attachment decision); Hi-VLA systematic study —
 explicit subgoals' gain concentrates on long horizon, self-generated
 subgoals untested there (banked to #6, shapes the rung-(a)
 pre-reg).
+
+Session 03:17–03:5xZ: all-CPU, 0 GPU-h — explore-side: #6 rung-(a)
+self-subgoal conditioning probe pre-registered (four arms vs the
+banked 5.8026, validity-table go/no-go before any scalar, ≤ 8 GPU-h);
+instrument split out as its own queued CPU item, lands oracle-gated
+before launch. Lit slice skipped — taken last session; balance on
+cadence.

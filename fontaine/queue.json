@@ -1,10 +1,10 @@
 {
-  "updated_utc": "2026-08-07T03:15:00+00:00",
+  "updated_utc": "2026-08-07T03:58:00+00:00",
   "depth_reason": null,
   "items": [
     {
       "id": "molmo2_ar40k",
-      "title": "Molmo2 AR 40k trunk run (box, 4xDDP) — probe 9.24@5500 (sub-10 ×3, new low); watch @7500 save ~04:1x-04:2xZ for a repeat of the @5000 slow-save",
+      "title": "Molmo2 AR 40k trunk run (box, 4xDDP) \u2014 probe 9.24@5500 (sub-10 \u00d73, new low); watch @7500 save ~04:1x-04:2xZ for a repeat of the @5000 slow-save",
       "class": "gpu-box",
       "status": "live",
       "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-molmo2-ar-40k.md",
@@ -30,13 +30,22 @@
       "boundary": "opens at draws10_t1 completion (~13:0x-13:2xZ 2026-08-07); reads are frozen in the pre-reg"
     },
     {
-      "id": "idea6-selfsubgoal-prereg-draft",
-      "title": "#6 self-subgoal rung-(a) pre-reg draft (zero-training probe: self-generated subgoal -> [subgoal|...] -> panel vs 5.8026, validity table first); the probe itself wants a quiet GPU >= draws10 boundary",
+      "id": "idea6-selfsubgoal-instrument",
+      "title": "#6 rung-(a) instrument: bijou.eval self-subgoal two-pass mode + oracle-truth [subgoal|...] conditioning, per-frame generation dump + validity table, 4 pre-registered oracles (pre-reg posted 08-07 03:5xZ; instrument must land oracle-gated before launch)",
       "class": "cpu",
       "status": "queued",
-      "prereg": null,
+      "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-selfsubgoal-probe.md",
       "owner_hold": false,
-      "boundary": null
+      "boundary": "wanted before the first quiet local-GPU window after draws10_t1 frozen reads"
+    },
+    {
+      "id": "idea6-selfsubgoal-probe",
+      "title": "#6 rung-(a) self-subgoal probe execution: stage-1 validity table (go/no-go) then oracle/self/narrated arms vs banked 5.8026, <= 8 GPU-h",
+      "class": "gpu-local",
+      "status": "blocked",
+      "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-selfsubgoal-probe.md",
+      "owner_hold": false,
+      "boundary": "opens at first quiet local-GPU window >= draws10_t1 boundary (~13:0x-13:2xZ 2026-08-07) AND its frozen reads AND the instrument landing"
     },
     {
       "id": "idea19-ar-draws-instrument",
@@ -49,7 +58,7 @@
     },
     {
       "id": "molmo2-stage2-attachment-decision",
-      "title": "Molmo2 stage-2 attachment decision at endpoint — carries the pi0.5 deep-read's two named arms (all-layer KV reads; trunk CE under stop-grad vs hard freeze)",
+      "title": "Molmo2 stage-2 attachment decision at endpoint \u2014 carries the pi0.5 deep-read's two named arms (all-layer KV reads; trunk CE under stop-grad vs hard freeze)",
       "class": "cpu",
       "status": "blocked",
       "prereg": null,
@@ -58,7 +67,7 @@
     },
     {
       "id": "box-home-sweep",
-      "title": "Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era mainline artifacts) — HELD: charter Loaned-compute READ-ONLY rule; needs explicit owner all-clear (asked in-channel 03:1xZ 08-07)",
+      "title": "Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era mainline artifacts) \u2014 HELD: charter Loaned-compute READ-ONLY rule; needs explicit owner all-clear (asked in-channel 03:1xZ 08-07)",
       "class": "cpu",
       "status": "blocked",
       "prereg": null,
@@ -67,7 +76,7 @@
     },
     {
       "id": "arm-a-img280",
-      "title": "arch-batch arm A img280 40k (box) — HELD: fresh owner go required before launch",
+      "title": "arch-batch arm A img280 40k (box) \u2014 HELD: fresh owner go required before launch",
       "class": "gpu-box",
       "status": "blocked",
       "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-arch-batch-1.md",

@@ -288,6 +288,16 @@ numbers and both finalization amendments.
   failure mode ("VLMs tend to ignore image inputs as task becomes
   harder") is the #11 state-dominant-bias story from the hierarchy
   side.
+- **Rung (a) PRE-REGISTERED 2026-08-07 ~03:5xZ
+  ([pre-reg](posts/2026-08-07-prereg-selfsubgoal-probe.md)):** four
+  arms on AR-100k (banked planner-less 5.8026 / oracle-truth
+  `[subgoal|…]` / self-generated fed back through the slot /
+  narrated-subgoal-only), validity table gated go/no-go BEFORE any
+  scalar, frozen Δ-reads + horizon decomposition, ≤ 8 GPU-h with the
+  q4-subset fallback. Instrument (two-pass self-subgoal eval mode +
+  oracle-truth conditioning) does not exist yet — lands oracle-gated
+  before launch (queued); execution at the first quiet local-GPU
+  window ≥ the draws10_t1 boundary + its frozen reads.
 
 ## 7. Stream-schedule re-test — `queued`
 
