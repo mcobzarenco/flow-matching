@@ -1,10 +1,45 @@
 # Now
 
-
-
-
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-07 00:49–01:0xZ (real `date -u`) — tick (babysit):
+**OWNER SIGN-OFF ON #21 LANDED — P1–P7 green-lit** (00:34Z message;
+caught by the `history` check only — the read cursor had already
+consumed it and the 00:23Z session's polls missed recording it; the
+mandatory-history rule just paid for itself, and it's live evidence
+for P1's forced-poll design). Owner constraints absorbed into P1:
+(1) must catch training crashes — it does by construction (liveness
+= pgrep + GPU-mem, never a log tail); (2) show metric
+trends/history for qualitative judgment; (3) never a purely
+mechanical verdict — so P1's output contract is now **trajectories,
+not verdicts** (last-k probe values, loss deltas, rate windows vs
+cumulative, pre-reg anchors alongside; surfaces gate crossings,
+never acts on them — the healthy/anomalous/escalate call stays with
+the session per charter §6). Conversational window 00:50–00:59Z:
+truncation scare was the owner's phone rendering — message verified
+intact server-side via API re-fetch (1.3k chars < 2k limit), no
+helper bug; owner off to bed 00:58Z ("keep an eye on the runs").
+BABYSIT: box molmo2 **@2500 anchor READ — probe 12.0944**
+(30.84@500 → 25.72 → 15.25 → 13.21 → 12.09, descending every
+anchor), loss 4.46@2500, 2.17–2.18 s/step, vram 67.07 (rule ≤71), 4
+ranks pgrep-alive, util 100%×3+idle-rank normal; **K1 kill-line
+reference now SET: probe must sit below 12.09 by 10k**; next probe
+@3000 (~01:1xZ), next save @5000, endpoint ~08-08. Local draws10_t1
+**RE-ACCELERATED: 37.2 f/min** exact window (1952→2272 over
+00:50:46–00:59:22) after the 16 f/min dip — confirms the
+content-dependent-rate mechanism (not degradation); cumulative
+2272/81.7 min = **27.8 f/min → total ≈15.5 h, comfortably INSIDE
+the 24 GPU-h gate; boundary ~15:0x–15:3xZ** 08-07. Tick rule
+stands: re-measure + re-project from cumulative each babysit.
+Queue: **next (chained work session) → P3 pre-commit hook (<30 min)
+then P1 babysit CLI with the owner's three constraints — the #21
+block is now OWNER-SIGNED, outranking the #6 pre-reg draft;
+draws10_t1 boundary ~15:0x–15:3xZ → frozen reads (Δ_AR vs 5.8026,
+fairness vs −1.258, family vs 5.365) + T-sensitivity rung after;
+molmo2 @5000 save ~02:3xZ (tick duty), stage-2 attachment decision
+carries the deep-read's two named arms; arm A img280 HELD (fresh
+owner go required).** GPUs busy ×5 + owner-signed CPU queue →
+`run_work_next` armed.*
 
 *Updated 2026-08-07 00:23–00:5xZ (real `date -u`) — work session (bounded):
 **π0.5 CANON DEEP-READ DONE — the queued lit item, taken as the
@@ -94,31 +129,6 @@ frozen reads (Δ_AR vs 5.8026, fairness vs −1.258, family vs 5.365)
 duty), endpoint ~08-08; arm A img280 HELD (fresh owner go
 required).** GPUs busy ×5 + CPU queue live → `run_work_next`
 armed.*
-
-*Updated 2026-08-06 23:57–00:1xZ 08-07 (real `date -u`) — tick (babysit):
-**both jobs healthy.** Local AR-100k `draws10_t1`: pgrep-alive, 12.6
-GiB resident; measured a live window because the flushed progress
-line (352/25800 @23:54) looked under-gate — verdict: flush-lag
-illusion, the log flushes every 160 frames and three consecutive
-intervals clock **37–40 f/min** (512→672→832 over ~8.5 min), ABOVE
-the 32 f/min gate rate → remaining ~25k frames ≈ 11 h, **boundary
-now projects ~11:0x–11:3xZ 08-07** (earlier than the 13:1xZ
-estimate). Box molmo2 AR 40k: step 1480/40k, loss **4.904**
-(5.27@940 → 4.90@1480, smooth), 2.17–2.23 s/step, vram_alloc_peak
-66.91 GiB (rule ≤71), grad norm 4.7–11.5 (spikes-normal), LR on
-schedule, 4 ranks pgrep-alive (6 procs), util 67–98%; first gated
-probe anchor lands @2500 (~00:4xZ). Discord: cursor-new was only our
-own 23:56Z close-out; history confirms owner **"Amazing stuff, let's
-keep up the good work"** 23:55Z + 👍 on the #21 plan post —
-encouragement, no redirect; #21 stays top. Queue unchanged: **next
-(chained work session) → #21 main deliverable (review post +
-concrete diffs: queue-as-data, babysit CLI, Discord file-post
-helper, blog hierarchy, prompt/lock handling) — owner-prioritized;
-draws10_t1 boundary ~11:0x–11:3xZ → frozen reads (Δ_AR vs 5.8026,
-fairness vs −1.258, family vs 5.365) + T-sensitivity rung queues
-after; molmo2 @2500 probe anchor ~00:4xZ, endpoint ~08-08; π0.5
-deep-read post (low-prio); arm A img280 HELD (fresh owner go
-required).** GPUs busy ×5 + CPU queue live → `run_work_next` armed.*
 
 ## Utilization footer
 
