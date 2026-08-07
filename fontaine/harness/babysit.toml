@@ -28,6 +28,36 @@ step = 10000                        # K1 kill-line (owner-set 08-07) — crossed
 kind = "vram_max_gib"
 value = 71.0
 
+# LIVE — #6 self-subgoal probe (local GPU; pre-reg
+# 2026-08-07-prereg-selfsubgoal-probe.md). Phase 1 = preflight unit
+# fontaine-selfsubgoal-preflight (q4 emptyhint + q4 oracle + live-oracle
+# adjudication + stage-1 table, ~30 min); phase 2 = arms unit
+# fontaine-selfsubgoal-arms (full-panel oracle ~35 min, then marker-gated
+# self two-pass ~70 min). Repoint `log` at the arms launch; prune at
+# completion (retained-entry footgun).
+[[run]]
+name = "ar100k_selfsubgoal"
+kind = "progress-log"
+host = "local"
+pgrep = "selfsubgoal"               # matches both phase scripts + evals
+pgrep_min = 2                       # launcher bash + eval python
+gpu_indices = [0]
+gpu_mem_min_mib = 8000
+log = "/home/ubuntu/eval__ar100k_selfsubgoal_preflight.log"
+progress_re = "scored [0-9]+/[0-9]+ frames"
+started_utc = "2026-08-07T23:24:00Z"
+gpu_hours_per_wall_hour = 1.0       # single local GPU
+boundary = "preflight q4 runs 4301 rows each (~12+6 min) + stage-1 60 frames; arms 25800 rows (oracle 1 pass, self 2 passes); all greedy"
+anchors = [
+    "NO scalars before the stage-1 go/no-go (pre-reg): live oracles are byte-match only; do not quote MAEs from preflight logs",
+    "self arm runs ONLY behind fontaine/harness/state/selfsubgoal_stage1_go (human judgment on the validity table); oracle arm runs regardless",
+    "banked baseline 5.8026/2.1431 never re-run; reads pair vs reports/eval__bijou_arb_rcond_100k_ddp4__step_100000__panel_k4l2.npz",
+    "model-load + spawn-worker startup ~2-4 min per eval invocation shows as a quiet log head — not a stall",
+]
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 8.0                         # pre-reg ceiling, all stages
+
 # PREPARED — molmo2 endpoint draws arm (#19). Uncomment + fill
 # started_utc when eval_box_molmo2_endpoint_draws10_t1.sh launches
 # (prune molmo2_ar40k at the same time — the train run is over).
