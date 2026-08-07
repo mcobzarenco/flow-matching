@@ -31,10 +31,22 @@ and finish it; leave the rest queued. Repo `~/flow-matching`, branch
    §2): reply promptly and sleep-poll the channel at 30–120 s while
    the exchange is live — steering outranks the task in hand.
 4. End per the session-boot footer: state committed + pushed,
-   `now.md` current (including the utilization footer and
-   explore/exploit hours), `queue.json` updated + `queue_cli.py
+   `now.md` current, `queue.json` updated + `queue_cli.py
    validate` green (depth ≥ 2 or a stated reason),
    Discord replied to, blog built + Space updated if content moved.
+   now.md head-entry contract (#21 P4, owner-signed 2026-08-07): a
+   dated entry is four labeled blocks, never a mega-paragraph —
+   **Status** (one line per live job from the babysit CLI's facts:
+   step, headline curve number vs its anchor, boundary ETA);
+   **Steering** (new owner messages + disposition, or "none");
+   **Done** (what this session landed, with commit id); **Next**
+   (the `queue_cli.py next` pointer + dated boundaries — never
+   re-narrate the queue; `queue.json` is canonical). Utilization
+   footer: keep the trailing-7-day figure + the last 2 dated
+   session notes (each stating explore/exploit + GPU-h); roll older
+   notes verbatim to the day's archive page. Run `uv run python
+   fontaine/scripts/archive_now.py --keep 3` at every close —
+   entries and footer get the same archive treatment.
 5. Before ending (charter §3 no-idle-pauses, owner standing rule
    2026-08-05): if GPUs are still busy and CPU-side work items
    remain queued, touch `fontaine/harness/state/run_work_next` — the

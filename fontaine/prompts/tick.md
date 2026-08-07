@@ -65,4 +65,8 @@ prompt's contract.
    stretches prefer exiting — the timer's fresh sessions are cheaper
    and crash-proof.
 7. End: commit + push state (`now.md` always; blog build + Space
-   upload only if reader-visible content changed).
+   upload only if reader-visible content changed). now.md entries
+   use the #21 P4 skeleton (work prompt §4): **Status / Steering /
+   Done / Next** labeled blocks, never a mega-paragraph; footer =
+   trailing-7-day figure + last 2 session notes, older material
+   rolls to the archive.

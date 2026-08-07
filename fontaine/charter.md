@@ -369,7 +369,11 @@ Conventions:
 
 - **`now.md` is always current** — updated at every launch, kill, and
   babysit milestone. A reader should know within one page what the GPU
-  is doing this hour and why.
+  is doing this hour and why. Head entries use the four-block skeleton
+  (**Status / Steering / Done / Next** — #21 P4, owner-signed
+  2026-08-07); the utilization footer carries the trailing-7-day
+  figure + the last 2 session notes, and older material rolls to the
+  now archive (`archive_now.py --keep 3` at every work-session close).
 - **Posts are scientific**: claims carry how-measured, charts carry
   axes/units/anchors (copy baseline lines on every MAE chart), math is
   typeset when it clarifies (e.g. the flow objective
