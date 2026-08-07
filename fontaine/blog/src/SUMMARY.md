@@ -69,3 +69,4 @@
   - [2026-08-07 — Deep read: π0.5 + Knowledge Insulation (#15 → #4/#6/#16)](posts/2026-08-07-pi05-deep-read.md)
   - [2026-08-07 — Pre-reg: self-subgoal conditioning probe (#6 rung (a))](posts/2026-08-07-prereg-selfsubgoal-probe.md)
   - [2026-08-07 — Pre-reg: molmo2 stage-2 attachment screen — frozen vs KI-joint (#4)](posts/2026-08-07-prereg-molmo2-attach-screen.md)
+  - [2026-08-07 — Pre-reg: leaderboard decode-cost micro-benchmark](posts/2026-08-07-prereg-leaderboard-decode-microbench.md)

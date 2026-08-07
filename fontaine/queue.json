@@ -148,9 +148,9 @@
   },
   {
    "id": "endpoint-runbook-git-audit",
-   "title": "Pre-endpoint runbook git-audit (CPU, integrity class \u2014 the audit-queue-items-against-git standing practice applied BEFORE the highest-stakes window opens): for every blocked endpoint-chain item (idea19-molmo2-draws-arm, selection-ceiling + energy-score reads, tsens chain, idea4-attach-k-smoke-ladder, idea4-attach-screen-execution), verify at HEAD: referenced scripts exist; launcher output stems == read-script defaults == babysit.toml prepared entries (the stem-vs-reader disagreement class the %g tsens fix caught); prepared pgrep patterns match the launchers' actual process names; every flag the launchers pass still exists in the bijou CLIs (--help grep). Output: short audit note (now.md + Discord); any mismatch becomes its own fix item BEFORE the endpoint opens",
+   "title": "Pre-endpoint runbook git-audit (CPU, integrity class \u2014 the audit-queue-items-against-git standing practice applied BEFORE the highest-stakes window opens): for every blocked endpoint-chain item (idea19-molmo2-draws-arm, selection-ceiling + energy-score reads, tsens chain, idea4-attach-k-smoke-ladder, idea4-attach-screen-execution), verify at HEAD: referenced scripts exist; launcher output stems == read-script defaults == babysit.toml prepared entries (the stem-vs-reader disagreement class the %g tsens fix caught); prepared pgrep patterns match the launchers' actual process names; every flag the launchers pass still exists in the bijou CLIs (--help grep). Output: short audit note (now.md + Discord); any mismatch becomes its own fix item BEFORE the endpoint opens \u2014 EXECUTED 2026-08-07 ~10:4xZ, CLEAN at HEAD 3d9e2a2: all scripts exist; molmo2-draws/tsens/attach stems byte-match read defaults + prepared babysit entries; pgrep patterns match actual cmdlines; every launcher flag exists in bijou.train/eval + gate CLIs (--help cross-check); smoke ladder = K recipe verbatim modulo intended smoke deltas; --arm-steps 10000 hardcode safe (gate only in the STEPS==10000 branch). Zero fix items; 2 harmless nuances recorded (tsens prune-ordering already documented, tsens pgrep_min comment mislabel)",
    "class": "cpu",
-   "status": "queued",
+   "status": "done",
    "prereg": null,
    "owner_hold": false,
    "boundary": "run before the molmo2_ar40k endpoint (~2026-08-08) opens the box chain; CPU work at any GPU-busy window"
@@ -166,12 +166,12 @@
   },
   {
    "id": "leaderboard-decode-cost-microbench",
-   "title": "Leaderboard compute-column micro-benchmark PREP (owner steering 08-07 10:04Z follow-up; CPU now): write the timing script + its short pre-reg post \u2014 one script, same batch size / workers / dtype, times every leaderboard decode config (AR greedy, AR draws10-T1, teacher heun30 draws{1,10}, student 1-NFE draws{1,5,10}) on a fixed panel slice on the local 1xH100, plus single-stream batch=1 latency per config as the deployment-facing number (#16 hook); replaces the mtime-derived ~= ms/frame leaderboard entries with apples-to-apples numbers. Record-only, no headline claims; the ~15-min GPU run executes at the boundary under the posted pre-reg",
-   "class": "cpu",
+   "title": "Leaderboard compute-column micro-benchmark PREP (owner steering 08-07 10:04Z follow-up; CPU now): write the timing script + its short pre-reg post \u2014 one script, same batch size / workers / dtype, times every leaderboard decode config (AR greedy, AR draws10-T1, teacher heun30 draws{1,10}, student 1-NFE draws{1,5,10}) on a fixed panel slice on the local 1xH100, plus single-stream batch=1 latency per config as the deployment-facing number (#16 hook); replaces the mtime-derived ~= ms/frame leaderboard entries with apples-to-apples numbers. Record-only, no headline claims; the ~15-min GPU run executes at the boundary under the posted pre-reg \u2014 PREP DONE 2026-08-07 ~11:0xZ: leaderboard_decode_microbench.py landed (7 configs x {batched b32/w20 N320, single b1/w4 N50}, decode flags byte-matched to banked stems, progress-line rate rule excludes startup/warmup, watchdog 30 min/run) + --selftest oracle PASS (exact rate arithmetic, 4 guard aborts, parser fixtures) + pre-reg posted (2026-08-07-prereg-leaderboard-decode-microbench.md). REMAINING: the ~30-min GPU run at the draws10_t1 boundary, before any next local launch",
+   "class": "gpu-local",
    "status": "queued",
-   "prereg": null,
+   "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-leaderboard-decode-microbench.md",
    "owner_hold": false,
-   "boundary": "runs when draws10_t1 frees the local GPU (boundary ~12:3x-12:5xZ 2026-08-07) and before the next local launch; script prep is CPU work at any GPU-busy window"
+   "boundary": "GPU run executes when draws10_t1 frees the local GPU (boundary ~12:3x-12:5xZ 2026-08-07), before the next local launch; consistency anchor: ar_greedy batched ~88.7 ms/frame"
   }
  ]
 }
