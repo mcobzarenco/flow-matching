@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-07T06:35:46+00:00",
+ "updated_utc": "2026-08-07T06:53:25+00:00",
  "depth_reason": null,
  "items": [
   {
@@ -58,12 +58,12 @@
   },
   {
    "id": "idea4-attach-k-smoke-ladder",
-   "title": "#4 K-arm smoke memory ladder script (F1-style, pre-reg instrument item 4): smoke_attach_k_ddp4.sh measuring vram_alloc_peak at B12 eff-48 with #20 checkpointing on, short-step run, echoes the peak vs the 71 GiB gate; K_MEM_READY=1 (the K launcher's guard) is set only on a green ladder; if K cannot fit eff-48 checkpointed, BOTH arms downshift batch together (matched, loudly echoed)",
-   "class": "cpu",
-   "status": "queued",
+   "title": "#4 K-arm smoke memory ladder script — SCRIPT LANDED 08-07 ~06:5xZ (smoke_attach_k_ddp4.sh: exact K recipe verbatim incl. --activation-checkpointing, 150 steps/rung w/ eval+save exercised, rungs B12c6->B8c4->B6c3 at pinned chunk-microbatch 2, pass = rc0 AND max vram_alloc_peak_gib <= 71.0 from the jsonl, nvidia-smi peak advisory; green writes fontaine/harness/state/k_mem_ready record + echoes the K_MEM_READY=1 BATCH/BACKWARD_CHUNKS launch line; sub-B12 green = MATCHED DOWNSHIFT both arms loudly echoed; all-red = no marker, owner steer). REMAINING: RUN the ladder on the box after it frees",
+   "class": "gpu-box",
+   "status": "blocked",
    "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-molmo2-attach-screen.md",
    "owner_hold": false,
-   "boundary": "script is CPU work now; the ladder RUNS on the box after the box frees (endpoint ~2026-08-08); #20 checkpointing LANDED 08-07 ~06:4xZ (oracle-gated, K launcher carries --activation-checkpointing); required before the K arm launches"
+   "boundary": "opens at molmo2_ar40k endpoint (~2026-08-08), after the #19 draws-arm box obligations; needs the endpoint checkpoint (warm-start is part of the measured shape); GREEN required BEFORE EITHER arm launches — the ladder's batch verdict is matched (a sub-B12 green downshifts F too, so F must not start at B12 first)"
   },
   {
    "id": "molmo2-stage2-attachment-decision",
@@ -100,6 +100,15 @@
    "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-molmo2-attach-screen.md",
    "owner_hold": false,
    "boundary": "wanted before the attach screen's arms finish (screen runs after endpoint ~2026-08-08); the decision item consumes its output"
+  },
+  {
+   "id": "idea19-selection-ceiling-read-script",
+   "title": "#19 selection-rung ceiling read script (CPU now, banked lit rung — NOT pre-registered, exploratory read only, any escalation needs its own pre-reg): oracle best-of-10 ceiling per-frame from the molmo2 endpoint draws --dump-draws npz (the retention fixed 08-07 ~06:1xZ) — bounds what ANY selector (MG-Select / VLA-ATTC / CoVer flavors) could buy before building one; AUDIT FIRST per standing rule: draws_fairness.py already computes best-of-N on flow probe npz — verify its npz/stems contract against the AR draws dump and extend only the delta; oracle-gate on synthetic per-draw fixtures (known best-draw pattern in/out) + degenerate draws=1 must reproduce the greedy number",
+   "class": "cpu",
+   "status": "queued",
+   "prereg": null,
+   "owner_hold": false,
+   "boundary": "script is CPU work now; the read runs after the molmo2 endpoint draws arm lands its npz (~2026-08-08); AR-100k draws10_t1 retained only pooled predictions (accepted 08-07) so this read is molmo2-endpoint-first"
   }
  ]
 }

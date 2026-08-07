@@ -276,6 +276,23 @@ matched steps.
   `from_checkpoint` on the tiny fixture). 10 new oracles; check.py
   433. Remaining before launch: #20 + the K smoke memory ladder.
 
+- **K smoke-ladder SCRIPT LANDED 2026-08-07 ~06:5xZ (work session):**
+  `smoke_attach_k_ddp4.sh` — the exact K recipe verbatim (warm-start
+  from the 40k endpoint, `--joint-ce --seam-stop-grad
+  --activation-checkpointing`, zero1 + chunked backward), 150 steps
+  per rung with eval@100 + save@100 so the probe-decode and
+  joint-checkpoint-writer memory shapes are exercised, not just the
+  bare step. Ladder B12c6 → B8c4 → B6c3 (chunk microbatch pinned at
+  2); pass = rc 0 AND max `vram_alloc_peak_gib` over the rung's jsonl
+  ≤ 71.0 (torch alloc peak, the gate babysit enforces — NOT
+  nvidia-smi reserved, the phase-1 ladder lesson); green writes the
+  `fontaine/harness/state/k_mem_ready` record and echoes the exact
+  `K_MEM_READY=1 BATCH= BACKWARD_CHUNKS=` launch line; a sub-B12
+  green is echoed as a MATCHED DOWNSHIFT for BOTH arms (the ladder
+  must run before F, not just before K); all-red = no marker, owner
+  steer. Runs on the box after the endpoint (~08-08), post the #19
+  box obligations. Remaining before launch: run the ladder green.
+
 ## 5. FAST tokenizer v3 — `queued`
 
 - **Hypothesis:** refitting on curated-v0's exact quantiles removes
@@ -1272,9 +1289,10 @@ and a transformer-level prefill+cached-suffix pass are BITWISE the
 plain step (loss + every param grad, cache contents included), with a
 call spy pinning that checkpointing actually engaged (2×blocks calls
 — no vacuous equality); no-grad and F-arm paths never enter
-checkpoint. The K launcher carries the flag. Still open: the measured
-chunk-size ladder re-run on the box = the queued K smoke-ladder item
-(vram_alloc_peak at B12 eff-48 checkpointed vs the 71 GiB gate).
+checkpoint. The K launcher carries the flag. The measured ladder's
+SCRIPT landed 2026-08-07 ~06:5xZ (`smoke_attach_k_ddp4.sh`, B12c6 →
+B8c4 → B6c3 vs the 71 GiB alloc-peak gate — see #4); still open: RUN
+it on the box at the endpoint window.
 
 ## 21. Agentic-loop & infrastructure deep review — `confirmed`/CLOSED (all 7 signed items landed 2026-08-07)
 
@@ -1396,7 +1414,12 @@ between these two priors on our own panel before any escalation.
   mean-of-samples is the registered read), but the molmo2 endpoint
   draws launcher now carries `--dump-draws` (added pre-launch,
   data-retention only, ~310 MB) so its selection-rung reads come free
-  from the ~08-08 compute.
+  from the ~08-08 compute. The ceiling read is now a queue item
+  (2026-08-07 ~06:5xZ, `idea19-selection-ceiling-read-script`, CPU:
+  audit `draws_fairness.py`'s existing best-of-N against the AR
+  draws-npz contract first, extend only the delta, oracle-gate on
+  synthetic per-draw fixtures; exploratory read, NOT pre-registered
+  — escalation to any actual selector needs its own pre-reg).
 
 ## 15. Literature-sourced arms — standing
 

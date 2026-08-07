@@ -13,8 +13,10 @@
 #   endpoint's expert.safetensors (loaded by --backbone-init-from +
 #   --joint-ce in bijou.train) — never fresh.
 # HARD PREREQUISITE (pre-reg instrument item 4): #20 activation
-#   checkpointing landed + an F1-style smoke memory ladder run at THIS
-#   batch — phase 1 alone sat at 67.07/71 GiB with no expert riding.
+#   checkpointing landed + the smoke memory ladder GREEN at THIS batch
+#   (fontaine/scripts/box/smoke_attach_k_ddp4.sh; green record at
+#   fontaine/harness/state/k_mem_ready) — phase 1 alone sat at
+#   67.07/71 GiB with no expert riding.
 #   The K_MEM_READY env guard below refuses a blind launch. If K cannot
 #   fit eff-48 under 71 GiB checkpointed, BOTH arms downshift batch
 #   together (matched, loudly echoed) — never K alone.
@@ -42,7 +44,7 @@ export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 cd /home/ubuntu/flow-matching
 mkdir -p outputs/train reports "$HOME/logs"
 
-: "${K_MEM_READY:?K arm refused: set K_MEM_READY=1 only after #20 activation checkpointing landed AND the smoke memory ladder passed at this BATCH (see header)}"
+: "${K_MEM_READY:?K arm refused: set K_MEM_READY=1 only after #20 activation checkpointing landed AND smoke_attach_k_ddp4.sh ran GREEN at this BATCH (record: fontaine/harness/state/k_mem_ready)}"
 
 ENDPOINT=outputs/train/fontaine_molmo2_ar_40k_ddp4/step_040000
 PLAN_V2=plans/holdout_curated_v0_k4l2_panel_v2.json
