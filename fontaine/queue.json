@@ -1,5 +1,5 @@
 {
-  "updated_utc": "2026-08-07T18:10:00+00:00",
+  "updated_utc": "2026-08-07T18:45:00+00:00",
   "depth_reason": null,
   "items": [
     {
@@ -283,7 +283,7 @@
     },
     {
       "id": "idea17-molmo2-vision-unfreeze-prereg-draft",
-      "title": "#17 molmo2 vision-unfreeze rung \u2014 pre-reg DRAFT \u2014 DRAFTED 08-07 ~17:5xZ work session (2026-08-07-prereg-molmo2-vision-unfreeze.md, loud DRAFT banner): one variable --backbone-vision-lr 2e-6 (0.1x text; full-FT tower per 2607.10172, never LoRA-on-SigLIP), PRIMARY = 10k screen vs the banked baseline step_010000 checkpoint (both panel-eval'd with the 40k launcher's chained eval verbatim; paired per-frame delta CI95, null band 0.07 = seed-trio spread; critical-frame re-pool robustness; probe overlay record-only), 40k = escalation rung only; memory ladder pre-registered (R0 as-is / R1 chunks 12 / R2 + decoder activation-ckpt; matched downshift EXCLUDED \u2014 poisons the contrast; ~3-4 GiB tower adder on 67.07/71 straddles the gate so the 150-step smoke is load-bearing); kill lines incl. probe > baseline+2.0 x3 evals; cost gate 40 GPU-h; declared blind spot: panel cannot see the MAPS OOD tax. Finalization checklist in the post converts DRAFT -> posted",
+      "title": "#17 molmo2 vision-unfreeze rung \u2014 pre-reg DRAFT \u2014 DRAFTED 08-07 ~17:5xZ; AMENDED 08-07 18:xxZ work session to the OWNER-STEERED (18:02Z) warm-start two-arm design (2026-08-07-prereg-molmo2-vision-unfreeze.md amendment 1, loud DRAFT banner retained): both arms --init-from the 40k endpoint step_040000 (frozen-continue CONTROL vs thawed-continue --backbone-vision-lr 2e-6; --resume mechanically excluded \u2014 extra vision param group breaks optimizer.load_state_dict, verified at HEAD), 3k steps each, --warmup-steps 200, tail LRs decoder 1e-5 / text 2e-6, seed 1 BOTH arms (identical batches; arms differ in exactly one flag), frozen-first ordering (its curve = thawed kill-line reference); PRIMARY = thawed@3000 - frozen@3000 paired per-frame delta CI95, null band 0.07, critical-frame re-pool; arm-vs-endpoint reads record-only; memory ladder unchanged (thawed arm; matched downshift EXCLUDED); kill lines: frozen-arm sanity vs banked endpoint probe +2.0 x3, thawed vs frozen +2.0 x3 after step 1000, vram 71 gate; cost gate 24 GPU-h (~15 train); declared caveats: late-thaw may understate from-scratch (tie != 'unfreezing doesn't help'), MAPS OOD blind spot. Finalization checklist converts DRAFT -> posted",
       "class": "cpu",
       "status": "done",
       "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-molmo2-vision-unfreeze.md",
@@ -292,7 +292,7 @@
     },
     {
       "id": "idea17-molmo2-vision-unfreeze-execution",
-      "title": "#17 molmo2 vision-unfreeze 10k screen EXECUTION (box, 4xDDP): run the finalization-amendment checklist in 2026-08-07-prereg-molmo2-vision-unfreeze.md (launcher byte-audit at HEAD, 150-step memory smoke -> ladder rung + peak/rate quoted, baseline probe values at 2500/5000/7500/10000 quoted, arm launcher + babysit.toml entry landed, owner go), post the amendment (DRAFT -> posted), then launch via run_detached.sh; reads frozen in the draft (paired delta vs baseline@step_010000, null band 0.07, critical-frame re-pool)",
+      "title": "#17 molmo2 vision-unfreeze warm-start two-arm screen EXECUTION (box, 4xDDP, sequential frozen-first): run the finalization-amendment checklist in 2026-08-07-prereg-molmo2-vision-unfreeze.md amendment-1 design (launcher byte-audit at HEAD incl. --init-from/--seed/tail-LR flags vs bijou.train CLI, 150-step thawed memory smoke FROM the endpoint checkpoint -> ladder rung + peak/rate + first async-save line quoted, banked 40k endpoint probe value quoted for the frozen-arm sanity line, two arm launchers vu3k_frozen/vu3k_thawed + babysit.toml entries landed, owner go), post the amendment (DRAFT -> posted), then launch via run_detached.sh; reads frozen in the draft (thawed@3000 - frozen@3000 paired delta, null band 0.07, critical-frame re-pool; arm-vs-endpoint record-only); gate 24 GPU-h",
       "class": "gpu-box",
       "status": "blocked",
       "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-molmo2-vision-unfreeze.md",

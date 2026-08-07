@@ -19,22 +19,28 @@ toward the exploration budget.
   mixes UNDERPERFORMED plain baselines — do not import aux-data
   recipes on faith (compare against our own #6 measurements).
 
-- **Vision-unfreeze rung pre-reg DRAFTED 2026-08-07
+- **Vision-unfreeze rung pre-reg DRAFTED 2026-08-07, AMENDED to the
+  warm-start two-arm design same day (owner steering 18:02Z)
   ([draft post](../posts/2026-08-07-prereg-molmo2-vision-unfreeze.md);
   owner question 17:04Z + the
   [vision-encoder-freeze](../papers/vision-encoder-freeze.md) slice)**
-  — one variable (`--backbone-vision-lr 2e-6`, 0.1× text; full-FT
-  tower, never LoRA-on-SigLIP), primary = **10k screen** vs the
-  banked baseline `step_010000` checkpoint (paired per-frame Δ, CI95,
-  null band 0.07 = seed-trio spread; critical-frame re-pool
-  robustness check), 40k = escalation only. Memory is the binding
-  constraint (67.07/71 baseline peak + ~3–4 GiB tower adder →
-  pre-registered ladder: chunks 6→12 → decoder activation-ckpt;
-  matched downshift explicitly excluded — it would poison the
-  contrast). Declared blind spot: the panel can't see the MAPS-style
-  OOD tax. DRAFT status: execution blocked on finalization amendment
-  (launcher byte-audit + memory smoke + baseline probe quotes) +
-  owner go, window post-attach-screen (~08-09+).
+  — both arms `--init-from` the 40k endpoint checkpoint
+  (frozen-continue control vs thawed-continue `--backbone-vision-lr
+  2e-6`; full-FT tower, never LoRA-on-SigLIP), 3k steps each at the
+  40k tail LRs (decoder 1e-5 / text 2e-6), seed 1 both arms →
+  identical batches, fresh AdamW symmetric (`--resume` mechanically
+  excluded: the extra vision param group breaks
+  `optimizer.load_state_dict`). Primary = **thawed@3k − frozen@3k
+  paired per-frame Δ** (CI95, null band 0.07; critical-frame
+  re-pool robustness). ~15 GPU-h train vs ~27 from-scratch, and a
+  win directly upgrades the deployment artifact. Declared caveats:
+  late low-LR thaw may understate from-scratch unfreeze (tie ≠
+  "unfreezing doesn't help"); panel can't see the MAPS-style OOD
+  tax. Memory ladder unchanged (67.07/71 + ~3–4 GiB tower adder →
+  chunks 6→12 → decoder activation-ckpt; matched downshift
+  excluded). DRAFT status: execution blocked on finalization
+  amendment (launcher byte-audit + memory smoke + endpoint probe
+  quote) + owner go, window post-attach-screen (~08-09+).
 - **OWNER PICK (2026-08-05 21:57Z): E4B screen confirmed as the next
   pre-reg** — AR-100k on the freed 4×H100, **matched parameters with
   the E2B AR-100k run** (verified from the recipe: `--batch-size 12`
