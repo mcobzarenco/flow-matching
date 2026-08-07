@@ -153,6 +153,32 @@ second-generation AR trunk re-measured through the stage-2 lens.
 Cost: one screen-rung run per arm. Falsification: paired screens at
 matched steps.
 
+- **Deep read 2026-08-07 00:2x–00:5xZ
+  ([post](posts/2026-08-07-pi05-deep-read.md)): π0.5
+  (arXiv:2504.16054) + Knowledge Insulation (arXiv:2505.23705) are
+  the production version of this recipe, and the two dials where
+  theirs differs from ours are now named external arms:**
+  1. **All-layer reads** — their expert attends per-layer to the
+     full backbone KV stack; ours cross-attends to 3 exported
+     streams ({4,9,14} of 35). Production-scale evidence for the
+     deep end of the already-flagged export-streams headroom.
+  2. **Trunk kept adapting under stop-grad** — KI's backbone
+     continues CE-on-FAST *during* expert training, with
+     stop-gradient on the expert→backbone attention seam
+     (expert queries attend to `sg(K_b)`, `sg(V_b)`); naive joint
+     training collapses language following (~75%→~5-10%) and is
+     7.5× slower to converge; with stop-grad the CE/flow loss
+     balance needs no tuning (α=1 vs π0.5's tuned α=10). Our
+     sequential freeze is "extreme KI" — KI's frozen-backbone-0%
+     result does NOT indict it (their backbone was action-naive,
+     ours is action-pretrained), but a joint arm (trunk CE
+     continuing + stop-grad seam) vs the frozen baseline is a
+     screen-rung question with a banked anchor.
+  Natural venue: the Molmo2 trunk endpoint (~08-08), where stage-2
+  attachment becomes a live decision. π0.5 post-training also keeps
+  the discrete head alive beside the flow head — our decoder kinds
+  share the seam, so a both-heads arm is config, not surgery.
+
 ## 5. FAST tokenizer v3 — `queued`
 
 - **Hypothesis:** refitting on curated-v0's exact quantiles removes
@@ -172,6 +198,11 @@ matched steps.
   headroom on curated-v0, a learned-VQ arm is the natural rung after
   it (same paired-arm falsification; token metrics reset applies
   either way).
+- **Deep read 2026-08-07 ([post](posts/2026-08-07-pi05-deep-read.md)):
+  KI (arXiv:2505.23705) measured FAST vs naive per-dim binning as
+  the backbone's discrete training signal: ~95% vs ~85% table-
+  bussing success — external support for the token-quality premise
+  behind the v3 refit.
 
 ## 6. Aux attribution arms — `confirmed` (aux HELPS actions; results 2026-08-06)
 
@@ -208,6 +239,23 @@ matching vs report JSONs, σ_seed → the E4B adopt band and rig slot 2;
 anchors/degenerate/synthetic-inflation oracles all passed. When the
 four npz+report pairs land: one command produces the results-post
 numbers and both finalization amendments.
+
+- **External replication + a new rung-(a) probe (deep read
+  2026-08-07, [post](posts/2026-08-07-pi05-deep-read.md)):** our
+  +0.462 aux-off cost is the same result class as π0.5's Fig. 13 —
+  "Implicit HL" (subtask data in training, no runtime decoding) is
+  their second-best config, i.e. semantic co-training shapes the
+  action representation. Their further increment we have NEVER
+  tested: **explicit runtime hierarchy** — decode a subtask first,
+  condition actions on it. We own the seam: the `[subgoal|…]`
+  conditioning slot (heavily dropped out; planner-less default
+  well-trained). **Probe (zero training, quiet-GPU window):** have
+  the AR model generate its own subgoal per panel frame, feed it
+  back through `[subgoal|…]`, score panel vs no-hint baseline
+  5.8026. Validity check first — eyes on a table of self-generated
+  subgoals before any scalar (the never-generated-subgoal scar).
+  Owner anchor in favor: the 21:43Z steer notes aux subgoals
+  generalize strikingly OOD.
 
 ## 7. Stream-schedule re-test — `queued`
 
@@ -622,6 +670,16 @@ variants, consistency/distillation toward 1–2-step deployment decodes
   for a fully-OOD instruction — "coiled USB-C cable", "glass pot").
   The instruments below stay banked: they are corpus-agnostic and
   re-run on the future dataset in minutes.
+
+- **External anchor for the premise (deep read 2026-08-07,
+  [post](posts/2026-08-07-pi05-deep-read.md)):** π0.5's Fig. 8 is
+  the diversity-buys-transfer bet measured at production scale —
+  held-out-home performance scales monotonically with training
+  locations (3→104), and at 104 locations MATCHES a control trained
+  on the test homes; 97.6% of their phase-1 examples are not the
+  target embodiment. Evidence, not proof (their scale: ~400 h,
+  ~100 homes) — but the north-star premise now has a citable
+  production-scale precedent.
 
 - **Pre-reg draft posted 2026-08-05 ~21:2xZ**
   ([post](posts/2026-08-05-prereg-rig-fewshot-benchmark.md)): design
@@ -1085,6 +1143,14 @@ tokenization, data curation) feeds this list; every borrowed idea
 cites its source in the pre-registration; every "novel" idea gets a
 search first. Local canon: π0, π0.5, SmolVLA, FAST
 (arXiv:2501.09747).
+
+- **π0.5 canon deep-read DONE (2026-08-07,
+  [post](posts/2026-08-07-pi05-deep-read.md))** — π0.5
+  (arXiv:2504.16054) + KI (arXiv:2505.23705), read against the live
+  stage-2/Molmo2 question. Findings banked into #4 (two named
+  attachment arms), #5 (FAST-vs-naive ablation), #6 (Implicit-HL
+  replication + self-subgoal rung-(a) probe), #16 (Fig. 8 external
+  anchor). Convention flag: π0.5's τ=1 is DATA; ours is NOISE.
 
 - **IVRA (arXiv:2601.16207, lit slice 2026-08-06 16:2xZ)** —
   training-free, inference-side: VLAs flatten patches to 1D and lose

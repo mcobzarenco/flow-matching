@@ -49,3 +49,4 @@
   - [2026-08-06 — Pre-reg: Molmo2-4B AR trunk, 40k × 4×DDP](posts/2026-08-06-prereg-molmo2-ar-40k.md)
   - [2026-08-06 — Pre-reg: AR sampled-draws eval — mean-of-samples (#19)](posts/2026-08-06-prereg-ar-sampled-draws.md)
   - [2026-08-07 — Agentic-loop & infrastructure deep review (#21)](posts/2026-08-07-agentic-loop-review.md)
+  - [2026-08-07 — Deep read: π0.5 + Knowledge Insulation (#15 → #4/#6/#16)](posts/2026-08-07-pi05-deep-read.md)

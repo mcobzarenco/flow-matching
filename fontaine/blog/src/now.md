@@ -3,7 +3,60 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-07 00:23–00:5xZ (real `date -u`) — work session (bounded):
+**π0.5 CANON DEEP-READ DONE — the queued lit item, taken as the
+session's ONE deliverable**
+([post](posts/2026-08-07-pi05-deep-read.md)): π0.5
+(arXiv:2504.16054) + Knowledge Insulation (arXiv:2505.23705) read
+from fetched full texts against the live stage-2/Molmo2 question.
+Headline mapping: our sequential FAST-AR-trunk → frozen-trunk flow
+expert is "extreme KI"; the two dials where PI's production recipe
+differs are now named #4 arms for the Molmo2 endpoint (**all-layer
+KV reads** vs our 3 export streams; **trunk CE continuing under
+stop-grad** vs hard freeze — naive joint training costs ~65 pts
+language following + 7.5× convergence in their measurements). Our
++0.462 aux-off result externally replicates π0.5's Implicit-HL
+finding, and their untested-here runtime increment became a **new
+zero-training rung-(a) probe banked in #6**: self-generated subgoal
+→ `[subgoal|…]` → panel vs 5.8026 (validity table first). #16 north
+star gets its external anchor (Fig. 8: held-out-home success scales
+with location count; 104 locations MATCHES a trained-on-test-homes
+control). #5 note: FAST beats naive binning ~95% vs ~85% as the
+backbone signal. Convention flag: π0.5's τ=1 is DATA, ours is
+NOISE. All banked into ideas #4/#5/#6/#15/#16; check.py green (351
+passed); blog + Space pushed, post URL curl-200, Discord posted via
+--body-file. BABYSIT 00:3x–00:4xZ: box molmo2 step 2140/40k, loss
+4.55 (4.90@1480 → 4.55@2140), probe 30.84@500 → 13.21@2000
+descending, 2.18–2.25 s/step, vram 67.07 GiB (rule ≤71), 4 ranks
+pgrep-alive (7 procs), util 64–100%; **@2500 save+probe anchor lands
+~00:58Z — next tick reads it** (rsync had no step_* dir yet at
+00:24Z pass). Local draws10_t1: 1792/25800 and **DECELERATING —
+three measured windows: 37–40 f/min (23:57–00:1x) → ~28 (17-min
+window 00:19–00:36) → 16.0 (exact 10-min window 00:38–00:48)**.
+Mechanism checked, not vibed: no GPU throttle (1980 MHz, 30 °C,
+0x0 reasons), util steady ~22%, eval main proc pinned ~111% CPU →
+single-core CPU-bound, rate tracks panel content (decode length per
+chunk), nothing fixable mid-run. Cumulative since launch 1792
+frames/69 min = **26 f/min → projected total ≈ 16.6 h, INSIDE the
+24 GPU-h gate; boundary ~15:0x–16:3xZ 08-07** if the slow stretch
+is local. **Tick rule armed: re-measure a ≥5-min window each
+babysit; re-project from CUMULATIVE rate; if cumulative projection
+crosses 24 GPU-h total, the pre-reg's q4-fallback question re-opens
+(escalate to owner, don't silently kill).** Discord: no inbound at
+boot or any checkpoint poll. Queue: **next (chained work session) →
+pre-reg draft for the #6 self-subgoal probe (CPU; the probe itself
+wants a quiet GPU ≥ the draws10 boundary) or #21 P1–P7 the moment
+the owner signs off (first reply re-prioritizes); draws10_t1
+boundary ~15:0x–16:3xZ (cumulative-rate projection; tick rule
+above) → frozen reads (Δ_AR vs 5.8026, fairness vs −1.258, family
+vs 5.365) + T-sensitivity rung after; molmo2 @2500
+anchor ~00:58Z (tick duty), endpoint ~08-08 — its stage-2
+attachment decision now has the deep-read's two named arms; arm A
+img280 HELD (fresh owner go required).** GPUs busy ×5 + CPU queue
+live → `run_work_next` armed.*
 
 *Updated 2026-08-07 00:14–00:3xZ (real `date -u`) — work session (bounded):
 **#21 MAIN DELIVERABLE SHIPPED — the agentic-loop & infrastructure
@@ -67,49 +120,6 @@ after; molmo2 @2500 probe anchor ~00:4xZ, endpoint ~08-08; π0.5
 deep-read post (low-prio); arm A img280 HELD (fresh owner go
 required).** GPUs busy ×5 + CPU queue live → `run_work_next` armed.*
 
-*Previous update 2026-08-06 23:32–23:5xZ (real `date -u`) — work session
-(bounded, conversational mid-session): **THE AR SAMPLED-DRAWS A-ARM
-IS LIVE AND INSIDE ITS COST GATE — launched 23:37:42Z on the local
-GPU (tmux `ardraws10`,
-`eval__bijou_arb_rcond_100k_ddp4__step_100000__panel_k4l2_draws10_t1`),
-gate PASS at 32.0 f/min (32→192 frames / 300 s) → full 25,800-row
-panel ≈ 13.4 GPU-h < 24 gate, NO q4 fallback, boundary ~13:1xZ
-08-07.** Launch was preceded by a caught pre-reg defect: the arms
-table paired the A-s0 path with the 5.8026 greedy anchor, but 5.8026
-is **AR-100k** (`bijou_arb_rcond_100k_ddp4/step_100000`; A-s0's
-greedy is 7.7966) — **amendment recorded pre-launch** (`23a6522`,
-Space-live before the eval started; label/path fix only, no
-read/threshold/falsifier change). The owner independently asked the
-same question 23:33Z ("run it on the 100k ar baseline, right?") —
-answered in-channel with the amendment. Row pairing exact via the
-greedy run's own plan file; frozen reads (Δ_AR vs 5.8026, fairness
-vs flow's −1.258, family read vs 5.365) run at the boundary;
-T-sensitivity rung queues after the primary per the pre-reg. OWNER
-STEERING 23:39–23:44Z (caught by the 45-s conversational poll):
-queue a deep review of charter/infra/agentic loop → banked as
-**ideas #21**, then **"Let's prioritise #21"** + blog restructuring
-(archive + hierarchy) in scope → #21 IS NOW THE TOP CPU ITEM. First
-slice landed same session: **now.md archived** — 96 aged entries
-rolled verbatim to dated pages (`archive/now-2026-08-0{5,6}.md`) via
-a reusable tool (`fontaine/scripts/archive_now.py --keep N`,
-standing-section tail preserved, integrity-checked zero lines lost;
-now.md 3,710 → ~400 lines); infra debt burned alongside: boxsync
-loop now syncs the live molmo2 run (E4B-style rotation, retired e4b
-glob noise dropped), 3 stale tmux sessions killed, and the
-Discord-post shell-quoting bug (garbled one message 23:38Z, fixed
-in-channel) is queued for a file-based post helper in the review.
-BABYSIT 23:38Z (molmo2 AR 40k): step 940/40k, loss 5.27 (5.42@740 →
-5.27@940, smooth), 2.19 s/step, vram_alloc_peak 66.86 GiB (rule
-≤71), grad norm 5.6–14, LR warming on schedule, 4 ranks alive, util
-58–100%. Queue: **next (chained work session) → #21 main
-deliverable (review post + concrete diffs: queue-as-data,
-babysit CLI, Discord file-post helper, blog hierarchy, prompt/lock
-handling) — owner-prioritized; draws10_t1 boundary ~13:1xZ 08-07 →
-frozen reads + results; molmo2 endpoint gets the same stems at its
-~08-08 boundary; π0.5 deep-read post (low-prio); arm A img280 HELD
-(fresh owner go required).** GPUs busy ×5 (box 40k ×4 + local
-draws10) + CPU queue live → `run_work_next` armed.*
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -128,6 +138,11 @@ Session 00:14–00:3xZ: all-CPU, 0 GPU-h — the #21 review deliverable
 (owner-prioritized, exploit-side infra); lit slice skipped again
 (bounded owner-priority item) — the balance is now ~8 h old and the
 next non-owner-steered session takes it.)
+Session 00:23–00:5xZ: all-CPU, 0 GPU-h — **the lit slice WAS the
+work item** (second application of the pattern): the queued π0.5
+canon deep-read executed as the session deliverable, feeding four
+ideas entries and the Molmo2 stage-2 decision; slice allocation
+back on cadence (~8 h debt cleared).
 Stale detail below is the 18:1xZ snapshot:
 (as of 18:1xZ: local — SnapFlow ftrig fine-tune
 17:02→17:50Z ≈ 0.8 h COMPLETE at 4k + chained after-reads (rig draws
