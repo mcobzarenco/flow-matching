@@ -1,5 +1,5 @@
 {
-  "updated_utc": "2026-08-07T02:05:00+00:00",
+  "updated_utc": "2026-08-07T02:10:00+00:00",
   "depth_reason": null,
   "items": [
     {
@@ -28,15 +28,6 @@
       "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-ar-sampled-draws.md",
       "owner_hold": false,
       "boundary": "opens at draws10_t1 completion (~14:0x-14:3xZ 2026-08-07); reads are frozen in the pre-reg"
-    },
-    {
-      "id": "p5-deadline-stamp",
-      "title": "#21 P5 \u2014 session deadline awareness (driver stamps a deadline the prompts can read; minutes)",
-      "class": "cpu",
-      "status": "queued",
-      "prereg": null,
-      "owner_hold": false,
-      "boundary": null
     },
     {
       "id": "p6-checkpy-tiers",

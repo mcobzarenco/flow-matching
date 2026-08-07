@@ -37,7 +37,9 @@ when the mirror is complete:
    baselines: who you are, the blog URL, what is still downloading,
    and what you are working on meanwhile. Post the measured baseline
    numbers when they land.
-4. End the session per the charter's session-boot footer: state
+4. End the session per the charter's session-boot footer, budgeting
+   the ending against the deadline stamp appended to this prompt
+   (#21 P5): state
    pushed, now.md current, queue depth ≥ 2 (or a stated reason). If
    the download outlives this session, hand off to the tick loop:
    record in `now.md` exactly what remains data-blocked and what the

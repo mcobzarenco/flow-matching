@@ -87,7 +87,13 @@ run_session() {
     # per turn/tool-use AS IT HAPPENS — plain text mode buffers
     # everything until session end, so tail -f showed nothing for hours.
     set +e
-    timeout "$timeout_s" claude -p "$(cat "$DIR/prompts/$mode.md")" \
+    # #21 P5 (owner-signed): sessions can't see their own wall-clock —
+    # stamp the start time + hard-kill budget into the prompt so the
+    # ending is budgeted, never truncated mid-commit.
+    timeout "$timeout_s" claude -p "$(cat "$DIR/prompts/$mode.md")
+
+Session start: $(date -u +%H:%M:%SZ); hard kill in $((timeout_s / 60)) min.
+Commit and push state comfortably before the deadline." \
         ${FONTAINE_MODEL:+--model "$FONTAINE_MODEL"} \
         --dangerously-skip-permissions \
         --output-format stream-json --verbose \

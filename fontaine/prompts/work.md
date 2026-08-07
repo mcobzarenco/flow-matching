@@ -30,7 +30,11 @@ and finish it; leave the rest queued. Repo `~/flow-matching`, branch
    chatting mid-session, conversational mode applies (tick prompt
    §2): reply promptly and sleep-poll the channel at 30–120 s while
    the exchange is live — steering outranks the task in hand.
-4. End per the session-boot footer: state committed + pushed,
+4. End per the session-boot footer, budgeting the ending against the
+   deadline stamp appended to this prompt (#21 P5: session start +
+   hard-kill budget — schedule the ~30-min babysit checkpoints from
+   that zero point; never let the timeout truncate a commit
+   mid-flight): state committed + pushed,
    `now.md` current, `queue.json` updated + `queue_cli.py
    validate` green (depth ≥ 2 or a stated reason),
    Discord replied to, blog built + Space updated if content moved.

@@ -64,7 +64,9 @@ prompt's contract.
    off the lock. Mind the mode's wall-clock cap; for stable
    stretches prefer exiting — the timer's fresh sessions are cheaper
    and crash-proof.
-7. End: commit + push state (`now.md` always; blog build + Space
+7. End: budget your ending against the deadline stamp appended to
+   this prompt (#21 P5: session start + hard-kill budget; never let
+   the timeout truncate a commit mid-flight). Commit + push state (`now.md` always; blog build + Space
    upload only if reader-visible content changed). now.md entries
    use the #21 P4 skeleton (work prompt §4): **Status / Steering /
    Done / Next** labeled blocks, never a mega-paragraph; footer =
