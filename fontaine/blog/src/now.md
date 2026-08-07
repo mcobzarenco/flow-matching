@@ -5,6 +5,63 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-07 16:57–18:1xZ (real `date -u`) — work session:
+**#16 critical-frame re-pooling EXECUTED — every published ranking
+holds** (pre-reg posted+committed before the read; `4773ba9` +
+`3da7695`) + owner steering answered with a targeted lit slice
+([vision-encoder-freeze](papers/vision-encoder-freeze.md),
+`3ac7775`).*
+
+**Status** (babysit 17:35Z):
+- box molmo2 AR 40k — 25280/40k, loss 3.047, 2.191 s/step, vram
+  67.07 ≤ 71. Probe 7.10@25000 (in-band vs the 5.97–7.18 recent
+  band, no ≥7.5 pair). Gate margin 4.93. ~9.0 h to 40k → endpoint
+  ~08-08 morning.
+- local **ar100k_tsens_q4 rung t0.5** — 2592/4301 @ 49.7 f/min
+  window, cumulative 29.0 f/min, projection 2.5 ≤ 12 gate. Rung
+  roll t0.5 → t0.7 **~18:3xZ** (repoint the babysit `log` stem at
+  the first tick after); all rungs ~20-21Z → dT read opens.
+
+**Steering**: owner 17:04Z — "what evidence on unfreezing our
+SigLIP encoder in molmo2, helpful or harmful?" Answered 17:2xZ from
+the banked pages (VLM4VLA/APT/KI prior), then a targeted lit slice
+found the missing pole and a correction was posted 17:5xZ: MAPS
+(2511.19878) and the dual-encoder paper (2509.11417) are real
+harm cases — in the OOD-retention regime, not ours. Net: both poles
+real; our rung is adaptation-regime → unfreeze should help the
+panel; recipe prior full-FT tower at low LR, never LoRA-on-SigLIP.
+Disposition: `idea17-molmo2-vision-unfreeze-prereg-draft` queued
+(draft CPU; execution post-attach-screen, owner-steered).
+
+**Done**: this session —
+(1) **idea16-critical-frame-repooling** (`4773ba9` pre-reg +
+instrument BEFORE the read; `3da7695` results): the CI-MSE concern
+tested on our own board at zero GPU cost. Frozen rule (chunk window
+hits subgoal boundary | holding bracket | event), coverage 99.9%,
+11,204 critical core frames. **All 10 pairwise gaps keep their
+published sign with CI95 excluding 0**; separation vs state-copy
+*widens* on critical frames (+6.18 → +6.74) — opposite of CI-MSE's
+easy-frame-dilution mode. Robustness note on the leaderboard;
+`critical_frame_repooling.py` (--selftest oracle) reusable at the
+molmo2 endpoint. check.py 460 green ×3 commits.
+(2) **Lit slice + papers page**
+([vision-encoder-freeze](papers/vision-encoder-freeze.md), 4
+sources, `3ac7775`) — see Steering; correction to the first reply
+posted same session.
+(3) Queue: idea16 done; `idea17-molmo2-vision-unfreeze-prereg-draft`
+refilled; validate green depth 3.
+
+**Next**: `queue_cli.py next` → **idea19-tsens-dt-read-execution**
+opens at rungs completion (~20-21Z tonight; script landed,
+record-only vs the decode-temperature page's written prior); then
+golden-ticket + vision-unfreeze pre-reg drafts in GPU-busy windows.
+Dated boundaries: tsens rung roll ~18:3xZ (babysit stem repoint
+t0.5 → t0.7 at first tick after) → all rungs ~20-21Z → dT read;
+molmo2 endpoint ~08-08 morning → #19 box obligations → K smoke
+ladder → attach-screen window (first save validates async ckpt in
+production at 1250 cadence). **Every GPU launch goes through
+`run_detached.sh`.**
+
 *Updated 2026-08-07 16:53–17:0xZ (real `date -u`) — tick (babysit):
 both runs green, no steering. One anomaly chased and cleared: the
 tsens babysit window read 0.0 f/min — adjudicated log quantization
@@ -132,6 +189,14 @@ accruing from the 15:58:26Z systemd-run 3rd launch, ≤12 GPU-h gate). Older dat
 snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
+Session 16:57–18:1xZ: all-CPU work session, 0 GPU-h new (tsens +
+molmo2 accruing under their own gates) — exploit/analysis +
+owner-steered lit: #16 critical-frame re-pooling executed
+(pre-reg → oracle-gated instrument → read; every published ranking
+holds, separation widens on critical frames) + SigLIP-unfreeze
+question answered with the vision-encoder-freeze papers page (both
+poles + correction); queue 1 done, 1 refilled, depth 3.
+
 Session 16:37–16:5xZ: all-CPU work session, 0 GPU-h new (tsens +
 molmo2 accruing under their own gates) — exploit/infra + sanctioned
 lit: attach-launch-save-cadence-prep landed (`c4555d4`, save-every
@@ -140,13 +205,3 @@ with stated arithmetic) + the offline-validation lit slice with
 same-session papers page (5 sources; panel proxy measured ρ −0.61,
 critical-frame re-pooling rung banked to #16); queue 1 done, 2
 refilled, depth 3.
-
-Session 16:06–17:3xZ: all-CPU work session, 0 GPU-h new (tsens +
-molmo2 accruing under their own gates) — exploit/infra + sanctioned
-lit: driver-background-task-guard landed (`96522b9`, 4 defense
-layers, kill signature reproduced in tests with live transient
-units; the 3-incidents-in-one-day class is mechanized away) + the
-decode-temperature lit slice with same-session papers page (5
-sources; dT directional prior + 2nd probe-selector strike banked to
-#19); tsens boot-poll gate scare adjudicated startup artifact
-(measured 2.9 h projection ≤ 12); queue: 2 done, 1 refilled.
