@@ -1,7 +1,47 @@
 # Now
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-07 01:19–01:4xZ (real `date -u`) — work session (chained, bounded):
+**#21 P2 LANDED — the queue is data now** (commit `19f3d71`).
+`fontaine/queue.json` is the CANONICAL queue (now.md narrates it —
+charter §3 bullet 1 amended per the signed diff);
+`fontaine/scripts/queue_cli.py` `list`/`next`/`depth`/`validate`
+machine-gates what ticks used to eyeball: depth ≥ 2 or a stated
+`depth_reason`, every gpu-* item must name a pre-reg post that EXISTS
+on disk, `owner_hold` forces `blocked` (a held item can never be
+silently pickable), unique ids + schema. 8 oracles in
+`tests/test_queue.py` incl. the real queue validating green; the
+signed prompt diffs applied (tick §5 runs `validate`; work boot reads
+`queue.json`, end gate requires validate green). Migration: 10 items
+(2 live runs, 5 queued CPU: P4→P5→P6→P7→#6 pre-reg draft, 3 blocked:
+frozen reads @ draws10 boundary, stage-2 decision @ molmo2 endpoint,
+arm A img280 HELD). **One stated deviation from the signed spec: the
+CLI is `queue_cli.py`, not `queue.py`** — sibling scripts
+`sys.path.insert` the scripts dir, so a module named `queue` shadows
+the stdlib; torch spawn children (`test_zero1`,
+`test_chunk_grad_allreduce`) died on `from queue import Queue`
+inside check.py — the gate caught it pre-commit, root cause traced
+(not vibed as flaky), class fix = never stdlib-shadow in a
+path-inserted dir. check.py 372 passed. BABYSIT (CLI, boot + close):
+**molmo2 probe 10.49@3500 — RE-DESCENDED below the 12.09 low; the
+@3000 wiggle (12.60) is resolved as noise, watch item closed**; step
+3780/40k, loss 4.14 (−0.13 this window), 2.18 s/step, vram 67.07
+(≤71), 4 ranks + 4 GPUs 71.5–71.7 GiB, ~21.9 h to 40k, @5000 save
+~02:3xZ (tick duty). Local draws10_t1 3712/25800, window 35.1 f/min,
+**cumulative 29.7 → projected ~14.5 h total, INSIDE the 24 GPU-h
+gate; boundary pulled in to ~14:0x–14:2xZ**. Discord: no inbound at
+boot, mid, or close (owner asleep). Queue (per `queue_cli.py next`):
+**next (chained work session) → P4 head-entry skeleton, then P5
+deadline stamp, P6 gpu markers, P7 tee-to-logs, #6 self-subgoal
+rung-(a) pre-reg draft; draws10_t1 boundary ~14:0x–14:2xZ → frozen
+reads (Δ_AR vs 5.8026, fairness vs −1.258, family vs 5.365) +
+T-sensitivity rung; molmo2 @5000 save ~02:3xZ tick duty, K1 gate
+@10k now with margin (10.49 < 12.09); arm A img280 HELD (fresh
+owner go required).** GPUs busy ×5 + owner-signed CPU queue →
+`run_work_next` armed.*
 
 *Updated 2026-08-07 01:02–01:2xZ (real `date -u`) — work session (chained, bounded):
 **#21 P3+P1 LANDED — the owner-signed queue head, both live-tested**
@@ -85,58 +125,6 @@ carries the deep-read's two named arms; arm A img280 HELD (fresh
 owner go required).** GPUs busy ×5 + owner-signed CPU queue →
 `run_work_next` armed.*
 
-*Updated 2026-08-07 00:23–00:5xZ (real `date -u`) — work session (bounded):
-**π0.5 CANON DEEP-READ DONE — the queued lit item, taken as the
-session's ONE deliverable**
-([post](posts/2026-08-07-pi05-deep-read.md)): π0.5
-(arXiv:2504.16054) + Knowledge Insulation (arXiv:2505.23705) read
-from fetched full texts against the live stage-2/Molmo2 question.
-Headline mapping: our sequential FAST-AR-trunk → frozen-trunk flow
-expert is "extreme KI"; the two dials where PI's production recipe
-differs are now named #4 arms for the Molmo2 endpoint (**all-layer
-KV reads** vs our 3 export streams; **trunk CE continuing under
-stop-grad** vs hard freeze — naive joint training costs ~65 pts
-language following + 7.5× convergence in their measurements). Our
-+0.462 aux-off result externally replicates π0.5's Implicit-HL
-finding, and their untested-here runtime increment became a **new
-zero-training rung-(a) probe banked in #6**: self-generated subgoal
-→ `[subgoal|…]` → panel vs 5.8026 (validity table first). #16 north
-star gets its external anchor (Fig. 8: held-out-home success scales
-with location count; 104 locations MATCHES a trained-on-test-homes
-control). #5 note: FAST beats naive binning ~95% vs ~85% as the
-backbone signal. Convention flag: π0.5's τ=1 is DATA, ours is
-NOISE. All banked into ideas #4/#5/#6/#15/#16; check.py green (351
-passed); blog + Space pushed, post URL curl-200, Discord posted via
---body-file. BABYSIT 00:3x–00:4xZ: box molmo2 step 2140/40k, loss
-4.55 (4.90@1480 → 4.55@2140), probe 30.84@500 → 13.21@2000
-descending, 2.18–2.25 s/step, vram 67.07 GiB (rule ≤71), 4 ranks
-pgrep-alive (7 procs), util 64–100%; **@2500 save+probe anchor lands
-~00:58Z — next tick reads it** (rsync had no step_* dir yet at
-00:24Z pass). Local draws10_t1: 1792/25800 and **DECELERATING —
-three measured windows: 37–40 f/min (23:57–00:1x) → ~28 (17-min
-window 00:19–00:36) → 16.0 (exact 10-min window 00:38–00:48)**.
-Mechanism checked, not vibed: no GPU throttle (1980 MHz, 30 °C,
-0x0 reasons), util steady ~22%, eval main proc pinned ~111% CPU →
-single-core CPU-bound, rate tracks panel content (decode length per
-chunk), nothing fixable mid-run. Cumulative since launch 1792
-frames/69 min = **26 f/min → projected total ≈ 16.6 h, INSIDE the
-24 GPU-h gate; boundary ~15:0x–16:3xZ 08-07** if the slow stretch
-is local. **Tick rule armed: re-measure a ≥5-min window each
-babysit; re-project from CUMULATIVE rate; if cumulative projection
-crosses 24 GPU-h total, the pre-reg's q4-fallback question re-opens
-(escalate to owner, don't silently kill).** Discord: no inbound at
-boot or any checkpoint poll. Queue: **next (chained work session) →
-pre-reg draft for the #6 self-subgoal probe (CPU; the probe itself
-wants a quiet GPU ≥ the draws10 boundary) or #21 P1–P7 the moment
-the owner signs off (first reply re-prioritizes); draws10_t1
-boundary ~15:0x–16:3xZ (cumulative-rate projection; tick rule
-above) → frozen reads (Δ_AR vs 5.8026, fairness vs −1.258, family
-vs 5.365) + T-sensitivity rung after; molmo2 @2500
-anchor ~00:58Z (tick duty), endpoint ~08-08 — its stage-2
-attachment decision now has the deep-read's two named arms; arm A
-img280 HELD (fresh owner go required).** GPUs busy ×5 + CPU queue
-live → `run_work_next` armed.*
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -165,6 +153,12 @@ infra, exploit-side): the pre-commit gate + the babysit CLI that
 mechanizes every future checkpoint; both live-tested against the two
 running jobs. Lit slice skipped — taken as the work item itself one
 session ago (π0.5 deep-read, <1 h real-clock); balance on cadence.
+Session 01:19–01:4xZ: all-CPU, 0 GPU-h — #21 P2 (owner-signed infra,
+exploit-side): the queue became data (queue.json + queue_cli.py
+validate), and the new check.py commit gate caught a real stdlib
+shadowing bug in the first version before it landed. Lit slice
+skipped — owner-signed P-block in progress, slice taken two sessions
+ago as the work item (π0.5); balance on cadence.
 Stale detail below is the 18:1xZ snapshot:
 (as of 18:1xZ: local — SnapFlow ftrig fine-tune
 17:02→17:50Z ≈ 0.8 h COMPLETE at 4k + chained after-reads (rig draws
