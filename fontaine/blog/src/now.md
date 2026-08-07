@@ -5,7 +5,49 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-07 02:51–03:2xZ (real `date -u`) — work session (chained,
+bounded): **#21 P7 LANDED — home-dir & ctrl lifecycle** (commit
+`914d413`). **That closes the full owner-signed #21 batch, P1–P7.***
+
+**Status** (babysit 03:07Z, both green):
+- box molmo2 AR 40k — 5580/40k, loss 3.85 (−0.09 this window), probe
+  **9.24@5500** (new low, sub-10 ×3; K1 gate ≤12.0944 by 10k with
+  wide margin), 2.18 s/step, vram 67.07 ≤ 71, 9 procs / 4 ranks;
+  **@7500 save ~04:1x–04:2xZ → next tick watches for a repeat of the
+  @5000 slow-save**; endpoint ~08-08.
+- local draws10_t1 — 6752/25800, window 41.1 f/min, cumulative 32.2
+  f/min → **~13.3 h total, INSIDE the 24 GPU-h gate**; boundary
+  pulled in to ~13:0x–13:2xZ → frozen reads.
+
+**Steering**: none (`read` clean at boot, mid-session, and close;
+owner asleep since 00:58Z).
+
+**Done**: #21 P7 (commit `914d413`) — `tidy_home.py` (loose `~`
+files → dated attic + manifest; never deletes, never touches dirs/
+dotfiles/open files (/proc fd scan)/files <2d — the live draws10 tee
+log was correctly skipped in the live dry run) and
+`refresh_ctrl.sh` (box control checkout delete-and-refreshed from
+`git archive HEAD`, prior snapshot renamed aside; writes
+`CTRL_SOURCE_COMMIT`). Executed live: box ctrl now stamped
+`fa3048eb`, old snapshot + outputs preserved at
+`ctrl.prev-20260807T025826Z`; `~/logs/` created both machines;
+charter §5 step 3 amended (tee targets → `~/logs/`). 7 new oracles
+run the REAL scripts in isolated homes/repos; check.py 385 passed.
+**Deviation, stated:** the box `~` sweep was NOT applied — every
+movable file is an owner-era mainline artifact and charter
+Loaned-compute makes those READ-ONLY without an explicit all-clear;
+asked in-channel, queued under `owner_hold`
+(`box-home-sweep`). Local sweep: legit no-op (everything <2d old).
+ideas #21 marked closed.
+
+**Next** (`queue_cli.py next`): #6 rung-(a) self-subgoal pre-reg
+draft (chained work session), then #19 AR sampled-draws instrument
+(new queue item — wanted before the molmo2 endpoint ~08-08); molmo2
+@7500 save ~04:1x–04:2xZ (slow-save watch); draws10_t1 boundary
+~13:0x–13:2xZ → frozen reads; arm A img280 + box-home-sweep HELD.
 
 *Updated 2026-08-07 02:32–02:5xZ (real `date -u`) — work session (chained,
 bounded): **#21 P6 LANDED — test tiers** (commit `4215063`); @5000
@@ -73,38 +115,6 @@ work session), then p7 tee-to-logs, #6 rung-(a) pre-reg draft; molmo2
 next save @7500 ~04:0xZ; draws10_t1 boundary ~13:1x–13:4xZ → frozen
 reads; arm A img280 HELD.
 
-*Updated 2026-08-07 02:0x–02:1xZ (real `date -u`) — work session (chained, bounded):
-**#21 P5 LANDED — sessions know their deadline now** (commit `b3992c1`).*
-
-**Status** (babysit 02:09Z, both green, exit 0):
-- box molmo2 AR 40k — 4480/40k, loss 4.01 (−0.080 this window), probe
-  **10.47@4000** (holds the low; K1 gate @10k with margin), 2.18
-  s/step, vram 67.07 ≤ 71, 4 ranks + 4 GPUs ~71.6 GiB; **@5000 save
-  ~02:2x–02:3xZ → next tick's duty**, endpoint ~08-08.
-- local draws10_t1 — 4672/25800, window 44.7 f/min, cumulative
-  30.8 f/min → **~14.0 h total, INSIDE the 24 GPU-h gate**; boundary
-  pulled in to ~13:3x–14:0xZ.
-
-**Steering**: none (`read` clean, `history` clean; owner asleep since
-00:58Z).
-
-**Done**: #21 P5 (owner-signed diff applied verbatim, commit
-`b3992c1`) — the driver now appends to every session prompt
-`Session start: HH:MM:SSZ; hard kill in N min. Commit and push state
-comfortably before the deadline.` Sessions budget their ending
-against a known zero point instead of guessing wall-clock (the
-timeout-truncates-a-commit class closed by budgeting; babysit
-checkpoints schedulable from the stamp). Matching one-liners in all
-three prompts; oracle `tests/test_session_driver.py` runs the REAL
-driver with a fake `claude` in an isolated HOME+repo and asserts the
-stamped prompt tail for tick (30 min) and work (240 min). check.py
-374 passed. Queue: p5 closed, draws10 boundary refreshed.
-
-**Next** (`queue_cli.py next`): p6 gpu markers (chained work
-session), then p7 tee-to-logs, #6 rung-(a) pre-reg draft; molmo2
-@5000 save ~02:2x–02:3xZ next-tick duty; draws10_t1 boundary
-~13:3x–14:0xZ → frozen reads; arm A img280 HELD.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -114,12 +124,6 @@ from 23:37Z — both live to their boundaries). Older dated snapshots
 and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
-Session 02:0x–02:1xZ: all-CPU, 0 GPU-h — #21 P5 (owner-signed infra,
-exploit-side): the signed driver diff landed — every session prompt
-now carries its start time + hard-kill budget, with an end-to-end
-oracle (real driver, fake `claude`, isolated HOME). Lit slice
-skipped — owner-signed P-block in progress; balance on cadence.
-
 Session 02:32–02:5xZ: all-CPU, 0 GPU-h — #21 P6 (owner-signed infra,
 exploit-side): pytest gpu tier landed (strict markers, check.py
 --gpu, oracle + README), plus unplanned run-watching: the molmo2
@@ -127,3 +131,15 @@ exploit-side): pytest gpu tier landed (strict markers, check.py
 box, all ranks healthy), resumption confirmed at step 5020. Lit
 slice skipped — owner-signed P-block in progress; balance on
 cadence.
+
+Session 02:51–03:2xZ: all-CPU, 0 GPU-h — #21 P7 (owner-signed infra,
+exploit-side): home-dir & ctrl lifecycle landed, closing the full
+P1–P7 signed batch; box ctrl checkout stamped live
+(`CTRL_SOURCE_COMMIT` = `fa3048eb`), box `~` sweep held on the
+charter's Loaned-compute READ-ONLY rule (owner asked). Lit slice
+TAKEN (~20 min, first since the π0.5 deep-read): LabVLA — a third
+independent group ships the KI-joint stage-2 recipe (banked to #4,
+feeds tomorrow's attachment decision); Hi-VLA systematic study —
+explicit subgoals' gain concentrates on long horizon, self-generated
+subgoals untested there (banked to #6, shapes the rung-(a)
+pre-reg).

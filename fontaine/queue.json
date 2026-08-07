@@ -1,10 +1,10 @@
 {
-  "updated_utc": "2026-08-07T02:52:00+00:00",
+  "updated_utc": "2026-08-07T03:15:00+00:00",
   "depth_reason": null,
   "items": [
     {
       "id": "molmo2_ar40k",
-      "title": "Molmo2 AR 40k trunk run (box, 4xDDP) \u2014 probe 9.64@5000 (sub-10 \u00d72); @5000 save landed SLOW (~14 min pre-save stall, resumed 02:48Z) \u2014 watch @7500 ~04:1x-04:2xZ for a repeat",
+      "title": "Molmo2 AR 40k trunk run (box, 4xDDP) — probe 9.24@5500 (sub-10 ×3, new low); watch @7500 save ~04:1x-04:2xZ for a repeat of the @5000 slow-save",
       "class": "gpu-box",
       "status": "live",
       "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-molmo2-ar-40k.md",
@@ -18,7 +18,7 @@
       "status": "live",
       "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-ar-sampled-draws.md",
       "owner_hold": false,
-      "boundary": "~13:1x-13:4xZ 2026-08-07 (cumulative 31.4 f/min at 02:42Z -> ~13.7 h total, re-projected each babysit; 24 GPU-h gate)"
+      "boundary": "~13:0x-13:2xZ 2026-08-07 (cumulative 32.2 f/min at 03:07Z -> ~13.3 h total, re-projected each babysit; 24 GPU-h gate)"
     },
     {
       "id": "draws10-frozen-reads",
@@ -27,16 +27,7 @@
       "status": "blocked",
       "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-ar-sampled-draws.md",
       "owner_hold": false,
-      "boundary": "opens at draws10_t1 completion (~13:1x-13:4xZ 2026-08-07); reads are frozen in the pre-reg"
-    },
-    {
-      "id": "p7-tee-to-logs",
-      "title": "#21 P7 \u2014 tee session output to ~/logs + ctrl-checkout commit stamp (<30 min)",
-      "class": "cpu",
-      "status": "queued",
-      "prereg": null,
-      "owner_hold": false,
-      "boundary": null
+      "boundary": "opens at draws10_t1 completion (~13:0x-13:2xZ 2026-08-07); reads are frozen in the pre-reg"
     },
     {
       "id": "idea6-selfsubgoal-prereg-draft",
@@ -48,8 +39,17 @@
       "boundary": null
     },
     {
+      "id": "idea19-ar-draws-instrument",
+      "title": "#19 AR sampled-draws instrument + pre-reg draft (owner ask 08-06 19:15Z): temperature-sampled draws-N + mean-of-samples for AR panels, mirroring the flow draws machinery; needed before the molmo2_ar40k endpoint read so both families get the same instrument",
+      "class": "cpu",
+      "status": "queued",
+      "prereg": null,
+      "owner_hold": false,
+      "boundary": "instrument + pre-reg wanted before molmo2_ar40k endpoint (~2026-08-08)"
+    },
+    {
       "id": "molmo2-stage2-attachment-decision",
-      "title": "Molmo2 stage-2 attachment decision at endpoint \u2014 carries the pi0.5 deep-read's two named arms (all-layer KV reads; trunk CE under stop-grad vs hard freeze)",
+      "title": "Molmo2 stage-2 attachment decision at endpoint — carries the pi0.5 deep-read's two named arms (all-layer KV reads; trunk CE under stop-grad vs hard freeze)",
       "class": "cpu",
       "status": "blocked",
       "prereg": null,
@@ -57,8 +57,17 @@
       "boundary": "opens at molmo2_ar40k endpoint (~2026-08-08)"
     },
     {
+      "id": "box-home-sweep",
+      "title": "Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era mainline artifacts) — HELD: charter Loaned-compute READ-ONLY rule; needs explicit owner all-clear (asked in-channel 03:1xZ 08-07)",
+      "class": "cpu",
+      "status": "blocked",
+      "prereg": null,
+      "owner_hold": true,
+      "boundary": null
+    },
+    {
       "id": "arm-a-img280",
-      "title": "arch-batch arm A img280 40k (box) \u2014 HELD: fresh owner go required before launch",
+      "title": "arch-batch arm A img280 40k (box) — HELD: fresh owner go required before launch",
       "class": "gpu-box",
       "status": "blocked",
       "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-arch-batch-1.md",

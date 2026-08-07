@@ -178,6 +178,20 @@ matched steps.
   attachment becomes a live decision. π0.5 post-training also keeps
   the discrete head alive beside the flow head — our decoder kinds
   share the seam, so a both-heads arm is config, not surgery.
+- **Lit slice 2026-08-07 03:2xZ — a THIRD independent group ships
+  the KI-joint recipe:** [LabVLA](https://arxiv.org/html/2606.13578)
+  (lab-bench manipulation, Qwen3-VL-4B trunk) uses exactly the
+  two-stage shape we're deciding on: FAST-token pretraining makes
+  the backbone action-aware first, then an 18-layer DiT flow expert
+  attaches under stop-grad with **the backbone's FAST/annotation CE
+  kept active during expert training** (their words: flow loss
+  updates projection+DiT only; token losses still train the VLM).
+  No isolating ablation published — adoption evidence, not
+  measurement — but the KI-joint arm now has π0.5/KI + LabVLA
+  behind it vs our sequential-freeze default. Also a second 4B-scale
+  trunk data point for the Molmo2-4B port's size class. Their expert
+  reads a projected "detached prefix slice", not all-layer KV —
+  arms 1 and 2 remain independently testable.
 
 ## 5. FAST tokenizer v3 — `queued`
 
@@ -256,6 +270,24 @@ numbers and both finalization amendments.
   subgoals before any scalar (the never-generated-subgoal scar).
   Owner anchor in favor: the 21:43Z steer notes aux subgoals
   generalize strikingly OOD.
+- **Lit slice 2026-08-07 03:2xZ — external support + two design
+  constraints for rung (a):**
+  [Hi-VLA systematic study](https://arxiv.org/html/2606.10267v1)
+  (2606.10267) benchmarks hierarchy design and finds explicit
+  language subgoals beat flat VLA **largest on long horizon** (flat
+  25.30% → naive hierarchy 40.56% → best 67.08%; short-horizon gap
+  near zero) — so the probe's per-step decomposition should expect
+  the gain concentrated in LATE-horizon chunk_mae, mirroring the #1
+  banked-prediction pattern. Two carried constraints: (i) their
+  planner/controller are separate models — SELF-generated subgoals
+  (our probe) are untested there, so ours is a genuine increment,
+  not a replication; (ii) subgoal refresh granularity mattered a lot
+  (4–8 s best; model-predicted horizons WORST) — our panel probe
+  conditions per-frame, sidestepping refresh policy, but any later
+  rollout arm must pre-register the refresh rule. Their hardest-task
+  failure mode ("VLMs tend to ignore image inputs as task becomes
+  harder") is the #11 state-dominant-bias story from the hierarchy
+  side.
 
 ## 7. Stream-schedule re-test — `queued`
 
@@ -1082,18 +1114,28 @@ blocks make it trivial), Gemma later if a live-trunk E4B+ run recurs.
 Gate: keystone oracle (checkpointed ≡ plain forward/backward, loss
 bit-close) + a measured chunk-size ladder re-run.
 
-## 21. Agentic-loop & infrastructure deep review — `delivered`, awaiting owner sign-off (review published 2026-08-07 00:3xZ)
+## 21. Agentic-loop & infrastructure deep review — `confirmed`/CLOSED (all 7 signed items landed 2026-08-07)
 
-**Status 2026-08-07:** the main deliverable is published —
+**CLOSED 2026-08-07 03:1xZ — P1–P7 all landed, owner-signed 00:50Z,
+one chained-session cadence:** P3+P1 `4c4fea8` babysit CLI +
+pre-commit gate; P2 `19f3d71` queue-as-data; P4 `40e782f` now.md
+skeleton + archive policy; P5 `b3992c1` deadline stamp; P6 `4215063`
+test tiers; P7 `914d413` home-dir/ctrl lifecycle (`tidy_home.py`
+manifested attic sweep, `refresh_ctrl.sh` + `CTRL_SOURCE_COMMIT` —
+box ctrl stamped `fa3048eb` live; tee targets → `~/logs/` per charter
+§5). One open residue: the box `~` sweep (133 owner-era entries)
+awaits an explicit owner all-clear (charter Loaned-compute
+READ-ONLY rule) — asked in-channel, tracked in `queue.json` under
+`owner_hold`. Original scope below, kept for the record.
+
+**Status 2026-08-07 (pre-execution):** the main deliverable is
+published —
 [the review post](posts/2026-08-07-agentic-loop-review.md) with 7
 prioritized proposals (P1 babysit CLI, P2 queue-as-data, P3
 pre-commit hook, P4 now.md skeleton, P5 deadline stamp, P6 gpu test
 markers, P7 home-dir/ctrl hygiene) + inline prompt/driver diffs.
 Applied as class fixes (no sign-off needed): `archive_now.py`
-(2026-08-06), `discord.py post --body-file` (2026-08-07). Everything
-else is **blocked on owner review** — first owner reply
-re-prioritizes; P3+P5+P6+P7 fit one work session, P1 and P2 one
-each.
+(2026-08-06), `discord.py post --body-file` (2026-08-07).
 
 Owner steering, verbatim scope: "a deep review of your charter focus
 on optimising the way you work and your local infrastructure … The
