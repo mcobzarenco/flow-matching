@@ -1,10 +1,10 @@
 {
-  "updated_utc": "2026-08-07T03:52:47+00:00",
+  "updated_utc": "2026-08-07T04:11:56+00:00",
   "depth_reason": null,
   "items": [
     {
       "id": "molmo2_ar40k",
-      "title": "Molmo2 AR 40k trunk run (box, 4xDDP) \u2014 probe low 8.54@6000 (8.94@6500 latest, sub-10 \u00d75); watch @7500 save ~04:1x-04:2xZ for a repeat of the @5000 slow-save",
+      "title": "Molmo2 AR 40k trunk run (box, 4xDDP) — probe low 8.54@6000 (8.64@7500 latest, sub-10 ×6); @7500 save in flight 04:2xZ (slow-save watch, next check confirms steps rolling)",
       "class": "gpu-box",
       "status": "live",
       "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-molmo2-ar-40k.md",
@@ -39,13 +39,22 @@
       "boundary": "opens at first quiet local-GPU window >= draws10_t1 boundary (~13:0x-13:2xZ 2026-08-07) AND its frozen reads"
     },
     {
-      "id": "idea19-ar-draws-instrument",
-      "title": "#19 AR sampled-draws instrument + pre-reg draft (owner ask 08-06 19:15Z): temperature-sampled draws-N + mean-of-samples for AR panels, mirroring the flow draws machinery; needed before the molmo2_ar40k endpoint read so both families get the same instrument",
+      "id": "idea19-molmo2-draws-arm",
+      "title": "#19 molmo2 sampled-draws arm execution at the 40k endpoint (pre-reg'd in ar-sampled-draws post: greedy + _draws10_t1 same stems, same cost gate w/ q4 fallback) — instrument landed 78c9f56 (08-06), molmo2 trunk-specific oracles landed 08-07 ~04:3xZ (tests/test_molmo2_ar_sampling.py: T→0 greedy recovery, snapshot/restore prefill-sharing over Molmo2KVCache, append-only contract, ar_predict_sampled dispatch); the stale 'instrument + pre-reg draft' framing closed — both existed since 08-06",
+      "class": "gpu-box",
+      "status": "blocked",
+      "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-ar-sampled-draws.md",
+      "owner_hold": false,
+      "boundary": "opens at molmo2_ar40k endpoint (~2026-08-08); box GPUs busy until then"
+    },
+    {
+      "id": "idea19-endpoint-launcher-prep",
+      "title": "#19 molmo2 endpoint eval launcher prep (CPU): box launcher script for the endpoint panel — greedy + draws10_t1 stems per the ar-sampled-draws pre-reg, first-200-frames rate measurement + pre-registered q4 fallback switch, babysit.toml registry entry — so the endpoint read is one command when the box frees",
       "class": "cpu",
       "status": "queued",
-      "prereg": null,
+      "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-ar-sampled-draws.md",
       "owner_hold": false,
-      "boundary": "instrument + pre-reg wanted before molmo2_ar40k endpoint (~2026-08-08)"
+      "boundary": "wanted before molmo2_ar40k endpoint (~2026-08-08)"
     },
     {
       "id": "idea20-activation-checkpointing",
@@ -58,7 +67,7 @@
     },
     {
       "id": "molmo2-stage2-attachment-decision",
-      "title": "Molmo2 stage-2 attachment decision at endpoint \u2014 carries the pi0.5 deep-read's two named arms (all-layer KV reads; trunk CE under stop-grad vs hard freeze)",
+      "title": "Molmo2 stage-2 attachment decision at endpoint — carries the pi0.5 deep-read's two named arms (all-layer KV reads; trunk CE under stop-grad vs hard freeze)",
       "class": "cpu",
       "status": "blocked",
       "prereg": null,
@@ -67,7 +76,7 @@
     },
     {
       "id": "box-home-sweep",
-      "title": "Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era mainline artifacts) \u2014 HELD: charter Loaned-compute READ-ONLY rule; needs explicit owner all-clear (asked in-channel 03:1xZ 08-07)",
+      "title": "Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era mainline artifacts) — HELD: charter Loaned-compute READ-ONLY rule; needs explicit owner all-clear (asked in-channel 03:1xZ 08-07)",
       "class": "cpu",
       "status": "blocked",
       "prereg": null,
@@ -76,7 +85,7 @@
     },
     {
       "id": "arm-a-img280",
-      "title": "arch-batch arm A img280 40k (box) \u2014 HELD: fresh owner go required before launch",
+      "title": "arch-batch arm A img280 40k (box) — HELD: fresh owner go required before launch",
       "class": "gpu-box",
       "status": "blocked",
       "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-arch-batch-1.md",

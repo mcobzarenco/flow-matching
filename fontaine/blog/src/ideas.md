@@ -1221,22 +1221,53 @@ the rest to dated archive pages). Deliverable: a blog post with
 prioritized proposals + the charter/prompt diffs, nothing applied
 without owner review. Cost: 0 GPU-h.
 
-## 19. AR sampled-draws eval (mean-of-samples) — `queued` (owner ask 2026-08-06 19:15Z)
+## 19. AR sampled-draws eval (mean-of-samples) — `screening` (AR-100k arm LIVE; molmo2 arm oracle-complete, waits on its endpoint)
 
 Greedy decode is the AR family's single-draw voice; the flow family's
-deployment read is mean-of-10 draws. The owner's fairness point: when
-we quote flow mean-of-N, the AR models should get temperature-sampled
-draws-N + mean-of-samples too. Instrument work, mirrors the flow draws
-machinery: sample N chunk decodes per frame at a pre-registered
-temperature (grammar mask unchanged — sampling within legal ids),
-mean the decoded chunks, report draws1/drawsN like the flow panels.
-Open design points for the pre-reg: temperature (fit on a probe set,
-never the panel), whether aux value lines stay greedy (they should —
-only the action block samples), and the fairness caveat that flow
-draws are i.i.d. noise draws while AR draws share the prompt prefill
-(cheaper per draw with the KV cache). First consumer: the
-`fontaine_molmo2_ar_40k_ddp4` endpoint vs the A-s0 anchor —
-BOTH sides get the same instrument or neither.
+deployment read is mean-of-10 draws. The owner's fairness point
+(2026-08-06 19:15Z): when we quote flow mean-of-N, the AR models get
+temperature-sampled draws-N + mean-of-samples too — both sides get
+the same instrument or neither.
+
+**Status 2026-08-07.** Instrument landed + gated 2026-08-06
+(`78c9f56`: `--ar-temperature T --sample-draws N`, Gumbel-max over
+the grammar-masked softmax, action block only — aux value lines stay
+greedy; draws share one prefill via by-reference cache
+snapshot/restore; `stable_sample_rng` keying domain-separated from
+flow noise; `_drawsN_tT` provenance). Pre-registered the same night
+([pre-reg](posts/2026-08-06-prereg-ar-sampled-draws.md), T=1.0
+pinned untuned, frozen reads Δ_AR vs 5.8026 / fairness vs −1.258 /
+family vs 5.365, q4 cost fallback). **AR-100k arm running now**
+(`draws10_t1`, local GPU, boundary ~13Z 2026-08-07 → frozen reads).
+**Molmo2 arm oracle-complete 2026-08-07 ~04:3xZ**: the pre-reg's
+mechanics were oracle-pinned on the gemma trunk only while the
+molmo2 arm runs the shared suffix decode over a different cache
+(`Molmo2KVCache`) — `tests/test_molmo2_ar_sampling.py` now pins the
+trunk-specific halves on the molmo2 fixture (T→0 greedy recovery,
+draw determinism/distinctness, snapshot/restore prefill-sharing
+bit-exactness, the append-only-cache contract directly, the
+`ar_predict_sampled` dispatch). Remaining: execute the molmo2 arm at
+its endpoint (~2026-08-08), same stems + same cost gate, per the
+pre-reg — launcher prep queued.
+
+**Lit-sourced escalation rung (banked 2026-08-07 ~04:4xZ, NOT
+pre-registered).** If the frozen mean-of-draws reads land small,
+selection-over-draws is the named next rung, two flavors from the
+radar: (a) MG-Select ([2510.05681](https://arxiv.org/abs/2510.05681))
+— verifier-free BEST-of-N: pick the draw whose action-token
+distribution maximizes KL(conditional ‖ condition-MASKED reference),
+where the reference needs a model trained with condition dropout —
+**AR-100k already is** (state dropout 0.5, subgoal dropout 0.5) and
+`--mask-state` already computes the masked context, so this is a
+zero-training read over a `--dump-draws` npz + per-draw logit
+retention; (b) VLA-ATTC
+([2605.01194](https://arxiv.org/abs/2605.01194)) — a trained relative
+action critic ranks candidates (pairwise), with uncertainty-gated
+test-time compute; the trained-critic alternative if (a)'s
+verifier-free score is noise. Both papers frame greedy as the
+precision bottleneck — the OPPOSITE of our expectation 2
+(greedy ≈ posterior mean); the draws10 primary read adjudicates
+between these two priors on our own panel before any escalation.
 
 ## 15. Literature-sourced arms — standing
 

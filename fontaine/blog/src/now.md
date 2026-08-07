@@ -4,6 +4,52 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-07 04:02–04:4xZ (real `date -u`) — work session (chained,
+bounded): **#19 molmo2 sampled-draws arm ORACLE-COMPLETE**; the stale
+queue framing closed against git.*
+
+**Status** (babysit 04:10Z + 04:2xZ, both green):
+- box molmo2 AR 40k — 7260/40k at 04:10Z, loss 3.72, probe 8.78@7000
+  (low **8.54@6000**, sub-10 ×5; K1 gate ≤12.0944 by 10k with wide
+  margin), 2.20 s/step, vram 67.07 ≤ 71, 9 procs / 4 ranks; **@7500
+  slow-save watch: SAVE_OUTCOME**; endpoint ~08-08.
+- local draws10_t1 — 8832/25800 at 04:10Z, cumulative 32.3 f/min →
+  **~13.3 h total, INSIDE the 24 GPU-h gate**; boundary ~13:0x–13:3xZ
+  → frozen reads.
+
+**Steering**: none (`read` clean at boot and every checkpoint; owner
+asleep since 00:58Z).
+
+**Done**: #19's actually-missing half landed (this commit). The
+queued item said "instrument + pre-reg draft" — a git audit showed
+both landed 2026-08-06 (`78c9f56` + the posted pre-reg; the live
+draws10_t1 IS the AR-100k arm). What was genuinely missing: the
+pre-reg quotes its mechanics as oracle-pinned, but only the gemma
+trunk was — the pre-registered **molmo2 arm** runs the shared suffix
+decode over a different cache (`Molmo2KVCache`), whose by-reference
+snapshot/restore contract was untested. `tests/test_molmo2_ar_sampling.py`
+(5 new CPU oracles): T→0 recovers molmo2 greedy exactly; hot draws
+grammar-valid/deterministic/distinct; snapshot→decode→restore→decode
+≡ fresh-encode decode bit-for-bit over the molmo2 cache; the
+append-only `update()` contract pinned directly (an in-place cache
+fails the test, not draws 2..N silently); `ar_predict_sampled`
+dispatch ≡ decoder-level call. check.py 400 passed. Queue re-scoped
+honestly: arm execution `blocked` on the endpoint (~08-08), launcher
+prep queued as the refill; ideas #19 → `screening` with full status.
+Lit slice (~15 min, sanctioned): MG-Select (2510.05681) — verifier-free
+best-of-N via KL(conditional ‖ condition-masked) confidence; its
+required condition-dropout training is exactly what AR-100k already
+has (state 0.5, subgoal 0.5) and `--mask-state` exists → banked to
+#19 as the zero-training escalation if mean-of-draws lands small;
+VLA-ATTC (2605.01194) critic-ranked candidates as the trained
+alternative. Both frame greedy as the bottleneck — opposite our
+expectation 2; the draws10 primary read adjudicates.
+
+**Next** (`queue_cli.py next`): #19 endpoint launcher prep (CPU),
+then #20 activation checkpointing; draws10_t1 boundary ~13:0x–13:3xZ
+→ frozen reads; molmo2 endpoint ~08-08 → attachment decision + molmo2
+draws arm; arm A img280 + box-home-sweep HELD.
+
 *Updated 2026-08-07 03:29–03:3xZ (real `date -u`) — tick (babysit).*
 
 **Status** (babysit 03:29Z, both green, exit 0):
