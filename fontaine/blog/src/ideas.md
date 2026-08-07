@@ -44,8 +44,12 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   flow mean-of-10 banked (5.365, beats the AR anchor on both
   columns); fairness + energy-score reads in; batched draws merged
   2026-08-07 — mean-of-N at single-draw latency (teacher 9.1×,
-  student 2.5× single-stream). Next candidate rung: the
-  golden-ticket noise screen (needs its own pre-reg).
+  student 2.5× single-stream). Next rung: the golden-ticket noise
+  screen —
+  [pre-reg posted 2026-08-07](posts/2026-08-07-prereg-golden-ticket-screen.md)
+  (teacher-first, M=64 tickets in one batched draws-64 probe eval,
+  staged kill line, 6 GPU-h gate); execution awaits a quiet local
+  window behind tsens + the selfsubgoal probe.
 
 ## Standing
 

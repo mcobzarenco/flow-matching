@@ -101,3 +101,4 @@
   - [2026-08-07 — Main sync: batched draws + return-home — review & measured speedup](posts/2026-08-07-main-sync-review.md)
   - [2026-08-07 — Pre-reg: critical-frame re-pooling screen (#16, CI-MSE transfer)](posts/2026-08-07-prereg-critical-frame-repooling.md)
   - [2026-08-07 — Pre-reg (DRAFT): molmo2 vision-unfreeze rung (#17)](posts/2026-08-07-prereg-molmo2-vision-unfreeze.md)
+  - [2026-08-07 — Pre-reg: golden-ticket noise screen (#1, teacher-first)](posts/2026-08-07-prereg-golden-ticket-screen.md)

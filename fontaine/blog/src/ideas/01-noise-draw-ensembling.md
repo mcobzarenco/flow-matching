@@ -1,4 +1,4 @@
-# 1. Inference-time noise-draw ensembling — flow side BANKED (mean-of-10 5.365 beats the AR anchor; fairness + energy-score reads in); open rung: the golden-ticket noise screen (`queued`, needs its own pre-reg)
+# 1. Inference-time noise-draw ensembling — flow side BANKED (mean-of-10 5.365 beats the AR anchor; fairness + energy-score reads in); open rung: the golden-ticket noise screen (pre-reg POSTED 2026-08-07, execution awaits a quiet local window)
 
 *Tag: `noise-draws` · idea #1 · [index](../ideas.md)*
 
@@ -102,6 +102,21 @@
   1-NFE student's draw collapse may have shrunk the searchable
   ticket space — screen the teacher's noise space first, or verify
   the student still responds to noise.
+- **Golden-ticket screen PRE-REGISTERED (2026-08-07 ~18:0xZ,
+  [pre-reg](../posts/2026-08-07-prereg-golden-ticket-screen.md)):**
+  teacher-first, M=64 i.i.d. tickets scored in ONE batched draws-64
+  eval on the drawsprobe_s7 subset (the "draws" are the tickets — the
+  batched-draws merge makes the search ~1.5 GPU-h); frozen null from
+  banked data (σ_probe 0.0669 per-draw pooled spread; null min₆₄ =
+  mean − 0.157); staged kill line BEFORE the confirmatory full-panel
+  read (winner judged on complement rows only, adopt floor −0.05);
+  "both" cell = mean-of-top-10-tickets vs banked mean-of-10; free R4:
+  per-dataset argmin tickets = the task-locality read the paper
+  predicts. Honest prior *against*: a panel-wide ticket is the
+  paper's shared-ticket regime (regressed in all 3 LIBERO suites).
+  Instrument = a "ticket" noise-key mode in `bijou.eval` (to land
+  oracle-gated; 4 oracles frozen in the post). Gate 6 GPU-h; window
+  strictly after tsens rungs + behind the selfsubgoal probe.
 - **Batched draws MERGED + speedup measured (2026-08-07,
   [main-sync review](../posts/2026-08-07-main-sync-review.md)):**
   the owner's `2ee2be5` integrates all draws in ONE solver call at

@@ -47,3 +47,8 @@ corrections are follow-up posts.
 - [2026-08-07 — Deep read: π0.5 + Knowledge Insulation (#15 → #4/#6/#16)](2026-08-07-pi05-deep-read.md)
 - [2026-08-07 — Pre-reg: self-subgoal conditioning probe (#6 rung (a))](2026-08-07-prereg-selfsubgoal-probe.md)
 - [2026-08-07 — Pre-reg: molmo2 stage-2 attachment screen — frozen vs KI-joint (#4)](2026-08-07-prereg-molmo2-attach-screen.md)
+- [2026-08-07 — Pre-reg: leaderboard decode-cost micro-benchmark](2026-08-07-prereg-leaderboard-decode-microbench.md)
+- [2026-08-07 — Main sync: batched draws + return-home — review & measured speedup](2026-08-07-main-sync-review.md)
+- [2026-08-07 — Pre-reg: critical-frame re-pooling screen (#16, CI-MSE transfer)](2026-08-07-prereg-critical-frame-repooling.md)
+- [2026-08-07 — Pre-reg (DRAFT): molmo2 vision-unfreeze rung (#17)](2026-08-07-prereg-molmo2-vision-unfreeze.md)
+- [2026-08-07 — Pre-reg: golden-ticket noise screen (#1, teacher-first)](2026-08-07-prereg-golden-ticket-screen.md)

@@ -1,5 +1,5 @@
 {
-  "updated_utc": "2026-08-07T17:55:00+00:00",
+  "updated_utc": "2026-08-07T18:10:00+00:00",
   "depth_reason": null,
   "items": [
     {
@@ -301,12 +301,30 @@
     },
     {
       "id": "idea1-golden-ticket-prereg-draft",
-      "title": "#1 golden-ticket noise screen \u2014 pre-reg DRAFT (CPU; sampling-beyond-selection page + idea page design note): search M candidate noise tickets offline by probe-subset MAE via sample_actions(noise=...) (hook exists), validate winner on full panel; screen the TEACHER's noise space first (1-NFE student draw-collapse may have shrunk the searchable space \u2014 verify student still responds to noise before spending its cells); freeze M, subset, draw budget, and the ticket-vs-mean-of-10-vs-both comparison cells before any launch",
+      "title": "#1 golden-ticket noise screen \u2014 pre-reg POSTED 08-07 ~18:1xZ work session (2026-08-07-prereg-golden-ticket-screen.md, immutable, not a draft \u2014 every design constant pinned from banked data): teacher-first (bijou_flow_artrunk@80k Heun-30; student = escalation amendment only), M=64 i.i.d. tickets [50,6] sha-pinned, stage 1 = ONE batched draws-64 eval on drawsprobe_s7 where the draws ARE the tickets (~1.5 GPU-h via the batched-draws merge), frozen null from banked sigma_draw_direct (sigma_probe 0.0669, null min64 = mean-0.157, MC-verified constants), R1 kill line BEFORE stage 2 (sd>0.0785 OR min<mean-0.22), R2 confirmatory = winner on COMPLEMENT core rows paired vs stablekey npz (adopt floor -0.05 = 2sigma), R3 mean-of-top-10-tickets vs banked 5.3645 (pooled, tie band 0.02), R4 free per-dataset task-locality read; instrument = ticket noise-key mode in bijou.eval, 4 oracles frozen; gate 6 GPU-h",
+      "class": "cpu",
+      "status": "done",
+      "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-golden-ticket-screen.md",
+      "owner_hold": false,
+      "boundary": "DONE 08-07; execution item queued separately"
+    },
+    {
+      "id": "idea1-golden-ticket-instrument",
+      "title": "#1 golden-ticket screen INSTRUMENT (CPU, any GPU-busy window; pre-reg semantics frozen 2026-08-07-prereg-golden-ticket-screen.md): ticket noise-key mode in bijou.eval (noise = tickets[draw], frame-independent; provenance carries mode + tickets sha256; reuses batched draws tiling + --dump-draws + scoring unchanged), generate + commit the M=64 tickets npz ([50,6], SeedSequence [TICKET_DOMAIN,0,m]), land the 4 frozen oracles (bit-exact contract vs sample_actions(noise=) on a fixture, cross-frame byte-identical ticket property in-process, two-run determinism, pooling reuse reproducing 6.5997 + the 10 banked per-draw probe MAEs exactly); AUDIT FIRST per standing rule: noise_for_item + NOISE_KEYS in bijou/eval/policies.py is the single seam; check.py green before commit; any semantic deviation from the pre-reg posts an amendment BEFORE launch",
       "class": "cpu",
       "status": "queued",
-      "prereg": null,
+      "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-golden-ticket-screen.md",
       "owner_hold": false,
-      "boundary": "draft in any GPU-busy window; execution rung needs a quiet local-GPU window after the pre-reg posts"
+      "boundary": "CPU work at any GPU-busy window; wanted green before the execution window opens (quiet local GPU after tsens ~00Z + selfsubgoal probe)"
+    },
+    {
+      "id": "idea1-golden-ticket-screen-execution",
+      "title": "#1 golden-ticket screen EXECUTION (local 1xH100, staged): land the ticket noise-key mode in bijou.eval + tickets npz (sha-pinned) + the 4 frozen oracles (contract vs sample_actions(noise=), ticket property across frames, determinism, pooling reuse reproducing 6.5997 + the 10 banked per-draw probe MAEs exactly), then stage 1 search via run_detached.sh (draws-64 drawsprobe_s7, ~1.5 GPU-h); R1 kill line adjudicates BEFORE stage 2 (full-panel winner on complement rows) and stage 3 (mean-of-top-10); gate 6 GPU-h total; reads frozen in the pre-reg",
+      "class": "gpu-local",
+      "status": "blocked",
+      "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-golden-ticket-screen.md",
+      "owner_hold": false,
+      "boundary": "opens at a quiet local-GPU window strictly after the tsens rungs complete (~00Z 08-08) AND behind the selfsubgoal probe (#6) per the pre-reg's window clause; instrument + oracles green before any launch"
     }
   ]
 }
