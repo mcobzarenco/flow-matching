@@ -127,3 +127,29 @@
   cells reproduce ≤0.3%. The unconstrained-class caveat on
   mean-of-10 rows is now almost purely about *panel semantics*, not
   deployment cost — the deployment argument for draws is live.
+- **Noise-space steering ladder READ (2026-08-07 ~20:2xZ,
+  [papers page](../papers/noise-space-steering.md) — DSRL 2506.15799
+  + LP-DS 2606.01151 + FRS 2606.13675):** the rung LAFM only named
+  is now mapped. DSRL: RL with the noise AS the action (dual critic
+  Q^A→Q^W distilled through the frozen decoder, noise aliasing for
+  sample efficiency; steered a real-world π₀/DROID checkpoint,
+  black-box access only). LP-DS: names the failure mode — 
+  unconstrained noise search drifts off the N(0,I) support and the
+  frozen decoder answers with mode collapse; fix = state-conditioned
+  residual w = ε + Δ_θ(s) inside a Lagrangian trust region (real
+  Franka 33/40 vs 18/40 frozen; preserves action entropy where DSRL
+  collapses it). FRS: reverse-ODE the flow to recover the noise
+  behind a reference action, then DSBC-distill 10 successful
+  trajectories into a tiny noise policy (<1 min, ~1 GB, up to +95%
+  absolute on real tasks; explicitly inapplicable to AR policies).
+  **Consequences banked**: (a) stage 1 is safe by construction
+  (i.i.d. prior candidates can't go off-manifold) but any CEM
+  escalation pre-reg MUST carry LP-DS's trust-region clause (‖ε‖
+  near the √300 ≈ 17.3 typical shell); (b) R4 gains a third
+  interpretation — per-dataset argmin structure is the offline
+  shadow of what DSRL/LAFM exploit online; (c) the rig-time story
+  from the 18:5x owner exchange now has published shapes one and two
+  rungs up (DSRL needs rewards + rollouts → gated on #16's rig
+  benchmark; DSBC needs 10 reference demos only → banked as a #16
+  lever). Whole ladder stays gated on the screen's R1/R2 verdicts —
+  no new arm from this read.

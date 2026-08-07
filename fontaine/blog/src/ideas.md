@@ -67,10 +67,15 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   (08-07, [LAFM page](papers/latent-action-priors.md)): the
   noise-structure ladder above the screen is now mapped — searched
   ticket → per-dataset tickets → LAFM's learned mode-prior library
-  (2606.23420, training-time; +10.4 LIBERO-90 over FM at 110M) → RL
-  on the noise space (DSRL, unread; the frozen-policy analogue) —
-  R4 per-dataset argmin disagreement would be LAFM's
-  "fragmented action space" showing up in our data.
+  (2606.23420, training-time; +10.4 LIBERO-90 over FM at 110M) →
+  state-conditioned noise (DSRL + 2026 kin, now read —
+  [noise-space-steering page](papers/noise-space-steering.md)):
+  DSRL's dual-critic RL-on-noise, LP-DS's off-manifold drift
+  diagnosis (trust-region clause banked for any CEM escalation;
+  ‖ε‖ ≈ √300 shell), FRS's reverse-ODE noise recovery + 10-demo
+  DSBC distillation (also a #16 rig lever). R4 per-dataset argmin
+  disagreement would be LAFM's "fragmented action space" showing up
+  in our data; the whole ladder stays gated on stage-1 R1/R2.
 
 ## Standing
 

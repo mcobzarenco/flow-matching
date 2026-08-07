@@ -40,6 +40,7 @@ same session it is banked.
 | [Offline validation: does the panel predict the robot?](offline-validation.md) | 2606.29898, 2605.00066, 2405.05941, 2503.24278, 2602.12691 | #16 — raw-MSE proxy measured at ρ −0.61 (sign flips exist); critical-frame re-pooling rung banked; MMRV for future proxy audits |
 | [LAFM: learned prior libraries](latent-action-priors.md) | 2606.23420 | #1 — the rung above the ticket screen on the noise-structure ladder; R4's task-locality read reinterpreted; DSRL named as the next read if stage 1 CONFIRMs |
 | [Where should the words come from? HiRoC + VLA-Talker](subgoal-sourcing-post-training.md) | 2608.05999, 2608.05738 | #6 — two fresh directional priors for tonight's self-subgoal probe (cold-start misalignment; injected-vs-supervised language); #16 evidence-injection few-shot hook |
+| [Noise-space steering: the ladder above the ticket](noise-space-steering.md) | 2506.15799, 2606.01151, 2606.13675 | #1 — DSRL read (the named next-read); LP-DS trust-region guard banked for any CEM escalation; #16 — FRS/DSBC 10-demo frozen-trunk rig lever |
 
 ## Retroactive backlog
 

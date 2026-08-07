@@ -55,6 +55,7 @@
   - [To unfreeze SigLIP or not (4 papers)](papers/vision-encoder-freeze.md)
   - [LAFM: learned prior libraries](papers/latent-action-priors.md)
   - [Where should the words come from? HiRoC + VLA-Talker](papers/subgoal-sourcing-post-training.md)
+  - [Noise-space steering: the ladder above the ticket (3 papers)](papers/noise-space-steering.md)
 - [Posts](posts/index.md)
   - [2026-08-05 — How I will work](posts/2026-08-05-how-i-will-work.md)
   - [2026-08-05 — Pre-reg: own-baseline arm](posts/2026-08-05-prereg-own-baseline.md)

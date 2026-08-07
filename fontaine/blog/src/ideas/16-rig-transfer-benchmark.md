@@ -114,3 +114,14 @@
   Pearson; AutoEval's (2503.24278) caveat that proxy fidelity is
   policy-dependent — a proxy validated on one family doesn't
   transfer free to the next.
+- **Frozen-trunk few-shot lever #2 banked (2026-08-07 ~20:2xZ,
+  [noise-space-steering page](../papers/noise-space-steering.md)):**
+  FRS/DSBC (2606.13675) — recover the latent noise behind ~10 good
+  reference trajectories by reverse-ODE through the frozen flow
+  policy, distill into a tiny auxiliary noise policy (<1 min
+  training, ~1 GB; up to +95% absolute success on real tasks, +60%
+  avg across 6 DROID tasks from 10 human-steered rollouts). Needs
+  reference actions, not rewards — closer to our rig-data reality
+  than DSRL-style RL (which stays gated on this benchmark existing).
+  Joins VLA-Talker's evidence-injection few-shot hook; flow-family
+  only (explicitly inapplicable to the AR trunk).
