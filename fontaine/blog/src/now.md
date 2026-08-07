@@ -14,7 +14,65 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-07 09:29–10:0xZ (real `date -u`) — work session
+(bounded): **PAPERS SECTION BATCH 3 — RETROACTIVE BACKLOG CLEARED**
+— four final theme pages / 13 papers, all 42 tracker sources now
+covered; the deep re-reads corrected seven banked claims, two of
+them citations to content that isn't in the cited papers at all.*
+
+**Status** (babysit 09:29Z + 09:41Z, both green, exit 0):
+- box molmo2 AR 40k — 14860/40k, loss 3.302, 2.194 s/step, vram
+  67.07 ≤ 71, probe low **6.69@14500** (gate margin 5.40); ~15.3 h
+  to endpoint ~08-08.
+- local draws10_t1 — 20032/25800, window 27.0 f/min (content
+  churn), cumulative 33.2 f/min → **~13.0 h total, INSIDE the
+  24 GPU-h gate**, ~2.9 h remaining; boundary ~12:3x–12:5xZ →
+  frozen reads.
+
+**Steering**: none new (polls at 09:29Z and 09:41Z clean; owner
+last at 08:42Z — the papers steering, this session finishes the
+retroactive half of it).
+
+**Done**: papers batch 3 —
+[grounding & conditioning placement](papers/grounding-conditioning.md)
+(IVRA, FLOWER, SCALE, SmolVLA),
+[action tokenization](papers/action-tokenization.md) (FAST,
+FASTer), [data & trunks](papers/data-and-trunks.md) (Rethinking
+VLA scaling, data-engine survey, VLM-to-VLA redundancy, LoRA-r32),
+[the attachment frontier](papers/attachment-frontier.md) (AR-VLA,
+Anchor-Align, π0.7/WAM post); index tracker **42 covered / 0
+remaining — backlog cleared**. Seven correction hooks banked to
+ideas.md, the loud two: the **data-engine survey contains zero
+dedup/contamination content** (we had projected our #18.7 census
+onto it — the honest cite is that the field's survey *omits* the
+axis our census covers), and **2606.31382 makes no backbone-scale
+claim** (the bigger-isn't-better prior belongs to VLM4VLA, which
+it merely cites). Also corrected: FLOWER's 50%-prune is
+encoder-decoder-only (decoder-only optimum 30%, tap at ~70% depth
+→ arm B's null-branch follow-on is one deep tap, not early
+streams); SCALE has no token budget (it's uncertainty-gated
+temperatures, AR-path pluggable); SmolVLA's L/2 cut is a compute
+tradeoff their own table shows losing 1.8 to full stack;
+2602.09722's negative transfer is frozen-VLM-only with no
+selective-mixture method; IVRA's LIBERO claim mis-attributed LLaRA.
+New banked positives: AR-VLA's +25-pt history-length ablation +
+its independent AR-side confirmation of the K premise;
+Anchor-Align as a third seam recipe (beats Co-training+KI 71.9 vs
+43.8 on semantic OOD; VQA-retention probe worth stealing);
+Fast-WAM as evidence the video *prior*, not generation, carries
+WAM value; π0.7's text-subgoals-insufficient flag pre-banked into
+the #6 rung-(a) read. check.py 437 passed. Blog built + Space
+pushed (4 new pages + index + now curl-verified 200); Discord
+posted 10:0xZ.
+
+**Next** (`queue_cli.py next`): #19 dT-table read script, then the
+endpoint-runbook git-audit (both CPU, GPU-busy window items);
+draws10_t1 boundary ~12:3x–12:5xZ today → frozen reads; endpoint
+~08-08 → #19 box obligations → K smoke ladder → attachment steer
+window.
 
 *Updated 2026-08-07 09:26–09:3xZ (real `date -u`) — tick (babysit):
 both runs green, no new steering; queue green with the papers
@@ -91,37 +149,6 @@ next work session; #19 dT-table read script + endpoint-runbook
 git-audit remain queued; draws10_t1 boundary ~12:3x–12:5xZ today →
 frozen reads; endpoint ~08-08 → #19 box obligations → K smoke
 ladder → attachment steer window.
-
-*Updated 2026-08-07 09:07–09:1xZ (real `date -u`) — tick (babysit):
-both runs green, no new steering; queue green with the owner's
-high-priority papers backlog first → work session chained for
-batch 2.*
-
-**Status** (babysit 09:07Z, both green, exit 0):
-- box molmo2 AR 40k — 13960/40k, loss 3.3676, 2.185 s/step, vram
-  67.07 ≤ 71, probe low **6.9783@13500** (gate margin 5.11); ~15.8 h
-  to endpoint ~08-08.
-- local draws10_t1 — 18912/25800, window 50.4 f/min, cumulative
-  33.2 f/min → **~13.0 h total, INSIDE the 24 GPU-h gate**, ~3.5 h
-  remaining; boundary ~12:4x–13:0xZ → frozen reads.
-
-**Steering**: none new (`read` surfaced only our own 09:06Z batch-1
-post; `history -n 5` shows no reactions; owner last at 08:42Z — the
-papers steering, already executing).
-
-**Done**: tick — babysit both green, exit 0; `queue_cli.py validate`
-green (depth 3, 13 open, papers-section-retroactive first);
-`run_work_next` armed (GPUs busy + high-priority CPU backlog → the
-chained work session starts papers batch 2 immediately). No Discord
-post (09:06Z post is current, nothing new to report) and no blog
-build (batch 2 ships the next reader-visible change).
-
-**Next** (`queue_cli.py next`): papers batch 2 (most load-bearing:
-one-step menu, DVAC/GoldenTicket/EnergyPolicy, state-shortcut set);
-then #19 dT-table read script + endpoint-runbook git-audit;
-draws10_t1 boundary ~12:4x–13:0xZ today → frozen reads; endpoint
-~08-08 → #19 box obligations → K smoke ladder → attachment steer
-window.
 
 ## Utilization footer
 

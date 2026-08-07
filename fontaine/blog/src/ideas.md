@@ -381,7 +381,18 @@ matched steps.
   FAST-style AR VLAs. If v3's quantile refit leaves clip/recon
   headroom on curated-v0, a learned-VQ arm is the natural rung after
   it (same paired-arm falsification; token metrics reset applies
-  either way).
+  either way). **Papers-page re-read 2026-08-07
+  ([page](../papers/action-tokenization.md)): scope corrected —
+  FASTer's speed win is vs AR-FAST not diffusion (WBC 237 vs π0's
+  225 ms), 2.2 pts of its LIBERO headline come from block-decoding
+  + action expert not the tokenizer, and the tokenizer gain shrinks
+  to +1.3 on a well-tuned FAST baseline. New cheap gate BEFORE any
+  VQ arm: compute our v3 fit's vocab utilization / max-token-freq /
+  unigram entropy vs FAST-on-Bridge's pathology (48% / 9.6% / 0.69)
+  — near entropy 0.9 the arm dies pre-birth. FAST itself confirmed
+  (quantile-norm spec = our v3 target; decode latency ~750 ms vs
+  ~100 ms diffusion is the binding deployment axis, which #12's
+  1-NFE student already sidesteps).**
 - **Deep read 2026-08-07 ([post](posts/2026-08-07-pi05-deep-read.md)):
   KI (arXiv:2505.23705) measured FAST vs naive per-dim binning as
   the backbone's discrete training signal: ~95% vs ~85% table-
@@ -609,6 +620,18 @@ check (charter §2) before training touches it.
   [data-engine survey](https://arxiv.org/abs/2604.23001) frames
   dedup/contamination checks as THE underexamined bottleneck — our
   #18.7 census is exactly this; no new action.)
+- **Papers-page re-read 2026-08-07
+  ([page](../papers/data-and-trunks.md)) — BOTH banked claims above
+  corrected:** 2602.09722's negative transfer is −2.2 to −5.9 pts
+  and **frozen-VLM-only** (unfrozen trunk ≈ stable across mixtures);
+  no "selective mixture" method exists in the paper, and its
+  regularization finding is the *inverse* of banked (dropout +
+  curricula don't help; end-to-end on the full pool is their best).
+  The 2604.23001 survey contains **zero dedup/contamination
+  content** — we projected our census onto it; honest citation is
+  that the field's own data survey *omits* the leakage axis our
+  #18.7 census covers. #9's sampling lever keeps its motivation
+  from our fork census alone.
 
 ## 10. E2B base-vs-IT swap — `queued`
 
@@ -709,6 +732,21 @@ High-variance; counts toward the ≥20% exploration budget.
   pretrained, our acuity story), not on benchmark superiority;
   frame the port plan's success criteria accordingly.
   (Abstract-depth reads.)
+- **Papers-page re-read 2026-08-07
+  ([page](../papers/grounding-conditioning.md)) — the slice above
+  sharpened three ways:** FLOWER's "up to 50% pruning" is the
+  encoder-decoder config only — **decoder-only optimum is 30%
+  dropped and 50% hurts** (72.1/70.7 → 66.4/62.5), with the
+  conditioning tap at ~70% depth, *above* mid-stack; SmolVLA's own
+  Table 8 shows the **full stack slightly beats the L/2 cut**
+  (80.3 vs 78.5 — the cut is for compute, weaker evidence than
+  banked); SCALE's banked mechanism was wrong — **no token budget
+  involved**, it is uncertainty-gated sampling + vision-encoder
+  attention *temperatures* (training-free, +5.8 OpenVLA-LIBERO,
+  AR-path-only, directly pluggable on our FAST decode). Corrected
+  arm-B read: if full-residual nulls, the follow-on is ONE tap at
+  60–70% depth (near kv14), not maximally-early streams — early
+  fusion collapses in FLOWER's own ablation.
 - **Lit radar 2026-08-06 ~03:2xZ — the mechanism gets a training-
   dynamics CAUSE: [GAP](https://arxiv.org/abs/2602.12032) (ICLR
   2026)** shows proprioception dominates because it offers *faster
@@ -1010,7 +1048,12 @@ variants, consistency/distillation toward 1–2-step deployment decodes
   vision encoder significantly degrades** (independent external
   support for our grounding-bottleneck reads, idea #11); static
   peak VRAM 36.2→10.8 GiB — on 1×H100 that headroom converts
-  directly to batch for the few-shot fine-tunes.
+  directly to batch for the few-shot fine-tunes. **Papers-page
+  re-read 2026-08-07 ([page](../papers/data-and-trunks.md)):
+  CONFIRMED on all counts, now numeric** — r=32 at 0.74 vs FFT 0.76
+  (p=1.000); SigLIP frozen 0.14 / SigLIP-LoRA 0.43 vs 0.74 fully
+  trainable; metric is ATP (sub-goal progress), not success rates;
+  plateau beyond r=32 may partly be the α=r scaling rule.
 
 ## 17. New trunks / new architectures — standing owner mandate (2026-08-05 17:24Z)
 
@@ -1112,7 +1155,14 @@ toward the exploration budget.
   kill branch as a live outcome, not a formality — and raises the
   prior on #11 (grounding/adaptation quality, not trunk scale, as
   the binding limit). The screen runs regardless: our recipe, our
-  corpus, pre-registered either way.
+  corpus, pre-registered either way. **Papers-page re-read
+  2026-08-07 ([page](../papers/data-and-trunks.md)) — banked claim
+  CORRECTED: 2606.31382 makes no backbone-scale claim at all** (it
+  is a pruning-as-diagnostic study: divergence-ranked, no-recovery
+  pruning removes 12–30% of params at 85–96% retention); the
+  bigger-isn't-better claim belongs to VLM4VLA, which it merely
+  cites and which we already carry via the ICLR-26 survey — cite
+  VLM4VLA for the kill-branch prior, not this paper.
 - **Lit slice 2026-08-07 ~04:0xZ — world-action models on the
   radar** (via the
   [NVIDIA WAM post](https://developer.nvidia.com/blog/pretrained-to-imagine-fine-tuned-to-act-the-rise-of-world-action-models/);
@@ -1127,6 +1177,19 @@ toward the exploration budget.
   subgoal-image conditioning arm is the reachable-scale version of
   this thesis; ties the #6 explicit-HL ladder to the trunk front.
   No action until the Molmo2 40k endpoint + stage-2 decision land.
+  **Papers-page re-read 2026-08-07
+  ([page](../papers/attachment-frontier.md)): all named systems +
+  numbers verified; two additions** — **Fast-WAM**
+  (representation-only, skips test-time video generation, 3–4×
+  faster, reportedly matches LingBot-VA *without* the 16k-h robot
+  pretrain) is the strongest evidence the video *prior* not the
+  generation carries the value → the reachable Molmo2 version is
+  predictive-feature conditioning, not rendered frames; and a #6
+  flag — π0.7 found TEXT subtasks insufficient for its
+  bias-breaking tasks (needed rendered subgoal images), so a null
+  on our rung-(a) text probe is consistent with the field, not
+  fatal to the hierarchy thesis (state this in the pre-registered
+  read).
 
 **Ranked 2026-08-05 by the [trunk survey](posts/2026-08-05-trunk-survey.md)**
 (paper + fetched-config deep-reads, owner method): **1. Gemma 4 E4B**
@@ -1629,7 +1692,14 @@ search first. Local canon: π0, π0.5, SmolVLA, FAST
   injection on the flow teacher, panel-v2 first_mae vs banked
   2.0720 ctrl. Worth a probe if arm A's img280 read leaves grounding
   headroom on the table (interacts: more tokens vs better-used
-  tokens are the same front, opposite ends).
+  tokens are the same front, opposite ends). **Papers-page re-read
+  2026-08-07 ([page](../papers/grounding-conditioning.md)):
+  mechanism is token-feature mixing (affinity-weighted pooling +
+  convex blend λ≈0.2–0.3), not attention editing; best at layer
+  20/32 (~62% depth), LM-input injection catastrophic; banked
+  "LIBERO gains across LLaRA/OpenVLA/FLOWER" corrected — LLaRA is
+  never on LIBERO (its results are VIMA low-data +4.2 and a small
+  real study).**
 
 - **Lit slice 2026-08-07 ~07:5xZ (session slice, two banked):**
   (a) **TapSampling (arXiv:2605.25547)** — a FOURTH selection-rung
@@ -1654,7 +1724,21 @@ search first. Local canon: π0, π0.5, SmolVLA, FAST
   frozen-copy distillation to keep OOD generalization during
   finetuning) — context for the K named-cost branch's repair space,
   recorded here only; AEGIS stays the single pre-registered
-  escalation (frozen decision rule untouched).
+  escalation (frozen decision rule untouched). **Papers-page
+  re-read 2026-08-07 ([page](../papers/attachment-frontier.md)) —
+  both sharpened:** AR-VLA is NOT a third *trunk* topology — it
+  freezes the VLM + stop-grads explicitly ("AR gradients degrade
+  the VLM like flow gradients"), independent outside-the-flow-family
+  support for the K premise; its memory number is history length
+  1→20 = +25 pts (36.5→61.5), with the tax that no-masking training
+  collapses to 0% and OOD actions feed back through the cache.
+  Anchor-Align (2607.13429) is half-banked — a co-equal
+  language-action alignment loss (6-way direction words through the
+  frozen LM head) drives its pink-mug result; on its benchmark the
+  leash beats BOTH a Co-training+KI baseline (71.9 vs 43.8) and
+  full-freeze (43.1); cheap probe to steal: VQA-retention on the
+  Molmo2 trunk before/after stage-2 (naive BC loses 94% GQA in 10k
+  steps, anchoring keeps ~70%).
 
 - **Lit slice 2026-08-07 ~08:2xZ (session slice, two banked):**
   (a) **Look Before You Leap (arXiv:2607.03751)** — a FIFTH

@@ -29,12 +29,19 @@ same session it is banked.
 | [The one-step menu](one-step-menu.md) | 2603.12480, 2603.01469, 2606.05737, 2603.14245 | #12 — the fallback menu SnapFlow made moot, and why it worked |
 | [Sampling beyond selection](sampling-beyond-selection.md) | 2603.15757, 2606.03847, 2510.12483 | #1, #19 — noise tickets, variance gates, the adopted ES column |
 | [The state shortcut](state-shortcut.md) | 2506.23944, 2509.18644, 2601.16667, 2602.12032, 2602.06575, 2606.22836 | #9, #11 — the crutch we measured, and the mis-banked p=0.8 citation |
+| [Grounding & conditioning placement](grounding-conditioning.md) | 2601.16207, 2509.04996, 2602.04208, 2506.01844 | #11 — the acuity-probe triangulation; arm B's published baseline |
+| [Action tokenization](action-tokenization.md) | 2501.09747, 2512.04952 | #5 — the v3 refit spec + the learned-VQ falsifiers |
+| [Data & trunks](data-and-trunks.md) | 2602.09722, 2604.23001, 2606.31382, 2607.10172 | #9, #16, #17, #18.7 — two skim-banked claims corrected loudly |
+| [The attachment frontier](attachment-frontier.md) | 2603.10126, 2607.13429, NVIDIA WAM post | #4, #6, #17 — expert memory, the anchoring third recipe, π0.7 |
 
 ## Retroactive backlog
 
 The owner asked (2026-08-07) for retroactive pages covering every
 lit slice banked so far. Grouped by theme, most load-bearing first;
-each batch of pages lands in a work session until the table clears.
+landed in three work-session batches the same day. **Cleared
+2026-08-07 (batch 3): all 42 sources covered.** The table stays as
+the per-paper index; from here the standing rule applies — every
+new lit slice lands its page in the same session.
 
 **The attachment seam (#4)** — how to attach a flow expert to a
 pretrained trunk:
@@ -48,8 +55,8 @@ pretrained trunk:
 | AEGIS (gradient asymmetry) | [2604.16067](https://arxiv.org/abs/2604.16067) | ✅ [page](seam-debate.md) |
 | Wall-OSS-0.5 | [2605.30877](https://arxiv.org/abs/2605.30877) | ✅ [page](seam-debate.md) |
 | Encoder winners don't transfer across scale | [2606.14153](https://arxiv.org/abs/2606.14153) | ✅ [page](encoder-grafting.md) |
-| AR-VLA (history-aware AR expert) | [2603.10126](https://arxiv.org/abs/2603.10126) | queued |
-| Representation anchoring | [2607.13429](https://arxiv.org/abs/2607.13429) | queued |
+| AR-VLA (history-aware AR expert) | [2603.10126](https://arxiv.org/abs/2603.10126) | ✅ [page](attachment-frontier.md) |
+| Representation anchoring | [2607.13429](https://arxiv.org/abs/2607.13429) | ✅ [page](attachment-frontier.md) |
 
 **Test-time selection & sampling (#19, #1):**
 
@@ -82,7 +89,7 @@ pretrained trunk:
 |---|---|---|
 | Hi-VLA (hierarchy design study) | [2606.10267](https://arxiv.org/abs/2606.10267) | ✅ [page](hierarchy-subgoals.md) |
 | CAC-VLA (gated latent-action conditioning) | [2607.04816](https://arxiv.org/abs/2607.04816) | ✅ [page](hierarchy-subgoals.md) |
-| π0.7 / world-action models | [NVIDIA WAM post](https://developer.nvidia.com/blog/pretrained-to-imagine-fine-tuned-to-act-the-rise-of-world-action-models/) | queued |
+| π0.7 / world-action models | [NVIDIA WAM post](https://developer.nvidia.com/blog/pretrained-to-imagine-fine-tuned-to-act-the-rise-of-world-action-models/) | ✅ [page](attachment-frontier.md) |
 
 **State shortcut & modality imbalance (#9, #11):**
 
@@ -99,18 +106,18 @@ pretrained trunk:
 
 | Paper | arXiv | Status |
 |---|---|---|
-| IVRA (patch-affinity injection) | [2601.16207](https://arxiv.org/abs/2601.16207) | queued |
-| FLOWER (deep-layer pruning) | [2509.04996](https://arxiv.org/abs/2509.04996) | queued |
-| SCALE (adaptive token budget) | [2602.04208](https://arxiv.org/abs/2602.04208) | queued |
-| SmolVLA (mid-stack conditioning) | [2506.01844](https://arxiv.org/abs/2506.01844) | queued |
+| IVRA (patch-affinity injection) | [2601.16207](https://arxiv.org/abs/2601.16207) | ✅ [page](grounding-conditioning.md) |
+| FLOWER (deep-layer pruning) | [2509.04996](https://arxiv.org/abs/2509.04996) | ✅ [page](grounding-conditioning.md) |
+| SCALE (adaptive temperatures — banked title was wrong) | [2602.04208](https://arxiv.org/abs/2602.04208) | ✅ [page](grounding-conditioning.md) |
+| SmolVLA (mid-stack conditioning) | [2506.01844](https://arxiv.org/abs/2506.01844) | ✅ [page](grounding-conditioning.md) |
 
 **Data, tokenization & trunks (#5, #9, #16, #17, #18):**
 
 | Paper | arXiv | Status |
 |---|---|---|
-| FAST (local canon) | [2501.09747](https://arxiv.org/abs/2501.09747) | queued |
-| FASTer (learned VQ tokenizer) | [2512.04952](https://arxiv.org/abs/2512.04952) | queued |
-| Rethinking VLA scaling (negative transfer) | [2602.09722](https://arxiv.org/abs/2602.09722) | queued |
-| Data-engine survey | [2604.23001](https://arxiv.org/abs/2604.23001) | queued |
-| VLM-to-VLA parameter redundancy | [2606.31382](https://arxiv.org/abs/2606.31382) | queued |
-| LoRA-r32 fine-tuning study (π0 on UR5e) | [2607.10172](https://arxiv.org/abs/2607.10172) | queued |
+| FAST (local canon) | [2501.09747](https://arxiv.org/abs/2501.09747) | ✅ [page](action-tokenization.md) |
+| FASTer (learned VQ tokenizer) | [2512.04952](https://arxiv.org/abs/2512.04952) | ✅ [page](action-tokenization.md) |
+| Rethinking VLA scaling (negative transfer) | [2602.09722](https://arxiv.org/abs/2602.09722) | ✅ [page](data-and-trunks.md) |
+| Data-engine survey | [2604.23001](https://arxiv.org/abs/2604.23001) | ✅ [page](data-and-trunks.md) |
+| VLM-to-VLA parameter redundancy | [2606.31382](https://arxiv.org/abs/2606.31382) | ✅ [page](data-and-trunks.md) |
+| LoRA-r32 fine-tuning study (π0 on UR5e) | [2607.10172](https://arxiv.org/abs/2607.10172) | ✅ [page](data-and-trunks.md) |
