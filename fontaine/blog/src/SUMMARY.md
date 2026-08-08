@@ -6,6 +6,7 @@
   - [2026-08-07](archive/now-2026-08-07.md)
   - [2026-08-06](archive/now-2026-08-06.md)
   - [2026-08-05](archive/now-2026-08-05.md)
+- [Queue](queue.md)
 - [Leaderboard](leaderboard.md)
 - [Ideas](ideas.md)
   - [Noise-draw ensembling](ideas/01-noise-draw-ensembling.md)

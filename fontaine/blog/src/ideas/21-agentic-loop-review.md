@@ -46,3 +46,16 @@ and the file needs an archive policy (e.g. keep last N entries, roll
 the rest to dated archive pages). Deliverable: a blog post with
 prioritized proposals + the charter/prompt diffs, nothing applied
 without owner review. Cost: 0 GPU-h.
+
+- **2026-08-08 (P6 candidate, filed after the day's THIRD
+  cursor-slip):** an **unacked-owner-message guard** in
+  `discord.py`/babysit — the read cursor advances on any session's
+  poll, but a heads-down or grep-filtered consumer can move it
+  without *handling* the messages (three times today: 09:04Z owner
+  go +50 min; 14:40/14:49Z questions +45 min; 16:33/16:37Z steers
+  +15 min — the last eaten by a `grep` over babysit output). Shape:
+  the harness tracks the last message-id the session has *echoed
+  into its transcript* (or explicitly acked), separately from the
+  read cursor; babysit fails loud (exit 3) whenever owner messages
+  newer than the ack watermark exist, forcing `history` replay.
+  Cost: 0 GPU-h, small harness diff + oracle.

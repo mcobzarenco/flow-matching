@@ -174,3 +174,22 @@
   targets drift slightly off-prior — LP-DS's warning surfacing in
   practice, third citation for the CEM trust-region clause. No new
   arm, no gate change; stage 1 R1/R2 still gate the entire ladder.
+- **2026-08-08 16:0x–17:0xZ (work session): rung-2 instrument +
+  preflight LANDED, one pre-reg amendment earned by the apparatus.**
+  `--noise-ticket-map` in `bijou.eval` (per-dataset routing off the
+  committed stage-01 map; `_ticketmap` policy suffix; routed
+  provenance in report + predictions npz; 15 CPU oracles in
+  `tests/test_ticket_map.py`); preflight apparatus per the pre-reg's
+  stage-2 item 5 (committed 2-dataset ticket-2 plan + t2-only bank +
+  abort-on-red adjudicator + launchers for preflight/stage-2/seating —
+  the seating arm pins `--noise-key index` because the banked 5.3645
+  mean-of-10 row predates `--noise-key`). **Amendment 1**: the
+  adjudicator's first real run caught the committed map enumerating
+  only the probe universe (792 datasets) while the panel decodes 878 —
+  fixed with a panel-total extension (86 added → 33 per the pre-reg's
+  own non-qualifying rule; restriction to the 792 must reproduce the
+  pre-registered sha exactly, enforced abort-on-red;
+  [amendment posted](../posts/2026-08-08-prereg-noise-ladder-perdataset.md)
+  before stage 2). Stage-2 + seating GPU runs open post-60k-close
+  behind the preflight green json; the read script is the remaining
+  CPU cell.

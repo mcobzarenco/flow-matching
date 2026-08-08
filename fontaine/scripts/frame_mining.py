@@ -45,6 +45,7 @@ import argparse
 import itertools
 import json
 import sys
+import textwrap
 from collections import defaultdict
 from pathlib import Path
 
@@ -632,7 +633,16 @@ def cmd_figures(args: argparse.Namespace) -> None:
                 fontsize=8,
                 color=dark,
             )
-            subgoals.append(subgoal_text(item) or "no subgoal label")
+            subgoal = subgoal_text(item) or "no subgoal label"
+            subgoals.append(subgoal)
+            # Owner 16:33Z: the subgoal rides the image subtitle too
+            # (wrapped; the caption keeps the full record).
+            ax.set_xlabel(
+                "\n".join(textwrap.wrap(f"“{subgoal}”", width=38)[:2]),
+                fontsize=7,
+                color=dark,
+                style="italic",
+            )
         chart = axes[2]
         chart.set_facecolor(surface)
         for row, color, label in ((a, blue, "query"), (b, orange, "neighbor")):

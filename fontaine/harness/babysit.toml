@@ -386,33 +386,15 @@ value = 60.0
 # kind = "gpu_hours_max"
 # value = 3.0
 
-# noise-ladder rung 2 (#1) PREFLIGHT — routed-vs-plain byte-match on
-# the committed 2-dataset ticket-2 plan (144 rows x 2 decodes + CPU
-# adjudication; pre-reg 2026-08-08-prereg-noise-ladder-perdataset.md
-# stage-2 oracle item 5). NO scalars — instrument adjudication only.
-# Green writes reports/analysis__noise_ladder_preflight_oracles.json
-# (the stage-2 launcher's gate). Prune at rc=0.
-[[run]]
-name = "noiseladder_preflight"
-kind = "progress-log"
-host = "local"
-pgrep = "noiseladder_preflight"
-pgrep_min = 1
-gpu_indices = [0]
-gpu_mem_min_mib = 4000
-log = "/home/ubuntu/eval__noiseladder_preflight.log"
-progress_re = "scored [0-9]+/[0-9]+ frames"
-started_utc = "2026-08-08T16:43:00+00:00"
-gpu_hours_per_wall_hour = 1.0
-boundary = "two 144-row heun-30 decodes (corpus scan dominates, ~10-12 min each) + adjudicator; expect rc=0 well under 1 h wall. RELAUNCH 16:43Z: first run's adjudication went RED on the map-coverage oracle (committed map = probe universe 792, panel plan carries 86 more datasets) -> amendment 1 posted (panel-total extended map 27858421..., restriction == pre-registered 15d92935... enforced), routed decode re-runs with the extended map"
-anchors = [
-    "adjudication is abort-on-red byte-match (identity + pred + provenance + map coverage) — a red here BLOCKS stage 2, never reads scalars",
-    "amendment 1 changed NO reads: qualifying set within the original 792; added 86 datasets route to fallback 33",
-    "box 60k run is UNTOUCHED by this unit (local GPU only)",
-]
-[[run.gates]]
-kind = "gpu_hours_max"
-value = 1.0
+# noise-ladder rung 2 (#1) PREFLIGHT — PRUNED 08-08 16:5xZ: relaunch
+# (16:43Z, extended map per amendment 1) COMPLETE rc=0 ~16:55Z, all
+# oracles GREEN (verdict json: restriction == 15d92935... exact, map
+# 27858421..., 86 added datasets, t2 bank abfaf064..., 144 rows
+# routed==plain byte-match). Green json
+# reports/analysis__noise_ladder_preflight_oracles.json written = the
+# stage-2 launcher's gate. Unit exited clean, local GPU FREE. Stage-2 +
+# seating activate their PREPARED entries below at launch (read script
+# = remaining CPU cell first, per the queue boundary).
 
 # PREPARED — noise-ladder rung 2 STAGE 2 (activate at launch:
 # uncomment, fill started_utc; the launcher gates on the preflight

@@ -31,8 +31,11 @@ running around the clock, written up like science.
    overwritten.
 4. Every claim ships with instrument + anchors; every launch has its
    pre-registration posted first.
-5. End by pushing state: blog built + Space updated if content moved,
-   `now.md` current, queue depth ≥ 2 or a stated reason why not.
+5. End by pushing state: blog built + Space updated if content moved
+   (build via `fontaine/scripts/blog_build.sh`, never a bare `mdbook
+   build` — it renders the generated Queue page from `queue.json`
+   first; owner steering 2026-08-08 16:37Z), `now.md` current, queue
+   depth ≥ 2 or a stated reason why not.
 
 ## 0. Mission
 
@@ -402,10 +405,12 @@ Conventions:
 - **Now archive is sorted most-recent-first** (owner, 2026-08-07):
   `archive_now.py` rebuilds the sidebar block + `archive/index.md`
   sorted at every roll — never hand-edit the order.
-- **Publishing (settled)**: `mdbook build` + push the static site to
-  the public HF Space after each meaningful update (at least daily
-  while active). The Space renders in any browser, no auth, with
-  mdbook's client-side search working; the owner just keeps the URL.
+- **Publishing (settled)**: `fontaine/scripts/blog_build.sh` (renders
+  the generated Queue page from `queue.json`, then `mdbook build`) +
+  push the static site to the public HF Space after each meaningful
+  update (at least daily while active). The Space renders in any
+  browser, no auth, with mdbook's client-side search working; the
+  owner just keeps the URL.
 
 ## 6. Experiment protocol — the curated inheritance
 
