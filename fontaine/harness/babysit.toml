@@ -317,3 +317,28 @@ value = 60.0
 # delta -0.180, record-only); R4a/b banked. Entry pruned same session
 # (retained-entry footgun). No live local run; next local claim =
 # idea6 rung-(b) preflight (next session).
+# PREPARED (fieldgen-accuracy-eval, pre-reg 2026-08-08-prereg-accuracy-by-field.md):
+# molmo2 60k fields panel — uncomment + fill started_utc AT LAUNCH
+# (run_detached.sh fontaine-molmo2-60k-fields bash
+# fontaine/scripts/box/eval_box_molmo2_60k_fields_panel.sh; launcher
+# self-guards: post-2f4d575 checkout, chained eval landed, GPUs free).
+# [[run]]
+# name = "molmo2_60k_fields"
+# kind = "progress-log"
+# host = "192.222.55.210"
+# pgrep = "panel_curated_v0_k4l2_fields"
+# pgrep_min = 4                     # 4 torchrun ranks
+# gpu_indices = [0, 1, 2, 3]
+# gpu_mem_min_mib = 8000
+# log = "/home/ubuntu/logs/eval__fontaine_molmo2_ar_60k_ddp4__step_060000__panel_curated_v0_k4l2_fields.log"
+# progress_re = "scored [0-9]+/[0-9]+ frames"
+# started_utc = "FILL-AT-LAUNCH"
+# gpu_hours_per_wall_hour = 4.0
+# boundary = "25,800 rows x (base + narrated) decode ~= 2x the 40k chained panel => ~50 min wall, ~3.5 GPU-h <= 6 gate; record-only reads printed by the launcher at rc=0 (accuracy block, narration delta, read-3 base-equality oracle)"
+# anchors = [
+#     "read 3 (mechanized in the launcher): base bijou@60000 chunk MAE must equal the chained eval json exactly — disagreement is an instrument finding, not a result",
+#     "AR-100k anchors: holding 0.807 / progress MAE 0.062 / event 0.878 / visible 0.319; narration cost +0.054 — weak-label ceilings, record-only",
+# ]
+# [[run.gates]]
+# kind = "gpu_hours_max"
+# value = 6.0

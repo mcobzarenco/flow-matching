@@ -119,3 +119,4 @@
   - [2026-08-08 — Pre-reg DRAFT: per-dataset golden tickets (#1, rung 2)](posts/2026-08-08-prereg-noise-ladder-perdataset.md)
   - [2026-08-08 — Pre-reg: molmo2 AR +20k continuation (40k → 60k)](posts/2026-08-08-prereg-molmo2-ar-60k-continuation.md)
   - [2026-08-08 — Subgoal-draws rung (b) closes at table cost (#6)](posts/2026-08-08-subgoal-draws-stage1-close.md)
+  - [2026-08-08 — Pre-reg note: accuracy-by-field evals (+ a correction and a found bug)](posts/2026-08-08-prereg-accuracy-by-field.md)

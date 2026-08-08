@@ -3,7 +3,69 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-08 10:54–11:2xZ (real `date -u`) — work session
+(bounded): **the owner's accuracy-by-field ask (10:08Z) executed as a
+correction + a found bug + zero new GPU-hours** — the AR-100k table
+already existed in the banked panel (my 10:49Z in-channel claim was
+wrong; the queued ~1.5 GPU-h local run is cancelled), molmo2's
+missing table root-caused to a silent isinstance bug (narrated pass
+never rode molmo2 checkpoints), fixed + regression-tested, and the
+60k-endpoint fields eval fully armed (pre-reg note + self-guarding
+launcher + prepared babysit entry).*
+
+**Status** (11:1xZ): box **molmo2_ar60k LIVE + healthy** (babysit
+11:13Z): step 41,020/60,000, loss 2.79, window 25.6 steps/min, probe
+6.37@41,000 — the rewarmup-window transient the anchors predicted
+(kill bar 8.2075 opens at 41,500, judged at the 42,500 save boundary
+~12:1xZ); vram 73.49 **no new peak**; endpoint ~23:0x–23:5xZ +
+chained panel eval. Local idle-by-design (next claim: cleancand or
+noise-ladder drafts; the fieldgen local run is cancelled, below).
+
+**Steering**: none new this session (`read` empty at both babysits;
+the 10:49Z 👍 stands recorded). This session IS the 10:08Z steering
+item's execution.
+
+**Done** (this session, commits `2f4d575` + docs):
+- **Correction**: the banked AR-100k greedy panels ALREADY carry the
+  accuracy-by-field block — the narrated `+fields` arm rides
+  automatically on aux-trained gemma checkpoints: **holding 0.807 ·
+  progress MAE 0.062 · event 0.878 · visible 0.319** (~9k
+  judge-labeled frames, panel_k4l2; curated_v0 panel:
+  0.814/0.063/0.879/0.316). Narration-cost companion: +fields 5.8565
+  vs base 5.8026 (+0.054). **AR-100k half closed with banked data —
+  no run.**
+- **Bug found + fixed** (`2f4d575`): `BijouPolicy` gated the narrated
+  pass (and `--generate`) on the Gemma CONCRETE
+  (`isinstance(decoder, ARBackboneDecoder)`); `Molmo2ARDecoder` is an
+  `ARSuffixDecoder` sibling ⇒ aux-trained molmo2 checkpoints silently
+  reported no fields — the molmo2 40k panel's all-None accuracy block
+  next to 8,596 labeled frames is exactly this. Gate moved to the
+  scaffold; prompt bytes unchanged on every banked read
+  (`generate_bracket=True` recorded at save; override `()` ≡ `None`
+  at render). 2 CPU regression tests incl. a real narrated decode on
+  the tiny molmo2 fixture; check.py **500** green.
+- **60k fields eval armed**: pre-reg note posted
+  ([post](posts/2026-08-08-prereg-accuracy-by-field.md), record-only,
+  ~3.5 GPU-h ≤ 6 gate), `eval_box_molmo2_60k_fields_panel.sh`
+  (self-guards: post-fix checkout grep, chained-eval-json present,
+  plan sha, GPUs free; mechanized read-3 oracle: base `bijou@60000`
+  must equal the chained json exactly), prepared babysit entry
+  `molmo2_60k_fields`. Tonight's chained eval stays as-launched
+  (charter: never sync box code under a live run) — narrated-arm-free
+  and byte-comparable to the 40k panel, which the paired read wants.
+- reports.md: AR-100k accuracy block surfaced + molmo2 missing-by-bug
+  note; queue item rewritten (class → gpu-box, boundary at the 60k
+  close).
+
+**Next**: `queue_cli.py next` → 60k babysits every ~30 min (42.5k
+save-boundary judgment ~12:1xZ is the first real gate check); at the
+60k close (~23Z): chained eval → refresh_ctrl.sh → fields panel
+(armed) alongside the attach-chain repoint decision. CPU queue:
+snapflow visual report (owner), cleancand draft, noise-ladder
+finalization. **Every GPU launch goes through `run_detached.sh`.**
 
 *Updated 2026-08-08 10:52–10:5xZ (real `date -u`) — tick (babysit):
 **molmo2_ar60k HEALTHY** at first post-relaunch tick; owner 👍 on the
@@ -119,40 +181,6 @@ endpoint (~23Z) per the owner's priority + repoint decision rule.
 `run_work_next` armed. **Every GPU launch goes through
 `run_detached.sh`.**
 
-*Updated 2026-08-08 08:27–08:3xZ (real `date -u`) — tick (babysit):
-no live runs (registry declared-empty, correct). **Owner's 08:02Z
-message was half-unanswered — caught and fixed in-tick**: the Molmo2
-#17 eval report HTML + the three state-drop report files had never
-been uploaded to the Space (404s the owner flagged); all six missing
-files pushed, reports.md gained Molmo2 + golden-ticket sections,
-full 58-link audit = all 200, in-channel reply posted 08:33Z.*
-
-**Status** (08:3xZ): box + local both **idle-by-design** since
-~07:50/08:15Z, pending the next pre-registered launches (#4 attach
-screen behind the owner-steer window; idea6 rung-(b) preflight
-local). No babysit run — registry empty with declared reason.
-
-**Steering**: owner 08:02Z ("Molmo2 eval report on reports.html?
-state-drop links broken") — the 08:19Z reply covered only the
-08:08Z follow-ups question; this message is now ANSWERED 08:33Z
-with the fix live. No new messages or reactions this tick (`read`
-empty; `history -n 5` checked).
-
-**Done** (this tick): reports.html repaired end-to-end — root cause
-was ad-hoc per-session report uploads (page indexed files never
-pushed): uploaded molmo2 endpoint panel HTML + endpoint analysis
-JSON, statedrop 2×HTML + JSON, goldenticket stage-1 JSON; reports.md
-new sections (Molmo2 trunk @40k, golden-ticket screen); blog built +
-Space pushed; **all 58 reports.html links curl-verified 200**;
-Discord reply. Queue validate green (depth 1 w/ declared reason, 11
-open); `run_work_next` confirmed armed (08:22).
-
-**Next**: chained work session →
-**idea1-noise-ladder-perdataset-prereg-draft** (queue head), then
-idea6 rung-(b) preflight launcher (local GPU free); #4 attach screen
-at the owner-steer window (box free). **Every GPU launch goes
-through `run_detached.sh`.**
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -178,6 +206,15 @@ to ~04:0xZ, greedy ~1.7 GPU-h, draws10_t1 04:54–07:22Z **~10 GPU-h
 idle from ~08:15Z pending the next pre-registered launches). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
+
+Session 2026-08-08 10:54–11:2xZ (work): exploit, **0 GPU-h new —
+one run cancelled as redundant (~1.5 GPU-h saved)**: the owner's
+accuracy-by-field ask closed for AR-100k from banked data (the table
+existed all along; 10:49Z in-channel claim corrected), molmo2's
+missing table root-caused to the narrated-pass isinstance bug and
+fixed (2f4d575, check.py 500), 60k-endpoint fields eval armed
+(pre-reg + guarded launcher + prepared babysit entry, ~3.5 GPU-h at
+the ~23Z boundary). Queue green depth 4; `run_work_next` armed.
 
 Session 2026-08-08 10:52–10:5xZ (tick): babysit, molmo2_ar60k
 healthy at first post-relaunch tick (step 40,480, 2.249 s/step, no
