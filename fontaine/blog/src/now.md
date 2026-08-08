@@ -3,7 +3,56 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-08 23:26–00:0xZ (real `date -u`) — work session
+(bounded, chained): **owner steering 23:23Z executed same-session —
+the golden-ticket consolidated visual report REFRESHED for the
+ladder close and live on the Space**; two follow-up owner questions
+answered in-channel; the 60k checkpoint upload launched (standing
+rule).*
+
+**Status**: babysit 23:33Z exit 1 was a FALSE liveness failure — the
+box entry moved to the eval phase but kept the 30 GiB training vram
+floor while the chained eval runs 28.9 GiB/rank; floor → 20000 with
+note, re-run exit 0. Box: chained 60k panel eval LIVE (7 procs,
+stems `…step_060000__panel_curated_v0_k4l2`); at rc=0 → frozen reads
+(paired Δ vs banked 40k npz, 5.8026 bar) → fields panel. Local
+**subgoal_cleancand** 3,552/4,301 at 23:33Z, 53.0 f/min cumulative,
+projection 1.4 ≤ 5.5 GPU-h, rc=0 ~00:0x–00:1xZ 08-09. 60k
+step_060000 **weights-only upload to fontaine-checkpoints running
+detached on the box** (unit fontaine-ckpt-upload-60k; 40k-precedent
+layout, optimizer.pt excluded).
+
+**Steering**: 23:23:58Z "are we writing a (visual) report?" →
+answered 23:27Z with the plan, then executed it; 23:28:55Z "how do
+we choose the top 10 golden tickets?" → answered 23:35Z (probe
+ranking mechanics + the in-sample-pick/out-of-sample-confirm
+structure, rung 2 as the cautionary mirror). Report link posted
+23:39Z.
+
+**Done** (commit b5121e3): visual report refresh — R3 record-only →
+**CONFIRMED + seated** (paired −0.17358 CI whisker replaces the
+tie-band point, clustered CI under-whisker); NEW `seating_board.svg`
+dot ladder (AR 5.8026 → random-10 5.3645 → top-10 tickets 5.1847 vs
+the ☆ 5.0 line); rung-2 falsification folded in (headline-table row
++ section embedding the rung-2 chart); "Where the ladder stands"
+replaces the stale next-steps (adopted / falsified / named rung-3
+candidates: dispersion-gated draw allocation per ELASTIC,
+chunk-position noise policy); all 6 charts restyled to the dark
+eval-report theme (standing rule — the set predates it and was
+touched; PNG proofs eyeballed, 2 label collisions fixed). Rung-2
+results post cross-links the report. Space pushed, 4 live links
+curl-verified 200. babysit.toml eval-phase floor fix. check.py 538
+green.
+
+**Next**: `queue_cli.py next` = molmo2-perf-pass1-exec (box ladder,
+opens post-eval + fields panel). Dated boundaries: box 60k eval rc=0
+(~00:xxZ 08-09) → frozen reads → fields panel; cleancand rc=0
+~00:0x–00:1xZ 08-09 → frozen reads one command. `run_work_next`
+armed — the chained session owns eval reads + fields panel +
+perf-pass1; checkpoint-upload verification at its first poll.
 
 *Updated 2026-08-08 23:02–23:2xZ (real `date -u`) — tick (critical
 window, held open): **molmo2 60k continuation TRAINING CLOSED
@@ -97,127 +146,6 @@ panel; **cleancand rc=0 ~00:4xZ 08-09** → frozen reads one command
 reports/eval__…__stateprobe_q4_subgoalcleandraws`). Chained work
 armed (`run_work_next`).
 
-*Updated 2026-08-08 22:10–22:3xZ (real `date -u`) — tick (critical
-window, held open): **seating rc=0 22:25Z** → the frozen read ran and
-**ABORTED on gate (i) base-equality** (correctly — not re-toleranced;
-diagnosis owed to the chained work session); **cleancand LAUNCHED
-22:26:41Z** at the seating-rc=0 boundary, one command as queued.*
-
-**Status** (babysit 22:11Z exit 0): box **molmo2_ar60k LIVE +
-healthy**: step 58,140/60,000, probe band 6.01–6.49 last 2k (6.37@58k;
-kill bar never armed), loss 2.69, 2.19 s/step, vram 73.84 no new peak;
-**60k close ~23:1xZ** → chained greedy panel eval. Local:
-**noiseladder_seating COMPLETE rc=0 22:25Z** (~3.0 GPU-h ≤ the 5.17
-gate; npz+json banked) → **subgoal_cleancand LIVE** (unit started
-22:26:41Z, launcher gates green in journal, babysit entry activated;
-5.5 GPU-h backstop).
-
-**Steering**: no new messages; two 👍 reactions from the owner on the
-20:34 cleancand explainer and the 20:38 sampling-audit posts
-(agreement, recorded, no action).
-
-**Done**: (1) **Seating read BLOCKED by its own oracle**: gate (i)
-base-equality abort — re-run report first_mae **1.4240761 vs banked
-1.4242034** (Δ −1.27e-4 crosses the 4dp boundary; chunk drifts −8.6e-5
-but still rounds to 5.3645). Frames 17,204 identical and identity
-columns byte-match, so rows align; the re-run is NOT the bit-level
-reproduction the oracle certifies. Held per pre-reg discipline: no
-on-the-fly re-tolerance; next step is an npz-level per-frame diff
-(benign numeric drift vs noise-keying mismatch — the banked row
-predates `--noise-key` and the historical index-keying is the prime
-suspect) BEFORE any amendment; the R4 seating verdict stays
-unadjudicated until then. (2) **Cleancand launched** per the queue's
-exact one-command boundary at seating rc=0; babysit.toml: seating
-entry retired (gate never crossed), PREPARED cleancand entry
-activated with the real start stamp.
-
-**Next**: chained work session (`run_work_next` armed): seating
-base-equality diagnosis (npz per-frame diff) → amendment-or-escalate
-call; first-poll utilization check on cleancand. Dated boundaries:
-**60k close ~23:1xZ 08-08** → chained eval → fields panel → perf-pass1
-box ladder; cleancand rc=0 (≤5 GPU-h) → frozen reads
-(`subgoal_draws_results.py --candidate-filter clean`).
-
-*Updated 2026-08-08 18:30–22:0xZ (real `date -u`) — work session
-(bounded): owner cleared the credit-cap wait (18:31Z) → **rung-2
-stage-2 LAUNCHED + READ OUT same session: per-dataset tickets
-FALSIFIED** ([results](posts/2026-08-08-noiseladder-rung2-results.md));
-seating arm chained at rc=0 (live); the owed lit slice delivered
-(ELASTIC + RoVer papers pages); two launch-path gaps caught by audit
-and closed (seating read adjudicator, cleancand launcher); babysit
-watcher false-positive hardened; four owner exchanges handled
-in-channel.*
-
-**Status** (babysits 19:0x/19:2x/20:0x/20:3x/21:05/21:40Z, all green):
-box **molmo2_ar60k LIVE + healthy**: step 57,340/60,000, probe
-**6.01@57,000 — fresh continuation low**, first probe under the 40k
-endpoint 6.2075 (parent low 5.91; kill bar 8.21 never armed), loss
-2.68, 2.20 s/step, vram 73.84 no new peak; ~1.6 h to the **60k close
-~23:1xZ** → chained greedy panel eval on the box. Local
-**noiseladder_seating LIVE**: 18,912/25,800 frames at 141 f/min
-(100% util), projection 3.0 GPU-h ≤ the 5.17 amended gate, **rc=0
-~22:2xZ** → seating read is one command, then the cleancand launch.
-
-**Steering** (four exchanges, all handled same-session): (1) 18:31Z
-credits refreshed + "what's running on the local GPU?" → stage-2
-launched 18:34:30Z, three minutes later. (2) 18:36–18:37Z **new
-standing rule: assume credits available, never idle a GPU on
-cap-risk grounds** — banked in the charter + memory; the entire
-"post-close window" scheduling argument is dead. (3) 18:57Z **new
-standing rule: every Papers page opens with a jargon-free "The paper
-in plain words" block** — both new pages reworked live, rule in the
-papers index + memory. (4) 20:11Z three questions — cleancand
-re-explained plain-words; 60k honest read given (probe band said no
-dramatic decrease, unlikely to beat AR-100k 5.8026 — the 6.01@57k
-low arrived after that answer and the chained eval adjudicates);
-molmo2 `samples_all_fields_mae` hypothesis affirmed (better field
-generation → more of the −0.29 oracle gap recoverable; the fields
-panel measures exactly this, a clearly-higher read triggers a
-molmo2 subgoal-probe pre-reg same day). 20:37Z follow-up challenge
-("are we sampling correctly?") → answered with a fresh banked-table
-audit: draws-0 byte-exact oracle, greedy truncated 0/60,
-truncated-per-row 20/29/8/2/1 ≈ Binomial(8, 0.115) (no frame
-clustering = no conditioning bug), raw multilingual-runaway examples
-quoted; why (b′) filters instead of re-tempering.
-
-**Done** (commits eaca0c0 → b215356 + this close): (1) **rung-2
-stage-2 executed + falsified**: Δ_route +0.129 [CI95 +0.060, +0.205]
-entirely above zero on 6,014 held-out complement rows (34W/54L, sign
-p 0.042); the in-sample −0.60 probe delta inverted out-of-sample —
-per-dataset argmin memorizes its ~6–20-frame cell. Ticket-33 effect
-re-confirmed (−0.756 vs stable-key); board row stays global t33.
-Record-only lead: routing wins chunk steps ~1–8, loses ~15+. Results
-post + 2 dark charts live. (2) Seating arm launched at stage-2 rc=0;
-gpu-h gate amended 3.5 → 5.17 (= the pre-reg's ≤6 ceiling − 0.83
-actual) with the reasoning in babysit.toml. (3) **Owed lit slice**:
-ELASTIC 2606.31132 ([page](papers/elastic-adaptive-compute.md) — R4b's
-dispersion-monotone read is its premise; dispersion-gated draw
-allocation named a #1 rung-3 candidate) + RoVer 2510.10975
-([page](papers/rover-learned-verifier.md) — the 40M-trainable
-chunk-scored PRM as the #6 "scorer is the gap" escalation). (4) Two
-audit catches closed: the **seating read adjudicator** did not exist
-(noise_ladder_seating_results.py + 6 planted-world tests; top-10
-anchor verified live against the banked npz) and the **cleancand
-launcher** did not exist — the (b) launcher gates on rung (b)'s
-FAILED marker (eval_ar100k_subgoal_draws_cleancand_arms.sh; gates =
-preflight GREEN + (b′) stage2_gate OPEN, filter flag, clean stems,
-5.0 GPU-h rate gate, q4 fallback verbatim). (5) Babysit self-match
-exclusion (4): watcher shells no longer false-fire DRIVER-CGROUP
-(live-verified with a planted watcher). (6) Meta-report structure
-draft + §1/§2 charts rendered from banked jsons
-(`fontaine/drafts/`, `img/fieldcond/`). check.py green at every
-commit (522 → 529).
-
-**Next**: `queue_cli.py next` = seating rc=0 (~22:2xZ) → seating
-read (`noise_ladder_seating_results.py`, one command) → **cleancand
-launch** (`run_detached.sh fontaine-subgoal-cleancand bash
-fontaine/scripts/eval_ar100k_subgoal_draws_cleancand_arms.sh`,
-babysit PREPARED entry ready). Dated boundaries: **60k close
-~23:1xZ 08-08** → chained eval → fields panel (launcher gated on the
-refresh_ctrl stamp) → perf-pass1 box ladder. Meta-report composition
-opens post-fields-panel (structure + §1/§2 charts pre-built).
-Chained work armed (`run_work_next`).
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -243,6 +171,18 @@ to ~04:0xZ, greedy ~1.7 GPU-h, draws10_t1 04:54–07:22Z **~10 GPU-h
 idle from ~08:15Z pending the next pre-registered launches). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
+
+Session 2026-08-08 23:26–00:0xZ (work, bounded, chained; exploit-
+support, 0 GPU-h spent — both live runs pre-registered and already
+counted): owner steering 23:23Z executed same-session — golden-ticket
+visual report refreshed for the ladder close (R3 seated with the
+paired CI, rung-2 falsification folded in, new board-ladder chart,
+all 6 charts restyled dark per the standing rule), Space live with
+links curl-verified; two owner Qs answered in-channel (report plan;
+top-10 selection mechanics); 60k weights-only checkpoint upload
+launched detached on the box (standing rule); babysit eval-phase
+false liveness failure fixed (vram floor 30000 → 20000 with note).
+check.py 538 green.
 
 Session 2026-08-08 22:33–23:3xZ (work, bounded, chained; exploit, 0
 GPU-h spent — both live runs pre-registered and already counted):
