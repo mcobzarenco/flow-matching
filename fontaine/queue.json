@@ -1,6 +1,6 @@
 {
- "updated_utc": "2026-08-08T09:35:00+00:00",
- "depth_reason": "depth 3 at 09:3xZ 08-08: idea6 rung-(b) LIVE + queued: idea1 noise-ladder draft (DRAFT written this session, finalization checklist open), goldenticket-visual-report (owner 08:42Z), molmo2 continuation draft (owner-hold, discussion live).",
+ "updated_utc": "2026-08-08T10:12:00+00:00",
+ "depth_reason": "depth OK at 10:1xZ 08-08: two LIVE runs (idea6 rung-(b) local chain; molmo2 60k continuation box) + queued: goldenticket-visual-report DONE-in-session pending close narrative, snapflow visual report + chunk_mae_success one-off + discord reply-parsing fix to add this session, idea1 noise-ladder draft finalization.",
  "items": [
   {
    "id": "ar100k-tsens-q4-live",
@@ -90,7 +90,7 @@
    "status": "blocked",
    "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-molmo2-attach-screen.md",
    "owner_hold": false,
-   "boundary": "opens strictly after: molmo2_ar40k endpoint saves -> chained greedy + #19 draws arm (that pre-reg's box obligations first) -> K smoke ladder green (#20 checkpointing LANDED 08-07) -> molmo2-stage2-attachment-decision opens (owner steer window)"
+   "boundary": "opens strictly after: molmo2_ar40k endpoint saves -> chained greedy + #19 draws arm (that pre-reg's box obligations first) -> K smoke ladder green (#20 checkpointing LANDED 08-07) -> molmo2-stage2-attachment-decision opens (owner steer window) \u2014 REQUEUED BEHIND the molmo2 60k continuation (owner priority call 09:04Z 08-08): opens when fontaine-molmo2-60k lands (~23Z 08-08) and the 60k-vs-40k read decides the warm-start checkpoint (repoint amendment + K-smoke re-run if 60k wins)"
   },
   {
    "id": "idea4-attach-k-smoke-ladder",
@@ -99,7 +99,7 @@
    "status": "blocked",
    "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-molmo2-attach-screen.md",
    "owner_hold": false,
-   "boundary": "opens at molmo2_ar40k endpoint (~2026-08-08), after the #19 draws-arm box obligations; needs the endpoint checkpoint (warm-start is part of the measured shape); GREEN required BEFORE EITHER arm launches \u2014 the ladder's batch verdict is matched (a sub-B12 green downshifts F too, so F must not start at B12 first)"
+   "boundary": "opens at molmo2_ar40k endpoint (~2026-08-08), after the #19 draws-arm box obligations; needs the endpoint checkpoint (warm-start is part of the measured shape); GREEN required BEFORE EITHER arm launches \u2014 the ladder's batch verdict is matched (a sub-B12 green downshifts F too, so F must not start at B12 first) \u2014 REQUEUED BEHIND the molmo2 60k continuation (owner priority call 09:04Z 08-08): opens when fontaine-molmo2-60k lands (~23Z 08-08) and the 60k-vs-40k read decides the warm-start checkpoint (repoint amendment + K-smoke re-run if 60k wins)"
   },
   {
    "id": "molmo2-stage2-attachment-decision",
@@ -435,13 +435,40 @@
    "boundary": "owner-priority CPU item: next CPU work window (this session if the rung-(b) chain leaves room, else next session head)"
   },
   {
-   "id": "molmo2-continuation-20k-prereg-draft",
-   "title": "OWNER STEERING 08-08 08:49Z (discussion requested, not a launch order): molmo2 +20k continuation \u2014 owner proposal: --resume step_040000 to --steps 60000, --rewarmup-steps 1000, NEW data seed (fresh shuffle; rule banked in memory AND already mechanized in bijou.train check_resume_seed which hard-aborts on seed reuse). Facts for the discussion: matched-steps read says the trunk leads (40k molmo2 6.0079 vs A-s0 7.7966, paired -1.717); the -0.205 gap to AR-100k (5.8026) is a 2.5x-steps confound; probe curve 5.91@26.5k -> 6.2075@40k = the cosine floor tail bought nothing (the exact published setup for re-warm + re-decay, already implemented in lr_lambda for extensions). Cost ~49 GPU-h (~12.2h box wall at 2.2 s/step). DRAFT the pre-reg after the Discord discussion converges: primary = 60k greedy panel paired vs the 40k endpoint npz + the AR-100k 5.8026 bar quoted; probe kill line vs 6.2075 sustained; epochs-seen arithmetic pinned; async saves default-on; box sequencing vs the #4 attach chain is the owner decision in flight",
+   "id": "molmo2-continuation-60k",
+   "title": "OWNER STEERING 08-08 08:49Z (discussion requested, not a launch order): molmo2 +20k continuation \u2014 owner proposal: --resume step_040000 to --steps 60000, --rewarmup-steps 1000, NEW data seed (fresh shuffle; rule banked in memory AND already mechanized in bijou.train check_resume_seed which hard-aborts on seed reuse). Facts for the discussion: matched-steps read says the trunk leads (40k molmo2 6.0079 vs A-s0 7.7966, paired -1.717); the -0.205 gap to AR-100k (5.8026) is a 2.5x-steps confound; probe curve 5.91@26.5k -> 6.2075@40k = the cosine floor tail bought nothing (the exact published setup for re-warm + re-decay, already implemented in lr_lambda for extensions). Cost ~49 GPU-h (~12.2h box wall at 2.2 s/step). DRAFT the pre-reg after the Discord discussion converges: primary = 60k greedy panel paired vs the 40k endpoint npz + the AR-100k 5.8026 bar quoted; probe kill line vs 6.2075 sustained; epochs-seen arithmetic pinned; async saves default-on; box sequencing vs the #4 attach chain is the owner decision in flight \u2014 OWNER GO 09:04Z ('let's prio the 60k molmo2 run as you described it', caught 10:02Z after a 50-min poll-output miss); PRE-REG POSTED + LAUNCHED this session: launch_box_fontaine_molmo2_ar_60k_resume_ddp4.sh (box 4xDDP, unit fontaine-molmo2-60k via run_detached; --resume step_040000 --steps 60000 --rewarmup-steps 1000 --seed 1, all else byte-identical to the 40k launcher; cosine-over-60k restarts LR at 0.332x peak; E1 banner gate + resume-banner check; K1 probe kill 8.2075 x3 after 41.5k; ~49 GPU-h <= 60 ceiling; chained 60k endpoint greedy panel w/ dumps). Attach chain requeued strictly behind it per the owner priority; frozen reads incl. paired 60k-vs-40k CI + the AR-100k 5.8026 bar + the attach-repoint decision rule",
    "class": "cpu",
-   "status": "blocked",
+   "status": "live",
+   "prereg": "fontaine/blog/src/posts/2026-08-08-prereg-molmo2-ar-60k-continuation.md",
+   "owner_hold": false,
+   "boundary": "launched ~10:1xZ 08-08; 20k steps at ~2.2 s/step ~= 12.2h -> endpoint ~22:3x-23:0xZ 08-08 + chained panel eval; babysit entry molmo2_ar60k live; first babysit validates async-save lines + util/rate"
+  },
+  {
+   "id": "snapflow-visual-report",
+   "title": "OWNER 09:22Z: SnapFlow consolidated visual report \u2014 same chart-led treatment as the golden-ticket page (distill trunk story: teacher band, ftrig, 1-NFE student draws/collapse, microbench cost cells); values from banked reports only",
+   "class": "cpu",
+   "status": "queued",
    "prereg": null,
-   "owner_hold": true,
-   "boundary": "opens when the owner discussion converges on continuing; execution (gpu-box) would get its own pre-reg + queue entry + owner go"
+   "owner_hold": false,
+   "boundary": "next CPU window after the rung-(b) chain + 60k babysits"
+  },
+  {
+   "id": "chunk-mae-success-oneoff",
+   "title": "OWNER 09:07/09:11Z: one-off record-only slice \u2014 eval/chunk_mae_success comparison e2b AR-100k vs molmo2 AR-40k (owner caveat quoted: soft judge label, not a substitute for chunk_mae; sparsity check first \u2014 most trajectories successful?); source = train jsonl probe metric or panel success labels, whichever exists; post the table in-channel same day",
+   "class": "cpu",
+   "status": "queued",
+   "prereg": null,
+   "owner_hold": false,
+   "boundary": "this session if the window allows, else next; CPU only"
+  },
+  {
+   "id": "discord-reply-reference-parsing",
+   "title": "Harness fix (owner question 09:22Z): discord.py read/history do NOT surface native reply references (message_reference) \u2014 quoted-message context drops. Add referenced-message rendering (author + first ~120 chars, '\u21b3 replying to ...') to read + history; oracle: fixture message dicts w/ and w/o reference render stably; also surface edits (edited_timestamp) so 'Edited message above' events carry content",
+   "class": "cpu",
+   "status": "queued",
+   "prereg": null,
+   "owner_hold": false,
+   "boundary": "small CPU item; this session if the window allows"
   }
  ]
 }

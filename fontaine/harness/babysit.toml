@@ -228,6 +228,45 @@
 # preflight entry below is live; the 08:3xZ declared-empty reason is
 # preserved in git history.)
 
+# LIVE — molmo2 AR +20k CONTINUATION (box 4xDDP; pre-reg
+# 2026-08-08-prereg-molmo2-ar-60k-continuation.md; owner GO 09:04Z,
+# prioritized over the attach chain). --resume step_040000 -> 60k
+# total, rewarmup 1000, seed 1 (fresh shuffle), all else = the 40k
+# recipe byte-identical. First babysit: E1 banner + 'resumed
+# optimizer/scheduler at step 40000' + check_resume_seed line + first
+# async-save 'captured in Xs' + util/rate per standing rule.
+[[run]]
+name = "molmo2_ar60k"
+kind = "train-jsonl"
+host = "192.222.55.210"
+pgrep = "fontaine_molmo2_ar_60k_ddp4"
+pgrep_min = 4                     # 4 DDP ranks
+gpu_indices = [0, 1, 2, 3]
+gpu_mem_min_mib = 30000
+jsonl = "/home/ubuntu/flow-matching/outputs/train/fontaine_molmo2_ar_60k_ddp4/train_log.jsonl"
+total_steps = 60000
+probe_key = "eval_chunk_mae"
+vram_key = "vram_alloc_peak_gib"
+started_utc = "FILL-AT-LAUNCH"
+gpu_hours_per_wall_hour = 4.0
+boundary = "resumes at 40000 -> 60000 at ~2.2 s/step ~= 12.2 h (endpoint ~22:3x-23:0xZ 08-08) + chained greedy panel eval; saves every 2500 (async), probes every 500"
+anchors = [
+    "K1 kill (pre-reg): probe > 8.2075 (40k endpoint 6.2075 + 2.0) sustained x3 evals after step 41,500 — judged at save boundaries; NaN/inf immediate",
+    "rewarmup segment (40000-41000) may probe high transiently — the kill line deliberately starts at 41,500",
+    "parent-curve context: probe low 5.91@26,500, endpoint 6.2075@40,000; expectation 2 = new low below 5.91 in the rewarmed segment",
+    "frozen reads at 60k endpoint: paired per-frame delta vs the BANKED 40k npz (CI95) + the AR-100k 5.8026 bar; attach-chain repoint decision hangs on read 1",
+]
+[[run.gates]]
+kind = "probe_below_by_step"
+value = 8.2075
+step = 43000
+[[run.gates]]
+kind = "vram_max_gib"
+value = 71.0
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 60.0
+
 # LIVE — #6 subgoal-draws rung (b) PREFLIGHT (local GPU; pre-reg
 # 2026-08-08-prereg-subgoal-draws.md). Five phases in one unit
 # (fontaine-subgoal-draws-preflight): q4 fresh self (oracle-i
