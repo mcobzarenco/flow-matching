@@ -42,6 +42,7 @@ same session it is banked.
 | [Where should the words come from? HiRoC + VLA-Talker](subgoal-sourcing-post-training.md) | 2608.05999, 2608.05738 | #6 — two fresh directional priors for tonight's self-subgoal probe (cold-start misalignment; injected-vs-supervised language); #16 evidence-injection few-shot hook |
 | [Noise-space steering: the ladder above the ticket](noise-space-steering.md) | 2506.15799, 2606.01151, 2606.13675 | #1 — DSRL read (the named next-read); LP-DS trust-region guard banked for any CEM escalation; #16 — FRS/DSBC 10-demo frozen-trunk rig lever |
 | [Noise-space steering II: execution + the human loop](noise-space-steering-2.md) | 2606.19774, 2605.10821 | #22 — PAINT banked as the new training-free first arm (chunk-50 π₀, beats the TT-RTC fallback on cost); #16 — UniSteer rig lever #3 (corrections→noise, SFT-then-RL prior); #1 — locality probe noted, no gate change |
+| [Runtime plan verification: gate, refresh, recover](runtime-plan-verification.md) | 2604.02965, 2510.16281, 2512.03913 | #6 — the escalation ladder above rung (a) priced (gate needs recovery; subgoal-draws width scaling); #22 — SV-VLA as a drift-monitor competitor; #19/#1 subgoal-draws bridge |
 
 ## Retroactive backlog
 

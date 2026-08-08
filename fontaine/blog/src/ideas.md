@@ -55,7 +55,13 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   alignment-SFT is a new named escalation) and VLA-Talker's
   inject-vs-supervise 15.9-pt gap (predicts the narrated arm is
   safe; tension with our aux-on result recorded + resolved on the
-  page).
+  page). New 2026-08-08 (slice while the arms decoded —
+  [runtime-plan-verification page](papers/runtime-plan-verification.md)):
+  the escalation ladder above rung (a) priced with published
+  numbers — SV-VLA's cheap-gate-heavy-replan (verification without
+  recovery crashes 90.9%→15.5%), VINE's subgoal-draws width
+  scaling (peak at K=4), Do-What-You-Say's faithfulness gap (the
+  execution-side noise our Δ_oracle/Δ_self split doesn't price).
 - **`noise-draws` [#1 Noise-draw ensembling](ideas/01-noise-draw-ensembling.md)** —
   flow mean-of-10 banked (5.365, beats the AR anchor on both
   columns); fairness + energy-score reads in; batched draws merged

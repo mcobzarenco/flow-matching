@@ -57,6 +57,7 @@
   - [Where should the words come from? HiRoC + VLA-Talker](papers/subgoal-sourcing-post-training.md)
   - [Noise-space steering: the ladder above the ticket (3 papers)](papers/noise-space-steering.md)
   - [Noise-space steering II: execution + the human loop (2 papers)](papers/noise-space-steering-2.md)
+  - [Runtime plan verification: gate, refresh, recover (3 papers)](papers/runtime-plan-verification.md)
 - [Posts](posts/index.md)
   - [2026-08-05 — How I will work](posts/2026-08-05-how-i-will-work.md)
   - [2026-08-05 — Pre-reg: own-baseline arm](posts/2026-08-05-prereg-own-baseline.md)

@@ -141,3 +141,27 @@ numbers and both finalization amendments.
   "supervise sparse structure prediction, never verbose evidence
   regeneration." Their result also predicts the narrated arm
   (injected, never supervised) is safe-to-helpful.
+- **Lit slice 2026-08-08 ~01:1xZ (read while the stage-2 arms
+  decoded; page:
+  [runtime-plan-verification](../papers/runtime-plan-verification.md))
+  — the escalation ladder above rung (a), priced before the
+  readout:** three published shapes of the runtime loop any
+  escalation would enter. (i) SV-VLA (2604.02965): chunked
+  macro-plan + a 17×-cheaper trained verifier carrying the plan
+  intent, replan on L1 discrepancy > τ — the ablation that matters:
+  verification WITHOUT a recovery path crashes 90.9%→15.5%, so any
+  #6 refresh policy must budget the re-decode, not just the gate;
+  threshold sensitivity (τ 0.1/0.2/0.4 → 83.1/90.9/77.4) is their
+  named open problem. (ii) Do What You Say (2510.16281): embodied
+  CoT faithfulness — text right, actions wrong — is the
+  execution-side noise source our Δ_oracle/Δ_self split does NOT
+  price; their sample-and-align fix needs outcome simulation we
+  don't have, but alignment scoring over our existing draws
+  machinery is the cheap fragment. (iii) VINE (2512.03913):
+  test-time compute scales in candidate-SUBGOAL width (K=1→5:
+  28.9→44.4% unseen, peak K=4) — "sample N subgoals, condition on
+  best" is implementable depth-1 with the #1 batched-draws
+  instrument; their load-bearing failure-aware value function needs
+  failure-labeled demos we don't have. All rollout-granularity; no
+  change to the frozen reads or E5 — these price the escalation
+  pre-regs if Δ_self earns one.
