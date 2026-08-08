@@ -1,32 +1,38 @@
 # Babysit run registry (#21 P1). One entry per LIVE run; update at
 # launch time, prune at completion. Schema: fontaine/scripts/babysit.py.
 
+# molmo2 40k TRAIN entry pruned 04:2xZ 08-08 — run COMPLETE (40000/40000,
+# endpoint probe 6.2075@40000, low 5.91@26500 stands; weights uploaded to
+# fontaine-checkpoints). Its launcher's chained greedy eval DIED 04:16Z
+# (fp32/bf16 promotion in _suffix_hidden — fixed + regression-tested at
+# 5a43b15); the endpoint chain relaunched via
+# eval_box_molmo2_endpoint_draws10_t1.sh (unit
+# fontaine-molmo2-endpoint-chain): greedy arm re-run first (~2 h), then
+# the #19 draws10_t1 arm. This entry watches the GREEDY phase; swap log
+# to the panel_k4l2_draws10_t1 stem when that phase starts (prepared
+# entry below).
+
 [[run]]
-name = "molmo2_ar40k"
-kind = "train-jsonl"
+name = "molmo2_endpoint_chain"
+kind = "progress-log"
 host = "192.222.55.210"
 pgrep = "fontaine_molmo2_ar_40k_ddp4"
-pgrep_min = 4                       # 4 DDP ranks
+pgrep_min = 4                       # torchrun + 4 rank workers match
 gpu_indices = [0, 1, 2, 3]
-gpu_mem_min_mib = 30000
-jsonl = "/home/ubuntu/flow-matching/outputs/train/fontaine_molmo2_ar_40k_ddp4/train_log.jsonl"
-total_steps = 40000
-probe_key = "eval_chunk_mae"
-vram_key = "vram_alloc_peak_gib"
-boundary = "40k ~08-08 at ~2.2 s/step; saves every 2500, probes every 500"
+gpu_mem_min_mib = 8000
+log = "/home/ubuntu/logs/eval__fontaine_molmo2_ar_40k_ddp4__step_040000__panel_curated_v0_k4l2.log"
+progress_re = "scored [0-9]+/[0-9]+ frames"
+started_utc = "2026-08-08T04:27:00Z"
+gpu_hours_per_wall_hour = 4.0       # 4-GPU sharded torchrun
+boundary = "greedy panel arm (25,800 frames, 4-GPU sharded, ~2 h) -> #19 draws10_t1 arm chained in the same unit; postprocessing opens at the greedy JSON"
 anchors = [
-    "probe reference: 30.84@500 -> 25.72@1000 -> 15.25@1500 -> 13.21@2000 -> 12.09@2500 (descending each anchor)",
-    "K1 gate CROSSED GREEN 08-07 06:0xZ: 7.1652@10000 vs 12.0944 (margin 4.93, new low)",
-    "stage-2 attachment decision at endpoint carries the pi0.5 deep-read's two named arms",
-    "SAVE WINDOWS STALL ~15.5 min: every save-every-2500 boundary writes ~38 GB (29 GB optimizer.pt) at ~42 MB/s synchronously — a poll inside the window shows a stuck step, halved window rate, one rank's GPU at 0%, and loss/vram None (mid-write jsonl). NOT an incident: check step %% 2500 == 0 and the step_0XXXXX dir mtime before alarming (every save 2500..27500 shows s_per_step ~48.6 on the following 20-step line; verified 08-07 19:0xZ after a full py-spy workup of the 27500 window). ETA arithmetic: ~4 h of the 40k wall clock is saves; endpoint ~04-05Z 08-08",
+    "progress counts are the RANK-0 SHARD (~6450/rank on the full panel)",
+    "frozen endpoint reads (pre-reg 2026-08-06): pooled chunk vs E2B AR anchor 7.7966 - BEATS < 7.30, PARITY within +/-0.5; state-copy rows byte-match 11.7639/2.5851",
+    "model-load + first prefill ~4-5 min shows as a quiet log head - not a stall (the 04:16 crash fired at exactly this point pre-fix; a repeat dtype error is loud in the log tail)",
 ]
 [[run.gates]]
-kind = "probe_below_by_step"
-value = 12.0944
-step = 10000                        # K1 kill-line (owner-set 08-07) — crossed green 06:0xZ, kept for the record
-[[run.gates]]
-kind = "vram_max_gib"
-value = 71.0
+kind = "gpu_hours_max"
+value = 24.0                        # #19 pre-reg gate spans the chain
 
 # LIVE — #6 self-subgoal probe (local GPU; pre-reg
 # 2026-08-07-prereg-selfsubgoal-probe.md + amendment 1). History: preflight
