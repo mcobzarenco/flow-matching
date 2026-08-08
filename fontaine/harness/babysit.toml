@@ -432,3 +432,33 @@ anchors = [
 [[run.gates]]
 kind = "gpu_hours_max"
 value = 5.17
+
+# PREPARED — #6 rung (b') CLEANCAND ARMS (activate at launch:
+# uncomment, fill started_utc; launcher gates on the (b) preflight
+# GREEN json + the (b') stage-1 gate OPEN json). Full-panel draws-8
+# pass-1 + both clean-list arms; launcher
+# eval_ar100k_subgoal_draws_cleancand_arms.sh (landed 08-08 20:1xZ —
+# the (b) launcher gates on rung (b)'s FAILED go marker and carries
+# no filter flag, so it can never launch (b')). Rate gate inside the
+# launcher (5.0 GPU-h projection -> q4 fallback). Frozen reads at
+# rc=0: subgoal_draws_results.py --candidate-filter clean.
+# [[run]]
+# name = "subgoal_cleancand"
+# kind = "progress-log"
+# host = "local"
+# pgrep = "subgoal_cleancand"
+# pgrep_min = 1
+# gpu_indices = [0]
+# gpu_mem_min_mib = 4000
+# log = "/home/ubuntu/eval__ar100k_subgoal_cleancand_arms.log"
+# progress_re = "scored [0-9]+/[0-9]+ frames"
+# started_utc = "FILL-AT-LAUNCH"
+# gpu_hours_per_wall_hour = 1.0
+# boundary = "one full-panel draws-8 run carries pass 1 + bon + ceil (clean-list); ceiling 5 GPU-h, launcher rate gate falls back to q4"
+# anchors = [
+#     "falsifier (pre-reg, inherited verbatim): Delta_bon CI95 not entirely below 0 vs the banked self npz => selection over 9 candidates buys nothing; Delta_ceil adjudicates no-diversity vs no-scorer",
+#     "banked baseline 5.8026/2.1431 and the rung-(a) self npz are frozen comparators — never re-run",
+# ]
+# [[run.gates]]
+# kind = "gpu_hours_max"
+# value = 5.5
