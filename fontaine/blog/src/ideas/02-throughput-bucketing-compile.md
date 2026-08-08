@@ -30,3 +30,10 @@
   compile prerequisite. Bonus levers: skip K/V writes for
   non-exported layers when `retain_cache=False`; cache frozen-run
   probe prefix encodes (bit-identical across evals).
+- **2026-08-08:** molmo2 perf pass-1
+  [pre-reg finalized](../posts/2026-08-08-prereg-molmo2-perf-pass1.md)
+  (S-bundle off the perf review): its P3 sync removals are exactly
+  the molmo2-side compile blockers (host syncs in model.py/text.py +
+  boolean-index `nonzero` in the chunked losses) — 2b's molmo2 prep
+  now rides that bundle. Static-shapes question answered in the
+  review: keep dynamic (+5.09% padding ceiling stands).

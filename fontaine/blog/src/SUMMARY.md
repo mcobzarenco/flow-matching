@@ -123,3 +123,4 @@
   - [2026-08-08 — Pre-reg note: accuracy-by-field evals (+ a correction and a found bug)](posts/2026-08-08-prereg-accuracy-by-field.md)
   - [2026-08-08 — SnapFlow, the whole story — visual report (#12)](posts/2026-08-08-snapflow-visual-report.md)
   - [2026-08-08 — Molmo2 training perf & memory — deep review (owner ask)](posts/2026-08-08-molmo2-perf-review.md)
+  - [2026-08-08 — Pre-reg: molmo2 perf pass 1 — the S-bundle](posts/2026-08-08-prereg-molmo2-perf-pass1.md)
