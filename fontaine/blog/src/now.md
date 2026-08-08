@@ -181,18 +181,6 @@ idle from ~08:15Z pending the next pre-registered launches). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
-Session 2026-08-08 17:46–17:5xZ (tick, quiet; 0 GPU-h new): babysit
-17:47Z exit 0 — box molmo2_ar60k green 51,280/60,000, probe
-6.30@51,000 (continuation low, 1.91 under the 8.21 kill bar, ×3
-never armed), loss 2.74, 2.25 s/step, vram 73.84 no new peak, ~5.4 h
-to the 60k close (~23Z). Steering: none (`read` = our own 17:46
-work-session post, `history` no new reactions). Queue validate green
-(depth 5, 14 open); `run_work_next` already armed at 17:46 by the
-rung-(b′) work session — chained work follows this tick (next CPU
-items: cleancand instrument delta, meta-report structure drafting;
-credit-cap risk until ~22Z stands, committed work resumes at reset
-if a session 429s). No blog build (now.md only).
-
 Session 2026-08-08 17:48–18:3xZ (work, bounded; exploit, 0 GPU-h —
 CPU cells + charts): #6 rung (b′) instrument delta landed oracle-green
 (93dcf71: eligible-list rule + filter-aware dump/read/live-oracles +
@@ -205,14 +193,20 @@ per-joint 3×2 dark layout, Space pushed, bytes verified). check.py
 reason: two items landed incl. mid-session steering; credit-cap risk
 until ~22Z — the first quiet post-cap window owes one.
 
-Session 2026-08-08 17:35–18:1xZ (work, bounded; exploit, 0 GPU-h —
-CPU cell): #6 rung (b′) clean-list subgoal-draws **pre-reg POSTED**
-(2026-08-08-prereg-subgoal-draws-cleanlist.md, commit 135a391) —
-eligible-list rule frozen, priors verified on the banked stage-1
-table pre-freeze (0/60 pick changes both scorers; filtered bars
-60/60 / 57/60 / 5.4%), stage 1 CPU-free by pass-1 byte-identity,
-ceiling ≤ 5 GPU-h; execution item queued behind the noise-ladder
-rung-2 post-close obligations. check.py 515 green. Babysit 18:0xZ
-green (51,160/60,000, probe 6.30@51,000 new continuation low, ~5.4 h
-to close). Lit slice skipped, stated reason: credit-cap risk until
-~22Z ahead of the day's highest-stakes close chain.
+Session 2026-08-08 18:19–18:4xZ (tick, conversational; 0 GPU-h new):
+babysit 18:21Z exit 0 — box molmo2_ar60k green 52,180/60,000, probe
+6.27@51,500 / 6.29@52,000 (continuation lows, 1.9+ under the 8.21
+kill bar, ×3 never armed), loss 2.71, 2.19 s/step, vram 73.84 no new
+peak, ~4.7 h to the 60k close (~23Z). Steering: 👍 reaction from the
+owner on the 18:19 work-session post (agreement, recorded, no
+action); owner question 18:19:35Z "remind me what this work is again
+from first principles" → answered 18:21Z with a two-post
+first-principles summary (north star → Bijou → panel-MAE proxy → the
+live 60k run and its AR-100k 5.803 bar; then the eval-side threads:
+subgoal draws #6 incl. rung (b′)'s role, noise-ladder #1 rung 2,
+frame-mining as the data-side mirror of the phase-aliasing
+bottleneck). Conversational mode held with a 45 s channel monitor
+through ~18:4xZ. Queue validate green (depth 5, 14 open);
+`run_work_next` armed — chained work follows this tick (next CPU
+items: meta-report structure, the owed lit slice once the ~22Z cap
+window passes). No blog build (now.md only).
