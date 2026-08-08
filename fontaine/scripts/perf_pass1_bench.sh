@@ -7,14 +7,19 @@
 #   bench_A  (HEAD)          320 steps log-every 20
 #   bench_B  (P1 only, 00cdafe)   320 steps
 #   bench_C  (full bundle, 22e8148) 320 steps
-# AMENDMENT (recorded in-channel 2026-08-08 ~14:4xZ): batch 8 +
-# backward-chunks 4, not the pre-reg's 12/6 — a single-GPU bench
-# unshards the ZeRO-1 optimizer (~+11 GiB vs the 4-rank launcher's
-# per-GPU footprint), so batch 12 risks OOM on the 80 GiB card; and
-# chunks must divide the batch (train.py guard). 8/4 keeps the live
-# per-chunk size exactly (2 samples/chunk, as 12/6); the P3
-# sync-multiplier runs x4 not x6 per step (slightly conservative for
-# the bundle read). Uniform across every rung: relative reads stand.
+# AMENDMENT (recorded in-channel, two rounds ~14:3x-14:4xZ): batch 4 +
+# backward-chunks 2, not the pre-reg 12/6 — a single-GPU bench cannot
+# shard the optimizer (--zero1 refuses world 1; measured: batch 8
+# OOMed at step 2 with the unsharded states at 79.15 GiB). 4/2 keeps
+# the live per-chunk size exactly (2 samples/chunk, as 12/6); the P3
+# sync-multiplier runs x2 not x6 per step (conservative for the
+# bundle read). ROUND 3: --activation-checkpointing ON, uniform — the
+# unsharded AdamW states (+~19 GiB at first optimizer step, measured
+# 78.2/79.18 OOM) leave no room for full activations on one card.
+# Caveat recorded: recompute runs forward kernels twice, so P1-type
+# forward deltas read slightly HIGH here; the pre-reg box smoke
+# (4-GPU, true recipe) recalibrates before any adoption.
+# Uniform across every rung: relative reads stand.
 # LAUNCH: fontaine/scripts/run_detached.sh fontaine-perfpass1-bench \
 #             bash fontaine/scripts/perf_pass1_bench.sh
 set -euo pipefail
@@ -58,8 +63,8 @@ run_cfg () {
             --camera-kind-dropout 0.1 \
             --decoder-lr 1e-4 --backbone-text-lr 2e-5 --grad-clip 100 \
             --steps "$steps" --warmup-steps 1000 \
-            --batch-size 8 \
-            --zero1 --backward-chunks 4 --chunk-grad-allreduce \
+            --batch-size 4 \
+            --backward-chunks 2 \
             --num-workers 20 --prefetch-factor 4 \
             --eval-samples 256 --eval-every 100000 --save-every 100000 \
             --log-every "$logev" \
@@ -74,9 +79,21 @@ run_cfg () {
 }
 mkdir -p "$OUT"
 
+# ROUND 4 (final local form): PARITY_ONLY=1 runs just the one-step
+# parity pair. The 320-step ladder + 50-step overlay MOVED TO THE BOX
+# post-23Z window at the true 4-GPU recipe (batch 12 / chunks 6 /
+# zero1): the single-GPU full-recipe run is structurally OOM (~78.2
+# GiB resident with unsharded optimizer; act-ckpt would fix memory but
+# is BROKEN at HEAD — checkpoint recompute escapes the sdpa_kernel
+# pin and picks a different backend than the saved forward, metadata
+# mismatch abort; a real find, filed on the act-ckpt queue item).
+# Step 1 completes locally (peak 58.9 GiB) — exactly the pre-reg's
+# oracle (a) window.
+PARITY_STEPS="${PARITY_ONLY:+1}"
+PARITY_STEPS="${PARITY_STEPS:-50}"
 git -C "$WT" checkout -q "$P1_COMMIT"
-run_cfg perfpass1_parity_A "$MAIN" 50 1
-run_cfg perfpass1_parity_B "$WT"   50 1
+run_cfg perfpass1_parity_A "$MAIN" "$PARITY_STEPS" 1
+run_cfg perfpass1_parity_B "$WT"   "$PARITY_STEPS" 1
 
 # P1 one-step parity gate (pre-reg bounds: loss abs diff <= 1e-3,
 # grad-norm rel diff <= 1e-2 at step 1) — surfaced loudly; the ladder
@@ -93,6 +110,11 @@ print(f"PARITY step1: loss {la} vs {lb} (|d|={dl:.2e} bound 1e-3), "
       f"grad_norm {ga} vs {gb} (rel {dg:.2e} bound 1e-2) -> "
       f"{'PASS' if ok else 'FAIL'}")
 EOF
+
+if [ "${PARITY_ONLY:-0}" = 1 ]; then
+    echo "=== PARITY-ONLY MODE DONE $(date -u +%H:%M:%SZ) (ladder runs on the box post-23Z) ==="
+    exit 0
+fi
 
 run_cfg perfpass1_bench_A "$MAIN" 320 20
 run_cfg perfpass1_bench_B "$WT"   320 20

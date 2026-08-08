@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-08T14:45:00+00:00",
+ "updated_utc": "2026-08-08T15:10:00+00:00",
  "depth_reason": "depth 4+ at 11:1xZ 08-08: 60k LIVE (box, endpoint ~23Z); queued: fieldgen fields-panel (owner, armed w/ launcher+prereg, opens at 60k close), snapflow-visual-report (owner), idea6 cleancand draft, idea1 noise-ladder draft; attach chain blocked behind 60k per owner priority.",
  "items": [
   {
@@ -22,12 +22,12 @@
   },
   {
    "id": "molmo2-perf-pass1-exec",
-   "title": "molmo2 perf pass 1 EXECUTION (gpu-local, <= 3 GPU-h): per the finalized pre-reg — (1) branch perf-pass1 with the four pinned changes (P1 suffix cuDNN training-only scope, P2 windowed vram peak + lifetime max kept, P3a-c sync removals, P4 clone drop); (2) parity oracles per item (P1 loss<=1e-3/gradnorm<=1e-2 + 50-step overlay + decode byte-match; P3b wte bitwise both regimes; P3c CPU loss-oracle re-pin sum-form only, mean-form UNCHANGED; P4 bitwise grads), failing item drops, no re-tolerancing; (3) bench ladder A=HEAD B=+P1 C=bundle, 320 steps each single local H100, 60k data recipe, median s_per_step over last 240 + vram guard >2% fails; (4) decision: C>=5% -> land post-evals, <5% -> P2+bitwise-free items only; box 4-GPU transfer smoke 0.3 GPU-h before first adopting lineage launch. check.py + oracles green before the landing commit. | EXECUTING 08-08 14:2xZ (owner prio 14:10Z): branch perf-pass1 (P1=00cdafe, full=22e8148, check.py green both), BITWISE ORACLE GREEN 118/118 hashes (perf_pass1_bitwise_oracle.py HEAD-vs-branch), ladder unit fontaine-perfpass1-bench live on local GPU (perf_pass1_bench.sh: parity A/B 50-step + bench A/B/C 320-step). AMENDMENT: batch 8 + chunks 4 (single-GPU unshards ZeRO-1 optimizer ~+11GiB, 12 would OOM; chunks must divide batch; per-chunk size 2 preserved)",
+   "title": "molmo2 perf pass 1 EXECUTION (gpu-local, <= 3 GPU-h): per the finalized pre-reg — (1) branch perf-pass1 with the four pinned changes (P1 suffix cuDNN training-only scope, P2 windowed vram peak + lifetime max kept, P3a-c sync removals, P4 clone drop); (2) parity oracles per item (P1 loss<=1e-3/gradnorm<=1e-2 + 50-step overlay + decode byte-match; P3b wte bitwise both regimes; P3c CPU loss-oracle re-pin sum-form only, mean-form UNCHANGED; P4 bitwise grads), failing item drops, no re-tolerancing; (3) bench ladder A=HEAD B=+P1 C=bundle, 320 steps each single local H100, 60k data recipe, median s_per_step over last 240 + vram guard >2% fails; (4) decision: C>=5% -> land post-evals, <5% -> P2+bitwise-free items only; box 4-GPU transfer smoke 0.3 GPU-h before first adopting lineage launch. check.py + oracles green before the landing commit. | EXECUTING 08-08 14:2xZ (owner prio 14:10Z): branch perf-pass1 (P1=00cdafe, full=22e8148, check.py green both), BITWISE ORACLE GREEN 118/118 hashes (perf_pass1_bitwise_oracle.py HEAD-vs-branch), ladder unit fontaine-perfpass1-bench live on local GPU (perf_pass1_bench.sh: parity A/B 50-step + bench A/B/C 320-step). AMENDMENT: batch 8 + chunks 4 (single-GPU unshards ZeRO-1 optimizer ~+11GiB, 12 would OOM; chunks must divide batch; per-chunk size 2 preserved) | LOCAL PHASE CLOSED 15:0xZ: one-step parity ran (grad-norm PASS rel 8.1e-3<=1e-2, no cuDNN crash; LOSS BOUND FAILED AS BANKED |d|=8.70e-3 vs frozen 1e-3 abs = 5.1e-4 RELATIVE at init-scale loss 16.9 — calibration flaw owned in-channel, P1 dropped unless owner approves a relative-bound amendment BEFORE the box ladder). Single-GPU full-recipe bench proven structurally OOM (78.2/79.18 by step 2, batch-invariant). BONUS FIND: --activation-checkpointing crashes on CUDA (recompute escapes sdpa_kernel pin -> backend mismatch abort; filed idea #20, prerequisite fix named). Ladder+overlay moved to box TRUE recipe: fontaine/scripts/box/perf_pass1_bench_box_ddp4.sh (supersedes transfer smoke)",
    "class": "gpu-local",
-   "status": "live",
+   "status": "queued",
    "prereg": "fontaine/blog/src/posts/2026-08-08-prereg-molmo2-perf-pass1.md",
    "owner_hold": false,
-   "boundary": "ladder ~70 min from 14:4xZ launch; readout in-session; LANDING on main still gated on 60k close + chained evals (~23Z); decode byte-match oracle runs at landing time"
+   "boundary": "BOX ladder (~2.5-3 GPU-h) opens post-60k-close + chained eval + fields panel (~23Z+); needs worktree perf-pass1 on the box (prereq in launcher header); P1 gate status adjudicated by owner amendment or stays dropped; LANDING after ladder verdict per frozen rules"
   },
   {
    "id": "ar100k-tsens-q4-live",

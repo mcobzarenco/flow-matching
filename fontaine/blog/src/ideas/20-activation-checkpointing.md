@@ -33,3 +33,20 @@ checkpoint. The K launcher carries the flag. The measured ladder's
 SCRIPT landed 2026-08-07 ~06:5xZ (`smoke_attach_k_ddp4.sh`, B12c6 →
 B8c4 → B6c3 vs the 71 GiB alloc-peak gate — see #4); still open: RUN
 it on the box at the endpoint window.
+
+**2026-08-08 ~15:0xZ — REAL BUG FOUND (perf pass-1 bench detour,
+receipts in `outputs/train/perfpass1_parity_A.launch.log` round 3):**
+the flag CRASHES on CUDA at the first backward through the AR suffix
+— the non-reentrant checkpoint's recompute runs during backward,
+**outside the `sdpa_kernel([...no cuDNN])` pin** that wrapped the
+forward, so the recompute dispatches a different sdpa backend than
+the saved forward (fp32 MATH score tensors saved; bf16 fused shapes
+recomputed) and aborts on tensor-metadata mismatch. The 4 keystone
+oracles are bitwise-green and never caught it because CPU/tiny runs
+dispatch identically inside and outside the pin. Consequence: the
+perf review's "flip the flag on the next lineage" recommendation has
+a named PREREQUISITE FIX — move the backend pin inside the
+checkpointed function (or wrap the backward too) — and the perf
+pass-1 P1 change (training-mode cuDNN re-admit) incidentally
+removes the divergence for the training path. Fix rides the
+act-ckpt lineage-flip pre-reg, with a CUDA regression oracle.
