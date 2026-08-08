@@ -18,9 +18,12 @@ frozen there, this file only mechanizes them):
   6. EXECUTION ORACLES (each failure a hard abort): banked baseline
      anchor 5.8026/2.1431 reproduced; identity columns byte-match
      across all npzs; state-copy / state-copy-norm rows byte-match the
-     banked panel; label-less oracle rows byte-match baseline; policy
-     keys carry the mode suffixes; report JSONs record the mode and
-     npz-recomputed pooled values reproduce each report's summaries.
+     banked panel; policy keys carry the mode suffixes; report JSONs
+     record the mode and npz-recomputed pooled values reproduce each
+     report's summaries. Label-less oracle-row decode deltas are
+     RECORDED, not adjudicated (amendment 1: label-bearing batchmates
+     change the batch composition, so equality vs the banked baseline
+     holds only up to kernel composition noise).
 
 The baseline is the BANKED panel npz — never re-run. Expectation 5
 (falsifier): Δ_self ≥ 0 ⇒ rung (a) gives nothing at panel granularity;
@@ -219,17 +222,35 @@ def analyze(
     check_report(self_npz, SELF_KEY, self_rep, "self", "self arm")
     labeled = labeled_mask(subgoals, base)
     unlabeled = ~labeled
-    if not _bytes_equal(
-        np.ascontiguousarray(base[BASELINE_KEY][unlabeled]),
-        np.ascontiguousarray(oracle_npz[ORACLE_KEY][unlabeled]),
-    ):
-        sys.exit(
-            "label-less oracle rows do NOT byte-match baseline — the "
-            "label-less context is not the baseline context, stop",
-        )
+    # Amendment 1 (posted before the stage-2 launch): label-less rows in
+    # the oracle arm decode alongside label-BEARING batchmates, so their
+    # equality vs the banked baseline holds only up to batch-composition
+    # kernel noise — recorded descriptively, never an abort. Abort-grade
+    # byte checks stay on the composition-independent surfaces above
+    # (identity columns, state-copy rows, provenance/report fields).
+    diff_labelless = unlabeled & (
+        (
+            base[BASELINE_KEY].view(np.int32) != oracle_npz[ORACLE_KEY].view(np.int32)
+        ).any(axis=(1, 2))
+    )
+    labelless_decode: dict[str, Any] = {
+        "rows_differ": int(diff_labelless.sum()),
+        "rows_labelless": int(unlabeled.sum()),
+    }
+    if diff_labelless.any():
+        pool_mask = diff_labelless & core
+        if pool_mask.any():
+            oerr_all = np.abs(oracle_npz[ORACLE_KEY] - truth)
+            labelless_decode["pooled_delta_on_differing_core_rows"] = round(
+                bbr.pooled_chunk(oerr_all, pool_mask, w)
+                - bbr.pooled_chunk(base_err, pool_mask, w),
+                5,
+            )
     print(
         f"execution oracles GREEN ({int(labeled.sum())} labeled / "
-        f"{int(unlabeled.sum())} label-less rows)",
+        f"{int(unlabeled.sum())} label-less rows; label-less decode vs "
+        f"banked: {labelless_decode['rows_differ']} rows differ — "
+        "amendment-1 composition noise, recorded)",
     )
 
     # ---- per-frame machinery shared by reads 1-3 + 5 ----
@@ -285,6 +306,7 @@ def analyze(
     out: dict[str, Any] = {
         "baseline": {"chunk_mae": round(bc, 5), "first_mae": round(bf, 5)},
         "baseline_curve": [round(v, 5) for v in step_curve(base_err, valid, core)],
+        "labelless_decode": labelless_decode,
         "arms": {name: reads(err) for name, err in arms.items()},
     }
 
@@ -535,21 +557,22 @@ def oracle() -> None:
     )
     mut = {k: v.copy() for k, v in oracle_npz.items()}
     mut[ORACLE_KEY] = mut[ORACLE_KEY].copy()
-    mut[ORACLE_KEY][5] = 0.99  # a label-less row drifts
-    expect_exit(
-        lambda: analyze(
-            base,
-            reps["base"],
-            mut,
-            reps["oracle"],
-            self_npz,
-            reps["self"],
-            subgoals,
-            anchor,
-            None,
-        ),
-        "label-less oracle rows",
-        "label-less drift",
+    mut[ORACLE_KEY][5] = 0.99  # a label-less row drifts (composition class)
+    drifted = analyze(
+        base,
+        reps["base"],
+        mut,
+        reps["oracle"],
+        self_npz,
+        reps["self"],
+        subgoals,
+        anchor,
+        None,
+    )
+    assert drifted["labelless_decode"]["rows_differ"] == 1, drifted["labelless_decode"]
+    print(
+        "  descriptive branch OK: label-less drift recorded, not adjudicated "
+        "(amendment 1)",
     )
     bad_rep = dict(reps["self"])
     bad_rep["summaries"] = [dict(reps["self"]["summaries"][0], chunk_mae=2.0)]

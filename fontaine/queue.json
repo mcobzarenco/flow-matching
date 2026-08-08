@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-08T00:30:00+00:00",
+ "updated_utc": "2026-08-08T03:00:00+00:00",
  "depth_reason": null,
  "items": [
   {
@@ -67,12 +67,12 @@
   },
   {
    "id": "idea6-selfsubgoal-probe",
-   "title": "#6 rung-(a) self-subgoal probe EXECUTING (launched 08-07/08 session): live oracles first RED vs banked comparator -> diagnosed batch-composition kernel numerics (plain q4 baseline flips the IDENTICAL 1207/4301 rows, pooled effect -0.0008 mean-zero; quantiles per-item) -> AMENDMENT 1 posted pre-launch (matched-composition comparator) -> adjudication ALL GREEN (emptyhint bit-exact 4301/4301 vs matched, wiring live 4030/4298) -> stage-1 table 60/60 GO (gates a/b/c pass; ~10/60 phase-offset noted for results post) -> ARMS LIVE 00:2xZ 08-08 unit fontaine-selfsubgoal-arms (full-panel oracle then marker-gated self two-pass, ~3.2 GPU-h projected <= 8 gate); read script selfsubgoal_results.py LANDED oracle-gated pre-data",
+   "title": "#6 rung-(a) self-subgoal probe COMPLETE 02:37Z 08-08 (~3.2 GPU-h <= 8 gate): arms rc=0 (oracle full panel + marker-gated self two-pass; narrated free from pass 1); READ OUT same session \u2014 Delta_oracle -0.290 [-0.331,-0.225] slot ALIVE 6x late-horizon; Delta_self -0.018 CI spans 0 = no deployment win at 3x decode; channel narr-self +0.043 CI excl 0 (slot right, generation phase-estimation is the bottleneck). Results post 2026-08-08-selfsubgoal-results.md",
    "class": "gpu-local",
-   "status": "live",
+   "status": "done",
    "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-selfsubgoal-probe.md",
    "owner_hold": false,
-   "boundary": "arms complete ~03:5x-04:2xZ 08-08 (oracle ~50 min + self two-pass ~130 min from 00:2xZ); frozen reads (selfsubgoal_results.py, one command) + results post at completion \u2014 the chained session's item; golden-ticket screen (#1) strictly behind it per its pre-reg window clause"
+   "boundary": "closed 2026-08-08 02:37Z (arms) / 02:5xZ (reads); babysit entry pruned same commit"
   },
   {
    "id": "idea19-molmo2-draws-arm",
@@ -337,21 +337,30 @@
   },
   {
    "id": "idea6-selfsubgoal-frozen-reads",
-   "title": "#6 frozen reads + results post at the arms boundary: selfsubgoal_results.py (one command, oracle-gated pre-data \u2014 Delta_self primary vs banked 5.8026 w/ CI + labeled-subset quote, Delta_oracle labeled bound, Delta_narr channel + narr-minus-self CI, horizon curves + first10/last10, first_mae mirrors, execution oracles incl. banked-anchor re-pool; decode-noise floor -0.0008/CI\u00b10.016 quoted beside Delta_self per amendment 1), then: results post w/ stage-1 table commented row-by-row (the ~10/60 phase-offset rows) + E1-E5 dispositions, ideas.md #6 hook + idea page 06 entry, leaderboard/ledger rows if any arm heads a class, babysit ar100k_selfsubgoal entry PRUNED at the same commit, Discord post",
+   "title": "#6 frozen reads + results post EXECUTED 02:4x-03:0xZ 08-08: selfsubgoal_results.py one command, execution oracles GREEN (anchor re-pool exact, identity/state-copy byte-match, modes carried; 25788 labeled/12 label-less rows, 5 differ = amendment-1 composition class RECORDED \u2014 the read script's pre-amendment label-less byte-match guard fired on the real dumps and was re-graded to amendment-1 descriptive semantics BEFORE the reads ran, selftest updated, pre-reg abort set untouched). E1 CONFIRMED -0.290; E2 point-wise only (CI spans 0); E3 CONFIRMED (last10 -0.480 vs first10 -0.081); E4 confirmed (+0.026, narr-self +0.043 CI excl 0); E5 not fired, deployment claim dead anyway. No leaderboard change (oracle = not deployment class; self = null at 3x cost). Results post + ideas/idea-06 ledger + stage-1 table commentary landed; babysit entry pruned",
    "class": "cpu",
-   "status": "queued",
+   "status": "done",
    "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-selfsubgoal-probe.md",
    "owner_hold": false,
-   "boundary": "opens at fontaine-selfsubgoal-arms completion (~03:5x-04:2xZ 08-08); reads are frozen in the pre-reg + amendment 1; NO scalar quoted before the read script's execution oracles pass"
+   "boundary": "closed 2026-08-08 ~03:0xZ"
   },
   {
    "id": "idea1-golden-ticket-screen-execution",
-   "title": "#1 golden-ticket screen EXECUTION (local 1xH100, staged) \u2014 instrument PRE-LANDED (idea1-golden-ticket-instrument done 08-07: --noise-tickets mode, bank sha 9bb13bc4\u2026, 4 oracles green, ticket_scores.py scorer + R1 ready): remaining is launch-only. Stage 1 search via run_detached.sh: eval with --checkpoint bijou_flow_artrunk_h1024_40k_ddp2/step_080000 --sample-plan plans/holdout_curated_v0_k4l2_drawsprobe_s7.json --sample-draws 64 --noise-tickets plans/tickets_goldenticket_m64.npz --dump-draws (heun-30, ~1.5 GPU-h), then ticket_scores.py --npz \u2026 --out reports/analysis__goldenticket_stage1.json; R1 kill line adjudicates BEFORE stage 2 (winner, full panel, complement-row paired read vs stablekey npz) and stage 3 (mean-of-top-10); gate 6 GPU-h total; reads frozen in the pre-reg; babysit.toml entry at launch per standing rule",
+   "title": "#1 golden-ticket screen stage 1 LIVE 02:41:13Z 08-08 (unit fontaine-goldenticket-stage1 via run_detached.sh, launcher eval_flow80k_goldenticket_stage1.sh landed 3392583 w/ plan+tickets shas pinned): one draws-64 ticket eval on drawsprobe_s7 (heun-30, ~1.5 GPU-h) chaining ticket_scores.py + frozen R1 kill line (sd > 0.0785 OR min < mean-0.22 -> stage 2; else screen CLOSES ~1.5 GPU-h). Stage 2/3 SEPARATE R1-gated launches. babysit goldenticket_stage1 entry active; gate 6 GPU-h",
    "class": "gpu-local",
-   "status": "blocked",
+   "status": "live",
    "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-golden-ticket-screen.md",
    "owner_hold": false,
-   "boundary": "opens at a quiet local-GPU window strictly after the tsens rungs complete (~00Z 08-08) AND behind the selfsubgoal probe (#6) per the pre-reg's window clause; instrument + oracles green before any launch"
+   "boundary": "stage-1 eval ~1.5 GPU-h from 02:41Z -> R1 adjudication ~04:1x-04:3xZ 08-08; stage 2 (~0.9 GPU-h) only on R1 pass"
+  },
+  {
+   "id": "idea6-subgoal-draws-prereg-draft",
+   "title": "#6 escalation rung (b) pre-reg DRAFT (CPU; opens now that rung (a) is banked): candidate-subgoal SELECTION \u2014 pass 1 decodes N subgoal candidates (the #1 batched-draws machinery, depth-1 VINE width scaling per papers/runtime-plan-verification.md), a frozen scorer picks one, pass 2 conditions on it; the measured prize is the Delta_oracle -0.290 vs Delta_self -0.018 gap (generation phase noise). Draft must freeze: candidate count, scorer definition (no oracle leakage), cost gate, falsifier vs the banked -0.018, and the no-prompt-fishing clause inherited from rung (a). Execution needs its own posted pre-reg + queue entry",
+   "class": "cpu",
+   "status": "queued",
+   "prereg": null,
+   "owner_hold": false,
+   "boundary": "CPU work at any GPU-busy window; informed by rung (a) results (banked 02:5xZ 08-08); scorer choice is the hard design cell \u2014 do a short lit check on subgoal-scoring signals before freezing"
   }
  ]
 }

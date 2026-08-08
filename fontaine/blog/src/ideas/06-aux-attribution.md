@@ -165,3 +165,27 @@ numbers and both finalization amendments.
   failure-labeled demos we don't have. All rollout-granularity; no
   change to the frozen reads or E5 — these price the escalation
   pre-regs if Δ_self earns one.
+- **2026-08-08 ~02:5xZ — RUNG (a) READ OUT
+  ([results post](../posts/2026-08-08-selfsubgoal-results.md), reads
+  by `selfsubgoal_results.py`, execution oracles green):** the
+  trained `[subgoal|…]` slot is ALIVE — **Δ_oracle −0.290
+  [−0.331, −0.225]** on 25,788 labeled panel rows (≈ the whole
+  panel), concentrated 6× late-horizon (last-10 −0.480 vs first-10
+  −0.081; E3 confirmed) — but the closed loop returns
+  **Δ_self −0.018 [−0.052, +0.026]**, a statistical zero at ~3×
+  decode cost (E2 point-wise only; E5's falsifier does not fire by
+  the letter, the deployment claim is dead anyway). **Channel read
+  (the probe's only significant self-text number): narr − self
+  +0.043 [+0.023, +0.064]** — identical text, suffix voice loses to
+  the condition slot; with stage-1's ~10/60 phase-offset rows this
+  locates the bottleneck in single-frame PHASE ESTIMATION, not the
+  channel and not language quality. Decode-noise floor context
+  −0.0008 ± 0.016 quoted per amendment 1. Cost ~3.2 GPU-h ≤ 8 gate.
+  **Disposition: rung (a) closed — "don't deploy"; ceiling −0.29
+  banked as the escalation prize. Next rung, own pre-reg required:
+  subgoal-DRAWS selection (decode N candidates, condition on
+  best-scored — the [runtime-plan-verification
+  slice](../papers/runtime-plan-verification.md)'s VINE width
+  scaling, depth-1 via the #1 batched-draws machinery); heavier
+  siblings: planner-side SFT (HiRoC direction), rollout refresh
+  policies (SV-VLA shape, #16-gated).**

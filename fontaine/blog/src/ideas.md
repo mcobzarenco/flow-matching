@@ -45,9 +45,16 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   150-step memory smoke + amendment post + owner go, window
   post-attach-screen.
 - **`aux-subgoals` [#6 Aux attribution](ideas/06-aux-attribution.md)** —
-  `confirmed` (aux HELPS actions, +0.462 cost when off), and its
-  rung-(a) self-subgoal probe is pre-registered, waiting on the next
-  quiet local-GPU window. New 2026-08-07 (radar, both papers
+  `confirmed` (aux HELPS actions, +0.462 cost when off). **Rung (a)
+  self-subgoal probe READ OUT 2026-08-08
+  ([results](posts/2026-08-08-selfsubgoal-results.md)): the slot is
+  ALIVE — Δ_oracle −0.290 [CI −0.331, −0.225], 6× late-horizon,
+  twice the AR draws-10 gain — but self-generated subgoals recover
+  almost none of it (Δ_self −0.018, CI spans 0; no deployment win at
+  3× decode cost). Channel read significant: same text via suffix
+  is +0.043 worse than the slot — generation quality (phase
+  estimation), not the channel, is the bottleneck. Escalations
+  (subgoal-draws selection first) each need a new pre-reg.** New 2026-08-07 (radar, both papers
   announced same day —
   [subgoal-sourcing page](papers/subgoal-sourcing-post-training.md)):
   two fresh directional priors before the read — HiRoC's

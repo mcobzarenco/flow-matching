@@ -38,29 +38,6 @@ value = 71.0
 # (~50 min at the measured ~540 f/min single-pass), then marker-gated
 # self two-pass (~130 min at ~197 f/min). Prune at completion
 # (retained-entry footgun); frozen reads = selfsubgoal_results.py.
-[[run]]
-name = "ar100k_selfsubgoal"
-kind = "progress-log"
-host = "local"
-pgrep = "selfsubgoal"               # matches both phase scripts + evals
-pgrep_min = 2                       # launcher bash + eval python
-gpu_indices = [0]
-gpu_mem_min_mib = 8000
-log = "/home/ubuntu/eval__ar100k_selfsubgoal_arms.log"
-progress_re = "scored [0-9]+/[0-9]+ frames"
-started_utc = "2026-08-07T23:24:00Z"
-gpu_hours_per_wall_hour = 1.0       # single local GPU
-boundary = "preflight q4 runs 4301 rows each (~12+6 min) + stage-1 60 frames; arms 25800 rows (oracle 1 pass, self 2 passes); all greedy"
-anchors = [
-    "NO scalars before the stage-1 go/no-go (pre-reg): live oracles are byte-match only; do not quote MAEs from preflight logs",
-    "self arm runs ONLY behind fontaine/harness/state/selfsubgoal_stage1_go (human judgment on the validity table); oracle arm runs regardless",
-    "banked baseline 5.8026/2.1431 never re-run; reads pair vs reports/eval__bijou_arb_rcond_100k_ddp4__step_100000__panel_k4l2.npz",
-    "model-load + spawn-worker startup ~2-4 min per eval invocation shows as a quiet log head — not a stall",
-]
-[[run.gates]]
-kind = "gpu_hours_max"
-value = 8.0                         # pre-reg ceiling, all stages
-
 # PREPARED — molmo2 endpoint draws arm (#19). Uncomment + fill
 # started_utc when eval_box_molmo2_endpoint_draws10_t1.sh launches
 # (prune molmo2_ar40k at the same time — the train run is over).
@@ -279,30 +256,30 @@ value = 8.0                         # pre-reg ceiling, all stages
 # kind = "vram_max_gib"
 # value = 71.0
 
-# PREPARED — golden-ticket screen stage 1 (#1). Uncomment + fill
-# started_utc when eval_flow80k_goldenticket_stage1.sh launches via
-# run_detached.sh (unit fontaine-goldenticket-stage1); prune the
-# ar100k_selfsubgoal entry at the same commit (its arms are over).
-#
-# [[run]]
-# name = "goldenticket_stage1"
-# kind = "progress-log"
-# host = "local"
-# pgrep = "goldenticket"             # launcher bash + eval python
-# pgrep_min = 2
-# gpu_indices = [0]
-# gpu_mem_min_mib = 8000
-# log = "/home/ubuntu/eval__goldenticket_stage1.log"
-# progress_re = "scored [0-9]+/[0-9]+ frames"
-# started_utc = "FILL-AT-LAUNCH"
-# gpu_hours_per_wall_hour = 1.0      # single local GPU
-# boundary = "stage 1 = 2458 probe frames x draws-64 ticket batch (heun-30, ~1.5 GPU-h); scorer + R1 kill line adjudicate BEFORE any stage-2 launch"
-# anchors = [
-#     "R1 kill line frozen in the pre-reg: sd > 0.0785 OR min < mean - 0.22 -> stage 2; otherwise the screen CLOSES at ~1.5 GPU-h (null is informative)",
-#     "anchors banked: stable-key single draw 6.5997/1.9355, sigma_probe 0.0669, expected null min = mean - 0.157",
-#     "tickets bank sha 9bb13bc4... pinned in the launcher + verified by ticket_scores.py provenance refusals",
-#     "model-load + spawn-worker startup ~2-4 min shows as a quiet log head — not a stall",
-# ]
-# [[run.gates]]
-# kind = "gpu_hours_max"
-# value = 6.0                        # pre-reg ceiling, all stages
+# golden-ticket screen stage 1 (#1) — ACTIVE (launched 02:41:13Z 08-08
+# via run_detached.sh unit fontaine-goldenticket-stage1; the
+# ar100k_selfsubgoal entry was pruned at the same commit — arms done
+# 02:37Z rc=0).
+
+[[run]]
+name = "goldenticket_stage1"
+kind = "progress-log"
+host = "local"
+pgrep = "goldenticket"             # launcher bash + eval python
+pgrep_min = 2
+gpu_indices = [0]
+gpu_mem_min_mib = 8000
+log = "/home/ubuntu/eval__goldenticket_stage1.log"
+progress_re = "scored [0-9]+/[0-9]+ frames"
+started_utc = "2026-08-08T02:41:13Z"
+gpu_hours_per_wall_hour = 1.0      # single local GPU
+boundary = "stage 1 = 2458 probe frames x draws-64 ticket batch (heun-30, ~1.5 GPU-h); scorer + R1 kill line adjudicate BEFORE any stage-2 launch"
+anchors = [
+    "R1 kill line frozen in the pre-reg: sd > 0.0785 OR min < mean - 0.22 -> stage 2; otherwise the screen CLOSES at ~1.5 GPU-h (null is informative)",
+    "anchors banked: stable-key single draw 6.5997/1.9355, sigma_probe 0.0669, expected null min = mean - 0.157",
+    "tickets bank sha 9bb13bc4... pinned in the launcher + verified by ticket_scores.py provenance refusals",
+    "model-load + spawn-worker startup ~2-4 min shows as a quiet log head — not a stall",
+]
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 6.0                        # pre-reg ceiling, all stages
