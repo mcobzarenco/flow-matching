@@ -525,7 +525,7 @@ def main() -> int:
             print("DISCORD POLL FAILED — treat as a liveness-grade failure")
             exit_code = EXIT_LIVENESS
     print(
-        f"babysit exit {exit_code} (0 ok, 1 liveness/poll failure, 3 gate crossing surfaced)",
+        f"babysit exit {exit_code} (exit codes: 0=ok, 1=liveness/poll failure, 3=gate crossing surfaced)",
     )
     return exit_code
 
