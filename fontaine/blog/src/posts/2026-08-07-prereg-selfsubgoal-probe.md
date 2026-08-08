@@ -156,3 +156,50 @@ recorded. Venue: local GPU, first quiet window at or after the
 draws10_t1 boundary AND its frozen reads (that pre-reg's obligations
 come first); never co-located with a training run's eval chain.
 First-poll util+rate check per standing rule.
+
+## Amendment 1 — oracle-(i)/(ii) comparator (2026-08-08 ~00:1xZ, posted BEFORE the stage-2 launch)
+
+*The pre-launch adjudication run falsified an assumption inside the
+oracle spec, not the oracle's semantics. Recorded here per this post's
+own amendment clause; no read, arm, gate or expectation changes.*
+
+The live oracle-(i) run (q4 subset, `--selfsubgoal-force-empty`)
+was NOT bit-exact against the banked full-panel baseline npz:
+1207/4,301 rows differed. Diagnosis, in order run:
+
+- state-copy / state-copy-norm rows byte-match the banked panel
+  (plan/data alignment exact); differing rows hit subgoal-labeled and
+  label-less rows at the same rate (no hint-leak signature);
+- the pooled effect of the differing rows is **−0.0008 chunk MAE**
+  (per-frame CI [−0.016, +0.015] — mean-zero decode noise, not a
+  systematic shift);
+- a **plain baseline eval on the same q4 plan with zero instrument
+  code involved** reproduces the same class of row flips against the
+  banked npz (count quoted in the adjudication log). Mechanism:
+  greedy AR decode is batch-composition-sensitive at the kernel level
+  — padding/shape-dependent reduction order perturbs logits at ulp
+  scale, near-tie argmaxes flip, and one flipped token cascades
+  through the row. Action quantiles are per-item (verified at
+  `interface.py::_stats`), so bins are composition-independent —
+  kernel numerics are the only channel.
+
+**Amended comparator (semantics unchanged: "the no-hint limit is the
+plain path"):** oracle (i) is adjudicated bit-exact against a plain
+baseline decode of the SAME plan at the SAME batch composition (the
+`stateprobe_q4_diagbaseline` run), not against the banked full-panel
+npz. Oracle (ii)'s label-less half is decode-checkable only up to the
+same composition noise (label-bearing batchmates change padding), so
+its abort-grade live form is the wiring check (≥ 1 labeled row moves
+the decode) and the label-less byte-equality stands on the pinned CPU
+prompt-byte oracle; the label-less decode count is recorded
+descriptively. All composition-independent execution oracles keep
+their banked comparator and abort grade: identity columns, state-copy
+rows, provenance fields.
+
+Consequence for the frozen reads: none. The stage-2 arms run the full
+panel — the SAME plan, order and batch size as the banked baseline —
+and the paired reads keep the banked npz as baseline, exactly as
+frozen. The measured mean-zero composition noise (−0.0008 pooled,
+CI ±0.016 per-frame) is quoted in the results post beside Δ_self as
+the decode-noise floor context; it does not modify the read
+definitions or the E5 falsifier.
