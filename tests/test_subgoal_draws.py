@@ -23,7 +23,13 @@ execution item's preflight):
   prefill (oracle i's CPU half), restore + re-decode is bit-stable,
   sampled draws are RNG-deterministic, and the recorded stats have the
   greedy argmax property (chosen ≥ mean per step);
-- CLI flag interactions for the draws mode.
+- CLI flag interactions for the draws mode;
+- the rung-(b') clean-list filter (pre-reg …-cleanlist oracles viii/ix
+  CPU halves): planted filter-binds worlds on BOTH scorers, the
+  all-truncated greedy fallback, no-truncation pick invariance, the
+  single-candidate (draws-0) limit, and name/flag provenance. The
+  banked-table halves (vii/x) run in
+  fontaine/scripts/subgoal_draws_cleanlist_stage1.py.
 
 Fixture families: test_selfsubgoal (FakeModel/FakeBase over the real
 Collator) and test_ar_backbone (tiny 256-vocab Gemma, real decoder).
@@ -58,6 +64,7 @@ from bijou.eval.policies import (
 )
 from bijou.eval.subgoal_scoring import (
     ceiling_pick,
+    eligible_indices,
     likelihood_pick,
     mean_chosen_logprob,
     medoid_pick,
@@ -114,6 +121,19 @@ def test_picks_break_ties_toward_lowest_index() -> None:
     assert ceiling_pick(["only one"], "reach the boat") == 0
     with pytest.raises(ValueError, match="zero candidates"):
         self_certainty_pick([], 8)
+
+
+def test_eligible_indices_rule() -> None:
+    """Rung (b') frozen rule: non-truncated original indices, ascending
+    (so a sublist argmax mapped back preserves greedy-first ties);
+    all-truncated → [0]; zero candidates loud."""
+    assert eligible_indices([False, False, False]) == [0, 1, 2]
+    assert eligible_indices([False, True, False]) == [0, 2]
+    assert eligible_indices([True, False, True]) == [1]
+    assert eligible_indices([True, True, True]) == [0]
+    assert eligible_indices([True]) == [0]
+    with pytest.raises(ValueError, match="zero candidates"):
+        eligible_indices([])
 
 
 def test_medoid_pick_consensus() -> None:
@@ -232,6 +252,7 @@ def build_draws(
     *,
     draws: int = 2,
     force_empty: bool = False,
+    candidate_filter: str | None = None,
 ) -> tuple[
     DrawsFakeModel,
     SelfSubgoalPass1Policy,
@@ -242,8 +263,20 @@ def build_draws(
     base = cast(BijouPolicy, FakeBase(model))
     base.seed = 0  # BijouPolicy surface consumed by the draws keying
     pass1 = SelfSubgoalPass1Policy(base, draws=draws, temperature=1.0)
-    bon = SelectedSubgoalPolicy(base, pass1, mode="bon", force_empty=force_empty)
-    ceil = SelectedSubgoalPolicy(base, pass1, mode="ceil", force_empty=force_empty)
+    bon = SelectedSubgoalPolicy(
+        base,
+        pass1,
+        mode="bon",
+        force_empty=force_empty,
+        candidate_filter=candidate_filter,
+    )
+    ceil = SelectedSubgoalPolicy(
+        base,
+        pass1,
+        mode="ceil",
+        force_empty=force_empty,
+        candidate_filter=candidate_filter,
+    )
     return model, pass1, bon, ceil
 
 
@@ -359,6 +392,124 @@ def test_name_provenance() -> None:
     _, _, forced_bon, forced_ceil = build_draws(CANDS, force_empty=True)
     assert forced_bon.name == "bijou@100000_bonsubgoal_emptyhint"
     assert forced_ceil.name == "bijou@100000_ceilsubgoal_emptyhint"
+
+
+# ------------------------------------- rung (b') clean-list filter
+
+
+def test_clean_filter_binds_on_bon() -> None:
+    """Oracle viii, SC half: the full-list SC argmax (candidate 2) is
+    truncated — the filtered pick must move (to candidate 1, the best
+    ELIGIBLE SC) and the rendered prompt must carry it."""
+    planted = {
+        "pick up the cube": [
+            cand("lower the gripper", (-2.0, -2.0)),
+            cand("reach toward the boat", (-4.0, -4.0)),
+            cand("spin in place", (-5.0, -5.0), truncated=True),
+        ],
+    }
+    model, pass1, bon, _ = build_draws(planted, candidate_filter="clean")
+    frame = labeled_item()
+    pass1.predict([frame], [7])
+    bon.predict([frame], [7])
+    assert bon.picks[7] == 1  # full-list argmax is 2 (see CANDS tests)
+    [rendered] = condition_texts(model, 1)
+    assert (
+        rendered == "[subgoal|reach toward the boat][outcome|success][generate|actions]"
+    )
+
+
+def test_clean_filter_binds_on_ceil() -> None:
+    """Oracle viii, ceiling half: the full-list ceil argmax (candidate
+    1, the exact label match) is truncated — the filtered pick must
+    move (F1 tie at 0 between the survivors → greedy first)."""
+    planted = {
+        "pick up the cube": [
+            cand("lower the gripper", (-2.0, -2.0)),
+            cand("reach toward the boat", (-4.0, -4.0), truncated=True),
+            cand("spin in place", (-5.0, -5.0)),
+        ],
+    }
+    model, pass1, bon, ceil = build_draws(planted, candidate_filter="clean")
+    frame = labeled_item()  # true label: "reach toward the boat"
+    pass1.predict([frame], [7])
+    ceil.predict([frame], [7])
+    assert ceil.picks[7] == 0
+    assert condition_texts(model, 1) == [
+        "[subgoal|lower the gripper][outcome|success][generate|actions]",
+    ]
+    # The bon side still sees candidate 2 (eligible) — unchanged pick.
+    bon.predict([frame], [7])
+    assert bon.picks[7] == 2
+
+
+def test_clean_filter_all_truncated_falls_back_to_greedy() -> None:
+    """Oracle ix: an all-truncated row yields the greedy candidate AS
+    DECODED on both scorers — recorded as pick 0, rendered verbatim."""
+    planted = {
+        "pick up the cube": [
+            cand("lower the gripper", (-2.0, -2.0), truncated=True),
+            cand("reach toward the boat", (-4.0, -4.0), truncated=True),
+            cand("spin in place", (-5.0, -5.0), truncated=True),
+        ],
+    }
+    model, pass1, bon, ceil = build_draws(planted, candidate_filter="clean")
+    frame = labeled_item()
+    pass1.predict([frame], [7])
+    bon.predict([frame], [7])
+    ceil.predict([frame], [7])
+    assert bon.picks[7] == 0
+    assert ceil.picks[7] == 0
+    assert condition_texts(model, 1) == [
+        "[subgoal|lower the gripper][outcome|success][generate|actions]",
+    ]
+
+
+def test_clean_filter_without_truncation_is_identity() -> None:
+    """No truncated candidate → the filter cannot change any pick (the
+    banked-table invariance, oracle vii's CPU shape)."""
+    _model, pass1, bon, ceil = build_draws(CANDS, candidate_filter="clean")
+    frame = labeled_item()
+    pass1.predict([frame], [7])
+    bon.predict([frame], [7])
+    ceil.predict([frame], [7])
+    assert bon.picks[7] == 2  # == the unfiltered pick (CANDS tests)
+    assert ceil.picks[7] == 1
+
+
+def test_clean_filter_single_candidate_limit() -> None:
+    """The draws-0 limit under the filter: eligible == [greedy], so the
+    bit-exact carry of oracles i–vi holds structurally (pick 0 whether
+    or not the lone greedy candidate is truncated)."""
+    for truncated in (False, True):
+        single = {
+            "pick up the cube": [
+                cand("lower the gripper", (-2.0, -2.0), truncated=truncated),
+            ],
+        }
+        _model, pass1, bon, _ = build_draws(
+            single,
+            draws=0,
+            candidate_filter="clean",
+        )
+        frame = labeled_item()
+        pass1.predict([frame], [7])
+        bon.predict([frame], [7])
+        assert bon.picks[7] == 0
+
+
+def test_clean_name_provenance_and_guard() -> None:
+    _, _, bon, ceil = build_draws(CANDS, candidate_filter="clean")
+    assert bon.name == "bijou@100000_boncleansubgoal"
+    assert ceil.name == "bijou@100000_ceilcleansubgoal"
+    _, _, forced_bon, _ = build_draws(
+        CANDS,
+        candidate_filter="clean",
+        force_empty=True,
+    )
+    assert forced_bon.name == "bijou@100000_boncleansubgoal_emptyhint"
+    with pytest.raises(SystemExit, match="candidate filter"):
+        build_draws(CANDS, candidate_filter="dirty")
 
 
 def test_pass2_before_pass1_is_loud() -> None:
@@ -488,6 +639,7 @@ def test_cli_guards(monkeypatch: pytest.MonkeyPatch) -> None:
         "1.0",
     )
     assert ok.subgoal_mode == "draws" and ok.subgoal_draws == 8
+    assert ok.subgoal_candidate_filter is None
     preflight = parse_cli(
         monkeypatch,
         "--subgoal-mode",
@@ -498,6 +650,22 @@ def test_cli_guards(monkeypatch: pytest.MonkeyPatch) -> None:
         "0",
     )
     assert preflight.subgoal_draws == 0 and preflight.subgoal_temperature is None
+    # Rung (b'): the clean-list filter parses in draws mode (including
+    # the draws-0 preflight limit, where it is inert by the frozen rule).
+    clean = parse_cli(
+        monkeypatch,
+        "--subgoal-mode",
+        "draws",
+        "--checkpoint",
+        "c",
+        "--subgoal-draws",
+        "8",
+        "--subgoal-temperature",
+        "1.0",
+        "--subgoal-candidate-filter",
+        "clean",
+    )
+    assert clean.subgoal_candidate_filter == "clean"
     for bad in (
         # draws mode without an explicit width
         ("--subgoal-mode", "draws", "--checkpoint", "c"),
@@ -529,6 +697,15 @@ def test_cli_guards(monkeypatch: pytest.MonkeyPatch) -> None:
         ("--subgoal-mode", "self", "--checkpoint", "c", "--subgoal-draws", "8"),
         ("--checkpoint", "c", "--subgoal-temperature", "1.0"),
         ("--checkpoint", "c", "--dump-subgoal-candidates", "cands.json"),
+        ("--checkpoint", "c", "--subgoal-candidate-filter", "clean"),
+        (
+            "--subgoal-mode",
+            "self",
+            "--checkpoint",
+            "c",
+            "--subgoal-candidate-filter",
+            "clean",
+        ),
         # draws mode inherits the self-mode incompatibilities
         (
             "--subgoal-mode",

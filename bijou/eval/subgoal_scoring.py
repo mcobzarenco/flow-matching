@@ -27,6 +27,10 @@ Conventions frozen by the pre-reg:
 - Every argmax breaks exact ties toward the LOWEST candidate index
   (greedy first). Duplicate strings decode identical distributions, so
   dedup is implicit in the tie rule.
+- ELIGIBLE LIST (rung (b'), pre-reg …-cleanlist): under the clean-list
+  filter every scorer sees only non-truncated candidates
+  (``eligible_indices``); an all-truncated row falls back to the greedy
+  candidate as decoded, recorded. Picks stay original-list indices.
 """
 
 from __future__ import annotations
@@ -34,6 +38,20 @@ from __future__ import annotations
 import math
 from collections import Counter
 from collections.abc import Sequence
+
+
+def eligible_indices(truncated: Sequence[bool]) -> list[int]:
+    """The rung-(b') frozen eligible-candidate rule (pre-reg
+    2026-08-08-prereg-subgoal-draws-cleanlist): every scorer operates on
+    the candidates with ``truncated == False``; when ALL candidates are
+    truncated the list falls back to ``[0]`` (greedy as decoded — the
+    caller records the fallback row). Returned indices are
+    ORIGINAL-list indices in ascending order, so a sublist argmax
+    mapped back through them preserves the greedy-first tie rule."""
+    if not truncated:
+        raise ValueError("eligibility over zero candidates")
+    keep = [index for index, forced in enumerate(truncated) if not forced]
+    return keep or [0]
 
 
 def _argmax_lowest(scores: Sequence[float]) -> int:

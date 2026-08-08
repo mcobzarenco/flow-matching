@@ -75,6 +75,7 @@ from .policies import (
     StateCopyPolicy,
 )
 from .subgoal_scoring import (
+    eligible_indices,
     likelihood_pick,
     mean_chosen_logprob,
     medoid_pick,
@@ -161,6 +162,11 @@ class EvalReport:
     # = the bit-exactness preflight limit).
     subgoal_draws: int | None
     subgoal_temperature: float | None
+    # Rung (b') clean-list rule (None = unfiltered rung (b)): "clean"
+    # means every scorer operated on the eligible (non-truncated)
+    # candidate list, greedy fallback on all-truncated rows — the
+    # report records the filter alongside the scorer id (pre-reg).
+    subgoal_candidate_filter: str | None
     # Oracle-(i)/(ii) live check: pass 2 ran with every hint forced
     # EMPTY (must reproduce the baseline decode; the policy names carry
     # _emptyhint) — never an arm read.
@@ -231,6 +237,7 @@ class EvalReport:
             "subgoal_mode": self.subgoal_mode,
             "subgoal_draws": self.subgoal_draws,
             "subgoal_temperature": self.subgoal_temperature,
+            "subgoal_candidate_filter": self.subgoal_candidate_filter,
             "selfsubgoal_force_empty": self.selfsubgoal_force_empty,
             "generate": self.generate,
             "condition_override": self.condition_override,
@@ -545,6 +552,18 @@ def parse_args() -> argparse.Namespace:
         "candidate and both conditioned decodes stay greedy",
     )
     parser.add_argument(
+        "--subgoal-candidate-filter",
+        choices=["clean"],
+        default=None,
+        help="requires --subgoal-mode draws: rung (b') clean-list rule "
+        "(pre-reg 2026-08-08-…-cleanlist) — every scorer (both selection "
+        "arms and the record-only alternates in the candidates dump) "
+        "operates on the eligible list: candidates with truncated == "
+        "false, empty list -> greedy fallback (recorded). Pass-1 decode "
+        "and dump bytes are unchanged; policy names gain "
+        "_boncleansubgoal/_ceilcleansubgoal",
+    )
+    parser.add_argument(
         "--dump-subgoal-candidates",
         type=Path,
         default=None,
@@ -757,6 +776,7 @@ def parse_args() -> argparse.Namespace:
         for flag, value in (
             ("--subgoal-draws", args.subgoal_draws),
             ("--subgoal-temperature", args.subgoal_temperature),
+            ("--subgoal-candidate-filter", args.subgoal_candidate_filter),
             ("--dump-subgoal-candidates", args.dump_subgoal_candidates),
         ):
             if value is not None:
@@ -1002,12 +1022,14 @@ def main() -> int:
                 pass1_policy,
                 mode="bon",
                 force_empty=args.selfsubgoal_force_empty,
+                candidate_filter=args.subgoal_candidate_filter,
             )
             ceil_policy = SelectedSubgoalPolicy(
                 bijou_policy,
                 pass1_policy,
                 mode="ceil",
                 force_empty=args.selfsubgoal_force_empty,
+                candidate_filter=args.subgoal_candidate_filter,
             )
             policies.extend([pass1_policy, bon_policy, ceil_policy])
             if is_main:
@@ -1018,7 +1040,14 @@ def main() -> int:
                     f"{bon_policy.name} (self-certainty pick) + "
                     f"{ceil_policy.name} (record-only oracle-similarity "
                     "ceiling); plain bijou row skipped (baseline is "
-                    "banked)",
+                    "banked)"
+                    + (
+                        "; CLEAN-LIST filter active (rung (b'): scorers "
+                        "see non-truncated candidates only, greedy "
+                        "fallback recorded)"
+                        if args.subgoal_candidate_filter == "clean"
+                        else ""
+                    ),
                     flush=True,
                 )
         else:
@@ -1380,38 +1409,57 @@ def main() -> int:
                     f"frame {index} has a subgoal record but no candidate "
                     "list — pass 1 candidate capture broke, stop",
                 )
-            candidate_rows.append(
-                {
-                    "index": index,
-                    "repo_id": record.repo_id,
-                    "episode_index": record.episode_index,
-                    "frame_index": record.frame_index,
-                    "instruction": record.instruction,
-                    "true_subgoal": record.true_subgoal,
-                    "greedy_subgoal": record.generated_subgoal,
-                    "candidates": [
-                        dataclasses.asdict(candidate) for candidate in row_candidates
-                    ],
-                    "self_certainty": [
-                        self_certainty(c.mean_logprob, c.allowed_vocab)
-                        for c in row_candidates
-                    ],
-                    "mean_chosen_logprob": [
-                        mean_chosen_logprob(c.chosen_logprob) for c in row_candidates
-                    ],
-                    "picks": {
-                        "bon": results.subgoal_picks.get("bon", {}).get(index),
-                        "ceil": results.subgoal_picks.get("ceil", {}).get(index),
-                        # Record-only alternates, computed offline here —
-                        # never conditioned on (pre-reg: no post-hoc
-                        # promotion).
-                        "likelihood": likelihood_pick(
-                            [c.chosen_logprob for c in row_candidates],
-                        ),
-                        "medoid": medoid_pick([c.text for c in row_candidates]),
-                    },
-                },
+            # Every scorer — the live picks and the record-only
+            # alternates — operates on the same eligible list (the full
+            # list when unfiltered; the rung-(b') clean list otherwise).
+            eligible = (
+                eligible_indices([c.truncated for c in row_candidates])
+                if args.subgoal_candidate_filter == "clean"
+                else list(range(len(row_candidates)))
             )
+            candidate_row: dict[str, Any] = {
+                "index": index,
+                "repo_id": record.repo_id,
+                "episode_index": record.episode_index,
+                "frame_index": record.frame_index,
+                "instruction": record.instruction,
+                "true_subgoal": record.true_subgoal,
+                "greedy_subgoal": record.generated_subgoal,
+                "candidates": [
+                    dataclasses.asdict(candidate) for candidate in row_candidates
+                ],
+                "self_certainty": [
+                    self_certainty(c.mean_logprob, c.allowed_vocab)
+                    for c in row_candidates
+                ],
+                "mean_chosen_logprob": [
+                    mean_chosen_logprob(c.chosen_logprob) for c in row_candidates
+                ],
+                "picks": {
+                    "bon": results.subgoal_picks.get("bon", {}).get(index),
+                    "ceil": results.subgoal_picks.get("ceil", {}).get(index),
+                    # Record-only alternates, computed offline here —
+                    # never conditioned on (pre-reg: no post-hoc
+                    # promotion).
+                    "likelihood": eligible[
+                        likelihood_pick(
+                            [row_candidates[i].chosen_logprob for i in eligible],
+                        )
+                    ],
+                    "medoid": eligible[
+                        medoid_pick([row_candidates[i].text for i in eligible])
+                    ],
+                },
+            }
+            if args.subgoal_candidate_filter is not None:
+                # Membership in the scorer's operating list (a fallback
+                # row keeps [candidate 0] though it is truncated).
+                members = set(eligible)
+                candidate_row["eligible"] = [
+                    i in members for i in range(len(row_candidates))
+                ]
+                candidate_row["fallback"] = all(c.truncated for c in row_candidates)
+            candidate_rows.append(candidate_row)
         args.dump_subgoal_candidates.parent.mkdir(parents=True, exist_ok=True)
         args.dump_subgoal_candidates.write_text(
             json.dumps(
@@ -1420,6 +1468,7 @@ def main() -> int:
                     "subgoal_mode": args.subgoal_mode,
                     "subgoal_draws": args.subgoal_draws,
                     "subgoal_temperature": args.subgoal_temperature,
+                    "subgoal_candidate_filter": args.subgoal_candidate_filter,
                     "selfsubgoal_force_empty": args.selfsubgoal_force_empty,
                     "seed": args.seed,
                     "rows": candidate_rows,
@@ -1694,6 +1743,7 @@ def main() -> int:
             subgoal_mode=args.subgoal_mode,
             subgoal_draws=args.subgoal_draws,
             subgoal_temperature=args.subgoal_temperature,
+            subgoal_candidate_filter=args.subgoal_candidate_filter,
             selfsubgoal_force_empty=args.selfsubgoal_force_empty,
             generate=list(args.generate) if args.generate is not None else None,
             condition_override=list(args.condition_override),

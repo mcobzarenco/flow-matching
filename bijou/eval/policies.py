@@ -41,7 +41,7 @@ from ..interface import (
 )
 from ..loading import CheckpointInfo, from_checkpoint
 from ..model import BijouModel, SamplingMethod
-from .subgoal_scoring import ceiling_pick, self_certainty_pick
+from .subgoal_scoring import ceiling_pick, eligible_indices, self_certainty_pick
 
 
 class ChunkPolicy(Protocol):
@@ -1103,6 +1103,14 @@ class SelectedSubgoalPolicy:
     carries the mode (``_bonsubgoal``/``_ceilsubgoal``) so an
     oracle-informed read can never pass as a deployment read.
 
+    ``candidate_filter='clean'`` applies the rung-(b') frozen
+    eligible-list rule (pre-reg 2026-08-08-…-cleanlist): every scorer
+    operates on the non-truncated candidates only, an all-truncated row
+    falls back to the greedy candidate as decoded (recorded), and the
+    name carries the filter (``_boncleansubgoal``/``_ceilcleansubgoal``)
+    so a filtered read can never pool as a rung-(b) read. Pass 1 and
+    the dump bytes are untouched — the filter is selection-side only.
+
     ``force_empty`` forces the no-hint limit on every frame (the
     pre-launch oracle-(ii) run) and suffixes the name."""
 
@@ -1113,9 +1121,14 @@ class SelectedSubgoalPolicy:
         *,
         mode: str,
         force_empty: bool = False,
+        candidate_filter: str | None = None,
     ) -> None:
         if mode not in ("bon", "ceil"):
             raise SystemExit(f"selection mode must be 'bon' or 'ceil', got {mode!r}")
+        if candidate_filter not in (None, "clean"):
+            raise SystemExit(
+                f"candidate filter must be None or 'clean', got {candidate_filter!r}",
+            )
         if pass1.draws is None:
             raise SystemExit(
                 "selected-subgoal pass 2 needs pass 1 in candidates mode — "
@@ -1125,7 +1138,11 @@ class SelectedSubgoalPolicy:
         self.pass1 = pass1
         self.mode = mode
         self.force_empty = force_empty
-        self.name = f"{base.name}_{mode}subgoal" + ("_emptyhint" if force_empty else "")
+        self.candidate_filter = candidate_filter
+        tag = "clean" if candidate_filter == "clean" else ""
+        self.name = f"{base.name}_{mode}{tag}subgoal" + (
+            "_emptyhint" if force_empty else ""
+        )
         self.collator = dataclasses.replace(
             base.collator,
             # The trained condition fields WITH the subgoal slot, in
@@ -1153,15 +1170,27 @@ class SelectedSubgoalPolicy:
                 f"frame {index}: candidates disagree on allowed_vocab "
                 f"{sorted(vocabs)} — mixed decode masks, stop",
             )
+        eligible = (
+            eligible_indices([c.truncated for c in candidates])
+            if self.candidate_filter == "clean"
+            else list(range(len(candidates)))
+        )
         if self.mode == "bon":
-            return self_certainty_pick(
-                [c.mean_logprob for c in candidates],
-                candidates[0].allowed_vocab,
-            )
+            return eligible[
+                self_certainty_pick(
+                    [candidates[i].mean_logprob for i in eligible],
+                    candidates[0].allowed_vocab,
+                )
+            ]
         record = self.pass1.records[index]
         if record.true_subgoal is None:
             return None
-        return ceiling_pick([c.text for c in candidates], record.true_subgoal)
+        return eligible[
+            ceiling_pick(
+                [candidates[i].text for i in eligible],
+                record.true_subgoal,
+            )
+        ]
 
     @torch.no_grad()
     def predict(self, items: list[dict[str, Any]], indices: list[int]) -> list[Tensor]:

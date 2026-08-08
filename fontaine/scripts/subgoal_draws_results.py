@@ -35,9 +35,21 @@ The baseline and the rung-(a) self arm are BANKED npzs — never re-run.
 Small deltas are quoted beside the decode-noise floor (±0.016 per-frame
 CI at matched composition, amendment 1).
 
+``--candidate-filter clean`` is the rung-(b') read (pre-reg
+2026-08-08-prereg-subgoal-draws-cleanlist): reads 1–6 verbatim with
+"the 9 candidates" read as "the eligible list" — arm keys carry the
+filter (``_boncleansubgoal``/``_ceilcleansubgoal``), every offline
+pick recompute (arms AND record-only alternates) runs over the
+eligible (non-truncated) list with the greedy fallback rule, the
+dumped eligible/fallback fields must byte-agree with a recompute from
+the truncated flags, and the agreement block gains the per-row
+eligible-list size distribution + fallback-row count.
+
 ``--oracle`` runs the pre-data selftest: exact-arithmetic fixtures,
 degenerate arm ⇒ delta exactly 0 with CI [0, 0] and the falsifier
-firing, and every abort branch exercised.
+firing, and every abort branch exercised — in BOTH conventions,
+including the planted filter-binds world (full-list argmax truncated ⇒
+filtered pick differs, both scorers) and the all-truncated fallback.
 """
 
 from __future__ import annotations
@@ -57,6 +69,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from bijou.eval.subgoal_scoring import (
     ceiling_pick,
+    eligible_indices,
     likelihood_pick,
     medoid_pick,
     self_certainty_pick,
@@ -79,12 +92,32 @@ BASE_STEM = "reports/eval__bijou_arb_rcond_100k_ddp4__step_100000__panel_k4l2"
 SELF_STEM = f"{BASE_STEM}_selfsubgoal"
 DRAWS_STEM = f"{BASE_STEM}_subgoaldraws"
 OUT_DEFAULT = "reports/analysis__subgoal_draws_ar100k_k4l2.json"
+# Rung (b') clean-list run (pre-reg …-cleanlist): distinct stems and
+# arm keys carry the filter so a filtered read can never pool as (b).
+CLEAN_DRAWS_STEM = f"{BASE_STEM}_subgoalcleandraws"
+CLEAN_OUT_DEFAULT = "reports/analysis__subgoal_draws_cleanlist_ar100k_k4l2.json"
 
 BASELINE_KEY = "pred:bijou@100000"
 NARR_KEY = "pred:bijou@100000_narrsubgoal"
 SELF_KEY = "pred:bijou@100000_selfsubgoal"
 BON_KEY = "pred:bijou@100000_bonsubgoal"
 CEIL_KEY = "pred:bijou@100000_ceilsubgoal"
+CLEAN_BON_KEY = "pred:bijou@100000_boncleansubgoal"
+CLEAN_CEIL_KEY = "pred:bijou@100000_ceilcleansubgoal"
+
+
+def _arm_keys(candidate_filter: str | None) -> tuple[str, str]:
+    if candidate_filter == "clean":
+        return CLEAN_BON_KEY, CLEAN_CEIL_KEY
+    return BON_KEY, CEIL_KEY
+
+
+def _eligible(cands: list[dict], candidate_filter: str | None) -> list[int]:
+    if candidate_filter == "clean":
+        return eligible_indices([c["truncated"] for c in cands])
+    return list(range(len(cands)))
+
+
 IDENTITY_KEYS = ("index", "truth", "valid", "repo_id", "core")
 STATE_KEYS = ("pred:state-copy", "pred:state-copy-norm")
 SUMMARY_TOL = 5e-3
@@ -119,11 +152,23 @@ def check_state_rows(base: dict, probe: dict, label: str) -> None:
             )
 
 
-def check_report(npz: dict, key: str, report: dict, label: str) -> None:
+def check_report(
+    npz: dict,
+    key: str,
+    report: dict,
+    label: str,
+    candidate_filter: str | None = None,
+) -> None:
     if report.get("subgoal_mode") != "draws":
         sys.exit(
             f"{label}: report subgoal_mode {report.get('subgoal_mode')!r} != "
             "'draws' — wrong run, stop",
+        )
+    if report.get("subgoal_candidate_filter") != candidate_filter:
+        sys.exit(
+            f"{label}: report subgoal_candidate_filter "
+            f"{report.get('subgoal_candidate_filter')!r} != expected "
+            f"{candidate_filter!r} — candidate-filter provenance broken, stop",
         )
     if report.get("selfsubgoal_force_empty"):
         sys.exit(f"{label}: forced-empty run is never an arm read — stop")
@@ -148,11 +193,18 @@ def check_report(npz: dict, key: str, report: dict, label: str) -> None:
     print(f"{label}: report cross-check OK ({policy} chunk {gc:.4f} first {gf:.4f})")
 
 
-def check_candidates(candidates: dict, base: dict) -> dict[int, dict]:
+def check_candidates(
+    candidates: dict,
+    base: dict,
+    candidate_filter: str | None = None,
+) -> dict[int, dict]:
     """Panel coverage + LIVE-pick equality vs an offline scorer
     recompute (abort-grade: the dumped picks are what the arms actually
-    conditioned on, so a mismatch means the scorer path drifted).
-    Returns rows keyed by global index."""
+    conditioned on, so a mismatch means the scorer path drifted). Under
+    the clean-list filter the recompute runs over the eligible list and
+    the dumped eligible/fallback fields must byte-agree with a
+    recompute from the truncated flags. Returns rows keyed by global
+    index."""
     rows = candidates.get("rows")
     if not isinstance(rows, list) or not rows:
         sys.exit("candidates json has no 'rows' — not a --dump-subgoal-candidates file")
@@ -160,6 +212,12 @@ def check_candidates(candidates: dict, base: dict) -> dict[int, dict]:
         sys.exit(
             f"candidates json subgoal_mode {candidates.get('subgoal_mode')!r} "
             "!= 'draws' — wrong dump, stop",
+        )
+    if candidates.get("subgoal_candidate_filter") != candidate_filter:
+        sys.exit(
+            f"candidates json subgoal_candidate_filter "
+            f"{candidates.get('subgoal_candidate_filter')!r} != expected "
+            f"{candidate_filter!r} — candidate-filter provenance broken, stop",
         )
     if candidates.get("selfsubgoal_force_empty"):
         sys.exit("candidates json from a forced-empty run — never an arm read, stop")
@@ -175,10 +233,28 @@ def check_candidates(candidates: dict, base: dict) -> dict[int, dict]:
         vocabs = {c["allowed_vocab"] for c in cands}
         if len(vocabs) != 1:
             sys.exit(f"row {index}: mixed allowed_vocab {sorted(vocabs)} — stop")
-        bon = self_certainty_pick(
-            [c["mean_logprob"] for c in cands],
-            cands[0]["allowed_vocab"],
-        )
+        elig = _eligible(cands, candidate_filter)
+        if candidate_filter == "clean":
+            members = set(elig)
+            flags = [i in members for i in range(len(cands))]
+            if row.get("eligible") != flags:
+                sys.exit(
+                    f"row {index}: dumped eligible flags {row.get('eligible')} "
+                    f"!= recompute from truncated flags {flags} — eligible-"
+                    "list drift, stop",
+                )
+            fallback = all(c["truncated"] for c in cands)
+            if bool(row.get("fallback")) != fallback:
+                sys.exit(
+                    f"row {index}: dumped fallback {row.get('fallback')!r} != "
+                    f"recompute {fallback} — fallback recording drift, stop",
+                )
+        bon = elig[
+            self_certainty_pick(
+                [cands[i]["mean_logprob"] for i in elig],
+                cands[0]["allowed_vocab"],
+            )
+        ]
         if row["picks"]["bon"] != bon:
             sys.exit(
                 f"row {index}: dumped bon pick {row['picks']['bon']} != "
@@ -188,10 +264,12 @@ def check_candidates(candidates: dict, base: dict) -> dict[int, dict]:
         ceil = (
             None
             if label is None
-            else ceiling_pick(
-                [c["text"] for c in cands],
-                label,
-            )
+            else elig[
+                ceiling_pick(
+                    [cands[i]["text"] for i in elig],
+                    label,
+                )
+            ]
         )
         if row["picks"]["ceil"] != ceil:
             sys.exit(
@@ -231,8 +309,15 @@ def step_curve(err: np.ndarray, valid: np.ndarray, core: np.ndarray) -> list[flo
     return (num / np.maximum(den, 1)).tolist()
 
 
-def agreement_records(by_index: dict[int, dict]) -> dict:
-    """Read 3 — record-only, straight off the candidates dump."""
+def agreement_records(
+    by_index: dict[int, dict],
+    candidate_filter: str | None = None,
+) -> dict:
+    """Read 3 — record-only, straight off the candidates dump. Every
+    alternate operates on the same eligible list as the arms (the b'
+    filter applies to every scorer); under the filter the per-row
+    eligible-list size distribution and the fallback-row count ride
+    along (pre-reg …-cleanlist, "scorer-agreement records")."""
     n = len(by_index)
     pick_ne_greedy = 0
     likelihood_eq_bon = 0
@@ -240,16 +325,22 @@ def agreement_records(by_index: dict[int, dict]) -> dict:
     likelihood_eq_ceil = 0
     medoid_eq_ceil = 0
     labeled = 0
+    fallback_rows = 0
     unique_counts: list[int] = []
+    eligible_sizes: list[int] = []
     for row in by_index.values():
         cands = row["candidates"]
+        elig = _eligible(cands, candidate_filter)
+        eligible_sizes.append(len(elig))
+        if candidate_filter == "clean" and all(c["truncated"] for c in cands):
+            fallback_rows += 1
         texts = [c["text"] for c in cands]
-        unique_counts.append(len(set(texts)))
+        unique_counts.append(len({texts[i] for i in elig}))
         bon = row["picks"]["bon"]
         if texts[bon] != texts[0]:
             pick_ne_greedy += 1
-        lik = likelihood_pick([c["chosen_logprob"] for c in cands])
-        med = medoid_pick(texts)
+        lik = elig[likelihood_pick([cands[i]["chosen_logprob"] for i in elig])]
+        med = elig[medoid_pick([texts[i] for i in elig])]
         likelihood_eq_bon += lik == bon
         medoid_eq_bon += med == bon
         ceil = row["picks"]["ceil"]
@@ -258,7 +349,7 @@ def agreement_records(by_index: dict[int, dict]) -> dict:
             likelihood_eq_ceil += lik == ceil
             medoid_eq_ceil += med == ceil
     counts = np.array(unique_counts)
-    return {
+    out = {
         "n_frames": n,
         "pick_text_differs_from_greedy": round(pick_ne_greedy / n, 5),
         "likelihood_agrees_with_bon": round(likelihood_eq_bon / n, 5),
@@ -276,6 +367,20 @@ def agreement_records(by_index: dict[int, dict]) -> dict:
             "frac_ge_2": round(float((counts >= 2).mean()), 5),
         },
     }
+    if candidate_filter == "clean":
+        sizes = np.array(eligible_sizes)
+        out["eligible_list_size"] = {
+            "mean": round(float(sizes.mean()), 5),
+            "min": int(sizes.min()),
+            "max": int(sizes.max()),
+            "hist": {
+                str(k): int((sizes == k).sum())
+                for k in range(int(sizes.min()), int(sizes.max()) + 1)
+                if int((sizes == k).sum())
+            },
+        }
+        out["fallback_rows"] = fallback_rows
+    return out
 
 
 def analyze(
@@ -286,7 +391,9 @@ def analyze(
     candidates: dict,
     anchor: tuple[float, float],
     out_path: str | None,
+    candidate_filter: str | None = None,
 ) -> dict:
+    bon_key, ceil_key = _arm_keys(candidate_filter)
     # ---- read 6 first: execution oracles gate every number below ----
     truth, valid, core, w = bbr.masks(base)
     base_err = np.abs(base[BASELINE_KEY] - truth)
@@ -300,8 +407,8 @@ def analyze(
     print(f"anchor OK: baseline re-pool {bc:.4f}/{bf:.4f}")
     for key, npz, label in (
         (SELF_KEY, self_npz, "banked self arm"),
-        (BON_KEY, draws_npz, "bon arm"),
-        (CEIL_KEY, draws_npz, "ceil arm"),
+        (bon_key, draws_npz, "bon arm"),
+        (ceil_key, draws_npz, "ceil arm"),
         (NARR_KEY, draws_npz, "draws pass 1"),
     ):
         if key not in npz:
@@ -313,12 +420,20 @@ def analyze(
             "draws npz carries a bare bijou column — the baseline must "
             "never re-run, stop",
         )
+    # A filtered read must never consume an unfiltered run's arms (and
+    # vice versa): the OTHER convention's keys may not appear.
+    for stray in set(_arm_keys("clean" if candidate_filter is None else None)):
+        if stray in draws_npz:
+            sys.exit(
+                f"draws npz carries {stray} — wrong candidate-filter "
+                "convention for this read, stop",
+            )
     check_pairing(base, self_npz, "banked self arm")
     check_pairing(base, draws_npz, "draws run")
     check_state_rows(base, draws_npz, "draws run")
-    check_report(draws_npz, BON_KEY, draws_rep, "bon arm")
-    check_report(draws_npz, CEIL_KEY, draws_rep, "ceil arm")
-    by_index = check_candidates(candidates, base)
+    check_report(draws_npz, bon_key, draws_rep, "bon arm", candidate_filter)
+    check_report(draws_npz, ceil_key, draws_rep, "ceil arm", candidate_filter)
+    by_index = check_candidates(candidates, base, candidate_filter)
     labeled = labeled_mask(by_index, base)
     # Descriptive (amendment-1 class): the draws run's pass-1 narr
     # column vs the banked rung-(a) narr column — bit-equality holds
@@ -346,8 +461,8 @@ def analyze(
 
     # ---- per-frame machinery ----
     arms = {
-        "bon": np.abs(draws_npz[BON_KEY] - truth),
-        "ceil": np.abs(draws_npz[CEIL_KEY] - truth),
+        "bon": np.abs(draws_npz[bon_key] - truth),
+        "ceil": np.abs(draws_npz[ceil_key] - truth),
         "narr": np.abs(draws_npz[NARR_KEY] - truth),
     }
     self_err = np.abs(self_npz[SELF_KEY] - truth)
@@ -397,6 +512,7 @@ def analyze(
         }
 
     out: dict[str, Any] = {
+        "candidate_filter": candidate_filter,
         "baseline": {"chunk_mae": round(bc, 5), "first_mae": round(bf, 5)},
         "baseline_curve": [round(v, 5) for v in step_curve(base_err, valid, core)],
         "banked_self": {
@@ -406,7 +522,7 @@ def analyze(
         "narr_vs_banked_rows_differ": narr_matches,
         "noise_floor_per_frame_ci": NOISE_FLOOR,
         "arms": {name: reads(err) for name, err in arms.items()},
-        "agreement": agreement_records(by_index),
+        "agreement": agreement_records(by_index, candidate_filter),
     }
 
     # read 1 head-to-head: paired (bon − self) per-frame vs the BANKED
@@ -603,6 +719,59 @@ def _fixture() -> tuple:
     return base, self_npz, draws_npz, draws_rep, candidates
 
 
+def _clean_fixture() -> tuple:
+    """The clean-list (rung b') transform of the base fixture: the same
+    planted arrays under the filtered arm keys, filter provenance in
+    dump + report, and two planted worlds — row 0: the full-list SC AND
+    ceil argmax (candidate 1) is truncated, so both filtered picks move
+    to candidate 0 (pre-reg oracle viii); row 1: all three candidates
+    truncated → greedy fallback, recorded (oracle ix). Picks and
+    eligible/fallback fields are recomputed through the frozen rule."""
+    base, self_npz, draws_npz, draws_rep, candidates = _fixture()
+    draws_npz[CLEAN_BON_KEY] = draws_npz.pop(BON_KEY)
+    draws_npz[CLEAN_CEIL_KEY] = draws_npz.pop(CEIL_KEY)
+    draws_rep = dict(draws_rep, subgoal_candidate_filter="clean")
+    draws_rep["summaries"] = [
+        dict(
+            s,
+            policy=s["policy"]
+            .replace("bonsubgoal", "boncleansubgoal")
+            .replace("ceilsubgoal", "ceilcleansubgoal"),
+        )
+        for s in draws_rep["summaries"]
+    ]
+    candidates = json.loads(json.dumps(candidates))
+    candidates["subgoal_candidate_filter"] = "clean"
+    for i, row in enumerate(candidates["rows"]):
+        cands = row["candidates"]
+        if i == 0:
+            cands[1]["truncated"] = True
+        if i == 1:
+            for c in cands:
+                c["truncated"] = True
+        elig = eligible_indices([c["truncated"] for c in cands])
+        members = set(elig)
+        row["eligible"] = [j in members for j in range(len(cands))]
+        row["fallback"] = all(c["truncated"] for c in cands)
+        row["picks"]["bon"] = elig[
+            self_certainty_pick(
+                [cands[j]["mean_logprob"] for j in elig],
+                cands[0]["allowed_vocab"],
+            )
+        ]
+        label = row["true_subgoal"]
+        row["picks"]["ceil"] = (
+            None
+            if label is None
+            else elig[ceiling_pick([cands[j]["text"] for j in elig], label)]
+        )
+        row["picks"]["likelihood"] = elig[
+            likelihood_pick([cands[j]["chosen_logprob"] for j in elig])
+        ]
+        row["picks"]["medoid"] = elig[medoid_pick([cands[j]["text"] for j in elig])]
+    return base, self_npz, draws_npz, draws_rep, candidates
+
+
 def oracle() -> None:
     def expect_exit(fn: Callable[[], object], needle: str, label: str) -> None:
         try:
@@ -777,6 +946,149 @@ def oracle() -> None:
         "scorer drift",
         "live-pick mismatch",
     )
+
+    # ---- rung (b') clean-list mode (pre-reg …-cleanlist oracles) ----
+    cbase, cself, cdraws, crep, ccands = _clean_fixture()
+    row0 = ccands["rows"][0]["candidates"]
+    # Oracle viii planted world holds: the full-list argmax IS truncated
+    # and the filtered pick differs — on BOTH scorers.
+    full_bon = self_certainty_pick(
+        [c["mean_logprob"] for c in row0],
+        row0[0]["allowed_vocab"],
+    )
+    full_ceil = ceiling_pick(
+        [c["text"] for c in row0],
+        ccands["rows"][0]["true_subgoal"],
+    )
+    assert full_bon == 1 and row0[1]["truncated"], ccands["rows"][0]
+    assert ccands["rows"][0]["picks"]["bon"] == 0 != full_bon
+    assert full_ceil == 1 and ccands["rows"][0]["picks"]["ceil"] == 0 != full_ceil
+    # Oracle ix planted world holds: all-truncated → greedy fallback.
+    assert ccands["rows"][1]["fallback"] is True
+    assert ccands["rows"][1]["picks"]["bon"] == 0
+    assert ccands["rows"][1]["picks"]["ceil"] == 0
+    print("  clean fixture planted worlds OK (filter binds both scorers; fallback)")
+
+    cout = analyze(
+        cbase,
+        cself,
+        cdraws,
+        crep,
+        ccands,
+        anchor,
+        None,
+        candidate_filter="clean",
+    )
+    assert cout["candidate_filter"] == "clean", cout
+    # Same planted arrays → the exact-arithmetic reads carry verbatim.
+    assert cout["arms"]["bon"]["core"]["delta_pooled"] == -0.05, cout
+    chh = cout["head_to_head_bon_minus_self"]
+    assert chh["delta_frame_mean"] == -0.03 and chh["ci95"] == [-0.03, -0.03], cout
+    agree = cout["agreement"]
+    assert agree["fallback_rows"] == 1, agree
+    assert agree["eligible_list_size"]["hist"] == {"1": 1, "2": 1, "3": 10}, agree
+    # Rows 0/1 pick candidate 0 (greedy text) under the filter; the
+    # other 10 keep pick 1 → 10/12 differ from greedy.
+    assert agree["pick_text_differs_from_greedy"] == round(10 / 12, 5), agree
+    assert agree["unique_candidates"]["frac_ge_2"] == round(11 / 12, 5), agree
+    print("  clean-mode reads OK (filtered agreement records, deltas carried)")
+
+    expect_exit(
+        lambda: analyze(
+            cbase,
+            cself,
+            cdraws,
+            dict(crep, subgoal_candidate_filter=None),
+            ccands,
+            anchor,
+            None,
+            candidate_filter="clean",
+        ),
+        "candidate-filter provenance",
+        "report filter provenance",
+    )
+    unfiltered_dump = json.loads(json.dumps(ccands))
+    del unfiltered_dump["subgoal_candidate_filter"]
+    expect_exit(
+        lambda: analyze(
+            cbase,
+            cself,
+            cdraws,
+            crep,
+            unfiltered_dump,
+            anchor,
+            None,
+            candidate_filter="clean",
+        ),
+        "candidate-filter provenance",
+        "dump filter provenance",
+    )
+    stray = {k: v.copy() for k, v in cdraws.items()}
+    stray[BON_KEY] = stray[CLEAN_BON_KEY].copy()
+    expect_exit(
+        lambda: analyze(
+            cbase,
+            cself,
+            stray,
+            crep,
+            ccands,
+            anchor,
+            None,
+            candidate_filter="clean",
+        ),
+        "wrong candidate-filter convention",
+        "cross-convention arm key",
+    )
+    mut_c = json.loads(json.dumps(ccands))
+    mut_c["rows"][0]["eligible"] = [True, True, True]
+    expect_exit(
+        lambda: analyze(
+            cbase,
+            cself,
+            cdraws,
+            crep,
+            mut_c,
+            anchor,
+            None,
+            candidate_filter="clean",
+        ),
+        "eligible-list drift",
+        "eligible flags drift",
+    )
+    mut_c = json.loads(json.dumps(ccands))
+    mut_c["rows"][1]["fallback"] = False
+    expect_exit(
+        lambda: analyze(
+            cbase,
+            cself,
+            cdraws,
+            crep,
+            mut_c,
+            anchor,
+            None,
+            candidate_filter="clean",
+        ),
+        "fallback recording drift",
+        "fallback flag drift",
+    )
+    # The planted-world regression: a scorer path that FORGOT the filter
+    # would dump the full-list argmax on row 0 — must abort.
+    mut_c = json.loads(json.dumps(ccands))
+    mut_c["rows"][0]["picks"]["bon"] = full_bon
+    expect_exit(
+        lambda: analyze(
+            cbase,
+            cself,
+            cdraws,
+            crep,
+            mut_c,
+            anchor,
+            None,
+            candidate_filter="clean",
+        ),
+        "scorer drift",
+        "unfiltered-pick regression (filter binds)",
+    )
     print("oracle: ALL branches OK")
 
 
@@ -786,12 +1098,26 @@ def main() -> None:
     parser.add_argument("--baseline-stem", default=BASE_STEM)
     parser.add_argument("--self-stem", default=SELF_STEM)
     parser.add_argument("--draws-stem", default=DRAWS_STEM)
+    parser.add_argument(
+        "--candidate-filter",
+        choices=["clean"],
+        default=None,
+        help="rung (b') clean-list read: expect the _boncleansubgoal/"
+        "_ceilcleansubgoal arms, recompute every pick over the eligible "
+        "(non-truncated) list, and require filter provenance in the "
+        "dump + report; default stems/out switch to the cleanlist names",
+    )
     parser.add_argument("--candidates", default=None)
     parser.add_argument("--out", default=OUT_DEFAULT)
     args = parser.parse_args()
     if args.oracle:
         oracle()
         return
+    if args.candidate_filter == "clean":
+        if args.draws_stem == DRAWS_STEM:
+            args.draws_stem = CLEAN_DRAWS_STEM
+        if args.out == OUT_DEFAULT:
+            args.out = CLEAN_OUT_DEFAULT
     candidates_path = args.candidates or f"{args.draws_stem}_candidates.json"
     analyze(
         _load_npz(f"{args.baseline_stem}.npz"),
@@ -801,6 +1127,7 @@ def main() -> None:
         json.loads(Path(candidates_path).read_text()),
         bbr.ANCHORS["ar"],
         args.out,
+        candidate_filter=args.candidate_filter,
     )
 
 

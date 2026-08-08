@@ -52,9 +52,28 @@ CEIL_KEY = "pred:bijou@100000_ceilsubgoal"
 BON_EMPTY_KEY = "pred:bijou@100000_bonsubgoal_emptyhint"
 CEIL_EMPTY_KEY = "pred:bijou@100000_ceilsubgoal_emptyhint"
 BANKED_EMPTY_KEY = "pred:bijou@100000_selfsubgoal_emptyhint"
+# Rung (b') clean-list runs carry the filter in the policy names; in
+# the draws-0 limit the eligible list is exactly [greedy], so oracles
+# (i)/(ii) apply verbatim under the filtered keys (pre-reg …-cleanlist).
+CLEAN_BON_KEY = "pred:bijou@100000_boncleansubgoal"
+CLEAN_CEIL_KEY = "pred:bijou@100000_ceilcleansubgoal"
+CLEAN_BON_EMPTY_KEY = "pred:bijou@100000_boncleansubgoal_emptyhint"
+CLEAN_CEIL_EMPTY_KEY = "pred:bijou@100000_ceilcleansubgoal_emptyhint"
 IDENTITY_KEYS = ("index", "truth", "valid", "repo_id", "core")
 STATE_KEYS = ("pred:state-copy", "pred:state-copy-norm")
 Q4_PLAN = "plans/holdout_curated_v0_k4l2_stateprobe_q4.json"
+
+
+def _selection_keys(candidate_filter: str | None) -> tuple[str, str, str, str]:
+    """(bon, ceil, bon_emptyhint, ceil_emptyhint) for the convention."""
+    if candidate_filter == "clean":
+        return (
+            CLEAN_BON_KEY,
+            CLEAN_CEIL_KEY,
+            CLEAN_BON_EMPTY_KEY,
+            CLEAN_CEIL_EMPTY_KEY,
+        )
+    return BON_KEY, CEIL_KEY, BON_EMPTY_KEY, CEIL_EMPTY_KEY
 
 
 def _load_npz(path: Path) -> dict:
@@ -99,6 +118,7 @@ def check_report(
     draws: int | None,
     force_empty: bool,
     label: str,
+    candidate_filter: str | None = None,
 ) -> None:
     if report.get("subgoal_mode") != mode:
         sys.exit(
@@ -109,6 +129,12 @@ def check_report(
         sys.exit(
             f"{label}: report subgoal_draws is {report.get('subgoal_draws')!r}, "
             f"expected {draws} — wrong run for this check",
+        )
+    if mode == "draws" and report.get("subgoal_candidate_filter") != candidate_filter:
+        sys.exit(
+            f"{label}: report subgoal_candidate_filter is "
+            f"{report.get('subgoal_candidate_filter')!r}, expected "
+            f"{candidate_filter!r} — candidate-filter provenance broken, stop",
         )
     if bool(report.get("selfsubgoal_force_empty")) != force_empty:
         sys.exit(
@@ -132,9 +158,11 @@ def check_draws0_vs_self(
     draws0: dict,
     draws0_report: dict,
     candidates: dict,
+    candidate_filter: str | None = None,
 ) -> None:
     """Oracle (i): the draws-0 limit == the rung-(a) self decode,
     bit-exact at matched composition, decode AND text level."""
+    bon_key, ceil_key, _, _ = _selection_keys(candidate_filter)
     label = "oracle-i (draws-0 limit)"
     check_report(
         self_report,
@@ -149,11 +177,18 @@ def check_draws0_vs_self(
         draws=0,
         force_empty=False,
         label=f"{label}/draws0",
+        candidate_filter=candidate_filter,
     )
+    if candidates.get("subgoal_candidate_filter") != candidate_filter:
+        sys.exit(
+            f"{label}: candidates dump subgoal_candidate_filter is "
+            f"{candidates.get('subgoal_candidate_filter')!r}, expected "
+            f"{candidate_filter!r} — candidate-filter provenance broken, stop",
+        )
     for key, side in ((SELF_KEY, selfrun), (NARR_KEY, selfrun)):
         if key not in side:
             sys.exit(f"{label}: {key} missing from the fresh self run npz")
-    for key in (BON_KEY, CEIL_KEY, NARR_KEY):
+    for key in (bon_key, ceil_key, NARR_KEY):
         if key not in draws0:
             sys.exit(f"{label}: {key} missing from the draws-0 npz")
     check_identity(selfrun, draws0, label)
@@ -164,8 +199,8 @@ def check_draws0_vs_self(
             f"draws-0 modes ({len(diff)} rows differ, first {diff[:3].tolist()}) "
             "— the shared pass-1 path diverged, stop",
         )
-    if not _bytes_equal(selfrun[SELF_KEY], draws0[BON_KEY]):
-        diff = _diff_rows(selfrun[SELF_KEY], draws0[BON_KEY])
+    if not _bytes_equal(selfrun[SELF_KEY], draws0[bon_key]):
+        diff = _diff_rows(selfrun[SELF_KEY], draws0[bon_key])
         sys.exit(
             f"{label}: bon arm at draws-0 is NOT bit-exact to the self arm "
             f"({len(diff)} rows differ, first {diff[:3].tolist()}) — the "
@@ -214,9 +249,11 @@ def check_forced_empty(
     banked_empty: dict,
     empty: dict,
     empty_report: dict,
+    candidate_filter: str | None = None,
 ) -> None:
     """Oracle (ii): forced-empty selection arms == the plain path,
     via the BANKED rung-(a) q4 emptyhint decode (matched composition)."""
+    _, _, bon_empty_key, ceil_empty_key = _selection_keys(candidate_filter)
     label = "oracle-ii (forced-empty)"
     check_report(
         empty_report,
@@ -224,11 +261,12 @@ def check_forced_empty(
         draws=0,
         force_empty=True,
         label=label,
+        candidate_filter=candidate_filter,
     )
     if BANKED_EMPTY_KEY not in banked_empty:
         sys.exit(f"{label}: {BANKED_EMPTY_KEY} missing — wrong banked npz")
     check_identity(banked_empty, empty, label)
-    for key in (BON_EMPTY_KEY, CEIL_EMPTY_KEY):
+    for key in (bon_empty_key, ceil_empty_key):
         if key not in empty:
             sys.exit(f"{label}: {key} missing from the forced-empty npz")
         if not _bytes_equal(banked_empty[BANKED_EMPTY_KEY], empty[key]):
@@ -256,6 +294,7 @@ def adjudicate(
     empty_report: dict,
     banked_empty: dict,
     out: Path | None,
+    candidate_filter: str | None = None,
 ) -> None:
     check_identity(banked_empty, selfrun, "identity (self vs banked)")
     check_state_rows(banked_empty, selfrun, "state rows (self vs banked)")
@@ -267,13 +306,15 @@ def adjudicate(
         draws0,
         draws0_report,
         candidates,
+        candidate_filter,
     )
-    check_forced_empty(banked_empty, empty, empty_report)
+    check_forced_empty(banked_empty, empty, empty_report, candidate_filter)
     if out is not None:
         out.write_text(
             json.dumps(
                 {
                     "verdict": "GREEN",
+                    "candidate_filter": candidate_filter,
                     "adjudicated_utc": datetime.now(UTC).isoformat(),
                     "rows": len(selfrun["index"]),
                     "oracle_i": "draws-0 bon+narr bit-exact vs fresh self run; "
@@ -516,6 +557,51 @@ def selftest() -> int:
             "missing from the forced-empty npz",
             "missing-arm guard",
         )
+
+        # Rung (b') clean-list convention: same fixture under the
+        # filtered keys + filter provenance everywhere; draws-0 makes
+        # the filter inert (eligible == [greedy]) so the pass path must
+        # go green verbatim.
+        clean_draws0 = dict(draws0)
+        clean_draws0[CLEAN_BON_KEY] = clean_draws0.pop(BON_KEY)
+        clean_draws0[CLEAN_CEIL_KEY] = clean_draws0.pop(CEIL_KEY)
+        clean_empty = dict(empty)
+        clean_empty[CLEAN_BON_EMPTY_KEY] = clean_empty.pop(BON_EMPTY_KEY)
+        clean_empty[CLEAN_CEIL_EMPTY_KEY] = clean_empty.pop(CEIL_EMPTY_KEY)
+        clean_rep_draws0 = dict(rep_draws0, subgoal_candidate_filter="clean")
+        clean_rep_empty = dict(rep_empty, subgoal_candidate_filter="clean")
+        clean_candidates = json.loads(json.dumps(candidates))
+        clean_candidates["subgoal_candidate_filter"] = "clean"
+        clean_defaults = {
+            **defaults,
+            "draws0": clean_draws0,
+            "draws0_report": clean_rep_draws0,
+            "candidates": clean_candidates,
+            "empty": clean_empty,
+            "empty_report": clean_rep_empty,
+            "candidate_filter": "clean",
+        }
+
+        def run_clean(**kw: object) -> None:
+            adjudicate(**{**clean_defaults, **kw})  # type: ignore[arg-type]
+
+        run_clean()
+        print("  clean-mode pass path OK (filtered keys, draws-0 inert filter)")
+        expect_abort(
+            lambda: run_clean(draws0_report=rep_draws0),
+            "candidate-filter provenance",
+            "clean report provenance",
+        )
+        expect_abort(
+            lambda: run_clean(candidates=candidates),
+            "candidate-filter provenance",
+            "clean dump provenance",
+        )
+        expect_abort(
+            lambda: run_clean(draws0=draws0),
+            "missing from the draws-0 npz",
+            "clean-key guard (unfiltered npz refused)",
+        )
     print("selftest: ALL branches OK")
     return 0
 
@@ -532,6 +618,15 @@ def main() -> int:
     parser.add_argument("--empty-npz", type=Path)
     parser.add_argument("--empty-json", type=Path)
     parser.add_argument("--banked-empty-npz", type=Path)
+    parser.add_argument(
+        "--candidate-filter",
+        choices=["clean"],
+        default=None,
+        help="rung (b') clean-list preflight: expect the "
+        "_boncleansubgoal/_ceilcleansubgoal keys and require "
+        "candidate-filter provenance in the draws reports + dump "
+        "(the filter is inert at draws-0 — eligible == [greedy])",
+    )
     parser.add_argument("--out", type=Path)
     args = parser.parse_args()
     if args.selftest:
@@ -561,6 +656,7 @@ def main() -> int:
         json.loads(args.empty_json.read_text()),
         _load_npz(args.banked_empty_npz),
         args.out,
+        candidate_filter=args.candidate_filter,
     )
     return 0
 
