@@ -25,7 +25,6 @@ from torch import Tensor
 from ..annotations import ConditionField
 from ..aux_text import AuxField, AuxGeneration, subgoal_text
 from ..decoders.ar_backbone import (
-    ARBackboneDecoder,
     ARSampling,
     ARSuffixDecoder,
     ValueCandidate,
@@ -432,7 +431,11 @@ class BijouPolicy:
             expert_dtype=expert_dtype,
             offload_ple=offload_ple,
         )
-        is_ar_backbone = isinstance(self.model.decoder, ARBackboneDecoder)
+        # The whole AR-suffix family (--decoder ar_backbone on any
+        # trunk: Gemma's ARBackboneDecoder AND Molmo2ARDecoder) — the
+        # Gemma-concrete isinstance here silently dropped the narrated
+        # pass (and refused --generate) on molmo2 checkpoints.
+        is_ar_backbone = isinstance(self.model.decoder, ARSuffixDecoder)
         if generate and not is_ar_backbone:
             raise SystemExit(
                 "--generate is ar_backbone-only (the request rides its "
@@ -585,7 +588,7 @@ class BijouPolicy:
         """The aux fields this checkpoint trained (empty for aux-less /
         non-ar_backbone) — what a narrated pass can request."""
         decoder = self.model.decoder
-        if isinstance(decoder, ARBackboneDecoder) and decoder.config.aux is not None:
+        if isinstance(decoder, ARSuffixDecoder) and decoder.config.aux is not None:
             return decoder.config.aux.fields
         return ()
 

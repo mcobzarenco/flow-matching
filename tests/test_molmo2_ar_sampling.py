@@ -14,26 +14,48 @@ never writes in place, pinned directly in (4); (5) the eval loop's
 model-level entry (`ar_predict_sampled`) dispatches the molmo2 trunk
 to the same decode. Pure-sampler math (mask compliance, batch
 composition, RNG keying) is trunk-free and stays pinned in
-test_ar_sampling. Fixture family: tests/test_molmo2_ar."""
+test_ar_sampling. Fixture family: tests/test_molmo2_ar.
+
+Also pinned here (2026-08-08): the narrated/[generate|…] pass on the
+molmo2 concrete — (6) BijouPolicy.aux_fields gates on the family
+scaffold ARSuffixDecoder, not the Gemma concrete (the isinstance that
+silently dropped the narrated pass, and with it the report's
+accuracy-by-field table, from the banked molmo2 40k panel); (7) the
+decode entry the narrated pass calls (predict_chunk generate=…)
+elicits value lines and a grammar-valid chunk on the molmo2 trunk."""
 
 from __future__ import annotations
 
+import dataclasses
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
 import torch
+from test_aux_text import CharTokenizer
 from test_molmo2_ar import (
     BATCH,
     batch,
     build_decoder,
     build_encoder,
+    codec,
+    decoder_config,
     encode_memory,
+    text_config,
     tiny_inputs,
 )
 
+from bijou.aux_text import (
+    AUX_TEMPLATE_VERSION,
+    AuxDecodeConfig,
+    AuxField,
+    build_aux_runtime,
+)
 from bijou.decoders.ar_backbone import ARSampling
-from bijou.eval.policies import stable_sample_rng
+from bijou.decoders.ar_molmo2 import Molmo2ARDecoder
+from bijou.eval.policies import BijouPolicy, stable_sample_rng
+from bijou.fast.codec import ActionCodec
 from bijou.model import BijouModel
 from bijou.molmo2.cache import Molmo2KVCache
 from bijou.molmo2.model import Molmo2Model, load_model
@@ -192,3 +214,80 @@ def test_bf16_mounted_trunk_decodes_with_fp32_patch(
     )
     assert prediction.actions.shape == (BATCH, loaded.time_horizon, loaded.action_dim)
     assert bool(torch.isfinite(prediction.actions).all())
+
+
+def aux_config() -> AuxDecodeConfig:
+    return AuxDecodeConfig(
+        template_version=AUX_TEMPLATE_VERSION,
+        fields=(AuxField.SUBGOAL, AuxField.HOLDING, AuxField.PROGRESS),
+        prompt_hash="9b796de",
+        judge_model="claude-opus-4-8",
+    )
+
+
+def build_aux_decoder(model: Molmo2Model) -> tuple[Molmo2ARDecoder, ActionCodec]:
+    """An aux-CAPABLE molmo2 decoder — build_decoder plus the trained
+    aux record + runtime (test_ar_backbone_aux.build_with_aux's shape
+    on this trunk)."""
+    loaded = codec()
+    torch.manual_seed(0)
+    decoder = Molmo2ARDecoder(
+        dataclasses.replace(decoder_config(loaded), aux=aux_config()),
+        text_config().text,
+        loaded,
+        tokenizer=CharTokenizer(),
+        aux_runtime=build_aux_runtime(aux_config(), CharTokenizer()),
+        device="cpu",
+        dtype=torch.float32,
+    )
+    decoder.init_tables_from_backbone(model)
+    return decoder, loaded
+
+
+def test_bijou_policy_aux_fields_sees_the_molmo2_concrete(
+    model: Molmo2Model,
+) -> None:
+    """Regression (2026-08-08): BijouPolicy.aux_fields gated on the
+    Gemma concrete (ARBackboneDecoder), so an aux-trained molmo2
+    checkpoint reported NO trained fields and the eval's narrated pass
+    — the sole producer of the report's accuracy-by-field table —
+    silently never rode (the banked molmo2 40k panel is missing the
+    table for exactly this reason). The gate is the family scaffold,
+    ARSuffixDecoder."""
+    aux_fields = BijouPolicy.aux_fields.fget
+    assert aux_fields is not None
+    decoder, _ = build_aux_decoder(model)
+    stub = SimpleNamespace(model=SimpleNamespace(decoder=decoder))
+    assert aux_fields(stub) == aux_config().fields
+    # Aux-less molmo2 stays narration-free — same property, same trunk.
+    bare, _ = build_decoder(model)
+    stub = SimpleNamespace(model=SimpleNamespace(decoder=bare))
+    assert aux_fields(stub) == ()
+
+
+def test_narrated_generate_decodes_fields_on_the_molmo2_trunk(
+    model: Molmo2Model,
+    tiny_checkpoint: Path,
+) -> None:
+    """The decode entry the narrated pass calls (predict_chunk with the
+    checkpoint's full trained request — what the fixed eval runs at the
+    60k endpoint panel): per-field value lines then a full grammar-valid
+    chunk, on the molmo2 cache."""
+    decoder, loaded = build_aux_decoder(model)
+    encoder = build_encoder(tiny_checkpoint)
+    request = aux_config().fields
+    prediction = decoder.predict_chunk(
+        model,
+        encode_memory(encoder, model),
+        batch(loaded, tiny_inputs()),
+        generate=request,
+    )
+    generations = prediction.generations
+    assert generations is not None
+    assert len(generations) == BATCH
+    assert prediction.actions.shape == (BATCH, loaded.time_horizon, loaded.action_dim)
+    assert bool(torch.isfinite(prediction.actions).all())
+    for generation in generations:
+        # holding is candidate-constrained (yes/no) — always parses.
+        assert generation.holding is not None
+        assert "holding: " in generation.text
