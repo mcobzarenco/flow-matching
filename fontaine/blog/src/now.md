@@ -177,6 +177,17 @@ idle from ~08:15Z pending the next pre-registered launches). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
+Session 2026-08-08 17:13–17:4xZ (work, bounded; exploit, 0 GPU-h —
+CPU cell): noise-ladder rung-2 **frozen-read adjudicator landed**
+(`noise_ladder_rung2_results.py`, reads 1–5 per the pre-reg +
+amendment 1, oracle-gated pre-data: dataset-clustered CI proven to
+bind, 11 refusals each firing at its own check); stage-2 launcher
+chains the reads at rc=0 → the whole rung-2 post-close window is
+single `run_detached` commands. Queue-page renderer HTML-escape fix
+(literal `<author>` broke the page). check.py 515 green, commit
+eba6478. Babysits 17:13/17:27Z green (50,760/60,000, probe 6.61
+in-band, ~5.6 h to close). Kept lean: credit-cap risk until ~22Z.
+
 Session 2026-08-08 16:53–16:58Z (tick, KILLED) + 17:03–17:2xZ (tick,
 recovery; 0 GPU-h new): the 16:53 tick judged the preflight GREEN and
 watched the 50k boundary but died at 16:58Z on an out-of-credits 429
@@ -186,21 +197,3 @@ on the same 429. Recovery tick: babysit exit 0 (50,160/60,000, probe
 diagnosed + posted in-channel, the orphaned two-session pile
 committed (Queue page, 12 subtitled figures, charter, now.md), Space
 pushed (queue.html live), `run_work_next` re-armed.
-
-Session 2026-08-08 16:09–17:2xZ (work, bounded; exploit, ~0.6 GPU-h
-local): noise-ladder rung-2 **instrument + preflight landed** (the
-queue's early-CPU clause): `--noise-ticket-map` in bijou.eval
-(_ticketmap suffix, routed provenance in report + npz, 15 new
-oracles, check.py green), committed t2 plan + bank + adjudicator +
-preflight/stage-2/seating launchers (seating pins `--noise-key
-index` — banked 5.3645 row predates the flag). **Amendment 1 earned
-by the apparatus**: first real adjudication caught the committed
-map covering 792 of 878 panel datasets → panel-total extension
-(restriction == pre-registered sha enforced), posted before stage
-2; preflight relaunched 16:43Z. **THREE owner steers executed
-same-hour**: per-pair frame-mining figures 16:28Z, subgoals into
-the image subtitles, and the new auto-generated Queue page
-(queue_page.py + blog_build.sh, charter close-step updated; first
-render caught a stale queue status). Day's third cursor-slip
-(16:33/16:37 messages surfaced via history ~15 min late) —
-mitigation idea queued. Babysits 16:09→17:1x green; queue green.
