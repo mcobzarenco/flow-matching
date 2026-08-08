@@ -278,3 +278,31 @@ value = 8.0                         # pre-reg ceiling, all stages
 # [[run.gates]]
 # kind = "vram_max_gib"
 # value = 71.0
+
+# PREPARED — golden-ticket screen stage 1 (#1). Uncomment + fill
+# started_utc when eval_flow80k_goldenticket_stage1.sh launches via
+# run_detached.sh (unit fontaine-goldenticket-stage1); prune the
+# ar100k_selfsubgoal entry at the same commit (its arms are over).
+#
+# [[run]]
+# name = "goldenticket_stage1"
+# kind = "progress-log"
+# host = "local"
+# pgrep = "goldenticket"             # launcher bash + eval python
+# pgrep_min = 2
+# gpu_indices = [0]
+# gpu_mem_min_mib = 8000
+# log = "/home/ubuntu/eval__goldenticket_stage1.log"
+# progress_re = "scored [0-9]+/[0-9]+ frames"
+# started_utc = "FILL-AT-LAUNCH"
+# gpu_hours_per_wall_hour = 1.0      # single local GPU
+# boundary = "stage 1 = 2458 probe frames x draws-64 ticket batch (heun-30, ~1.5 GPU-h); scorer + R1 kill line adjudicate BEFORE any stage-2 launch"
+# anchors = [
+#     "R1 kill line frozen in the pre-reg: sd > 0.0785 OR min < mean - 0.22 -> stage 2; otherwise the screen CLOSES at ~1.5 GPU-h (null is informative)",
+#     "anchors banked: stable-key single draw 6.5997/1.9355, sigma_probe 0.0669, expected null min = mean - 0.157",
+#     "tickets bank sha 9bb13bc4... pinned in the launcher + verified by ticket_scores.py provenance refusals",
+#     "model-load + spawn-worker startup ~2-4 min shows as a quiet log head — not a stall",
+# ]
+# [[run.gates]]
+# kind = "gpu_hours_max"
+# value = 6.0                        # pre-reg ceiling, all stages

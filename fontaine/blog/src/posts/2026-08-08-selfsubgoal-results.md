@@ -122,7 +122,7 @@ Pre-registered expectations (banked before data):
   (+ `_selfsubgoal_subgoals.json` per-frame text dump). Cost
   «GPU-H-PLACEHOLDER» GPU-h vs the ≤ 8 gate.
 - Reads: `fontaine/scripts/selfsubgoal_results.py` →
-  `reports/analysis__selfsubgoal_reads.json`; baseline anchor
+  `reports/analysis__selfsubgoal_ar100k_k4l2.json`; baseline anchor
   5.8026/2.1431 re-pooled from the banked
   `panel_k4l2` npz inside the script's execution oracles.
 - Stage-1 table: `reports/analysis__selfsubgoal_stage1_table.{json,md}`;
