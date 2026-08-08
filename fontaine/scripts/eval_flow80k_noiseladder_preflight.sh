@@ -34,13 +34,17 @@ CKPT=outputs/train/${RUN}/step_080000
 PLAN=plans/noise_ladder_preflight_t2.json
 M64=plans/tickets_goldenticket_m64.npz
 T2=plans/tickets_goldenticket_t2.npz
-MAP=reports/analysis__noise_ladder_stage01.json
+# Amendment 1 (2026-08-08): the panel-total extended enumeration —
+# restriction to the committed 792 == pre-registered map 15d92935…
+# exactly (the adjudicator enforces it); added datasets → 33.
+MAP=plans/noise_ladder_ticketmap_panel.json
 
 [ -d "$CKPT" ] || { echo "no checkpoint $CKPT — abort"; exit 1; }
 sha256sum -c - <<'SHAS'
 f23d70abf9c3d8c90711c495452b335b9e660f92ae39a5dc8922d13082627cd3  plans/noise_ladder_preflight_t2.json
 9bb13bc47a92f7cc764e81022a9a7b05dbb9ec391eb9ba8ab14d675c955cc7c0  plans/tickets_goldenticket_m64.npz
 abfaf064f64299831f62cd4197721e6f206bed9b3caabd5ab9f3cfba3979a06d  plans/tickets_goldenticket_t2.npz
+27858421c6293ccaf4d98405a9e8b1f2182480bc63459fea6e27d1e36e0ec6b7  plans/noise_ladder_ticketmap_panel.json
 SHAS
 
 DATA_ARGS=(

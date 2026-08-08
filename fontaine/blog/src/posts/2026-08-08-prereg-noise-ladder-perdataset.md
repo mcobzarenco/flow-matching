@@ -216,6 +216,31 @@ launch via `run_detached.sh`; babysit entries at launch. Boundary
 artifact (chunk hand-offs) remains a named unknown of every ticket
 config — panel-blind, rollout-gated, inherited from the screen.
 
+## Amendment 1 (2026-08-08 16:4xZ — posted BEFORE stage 2; found by
+## the preflight's first real run)
+
+The committed routing map enumerates the **probe universe** (792
+datasets — every dataset with stage-1 probe rows), but the full panel
+plan decodes **86 more datasets that have zero probe rows** (they also
+appear only in core/labeled panel rows). The map-coverage oracle
+(stage-2 item 5) caught this pre-data, exactly as intended. These
+datasets are non-qualifying *by definition* (zero probe frames < F),
+and stage 1's frozen rule already routes non-qualifying datasets to
+ticket 33 — the **rule** was total, the **enumeration** was not.
+
+Resolution (selection unchanged, enumeration made total):
+`plans/noise_ladder_ticketmap_panel.json` — the 792 committed routes
+verbatim plus the 86 panel-only datasets → 33; canonical sha
+`27858421c6293cca…`. The preflight adjudicator enforces, abort-on-red:
+the extension's **restriction to the 792 reproduces the pre-registered
+map sha `15d9293553ac1a88…` exactly**, every added dataset routes to
+33 only, and the extension covers every dataset the panel plan decodes
+(core + labeled). Routed runs (preflight + stage 2) carry the extended
+sha in `ticket_map_sha256`; the committed sha is quoted alongside in
+the preflight record. **No read changes**: read 1 pools qualifying
+datasets' complement rows only, and all qualifying datasets are in the
+original 792.
+
 ## Finalization record (DRAFT ~09:2xZ → posted ~13:2xZ, same day)
 
 1. ✅ Stage 0 + stage 1 ran on banked data (oracles first); F, the

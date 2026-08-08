@@ -246,3 +246,25 @@ def test_parser_accepts_routed_single_decode(
     )
     assert args.noise_ticket_map == Path("map.json")
     assert args.sample_draws == 1
+
+
+# --- amendment-1 committed artifact ------------------------------------
+
+
+def test_extended_panel_map_restricts_to_committed() -> None:
+    """plans/noise_ladder_ticketmap_panel.json (amendment 1): the
+    panel-total enumeration must restrict to the committed 792-dataset
+    map EXACTLY (pre-registered sha reproduced — the selection is
+    unchanged) and route every added dataset to the non-qualifying
+    fallback 33."""
+    extended, ext_sha = load_ticket_map(
+        REPO / "plans/noise_ladder_ticketmap_panel.json",
+        64,
+    )
+    committed, sha = load_ticket_map(ANALYSIS, 64)
+    assert sha == MAP_SHA
+    assert ext_sha == (
+        "27858421c6293ccaf4d98405a9e8b1f2182480bc63459fea6e27d1e36e0ec6b7"
+    )
+    assert {k: v for k, v in extended.items() if k in committed} == committed
+    assert {v for k, v in extended.items() if k not in committed} == {33}

@@ -32,22 +32,29 @@ uv run python - <<'EOF'
 import json
 record = json.load(open("reports/analysis__noise_ladder_preflight_oracles.json"))
 assert record["verdict"] == "GREEN", record
-assert record["ticket_map_sha256"] == (
+assert record["committed_map_sha256"] == (
     "15d9293553ac1a8878e0b7b0c385f03127a518d96e408bc1f496f5d8c4ec2173"
 ), record
-print("preflight gate: GREEN, map sha pinned")
+assert record["ticket_map_sha256"] == (
+    "27858421c6293ccaf4d98405a9e8b1f2182480bc63459fea6e27d1e36e0ec6b7"
+), record
+print("preflight gate: GREEN, committed + extended map shas pinned")
 EOF
 
 RUN=bijou_flow_artrunk_h1024_40k_ddp2
 CKPT=outputs/train/${RUN}/step_080000
 PLAN=plans/holdout_curated_v0_k4l2.json
 M64=plans/tickets_goldenticket_m64.npz
-MAP=reports/analysis__noise_ladder_stage01.json
+# Amendment 1 (2026-08-08): the panel-total extended enumeration —
+# restriction to the committed 792 == pre-registered map 15d92935…
+# exactly (preflight adjudicator enforces it); added datasets → 33.
+MAP=plans/noise_ladder_ticketmap_panel.json
 
 [ -d "$CKPT" ] || { echo "no checkpoint $CKPT — abort"; exit 1; }
 sha256sum -c - <<'SHAS'
 af3f85465b53d9ff783636d53923f89c6823700161da5667bf810cf17f922b1e  plans/holdout_curated_v0_k4l2.json
 9bb13bc47a92f7cc764e81022a9a7b05dbb9ec391eb9ba8ab14d675c955cc7c0  plans/tickets_goldenticket_m64.npz
+27858421c6293ccaf4d98405a9e8b1f2182480bc63459fea6e27d1e36e0ec6b7  plans/noise_ladder_ticketmap_panel.json
 SHAS
 
 name="eval__${RUN}__step_080000__panel_curated_v0_k4l2_ticketmap_heun30"
@@ -73,9 +80,9 @@ report = json.load(open(
     "panel_curated_v0_k4l2_ticketmap_heun30.json",
 ))
 assert report["ticket_map_sha256"] == (
-    "15d9293553ac1a8878e0b7b0c385f03127a518d96e408bc1f496f5d8c4ec2173"
+    "27858421c6293ccaf4d98405a9e8b1f2182480bc63459fea6e27d1e36e0ec6b7"
 ), report["ticket_map_sha256"]
-print("stage-2 provenance: map sha matches the pre-registered map")
+print("stage-2 provenance: map sha matches the amendment-1 extended map")
 EOF
 
 echo "=== NOISE-LADDER STAGE 2 DONE (rc=0) — frozen reads run offline from the npz ==="

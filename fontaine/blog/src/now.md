@@ -55,7 +55,18 @@ committed 2-dataset ticket-2 plan (144 rows) + t2-only bank
 with `--noise-key index` — the banked 5.3645 row **predates
 `--noise-key`**, so the base-equality oracle needs the historical
 index keying, header documents the evidence) + prepared babysit
-entries. Preflight running at close.
+entries. (3) **Amendment 1, earned by the apparatus**: the preflight
+adjudicator's first real run went RED on its map-coverage oracle —
+the committed map enumerates the probe universe (792 datasets) while
+the panel plan decodes 86 more with zero probe rows. The pre-reg's
+own rule already routes non-qualifying datasets to 33, so the fix
+makes the enumeration total without touching the selection:
+`plans/noise_ladder_ticketmap_panel.json` (792 routes verbatim + 86
+→ 33, sha `27858421…`; adjudicator enforces restriction ==
+pre-registered `15d92935…` exactly, selftest gained a
+restriction-drift red world), amendment posted on the pre-reg BEFORE
+stage 2, launchers repointed. No read changes. Preflight relaunched
+16:43Z with the extended map, running at close.
 
 **Next**: `queue_cli.py next` boundaries: **50,000 save ~17:0xZ**
 (routine), **60k close ~23Z** → chained eval → fields panel → perf
