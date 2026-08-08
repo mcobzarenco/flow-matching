@@ -171,3 +171,24 @@ def test_ar_predict_sampled_dispatches_molmo2(
         sampling=ARSampling(temperature=2.0, rngs=rngs(0)),
     )
     assert torch.equal(via_model.actions, direct.actions)
+
+
+def test_bf16_mounted_trunk_decodes_with_fp32_patch(
+    tiny_checkpoint: Path,
+) -> None:
+    """The production mount (loading.py casts the trunk bf16; the
+    trainable FAST patch stays fp32): the suffix decode must not let
+    torch.where promote mixed-dtype embeds to fp32 — the first
+    attention matmul rejects fp32 hidden states against bf16 weights
+    (the 40k endpoint eval crash, 2026-08-08)."""
+    bf16 = load_model(str(tiny_checkpoint), dtype=torch.bfloat16)
+    decoder, loaded = build_decoder(bf16)
+    encoder = build_encoder(tiny_checkpoint)
+    sample = batch(loaded, tiny_inputs())
+    prediction = decoder.predict_chunk(
+        bf16,
+        encode_memory(encoder, bf16),
+        sample,
+    )
+    assert prediction.actions.shape == (BATCH, loaded.time_horizon, loaded.action_dim)
+    assert bool(torch.isfinite(prediction.actions).all())

@@ -178,10 +178,15 @@ class Molmo2ARDecoder(ARSuffixDecoder[Molmo2Model]):
         # row (discarded by the select) — every id stays in range for
         # every table.
         text_ids = tokens.clamp(max=self.config.block_base - 1)
+        # The trainable FAST patch stays fp32 while the mounted trunk may
+        # be bf16; torch.where would silently promote the mixed pair to
+        # fp32 and the first attention matmul rejects it. Same seam as
+        # _logits' fast_head cast.
+        text_embeds = transformer.wte(text_ids)
         embeds = torch.where(
             is_text,
-            transformer.wte(text_ids),
-            self.fast_embed(block_ids),
+            text_embeds,
+            self.fast_embed(block_ids).to(text_embeds.dtype),
         )
         batch, seq_len = tokens.shape
         device = embeds.device
