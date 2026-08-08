@@ -29,12 +29,15 @@ kind = "vram_max_gib"
 value = 71.0
 
 # LIVE — #6 self-subgoal probe (local GPU; pre-reg
-# 2026-08-07-prereg-selfsubgoal-probe.md). Phase 1 = preflight unit
-# fontaine-selfsubgoal-preflight (q4 emptyhint + q4 oracle + live-oracle
-# adjudication + stage-1 table, ~30 min); phase 2 = arms unit
-# fontaine-selfsubgoal-arms (full-panel oracle ~35 min, then marker-gated
-# self two-pass ~70 min). Repoint `log` at the arms launch; prune at
-# completion (retained-entry footgun).
+# 2026-08-07-prereg-selfsubgoal-probe.md + amendment 1). History: preflight
+# 23:24-00:0xZ (live oracle-i red vs the BANKED comparator -> diagnosed as
+# batch-composition kernel numerics via the diagbaseline run; amendment 1
+# posted; adjudication GREEN under matched-composition semantics 00:1xZ);
+# stage-1 table 60/60 GO judged 00:2xZ (marker written). ARMS unit
+# fontaine-selfsubgoal-arms launched 00:2xZ 08-08: full-panel oracle
+# (~50 min at the measured ~540 f/min single-pass), then marker-gated
+# self two-pass (~130 min at ~197 f/min). Prune at completion
+# (retained-entry footgun); frozen reads = selfsubgoal_results.py.
 [[run]]
 name = "ar100k_selfsubgoal"
 kind = "progress-log"
@@ -43,7 +46,7 @@ pgrep = "selfsubgoal"               # matches both phase scripts + evals
 pgrep_min = 2                       # launcher bash + eval python
 gpu_indices = [0]
 gpu_mem_min_mib = 8000
-log = "/home/ubuntu/eval__ar100k_selfsubgoal_preflight.log"
+log = "/home/ubuntu/eval__ar100k_selfsubgoal_arms.log"
 progress_re = "scored [0-9]+/[0-9]+ frames"
 started_utc = "2026-08-07T23:24:00Z"
 gpu_hours_per_wall_hour = 1.0       # single local GPU
