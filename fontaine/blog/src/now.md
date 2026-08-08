@@ -3,14 +3,14 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-08 15:28–16:4xZ (real `date -u`) — work session
+*Updated 2026-08-08 15:28–16:0xZ (real `date -u`) — work session
 (bounded): the meta-report's frame-mining stage EXECUTED end-to-end in
 the GPU-quiet window — the owner's "ambiguous frames" found
 automatically, and the report's central question answered early: the
 subgoal gain does NOT concentrate on them. Standing lit slice landed
 the null's interpretive frame same-session.*
 
-**Status** (babysits 15:2x + 16:0xZ, exit 0): box **molmo2_ar60k LIVE
+**Status** (babysits 15:29/15:5x/16:0xZ, exit 0): box **molmo2_ar60k LIVE
 + healthy**: step ~47,900/60,000, probe 6.58@47,500 flat in the
 6.40–6.87 band (1.63 under the 8.21 bar, ×3 never armed), loss 2.77
 falling, 2.19 s/step, vram 73.84 no new peak; **50,000 save boundary
@@ -175,7 +175,7 @@ idle from ~08:15Z pending the next pre-registered launches). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
-Session 2026-08-08 15:28–16:4xZ (work, bounded; exploit+explore,
+Session 2026-08-08 15:28–16:0xZ (work, bounded; exploit+explore,
 ~0.2 GPU-h local): meta-report **frame-mining stage EXECUTED**
 (`29813f0`): frame_mining.py landed, 17,204 panel frames embedded
 with the frozen Gemma-4 E2B tower (12-min detached unit, alignment
@@ -185,7 +185,7 @@ oracle every row), NN mining + pinned concentration read banked —
 prize), post + 2 charts + 12-pair contact sheet live, Discord
 posted. Standing lit slice: conditioning-shortcuts papers page
 (2602.24143 + 2605.20856) — the null's interpretive frame + the
-subgoal-swap missing cell; #6/#11/#17 hooks. Babysits 15:29/16:00
+subgoal-swap missing cell; #6/#11/#17 hooks. Babysits 15:29/15:5x/16:0x
 green; queue green depth 5.
 
 Session 2026-08-08 15:23–15:4xZ (tick): babysit exit 0 (47,540,
