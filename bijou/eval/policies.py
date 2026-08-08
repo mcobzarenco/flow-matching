@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import dataclasses
 import hashlib
+import json
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -244,6 +245,41 @@ def load_tickets(path: Path) -> tuple[Tensor, str]:
     return torch.from_numpy(bank), hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def load_ticket_map(path: Path, bank_count: int) -> tuple[dict[str, int], str]:
+    """(dataset → bank-index routing map, sha256 of its canonical form).
+
+    Accepts the committed stage-0/1 analysis json (map under
+    ``stage1.routing_map`` — the noise-ladder rung-2 artifact) or a bare
+    ``{repo_id: index}`` json. The sha is computed over
+    ``json.dumps(map, sort_keys=True)`` — byte-identical to the
+    committing script's — so a routed run's provenance can be checked
+    against the pre-registered map sha without trusting file paths."""
+    data = json.loads(path.read_text())
+    if isinstance(data, dict) and "stage1" in data:
+        data = data["stage1"].get("routing_map")
+    if not isinstance(data, dict) or not data:
+        raise SystemExit(
+            f"--noise-ticket-map {path} carries no routing map (expected "
+            "a non-empty {repo_id: ticket index} dict, bare or under "
+            "stage1.routing_map)",
+        )
+    mapping: dict[str, int] = {}
+    for repo_id, ticket in data.items():
+        if not isinstance(ticket, int) or isinstance(ticket, bool):
+            raise SystemExit(
+                f"--noise-ticket-map {path}: dataset {repo_id!r} routes "
+                f"to non-integer ticket {ticket!r}",
+            )
+        if not 0 <= ticket < bank_count:
+            raise SystemExit(
+                f"--noise-ticket-map {path}: dataset {repo_id!r} routes "
+                f"to ticket {ticket} outside the bank [0, {bank_count})",
+            )
+        mapping[str(repo_id)] = ticket
+    blob = json.dumps(mapping, sort_keys=True).encode()
+    return mapping, hashlib.sha256(blob).hexdigest()
+
+
 def noise_for_item(
     noise_key: str,
     seed: int,
@@ -363,6 +399,7 @@ class BijouPolicy:
         offload_ple: bool = False,
         noise_key: str = "stable",
         tickets: Path | None = None,
+        ticket_map: Path | None = None,
         mask_state: bool = False,
     ) -> None:
         self.name = f"bijou@{checkpoint.name.removeprefix('step_').lstrip('0') or '0'}"
@@ -381,12 +418,36 @@ class BijouPolicy:
             self.name += "_state-masked"
         self.tickets: Tensor | None = None
         self.tickets_sha256: str | None = None
+        self.ticket_map: dict[str, int] | None = None
+        self.ticket_map_sha256: str | None = None
+        if ticket_map is not None and tickets is None:
+            raise SystemExit(
+                "--noise-ticket-map routes datasets INTO a ticket bank — "
+                "it requires --noise-tickets",
+            )
         if tickets is not None:
             # Same convention: a searched-noise read must never be
             # mistakable for a keyed-noise read (the sha rides in the
             # report/dump provenance).
             self.tickets, self.tickets_sha256 = load_tickets(tickets)
-            self.name += "_ticket"
+            if ticket_map is not None:
+                # Noise-ladder rung 2 (#1): per-dataset routing. The
+                # distinct suffix keeps a routed read from ever pooling
+                # as a single-ticket (_ticket) read.
+                if sample_draws != 1:
+                    raise SystemExit(
+                        "--noise-ticket-map is a deterministic single "
+                        "decode (each frame integrates from its dataset's "
+                        f"routed ticket) — --sample-draws {sample_draws} "
+                        "has no routed semantics",
+                    )
+                self.ticket_map, self.ticket_map_sha256 = load_ticket_map(
+                    ticket_map,
+                    self.tickets.shape[0],
+                )
+                self.name += "_ticketmap"
+            else:
+                self.name += "_ticket"
         if subgoal_mode not in (None, "oracle", "self", "draws"):
             raise SystemExit(
                 "subgoal_mode must be None, 'oracle', 'self' or 'draws', "
@@ -632,6 +693,33 @@ class BijouPolicy:
                 raise SystemExit(
                     f"tickets shaped {tuple(self.tickets.shape[1:])}, "
                     f"batch actions shaped {shape}",
+                )
+            if self.ticket_map is not None:
+                # Routed mode: each frame integrates from its DATASET's
+                # ticket. Coverage is a hard abort — silently falling
+                # back to any default would blend routed and unrouted
+                # rows inside one npz.
+                if draws != 1:
+                    raise SystemExit(
+                        f"routed ticket decode is single-draw, got {draws}",
+                    )
+                unmapped = sorted(
+                    {
+                        str(item["repo_id"])
+                        for item in items
+                        if str(item["repo_id"]) not in self.ticket_map
+                    },
+                )
+                if unmapped:
+                    raise SystemExit(
+                        f"--noise-ticket-map covers no route for {unmapped} "
+                        "— every eval dataset must appear in the map",
+                    )
+                return torch.stack(
+                    [
+                        self.tickets[self.ticket_map[str(item["repo_id"])]]
+                        for item in items
+                    ],
                 )
             return self.tickets[:draws].repeat_interleave(len(items), dim=0)
         return torch.cat(

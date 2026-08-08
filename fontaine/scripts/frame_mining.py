@@ -558,6 +558,128 @@ def cmd_sheet(args: argparse.Namespace) -> None:
     print(f"wrote {out.relative_to(REPO_ROOT)} ({len(pairs)} pairs)")
 
 
+def cmd_figures(args: argparse.Namespace) -> None:
+    """One figure PER mined pair (owner steering 2026-08-08 16:20Z):
+    three panels on a row — query image, neighbor image, and the
+    action-chunk chart with both frames' ground-truth trajectories
+    overlaid — plus each frame's subgoal label in a caption. Writes
+    img/framemining/pair_NN.png and a captions markdown snippet the
+    post includes verbatim (CPU; refetches only the figures' frames).
+
+    Palette: the dataviz reference categorical pair (pre-validated
+    instance; house convention since the golden-ticket report)."""
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    from bijou.aux_text import subgoal_text
+    from bijou.data import EpisodeSplit, select_datasets
+
+    blue, orange = "#2a78d6", "#eb6834"
+    dark, grid, surface = "#52514e", "#e5e4e0", "#fcfcfb"
+
+    z = np.load(FLAGGED_OUT, allow_pickle=True)
+    pairs = json.loads(str(z["top_pairs"]))[: args.pairs]
+    if not pairs:
+        raise SystemExit("no banked pairs — run mine first")
+    rows = load_panel_rows()
+    # The flagged npz banked the SAME core-row order (mine wrote its
+    # identity columns straight from load_panel_rows) — verify, never
+    # assume: pair rows index truth/valid below.
+    for column in ("index", "repo_id", "episode_index", "frame_index"):
+        if not np.array_equal(z[column], rows[column]):
+            raise SystemExit(f"flagged npz {column} disagrees with panel rows")
+    truth, valid = rows["truth"], rows["valid"]
+    deltas, scores = z["delta"], z["alias_score"]
+    indices, repo_ids = z["index"], z["repo_id"]
+    episodes, frames = z["episode_index"], z["frame_index"]
+
+    selection = select_datasets(
+        (DATA_ROOT,),
+        (),
+        CHUNK_SIZE,
+        episode_split=EpisodeSplit.HOLDOUT,
+        holdout_fraction=HOLDOUT_FRACTION,
+        split_seed=SPLIT_SEED,
+        allowed_fps=FPS,
+        allowed_camera_counts=CAMERA_COUNTS,
+    )
+    dataset = selection.concat()
+
+    out_dir = REPO_ROOT / "fontaine/blog/src/img/framemining"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    captions: list[str] = []
+    for number, pair in enumerate(pairs, start=1):
+        a, b = pair["row"], pair["neighbor_row"]
+        fig, axes = plt.subplots(1, 3, figsize=(10.4, 3.1), dpi=110)
+        fig.patch.set_facecolor(surface)
+        subgoals: list[str] = []
+        for ax, row, label in (
+            (axes[0], a, "query"),
+            (axes[1], b, "neighbor"),
+        ):
+            item = dataset[int(indices[row])]
+            key = min(k for k in item if k.startswith("observation.images."))
+            image = (item[key].clamp(0, 1) * 255).to(torch.uint8)
+            ax.imshow(image.permute(1, 2, 0).numpy())
+            ax.set_xticks(())
+            ax.set_yticks(())
+            for spine in ax.spines.values():
+                spine.set_color(grid)
+            ax.set_title(
+                f"{label} · ep {episodes[row]} f {frames[row]}",
+                fontsize=8,
+                color=dark,
+            )
+            subgoals.append(subgoal_text(item) or "no subgoal label")
+        chart = axes[2]
+        chart.set_facecolor(surface)
+        for row, color, label in ((a, blue, "query"), (b, orange, "neighbor")):
+            steps = int(valid[row].sum())
+            for motor in range(truth.shape[-1]):
+                chart.plot(
+                    range(steps),
+                    truth[row, :steps, motor],
+                    color=color,
+                    linewidth=1.3,
+                    alpha=0.85,
+                    label=label if motor == 0 else None,
+                )
+        for side in ("top", "right"):
+            chart.spines[side].set_visible(False)
+        for side in ("left", "bottom"):
+            chart.spines[side].set_color(grid)
+        chart.tick_params(colors=dark, labelsize=8)
+        chart.yaxis.grid(True, color=grid, linewidth=0.8)
+        chart.set_xlabel("chunk step (30 fps)", fontsize=8, color=dark)
+        chart.set_ylabel("action (degrees)", fontsize=8, color=dark)
+        chart.set_title(
+            "ground-truth continuations (6 motors)",
+            fontsize=8,
+            color=dark,
+        )
+        chart.legend(fontsize=8, labelcolor=dark, framealpha=0, loc="best")
+        fig.tight_layout()
+        name = f"pair_{number:02d}.png"
+        fig.savefig(out_dir / name, bbox_inches="tight", facecolor=surface)
+        plt.close(fig)
+        captions.append(
+            f"![aliased pair {number}](../img/framemining/{name})\n\n"
+            f"*Pair {number} — `{repo_ids[a]!s}` · alias score "
+            f"{scores[a]:.2f} · embed dist {pair['embed_dist']:.4f} · "
+            f"continuation divergence {pair['divergence_std']:.2f}σ. "
+            f"**Query** (blue): ep {episodes[a]} f {frames[a]}, Δ_oracle "
+            f"{deltas[a]:+.2f}, subgoal “{subgoals[0]}”. "
+            f"**Neighbor** (orange): ep {episodes[b]} f {frames[b]}, "
+            f"Δ_oracle {deltas[b]:+.2f}, subgoal “{subgoals[1]}”.*\n",
+        )
+        print(f"wrote {name}")
+    snippet = out_dir / "pair_figures.md"
+    snippet.write_text("\n".join(captions))
+    print(f"wrote {snippet.relative_to(REPO_ROOT)} ({len(pairs)} figures)")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -573,6 +695,9 @@ def main() -> None:
     sheet = sub.add_parser("sheet")
     sheet.add_argument("--pairs", type=int, default=12)
     sheet.set_defaults(func=cmd_sheet)
+    figures = sub.add_parser("figures")
+    figures.add_argument("--pairs", type=int, default=12)
+    figures.set_defaults(func=cmd_figures)
     args = parser.parse_args()
     args.func(args)
 

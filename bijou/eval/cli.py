@@ -138,6 +138,12 @@ class EvalReport:
     # read — consumers check these before pairing against keyed npzs.
     noise_tickets: str | None
     tickets_sha256: str | None
+    # Noise-ladder rung 2 (#1): per-dataset ticket routing map and the
+    # sha of its canonical form (None = unrouted). A routed (_ticketmap)
+    # read must never pool as a single-ticket (_ticket) read — the
+    # stage-2 scorer checks this sha against the pre-registered map.
+    noise_ticket_map: str | None
+    ticket_map_sha256: str | None
     # State-reliance probe: bijou policy fed the dataset state mean
     # (zero-information soft state token) — a diagnostic, never a
     # deployment read; the policy name carries _state-masked too.
@@ -219,6 +225,8 @@ class EvalReport:
             "noise_key": self.noise_key,
             "noise_tickets": self.noise_tickets,
             "tickets_sha256": self.tickets_sha256,
+            "noise_ticket_map": self.noise_ticket_map,
+            "ticket_map_sha256": self.ticket_map_sha256,
             "mask_state": self.mask_state,
             "subgoal_mode": self.subgoal_mode,
             "subgoal_draws": self.subgoal_draws,
@@ -405,6 +413,20 @@ def parse_args() -> argparse.Namespace:
         "must not exceed the bank. The policy name gains _ticket and the "
         "report/dump provenance carries the file's sha256 — a ticket "
         "read must never pass as a keyed-noise (--noise-key) read",
+    )
+    parser.add_argument(
+        "--noise-ticket-map",
+        type=Path,
+        default=None,
+        help="noise-ladder rung 2 (#1): per-dataset ticket routing — a "
+        "json {repo_id: bank index} map (bare, or the committed stage-01 "
+        "analysis json's stage1.routing_map). Every frame integrates "
+        "from its DATASET's routed ticket of the --noise-tickets bank; "
+        "deterministic single decode (--sample-draws 1). The policy "
+        "name gains _ticketmap (a routed read must never pool as a "
+        "single-ticket _ticket read) and the report/dump provenance "
+        "carries the map's canonical-form sha256; a dataset absent from "
+        "the map is a hard abort, never a silent fallback",
     )
     parser.add_argument("--chunk-size", type=int, default=50)
     parser.add_argument(
@@ -656,6 +678,18 @@ def parse_args() -> argparse.Namespace:
                 "--noise-tickets substitutes flow initial noise; "
                 "--ar-temperature samples the AR decode — the modes are "
                 "disjoint",
+            )
+    if args.noise_ticket_map is not None:
+        if args.noise_tickets is None:
+            parser.error(
+                "--noise-ticket-map routes datasets INTO a ticket bank — "
+                "it requires --noise-tickets",
+            )
+        if args.sample_draws != 1:
+            parser.error(
+                "--noise-ticket-map is a deterministic single decode "
+                "(each frame integrates from its dataset's routed "
+                "ticket) — --sample-draws must be 1",
             )
     if args.subgoal_mode is not None:
         if args.checkpoint is None:
@@ -918,6 +952,7 @@ def main() -> int:
             target_time=target_time,
             noise_key=args.noise_key,
             tickets=args.noise_tickets,
+            ticket_map=args.noise_ticket_map,
             mask_state=args.mask_state,
             generate=tuple(AuxField(f) for f in (args.generate or ())),
             condition_override=overrides,
@@ -1264,6 +1299,20 @@ def main() -> int:
         payload: dict[str, np.ndarray] = dump_identity()
         for name, chunks in results.dump_predictions.items():
             payload[f"pred:{name}"] = torch.stack(chunks).numpy()
+        if args.noise_tickets is not None:
+            # Ticket-mode provenance (pre-reg 2026-08-08 rung 2, item 5):
+            # the single-decode npz must carry the bank sha — and, when
+            # routed, the map sha — so a scorer can refuse to pool a
+            # ticket/routed npz against keyed or single-ticket anchors.
+            assert bijou_policy is not None  # parse_args enforced
+            payload["noise_tickets"] = np.array(str(args.noise_tickets))
+            payload["tickets_sha256"] = np.array(bijou_policy.tickets_sha256 or "")
+            payload["noise_ticket_map"] = np.array(
+                str(args.noise_ticket_map or ""),
+            )
+            payload["ticket_map_sha256"] = np.array(
+                bijou_policy.ticket_map_sha256 or "",
+            )
         np.savez_compressed(args.dump_predictions, allow_pickle=False, **payload)
         print(f"dumped predictions to {args.dump_predictions}", flush=True)
     if args.dump_draws is not None:
@@ -1633,6 +1682,14 @@ def main() -> int:
             tickets_sha256=(
                 bijou_policy.tickets_sha256 if bijou_policy is not None else None
             ),
+            noise_ticket_map=(
+                str(args.noise_ticket_map)
+                if args.noise_ticket_map is not None
+                else None
+            ),
+            ticket_map_sha256=(
+                bijou_policy.ticket_map_sha256 if bijou_policy is not None else None
+            ),
             mask_state=args.mask_state,
             subgoal_mode=args.subgoal_mode,
             subgoal_draws=args.subgoal_draws,
@@ -1704,6 +1761,12 @@ def main() -> int:
                 f" OVERRIDDEN by tickets {args.noise_tickets} (sha256 "
                 f"{bijou_policy.tickets_sha256})"
                 if bijou_policy is not None and bijou_policy.tickets_sha256
+                else ""
+            )
+            + (
+                f" ROUTED per-dataset by {args.noise_ticket_map} (map "
+                f"sha256 {bijou_policy.ticket_map_sha256})"
+                if bijou_policy is not None and bijou_policy.ticket_map_sha256
                 else ""
             ),
             "state: "

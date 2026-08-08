@@ -2,7 +2,67 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-08 16:09–17:0xZ (real `date -u`) — work session
+(bounded): noise-ladder rung-2 instrument + preflight landed early
+(the queue's CPU-side clause), then a mid-session owner steer
+executed same-hour — the frame-mining report rebuilt to the per-pair
+figure spec with subgoal labels.*
+
+**Status** (babysits 16:09/16:17/16:25Z, exit 0): box **molmo2_ar60k
+LIVE + healthy**: step ~49,100/60,000, probe 6.55@49,000 flat in the
+6.40–6.87 band (1.66 under the 8.21 kill bar, ×3 never armed), loss
+2.74 falling, 2.18 s/step, vram 73.84 no new peak; **50,000 save
+boundary ~17:0xZ** (async-save lines checked at that boundary),
+~6.6 h to the 60k close (~23Z). Local GPU: noise-ladder **preflight
+unit live** (fontaine-noiseladder-preflight, launched 16:26Z via
+run_detached, ~25 min; babysit entry live) — the only local claim
+before the post-close window.
+
+**Steering** (owner 16:20–16:22Z, caught at the 16:25Z poll, ~5 min
+latency): rework the frame-mining report's contact sheet into **one
+figure per mined pair** — query image, neighbor image, and an
+action-chunk chart with both ground-truth trajectories — all 12
+pairs with captions, plus **each frame's subgoal label**. Executed
+same session (ack 16:26Z, delivery 16:28Z): `frame_mining.py
+figures` subcommand (house palette, flagged-npz-vs-panel alignment
+guard, `subgoal_text` per frame), 12 `pair_NN.png` + captions
+inlined into the
+[post](posts/2026-08-08-framemining-aliased-frames.md), contact
+sheet retired from the post; Space pushed, post 200 + image bytes
+verified. The subgoal captions land the report's point: on most
+pairs the label names exactly the phase distinction the image can't
+carry.
+
+**Done** (this session): the `idea1-noise-ladder-rung2-execution`
+CPU-side half, instrument to running preflight: (1)
+**`--noise-ticket-map`** routing mode in `bijou.eval`
+(`BijouPolicy._flow_noise` routes each frame to its dataset's bank
+ticket; `_ticketmap` policy suffix so a routed read can never pool
+as `_ticket`; `--sample-draws 1` enforced; unmapped dataset = hard
+abort; report AND predictions-npz provenance carry the bank sha +
+`ticket_map_sha256` — the predictions dump gained ticket provenance
+for all ticket modes); committed stage-01 map loads with
+canonical-form sha reproducing the pre-registered `15d92935…`
+exactly; `tests/test_ticket_map.py` 14 CPU oracles, check.py green.
+(2) Preflight apparatus per the pre-reg's stage-2 oracle item 5:
+committed 2-dataset ticket-2 plan (144 rows) + t2-only bank
+(= m64[2:3] byte-verified) + `noise_ladder_preflight_oracles.py`
+(selftest: 1 green + 4 red synthetic worlds) + three launchers
+(preflight; stage-2 gated on the preflight green json; seating arm
+with `--noise-key index` — the banked 5.3645 row **predates
+`--noise-key`**, so the base-equality oracle needs the historical
+index keying, header documents the evidence) + prepared babysit
+entries. Preflight running at close.
+
+**Next**: `queue_cli.py next` boundaries: **50,000 save ~17:0xZ**
+(routine), **60k close ~23Z** → chained eval → fields panel → perf
+box ladder (P1 per owner adjudication) + noise-ladder stage-2/seating
+launches (behind the preflight green json) in the post-close window;
+rung-2 read script = the remaining CPU cell before those reads.
+Chained work armed (`run_work_next`).
 
 *Updated 2026-08-08 16:06–16:1xZ (real `date -u`) — tick (babysit):
 routine green; quiet tick after the frame-mining work session.*
@@ -84,50 +144,6 @@ box ladder + noise-ladder stage 2 in the post-close window; the
 meta-report composes the banked mining artifacts with the fields
 numbers after that. Chained work armed (`run_work_next`).
 
-*Updated 2026-08-08 15:23–15:4xZ (real `date -u`) — tick (babysit):
-run healthy; and a SECOND missed-steering catch this day — **two
-owner questions (14:40Z + 14:49Z) had scrolled past the cursor
-unanswered** during the perf-exec window; found via `history`,
-both answered from code this tick (~45 min latency).*
-
-**Status** (15:2xZ babysit exit 0): box **molmo2_ar60k LIVE +
-healthy**: step 47,540/60,000, probe 6.58@47,500 flat in the
-6.40–6.87 band (1.63 under the 8.21 bar, ×3 never armed), loss
-2.786 falling, 2.21 s/step, vram 73.84 no new peak; ~7.5 h to the
-60k close (~23Z). Local GPU idle-by-design (perf ladder waits for
-the box's post-23Z window). Queue validate green depth 5 (15 open).
-
-**Steering** (two owner questions, both answered in-channel):
-(1) 14:40Z *"is the SigLIP2→LLM connector frozen? vision-lr or
-text-lr?"* — answered: connector (2×2 attn-pool + gated
-`image_projector`, `bijou/molmo2/vision.py`) is inside
-`backbone.vision` → **`--backbone-vision-lr`'s group**
-(`encoders/molmo2.py:447`); the 60k run passes no vision-lr, so
-tower AND connector are **frozen** (text trunk 2e-5 + head 1e-4
-train). (2) 14:49Z *"40k report: headline chunk_mae 6.008 vs Q2
-true-outcome MAE 5.877 — what's the first conditioned on?"* —
-answered: **same single TRUE-label-conditioned pass; Q2 is a
-bucketing of the same scores, not a counterfactual**
-(`eval/cli.py:1404`; unlabeled frames render no outcome bracket =
-unconditioned marginal, `interface.py:456`). 6.008 = frame-weighted
-pool over all 17,204 frames {success 5.877, partial 6.315, failure
-6.894, unlabeled 6.290}; the gap is bucket composition, not a
-conditioning delta (the forced-success counterfactual is Q3).
-P1 relative-bound adjudication still pending with the owner.
-
-**Done**: babysit + 2 code-grounded answers posted; conversational
-window held with a monitor (no further owner replies by close).
-Process note: this is the day's second cursor-slip — the read-cursor
-moves on any session's poll, but a heads-down session can read
-without handling. `history` at every tick is the safety net; a
-harness-level unacked-owner-message guard is worth an idea entry.
-
-**Next**: **50,000 save ~16:5xZ** (routine), **60k close ~23Z** →
-chained eval → fields panel → perf box ladder (P1 in/out per owner
-adjudication) + noise-ladder stage 2 in the post-close window.
-Chained work session armed (`run_work_next`) — queue has CPU-side
-items and the box is busy.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -153,6 +169,19 @@ to ~04:0xZ, greedy ~1.7 GPU-h, draws10_t1 04:54–07:22Z **~10 GPU-h
 idle from ~08:15Z pending the next pre-registered launches). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
+
+Session 2026-08-08 16:09–17:0xZ (work, bounded; exploit, ~0.3 GPU-h
+local): noise-ladder rung-2 **instrument + preflight landed** (the
+queue's early-CPU clause): `--noise-ticket-map` in bijou.eval
+(_ticketmap suffix, routed provenance in report + npz, 14 new
+oracles, check.py green), committed t2 plan + bank + adjudicator
+(selftest 1 green/4 red worlds) + preflight/stage-2/seating
+launchers (seating pins `--noise-key index` — banked 5.3645 row
+predates the flag); preflight unit launched 16:26Z. **Owner steer
+16:20Z executed same-hour**: frame-mining report rebuilt to
+per-pair figures (12 × query/neighbor/trajectory-chart + subgoal
+captions), Space pushed + verified, delivery posted 16:28Z. Babysits
+16:09/16:17/16:25 green; queue green depth 5.
 
 Session 2026-08-08 16:06–16:1xZ (tick): babysit exit 0 (48,660,
 probe 6.58@48,500 in-band, loss 2.78, vram 73.84 flat, ~6.9 h to the

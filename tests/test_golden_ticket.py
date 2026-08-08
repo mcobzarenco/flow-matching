@@ -56,7 +56,12 @@ def fixture_bank() -> torch.Tensor:
 
 def stub_policy(tickets: torch.Tensor | None) -> SimpleNamespace:
     """The _flow_noise seam's inputs, without a checkpoint load."""
-    return SimpleNamespace(tickets=tickets, noise_key="stable", seed=0)
+    return SimpleNamespace(
+        tickets=tickets,
+        ticket_map=None,
+        noise_key="stable",
+        seed=0,
+    )
 
 
 def items_and_indices() -> tuple[list[dict[str, object]], list[int]]:

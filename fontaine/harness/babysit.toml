@@ -385,3 +385,81 @@ value = 60.0
 # [[run.gates]]
 # kind = "gpu_hours_max"
 # value = 3.0
+
+# noise-ladder rung 2 (#1) PREFLIGHT — routed-vs-plain byte-match on
+# the committed 2-dataset ticket-2 plan (144 rows x 2 decodes + CPU
+# adjudication; pre-reg 2026-08-08-prereg-noise-ladder-perdataset.md
+# stage-2 oracle item 5). NO scalars — instrument adjudication only.
+# Green writes reports/analysis__noise_ladder_preflight_oracles.json
+# (the stage-2 launcher's gate). Prune at rc=0.
+[[run]]
+name = "noiseladder_preflight"
+kind = "progress-log"
+host = "local"
+pgrep = "noiseladder_preflight"
+pgrep_min = 1
+gpu_indices = [0]
+gpu_mem_min_mib = 4000
+log = "/home/ubuntu/eval__noiseladder_preflight.log"
+progress_re = "scored [0-9]+/[0-9]+ frames"
+started_utc = "2026-08-08T16:26:00+00:00"
+gpu_hours_per_wall_hour = 1.0
+boundary = "two 144-row heun-30 decodes (corpus scan dominates, ~10-12 min each) + adjudicator; expect rc=0 well under 1 h wall"
+anchors = [
+    "adjudication is abort-on-red byte-match (identity + pred + provenance + map coverage) — a red here BLOCKS stage 2, never reads scalars",
+    "box 60k run is UNTOUCHED by this unit (local GPU only)",
+]
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 1.0
+
+# PREPARED — noise-ladder rung 2 STAGE 2 (activate at launch:
+# uncomment, fill started_utc; the launcher gates on the preflight
+# green json). One routed full-panel decode (~0.9 GPU-h); frozen
+# reads run offline (Δ_route on qualifying complement core rows,
+# dataset-clustered CI95 seed 0).
+# [[run]]
+# name = "noiseladder_stage2"
+# kind = "progress-log"
+# host = "local"
+# pgrep = "noiseladder_stage2"
+# pgrep_min = 1
+# gpu_indices = [0]
+# gpu_mem_min_mib = 4000
+# log = "/home/ubuntu/eval__noiseladder_stage2.log"
+# progress_re = "scored [0-9]+/[0-9]+ frames"
+# started_utc = "FILL-AT-LAUNCH"
+# gpu_hours_per_wall_hour = 1.0
+# boundary = "full-panel single decode ~0.9 GPU-h; belt check pins map sha 15d92935... in the report at rc=0"
+# anchors = [
+#     "falsifier (pre-reg): read-1 CI95 not entirely below 0 => routing buys nothing over ticket 33 at this probe's cell sizes",
+#     "banked ticket33 npz + stablekey npz are the frozen comparators — never re-run",
+# ]
+# [[run.gates]]
+# kind = "gpu_hours_max"
+# value = 1.5
+
+# PREPARED — noise-ladder rung 2 SEATING ARM (activate at launch:
+# uncomment, fill started_utc). Random-noise draws-10 re-run with
+# dumps (~3.0 GPU-h); --noise-key index reproduces the 2026-08-05
+# banked config (predates --noise-key; header explains). Base-equality
+# oracle (pooled 5.3645/1.4242 at 4dp) aborts the seating read on red.
+# [[run]]
+# name = "noiseladder_seating"
+# kind = "progress-log"
+# host = "local"
+# pgrep = "noiseladder_seating"
+# pgrep_min = 1
+# gpu_indices = [0]
+# gpu_mem_min_mib = 4000
+# log = "/home/ubuntu/eval__noiseladder_seating.log"
+# progress_re = "scored [0-9]+/[0-9]+ frames"
+# started_utc = "FILL-AT-LAUNCH"
+# gpu_hours_per_wall_hour = 1.0
+# boundary = "draws-10 full panel ~3.0 GPU-h; R4 expectation: seating CI below 0 moves the mean-of-10 board row to the top-10 ensemble"
+# anchors = [
+#     "record-only until the paired read: R3 -0.180 was 9x the 0.02 tie band but UNPAIRED — the seating read is the adjudication",
+# ]
+# [[run.gates]]
+# kind = "gpu_hours_max"
+# value = 3.5
