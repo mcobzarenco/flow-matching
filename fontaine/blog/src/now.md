@@ -2,7 +2,43 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-08 10:52–10:5xZ (real `date -u`) — tick (babysit):
+**molmo2_ar60k HEALTHY** at first post-relaunch tick; owner 👍 on the
+eval-conditioning reply recorded; two dead straggler processes from
+the closed rung-(b) chain reaped.*
+
+**Status** (10:5xZ): box **molmo2_ar60k LIVE + healthy** (babysit
+exit 0): step 40,480/60,000, loss 2.767, 2.249 s/step (20.1
+steps/min window ≈ cumulative), vram 73.49 = the known resume-load
+transient, **no new peak**; util 65–100% across the 4 GPUs; ~12.2 h
+to endpoint (~23:0xZ). First probe lands at 40,500 (not yet fired);
+kill line opens at 41,500, judged at the 42,500 async-save boundary
+~11:4xZ — **next tick's judgment**. Local idle-by-design (rung (b)
+closed).
+
+**Steering**: owner **👍 reaction on the 10:49Z relaunch +
+eval-conditioning post** (`history -n 5`; agreement — TRUE-label
+conditioning read + accuracy-by-field queue plan stand as stated).
+No new messages; `read` surfaced only the driver-guard straggler
+notice (handled below).
+
+**Done** (this tick): babysit green (facts above, judged healthy —
+loss +0.02 sample-to-sample is rewarmup-segment noise, LR
+rewarming on schedule); killed driver-guard stragglers pids
+3287045/3287048 (a `tail -f` + `ugrep` watch pipe on the CLOSED
+rung-(b) preflight log — 2 h old, watching nothing); queue validate
+green (depth 4, 14 open); `run_work_next` re-armed (box busy + CPU
+items queued: fieldgen-accuracy prep, snapflow visual report,
+cleancand escalation draft, noise-ladder finalization).
+
+**Next**: chained work session works the CPU queue head
+(fieldgen-accuracy prep can also claim the free local GPU per its
+item); 60k babysits every ~30 min — 42.5k save boundary + probe
+trajectory are the first real gate checks. **Every GPU launch goes
+through `run_detached.sh`.**
 
 *Updated 2026-08-08 08:36–11:2xZ (real `date -u`) — work session
 (bounded, owner-active): **rung (b) executed end-to-end to a
@@ -117,82 +153,6 @@ idea6 rung-(b) preflight launcher (local GPU free); #4 attach screen
 at the owner-steer window (box free). **Every GPU launch goes
 through `run_detached.sh`.**
 
-*Updated 2026-08-08 05:22–08:4xZ (real `date -u`) — work session
-(4-h chained): **THREE BOUNDARIES CLOSED IN-SESSION** — #19 molmo2
-draws arm (all expectations met → leaderboard row 9 + microbench
-cost cells → mtime caveat retired) and the **golden-ticket screen
-CLOSED: R3 INTERESTING** (mean-of-top-10 **5.1847/1.3831**, the best
-chunk AND first numbers measured on this panel, record-only per
-pre-reg). Plus: lit slice (steering III) whose SDN selector idea was
-executed same-session as a record-only read (flow null / AR small),
-the stage-3 close-out read landed oracle-green BEFORE the data, and
-a babysit driver-cgroup false-positive class fixed.*
-
-**Status** (babysit 08:2xZ; no live runs — both landed):
-- box: **idle since 07:50Z** (#19 draws arm DONE 07:22Z rc=0, ~10 ≤
-  24 GPU-h; microbench rode the landing window 07:27–07:50Z rc=0).
-  Next box claim: **#4 attach screen** (K smoke ladder → F → K),
-  behind the attachment-decision owner-steer window.
-- local: **idle since 08:15Z** (goldenticket stage 3 DONE 08:15:39Z
-  rc=0, 2.99 GPU-h; screen total ~5.55 ≤ 6 gate). Next local claim:
-  idea6 rung-(b) preflight (launcher is next-session work).
-
-**Steering**: owner 08:08Z — "What are all the follow ups on
-molmo2?" → answered 08:2xZ with the full map (attach screen next +
-owner-steer window, vu5k behind it + owner go, banked reads, named
-escalations); channel polled through close, no further reply yet.
-Earlier checkpoints 05:22/05:47/05:54/06:27/06:52/07:31: none.
-
-**Done** (this session, commits `3a19cac`..`+`):
-- **goldenticket screen CLOSED** (`3a19cac` instrument + close
-  commit): stage-3 read landed oracle-green pre-data; R3
-  **INTERESTING 9× the band** (5.1847/1.3831 vs banked mean-of-10
-  5.3645/1.4242, Δ −0.180, record-only — row-seating needs the
-  paired follow-up folded into the queued noise-ladder pre-reg);
-  R4a task-locality (argmin 4.4% of 792 datasets, top-10
-  containment ~2× null, median-2-frame caveat); R4b gain monotone
-  in dispersion (−0.35→−1.44). Results post appended; screen
-  ~5.55/6 GPU-h.
-- **#19 molmo2 draws arm CLOSED** (`6a18e5f`): Δ_AR −0.154 [CI
-  −0.195, −0.113] — mean-collapse replicated on a second AR trunk;
-  5.8492/1.9736 → row 9; execution oracles byte-green. Microbench
-  executed on the box in the landing window (box bundle-synced
-  first): greedy 143.8/678.1, draws10 1191.2/6291.3 ms → rows 8+9
-  cost cells, caveat retired.
-- **Lit slice closed** (`41460df`, steering III page): 2603.11642
-  (path-intact condition + 1.4%/39.4% variance decomposition = the
-  per-dataset pre-reg's written priors; boundary artifact =
-  panel-blind unknown of ticket 33) + 2606.14084 SDN → jerk-pick
-  read executed same session (`aa138b2`): flow NULL, AR
-  small-but-real T-monotone, molmo2 8% — family decodes stand.
-- **Infra**: babysit driver-cgroup self-match class 3 fixed
-  (`410d7e8`, pipeline-sibling grep false positive; stage 3 was
-  verified teardown-safe in its own unit). check.py 491 green
-  throughout; queue narratives + registry pruned at each close.
-
-**Next**: `queue_cli.py next` →
-**idea1-noise-ladder-perdataset-prereg-draft** (OPEN — R3/R4
-numbers in hand; sample-size floor + held-out confirm design are
-the hard parts). Then: idea6 rung-(b) preflight launcher + launch
-(local GPU free); #4 attach screen at the owner-steer window (box
-free). `run_work_next` armed. **Every GPU launch goes through
-`run_detached.sh`.**
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-*Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -218,6 +178,14 @@ to ~04:0xZ, greedy ~1.7 GPU-h, draws10_t1 04:54–07:22Z **~10 GPU-h
 idle from ~08:15Z pending the next pre-registered launches). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
+
+Session 2026-08-08 10:52–10:5xZ (tick): babysit, molmo2_ar60k
+healthy at first post-relaunch tick (step 40,480, 2.249 s/step, no
+new vram peak; probe window opens 41,500, first boundary judgment
+42,500 next tick), 0 GPU-h new; owner 👍 on the 10:49Z
+eval-conditioning post recorded as agreement; 2 stragglers reaped
+(dead preflight watch pipe); queue green depth 4; `run_work_next`
+armed.
 
 Session 2026-08-08 08:27–08:3xZ (tick): babysit with no live runs
 (registry declared-empty, correct), 0 GPU-h — caught the
