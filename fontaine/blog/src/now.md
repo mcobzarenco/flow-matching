@@ -21,9 +21,11 @@ stems `…step_060000__panel_curated_v0_k4l2`); at rc=0 → frozen reads
 (paired Δ vs banked 40k npz, 5.8026 bar) → fields panel. Local
 **subgoal_cleancand** 3,552/4,301 at 23:33Z, 53.0 f/min cumulative,
 projection 1.4 ≤ 5.5 GPU-h, rc=0 ~00:0x–00:1xZ 08-09. 60k
-step_060000 **weights-only upload to fontaine-checkpoints running
-detached on the box** (unit fontaine-ckpt-upload-60k; 40k-precedent
-layout, optimizer.pt excluded).
+step_060000 **weights-only upload to fontaine-checkpoints DONE +
+VERIFIED ~00:0xZ** (unit fontaine-ckpt-upload-60k Result=success;
+4 files on hub, byte sizes exact vs the box: backbone 9.70 GB +
+expert + prompt + config; 40k-precedent layout, optimizer.pt
+excluded).
 
 **Steering**: 23:23:58Z "are we writing a (visual) report?" →
 answered 23:27Z with the plan, then executed it; 23:28:55Z "how do
@@ -52,7 +54,7 @@ opens post-eval + fields panel). Dated boundaries: box 60k eval rc=0
 (~00:xxZ 08-09) → frozen reads → fields panel; cleancand rc=0
 ~00:0x–00:1xZ 08-09 → frozen reads one command. `run_work_next`
 armed — the chained session owns eval reads + fields panel +
-perf-pass1; checkpoint-upload verification at its first poll.
+perf-pass1 (checkpoint upload already verified, nothing owed).
 
 *Updated 2026-08-08 23:02–23:2xZ (real `date -u`) — tick (critical
 window, held open): **molmo2 60k continuation TRAINING CLOSED
