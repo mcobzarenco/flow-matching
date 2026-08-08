@@ -23,8 +23,9 @@ first_mae ≤ 1.6 · ☆☆☆ mainline adoption.
 | 4 | SnapFlow student, 1-NFE, single draw | 5.6036 | 1.7039 | 1 | 46.9 | 100.1 | [results](posts/2026-08-06-snapflow-results.md) |
 | 5 | AR-100k, draws-10 mean, T=1.0 | 5.6515 | 1.9477 | 10 (serial) | 2107.3 | 7993.0 | [readout](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__draws10_t1_ar100k_k4l2.json) |
 | 6 | AR-100k, greedy decode (deployment anchor) | 5.8026 | 2.1431 | 1 (serial) | 247.0 | 2156.6 | [report](https://mcobzarenco-fontaine-blog.static.hf.space/reports/eval__bijou_arb_rcond_100k_ddp4__step_100000__panel_k4l2.html) |
-| 7 | Flow teacher @80k, Heun-30, single draw (stable-key) | 6.5997 | 1.9355 | 30 | 115.7 | 1234.0 | [rebank](posts/2026-08-06-stablekey-rebank-results.md) |
-| 8 | state-copy (control) | 11.785 | 2.620 | 0 | — | — | banked, byte-matched every eval |
+| 7 | **Molmo2 AR 40k, greedy decode** | 6.0079 | 2.1871 | 1 (serial) | —² | —² | [results](posts/2026-08-08-molmo2-endpoint-results.md) |
+| 8 | Flow teacher @80k, Heun-30, single draw (stable-key) | 6.5997 | 1.9355 | 30 | 115.7 | 1234.0 | [rebank](posts/2026-08-06-stablekey-rebank-results.md) |
+| 9 | state-copy (control) | 11.785 | 2.620 | 0 | — | — | banked, byte-matched every eval |
 
 Ranks 1–2 are a statistical tie on chunk MAE (Δ 0.003, ~1σ_draw) at
 **30× different expert compute**. The ☆☆ first-mae arm (≤ 1.6) is
@@ -36,8 +37,14 @@ board) and the student's (1.5927). The ☆ chunk bar (≤ 5.0) is
 pre-registered expectations met): AR mean-of-10 buys −0.145 [CI95
 −0.182, −0.109] — real but ~9× smaller than the flow families' draws
 gain, the pre-registered mean-collapse shape (greedy AR decode
-already sits near the predictive mean). **Rows still owed**: molmo2
-AR 40k greedy + mean-of-10 at its endpoint (~2026-08-08). The
+already sits near the predictive mean). **Row 7 landed 2026-08-08**
+(endpoint chained eval; frozen Read 1 = BEATS its own-topology E2B
+control 7.7966 by paired −1.717 [CI −1.80, −1.63] → phase-2
+flow-trunk candidate): the Molmo2 trunk at 40k sits 0.21 behind
+AR-100k's greedy at 2.5× fewer steps. Its ² cost cells await the
+queued microbench run (molmo2 configs were not in the measured set;
+nothing mtime-derived is quoted). **Rows still owed**: molmo2
+mean-of-10 (draws arm running at the endpoint chain). The
 T-sensitivity rungs (T ∈ {0.5, 0.7, 1.3}) are **record-only by
 pre-registration** and never enter the leaderboard — dT diagnostic
 only.
@@ -126,6 +133,7 @@ clean.*
 | run | steps | panel MAE | first_mae | notes |
 |---|---|---|---|---|
 | `fontaine_arb_rcond_40k_1xh100` (A-s0, aux-on control) | 40k | 7.7966 | 3.9422 | **own-topology baseline**; [results](posts/2026-08-06-box-batch-results.md) |
+| **`fontaine_molmo2_ar_40k_ddp4`** (Molmo2-4B trunk, 4×DDP eff-48) | 40k | **6.0079** | **2.1871** | **BEATS A-s0 paired −1.717 [CI −1.80, −1.63] → phase-2 flow-trunk candidate**; topology differs from the eff-10 arms (recorded); [results](posts/2026-08-08-molmo2-endpoint-results.md) |
 | `fontaine_arb_rcond_40k_1xh100_s1` | 40k | 7.8052 | 4.1118 | seed replicate |
 | `fontaine_arb_rcond_40k_1xh100_s2` | 40k | 7.7355 | 3.9377 | seed replicate; σ_seed(chunk)=0.038, max pairwise Δ=0.0697 |
 | `fontaine_arb_rcond_auxoff_40k_1xh100` (B) | 40k | 8.2989 | 3.5009 | aux-off: **+0.462 vs A-s0, CI [0.387, 0.537], REAL** (7.5× replicate threshold, LORO-coherent); first_mae inversion + cond-sens 1.13 vs 1.86–2.00 |

@@ -155,11 +155,21 @@ def endpoint_reads(
     m_chunk, m_first = pooled(molmo2, m_key)
     verdict = classify(m_chunk)
 
-    # Read 1 paired block — only where row alignment holds.
-    aligned = all(
-        np.array_equal(molmo2[k], anchor[k])
+    # Read 1 paired block — only where row alignment holds. The A-s0
+    # npz predates the episode/frame identity columns (added to
+    # dump_identity later); alignment uses the columns BOTH carry —
+    # index (the concat index under this exact selection), repo_id,
+    # core, truth and valid together still pin identical rows.
+    shared = [
+        k
         for k in ("index", "repo_id", "episode_index", "frame_index", "core")
-    ) and np.array_equal(molmo2["truth"], anchor["truth"])
+        if k in molmo2 and k in anchor
+    ]
+    aligned = (
+        all(np.array_equal(molmo2[k], anchor[k]) for k in shared)
+        and np.array_equal(molmo2["truth"], anchor["truth"])
+        and np.array_equal(molmo2["valid"], anchor["valid"])
+    )
     paired: dict[str, Any] | None = None
     if aligned:
         core = molmo2["core"].astype(bool)
@@ -192,6 +202,7 @@ def endpoint_reads(
             "classification": verdict,
             "paired": paired,
             "pairing_failure": not aligned,
+            "alignment_columns": [*shared, "truth", "valid"],
             "decision": DECISION[verdict],
         },
         "read2": {

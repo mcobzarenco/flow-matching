@@ -12,27 +12,32 @@
 # to the panel_k4l2_draws10_t1 stem when that phase starts (prepared
 # entry below).
 
+# Greedy phase COMPLETE 04:53Z (JSON landed; READ OUT: BEATS 6.0079 vs
+# 7.7966, paired -1.717 [CI -1.80, -1.63] -> phase-2 flow-trunk
+# candidate; postprocessing done same session). Entry now watches the
+# chained #19 draws10_t1 phase (the prepared-entry plan, activated).
+
 [[run]]
-name = "molmo2_endpoint_chain"
+name = "molmo2_draws10_t1"
 kind = "progress-log"
 host = "192.222.55.210"
-pgrep = "fontaine_molmo2_ar_40k_ddp4"
+pgrep = "draws10_t1"
 pgrep_min = 4                       # torchrun + 4 rank workers match
 gpu_indices = [0, 1, 2, 3]
 gpu_mem_min_mib = 8000
-log = "/home/ubuntu/logs/eval__fontaine_molmo2_ar_40k_ddp4__step_040000__panel_curated_v0_k4l2.log"
+log = "/home/ubuntu/logs/eval__fontaine_molmo2_ar_40k_ddp4__step_040000__panel_k4l2_draws10_t1.log"
 progress_re = "scored [0-9]+/[0-9]+ frames"
-started_utc = "2026-08-08T04:27:00Z"
+started_utc = "2026-08-08T04:54:00Z"
 gpu_hours_per_wall_hour = 4.0       # 4-GPU sharded torchrun
-boundary = "greedy panel arm (25,800 frames, 4-GPU sharded, ~2 h) -> #19 draws10_t1 arm chained in the same unit; postprocessing opens at the greedy JSON"
+boundary = "shard counts (~6450/rank full panel, ~1075 q4); launcher's rate gate decides q4 fallback inside the first ~30 min; greedy arm banked (this chain, 04:53Z) is the paired baseline"
 anchors = [
-    "progress counts are the RANK-0 SHARD (~6450/rank on the full panel)",
-    "frozen endpoint reads (pre-reg 2026-08-06): pooled chunk vs E2B AR anchor 7.7966 - BEATS < 7.30, PARITY within +/-0.5; state-copy rows byte-match 11.7639/2.5851",
-    "model-load + first prefill ~4-5 min shows as a quiet log head - not a stall (the 04:16 crash fired at exactly this point pre-fix; a repeat dtype error is loud in the log tail)",
+    "frozen reads at completion: molmo2 delta_AR (draws10 - greedy) paired on its own greedy npz; fairness vs -1.258; family vs 5.365",
+    "fallback relaunch logs to the stateprobe_q4 stem - repoint log if the cost gate fired",
+    "model-load + first prefill ~4-5 min shows as a quiet log head - not a stall; greedy phase ran ~26 min at ~250 f/min effective, draws10 ~10x decode cost on the same frames",
 ]
 [[run.gates]]
 kind = "gpu_hours_max"
-value = 24.0                        # #19 pre-reg gate spans the chain
+value = 24.0                        # same pre-reg gate as the AR-100k arm
 
 # LIVE — #6 self-subgoal probe (local GPU; pre-reg
 # 2026-08-07-prereg-selfsubgoal-probe.md + amendment 1). History: preflight
@@ -44,33 +49,8 @@ value = 24.0                        # #19 pre-reg gate spans the chain
 # (~50 min at the measured ~540 f/min single-pass), then marker-gated
 # self two-pass (~130 min at ~197 f/min). Prune at completion
 # (retained-entry footgun); frozen reads = selfsubgoal_results.py.
-# PREPARED — molmo2 endpoint draws arm (#19). Uncomment + fill
-# started_utc when eval_box_molmo2_endpoint_draws10_t1.sh launches
-# (prune molmo2_ar40k at the same time — the train run is over).
-# Progress counts are the RANK-0 SHARD (~total/4, "scored N/M frames
-# (rank 0 shard)"); the fallback relaunch logs to the stateprobe_q4
-# stem — repoint `log` if the cost gate fired.
-#
-# [[run]]
-# name = "molmo2_draws10_t1"
-# kind = "progress-log"
-# host = "192.222.55.210"
-# pgrep = "draws10_t1"
-# pgrep_min = 4                     # torchrun + 4 rank workers match
-# gpu_indices = [0, 1, 2, 3]
-# gpu_mem_min_mib = 8000
-# log = "/home/ubuntu/logs/eval__fontaine_molmo2_ar_40k_ddp4__step_040000__panel_k4l2_draws10_t1.log"
-# progress_re = "scored [0-9]+/[0-9]+ frames"
-# started_utc = "FILL-AT-LAUNCH"
-# gpu_hours_per_wall_hour = 4.0     # 4-GPU sharded torchrun
-# boundary = "shard counts (~6450/rank full panel, ~1075 q4); launcher's rate gate decides q4 fallback inside the first ~30 min"
-# anchors = [
-#     "frozen reads at completion: molmo2 delta_AR (draws10 - greedy) paired on its own greedy npz; fairness vs -1.258; family vs 5.365",
-#     "greedy arm comes from the chained endpoint eval (panel_curated_v0_k4l2 stems); launcher re-runs it only if missing",
-# ]
-# [[run.gates]]
-# kind = "gpu_hours_max"
-# value = 24.0                      # same pre-reg gate as the AR-100k arm
+# (The PREPARED molmo2_draws10_t1 block that lived here was activated
+# 04:5xZ 08-08 as the live entry above.)
 
 # PREPARED — #19 T-sensitivity rung (record-only; launcher
 # eval_ar100k_tsens_q4_draws10.sh, one command, 3 sequential q4

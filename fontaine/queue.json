@@ -1,6 +1,6 @@
 {
- "updated_utc": "2026-08-08T04:36:37+00:00",
- "depth_reason": null,
+ "updated_utc": "2026-08-08T04:59:24+00:00",
+ "depth_reason": "depth 1 mid-session (08-08 05:0xZ): the live R2->stage-3/idea6 chain occupies the rest of this work session; its verdict generates the next items (stage-3 launch obligations OR screen-close writeup + idea6 execution). Refill lands at session close from that verdict \u2014 adding speculative items before R2 reads out would just be churn.",
  "items": [
   {
    "id": "ar100k-tsens-q4-live",
@@ -330,10 +330,10 @@
    "id": "molmo2-endpoint-postprocessing",
    "title": "molmo2 40k endpoint POST-PROCESSING (CPU, opens when the chained greedy panel eval lands ~04-05Z 08-08): read eval__fontaine_molmo2_ar_40k_ddp4__step_040000__panel_curated_v0_k4l2.json -> leaderboard row (measured decode-cost column caveat: molmo2 configs were NOT in the microbench set \u2014 mtime-derived number flagged as such or left blank), ledger entry vs the pre-reg's frozen reads (2026-08-06-prereg-molmo2-ar-40k.md), blog post + Discord line; prune/repoint babysit molmo2_ar40k entry at the same commit (the train run is over; the draws-arm prepared entry takes over per the registry comment); quote the endpoint probe value HERE for the vu5k finalization amendment's frozen-sanity bar (feeds idea17 execution cell 2); checkpoint upload per the upload-valuable-checkpoints standing rule (weights-only unless seeding)",
    "class": "cpu",
-   "status": "queued",
+   "status": "done",
    "prereg": "fontaine/blog/src/posts/2026-08-06-prereg-molmo2-ar-40k.md",
    "owner_hold": false,
-   "boundary": "opens at the molmo2_ar40k endpoint chain landing (~04-05Z 08-08); the #19 draws-arm box launch (separate item) should not wait on this \u2014 post-processing is CPU-parallel"
+   "boundary": "closed 08-08 05:0xZ (chained work session): greedy JSON landed 04:53Z (after the 04:16 chained-eval dtype incident was root-caused + fixed + relaunched via the #19 launcher's greedy-if-missing clause, 5a43b15); frozen reads executed via molmo2_endpoint_results.py (oracle-green BEFORE data, 61dacb9): READ 1 = BEATS \u2014 6.0079/2.1871 vs A-s0 7.7966/3.9422, paired -1.717 [CI95 -1.797, -1.635] on 17,204 core frames -> frozen decision executes, Molmo2 is the phase-2 flow-trunk candidate; READ 2 byte-match green (pooled 11.7847/2.6202; the pre-reg's parenthetical 11.7639/2.5851 reproduces under NO pooling of this plan \u2014 drafting slip recorded, not silently corrected). Leaderboard row 7 added (cost cells await the microbench prep item \u2014 flagged, nothing mtime-derived) + own-topology table row; results post 2026-08-08-molmo2-endpoint-results.md published + Space 200-verified + Discord line; ideas.md #17/#19 hooks updated; babysit repointed train->greedy->draws10_t1 phases at each transition; endpoint probe 6.2075@40000 quoted in the results post as the vu5k amendment's frozen-sanity bar input (feeds idea17 cell 2); checkpoint upload done same session (weights-only, 4 files hub-verified)"
   },
   {
    "id": "idea6-selfsubgoal-frozen-reads",

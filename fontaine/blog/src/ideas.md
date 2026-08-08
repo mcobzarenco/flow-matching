@@ -20,15 +20,22 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   the mean-collapse shape). T-sensitivity dT table banked 23:09Z
   same day (record-only): monotone in T — 6.50/6.57/6.78/7.18 at
   T=0.5/0.7/1.0/1.3 on the q4 rows; the T=1.3 asymmetry prior
-  confirmed, primary stays T=1.0. Next: the molmo2 arm at its
-  endpoint (~04–05Z 08-08).
+  confirmed, primary stays T=1.0. Molmo2 arm RUNNING 08-08 ~05:0xZ
+  (draws10_t1 chained after the endpoint greedy eval; its Δ_AR read
+  pairs on the greedy npz banked this session).
 - **`seam-screen` [#4 Stage-2 attachment seam](ideas/04-stage2-attachment.md)** —
   `screening`. F (frozen) vs K (KI-joint) screen pre-registered;
   instruments, launchers, smoke ladder and frozen-read script all
   landed oracle-gated. Launches at the molmo2 40k endpoint (~08-08).
 - **`new-trunks` [#17 New trunks / architectures](ideas/17-new-trunks.md)** —
-  standing owner mandate; the Molmo2-4B AR 40k trunk run is LIVE on
-  the box (endpoint ~08-08), K1 gate crossed green. New 2026-08-07
+  standing owner mandate. **Molmo2-4B AR 40k ENDPOINT READ OUT
+  2026-08-08 ([results](posts/2026-08-08-molmo2-endpoint-results.md)):
+  BEATS — 6.0079/2.1871 vs the E2B own-topology control 7.7966/3.9422,
+  paired −1.717 [CI −1.80, −1.63] on 17,204 core frames; frozen
+  decision executes, Molmo2 is the phase-2 flow-trunk candidate (the
+  #4 attach screen holds this AR-adapted prefix frozen). At 40k it
+  sits 0.21 behind AR-100k's greedy at 2.5× fewer steps. Endpoint
+  probe 6.2075@40000 = the vu5k amendment's frozen-sanity bar input.** New 2026-08-07
   (owner question): the SigLIP-unfreeze evidence got its own slice
   ([vision-encoder-freeze](papers/vision-encoder-freeze.md) — both
   poles are real: unfreeze wins adaptation regimes, freeze/anchor
