@@ -80,3 +80,62 @@ our own decoder, unprompted.
 
 Stage 1 ~1.7 GPU-h, stage 2 ~0.85, stage 3 ~2.9 projected — ~5.5 of
 the pre-registered 6 GPU-h, one quiet local-GPU day, zero training.
+
+---
+
+## Stage 3 + R4: the screen closes (appended 08-08 ~08:2xZ)
+
+Stage 3 landed 08:15:39Z rc=0 (2.99 GPU-h measured; screen total
+**~5.55 of the 6 GPU-h gate**). Frozen reads via the oracle-green
+`goldenticket_stage3_results.py` (top-10 sha pinned, 4-way identity
+byte-match, pooled column verified equal to the draws-stack mean).
+
+**R3 — searched noise wins inside the ensembling regime too:
+INTERESTING, 9× beyond the band.** Mean-of-top-10-tickets, full
+panel, core-pooled: **5.1847 / 1.3831** vs the banked random-noise
+mean-of-10 **5.3645 / 1.4242** → pooled Δ = **−0.180** against a
+±0.02 tie band. Both cells' draw-noise scales are ≤0.008, so this is
+not pooling luck. Per the pre-reg this is **record-only** — the
+mean-of-10 board row is not displaced without a paired follow-up
+(the banked row's per-frame npz was never retained, so a paired read
+needs one re-run) — but the number itself is currently the best
+chunk MAE *and* the best first_mae measured on this panel by any
+config (board best 5.3645/1.4242). The follow-up that could seat it
+as a row belongs to the noise-ladder pre-reg now in the queue.
+
+**R4a — tickets are task-local, exactly as the paper (and
+2603.11642) predicted.** Per-dataset per-ticket matrix from the
+stage-1 dump (792 probe datasets): ticket 33 is the per-dataset
+argmin in only **4.4%** of them; every one of the 64 tickets wins
+somewhere; the per-dataset argmin falls inside the global top-10 set
+29.8% of the time (~2× the 15.6% null). Median margin left on the
+table vs the global winner: 1.18 pooled MAE. The loud caveat the
+pre-reg banked in advance: the median dataset has **2 probe frames**
+— a 64-way argmin on 2 frames is mostly selection noise, so these
+per-dataset winners are hypotheses, not results. (For calibration:
+[2603.11642](https://arxiv.org/abs/2603.11642) measured the same
+structure cleanly — noise main effect 1.4%, context×noise
+interaction 39.4% — and its best shared noise was optimal in 3.1%
+of contexts; our 4.4% is the same picture.)
+
+**R4b — the ticket buys most where the draws disagree most.**
+Dispersion-quartile geometry (dispersion = valid-weighted std across
+the stage-3 top-10 stack; gain = ticket 33 − stable-key per frame,
+all 17,204 core rows): quartile mean gains **−0.35 / −0.75 / −1.09 /
+−1.44** from tightest to most dispersed. Monotone through all four
+quartiles — the winner ticket is not shaving uniform noise; it wins
+where the decoder's noise-response is largest, which is also where a
+per-dataset or per-frame escalation has the most to work with.
+
+**R4c** (horizon): the winner's complement-row gain is spread across
+the chunk horizon (banked in `analysis__goldenticket_stage2.json` /
+`analysis__goldenticket_stage3.json`), not a first-step artifact.
+
+**Screen verdict, final:** R1 CONFIRM → R2 REAL → R3 INTERESTING.
+One searched, sha-pinned noise vector is real on held-out rows;
+searched top-10 noise beats random-noise ensembling by −0.180
+pooled; the effect is directional, task-local, and
+dispersion-concentrated. The noise-structure ladder's entry
+condition is met with headroom — the per-dataset-tickets rung
+pre-reg (queued) inherits R4a's caveat (per-dataset cells need a
+sample-size floor and held-out confirms) and R4b's targeting signal.

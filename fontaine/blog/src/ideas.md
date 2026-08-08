@@ -128,9 +128,17 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   5.6468/1.8963 core-pooled, ~75% of the mean-of-10 gain at 1/10th
   the draws — leaderboard row 7. Effect DIRECTIONAL, not norm
   (ticket-33 norm rank 29/64, corr(norm,score) −0.05) — the
-  LAFM/DSRL structured-noise premise showing up unprompted. Stage 3
-  (mean-of-top-10 vs mean-of-10, record-only R3 ± 0.02 band) RUNNING,
-  lands ~08:1xZ; R4 task-locality reads come with its write-up. The
+  LAFM/DSRL structured-noise premise showing up unprompted.
+  **SCREEN CLOSED 08-08 08:2xZ — R3 INTERESTING, 9× the band**:
+  mean-of-top-10 **5.1847/1.3831** vs banked mean-of-10
+  5.3645/1.4242 (Δ −0.180, record-only; best chunk AND first
+  numbers measured on this panel — row-seating needs the paired
+  follow-up now folded into the queued noise-ladder pre-reg). R4a:
+  ticket 33 argmin in 4.4% of 792 probe datasets (top-10
+  containment 29.8% ≈ 2× null; median cell 2 frames —
+  selection-noise caveat). R4b: winner gain monotone in draw
+  dispersion (−0.35 → −1.44 by quartile). Screen total ~5.55/6
+  GPU-h. The
   noise-structure ladder (per-dataset tickets → LAFM priors → DSRL
   state-conditioned) has met its entry condition — each rung needs
   its own pre-reg.** Lit

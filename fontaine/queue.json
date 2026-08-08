@@ -1,6 +1,6 @@
 {
- "updated_utc": "2026-08-08T07:57:00+00:00",
- "depth_reason": "depth 1 at 07:5xZ 08-08: the noise-ladder per-dataset-tickets pre-reg draft is queued (opens at the R3 close, minutes away; its draft quality gates on the R3/R4b numbers). Further refill at the goldenticket screen close this session; idea6 execution remains blocked on the first quiet local window.",
+ "updated_utc": "2026-08-08T08:17:45+00:00",
+ "depth_reason": "depth 1 at 08:2xZ 08-08: the noise-ladder per-dataset-tickets pre-reg draft is OPEN (R3/R4 numbers in hand as of this close) and is the next work item; idea6 rung-(b) execution opens with it (local GPU free since 08:15; its preflight launcher is next-session work \u2014 not rushed at this session's deadline). run_work_next armed.",
  "items": [
   {
    "id": "ar100k-tsens-q4-live",
@@ -346,12 +346,12 @@
   },
   {
    "id": "idea1-golden-ticket-screen-execution",
-   "title": "#1 golden-ticket screen: stage 1 DONE (R1 CONFIRM 04:2xZ 08-08: sd 0.82252 vs 0.0785, min 5.70564 vs 6.52401, winner ticket 33) -> stage 2 DONE (R2 REAL 05:1xZ: complement paired -0.924 [CI95 -0.985, -0.866] vs line -0.05 on 14,746 rows, core-pooled 5.6468/1.8963 = leaderboard row 7; effect directional not norm) -> stage 3 LIVE 05:16:30Z (unit fontaine-goldenticket-stage3, mean-of-top-10 [33,2,0,51,10,59,38,28,15,36] byte-verified sha e537f4cd, draws-10 ticket noise, ~2.9 GPU-h, lands ~08:1xZ). REMAINING: R3 pooled read vs banked 5.3645 (tie band \u00b10.02, RECORD-ONLY) + R4 record-only reads (per-dataset argmin task-locality, quartile geometry, horizon) + stage-3 write-up; screen budget ~5.5 of the 6 GPU-h gate. Results post (stages 1-2) published 2026-08-08-goldenticket-results.md",
+   "title": "#1 golden-ticket screen: stage 1 DONE (R1 CONFIRM 04:2xZ 08-08: sd 0.82252 vs 0.0785, min 5.70564 vs 6.52401, winner ticket 33) -> stage 2 DONE (R2 REAL 05:1xZ: complement paired -0.924 [CI95 -0.985, -0.866] vs line -0.05 on 14,746 rows, core-pooled 5.6468/1.8963 = leaderboard row 7; effect directional not norm) -> stage 3 LIVE 05:16:30Z (unit fontaine-goldenticket-stage3, mean-of-top-10 [33,2,0,51,10,59,38,28,15,36] byte-verified sha e537f4cd, draws-10 ticket noise, ~2.9 GPU-h, lands ~08:1xZ). REMAINING: R3 pooled read vs banked 5.3645 (tie band \u00b10.02, RECORD-ONLY) + R4 record-only reads (per-dataset argmin task-locality, quartile geometry, horizon) + stage-3 write-up; screen budget ~5.5 of the 6 GPU-h gate. Results post (stages 1-2) published 2026-08-08-goldenticket-results.md \u2014 STAGE 3 LANDED 08:15:39Z rc=0 (2.99 GPU-h; screen total ~5.55 <= 6 gate); R3 read via oracle-green goldenticket_stage3_results.py: mean-of-top-10 5.1847/1.3831 vs banked 5.3645/1.4242 -> delta -0.180 = INTERESTING 9x beyond the band (RECORD-ONLY per pre-reg; best chunk+first numbers on the panel, row needs paired follow-up); R4a task-locality (argmin 4.4%/792 datasets, top-10 containment 29.8% ~2x null, median cell 2 frames caveat); R4b gain monotone in dispersion (-0.35 -> -1.44 by quartile). SCREEN CLOSED: R1 CONFIRM -> R2 REAL -> R3 INTERESTING.",
    "class": "gpu-local",
-   "status": "live",
+   "status": "done",
    "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-golden-ticket-screen.md",
    "owner_hold": false,
-   "boundary": "stage 3 lands ~08:1xZ 08-08 -> R3/R4 reads + write-up close the screen; budget ~5.5/6 GPU-h"
+   "boundary": "closed 2026-08-08 08:2xZ"
   },
   {
    "id": "idea6-subgoal-draws-prereg-draft",

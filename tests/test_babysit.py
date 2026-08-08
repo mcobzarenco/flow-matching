@@ -124,7 +124,18 @@ class TestParsing:
 
     def test_real_registry_loads(self) -> None:
         runs = babysit.load_registry(babysit.REGISTRY)
-        assert len(runs) >= 1
+        if not runs:
+            # An empty registry is legal ONLY as an explicitly declared
+            # state (all runs landed and were pruned at their close) —
+            # the key names the reason so accidental emptying still
+            # fails here.
+            import tomllib
+
+            with babysit.REGISTRY.open("rb") as f:
+                data = tomllib.load(f)
+            assert data.get("no_live_runs_reason"), (
+                "registry has no runs and no declared no_live_runs_reason"
+            )
         for run in runs:
             assert run.kind in ("train-jsonl", "progress-log")
             assert run.pgrep and run.gpu_indices

@@ -1,8 +1,67 @@
 # Now
 
+*Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-08 05:22–08:4xZ (real `date -u`) — work session
+(4-h chained): **THREE BOUNDARIES CLOSED IN-SESSION** — #19 molmo2
+draws arm (all expectations met → leaderboard row 9 + microbench
+cost cells → mtime caveat retired) and the **golden-ticket screen
+CLOSED: R3 INTERESTING** (mean-of-top-10 **5.1847/1.3831**, the best
+chunk AND first numbers measured on this panel, record-only per
+pre-reg). Plus: lit slice (steering III) whose SDN selector idea was
+executed same-session as a record-only read (flow null / AR small),
+the stage-3 close-out read landed oracle-green BEFORE the data, and
+a babysit driver-cgroup false-positive class fixed.*
 
+**Status** (babysit 08:2xZ; no live runs — both landed):
+- box: **idle since 07:50Z** (#19 draws arm DONE 07:22Z rc=0, ~10 ≤
+  24 GPU-h; microbench rode the landing window 07:27–07:50Z rc=0).
+  Next box claim: **#4 attach screen** (K smoke ladder → F → K),
+  behind the attachment-decision owner-steer window.
+- local: **idle since 08:15Z** (goldenticket stage 3 DONE 08:15:39Z
+  rc=0, 2.99 GPU-h; screen total ~5.55 ≤ 6 gate). Next local claim:
+  idea6 rung-(b) preflight (launcher is next-session work).
 
+**Steering**: owner 08:08Z — "What are all the follow ups on
+molmo2?" → answered 08:2xZ with the full map (attach screen next +
+owner-steer window, vu5k behind it + owner go, banked reads, named
+escalations); channel polled through close, no further reply yet.
+Earlier checkpoints 05:22/05:47/05:54/06:27/06:52/07:31: none.
+
+**Done** (this session, commits `3a19cac`..`+`):
+- **goldenticket screen CLOSED** (`3a19cac` instrument + close
+  commit): stage-3 read landed oracle-green pre-data; R3
+  **INTERESTING 9× the band** (5.1847/1.3831 vs banked mean-of-10
+  5.3645/1.4242, Δ −0.180, record-only — row-seating needs the
+  paired follow-up folded into the queued noise-ladder pre-reg);
+  R4a task-locality (argmin 4.4% of 792 datasets, top-10
+  containment ~2× null, median-2-frame caveat); R4b gain monotone
+  in dispersion (−0.35→−1.44). Results post appended; screen
+  ~5.55/6 GPU-h.
+- **#19 molmo2 draws arm CLOSED** (`6a18e5f`): Δ_AR −0.154 [CI
+  −0.195, −0.113] — mean-collapse replicated on a second AR trunk;
+  5.8492/1.9736 → row 9; execution oracles byte-green. Microbench
+  executed on the box in the landing window (box bundle-synced
+  first): greedy 143.8/678.1, draws10 1191.2/6291.3 ms → rows 8+9
+  cost cells, caveat retired.
+- **Lit slice closed** (`41460df`, steering III page): 2603.11642
+  (path-intact condition + 1.4%/39.4% variance decomposition = the
+  per-dataset pre-reg's written priors; boundary artifact =
+  panel-blind unknown of ticket 33) + 2606.14084 SDN → jerk-pick
+  read executed same session (`aa138b2`): flow NULL, AR
+  small-but-real T-monotone, molmo2 8% — family decodes stand.
+- **Infra**: babysit driver-cgroup self-match class 3 fixed
+  (`410d7e8`, pipeline-sibling grep false positive; stage 3 was
+  verified teardown-safe in its own unit). check.py 491 green
+  throughout; queue narratives + registry pruned at each close.
+
+**Next**: `queue_cli.py next` →
+**idea1-noise-ladder-perdataset-prereg-draft** (OPEN — R3/R4
+numbers in hand; sample-size floor + held-out confirm design are
+the hard parts). Then: idea6 rung-(b) preflight launcher + launch
+(local GPU free); #4 attach screen at the owner-steer window (box
+free). `run_work_next` armed. **Every GPU launch goes through
+`run_detached.sh`.**
 
 
 
@@ -124,57 +183,6 @@ resolves, preflight = GPU-side oracles (draws-0 bit-exact at
 matched composition, forced-empty = plain path). **Every GPU launch
 goes through `run_detached.sh`.**
 
-*Updated 2026-08-08 03:19–04:0xZ (real `date -u`) — work session
-(bounded, chained off the 03:15 tick): **#6 rung (b) INSTRUMENT +
-READ SCRIPT LANDED, oracle-green** — the CPU item the pre-reg
-required before any launch; execution now waits only on the #1 R1
-chain + its GPU-side preflight oracles.*
-
-**Status** (babysit 03:20 + 03:32 + 03:50Z, exit 0, 2 registered
-runs):
-- box molmo2 AR 40k — 39900/40000 at 03:50, loss 2.7465, 27.5
-  steps/min in-window, vram 67.13 ≤ 71; probe 6.30@39500 (low
-  5.91@26500 stands, gate margin 4.93). Endpoint minutes away →
-  40000 save (~15 min write) → chained greedy panel eval; endpoint
-  chain lands ~04:1x–04:4xZ.
-- local **#1 goldenticket stage 1** — 1632/2458 at 100% util,
-  window 26.4 f/min, cumulative 23.5 f/min → projected total 1.7 h
-  ≤ 6 GPU-h gate, ~0.6 h remaining; R1 adjudication ~04:2x–04:5xZ.
-
-**Steering**: none (`read` at boot 03:19 and at all three babysit
-checkpoints — no messages, no reactions).
-
-**Done** (this commit): **idea6-subgoal-draws-instrument CLOSED,
-oracle-green** — `bijou.eval --subgoal-mode draws`: pass 1 decodes
-greedy + `--subgoal-draws` sampled candidates (T via
-`--subgoal-temperature`, draws10_t1 stable keying verbatim) off ONE
-shared prefill (new `ARSuffixDecoder.decode_value_line`, per-step
-chosen/mean log-probs = exact SC sufficient stats; model-level
-candidate-0 == full-pass byte assert); `_bonsubgoal` (frozen SC
-argmax, structurally label-blind) + `_ceilsubgoal` (token-F1 vs
-true label; label-less rows render no hint) arms in one run;
-`--dump-subgoal-candidates` table with live picks + record-only
-likelihood/medoid alternates; pure scorers in
-`bijou/eval/subgoal_scoring.py` (ties → lowest index); read script
-`subgoal_draws_results.py` (Δ_bon + paired bon−self vs the banked
-rung-(a) self npz, Δ_ceil + no-diversity/no-scorer adjudication,
-agreement, horizon, first_mae mirrors; `--oracle` selftest: planted
-deltas exact, degenerate CI [0,0] + falsifier, 11 abort branches
-green). 22 new tests incl. the REAL tiny-model decode-loop oracle-i
-half; **check.py 489 green**. Queue refilled
-(lit-slice-verifier-free-selection-followups, targeted at the
-rung-(b) escalation routing) — validate green depth 2, 13 open.
-
-**Next**: `queue_cli.py next` →
-**molmo2-endpoint-postprocessing** (CPU, opens at the endpoint
-chain landing ~04:1x–04:4xZ); goldenticket R1 ~04:2x–04:5xZ gates
-its stage 2; **idea6-subgoal-draws-execution** (gpu-local) opens at
-the first quiet local window AFTER the R1 chain resolves — its
-preflight runs the GPU-side oracles (draws-0 bit-exact vs the
-banked self arm at matched composition, forced-empty = plain path).
-`run_work_next` re-armed. **Every GPU launch goes through
-`run_detached.sh`.**
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -189,10 +197,27 @@ the tick-service cgroup teardown (+~0.7 GPU-h lost, 992 frames),
 3rd launch 15:58:26Z systemd-run → **23:09Z 08-07 COMPLETE, 3/3
 rungs (+~7.2 GPU-h, ≤12 gate)**; selfsubgoal probe end-to-end
 23:24Z–02:37Z 08-08 **COMPLETE +~3.2 GPU-h (≤ 8 gate)**;
-goldenticket stage 1 live from 02:41Z 08-08, ~1.5 GPU-h projected
-under the 6 gate). Older dated
-snapshots and session notes: rolled verbatim to the
+goldenticket screen 02:41Z–08:15Z 08-08 **CLOSED at ~5.55 GPU-h ≤ 6
+gate** (s1 ~1.7 + s2 ~0.85 + s3 2.99); box molmo2 chain: 40k train
+to ~04:0xZ, greedy ~1.7 GPU-h, draws10_t1 04:54–07:22Z **~10 GPU-h
+≤ 24 gate**, microbench 07:27–07:50Z ~0.4 GPU-h; box + local both
+idle from ~08:15Z pending the next pre-registered launches). Older
+dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
+
+Session 2026-08-08 05:22–08:4xZ (work): exploit-heavy, 0 GPU-h
+newly launched local (both live runs landed in-session:
+goldenticket stage 3 → R3 INTERESTING 5.1847/1.3831 record-only,
+screen closed ~5.55/6; #19 molmo2 draws → row 9, Δ_AR −0.154) +
+~0.4 GPU-h box (microbench rode the #19 landing window — rows 8+9
+cost cells, mtime caveat retired). Lit slice (steering III:
+2603.11642 + SDN 2606.14084) with its selector idea executed
+same-session as a record-only read (flow null / AR small); stage-3
+close-out read + jerkpick script landed oracle-green; babysit
+driver-cgroup false-positive class fixed; owner steering answered
+in-session (molmo2 follow-up map, 08:08Z→08:2xZ). Queue: 5 items
+closed w/ narratives, noise-ladder pre-reg draft refilled+open;
+depth 1 w/ stated reason. Blog + Space pushed; Discord ×3.
 
 Session 2026-08-08 04:00–05:2xZ (work): exploit-heavy, ~1.0 GPU-h
 new local (goldenticket stages 2+3 launches; stage 1 closed at ~1.7,
