@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-08T03:00:00+00:00",
+ "updated_utc": "2026-08-08T03:14:00+00:00",
  "depth_reason": null,
  "items": [
   {
@@ -355,12 +355,30 @@
   },
   {
    "id": "idea6-subgoal-draws-prereg-draft",
-   "title": "#6 escalation rung (b) pre-reg DRAFT (CPU; opens now that rung (a) is banked): candidate-subgoal SELECTION \u2014 pass 1 decodes N subgoal candidates (the #1 batched-draws machinery, depth-1 VINE width scaling per papers/runtime-plan-verification.md), a frozen scorer picks one, pass 2 conditions on it; the measured prize is the Delta_oracle -0.290 vs Delta_self -0.018 gap (generation phase noise). Draft must freeze: candidate count, scorer definition (no oracle leakage), cost gate, falsifier vs the banked -0.018, and the no-prompt-fishing clause inherited from rung (a). Execution needs its own posted pre-reg + queue entry",
+   "title": "#6 escalation rung (b) pre-reg POSTED 03:2xZ 08-08 (posts/2026-08-08-prereg-subgoal-draws.md): candidate-subgoal SELECTION frozen \u2014 9 candidates (greedy + 8 sampled T=1, draws10_t1 seeding verbatim), primary scorer self-certainty (2502.18581, mean KL-from-uniform, argmax, zero extra forwards; likelihood + medoid token-F1 record-only alternates from the same dumps), plus a record-only ORACLE-similarity ceiling arm bounding every scorer at this width; head-to-head falsifier = paired (bon - self) CI95 entirely below 0 vs the banked rung-(a) self npz; stage-1 candidates table gates stage 2 (diversity bar); gate <= 6 GPU-h w/ q4 fallback; no-prompt-fishing + matched-composition constraints inherited. Scorer lit check landed same-session (papers/self-certainty.md). Execution queued separately (instrument to land oracle-gated first).",
    "class": "cpu",
-   "status": "queued",
+   "status": "done",
    "prereg": null,
    "owner_hold": false,
-   "boundary": "CPU work at any GPU-busy window; informed by rung (a) results (banked 02:5xZ 08-08); scorer choice is the hard design cell \u2014 do a short lit check on subgoal-scoring signals before freezing"
+   "boundary": "closed 08-08: pre-reg posted + papers page landed + execution entry queued"
+  },
+  {
+   "id": "idea6-subgoal-draws-instrument",
+   "title": "#6 rung (b) INSTRUMENT + read script (CPU, any GPU-busy window, oracle-gated, lands BEFORE the execution item's launch \u2014 the rung-(a) reads-before-data precedent): bijou.eval selfsubgoal mode gains sampled pass-1 draws (--subgoal-draws 8 --subgoal-temperature 1.0 spelling implementation's; draws10_t1 per-frame stable seeding verbatim), per-candidate distribution stats sufficient to compute self-certainty exactly, _bonsubgoal/_ceilsubgoal selection modes, machine-readable candidate dump (frame triple -> candidates/scores/pick); scorers: SC (mean KL-from-uniform, argmax, tie -> lowest index) + ceiling token-F1 (lowercase, whitespace tokens, tie -> lowest index) with exact-arithmetic selftest fixtures incl. single-candidate + tie cases; read script subgoal_draws_results.py (Delta_bon, paired bon-self vs the banked rung-(a) self npz, Delta_ceil, agreement records, horizon curves, first_mae mirrors; abort branches per the pre-reg); CPU-verifiable oracles green in selftest (fixtures, provenance separation, pass-2 generate-list exclusion); the GPU-side oracles (draws-0 bit-exact vs rung-(a) self arm at matched composition, forced-empty = plain path) run as the execution item's preflight",
+   "class": "cpu",
+   "status": "queued",
+   "prereg": "fontaine/blog/src/posts/2026-08-08-prereg-subgoal-draws.md",
+   "owner_hold": false,
+   "boundary": "CPU work at any GPU-busy window from now; must be green before idea6-subgoal-draws-execution launches (that item's preflight runs the GPU-side oracles)"
+  },
+  {
+   "id": "idea6-subgoal-draws-execution",
+   "title": "#6 rung (b) subgoal-draws selection EXECUTION (gpu-local): (1) instrument + read script landed by the CPU-side item (idea6-subgoal-draws-instrument) (bijou.eval selfsubgoal mode + sampled pass-1 draws --subgoal-draws 8 --subgoal-temperature 1.0 spelling implementation's, per-candidate SC-sufficient distribution stats dump, _bonsubgoal/_ceilsubgoal selection modes, machine-readable candidate dump; abort-on-red oracles per the pre-reg: draws-0 limit bit-exact vs the banked rung-(a) self arm at matched composition, forced-empty = plain path, SC + token-F1 exact-arithmetic fixtures incl. tie cases, pass-2 excludes subgoal, _ceilsubgoal provenance separation, collator-rendering byte match); (2) stage-1 candidates table on the rung-(a) 60-frame sample, go/no-go bars per the pre-reg (>=90% valid, >=2 unique strings on >=50% frames, no >50% pooled collapse, subgoal-shaped) \u2014 fail closes the rung at table cost; (3) stage-2 two conditioned full-panel arms (bon + ceil) via run_detached.sh, first-200-frame rate check vs the 6 GPU-h gate (q4 fallback clause verbatim); (4) frozen reads via the landed read script: Delta_bon + paired (bon - self) head-to-head, Delta_ceil bound, scorer-agreement records, horizon decomposition, first_mae mirrors",
+   "class": "gpu-local",
+   "status": "blocked",
+   "prereg": "fontaine/blog/src/posts/2026-08-08-prereg-subgoal-draws.md",
+   "owner_hold": false,
+   "boundary": "opens at the first quiet local-GPU window AFTER the #1 goldenticket R1 chain resolves (R1 ~04:3x-05:0xZ 08-08; stage 2/3 obligations first if R1 passes); never co-located with a training run's eval chain; instrument + read script land (CPU-side, oracle-gated) before any launch; babysit entry prepared at launch"
   }
  ]
 }

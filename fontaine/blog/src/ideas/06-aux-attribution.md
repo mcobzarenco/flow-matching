@@ -189,3 +189,29 @@ numbers and both finalization amendments.
   scaling, depth-1 via the #1 batched-draws machinery); heavier
   siblings: planner-side SFT (HiRoC direction), rollout refresh
   policies (SV-VLA shape, #16-gated).**
+- **2026-08-08 ~03:2xZ — RUNG (b) PRE-REGISTERED
+  ([pre-reg](../posts/2026-08-08-prereg-subgoal-draws.md)),
+  scorer cell settled by a targeted lit check first
+  ([Self-Certainty page](../papers/self-certainty.md),
+  2502.18581 NeurIPS 2025):** subgoal-DRAWS selection — pass 1
+  decodes 9 candidates (greedy + 8 sampled T=1, draws10_t1 seeding
+  verbatim), the frozen verifier-free scorer is **self-certainty**
+  (mean KL from uniform of the candidate's own decode
+  distributions; zero extra forwards, no oracle access; the
+  published best reward-free selector on open-ended text — chosen
+  over likelihood/medoid, which stay record-only alternates from
+  the same dumps). Two conditioned arms: **bon** (scorer pick,
+  deployment-honest primary) and **ceil** (token-F1-vs-true-label
+  pick, record-only) — the ceiling bounds EVERY scorer at this
+  width, so a failed falsifier still adjudicates no-diversity
+  (family closes) vs no-scorer (MG-Select-style masked-contrast or
+  planner SFT earn a look; masked reference is OOD for us without
+  trained image dropout, so it's an escalation, not the primary).
+  Head-to-head read: paired per-frame (bon − self) vs rung (a)'s
+  banked self npz; falsified unless CI95 entirely below 0.
+  Stage-1 candidates table gates stage 2 (diversity ≥ 2 unique
+  strings on ≥ 50% of frames, else the rung closes at table cost).
+  Gate ≤ 6 GPU-h, q4 fallback; venue local behind the goldenticket
+  R1 chain; instrument (subgoal draws + SC dump + two modes) lands
+  oracle-gated before launch, draws-0 limit must reproduce the
+  rung-(a) self arm bit-exact at matched composition.

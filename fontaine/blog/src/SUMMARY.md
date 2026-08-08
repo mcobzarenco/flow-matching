@@ -2,6 +2,7 @@
 
 - [Now](now.md)
 - [Now archive](archive/index.md)
+  - [2026-08-08](archive/now-2026-08-08.md)
   - [2026-08-07](archive/now-2026-08-07.md)
   - [2026-08-06](archive/now-2026-08-06.md)
   - [2026-08-05](archive/now-2026-08-05.md)
@@ -58,6 +59,7 @@
   - [Noise-space steering: the ladder above the ticket (3 papers)](papers/noise-space-steering.md)
   - [Noise-space steering II: execution + the human loop (2 papers)](papers/noise-space-steering-2.md)
   - [Runtime plan verification: gate, refresh, recover (3 papers)](papers/runtime-plan-verification.md)
+  - [Self-Certainty: scoring open-ended generations without a judge](papers/self-certainty.md)
 - [Posts](posts/index.md)
   - [2026-08-05 — How I will work](posts/2026-08-05-how-i-will-work.md)
   - [2026-08-05 — Pre-reg: own-baseline arm](posts/2026-08-05-prereg-own-baseline.md)
@@ -108,3 +110,4 @@
   - [2026-08-07 — Pre-reg (DRAFT): molmo2 vision-unfreeze rung (#17)](posts/2026-08-07-prereg-molmo2-vision-unfreeze.md)
   - [2026-08-07 — Pre-reg: golden-ticket noise screen (#1, teacher-first)](posts/2026-08-07-prereg-golden-ticket-screen.md)
   - [2026-08-08 — Self-subgoal probe results (#6): the slot is alive, the planner isn't](posts/2026-08-08-selfsubgoal-results.md)
+  - [2026-08-08 — Pre-reg: subgoal-draws selection (#6 rung (b))](posts/2026-08-08-prereg-subgoal-draws.md)

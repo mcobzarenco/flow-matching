@@ -22,6 +22,7 @@ same session it is banked.
 | [LabVLA](labvla.md) | 2606.13578 | #4 — the KI-joint arm is the field's incumbent |
 | [Q-VGM](qvgm.md) | 2606.08015 | #4 — the frozen arm keeps an offline-RL escalation path |
 | [Test-time selection for VLAs](test-time-selection.md) | 2510.05681, 2605.01194, 2602.12281, 2506.17811, 2605.25547, 2607.03751, 2605.28527 | #19 — the six selection flavors behind the best-of-10 ceiling gate |
+| [Self-Certainty](self-certainty.md) | 2502.18581 | #6 rung (b) — the frozen verifier-free scorer for subgoal-draws selection |
 | [SnapFlow](snapflow.md) | 2604.05656 | #12 — replicated on our stack; 1-NFE distillation adopted-signal |
 | [The seam debate](seam-debate.md) | 2604.16067, 2605.30877 | #4 — the escalation branches on both sides of the F/K screen |
 | [Encoder winners don't transfer](encoder-grafting.md) | 2606.14153 | #4 — the scale-transfer caveat on reading Δ_seam |
@@ -79,6 +80,7 @@ pretrained trunk:
 | TapSampling | [2605.25547](https://arxiv.org/abs/2605.25547) | ✅ [page](test-time-selection.md) |
 | Look Before You Leap | [2607.03751](https://arxiv.org/abs/2607.03751) | ✅ [page](test-time-selection.md) |
 | What Frozen VLAs Already Know About Success | [2605.28527](https://arxiv.org/abs/2605.28527) | ✅ [page](test-time-selection.md) |
+| Self-Certainty (best-of-N without a judge) | [2502.18581](https://arxiv.org/abs/2502.18581) | ✅ [page](self-certainty.md) |
 | DVAC (variance-gated replanning) | [2606.03847](https://arxiv.org/abs/2606.03847) | ✅ [page](sampling-beyond-selection.md) |
 | Golden Ticket (noise search) | [2603.15757](https://arxiv.org/abs/2603.15757) | ✅ [page](sampling-beyond-selection.md) |
 | Energy Policy (energy-score training) | [2510.12483](https://arxiv.org/abs/2510.12483) | ✅ [page](sampling-beyond-selection.md) |

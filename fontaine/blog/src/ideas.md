@@ -54,7 +54,17 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   3× decode cost). Channel read significant: same text via suffix
   is +0.043 worse than the slot — generation quality (phase
   estimation), not the channel, is the bottleneck. Escalations
-  (subgoal-draws selection first) each need a new pre-reg.** New 2026-08-07 (radar, both papers
+  (subgoal-draws selection first) each need a new pre-reg.**
+  **Rung (b) PRE-REGISTERED 2026-08-08
+  ([pre-reg](posts/2026-08-08-prereg-subgoal-draws.md)): sample 9
+  subgoal candidates (greedy + 8 at T=1), condition on the
+  self-certainty pick (frozen scorer,
+  [Self-Certainty page](papers/self-certainty.md), 2502.18581) —
+  plus a record-only oracle-similarity CEILING arm that bounds
+  every scorer at this width and adjudicates no-diversity vs
+  no-scorer if the falsifier fires; gate ≤ 6 GPU-h, instrument
+  to land oracle-gated; execution queued behind the goldenticket
+  R1 chain.** New 2026-08-07 (radar, both papers
   announced same day —
   [subgoal-sourcing page](papers/subgoal-sourcing-post-training.md)):
   two fresh directional priors before the read — HiRoC's
