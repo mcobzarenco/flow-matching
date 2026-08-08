@@ -249,7 +249,7 @@ probe_key = "eval_chunk_mae"
 vram_key = "vram_alloc_peak_gib"
 started_utc = "2026-08-08T10:28:43Z"  # RELAUNCH (attempt 1 died 10:15:43Z at first optimizer.step — state_steps-on-cpu, fixed 2c10d96 + amendment 1; rig datasets joined the mix, expected banner 880/38,628/18,672,827)
 gpu_hours_per_wall_hour = 4.0
-boundary = "resumes at 40000 -> 60000 at ~2.2 s/step ~= 12.2 h (endpoint ~22:3x-23:0xZ 08-08) + chained greedy panel eval; saves every 2500 (async), probes every 500"
+boundary = "TRAINING CLOSED 23:21Z 08-08: step 60000 reached (final probe 6.3548, loss 2.66, K1 never armed), step_060000 checkpoint verified on disk 23:23Z; CHAINED PANEL EVAL LIVE since ~23:23Z (torchrun 4-rank bijou.eval, stems eval__fontaine_molmo2_ar_60k_ddp4__step_060000__panel_curated_v0_k4l2, log /home/ubuntu/eval_fontaine_molmo2_ar_60k_ddp4.log on box) — jsonl step stops at 60000 by design, liveness = the eval procs; at eval rc=0: frozen reads (paired delta vs banked 40k npz + 5.8026 bar) then fields panel opens"
 anchors = [
     "K1 kill (pre-reg): probe > 8.2075 (40k endpoint 6.2075 + 2.0) sustained x3 evals after step 41,500 — judged at save boundaries; NaN/inf immediate",
     "vram: peak 73.49 set during the resume-state load (parent 40k steady-state was 67.13) — judged a load transient; gate raised 71->78 (OOM guard) per amendment note. A NEW peak above 73.5 mid-run = real growth, investigate",

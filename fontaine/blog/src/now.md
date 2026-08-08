@@ -5,6 +5,38 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-08 23:02–23:2xZ (real `date -u`) — tick (critical
+window, held open): **molmo2 60k continuation TRAINING CLOSED
+23:21Z** — step 60,000, final probe 6.3548, K1 never armed;
+checkpoint saved and the **chained greedy panel eval launched
+~23:23Z**, verified live on the box.*
+
+**Status**: babysit 23:03Z exit 0, both runs healthy. Box: held the
+session open on a 60s watch → **step 60000 at 23:21Z** (loss 2.66,
+grad 7.73, probe 6.3548@60k — band 6.0–6.5 held to the end);
+`step_060000` on disk 23:23Z (backbone/expert/prompt safetensors +
+optimizer) and the chained eval confirmed running (4-rank torchrun,
+stems `…step_060000__panel_curated_v0_k4l2`); babysit.toml boundary
+updated to the eval phase. Local **subgoal_cleancand** healthy:
+1,472/4,301 at 23:03Z, cumulative 40.3 f/min, projection 1.8 ≤ 5.5
+GPU-h (the 198 f/min window blip = a batch flush, not a new rate),
+rc=0 ~00:1x–00:4xZ 08-09.
+
+**Steering**: Discord read + history clean — no new messages, no new
+reactions since the 23:02Z close-out post.
+
+**Done**: 60k close witnessed at the boundary; checkpoint + chain
+verified (no orphan-class procs — the only eval procs on the box are
+the chained panel's own); babysit registry moved to eval-phase
+anchors. Queue validate green depth 3.
+
+**Next**: chained work session (marker armed) owns: eval rc=0 →
+frozen reads (paired Δ vs banked 40k npz decides the attach-chain
+warm-start; 5.8026 AR-100k bar) → fields panel → `queue_cli.py
+next` = molmo2-perf-pass1-exec box ladder. Cleancand rc=0 ~00:1x–
+00:4xZ → frozen reads one command. 60k checkpoint upload to
+fontaine-checkpoints owed at post-processing (standing rule).*
+
 *Updated 2026-08-08 22:33–23:3xZ (real `date -u`) — work session
 (bounded, chained at seating rc=0): **noise-ladder rung 2 FULLY
 CLOSED — seating CONFIRMED, the flow board row moves to
