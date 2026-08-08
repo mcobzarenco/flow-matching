@@ -36,6 +36,7 @@ from dataclasses import dataclass
 from torch import Tensor
 
 from ..aux_text import AuxGeneration
+from ..decoders.ar_backbone import ValueCandidate
 from .metrics import FrameScore
 from .policies import SubgoalRecord
 from .report import ReportSample
@@ -68,6 +69,12 @@ class ShardResults:
     # Self-subgoal pass 1's per-frame provenance rows ({} when no
     # subgoal-mode run) — --dump-subgoals serializes the merged map.
     subgoal_records: dict[int, SubgoalRecord]
+    # Rung (b) draws mode: pass 1's per-frame candidate lists and each
+    # selection arm's per-frame pick (arm name → index → candidate
+    # index; None = label-less ceil row). {} outside draws mode —
+    # --dump-subgoal-candidates serializes the merged maps.
+    subgoal_candidates: dict[int, list[ValueCandidate]]
+    subgoal_picks: dict[str, dict[int, int | None]]
     dump_predictions: dict[str, list[Tensor]]
     dump_truth: list[Tensor]
     dump_valid: list[Tensor]
@@ -132,6 +139,17 @@ def merge_shards(shards: list[ShardResults]) -> ShardResults:
         generations={k: v for shard in shards for k, v in shard.generations.items()},
         subgoal_records={
             k: v for shard in shards for k, v in shard.subgoal_records.items()
+        },
+        subgoal_candidates={
+            k: v for shard in shards for k, v in shard.subgoal_candidates.items()
+        },
+        subgoal_picks={
+            arm: {
+                k: v
+                for shard in shards
+                for k, v in shard.subgoal_picks.get(arm, {}).items()
+            }
+            for arm in {arm for shard in shards for arm in shard.subgoal_picks}
         },
         # --dump-draws without --dump-predictions: the per-policy lists
         # stay [] while dump_index carries one row per dumped frame — the

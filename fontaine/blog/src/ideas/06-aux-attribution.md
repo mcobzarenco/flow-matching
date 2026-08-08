@@ -215,3 +215,32 @@ numbers and both finalization amendments.
   R1 chain; instrument (subgoal draws + SC dump + two modes) lands
   oracle-gated before launch, draws-0 limit must reproduce the
   rung-(a) self arm bit-exact at matched composition.
+- **2026-08-08 ~03:5xZ — RUNG (b) INSTRUMENT LANDED, oracle-green
+  (CPU work session inside the goldenticket/molmo2 GPU-busy
+  window):** `bijou.eval --subgoal-mode draws` — pass 1 decodes the
+  greedy subgoal plus `--subgoal-draws` sampled candidates
+  (`--subgoal-temperature`, draws10_t1 stable frame-keying
+  verbatim) off ONE shared prefill via the new
+  `ARSuffixDecoder.decode_value_line` (text-only value decode,
+  per-step chosen/mean log-probs over the masked value softmax —
+  the exact sufficient statistics for self-certainty, recomputable
+  offline); a model-level assert pins candidate 0 byte-equal to the
+  full pass's parsed subgoal. Pass 2 runs BOTH selection arms in
+  one invocation (`_bonsubgoal` = frozen SC argmax, structurally
+  label-blind; `_ceilsubgoal` = token-F1 vs true label, label-less
+  rows render no hint). `--dump-subgoal-candidates` writes the
+  machine-readable table (stats + LIVE picks + record-only
+  likelihood/medoid alternates). Scorers pure in
+  `bijou/eval/subgoal_scoring.py` (ties → lowest index, greedy
+  first); read script
+  `fontaine/scripts/subgoal_draws_results.py` mechanizes the frozen
+  reads (Δ_bon + paired bon−self vs the banked rung-(a) self npz,
+  Δ_ceil + ceil−self no-diversity/no-scorer adjudication,
+  agreement records, horizon, first_mae mirrors) with an `--oracle`
+  selftest: exact planted deltas, degenerate CI [0,0] + falsifier,
+  11 abort branches — all green. 22 new tests
+  (`tests/test_subgoal_draws.py`) incl. the REAL decode-loop
+  oracle-i half on the tiny fixture model; `check.py` 489 green.
+  Remaining before launch (execution item's preflight, GPU): draws-0
+  bit-exact vs the banked self arm at matched composition +
+  forced-empty = plain path.

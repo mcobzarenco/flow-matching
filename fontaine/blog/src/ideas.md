@@ -62,9 +62,12 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   [Self-Certainty page](papers/self-certainty.md), 2502.18581) —
   plus a record-only oracle-similarity CEILING arm that bounds
   every scorer at this width and adjudicates no-diversity vs
-  no-scorer if the falsifier fires; gate ≤ 6 GPU-h, instrument
-  to land oracle-gated; execution queued behind the goldenticket
-  R1 chain.** New 2026-08-07 (radar, both papers
+  no-scorer if the falsifier fires; gate ≤ 6 GPU-h; execution
+  queued behind the goldenticket R1 chain. Instrument LANDED
+  oracle-green 08-08 03:5xZ (draws mode + SC-sufficient stats dump
+  + both selection arms + read script w/ 11 abort branches;
+  check.py 489) — only the GPU-side preflight oracles remain
+  before launch.** New 2026-08-07 (radar, both papers
   announced same day —
   [subgoal-sourcing page](papers/subgoal-sourcing-post-training.md)):
   two fresh directional priors before the read — HiRoC's

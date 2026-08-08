@@ -159,6 +159,30 @@ def _sample_action_ids(
     return (scaled + torch.from_numpy(gumbel).to(scaled.device)).argmax(dim=-1)
 
 
+@dataclass(frozen=True, slots=True)
+class ValueCandidate:
+    """One text-only decode of a single free-text aux value line (#6
+    rung (b) candidate): the parsed value (the ``_parse_aux`` stripped
+    convention, so conditioning on it is byte-compatible with rung (a)'s
+    ``generated_subgoal``) plus the per-step distribution stats that
+    make the frozen scorers exactly recomputable offline
+    (``bijou.eval.subgoal_scoring``). Per decode step — every step the
+    row was active, including the natural terminator step, EXCLUDING a
+    budget-forced terminator (that step's distribution chose something
+    else; ``truncated`` records the force): ``chosen_logprob`` = the
+    emitted id's log-prob and ``mean_logprob`` = the mean log-prob over
+    all ``allowed_vocab`` legal text ids, both under the float32
+    log-softmax of the text-masked value logits the decode itself
+    chose/sampled from. An empty candidate records exactly its
+    terminator step, so stats are never empty."""
+
+    text: str
+    truncated: bool
+    chosen_logprob: tuple[float, ...]
+    mean_logprob: tuple[float, ...]
+    allowed_vocab: int
+
+
 class ARSuffixDecoder[B: nn.Module](nn.Module, abc.ABC):
     """Trunk-generic half of the backbone-suffix role: the format-5
     scaffold (opener, value lines, BOA, grammar-masked action decode),
@@ -553,6 +577,142 @@ class ARSuffixDecoder[B: nn.Module](nn.Module, abc.ABC):
             actions=torch.stack(chunks).to(device),
             generations=generations,
         )
+
+    @torch.no_grad()
+    def decode_value_line(
+        self,
+        backbone: B,
+        memory: ObservationMemory,
+        *,
+        field: AuxField,
+        sampling: ARSampling | None = None,
+    ) -> list[ValueCandidate]:
+        """Text-ONLY decode of one free-text value line per row against
+        the memory's CURRENT cache state — the subgoal-draws candidate
+        instrument (#6 rung (b)). The caller owns the cache protocol:
+        ``cache_restore`` to the post-prefill snapshot before every
+        call, so all candidates (and the full greedy pass) share one
+        prefill. The value loop mirrors :meth:`predict_chunk`'s free
+        value phase op-for-op (same text mask, same min_value greedy
+        argmax, same budget/terminator forcing), so the greedy
+        (``sampling=None``) candidate's text is bit-identical to the
+        full pass's parsed field value — asserted by the model-level
+        caller, never assumed. ``sampling`` switches emission to the
+        temperature Gumbel-max draw (:func:`_sample_action_ids`, the
+        trained sampled-draws machinery); the recorded distributions
+        are the same masked value softmax either way (sampling changes
+        which id is emitted, never the stats). BOA is never fed and no
+        actions decode — the candidate texts are the entire output."""
+        config = self.config
+        runtime = self.aux_runtime
+        if runtime is None:
+            raise ValueError(
+                "decode_value_line on a decoder without an AuxRuntime — "
+                "loading built the model without the aux record",
+            )
+        trained = () if config.aux is None else config.aux.fields
+        if field not in trained:
+            raise ValueError(
+                f"decode_value_line for {field.value!r}, but the checkpoint "
+                f"trained aux fields {[f.value for f in trained] or 'NONE'}",
+            )
+        if field in runtime.value_candidates:
+            raise ValueError(
+                f"{field.value!r} is a constrained field (classification "
+                "over fixed candidates) — free-text candidate decoding "
+                "does not apply",
+            )
+        streams = next(iter(memory.streams.values()))
+        batch_size = int(streams.key.shape[0])
+        device = streams.key.device
+        if sampling is not None and len(sampling.rngs) != batch_size:
+            raise ValueError(
+                f"sampling carries {len(sampling.rngs)} row RNGs for a "
+                f"batch of {batch_size} — one keyed stream per row",
+            )
+        vocab = config.block_base + config.vocab_total
+        min_value: float = torch.finfo(torch.float32).min
+        # The text-only mask, exactly predict_chunk's construction.
+        text_allowed = torch.zeros(vocab, dtype=torch.bool, device=device)
+        text_allowed[: config.block_base] = True
+        if self.newline_carrier_ids:
+            text_allowed[
+                torch.tensor(
+                    sorted(self.newline_carrier_ids),
+                    dtype=torch.long,
+                    device=device,
+                )
+            ] = False
+        allowed_vocab = int(text_allowed.sum())
+        terminator = runtime.terminator_id
+        budget = VALUE_BUDGETS[field]
+        fed = 0
+        feed: Tensor = (
+            torch.tensor([list(self.opener_ids)], dtype=torch.long, device=device)
+            .expand(batch_size, -1)
+            .contiguous()
+        )
+        done = torch.zeros(batch_size, dtype=torch.bool, device=device)
+        row_ids: list[list[int]] = [[] for _ in range(batch_size)]
+        chosen_stats: list[list[float]] = [[] for _ in range(batch_size)]
+        mean_stats: list[list[float]] = [[] for _ in range(batch_size)]
+        truncated = [False] * batch_size
+        for step in range(budget + 1):
+            logits, fed = self._step(backbone, memory, feed, fed)
+            logits = logits[:, :vocab]
+            masked = logits.masked_fill(~text_allowed, min_value)
+            if sampling is None:
+                next_ids = masked.argmax(dim=-1)
+            else:
+                next_ids = _sample_action_ids(
+                    logits,
+                    text_allowed.expand(batch_size, -1),
+                    sampling,
+                )
+            # Stats from the SAME masked softmax the emission came from
+            # (fp32; illegal ids carry ~-inf log-probs and are excluded
+            # from the mean by indexing the allowed columns).
+            logprobs = torch.log_softmax(masked, dim=-1)
+            step_mean = logprobs[:, text_allowed].mean(dim=-1)
+            step_chosen = logprobs.gather(1, next_ids[:, None]).squeeze(1)
+            if step == budget:
+                forced = ~done & (next_ids != terminator)
+                for row in forced.nonzero().flatten().tolist():
+                    truncated[row] = True
+                next_ids = torch.where(
+                    forced,
+                    torch.full_like(next_ids, terminator),
+                    next_ids,
+                )
+            next_ids = torch.where(
+                done,
+                torch.full_like(next_ids, terminator),
+                next_ids,
+            )
+            for row, next_id in enumerate(next_ids.tolist()):
+                if done[row] or (truncated[row] and step == budget):
+                    continue
+                chosen_stats[row].append(float(step_chosen[row]))
+                mean_stats[row].append(float(step_mean[row]))
+                if next_id != terminator:
+                    row_ids[row].append(next_id)
+            done |= next_ids == terminator
+            feed = next_ids[:, None]
+            if bool(done.all()):
+                break
+        return [
+            ValueCandidate(
+                # The _parse_aux stripped convention: conditioning on a
+                # candidate is byte-compatible with conditioning on a
+                # pass-1 parsed value.
+                text=self.tokenizer.decode(row_ids[row]).strip(),
+                truncated=truncated[row],
+                chosen_logprob=tuple(chosen_stats[row]),
+                mean_logprob=tuple(mean_stats[row]),
+                allowed_vocab=allowed_vocab,
+            )
+            for row in range(batch_size)
+        ]
 
     def _step(
         self,

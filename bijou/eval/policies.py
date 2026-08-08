@@ -24,7 +24,12 @@ from torch import Tensor
 
 from ..annotations import ConditionField
 from ..aux_text import AuxField, AuxGeneration, subgoal_text
-from ..decoders.ar_backbone import ARBackboneDecoder, ARSampling, ARSuffixDecoder
+from ..decoders.ar_backbone import (
+    ARBackboneDecoder,
+    ARSampling,
+    ARSuffixDecoder,
+    ValueCandidate,
+)
 from ..decoders.flow import FlowDecoder
 from ..interface import (
     CollatedBatch,
@@ -36,6 +41,7 @@ from ..interface import (
 )
 from ..loading import CheckpointInfo, from_checkpoint
 from ..model import BijouModel, SamplingMethod
+from .subgoal_scoring import ceiling_pick, self_certainty_pick
 
 
 class ChunkPolicy(Protocol):
@@ -382,9 +388,10 @@ class BijouPolicy:
             # report/dump provenance).
             self.tickets, self.tickets_sha256 = load_tickets(tickets)
             self.name += "_ticket"
-        if subgoal_mode not in (None, "oracle", "self"):
+        if subgoal_mode not in (None, "oracle", "self", "draws"):
             raise SystemExit(
-                f"subgoal_mode must be None, 'oracle' or 'self', got {subgoal_mode!r}",
+                "subgoal_mode must be None, 'oracle', 'self' or 'draws', "
+                f"got {subgoal_mode!r}",
             )
         if subgoal_mode is not None and "subgoal" in (condition_override or {}):
             raise SystemExit(
@@ -513,10 +520,13 @@ class BijouPolicy:
                     "[subgoal|…] condition slot; this one trained "
                     f"{list(self.info.condition_fields) or 'NONE'}",
                 )
-            if subgoal_mode == "self" and AuxField.SUBGOAL not in self.aux_fields:
+            if (
+                subgoal_mode in ("self", "draws")
+                and AuxField.SUBGOAL not in self.aux_fields
+            ):
                 raise SystemExit(
-                    "--subgoal-mode self decodes the model's OWN subgoal; "
-                    "this checkpoint trained aux fields "
+                    f"--subgoal-mode {subgoal_mode} decodes the model's OWN "
+                    "subgoal; this checkpoint trained aux fields "
                     f"{[f.value for f in self.aux_fields] or 'NONE'} — no "
                     "subgoal to generate",
                 )
@@ -819,7 +829,13 @@ class SelfSubgoalPass1Policy:
     whenever the prompt rendered the hint, so condition-plus-generate
     is a context the model never trained."""
 
-    def __init__(self, base: BijouPolicy) -> None:
+    def __init__(
+        self,
+        base: BijouPolicy,
+        *,
+        draws: int | None = None,
+        temperature: float = 1.0,
+    ) -> None:
         if AuxField.SUBGOAL not in base.aux_fields:
             raise SystemExit(
                 "self-subgoal pass 1 requests the model's own subgoal; "
@@ -834,24 +850,71 @@ class SelfSubgoalPass1Policy:
                 "condition — construct the base with subgoal_mode='self', "
                 "not 'oracle'",
             )
+        if draws is not None and draws < 0:
+            raise SystemExit(f"--subgoal-draws must be >= 0, got {draws}")
+        if draws is not None and draws > 0 and not temperature > 0:
+            raise SystemExit(
+                f"--subgoal-temperature must be > 0, got {temperature} "
+                "(greedy is the draws-0 limit, not a temperature limit)",
+            )
         self.base = base
+        # None = rung (a): the legacy single-greedy path, byte-for-byte.
+        # An int >= 0 = rung (b) candidates mode: the same greedy full
+        # pass PLUS `draws + 1` text-only candidate decodes off one
+        # shared prefill (0 sampled draws still captures the greedy
+        # candidate's stats — the bit-exactness preflight limit).
+        self.draws = draws
+        self.temperature = temperature
         self.name = f"{base.name}_narrsubgoal"
         self.collator = dataclasses.replace(
             base.collator,
             generate_override=(AuxField.SUBGOAL,),
         )
         self.records: dict[int, SubgoalRecord] = {}
+        # Candidates mode only: per-frame candidate lists, index-keyed
+        # like `records` (candidate 0 greedy, then the sampled draws).
+        self.candidates: dict[int, list[ValueCandidate]] = {}
 
     @torch.no_grad()
     def predict(self, items: list[dict[str, Any]], indices: list[int]) -> list[Tensor]:
         items = self.base.apply_overrides(items)
         batch = self.collator(items).to(self.base.device)
-        prediction = self.base.model.predict_chunk(
-            batch,
-            num_steps=self.base.sample_steps,
-            method=self.base.method,
-            generate=(AuxField.SUBGOAL,),
-        )
+        if self.draws is None:
+            prediction = self.base.model.predict_chunk(
+                batch,
+                num_steps=self.base.sample_steps,
+                method=self.base.method,
+                generate=(AuxField.SUBGOAL,),
+            )
+        else:
+            # Sampled-draw RNGs reuse the draws10_t1 stable frame-keying
+            # verbatim (stable_sample_rng, run seed, draw index d for
+            # sampled candidate d in 1..draws; the greedy candidate 0
+            # consumes no RNG).
+            def sampling_for_draw(draw: int) -> ARSampling:
+                return ARSampling(
+                    temperature=self.temperature,
+                    rngs=tuple(
+                        stable_sample_rng(
+                            self.base.seed,
+                            str(item["repo_id"]),
+                            int(item["episode_index"]),
+                            int(item["frame_index"]),
+                            draw,
+                        )
+                        for item in items
+                    ),
+                )
+
+            prediction, candidates = self.base.model.ar_predict_with_value_candidates(
+                batch,
+                field=AuxField.SUBGOAL,
+                generate=(AuxField.SUBGOAL,),
+                draws=self.draws,
+                sampling_for_draw=sampling_for_draw,
+            )
+            for index, row_candidates in zip(indices, candidates, strict=True):
+                self.candidates[index] = row_candidates
         assert prediction.generations is not None  # ar_backbone always generates
         for item, index, generation in zip(
             items,
@@ -920,6 +983,107 @@ class SelfSubgoalPolicy:
                     "first in every batch",
                 )
             text = "" if self.force_empty else (record.generated_subgoal or "")
+            # An explicit EMPTY override means "no hint" to the collator
+            # — it must never fall through to the frame's true label.
+            conditioned.append({**item, "condition_subgoal": text})
+        batch = self.collator(conditioned).to(self.base.device)
+        prediction = self.base.model.predict_chunk(
+            batch,
+            num_steps=self.base.sample_steps,
+            method=self.base.method,
+            generate=(),
+        )
+        return [chunk.cpu() for chunk in prediction.actions]
+
+
+class SelectedSubgoalPolicy:
+    """Pass 2 of the subgoal-draws rung (#6 rung (b)): condition each
+    frame on a SELECTED candidate from pass 1's candidate list and
+    decode actions on the deployment fast path — the SelfSubgoalPolicy
+    machinery with the selection swapped in.
+
+    ``mode='bon'`` (primary, deployment-honest): the frozen
+    self-certainty pick — distribution stats only, no candidate text
+    comparison, no label access anywhere on the path (pre-reg oracle v:
+    the scorer function's signature has no label argument).
+    ``mode='ceil'`` (record-only ceiling): the candidate maximizing
+    token-F1 vs the frame's TRUE segment label; label-less frames
+    render NO subgoal (the rung-(a) oracle-arm convention). The name
+    carries the mode (``_bonsubgoal``/``_ceilsubgoal``) so an
+    oracle-informed read can never pass as a deployment read.
+
+    ``force_empty`` forces the no-hint limit on every frame (the
+    pre-launch oracle-(ii) run) and suffixes the name."""
+
+    def __init__(
+        self,
+        base: BijouPolicy,
+        pass1: SelfSubgoalPass1Policy,
+        *,
+        mode: str,
+        force_empty: bool = False,
+    ) -> None:
+        if mode not in ("bon", "ceil"):
+            raise SystemExit(f"selection mode must be 'bon' or 'ceil', got {mode!r}")
+        if pass1.draws is None:
+            raise SystemExit(
+                "selected-subgoal pass 2 needs pass 1 in candidates mode — "
+                "construct SelfSubgoalPass1Policy with draws >= 0",
+            )
+        self.base = base
+        self.pass1 = pass1
+        self.mode = mode
+        self.force_empty = force_empty
+        self.name = f"{base.name}_{mode}subgoal" + ("_emptyhint" if force_empty else "")
+        self.collator = dataclasses.replace(
+            base.collator,
+            # The trained condition fields WITH the subgoal slot, in
+            # template order (the SelfSubgoalPolicy construction).
+            condition_fields=tuple(
+                f for f in ConditionField if f.value in set(base.info.condition_fields)
+            ),
+            generate_override=(),
+        )
+        # Per-frame pick provenance (None = label-less ceil row): the
+        # candidates dump cross-checks these against offline recomputes.
+        self.picks: dict[int, int | None] = {}
+
+    def _pick(self, index: int) -> int | None:
+        candidates = self.pass1.candidates.get(index)
+        if candidates is None:
+            raise SystemExit(
+                f"selected-subgoal pass 2 reached frame {index} before "
+                "pass 1 — the runner must score the pass-1 policy first "
+                "in every batch",
+            )
+        vocabs = {c.allowed_vocab for c in candidates}
+        if len(vocabs) != 1:
+            raise SystemExit(
+                f"frame {index}: candidates disagree on allowed_vocab "
+                f"{sorted(vocabs)} — mixed decode masks, stop",
+            )
+        if self.mode == "bon":
+            return self_certainty_pick(
+                [c.mean_logprob for c in candidates],
+                candidates[0].allowed_vocab,
+            )
+        record = self.pass1.records[index]
+        if record.true_subgoal is None:
+            return None
+        return ceiling_pick([c.text for c in candidates], record.true_subgoal)
+
+    @torch.no_grad()
+    def predict(self, items: list[dict[str, Any]], indices: list[int]) -> list[Tensor]:
+        items = self.base.apply_overrides(items)
+        conditioned: list[dict[str, Any]] = []
+        for item, index in zip(items, indices, strict=True):
+            pick = self._pick(index)
+            self.picks[index] = pick
+            text = (
+                ""
+                if self.force_empty or pick is None
+                else self.pass1.candidates[index][pick].text
+            )
             # An explicit EMPTY override means "no hint" to the collator
             # — it must never fall through to the frame's true label.
             conditioned.append({**item, "condition_subgoal": text})

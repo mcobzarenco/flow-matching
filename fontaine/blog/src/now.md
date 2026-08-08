@@ -14,7 +14,59 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-08 03:19–04:0xZ (real `date -u`) — work session
+(bounded, chained off the 03:15 tick): **#6 rung (b) INSTRUMENT +
+READ SCRIPT LANDED, oracle-green** — the CPU item the pre-reg
+required before any launch; execution now waits only on the #1 R1
+chain + its GPU-side preflight oracles.*
+
+**Status** (babysit 03:20 + 03:32 + 03:50Z, exit 0, 2 registered
+runs):
+- box molmo2 AR 40k — 39900/40000 at 03:50, loss 2.7465, 27.5
+  steps/min in-window, vram 67.13 ≤ 71; probe 6.30@39500 (low
+  5.91@26500 stands, gate margin 4.93). Endpoint minutes away →
+  40000 save (~15 min write) → chained greedy panel eval; endpoint
+  chain lands ~04:1x–04:4xZ.
+- local **#1 goldenticket stage 1** — 1632/2458 at 100% util,
+  window 26.4 f/min, cumulative 23.5 f/min → projected total 1.7 h
+  ≤ 6 GPU-h gate, ~0.6 h remaining; R1 adjudication ~04:2x–04:5xZ.
+
+**Steering**: none (`read` at boot 03:19 and at all three babysit
+checkpoints — no messages, no reactions).
+
+**Done** (this commit): **idea6-subgoal-draws-instrument CLOSED,
+oracle-green** — `bijou.eval --subgoal-mode draws`: pass 1 decodes
+greedy + `--subgoal-draws` sampled candidates (T via
+`--subgoal-temperature`, draws10_t1 stable keying verbatim) off ONE
+shared prefill (new `ARSuffixDecoder.decode_value_line`, per-step
+chosen/mean log-probs = exact SC sufficient stats; model-level
+candidate-0 == full-pass byte assert); `_bonsubgoal` (frozen SC
+argmax, structurally label-blind) + `_ceilsubgoal` (token-F1 vs
+true label; label-less rows render no hint) arms in one run;
+`--dump-subgoal-candidates` table with live picks + record-only
+likelihood/medoid alternates; pure scorers in
+`bijou/eval/subgoal_scoring.py` (ties → lowest index); read script
+`subgoal_draws_results.py` (Δ_bon + paired bon−self vs the banked
+rung-(a) self npz, Δ_ceil + no-diversity/no-scorer adjudication,
+agreement, horizon, first_mae mirrors; `--oracle` selftest: planted
+deltas exact, degenerate CI [0,0] + falsifier, 11 abort branches
+green). 22 new tests incl. the REAL tiny-model decode-loop oracle-i
+half; **check.py 489 green**. Queue refilled
+(lit-slice-verifier-free-selection-followups, targeted at the
+rung-(b) escalation routing) — validate green depth 2, 13 open.
+
+**Next**: `queue_cli.py next` →
+**molmo2-endpoint-postprocessing** (CPU, opens at the endpoint
+chain landing ~04:1x–04:4xZ); goldenticket R1 ~04:2x–04:5xZ gates
+its stage 2; **idea6-subgoal-draws-execution** (gpu-local) opens at
+the first quiet local window AFTER the R1 chain resolves — its
+preflight runs the GPU-side oracles (draws-0 bit-exact vs the
+banked self arm at matched composition, forced-empty = plain path).
+`run_work_next` re-armed. **Every GPU launch goes through
+`run_detached.sh`.**
 
 *Updated 2026-08-08 03:15–03:2xZ (real `date -u`) — tick (babysit):
 quiet-green on both runs; goldenticket cumulative projection firmed
@@ -96,42 +148,6 @@ box launch beside it; **idea6-subgoal-draws-instrument** is the
 CPU item for any GPU-busy window; goldenticket R1 ~04:5xZ gates its
 stage 2. `run_work_next` armed — the next tick babysits and chains.
 **Every GPU launch goes through `run_detached.sh`.**
-
-*Updated 2026-08-08 02:57–03:0xZ (real `date -u`) — tick (babysit):
-quiet-green on both runs; goldenticket cumulative projection 3.4 h
-≤ 6 gate (the 02:48 startup-head anchor holds); `run_work_next`
-confirmed armed for the R1/endpoint chain.*
-
-**Status** (babysit 02:57Z, exit 0, 2 registered runs):
-- box molmo2 AR 40k — 38460/40k, loss 2.8054, 2.16 s/step, 25.4
-  steps/min in-window, vram 67.13 ≤ 71; probe 6.47@38000 (low
-  5.91@26500 stands, gate margin 4.93). ~0.9 h compute to 40k →
-  endpoint ~04:0x–04:2xZ (with the 40000 save), then the chained
-  greedy panel eval.
-- local **#1 goldenticket stage 1** — 192/2458 frames at 100% util.
-  Window 02:48→02:57 is 18.5 f/min, but it's an 8.6-min window
-  (under the anchor's ≥10-min rule) at 32-frame burst granularity —
-  consistent with the ~25 f/min steady anchor, non-incident.
-  Cumulative projection 3.4 h ≤ 6 GPU-h gate. R1 adjudication
-  ~04:3x–05:0xZ at the observed rate band (a touch later than the
-  earlier ~04:1x–04:3x estimate if 18.5 holds; the chained session
-  judges on a proper ≥10-min window).
-
-**Steering**: none (`read` + `history` at 02:57 — no messages, no
-new reactions; last owner exchange 00:39Z already answered).
-
-**Done**: quiet tick — babysit exit 0, both runs judged healthy
-(goldenticket window rate within burst noise of the steady anchor);
-queue validate green (depth 2, 12 open); `run_work_next` confirmed
-armed (02:56) and left for the chain; now archive roll `--keep 3`.
-
-**Next**: chained work session takes
-**idea6-subgoal-draws-prereg-draft** (CPU, rung (b)) through the
-GPU-busy window; molmo2 endpoint ~04:0x–04:2xZ →
-**molmo2-endpoint-postprocessing** + #19 draws arm; goldenticket R1
-~04:3x–05:0xZ gates its stage 2; then #19 box obligations → K smoke
-ladder → attach screen → vu5k (launch-only-after-smoke per
-`485194b`). **Every GPU launch goes through `run_detached.sh`.**
 
 ## Utilization footer
 

@@ -34,6 +34,7 @@ senses — the pretrained artifact (``--backbone``, ``BackboneConfig.id``,
 from __future__ import annotations
 
 import dataclasses
+from collections.abc import Callable
 from typing import override
 
 import torch
@@ -44,6 +45,7 @@ from .decoders.ar_backbone import (
     ARBackboneDecoder,
     ARSampling,
     ARSuffixDecoder,
+    ValueCandidate,
     ar_backbone_counts,
     ar_backbone_loss_sums,
     ar_backbone_losses,
@@ -537,6 +539,84 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                     "sampled AR decode continues a trunk suffix; the "
                     f"loaded decoder is {type(self.decoder).__name__}",
                 )
+
+    @torch.no_grad()
+    def ar_predict_with_value_candidates(
+        self,
+        batch: CollatedBatch[I],
+        *,
+        field: AuxField,
+        generate: tuple[AuxField, ...],
+        draws: int,
+        sampling_for_draw: Callable[[int], ARSampling],
+    ) -> tuple[BijouPrediction, list[list[ValueCandidate]]]:
+        """The subgoal-draws pass-1 decode (#6 rung (b)): ONE prefill,
+        then (a) the full greedy decode — actions + value lines,
+        op-identical to :meth:`predict_chunk` so the draws-0 limit stays
+        bit-exact against rung (a)'s pass 1 — and (b) ``draws + 1``
+        text-only decodes of ``field`` against the restored prefix
+        cache: candidate 0 greedy (its per-step stats make the greedy
+        candidate scorable), candidates 1..draws temperature-sampled
+        under ``sampling_for_draw(draw)`` (the caller keys each draw's
+        per-row RNGs — eval's ``stable_sample_rng`` convention).
+
+        Returns (full-pass prediction, per-row candidate lists). The
+        greedy candidate's text must equal the full pass's parsed field
+        value — same restored cache state, same ops — and a mismatch is
+        a loud instrument break, not a warning."""
+        if draws < 0:
+            raise ValueError(f"draws must be >= 0, got {draws}")
+
+        def run[T: nn.Module](
+            decoder: ARSuffixDecoder[T],
+            backbone: T,
+        ) -> tuple[BijouPrediction, list[list[ValueCandidate]]]:
+            memory = self.encode(batch.encoder_inputs, with_grad=False)
+            snapshot = decoder.cache_snapshot(memory)
+            full = decoder.predict_chunk(backbone, memory, batch, generate=generate)
+            rows: list[list[ValueCandidate]] = [[] for _ in range(batch.state.shape[0])]
+            for draw in range(draws + 1):
+                decoder.cache_restore(memory, snapshot)
+                sampling = None if draw == 0 else sampling_for_draw(draw)
+                for row, candidate in enumerate(
+                    decoder.decode_value_line(
+                        backbone,
+                        memory,
+                        field=field,
+                        sampling=sampling,
+                    ),
+                ):
+                    rows[row].append(candidate)
+            return full, rows
+
+        match self.decoder:
+            case ARBackboneDecoder():
+                prediction, candidates = run(self.decoder, self._gemma_backbone())
+            case Molmo2ARDecoder():
+                prediction, candidates = run(self.decoder, self._molmo2_backbone())
+            case _:
+                raise TypeError(
+                    "value-candidate decode continues a trunk suffix; the "
+                    f"loaded decoder is {type(self.decoder).__name__}",
+                )
+        assert prediction.generations is not None  # AR suffix always generates
+        for row, (generation, row_candidates) in enumerate(
+            zip(prediction.generations, candidates, strict=True),
+        ):
+            parsed = getattr(generation, field.value)
+            if parsed is not None and not isinstance(parsed, str):
+                raise TypeError(
+                    f"{field.value!r} parses to {type(parsed).__name__}, not "
+                    "text — candidate decoding covers free-text fields only",
+                )
+            full_value = parsed or ""
+            if full_value != row_candidates[0].text:
+                raise SystemExit(
+                    f"candidate-0 drift on batch row {row}: text-only greedy "
+                    f"decode {row_candidates[0].text!r} != full-pass value "
+                    f"{full_value!r} — the shared-prefill contract broke, stop",
+                )
+        return prediction, candidates
 
     @torch.no_grad()
     def sample_actions(

@@ -69,9 +69,16 @@ from .policies import (
     ChunkPolicy,
     NarratedBijouPolicy,
     NormalizedStateCopyPolicy,
+    SelectedSubgoalPolicy,
     SelfSubgoalPass1Policy,
     SelfSubgoalPolicy,
     StateCopyPolicy,
+)
+from .subgoal_scoring import (
+    likelihood_pick,
+    mean_chosen_logprob,
+    medoid_pick,
+    self_certainty,
 )
 
 # Q2 buckets, the train-side convention (train.OUTCOME_BUCKETS): frames
@@ -135,14 +142,22 @@ class EvalReport:
     # (zero-information soft state token) — a diagnostic, never a
     # deployment read; the policy name carries _state-masked too.
     mask_state: bool
-    # #6 rung (a) subgoal-conditioning probe: None = every eval before
-    # 2026-08-07; "oracle" = per-frame TRUE-label [subgoal|…]
+    # #6 rung (a)/(b) subgoal-conditioning probes: None = every eval
+    # before 2026-08-07; "oracle" = per-frame TRUE-label [subgoal|…]
     # conditioning; "self" = the two-pass self-subgoal arms (policy
-    # names carry _oraclesubgoal / _narrsubgoal / _selfsubgoal).
+    # names carry _oraclesubgoal / _narrsubgoal / _selfsubgoal);
+    # "draws" = rung (b) candidate selection — pass 1 additionally
+    # decodes sampled subgoal candidates, pass 2 runs BOTH selection
+    # arms (_bonsubgoal / _ceilsubgoal) on the same rows.
     subgoal_mode: str | None
-    # Oracle-(i) live check: pass 2 ran with every generated subgoal
-    # forced EMPTY (must reproduce the baseline decode; the policy name
-    # carries _emptyhint) — never a self-arm read.
+    # Rung (b) candidate set: sampled draws beyond the greedy candidate
+    # and their sampling temperature (None outside draws mode; 0 draws
+    # = the bit-exactness preflight limit).
+    subgoal_draws: int | None
+    subgoal_temperature: float | None
+    # Oracle-(i)/(ii) live check: pass 2 ran with every hint forced
+    # EMPTY (must reproduce the baseline decode; the policy names carry
+    # _emptyhint) — never an arm read.
     selfsubgoal_force_empty: bool
     generate: list[str] | None
     condition_override: list[str]
@@ -206,6 +221,8 @@ class EvalReport:
             "tickets_sha256": self.tickets_sha256,
             "mask_state": self.mask_state,
             "subgoal_mode": self.subgoal_mode,
+            "subgoal_draws": self.subgoal_draws,
+            "subgoal_temperature": self.subgoal_temperature,
             "selfsubgoal_force_empty": self.selfsubgoal_force_empty,
             "generate": self.generate,
             "condition_override": self.condition_override,
@@ -469,19 +486,52 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--subgoal-mode",
-        choices=["oracle", "self"],
+        choices=["oracle", "self", "draws"],
         default=None,
-        help="#6 rung (a) subgoal-conditioning probe (condition-trained "
-        "ar_backbone checkpoints): 'oracle' renders each frame's TRUE "
-        "segment label through the trained [subgoal|…] slot (label-less "
-        "frames decode identically to baseline; policy name gains "
-        "_oraclesubgoal); 'self' runs the two-pass loop — pass 1 "
-        "greedy-decodes the model's own subgoal on the planner-less "
-        "prompt ([generate|subgoal actions]; its actions are the "
-        "_narrsubgoal arm, free), pass 2 feeds that text back through "
-        "the prompt slot and decodes on the deployment fast path "
-        "(_selfsubgoal). Probe reads, never deployment reads; the "
-        "banked planner-less baseline is NOT re-run",
+        help="#6 rung (a)/(b) subgoal-conditioning probes "
+        "(condition-trained ar_backbone checkpoints): 'oracle' renders "
+        "each frame's TRUE segment label through the trained "
+        "[subgoal|…] slot (label-less frames decode identically to "
+        "baseline; policy name gains _oraclesubgoal); 'self' runs the "
+        "two-pass loop — pass 1 greedy-decodes the model's own subgoal "
+        "on the planner-less prompt ([generate|subgoal actions]; its "
+        "actions are the _narrsubgoal arm, free), pass 2 feeds that "
+        "text back through the prompt slot and decodes on the "
+        "deployment fast path (_selfsubgoal); 'draws' is rung (b) "
+        "candidate selection — pass 1 additionally decodes "
+        "--subgoal-draws sampled candidates off the shared prefill, "
+        "pass 2 runs BOTH selection arms on the same rows: the frozen "
+        "self-certainty pick (_bonsubgoal, deployment-honest) and the "
+        "record-only oracle-similarity ceiling (_ceilsubgoal). Probe "
+        "reads, never deployment reads; the banked planner-less "
+        "baseline is NOT re-run",
+    )
+    parser.add_argument(
+        "--subgoal-draws",
+        type=int,
+        default=None,
+        help="requires --subgoal-mode draws: sampled subgoal candidates "
+        "beyond the greedy candidate (pre-reg width 8; 0 = the greedy-"
+        "only bit-exactness preflight limit)",
+    )
+    parser.add_argument(
+        "--subgoal-temperature",
+        type=float,
+        default=None,
+        help="requires --subgoal-mode draws with --subgoal-draws > 0: "
+        "candidate sampling temperature (pre-reg 1.0); the greedy "
+        "candidate and both conditioned decodes stay greedy",
+    )
+    parser.add_argument(
+        "--dump-subgoal-candidates",
+        type=Path,
+        default=None,
+        help="requires --subgoal-mode draws: write the per-frame "
+        "candidate table as JSON — identity triple, TRUE label, all "
+        "candidate texts + per-step distribution stats (self-certainty "
+        "exactly recomputable offline), scorer values and the picks "
+        "both arms actually conditioned on — the stage-1 table and the "
+        "read script consume this",
     )
     parser.add_argument(
         "--dump-subgoals",
@@ -640,16 +690,43 @@ def parse_args() -> argparse.Namespace:
                 "--subgoal-mode and --condition-override subgoal=… are "
                 "two sources for the same prompt slot — pick one",
             )
-    if args.dump_subgoals is not None and args.subgoal_mode != "self":
+    if args.dump_subgoals is not None and args.subgoal_mode not in ("self", "draws"):
         parser.error(
             "--dump-subgoals writes pass 1's generations — it requires "
-            "--subgoal-mode self",
+            "--subgoal-mode self or draws",
         )
-    if args.selfsubgoal_force_empty and args.subgoal_mode != "self":
+    if args.selfsubgoal_force_empty and args.subgoal_mode not in ("self", "draws"):
         parser.error(
             "--selfsubgoal-force-empty forces pass 2's hint empty — it "
-            "requires --subgoal-mode self",
+            "requires --subgoal-mode self or draws",
         )
+    if args.subgoal_mode == "draws":
+        if args.subgoal_draws is None:
+            parser.error(
+                "--subgoal-mode draws needs an explicit --subgoal-draws "
+                "(the pre-reg width is 8; 0 is the preflight limit) — "
+                "no silent default on a pre-registered knob",
+            )
+        if args.subgoal_draws < 0:
+            parser.error(f"--subgoal-draws must be >= 0, got {args.subgoal_draws}")
+        if args.subgoal_draws > 0 and args.subgoal_temperature is None:
+            parser.error(
+                "--subgoal-draws > 0 samples candidates — set "
+                "--subgoal-temperature explicitly (the pre-reg value is 1.0)",
+            )
+        if args.subgoal_draws == 0 and args.subgoal_temperature is not None:
+            parser.error(
+                "--subgoal-temperature with --subgoal-draws 0 is a no-op "
+                "— the greedy-only limit samples nothing; drop it",
+            )
+    else:
+        for flag, value in (
+            ("--subgoal-draws", args.subgoal_draws),
+            ("--subgoal-temperature", args.subgoal_temperature),
+            ("--dump-subgoal-candidates", args.dump_subgoal_candidates),
+        ):
+            if value is not None:
+                parser.error(f"{flag} requires --subgoal-mode draws")
     return args
 
 
@@ -819,6 +896,8 @@ def main() -> int:
     narrated_policy: NarratedBijouPolicy | None = None
     pass1_policy: SelfSubgoalPass1Policy | None = None
     self_policy: SelfSubgoalPolicy | None = None
+    bon_policy: SelectedSubgoalPolicy | None = None
+    ceil_policy: SelectedSubgoalPolicy | None = None
     if args.checkpoint is not None:
         overrides: dict[str, str] = {}
         for pair in args.condition_override:
@@ -872,6 +951,39 @@ def main() -> int:
                     f"narrated-subgoal arm) feeds {self_policy.name} "
                     "(pass 2, prompt-slot conditioning); plain bijou row "
                     "skipped (baseline is banked)",
+                    flush=True,
+                )
+        elif args.subgoal_mode == "draws":
+            # Rung (b): the same pass-1-first contract; BOTH selection
+            # arms ride one run so they share pass 1's candidate decode
+            # and stay row/composition-matched to each other.
+            pass1_policy = SelfSubgoalPass1Policy(
+                bijou_policy,
+                draws=args.subgoal_draws,
+                temperature=args.subgoal_temperature or 1.0,
+            )
+            bon_policy = SelectedSubgoalPolicy(
+                bijou_policy,
+                pass1_policy,
+                mode="bon",
+                force_empty=args.selfsubgoal_force_empty,
+            )
+            ceil_policy = SelectedSubgoalPolicy(
+                bijou_policy,
+                pass1_policy,
+                mode="ceil",
+                force_empty=args.selfsubgoal_force_empty,
+            )
+            policies.extend([pass1_policy, bon_policy, ceil_policy])
+            if is_main:
+                print(
+                    f"subgoal mode DRAWS: {pass1_policy.name} decodes "
+                    f"1 greedy + {args.subgoal_draws} sampled candidates "
+                    f"(T={args.subgoal_temperature}) and feeds "
+                    f"{bon_policy.name} (self-certainty pick) + "
+                    f"{ceil_policy.name} (record-only oracle-similarity "
+                    "ceiling); plain bijou row skipped (baseline is "
+                    "banked)",
                     flush=True,
                 )
         else:
@@ -1105,6 +1217,14 @@ def main() -> int:
             narrated_policy.generations if narrated_policy is not None else {}
         ),
         subgoal_records=(pass1_policy.records if pass1_policy is not None else {}),
+        subgoal_candidates=(
+            pass1_policy.candidates if pass1_policy is not None else {}
+        ),
+        subgoal_picks={
+            policy.mode: policy.picks
+            for policy in (bon_policy, ceil_policy)
+            if policy is not None
+        },
         dump_predictions=dump_predictions,
         dump_truth=dump_truth,
         dump_valid=dump_valid,
@@ -1195,6 +1315,72 @@ def main() -> int:
         )
         print(
             f"dumped {len(rows)} per-frame subgoals to {args.dump_subgoals}",
+            flush=True,
+        )
+    if args.dump_subgoal_candidates is not None:
+        # Sorted by global frame index (world-size-invariant). Scorer
+        # values ride precomputed for readability, but the per-step
+        # stats make every one exactly recomputable offline — and the
+        # dumped picks are the arms' LIVE picks (cross-checked against
+        # an offline recompute by the read script, oracle-grade).
+        candidate_rows = []
+        for index, record in sorted(results.subgoal_records.items()):
+            row_candidates = results.subgoal_candidates.get(index)
+            if row_candidates is None:
+                raise SystemExit(
+                    f"frame {index} has a subgoal record but no candidate "
+                    "list — pass 1 candidate capture broke, stop",
+                )
+            candidate_rows.append(
+                {
+                    "index": index,
+                    "repo_id": record.repo_id,
+                    "episode_index": record.episode_index,
+                    "frame_index": record.frame_index,
+                    "instruction": record.instruction,
+                    "true_subgoal": record.true_subgoal,
+                    "greedy_subgoal": record.generated_subgoal,
+                    "candidates": [
+                        dataclasses.asdict(candidate) for candidate in row_candidates
+                    ],
+                    "self_certainty": [
+                        self_certainty(c.mean_logprob, c.allowed_vocab)
+                        for c in row_candidates
+                    ],
+                    "mean_chosen_logprob": [
+                        mean_chosen_logprob(c.chosen_logprob) for c in row_candidates
+                    ],
+                    "picks": {
+                        "bon": results.subgoal_picks.get("bon", {}).get(index),
+                        "ceil": results.subgoal_picks.get("ceil", {}).get(index),
+                        # Record-only alternates, computed offline here —
+                        # never conditioned on (pre-reg: no post-hoc
+                        # promotion).
+                        "likelihood": likelihood_pick(
+                            [c.chosen_logprob for c in row_candidates],
+                        ),
+                        "medoid": medoid_pick([c.text for c in row_candidates]),
+                    },
+                },
+            )
+        args.dump_subgoal_candidates.parent.mkdir(parents=True, exist_ok=True)
+        args.dump_subgoal_candidates.write_text(
+            json.dumps(
+                {
+                    "checkpoint": str(args.checkpoint),
+                    "subgoal_mode": args.subgoal_mode,
+                    "subgoal_draws": args.subgoal_draws,
+                    "subgoal_temperature": args.subgoal_temperature,
+                    "selfsubgoal_force_empty": args.selfsubgoal_force_empty,
+                    "seed": args.seed,
+                    "rows": candidate_rows,
+                },
+                indent=2,
+            ),
+        )
+        print(
+            f"dumped {len(candidate_rows)} per-frame candidate tables to "
+            f"{args.dump_subgoal_candidates}",
             flush=True,
         )
 
@@ -1449,6 +1635,8 @@ def main() -> int:
             ),
             mask_state=args.mask_state,
             subgoal_mode=args.subgoal_mode,
+            subgoal_draws=args.subgoal_draws,
+            subgoal_temperature=args.subgoal_temperature,
             selfsubgoal_force_empty=args.selfsubgoal_force_empty,
             generate=list(args.generate) if args.generate is not None else None,
             condition_override=list(args.condition_override),
@@ -1530,6 +1718,12 @@ def main() -> int:
             "subgoal mode: "
             + (
                 args.subgoal_mode
+                + (
+                    f" (1 greedy + {args.subgoal_draws} sampled "
+                    f"T={args.subgoal_temperature})"
+                    if args.subgoal_mode == "draws"
+                    else ""
+                )
                 + (" (FORCED-EMPTY hint)" if args.selfsubgoal_force_empty else "")
                 if args.subgoal_mode is not None
                 else "none (planner-less)"
