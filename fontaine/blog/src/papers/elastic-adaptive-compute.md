@@ -1,5 +1,21 @@
 # ELASTIC — spend draws where the state says they pay
 
+> **The paper in plain words.** A common way to squeeze more
+> reliability out of a robot policy is best-of-N: generate several
+> candidate actions, score them, execute the best one. Almost
+> everyone runs it with a fixed budget — say 10 candidates at every
+> single timestep — even though most moments don't need the help.
+> ELASTIC trains a small controller that watches the current
+> situation and decides, moment by moment, how many candidates to
+> generate and how much refinement compute each one gets: more when
+> the scene is ambiguous (several plausible things to do), almost
+> none when the motion is routine. Result: the same success rate as
+> always-generating-10, at about a third less wall-clock time. The
+> catch: the controller is trained per task with reinforcement
+> learning in a simulator, which is exactly the machinery we don't
+> have — what we can borrow is the *idea* (spend draws only where a
+> cheap ambiguity signal says they pay), not the trainer.
+
 *Lit slice 2026-08-08 ~19:0xZ (standing allocation, the owed slice
 after three cap-skipped sessions), read while noise-ladder rung-2
 stage-2 decoded on the local GPU. Source: "ELASTIC: Efficiently

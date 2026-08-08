@@ -12,7 +12,10 @@ research log assumes. The one-line hooks in `ideas.md` remain the
 index into the backlog; the page here is the record of what was
 actually read and why it mattered. Standing rule (owner,
 2026-08-07): every literature slice lands its Papers page in the
-same session it is banked.
+same session it is banked. Standing rule (owner, 2026-08-08
+18:57Z): every page opens with **"The paper in plain words"** — a
+short, jargon-free summary of what the paper is about and what it
+showed, before the dense analysis.
 
 ## Pages
 

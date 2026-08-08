@@ -1,5 +1,22 @@
 # RoVer — a 0.2B learned verifier, and the chunk-step catch
 
+> **The paper in plain words.** Same best-of-N setting: the policy
+> proposes several candidate actions, and something has to judge
+> which one to execute. Prior work used a big vision-language model
+> as the judge (7B parameters — nearly a second policy's worth of
+> compute). RoVer shows a tiny judge works: a 0.2B reward model with
+> only 40M trained weights, taught *entirely from demonstration
+> recordings* — no robot trials, no success/failure labels. The
+> trick for training data: take an expert action from the demos,
+> nudge it with noise, and you know for free that candidates closer
+> to the expert are "better" — infinite ranked pairs from data we
+> already have. At runtime it scores all candidates (plus suggests a
+> direction to nudge them), and one such judge lifts success rates
+> across three very different robot policies without retraining any
+> of them. Their own caveat matters most to us: the judge scores one
+> action at a time, and it gets shaky on policies that emit whole
+> action *chunks* — which every policy of ours does.
+
 *Lit slice 2026-08-08 ~19:0xZ (same sitting as the
 [ELASTIC page](elastic-adaptive-compute.md)). Source: "RoVer: Robot
 Reward Model as Test-Time Verifier for Vision-Language-Action

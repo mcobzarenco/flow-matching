@@ -424,10 +424,11 @@ log = "/home/ubuntu/eval__noiseladder_seating.log"
 progress_re = "scored [0-9]+/[0-9]+ frames"
 started_utc = "2026-08-08T19:25:16Z"
 gpu_hours_per_wall_hour = 1.0
-boundary = "draws-10 full panel ~3.0 GPU-h; R4 expectation: seating CI below 0 moves the mean-of-10 board row to the top-10 ensemble"
+boundary = "draws-10 full panel; ~3.0 GPU-h ESTIMATE SUPERSEDED 20:0xZ by measured rate (96 f/min steady at 100% util, no starvation; draws-10 WITH dumps runs slower than R3's non-dump basis) -> projected ~4.5 GPU-h, ETA ~23:5xZ; R4 expectation: seating CI below 0 moves the mean-of-10 board row to the top-10 ensemble"
 anchors = [
     "record-only until the paired read: R3 -0.180 was 9x the 0.02 tie band but UNPAIRED — the seating read is the adjudication",
+    "gate amendment 20:0xZ: 3.5 (stale per-arm estimate) -> 5.17 = the pre-reg's binding ceiling (<= 6 GPU-h rung-2 TOTAL, line 213 of the pre-reg) minus stage-2's actual 0.83; crossing 5.17 = abort per pre-reg, not re-tolerance",
 ]
 [[run.gates]]
 kind = "gpu_hours_max"
-value = 3.5
+value = 5.17
