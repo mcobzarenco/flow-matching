@@ -272,6 +272,17 @@ class TestPerRunChecks:
         assert not report.gate_crossed
         assert report.lines == []
 
+    def test_probe_cmd_skips_monitor_shells(self) -> None:
+        # Self-match exclusion (4), incident 08-08 19:0xZ: a driver
+        # background watcher (`until systemctl --user is-active <unit>`)
+        # carries the run stem in its cmdline from inside the tick
+        # cgroup — the probe's cgroup loop must skip monitoring shells
+        # by verb before cat'ing their cgroup, or every armed watcher
+        # is a guaranteed false DRIVER-CGROUP exit 3.
+        cmd = babysit.batched_probe_cmd(self._train_run())
+        assert "systemctl|journalctl|babysit\\.py" in cmd
+        assert "/proc/$p/cmdline" in cmd
+
     def test_progress_log_projection(self) -> None:
         run = babysit.Run(
             name="p",

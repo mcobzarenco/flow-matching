@@ -144,6 +144,14 @@ def batched_probe_cmd(run: Run) -> str:
         # cmdline. Real runs launched via run_detached.sh get their own
         # session/pgid, and earlier session-child launches keep their
         # dead launch pipeline's pgid, so neither is masked.
+        # (4) 08-08 19:0xZ — a driver-session WATCHER shell: a
+        # background `until systemctl --user is-active <unit>` loop
+        # (armed to launch the next arm at rc=0) carries the run stem
+        # in its cmdline, lives in the tick cgroup, and is neither an
+        # ancestor nor in the probe's pgid — a false DRIVER-CGROUP
+        # exit 3. Monitoring shells are recognized by verb (systemctl/
+        # journalctl/babysit.py in the cmdline) and skipped; a real
+        # doomed workload never invokes those.
         (
             'anc=$$; ex=" "; while [ "$anc" -gt 1 ]; do ex="$ex$anc "; '
             "anc=$(awk '/^PPid:/{print $2}' /proc/$anc/status 2>/dev/null || echo 0);"
@@ -153,6 +161,8 @@ def batched_probe_cmd(run: Run) -> str:
             'case "$ex" in *" $p "*) continue;; esac; '
             "ppg=$(ps -o pgid= -p $p 2>/dev/null | tr -d ' '); "
             '[ "$ppg" = "$mypg" ] && continue; '
+            "tr '\\0' ' ' < /proc/$p/cmdline 2>/dev/null "
+            "| grep -qE 'systemctl|journalctl|babysit\\.py' && continue; "
             "cat /proc/$p/cgroup 2>/dev/null; "
             "done || true"
         ),
