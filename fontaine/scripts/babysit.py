@@ -127,20 +127,33 @@ def batched_probe_cmd(run: Run) -> str:
         f"echo {SENTINEL_PGREP}",
         f"pgrep -fc '{run.pgrep}' || true",
         f"echo {SENTINEL_CGROUP}",
-        # Two self-match exclusions, both measured live 08-07 16:2xZ:
-        # (1) the probe shell's ancestor chain — a compound session
-        # command mentioning the run's stem (a log grep on the same
-        # line) matches the pattern from inside the driver's cgroup;
-        # (2) NO pipeline around the for-loop — `| sort -u` forks the
-        # loop into a subshell that inherits this bash -c's cmdline
-        # (which contains the pattern) and is alive during its own
-        # pgrep: a guaranteed false hit. Dedupe happens Python-side.
+        # Three self-match exclusions, all measured live:
+        # (1) 08-07 16:2xZ — the probe shell's ancestor chain: a
+        # compound session command mentioning the run's stem (a log
+        # grep on the same line) matches the pattern from inside the
+        # driver's cgroup;
+        # (2) 08-07 16:2xZ — NO pipeline around the for-loop: `| sort
+        # -u` forks the loop into a subshell that inherits this bash
+        # -c's cmdline (which contains the pattern) and is alive during
+        # its own pgrep: a guaranteed false hit. Dedupe happens
+        # Python-side.
+        # (3) 08-08 05:4xZ — the probe shell's process group: a session
+        # running `babysit | grep <stem>` matched its own grep — a
+        # pipeline SIBLING of the babysit process, so never in the
+        # ancestor chain, but in the tick cgroup with the stem in its
+        # cmdline. Real runs launched via run_detached.sh get their own
+        # session/pgid, and earlier session-child launches keep their
+        # dead launch pipeline's pgid, so neither is masked.
         (
             'anc=$$; ex=" "; while [ "$anc" -gt 1 ]; do ex="$ex$anc "; '
             "anc=$(awk '/^PPid:/{print $2}' /proc/$anc/status 2>/dev/null || echo 0);"
             " done; "
+            "mypg=$(ps -o pgid= -p $$ | tr -d ' '); "
             f"for p in $(pgrep -f '{run.pgrep}'); do "
-            'case "$ex" in *" $p "*) ;; *) cat /proc/$p/cgroup 2>/dev/null;; esac; '
+            'case "$ex" in *" $p "*) continue;; esac; '
+            "ppg=$(ps -o pgid= -p $p 2>/dev/null | tr -d ' '); "
+            '[ "$ppg" = "$mypg" ] && continue; '
+            "cat /proc/$p/cgroup 2>/dev/null; "
             "done || true"
         ),
         f"echo {SENTINEL_GPU}",
