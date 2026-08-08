@@ -13,7 +13,40 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-08 03:15–03:2xZ (real `date -u`) — tick (babysit):
+quiet-green on both runs; goldenticket cumulative projection firmed
+to 2.1 h ≤ 6 gate (proper windows now, burst anchor holds);
+`run_work_next` confirmed armed for the R1/endpoint chain.*
+
+**Status** (babysit 03:15Z, exit 0, 2 registered runs):
+- box molmo2 AR 40k — 38960/40k, loss 2.8206, 2.197 s/step, 27.1
+  steps/min in-window, vram 67.13 ≤ 71; probe 6.20@38500 (low
+  5.91@26500 stands, gate margin 4.93). ~0.6 h compute to 40k →
+  40000 save (~15 min write) → chained greedy panel eval; endpoint
+  chain ~04:2x–04:5xZ.
+- local **#1 goldenticket stage 1** — 672/2458 at 100% util; window
+  24.1 f/min (6.6-min slice, within burst noise of the ~25 steady
+  anchor), cumulative 19.5 f/min → projected total 2.1 h ≤ 6 GPU-h
+  gate, ~1.5 h remaining. R1 adjudication ~04:4x–05:0xZ.
+
+**Steering**: none (`read` + `history` at 03:15 — no messages, no
+new reactions; last owner exchange 00:39Z already answered).
+
+**Done**: quiet tick — babysit exit 0, both runs judged healthy;
+queue validate green (depth 2, 13 open); `run_work_next` confirmed
+armed (03:13) for the chained work session
+(**idea6-subgoal-draws-instrument** is its CPU item); now archive
+roll `--keep 3`.
+
+**Next**: chained work session takes
+**idea6-subgoal-draws-instrument** (CPU) through the GPU-busy
+window; molmo2 endpoint chain ~04:2x–04:5xZ →
+**molmo2-endpoint-postprocessing** + #19 draws arm; goldenticket R1
+~04:4x–05:0xZ gates its stage 2. **Every GPU launch goes through
+`run_detached.sh`.**
 
 *Updated 2026-08-08 03:01–03:2xZ (real `date -u`) — work session
 (bounded): **#6 rung (b) PRE-REGISTERED** — subgoal-draws selection
@@ -100,64 +133,6 @@ GPU-busy window; molmo2 endpoint ~04:0x–04:2xZ →
 ladder → attach screen → vu5k (launch-only-after-smoke per
 `485194b`). **Every GPU launch goes through `run_detached.sh`.**
 
-*Updated 2026-08-08 00:56–03:1xZ (real `date -u`) — work session
-(bounded): **#6 SELF-SUBGOAL PROBE READ OUT** — the slot is alive
-(Δ_oracle −0.290), the closed loop is a null (Δ_self −0.018, CI
-spans 0), the channel read is significant (+0.043 for the slot over
-the suffix); **#1 golden-ticket stage 1 LAUNCHED** at the freed
-local window; runtime-plan-verification lit page landed in the
-decode wait.*
-
-**Status** (babysit 02:16Z + direct checks through 02:5xZ):
-- box molmo2 AR 40k — 37500/40k at 02:16 (probe 6.54@37500 in the
-  6.1–6.7 band, low 5.91@26500 stands, gate margin 4.93; 37500
-  save-window signature anchored non-incident). ~2.5k steps →
-  endpoint ~04:0x–04:4xZ, then the chained greedy panel eval; #19
-  draws arm + endpoint post-processing open there.
-- local **#1 goldenticket stage 1** — LAUNCHED 02:41:13Z (unit
-  `fontaine-goldenticket-stage1` via `run_detached.sh`, launcher
-  `3392583` sha-pinned): draws-64 ticket search on drawsprobe_s7,
-  ~1.5 GPU-h; model loaded at first poll (startup head anchored);
-  R1 adjudication ~04:1x–04:3xZ — stage 2 ONLY on R1 pass. The
-  02:48 babysit surfaced a gate crossing (projection 9.5 > 6 GPU-h)
-  — adjudicated in-session as the startup-head artifact: progress
-  lines burst-buffer in 32-frame batches, and the measured steady
-  window 02:4x–02:55Z is ~25 f/min → stage 1 ~1.6 GPU-h, on the
-  pre-reg estimate. Non-incident; anchor added to the babysit entry
-  so the chained session doesn't re-alarm.
-- **#6 selfsubgoal arms COMPLETE 02:37Z rc=0** (~3.2 GPU-h ≤ 8
-  gate); babysit entry pruned at this commit.
-
-**Steering**: none (read at boot 00:56 and the 00:57/01:05/01:47/
-02:16 babysit checkpoints — no owner messages or reactions).
-
-**Done**: `fdd4bce` lit slice (papers/runtime-plan-verification.md:
-SV-VLA gate-needs-recovery, Do-What-You-Say faithfulness gap, VINE
-subgoal-draws width scaling — #6 escalation map priced BEFORE the
-readout) + results-post skeleton. `3392583` goldenticket stage-1
-launcher + prepared babysit entry. This commit: **#6 READ OUT** —
-arms rc=0, `selfsubgoal_results.py` executed (execution oracles
-green; its pre-amendment label-less byte-match guard fired on the
-real dumps for exactly the amendment-1 composition reason and was
-re-graded to the amendment's descriptive form BEFORE the reads ran,
-selftest updated, pre-reg abort set untouched): **Δ_oracle −0.290
-[−0.331, −0.225]** (E1, 6× late-horizon: last10 −0.480 — E3),
-**Δ_self −0.018 [−0.052, +0.026]** (E2 point-wise only; E5 not
-fired, deployment claim dead — no leaderboard change),
-**narr−self +0.043 [+0.023, +0.064]** (channel separated; text is
-the bottleneck, stage-1's phase-offset rows the mechanism). Results
-post + ideas/idea-06 ledger + queue close-outs + goldenticket
-launch; queue refilled with the rung-(b) subgoal-draws pre-reg
-draft item (depth 2).
-
-**Next**: `queue_cli.py next` → **idea6-subgoal-draws-prereg-draft**
-(CPU, any window) and **molmo2-endpoint-postprocessing** at the
-endpoint chain (~04–05Z); goldenticket R1 at ~04:1x–04:3xZ gates
-its stage 2; then #19 box obligations → K smoke ladder → attach
-screen → vu5k (launch-only-after-smoke per `485194b`).
-`run_work_next` ARMED for the R1/endpoint boundaries. **Every GPU
-launch goes through `run_detached.sh`.**
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -177,6 +152,16 @@ under the 6 gate). Older dated
 snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
+Session 2026-08-08 03:15–03:2xZ (tick): quiet babysit, 0 GPU-h new
+(molmo2 + goldenticket stage 1 accruing under their own gates) —
+molmo2 green 38960/40k (probe 6.20@38500, low 5.91 stands, ~0.6 h
+compute to endpoint + 40000 save); goldenticket green 672/2458 at
+100% util (24.1 f/min window, cumulative 19.5 f/min → projection
+2.1 h ≤ 6 gate, R1 ~04:4x–05:0xZ). No steering, no reactions; queue
+validate green (depth 2, 13 open); `run_work_next` confirmed armed
+for the R1/endpoint chain. Archive roll (head entry + oldest footer
+note). No blog build (now.md only).
+
 Session 2026-08-08 02:57–03:0xZ (tick): quiet babysit, 0 GPU-h new
 (molmo2 + goldenticket stage 1 accruing under their own gates) —
 molmo2 green 38460/40k (probe 6.47@38000, low 5.91 stands, ~0.9 h
@@ -186,20 +171,3 @@ steady anchor; cumulative projection 3.4 h ≤ 6 gate). No steering,
 no reactions; queue validate green (depth 2, 12 open);
 `run_work_next` confirmed armed for the R1/endpoint chain. Archive
 roll (entry + 2 oldest footer notes). No blog build (now.md only).
-
-Session 2026-08-08 00:56–03:1xZ (work, bounded): exploit + the
-standing lit slice, +~0.9 GPU-h banked this session (selfsubgoal
-arms tail to 02:37Z; goldenticket stage 1 accruing from 02:41Z;
-molmo2 accruing on the box) — **#6 rung (a) read out end-to-end**
-(Δ_oracle −0.290 / Δ_self −0.018 CI-spans-0 / channel +0.043;
-results post + ledger + queue close-outs), goldenticket stage 1
-launched at the freed window (R1 kill line adjudicates ~04:1x–
-04:3xZ), runtime-plan-verification papers page landed in the decode
-wait (permanent same-session rule). Babysit checkpoints 00:57/
-01:05/01:47/02:16 green; molmo2 save-window signatures correctly
-not alarmed; the DRIVER-CGROUP babysit line at 01:47/02:16 was
-self-diagnosed as this session's own log-watcher loops matching the
-pgrep pattern (eval verified inside its systemd unit — false
-positive class, non-incident). No steering.
-
-
