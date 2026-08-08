@@ -208,18 +208,21 @@ class Molmo2ARDecoder(ARSuffixDecoder[Molmo2Model]):
         else:
             positions = torch.full((batch, 1), memory.length, device=device) + offsets
             full_mask = None
-        # Same non-cuDNN pin as the Gemma concrete: the cuDNN fused
-        # backward crashed twice on Gemma's ragged suffix-vs-cache
-        # geometry (pytorch#122695 family); Molmo2's head_dim-128 suffix
-        # is standard geometry, but the pin is cheap insurance and the
-        # prefix encode — the dominant cost — keeps the full dispatcher.
-        with sdpa_kernel(
-            [
-                SDPBackend.FLASH_ATTENTION,
-                SDPBackend.EFFICIENT_ATTENTION,
-                SDPBackend.MATH,
-            ],
-        ):
+        # Training re-admits cuDNN (perf pass-1 pre-reg, parity-gated):
+        # the teacher-forced suffix always carries a dense mask (rejects
+        # FLASH) and enable_gqa (rejects EFFICIENT), so the inherited
+        # non-cuDNN pin left only MATH — 13x/layer measured. Decode
+        # keeps the inherited list (the Gemma ragged-geometry crash
+        # guard, pytorch#122695 family): banked eval byte-anchors assume
+        # decode numerics are frozen across code versions.
+        backends = [
+            SDPBackend.FLASH_ATTENTION,
+            SDPBackend.EFFICIENT_ATTENTION,
+            SDPBackend.MATH,
+        ]
+        if self.training:
+            backends.insert(0, SDPBackend.CUDNN_ATTENTION)
+        with sdpa_kernel(backends):
             return transformer(
                 inputs_embeds=embeds,
                 position_ids=positions,
