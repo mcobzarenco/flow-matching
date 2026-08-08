@@ -4,7 +4,49 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-08 13:36–13:5xZ (real `date -u`) — tick (babysit):
+**45,000 save boundary judged — routine PASS**; and a missed-steering
+catch: the owner's **13:21Z message was read-but-unhandled** (the work
+session's cursor moved past it but closed on the perf review) — found
+via `history`, queued + acknowledged this tick.*
+
+**Status** (13:4xZ): box **molmo2_ar60k LIVE + healthy** (babysit
+exit 0, held in-session through the boundary): step 45,000/60,000,
+probe **6.70@45,000** — back inside the 6.40–6.87 oscillation band
+(6.40@43.5k → 6.54@44k → 6.87@44.5k → 6.70@45k), 1.50 under the
+8.2075 kill bar, ×3 rule never armed; loss ~2.83 (oscillating,
+trend down), 2.18 s/step, vram 73.84 **no new peak**, all 4 GPUs
+~100%; ~9.1 h to the 60k close (~23Z) + chained panel eval. Local
+idle-by-design.
+
+**Steering** (13:21Z, mcobzarenco — caught this tick): queue a
+consolidated **chart-led meta-report on field conditioning + all
+aux-subgoal idea work**; don't title such pages "visual report" —
+charts/visual aids are the default treatment; include specific
+episode frames comparing the effect of subgoal conditioning,
+especially frames where the right action is **ambiguous from the
+image alone** (start-vs-end indistinguishable, goal not visible from
+the parked position). **Disposition**: queued as
+`fieldcond-subgoal-meta-report` (CPU; natural slot after the 60k
+close + fields panel so it carries those numbers; frame-mining can
+start earlier), acknowledged in-channel 13:4xZ, standing charts
+memory amended with the no-"visual-report"-title + ambiguous-frames
+preferences.
+
+**Done** (this tick): 13:21Z steering caught + queued + acked (facts
+above); 45,000 boundary judged routine PASS (probe fell back to
+6.70, posted in-channel); babysit ×2 green; queue validate green
+(depth 5, 15 open); `run_work_next` re-armed.
+
+**Next**: chained work session → CPU heads: cleancand pre-reg draft /
+molmo2-perf-fix-prereg draft / meta-report frame-mining. Boundaries:
+47,500 save ~15:1xZ (routine unless the probe breaks the band
+upward), **60k close ~23Z** (chained eval → fields panel armed +
+attach-chain repoint decision); noise-ladder rung-2 execution + perf
+pass-1 bench open after 23Z. Every GPU launch via `run_detached.sh`.*
 
 *Updated 2026-08-08 12:58–13:3xZ (real `date -u`) — work session
 (bounded): **two majors shipped** — the noise-ladder rung-2 pre-reg
@@ -100,41 +142,6 @@ GPU launch goes through `run_detached.sh`.** If credit 429s recur,
 expect the same alert pattern — sessions self-heal on window
 rollover.
 
-*Updated 2026-08-08 11:38–11:5xZ (real `date -u`) — tick (babysit):
-**molmo2_ar60k HEALTHY**, third post-relaunch check; probe tail still
-rising inside the pre-registered window; no new steering; queue
-green, `run_work_next` armed.*
-
-**Status** (11:4xZ): box **molmo2_ar60k LIVE + healthy** (babysit
-exit 0): step 41,720/60,000, loss 2.8295, 2.195 s/step (30.9
-steps/min window), vram 73.49 **no new peak**; probe trajectory
-6.05@40,500 → 6.37@41,000 → 6.75@41,500 — rising ~+0.33/500 steps
-but 1.46 under the 8.2075 kill bar; linear extrapolation wouldn't
-touch the bar before ~43,500 and the rewarmup anchor says the tail
-should bend first — the 42,000 probe is the tell. **42,500 save
-boundary lands ~12:05–12:1xZ, at this session's hard-kill stamp — the
-gate judgment stays with the next tick (~12:1xZ), which will have
-both the 42,000 probe and the boundary in hand.** ~11.1 h to
-endpoint (~22:4xZ) + chained panel eval. Local idle-by-design.
-
-**Steering**: none new (`read` empty; `history -n 5` = our own posts,
-no new reactions; the 10:49Z 👍 stands recorded).
-
-**Done** (this tick): babysit green (facts above, judged healthy —
-rising probe tail explicitly weighed, not just pattern-matched to
-"under the bar"); queue validate green (depth 3, 13 open);
-`run_work_next` re-armed (box busy + CPU queue: noise-ladder
-per-dataset pre-reg draft at head, cleancand draft,
-fieldgen-accuracy at the 60k close).
-
-**Next**: chained work session works the noise-ladder pre-reg draft;
-**next tick ~12:1xZ judges the 42,500 save boundary** (probe
-trajectory vs the 8.2075 ×3 rule — if 42,000 still climbs at the
-same slope, that's the anomaly flag even under the bar). At the 60k
-close (~23Z): chained eval → fields panel (armed) + attach-chain
-repoint decision. **Every GPU launch goes through
-`run_detached.sh`.**
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -161,6 +168,17 @@ idle from ~08:15Z pending the next pre-registered launches). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
+Session 2026-08-08 13:36–13:5xZ (tick): babysit ×2, **45,000 save
+boundary judged routine PASS** (probe 6.70@45,000 back inside the
+6.40–6.87 band, 1.50 under the 8.21 bar, ×3 never armed; held
+in-session through the boundary), 0 GPU-h new; **missed-steering
+catch: owner 13:21Z message was read-but-unhandled** by the closing
+work session — queued as `fieldcond-subgoal-meta-report` (chart-led
+field-conditioning + aux-subgoal meta-report w/ ambiguous episode
+frames), acked in-channel, charts memory amended (no "visual report"
+titles); queue green depth 5 (15 open); `run_work_next` re-armed.
+Archive roll (head entry + oldest footer note).
+
 Session 2026-08-08 12:54–13:0xZ (tick): babysit, **42,500
 save-boundary gate judged PASS** (probe 6.75@41.5k → 6.73@42k →
 6.73@42.5k → 6.77@43k → 6.40@43.5k — tail bent per the rewarmup
@@ -173,13 +191,4 @@ not a leak (bumps at 41,780/42,940, flat since, 4.16 under gate);
 consolidated Discord post; queue green depth 3; `run_work_next`
 re-armed (noise-ladder draft still queue head — the credit-killed
 work session never ran it). Archive roll (head entry + 3 oldest
-footer notes).
-
-Session 2026-08-08 11:38–11:5xZ (tick): babysit, molmo2_ar60k
-healthy at third post-relaunch tick (step 41,720, 30.9 steps/min,
-probe 6.75@41.5k rising ~+0.33/500 under the 8.21 bar, no new vram
-peak), 0 GPU-h new; 42,500 save-boundary judgment deferred to next
-tick ~12:1xZ (boundary lands at this session's hard-kill stamp; the
-42,000 probe is the slope tell); no new steering; queue green depth
-3; `run_work_next` armed. Archive roll (head entry + 3 oldest
 footer notes).

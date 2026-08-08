@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-08T14:40:00+00:00",
+ "updated_utc": "2026-08-08T13:40:00+00:00",
  "depth_reason": "depth 4+ at 11:1xZ 08-08: 60k LIVE (box, endpoint ~23Z); queued: fieldgen fields-panel (owner, armed w/ launcher+prereg, opens at 60k close), snapflow-visual-report (owner), idea6 cleancand draft, idea1 noise-ladder draft; attach chain blocked behind 60k per owner priority.",
  "items": [
   {
@@ -514,6 +514,15 @@
    "prereg": "fontaine/blog/src/posts/2026-08-08-prereg-noise-ladder-perdataset.md",
    "owner_hold": false,
    "boundary": "opens at the next quiet local-GPU window after the molmo2_ar60k close (~23Z 08-08) and its chained eval + the armed fieldgen-accuracy eval resolve; instrument+preflight are CPU-side and may land earlier"
+  },
+  {
+   "id": "fieldcond-subgoal-meta-report",
+   "title": "OWNER STEERING 08-08 13:21Z: consolidated chart-led meta-report on field conditioning + ALL aux-subgoal idea work (title must NOT say 'visual report' \u2014 charts/visual aids are the default treatment, per standing preference): synthesize the fieldgen/field-conditioning thread + subgoal-conditioning ideas (#6 rungs, selfsubgoal probe, goldenticket lineage where it feeds subgoals) into one page; MUST include specific interesting episode frames comparing the effect of subgoal conditioning \u2014 prioritize frames where the right action is ambiguous from the image alone (e.g. start-vs-end of episode indistinguishable, goal not visible from the parked position); values/frames from banked reports + banked episode data only",
+   "class": "cpu",
+   "status": "queued",
+   "prereg": null,
+   "owner_hold": false,
+   "boundary": "CPU work at any window; natural slot after fieldgen-accuracy-eval closes (60k close ~23Z 08-08) so the report includes the fields-panel numbers, but drafting structure/frame-mining can start any time"
   }
  ]
 }
