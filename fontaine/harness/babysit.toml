@@ -224,7 +224,67 @@
 # kind = "vram_max_gib"
 # value = 71.0
 
-no_live_runs_reason = "2026-08-08 08:3xZ: all runs landed and pruned at their close (molmo2 chain incl. #19 draws arm 07:22Z + microbench 07:50Z; goldenticket stage 3 08:15:39Z). Next launches: idea6 rung-(b) preflight (local) + #4 attach screen (box, owner-steer window) — entries return at launch per standing rule."
+# (no_live_runs_reason retired 08-08 09:1xZ — the idea6 rung-(b)
+# preflight entry below is live; the 08:3xZ declared-empty reason is
+# preserved in git history.)
+
+# LIVE — #6 subgoal-draws rung (b) PREFLIGHT (local GPU; pre-reg
+# 2026-08-08-prereg-subgoal-draws.md). Five phases in one unit
+# (fontaine-subgoal-draws-preflight): q4 fresh self (oracle-i
+# comparator) -> q4 draws-0 -> q4 draws-0 forced-empty -> abort-on-red
+# adjudication (subgoal_draws_live_oracles.py; green summary JSON is
+# the arms launcher's gate) -> stage-1 candidates table (60 frames x 9
+# candidates). NO scalars before the stage-1 go/no-go. Arms launch is a
+# SEPARATE unit (eval_ar100k_subgoal_draws_arms.sh) behind the go
+# marker fontaine/harness/state/subgoal_draws_stage1_go.
+[[run]]
+name = "subgoal_draws_preflight"
+kind = "progress-log"
+host = "local"
+pgrep = "subgoal_draws_preflight"  # launcher bash cmdline carries the script name
+pgrep_min = 1
+gpu_indices = [0]
+gpu_mem_min_mib = 8000
+log = "/home/ubuntu/eval__ar100k_subgoal_draws_preflight.log"
+progress_re = "scored [0-9]+/[0-9]+ frames"
+started_utc = "2026-08-08T08:49:29Z"
+gpu_hours_per_wall_hour = 1.0
+boundary = "3 sequential q4 runs (4,301 rows each; ~22-25 min/run at banked rates) + CPU adjudication + 60-frame stage-1 table; ~1.3-1.5 GPU-h of the 6 GPU-h rung ceiling; lands ~80-95 min after launch"
+anchors = [
+    "abort-on-red: adjudication SystemExit (phase 4) kills the unit non-zero — a red preflight is a STOP, diagnose before any arms launch (rung-(a) precedent: composition amendment)",
+    "NO scalar reads from these runs — stage-2 scalars stay behind the stage-1 go/no-go (pre-reg)",
+    "on rc=0: judge the stage-1 table (bars (a)-(c) mechanical in the JSON, (d) subgoal-shaped by eyes), write the go marker, launch arms via run_detached.sh fontaine-subgoal-draws-arms",
+]
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 2.5
+
+# PREPARED — #6 rung (b) STAGE-2 ARMS (activate at launch: uncomment,
+# fill started_utc, prune the preflight entry above). Full-panel
+# draws-8 run, both selection arms in one npz (panel_k4l2_subgoaldraws
+# stems); draws_rate_gate.py enforces the q4 fallback at ~200 frames
+# (budget 4.5 GPU-h = 6 ceiling - ~1.5 preflight+stage1).
+# [[run]]
+# name = "subgoal_draws_arms"
+# kind = "progress-log"
+# host = "local"
+# pgrep = "subgoal_draws_arms"
+# pgrep_min = 1
+# gpu_indices = [0]
+# gpu_mem_min_mib = 8000
+# log = "/home/ubuntu/eval__ar100k_subgoal_draws_arms.log"
+# progress_re = "scored [0-9]+/[0-9]+ frames"
+# started_utc = "FILL-AT-LAUNCH"
+# gpu_hours_per_wall_hour = 1.0
+# boundary = "25,800 rows, pass 1 (1 greedy + 8 sampled off one prefill) + bon + ceil decodes; projected ~2.5-3 GPU-h <= 4.5 remaining budget; frozen reads = subgoal_draws_results.py at rc=0"
+# anchors = [
+#     "banked baseline 5.8026/2.1431 and rung-(a) self npz are the frozen comparators — never re-run",
+#     "falsifier: paired (bon - self) CI95 not entirely below 0 => rung FALSIFIED; Delta_ceil adjudicates no-diversity vs no-scorer routing",
+#     "q4 fallback (rate gate exit 2) is pre-registered arithmetic — record the switch in now.md + Discord, reads via --draws-stem",
+# ]
+# [[run.gates]]
+# kind = "gpu_hours_max"
+# value = 4.5
 
 # golden-ticket screen (#1) — CLOSED 08-08 08:2xZ: stage 3 landed
 # 08:15:39Z rc=0 (2.99 GPU-h; screen total ~5.55 <= 6 gate). R3 read

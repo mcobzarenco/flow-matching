@@ -1,6 +1,6 @@
 {
- "updated_utc": "2026-08-08T08:17:45+00:00",
- "depth_reason": "depth 1 at 08:2xZ 08-08: the noise-ladder per-dataset-tickets pre-reg draft is OPEN (R3/R4 numbers in hand as of this close) and is the next work item; idea6 rung-(b) execution opens with it (local GPU free since 08:15; its preflight launcher is next-session work \u2014 not rushed at this session's deadline). run_work_next armed.",
+ "updated_utc": "2026-08-08T08:52:00+00:00",
+ "depth_reason": "depth 1 at 08:5xZ 08-08: idea6 rung-(b) execution is LIVE (preflight 08:49Z; arms chain behind the stage-1 gate) and idea1-noise-ladder-perdataset-prereg-draft is the queued head (R3/R4 numbers in hand). Blocked-but-mapped behind them: #4 attach chain (owner-steer window), vu5k (owner go), escalation drafts. run_work_next armed at session end.",
  "items": [
   {
    "id": "ar100k-tsens-q4-live",
@@ -373,12 +373,12 @@
   },
   {
    "id": "idea6-subgoal-draws-execution",
-   "title": "#6 rung (b) subgoal-draws selection EXECUTION (gpu-local): (1) instrument + read script landed by the CPU-side item (idea6-subgoal-draws-instrument) (bijou.eval selfsubgoal mode + sampled pass-1 draws --subgoal-draws 8 --subgoal-temperature 1.0 spelling implementation's, per-candidate SC-sufficient distribution stats dump, _bonsubgoal/_ceilsubgoal selection modes, machine-readable candidate dump; abort-on-red oracles per the pre-reg: draws-0 limit bit-exact vs the banked rung-(a) self arm at matched composition, forced-empty = plain path, SC + token-F1 exact-arithmetic fixtures incl. tie cases, pass-2 excludes subgoal, _ceilsubgoal provenance separation, collator-rendering byte match); (2) stage-1 candidates table on the rung-(a) 60-frame sample, go/no-go bars per the pre-reg (>=90% valid, >=2 unique strings on >=50% frames, no >50% pooled collapse, subgoal-shaped) \u2014 fail closes the rung at table cost; (3) stage-2 two conditioned full-panel arms (bon + ceil) via run_detached.sh, first-200-frame rate check vs the 6 GPU-h gate (q4 fallback clause verbatim); (4) frozen reads via the landed read script: Delta_bon + paired (bon - self) head-to-head, Delta_ceil bound, scorer-agreement records, horizon decomposition, first_mae mirrors",
+   "title": "#6 rung (b) subgoal-draws selection EXECUTION (gpu-local): (1) instrument + read script landed by the CPU-side item (idea6-subgoal-draws-instrument) (bijou.eval selfsubgoal mode + sampled pass-1 draws --subgoal-draws 8 --subgoal-temperature 1.0 spelling implementation's, per-candidate SC-sufficient distribution stats dump, _bonsubgoal/_ceilsubgoal selection modes, machine-readable candidate dump; abort-on-red oracles per the pre-reg: draws-0 limit bit-exact vs the banked rung-(a) self arm at matched composition, forced-empty = plain path, SC + token-F1 exact-arithmetic fixtures incl. tie cases, pass-2 excludes subgoal, _ceilsubgoal provenance separation, collator-rendering byte match); (2) stage-1 candidates table on the rung-(a) 60-frame sample, go/no-go bars per the pre-reg (>=90% valid, >=2 unique strings on >=50% frames, no >50% pooled collapse, subgoal-shaped) \u2014 fail closes the rung at table cost; (3) stage-2 two conditioned full-panel arms (bon + ceil) via run_detached.sh, first-200-frame rate check vs the 6 GPU-h gate (q4 fallback clause verbatim); (4) frozen reads via the landed read script: Delta_bon + paired (bon - self) head-to-head, Delta_ceil bound, scorer-agreement records, horizon decomposition, first_mae mirrors \u2014 PREFLIGHT LIVE 08:49:29Z 08-08 (unit fontaine-subgoal-draws-preflight via run_detached.sh): live-oracle adjudicator subgoal_draws_live_oracles.py landed same session (selftest green, 14 branches; matched-composition by construction \u2014 oracle i vs a FRESH q4 self run, oracle ii vs the BANKED q4 emptyhint npz, the amendment-1 lesson mechanized) + both launchers (preflight 5-phase; arms launcher gated on the green summary JSON AND the stage-1 go marker, draws_rate_gate q4 fallback at 4.5 GPU-h remaining budget); babysit entry live. Next: judge stage-1 table at preflight rc=0 (~10:1xZ), write subgoal_draws_stage1_go, launch arms unit fontaine-subgoal-draws-arms",
    "class": "gpu-local",
-   "status": "blocked",
+   "status": "live",
    "prereg": "fontaine/blog/src/posts/2026-08-08-prereg-subgoal-draws.md",
    "owner_hold": false,
-   "boundary": "opens at the first quiet local-GPU window AFTER the #1 goldenticket R1 chain resolves (R1 ~04:3x-05:0xZ 08-08; stage 2/3 obligations first if R1 passes); never co-located with a training run's eval chain; instrument + read script land (CPU-side, oracle-gated) before any launch; babysit entry prepared at launch"
+   "boundary": "preflight lands ~10:1xZ 08-08 (~85 min); stage-1 go/no-go judged in-session; arms ~2.5-3 GPU-h land ~13:0x-13:3xZ; frozen reads at the next tick/session boundary; rung ceiling 6 GPU-h"
   },
   {
    "id": "lit-slice-verifier-free-selection-followups",
