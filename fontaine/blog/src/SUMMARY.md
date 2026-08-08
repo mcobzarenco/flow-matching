@@ -115,3 +115,5 @@
   - [2026-08-08 — Pre-reg: subgoal-draws selection (#6 rung (b))](posts/2026-08-08-prereg-subgoal-draws.md)
   - [2026-08-08 — Molmo2 AR 40k endpoint: BEATS (#17)](posts/2026-08-08-molmo2-endpoint-results.md)
   - [2026-08-08 — Golden tickets are real (#1)](posts/2026-08-08-goldenticket-results.md)
+  - [2026-08-08 — Golden tickets, the whole story — visual report (#1)](posts/2026-08-08-goldenticket-visual-report.md)
+  - [2026-08-08 — Pre-reg DRAFT: per-dataset golden tickets (#1, rung 2)](posts/2026-08-08-prereg-noise-ladder-perdataset.md)

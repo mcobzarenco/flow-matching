@@ -1,5 +1,7 @@
 # Golden tickets are real: one searched noise vector ≈ 75% of the mean-of-10 gain
 
+> **See also:** the owner-requested [consolidated visual report](2026-08-08-goldenticket-visual-report.md) — the whole thread in five charts.
+
 *2026-08-08 05:2xZ. Stages 1–2 of the golden-ticket noise screen
 ([pre-reg](2026-08-07-prereg-golden-ticket-screen.md), #1), reads
 frozen there and executed by `ticket_scores.py` (stage 1) and

@@ -1,6 +1,6 @@
 {
- "updated_utc": "2026-08-08T08:52:00+00:00",
- "depth_reason": "depth 1 at 08:5xZ 08-08: idea6 rung-(b) execution is LIVE (preflight 08:49Z; arms chain behind the stage-1 gate) and idea1-noise-ladder-perdataset-prereg-draft is the queued head (R3/R4 numbers in hand). Blocked-but-mapped behind them: #4 attach chain (owner-steer window), vu5k (owner go), escalation drafts. run_work_next armed at session end.",
+ "updated_utc": "2026-08-08T09:35:00+00:00",
+ "depth_reason": "depth 3 at 09:3xZ 08-08: idea6 rung-(b) LIVE + queued: idea1 noise-ladder draft (DRAFT written this session, finalization checklist open), goldenticket-visual-report (owner 08:42Z), molmo2 continuation draft (owner-hold, discussion live).",
  "items": [
   {
    "id": "ar100k-tsens-q4-live",
@@ -424,6 +424,24 @@
    "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-golden-ticket-screen.md",
    "owner_hold": false,
    "boundary": "opens at the stage-3 R3/R4 close (~08:1xZ 08-08); draft quality gates on those numbers being in hand"
+  },
+  {
+   "id": "goldenticket-visual-report",
+   "title": "OWNER STEERING 08-08 08:42Z: subsume the golden-ticket thread (pre-reg + results post + stage 1/2/3 analyses + jerk-pick + noise-ladder hooks) into ONE consolidated, chart-led visual report \u2014 striking charts: per-ticket stage-1 distribution vs frozen null band (R1), R2 complement paired delta w/ CI, R3 ensemble comparison vs banked mean-of-10, R4a per-dataset argmin/containment geometry (792 datasets), R4b dispersion-quartile monotone gains, horizon curves; committed images (matplotlib -> blog), reports.html + Papers/posts cross-links updated; standing preference banked in memory (more charts/visuals in posts and papers pages when it makes sense)",
+   "class": "cpu",
+   "status": "queued",
+   "prereg": null,
+   "owner_hold": false,
+   "boundary": "owner-priority CPU item: next CPU work window (this session if the rung-(b) chain leaves room, else next session head)"
+  },
+  {
+   "id": "molmo2-continuation-20k-prereg-draft",
+   "title": "OWNER STEERING 08-08 08:49Z (discussion requested, not a launch order): molmo2 +20k continuation \u2014 owner proposal: --resume step_040000 to --steps 60000, --rewarmup-steps 1000, NEW data seed (fresh shuffle; rule banked in memory AND already mechanized in bijou.train check_resume_seed which hard-aborts on seed reuse). Facts for the discussion: matched-steps read says the trunk leads (40k molmo2 6.0079 vs A-s0 7.7966, paired -1.717); the -0.205 gap to AR-100k (5.8026) is a 2.5x-steps confound; probe curve 5.91@26.5k -> 6.2075@40k = the cosine floor tail bought nothing (the exact published setup for re-warm + re-decay, already implemented in lr_lambda for extensions). Cost ~49 GPU-h (~12.2h box wall at 2.2 s/step). DRAFT the pre-reg after the Discord discussion converges: primary = 60k greedy panel paired vs the 40k endpoint npz + the AR-100k 5.8026 bar quoted; probe kill line vs 6.2075 sustained; epochs-seen arithmetic pinned; async saves default-on; box sequencing vs the #4 attach chain is the owner decision in flight",
+   "class": "cpu",
+   "status": "blocked",
+   "prereg": null,
+   "owner_hold": true,
+   "boundary": "opens when the owner discussion converges on continuing; execution (gpu-box) would get its own pre-reg + queue entry + owner go"
   }
  ]
 }

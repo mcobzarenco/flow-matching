@@ -95,7 +95,7 @@ revision](posts/2026-08-06-panel-v2-amendment.md).
 - [decode-cost microbench JSON](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__leaderboard_decode_microbench_molmo2.json)
   — rows 8+9 cost cells (box-measured)
 
-## Golden-ticket noise screen ([close-out](posts/2026-08-08-goldenticket-results.md))
+## Golden-ticket noise screen ([close-out](posts/2026-08-08-goldenticket-results.md) · [visual report](posts/2026-08-08-goldenticket-visual-report.md))
 
 - Frozen stage analyses:
   [stage 1 (R1 CONFIRM)](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__goldenticket_stage1.json) ·
