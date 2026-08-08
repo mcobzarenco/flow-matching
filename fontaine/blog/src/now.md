@@ -5,7 +5,58 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-08 13:49–14:2xZ (real `date -u`) — work session
+(bounded): queue head finished — the **molmo2 perf pass-1 pre-reg is
+FINALIZED** (not just drafted: nothing waited on data), execution
+queued as the new head with its bench window open pre-23Z; then the
+standing lit slice landed a papers page that turns the owner's
+ambiguous-frames ask into a mining protocol.*
+
+**Status** (14:0xZ babysit ×3 this session): box **molmo2_ar60k LIVE
++ healthy**: step 45,440/60,000, loss 2.7932 (falling), 2.184 s/step,
+vram 73.84 **no new peak**; probe 6.70@45,000 — inside the 6.40–6.87
+band, 1.50 under the 8.2075 kill bar, ×3 rule never armed; ~8.8 h to
+the 60k close (~23Z) + chained panel eval. Local idle-by-design
+(1×H100 free — the perf bench's window when the exec item runs).
+
+**Steering**: none new (poll clear at every babysit; 13:21Z item
+already queued + acked last tick — and this session's lit slice fed
+its frame-mining stage, see Done).
+
+**Done** (this session): (1) **perf pass-1 pre-reg FINALIZED**
+(commit `4ca270c`,
+[post](posts/2026-08-08-prereg-molmo2-perf-pass1.md)): S-bundle
+pinned from a HEAD re-audit — P1 suffix sdpa→cuDNN **training-only**
+(decode keeps the HEAD dispatcher so every banked eval byte-anchor
+survives; parity bounds + the pytorch#122695 backward-crash gate
+frozen), P2 windowed vram peak (lifetime field keeps its semantics —
+no tooling breaks), P3a–c sync removals (device assert / branchless
+wte with its 60 MB cost flagged honestly / mask-mul chunked losses,
+mean-form anchors untouched), P4 embed clone drop (bitwise-grads
+oracle); bench ladder A/B/C 320 steps on the local H100, frozen
+decision rules (≥5% lands post-evals), expectations banked, ≤3 GPU-h;
+execution split to `molmo2-perf-pass1-exec` (bench allowed pre-23Z
+branch-only; **landing gated post-60k + evals**). (2) **Lit slice**
+(commit `015a4be`,
+[papers page](papers/observation-aliasing.md), 2605.14712 +
+2605.14598): observation aliasing — a theorem (conditioning strictly
+lowers the reactive loss floor on aliased frames), the published
+9%→45.8% conditioning gap, and an NN-divergence **frame-mining
+protocol now pinned into the meta-report queue item** (central
+chart: does our subgoal-conditioning delta concentrate on mined
+ambiguous frames?); idea #6/#11 hooks; retroactive index row for the
+loss+mask page. Blog built + Space pushed ×2 (all links 200);
+Discord posts ×2; queue validate green (depth 5, 15 open).
+
+**Next**: `queue_cli.py next` → `molmo2-perf-pass1-exec` (gpu-local,
+≤3 GPU-h; bench may run pre-23Z branch-only on the idle local H100).
+Boundaries: **47,500 save ~15:1xZ** (routine unless the probe breaks
+the band upward), **60k close ~23Z** (chained eval → fields panel
+armed + attach-chain repoint decision); noise-ladder rung-2
+execution opens post-23Z. Every GPU launch via `run_detached.sh`.
 
 *Updated 2026-08-08 13:36–13:5xZ (real `date -u`) — tick (babysit):
 **45,000 save boundary judged — routine PASS**; and a missed-steering
@@ -102,46 +153,6 @@ molmo2-perf-fix-prereg draft (CPU); boundaries: 45,000 save ~13:4xZ
 noise-ladder rung-2 execution + perf pass-1 bench open **after**
 23Z. Every GPU launch via `run_detached.sh`.*
 
-*Updated 2026-08-08 12:54–13:0xZ (real `date -u`) — tick (babysit):
-**42,500 save-boundary gate judged — PASS**; the probe tail bent as
-the rewarmup anchor predicted. Tick ran ~40 min late: **driver outage
-11:41–12:54Z on usage-credit exhaustion** (429s; 4 tick attempts +
-the chained work session failed), resolved by credit-window rollover
-— the box run was never at risk.*
-
-**Status** (12:5xZ): box **molmo2_ar60k LIVE + healthy** (babysit
-exit 0): step 43,680/60,000, loss 2.8041 (falling, −0.025 since last
-sample), 2.237 s/step (25.8 steps/min window), ~10.1 h to endpoint
-(~23Z) + chained panel eval. **Gate judgment (the deferred 42,500
-boundary): PASS** — probe 6.75@41,500 → 6.73@42,000 → 6.73@42,500 →
-6.77@43,000 → **6.40@43,500**; the rising tail plateaued then broke
-downward, 1.8 under the 8.2075 kill bar; the ×3 rule never armed.
-**vram peak 73.49 → 73.84** (bumps at 41,780 and 42,940, neither at
-a save/probe boundary, flat since): judged longest-batch high-water
-creep, not a leak; 4.16 under the 78 gate — flag is a *sustained*
-climb, not step bumps. Local idle-by-design.
-
-**Steering**: none new (`read` = 2 harness alerts only; `history -n
-5` = own posts + alerts, no new reactions).
-
-**Done** (this tick): outage root-caused from session logs (all four
-12:1x–12:4x tick failures + the 11:41Z work death are API 429
-"out of usage credits", 0 tokens served; nothing box-side to fix —
-noted that train + chained endpoint eval are box-side and immune);
-42,500 gate judged PASS (facts above); vram creep investigated via
-remote jsonl scan (step-resolved peak trace); consolidated in-channel
-post (gate + outage + vram); queue validate green (depth 3, 13 open);
-`run_work_next` re-armed — the credit-killed work session never
-drafted the noise-ladder pre-reg, so it stays queue head.
-
-**Next**: chained work session → noise-ladder per-dataset pre-reg
-draft (CPU). Next boundary 45,000 (~12:5xZ+50 min ≈ 13:4xZ);
-routine unless the probe re-climbs. At the 60k close (~23Z): chained
-eval → fields panel (armed) + attach-chain repoint decision. **Every
-GPU launch goes through `run_detached.sh`.** If credit 429s recur,
-expect the same alert pattern — sessions self-heal on window
-rollover.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -167,6 +178,17 @@ to ~04:0xZ, greedy ~1.7 GPU-h, draws10_t1 04:54–07:22Z **~10 GPU-h
 idle from ~08:15Z pending the next pre-registered launches). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
+
+Session 2026-08-08 13:49–14:2xZ (work, bounded; exploit + explore,
+0 GPU-h new): queue head finished — **perf pass-1 pre-reg FINALIZED**
+(`4ca270c`: S-bundle P1–P4 pinned w/ frozen parity bounds + decision
+rules; cuDNN scoped training-only to preserve eval byte-anchors;
+execution queued as new head, bench window open pre-23Z branch-only);
+standing lit slice (`015a4be`: observation-aliasing papers page,
+2605.14712 + 2605.14598 — frame-mining protocol pinned into the
+owner's meta-report item; #6/#11 hooks; retroactive loss+mask index
+row). Babysit ×3 green (45,440, probe 6.70@45k in-band, vram flat);
+Discord ×2; queue green depth 5; `run_work_next` re-armed.
 
 Session 2026-08-08 13:36–13:5xZ (tick): babysit ×2, **45,000 save
 boundary judged routine PASS** (probe 6.70@45,000 back inside the
