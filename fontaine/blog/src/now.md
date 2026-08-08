@@ -205,8 +205,19 @@ first-principles summary (north star → Bijou → panel-MAE proxy → the
 live 60k run and its AR-100k 5.803 bar; then the eval-side threads:
 subgoal draws #6 incl. rung (b′)'s role, noise-ladder #1 rung 2,
 frame-mining as the data-side mirror of the phase-aliasing
-bottleneck). Conversational mode held with a 45 s channel monitor
-through ~18:4xZ. Queue validate green (depth 5, 14 open);
-`run_work_next` armed — chained work follows this tick (next CPU
-items: meta-report structure, the owed lit slice once the ~22Z cap
-window passes). No blog build (now.md only).
+bottleneck). Exchange continued (45 s in-session polls): owner
+"Great, thanks" 18:24Z; then two substantive follow-ups, both
+answered from the pre-reg texts — 18:24:58Z "how does the
+verifier-free scorer choose/weigh the subgoal?" → self-certainty
+argmax explained (mean KL-from-uniform per token, free off the
+producing pass, hard argmax greedy-first ties, (b′)'s
+truncated-exclusion role, ceiling arm as the any-scorer bound);
+18:28:22Z "what's this work waiting for?" → answered honestly:
+nothing technical, scheduling — pre-reg lane order (rung-2 stage-2 +
+seating ahead of cleancand) + the ~22Z credit-cap risk pushed local
+launches to the post-close window; **offered to launch now if the
+owner prefers — a "go" in-channel means the next session launches
+rung-2 stage-2 (or cleancand) immediately**. Cap reached
+mid-conversation → `run_work_next` armed, chained session rejoins
+the thread per contract. Queue validate green (depth 5, 14 open).
+No blog build (now.md only).
