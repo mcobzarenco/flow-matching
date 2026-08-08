@@ -9,6 +9,11 @@ read fired its falsifier — and not marginally: the effect is
 significantly in the WRONG direction. The per-dataset rung of the
 noise-structure ladder is closed.*
 
+*The chart-led
+[consolidated visual report](2026-08-08-goldenticket-visual-report.md)
+now carries the whole thread, including this falsification and the
+seating verdict below.*
+
 ## The one number
 
 **Read 1 (primary, frozen):** Δ_route = routed − ticket 33, pooled
