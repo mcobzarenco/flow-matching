@@ -342,3 +342,36 @@ value = 60.0
 # [[run.gates]]
 # kind = "gpu_hours_max"
 # value = 6.0
+
+# LIVE — perf pass-1 bench ladder (LOCAL GPU, unit
+# fontaine-perfpass1-bench; pre-reg
+# 2026-08-08-prereg-molmo2-perf-pass1.md, owner prio 14:10Z).
+# Sequence of 5 short runs in one unit: parity_A/B (50 steps,
+# log-every 1, MATH-vs-cuDNN one-step bounds + overlay) then
+# bench_A/B/C (320 steps each; A=HEAD 9a18432, B=P1-only 00cdafe,
+# C=full bundle 22e8148 in the perf-pass1 worktree). Amendment:
+# batch 8 (single-GPU unshards ZeRO-1 optimizer, +~11 GiB; 12 would
+# OOM) — uniform across rungs, relative reads unaffected. Prune at
+# completion; readout = the unit's LADDER summary line + parity line.
+[[run]]
+name = "perfpass1_bench"
+kind = "progress-log"
+host = "local"
+pgrep = "perfpass1"
+pgrep_min = 1
+gpu_indices = [0]
+gpu_mem_min_mib = 8000
+log = "/home/ubuntu/flow-matching/outputs/train/perfpass1_parity_A.launch.log"  # REPOINT as rungs roll: parity_A -> parity_B -> bench_A -> bench_B -> bench_C (.launch.log stems)
+progress_re = "\"step\": [0-9]+"
+started_utc = "2026-08-08T14:36:00Z"
+gpu_hours_per_wall_hour = 1.0
+boundary = "5 sequential runs, ~60-75 min wall total (2x ~5 min parity + 3x ~12-15 min bench + 5 model loads); judge stalls per-run (model load ~4-5 min prints nothing), not across the unit"
+anchors = [
+    "parity gate (pre-reg): step-1 loss abs diff <= 1e-3, grad-norm rel diff <= 1e-2 (PARITY line in journal); FAIL => P1 drops per decision rule 4, ladder continues for the record",
+    "decision (pre-reg): C >= 5% median step-time vs A => bundle lands post-60k-close+evals; < 5% => P2 + bitwise-free items only",
+    "vram guard: C steady peak <= A * 1.02; batch-8 amendment recorded in-channel ~14:3xZ",
+    "box 60k run is UNTOUCHED by this unit (local GPU only); do not conflate the two at polls",
+]
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 3.0
