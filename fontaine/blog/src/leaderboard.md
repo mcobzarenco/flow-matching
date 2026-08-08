@@ -18,7 +18,7 @@ first_mae ≤ 1.6 · ☆☆☆ mainline adoption.
 | # | model × decode | panel MAE ↓ | first_mae | evals/frame | eval ms/f¹ ⏱ | b=1 ms¹ ⏱ | provenance |
 |---|---|---|---|---|---|---|---|
 | 1 | **SnapFlow student, 1-NFE, mean-of-10** | **5.3675** | 1.5927² | 10 | 50.0 | 111.2 | [results](posts/2026-08-06-snapflow-results.md) |
-| 2 | **Flow teacher @80k, Heun-30, mean-of-10** | **5.3645** | **1.4242** | 300 | 409.6 | 1245.0 | [results](posts/2026-08-06-snapflow-results.md) |
+| 2 | **Flow teacher @80k, Heun-30, mean-of-top-10-tickets** | **5.1847** | **1.3831** | 300 | 409.6⁵ | 1245.0⁵ | [results](posts/2026-08-08-goldenticket-results.md) |
 | 3 | SnapFlow student, 1-NFE, mean-of-5 | 5.3918 | 1.6056 | 5 | 50.0 | 111.2 | [results](posts/2026-08-06-snapflow-results.md) |
 | 4 | SnapFlow student, 1-NFE, single draw | 5.6036 | 1.7039 | 1 | 46.9 | 100.1 | [results](posts/2026-08-06-snapflow-results.md) |
 | 5 | AR-100k, draws-10 mean, T=1.0 | 5.6515 | 1.9477 | 10 (serial) | 2107.3 | 7993.0 | [readout](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__draws10_t1_ar100k_k4l2.json) |
@@ -29,11 +29,19 @@ first_mae ≤ 1.6 · ☆☆☆ mainline adoption.
 | 10 | Flow teacher @80k, Heun-30, single draw (stable-key) | 6.5997 | 1.9355 | 30 | 115.7 | 1234.0 | [rebank](posts/2026-08-06-stablekey-rebank-results.md) |
 | 11 | state-copy (control) | 11.785 | 2.620 | 0 | — | — | banked, byte-matched every eval |
 
-Ranks 1–2 are a statistical tie on chunk MAE (Δ 0.003, ~1σ_draw) at
-**30× different expert compute**. The ☆☆ first-mae arm (≤ 1.6) is
-**crossed** — by the teacher's mean-of-10 (1.4242, best on the
-board) and the student's (1.5927). The ☆ chunk bar (≤ 5.0) is
-**open**: current best 5.3675, gap 0.37.
+**Row 2 re-seated 2026-08-08** (noise-ladder seating read, paired
+per-frame): the mean-of-**top-10-tickets** ensemble replaces the
+random mean-of-10 (5.3645/1.4242) it was measured against — paired
+Δ −0.174 [CI95 −0.196, −0.152] on 17,204 core frames, clustered CI
+agrees ([analysis](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__noise_ladder_seating.json)).
+⁵ cost cells inherited from the random mean-of-10 row — identical
+decode config (10 draws × Heun-30), only the noise source differs.
+The ☆☆ first-mae arm (≤ 1.6) is **crossed** — 1.3831 is the best
+first-step accuracy banked (student: 1.5927). The ☆ chunk bar
+(≤ 5.0) is **open**: current best **5.1847, gap 0.18** (was 0.37
+before the re-seating). The student-vs-teacher compute story (rows
+1 vs 2): the 30×-cheaper student now trails the teacher's best
+ensemble by 0.18 — the distillation target moved.
 
 **Row 5 landed 2026-08-07** (the `draws10_t1` boundary, all three
 pre-registered expectations met): AR mean-of-10 buys −0.145 [CI95
@@ -93,8 +101,9 @@ either way (2.2 s greedy → 8.0 s draws-10 single-stream) for a
 universal one (row 5's readout).
 
 ² The student's mean-of-10 first_mae (1.5927) crosses the ☆☆
-first-mae bar (≤ 1.6); the teacher's 1.4242 remains the best
-first-step accuracy banked.
+first-mae bar (≤ 1.6); the teacher's top-10-ticket 1.3831 is the
+best first-step accuracy banked (the random mean-of-10's 1.4242
+held this title until the 2026-08-08 re-seating).
 
 
 ## The instrument

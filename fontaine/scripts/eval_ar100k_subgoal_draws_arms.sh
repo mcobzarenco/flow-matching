@@ -90,8 +90,24 @@ set -e
 
 if [ "$gate_rc" -eq 2 ]; then
     echo "COST GATE FALLBACK — killing the full-panel run, relaunching on q4"
+    # $EVAL_PID is the run_arms SUBSHELL — killing it alone orphans the
+    # uv wrapper + python eval (22:26Z 08-08 cleancand incident: the
+    # full-panel run survived its own fallback and ran beside the q4
+    # relaunch). TERM the tree by pattern — bijou.eval invocation AND
+    # this stem together (babysit self-match lesson: a bystander shell
+    # inspecting reports/<stem>.npz must not match; only the eval tree
+    # carries both tokens in one argv). Confirm death, escalate to KILL.
     kill "$EVAL_PID" 2>/dev/null || true
+    pkill -TERM -f "bijou[.]eval.*${stem}" 2>/dev/null || true
     wait "$EVAL_PID" 2>/dev/null || true
+    for _ in $(seq 30); do
+        pgrep -f "bijou[.]eval.*${stem}" >/dev/null || break
+        sleep 2
+    done
+    if pgrep -f "bijou[.]eval.*${stem}" >/dev/null; then
+        echo "full-panel eval survived TERM — escalating to KILL"
+        pkill -KILL -f "bijou[.]eval.*${stem}" 2>/dev/null || true
+    fi
     sleep 10
     stem_q4="eval__${RUN}__step_100000__stateprobe_q4_subgoaldraws"
     echo "=== stage 2 (q4 fallback): draws-8 run, both arms ($stem_q4) ==="

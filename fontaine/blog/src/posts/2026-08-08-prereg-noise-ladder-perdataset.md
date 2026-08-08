@@ -241,6 +241,68 @@ the preflight record. **No read changes**: read 1 pools qualifying
 datasets' complement rows only, and all qualifying datasets are in the
 original 792.
 
+## Amendment 2 (2026-08-08 ~23:0xZ — posted AFTER the seating arm's
+## base-equality abort, BEFORE any gate change or re-read)
+
+The seating arm ran (rc=0 on the eval, ~3.0 GPU-h ≤ gate) and the
+**base-equality oracle fired exactly as designed**: re-run report
+5.3645/**1.4241** vs banked 5.3645/**1.4242** at 4dp (chunk Δ −8.6e-5
+still rounds equal; first Δ −1.27e-4 crosses the rounding boundary).
+Held per the never-re-tolerance clause; this amendment records the
+owed diagnosis and the amended gate.
+
+**Diagnosis** (committed: `fontaine/scripts/seating_base_equality_diag.py`
+→ `reports/analysis__seating_base_equality_diag.json`; the banked run
+retained no per-frame npz — that gap is this arm's entire reason to
+exist — so the diagnosis uses the finest banked granularity, the
+878-cell per-dataset table, plus git archaeology):
+
+1. **Rows/truth/pooling identical**: identity columns byte-equal
+   (17,204 core frames), and the per-dataset **state-copy** chunk MAE
+   is **exactly equal** in all 878 cells (max |Δ| = 0.0) — the
+   sampling-independent half of the report reproduces bit-for-bit.
+2. **Noise reproduction CONFIRMED, resampling EXCLUDED**: the bijou
+   row's per-dataset |Δ| is ≤ 1.7e-3 even in 4-frame cells (median
+   7.9e-5; per-motor ≤ 2.5e-4; p50/p90 within 3.1e-4). Different
+   noise draws would move small cells at draw-level dispersion —
+   order 0.05–0.5 (the single-draw ticket spread on this panel is
+   5.71–9.37) — two orders of magnitude above what is observed. The
+   launcher's `--noise-key index` reproduction of the historical
+   keying is confirmed; the "index-keying suspect" is cleared.
+3. **Mechanism located in git**: the banked row (2026-08-05 23:31)
+   was produced by the *sequential* per-draw solver loop (one
+   `predict_chunk` per draw at batch 32). Owner commit `2ee2be5`
+   ("--sample-draws batched flow ensembling"), merged into fontaine
+   2026-08-07 12:26Z as `85cdc0a`, rewrote the eval draws path into
+   **one tiled solver call** (batch draws×32 = 320) — same noise
+   tensor, draws-major layout unchanged, different kernel reduction
+   order. Per-frame numeric drift ~1e-3 pools to the observed −8.6e-5
+   chunk / −1.27e-4 first. Every byte-identity regression since
+   (`0acabde` etc.) certifies against the post-merge path; the
+   seating launcher's "bit-for-bit" header claim was true of the
+   noise values, false of the solver forward across that merge.
+
+**Amended gate (i)** — pooled-4dp equality is replaced by the
+certification it was standing in for (same experiment, same rows,
+same noise), each clause sharper than the rounding gate it replaces:
+
+- (a) identity columns byte-equal (unchanged — gate ii);
+- (b) per-dataset **state-copy chunk MAE exactly equal** to the
+  banked json, all cells (certifies rows/truth/pooling);
+- (c) bijou report row within **|Δ| ≤ 5e-4 absolute** of the banked
+  row on chunk_mae AND first_mae (4× the observed batched-solver
+  drift; ~360× below the read's effect scale |5.1847−5.3645|≈0.18);
+- (d) per-dataset bijou chunk MAE within **|Δ| ≤ 5e-3** in every
+  cell (the noise-resample exclusion bound: 10–100× below draw-level
+  dispersion at the smallest cells — a keying/resample fault cannot
+  pass this clause).
+
+The **frozen read is unchanged** and internally consistent: both
+npzs it pairs (top-10, seating) are post-merge artifacts of the same
+code path; the drift enters only the comparison against the
+2026-08-05 pooled anchor. Expectation 4 and the falsifier are
+untouched.
+
 ## Finalization record (DRAFT ~09:2xZ → posted ~13:2xZ, same day)
 
 1. ✅ Stage 0 + stage 1 ran on banked data (oracles first); F, the

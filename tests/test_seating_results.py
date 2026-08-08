@@ -5,11 +5,14 @@ The script's main() runs against the banked/gitignored npzs; these
 tests keep the gate semantics and the paired-read math under check.py
 on planted synthetic worlds (anchors injected via the seating_read
 parameters). The real top-10 anchor (gate iii vs 5.1847/1.3831) was
-verified live against the banked npz before the script froze.
+verified live against the banked npz before the script froze. Gate
+(i) is the AMENDED form (pre-reg Amendment 2): state-copy cells
+exact, bijou pooled row within 5e-4, bijou cells within 5e-3.
 """
 
 from __future__ import annotations
 
+import copy
 import importlib.util
 from pathlib import Path
 from typing import Any
@@ -34,9 +37,16 @@ FRAMES, CHUNK, DIMS = 12, 4, 3
 def world(
     top10_offset: float,
     seed: int = 0,
-) -> tuple[dict[str, np.ndarray], dict[str, np.ndarray], dict[str, Any]]:
-    """Two aligned npz-shaped dicts: seating errs ~1.0/element, the
-    top-10 arm shifted by top10_offset (negative = better)."""
+) -> tuple[
+    dict[str, np.ndarray],
+    dict[str, np.ndarray],
+    dict[str, Any],
+    dict[str, Any],
+]:
+    """Two aligned npz-shaped dicts plus seating/banked reports:
+    seating errs ~1.0/element, the top-10 arm shifted by top10_offset
+    (negative = better). The banked report matches the seating report
+    exactly (drift 0); tests perturb copies."""
     rng = np.random.default_rng(seed)
     truth = rng.normal(size=(FRAMES, CHUNK, DIMS))
     valid = np.ones((FRAMES, CHUNK), dtype=bool)
@@ -61,7 +71,14 @@ def world(
         nls.element_mask(truth, valid),
         core,
     )
-    report = {
+    per_dataset = {
+        f"ds{i}": {
+            "frames": int((repo == f"ds{i}").sum()),
+            "chunk_mae": {"state-copy": 2.0 + i, "bijou@80000": 1.0 + 0.1 * i},
+        }
+        for i in range(3)
+    }
+    seating_report = {
         "summaries": [
             {
                 "policy": "bijou@80000",
@@ -69,8 +86,10 @@ def world(
                 "first_mae": first,
             },
         ],
+        "per_dataset": per_dataset,
     }
-    return top10, seating, report
+    banked_report = copy.deepcopy(seating_report)
+    return top10, seating, seating_report, banked_report
 
 
 def anchors(top10: dict[str, np.ndarray]) -> tuple[float, float]:
@@ -84,24 +103,21 @@ def anchors(top10: dict[str, np.ndarray]) -> tuple[float, float]:
 def run(
     top10: dict[str, np.ndarray],
     seating: dict[str, np.ndarray],
-    report: dict[str, Any],
+    seating_report: dict[str, Any],
+    banked_report: dict[str, Any],
 ) -> dict[str, Any]:
-    base = (
-        round(report["summaries"][0]["chunk_mae"], 4),
-        round(report["summaries"][0]["first_mae"], 4),
-    )
     return nls.seating_read(
         top10,
         seating,
-        report,
-        banked_mean10=base,
+        seating_report,
+        banked_report,
         banked_top10=anchors(top10),
     )
 
 
 def test_planted_top10_better_confirms_with_exact_delta() -> None:
-    top10, seating, report = world(top10_offset=-0.25)
-    out = run(top10, seating, report)
+    top10, seating, report, banked = world(top10_offset=-0.25)
+    out = run(top10, seating, report, banked)
     read = out["read_paired"]
     assert read["delta_pooled"] == pytest.approx(-0.25, abs=1e-4)
     assert read["ci95"][1] < 0
@@ -110,50 +126,74 @@ def test_planted_top10_better_confirms_with_exact_delta() -> None:
 
 
 def test_planted_null_world_not_confirmed() -> None:
-    top10, seating, report = world(top10_offset=0.0)
-    out = run(top10, seating, report)
+    top10, seating, report, banked = world(top10_offset=0.0)
+    out = run(top10, seating, report, banked)
     read = out["read_paired"]
     assert read["delta_pooled"] == pytest.approx(0.0, abs=1e-6)
     assert read["verdict"].startswith("NOT-CONFIRMED")
 
 
 def test_identity_misalignment_aborts() -> None:
-    top10, seating, report = world(top10_offset=-0.25)
+    top10, seating, report, banked = world(top10_offset=-0.25)
     seating = dict(seating)
     seating["frame_index"] = seating["frame_index"] + 1
     with pytest.raises(SystemExit, match="identity column"):
-        run(top10, seating, report)
+        run(top10, seating, report, banked)
 
 
-def test_base_equality_mismatch_aborts() -> None:
-    top10, seating, report = world(top10_offset=-0.25)
-    report["summaries"][0]["chunk_mae"] += 0.01
-    base = (
-        round(report["summaries"][0]["chunk_mae"] - 0.01, 4),
-        round(report["summaries"][0]["first_mae"], 4),
+def test_base_equality_pooled_drift_beyond_envelope_aborts() -> None:
+    top10, seating, report, banked = world(top10_offset=-0.25)
+    banked["summaries"][0]["chunk_mae"] += 0.01
+    with pytest.raises(SystemExit, match="base-equality FAILED \\(pooled\\)"):
+        run(top10, seating, report, banked)
+
+
+def test_base_equality_within_envelope_passes() -> None:
+    # Amendment-2 confirm branch: solver-drift-scale deltas pass —
+    # pooled 2e-4 < 5e-4, cells 1e-3 < 5e-3, state-copy untouched.
+    top10, seating, report, banked = world(top10_offset=-0.25)
+    banked["summaries"][0]["chunk_mae"] += 2e-4
+    banked["summaries"][0]["first_mae"] -= 2e-4
+    banked["per_dataset"]["ds1"]["chunk_mae"]["bijou@80000"] += 1e-3
+    out = run(top10, seating, report, banked)
+    assert out["gates"]["base_equality_pooled_delta"][0] == pytest.approx(
+        -2e-4,
+        abs=1e-9,
     )
-    with pytest.raises(SystemExit, match="base-equality FAILED"):
-        nls.seating_read(
-            top10,
-            seating,
-            report,
-            banked_mean10=base,
-            banked_top10=anchors(top10),
-        )
+    assert out["gates"]["base_equality_cell_delta_max"] == pytest.approx(
+        1e-3,
+        abs=1e-9,
+    )
+    assert out["read_paired"]["verdict"].startswith("CONFIRMED")
+
+
+def test_base_equality_state_copy_cell_drift_aborts() -> None:
+    # state-copy is sampling-independent: ANY difference means the
+    # rows/truth/pooling changed — never tolerated, however small.
+    top10, seating, report, banked = world(top10_offset=-0.25)
+    banked["per_dataset"]["ds2"]["chunk_mae"]["state-copy"] += 1e-9
+    with pytest.raises(SystemExit, match="state-copy cell"):
+        run(top10, seating, report, banked)
+
+
+def test_base_equality_cell_drift_beyond_envelope_aborts() -> None:
+    # A resample/keying fault: pooled row still inside the envelope,
+    # but one small cell moves at draw-dispersion scale.
+    top10, seating, report, banked = world(top10_offset=-0.25)
+    banked["per_dataset"]["ds0"]["chunk_mae"]["bijou@80000"] += 0.05
+    with pytest.raises(SystemExit, match="base-equality FAILED \\(cells\\)"):
+        run(top10, seating, report, banked)
 
 
 def test_top10_anchor_mismatch_aborts() -> None:
-    top10, seating, report = world(top10_offset=-0.25)
+    top10, seating, report, banked = world(top10_offset=-0.25)
     good = anchors(top10)
     with pytest.raises(SystemExit, match="top-10 anchor FAILED"):
         nls.seating_read(
             top10,
             seating,
             report,
-            banked_mean10=(
-                round(report["summaries"][0]["chunk_mae"], 4),
-                round(report["summaries"][0]["first_mae"], 4),
-            ),
+            banked,
             banked_top10=(good[0] + 0.01, good[1]),
         )
 
@@ -163,3 +203,5 @@ def test_frozen_banked_constants_unchanged() -> None:
     assert nls.BANKED_MEAN10_FIRST == 1.4242
     assert nls.BANKED_TOP10_CHUNK == 5.1847
     assert nls.BANKED_TOP10_FIRST == 1.3831
+    assert nls.BASE_TOL_POOLED == 5e-4
+    assert nls.BASE_TOL_CELL == 5e-3

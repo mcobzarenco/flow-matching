@@ -2,7 +2,68 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-08 22:33–23:3xZ (real `date -u`) — work session
+(bounded, chained at seating rc=0): **noise-ladder rung 2 FULLY
+CLOSED — seating CONFIRMED, the flow board row moves to
+mean-of-top-10-tickets 5.1847/1.3831** (best chunk AND first on the
+leaderboard, ☆ gap 0.37 → 0.18); the base-equality abort diagnosed
+and amended by the book; **cleancand launcher incident caught at
+first babysit and fixed** (orphaned full-panel eval beside the q4
+fallback).*
+
+**Status** (babysits 22:33/22:58Z): box **molmo2_ar60k LIVE +
+healthy**: 59,380/60,000 at 22:58Z, probe 6.41@59k (band 6.0–6.5,
+kill bar never armed), loss 2.72, vram 73.84 — **60k close ~23:2xZ**
+→ chained greedy panel eval → fields panel opens. Local
+**subgoal_cleancand LIVE on the q4 fallback**: rate gate correctly
+projected the full panel past 5 GPU-h at ~200 frames → q4 relaunch
+22:37Z (4,301 rows); 992/4,301 at 22:58Z, 31.7 f/min cumulative,
+projection **2.3 GPU-h ≤ 5.5**, rc=0 ~00:4xZ 08-09.
+
+**Steering**: 22:18Z "How are things going?" → replied 22:34Z with
+the three-things-in-flight status (60k ~45 min out, seating abort
+held un-re-toleranced, cleancand ramping); seating
+verdict + incident follow-up posted at close. No other messages.
+
+**Done**: (1) **Seating base-equality DIAGNOSED** (the owed npz-level
+adjudication): state-copy per-dataset cells byte-equal 878/878 and
+bijou cells ≤1.7e-3 even at 4-frame size — two orders below
+draw-level dispersion, so **resampled noise excluded,
+`--noise-key index` reproduction confirmed**; mechanism git-located
+in the batched-ensembling merge (`2ee2be5`/`85cdc0a` 08-07:
+sequential batch-32 solver calls → one tiled batch-320 call, same
+noise tensor, different kernel reduction order). **Amendment 2
+posted on the pre-reg BEFORE any gate change**; committed
+`seating_base_equality_diag.py` (+6 planted oracles) writes
+`analysis__seating_base_equality_diag.json`; amended gate (i) =
+state-copy exact + pooled ≤5e-4 + cells ≤5e-3 in the read script
+(+9 tests) and the launcher's oracle now runs the diag script.
+(2) **Frozen seating read: CONFIRMED** — paired Δ −0.17358
+[CI95 −0.19556, −0.15214] entirely below 0 (clustered CI agrees,
+first mirror −0.041); leaderboard row 2 re-seated to
+**mean-of-top-10-tickets 5.1847/1.3831**, results-post seating
+section + idea-01 ledger entries landed. Noise-ladder rung 2 closed
+end-to-end. (3) **Cleancand kill-path incident**: babysit exit 3 at
+22:33 surfaced a 94.6 h projection — root cause: the launcher's
+q4-fallback `kill` hit only the `run_arms` subshell, orphaning the
+uv+python full-panel eval to run BESIDE the q4 relaunch; session
+TERM'd the orphans by PID 22:41Z (q4 run healthy since, 77–100%
+util). Fix landed in BOTH subgoal-draws launchers: pkill by
+`bijou[.]eval.*<stem>` (self-match-safe pattern per the babysit
+lesson) + poll + KILL escalation; babysit entry updated with q4
+boundary + incident anchors. check.py 538 green.
+
+**Next**: `queue_cli.py next` = molmo2-perf-pass1-exec (box ladder,
+opens post-60k-close + chained eval + fields panel). Dated
+boundaries: **60k close ~23:2xZ 08-08** → chained eval (paired read
+vs banked 40k npz decides the attach-chain warm-start) → fields
+panel; **cleancand rc=0 ~00:4xZ 08-09** → frozen reads one command
+(`subgoal_draws_results.py --candidate-filter clean --draws-stem
+reports/eval__…__stateprobe_q4_subgoalcleandraws`). Chained work
+armed (`run_work_next`).
 
 *Updated 2026-08-08 22:10–22:3xZ (real `date -u`) — tick (critical
 window, held open): **seating rc=0 22:25Z** → the frozen read ran and
@@ -125,60 +186,6 @@ refresh_ctrl stamp) → perf-pass1 box ladder. Meta-report composition
 opens post-fields-panel (structure + §1/§2 charts pre-built).
 Chained work armed (`run_work_next`).
 
-*Updated 2026-08-08 17:48–18:3xZ (real `date -u`) — work session
-(bounded): #6 rung (b′) **instrument delta LANDED oracle-green +
-stage-1 gate OPEN** (commit 93dcf71) — the cleancand execution item
-is now launch-only. Mid-session owner steering (17:50Z) handled same
-session: all 12 frame-mining pair figures rebuilt in the eval-report
-per-joint layout (commit 128f096), live on the Space.*
-
-**Status** (babysits 18:09/18:2xZ, exit 0): box **molmo2_ar60k LIVE +
-healthy**: step 52,080/60,000, probe **6.27@51,500 / 6.29@52,000 —
-fresh continuation lows** (band was 6.40–6.87; 1.91+ under the 8.21
-kill bar, ×3 never armed), loss 2.71, 2.21 s/step, vram 73.84 no new
-peak; ~4.9 h to the **60k close ~23Z** → chained greedy panel eval.
-Local GPU free; the post-close window is now fully launch-only
-(rung-2 stage-2/seating + cleancand arms all single commands).
-
-**Steering** (17:50Z, mcobzarenco): the action charts on the
-frame-mining post are unreadable — rework each figure as
-[image][image] / 3×2 per-joint grid, eval-report format (their
-original message was lost in the 16:5xZ credit outage). DONE same
-session (128f096): per-joint axes with motor-name titles from the
-banked baseline report json, eval-report dark theme (query #648fff /
-neighbor amber #ffb000), subgoal subtitles kept; blog rebuilt, Space
-pushed, live bytes sha-verified; confirmed in-channel 18:16Z with a
-per-joint reading of pairs 1 and 7.
-
-**Done** (commits 93dcf71 + 128f096): (1) rung (b′) instrument delta
-per the pre-reg — frozen eligible-list rule canonicalized as
-`subgoal_scoring.eligible_indices`; `SelectedSubgoalPolicy`
-`candidate_filter='clean'` (names `_boncleansubgoal`/
-`_ceilcleansubgoal`, both scorers pick over the eligible list); eval
-CLI `--subgoal-candidate-filter clean` (report records the filter,
-candidates dump gains eligible flags + fallback + alternates over the
-eligible list; pass-1 bytes untouched); read script + live oracles
-gained filter-aware modes (provenance aborts incl. cross-convention
-stray keys, eligible/fallback recompute aborts, eligible-size +
-fallback-count records; draws-0 limit inert by the rule). NEW
-`subgoal_draws_cleanlist_stage1.py`: banked-table re-adjudication
-reproduced every written prior EXACTLY (40/60 binds, 0/60 SC + 0/60
-ceil pick changes, a′ 60/60, b′ 57/60, c′ 23/425, 0 fallback) =
-oracles vii+x; bars all PASS → **stage-2 gate json written**. Oracles
-viii/ix pinned CPU-side in tests (planted filter-binds worlds both
-scorers, all-truncated fallback). check.py 522 green (30/30
-subgoal-draws). (2) The steering item above. Queue: execution item
-annotated LAUNCH-ONLY, validate green depth 5.
-
-**Next**: `queue_cli.py next` = molmo2-perf-pass1-exec (box ladder,
-post-close). Dated boundaries: **60k close ~23Z 08-08** → chained
-eval → fields panel → perf box ladder + noise-ladder rung-2
-stage-2/seating → cleancand arms behind those (launch-only, gate
-json on disk). Chained work armed (`run_work_next`): next CPU items =
-meta-report structure drafting, lit slice (skipped 3 sessions running
-on the credit-cap reason — first quiet post-cap window owes one);
-credit-cap risk until ~22Z stands, committed work resumes at reset.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -204,6 +211,21 @@ to ~04:0xZ, greedy ~1.7 GPU-h, draws10_t1 04:54–07:22Z **~10 GPU-h
 idle from ~08:15Z pending the next pre-registered launches). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
+
+Session 2026-08-08 22:33–23:3xZ (work, bounded, chained; exploit, 0
+GPU-h spent — both live runs pre-registered and already counted):
+noise-ladder rung 2 FULLY CLOSED — seating base-equality abort
+diagnosed (state-copy cells exact 878/878, bijou cells ≤1.7e-3 =
+resampling excluded; mechanism = the batched-ensembling merge
+2ee2be5/85cdc0a), Amendment 2 posted before any gate change, amended
+read ran: paired Δ −0.17358 [−0.19556, −0.15214] CONFIRMED → board
+row moved to mean-of-top-10-tickets 5.1847/1.3831 (☆ gap 0.18).
+Cleancand kill-path incident caught at first babysit (orphaned
+full-panel eval beside the q4 fallback, 94.6 h false projection),
+orphans TERM'd, fix landed both launchers (self-match-safe pkill
+pattern); q4 run healthy, 2.3 GPU-h projection ≤ 5.5. Owner 22:18Z
+status question answered in-channel 22:34Z + verdict follow-up at
+close. check.py 538 green.
 
 Session 2026-08-08 22:10–22:3xZ (tick, critical window held open; ~3.0
 GPU-h seating closed + cleancand live): babysit 22:11Z exit 0 both

@@ -193,3 +193,27 @@
   before stage 2). Stage-2 + seating GPU runs open post-60k-close
   behind the preflight green json; the read script is the remaining
   CPU cell.
+- **2026-08-08 18:3x–19:4xZ: rung-2 stage-2 FALSIFIED out-of-sample
+  ([results](../posts/2026-08-08-noiseladder-rung2-results.md)):**
+  Δ_route +0.129 [CI95 +0.060, +0.205] entirely above zero on 6,014
+  held-out complement rows — the in-sample −0.60 probe delta
+  inverted; per-dataset argmin at ~6–20-frame cells memorizes its
+  cell. Board row stays global ticket 33. Measured prior banked for
+  the whole specialization ladder: transfer-at-selection-time is now
+  the mandatory test. Record-only lead: routing wins chunk steps
+  ~1–8, loses ~15+ (a chunk-position noise policy would be a
+  different, cheaper axis).
+- **2026-08-08 ~23:1xZ: SEATING CONFIRMED — the board row moves to
+  the top-10 ensemble ([results §seating](../posts/2026-08-08-noiseladder-rung2-results.md)):**
+  paired Δ **−0.17358 [CI95 −0.19556, −0.15214]** on 17,204 core
+  frames (clustered CI agrees; first mirror −0.041). Leaderboard row
+  2 is now **mean-of-top-10-tickets 5.1847/1.3831** — best chunk AND
+  first on the board; ☆ gap 0.37 → 0.18. The read survived its own
+  base-equality abort first: the re-run missed the banked first_mae
+  by −1.27e-4 (4dp gate), diagnosed as benign numeric drift from the
+  batched-ensembling merge (state-copy cells exact 878/878, bijou
+  cells ≤1.7e-3 vs draw-dispersion ~0.05–0.5 — resampling excluded;
+  Amendment 2 on the pre-reg, `analysis__seating_base_equality_diag`).
+  The 1-NFE student's distillation target moved: it now trails the
+  teacher's best ensemble by 0.18 at 30× less compute — re-screening
+  the student's ticket response is the natural next rung.

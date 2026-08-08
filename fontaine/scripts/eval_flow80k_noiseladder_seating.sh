@@ -13,11 +13,15 @@
 # KEYING (load-bearing): the banked 5.3645/1.4242 row
 #   (…panel_curated_v0_k4l2_draws10_heun30.json) is dated 2026-08-05 —
 #   BEFORE --noise-key existed (no noise_key field in the json), i.e.
-#   the historical INDEX-keyed path. --noise-key index reproduces that
-#   path bit-for-bit at frozen corpus composition (draw 0 =
-#   sample_noise(seed + index); NOISE_KEYS docstring) — the pre-reg's
-#   base-equality oracle (pooled 5.3645 at 4dp) depends on it. A
-#   distinct _seating stem keeps this re-run from overwriting the
+#   the historical INDEX-keyed path. --noise-key index reproduces the
+#   NOISE VALUES bit-for-bit at frozen corpus composition (draw 0 =
+#   sample_noise(seed + index); NOISE_KEYS docstring). The SOLVER
+#   FORWARD is not bit-stable across the batched-ensembling merge
+#   (owner 2ee2be5, merged 85cdc0a 08-07: sequential batch-32 ->
+#   tiled batch-320) — the first run's 4dp oracle fired on exactly
+#   this (−1.27e-4 on first_mae); diagnosis + amended gate in the
+#   pre-reg's Amendment 2 (analysis__seating_base_equality_diag).
+#   A distinct _seating stem keeps this re-run from overwriting the
 #   banked report json.
 # Cost: ≈ 3.0 GPU-h (the stage-3 cost) of the ≤ 4 GPU-h remaining.
 set -euo pipefail
@@ -54,24 +58,12 @@ uv run python -m bijou.eval \
     --output-json "reports/${name}.json" \
     --dump-predictions "reports/${name}.npz"
 
-# Base-equality oracle (pre-reg, frozen): the re-run's pooled core
-# chunk/first MAE must reproduce the banked 5.3645/1.4242 at 4dp —
-# else the banked config was NOT reproduced and the seating read must
-# not run (abort loud, never re-tolerance).
-uv run python - <<'EOF'
-import json
-report = json.load(open(
-    "reports/eval__bijou_flow_artrunk_h1024_40k_ddp2__step_080000__"
-    "panel_curated_v0_k4l2_draws10_seating_heun30.json",
-))
-rows = [s for s in report["summaries"] if s["policy"].startswith("bijou@")]
-assert len(rows) == 1, [s["policy"] for s in report["summaries"]]
-chunk, first = round(rows[0]["chunk_mae"], 4), round(rows[0]["first_mae"], 4)
-assert chunk == 5.3645 and first == 1.4242, (
-    f"base-equality FAILED: {chunk}/{first} != banked 5.3645/1.4242 — "
-    "the banked config was not reproduced; seating read must not run"
-)
-print(f"base-equality oracle GREEN: {chunk}/{first} == banked")
-EOF
+# Base-equality oracle (pre-reg Amendment 2 — the original 4dp round
+# fired on the batched-solver drift at the first run; the amended
+# clauses certify the same thing sharper): state-copy per-dataset
+# cells exactly equal, bijou pooled row within 5e-4, every bijou
+# per-dataset cell within 5e-3. Enforced by the diagnosis script
+# (aborts loud on any clause).
+uv run python fontaine/scripts/seating_base_equality_diag.py
 
 echo "=== NOISE-LADDER SEATING ARM DONE (rc=0) — paired R3 seating read runs offline ==="

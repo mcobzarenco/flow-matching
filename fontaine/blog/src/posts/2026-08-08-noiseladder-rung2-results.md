@@ -82,3 +82,28 @@ stage-2's rc=0, ~3.0 GPU-h) — it re-runs the *random-noise* draws-10
 config with dumps to give R3's mean-of-top-10 vs mean-of-random-10
 the paired read the board seating requires. Its verdict concerns the
 top-10 *ensemble*, not per-dataset routing, and lands tonight.
+
+## Seating verdict (landed 2026-08-08 ~23:1xZ): CONFIRMED
+
+The paired read ran after a one-abort detour worth recording. The
+run finished clean (rc=0, ~3.0 GPU-h) but its **base-equality oracle
+fired**: the re-run reproduced the banked 5.3645 chunk at 4dp yet
+missed first_mae by −1.27e-4 (1.4241 vs 1.4242). Held per the
+never-re-tolerance clause; the diagnosis (pre-reg Amendment 2,
+`analysis__seating_base_equality_diag.json`) adjudicated
+**benign numeric drift, noise reproduction confirmed**: state-copy
+per-dataset cells match *exactly* (878/878), the bijou cells move at
+most 1.7e-3 even at 4-frame size — two orders below draw-level
+dispersion, so resampled noise is excluded — and git locates the
+mechanism in the batched-ensembling merge (`2ee2be5`/`85cdc0a`,
+08-07: sequential batch-32 solver calls → one tiled batch-320 call;
+same noise tensor, different kernel reduction order).
+
+With the amended gate green, the frozen read: **paired Δ = −0.17358
+[CI95 −0.19556, −0.15214]** on 17,204 core frames, entirely below
+zero (dataset-clustered CI [−0.20188, −0.14756] agrees; first-step
+mirror −0.041 [−0.047, −0.034], record-only). **Expectation 4
+confirmed — the board row moves to the mean-of-top-10-tickets
+ensemble, 5.1847 / 1.3831**, the best chunk and first numbers on
+the panel. The ☆ bar (≤ 5.0) gap shrinks 0.37 → 0.18. Full record:
+`analysis__noise_ladder_seating.json`.

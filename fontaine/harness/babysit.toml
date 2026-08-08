@@ -437,10 +437,12 @@ log = "/home/ubuntu/eval__ar100k_subgoal_cleancand_arms.log"
 progress_re = "scored [0-9]+/[0-9]+ frames"
 started_utc = "2026-08-08T22:26:41Z"
 gpu_hours_per_wall_hour = 1.0
-boundary = "one full-panel draws-8 run carries pass 1 + bon + ceil (clean-list); ceiling 5 GPU-h, launcher rate gate falls back to q4"
+boundary = "Q4 FALLBACK TAKEN 22:37Z 08-08 (rate gate: full panel projected past 5 GPU-h at ~200 frames) — the live run is the q4 subset, 4301 rows, stems stateprobe_q4_subgoalcleandraws; reads via subgoal_draws_results.py --candidate-filter clean --draws-stem the q4 stem"
 anchors = [
     "falsifier (pre-reg, inherited verbatim): Delta_bon CI95 not entirely below 0 vs the banked self npz => selection over 9 candidates buys nothing; Delta_ceil adjudicates no-diversity vs no-scorer",
     "banked baseline 5.8026/2.1431 and the rung-(a) self npz are frozen comparators — never re-run",
+    "22:26-22:41Z incident: the launcher's fallback kill hit only the run_arms subshell — the full-panel eval ran ON beside the q4 relaunch until the session TERM'd it by PID (fix landed: pkill by bijou.eval+stem pattern). Progress lines before 22:41Z interleave both runs; q4 denominators are /4301",
+    "q4 run start 22:37:24Z-ish; a /25800 denominator in any NEW progress line = the orphan class again, investigate",
 ]
 [[run.gates]]
 kind = "gpu_hours_max"
