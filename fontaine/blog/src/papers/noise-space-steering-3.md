@@ -134,8 +134,26 @@ oracle best-of-N) for both families, before anyone builds a
 deployment selector. If jerk-pick recovers a nontrivial slice of the
 oracle gap on our panel, #19's escalation has a published,
 verifier-free candidate; if it recovers nothing, the SDN prior is
-falsified *for our stacks* at table cost. Queued as the next analysis
-item. The grounding half is heavier (one masked forward per frame,
+falsified *for our stacks* at table cost.
+
+*Executed same session (`jerkpick_selector_results.py`, oracle-green;
+results in `reports/analysis__jerkpick_selector.json`): a clean
+two-family split. On the flow teacher's fresh-noise draws-10 stack
+jerk-pick is **null on every diagnostic** — oracle agreement 10.5%
+vs a 10% null, Spearman(jerk, MAE) +0.13, −2.3% of the oracle gap
+recovered (i.e. slightly worse than an average single draw); the
+ticket-64 stack reads the same. Heun-30 ODE draws are uniformly
+smooth — the criterion has nothing to grip. On the AR q4 stacks the
+prior is **real but small and temperature-monotone**: 5.6% / 7.5% /
+20.9% of the oracle gap recovered at T = 0.5 / 0.7 / 1.3, Spearman
++0.36 — jerky sampled-token decodes really are bad decodes, and the
+wilder the temperature the more a smoothness filter rescues. On
+neither family does jerk-pick approach mean-of-N, so the family
+decodes stand. SDN's smoothness prior: falsified for our flow
+stacks, confirmed-in-miniature for AR — consistent with SDN's own
+setting (stochastic diffusion policies, not deterministic ODE
+decodes). The molmo2 draws10_t1 stack gets the same read when the
+#19 arm lands.* The grounding half is heavier (one masked forward per frame,
 and our observation masking would need object boxes we don't have) —
 noted for [#11 visual grounding](../ideas/11-visual-grounding.md),
 not queued.

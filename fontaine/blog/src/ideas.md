@@ -27,8 +27,12 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   (2606.14084) — a judge-free per-step noise selector whose
   smoothness-only ablation carries most of its +18 pp real-robot
   gain; jerk-pick is a pure function of our banked draw stacks →
-  record-only ceiling-ladder read queued (single → mean → jerk-pick
-  → oracle), both families, table cost.
+  record-only ceiling-ladder read EXECUTED same session: flow
+  fresh-noise NULL on every diagnostic (agreement at the 10% null,
+  −2.3% of the oracle gap; ODE draws uniformly smooth), AR
+  real-but-small and T-monotone (5.6/7.5/20.9% of the gap at
+  T=0.5/0.7/1.3, Spearman +0.36); never approaches mean-of-N —
+  family decodes stand. Molmo2 stack half at the #19 landing.
 - **`seam-screen` [#4 Stage-2 attachment seam](ideas/04-stage2-attachment.md)** —
   `screening`. F (frozen) vs K (KI-joint) screen pre-registered;
   instruments, launchers, smoke ladder and frozen-read script all
