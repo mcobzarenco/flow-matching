@@ -84,6 +84,26 @@ revision](posts/2026-08-06-panel-v2-amendment.md).
 - [masked-state reliance eval (stateprobe q4)](https://mcobzarenco-fontaine-blog.static.hf.space/reports/eval__fontaine_arb_rcond_statedrop80_40k_1xh100__step_040000__stateprobe_q4_state-masked.html)
 - [frozen analysis JSON](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__statedrop_40k_k4l2.json)
 
+## Molmo2 AR trunk `fontaine_molmo2_ar_40k_ddp4` @40k ([results](posts/2026-08-08-molmo2-endpoint-results.md))
+
+- [endpoint panel, greedy (curated v0 k4l2)](https://mcobzarenco-fontaine-blog.static.hf.space/reports/eval__fontaine_molmo2_ar_40k_ddp4__step_040000__panel_curated_v0_k4l2.html)
+  — the #17 BEATS read (6.0079/2.1871 vs A-s0, paired −1.717)
+- [frozen endpoint analysis JSON](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__molmo2_endpoint_k4l2.json)
+  (`molmo2_endpoint_results.py`, pre-registered reads)
+- [draws10_t1 frozen analysis JSON](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__draws10_t1_molmo2_40k_k4l2.json)
+  — leaderboard row 9, Δ_AR −0.154 mean-collapse read
+- [decode-cost microbench JSON](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__leaderboard_decode_microbench_molmo2.json)
+  — rows 8+9 cost cells (box-measured)
+
+## Golden-ticket noise screen ([close-out](posts/2026-08-08-goldenticket-results.md))
+
+- Frozen stage analyses:
+  [stage 1 (R1 CONFIRM)](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__goldenticket_stage1.json) ·
+  [stage 2 (R2 REAL)](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__goldenticket_stage2.json) ·
+  [stage 3 (R3 INTERESTING + R4a/R4b)](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__goldenticket_stage3.json)
+- [jerk-pick selector read](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__jerkpick_selector.json)
+  — SDN smoothness-prior test on banked draw stacks (flow null / AR small)
+
 ## Cross-family analyses
 
 - [flow-vs-AR paired per-step read](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__flow_vs_ar_paired_k4l2.json)

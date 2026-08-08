@@ -1,6 +1,41 @@
 # Now
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-08 08:27–08:3xZ (real `date -u`) — tick (babysit):
+no live runs (registry declared-empty, correct). **Owner's 08:02Z
+message was half-unanswered — caught and fixed in-tick**: the Molmo2
+#17 eval report HTML + the three state-drop report files had never
+been uploaded to the Space (404s the owner flagged); all six missing
+files pushed, reports.md gained Molmo2 + golden-ticket sections,
+full 58-link audit = all 200, in-channel reply posted 08:33Z.*
+
+**Status** (08:3xZ): box + local both **idle-by-design** since
+~07:50/08:15Z, pending the next pre-registered launches (#4 attach
+screen behind the owner-steer window; idea6 rung-(b) preflight
+local). No babysit run — registry empty with declared reason.
+
+**Steering**: owner 08:02Z ("Molmo2 eval report on reports.html?
+state-drop links broken") — the 08:19Z reply covered only the
+08:08Z follow-ups question; this message is now ANSWERED 08:33Z
+with the fix live. No new messages or reactions this tick (`read`
+empty; `history -n 5` checked).
+
+**Done** (this tick): reports.html repaired end-to-end — root cause
+was ad-hoc per-session report uploads (page indexed files never
+pushed): uploaded molmo2 endpoint panel HTML + endpoint analysis
+JSON, statedrop 2×HTML + JSON, goldenticket stage-1 JSON; reports.md
+new sections (Molmo2 trunk @40k, golden-ticket screen); blog built +
+Space pushed; **all 58 reports.html links curl-verified 200**;
+Discord reply. Queue validate green (depth 1 w/ declared reason, 11
+open); `run_work_next` confirmed armed (08:22).
+
+**Next**: chained work session →
+**idea1-noise-ladder-perdataset-prereg-draft** (queue head), then
+idea6 rung-(b) preflight launcher (local GPU free); #4 attach screen
+at the owner-steer window (box free). **Every GPU launch goes
+through `run_detached.sh`.**
 
 *Updated 2026-08-08 05:22–08:4xZ (real `date -u`) — work session
 (4-h chained): **THREE BOUNDARIES CLOSED IN-SESSION** — #19 molmo2
@@ -148,41 +183,6 @@ adjudicates (deliberate: pre-reg quality needs R3/R4 numbers).
 `run_work_next` armed. **Every GPU launch goes through
 `run_detached.sh`.**
 
-*Updated 2026-08-08 03:56–04:0xZ (real `date -u`) — tick (babysit):
-**molmo2 REACHED 40000/40000** — polled inside the endpoint save
-window (known signature, non-incident); goldenticket 1792/2458 on
-projection 1.7 ≤ 6 gate. Quiet-green; the chained work session
-takes the endpoint chain + R1 adjudication.*
-
-**Status** (babysit 03:57Z, exit 0, 2 registered runs):
-- box molmo2 AR 40k — **step 40000/40000**, probe 6.21@40000 (low
-  5.91@26500 stands, gate margin 4.93). Poll landed mid-save: gpu1
-  0%, loss/vram None, 15.7 steps/min halved window — the banked
-  ~15.5-min save-window signature, NOT an incident. Save →
-  chained greedy panel eval; endpoint chain lands ~04:1x–04:4xZ.
-- local **#1 goldenticket stage 1** — 1792/2458 at 100% util,
-  window 25.1 f/min, cumulative 23.6 f/min → projected total 1.7 h
-  ≤ 6 GPU-h gate, ~0.5 h remaining; R1 adjudication ~04:2x–04:5xZ.
-
-**Steering**: none (`read` at 03:57 surfaced only our own 03:55
-post; `history -n 5` — no owner messages, no new reactions; last
-owner exchange 00:39Z already answered).
-
-**Done**: quiet tick — babysit exit 0, both runs judged healthy
-(molmo2's degenerate-looking poll adjudicated as the save-window
-anchor, not an anomaly); queue validate green (depth 2, 13 open);
-`run_work_next` confirmed armed (03:52); now archive roll
-`--keep 3`.
-
-**Next**: chained work session (4-h budget) catches the molmo2
-endpoint chain (~04:1x–04:4xZ) → **molmo2-endpoint-postprocessing**
-+ #19 draws-arm box launch, and the goldenticket **R1 kill-line
-adjudication** (~04:2x–04:5xZ) → stage 2 or close-at-null;
-**idea6-subgoal-draws-execution** (gpu-local) opens after R1
-resolves, preflight = GPU-side oracles (draws-0 bit-exact at
-matched composition, forced-empty = plain path). **Every GPU launch
-goes through `run_detached.sh`.**
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -204,6 +204,17 @@ to ~04:0xZ, greedy ~1.7 GPU-h, draws10_t1 04:54–07:22Z **~10 GPU-h
 idle from ~08:15Z pending the next pre-registered launches). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
+
+Session 2026-08-08 08:27–08:3xZ (tick): babysit with no live runs
+(registry declared-empty, correct), 0 GPU-h — caught the
+half-unanswered owner 08:02Z message: Molmo2 #17 eval report HTML +
+3 state-drop report files were 404 on the Space (indexed on
+reports.html but never uploaded); 6 files pushed, reports.md gained
+Molmo2 + golden-ticket sections, all 58 page links curl-verified
+200, in-channel reply 08:33Z. Queue validate green (depth 1 w/
+declared reason, 11 open); `run_work_next` confirmed armed. Blog
+built + Space pushed. Archive roll (03:56 tick entry + 2 oldest
+footer notes).
 
 Session 2026-08-08 05:22–08:4xZ (work): exploit-heavy, 0 GPU-h
 newly launched local (both live runs landed in-session:
@@ -228,26 +239,3 @@ updated, two results posts + 3 Discord updates; dtype incident fixed
 w/ regression test; 4 oracle-green CPU instruments; lit slice closed
 (papers page + MG-Select correction).
 
-Session 2026-08-08 03:56–04:0xZ (tick): quiet babysit, 0 GPU-h new
-(molmo2 + goldenticket stage 1 accruing under their own gates) —
-**molmo2 REACHED 40000/40000** (probe 6.21@40000, low 5.91 stands;
-poll landed mid-save — gpu1 0%, loss/vram None, halved window rate
-= the banked save-window signature, judged non-incident; save →
-chained greedy panel eval ~04:1x–04:4xZ); goldenticket green
-1792/2458 at 100% util (25.1 f/min window, cumulative 23.6 f/min →
-projection 1.7 h ≤ 6 gate, R1 ~04:2x–04:5xZ). No steering, no
-reactions (read surfaced only our own 03:55 post); queue validate
-green (depth 2, 13 open); `run_work_next` confirmed armed (03:52) —
-the chained work session takes the endpoint chain + R1. Archive
-roll (03:01 work entry + oldest footer note). No blog build (now.md
-only).
-
-Session 2026-08-08 03:15–03:2xZ (tick): quiet babysit, 0 GPU-h new
-(molmo2 + goldenticket stage 1 accruing under their own gates) —
-molmo2 green 38960/40k (probe 6.20@38500, low 5.91 stands, ~0.6 h
-compute to endpoint + 40000 save); goldenticket green 672/2458 at
-100% util (24.1 f/min window, cumulative 19.5 f/min → projection
-2.1 h ≤ 6 gate, R1 ~04:4x–05:0xZ). No steering, no reactions; queue
-validate green (depth 2, 13 open); `run_work_next` confirmed armed
-for the R1/endpoint chain. Archive roll (head entry + oldest footer
-note). No blog build (now.md only).
