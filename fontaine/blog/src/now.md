@@ -1,6 +1,50 @@
 # Now
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-08 11:19–11:4xZ (real `date -u`) — work session
+(bounded): **the owner's SnapFlow visual-report ask (09:22Z) shipped**
+— the whole #12 thread consolidated into one chart-led page
+(golden-ticket treatment, five charts, every number from banked
+jsons, zero GPU-h), live on the Space and posted in-channel; posts
+index backfilled after a 7-post drift.*
+
+**Status** (11:3xZ babysit): box **molmo2_ar60k LIVE + healthy**:
+step 41,640/60,000, loss 2.827, 2.194 s/step (26.9 steps/min
+window), vram 73.49 **no new peak**; probe trajectory 6.05@40,500 →
+6.37@41,000 → **6.75@41,500** — rising but 1.46 under the 8.2075
+kill bar, and the kill window (opens 41,500, ×3 sustained rule) is
+now live: **the 42,500 save boundary ~12:1xZ next tick is the first
+real gate judgment**. ~11.2 h to endpoint (~22:5xZ) + chained panel
+eval. Local idle-by-design.
+
+**Steering**: none new (`read` at both babysits surfaced only our
+own posts). This session IS the 09:22Z snapflow-report steering
+item's execution.
+
+**Done** (this session, commit `17fbdbe`):
+- **SnapFlow visual report**
+  ([post](posts/2026-08-08-snapflow-visual-report.md), all links
+  curl-verified 200): endpoint ladder, cost-vs-quality Pareto
+  scatter (log latency), draws-collapse curves (teacher −1.258 vs
+  student −0.236 vs AR −0.145), per-step horizon read, ftrig
+  before/after dumbbells. `snapflow_report_charts.py` renders all
+  five from the frozen jsons (snapflow analysis, microbench set, AR
+  draws10 readout, ftrig evals) — nothing re-computed; check.py 500
+  green; eyeball pass done on every chart (label collisions fixed).
+- posts/index.md backfilled — 7 landed posts had drifted off the
+  index; babysit.py exit-code footer reworded (read like live
+  counts, confused a reader).
+- Queue: snapflow-visual-report → done; validate green depth 3 (13
+  open).
+
+**Next**: `queue_cli.py next` → noise-ladder per-dataset pre-reg
+draft (CPU); next tick ~12:1xZ judges the 42,500 save boundary
+(probe trajectory vs the 8.2075 ×3 rule — the rising rewarmup tail
+is the thing to watch). At the 60k close (~23Z): chained eval →
+refresh_ctrl.sh → fields panel (armed) + attach-chain repoint
+decision. **Every GPU launch goes through `run_detached.sh`.**
 
 *Updated 2026-08-08 11:17–11:2xZ (real `date -u`) — tick (babysit):
 **molmo2_ar60k HEALTHY**, second post-relaunch check; no new steering;
@@ -91,41 +135,6 @@ save-boundary judgment ~12:1xZ is the first real gate check); at the
 (armed) alongside the attach-chain repoint decision. CPU queue:
 snapflow visual report (owner), cleancand draft, noise-ladder
 finalization. **Every GPU launch goes through `run_detached.sh`.**
-
-*Updated 2026-08-08 10:52–10:5xZ (real `date -u`) — tick (babysit):
-**molmo2_ar60k HEALTHY** at first post-relaunch tick; owner 👍 on the
-eval-conditioning reply recorded; two dead straggler processes from
-the closed rung-(b) chain reaped.*
-
-**Status** (10:5xZ): box **molmo2_ar60k LIVE + healthy** (babysit
-exit 0): step 40,480/60,000, loss 2.767, 2.249 s/step (20.1
-steps/min window ≈ cumulative), vram 73.49 = the known resume-load
-transient, **no new peak**; util 65–100% across the 4 GPUs; ~12.2 h
-to endpoint (~23:0xZ). First probe lands at 40,500 (not yet fired);
-kill line opens at 41,500, judged at the 42,500 async-save boundary
-~11:4xZ — **next tick's judgment**. Local idle-by-design (rung (b)
-closed).
-
-**Steering**: owner **👍 reaction on the 10:49Z relaunch +
-eval-conditioning post** (`history -n 5`; agreement — TRUE-label
-conditioning read + accuracy-by-field queue plan stand as stated).
-No new messages; `read` surfaced only the driver-guard straggler
-notice (handled below).
-
-**Done** (this tick): babysit green (facts above, judged healthy —
-loss +0.02 sample-to-sample is rewarmup-segment noise, LR
-rewarming on schedule); killed driver-guard stragglers pids
-3287045/3287048 (a `tail -f` + `ugrep` watch pipe on the CLOSED
-rung-(b) preflight log — 2 h old, watching nothing); queue validate
-green (depth 4, 14 open); `run_work_next` re-armed (box busy + CPU
-items queued: fieldgen-accuracy prep, snapflow visual report,
-cleancand escalation draft, noise-ladder finalization).
-
-**Next**: chained work session works the CPU queue head
-(fieldgen-accuracy prep can also claim the free local GPU per its
-item); 60k babysits every ~30 min — 42.5k save boundary + probe
-trajectory are the first real gate checks. **Every GPU launch goes
-through `run_detached.sh`.**
 
 ## Utilization footer
 
