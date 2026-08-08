@@ -93,25 +93,25 @@ class ViTAttention(nn.Module):
     @override
     def forward(
         self,
-        inputs_q: Tensor,
-        inputs_kv: Tensor | None = None,
-        attn_mask: Tensor | None = None,
-    ) -> Tensor:
+        inputs_q: Tensor,  # [B, Q, input_dim]
+        inputs_kv: Tensor | None = None,  # [B, K, input_dim]; None = self-attn
+        attn_mask: Tensor | None = None,  # bool, broadcastable [B, H, Q, K]
+    ) -> Tensor:  # [B, Q, hidden_size]
         """Attention over full sequences (no causality).
 
-        Shapes:
-          - inputs_q: [B, Q, input_dim]
-          - inputs_kv (when given): [B, K, input_dim]; else self-attention
-          - attn_mask (when given): boolean, broadcastable to [B, H, Q, K]
-            (True = attend) — the reference passes it only on the SDPA
-            path; the eager path applies it additively for identical
-            semantics.
-          - returns [B, Q, hidden_size]
+        ``attn_mask`` True = attend — the reference passes it only on
+        the SDPA path; the eager path applies it additively for
+        identical semantics.
         """
         if inputs_kv is None:
             inputs_kv = inputs_q
         batch, q_len, _ = inputs_q.shape
-        query = self.wq(inputs_q).reshape(batch, q_len, self.num_heads, self.head_dim)
+        query = self.wq(inputs_q).reshape(  # [B, Q, H, head_dim]
+            batch,
+            q_len,
+            self.num_heads,
+            self.head_dim,
+        )
         key = self.wk(inputs_kv).reshape(batch, -1, self.num_heads, self.head_dim)
         value = self.wv(inputs_kv).reshape(batch, -1, self.num_heads, self.head_dim)
 
@@ -122,7 +122,7 @@ class ViTAttention(nn.Module):
 
         # Reference eager path: einsum over [B, S, H, D], fp32 softmax,
         # weights cast to the VALUE dtype for the second matmul.
-        scores = torch.einsum(
+        scores = torch.einsum(  # [B, H, Q, K], materialized
             "...qhd,...khd->...hqk",
             query / math.sqrt(query.size(-1)),
             key,
@@ -130,14 +130,14 @@ class ViTAttention(nn.Module):
         if attn_mask is not None:
             scores = scores.masked_fill(~attn_mask, torch.finfo(scores.dtype).min)
         weights = F.softmax(scores, dim=-1, dtype=torch.float32).to(query.dtype)
-        attn_output = torch.einsum(
+        attn_output = torch.einsum(  # [B, Q, H, head_dim]
             "...hqk,...khd->...qhd",
             weights.to(value.dtype),
             value,
         )
 
         attn_output = attn_output.to(original_dtype)
-        attn_output = attn_output.reshape(batch, q_len, -1)
+        attn_output = attn_output.reshape(batch, q_len, -1)  # [B, Q, H*head_dim]
         return self.wo(attn_output)
 
 
@@ -157,7 +157,7 @@ class ViTMLP(nn.Module):
         self.act = activation_fn(hidden_act)
 
     @override
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: Tensor) -> Tensor:  # [B, N, dim] -> same
         return self.w2(self.act(self.w1(x)))
 
 
@@ -201,7 +201,7 @@ class VisionBlock(nn.Module):
         )
 
     @override
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: Tensor) -> Tensor:  # [B, N, hidden] -> same
         x = x + self.attention(self.attention_norm(x))
         return x + self.feed_forward(self.ffn_norm(x))
 
@@ -223,7 +223,7 @@ class BlockCollection(nn.Module):
         )
 
     @override
-    def forward(self, x: Tensor) -> list[Tensor]:
+    def forward(self, x: Tensor) -> list[Tensor]:  # [B, N, hidden] -> per block
         hidden_states: list[Tensor] = []
         for block in self.resblocks:
             x = block(x)
@@ -322,7 +322,7 @@ class ImageProjectorMLP(nn.Module):
         self.act = activation_fn(hidden_act)
 
     @override
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: Tensor) -> Tensor:  # [.., input_dim] -> [.., output_dim]
         return self.w2(self.act(self.w1(x)) * self.w3(x))
 
 
@@ -385,14 +385,18 @@ class Molmo2VisionBackbone(nn.Module):
         """
         batch, views, num_patches, _ = images.shape
         hidden_states = self.image_vit(images.view(batch * views, num_patches, -1))
-        features = torch.cat(
+        features = torch.cat(  # [B*T, N, hidden * num_taps]
             [hidden_states[layer] for layer in self.vit_layers],
             dim=-1,
         )
         return features.view(batch, views, num_patches, -1)
 
     @override
-    def forward(self, images: Tensor, pooled_patches_idx: Tensor) -> Tensor:
+    def forward(
+        self,
+        images: Tensor,  # [B, T, N, patch_dim]
+        pooled_patches_idx: Tensor,  # [B, P, G] long, -1 padded
+    ) -> Tensor:  # [num_valid_tokens, text_hidden]
         """Pooled, projected image features for the valid output tokens.
 
         ``pooled_patches_idx`` [B, P, G] names, for each of P output tokens,
@@ -414,8 +418,8 @@ class Molmo2VisionBackbone(nn.Module):
         image_features = self.encode_image(images)
         dim = image_features.shape[-1]
 
-        valid = pooled_patches_idx >= 0
-        valid_token = torch.any(valid, -1)
+        valid = pooled_patches_idx >= 0  # [B, P, G]
+        valid_token = torch.any(valid, -1)  # [B, P]
 
         batch_idx = torch.arange(
             batch,
@@ -426,12 +430,14 @@ class Molmo2VisionBackbone(nn.Module):
             batch_idx.view(batch, 1, 1),
             [1, pooled_patches_idx.shape[1], pooled_patches_idx.shape[2]],
         )
-        to_pool = image_features.reshape(batch, -1, dim)[
+        to_pool = image_features.reshape(batch, -1, dim)[  # [B, P, G, dim]
             batch_idx,
             torch.clip(pooled_patches_idx, 0),
         ]
         to_pool = to_pool * valid.to(to_pool.dtype)[:, :, :, None]
-        to_pool = to_pool.reshape([-1, pooled_patches_idx.shape[-1], dim])
+        to_pool = to_pool.reshape(
+            [-1, pooled_patches_idx.shape[-1], dim],
+        )  # [B*P, G, dim]
 
         if self.adapter_config.pooling_attention_mask:
             attn_mask = valid.reshape([-1, 1, 1, valid.shape[-1]])
@@ -443,8 +449,12 @@ class Molmo2VisionBackbone(nn.Module):
         else:
             attn_mask = None
             query = to_pool.mean(-2, keepdim=True)
-        pooled = self.image_pooling_2d(query, to_pool, attn_mask=attn_mask)
-        pooled = pooled.reshape([batch, -1, pooled.shape[-1]])
+        pooled = self.image_pooling_2d(
+            query,
+            to_pool,
+            attn_mask=attn_mask,
+        )  # [B*P, 1, ah]
+        pooled = pooled.reshape([batch, -1, pooled.shape[-1]])  # [B, P, adapter_hidden]
 
-        pooled = self.image_projector(pooled)
+        pooled = self.image_projector(pooled)  # [B, P, text_hidden]
         return pooled.view(-1, pooled.shape[-1])[valid_token.flatten()]

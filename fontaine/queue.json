@@ -1,7 +1,25 @@
 {
- "updated_utc": "2026-08-08T13:25:00+00:00",
+ "updated_utc": "2026-08-08T14:40:00+00:00",
  "depth_reason": "depth 4+ at 11:1xZ 08-08: 60k LIVE (box, endpoint ~23Z); queued: fieldgen fields-panel (owner, armed w/ launcher+prereg, opens at 60k close), snapflow-visual-report (owner), idea6 cleancand draft, idea1 noise-ladder draft; attach chain blocked behind 60k per owner priority.",
  "items": [
+  {
+   "id": "owner-molmo2-perf-review",
+   "title": "OWNER STEERING 08-08 13:09Z molmo2 perf/memory deep review \u2014 SHIPPED same session (posts/2026-08-08-molmo2-perf-review.md + in-channel summary). Three-lens sweep with 2 measured kernel gaps (idle-local-GPU microbench, ~0 GPU-h): (1) suffix attention lands on MATH sdpa backend (cuDNN excluded by inherited pin; flash rejects mask, efficient rejects GQA) 13x/layer ~5-10% step; (2) ViT eager einsum vs SDPA-flash 13x/block; (3) hand-rolled RMSNorm 10x vs F.rms_norm; (4) --activation-checkpointing exists oracle-pinned but NOT on the live lineage (~2.4-2.8 GiB/sample lever); (5) full-vocab CE fp32-upcasts pad rows; (6) per-step host syncs; (7) 60MB/step embed clone; (8) vram peak metric is a lifetime ratchet (explains the 41,780/42,940 creep). Static-max verdict: DON'T (bucketing prior art +5.09% padding ceiling; suffix uncapped). Shape annotations landed on bijou/molmo2/{model,text,vision}.py. All changes need pre-reg; nothing touched the live run.",
+   "class": "cpu",
+   "status": "done",
+   "prereg": null,
+   "owner_hold": false,
+   "boundary": "opened by owner message 13:09Z 08-08; review report lands same session (13:3x-16:5xZ)"
+  },
+  {
+   "id": "molmo2-perf-fix-prereg",
+   "title": "molmo2 perf pass 1 pre-reg DRAFT (CPU->gpu-local): from the 08-08 review (posts/2026-08-08-molmo2-perf-review.md) bundle the S-effort items: suffix sdpa -> cuDNN (one-line + one-step parity gate), windowed vram peak logging (reset_peak_memory_stats per log window + keep lifetime max), sync removals (model.py:121 count check, text.py:101 wte branch, mask-mul losses in ar_backbone), embed clone drop (model.py:127 index_put_ on non-leaf). Before/after benchmark on a short pinned run + bitwise/parity oracles per item; expected ~8-15% step time at S risk. Separate later rungs: activation-checkpointing lineage flip (batch re-tune), ViT SDPA path (M, parity contract), valid-row CE + F.rms_norm (parity re-gates). Shape-annotation long tail (processor.py, cache.py, encoders/molmo2.py, decoders/ar_molmo2.py) rides whichever item touches each file first.",
+   "class": "cpu",
+   "status": "queued",
+   "prereg": null,
+   "owner_hold": false,
+   "boundary": "pre-reg draft is CPU work at any window; benchmark + landing needs a quiet local-GPU window and must NOT land on the box before the 60k run + chained evals finish (~23Z 08-08)"
+  },
   {
    "id": "ar100k-tsens-q4-live",
    "title": "#19 T-sensitivity q4 rungs COMPLETE 23:09Z 08-07 (3/3 rungs, 4301 rows each, ~7.2 GPU-h <= 12 gate): dT table banked reports/analysis__tsens_dt_ar100k_q4.json (record-only)",

@@ -40,11 +40,11 @@ from .vision import Molmo2VisionBackbone
 
 def build_multimodal_mask(
     *,
-    image_type_mask: Tensor,
-    padding_mask: Tensor | None,
+    image_type_mask: Tensor,  # [B, S] bool, True = image-typed position
+    padding_mask: Tensor | None,  # [B, S], True/1 = real token
     dtype: torch.dtype,
     device: torch.device,
-) -> MaskSpec:
+) -> MaskSpec:  # .tensor: [B, 1, S, S] additive (0 / dtype-min)
     """Causal-or-image-block attention mask for one no-cache forward.
 
     ``image_type_mask``: [B, S] bool, True at image-typed positions (the
@@ -99,19 +99,12 @@ class Molmo2Model(nn.Module):
 
     def build_input_embeddings(
         self,
-        input_ids: Tensor,
+        input_ids: Tensor,  # [B, S] long
         *,
-        crops: Tensor,
-        pooled_patches_idx: Tensor,
-    ) -> Tensor:
-        """Token embeddings with image features added at patch positions.
-
-        Shapes:
-          - input_ids: [B, S]
-          - crops: [B, M, patches, patch_dim]  (-1 padded)
-          - pooled_patches_idx: [B, P, pool_group]  (-1 padded)
-          - returns [B, S, hidden]
-        """
+        crops: Tensor,  # [B, M, patches, patch_dim] (-1 padded)
+        pooled_patches_idx: Tensor,  # [B, P, pool_group] long (-1 padded)
+    ) -> Tensor:  # [B, S, hidden]
+        """Token embeddings with image features added at patch positions."""
         embeds = self.text.transformer.wte(input_ids)
         features = self.vision(crops, pooled_patches_idx).to(
             device=embeds.device,
@@ -129,24 +122,23 @@ class Molmo2Model(nn.Module):
         return flat.view_as(embeds)
 
     @staticmethod
-    def logical_positions(attention_mask: Tensor) -> Tensor:
+    def logical_positions(attention_mask: Tensor) -> Tensor:  # [B, S] -> [B, S]
         """Positions of real tokens under left padding: [B, S] long."""
         return (attention_mask.long().cumsum(-1) - 1).clamp(min=0)
 
     @override
     def forward(
         self,
-        input_ids: Tensor,
+        input_ids: Tensor,  # [B, S] long
         *,
-        crops: Tensor,
-        pooled_patches_idx: Tensor,
-        image_type_mask: Tensor,
-        attention_mask: Tensor | None = None,
-    ) -> Tensor:
+        crops: Tensor,  # [B, M, patches, patch_dim] (-1 padded)
+        pooled_patches_idx: Tensor,  # [B, P, pool_group] long (-1 padded)
+        image_type_mask: Tensor,  # [B, S] bool, True = image-typed
+        attention_mask: Tensor | None = None,  # [B, S], 1 = real; None = no pad
+    ) -> Tensor:  # [B, S, vocab]
         """Logits [B, S, vocab] for one full multimodal forward.
 
-        ``attention_mask``: [B, S], 1 = real token (the collator's field);
-        None means no padding.
+        ``attention_mask`` is the collator's field; None means no padding.
         """
         embeds = self.build_input_embeddings(
             input_ids,
@@ -171,12 +163,12 @@ class Molmo2Model(nn.Module):
     @torch.no_grad()
     def greedy_generate(
         self,
-        input_ids: Tensor,
+        input_ids: Tensor,  # [B, S] long
         *,
-        crops: Tensor,
-        pooled_patches_idx: Tensor,
-        image_type_mask: Tensor,
-        attention_mask: Tensor | None = None,
+        crops: Tensor,  # [B, M, patches, patch_dim] (-1 padded)
+        pooled_patches_idx: Tensor,  # [B, P, pool_group] long (-1 padded)
+        image_type_mask: Tensor,  # [B, S] bool, True = image-typed
+        attention_mask: Tensor | None = None,  # [B, S], 1 = real token
         max_new_tokens: int,
         stop_ids: frozenset[int] = frozenset(),
     ) -> list[list[int]]:

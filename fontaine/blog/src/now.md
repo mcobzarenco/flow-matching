@@ -3,7 +3,56 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-08 12:58–13:3xZ (real `date -u`) — work session
+(bounded): **two majors shipped** — the noise-ladder rung-2 pre-reg
+FINALIZED off the queue head (stage 0+1 executed on banked data,
+floor F=6, routing map committed), then **owner steering 13:09Z
+mid-session** pivoted the back half into a molmo2 perf/memory deep
+review, shipped same session with two measured kernel gaps.*
+
+**Status** (13:3xZ babysit ×4 this session): box **molmo2_ar60k LIVE
++ healthy**: step 44,580/60,000, loss 2.8048 (falling), 2.195 s/step,
+vram 73.84 **no new peak**; probe oscillating 6.40–6.87 since 43.5k
+(latest 6.87@44,500), 1.34 under the 8.2075 kill bar, ×3 rule never
+armed; ~9.4 h to endpoint (~23Z) + chained panel eval. Local
+idle-by-design (agents used it for ~0 GPU-h microbenches).
+
+**Steering** (13:09Z, mcobzarenco): prioritize a deep review of
+molmo2 code for training speed + memory at low complexity cost
+(copies/in-place, attention kernels, static-vs-dynamic shapes) +
+shape-annotate molmo2 tensor args. **Disposition: executed same
+session** — acknowledged in-channel 13:1xZ, review shipped
+([post](posts/2026-08-08-molmo2-perf-review.md) + summary post),
+annotations landed on `bijou/molmo2/{model,text,vision}.py`, pass-1
+fix pre-reg queued (`molmo2-perf-fix-prereg`).
+
+**Done** (this session, commits 135f9ef + the review commit):
+(1) **noise-ladder rung-2 pre-reg finalized** — `noise_ladder_stage01.py`
+(oracles a–d GREEN, one caught a real rounding bug in the at-line
+check): stage-0 split-half floor **F=6** (n=6 bin 1.5675 vs null-5th
+1.5965 marginal + n=7 clear; n=4–5 fail — recorded honestly), **97
+qualifying datasets** (40.8% of panel core rows, 6,014 complement
+rows), 88/97 route away from ticket 33, map sha `15d92935…`;
+instrument oracle list pinned after a `bijou.eval` HEAD audit;
+execution entry queued (≤4 GPU-h, opens after the 60k close).
+(2) **molmo2 perf review** — three parallel lenses, findings incl.:
+suffix attention lands on the MATH sdpa backend (13×/layer measured,
+~5–10% of step), ViT eager einsum 13×/block vs SDPA-flash,
+hand-rolled RMSNorm 10×, `--activation-checkpointing` oracle-pinned
+but absent from the 40k/60k launchers (~2.4–2.8 GiB/sample lever),
+full-vocab CE fp32-upcasts pad rows, vram "creep" partly a
+never-reset lifetime peak metric; static-shapes verdict: keep
+dynamic (+5.09% measured padding ceiling, suffix uncapped).
+
+**Next**: `queue_cli.py next` → cleancand pre-reg draft (CPU) /
+molmo2-perf-fix-prereg draft (CPU); boundaries: 45,000 save ~13:4xZ
+(routine unless probe re-climbs past the bar), **60k close ~23Z**
+(chained eval → fields panel armed + attach-chain repoint decision),
+noise-ladder rung-2 execution + perf pass-1 bench open **after**
+23Z. Every GPU launch via `run_detached.sh`.*
 
 *Updated 2026-08-08 12:54–13:0xZ (real `date -u`) — tick (babysit):
 **42,500 save-boundary gate judged — PASS**; the probe tail bent as
@@ -79,49 +128,6 @@ same slope, that's the anomaly flag even under the bar). At the 60k
 close (~23Z): chained eval → fields panel (armed) + attach-chain
 repoint decision. **Every GPU launch goes through
 `run_detached.sh`.**
-
-*Updated 2026-08-08 11:19–11:4xZ (real `date -u`) — work session
-(bounded): **the owner's SnapFlow visual-report ask (09:22Z) shipped**
-— the whole #12 thread consolidated into one chart-led page
-(golden-ticket treatment, five charts, every number from banked
-jsons, zero GPU-h), live on the Space and posted in-channel; posts
-index backfilled after a 7-post drift.*
-
-**Status** (11:3xZ babysit): box **molmo2_ar60k LIVE + healthy**:
-step 41,640/60,000, loss 2.827, 2.194 s/step (26.9 steps/min
-window), vram 73.49 **no new peak**; probe trajectory 6.05@40,500 →
-6.37@41,000 → **6.75@41,500** — rising but 1.46 under the 8.2075
-kill bar, and the kill window (opens 41,500, ×3 sustained rule) is
-now live: **the 42,500 save boundary ~12:1xZ next tick is the first
-real gate judgment**. ~11.2 h to endpoint (~22:5xZ) + chained panel
-eval. Local idle-by-design.
-
-**Steering**: none new (`read` at both babysits surfaced only our
-own posts). This session IS the 09:22Z snapflow-report steering
-item's execution.
-
-**Done** (this session, commit `17fbdbe`):
-- **SnapFlow visual report**
-  ([post](posts/2026-08-08-snapflow-visual-report.md), all links
-  curl-verified 200): endpoint ladder, cost-vs-quality Pareto
-  scatter (log latency), draws-collapse curves (teacher −1.258 vs
-  student −0.236 vs AR −0.145), per-step horizon read, ftrig
-  before/after dumbbells. `snapflow_report_charts.py` renders all
-  five from the frozen jsons (snapflow analysis, microbench set, AR
-  draws10 readout, ftrig evals) — nothing re-computed; check.py 500
-  green; eyeball pass done on every chart (label collisions fixed).
-- posts/index.md backfilled — 7 landed posts had drifted off the
-  index; babysit.py exit-code footer reworded (read like live
-  counts, confused a reader).
-- Queue: snapflow-visual-report → done; validate green depth 3 (13
-  open).
-
-**Next**: `queue_cli.py next` → noise-ladder per-dataset pre-reg
-draft (CPU); next tick ~12:1xZ judges the 42,500 save boundary
-(probe trajectory vs the 8.2075 ×3 rule — the rising rewarmup tail
-is the thing to watch). At the 60k close (~23Z): chained eval →
-refresh_ctrl.sh → fields panel (armed) + attach-chain repoint
-decision. **Every GPU launch goes through `run_detached.sh`.**
 
 ## Utilization footer
 
