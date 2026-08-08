@@ -2,7 +2,48 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-08 12:54–13:0xZ (real `date -u`) — tick (babysit):
+**42,500 save-boundary gate judged — PASS**; the probe tail bent as
+the rewarmup anchor predicted. Tick ran ~40 min late: **driver outage
+11:41–12:54Z on usage-credit exhaustion** (429s; 4 tick attempts +
+the chained work session failed), resolved by credit-window rollover
+— the box run was never at risk.*
+
+**Status** (12:5xZ): box **molmo2_ar60k LIVE + healthy** (babysit
+exit 0): step 43,680/60,000, loss 2.8041 (falling, −0.025 since last
+sample), 2.237 s/step (25.8 steps/min window), ~10.1 h to endpoint
+(~23Z) + chained panel eval. **Gate judgment (the deferred 42,500
+boundary): PASS** — probe 6.75@41,500 → 6.73@42,000 → 6.73@42,500 →
+6.77@43,000 → **6.40@43,500**; the rising tail plateaued then broke
+downward, 1.8 under the 8.2075 kill bar; the ×3 rule never armed.
+**vram peak 73.49 → 73.84** (bumps at 41,780 and 42,940, neither at
+a save/probe boundary, flat since): judged longest-batch high-water
+creep, not a leak; 4.16 under the 78 gate — flag is a *sustained*
+climb, not step bumps. Local idle-by-design.
+
+**Steering**: none new (`read` = 2 harness alerts only; `history -n
+5` = own posts + alerts, no new reactions).
+
+**Done** (this tick): outage root-caused from session logs (all four
+12:1x–12:4x tick failures + the 11:41Z work death are API 429
+"out of usage credits", 0 tokens served; nothing box-side to fix —
+noted that train + chained endpoint eval are box-side and immune);
+42,500 gate judged PASS (facts above); vram creep investigated via
+remote jsonl scan (step-resolved peak trace); consolidated in-channel
+post (gate + outage + vram); queue validate green (depth 3, 13 open);
+`run_work_next` re-armed — the credit-killed work session never
+drafted the noise-ladder pre-reg, so it stays queue head.
+
+**Next**: chained work session → noise-ladder per-dataset pre-reg
+draft (CPU). Next boundary 45,000 (~12:5xZ+50 min ≈ 13:4xZ);
+routine unless the probe re-climbs. At the 60k close (~23Z): chained
+eval → fields panel (armed) + attach-chain repoint decision. **Every
+GPU launch goes through `run_detached.sh`.** If credit 429s recur,
+expect the same alert pattern — sessions self-heal on window
+rollover.
 
 *Updated 2026-08-08 11:38–11:5xZ (real `date -u`) — tick (babysit):
 **molmo2_ar60k HEALTHY**, third post-relaunch check; probe tail still
@@ -82,35 +123,6 @@ is the thing to watch). At the 60k close (~23Z): chained eval →
 refresh_ctrl.sh → fields panel (armed) + attach-chain repoint
 decision. **Every GPU launch goes through `run_detached.sh`.**
 
-*Updated 2026-08-08 11:17–11:2xZ (real `date -u`) — tick (babysit):
-**molmo2_ar60k HEALTHY**, second post-relaunch check; no new steering;
-queue green, `run_work_next` armed.*
-
-**Status** (11:1xZ): box **molmo2_ar60k LIVE + healthy** (babysit
-exit 0): step 41,140/60,000, loss 2.861, 2.19 s/step (27.5 steps/min
-window), vram 73.49 **no new peak**; probes 6.05@40,500 →
-6.37@41,000 — both well under the 8.2075 kill bar and inside the
-pre-registered rewarmup-transient window (kill line opens 41,500;
-**first boundary judgment at the 42,500 async save ~12:1xZ — next
-tick**). Loss +0.07 sample-to-sample = rewarmup noise (LR rewarming
-on schedule). ~11.5 h to endpoint (~22:5xZ) + chained panel eval.
-Local idle-by-design.
-
-**Steering**: none new (`read` surfaced only our own 11:15Z
-accuracy-by-field post; `history -n 5` shows no new reactions — the
-10:49Z 👍 stands recorded).
-
-**Done** (this tick): babysit green (facts above, judged healthy);
-queue validate green (depth 4, 14 open); `run_work_next` re-armed
-(box busy + CPU items queued: snapflow visual report, cleancand
-draft, noise-ladder finalization, fieldgen-accuracy prep).
-
-**Next**: chained work session works the CPU queue head; next tick
-~11:4xZ judges the 42,500 save boundary (first real gate check:
-probe trajectory vs the 8.2075 ×3 rule). At the 60k close (~23Z):
-chained eval → fields panel (armed) + attach-chain repoint decision.
-**Every GPU launch goes through `run_detached.sh`.**
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -137,6 +149,20 @@ idle from ~08:15Z pending the next pre-registered launches). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
+Session 2026-08-08 12:54–13:0xZ (tick): babysit, **42,500
+save-boundary gate judged PASS** (probe 6.75@41.5k → 6.73@42k →
+6.73@42.5k → 6.77@43k → 6.40@43.5k — tail bent per the rewarmup
+anchor, ×3 rule never armed; step 43,680, loss 2.804 falling), 0
+GPU-h new; **driver outage 11:41–12:54Z root-caused: usage-credit
+429s** (4 tick attempts + the chained work session failed; box run
+unaffected, self-healed on window rollover); vram peak 73.49→73.84
+investigated via remote jsonl scan — longest-batch high-water creep,
+not a leak (bumps at 41,780/42,940, flat since, 4.16 under gate);
+consolidated Discord post; queue green depth 3; `run_work_next`
+re-armed (noise-ladder draft still queue head — the credit-killed
+work session never ran it). Archive roll (head entry + 3 oldest
+footer notes).
+
 Session 2026-08-08 11:38–11:5xZ (tick): babysit, molmo2_ar60k
 healthy at third post-relaunch tick (step 41,720, 30.9 steps/min,
 probe 6.75@41.5k rising ~+0.33/500 under the 8.21 bar, no new vram
@@ -145,27 +171,3 @@ tick ~12:1xZ (boundary lands at this session's hard-kill stamp; the
 42,000 probe is the slope tell); no new steering; queue green depth
 3; `run_work_next` armed. Archive roll (head entry + 3 oldest
 footer notes).
-
-Session 2026-08-08 11:17–11:2xZ (tick): babysit, molmo2_ar60k
-healthy at second post-relaunch tick (step 41,140, 27.5 steps/min,
-probes 6.05→6.37 under the 8.21 bar in the rewarmup window, no new
-vram peak; 42,500 save-boundary judgment next tick ~11:4xZ), 0 GPU-h
-new; no new steering; queue green depth 4; `run_work_next` armed.
-
-Session 2026-08-08 10:54–11:2xZ (work): exploit, **0 GPU-h new —
-one run cancelled as redundant (~1.5 GPU-h saved)**: the owner's
-accuracy-by-field ask closed for AR-100k from banked data (the table
-existed all along; 10:49Z in-channel claim corrected), molmo2's
-missing table root-caused to the narrated-pass isinstance bug and
-fixed (2f4d575, check.py 500), 60k-endpoint fields eval armed
-(pre-reg + guarded launcher + prepared babysit entry, ~3.5 GPU-h at
-the ~23Z boundary). Queue green depth 4; `run_work_next` armed.
-
-Session 2026-08-08 10:52–10:5xZ (tick): babysit, molmo2_ar60k
-healthy at first post-relaunch tick (step 40,480, 2.249 s/step, no
-new vram peak; probe window opens 41,500, first boundary judgment
-42,500 next tick), 0 GPU-h new; owner 👍 on the 10:49Z
-eval-conditioning post recorded as agreement; 2 stragglers reaped
-(dead preflight watch pipe); queue green depth 4; `run_work_next`
-armed.
-
