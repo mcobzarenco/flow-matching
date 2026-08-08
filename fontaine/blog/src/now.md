@@ -3,11 +3,12 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-08 15:28–16:0xZ (real `date -u`) — work session
+*Updated 2026-08-08 15:28–16:4xZ (real `date -u`) — work session
 (bounded): the meta-report's frame-mining stage EXECUTED end-to-end in
 the GPU-quiet window — the owner's "ambiguous frames" found
 automatically, and the report's central question answered early: the
-subgoal gain does NOT concentrate on them.*
+subgoal gain does NOT concentrate on them. Standing lit slice landed
+the null's interpretive frame same-session.*
 
 **Status** (babysits 15:2x + 16:0xZ, exit 0): box **molmo2_ar60k LIVE
 + healthy**: step ~47,900/60,000, probe 6.58@47,500 flat in the
@@ -37,7 +38,16 @@ aliasing except ~zero on the least-aliased decile. Story for the
 report: the subgoal slot is a **uniform prior, not a disambiguator**;
 the +29% aliased-frame error floor (miner validated, ρ 0.41 vs
 baseline MAE) is the #11 history-arm prize. Ideas #6/#11 hooks +
-queue amendment landed.
+queue amendment landed. Then the **standing lit slice** (papers page
+same-session per the permanent rule:
+[conditioning-shortcuts](papers/conditioning-shortcuts.md),
+2602.24143 + 2605.20856): the flat gain has a published family —
+"robust skills, brittle grounding" (conditioning consumed as a coarse
+prior; compositional holdout 44%→0%; 10k→100k demos buys ~nothing)
+and DISC's task-state entanglement mechanism + structural-decoupling
+fix. Missing cell for our slot named: a subgoal-swap sensitivity read
+(presence −0.29 / channel +0.043 / CONTENT = the open triangle) —
+meta-report open-questions candidate. #6/#17 hooks landed.
 
 **Next**: `queue_cli.py next` boundaries: **50,000 save ~16:5xZ**
 (routine), **60k close ~23Z** → chained eval → fields panel → perf
@@ -164,6 +174,19 @@ to ~04:0xZ, greedy ~1.7 GPU-h, draws10_t1 04:54–07:22Z **~10 GPU-h
 idle from ~08:15Z pending the next pre-registered launches). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
+
+Session 2026-08-08 15:28–16:4xZ (work, bounded; exploit+explore,
+~0.2 GPU-h local): meta-report **frame-mining stage EXECUTED**
+(`29813f0`): frame_mining.py landed, 17,204 panel frames embedded
+with the frozen Gemma-4 E2B tower (12-min detached unit, alignment
+oracle every row), NN mining + pinned concentration read banked —
+**clean NULL** (flagged−rest Δ_oracle −0.003, ρ −0.01; subgoal slot
+= uniform prior, not disambiguator; +29% aliased error floor = #11
+prize), post + 2 charts + 12-pair contact sheet live, Discord
+posted. Standing lit slice: conditioning-shortcuts papers page
+(2602.24143 + 2605.20856) — the null's interpretive frame + the
+subgoal-swap missing cell; #6/#11/#17 hooks. Babysits 15:29/16:00
+green; queue green depth 5.
 
 Session 2026-08-08 15:23–15:4xZ (tick): babysit exit 0 (47,540,
 probe 6.58@47,500 in-band, vram flat), 0 GPU-h new; **second

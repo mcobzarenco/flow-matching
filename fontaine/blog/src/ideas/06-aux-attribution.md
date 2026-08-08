@@ -287,3 +287,16 @@ independently: alias score ↔ baseline per-frame MAE ρ = 0.41,
 flagged frames +29% baseline error (the DSSP floor, real on our
 corpus, caveat: state-copy error elevated too — "ambiguous" partly
 conflated with "dynamic").
+
+**2026-08-08 ~16:2xZ — lit
+([conditioning shortcuts](../papers/conditioning-shortcuts.md),
+2602.24143 + 2605.20856):** the concentration null now has its
+external family — "robust skills, brittle grounding" documents
+conditioning channels consumed as coarse priors (region-prior
+picking: compositional holdout 44%→0%; 10k→100k demos buys nothing),
+DISC names the mechanism (task-state entanglement) and shows
+structural decoupling fixes it. Missing cell for our slot named: a
+**subgoal-swap sensitivity read** (wrong-episode subgoal at fixed
+frame vs true-subgoal pass) would close the presence(−0.29) /
+channel(+0.043) / CONTENT triangle for ~1 panel pass — meta-report
+open-questions candidate, own pre-reg if it graduates.

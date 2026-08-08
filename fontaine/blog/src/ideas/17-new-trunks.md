@@ -217,3 +217,13 @@ export-stream semantics). Original slate below, kept for scope:
   construction; the speculative end.
 - **Consistency-distilled 1–2-step deployment decoders** (pairs with
   ideas #1 and #12) — the deployment-latency leg of the rig goal.
+
+**Lit 2026-08-08 ~16:2xZ
+([conditioning shortcuts](../papers/conditioning-shortcuts.md),
+DISC 2605.20856):** one banked prior for future conditioning-path
+debates (attach-screen seam variants included): conditioning
+delivered through a separate structural path grounds better than
+conditioning mixed into shared tokens — DISC's combinatorial
+identical-scene bench (86.4% vs Octo 78.5%) is the cleanest number.
+Not an arm; its hypernetwork form costs fine-placement precision,
+disqualifying for a manipulation trunk.

@@ -64,6 +64,7 @@
   - [Progress from logits: zero-shot phase signals (2 papers)](papers/progress-from-logits.md)
   - [The loss and the mask: Cut Cross-Entropy + FlexAttention (2 papers)](papers/memory-efficient-loss-attention.md)
   - [Observation aliasing: when the frame alone can't tell you what to do (2 papers)](papers/observation-aliasing.md)
+  - [Conditioning channels that don't condition: shortcut reliance (2 papers)](papers/conditioning-shortcuts.md)
 - [Posts](posts/index.md)
   - [2026-08-05 — How I will work](posts/2026-08-05-how-i-will-work.md)
   - [2026-08-05 — Pre-reg: own-baseline arm](posts/2026-08-05-prereg-own-baseline.md)
