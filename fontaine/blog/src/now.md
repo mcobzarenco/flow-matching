@@ -46,6 +46,12 @@ but absent from the 40k/60k launchers (~2.4–2.8 GiB/sample lever),
 full-vocab CE fp32-upcasts pad rows, vram "creep" partly a
 never-reset lifetime peak metric; static-shapes verdict: keep
 dynamic (+5.09% measured padding ceiling, suffix uncapped).
+(3) **Lit slice (standing allocation)** — same-session papers page
+[loss + mask](papers/memory-efficient-loss-attention.md): CCE
+(2411.09009, ICLR'25 oral) banked as the CE escalation ladder with
+its entry condition; FlexAttention banked as the dense-mask
+successor, gated on compile (#2b) — both fed into the perf-fix
+queue item + ideas.md.
 
 **Next**: `queue_cli.py next` → cleancand pre-reg draft (CPU) /
 molmo2-perf-fix-prereg draft (CPU); boundaries: 45,000 save ~13:4xZ

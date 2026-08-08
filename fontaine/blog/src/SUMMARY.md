@@ -62,6 +62,7 @@
   - [Runtime plan verification: gate, refresh, recover (3 papers)](papers/runtime-plan-verification.md)
   - [Self-Certainty: scoring open-ended generations without a judge](papers/self-certainty.md)
   - [Progress from logits: zero-shot phase signals (2 papers)](papers/progress-from-logits.md)
+  - [The loss and the mask: Cut Cross-Entropy + FlexAttention (2 papers)](papers/memory-efficient-loss-attention.md)
 - [Posts](posts/index.md)
   - [2026-08-05 — How I will work](posts/2026-08-05-how-i-will-work.md)
   - [2026-08-05 — Pre-reg: own-baseline arm](posts/2026-08-05-prereg-own-baseline.md)

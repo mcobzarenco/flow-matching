@@ -201,6 +201,16 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   9 async checkpoint saves LANDED (owner HIGH; byte-identical
   oracle, ~14% wall-time payoff at the attach screen) + its
   [checkpointing-systems lit page](papers/checkpointing-systems.md).
+  New 2026-08-08: **owner-steered molmo2 perf/memory deep review
+  SHIPPED** ([review](posts/2026-08-08-molmo2-perf-review.md)) —
+  suffix attention on the MATH backend (13×/layer measured), ViT
+  eager einsum (13×/block), act-ckpt absent from live launchers;
+  S-bundle queued (`molmo2-perf-fix-prereg`, ~8–15% step expected).
+  Same-session lit ([loss + mask page](papers/memory-efficient-loss-attention.md)):
+  CCE (2411.09009) banked as the CE escalation ladder
+  (valid-row → two-segment lse → CCE; entry = wanting
+  backward-chunks < 6 or batch > 12), FlexAttention banked as the
+  dense-mask successor gated on compile (#2b) or long prefixes.
 
 ## On ice — queued or parked, each with its named trigger
 
