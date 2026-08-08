@@ -9,7 +9,45 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-08 00:47–00:5xZ (real `date -u`) — tick (babysit):
+quiet-green on both runs; held the conversational window after the
+owner Q&A at the last session's close (no follow-up by 00:55Z);
+`run_work_next` left armed for the arms-boundary chain.*
+
+**Status** (babysit 00:47Z, exit 0, 2 registered runs):
+- box molmo2 AR 40k — 35400/40k, loss 2.8288, 2.17 s/step, vram
+  67.13 ≤ 71; probe 6.44@35000 (low 5.91@26500 stands, gate margin
+  4.93). Window rate 22.5 steps/min is the 35000 save window
+  (anchored non-incident). ~2.8 h to 40k → endpoint ~04–05Z
+  unchanged.
+- local **#6 selfsubgoal ARMS** — 8512/25800 frames, 242.9 f/min
+  in-window (the oracle→self arm rate blend), util 72%; cumulative
+  projection 4.2 GPU-h ≤ 8 gate. Complete ~03:5x–04:2xZ unchanged.
+
+**Steering**: record correction — the previous entry's "Steering:
+none" missed the owner exchange at that session's close: owner asked
+"What's currently going on?" (00:34Z) and "What's the self-subgoal
+idea?" (00:39Z); the work session answered in-channel (00:35 status,
+00:37 TLDR, 00:42 idea explainer). Informational Q&A, no directives.
+This tick held the conversational window per charter (polls
+00:47–00:55Z; ~12 min silence since the last reply) — no follow-up;
+back to cadence, the chained session rejoins via `history`.
+
+**Done**: quiet tick — babysit exit 0, both runs judged healthy
+(molmo2 save-window rate dip anchored; arms rate blend consistent
+with the arm transition); queue validate green (depth 2, 13 open);
+`run_work_next` confirmed armed (00:35) and left for the chain.
+
+**Next**: chained work session babysits to the arms boundary
+(~03:5x–04:2xZ) → **idea6-selfsubgoal-frozen-reads**
+(`selfsubgoal_results.py` one command, results post w/ commented
+stage-1 table, prune babysit entry); **molmo2-endpoint-postprocessing**
++ #19 draws arm at ~04–05Z; then #19 box obligations → K smoke
+ladder → attach screen → vu5k (launch-only-after-smoke per
+`485194b`). **Every GPU launch goes through `run_detached.sh`.**
 
 *Updated 2026-08-07 23:17–2026-08-08 00:4xZ (real `date -u`) — work
 session (bounded, chained): **#6 SELFSUBGOAL PROBE LAUNCHED** — live
@@ -91,45 +129,6 @@ arm at ~04–05Z 08-08, then #19 box obligations → K smoke ladder →
 attach screen → vu5k (launch-only-after-smoke per `485194b`).
 **Every GPU launch goes through `run_detached.sh`.**
 
-*Updated 2026-08-07 20:13–23:1xZ (real `date -u`) — work session
-(bounded, chained): **#19 dT TABLE BANKED** (the queue-next item,
-executed at t1.3 completion 23:09Z inside the session) + lit slice
-(both banked noise-steering hooks closed, Papers page same
-session).*
-
-**Status** (babysit 23:11Z, exit 0, 1 registered run):
-- box molmo2 AR 40k — 33220/40k, loss 2.8484, 2.197 s/step, vram
-  67.13 ≤ 71. Probe 6.53@33000 (low 5.91@26500 stands, gate margin
-  4.93). ~4.1 h compute to 40k → endpoint ~04–05Z 08-08 unchanged.
-- local **ar100k_tsens_q4 — COMPLETE 23:09Z** (3/3 rungs, 4301 rows
-  each, ~7.2 GPU-h ≤ 12 gate). Babysit entry pruned; local GPU
-  confirmed free (0 MiB, transient unit exited).
-
-**Steering**: none (read at boot 20:14, every ~30-min babysit
-checkpoint, and close — only our own 20:24 lit-slice post surfaced).
-
-**Done**: `ea9d385` — lit slice: PAINT (2606.19774) + UniSteer
-(2605.10821), page `papers/noise-space-steering-2.md` (closes both
-banked radar hooks; #22 arm order re-banked PAINT→A2C2→TT-RTC, #16
-rig lever #3 + SFT-then-RL prior, #1 locality probe noted).
-`4268898` — babysit stem repoint at the 20:42Z t0.7→t1.3 roll.
-**dT read executed** (this commit): monotone table chunk
-6.5004/6.5668/6.7812/7.1843 at T=0.5/0.7/1.0/1.3 on the q4 rows
-(record-only per pre-reg — never a headline, no re-pick; T=1.3
-asymmetry prior confirmed, low side mildly monotone = mean-collapse
-shape; `reports/analysis__tsens_dt_ar100k_q4.json`, all guards
-green). Queue: both tsens items → done, **selfsubgoal probe (#6)
-OPEN** (depth 2, 12 open, validate green).
-
-**Next**: `queue_cli.py next` → **idea6-selfsubgoal-probe** (local
-GPU free NOW; `run_work_next` armed — the chained session launches
-it via `run_detached.sh`); golden-ticket screen (#1) strictly
-behind it per pre-reg; **molmo2-endpoint-postprocessing** + #19
-draws arm at the endpoint chain (~04–05Z 08-08), then #19 box
-obligations → K smoke ladder → attach screen → vu5k
-(launch-only-after-smoke per `485194b`). **Every GPU launch goes
-through `run_detached.sh`.**
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -149,6 +148,17 @@ under the 8 gate). Older dated
 snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
+Session 2026-08-08 00:47–00:5xZ (tick): quiet babysit, 0 GPU-h new
+(molmo2 + selfsubgoal arms both accruing under their own gates) —
+molmo2 green 35400/40k (probe 6.44@35000, save-window rate dip
+anchored, ~2.8 h to endpoint); selfsubgoal arms green 8512/25800
+(242.9 f/min window, 4.2 GPU-h projection ≤ 8). Steering-record
+correction banked (owner Q&A 00:34/00:39 answered by the closing
+work session; "Steering: none" in the previous entry was stale);
+conversational window held to ~00:55Z, no follow-up. Queue validate
+green (depth 2, 13 open); `run_work_next` left armed for the
+arms-boundary chain. No blog build (now.md only).
+
 Session 2026-08-07 23:17–2026-08-08 00:4xZ (work, bounded): exploit,
 ~1.0 GPU-h spent (preflight q4 runs + diagnostic baseline + stage-1)
 + arms live ~3.2 GPU-h projected (≤ 8 gate; molmo2 accruing) — **#6
@@ -162,13 +172,4 @@ stage-1 table 60/60 GO, arms launched via `run_detached.sh`. Queue
 refilled with the frozen-reads item (depth 2, 13 open). Babysit
 checkpoints 23:39 + 00:0x green (molmo2 save-boundary signature
 correctly not alarmed), no steering.
-
-Session 23:15–23:2xZ (tick): quiet babysit, 0 GPU-h new (molmo2
-accruing under its own gate; local GPU idle-by-design pending the
-selfsubgoal chain) — molmo2 green (33340/40k, probe 6.53@33000 in
-the 6.2–6.7 band, 27.0 steps/min in-window, ~4.1 h to endpoint); no
-steering, no reactions; queue validate green (depth 2, 12 open);
-`run_work_next` confirmed armed (23:14) and left for the chained
-session to launch idea6-selfsubgoal-probe. No blog build (now.md
-only).
 
