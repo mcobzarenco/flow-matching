@@ -1,12 +1,60 @@
 # Now
 
-
-
-
-
-
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-08 17:48–18:3xZ (real `date -u`) — work session
+(bounded): #6 rung (b′) **instrument delta LANDED oracle-green +
+stage-1 gate OPEN** (commit 93dcf71) — the cleancand execution item
+is now launch-only. Mid-session owner steering (17:50Z) handled same
+session: all 12 frame-mining pair figures rebuilt in the eval-report
+per-joint layout (commit 128f096), live on the Space.*
+
+**Status** (babysits 18:09/18:2xZ, exit 0): box **molmo2_ar60k LIVE +
+healthy**: step 52,080/60,000, probe **6.27@51,500 / 6.29@52,000 —
+fresh continuation lows** (band was 6.40–6.87; 1.91+ under the 8.21
+kill bar, ×3 never armed), loss 2.71, 2.21 s/step, vram 73.84 no new
+peak; ~4.9 h to the **60k close ~23Z** → chained greedy panel eval.
+Local GPU free; the post-close window is now fully launch-only
+(rung-2 stage-2/seating + cleancand arms all single commands).
+
+**Steering** (17:50Z, mcobzarenco): the action charts on the
+frame-mining post are unreadable — rework each figure as
+[image][image] / 3×2 per-joint grid, eval-report format (their
+original message was lost in the 16:5xZ credit outage). DONE same
+session (128f096): per-joint axes with motor-name titles from the
+banked baseline report json, eval-report dark theme (query #648fff /
+neighbor amber #ffb000), subgoal subtitles kept; blog rebuilt, Space
+pushed, live bytes sha-verified; confirmed in-channel 18:16Z with a
+per-joint reading of pairs 1 and 7.
+
+**Done** (commits 93dcf71 + 128f096): (1) rung (b′) instrument delta
+per the pre-reg — frozen eligible-list rule canonicalized as
+`subgoal_scoring.eligible_indices`; `SelectedSubgoalPolicy`
+`candidate_filter='clean'` (names `_boncleansubgoal`/
+`_ceilcleansubgoal`, both scorers pick over the eligible list); eval
+CLI `--subgoal-candidate-filter clean` (report records the filter,
+candidates dump gains eligible flags + fallback + alternates over the
+eligible list; pass-1 bytes untouched); read script + live oracles
+gained filter-aware modes (provenance aborts incl. cross-convention
+stray keys, eligible/fallback recompute aborts, eligible-size +
+fallback-count records; draws-0 limit inert by the rule). NEW
+`subgoal_draws_cleanlist_stage1.py`: banked-table re-adjudication
+reproduced every written prior EXACTLY (40/60 binds, 0/60 SC + 0/60
+ceil pick changes, a′ 60/60, b′ 57/60, c′ 23/425, 0 fallback) =
+oracles vii+x; bars all PASS → **stage-2 gate json written**. Oracles
+viii/ix pinned CPU-side in tests (planted filter-binds worlds both
+scorers, all-truncated fallback). check.py 522 green (30/30
+subgoal-draws). (2) The steering item above. Queue: execution item
+annotated LAUNCH-ONLY, validate green depth 5.
+
+**Next**: `queue_cli.py next` = molmo2-perf-pass1-exec (box ladder,
+post-close). Dated boundaries: **60k close ~23Z 08-08** → chained
+eval → fields panel → perf box ladder + noise-ladder rung-2
+stage-2/seating → cleancand arms behind those (launch-only, gate
+json on disk). Chained work armed (`run_work_next`): next CPU items =
+meta-report structure drafting, lit slice (skipped 3 sessions running
+on the credit-cap reason — first quiet post-cap window owes one);
+credit-cap risk until ~22Z stands, committed work resumes at reset.
 
 *Updated 2026-08-08 17:35–18:1xZ (real `date -u`) — work session
 (bounded): #6 rung (b′) **clean-list subgoal-draws pre-reg POSTED**
@@ -107,50 +155,6 @@ commands). Chained work armed (`run_work_next`): idea6 cleancand
 pre-reg draft is the next CPU item; credit-cap risk until ~22Z noted
 — if a session dies on a 429, committed work resumes at reset.
 
-*Updated 2026-08-08 17:03–17:2xZ (real `date -u`) — tick (babysit):
-outage-recovery tick. The 16:53Z tick AND its chained work session
-were both killed by an out-of-credits 429 (16:58Z; cap resets ~22Z) —
-no commit, no boundary post, a SAVELINE placeholder left in the entry
-below. This tick audited the dead tick's claims against disk,
-verified the 50k save on the box, sent the unsent boundary post, and
-landed two sessions of orphaned uncommitted work.*
-
-**Status** (17:05Z babysit exit 0): box **molmo2_ar60k LIVE +
-healthy**: step 50,160/60,000, probe 6.5742@50,000 flat in the
-6.40–6.87 band (1.63 under the 8.21 kill bar, ×3 never armed), loss
-2.76, 2.22 s/step, vram 73.84 no new peak; **50k async-save VERIFIED
-on the box**: `saved …/step_050000 (async, 151.4s behind the
-boundary)` at 16:59:39Z, all checkpoint files present (backbone +
-expert + optimizer + prompt). ~6.1 h to the 60k close (~23Z). Local
-GPU free; preflight green json real on disk
-(`reports/analysis__noise_ladder_preflight_oracles.json`, 16:54Z).
-
-**Steering**: none new (`read` = our own posts + the harness exit-1
-alert; `history` = no new reactions). The alert is **diagnosed**: the
-16:53Z tick's log ends in a 429 — `out_of_credits`, seven-day cap,
-resetsAt ~22:00Z — NOT auth, NOT the box; the 16:58:24Z chained work
-session died in 1 turn on the same 429 (consuming `run_work_next`).
-Credits flow again as of 17:03Z. If sessions die again before ~22Z,
-that's the cap re-biting — the work resumes at reset, nothing is
-lost that's committed.
-
-**Done**: dead tick's claims audited (preflight green json, babysit
-prune, queue annotation — all real; the SAVELINE placeholder and the
-phantom "boundary post at 17:0xZ" corrected in its entry below);
-50k save verified over ssh; boundary + outage Discord post sent
-17:1xZ; the two-session orphan pile committed + pushed (Queue page:
-`queue_page.py`/`blog_build.sh`/`queue.md`; 12 subtitled frame-mining
-figures; charter close-step; now.md); blog rebuilt + Space pushed —
-`queue.html` live (it 404'd until now: the 16:48Z "lands this
-session" promise died with the credits).
-
-**Next**: `run_work_next` RE-armed (the dead chained session consumed
-it): rung-2 **read script** (the remaining CPU cell before stage-2),
-cleancand pre-reg draft, meta-report composition; **60k close ~23Z**
-→ chained eval → fields panel → perf box ladder + noise-ladder
-stage-2/seating in the post-close window. Credit-cap risk until ~22Z
-noted for the chained session.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -188,6 +192,18 @@ rung-(b′) work session — chained work follows this tick (next CPU
 items: cleancand instrument delta, meta-report structure drafting;
 credit-cap risk until ~22Z stands, committed work resumes at reset
 if a session 429s). No blog build (now.md only).
+
+Session 2026-08-08 17:48–18:3xZ (work, bounded; exploit, 0 GPU-h —
+CPU cells + charts): #6 rung (b′) instrument delta landed oracle-green
+(93dcf71: eligible-list rule + filter-aware dump/read/live-oracles +
+NEW cleanlist stage-1 re-adjudicator; priors reproduced exactly,
+stage-2 gate json written → execution launch-only) + owner-steering
+chart rework same session (128f096: 12 pair figures → eval-report
+per-joint 3×2 dark layout, Space pushed, bytes verified). check.py
+522 green ×2. Babysits 18:09/18:2xZ green (52,080/60,000, probe
+6.27@51,500 fresh low, ~4.9 h to close). Lit slice skipped, stated
+reason: two items landed incl. mid-session steering; credit-cap risk
+until ~22Z — the first quiet post-cap window owes one.
 
 Session 2026-08-08 17:35–18:1xZ (work, bounded; exploit, 0 GPU-h —
 CPU cell): #6 rung (b′) clean-list subgoal-draws **pre-reg POSTED**
