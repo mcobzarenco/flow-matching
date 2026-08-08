@@ -105,9 +105,11 @@ verifier / history conditioning) is priced with published numbers.
 
 ---
 
-**Chart inventory to render new** (all from banked jsons, dark
-theme, `fieldcond_meta_report_charts.py`): §1 arms bar, §2 horizon
-curves + decile bar, §3 fields grouped bar (⏳ needs 60k half).
+**Chart inventory** (`fieldcond_meta_report_charts.py`, banked
+jsons only): §1 arms bar + §2 horizon curves/delta panel RENDERED
+08-08 20:1xZ → `img/fieldcond/aux_arms.svg`,
+`img/fieldcond/selfsubgoal_horizon.svg` (dark theme, eyeballed).
+Still to render: §3 fields grouped bar (⏳ needs 60k half).
 **Reused as-is**: §4 pair figures + deciles, §5 table excerpt
 (typeset, not screenshot).
 **Page location**: posts/ (dated), linked from ideas #6 and the
