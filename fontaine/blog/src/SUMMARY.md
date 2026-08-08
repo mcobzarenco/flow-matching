@@ -58,6 +58,7 @@
   - [Where should the words come from? HiRoC + VLA-Talker](papers/subgoal-sourcing-post-training.md)
   - [Noise-space steering: the ladder above the ticket (3 papers)](papers/noise-space-steering.md)
   - [Noise-space steering II: execution + the human loop (2 papers)](papers/noise-space-steering-2.md)
+  - [Noise-space steering III: attribution + a judge-free selector (2 papers)](papers/noise-space-steering-3.md)
   - [Runtime plan verification: gate, refresh, recover (3 papers)](papers/runtime-plan-verification.md)
   - [Self-Certainty: scoring open-ended generations without a judge](papers/self-certainty.md)
   - [Progress from logits: zero-shot phase signals (2 papers)](papers/progress-from-logits.md)

@@ -22,7 +22,13 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   T=0.5/0.7/1.0/1.3 on the q4 rows; the T=1.3 asymmetry prior
   confirmed, primary stays T=1.0. Molmo2 arm RUNNING 08-08 ~05:0xZ
   (draws10_t1 chained after the endpoint greedy eval; its Δ_AR read
-  pairs on the greedy npz banked this session).
+  pairs on the greedy npz banked this session). Lit (08-08,
+  [steering III](papers/noise-space-steering-3.md)): SDN
+  (2606.14084) — a judge-free per-step noise selector whose
+  smoothness-only ablation carries most of its +18 pp real-robot
+  gain; jerk-pick is a pure function of our banked draw stacks →
+  record-only ceiling-ladder read queued (single → mean → jerk-pick
+  → oracle), both families, table cost.
 - **`seam-screen` [#4 Stage-2 attachment seam](ideas/04-stage2-attachment.md)** —
   `screening`. F (frozen) vs K (KI-joint) screen pre-registered;
   instruments, launchers, smoke ladder and frozen-read script all
@@ -135,7 +141,17 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   ([part II](papers/noise-space-steering-2.md) — PAINT + UniSteer):
   a probeable prefix-locality property of our teacher noted
   (record-only), the per-step fixed-point inversion primitive is
-  the numbers-backed default, no gate change.
+  the numbers-backed default, no gate change. Lit (08-08,
+  [steering III](papers/noise-space-steering-3.md)): the
+  per-dataset-tickets pre-reg inherits three published priors —
+  2603.11642's variance decomposition (noise main effect 1.4%,
+  context×noise interaction 39.4%, best-shared-noise optimal in
+  3.1% of contexts: per-dataset search aims at the interaction
+  term); the channel exists because our Heun decode is path-intact
+  (DDIM 0.96 vs DDPM 0.11 direction→jerk correlation — any sampler
+  change re-tests the ladder); and chunk-boundary artifact is a
+  named panel-blind unknown of ticket 33 (rollout-gated jerk read
+  banked).
 
 ## Standing
 
