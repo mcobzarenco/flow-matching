@@ -113,3 +113,4 @@
   - [2026-08-08 — Self-subgoal probe results (#6): the slot is alive, the planner isn't](posts/2026-08-08-selfsubgoal-results.md)
   - [2026-08-08 — Pre-reg: subgoal-draws selection (#6 rung (b))](posts/2026-08-08-prereg-subgoal-draws.md)
   - [2026-08-08 — Molmo2 AR 40k endpoint: BEATS (#17)](posts/2026-08-08-molmo2-endpoint-results.md)
+  - [2026-08-08 — Golden tickets are real (#1)](posts/2026-08-08-goldenticket-results.md)

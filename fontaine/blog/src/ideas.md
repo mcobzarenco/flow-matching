@@ -103,16 +103,22 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   bottleneck). Lane (a) verdict: nothing published beats SC
   label-free on open-ended text — the frozen scorer cell stands.
 - **`noise-draws` [#1 Noise-draw ensembling](ideas/01-noise-draw-ensembling.md)** —
-  flow mean-of-10 banked (5.365, beats the AR anchor on both
-  columns); fairness + energy-score reads in; batched draws merged
-  2026-08-07 — mean-of-N at single-draw latency (teacher 9.1×,
-  student 2.5× single-stream). Next rung: the golden-ticket noise
-  screen —
-  [pre-reg posted 2026-08-07](posts/2026-08-07-prereg-golden-ticket-screen.md)
-  (teacher-first, M=64 tickets in one batched draws-64 probe eval,
-  staged kill line, 6 GPU-h gate); **instrument landed 08-07
-  (`0acabde`, oracles green)** — execution is launch-only, awaits a
-  quiet local window behind tsens + the selfsubgoal probe. Lit
+  flow mean-of-10 banked (5.365); batched draws merged 2026-08-07.
+  **GOLDEN-TICKET SCREEN R1+R2 READ OUT 2026-08-08
+  ([results](posts/2026-08-08-goldenticket-results.md)): tickets are
+  REAL — R1 CONFIRM (sd 0.823 vs null line 0.0785, 12× the null;
+  winner ticket 33), R2 REAL on 14,746 complement rows (paired
+  −0.924 [CI −0.985, −0.866] vs stable-key; LARGER than the
+  selection-biased probe delta): one fixed sha-pinned noise vector =
+  5.6468/1.8963 core-pooled, ~75% of the mean-of-10 gain at 1/10th
+  the draws — leaderboard row 7. Effect DIRECTIONAL, not norm
+  (ticket-33 norm rank 29/64, corr(norm,score) −0.05) — the
+  LAFM/DSRL structured-noise premise showing up unprompted. Stage 3
+  (mean-of-top-10 vs mean-of-10, record-only R3 ± 0.02 band) RUNNING,
+  lands ~08:1xZ; R4 task-locality reads come with its write-up. The
+  noise-structure ladder (per-dataset tickets → LAFM priors → DSRL
+  state-conditioned) has met its entry condition — each rung needs
+  its own pre-reg.** Lit
   (08-07, [LAFM page](papers/latent-action-priors.md)): the
   noise-structure ladder above the screen is now mapped — searched
   ticket → per-dataset tickets → LAFM's learned mode-prior library

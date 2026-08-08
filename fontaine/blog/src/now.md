@@ -16,7 +16,78 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-08 04:00–05:2xZ (real `date -u`) — work session
+(4-h chained, ended early with the chain fully dispatched): **TWO
+PRE-REGISTERED SCREENS READ OUT POSITIVE** — molmo2 40k endpoint
+**BEATS** (→ phase-2 flow-trunk candidate) and golden-ticket
+**R1 CONFIRM + R2 REAL** (→ leaderboard row 7, stage 3 live). Plus:
+the endpoint chain's dtype incident root-caused + fixed + relaunched
+inside ~10 min; the rung-(b) escalation lit slice; four oracle-green
+CPU instruments banked.*
+
+**Status** (babysit 05:18Z, exit 0, 2 registered runs):
+- box **#19 molmo2 draws10_t1** — 832/6450 rank-0 shard at 33.3
+  f/min, projection 12.9 ≤ 24 GPU-h gate, lands ~08:1xZ; its Δ_AR
+  read pairs on the greedy npz banked this session.
+- local **#1 goldenticket stage 3** — launched 05:16:30Z
+  (mean-of-top-10, byte-verified sha e537f4cd), in model-load at the
+  05:18 poll (documented startup signature, non-incident, verified
+  past its sha+GPU guards); ~2.9 GPU-h, lands ~08:1xZ; screen budget
+  ~5.5 of the 6 gate.
+
+**Steering**: none (`read` at boot 04:00 and at every babysit
+checkpoint 04:28/04:35/04:43/05:18 — no messages, no reactions; last
+owner exchange 00:39Z already answered).
+
+**Done** (this session, 7 commits `0401de8`..`e6314ed`+):
+- **molmo2 endpoint chain**: 40000/40000 reached; chained greedy
+  eval DIED 04:16Z (`float != BFloat16` — `torch.where` promoted
+  mixed-dtype suffix embeds; autocast had masked it in training;
+  tests loaded the fixture fp32) → one-line cast fix + red/green
+  regression test (`5a43b15`), box synced via git bundle, chain
+  relaunched through the #19 launcher's pre-built greedy-if-missing
+  clause. Greedy landed 04:53Z → frozen reads via oracle-green
+  `molmo2_endpoint_results.py` (`61dacb9`): **BEATS — 6.0079/2.1871
+  vs A-s0 7.7966/3.9422, paired −1.717 [CI −1.80, −1.63]**; decision
+  executes, Molmo2 = phase-2 flow-trunk candidate; leaderboard row 8
+  + own-topology row; results post + Discord; weights uploaded to
+  fontaine-checkpoints (hub-verified); endpoint probe 6.2075@40000
+  quoted for the vu5k amendment; babysit repointed at each phase.
+- **goldenticket screen**: R1 **CONFIRM** (sd 0.82252 vs 0.0785 —
+  12× null; winner ticket 33) → stage 2 launched 04:24Z
+  (winner-only npz byte-verified) → R2 read via oracle-green
+  `goldenticket_stage2_results.py` (`f65e6b7`; provenance via report
+  JSON — caught pre-data that --dump-predictions carries no ticket
+  fields): **REAL — complement Δ −0.924 [CI −0.985, −0.866]**,
+  bigger than the probe-row delta; effect directional not norm
+  (rank 29/64, corr −0.05); core-pooled 5.6468/1.8963 = leaderboard
+  row 7; stage 3 launched 05:16:30Z. Results post + Discord.
+- **Lit slice closed** (`0401de8`): papers/progress-from-logits.md
+  (TOPReward + ProgVLA) + MG-Select prerequisite VERIFIED MET
+  (correction banked on self-certainty.md) — rung-(b) escalation
+  routing pre-mapped; SC scorer cell stands.
+- **CPU instruments banked**: R2 read script; molmo2 endpoint read
+  script (pre-reg drafting slip in its state-copy parenthetical
+  found + recorded); rung-(b) stage-1 draws runner in
+  selfsubgoal_stage1.py (`b1286ca`, mechanical go/no-go bars as pure
+  tested fn); molmo2 decode-cost microbench prep (`2cdc06d`, retires
+  the leaderboard cost caveat at the next pre-registered box
+  window). check.py 491 green at close.
+
+**Next**: `queue_cli.py next` → **molmo2-decode-cost-microbench**
+(CPU prep done; box run at the first pre-registered eval window).
+Boundaries: **stage-3 R3/R4 + screen close-out ~08:1xZ** (read
+script trivial: pooled vs 5.3645, ±0.02 band, record-only);
+**#19 draws Δ_AR read ~08:1xZ** (box, paired on this session's
+greedy npz); **idea6-subgoal-draws-execution** at the first quiet
+local window after stage 3 (preflight = GPU-side oracles; stage-1
+runner landed this session); noise-ladder pre-reg draft AFTER R3
+adjudicates (deliberate: pre-reg quality needs R3/R4 numbers).
+`run_work_next` armed. **Every GPU launch goes through
+`run_detached.sh`.**
 
 *Updated 2026-08-08 03:56–04:0xZ (real `date -u`) — tick (babysit):
 **molmo2 REACHED 40000/40000** — polled inside the endpoint save
@@ -104,38 +175,6 @@ banked self arm at matched composition, forced-empty = plain path).
 `run_work_next` re-armed. **Every GPU launch goes through
 `run_detached.sh`.**
 
-*Updated 2026-08-08 03:15–03:2xZ (real `date -u`) — tick (babysit):
-quiet-green on both runs; goldenticket cumulative projection firmed
-to 2.1 h ≤ 6 gate (proper windows now, burst anchor holds);
-`run_work_next` confirmed armed for the R1/endpoint chain.*
-
-**Status** (babysit 03:15Z, exit 0, 2 registered runs):
-- box molmo2 AR 40k — 38960/40k, loss 2.8206, 2.197 s/step, 27.1
-  steps/min in-window, vram 67.13 ≤ 71; probe 6.20@38500 (low
-  5.91@26500 stands, gate margin 4.93). ~0.6 h compute to 40k →
-  40000 save (~15 min write) → chained greedy panel eval; endpoint
-  chain ~04:2x–04:5xZ.
-- local **#1 goldenticket stage 1** — 672/2458 at 100% util; window
-  24.1 f/min (6.6-min slice, within burst noise of the ~25 steady
-  anchor), cumulative 19.5 f/min → projected total 2.1 h ≤ 6 GPU-h
-  gate, ~1.5 h remaining. R1 adjudication ~04:4x–05:0xZ.
-
-**Steering**: none (`read` + `history` at 03:15 — no messages, no
-new reactions; last owner exchange 00:39Z already answered).
-
-**Done**: quiet tick — babysit exit 0, both runs judged healthy;
-queue validate green (depth 2, 13 open); `run_work_next` confirmed
-armed (03:13) for the chained work session
-(**idea6-subgoal-draws-instrument** is its CPU item); now archive
-roll `--keep 3`.
-
-**Next**: chained work session takes
-**idea6-subgoal-draws-instrument** (CPU) through the GPU-busy
-window; molmo2 endpoint chain ~04:2x–04:5xZ →
-**molmo2-endpoint-postprocessing** + #19 draws arm; goldenticket R1
-~04:4x–05:0xZ gates its stage 2. **Every GPU launch goes through
-`run_detached.sh`.**
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -154,6 +193,15 @@ goldenticket stage 1 live from 02:41Z 08-08, ~1.5 GPU-h projected
 under the 6 gate). Older dated
 snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
+
+Session 2026-08-08 04:00–05:2xZ (work): exploit-heavy, ~1.0 GPU-h
+new local (goldenticket stages 2+3 launches; stage 1 closed at ~1.7,
+screen tracking ~5.5/6 gate) + box endpoint chain relaunch (greedy
+~1.7 GPU-h + draws10_t1 accruing under its 24 gate) — molmo2
+endpoint BEATS (row 8) + goldenticket R2 REAL (row 7), both boards
+updated, two results posts + 3 Discord updates; dtype incident fixed
+w/ regression test; 4 oracle-green CPU instruments; lit slice closed
+(papers page + MG-Select correction).
 
 Session 2026-08-08 03:56–04:0xZ (tick): quiet babysit, 0 GPU-h new
 (molmo2 + goldenticket stage 1 accruing under their own gates) —

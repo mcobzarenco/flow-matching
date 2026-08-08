@@ -242,32 +242,33 @@ value = 24.0                        # same pre-reg gate as the AR-100k arm
 # kind = "vram_max_gib"
 # value = 71.0
 
-# golden-ticket screen stage 2 (#1) — ACTIVE (launched 04:24Z 08-08
-# via run_detached.sh unit fontaine-goldenticket-stage2; stage 1
-# completed 04:2xZ rc=0 with R1 CONFIRM — sd 0.82252 > 0.0785, min
-# 5.70564 < 6.52401, winner ticket 33 (chunk 5.7056 on probe rows);
-# the stage_1 entry was replaced by this one at the same commit).
+# golden-ticket screen stage 3 (#1) — ACTIVE (launched 05:16:30Z 08-08
+# via run_detached.sh unit fontaine-goldenticket-stage3; stage 2
+# completed 05:14Z rc=0 and R2 read REAL — complement delta -0.924
+# [CI95 -0.985, -0.866] vs line -0.05, winner core-pooled
+# 5.6468/1.8963; the stage_2 entry was replaced at the same commit).
 
 [[run]]
-name = "goldenticket_stage2"
+name = "goldenticket_stage3"
 kind = "progress-log"
 host = "local"
 pgrep = "goldenticket"             # launcher bash + eval python
 pgrep_min = 2
 gpu_indices = [0]
 gpu_mem_min_mib = 8000
-log = "/home/ubuntu/eval__goldenticket_stage2.log"
+log = "/home/ubuntu/eval__goldenticket_stage3.log"
 progress_re = "scored [0-9]+/[0-9]+ frames"
-started_utc = "2026-08-08T04:24:06Z"
+started_utc = "2026-08-08T05:16:30Z"
 gpu_hours_per_wall_hour = 1.0      # single local GPU
-boundary = "stage 2 = winner ticket 33, full 25,800-frame panel, draws-1 ticket noise (heun-30, ~0.9 GPU-h) -> R2 read on COMPLEMENT core rows vs banked stable-key npz (REAL iff delta <= -0.05, CI95 excluding 0); stage 3 gated on R2"
+boundary = "stage 3 = mean-of-top-10 tickets, full panel, draws-10 ticket noise (heun-30, ~2.9 GPU-h, lands ~08:1xZ) -> R3 pooled read vs banked mean-of-10 5.3645, tie band ±0.02, RECORD-ONLY either way; screen closes at R3"
 anchors = [
-    "R1 CONFIRMED 04:2xZ 08-08: sd 0.82252 (line 0.0785), min 5.70564 (line 6.52401), both clauses open; ticket spread smooth 5.71-9.37, not an artifact",
-    "winner ticket 33 probe-row numbers 5.7056/1.8701 are SELECTION-BIASED - the R2 complement read is the honest number; anchors: stable-key single draw 6.5997/1.9355",
-    "winner npz = bank[33:34] byte-verified, sha a392d630... pinned in the launcher; bank sha 9bb13bc4...",
+    "R1 CONFIRM (sd 0.82252, min 5.70564) + R2 REAL (complement -0.924 [CI -0.985, -0.866]) both banked; the ticket effect is DIRECTIONAL, not norm (ticket 33 norm rank 29/64, corr(norm,score) -0.05)",
+    "R3 is record-only by pre-reg: mean-of-10's board row is not displaced without a paired follow-up",
+    "top10 npz = bank[[33,2,0,51,10,59,38,28,15,36]] byte-verified, sha e537f4cd... pinned in the launcher",
     "model-load + spawn-worker startup ~2-4 min shows as a quiet log head - not a stall",
-    "progress lines BURST-buffered (32-frame batches): judge rate on >=10-min windows only; stage-1 steady ~25 f/min at draws-64 => draws-1 full panel ~0.9 GPU-h expected",
+    "progress lines BURST-buffered (32-frame batches): judge rate on >=10-min windows only; draws-10 full panel ~2.9 GPU-h expected (~145 f/min)",
+    "screen budget: s1 ~1.7 + s2 ~0.85 + s3 ~2.9 = ~5.5 of the 6.0 gate — a stage-3 overrun past ~3.4 GPU-h breaches the gate, kill then",
 ]
 [[run.gates]]
 kind = "gpu_hours_max"
-value = 6.0                        # pre-reg ceiling, all stages (stage 1 spent ~1.7)
+value = 6.0                        # pre-reg ceiling, all stages (s1+s2 spent ~2.55)
