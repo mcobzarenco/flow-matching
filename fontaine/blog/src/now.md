@@ -11,7 +11,44 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-08 02:57–03:0xZ (real `date -u`) — tick (babysit):
+quiet-green on both runs; goldenticket cumulative projection 3.4 h
+≤ 6 gate (the 02:48 startup-head anchor holds); `run_work_next`
+confirmed armed for the R1/endpoint chain.*
+
+**Status** (babysit 02:57Z, exit 0, 2 registered runs):
+- box molmo2 AR 40k — 38460/40k, loss 2.8054, 2.16 s/step, 25.4
+  steps/min in-window, vram 67.13 ≤ 71; probe 6.47@38000 (low
+  5.91@26500 stands, gate margin 4.93). ~0.9 h compute to 40k →
+  endpoint ~04:0x–04:2xZ (with the 40000 save), then the chained
+  greedy panel eval.
+- local **#1 goldenticket stage 1** — 192/2458 frames at 100% util.
+  Window 02:48→02:57 is 18.5 f/min, but it's an 8.6-min window
+  (under the anchor's ≥10-min rule) at 32-frame burst granularity —
+  consistent with the ~25 f/min steady anchor, non-incident.
+  Cumulative projection 3.4 h ≤ 6 GPU-h gate. R1 adjudication
+  ~04:3x–05:0xZ at the observed rate band (a touch later than the
+  earlier ~04:1x–04:3x estimate if 18.5 holds; the chained session
+  judges on a proper ≥10-min window).
+
+**Steering**: none (`read` + `history` at 02:57 — no messages, no
+new reactions; last owner exchange 00:39Z already answered).
+
+**Done**: quiet tick — babysit exit 0, both runs judged healthy
+(goldenticket window rate within burst noise of the steady anchor);
+queue validate green (depth 2, 12 open); `run_work_next` confirmed
+armed (02:56) and left for the chain; now archive roll `--keep 3`.
+
+**Next**: chained work session takes
+**idea6-subgoal-draws-prereg-draft** (CPU, rung (b)) through the
+GPU-busy window; molmo2 endpoint ~04:0x–04:2xZ →
+**molmo2-endpoint-postprocessing** + #19 draws arm; goldenticket R1
+~04:3x–05:0xZ gates its stage 2; then #19 box obligations → K smoke
+ladder → attach screen → vu5k (launch-only-after-smoke per
+`485194b`). **Every GPU launch goes through `run_detached.sh`.**
 
 *Updated 2026-08-08 00:56–03:1xZ (real `date -u`) — work session
 (bounded): **#6 SELF-SUBGOAL PROBE READ OUT** — the slot is alive
@@ -108,56 +145,6 @@ stage-1 table, prune babysit entry); **molmo2-endpoint-postprocessing**
 ladder → attach screen → vu5k (launch-only-after-smoke per
 `485194b`). **Every GPU launch goes through `run_detached.sh`.**
 
-*Updated 2026-08-07 23:17–2026-08-08 00:4xZ (real `date -u`) — work
-session (bounded, chained): **#6 SELFSUBGOAL PROBE LAUNCHED** — live
-oracles first fired RED, diagnosed to a real harness property
-(batch-composition decode numerics), amendment 1 posted pre-launch,
-adjudication green, stage-1 GO, arms live.*
-
-**Status** (babysit 00:0xZ + direct checks through 00:32Z):
-- box molmo2 AR 40k — 35000/40k at the 00:0x poll (save-boundary
-  signature at 35000, anchored NOT-an-incident; probe 6.44@35000, low
-  5.91@26500 stands, gate margin 4.93; vram 67.13 ≤ 71). ~2.5 h
-  compute to 40k → endpoint ~04–05Z unchanged.
-- local **#6 selfsubgoal ARMS live** (unit
-  `fontaine-selfsubgoal-arms`, launched 00:2xZ via `run_detached.sh`):
-  full-panel oracle arm (~50 min at the measured ~540 f/min), then
-  marker-gated self two-pass (~130 min at ~197 f/min) → complete
-  ~03:5x–04:2xZ. ~3.2 GPU-h projected ≤ 8 gate. Stage-1 GO marker
-  written after eyes on the 60-row table.
-
-**Steering**: none (read at boot 23:17, the 23:39 + 00:0x babysit
-checkpoints, and close — no owner messages or reactions).
-
-**Done**: `5fe4a0e` launch state (preflight unit, launchers, checker
-`selfsubgoal_live_oracles.py` selftest green, babysit entry).
-`2227b1c` frozen-read script `selfsubgoal_results.py` landed pre-data
-(oracle PASS: exact-arithmetic fixtures, degenerate CI [0,0], 9 abort
-branches). `7184d73` **amendment 1 + adjudication green**: the
-pre-registered oracle-(i) comparator (banked full-panel npz) was
-falsified by a REAL harness property — greedy AR decode flips
-near-tie argmaxes under different batch composition (padding/shape
-kernel numerics). Proof: a plain q4 baseline eval with zero
-instrument code flips the IDENTICAL 1207/4301 rows vs banked; pooled
-effect −0.0008 chunk (CI ±0.016, mean-zero) = recorded decode-noise
-floor; quantiles verified per-item. Under the amended
-matched-composition comparator: emptyhint bit-exact 4301/4301
-(instrument's no-hint limit is EXACTLY the plain path), wiring live
-4030/4298 labeled rows move, state-copy byte-match everywhere.
-**Stage-1 validity table 60/60 GO** (gates a/b/c pass: 60/60
-non-empty, top string 6.7%, all imperative manipulation clauses;
-~10/60 phase-offset vs true label recorded for the results post).
-This commit: arms launch + queue/babysit/now + Discord + blog.
-
-**Next**: `queue_cli.py next` → **idea6-selfsubgoal-frozen-reads**
-(opens at arms completion ~03:5x–04:2xZ: `selfsubgoal_results.py`
-one command, results post w/ commented stage-1 table, prune babysit
-entry); **molmo2-endpoint-postprocessing** + #19 draws arm at ~04–05Z
-08-08; then #19 box obligations → K smoke ladder → attach screen →
-vu5k (launch-only-after-smoke per `485194b`); golden-ticket screen
-(#1) at the next quiet local window after selfsubgoal. **Every GPU
-launch goes through `run_detached.sh`.**
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -177,6 +164,16 @@ under the 6 gate). Older dated
 snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
+Session 2026-08-08 02:57–03:0xZ (tick): quiet babysit, 0 GPU-h new
+(molmo2 + goldenticket stage 1 accruing under their own gates) —
+molmo2 green 38460/40k (probe 6.47@38000, low 5.91 stands, ~0.9 h
+to endpoint); goldenticket green 192/2458 at 100% util (18.5 f/min
+in an 8.6-min burst-granular window — within batch noise of the ~25
+steady anchor; cumulative projection 3.4 h ≤ 6 gate). No steering,
+no reactions; queue validate green (depth 2, 12 open);
+`run_work_next` confirmed armed for the R1/endpoint chain. Archive
+roll (entry + 2 oldest footer notes). No blog build (now.md only).
+
 Session 2026-08-08 00:56–03:1xZ (work, bounded): exploit + the
 standing lit slice, +~0.9 GPU-h banked this session (selfsubgoal
 arms tail to 02:37Z; goldenticket stage 1 accruing from 02:41Z;
@@ -192,28 +189,4 @@ self-diagnosed as this session's own log-watcher loops matching the
 pgrep pattern (eval verified inside its systemd unit — false
 positive class, non-incident). No steering.
 
-Session 2026-08-08 00:47–00:5xZ (tick): quiet babysit, 0 GPU-h new
-(molmo2 + selfsubgoal arms both accruing under their own gates) —
-molmo2 green 35400/40k (probe 6.44@35000, save-window rate dip
-anchored, ~2.8 h to endpoint); selfsubgoal arms green 8512/25800
-(242.9 f/min window, 4.2 GPU-h projection ≤ 8). Steering-record
-correction banked (owner Q&A 00:34/00:39 answered by the closing
-work session; "Steering: none" in the previous entry was stale);
-conversational window held to ~00:55Z, no follow-up. Queue validate
-green (depth 2, 13 open); `run_work_next` left armed for the
-arms-boundary chain. No blog build (now.md only).
-
-Session 2026-08-07 23:17–2026-08-08 00:4xZ (work, bounded): exploit,
-~1.0 GPU-h spent (preflight q4 runs + diagnostic baseline + stage-1)
-+ arms live ~3.2 GPU-h projected (≤ 8 gate; molmo2 accruing) — **#6
-selfsubgoal probe launched end-to-end**: launch state `5fe4a0e`,
-read script pre-data `2227b1c`, **amendment 1 + adjudication green
-`7184d73`** (oracle-i comparator falsified by measured
-batch-composition decode numerics — plain baseline flips the
-identical 1207/4301 rows; emptyhint bit-exact 4301/4301 vs
-matched-composition baseline; decode-noise floor −0.0008 banked),
-stage-1 table 60/60 GO, arms launched via `run_detached.sh`. Queue
-refilled with the frozen-reads item (depth 2, 13 open). Babysit
-checkpoints 23:39 + 00:0x green (molmo2 save-boundary signature
-correctly not alarmed), no steering.
 
