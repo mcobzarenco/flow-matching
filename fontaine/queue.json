@@ -513,7 +513,7 @@
    "status": "live",
    "prereg": "fontaine/blog/src/posts/2026-08-08-prereg-subgoal-draws-cleanlist.md",
    "owner_hold": false,
-   "boundary": "rc=0 ~00:4xZ 08-09 (31.7 f/min cumulative, 992/4301 at 22:58Z) -> frozen reads ONE command: uv run python fontaine/scripts/subgoal_draws_results.py --candidate-filter clean --draws-stem reports/eval__bijou_arb_rcond_100k_ddp4__step_100000__stateprobe_q4_subgoalcleandraws"
+   "boundary": "RUN COMPLETE 23:52Z 08-08: q4 subset 4301/4301 scored, all artifacts on disk (npz + subgoals/candidates json + report json, reports/eval__bijou_arb_rcond_100k_ddp4__step_100000__stateprobe_q4_subgoalcleandraws*); console pretty-print crashed AFTER dumps (KeyError 'bijou@100000' in cli.py sort \u2014 expected: clean-filter arms carry suffixed keys, no bare bijou column; cosmetic). READ BLOCKED: subgoal_draws_results.py hard-requires full-panel identity pairing (check_pairing exits 'pairing broken on index') \u2014 needs the q4 subset-join-on-index path per the draws10_t1_results.py precedent (subset-join + oracle (f) slice fixture) + q4 re-pool quoted directional. Chained work session: land the subset path, run the frozen reads (Delta_bon falsifier, Delta_ceil adjudicator), results post. Prior boundary: rc=0 ~00:4xZ 08-09 (31.7 f/min cumulative, 992/4301 at 22:58Z) -> frozen reads ONE command: uv run python fontaine/scripts/subgoal_draws_results.py --candidate-filter clean --draws-stem reports/eval__bijou_arb_rcond_100k_ddp4__step_100000__stateprobe_q4_subgoalcleandraws"
   },
   {
    "id": "fieldgen-accuracy-eval",
@@ -551,5 +551,6 @@
    "owner_hold": false,
    "boundary": "closed 2026-08-08 16:4xZ"
   }
- ]
+ ],
+ "updated": "2026-08-08T23:58:00+00:00"
 }

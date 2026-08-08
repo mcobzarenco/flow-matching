@@ -1,6 +1,8 @@
 # Babysit run registry (#21 P1). One entry per LIVE run; update at
 # launch time, prune at completion. Schema: fontaine/scripts/babysit.py.
 
+no_live_runs_reason = "both 08-08 runs closed inside the 23:42Z tick — box 60k panel eval done 23:49Z (artifacts verified), local cleancand q4 done 23:52Z (4301/4301 dumped); GPUs idle-by-design pending the chained work session's frozen reads, then fields panel + perf-pass1 relaunch here"
+
 # molmo2 40k TRAIN entry pruned 04:2xZ 08-08 — run COMPLETE (40000/40000,
 # endpoint probe 6.2075@40000, low 5.91@26500 stands; weights uploaded to
 # fontaine-checkpoints). Its launcher's chained greedy eval DIED 04:16Z
@@ -235,38 +237,42 @@
 # recipe byte-identical. First babysit: E1 banner + 'resumed
 # optimizer/scheduler at step 40000' + check_resume_seed line + first
 # async-save 'captured in Xs' + util/rate per standing rule.
-[[run]]
-name = "molmo2_ar60k"
-kind = "train-jsonl"
-host = "192.222.55.210"
-pgrep = "fontaine_molmo2_ar_60k_ddp4"
-pgrep_min = 4                     # 4 DDP ranks
-gpu_indices = [0, 1, 2, 3]
-gpu_mem_min_mib = 20000           # eval phase since 23:23Z 08-08: chained panel eval runs ~28.9 GiB/rank (training floor was 30000; observed steady 28,887 MiB tripped it — false liveness failure at 23:33Z)
-jsonl = "/home/ubuntu/flow-matching/outputs/train/fontaine_molmo2_ar_60k_ddp4/train_log.jsonl"
-total_steps = 60000
-probe_key = "eval_chunk_mae"
-vram_key = "vram_alloc_peak_gib"
-started_utc = "2026-08-08T10:28:43Z"  # RELAUNCH (attempt 1 died 10:15:43Z at first optimizer.step — state_steps-on-cpu, fixed 2c10d96 + amendment 1; rig datasets joined the mix, expected banner 880/38,628/18,672,827)
-gpu_hours_per_wall_hour = 4.0
-boundary = "TRAINING CLOSED 23:21Z 08-08: step 60000 reached (final probe 6.3548, loss 2.66, K1 never armed), step_060000 checkpoint verified on disk 23:23Z; CHAINED PANEL EVAL LIVE since ~23:23Z (torchrun 4-rank bijou.eval, stems eval__fontaine_molmo2_ar_60k_ddp4__step_060000__panel_curated_v0_k4l2, log /home/ubuntu/eval_fontaine_molmo2_ar_60k_ddp4.log on box) — jsonl step stops at 60000 by design, liveness = the eval procs; at eval rc=0: frozen reads (paired delta vs banked 40k npz + 5.8026 bar) then fields panel opens"
-anchors = [
-    "K1 kill (pre-reg): probe > 8.2075 (40k endpoint 6.2075 + 2.0) sustained x3 evals after step 41,500 — judged at save boundaries; NaN/inf immediate",
-    "vram: peak 73.49 set during the resume-state load (parent 40k steady-state was 67.13) — judged a load transient; gate raised 71->78 (OOM guard) per amendment note. A NEW peak above 73.5 mid-run = real growth, investigate",
-    "rewarmup segment (40000-41000) may probe high transiently — the kill line deliberately starts at 41,500",
-    "parent-curve context: probe low 5.91@26,500, endpoint 6.2075@40,000; expectation 2 = new low below 5.91 in the rewarmed segment",
-    "frozen reads at 60k endpoint: paired per-frame delta vs the BANKED 40k npz (CI95) + the AR-100k 5.8026 bar; attach-chain repoint decision hangs on read 1",
-]
-[[run.gates]]
-kind = "probe_below_by_step"
-value = 8.2075
-step = 43000
-[[run.gates]]
-kind = "vram_max_gib"
-value = 78.0
-[[run.gates]]
-kind = "gpu_hours_max"
-value = 60.0
+# PRUNED 00:0xZ 08-09: EVAL PHASE COMPLETE 23:49Z 08-08 — panel eval rc clean,
+# npz+json+html on the box (step_060000, panel_curated_v0_k4l2); pooled 5.860/2.072
+# directional from the report table. Frozen paired read vs banked 40k npz + attach
+# repoint decision owed by the chained work session. Training closed 23:21Z earlier.
+# [[run]]
+# name = "molmo2_ar60k"
+# kind = "train-jsonl"
+# host = "192.222.55.210"
+# pgrep = "fontaine_molmo2_ar_60k_ddp4"
+# pgrep_min = 4                     # 4 DDP ranks
+# gpu_indices = [0, 1, 2, 3]
+# gpu_mem_min_mib = 20000           # eval phase since 23:23Z 08-08: chained panel eval runs ~28.9 GiB/rank (training floor was 30000; observed steady 28,887 MiB tripped it — false liveness failure at 23:33Z)
+# jsonl = "/home/ubuntu/flow-matching/outputs/train/fontaine_molmo2_ar_60k_ddp4/train_log.jsonl"
+# total_steps = 60000
+# probe_key = "eval_chunk_mae"
+# vram_key = "vram_alloc_peak_gib"
+# started_utc = "2026-08-08T10:28:43Z"  # RELAUNCH (attempt 1 died 10:15:43Z at first optimizer.step — state_steps-on-cpu, fixed 2c10d96 + amendment 1; rig datasets joined the mix, expected banner 880/38,628/18,672,827)
+# gpu_hours_per_wall_hour = 4.0
+# boundary = "TRAINING CLOSED 23:21Z 08-08: step 60000 reached (final probe 6.3548, loss 2.66, K1 never armed), step_060000 checkpoint verified on disk 23:23Z; CHAINED PANEL EVAL LIVE since ~23:23Z (torchrun 4-rank bijou.eval, stems eval__fontaine_molmo2_ar_60k_ddp4__step_060000__panel_curated_v0_k4l2, log /home/ubuntu/eval_fontaine_molmo2_ar_60k_ddp4.log on box) — jsonl step stops at 60000 by design, liveness = the eval procs; at eval rc=0: frozen reads (paired delta vs banked 40k npz + 5.8026 bar) then fields panel opens"
+# anchors = [
+#     "K1 kill (pre-reg): probe > 8.2075 (40k endpoint 6.2075 + 2.0) sustained x3 evals after step 41,500 — judged at save boundaries; NaN/inf immediate",
+#     "vram: peak 73.49 set during the resume-state load (parent 40k steady-state was 67.13) — judged a load transient; gate raised 71->78 (OOM guard) per amendment note. A NEW peak above 73.5 mid-run = real growth, investigate",
+#     "rewarmup segment (40000-41000) may probe high transiently — the kill line deliberately starts at 41,500",
+#     "parent-curve context: probe low 5.91@26,500, endpoint 6.2075@40,000; expectation 2 = new low below 5.91 in the rewarmed segment",
+#     "frozen reads at 60k endpoint: paired per-frame delta vs the BANKED 40k npz (CI95) + the AR-100k 5.8026 bar; attach-chain repoint decision hangs on read 1",
+# ]
+# [[run.gates]]
+# kind = "probe_below_by_step"
+# value = 8.2075
+# step = 43000
+# [[run.gates]]
+# kind = "vram_max_gib"
+# value = 78.0
+# [[run.gates]]
+# kind = "gpu_hours_max"
+# value = 60.0
 
 # LIVE — #6 subgoal-draws rung (b) PREFLIGHT (local GPU; pre-reg
 # 2026-08-08-prereg-subgoal-draws.md). Five phases in one unit
@@ -424,26 +430,30 @@ value = 60.0
 # shas OK in journal). Full-panel draws-8 pass-1 + both clean-list
 # arms; rate gate inside the launcher (5.0 GPU-h projection -> q4
 # fallback). Frozen reads at rc=0: subgoal_draws_results.py
+# PRUNED 23:5xZ 08-08: RUN COMPLETE 23:52Z — 4301/4301 scored, npz+jsons dumped;
+# console sort crash post-dump cosmetic (KeyError bare 'bijou@100000', clean arms are suffixed).
+# Frozen reads owed by the chained work session: subgoal_draws_results.py needs the q4
+# subset-join path first (pairing oracle exits on the 4301-row subset; draws10_t1 precedent).
 # --candidate-filter clean.
-[[run]]
-name = "subgoal_cleancand"
-kind = "progress-log"
-host = "local"
-pgrep = "subgoal_cleancand"
-pgrep_min = 1
-gpu_indices = [0]
-gpu_mem_min_mib = 4000
-log = "/home/ubuntu/eval__ar100k_subgoal_cleancand_arms.log"
-progress_re = "scored [0-9]+/[0-9]+ frames"
-started_utc = "2026-08-08T22:26:41Z"
-gpu_hours_per_wall_hour = 1.0
-boundary = "Q4 FALLBACK TAKEN 22:37Z 08-08 (rate gate: full panel projected past 5 GPU-h at ~200 frames) — the live run is the q4 subset, 4301 rows, stems stateprobe_q4_subgoalcleandraws; reads via subgoal_draws_results.py --candidate-filter clean --draws-stem the q4 stem"
-anchors = [
-    "falsifier (pre-reg, inherited verbatim): Delta_bon CI95 not entirely below 0 vs the banked self npz => selection over 9 candidates buys nothing; Delta_ceil adjudicates no-diversity vs no-scorer",
-    "banked baseline 5.8026/2.1431 and the rung-(a) self npz are frozen comparators — never re-run",
-    "22:26-22:41Z incident: the launcher's fallback kill hit only the run_arms subshell — the full-panel eval ran ON beside the q4 relaunch until the session TERM'd it by PID (fix landed: pkill by bijou.eval+stem pattern). Progress lines before 22:41Z interleave both runs; q4 denominators are /4301",
-    "q4 run start 22:37:24Z-ish; a /25800 denominator in any NEW progress line = the orphan class again, investigate",
-]
-[[run.gates]]
-kind = "gpu_hours_max"
-value = 5.5
+# [[run]]
+# name = "subgoal_cleancand"
+# kind = "progress-log"
+# host = "local"
+# pgrep = "subgoal_cleancand"
+# pgrep_min = 1
+# gpu_indices = [0]
+# gpu_mem_min_mib = 4000
+# log = "/home/ubuntu/eval__ar100k_subgoal_cleancand_arms.log"
+# progress_re = "scored [0-9]+/[0-9]+ frames"
+# started_utc = "2026-08-08T22:26:41Z"
+# gpu_hours_per_wall_hour = 1.0
+# boundary = "Q4 FALLBACK TAKEN 22:37Z 08-08 (rate gate: full panel projected past 5 GPU-h at ~200 frames) — the live run is the q4 subset, 4301 rows, stems stateprobe_q4_subgoalcleandraws; reads via subgoal_draws_results.py --candidate-filter clean --draws-stem the q4 stem"
+# anchors = [
+#     "falsifier (pre-reg, inherited verbatim): Delta_bon CI95 not entirely below 0 vs the banked self npz => selection over 9 candidates buys nothing; Delta_ceil adjudicates no-diversity vs no-scorer",
+#     "banked baseline 5.8026/2.1431 and the rung-(a) self npz are frozen comparators — never re-run",
+#     "22:26-22:41Z incident: the launcher's fallback kill hit only the run_arms subshell — the full-panel eval ran ON beside the q4 relaunch until the session TERM'd it by PID (fix landed: pkill by bijou.eval+stem pattern). Progress lines before 22:41Z interleave both runs; q4 denominators are /4301",
+#     "q4 run start 22:37:24Z-ish; a /25800 denominator in any NEW progress line = the orphan class again, investigate",
+# ]
+# [[run.gates]]
+# kind = "gpu_hours_max"
+# value = 5.5

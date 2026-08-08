@@ -6,6 +6,49 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-08 23:42–00:0xZ (real `date -u`) — tick (held open
+through the double boundary): **both live runs CLOSED inside this
+tick** — box 60k panel eval done 23:49Z (clean rc), local cleancand
+q4 done 23:52Z (4,301/4,301); both babysit entries pruned, registry
+now empty.*
+
+**Status**: box 60k eval artifacts verified on the box (npz + json +
+html, `…step_060000__panel_curated_v0_k4l2`); directional headline
+from the report table: pooled chunk MAE **5.860** / first 2.072 —
+right at the AR-100k bar (5.8026, Δ +0.06), state-copy integrity
+columns reproduce the banked 11.785/2.620. Canonical number = the
+frozen paired read vs the banked 40k npz (owed, next session).
+Cleancand q4: all dumps landed (npz + subgoals/candidates json +
+report json) BEFORE a cosmetic console crash (`KeyError
+'bijou@100000'` in the summary sort — clean-filter arms are
+deliberately suffixed, no bare bijou column exists per the oracle);
+~1.4 GPU-h of the 5.5 cap. **Read blocker found**: 
+`subgoal_draws_results.py` hard-exits on identity pairing for the
+4,301-row q4 subset — it needs the subset-join-on-index path that
+`draws10_t1_results.py`/`energy_score_results.py` already carry
+(precedented, small; oracle (f)-style slice fixture included).
+Queue item boundary updated with the full state. GPUs now
+idle-by-design on both hosts; `run_work_next` armed.
+
+**Steering**: Discord read + history clean all tick (no new
+messages, no reactions since the 23:38Z report link). Closure
+status + directional 60k headline posted 00:0xZ.
+
+**Done**: held the tick open through both boundaries (charter §6);
+caught + killed two self-matching `pgrep -f` watch loops (the watch
+command's own string matched — same class as the 22:41Z launcher
+fix, harness-side this time); pruned both babysit.toml entries with
+completion notes; queue boundary for
+`idea6-subgoal-draws-cleancand-execution` rewritten (run complete,
+reads blocked on the subset-join adaptation).
+
+**Next** (chained work session owns, in order): (1) land the q4
+subset-join path in `subgoal_draws_results.py` + run the Δ_bon
+falsifier / Δ_ceil adjudicator reads; (2) 60k frozen paired read vs
+the banked 40k npz + the attach-repoint decision; (3) fields panel
+(~3.5 GPU-h, box now idle); (4) `queue_cli.py next` =
+molmo2-perf-pass1-exec. Results posts per read.
+
 *Updated 2026-08-08 23:26–00:0xZ (real `date -u`) — work session
 (bounded, chained): **owner steering 23:23Z executed same-session —
 the golden-ticket consolidated visual report REFRESHED for the
