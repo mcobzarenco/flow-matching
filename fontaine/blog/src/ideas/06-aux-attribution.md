@@ -244,3 +244,18 @@ numbers and both finalization amendments.
   Remaining before launch (execution item's preflight, GPU): draws-0
   bit-exact vs the banked self arm at matched composition +
   forced-empty = plain path.
+
+**2026-08-08 ~10:2xZ — rung (b) CLOSED AT TABLE COST**
+([close post](../posts/2026-08-08-subgoal-draws-stage1-close.md)):
+preflight live oracles ALL GREEN (draws-0 bit-exact vs a fresh
+matched-composition q4 self run; forced-empty bit-exact vs the
+banked emptyhint), then stage-1 bar (a) FAILED — **11.5% of T=1.0
+sampled draws derail into budget-truncated multilingual gibberish**
+(55/480; greedy clean 60/60; 0.885⁸ binomial arithmetic reproduces
+the 20/60 row rate). Bars (b)/(c) passed (97% diverse, 4.8% top
+pooled string); clean candidates are subgoal-shaped with real
+adjacent-phase alternatives; SC pick ≠ greedy 39/60; **SC never
+picks a truncated candidate** (0/60, median rank 9/9). Δ_bon/Δ_ceil
+stay unmeasured. Escalation queued
+(`idea6-subgoal-draws-cleancand-prereg-draft`): truncation-robust
+candidate list, own pre-reg required. Cost ~1.6 of 6 GPU-h.

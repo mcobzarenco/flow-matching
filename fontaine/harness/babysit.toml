@@ -247,7 +247,7 @@ jsonl = "/home/ubuntu/flow-matching/outputs/train/fontaine_molmo2_ar_60k_ddp4/tr
 total_steps = 60000
 probe_key = "eval_chunk_mae"
 vram_key = "vram_alloc_peak_gib"
-started_utc = "FILL-AT-LAUNCH"
+started_utc = "2026-08-08T10:08:43Z"
 gpu_hours_per_wall_hour = 4.0
 boundary = "resumes at 40000 -> 60000 at ~2.2 s/step ~= 12.2 h (endpoint ~22:3x-23:0xZ 08-08) + chained greedy panel eval; saves every 2500 (async), probes every 500"
 anchors = [
@@ -276,27 +276,12 @@ value = 60.0
 # candidates). NO scalars before the stage-1 go/no-go. Arms launch is a
 # SEPARATE unit (eval_ar100k_subgoal_draws_arms.sh) behind the go
 # marker fontaine/harness/state/subgoal_draws_stage1_go.
-[[run]]
-name = "subgoal_draws_preflight"
-kind = "progress-log"
-host = "local"
-pgrep = "subgoal_draws_preflight"  # launcher bash cmdline carries the script name
-pgrep_min = 1
-gpu_indices = [0]
-gpu_mem_min_mib = 8000
-log = "/home/ubuntu/eval__ar100k_subgoal_draws_preflight.log"
-progress_re = "scored [0-9]+/[0-9]+ frames"
-started_utc = "2026-08-08T08:49:29Z"
-gpu_hours_per_wall_hour = 1.0
-boundary = "3 sequential q4 runs (4,301 rows each; ~22-25 min/run at banked rates) + CPU adjudication + 60-frame stage-1 table; ~1.3-1.5 GPU-h of the 6 GPU-h rung ceiling; lands ~80-95 min after launch"
-anchors = [
-    "abort-on-red: adjudication SystemExit (phase 4) kills the unit non-zero — a red preflight is a STOP, diagnose before any arms launch (rung-(a) precedent: composition amendment)",
-    "NO scalar reads from these runs — stage-2 scalars stay behind the stage-1 go/no-go (pre-reg)",
-    "on rc=0: judge the stage-1 table (bars (a)-(c) mechanical in the JSON, (d) subgoal-shaped by eyes), write the go marker, launch arms via run_detached.sh fontaine-subgoal-draws-arms",
-]
-[[run.gates]]
-kind = "gpu_hours_max"
-value = 2.5
+# PRUNED 08-08 10:2xZ — preflight rc=0 ~10:1x (1.6 GPU-h; oracles ALL
+# GREEN) and the RUNG CLOSED AT TABLE COST on stage-1 bar (a) (11.5%
+# T=1 draw derailment; see 2026-08-08-subgoal-draws-stage1-close.md).
+# Local GPU free. The PREPARED arms entry below is SUPERSEDED — no
+# arms run under this pre-reg; the escalation (cleancand) gets its own
+# pre-reg + entries.
 
 # PREPARED — #6 rung (b) STAGE-2 ARMS (activate at launch: uncomment,
 # fill started_utc, prune the preflight entry above). Full-panel

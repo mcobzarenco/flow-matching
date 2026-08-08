@@ -117,14 +117,33 @@ def _request(
     raise SystemExit(f"discord {method} {path}: rate-limited twice, giving up")
 
 
+def _author_name(message: Any) -> str:
+    author = message["author"]
+    name = author.get("global_name")
+    if name is None or name == "":
+        name = author["username"]
+    return str(name)
+
+
 def _print_messages(messages: Any) -> None:
     for message in reversed(messages):  # the API returns newest first
-        author = message["author"]
-        name = author.get("global_name")
-        if name is None or name == "":
-            name = author["username"]
-        flag = " [BOT]" if author.get("bot", False) else ""
-        print(f"{message['timestamp']} {name}{flag}: {message['content']}")
+        name = _author_name(message)
+        flag = " [BOT]" if message["author"].get("bot", False) else ""
+        edited = " (edited)" if message.get("edited_timestamp") else ""
+        print(f"{message['timestamp']} {name}{flag}{edited}: {message['content']}")
+        # Native reply context (owner question 2026-08-08 09:22Z): a
+        # Discord reply carries the quoted message in
+        # `referenced_message` (null when it was deleted; absent for
+        # non-replies) — without this line the reply's target drops.
+        if "message_reference" in message:
+            referenced = message.get("referenced_message")
+            if referenced:
+                snippet = " ".join(str(referenced.get("content", "")).split())
+                if len(snippet) > 120:
+                    snippet = snippet[:120] + "…"
+                print(f"    ↳ replying to {_author_name(referenced)}: {snippet}")
+            else:
+                print("    ↳ replying to a deleted/unavailable message")
         for attachment in message.get("attachments", []):
             print(f"    attachment: {attachment['url']}")
         reactions = [
