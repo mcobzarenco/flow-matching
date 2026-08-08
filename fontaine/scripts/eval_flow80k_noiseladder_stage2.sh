@@ -85,4 +85,11 @@ assert report["ticket_map_sha256"] == (
 print("stage-2 provenance: map sha matches the amendment-1 extended map")
 EOF
 
-echo "=== NOISE-LADDER STAGE 2 DONE (rc=0) — frozen reads run offline from the npz ==="
+# Frozen reads (pre-reg stage-2 reads 1-5), chained at rc=0: the
+# oracle-gated adjudicator (noise_ladder_rung2_results.py, oracles
+# green pre-data 2026-08-08) writes the analysis json. Pure CPU;
+# every claim in it is abort-gated on the execution oracles above.
+uv run python fontaine/scripts/noise_ladder_rung2_results.py \
+    --out reports/analysis__noise_ladder_rung2.json
+
+echo "=== NOISE-LADDER STAGE 2 DONE (rc=0) — frozen reads adjudicated (analysis__noise_ladder_rung2.json) ==="

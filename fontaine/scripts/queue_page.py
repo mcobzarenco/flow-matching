@@ -21,6 +21,7 @@ freshness guard for check-time use).
 from __future__ import annotations
 
 import argparse
+import html
 import json
 import re
 from pathlib import Path
@@ -66,21 +67,29 @@ def prereg_link(prereg: str | None) -> str | None:
     return f"`{prereg}`"
 
 
+def esc(text: str) -> str:
+    """Item text is data, never markup: titles carry literal '<author>'
+    style angle brackets that mdbook would otherwise parse as HTML
+    (and silently swallow the rest of the paragraph)."""
+    return html.escape(text, quote=False)
+
+
 def card(item: dict) -> str:
     chip = CLASS_CHIP.get(str(item.get("class")), f"`{item.get('class')}`")
     hold = " · **⛔ owner hold**" if item.get("owner_hold") else ""
     lines = [f"**`{item['id']}`** · {chip}{hold}"]
-    lines.append(f"\n{summary_of(str(item['title']))}")
+    lines.append(f"\n{esc(summary_of(str(item['title'])))}")
     meta = []
     if item.get("boundary"):
-        meta.append(f"**boundary:** {item['boundary']}")
+        meta.append(f"**boundary:** {esc(str(item['boundary']))}")
     link = prereg_link(item.get("prereg"))
     if link:
         meta.append(link)
     if meta:
         lines.append("\n" + " · ".join(meta))
     lines.append(
-        f"\n<details><summary>full record</summary>\n\n{item['title']}\n\n</details>",
+        "\n<details><summary>full record</summary>\n\n"
+        f"{esc(str(item['title']))}\n\n</details>",
     )
     return "\n".join(lines)
 
