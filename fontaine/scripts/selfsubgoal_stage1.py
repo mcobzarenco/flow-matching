@@ -51,6 +51,7 @@ from bijou.eval.plan import (
     validate_plan,
 )
 from bijou.eval.policies import BijouPolicy, SelfSubgoalPass1Policy
+from bijou.eval.subgoal_scoring import self_certainty, self_certainty_pick
 
 
 def stratify(identities: list[tuple[str, int]], n: int, seed: int) -> list[int]:
@@ -105,6 +106,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--output-md", type=Path, required=True)
     parser.add_argument("--output-json", type=Path, required=True)
+    # rung (b): decode greedy + N sampled candidates per frame off one
+    # shared prefill and write the CANDIDATES table (pre-reg
+    # 2026-08-08-prereg-subgoal-draws.md, stage 1). None = rung (a),
+    # byte-identical legacy path.
+    parser.add_argument("--subgoal-draws", type=int, default=None)
+    parser.add_argument("--subgoal-temperature", type=float, default=1.0)
     return parser.parse_args()
 
 
@@ -165,7 +172,11 @@ def main() -> int:
         seed=args.seed,
         subgoal_mode="self",
     )
-    pass1 = SelfSubgoalPass1Policy(base)
+    pass1 = SelfSubgoalPass1Policy(
+        base,
+        draws=args.subgoal_draws,
+        temperature=args.subgoal_temperature,
+    )
     loader = torch.utils.data.DataLoader(
         torch.utils.data.Subset(dataset, indices),
         batch_size=args.batch_size,
@@ -183,6 +194,8 @@ def main() -> int:
         print(f"  generated {done}/{len(indices)}", flush=True)
 
     records = [pass1.records[index] for index in indices]
+    if args.subgoal_draws is not None:
+        return write_draws_table(args, pass1, records, indices)
     # The two mechanical go/no-go counts ((a) and (b)); criterion (c) —
     # subgoal-shaped — is eyes-only and stays with the results post.
     nonempty = sum(1 for r in records if (r.generated_subgoal or "").strip())
@@ -238,6 +251,160 @@ def main() -> int:
         ),
     )
     print(f"wrote {args.output_md} and {args.output_json}", flush=True)
+    return 0
+
+
+def draws_counts(
+    texts_per_frame: list[list[str]],
+    truncated_per_frame: list[list[bool]],
+) -> dict:
+    """The rung-(b) mechanical go/no-go counts (pre-reg stage 1; the
+    final judgment stays human, criterion (d) is eyes-only). Candidate
+    0 is the greedy decode; 1..N are the sampled draws.
+
+      (a) rows whose SAMPLED candidates are all non-empty and
+          non-truncated (bar: >= 90% of rows);
+      (b) rows with >= 2 unique candidate strings among all 1+N
+          (bar: >= 50% of rows — else selection is vacuous at this
+          width and the rung closes at table cost);
+      (c) the most common SAMPLED string pooled across frames
+          (bar: <= 50% of the pool — cross-frame collapse check).
+    """
+    n = len(texts_per_frame)
+    ok_a = sum(
+        1
+        for texts, trunc in zip(texts_per_frame, truncated_per_frame, strict=True)
+        if all(t.strip() for t in texts[1:]) and not any(trunc[1:])
+    )
+    ok_b = sum(1 for texts in texts_per_frame if len({t.strip() for t in texts}) >= 2)
+    pooled = Counter(t.strip() for texts in texts_per_frame for t in texts[1:])
+    top_text, top_count = ("", 0)
+    if pooled:
+        [(top_text, top_count)] = pooled.most_common(1)
+    total_sampled = sum(pooled.values())
+    return {
+        "rows": n,
+        "a_sampled_clean_rows": ok_a,
+        "a_bar": "≥ 90% of rows",
+        "a_pass": bool(n and ok_a / n >= 0.9),
+        "b_diverse_rows": ok_b,
+        "b_bar": "≥ 50% of rows",
+        "b_pass": bool(n and ok_b / n >= 0.5),
+        "c_top_sampled": {"text": top_text, "count": top_count},
+        "c_pool": total_sampled,
+        "c_bar": "≤ 50% of the sampled pool",
+        "c_pass": bool(total_sampled and top_count / total_sampled <= 0.5),
+    }
+
+
+def write_draws_table(
+    args: argparse.Namespace,
+    pass1: SelfSubgoalPass1Policy,
+    records: list,
+    indices: list[int],
+) -> int:
+    rows = []
+    texts_per_frame: list[list[str]] = []
+    truncated_per_frame: list[list[bool]] = []
+    for record, index in zip(records, indices, strict=True):
+        candidates = pass1.candidates.get(index)
+        if candidates is None:
+            raise SystemExit(f"no candidates retained for frame index {index}")
+        texts = [c.text for c in candidates]
+        texts_per_frame.append(texts)
+        truncated_per_frame.append([c.truncated for c in candidates])
+        sc = [self_certainty(c.mean_logprob, c.allowed_vocab) for c in candidates]
+        pick = self_certainty_pick(
+            [c.mean_logprob for c in candidates],
+            candidates[0].allowed_vocab,
+        )
+        rows.append(
+            {
+                "index": record.index,
+                "repo_id": record.repo_id,
+                "episode_index": record.episode_index,
+                "frame_index": record.frame_index,
+                "instruction": record.instruction,
+                "true_subgoal": record.true_subgoal,
+                "candidates": [
+                    {
+                        "text": c.text,
+                        "truncated": c.truncated,
+                        "self_certainty": round(s_, 6),
+                        "chosen_logprob": list(c.chosen_logprob),
+                        "mean_logprob": list(c.mean_logprob),
+                        "allowed_vocab": c.allowed_vocab,
+                    }
+                    for c, s_ in zip(candidates, sc, strict=True)
+                ],
+                "sc_pick": pick,
+            },
+        )
+    counts = draws_counts(texts_per_frame, truncated_per_frame)
+
+    def cell(text: str | None) -> str:
+        return (text or "—").replace("|", "\\|").replace("\n", " ")
+
+    lines = [
+        "# Subgoal-draws stage-1 candidates table (#6 rung (b))",
+        "",
+        (
+            f"checkpoint: `{args.checkpoint}` · plan: `{args.sample_plan}` · "
+            f"seed {args.seed} · draws {args.subgoal_draws} @ "
+            f"T={args.subgoal_temperature} · {len(rows)} frames"
+        ),
+        "",
+        (
+            f"mechanical bars: (a) sampled clean "
+            f"{counts['a_sampled_clean_rows']}/{counts['rows']} "
+            f"[{counts['a_bar']}] {'PASS' if counts['a_pass'] else 'FAIL'} · "
+            f"(b) diverse {counts['b_diverse_rows']}/{counts['rows']} "
+            f"[{counts['b_bar']}] {'PASS' if counts['b_pass'] else 'FAIL'} · "
+            f"(c) top sampled {counts['c_top_sampled']['count']}/"
+            f"{counts['c_pool']} [{counts['c_bar']}] "
+            f"{'PASS' if counts['c_pass'] else 'FAIL'} — criterion (d) "
+            f"subgoal-shaped stays with the results post, by eyes"
+        ),
+        "",
+        "| frame | cand | SC | pick | trunc | text |",
+        "|---|---|---|---|---|---|",
+    ]
+    for row in rows:
+        frame = f"{row['repo_id']} e{row['episode_index']} f{row['frame_index']}"
+        for d, cand in enumerate(row["candidates"]):
+            tag = "greedy" if d == 0 else f"d{d}"
+            lines.append(
+                f"| {cell(frame) if d == 0 else ''} | {tag} | "
+                f"{cand['self_certainty']:.4f} | "
+                f"{'◀' if d == row['sc_pick'] else ''} | "
+                f"{'T' if cand['truncated'] else ''} | {cell(cand['text'])} |",
+            )
+        lines.append(
+            f"| | | | | | true: {cell(row['true_subgoal'])} |",
+        )
+    args.output_md.parent.mkdir(parents=True, exist_ok=True)
+    args.output_md.write_text("\n".join(lines) + "\n")
+    args.output_json.parent.mkdir(parents=True, exist_ok=True)
+    args.output_json.write_text(
+        json.dumps(
+            {
+                "checkpoint": str(args.checkpoint),
+                "sample_plan": str(args.sample_plan),
+                "seed": args.seed,
+                "subgoal_draws": args.subgoal_draws,
+                "subgoal_temperature": args.subgoal_temperature,
+                "num_frames": len(rows),
+                "mechanical": counts,
+                "rows": rows,
+            },
+            indent=2,
+        ),
+    )
+    print(
+        f"stage-1 mechanical: a {counts['a_pass']} b {counts['b_pass']} "
+        f"c {counts['c_pass']} — wrote {args.output_md} and {args.output_json}",
+        flush=True,
+    )
     return 0
 
 

@@ -578,3 +578,38 @@ def test_cli_guards(monkeypatch: pytest.MonkeyPatch) -> None:
         "--selfsubgoal-force-empty",
     )
     assert extended.selfsubgoal_force_empty
+
+
+def test_stage1_draws_counts_exact() -> None:
+    """The rung-(b) stage-1 mechanical go/no-go counts on exact
+    fixtures (bars from the pre-reg: (a) >= 90% rows sampled-clean,
+    (b) >= 2 unique strings on >= 50% of frames, (c) no sampled string
+    > 50% of the pool). Candidate 0 is greedy and never counts toward
+    (a)/(c)."""
+    from test_selfsubgoal import stage1
+
+    # 2 rows, 1 greedy + 2 sampled each: row 0 diverse+clean, row 1
+    # collapsed (both sampled == greedy) but clean -> a 2/2 PASS,
+    # b 1/2 (50%) PASS at the boundary, c top 'x' 3/4 (75%) FAIL.
+    counts = stage1.draws_counts(
+        [["g", "u", "x"], ["x", "x", "x"]],
+        [[False, False, False], [False, False, False]],
+    )
+    assert counts["a_sampled_clean_rows"] == 2 and counts["a_pass"]
+    assert counts["b_diverse_rows"] == 1 and counts["b_pass"]
+    assert counts["c_top_sampled"] == {"text": "x", "count": 3}
+    assert counts["c_pool"] == 4 and not counts["c_pass"]
+
+    # Truncated or empty sampled candidates break (a); the greedy slot
+    # being empty does not.
+    counts = stage1.draws_counts(
+        [["", "u", "v"], ["g", "", "w"], ["g", "y", "z"]],
+        [[False, False, False], [False, False, False], [True, False, False]],
+    )
+    assert counts["a_sampled_clean_rows"] == 2  # row 1 empty sampled
+    assert not counts["a_pass"]  # 2/3 < 90%
+    assert counts["b_diverse_rows"] == 3
+
+    # A truncated SAMPLED candidate breaks (a) for its row.
+    counts = stage1.draws_counts([["g", "u", "v"]], [[False, True, False]])
+    assert counts["a_sampled_clean_rows"] == 0
