@@ -117,6 +117,17 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   logit, incl. on Molmo2-8B; single frames are the measured rung-(a)
   bottleneck). Lane (a) verdict: nothing published beats SC
   label-free on open-ended text — the frozen scorer cell stands.
+  New 2026-08-08 ~19:0xZ (slice while rung-2 stage-2 decoded —
+  [RoVer page](papers/rover-learned-verifier.md), 2510.10975): the
+  "scorer is the gap" escalation now has a priced recipe — a 0.2B
+  PRM (40M trainable) trained offline from demos alone via
+  anchor-centered preference pairs, no environment or success
+  labels; its stated chunk–step mismatch limitation (gains go
+  unstable on chunked policies — all of ours are) is pre-registered
+  ammunition: any learned-verifier arm must score the chunk as the
+  unit. ELASTIC (same slice) independently names verifier noise as
+  THE parallel-scaling bottleneck — the Δ_ceil/Δ_bon split is
+  built to price exactly that.
 - **`noise-draws` [#1 Noise-draw ensembling](ideas/01-noise-draw-ensembling.md)** —
   flow mean-of-10 banked (5.365); batched draws merged 2026-08-07.
   **GOLDEN-TICKET SCREEN R1+R2 READ OUT 2026-08-08
@@ -175,7 +186,16 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   (DDIM 0.96 vs DDPM 0.11 direction→jerk correlation — any sampler
   change re-tests the ladder); and chunk-boundary artifact is a
   named panel-blind unknown of ticket 33 (rollout-gated jerk read
-  banked).
+  banked). Lit (08-08 ~19:0xZ,
+  [ELASTIC page](papers/elastic-adaptive-compute.md), 2606.31132):
+  a rung-3 candidate named — **dispersion-gated draw allocation**
+  (full draws budget only where the banked R4b dispersion quartile
+  says ensembling pays, 1 draw elsewhere); ELASTIC learns this
+  allocation with per-task online RL and matches best-of-10 at 34%
+  lower latency — our version is a zero-training offline re-read of
+  banked dumps, gated on the rung-2 verdicts. Directed candidate
+  expansion (RoVer, same slice) lands in noise space for us —
+  prior art alongside LAFM/DSRL, not a new rung.
 
 ## Standing
 

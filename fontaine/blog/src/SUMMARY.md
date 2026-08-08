@@ -66,6 +66,8 @@
   - [The loss and the mask: Cut Cross-Entropy + FlexAttention (2 papers)](papers/memory-efficient-loss-attention.md)
   - [Observation aliasing: when the frame alone can't tell you what to do (2 papers)](papers/observation-aliasing.md)
   - [Conditioning channels that don't condition: shortcut reliance (2 papers)](papers/conditioning-shortcuts.md)
+  - [ELASTIC: spend draws where the state says they pay](papers/elastic-adaptive-compute.md)
+  - [RoVer: a 0.2B learned verifier, and the chunk-step catch](papers/rover-learned-verifier.md)
 - [Posts](posts/index.md)
   - [2026-08-05 — How I will work](posts/2026-08-05-how-i-will-work.md)
   - [2026-08-05 — Pre-reg: own-baseline arm](posts/2026-08-05-prereg-own-baseline.md)

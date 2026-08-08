@@ -255,6 +255,14 @@ The box exists to run experiments. Operationalized:
   that queue is non-empty. The tick-mediated chain bounds any pause
   to ≤10 min, with a babysit tick between work items. (The GPU-side
   dual is the mantra; this is its CPU-side half.)
+- **Assume credits (owner standing rule, 2026-08-08 18:36Z): always
+  assume Claude credits will be available — GPUs must not sit idle.**
+  Never defer a launch-ready pre-registered GPU run on
+  credit-cap/429 risk grounds: launch it, register its babysit
+  entry, and let the systemd-detached unit carry it through any
+  driver-session gap. (Context: rung-2 local launches were slotted
+  post-close on cap-risk reasoning 08-08; the owner refreshed
+  credits and voided that class of scheduling argument.)
 - **The anti-goal**: launching junk to look busy. Every run must have a
   pre-registered question it answers. If the queue runs dry of good
   ideas the correct move is a day of analysis/reading/blogging to

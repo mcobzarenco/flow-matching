@@ -396,31 +396,30 @@ value = 60.0
 # seating activate their PREPARED entries below at launch (read script
 # = remaining CPU cell first, per the queue boundary).
 
-# PREPARED — noise-ladder rung 2 STAGE 2 (activate at launch:
-# uncomment, fill started_utc; the launcher gates on the preflight
-# green json). One routed full-panel decode (~0.9 GPU-h); frozen
-# reads run offline (Δ_route on qualifying complement core rows,
-# dataset-clustered CI95 seed 0).
-# [[run]]
-# name = "noiseladder_stage2"
-# kind = "progress-log"
-# host = "local"
-# pgrep = "noiseladder_stage2"
-# pgrep_min = 1
-# gpu_indices = [0]
-# gpu_mem_min_mib = 4000
-# log = "/home/ubuntu/eval__noiseladder_stage2.log"
-# progress_re = "scored [0-9]+/[0-9]+ frames"
-# started_utc = "FILL-AT-LAUNCH"
-# gpu_hours_per_wall_hour = 1.0
-# boundary = "full-panel single decode ~0.9 GPU-h; belt check pins map sha 15d92935... in the report at rc=0"
-# anchors = [
-#     "falsifier (pre-reg): read-1 CI95 not entirely below 0 => routing buys nothing over ticket 33 at this probe's cell sizes",
-#     "banked ticket33 npz + stablekey npz are the frozen comparators — never re-run",
-# ]
-# [[run.gates]]
-# kind = "gpu_hours_max"
-# value = 1.5
+# LAUNCHED 18:34:30Z 08-08 (owner cleared the credit-cap concern
+# 18:31Z; unit fontaine-noiseladder-stage2). One routed full-panel
+# decode (~0.9 GPU-h); frozen reads run offline (Δ_route on
+# qualifying complement core rows, dataset-clustered CI95 seed 0).
+[[run]]
+name = "noiseladder_stage2"
+kind = "progress-log"
+host = "local"
+pgrep = "noiseladder_stage2"
+pgrep_min = 1
+gpu_indices = [0]
+gpu_mem_min_mib = 4000
+log = "/home/ubuntu/eval__noiseladder_stage2.log"
+progress_re = "scored [0-9]+/[0-9]+ frames"
+started_utc = "2026-08-08T18:34:30Z"
+gpu_hours_per_wall_hour = 1.0
+boundary = "full-panel single decode ~0.9 GPU-h; belt check pins map sha 15d92935... in the report at rc=0"
+anchors = [
+    "falsifier (pre-reg): read-1 CI95 not entirely below 0 => routing buys nothing over ticket 33 at this probe's cell sizes",
+    "banked ticket33 npz + stablekey npz are the frozen comparators — never re-run",
+]
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 1.5
 
 # PREPARED — noise-ladder rung 2 SEATING ARM (activate at launch:
 # uncomment, fill started_utc). Random-noise draws-10 re-run with
