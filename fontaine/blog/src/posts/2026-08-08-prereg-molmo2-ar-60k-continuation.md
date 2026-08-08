@@ -112,3 +112,35 @@ launch immediately after this post via the box `run_detached.sh`
 (unit `fontaine-molmo2-60k`). The #4 attach chain (K smoke ladder →
 screen) queues strictly behind this run per the owner's 09:04Z
 priority call; vu5k stays behind attach.
+
+---
+
+## Amendment 1 (2026-08-08 ~10:5xZ, posted before the relaunch)
+
+Two changes, one incident:
+
+1. **Incident + fix.** The first launch (10:08:43Z) died at the first
+   `optimizer.step()`: `state_steps is on cpu … (fused_adamw)`. Root
+   cause: the async-checkpoint representational note biting on the
+   first real `--resume` of a consolidated ZeRO-1 payload — the
+   CPU-tagged `optimizer.pt` loads through the ZRO shard path without
+   re-casting the integer `step` tensors that fused AdamW needs
+   on-device (plain AdamW's `load_state_dict` re-casts them; the ZRO
+   path does not). Fixed in `bijou.train`
+   (`rehome_fused_step_tensors`, called on every resume, loud log
+   line) with a GPU regression test reproducing the exact crash
+   signature in the ZeRO-1 shape and proving the fix
+   (`tests/test_resume_rehome.py`) plus CPU no-op contracts. No
+   design constant changes.
+2. **Rig datasets join the training mix** (owner 10:06Z): the two
+   staged SO101 sets `so101_pick_place_clean` (7 eps / 3,399 frames)
+   and `so101_pick_place_v2` (50 eps / 32,679 frames), fps 30 —
+   together 0.19% of the corpus. **Expected E1 banner becomes 880
+   datasets / 38,628 episodes / 18,672,827 frames**; a banner still
+   reading 878 means the rig sets were filtered out (camera-count /
+   fps guards) — the launch is stopped and reported, never silently
+   accepted. The eval panel plan is untouched (community holdout,
+   sha-pinned), so every read stays comparable; the north-star
+   rationale is rig-domain presence in the trunk. Seed stays 1.
+
+All frozen reads, kill lines and gates are unchanged.

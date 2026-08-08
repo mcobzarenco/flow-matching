@@ -1640,6 +1640,38 @@ def resume_hyperparameter_notes(
     return notes
 
 
+def rehome_fused_step_tensors(
+    optimizer: torch.optim.Optimizer,
+    *,
+    fused: bool,
+) -> int:
+    """PyTorch's ``Optimizer.load_state_dict`` re-homes floating-point
+    state to each param's device but decides where integer ``step``
+    tensors live from the SAVED group's fused/capturable flags — and a
+    consolidated resume payload (async-save's device→CPU capture +
+    ZeRO-1 merge) stores everything CPU-tagged without those flags, so
+    the steps stay on CPU and fused AdamW aborts at the first
+    ``optimizer.step()`` ('state_steps is on cpu…', measured live at
+    the molmo2 60k resume, 2026-08-08 10:15Z). Move each param's step
+    counter to the param's device. Exact no-op for non-fused (CPU)
+    runs, whose reference kernels want CPU scalar steps. Handles the
+    ZeRO-1 wrapper by operating on its local inner optimizer."""
+    if not fused:
+        return 0
+    inner = getattr(optimizer, "optim", optimizer)
+    moved = 0
+    for group in inner.param_groups:
+        for param in group["params"]:
+            state = inner.state.get(param)
+            if not state:
+                continue
+            step = state.get("step")
+            if isinstance(step, torch.Tensor) and step.device != param.device:
+                state["step"] = step.to(param.device)
+                moved += 1
+    return moved
+
+
 def length_bucket_keys(
     datasets: list[StatsAttachedDataset],
     collator: Collator[Any],
@@ -3610,6 +3642,16 @@ def main() -> int:
             torch.load(optimizer_path, map_location="cpu", weights_only=True),
         )
         optimizer.load_state_dict(train_state.optimizer)
+        rehomed = rehome_fused_step_tensors(
+            optimizer,
+            fused=bool(adamw_kwargs["fused"]),
+        )
+        if is_main and rehomed:
+            print(
+                f"re-homed {rehomed} optimizer step counters to device "
+                "(fused AdamW resume from a CPU-tagged payload)",
+                flush=True,
+            )
         scheduler.load_state_dict(train_state.scheduler)
         start_step = train_state.step
         if start_step >= args.steps:

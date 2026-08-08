@@ -42,8 +42,16 @@ for g in 0 1 2 3; do
     if [ "$mem" -gt 1024 ]; then echo "GPU $g busy (${mem} MiB) — abort"; exit 1; fi
 done
 
+# Amendment 1 (owner 10:06Z): the two staged SO101 rig datasets join
+# the mix (57 eps / 36,078 frames ≈ 0.19% of the corpus; panel plan
+# untouched — evals stay comparable). Expected E1 banner becomes
+# 880 datasets / 38,628 episodes / 18,672,827 frames; a banner still
+# reading 878 means the rig sets were filtered out (camera/fps) — stop
+# and report, don't proceed silently.
 .venv/bin/torchrun --standalone --nproc-per-node=4 -m bijou.train \
     --train-data /home/ubuntu/datasets/mcobzarenco/community_curated_v0 \
+        /home/ubuntu/datasets/mcobzarenco/so101_pick_place_clean \
+        /home/ubuntu/datasets/mcobzarenco/so101_pick_place_v2 \
     --fps 30 --camera-counts 1 2 \
     --holdout-episodes 0.1 --split-seed 0 \
     --decoder ar_backbone \
