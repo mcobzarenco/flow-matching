@@ -5,7 +5,57 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-08 17:35–18:1xZ (real `date -u`) — work session
+(bounded): #6 rung (b′) **clean-list subgoal-draws pre-reg POSTED**
+([post](posts/2026-08-08-prereg-subgoal-draws-cleanlist.md)) — the
+stage-1 close's named escalation, execution queued for the
+post-close local window. Kept lean past the one item: credit-cap
+risk until ~22Z; the 60k close chain (~23Z) stays the day's
+highest-stakes window.*
+
+**Status** (babysit 18:0xZ, exit 0): box **molmo2_ar60k LIVE +
+healthy**: step 51,160/60,000, probe **6.30@51,000 — new low of the
+continuation** (prior band 6.40–6.87; 1.91 under the 8.21 kill bar,
+×3 never armed), loss 2.71 falling, 2.19 s/step, vram 73.84 no new
+peak; ~5.4 h to the **60k close ~23Z** → chained greedy panel eval.
+Local GPU free; next local boundary is the post-close window.
+
+**Steering**: none (`read` clear at the 18:0x babysit poll, no new
+reactions).
+
+**Done** (commit 135a391): rung (b′) pre-reg posted — rung (b)
+inherited verbatim except the frozen **eligible-list rule**
+(budget-truncated candidates excluded from every scorer's list;
+empty → greedy fallback, recorded); nucleus/lower-T rejected with
+reasons banked. Priors verified on the banked stage-1 table BEFORE
+freezing: exclusion changes **0/60 SC picks and 0/60 ceiling
+picks** (both scorers audited; 40/60 rows carry ≥ 1 truncated
+candidate — the filter binds on the list two rows in three while
+changing no observed pick), filtered bars all clear (60/60 rows
+keep ≥ 1 eligible sampled draw, 57/60 diverse, top pooled string
+5.4%). Consequence: stage 1 is **CPU-free** (banked-table
+re-adjudication; pass-1 byte-identity — checkpoint/plan/seeds/T
+unchanged, the filter is selection-side only), so the ≤ 5 GPU-h
+ceiling buys the actual payload: Δ_bon/Δ_ceil finally measured,
+falsifier + no-diversity/no-scorer adjudication inherited verbatim.
+Instrument delta pinned (`SelectedSubgoalPolicy._pick` + 4 new
+oracles incl. the banked-table pick-invariance regression fixture
+and a planted filter-binds world). Queue: draft → done, execution
+item `idea6-subgoal-draws-cleancand-execution` queued (opens BEHIND
+the noise-ladder rung-2 obligations), escalation item repointed at
+the (b′) read; validate green depth 5. check.py 515 green.
+
+**Next**: `queue_cli.py next` = molmo2-perf-pass1-exec (box ladder,
+post-close). Dated boundaries: **60k close ~23Z 08-08** → chained
+eval → fields panel → perf box ladder + noise-ladder stage-2/seating
+(single `run_detached` commands) → cleancand execution behind those
+(its instrument delta is a CPU cell for any window before). Chained
+work armed (`run_work_next`): next CPU items = cleancand instrument
+delta, meta-report structure drafting; credit-cap risk until ~22Z
+stands — committed work resumes at reset if a session 429s.
 
 *Updated 2026-08-08 17:13–17:4xZ (real `date -u`) — work session
 (bounded): noise-ladder rung-2 **frozen-read adjudicator landed** —
@@ -101,56 +151,6 @@ cleancand pre-reg draft, meta-report composition; **60k close ~23Z**
 stage-2/seating in the post-close window. Credit-cap risk until ~22Z
 noted for the chained session.
 
-*Updated 2026-08-08 16:53–16:58Z (real `date -u`) — tick (babysit),
-**KILLED mid-session by the credit 429** (see the entry above; the
-claims below were written before the kill and have been corrected
-where they never happened): two boundaries in one tick — the
-noise-ladder preflight went GREEN (stage 2 launch-ready) and the box
-crossed the 50,000 save in-session; plus a missed 16:32Z owner steer
-recovered from history.*
-
-**Status** (16:54Z babysit exit 0 + in-session boundary watch): box
-**molmo2_ar60k LIVE + healthy**: crossed **step 50,000/60,000
-in-session** (~16:57Z), probe 6.57@49,500 flat in the 6.40–6.87 band
-(1.64 under the 8.21 kill bar, ×3 never armed), loss 2.75, 2.18–2.20
-s/step, vram 73.84 no new peak; the 50k async-save watch was CUT by
-the kill — verified next tick 16:59:39Z (see above; the original
-entry left a SAVELINE placeholder here). ~6 h to the 60k close
-(~23Z). Local
-GPU: **noise-ladder preflight COMPLETE rc=0 ~16:55Z, ALL GREEN** —
-the 16:43Z relaunch with the amendment-1 extended map passed every
-oracle (144 rows routed==plain byte-match; restriction ==
-pre-registered `15d92935…` exact, map `27858421…`, t2 bank
-`abfaf064…`); green json written = the stage-2 launcher's gate armed.
-Local GPU free; babysit entry pruned, queue item annotated.
-
-**Steering** (one recovered miss): owner 16:32:27Z — **"make the
-charts dark-mode friendly moving forward, similar color scheme to
-eval reports"** — was eaten by the same 16:46 cursor slip as the
-other two steers but NOT recovered with them (the 16:48Z ack covered
-only subgoals + queue page). Caught at this tick's `history` check,
-acked in-channel 16:56Z with the miss owned, and recorded as a
-standing rule in persistent memory (dark-mode-charts): every new
-chart legible on dark backgrounds, palette from the eval-report
-chart scripts. No other steering; `read` clear, no new reactions.
-
-**Done**: babysit + boundary watches (50k save + preflight
-completion judged in-session per charter §6 — both crossed clean);
-preflight babysit entry pruned at rc=0 (retained-entry footgun);
-queue item `idea1-noise-ladder-rung2-execution` annotated PREFLIGHT
-GREEN; dark-mode steer recovered + acked + banked. ~~Discord boundary
-post at 17:0xZ~~ — NEVER SENT (the 429 killed the session first);
-sent 17:1xZ by the next tick. Nothing was committed either — the
-next tick landed the pile.
-
-**Next**: chained work session (`run_work_next` armed): rung-2
-**read script = the remaining CPU cell** (wanted before stage-2
-launch; stage-2/seating GPU windows open post-23Z per the queue
-boundary), cleancand pre-reg draft + meta-report composition as
-further CPU items; **60k close ~23Z** → chained eval → fields panel
-→ perf box ladder + noise-ladder stage-2/seating in the post-close
-window.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -176,6 +176,18 @@ to ~04:0xZ, greedy ~1.7 GPU-h, draws10_t1 04:54–07:22Z **~10 GPU-h
 idle from ~08:15Z pending the next pre-registered launches). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
+
+Session 2026-08-08 17:35–18:1xZ (work, bounded; exploit, 0 GPU-h —
+CPU cell): #6 rung (b′) clean-list subgoal-draws **pre-reg POSTED**
+(2026-08-08-prereg-subgoal-draws-cleanlist.md, commit 135a391) —
+eligible-list rule frozen, priors verified on the banked stage-1
+table pre-freeze (0/60 pick changes both scorers; filtered bars
+60/60 / 57/60 / 5.4%), stage 1 CPU-free by pass-1 byte-identity,
+ceiling ≤ 5 GPU-h; execution item queued behind the noise-ladder
+rung-2 post-close obligations. check.py 515 green. Babysit 18:0xZ
+green (51,160/60,000, probe 6.30@51,000 new continuation low, ~5.4 h
+to close). Lit slice skipped, stated reason: credit-cap risk until
+~22Z ahead of the day's highest-stakes close chain.
 
 Session 2026-08-08 17:33–17:4xZ (tick, quiet; 0 GPU-h new): babysit
 17:34Z exit 0 — box molmo2_ar60k green 50,940/60,000, probe
