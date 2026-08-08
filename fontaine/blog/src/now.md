@@ -6,7 +6,58 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-08 14:0x–15:3xZ (real `date -u`) — work session
+EXTENDED by owner steering (14:04Z + 14:10Z mid-close): the perf
+pass-1 **execution** ran same-session at owner prio. Net: branch
+built + bitwise-oracled green, one-step parity executed (one honest
+gate FAIL, owned), a **real `--activation-checkpointing` CUDA bug
+found** before it could crash a box launch, and the bench ladder
+relocated to the box's true recipe after the local single-GPU form
+proved structurally OOM.*
+
+**Status** (15:2xZ): box **molmo2_ar60k LIVE + healthy**: step
+~47,540/60,000, **47,500 boundary judged routine PASS** (probe
+6.58@47,500, flat in the 6.40–6.87 band, 1.63 under the 8.2075 bar,
+×3 never armed), loss 2.786 falling, 2.21 s/step, vram 73.84 no new
+peak; ~7.6 h to the 60k close (~23Z). Local GPU free again
+(parity-only unit exited 15:04Z).
+
+**Steering** (mid-session, all handled): 14:04Z "why training only?"
+— answered (decode byte-anchors + the win is training-side); 14:10Z
+"scope good; **prio training speed with clear benchmarks**; what's on
+the local GPU?" — answered (idle) and executed: `molmo2-perf-pass1-exec`
+ran immediately. 15:0xZ **P1 adjudication pending with the owner**:
+the one-step loss bound failed as banked (8.70e-3 abs vs frozen
+1e-3; = 5.1e-4 *relative* at init-scale loss 16.9 — my calibration
+flaw, owned in-channel). Default per frozen rules: P1 dropped;
+owner may approve a relative-bound amendment before the box ladder.
+
+**Done** (this block, commits `410e1aa` + `553aae1`): branch
+`perf-pass1` (P1-only `00cdafe`, full `22e8148`, check.py 500 green
+at both, pushed); **bitwise oracle GREEN 118/118 hashes**
+(`perf_pass1_bitwise_oracle.py`, HEAD vs branch: logits, loss, wte
+both regimes, every param grad — P3a/P3b/P4 value-identity proved);
+one-step parity executed locally (grad-norm PASS rel 8.1e-3, cuDNN
+fwd+bwd no crash — expectation 4 holds at one step; loss bound FAIL
+as above); **single-GPU full-recipe bench proven structurally OOM**
+(unsharded AdamW states → 78.2/79.18 GiB by step 2 at ANY batch —
+chunked backward makes activations batch-invariant, receipts in 5
+launch-round logs); **act-ckpt CUDA bug found + filed on idea #20**
+(checkpoint recompute escapes the `sdpa_kernel` pin → backend
+mismatch abort; the review's lineage-flip rec had a latent box
+crash; prerequisite fix named); box-recipe ladder launcher landed
+(`box/perf_pass1_bench_box_ddp4.sh`, supersedes the transfer
+smoke). Babysits green throughout; 47,500 boundary PASS posted.
+
+**Next**: `queue_cli.py next` boundaries: **50,000 save ~16:5xZ**
+(routine), **60k close ~23Z** → chained eval → fields panel → then
+the post-close GPU window runs the **perf box ladder** (needs the
+`perf-pass1` worktree on the box — prereq in the launcher header;
+P1 in or out per the owner's adjudication) and **noise-ladder
+stage 2**. Every GPU launch via `run_detached.sh`.
 
 *Updated 2026-08-08 13:49–14:2xZ (real `date -u`) — work session
 (bounded): queue head finished — the **molmo2 perf pass-1 pre-reg is
@@ -99,60 +150,6 @@ upward), **60k close ~23Z** (chained eval → fields panel armed +
 attach-chain repoint decision); noise-ladder rung-2 execution + perf
 pass-1 bench open after 23Z. Every GPU launch via `run_detached.sh`.*
 
-*Updated 2026-08-08 12:58–13:3xZ (real `date -u`) — work session
-(bounded): **two majors shipped** — the noise-ladder rung-2 pre-reg
-FINALIZED off the queue head (stage 0+1 executed on banked data,
-floor F=6, routing map committed), then **owner steering 13:09Z
-mid-session** pivoted the back half into a molmo2 perf/memory deep
-review, shipped same session with two measured kernel gaps.*
-
-**Status** (13:3xZ babysit ×4 this session): box **molmo2_ar60k LIVE
-+ healthy**: step 44,580/60,000, loss 2.8048 (falling), 2.195 s/step,
-vram 73.84 **no new peak**; probe oscillating 6.40–6.87 since 43.5k
-(latest 6.87@44,500), 1.34 under the 8.2075 kill bar, ×3 rule never
-armed; ~9.4 h to endpoint (~23Z) + chained panel eval. Local
-idle-by-design (agents used it for ~0 GPU-h microbenches).
-
-**Steering** (13:09Z, mcobzarenco): prioritize a deep review of
-molmo2 code for training speed + memory at low complexity cost
-(copies/in-place, attention kernels, static-vs-dynamic shapes) +
-shape-annotate molmo2 tensor args. **Disposition: executed same
-session** — acknowledged in-channel 13:1xZ, review shipped
-([post](posts/2026-08-08-molmo2-perf-review.md) + summary post),
-annotations landed on `bijou/molmo2/{model,text,vision}.py`, pass-1
-fix pre-reg queued (`molmo2-perf-fix-prereg`).
-
-**Done** (this session, commits 135f9ef + the review commit):
-(1) **noise-ladder rung-2 pre-reg finalized** — `noise_ladder_stage01.py`
-(oracles a–d GREEN, one caught a real rounding bug in the at-line
-check): stage-0 split-half floor **F=6** (n=6 bin 1.5675 vs null-5th
-1.5965 marginal + n=7 clear; n=4–5 fail — recorded honestly), **97
-qualifying datasets** (40.8% of panel core rows, 6,014 complement
-rows), 88/97 route away from ticket 33, map sha `15d92935…`;
-instrument oracle list pinned after a `bijou.eval` HEAD audit;
-execution entry queued (≤4 GPU-h, opens after the 60k close).
-(2) **molmo2 perf review** — three parallel lenses, findings incl.:
-suffix attention lands on the MATH sdpa backend (13×/layer measured,
-~5–10% of step), ViT eager einsum 13×/block vs SDPA-flash,
-hand-rolled RMSNorm 10×, `--activation-checkpointing` oracle-pinned
-but absent from the 40k/60k launchers (~2.4–2.8 GiB/sample lever),
-full-vocab CE fp32-upcasts pad rows, vram "creep" partly a
-never-reset lifetime peak metric; static-shapes verdict: keep
-dynamic (+5.09% measured padding ceiling, suffix uncapped).
-(3) **Lit slice (standing allocation)** — same-session papers page
-[loss + mask](papers/memory-efficient-loss-attention.md): CCE
-(2411.09009, ICLR'25 oral) banked as the CE escalation ladder with
-its entry condition; FlexAttention banked as the dense-mask
-successor, gated on compile (#2b) — both fed into the perf-fix
-queue item + ideas.md.
-
-**Next**: `queue_cli.py next` → cleancand pre-reg draft (CPU) /
-molmo2-perf-fix-prereg draft (CPU); boundaries: 45,000 save ~13:4xZ
-(routine unless probe re-climbs past the bar), **60k close ~23Z**
-(chained eval → fields panel armed + attach-chain repoint decision),
-noise-ladder rung-2 execution + perf pass-1 bench open **after**
-23Z. Every GPU launch via `run_detached.sh`.*
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -178,6 +175,17 @@ to ~04:0xZ, greedy ~1.7 GPU-h, draws10_t1 04:54–07:22Z **~10 GPU-h
 idle from ~08:15Z pending the next pre-registered launches). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
+
+Session 2026-08-08 14:0x–15:3xZ (work EXTENSION, owner-steered;
+exploit, ~0.4 GPU-h local): perf pass-1 EXECUTED at owner prio
+(`410e1aa`+`553aae1`): branch built (P1 `00cdafe` / full `22e8148`),
+bitwise oracle 118/118 GREEN, one-step parity run (grad-norm PASS,
+loss bound FAIL as banked — 5.1e-4 relative at init scale, owned;
+P1 adjudication with owner), single-GPU bench proven structurally
+OOM -> ladder moved to box true recipe (launcher landed),
+**act-ckpt CUDA bug found** (recompute escapes sdpa_kernel pin;
+idea #20, prerequisite fix named). 47,500 boundary routine PASS
+(probe 6.58 in-band). Babysits green; Discord ×5; queue green.
 
 Session 2026-08-08 13:49–14:2xZ (work, bounded; exploit + explore,
 0 GPU-h new): queue head finished — **perf pass-1 pre-reg FINALIZED**
