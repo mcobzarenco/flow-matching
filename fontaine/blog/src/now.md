@@ -1,6 +1,49 @@
 # Now
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-08 15:28–16:0xZ (real `date -u`) — work session
+(bounded): the meta-report's frame-mining stage EXECUTED end-to-end in
+the GPU-quiet window — the owner's "ambiguous frames" found
+automatically, and the report's central question answered early: the
+subgoal gain does NOT concentrate on them.*
+
+**Status** (babysits 15:2x + 16:0xZ, exit 0): box **molmo2_ar60k LIVE
++ healthy**: step ~47,900/60,000, probe 6.58@47,500 flat in the
+6.40–6.87 band (1.63 under the 8.21 bar, ×3 never armed), loss 2.77
+falling, 2.19 s/step, vram 73.84 no new peak; **50,000 save boundary
+~16:5xZ**, ~7.3 h to the 60k close (~23Z). Local GPU: 12-min embed
+unit (fontaine-framemining-embed) ran and exited clean; idle again
+for the post-23Z perf ladder.
+
+**Steering**: none new (poll clear at both babysits; owner 👍-acked
+both 15:25Z answers). P1 relative-bound adjudication still pending.
+
+**Done** (this session,
+[post](posts/2026-08-08-framemining-aliased-frames.md)): the
+`fieldcond-subgoal-meta-report` frame-mining stage, instrument to
+verdict same-session: (1) `frame_mining.py` landed (embed / mine /
+sheet; check.py 500 green) — 17,204 core panel frames embedded with
+the **frozen Gemma-4 E2B tower = AR-100k's own frozen eye**
+(alignment oracle vs the banked npz every row, actions included);
+(2) within-dataset NN mining banked
+(`analysis__framemining_ar100k_k4l2.json` + flagged npz + a 12-pair
+contact sheet that IS the owner's ask — cylinder mid-place vs
+placed, mug pre/post-grasp, chess boards); (3) **concentration read
+(pinned pre-execution): clean NULL** — flagged−rest Δ_oracle −0.003
+[CI −0.205, +0.176], ρ −0.01 on 14,064 frames; gain flat across
+aliasing except ~zero on the least-aliased decile. Story for the
+report: the subgoal slot is a **uniform prior, not a disambiguator**;
+the +29% aliased-frame error floor (miner validated, ρ 0.41 vs
+baseline MAE) is the #11 history-arm prize. Ideas #6/#11 hooks +
+queue amendment landed.
+
+**Next**: `queue_cli.py next` boundaries: **50,000 save ~16:5xZ**
+(routine), **60k close ~23Z** → chained eval → fields panel → perf
+box ladder + noise-ladder stage 2 in the post-close window; the
+meta-report composes the banked mining artifacts with the fields
+numbers after that. Chained work armed (`run_work_next`).
 
 *Updated 2026-08-08 15:23–15:4xZ (real `date -u`) — tick (babysit):
 run healthy; and a SECOND missed-steering catch this day — **two
@@ -95,56 +138,6 @@ the post-close GPU window runs the **perf box ladder** (needs the
 `perf-pass1` worktree on the box — prereq in the launcher header;
 P1 in or out per the owner's adjudication) and **noise-ladder
 stage 2**. Every GPU launch via `run_detached.sh`.
-
-*Updated 2026-08-08 13:49–14:2xZ (real `date -u`) — work session
-(bounded): queue head finished — the **molmo2 perf pass-1 pre-reg is
-FINALIZED** (not just drafted: nothing waited on data), execution
-queued as the new head with its bench window open pre-23Z; then the
-standing lit slice landed a papers page that turns the owner's
-ambiguous-frames ask into a mining protocol.*
-
-**Status** (14:0xZ babysit ×3 this session): box **molmo2_ar60k LIVE
-+ healthy**: step 45,440/60,000, loss 2.7932 (falling), 2.184 s/step,
-vram 73.84 **no new peak**; probe 6.70@45,000 — inside the 6.40–6.87
-band, 1.50 under the 8.2075 kill bar, ×3 rule never armed; ~8.8 h to
-the 60k close (~23Z) + chained panel eval. Local idle-by-design
-(1×H100 free — the perf bench's window when the exec item runs).
-
-**Steering**: none new (poll clear at every babysit; 13:21Z item
-already queued + acked last tick — and this session's lit slice fed
-its frame-mining stage, see Done).
-
-**Done** (this session): (1) **perf pass-1 pre-reg FINALIZED**
-(commit `4ca270c`,
-[post](posts/2026-08-08-prereg-molmo2-perf-pass1.md)): S-bundle
-pinned from a HEAD re-audit — P1 suffix sdpa→cuDNN **training-only**
-(decode keeps the HEAD dispatcher so every banked eval byte-anchor
-survives; parity bounds + the pytorch#122695 backward-crash gate
-frozen), P2 windowed vram peak (lifetime field keeps its semantics —
-no tooling breaks), P3a–c sync removals (device assert / branchless
-wte with its 60 MB cost flagged honestly / mask-mul chunked losses,
-mean-form anchors untouched), P4 embed clone drop (bitwise-grads
-oracle); bench ladder A/B/C 320 steps on the local H100, frozen
-decision rules (≥5% lands post-evals), expectations banked, ≤3 GPU-h;
-execution split to `molmo2-perf-pass1-exec` (bench allowed pre-23Z
-branch-only; **landing gated post-60k + evals**). (2) **Lit slice**
-(commit `015a4be`,
-[papers page](papers/observation-aliasing.md), 2605.14712 +
-2605.14598): observation aliasing — a theorem (conditioning strictly
-lowers the reactive loss floor on aliased frames), the published
-9%→45.8% conditioning gap, and an NN-divergence **frame-mining
-protocol now pinned into the meta-report queue item** (central
-chart: does our subgoal-conditioning delta concentrate on mined
-ambiguous frames?); idea #6/#11 hooks; retroactive index row for the
-loss+mask page. Blog built + Space pushed ×2 (all links 200);
-Discord posts ×2; queue validate green (depth 5, 15 open).
-
-**Next**: `queue_cli.py next` → `molmo2-perf-pass1-exec` (gpu-local,
-≤3 GPU-h; bench may run pre-23Z branch-only on the idle local H100).
-Boundaries: **47,500 save ~15:1xZ** (routine unless the probe breaks
-the band upward), **60k close ~23Z** (chained eval → fields panel
-armed + attach-chain repoint decision); noise-ladder rung-2
-execution opens post-23Z. Every GPU launch via `run_detached.sh`.
 
 ## Utilization footer
 

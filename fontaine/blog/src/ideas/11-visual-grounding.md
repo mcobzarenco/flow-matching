@@ -139,3 +139,14 @@ live on engineered-aliased benchmarks); large fraction ⇒ the entry
 arm is a compact learned context (few tokens), never naive frame
 stacking (worst point on the published cost/gain curve: 19 of 37
 points at +4-frames prefix cost we can't pay on a 2.2 s step).
+
+**2026-08-08 ~15:5xZ — the census EXISTS
+([post](../posts/2026-08-08-framemining-aliased-frames.md),
+`analysis__framemining_ar100k_k4l2.json`):** alias score is a
+continuum (long tail, no bimodal split); flagged top decile carries
++29% baseline chunk MAE (6.84 vs 5.32) that oracle subgoals do NOT
+fix (concentration null on Δ_oracle) — that elevated floor is the
+quantified prize a history/memory arm would chase. AliasBench's
+<3e-3 embedding-gap criterion lands in our top ~2% of frames; the
+entry-condition read should anchor on that external bar, not a
+self-picked threshold.

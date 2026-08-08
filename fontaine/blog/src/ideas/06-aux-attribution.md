@@ -272,3 +272,18 @@ divergent in ground-truth continuation) and test whether OUR
 subgoal-conditioning delta concentrates on them; concentration =
 disambiguation (the published mechanism), no concentration = the
 channel is a style/dataset prior — either sharpens the report.
+
+**2026-08-08 ~15:5xZ — frame-mining read EXECUTED
+([post](../posts/2026-08-08-framemining-aliased-frames.md)): the
+concentration test is a clean NULL.** Flagged (top-decile alias
+score) − rest Δ_oracle = −0.003 [CI95 −0.205, +0.176], Spearman
+ρ = −0.01 over 14,064 qualifying frames — the oracle-subgoal gain is
+FLAT across the aliasing spectrum, except the least-aliased decile
+gets almost nothing (−0.04, post-hoc observation). The subgoal slot
+behaves as a uniform prior/guidance signal, not a disambiguator of
+aliased observations; escalations (#6 rungs) should sell generation
+quality and broad gain, not aliasing rescue. Instrument validated
+independently: alias score ↔ baseline per-frame MAE ρ = 0.41,
+flagged frames +29% baseline error (the DSSP floor, real on our
+corpus, caveat: state-copy error elevated too — "ambiguous" partly
+conflated with "dynamic").
