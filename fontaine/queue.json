@@ -1,6 +1,6 @@
 {
- "updated_utc": "2026-08-08T17:30:00+00:00",
- "depth_reason": "depth 4+ at 16:4xZ 08-08: 60k LIVE (box, ~23Z close); queued: fieldgen fields-panel (armed, opens at 60k close), noise-ladder rung-2 GPU runs (instrument+preflight landed this session, stage-2 launch-ready: preflight GREEN + frozen-read adjudicator landed 17:2xZ, launcher chains it at rc=0), fieldcond meta-report composition (post-fields-panel), idea6 cleancand draft; attach chain + perf ladder behind the 60k close per owner priority",
+ "updated_utc": "2026-08-08T18:00:00+00:00",
+ "depth_reason": "depth 5 at 18:0xZ 08-08: 60k LIVE (box, ~23Z close); queued: fieldgen fields-panel (armed, opens at 60k close), noise-ladder rung-2 GPU runs (stage-2 launch-ready, adjudicator chained), molmo2-perf-pass1-exec box ladder (post-close), idea6 rung-(b') cleancand execution (pre-reg POSTED 17:5xZ, opens behind the noise-ladder local runs), fieldcond meta-report composition (post-fields-panel); attach chain behind the 60k close per owner priority",
  "items": [
   {
    "id": "owner-molmo2-perf-review",
@@ -418,12 +418,12 @@
   },
   {
    "id": "idea6-subgoal-draws-escalation-prereg-draft",
-   "title": "#6 rung-(b) ESCALATION pre-reg draft (CPU) \u2014 opens ONLY on a no-scorer verdict from the rung-(b) read (ceiling >> bon with diversity present); closes as moot on no-diversity or on the falsifier passing. Routing pre-mapped by the 08-08 lit slice (papers/progress-from-logits.md + corrected self-certainty.md note): candidate 1 = masked-contrast selection (MG-Select form, prerequisite VERIFIED MET: subgoal-masked reference = planner-less path trained at 50% dropout; N+1 teacher-forced pass-2 action forwards, no decode loop; reference tempered tau=4); candidate 2 = history-conditioned planning (TOPReward 2602.19313: phase zero-shot recoverable from a video prefix via one completion logit incl. on Molmo2-8B \u2014 attacks the measured ~10/60 single-frame phase-offset mechanism directly). Draft picks ONE (or stages both) with frozen falsifiers + cost gates; execution needs its own posted pre-reg + queue entry",
+   "title": "#6 rung-(b) ESCALATION pre-reg draft (CPU) \u2014 opens ONLY on a no-scorer verdict from the rung-(b') read (rung (b) closed at table cost; (b') carries the frozen falsifier + adjudication) (ceiling >> bon with diversity present); closes as moot on no-diversity or on the falsifier passing. Routing pre-mapped by the 08-08 lit slice (papers/progress-from-logits.md + corrected self-certainty.md note): candidate 1 = masked-contrast selection (MG-Select form, prerequisite VERIFIED MET: subgoal-masked reference = planner-less path trained at 50% dropout; N+1 teacher-forced pass-2 action forwards, no decode loop; reference tempered tau=4); candidate 2 = history-conditioned planning (TOPReward 2602.19313: phase zero-shot recoverable from a video prefix via one completion logit incl. on Molmo2-8B \u2014 attacks the measured ~10/60 single-frame phase-offset mechanism directly). Draft picks ONE (or stages both) with frozen falsifiers + cost gates; execution needs its own posted pre-reg + queue entry",
    "class": "cpu",
    "status": "blocked",
    "prereg": null,
    "owner_hold": false,
-   "boundary": "opens at the #6 rung-(b) execution read-out (idea6-subgoal-draws-execution) IF it reads no-scorer; any GPU-busy window after that"
+   "boundary": "opens at the #6 rung-(b) execution read-out (idea6-subgoal-draws-cleancand-execution) IF it reads no-scorer; any GPU-busy window after that"
   },
   {
    "id": "molmo2-decode-cost-microbench",
@@ -499,12 +499,21 @@
   },
   {
    "id": "idea6-subgoal-draws-cleancand-prereg-draft",
-   "title": "#6 rung (b') escalation pre-reg DRAFT (CPU): truncation-robust candidate list \u2014 identical rung-(b) design except budget-truncated candidates are EXCLUDED from the scorer's candidate list (fallback greedy when all 8 sampled derail) OR nucleus/lower-T sampling; written priors = the stage-1 close (11.5% T=1 derailment, SC median-rank-last on truncated 0/60 picks, diversity 97%, pick!=greedy 65%); instrument delta small (filter in SelectedSubgoalPolicy candidate list + oracle: exclusion changes picks on 0/60 stage-1 rows \u2014 structural not behavioral on observed data); preflight apparatus (live oracles, matched-composition) landed green and reusable; stage-1 bars re-run with the same (a) bar now scoring the FILTERED list",
+   "title": "#6 rung (b') escalation pre-reg DRAFT (CPU): truncation-robust candidate list \u2014 identical rung-(b) design except budget-truncated candidates are EXCLUDED from the scorer's candidate list (fallback greedy when all 8 sampled derail) OR nucleus/lower-T sampling; written priors = the stage-1 close (11.5% T=1 derailment, SC median-rank-last on truncated 0/60 picks, diversity 97%, pick!=greedy 65%); instrument delta small (filter in SelectedSubgoalPolicy candidate list + oracle: exclusion changes picks on 0/60 stage-1 rows \u2014 structural not behavioral on observed data); preflight apparatus (live oracles, matched-composition) landed green and reusable; stage-1 bars re-run with the same (a) bar now scoring the FILTERED list | POSTED 08-08 17:5xZ work session (2026-08-08-prereg-subgoal-draws-cleanlist.md): rung (b) inherited verbatim except the frozen eligible-list rule (truncated==false; empty -> greedy fallback recorded); nucleus/lower-T rejected with reasons banked. Priors VERIFIED on the banked stage-1 table before freezing: filter changes 0/60 SC picks AND 0/60 ceiling picks (both scorers checked, not just SC; 40/60 rows carry >=1 truncated candidate); filtered bars a' 60/60, b' 57/60 (95%), c' 5.4% -> stage 1 is CPU-free banked-table re-adjudication (pass-1 byte-identity argument), stage 2 = the frozen rung-(b) arms with Delta_bon/Delta_ceil finally measured. Ceiling <= 5 GPU-h (tighter than (b)'s 6), q4 fallback clause verbatim. Execution split to idea6-subgoal-draws-cleancand-execution",
    "class": "cpu",
-   "status": "queued",
-   "prereg": null,
+   "status": "done",
+   "prereg": "fontaine/blog/src/posts/2026-08-08-prereg-subgoal-draws-cleanlist.md",
    "owner_hold": false,
-   "boundary": "draft is CPU work at any window; execution (gpu-local, ~3 GPU-h) needs the posted pre-reg + its own queue entry; local GPU free after this close"
+   "boundary": "POSTED 08-08 17:5xZ; execution item carries the launch"
+  },
+  {
+   "id": "idea6-subgoal-draws-cleancand-execution",
+   "title": "#6 rung (b') clean-list subgoal-draws EXECUTION (gpu-local, ~2.5-3.5 GPU-h, ceiling <= 5): per the posted pre-reg (2026-08-08-prereg-subgoal-draws-cleanlist.md) -- (1) instrument delta oracle-gated BEFORE launch: eligible-list rule in SelectedSubgoalPolicy._pick + offline recomputes + dump eligible flags/filtered picks + filter-aware read script; oracles = rung-(b) i-vi inherited (draws-0 limit: eligible list == [greedy], bit-exact carry) + vii banked-table pick-invariance regression fixture (0/60 SC + 0/60 ceiling on the real stage-1 json) + viii planted filter-binds world (full-list argmax IS truncated -> filtered pick differs, both scorers) + ix all-truncated -> greedy fallback recorded + x stage-1 re-adjudication script reproduces the written priors exactly (60/60, 57/60, 23/425, 0/60+0/60); (2) stage 1 CPU re-adjudication on the banked table gates stage 2 (bars a' >=90% / b' >=50% / c' <=50% / d eyes; a failed bar = instrument breakage, abort loudly); (3) stage 2: full-panel pass 1 (9 candidates, one shared prefill) + bon (SC over eligible) + ceil (token-F1 over eligible) arms, plan/checkpoint/seed/composition verbatim rung (b), distinct policy stems carrying the filter id; (4) frozen reads 1-6 verbatim via the filter-aware read script: primary Delta_bon vs 5.8026 + paired (bon - self) vs the banked rung-(a) self npz, falsified unless CI95 entirely below 0; Delta_ceil adjudicates no-diversity vs no-scorer and routes the escalation item. q4 fallback on a first-200-frame rate projection past ceiling. Launch via run_detached.sh + babysit.toml entry at launch; first-poll util+rate check",
+   "class": "gpu-local",
+   "status": "queued",
+   "prereg": "fontaine/blog/src/posts/2026-08-08-prereg-subgoal-draws-cleanlist.md",
+   "owner_hold": false,
+   "boundary": "opens in the post-60k-close local window (~23Z+ 08-08) AFTER the noise-ladder rung-2 obligations (stage-2 confirm ~0.9 GPU-h + seating ~3.0 GPU-h launch first, per that pre-reg's venue clause); instrument delta + oracles are CPU work at any window before that; never co-located with a training run's eval chain"
   },
   {
    "id": "fieldgen-accuracy-eval",

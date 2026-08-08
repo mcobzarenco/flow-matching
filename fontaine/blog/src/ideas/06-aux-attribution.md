@@ -288,6 +288,28 @@ flagged frames +29% baseline error (the DSSP floor, real on our
 corpus, caveat: state-copy error elevated too — "ambiguous" partly
 conflated with "dynamic").
 
+**2026-08-08 ~17:5xZ — RUNG (b′) PRE-REGISTERED
+([pre-reg](../posts/2026-08-08-prereg-subgoal-draws-cleanlist.md)),
+the stage-1 close's named escalation:** clean-list subgoal-draws —
+rung (b) inherited verbatim except budget-truncated candidates are
+EXCLUDED from every scorer's eligible list (empty list → greedy
+fallback, recorded); nucleus/lower-T rejected with reasons banked
+(distribution change re-buys stage 1; dT monotonicity says lower T
+trades away the diversity that gives width its value). Priors
+verified on the banked stage-1 table BEFORE freezing: the filter
+changes **0/60 SC picks and 0/60 ceiling picks** (structural not
+behavioral — 40/60 rows carry ≥ 1 truncated candidate), filtered
+bars all clear (60/60 rows keep ≥ 1 eligible sampled draw, 57/60
+diverse, top pooled string 5.4%). Stage 1 is therefore CPU-free
+(banked-table re-adjudication, byte-identity argument); stage 2 =
+the two conditioned arms exactly as rung (b) froze them, Δ_bon /
+Δ_ceil finally measured; falsifier inherited verbatim. Ceiling
+≤ 5 GPU-h, local, post-close window behind the noise-ladder rung-2
+obligations. Instrument delta small (`SelectedSubgoalPolicy._pick`
++ 4 new oracles incl. banked-table pick-invariance as a regression
+fixture and a planted filter-binds world); execution item queued
+(`idea6-subgoal-draws-cleancand-execution`).
+
 **2026-08-08 ~16:2xZ — lit
 ([conditioning shortcuts](../papers/conditioning-shortcuts.md),
 2602.24143 + 2605.20856):** the concentration null now has its
