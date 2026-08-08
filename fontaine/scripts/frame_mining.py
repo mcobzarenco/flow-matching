@@ -560,15 +560,20 @@ def cmd_sheet(args: argparse.Namespace) -> None:
 
 
 def cmd_figures(args: argparse.Namespace) -> None:
-    """One figure PER mined pair (owner steering 2026-08-08 16:20Z):
-    three panels on a row — query image, neighbor image, and the
-    action-chunk chart with both frames' ground-truth trajectories
-    overlaid — plus each frame's subgoal label in a caption. Writes
-    img/framemining/pair_NN.png and a captions markdown snippet the
-    post includes verbatim (CPU; refetches only the figures' frames).
+    """One figure PER mined pair, in the eval-report sample layout
+    (owner steering 2026-08-08 17:50Z, superseding the 16:20Z single
+    overlaid chart that proved unreadable): first row the two frames
+    ([query image][neighbor image]), then a 3x2 per-joint grid of the
+    ground-truth action continuations — one axes per motor, titled with
+    the motor name, exactly the eval reports' chart convention — plus
+    each frame's subgoal label as the image subtitle (16:33Z ask) and
+    in the caption. Writes img/framemining/pair_NN.png and a captions
+    markdown snippet the post includes verbatim (CPU; refetches only
+    the figures' frames).
 
-    Palette: the dataviz reference categorical pair (pre-validated
-    instance; house convention since the golden-ticket report)."""
+    Palette: the eval reports' DARK theme (dark_background + the IBM
+    colorblind-safe series colors; standing owner rule 2026-08-08
+    16:32Z — new charts dark-mode friendly, eval-report scheme)."""
     import matplotlib
 
     matplotlib.use("Agg")
@@ -577,8 +582,10 @@ def cmd_figures(args: argparse.Namespace) -> None:
     from bijou.aux_text import subgoal_text
     from bijou.data import EpisodeSplit, select_datasets
 
-    blue, orange = "#2a78d6", "#eb6834"
-    dark, grid, surface = "#52514e", "#e5e4e0", "#fcfcfb"
+    # bijou.eval.report THEMES["dark"]: page/series/text tokens.
+    page_bg = "#121417"
+    query_color, neighbor_color = "#648fff", "#ffb000"
+    text, meta, grid = "#d8dade", "#9aa0a8", "#3a3f46"
 
     z = np.load(FLAGGED_OUT, allow_pickle=True)
     pairs = json.loads(str(z["top_pairs"]))[: args.pairs]
@@ -595,6 +602,14 @@ def cmd_figures(args: argparse.Namespace) -> None:
     deltas, scores = z["delta"], z["alias_score"]
     indices, repo_ids = z["index"], z["repo_id"]
     episodes, frames = z["episode_index"], z["frame_index"]
+    motor_names = json.loads(BASELINE_NPZ.with_suffix(".json").read_text())[
+        "motor_names"
+    ]
+    dims = truth.shape[-1]
+    if len(motor_names) != dims:
+        raise SystemExit(
+            f"baseline report names {len(motor_names)} motors, truth has {dims}",
+        )
 
     selection = select_datasets(
         (DATA_ROOT,),
@@ -611,69 +626,77 @@ def cmd_figures(args: argparse.Namespace) -> None:
     out_dir = REPO_ROOT / "fontaine/blog/src/img/framemining"
     out_dir.mkdir(parents=True, exist_ok=True)
     captions: list[str] = []
+    ncols = 3
+    joint_rows = (dims + ncols - 1) // ncols
     for number, pair in enumerate(pairs, start=1):
         a, b = pair["row"], pair["neighbor_row"]
-        fig, axes = plt.subplots(1, 3, figsize=(10.4, 3.1), dpi=110)
-        fig.patch.set_facecolor(surface)
-        subgoals: list[str] = []
-        for ax, row, label in (
-            (axes[0], a, "query"),
-            (axes[1], b, "neighbor"),
-        ):
-            item = dataset[int(indices[row])]
-            key = min(k for k in item if k.startswith("observation.images."))
-            image = (item[key].clamp(0, 1) * 255).to(torch.uint8)
-            ax.imshow(image.permute(1, 2, 0).numpy())
-            ax.set_xticks(())
-            ax.set_yticks(())
-            for spine in ax.spines.values():
-                spine.set_color(grid)
-            ax.set_title(
-                f"{label} · ep {episodes[row]} f {frames[row]}",
-                fontsize=8,
-                color=dark,
+        with plt.style.context("dark_background"):
+            fig = plt.figure(figsize=(4.2 * ncols, 3.4 + 2.6 * joint_rows), dpi=110)
+            fig.patch.set_facecolor(page_bg)
+            gs = fig.add_gridspec(
+                1 + joint_rows,
+                2 * ncols,
+                height_ratios=[1.35] + [1.0] * joint_rows,
             )
-            subgoal = subgoal_text(item) or "no subgoal label"
-            subgoals.append(subgoal)
-            # Owner 16:33Z: the subgoal rides the image subtitle too
-            # (wrapped; the caption keeps the full record).
-            ax.set_xlabel(
-                "\n".join(textwrap.wrap(f"“{subgoal}”", width=38)[:2]),
-                fontsize=7,
-                color=dark,
-                style="italic",
-            )
-        chart = axes[2]
-        chart.set_facecolor(surface)
-        for row, color, label in ((a, blue, "query"), (b, orange, "neighbor")):
-            steps = int(valid[row].sum())
-            for motor in range(truth.shape[-1]):
-                chart.plot(
-                    range(steps),
-                    truth[row, :steps, motor],
-                    color=color,
-                    linewidth=1.3,
-                    alpha=0.85,
-                    label=label if motor == 0 else None,
+            subgoals: list[str] = []
+            for slot, (row, label) in enumerate(((a, "query"), (b, "neighbor"))):
+                ax = fig.add_subplot(gs[0, slot * ncols : (slot + 1) * ncols])
+                item = dataset[int(indices[row])]
+                key = min(k for k in item if k.startswith("observation.images."))
+                image = (item[key].clamp(0, 1) * 255).to(torch.uint8)
+                ax.imshow(image.permute(1, 2, 0).numpy())
+                ax.set_xticks(())
+                ax.set_yticks(())
+                for spine in ax.spines.values():
+                    spine.set_color(grid)
+                ax.set_title(
+                    f"{label} · ep {episodes[row]} f {frames[row]}",
+                    fontsize=10,
+                    color=text,
                 )
-        for side in ("top", "right"):
-            chart.spines[side].set_visible(False)
-        for side in ("left", "bottom"):
-            chart.spines[side].set_color(grid)
-        chart.tick_params(colors=dark, labelsize=8)
-        chart.yaxis.grid(True, color=grid, linewidth=0.8)
-        chart.set_xlabel("chunk step (30 fps)", fontsize=8, color=dark)
-        chart.set_ylabel("action (degrees)", fontsize=8, color=dark)
-        chart.set_title(
-            "ground-truth continuations (6 motors)",
-            fontsize=8,
-            color=dark,
-        )
-        chart.legend(fontsize=8, labelcolor=dark, framealpha=0, loc="best")
-        fig.tight_layout()
-        name = f"pair_{number:02d}.png"
-        fig.savefig(out_dir / name, bbox_inches="tight", facecolor=surface)
-        plt.close(fig)
+                subgoal = subgoal_text(item) or "no subgoal label"
+                subgoals.append(subgoal)
+                # Owner 16:33Z: the subgoal rides the image subtitle too
+                # (wrapped; the caption keeps the full record).
+                ax.set_xlabel(
+                    "\n".join(textwrap.wrap(f"“{subgoal}”", width=52)[:2]),
+                    fontsize=9,
+                    color=meta,
+                    style="italic",
+                )
+            for dim in range(dims):
+                ax = fig.add_subplot(
+                    gs[1 + dim // ncols, 2 * (dim % ncols) : 2 * (dim % ncols) + 2],
+                )
+                ax.set_facecolor(page_bg)
+                for row, color, label in (
+                    (a, query_color, "query"),
+                    (b, neighbor_color, "neighbor"),
+                ):
+                    steps = int(valid[row].sum())
+                    ax.plot(
+                        range(steps),
+                        truth[row, :steps, dim],
+                        color=color,
+                        linewidth=1.8,
+                        label=label,
+                    )
+                ax.set_title(motor_names[dim], fontsize=9, color=text)
+                ax.tick_params(labelsize=8, colors=meta)
+                ax.yaxis.grid(True, color=grid, linewidth=0.8)
+                ax.set_axisbelow(True)
+                for spine in ax.spines.values():
+                    spine.set_color(grid)
+                if dim == 0:
+                    ax.legend(fontsize=8, framealpha=0, labelcolor=text)
+                if dim // ncols == joint_rows - 1:
+                    ax.set_xlabel("chunk step (30 fps)", fontsize=8, color=meta)
+                if dim % ncols == 0:
+                    ax.set_ylabel("action (degrees)", fontsize=8, color=meta)
+            fig.tight_layout()
+            name = f"pair_{number:02d}.png"
+            fig.savefig(out_dir / name, bbox_inches="tight", facecolor=page_bg)
+            plt.close(fig)
         captions.append(
             f"![aliased pair {number}](../img/framemining/{name})\n\n"
             f"*Pair {number} — `{repo_ids[a]!s}` · alias score "
@@ -681,7 +704,7 @@ def cmd_figures(args: argparse.Namespace) -> None:
             f"continuation divergence {pair['divergence_std']:.2f}σ. "
             f"**Query** (blue): ep {episodes[a]} f {frames[a]}, Δ_oracle "
             f"{deltas[a]:+.2f}, subgoal “{subgoals[0]}”. "
-            f"**Neighbor** (orange): ep {episodes[b]} f {frames[b]}, "
+            f"**Neighbor** (amber): ep {episodes[b]} f {frames[b]}, "
             f"Δ_oracle {deltas[b]:+.2f}, subgoal “{subgoals[1]}”.*\n",
         )
         print(f"wrote {name}")
