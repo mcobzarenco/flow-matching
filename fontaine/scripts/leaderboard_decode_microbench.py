@@ -90,6 +90,12 @@ CKPT_AR100K = (
 )
 CKPT_TEACHER = "/home/ubuntu/checkpoints/bijou-checkpoints/bijou_flow_artrunk_h1024_40k_ddp2/step_080000"
 CKPT_STUDENT = "outputs/train/fontaine_flow_snapdistill_h1024_30k_1xh100/step_030000"
+# Box-resident (molmo2 rows run ON the box via microbench_box_molmo2.sh;
+# added 2026-08-08, queue item molmo2-decode-cost-microbench — a
+# record-only EXTENSION of the pre-reg's registered set, recorded here
+# not silent: the 40k leaderboard row shipped with an mtime-derived
+# cost caveat this measurement retires).
+CKPT_MOLMO2 = "outputs/train/fontaine_molmo2_ar_40k_ddp4/step_040000"
 
 _FLOW_STABLE = ["--noise-key", "stable"]
 _TEACHER = ["--sample-method", "heun", "--sample-steps", "30", *_FLOW_STABLE]
@@ -107,6 +113,11 @@ CONFIGS: dict[str, dict] = {
     "ar_greedy": {"checkpoint": CKPT_AR100K, "flags": []},
     "ar_draws10_t1": {
         "checkpoint": CKPT_AR100K,
+        "flags": ["--ar-temperature", "1.0", "--sample-draws", "10"],
+    },
+    "molmo2_greedy": {"checkpoint": CKPT_MOLMO2, "flags": []},
+    "molmo2_draws10_t1": {
+        "checkpoint": CKPT_MOLMO2,
         "flags": ["--ar-temperature", "1.0", "--sample-draws", "10"],
     },
     "teacher_heun30_draws1": {
@@ -210,7 +221,9 @@ def run_one(config: str, mode: str, *, dry_run: bool = False) -> dict | None:
     ckpt = Path(cfg["checkpoint"])
     if not ckpt.is_absolute():
         ckpt = REPO / ckpt
-    if not ckpt.is_dir():
+    if not ckpt.is_dir() and not dry_run:
+        # dry-run only prints the command (box-resident checkpoints are
+        # absent locally); a real run still dies loud.
         sys.exit(f"checkpoint missing: {ckpt} — abort")
     name = f"bench__decode__{config}__{mode}"
     log = LOG_DIR / f"{name}.log"

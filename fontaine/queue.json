@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-08T04:08:23+00:00",
+ "updated_utc": "2026-08-08T04:36:37+00:00",
  "depth_reason": null,
  "items": [
   {
@@ -400,7 +400,7 @@
   },
   {
    "id": "molmo2-decode-cost-microbench",
-   "title": "Leaderboard integrity: bring molmo2 AR configs into the decode-cost microbench (CPU prep item \u2014 the molmo2-endpoint-postprocessing row must otherwise flag its cost column as mtime-derived or leave it blank; this item retires that caveat). Work: extend the microbench harness to cover the molmo2 AR config (config plumbing + tiny-fixture dry run, CPU-verifiable), and land a one-command box script whose GPU minutes ride an already-pre-registered box eval window (the #19 draws-arm launcher's posted cost-gate umbrella, or the next posted box pre-reg) \u2014 no standalone unpre-registered GPU launch; then write the measured number into the leaderboard row + note the caveat's removal",
+   "title": "Leaderboard integrity: bring molmo2 AR configs into the decode-cost microbench (CPU prep item \u2014 the molmo2-endpoint-postprocessing row must otherwise flag its cost column as mtime-derived or leave it blank; this item retires that caveat). Work: extend the microbench harness to cover the molmo2 AR config (config plumbing + tiny-fixture dry run, CPU-verifiable), and land a one-command box script whose GPU minutes ride an already-pre-registered box eval window (the #19 draws-arm launcher's posted cost-gate umbrella, or the next posted box pre-reg) \u2014 no standalone unpre-registered GPU launch; then write the measured number into the leaderboard row + note the caveat's removal \u2014 PREP LANDED 08-08 04:4xZ: molmo2_greedy + molmo2_draws10_t1 configs in the shared harness (selftest PASS, dry-run prints both modes; dry-run no longer requires the box-resident checkpoint, real runs still abort), one-command box script microbench_box_molmo2.sh (all-GPU-free guard, run_detached launch line in header); REMAINING: run on the box at the first pre-registered eval window after the #19 chain, then merge rows into the leaderboard cost column",
    "class": "cpu",
    "status": "queued",
    "prereg": null,
