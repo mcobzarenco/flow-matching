@@ -1,10 +1,35 @@
 # Now
 
-
-
-
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-08 11:17–11:2xZ (real `date -u`) — tick (babysit):
+**molmo2_ar60k HEALTHY**, second post-relaunch check; no new steering;
+queue green, `run_work_next` armed.*
+
+**Status** (11:1xZ): box **molmo2_ar60k LIVE + healthy** (babysit
+exit 0): step 41,140/60,000, loss 2.861, 2.19 s/step (27.5 steps/min
+window), vram 73.49 **no new peak**; probes 6.05@40,500 →
+6.37@41,000 — both well under the 8.2075 kill bar and inside the
+pre-registered rewarmup-transient window (kill line opens 41,500;
+**first boundary judgment at the 42,500 async save ~12:1xZ — next
+tick**). Loss +0.07 sample-to-sample = rewarmup noise (LR rewarming
+on schedule). ~11.5 h to endpoint (~22:5xZ) + chained panel eval.
+Local idle-by-design.
+
+**Steering**: none new (`read` surfaced only our own 11:15Z
+accuracy-by-field post; `history -n 5` shows no new reactions — the
+10:49Z 👍 stands recorded).
+
+**Done** (this tick): babysit green (facts above, judged healthy);
+queue validate green (depth 4, 14 open); `run_work_next` re-armed
+(box busy + CPU items queued: snapflow visual report, cleancand
+draft, noise-ladder finalization, fieldgen-accuracy prep).
+
+**Next**: chained work session works the CPU queue head; next tick
+~11:4xZ judges the 42,500 save boundary (first real gate check:
+probe trajectory vs the 8.2075 ×3 rule). At the 60k close (~23Z):
+chained eval → fields panel (armed) + attach-chain repoint decision.
+**Every GPU launch goes through `run_detached.sh`.**
 
 *Updated 2026-08-08 10:54–11:2xZ (real `date -u`) — work session
 (bounded): **the owner's accuracy-by-field ask (10:08Z) executed as a
@@ -102,85 +127,6 @@ item); 60k babysits every ~30 min — 42.5k save boundary + probe
 trajectory are the first real gate checks. **Every GPU launch goes
 through `run_detached.sh`.**
 
-*Updated 2026-08-08 08:36–11:2xZ (real `date -u`) — work session
-(bounded, owner-active): **rung (b) executed end-to-end to a
-table-cost close, the molmo2 60k continuation launched (owner GO)
-through a crash→root-cause→fix→relaunch cycle, and four owner asks
-delivered same-session** (visual report, chunk_mae_success one-off,
-reply-parsing fix, rig datasets folded into the 60k mix).*
-
-**Status** (11:1xZ):
-- box: **molmo2_ar60k LIVE** (unit `fontaine-molmo2-60k`, relaunch
-  10:28:43Z after the 10:15Z first-step crash): step 40,360+ at last
-  check, loss 2.80, LR rewarming on schedule, util ~95%; banner
-  gates all green (**880 datasets** incl. both SO101 rig sets,
-  resume + fresh-seed lines, `re-homed 37 step counters` = the fix
-  firing). vram peak 73.49 = resume-load transient (parent 67.13),
-  gate 71→78 w/ watch anchor. Endpoint ~22:3x–23:0xZ + chained
-  panel eval; probe kill 8.2075 ×3 after 41.5k.
-- local: **idle since ~10:15Z by pre-reg verdict** — the rung-(b)
-  chain closed at table cost (below); next local claim =
-  fieldgen-accuracy eval prep or the cleancand escalation.
-
-**Steering** (owner active 08:42–10:08Z, seven messages, all
-answered in-channel):
-- 08:42Z golden-ticket visual report → **delivered 09:1xZ**
-  ([post](posts/2026-08-08-goldenticket-visual-report.md), 5 charts;
-  owner: "Amazing! Good report"); more-visuals preference banked.
-- 08:49Z molmo2 +20k proposal → discussion posted 09:00Z → **GO
-  09:04Z** ("let's prio the 60k run") → pre-reg + launch (below).
-  Fresh-shuffle-seed rule banked (memory + already mechanized).
-- 09:07/09:11Z chunk_mae_success one-off → **delivered 10:4xZ**:
-  clean panel read (identical rows) — success slice narrows the gap
-  (+0.173 vs +0.205 overall) but doesn't flip; wandb probe flip
-  exists but is composition-confounded, flagged.
-- 09:22Z SnapFlow visual report → queued; reply-parsing question →
-  **fix landed** (reply-reference + edited markers, 5 oracles).
-- 10:06Z rig datasets into the mix → **in the relaunch** (amendment
-  1); 10:08Z eval-conditioning question → answered with the
-  TRUE-label default + `--condition-override outcome=success`
-  counterfactual; accuracy-by-field eval queued (prep item).
-- **Process slip owned in-channel**: the 09:04–09:11Z messages sat
-  unread ~50 min (a background poll-loop's output was never read);
-  caught at the 10:02Z babysit.
-
-**Done** (this session, commits `4cd819c`..`+`):
-- **#6 rung (b) EXECUTED → CLOSED at table cost** (`4cd819c` launch,
-  close post `2026-08-08-subgoal-draws-stage1-close.md`): preflight
-  live oracles ALL GREEN (draws-0 bon+narr bit-exact vs a fresh
-  matched-composition q4 self run; forced-empty bit-exact vs the
-  banked emptyhint — amendment-1 lesson mechanized in
-  `subgoal_draws_live_oracles.py`, 14-branch selftest); stage-1 bar
-  (a) FAIL 20/60 → frozen rule: no arms. **Finding: 11.5% of T=1.0
-  sampled subgoal draws derail into budget-truncated gibberish**;
-  diversity real (97%), SC never picks a derailed draw (0/60,
-  median rank 9/9). ~1.6 of 6 GPU-h. Escalation queued (cleancand).
-- **molmo2 60k continuation** (`6f08e48` pre-reg + launcher,
-  `2c10d96` fix): first launch died at first step (`state_steps is
-  on cpu`, fused AdamW) — root-caused to the async-save CPU-tagged
-  ZeRO-1 payload's shard-load path, fixed
-  (`rehome_fused_step_tensors` + GPU regression test reproducing
-  the crash in the ZRO shape), amendment 1 posted, relaunched
-  10:28:43Z with rig datasets in the mix. Babysit caught the death
-  in 6 min.
-- **Golden-ticket visual report** (`143bdde`): 5 SVGs from banked
-  JSONs (chart script + dataviz procedure), Space-live; noise-ladder
-  rung-2 pre-reg DRAFT posted (split-half reliability floor on the
-  banked 2,458×64 stack, CPU-first).
-- **Harness**: discord.py reply-reference + edit rendering (5
-  oracles); babysit watcher self-match class noted (monitor tail
-  matching pgrep via the log filename).
-- check.py green at every commit (491→498 tests).
-
-**Next**: `queue_cli.py next` → 60k babysits every ~30 min (probe
-kill live from 41.5k; async-save first-boundary check at 42.5k
-~11:4xZ); then CPU queue: fieldgen-accuracy prep (owner), snapflow
-visual report (owner), idea6 cleancand escalation draft, idea1
-noise-ladder draft finalization. #4 attach chain opens at the 60k
-endpoint (~23Z) per the owner's priority + repoint decision rule.
-`run_work_next` armed. **Every GPU launch goes through
-`run_detached.sh`.**
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -206,6 +152,12 @@ to ~04:0xZ, greedy ~1.7 GPU-h, draws10_t1 04:54–07:22Z **~10 GPU-h
 idle from ~08:15Z pending the next pre-registered launches). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
+
+Session 2026-08-08 11:17–11:2xZ (tick): babysit, molmo2_ar60k
+healthy at second post-relaunch tick (step 41,140, 27.5 steps/min,
+probes 6.05→6.37 under the 8.21 bar in the rewarmup window, no new
+vram peak; 42,500 save-boundary judgment next tick ~11:4xZ), 0 GPU-h
+new; no new steering; queue green depth 4; `run_work_next` armed.
 
 Session 2026-08-08 10:54–11:2xZ (work): exploit, **0 GPU-h new —
 one run cancelled as redundant (~1.5 GPU-h saved)**: the owner's
