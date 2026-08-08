@@ -1,13 +1,50 @@
 # Now
 
-
-
-
-
-
-
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-08 15:23–15:4xZ (real `date -u`) — tick (babysit):
+run healthy; and a SECOND missed-steering catch this day — **two
+owner questions (14:40Z + 14:49Z) had scrolled past the cursor
+unanswered** during the perf-exec window; found via `history`,
+both answered from code this tick (~45 min latency).*
+
+**Status** (15:2xZ babysit exit 0): box **molmo2_ar60k LIVE +
+healthy**: step 47,540/60,000, probe 6.58@47,500 flat in the
+6.40–6.87 band (1.63 under the 8.21 bar, ×3 never armed), loss
+2.786 falling, 2.21 s/step, vram 73.84 no new peak; ~7.5 h to the
+60k close (~23Z). Local GPU idle-by-design (perf ladder waits for
+the box's post-23Z window). Queue validate green depth 5 (15 open).
+
+**Steering** (two owner questions, both answered in-channel):
+(1) 14:40Z *"is the SigLIP2→LLM connector frozen? vision-lr or
+text-lr?"* — answered: connector (2×2 attn-pool + gated
+`image_projector`, `bijou/molmo2/vision.py`) is inside
+`backbone.vision` → **`--backbone-vision-lr`'s group**
+(`encoders/molmo2.py:447`); the 60k run passes no vision-lr, so
+tower AND connector are **frozen** (text trunk 2e-5 + head 1e-4
+train). (2) 14:49Z *"40k report: headline chunk_mae 6.008 vs Q2
+true-outcome MAE 5.877 — what's the first conditioned on?"* —
+answered: **same single TRUE-label-conditioned pass; Q2 is a
+bucketing of the same scores, not a counterfactual**
+(`eval/cli.py:1404`; unlabeled frames render no outcome bracket =
+unconditioned marginal, `interface.py:456`). 6.008 = frame-weighted
+pool over all 17,204 frames {success 5.877, partial 6.315, failure
+6.894, unlabeled 6.290}; the gap is bucket composition, not a
+conditioning delta (the forced-success counterfactual is Q3).
+P1 relative-bound adjudication still pending with the owner.
+
+**Done**: babysit + 2 code-grounded answers posted; conversational
+window held with a monitor (no further owner replies by close).
+Process note: this is the day's second cursor-slip — the read-cursor
+moves on any session's poll, but a heads-down session can read
+without handling. `history` at every tick is the safety net; a
+harness-level unacked-owner-message guard is worth an idea entry.
+
+**Next**: **50,000 save ~16:5xZ** (routine), **60k close ~23Z** →
+chained eval → fields panel → perf box ladder (P1 in/out per owner
+adjudication) + noise-ladder stage 2 in the post-close window.
+Chained work session armed (`run_work_next`) — queue has CPU-side
+items and the box is busy.
 
 *Updated 2026-08-08 14:0x–15:3xZ (real `date -u`) — work session
 EXTENDED by owner steering (14:04Z + 14:10Z mid-close): the perf
@@ -109,47 +146,6 @@ the band upward), **60k close ~23Z** (chained eval → fields panel
 armed + attach-chain repoint decision); noise-ladder rung-2
 execution opens post-23Z. Every GPU launch via `run_detached.sh`.
 
-*Updated 2026-08-08 13:36–13:5xZ (real `date -u`) — tick (babysit):
-**45,000 save boundary judged — routine PASS**; and a missed-steering
-catch: the owner's **13:21Z message was read-but-unhandled** (the work
-session's cursor moved past it but closed on the perf review) — found
-via `history`, queued + acknowledged this tick.*
-
-**Status** (13:4xZ): box **molmo2_ar60k LIVE + healthy** (babysit
-exit 0, held in-session through the boundary): step 45,000/60,000,
-probe **6.70@45,000** — back inside the 6.40–6.87 oscillation band
-(6.40@43.5k → 6.54@44k → 6.87@44.5k → 6.70@45k), 1.50 under the
-8.2075 kill bar, ×3 rule never armed; loss ~2.83 (oscillating,
-trend down), 2.18 s/step, vram 73.84 **no new peak**, all 4 GPUs
-~100%; ~9.1 h to the 60k close (~23Z) + chained panel eval. Local
-idle-by-design.
-
-**Steering** (13:21Z, mcobzarenco — caught this tick): queue a
-consolidated **chart-led meta-report on field conditioning + all
-aux-subgoal idea work**; don't title such pages "visual report" —
-charts/visual aids are the default treatment; include specific
-episode frames comparing the effect of subgoal conditioning,
-especially frames where the right action is **ambiguous from the
-image alone** (start-vs-end indistinguishable, goal not visible from
-the parked position). **Disposition**: queued as
-`fieldcond-subgoal-meta-report` (CPU; natural slot after the 60k
-close + fields panel so it carries those numbers; frame-mining can
-start earlier), acknowledged in-channel 13:4xZ, standing charts
-memory amended with the no-"visual-report"-title + ambiguous-frames
-preferences.
-
-**Done** (this tick): 13:21Z steering caught + queued + acked (facts
-above); 45,000 boundary judged routine PASS (probe fell back to
-6.70, posted in-channel); babysit ×2 green; queue validate green
-(depth 5, 15 open); `run_work_next` re-armed.
-
-**Next**: chained work session → CPU heads: cleancand pre-reg draft /
-molmo2-perf-fix-prereg draft / meta-report frame-mining. Boundaries:
-47,500 save ~15:1xZ (routine unless the probe breaks the band
-upward), **60k close ~23Z** (chained eval → fields panel armed +
-attach-chain repoint decision); noise-ladder rung-2 execution + perf
-pass-1 bench open after 23Z. Every GPU launch via `run_detached.sh`.*
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -176,6 +172,16 @@ idle from ~08:15Z pending the next pre-registered launches). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
+Session 2026-08-08 15:23–15:4xZ (tick): babysit exit 0 (47,540,
+probe 6.58@47,500 in-band, vram flat), 0 GPU-h new; **second
+missed-steering catch of the day via `history`**: owner questions
+14:40Z (connector frozen? → yes, vision group, no vision-lr passed)
++ 14:49Z (chunk_mae 6.008 vs Q2 5.877 → same true-label pass, Q2 is
+a bucketing; 6.008 pools all buckets) both answered from code
+in-channel (~45 min latency); conversational window held via
+monitor; queue green depth 5; `run_work_next` re-armed. Archive
+roll (head entry + 3 oldest footer notes).
+
 Session 2026-08-08 14:0x–15:3xZ (work EXTENSION, owner-steered;
 exploit, ~0.4 GPU-h local): perf pass-1 EXECUTED at owner prio
 (`410e1aa`+`553aae1`): branch built (P1 `00cdafe` / full `22e8148`),
@@ -186,39 +192,3 @@ OOM -> ladder moved to box true recipe (launcher landed),
 **act-ckpt CUDA bug found** (recompute escapes sdpa_kernel pin;
 idea #20, prerequisite fix named). 47,500 boundary routine PASS
 (probe 6.58 in-band). Babysits green; Discord ×5; queue green.
-
-Session 2026-08-08 13:49–14:2xZ (work, bounded; exploit + explore,
-0 GPU-h new): queue head finished — **perf pass-1 pre-reg FINALIZED**
-(`4ca270c`: S-bundle P1–P4 pinned w/ frozen parity bounds + decision
-rules; cuDNN scoped training-only to preserve eval byte-anchors;
-execution queued as new head, bench window open pre-23Z branch-only);
-standing lit slice (`015a4be`: observation-aliasing papers page,
-2605.14712 + 2605.14598 — frame-mining protocol pinned into the
-owner's meta-report item; #6/#11 hooks; retroactive loss+mask index
-row). Babysit ×3 green (45,440, probe 6.70@45k in-band, vram flat);
-Discord ×2; queue green depth 5; `run_work_next` re-armed.
-
-Session 2026-08-08 13:36–13:5xZ (tick): babysit ×2, **45,000 save
-boundary judged routine PASS** (probe 6.70@45,000 back inside the
-6.40–6.87 band, 1.50 under the 8.21 bar, ×3 never armed; held
-in-session through the boundary), 0 GPU-h new; **missed-steering
-catch: owner 13:21Z message was read-but-unhandled** by the closing
-work session — queued as `fieldcond-subgoal-meta-report` (chart-led
-field-conditioning + aux-subgoal meta-report w/ ambiguous episode
-frames), acked in-channel, charts memory amended (no "visual report"
-titles); queue green depth 5 (15 open); `run_work_next` re-armed.
-Archive roll (head entry + oldest footer note).
-
-Session 2026-08-08 12:54–13:0xZ (tick): babysit, **42,500
-save-boundary gate judged PASS** (probe 6.75@41.5k → 6.73@42k →
-6.73@42.5k → 6.77@43k → 6.40@43.5k — tail bent per the rewarmup
-anchor, ×3 rule never armed; step 43,680, loss 2.804 falling), 0
-GPU-h new; **driver outage 11:41–12:54Z root-caused: usage-credit
-429s** (4 tick attempts + the chained work session failed; box run
-unaffected, self-healed on window rollover); vram peak 73.49→73.84
-investigated via remote jsonl scan — longest-batch high-water creep,
-not a leak (bumps at 41,780/42,940, flat since, 4.16 under gate);
-consolidated Discord post; queue green depth 3; `run_work_next`
-re-armed (noise-ladder draft still queue head — the credit-killed
-work session never ran it). Archive roll (head entry + 3 oldest
-footer notes).
