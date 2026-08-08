@@ -31,7 +31,13 @@ decode wait.*
   `fontaine-goldenticket-stage1` via `run_detached.sh`, launcher
   `3392583` sha-pinned): draws-64 ticket search on drawsprobe_s7,
   ~1.5 GPU-h; model loaded at first poll (startup head anchored);
-  R1 adjudication ~04:1x–04:3xZ — stage 2 ONLY on R1 pass.
+  R1 adjudication ~04:1x–04:3xZ — stage 2 ONLY on R1 pass. The
+  02:48 babysit surfaced a gate crossing (projection 9.5 > 6 GPU-h)
+  — adjudicated in-session as the startup-head artifact: progress
+  lines burst-buffer in 32-frame batches, and the measured steady
+  window 02:4x–02:55Z is ~25 f/min → stage 1 ~1.6 GPU-h, on the
+  pre-reg estimate. Non-incident; anchor added to the babysit entry
+  so the chained session doesn't re-alarm.
 - **#6 selfsubgoal arms COMPLETE 02:37Z rc=0** (~3.2 GPU-h ≤ 8
   gate); babysit entry pruned at this commit.
 
