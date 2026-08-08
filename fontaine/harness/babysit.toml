@@ -16,28 +16,10 @@
 # 7.7966, paired -1.717 [CI -1.80, -1.63] -> phase-2 flow-trunk
 # candidate; postprocessing done same session). Entry now watches the
 # chained #19 draws10_t1 phase (the prepared-entry plan, activated).
-
-[[run]]
-name = "molmo2_draws10_t1"
-kind = "progress-log"
-host = "192.222.55.210"
-pgrep = "draws10_t1"
-pgrep_min = 4                       # torchrun + 4 rank workers match
-gpu_indices = [0, 1, 2, 3]
-gpu_mem_min_mib = 8000
-log = "/home/ubuntu/logs/eval__fontaine_molmo2_ar_40k_ddp4__step_040000__panel_k4l2_draws10_t1.log"
-progress_re = "scored [0-9]+/[0-9]+ frames"
-started_utc = "2026-08-08T04:54:00Z"
-gpu_hours_per_wall_hour = 4.0       # 4-GPU sharded torchrun
-boundary = "shard counts (~6450/rank full panel, ~1075 q4); launcher's rate gate decides q4 fallback inside the first ~30 min; greedy arm banked (this chain, 04:53Z) is the paired baseline"
-anchors = [
-    "frozen reads at completion: molmo2 delta_AR (draws10 - greedy) paired on its own greedy npz; fairness vs -1.258; family vs 5.365",
-    "fallback relaunch logs to the stateprobe_q4 stem - repoint log if the cost gate fired",
-    "model-load + first prefill ~4-5 min shows as a quiet log head - not a stall; greedy phase ran ~26 min at ~250 f/min effective, draws10 ~10x decode cost on the same frames",
-]
-[[run.gates]]
-kind = "gpu_hours_max"
-value = 24.0                        # same pre-reg gate as the AR-100k arm
+# PRUNED 08-08 07:5xZ: draws arm LANDED 07:22Z rc=0 (full panel, no q4
+# fallback, ~10 GPU-h <= 24 gate); frozen reads all expectations met
+# (Delta_AR -0.154 [CI -0.195, -0.113]); microbench rode the landing
+# window 07:27-07:50Z rc=0. Box GPUs free for the #4 attach screen.
 
 # LIVE — #6 self-subgoal probe (local GPU; pre-reg
 # 2026-08-07-prereg-selfsubgoal-probe.md + amendment 1). History: preflight

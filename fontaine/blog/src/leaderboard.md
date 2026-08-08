@@ -24,9 +24,10 @@ first_mae ≤ 1.6 · ☆☆☆ mainline adoption.
 | 5 | AR-100k, draws-10 mean, T=1.0 | 5.6515 | 1.9477 | 10 (serial) | 2107.3 | 7993.0 | [readout](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__draws10_t1_ar100k_k4l2.json) |
 | 6 | AR-100k, greedy decode (deployment anchor) | 5.8026 | 2.1431 | 1 (serial) | 247.0 | 2156.6 | [report](https://mcobzarenco-fontaine-blog.static.hf.space/reports/eval__bijou_arb_rcond_100k_ddp4__step_100000__panel_k4l2.html) |
 | 7 | **Flow teacher @80k, Heun-30, single draw (ticket 33)** | **5.6468** | 1.8963 | 30 | 115.7³ | 1234.0³ | [results](posts/2026-08-08-goldenticket-results.md) |
-| 8 | **Molmo2 AR 40k, greedy decode** | 6.0079 | 2.1871 | 1 (serial) | —² | —² | [results](posts/2026-08-08-molmo2-endpoint-results.md) |
-| 9 | Flow teacher @80k, Heun-30, single draw (stable-key) | 6.5997 | 1.9355 | 30 | 115.7 | 1234.0 | [rebank](posts/2026-08-06-stablekey-rebank-results.md) |
-| 10 | state-copy (control) | 11.785 | 2.620 | 0 | — | — | banked, byte-matched every eval |
+| 8 | **Molmo2 AR 40k, greedy decode** | 6.0079 | 2.1871 | 1 (serial) | 143.8⁴ | 678.1⁴ | [results](posts/2026-08-08-molmo2-endpoint-results.md) |
+| 9 | Molmo2 AR 40k, draws-10 mean, T=1.0 | 5.8492 | 1.9736 | 10 (serial) | 1191.2⁴ | 6291.3⁴ | [readout](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__draws10_t1_molmo2_40k_k4l2.json) |
+| 10 | Flow teacher @80k, Heun-30, single draw (stable-key) | 6.5997 | 1.9355 | 30 | 115.7 | 1234.0 | [rebank](posts/2026-08-06-stablekey-rebank-results.md) |
+| 11 | state-copy (control) | 11.785 | 2.620 | 0 | — | — | banked, byte-matched every eval |
 
 Ranks 1–2 are a statistical tie on chunk MAE (Δ 0.003, ~1σ_draw) at
 **30× different expert compute**. The ☆☆ first-mae arm (≤ 1.6) is
@@ -38,24 +39,30 @@ board) and the student's (1.5927). The ☆ chunk bar (≤ 5.0) is
 pre-registered expectations met): AR mean-of-10 buys −0.145 [CI95
 −0.182, −0.109] — real but ~9× smaller than the flow families' draws
 gain, the pre-registered mean-collapse shape (greedy AR decode
-already sits near the predictive mean). **Row 7 landed 2026-08-08**
+already sits near the predictive mean). **Row 8 landed 2026-08-08**
 (endpoint chained eval; frozen Read 1 = BEATS its own-topology E2B
 control 7.7966 by paired −1.717 [CI −1.80, −1.63] → phase-2
 flow-trunk candidate): the Molmo2 trunk at 40k sits 0.21 behind
-AR-100k's greedy at 2.5× fewer steps. Its ² cost cells await the
-queued microbench run (molmo2 configs were not in the measured set;
-nothing mtime-derived is quoted). **Row 7 landed 2026-08-08** (golden-ticket
+AR-100k's greedy at 2.5× fewer steps. **Row 7 landed 2026-08-08** (golden-ticket
 screen R2 = REAL): a single sha-pinned noise vector (ticket 33,
 searched over a 64-candidate bank on probe rows, judged on 14,746
 complement rows: paired −0.924 [CI −0.985, −0.866] vs stable-key)
 captures ~75% of the mean-of-10 gain at 1/10th the draws; keying
 `ticket`, effect directional not norm (norm rank 29/64). ³ cost cells
 inherited from the stable-key single-draw row — identical decode
-config, only the noise source differs. **Rows still owed**: molmo2
-mean-of-10 (draws arm running at the endpoint chain). The
-T-sensitivity rungs (T ∈ {0.5, 0.7, 1.3}) are **record-only by
-pre-registration** and never enter the leaderboard — dT diagnostic
-only.
+config, only the noise source differs. **Row 9 landed 2026-08-08**
+(#19 molmo2 draws arm, all pre-registered expectations met): molmo2
+mean-of-10 buys Δ_AR −0.154 [CI95 −0.195, −0.113] — the same
+mean-collapse shape as AR-100k's −0.145, replicated on a second AR
+trunk; no overtake of the flow draws band (5.365). ⁴ molmo2 cost
+cells measured 2026-08-08 on the **box** H100 (same harness, flags
+byte-matched to the panel stems, record-only extension of the
+pre-reg's registered set — other rows were measured on the local
+1×H100; same GPU model, cross-machine deltas are directional):
+`analysis__leaderboard_decode_microbench_molmo2.json`. The mtime
+caveat on row 8 is retired. The T-sensitivity rungs (T ∈ {0.5, 0.7,
+1.3}) are **record-only by pre-registration** and never enter the
+leaderboard — dT diagnostic only.
 
 ## Reading the compute column
 

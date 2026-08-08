@@ -20,9 +20,14 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   the mean-collapse shape). T-sensitivity dT table banked 23:09Z
   same day (record-only): monotone in T — 6.50/6.57/6.78/7.18 at
   T=0.5/0.7/1.0/1.3 on the q4 rows; the T=1.3 asymmetry prior
-  confirmed, primary stays T=1.0. Molmo2 arm RUNNING 08-08 ~05:0xZ
-  (draws10_t1 chained after the endpoint greedy eval; its Δ_AR read
-  pairs on the greedy npz banked this session). Lit (08-08,
+  confirmed, primary stays T=1.0. **Molmo2 arm READ OUT 08-08
+  07:2xZ, all expectations met**: Δ_AR −0.154 [CI −0.195, −0.113] —
+  the mean-collapse shape replicated on a second AR trunk (AR-100k
+  was −0.145); draws10_t1 5.8492/1.9736 → leaderboard row 9, no
+  overtake of the flow band; execution oracles byte-green. Decode
+  microbench rows measured same window (box H100): greedy
+  143.8/678.1, draws10 1191.2/6291.3 ms — row 8's mtime caveat
+  retired. Lit (08-08,
   [steering III](papers/noise-space-steering-3.md)): SDN
   (2606.14084) — a judge-free per-step noise selector whose
   smoothness-only ablation carries most of its +18 pp real-robot
