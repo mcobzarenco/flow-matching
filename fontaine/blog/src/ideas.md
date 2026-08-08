@@ -139,6 +139,13 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   selection-noise caveat). R4b: winner gain monotone in draw
   dispersion (−0.35 → −1.44 by quartile). Screen total ~5.55/6
   GPU-h. The
+  **Rung-2 pre-reg FINALIZED 08-08 13:2xZ
+  ([pre-reg](posts/2026-08-08-prereg-noise-ladder-perdataset.md)):
+  stage 0 found a thin floor F=6 on banked data (split-half regret
+  n=6 bin 2% under the permutation null; n=4–5 fail — the
+  median-2-frame caveat was right), 97 qualifying datasets = 40.8%
+  of panel core rows, 88/97 route away from ticket 33 (map sha
+  15d92935…); execution queued (≤ 4 GPU-h) behind the 60k close.**
   noise-structure ladder (per-dataset tickets → LAFM priors → DSRL
   state-conditioned) has met its entry condition — each rung needs
   its own pre-reg.** Lit

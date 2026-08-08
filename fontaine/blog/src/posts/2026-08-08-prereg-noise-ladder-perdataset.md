@@ -1,15 +1,20 @@
-# Pre-registration DRAFT: per-dataset golden tickets (#1, noise-ladder rung 2)
+# Pre-registration: per-dataset golden tickets (#1, noise-ladder rung 2)
 
-*2026-08-08 ~09:2xZ. **DRAFT — not yet the immutable pre-reg.** The
-design below is frozen in structure; the finalization checklist at the
-bottom converts DRAFT → posted before any instrument or launch work
-(the [vu5k precedent](2026-08-07-prereg-molmo2-vision-unfreeze.md)).
-Entry condition met 2026-08-08: the
+*2026-08-08 ~13:2xZ — **finalized; immutable from this commit.**
+Drafted ~09:2xZ the same day (structure unchanged); finalized after
+the CPU stages ran on banked data: stage-0/1 results are published
+below (they were the draft's finalization checklist item 1), the
+instrument oracle list is pinned after an audit of `bijou.eval` at
+HEAD (item 2), and one wording clarification is flagged inline where
+it occurs. Entry condition met 2026-08-08: the
 [golden-ticket screen](2026-08-08-goldenticket-results.md) closed
 R1 CONFIRM → R2 REAL → R3 INTERESTING. Idea
 [#1](../ideas/idea-01.md). Priors from
 [2603.11642](../papers/noise-space-steering-3.md) and our own R4a/R4b
-reads, quoted below with their numbers. Zero training.*
+reads, quoted below with their numbers. Zero training. Remaining GPU
+cost at launch: **≤ 4 GPU-h** (stage 2 ≈ 0.9 + seating arm ≈ 3.0; the
+draft's ≤ 6 ceiling included CPU-stage contingency that is now
+spent).*
 
 ## Question
 
@@ -84,6 +89,40 @@ the global winner 33. Non-qualifying datasets route to ticket 33
 rung 1, never below it). The full map (dataset → ticket) is
 committed before stage 2.
 
+## Stage 0–1 results (executed 2026-08-08 ~13:1xZ — CPU, banked data)
+
+Instrument: `fontaine/scripts/noise_ladder_stage01.py` (oracles a–d
+GREEN first: pooling + complement reproduction against the banked
+stage-1/2 jsons; planted signal/null/at-line split-half worlds;
+provenance refusal; routing tie-breaks). Full table:
+`reports/analysis__noise_ladder_stage01.json`.
+
+**Stage 0: floor F = 6 — the rung stays open, thinly.** 147 of the
+153 ≥4-frame datasets split (6 have a single-parity frame set and are
+listed in the json). The bin table is honest and noisy: n=4 (30
+datasets) fails (median regret 1.855 vs null 5th-pctl 1.766), n=5
+(20) fails, **n=6 (39 datasets) passes — 1.5675 vs 1.5965** (~2%
+under the line), **n=7 (10) passes clearly — 0.846 vs 1.084**, and
+the sparse bins n=8–22 (1–11 datasets each) all fail; three
+single-dataset bins at n=23/37/86 pass on their own cells. The floor
+rule binds at the smallest passing n: **F = 6**. Caveats recorded at
+the moment of judgment: the pass at the floor is marginal, the
+pattern over n is not monotone (small-bin power is the likely reason,
+but that is an interpretation, not a measurement), and the frozen
+qualification rule (≥ F frames) admits datasets from failing bins.
+Stage 2's held-out reads exist precisely to adjudicate whether this
+thin floor carries transferable signal — the falsifier stands
+unchanged.
+
+**Stage 1: the routing map is committed.** Qualifying set (≥ 6 probe
+frames AND ≥ 20 complement rows): **97 datasets**, covering **7,028
+panel core rows (40.8%)** and **6,014 complement rows** (expectation
+1's ≥ 25% met). **88 of 97 route away from ticket 33**; the routed
+tickets span all ten of the top-10 set. The full dataset → ticket map
+(all 792 datasets; non-qualifying → 33) is in the analysis json;
+**map sha256 `15d9293553ac1a88…`** — the stage-2 run must carry
+exactly this sha in its provenance.
+
 ## Stage 2 — one confirm eval (GPU), paired frozen reads
 
 One full-panel eval, deterministic single decode, with the
@@ -98,17 +137,40 @@ within a dataset share the routing decision — an unclustered CI
 would overstate precision):
 
 1. **Primary: Δ_route = map vs ticket 33**, qualifying datasets'
-   core rows only — the marginal value of per-dataset routing over
-   the shared winner. Pass = CI95 entirely below 0.
+   **held-out complement core rows only** (clarified at finalization:
+   the draft said "core rows"; probe rows selected the tickets and
+   never judge — the R2 pattern, and the reason the ≥ 20
+   complement-row qualification floor exists) — the marginal value of
+   per-dataset routing over the shared winner. Pass = CI95 entirely
+   below 0.
 2. **Δ_route vs stable-key** on the same rows (record-only context;
    rung-1 already banked the shared-vs-stable number).
 3. **Per-dataset win table**: fraction of qualifying datasets where
    the routed ticket beats ticket 33 on held-out rows, vs the 50%
    null (sign test).
 4. Horizon + dispersion-quartile mirrors of read 1 (R4b form).
-5. Execution oracles (abort): state-copy rows byte-match; identity
-   columns; routing-map sha in the report; non-qualifying rows
-   byte-match the banked ticket33 run at matched composition.
+5. Execution oracles — **pinned at finalization** after the audit of
+   `bijou.eval` at HEAD (the substitution point is
+   `BijouPolicy._flow_noise`, which already has per-item identity in
+   hand; ticket provenance already rides both the npz dump and the
+   report json). All abort, never silent:
+   - **Provenance:** report + npz carry the m64 bank sha
+     (`9bb13bc4…`) AND a new `ticket_map_sha256` equal to the
+     committed map sha `15d9293553ac1a88…`; the policy name gains
+     `_ticketmap` (distinct from plain `_ticket` — a routed read must
+     never pool as a single-ticket read); `sample_draws == 1`.
+   - **Routing byte-match (preflight, before the panel run):** on a
+     small plan of rows from ≥ 2 datasets mapped to a non-33 ticket
+     t, the routed decode must be byte-identical to a plain
+     `--noise-tickets` ticket-t decode of the same plan at matched
+     composition (the rung-(b) preflight pattern).
+   - **Non-qualifying rows** (mapped to 33) of the full panel run
+     byte-match the banked ticket33 npz at matched composition (same
+     plan file, same batch size — same row order).
+   - **Identity columns** byte-match the banked panel npzs;
+     state-copy rows byte-match.
+   - **Map coverage:** every panel dataset appears in the map; the
+     map's image ⊆ top-10 ∪ {33}.
 
 **Falsifier:** read-1 CI95 not entirely below 0 ⇒ per-dataset
 routing at this probe's cell sizes buys nothing over one shared
@@ -154,12 +216,18 @@ launch via `run_detached.sh`; babysit entries at launch. Boundary
 artifact (chunk hand-offs) remains a named unknown of every ticket
 config — panel-blind, rollout-gated, inherited from the screen.
 
-## Finalization checklist (DRAFT → posted)
+## Finalization record (DRAFT ~09:2xZ → posted ~13:2xZ, same day)
 
-1. Run stage 0 + stage 1 (CPU, banked data); publish F, the
-   qualifying set + row weights, and the routing map in this post.
-2. Pin the instrument oracle list (routing mode + byte-match checks)
-   once the instrument design is audited against `bijou.eval` at
-   HEAD.
-3. Re-date the post, drop the DRAFT banner, commit as immutable;
-   execution gets its own queue entry and babysit entries.
+1. ✅ Stage 0 + stage 1 ran on banked data (oracles first); F, the
+   qualifying set + row weights, and the routing map sha are
+   published above; the full map is committed in
+   `reports/analysis__noise_ladder_stage01.json`.
+2. ✅ Instrument oracle list pinned (stage-2 item 5) after auditing
+   `bijou.eval` at HEAD. The routing mode itself is instrument work
+   that happens at execution time, gated on its preflight oracle.
+3. ✅ This commit: re-dated, DRAFT banner dropped, immutable from
+   here; execution gets its own queue entry and babysit entries at
+   launch. One wording clarification at finalization is flagged
+   inline (read 1: complement rows); expectations 1–5 were banked in
+   the draft **before** stage 0 ran and are unchanged — expectation 1
+   is already CONFIRMED (F = 6 ≤ 16; 40.8% ≥ 25%).

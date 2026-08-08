@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-08T11:39:00+00:00",
+ "updated_utc": "2026-08-08T13:25:00+00:00",
  "depth_reason": "depth 4+ at 11:1xZ 08-08: 60k LIVE (box, endpoint ~23Z); queued: fieldgen fields-panel (owner, armed w/ launcher+prereg, opens at 60k close), snapflow-visual-report (owner), idea6 cleancand draft, idea1 noise-ladder draft; attach chain blocked behind 60k per owner priority.",
  "items": [
   {
@@ -418,10 +418,10 @@
   },
   {
    "id": "idea1-noise-ladder-perdataset-prereg-draft",
-   "title": "Noise-ladder rung 2 pre-reg DRAFT: per-dataset tickets (idea #1, entry condition met by R1 CONFIRM + R2 REAL 08-08). Draft the pre-registration for per-dataset ticket search \u2014 the interaction-term bet: 2603.11642's variance decomposition (noise main effect 1.4%, context x noise interaction 39.4%, best shared noise optimal in 3.1% of contexts) + our R4a shadow (ticket 33 argmin in only 4.4% of 792 probe datasets, top-10 containment 29.8% ~ 2x the 15.6% null, median dataset 2 frames -> selection noise dominates tiny cells) are the written priors; the pre-reg must take a stance on the per-dataset sample-size floor (median-2-frame cells cannot adjudicate a 64-way argmin), the held-out confirm design (per-dataset winner judged on held-out rows of the SAME dataset, the R2 complement-row pattern), and the aggregation claim (panel-level gain vs per-dataset gains). Stage-3 R3/R4b numbers feed the draft (dispersion-quartile geometry says where selection buys most). CPU item; the draft posts before any instrument/launch work",
+   "title": "Noise-ladder rung 2 pre-reg \u2014 FINALIZED 08-08 13:2xZ work session (posts/2026-08-08-prereg-noise-ladder-perdataset.md, DRAFT banner dropped, immutable). Stage 0+1 EXECUTED on banked data (noise_ladder_stage01.py, oracles a-d GREEN, reports/analysis__noise_ladder_stage01.json): floor F=6 (n=6 bin 1.5675 vs null5 1.5965 marginal + n=7 clear; non-monotone small bins recorded honestly), 97 qualifying datasets (7,028 panel core rows = 40.8%, 6,014 complement rows), 88/97 route away from ticket 33, map sha 15d92935... committed. Instrument oracle list pinned after bijou.eval HEAD audit (_flow_noise substitution point; _ticketmap policy suffix; preflight byte-match). Expectation 1 CONFIRMED at finalization (F=6<=16, 40.8%>=25%).",
    "class": "cpu",
-   "status": "queued",
-   "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-golden-ticket-screen.md",
+   "status": "done",
+   "prereg": "fontaine/blog/src/posts/2026-08-08-prereg-noise-ladder-perdataset.md",
    "owner_hold": false,
    "boundary": "opens at the stage-3 R3/R4 close (~08:1xZ 08-08); draft quality gates on those numbers being in hand"
   },
@@ -487,6 +487,15 @@
    "prereg": "fontaine/blog/src/posts/2026-08-08-prereg-accuracy-by-field.md",
    "owner_hold": false,
    "boundary": "opens when the 60k chain (train + chained panel eval) completes ~23Z 08-08 AND refresh_ctrl.sh has stamped a post-2f4d575 commit; run BEFORE or alongside the attach-chain window (3.5 GPU-h, does not gate the attach decision); AR-100k half closed 08-08 11:1xZ with banked numbers"
+  },
+  {
+   "id": "idea1-noise-ladder-rung2-execution",
+   "title": "Noise-ladder rung 2 EXECUTION (idea #1, gpu): instrument the per-dataset routing mode (--noise-ticket-map: BijouPolicy._flow_noise substitution keyed on item repo_id; policy suffix _ticketmap; ticket_map_sha256 in npz+report provenance) + preflight byte-match oracle (routed decode == plain ticket-t decode on a small 2-dataset plan, matched composition), THEN stage 2 confirm eval (~0.9 GPU-h: full panel, map sha 15d92935..., reads 1-5 per the pre-reg: primary D_route map-vs-33 on qualifying complement core rows, dataset-clustered bootstrap CI95 seed 0) + the folded R3 seating arm (~3.0 GPU-h: random-noise draws-10 re-run with --dump-predictions retained; base-equality oracle pooled 5.3645 at 4dp; paired mean-of-top-10 vs mean-of-random-10). Ceiling <= 4 GPU-h, local GPU, every launch via run_detached.sh + babysit.toml entries at launch.",
+   "class": "gpu-local",
+   "status": "queued",
+   "prereg": "fontaine/blog/src/posts/2026-08-08-prereg-noise-ladder-perdataset.md",
+   "owner_hold": false,
+   "boundary": "opens at the next quiet local-GPU window after the molmo2_ar60k close (~23Z 08-08) and its chained eval + the armed fieldgen-accuracy eval resolve; instrument+preflight are CPU-side and may land earlier"
   }
  ]
 }
