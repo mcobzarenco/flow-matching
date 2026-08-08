@@ -531,7 +531,7 @@
    "status": "done",
    "prereg": "fontaine/blog/src/posts/2026-08-08-prereg-noise-ladder-perdataset.md",
    "owner_hold": false,
-   "boundary": "stage-2 CLOSED (falsified, adjudication banked analysis__noise_ladder_rung2.json); seating read lands at unit rc=0 ~22:25Z 08-08 \u2014 paired read + R3 board-row seating decision is the remaining CPU cell"
+   "boundary": "stage-2 CLOSED (falsified, banked analysis__noise_ladder_rung2.json); seating unit rc=0 ~00:0xZ 08-09 (rate-measured) -> the read is ONE command: uv run python fontaine/scripts/noise_ladder_seating_results.py (adjudicator LANDED this session, gates i-iii + planted-world tests; frame-level bootstrap verdict CI per the pre-reg's plain 'paired CI95', clustered CI recorded)"
   },
   {
    "id": "fieldcond-subgoal-meta-report",
