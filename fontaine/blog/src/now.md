@@ -1,7 +1,36 @@
 # Now
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-08 16:06–16:1xZ (real `date -u`) — tick (babysit):
+routine green; quiet tick after the frame-mining work session.*
+
+**Status** (16:06Z babysit exit 0): box **molmo2_ar60k LIVE +
+healthy**: step 48,660/60,000, probe 6.58@48,500 flat in the
+6.40–6.87 band (last four evals 6.58/6.62/6.58 — 1.63 under the
+8.21 kill bar, ×3 never armed), loss 2.78, 2.19 s/step (22.1
+steps/min window rate), vram 73.84 no new peak, all 4 GPUs 52–84%
+util. **50,000 save boundary ~17:07Z** (falls to the chained work
+session), ~6.9 h to the 60k close (~23Z). Local GPU idle-by-design
+(perf ladder waits for the post-close window).
+
+**Steering**: none new — `read` surfaced only our own 16:05Z lit-slice
+post; `history -n 5` shows no new reactions beyond the already-recorded
+👍×2 on the 15:25Z answers. P1 relative-bound adjudication still
+pending with the owner.
+
+**Done**: babysit + Discord poll only; no boundary crossed since the
+16:05Z status line, so no new post (noise discipline). Queue validate
+green depth 5 (15 open); `run_work_next` already armed at 16:05 by the
+closing work session — chained work session picks up the 50k boundary
+and the CPU-side queue.
+
+**Next**: chained work session: CPU-side queue items through the
+GPU-busy window, 50,000 save ~17:07Z routine check; **60k close ~23Z**
+→ chained eval → fields panel → perf box ladder (P1 per owner
+adjudication) + noise-ladder stage 2 in the post-close window.
 
 *Updated 2026-08-08 15:28–16:0xZ (real `date -u`) — work session
 (bounded): the meta-report's frame-mining stage EXECUTED end-to-end in
@@ -99,56 +128,6 @@ adjudication) + noise-ladder stage 2 in the post-close window.
 Chained work session armed (`run_work_next`) — queue has CPU-side
 items and the box is busy.
 
-*Updated 2026-08-08 14:0x–15:3xZ (real `date -u`) — work session
-EXTENDED by owner steering (14:04Z + 14:10Z mid-close): the perf
-pass-1 **execution** ran same-session at owner prio. Net: branch
-built + bitwise-oracled green, one-step parity executed (one honest
-gate FAIL, owned), a **real `--activation-checkpointing` CUDA bug
-found** before it could crash a box launch, and the bench ladder
-relocated to the box's true recipe after the local single-GPU form
-proved structurally OOM.*
-
-**Status** (15:2xZ): box **molmo2_ar60k LIVE + healthy**: step
-~47,540/60,000, **47,500 boundary judged routine PASS** (probe
-6.58@47,500, flat in the 6.40–6.87 band, 1.63 under the 8.2075 bar,
-×3 never armed), loss 2.786 falling, 2.21 s/step, vram 73.84 no new
-peak; ~7.6 h to the 60k close (~23Z). Local GPU free again
-(parity-only unit exited 15:04Z).
-
-**Steering** (mid-session, all handled): 14:04Z "why training only?"
-— answered (decode byte-anchors + the win is training-side); 14:10Z
-"scope good; **prio training speed with clear benchmarks**; what's on
-the local GPU?" — answered (idle) and executed: `molmo2-perf-pass1-exec`
-ran immediately. 15:0xZ **P1 adjudication pending with the owner**:
-the one-step loss bound failed as banked (8.70e-3 abs vs frozen
-1e-3; = 5.1e-4 *relative* at init-scale loss 16.9 — my calibration
-flaw, owned in-channel). Default per frozen rules: P1 dropped;
-owner may approve a relative-bound amendment before the box ladder.
-
-**Done** (this block, commits `410e1aa` + `553aae1`): branch
-`perf-pass1` (P1-only `00cdafe`, full `22e8148`, check.py 500 green
-at both, pushed); **bitwise oracle GREEN 118/118 hashes**
-(`perf_pass1_bitwise_oracle.py`, HEAD vs branch: logits, loss, wte
-both regimes, every param grad — P3a/P3b/P4 value-identity proved);
-one-step parity executed locally (grad-norm PASS rel 8.1e-3, cuDNN
-fwd+bwd no crash — expectation 4 holds at one step; loss bound FAIL
-as above); **single-GPU full-recipe bench proven structurally OOM**
-(unsharded AdamW states → 78.2/79.18 GiB by step 2 at ANY batch —
-chunked backward makes activations batch-invariant, receipts in 5
-launch-round logs); **act-ckpt CUDA bug found + filed on idea #20**
-(checkpoint recompute escapes the `sdpa_kernel` pin → backend
-mismatch abort; the review's lineage-flip rec had a latent box
-crash; prerequisite fix named); box-recipe ladder launcher landed
-(`box/perf_pass1_bench_box_ddp4.sh`, supersedes the transfer
-smoke). Babysits green throughout; 47,500 boundary PASS posted.
-
-**Next**: `queue_cli.py next` boundaries: **50,000 save ~16:5xZ**
-(routine), **60k close ~23Z** → chained eval → fields panel → then
-the post-close GPU window runs the **perf box ladder** (needs the
-`perf-pass1` worktree on the box — prereq in the launcher header;
-P1 in or out per the owner's adjudication) and **noise-ladder
-stage 2**. Every GPU launch via `run_detached.sh`.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -175,6 +154,15 @@ idle from ~08:15Z pending the next pre-registered launches). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
+Session 2026-08-08 16:06–16:1xZ (tick): babysit exit 0 (48,660,
+probe 6.58@48,500 in-band, loss 2.78, vram 73.84 flat, ~6.9 h to the
+60k close), 0 GPU-h new; Discord read + history clean — no new
+steering, no new reactions; no post (no boundary crossed since the
+16:05Z status line). Queue green depth 5 (15 open); `run_work_next`
+already armed by the closing work session — 50,000 save ~17:07Z
+falls to the chained work session. Archive roll (head entry + 2
+oldest footer notes).
+
 Session 2026-08-08 15:28–16:0xZ (work, bounded; exploit+explore,
 ~0.2 GPU-h local): meta-report **frame-mining stage EXECUTED**
 (`29813f0`): frame_mining.py landed, 17,204 panel frames embedded
@@ -187,24 +175,3 @@ posted. Standing lit slice: conditioning-shortcuts papers page
 (2602.24143 + 2605.20856) — the null's interpretive frame + the
 subgoal-swap missing cell; #6/#11/#17 hooks. Babysits 15:29/15:5x/16:0x
 green; queue green depth 5.
-
-Session 2026-08-08 15:23–15:4xZ (tick): babysit exit 0 (47,540,
-probe 6.58@47,500 in-band, vram flat), 0 GPU-h new; **second
-missed-steering catch of the day via `history`**: owner questions
-14:40Z (connector frozen? → yes, vision group, no vision-lr passed)
-+ 14:49Z (chunk_mae 6.008 vs Q2 5.877 → same true-label pass, Q2 is
-a bucketing; 6.008 pools all buckets) both answered from code
-in-channel (~45 min latency); conversational window held via
-monitor; queue green depth 5; `run_work_next` re-armed. Archive
-roll (head entry + 3 oldest footer notes).
-
-Session 2026-08-08 14:0x–15:3xZ (work EXTENSION, owner-steered;
-exploit, ~0.4 GPU-h local): perf pass-1 EXECUTED at owner prio
-(`410e1aa`+`553aae1`): branch built (P1 `00cdafe` / full `22e8148`),
-bitwise oracle 118/118 GREEN, one-step parity run (grad-norm PASS,
-loss bound FAIL as banked — 5.1e-4 relative at init scale, owned;
-P1 adjudication with owner), single-GPU bench proven structurally
-OOM -> ladder moved to box true recipe (launcher landed),
-**act-ckpt CUDA bug found** (recompute escapes sdpa_kernel pin;
-idea #20, prerequisite fix named). 47,500 boundary routine PASS
-(probe 6.58 in-band). Babysits green; Discord ×5; queue green.
