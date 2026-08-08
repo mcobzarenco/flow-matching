@@ -3838,6 +3838,10 @@ def main() -> int:
     grad_norm = torch.zeros((), device=device)
     prefetcher = DevicePrefetcher(loader, device)
     epoch = 0
+    # Lifetime vram peak carried in Python: the CUDA counter is reset
+    # per log window (windowed peak field), so the monotone lifetime
+    # read existing consumers parse must survive the resets here.
+    vram_lifetime_peak_gib = 0.0
     t_last = time.perf_counter()
     while step < args.steps:
         if sampler is not None:
@@ -3994,13 +3998,29 @@ def main() -> int:
                         "s_per_step": round(dt, 3),
                     }
                     if device.type == "cuda":
-                        # True torch-side peaks since process start —
-                        # nvidia-smi only sees the reserved pool, which
-                        # under expandable_segments never shrinks (the
-                        # molmo2 smoke-ladder lesson: reserved shadows
-                        # hid the live/steady-state gap entirely).
+                        # True torch-side peaks — nvidia-smi only sees
+                        # the reserved pool, which under
+                        # expandable_segments never shrinks (the molmo2
+                        # smoke-ladder lesson: reserved shadows hid the
+                        # live/steady-state gap entirely). The CUDA
+                        # counter is reset each window: window peak is
+                        # the new direct read (one long batch no longer
+                        # ratchets it forever), lifetime peak keeps its
+                        # monotone semantics via the Python-side max.
+                        window_peak_gib = (
+                            torch.cuda.max_memory_allocated(device) / 2**30
+                        )
+                        vram_lifetime_peak_gib = max(
+                            vram_lifetime_peak_gib,
+                            window_peak_gib,
+                        )
+                        torch.cuda.reset_peak_memory_stats(device)
                         record["vram_alloc_peak_gib"] = round(
-                            torch.cuda.max_memory_allocated(device) / 2**30,
+                            vram_lifetime_peak_gib,
+                            2,
+                        )
+                        record["vram_window_peak_gib"] = round(
+                            window_peak_gib,
                             2,
                         )
                         record["vram_reserved_gib"] = round(

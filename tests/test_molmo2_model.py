@@ -130,7 +130,10 @@ def test_injection_additive_at_patch_positions_only(model: Molmo2Model) -> None:
 def test_injection_count_mismatch_dies_loud(model: Molmo2Model) -> None:
     input_ids, _ = tiny_ids()
     crops, pooled_idx = tiny_vision_inputs([2, 2])  # 4 + 2 patches expected
-    with pytest.raises(ValueError, match="pooled feature rows"):
+    # Perf pass-1: the guard is device-side (_assert_async — no per-step
+    # host sync). On CPU it raises RuntimeError eagerly; on CUDA it
+    # traps as a device assert. Either way a mismatch still dies loud.
+    with pytest.raises(RuntimeError, match="vision grid disagree"):
         model.build_input_embeddings(
             input_ids,
             crops=crops,

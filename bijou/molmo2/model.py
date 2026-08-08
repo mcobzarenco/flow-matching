@@ -111,13 +111,20 @@ class Molmo2Model(nn.Module):
             dtype=embeds.dtype,
         )
         is_patch = (input_ids == self.image_patch_id).view(-1)
-        if int(is_patch.sum()) != features.shape[0]:
-            raise ValueError(
-                f"{int(is_patch.sum())} image-patch positions but "
-                f"{features.shape[0]} pooled feature rows — inputs and "
-                "vision grid disagree",
-            )
-        flat = embeds.view(-1, embeds.shape[-1]).clone()
+        # Device-side guard: int(sum()) forced a host sync on every
+        # encode (x chunks/step). The abort survives as a CUDA device
+        # assert — message quality traded for the sync; this guard has
+        # never fired in any run.
+        torch._assert_async(  # pyright: ignore[reportPrivateImportUsage] — public per pytorch docs, stub gap
+            is_patch.sum() == features.shape[0],
+            "image-patch positions and pooled feature rows disagree — "
+            "inputs and vision grid disagree",
+        )
+        # In-place masked add on the fresh wte output (non-leaf, nothing
+        # else aliases it, embedding backward never reads its output
+        # value) — the former .clone() copied ~60 MB bf16 per call for
+        # no semantic difference; the grads oracle gates bitwise.
+        flat = embeds.view(-1, embeds.shape[-1])
         flat[is_patch] += features
         return flat.view_as(embeds)
 

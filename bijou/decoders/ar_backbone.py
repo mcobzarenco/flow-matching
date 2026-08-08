@@ -1128,14 +1128,20 @@ def ar_backbone_loss_sums[B: nn.Module](
         reduction="none",
     ).reshape(targets.shape)
     valid = targets != IGNORE_INDEX
+    # Mask-multiply, never boolean-index: advanced indexing runs
+    # nonzero + a host sync per reduction (x chunks/step on the live
+    # path). CE with reduction="none" writes exact 0.0 at IGNORE_INDEX
+    # positions, so these sums equal the indexed sums up to fp
+    # reduction order (declared in the perf pass-1 pre-reg; the CPU
+    # loss oracles re-pin on the sum form, mean form untouched).
     if is_aux is None:
-        return elementwise[valid].sum(), valid.sum(), None, None
+        return elementwise.sum(), valid.sum(), None, None
     aux_positions = valid & is_aux
     action_positions = valid & ~is_aux
     return (
-        elementwise[action_positions].sum(),
+        (elementwise * action_positions).sum(),
         action_positions.sum(),
-        elementwise[aux_positions].sum(),
+        (elementwise * aux_positions).sum(),
         aux_positions.sum(),
     )
 
