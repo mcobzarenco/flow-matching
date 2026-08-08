@@ -1,6 +1,6 @@
 {
- "updated_utc": "2026-08-08T10:50:00+00:00",
- "depth_reason": "depth OK at 10:1xZ 08-08: two LIVE runs (idea6 rung-(b) local chain; molmo2 60k continuation box) + queued: goldenticket-visual-report DONE-in-session pending close narrative, snapflow visual report + chunk_mae_success one-off + discord reply-parsing fix to add this session, idea1 noise-ladder draft finalization.",
+ "updated_utc": "2026-08-08T11:00:00+00:00",
+ "depth_reason": "depth 5+ at 11:0xZ 08-08: 60k continuation LIVE (box, endpoint ~23Z); queued CPU/GPU: fieldgen-accuracy-eval (owner), snapflow-visual-report (owner), idea6 cleancand escalation draft, idea1 noise-ladder draft finalization, blocked attach chain behind the 60k per owner priority. run_work_next armed at close.",
  "items": [
   {
    "id": "ar100k-tsens-q4-live",
@@ -478,6 +478,15 @@
    "prereg": null,
    "owner_hold": false,
    "boundary": "draft is CPU work at any window; execution (gpu-local, ~3 GPU-h) needs the posted pre-reg + its own queue entry; local GPU free after this close"
+  },
+  {
+   "id": "fieldgen-accuracy-eval",
+   "title": "OWNER 10:08Z (PREP item \u2014 the GPU execution gets its own entry once the short pre-reg note posts): accuracy-by-field eval runs (--generate holding progress event visible -> per-field accuracy table in the report): (1) AR-100k on the panel, local GPU (~1-2 GPU-h, free now); (2) molmo2 60k endpoint when the box frees (~23Z+). Short pre-reg note posts before launch (record-only diagnostic, the microbench precedent); reports page gains the tables; owner answer 10:5xZ documented the default TRUE-label outcome conditioning + the --condition-override outcome=success counterfactual knob",
+   "class": "cpu",
+   "status": "queued",
+   "prereg": null,
+   "owner_hold": false,
+   "boundary": "AR-100k half: next work window (local GPU free since the rung-(b) close); molmo2 half behind the 60k endpoint"
   }
  ]
 }

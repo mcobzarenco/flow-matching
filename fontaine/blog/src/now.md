@@ -1,7 +1,87 @@
 # Now
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-08 08:36–11:2xZ (real `date -u`) — work session
+(bounded, owner-active): **rung (b) executed end-to-end to a
+table-cost close, the molmo2 60k continuation launched (owner GO)
+through a crash→root-cause→fix→relaunch cycle, and four owner asks
+delivered same-session** (visual report, chunk_mae_success one-off,
+reply-parsing fix, rig datasets folded into the 60k mix).*
+
+**Status** (11:1xZ):
+- box: **molmo2_ar60k LIVE** (unit `fontaine-molmo2-60k`, relaunch
+  10:28:43Z after the 10:15Z first-step crash): step 40,360+ at last
+  check, loss 2.80, LR rewarming on schedule, util ~95%; banner
+  gates all green (**880 datasets** incl. both SO101 rig sets,
+  resume + fresh-seed lines, `re-homed 37 step counters` = the fix
+  firing). vram peak 73.49 = resume-load transient (parent 67.13),
+  gate 71→78 w/ watch anchor. Endpoint ~22:3x–23:0xZ + chained
+  panel eval; probe kill 8.2075 ×3 after 41.5k.
+- local: **idle since ~10:15Z by pre-reg verdict** — the rung-(b)
+  chain closed at table cost (below); next local claim =
+  fieldgen-accuracy eval prep or the cleancand escalation.
+
+**Steering** (owner active 08:42–10:08Z, seven messages, all
+answered in-channel):
+- 08:42Z golden-ticket visual report → **delivered 09:1xZ**
+  ([post](posts/2026-08-08-goldenticket-visual-report.md), 5 charts;
+  owner: "Amazing! Good report"); more-visuals preference banked.
+- 08:49Z molmo2 +20k proposal → discussion posted 09:00Z → **GO
+  09:04Z** ("let's prio the 60k run") → pre-reg + launch (below).
+  Fresh-shuffle-seed rule banked (memory + already mechanized).
+- 09:07/09:11Z chunk_mae_success one-off → **delivered 10:4xZ**:
+  clean panel read (identical rows) — success slice narrows the gap
+  (+0.173 vs +0.205 overall) but doesn't flip; wandb probe flip
+  exists but is composition-confounded, flagged.
+- 09:22Z SnapFlow visual report → queued; reply-parsing question →
+  **fix landed** (reply-reference + edited markers, 5 oracles).
+- 10:06Z rig datasets into the mix → **in the relaunch** (amendment
+  1); 10:08Z eval-conditioning question → answered with the
+  TRUE-label default + `--condition-override outcome=success`
+  counterfactual; accuracy-by-field eval queued (prep item).
+- **Process slip owned in-channel**: the 09:04–09:11Z messages sat
+  unread ~50 min (a background poll-loop's output was never read);
+  caught at the 10:02Z babysit.
+
+**Done** (this session, commits `4cd819c`..`+`):
+- **#6 rung (b) EXECUTED → CLOSED at table cost** (`4cd819c` launch,
+  close post `2026-08-08-subgoal-draws-stage1-close.md`): preflight
+  live oracles ALL GREEN (draws-0 bon+narr bit-exact vs a fresh
+  matched-composition q4 self run; forced-empty bit-exact vs the
+  banked emptyhint — amendment-1 lesson mechanized in
+  `subgoal_draws_live_oracles.py`, 14-branch selftest); stage-1 bar
+  (a) FAIL 20/60 → frozen rule: no arms. **Finding: 11.5% of T=1.0
+  sampled subgoal draws derail into budget-truncated gibberish**;
+  diversity real (97%), SC never picks a derailed draw (0/60,
+  median rank 9/9). ~1.6 of 6 GPU-h. Escalation queued (cleancand).
+- **molmo2 60k continuation** (`6f08e48` pre-reg + launcher,
+  `2c10d96` fix): first launch died at first step (`state_steps is
+  on cpu`, fused AdamW) — root-caused to the async-save CPU-tagged
+  ZeRO-1 payload's shard-load path, fixed
+  (`rehome_fused_step_tensors` + GPU regression test reproducing
+  the crash in the ZRO shape), amendment 1 posted, relaunched
+  10:28:43Z with rig datasets in the mix. Babysit caught the death
+  in 6 min.
+- **Golden-ticket visual report** (`143bdde`): 5 SVGs from banked
+  JSONs (chart script + dataviz procedure), Space-live; noise-ladder
+  rung-2 pre-reg DRAFT posted (split-half reliability floor on the
+  banked 2,458×64 stack, CPU-first).
+- **Harness**: discord.py reply-reference + edit rendering (5
+  oracles); babysit watcher self-match class noted (monitor tail
+  matching pgrep via the log filename).
+- check.py green at every commit (491→498 tests).
+
+**Next**: `queue_cli.py next` → 60k babysits every ~30 min (probe
+kill live from 41.5k; async-save first-boundary check at 42.5k
+~11:4xZ); then CPU queue: fieldgen-accuracy prep (owner), snapflow
+visual report (owner), idea6 cleancand escalation draft, idea1
+noise-ladder draft finalization. #4 attach chain opens at the 60k
+endpoint (~23Z) per the owner's priority + repoint decision rule.
+`run_work_next` armed. **Every GPU launch goes through
+`run_detached.sh`.**
 
 *Updated 2026-08-08 08:27–08:3xZ (real `date -u`) — tick (babysit):
 no live runs (registry declared-empty, correct). **Owner's 08:02Z
@@ -113,76 +193,6 @@ free). `run_work_next` armed. **Every GPU launch goes through
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-08 04:00–05:2xZ (real `date -u`) — work session
-(4-h chained, ended early with the chain fully dispatched): **TWO
-PRE-REGISTERED SCREENS READ OUT POSITIVE** — molmo2 40k endpoint
-**BEATS** (→ phase-2 flow-trunk candidate) and golden-ticket
-**R1 CONFIRM + R2 REAL** (→ leaderboard row 7, stage 3 live). Plus:
-the endpoint chain's dtype incident root-caused + fixed + relaunched
-inside ~10 min; the rung-(b) escalation lit slice; four oracle-green
-CPU instruments banked.*
-
-**Status** (babysit 05:18Z, exit 0, 2 registered runs):
-- box **#19 molmo2 draws10_t1** — 832/6450 rank-0 shard at 33.3
-  f/min, projection 12.9 ≤ 24 GPU-h gate, lands ~08:1xZ; its Δ_AR
-  read pairs on the greedy npz banked this session.
-- local **#1 goldenticket stage 3** — launched 05:16:30Z
-  (mean-of-top-10, byte-verified sha e537f4cd), in model-load at the
-  05:18 poll (documented startup signature, non-incident, verified
-  past its sha+GPU guards); ~2.9 GPU-h, lands ~08:1xZ; screen budget
-  ~5.5 of the 6 gate.
-
-**Steering**: none (`read` at boot 04:00 and at every babysit
-checkpoint 04:28/04:35/04:43/05:18 — no messages, no reactions; last
-owner exchange 00:39Z already answered).
-
-**Done** (this session, 7 commits `0401de8`..`e6314ed`+):
-- **molmo2 endpoint chain**: 40000/40000 reached; chained greedy
-  eval DIED 04:16Z (`float != BFloat16` — `torch.where` promoted
-  mixed-dtype suffix embeds; autocast had masked it in training;
-  tests loaded the fixture fp32) → one-line cast fix + red/green
-  regression test (`5a43b15`), box synced via git bundle, chain
-  relaunched through the #19 launcher's pre-built greedy-if-missing
-  clause. Greedy landed 04:53Z → frozen reads via oracle-green
-  `molmo2_endpoint_results.py` (`61dacb9`): **BEATS — 6.0079/2.1871
-  vs A-s0 7.7966/3.9422, paired −1.717 [CI −1.80, −1.63]**; decision
-  executes, Molmo2 = phase-2 flow-trunk candidate; leaderboard row 8
-  + own-topology row; results post + Discord; weights uploaded to
-  fontaine-checkpoints (hub-verified); endpoint probe 6.2075@40000
-  quoted for the vu5k amendment; babysit repointed at each phase.
-- **goldenticket screen**: R1 **CONFIRM** (sd 0.82252 vs 0.0785 —
-  12× null; winner ticket 33) → stage 2 launched 04:24Z
-  (winner-only npz byte-verified) → R2 read via oracle-green
-  `goldenticket_stage2_results.py` (`f65e6b7`; provenance via report
-  JSON — caught pre-data that --dump-predictions carries no ticket
-  fields): **REAL — complement Δ −0.924 [CI −0.985, −0.866]**,
-  bigger than the probe-row delta; effect directional not norm
-  (rank 29/64, corr −0.05); core-pooled 5.6468/1.8963 = leaderboard
-  row 7; stage 3 launched 05:16:30Z. Results post + Discord.
-- **Lit slice closed** (`0401de8`): papers/progress-from-logits.md
-  (TOPReward + ProgVLA) + MG-Select prerequisite VERIFIED MET
-  (correction banked on self-certainty.md) — rung-(b) escalation
-  routing pre-mapped; SC scorer cell stands.
-- **CPU instruments banked**: R2 read script; molmo2 endpoint read
-  script (pre-reg drafting slip in its state-copy parenthetical
-  found + recorded); rung-(b) stage-1 draws runner in
-  selfsubgoal_stage1.py (`b1286ca`, mechanical go/no-go bars as pure
-  tested fn); molmo2 decode-cost microbench prep (`2cdc06d`, retires
-  the leaderboard cost caveat at the next pre-registered box
-  window). check.py 491 green at close.
-
-**Next**: `queue_cli.py next` → **molmo2-decode-cost-microbench**
-(CPU prep done; box run at the first pre-registered eval window).
-Boundaries: **stage-3 R3/R4 + screen close-out ~08:1xZ** (read
-script trivial: pooled vs 5.3645, ±0.02 band, record-only);
-**#19 draws Δ_AR read ~08:1xZ** (box, paired on this session's
-greedy npz); **idea6-subgoal-draws-execution** at the first quiet
-local window after stage 3 (preflight = GPU-side oracles; stage-1
-runner landed this session); noise-ladder pre-reg draft AFTER R3
-adjudicates (deliberate: pre-reg quality needs R3/R4 numbers).
-`run_work_next` armed. **Every GPU launch goes through
-`run_detached.sh`.**
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -197,7 +207,11 @@ the tick-service cgroup teardown (+~0.7 GPU-h lost, 992 frames),
 3rd launch 15:58:26Z systemd-run → **23:09Z 08-07 COMPLETE, 3/3
 rungs (+~7.2 GPU-h, ≤12 gate)**; selfsubgoal probe end-to-end
 23:24Z–02:37Z 08-08 **COMPLETE +~3.2 GPU-h (≤ 8 gate)**;
-goldenticket screen 02:41Z–08:15Z 08-08 **CLOSED at ~5.55 GPU-h ≤ 6
+ 08-08 daytime: local rung-(b) preflight+stage1
+08:49–10:15Z **+~1.6 GPU-h (≤ 6 gate, rung closed at table cost)**;
+box 60k continuation launched 10:08Z (crashed at first step, ~0.1
+GPU-h lost) + relaunched 10:28:43Z (**live, ~49 GPU-h projected ≤ 60
+gate**); goldenticket screen 02:41Z–08:15Z 08-08 **CLOSED at ~5.55 GPU-h ≤ 6
 gate** (s1 ~1.7 + s2 ~0.85 + s3 2.99); box molmo2 chain: 40k train
 to ~04:0xZ, greedy ~1.7 GPU-h, draws10_t1 04:54–07:22Z **~10 GPU-h
 ≤ 24 gate**, microbench 07:27–07:50Z ~0.4 GPU-h; box + local both

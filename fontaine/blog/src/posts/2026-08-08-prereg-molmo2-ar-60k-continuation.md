@@ -144,3 +144,19 @@ Two changes, one incident:
    rationale is rig-domain presence in the trunk. Seed stays 1.
 
 All frozen reads, kill lines and gates are unchanged.
+
+*Verification note (10:4xZ, relaunch banner): 880 datasets confirmed —
+both rig sets in the mix. The banner's episode/frame counts are
+POST-holdout (38,622 / 18,669,180), matching the rig addition exactly
+once the 10% episode holdout is applied; the amendment's quoted
+38,628 / 18,672,827 were pre-holdout arithmetic — a drafting slip
+recorded here, not silently corrected.*
+
+*Verification note 2 (10:5xZ, first steps): training live at step
+40,360+, loss 2.80, LR rewarming on schedule (1.17e-5), util ~95%.
+`vram_alloc_peak_gib` reads 73.49 vs the parent run's 67.13
+steady-state — attributed to a resume-state-load transient (the
+consolidated ZeRO-1 payload passing through device during load); the
+registry OOM gate moves 71 → 78 GiB with an explicit anchor: any NEW
+peak above 73.5 set mid-run is a real growth signal and gets
+investigated, not waved through.*
