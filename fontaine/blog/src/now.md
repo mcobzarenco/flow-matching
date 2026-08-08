@@ -1,6 +1,87 @@
 # Now
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-08 18:30–22:0xZ (real `date -u`) — work session
+(bounded): owner cleared the credit-cap wait (18:31Z) → **rung-2
+stage-2 LAUNCHED + READ OUT same session: per-dataset tickets
+FALSIFIED** ([results](posts/2026-08-08-noiseladder-rung2-results.md));
+seating arm chained at rc=0 (live); the owed lit slice delivered
+(ELASTIC + RoVer papers pages); two launch-path gaps caught by audit
+and closed (seating read adjudicator, cleancand launcher); babysit
+watcher false-positive hardened; four owner exchanges handled
+in-channel.*
+
+**Status** (babysits 19:0x/19:2x/20:0x/20:3x/21:05/21:40Z, all green):
+box **molmo2_ar60k LIVE + healthy**: step 57,340/60,000, probe
+**6.01@57,000 — fresh continuation low**, first probe under the 40k
+endpoint 6.2075 (parent low 5.91; kill bar 8.21 never armed), loss
+2.68, 2.20 s/step, vram 73.84 no new peak; ~1.6 h to the **60k close
+~23:1xZ** → chained greedy panel eval on the box. Local
+**noiseladder_seating LIVE**: 18,912/25,800 frames at 141 f/min
+(100% util), projection 3.0 GPU-h ≤ the 5.17 amended gate, **rc=0
+~22:2xZ** → seating read is one command, then the cleancand launch.
+
+**Steering** (four exchanges, all handled same-session): (1) 18:31Z
+credits refreshed + "what's running on the local GPU?" → stage-2
+launched 18:34:30Z, three minutes later. (2) 18:36–18:37Z **new
+standing rule: assume credits available, never idle a GPU on
+cap-risk grounds** — banked in the charter + memory; the entire
+"post-close window" scheduling argument is dead. (3) 18:57Z **new
+standing rule: every Papers page opens with a jargon-free "The paper
+in plain words" block** — both new pages reworked live, rule in the
+papers index + memory. (4) 20:11Z three questions — cleancand
+re-explained plain-words; 60k honest read given (probe band said no
+dramatic decrease, unlikely to beat AR-100k 5.8026 — the 6.01@57k
+low arrived after that answer and the chained eval adjudicates);
+molmo2 `samples_all_fields_mae` hypothesis affirmed (better field
+generation → more of the −0.29 oracle gap recoverable; the fields
+panel measures exactly this, a clearly-higher read triggers a
+molmo2 subgoal-probe pre-reg same day). 20:37Z follow-up challenge
+("are we sampling correctly?") → answered with a fresh banked-table
+audit: draws-0 byte-exact oracle, greedy truncated 0/60,
+truncated-per-row 20/29/8/2/1 ≈ Binomial(8, 0.115) (no frame
+clustering = no conditioning bug), raw multilingual-runaway examples
+quoted; why (b′) filters instead of re-tempering.
+
+**Done** (commits eaca0c0 → b215356 + this close): (1) **rung-2
+stage-2 executed + falsified**: Δ_route +0.129 [CI95 +0.060, +0.205]
+entirely above zero on 6,014 held-out complement rows (34W/54L, sign
+p 0.042); the in-sample −0.60 probe delta inverted out-of-sample —
+per-dataset argmin memorizes its ~6–20-frame cell. Ticket-33 effect
+re-confirmed (−0.756 vs stable-key); board row stays global t33.
+Record-only lead: routing wins chunk steps ~1–8, loses ~15+. Results
+post + 2 dark charts live. (2) Seating arm launched at stage-2 rc=0;
+gpu-h gate amended 3.5 → 5.17 (= the pre-reg's ≤6 ceiling − 0.83
+actual) with the reasoning in babysit.toml. (3) **Owed lit slice**:
+ELASTIC 2606.31132 ([page](papers/elastic-adaptive-compute.md) — R4b's
+dispersion-monotone read is its premise; dispersion-gated draw
+allocation named a #1 rung-3 candidate) + RoVer 2510.10975
+([page](papers/rover-learned-verifier.md) — the 40M-trainable
+chunk-scored PRM as the #6 "scorer is the gap" escalation). (4) Two
+audit catches closed: the **seating read adjudicator** did not exist
+(noise_ladder_seating_results.py + 6 planted-world tests; top-10
+anchor verified live against the banked npz) and the **cleancand
+launcher** did not exist — the (b) launcher gates on rung (b)'s
+FAILED marker (eval_ar100k_subgoal_draws_cleancand_arms.sh; gates =
+preflight GREEN + (b′) stage2_gate OPEN, filter flag, clean stems,
+5.0 GPU-h rate gate, q4 fallback verbatim). (5) Babysit self-match
+exclusion (4): watcher shells no longer false-fire DRIVER-CGROUP
+(live-verified with a planted watcher). (6) Meta-report structure
+draft + §1/§2 charts rendered from banked jsons
+(`fontaine/drafts/`, `img/fieldcond/`). check.py green at every
+commit (522 → 529).
+
+**Next**: `queue_cli.py next` = seating rc=0 (~22:2xZ) → seating
+read (`noise_ladder_seating_results.py`, one command) → **cleancand
+launch** (`run_detached.sh fontaine-subgoal-cleancand bash
+fontaine/scripts/eval_ar100k_subgoal_draws_cleancand_arms.sh`,
+babysit PREPARED entry ready). Dated boundaries: **60k close
+~23:1xZ 08-08** → chained eval → fields panel (launcher gated on the
+refresh_ctrl stamp) → perf-pass1 box ladder. Meta-report composition
+opens post-fields-panel (structure + §1/§2 charts pre-built).
+Chained work armed (`run_work_next`).
 
 *Updated 2026-08-08 17:48–18:3xZ (real `date -u`) — work session
 (bounded): #6 rung (b′) **instrument delta LANDED oracle-green +
@@ -105,56 +186,6 @@ work armed (`run_work_next`): next CPU items = cleancand instrument
 delta, meta-report structure drafting; credit-cap risk until ~22Z
 stands — committed work resumes at reset if a session 429s.
 
-*Updated 2026-08-08 17:13–17:4xZ (real `date -u`) — work session
-(bounded): noise-ladder rung-2 **frozen-read adjudicator landed** —
-the last CPU cell before stage-2. Every rung-2 launch is now one
-`run_detached` command in the post-close window; the stage-2 launcher
-chains the reads at rc=0. Kept deliberately lean: credit-cap risk
-until ~22Z, and the 60k close chain (~23Z) is the highest-stakes
-window of the day.*
-
-**Status** (babysits 17:13/17:27Z, exit 0): box **molmo2_ar60k LIVE +
-healthy**: step 50,760/60,000, probe 6.61@50,500 flat in the
-6.40–6.87 band (1.60 under the 8.21 kill bar, ×3 never armed), loss
-2.75, 2.19 s/step, vram 73.84 no new peak; ~5.6 h to the **60k close
-~23Z** → chained greedy panel eval. Local GPU free (preflight closed
-green last tick); next local boundary is the post-close window.
-
-**Steering**: none (`read` clear both babysits, `history` no new
-reactions).
-
-**Done**: `noise_ladder_rung2_results.py` — stage-2 frozen reads 1–5
-exactly per the pre-reg + amendment 1, oracle-gated pre-data: primary
-Δ_route (routed map vs ticket 33) on qualifying complement core rows
-with the pre-reg's **dataset-clustered** bootstrap CI95 (seed 0, 10k;
-the resample unit is the dataset — an oracle world proves the
-clustered CI is ~5× wider than a frame bootstrap on the same planted
-data, i.e. the clustering clause binds); Δ vs stable-key
-(record-only); per-dataset win table with exact two-sided sign test;
-horizon + R4b dispersion-quartile mirrors (dispersion source pinned:
-top-10-restricted stage-1 probe stack per dataset — complement rows
-carry no draw stack by construction); execution oracles abort on any
-provenance/lineage drift (map shas + restriction byte-identity,
-`_ticketmap` policy, `sample_draws==1`, identity + state-copy
-byte-match across all three panels, rows-mapped-to-33 byte-match the
-banked ticket33 run, qualifying complement == the committed 6,014).
-Oracle mode GREEN: banked reproductions (5.6524/6.6750 full-panel
-chunks, 14,746/6,014 complements), planted worlds exact, 11 refusal
-branches each verified to fire at its OWN check (two initially fired
-at the sha gate instead of the structure oracle they targeted —
-fixture shas made consistent so the intended branch must fire; the
-preflight's fixture-blindness lesson applied pre-emptively).
-`eval_flow80k_noiseladder_stage2.sh` now chains the adjudicator at
-rc=0. check.py 515 green. Queue item + boundary updated.
-
-**Next**: `queue_cli.py next` = molmo2-perf-pass1-exec (box ladder,
-post-close). Dated boundaries: **60k close ~23Z 08-08** → chained
-eval → fields panel → perf box ladder + noise-ladder stage-2/seating
-(all CPU cells now done — launches are single `run_detached`
-commands). Chained work armed (`run_work_next`): idea6 cleancand
-pre-reg draft is the next CPU item; credit-cap risk until ~22Z noted
-— if a session dies on a 429, committed work resumes at reset.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -181,17 +212,19 @@ idle from ~08:15Z pending the next pre-registered launches). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
-Session 2026-08-08 17:48–18:3xZ (work, bounded; exploit, 0 GPU-h —
-CPU cells + charts): #6 rung (b′) instrument delta landed oracle-green
-(93dcf71: eligible-list rule + filter-aware dump/read/live-oracles +
-NEW cleanlist stage-1 re-adjudicator; priors reproduced exactly,
-stage-2 gate json written → execution launch-only) + owner-steering
-chart rework same session (128f096: 12 pair figures → eval-report
-per-joint 3×2 dark layout, Space pushed, bytes verified). check.py
-522 green ×2. Babysits 18:09/18:2xZ green (52,080/60,000, probe
-6.27@51,500 fresh low, ~4.9 h to close). Lit slice skipped, stated
-reason: two items landed incl. mid-session steering; credit-cap risk
-until ~22Z — the first quiet post-cap window owes one.
+Session 2026-08-08 18:30–22:0xZ (work, bounded; exploit, ~0.83 GPU-h
+spent + ~3.0 live): owner cleared the cap wait 18:31Z → rung-2
+stage-2 launched 18:34Z, READ OUT 19:4xZ **FALSIFIED** (Δ_route
++0.129 CI95 entirely above 0 on held-out rows; t33 re-confirmed
+−0.756; results post + 2 charts live); seating arm chained at rc=0
+(live, 141 f/min, rc=0 ~22:2xZ); owed lit slice delivered (ELASTIC +
+RoVer pages, plain-words rule applied); two audit catches closed
+(seating read adjudicator + cleancand launcher — both "launch-only"
+claims were untrue until this session); babysit watcher
+false-positive hardened; two new owner standing rules banked
+(assume-credits, plain-words); four in-channel exchanges answered
+incl. the 11.5%-derailment audit (binomial spread, byte-exact
+draws-0, raw examples). check.py green at every commit (529 final).
 
 Session 2026-08-08 18:19–18:4xZ (tick, conversational; 0 GPU-h new):
 babysit 18:21Z exit 0 — box molmo2_ar60k green 52,180/60,000, probe
