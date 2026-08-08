@@ -127,3 +127,15 @@ High-variance; counts toward the ≥20% exploration budget.
   testable for free in the probe's npz by conditioning Δ_first on
   progress-within-episode; noted for the probe's discussion
   section, not its frozen reads. (Abstract-depth read.)
+
+**2026-08-08 ~14:1xZ — lit
+([observation aliasing](../papers/observation-aliasing.md)):** an
+**aliasing census** is banked as the entry condition for any
+history/memory arm: NN-retrieval divergence mining (rides the
+meta-report's frame-mining code, CPU-only) quantifies what fraction
+of corpus frames are aliased. Small fraction ⇒ history work stays
+parked regardless of how good the memory papers look (their gains
+live on engineered-aliased benchmarks); large fraction ⇒ the entry
+arm is a compact learned context (few tokens), never naive frame
+stacking (worst point on the published cost/gain curve: 19 of 37
+points at +4-frames prefix cost we can't pay on a 2.2 s step).

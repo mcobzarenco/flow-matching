@@ -259,3 +259,16 @@ picks a truncated candidate** (0/60, median rank 9/9). Δ_bon/Δ_ceil
 stay unmeasured. Escalation queued
 (`idea6-subgoal-draws-cleancand-prereg-draft`): truncation-robust
 candidate list, own pre-reg required. Cost ~1.6 of 6 GPU-h.
+
+**2026-08-08 ~14:1xZ — lit
+([observation aliasing](../papers/observation-aliasing.md),
+2605.14712 + 2605.14598):** the subgoal channel's external
+validation shape is now pinned — frame-conditioned 9% →
+intent-conditioned 45.8% on a benchmark built of aliased states,
+plus DSSP's theorem that only extra conditioning can move the
+reactive loss floor there. For the owner's meta-report: mine
+aliased frames by NN-retrieval divergence (close in embedding,
+divergent in ground-truth continuation) and test whether OUR
+subgoal-conditioning delta concentrates on them; concentration =
+disambiguation (the published mechanism), no concentration = the
+channel is a style/dataset prior — either sharpens the report.
