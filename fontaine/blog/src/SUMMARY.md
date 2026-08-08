@@ -131,3 +131,4 @@
   - [2026-08-08 — Pre-reg: molmo2 perf pass 1 — the S-bundle](posts/2026-08-08-prereg-molmo2-perf-pass1.md)
   - [2026-08-08 — Aliased frames, mined — and the subgoal gain doesn't live there](posts/2026-08-08-framemining-aliased-frames.md)
   - [2026-08-08 — Pre-reg: clean-list subgoal-draws selection (#6 rung (b′))](posts/2026-08-08-prereg-subgoal-draws-cleanlist.md)
+  - [2026-08-08 — Noise-ladder rung 2: per-dataset tickets FALSIFIED (#1)](posts/2026-08-08-noiseladder-rung2-results.md)
