@@ -407,58 +407,41 @@ value = 60.0
 # -0.756 re-confirms the shared-ticket effect; read-3 win rate 0.386 p 0.042
 # (routing loses); read-4 Spearman(dispersion, delta) -0.046. Entry retired.
 
-# LAUNCHED 19:25:16Z 08-08 (unit fontaine-noiseladder-seating,
-# chained at stage-2 rc=0). Random-noise draws-10 re-run with
-# dumps (~3.0 GPU-h); --noise-key index reproduces the 2026-08-05
-# banked config (predates --noise-key; header explains). Base-equality
-# oracle (pooled 5.3645/1.4242 at 4dp) aborts the seating read on red.
+# RETIRED 22:2xZ 08-08: seating rc=0 22:25Z at ~3.0 GPU-h (<= 5.17
+# gate, never crossed). READ BLOCKED same-session: adjudicator gate (i)
+# base-equality ABORT — re-run report first_mae 1.4240761 vs banked
+# 1.4242034 (delta -1.27e-4 crosses the 4dp boundary; chunk drifts
+# -8.6e-5 but still rounds 5.3645). Frames 17204 identical, identity
+# columns byte-match (gate ii passed before i fired). The re-run is NOT
+# the bit-level reproduction the oracle certifies; npz-level per-frame
+# diagnosis (drift vs noise-keying mismatch) owed to the chained work
+# session BEFORE any amendment. NOT re-toleranced. Artifacts banked:
+# ..._draws10_seating_heun30.{npz,json} 22:25Z.
+
+# LAUNCHED 22:26:41Z 08-08 (unit fontaine-subgoal-cleancand, launched
+# at seating rc=0 per the queue boundary; launcher gates verified at
+# start: (b) preflight GREEN json + (b') stage-1 gate OPEN json, plan
+# shas OK in journal). Full-panel draws-8 pass-1 + both clean-list
+# arms; rate gate inside the launcher (5.0 GPU-h projection -> q4
+# fallback). Frozen reads at rc=0: subgoal_draws_results.py
+# --candidate-filter clean.
 [[run]]
-name = "noiseladder_seating"
+name = "subgoal_cleancand"
 kind = "progress-log"
 host = "local"
-pgrep = "noiseladder_seating"
+pgrep = "subgoal_cleancand"
 pgrep_min = 1
 gpu_indices = [0]
 gpu_mem_min_mib = 4000
-log = "/home/ubuntu/eval__noiseladder_seating.log"
+log = "/home/ubuntu/eval__ar100k_subgoal_cleancand_arms.log"
 progress_re = "scored [0-9]+/[0-9]+ frames"
-started_utc = "2026-08-08T19:25:16Z"
+started_utc = "2026-08-08T22:26:41Z"
 gpu_hours_per_wall_hour = 1.0
-boundary = "draws-10 full panel; ~3.0 GPU-h ESTIMATE SUPERSEDED 20:0xZ by measured rate (96 f/min steady at 100% util, no starvation; draws-10 WITH dumps runs slower than R3's non-dump basis) -> projected ~4.5 GPU-h, ETA ~23:5xZ; R4 expectation: seating CI below 0 moves the mean-of-10 board row to the top-10 ensemble"
+boundary = "one full-panel draws-8 run carries pass 1 + bon + ceil (clean-list); ceiling 5 GPU-h, launcher rate gate falls back to q4"
 anchors = [
-    "record-only until the paired read: R3 -0.180 was 9x the 0.02 tie band but UNPAIRED — the seating read is the adjudication",
-    "gate amendment 20:0xZ: 3.5 (stale per-arm estimate) -> 5.17 = the pre-reg's binding ceiling (<= 6 GPU-h rung-2 TOTAL, line 213 of the pre-reg) minus stage-2's actual 0.83; crossing 5.17 = abort per pre-reg, not re-tolerance",
+    "falsifier (pre-reg, inherited verbatim): Delta_bon CI95 not entirely below 0 vs the banked self npz => selection over 9 candidates buys nothing; Delta_ceil adjudicates no-diversity vs no-scorer",
+    "banked baseline 5.8026/2.1431 and the rung-(a) self npz are frozen comparators — never re-run",
 ]
 [[run.gates]]
 kind = "gpu_hours_max"
-value = 5.17
-
-# PREPARED — #6 rung (b') CLEANCAND ARMS (activate at launch:
-# uncomment, fill started_utc; launcher gates on the (b) preflight
-# GREEN json + the (b') stage-1 gate OPEN json). Full-panel draws-8
-# pass-1 + both clean-list arms; launcher
-# eval_ar100k_subgoal_draws_cleancand_arms.sh (landed 08-08 20:1xZ —
-# the (b) launcher gates on rung (b)'s FAILED go marker and carries
-# no filter flag, so it can never launch (b')). Rate gate inside the
-# launcher (5.0 GPU-h projection -> q4 fallback). Frozen reads at
-# rc=0: subgoal_draws_results.py --candidate-filter clean.
-# [[run]]
-# name = "subgoal_cleancand"
-# kind = "progress-log"
-# host = "local"
-# pgrep = "subgoal_cleancand"
-# pgrep_min = 1
-# gpu_indices = [0]
-# gpu_mem_min_mib = 4000
-# log = "/home/ubuntu/eval__ar100k_subgoal_cleancand_arms.log"
-# progress_re = "scored [0-9]+/[0-9]+ frames"
-# started_utc = "FILL-AT-LAUNCH"
-# gpu_hours_per_wall_hour = 1.0
-# boundary = "one full-panel draws-8 run carries pass 1 + bon + ceil (clean-list); ceiling 5 GPU-h, launcher rate gate falls back to q4"
-# anchors = [
-#     "falsifier (pre-reg, inherited verbatim): Delta_bon CI95 not entirely below 0 vs the banked self npz => selection over 9 candidates buys nothing; Delta_ceil adjudicates no-diversity vs no-scorer",
-#     "banked baseline 5.8026/2.1431 and the rung-(a) self npz are frozen comparators — never re-run",
-# ]
-# [[run.gates]]
-# kind = "gpu_hours_max"
-# value = 5.5
+value = 5.5
