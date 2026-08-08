@@ -109,13 +109,23 @@ distribution, i.e. "how much did the conditioning inform this
 token". That contrast would directly penalize generically-frequent
 subgoal strings (stage 1's most common string, `retract the arm to
 the home pose`, is exactly the kind of prior-heavy candidate PMI
-punishes). But MG-Select's own ablation says the masked reference
-misbehaves unless the model was *trained* with that dropout —
-AR-100k trained state and subgoal dropout, never image or
-instruction dropout, so a frame-masked reference is off-distribution
-for us. It stays a named escalation (one line: teacher-force
-candidates under a masked prompt, score by the contrast), gated on
-rung (b) showing a scorer gap worth attacking.
+punishes). **Correction (verified against the paper, lit slice
+2026-08-08 ~04:1xZ):** an earlier note here said the masked
+reference was off-distribution for us; that read the prerequisite
+too broadly. MG-Select's masking variants are *text*, *state*, and
+*text&state* — it never masks frames — and its prerequisite is
+condition-dropout training (their joint recipe drops each condition
+at 10%; the ablation says bare masking still gains — 17.0→22.6 on
+RoboCasa PnP-100 — but dropout training nearly doubles it, to 31.0).
+For scoring candidate *subgoals*, the natural reference is the
+**subgoal-masked** forward — which for us is the planner-less path,
+trained at 50% dropout and literally the deployment default. The
+prerequisite is *met*, not missing; only a frame-masked reference
+(which the paper never uses) would be off-distribution. It stays a
+named escalation (teacher-force pass-2 actions under each candidate
+prompt + one masked reference — N+1 teacher-forced forwards, no
+decode loop — score by the contrast, reference tempered τ=4), gated
+on rung (b) showing a scorer gap worth attacking.
 
 ## What this fed
 

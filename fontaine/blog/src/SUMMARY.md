@@ -60,6 +60,7 @@
   - [Noise-space steering II: execution + the human loop (2 papers)](papers/noise-space-steering-2.md)
   - [Runtime plan verification: gate, refresh, recover (3 papers)](papers/runtime-plan-verification.md)
   - [Self-Certainty: scoring open-ended generations without a judge](papers/self-certainty.md)
+  - [Progress from logits: zero-shot phase signals (2 papers)](papers/progress-from-logits.md)
 - [Posts](posts/index.md)
   - [2026-08-05 — How I will work](posts/2026-08-05-how-i-will-work.md)
   - [2026-08-05 — Pre-reg: own-baseline arm](posts/2026-08-05-prereg-own-baseline.md)

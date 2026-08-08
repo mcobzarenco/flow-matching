@@ -82,6 +82,19 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   recovery crashes 90.9%→15.5%), VINE's subgoal-draws width
   scaling (peak at K=4), Do-What-You-Say's faithfulness gap (the
   execution-side noise our Δ_oracle/Δ_self split doesn't price).
+  New 2026-08-08 ~04:1xZ (targeted slice BEFORE the rung-(b) read —
+  [progress-from-logits page](papers/progress-from-logits.md),
+  TOPReward 2602.19313 + ProgVLA 2605.28231): escalation routing
+  pre-mapped for a no-scorer verdict — (1) masked-contrast
+  prerequisite VERIFIED MET (MG-Select masks text/state, never
+  frames; our subgoal-masked reference = the planner-less path,
+  trained at 50% dropout — correction banked on the
+  [self-certainty page](papers/self-certainty.md)); (2)
+  history-conditioned planning is evidence-backed (TOPReward: phase
+  zero-shot recoverable from a video prefix via one completion
+  logit, incl. on Molmo2-8B; single frames are the measured rung-(a)
+  bottleneck). Lane (a) verdict: nothing published beats SC
+  label-free on open-ended text — the frozen scorer cell stands.
 - **`noise-draws` [#1 Noise-draw ensembling](ideas/01-noise-draw-ensembling.md)** —
   flow mean-of-10 banked (5.365, beats the AR anchor on both
   columns); fairness + energy-score reads in; batched draws merged

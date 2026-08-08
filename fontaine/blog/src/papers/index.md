@@ -23,6 +23,7 @@ same session it is banked.
 | [Q-VGM](qvgm.md) | 2606.08015 | #4 — the frozen arm keeps an offline-RL escalation path |
 | [Test-time selection for VLAs](test-time-selection.md) | 2510.05681, 2605.01194, 2602.12281, 2506.17811, 2605.25547, 2607.03751, 2605.28527 | #19 — the six selection flavors behind the best-of-10 ceiling gate |
 | [Self-Certainty](self-certainty.md) | 2502.18581 | #6 rung (b) — the frozen verifier-free scorer for subgoal-draws selection |
+| [Progress from logits](progress-from-logits.md) | 2602.19313, 2605.28231 | #6 rung-(b) escalation routing — history fixes phase (zero-shot, our trunk family); masked-contrast prerequisite verified met; SC scorer cell survives |
 | [SnapFlow](snapflow.md) | 2604.05656 | #12 — replicated on our stack; 1-NFE distillation adopted-signal |
 | [The seam debate](seam-debate.md) | 2604.16067, 2605.30877 | #4 — the escalation branches on both sides of the F/K screen |
 | [Encoder winners don't transfer](encoder-grafting.md) | 2606.14153 | #4 — the scale-transfer caveat on reading Δ_seam |
