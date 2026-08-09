@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 # fontaine Molmo2-4B AdamC 100k from BASE — fontaine_molmo2_adamc_100k_ddp4.
 # OWNER SPEC 2026-08-09 12:37:56Z, approved in-channel 13:19Z with
-#   overrides folded (λ=0.01, text+vision 2e-5 confirmed, seed 1,
-#   save-every 5000, NO smoke — direct launch, restart-on-OOM policy).
+#   overrides folded (text+vision 2e-5 confirmed, seed 1, save-every
+#   5000, NO smoke — direct launch, restart-on-OOM policy); λ OVERRIDE
+#   13:24:10Z: weight decay stays at the 40k/60k lineage value 1e-5
+#   (the CLI default) — first launch attempt (λ=0.01) was stopped
+#   pre-step-1 and relaunched with this value.
 # PRE-REG / PARAMETER SHEET:
 #   fontaine/blog/src/posts/2026-08-09-prereg-molmo2-adamc-100k.md
 #   (amendment records the owner's decisions; posted before launch).
@@ -59,7 +62,7 @@ done
     --instruction-augment 0.5 \
     --camera-kind-dropout 0.1 \
     --decoder-lr 1e-4 --backbone-text-lr 2e-5 --backbone-vision-lr 2e-5 \
-    --optimizer adamc --weight-decay 0.01 \
+    --optimizer adamc --weight-decay 1e-5 \
     --grad-clip 100 \
     --steps "$STEPS" --warmup-steps 1000 --batch-size "$BATCH" \
     "${CHUNK_ARGS[@]}" \

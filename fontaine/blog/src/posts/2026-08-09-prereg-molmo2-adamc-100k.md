@@ -247,3 +247,17 @@ launch procedure:
 Launcher: `fontaine/scripts/box/launch_box_fontaine_molmo2_adamc_100k_ddp4.sh`
 (diff vs the 40k lineage launcher = exactly the declared deltas).
 Launched immediately after this amendment was pushed.
+
+## Amendment 2 (2026-08-09 13:3xZ, pre-step-1): λ = 1e-5 (owner override)
+
+Owner 13:24:10Z, overriding amendment 1's λ=0.01: weight decay stays
+at **the 40k/60k lineage value, 1e-5** (the CLI default — confirmed
+against both launchers, which never passed `--weight-decay`).
+Amendment 1's launch was stopped at 13:29Z **before step 1** (the run
+was still in model load / wandb init; no optimizer step was taken, no
+checkpoint written; the save dir was removed) and relaunched with
+λ=1e-5. Note for the readout: at λ=1e-5 the decay term is tiny, so
+this run exercises AdamC's *mechanism* (schedule-tracking decay) at
+lineage-equivalent regularization strength — grad-norm trajectory
+remains the record-only watch, with no AdamW-vs-AdamC claim planned
+either way (owner: no ablation wanted).
