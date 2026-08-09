@@ -75,6 +75,13 @@ class ShardResults:
     # --dump-subgoal-candidates serializes the merged maps.
     subgoal_candidates: dict[int, list[ValueCandidate]]
     subgoal_picks: dict[str, dict[int, int | None]]
+    # #6 rung (c) mcselect mode: the producer's per-frame measurement
+    # rows (KL [C] with NaN at ineligible, per-candidate decoded chunks
+    # [C, S, D], the planner-less reference chunk [S, D]) — {} outside
+    # mcselect mode; --dump-predictions serializes them as mcselect:*.
+    mcselect_kl: dict[int, list[float]]
+    mcselect_cand_pred: dict[int, Tensor]
+    mcselect_pred_masked: dict[int, Tensor]
     dump_predictions: dict[str, list[Tensor]]
     dump_truth: list[Tensor]
     dump_valid: list[Tensor]
@@ -150,6 +157,13 @@ def merge_shards(shards: list[ShardResults]) -> ShardResults:
                 for k, v in shard.subgoal_picks.get(arm, {}).items()
             }
             for arm in {arm for shard in shards for arm in shard.subgoal_picks}
+        },
+        mcselect_kl={k: v for shard in shards for k, v in shard.mcselect_kl.items()},
+        mcselect_cand_pred={
+            k: v for shard in shards for k, v in shard.mcselect_cand_pred.items()
+        },
+        mcselect_pred_masked={
+            k: v for shard in shards for k, v in shard.mcselect_pred_masked.items()
         },
         # --dump-draws without --dump-predictions: the per-policy lists
         # stay [] while dump_index carries one row per dumped frame — the

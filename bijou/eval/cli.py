@@ -32,6 +32,7 @@ from __future__ import annotations
 import argparse
 import dataclasses
 import datetime
+import hashlib
 import json
 import os
 import random
@@ -67,6 +68,7 @@ from .policies import (
     NOISE_KEYS,
     BijouPolicy,
     ChunkPolicy,
+    MaskedContrastSubgoalPolicy,
     NarratedBijouPolicy,
     NormalizedStateCopyPolicy,
     SelectedSubgoalPolicy,
@@ -97,6 +99,10 @@ from .plan import (
 from .report import THEMES, ReportSample, ReportTable, render_report
 from .sharding import ShardResults, merge_shards
 from .smolvla import SmolVLAEvalPolicy
+
+# #6 rung (c) npz key namespace — the mcselect_results.py contract
+# (mcselect:kl / mcselect:cand_pred / mcselect:pred_masked).
+MCSELECT_PREFIX = "mcselect:"
 
 
 @dataclass(frozen=True, slots=True)
@@ -179,6 +185,13 @@ class EvalReport:
     # EMPTY (must reproduce the baseline decode; the policy names carry
     # _emptyhint) — never an arm read.
     selfsubgoal_force_empty: bool
+    # #6 rung (c) mcselect mode (None/absent outside it): the reference
+    # tempering τ, the injected candidates file, and its sha256 — the
+    # read script refuses a run whose sha does not match the banked
+    # rung-(b') width (every comparator would be void).
+    mcselect_tau: float | None
+    mcselect_candidates_file: str | None
+    candidates_sha256: str | None
     generate: list[str] | None
     condition_override: list[str]
     batch_size: int
@@ -249,6 +262,9 @@ class EvalReport:
             "subgoal_temperature": self.subgoal_temperature,
             "subgoal_candidate_filter": self.subgoal_candidate_filter,
             "selfsubgoal_force_empty": self.selfsubgoal_force_empty,
+            "mcselect_tau": self.mcselect_tau,
+            "mcselect_candidates_file": self.mcselect_candidates_file,
+            "candidates_sha256": self.candidates_sha256,
             "generate": self.generate,
             "condition_override": self.condition_override,
             "batch_size": self.batch_size,
@@ -525,7 +541,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--subgoal-mode",
-        choices=["oracle", "self", "draws"],
+        choices=["oracle", "self", "draws", "mcselect"],
         default=None,
         help="#6 rung (a)/(b) subgoal-conditioning probes "
         "(condition-trained ar_backbone checkpoints): 'oracle' renders "
@@ -541,9 +557,35 @@ def parse_args() -> argparse.Namespace:
         "--subgoal-draws sampled candidates off the shared prefill, "
         "pass 2 runs BOTH selection arms on the same rows: the frozen "
         "self-certainty pick (_bonsubgoal, deployment-honest) and the "
-        "record-only oracle-similarity ceiling (_ceilsubgoal). Probe "
+        "record-only oracle-similarity ceiling (_ceilsubgoal); "
+        "'mcselect' is rung (c) masked-contrast scoring — NO in-run "
+        "sampling: candidates are injected from the banked rung-(b') "
+        "file (--subgoal-candidates-file), each eligible candidate gets "
+        "a conditioned greedy decode + a teacher-forced planner-less "
+        "reference forward, and the per-candidate KL(p_cond || "
+        "p_masked^(1/tau)) is dumped for the offline argmax "
+        "(mcselect_results.py owns the pick). Probe "
         "reads, never deployment reads; the banked planner-less "
         "baseline is NOT re-run",
+    )
+    parser.add_argument(
+        "--subgoal-candidates-file",
+        type=Path,
+        default=None,
+        help="requires --subgoal-mode mcselect: the banked rung-(b') "
+        "candidates JSON (rows keyed by global frame index, 9 "
+        "candidates each) — the run scores EXACTLY this width; the "
+        "file's sha256 lands in the report for the read script's "
+        "comparator guard",
+    )
+    parser.add_argument(
+        "--mcselect-tau",
+        type=float,
+        default=None,
+        help="requires --subgoal-mode mcselect: the masked reference's "
+        "tempering τ (the pre-reg pins 4.0, MG-Select's setting, "
+        "adopted verbatim — the read script refuses any other value); "
+        "explicit, no silent default on a pre-registered knob",
     )
     parser.add_argument(
         "--subgoal-swap-seed",
@@ -836,6 +878,33 @@ def parse_args() -> argparse.Namespace:
         ):
             if value is not None:
                 parser.error(f"{flag} requires --subgoal-mode draws")
+    if args.subgoal_mode == "mcselect":
+        if args.subgoal_candidates_file is None:
+            parser.error(
+                "--subgoal-mode mcselect injects banked candidates — "
+                "set --subgoal-candidates-file (the rung-(b') dump)",
+            )
+        if args.mcselect_tau is None:
+            parser.error(
+                "--subgoal-mode mcselect needs an explicit --mcselect-tau "
+                "(the pre-reg value is 4.0) — no silent default on a "
+                "pre-registered knob",
+            )
+        if args.dump_predictions is None:
+            parser.error(
+                "--subgoal-mode mcselect without --dump-predictions "
+                "would measure and throw the mcselect:* arrays away — "
+                "the read script consumes the npz",
+            )
+        if args.selfsubgoal_force_empty:
+            parser.error("--selfsubgoal-force-empty requires --subgoal-mode self")
+    else:
+        for flag, value in (
+            ("--subgoal-candidates-file", args.subgoal_candidates_file),
+            ("--mcselect-tau", args.mcselect_tau),
+        ):
+            if value is not None:
+                parser.error(f"{flag} requires --subgoal-mode mcselect")
     return args
 
 
@@ -1043,6 +1112,8 @@ def main() -> int:
     self_policy: SelfSubgoalPolicy | None = None
     bon_policy: SelectedSubgoalPolicy | None = None
     ceil_policy: SelectedSubgoalPolicy | None = None
+    mcselect_policy: MaskedContrastSubgoalPolicy | None = None
+    candidates_sha256: str | None = None
     if args.checkpoint is not None:
         overrides: dict[str, str] = {}
         for pair in args.condition_override:
@@ -1140,6 +1211,42 @@ def main() -> int:
                         if args.subgoal_candidate_filter == "clean"
                         else ""
                     ),
+                    flush=True,
+                )
+        elif args.subgoal_mode == "mcselect":
+            # Rung (c): candidates are INJECTED from the banked rung-(b')
+            # file — no in-run sampling; the plain bijou row is skipped
+            # (the masked reference rides the policy itself and the
+            # baseline is banked — the npz must never re-carry it).
+            assert args.subgoal_candidates_file is not None  # parse_args
+            candidates_bytes = args.subgoal_candidates_file.read_bytes()
+            candidates_sha256 = hashlib.sha256(candidates_bytes).hexdigest()
+            candidates_doc = json.loads(candidates_bytes)
+            doc_checkpoint = Path(str(candidates_doc.get("checkpoint", "")))
+            if doc_checkpoint.parts[-2:] != args.checkpoint.parts[-2:]:
+                raise SystemExit(
+                    f"candidates file decoded from {doc_checkpoint} but "
+                    f"this run scores {args.checkpoint} — cross-checkpoint "
+                    "re-ranking voids every banked comparator, stop",
+                )
+            mcselect_policy = MaskedContrastSubgoalPolicy(
+                bijou_policy,
+                candidates_by_index={
+                    int(row["index"]): row["candidates"]
+                    for row in candidates_doc["rows"]
+                },
+                tau=args.mcselect_tau,
+            )
+            policies.append(mcselect_policy)
+            if is_main:
+                print(
+                    f"subgoal mode MCSELECT: {mcselect_policy.name} scores "
+                    f"{mcselect_policy.n_candidates} banked candidates/row "
+                    f"(file sha {candidates_sha256[:12]}…, tau="
+                    f"{args.mcselect_tau:g}) — conditioned greedy decode + "
+                    "teacher-forced masked reference per eligible "
+                    "candidate; the ARGMAX lives in the read script; "
+                    "plain bijou row skipped (baseline is banked)",
                     flush=True,
                 )
         else:
@@ -1398,6 +1505,13 @@ def main() -> int:
             for policy in (bon_policy, ceil_policy)
             if policy is not None
         },
+        mcselect_kl=(mcselect_policy.kl if mcselect_policy is not None else {}),
+        mcselect_cand_pred=(
+            mcselect_policy.cand_pred if mcselect_policy is not None else {}
+        ),
+        mcselect_pred_masked=(
+            mcselect_policy.pred_masked if mcselect_policy is not None else {}
+        ),
         dump_predictions=dump_predictions,
         dump_truth=dump_truth,
         dump_valid=dump_valid,
@@ -1437,6 +1551,21 @@ def main() -> int:
         payload: dict[str, np.ndarray] = dump_identity()
         for name, chunks in results.dump_predictions.items():
             payload[f"pred:{name}"] = torch.stack(chunks).numpy()
+        if mcselect_policy is not None:
+            # The rung-(c) contract keys (mcselect_results.py): KL
+            # [N, C] float64 NaN-at-ineligible, per-candidate decoded
+            # chunks [N, C, S, D], the planner-less reference [N, S, D]
+            # — all row-aligned with the identity columns.
+            payload[f"{MCSELECT_PREFIX}kl"] = np.array(
+                [results.mcselect_kl[i] for i in results.dump_index],
+                dtype=np.float64,
+            )
+            payload[f"{MCSELECT_PREFIX}cand_pred"] = torch.stack(
+                [results.mcselect_cand_pred[i] for i in results.dump_index],
+            ).numpy()
+            payload[f"{MCSELECT_PREFIX}pred_masked"] = torch.stack(
+                [results.mcselect_pred_masked[i] for i in results.dump_index],
+            ).numpy()
         if args.noise_tickets is not None:
             # Ticket-mode provenance (pre-reg 2026-08-08 rung 2, item 5):
             # the single-decode npz must carry the bank sha — and, when
@@ -1890,6 +2019,13 @@ def main() -> int:
             subgoal_temperature=args.subgoal_temperature,
             subgoal_candidate_filter=args.subgoal_candidate_filter,
             selfsubgoal_force_empty=args.selfsubgoal_force_empty,
+            mcselect_tau=args.mcselect_tau,
+            mcselect_candidates_file=(
+                str(args.subgoal_candidates_file)
+                if args.subgoal_candidates_file is not None
+                else None
+            ),
+            candidates_sha256=candidates_sha256,
             generate=list(args.generate) if args.generate is not None else None,
             condition_override=list(args.condition_override),
             batch_size=args.batch_size,
@@ -2076,10 +2212,18 @@ def main() -> int:
         policy_names = [s.name for s in summaries]
         # Worst-first by the evaluated policy's MAE (the actionable tail
         # on top); the baseline sorts it when no checkpoint was given.
-        # In self mode the plain bijou row never ran — pass 2 sorts.
+        # Subgoal modes skip the plain bijou row (the baseline is
+        # banked), so the sorter must be a policy that actually RAN —
+        # sorting by the absent bare name was a KeyError that silently
+        # cost the rung-(b') q4 run its HTML (caught by the mcselect
+        # smoke 2026-08-09).
         if self_policy is not None:
             sort_policy = self_policy.name
-        elif bijou_policy is not None:
+        elif bon_policy is not None:
+            sort_policy = bon_policy.name
+        elif mcselect_policy is not None:
+            sort_policy = mcselect_policy.name
+        elif bijou_policy is not None and bijou_policy.name in policy_names:
             sort_policy = bijou_policy.name
         else:
             sort_policy = policy_names[0]

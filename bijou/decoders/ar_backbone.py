@@ -183,6 +183,23 @@ class ValueCandidate:
     allowed_vocab: int
 
 
+@dataclass(frozen=True, slots=True)
+class ActionCaptureStep:
+    """One ACTION-phase decode step's scoring surface (#6 rung (c) —
+    the masked-contrast scorer's conditional side, collected during the
+    decode rather than re-forwarded): the pre-mask BLOCK logits the
+    step chose from, the grammar mask it applied, which rows were still
+    decoding (remaining symbol budget > 0 at step start — exactly the
+    rows whose emitted id this step is real), and the emitted backbone
+    ids. Rows with ``active`` False emit PAD by construction and their
+    columns are meaningless."""
+
+    block_logits: Tensor  # [B, vocab_total] float32, PRE-mask
+    allowed: Tensor  # [B, vocab_total] bool — the applied grammar mask
+    active: Tensor  # [B] bool — remaining > 0 at step start
+    chosen: Tensor  # [B] long — emitted backbone ids
+
+
 class ARSuffixDecoder[B: nn.Module](nn.Module, abc.ABC):
     """Trunk-generic half of the backbone-suffix role: the format-5
     scaffold (opener, value lines, BOA, grammar-masked action decode),
@@ -334,12 +351,17 @@ class ARSuffixDecoder[B: nn.Module](nn.Module, abc.ABC):
         generator: torch.Generator | None = None,
         noise: Tensor | None = None,
         sampling: ARSampling | None = None,
+        action_capture: list[ActionCaptureStep] | None = None,
     ) -> BijouPrediction:
         """The single decode path, fully scaffolded by the request set.
         Deterministic greedy by default; ``sampling`` switches the
         ACTION block (only) to per-row temperature sampling — the
         sampled-draws eval instrument. ``generator``/``noise``
-        unused/must be None.
+        unused/must be None. ``action_capture`` (#6 rung (c)): a list
+        the ACTION phase appends one :class:`ActionCaptureStep` to per
+        decode step — the conditional scoring surface, captured from
+        the very logits the decode chose from (no re-forward, no
+        numeric drift vs the executed decode).
 
         ``generate`` must equal the request the PROMPT was collated with
         (the collator's ``generate_override``; the memory was encoded
@@ -542,6 +564,18 @@ class ARSuffixDecoder[B: nn.Module](nn.Module, abc.ABC):
                 # and each active row's ids depend only on its OWN
                 # stream position — batch-composition-independent.
                 next_ids = _sample_action_ids(logits, action_allowed, sampling)
+            if action_capture is not None:
+                # Active BEFORE the remaining update: exactly the rows
+                # whose emitted id this step is a real symbol (finished
+                # rows can only emit PAD — never recorded).
+                action_capture.append(
+                    ActionCaptureStep(
+                        block_logits=logits[:, base:].float(),
+                        allowed=action_allowed[:, base:].clone(),
+                        active=(remaining > 0).clone(),
+                        chosen=next_ids.clone(),
+                    ),
+                )
             for row, next_id in enumerate(next_ids.tolist()):
                 codec_id = next_id - base
                 if codec_id != self.codec.pad:
@@ -577,6 +611,67 @@ class ARSuffixDecoder[B: nn.Module](nn.Module, abc.ABC):
             actions=torch.stack(chunks).to(device),
             generations=generations,
         )
+
+    @torch.no_grad()
+    def teacher_forced_block_logits(
+        self,
+        backbone: B,
+        memory: ObservationMemory,
+        action_ids: list[list[int] | None],
+    ) -> list[Tensor | None]:
+        """Teacher-forced next-token BLOCK logits over given per-row
+        action-id sequences (CODEC space) against an already-encoded
+        memory — the #6 rung-(c) masked-reference forward: the
+        planner-less prompt's distribution at every position of a
+        sequence DECODED ELSEWHERE (under a candidate's conditioning).
+        The suffix is exactly the deployment fast path's —
+        ``[opener][BOA][a_1..a_T]`` — so row ``r``'s output ``t``
+        predicts ``action_ids[r][t]`` from the same scaffold the
+        conditioned decode ran. CONSUMES the memory's cache
+        (snapshot/restore around calls — the sampled-draws convention).
+        ``None`` rows are batch filler (PAD-padded, causal attention
+        keeps them from touching anything) and return ``None``; an
+        EMPTY non-None sequence is a caller bug (every decode emits at
+        least one symbol) and raises. Returns per-row
+        ``[len(ids), vocab_total]`` float32."""
+        config = self.config
+        base = config.block_base
+        boa_backbone = base + self.codec.boa
+        pad_backbone = base + self.codec.pad
+        opener = list(self.opener_ids)
+        k = len(opener)
+        t_max = 0
+        for ids in action_ids:
+            if ids is None:
+                continue
+            if not ids:
+                raise ValueError(
+                    "teacher_forced_block_logits got an empty action-id "
+                    "sequence — every decode emits at least one symbol; "
+                    "pass None for filler rows",
+                )
+            t_max = max(t_max, len(ids))
+        if t_max == 0:
+            return [None for _ in action_ids]
+        device = next(self.parameters()).device
+        width = k + 1 + t_max
+        rows: list[list[int]] = []
+        for ids in action_ids:
+            seq = [*opener, boa_backbone, *(base + i for i in (ids or []))]
+            seq.extend([pad_backbone] * (width - len(seq)))
+            rows.append(seq)
+        tokens = torch.tensor(rows, dtype=torch.long, device=device)
+        logits = self.forward(backbone, memory, tokens)
+        return [
+            (
+                None
+                if ids is None
+                else logits[row, k : k + len(ids), base : base + config.vocab_total]
+                .detach()
+                .float()
+            )
+            for row, ids in enumerate(action_ids)
+        ]
 
     @torch.no_grad()
     def decode_value_line(

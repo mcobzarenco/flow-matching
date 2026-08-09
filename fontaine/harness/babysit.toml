@@ -128,7 +128,7 @@ total_steps = 10000
 probe_key = "eval_chunk_mae"
 vram_key = "vram_alloc_peak_gib"
 started_utc = "2026-08-09T08:01:19Z"  # unit fontaine-attach-k (systemd-run); K_MEM_READY=1 B12c6, EXTRA_GPU_HOURS=17 (F actual 10.2 train + 1.25 eval + K eval ~2 + AR-view panel ~3); rate gate binds in-launcher (rc 2 => matched 5k downshift, F re-evals step_005000)
-boundary = "10k at K-rate TBD at rate-gate fire (first jsonl window 13.19 s/step warmup-contaminated @ step 20; smoke steady 5.675 -> 63.1 GPU-h train + EXTRA 17 = 80 > 70, so rc-2 MATCHED 5K DOWNSHIFT IS THE LIKELY BRANCH — next poll MUST check the launcher log for the gate verdict and, if downshifted, repoint this entry's pgrep/jsonl/total_steps to fontaine_molmo2_flow_kijoint_5k_ddp4 (relaunch = new run name) and re-eval F from step_005000 per pre-reg); saves every 1250, probes every 500; chains panel_v2 + AR-view drift panel"
+boundary = "COST GATE PASS 08:18:50Z 08-09 (median 3.729 s/step x 10k x 4 + 17 extra = 58.4 <= 70) — FULL 10k, no downshift (the smoke's 5.675 carried warmup; steady windows run 3.7-3.87). At 3.73 s/step from step ~200: endpoint ~18:3xZ 08-09; saves every 1250, probes every 500 (first probe @500 ~08:35Z, kill-bars bind at >=5k); chains panel_v2 + AR-view drift panel"
 anchors = [
     "kill rule: probe > phase-1 curve at matched step + 3.0 at any eval >= 5k, kill at next save boundary",
     "CE-health watch (record): jsonl loss_aux vs phase-1 loss_action at matched step — rising CE under stop-grad = AEGIS drift signal",
@@ -150,6 +150,33 @@ step = 10000
 [[run.gates]]
 kind = "vram_max_gib"
 value = 71.0
+
+# PREPARED — #6 rung (c) mcselect run (local GPU, launcher
+# eval_ar100k_mcselect_q4.sh via run_detached.sh fontaine-mcselect-q4;
+# pre-reg 2026-08-09-prereg-subgoal-mcselect.md FINALIZED 08-09).
+# Uncomment + fill started_utc at launch; prune at completion.
+# Smoke-measured 1.4 s/frame -> ~1.7 GPU-h scoring projected, gate 4.
+# Chain: run -> mcselect_live_oracles.py (abort-grade) ->
+# mcselect_results.py (frozen read).
+#
+# [[run]]
+# name = "mcselect_q4"
+# kind = "progress-log"
+# host = "local"
+# pgrep = "stateprobe_q4_subgoalmcselect"
+# pgrep_min = 1                      # eval python (launcher bash carries the stem too)
+# gpu_indices = [0]
+# gpu_mem_min_mib = 8000
+# log = "/home/ubuntu/eval__ar100k_mcselect_q4.log"
+# progress_re = "scored [0-9]+/[0-9]+ frames"
+# started_utc = "FILL"
+# gpu_hours_per_wall_hour = 1.0      # single local GPU
+# boundary = "4,301 q4 rows x (1 masked decode + <=9 conditioned decodes + <=9 reference forwards); smoke 1.4 s/frame -> ~1.7 GPU-h + load, GATE 4.0 (pre-reg); ETA ~1.7-2.2 h after launch"
+# anchors = [
+#     "NO scalar reads at any poll — the verdict is mcselect_results.py's frozen read (argmax + tie rule live THERE)",
+#     "rate check at first poll (q4-shaped, max-GPU-utilization standing rule): expect ~0.7+ f/s scoring; input starvation = fix before letting it run",
+#     "chain rc: live oracles abort-grade BEFORE the read; a red = instrument break, no verdict either way",
+# ]
 
 # PREPARED — #17 vision-unfreeze screen arms (vu5k, sequential FROZEN
 # FIRST; pre-reg 2026-08-07-prereg-molmo2-vision-unfreeze.md,

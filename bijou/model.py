@@ -42,6 +42,7 @@ from torch import Tensor, nn
 
 from .aux_text import AuxField
 from .decoders.ar_backbone import (
+    ActionCaptureStep,
     ARBackboneDecoder,
     ARSampling,
     ARSuffixDecoder,
@@ -538,6 +539,74 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                 raise TypeError(
                     "sampled AR decode continues a trunk suffix; the "
                     f"loaded decoder is {type(self.decoder).__name__}",
+                )
+
+    @torch.no_grad()
+    def ar_predict_greedy(
+        self,
+        memory: ObservationMemory,
+        batch: CollatedBatch[I],
+        *,
+        generate: tuple[AuxField, ...] = (),
+        action_capture: list[ActionCaptureStep] | None = None,
+    ) -> BijouPrediction:
+        """Greedy AR suffix decode against an ALREADY-ENCODED memory —
+        the #6 rung-(c) per-candidate call: the caller encodes each
+        conditioned prompt once and decodes with ``action_capture``
+        recording the conditional scoring surface from the decode's own
+        logits (:class:`ActionCaptureStep`). ``ar_predict_sampled``'s
+        decoder dispatch, minus the sampling."""
+        match self.decoder:
+            case ARBackboneDecoder():
+                return self.decoder.predict_chunk(
+                    self._gemma_backbone(),
+                    memory,
+                    batch,
+                    generate=generate,
+                    action_capture=action_capture,
+                )
+            case Molmo2ARDecoder():
+                return self.decoder.predict_chunk(
+                    self._molmo2_backbone(),
+                    memory,
+                    batch,
+                    generate=generate,
+                    action_capture=action_capture,
+                )
+            case _:
+                raise TypeError(
+                    "greedy AR decode continues a trunk suffix; the "
+                    f"loaded decoder is {type(self.decoder).__name__}",
+                )
+
+    @torch.no_grad()
+    def ar_teacher_forced_block_logits(
+        self,
+        memory: ObservationMemory,
+        action_ids: list[list[int] | None],
+    ) -> list[Tensor | None]:
+        """Teacher-forced BLOCK logits over per-row action-id sequences
+        against an already-encoded memory (consumes its cache —
+        snapshot/restore around calls): the #6 rung-(c)
+        masked-reference forward. See
+        :meth:`ARSuffixDecoder.teacher_forced_block_logits`."""
+        match self.decoder:
+            case ARBackboneDecoder():
+                return self.decoder.teacher_forced_block_logits(
+                    self._gemma_backbone(),
+                    memory,
+                    action_ids,
+                )
+            case Molmo2ARDecoder():
+                return self.decoder.teacher_forced_block_logits(
+                    self._molmo2_backbone(),
+                    memory,
+                    action_ids,
+                )
+            case _:
+                raise TypeError(
+                    "teacher-forced suffix scoring needs an AR suffix "
+                    f"decoder; loaded: {type(self.decoder).__name__}",
                 )
 
     @torch.no_grad()

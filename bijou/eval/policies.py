@@ -26,6 +26,7 @@ from torch import Tensor
 from ..annotations import ConditionField
 from ..aux_text import AuxField, AuxGeneration, subgoal_text
 from ..decoders.ar_backbone import (
+    ActionCaptureStep,
     ARSampling,
     ARSuffixDecoder,
     ValueCandidate,
@@ -450,10 +451,10 @@ class BijouPolicy:
                 self.name += "_ticketmap"
             else:
                 self.name += "_ticket"
-        if subgoal_mode not in (None, "oracle", "self", "draws"):
+        if subgoal_mode not in (None, "oracle", "self", "draws", "mcselect"):
             raise SystemExit(
-                "subgoal_mode must be None, 'oracle', 'self' or 'draws', "
-                f"got {subgoal_mode!r}",
+                "subgoal_mode must be None, 'oracle', 'self', 'draws' or "
+                f"'mcselect', got {subgoal_mode!r}",
             )
         if subgoal_mode is not None and "subgoal" in (condition_override or {}):
             raise SystemExit(
@@ -1145,6 +1146,197 @@ class SelfSubgoalPolicy:
             generate=(),
         )
         return [chunk.cpu() for chunk in prediction.actions]
+
+
+class MaskedContrastSubgoalPolicy:
+    """#6 rung (c) producer — the masked-contrast (MG-Select-form)
+    scorer's measurement pass (pre-reg 2026-08-09-prereg-subgoal-
+    mcselect.md; the frozen reads and the ARGMAX live in
+    ``fontaine/scripts/mcselect_results.py``, never here).
+
+    Candidates come from the banked rung-(b') candidates FILE — no
+    in-run sampling, so the scorer re-ranks exactly the width whose
+    ceiling and floor are on the board. Per frame: ONE planner-less
+    greedy decode (the masked reference prediction, record-only), then
+    per ELIGIBLE (non-truncated) candidate a greedy decode conditioned
+    on the candidate's text through the trained ``[subgoal|…]`` prompt
+    slot (the SelfSubgoalPolicy rendering path, byte-shared) with the
+    ACTION phase's own logits captured, plus one teacher-forced
+    planner-less forward over that candidate's decoded action-id
+    sequence (one shared masked prefill, snapshot/restored — the
+    sampled-draws convention). Score
+    ``KL( p_cond(·|c) ‖ p_masked^{1/τ} )`` averaged over the
+    candidate's active decode steps, both sides masked by the SAME
+    grammar mask the decode applied. Ineligible candidates stay NaN —
+    a finite score there is a contract violation the read script
+    aborts on."""
+
+    def __init__(
+        self,
+        base: BijouPolicy,
+        *,
+        candidates_by_index: dict[int, list[dict[str, Any]]],
+        tau: float,
+    ) -> None:
+        if not isinstance(base.model.decoder, ARSuffixDecoder):
+            raise SystemExit(
+                "masked-contrast scoring continues a trunk suffix; the "
+                f"loaded decoder is {type(base.model.decoder).__name__}",
+            )
+        if ConditionField.SUBGOAL in base.collator.condition_fields:
+            raise SystemExit(
+                "masked-contrast needs the PLANNER-LESS base context "
+                "(the masked reference IS the deployment default), but "
+                "the base collator renders the [subgoal|…] condition — "
+                "construct the base with subgoal_mode='mcselect'",
+            )
+        if not tau > 0:
+            raise SystemExit(f"mcselect tau must be > 0, got {tau}")
+        if not candidates_by_index:
+            raise SystemExit("mcselect got an empty candidates file")
+        first = next(iter(candidates_by_index.values()))
+        if not first or not {"text", "truncated"} <= set(first[0]):
+            raise SystemExit(
+                "candidates file rows must carry candidate dicts with "
+                "'text' and 'truncated' — not a rung-(b') candidates dump",
+            )
+        self.base = base
+        self.candidates_by_index = candidates_by_index
+        self.tau = float(tau)
+        # One width for every dumped row (the reader's [N, C] contract);
+        # the banked file is homogeneous, but never assume per batch.
+        self.n_candidates = max(len(c) for c in candidates_by_index.values())
+        self.name = f"{base.name}_mcselectsubgoal"
+        self.collator = base.collator  # planner-less, deployment fast path
+        self.cond_collator = dataclasses.replace(
+            base.collator,
+            # The trained condition fields WITH the subgoal slot, in
+            # template order (the SelfSubgoalPolicy construction).
+            condition_fields=tuple(
+                f for f in ConditionField if f.value in set(base.info.condition_fields)
+            ),
+            generate_override=(),
+        )
+        # Per-frame measurement rows, keyed by global frame index —
+        # the --dump-predictions npz serializes these (mcselect:* keys).
+        self.kl: dict[int, list[float]] = {}
+        self.cand_pred: dict[int, Tensor] = {}
+        self.pred_masked: dict[int, Tensor] = {}
+
+    @torch.no_grad()
+    def predict(self, items: list[dict[str, Any]], indices: list[int]) -> list[Tensor]:
+        items = self.base.apply_overrides(items)
+        rows_cands: list[list[dict[str, Any]]] = []
+        for index in indices:
+            cands = self.candidates_by_index.get(index)
+            if cands is None:
+                raise SystemExit(
+                    f"frame index {index} has no row in the candidates "
+                    "file — this run's plan does not match the banked "
+                    "rung-(b') width, stop",
+                )
+            rows_cands.append(cands)
+        model = self.base.model
+        decoder = model.decoder
+        assert isinstance(decoder, ARSuffixDecoder)  # __init__ guarded
+        block_base = decoder.config.block_base
+
+        # Masked pass: ONE planner-less prefill for the reference
+        # prediction AND (snapshot/restored) every candidate's
+        # teacher-forced reference forward.
+        batch = self.collator(items).to(self.base.device)
+        memory = model.encode(batch.encoder_inputs, with_grad=False)
+        snapshot = decoder.cache_snapshot(memory)
+        masked_chunks = [
+            chunk.cpu() for chunk in model.ar_predict_greedy(memory, batch).actions
+        ]
+
+        n_rows = len(items)
+        kl = torch.full((n_rows, self.n_candidates), float("nan"), dtype=torch.float64)
+        chunk_shape = tuple(masked_chunks[0].shape)  # (S, D)
+        cand_pred = torch.full(
+            (n_rows, self.n_candidates, *chunk_shape),
+            float("nan"),
+        )
+        for j in range(self.n_candidates):
+            eligible = [
+                row
+                for row in range(n_rows)
+                if j < len(rows_cands[row]) and not rows_cands[row][j]["truncated"]
+            ]
+            if not eligible:
+                continue
+            cond_items = [
+                {**items[row], "condition_subgoal": str(rows_cands[row][j]["text"])}
+                for row in eligible
+            ]
+            cbatch = self.cond_collator(cond_items).to(self.base.device)
+            cmemory = model.encode(cbatch.encoder_inputs, with_grad=False)
+            capture: list[ActionCaptureStep] = []
+            conditioned = model.ar_predict_greedy(
+                cmemory,
+                cbatch,
+                action_capture=capture,
+            )
+            # CPU once per step — the per-row loop below must not sync
+            # the device thousands of times.
+            steps = [
+                (
+                    step.block_logits.cpu(),
+                    step.allowed.cpu(),
+                    step.active.cpu(),
+                    step.chosen.cpu(),
+                )
+                for step in capture
+            ]
+            active_steps: list[list[int]] = [
+                [t for t, (_, _, active, _) in enumerate(steps) if bool(active[sub])]
+                for sub in range(len(eligible))
+            ]
+            sequences: list[list[int] | None] = [None] * n_rows
+            for sub, row in enumerate(eligible):
+                sequences[row] = [
+                    int(steps[t][3][sub]) - block_base for t in active_steps[sub]
+                ]
+            decoder.cache_restore(memory, snapshot)
+            reference = model.ar_teacher_forced_block_logits(memory, sequences)
+            for sub, row in enumerate(eligible):
+                ref_row = reference[row]
+                assert ref_row is not None  # sequences[row] was non-None
+                own_steps = active_steps[sub]
+                if ref_row.shape[0] != len(own_steps):
+                    raise SystemExit(
+                        f"row {row} candidate {j}: reference forward "
+                        f"returned {ref_row.shape[0]} positions for "
+                        f"{len(own_steps)} decoded steps — the "
+                        "teacher-forced scaffold drifted from the decode, "
+                        "stop",
+                    )
+                ref_row = ref_row.cpu()
+                total = 0.0
+                for position, t in enumerate(own_steps):
+                    step_logits, step_allowed, _, _ = steps[t]
+                    legal = step_allowed[sub]
+                    # float64: the score is tiny CPU math and lands in
+                    # a float64 dump column — no fp32 noise in the rank.
+                    log_cond = step_logits[sub][legal].double().log_softmax(-1)
+                    log_ref = (
+                        ref_row[position][legal].double() / self.tau
+                    ).log_softmax(
+                        -1,
+                    )
+                    total += float((log_cond.exp() * (log_cond - log_ref)).sum())
+                kl[row, j] = total / len(own_steps)
+            actions = conditioned.actions.cpu()
+            for sub, row in enumerate(eligible):
+                cand_pred[row, j] = actions[sub]
+
+        for i, (item, index) in enumerate(zip(items, indices, strict=True)):
+            length = int(item["action"].shape[0])
+            self.kl[index] = [float(v) for v in kl[i]]
+            self.cand_pred[index] = cand_pred[i, :, :length].clone()
+            self.pred_masked[index] = masked_chunks[i][:length].float().clone()
+        return masked_chunks
 
 
 class SelectedSubgoalPolicy:
