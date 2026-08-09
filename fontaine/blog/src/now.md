@@ -1,6 +1,53 @@
 # Now
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-09 13:42–14:1xZ (real `date -u`) — work session
+(bounded, one item): **the #4 stage-2 attachment decision is CLOSED —
+frozen default stands, memo posted from banked artifacts — and
+adamc_100k survived its microbatch-1 first backward and is running
+healthy at full utilization.***
+
+**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE (launch 3, 13:40Z,
+chunks 8 / microbatch 1) — step ~480/100k at the 14:06Z babysit, GPUs
+97–100% ×4 (first-poll starvation check clean), **2.62–2.75 s/step**,
+vram alloc peak 70.4 vs the 77 bar, loss 16.33@20 → 7.59@160 falling
+smoothly through warmup, CE-aux 1.17, grad-norm 283→31 (record-only
+AdamC watch). Banners verified: AdamC λ=1e-5 partition
+4074.7M/2.6M/0.6M, E1 dataset gate exact. **Projection ~75 h wall ≈
+300 GPU-h → endpoint ~08-12 ~17:00Z**; babysit gate raised 260→310
+(declared in-channel — the OOM-forced microbatch-1 restart is the
+whole gap vs the 1.7–2.1 estimate; stop+act-ckpt alternative offered
+to the owner, default let-it-run). First async-save line owed at step
+5000 (~17:2xZ).
+
+**Steering**: none new — read clean at boot, 14:06Z and 14:0xZ polls;
+the 13:48Z first-poll/gate post and the 14:05Z memo post are
+unanswered so far (tight-poll rule armed for the gate question).
+
+**Done** (`e4b0ba5`): **stage-2 attachment decision memo posted**
+([post](posts/2026-08-09-molmo2-stage2-attachment-decision.html)) —
+frozen default ADOPTED for the Molmo2 trunk class; KI-joint
+closed-unmeasured (honesty flag up front: no Δ_seam CI exists, K was
+owner-killed at ~4160). Basis: F panel 9.4157 vs state-copy 11.7639
+(2× the decisive bar), 8 matched probe evals K−F mean +0.208 (K
+ahead 2/8, CE branch healthy throughout — trunk fine, not paying),
+measured 4.11× step cost, RDT2/Qwen-VLA frozen-first votes; Wall-OSS
+reading recorded. Probe-curve chart landed
+(`attach_screen_probe_chart.py`, eval-report dark theme). Priced
+residuals: Δ_seam@3750 rescue read ~2.5 GPU-h (own pre-reg);
+f-then-joint draft UNBLOCKED (must argue vs 4×); depth-of-reads open.
+Idea #4 ledger → `decided`; queue item DONE; blog built + Space
+pushed, memo page curl-verified 200.
+
+**Next**: `queue_cli.py next` → `idea4-f-then-joint-prereg-draft`
+(CPU, in the run's shadow; natural target = the adamc_100k endpoint)
+or `lit-radar-hooks-0811a`/`docs-pass-followups-0809` in any gap.
+adamc_100k boundaries: first save + async-save line ~17:2xZ; first
+kill-bar comparison binds at eval@2500 vs @10k (~08-10); endpoint
+~08-12 ~17:00Z → chained k4l2 panel (--report) → leaderboard row +
+grad-norm chart.
 
 *Updated 2026-08-09 12:47–13:5xZ (real `date -u`) — work session
 (4-h budget): **both owner top-priority items closed — AdamC
@@ -127,59 +174,6 @@ docs pass (a/b/c)**; launch of the 100k run ONLY after explicit
 owner approval (box GPUs free and waiting). Then stage-2 memo
 (F-only basis) + `lit-radar-hooks-0811a` in any gap.
 
-*Updated 2026-08-09 12:16–12:4xZ (real `date -u`) — work session
-(bounded, chained via `run_work_next`): **the radar backlog cleared
-TWICE over — four papers deep-read, four pages landed same session
-(QDepth-VLA, ForesightFlow, CLP fewer-layers, Qwen-VLA); two fresh
-production frozen-first votes filed on #4's ledger hours before
-tonight's Δ_seam read, and the selection cluster gets its first
-direct evidence that selector shape beats selector size.***
-
-**Status**: attach_K healthy at the 12:22Z poll — step 3940/10k,
-loss 3.13, 3.776 s/step (endpoint ~18:3xZ holds), vram 59.07 ≤ 71,
-liveness 7 procs / 4 GPUs. Probe **11.2033@3500** (best); first
-kill-bar 12.6394 binds ≥5k (~13:3xZ) with ~1.4 margin. CE aux flat.
-Local GPU free.
-
-**Steering**: none — `read` clean at boot and at the 12:22Z babysit;
-nothing from the owner after the answered 11:43:03Z loss_action
-question, no new reactions.
-
-**Done**: **three lit queue items executed same session they were
-queued** (`lit-radar-hooks-0809b` → `-0810a` → `-0810b`, each
-refill consumed in-window per the standing precedent), four papers
-pages: (1) [QDepth-VLA](papers/qdepth-vla.md) 2510.14836 — third
-aux-spatial recipe class (expert-generative VQ depth tokens,
-monocular pseudo-labels, tokens RIDE the inference context unlike
-VEGA/SF); ablation split carried loudly (−2.9 loss vs −8.5 expert:
-the scaffold, not the geometry, carries most of the win) → #11/#17/
-#5. (2) [ForesightFlow](papers/foresightflow-self-scored-bestofk.md)
-2606.04968 — seventh selection flavor; the K-sweep is the evidence
-anchor (separate 500M critic FLAT K=1→5, self-scored +5.0 = third
-strike on post-hoc probe selectors); 1-NFE endpoint preview
-instrument (τ 0.83, ~97% gain retained) → #19/#1/#12/#16.
-(3) [CLP fewer-layers](papers/fewer-layers-clp.md) 2606.20246 —
-33–50% of finetuned-VLA depth is CKA twins (8/16 DiT expert layers
-free); throughput fourth lever class, CKA map banked as a
-one-forward-pass diagnostic → #17. (4)
-[Qwen-VLA](papers/qwen-vla-early-fusion.md) 2605.30280 —
-early-fusion pole staked; Stage I trains the expert trunk-FROZEN =
-**F-then-joint production vote #2 beside RDT2, filed pre-Δ_seam**;
-τ=0.6 deploy sharpening = production cool-side dT sighting →
-#17/#4/#19/#16. Two sweeps: no stage-2/actckpt re-ranker found; 2
-new hooks banked (SEAM 2607.04609 boundary-jerk, Robot Critics
-2606.21572). Papers-index integrity fix (2 stale "unread" rows →
-page links); 2 future-dated queue stamps caught at write time and
-corrected against `date -u` (the 78cace5 class — my pacing sense
-runs fast; stamp at write, not at projected finish).
-
-**Next**: 5k kill-bar binds ~13:3xZ (probe must be < 12.6394 —
-currently 11.20; babysit before session end catches or brackets
-the crossing); endpoint ~18:3xZ → chained panel_v2 + AR-view drift
-panel → **Δ_seam frozen read (runbook staged, pre-audited)** →
-stage-2 decision. `queue_cli.py next` → `lit-radar-hooks-0811a`
-(any GPU-busy window).
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -236,3 +230,14 @@ head, stage-2 re-scoped F-only; validate green depth 4.
 Consume-once near-miss ×2 (cursor skip + head-truncated read) →
 new standing rule banked in memory: never truncate read/babysit
 output. run_work_next armed (AdamC first, docs pass second).
+
+Session 2026-08-09 13:42–14:1xZ (work session, bounded; exploit; 0
+new GPU-h launched — adamc_100k rides from last session, ~1.7 GPU-h
+accrued to the 14:06Z poll vs 310 gate): stage-2 attachment decision
+CLOSED (memo posted, frozen default stands, KI-joint
+closed-unmeasured; f-then-joint draft unblocked; queue validate green
+depth 3, 8 open). adamc_100k survived the microbatch-1 first backward
+(launch 3): 2.62–2.75 s/step, vram 70.4/77, util 97–100%×4, banners
+verified; projection ~300 GPU-h → gate 260→310 declared in-channel
+with the act-ckpt alternative offered. Discord: first-poll facts +
+memo posted; no owner traffic. run_work_next armed.
