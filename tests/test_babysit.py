@@ -233,6 +233,46 @@ class TestPerRunChecks:
         assert report.alive  # a crossed gate is surfaced, never a liveness kill
         assert "SURFACED" in "\n".join(report.lines)
 
+    def test_progress_log_probe_ladder(self) -> None:
+        # 08-09 20:3xZ fix: progress-log entries with jsonl+probe_key set
+        # (adamc wiring) must print the probe ladder — previously a
+        # silent no-op (the fields were fetched/parsed only for
+        # train-jsonl). Regex fallback covers rows embedded in mixed
+        # launch-log lines.
+        run = babysit.Run(
+            name="p",
+            kind="progress-log",
+            host="local",
+            pgrep="x",
+            pgrep_min=4,
+            gpu_indices=[0],
+            gpu_mem_min_mib=8000,
+            anchors=[],
+            gates=[],
+            boundary="-",
+            jsonl="-",
+            probe_key="eval_chunk_mae",
+            log="-",
+            progress_re=r"\"step\": [0-9]+",
+            started_utc="2026-08-09T13:40:00Z",
+        )
+        sections = {
+            "@@PGREP": ["4"],
+            "@@GPU": ["0, 71617, 98"],
+            "@@PROBE": [
+                json.dumps({"step": 8000, "eval_chunk_mae": 11.0237}),
+                # mixed launch-log line: JSON row behind a prefix
+                'rank0| {"step": 8500, "eval_chunk_mae": 11.4102, "loss": 4.1}',
+            ],
+            "@@TAIL": ['"step": 9100'],
+        }
+        report = babysit.Report()
+        now = datetime(2026, 8, 9, 20, 34, tzinfo=UTC)
+        sample = babysit.check_progress_log(run, sections, {}, now, report)
+        assert sample["count"] == 9100
+        text = "\n".join(report.lines)
+        assert "probe eval_chunk_mae: 11.02@8000 -> 11.41@8500" in text
+
     def test_driver_cgroup_surfaced(self) -> None:
         # driver-background-task-guard (3 incidents 2026-08-07): a run
         # inside the driver unit's cgroup is surfaced BEFORE the kill —

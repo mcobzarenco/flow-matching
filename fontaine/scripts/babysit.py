@@ -180,6 +180,14 @@ def batched_probe_cmd(run: Run) -> str:
             f"tail -n 3 {run.jsonl}",
         ]
     else:
+        if run.jsonl and run.probe_key:
+            # progress-log runs may still carry a jsonl (often the launch
+            # log itself) — fetch the probe ladder from it (08-09 20:3xZ:
+            # the adamc wiring was a silent no-op without this branch)
+            parts += [
+                f"echo {SENTINEL_PROBE}",
+                f"grep -h '{run.probe_key}' {run.jsonl} | tail -12 || true",
+            ]
         parts += [
             f"echo {SENTINEL_TAIL}",
             f"tail -c 100000 {run.log} | tr '\\r' '\\n' | grep -oE '{run.progress_re}' | tail -3 || true",
@@ -329,6 +337,30 @@ def check_driver_cgroup(
         )
 
 
+def probe_trajectory(
+    run: Run,
+    sections: dict[str, list[str]],
+) -> list[tuple[int, float]]:
+    """(step, probe) pairs from the PROBE section. json.loads first;
+    regex fallback for probe rows embedded in mixed log lines (a
+    progress-log run's `jsonl` is often the launch log itself)."""
+    probes: list[tuple[int, float]] = []
+    step_re = re.compile(r'"step":\s*(\d+)')
+    val_re = re.compile(rf'"{re.escape(run.probe_key)}":\s*([-+0-9.eE]+)')
+    for ln in sections.get(SENTINEL_PROBE, []):
+        try:
+            row = json.loads(ln)
+            if run.probe_key in row:
+                probes.append((int(row["step"]), float(row[run.probe_key])))
+            continue
+        except (json.JSONDecodeError, KeyError, TypeError, ValueError):
+            pass
+        sm, vm = step_re.search(ln), val_re.search(ln)
+        if sm and vm:
+            probes.append((int(sm.group(1)), float(vm.group(1))))
+    return probes
+
+
 def check_train_jsonl(
     run: Run,
     sections: dict[str, list[str]],
@@ -355,14 +387,7 @@ def check_train_jsonl(
         f"  step {step}/{run.total_steps}  loss {loss}  {sps} s/step  vram {vram} GiB",
     )
     # probe trajectory — the last-k eval rows, printed as a trajectory
-    probes: list[tuple[int, float]] = []
-    for ln in sections.get(SENTINEL_PROBE, []):
-        try:
-            row = json.loads(ln)
-        except json.JSONDecodeError:
-            continue
-        if run.probe_key in row:
-            probes.append((int(row["step"]), float(row[run.probe_key])))
+    probes = probe_trajectory(run, sections)
     if probes:
         traj = " -> ".join(f"{v:.2f}@{s}" for s, v in probes[-8:])
         report.add(f"  probe {run.probe_key}: {traj}")
@@ -422,6 +447,11 @@ def check_progress_log(
         report.alive = False
         report.add("  LIVENESS FAILURE: no progress line parsed from log")
         return {}
+    if run.jsonl and run.probe_key:
+        probes = probe_trajectory(run, sections)
+        if probes:
+            traj = " -> ".join(f"{v:.2f}@{s}" for s, v in probes[-8:])
+            report.add(f"  probe {run.probe_key}: {traj}")
     started = datetime.fromisoformat(run.started_utc)
     # Multi-phase logs reset the counter per phase (subgoal_swap 03:13Z
     # 08-09: identity -> swap roll). Dividing the new phase's counter by

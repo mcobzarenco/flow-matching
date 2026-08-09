@@ -6,7 +6,49 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-09 19:49–20:3xZ (real `date -u` at write: 20:32) —
+*Updated 2026-08-09 20:33–20:4xZ (real `date -u` at write: 20:38) —
+tick (babysit): **both runs healthy — but the 19:41 tick's "probe
+ladder prints without manual ssh" claim was FALSE (the babysit.toml
+`jsonl`+`probe_key` wiring was a silent no-op for `progress-log`
+entries); fixed + tested + live-verified this tick. adamc probes
+@8500 = 11.44 / @9000 = 11.53 — above the 11.02@8000 run-best but
+inside the run's noise band, record-only.***
+
+**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE — babysit exit 0
+×2 (20:34, 20:36), step 9,140 @ 20:36, 21.5–24.3 st/min windows,
+27.7/310 GPU-h, vram 75.3 ×4 vs 77 bar. Probe ladder (now
+auto-printed): 11.69@7000 → 11.72@7500 → **11.02@8000 → 11.44@8500
+→ 11.53@9000** — the uptick mirrors the @5000 one that receded,
+nothing near a kill line (>25 ×3 sustained; not-below-@2500 by
+10k); judged healthy, no escalation. Endpoint ~08-12 ~17:00Z.
+`fontaine-tiny10k` LIVE local — step ~160, 99% util, 12.98 GiB,
+~0.4/15 GPU-h; first probe lands @500; endpoint ~04:2xZ 08-10 →
+panel_v2 @10000 → Δ_capacity read ~05:4xZ.
+
+**Steering**: none new — babysit `read` empty (20:34), `history -n
+5` = the 20:08 owner exchange (answered in-session) + our own
+posts, no reactions. 13:48Z gate default (let run, gate 310)
+governs adamc.
+
+**Done**: babysit.py probe-ladder fix — `batched_probe_cmd` fetched
+and `check_*` parsed the probe section only for `kind =
+"train-jsonl"`, so the adamc entry's 19:41 wiring never printed
+(caught this tick: fresh @8500/@9000 evals existed, no ladder in
+the output). Now `progress-log` entries with `jsonl`+`probe_key`
+fetch + print the ladder too, with regex-fallback parsing for probe
+rows embedded in mixed launch-log lines; new oracle
+`test_progress_log_probe_ladder` (suite 20/20), verified live over
+ssh (full adamc ladder above). Queue validate green depth 4 (10
+open, 20:16:00Z stamp clean). `run_work_next` already armed (20:31
+marker from the work session).
+
+**Next**: chained work session → `queue_cli.py next` →
+`lit-radar-0816` (CPU, GPU-busy window). tiny10k probes from @500
+are routine tick reads; endpoint ~04:2xZ 08-10 → chained panel_v2 →
+Δ_capacity readout session. adamc endpoint ~08-12 ~17:00Z →
+chained k4l2 panel. Survey follow-ups remain owner-decision items.*
+
+*Previous update 2026-08-09 19:49–20:3xZ (real `date -u` at write: 20:32) —
 work session (bounded): **owner steering ×3 handled live — T1
 tiny-expert capacity rung LAUNCHED on the local H100
 (`fontaine-tiny10k`, 86.8M vs F's 367.5M params, matched-F 10k @
@@ -102,39 +144,6 @@ archive, verbatim).
 routine. adamc endpoint ~08-12 ~17:00Z → chained k4l2 panel. fjoint
 stays owner-gated post-endpoint.
 
-*Previous update 2026-08-09 19:25–19:3xZ (real `date -u` at write: 19:27) —
-tick (babysit): **adamc_100k healthy at step 7560 (23.1/310 GPU-h,
-21.6 st/min window); probe ladder unchanged since @7500 = 11.7238 —
-the @7000 downward break holds; Discord clean; queue green depth 3;
-`run_work_next` armed for `lit-radar-0815`.***
-
-**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE — babysit exit 0,
-8 procs, ~75.3 GiB ×4 vs 77 bar, step 7560 @ 19:26, window 21.6
-st/min, cumulative 23.1/310 GPU-h. Probe ladder unchanged since the
-@7500 read (11.32@4500 → 12.65@5000 → 12.12@5500 → 12.59@6000 →
-12.60@6500 → 11.69@7000 → 11.72@7500 — the downward break holds,
-train_mae 12.49 and falling); next eval @8000 ~19:46Z is routine —
-the chained work session reads it. No escalation, nothing near a
-kill line. Endpoint ~08-12 ~17:00Z → chained k4l2 panel. LOCAL GPU
-free.
-
-**Steering**: none new — the 19:26 `read` (unfiltered, via babysit)
-consumed only our own 19:24 lit-radar post; `history -n 5` = our own
-posts only, no reactions. Last owner message remains the answered
-16:42Z ticket question. 13:48Z gate default (let run, gate 310)
-governs.
-
-**Done**: babysit poll (exit 0, unfiltered, Discord poll included).
-Queue validate green depth 3 (8 open; 19:18:54Z stamp clean).
-`run_work_next` confirmed armed (19:25 marker). Head keep-3 +
-footer keep-2 rolls (the 18:49 head entry + the 19:05 footer note →
-day archive, verbatim).
-
-**Next**: chained work session → `queue_cli.py next` →
-`lit-radar-0815` (CPU, any GPU-busy window) + probe@8000 read
-(~19:46Z, routine). adamc endpoint ~08-12 ~17:00Z → chained k4l2
-panel. fjoint stays owner-gated post-endpoint.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -167,19 +176,6 @@ call — no endpoint, no chained evals)**). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
-Session 2026-08-09 19:41–19:5xZ (tick, babysit; 0 new GPU-h —
-adamc_100k rides, 24.1/310): orphan audit — the 19:3x work session
-(lit-radar-0815 close, 5 papers pages, commit c53e517) died at turn
-end before committing queue state or posting; its queue.json/queue.md
-diff verified (c53e517 landed, 200 ×5 Space checks, stamp clean) and
-committed — 0815 CLOSED (3 hook corrections), lit-radar-0816 queued,
-owed in-channel post made this tick. Run healthy at step 7900 —
-babysit exit 0, 22.1 st/min window, vram 75.3/77. Probe@8000 =
-11.0237 caught in-session (background poll): NEW RUN-BEST, below the
-11.32@4500 floor, train_mae 12.41 falling. babysit.toml wired with
-jsonl+probe_key so future ticks print the ladder without ssh. Queue
-green depth 3; run_work_next re-armed for lit-radar-0816.
-
 Session 2026-08-09 19:49–20:3xZ (work, bounded; +~0.6 GPU-h local so
 far — tiny10k launched 20:12Z, rides to ~05:4xZ ≈ 9.5 GPU-h ≤ 15
 gate; adamc rides, 27.4/310; explore): owner steering ×5 handled
@@ -192,3 +188,15 @@ vs 367.5M params, b48c12 fit-ladder green 13.0 GiB, 2.8–3.0 s/step,
 diff = top recommendation); idea #9 fed. One stale-queue-title
 audit catch owned in-channel (#20 already fixed). Commit beb8659;
 check 598 ×2; blog + Space pushed, pages 200.
+
+Session 2026-08-09 20:33–20:4xZ (tick, babysit; 0 new GPU-h — adamc
+rides 27.7/310, tiny10k rides ~0.4/15): both runs healthy (adamc
+step 9,140, 21.5–24.3 st/min, vram 75.3/77; tiny10k step ~160, 99%
+util, 12.98 GiB). Caught + fixed a babysit.py gap: the 19:41 tick's
+adamc jsonl+probe_key wiring was a silent no-op for progress-log
+entries (probe section fetched/parsed only for train-jsonl) — fixed
+with regex-fallback parsing, oracle added (suite 20/20), verified
+live over ssh. Fresh probes @8500 = 11.44 / @9000 = 11.53: above
+the 11.02@8000 run-best, inside the noise band (the @5000 uptick
+precedent), record-only, no escalation. Discord clean; queue green
+depth 4; run_work_next armed (20:31) for lit-radar-0816.
