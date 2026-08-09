@@ -2,9 +2,9 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T18:30:00Z
+**Updated:** 2026-08-09T18:19:00Z
 
-**Depth call:** depth >=2 at 18:3xZ 08-09: adamc-100k babysit to ~08-12 (live) + lit-radar-0812b (cpu, actionable, 5 dup-checked hooks) + docs-pass tail (owner-side only) + fjoint owner-gated; lit-radar-0811 CLOSED this session (5 pages, all banked hooks cleared)
+**Depth call:** depth >=2 at 18:1xZ 08-09: adamc-100k babysit to ~08-12 (live) + lit-radar-0812b (cpu, actionable, 5 dup-checked hooks) + docs-pass tail (owner-side only) + fjoint owner-gated; lit-radar-0811 CLOSED this session (5 pages, all banked hooks cleared)
 
 **8 open** (Live 1 · Queued 3 · Blocked 4 · Done 81)
 
