@@ -283,6 +283,19 @@ def parse_args() -> argparse.Namespace:
         help="noise seed (default: stochastic)",
     )
     parser.add_argument(
+        "--noise-ticket",
+        type=Path,
+        default=None,
+        help="npz with a 'tickets' float32 [count, chunk, dim] array "
+        "(the eval CLI's --noise-tickets format): every replan "
+        "integrates from the SAME fixed noise instead of a fresh "
+        "seeded draw — cross-chunk consistency at the cost of draw "
+        "diversity. With --sample-draws N the first N bank rows are "
+        "the draws. Flow checkpoints only; the file sha256 prints in "
+        "the banner so a physical run is attributable to the exact "
+        "vector",
+    )
+    parser.add_argument(
         "--check",
         action="store_true",
         help="load the policy and stats, print the plan, exit without "
@@ -413,6 +426,11 @@ def main() -> int:
         # replan (and per draw at --sample-draws > 1), reproducible
         # under a fixed --seed.
         noise_key="index",
+        # A ticket file overrides the keying entirely: every replan
+        # integrates from the same bank row(s) — the fixed-noise
+        # deployment mode (seam-consistency lever; policies.py guards
+        # flow-only, chunk-size match, draws <= bank).
+        tickets=args.noise_ticket,
         sample_draws=args.sample_draws,
         target_time=0.0 if args.target_time == "zero" else None,
         expert_dtype=getattr(torch, args.expert_dtype),
@@ -447,6 +465,14 @@ def main() -> int:
         f"policy: {policy.name} (chunk {chunk_size}, "
         f"{decode_tag}, {args.expert_dtype} expert)",
     )
+    if policy.tickets is not None:
+        # Attribution line: a physical run under a fixed ticket must be
+        # traceable to the exact vector bytes.
+        print(
+            f"noise ticket: {args.noise_ticket} "
+            f"({policy.tickets.shape[0]} in bank, "
+            f"sha256 {policy.tickets_sha256})",
+        )
     print(f"task: {args.task!r}")
     print(f"cameras (prompt order): {sorted(cameras)}")
     print(f"camera kinds (prompt tags): {rig_kinds}")

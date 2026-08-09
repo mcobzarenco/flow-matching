@@ -216,3 +216,30 @@ def test_npz_roundtrip_and_sha(tmp_path: Path) -> None:
     assert sha_a == sha_b == hashlib.sha256(path.read_bytes()).hexdigest()
     assert torch.equal(loaded_a, loaded_b)
     assert np.array_equal(loaded_a.numpy(), bank)
+
+
+def test_rollout_exposes_noise_ticket(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The rig rollout CLI accepts the eval ticket format (owner request
+    2026-08-09 15:25Z): --noise-ticket must parse to the Path handed to
+    BijouPolicy's tickets input — fixed noise per replan."""
+    from bijou.rollout import parse_args
+
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "rollout",
+            "--checkpoint",
+            "outputs/train/x/step_000001",
+            "--task",
+            "pick",
+            "--noise-ticket",
+            "plans/ticket.npz",
+        ],
+    )
+    args = parse_args()
+    assert args.noise_ticket == Path("plans/ticket.npz")
+    monkeypatch.setattr(
+        "sys.argv",
+        ["rollout", "--checkpoint", "outputs/train/x/step_000001", "--task", "pick"],
+    )
+    assert parse_args().noise_ticket is None
