@@ -45,3 +45,32 @@
   enforced — probeable with our draws machinery, noted on #1);
   off-manifold executed prefixes invert poorly. Gate unchanged:
   parked until #16's rig bench exists.
+
+- **2026-08-09 ~12:0xZ — async family deep-read, arms re-banked
+  again** ([async execution II](../papers/async-execution-2.md):
+  FASTER 2603.19199 + ABPolicy 2602.23901 + DEFLECT 2605.19294).
+  Three findings move this idea: (1) **FASTER** shows the delay
+  itself is partly a scheduling artifact — its horizon-aware
+  schedule finalizes action 0 after one flow step of N (hit-times
+  u_i per action index, mixed-schedule fine-tune, no architecture
+  change) + streams actions as they finalize; TTFA 1.29–3.09× on
+  π0.5/X-VLA. The schedule is per-action-index so it tiles across
+  our draws-major batch — the 18-tick mean-of-10 staleness this
+  idea's hypothesis rests on could drop toward ~2–4 ticks *before
+  any bridging is bought*. (2) **DEFLECT** hard-measures the survey's
+  regime prediction — RTC/BID ≤5% at d≥5 on chunked VLAs — and
+  post-trains through it with stale-vs-fresh preference pairs from a
+  frozen reference (FM-DPO + SFT anchor, both chunks scored under
+  the *stale deployment input*); headline +6.4 pp at d=5–7 but the
+  restart-corrected net is **+1.6–2.3 pp** (their own Appendix L) —
+  carry that number. Delay generalizes (train d≤2 → +3.7 pp at
+  d=7); flow heads only. (3) **ABPolicy**'s
+  continuity-constrained refitting + jerk instruments (95th-pct
+  accel, zero-crossings) banked as boundary-seam tooling for the
+  eventual rig screen; its within-chunk win is predicted small for
+  us (our ODE draws already uniformly smooth per the SDN read).
+  **Arm order now: measure naive-switch cost → HAS-on-decode
+  (fine-tune) → PAINT → A2C2 residual → TT-RTC/DEFLECT-class
+  post-training.** Caveat carried loud: nobody tests d≈18; d=7 is
+  the field's ceiling. Gate unchanged: parked until #16's rig bench
+  exists.

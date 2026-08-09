@@ -35,3 +35,12 @@
   the backbone's discrete training signal: ~95% vs ~85% table-
   bussing success — external support for the token-quality premise
   behind the v3 refit.
+
+**2026-08-09 — RVQ banked as the priced-first alternative
+([RDT2 page](../papers/rdt2-umi-scaling.md), 2602.03310):** at
+matched quantization error, residual VQ (temporal-CNN encoder, m
+codebook depths onto 1024 reserved vocab entries) uses ~⅓ the tokens
+of FAST or uniform binning; their codebook-collapse mitigations
+(low-dim codes, cosine similarity, EMA, dead-entry restart) are the
+practical recipe. If v3 ever reopens, price RVQ before another FAST
+refit.

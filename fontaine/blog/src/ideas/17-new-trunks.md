@@ -267,3 +267,22 @@ disqualifying for a manipulation trunk.
   weight-modulation adapters; its MSE-beats-diffusion ablation
   is regime-bound (per-task specialist policies) and does NOT
   read onto AR-vs-flow.
+- **Lit 2026-08-09 later session ([Spatial Forcing
+  page](../papers/spatial-forcing.md) 2510.12276, the banked VEGA
+  baseline examined):** the aux-alignment third pole now has TWO
+  recipes with a measured teacher×depth interaction — SF aligns
+  visual tokens at LLM layer 24 (of 32; "deep but not deepest"
+  ablated: 24 ≫ 32/16/1) to VGGT by cosine via a discarded
+  projector, and VGGT *works* there while VEGA saw it collapse to
+  0.04 at the encoder output. Teacher choice is not separable from
+  alignment depth. SF's headline is NOT final score (LIBERO ~parity,
+  tables setting-ambiguous) but **convergence: same success in ~50k
+  vs ~150k iterations ("up to 3.8×") + 5%-data +25.8 pp** — a
+  fewer-steps-to-quality lever, distinct from every step-time lever
+  in the perf thread; teacher-forward training overhead unreported
+  (demand it before any pre-reg). For vu5k: SF never tests
+  unfreezing, so VEGA's frozen≈unfrozen probe stays the freeze-axis
+  evidence; escalation order stays VEGA-first (beat SF head-to-head
+  on RoboTwin), with SF's LLM-interior hook as the named sibling
+  that may fit our single-tower Molmo2 better (no encoder/LLM seam
+  needed).

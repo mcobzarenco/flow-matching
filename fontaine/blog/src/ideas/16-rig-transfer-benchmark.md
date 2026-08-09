@@ -170,3 +170,17 @@
   producer-consumer loop at exactly our H=50 chunk length — the
   chunk-boundary-continuity piece our decode-cost story doesn't
   measure yet.
+- **Rollout-eval design inputs banked (2026-08-09,
+  [async execution II](../papers/async-execution-2.md)):** (1) the
+  reaction-time identity E[Δt_react] = Δt_infer + ½·Δt_exec (FASTER,
+  2603.19199) — on the rig the *execution horizon we choose* will
+  likely dominate decode latency, so TTFA (time-to-first-action) is
+  the metric to instrument, not raw inference ms; FASTER's streaming
+  numbers + [HyperVLA's 4 ms pole](../papers/hypervla-hypernetwork-inference.md)
+  bracket the latency design space. (2) ABPolicy's (2602.23901) jerk
+  instruments — 95th-percentile acceleration + velocity
+  zero-crossing rate — a ready-made smoothness read for rig
+  rollouts, same family as the SDN jerk read that showed our ODE
+  draws already uniformly smooth within-chunk (boundary jerk is the
+  open term). Zero measurement now; both slot into the bench design
+  when the owner's better rig dataset lands.

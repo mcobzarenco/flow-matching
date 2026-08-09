@@ -2,7 +2,61 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-09 11:56–12:1xZ (real `date -u`) — work session
+(bounded, chained via `run_work_next`): **the async-execution radar
+cluster cleared and then some — FIVE papers read, THREE papers pages
+landed same session (async II cluster + Spatial Forcing + RDT2); #22's
+arm menu re-ranked around FASTER's "the delay is a scheduling
+artifact" result, and RDT2 files a production-scale F-shape vote
+hours before tonight's Δ_seam read.***
+
+**Status**: attach_K healthy at the 11:57Z + 12:08Z polls — step
+3740/10k, loss 3.21, 3.74 s/step (endpoint ~18:3xZ holds), vram
+59.07 ≤ 71, liveness 7 procs / 4 GPUs. Probe **11.2033@3500** (new
+best); first kill-bar 12.6394 binds ≥5k (~13:2xZ) with ~1.4 margin.
+CE aux flat. Local GPU free.
+
+**Steering**: none — `read` clean at boot and at the 12:08Z babysit;
+no new owner messages after the answered 11:43:03Z loss_action
+question, no new reactions.
+
+**Done**: **`lit-radar-async-exec` EXECUTED, both ride-along clauses
+fired** (the cluster closed early, so Spatial Forcing AND RDT2 rode
+per the item's own text): (1)
+[async execution II](papers/async-execution-2.md) — FASTER
+2603.19199 (TTFA theory + horizon-aware schedule: first action in 1
+flow step of N, streams while the tail refines, 1.29–3.09×; tiles
+across our draws-major batch, so the 18-tick mean-of-10 staleness
+may be a scheduling artifact), ABPolicy 2602.23901 (B-spline
+control-point flow + continuity refitting; jerk instruments banked),
+DEFLECT 2605.19294 (stale-vs-fresh FM-DPO where RTC/BID measure ≤5%
+at d≥5; carried at its restart-corrected +1.6–2.3 pp, not the +6.4
+headline) → **#22 arm order: measure naive-switch → HAS-on-decode →
+PAINT → A2C2 → TT-RTC/DEFLECT**; d≈18 untested by anyone stays
+loud. (2) [Spatial Forcing](papers/spatial-forcing.md) 2510.12276 —
+teacher×depth interact (VGGT works at LLM-24, collapsed at encoder
+in VEGA); the 3.8× is a **fewer-steps** lever (≈50k vs 150k iters,
++25.8 pp at 5% data), a new column in the throughput accounting;
+teacher overhead unreported. (3)
+[RDT2](papers/rdt2-umi-scaling.md) 2602.03310 — 10k h robot-free
+UMI data, zero-shot cross-embodiment; recipe = AR-first +
+**frozen-trunk** flow expert + 1-step distill, no joint stage —
+F-pole ledger context for tonight's decision (frozen read
+untouched); #16 β≈0.23 data exponent; #5 RVQ ~⅓ tokens of FAST;
+#12 second production 1-NFE point. Ideas #4/#5/#11/#12/#16/#17/#22
+records + index hooks updated; papers index/SUMMARY rows. Queue:
+item closed, refill `lit-radar-hooks-0809b` (QDepth-VLA + fresh
+sweep — the banked radar backlog is now EMPTY), validate green
+depth 2.
+
+**Next**: 5k kill-bar binds ~13:2xZ (probe must be < 12.6394 —
+currently 11.20); endpoint ~18:3xZ → chained panel_v2 + AR-view
+drift panel → **Δ_seam frozen read (runbook staged, pre-audited)**
+→ stage-2 decision. `queue_cli.py next` → `lit-radar-hooks-0809b`
+(any GPU-busy window).
 
 *Updated 2026-08-09 11:49–12:0xZ (real `date -u`) — tick (babysit):
 **attach_K healthy at mid-run — probe margin ~1.0 held going into
@@ -90,48 +144,6 @@ currently 11.61); endpoint ~18:3xZ → chained panel_v2 + AR-view
 drift panel → **Δ_seam frozen read (runbook staged, pre-audited)**
 → stage-2 decision. `queue_cli.py next` → `lit-radar-async-exec`
 (any GPU-busy window).
-
-*Updated 2026-08-09 11:11–11:3xZ (real `date -u`) — tick (babysit,
-then conversational): **the 2500 probe uptick resolved as NOISE —
-probe@3000 = 11.6124, a new best; then an owner throughput question
-landed mid-close and was answered in-channel same tick.***
-
-**Status**: attach_K healthy at the 11:12Z poll — step 2880/10k,
-loss 3.25, 3.822 s/step (endpoint ~18:3xZ holds), vram 59.07 ≤ 71,
-liveness 7 procs / all 4 GPUs loaded. Probe 11.67@2000 →
-12.42@2500 → **11.6124@3000** (caught via a background watcher on
-the box jsonl): the uptick was noise, the trajectory resumes
-downward, and the first kill-bar 12.6394 (binds at ≥5k, ~13:2xZ)
-now has ~1.0 of margin. CE aux flat. Local GPU free.
-
-**Steering**: owner 11:14:53Z (caught on the pre-close `read`):
-*where are we on increasing training throughput for molmo2 AR?*
-Answered in-channel 11:25Z with the assembled record: (1) the 08-08
-review's 8 findings; (2) **pass-1 executed and killed by its own
-frozen rule** — true-recipe box ladder A 2.251 / B(+cuDNN suffix)
-2.495 (**−10.8%**) / C(bundle) 2.415 (**−7.3%**) s/step, both
-SLOWER, the 13× local microbench transfer falsified, P1 doubly dead
-(parity loss-bound fail too); bitwise-safe subset landed `6a4b45e`
-with no speed claim; (3) the live lever is **#20 actckpt** (crash
-fixed `913fdc4`, flag field-validated on the K arm right now; 4-rung
-ladder pre-reg drafted, ADOPT iff ≤1.02× control AND alloc ≤63 GiB,
-frees batch 12→16–20/GPU; blocked on a fresh AR-trunk launch —
-nothing AR-trunk is training now, so no run currently pays the
-cost); (4) ViT SDPA / valid-row CE / fused RMSNorm unmeasured solo
-(bundling hides sign), parked. Reply-watch held ~8 min after the
-answer — quiet → normal cadence (chained work session rejoins if
-the thread continues). No new reactions in `history`.
-
-**Done**: babysit poll (exit 0, facts above); in-session hold for
-the step-3000 probe (charter §6 — cheapest resolution of the
-uptick watch item); queue validate green (depth 2, 8 open);
-`run_work_next` confirmed armed from the 11:08Z close (the chained
-work session picks up `lit-radar-hooks-17`).
-
-**Next**: 5k kill-bar binds ~13:2xZ (probe must be < 12.6394 —
-currently 11.61); endpoint ~18:3xZ → chained panel_v2 + AR-view
-drift panel → **Δ_seam frozen read (runbook staged, pre-audited)**
-→ stage-2 decision.
 
 ## Utilization footer
 

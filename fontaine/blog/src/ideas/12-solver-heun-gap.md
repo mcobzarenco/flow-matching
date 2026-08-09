@@ -143,3 +143,20 @@ variants, consistency/distillation toward 1–2-step deployment decodes
   fired the DIAGNOSIS branch — no upload.** Rig-holdout draws1 got
   worse (+0.09/+0.04); per the owner steer the next rung waits on a
   better rig dataset (#16). The student itself stays banked.
+- **A fourth pole on the one-step axis banked (2026-08-09,
+  [async execution II](../papers/async-execution-2.md), FASTER
+  2603.19199): one-step for the *head* of the chunk, many-step for
+  the tail.** A horizon-aware timestep schedule (per-action hit
+  times, mixed-schedule fine-tune, no architecture change) finalizes
+  action 0 after one flow step of N and streams it while the tail
+  keeps refining — TTFA 1.29–3.09× on π0.5/X-VLA. Orthogonal to
+  SnapFlow's distill-everything (which we banked); relevant iff we
+  ever run multi-step decode for quality at deployment — mean-of-10
+  batched draws is exactly that case (see #22's re-ranked arm menu).
+  Record-only; no arm here while the 1-NFE student holds the panel.
+- **Second production data point for 1-NFE (2026-08-09,
+  [RDT2 page](../papers/rdt2-umi-scaling.md)):** 5-step flow →
+  1-step distillation with on-the-fly teacher targets holds at 7B /
+  10k-hours scale ("UltraFast", fastest inference in their fleet at
+  2× π0.5's size, +97 ms button-press reaction vs human). Same
+  adopted-signal shape as our SnapFlow row.

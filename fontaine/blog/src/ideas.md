@@ -58,7 +58,12 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   distortion channel); prices the rung's ordering + the
   compute-Pareto case for cheap-a=0-steps-first. Draft note: joint
   phase should start from the CONVERGED F expert, not a fixed step
-  count.
+  count. New 2026-08-09 later session
+  ([RDT2](papers/rdt2-umi-scaling.md), 2602.03310): a production
+  vote for the F shape hours before the Δ_seam read — RDT2's 7B
+  recipe is AR-first (protects VLM knowledge, ablated) + flow expert
+  on a FROZEN backbone + 1-step distill, **no joint stage**; ledger
+  context only, the frozen read is untouched.
 - **`new-trunks` [#17 New trunks / architectures](ideas/17-new-trunks.md)** —
   standing owner mandate. **Molmo2-4B AR 40k ENDPOINT READ OUT
   2026-08-08 ([results](posts/2026-08-08-molmo2-endpoint-results.md)):
@@ -101,7 +106,16 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   wins. HyperVLA = the inference-efficiency pole for the trunk
   ledger (0.1M generated policy/episode, 4 ms/step, sim-only,
   2024-baseline caveats loud) + the generated-update normalization
-  design rule; radar-only, changes no queued arm.
+  design rule; radar-only, changes no queued arm. New 2026-08-09
+  later session ([Spatial Forcing](papers/spatial-forcing.md),
+  VEGA's baseline examined): the aux pole gains a second recipe —
+  LLM-layer-24 alignment where VGGT works as teacher (vs collapsing
+  at encoder depth: teacher×depth interact) — and its real headline
+  is convergence, ~3× fewer iterations to matched LIBERO success +
+  25.8 pp at 5% data; a fewer-steps lever for the throughput
+  accounting, teacher overhead unreported. SF may fit single-tower
+  Molmo2 better than the VEGA recipe; escalation order unchanged
+  (VEGA won head-to-head).
 - **`aux-subgoals` [#6 Aux attribution](ideas/06-aux-attribution.md)** —
   `confirmed` (aux HELPS actions, +0.462 cost when off).
   **CONSOLIDATED REPORT 2026-08-09
@@ -318,7 +332,16 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   — FlowPRO preference RL (flow loss as implicit reward,
   intervention-and-rollback pairs, +6–12 pts over DAgger, retention
   UNMEASURED vs FlowDAgger's 0.88-vs-−0.94) + the H=50
-  Bézier chunk-stitch deployment lever.
+  Bézier chunk-stitch deployment lever. New 2026-08-09 later session
+  ([async II](papers/async-execution-2.md) +
+  [RDT2](papers/rdt2-umi-scaling.md)): TTFA accounting
+  (E[react] = Δt_infer + ½·Δt_exec — the chosen execution horizon
+  will dominate decode latency on the rig) + ABPolicy's jerk
+  instruments banked as bench design inputs; and the north-star
+  premise gains its hours-scale existence proof — 10k h of
+  robot-free UMI data transfers zero-shot cross-embodiment with a
+  predictable data exponent (β≈0.23), though the zero-shot column
+  needs a UMI-twin gripper the SO101 rig lacks.
 - **`lit-arms` [#15 Literature-sourced arms](ideas/15-literature-arms.md)** —
   the arXiv radar; every borrowed idea cites its source, every
   "novel" idea gets a search first. Feeds the Papers section.
@@ -378,8 +401,15 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   construction). New 2026-08-07: PAINT (2606.19774,
   [noise-steering II page](papers/noise-space-steering-2.md)) —
   training-free initial-noise selection matches RTC on a chunk-50
-  π₀ with no gradients; **arm order re-banked: PAINT → A2C2 →
-  TT-RTC**.
+  π₀ with no gradients. New 2026-08-09
+  ([async execution II](papers/async-execution-2.md)): FASTER's
+  horizon-aware schedule attacks the delay itself (first action in
+  1 flow step of N, TTFA 1.3–3×) and tiles across batched draws —
+  the 18-tick mean-of-10 staleness may be a scheduling artifact;
+  DEFLECT measures RTC/BID at ≤5% for d≥5 and fixes it with
+  stale-vs-fresh FM-DPO (restart-corrected net +1.6–2.3 pp). **Arm
+  order re-banked: measure naive-switch → HAS-on-decode → PAINT →
+  A2C2 → TT-RTC/DEFLECT.**
 
 ## Answered — banked results
 

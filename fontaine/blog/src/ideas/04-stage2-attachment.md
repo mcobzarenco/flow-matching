@@ -291,3 +291,13 @@ matched steps.
   escalation rung behind tonight's Δ_seam readout. Venue caveat
   loud: Frontiers; ablation ORDERING trusted, magnitudes not (their
   no-pretrain Spatial row reads 0%, likely matched-budget snapshot).
+- **Lit 2026-08-09 later session
+  ([RDT2 page](../papers/rdt2-umi-scaling.md), 2602.03310)**: a
+  production-scale vote for the F-shaped ordering, hours before the
+  Δ_seam read — RDT2's 7B recipe is discrete-AR pretraining first
+  ("avoided damaging discrete VLM knowledge", their ablation), then
+  a 400M flow expert trained on a **frozen** backbone, then 1-step
+  distillation; **no joint stage at all** in the main recipe. Filed
+  as F-pole ledger context only — the frozen read decides on our own
+  numbers, unchanged; a K win would now have to explain away both
+  APT's diagnosis and a shipped 10k-hour stack that never unfroze.

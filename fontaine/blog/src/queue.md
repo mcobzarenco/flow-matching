@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T11:45:00Z
+**Updated:** 2026-08-09T12:08:00Z
 
-**Depth call:** depth >=2 at 11:4xZ 08-09: attach screen EXECUTING (arm K live, endpoint ~18:3xZ) + lit-radar-async-exec queued (CPU, any GPU-busy window); blocked behind: stage-2 decision (K readout tonight), actckpt ladder, f-then-joint draft (Delta_seam), #17 vu5k (owner go), owner-held items
+**Depth call:** depth >=2 at 12:0xZ 08-09: attach screen EXECUTING (arm K live, endpoint ~18:3xZ) + lit-radar-hooks-0809b queued (CPU, any GPU-busy window); blocked behind: stage-2 decision (K readout tonight), actckpt ladder, f-then-joint draft (Delta_seam), #17 vu5k (owner go), owner-held items
 
-**8 open** (Live 0 · Queued 2 · Blocked 6 · Done 65)
+**8 open** (Live 0 · Queued 2 · Blocked 6 · Done 66)
 
 ## 🔴 Live (0)
 
@@ -18,15 +18,15 @@
 
 *ready — waiting on a window or a boundary*
 
-**`lit-radar-async-exec`** · `cpu`
+**`lit-radar-hooks-0809b`** · `cpu`
 
-Lit slice (standing allocation): the async/real-time execution family from the banked radar hooks
+Lit slice (standing allocation): last banked radar hook — QDepth-VLA 2510.14836 (depth aux, #11/#17; cross-read against the Spatial Forcing/VEGA teacher-x-depth grid) + a fresh arXiv sweep for new hooks (the banked backlog is now…
 
-**boundary:** executable any GPU-busy window
+**boundary:** any GPU-busy window; stage-2 decision window opens at the K endpoint ~18:3xZ 08-09
 
 <details><summary>full record</summary>
 
-Lit slice (standing allocation): the async/real-time execution family from the banked radar hooks — FASTER 2603.19199 (real-time flow VLAs) + ABPolicy 2602.23901 + DEFLECT 2605.19294 (async execution), optionally RDT2 2602.03310 if time allows; papers page(s) same session per the permanent rule. Feeds #22 (async chunk execution / drift-monitor thread), #16 rig deployment latency (fresh relevance: HyperVLA's 4ms pole banked 08-09), #12 one-step deployment leg. Spatial Forcing 2510.12276 (VEGA's baseline, 3.8x training-accel claim) rides along ONLY if the async set closes early
+Lit slice (standing allocation): last banked radar hook — QDepth-VLA 2510.14836 (depth aux, #11/#17; cross-read against the Spatial Forcing/VEGA teacher-x-depth grid) + a fresh arXiv sweep for new hooks (the banked backlog is now EMPTY — first sweep priority: anything re-ranking the stage-2 decision or the actckpt ladder). Papers page(s) same session per the permanent rule
 
 </details>
 
@@ -132,9 +132,23 @@ Molmo2 stage-2 attachment decision at endpoint — now EXECUTABLE via the seam-s
 
 ---
 
-## ✅ Done (65)
+## ✅ Done (66)
 
 *closed — the full record stays in each fold*
+
+**`lit-radar-async-exec`** · `cpu`
+
+Lit slice (standing allocation): the async/real-time execution family from the banked radar hooks
+
+**boundary:** EXECUTED 11:5x-12:1xZ 08-09 (the chained work session run_work_next armed): all three async-family hooks deep-read, ONE cluster papers page SAME SESSION (papers/async-execution-2.md — three orthogonal levers: FASTER 2603.19199 scheduling/TTFA, ABPolicy 2602.23901 B-spline representation, DEFLECT 2605.19294 stale-vs-fresh FM-DPO). #22 arm menu re-ranked (naive-switch measure -&gt; HAS-on-decode NEW rung 2 -&gt; PAINT -&gt; A2C2 -&gt; TT-RTC/DEFLECT; DEFLECT carried at its restart-corrected +1.6-2.3 pp, not the +6.4 headline; d~18 untested by anyone stays loud); #16 TTFA identity + jerk instruments banked; #12 fourth one-step pole (one-step head/many-step tail). Cluster closed EARLY (12:0xZ) so Spatial Forcing 2510.12276 RODE ALONG per the item's own clause: papers/spatial-forcing.md same session (teacher-x-depth interaction vs VEGA; 3.8x = fewer-steps lever, teacher overhead unreported; #17/#11 hooks updated). RDT2 2602.03310 ALSO rode (the item's own if-time-allows clause): papers/rdt2-umi-scaling.md same session — production F-shape vote (AR-first + frozen-trunk expert + distill, no joint stage) filed as Delta_seam ledger context; #16 hours-scale premise + beta~0.23; #5 RVQ; #12 second 1-NFE point. QDepth-VLA 2510.14836 rolls to the refill item
+
+<details><summary>full record</summary>
+
+Lit slice (standing allocation): the async/real-time execution family from the banked radar hooks — FASTER 2603.19199 (real-time flow VLAs) + ABPolicy 2602.23901 + DEFLECT 2605.19294 (async execution), optionally RDT2 2602.03310 if time allows; papers page(s) same session per the permanent rule. Feeds #22 (async chunk execution / drift-monitor thread), #16 rig deployment latency (fresh relevance: HyperVLA's 4ms pole banked 08-09), #12 one-step deployment leg. Spatial Forcing 2510.12276 (VEGA's baseline, 3.8x training-accel claim) rides along ONLY if the async set closes early
+
+</details>
+
+---
 
 **`lit-radar-hooks-17`** · `cpu`
 

@@ -150,3 +150,13 @@ quantified prize a history/memory arm would chase. AliasBench's
 <3e-3 embedding-gap criterion lands in our top ~2% of frames; the
 entry-condition read should anchor on that external bar, not a
 self-picked threshold.
+
+**2026-08-09 — aux-family sighting ([Spatial Forcing
+page](../papers/spatial-forcing.md), 2510.12276):** spatial structure
+is injectable without depth sensors — cosine-align LLM-interior
+visual tokens to a VGGT teacher during training, delete at inference.
+Evidence class: strong on convergence speed + low-data (+25.8 pp at
+5% demos), weak/ambiguous on final score. Relevant here as the
+grounding-aux sibling of VEGA's encoder recipe (teacher×depth
+interact — see the #17 record); no arm changes, the acuity-probe
+triangulation stays the entry point.
