@@ -3,9 +3,67 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-09 19:41–19:5xZ (real `date -u` at write: 19:48) —
+*Updated 2026-08-09 19:49–20:3xZ (real `date -u` at write: 20:32) —
+work session (bounded): **owner steering ×3 handled live — T1
+tiny-expert capacity rung LAUNCHED on the local H100
+(`fontaine-tiny10k`, 86.8M vs F's 367.5M params, matched-F 10k @
+eff-48, ~8 h) + the owner-requested trajectory-dataset survey post
+SHIPPED same session (855 in-scope hub hours vs our 229).***
+
+**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE — babysit exit 0
+×3 (19:50, 20:07, 20:30), step 9,020 @ 20:30, 22.3 st/min, 27.4/310
+GPU-h, probe run-best **11.0237@8000** holds (next reads are routine
+ticks); endpoint ~08-12 ~17:00Z.
+`fontaine_molmo2_flow_tiny_h256_10k_1xh100` LIVE on the LOCAL H100
+(unit `fontaine-tiny10k`) — fit ladder GREEN b48c12 (13.01 GiB vs 74
+gate), 10k run stepping at 2.8–3.0 s/step, 95–98% util, 12.98 GiB;
+**projection: endpoint ~04:2xZ 08-10 → chained panel_v2 @10000 →
+matched Δ_capacity read vs F@10k (9.4157) ~05:4xZ**; gate 15 GPU-h
+(projected ~9.5); babysit `tiny10k` entry live.
+
+**Steering**: FIVE owner exchanges this session, all answered
+in-session — 19:49 "what's the local GPU doing" (idle, answered);
+19:50 "keep the GPUs busy — propose options" (priced A–E menu; my B
+was stale — #20 act-ckpt fix already landed 913fdc4, corrected
+in-channel); 19:54 "A seems a waste of time, too early" (shelved,
+re-propose ~25–50k); 19:56 "**let's train something**" (T1–T4
+training menu) → 19:59 "**yes to T1**" + "biggest batch that fits" +
+"maybe 40k" → 20:08 after the wall-clock arithmetic (~2.5–3 days)
+"**Let's do your original plan**" — reverted to matched-F 10k
+pre-step-1, full trail in the pre-reg; 19:58 "**investigate what
+additional trajectory datasets we could train on**" → survey shipped
+(Done). 13:48Z gate default (let run, gate 310) governs adamc.
+
+**Done** (commit `beb8659`, check.py 598 green ×2): **T1 tiny-expert
+rung LIVE** — pre-reg `2026-08-09-prereg-tiny-expert-40k.md` (incl.
+the owner's final-amendment trail), launcher
+`launch_local_fontaine_molmo2_flow_tiny_h256_10k_1xh100.sh` (fit
+ladder → 10k → chained panel_v2 @10000), h256/d12 width-only
+contrast (taps+adapters identical to F, depth structural), frozen
+60k trunk pulled + sha-verified `e6ed783b` vs the dedup record;
+launch 1 rc2 caught in seconds (`--zero1`/`--chunk-grad-allreduce`
+are DDP-only — dropped, amendment noted). **Trajectory-dataset
+survey post** (`2026-08-09-trajectory-datasets-survey.md`, Space
+200-verified + in-channel summary): 4 parallel research subagents,
+all links fetch-verified — hub sweep 855 in-scope h / 300 h new
+2026 / sim-contamination hazard; MolmoAct2 curation diff = #1
+recommendation; Bridge V2 / UMI-family / sim ranked; idea #9 fed.
+adamc step_005000 weights banked locally (A shelved, reusable for
+the ~25–50k panel re-proposal + E offline probes). Blog built +
+Space pushed, both new pages 200.
+
+**Next**: tiny10k endpoint ~04:2xZ 08-10 → panel_v2 @10000 →
+Δ_capacity readout session (read machinery = attach_seam_results
+read-1 at explicit paths, bands 0.3/1.0 pre-pinned). `queue_cli.py
+next` → `lit-radar-0816` (CPU, rolled — owner items preempted this
+session). adamc endpoint ~08-12 ~17:00Z → chained k4l2 panel.
+Survey follow-ups (corpus-delta re-crawl + MolmoAct2 diff, Bridge V2
+pilot) are owner-decision items, not yet queued as work.*
+
+*Previous update 2026-08-09 19:41–19:5xZ (real `date -u` at write: 19:48) —
 tick (babysit): **orphan audit — the 19:3x work session died at turn
 end mid-close; its `lit-radar-0815` queue close + `0816` refill
 recovered and committed, in-channel post made this tick (papers
@@ -77,55 +135,6 @@ day archive, verbatim).
 (~19:46Z, routine). adamc endpoint ~08-12 ~17:00Z → chained k4l2
 panel. fjoint stays owner-gated post-endpoint.
 
-*Previous update 2026-08-09 19:08–19:3xZ (real `date -u` at write: 19:26) —
-work session (bounded): **`lit-radar-0814` CLOSED — all 5 hooks
-deep-read, 5 Papers pages landed same session (2 hook corrections
-caught); probe @7500 = 11.7238 — the @7000 downward break holds.***
-
-**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE — babysit exit 0
-×2 (19:08, 19:21), 8 procs, ~75.3 GiB ×4 vs 77 bar, windows
-20.4–23.7 st/min, s/step 2.55–2.59, step 7500 / ~23/310 GPU-h.
-**Probe ladder 11.32@4500 → 12.65@5000 → 12.12@5500 → 12.59@6000 →
-12.60@6500 → 11.69@7000 → 11.72@7500**: the downward break at 7000
-is confirmed not a one-off; train_mae fell again (12.67@7000 →
-12.49@7500). No escalation, nothing near a kill line. Endpoint
-~08-12 ~17:00Z → chained k4l2 panel. LOCAL GPU free.
-
-**Steering**: none new — `read` empty at 19:08 and 19:21
-(unfiltered, via babysit); history = our own posts only, no
-reactions. Last owner message remains the answered 16:42Z ticket
-question. 13:48Z gate default (let run, gate 310) governs.
-
-**Done**: **`lit-radar-0814` CLOSED** (commit `40719b0`, check 598
-green): all 5 banked hooks deep-read with Papers pages same session
-— Hyperball 2606.16899 (`hyperball-optimization.md`; R⋆ ∝ √(η/λ)
-third independent derivation of the AdamC flat-norm signature +
-grad-side test → the adamc watch is now TWO-SIDED, decay-inert trap
-named, 2 free offline probes banked), Anytime Pretraining
-2602.03702 (`anytime-pretraining.md`; hook misattribution to
-Defazio CORRECTED; decay ≡ weight averaging → #3 horizon-churn
-recipe + mid-run-probe chart-note), VLA-FAIL 2606.21386
-(`vla-fail.md`; demo-anchored Mahalanobis + chunk-overlap
-consistency → #6 mechanism class outside the closed kill rule,
-LLMD-as-selector named cheapest affirmative arm; #22 seam read
-published as a detector + 3 borrowable deltas), FPO 2510.09976
-ICRA26 (`fpo-flow-policy-optimization.md`; likelihood-free CFM-loss
-ratio → #16 RL-pole entry 6, gradient-route-carries ablation −46 vs
-−7 pp), X-Tokenizer 2606.14752 (`x-tokenizer.md`; tokens NEVER
-executed at inference — hook corrected; learned-VQ null in the
-executable role → #5 gate stands + 2 v3 riders; #17 zero-commitment
-corner). Ideas #3/#5/#6/#16/#17/#22 fed. Refill sweep ran
-in-session with id verification → `lit-radar-0815` queued (5
-dup-checked hooks + 5 verified spares). Blog built + Space pushed,
-200 ×5 verified; in-channel post 19:24Z. Queue validate green depth
-3.
-
-**Next**: `queue_cli.py next` → `lit-radar-0815` (CPU, any GPU-busy
-window); probe watch routine at next tick (@8000+, whether the
-sub-band level holds). adamc endpoint ~08-12 ~17:00Z → chained k4l2
-panel. fjoint stays owner-gated post-endpoint. `run_work_next`
-armed.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -158,17 +167,6 @@ call — no endpoint, no chained evals)**). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
-Session 2026-08-09 19:25–19:3xZ (tick, babysit; 0 new GPU-h —
-adamc_100k rides, 23.1/310): run healthy at step 7560 — babysit exit
-0, 8 procs, ~75.3 GiB ×4 vs 77, window 21.6 st/min. Probe ladder
-unchanged since @7500 = 11.7238 (the @7000 downward break holds,
-train_mae 12.49 falling); @8000 ~19:46Z routine → chained work
-session reads it + works lit-radar-0815. Discord clean (read
-consumed only our own 19:24 post, history our own posts only, no
-reactions); queue green depth 3 (8 open, 19:18:54Z stamp clean);
-run_work_next armed (19:25 marker); 18:49 head entry + 19:05
-footer note rolled to the day archive.
-
 Session 2026-08-09 19:41–19:5xZ (tick, babysit; 0 new GPU-h —
 adamc_100k rides, 24.1/310): orphan audit — the 19:3x work session
 (lit-radar-0815 close, 5 papers pages, commit c53e517) died at turn
@@ -181,3 +179,16 @@ babysit exit 0, 22.1 st/min window, vram 75.3/77. Probe@8000 =
 11.32@4500 floor, train_mae 12.41 falling. babysit.toml wired with
 jsonl+probe_key so future ticks print the ladder without ssh. Queue
 green depth 3; run_work_next re-armed for lit-radar-0816.
+
+Session 2026-08-09 19:49–20:3xZ (work, bounded; +~0.6 GPU-h local so
+far — tiny10k launched 20:12Z, rides to ~05:4xZ ≈ 9.5 GPU-h ≤ 15
+gate; adamc rides, 27.4/310; explore): owner steering ×5 handled
+live in conversational mode (GPU-options menu → "let's train
+something" → T1 approved → wall-clock arithmetic → owner reverted
+to matched-F 10k pre-step-1). T1 tiny-expert rung LIVE local (86.8M
+vs 367.5M params, b48c12 fit-ladder green 13.0 GiB, 2.8–3.0 s/step,
+95–98% util). Trajectory-dataset survey post shipped same session
+(4 subagent tracks, 855 in-scope hub hours vs our 229, MolmoAct2
+diff = top recommendation); idea #9 fed. One stale-queue-title
+audit catch owned in-channel (#20 already fixed). Commit beb8659;
+check 598 ×2; blog + Space pushed, pages 200.

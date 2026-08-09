@@ -2,13 +2,13 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T19:39:56Z
+**Updated:** 2026-08-09T20:16:00Z
 
-**Depth call:** depth >=2 at 19:39Z 08-09: adamc-100k babysit to ~08-12 (live) + lit-radar-0816 (cpu, actionable, 5 verified dup-checked hooks + 5 spares) + docs-pass tail (owner-side only) + fjoint owner-gated; lit-radar-0815 CLOSED this session (5 pages, 3 hook corrections)
+**Depth call:** depth >=2 at 20:14Z 08-09: tiny-expert-40k (gpu-local LIVE) + owner trajectory-datasets survey (cpu, in flight this session, 4 research subagents out) + adamc-100k babysit to ~08-12 (live) + lit-radar-0816 (cpu, 5 verified hooks) + docs-pass tail (owner-side only)
 
-**8 open** (Live 1 · Queued 3 · Blocked 4 · Done 85)
+**10 open** (Live 2 · Queued 4 · Blocked 4 · Done 85)
 
-## 🔴 Live (1)
+## 🔴 Live (2)
 
 *running right now (GPU or owner-window)*
 
@@ -26,7 +26,21 @@ OWNER RUN LIVE (launched 13:30Z 08-09): fontaine_molmo2_adamc_100k_ddp4 — base
 
 ---
 
-## 🟢 Queued (3)
+**`tiny-expert-capacity-10k`** · `gpu-local`
+
+T1 tiny-expert capacity rung, FINAL DESIGN (owner yes 19:59:04Z; 40k/biggest-batch amendments REVERTED by owner 20:08:53Z 'Let's do your original plan' after the wall-clock arithmetic
+
+**boundary:** fit ladder ~20:3xZ -&gt; 10k run ~10-11 h -&gt; endpoint ~06-07Z 08-10 + ~1.3 h eval; first-poll s/step + vram + projection in-channel; babysit tiny10k entry live, gate 15 GPU-h · [pre-reg](posts/2026-08-09-prereg-tiny-expert-40k.md)
+
+<details><summary>full record</summary>
+
+T1 tiny-expert capacity rung, FINAL DESIGN (owner yes 19:59:04Z; 40k/biggest-batch amendments REVERTED by owner 20:08:53Z 'Let's do your original plan' after the wall-clock arithmetic — no training step had run): h256/d12 width-only contrast vs F (tap surface + adapters identical; depth structural), frozen 60k trunk (backbone sha e6ed783b verified), LOCAL 1xH100 unit fontaine-tiny10k, 10k steps @ eff-48 (48x1 vs F 12x4, same LR schedule), saves 1250 (F cadence). Launcher launch_local_fontaine_molmo2_flow_tiny_h256_10k_1xh100.sh: fit ladder b48c12 -&gt; b48c24 -&gt; 10k run -&gt; chained panel_v2 @10000. Frozen read: Delta_capacity@10k fully matched (tiny minus F, paired per-frame CI95) vs banked F@10k 9.4157 + state-copy execution oracle; bands |d|&lt;=0.3 prior confirmed / &gt;=1.0 capacity binds. LAUNCH HISTORY: 20:03Z rc2 (--zero1/--chunk-grad-allreduce DDP-only guards, dropped, pre-reg amended); 20:05Z b96 ladder started, owner re-scoped pre-step-1; 20:1xZ relaunch at final design.
+
+</details>
+
+---
+
+## 🟢 Queued (4)
 
 *ready — waiting on a window or a boundary*
 
@@ -67,6 +81,20 @@ Docs pass tail (from the 08-09 staleness audit, deferred at my discretion): (1) 
 <details><summary>full record</summary>
 
 Docs pass tail (from the 08-09 staleness audit, deferred at my discretion): (1) sweep agent-internal vocabulary out of shipped bijou/ source comments (eval/leakage.py 'fontaine/charter.md', eval/subgoal_scoring.py '#6 rung (b)', train.py 'K arm of the attach-screen'/'#20'); (2) architecture.md S6: enumerate the eval-system surface (frozen sample plans, --dump-draws, noise tickets, --mask-state, subgoal modes, --smolvla baseline, leakage checker) + full rollout flag docs (or rewrite rollout_so101.md properly); (3) S1: a real Molmo2 prompt-format subsection (ChatML, image hoisting, id 151645 bos) instead of the pointer note; (4) confirm docs/notes/2026-08-06 S3 failing-test claim resolved; (5) wandb API key rotation still owed (S8 hygiene note). | PARTIAL 15:5xZ 08-09: (2) architecture.md S6 eval-system surface enumerated (plans/dumps/tickets/mask-state/subgoal modes/smolvla/leakage) + rollout noise/draws/async flags incl. new --noise-ticket, rollout_so101.md flag list updated; (3) S1 Molmo2 prompt-format subsection landed (ChatML hoist, [kind camera|Image i] groups, bos=151645 quirk, native tokenization); (4) 2026-08-06 note's failing-test claim VERIFIED RESOLVED (test passes, note annotated); (1) bijou/ vocab sweep IN FLIGHT via subagent; (5) wandb key rotation still owed (owner-side action) | SUBITEM 1 DONE 15:5xZ (51a692e, subagent sweep + review): 14 bijou/ files de-jargoned (comments/docstrings/help/runtime strings; paths kept; check.py 598 green, no test edits needed). Remaining: ONLY (5) wandb API key rotation — owner-side action, flagged in-channel at close-out
+
+</details>
+
+---
+
+**`owner-trajectory-datasets-survey-0809`** · `cpu`
+
+OWNER STEERING 19:58:05Z 08-09: investigate additional trajectory datasets we could train on
+
+**boundary:** opened by owner message 19:58Z 08-09; execute same session alongside the local training launch
+
+<details><summary>full record</summary>
+
+OWNER STEERING 19:58:05Z 08-09: investigate additional trajectory datasets we could train on — ideally SO-101, but also look more generally. Deliverable: a detailed blog post with links to the datasets, statistics (episodes/hours/tasks/embodiments/modalities), brief descriptions, and an assessment of what is actually usable for our training recipes (community_curated_v0 is the current substrate). Post link in-channel when it lands.
 
 </details>
 
