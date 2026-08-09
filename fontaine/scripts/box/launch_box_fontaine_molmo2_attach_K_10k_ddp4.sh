@@ -34,7 +34,7 @@
 #   signal; it feeds read 4.
 # CHAINED: panel-v2 eval (Delta_seam K side) + the AR-VIEW
 #   materialization + greedy AR panel on the phase-1 k4l2 plan — read
-#   4's trunk-drift number vs the 40k endpoint AR panel (band 0.3).
+#   4's trunk-drift number vs the 60k endpoint AR panel (band 0.3).
 # babysit.toml: uncomment the prepared attach_K entry + fill
 #   started_utc AT LAUNCH; first-poll util+rate check per standing rule.
 set -euo pipefail
@@ -46,7 +46,7 @@ mkdir -p outputs/train reports "$HOME/logs"
 
 : "${K_MEM_READY:?K arm refused: set K_MEM_READY=1 only after #20 activation checkpointing landed AND smoke_attach_k_ddp4.sh ran GREEN at this BATCH (record: fontaine/harness/state/k_mem_ready)}"
 
-ENDPOINT=outputs/train/fontaine_molmo2_ar_40k_ddp4/step_040000
+ENDPOINT=outputs/train/fontaine_molmo2_ar_60k_ddp4/step_060000  # REPOINTED per amendment 2 (60k read IMPROVED -0.1388, 2026-08-09)
 PLAN_V2=plans/holdout_curated_v0_k4l2_panel_v2.json
 PLAN_AR=plans/holdout_curated_v0_k4l2.json
 DOWNSHIFT_MARKER=fontaine/harness/state/attach_screen_5k_downshift
@@ -169,7 +169,7 @@ name="eval__${RUN}__step_${ENDPOINT_STEP}__panel_v2_heun30_draws1_stable"
 
 # Chained 2/2: READ 4 — trunk-drift. Materialize the AR view of the
 # joint checkpoint (rider := decoder) and greedy-eval it on the SAME
-# k4l2 plan/stems family as the 40k endpoint AR number. Band: |Δ_AR|
+# k4l2 plan/stems family as the 60k endpoint AR number. Band: |Δ_AR|
 # <= 0.3 (frozen); a K win that breaks the band escalates to owner
 # steer with AEGIS projection as the named (banked, unbuilt) repair.
 .venv/bin/python fontaine/scripts/materialize_joint_ar_view.py --checkpoint "$CKPT"

@@ -24,10 +24,19 @@ first_mae ≤ 1.6 · ☆☆☆ mainline adoption.
 | 5 | AR-100k, draws-10 mean, T=1.0 | 5.6515 | 1.9477 | 10 (serial) | 2107.3 | 7993.0 | [readout](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__draws10_t1_ar100k_k4l2.json) |
 | 6 | AR-100k, greedy decode (deployment anchor) | 5.8026 | 2.1431 | 1 (serial) | 247.0 | 2156.6 | [report](https://mcobzarenco-fontaine-blog.static.hf.space/reports/eval__bijou_arb_rcond_100k_ddp4__step_100000__panel_k4l2.html) |
 | 7 | **Flow teacher @80k, Heun-30, single draw (ticket 33)** | **5.6468** | 1.8963 | 30 | 115.7³ | 1234.0³ | [results](posts/2026-08-08-goldenticket-results.md) |
-| 8 | **Molmo2 AR 40k, greedy decode** | 6.0079 | 2.1871 | 1 (serial) | 143.8⁴ | 678.1⁴ | [results](posts/2026-08-08-molmo2-endpoint-results.md) |
-| 9 | Molmo2 AR 40k, draws-10 mean, T=1.0 | 5.8492 | 1.9736 | 10 (serial) | 1191.2⁴ | 6291.3⁴ | [readout](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__draws10_t1_molmo2_40k_k4l2.json) |
-| 10 | Flow teacher @80k, Heun-30, single draw (stable-key) | 6.5997 | 1.9355 | 30 | 115.7 | 1234.0 | [rebank](posts/2026-08-06-stablekey-rebank-results.md) |
-| 11 | state-copy (control) | 11.785 | 2.620 | 0 | — | — | banked, byte-matched every eval |
+| 8 | **Molmo2 AR 60k, greedy decode** | **5.8602** | **2.0719** | 1 (serial) | 143.8⁴ | 678.1⁴ | [results](posts/2026-08-09-molmo2-60k-results.md) |
+| 9 | Molmo2 AR 40k, greedy decode | 6.0079 | 2.1871 | 1 (serial) | 143.8⁴ | 678.1⁴ | [results](posts/2026-08-08-molmo2-endpoint-results.md) |
+| 10 | Molmo2 AR 40k, draws-10 mean, T=1.0 | 5.8492 | 1.9736 | 10 (serial) | 1191.2⁴ | 6291.3⁴ | [readout](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__draws10_t1_molmo2_40k_k4l2.json) |
+| 11 | Flow teacher @80k, Heun-30, single draw (stable-key) | 6.5997 | 1.9355 | 30 | 115.7 | 1234.0 | [rebank](posts/2026-08-06-stablekey-rebank-results.md) |
+| 12 | state-copy (control) | 11.785 | 2.620 | 0 | — | — | banked, byte-matched every eval |
+
+**Row 8 added 2026-08-09** (60k continuation read): +20k fresh-data
+steps on the Molmo2 trunk, paired Δ(60k−40k) **−0.1388 [CI95
+−0.194, −0.090]** on 17,204 core frames — IMPROVED; the AR-100k
+greedy bar (row 6) is NOT yet passed (+0.058 chunk, cross-trunk
+unpaired; first_mae 2.0719 is already below the 100k's 2.1431).
+Decode cost columns inherited from the 40k rows (same architecture
+and decode config, ⁴).
 
 **Row 2 re-seated 2026-08-08** (noise-ladder seating read, paired
 per-frame): the mean-of-**top-10-tickets** ensemble replaces the
@@ -47,7 +56,7 @@ ensemble by 0.18 — the distillation target moved.
 pre-registered expectations met): AR mean-of-10 buys −0.145 [CI95
 −0.182, −0.109] — real but ~9× smaller than the flow families' draws
 gain, the pre-registered mean-collapse shape (greedy AR decode
-already sits near the predictive mean). **Row 8 landed 2026-08-08**
+already sits near the predictive mean). **Row 9 landed 2026-08-08**
 (endpoint chained eval; frozen Read 1 = BEATS its own-topology E2B
 control 7.7966 by paired −1.717 [CI −1.80, −1.63] → phase-2
 flow-trunk candidate): the Molmo2 trunk at 40k sits 0.21 behind
@@ -58,7 +67,7 @@ complement rows: paired −0.924 [CI −0.985, −0.866] vs stable-key)
 captures ~75% of the mean-of-10 gain at 1/10th the draws; keying
 `ticket`, effect directional not norm (norm rank 29/64). ³ cost cells
 inherited from the stable-key single-draw row — identical decode
-config, only the noise source differs. **Row 9 landed 2026-08-08**
+config, only the noise source differs. **Row 10 landed 2026-08-08**
 (#19 molmo2 draws arm, all pre-registered expectations met): molmo2
 mean-of-10 buys Δ_AR −0.154 [CI95 −0.195, −0.113] — the same
 mean-collapse shape as AR-100k's −0.145, replicated on a second AR
@@ -68,7 +77,7 @@ byte-matched to the panel stems, record-only extension of the
 pre-reg's registered set — other rows were measured on the local
 1×H100; same GPU model, cross-machine deltas are directional):
 `analysis__leaderboard_decode_microbench_molmo2.json`. The mtime
-caveat on row 8 is retired. The T-sensitivity rungs (T ∈ {0.5, 0.7,
+caveat on row 9 is retired. The T-sensitivity rungs (T ∈ {0.5, 0.7,
 1.3}) are **record-only by pre-registration** and never enter the
 leaderboard — dT diagnostic only.
 
@@ -157,7 +166,8 @@ clean.*
 | run | steps | panel MAE | first_mae | notes |
 |---|---|---|---|---|
 | `fontaine_arb_rcond_40k_1xh100` (A-s0, aux-on control) | 40k | 7.7966 | 3.9422 | **own-topology baseline**; [results](posts/2026-08-06-box-batch-results.md) |
-| **`fontaine_molmo2_ar_40k_ddp4`** (Molmo2-4B trunk, 4×DDP eff-48) | 40k | **6.0079** | **2.1871** | **BEATS A-s0 paired −1.717 [CI −1.80, −1.63] → phase-2 flow-trunk candidate**; topology differs from the eff-10 arms (recorded); [results](posts/2026-08-08-molmo2-endpoint-results.md) |
+| **`fontaine_molmo2_ar_60k_ddp4`** (Molmo2-4B trunk, 4×DDP eff-48, +20k continuation) | 60k | **5.8602** | **2.0719** | **IMPROVED over 40k paired −0.1388 [CI −0.194, −0.090] → phase-2 flow-trunk candidate + attach warm-start (repoint amendment 3)**; [results](posts/2026-08-09-molmo2-60k-results.md) |
+| `fontaine_molmo2_ar_40k_ddp4` (Molmo2-4B trunk, 4×DDP eff-48) | 40k | 6.0079 | 2.1871 | BEATS A-s0 paired −1.717 [CI −1.80, −1.63]; superseded as warm-start by the 60k endpoint; topology differs from the eff-10 arms (recorded); [results](posts/2026-08-08-molmo2-endpoint-results.md) |
 | `fontaine_arb_rcond_40k_1xh100_s1` | 40k | 7.8052 | 4.1118 | seed replicate |
 | `fontaine_arb_rcond_40k_1xh100_s2` | 40k | 7.7355 | 3.9377 | seed replicate; σ_seed(chunk)=0.038, max pairwise Δ=0.0697 |
 | `fontaine_arb_rcond_auxoff_40k_1xh100` (B) | 40k | 8.2989 | 3.5009 | aux-off: **+0.462 vs A-s0, CI [0.387, 0.537], REAL** (7.5× replicate threshold, LORO-coherent); first_mae inversion + cond-sens 1.13 vs 1.86–2.00 |

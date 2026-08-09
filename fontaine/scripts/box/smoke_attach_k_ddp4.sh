@@ -6,7 +6,7 @@
 #   with no expert riding, so "it probably fits checkpointed" is not a
 #   measurement.
 # WHAT IT RUNS: the EXACT K recipe (launch_box_fontaine_molmo2_attach_K_
-#   10k_ddp4.sh flags verbatim — live trunk warm-started from the 40k
+#   10k_ddp4.sh flags verbatim — live trunk warm-started from the 60k
 #   endpoint, --joint-ce, --seam-stop-grad, --activation-checkpointing,
 #   zero1 + chunked backward + chunk-grad-allreduce) for 150 steps per
 #   rung, with eval at step 100 (probe decode path) and save at step 100
@@ -42,7 +42,7 @@ export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 export WANDB_MODE=offline
 cd /home/ubuntu/flow-matching
 
-ENDPOINT=outputs/train/fontaine_molmo2_ar_40k_ddp4/step_040000
+ENDPOINT=outputs/train/fontaine_molmo2_ar_60k_ddp4/step_060000  # REPOINTED per amendment 2 (60k read IMPROVED -0.1388, 2026-08-09)
 MARKER=fontaine/harness/state/k_mem_ready
 [ -d "$ENDPOINT" ] || { echo "no endpoint checkpoint $ENDPOINT — the ladder runs the real warm start; abort"; exit 1; }
 mkdir -p fontaine/harness/state

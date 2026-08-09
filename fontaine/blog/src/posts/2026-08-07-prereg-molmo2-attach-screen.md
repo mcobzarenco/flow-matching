@@ -253,3 +253,28 @@ interval (<0.2% overhead), and touching the oracle-gated save path
 the day before a 50–70 GPU-h screen buys ~a minute total across a
 run. Gates, arms, frozen reads and the decision rule stand as
 posted.
+
+## Amendment 3 (2026-08-09 ~00:5xZ, pre-launch — warm-start repoint to 60k)
+
+Executes the 60k continuation pre-reg's frozen decision rule
+(posted before that run launched): its read 1 came back **IMPROVED
+— paired Δ(60k−40k) −0.1388, CI95 [−0.194, −0.090], 17,204 core
+frames** (analysis banked,
+`analysis__molmo2_60k_vs_40k_k4l2.json`), so **the screen's
+warm-start checkpoint repoints from `step_040000` to
+`fontaine_molmo2_ar_60k_ddp4/step_060000`**. The AR-100k bar was
+NOT passed (5.8602 vs 5.8026, +0.058, cross-trunk unpaired) — noted
+honestly, per that pre-reg the repoint does not depend on it.
+
+Mechanics of the repoint, all landed in this amendment's commit:
+both arm launchers' and the K-smoke ladder's `ENDPOINT` lines;
+`attach_seam_results.py`'s read-4 drift comparator now pulls the
+**60k** endpoint panel json (band 0.3 unchanged; oracle re-run
+green). Consequences per the original boundary text: **the K-smoke
+memory ladder must re-run GREEN at the 60k warm start before either
+arm launches** (`k_mem_ready` is already absent — the ladder
+deletes and re-earns it); phase-1 CE verbatim, seam, α, matched
+steps/batch, gates, frozen reads and the decision rule all stand as
+posted. The trunk-drift band's comparator value changes with the
+repoint (6.0079 → 5.8602) because read 4 measures drift *from the
+warm-start trunk*, which is now the 60k endpoint.

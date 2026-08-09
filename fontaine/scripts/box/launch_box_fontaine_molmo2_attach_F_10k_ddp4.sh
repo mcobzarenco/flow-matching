@@ -5,7 +5,7 @@
 #   before the K launcher; the seam is the ONLY contrast between arms.
 # ARM: flow expert (h1024/8h/4096/8xh, adaRMS, bidirectional, depth 12
 #   structural from the pinned tap rule: 12 taps @ stride 3, layers
-#   2,5,...,35) reading residual taps off the HARD-FROZEN molmo2 40k
+#   2,5,...,35) reading residual taps off the HARD-FROZEN molmo2 60k
 #   endpoint trunk via --backbone-init-from. Data/topology = phase 1:
 #   eff-48 (B12 x 4), same split/seed, eval 256 @ 500, save @ 1250
 #   (pre-reg amendment 2: async saves landed post-pre-reg; cadence
@@ -34,7 +34,7 @@ export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 cd /home/ubuntu/flow-matching
 mkdir -p outputs/train reports "$HOME/logs"
 
-ENDPOINT=outputs/train/fontaine_molmo2_ar_40k_ddp4/step_040000
+ENDPOINT=outputs/train/fontaine_molmo2_ar_60k_ddp4/step_060000  # REPOINTED per amendment 2 (60k read IMPROVED -0.1388, 2026-08-09)
 PLAN_V2=plans/holdout_curated_v0_k4l2_panel_v2.json
 DOWNSHIFT_MARKER=fontaine/harness/state/attach_screen_5k_downshift
 BATCH="${BATCH:-12}"

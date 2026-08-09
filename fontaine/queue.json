@@ -1,6 +1,6 @@
 {
- "updated_utc": "2026-08-09T00:25:00+00:00",
- "depth_reason": "depth 3 at 00:2xZ 08-09: fields panel LIVE (box, rc=0 ~00:5xZ); queued: molmo2-perf-pass1-exec (box ladder, opens post-fields-panel), fieldcond-subgoal-meta-report (CPU, now carries the rung-b' NO-SCORER close); idea6 cleancand rung CLOSED this session (E6 falsified, NO-SCORER routed)",
+ "updated_utc": "2026-08-09T01:00:00+00:00",
+ "depth_reason": "depth 3 at 01:0xZ 08-09: fields panel LIVE (box, rc=0 ~02:0xZ); queued: molmo2-perf-pass1-exec (box ladder, post-fields-panel), idea4-attach-k-smoke-ladder re-run at 60k warm start (repoint amendment 3 executed this session), fieldcond-subgoal-meta-report (CPU); closed this session: idea6 cleancand rung (E6 falsified NO-SCORER) + molmo2-continuation-60k (IMPROVED, repoint executed)",
  "items": [
   {
    "id": "owner-molmo2-perf-review",
@@ -117,7 +117,7 @@
    "status": "blocked",
    "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-molmo2-attach-screen.md",
    "owner_hold": false,
-   "boundary": "opens strictly after: molmo2_ar40k endpoint saves -> chained greedy + #19 draws arm (that pre-reg's box obligations first) -> K smoke ladder green (#20 checkpointing LANDED 08-07) -> molmo2-stage2-attachment-decision opens (owner steer window) \u2014 REQUEUED BEHIND the molmo2 60k continuation (owner priority call 09:04Z 08-08): opens when fontaine-molmo2-60k lands (~23Z 08-08) and the 60k-vs-40k read decides the warm-start checkpoint (repoint amendment + K-smoke re-run if 60k wins)"
+   "boundary": "REPOINTED 2026-08-09 00:5xZ (60k read IMPROVED -0.1388 [CI -0.194,-0.090], analysis__molmo2_60k_vs_40k_k4l2.json; attach pre-reg amendment 3): warm-start = fontaine_molmo2_ar_60k_ddp4/step_060000, launchers + smoke ladder + attach_seam_results drift comparator repointed (oracle green). Opens: K-smoke ladder re-run GREEN at the 60k warm start (box, after fields panel + perf-pass1 window) -> then owner steer window (molmo2-stage2-attachment-decision) -> arms sequential F then K. Screen launch strictly after the ladder verdict (matched-downshift rule)."
   },
   {
    "id": "idea4-attach-k-smoke-ladder",
@@ -126,7 +126,7 @@
    "status": "blocked",
    "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-molmo2-attach-screen.md",
    "owner_hold": false,
-   "boundary": "opens at molmo2_ar40k endpoint (~2026-08-08), after the #19 draws-arm box obligations; needs the endpoint checkpoint (warm-start is part of the measured shape); GREEN required BEFORE EITHER arm launches \u2014 the ladder's batch verdict is matched (a sub-B12 green downshifts F too, so F must not start at B12 first) \u2014 REQUEUED BEHIND the molmo2 60k continuation (owner priority call 09:04Z 08-08): opens when fontaine-molmo2-60k lands (~23Z 08-08) and the 60k-vs-40k read decides the warm-start checkpoint (repoint amendment + K-smoke re-run if 60k wins)"
+   "boundary": "REPOINTED 2026-08-09 00:5xZ (60k read IMPROVED -0.1388 [CI -0.194,-0.090], analysis__molmo2_60k_vs_40k_k4l2.json; attach pre-reg amendment 3): warm-start = fontaine_molmo2_ar_60k_ddp4/step_060000, launchers + smoke ladder + attach_seam_results drift comparator repointed (oracle green). Opens: K-smoke ladder re-run GREEN at the 60k warm start (box, after fields panel + perf-pass1 window) -> then owner steer window (molmo2-stage2-attachment-decision) -> arms sequential F then K. Ladder itself is the next box item after perf-pass1."
   },
   {
    "id": "molmo2-stage2-attachment-decision",
@@ -135,7 +135,7 @@
    "status": "blocked",
    "prereg": null,
    "owner_hold": false,
-   "boundary": "opens at molmo2_ar40k endpoint (~2026-08-08)"
+   "boundary": "opens now that the 60k read is banked (repoint executed, amendment 3); owner steer window before the screen launches \u2014 K-smoke re-run at 60k warm start is the remaining mechanical gate"
   },
   {
    "id": "box-home-sweep",
@@ -465,10 +465,10 @@
    "id": "molmo2-continuation-60k",
    "title": "OWNER STEERING 08-08 08:49Z (discussion requested, not a launch order): molmo2 +20k continuation \u2014 owner proposal: --resume step_040000 to --steps 60000, --rewarmup-steps 1000, NEW data seed (fresh shuffle; rule banked in memory AND already mechanized in bijou.train check_resume_seed which hard-aborts on seed reuse). Facts for the discussion: matched-steps read says the trunk leads (40k molmo2 6.0079 vs A-s0 7.7966, paired -1.717); the -0.205 gap to AR-100k (5.8026) is a 2.5x-steps confound; probe curve 5.91@26.5k -> 6.2075@40k = the cosine floor tail bought nothing (the exact published setup for re-warm + re-decay, already implemented in lr_lambda for extensions). Cost ~49 GPU-h (~12.2h box wall at 2.2 s/step). DRAFT the pre-reg after the Discord discussion converges: primary = 60k greedy panel paired vs the 40k endpoint npz + the AR-100k 5.8026 bar quoted; probe kill line vs 6.2075 sustained; epochs-seen arithmetic pinned; async saves default-on; box sequencing vs the #4 attach chain is the owner decision in flight \u2014 OWNER GO 09:04Z ('let's prio the 60k molmo2 run as you described it', caught 10:02Z after a 50-min poll-output miss); PRE-REG POSTED + LAUNCHED this session: launch_box_fontaine_molmo2_ar_60k_resume_ddp4.sh (box 4xDDP, unit fontaine-molmo2-60k via run_detached; --resume step_040000 --steps 60000 --rewarmup-steps 1000 --seed 1, all else byte-identical to the 40k launcher; cosine-over-60k restarts LR at 0.332x peak; E1 banner gate + resume-banner check; K1 probe kill 8.2075 x3 after 41.5k; ~49 GPU-h <= 60 ceiling; chained 60k endpoint greedy panel w/ dumps). Attach chain requeued strictly behind it per the owner priority; frozen reads incl. paired 60k-vs-40k CI + the AR-100k 5.8026 bar + the attach-repoint decision rule",
    "class": "cpu",
-   "status": "live",
+   "status": "done",
    "prereg": "fontaine/blog/src/posts/2026-08-08-prereg-molmo2-ar-60k-continuation.md",
    "owner_hold": false,
-   "boundary": "launched ~10:1xZ 08-08; 20k steps at ~2.2 s/step ~= 12.2h -> endpoint ~22:3x-23:0xZ 08-08 + chained panel eval; babysit entry molmo2_ar60k live; first babysit validates async-save lines + util/rate"
+   "boundary": "CLOSED 2026-08-09 00:5xZ: training done 23:21Z 08-08 (step 60000, ~49 <= 60 GPU-h), chained eval 23:49Z, canonical read EXECUTED via new molmo2_60k_results.py (oracle-gated) \u2014 read 1 IMPROVED paired -0.1388 [CI -0.194,-0.090] n=17204; read 2 AR-100k bar NOT passed (+0.058 chunk; first_mae 2.0719 already under 2.1431); read 4 no new probe low (6.0062@57k vs 5.91@26.5k); decision executed: attach repoint to step_060000 (amendment 3), K-smoke re-run required; leaderboard row 8 + board row; results post 2026-08-09-molmo2-60k-results.md"
   },
   {
    "id": "snapflow-visual-report",

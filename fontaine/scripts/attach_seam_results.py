@@ -20,7 +20,7 @@ Implements exactly the frozen reads of the attachment seam screen pre-reg
                     orthogonal-projection repair is the named escalation
                     (banked, NOT built); adoption waits for owner steer.
   * READ 3 (context anchors, quoted beside, never the decision): the
-    molmo2 40k endpoint greedy AR panel number (pulled from the drift
+    molmo2 60k endpoint greedy AR panel number (pulled from the drift
     read's endpoint JSON), gemma flow lineage 6.5997 @80k stable-key
     (cross-trunk, directional only), and state-copy as EXECUTION ORACLE:
     both arms must beat it decisively or the screen is VOID, not merely
@@ -28,7 +28,7 @@ Implements exactly the frozen reads of the attachment seam screen pre-reg
     least ``VOID_MARGIN`` (1.0) below the same-npz state-copy pooled
     number — a healthy flow arm clears it by ~4-5.
   * READ 4 (trunk-drift diagnostic, K only): greedy AR panel eval of
-    K's materialized ar_view at the screen end vs the 40k endpoint AR
+    K's materialized ar_view at the screen end vs the 60k endpoint AR
     number, same k4l2 plan family. Band, frozen: |Delta_AR| <= 0.3.
   * READ 5 (record-only): first_mae mirrors of read 1 and per-step-in-
     horizon MAE curves for both arms from the npzs.
@@ -93,7 +93,7 @@ abr = _sibling("arch_batch_results")
 F_RUN = "fontaine_molmo2_flow_frozen_{k}k_ddp4"
 K_RUN = "fontaine_molmo2_flow_kijoint_{k}k_ddp4"
 ENDPOINT_JSON = (
-    "reports/eval__fontaine_molmo2_ar_40k_ddp4__step_040000__panel_curated_v0_k4l2.json"
+    "reports/eval__fontaine_molmo2_ar_60k_ddp4__step_060000__panel_curated_v0_k4l2.json"
 )
 OUT_DEFAULT = "reports/analysis__attach_seam_panel_v2.json"
 
@@ -125,7 +125,7 @@ def default_paths(steps: int) -> dict:
 
 def load_drift_json(src: str | Path | dict, label: str) -> dict:
     """Strict loader for the k4l2 greedy-AR JSONs the drift read consumes
-    (K ar_view at screen end; molmo2 40k endpoint). Plan + frame-count
+    (K ar_view at screen end; molmo2 60k endpoint). Plan + frame-count
     semantics must match the anchored k4l2 family, or we stop."""
     d = src if isinstance(src, dict) else json.loads(Path(src).read_text())
     want = {
@@ -198,7 +198,7 @@ def drift_read(view: dict, endpoint: dict) -> dict:
         "inside_band": bool(abs(d) <= DRIFT_BAND),
         "definition": (
             "greedy AR panel chunk_mae of K's materialized ar_view at the "
-            "screen end minus the molmo2 40k endpoint AR number, same k4l2 "
+            "screen end minus the molmo2 60k endpoint AR number, same k4l2 "
             f"plan family; frozen band |Delta_AR| <= {DRIFT_BAND}"
         ),
         "first_mae_delta_descriptive": round(

@@ -66,3 +66,4 @@ corrections are follow-up posts.
 - [2026-08-08 — Pre-reg: molmo2 perf pass 1 — the S-bundle](2026-08-08-prereg-molmo2-perf-pass1.md)
 - [2026-08-08 — Aliased frames, mined — and the subgoal gain doesn't live there](2026-08-08-framemining-aliased-frames.md)
 - [2026-08-09 — Subgoal-draws rung (b′) FALSIFIED: better subgoals exist, the scorer anti-selects (#6)](2026-08-09-subgoal-draws-cleanlist-results.md)
+- [2026-08-09 — Molmo2 60k continuation IMPROVED −0.139 paired; attach screen repoints to step_060000](2026-08-09-molmo2-60k-results.md)
