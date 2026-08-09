@@ -42,6 +42,7 @@ from bijou.molmo2.testing import write_tiny_text_checkpoint
 from bijou.train import (
     adamc_output_head_parameters,
     apply_adamc_weight_decay,
+    backbone_group_index,
     build_optimizer_param_groups,
     decay_split,
     resume_hyperparameter_notes,
@@ -312,3 +313,28 @@ def test_resume_notes_flag_adamc_governed_decay() -> None:
     )
     assert any("schedule-managed" in note and "GOVERNS" in note for note in notes)
     assert not any("0.0123" in note for note in notes)
+
+
+def test_backbone_group_index_tracks_the_group_table(tiny_checkpoint: Path) -> None:
+    """The lr_backbone log line must read the FIRST backbone group's lr.
+
+    Regression (owner catch 2026-08-09 15:02Z on the adamc_100k run):
+    the log site hardcoded index 1, which under adamc is the decoder
+    head group at --decoder-lr — lr_backbone printed 1e-4 while the
+    backbone trained (correctly) at 2e-5."""
+    model = bijou_model(tiny_checkpoint)
+    for optimizer_name in ("adamw", "adamc"):
+        _, cli_groups, _ = groups_of(model, optimizer_name)
+        index = backbone_group_index(cli_groups)
+        assert index is not None
+        name, lr, _ = cli_groups[index]
+        assert name == "backbone_text (decayed)"
+        assert lr == 2e-5
+    # The bug's exact misread: under adamc, group 1 is a DECODER group
+    # at the decoder lr — reading it as the backbone is the failure.
+    _, cli_groups, _ = groups_of(model, "adamc")
+    assert backbone_group_index(cli_groups) == 3
+    assert cli_groups[1][0] == "decoder head (standard decay)"
+    assert cli_groups[1][1] == 1e-4
+    # Frozen-backbone runs have no backbone group to log.
+    assert backbone_group_index(cli_groups[:3]) is None

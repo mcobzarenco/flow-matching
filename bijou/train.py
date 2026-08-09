@@ -719,6 +719,23 @@ def build_optimizer_param_groups(
     return param_groups, cli_groups, adamc_corrected
 
 
+def backbone_group_index(cli_groups: Sequence[tuple[str, float, float]]) -> int | None:
+    """Index of the first backbone param group, in construction order.
+
+    The decoder contributes ONE leading group under adamw but THREE
+    under adamc (hidden/head/no-decay), so a hardcoded index reads the
+    decoder head's lr as ``lr_backbone`` in adamc logs — the group
+    table is the only stable source."""
+    return next(
+        (
+            index
+            for index, (name, _, _) in enumerate(cli_groups)
+            if name.startswith("backbone_")
+        ),
+        None,
+    )
+
+
 def apply_adamc_weight_decay(
     optimizer: torch.optim.Optimizer,
     corrected_indices: Sequence[int],
@@ -4300,9 +4317,13 @@ def main() -> int:
                                 4,
                             )
                     if args.backbone_trained:
-                        # Group 1 is the first backbone group (same cosine
-                        # shape as the expert's, scaled to its base lr).
-                        record["lr_backbone"] = scheduler.get_last_lr()[1]
+                        # Same cosine shape as the expert's, scaled to the
+                        # backbone's base lr; the index comes from the group
+                        # table (adamc's decoder split shifts it — a
+                        # hardcoded 1 logged the decoder head's lr).
+                        index = backbone_group_index(cli_groups)
+                        assert index is not None  # backbone_trained
+                        record["lr_backbone"] = scheduler.get_last_lr()[index]
                     assert log_file is not None
                     print(json.dumps(record), flush=True)
                     log_file.write(json.dumps(record) + "\n")
