@@ -1,7 +1,46 @@
 # Now
 
+*Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-09 17:01–17:4xZ (real `date -u`) — work session
+(bounded): **#9 corpus continuity screen CLOSED at zero GPU
+(qualified null — post + charts live); adamc_100k step-5000 async
+save verified live end-to-end (captured 20.3 s, published 164.4 s
+behind the boundary, stepped through the write), probe 12.646@5000.***
 
+**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE — babysit exit 0
+twice (17:11, 17:28), 8 procs, ~75.3 GiB ×4 vs 77 bar, 23.3 st/min,
+15.2/310 GPU-h. **Step-5000 boundary caught**: probe ladder
+14.03@2500 → 12.07@3500 → 11.40@4000 → 11.32@4500 → **12.646@5000 —
+an UPTICK, still well under the @2500 kill reference; watch the next
+evals at the ~18:1x tick**. First async save verified: "captured in
+20.3s" → "saved …/step_005000 (async, 164.4s behind the boundary)",
+atomic publish, step 5020 logged mid-write. Endpoint ~08-12 ~17:00Z
+→ chained k4l2 panel. LOCAL GPU free.
+
+**Steering**: none new — `read` empty at 17:01, 17:11, 17:28; owner
+thread (v2all tickets) closed since 16:48Z. 13:48Z gate default (let
+run, gate 310) governs.
+
+**Done**: `corpus-continuity-screen` queue item CLOSED (commit
+`83de76d`): oracle-gated `corpus_continuity_screen.py` (VISTA
+three-regime scoring, rig-calibrated p99.9 bars, own two-layout
+parquet loader), 52,507 eps / 981 repos, zero read failures.
+Qualified null: teleport tail 123 eps (0.23%) = wrap census's two
+known repos + 42 new sub-300° dropout eps (0.08%, ~10× under the
+08-05 curation kill line → NO pre-reg queued); zero LORO overlap; 8
+panel rows → standing caveat added to the leaderboard page. Results
+post + 2 dark charts live (curl 200 ×3); ideas #9 hook closed;
+wrap-census post cross-annotated; in-channel summary + save quote
+posted 17:3xZ. Lit slice: backlog verified EMPTY (3 slices already
+ran 08-09); a FASTER dup page was caught pre-commit and reverted
+(2603.19199 = papers/async-execution-2.md); fresh-sweep item queued
+instead of forcing a thin sweep.
+
+**Next**: `queue_cli.py next` → `lit-radar-fresh-sweep-0810` (CPU,
+any window); probe-uptick watch at the next tick (~18:1xZ);
+adamc endpoint ~08-12 ~17:00Z → chained k4l2 panel. fjoint stays
+owner-gated post-endpoint. `run_work_next` armed.
 
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
@@ -77,46 +116,6 @@ depth 3, 8 open); blog built + Space pushed.
 quote ~17:2xZ (tick, `run_work_next` armed); adamc endpoint ~08-12
 ~17:00Z → chained k4l2 panel. fjoint stays owner-gated post-endpoint.
 
-*Updated 2026-08-09 16:10–16:4xZ (real `date -u`) — tick (babysit, held
-through the v2all landing): **adamc_100k healthy step 3240; v2-all
-ticket scoring LANDED 16:35:31Z (32,679 frames) — winner
-selection+subset diagnostics running detached, table post owed by the
-chained work session.***
-
-**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE — babysit exit 0, 8
-procs, ~75.3 GiB ×4 vs 77 bar, step 3240 @ 16:10, window 25.4 f/min,
-10.1/310 GPU-h; probe ladder unchanged (14.03@2500 = @10k kill-bar
-ref). Next boundary: **step-5000 async-save line ~17:2xZ, quote owed
-in-channel.** LOCAL GPU: `fontaine-ftrig-ticket64-v2all.service`
-COMPLETED 16:35:31Z (json + 2.27 GB draws npz in reports/).
-**HANDOFF — chained work session must**: (1) check
-`fontaine-ftrig-v2all-winner.service` (detached 16:37Z: runs
-`ftrig_ticket_winner.py --draws-npz <v2all draws> --out
-plans/ticket_ftrig4k_rigv2all_winner.npz --json
-reports/analysis__ftrig_ticket_selection_rigv2all.json` then
-`ftrig_ticket_v2all_subsets.py`); (2) post the owner table in-channel —
-v2all winner vs ticket 59 (holdout winner, 11.203 holdout) vs ticket33,
-+ subset diagnostics (train-rows vs heldout-rows ladders, Spearman
-rank agreement = the memorized-rows-sensitivity read); (3) upload
-`ticket_ftrig4k_rigv2all_winner.npz` per checkpoint rule; (4) blog
-build + Space push (this entry). CAUTION: the 16:05 work session died
-end-turn-waiting on watchers (known failure mode) — its subsets script
-is committed here; do NOT end-turn-wait, foreground-block instead.
-
-**Steering**: none new — `read` empty at 16:11, no reactions in
-history -n 5. 13:48Z gate default (let run, gate 310) governs.
-
-**Done**: babysit poll (exit 0); v2all ride-through + landing
-confirmed; detached winner/subsets launch; queue validate green depth
-3 (8 open); `run_work_next` armed; subsets script
-`fontaine/scripts/ftrig_ticket_v2all_subsets.py` (written by the 16:05
-work session, import-verified) committed.
-
-**Next**: chained work session → items (1)–(4) above, then step-5000
-save quote ~17:2xZ, then CPU queue (`corpus-continuity-screen` /
-`boundary-incompat-read-npz`). fjoint stays owner-gated
-post-adamc-endpoint (~08-12 ~17:00Z+).*
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -149,17 +148,6 @@ call — no endpoint, no chained evals)**). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
-Session 2026-08-09 15:59–16:1xZ (tick, babysit; 0 new GPU-h —
-adamc_100k rides, 9.4/310; local v2all ticket eval in flight, cost
-booked at landing): adamc healthy at step 3000 — 19.9 f/min, probe
-31.30@500 → 24.48@1000 → 16.87@1500 → 14.03@2500 (the @10k kill-bar
-reference), ~75 GiB ×4 vs 77. v2all selection 9.8k/32.7k frames,
-bursty-but-steady, left riding, ETA ~16:3xZ. Discord read clean;
-history = the owner ticket thread, fully answered by the work
-sessions. Queue green depth 3 (8 open, prior session's queue.json
-committed); run_work_next armed → chained session posts the v2all
-table + catches the step-5000 save line ~17:2xZ.
-
 Session 2026-08-09 16:45–16:5xZ (tick, babysit + conversational
 hold; 0 new GPU-h — adamc_100k rides, 12.4/310): run healthy at step
 4000 — 20.5 f/min window, ~75.3 GiB ×4 vs 77, probe ladder unchanged
@@ -169,3 +157,14 @@ answered in-channel 16:48Z with all three ticket vectors' paths;
 conversational hold kept via background history-watcher. Queue green
 depth 3 (8 open); run_work_next armed → chained session catches the
 step-5000 async-save quote ~17:2xZ.
+
+Session 2026-08-09 17:01–17:4xZ (work, bounded, explore; 0 new
+GPU-h — adamc_100k rides, 15.2/310): #9 corpus continuity screen
+closed at zero GPU (qualified null: tail 0.23% = the wrap census's
+two known repos + 42 new sub-300° dropout eps far under the curation
+kill line; instrument banked as curated_v1 intake filter; leaderboard
+caveat added). Step-5000 boundary caught live: async save
+end-to-end verified (20.3 s capture / 164.4 s behind-boundary atomic
+publish), probe 12.646@5000 uptick flagged for the next tick. Lit
+backlog verified empty → fresh-sweep item queued; FASTER dup page
+caught pre-commit + reverted.

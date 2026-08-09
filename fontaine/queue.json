@@ -1,6 +1,6 @@
 {
- "updated_utc": "2026-08-09T17:22:00Z",
- "depth_reason": "depth >=2 at 17:2xZ 08-09: adamc-100k babysit to ~08-12 (live) + docs-pass tail (owner-side wandb rotation only) + fjoint owner-gated post-endpoint + standing lit slice this session; corpus-continuity-screen CLOSED this session (qualified null)",
+ "updated_utc": "2026-08-09T17:40:00Z",
+ "depth_reason": "depth >=2 at 17:4xZ 08-09: adamc-100k babysit to ~08-12 (live) + lit-radar-fresh-sweep-0810 (cpu, actionable) + docs-pass tail (owner-side only) + fjoint owner-gated; corpus-continuity-screen CLOSED this session",
  "items": [
   {
    "id": "owner-molmo2-perf-review",
@@ -775,6 +775,15 @@
    "prereg": "fontaine/blog/src/archive/now-2026-08-09.md",
    "owner_hold": false,
    "boundary": "CLOSED 16:4xZ 08-09 same-session as the landing (chained work session per the 16:10 tick handoff); ~1.0 GPU-h local (55-min eval + 53 s CPU selection)"
+  },
+  {
+   "id": "lit-radar-fresh-sweep-0810",
+   "class": "cpu",
+   "status": "queued",
+   "prereg": null,
+   "owner_hold": false,
+   "title": "Lit slice (standing allocation): FRESH arXiv sweep for new hooks \u2014 the banked radar backlog is EMPTY as of 08-09 17:3xZ (three slices ran 08-09: async-exec cluster, 0809b QDepth+sweep, 0812a FAFM/VISTA/LAFP; the 17:0x session verified empty and skipped rather than force a thin sweep, and caught+reverted a FASTER dup page pre-commit \u2014 2603.19199 already covered by papers/async-execution-2.md). Sweep priority: (1) anything re-ranking the adamc_100k readout (AdamC grad-norm claim, vision-unfreeze-from-0 evidence), (2) the fjoint sequencing owner call, (3) actckpt ladder. Papers page(s) same session per the permanent rule.",
+   "boundary": "any GPU-busy window; adamc rides to ~08-12 so windows are plentiful"
   }
  ],
  "updated": "2026-08-09T11:08:00Z"

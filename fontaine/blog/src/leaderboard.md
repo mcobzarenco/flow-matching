@@ -146,6 +146,16 @@ separation *widens* on critical frames — the board's ordering is not
 an easy-frame artifact. Offline-vs-rollout remains open until a rig
 benchmark exists (#16).
 
+**Panel-row integrity (2026-08-09,
+[continuity screen](posts/2026-08-09-corpus-continuity-screen.md) +
+[wrap census](posts/2026-08-05-wrap-census.md)):** 8 panel episodes
+(≤ 32 of 25,800 rows) come from the two structurally non-conforming
+repos (kevin510 ±180° wrap seam, willnorris raw encoder counts).
+Pooled numbers are robust — the census measured the whole class at
++0.072 and the bounded worst case is ~0.05 — but **per-repo or
+max-row diagnostics touching those two repos are not trustworthy**;
+standing caveat wherever k4l2 anchors are sliced fine.
+
 ## Anchors (mainline-measured, inherited 2026-08-05)
 
 | checkpoint | panel MAE | first_mae | notes |

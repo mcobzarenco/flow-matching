@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T16:48:00Z
+**Updated:** 2026-08-09T17:40:00Z
 
-**Depth call:** depth >=2 at 16:4xZ 08-09: adamc-100k babysit to ~08-12 + corpus-continuity-screen (CPU) + docs-pass tail + boundary-incompat-read-npz + fjoint owner-gated; owner v2all ticket thread CLOSED this session (table posted 16:4xZ)
+**Depth call:** depth >=2 at 17:4xZ 08-09: adamc-100k babysit to ~08-12 (live) + lit-radar-fresh-sweep-0810 (cpu, actionable) + docs-pass tail (owner-side only) + fjoint owner-gated; corpus-continuity-screen CLOSED this session
 
-**8 open** (Live 1 · Queued 3 · Blocked 4 · Done 78)
+**8 open** (Live 1 · Queued 3 · Blocked 4 · Done 79)
 
 ## 🔴 Live (1)
 
@@ -30,15 +30,15 @@ OWNER RUN LIVE (launched 13:30Z 08-09): fontaine_molmo2_adamc_100k_ddp4 — base
 
 *ready — waiting on a window or a boundary*
 
-**`corpus-continuity-screen`** · `cpu`
+**`lit-radar-fresh-sweep-0810`** · `cpu`
 
-#9 corpus kinematic-continuity screen (CPU, record-only, VISTA hook 08-09 papers/vista-umi-validation.md
+Lit slice (standing allocation): FRESH arXiv sweep for new hooks
 
-**boundary:** any GPU-busy window; born 15:5xZ 08-09 from the VISTA read; zero GPU (pure function of dataset actions on disk)
+**boundary:** any GPU-busy window; adamc rides to ~08-12 so windows are plentiful
 
 <details><summary>full record</summary>
 
-#9 corpus kinematic-continuity screen (CPU, record-only, VISTA hook 08-09 papers/vista-umi-validation.md — exploratory read on our own data, SDN-read precedent, no pre-reg; any curation change from it DOES need one): score every episode of community_curated_v0 (+ the 2 rig repos as calibration anchors) for per-tick action-displacement continuity — VISTA's three-regime scoring (full marks / linear / exponential) recalibrated to so100 joint space from the rig repos' own displacement distribution; episode score = min over ticks. AUDIT FIRST per standing rule: check what dup_content_census.py / frame-mining machinery already computes per-episode before writing anything new. Oracle-gate on synthetic planted-dropout fixtures (teleport jump in/out, clean episode = full marks); quote score distribution + tail episodes, cross-check low-continuity repos against the banked LORO influential-repo lists (arch/box-batch reads). A null (no corrupted tail) closes the hook at zero cost; a signal is a #9 curation lever with its own pre-reg
+Lit slice (standing allocation): FRESH arXiv sweep for new hooks — the banked radar backlog is EMPTY as of 08-09 17:3xZ (three slices ran 08-09: async-exec cluster, 0809b QDepth+sweep, 0812a FAFM/VISTA/LAFP; the 17:0x session verified empty and skipped rather than force a thin sweep, and caught+reverted a FASTER dup page pre-commit — 2603.19199 already covered by papers/async-execution-2.md). Sweep priority: (1) anything re-ranking the adamc_100k readout (AdamC grad-norm claim, vision-unfreeze-from-0 evidence), (2) the fjoint sequencing owner call, (3) actckpt ladder. Papers page(s) same session per the permanent rule.
 
 </details>
 
@@ -130,7 +130,7 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 
 ---
 
-## ✅ Done (78)
+## ✅ Done (79)
 
 *closed — the full record stays in each fold*
 
@@ -143,6 +143,20 @@ OWNER STEERING 15:44Z 08-09: best 1-NFE ticket over the ENTIRE so101_pick_place_
 <details><summary>full record</summary>
 
 OWNER STEERING 15:44Z 08-09: best 1-NFE ticket over the ENTIRE so101_pick_place_v2 (training rows included) — scored the sha-pinned m64 bank through ftrig@4000 euler-1 s=0 over all 50 episodes / 32,679 frames (unit fontaine-ftrig-ticket64-v2all, landed 16:35:31Z), winner selection + subset diagnostics detached (fontaine-ftrig-v2all-winner, landed 16:36:58Z). WINNER = ticket 12, pooled MAE 5.26497 (bank median 5.474, worst 6.094); ticket 59 (holdout winner) rank 5 (5.330), ticket33 rank 19 (5.405). Memorized-rows read: train rows (29,405) ticket12 rank 1 (4.536) vs heldout rows (3,274) ticket12 rank 9 (11.808) while 59 holds rank 3 (11.722), ticket33 rank 51; Spearman train-vs-heldout rows 0.39 (weak), v2all-vs-holdout ladder 0.57 =&gt; ticket choice measurably sensitive to memorized rows; 59 = generalization pick, 12 = deployment-fit pick. Table + read posted in-channel 16:4xZ; ticket_ftrig4k_rigv2all_winner.npz committed in-repo (sha ec0484e8) + uploaded to fontaine-checkpoints tickets/ (hub commit d8cbfcc); analysis json banked reports/analysis__ftrig_ticket_selection_rigv2all.json | PRE-REG FORM: owner-steered eval, registered via the charter's now.md-entry route (15:59Z entry: decode/bank/output/ETA pinned at the 15:46Z launch ack, before any result was read); entry rolls verbatim to the cited archive page
+
+</details>
+
+---
+
+**`corpus-continuity-screen`** · `cpu`
+
+#9 corpus kinematic-continuity screen (CPU, record-only, VISTA hook 08-09 papers/vista-umi-validation.md
+
+**boundary:** CLOSED 17:1xZ 08-09 at zero GPU; reads banked reports/analysis__corpus_continuity_screen.json (+ .max_ratios.npy sidecar)
+
+<details><summary>full record</summary>
+
+#9 corpus kinematic-continuity screen (CPU, record-only, VISTA hook 08-09 papers/vista-umi-validation.md — exploratory read on our own data, SDN-read precedent, no pre-reg; any curation change from it DOES need one): score every episode of community_curated_v0 (+ the 2 rig repos as calibration anchors) for per-tick action-displacement continuity — VISTA's three-regime scoring (full marks / linear / exponential) recalibrated to so100 joint space from the rig repos' own displacement distribution; episode score = min over ticks. AUDIT FIRST per standing rule: check what dup_content_census.py / frame-mining machinery already computes per-episode before writing anything new. Oracle-gate on synthetic planted-dropout fixtures (teleport jump in/out, clean episode = full marks); quote score distribution + tail episodes, cross-check low-continuity repos against the banked LORO influential-repo lists (arch/box-batch reads). A null (no corrupted tail) closes the hook at zero cost; a signal is a #9 curation lever with its own pre-reg | EXECUTED 17:1xZ 08-09 (same session as queued+1): corpus_continuity_screen.py landed (oracle 7 fixture families; own two-layout parquet loader — census loader assumed list arrays, v3.0 rig repos are FixedSizeList). 52,507 episodes / 981 repos scored, zero read failures. QUALIFIED NULL: EXP tail 123 eps (0.23%) = wrap census's two known repos (kevin510 40/40 wrap seam, willnorris 41/42 counts-units) + 42 genuinely-new sub-300-deg dropout eps in 30 repos (0.08%, order of magnitude under the census's curation kill line — NO pre-reg queued, would re-litigate the owner's 08-05 16:13Z drop). Zero LORO overlap; 8 tail eps are panel rows (bounded ~0.05 pooled, per-repo diagnostics on those 2 repos untrustworthy — standing caveat). Results post 2026-08-09-corpus-continuity-screen.md (2 dark charts); wrap-census post cross-annotated; ideas #9 hook CLOSED; instrument banked as curated_v1 intake filter.
 
 </details>
 
