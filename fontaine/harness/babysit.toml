@@ -359,7 +359,7 @@ anchors = [
 ]
 [[run.gates]]
 kind = "gpu_hours_max"
-value = 6.0                       # panel eval alone; the 70 GPU-h batch gate tracks separately
+value = 8.0                       # panel eval alone; raised 6->8 at 07:48Z (judged CONTINUE): the 6.0 was this session's estimate, the pre-reg EXTRA budget carries ~8/arm for evals, and the 6.4 cumulative projection includes the ~6-min load phase (the tsens early-window lesson). Scoring-window rate 58.7 f/min -> 5645 frames ~1.6h ~6.4 GPU-h worst case, inside the 70 batch gate
 
 # LIVE — #4 attach-screen K-arm memory smoke LADDER (box, 4xDDP; unit
 # fontaine-attach-ksmoke; pre-reg instrument item 4 of
