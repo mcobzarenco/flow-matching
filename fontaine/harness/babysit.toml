@@ -329,7 +329,7 @@
 # 2026-08-09-subgoal-swap-results.md. Local GPU FREE; next local
 # claim per queue. Entry pruned per the retained-entry footgun.
 
-# (no_live_runs_reason cleared 04:02Z 08-09 — K-smoke ladder live below)
+no_live_runs_reason = "K-smoke ladder GREEN + pruned 04:4xZ 08-09; box idle pending owner steer (molmo2-stage2-attachment-decision); local idle"
 
 # LIVE — #4 attach-screen K-arm memory smoke LADDER (box, 4xDDP; unit
 # fontaine-attach-ksmoke; pre-reg instrument item 4 of
@@ -345,28 +345,39 @@
 # writes fontaine/harness/state/k_mem_ready ON THE BOX (sync back).
 # Log rolls per rung: repoint `log` b12c6 -> b8c4 -> b6c3 as rungs
 # roll (RED rungs only; GREEN exits).
-[[run]]
-name = "attach_ksmoke"
-kind = "progress-log"
-host = "192.222.55.210"
-pgrep = "smoke_attach_k_b"
-pgrep_min = 4
-gpu_indices = [0, 1, 2, 3]
-gpu_mem_min_mib = 8000
-log = "/home/ubuntu/smoke_attach_k_b12c6ckpt.log"
-progress_re = "\"step\": [0-9]+"
-started_utc = "2026-08-09T04:18:29Z"
-gpu_hours_per_wall_hour = 4.0
-boundary = "150 steps/rung; rung 1 ETA ~04:45-05:00Z (load+first-batch ~10 min + 150 steps at est 2.4-3 s/step + eval@100 + save@100); worst case 3 rungs ~1.5 h wall; verdict line '=== K SMOKE RUNG ...' tees into the rung log, unit journal is the record; attempt-1 crash was #20, FIXED at 913fdc4 — a recurrence of CheckpointError is a NEW finding, stop and diagnose"
-anchors = [
-    "pass rule per rung: rc=0 AND max vram_alloc_peak_gib <= 71.0 from the rung jsonl (torch alloc peak, NOT nvidia-smi reserved); nvidia-smi peak advisory ~75000 MiB",
-    "GREEN below B12 = MATCHED DOWNSHIFT loudly echoed (both arms take the same BATCH/BACKWARD_CHUNKS, pre-reg: never K alone); ALL-RED = no marker, owner steer, screen does not launch",
-    "on green: marker k_mem_ready written on the BOX — rsync it into local fontaine/harness/state/ before any launcher consumes it",
-    "next after green: owner steer window molmo2-stage2-attachment-decision, then arms F then K (launchers take K_MEM_READY=1 BATCH=<B> BACKWARD_CHUNKS=<c>)",
-]
-[[run.gates]]
-kind = "gpu_hours_max"
-value = 6.0
+# PRUNED 08-09 04:4xZ — RUNG 1 GREEN AT FIRST TRY 04:39:33Z: rc=0,
+# vram_alloc_peak 57.34 GiB <= 71 gate (nvidia-smi peak 63887 MiB <=
+# ~75000 advisory), s/step(last5) 5.675, B12c6 = FULL BATCH, no
+# downshift. True cost ~0.4+0.1 GPU-h (attempt 2 + attempt-1 crash)
+# <= 6 gate. k_mem_ready rsynced box -> local state (utc/batch/
+# chunks/peaks recorded in the marker). Ladder's own projection:
+# K 10k train ~63.1 of the 70 GPU-h batch gate (advisory;
+# attach_rate_gate.py binds at launch). Unit inactive, box GPUs 0
+# MiB x4. Next: owner steer window molmo2-stage2-attachment-decision
+# -> arms F then K (launchers take K_MEM_READY=1 BATCH=12
+# BACKWARD_CHUNKS=6). Entry commented per the retained-entry footgun.
+# [[run]]
+# name = "attach_ksmoke"
+# kind = "progress-log"
+# host = "192.222.55.210"
+# pgrep = "smoke_attach_k_b"
+# pgrep_min = 4
+# gpu_indices = [0, 1, 2, 3]
+# gpu_mem_min_mib = 8000
+# log = "/home/ubuntu/smoke_attach_k_b12c6ckpt.log"
+# progress_re = "\"step\": [0-9]+"
+# started_utc = "2026-08-09T04:18:29Z"
+# gpu_hours_per_wall_hour = 4.0
+# boundary = "150 steps/rung; rung 1 ETA ~04:45-05:00Z (load+first-batch ~10 min + 150 steps at est 2.4-3 s/step + eval@100 + save@100); worst case 3 rungs ~1.5 h wall; verdict line '=== K SMOKE RUNG ...' tees into the rung log, unit journal is the record; attempt-1 crash was #20, FIXED at 913fdc4 — a recurrence of CheckpointError is a NEW finding, stop and diagnose"
+# anchors = [
+#     "pass rule per rung: rc=0 AND max vram_alloc_peak_gib <= 71.0 from the rung jsonl (torch alloc peak, NOT nvidia-smi reserved); nvidia-smi peak advisory ~75000 MiB",
+#     "GREEN below B12 = MATCHED DOWNSHIFT loudly echoed (both arms take the same BATCH/BACKWARD_CHUNKS, pre-reg: never K alone); ALL-RED = no marker, owner steer, screen does not launch",
+#     "on green: marker k_mem_ready written on the BOX — rsync it into local fontaine/harness/state/ before any launcher consumes it",
+#     "next after green: owner steer window molmo2-stage2-attachment-decision, then arms F then K (launchers take K_MEM_READY=1 BATCH=<B> BACKWARD_CHUNKS=<c>)",
+# ]
+# [[run.gates]]
+# kind = "gpu_hours_max"
+# value = 6.0
 
 # golden-ticket screen (#1) — CLOSED 08-08 08:2xZ: stage 3 landed
 # 08:15:39Z rc=0 (2.99 GPU-h; screen total ~5.55 <= 6 gate). R3 read

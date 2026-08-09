@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T03:56:51Z
+**Updated:** 2026-08-09T04:52:00Z
 
-**Depth call:** depth 3 at 02:3xZ 08-09: idea6-subgoal-swap-read LIVE on local (identity+swap unit, reads next session); queued: idea4-attach-k-smoke-ladder (box FREE — next box claim), molmo2-perf-pass1-subset-landing (CPU), plus the standing attach chain behind the k-smoke verdict
+**Depth call:** depth 2 at 04:0xZ 08-09: attach_ksmoke LIVE on box (unit fontaine-attach-ksmoke, first green rung writes k_mem_ready); queued: molmo2-perf-pass1-subset-landing (CPU); blocked-on-ladder: molmo2-stage2-attachment-decision steer window -> idea4-attach-screen-execution arms F then K. 60k HTML panel item closed at zero GPU-h this session (audit found the HTML already existed on the box)
 
-**10 open** (Live 0 · Queued 3 · Blocked 7 · Done 54)
+**8 open** (Live 0 · Queued 2 · Blocked 6 · Done 57)
 
 ## 🔴 Live (0)
 
@@ -14,53 +14,39 @@
 
 *(empty)*
 
-## 🟢 Queued (3)
+## 🟢 Queued (2)
 
 *ready — waiting on a window or a boundary*
 
-**`molmo2-60k-html-panel-report`** · `gpu-box`
+**`actckpt-lineage-flip-prereg`** · `cpu`
 
-Molmo2 60k HTML panel report backfill (OWNER STANDING RULE 08-09 03:55Z: important checkpoints always get the browsable HTML report generated + linked from reports/): re-run the greedy curated_v0 k4l2 panel on fontaine_molmo2_ar_…
+#20 activation-checkpointing lineage-flip pre-reg DRAFT (CPU; unblocked 08-09 by the sdpa-pin fix 913fdc4 + the live K-smoke validation of the flag on CUDA): the perf review's ~2.4-2.8 GiB/sample memory lever for TRAINING lineage…
 
-**boundary:** rides the next box claim alongside idea4-attach-k-smoke-ladder (owner-adopted 03:55Z, ack posted 04:1xZ); record-only re-run of an already-banked eval, no new reads - if MAE mismatches the banked value, STOP and escalate (instrument drift) (prereg = the 60k continuation post whose chained panel this re-renders; --report adds retained-prediction HTML only, no metric change) · [pre-reg](posts/2026-08-08-prereg-molmo2-ar-60k-continuation.md)
+**boundary:** CPU draft at any window; execution rides whichever fresh training launch its pre-reg names; low urgency until the next non-attach train launch is scheduled
 
 <details><summary>full record</summary>
 
-Molmo2 60k HTML panel report backfill (OWNER STANDING RULE 08-09 03:55Z: important checkpoints always get the browsable HTML report generated + linked from reports/): re-run the greedy curated_v0 k4l2 panel on fontaine_molmo2_ar_60k_ddp4/step_060000 WITH --report (same instrument/sharding as the banked eval; ~1 GPU-h), verify chunk MAE reproduces the banked 5.86022663460471 to full JSON precision (validity oracle, same as the fields-run base check), push the HTML to the Space reports/ and link it from the @60k section. Forward half of the rule already recorded: endpoint-checkpoint evals include --report by default + post-eval close checklist gains 'reports page section + Space artifact push'
+#20 activation-checkpointing lineage-flip pre-reg DRAFT (CPU; unblocked 08-09 by the sdpa-pin fix 913fdc4 + the live K-smoke validation of the flag on CUDA): the perf review's ~2.4-2.8 GiB/sample memory lever for TRAINING lineages that don't currently carry --activation-checkpointing. Pre-reg must pin: which lineage flips first (next fresh molmo2 train launch, never a live run), the batch/chunk re-tune the freed memory buys (review projected chunked-backward passes could drop), before/after bench protocol + the bitwise keystone re-gate on the target recipe, and the decision rule for adopting. NOTE the K attach arm already carries the flag by pre-reg — this item is about OTHER lineages (e.g. a future 100k continuation or arch-batch arms)
 
 </details>
 
 ---
 
-**`idea4-attach-k-smoke-ladder`** · `gpu-box`
+**`molmo2-stage2-attachment-decision`** · `cpu`
 
-#4 K-arm smoke memory ladder script — SCRIPT LANDED 08-07 ~06:5xZ (smoke_attach_k_ddp4.sh: exact K recipe verbatim incl
+Molmo2 stage-2 attachment decision at endpoint — now EXECUTABLE via the seam-screen pre-reg (2026-08-07-prereg-molmo2-attach-screen.md: frozen vs KI-joint is the first measurement; the depth-of-reads arm stays open for its own sc…
 
-**boundary:** QUEUED 2026-08-09 02:3xZ (perfpass1 ladder CLOSED, box GPUs FREE): next box claim — run smoke_attach_k_ddp4.sh at the 60k warm start (repoint amendment 3 executed 00:5xZ); green -&gt; owner steer window (molmo2-stage2-attachment-decision) -&gt; arms sequential F then K · [pre-reg](posts/2026-08-07-prereg-molmo2-attach-screen.md)
+**boundary:** STEER WINDOW OPEN 2026-08-09 04:4xZ — K-smoke gate GREEN at full batch B12c6 (k_mem_ready synced local; launchers take K_MEM_READY=1 BATCH=12 BACKWARD_CHUNKS=6). All mechanical gates cleared; box idle pending owner steer. Asked in-channel 04:4xZ; default per pre-reg: arms sequential F then K on the attach-screen pre-reg as written — owner may amend before launch
 
 <details><summary>full record</summary>
 
-#4 K-arm smoke memory ladder script — SCRIPT LANDED 08-07 ~06:5xZ (smoke_attach_k_ddp4.sh: exact K recipe verbatim incl. --activation-checkpointing, 150 steps/rung w/ eval+save exercised, rungs B12c6-&gt;B8c4-&gt;B6c3 at pinned chunk-microbatch 2, pass = rc0 AND max vram_alloc_peak_gib &lt;= 71.0 from the jsonl, nvidia-smi peak advisory; green writes fontaine/harness/state/k_mem_ready record + echoes the K_MEM_READY=1 BATCH/BACKWARD_CHUNKS launch line; sub-B12 green = MATCHED DOWNSHIFT both arms loudly echoed; all-red = no marker, owner steer). REMAINING: RUN the ladder on the box after it frees
+Molmo2 stage-2 attachment decision at endpoint — now EXECUTABLE via the seam-screen pre-reg (2026-08-07-prereg-molmo2-attach-screen.md: frozen vs KI-joint is the first measurement; the depth-of-reads arm stays open for its own screen); owner steer window before the screen launches
 
 </details>
 
 ---
 
-**`molmo2-perf-pass1-subset-landing`** · `cpu`
-
-perf pass-1 SUBSET landing (CPU; the frozen &lt;5% decision branch executed 02:26Z 08-09): build a P1-free subset from branch perf-pass1
-
-**boundary:** CPU work at any GPU-busy window; low urgency (metrics + hygiene, no step-time claim); lands post-evals per the pre-reg clause · [pre-reg](posts/2026-08-08-prereg-molmo2-perf-pass1.md)
-
-<details><summary>full record</summary>
-
-perf pass-1 SUBSET landing (CPU; the frozen &lt;5% decision branch executed 02:26Z 08-09): build a P1-free subset from branch perf-pass1 — P2 windowed vram peak logging (metrics-only, proven live on bench_C window_peak 66.6) + P3a-c sync removals + P4 embed-clone drop (both bitwise-proven 118/118 at 22e8148, but their box speed effect was NOT measured alone: only the C-vs-B cross-read +3.2 pts suggests they recoup some of P1's -10.8%). Re-run perf_pass1_bitwise_oracle.py HEAD-vs-subset before the landing commit; check.py green. NO new bench needed per the frozen rule; any optional confirm rung would need its own pre-reg. NOTE: P1 (suffix MATH-&gt;cuDNN) is dead twice over (loss-bound oracle fail + -10.8% slower on the true recipe) — do not carry it
-
-</details>
-
----
-
-## 🟡 Blocked (7)
+## 🟡 Blocked (6)
 
 *waiting on a prerequisite, a boundary, or the owner*
 
@@ -132,20 +118,6 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 
 ---
 
-**`molmo2-stage2-attachment-decision`** · `cpu`
-
-Molmo2 stage-2 attachment decision at endpoint — now EXECUTABLE via the seam-screen pre-reg (2026-08-07-prereg-molmo2-attach-screen.md: frozen vs KI-joint is the first measurement; the depth-of-reads arm stays open for its own sc…
-
-**boundary:** opens now that the 60k read is banked (repoint executed, amendment 3); owner steer window before the screen launches — K-smoke re-run at 60k warm start is the remaining mechanical gate
-
-<details><summary>full record</summary>
-
-Molmo2 stage-2 attachment decision at endpoint — now EXECUTABLE via the seam-screen pre-reg (2026-08-07-prereg-molmo2-attach-screen.md: frozen vs KI-joint is the first measurement; the depth-of-reads arm stays open for its own screen); owner steer window before the screen launches
-
-</details>
-
----
-
 **`idea4-attach-screen-execution`** · `gpu-box`
 
 #4 attachment seam screen execution (box, 4xDDP, sequential F then K): F frozen-trunk vs K KI-joint (phase-1 CE verbatim + stop-grad seam, alpha=1) at matched 10k steps / eff-48 from the 40k endpoint; residual surface constant; g…
@@ -160,7 +132,7 @@ Molmo2 stage-2 attachment decision at endpoint — now EXECUTABLE via the seam-s
 
 ---
 
-## ✅ Done (54)
+## ✅ Done (57)
 
 *closed — the full record stays in each fold*
 
@@ -752,6 +724,34 @@ draws10_t1 frozen-read script — SCRIPT LANDED 2026-08-07 ~07:5xZ (draws10_t1_r
 
 ---
 
+**`molmo2-60k-html-panel-report`** · `cpu`
+
+Molmo2 60k HTML panel report backfill (OWNER STANDING RULE 08-09 03:55Z)
+
+**boundary:** CLOSED 04:0xZ 08-09 (same session as the K-smoke ladder launch it was to ride); MAE oracle satisfied by the banked json itself (no re-run, no drift possible); owner correction posted in-channel · [pre-reg](posts/2026-08-08-prereg-molmo2-ar-60k-continuation.md)
+
+<details><summary>full record</summary>
+
+Molmo2 60k HTML panel report backfill (OWNER STANDING RULE 08-09 03:55Z) — CLOSED AT ZERO GPU-H 04:0xZ 08-09: the planned ~1 GPU-h --report re-run was UNNECESSARY — pre-launch audit found the 60k chained eval DID run with --report (the launcher always had it, launch_box_fontaine_molmo2_ar_60k_resume_ddp4.sh line 92); the 8.6 MB panel HTML (+ the 9.2 MB fields-run HTML) sat unsynced on the box since 23:49Z/00:49Z 08-08. Both synced local, verified (checkpoint ref + banked MAE 5.86022663460471 in json; html mtime == json mtime, same writer process), uploaded to Space reports/, linked from the @60k section (stale 'ran without --report' caveat replaced with a correction note). The audit-queue-items-against-git practice win: 'no HTML exists' was asserted from the local reports/ dir without checking the box
+
+</details>
+
+---
+
+**`idea4-attach-k-smoke-ladder`** · `gpu-box`
+
+#4 K-arm smoke memory ladder script — SCRIPT LANDED 08-07 ~06:5xZ (smoke_attach_k_ddp4.sh: exact K recipe verbatim incl
+
+**boundary:** DONE 2026-08-09 04:39:33Z — RUNG 1 (B12c6) GREEN AT FIRST TRY on attempt 2 (unit fontaine-attach-ksmoke at 913fdc4): rc=0, vram_alloc_peak 57.34 GiB &lt;= 71 gate, nvidia-smi peak 63887 MiB &lt;= ~75000 advisory, s/step(last5) 5.675; FULL BATCH B12c6, no downshift. True cost ~0.5 GPU-h (incl. attempt-1 #20 crash) &lt;= 6 gate. k_mem_ready written on box + rsynced to local fontaine/harness/state/ 04:4xZ. Ladder projection: K 10k ~63.1 of 70 GPU-h batch gate (advisory; attach_rate_gate.py binds at launch). Attempt-1 crash = idea #20 CUDA bug, fixed 913fdc4 same session. -&gt; owner steer window molmo2-stage2-attachment-decision NOW OPEN · [pre-reg](posts/2026-08-07-prereg-molmo2-attach-screen.md)
+
+<details><summary>full record</summary>
+
+#4 K-arm smoke memory ladder script — SCRIPT LANDED 08-07 ~06:5xZ (smoke_attach_k_ddp4.sh: exact K recipe verbatim incl. --activation-checkpointing, 150 steps/rung w/ eval+save exercised, rungs B12c6-&gt;B8c4-&gt;B6c3 at pinned chunk-microbatch 2, pass = rc0 AND max vram_alloc_peak_gib &lt;= 71.0 from the jsonl, nvidia-smi peak advisory; green writes fontaine/harness/state/k_mem_ready record + echoes the K_MEM_READY=1 BATCH/BACKWARD_CHUNKS launch line; sub-B12 green = MATCHED DOWNSHIFT both arms loudly echoed; all-red = no marker, owner steer). REMAINING: RUN the ladder on the box after it frees
+
+</details>
+
+---
+
 **`idea19-molmo2-draws-arm`** · `gpu-box`
 
 #19 molmo2 sampled-draws arm execution at the 40k endpoint (pre-reg'd in ar-sampled-draws post: greedy + _draws10_t1 same stems, same cost gate w/ q4 fallback)
@@ -873,6 +873,20 @@ Molmo2 AR 40k trunk run (box, 4xDDP) — K1 GATE CROSSED GREEN 08-07 06:0xZ: pro
 <details><summary>full record</summary>
 
 #19 T-sensitivity q4 rungs COMPLETE 23:09Z 08-07 (3/3 rungs, 4301 rows each, ~7.2 GPU-h &lt;= 12 gate): dT table banked reports/analysis__tsens_dt_ar100k_q4.json (record-only)
+
+</details>
+
+---
+
+**`molmo2-perf-pass1-subset-landing`** · `cpu`
+
+perf pass-1 SUBSET landing (CPU; the frozen &lt;5% decision branch executed 02:26Z 08-09): build a P1-free subset from branch perf-pass1
+
+**boundary:** LANDED 04:3xZ 08-09 (6a4b45e, the K-smoke attempt-2 wait window): clean cherry-pick of 22e8148 onto 913fdc4 (P1 not carried); bitwise oracle re-run HEAD-vs-subset 118/118; check.py 558 green. No speed claim per the frozen rule. NOT synced to the box until the live ladder finishes (box code frozen under a live run) · [pre-reg](posts/2026-08-08-prereg-molmo2-perf-pass1.md)
+
+<details><summary>full record</summary>
+
+perf pass-1 SUBSET landing (CPU; the frozen &lt;5% decision branch executed 02:26Z 08-09): build a P1-free subset from branch perf-pass1 — P2 windowed vram peak logging (metrics-only, proven live on bench_C window_peak 66.6) + P3a-c sync removals + P4 embed-clone drop (both bitwise-proven 118/118 at 22e8148, but their box speed effect was NOT measured alone: only the C-vs-B cross-read +3.2 pts suggests they recoup some of P1's -10.8%). Re-run perf_pass1_bitwise_oracle.py HEAD-vs-subset before the landing commit; check.py green. NO new bench needed per the frozen rule; any optional confirm rung would need its own pre-reg. NOTE: P1 (suffix MATH-&gt;cuDNN) is dead twice over (loss-bound oracle fail + -10.8% slower on the true recipe) — do not carry it
 
 </details>
 

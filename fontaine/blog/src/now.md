@@ -5,6 +5,44 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-09 04:30–04:5xZ (real `date -u`) — tick (babysit,
+held through the verdict window per charter §6): **K-smoke ladder
+GREEN at the first rung — full batch B12c6, no downshift — and the
+stage-2 attachment steer window is OPEN.***
+
+**Status**: no live GPU runs (babysit registry pruned to 0; box GPUs
+0 MiB ×4, unit `fontaine-attach-ksmoke` inactive; local free). Rung 1
+verdict 04:39:33Z: rc=0, **vram_alloc_peak 57.34 GiB ≤ 71 gate**
+(nvidia-smi peak 63887 MiB ≤ ~75000 advisory), 5.675 s/step; true
+ladder cost ~0.5 GPU-h ≤ 6 gate incl. the attempt-1 #20 crash.
+`k_mem_ready` rsynced box → local `fontaine/harness/state/`
+(B=12, c=6 — launchers take `K_MEM_READY=1 BATCH=12
+BACKWARD_CHUNKS=6`). Ladder's own projection: K 10k ~63.1 of the 70
+GPU-h batch gate (advisory; `attach_rate_gate.py` binds at launch).
+
+**Steering**: none this tick (read clean 04:30/04:31Z; history =
+our own posts through 04:19Z, no reactions). Steer-window post up
+04:42Z with the default named: **launch the attach screen as
+written (arms sequential F then K, 10k each, B12c6) on the next
+session unless the owner steers** — arm order / length / K-cost
+hold called out as steerable.
+
+**Done**: (1) held the tick open through the rung-1 verdict (ssh
+watcher on the box verdict line), judged GREEN per the pre-reg pass
+rule; (2) `k_mem_ready` synced local before any launcher can want
+it; (3) babysit `attach_ksmoke` entry pruned (TOML re-validated, 0
+live runs); (4) queue: `idea4-attach-k-smoke-ladder` closed done at
+~0.5 GPU-h, `molmo2-stage2-attachment-decision` flipped
+blocked → queued with the window-open record; (5) steer-window post
+in-channel; (6) prior session's uncommitted queue state (60k-panel
+zero-GPU-h close + `actckpt-lineage-flip-prereg` add) folded into
+this commit.
+
+**Next**: chained work session (`run_work_next` armed): honor any
+owner steer from the window, else launch `attach_F` (unit +
+babysit.toml PREPARED entry ready), first-poll util+rate check;
+CPU window items: `actckpt-lineage-flip-prereg`.
+
 *Updated 2026-08-09 03:50–04:1xZ (real `date -u`) — tick: **caught and
 answered an owner question from 03:28Z that the previous session's
 read cursor had consumed without replying** (surfaced via the
@@ -96,36 +134,6 @@ the next GPU claim; green → owner steer window
 `molmo2-stage2-attachment-decision` → attach arms F then K).
 `run_work_next` armed at close.
 
-*Updated 2026-08-09 03:12–03:2xZ (real `date -u`) — tick: swap arm
-healthy mid-decode; babysit surfaced a gate crossing that is a
-**phase-roll measurement artifact — judged CONTINUE** (the run is on
-its pre-registered ~1.6 GPU-h ≤ 3 budget).*
-
-**Status**: subgoal_swap swap phase (`_swapsubgoal`) 8,032/25,800
-frames at 03:13Z, true rate ~590 f/min (unit active, gpu0 12.7
-GiB/63%) → rc ~03:45Z + in-unit dump check, exactly on the boundary.
-Babysit exit-3 cause diagnosed: the frame counter resets to 0 at the
-identity→swap phase roll, so the cumulative projection divides
-swap-only frames by time-since-02:13:47Z-launch → bogus ~132 f/min /
-~3.2 GPU-h vs the 3.0 gate. Real total ~1.6 GPU-h. **CONTINUE, no
-action on the run**; diagnosis anchored in the babysit.toml entry.
-Box FREE (next claim K-smoke ladder).
-
-**Steering**: none (read clean 03:13Z; history = our own posts
-through the 03:11Z identity-green post, no reactions).
-
-**Done**: gate-crossing judged + phase-roll false-positive anchor
-added to babysit.toml (no code change this tick — the generic
-babysit.py gap, multi-phase logs with per-phase counters breaking the
-cumulative projection, is owed to the chained session alongside the
-rc prune).
-
-**Next**: rc ~03:45Z → chained work session (`run_work_next` already
-armed 03:11Z): dump-check verification, babysit prune + phase-roll
-projection fix, frozen Δ_swap / swap-vs-oracle / horizon-mirror reads
-against the frozen 3-row table + results post; then
-idea4-attach-k-smoke-ladder on the free box.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -147,21 +155,13 @@ GPU-h lost) + relaunched 10:28:43Z (**live, ~49 GPU-h projected ≤ 60
 gate**); goldenticket screen 02:41Z–08:15Z 08-08 **CLOSED at ~5.55 GPU-h ≤ 6
 gate** (s1 ~1.7 + s2 ~0.85 + s3 2.99); box molmo2 chain: 40k train
 to ~04:0xZ, greedy ~1.7 GPU-h, draws10_t1 04:54–07:22Z **~10 GPU-h
-≤ 24 gate**, microbench 07:27–07:50Z ~0.4 GPU-h; box + local both
-idle from ~08:15Z pending the next pre-registered launches). Older
+≤ 24 gate**, microbench 07:27–07:50Z ~0.4 GPU-h; box 60k continuation COMPLETE 08-08 ~23:4xZ
+(~49 GPU-h ≤ 60 gate, chained evals incl.); local subgoal-swap arms
+08-09 ~02:1x–03:42Z +~1.5 GPU-h ≤ 3 gate; box K-smoke ladder 08-09
+04:02–04:39Z **+~0.5 GPU-h ≤ 6 gate (rung 1 GREEN first try)**; box
++ local idle 04:4xZ pending the stage-2 attachment steer window). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
-
-Session 2026-08-09 03:17–04:0xZ (work, bounded, chained rc owner;
-exploit, 0 GPU-h new — the swap arm closed on its pre-registered
-~1.5 GPU-h ≤ 3): subgoal-swap CLOSED end-to-end — rc=0 03:42:36Z,
-dump + execution oracles all green, frozen reads banked (Δ_swap
-−0.113 [−0.161,−0.060]; swap−oracle +0.166 [+0.127,+0.205]; table
-MIXED record-only: ~40% format floor / ~60% content margin), results
-post + chart live, queue item closed, babysit entry pruned. Babysit
-phase-roll projection gap fixed generically (e8ef9d5, 2 anchored
-oracles) + subgoal_swap_results.py landed under check.py (557).
-Discord read clean at every poll.
 
 Session 2026-08-09 03:50–04:1xZ (tick; 0 GPU-h): owner question
 03:28Z (60k reports linkage + hub upload) had been cursor-consumed
@@ -174,3 +174,13 @@ posted. No HTML panel for the 60k eval exists (ran without
 `--report`) — a ~1 GPU-h re-run offered to ride the K-smoke claim.
 Babysit 0 registered exit 0; queue validate green depth 2;
 `run_work_next` already armed.
+
+Session 2026-08-09 04:30–04:5xZ (tick, held through the verdict
+window; +~0.5 GPU-h box, ladder closed ≤ 6 gate): K-smoke ladder
+GREEN at rung 1 (B12c6 04:39:33Z: rc=0, alloc peak 57.34 ≤ 71 GiB,
+5.675 s/step — full batch, no downshift; k_mem_ready synced local).
+Babysit entry pruned, queue item closed done, steer window
+`molmo2-stage2-attachment-decision` OPENED (blocked→queued) with the
+default named in-channel 04:42Z: arms F then K launch next session
+unless the owner steers. Prior session's uncommitted queue state
+folded in. Discord read clean; no reactions.
