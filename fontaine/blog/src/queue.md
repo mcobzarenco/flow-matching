@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T05:35:00Z
+**Updated:** 2026-08-09T05:45:00Z
 
-**Depth call:** depth >=2 at 05:15Z 08-09: attach screen EXECUTING (arm F live on box since 04:57:51Z, babysit armed; K chains after F) + lit-slice window item queued; blocked behind: stage-2 decision (on screen readout), actckpt ladder (on post-attach window + a scheduled fresh AR-trunk launch), f-then-joint + subgoal-draws-escalation pre-reg drafts, owner-held items
+**Depth call:** depth >=2 at 05:45Z 08-09: attach screen EXECUTING (arm F live on box) + idea6-mcselect-execution queued (instrument CPU work then local GPU run); blocked behind: stage-2 decision (screen readout), actckpt ladder, f-then-joint draft (Delta_seam), owner-held items
 
-**8 open** (Live 0 · Queued 1 · Blocked 7 · Done 59)
+**8 open** (Live 0 · Queued 2 · Blocked 6 · Done 60)
 
 ## 🔴 Live (0)
 
@@ -14,9 +14,23 @@
 
 *(empty)*
 
-## 🟢 Queued (1)
+## 🟢 Queued (2)
 
 *ready — waiting on a window or a boundary*
+
+**`idea6-mcselect-execution`** · `gpu-local`
+
+#6 rung-(c) masked-contrast selection EXECUTION (gpu-local, &lt;= 4 GPU-h gate): per 2026-08-09-prereg-subgoal-mcselect.md
+
+**boundary:** instrument is CPU work at any GPU-busy window; the GPU run needs a quiet local-GPU window (local is FREE now — but instrument + finalization gate the launch); no dependency on the attach screen · [pre-reg](posts/2026-08-09-prereg-subgoal-mcselect.md)
+
+<details><summary>full record</summary>
+
+#6 rung-(c) masked-contrast selection EXECUTION (gpu-local, &lt;= 4 GPU-h gate): per 2026-08-09-prereg-subgoal-mcselect.md — (1) INSTRUMENT first (CPU): candidates-file injection eval path + per-candidate teacher-forced logprob stacks + masked reference; oracle gates named in the draft (planted-informative fixture, tau degeneracy check, rung-(a) greedy-text byte-reproduction spot check); (2) FINALIZE the draft (immutability stamp, candidates-file sha256 pinned); (3) run 9 forwards x 4301 q4 rows local H100 (~1.5 GPU-h projected), babysit entry at launch; (4) frozen reads: (mc-self) paired CI95 primary, capture fraction vs -0.181, late-horizon signature, agreement diagnostics; anti-select = second strike closes the zero-training scorer family
+
+</details>
+
+---
 
 **`idea4-attach-screen-execution`** · `gpu-box`
 
@@ -32,7 +46,7 @@
 
 ---
 
-## 🟡 Blocked (7)
+## 🟡 Blocked (6)
 
 *waiting on a prerequisite, a boundary, or the owner*
 
@@ -45,20 +59,6 @@
 <details><summary>full record</summary>
 
 #20 activation-checkpointing lineage-flip LADDER execution (gpu-box, &lt;= 2 GPU-h gate): run the 4-rung box ladder per 2026-08-09-prereg-actckpt-lineage-flip.md (control B12c6 no-ckpt / ckpt-c6 / ckpt-c1 candidate / record-only max-B bisect at &lt;= 71 GiB), 150 steps/rung on the AR-trunk true recipe, median-of-last-100 s/step, frozen decision rule ADOPT iff r2 &lt;= 1.02*r0 AND rung-2 alloc peak &lt;= 63 GiB. FINALIZE the draft (immutability stamp, baselines re-pinned at then-HEAD) when the target launch is scheduled, BEFORE the ladder runs
-
-</details>
-
----
-
-**`idea6-subgoal-draws-escalation-prereg-draft`** · `cpu`
-
-#6 rung-(b) ESCALATION pre-reg draft (CPU) — opens ONLY on a no-scorer verdict from the rung-(b') read (rung (b) closed at table cost; (b') carries the frozen falsifier + adjudication) (ceiling &gt;&gt; bon with diversity present); clo…
-
-**boundary:** opens at the #6 rung-(b) execution read-out (idea6-subgoal-draws-cleancand-execution) IF it reads no-scorer; any GPU-busy window after that
-
-<details><summary>full record</summary>
-
-#6 rung-(b) ESCALATION pre-reg draft (CPU) — opens ONLY on a no-scorer verdict from the rung-(b') read (rung (b) closed at table cost; (b') carries the frozen falsifier + adjudication) (ceiling &gt;&gt; bon with diversity present); closes as moot on no-diversity or on the falsifier passing. Routing pre-mapped by the 08-08 lit slice (papers/progress-from-logits.md + corrected self-certainty.md note): candidate 1 = masked-contrast selection (MG-Select form, prerequisite VERIFIED MET: subgoal-masked reference = planner-less path trained at 50% dropout; N+1 teacher-forced pass-2 action forwards, no decode loop; reference tempered tau=4); candidate 2 = history-conditioned planning (TOPReward 2602.19313: phase zero-shot recoverable from a video prefix via one completion logit incl. on Molmo2-8B — attacks the measured ~10/60 single-frame phase-offset mechanism directly). Draft picks ONE (or stages both) with frozen falsifiers + cost gates; execution needs its own posted pre-reg + queue entry | SWAP READ BANKED 03:5xZ 08-09 (MIXED): content consumed (+0.166 truth-over-wrong margin) — scorer coherence question resolved POSITIVE; cost any scorer rung against the free any-plausible-words floor Delta_swap -0.113, not against no-slot
 
 </details>
 
@@ -132,7 +132,7 @@ Molmo2 stage-2 attachment decision at endpoint — now EXECUTABLE via the seam-s
 
 ---
 
-## ✅ Done (59)
+## ✅ Done (60)
 
 *closed — the full record stays in each fold*
 
@@ -355,6 +355,20 @@ Leaderboard integrity: bring molmo2 AR configs into the decode-cost microbench (
 <details><summary>full record</summary>
 
 Leaderboard integrity: bring molmo2 AR configs into the decode-cost microbench (CPU prep item — the molmo2-endpoint-postprocessing row must otherwise flag its cost column as mtime-derived or leave it blank; this item retires that caveat). Work: extend the microbench harness to cover the molmo2 AR config (config plumbing + tiny-fixture dry run, CPU-verifiable), and land a one-command box script whose GPU minutes ride an already-pre-registered box eval window (the #19 draws-arm launcher's posted cost-gate umbrella, or the next posted box pre-reg) — no standalone unpre-registered GPU launch; then write the measured number into the leaderboard row + note the caveat's removal — PREP LANDED 08-08 04:4xZ: molmo2_greedy + molmo2_draws10_t1 configs in the shared harness (selftest PASS, dry-run prints both modes; dry-run no longer requires the box-resident checkpoint, real runs still abort), one-command box script microbench_box_molmo2.sh (all-GPU-free guard, run_detached launch line in header); REMAINING: run on the box at the first pre-registered eval window after the #19 chain, then merge rows into the leaderboard cost column — EXECUTED 08-08 07:27-07:50Z on the box (rode the #19 landing window, all-GPU-free guard green, unit fontaine-microbench-molmo2 rc=0): molmo2_greedy 143.8 batched / 678.1 b=1 ms, molmo2_draws10_t1 1191.2 / 6291.3 ms -&gt; leaderboard rows 8+9 cost cells filled, mtime caveat RETIRED (box-measured noted, record-only extension per prep commit)
+
+</details>
+
+---
+
+**`idea6-subgoal-draws-escalation-prereg-draft`** · `cpu`
+
+#6 rung-(b) ESCALATION pre-reg draft (CPU) — opens ONLY on a no-scorer verdict from the rung-(b') read (rung (b) closed at table cost; (b') carries the frozen falsifier + adjudication) (ceiling &gt;&gt; bon with diversity present); clo…
+
+**boundary:** DRAFT LANDED 05:3xZ 08-09; execution per idea6-mcselect-execution · [pre-reg](posts/2026-08-09-prereg-subgoal-mcselect.md)
+
+<details><summary>full record</summary>
+
+#6 rung-(b) ESCALATION pre-reg draft (CPU) — opens ONLY on a no-scorer verdict from the rung-(b') read (rung (b) closed at table cost; (b') carries the frozen falsifier + adjudication) (ceiling &gt;&gt; bon with diversity present); closes as moot on no-diversity or on the falsifier passing. Routing pre-mapped by the 08-08 lit slice (papers/progress-from-logits.md + corrected self-certainty.md note): candidate 1 = masked-contrast selection (MG-Select form, prerequisite VERIFIED MET: subgoal-masked reference = planner-less path trained at 50% dropout; N+1 teacher-forced pass-2 action forwards, no decode loop; reference tempered tau=4); candidate 2 = history-conditioned planning (TOPReward 2602.19313: phase zero-shot recoverable from a video prefix via one completion logit incl. on Molmo2-8B — attacks the measured ~10/60 single-frame phase-offset mechanism directly). Draft picks ONE (or stages both) with frozen falsifiers + cost gates; execution needs its own posted pre-reg + queue entry | SWAP READ BANKED 03:5xZ 08-09 (MIXED): content consumed (+0.166 truth-over-wrong margin) — scorer coherence question resolved POSITIVE; cost any scorer rung against the free any-plausible-words floor Delta_swap -0.113, not against no-slot | OPENING CONDITION ADJUDICATED MET 05:3xZ 08-09 (audit: the item sat blocked though the (b') read HAD routed no-scorer-with-live-ceiling 00:2xZ + the swap read resolved coherence positive 03:5xZ) — DRAFT LANDED same session (2026-08-09-prereg-subgoal-mcselect.md): picks candidate 1 ONLY (MG-Select masked-contrast, tau=4 verbatim, subgoal-dropout-0.5 prerequisite met), FROZEN to the banked (b') candidates file (4301 q4 rows x 8 clean texts) so ceil/floor comparators hold by construction; E6-mirror falsifier (mc - self CI95 &lt; 0), anti-select second-strike closes the zero-training family; gate &lt;= 4 GPU-h local, no decode, no training. Candidate 2 (TOPReward history probe) = named escalation only on a phase-specific failure. Execution split to idea6-mcselect-execution (blocked: instrument + oracles + finalization stamp first)
 
 </details>
 
