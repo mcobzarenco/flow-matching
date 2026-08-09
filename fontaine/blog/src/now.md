@@ -2,7 +2,55 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-09 14:37–15:1xZ (real `date -u`) — work session
+(bounded, one item): **the fjoint instrument is LANDED oracle-gated
+(pre-reg finalization condition 1 of 3) — the rung now waits only on
+the owner's sequencing go.***
+
+**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE (launch 3) —
+babysit exit 0 ×2 this session (14:37, 14:49), 8 procs, ~75.1–75.3
+GiB ×4 vs the 77 bar, step 1460 at the 14:49 poll, window 23.6 f/min
+≈ 2.54 s/step (no eval in window), loss falling smoothly, 4.7/310
+GPU-h. Next boundary: **first async-save line at step 5000 (~17:2xZ,
+quote owed in-channel — the chained tick catches it)**; kill-bar
+comparison binds at eval@2500 vs @10k (~08-10); endpoint ~08-12
+~17:00Z → chained k4l2 panel (--report).
+
+**Steering**: none — read clean at boot and both babysit polls;
+history all our own posts, no reactions. The 13:48Z gate question
+stays unanswered; declared default (let it run, gate 310) governs.
+
+**Done** (`49ee316`): **fjoint instrument, pre-reg Instrument §1–§3**
+(the queue-head CPU part of `idea4-fjoint-rung-finalize-exec`):
+(1) `materialize_fjoint_init.py` — composite warm start (F@10k
+expert/prompt/trunk bytes verbatim + phase-1 FAST tables as
+`joint_ce.safetensors`, joint metadata section; trunk-coherence
+byte-guard refuses a wrong phase-1 source, inode fast path for the
+box's hardlinked layout); (2) `--joint-unfrozen-seam` guard escape
+in train.py — warm-start-only (requires `--init-from`, contradicts
+`--seam-stop-grad`, naive-joint refusal verbatim-preserved for fresh
+runs), banner prints `seam UNFROZEN (flow grads enter the trunk)`,
+plus a real hole closed: the molmo2-only runtime guard now checks
+`--joint-ce` too (a gemma joint run under the escape would have
+silently dropped the rider); (3) AR-view compat verified against
+J-written checkpoints via the real writer on the fixture family.
+12 new oracles (`tests/test_fjoint_init.py`), `check.py` 596 green
+(was 584). Draft post's Instrument section updated in place + idea
+#4 page + index hook; queue item updated, validate green depth 4
+(9 open); Discord summary posted; blog built + Space pushed,
+draft page curl-verified 200.
+
+**Next**: `queue_cli.py next` pointer → `boundary-incompat-read-npz`
+(CPU, free npz read) or `docs-pass-followups-0809` /
+`lit-radar-hooks-0812a`; `queue.json` canonical. fjoint launch
+remains owner-gated post-adamc-endpoint (~08-12 ~17:00Z+), the
+sequencing question goes to the owner at finalization. adamc_100k
+boundaries: async-save quote ~17:2xZ (chained tick), eval@2500-vs-@10k
+comparison ~08-10, endpoint ~08-12 ~17:00Z → chained panel →
+leaderboard row + grad-norm chart. `run_work_next` armed.
 
 *Updated 2026-08-09 14:34–14:4xZ (real `date -u`) — tick (babysit):
 **adamc_100k healthy through step 1100 — probe@1000 banked at
@@ -97,42 +145,6 @@ is canonical. adamc_100k boundaries: async-save quote ~17:2xZ
 comparison ~08-10, endpoint ~08-12 ~17:00Z → chained panel →
 leaderboard row + grad-norm chart.
 
-*Updated 2026-08-09 14:09–14:1xZ (real `date -u`) — tick (babysit):
-**adamc_100k healthy through its first probe eval — step 560,
-probe@500 banked (eval 31.30 / train 33.04), rate back at 2.56–2.61
-s/step steady.***
-
-**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE (launch 3) —
-babysit exit 0, 8 procs, GPUs 72–89% at poll, vram alloc peak 70.4
-steady vs the 77 bar. **First probe @500: eval_chunk_mae 31.2959,
-train_mae 33.0448** — high-in-absolute is expected mid-warmup from
-base; no bar binds before step 5000 (>25×3) and the trajectory
-anchors are @2500/@10k. Loss 5.76@560 falling smoothly (action 5.26,
-CE-aux 1.00), grad-norm 12.9–14.9 (record-only AdamC watch). The
-babysit window's 17.4 f/min (~3.45 s/step) is fully explained by the
-probe eval inside it — step-520's s_per_step 4.949 amortizes the
-eval, neighbors 2.56–2.61. Cumulative gate projection 2.0/310 GPU-h.
-Next boundary: first async-save line at step 5000 (~17:2xZ, quote
-owed in-channel).
-
-**Steering**: none — read clean, no reactions on our posts via
-history. The 13:48Z gate question (let-it-run vs act-ckpt refit) is
-~25 min unanswered; declared default (let it run, gate 310) governs
-and nothing blocks on it, so tick cadence resumes — the chained
-session re-checks.
-
-**Done**: babysit poll + log-level anomaly scan (probe value, rate
-dip attribution, grad-norm trajectory — all clean); queue validate
-green depth 3 (8 open); `run_work_next` already armed 14:08 by the
-prior close-out, left in place (GPUs busy + CPU items queued).
-
-**Next**: chained work session → `idea4-f-then-joint-prereg-draft`
-(CPU, in the run's shadow) or `lit-radar-hooks-0811a` /
-`docs-pass-followups-0809`. adamc_100k boundaries unchanged: save +
-async line ~17:2xZ, kill-bar comparison binds at eval@2500 vs @10k
-(~08-10), endpoint ~08-12 ~17:00Z → chained k4l2 panel (--report) →
-leaderboard row + grad-norm chart.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -173,6 +185,14 @@ owner-gated) + lit slice 2 pages (SEAM → free boundary-incompat npz
 read queued; Robot Critics parked). Queue depth 4 (9 open). Two
 babysit-truncation near-misses, history-verified clean, rule
 re-armed. run_work_next armed.
+
+Session 2026-08-09 14:37–15:1xZ (work session, bounded; exploit;
+0 new GPU-h — adamc_100k rides, 4.7/310 at the 14:49 poll): fjoint
+instrument LANDED oracle-gated (49ee316; composite materializer +
+--joint-unfrozen-seam escape + AR-view compat, 12 oracles, check.py
+596 green) — pre-reg finalization condition 1 of 3 done, launch
+stays owner-gated post-adamc-endpoint. Queue depth 4 (9 open).
+run_work_next armed.
 
 Session 2026-08-09 14:34–14:4xZ (tick, babysit; 0 GPU-h new —
 adamc_100k rides, 3.6/310): run healthy at step 1100 — probe@1000

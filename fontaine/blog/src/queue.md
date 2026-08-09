@@ -2,9 +2,9 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T14:45:00Z
+**Updated:** 2026-08-09T15:05:00Z
 
-**Depth call:** depth >=2 at 14:4xZ 08-09: adamc-100k babysit to ~08-12 + idea4-fjoint-rung-finalize-exec (instrument CPU-ready) + boundary-incompat-read-npz (new, CPU) + docs-pass-followups-0809 + lit-radar-hooks-0812a (refilled); f-then-joint draft + SEAM/Robot-Critics lit slice both DONE this session
+**Depth call:** depth >=2 at 15:0xZ 08-09: adamc-100k babysit to ~08-12 + boundary-incompat-read-npz (CPU) + docs-pass-followups-0809 + lit-radar-hooks-0812a; idea4-fjoint-rung-finalize-exec instrument part DONE this session (launch remains owner-gated post-adamc-endpoint)
 
 **9 open** (Live 1 · Queued 4 · Blocked 4 · Done 75)
 
@@ -60,13 +60,13 @@ Lit slice (standing allocation): fresh-sweep hooks banked 08-09 14:4xZ, unread s
 
 **`idea4-fjoint-rung-finalize-exec`** · `gpu-box`
 
-#4 F-then-joint rung FINALIZE + EXECUTE (per the posted DRAFT posts/2026-08-09-prereg-fjoint-rung.md): (1) CPU instrument, oracle-gated, any GPU-busy window
+#4 F-then-joint rung FINALIZE + EXECUTE (per the posted DRAFT posts/2026-08-09-prereg-fjoint-rung.md): (1) CPU instrument DONE 15:0xZ 08-09 (check.py 596 green, 12 new oracles tests/test_fjoint_init.py): materialize_fjoint_init.p…
 
-**boundary:** instrument = CPU work at any GPU-busy window from now; LAUNCH gated on owner go (draft finalization condition 2) + box free after the adamc_100k endpoint + chained panel (~08-12 ~17:00Z+); sequencing vs the adamc stage-2 frozen attach is an owner call at finalization — do NOT launch on the default · [pre-reg](posts/2026-08-09-prereg-fjoint-rung.md)
+**boundary:** instrument LANDED 15:0xZ 08-09 (draft Instrument section updated in place — finalization condition 1 satisfied); LAUNCH gated on owner go (draft finalization condition 2) + box free after the adamc_100k endpoint + chained panel (~08-12 ~17:00Z+); sequencing vs the adamc stage-2 frozen attach is an owner call at finalization — do NOT launch on the default · [pre-reg](posts/2026-08-09-prereg-fjoint-rung.md)
 
 <details><summary>full record</summary>
 
-#4 F-then-joint rung FINALIZE + EXECUTE (per the posted DRAFT posts/2026-08-09-prereg-fjoint-rung.md): (1) CPU instrument, oracle-gated, any GPU-busy window — composite warm-start materializer (F@10k + phase-1 rider tables from the 60k endpoint expert.safetensors + config section; oracles: expert bytes == F@10k, rider bytes == phase-1 tables, --init-from --joint-ce round-trip), naive-joint guard escape (opt-in flag; refusal verbatim-preserved without it; negative-control oracle becomes the positive contract), materialize_joint_ar_view.py compat vs J checkpoints on the fixture family; (2) at finalization: owner go + the rung-vs-adamc-attach sequencing question posted in-channel; (3) box execution post-adamc-endpoint (~08-12 17Z+): J-config B12c6 memory smoke 150 steps, then F2 first (0.92 s/step measured) then J (~4.0 assumed from K 3.782 measured), 5k phase ceiling 35 GPU-h, babysit entries at launch; reads via attach_seam_results.py explicit stems + drift AR-view panel
+#4 F-then-joint rung FINALIZE + EXECUTE (per the posted DRAFT posts/2026-08-09-prereg-fjoint-rung.md): (1) CPU instrument DONE 15:0xZ 08-09 (check.py 596 green, 12 new oracles tests/test_fjoint_init.py): materialize_fjoint_init.py composite warm-start materializer (F expert/prompt/trunk bytes + phase-1 tables as joint_ce.safetensors, joint metadata section, trunk-coherence byte-guard refuses a wrong phase-1 source) + --joint-unfrozen-seam guard escape in train.py (warm-start-only: requires --init-from, contradicts --seam-stop-grad, naive-joint refusal verbatim-preserved, molmo2-only runtime guard extended to joint_ce, banner prints seam UNFROZEN) + AR-view compat verified vs J-written checkpoints on the fixture family — WAS: composite warm-start materializer (F@10k + phase-1 rider tables from the 60k endpoint expert.safetensors + config section; oracles: expert bytes == F@10k, rider bytes == phase-1 tables, --init-from --joint-ce round-trip), naive-joint guard escape (opt-in flag; refusal verbatim-preserved without it; negative-control oracle becomes the positive contract), materialize_joint_ar_view.py compat vs J checkpoints on the fixture family; (2) at finalization: owner go + the rung-vs-adamc-attach sequencing question posted in-channel; (3) box execution post-adamc-endpoint (~08-12 17Z+): J-config B12c6 memory smoke 150 steps, then F2 first (0.92 s/step measured) then J (~4.0 assumed from K 3.782 measured), 5k phase ceiling 35 GPU-h, babysit entries at launch; reads via attach_seam_results.py explicit stems + drift AR-view panel
 
 </details>
 
