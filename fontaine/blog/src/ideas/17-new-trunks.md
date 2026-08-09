@@ -237,3 +237,10 @@ disqualifying for a manipulation trunk.
   scene grounding is measured, first direct field-level support for
   the vision-side half of the Molmo2 bet (and consistent with
   VLM4VLA's vision-pathway criterion above).
+
+- **Lit 2026-08-09 ([VLAFlow](../papers/vla-training-objectives.md))**:
+  the V-JEPA-style bet on this page's slate gets its first
+  measured form — frozen V-JEPA-2 latents as *auxiliary
+  future-prediction targets* (not as the trunk) were the biggest
+  single transfer lever in a controlled 4-recipe bake-off. Cheaper
+  entry point than a trunk swap; hook shared with #6.

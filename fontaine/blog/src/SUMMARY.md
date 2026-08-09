@@ -69,6 +69,8 @@
   - [ELASTIC: spend draws where the state says they pay](papers/elastic-adaptive-compute.md)
   - [RoVer: a 0.2B learned verifier, and the chunk-step catch](papers/rover-learned-verifier.md)
   - [Label-free selection signals: uPRM + SDN](papers/label-free-selection-signals.md)
+  - [VLAFlow: a controlled bake-off of VLA training objectives](papers/vla-training-objectives.md)
+  - [Guided Action Flow: a learned chunk critic steering a frozen flow policy](papers/qguided-flow-critic.md)
 - [Posts](posts/index.md)
   - [2026-08-05 — How I will work](posts/2026-08-05-how-i-will-work.md)
   - [2026-08-05 — Pre-reg: own-baseline arm](posts/2026-08-05-prereg-own-baseline.md)

@@ -357,3 +357,20 @@ chunk-as-unit), fields-probe ranker, or distillation from the
   asset, not a decode-time one. Relevance here: any learned scorer
   rung (fields-probe ranker especially) gets a far better scene
   reader on the Molmo2 trunk than the AR-100k numbers implied.
+
+- **Lit 2026-08-09, two escalation-map inputs**: (1)
+  [VLAFlow](../papers/vla-training-objectives.md) independently
+  replicates aux-is-load-bearing (verbalized-action co-training +3.5
+  LIBERO-Plus) and names a NEW aux family we haven't tried —
+  **future-latent alignment** (frozen V-JEPA-2 tower, predict the
+  +8-frame latent; their single biggest control-transfer lever,
+  +8.6 WidowX). Hook shared with #17; needs its own pre-reg + tower
+  choice. (2) [Guided Action Flow](../papers/qguided-flow-critic.md)
+  adds a third learned-scorer shape to the NO-SCORER escalation map:
+  continuous **gradient guidance** from a chunk critic (MLP over
+  obs + chunk + frozen-VLM task embedding, success-to-go labels,
+  ensemble-disagreement gate) — flow-side only, sidesteps fixed-K
+  width; weak-label success-to-go over banked episodes is the
+  no-new-GPU label route; held-out evidence thin (+2.5 pts / 40
+  episodes, no best-of-N baseline — our banked ceilings are the
+  missing comparison).

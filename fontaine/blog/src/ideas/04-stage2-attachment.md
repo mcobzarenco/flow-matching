@@ -245,3 +245,13 @@ matched steps.
   "frozen default stands" keeps an escalation path that KI-joint
   would complicate (RL updates into a live trunk). Record-only
   prior; no new arm until the screen's own verdict lands.
+
+- **Lit 2026-08-09 ([VLAFlow](../papers/vla-training-objectives.md),
+  2607.01586)**: controlled 4-recipe bake-off on one π0-style
+  skeleton (5,000 h) — **stop-gradient cost ~26 pts** LIBERO-Plus
+  (anti-KI, same side as APT), and the frozen-VLM trade-off measured
+  both ways (VL generalization kept 74.9 vs 68.8, embodiment
+  adaptation lost: WidowX 54.4). Joins the interpretation ladder for
+  the F/K readout; screen unchanged. Caveat carried: their expert
+  co-pretrains from scratch — our random-init K expert is exactly
+  APT's damage regime, so the screen still adjudicates.

@@ -44,6 +44,8 @@ showed, before the dense analysis.
 | [ELASTIC — adaptive test-time compute](elastic-adaptive-compute.md) | 2606.31132 | #1 rung-3 candidate (dispersion-gated draw allocation), #19, #6 — R4b's monotone-dispersion read is this paper's premise, measured free on our panel |
 | [RoVer — a 0.2B learned verifier](rover-learned-verifier.md) | 2510.10975 | #6 escalation rung (learned PRM if "scorer is the gap"; chunk-step caveat pre-registered ammunition), #19, #1 |
 | [Label-free selection signals](label-free-selection-signals.md) | 2605.10158 (+ 2606.14084 re-read) | #6 scorer rung design constraint (score the SET, not the candidate — read the same session as the NO-SCORER verdict); masked-conditioning scorer sketch; jerkpick already banked on [noise-space III](noise-space-steering-3.md) |
+| [VLAFlow: training-objective bake-off](vla-training-objectives.md) | 2607.01586 | #4 attachment decision brief (stop-grad −26 pts, frozen-VLM trade table); #6 aux corroboration; NEW future-latent-alignment hook (#6/#17) |
+| [Q-guided flow critic](qguided-flow-critic.md) | 2607.02092 | #6 escalation map third scorer shape (gradient guidance, flow-side); #1/#19 rung-3 note + uncertainty gate |
 | [Decode-time stochasticity](decode-temperature.md) | 2605.22493, 2605.29766, 2603.20538, 2605.30660, 2508.20072 | #19 — the dT read's directional prior; 2nd strike on cheap probe selectors; q-token theory anchor |
 | [Offline validation: does the panel predict the robot?](offline-validation.md) | 2606.29898, 2605.00066, 2405.05941, 2503.24278, 2602.12691 | #16 — raw-MSE proxy measured at ρ −0.61 (sign flips exist); critical-frame re-pooling rung banked; MMRV for future proxy audits |
 | [LAFM: learned prior libraries](latent-action-priors.md) | 2606.23420 | #1 — the rung above the ticket screen on the noise-structure ladder; R4's task-locality read reinterpreted; DSRL named as the next read if stage 1 CONFIRMs |
@@ -78,6 +80,7 @@ pretrained trunk:
 | Encoder winners don't transfer across scale | [2606.14153](https://arxiv.org/abs/2606.14153) | ✅ [page](encoder-grafting.md) |
 | AR-VLA (history-aware AR expert) | [2603.10126](https://arxiv.org/abs/2603.10126) | ✅ [page](attachment-frontier.md) |
 | Representation anchoring | [2607.13429](https://arxiv.org/abs/2607.13429) | ✅ [page](attachment-frontier.md) |
+| VLAFlow (objective bake-off) | [2607.01586](https://arxiv.org/abs/2607.01586) | ✅ [page](vla-training-objectives.md) |
 
 **Test-time selection & sampling (#19, #1):**
 
@@ -94,6 +97,7 @@ pretrained trunk:
 | DVAC (variance-gated replanning) | [2606.03847](https://arxiv.org/abs/2606.03847) | ✅ [page](sampling-beyond-selection.md) |
 | Golden Ticket (noise search) | [2603.15757](https://arxiv.org/abs/2603.15757) | ✅ [page](sampling-beyond-selection.md) |
 | Energy Policy (energy-score training) | [2510.12483](https://arxiv.org/abs/2510.12483) | ✅ [page](sampling-beyond-selection.md) |
+| Guided Action Flow (Q-guided critic) | [2607.02092](https://arxiv.org/abs/2607.02092) | ✅ [page](qguided-flow-critic.md) |
 
 **One-step decoding & distillation (#12):**
 
