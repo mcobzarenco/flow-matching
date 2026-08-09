@@ -5,6 +5,32 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-09 12:12–12:2xZ (real `date -u`) — tick (babysit):
+**attach_K healthy past the run's midpoint approach — probe margin
+~1.4 held, all quiet; queue armed for the next lit slice.***
+
+**Status**: attach_K healthy at the 12:13Z poll — step 3800/10k,
+loss 3.10, 3.78 s/step (13.1 steps/min window; endpoint ~18:3xZ
+holds), vram 59.07 ≤ 71, liveness 7 procs / 4 GPUs. Probe
+**11.2033@3500** (best); first kill-bar 12.6394 binds ≥5k (~13:2xZ)
+with ~1.4 margin. CE aux flat. Local GPU free.
+
+**Steering**: none — `read` clean; `history` shows nothing from the
+owner after the answered 11:43:03Z loss_action question and no new
+reactions on our 11:48Z answer or the 12:12Z session post.
+
+**Done**: babysit poll (exit 0, facts above — trajectories nominal,
+no anomaly beyond the CLI facts: loss stepping down 3.21 → 3.10,
+probe monotone-improving since 2500); queue validate green (depth 2,
+8 open); `run_work_next` armed (chained work session takes
+`lit-radar-hooks-0809b` — QDepth-VLA + fresh sweep; banked radar
+backlog is empty).
+
+**Next**: 5k kill-bar binds ~13:2xZ (probe must be < 12.6394 —
+currently 11.20; next tick catches the crossing); endpoint ~18:3xZ
+→ chained panel_v2 + AR-view drift panel → **Δ_seam frozen read
+(runbook staged, pre-audited)** → stage-2 decision.
+
 *Updated 2026-08-09 11:56–12:1xZ (real `date -u`) — work session
 (bounded, chained via `run_work_next`): **the async-execution radar
 cluster cleared and then some — FIVE papers read, THREE papers pages
@@ -92,59 +118,6 @@ drift panel → **Δ_seam frozen read (runbook staged, pre-audited)**
 → stage-2 decision. `queue_cli.py next` → `lit-radar-async-exec`
 (any GPU-busy window).
 
-*Updated 2026-08-09 11:34–11:5xZ (real `date -u`) — work session
-(bounded, chained via `run_work_next`): **the two unread #17 radar
-hooks cleared — VEGA lands a THIRD pole on the vision-freeze axis
-(aux-injected spatial structure substitutes for unfreezing) and
-HyperVLA stakes the inference-efficiency pole; 2 papers pages same
-session, queue refilled.***
-
-**Status**: attach_K healthy at the 11:35Z + 11:42Z polls — step
-3340/10k, loss 3.20, 3.84 s/step (endpoint ~18:3xZ holds), vram
-59.07 ≤ 71, liveness 7 procs / 4 GPUs. Probe 11.6124@3000 (best);
-first kill-bar 12.6394 binds ≥5k (~13:2xZ) with ~1.0 margin. CE aux
-flat. Local GPU free.
-
-**Steering**: owner 11:43:03Z (caught on the post-session-post
-`read`): *why did train/loss_action crash to ~0.2–0.3 on the
-current run vs >2.5 on the 40k AR run — does the field still mean
-AR action-token loss?* Answered in-channel 11:48Z after verifying
-at `bijou/train.py:619–624`: **the field changed meaning, nothing
-crashed** — in the joint arm the `loss_action` slot carries the
-flow-matching component (regression scale ~0.2–0.3) and the AR
-action-token CE moves to `train/loss_aux` (~2.6, flat — exactly
-the pre-registered CE-health drift watch, matching the phase-1
-curve at matched step; the babysit anchors already compare the
-right pair). Reply-watch held ~8 min post-answer.
-
-**Done**: **`lit-radar-hooks-17` EXECUTED** (the queued lit slice,
-~25 min): deep-read both banked #17 hooks + 2 papers pages SAME
-SESSION per the permanent rule —
-[VEGA](papers/vega-encoder-grounding.md) (2605.10485: encoder-output
-cosine alignment to DINOv2-FiT3D, projector discarded at inference;
-beats Spatial-Forcing LLM-token alignment 67.5/30.7 vs 64.2/27.8 on
-RoboTwin easy/hard + 0.60 vs 0.55 real ALOHA; the frozen-FiT3D ≈
-unfrozen-FiT3D probe ⇒ unfreezing pays only while features lack
-what control needs — banked as the vu5k readout's interpretation
-lever + named cheap escalation if thawed wins; Molmo2 single-tower
-caveat + VGGT-teacher collapse noted) and
-[HyperVLA](papers/hypervla-hypernetwork-inference.md) (2510.04898:
-understand-once/execute-tiny — 0.1M generated policy per episode,
-4 ms/step, 90× fewer activated params, sim-only vs 2024-OpenVLA;
-#17 trunk-ledger pole + #16 rig-latency existence proof + the √d
-generated-update normalization rule; its MSE-beats-diffusion
-ablation regime-bound, explicitly NOT read onto AR-vs-flow).
-index/SUMMARY/ideas #17 + idea-page ledger updated; new radar hook
-banked: Spatial Forcing 2510.12276 (3.8× training-accel claim
-unexamined). Queue: item closed, `lit-radar-async-exec` queued
-(FASTER + ABPolicy + DEFLECT cluster, feeds #22/#16/#12).
-
-**Next**: 5k kill-bar binds ~13:2xZ (probe must be < 12.6394 —
-currently 11.61); endpoint ~18:3xZ → chained panel_v2 + AR-view
-drift panel → **Δ_seam frozen read (runbook staged, pre-audited)**
-→ stage-2 decision. `queue_cli.py next` → `lit-radar-async-exec`
-(any GPU-busy window).
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -176,31 +149,6 @@ panel_v2 eval live (~1–2 GPU-h; batch gate 70, rate-gate projection
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
-Session 2026-08-09 11:34–11:5xZ (work, bounded — explore/lit; 0
-GPU-h): `lit-radar-hooks-17` executed — VEGA 2605.10485 + HyperVLA
-2510.04898 deep-read, 2 papers pages same session (vega-encoder-
-grounding, hypervla-hypernetwork-inference): VEGA = third pole on
-the vision-freeze axis (encoder-level 3D-aware alignment aux
-substitutes for unfreezing; vu5k interpretation lever + cheap
-escalation), HyperVLA = inference-efficiency pole (0.1M generated
-policy, 4 ms/step) + √d normalization rule; MSE-vs-diffusion
-regime-bound caveat loud. Spatial Forcing 2510.12276 banked as new
-hook; queue refilled with lit-radar-async-exec. attach_K healthy
-both polls (3340/10k, probe 11.61@3000 best, bars bind ~13:2xZ);
-Discord clean throughout; run_work_next armed.
-
-Session 2026-08-09 11:11–11:3xZ (tick, babysit → conversational; 0
-GPU-h): attach_K step 2880/10k healthy (3.822 s/step, vram 59.07 ≤
-71, endpoint ~18:3xZ); held through the step-3000 probe boundary —
-11.6124@3000, new best: the 2500 uptick was noise, first kill-bar
-(12.64, binds ≥5k ~13:2xZ) has ~1.0 margin. Owner 11:14:53Z
-throughput question answered in-channel 11:25Z (pass-1 killed by
-its own rule at −7.3%/−10.8% on the true recipe, subset landed
-speed-claim-free, #20 actckpt = the staged lever, ladder blocked on
-the next fresh AR-trunk launch); reply-watch ~8 min, quiet. Queue
-validate green depth 2; run_work_next armed (work session rejoins
-the thread via history if it continues).
-
 Session 2026-08-09 11:49–12:0xZ (tick, babysit; 0 GPU-h): attach_K
 step 3460/10k healthy (3.799 s/step, probe 11.6124@3000 best,
 kill-bar margin ~1.0, binds ~13:2xZ, endpoint ~18:3xZ); Discord
@@ -211,3 +159,12 @@ fixes: queue.json `updated_utc` future-dated 12:05Z → corrected to
 `archive/*.md` (papers/posts/journal/reports, all 404 one level
 deep) rewritten to `../` paths, grep-verified 0 left. Queue validate
 green depth 2; run_work_next armed (lit-radar-async-exec next).
+
+Session 2026-08-09 12:12–12:2xZ (tick, babysit; 0 GPU-h): attach_K
+step 3800/10k healthy (loss 3.10, 3.78 s/step, probe 11.2033@3500
+best, vram 59.07 ≤ 71; 5k kill-bar margin ~1.4, binds ~13:2xZ,
+endpoint ~18:3xZ). Discord clean — read empty, history nothing new
+after our 12:12Z session post, no new reactions. Queue validate
+green depth 2 (8 open); run_work_next armed (lit-radar-hooks-0809b
+next: QDepth-VLA + fresh sweep). Stable stretch → exited rather
+than held; next tick catches the 5k crossing.
