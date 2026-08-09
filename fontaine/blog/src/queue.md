@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T11:08:00Z
+**Updated:** 2026-08-09T12:05:00Z
 
-**Depth call:** depth >=2 at 10:3xZ 08-09: attach screen EXECUTING (arm K live, endpoint ~18:3xZ) + idea6-mcselect-postmortem queued (CPU/record-only on banked dump); blocked behind: stage-2 decision (screen readout tonight), actckpt ladder, f-then-joint draft (Delta_seam), owner-held items
+**Depth call:** depth >=2 at 12:0xZ 08-09: attach screen EXECUTING (arm K live, endpoint ~18:3xZ) + lit-radar-async-exec queued (CPU, any GPU-busy window); blocked behind: stage-2 decision (K readout tonight), actckpt ladder, f-then-joint draft (Delta_seam), #17 vu5k (owner go), owner-held items
 
-**8 open** (Live 0 · Queued 2 · Blocked 6 · Done 64)
+**8 open** (Live 0 · Queued 2 · Blocked 6 · Done 65)
 
 ## 🔴 Live (0)
 
@@ -18,15 +18,15 @@
 
 *ready — waiting on a window or a boundary*
 
-**`lit-radar-hooks-17`** · `cpu`
+**`lit-radar-async-exec`** · `cpu`
 
-Lit slice (standing allocation): clear the two unread #17 radar hooks
+Lit slice (standing allocation): the async/real-time execution family from the banked radar hooks
 
 **boundary:** executable any GPU-busy window
 
 <details><summary>full record</summary>
 
-Lit slice (standing allocation): clear the two unread #17 radar hooks — VEGA 2605.10485 (encoder grounding alignment) + HyperVLA 2510.04898 (hypernetwork inference) — papers page(s) same session per the permanent rule; both feed the vision-unfreeze finalization amendment's citation set (VLM4VLA prior now banked) and the #17 trunk ledger.
+Lit slice (standing allocation): the async/real-time execution family from the banked radar hooks — FASTER 2603.19199 (real-time flow VLAs) + ABPolicy 2602.23901 + DEFLECT 2605.19294 (async execution), optionally RDT2 2602.03310 if time allows; papers page(s) same session per the permanent rule. Feeds #22 (async chunk execution / drift-monitor thread), #16 rig deployment latency (fresh relevance: HyperVLA's 4ms pole banked 08-09), #12 one-step deployment leg. Spatial Forcing 2510.12276 (VEGA's baseline, 3.8x training-accel claim) rides along ONLY if the async set closes early
 
 </details>
 
@@ -132,9 +132,23 @@ Molmo2 stage-2 attachment decision at endpoint — now EXECUTABLE via the seam-s
 
 ---
 
-## ✅ Done (64)
+## ✅ Done (65)
 
 *closed — the full record stays in each fold*
+
+**`lit-radar-hooks-17`** · `cpu`
+
+Lit slice (standing allocation): clear the two unread #17 radar hooks
+
+**boundary:** EXECUTED same session as queued (attach_K train window)
+
+<details><summary>full record</summary>
+
+Lit slice (standing allocation): clear the two unread #17 radar hooks — VEGA 2605.10485 (encoder grounding alignment) + HyperVLA 2510.04898 (hypernetwork inference) — papers page(s) same session per the permanent rule; both feed the vision-unfreeze finalization amendment's citation set (VLM4VLA prior now banked) and the #17 trunk ledger. — EXECUTED 11:4x-12:0xZ 08-09 (same session as queued): both papers deep-read + 2 papers pages SAME SESSION (papers/vega-encoder-grounding.md, papers/hypervla-hypernetwork-inference.md). VEGA 2605.10485: encoder-output alignment aux to DINOv2-FiT3D (2407.20229), projector discarded at inference, beats Spatial-Forcing LLM-token alignment on RoboTwin easy+hard (67.5/30.7 vs 64.2/27.8) + real ALOHA 0.60 vs 0.55; frozen-FiT3D~unfrozen probe =&gt; THIRD POLE on the freeze axis: aux-injected structure substitutes for unfreezing =&gt; banked as vu5k interpretation lever + named cheap escalation if thawed wins (Molmo2 single-tower caveat; VGGT-teacher collapse 0.04 hard). HyperVLA 2510.04898: understand-once/execute-tiny pole (0.1M generated policy/episode, 4ms/step, 90x fewer activated params, sim-only vs 2024 OpenVLA) =&gt; #17 trunk ledger + #16 rig-latency existence proof + sqrt-d generated-update normalization rule (OOD-specific failure); MSE-beats-diffusion ablation regime-bound, NOT read onto AR-vs-flow. index/SUMMARY/ideas #17 hooks + idea page ledger updated. NEW radar hook banked: Spatial Forcing 2510.12276 (ICLR'26; 3.8x training-accel claim unexamined)
+
+</details>
+
+---
 
 **`lit-unfreeze-schedules`** · `cpu`
 

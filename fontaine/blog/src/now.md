@@ -17,8 +17,17 @@ session, queue refilled.***
 first kill-bar 12.6394 binds ≥5k (~13:2xZ) with ~1.0 margin. CE aux
 flat. Local GPU free.
 
-**Steering**: none — Discord clean at boot (11:35Z) and at the
-12:0xZ-cadence poll; the 11:14Z throughput thread stayed quiet.
+**Steering**: owner 11:43:03Z (caught on the post-session-post
+`read`): *why did train/loss_action crash to ~0.2–0.3 on the
+current run vs >2.5 on the 40k AR run — does the field still mean
+AR action-token loss?* Answered in-channel 11:48Z after verifying
+at `bijou/train.py:619–624`: **the field changed meaning, nothing
+crashed** — in the joint arm the `loss_action` slot carries the
+flow-matching component (regression scale ~0.2–0.3) and the AR
+action-token CE moves to `train/loss_aux` (~2.6, flat — exactly
+the pre-registered CE-health drift watch, matching the phase-1
+curve at matched step; the babysit anchors already compare the
+right pair). Reply-watch held ~8 min post-answer.
 
 **Done**: **`lit-radar-hooks-17` EXECUTED** (the queued lit slice,
 ~25 min): deep-read both banked #17 hooks + 2 papers pages SAME
