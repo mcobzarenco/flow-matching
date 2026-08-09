@@ -17,6 +17,20 @@ read is void. Kill lines and bands unchanged; the 90 GPU-h gate
 re-prices to 15. Everything below is otherwise as first posted; 40k
 references should be read through this amendment.*
 
+*Amendment 2 (2026-08-09 21:0xZ, incident): the first 10k launch was
+killed at step 500 by the **host-RAM** OOM killer (20:52:08Z) — the
+launcher had inherited the box recipe's `--num-workers 20
+--prefetch-factor 4`, which at batch 48×1 buffers ~3,840 samples
+(~150–190 GiB of DataLoader workers, kernel log) against 221 GiB
+host RAM; GPU memory was fine (13.06/74 gate). No checkpoint existed
+(saves @1250). Launcher amended to `--num-workers 10
+--prefetch-factor 2` — DataLoader worker count and prefetch depth do
+not affect sample order, so the training recipe is byte-identical —
+plus a `SKIP_LADDER=1` escape reusing the green b48c12 rung.
+Relaunched clean from step 0 at ~21:03Z, same seed 0 (fresh run, not
+a resume — nothing consumed). ~0.4 GPU-h lost inside the 15 gate.
+New projection: endpoint ~05:1xZ 08-10, Δ_capacity read ~06:3xZ.*
+
 *Original header and design follow. Basis: the
 [stage-2 attachment decision memo](2026-08-09-molmo2-stage2-attachment-decision.md)
 (frozen default stands) + the

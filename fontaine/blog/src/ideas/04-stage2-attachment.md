@@ -431,3 +431,21 @@ production datum for the ledger: 16-robot fleet RL updates **only
 the flow expert on a frozen trunk** even mid-RL with every
 incentive to adapt — the sixth production frozen-first vote. The
 fjoint pre-reg's frozen reads are untouched.
+
+**2026-08-09 — MolmoAct2 deep dive
+([post](../posts/2026-08-09-molmoact2-deep-dive.md), 2605.02881):
+the seam ledger's most relevant production entry.** Their staging
+IS our debate: post-train the 621M flow expert **with knowledge
+insulation** (KV conditioning detached — F's philosophy), then at
+finetune **drop insulation and unfreeze everything** — measured:
+expert-only finetune 93.05 vs full-FT 97.20 (**+4.15, the
+strongest joint-pole vote banked**), insulation-at-finetune a wash
+(97.05 vs 97.20), discrete co-training rider +0.25, LoRA −0.95.
+Caveats before this re-ranks anything: their "expert-only" starts
+from a jointly post-trained system, not a converged frozen-trunk
+expert like F; LIBERO is at ceiling; and it's the same benchmark
+family every ledger entry leans on. Net: doesn't overturn the
+frozen memo, but it predicts fjoint > F2 and raises the rung's
+expected value. Also: per-layer KV cross-attention beats
+final-hidden-state 95.9 vs 94.0 — the deep-read direction of our
+12-tap surface, priced at ~+2 at ceiling.

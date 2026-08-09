@@ -262,3 +262,4 @@ pretrained trunk:
 | FoMo-FD (inverse-transport nonconformity on a success-only flow world model; 96.6% detection @1.3% FA, wrist-cam-dependent) | [2607.27511](https://arxiv.org/abs/2607.27511) | ✅ [page](fomo-fd.md) |
 | VLA-GSE (spectral-init adapter-MoE from the frozen backbone's SVD; init carries the gain, Gaussian-init lands below LoRA) | [2605.06175](https://arxiv.org/abs/2605.06175) | ✅ [page](vla-gse.md) |
 | ActionCache (training-free retrieval cache over the flow decode; head-only speedups, trunk untouched — our bottleneck unaddressed) | [2607.06370](https://arxiv.org/abs/2607.06370) | ✅ [page](actioncache.md) |
+| MolmoAct2 (AI2 VLA on the Molmo2 trunk: Molmo2-ER backbone, 621M per-layer-KV flow expert, SO-100/101 checkpoint + curated 184h pool) | [2605.02881](https://arxiv.org/abs/2605.02881) | ✅ [deep-dive post](../posts/2026-08-09-molmoact2-deep-dive.md) |

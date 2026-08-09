@@ -1,8 +1,72 @@
 # Now
 
+*Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-09 20:47–21:5xZ (real `date -u` at write: 21:5x) —
+work session (bounded): **lit-radar-0816 CLOSED (5 papers pages,
+every hook needed corrections) + owner steering 20:49Z handled
+live — the MolmoAct2 deep dive SHIPPED same session (AI2 built
+their production VLA on our trunk family; Molmo2-ER released =
+cheapest trunk arm ever priced). tiny10k survived a host-RAM OOM
+kill: root-caused, launcher amended, relaunched inside 11 min.***
 
+**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE — babysit exit 0
+×3 (20:48, 21:01, 21:14 server clock), step 10,000 @ 21:14,
+21.9–23.3 st/min, 30.3/310 GPU-h, vram 75.3 ×4 vs 77. Probe ladder:
+… 11.02@8000 → 11.44@8500 → 11.53@9000 → **10.63@9500 NEW
+RUN-BEST** — the @8500/@9000 uptick receded exactly like the @5000
+precedent; nothing near a kill line. Endpoint ~08-12 ~17:00Z.
+`fontaine-tiny10k` LIVE local — **killed at step 500 by the HOST-RAM
+OOM killer 20:52Z** (kernel log: 20× pt_data_worker ≈150–190 GiB —
+the launcher had inherited the box recipe's `--num-workers 20
+--prefetch-factor 4`, lethal at batch 48×1; GPU vram was fine at
+13/74) → launcher amended to workers 10 / prefetch 2 (sample order
+unchanged, recipe byte-identical; pre-reg Amendment 2) +
+`SKIP_LADDER=1`, relaunched clean from step 0 same seed @21:03Z,
+stepping since 21:08Z (12.98 GiB, ~2.8 s/step), ~0.4 GPU-h lost.
+**New projection: endpoint ~05:1xZ 08-10 → panel_v2 → Δ_capacity
+read ~06:3xZ.** Note: the old run's probe 16.46@500 row persists in
+the reused jsonl — ignore rows predating 21:03Z.
 
+**Steering**: 20:49:36Z — "there's already a molmo2 VLA
+(allenai/molmoact2). Write a super in-depth piece on it" →
+**SHIPPED same session** (Done); ack 21:16Z, link posted 21:5xZ.
+Follow-up arms offered as owner-decision, none queued. 13:48Z gate
+default (let run, gate 310) governs adamc.
+
+**Done** (commits `a5abb5e` + this close; check 599 green ×2):
+**(1) lit-radar-0816 CLOSED** — 5-subagent fan-out, 5 Papers pages
+same session (weight-decay-plasticity, learning-while-deploying,
+fomo-fd, vla-gse, actioncache), ideas #4/#6/#16/#17/#19/#22 + adamc
+watch fed. Every banked hook needed corrections, three loud:
+FoMo-FD "no env rollouts" FALSE (conformal calibration needs ~19
+successful deployed-policy rollouts/task; "FDR" = detection rate);
+ActionCache "changes #19's cheap-draws cost model" WRONG (trunk
+unskippable — keys computed from trunk outputs; top-1 retrieval
+collapses draws; kept: real-SO-101 ~102 ms/decision anchor); LWD
+QAM adopted-not-invented + 95% = mixed human-rubric metric. Refill
+sweep → `lit-radar-0817` queued (2 dup catches: 2607.23777 =
+already-read Muon-SW; FlowPRO standalone covered in
+hy-embodied-stack). **(2) MolmoAct2 deep dive**
+(`2026-08-09-molmoact2-deep-dive.md`, 4 research tracks, Space 200
+×6): backbone IS Molmo2 → Molmo2-ER (+6.0 LIBERO-Long from
+ER-ization alone, weights released → #17's cheapest trunk arm);
+621M per-layer-KV flow expert (capacity anchor for tonight's read);
+expert-only finetune −4.15 vs full FT = strongest joint-pole vote
+(#4, predicts fjoint > F2); SO100_101 checkpoint zero-shot official
+in LeRobot v0.6 (12.1 GiB bf16, joint-remap gotcha), expert-only FT
+16.5 GiB single-GPU; `repo_list.json` mechanizes the survey's
+corpus diff (#9). **(3) tiny10k OOM recovery** (Status). **(4)
+Bookkeeping**: stale survey queue item flipped done (audit vs
+beb8659); posts/index.md drift fixed (5 missing 08-09 entries).
+
+**Next**: `queue_cli.py next` → `lit-radar-0817` (CPU, 4 verified
+hooks + 6 spares; MolmoAct2 slot satisfied by the owner piece).
+tiny10k endpoint ~05:1xZ 08-10 → chained panel_v2 → Δ_capacity
+readout session (now with MolmoAct2's 15.5% expert-ratio anchor).
+adamc endpoint ~08-12 ~17:00Z → chained k4l2 panel. MolmoAct2
+follow-up arms (frozen-ER swap, corpus intersection, rig zero-shot)
+are owner-decision items.
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
@@ -105,45 +169,6 @@ session). adamc endpoint ~08-12 ~17:00Z → chained k4l2 panel.
 Survey follow-ups (corpus-delta re-crawl + MolmoAct2 diff, Bridge V2
 pilot) are owner-decision items, not yet queued as work.*
 
-*Previous update 2026-08-09 19:41–19:5xZ (real `date -u` at write: 19:48) —
-tick (babysit): **orphan audit — the 19:3x work session died at turn
-end mid-close; its `lit-radar-0815` queue close + `0816` refill
-recovered and committed, in-channel post made this tick (papers
-commit `c53e517` + Space push had landed). adamc_100k healthy at
-step 7900 (24.1/310 GPU-h, 22.1 st/min); probe @8000 = 11.0237 —
-NEW RUN-BEST, the downward break extends.***
-
-**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE — babysit exit 0,
-8 procs, ~75.3 GiB ×4 vs 77 bar, step 7900 @ 19:41, window 22.1
-st/min, cumulative 24.1/310 GPU-h. **Probe @8000 = 11.0237** (read
-in-session ~19:47Z): 11.69@7000 → 11.72@7500 → 11.02@8000 — new
-best, below the 11.32@4500 floor; train_mae 12.49 → 12.41 still
-falling. No escalation, nothing near a kill line. Endpoint ~08-12
-~17:00Z → chained k4l2 panel. LOCAL GPU free.
-
-**Steering**: none new — babysit `read` empty (19:41, unfiltered);
-`history -n 5` = our own posts only, no reactions. Last owner
-message remains the answered 16:42Z ticket question. 13:48Z gate
-default (let run, gate 310) governs.
-
-**Done**: orphan audit (charter boot): the dead session's
-`queue.json`/`queue.md` diff verified against landed work (`c53e517`
-+ 200 ×5 Space checks, 19:39:56Z stamp clean vs real clock) and
-committed — `lit-radar-0815` CLOSED (3 hook corrections), Done 85,
-`lit-radar-0816` queued. Owed in-channel 0815 post made this tick.
-Babysit poll exit 0 (Discord poll included). Probe@8000 caught
-in-session (background poll + foreground hold). babysit.toml: adamc
-entry wired with `jsonl`+`probe_key = eval_chunk_mae` — future
-ticks print the probe ladder without manual ssh. Queue validate
-green depth 3. `run_work_next` re-armed (19:43 marker). Head keep-3
-+ footer keep-2 rolls (19:05 head entry + 19:08 footer note → day
-archive, verbatim).
-
-**Next**: chained work session → `queue_cli.py next` →
-`lit-radar-0816` (CPU, any GPU-busy window); probe@8500 ~20:09Z
-routine. adamc endpoint ~08-12 ~17:00Z → chained k4l2 panel. fjoint
-stays owner-gated post-endpoint.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -200,3 +225,18 @@ live over ssh. Fresh probes @8500 = 11.44 / @9000 = 11.53: above
 the 11.02@8000 run-best, inside the noise band (the @5000 uptick
 precedent), record-only, no escalation. Discord clean; queue green
 depth 4; run_work_next armed (20:31) for lit-radar-0816.
+
+Session 2026-08-09 20:47–21:5xZ (work, bounded; ~0.4 GPU-h lost to
+the tiny10k host-RAM OOM + relaunch riding to ~05:1xZ ≈ 9.5 ≤ 15
+gate; adamc rides 30.3/310; explore): lit-radar-0816 closed — 5
+deep reads via subagent fan-out, 5 Papers pages, every hook needed
+corrections (3 loud: FoMo-FD rollout clause, ActionCache
+cheap-draws clause, LWD attribution), 0817 refill queued with 2
+dup catches. Owner steering 20:49Z (MolmoAct2 piece) handled in
+conversational mode: 4-track research fan-out → deep-dive post
+shipped + linked same session; Molmo2-ER trunk arm, seam vote,
+capacity anchor, and corpus manifest all fed to ideas. tiny10k OOM
+root-caused (DataLoader worker buffer 4× oversized at b48×1),
+launcher amended, relaunched inside 11 min. adamc probe @9500 =
+10.63 new run-best. Commits a5abb5e + close; check 599 ×2; Space
+pushed, 6 new pages 200.

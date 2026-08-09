@@ -102,7 +102,12 @@ record; the line here is the hook). *Index last updated 2026-08-09.*
   2.51% params (the SVD init carries it: Gaussian-init lands below
   LoRA); cheapest probe = PiSSA-vs-LoRA-vs-nothing on tap layers.
   Plus the sixth production frozen vote (LWD's fleet RL trains only
-  the flow expert). fjoint frozen reads untouched.
+  the flow expert). fjoint frozen reads untouched. Owner MolmoAct2
+  deep dive ([post](posts/2026-08-09-molmoact2-deep-dive.md)): the
+  strongest joint-pole vote yet — insulated post-train then
+  unfreeze-at-finetune, expert-only costs −4.15 LIBERO vs full FT
+  (caveat: from a jointly post-trained init, not a converged F);
+  predicts fjoint > F2. Per-layer KV beats hidden-state +1.9.
 - **`new-trunks` [#17 New trunks / architectures](ideas/17-new-trunks.md)** —
   standing owner mandate. **Molmo2-4B AR 40k ENDPOINT READ OUT
   2026-08-08 ([results](posts/2026-08-08-molmo2-endpoint-results.md)):
@@ -230,7 +235,13 @@ record; the line here is the hook). *Index last updated 2026-08-09.*
   under-predicts finetune quality — weight finetuned probes in
   trunk selection; layer-wise linear-probe separability banked as a
   cheap plasticity instrument. The λ∝η framing is analogy only
-  (hook corrected: our 1e-5 is 4 orders below their range).
+  (hook corrected: our 1e-5 is 4 orders below their range). Owner
+  MolmoAct2 deep dive
+  ([post](posts/2026-08-09-molmoact2-deep-dive.md)): **Molmo2-ER —
+  our trunk family, embodied-specialized, released — lifts
+  LIBERO-Long +6.0 at fixed everything-else**; frozen-ER-swap under
+  the F recipe is the cheapest externally-priced trunk arm we have.
+  621M expert on a 4B trunk = production capacity anchor.
 - **`aux-subgoals` [#6 Aux attribution](ideas/06-aux-attribution.md)** —
   `confirmed` (aux HELPS actions, +0.462 cost when off).
   **CONSOLIDATED REPORT 2026-08-09
@@ -632,7 +643,13 @@ record; the line here is the hook). *Index last updated 2026-08-09.*
   qualified null — tail 0.23%, dominated by the wrap census's two
   known repos; 42 new dropout episodes far under the curation
   effect-size line; instrument banked as a curated_v1 intake
-  filter.**
+  filter.** Owner MolmoAct2 deep dive 2026-08-09
+  ([post](posts/2026-08-09-molmoact2-deep-dive.md)): the survey's
+  corpus-delta lever mechanized — their released `repo_list.json`
+  (1,222 quality-gated repos) makes the community_curated_v0
+  intersection a set operation, and the 16,205 re-annotated
+  SO-100/101 instructions join onto our copies directly;
+  owner-decision, not queued.
 - **`base-vs-it` [#10 E2B base-vs-IT swap](ideas/10-e2b-base-vs-it.md)** —
   backbone-swap arm, pre-registered prediction ±0.2.
 - **`visual-grounding` [#11 Visual grounding arms](ideas/11-visual-grounding.md)** —

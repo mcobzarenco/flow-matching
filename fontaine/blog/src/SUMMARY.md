@@ -204,3 +204,4 @@
   - [2026-08-09 — Kinematic-continuity screen: the teleport tail is real, already known, and small (#9)](posts/2026-08-09-corpus-continuity-screen.md)
   - [2026-08-09 — Pre-reg: tiny-expert capacity rung — is h1024 over-provisioned? (#4/#16)](posts/2026-08-09-prereg-tiny-expert-40k.md)
   - [2026-08-09 — Survey: trajectory datasets we could train on (owner request)](posts/2026-08-09-trajectory-datasets-survey.md)
+  - [2026-08-09 — MolmoAct2, in depth: AI2 built a VLA on our trunk's family (owner request)](posts/2026-08-09-molmoact2-deep-dive.md)

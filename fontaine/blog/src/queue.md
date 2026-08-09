@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T21:20:00Z
+**Updated:** 2026-08-09T21:45:00Z
 
-**Depth call:** depth >=2 at 21:20Z 08-09: owner-molmoact2-deep-dive (cpu, in progress this session) + adamc-100k babysit to ~08-12 (live) + tiny-expert-10k (gpu-local RELAUNCHED post-OOM, endpoint ~05:1xZ 08-10) + lit-radar-0817 (cpu, 4 verified hooks + 6 spares after the MolmoAct2 slot moved to the owner item) + idea4-fjoint-rung-finalize-exec (gpu-box, owner-gated)
+**Depth call:** depth >=2 at 21:45Z 08-09: adamc-100k babysit to ~08-12 (live) + tiny-expert-10k (gpu-local relaunched post-OOM, endpoint ~05:1xZ 08-10) + lit-radar-0817 (cpu, 4 verified hooks + 6 spares) + idea4-fjoint-rung-finalize-exec (gpu-box, owner-gated) + docs-pass tail (owner-side only)
 
-**10 open** (Live 2 · Queued 4 · Blocked 4 · Done 87)
+**9 open** (Live 2 · Queued 3 · Blocked 4 · Done 88)
 
 ## 🔴 Live (2)
 
@@ -40,23 +40,9 @@ T1 tiny-expert capacity rung, FINAL DESIGN (owner yes 19:59:04Z; 40k/biggest-bat
 
 ---
 
-## 🟢 Queued (4)
+## 🟢 Queued (3)
 
 *ready — waiting on a window or a boundary*
-
-**`owner-molmoact2-deep-dive-0809`** · `cpu`
-
-OWNER STEERING 20:49:36Z 08-09: 'Woah, there's already a molmo2 VLA -- https://github.com/allenai/molmoact2
-
-**boundary:** opened by owner message 20:49Z 08-09; executing same session (4-track research fan-out out since ~21:2xZ); acknowledged in-channel 21:16Z
-
-<details><summary>full record</summary>
-
-OWNER STEERING 20:49:36Z 08-09: 'Woah, there's already a molmo2 VLA -- https://github.com/allenai/molmoact2. Write a super in-depth piece on it, everything you can find on training, arch, experiments etc. well organized.' Deliverable: long-form blog piece (paper 2605.02881 + repo + HF model/dataset cards + AI2 announcement + v1-&gt;v2 delta + competitive map + what-transfers-to-us), link in-channel. Note: the 0816 refill sweep had independently ranked this paper #1 ~20 min before the owner message; the 0817 queue item's priority-1 slot is satisfied by this piece.
-
-</details>
-
----
 
 **`lit-radar-0817`** · `cpu`
 
@@ -158,9 +144,23 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 
 ---
 
-## ✅ Done (87)
+## ✅ Done (88)
 
 *closed — the full record stays in each fold*
+
+**`owner-molmoact2-deep-dive-0809`** · `cpu`
+
+OWNER STEERING 20:49:36Z 08-09: 'Woah, there's already a molmo2 VLA -- https://github.com/allenai/molmoact2
+
+**boundary:** CLOSED 2026-08-09T21:4xZ same session: deep-dive post posts/2026-08-09-molmoact2-deep-dive.md shipped via 4-track fan-out (paper 51pp PDF + repo/configs + HF cards + AI2 blog/LeRobot docs/community sweep). Headlines for us: backbone IS Molmo2 (-&gt; Molmo2-ER, +6.0 LIBERO-Long from ER-ization alone, released = cheapest trunk arm ever priced, fed #17); 621M per-layer-KV flow expert (capacity anchor for tonight's Delta_capacity read; KV-vs-hidden +1.9); finetune ablation expert-only 93.05 vs full-FT 97.20 = strongest joint-pole vote, insulation-at-finetune a wash (fed #4, predicts fjoint &gt; F2); SO100_101 checkpoint zero-shot path official in LeRobot v0.6 (12.1 GiB bf16, joint-remap gotcha), expert-only FT 16.5 GiB = single-GPU; repo_list.json manifest mechanizes the survey's corpus-delta (fed #9). Independent-signal dryness flagged. In-channel link posted. Follow-up arms (ER-swap, corpus intersection, rig zero-shot) owner-decision, NOT queued.
+
+<details><summary>full record</summary>
+
+OWNER STEERING 20:49:36Z 08-09: 'Woah, there's already a molmo2 VLA -- https://github.com/allenai/molmoact2. Write a super in-depth piece on it, everything you can find on training, arch, experiments etc. well organized.' Deliverable: long-form blog piece (paper 2605.02881 + repo + HF model/dataset cards + AI2 announcement + v1-&gt;v2 delta + competitive map + what-transfers-to-us), link in-channel. Note: the 0816 refill sweep had independently ranked this paper #1 ~20 min before the owner message; the 0817 queue item's priority-1 slot is satisfied by this piece.
+
+</details>
+
+---
 
 **`lit-radar-0816`** · `cpu`
 

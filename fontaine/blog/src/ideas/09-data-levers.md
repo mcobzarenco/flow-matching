@@ -129,3 +129,19 @@ check (charter §2) before training touches it.
   pilot > UMI cup → FastUMI-100K > sim-as-augmentation-only). A
   corpus-delta re-crawl is the survey's #1 recommendation — needs
   its own work item + judge budget before any training touches it.
+
+- **2026-08-09 MolmoAct2 deep dive
+  ([post](../posts/2026-08-09-molmoact2-deep-dive.md)): the
+  survey's #1 recommendation is now mechanized.** The
+  MolmoAct2-SO100_101 release is an **annotations manifest**:
+  `repo_list.json` names all 1,222 kept repos verbatim (1,660
+  candidates, 438 rejected by structural → eval-style → license →
+  TOPReward quality gates), plus per-repo re-annotated instruction
+  parquets (Qwen3.5-27B; SO-100/101 unique instructions 707 →
+  16,205). So: (a) corpus intersection with community_curated_v0
+  is a set operation, not a re-crawl; (b) the instruction port
+  joins directly onto our copies (verify per-repo episode counts —
+  re-uploads shift indices); (c) membership in their list = a free
+  external quality signal on our 229 h. Their 183.6 h is SO-100 +
+  SO-101 combined vs our SO-101-only 229 h — neither is a superset.
+  Owner-decision item; not queued.

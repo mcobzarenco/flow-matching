@@ -514,3 +514,20 @@ detects 96.6% of failures where *forward* prediction-error scores
 52.2% — the useful signal is post-hoc by construction (needs the
 observed endpoint), a caution against forward-sampling verifiers
 ranking candidate chunks pre-execution.
+
+**2026-08-09 — owner-requested MolmoAct2 deep dive
+([post](../posts/2026-08-09-molmoact2-deep-dive.md), 2605.02881,
+AI2): the trunk axis gets its most actionable arm ever.** AI2's
+production VLA is built on OUR trunk family — Molmo2-4B finetuned
+into **Molmo2-ER** (specialize 20k steps on a 3.3M embodied corpus,
+then rehearse 1.5k steps re-mixing the original mid-training data,
+50/50 best) — and the controlled ablation is the datum: swapping
+Molmo2 → Molmo2-ER under an identical discrete VLA lifts
+LIBERO-Long **77.6 → 83.6 (+6.0)**, larger than their per-layer-KV
+conditioning gain (+1.9) or K=8 flow samples (+1.75). Molmo2-ER is
+released (Apache-2.0, ~5.8k monthly downloads). The concrete arm:
+frozen-Molmo2-ER swap under the identical F recipe, panel delta vs
+F — externally priced, weights-in-hand, owner-decision. Also filed:
+their expert is 621M on a 4B trunk (15.5%; our F 9.2%, tiny 2.2%)
+— a production capacity anchor for tonight's Δ_capacity read; and
+the per-layer KV result seconds our deep-tap direction.
