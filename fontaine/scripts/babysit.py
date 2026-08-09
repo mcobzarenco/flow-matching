@@ -423,10 +423,32 @@ def check_progress_log(
         report.add("  LIVENESS FAILURE: no progress line parsed from log")
         return {}
     started = datetime.fromisoformat(run.started_utc)
+    # Multi-phase logs reset the counter per phase (subgoal_swap 03:13Z
+    # 08-09: identity -> swap roll). Dividing the new phase's counter by
+    # time-since-launch fabricates a slow rate and a false gpu-hours
+    # crossing, so the projection anchors at the last observed reset
+    # (persisted in the prev cache), falling back to launch time.
+    phase_t = (
+        datetime.fromisoformat(prev["phase_t0"]) if prev.get("phase_t0") else started
+    )
+    phase_c0 = float(prev.get("phase_c0", 0))
+    if prev and done < prev["count"]:
+        phase_t, phase_c0 = datetime.fromisoformat(prev["t"]), 0.0
+        report.add(
+            f"  counter reset ({prev['count']} -> {done}): phase roll —"
+            f" projection re-anchored at {prev['t']}",
+        )
     if total is not None:
         report.add(f"  progress: {done}/{total} frames")
-        cum_rate = per_minute_rate(started, 0, now, done)
-        proj_h = projected_total_hours(started, now, done, total)
+        cum_rate = per_minute_rate(phase_t, phase_c0, now, done)
+        elapsed_h = (now - started).total_seconds() / 3600.0
+        if cum_rate is not None:
+            # elapsed is a fact; only the remainder is projected, at the
+            # current phase's rate (== old whole-job formula when the
+            # anchor is launch itself)
+            proj_h = elapsed_h + (total - done) / cum_rate / 60.0
+        else:
+            proj_h = None
         proj_gpu_h = proj_h * run.gpu_hours_per_wall_hour if proj_h else None
     else:
         report.add(f"  progress: count {done} (no total in log — bare-count mode)")
@@ -444,7 +466,7 @@ def check_progress_log(
     if cum_rate is not None and proj_h is not None:
         eta_h = (total - done) / cum_rate / 60.0
         report.add(
-            f"  cumulative since {run.started_utc}: {cum_rate:.1f} f/min"
+            f"  cumulative since {phase_t.isoformat()}: {cum_rate:.1f} f/min"
             f" -> projected total ~{proj_h:.1f} h, ~{eta_h:.1f} h remaining",
         )
     for gate in run.gates:
@@ -455,7 +477,12 @@ def check_progress_log(
             report.add(
                 "  GATE CROSSING SURFACED (call stays with the session, charter §6)",
             )
-    return {"t": now.isoformat(), "count": done}
+    return {
+        "t": now.isoformat(),
+        "count": done,
+        "phase_t0": phase_t.isoformat(),
+        "phase_c0": phase_c0,
+    }
 
 
 def babysit_run(

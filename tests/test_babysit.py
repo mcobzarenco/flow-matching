@@ -313,3 +313,72 @@ class TestPerRunChecks:
         assert "27.8 f/min" in text
         assert "~15.5 h" in text
         assert not report.gate_crossed  # 15.5 < 24
+        # single-phase anchor: launch time itself, counter base 0
+        assert sample["phase_t0"] == start.isoformat()
+        assert sample["phase_c0"] == 0
+
+    def _swap_run(self) -> object:
+        return babysit.Run(
+            name="s",
+            kind="progress-log",
+            host="local",
+            pgrep="x",
+            pgrep_min=1,
+            gpu_indices=[0],
+            gpu_mem_min_mib=4000,
+            anchors=[],
+            gates=[{"kind": "gpu_hours_max", "value": 3.0}],
+            boundary="-",
+            log="-",
+            progress_re="scored [0-9]+/[0-9]+ frames",
+            started_utc="2026-08-09T02:13:47Z",
+        )
+
+    def test_progress_log_phase_roll_reanchors_projection(self) -> None:
+        # REAL false positive (subgoal_swap 03:13Z 08-09): the frame
+        # counter reset to 0 at the identity->swap phase roll, and the
+        # launch-anchored cumulative projection read ~3.2 GPU-h > 3.0 —
+        # a phantom crossing on a run truly headed for ~1.5 GPU-h. A
+        # counter reset must re-anchor the projection at the previous
+        # sample and NOT cross the gate.
+        run = self._swap_run()
+        sections = {
+            "@@PGREP": ["2"],
+            "@@GPU": ["0, 12675, 63"],
+            "@@TAIL": ["  scored 7712/25800 frames"],
+        }
+        report = babysit.Report()
+        prev = {"t": "2026-08-09T03:00:00+00:00", "count": 25800}
+        now = datetime(2026, 8, 9, 3, 13, 14, tzinfo=UTC)
+        sample = babysit.check_progress_log(run, sections, prev, now, report)
+        text = "\n".join(report.lines)
+        assert "counter reset (25800 -> 7712)" in text
+        # ~583 f/min phase rate -> elapsed 0.99 h + remaining 0.52 h ~= 1.5
+        assert "~1.5 h" in text
+        assert not report.gate_crossed  # the 03:13Z artifact, now silent
+        assert sample["phase_t0"] == prev["t"]
+        assert sample["phase_c0"] == 0
+
+    def test_progress_log_phase_anchor_persists(self) -> None:
+        # Polls after the roll keep the cached anchor: rate comes from
+        # the phase window, never from time-since-launch.
+        run = self._swap_run()
+        sections = {
+            "@@PGREP": ["2"],
+            "@@GPU": ["0, 12675, 63"],
+            "@@TAIL": ["  scored 11712/25800 frames"],
+        }
+        report = babysit.Report()
+        prev = {
+            "t": "2026-08-09T03:13:14+00:00",
+            "count": 7712,
+            "phase_t0": "2026-08-09T03:00:00+00:00",
+            "phase_c0": 0,
+        }
+        now = datetime(2026, 8, 9, 3, 18, 30, tzinfo=UTC)
+        sample = babysit.check_progress_log(run, sections, prev, now, report)
+        text = "\n".join(report.lines)
+        assert "counter reset" not in text
+        assert "cumulative since 2026-08-09T03:00:00+00:00" in text
+        assert not report.gate_crossed
+        assert sample["phase_t0"] == prev["phase_t0"]
