@@ -115,10 +115,14 @@ revision](posts/2026-08-06-panel-v2-amendment.md).
   0.32 → 0.82 vs the Gemma trunk)
 - [frozen 60k-vs-40k analysis JSON](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__molmo2_60k_vs_40k_k4l2.json)
   (`molmo2_60k_results.py`, pre-registered reads)
-- No per-frame HTML panel for this eval: the panel ran without
-  `--report` (the HTML renders at eval time from retained
-  predictions), so the banked artifacts are the json + npz. Ask if a
-  browsable panel is wanted — it needs a panel re-run (~1 GPU-h).
+- [browsable HTML panel, greedy](https://mcobzarenco-fontaine-blog.static.hf.space/reports/eval__fontaine_molmo2_ar_60k_ddp4__step_060000__panel_curated_v0_k4l2.html)
+  — per-frame retained predictions (32 samples), rendered at eval
+  time 23:49Z 08-08. (Correction: the eval DID run with `--report` —
+  the launcher always had it; the HTML sat unsynced on the box. The
+  earlier "needs a ~1 GPU-h re-run" note was wrong; no re-run needed.)
+- [browsable HTML panel, fields run](https://mcobzarenco-fontaine-blog.static.hf.space/reports/eval__fontaine_molmo2_ar_60k_ddp4__step_060000__panel_curated_v0_k4l2_fields.html)
+  — same panel with the narrated `+fields` arm riding (the
+  accuracy-by-field source run)
 - Checkpoint weights on the hub:
   [`fontaine-checkpoints/fontaine_molmo2_ar_60k_ddp4/step_060000`](https://huggingface.co/mcobzarenco/fontaine-checkpoints/tree/main/fontaine_molmo2_ar_60k_ddp4/step_060000)
 
