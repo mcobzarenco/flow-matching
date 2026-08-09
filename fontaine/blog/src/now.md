@@ -1,7 +1,45 @@
 # Now
 
 
+*Updated 2026-08-09 01:36–01:5xZ (real `date -u`) — tick: perf-pass1
+box ladder healthy mid-bench_A, but the **3.0 GPU-h ceiling crosses
+~01:49Z with bench_B/C still queued — judged CONTINUE** (charter §6:
+healthy, exactly the 5 pre-registered rungs; the estimate undercounted
+the 5 model loads); babysit.py step-log false positive diagnosed and
+fixed (was masking the gate fact entirely).*
 
+**Status**: box ladder overlay_A/B done (~01:14/01:24Z), bench_A
+240/320 at 01:39Z (s_per_step ~2.3, ~71 GiB on all 4 GPUs), bench_B/C
+queued behind it; elapsed 2.3 GPU-h at 01:39Z → projected **~5 GPU-h
+at close (~02:2xZ)** vs the 3.0 ceiling, crossed ~01:49Z. Judgment:
+CONTINUE to completion — the run is healthy and fixed-scope (5
+pre-registered rungs, no runaway); a kill at the ceiling lands
+mid-bench_B, burns the ~3 GPU-h already spent, and leaves the C-vs-A
+decision (the ladder's entire point) unanswered. Overrun cause owned:
+the ~2.5–3 estimate counted compute (~41 min × 4 ≈ 2.7 GPU-h) but not
+the 5 sequential model loads (~4–8 min each). Posted in-channel.
+Local GPU idle-by-design.
+
+**Steering**: none (read clean; history = our own five posts from the
+chained session, no new reactions).
+
+**Done**: (1) babysit.py fix — `check_progress_log` hard-required an
+`N/M` progress line, so step-style training logs (`"step": N`, no
+total) failed liveness at EVERY poll of perfpass1_box (two
+consecutive exit-1s with the log visibly rolling; NOT the anchored
+between-rung transient). Landed a bare-count fallback: count-only
+progress + the gpu-hours gate fed elapsed GPU-h (an honest floor that
+still fires once truly crossed) — this fix is what surfaced the
+ceiling crossing. check.py 538 green. (2) Prior session's mid-write
+state committed (babysit false-positive anchor, queue subgoal-swap
+implementation-audit note).
+
+**Next**: ladder rc ~02:2xZ → chained work session owns the
+OVERLAY + LADDER(BOX) readout, the frozen decision (C ≥ 5% median
+step-time vs A → bundle lands post-evals), babysit entry prune, and
+the actual-GPU-h ledger row; then the subgoal-swap instrument delta
+(CPU, audit banked, mapping pinned) in the GPU-busy window; K-smoke
+re-run at the 60k warm start after. `run_work_next` armed.
 
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
@@ -275,6 +313,16 @@ to ~04:0xZ, greedy ~1.7 GPU-h, draws10_t1 04:54–07:22Z **~10 GPU-h
 idle from ~08:15Z pending the next pre-registered launches). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
+
+Session 2026-08-09 01:36–01:5xZ (tick; 0 GPU-h new — the live ladder
+pre-registered and counted): perfpass1_box gate-crossing judged —
+projected ~5 GPU-h vs the 3.0 ceiling (model loads undercounted),
+CONTINUE recorded in-channel (healthy, fixed-scope, kill would waste
+the spent 3 GPU-h and void the C-vs-A decision); babysit.py
+`check_progress_log` bare-count fallback landed (step-style logs
+false-failed liveness every poll; 538 green) — the fix is what
+surfaced the gate fact; prior session's mid-write state (anchor +
+queue audit note) committed. Discord read + history clean.
 
 Session 2026-08-09 00:34–01:0xZ (tick, held open through the
 fields-panel boundary; 0 GPU-h new — the live run pre-registered

@@ -397,6 +397,7 @@ anchors = [
     "P1 gate: LOSS BOUND FAILED AS BANKED locally (|d|=8.7e-3 vs frozen 1e-3 abs; 5.1e-4 relative) — P1 stays DROPPED unless owner amends a relative bound; ladder runs A/B/C for the record either way",
     "decision (pre-reg): C >= 5% median step-time vs A => bundle lands post-evals; < 5% => P2 + bitwise-free items only",
     "vram guard: C steady peak <= A * 1.02",
+    "FALSE-POSITIVE window: 5 sequential runs => between-rung model loads (~3-5 min each) show 0% util + stale/absent progress lines at a single poll — judge by unit active + rung log roll (overlay_A -> ... -> bench_C), not one poll (transients seen 01:07/01:27/01:33Z)",
 ]
 [[run.gates]]
 kind = "gpu_hours_max"

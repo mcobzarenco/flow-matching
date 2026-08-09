@@ -412,15 +412,28 @@ def check_progress_log(
         m = re.search(r"(\d+)/(\d+)", ln)
         if m:
             done, total = int(m.group(1)), int(m.group(2))
-    if done is None or total is None:
+    if done is None:
+        # step-style logs match progress_re but carry no N/M total
+        for ln in sections.get(SENTINEL_TAIL, []):
+            nums = re.findall(r"\d+", ln)
+            if nums:
+                done = int(nums[-1])
+    if done is None:
         report.alive = False
         report.add("  LIVENESS FAILURE: no progress line parsed from log")
         return {}
-    report.add(f"  progress: {done}/{total} frames")
     started = datetime.fromisoformat(run.started_utc)
-    cum_rate = per_minute_rate(started, 0, now, done)
-    proj_h = projected_total_hours(started, now, done, total)
-    proj_gpu_h = proj_h * run.gpu_hours_per_wall_hour if proj_h else None
+    if total is not None:
+        report.add(f"  progress: {done}/{total} frames")
+        cum_rate = per_minute_rate(started, 0, now, done)
+        proj_h = projected_total_hours(started, now, done, total)
+        proj_gpu_h = proj_h * run.gpu_hours_per_wall_hour if proj_h else None
+    else:
+        report.add(f"  progress: count {done} (no total in log — bare-count mode)")
+        cum_rate, proj_h = None, None
+        elapsed_h = (now - started).total_seconds() / 3600.0
+        # elapsed GPU-h is a floor of any projection; gate still fires once truly crossed
+        proj_gpu_h = elapsed_h * run.gpu_hours_per_wall_hour
     if prev:
         prev_t = datetime.fromisoformat(prev["t"])
         rate = per_minute_rate(prev_t, prev["count"], now, done)
