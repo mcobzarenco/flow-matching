@@ -208,3 +208,24 @@
   the cost levers; paper reports zero compute figures and is
   sim-only. Sits in the post-SFT menu beside FlowPRO/ForesightFlow
   (weight-space) and the noise-space column.
+
+- **2026-08-09 `lit-radar-0811` — two post-SFT menu entries, the
+  poles priced at both infrastructure extremes.**
+  ([RLDT page](../papers/rldt-density-transport-rl.md), 2606.08602):
+  RL-pole roster entry #3 — SVGD density transport on flow policies;
+  the only update *native* to flow matching (no likelihoods, no
+  backprop-through-time; per-depth gradients stay well-conditioned;
+  repulsion term preserves multimodality by construction). Honest
+  price: 64–1,000 parallel envs + trained critic + 30–48 GPU-h per
+  task at SMALL policy scale — the whole RL pole is sim-first;
+  parallel-env infrastructure, not sample count, is the blocker.
+  Its expected-target trick is the same 1-NFE endpoint estimate
+  ForesightFlow benchmarked (τ 0.80–0.86), now used for gradients.
+  ([FAN page](../papers/fan-feasible-action-neighborhood.md),
+  2604.01570, CVPR26): the ZERO-infrastructure pole — one KL term
+  at SFT time toward a Gaussian around the policy's own argmax
+  (self-referential smoothing, no rollouts/critic/labels); modest
+  ID gains, real OOD/perturbation wins (+5–6 pts; 1/30→7/30 on
+  their hardest real task). Discrete-token heads only → AR-trunk
+  candidate for a future rig fine-tune pre-reg; α benchmark-tuned,
+  unimodality-per-state assumption untested on bimodal states.

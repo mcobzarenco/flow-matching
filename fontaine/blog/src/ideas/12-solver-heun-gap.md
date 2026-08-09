@@ -161,6 +161,24 @@ variants, consistency/distillation toward 1–2-step deployment decodes
   2× π0.5's size, +97 ms button-press reaction vs human). Same
   adopted-signal shape as our SnapFlow row.
 
+- **Third axis on the family map: training-side integration
+  supervision (2026-08-09,
+  [TCFM page](../papers/trajectory-consistent-flow-matching.md),
+  2605.08511).** Alongside *distill it short* (SnapFlow/OFP/MeanFlow)
+  and *smooth it in action time* (FAFM), TCFM supervises multi-step
+  integrated displacement during BC training (backprop through a
+  4-step Euler rollout) + a denoising-clock velocity-smoothness
+  regularizer, then deploys RK4-30 (120 NFE). Their ablation is an
+  interaction claim: smoothness loss alone or RK4 alone ~nothing;
+  together 0%→70% long-horizon at 30–101-demo scale. Two reads for
+  us: (a) the consistency term is corroborating evidence for the
+  distill leg we already banked; (b) **zero-training hook, priced
+  not queued** — score an RK4-k decode variant on a banked
+  checkpoint vs the euler-10/30/Heun rows (decode flag only; SDN
+  read says our fields are already smooth, so the integrator axis
+  is separable). Prior is a null (our measured Heun gap is small);
+  cheap falsification if the solver question resurfaces. RK4-120 is
+  an eval-side anchor only — deployment stays 1-NFE.
 - **1-NFE mean read gains a ranking-fidelity number (2026-08-09,
   [ForesightFlow page](../papers/foresightflow-self-scored-bestofk.md)):**
   their value baseline is exactly the 1-NFE endpoint estimate

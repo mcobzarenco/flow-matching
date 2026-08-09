@@ -207,3 +207,13 @@ pretrained trunk:
 |---|---|---|
 | Correction of Decoupled Weight Decay (AdamC successor) | [2512.08217](https://arxiv.org/abs/2512.08217) | ✅ [page](weight-decay-correction.md) |
 | Z-1 (efficient GRPO for flow VLAs, selective joint training) | [2606.31846](https://arxiv.org/abs/2606.31846) | ✅ [page](z1-selective-joint-rl.md) |
+
+**Radar 0811 (banked hooks from the 0810 fresh sweep):**
+
+| Paper | arXiv | Status |
+|---|---|---|
+| TCFM (trajectory-consistent flow matching, RK4 decode) | [2605.08511](https://arxiv.org/abs/2605.08511) | ✅ [page](trajectory-consistent-flow-matching.md) |
+| RLDT (SVGD density-transport RL on flow policies) | [2606.08602](https://arxiv.org/abs/2606.08602) | ✅ [page](rldt-density-transport-rl.md) |
+| FAN (feasible-action-neighborhood prior) | [2604.01570](https://arxiv.org/abs/2604.01570) | ✅ [page](fan-feasible-action-neighborhood.md) |
+| HiFlow (tokenization-free scale-wise AR-via-FM) | [2603.27281](https://arxiv.org/abs/2603.27281) | 🔜 queued |
+| VLA-JEPA (latent world model) | [2602.10098](https://arxiv.org/abs/2602.10098) | 🔜 queued |

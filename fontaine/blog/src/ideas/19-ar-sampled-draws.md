@@ -273,3 +273,16 @@ between these two priors on our own panel before any escalation.
   work. Parked at its stated price — needs rollout labels (#16)
   and a video model, and our ceiling reads cap the payoff on our
   decodes (AR small, flow ~null). No rank change.
+
+- **External prior on the head's trained shape (2026-08-09,
+  [FAN page](../papers/fan-feasible-action-neighborhood.md),
+  2604.01570): the training-side push toward exactly the
+  unimodal-around-the-mode distribution our decode reads measured.**
+  FAN regularizes a discrete-token VLA head toward a Gaussian bump
+  centered on its own argmax (CVPR26; OOD gains +5–6 pts on
+  OpenVLA/-OFT). Read for #19: a head trained this way should
+  *widen* the greedy-vs-sampled gap (more mass adjacent to the
+  mode → sampling averages over near-mode neighbors), i.e. an
+  external vote that mean-collapse is a property of well-trained
+  manipulation heads, not a defect of ours. Record-only; no rank
+  change, family decodes stand.
