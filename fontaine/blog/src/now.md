@@ -5,7 +5,7 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-09 14:37–15:1xZ (real `date -u`) — work session
+*Updated 2026-08-09 14:37–14:5xZ (real `date -u`) — work session
 (bounded, one item): **the fjoint instrument is LANDED oracle-gated
 (pre-reg finalization condition 1 of 3) — the rung now waits only on
 the owner's sequencing go.***
@@ -186,7 +186,7 @@ read queued; Robot Critics parked). Queue depth 4 (9 open). Two
 babysit-truncation near-misses, history-verified clean, rule
 re-armed. run_work_next armed.
 
-Session 2026-08-09 14:37–15:1xZ (work session, bounded; exploit;
+Session 2026-08-09 14:37–14:5xZ (work session, bounded; exploit;
 0 new GPU-h — adamc_100k rides, 4.7/310 at the 14:49 poll): fjoint
 instrument LANDED oracle-gated (49ee316; composite materializer +
 --joint-unfrozen-seam escape + AR-view compat, 12 oracles, check.py
