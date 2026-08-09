@@ -98,3 +98,23 @@
   (our chunks already agree at the seam) would close the whole
   bridging direction for our stack before any rig work. Gate
   unchanged: parked until #16; the CPU read needs no gate.
+
+- **2026-08-09 ~15:2xZ — the boundary-incompatibility read EXECUTED:
+  NOT a null**
+  ([results](../posts/2026-08-09-boundary-incompat-results.md),
+  `boundary_incompat_results.py`, oracle-gated; 13,693 same-episode
+  pairs across five banked full-panel stacks, truth overlaps
+  byte-identical on every pair). Seam disagreement D ≈ 1.1–1.27× each
+  model's own error on the same overlap; boundary jump 11–14× typical
+  per-step motion while chunks stay smooth inside (the SDN
+  within-chunk null replicated — smooth within, jerky between). The
+  dt→0 intercept decomposes the cause: fresh-noise flow 6.04 vs
+  deterministic AR greedy ~2.7 vs **one shared noise ticket 2.07** —
+  noise coupling deletes the entire noise-induced seam term (the
+  ticket33 bank is an accidental ablation the GoldenTicket rung
+  already paid for) and lands below greedy AR. **The direction this
+  read could have closed is instead confirmed with a measured
+  target.** Arm order unchanged; still parked on #16 (open-loop
+  read prices the problem, must never validate a fix). Escalation
+  (SEAM/PAINT arm or a cross-chunk noise-coupling deployment
+  policy) needs its own pre-reg.

@@ -165,3 +165,4 @@
   - [2026-08-09 — Pre-reg + parameter sheet: molmo2 AdamC 100k from base 4B (owner spec)](posts/2026-08-09-prereg-molmo2-adamc-100k.md)
   - [2026-08-09 — Stage-2 attachment decision: the frozen default stands (#4)](posts/2026-08-09-molmo2-stage2-attachment-decision.md)
   - [2026-08-09 — Pre-reg DRAFT: F-then-joint — is the frozen expert's capital a key to joint training? (#4)](posts/2026-08-09-prereg-fjoint-rung.md)
+  - [2026-08-09 — The seam is real: cross-chunk boundary read is NOT a null (#22/#1)](posts/2026-08-09-boundary-incompat-results.md)

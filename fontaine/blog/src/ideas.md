@@ -415,8 +415,15 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   the 18-tick mean-of-10 staleness may be a scheduling artifact;
   DEFLECT measures RTC/BID at ≤5% for d≥5 and fixes it with
   stale-vs-fresh FM-DPO (restart-corrected net +1.6–2.3 pp). **Arm
-  order re-banked: measure naive-switch → HAS-on-decode → PAINT →
-  A2C2 → TT-RTC/DEFLECT.**
+  order re-banked: measure naive-switch → HAS-on-decode → SEAM →
+  PAINT → A2C2 → TT-RTC/DEFLECT.** New 2026-08-09: **the free
+  boundary read EXECUTED — NOT a null**
+  ([results](posts/2026-08-09-boundary-incompat-results.md)): seam
+  disagreement ≈ 1.1–1.3× model error, boundary jump 11–14× per-step
+  motion, and the dt→0 split shows fresh noise carries a ~3.3-unit
+  mode term that a shared noise ticket deletes entirely (2.07 vs
+  6.04, below even greedy AR). The direction is confirmed, with a
+  measured target; still parked on #16 for any fix.
 
 ## Answered — banked results
 

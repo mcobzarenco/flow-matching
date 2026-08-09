@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T15:05:00Z
+**Updated:** 2026-08-09T15:25:00Z
 
-**Depth call:** depth >=2 at 15:0xZ 08-09: adamc-100k babysit to ~08-12 + boundary-incompat-read-npz (CPU) + docs-pass-followups-0809 + lit-radar-hooks-0812a; idea4-fjoint-rung-finalize-exec instrument part DONE this session (launch remains owner-gated post-adamc-endpoint)
+**Depth call:** depth >=2 at 15:2xZ 08-09: adamc-100k babysit to ~08-12 + docs-pass-followups-0809 + lit-radar-hooks-0812a (CPU) + fjoint owner-gated launch; boundary-incompat-read-npz DONE this session (NOT a null)
 
-**9 open** (Live 1 · Queued 4 · Blocked 4 · Done 75)
+**8 open** (Live 1 · Queued 3 · Blocked 4 · Done 76)
 
 ## 🔴 Live (1)
 
@@ -26,7 +26,7 @@ OWNER RUN LIVE (launched 13:30Z 08-09): fontaine_molmo2_adamc_100k_ddp4 — base
 
 ---
 
-## 🟢 Queued (4)
+## 🟢 Queued (3)
 
 *ready — waiting on a window or a boundary*
 
@@ -39,20 +39,6 @@ Lit slice (standing allocation): fresh-sweep hooks banked 08-09 14:4xZ, unread s
 <details><summary>full record</summary>
 
 Lit slice (standing allocation): fresh-sweep hooks banked 08-09 14:4xZ, unread skim-class — Frequency-Aware Flow Matching 2606.20135 (continuous/consistent action generation: the SEAM boundary family from the TRAINING side; #22/#1); VISTA 2606.04708 (vision-grounded physics-validated UMI data adaptation — beside RDT2's 10k-h premise; #16/#9); latent-action-guided FM pair LAFP 2606.10517 + Flowing With Purpose 2606.23420 (latent-action bias on flow policies; #17/#12). Papers page(s) same session per the permanent rule; dup-check against the index tracker before writing
-
-</details>
-
----
-
-**`boundary-incompat-read-npz`** · `cpu`
-
-#1/#22 boundary-incompatibility CPU read (record-only, SDN-read precedent
-
-**boundary:** CPU work at any GPU-busy window (pure function of banked npz); no gate; born from the SEAM read 08-09 (papers/seam-boundary-steering.md)
-
-<details><summary>full record</summary>
-
-#1/#22 boundary-incompatibility CPU read (record-only, SDN-read precedent — exploratory read on banked stacks, NO pre-reg needed, any escalation does): measure cross-chunk mode incompatibility from banked panel npz — for temporally adjacent panel frames of the same episode (Delta-t = a few ticks), compare earlier chunk's tail vs later chunk's head on their overlap (per-frame index join, the draws_fairness/SDN join pattern); quote vs within-chunk smoothness as the anchor. AUDIT FIRST per standing rule: check which panel plans place multiple ordered frames per episode close enough to overlap at chunk 50, and whether flow + AR stacks both qualify. Oracle-gate on synthetic fixtures (planted compatible/incompatible chunk pairs in/out; degenerate same-frame overlap must read exactly 0). A null (chunks already agree at the seam) closes the #22 bridging direction for our stack at zero GPU cost; a real signal is the design input for any SEAM/PAINT-class arm at the #16 rig bench
 
 </details>
 
@@ -144,9 +130,23 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 
 ---
 
-## ✅ Done (75)
+## ✅ Done (76)
 
 *closed — the full record stays in each fold*
+
+**`boundary-incompat-read-npz`** · `cpu`
+
+#1/#22 boundary-incompatibility CPU read (record-only, SDN-read precedent
+
+**boundary:** CLOSED 15:2xZ 08-09 zero GPU; #22/#1 records + SEAM papers page updated same session
+
+<details><summary>full record</summary>
+
+#1/#22 boundary-incompatibility CPU read (record-only, SDN-read precedent — exploratory read on banked stacks, NO pre-reg needed, any escalation does): measure cross-chunk mode incompatibility from banked panel npz — for temporally adjacent panel frames of the same episode (Delta-t = a few ticks), compare earlier chunk's tail vs later chunk's head on their overlap (per-frame index join, the draws_fairness/SDN join pattern); quote vs within-chunk smoothness as the anchor. AUDIT FIRST per standing rule: check which panel plans place multiple ordered frames per episode close enough to overlap at chunk 50, and whether flow + AR stacks both qualify. Oracle-gate on synthetic fixtures (planted compatible/incompatible chunk pairs in/out; degenerate same-frame overlap must read exactly 0). A null (chunks already agree at the seam) closes the #22 bridging direction for our stack at zero GPU cost; a real signal is the design input for any SEAM/PAINT-class arm at the #16 rig bench | EXECUTED 15:2xZ 08-09 (work session): boundary_incompat_results.py landed oracle-gated (planted pairs exact, dt=0 degenerate 0, NaN poison, 6 abort branches) + run on 5 banked stacks (flow80k stablekey/ticket33/draws10mean, molmo2 AR 40k/60k greedy), 13,693 pairs, truth overlaps byte-identical on all. NOT A NULL: seam D 1.1-1.27x model err; boundary jump 11-14x per-step motion (smooth within, jerky between); dt-&gt;0 intercept fresh-noise 6.04 vs AR-greedy ~2.7 vs shared-ticket 2.07 (noise coupling deletes the mode term; ticket33 = free ablation). json banked reports/analysis__boundary_incompat_panels.json + dark-mode dt-curve chart; results post 2026-08-09-boundary-incompat-results.md; #22 direction CONFIRMED not closed, still parked on #16; escalation needs own pre-reg
+
+</details>
+
+---
 
 **`lit-radar-hooks-0811a`** · `cpu`
 

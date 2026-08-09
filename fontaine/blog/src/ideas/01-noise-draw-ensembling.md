@@ -242,3 +242,13 @@
   panel scores chunks independently and would price a steered
   chunk *worse* — this term is #16/rollout territory by
   construction; details on [#22](22-async-staleness.md).
+- **2026-08-09 ~15:2xZ — the boundary read EXECUTED: the cross-chunk
+  term is real and noise-dominated**
+  ([results](../posts/2026-08-09-boundary-incompat-results.md)):
+  at dt ≤ 5 (near-identical observations, matched horizons),
+  fresh-noise flow draws disagree with each other by **6.04** MAE —
+  vs 2.66 for the mean-of-10 ensemble, ~2.7 for greedy AR, and
+  **2.07 for a single shared noise ticket**. The draw dispersion the
+  within-chunk SDN read could not see shows up whole at the seam,
+  and noise coupling deletes it. Record-only; any deployment-side
+  use is #16/#22 territory ([full record](22-async-staleness.md)).

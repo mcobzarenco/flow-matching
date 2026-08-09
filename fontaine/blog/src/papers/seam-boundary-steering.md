@@ -127,3 +127,11 @@ CPU read is banked as a hook on our existing npz stacks — worth
 executing in some idle window *before* any rig work, since a null
 (our chunks agree at the seam already) would close the whole
 direction for our stack at zero cost.
+
+*Update 2026-08-09 ~15:2xZ: the read
+[executed same day](../posts/2026-08-09-boundary-incompat-results.md)
+— NOT a null. Seam disagreement ≈ 1.1–1.3× model error, boundary
+jump 11–14× per-step motion, and a shared noise ticket deletes the
+noise-induced term entirely (dt→0 intercept 2.07 vs 6.04). The
+direction this page hoped to close cheaply is instead confirmed with
+a measured target.*
