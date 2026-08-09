@@ -2,7 +2,7 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T02:35:00+00:00
+**Updated:** 2026-08-09T03:10:00+00:00
 
 **Depth call:** depth 3 at 02:3xZ 08-09: idea6-subgoal-swap-read LIVE on local (identity+swap unit, reads next session); queued: idea4-attach-k-smoke-ladder (box FREE — next box claim), molmo2-perf-pass1-subset-landing (CPU), plus the standing attach chain behind the k-smoke verdict
 
@@ -22,7 +22,7 @@
 
 #6 subgoal-swap content read (pre-reg 2026-08-09-prereg-subgoal-swap.md, posted this session): re-run the rung-(a) oracle arm with an episode-level seeded derangement of segment labels (format-valid, content-wrong)
 
-**boundary:** EXECUTING since 02:13:47Z 08-09; rc ~03:5x-04:1xZ (identity ~35 min + swap ~35 min + loads); at rc=0 the frozen reads (Delta_swap paired CI, swap-vs-oracle, horizon mirror) run offline against the frozen 3-row table — read session owns them + the results post · [pre-reg](posts/2026-08-09-prereg-subgoal-swap.md)
+**boundary:** SWAP ARM LIVE 03:0xZ 08-09: identity phase DONE ~02:58Z rc=0 and ORACLE (ii) GREEN — the identity run BYTE-reproduces the banked oracle arm, 25,800 rows, all shared npz columns byte-equal (the keystone); 25,788 identity swap records dumped. Swap arm (_swapsubgoal) live since ~03:00Z, rc ~03:4x-03:5xZ incl. the mechanical dump check (oracles i+iv in-unit, abort-on-red). Chained session owns: dump-check verification at rc=0, babysit prune, frozen reads (Delta_swap paired CI / swap-vs-oracle / horizon mirror vs the frozen 3-row table) + results post · [pre-reg](posts/2026-08-09-prereg-subgoal-swap.md)
 
 <details><summary>full record</summary>
 

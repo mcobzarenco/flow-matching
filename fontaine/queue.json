@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-09T02:35:00+00:00",
+ "updated_utc": "2026-08-09T03:10:00+00:00",
  "depth_reason": "depth 3 at 02:3xZ 08-09: idea6-subgoal-swap-read LIVE on local (identity+swap unit, reads next session); queued: idea4-attach-k-smoke-ladder (box FREE \u2014 next box claim), molmo2-perf-pass1-subset-landing (CPU), plus the standing attach chain behind the k-smoke verdict",
  "items": [
   {
@@ -567,7 +567,7 @@
    "status": "queued",
    "prereg": "fontaine/blog/src/posts/2026-08-09-prereg-subgoal-swap.md",
    "owner_hold": false,
-   "boundary": "EXECUTING since 02:13:47Z 08-09; rc ~03:5x-04:1xZ (identity ~35 min + swap ~35 min + loads); at rc=0 the frozen reads (Delta_swap paired CI, swap-vs-oracle, horizon mirror) run offline against the frozen 3-row table \u2014 read session owns them + the results post"
+   "boundary": "SWAP ARM LIVE 03:0xZ 08-09: identity phase DONE ~02:58Z rc=0 and ORACLE (ii) GREEN \u2014 the identity run BYTE-reproduces the banked oracle arm, 25,800 rows, all shared npz columns byte-equal (the keystone); 25,788 identity swap records dumped. Swap arm (_swapsubgoal) live since ~03:00Z, rc ~03:4x-03:5xZ incl. the mechanical dump check (oracles i+iv in-unit, abort-on-red). Chained session owns: dump-check verification at rc=0, babysit prune, frozen reads (Delta_swap paired CI / swap-vs-oracle / horizon mirror vs the frozen 3-row table) + results post"
   }
  ],
  "updated": "2026-08-08T23:58:00+00:00"
