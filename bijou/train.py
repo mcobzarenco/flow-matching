@@ -201,10 +201,14 @@ class TrainArgs:
     # zero (the π0.5/KI seam). --joint-ce: ride the phase-1 CE objective
     # (Molmo2ARDecoder suffix, aux fields and all) beside the flow loss
     # at fixed weight 1.0 — the K arm; requires a live trunk and the
-    # stop-grad seam (naive joint exists only as the oracle's negative
-    # control, never as a run).
+    # stop-grad seam. --joint-unfrozen-seam: the narrowly-scoped escape
+    # (F-then-joint pre-reg 2026-08-09) admitting --joint-ce with the
+    # seam OPEN — flow gradients into the trunk — for --init-from warm
+    # starts only; random-init naive joint stays refused (the published
+    # KI collapse the guard exists for).
     seam_stop_grad: bool
     joint_ce: bool
+    joint_unfrozen_seam: bool
     self_attention_mode: str
     time_conditioning: str
     # SnapFlow φ_s target-time embedding on the flow decoder (implied by
@@ -2023,8 +2027,20 @@ def parse_args() -> TrainArgs:
         "apply to it verbatim) beside the flow loss at fixed weight 1.0 "
         "(KI's no-tuning result; deliberately not a knob). Requires "
         "molmo2 + --decoder flow + --conditioning-streams residual + "
-        "--backbone-text-lr + --seam-stop-grad (naive joint is an "
-        "oracle-only negative control, never a run)",
+        "--backbone-text-lr + --seam-stop-grad (random-init naive joint "
+        "is an oracle-only negative control, never a run; "
+        "--joint-unfrozen-seam is the warm-start-only escape)",
+    )
+    parser.add_argument(
+        "--joint-unfrozen-seam",
+        action="store_true",
+        help="opt-in escape from the naive-joint guard (F-then-joint "
+        "pre-reg 2026-08-09): admits --joint-ce WITHOUT --seam-stop-grad, "
+        "so flow-loss gradients enter the trunk through the taps — the "
+        "APT regime. Sane only when --init-from supplies an already-"
+        "converged expert (required); the guard's collapse reasoning "
+        "(KI: an uninformed head's early gradients wreck the trunk) is "
+        "about random init, so fresh runs stay refused",
     )
     parser.add_argument(
         "--self-attention-mode",
@@ -2515,14 +2531,16 @@ def parse_args() -> TrainArgs:
         # The K arm's frozen preconditions (attach-screen pre-reg
         # 2026-08-07): the CE branch is the phase-1 objective continuing
         # VERBATIM (live trunk, FAST suffix, bracketed prompts), and the
-        # seam must be stop-grad — naive joint (flow gradients into the
-        # trunk) exists only as an oracle negative control.
+        # seam must be stop-grad — random-init naive joint (flow
+        # gradients into the trunk) exists only as an oracle negative
+        # control. --joint-unfrozen-seam (guarded below) is the
+        # warm-start-only escape.
         if raw.decoder != "flow" or raw.conditioning_streams != "residual":
             parser.error(
                 "--joint-ce rides the flow expert — it requires --decoder "
                 "flow --conditioning-streams residual",
             )
-        if not raw.seam_stop_grad:
+        if not raw.seam_stop_grad and not raw.joint_unfrozen_seam:
             parser.error(
                 "--joint-ce without --seam-stop-grad is the naive-joint "
                 "arm — a published collapse (KI), refused as a run",
@@ -2542,6 +2560,29 @@ def parse_args() -> TrainArgs:
             )
         if raw.distill is not None:
             parser.error("--joint-ce and --distill are mutually exclusive")
+    if raw.joint_unfrozen_seam:
+        # The escape's own scope (F-then-joint pre-reg 2026-08-09): it
+        # modifies --joint-ce only, contradicts an explicit stop-grad,
+        # and is warm-start-only — the collapse the guard refuses is a
+        # random-init expert's early gradients, so a fresh run gets no
+        # escape.
+        if not raw.joint_ce:
+            parser.error(
+                "--joint-unfrozen-seam is the naive-joint guard escape — "
+                "it modifies --joint-ce and does nothing without it",
+            )
+        if raw.seam_stop_grad:
+            parser.error(
+                "--joint-unfrozen-seam contradicts --seam-stop-grad — the "
+                "escape exists to run the seam open; pick one",
+            )
+        if raw.init_from is None:
+            parser.error(
+                "--joint-unfrozen-seam requires --init-from: the naive-"
+                "joint collapse (KI) is a random-init pathology, so the "
+                "open seam is admitted only for warm starts whose expert "
+                "is already informed (F-then-joint pre-reg 2026-08-09)",
+            )
     if raw.decoder != "flow" and raw.time_conditioning != "additive":
         parser.error(
             "--time-conditioning is flow-only (AR decoders have no \u03c4)",
@@ -2712,6 +2753,7 @@ def parse_args() -> TrainArgs:
         conditioning_streams=raw.conditioning_streams,
         seam_stop_grad=raw.seam_stop_grad,
         joint_ce=raw.joint_ce,
+        joint_unfrozen_seam=raw.joint_unfrozen_seam,
         self_attention_mode=raw.self_attention_mode,
         time_conditioning=raw.time_conditioning,
         target_time_embed=raw.target_time_embed,
@@ -2886,7 +2928,10 @@ def main() -> int:
             "(--conditioning-streams residual): the trunk exports no K/V "
             "streams (attach-screen pre-reg, 2026-08-07)",
         )
-    if args.seam_stop_grad and not molmo2_trunk:
+    if (args.seam_stop_grad or args.joint_ce) and not molmo2_trunk:
+        # joint_ce checked too: --joint-unfrozen-seam admits joint_ce
+        # without seam_stop_grad, and the rider is built only on the
+        # molmo2 branch — a gemma joint run would silently drop it.
         raise SystemExit(
             "--seam-stop-grad / --joint-ce are the molmo2 attach-screen "
             "seam flags; the gemma residual arm trains under a frozen "
@@ -3258,10 +3303,17 @@ def main() -> int:
             )
             joint_rider.init_tables_from_backbone(molmo2_backbone)
             model.joint_ce = joint_rider
+        if args.seam_stop_grad:
+            seam_desc = "stop-grad"
+        elif args.joint_ce:
+            # Only reachable via --joint-unfrozen-seam (parse guard) —
+            # the launch banner must say the trunk takes flow gradients.
+            seam_desc = "UNFROZEN (flow grads enter the trunk)"
+        else:
+            seam_desc = "transparent"
         schedule_desc = (
             f"molmo2 residual taps {expert_config.streams} (1:1 ascending, "
-            f"learned adapters; seam "
-            f"{'stop-grad' if args.seam_stop_grad else 'transparent'}"
+            f"learned adapters; seam {seam_desc}"
             f"{', joint CE rider' if args.joint_ce else ''})"
         )
     elif args.decoder == "flow":

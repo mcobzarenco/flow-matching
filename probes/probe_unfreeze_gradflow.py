@@ -91,6 +91,7 @@ def make_args(
         conditioning_streams="kv",
         seam_stop_grad=False,
         joint_ce=False,
+        joint_unfrozen_seam=False,
         self_attention_mode="causal_actions",
         time_conditioning="additive",
         target_time_embed=False,

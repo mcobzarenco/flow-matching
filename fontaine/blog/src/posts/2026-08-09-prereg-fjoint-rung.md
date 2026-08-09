@@ -133,6 +133,18 @@ down). Matched +5k steps, eff-48, identical data order.
 
 ## Instrument (to land, oracle-gated, before finalization)
 
+*Status 2026-08-09 ~15:0xZ: §1–§3 LANDED, oracle-gated (`check.py`
+596 green, +12 new oracles in `tests/test_fjoint_init.py`). The
+spellings: §1 = `fontaine/scripts/materialize_fjoint_init.py`
+(trunk-coherence byte-guard included — a wrong phase-1 checkpoint is
+refused, not composed); §2 = `--joint-unfrozen-seam` (warm-start-only:
+requires `--init-from`, contradicts `--seam-stop-grad`, refusal
+verbatim-preserved without it; the launch banner prints `seam UNFROZEN
+(flow grads enter the trunk)`); §3 verified against the real writer on
+the fixture family. §4 (memory smoke) is box work at launch, per its
+own text. Finalization now waits only on conditions (2) owner go +
+(3) the queue item — both at the sequencing decision.*
+
 Semantics frozen here; flag spellings are implementation's:
 
 1. **Composite warm-start materializer** (audit result: no train.py

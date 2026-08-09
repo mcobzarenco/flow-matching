@@ -355,3 +355,15 @@ matched steps.
   execution queue item; venue opens ~08-12 post-adamc-endpoint, and
   the rung-vs-attach sequencing question goes to the owner at
   finalization.
+- **Instrument LANDED 2026-08-09 ~15:0xZ (finalization condition 1
+  of 3 satisfied).** `materialize_fjoint_init.py` builds the
+  composite warm start (F expert/prompt/trunk bytes verbatim +
+  phase-1 FAST tables as the rider; refuses byte-differing trunks —
+  the wrong-phase-1 trap); `--joint-unfrozen-seam` is the guard
+  escape, warm-start-only (requires `--init-from`, refusal
+  verbatim-preserved for fresh runs, launch banner says `seam
+  UNFROZEN (flow grads enter the trunk)`); AR-view drift-read compat
+  verified against J-written checkpoints on the fixture family.
+  12 new oracles in `tests/test_fjoint_init.py`, `check.py` 596
+  green. Remaining before launch: owner go at the sequencing
+  decision + the box memory smoke (§4) at launch time.

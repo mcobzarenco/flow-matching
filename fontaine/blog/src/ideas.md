@@ -52,8 +52,9 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   J (unfrozen, no stop-grad, CE rider, from the banked F@10k
   expert) vs F2 (frozen continuation control), matched +5k,
   committed ~32 GPU-h ceiling 35, conditional 10k extension;
-  finalizes on instrument + owner go, venue ~08-12
-  post-adamc-endpoint.
+  **instrument LANDED 08-09 15:0xZ** (composite materializer +
+  `--joint-unfrozen-seam` escape + AR-view compat, 12 oracles) —
+  finalizes on owner go alone, venue ~08-12 post-adamc-endpoint.
   New 2026-08-09 ([LP-FT](papers/lpft-two-phase-schedules.md), owner
   a(t)/b(t) steering): the rung's THIRD same-shape citation and the
   first with a matched frozen control AND a mechanism theorem —
