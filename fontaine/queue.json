@@ -1,6 +1,6 @@
 {
- "updated_utc": "2026-08-09T12:05:00Z",
- "depth_reason": "depth >=2 at 12:0xZ 08-09: attach screen EXECUTING (arm K live, endpoint ~18:3xZ) + lit-radar-async-exec queued (CPU, any GPU-busy window); blocked behind: stage-2 decision (K readout tonight), actckpt ladder, f-then-joint draft (Delta_seam), #17 vu5k (owner go), owner-held items",
+ "updated_utc": "2026-08-09T11:45:00Z",
+ "depth_reason": "depth >=2 at 11:4xZ 08-09: attach screen EXECUTING (arm K live, endpoint ~18:3xZ) + lit-radar-async-exec queued (CPU, any GPU-busy window); blocked behind: stage-2 decision (K readout tonight), actckpt ladder, f-then-joint draft (Delta_seam), #17 vu5k (owner go), owner-held items",
  "items": [
   {
    "id": "owner-molmo2-perf-review",

@@ -2,9 +2,9 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T12:05:00Z
+**Updated:** 2026-08-09T11:45:00Z
 
-**Depth call:** depth >=2 at 12:0xZ 08-09: attach screen EXECUTING (arm K live, endpoint ~18:3xZ) + lit-radar-async-exec queued (CPU, any GPU-busy window); blocked behind: stage-2 decision (K readout tonight), actckpt ladder, f-then-joint draft (Delta_seam), #17 vu5k (owner go), owner-held items
+**Depth call:** depth >=2 at 11:4xZ 08-09: attach screen EXECUTING (arm K live, endpoint ~18:3xZ) + lit-radar-async-exec queued (CPU, any GPU-busy window); blocked behind: stage-2 decision (K readout tonight), actckpt ladder, f-then-joint draft (Delta_seam), #17 vu5k (owner go), owner-held items
 
 **8 open** (Live 0 · Queued 2 · Blocked 6 · Done 65)
 

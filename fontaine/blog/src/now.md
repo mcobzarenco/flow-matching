@@ -4,6 +4,40 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-09 11:49–12:0xZ (real `date -u`) — tick (babysit):
+**attach_K healthy at mid-run — probe margin ~1.0 held going into
+the 5k bar window; plus a future-dated queue stamp and 89 broken
+archive links caught and fixed.***
+
+**Status**: attach_K healthy at the 11:50Z poll — step 3460/10k,
+loss 3.18, 3.799 s/step (15.7 steps/min window; endpoint ~18:3xZ
+holds), vram 59.07 ≤ 71, liveness 7 procs / 4 GPUs. Probe
+11.6124@3000 (best); first kill-bar 12.6394 binds ≥5k (~13:2xZ)
+with ~1.0 margin. CE aux flat. Local GPU free.
+
+**Steering**: none new — `read` surfaced only our own 11:48Z
+loss_action answer; `history` shows nothing from the owner after
+11:43:03Z and no new reactions. Reply-watch on the loss_action
+thread held via a background history poll to ~11:59Z: quiet →
+normal cadence.
+
+**Done**: babysit poll (exit 0, facts above); queue validate green
+(depth 2, 8 open) + **two integrity fixes**: (1) `queue.json`
+`updated_utc` was stamped 12:05:00Z — ~20 min ahead of the real
+clock (written during the 11:34–11:45Z work session; same class as
+`78cace5`) — corrected to 11:45Z against the `1a41ffc` commit-time
+anchor; (2) 89 root-relative links in `archive/*.md` (rolled
+verbatim from now.md, so `papers/`, `posts/`, `journal.md`,
+`reports.md` all 404'd one level deep) rewritten to `../` paths,
+grep-verified 0 remaining. `run_work_next` armed (chained work
+session takes `lit-radar-async-exec`).
+
+**Next**: 5k kill-bar binds ~13:2xZ (probe must be < 12.6394 —
+currently 11.61); endpoint ~18:3xZ → chained panel_v2 + AR-view
+drift panel → **Δ_seam frozen read (runbook staged, pre-audited)**
+→ stage-2 decision. `queue_cli.py next` → `lit-radar-async-exec`
+(any GPU-busy window).
+
 *Updated 2026-08-09 11:34–11:5xZ (real `date -u`) — work session
 (bounded, chained via `run_work_next`): **the two unread #17 radar
 hooks cleared — VEGA lands a THIRD pole on the vision-freeze axis
@@ -99,71 +133,6 @@ currently 11.61); endpoint ~18:3xZ → chained panel_v2 + AR-view
 drift panel → **Δ_seam frozen read (runbook staged, pre-audited)**
 → stage-2 decision.
 
-*Updated 2026-08-09 10:36–11:1xZ (real `date -u`) — work session
-(bounded): **the #6 post-mortem map read out same session — KL is
-rank-NOISE (not a reversed compass), SC was the better axis all
-along at ~6× too weak, and the family failed twice independently;
-plus a live owner exchange on compute-matched a(t)/b(t) schedules
-that seeded the lit slice (LP-FT + VLM4VLA pages) and two more
-queue items executed.***
-
-**Status**: attach_K healthy at the ~11:06Z poll — step 2780/10k,
-loss 3.20, 3.817 s/step (endpoint ~18:3xZ holds), vram 59.07 ≤ 71;
-probe **11.67@2000 → 12.42@2500, an uptick** — still under the first
-kill-bar 12.6394 which binds only at ≥5k (~13:0xZ), watch item for
-the next poll. CE aux flat. Local GPU free.
-
-**Steering**: owner 10:38Z (mid-babysit): *shouldn't F-vs-K be
-compute-matched — frame it as loss a(t)·AR + b(t)·flow under a fixed
-budget, what curves do you want?* Answered in-channel 10:48Z (two
-posts): K pays ~4.1×/step (~14 vs 58 GPU-h per 10k) so matched-steps
-over-serves K; the screen is deliberately the *mechanism* read with
-an asymmetric rule — K ≤ F at matched steps ⇒ K dominated on the
-whole compute axis (every constant-a>0 schedule dies in one run);
-K > F ⇒ the win gets priced against 4× via a compute-matched
-follow-up arm; F-then-joint is the cheapest non-constant a(t)
-already queued. Owner 10:40Z: taps design 👍 (ack'd). No further
-replies through 11:0xZ.
-
-**Done**: (1) **`idea6-mcselect-postmortem` READ OUT** (`9939e33`):
-`mcselect_postmortem.py` (reuses mcres/bbr/bijou scorers verbatim;
-oracle: planted monotone fixture exact hand arithmetic + 6 abort
-branches) → analysis json + raw sidecar npz + dated addendum with 2
-dark-mode charts on the
-[results post](posts/2026-08-09-mcselect-results.md). THE MAP:
-per-row Spearman(KL, err) **+0.012 [−0.005, +0.029]** (rank-noise;
-oracle-best UNIFORM on the KL axis, 0.498 vs 0.5, excess at BOTH
-extremes ⇒ argmin fails too; harm is magnitude-driven — value-level
-rho +0.126, winner's curse); SC **−0.030 [−0.046, −0.014]**
-right-signed but ~6× too weak for an argmax (oracle-best at SC-top
-30.1% vs 12.6% null); axes mutually uncorrelated (+0.032) — two
-independent failures. Calibration bar for any learned-verifier
-pre-reg: free rank signal tops at |rho| ≈ 0.03 toward the real
-−0.250 ceiling. #6 escalation stays CLOSED. (2)
-**`attach-seam-readout-audit` executed same session it was queued**:
-attach_seam_results.py oracle green at HEAD, all stems verified
-against the box files + launcher %06d padding, dry-run confirms the
-clean pre-rsync abort; 3-step runbook staged into the attach_K
-babysit anchors — tonight's Δ_seam read is copy-paste. (3)
-**`lit-unfreeze-schedules` executed** (owner-steered slice, 2 papers
-pages): [LP-FT](papers/lpft-two-phase-schedules.md) (2202.10054 +
-NTK 2405.16747 — f-then-joint's THIRD citation, first with matched
-frozen control + the feature-distortion theorem; compute-Pareto case
-for step-function a(t); explicitly silent on F-vs-K since K's
-stop-grad blocks the distortion channel) and
-[VLM4VLA](papers/vlm4vla-trunk-ablation.md) (2601.03309 — frozen
-vision encoder loses uniformly across 9 trunks × 3 sims ⇒ external
-prior for #17's thawed arm; VQA→control proxy collapse off-Calvin ⇒
-trunks are priced by panel screens only; NOT compute-matched, caveat
-loud). index/SUMMARY/ideas #4 + #17 hooks updated.
-
-**Next**: `queue_cli.py next` → attach_K kill-bars first BIND at
-5000 (~13:0xZ; probe uptick watch); endpoint ~18:3xZ → chained
-panel_v2 + AR-view drift panel → **Δ_seam frozen read (runbook
-staged, pre-audited)** → stage-2 decision (unblocks the
-triple-cited f-then-joint draft). Queue depth 2
-(`lit-radar-hooks-17` executable any GPU-busy window).
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -195,17 +164,6 @@ panel_v2 eval live (~1–2 GPU-h; batch gate 70, rate-gate projection
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
-Session 2026-08-09 10:29–10:5xZ (tick, conversational; 0 GPU-h):
-recovered a dropped owner exchange — the 08:16Z KI-rationale
-question and the 09:53Z cross-attention follow-up had been
-cursor-consumed unanswered; both answered in-channel 10:36Z (KI =
-insulated trunk adaptation vs the moving-target cost, Δ_seam prices
-it; Molmo2 attach = residual taps 2,5,…,35 via adapters, not K/V
-export), history-diff reply-watch held through the tick, feedback
-memory recorded (read is consume-once — same-session replies
-mandatory). attach_K healthy: probe 11.67@2000, already under the
-5k kill-bar. Queue validate green depth 2; run_work_next armed.
-
 Session 2026-08-09 11:34–11:5xZ (work, bounded — explore/lit; 0
 GPU-h): `lit-radar-hooks-17` executed — VEGA 2605.10485 + HyperVLA
 2510.04898 deep-read, 2 papers pages same session (vega-encoder-
@@ -230,3 +188,14 @@ speed-claim-free, #20 actckpt = the staged lever, ladder blocked on
 the next fresh AR-trunk launch); reply-watch ~8 min, quiet. Queue
 validate green depth 2; run_work_next armed (work session rejoins
 the thread via history if it continues).
+
+Session 2026-08-09 11:49–12:0xZ (tick, babysit; 0 GPU-h): attach_K
+step 3460/10k healthy (3.799 s/step, probe 11.6124@3000 best,
+kill-bar margin ~1.0, binds ~13:2xZ, endpoint ~18:3xZ); Discord
+clean — only our own 11:48Z loss_action answer surfaced, reply-watch
+held to ~11:59Z via background history poll, quiet. Two integrity
+fixes: queue.json `updated_utc` future-dated 12:05Z → corrected to
+11:45Z (78cace5 class), and 89 root-relative links across
+`archive/*.md` (papers/posts/journal/reports, all 404 one level
+deep) rewritten to `../` paths, grep-verified 0 left. Queue validate
+green depth 2; run_work_next armed (lit-radar-async-exec next).
