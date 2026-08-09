@@ -442,3 +442,49 @@ its zero-test-time-commitment corner — discrete tokens as pure
 training-signal (AR head disabled at inference, flow head executes,
 +8.25 long-horizon over FAST-as-auxiliary) — commitment, not
 discreteness, stays the expensive property from a fourth direction.
+
+**2026-08-09 — lit `0815`: the adamc watch gains its failure-side
+frame and a measured disambiguator
+([Weight-norm criticality page](../papers/weight-norm-criticality.md),
+2607.21005 + [Weibull weight-scale page](../papers/weibull-weight-scale.md),
+2606.19367):** the fifth and sixth papers of the corrected-decay
+reading close the loop from both ends. Criticality (Xu group,
+SJTU): on scale-invariant layers decay shrinks norms unopposed
+while sharpness grows as 1/‖u‖² — halve the norm, quadruple the
+curvature — until norms cross a derived floor c⋆ = √(ηρ/2) and the
+loss spikes; in transformers the top Hessian eigenvector
+concentrates in the MLP blocks during spikes, and killing decay
+there alone both stabilizes and lowers loss. New named failure
+mode for the watch ("criticality approach"), a *joint* read on
+series we already record: per-group norm decline + that group's
+grad climb (the 1/‖u‖ law again) + train spikes co-timed with the
+deepest dips. It also flips the decay-inert trap's valence — every
+demonstrated spike lives at λ ∈ {0.5, 1} (187M) or 0.01–0.03
+(toys), 4+ orders above our 1e-5, so flat norms at our λ are the
+*safe* corner. And a synthesis (ours, flagged): λ ∝ η is
+incidentally spike-protective — constant λ rides R⋆ ∝ √(η/λ) down
+toward the floor during LR decay; the correction pins the distance
+flat — a fourth independent reason the correction has the right
+sign. Weibull weight-scale (Ding, single-author): AdamW norm
+change decomposes into alignment/injection/decay forces —
+alignment is 88–94% of the budget during norm rise, and a
+cubic-spline displacement trick recovers it from sparse
+*weights-only* checkpoints at 92–94% accuracy (~2× the two-point
+baseline); decay needs no recovery (checkpoint norms × our
+analytically-known λ_t·η_t schedule, exact — the identity's
+time-varying-λ requirement satisfied for free); injection is NOT
+recoverable weights-only (hook corrected) but is ~4% residual.
+The payoff probe for the ~20 banked 5k saves: per-matrix
+|F_decay|/|F_align| across the run — ratio ≪ 1 with sizable
+alignment = decay inert at λ=1e-5 (flat norms are alignment's
+doing); ratio → O(1) into the cosine tail = the AdamC balance is
+real. Converts the trap from named ambiguity to measured number.
+Bonus: the spline-recovered ⟨W,û⟩ makes Muon-SW's alignment-cosine
+probe computable from weights-only saves. Offline-probe list now:
+grad·norm constancy, stable rank, alignment cosine,
+distance-to-criticality margin (ρ_grad = ‖u‖²·gᵀHg/‖g‖², one
+grad + one HVP per group), force chronicle. Caveats: quote
+recovered forces, never forward-integrate norms across 5k gaps
+(15–24% error in their real-Pythia test); direct three-force
+ground truth validated only at 70M from random init — method
+transfer, not phenomenology, on a 4B pretrained trunk.

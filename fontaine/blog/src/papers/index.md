@@ -247,3 +247,13 @@ pretrained trunk:
 | VLA-FAIL (zero-failure-data detection: Mahalanobis + chunk consistency) | [2606.21386](https://arxiv.org/abs/2606.21386) | ✅ [page](vla-fail.md) |
 | FPO (likelihood-free RFT of flow-matching VLAs, ICRA 2026) | [2510.09976](https://arxiv.org/abs/2510.09976) | ✅ [page](fpo-flow-policy-optimization.md) |
 | X-Tokenizer (multimodal action tokenizer as auxiliary supervision) | [2606.14752](https://arxiv.org/abs/2606.14752) | ✅ [page](x-tokenizer.md) |
+
+**Radar 0815 (banked hooks from the 0814 refill sweep):**
+
+| Paper | arXiv | Status |
+|---|---|---|
+| Weight-norm criticality (loss spikes from decay+normalization driving scale-invariant norms below a critical floor) | [2607.21005](https://arxiv.org/abs/2607.21005) | ✅ [page](weight-norm-criticality.md) |
+| Weibull weight-scale (three-force norm decomposition; spline recovery of alignment force from sparse checkpoints) | [2606.19367](https://arxiv.org/abs/2606.19367) | ✅ [page](weibull-weight-scale.md) |
+| Decoupled Action Expert (5M MLP ≈ 244M U-Net; task knowledge fits in the conditioning pathway) | [2511.12101](https://arxiv.org/abs/2511.12101) | ✅ [page](decoupled-action-expert.md) |
+| Foresight (learned failure detection over action-conditioned world-model latents, outcome labels only, conformal FPR band) | [2606.23085](https://arxiv.org/abs/2606.23085) | ✅ [page](foresight-failure-detection.md) |
+| RedFlow (offline failure→correction RL for flow VLAs) | [2607.27782](https://arxiv.org/abs/2607.27782) | ✅ [page](redflow.md) |

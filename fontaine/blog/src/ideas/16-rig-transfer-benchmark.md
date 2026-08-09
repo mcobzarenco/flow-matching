@@ -282,3 +282,26 @@ elaboration is seasoning**. Third independent frozen-trunk vote
 below SFT level — consistent with SA-VLA's negative sign. Env
 count/compute unreported (the pole's open cost axis gets nothing);
 zero OOD/retention measurement. Pole stays sim-first.
+
+**2026-08-09 — lit `0815`: RL-pole entry 7, the first fully
+offline + real-robot entry ([RedFlow page](../papers/redflow.md),
+2607.27782):** failed deployment rollouts become action-level
+corrective supervision with no environment, no teleop, no critic —
+an off-the-shelf progress model (Robo-Dopamine GRM) scores chunks,
+HDBSCAN clusters matched proprio+progress contexts, and
+correctable failures get advantage-weighted attraction / margin
+suppression / correction-redirection targets on the flow endpoint.
+Real-world average 56.7% → 74.7% across three AgileX tasks from
+100–200 deployment rollouts + binary outcomes per task; matches
+PPO/GRPO/DDPO on LIBERO-Spatial at ~10× fewer samples (1,536
+offline vs 13K–24K on-policy). This re-prices the pole: parallel-env
+infra is no longer the universal entry fee, and it bridges to the
+intervention levers (UniSteer/FlowDAgger) — corrections without a
+human in the loop. Sharpest ablation repeats the
+protective-structure-carries-the-sign pattern: dropping the
+uncorrectable-failure separation costs −11.5 avg (−20.4 on Goal) —
+knowing which failures NOT to correct is the biggest single
+component. Caveats for the roster: retention/OOD unmeasured (the
+FlowDAgger critique stands), the headline gain is from a
+*deliberately weakened* base policy, per-task real numbers are
+figure reads, and the GRM is unvalidated on rig-like scenes.

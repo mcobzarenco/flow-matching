@@ -381,3 +381,27 @@ matched steps.
   clause — a prior for making the joint phase trigger-gated rather
   than scheduled. Evidence thin (one task shown, no final-number
   decomposition); ledger prior, no gate change.
+
+**2026-08-09 — lit `0815`: the seam question's capacity axis,
+measured ([Decoupled Action Expert page](../papers/decoupled-action-expert.md),
+2511.12101):** pretrain a generic denoiser on observation-free
+forward-kinematics data, freeze it, retrain only the conditioning
+pathway — a 5M MLP matches (and beats) Diffusion Policy's 244M
+U-Net: LIBERO avg 84.7 vs 79.3, and the frozen-backbone version
+keeps 84.2. The capacity prior for the fjoint read: the pure
+denoising job fits in ~5M params, so the F arm is not
+expert-capacity-starved — if J beats F2, read it as
+trunk-representation adaptation, not expert relief; if J≈F2, this
+paper is the null's mechanism. The conditioning-mechanism ablation
+is the load-bearing datum for us: cross-attention conditioning
+collapses under backbone freezing (DP-T 76.4→5.9 LIBERO, −41.5
+avg) while modulation (FiLM/AdaLN) survives within ~0–8 pts — task
+knowledge migrates into whatever pathway is trainable, so the
+banked F@10k expert (cross-attn to residual taps) is
+task/trunk-entangled capital, not a portable module. Framing
+caveats carried loudly: the testbed is Diffusion Policy — no VLM
+trunk, no flow matching, VLA validation explicitly deferred; the
+freeze direction is *inverted* vs our seam (they freeze the action
+backbone and train conditioning); and "5M matches 244M" is partly
+plain capacity (DP-MLP beats DP-C end-to-end too, 84.7 vs 79.3).
+Capacity datum only; silent on frozen-vs-joint.

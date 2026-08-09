@@ -529,3 +529,31 @@ is *confident coherent failure* ("consistent in features and
 actions") — plausibly the exact class inside our alive oracle
 ceiling, so a selector win is not guaranteed by the mechanism being
 new.
+
+**2026-08-09 — lit `0815`: the "affirmative case" hook broke on
+read ([Foresight page](../papers/foresight-failure-detection.md),
+2606.23085):** the sweep banked it as "learned failure detection,
+no env rollouts" — false. Foresight trains its detector on success
+*and failure* rollouts (policy inference in sim, teleop attempts on
+real robots); "task-level success labels only" refers to label
+granularity (one binary tag per trajectory, no dense annotations),
+not to a demos-only diet. It therefore does NOT match our
+demos+panel no-rollouts constraint, and LLMD-as-selector keeps the
+cheapest-affirmative-arm slot. Re-ledgered as the **rig-phase
+supervised endpoint**: once a rig exists, every teleop attempt +
+worked/didn't tag is exactly its training diet. What's banked
+meanwhile: 0.78±0.02 balanced accuracy at an 8,557-step
+BEHAVIOR-1K horizon (+0.14 over the best baseline) from a 2-layer
+causal transformer over frozen V-JEPA 2-AC *action-conditioned
+world-model* latents — third echo that decoupled features beat
+policy internals; action-conditioned *predicted* latents beat
+observation-only; a sequence head is mandatory (MLP near chance on
+real robots); an outcome-labels-suffice counterpoint to AsyncVLA's
+dense-labels-win result. The time-varying conformal band
+(δ_t = μ_t + q̂·σ_t, calibrated on successful runs only, anytime
+FPR ≤ α) needs NO failure data — borrowable as an upgrade to the
+VLA-FAIL/#22 recipe today. Fine print: no earliness metric
+anywhere despite the name; short-horizon LIBERO-Long ROC-AUC 0.89
+trails SAFE-LSTM's 0.91 (the advantage is specifically
+long-horizon); cross-policy transfer asymmetric (π₀.₅→ACT 0.94,
+ACT→π₀.₅ 0.56) — failure logs age across policy generations.

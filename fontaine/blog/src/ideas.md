@@ -78,7 +78,20 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   expert-only progress, rollout failure modes); joint as
   *conditional escalation*, not a scheduled phase — exactly the
   fjoint rung's conditional-extension clause (evidence thin: one
-  task, no final-number decomposition).
+  task, no final-number decomposition). New 2026-08-09 lit `0815`
+  ([Decoupled Action Expert](papers/decoupled-action-expert.md),
+  2511.12101): the seam question's *capacity axis* measured — a 5M
+  MLP denoiser pretrained on observation-free kinematics data, then
+  frozen with only the conditioning pathway retrained, matches a
+  244M U-Net (LIBERO 84.7 vs 79.3; 84.2 with the freeze), so the F
+  arm is not expert-capacity-starved and a J-beats-F2 read should be
+  read as trunk-representation adaptation, not expert relief; their
+  conditioning ablation — cross-attention conditioning collapses
+  under backbone freezing (76.4→5.9) while modulation survives —
+  makes the banked F@10k expert task/trunk-entangled capital, not
+  portable. Framing caveats loud: testbed is Diffusion Policy (no
+  VLM anywhere), and the freeze direction is inverted vs our seam —
+  capacity datum only, silent on frozen-vs-joint.
 - **`new-trunks` [#17 New trunks / architectures](ideas/17-new-trunks.md)** —
   standing owner mandate. **Molmo2-4B AR 40k ENDPOINT READ OUT
   2026-08-08 ([results](posts/2026-08-08-molmo2-endpoint-results.md)):
@@ -180,7 +193,27 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   (cosine's endpoint is largely implicit averaging). And
   [X-Tokenizer](papers/x-tokenizer.md) adds the commitment axis's
   zero-test-time-commitment corner (tokens as pure training signal,
-  flow head executes).
+  flow head executes). New 2026-08-09 lit `0815`
+  ([Weight-norm criticality](papers/weight-norm-criticality.md),
+  2607.21005 + [Weibull weight-scale](papers/weibull-weight-scale.md),
+  2606.19367): the adamc watch gains its *failure-side* frame and a
+  measured disambiguator — decay+normalization can drag
+  scale-invariant norms toward a derived floor c⋆ = √(ηρ/2) where
+  sharpness (∝ 1/‖u‖²) spikes the loss (MLP blocks carry the
+  blow-up); the named failure signature is joint: per-group norm
+  decline + that group's grad climb + co-timed train spikes, all
+  three series already recorded. The decay-inert trap flips valence
+  — spikes need λ ~0.01–1, so λ=1e-5 sits in the safe corner — and
+  stops being unmeasurable: the three-force decomposition
+  (alignment ≈88–94% of the norm-force budget, spline-recovered at
+  92–94% accuracy from sparse *weights-only* checkpoints; decay
+  exact from our known λ_t·η_t schedule; injection ~4% residual,
+  not recoverable) turns per-matrix |F_decay|/|F_align| across the
+  ~20 banked 5k saves into a number — ratio ≪1 = decay inert, →O(1)
+  into the cosine tail = the AdamC balance is real. Bonus: the
+  Muon-SW alignment-cosine probe becomes computable weights-only.
+  Two offline probes join the endpoint list (distance-to-criticality
+  margin; force chronicle).
 - **`aux-subgoals` [#6 Aux attribution](ideas/06-aux-attribution.md)** —
   `confirmed` (aux HELPS actions, +0.462 cost when off).
   **CONSOLIDATED REPORT 2026-08-09
@@ -323,7 +356,24 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   (retro-computable on banked dumps once a feature-dump hook
   exists, own pre-reg required); caveat carried — its stated blind
   spot, confident coherent failure, is plausibly our ceiling's
-  class.
+  class. New 2026-08-09 lit `0815`
+  ([Foresight](papers/foresight-failure-detection.md), 2606.23085 —
+  hook corrected loudly): NOT a current-phase affirmative case — it
+  trains on success *and failure* rollouts ("task-level labels"
+  means label granularity, not a demos-only diet), so it enters the
+  ledger as the **rig-phase supervised endpoint** (teleop attempts +
+  worked/didn't tags = its full diet; LLMD keeps the cheapest-arm
+  slot). Banked anyway: 0.78 balanced accuracy at an 8,557-step
+  horizon (+0.14 over best baseline) from a 2-layer head on frozen
+  *action-conditioned world-model* latents — third echo that
+  decoupled features beat policy internals, sequence head mandatory
+  (MLP near chance on real robots), an outcome-labels-suffice
+  counterpoint to AsyncVLA's dense-labels result; the time-varying
+  conformal band (δ_t = μ_t + q̂σ_t, calibrated on successes only,
+  anytime FPR ≤ α) is a borrowable no-failure-data upgrade for the
+  VLA-FAIL recipe; cross-policy transfer is asymmetric (π₀.₅→ACT
+  0.94, ACT→π₀.₅ 0.56) — failure logs age across policy
+  generations.
 - **`noise-draws` [#1 Noise-draw ensembling](ideas/01-noise-draw-ensembling.md)** —
   flow mean-of-10 banked (5.365); batched draws merged 2026-08-07.
   **GOLDEN-TICKET SCREEN R1+R2 READ OUT 2026-08-08
@@ -463,7 +513,22 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   BPTT); ALOHA ~40%→65%+ own-baseline sparse-reward sim; its
   ablation says the gradient route carries the method (−46 pp) while
   the critic ensemble is seasoning (−7 pp); third frozen-trunk vote;
-  env/compute cost unreported, zero retention measurement.
+  env/compute cost unreported, zero retention measurement. New
+  2026-08-09 lit `0815` ([RedFlow](papers/redflow.md), 2607.27782):
+  RL-pole entry 7, the first fully *offline* + real-robot entry —
+  failed deployment rollouts become action-level corrective
+  supervision (progress-model advantage + context clustering, then
+  attraction/suppression/redirection targets on the flow endpoint):
+  real-world 56.7→74.7 avg across three AgileX tasks from 100–200
+  rollouts + binary outcomes, no envs, no teleop, no critic; matches
+  PPO/GRPO/DDPO on LIBERO-Spatial at ~10× fewer samples. Re-prices
+  the pole (parallel-env infra is no longer the universal entry fee)
+  and bridges to the intervention levers — corrections without a
+  human. Sharpest ablation repeats the protective-structure pattern:
+  knowing which failures NOT to correct carries −11.5 avg alone.
+  Caveats: retention unmeasured (FlowDAgger critique stands),
+  deliberately weakened base policy, progress model unvalidated on
+  rig scenes.
 - **`lit-arms` [#15 Literature-sourced arms](ideas/15-literature-arms.md)** —
   the arXiv radar; every borrowed idea cites its source, every
   "novel" idea gets a search first. Feeds the Papers section.
