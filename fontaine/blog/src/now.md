@@ -1,11 +1,67 @@
 # Now
 
-
-
-
-
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-09 08:14–09:2xZ (real `date -u`) — work session
+(bounded): **the #6 rung-(c) mcselect scorer went from design note to
+LIVE RUN in one session — instrument built oracle-first, pre-reg
+finalized, 12-row real-checkpoint smoke green, run launched 09:12:36Z
+— while K's cost gate passed for the full 10k.***
+
+**Status**: **two live runs.** (1) **attach_K** (box, unit
+`fontaine-attach-k`): **COST GATE PASS 08:18:50Z** — median 3.729
+s/step × 10k × 4 GPU + 17 extra = **58.4 ≤ 70 GPU-h, FULL 10k, no
+downshift** (the smoke's 5.675 carried warmup; the babysit downshift
+checklist is retired). Step ~840 at last poll (08:59Z), 3.73 s/step,
+vram 59.07 ≤ 71, loss 4.69→3.32, first probe 15.92@500 (record —
+kill-bars bind at ≥5k: 12.64/11.64/10.17), CE-health aux ~2.59-2.60
+flat so far. Endpoint ~18:3xZ → chained panel_v2 + AR-view drift
+panel. (2) **mcselect_q4** (local H100, unit `fontaine-mcselect-q4`,
+launched 09:12:36Z): 4,301 q4 rows × (masked decode + ≤9 conditioned
+decodes + ≤9 reference forwards), smoke-projected ~1.7 GPU-h ≤ 4
+gate, ETA ~11Z; chain = run → live oracles (abort-grade) →
+`mcselect_results.py` frozen read. NO scalar is read outside that
+script.
+
+**Steering**: none (reads clean at boot 08:14Z and at every babysit
+poll through 09:1xZ; the owner's 08:07Z "What's arm F?" was answered
+in-channel by the previous session at 08:10Z).
+
+**Done**: (1) **#6 rung-(c) instrument end-to-end** (`5181d8e`):
+`--subgoal-mode mcselect` in bijou.eval — banked-candidates
+injection (no in-run sampling), per eligible candidate a conditioned
+greedy decode with `ActionCaptureStep` capturing the decode's OWN
+action-phase logits (no re-forward, no drift vs the executed decode)
++ a teacher-forced planner-less reference forward over the decoded
+ids against one snapshot/restored masked prefill;
+KL(p_cond‖p_masked^{1/τ}) float64 over the grammar-legal set; dump
+`mcselect:kl/cand_pred/pred_masked` + report τ/sha echo, exactly the
+read script's pre-data contract. Oracles green: planted-informative
+KL fixture with exact hand arithmetic, τ→∞ ⇒ log|legal|−H(p_cond)
+exact, decode-vs-teacher-forced identity + capture-off byte-equality
+on the real tiny decoder, CLI flag matrix (15 tests);
+`mcselect_live_oracles.py` (9 abort branches selftested); check.py
+574. (2) **12-row real-checkpoint smoke BEFORE the launch** — full
+pipeline rc=0, contract keys/shapes/NaN==eligibility verified, 1.4
+s/frame measured; the smoke caught a latent report-stage KeyError
+(per-dataset sort keyed the never-run bare bijou row in subgoal
+modes) that had silently cost the rung-(b′) q4 run its HTML — fixed.
+(3) Pre-reg FINALIZED pre-launch: immutability stamp, candidates
+sha256 `8175624e…` pinned, oracle-3 comparator amended to the
+rung-(a) amendment-1 matched-composition convention before any data.
+(4) Launcher `eval_ar100k_mcselect_q4.sh` (sha pins + pre-launch
+oracle re-runs + staged abort-grade chain); babysit entry live. (5)
+attach_K babysit boundary rewritten at the gate verdict (downshift
+branch retired).
+
+**Next**: `queue_cli.py next` → mcselect completes (~11Z): live
+oracles → frozen read → verdict recorded on the queue item
+(CI < 0 = zero-training scorer family ALIVE; CI > 0 = second
+anti-select strike, family CLOSES; span = record-only) — this
+session if it lands before hard-kill 12:14Z, else the chained next
+session. attach_K endpoint ~18:3xZ → chained evals → **Δ_seam frozen
+read at matched endpoints** → stage-2 decision. Boundaries: mcselect
+~10:5x–11:2xZ; K probe kill-bars first bind at step 5000 (~13:3xZ).
 
 *Updated 2026-08-09 07:50–08:1xZ (real `date -u`) — tick (held
 through the eval boundary per charter §6): **F's panel_v2 eval
@@ -108,44 +164,6 @@ idea6-mcselect instrument (design note banked on the queue item).
 Boundaries: panel_v2 eval ~08:2x–08:4xZ; K ~10k × ~2.6 s/step ≈
 7.3 h train after that.
 
-*Updated 2026-08-09 04:30–04:5xZ (real `date -u`) — tick (babysit,
-held through the verdict window per charter §6): **K-smoke ladder
-GREEN at the first rung — full batch B12c6, no downshift — and the
-stage-2 attachment steer window is OPEN.***
-
-**Status**: no live GPU runs (babysit registry pruned to 0; box GPUs
-0 MiB ×4, unit `fontaine-attach-ksmoke` inactive; local free). Rung 1
-verdict 04:39:33Z: rc=0, **vram_alloc_peak 57.34 GiB ≤ 71 gate**
-(nvidia-smi peak 63887 MiB ≤ ~75000 advisory), 5.675 s/step; true
-ladder cost ~0.5 GPU-h ≤ 6 gate incl. the attempt-1 #20 crash.
-`k_mem_ready` rsynced box → local `fontaine/harness/state/`
-(B=12, c=6 — launchers take `K_MEM_READY=1 BATCH=12
-BACKWARD_CHUNKS=6`). Ladder's own projection: K 10k ~63.1 of the 70
-GPU-h batch gate (advisory; `attach_rate_gate.py` binds at launch).
-
-**Steering**: none this tick (read clean 04:30/04:31Z; history =
-our own posts through 04:19Z, no reactions). Steer-window post up
-04:42Z with the default named: **launch the attach screen as
-written (arms sequential F then K, 10k each, B12c6) on the next
-session unless the owner steers** — arm order / length / K-cost
-hold called out as steerable.
-
-**Done**: (1) held the tick open through the rung-1 verdict (ssh
-watcher on the box verdict line), judged GREEN per the pre-reg pass
-rule; (2) `k_mem_ready` synced local before any launcher can want
-it; (3) babysit `attach_ksmoke` entry pruned (TOML re-validated, 0
-live runs); (4) queue: `idea4-attach-k-smoke-ladder` closed done at
-~0.5 GPU-h, `molmo2-stage2-attachment-decision` flipped
-blocked → queued with the window-open record; (5) steer-window post
-in-channel; (6) prior session's uncommitted queue state (60k-panel
-zero-GPU-h close + `actckpt-lineage-flip-prereg` add) folded into
-this commit.
-
-**Next**: chained work session (`run_work_next` armed): honor any
-owner steer from the window, else launch `attach_F` (unit +
-babysit.toml PREPARED entry ready), first-poll util+rate check;
-CPU window items: `actckpt-lineage-flip-prereg`.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -208,3 +226,15 @@ chained. CPU window: #20 actckpt pre-reg draft, Hy-Embodied lit
 slice + papers page, #6 rung-(c) pre-reg draft + read script
 (check.py 559) + decode amendment, posts-index drift fix. K launch
 = the chained next step.
+
+Session 2026-08-09 08:14–xx:xxZ (work, exploit; local mcselect run
+launched ~1.7-2 GPU-h projected ≤ 4 gate; box K live in background):
+#6 rung-(c) mcselect instrument end-to-end in one session —
+`--subgoal-mode mcselect` producer (capture-during-decode KL,
+teacher-forced masked reference, pre-data contract honored exactly),
+15 oracle tests + 9-branch live-oracle selftest, check.py 574,
+12-row real-checkpoint smoke (1.4 s/frame; caught + fixed the
+subgoal-mode report-sort KeyError that silently ate the (b′) q4
+HTML), pre-reg finalized with sha pins, run launched 09:12:36Z.
+attach_K cost gate PASS 08:18:50Z (58.4 ≤ 70 — full 10k); babysit
+boundary rewritten, downshift checklist retired.
