@@ -115,39 +115,41 @@
 # kind = "vram_max_gib"
 # value = 71.0
 #
-# [[run]]
-# name = "attach_K"
-# kind = "train-jsonl"
-# host = "192.222.55.210"
-# pgrep = "fontaine_molmo2_flow_kijoint_10k_ddp4"
-# pgrep_min = 4                     # 4 DDP ranks
-# gpu_indices = [0, 1, 2, 3]
-# gpu_mem_min_mib = 30000
-# jsonl = "/home/ubuntu/flow-matching/outputs/train/fontaine_molmo2_flow_kijoint_10k_ddp4/train_log.jsonl"
-# total_steps = 10000
-# probe_key = "eval_chunk_mae"
-# vram_key = "vram_alloc_peak_gib"
-# boundary = "10k at K-rate TBD at launch (est 2.4-2.8 s/step); saves every 1250, probes every 500; chains panel_v2 + AR-view drift panel"
-# anchors = [
-#     "kill rule: probe > phase-1 curve at matched step + 3.0 at any eval >= 5k, kill at next save boundary",
-#     "CE-health watch (record): jsonl loss_aux vs phase-1 loss_action at matched step — rising CE under stop-grad = AEGIS drift signal",
-#     "read 4 at endpoint: AR-view greedy panel vs 40k endpoint AR number, band |Delta_AR| <= 0.3",
-# ]
-# [[run.gates]]
-# kind = "probe_below_by_step"
-# value = 12.6394                   # phase-1 9.6394@5000 + 3.0
-# step = 5000
-# [[run.gates]]
-# kind = "probe_below_by_step"
-# value = 11.6356                   # phase-1 8.6356@7500 + 3.0
-# step = 7500
-# [[run.gates]]
-# kind = "probe_below_by_step"
-# value = 10.1652                   # phase-1 7.1652@10000 + 3.0 (K1 crossing green 08-07 06:0xZ)
-# step = 10000
-# [[run.gates]]
-# kind = "vram_max_gib"
-# value = 71.0
+[[run]]
+name = "attach_K"
+kind = "train-jsonl"
+host = "192.222.55.210"
+pgrep = "fontaine_molmo2_flow_kijoint_10k_ddp4"
+pgrep_min = 4                     # 4 DDP ranks
+gpu_indices = [0, 1, 2, 3]
+gpu_mem_min_mib = 30000           # trunk-live arm: full-scale floor is right here (unlike F's 12000)
+jsonl = "/home/ubuntu/flow-matching/outputs/train/fontaine_molmo2_flow_kijoint_10k_ddp4/train_log.jsonl"
+total_steps = 10000
+probe_key = "eval_chunk_mae"
+vram_key = "vram_alloc_peak_gib"
+started_utc = "2026-08-09T08:01:19Z"  # unit fontaine-attach-k (systemd-run); K_MEM_READY=1 B12c6, EXTRA_GPU_HOURS=17 (F actual 10.2 train + 1.25 eval + K eval ~2 + AR-view panel ~3); rate gate binds in-launcher (rc 2 => matched 5k downshift, F re-evals step_005000)
+boundary = "10k at K-rate TBD at rate-gate fire (first jsonl window 13.19 s/step warmup-contaminated @ step 20; smoke steady 5.675 -> 63.1 GPU-h train + EXTRA 17 = 80 > 70, so rc-2 MATCHED 5K DOWNSHIFT IS THE LIKELY BRANCH — next poll MUST check the launcher log for the gate verdict and, if downshifted, repoint this entry's pgrep/jsonl/total_steps to fontaine_molmo2_flow_kijoint_5k_ddp4 (relaunch = new run name) and re-eval F from step_005000 per pre-reg); saves every 1250, probes every 500; chains panel_v2 + AR-view drift panel"
+anchors = [
+    "kill rule: probe > phase-1 curve at matched step + 3.0 at any eval >= 5k, kill at next save boundary",
+    "CE-health watch (record): jsonl loss_aux vs phase-1 loss_action at matched step — rising CE under stop-grad = AEGIS drift signal",
+    "read 4 at endpoint: AR-view greedy panel vs 60k endpoint AR number (amendment-2 repoint), band |Delta_AR| <= 0.3",
+    "Delta_seam frozen read at matched endpoints after this arm's panel_v2 (attach_seam_results.py); F side banked 08:01Z",
+]
+[[run.gates]]
+kind = "probe_below_by_step"
+value = 12.6394                   # phase-1 9.6394@5000 + 3.0
+step = 5000
+[[run.gates]]
+kind = "probe_below_by_step"
+value = 11.6356                   # phase-1 8.6356@7500 + 3.0
+step = 7500
+[[run.gates]]
+kind = "probe_below_by_step"
+value = 10.1652                   # phase-1 7.1652@10000 + 3.0 (K1 crossing green 08-07 06:0xZ)
+step = 10000
+[[run.gates]]
+kind = "vram_max_gib"
+value = 71.0
 
 # PREPARED — #17 vision-unfreeze screen arms (vu5k, sequential FROZEN
 # FIRST; pre-reg 2026-08-07-prereg-molmo2-vision-unfreeze.md,
@@ -340,26 +342,15 @@
 # cost 10000 x ~0.92 s/step x 4 ~= 10.2 GPU-h. Entry below watches the
 # chained panel_v2 eval phase (same unit fontaine-attach-f).
 
-[[run]]
-name = "attach_F_panel_eval"
-kind = "progress-log"
-host = "192.222.55.210"
-pgrep = "panel_v2_heun30_draws1_stable"
-pgrep_min = 4                     # 4-GPU sharded bijou.eval ranks
-gpu_indices = [0, 1, 2, 3]
-gpu_mem_min_mib = 4000
-log = "/home/ubuntu/logs/eval__fontaine_molmo2_flow_frozen_10k_ddp4__step_010000__panel_v2_heun30_draws1_stable.log"
-progress_re = "scored [0-9]+/[0-9]+ frames"
-started_utc = "2026-08-09T07:42:30Z"  # chained in-unit after the 10k endpoint save
-gpu_hours_per_wall_hour = 4.0
-boundary = "panel_v2 heun30/draws1/stable, 4-GPU sharded; the Delta_seam read's F side; K launches when this frees the box (K_MEM_READY=1 BATCH=12 BACKWARD_CHUNKS=6)"
-anchors = [
-    "Delta_seam frozen read at matched endpoints (attach_seam_results.py) — needs BOTH arms; nothing is read from this json alone",
-    "state-copy 11.785 must be beaten decisively at the read or the screen is void",
-]
-[[run.gates]]
-kind = "gpu_hours_max"
-value = 8.0                       # panel eval alone; raised 6->8 at 07:48Z (judged CONTINUE): the 6.0 was this session's estimate, the pre-reg EXTRA budget carries ~8/arm for evals, and the 6.4 cumulative projection includes the ~6-min load phase (the tsens early-window lesson). Scoring-window rate 58.7 f/min -> 5645 frames ~1.6h ~6.4 GPU-h worst case, inside the 70 batch gate
+# attach_F_panel_eval COMPLETE ~08:01:0xZ 08-09 — scoring accelerated
+# to ~457 f/min once all shards hit steady state (the 58.7 f/min ETA
+# was the load-phase-contaminated early window); wall 07:42:30 ->
+# 08:01:07 ~= 0.31 h -> ~1.24 GPU-h, far under the 8.0 gate.
+# json + npz + html at reports/eval__fontaine_molmo2_flow_frozen_10k_
+# ddp4__step_010000__panel_v2_heun30_draws1_stable.* (box). NOTHING
+# read from this json alone — Delta_seam waits for arm K (frozen read
+# attach_seam_results.py at matched endpoints). Unit fontaine-attach-f
+# exited clean; entry pruned. ARM K launched 08:01:19Z (entry below).
 
 # LIVE — #4 attach-screen K-arm memory smoke LADDER (box, 4xDDP; unit
 # fontaine-attach-ksmoke; pre-reg instrument item 4 of

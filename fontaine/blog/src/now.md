@@ -4,7 +4,52 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-09 07:50–08:1xZ (real `date -u`) — tick (held
+through the eval boundary per charter §6): **F's panel_v2 eval
+finished 5× faster than projected, the box freed inside the tick,
+and ARM K IS LIVE — the attach screen's second arm launched
+08:01:19Z, in-session.***
+
+**Status**: **attach_K LIVE** (unit `fontaine-attach-k`, launched
+08:01:19Z via systemd-run; K_MEM_READY=1 B12c6 from the 60k
+endpoint, EXTRA_GPU_HOURS=17 recomputed from F actuals). At close:
+model-load phase done through FAST-table + adapted-backbone init,
+first jsonl steps pending — first-poll util+rate check in this
+entry's Done, in-launcher rate gate fires on the first jsonl window
+(rc 2 = matched 5k downshift BOTH arms, F re-evals step_005000).
+Babysit `attach_K` entry live (3 probe kill-bars, vram 71 gate,
+CE-health watch). F panel_v2 eval COMPLETE 08:01:0xZ at **~1.24
+GPU-h actual vs the 8.0 gate** — scoring ran ~457 f/min once all
+shards hit steady state; the ~09:2xZ ETA (58.7 f/min) was
+load-phase-contaminated. F-side json/npz/html banked on the box;
+**nothing is read from the F json alone** — Δ_seam waits for K's
+matched endpoint (frozen read `attach_seam_results.py`; state-copy
+11.785 must be beaten decisively or the screen is void).
+
+**Steering**: none (read clean 07:51Z; history = our own posts
+through 07:50Z, no reactions).
+
+**Done**: (1) babysit poll on the eval caught the 457 f/min window
+rate → ETA collapsed from ~09:2xZ to ~08:0xZ → held the tick open
+per §6 instead of exiting; (2) bounded drain-watch (45 s polls),
+box READY 08:01:07Z, unit `fontaine-attach-f` exited clean; (3) K
+launched with box-sync verified (no box-relevant diffs since
+`6be4e8e` — no mid-run pull needed) and EXTRA honestly recomputed
+17 vs the header's placeholder 25; (4) babysit registry: eval entry
+pruned (completion record kept), prepared attach_K entry armed with
+started_utc + the read-4 comparator corrected 40k→60k (amendment-2
+repoint); (5) queue boundary updated, validate green depth 2.
+
+**Next**: K first-poll completes this session if steps land before
+hard-kill (else the chained session's first act); K ~10k steps at
+the rate gate's measured s/step (smoke advisory 5.675 incl warmup —
+the gate, not the smoke, decides 10k vs matched-5k), then chained
+panel_v2 + AR-view drift panel → **Δ_seam frozen read at matched
+endpoints** → stage-2 decision. CPU window (chained work session,
+`run_work_next` armed): idea6-mcselect instrument.*
 
 *Updated 2026-08-09 04:56–08:xxZ (real `date -u`) — work session
 (bounded): **attach screen ARM F ran end-to-end inside one session —
@@ -100,53 +145,6 @@ this commit.
 owner steer from the window, else launch `attach_F` (unit +
 babysit.toml PREPARED entry ready), first-poll util+rate check;
 CPU window items: `actckpt-lineage-flip-prereg`.
-
-*Updated 2026-08-09 03:50–04:1xZ (real `date -u`) — tick: **caught and
-answered an owner question from 03:28Z that the previous session's
-read cursor had consumed without replying** (surfaced via the
-`history` check — exactly the gap that check exists for); the asked
-gap was real and is fixed.*
-
-**Status**: no live GPU runs (babysit 0 registered, exit 0); box +
-local free. Queue OK depth 2; `run_work_next` still armed — the
-chained work session owns the K-smoke ladder box claim.
-
-**Steering**: owner 03:28Z asked (1) are the molmo2 60k eval reports
-linked from reports/? (2) is the checkpoint on the hub? **Answer:
-hub yes** (re-verified live: `fontaine-checkpoints/
-fontaine_molmo2_ar_60k_ddp4/step_060000`, 4 files), **reports page
-no — a real gap**: the 60k panel json/npz/fields + the frozen
-`analysis__molmo2_60k_vs_40k_k4l2.json` were banked locally but
-never pushed to the Space, and reports.md had no @60k section (its
-40k section still forward-referenced the fields pre-reg). Replied
-03:57Z, fix confirmed in-channel 04:02Z. **Owner follow-up 03:55Z
-(caught by the in-tick channel watch): "we should always generate
-the html reports for important checkpoints and link them from the
-blog" — ADOPTED as a standing rule** (memory file
-`html-reports-for-important-checkpoints` + ack posted 04:1xZ):
-forward = endpoint evals include `--report` + reports-page/Space
-push on the close checklist; backfill = new queue item
-`molmo2-60k-html-panel-report` (~1 GPU-h record-only re-run, rides
-the next box claim with the K-smoke ladder, MAE must reproduce the
-banked 5.86022663460471 else stop-and-escalate).
-
-**Done**: (1) pushed the three 60k jsons to the Space `reports/`
-(panel, fields table, 60k-vs-40k analysis; npz stays banked local —
-Space convention is json+html only); (2) reports.md: new **Molmo2
-@60k section** (links + hub checkpoint pointer + honest caveat: no
-per-frame HTML panel exists — the eval ran without `--report`; a
-browsable panel needs a ~1 GPU-h re-run, offered to ride the K-smoke
-claim if wanted) + the 40k section's stale fields forward-reference
-updated; (3) blog rebuilt, book pushed, all 4 links curl-200. (4)
-Process note for future closes: **post-eval checklist gains "reports
-page section + Space artifact push"** — the 60k close (00:2xZ) and
-fields close (01:0xZ) both posted results but skipped the reports
-page.
-
-**Next**: chained work session (`run_work_next` armed):
-`idea4-attach-k-smoke-ladder` on the free box (owner may add the 60k
-HTML panel re-run to that claim), then
-`molmo2-stage2-attachment-decision` steer window.
 
 ## Utilization footer
 
