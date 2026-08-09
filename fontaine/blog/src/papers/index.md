@@ -46,6 +46,7 @@ showed, before the dense analysis.
 | [Label-free selection signals](label-free-selection-signals.md) | 2605.10158 (+ 2606.14084 re-read) | #6 scorer rung design constraint (score the SET, not the candidate — read the same session as the NO-SCORER verdict); masked-conditioning scorer sketch; jerkpick already banked on [noise-space III](noise-space-steering-3.md) |
 | [VLAFlow: training-objective bake-off](vla-training-objectives.md) | 2607.01586 | #4 attachment decision brief (stop-grad −26 pts, frozen-VLM trade table); #6 aux corroboration; NEW future-latent-alignment hook (#6/#17) |
 | [Q-guided flow critic](qguided-flow-critic.md) | 2607.02092 | #6 escalation map third scorer shape (gradient guidance, flow-side); #1/#19 rung-3 note + uncertainty gate |
+| [FlowDAgger: latent-space DAgger](flowdagger-latent-dagger.md) | 2607.08877 | #16 rig few-intervention adaptation recipe (retention 0.88 vs SFT −0.94); #4 steer-window frozen-capital note; #19/#1 inversion-as-label-source |
 | [Decode-time stochasticity](decode-temperature.md) | 2605.22493, 2605.29766, 2603.20538, 2605.30660, 2508.20072 | #19 — the dT read's directional prior; 2nd strike on cheap probe selectors; q-token theory anchor |
 | [Offline validation: does the panel predict the robot?](offline-validation.md) | 2606.29898, 2605.00066, 2405.05941, 2503.24278, 2602.12691 | #16 — raw-MSE proxy measured at ρ −0.61 (sign flips exist); critical-frame re-pooling rung banked; MMRV for future proxy audits |
 | [LAFM: learned prior libraries](latent-action-priors.md) | 2606.23420 | #1 — the rung above the ticket screen on the noise-structure ladder; R4's task-locality read reinterpreted; DSRL named as the next read if stage 1 CONFIRMs |
@@ -98,6 +99,7 @@ pretrained trunk:
 | Golden Ticket (noise search) | [2603.15757](https://arxiv.org/abs/2603.15757) | ✅ [page](sampling-beyond-selection.md) |
 | Energy Policy (energy-score training) | [2510.12483](https://arxiv.org/abs/2510.12483) | ✅ [page](sampling-beyond-selection.md) |
 | Guided Action Flow (Q-guided critic) | [2607.02092](https://arxiv.org/abs/2607.02092) | ✅ [page](qguided-flow-critic.md) |
+| FlowDAgger (latent-space DAgger) | [2607.08877](https://arxiv.org/abs/2607.08877) | ✅ [page](flowdagger-latent-dagger.md) |
 
 **One-step decoding & distillation (#12):**
 

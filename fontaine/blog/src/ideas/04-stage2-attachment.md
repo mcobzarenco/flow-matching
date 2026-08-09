@@ -255,3 +255,14 @@ matched steps.
   the F/K readout; screen unchanged. Caveat carried: their expert
   co-pretrains from scratch — our random-init K expert is exactly
   APT's damage regime, so the screen still adjudicates.
+
+- **Lit 2026-08-09
+  ([FlowDAgger](../papers/flowdagger-latent-dagger.md),
+  2607.08877)**: steer-window context note, weighed only at F≈K —
+  the frozen-capital *aftermarket* now has a measured retention
+  number (latent-space adaptation keeps held-out skills at 0.88
+  where SFT collapses to −0.94 delta). Not seam evidence (their
+  bases are complete post-attach VLAs); it prices what an intact
+  frozen policy composes with after deployment (correction loops,
+  guidance, steering — with [Q-guided
+  flow](../papers/qguided-flow-critic.md) from the inference side).

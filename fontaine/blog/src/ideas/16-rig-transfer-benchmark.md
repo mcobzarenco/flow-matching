@@ -141,3 +141,14 @@
   DSBC's 10 recorded demos (lever #2). The rig-time menu is now:
   ticket (zero machinery) → DSBC (10 demos) → UniSteer (teleop
   pedal + ~1 h/task) → DSRL (rewards + rollouts). Flow-family only.
+- **Lever #3 corroborated + retention number banked (2026-08-09,
+  [FlowDAgger page](../papers/flowdagger-latent-dagger.md),
+  2607.08877):** the same inversion-of-corrections recipe as
+  UniSteer (per-step fixed point, M=5 vs 16) run as an explicit
+  DAgger loop at 5–20 interventions/task on π0.5, Cosmos-Policy,
+  Gr00t and vanilla diffusion — MetaWorld +0.25 mean vs SFT +0.18 /
+  LoRA-DAgger +0.15 / DSRL +0.02; real bimanual 13%→80% w/ 10
+  corrections. The new number the rung was missing: **held-out
+  retention 0.88 under latent adaptation vs LoRA −0.66 / SFT −0.94**
+  — weight-space adaptation's forgetting cost, measured. ~8 GB
+  train budget = deployment hardware.
