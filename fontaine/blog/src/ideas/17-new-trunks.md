@@ -417,3 +417,28 @@ correction-conditioned module. Also
 ([SA-VLA page](../papers/sa-vla.md)): frozen VGGT-token injection =
 a fourth aux integration mode (read-only geometry, erosion-proof
 under RL), filed with the family on #11.
+
+**2026-08-09 — lit `0814`: the adamc watch goes two-sided
+([Hyperball page](../papers/hyperball-optimization.md), 2606.16899 +
+[Anytime Pretraining page](../papers/anytime-pretraining.md),
+2602.03702):** Hyperball (Stanford/Marin) derives the equilibrium
+law R⋆ ∝ √(η/λ) — AdamC's λ ∝ η makes the norm target constant, so
+plateau-then-flat now has a *third* independent derivation (never
+citing AdamC); and its scale-invariance lemma (grad ∝ 1/‖W‖) adds
+the grad-norm side: **if the correction holds, corrected-group grad
+norms should stay ~flat through decay too**; a grad climb mirroring
+1/√η with sagging norms is the uncorrected shape. Two free offline
+probes banked (per-matrix ‖∇L‖·‖W‖ constancy; stable rank), plus
+the sharpest interpretive trap yet: at λ=1e-5 on a *pretrained* 4B
+init the equilibrium may never be reached — flat norms could mean
+"decay inert," not "correction working"; the grad side and the
+Muon-SW alignment cosine disambiguate. Anytime Pretraining adds a
+chart-note: cosine's endpoint quality is largely the decay leg's
+implicit averaging, so mid-run probe reads understate what the
+compute buys — the ladder ranks trajectories, it doesn't price
+intermediate models. Also from the slice
+([X-Tokenizer](../papers/x-tokenizer.md)): the commitment axis gains
+its zero-test-time-commitment corner — discrete tokens as pure
+training-signal (AR head disabled at inference, flow head executes,
++8.25 long-horizon over FAST-as-auxiliary) — commitment, not
+discreteness, stays the expensive property from a fourth direction.

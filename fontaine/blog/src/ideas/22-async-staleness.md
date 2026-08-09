@@ -143,3 +143,21 @@ to chunk boundaries) — complements VLA-Corrector's truncation axis
 rather than competing; its economics datum (event-triggered refresh
 ≈ always-refresh at half latency) transfers to any replan-policy
 pre-reg. Gate unchanged: parked on #16.
+
+**2026-08-09 — lit `0814`: our seam read, published as a detector
+([VLA-FAIL page](../papers/vla-fail.md), 2606.21386):** their ACC
+score is the boundary-disagreement quantity we measured — previous
+chunk's unexecuted suffix vs new chunk's prefix over the
+receding-horizon overlap — deployed as a runtime failure signal.
+Three borrowable deltas banked: velocity normalization (per-dim MAE
+÷ in-chunk motion range, clamped — scale-free across slow/fast
+phases), EMA α=0.9 before thresholding (our jump numbers are
+instantaneous), position-dims-only restriction; plus the
+conformal-band-on-20-successes thresholding recipe. The sharp
+cross-read: ACC compares *sampled* chunks, so our measured
+~3.3-unit fresh-noise mode term sits inside their signal as an
+undecomposed noise floor — they fix the noise for LLMD's features
+but NOT for ACC's actions, so our shared noise ticket would shrink
+their null distribution and make the detector strictly more
+sensitive. Population-level confirmation: detection degrades as
+overlap shrinks. Menu unchanged; still parked on #16.

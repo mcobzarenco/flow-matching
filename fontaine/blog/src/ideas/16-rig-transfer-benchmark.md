@@ -265,3 +265,20 @@ flagged successes even with scripted policies in clean sim, so any
 rig benchmark (and every RL-pole recipe trained on binary success)
 needs an exteroceptive label audit; cheapest sufficient check is a
 final-frame scene read.
+
+**2026-08-09 — lit `0814`: RL-pole entry 6
+([FPO page](../papers/fpo-flow-policy-optimization.md),
+2510.09976, ICRA 2026):** the missing gradient route — a
+likelihood-free PPO ratio from the *change in CFM training loss* on
+the action (batch-normalized, exponentiated; "mild local
+monotonicity" assumed, not proven), no SDE conversion, no BPTT.
+π₀-FPO in sim: ALOHA Transfer Cube ~40% → 65%+ own-baseline sparse
+reward (the bankable number); LIBERO 87.2 avg is cross-base-model.
+The ablation is the roster datum: removing the ratio proxy costs 46
+pp and clipping 33, while dropping the Q-ensemble to one critic
+costs 7 — **the gradient route carries the method, critic
+elaboration is seasoning**. Third independent frozen-trunk vote
+(decoder frozen, actor-only), and its degraded variants collapse
+below SFT level — consistent with SA-VLA's negative sign. Env
+count/compute unreported (the pole's open cost axis gets nothing);
+zero OOD/retention measurement. Pole stays sim-first.

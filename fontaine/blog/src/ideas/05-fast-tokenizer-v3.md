@@ -63,3 +63,20 @@ neighborhoods. The trade vs FAST is explicit: compression vs metric
 structure. For a pure-AR consumer nothing refines through
 neighborhoods, so the answer may differ — "ablate embedding metric
 structure" banked as a free rider on any v3 refit. No status change.
+
+**2026-08-09 — lit `0814`: a clean external null for the learned-VQ
+escalation ([X-Tokenizer page](../papers/x-tokenizer.md),
+2606.14752):** the strongest learned action tokenizer published to
+date (2.4M-trajectory pretrain, 17 embodiments) *loses to FAST in
+FAST's own job twice* — plain residual-VQ-no-aux is worse than FAST
+on control (69.1 vs ~73.0 progress) and the full tokenizer
+reconstructs 17% worse (ℓ1 0.01693 vs 0.01446); its real wins
+(+13.5% rel. VQA, +8.25 long-horizon) come only in an
+auxiliary-supervision role where the tokens are never executed, and
+need a frozen 7B VLM teacher. The entropy/utilization gate stands,
+now with a measured datum behind it. Two free riders banked for the
+v3 refit: their 0.1%/99.9% quantile normalization is exactly the
+queued v3 move (independent confirmation), and their
+**WER-under-noise probe** (same noisy chunks → token edit distance;
+FAST blows up 3× at σ=0.008 via BPE re-segmentation cascades) is a
+cheap CPU diagnostic to run on v2-vs-v3. No status change.

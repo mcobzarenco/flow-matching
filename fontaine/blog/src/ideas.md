@@ -166,7 +166,21 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   intervention: re-noising low-confidence tokens + regenerating with
   trusted context is worth ~5× extra denoise compute, 2/3 of it
   with a coin-flip selector — revisability itself carries the
-  effect (must be trained in: bolt-on collapses 70.8 → 7.3).
+  effect (must be trained in: bolt-on collapses 70.8 → 7.3). New
+  2026-08-09 lit `0814`
+  ([Hyperball](papers/hyperball-optimization.md), 2606.16899 +
+  [Anytime](papers/anytime-pretraining.md), 2602.03702): the adamc
+  watch goes **two-sided** — R⋆ ∝ √(η/λ) gives plateau-then-flat a
+  third independent derivation AND a grad-norm-side test (corrected
+  group grads should stay flat through decay; climb ∝ 1/√η with
+  sagging norms = uncorrected), two free offline probes banked
+  (‖∇L‖·‖W‖ constancy, stable rank), and the decay-inert trap named
+  (λ=1e-5 on a pretrained init may never reach equilibrium); plus a
+  chart-note — mid-run probe reads understate decayed-model quality
+  (cosine's endpoint is largely implicit averaging). And
+  [X-Tokenizer](papers/x-tokenizer.md) adds the commitment axis's
+  zero-test-time-commitment corner (tokens as pure training signal,
+  flow head executes).
 - **`aux-subgoals` [#6 Aux attribution](ideas/06-aux-attribution.md)** —
   `confirmed` (aux HELPS actions, +0.462 cost when off).
   **CONSOLIDATED REPORT 2026-08-09
@@ -299,7 +313,17 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   [StreamVLA](papers/streamvla.md) — completion-anchored gating
   sidesteps the measured mid-execution phase bottleneck (τ-sweep
   flat 0.5→never-skip); refresh rule: event-triggered ≈
-  always-reason at half latency ≫ fixed schedule.
+  always-reason at half latency ≫ fixed schedule. New 2026-08-09 lit
+  `0814` ([VLA-FAIL](papers/vla-fail.md), 2606.21386): a verifier
+  mechanism class the kill rule doesn't cover — last-layer
+  Mahalanobis against *demo* statistics (zero training, fixed
+  prior-noise feature pass, ~2 ms vs 32-sample baselines) is
+  demo-anchored density, not policy self-report;
+  **LLMD-as-selector** is the cheapest named affirmative-case arm
+  (retro-computable on banked dumps once a feature-dump hook
+  exists, own pre-reg required); caveat carried — its stated blind
+  spot, confident coherent failure, is plausibly our ceiling's
+  class.
 - **`noise-draws` [#1 Noise-draw ensembling](ideas/01-noise-draw-ensembling.md)** —
   flow mean-of-10 banked (5.365); batched draws merged 2026-08-07.
   **GOLDEN-TICKET SCREEN R1+R2 READ OUT 2026-08-08
@@ -432,7 +456,14 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   constraint for the north star — telemetry success flags run
   32–48% false-positive in clean sim, so binary-success RL and any
   rig bench need an exteroceptive label audit (final-frame check is
-  the cheapest sufficient form).
+  the cheapest sufficient form). New 2026-08-09 lit `0814`
+  ([FPO](papers/fpo-flow-policy-optimization.md), 2510.09976, ICRA
+  2026): RL-pole entry 6 fills the missing gradient route —
+  likelihood-free PPO ratio from the CFM-loss *change* (no SDE, no
+  BPTT); ALOHA ~40%→65%+ own-baseline sparse-reward sim; its
+  ablation says the gradient route carries the method (−46 pp) while
+  the critic ensemble is seasoning (−7 pp); third frozen-trunk vote;
+  env/compute cost unreported, zero retention measurement.
 - **`lit-arms` [#15 Literature-sourced arms](ideas/15-literature-arms.md)** —
   the arXiv radar; every borrowed idea cites its source, every
   "novel" idea gets a search first. Feeds the Papers section.
@@ -464,14 +495,29 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   — 2a landed; GPU A/B conditional on a widened-selection corpus
   (padding ceiling too small under the current recipe).
 - **`longer-training` [#3 Longer training](ideas/03-longer-training.md)** — needs the
-  own-baseline reference arm first.
+  own-baseline reference arm first. New 2026-08-09 lit `0814`
+  ([Anytime Pretraining](papers/anytime-pretraining.md),
+  2602.03702): the horizon-churn fix published — constant-LR trunk +
+  branch decays from banked saves matches per-horizon-tuned cosine;
+  our 40k→60k→100k restart-from-the-floor lineage is the paper's
+  motivating pathology; mid-run checkpoint-averaging "endpoint
+  preview" priced as a CPU read (own pre-reg needed). Hook
+  correction on the page: not a Defazio paper.
 - **`tokenizer-v3` [#5 FAST tokenizer v3](ideas/05-fast-tokenizer-v3.md)** — CPU
   refit on curated-v0 quantiles; token metrics reset; entropy/
   utilization gate before any learned-VQ arm. New 2026-08-09
   ([DFM-VLA](papers/dfm-vla.md)): MAAT's metric-aligned embeddings
   (+4.4 pp for a refinement decoder) = the first measured
   order-preservation datum; "ablate embedding metric structure"
-  banked as a free rider on any v3 refit.
+  banked as a free rider on any v3 refit. New 2026-08-09 lit `0814`
+  ([X-Tokenizer](papers/x-tokenizer.md), 2606.14752): a clean
+  external null for learned-VQ in the *executable* role — RVQ-no-aux
+  loses to FAST on control (69.1 vs ~73.0) and the full tokenizer
+  reconstructs 17% worse; its wins are auxiliary-supervision only
+  (tokens never executed, needs a frozen 7B teacher). Gate stands;
+  two v3 riders banked (quantile normalization confirmed;
+  WER-under-noise probe — FAST's BPE re-segmentation blows up 3× at
+  σ=0.008).
 - **`stream-schedule` [#7 Stream-schedule re-test](ideas/07-stream-schedule.md)** —
   enters at the short-run screen rung.
 - **`vocab-head` [#8 Shortlist/output-vocab head](ideas/08-shortlist-vocab-head.md)**
@@ -551,6 +597,15 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   title isn't re-banked), and [StreamVLA](papers/streamvla.md)'s
   gate re-reasons but never cuts the chunk (complements the
   truncation axis; event-triggered refresh economics datum banked).
+  New 2026-08-09 lit `0814` ([VLA-FAIL](papers/vla-fail.md),
+  2606.21386): our seam read published as a detector — ACC compares
+  the previous chunk's unexecuted suffix vs the new chunk's prefix
+  over the receding-horizon overlap; three deltas banked (velocity
+  normalization, EMA α=0.9, position-dims-only) + the
+  conformal-band recipe; and the cross-read — they fix prior noise
+  for features but NOT for ACC's actions, so our shared noise
+  ticket would tighten their own detector (the ~3.3-unit
+  fresh-noise mode term is their undecomposed noise floor).
 
 ## Answered — banked results
 

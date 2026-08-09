@@ -237,3 +237,13 @@ pretrained trunk:
 | DFM-VLA (discrete flow matching iterative refinement) | [2603.26320](https://arxiv.org/abs/2603.26320) | ✅ [page](dfm-vla.md) |
 | One-Token-Per-Frame / OneWM-VLA (visual bandwidth in world models) | [2605.07931](https://arxiv.org/abs/2605.07931) | ✅ [page](onewm-vla-one-token.md) |
 | HiF-VLA (hindsight/insight/foresight motion representation) | [2512.09928](https://arxiv.org/abs/2512.09928) | ✅ [page](hif-vla.md) |
+
+**Radar 0814 (banked hooks from the 0813 refill sweep):**
+
+| Paper | arXiv | Status |
+|---|---|---|
+| Hyperball (Fantastic Pretraining Optimizers II, weight-norm equilibria) | [2606.16899](https://arxiv.org/abs/2606.16899) | ✅ [page](hyperball-optimization.md) |
+| Anytime Pretraining (horizon-free schedules + weight averaging) | [2602.03702](https://arxiv.org/abs/2602.03702) | ✅ [page](anytime-pretraining.md) |
+| VLA-FAIL (zero-failure-data detection: Mahalanobis + chunk consistency) | [2606.21386](https://arxiv.org/abs/2606.21386) | ✅ [page](vla-fail.md) |
+| FPO (likelihood-free RFT of flow-matching VLAs, ICRA 2026) | [2510.09976](https://arxiv.org/abs/2510.09976) | ✅ [page](fpo-flow-policy-optimization.md) |
+| X-Tokenizer (multimodal action tokenizer as auxiliary supervision) | [2606.14752](https://arxiv.org/abs/2606.14752) | ✅ [page](x-tokenizer.md) |

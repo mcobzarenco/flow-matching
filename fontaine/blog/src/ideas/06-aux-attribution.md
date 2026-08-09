@@ -508,3 +508,24 @@ localization; design constraint banked: anchor phase decisions to a
 completion reference, never to the current frame alone; refresh-rule
 datum (event-triggered ≈ always-reason ≫ fixed schedule) for any
 rollout escalation.
+
+**2026-08-09 — lit `0814`: a verifier mechanism class our kill rule
+doesn't cover ([VLA-FAIL page](../papers/vla-fail.md),
+2606.21386):** zero-training failure detection from two signals —
+last-layer Mahalanobis distance against statistics fit on the
+*demos* (with a fixed prior-noise draw for the feature pass), and
+action-chunk consistency over receding-horizon overlaps —
+calibrated on ~20 successful rollouts, ~2 ms/step vs 32-sample
+baselines. The ledger point: our closed zero-training family was
+*policy self-report* (self-certainty, masked-contrast); LLMD is a
+**demo-anchored density score** — external statistics, different
+mechanism, arguably outside the pre-registered kill rule.
+**LLMD-as-selector** (pick the candidate whose action-expert
+features sit least Mahalanobis-far from the demo distribution) is
+now the cheapest named affirmative-case arm — retroactively
+computable on banked draw dumps once a feature-dump hook exists;
+needs its own pre-reg. Sharp caveat carried: their stated blind spot
+is *confident coherent failure* ("consistent in features and
+actions") — plausibly the exact class inside our alive oracle
+ceiling, so a selector win is not guaranteed by the mechanism being
+new.
