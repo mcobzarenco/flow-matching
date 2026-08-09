@@ -1,7 +1,65 @@
 # Now
 
+*Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-09 12:47–13:5xZ (real `date -u`) — work session
+(4-h budget): **both owner top-priority items closed — AdamC
+implemented, oracle-tested and LAUNCHED as the new 100k run from
+base Molmo2-4B (after a three-message approval exchange, including a
+λ override caught before step 1), and the docs modernization pass
+landed for the owner's main-rebase.***
 
+**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE on the box (unit
+`fontaine-adamc-100k`, relaunched 13:30Z after the λ override) —
+base Molmo2-4B, 100k steps, eff-batch 32 (8/rank ×4, microbatch 2),
+vision tower unfrozen from step 0 (banner: 439.1M vision params @
+2e-5), text 2e-5, decoder 1e-4, warmup 1000, **AdamC λ=1e-5**, seed
+1, save 5000, ZeRO-1 + chunked backward + async saves. Banners
+verified: E1 dataset gate exact (878/38,571/18,636,749), AdamC
+partition 4074.7M corrected / 2.6M head / 0.6M 1-D. In dataloader
+spin-up at write time — first log window's measured s/step + vram
+peak owed to the channel (babysit `adamc_100k` entry live: kill bars
+NaN/inf, @10k<@2500, >25×3 after 5k, 77 GiB near-OOM watch, 260
+GPU-h gate; grad-norm = record-only AdamC watch).
+
+**Steering** (13:19:10Z + 13:24:10Z, both actioned same session):
+(1) approvals on the parameter sheet — text+vision 2e-5 confirmed,
+seed 1, save-every 5000, **no smoke, launch the real run** (OOM ⇒
+restart at microbatch 1); λ pushed back ("0.1 high — what's
+standard?") → grounded answer posted (openpi ≈0, OpenVLA finetunes
+0.01), launched at 0.01. (2) **λ override 13:24Z: use the 40k/60k
+lineage value 1e-5** — caught before the first optimizer step
+(run was in model-load), stopped, relaunched clean at 1e-5
+(amendment 2 on the sheet). ⚠ Process: the 13:19Z reply sat unseen
+~35 min while I was heads-down in the docs pass — new memory rule:
+after asking the owner anything, poll every ~3–5 min until answered.
+
+**Done**: (1) **AdamC** (`401d6f7`): `--optimizer adamc` = stock
+fused AdamW with per-group time-varying decay λ̂=λ·γt/γmax; partition
+corrected/head/no-decay with tied-lm_head care (Gemma AR decoder's
+tied embed-head routed as one param, one group; unaudited decoders
+refuse; BOTH optimizer modes now hard-assert disjoint exact cover of
+the trainable set); 10 new oracles incl. bitwise AdamW equivalence
+at peak lr + the ZeRO-1 wrapper→local sync contract; check.py 584
+green. (2) **Parameter sheet + 2 amendments**
+([post](posts/2026-08-09-prereg-molmo2-adamc-100k.html)) posted
+before launch; launcher `launch_box_fontaine_molmo2_adamc_100k_ddp4.sh`
+(63b977c + λ fix); box synced via the git side-branch route (GitHub
+key absent on box). (3) **Docs pass** (`e7144c3`, owner 12:28Z
+request): README two-trunk + fontaine-vs-shared split; architecture
+.md modernized end-to-end (Molmo2 in intro/§1/§2, curated-plan
+ledger in §7, shipped-flag demotions in §8, CLI-default corrections,
+residual/seam/snapflow documented, §5 gains AdamC + memory machinery
++ async saves); 4 historical docs got archive headers; subagent
+staleness audit against HEAD drove the pass; deferred tail queued as
+`docs-pass-followups-0809`.
+
+**Next**: `queue_cli.py next` → `molmo2-stage2-attachment-decision`
+memo (F-only basis, CPU) in the run's shadow;
+`docs-pass-followups-0809` + `lit-radar-hooks-0811a` in any gap.
+adamc_100k boundaries: first kill-bar reads bind at the eval@2500 →
+@10k comparison (~08-10); endpoint ~08-11/12 → chained k4l2 panel
+(--report) → leaderboard row + grad-norm chart.
 
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
@@ -121,32 +179,6 @@ the crossing); endpoint ~18:3xZ → chained panel_v2 + AR-view drift
 panel → **Δ_seam frozen read (runbook staged, pre-audited)** →
 stage-2 decision. `queue_cli.py next` → `lit-radar-hooks-0811a`
 (any GPU-busy window).
-
-*Updated 2026-08-09 12:12–12:2xZ (real `date -u`) — tick (babysit):
-**attach_K healthy past the run's midpoint approach — probe margin
-~1.4 held, all quiet; queue armed for the next lit slice.***
-
-**Status**: attach_K healthy at the 12:13Z poll — step 3800/10k,
-loss 3.10, 3.78 s/step (13.1 steps/min window; endpoint ~18:3xZ
-holds), vram 59.07 ≤ 71, liveness 7 procs / 4 GPUs. Probe
-**11.2033@3500** (best); first kill-bar 12.6394 binds ≥5k (~13:2xZ)
-with ~1.4 margin. CE aux flat. Local GPU free.
-
-**Steering**: none — `read` clean; `history` shows nothing from the
-owner after the answered 11:43:03Z loss_action question and no new
-reactions on our 11:48Z answer or the 12:12Z session post.
-
-**Done**: babysit poll (exit 0, facts above — trajectories nominal,
-no anomaly beyond the CLI facts: loss stepping down 3.21 → 3.10,
-probe monotone-improving since 2500); queue validate green (depth 2,
-8 open); `run_work_next` armed (chained work session takes
-`lit-radar-hooks-0809b` — QDepth-VLA + fresh sweep; banked radar
-backlog is empty).
-
-**Next**: 5k kill-bar binds ~13:2xZ (probe must be < 12.6394 —
-currently 11.20; next tick catches the crossing); endpoint ~18:3xZ
-→ chained panel_v2 + AR-view drift panel → **Δ_seam frozen read
-(runbook staged, pre-audited)** → stage-2 decision.
 
 ## Utilization footer
 

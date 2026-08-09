@@ -2,21 +2,47 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T12:43:00Z
+**Updated:** 2026-08-09T13:35:00Z
 
-**Depth call:** depth >=2 at 12:4xZ 08-09: owner-molmo2-adamc-run-prep-0809 (TOP, 'start with it' 12:37Z) + owner-docs-pass-0809 (owner prio 12:28Z, follows) + stage-2 memo (re-scoped F-only) + lit-radar-hooks-0811a; attach screen CLOSED (owner killed K 12:31Z), box GPUs free pending AdamC run approval
+**Depth call:** depth >=2 at 13:3xZ 08-09: adamc-100k-live (owner run, babysit) + molmo2-stage2-attachment-decision memo (unblocked — docs pass done) + docs-pass-followups-0809 + lit-radar-hooks-0811a + f-then-joint draft; both owner top-priority items (AdamC run prep, docs pass) CLOSED this session
 
-**9 open** (Live 0 · Queued 4 · Blocked 5 · Done 70)
+**9 open** (Live 1 · Queued 3 · Blocked 5 · Done 72)
 
-## 🔴 Live (0)
+## 🔴 Live (1)
 
 *running right now (GPU or owner-window)*
 
-*(empty)*
+**`adamc-100k-live`** · `gpu-box`
 
-## 🟢 Queued (4)
+OWNER RUN LIVE (launched 13:30Z 08-09): fontaine_molmo2_adamc_100k_ddp4
+
+**boundary:** endpoint ~08-11/12 (est 1.7-2.1 s/step =&gt; 47-58 h from 13:32Z); chained k4l2 panel eval (--report + npz) in-unit; then leaderboard row + grad-norm chart readout · [pre-reg](posts/2026-08-09-prereg-molmo2-adamc-100k.md)
+
+<details><summary>full record</summary>
+
+OWNER RUN LIVE (launched 13:30Z 08-09): fontaine_molmo2_adamc_100k_ddp4 — base Molmo2-4B, 100k steps, eff-32 (8/rank x4, chunks 4), vision unfrozen step 0, decoder 1e-4 / text 2e-5 / vision 2e-5, warmup 1000, AdamC lambda=1e-5 (amendment 2), seed 1, save 5000, ZeRO-1 + chunk-grad-allreduce + async saves. Babysit entry adamc_100k (kill bars: NaN/inf, @10k&lt;@2500, &gt;25 x3 after 5k, vram 77 near-OOM; grad-norm RECORD-ONLY AdamC watch). First-poll facts owed to channel: measured s/step, vram peak, wall projection, first async-save line. OOM policy: relaunch chunks 8 microbatch 1; second OOM = owner steer.
+
+</details>
+
+---
+
+## 🟢 Queued (3)
 
 *ready — waiting on a window or a boundary*
+
+**`docs-pass-followups-0809`** · `cpu`
+
+Docs pass tail (from the 08-09 staleness audit, deferred at my discretion): (1) sweep agent-internal vocabulary out of shipped bijou/ source comments (eval/leakage.py 'fontaine/charter.md', eval/subgoal_scoring.py '#6 rung (b)',…
+
+**boundary:** any GPU-busy window; low priority vs stage-2 memo + lit radar
+
+<details><summary>full record</summary>
+
+Docs pass tail (from the 08-09 staleness audit, deferred at my discretion): (1) sweep agent-internal vocabulary out of shipped bijou/ source comments (eval/leakage.py 'fontaine/charter.md', eval/subgoal_scoring.py '#6 rung (b)', train.py 'K arm of the attach-screen'/'#20'); (2) architecture.md S6: enumerate the eval-system surface (frozen sample plans, --dump-draws, noise tickets, --mask-state, subgoal modes, --smolvla baseline, leakage checker) + full rollout flag docs (or rewrite rollout_so101.md properly); (3) S1: a real Molmo2 prompt-format subsection (ChatML, image hoisting, id 151645 bos) instead of the pointer note; (4) confirm docs/notes/2026-08-06 S3 failing-test claim resolved; (5) wandb API key rotation still owed (S8 hygiene note).
+
+</details>
+
+---
 
 **`lit-radar-hooks-0811a`** · `cpu`
 
@@ -41,34 +67,6 @@ Molmo2 stage-2 attachment decision at endpoint — now EXECUTABLE via the seam-s
 <details><summary>full record</summary>
 
 Molmo2 stage-2 attachment decision at endpoint — now EXECUTABLE via the seam-screen pre-reg (2026-08-07-prereg-molmo2-attach-screen.md: frozen vs KI-joint is the first measurement; the depth-of-reads arm stays open for its own screen); owner steer window before the screen launches
-
-</details>
-
----
-
-**`owner-docs-pass-0809`** · `cpu`
-
-OWNER STEERING 12:28:59Z 08-09, TOP PRIORITY: docs/ modernization pass ahead of owner's main-rebase
-
-**boundary:** Audit docs/ + README against git state first (audit-queue-items-against-git). Deliverable = updated docs + README section, plain-language, no fontaine jargon; blog/Discord note when done. Chained work session executes (4-h budget).
-
-<details><summary>full record</summary>
-
-OWNER STEERING 12:28:59Z 08-09, TOP PRIORITY: docs/ modernization pass ahead of owner's main-rebase — (a) update flow-matching/docs (architecture.md and friends) to reflect the CURRENT codebase + trained models, written in standard ML language for an ML expert, NO internal vocabulary (rungs/panels/idea-numbers/arm codenames); (b) repo README: clear statement that fontaine/... is an autonomous research agent's harness/notes/blog and the rest is the shared codebase (owner will rebase main on fontaine and develop with local agents); (c) tech-debt sweep at my discretion (stale docs, dead scripts/flags, confusing leftovers). Acknowledged in-channel 12:40Z with plan; post links when it lands for owner review pre-rebase.
-
-</details>
-
----
-
-**`owner-molmo2-adamc-run-prep-0809`** · `cpu`
-
-OWNER STEERING 12:37:56Z 08-09, TOP PRIORITY ('let's start with it'): new molmo2 run from BASE 4B
-
-**boundary:** Order: read paper + shared conversation -&gt; AdamC implementation + tests (tied-weight/param-group handling verified) -&gt; parameter sheet posted for owner approval -&gt; LAUNCH ONLY AFTER explicit approval (owner_hold semantics on the launch, not the prep). Box GPUs free since the 12:38Z attach_K kill. Docs pass (owner-docs-pass-0809) follows in the same/next work session — owner's 'start with it' puts AdamC first.
-
-<details><summary>full record</summary>
-
-OWNER STEERING 12:37:56Z 08-09, TOP PRIORITY ('let's start with it'): new molmo2 run from BASE 4B — spec: (1) 100k steps; (2) effective batch 32 = 8/rank x 4; (3) vision encoder UNFROZEN from step 0, --{backbone,text}-vision-lr 2e-5; (4) warmup 1000; (5) optimizer AdamC per arxiv 2506.02285v1 (AdamW with time-varying per-group decay coefficient) — implement AdamC FIRST, efficiently, mindful of shared/tied layers (Gemma tied lm_head); owner-supplied context conversation https://claude.ai/share/52f07abb-4b00-48f0-9c62-6627868b5209 must be read as part of implementing. GATE: before ANY launch, post an in-depth description of ALL run parameters for owner approval.
 
 </details>
 
@@ -146,7 +144,7 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 
 ---
 
-## ✅ Done (70)
+## ✅ Done (72)
 
 *closed — the full record stays in each fold*
 
@@ -943,6 +941,34 @@ Standing lit slice (~20-30 min, owner allocation 2026-08-05) in the attach_F tra
 <details><summary>full record</summary>
 
 #4 attachment seam screen execution (box, 4xDDP, sequential F then K): F frozen-trunk vs K KI-joint (phase-1 CE verbatim + stop-grad seam, alpha=1) at matched 10k steps / eff-48 from the 40k endpoint; residual surface constant; gates vram&lt;=71, K1-style probe kill (phase-1 curve + 3.0 at &gt;=5k; bars 12.6394@5000, 11.6356@7500 in babysit.toml prepared entries), 70 GPU-h ceiling w/ matched 5k downshift; frozen reads Delta_seam paired CI + K trunk-drift band 0.3 (READ SCRIPT LANDED 08-07 ~07:2xZ: attach_seam_results.py, one command, oracle-gated all branches) — INSTRUMENT LANDED 08-07 ~06:0xZ; LAUNCH PREP LANDED 08-07 ~06:1xZ (launch_box_fontaine_molmo2_attach_{F,K}_10k_ddp4.sh: mechanized attach_rate_gate.py 70 GPU-h gate + 5k-downshift marker both launchers honor, sha256-pinned plans, chained panel_v2 evals; K chains materialize_joint_ar_view.py + greedy k4l2 drift panel; K_MEM_READY guard refuses blind K launch; 10 new oracles, check.py 433)
+
+</details>
+
+---
+
+**`owner-docs-pass-0809`** · `cpu`
+
+OWNER STEERING 12:28:59Z 08-09, TOP PRIORITY: docs/ modernization pass ahead of owner's main-rebase
+
+**boundary:** DONE 13:3xZ 08-09 (e7144c3): README two-trunk + fontaine-vs-shared split; architecture.md modernized (intro/S1/S2/S5/S7/S8 — Molmo2 everywhere it belongs, curated-plan ledger, shipped-flag demotions, CLI-default corrections 768/15/4-4-7, residual+seam+snapflow documented); molmo2/gemma4/styleguide/working-together/rollout/init_gpu fixed; 4 historical docs got archive headers. Staleness audit by subagent against HEAD drove the pass. Remaining tail split to docs-pass-followups-0809.
+
+<details><summary>full record</summary>
+
+OWNER STEERING 12:28:59Z 08-09, TOP PRIORITY: docs/ modernization pass ahead of owner's main-rebase — (a) update flow-matching/docs (architecture.md and friends) to reflect the CURRENT codebase + trained models, written in standard ML language for an ML expert, NO internal vocabulary (rungs/panels/idea-numbers/arm codenames); (b) repo README: clear statement that fontaine/... is an autonomous research agent's harness/notes/blog and the rest is the shared codebase (owner will rebase main on fontaine and develop with local agents); (c) tech-debt sweep at my discretion (stale docs, dead scripts/flags, confusing leftovers). Acknowledged in-channel 12:40Z with plan; post links when it lands for owner review pre-rebase.
+
+</details>
+
+---
+
+**`owner-molmo2-adamc-run-prep-0809`** · `cpu`
+
+OWNER STEERING 12:37:56Z 08-09, TOP PRIORITY ('let's start with it'): new molmo2 run from BASE 4B
+
+**boundary:** DONE 13:3xZ 08-09, RUN LAUNCHED: AdamC implemented 401d6f7 (10 oracles, check.py 584 green; partition corrected/head/no-decay + tied-param guard both optimizer modes); parameter sheet posted (2026-08-09-prereg-molmo2-adamc-100k.md) + Discord 13:13Z; owner approvals 13:19Z (text+vision 2e-5, seed 1, save 5000, NO smoke) + lambda override 13:24Z (1e-5 lineage value; first launch at 0.01 stopped PRE-STEP-1 13:29Z, relaunched 13:30Z). Unit fontaine-adamc-100k live, banners verified (E1 exact, vision 439.1M live, AdamC lambda=1e-05, 4074.7M corrected / 2.6M head / 0.6M undecayed). Babysit adamc_100k entry live (260 GPU-h gate, 77 GiB near-OOM watch, K1-style probe bars). Endpoint ~08-11/12 -&gt; chained k4l2 panel eval.
+
+<details><summary>full record</summary>
+
+OWNER STEERING 12:37:56Z 08-09, TOP PRIORITY ('let's start with it'): new molmo2 run from BASE 4B — spec: (1) 100k steps; (2) effective batch 32 = 8/rank x 4; (3) vision encoder UNFROZEN from step 0, --{backbone,text}-vision-lr 2e-5; (4) warmup 1000; (5) optimizer AdamC per arxiv 2506.02285v1 (AdamW with time-varying per-group decay coefficient) — implement AdamC FIRST, efficiently, mindful of shared/tied layers (Gemma tied lm_head); owner-supplied context conversation https://claude.ai/share/52f07abb-4b00-48f0-9c62-6627868b5209 must be read as part of implementing. GATE: before ANY launch, post an in-depth description of ALL run parameters for owner approval.
 
 </details>
 
