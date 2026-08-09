@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T19:18:54Z
+**Updated:** 2026-08-09T19:39:56Z
 
-**Depth call:** depth >=2 at 19:18Z 08-09: adamc-100k babysit to ~08-12 (live) + lit-radar-0815 (cpu, actionable, 5 verified dup-checked hooks + 5 spares) + docs-pass tail (owner-side only) + fjoint owner-gated; lit-radar-0814 CLOSED this session (5 pages, all banked hooks cleared)
+**Depth call:** depth >=2 at 19:39Z 08-09: adamc-100k babysit to ~08-12 (live) + lit-radar-0816 (cpu, actionable, 5 verified dup-checked hooks + 5 spares) + docs-pass tail (owner-side only) + fjoint owner-gated; lit-radar-0815 CLOSED this session (5 pages, 3 hook corrections)
 
-**8 open** (Live 1 · Queued 3 · Blocked 4 · Done 84)
+**8 open** (Live 1 · Queued 3 · Blocked 4 · Done 85)
 
 ## 🔴 Live (1)
 
@@ -30,15 +30,15 @@ OWNER RUN LIVE (launched 13:30Z 08-09): fontaine_molmo2_adamc_100k_ddp4 — base
 
 *ready — waiting on a window or a boundary*
 
-**`lit-radar-0815`** · `cpu`
+**`lit-radar-0816`** · `cpu`
 
-Lit slice (standing allocation): refill hooks banked in the 0814 session's fresh sweep, all ids VERIFIED against abs pages + dup-checked against papers/ + ideas/ + queue, priority-ordered
+Lit slice (standing allocation): refill hooks banked in the 0815 session's fresh sweep, all ids VERIFIED against abs pages + dup-checked against papers/ + ideas/ + queue (21 checked clean, 10 discarded as covered), priority-order…
 
 **boundary:** any GPU-busy window; adamc rides to ~08-12 so windows are plentiful
 
 <details><summary>full record</summary>
 
-Lit slice (standing allocation): refill hooks banked in the 0814 session's fresh sweep, all ids VERIFIED against abs pages + dup-checked against papers/ + ideas/ + queue, priority-ordered — 2607.21005 Weight-norm Criticality (loss spikes from decay+normalization driving scale-invariant norms to zero; a concrete failure mode for the LIVE adamc weight-norm watch) &gt; 2606.19367 Weibull weight-scale evolution under AdamW (alignment/injection/decay force decomposition recoverable from sparse checkpoints — an analysis frame for our banked 5k saves) &gt; 2511.12101 Decoupled Action Expert (task knowledge confined to the conditioning pathway, 5M MLP matches 244M U-Net; sharpest available datum for the fjoint F-then-joint rung's seam question) &gt; 2606.23085 Foresight (learned failure detection from task-level success labels only, no env rollouts, conformal-calibrated — the #6 learned-verifier affirmative case matching our no-rollouts constraint) &gt; 2607.27782 RedFlow (offline RL converting failures into action-level corrective supervision for flow VLAs, real-world 56.7-&gt;74.7%; #16 RL-pole entry candidate: real-robot, few-sample, failure-driven). VERIFIED SPARES if a pick falls through: 2607.10959 WSqD horizon-free schedule, 2606.10305 SARM2 stage-aware reward model, 2608.04246 SAFECAST contrast-set failure detection, 2607.14695 Reflex streaming inference (#22), 2606.11408 dynamic execution horizon (#22). Papers page(s) same session per the permanent rule; dedup-check each id before writing.
+Lit slice (standing allocation): refill hooks banked in the 0815 session's fresh sweep, all ids VERIFIED against abs pages + dup-checked against papers/ + ideas/ + queue (21 checked clean, 10 discarded as covered), priority-ordered — 2602.11137 Weight Decay Improves LM Plasticity (larger pretrain WD hurts base loss but INCREASES downstream finetune gains via separable representations; mechanistic frame for what lambda-prop-eta decay does to a pretrained Molmo2 trunk's plasticity — adamc priority 1) &gt; 2605.00416 Learning While Deploying (fleet-scale offline-to-online RL on a real 16-robot dual-arm fleet; Distributional Implicit Value Learning + Q-via-Adjoint-Matching NATIVE to flow action generators, 95% avg across 8 tasks; #16 top-rank real-robot flow-native entry + adjoint-matching taxonomy slot) &gt; 2607.27511 FoMo-FD (action-conditioned flow-matching WORLD MODEL flags visual-action inconsistency, conformal-calibrated on successes ONLY — no failure demos, no env rollouts, 96.6% FDR at 1.3% FAR on dVRK; #6 — actually fits our no-rollouts constraint where Foresight did not; #17 latent-WM-as-verifier) &gt; 2605.06175 VLA-GSE (spectral decomposition of frozen backbone initializes generalized+specialized experts, 2.51% params updated, 81.2% zero-shot LIBERO-Plus; #4/fjoint — knowledge-insulation-by-construction alternative to the brief-unfreeze rung) &gt; 2607.06370 ActionCache (training-free action caching+refinement for flow VLAs, 10.44x pi-0.5 / 40.17x GR00T speedup at held SR; #22 + changes #19's cheap-draws cost model). VERIFIED SPARES: 2605.30834 Hide-and-Seek (trajectory-label contrastive failure localization, #6), 2605.13959 WarmPrior (temporal prior replaces Gaussian source, straighter paths; #1/#19/#17), 2608.04246 SAFECAST (contrast-set failure detection, #6, rolled fwd from 0815), 2607.14695 Reflex (streaming inference 50Hz, #22, rolled fwd), 2605.23061 SF-NorMuon (schedule-free spectral, WD-at-fast-iterate essential; adamc spare). Dropped 0815 spares: 2607.10959 WSqD + 2606.10305 SARM2 + 2606.11408 DEHP (outranked; reasons in 0815 close). Papers page(s) same session per the permanent rule; dedup-check each id before writing.
 
 </details>
 
@@ -130,9 +130,23 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 
 ---
 
-## ✅ Done (84)
+## ✅ Done (85)
 
 *closed — the full record stays in each fold*
+
+**`lit-radar-0815`** · `cpu`
+
+Lit slice (standing allocation): refill hooks banked in the 0814 session's fresh sweep, all ids VERIFIED against abs pages + dup-checked against papers/ + ideas/ + queue, priority-ordered
+
+**boundary:** CLOSED 2026-08-09T19:39:56Z work session: all 5 hooks deep-read via 5-subagent fan-out + parallel refill sweep, 5 Papers pages same session (weight-norm-criticality, weibull-weight-scale, decoupled-action-expert, foresight-failure-detection, redflow; commit c53e517, check 598 green); 3 hook corrections caught (Foresight trains on failure rollouts - NOT the no-rollouts affirmative case; Weibull decomposition is 2-of-3 forces from weights-only; Decoupled Action Expert testbed is Diffusion Policy not VLA, freeze direction inverted); ideas #4/#6/#16/#17 fed; refill -&gt; lit-radar-0816 queued
+
+<details><summary>full record</summary>
+
+Lit slice (standing allocation): refill hooks banked in the 0814 session's fresh sweep, all ids VERIFIED against abs pages + dup-checked against papers/ + ideas/ + queue, priority-ordered — 2607.21005 Weight-norm Criticality (loss spikes from decay+normalization driving scale-invariant norms to zero; a concrete failure mode for the LIVE adamc weight-norm watch) &gt; 2606.19367 Weibull weight-scale evolution under AdamW (alignment/injection/decay force decomposition recoverable from sparse checkpoints — an analysis frame for our banked 5k saves) &gt; 2511.12101 Decoupled Action Expert (task knowledge confined to the conditioning pathway, 5M MLP matches 244M U-Net; sharpest available datum for the fjoint F-then-joint rung's seam question) &gt; 2606.23085 Foresight (learned failure detection from task-level success labels only, no env rollouts, conformal-calibrated — the #6 learned-verifier affirmative case matching our no-rollouts constraint) &gt; 2607.27782 RedFlow (offline RL converting failures into action-level corrective supervision for flow VLAs, real-world 56.7-&gt;74.7%; #16 RL-pole entry candidate: real-robot, few-sample, failure-driven). VERIFIED SPARES if a pick falls through: 2607.10959 WSqD horizon-free schedule, 2606.10305 SARM2 stage-aware reward model, 2608.04246 SAFECAST contrast-set failure detection, 2607.14695 Reflex streaming inference (#22), 2606.11408 dynamic execution horizon (#22). Papers page(s) same session per the permanent rule; dedup-check each id before writing.
+
+</details>
+
+---
 
 **`lit-radar-0814`** · `cpu`
 

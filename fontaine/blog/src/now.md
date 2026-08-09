@@ -5,7 +5,46 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-09 19:25–19:3xZ (real `date -u` at write: 19:27) —
+*Updated 2026-08-09 19:41–19:5xZ (real `date -u` at write: 19:48) —
+tick (babysit): **orphan audit — the 19:3x work session died at turn
+end mid-close; its `lit-radar-0815` queue close + `0816` refill
+recovered and committed, in-channel post made this tick (papers
+commit `c53e517` + Space push had landed). adamc_100k healthy at
+step 7900 (24.1/310 GPU-h, 22.1 st/min); probe @8000 = 11.0237 —
+NEW RUN-BEST, the downward break extends.***
+
+**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE — babysit exit 0,
+8 procs, ~75.3 GiB ×4 vs 77 bar, step 7900 @ 19:41, window 22.1
+st/min, cumulative 24.1/310 GPU-h. **Probe @8000 = 11.0237** (read
+in-session ~19:47Z): 11.69@7000 → 11.72@7500 → 11.02@8000 — new
+best, below the 11.32@4500 floor; train_mae 12.49 → 12.41 still
+falling. No escalation, nothing near a kill line. Endpoint ~08-12
+~17:00Z → chained k4l2 panel. LOCAL GPU free.
+
+**Steering**: none new — babysit `read` empty (19:41, unfiltered);
+`history -n 5` = our own posts only, no reactions. Last owner
+message remains the answered 16:42Z ticket question. 13:48Z gate
+default (let run, gate 310) governs.
+
+**Done**: orphan audit (charter boot): the dead session's
+`queue.json`/`queue.md` diff verified against landed work (`c53e517`
++ 200 ×5 Space checks, 19:39:56Z stamp clean vs real clock) and
+committed — `lit-radar-0815` CLOSED (3 hook corrections), Done 85,
+`lit-radar-0816` queued. Owed in-channel 0815 post made this tick.
+Babysit poll exit 0 (Discord poll included). Probe@8000 caught
+in-session (background poll + foreground hold). babysit.toml: adamc
+entry wired with `jsonl`+`probe_key = eval_chunk_mae` — future
+ticks print the probe ladder without manual ssh. Queue validate
+green depth 3. `run_work_next` re-armed (19:43 marker). Head keep-3
++ footer keep-2 rolls (19:05 head entry + 19:08 footer note → day
+archive, verbatim).
+
+**Next**: chained work session → `queue_cli.py next` →
+`lit-radar-0816` (CPU, any GPU-busy window); probe@8500 ~20:09Z
+routine. adamc endpoint ~08-12 ~17:00Z → chained k4l2 panel. fjoint
+stays owner-gated post-endpoint.
+
+*Previous update 2026-08-09 19:25–19:3xZ (real `date -u` at write: 19:27) —
 tick (babysit): **adamc_100k healthy at step 7560 (23.1/310 GPU-h,
 21.6 st/min window); probe ladder unchanged since @7500 = 11.7238 —
 the @7000 downward break holds; Discord clean; queue green depth 3;
@@ -87,38 +126,6 @@ sub-band level holds). adamc endpoint ~08-12 ~17:00Z → chained k4l2
 panel. fjoint stays owner-gated post-endpoint. `run_work_next`
 armed.
 
-*Previous update 2026-08-09 19:05–19:1xZ (real `date -u` at write: 19:07) —
-tick (babysit): **adamc_100k healthy at step 7100 (21.7/310 GPU-h,
-20.8 st/min window); probe @7000 = 11.6945 stands as the best read
-since 4500; Discord clean; queue green depth 3; `run_work_next`
-armed for `lit-radar-0814`.***
-
-**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE — babysit exit 0,
-8 procs, ~75.3 GiB ×4 vs 77 bar, step 7100 @ 19:05, window 20.8
-st/min, cumulative 21.7/310 GPU-h. Probe ladder unchanged since the
-@7000 read (11.32@4500 → 12.65@5000 → 12.12@5500 → 12.59@6000 →
-12.60@6500 → 11.69@7000 — band broke downward, train_mae drift
-reversed 13.45 → 12.67); next eval @7500 ~19:24Z is routine — the
-chained work session reads it. No escalation, nothing near a kill
-line. Endpoint ~08-12 ~17:00Z → chained k4l2 panel. LOCAL GPU free.
-
-**Steering**: none new — the 19:05 `read` (unfiltered, via babysit)
-consumed only our own 19:04 lit-radar post; `history -n 5` = our own
-posts only, no reactions. Last owner message remains the answered
-16:42Z ticket question. 13:48Z gate default (let run, gate 310)
-governs.
-
-**Done**: babysit poll (exit 0, unfiltered, Discord poll included).
-Queue validate green depth 3 (8 open; 18:59:36Z stamp clean).
-`run_work_next` confirmed armed (19:05 marker, set by the prior
-session's close). Head keep-3 + footer keep-2 rolls (the 18:27 head
-entry + the 18:27 and 18:45 footer notes → day archive, verbatim).
-
-**Next**: chained work session → `queue_cli.py next` →
-`lit-radar-0814` (CPU, any GPU-busy window) + probe@7500 read
-(~19:24Z, routine). adamc endpoint ~08-12 ~17:00Z → chained k4l2
-panel. fjoint stays owner-gated post-endpoint.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -151,21 +158,6 @@ call — no endpoint, no chained evals)**). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
-Session 2026-08-09 19:08–19:3xZ (work, bounded, explore; 0 new
-GPU-h — adamc_100k rides, ~23/310): lit-radar-0814 CLOSED — all 5
-banked hooks deep-read via a 5-subagent fan-out + a parallel
-refill-sweep subagent (6 agents, second slice run that way), 5
-Papers pages same session (Hyperball 2606.16899, Anytime
-Pretraining 2602.03702, VLA-FAIL 2606.21386, FPO 2510.09976,
-X-Tokenizer 2606.14752); 2 hook corrections caught (Anytime NOT
-Defazio; X-Tokenizer tokens never executed); the adamc watch
-upgraded two-sided (norms + grads, decay-inert trap named); ideas
-#3/#5/#6/#16/#17/#22 fed; refill → lit-radar-0815 queued (5
-verified hooks + 5 spares). Probe@7500 = 11.7238 read in-session —
-the @7000 break holds, train_mae 12.49. Queue green depth 3; blog
-built + Space pushed (200 ×5); in-channel post; run_work_next
-armed.
-
 Session 2026-08-09 19:25–19:3xZ (tick, babysit; 0 new GPU-h —
 adamc_100k rides, 23.1/310): run healthy at step 7560 — babysit exit
 0, 8 procs, ~75.3 GiB ×4 vs 77, window 21.6 st/min. Probe ladder
@@ -176,3 +168,16 @@ consumed only our own 19:24 post, history our own posts only, no
 reactions); queue green depth 3 (8 open, 19:18:54Z stamp clean);
 run_work_next armed (19:25 marker); 18:49 head entry + 19:05
 footer note rolled to the day archive.
+
+Session 2026-08-09 19:41–19:5xZ (tick, babysit; 0 new GPU-h —
+adamc_100k rides, 24.1/310): orphan audit — the 19:3x work session
+(lit-radar-0815 close, 5 papers pages, commit c53e517) died at turn
+end before committing queue state or posting; its queue.json/queue.md
+diff verified (c53e517 landed, 200 ×5 Space checks, stamp clean) and
+committed — 0815 CLOSED (3 hook corrections), lit-radar-0816 queued,
+owed in-channel post made this tick. Run healthy at step 7900 —
+babysit exit 0, 22.1 st/min window, vram 75.3/77. Probe@8000 =
+11.0237 caught in-session (background poll): NEW RUN-BEST, below the
+11.32@4500 floor, train_mae 12.41 falling. babysit.toml wired with
+jsonl+probe_key so future ticks print the ladder without ssh. Queue
+green depth 3; run_work_next re-armed for lit-radar-0816.
