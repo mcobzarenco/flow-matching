@@ -202,3 +202,16 @@ ambiguity must be measured before buying context. Also adjacent
 ([OneWM-VLA page](../papers/onewm-vla-one-token.md)): a *dynamics*
 aux (future-latent forecast) beside the spatial aux family
 (VEGA/SF/QDepth), same single-tower seam-free argument. Record-only.
+
+**2026-08-09 — lit `0813`: the aux family gains a fourth integration
+mode ([SA-VLA page](../papers/sa-vla.md), 2602.00743):** *frozen
+feature injection* — pretrained VGGT geometry tokens enter via gated
+unidirectional cross-attention, read-only, no gradients — explicitly
+argued (their App A.1) as the erosion-proof form when RL is in the
+loop (co-trained reconstruction losses inject competing gradients).
+Zero-shot the injection alone buys +2.25 on LIBERO-Plus spatial,
+loaded on viewpoint shift (+3.83) not init-state (+0.52). Beside
+VEGA (encoder alignment), Spatial Forcing (LLM-layer alignment) and
+QDepth (generative head): the family axis is now *when the geometry
+is allowed to change*. Record-only; the acuity-probe triangulation
+stays the entry point.

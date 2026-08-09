@@ -79,6 +79,11 @@ showed, before the dense analysis.
 | [DFM-VLA: discrete tokens that get to change their mind](dfm-vla.md) | 2603.26320 | #17 head-axis fourth quadrant (commitment, not discreteness, is the expensive property); #5 MAAT metric-aligned embedding +4.4 pp datum; #16 low-data column (10%: 3.21 vs AR 1.71) |
 | [OneWM-VLA: a world model on one token per frame](onewm-vla-one-token.md) | 2605.07931 | #17 predictive-supervision pole, self-anchored variant (14.7M LoRA, no teacher; monotone bandwidth sweep; unsupervised scaffold < nothing); #11 dynamics-aux adjacency |
 | [HiF-VLA: codec motion vectors as temporal context](hif-vla.md) | 2512.09928 | #11 history-arm candidate representation (MPEG-4 MVs + decode-stage AdaLN), behind the aliasing-census gate |
+| [Muon-SW: the AdamC correction, re-derived for Muon](muon-sw.md) | 2607.23777 | `adamc-100k-live` readout — weight-norm chart expected shape (plateau-then-flat = correction working); λ ∝ η now derived 3 independent ways; alignment-cosine probe banked as free second opinion |
+| [AsyncVLA: re-noise the tokens you don't trust](asyncvla.md) | 2511.14148 | #17 commitment-axis datum 3 (within-model: revisability ≫ more denoise compute; coin-flip selector keeps 2/3 of gain); #6 verifier ledger (dense per-token ≫ outcome labels; relative-confidence blind spot); #22 negative placement (not async execution) |
+| [Silent failures: proprio vs vision observability](silent-failure-observability.md) | 2606.03134 | #16 bench constraint (telemetry success flags 32–48% false-positive in clean sim → exteroceptive label audit); #6 verifier ledger (modality > capacity; final-state exteroception carries the precision signal) |
+| [SA-VLA: spatially-aware flow-matching RL](sa-vla.md) | 2602.00743 | #16 RL-pole entry 5 (naive sparse RL measured NEGATIVE, 77.5 vs 81.0 no-RL; protective-machinery framing; noise-parameterization taxonomy); #11/#17 aux-family fourth mode (frozen feature injection, erosion-proof under RL) |
+| [StreamVLA: completion-state gating](streamvla.md) | 2602.01100 | #6 phase-estimation constraint (completion-anchored gate sidesteps the measured mid-execution bottleneck; event-triggered refresh ≈ always-reason at half latency); #22 adjacency (re-reasons, never cuts the chunk) |
 
 ## Retroactive backlog
 

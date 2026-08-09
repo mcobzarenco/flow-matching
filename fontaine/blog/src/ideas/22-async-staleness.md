@@ -129,3 +129,17 @@ truncation-only is +11.65 of the +15.65 pp total (MetaWorld π0.5) —
 boundary read (they cut on scene drift; our measured pathology is
 decode drift at the seam). Menu adjacency, not an arm — closed-loop
 by construction, parked on #16 like the rest of the ladder.
+
+**2026-08-09 — lit `0813`: two placements, both leaving the arm menu
+unchanged.** ([AsyncVLA page](../papers/asyncvla.md), 2511.14148):
+despite the name, NOT an async-execution paper — all correction is
+pre-execution within one chunk (two-pass masked regeneration; no
+staleness, truncation, or horizon ablation anywhere); filed so the
+title doesn't get re-banked as a hook. Its rater is a candidate
+when-to-cut signal nobody uses that way. ([StreamVLA
+page](../papers/streamvla.md), 2602.01100): the completion-state
+gate re-*reasons* but never cuts the chunk (K fixed, gate orthogonal
+to chunk boundaries) — complements VLA-Corrector's truncation axis
+rather than competing; its economics datum (event-triggered refresh
+≈ always-refresh at half latency) transfers to any replan-policy
+pre-reg. Gate unchanged: parked on #16.

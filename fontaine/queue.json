@@ -1,6 +1,6 @@
 {
- "updated_utc": "2026-08-09T18:39:09Z",
- "depth_reason": "depth >=2 at 18:3xZ 08-09: adamc-100k babysit to ~08-12 (live) + lit-radar-0813 (cpu, actionable, 5 dup-checked hooks) + docs-pass tail (owner-side only) + fjoint owner-gated; lit-radar-0812b CLOSED this session (5 pages, all banked hooks cleared)",
+ "updated_utc": "2026-08-09T18:59:36Z",
+ "depth_reason": "depth >=2 at 18:59Z 08-09: adamc-100k babysit to ~08-12 (live) + lit-radar-0814 (cpu, actionable, 5 dup-checked hooks) + docs-pass tail (owner-side only) + fjoint owner-gated; lit-radar-0813 CLOSED this session (5 pages, all banked hooks cleared)",
  "items": [
   {
    "id": "owner-molmo2-perf-review",
@@ -806,6 +806,15 @@
   {
    "id": "lit-radar-0813",
    "title": "Lit slice (standing allocation): refill hooks banked 08-09 18:3xZ fresh sweep, dup-checked against papers/ + ideas/, priority-ordered \u2014 2607.23777 Scale-Weight-Decay/Muon-SW (steady-state weight-norm analysis, AdamC-family sibling; feeds the live adamc_100k grad/weight-norm watch interpretive frame beside 2512.08217) > 2511.14148 AsyncVLA (asynchronous flow matching w/ self-correction; #22 family, VLA-Corrector adjacency) > 2606.03134 silent-failure observability (false-success detection, proprio-vs-vision detectors on bimanual ALOHA; #6/#16 verifier family) > 2602.00743 SA-VLA (spatially-aware FM for VLA RL; #16 RL pole x #11 spatial-aux crossover) > 2602.01100 StreamVLA (reason-act cycle via completion-state gating; #6 phase-estimation adjacency, skim-to-place). Papers page(s) same session per the permanent rule; dedup-check each id before writing.",
+   "class": "cpu",
+   "status": "done",
+   "prereg": null,
+   "owner_hold": false,
+   "boundary": "CLOSED 2026-08-09T18:59:36Z work session: all 5 hooks deep-read, 5 Papers pages landed same session (muon-sw.md, asyncvla.md, silent-failure-observability.md, sa-vla.md, streamvla.md); ideas #6/#11/#16/#17/#22 + the adamc-watch frame fed (weight-norm plateau signature + alignment-cosine probe banked). Notable: AsyncVLA is NOT async-execution despite the title (filed on #22 so it isn't re-hooked); SA-VLA measures naive sparse RL NEGATIVE (77.5 vs 81.0 no-RL). Refill sweep ran in-session -> lit-radar-0814 queued (5 dup-checked hooks)"
+  },
+  {
+   "id": "lit-radar-0814",
+   "title": "Lit slice (standing allocation): refill hooks banked in the 0813 session's fresh sweep, dup-checked against papers/ + ideas/ + queue, priority-ordered \u2014 2606.16899 Hyperball / Fantastic Pretraining Optimizers II (weight-norm tracking through warmup/decay, grad-norm growth as weight norms shrink; adamc-watch third frame beside 2512.08217 + 2607.23777) > 2602.03702 Anytime Pretraining (Defazio \u2014 AdamC's author \u2014 horizon-free LR schedules w/ weight averaging; bears on our cosine-to-10% floor reads) > 2606.21386 VLA-FAIL (failure detection WITHOUT failure data: last-layer Mahalanobis + action-chunk-consistency over receding-horizon overlaps \u2014 the #6 verifier family AND our #22 boundary-incompat read's overlap machinery published as a detector) > 2510.09976 RFT of flow-matching policies (#16 RL-pole roster completion) > 2606.14752 X-Tokenizer (multimodal action tokenizer w/ masked action modeling; #5 learned-VQ falsifier family). Papers page(s) same session per the permanent rule; dedup-check each id before writing.",
    "class": "cpu",
    "status": "queued",
    "prereg": null,

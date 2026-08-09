@@ -245,3 +245,23 @@ sparse credit assignment degrades on long horizons. Also filed
 ([DFM-VLA page](../papers/dfm-vla.md)): iterative-refinement
 decoders nearly double AR at 10% data (CALVIN 3.21 vs 1.71) — a
 few-shot-regime prior for the head axis.
+
+**2026-08-09 — lit `0813`: RL-pole entry 5, the first measured
+NEGATIVE sign ([SA-VLA page](../papers/sa-vla.md), 2602.00743):**
+sparse-reward actor-critic PPO on a π0.5 flow policy lands *below*
+no-RL (77.5 vs 81.0 on LIBERO-Plus spatial OOD) — the pole's
+emerging shape is that the RL update itself is the risk and
+published gains are protective machinery (dense geometric rewards
++5.5, frozen spatial injection +2.25 zero-shot, learned exploration
+noise +0.75; full pipeline nets +2.75 over SFT, 154 GPU-h, 64
+parallel envs, privileged sim rewards). Reusable design pattern:
+the noise-parameterization taxonomy — external SDE noise is
+invisible to PPO's likelihood ratio; the variance must be a learned
+policy output (annealed floor for early coverage). Also
+([silent-failures page](../papers/silent-failure-observability.md),
+2606.03134): a bench-design constraint for the north star —
+telemetry-style success flags run 32–48% false-positive among
+flagged successes even with scripted policies in clean sim, so any
+rig benchmark (and every RL-pole recipe trained on binary success)
+needs an exteroceptive label audit; cheapest sufficient check is a
+final-frame scene read.

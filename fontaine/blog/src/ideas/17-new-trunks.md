@@ -399,3 +399,21 @@ pole now spans teacher-anchored (VLA-JEPA) to self-anchored
 (OneWM); the self-anchored end is the plausible entry for a
 trained trunk — aux rider, not architecture change. Regime caveat
 loud: LoRA-budget-scoped by their own admission.
+
+**2026-08-09 — lit `0813`: the commitment axis gets its
+within-model intervention ([AsyncVLA page](../papers/asyncvla.md),
+2511.14148):** HiFlow and DFM-VLA measured commitment *between*
+architectures; AsyncVLA measures it inside one — after a standard
+flow decode, re-noising just the low-confidence tokens and
+re-denoising them with trusted neighbors as context lifts
+SimplerEnv-Bridge 47.9 → 70.8, while doubling synchronous denoise
+compute buys only +3.2. Two thirds of the lift survives a
+*coin-flip* token selector (62.5), so revisability itself — not
+detection — carries the effect. Carried constraint: the mechanism
+must be trained in (partial-mask objective; bolting the two-pass
+inference onto a plain-flow model collapses to 7.3), and their
+σ_c=0.05 corrupted-context trick is the exposure-bias fix for any
+correction-conditioned module. Also
+([SA-VLA page](../papers/sa-vla.md)): frozen VGGT-token injection =
+a fourth aux integration mode (read-only geometry, erosion-proof
+under RL), filed with the family on #11.

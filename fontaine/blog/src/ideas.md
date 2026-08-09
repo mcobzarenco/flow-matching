@@ -155,7 +155,18 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   predictive-supervision pole gains its cheap self-anchored variant
   (one pooled token/frame jointly denoised with actions, 14.7M LoRA,
   monotone bandwidth sweep, unsupervised-scaffold-worse-than-nothing
-  ablation) — the plausible aux-rider entry for a trained trunk.
+  ablation) — the plausible aux-rider entry for a trained trunk. New
+  2026-08-09 lit `0813` ([Muon-SW](papers/muon-sw.md), 2607.23777 +
+  [AsyncVLA](papers/asyncvla.md), 2511.14148): the adamc watch's
+  *weight-norm* frame lands — corrected decay's norm target is
+  LR-independent, so expect plateau-then-flat (peak-then-decline =
+  the uncorrected signature); λ ∝ η now has three independent
+  derivations; alignment-cosine probe banked as a free second
+  opinion. And the commitment axis gets its within-model
+  intervention: re-noising low-confidence tokens + regenerating with
+  trusted context is worth ~5× extra denoise compute, 2/3 of it
+  with a coin-flip selector — revisability itself carries the
+  effect (must be trained in: bolt-on collapses 70.8 → 7.3).
 - **`aux-subgoals` [#6 Aux attribution](ideas/06-aux-attribution.md)** —
   `confirmed` (aux HELPS actions, +0.462 cost when off).
   **CONSOLIDATED REPORT 2026-08-09
@@ -277,7 +288,18 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   drift, not candidates) — two design constraints banked for any
   learned-verifier case: predict residuals not states, and keep the
   judge decoupled from the policy (+14.8 pp external vs internal
-  head). Closed-loop only; parked on #16.
+  head). Closed-loop only; parked on #16. New 2026-08-09 lit `0813`
+  (three angles on the verifier ledger):
+  [AsyncVLA](papers/asyncvla.md) — dense per-token error labels beat
+  trajectory-outcome labels 70.8 vs 64.6, and its
+  relative-confidence blind spot is our anti-selection failure class;
+  [silent-failures](papers/silent-failure-observability.md) —
+  modality > capacity, final-state exteroception carries the
+  precision signal (proprio's 0.97 is a noiseless-sim artifact);
+  [StreamVLA](papers/streamvla.md) — completion-anchored gating
+  sidesteps the measured mid-execution phase bottleneck (τ-sweep
+  flat 0.5→never-skip); refresh rule: event-triggered ≈
+  always-reason at half latency ≫ fixed schedule.
 - **`noise-draws` [#1 Noise-draw ensembling](ideas/01-noise-draw-ensembling.md)** —
   flow mean-of-10 banked (5.365); batched draws merged 2026-08-07.
   **GOLDEN-TICKET SCREEN R1+R2 READ OUT 2026-08-08
@@ -400,7 +422,17 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   step-wise contrastive on flow-SDE transitions matches PPO IND but
   beats it +11.1 pp OOD (semantic 49.1 vs 25.4); for the
   few-demo/shifted rig regime the trade favors critic-free. Pole
-  stays sim-first (8×H100, co-located rollouts, success flags).
+  stays sim-first (8×H100, co-located rollouts, success flags). New
+  2026-08-09 lit `0813` ([SA-VLA](papers/sa-vla.md), 2602.00743 +
+  [silent-failures](papers/silent-failure-observability.md),
+  2606.03134): RL-pole entry 5 measures the first *negative* sign —
+  sparse-reward PPO lands below no-RL (77.5 vs 81.0 OOD); published
+  gains are protective machinery (dense privileged rewards, frozen
+  spatial injection, learned exploration noise); and a bench
+  constraint for the north star — telemetry success flags run
+  32–48% false-positive in clean sim, so binary-success RL and any
+  rig bench need an exteroceptive label audit (final-frame check is
+  the cheapest sufficient form).
 - **`lit-arms` [#15 Literature-sourced arms](ideas/15-literature-arms.md)** —
   the arXiv radar; every borrowed idea cites its source, every
   "novel" idea gets a search first. Feeds the Papers section.
@@ -468,7 +500,11 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   ([HiF-VLA](papers/hif-vla.md), CVPR26): codec motion vectors
   (~free from stored video) + decode-stage AdaLN banked as the
   cheapest history-arm representation, strictly behind the
-  aliasing-census entry condition.
+  aliasing-census entry condition. New 2026-08-09 lit `0813`
+  ([SA-VLA](papers/sa-vla.md)): aux-family fourth integration mode —
+  frozen VGGT-token injection via gated cross-attention (read-only,
+  erosion-proof under RL; +2.25 zero-shot, viewpoint-loaded); the
+  family axis is now *when the geometry is allowed to change*.
 - **`one-step` [#12 Solver/Heun-gap + 1-NFE distill](ideas/12-solver-heun-gap.md)**
   — SnapFlow 1-NFE student banked (holds the panel, single draw
   beats AR); rig fine-tune diagnosed, next rung opens with rig data
@@ -509,7 +545,12 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   event-triggered truncation datum — a 40M drift monitor cutting
   stale chunks is +11.65 of +15.65 pp before any steering; *when to
   cut* dominates *how to steer*. Menu adjacency, closed-loop,
-  parked on #16.
+  parked on #16. New 2026-08-09 lit `0813`: two placements, menu
+  unchanged — [AsyncVLA](papers/asyncvla.md) is NOT async execution
+  despite the name (all correction pre-execution; filed so the
+  title isn't re-banked), and [StreamVLA](papers/streamvla.md)'s
+  gate re-reasons but never cuts the chunk (complements the
+  truncation axis; event-triggered refresh economics datum banked).
 
 ## Answered — banked results
 

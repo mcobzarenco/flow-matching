@@ -483,3 +483,28 @@ judge **decoupled** from the policy — their internal-auxiliary-head
 variant loses 14.8 pp to the external monitor (49.55 vs 64.35),
 an independent echo of our finding that the policy's own signals
 make poor judges. Closed-loop only; parked with the rest on #16.
+
+**2026-08-09 — lit `0813`: three verifier-ledger entries from three
+angles.** (1) [AsyncVLA](../papers/asyncvla.md) (2511.14148): a 308M
+confidence rater trained on the policy's own per-token regression
+error — dense per-token labels beat trajectory-outcome labels 70.8
+vs 64.6 (token-level credit assignment matters for verifier
+training), and its stated blind spot (within-chunk relative
+normalization can't condemn a uniformly bad chunk) is exactly the
+failure class our closed candidate-scorer family died on; also, a
+*coin-flip* selector keeps 2/3 of its regeneration gain — detection
+quality was the smaller half. (2)
+[Silent-failures](../papers/silent-failure-observability.md)
+(2606.03134): modality > capacity — a GBT over 39 proprio stats vs 3
+final-frame pixel features; final-state exteroception recovers the
+precision-task false successes (0.94 vs 0.65 recall), with the loud
+caveat that the proprio signal is ~1e-3, below any real noise floor.
+(3) [StreamVLA](../papers/streamvla.md) (2602.01100): a 58M gate
+comparing the current frame to a *generated completion image* skips
+72% of re-reasoning at ~zero SR cost (τ-sweep flat from 0.5 to
+never-skip) — the field's cleanest "phase is cheap at the boundary,
+noisy mid-execution" datum, agreeing with our rung-(a) bottleneck
+localization; design constraint banked: anchor phase decisions to a
+completion reference, never to the current frame alone; refresh-rule
+datum (event-triggered ≈ always-reason ≫ fixed schedule) for any
+rollout escalation.
