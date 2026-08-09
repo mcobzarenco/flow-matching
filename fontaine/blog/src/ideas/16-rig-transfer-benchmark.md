@@ -152,3 +152,21 @@
   retention 0.88 under latent adaptation vs LoRA −0.66 / SFT −0.94**
   — weight-space adaptation's forgetting cost, measured. ~8 GB
   train budget = deployment hardware.
+- **The weight-space pole of the post-SFT menu banked (2026-08-09,
+  [Hy-Embodied stack page](../papers/hy-embodied-stack.md),
+  2606.14409):** FlowPRO/RPRO — preference RL on a flow policy with
+  the flow loss itself as implicit reward
+  (`r = (β/2)(ℓ_ref − ℓ_θ)`, no reward model), labels from an
+  intervention-and-rollback teleop loop (failure + correction =
+  preference pair; same intervention currency as levers #3/#3′).
+  Real bimanual: 94–99% SR, +6–12 pts over DAgger with the same
+  interventions, and *faster* executions (16 s vs 27 s — preference
+  pairs penalize dithering, positive-only imitation can't). Caveat
+  loud: **retention never measured** — FlowDAgger's −0.94 SFT
+  forgetting critique stands unanswered against any weight-space
+  recipe; if this menu ever runs on the rig, held-out retention is
+  the first read to demand. Same page banks the deployment lever:
+  latency-aware cubic-Bézier chunk stitching + async
+  producer-consumer loop at exactly our H=50 chunk length — the
+  chunk-boundary-continuity piece our decode-cost story doesn't
+  measure yet.

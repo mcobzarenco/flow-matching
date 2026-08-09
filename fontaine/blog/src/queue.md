@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T04:52:00Z
+**Updated:** 2026-08-09T05:35:00Z
 
-**Depth call:** depth 2 at 04:0xZ 08-09: attach_ksmoke LIVE on box (unit fontaine-attach-ksmoke, first green rung writes k_mem_ready); queued: molmo2-perf-pass1-subset-landing (CPU); blocked-on-ladder: molmo2-stage2-attachment-decision steer window -> idea4-attach-screen-execution arms F then K. 60k HTML panel item closed at zero GPU-h this session (audit found the HTML already existed on the box)
+**Depth call:** depth >=2 at 05:15Z 08-09: attach screen EXECUTING (arm F live on box since 04:57:51Z, babysit armed; K chains after F) + lit-slice window item queued; blocked behind: stage-2 decision (on screen readout), actckpt ladder (on post-attach window + a scheduled fresh AR-trunk launch), f-then-joint + subgoal-draws-escalation pre-reg drafts, owner-held items
 
-**8 open** (Live 0 · Queued 2 · Blocked 6 · Done 57)
+**8 open** (Live 0 · Queued 1 · Blocked 7 · Done 59)
 
 ## 🔴 Live (0)
 
@@ -14,41 +14,41 @@
 
 *(empty)*
 
-## 🟢 Queued (2)
+## 🟢 Queued (1)
 
 *ready — waiting on a window or a boundary*
 
-**`actckpt-lineage-flip-prereg`** · `cpu`
+**`idea4-attach-screen-execution`** · `gpu-box`
 
-#20 activation-checkpointing lineage-flip pre-reg DRAFT (CPU; unblocked 08-09 by the sdpa-pin fix 913fdc4 + the live K-smoke validation of the flag on CUDA): the perf review's ~2.4-2.8 GiB/sample memory lever for TRAINING lineage…
+#4 attachment seam screen execution (box, 4xDDP, sequential F then K): F frozen-trunk vs K KI-joint (phase-1 CE verbatim + stop-grad seam, alpha=1) at matched 10k steps / eff-48 from the 40k endpoint; residual surface constant; g…
 
-**boundary:** CPU draft at any window; execution rides whichever fresh training launch its pre-reg names; low urgency until the next non-attach train launch is scheduled
+**boundary:** ARM F LIVE since 04:57:51Z 08-09 (unit fontaine-attach-f, box at 6be4e8e, B12c6 from the 60k endpoint; babysit entry attach_F armed, started_utc filled). Rate gate ~200 steps in-unit (&gt;70 GPU-h =&gt; matched 5k downshift both arms). F endpoint ~11:1xZ at phase-1-like rates + chained panel_v2 eval; THEN launch K (launch_box_fontaine_molmo2_attach_K_10k_ddp4.sh, K_MEM_READY=1 BATCH=12 BACKWARD_CHUNKS=6, babysit attach_K entry at launch). Frozen reads after both arms · [pre-reg](posts/2026-08-07-prereg-molmo2-attach-screen.md)
 
 <details><summary>full record</summary>
 
-#20 activation-checkpointing lineage-flip pre-reg DRAFT (CPU; unblocked 08-09 by the sdpa-pin fix 913fdc4 + the live K-smoke validation of the flag on CUDA): the perf review's ~2.4-2.8 GiB/sample memory lever for TRAINING lineages that don't currently carry --activation-checkpointing. Pre-reg must pin: which lineage flips first (next fresh molmo2 train launch, never a live run), the batch/chunk re-tune the freed memory buys (review projected chunked-backward passes could drop), before/after bench protocol + the bitwise keystone re-gate on the target recipe, and the decision rule for adopting. NOTE the K attach arm already carries the flag by pre-reg — this item is about OTHER lineages (e.g. a future 100k continuation or arch-batch arms)
+#4 attachment seam screen execution (box, 4xDDP, sequential F then K): F frozen-trunk vs K KI-joint (phase-1 CE verbatim + stop-grad seam, alpha=1) at matched 10k steps / eff-48 from the 40k endpoint; residual surface constant; gates vram&lt;=71, K1-style probe kill (phase-1 curve + 3.0 at &gt;=5k; bars 12.6394@5000, 11.6356@7500 in babysit.toml prepared entries), 70 GPU-h ceiling w/ matched 5k downshift; frozen reads Delta_seam paired CI + K trunk-drift band 0.3 (READ SCRIPT LANDED 08-07 ~07:2xZ: attach_seam_results.py, one command, oracle-gated all branches) — INSTRUMENT LANDED 08-07 ~06:0xZ; LAUNCH PREP LANDED 08-07 ~06:1xZ (launch_box_fontaine_molmo2_attach_{F,K}_10k_ddp4.sh: mechanized attach_rate_gate.py 70 GPU-h gate + 5k-downshift marker both launchers honor, sha256-pinned plans, chained panel_v2 evals; K chains materialize_joint_ar_view.py + greedy k4l2 drift panel; K_MEM_READY guard refuses blind K launch; 10 new oracles, check.py 433)
 
 </details>
 
 ---
 
-**`molmo2-stage2-attachment-decision`** · `cpu`
-
-Molmo2 stage-2 attachment decision at endpoint — now EXECUTABLE via the seam-screen pre-reg (2026-08-07-prereg-molmo2-attach-screen.md: frozen vs KI-joint is the first measurement; the depth-of-reads arm stays open for its own sc…
-
-**boundary:** STEER WINDOW OPEN 2026-08-09 04:4xZ — K-smoke gate GREEN at full batch B12c6 (k_mem_ready synced local; launchers take K_MEM_READY=1 BATCH=12 BACKWARD_CHUNKS=6). All mechanical gates cleared; box idle pending owner steer. Asked in-channel 04:4xZ; default per pre-reg: arms sequential F then K on the attach-screen pre-reg as written — owner may amend before launch
-
-<details><summary>full record</summary>
-
-Molmo2 stage-2 attachment decision at endpoint — now EXECUTABLE via the seam-screen pre-reg (2026-08-07-prereg-molmo2-attach-screen.md: frozen vs KI-joint is the first measurement; the depth-of-reads arm stays open for its own screen); owner steer window before the screen launches
-
-</details>
-
----
-
-## 🟡 Blocked (6)
+## 🟡 Blocked (7)
 
 *waiting on a prerequisite, a boundary, or the owner*
+
+**`actckpt-lineage-flip-ladder`** · `gpu-box`
+
+#20 activation-checkpointing lineage-flip LADDER execution (gpu-box, &lt;= 2 GPU-h gate): run the 4-rung box ladder per 2026-08-09-prereg-actckpt-lineage-flip.md (control B12c6 no-ckpt / ckpt-c6 / ckpt-c1 candidate / record-only max…
+
+**boundary:** blocked on BOTH: (a) attach screen (F then K) off the box, (b) a scheduled fresh non-attach AR-trunk launch to ride (100k continuation / arch-batch arm / #17 vision-unfreeze, whichever the owner green-lights); result rides that launch's pre-reg as a named amendment · [pre-reg](posts/2026-08-09-prereg-actckpt-lineage-flip.md)
+
+<details><summary>full record</summary>
+
+#20 activation-checkpointing lineage-flip LADDER execution (gpu-box, &lt;= 2 GPU-h gate): run the 4-rung box ladder per 2026-08-09-prereg-actckpt-lineage-flip.md (control B12c6 no-ckpt / ckpt-c6 / ckpt-c1 candidate / record-only max-B bisect at &lt;= 71 GiB), 150 steps/rung on the AR-trunk true recipe, median-of-last-100 s/step, frozen decision rule ADOPT iff r2 &lt;= 1.02*r0 AND rung-2 alloc peak &lt;= 63 GiB. FINALIZE the draft (immutability stamp, baselines re-pinned at then-HEAD) when the target launch is scheduled, BEFORE the ladder runs
+
+</details>
+
+---
 
 **`idea6-subgoal-draws-escalation-prereg-draft`** · `cpu`
 
@@ -118,23 +118,37 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 
 ---
 
-**`idea4-attach-screen-execution`** · `gpu-box`
+**`molmo2-stage2-attachment-decision`** · `cpu`
 
-#4 attachment seam screen execution (box, 4xDDP, sequential F then K): F frozen-trunk vs K KI-joint (phase-1 CE verbatim + stop-grad seam, alpha=1) at matched 10k steps / eff-48 from the 40k endpoint; residual surface constant; g…
+Molmo2 stage-2 attachment decision at endpoint — now EXECUTABLE via the seam-screen pre-reg (2026-08-07-prereg-molmo2-attach-screen.md: frozen vs KI-joint is the first measurement; the depth-of-reads arm stays open for its own sc…
 
-**boundary:** REPOINTED 2026-08-09 00:5xZ (60k read IMPROVED -0.1388 [CI -0.194,-0.090], analysis__molmo2_60k_vs_40k_k4l2.json; attach pre-reg amendment 3): warm-start = fontaine_molmo2_ar_60k_ddp4/step_060000, launchers + smoke ladder + attach_seam_results drift comparator repointed (oracle green). Opens: K-smoke ladder re-run GREEN at the 60k warm start (box, after fields panel + perf-pass1 window) -&gt; then owner steer window (molmo2-stage2-attachment-decision) -&gt; arms sequential F then K. Screen launch strictly after the ladder verdict (matched-downshift rule). · [pre-reg](posts/2026-08-07-prereg-molmo2-attach-screen.md)
+**boundary:** STEER WINDOW CLOSED 04:57Z 08-09 into the named default (posted 04:42Z, Discord read clean at 04:56Z boot): arm F LAUNCHED 04:57:51Z. The decision itself now lands at the screen readout: Delta_seam frozen read (attach_seam_results.py) after BOTH arms + their panel_v2 evals complete; blocked on idea4-attach-screen-execution
 
 <details><summary>full record</summary>
 
-#4 attachment seam screen execution (box, 4xDDP, sequential F then K): F frozen-trunk vs K KI-joint (phase-1 CE verbatim + stop-grad seam, alpha=1) at matched 10k steps / eff-48 from the 40k endpoint; residual surface constant; gates vram&lt;=71, K1-style probe kill (phase-1 curve + 3.0 at &gt;=5k; bars 12.6394@5000, 11.6356@7500 in babysit.toml prepared entries), 70 GPU-h ceiling w/ matched 5k downshift; frozen reads Delta_seam paired CI + K trunk-drift band 0.3 (READ SCRIPT LANDED 08-07 ~07:2xZ: attach_seam_results.py, one command, oracle-gated all branches) — INSTRUMENT LANDED 08-07 ~06:0xZ; LAUNCH PREP LANDED 08-07 ~06:1xZ (launch_box_fontaine_molmo2_attach_{F,K}_10k_ddp4.sh: mechanized attach_rate_gate.py 70 GPU-h gate + 5k-downshift marker both launchers honor, sha256-pinned plans, chained panel_v2 evals; K chains materialize_joint_ar_view.py + greedy k4l2 drift panel; K_MEM_READY guard refuses blind K launch; 10 new oracles, check.py 433)
+Molmo2 stage-2 attachment decision at endpoint — now EXECUTABLE via the seam-screen pre-reg (2026-08-07-prereg-molmo2-attach-screen.md: frozen vs KI-joint is the first measurement; the depth-of-reads arm stays open for its own screen); owner steer window before the screen launches
 
 </details>
 
 ---
 
-## ✅ Done (57)
+## ✅ Done (59)
 
 *closed — the full record stays in each fold*
+
+**`actckpt-lineage-flip-prereg`** · `cpu`
+
+#20 activation-checkpointing lineage-flip pre-reg DRAFT (CPU; unblocked 08-09 by the sdpa-pin fix 913fdc4 + the live K-smoke validation of the flag on CUDA): the perf review's ~2.4-2.8 GiB/sample memory lever for TRAINING lineage…
+
+**boundary:** DRAFT LANDED 05:1xZ 08-09; finalize + execute per actckpt-lineage-flip-ladder · [pre-reg](posts/2026-08-09-prereg-actckpt-lineage-flip.md)
+
+<details><summary>full record</summary>
+
+#20 activation-checkpointing lineage-flip pre-reg DRAFT (CPU; unblocked 08-09 by the sdpa-pin fix 913fdc4 + the live K-smoke validation of the flag on CUDA): the perf review's ~2.4-2.8 GiB/sample memory lever for TRAINING lineages that don't currently carry --activation-checkpointing. Pre-reg must pin: which lineage flips first (next fresh molmo2 train launch, never a live run), the batch/chunk re-tune the freed memory buys (review projected chunked-backward passes could drop), before/after bench protocol + the bitwise keystone re-gate on the target recipe, and the decision rule for adopting. NOTE the K attach arm already carries the flag by pre-reg — this item is about OTHER lineages (e.g. a future 100k continuation or arch-batch arms) — DRAFT LANDED 05:1xZ 08-09 (2026-08-09-prereg-actckpt-lineage-flip.md, attach_F train window): 4-rung box ladder (control / ckpt-c6 / ckpt-c1 candidate / record-only max-B bisect), scope pinned perf-only (eff-48 + B12 frozen; batch-headroom spend named OUT of scope for a future science pre-reg), decision rule frozen (ADOPT iff r2 &lt;= 1.02*r0 AND alloc peak &lt;= 63 GiB), gate &lt;= 2 GPU-h. Execution split to actckpt-lineage-flip-ladder (blocked: needs a scheduled fresh non-attach AR-trunk launch + post-attach box window; finalization stamp re-pins baselines at then-HEAD)
+
+</details>
+
+---
 
 **`idea6-subgoal-swap-read`** · `gpu-local`
 
@@ -747,6 +761,20 @@ Molmo2 60k HTML panel report backfill (OWNER STANDING RULE 08-09 03:55Z) — CLO
 <details><summary>full record</summary>
 
 #4 K-arm smoke memory ladder script — SCRIPT LANDED 08-07 ~06:5xZ (smoke_attach_k_ddp4.sh: exact K recipe verbatim incl. --activation-checkpointing, 150 steps/rung w/ eval+save exercised, rungs B12c6-&gt;B8c4-&gt;B6c3 at pinned chunk-microbatch 2, pass = rc0 AND max vram_alloc_peak_gib &lt;= 71.0 from the jsonl, nvidia-smi peak advisory; green writes fontaine/harness/state/k_mem_ready record + echoes the K_MEM_READY=1 BATCH/BACKWARD_CHUNKS launch line; sub-B12 green = MATCHED DOWNSHIFT both arms loudly echoed; all-red = no marker, owner steer). REMAINING: RUN the ladder on the box after it frees
+
+</details>
+
+---
+
+**`lit-slice-attach-window-0809`** · `cpu`
+
+Standing lit slice (~20-30 min, owner allocation 2026-08-05) in the attach_F train window: web/arXiv sweep for ideas worth trying; current open hooks = FlowDAgger follow-ups (latent-DAgger family), anything re-ranking the #4 F-vs…
+
+**boundary:** EXECUTED same session as queued (attach_F window)
+
+<details><summary>full record</summary>
+
+Standing lit slice (~20-30 min, owner allocation 2026-08-05) in the attach_F train window: web/arXiv sweep for ideas worth trying; current open hooks = FlowDAgger follow-ups (latent-DAgger family), anything re-ranking the #4 F-vs-K readout before it lands, #17 trunk/init radar. PERMANENT RULE (owner 08-07 08:42Z): papers page(s) land on the blog SAME session; ideas.md line is the index hook only — EXECUTED 05:1x-05:3xZ 08-09: Hy-Embodied-0.5-VLA 2606.14409 deep-read + papers page SAME SESSION (hy-embedded... hy-embodied-stack.md) — full-stack blueprint: FlowPRO preference RL on flow policies (flow loss as implicit reward, intervention-and-rollback pairs, +6-12 pts over DAgger, 94-99% SR, retention UNMEASURED = FlowDAgger critique stands) + H=50 Bezier chunk-stitch async deployment + 10k-h UMI human data. Fed #16 (weight-space pole of post-SFT menu + deployment lever), #4 (joint-pole ledger entry under APT's pretrained-VLM condition, 11:1 expert sizing). Dup-check win: VLAFlow 2607.01586 re-surfaced by search, caught as ALREADY covered (5433814) before writing. Radar hooks banked unread: FASTER 2603.19199 (real-time flow VLAs), ABPolicy 2602.23901 + DEFLECT 2605.19294 (async execution family), RDT2 2602.03310 (UMI scaling), QDepth-VLA 2510.14836 (depth aux)
 
 </details>
 

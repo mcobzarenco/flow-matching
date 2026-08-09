@@ -266,3 +266,15 @@ matched steps.
   frozen policy composes with after deployment (correction loops,
   guidance, steering — with [Q-guided
   flow](../papers/qguided-flow-critic.md) from the inference side).
+
+- **Lit 2026-08-09 ([Hy-Embodied stack](../papers/hy-embodied-stack.md),
+  2606.14409, read during the live F arm)**: one more joint-pole
+  ledger entry — 4B MoT trunk + random-init 370M flow expert,
+  everything trainable, no stop-grad, no insulation — but from an
+  *embodiment-pretrained* VLM, i.e. exactly
+  [APT](../papers/apt-expert-pretraining.md)'s named condition for
+  joint being safe; doesn't re-rank F vs K for our
+  generic-VLM + random-expert regime. Expert sizing corroboration:
+  ~11:1 trunk:expert (370M on 4B), same regime as ours. RoboTwin
+  stack-vs-stack numbers (+25 over π0) are data-mismatched — not
+  seam evidence.

@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-09T05:15:00Z",
+ "updated_utc": "2026-08-09T05:35:00Z",
  "depth_reason": "depth >=2 at 05:15Z 08-09: attach screen EXECUTING (arm F live on box since 04:57:51Z, babysit armed; K chains after F) + lit-slice window item queued; blocked behind: stage-2 decision (on screen readout), actckpt ladder (on post-attach window + a scheduled fresh AR-trunk launch), f-then-joint + subgoal-draws-escalation pre-reg drafts, owner-held items",
  "items": [
   {
@@ -130,12 +130,12 @@
   },
   {
    "id": "lit-slice-attach-window-0809",
-   "title": "Standing lit slice (~20-30 min, owner allocation 2026-08-05) in the attach_F train window: web/arXiv sweep for ideas worth trying; current open hooks = FlowDAgger follow-ups (latent-DAgger family), anything re-ranking the #4 F-vs-K readout before it lands, #17 trunk/init radar. PERMANENT RULE (owner 08-07 08:42Z): papers page(s) land on the blog SAME session; ideas.md line is the index hook only",
+   "title": "Standing lit slice (~20-30 min, owner allocation 2026-08-05) in the attach_F train window: web/arXiv sweep for ideas worth trying; current open hooks = FlowDAgger follow-ups (latent-DAgger family), anything re-ranking the #4 F-vs-K readout before it lands, #17 trunk/init radar. PERMANENT RULE (owner 08-07 08:42Z): papers page(s) land on the blog SAME session; ideas.md line is the index hook only — EXECUTED 05:1x-05:3xZ 08-09: Hy-Embodied-0.5-VLA 2606.14409 deep-read + papers page SAME SESSION (hy-embedded... hy-embodied-stack.md) — full-stack blueprint: FlowPRO preference RL on flow policies (flow loss as implicit reward, intervention-and-rollback pairs, +6-12 pts over DAgger, 94-99% SR, retention UNMEASURED = FlowDAgger critique stands) + H=50 Bezier chunk-stitch async deployment + 10k-h UMI human data. Fed #16 (weight-space pole of post-SFT menu + deployment lever), #4 (joint-pole ledger entry under APT's pretrained-VLM condition, 11:1 expert sizing). Dup-check win: VLAFlow 2607.01586 re-surfaced by search, caught as ALREADY covered (5433814) before writing. Radar hooks banked unread: FASTER 2603.19199 (real-time flow VLAs), ABPolicy 2602.23901 + DEFLECT 2605.19294 (async execution family), RDT2 2602.03310 (UMI scaling), QDepth-VLA 2510.14836 (depth aux)",
    "class": "cpu",
-   "status": "queued",
+   "status": "done",
    "prereg": null,
    "owner_hold": false,
-   "boundary": "this session's attach_F window (F endpoint ~11:1xZ); if the session ends first, the slice rolls to the next session's window"
+   "boundary": "EXECUTED same session as queued (attach_F window)"
   },
   {
    "id": "idea4-attach-k-smoke-ladder",

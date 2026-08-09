@@ -256,7 +256,13 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   Rig-time menu now four deep
   ([noise-steering II](papers/noise-space-steering-2.md)): ticket →
   DSBC (10 demos) → UniSteer (teleop corrections→noise, 20%→90% in
-  ~66 min, OOD-robust where DSRL isn't) → DSRL (rewards).
+  ~66 min, OOD-robust where DSRL isn't) → DSRL (rewards). New
+  2026-08-09 ([Hy-Embodied stack](papers/hy-embodied-stack.md),
+  2606.14409): the **weight-space pole** of the post-SFT menu banked
+  — FlowPRO preference RL (flow loss as implicit reward,
+  intervention-and-rollback pairs, +6–12 pts over DAgger, retention
+  UNMEASURED vs FlowDAgger's 0.88-vs-−0.94) + the H=50
+  Bézier chunk-stitch deployment lever.
 - **`lit-arms` [#15 Literature-sourced arms](ideas/15-literature-arms.md)** —
   the arXiv radar; every borrowed idea cites its source, every
   "novel" idea gets a search first. Feeds the Papers section.
