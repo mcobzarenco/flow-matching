@@ -79,8 +79,16 @@ verifier / history conditioning) is priced with published numbers.
   bar (a) 20/60; Δ_bon/Δ_ceil never measured. One table excerpt
   (2–3 rows: a clean draw, a truncated derailment) as a figure.
 - Rung (b′): eligible-list rule; stage 1 free (0/60 pick changes,
-  bars pass, gate OPEN). ⏳ stage-2 Δ_bon/Δ_ceil + falsifier verdict
-  (cleancand arms open at seating rc=0) — the section's numbers.
+  bars pass, gate OPEN). ✅ LANDED 08-09: E6 FALSIFIED → NO-SCORER —
+  Δ_bon +0.142 [+0.027,+0.260] (SC ANTI-selects, worse than bare
+  baseline), bon−self +0.210 CI clear; ceiling ALIVE Δ_ceil −0.250
+  [−0.353,−0.148], late-horizon −0.464 (the rung-(a) slot
+  signature); width structurally fine (eligible 8.06/9, 0
+  fallback). The delta chart already exists
+  (img/fieldcond/subgoal_cleandraws_deltas.svg) — embed as the
+  section figure. Results post + analysis json banked
+  (2026-08-09-subgoal-draws-cleanlist-results.md,
+  analysis__subgoal_draws_cleanlist_q4_ar100k_k4l2.json).
 - Escalation map, priced from the lit pages (one compact table):
   scorer-is-the-gap → RoVer-style 40M chunk-scored PRM
   (papers/rover-learned-verifier.md); phase-is-the-gap →
@@ -97,9 +105,13 @@ verifier / history conditioning) is priced with published numbers.
   frame): closes the presence(−0.29) / channel(+0.043) / CONTENT
   triangle for ~1 panel pass — flagged in ideas/06 as the
   meta-report candidate; needs its own pre-reg.
-- ⏳ (b′) verdict routes: no-scorer → escalation pre-reg draft
-  (queue item exists, blocked); scorer-works → deployment question
-  is decode-cost (3×) vs gain.
+- ✅ (b′) routed NO-SCORER 08-09 → the escalation choice is now
+  RoVer-style supervised (4,298 in-domain picked-vs-oracle pairs
+  dumped by the run itself) vs set-joint label-free
+  (papers/label-free-selection-signals.md: uPRM batch-joint
+  principle + the masked-conditioning sketch); physics-side
+  (jerkpick) already priced OUT alone (8% of the gap, banked
+  08-08). Each needs its own pre-reg.
 - History-conditioned phase estimation (TOPReward-style prefix
   logit) as the rung above — cite, don't run.
 
