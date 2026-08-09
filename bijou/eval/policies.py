@@ -42,6 +42,7 @@ from ..interface import (
 from ..loading import CheckpointInfo, from_checkpoint
 from ..model import BijouModel, SamplingMethod
 from .subgoal_scoring import ceiling_pick, eligible_indices, self_certainty_pick
+from .subgoal_swap import SubgoalSwapMap, SwapRecord
 
 
 class ChunkPolicy(Protocol):
@@ -396,6 +397,7 @@ class BijouPolicy:
         condition_override: dict[str, str] | None = None,
         include_subgoal_condition: bool = False,
         subgoal_mode: str | None = None,
+        subgoal_swap: SubgoalSwapMap | None = None,
         offload_ple: bool = False,
         noise_key: str = "stable",
         tickets: Path | None = None,
@@ -458,10 +460,27 @@ class BijouPolicy:
                 "--subgoal-mode and --condition-override subgoal=… are two "
                 "sources for the same prompt slot — pick one",
             )
+        if subgoal_swap is not None and subgoal_mode != "oracle":
+            raise SystemExit(
+                "--subgoal-swap-seed rides the oracle conditioning path "
+                "(the swap arm IS the oracle arm with deranged labels) — "
+                f"it requires --subgoal-mode oracle, got {subgoal_mode!r}",
+            )
         if subgoal_mode == "oracle":
             # Same convention (charter §2): a truth-conditioned read must
-            # never pass as the planner-less deployment read.
-            self.name += "_oraclesubgoal"
+            # never pass as the planner-less deployment read — and a
+            # content-wrong (or identity-check) swap read must never pass
+            # as either of the other two.
+            if subgoal_swap is None:
+                self.name += "_oraclesubgoal"
+            elif subgoal_swap.identity:
+                self.name += "_swapidentity"
+            else:
+                self.name += "_swapsubgoal"
+        self.subgoal_swap = subgoal_swap
+        # Per-frame swap provenance keyed by the dataset-local identity
+        # triple — --dump-subgoal-swaps serializes it (oracle iv).
+        self.swap_records: dict[tuple[str, int, int], SwapRecord] = {}
         self.subgoal_mode = subgoal_mode
         self.mask_state = mask_state
         self.device = device
@@ -659,6 +678,8 @@ class BijouPolicy:
         identical inputs)."""
         if self.mask_state:
             items = mask_state_items(items)
+        if self.subgoal_swap is not None:
+            items = [self._swap_subgoal(item) for item in items]
         if not self.condition_override:
             return items
         return [
@@ -671,6 +692,45 @@ class BijouPolicy:
             }
             for item in items
         ]
+
+    def _swap_subgoal(self, item: dict[str, Any]) -> dict[str, Any]:
+        """The pinned swap rewrite for one frame (pre-reg
+        2026-08-09-prereg-subgoal-swap.md): label-less frames pass
+        UNTOUCHED (oracle iii — byte-identical to baseline); labeled
+        frames render the donor's fraction-matched label through the
+        ``condition_subgoal`` override — or an EMPTY slot when the
+        dataset contributed no swapped frames (single labeled episode:
+        the slot must never fall back to the truth). Every labeled
+        frame's outcome is recorded for --dump-subgoal-swaps (the
+        mechanical oracle-iv check recomputes the dump from sidecars)."""
+        assert self.subgoal_swap is not None
+        true_label = subgoal_text(item)
+        if true_label is None:
+            return item
+        repo_id = str(item["repo_id"])
+        episode = int(item["episode_index"])
+        frame = int(item["frame_index"])
+        episodes = self.subgoal_swap.episodes.get(repo_id)
+        if episodes is None or episode not in episodes:
+            raise SystemExit(
+                f"{repo_id} episode {episode}: the frame carries a "
+                "materialized segment label but the swap map (built from "
+                "meta/judgments.json under the dataset's own stamp) has "
+                "no labeled episode for it — sidecar and materialized "
+                "language rows disagree; re-materialize before swapping",
+            )
+        donor_index = self.subgoal_swap.donors.get(repo_id, {}).get(episode)
+        text = self.subgoal_swap.donor_text(repo_id, episode, frame) or ""
+        self.swap_records[(repo_id, episode, frame)] = SwapRecord(
+            repo_id=repo_id,
+            episode_index=episode,
+            frame_index=frame,
+            timestamp=float(item["timestamp"]),
+            true_subgoal=true_label,
+            donor_episode_index=donor_index,
+            rendered_subgoal=text,
+        )
+        return {**item, "condition_subgoal": text}
 
     def _flow_noise(
         self,

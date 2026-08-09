@@ -317,6 +317,39 @@
 # kind = "gpu_hours_max"
 # value = 4.5
 
+# LIVE — #6 subgoal-swap content read (local GPU, unit
+# fontaine-subgoal-swap; pre-reg 2026-08-09-prereg-subgoal-swap.md).
+# Four phases in one unit (eval_ar100k_subgoal_swap_arm.sh): live-
+# oracle selftest -> IDENTITY full-panel run (_swapidentity, ~35 min)
+# -> oracle (ii) byte-reproduction vs the BANKED oracle npz
+# (abort-on-red; a red here means the swap plumbing or code drift
+# changes the decode — NO swap arm runs then) -> SWAP arm
+# (_swapsubgoal, ~35 min) -> oracles (i)+(iv) mechanical dump check.
+# Frozen reads (Δ_swap, swap-vs-oracle, horizon mirror) run OFFLINE
+# next session. Prune at completion (retained-entry footgun).
+[[run]]
+name = "subgoal_swap"
+kind = "progress-log"
+host = "local"
+pgrep = "subgoal_swap_arm"
+pgrep_min = 1
+gpu_indices = [0]
+gpu_mem_min_mib = 4000
+log = "/home/ubuntu/eval__ar100k_subgoal_swap_arm.log"
+progress_re = "scored [0-9]+/[0-9]+ frames"
+started_utc = "2026-08-09T02:13:47Z"
+gpu_hours_per_wall_hour = 1.0
+boundary = "2 sequential full-panel passes (identity then swap, 25,800 rows each at the banked ~540 f/min single-pass rate ~= 35 min each + loads) ~2.4 GPU-h <= 3 gate; rc ~03:5x-04:1xZ"
+anchors = [
+    "banked comparators: oracle arm npz (08-08 01:14) + baseline npz — never re-run; identity phase must BYTE-reproduce the oracle npz (matched plan/batching, prompts byte-identical)",
+    "phase roll identity -> swap shows a load gap (~4-6 min, 0% util, no fresh progress lines) — judge by unit active + log phase banners, not one poll",
+    "swap arm read is RECORD-PLUS-DECISION per the frozen 3-row table; no scalar judged before the read session",
+    "unswappable labeled frames (single-labeled-episode datasets) render an EMPTY slot by design — the dump's empty_rendered count is expected non-zero, rare",
+]
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 3.0
+
 # golden-ticket screen (#1) — CLOSED 08-08 08:2xZ: stage 3 landed
 # 08:15:39Z rc=0 (2.99 GPU-h; screen total ~5.55 <= 6 gate). R3 read
 # INTERESTING (mean-of-top-10 5.1847/1.3831 vs banked 5.3645/1.4242,

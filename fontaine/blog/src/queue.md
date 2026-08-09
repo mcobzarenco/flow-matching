@@ -2,9 +2,9 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T01:45:00+00:00
+**Updated:** 2026-08-09T02:20:00+00:00
 
-**Depth call:** depth 3 at 01:4xZ 08-09: perfpass1_box ladder LIVE (bench phase, readout this session); queued: idea4-attach-k-smoke-ladder (next box claim), idea6-subgoal-swap-read (NEW pre-reg posted this session, local GPU, instrument delta first), plus the standing attach chain behind the k-smoke verdict
+**Depth call:** depth 3 at 02:2xZ 08-09: perfpass1_box ladder LIVE (bench_B/C tail, readout this session); idea6-subgoal-swap-read LIVE on local (identity+swap unit, reads next session); queued: idea4-attach-k-smoke-ladder (next box claim) + the standing attach chain behind it
 
 **10 open** (Live 0 · Queued 3 · Blocked 7 · Done 52)
 
@@ -22,11 +22,11 @@
 
 #6 subgoal-swap content read (pre-reg 2026-08-09-prereg-subgoal-swap.md, posted this session): re-run the rung-(a) oracle arm with an episode-level seeded derangement of segment labels (format-valid, content-wrong)
 
-**boundary:** instrument delta + oracles are CPU work at any window; launch at the next quiet local-GPU window after they land green (local idle-by-design since 08-08 ~23:52Z) · [pre-reg](posts/2026-08-09-prereg-subgoal-swap.md)
+**boundary:** EXECUTING since 02:13:47Z 08-09; rc ~03:5x-04:1xZ (identity ~35 min + swap ~35 min + loads); at rc=0 the frozen reads (Delta_swap paired CI, swap-vs-oracle, horizon mirror) run offline against the frozen 3-row table — read session owns them + the results post · [pre-reg](posts/2026-08-09-prereg-subgoal-swap.md)
 
 <details><summary>full record</summary>
 
-#6 subgoal-swap content read (pre-reg 2026-08-09-prereg-subgoal-swap.md, posted this session): re-run the rung-(a) oracle arm with an episode-level seeded derangement of segment labels (format-valid, content-wrong) — closes the presence(-0.290)/channel(+0.043)/CONTENT triangle; frozen 3-row interpretation table decides whether learned-scorer escalations are even coherent (swap~0 -&gt; coherent; swap~oracle -&gt; format mirage, deprioritize toward future-latent family; swap&gt;0 -&gt; strongest pro-scorer case). PREREQUISITE instrument delta: --subgoal-swap-seed on the oracle path + 4 oracles (derangement fixture bijective/no-identity, identity-map byte-reproduces banked oracle arm, label-less frames byte-match baseline, dumped text == source-episode label). ~1.2 GPU-h projected &lt;= 3 gate, local 1xH100 at any quiet window
+#6 subgoal-swap content read (pre-reg 2026-08-09-prereg-subgoal-swap.md, posted this session): re-run the rung-(a) oracle arm with an episode-level seeded derangement of segment labels (format-valid, content-wrong) — closes the presence(-0.290)/channel(+0.043)/CONTENT triangle; frozen 3-row interpretation table decides whether learned-scorer escalations are even coherent (swap~0 -&gt; coherent; swap~oracle -&gt; format mirage, deprioritize toward future-latent family; swap&gt;0 -&gt; strongest pro-scorer case). PREREQUISITE instrument delta: --subgoal-swap-seed on the oracle path + 4 oracles (derangement fixture bijective/no-identity, identity-map byte-reproduces banked oracle arm, label-less frames byte-match baseline, dumped text == source-episode label). ~1.2 GPU-h projected &lt;= 3 gate, local 1xH100 at any quiet window | IMPLEMENTATION AUDIT BANKED 01:4xZ same session (mapping rule pinned in the pre-reg first): label source = per-dataset meta/judge_annotations.json (metadata-only, no image decode — the swap-map builder is a pure-CPU pre-pass); interception point = the condition_subgoal item override the SelfSubgoalPolicy pass-2 path already uses (collator honors explicit override over the frame's true label; empty means no-hint, never falls through); fraction needs episode duration from LeRobot meta + item timestamp. Estimated ~150 lines + fixture tests; oracle (ii) identity-map byte-reproduction is a launcher-side pre-launch check vs the banked oracle npz, not a check.py test | INSTRUMENT LANDED + LAUNCHED 02:13Z 08-09 same session: bijou/eval/subgoal_swap.py (map builder: judgments sidecar under the stamp, materialize-exact span semantics, per-repo Sattolo derangement) + BijouPolicy _swapsubgoal/_swapidentity wiring + CLI --subgoal-swap-seed/--subgoal-swap-identity/--dump-subgoal-swaps; 16 fixture oracles in tests/test_subgoal_swap.py, check.py 554 green; launcher eval_ar100k_subgoal_swap_arm.sh (4 phases: selftest -&gt; IDENTITY full panel -&gt; oracle-(ii) byte-reproduction vs banked oracle npz abort-on-red -&gt; swap arm -&gt; mechanical dump check) LIVE unit fontaine-subgoal-swap, babysit entry active, ~2.4 GPU-h (identity+swap) &lt;= 3 gate
 
 </details>
 

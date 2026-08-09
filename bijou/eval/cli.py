@@ -81,6 +81,7 @@ from .subgoal_scoring import (
     medoid_pick,
     self_certainty,
 )
+from .subgoal_swap import SubgoalSwapMap, build_swap_map
 
 # Q2 buckets, the train-side convention (train.OUTCOME_BUCKETS): frames
 # sliced by their episode's TRUE outcome label; unlabeled = no
@@ -157,6 +158,13 @@ class EvalReport:
     # decodes sampled subgoal candidates, pass 2 runs BOTH selection
     # arms (_bonsubgoal / _ceilsubgoal) on the same rows.
     subgoal_mode: str | None
+    # #6 subgoal-swap content read (pre-reg 2026-08-09): oracle-path
+    # derangement seed (None = every eval before 2026-08-09; the policy
+    # name carries _swapsubgoal) and the identity-check flag (donor =
+    # self on every episode — the launcher's byte-reproduction oracle,
+    # name _swapidentity, NEVER a read).
+    subgoal_swap_seed: int | None
+    subgoal_swap_identity: bool
     # Rung (b) candidate set: sampled draws beyond the greedy candidate
     # and their sampling temperature (None outside draws mode; 0 draws
     # = the bit-exactness preflight limit).
@@ -235,6 +243,8 @@ class EvalReport:
             "ticket_map_sha256": self.ticket_map_sha256,
             "mask_state": self.mask_state,
             "subgoal_mode": self.subgoal_mode,
+            "subgoal_swap_seed": self.subgoal_swap_seed,
+            "subgoal_swap_identity": self.subgoal_swap_identity,
             "subgoal_draws": self.subgoal_draws,
             "subgoal_temperature": self.subgoal_temperature,
             "subgoal_candidate_filter": self.subgoal_candidate_filter,
@@ -536,6 +546,35 @@ def parse_args() -> argparse.Namespace:
         "baseline is NOT re-run",
     )
     parser.add_argument(
+        "--subgoal-swap-seed",
+        type=int,
+        default=None,
+        help="requires --subgoal-mode oracle: #6 subgoal-swap content "
+        "read (pre-reg 2026-08-09) — replace each labeled frame's TRUE "
+        "segment label with a DIFFERENT episode's fraction-matched label "
+        "(seeded within-dataset derangement; single-labeled-episode "
+        "datasets render an EMPTY slot, recorded; label-less frames stay "
+        "baseline-identical). Policy name gains _swapsubgoal; the "
+        "pre-reg seed is 0",
+    )
+    parser.add_argument(
+        "--subgoal-swap-identity",
+        action="store_true",
+        help="requires --subgoal-swap-seed: force every episode to be "
+        "its own donor (ALL swap plumbing live) — the pre-launch oracle "
+        "(ii) run, which must reproduce the banked oracle arm "
+        "byte-exactly. Policy name gains _swapidentity; never a read",
+    )
+    parser.add_argument(
+        "--dump-subgoal-swaps",
+        type=Path,
+        default=None,
+        help="requires --subgoal-swap-seed: write the per-frame swap "
+        "provenance as JSON (identity triple, TRUE label, donor episode, "
+        "rendered text) — the mechanical oracle-(iv) check recomputes "
+        "every row from the judgment sidecars and compares",
+    )
+    parser.add_argument(
         "--subgoal-draws",
         type=int,
         default=None,
@@ -743,6 +782,22 @@ def parse_args() -> argparse.Namespace:
                 "--subgoal-mode and --condition-override subgoal=… are "
                 "two sources for the same prompt slot — pick one",
             )
+    if args.subgoal_swap_seed is not None and args.subgoal_mode != "oracle":
+        parser.error(
+            "--subgoal-swap-seed rides the oracle conditioning path (the "
+            "swap arm IS the oracle arm with deranged labels) — it "
+            "requires --subgoal-mode oracle",
+        )
+    if args.subgoal_swap_identity and args.subgoal_swap_seed is None:
+        parser.error(
+            "--subgoal-swap-identity forces the swap map to identity — "
+            "it requires --subgoal-swap-seed",
+        )
+    if args.dump_subgoal_swaps is not None and args.subgoal_swap_seed is None:
+        parser.error(
+            "--dump-subgoal-swaps writes the swap arm's per-frame "
+            "provenance — it requires --subgoal-swap-seed",
+        )
     if args.dump_subgoals is not None and args.subgoal_mode not in ("self", "draws"):
         parser.error(
             "--dump-subgoals writes pass 1's generations — it requires "
@@ -809,6 +864,15 @@ def main() -> int:
             torch.cuda.set_device(device)
     is_main = rank == 0
 
+    if args.subgoal_swap_seed is not None and distributed:
+        # The pre-registered swap arm is a single-process local run; the
+        # per-frame provenance records live on the policy object and are
+        # not shard-gathered — refuse rather than dump a partial map.
+        raise SystemExit(
+            "--subgoal-swap-seed is a single-process instrument (swap "
+            f"records are not shard-gathered) — got WORLD_SIZE={world_size}",
+        )
+
     episode_split = EpisodeSplit(args.episodes)
     if episode_split is not EpisodeSplit.ALL and args.holdout_episodes <= 0:
         raise SystemExit(f"--episodes {args.episodes} requires --holdout-episodes > 0")
@@ -851,6 +915,33 @@ def main() -> int:
             )
             for reason in selection.dropped:
                 print(f"  - {reason}", flush=True)
+
+    subgoal_swap: SubgoalSwapMap | None = None
+    if args.subgoal_swap_seed is not None:
+        # Pure-CPU metadata pre-pass over the SELECTED datasets (the
+        # derangement domain is pinned to the eval's own selection);
+        # deterministic in the seed, so a re-run reproduces the map.
+        subgoal_swap = build_swap_map(
+            {
+                wrapped.dataset.repo_id: Path(wrapped.dataset.root)
+                for wrapped in selection.datasets
+            },
+            seed=args.subgoal_swap_seed,
+            identity=args.subgoal_swap_identity,
+        )
+        print(
+            f"subgoal swap map (seed {args.subgoal_swap_seed}"
+            + (", IDENTITY check mode" if args.subgoal_swap_identity else "")
+            + f"): {len(subgoal_swap.episodes)} datasets with labeled "
+            f"episodes, "
+            f"{sum(len(e) for e in subgoal_swap.episodes.values())} labeled "
+            f"episodes, "
+            f"{sum(len(d) for d in subgoal_swap.donors.values())} donor-"
+            f"mapped; {len(subgoal_swap.skipped)} dataset(s) skipped "
+            "(single labeled episode -> labeled frames render an EMPTY "
+            "slot, recorded)",
+            flush=True,
+        )
 
     plan: SamplePlan | None = None
     if args.sample_plan is not None:
@@ -981,6 +1072,7 @@ def main() -> int:
             # deployment default is planner-less).
             include_subgoal_condition="subgoal" in overrides,
             subgoal_mode=args.subgoal_mode,
+            subgoal_swap=subgoal_swap,
         )
         if bijou_policy.info.chunk_size != args.chunk_size:
             raise SystemExit(
@@ -1053,13 +1145,30 @@ def main() -> int:
         else:
             policies.append(bijou_policy)
             if args.subgoal_mode == "oracle" and is_main:
-                print(
-                    f"subgoal mode ORACLE: {bijou_policy.name} renders "
-                    "each frame's TRUE segment label through the "
-                    "[subgoal|…] slot (label-less frames = baseline "
-                    "context)",
-                    flush=True,
-                )
+                if subgoal_swap is None:
+                    print(
+                        f"subgoal mode ORACLE: {bijou_policy.name} renders "
+                        "each frame's TRUE segment label through the "
+                        "[subgoal|…] slot (label-less frames = baseline "
+                        "context)",
+                        flush=True,
+                    )
+                else:
+                    print(
+                        f"subgoal mode ORACLE+SWAP: {bijou_policy.name} "
+                        "renders each labeled frame's DONOR "
+                        "fraction-matched label through the [subgoal|…] "
+                        "slot (label-less frames = baseline context; "
+                        "unswappable labeled frames = EMPTY slot, "
+                        "recorded)"
+                        + (
+                            " — IDENTITY mode: donor = self, must "
+                            "byte-reproduce the banked oracle arm"
+                            if subgoal_swap.identity
+                            else ""
+                        ),
+                        flush=True,
+                    )
         if (
             bijou_policy.aux_fields
             and args.generate is None
@@ -1393,6 +1502,40 @@ def main() -> int:
         )
         print(
             f"dumped {len(rows)} per-frame subgoals to {args.dump_subgoals}",
+            flush=True,
+        )
+    if args.dump_subgoal_swaps is not None:
+        # Single-process by the WORLD_SIZE guard, so the policy's own
+        # record map IS the full map; sorted by the identity triple.
+        assert bijou_policy is not None  # parse_args enforced the mode
+        assert subgoal_swap is not None
+        swap_rows = [
+            dataclasses.asdict(record)
+            for _, record in sorted(bijou_policy.swap_records.items())
+        ]
+        args.dump_subgoal_swaps.parent.mkdir(parents=True, exist_ok=True)
+        args.dump_subgoal_swaps.write_text(
+            json.dumps(
+                {
+                    "checkpoint": str(args.checkpoint),
+                    "subgoal_swap_seed": args.subgoal_swap_seed,
+                    "subgoal_swap_identity": args.subgoal_swap_identity,
+                    "seed": args.seed,
+                    "skipped_datasets": list(subgoal_swap.skipped),
+                    "swapped": sum(
+                        1 for row in swap_rows if row["donor_episode_index"] is not None
+                    ),
+                    "empty_rendered": sum(
+                        1 for row in swap_rows if row["donor_episode_index"] is None
+                    ),
+                    "rows": swap_rows,
+                },
+                indent=2,
+            ),
+        )
+        print(
+            f"dumped {len(swap_rows)} per-frame subgoal swaps to "
+            f"{args.dump_subgoal_swaps}",
             flush=True,
         )
     if args.dump_subgoal_candidates is not None:
@@ -1741,6 +1884,8 @@ def main() -> int:
             ),
             mask_state=args.mask_state,
             subgoal_mode=args.subgoal_mode,
+            subgoal_swap_seed=args.subgoal_swap_seed,
+            subgoal_swap_identity=args.subgoal_swap_identity,
             subgoal_draws=args.subgoal_draws,
             subgoal_temperature=args.subgoal_temperature,
             subgoal_candidate_filter=args.subgoal_candidate_filter,
