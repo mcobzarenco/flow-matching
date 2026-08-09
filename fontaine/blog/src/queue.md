@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T22:02:00Z
+**Updated:** 2026-08-09T22:33:00Z
 
-**Depth call:** depth >=2 at 22:02Z 08-09: adamc-100k babysit to ~08-12 (live) + tiny-expert-10k (local, endpoint ~05:1xZ 08-10 -> chained panel_v2) + lit-radar-0819 (cpu, 4 priority hooks + 8 spares, all grep-clean) + idea4-fjoint-rung-finalize-exec (gpu-box, owner-gated) + docs-pass tail (owner-side only)
+**Depth call:** depth >=2 at 22:33Z 08-09: adamc-100k babysit to ~08-12 (live, owner kill proposal pending own confirmation) + tiny-expert-10k (local, endpoint ~05:1xZ 08-10 -> chained panel_v2) + lit-radar-0820 (cpu, 4 priority hooks + 10 spares, grep-clean) + owner-er60k-run-prep (gpu-box, blocked on owner inputs) + idea4-fjoint-rung-finalize-exec (gpu-box, owner-gated) + docs-pass tail (owner-side only)
 
-**9 open** (Live 2 · Queued 3 · Blocked 4 · Done 90)
+**10 open** (Live 2 · Queued 3 · Blocked 5 · Done 91)
 
 ## 🔴 Live (2)
 
@@ -44,15 +44,15 @@ T1 tiny-expert capacity rung, FINAL DESIGN (owner yes 19:59:04Z; 40k/biggest-bat
 
 *ready — waiting on a window or a boundary*
 
-**`lit-radar-0819`** · `cpu`
+**`lit-radar-0820`** · `cpu`
 
-Lit slice (standing allocation): 4 priority hooks from the 0818 fresh sweep (16 candidates abs-page-verified; only 2 corpus dups by local grep - the new-angles mandate fixed the pool; executor still greps full corpus per id befor…
+Lit slice (standing allocation): 4 priority hooks from the 0819 fresh sweep (16 candidates abs-page-verified, 14/16 grep-clean; executor still greps full corpus per id before writing), priority-ordered: rollout-free eval CLUSTER…
 
-**boundary:** any GPU-busy window; adamc rides to ~08-12 so windows are plentiful
+**boundary:** any GPU-busy window
 
 <details><summary>full record</summary>
 
-Lit slice (standing allocation): 4 priority hooks from the 0818 fresh sweep (16 candidates abs-page-verified; only 2 corpus dups by local grep - the new-angles mandate fixed the pool; executor still greps full corpus per id before writing), priority-ordered: 2602.21203 Squint (SO-101 integrated into ManiSkill3 + released 'SO-101 Task Set' 8 tasks w/ domain randomization, zero-shot sim2real on real SO-101 after &lt;15 min on one 3090; #16 - the first credible sim rollout-eval substrate for our exact arm class, could unblock every rollout-gated item: ATHENA-style curation, #6 calibration, #22 staleness screen) &gt; 2602.23408 Demystifying Action Space Design (13,000+ real rollouts, 500+ models: delta actions consistently win, joint/task-space complementary, absolute needs longer horizons; the evidence base for chunk-length/relative-vs-absolute/EE-vs-joint choices we currently make by folklore) &gt; 2606.08881 Benchmarking VLAs on SO-101 (real-world failure taxonomy + recovery analysis on our exact hardware, execution instability dominant; #6 second calibration corpus next to ArmnetBench + #16) &gt; continual-learning triangle 2603.03818 (pretrained VLAs resistant to forgetting, replay suffices) + 2605.26820 (real-robot CL benchmark: naive sequential FT forgets badly) + 2603.11653 (simple recipe + LoRA + on-policy RL beats elaborate CL machinery) as ONE theme-cluster read - the three partially contradict and adjudication is the read; feeds #17 unfreeze recipes + #4. SPARES (8, all grep-clean 08-09): 2602.10556 LAP language-as-action zero-shot cross-embodiment; 2607.06442 SIEVE structure-aware data selection (#9); 2603.06450 Data Analogies paired-demo cross-embodiment (+22.5%); 2602.12628 sim-real RL co-training; 2606.29570 spectral/DCT hierarchical action decomposition; 2603.16861 MolmoB0T 1.8M sim trajectories zero-shot (Molmo-family sibling); 2511.17001 CalibAll camera-frame action unification; 2608.06374 DyPES-VLA shared dynamics priors + embodiment-specific MoE heads. Papers page(s) same session per the permanent rule.
+Lit slice (standing allocation): 4 priority hooks from the 0819 fresh sweep (16 candidates abs-page-verified, 14/16 grep-clean; executor still greps full corpus per id before writing), priority-ordered: rollout-free eval CLUSTER 2607.01060 RoboWorld (AR video world model + VLM scorer, Pearson 0.989 vs RoboArena but n=8 policies — calibration check IS the read) + 2512.16881 PolaRiS (real-scene scans -&gt; neural interactive sim, scan-our-own-workspace template; adjudicate vs Squint as eval substrate) &gt; 2606.12406 FACTR 2 (external joint-torque estimation with NO force sensor from ~10 min motion data on commodity arms + force-informed BC re-sampling +17% — cheapest force recovery for cameras+joints-only SO-101; re-sampling idea may transfer to #9 curation) &gt; 2507.06219 Is Diversity All You Need (task diversity &gt; per-task count; EXPERT diversity hurts via velocity multimodality, debias +15% ~ 2.5x data — directly checkable on our multi-operator corpus, feeds #9) &gt; 2512.22414 Emergence of human-to-robot transfer (co-training pays only above a pretraining diversity threshold — gates all angle-A video recipes at our 229h scale). SPARES (10, grep-clean 08-09): 2607.08639 LingBot-VA 2.0 (native video-action pretraining, async inference, no release); 2512.13030 Motus latent-action WM; 2601.04061 CLAP contrastive latent actions from human video; 2602.12063 VLAW co-improvement (needs rollouts); 2604.28156 FlexiTac open tactile pads; 2607.03723 OmniTacTune tactile residual RL; 2602.13640 audio-visual-proprio fusion; 2607.27549 behavior-aligned cross-embodiment reps; 2606.24038 sim-real e-process anytime-valid CIs; 2606.04233 what-are-we-benchmarking. Papers page(s) same session per the permanent rule. Sweep planning note: angle D (eval methodology) still rich; angle C thin on true scaling laws (try 'power law demonstrations', 'compute-optimal robot policy'); angle B thin on audio/current-sensing.
 
 </details>
 
@@ -86,9 +86,23 @@ Docs pass tail (from the 08-09 staleness audit, deferred at my discretion): (1) 
 
 ---
 
-## 🟡 Blocked (4)
+## 🟡 Blocked (5)
 
 *waiting on a prerequisite, a boundary, or the owner*
+
+**`owner-er60k-run-prep-0809`** · `cpu` · **⛔ owner hold**
+
+OWNER STEERING 22:14:00Z 08-09: proposed 60k training run init from allenai/Molmo2-ER (MolmoAct2's embodied-specialized Molmo2-4B, released) with params matched to our molmo2 AR 40k recipe, 60k steps, owner rig datasets mixed in…
+
+**boundary:** opens on owner reply (go + rig dataset pointers); param sheet ~30 min after; launch only on owner approval of the sheet
+
+<details><summary>full record</summary>
+
+OWNER STEERING 22:14:00Z 08-09: proposed 60k training run init from allenai/Molmo2-ER (MolmoAct2's embodied-specialized Molmo2-4B, released) with params matched to our molmo2 AR 40k recipe, 60k steps, owner rig datasets mixed in from step 0; owner would KILL adamc_100k ('not looking great' — matches our named probe-rise watch, 3 consecutive rises 11.41@11000 vs 10.63@9500 run-best) and reuse the 4x box GPUs. FEASIBILITY VERIFIED + ANSWERED IN-CHANNEL 22:19Z: ER is a drop-in init — config diff vs base = max_position_embeddings 36864-&gt;16384 (RoPE metadata) + transformers_version only; safetensors manifests identical key set + identical total 19,403,476,800 bytes; launcher change = --backbone allenai/Molmo2-ER. ER snapshot download started on box (transient unit hf-dl-molmo2-er) so launch is not blocked on 19.4 GB. AWAITING OWNER: (1) explicit go to kill adamc_100k (keep step-10000 ckpt + bank logs for zero-GPU AdamC post-mortem chart unless owner says drop); (2) rig dataset pointers (HF ids or box paths) + mixture call (CL-triangle evidence: prior-data replay 2-20% share; rig-from-step-0 is the evidence-backed shape). THEN: pre-reg param sheet re-pinned verbatim from the 40k pre-reg/launcher (fresh shuffle seed per standing rule) posted for approval BEFORE launch per the standing gate.
+
+</details>
+
+---
 
 **`actckpt-lineage-flip-ladder`** · `gpu-box`
 
@@ -144,7 +158,7 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 
 ---
 
-## ✅ Done (90)
+## ✅ Done (91)
 
 *closed — the full record stays in each fold*
 
@@ -157,6 +171,20 @@ OWNER STEERING 20:49:36Z 08-09: 'Woah, there's already a molmo2 VLA -- https://g
 <details><summary>full record</summary>
 
 OWNER STEERING 20:49:36Z 08-09: 'Woah, there's already a molmo2 VLA -- https://github.com/allenai/molmoact2. Write a super in-depth piece on it, everything you can find on training, arch, experiments etc. well organized.' Deliverable: long-form blog piece (paper 2605.02881 + repo + HF model/dataset cards + AI2 announcement + v1-&gt;v2 delta + competitive map + what-transfers-to-us), link in-channel. Note: the 0816 refill sweep had independently ranked this paper #1 ~20 min before the owner message; the 0817 queue item's priority-1 slot is satisfied by this piece.
+
+</details>
+
+---
+
+**`lit-radar-0819`** · `cpu`
+
+Lit slice (standing allocation): 4 priority hooks from the 0818 fresh sweep (16 candidates abs-page-verified; only 2 corpus dups by local grep - the new-angles mandate fixed the pool; executor still greps full corpus per id befor…
+
+**boundary:** CLOSED 2026-08-09 ~22:3xZ work session: 4 Papers pages via 5-agent fan-out same session (squint.md, action-space-design.md, so101-vla-benchmark.md, cl-triangle.md). Headlines: Squint = the rollout-substrate blocker mechanically GONE (MIT SO-101 twin in ManiSkill3, verified installable, 96.1-&gt;91.3% ranking-preserving sim2real; caveat far-OOD visual world -&gt; relative screens first; correction: vendored not upstreamed); Action-space = first hook to STRENGTHEN on contact (code+data verified; chunk-wise delta-joint beats our absolute cell +8.4pp in our exact policy class -&gt; NEW idea #23 + offline&lt;-&gt;rollout inversion warning); SO-101 bench = 320 rollouts n=20/cell, leaky multi-label taxonomy, prize = 16 unlisted rollout_* datasets (unlabeled, needs 2-3h self-label pass); CL triangle = contradiction dissolves in tables, zero-replay FT always forgets, replay rho 0.02-0.2 @ 20% batches suffices (real-robot 3B full-FT proof) -&gt; #17 unfreeze price list + #4 drift instrument + #16 rig-phase pre-reg clause. Ideas #4/#5/#6/#16/#17/#22 fed + idea #23 opened. Refill sweep: 4 new angles, 16 abs-verified, only 2/16 dups (both already deep-read) -&gt; lit-radar-0820 queued w/ 4 priority hooks + 10 spares. INTERRUPTED-BY-STEERING note: owner 22:14Z ER-60k question answered mid-session (see owner-er60k-run-prep-0809).
+
+<details><summary>full record</summary>
+
+Lit slice (standing allocation): 4 priority hooks from the 0818 fresh sweep (16 candidates abs-page-verified; only 2 corpus dups by local grep - the new-angles mandate fixed the pool; executor still greps full corpus per id before writing), priority-ordered: 2602.21203 Squint (SO-101 integrated into ManiSkill3 + released 'SO-101 Task Set' 8 tasks w/ domain randomization, zero-shot sim2real on real SO-101 after &lt;15 min on one 3090; #16 - the first credible sim rollout-eval substrate for our exact arm class, could unblock every rollout-gated item: ATHENA-style curation, #6 calibration, #22 staleness screen) &gt; 2602.23408 Demystifying Action Space Design (13,000+ real rollouts, 500+ models: delta actions consistently win, joint/task-space complementary, absolute needs longer horizons; the evidence base for chunk-length/relative-vs-absolute/EE-vs-joint choices we currently make by folklore) &gt; 2606.08881 Benchmarking VLAs on SO-101 (real-world failure taxonomy + recovery analysis on our exact hardware, execution instability dominant; #6 second calibration corpus next to ArmnetBench + #16) &gt; continual-learning triangle 2603.03818 (pretrained VLAs resistant to forgetting, replay suffices) + 2605.26820 (real-robot CL benchmark: naive sequential FT forgets badly) + 2603.11653 (simple recipe + LoRA + on-policy RL beats elaborate CL machinery) as ONE theme-cluster read - the three partially contradict and adjudication is the read; feeds #17 unfreeze recipes + #4. SPARES (8, all grep-clean 08-09): 2602.10556 LAP language-as-action zero-shot cross-embodiment; 2607.06442 SIEVE structure-aware data selection (#9); 2603.06450 Data Analogies paired-demo cross-embodiment (+22.5%); 2602.12628 sim-real RL co-training; 2606.29570 spectral/DCT hierarchical action decomposition; 2603.16861 MolmoB0T 1.8M sim trajectories zero-shot (Molmo-family sibling); 2511.17001 CalibAll camera-frame action unification; 2608.06374 DyPES-VLA shared dynamics priors + embodiment-specific MoE heads. Papers page(s) same session per the permanent rule.
 
 </details>
 

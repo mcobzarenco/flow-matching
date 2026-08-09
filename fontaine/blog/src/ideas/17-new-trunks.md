@@ -557,3 +557,23 @@ entropy all FAILED to track plasticity onset even in-domain —
 never build watch/kill lines on those proxies; behavioral
 fixed-budget adaptation (our probe-MAE-under-budget shape) is the
 only instrument that worked.
+
+**2026-08-09 — lit `0819` ([CL triangle](../papers/cl-triangle.md),
+2603.03818 + 2605.26820 + 2603.11653):** the unfreeze recipes get
+their forgetting price list. The three-way "contradiction" dissolves
+in the tables — every paper shows zero-replay sequential FT forgets
+catastrophically on pretrained VLAs (the "surprisingly resistant"
+paper's own zero-replay rows: NBT 0.56–0.76); what the VLM prior
+buys is a 2–4× better replay exchange rate and <10%-of-steps
+recovery, and the ablation pins it on the VLM prior, not action
+pretraining. Binding real-robot precedent for our regime: π0.5-2.7B
+full FT loses BWT −81.0 within 4k steps/task; episode replay ρ
+0.02–0.2 at ~20% of batches fully fixes it (BWT +1.5) and beats
+joint retraining at matched compute. For the live vision-unfreeze
+question: vision-full-FT inside a constrained trunk is π0's own
+default (the well-behaved config) — the vu5k arms stand. For any
+LANGUAGE/trunk unfreeze: pre-register LoRA on the LM + a replay-like
+anchor; our banked Qwen-RobotManip 9:1 + λ=0.1 LM-aux rider already
+exceeds the sufficient dose. Replay-free CL claims are scoped to
+LoRA + on-policy RL (both ablations collapse without either) — no
+license for replay-free offline BC.

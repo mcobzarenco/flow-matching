@@ -80,3 +80,13 @@ queued v3 move (independent confirmation), and their
 **WER-under-noise probe** (same noisy chunks → token edit distance;
 FAST blows up 3× at σ=0.008 via BPE re-segmentation cascades) is a
 cheap CPU diagnostic to run on v2-vs-v3. No status change.
+
+**2026-08-09 — lit `0819`
+([Action-space design](../papers/action-space-design.md),
+2602.23408):** action parameterization is a normalization decision
+in disguise — step-wise and chunk-wise delta are bijective
+reparameterizations of the same targets that differ ~10pp at rollout
+purely through what the decode map does to prediction noise
+(step-wise amplifies O(k) in chunk length, (2k+1)/π factor). Judge
+any v3 encode map by its decode-time noise amplification, not its
+encode-side statistics.

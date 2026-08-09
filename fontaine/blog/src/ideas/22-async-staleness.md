@@ -203,3 +203,15 @@ overlap shrinks. Menu unchanged; still parked on #16.
   queued informally: verify our rollout path caches trunk features
   across ODE steps — if not, Reflex says the fix is free and
   exact. Still parked on #16.
+
+**2026-08-09 — lit `0819` ([Squint](../papers/squint.md)
+2602.21203):** the "parked on #16, closed-loop by construction"
+blocker softens — Squint's SO-101 twin gives deterministic-seed,
+1,024-parallel-env closed-loop rollouts at 10 Hz on trivial compute,
+and staleness/chunk-switch ablations are *relative* measurements
+where a far-OOD sim is still a fair judge (domain gap held constant
+across arms). The banked arm order (naive-switch → HAS-on-decode →
+SEAM → PAINT → A2C2 → TT-RTC/DEFLECT) becomes success-rate deltas
+instead of waiting on rig time. Any screen still needs its own
+pre-reg + a sim-adaptation sanity arm first (our policies are OOD in
+Squint's default visual world).

@@ -449,3 +449,15 @@ frozen memo, but it predicts fjoint > F2 and raises the rung's
 expected value. Also: per-layer KV cross-attention beats
 final-hidden-state 95.9 vs 94.0 — the deep-read direction of our
 12-tap surface, priced at ~+2 at ceiling.
+
+**2026-08-09 — lit `0819` ([CL triangle](../papers/cl-triangle.md)):**
+two free riders for the fjoint rung. (1) A zero-cost drift
+instrument: per-layer weight-delta effective rank + nuclear norm vs
+the pretrained trunk (the papers' cleanest full-FT-vs-LoRA statistic:
+324.7±465.0 / 4.31 vs 27.5±5.7 / 0.48) — computable from checkpoints
+we already save. (2) A LoRA-joint candidate first rung: LoRA-32 on
+the trunk preserves geometry at ~1.4% params and is proven
+insufficient alone under SFT but cheap insurance under a joint phase.
+Downside bound banked: "forgotten" competence recovers in <10% of
+original training steps — a bad joint phase is a recoverable
+experiment, not a lost trunk.

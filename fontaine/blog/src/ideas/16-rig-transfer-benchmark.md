@@ -350,3 +350,35 @@ frame-level smoothness) and boundary-overlap RMSE join the
 benchmark's candidate metric set — offline chunk-MAE panels are
 structurally blind to seam behavior. Menu unchanged; still the
 benchmark-design ledger.
+
+**2026-08-09 — lit `0819`: the rollout-substrate blocker is
+mechanically GONE, and the rig phase gets its binding forgetting
+precedent ([Squint](../papers/squint.md) 2602.21203 +
+[SO-101 VLA benchmark](../papers/so101-vla-benchmark.md) 2606.08881 +
+[CL triangle](../papers/cl-triangle.md)):** Squint ships an MIT
+SO-101 digital twin as registered ManiSkill3 gym envs — success
+predicates, arbitrary-resolution RGB (`sensor_configs` kwarg),
+`pd_joint_pos` with `normalize_action=False` (LeRobot-convention
+absolute joints, 5+gripper), verified installable file-by-file; sim
+compute is negligible next to Molmo2-4B inference. Correction: SO-101
+was never upstreamed to ManiSkill3 (vendored from a community
+`lerobot-sim2real` PR into their repo). What #16 inherits is a
+*design* problem, not an access problem: the default visual world is
+one wrist cam over black-composited primitives — far OOD for our
+multi-view 229h policies (their in-domain BC baseline: 41.9% sim) —
+so first use is relative A/B screens + probe-label generation, with
+mitigations already in-repo (ThirdCameraEnv one-line switch,
+`apply_overlay=False`, swappable overlay). Their 96.1%→91.3%
+ranking-preserving transfer (4 methods) is the first quantitative
+sim↔real correlation on our exact arm. From the benchmark paper, the
+anti-pattern list with one keepable axis set: pilot tasks into the
+20–80% success band (2 of their 4 tasks wasted on ceiling/floor),
+≥50 trials/cell or paired designs (n=20 = ±22pp), pre-register
+multi-label vs primary-label failure annotation; keep their
+execution-dimension framing (control fidelity / grounding / temporal
+consistency / precision). From the CL triangle, the rig phase is
+literally 2605.26820's experiment: pre-register that rig FT carries
+229h-corpus episode replay at ρ ∈ [0.02, 0.2] on ~20% of batches —
+naive rig-only FT wipes prior competence within a few thousand steps
+(BWT −81 by 4×4k), and replay beat joint retraining at matched
+compute.

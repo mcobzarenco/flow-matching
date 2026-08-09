@@ -114,7 +114,13 @@ record; the line here is the hook). *Index last updated 2026-08-09.*
   strongest joint-pole vote yet — insulated post-train then
   unfreeze-at-finetune, expert-only costs −4.15 LIBERO vs full FT
   (caveat: from a jointly post-trained init, not a converged F);
-  predicts fjoint > F2. Per-layer KV beats hidden-state +1.9.
+  predicts fjoint > F2. Per-layer KV beats hidden-state +1.9. Lit
+  `0819` ([CL triangle](papers/cl-triangle.md)): two free fjoint
+  riders — per-layer weight-delta effective-rank/nuclear-norm drift
+  instrument (full-FT 324.7/4.31 vs LoRA 27.5/0.48; computable from
+  saves we already keep) + a LoRA-joint candidate first rung;
+  downside bound: forgotten competence recovers in <10% of original
+  steps — a bad joint phase is recoverable, not a lost trunk.
 - **`new-trunks` [#17 New trunks / architectures](ideas/17-new-trunks.md)** —
   standing owner mandate. **Molmo2-4B AR 40k ENDPOINT READ OUT
   2026-08-08 ([results](posts/2026-08-08-molmo2-endpoint-results.md)):
@@ -260,7 +266,19 @@ record; the line here is the hook). *Index last updated 2026-08-09.*
   corrected: its WD clause just cites 2602.11137 (not new
   evidence); durable export is negative — dormant-unit/param-norm/
   attention-entropy proxies all failed to track onset; behavioral
-  fixed-budget probes only.
+  fixed-budget probes only. Lit `0819`
+  ([CL triangle](papers/cl-triangle.md)): the unfreeze price list —
+  zero-replay sequential FT forgets catastrophically at every scale
+  tested (the "resistant" paper's own zero-replay rows: NBT
+  0.56–0.76); real-robot π0.5 full FT loses BWT −81 in 4k steps;
+  episode replay ρ 0.02–0.2 @ ~20% of batches fully fixes it. Vision
+  full-FT inside a constrained trunk is π0's own default — vu5k arms
+  stand; any LANGUAGE unfreeze pre-registers LoRA-on-LM + a
+  replay-like anchor (the banked 9:1 + λ0.1 LM-aux rider exceeds the
+  sufficient dose). OWNER STEERING 22:14Z 08-09: proposed 60k run
+  init from Molmo2-ER (drop-in verified — configs/manifests
+  identical) + rig data from step 0, killing adamc_100k; awaiting
+  go + rig dataset pointers.
 - **`aux-subgoals` [#6 Aux attribution](ideas/06-aux-attribution.md)** —
   `confirmed` (aux HELPS actions, +0.462 cost when off).
   **CONSOLIDATED REPORT 2026-08-09
@@ -443,7 +461,16 @@ record; the line here is the hook). *Index last updated 2026-08-09.*
   elsewhere → the ArmnetBench separability gate gains a
   **trunk-tap arm** (probe Molmo2 residual taps AND flow-expert
   states; spatial pooling, shallow-mid layer sweep; flow-fails +
-  trunk-passes still GOes).
+  trunk-passes still GOes). Lit `0819` ([Squint](papers/squint.md) +
+  [SO-101 benchmark](papers/so101-vla-benchmark.md)): the gate gains
+  a sim label-source (Squint rollouts = unlimited ground-truth
+  labels; cross-check calibration vs ArmnetBench real labels — a
+  two-sided test neither corpus supports alone) and a sharper claim
+  target — execution labels saturate 91–100% in 2606.08881 (baselines
+  the probe must beat: gripper-proprio + action-periodicity), the
+  discriminative class is *state mismatch* (98→46% with trunk
+  strength); 16 unlisted `rollout_*` datasets on the author's Hub =
+  candidate second corpus after a ~2–3 h self-labeling pass.
 - **`noise-draws` [#1 Noise-draw ensembling](ideas/01-noise-draw-ensembling.md)** —
   flow mean-of-10 banked (5.365); batched draws merged 2026-08-07.
   **GOLDEN-TICKET SCREEN R1+R2 READ OUT 2026-08-08
@@ -612,7 +639,21 @@ record; the line here is the hook). *Index last updated 2026-08-09.*
   failures, Apache 2.0, 7 policy families) — banked as the pole's
   pre-rig calibration/eval corpus; completion time + boundary-
   overlap RMSE join the bench metric set (offline panels are blind
-  to seam hesitation, Legato's −20% lives there).
+  to seam hesitation, Legato's −20% lives there). Lit `0819`
+  ([Squint](papers/squint.md) + [SO-101
+  benchmark](papers/so101-vla-benchmark.md) +
+  [CL triangle](papers/cl-triangle.md)): **the rollout-substrate
+  blocker is mechanically gone** — Squint ships an MIT SO-101
+  digital twin in ManiSkill3 (success predicates, arbitrary-res RGB,
+  LeRobot-convention absolute-joint control, verified installable;
+  96.1→91.3% ranking-preserving sim→real on our exact arm), but its
+  default visual world is far-OOD for our policies, so first use =
+  relative screens + probe labels; #16 now owns a design problem,
+  not an access problem. Bench anti-patterns banked from 2606.08881
+  (tasks into the 20–80% band, ≥50 trials/cell, pre-registered
+  annotation protocol); rig-phase forgetting precedent from the CL
+  triangle: rig FT must carry 229h-corpus replay ρ 0.02–0.2 @ ~20%
+  of batches (naive rig-only FT: BWT −81 within 4k steps).
 - **`lit-arms` [#15 Literature-sourced arms](ideas/15-literature-arms.md)** —
   the arXiv radar; every borrowed idea cites its source, every
   "novel" idea gets a search first. Feeds the Papers section.
@@ -666,7 +707,24 @@ record; the line here is the hook). *Index last updated 2026-08-09.*
   (tokens never executed, needs a frozen 7B teacher). Gate stands;
   two v3 riders banked (quantile normalization confirmed;
   WER-under-noise probe — FAST's BPE re-segmentation blows up 3× at
-  σ=0.008).
+  σ=0.008). Lit `0819`
+  ([Action-space design](papers/action-space-design.md)): judge any
+  encode map by decode-time noise amplification, not encode-side
+  statistics — step-wise vs chunk-wise delta are bijective
+  reparameterizations differing ~10pp at rollout purely through the
+  decode map (O(k) amplification, (2k+1)/π).
+- **`action-space` [#23 Chunk-wise delta-joint](ideas/23-action-space.md)** —
+  NEW 2026-08-09 from lit `0819`
+  ([Action-space design](papers/action-space-design.md), 2602.23408,
+  code+data verified): flow + joint-space + chunk-wise delta beats
+  our absolute-joint cell 88.0 vs 79.6 real-robot, robust across
+  data/compute scales; step-wise delta is the trap (never test it).
+  Cheapest arm: delta-joint retrain, decode-to-absolute before panel
+  scoring, offline win necessary-not-sufficient (their delta/absolute
+  cells are decode-identical yet differ 8–15pp in rollouts — the
+  cleanest offline↔rollout inversion warning we have). Trigger: own
+  pre-reg + any free training window; definitive read wants the
+  Squint relative screen.
 - **`stream-schedule` [#7 Stream-schedule re-test](ideas/07-stream-schedule.md)** —
   enters at the short-run screen rung.
 - **`vocab-head` [#8 Shortlist/output-vocab head](ideas/08-shortlist-vocab-head.md)**
@@ -789,7 +847,12 @@ record; the line here is the hook). *Index last updated 2026-08-09.*
   rate adopted as an instrument), and the chunk-transition slot is
   a two-rung ladder: RTC (free) → Legato (fine-tune, −20%
   completion time vs RTC matched; objective change = own arm,
-  bakes in the solver step count).
+  bakes in the solver step count). Lit `0819`
+  ([Squint](papers/squint.md)): the #16 blocker softens — the SO-101
+  twin gives deterministic-seed closed-loop rollouts on trivial
+  compute, and the banked arm order becomes success-rate deltas as
+  *relative* screens (domain gap held constant across arms); still
+  needs own pre-reg + a sim-adaptation sanity arm.
 
 ## Answered — banked results
 

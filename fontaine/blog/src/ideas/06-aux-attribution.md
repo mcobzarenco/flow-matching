@@ -623,3 +623,22 @@ ACT→π₀.₅ 0.56) — failure logs age across policy generations.
   features), with spatial pooling and a shallow-mid layer sweep.
   ArmnetBench labels stay the supervision — no label-free shortcut
   exists here.
+
+**2026-08-09 — lit `0819`: the separability gate gains a sim
+label-source and a sharper claim target
+([Squint](../papers/squint.md) + [SO-101 VLA
+benchmark](../papers/so101-vla-benchmark.md)):** Squint's SO-101 twin
+generates unlimited ground-truth success/failure rollouts for free —
+probes calibrated on sim rollouts can be cross-checked against
+ArmnetBench's 2,288 real labels, a two-sided test neither corpus
+supports alone. From the benchmark paper: execution-failure labels
+saturate (91–100% of failed episodes for every policy — grasp
+instability and repetition loops are coverable by gripper-proprio and
+action-periodicity baselines the gate must BEAT), while the
+*state-mismatch* class is the discriminative one (98%→46% with trunk
+strength) — so the probe's marginal value should be claimed there.
+Candidate second corpus: 16 unlisted `rollout_*` LeRobot-v3 datasets
+on the author's HF account (320 on-policy SO-101 episodes incl. two
+flow-matching VLAs, 3 cameras) — but zero labels shipped; enters only
+after our own labeling pass (~2–3 h of footage; their Table 6
+aggregates pin per-cell totals as a check).
