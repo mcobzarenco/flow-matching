@@ -1,4 +1,4 @@
-# 20. Activation checkpointing for live-trunk training — `confirmed`/landed (wrap + keystone oracles 2026-08-07; GPU ladder = the K smoke item)
+# 20. Activation checkpointing for live-trunk training — `confirmed`/landed (wrap + keystone oracles 2026-08-07; CUDA sdpa-pin fix 2026-08-09; GPU ladder = the K smoke item)
 
 *Tag: `activation-ckpt` · idea #20 · [index](../ideas.md)*
 
@@ -50,3 +50,23 @@ checkpointed function (or wrap the backward too) — and the perf
 pass-1 P1 change (training-mode cuDNN re-admit) incidentally
 removes the divergence for the training path. Fix rides the
 act-ckpt lineage-flip pre-reg, with a CUDA regression oracle.
+
+**2026-08-09 ~04:2xZ — FIX LANDED (the bug fired live first):** the
+K-smoke ladder's rung 1 (the first real CUDA consumer of the flag)
+crashed at its first backward with exactly the predicted
+`CheckpointError` — fp32 MATH tensors saved under the suffix pin,
+bf16 fused shapes recomputed outside it. The named fix landed the
+generic way: `_checkpointed_block` captures the ambient sdpa backend
+set at forward time (`_ambient_sdpa_backends()` reads the four
+global flags, so it reconstructs whatever pin is active — full
+dispatcher for the prefix encode, non-cuDNN pin for the suffix) and
+the checkpointed callable re-enters `sdpa_kernel` with that set, so
+backward recompute always dispatches the saved forward's backends.
+Prefix-encode backend selection is untouched (its ambient set is the
+full dispatcher, and re-applying it is a no-op). Oracles: the 4 CPU
+keystones stay bitwise-green; new capture unit test (pin
+reconstruction, in `check.py`); new `@pytest.mark.gpu` regression on
+the exact crash shape (MATH-pinned forward + bf16 autocast +
+backward outside the pin), calibrated non-vacuous — the unfixed
+block body raises the production `CheckpointError` on the same
+scenario, the fixed path is bitwise the plain step on an H100.

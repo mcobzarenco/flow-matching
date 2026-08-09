@@ -30,6 +30,7 @@ import torch
 import torch.utils.checkpoint
 from torch import Tensor, nn
 from torch.nn import functional as F
+from torch.nn.attention import SDPBackend, sdpa_kernel
 
 from ..nn import (
     DEFAULT_ATTENTION_BACKEND,
@@ -177,6 +178,30 @@ def build_causal_mask(
         ),
         is_causal=padding_mask is None and seen == 0,
     )
+
+
+def _ambient_sdpa_backends() -> list[SDPBackend]:
+    """The SDPA backends admissible under the current global flags.
+
+    ``sdpa_kernel`` pins work by flipping the four per-backend flags in
+    ``torch.backends.cuda``; reading them reconstructs whatever pin (or
+    full dispatcher) is active at call time. ``_checkpointed_block``
+    captures this at forward time and re-applies it inside the
+    checkpointed region, because backward recompute runs outside the
+    caller's pin (#20 CUDA crash: suffix forward pinned to non-cuDNN
+    landed on MATH fp32; the unpinned recompute dispatched a fused bf16
+    kernel and aborted on saved-vs-recomputed metadata mismatch).
+    """
+    pairs: tuple[tuple[SDPBackend, bool], ...] = (
+        (SDPBackend.FLASH_ATTENTION, torch.backends.cuda.flash_sdp_enabled()),
+        (
+            SDPBackend.EFFICIENT_ATTENTION,
+            torch.backends.cuda.mem_efficient_sdp_enabled(),
+        ),
+        (SDPBackend.MATH, torch.backends.cuda.math_sdp_enabled()),
+        (SDPBackend.CUDNN_ATTENTION, torch.backends.cuda.cudnn_sdp_enabled()),
+    )
+    return [backend for backend, enabled in pairs if enabled]
 
 
 class _CheckpointLayerKV:
@@ -573,8 +598,33 @@ class Molmo2Transformer(nn.Module):
                 else None
             )
             shim = _CheckpointLayerKV(past)
+
+        # Backward recompute runs at `.backward()` time, OUTSIDE any
+        # `sdpa_kernel` pin that wrapped this forward (the suffix pin in
+        # ar_molmo2._continue_suffix) — with the ambient full dispatcher
+        # the recompute can pick a different sdpa backend than the saved
+        # forward and abort on saved-vs-recomputed metadata mismatch.
+        # Capture the admissible backends here and re-apply them inside
+        # the checkpointed region: the forward pass re-enters its own
+        # pin (no-op), the recompute replays under the forward's pin.
+        backends = _ambient_sdpa_backends()
+
+        def _block_under_forward_sdpa_pin(
+            hidden_states: Tensor,
+            position_embeddings: tuple[Tensor, Tensor],
+            attention_mask: MaskSpec,
+            shim: _CheckpointLayerKV | None,
+        ) -> Tensor:
+            with sdpa_kernel(backends):
+                return block(
+                    hidden_states,
+                    position_embeddings,
+                    attention_mask,
+                    shim,
+                )
+
         out = torch.utils.checkpoint.checkpoint(
-            block,
+            _block_under_forward_sdpa_pin,
             hidden_states,
             position_embeddings,
             attention_mask,

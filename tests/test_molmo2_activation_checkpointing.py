@@ -38,12 +38,13 @@ from test_molmo2_residual import (
     fresh_model,
     perturb_zero_init_heads,
 )
+from torch.nn.attention import SDPBackend, sdpa_kernel
 
 from bijou.decoders.flow import FlowDecoder
 from bijou.model import BijouModel
 from bijou.molmo2.cache import Molmo2KVCache
 from bijou.molmo2.testing import write_tiny_text_checkpoint
-from bijou.molmo2.text import Molmo2Transformer
+from bijou.molmo2.text import Molmo2Transformer, _ambient_sdpa_backends
 from bijou.train import BijouTrainStep
 
 
@@ -286,3 +287,95 @@ def test_f_arm_step_never_checkpoints_and_is_bitwise(
         named_grads(ckpt_model),
         context="F-arm step",
     )
+
+
+# -- (v) #20 CUDA fix: backward recompute replays the forward's sdpa pin ------
+
+
+def test_ambient_sdpa_backends_reconstruct_the_active_pin() -> None:
+    """``sdpa_kernel`` pins flip the four global backend flags;
+    ``_ambient_sdpa_backends`` must read back exactly the active pin
+    (and the unpinned baseline once the context exits) — this capture
+    is what the checkpointed region re-applies during recompute."""
+    baseline = _ambient_sdpa_backends()
+    with sdpa_kernel([SDPBackend.MATH]):
+        assert _ambient_sdpa_backends() == [SDPBackend.MATH]
+        with sdpa_kernel(
+            [SDPBackend.FLASH_ATTENTION, SDPBackend.MATH],
+        ):
+            assert _ambient_sdpa_backends() == [
+                SDPBackend.FLASH_ATTENTION,
+                SDPBackend.MATH,
+            ]
+        assert _ambient_sdpa_backends() == [SDPBackend.MATH]
+    assert _ambient_sdpa_backends() == baseline
+
+
+def pinned_prefill_suffix_backward_cuda(
+    transformer: Molmo2Transformer,
+    *,
+    checkpointing: bool,
+) -> tuple[dict[str, torch.Tensor | None], list[torch.Tensor]]:
+    """The #20 crash shape: prefill + cached suffix FORWARD under the
+    suffix path's non-cuDNN ``sdpa_kernel`` pin (landing on MATH) with
+    bf16 autocast making fused kernels eligible, then backward OUTSIDE
+    the pin — exactly ``train.py``'s ``share.backward()``, which runs
+    far from the pin in ``ar_molmo2._continue_suffix``. Pre-fix, the
+    unpinned recompute dispatched a fused bf16 kernel against the
+    MATH-saved graph and raised ``CheckpointError`` (metadata
+    mismatch); post-fix the recompute replays under the captured pin.
+    """
+    device = torch.device("cuda")
+    transformer.gradient_checkpointing = checkpointing
+    transformer.zero_grad(set_to_none=True)
+    hidden = transformer.config.hidden_size
+    torch.manual_seed(13)
+    prefix = torch.randn(2, 7, hidden, device=device).requires_grad_(True)
+    suffix = torch.randn(2, 3, hidden, device=device).requires_grad_(True)
+
+    cache = Molmo2KVCache(len(transformer.blocks))
+    with (
+        sdpa_kernel([SDPBackend.MATH]),
+        torch.autocast("cuda", torch.bfloat16),
+    ):
+        prefill_out = transformer(inputs_embeds=prefix, cache=cache)
+        suffix_out = transformer(inputs_embeds=suffix, cache=cache)
+    loss = prefill_out.float().square().sum() + suffix_out.float().square().sum()
+    loss.backward()  # outside the pin — the regression under test
+
+    tensors = [loss.detach(), prefill_out.detach(), suffix_out.detach()]
+    assert prefix.grad is not None and suffix.grad is not None
+    tensors.extend([prefix.grad, suffix.grad])
+    for layer in cache.layers:
+        assert layer.keys is not None and layer.values is not None
+        tensors.extend([layer.keys.detach(), layer.values.detach()])
+    return named_grads(transformer), tensors
+
+
+@pytest.mark.gpu
+def test_checkpointed_backward_replays_forward_sdpa_pin_on_cuda(
+    spy: CheckpointSpy,
+) -> None:
+    torch.manual_seed(5)
+    transformer = Molmo2Transformer(text_config().text, dtype=torch.float32).to(
+        "cuda",
+    )
+
+    plain_grads, plain_tensors = pinned_prefill_suffix_backward_cuda(
+        transformer,
+        checkpointing=False,
+    )
+    assert spy.calls == 0
+    ckpt_grads, ckpt_tensors = pinned_prefill_suffix_backward_cuda(
+        transformer,
+        checkpointing=True,
+    )
+    assert spy.calls == 2 * len(transformer.blocks)
+
+    assert len(plain_tensors) == len(ckpt_tensors)
+    for index, (plain_t, ckpt_t) in enumerate(
+        zip(plain_tensors, ckpt_tensors, strict=True),
+    ):
+        assert torch.equal(plain_t, ckpt_t), f"tensor {index} diverges"
+    assert_grads_bitwise(plain_grads, ckpt_grads, context="pinned prefill+suffix")
+    assert any(grad is not None and bool(grad.any()) for grad in plain_grads.values())
