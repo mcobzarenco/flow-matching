@@ -2,7 +2,7 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T05:50:00Z
+**Updated:** 2026-08-09T08:10:00Z
 
 **Depth call:** depth >=2 at 05:45Z 08-09: attach screen EXECUTING (arm F live on box) + idea6-mcselect-execution queued (instrument CPU work then local GPU run); blocked behind: stage-2 decision (screen readout), actckpt ladder, f-then-joint draft (Delta_seam), owner-held items
 
@@ -36,7 +36,7 @@
 
 #4 attachment seam screen execution (box, 4xDDP, sequential F then K): F frozen-trunk vs K KI-joint (phase-1 CE verbatim + stop-grad seam, alpha=1) at matched 10k steps / eff-48 from the 40k endpoint; residual surface constant; g…
 
-**boundary:** ARM F LIVE since 04:57:51Z 08-09 (unit fontaine-attach-f, box at 6be4e8e, B12c6 from the 60k endpoint; babysit entry attach_F armed, started_utc filled). Rate gate ~200 steps in-unit (&gt;70 GPU-h =&gt; matched 5k downshift both arms). F endpoint ~11:1xZ at phase-1-like rates + chained panel_v2 eval; THEN launch K (launch_box_fontaine_molmo2_attach_K_10k_ddp4.sh, K_MEM_READY=1 BATCH=12 BACKWARD_CHUNKS=6, babysit attach_K entry at launch). Frozen reads after both arms · [pre-reg](posts/2026-08-07-prereg-molmo2-attach-screen.md)
+**boundary:** ARM F LIVE since 04:57:51Z 08-09 (unit fontaine-attach-f, box 6be4e8e, B12c6 from the 60k endpoint). Rate gate PASS 05:05Z (50.3 projected &lt;= 70, full 10k). Kill-bar judgments at save boundaries: @5000 PASS 10.2595 vs 12.6394 (phase-1 matched +0.62), @7500 PASS 9.9391 vs 11.6356 (phase-1 matched +1.30); @10000 bar 10.1652. Rate ~0.92 s/step, 62-63 steps/min effective; vram 19.05 GiB. Async-save validated live at 1250. F endpoint ~07:4xZ -&gt; chained panel_v2 eval in-unit -&gt; THEN launch K (K_MEM_READY=1 BATCH=12 BACKWARD_CHUNKS=6, EXTRA_GPU_HOURS recomputed from F actual ~10.2 train + evals; babysit attach_K entry at launch). Frozen reads after both arms | F TRAIN COMPLETE 07:42:08Z (all bars passed, endpoint probe 9.3798@10000); panel_v2 eval live 5645 frames ~1.6h (done ~09:2xZ), eval gate raised 6-&gt;8 judged CONTINUE (session estimate vs pre-reg EXTRA budget). F expert capital uploaded to fontaine-checkpoints same-session (expert+prompt+config+README; backbone DEDUPLICATED — byte-identical sha e6ed78 to the 60k trunk, freeze verified at upload). K LAUNCH = next session first action once box frees · [pre-reg](posts/2026-08-07-prereg-molmo2-attach-screen.md)
 
 <details><summary>full record</summary>
 
