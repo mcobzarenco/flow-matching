@@ -1,7 +1,52 @@
 # Now
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-09 03:17–04:0xZ (real `date -u`) — work session
+(bounded, the chained rc owner): **subgoal-swap CLOSED end-to-end —
+arm rc=0 03:42:36Z, all oracles green, frozen reads banked, verdict
+MIXED (both mechanisms real: ~40% format floor + ~60% content margin
+of the −0.290 slot value), results post + chart live** — and the
+babysit phase-roll projection gap fixed generically.*
+
+**Status**: no live GPU runs — local GPU free 03:42Z (swap arm
+complete, ~1.5 GPU-h ≤ 3 gate), box free since 02:26Z. Next box
+claim = K-smoke ladder at the 60k warm start
+(`idea4-attach-k-smoke-ladder`, queued).
+
+**Steering**: none (read clean 03:18/03:33/03:45Z; history = our own
+posts through the identity-green 03:11Z post, no reactions).
+
+**Done** (this session): (1) **babysit.py phase-roll fix**
+(`e8ef9d5`): a counter reset vs the prev cache re-anchors the
+cumulative projection (phase_t0/phase_c0 persisted in state);
+GPU-h projected as elapsed + remaining-at-phase-rate — kills the
+03:13Z false exit-3 class generically; 2 oracles anchored to the
+real numbers, check.py 556. (2) **subgoal_swap_results.py**
+(`2f16951`): the frozen reads mechanized (Δ_swap paired CI core +
+labeled via the dump join, swap-vs-oracle contrast, horizon mirror,
+3-row table adjudicated from CIs, 10 abort branches under check.py,
+557). (3) **swap arm rc=0 03:42:36Z**: dump oracles i+iv green
+in-unit (25,788/25,788 swapped, 0 empty, 0 skipped; 2,162 textual
+coincidences recorded). (4) **Frozen reads executed** (execution
+oracles green on the real artifacts): **Δ_swap −0.113 [−0.161,
+−0.060]** (wrong words HELP), **swap−oracle +0.166 [+0.127,
++0.205]** (truth clearly better), horizon last-10 swap −0.175 vs
+oracle −0.480 (the banked −0.464 signature reproduced; NOT flat →
+the format floor compounds too). Table: **MIXED, record-only per
+pre-reg** — scorer escalations stay coherent, their prize is the
+~0.17 content margin over a free ~0.11 any-words floor. (5) Results
+post + dark two-panel chart (CI dots + horizon fingerprint), idea-6
+ledger line, queue item closed, babysit entry pruned
+(no_live_runs_reason set).
+
+**Next**: `queue_cli.py next` → `molmo2-perf-pass1-subset-landing`
+(CPU, low urgency) / `idea4-attach-k-smoke-ladder` (box free NOW —
+the next GPU claim; green → owner steer window
+`molmo2-stage2-attachment-decision` → attach arms F then K).
+`run_work_next` armed at close.
 
 *Updated 2026-08-09 03:12–03:2xZ (real `date -u`) — tick: swap arm
 healthy mid-decode; babysit surfaced a gate crossing that is a
@@ -90,46 +135,6 @@ results post. Then `queue_cli.py next` = idea4-attach-k-smoke-ladder
 (box FREE now) → owner steer window → attach arms.
 `run_work_next` armed.
 
-*Updated 2026-08-09 01:36–01:5xZ (real `date -u`) — tick: perf-pass1
-box ladder healthy mid-bench_A, but the **3.0 GPU-h ceiling crosses
-~01:49Z with bench_B/C still queued — judged CONTINUE** (charter §6:
-healthy, exactly the 5 pre-registered rungs; the estimate undercounted
-the 5 model loads); babysit.py step-log false positive diagnosed and
-fixed (was masking the gate fact entirely).*
-
-**Status**: box ladder overlay_A/B done (~01:14/01:24Z), bench_A
-240/320 at 01:39Z (s_per_step ~2.3, ~71 GiB on all 4 GPUs), bench_B/C
-queued behind it; elapsed 2.3 GPU-h at 01:39Z → projected **~5 GPU-h
-at close (~02:2xZ)** vs the 3.0 ceiling, crossed ~01:49Z. Judgment:
-CONTINUE to completion — the run is healthy and fixed-scope (5
-pre-registered rungs, no runaway); a kill at the ceiling lands
-mid-bench_B, burns the ~3 GPU-h already spent, and leaves the C-vs-A
-decision (the ladder's entire point) unanswered. Overrun cause owned:
-the ~2.5–3 estimate counted compute (~41 min × 4 ≈ 2.7 GPU-h) but not
-the 5 sequential model loads (~4–8 min each). Posted in-channel.
-Local GPU idle-by-design.
-
-**Steering**: none (read clean; history = our own five posts from the
-chained session, no new reactions).
-
-**Done**: (1) babysit.py fix — `check_progress_log` hard-required an
-`N/M` progress line, so step-style training logs (`"step": N`, no
-total) failed liveness at EVERY poll of perfpass1_box (two
-consecutive exit-1s with the log visibly rolling; NOT the anchored
-between-rung transient). Landed a bare-count fallback: count-only
-progress + the gpu-hours gate fed elapsed GPU-h (an honest floor that
-still fires once truly crossed) — this fix is what surfaced the
-ceiling crossing. check.py 538 green. (2) Prior session's mid-write
-state committed (babysit false-positive anchor, queue subgoal-swap
-implementation-audit note).
-
-**Next**: ladder rc ~02:2xZ → chained work session owns the
-OVERLAY + LADDER(BOX) readout, the frozen decision (C ≥ 5% median
-step-time vs A → bundle lands post-evals), babysit entry prune, and
-the actual-GPU-h ledger row; then the subgoal-swap instrument delta
-(CPU, audit banked, mapping pinned) in the GPU-busy window; K-smoke
-re-run at the 60k warm start after. `run_work_next` armed.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -156,6 +161,17 @@ idle from ~08:15Z pending the next pre-registered launches). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
+Session 2026-08-09 03:17–04:0xZ (work, bounded, chained rc owner;
+exploit, 0 GPU-h new — the swap arm closed on its pre-registered
+~1.5 GPU-h ≤ 3): subgoal-swap CLOSED end-to-end — rc=0 03:42:36Z,
+dump + execution oracles all green, frozen reads banked (Δ_swap
+−0.113 [−0.161,−0.060]; swap−oracle +0.166 [+0.127,+0.205]; table
+MIXED record-only: ~40% format floor / ~60% content margin), results
+post + chart live, queue item closed, babysit entry pruned. Babysit
+phase-roll projection gap fixed generically (e8ef9d5, 2 anchored
+oracles) + subgoal_swap_results.py landed under check.py (557).
+Discord read clean at every poll.
+
 Session 2026-08-09 03:12–03:2xZ (tick; 0 GPU-h new — the live swap
 arm pre-registered and counted): babysit exit-3 on subgoal_swap
 judged CONTINUE — the ~3.2 GPU-h projection is a phase-roll artifact
@@ -165,16 +181,3 @@ frames by time-since-launch; true swap rate ~590 f/min, rc ~03:45Z,
 multi-phase-counter babysit.py fix owed to the chained work session
 (`run_work_next` already armed). Discord read + history clean; queue
 validate green depth 3.
-
-Session 2026-08-09 01:43–03:1xZ (work, bounded, chained; exploit,
-~5.5 GPU-h box ladder closed this window + ~1.6 GPU-h local swap arm
-live, both pre-registered): perf-pass1 box ladder CLOSED 02:26:32Z +
-frozen decision executed — C −7.3% / B −10.8% vs A on the true 4×DDP
-recipe = NO bundle landing, P1 dead twice over (owner relative-bound
-question moot), P2+bitwise split to a hygiene item; results post +
-chart + analysis json banked, true-cost overrun owned (~5.5 vs 3.0
-ceiling, loads uncounted). Subgoal-swap instrument delta landed
-oracle-green same session (16 fixture tests, check.py 554) + arm
-LAUNCHED 02:13:47Z — identity phase BYTE-reproduced the banked oracle
-arm (oracle (ii) GREEN, 25,800 rows), swap arm live at close.
-Discord read clean at every babysit; ladder readout posted.

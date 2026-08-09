@@ -383,3 +383,18 @@ chunk-as-unit), fields-probe ranker, or distillation from the
   escalations are even coherent before any of them earns a
   pre-reg. Instrument delta (`--subgoal-swap-seed` + 4 oracles) is
   the prerequisite; ~1.2 GPU-h ≤ 3, local, any quiet window.
+
+- **Subgoal-swap READ OUT 2026-08-09 03:5xZ
+  ([results](../posts/2026-08-09-subgoal-swap-results.md)) — MIXED,
+  record-only, and the triangle is closed**: wrong-but-plausible
+  words still help (Δ_swap **−0.113** [−0.161, −0.060]) but truth
+  beats them clearly (paired swap−oracle **+0.166** [+0.127,
+  +0.205]) — the −0.290 slot value decomposes ~40% format/prior
+  floor + ~60% content margin. Late-horizon dive reproduced in both
+  arms (oracle −0.480, swap −0.175 last-10 — NOT flat, so the
+  format floor compounds too). Scorer escalations stay coherent
+  (content IS consumed) but any scorer rung must now be costed
+  against the free any-plausible-words floor, and its prize is the
+  ~0.17 content margin. Caveat recorded: 8.4% of swapped rows drew
+  a textually-true donor label (bias runs against the content
+  reading, which won anyway).

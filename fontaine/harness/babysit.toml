@@ -317,40 +317,19 @@
 # kind = "gpu_hours_max"
 # value = 4.5
 
-# LIVE — #6 subgoal-swap content read (local GPU, unit
-# fontaine-subgoal-swap; pre-reg 2026-08-09-prereg-subgoal-swap.md).
-# Four phases in one unit (eval_ar100k_subgoal_swap_arm.sh): live-
-# oracle selftest -> IDENTITY full-panel run (_swapidentity, ~35 min)
-# -> oracle (ii) byte-reproduction vs the BANKED oracle npz
-# (abort-on-red; a red here means the swap plumbing or code drift
-# changes the decode — NO swap arm runs then) -> SWAP arm
-# (_swapsubgoal, ~35 min) -> oracles (i)+(iv) mechanical dump check.
-# Frozen reads (Δ_swap, swap-vs-oracle, horizon mirror) run OFFLINE
-# next session. Prune at completion (retained-entry footgun).
-[[run]]
-name = "subgoal_swap"
-kind = "progress-log"
-host = "local"
-pgrep = "subgoal_swap_arm"
-pgrep_min = 1
-gpu_indices = [0]
-gpu_mem_min_mib = 4000
-log = "/home/ubuntu/eval__ar100k_subgoal_swap_arm.log"
-progress_re = "scored [0-9]+/[0-9]+ frames"
-started_utc = "2026-08-09T02:13:47Z"
-gpu_hours_per_wall_hour = 1.0
-boundary = "IDENTITY PHASE DONE ~02:58Z + ORACLE (ii) GREEN (byte-reproduction of the banked oracle arm, 25,800 rows, all columns); SWAP arm live since ~03:00Z at ~546 f/min, rc ~03:4x-03:5xZ incl. the in-unit dump check (oracles i+iv, abort-on-red); ~1.6 GPU-h total <= 3 gate"
-anchors = [
-    "banked comparators: oracle arm npz (08-08 01:14) + baseline npz — never re-run; identity phase must BYTE-reproduce the oracle npz (matched plan/batching, prompts byte-identical)",
-    "phase roll identity -> swap shows a load gap (~4-6 min, 0% util, no fresh progress lines) — judge by unit active + log phase banners, not one poll",
-    "swap arm read is RECORD-PLUS-DECISION per the frozen 3-row table; no scalar judged before the read session",
-    "unswappable labeled frames (single-labeled-episode datasets) render an EMPTY slot by design — the dump's empty_rendered count is expected non-zero, rare",
-    "SELF-MATCH note: driver-session log watchers grep this run's log path, so pgrep 'subgoal_swap_arm' can surface a DRIVER-CGROUP false positive (seen 02:37Z) — the real run is transient unit fontaine-subgoal-swap.service (PID under systemd, teardown-safe); judge by systemctl, not the cgroup line",
-    "PHASE-ROLL PROJECTION FALSE POSITIVE (judged CONTINUE 03:13Z): the frame counter resets to 0 at the identity->swap roll, so babysit's cumulative rate (counter / time-since-02:13:47Z) reads ~130 f/min and projects ~3.2 GPU-h > 3 gate — an artifact, not an overrun; true swap-phase rate ~590 f/min (7,712 frames in ~13 min at 03:13Z), rc ~03:45Z, total ~1.6 GPU-h <= 3. Generic babysit.py gap (multi-phase logs with per-phase counters) — fix owed to the chained work session alongside the rc prune",
-]
-[[run.gates]]
-kind = "gpu_hours_max"
-value = 3.0
+# PRUNED 03:5xZ 08-09 — #6 subgoal-swap content read COMPLETE rc=0
+# 03:42:36Z (~1.5 GPU-h <= 3 gate, never truly crossed — the 03:13Z
+# exit-3 was the phase-roll projection artifact, fixed generically in
+# babysit.py e8ef9d5 same session: counter reset re-anchors the
+# projection). Dump oracles i+iv GREEN (25,788/25,788 swapped, 0
+# empty, 0 skipped). Frozen reads banked
+# analysis__subgoal_swap_ar100k_k4l2.json: Delta_swap -0.113
+# [-0.161,-0.060], swap-vs-oracle +0.166 [+0.127,+0.205], table MIXED
+# record-only (~40% format floor / ~60% content margin). Results post
+# 2026-08-09-subgoal-swap-results.md. Local GPU FREE; next local
+# claim per queue. Entry pruned per the retained-entry footgun.
+
+no_live_runs_reason = "subgoal_swap pruned 03:5xZ 08-09 (rc=0, reads banked, results posted) — no live GPU runs; local GPU + box both FREE; next claims: k-smoke ladder (box), per queue"
 
 # golden-ticket screen (#1) — CLOSED 08-08 08:2xZ: stage 3 landed
 # 08:15:39Z rc=0 (2.99 GPU-h; screen total ~5.55 <= 6 gate). R3 read

@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T03:10:00+00:00
+**Updated:** 2026-08-09T03:45:26Z
 
 **Depth call:** depth 3 at 02:3xZ 08-09: idea6-subgoal-swap-read LIVE on local (identity+swap unit, reads next session); queued: idea4-attach-k-smoke-ladder (box FREE — next box claim), molmo2-perf-pass1-subset-landing (CPU), plus the standing attach chain behind the k-smoke verdict
 
-**10 open** (Live 0 · Queued 3 · Blocked 7 · Done 53)
+**9 open** (Live 0 · Queued 2 · Blocked 7 · Done 54)
 
 ## 🔴 Live (0)
 
@@ -14,23 +14,9 @@
 
 *(empty)*
 
-## 🟢 Queued (3)
+## 🟢 Queued (2)
 
 *ready — waiting on a window or a boundary*
-
-**`idea6-subgoal-swap-read`** · `gpu-local`
-
-#6 subgoal-swap content read (pre-reg 2026-08-09-prereg-subgoal-swap.md, posted this session): re-run the rung-(a) oracle arm with an episode-level seeded derangement of segment labels (format-valid, content-wrong)
-
-**boundary:** SWAP ARM LIVE 03:0xZ 08-09: identity phase DONE ~02:58Z rc=0 and ORACLE (ii) GREEN — the identity run BYTE-reproduces the banked oracle arm, 25,800 rows, all shared npz columns byte-equal (the keystone); 25,788 identity swap records dumped. Swap arm (_swapsubgoal) live since ~03:00Z, rc ~03:4x-03:5xZ incl. the mechanical dump check (oracles i+iv in-unit, abort-on-red). Chained session owns: dump-check verification at rc=0, babysit prune, frozen reads (Delta_swap paired CI / swap-vs-oracle / horizon mirror vs the frozen 3-row table) + results post · [pre-reg](posts/2026-08-09-prereg-subgoal-swap.md)
-
-<details><summary>full record</summary>
-
-#6 subgoal-swap content read (pre-reg 2026-08-09-prereg-subgoal-swap.md, posted this session): re-run the rung-(a) oracle arm with an episode-level seeded derangement of segment labels (format-valid, content-wrong) — closes the presence(-0.290)/channel(+0.043)/CONTENT triangle; frozen 3-row interpretation table decides whether learned-scorer escalations are even coherent (swap~0 -&gt; coherent; swap~oracle -&gt; format mirage, deprioritize toward future-latent family; swap&gt;0 -&gt; strongest pro-scorer case). PREREQUISITE instrument delta: --subgoal-swap-seed on the oracle path + 4 oracles (derangement fixture bijective/no-identity, identity-map byte-reproduces banked oracle arm, label-less frames byte-match baseline, dumped text == source-episode label). ~1.2 GPU-h projected &lt;= 3 gate, local 1xH100 at any quiet window | IMPLEMENTATION AUDIT BANKED 01:4xZ same session (mapping rule pinned in the pre-reg first): label source = per-dataset meta/judge_annotations.json (metadata-only, no image decode — the swap-map builder is a pure-CPU pre-pass); interception point = the condition_subgoal item override the SelfSubgoalPolicy pass-2 path already uses (collator honors explicit override over the frame's true label; empty means no-hint, never falls through); fraction needs episode duration from LeRobot meta + item timestamp. Estimated ~150 lines + fixture tests; oracle (ii) identity-map byte-reproduction is a launcher-side pre-launch check vs the banked oracle npz, not a check.py test | INSTRUMENT LANDED + LAUNCHED 02:13Z 08-09 same session: bijou/eval/subgoal_swap.py (map builder: judgments sidecar under the stamp, materialize-exact span semantics, per-repo Sattolo derangement) + BijouPolicy _swapsubgoal/_swapidentity wiring + CLI --subgoal-swap-seed/--subgoal-swap-identity/--dump-subgoal-swaps; 16 fixture oracles in tests/test_subgoal_swap.py, check.py 554 green; launcher eval_ar100k_subgoal_swap_arm.sh (4 phases: selftest -&gt; IDENTITY full panel -&gt; oracle-(ii) byte-reproduction vs banked oracle npz abort-on-red -&gt; swap arm -&gt; mechanical dump check) LIVE unit fontaine-subgoal-swap, babysit entry active, ~2.4 GPU-h (identity+swap) &lt;= 3 gate
-
-</details>
-
----
 
 **`idea4-attach-k-smoke-ladder`** · `gpu-box`
 
@@ -72,7 +58,7 @@ perf pass-1 SUBSET landing (CPU; the frozen &lt;5% decision branch executed 02:2
 
 <details><summary>full record</summary>
 
-#6 rung-(b) ESCALATION pre-reg draft (CPU) — opens ONLY on a no-scorer verdict from the rung-(b') read (rung (b) closed at table cost; (b') carries the frozen falsifier + adjudication) (ceiling &gt;&gt; bon with diversity present); closes as moot on no-diversity or on the falsifier passing. Routing pre-mapped by the 08-08 lit slice (papers/progress-from-logits.md + corrected self-certainty.md note): candidate 1 = masked-contrast selection (MG-Select form, prerequisite VERIFIED MET: subgoal-masked reference = planner-less path trained at 50% dropout; N+1 teacher-forced pass-2 action forwards, no decode loop; reference tempered tau=4); candidate 2 = history-conditioned planning (TOPReward 2602.19313: phase zero-shot recoverable from a video prefix via one completion logit incl. on Molmo2-8B — attacks the measured ~10/60 single-frame phase-offset mechanism directly). Draft picks ONE (or stages both) with frozen falsifiers + cost gates; execution needs its own posted pre-reg + queue entry
+#6 rung-(b) ESCALATION pre-reg draft (CPU) — opens ONLY on a no-scorer verdict from the rung-(b') read (rung (b) closed at table cost; (b') carries the frozen falsifier + adjudication) (ceiling &gt;&gt; bon with diversity present); closes as moot on no-diversity or on the falsifier passing. Routing pre-mapped by the 08-08 lit slice (papers/progress-from-logits.md + corrected self-certainty.md note): candidate 1 = masked-contrast selection (MG-Select form, prerequisite VERIFIED MET: subgoal-masked reference = planner-less path trained at 50% dropout; N+1 teacher-forced pass-2 action forwards, no decode loop; reference tempered tau=4); candidate 2 = history-conditioned planning (TOPReward 2602.19313: phase zero-shot recoverable from a video prefix via one completion logit incl. on Molmo2-8B — attacks the measured ~10/60 single-frame phase-offset mechanism directly). Draft picks ONE (or stages both) with frozen falsifiers + cost gates; execution needs its own posted pre-reg + queue entry | SWAP READ BANKED 03:5xZ 08-09 (MIXED): content consumed (+0.166 truth-over-wrong margin) — scorer coherence question resolved POSITIVE; cost any scorer rung against the free any-plausible-words floor Delta_swap -0.113, not against no-slot
 
 </details>
 
@@ -160,9 +146,23 @@ Molmo2 stage-2 attachment decision at endpoint — now EXECUTABLE via the seam-s
 
 ---
 
-## ✅ Done (53)
+## ✅ Done (54)
 
 *closed — the full record stays in each fold*
+
+**`idea6-subgoal-swap-read`** · `gpu-local`
+
+#6 subgoal-swap content read (pre-reg 2026-08-09-prereg-subgoal-swap.md, posted this session): re-run the rung-(a) oracle arm with an episode-level seeded derangement of segment labels (format-valid, content-wrong)
+
+**boundary:** CLOSED 03:5xZ 08-09: swap arm rc=0 03:42:36Z (~1.5 GPU-h &lt;= 3 gate); dump oracles i+iv GREEN (25,788/25,788 swapped, 0 empty, 0 skipped; 2,162 textual coincidences recorded). Frozen reads banked analysis__subgoal_swap_ar100k_k4l2.json (execution oracles green): Delta_swap -0.113 [-0.161,-0.060] (wrong words HELP), swap-vs-oracle +0.166 [+0.127,+0.205] (truth clearly better), horizon last10 swap -0.175 vs oracle -0.480 (banked -0.464 signature reproduced). Frozen 3-row table: MIXED — record-only per pre-reg, no decision row fires; reading = ~40% format/prior floor + ~60% content margin of the -0.290 bound. Scorer escalations stay coherent but their prize is the ~0.17 content margin over a free ~0.11 any-words floor. Results post 2026-08-09-subgoal-swap-results.md + chart. · [pre-reg](posts/2026-08-09-prereg-subgoal-swap.md)
+
+<details><summary>full record</summary>
+
+#6 subgoal-swap content read (pre-reg 2026-08-09-prereg-subgoal-swap.md, posted this session): re-run the rung-(a) oracle arm with an episode-level seeded derangement of segment labels (format-valid, content-wrong) — closes the presence(-0.290)/channel(+0.043)/CONTENT triangle; frozen 3-row interpretation table decides whether learned-scorer escalations are even coherent (swap~0 -&gt; coherent; swap~oracle -&gt; format mirage, deprioritize toward future-latent family; swap&gt;0 -&gt; strongest pro-scorer case). PREREQUISITE instrument delta: --subgoal-swap-seed on the oracle path + 4 oracles (derangement fixture bijective/no-identity, identity-map byte-reproduces banked oracle arm, label-less frames byte-match baseline, dumped text == source-episode label). ~1.2 GPU-h projected &lt;= 3 gate, local 1xH100 at any quiet window | IMPLEMENTATION AUDIT BANKED 01:4xZ same session (mapping rule pinned in the pre-reg first): label source = per-dataset meta/judge_annotations.json (metadata-only, no image decode — the swap-map builder is a pure-CPU pre-pass); interception point = the condition_subgoal item override the SelfSubgoalPolicy pass-2 path already uses (collator honors explicit override over the frame's true label; empty means no-hint, never falls through); fraction needs episode duration from LeRobot meta + item timestamp. Estimated ~150 lines + fixture tests; oracle (ii) identity-map byte-reproduction is a launcher-side pre-launch check vs the banked oracle npz, not a check.py test | INSTRUMENT LANDED + LAUNCHED 02:13Z 08-09 same session: bijou/eval/subgoal_swap.py (map builder: judgments sidecar under the stamp, materialize-exact span semantics, per-repo Sattolo derangement) + BijouPolicy _swapsubgoal/_swapidentity wiring + CLI --subgoal-swap-seed/--subgoal-swap-identity/--dump-subgoal-swaps; 16 fixture oracles in tests/test_subgoal_swap.py, check.py 554 green; launcher eval_ar100k_subgoal_swap_arm.sh (4 phases: selftest -&gt; IDENTITY full panel -&gt; oracle-(ii) byte-reproduction vs banked oracle npz abort-on-red -&gt; swap arm -&gt; mechanical dump check) LIVE unit fontaine-subgoal-swap, babysit entry active, ~2.4 GPU-h (identity+swap) &lt;= 3 gate
+
+</details>
+
+---
 
 **`framemining-perpair-figures`** · `cpu`
 
