@@ -1,6 +1,70 @@
 # Now
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-09 21:24–21:4xZ (real `date -u` at write: 21:37) —
+work session (bounded): **lit-radar-0817 CLOSED — 4 Papers pages in
+~15 min wall clock via 5-agent parallel fan-out (4 deep reads + the
+refill sweep concurrently), every banked hook needed corrections
+again; the refill sweep hit 12/16 corpus dups — the pool is
+drying.***
+
+**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE — babysit exit 0
+×2 (21:25, 21:37), step 10,480 @ 21:37, 22.0–25.8 st/min, 31.8/310
+GPU-h, vram 75.3 ×4 vs 77. Run-best 10.63@9500 stands; post-kill-
+line cruise, endpoint ~08-12 ~17:00Z. `fontaine-tiny10k` LIVE local
+— step 660 @ 21:37 (22.0 st/min), 1.4/15 GPU-h; **first
+post-relaunch probe @500 = 16.78 vs the pre-OOM run's 16.46@500 —
+same-seed sanity confirmed** (stale row now superseded in the
+ladder). Endpoint ~05:1xZ 08-10 → chained panel_v2 → Δ_capacity
+read ~06:3xZ.
+
+**Steering**: none — `read` empty at boot (21:24) and at the 21:37
+babysit. 13:48Z gate default (let run, gate 310) governs adamc.
+
+**Done**: **(1) lit-radar-0817 CLOSED** — 4 Papers pages same
+session ([armnetbench](papers/armnetbench.md),
+[safecast](papers/safecast.md), [reflex](papers/reflex.md) +
+[legato](papers/legato.md) cluster,
+[compression-gap](papers/compression-gap.md); MolmoAct2 slot
+satisfied by the 08-09 owner deep dive). Hook corrections, three
+loud: **ArmnetBench** "3,118 human-labeled" = 2,518 scored rollouts
++ 600 unscored demos, and the claimed 84 policy checkpoints are NOT
+public (→ #9 calibration study specified-but-blocked, watch item) —
+but the 2,288 labeled SO-101 failure rollouts are real, Apache 2.0,
+LeRobot-native (→ #16's LWD prerequisite met, #6's eval corpus);
+**SAFECAST** is NOT offline (needs closed-loop perturbed
+re-executions + hundreds of labeled rollouts) and its flow-policy
+cells land below coin-flip in its own metric → #6's cheapest next
+step sharpened into a go/no-go separability gate on the
+hidden-state-probe family; **Legato** "~10% smoother" wrong both
+directions (smoothness ~flat; real headline −19–23% completion time
+vs matched RTC). Plus: Reflex's 2.58× is vs a full-recompute
+strawman, but the timestep-invariance draws reframe is real (K
+draws share one trunk prefill → #19 cost split; stall-rate
+instrument adopted → #22); Compression Gap oversold on every clause
+(tiny non-VLA, single seed, mechanism asserted — filed
+consistent-with only, #19). Ideas #6 #9 #16 #19 #22 + index hooks
+fed. **(2) Refill sweep → `lit-radar-0818`**: 16 candidates
+abs-verified by the sweep agent, **12 dropped as corpus dups by
+local grep** (agent's exclusion-list check is insufficient — the
+executor must grep the full corpus per id; instrument note logged
+in the item); 4 clean hooks banked (ATHENA influence-function
+curation #9, ProbeAct #6, Qwen-RobotManip 38kh pipeline #9/#17,
+plasticity-at-scale adamc watch), NO spares — next slice should
+fresh-sweep with new angles first. **(3)** Self-caught a queue.json
+stamp 13 min future-dated (21:50 written at a real 21:37) —
+corrected same session; the 21:17 tick's clock-audit class is live
+in my own writes.
+
+**Next**: `queue_cli.py next` → `lit-radar-0818` (CPU, GPU-busy
+window) after the owner-side docs-pass tail; `run_work_next` armed
+at close. tiny10k endpoint ~05:1xZ 08-10 → chained panel_v2 →
+Δ_capacity readout (MolmoAct2 15.5% expert-ratio anchor in hand).
+adamc endpoint ~08-12 ~17:00Z → chained k4l2 panel. MolmoAct2
+follow-up arms + ArmnetBench checkpoint watch are owner-decision /
+watch items.*
 
 *Updated 2026-08-09 21:17–21:2xZ (real `date -u` at write: 21:2x) —
 tick (babysit): **both runs healthy — adamc crossed its step-10,000
@@ -118,48 +182,6 @@ are owner-decision items.
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-09 20:33–20:4xZ (real `date -u` at write: 20:38) —
-tick (babysit): **both runs healthy — but the 19:41 tick's "probe
-ladder prints without manual ssh" claim was FALSE (the babysit.toml
-`jsonl`+`probe_key` wiring was a silent no-op for `progress-log`
-entries); fixed + tested + live-verified this tick. adamc probes
-@8500 = 11.44 / @9000 = 11.53 — above the 11.02@8000 run-best but
-inside the run's noise band, record-only.***
-
-**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE — babysit exit 0
-×2 (20:34, 20:36), step 9,140 @ 20:36, 21.5–24.3 st/min windows,
-27.7/310 GPU-h, vram 75.3 ×4 vs 77 bar. Probe ladder (now
-auto-printed): 11.69@7000 → 11.72@7500 → **11.02@8000 → 11.44@8500
-→ 11.53@9000** — the uptick mirrors the @5000 one that receded,
-nothing near a kill line (>25 ×3 sustained; not-below-@2500 by
-10k); judged healthy, no escalation. Endpoint ~08-12 ~17:00Z.
-`fontaine-tiny10k` LIVE local — step ~160, 99% util, 12.98 GiB,
-~0.4/15 GPU-h; first probe lands @500; endpoint ~04:2xZ 08-10 →
-panel_v2 @10000 → Δ_capacity read ~05:4xZ.
-
-**Steering**: none new — babysit `read` empty (20:34), `history -n
-5` = the 20:08 owner exchange (answered in-session) + our own
-posts, no reactions. 13:48Z gate default (let run, gate 310)
-governs adamc.
-
-**Done**: babysit.py probe-ladder fix — `batched_probe_cmd` fetched
-and `check_*` parsed the probe section only for `kind =
-"train-jsonl"`, so the adamc entry's 19:41 wiring never printed
-(caught this tick: fresh @8500/@9000 evals existed, no ladder in
-the output). Now `progress-log` entries with `jsonl`+`probe_key`
-fetch + print the ladder too, with regex-fallback parsing for probe
-rows embedded in mixed launch-log lines; new oracle
-`test_progress_log_probe_ladder` (suite 20/20), verified live over
-ssh (full adamc ladder above). Queue validate green depth 4 (10
-open, 20:16:00Z stamp clean). `run_work_next` already armed (20:31
-marker from the work session).
-
-**Next**: chained work session → `queue_cli.py next` →
-`lit-radar-0816` (CPU, GPU-busy window). tiny10k probes from @500
-are routine tick reads; endpoint ~04:2xZ 08-10 → chained panel_v2 →
-Δ_capacity readout session. adamc endpoint ~08-12 ~17:00Z →
-chained k4l2 panel. Survey follow-ups remain owner-decision items.*
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -222,3 +244,18 @@ audit: the 20:47 work session stamped 21:45/21:5x at a real ~21:15
 — queue.json updated_utc was future-dated 30 min; corrected there +
 in now.md. Queue green depth 3 (9 open); run_work_next armed (21:16)
 for lit-radar-0817.
+
+Session 2026-08-09 21:24–21:4xZ (work, bounded; 0 new GPU-h — adamc
+rides 31.8/310, tiny10k 1.4/15; explore): lit-radar-0817 closed in
+~15 min wall clock — 4 deep reads + refill sweep as 5 concurrent
+subagents, 4 Papers pages (armnetbench, safecast, reflex, legato,
+compression-gap; MolmoAct2 slot pre-satisfied), every hook needed
+corrections (3 loud: ArmnetBench label-count + missing checkpoints,
+SAFECAST not-offline + sub-coin-flip on flow policies, Legato
+smoothness→completion-time). Ideas #6/#9/#16/#19/#22 fed; #6 gains
+a go/no-go gate (probe separability vs ArmnetBench labels), #19 a
+cost-model split (draws share one trunk prefill). Refill: 12/16
+candidates were corpus dups (pool drying — instrument + angle notes
+in the 0818 item); 4 clean hooks, no spares. tiny10k relaunch
+sanity: probe @500 = 16.78 vs pre-OOM 16.46. One self-caught
+future-dated stamp corrected. check 599; Space pushed.

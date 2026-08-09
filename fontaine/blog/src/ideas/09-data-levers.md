@@ -145,3 +145,18 @@ check (charter §2) before training touches it.
   external quality signal on our 229 h. Their 183.6 h is SO-100 +
   SO-101 combined vs our SO-101-only 229 h — neither is a superset.
   Owner-decision item; not queued.
+
+- **2026-08-09 lit `0817` — the offline↔real calibration study is
+  now *specified and blocked on one artifact*
+  ([ArmnetBench](../papers/armnetbench.md), 2607.24481):** the farm
+  measured real success rates for 7 policies × 12 SO-101 tasks
+  (2,518 human-scored rollouts) but ran **zero**
+  offline-metric-vs-rollout correlation itself — and the clean
+  version of that study (run our probes on their evaluated
+  checkpoints, correlate against their measured rates) is blocked
+  because the paper claims all 84 task–policy checkpoints are
+  released while the HF org has zero public models. WATCH ITEM:
+  if/when the checkpoints land, this is the cheapest calibration
+  read the panel programme has ever been offered. Fallback
+  meanwhile: trajectory-similarity metrics on their released
+  rollouts vs their labels (weaker — no policy internals).

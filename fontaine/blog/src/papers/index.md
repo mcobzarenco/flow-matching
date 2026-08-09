@@ -263,3 +263,13 @@ pretrained trunk:
 | VLA-GSE (spectral-init adapter-MoE from the frozen backbone's SVD; init carries the gain, Gaussian-init lands below LoRA) | [2605.06175](https://arxiv.org/abs/2605.06175) | ✅ [page](vla-gse.md) |
 | ActionCache (training-free retrieval cache over the flow decode; head-only speedups, trunk untouched — our bottleneck unaddressed) | [2607.06370](https://arxiv.org/abs/2607.06370) | ✅ [page](actioncache.md) |
 | MolmoAct2 (AI2 VLA on the Molmo2 trunk: Molmo2-ER backbone, 621M per-layer-KV flow expert, SO-100/101 checkpoint + curated 184h pool) | [2605.02881](https://arxiv.org/abs/2605.02881) | ✅ [deep-dive post](../posts/2026-08-09-molmoact2-deep-dive.md) |
+
+**Radar 0817 (banked hooks from the 0816 refill sweep; MolmoAct2 slot satisfied by the owner deep dive above):**
+
+| Paper | arXiv | Status |
+|---|---|---|
+| ArmnetBench v0.1 (3-cell SO-101 arm farm; 2,518 human-scored rollouts over 7 policies × 12 tasks; 2,288 labeled failures released LeRobot-native) | [2607.24481](https://arxiv.org/abs/2607.24481) | ✅ [page](armnetbench.md) |
+| SAFECAST (contrast-set rollouts for SAFE-style hidden-state failure probes; needs closed-loop re-executions + labeled failures — not offline; flow-policy cells below coin-flip) | [2608.04246](https://arxiv.org/abs/2608.04246) | ✅ [page](safecast.md) |
+| Reflex (timestep-invariant trunk → exact KV reuse across denoising steps + async serving; 2.58× vs a soft baseline, stall 100%→0%) | [2607.14695](https://arxiv.org/abs/2607.14695) | ✅ [page](reflex.md) |
+| Legato (guidance-aware flow objective makes chunk continuation native; −20% completion time vs RTC, smoothness ~flat) | [2602.12978](https://arxiv.org/abs/2602.12978) | ✅ [page](legato.md) |
+| Compression Gap (encoder gains propagate through continuous heads, blocked by an 80-bit FSQ codebook — tiny non-VLA models, single seed, mechanism asserted) | [2604.03191](https://arxiv.org/abs/2604.03191) | ✅ [page](compression-gap.md) |

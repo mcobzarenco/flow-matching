@@ -330,3 +330,23 @@ the advantage signal, so our entry runs through banked rig-day
 failure rollouts. Honesty flags: 0.95 mixes binary success with
 human rubric scores, trial counts and intervention rates
 unreported, per-task robot pools not one generalist deployment.
+
+**2026-08-09 — lit `0817`: the RL-pole's missing ingredient goes
+public, and two rig-benchmark metrics join the design set
+([ArmnetBench](../papers/armnetbench.md) 2607.24481 +
+[Legato](../papers/legato.md) 2602.12978):** LWD's stated
+prerequisite — failure rollouts with terminal labels, which
+success-only corpora can't provide — now exists as a public
+artifact on our exact embodiment: 2,288 labeled failures + 106
+suboptimal across 3,718 LeRobot-v3.0 episodes (Apache 2.0, 7
+policy families incl. flow-based π0/π0.5 and Molmo-trunk
+MolmoAct 2 — which ranked 6/7 at 18.9% under the 50-demo budget,
+with a camera-conditions asterisk). Banked as the designated
+offline calibration/eval corpus for the pole's pre-rig column.
+Flags carried: no inter-rater agreement, n≈30 per task–policy
+cell (±15–18 pt CIs), task confounded with cell. From Legato:
+completion time (−19–23% vs RTC at equal scores = hesitation, not
+frame-level smoothness) and boundary-overlap RMSE join the
+benchmark's candidate metric set — offline chunk-MAE panels are
+structurally blind to seam behavior. Menu unchanged; still the
+benchmark-design ledger.

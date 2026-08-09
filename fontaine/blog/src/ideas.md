@@ -41,7 +41,14 @@ record; the line here is the hook). *Index last updated 2026-08-09.*
   `0816` ([ActionCache](papers/actioncache.md), 2607.06370): the
   banked "cheap-draws cost model" hook corrected — top-1 retrieval
   collapses the draw distribution rather than amortizing N draws;
-  our draws economics unchanged.
+  our draws economics unchanged. Lit `0817`
+  ([Reflex](papers/reflex.md) + [Compression
+  Gap](papers/compression-gap.md)): the cost model splits — trunk
+  prefill is per-decision (timestep-invariant, shared by all K
+  draws), marginal draw = expert-only FLOPs; and the mean-collapse
+  asymmetry gains a weak *consistent-with* rhyme (continuous heads
+  pass encoder gains an 80-bit codebook blocks — tiny non-VLA
+  single-seed study, our AR bit budget likely escapes the bound).
 - **`seam-screen` [#4 Stage-2 attachment seam](ideas/04-stage2-attachment.md)** —
   `decided` 2026-08-09
   ([memo](posts/2026-08-09-molmo2-stage2-attachment-decision.md)):
@@ -257,7 +264,15 @@ record; the line here is the hook). *Index last updated 2026-08-09.*
   3× decode cost). Channel read significant: same text via suffix
   is +0.043 worse than the slot — generation quality (phase
   estimation), not the channel, is the bottleneck. Escalations
-  (subgoal-draws selection first) each need a new pre-reg.**
+  (subgoal-draws selection first) each need a new pre-reg.** Lit
+  `0817` ([ArmnetBench](papers/armnetbench.md) +
+  [SAFECAST](papers/safecast.md)): the failure-detection slot gets
+  a public ground-truth eval corpus (2,288 labeled SO-101 failure
+  rollouts, LeRobot-native) and a sharpened cheapest-next-step —
+  the SAFE-substrate separability probe on our flow-expert hidden
+  states vs those labels is now a **go/no-go gate** on the whole
+  hidden-state-probe family (SAFECAST's own flow-policy cells land
+  below coin-flip; the strong numbers are AR-only).
   **Rung (b) PRE-REGISTERED 2026-08-08
   ([pre-reg](posts/2026-08-08-prereg-subgoal-draws.md)): sample 9
   subgoal candidates (greedy + 8 at T=1), condition on the
@@ -569,7 +584,14 @@ record; the line here is the hook). *Index last updated 2026-08-09.*
   critic carries +9.7/+16.7 long-horizon over expectile; QAM is
   adopted (Li & Levine), not theirs (hook corrected); offline
   column alone beats SFT 0.88 vs 0.76 but needs failure-containing
-  buffers — success-only corpora collapse the signal.
+  buffers — success-only corpora collapse the signal. Lit `0817`
+  ([ArmnetBench](papers/armnetbench.md) +
+  [Legato](papers/legato.md)): LWD's failure-buffer prerequisite
+  now has a public artifact on our embodiment (2,288 labeled
+  failures, Apache 2.0, 7 policy families) — banked as the pole's
+  pre-rig calibration/eval corpus; completion time + boundary-
+  overlap RMSE join the bench metric set (offline panels are blind
+  to seam hesitation, Legato's −20% lives there).
 - **`lit-arms` [#15 Literature-sourced arms](ideas/15-literature-arms.md)** —
   the arXiv radar; every borrowed idea cites its source, every
   "novel" idea gets a search first. Feeds the Papers section.
@@ -638,6 +660,12 @@ record; the line here is the hook). *Index last updated 2026-08-09.*
   hook: the embodiment-agnostic *continuity screen* is a zero-GPU
   read on our own corpus (per-tick displacement thresholds — a
   kinematic-corruption dimension orthogonal to the VLM judge).
+  Lit `0817` ([ArmnetBench](papers/armnetbench.md)): the
+  offline↔real calibration study the panel programme wants is now
+  specified but blocked on one artifact — their claimed 84
+  task–policy checkpoints are not actually on the Hub; WATCH ITEM
+  (if they land, it's the cheapest calibration read ever offered:
+  our probes on their policies vs their measured success rates).
   **Hook CLOSED 2026-08-09
   ([screen results](posts/2026-08-09-corpus-continuity-screen.md)):
   qualified null — tail 0.23%, dominated by the wrap census's two
@@ -722,7 +750,16 @@ record; the line here is the hook). *Index last updated 2026-08-09.*
   banked — π0.5-class VLA ≈ 102 ms/decision end-to-end, VLM+embed
   ≈ 47 ms structurally unskippable (their 40× head speedup nets
   1.66× end-to-end) — trunk overlap, not decode acceleration, is
-  the lever.
+  the lever. Lit `0817` ([Reflex](papers/reflex.md) +
+  [Legato](papers/legato.md), complements): the serving stack now
+  has named layers — trunk-KV reuse within a chunk's ODE loop is
+  exact and free (timestep invariance, ours by construction; check
+  our rollout path actually does it), async thread split is the
+  measured latency lever (−47–54% reaction, stall 100%→0%; stall
+  rate adopted as an instrument), and the chunk-transition slot is
+  a two-rung ladder: RTC (free) → Legato (fine-tune, −20%
+  completion time vs RTC matched; objective change = own arm,
+  bakes in the solver step count).
 
 ## Answered — banked results
 

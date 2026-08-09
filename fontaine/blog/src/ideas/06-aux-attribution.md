@@ -580,3 +580,26 @@ ACT→π₀.₅ 0.56) — failure logs age across policy generations.
   calibration to deployment. Rig caveat: the wrist camera carries
   the result (96.6% vs 45.9% fixed view) — a camera-config
   prerequisite for our slot.
+
+- **Lit `0817` 2026-08-09 — the detector slot gets an eval corpus
+  and a cost-ladder ceiling ([ArmnetBench](../papers/armnetbench.md)
+  2607.24481 + [SAFECAST](../papers/safecast.md) 2608.04246):**
+  ArmnetBench releases 2,288 labeled *failure* rollouts (+ ~1,300
+  successes) on a bone-stock SO-101, LeRobot v3.0, Apache 2.0 —
+  the ground-truth-labeled rollout corpus any #6 candidate can now
+  be *scored* against without rig time (hook corrected: 2,518
+  human-scored rollouts, not 3,118; the claimed policy checkpoints
+  are NOT actually public). SAFECAST (SAFE + contrast-set rollouts)
+  is the anti-#6 budget rung: hundreds of labeled rollouts incl.
+  real failures + fresh closed-loop perturbed re-executions — and
+  on flow-class policies (π0) it lands *below coin-flip* in its own
+  α-marginalized metric (0.45 sim / 0.38 real) while AR OpenVLA
+  reaches 0.80. Net: the slot's cheapest next step is now a
+  **go/no-go gate** — SAFE-substrate MLP probe on our flow-expert
+  hidden states vs ArmnetBench outcome labels (zero-rollout,
+  state-copy-style forward passes); if flow-head activations don't
+  separate outcomes there, the probe family is out for our policy
+  class and FoMo-FD-style world models stand alone. Caveat logged:
+  that test measures "does my policy see THIS logged trajectory
+  failing," not "will MY rollout fail" — a mismatch no paper in
+  the thread has touched.

@@ -299,3 +299,22 @@ between these two priors on our own panel before any escalation.
   A top-k retrieval variant would be a cheap-diverse-draws
   mechanism, but that is our extrapolation, not the paper.
   Record-only; family decodes stand.
+
+- **2026-08-09 lit `0817` — the draws cost model splits cleanly,
+  and the mean-collapse asymmetry gets a weak external rhyme
+  ([Reflex](../papers/reflex.md) 2607.14695 + [Compression
+  Gap](../papers/compression-gap.md) 2604.03191):** Reflex's
+  timestep-invariance observation (trunk KV exactly valid across
+  all ODE steps — true of our frozen trunk by construction) means
+  K draws share ONE trunk prefill: marginal draw cost = expert-only
+  FLOPs. Combined with ActionCache's per-decision anchor (~102 ms,
+  VLM ≈ 22 ms), draw economics are better than the 0816 correction
+  alone implied — the fixed trunk cost is per-decision, not
+  per-draw. Compression Gap files as *consistent-with*, never
+  *predicted-by*: continuous heads convert encoder upgrades to
+  +21–26 pts where an 80-bit FSQ codebook passes +4–10 — but tiny
+  non-VLA single-seed models, frozen encoders, mechanism asserted
+  not measured, and our AR head's ~1,800-bit budget plausibly
+  escapes the bound entirely; with a WEAK encoder discrete wins by
+  17 pts. Watch note for the adamc k4l2 readout: flow-vs-AR
+  divergence under unfrozen vision may cite it as a rhyme only.

@@ -178,3 +178,28 @@ overlap shrinks. Menu unchanged; still parked on #16.
   dedup/retrieval primitive); cautionary: their Falcon baseline —
   naive warm-start from the previous timestep's action — collapses
   to 7.6% SR vs 41.0%. Menu unchanged; still parked on #16.
+
+- **2026-08-09 lit `0817` — the serving stack decomposes into
+  named layers ([Reflex](../papers/reflex.md) 2607.14695 +
+  [Legato](../papers/legato.md) 2602.12978, read as complements):**
+  Reflex (inference-only) formalizes what our architecture has by
+  construction — the frozen trunk never sees the flow timestep, so
+  trunk KV computed once per control step is *exactly* valid for
+  every ODE step (their MSE-0 proof; naive expert-side caching
+  collapses to 12.5% success). 2.58× headline is vs a
+  full-recompute strawman (openpi-class impls already reuse prefix
+  KV); the defensible gains are the async VLM-thread/expert-thread
+  split (reaction latency −47–54%, stall rate 100%→0% — stall rate
+  adopted as an instrument) and their 82–110 ms reaction band
+  brackets our 102 ms ActionCache anchor. Legato (train-time)
+  replaces RTC in the chunk-transition slot: guidance-aware FM
+  objective + schedule conditioning, matched vs RTC from the same
+  π0.5 checkpoint — completion time **−19–23%** on all 5 real
+  dual-arm tasks, frame-level smoothness ~flat (hook's "~10%
+  smoother" corrected both directions). Menu updated: transition
+  ladder = RTC (free) → Legato (fine-tune, gated on measured
+  boundary artifacts at rig time; objective change = own arm,
+  never a retrofit; bakes in N=5 solver steps). One infra check
+  queued informally: verify our rollout path caches trunk features
+  across ODE steps — if not, Reflex says the fix is free and
+  exact. Still parked on #16.

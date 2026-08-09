@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T21:15:00Z
+**Updated:** 2026-08-09T21:38:00Z
 
-**Depth call:** depth >=2 at 21:15Z 08-09 (stamp was hallucinated as 21:45Z, corrected by the 21:17Z tick): adamc-100k babysit to ~08-12 (live) + tiny-expert-10k (gpu-local relaunched post-OOM, endpoint ~05:1xZ 08-10) + lit-radar-0817 (cpu, 4 verified hooks + 6 spares) + idea4-fjoint-rung-finalize-exec (gpu-box, owner-gated) + docs-pass tail (owner-side only)
+**Depth call:** depth >=2 at 21:38Z 08-09: adamc-100k babysit to ~08-12 (live) + tiny-expert-10k (local, endpoint ~05:1xZ 08-10 -> chained panel_v2) + lit-radar-0818 (cpu, 4 verified-clean hooks, no spares - sweep pool drying note in item) + idea4-fjoint-rung-finalize-exec (gpu-box, owner-gated) + docs-pass tail (owner-side only)
 
-**9 open** (Live 2 · Queued 3 · Blocked 4 · Done 88)
+**9 open** (Live 2 · Queued 3 · Blocked 4 · Done 89)
 
 ## 🔴 Live (2)
 
@@ -44,15 +44,15 @@ T1 tiny-expert capacity rung, FINAL DESIGN (owner yes 19:59:04Z; 40k/biggest-bat
 
 *ready — waiting on a window or a boundary*
 
-**`lit-radar-0817`** · `cpu`
+**`lit-radar-0818`** · `cpu`
 
-Lit slice (standing allocation): refill hooks banked in the 0816 session's fresh sweep, all ids abs-page-verified by the sweep agent + dup-checked against papers/ + ideas/ + queue (2 dup catches dropped: 2607.23777 = Muon-SW alre…
+Lit slice (standing allocation): 4 verified-clean hooks from the 0817 session's refill sweep (16 candidates abs-page-verified by the sweep agent; 12 dropped as corpus dups by local grep vs papers/+ideas/+ideas.md - the sweep pool…
 
 **boundary:** any GPU-busy window; adamc rides to ~08-12 so windows are plentiful
 
 <details><summary>full record</summary>
 
-Lit slice (standing allocation): refill hooks banked in the 0816 session's fresh sweep, all ids abs-page-verified by the sweep agent + dup-checked against papers/ + ideas/ + queue (2 dup catches dropped: 2607.23777 = Muon-SW already read 0813; 2606.05468 FlowPRO = covered in hy-embodied-stack.md), priority-ordered - 2605.02881 MolmoAct2 (open-weight VLA on MolmoER, our trunk's direct lineage; specialize-then-rehearse on 3.3M samples incl. curated pool from 1,222 public LeRobot datasets w/ SO-100/101 subsets, 720h open bimanual; beats pi-0.5 + Gemini Robotics ER-1.5 across 7 benchmarks; #17 trunk-lineage + #9 curation recipe = the survey's #1 recommendation's paper) &gt; 2607.24481 ArmnetBench v0.1 (SO-101 arm-farm parallel eval, 7 policies x 12 tasks, 3,118 human-labeled episodes success/suboptimal/failure RELEASED - rare labeled failure-rollout data on our exact embodiment; #9 panel-calibration + #6/#16 failure labels we cannot collect ourselves) &gt; 2608.04246 SAFECAST (contrast-set perturbations + hidden-state risk probes + functional conformal prediction, ROC-AUC gains on DROID-real + LIBERO under shift; #6, pairs with ArmnetBench labels) &gt; 2607.14695 Reflex (timestep-invariance -&gt; streaming KV-cached inference for flow VLAs, 2.58x, stable 50 Hz, 54% reaction-latency cut; #22 - read w/ Legato 2602.12978 as infer-time/train-time complements) &gt; 2604.03191 Compression Gap (encoder upgrades give &gt;21-pt gains through continuous action heads but attenuated through discrete codebooks - mechanism-level flow-over-AR prediction that sharpens exactly when the trunk improves, i.e. our vision-unfrozen run; #19/#4). VERIFIED SPARES: 2605.30834 Hide-and-Seek (trajectory-label contrastive failure localization, #6), 2605.29605 VLAConf (single-pass success confidence from frozen-VLA hidden states, success-data-primary - calibration needs verifying, #6), 2605.13959 WarmPrior (temporal prior source, straighter paths, #19/#17), 2602.12978 Legato (native chunk continuation training, ~10% smoother vs RTC, #22), 2604.16683 Rewind-IL (training-free chunk-consistency failure detection from own draws, synergy w/ #19 machinery, #6), 2605.23061 SF-NorMuon (partly superseded by Muon-SW read, adamc spare). Papers page(s) same session per the permanent rule; dedup-check each id before writing.
+Lit slice (standing allocation): 4 verified-clean hooks from the 0817 session's refill sweep (16 candidates abs-page-verified by the sweep agent; 12 dropped as corpus dups by local grep vs papers/+ideas/+ideas.md - the sweep pool is drying, next sweep MUST diversify search angles AND the executor must grep the full corpus per id, never trust the agent's exclusion-list check), priority-ordered: 2606.16208 ATHENA (accelerated multi-task influence functions for robot data curation at billion-param VLA scale; #9's principled alternative to heuristic quality gating for the 229h corpus + the MolmoAct2 repo_list diff) &gt; 2606.09740 ProbeAct (probe-guided training-free failure detect-and-correct via hidden-state probes + control barrier functions; #6 - pairs directly with the ArmnetBench go/no-go separability gate banked 0817) &gt; 2606.17846 Qwen-RobotManip tech report (38,100h heterogeneous manipulation + egocentric human data, multi-stage curation/alignment pipeline at 166x our scale; #9 reference pipeline + #17 trunk-recipe signal) &gt; 2606.24752 Can Scale Save Us From Plasticity Loss (scale delays but does not prevent transformer plasticity loss; higher WD can improve plasticity despite worse pretrain loss; adamc watch-frame companion to WD-plasticity 2602.11137 - verify not same group re-cut, check whether its WD claims license anything at our 1e-5/1e-4 operating point). NO SPARES banked (dup rate left none) - session should run its own fresh sweep with new angles (suggested: cross-embodiment transfer, sim2real gap for SO-class arms, VLM-trunk continual learning, action-space/tokenizer design) before or instead of dipping below these 4. Papers page(s) same session per the permanent rule; dedup-check each id against the corpus before writing.
 
 </details>
 
@@ -144,7 +144,7 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 
 ---
 
-## ✅ Done (88)
+## ✅ Done (89)
 
 *closed — the full record stays in each fold*
 
@@ -157,6 +157,20 @@ OWNER STEERING 20:49:36Z 08-09: 'Woah, there's already a molmo2 VLA -- https://g
 <details><summary>full record</summary>
 
 OWNER STEERING 20:49:36Z 08-09: 'Woah, there's already a molmo2 VLA -- https://github.com/allenai/molmoact2. Write a super in-depth piece on it, everything you can find on training, arch, experiments etc. well organized.' Deliverable: long-form blog piece (paper 2605.02881 + repo + HF model/dataset cards + AI2 announcement + v1-&gt;v2 delta + competitive map + what-transfers-to-us), link in-channel. Note: the 0816 refill sweep had independently ranked this paper #1 ~20 min before the owner message; the 0817 queue item's priority-1 slot is satisfied by this piece.
+
+</details>
+
+---
+
+**`lit-radar-0817`** · `cpu`
+
+Lit slice (standing allocation): refill hooks banked in the 0816 session's fresh sweep, all ids abs-page-verified by the sweep agent + dup-checked against papers/ + ideas/ + queue (2 dup catches dropped: 2607.23777 = Muon-SW alre…
+
+**boundary:** any GPU-busy window; adamc rides to ~08-12 so windows are plentiful | CLOSED 2026-08-09 ~21:3xZ work session: 5 hooks -&gt; 4 Papers pages same session (armnetbench.md, safecast.md, reflex.md, legato.md, compression-gap.md; MolmoAct2 slot satisfied by the 08-09 owner deep-dive post). Hook corrections, three loud: ArmnetBench '3,118 human-labeled' = 2,518 human-scored rollouts + 600 unscored demos, and the claimed 84 task-policy checkpoints are NOT on the Hub (blocks the #9 calibration study -&gt; watch item); SAFECAST is NOT offline (contrast sets need closed-loop re-executions + hundreds of labeled rollouts incl. real failures) and its flow-policy cells land below coin-flip in its own alpha-marginalized metric (0.45 sim/0.38 real vs OpenVLA 0.80) -&gt; #6 cheapest-next-step sharpened into a go/no-go separability gate on the probe family; Legato '~10% smoother' wrong both directions (NSPARC ~flat; real headline completion time -19..23% vs RTC matched); Reflex 2.58x is vs a full-recompute strawman (defensible: async split -47..54% reaction latency, stall 100-&gt;0; K draws share one trunk prefill -&gt; #19 cost model split); Compression Gap heavily oversold (tiny non-VLA single-seed, mechanism asserted, our AR bit budget ~22x the bound). Ideas fed: #6 #9 #16 #19 #22. Refill sweep -&gt; lit-radar-0818: 16 candidates verified, 12 were CORPUS DUPS caught only by local grep (sweep-agent exclusion list insufficient - pool drying; instrument note logged in the 0818 item).
+
+<details><summary>full record</summary>
+
+Lit slice (standing allocation): refill hooks banked in the 0816 session's fresh sweep, all ids abs-page-verified by the sweep agent + dup-checked against papers/ + ideas/ + queue (2 dup catches dropped: 2607.23777 = Muon-SW already read 0813; 2606.05468 FlowPRO = covered in hy-embodied-stack.md), priority-ordered - 2605.02881 MolmoAct2 (open-weight VLA on MolmoER, our trunk's direct lineage; specialize-then-rehearse on 3.3M samples incl. curated pool from 1,222 public LeRobot datasets w/ SO-100/101 subsets, 720h open bimanual; beats pi-0.5 + Gemini Robotics ER-1.5 across 7 benchmarks; #17 trunk-lineage + #9 curation recipe = the survey's #1 recommendation's paper) &gt; 2607.24481 ArmnetBench v0.1 (SO-101 arm-farm parallel eval, 7 policies x 12 tasks, 3,118 human-labeled episodes success/suboptimal/failure RELEASED - rare labeled failure-rollout data on our exact embodiment; #9 panel-calibration + #6/#16 failure labels we cannot collect ourselves) &gt; 2608.04246 SAFECAST (contrast-set perturbations + hidden-state risk probes + functional conformal prediction, ROC-AUC gains on DROID-real + LIBERO under shift; #6, pairs with ArmnetBench labels) &gt; 2607.14695 Reflex (timestep-invariance -&gt; streaming KV-cached inference for flow VLAs, 2.58x, stable 50 Hz, 54% reaction-latency cut; #22 - read w/ Legato 2602.12978 as infer-time/train-time complements) &gt; 2604.03191 Compression Gap (encoder upgrades give &gt;21-pt gains through continuous action heads but attenuated through discrete codebooks - mechanism-level flow-over-AR prediction that sharpens exactly when the trunk improves, i.e. our vision-unfrozen run; #19/#4). VERIFIED SPARES: 2605.30834 Hide-and-Seek (trajectory-label contrastive failure localization, #6), 2605.29605 VLAConf (single-pass success confidence from frozen-VLA hidden states, success-data-primary - calibration needs verifying, #6), 2605.13959 WarmPrior (temporal prior source, straighter paths, #19/#17), 2602.12978 Legato (native chunk continuation training, ~10% smoother vs RTC, #22), 2604.16683 Rewind-IL (training-free chunk-consistency failure detection from own draws, synergy w/ #19 machinery, #6), 2605.23061 SF-NorMuon (partly superseded by Muon-SW read, adamc spare). Papers page(s) same session per the permanent rule; dedup-check each id before writing.
 
 </details>
 
