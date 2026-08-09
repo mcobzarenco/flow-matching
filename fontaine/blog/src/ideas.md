@@ -47,7 +47,13 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   beat state-copy by 2.35, 8 matched probes show no K edge, measured
   4.11× step cost, production frozen-first votes). Δ_seam@3750
   rescue read priced ~2.5 GPU-h (own pre-reg). Open remnants:
-  arm 1 depth-of-reads, F-then-joint rung (must argue vs 4× cost).
+  arm 1 depth-of-reads, F-then-joint rung —
+  **[pre-reg DRAFT posted 2026-08-09](posts/2026-08-09-prereg-fjoint-rung.md)**:
+  J (unfrozen, no stop-grad, CE rider, from the banked F@10k
+  expert) vs F2 (frozen continuation control), matched +5k,
+  committed ~32 GPU-h ceiling 35, conditional 10k extension;
+  finalizes on instrument + owner go, venue ~08-12
+  post-adamc-endpoint.
   New 2026-08-09 ([LP-FT](papers/lpft-two-phase-schedules.md), owner
   a(t)/b(t) steering): the rung's THIRD same-shape citation and the
   first with a matched frozen control AND a mechanism theorem —

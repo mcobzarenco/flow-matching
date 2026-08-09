@@ -264,3 +264,12 @@ between these two priors on our own panel before any escalation.
   toward T=0.5. Banked beside the table as a sighting, not
   evidence (their mechanism is exploration-vs-exploitation, not
   mean-collapse); primary stays T=1.0 per pre-reg.
+- **2026-08-09 ~14:3xZ — trained-critic pole placed and parked
+  ([Robot Critics page](../papers/robot-critics-small-stuff.md),
+  2606.21572):** fine-tuned VLM critic (pairwise success/failure
+  supervision from policy rollouts) + action-conditioned video
+  outcome model → +11% real / +5.9% sim. Consistent with RoVer and
+  the free-scorer arc: learning the judge is what makes judging
+  work. Parked at its stated price — needs rollout labels (#16)
+  and a video model, and our ceiling reads cap the payoff on our
+  decodes (AR small, flow ~null). No rank change.

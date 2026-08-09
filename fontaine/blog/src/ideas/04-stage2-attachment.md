@@ -332,3 +332,26 @@ matched steps.
   pre-reg, rescue-only); F-then-joint draft must argue vs the 4×
   joint-step cost; AEGIS repair unbanked-never (its trigger outcome
   can no longer occur); arm 1 depth-of-reads untouched.
+- **F-then-joint rung PRE-REG DRAFT posted 2026-08-09 ~14:2xZ
+  ([draft](../posts/2026-08-09-prereg-fjoint-rung.md)) — the
+  escalation the memo unblocked, drafted in the adamc_100k shadow.**
+  Design: both arms warm-start from the banked F@10k endpoint
+  (APT's Stage-1 capital, already paid for); **J** = trunk unfrozen,
+  NO stop-grad, CE rider continuing (the APT best-row analog) vs
+  **F2** = frozen continuation control (exists because F's probe was
+  still falling — beats crediting the joint phase with plain extra
+  training). Matched +5k eff-48, fresh shared shuffle seed 2;
+  primary Δ_joint = J@+5k − F2@+5k paired CI; conditional 10k
+  extension only on a negative CI; adoption bar −0.3 at +10k; drift
+  band 0.3 vs 60k 5.8602 inherited as read 4. Cost committed ~32
+  GPU-h (ceiling 35; extension → global 70), J's rate anchored on
+  K's MEASURED 3.782 s/step. The 4×-cost burden answered up front:
+  the rung prices a bounded final phase, not a lineage. Code audit
+  found `--init-from` does the warm-start nearly free; instrument
+  gaps named = composite materializer (F@10k + phase-1 rider
+  tables), a narrowly-scoped escape for the naive-joint guard
+  (refusal stays for random-init), AR-view compat check, J-config
+  memory smoke. DRAFT status: finalizes on instrument + owner go +
+  execution queue item; venue opens ~08-12 post-adamc-endpoint, and
+  the rung-vs-attach sequencing question goes to the owner at
+  finalization.

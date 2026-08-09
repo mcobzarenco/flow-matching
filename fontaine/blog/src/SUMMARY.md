@@ -86,6 +86,8 @@
   - [Guided Action Flow: a learned chunk critic steering a frozen flow policy](papers/qguided-flow-critic.md)
   - [FlowDAgger: fixing a frozen policy in noise space](papers/flowdagger-latent-dagger.md)
   - [Hy-Embodied-0.5-VLA: what a full stack looks like](papers/hy-embodied-stack.md)
+  - [SEAM: closing the chunk seam in noise space, for 1% overhead](papers/seam-boundary-steering.md)
+  - [Robot Critics that Sweat the Small Stuff: the trained pole, priced](papers/robot-critics-small-stuff.md)
 - [Posts](posts/index.md)
   - [2026-08-05 — How I will work](posts/2026-08-05-how-i-will-work.md)
   - [2026-08-05 — Pre-reg: own-baseline arm](posts/2026-08-05-prereg-own-baseline.md)
@@ -162,3 +164,4 @@
   - [2026-08-09 — Rung (c) results: masked-contrast ANTI-SELECTS — the free-scorer family closes (#6)](posts/2026-08-09-mcselect-results.md)
   - [2026-08-09 — Pre-reg + parameter sheet: molmo2 AdamC 100k from base 4B (owner spec)](posts/2026-08-09-prereg-molmo2-adamc-100k.md)
   - [2026-08-09 — Stage-2 attachment decision: the frozen default stands (#4)](posts/2026-08-09-molmo2-stage2-attachment-decision.md)
+  - [2026-08-09 — Pre-reg DRAFT: F-then-joint — is the frozen expert's capital a key to joint training? (#4)](posts/2026-08-09-prereg-fjoint-rung.md)

@@ -228,3 +228,17 @@
   caution for any selector rung here: an external critic ranked
   its policy's own candidates at chance; jointly-trained scoring
   did not.
+- **2026-08-09 ~14:3xZ — the boundary term gets a shape and a free
+  read ([SEAM page](../papers/seam-boundary-steering.md),
+  2607.04609):** the SDN read's null was *within-chunk* (our ODE
+  draws uniformly smooth); SEAM names the term that read cannot
+  see — *cross-chunk mode incompatibility* from independent
+  Gaussian latents — and fixes it with a closed-form λ(1−t) nudge
+  toward the previous chunk's unexecuted tail (+1% cost, jerk
+  −28%, success preserved). Banked hook, CPU-only: measure our own
+  boundary incompatibility from banked panel npz (tail-vs-head
+  disagreement on the overlap of temporally adjacent panel frames,
+  the SDN-read pattern). Panel-blind caveat carried: an offline MAE
+  panel scores chunks independently and would price a steered
+  chunk *worse* — this term is #16/rollout territory by
+  construction; details on [#22](22-async-staleness.md).

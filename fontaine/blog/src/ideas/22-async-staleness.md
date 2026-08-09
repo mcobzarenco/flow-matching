@@ -75,10 +75,26 @@
   the field's ceiling. Gate unchanged: parked until #16's rig bench
   exists.
 
-- **Fresh radar hook banked 2026-08-09 12:3xZ (sweep; unread,
-  skim-class only):** SEAM 2607.04609 — "smooth execution of
-  action-chunked motion": adjacent independently-sampled chunks
-  can pick incompatible modes → boundary discontinuities. Directly
-  on the #1/#22 boundary-jerk open term (the SDN jerk read showed
-  our draws smooth within-chunk, boundary unmeasured). Needs the
-  read before any instrument talk.
+- **2026-08-09 ~14:3xZ — SEAM read (the 12:3xZ hook cleared;
+  [page](../papers/seam-boundary-steering.md), 2607.04609): the
+  cheapest entry in the bridging family, and a free measurement for
+  us.** Training-free inference-time steering: after each Euler
+  step, a closed-form nudge pulls the new chunk's first M positions
+  toward the previous chunk's unexecuted tail ("aligned prior"),
+  scaled λ(1−t) — no backprop, +1% denoise cost. π0.5/LIBERO-10:
+  boundary jerk −28%, discontinuity −27%, success 94.8→95.7 (vs
+  RTC −54% at 1.22×; vs ACT-TE −84% but success −12 pts —
+  over-smoothing kills contact timing). **Arm order update: SEAM
+  slots ahead of PAINT as the cheapest smoothing arm** (PAINT
+  inverts 3N calls; SEAM is closed-form) — but PAINT stays the
+  async-robust one (SEAM assumes the tail is available at sampling
+  time; under async overlap the prior goes stale, unmeasured in the
+  paper). λ ablation caution banked: 0.15–0.2 erodes success —
+  guidance strength is not free. **Banked free hook (feeds #1
+  too): the boundary-incompatibility CPU read** — our panel npz
+  stacks hold predicted chunks on temporally ordered frames; tail
+  -vs-head disagreement on the overlap of frames Δt apart is a pure
+  function of banked data (the SDN-read pattern, zero GPU). A null
+  (our chunks already agree at the seam) would close the whole
+  bridging direction for our stack before any rig work. Gate
+  unchanged: parked until #16; the CPU read needs no gate.
