@@ -101,8 +101,26 @@ revision](posts/2026-08-06-panel-v2-amendment.md).
   — rows 8+9 cost cells (box-measured)
 - Accuracy-by-field: **missing from this panel by bug** (the narrated
   pass silently skipped molmo2 checkpoints; found + fixed `2f4d575`
-  2026-08-08). The 60k endpoint gets the table via the registered
-  [fields panel](posts/2026-08-08-prereg-accuracy-by-field.md)
+  2026-08-08). The table landed at the 60k endpoint instead — see the
+  [fields panel results](posts/2026-08-09-molmo2-fields-panel-results.md)
+  in the @60k section below
+
+## Molmo2 AR trunk `fontaine_molmo2_ar_60k_ddp4` @60k ([results](posts/2026-08-09-molmo2-60k-results.md) · [fields panel](posts/2026-08-09-molmo2-fields-panel-results.md))
+
+- [endpoint panel json, greedy (curated v0 k4l2)](https://mcobzarenco-fontaine-blog.static.hf.space/reports/eval__fontaine_molmo2_ar_60k_ddp4__step_060000__panel_curated_v0_k4l2.json)
+  — 5.8602/2.0719, the IMPROVED endpoint (−0.139 paired vs 40k) that
+  repointed the attach screen to `step_060000`
+- [accuracy-by-field table json](https://mcobzarenco-fontaine-blog.static.hf.space/reports/eval__fontaine_molmo2_ar_60k_ddp4__step_060000__panel_curated_v0_k4l2_fields.json)
+  — the registered fields panel read at this endpoint (visible slots
+  0.32 → 0.82 vs the Gemma trunk)
+- [frozen 60k-vs-40k analysis JSON](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__molmo2_60k_vs_40k_k4l2.json)
+  (`molmo2_60k_results.py`, pre-registered reads)
+- No per-frame HTML panel for this eval: the panel ran without
+  `--report` (the HTML renders at eval time from retained
+  predictions), so the banked artifacts are the json + npz. Ask if a
+  browsable panel is wanted — it needs a panel re-run (~1 GPU-h).
+- Checkpoint weights on the hub:
+  [`fontaine-checkpoints/fontaine_molmo2_ar_60k_ddp4/step_060000`](https://huggingface.co/mcobzarenco/fontaine-checkpoints/tree/main/fontaine_molmo2_ar_60k_ddp4/step_060000)
 
 ## Golden-ticket noise screen ([close-out](posts/2026-08-08-goldenticket-results.md) · [visual report](posts/2026-08-08-goldenticket-visual-report.md))
 

@@ -2,7 +2,46 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-09 03:50–04:1xZ (real `date -u`) — tick: **caught and
+answered an owner question from 03:28Z that the previous session's
+read cursor had consumed without replying** (surfaced via the
+`history` check — exactly the gap that check exists for); the asked
+gap was real and is fixed.*
+
+**Status**: no live GPU runs (babysit 0 registered, exit 0); box +
+local free. Queue OK depth 2; `run_work_next` still armed — the
+chained work session owns the K-smoke ladder box claim.
+
+**Steering**: owner 03:28Z asked (1) are the molmo2 60k eval reports
+linked from reports/? (2) is the checkpoint on the hub? **Answer:
+hub yes** (re-verified live: `fontaine-checkpoints/
+fontaine_molmo2_ar_60k_ddp4/step_060000`, 4 files), **reports page
+no — a real gap**: the 60k panel json/npz/fields + the frozen
+`analysis__molmo2_60k_vs_40k_k4l2.json` were banked locally but
+never pushed to the Space, and reports.md had no @60k section (its
+40k section still forward-referenced the fields pre-reg). Replied
+03:57Z, fix confirmed in-channel 04:02Z.
+
+**Done**: (1) pushed the three 60k jsons to the Space `reports/`
+(panel, fields table, 60k-vs-40k analysis; npz stays banked local —
+Space convention is json+html only); (2) reports.md: new **Molmo2
+@60k section** (links + hub checkpoint pointer + honest caveat: no
+per-frame HTML panel exists — the eval ran without `--report`; a
+browsable panel needs a ~1 GPU-h re-run, offered to ride the K-smoke
+claim if wanted) + the 40k section's stale fields forward-reference
+updated; (3) blog rebuilt, book pushed, all 4 links curl-200. (4)
+Process note for future closes: **post-eval checklist gains "reports
+page section + Space artifact push"** — the 60k close (00:2xZ) and
+fields close (01:0xZ) both posted results but skipped the reports
+page.
+
+**Next**: chained work session (`run_work_next` armed):
+`idea4-attach-k-smoke-ladder` on the free box (owner may add the 60k
+HTML panel re-run to that claim), then
+`molmo2-stage2-attachment-decision` steer window.
 
 *Updated 2026-08-09 03:17–04:0xZ (real `date -u`) — work session
 (bounded, the chained rc owner): **subgoal-swap CLOSED end-to-end —
@@ -78,63 +117,6 @@ projection fix, frozen Δ_swap / swap-vs-oracle / horizon-mirror reads
 against the frozen 3-row table + results post; then
 idea4-attach-k-smoke-ladder on the free box.
 
-*Updated 2026-08-09 01:43–03:1xZ (real `date -u`) — work session
-(bounded, chained): **perf-pass1 box ladder CLOSED and read out — the
-bundle is SLOWER on the real recipe (C −7.3%, P1 −10.8%), nothing
-perf-claiming lands, P1 dead twice over**; and the **subgoal-swap
-instrument landed oracle-green + the arm launched same session** —
-identity phase already BYTE-reproduced the banked oracle arm (the
-keystone oracle (ii), GREEN over all 25,800 rows), the content-wrong
-swap arm is live.*
-
-**Status**: Local **subgoal_swap LIVE** (unit fontaine-subgoal-swap,
-launched 02:13:47Z): identity full-panel pass done ~02:58Z rc=0 →
-**oracle (ii) GREEN** (identity npz byte-equal to the banked oracle
-arm, all shared columns, 25,800 rows; 25,788 swap records dumped) →
-swap arm (_swapsubgoal) live since ~03:00Z at ~546 f/min cumulative,
-**rc ~03:4x–03:5xZ** incl. the in-unit mechanical dump check (oracles
-i+iv, abort-on-red); ~1.6 GPU-h total ≤ 3 gate. Box GPUs **FREE**
-since 02:26Z (ladder closed) — next box claim = K-smoke ladder at the
-60k warm start.
-
-**Steering**: none (read clean at 01:45/02:18/02:37Z babysits; history
-= our own posts, no reactions).
-
-**Done** (commits 190ecb0-era + this close): (1) **subgoal-swap
-instrument delta** (pre-reg posted 01:4xZ, implemented this session):
-`bijou/eval/subgoal_swap.py` map builder (judgments sidecar under the
-dataset's own stamp = materialize's exact selection; span model
-reproduces the persistent-row semantics so identity provably equals
-the oracle arm), pinned fraction-matching (nearest labeled frame,
-ties earlier), per-repo Sattolo derangement (order-independent
-seeding); BijouPolicy `_swapsubgoal`/`_swapidentity` wiring +
-per-frame provenance records; CLI `--subgoal-swap-seed`/
-`--subgoal-swap-identity`/`--dump-subgoal-swaps`; 16 fixture oracles
-(check.py 554); launcher with the 4-phase abort-on-red sequence +
-`subgoal_swap_live_oracles.py` (selftest green, all abort branches
-fire). LAUNCHED 02:13:47Z. (2) **perfpass1 box ladder readout**
-(closed 02:26:32Z rc=0): OVERLAY PASS (0.0816 ≤ 0.3919 band); LADDER
-A=2.251s / B=2.495s / C=2.415s → **B −10.8% / C −7.3% vs A** — the
-frozen <5% branch executed: **no bundle landing**; P1 (suffix cuDNN)
-dead twice over (banked loss-bound fail AND −10.8% measured) so the
-owner relative-bound question is **moot**; P2+bitwise items split to
-new queue item `molmo2-perf-pass1-subset-landing` (CPU hygiene, no
-speed claim). Lesson recorded: local kernel microbenches don't
-predict end-to-end under 4×DDP comms overlap; future bench gates
-count model loads (~5.5 GPU-h actual vs 3.0 ceiling, CONTINUE judged
-01:42Z). Results post + house-dark dot chart + analysis json banked;
-Space pushed, links 200, Discord posted. (3) babysit self-match note
-added (driver-session log watchers can false-positive the
-subgoal_swap pgrep; the run is transient-unit-safe).
-
-**Next**: swap arm rc ~03:4x–03:5xZ → chained session owns the dump-
-check verification, babysit prune, the **frozen reads** (Δ_swap
-paired CI / swap-vs-oracle / horizon mirror against the frozen 3-row
-interpretation table — the read script is the first CPU item) +
-results post. Then `queue_cli.py next` = idea4-attach-k-smoke-ladder
-(box FREE now) → owner steer window → attach arms.
-`run_work_next` armed.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -172,12 +154,14 @@ phase-roll projection gap fixed generically (e8ef9d5, 2 anchored
 oracles) + subgoal_swap_results.py landed under check.py (557).
 Discord read clean at every poll.
 
-Session 2026-08-09 03:12–03:2xZ (tick; 0 GPU-h new — the live swap
-arm pre-registered and counted): babysit exit-3 on subgoal_swap
-judged CONTINUE — the ~3.2 GPU-h projection is a phase-roll artifact
-(frame counter resets at identity→swap, cumulative divides swap-only
-frames by time-since-launch; true swap rate ~590 f/min, rc ~03:45Z,
-~1.6 GPU-h ≤ 3 gate); diagnosis anchored in babysit.toml, generic
-multi-phase-counter babysit.py fix owed to the chained work session
-(`run_work_next` already armed). Discord read + history clean; queue
-validate green depth 3.
+Session 2026-08-09 03:50–04:1xZ (tick; 0 GPU-h): owner question
+03:28Z (60k reports linkage + hub upload) had been cursor-consumed
+unanswered by the prior session — caught via the `history` check and
+answered: hub YES (re-verified), reports page NO (real gap). Fixed
+same tick: three 60k jsons pushed to the Space `reports/`, reports.md
+@60k section added (+ stale 40k fields forward-ref updated), blog
+rebuilt + book pushed, 4 links curl-200, both Discord replies
+posted. No HTML panel for the 60k eval exists (ran without
+`--report`) — a ~1 GPU-h re-run offered to ride the K-smoke claim.
+Babysit 0 registered exit 0; queue validate green depth 2;
+`run_work_next` already armed.
