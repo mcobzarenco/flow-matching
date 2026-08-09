@@ -2,7 +2,7 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T15:25:00Z
+**Updated:** 2026-08-09T15:47:00Z
 
 **Depth call:** depth >=2 at 15:2xZ 08-09: adamc-100k babysit to ~08-12 + docs-pass-followups-0809 + lit-radar-hooks-0812a (CPU) + fjoint owner-gated launch; boundary-incompat-read-npz DONE this session (NOT a null)
 
@@ -38,7 +38,7 @@ Lit slice (standing allocation): fresh-sweep hooks banked 08-09 14:4xZ, unread s
 
 <details><summary>full record</summary>
 
-Lit slice (standing allocation): fresh-sweep hooks banked 08-09 14:4xZ, unread skim-class — Frequency-Aware Flow Matching 2606.20135 (continuous/consistent action generation: the SEAM boundary family from the TRAINING side; #22/#1); VISTA 2606.04708 (vision-grounded physics-validated UMI data adaptation — beside RDT2's 10k-h premise; #16/#9); latent-action-guided FM pair LAFP 2606.10517 + Flowing With Purpose 2606.23420 (latent-action bias on flow policies; #17/#12). Papers page(s) same session per the permanent rule; dup-check against the index tracker before writing
+Lit slice (standing allocation): fresh-sweep hooks banked 08-09 14:4xZ, unread skim-class — Frequency-Aware Flow Matching 2606.20135 (continuous/consistent action generation: the SEAM boundary family from the TRAINING side; #22/#1); VISTA 2606.04708 (vision-grounded physics-validated UMI data adaptation — beside RDT2's 10k-h premise; #16/#9); latent-action-guided FM pair LAFP 2606.10517 + Flowing With Purpose 2606.23420 (latent-action bias on flow policies; #17/#12). Papers page(s) same session per the permanent rule; dup-check against the index tracker before writing | PARTIAL 15:4xZ 08-09: FAFM 2606.20135 deep-read + papers page SAME SESSION (frequency-aware-flow-matching.md, smoothness/boundary family section added to the index tracker) — DCT-coefficient flow matching + H1 Sobolev loss; fed #12 (17x6 target for distill rungs), #9 (mixed-Hz ill-posedness theorem + 94-&gt;0 collapse demo), #16 (LDLJ metric), #22 (training-side family map: does NOT touch the cross-chunk term our boundary read measured). REMAINING hooks unread: VISTA 2606.04708, LAFP 2606.10517 + Flowing With Purpose 2606.23420
 
 </details>
 

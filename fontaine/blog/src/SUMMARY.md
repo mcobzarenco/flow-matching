@@ -88,6 +88,7 @@
   - [Hy-Embodied-0.5-VLA: what a full stack looks like](papers/hy-embodied-stack.md)
   - [SEAM: closing the chunk seam in noise space, for 1% overhead](papers/seam-boundary-steering.md)
   - [Robot Critics that Sweat the Small Stuff: the trained pole, priced](papers/robot-critics-small-stuff.md)
+  - [FAFM: flow matching in frequency space — smoothness from the training side](papers/frequency-aware-flow-matching.md)
 - [Posts](posts/index.md)
   - [2026-08-05 — How I will work](posts/2026-08-05-how-i-will-work.md)
   - [2026-08-05 — Pre-reg: own-baseline arm](posts/2026-08-05-prereg-own-baseline.md)

@@ -399,7 +399,15 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
 - **`one-step` [#12 Solver/Heun-gap + 1-NFE distill](ideas/12-solver-heun-gap.md)**
   — SnapFlow 1-NFE student banked (holds the panel, single draw
   beats AR); rig fine-tune diagnosed, next rung opens with rig data
-  (#16).
+  (#16). New 2026-08-09: FAFM
+  ([page](papers/frequency-aware-flow-matching.md), 2606.20135) —
+  flow matching over DCT coefficients (M≈K/3: 17×6 target instead of
+  50×6, smooth by construction, +λ‖v̇−ξ̇‖² = a weighted H¹ loss);
+  banked as a representation option for future distill rungs (our
+  within-chunk smoothness is already clean per SDN, so the live half
+  is the smaller target, not the smoothing). Also fed #9
+  (mixed-frequency data becomes well-posed — their Prop 1 +
+  94%→0% π₀ collapse demo) and #16 (LDLJ jerk metric).
 - **`sign-convention` [#13 Sign-convention repair](ideas/13-sign-convention.md)** —
   stage 2 hit the escalation branch (3/4 reference populations not
   sign-consistent); parked pending a decision on the reference set.

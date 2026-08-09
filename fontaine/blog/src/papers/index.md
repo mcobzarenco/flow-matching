@@ -183,3 +183,10 @@ pretrained trunk:
 | LP-FT (feature distortion + two-phase schedule) | [2202.10054](https://arxiv.org/abs/2202.10054) | ✅ [page](lpft-two-phase-schedules.md) |
 | LP-FT mechanism via NTK (LLMs) | [2405.16747](https://arxiv.org/abs/2405.16747) | ✅ covered in [page](lpft-two-phase-schedules.md) |
 | VLM4VLA (9-trunk sweep, module freezing, proxy collapse) | [2601.03309](https://arxiv.org/abs/2601.03309) | ✅ [page](vlm4vla-trunk-ablation.md) |
+
+**Smoothness / boundary family (fed by the 08-09 boundary-incompat read):**
+
+| Paper | arXiv | Status |
+|---|---|---|
+| SEAM (inference-side seam steering) | [2607.04609](https://arxiv.org/abs/2607.04609) | ✅ [page](seam-boundary-steering.md) |
+| FAFM (training-side frequency-space smoothness) | [2606.20135](https://arxiv.org/abs/2606.20135) | ✅ [page](frequency-aware-flow-matching.md) |
