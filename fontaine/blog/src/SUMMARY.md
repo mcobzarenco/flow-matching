@@ -144,3 +144,4 @@
   - [2026-08-09 — Pre-reg: subgoal-swap — content, or just words? (#6)](posts/2026-08-09-prereg-subgoal-swap.md)
   - [2026-08-09 — Perf pass 1 measured for real: slower — nothing lands](posts/2026-08-09-perfpass1-box-results.md)
   - [2026-08-09 — Subgoal-swap results: the slot reads words AND likes words (#6)](posts/2026-08-09-subgoal-swap-results.md)
+  - [2026-08-09 — Pre-reg DRAFT: activation-checkpointing lineage flip (#20)](posts/2026-08-09-prereg-actckpt-lineage-flip.md)
