@@ -5,6 +5,52 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-09 15:59–16:1xZ (real `date -u`) — tick (babysit):
+**adamc_100k healthy through step 3000 — probe@2500 banked at
+14.0294, now the @10k kill-bar reference; local v2-all ticket
+selection riding for the owner, ETA ~16:3xZ.***
+
+**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE (launch 3) —
+babysit exit 0, 8 procs, ~75.1–75.3 GiB ×4 vs the 77 bar, step 3000
+at the 16:00 poll, window 19.9 f/min steady, 9.4/310 GPU-h. Probe
+trajectory 31.30@500 → 24.48@1000 → 16.87@1500 → **14.03@2500**
+(banked at the 15:52 poll, quoted in-channel with the ticket post).
+LOCAL GPU: `fontaine-ftrig-ticket64-v2all.service` live — the owner's
+15:44Z request (best 1-NFE ticket over all of so101_pick_place_v2,
+training rows included), launched 15:46Z by the work session;
+9,792/32,679 frames at 16:00:34Z, steady 160-frame ticks, util bursty
+0–100% (~50% duty — GPU forwards alternating with CPU scoring, same
+shape as the holdout run; judged inherent to the eval loop, not input
+starvation — no intervention at 30%-done). ETA ~16:30–16:40Z →
+`plans/ticket_ftrig4k_rigv2all_winner.npz` + table owed in-channel
+(vs ticket 59 holdout winner and ticket33). Next adamc boundary:
+**first async-save line at step 5000 (~17:2xZ, quote owed
+in-channel — the chained session catches it)**; kill-bar comparison
+binds at eval@2500 vs @10k (~08-10); endpoint ~08-12 ~17:00Z →
+chained k4l2 panel (--report).
+
+**Steering**: none new — `read` empty; history -n 5 = the owner's
+two ticket questions (15:39Z tickets×--target-time, 15:44Z v2-all
+selection), both answered same-session by the 15:2x–15:5x work
+sessions (composition explainer 15:42Z, v2all launch ack 15:46Z);
+no reactions. The 13:48Z gate question stays unanswered; declared
+default (let it run, gate 310) governs.
+
+**Done**: babysit poll (exit 0, unfiltered); v2all unit health check
+(journal progress steady, util pattern attributed, left riding);
+queue validate green depth 3 (8 open) — committed the previous
+session's pending queue.json (docs-pass subitem 1 DONE per 51a692e +
+new `corpus-continuity-screen` CPU item from the VISTA hook);
+`run_work_next` armed — v2all landing, the step-5000 save line and
+the CPU queue all fall to the chained session.
+
+**Next**: chained work session → post the v2-all ticket table when
+the unit lands (~16:3xZ), then the step-5000 async-save quote
+~17:2xZ; queue pointer `corpus-continuity-screen` /
+`boundary-incompat-read-npz` / docs-pass tail (owner-side wandb
+only). fjoint launch remains owner-gated post-adamc-endpoint
+(~08-12 ~17:00Z+).
+
 *Updated 2026-08-09 14:54–15:0xZ (real `date -u`) — tick (babysit):
 **adamc_100k healthy through step 1560 — probe@1500 banked at
 16.8716, down hard again from 24.48@1000.***
@@ -91,38 +137,6 @@ boundaries: async-save quote ~17:2xZ (chained tick), eval@2500-vs-@10k
 comparison ~08-10, endpoint ~08-12 ~17:00Z → chained panel →
 leaderboard row + grad-norm chart. `run_work_next` armed.
 
-*Updated 2026-08-09 14:34–14:4xZ (real `date -u`) — tick (babysit):
-**adamc_100k healthy through step 1100 — probe@1000 banked at
-24.4834, down hard from 31.30@500.***
-
-**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE (launch 3) —
-babysit exit 0, 8 procs, ~75.1–75.3 GiB ×4, step 1100 at the 14:34
-poll, window 19.7 f/min (probe eval@1000 inside the window; steady
-neighbors remain 2.56–2.62 s/step). **Probe@1000: eval_chunk_mae
-24.4834, train_mae 25.5791** — falling fast out of warmup, already
-under the 25 sustained-×3 bar that only binds after step 5000. Loss
-5.30@1100 falling smoothly. Cumulative 3.6/310 GPU-h. Next boundary:
-**first async-save line at step 5000 (~17:2xZ, quote owed
-in-channel)**; kill-bar comparison binds at eval@2500 vs @10k
-(~08-10); endpoint ~08-12 ~17:00Z → chained k4l2 panel (--report).
-
-**Steering**: none — `read` surfaced only our own two posts (the lit
-slice + its typo fix); history -n 5 all our own, no reactions. The
-13:48Z gate question (let-run vs act-ckpt refit) remains unanswered;
-declared default (let it run, gate 310) governs.
-
-**Done**: babysit poll + log-level anomaly scan (probe@1000 pulled
-from the box log — the CLI window rate attributed to the in-window
-eval, grad-norm watch unremarkable); queue validate green depth 4
-(9 open); `run_work_next` left armed (GPUs busy + CPU items queued).
-
-**Next**: chained work session → `boundary-incompat-read-npz` (free
-npz read) or the fjoint instrument CPU part or
-`docs-pass-followups-0809` / `lit-radar-hooks-0812a`; `queue.json`
-canonical. adamc_100k boundaries unchanged: async-save quote
-~17:2xZ, eval@2500-vs-@10k comparison ~08-10, endpoint ~08-12
-~17:00Z → chained panel → leaderboard row + grad-norm chart.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -155,14 +169,6 @@ call — no endpoint, no chained evals)**). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
-Session 2026-08-09 14:37–14:5xZ (work session, bounded; exploit;
-0 new GPU-h — adamc_100k rides, 4.7/310 at the 14:49 poll): fjoint
-instrument LANDED oracle-gated (49ee316; composite materializer +
---joint-unfrozen-seam escape + AR-view compat, 12 oracles, check.py
-596 green) — pre-reg finalization condition 1 of 3 done, launch
-stays owner-gated post-adamc-endpoint. Queue depth 4 (9 open).
-run_work_next armed.
-
 Session 2026-08-09 14:54–15:0xZ (tick, babysit; 0 GPU-h new —
 adamc_100k rides, 5.0/310): run healthy at step 1560 — probe@1500
 16.8716 (from 24.48@1000, 31.30@500), loss 4.99 falling, grad-norm
@@ -173,3 +179,14 @@ question still open (default governs). Queue green depth 4 (9 open);
 run_work_next stays armed (GPUs busy + CPU items queued). Stable
 stretch → exited; next boundary the step-5000 async-save line
 ~17:2xZ.
+
+Session 2026-08-09 15:59–16:1xZ (tick, babysit; 0 new GPU-h —
+adamc_100k rides, 9.4/310; local v2all ticket eval in flight, cost
+booked at landing): adamc healthy at step 3000 — 19.9 f/min, probe
+31.30@500 → 24.48@1000 → 16.87@1500 → 14.03@2500 (the @10k kill-bar
+reference), ~75 GiB ×4 vs 77. v2all selection 9.8k/32.7k frames,
+bursty-but-steady, left riding, ETA ~16:3xZ. Discord read clean;
+history = the owner ticket thread, fully answered by the work
+sessions. Queue green depth 3 (8 open, prior session's queue.json
+committed); run_work_next armed → chained session posts the v2all
+table + catches the step-5000 save line ~17:2xZ.
