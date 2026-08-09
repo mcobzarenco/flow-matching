@@ -36,6 +36,33 @@ value = 310.0
 # (1.7-2.1 s/step) that OOM'd. Owner offered stop+act-ckpt alternative,
 # default let-it-run.
 
+[[run]]
+name = "tiny10k"
+kind = "progress-log"
+host = "local"
+pgrep = "tinyfit_b|fontaine_molmo2_flow_tiny_h256"
+pgrep_min = 1
+gpu_indices = [0]
+gpu_mem_min_mib = 4000
+log = "/home/ubuntu/train_fontaine_molmo2_flow_tiny_h256_10k_1xh100.log"
+progress_re = "\"step\": [0-9]+"
+jsonl = "/home/ubuntu/flow-matching/outputs/train/fontaine_molmo2_flow_tiny_h256_10k_1xh100/train_log.jsonl"
+probe_key = "eval_chunk_mae"
+started_utc = "2026-08-09T20:12:00Z"
+gpu_hours_per_wall_hour = 1.0
+boundary = "T1 tiny-expert capacity rung, FINAL DESIGN (owner 20:08:53Z: original matched-F plan; the 40k/biggest-batch amendments reverted pre-step-1): h256/d12 width-only contrast vs F (taps+adapters identical), frozen 60k trunk (backbone sha e6ed783b verified), LOCAL 1xH100, unit fontaine-tiny10k, 10k steps @ eff-48 (48x1 vs F 12x4), saves 1250 (F cadence), probe 500. Pre-reg posts/2026-08-09-prereg-tiny-expert-40k.md incl. final amendment block. PHASE 1 = fit ladder b48c12 -> b48c24 (green = rc0 + vram_alloc_peak <= 74; jsonl in outputs/train/tinyfit_b*/ during this phase); PHASE 2 = 10k run (~10-11 h est, endpoint ~06-07Z 08-10); PHASE 3 = chained panel_v2 @10000 = THE matched read vs banked F@10k 9.4157. First poll after ladder: measured s/step + vram + wall projection in-channel. LAUNCH HISTORY: 20:03Z all-red rc2 (--zero1/--chunk-grad-allreduce DDP-only, dropped); 20:05Z b96 ladder started then owner re-scoped; 20:1xZ relaunch at final design."
+anchors = [
+    "kill lines (save boundaries): NaN/inf loss; probe (eval_chunk_mae) > 20 sustained x3 consecutive evals after step 5000; vram alloc peak > 77 GiB",
+    "record-only: probe vs F phase-1 curve (10.2595@5000, 9.9391@7500, 9.3798@10000) — now step- AND batch-matched, so the probe ladder is directly comparable; still never a kill line (capacity gap is the hypothesis under test)",
+    "recipe: decoder-lr 1e-4, warmup 500, wd 1e-5, grad-clip 10, seed 0, eval-seed 0, h256/heads4/int1024/cross8, stride-3 12-tap residual surface, frozen trunk",
+    "reads: Delta_capacity@10k PRIMARY (fully matched, tiny minus F, paired per-frame CI95), state-copy execution oracle vs banked F npz; bands |d|<=0.3 prior confirmed / >=1.0 capacity binds; @40k read VOID per final amendment",
+]
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 15.0
+# 15 = re-priced at the 20:08:53Z final amendment (10k @ eff-48 ~10-11 h
+# train + ~1.3 h eval + margin); was 90 under the 40k design.
+
 # (previous no_live_runs_reason cleared 00:03Z 08-09 — fields panel was live then)
 
 # molmo2 40k TRAIN entry pruned 04:2xZ 08-08 — run COMPLETE (40000/40000,

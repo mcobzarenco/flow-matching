@@ -1,7 +1,25 @@
 {
- "updated_utc": "2026-08-09T19:39:56Z",
- "depth_reason": "depth >=2 at 19:39Z 08-09: adamc-100k babysit to ~08-12 (live) + lit-radar-0816 (cpu, actionable, 5 verified dup-checked hooks + 5 spares) + docs-pass tail (owner-side only) + fjoint owner-gated; lit-radar-0815 CLOSED this session (5 pages, 3 hook corrections)",
+ "updated_utc": "2026-08-09T20:16:00Z",
+ "depth_reason": "depth >=2 at 20:14Z 08-09: tiny-expert-40k (gpu-local LIVE) + owner trajectory-datasets survey (cpu, in flight this session, 4 research subagents out) + adamc-100k babysit to ~08-12 (live) + lit-radar-0816 (cpu, 5 verified hooks) + docs-pass tail (owner-side only)",
  "items": [
+  {
+   "id": "owner-trajectory-datasets-survey-0809",
+   "title": "OWNER STEERING 19:58:05Z 08-09: investigate additional trajectory datasets we could train on \u2014 ideally SO-101, but also look more generally. Deliverable: a detailed blog post with links to the datasets, statistics (episodes/hours/tasks/embodiments/modalities), brief descriptions, and an assessment of what is actually usable for our training recipes (community_curated_v0 is the current substrate). Post link in-channel when it lands.",
+   "class": "cpu",
+   "status": "queued",
+   "prereg": null,
+   "owner_hold": false,
+   "boundary": "opened by owner message 19:58Z 08-09; execute same session alongside the local training launch"
+  },
+  {
+   "id": "tiny-expert-capacity-10k",
+   "title": "T1 tiny-expert capacity rung, FINAL DESIGN (owner yes 19:59:04Z; 40k/biggest-batch amendments REVERTED by owner 20:08:53Z 'Let's do your original plan' after the wall-clock arithmetic \u2014 no training step had run): h256/d12 width-only contrast vs F (tap surface + adapters identical; depth structural), frozen 60k trunk (backbone sha e6ed783b verified), LOCAL 1xH100 unit fontaine-tiny10k, 10k steps @ eff-48 (48x1 vs F 12x4, same LR schedule), saves 1250 (F cadence). Launcher launch_local_fontaine_molmo2_flow_tiny_h256_10k_1xh100.sh: fit ladder b48c12 -> b48c24 -> 10k run -> chained panel_v2 @10000. Frozen read: Delta_capacity@10k fully matched (tiny minus F, paired per-frame CI95) vs banked F@10k 9.4157 + state-copy execution oracle; bands |d|<=0.3 prior confirmed / >=1.0 capacity binds. LAUNCH HISTORY: 20:03Z rc2 (--zero1/--chunk-grad-allreduce DDP-only guards, dropped, pre-reg amended); 20:05Z b96 ladder started, owner re-scoped pre-step-1; 20:1xZ relaunch at final design.",
+   "class": "gpu-local",
+   "status": "live",
+   "prereg": "fontaine/blog/src/posts/2026-08-09-prereg-tiny-expert-40k.md",
+   "owner_hold": false,
+   "boundary": "fit ladder ~20:3xZ -> 10k run ~10-11 h -> endpoint ~06-07Z 08-10 + ~1.3 h eval; first-poll s/step + vram + projection in-channel; babysit tiny10k entry live, gate 15 GPU-h"
+  },
   {
    "id": "owner-molmo2-perf-review",
    "title": "OWNER STEERING 08-08 13:09Z molmo2 perf/memory deep review \u2014 SHIPPED same session (posts/2026-08-08-molmo2-perf-review.md + in-channel summary). Three-lens sweep with 2 measured kernel gaps (idle-local-GPU microbench, ~0 GPU-h): (1) suffix attention lands on MATH sdpa backend (cuDNN excluded by inherited pin; flash rejects mask, efficient rejects GQA) 13x/layer ~5-10% step; (2) ViT eager einsum vs SDPA-flash 13x/block; (3) hand-rolled RMSNorm 10x vs F.rms_norm; (4) --activation-checkpointing exists oracle-pinned but NOT on the live lineage (~2.4-2.8 GiB/sample lever); (5) full-vocab CE fp32-upcasts pad rows; (6) per-step host syncs; (7) 60MB/step embed clone; (8) vram peak metric is a lifetime ratchet (explains the 41,780/42,940 creep). Static-max verdict: DON'T (bucketing prior art +5.09% padding ceiling; suffix uncapped). Shape annotations landed on bijou/molmo2/{model,text,vision}.py. All changes need pre-reg; nothing touched the live run.",

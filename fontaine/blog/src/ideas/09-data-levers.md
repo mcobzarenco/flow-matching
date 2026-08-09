@@ -111,3 +111,21 @@ check (charter §2) before training touches it.
   the sanctioned follow-up is a p=0.3 screen (own branch rule; see
   the correction bullet above — *modulate, don't amputate* is the
   cross-paper consensus).
+
+- **Owner-directed dataset survey 2026-08-09
+  ([post](../posts/2026-08-09-trajectory-datasets-survey.md)) — the
+  corpus-growth lever quantified:** a live hub sweep found **855
+  in-scope hours** (6-dim @ 30 fps SO-family) vs our 229 — ~300 h of
+  it new since the community_dataset_v3 crawl era, uncurated. Named
+  shortcut: AI2's
+  [MolmoAct2-SO100_101](https://huggingface.co/datasets/allenai/MolmoAct2-SO100_101-Dataset)
+  curation (1,220 repos / 38k eps / ~184 h, Apache-2.0, with
+  re-annotated instructions as a downloadable manifest) — diff its
+  source list against our 981, port its relabels. New scope hazard:
+  2026's hub volume is contaminated with sim-generated LeRobot
+  uploads (one MuJoCo repo = 11k episodes), so a re-crawl needs a
+  real-vs-sim provenance filter the v0 pipeline never needed.
+  Cross-embodiment/UMI/sim options ranked in the post (Bridge V2
+  pilot > UMI cup → FastUMI-100K > sim-as-augmentation-only). A
+  corpus-delta re-crawl is the survey's #1 recommendation — needs
+  its own work item + judge budget before any training touches it.
