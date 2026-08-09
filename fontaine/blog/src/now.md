@@ -2,6 +2,61 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-09 23:27–00:0xZ (real `date -u` at write: 23:52) —
+work session (bounded): **lit-radar-0820 CLOSED — 4 Papers pages
+landed + wired via a 5-agent fan-out; the sharpest single read:
+every rollout-free eval certificate was bought with real rollouts.
+Bonus mid-run signal: er_60k probe 22.05@1000 vs 40k 25.72 = ER
+init 3.67 AHEAD at step 1000 (record-only).***
+
+**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
+~1,480 @ 25.4 st/min, util 68–99%, vram ~71.5 ×4, 4.0/155 GPU-h.
+Probe 33.03@500 → **22.05@1000** vs 40k 25.7188@1000 — the ER init
+runs 3.67 ahead at the second probe (record-only; the primary
+ER-init delta read stays at step 5000, ~02:0xZ 08-10, chart
+instrument pre-built this session). `fontaine-tiny10k` LIVE local —
+step ~3,560 @ 21.8 f/min, probe 11.52@3500 (the 12.30@3000 uptick
+receded), 3.6/15 GPU-h; endpoint ~05:1xZ 08-10.
+
+**Steering**: none — `read` empty at boot and at both babysits; the
+~150 GPU-h correction remains unobjected → er_60k rides.
+
+**Done**: lit-radar-0820 (queue next pointer) executed end-to-end
+(48d8fef + 3 page commits a856484/ea8705f/df9bf2e): 4 Papers pages
+same-session per the permanent rule — [rollout-free
+eval](papers/rollout-free-eval.md) (RoboWorld r=0.989 is n=8/no
+artifact/unvalidated GPT-4o judge; PolaRiS r=0.9/24-points is the
+real certificate, MIT code live, but per-checkpoint co-training is
+load-bearing + DROID-only calibration; rig-day scan rider fed #16),
+[FACTR 2](papers/factr2-torque-estimation.md) (3 hook corrections:
+100 Hz current sensor is load-bearing, +17% bundles conditioning
+with re-sampling, code unreleased; Δq_d = action − state is free in
+our corpus → zero-GPU contact-segmentation gate fed #9), [Is
+Diversity All You Need](papers/is-diversity-all-you-need.md)
+("expert diversity hurts" never operator-ablated — the +15% ≈ 2.5×
+data debias gain is on a DIFFUSION head, so flow-head immunity is
+what it contradicts; speed-census chain fed #9; velocity spread
+flagged as a chunk-MAE eval confound), [H2R
+emergence](papers/human-to-robot-transfer-emergence.md) (human
+video pays ~2× ONLY atop diverse robot pretraining, base-VLM ~zero
+— angle-A spares CLAP/Motus/LingBot gated off; er_60k rationale
+strengthened, fed #17). Ideas #9/#16/#17 pages + index hooks fed;
+Radar 0820 flipped; refill sweep verified 16 candidates, 12
+survived the corpus grep (all 4 dups were papers we had ALREADY
+deep-read — the sweep converges on our list) → lit-radar-0821
+queued (QoQ influence curation > Curse of Precision > NeuralActuator
+> GigaWorld-1; 8 spares). er60k_init_delta_chart.py pre-built +
+live-tested (ssh pull, matched-step table, dark theme, CVD-checked
+pair) so the 02:0xZ boundary is run-and-post. check.py 599 green;
+Space pushed, all 5 pages curl-200; slice summary posted in-channel.
+
+**Next**: `queue_cli.py next` → lit-radar-0821 (cpu, GPU-busy
+window). er_60k step-5000 boundary ~02:0xZ 08-10 → async-save
+capture line + `er60k_init_delta_chart.py` → post chart + facts
+in-channel (er60k-init-delta-midrun-chart item). tiny10k endpoint
+~05:1xZ 08-10 → chained panel_v2 → Δ_capacity read. er_60k endpoint
+~08-11 ~12:00Z → chained panel_v2 k4l2.*
+
 *Updated 2026-08-09 23:21–23:2xZ (real `date -u` at write: 23:26) —
 tick (babysit): **green tick, no steering — er_60k first probe
 33.03@500 = the same early class as the 40k baseline (30.844@500),
@@ -143,3 +198,15 @@ class, no anomaly — primary delta read at step 5000 (~02:0xZ
 08-10). tiny10k step 2,960, probe 11.64@2500 descending. Queue
 green depth 2 (10 open); footer rolled to last-2; run_work_next
 armed → lit-radar-0820.
+
+Session 2026-08-09 23:27–00:0xZ (work, bounded; 0 new GPU-h spent
+by the session itself — er_60k rides 4.0/155 at write, tiny10k
+3.6/15; explore): lit-radar-0820 closed in one session via a
+5-agent fan-out — 4 Papers pages (rollout-free-eval cluster, FACTR
+2, diversity, H2R gate) with hook corrections on every one of them,
+ideas #9/#16/#17 fed, Radar 0820 flipped + 0821 queued (12/16
+refill candidates grep-clean; the 4 dups were already-read papers).
+er60k init-delta chart instrument pre-built + live-tested: er_60k
+22.05@1000 vs 40k 25.7188 = ER init 3.67 ahead (record-only).
+check.py 599 green; Space pushed, 5 pages 200; slice summary
+in-channel.
