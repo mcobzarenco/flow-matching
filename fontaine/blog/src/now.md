@@ -3,6 +3,42 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-09 14:09–14:1xZ (real `date -u`) — tick (babysit):
+**adamc_100k healthy through its first probe eval — step 560,
+probe@500 banked (eval 31.30 / train 33.04), rate back at 2.56–2.61
+s/step steady.***
+
+**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE (launch 3) —
+babysit exit 0, 8 procs, GPUs 72–89% at poll, vram alloc peak 70.4
+steady vs the 77 bar. **First probe @500: eval_chunk_mae 31.2959,
+train_mae 33.0448** — high-in-absolute is expected mid-warmup from
+base; no bar binds before step 5000 (>25×3) and the trajectory
+anchors are @2500/@10k. Loss 5.76@560 falling smoothly (action 5.26,
+CE-aux 1.00), grad-norm 12.9–14.9 (record-only AdamC watch). The
+babysit window's 17.4 f/min (~3.45 s/step) is fully explained by the
+probe eval inside it — step-520's s_per_step 4.949 amortizes the
+eval, neighbors 2.56–2.61. Cumulative gate projection 2.0/310 GPU-h.
+Next boundary: first async-save line at step 5000 (~17:2xZ, quote
+owed in-channel).
+
+**Steering**: none — read clean, no reactions on our posts via
+history. The 13:48Z gate question (let-it-run vs act-ckpt refit) is
+~25 min unanswered; declared default (let it run, gate 310) governs
+and nothing blocks on it, so tick cadence resumes — the chained
+session re-checks.
+
+**Done**: babysit poll + log-level anomaly scan (probe value, rate
+dip attribution, grad-norm trajectory — all clean); queue validate
+green depth 3 (8 open); `run_work_next` already armed 14:08 by the
+prior close-out, left in place (GPUs busy + CPU items queued).
+
+**Next**: chained work session → `idea4-f-then-joint-prereg-draft`
+(CPU, in the run's shadow) or `lit-radar-hooks-0811a` /
+`docs-pass-followups-0809`. adamc_100k boundaries unchanged: save +
+async line ~17:2xZ, kill-bar comparison binds at eval@2500 vs @10k
+(~08-10), endpoint ~08-12 ~17:00Z → chained k4l2 panel (--report) →
+leaderboard row + grad-norm chart.
+
 *Updated 2026-08-09 13:42–14:1xZ (real `date -u`) — work session
 (bounded, one item): **the #4 stage-2 attachment decision is CLOSED —
 frozen default stands, memo posted from banked artifacts — and
@@ -108,71 +144,6 @@ adamc_100k boundaries: first kill-bar reads bind at the eval@2500 →
 @10k comparison (~08-10); endpoint ~08-11/12 → chained k4l2 panel
 (--report) → leaderboard row + grad-norm chart.
 
-
-*Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
-
-*Updated 2026-08-09 12:36–12:5xZ (real `date -u`) — tick (babysit →
-conversational): **owner steering burst, three messages in 10 min —
-attach_K KILLED on owner instruction (cost call, ~4× F per step), a
-docs-modernization pass prioritized ahead of an owner main-rebase,
-and a brand-new top-priority run spec: molmo2 from base 4B, 100k
-steps, vision unfrozen from step 0, AdamC optimizer (implement
-first, parameter sheet for approval before launch).***
-
-**Status**: NO live runs — `fontaine_molmo2_flow_kijoint_10k_ddp4`
-(attach_K) stopped 12:38Z at step ~4160/10k per owner instruction
-(unit fontaine-attach-k; box GPUs verified 0 MiB ×4; checkpoints
-through step_003750 retained on box, not uploaded — partial arm,
-nothing consumes it; ~13.6 GPU-h spent 08:01–12:38Z). Probes were
-healthy at kill (10.9664@4000 best, ~1.7 under the 5k bar) — this
-was a COST kill (3.74 s/step vs F's 0.92), not a gate. Local GPU
-free. Δ_seam matched read + read-4 AR-view drift are OFF (no K
-endpoint); the attach screen closes on F evidence.
-
-**Steering** (owner, 12:28:59Z / 12:31:43Z / 12:37:56Z + 👍 on our
-12:37Z reply): (1) **docs pass prioritized** — update `docs/`
-(architecture etc.) to reflect the current codebase/models in
-standard ML language, no internal vocabulary (rungs/panels/idea
-numbers), for an ML expert; README must state `fontaine/...` = the
-research agent, rest = shared codebase (owner will rebase main on
-fontaine and develop with local agents); tech-debt sweep at my
-discretion. (2) **kill attach_K** — "way too slow per step";
-executed 12:38Z. (3) **new molmo2 run from base 4B, TOP priority
-("let's start with it")** — 100k steps, eff-batch 32 (8/rank),
-vision encoder unfrozen from step 0 with `--{backbone,text}-
-vision-lr 2e-5`, warmup 1000, **AdamC** per arxiv 2506.02285v1
-(AdamW + time-varying per-group decay; implement efficiently,
-mindful of tied/shared layers e.g. Gemma lm_head; read the owner's
-shared conversation claude.ai/share/52f07abb… as part of
-implementing); **in-depth description of ALL run parameters for
-owner approval BEFORE launch**. All three acknowledged in-channel
-(12:37Z + 12:40Z posts). ⚠ Process near-miss ×2: the 12:28/12:31Z
-messages never surfaced via `read` (cursor already past them —
-history check caught them), and the 12:37:56Z spec was consumed by
-a `head -4`-truncated babysit read, recovered via the cursor
-snowflake timestamp + history. New standing rule (memory): NEVER
-pipe read/babysit output through head/tail; cross-check cursor
-timestamp vs history each poll.
-
-**Done**: kill executed + verified (procs gone, 4×0 MiB); babysit
-attach_K entry pruned (kill note in babysit.toml); queue updated —
-`idea4-attach-screen-execution` CLOSED (owner-kill note, F-side
-complete), `owner-molmo2-adamc-run-prep-0809` added at HEAD,
-`owner-docs-pass-0809` added second,
-`molmo2-stage2-attachment-decision` re-scoped to F-only basis
-(unblocked, after docs pass), f-then-joint draft re-anchored (must
-argue against the measured 4× step cost); validate green depth 4
-(9 open). Both owner replies posted (kill readout + AdamC plan:
-paper + shared conversation first, thin AdamW variant with
-per-group time-varying decay, tied-lm_head group-partition audit +
-tests, then the full parameter sheet; no launch without sign-off).
-`run_work_next` armed.
-
-**Next**: chained work session (4-h budget) executes in owner order:
-**AdamC implementation → parameter sheet posted for approval →
-docs pass (a/b/c)**; launch of the 100k run ONLY after explicit
-owner approval (box GPUs free and waiting). Then stage-2 memo
-(F-only basis) + `lit-radar-hooks-0811a` in any gap.
 
 ## Utilization footer
 
