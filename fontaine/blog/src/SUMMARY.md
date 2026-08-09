@@ -51,6 +51,7 @@
   - [Data & trunks (4 papers)](papers/data-and-trunks.md)
   - [The attachment frontier: AR-VLA + Anchor-Align + WAMs](papers/attachment-frontier.md)
   - [APT: seam damage as an initialization problem](papers/apt-expert-pretraining.md)
+  - [ActionX: pre-train the expert first, then unfreeze everything](papers/actionx-rl-expert-pretraining.md)
   - [The initialization thread: APT's siblings](papers/vla-initialization.md)
   - [Checkpointing without stalling (6 papers)](papers/checkpointing-systems.md)
   - [Decode-time stochasticity (5 papers)](papers/decode-temperature.md)

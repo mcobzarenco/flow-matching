@@ -42,6 +42,12 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   `screening`. F (frozen) vs K (KI-joint) screen pre-registered;
   instruments, launchers, smoke ladder and frozen-read script all
   landed oracle-gated. Launches at the molmo2 40k endpoint (~08-08).
+  New 2026-08-09
+  ([ActionX](papers/actionx-rl-expert-pretraining.md)): the
+  F-then-joint escalation rung's second same-shape citation —
+  supervised expert pre-train on frozen trunk → full joint unfreeze
+  beats joint-from-scratch +38 LIBERO-Long; no matched frozen-vs-joint
+  ablation, so F-vs-K stays unranked pre-readout (venue caveat loud).
 - **`new-trunks` [#17 New trunks / architectures](ideas/17-new-trunks.md)** —
   standing owner mandate. **Molmo2-4B AR 40k ENDPOINT READ OUT
   2026-08-08 ([results](posts/2026-08-08-molmo2-endpoint-results.md)):

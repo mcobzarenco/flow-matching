@@ -278,3 +278,16 @@ matched steps.
   ~11:1 trunk:expert (370M on 4B), same regime as ours. RoboTwin
   stack-vs-stack numbers (+25 over π0) are data-mismatched — not
   seam evidence.
+
+- **Lit 2026-08-09
+  ([ActionX](../papers/actionx-rl-expert-pretraining.md), Frontiers
+  Neurorobotics 1806605, read during the live K arm)**: the
+  **F-then-joint rung's second independent citation, in its exact
+  shape** — supervised expert pre-training on a FROZEN trunk, then
+  full joint unfreeze (no stop-grad), beats joint-from-scratch by
+  +38 pts LIBERO-Long (52 vs 14; their RL variant adds +14 more but
+  needs rollouts we don't have). No frozen-vs-joint ablation at
+  matched conditions, so it does NOT re-rank F vs K — it prices the
+  escalation rung behind tonight's Δ_seam readout. Venue caveat
+  loud: Frontiers; ablation ORDERING trusted, magnitudes not (their
+  no-pretrain Spatial row reads 0%, likely matched-budget snapshot).

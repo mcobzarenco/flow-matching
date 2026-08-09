@@ -39,6 +39,7 @@ showed, before the dense analysis.
 | [Data & trunks](data-and-trunks.md) | 2602.09722, 2604.23001, 2606.31382, 2607.10172 | #9, #16, #17, #18.7 — two skim-banked claims corrected loudly |
 | [The attachment frontier](attachment-frontier.md) | 2603.10126, 2607.13429, NVIDIA WAM post | #4, #6, #17 — expert memory, the anchoring third recipe, π0.7 |
 | [APT — seam damage as initialization](apt-expert-pretraining.md) | 2606.12366 | #4 — why random-init experts wreck trunks; the F-then-joint escalation rung |
+| [ActionX — pre-train the expert, then unfreeze](actionx-rl-expert-pretraining.md) | fnbot.2026.1806605 | #4 — F-then-joint's second same-shape citation (+38 Long over joint-from-scratch); #16 — expert-scoped RL pole |
 | [The initialization thread](vla-initialization.md) | 2605.25802, 2601.03309 | #17 trunk criterion, #4 — F's frozen-vision caveat + the vision-first diagnostic |
 | [Checkpointing without stalling](checkpointing-systems.md) | CheckFreq, Gemini, 2406.10707, 2511.07035, 2605.17821, 2512.24511 | #18.9 async saves (landed `e3bdc93`) — design corroborated; pinned-buffer + save-frequency hooks banked |
 | [ELASTIC — adaptive test-time compute](elastic-adaptive-compute.md) | 2606.31132 | #1 rung-3 candidate (dispersion-gated draw allocation), #19, #6 — R4b's monotone-dispersion read is this paper's premise, measured free on our panel |
@@ -160,3 +161,4 @@ pretrained trunk:
 | Dual-encoder representation preservation | [2509.11417](https://arxiv.org/abs/2509.11417) | ✅ [page](vision-encoder-freeze.md) |
 | VEGA (encoder grounding alignment) | [2605.10485](https://arxiv.org/abs/2605.10485) | radar hook, unread |
 | HyperVLA (hypernetwork inference) | [2510.04898](https://arxiv.org/abs/2510.04898) | radar hook, unread |
+| ActionX (RL expert pre-training) | [fnbot.2026.1806605](https://www.frontiersin.org/journals/neurorobotics/articles/10.3389/fnbot.2026.1806605/full) | ✅ [page](actionx-rl-expert-pretraining.md) |
