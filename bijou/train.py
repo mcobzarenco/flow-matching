@@ -193,16 +193,17 @@ class TrainArgs:
     # global prefix layers (the shipped default, scheduled by
     # --stream-counts); "residual" = FULL residual streams — hidden state
     # after every prefix layer through learned decoder-side adapters,
-    # expert layer i reading trunk layer i (arch-batch-1 arm B).
+    # expert layer i reading trunk layer i (the full-residual ablation arm).
     conditioning_streams: str
-    # The attach-screen seam flags (pre-reg 2026-08-07, molmo2 flow
+    # The trunk-seam flags (molmo2 flow
     # phase). --seam-stop-grad: detach the raw residual taps before
     # adapter projection — flow-loss gradients into the trunk exactly
-    # zero (the π0.5/KI seam). --joint-ce: ride the phase-1 CE objective
+    # zero (the π0.5/KI seam). --joint-ce: keep the phase-1 CE objective
     # (Molmo2ARDecoder suffix, aux fields and all) beside the flow loss
-    # at fixed weight 1.0 — the K arm; requires a live trunk and the
+    # at fixed weight 1.0 — joint flow+CE training; requires a live
+    # trunk and the
     # stop-grad seam. --joint-unfrozen-seam: the narrowly-scoped escape
-    # (F-then-joint pre-reg 2026-08-09) admitting --joint-ce with the
+    # admitting --joint-ce with the
     # seam OPEN — flow gradients into the trunk — for --init-from warm
     # starts only; random-init naive joint stays refused (the published
     # KI collapse the guard exists for).
@@ -266,9 +267,9 @@ class TrainArgs:
     # the molmo2 smoke-ladder snapshot. Gradient identical to the DDP
     # sync up to fp reduction order (same sum / world).
     chunk_grad_allreduce: bool
-    # Activation checkpointing over the molmo2 decoder blocks (#20):
+    # Activation checkpointing over the molmo2 decoder blocks:
     # recompute each block in backward instead of retaining its
-    # interior activations (measured need 2026-08-06: ~2.4 GiB/sample
+    # interior activations (measured need: ~2.4 GiB/sample
     # saved activations on the live-trunk prefix). Memory only — the
     # gradient is oracle-pinned bitwise to the plain step; engages
     # wherever the trunk runs under grad, no-grad paths untouched.
@@ -813,7 +814,7 @@ class BijouTrainStep[I: BatchInputs](torch.nn.Module):
         The joint arm (``model.joint_ce`` set) uses THREE normalizers
         (flow count, CE action count, CE aux count | None) and returns
         the CE branch's action CE in the aux slots (the phase-1
-        ``loss_action`` analog — the pre-registered CE-health read);
+        ``loss_action`` analog — the pinned CE-health read);
         the action slot carries the flow component."""
         inputs = batch.encoder_inputs
         # Any batch tensor names the device; the inputs protocol has no
@@ -2033,13 +2034,13 @@ def parse_args() -> TrainArgs:
         "residual conditioning): raw taps are detached before adapter "
         "projection, so flow-loss gradients into every trunk parameter "
         "are exactly zero while a live trunk still trains through the "
-        "--joint-ce branch (the π0.5/KI recipe; attach-screen pre-reg "
-        "2026-08-07)",
+        "--joint-ce branch (the π0.5/KI recipe)",
     )
     parser.add_argument(
         "--joint-ce",
         action="store_true",
-        help="K arm of the attach-screen: ride the phase-1 CE objective "
+        help="joint flow+CE training: keep the pretrained autoregressive "
+        "CE objective "
         "(Molmo2ARDecoder suffix — --fast-tokenizer/--aux-fields flags "
         "apply to it verbatim) beside the flow loss at fixed weight 1.0 "
         "(KI's no-tuning result; deliberately not a knob). Requires "
@@ -2051,8 +2052,8 @@ def parse_args() -> TrainArgs:
     parser.add_argument(
         "--joint-unfrozen-seam",
         action="store_true",
-        help="opt-in escape from the naive-joint guard (F-then-joint "
-        "pre-reg 2026-08-09): admits --joint-ce WITHOUT --seam-stop-grad, "
+        help="opt-in escape from the naive-joint guard: "
+        "admits --joint-ce WITHOUT --seam-stop-grad, "
         "so flow-loss gradients enter the trunk through the taps — the "
         "APT regime. Sane only when --init-from supplies an already-"
         "converged expert (required); the guard's collapse reasoning "
@@ -2089,7 +2090,7 @@ def parse_args() -> TrainArgs:
         help="training objective variant: 'snapflow' = self-distillation "
         "toward 1-NFE decoding (L = α·L_FM + (1−α)·λ·L_shortcut with "
         "stop-gradient two-step-Euler shortcut targets; α=0.5, λ=0.1 "
-        "frozen in code per the 2026-08-06 pre-registration). Flow "
+        "frozen in code). Flow "
         "decoder only; enables --target-time-embed",
     )
     parser.add_argument(
@@ -2306,8 +2307,8 @@ def parse_args() -> TrainArgs:
     parser.add_argument(
         "--activation-checkpointing",
         action="store_true",
-        help="activation checkpointing over the molmo2 decoder blocks "
-        "(#20): recompute each block in backward instead of retaining "
+        help="activation checkpointing over the molmo2 decoder blocks: "
+        "recompute each block in backward instead of retaining "
         "its interior activations — memory only, the gradient is "
         "oracle-pinned bitwise to the plain step. Engages wherever the "
         "trunk runs under grad (live-trunk prefix encode + CE suffix); "
@@ -2545,8 +2546,8 @@ def parse_args() -> TrainArgs:
             "it requires --decoder flow --conditioning-streams residual",
         )
     if raw.joint_ce:
-        # The K arm's frozen preconditions (attach-screen pre-reg
-        # 2026-08-07): the CE branch is the phase-1 objective continuing
+        # Joint flow+CE frozen preconditions:
+        # the CE branch is the phase-1 objective continuing
         # VERBATIM (live trunk, FAST suffix, bracketed prompts), and the
         # seam must be stop-grad — random-init naive joint (flow
         # gradients into the trunk) exists only as an oracle negative
@@ -2578,7 +2579,7 @@ def parse_args() -> TrainArgs:
         if raw.distill is not None:
             parser.error("--joint-ce and --distill are mutually exclusive")
     if raw.joint_unfrozen_seam:
-        # The escape's own scope (F-then-joint pre-reg 2026-08-09): it
+        # The escape's own scope: it
         # modifies --joint-ce only, contradicts an explicit stop-grad,
         # and is warm-start-only — the collapse the guard refuses is a
         # random-init expert's early gradients, so a fresh run gets no
@@ -2598,7 +2599,7 @@ def parse_args() -> TrainArgs:
                 "--joint-unfrozen-seam requires --init-from: the naive-"
                 "joint collapse (KI) is a random-init pathology, so the "
                 "open seam is admitted only for warm starts whose expert "
-                "is already informed (F-then-joint pre-reg 2026-08-09)",
+                "is already informed",
             )
     if raw.decoder != "flow" and raw.time_conditioning != "additive":
         parser.error(
@@ -2842,8 +2843,7 @@ def main() -> int:
     if args.backward_chunks < 1 or args.batch_size % args.backward_chunks != 0:
         raise SystemExit(
             f"--backward-chunks {args.backward_chunks} must be >= 1 and "
-            f"divide --batch-size {args.batch_size} (equal chunks — the "
-            "pre-registered ladder rungs)",
+            f"divide --batch-size {args.batch_size} (equal chunks)",
         )
     os.environ["LEROBOT_VIDEO_DECODER_CACHE_SIZE"] = str(args.video_decoder_cache)
 
@@ -2886,8 +2886,8 @@ def main() -> int:
     # Memory forensics (BIJOU_MEM_SNAPSHOT=<path prefix>): record every
     # CUDA allocation with its python stack from process start; the
     # __main__ epilogue dumps a per-rank snapshot pickle if the run
-    # dies OOM (analyze with torch.cuda._memory_viz or fontaine's
-    # reader). Measurement instrument for smoke rungs — never set on a
+    # dies OOM (analyze with torch.cuda._memory_viz).
+    # Measurement instrument for smoke runs — never set on a
     # real launch (host-side overhead per allocation).
     if os.environ.get("BIJOU_MEM_SNAPSHOT") and device.type == "cuda":
         torch.cuda.memory._record_memory_history(max_entries=250_000)
@@ -2931,8 +2931,8 @@ def main() -> int:
     if molmo2_trunk and args.decoder == "ar_fast":
         raise SystemExit(
             "molmo2 backbones support --decoder ar_backbone (phase 1) "
-            "and --decoder flow with residual conditioning (the "
-            "attach-screen pre-reg, 2026-08-07) — ar_fast conditions on "
+            "and --decoder flow with residual conditioning — "
+            "ar_fast conditions on "
             "K/V exports this trunk does not produce",
         )
     if (
@@ -2943,15 +2943,15 @@ def main() -> int:
         raise SystemExit(
             "molmo2 flow experts condition on residual taps only "
             "(--conditioning-streams residual): the trunk exports no K/V "
-            "streams (attach-screen pre-reg, 2026-08-07)",
+            "streams",
         )
     if (args.seam_stop_grad or args.joint_ce) and not molmo2_trunk:
         # joint_ce checked too: --joint-unfrozen-seam admits joint_ce
         # without seam_stop_grad, and the rider is built only on the
         # molmo2 branch — a gemma joint run would silently drop it.
         raise SystemExit(
-            "--seam-stop-grad / --joint-ce are the molmo2 attach-screen "
-            "seam flags; the gemma residual arm trains under a frozen "
+            "--seam-stop-grad / --joint-ce are molmo2 trunk-seam "
+            "flags; the gemma residual arm trains under a frozen "
             "trunk (no seam to cut)",
         )
 
@@ -3238,7 +3238,7 @@ def main() -> int:
     backbone_dtype = torch.float32 if args.backbone_trained else None
     model: BijouModel[Any, Any]
     if args.decoder == "flow" and molmo2_trunk:
-        # The attach-screen composition (pre-reg 2026-08-07): full
+        # The molmo2 flow composition: full
         # multimodal Molmo2 trunk + residual-tap encoder (the pinned
         # stride-3 rule) + flow expert reading the taps 1:1 ascending.
         molmo2_config = load_molmo2_config(checkpoint_dir)
@@ -3971,7 +3971,7 @@ def main() -> int:
     if distributed and args.chunk_grad_allreduce:
         # No DDP wrapper AT ALL on this path: the constructor would
         # allocate reducer bucket buffers (a full fp32 gradient copy,
-        # measured 13.6 GiB on the molmo2 rung) even if the reducer
+        # measured 13.6 GiB on the molmo2 config) even if the reducer
         # never syncs. Replicate the two things DDP provided — the
         # construction-time rank-0 state broadcast here, and the
         # per-step gradient sync via allreduce_gradients in the loop.
@@ -3991,7 +3991,7 @@ def main() -> int:
             # Chunked backward runs n forwards + a no_sync accumulation
             # per step; the graph is still static per iteration, but the
             # static_graph fast path's interplay with no_sync is not a
-            # risk worth carrying for a memory-fallback rung — plain DDP
+            # risk worth carrying for a memory-fallback path — plain DDP
             # is the well-trodden grad-accumulation path. Unchunked runs
             # keep the historical flag (and its recorded-graph perf).
             static_graph=args.backward_chunks == 1,

@@ -1,12 +1,12 @@
-"""Frozen scorers for subgoal-draws selection (#6 rung (b)).
+"""Frozen scorers for subgoal-draws candidate selection.
 
 Pure arithmetic over the per-candidate decode stats that
 ``ARSuffixDecoder.decode_value_line`` records — no torch, no model
 access, so the read script and the exact-arithmetic selftest fixtures
 recompute every pick bit-for-bit from the ``--dump-subgoal-candidates``
-JSON alone (pre-reg 2026-08-08-prereg-subgoal-draws.md, "Scorer").
+JSON alone.
 
-Conventions frozen by the pre-reg:
+Frozen conventions:
 
 - PRIMARY  self-certainty (2502.18581, argmax form): SC(y) = mean over
   the candidate's decode steps of KL(uniform ‖ p_step) computed on the
@@ -23,11 +23,11 @@ Conventions frozen by the pre-reg:
 - ALTERNATES (record-only, computed offline from the same dumps):
   mean chosen-token log-prob (likelihood) and the medoid by mean
   token-F1 to the other candidates. Their conditioned deltas are NOT
-  measured; a future pre-reg may promote one.
+  measured; a future revision may promote one.
 - Every argmax breaks exact ties toward the LOWEST candidate index
   (greedy first). Duplicate strings decode identical distributions, so
   dedup is implicit in the tie rule.
-- ELIGIBLE LIST (rung (b'), pre-reg …-cleanlist): under the clean-list
+- ELIGIBLE LIST (clean-list variant): under the clean-list
   filter every scorer sees only non-truncated candidates
   (``eligible_indices``); an all-truncated row falls back to the greedy
   candidate as decoded, recorded. Picks stay original-list indices.
@@ -41,8 +41,8 @@ from collections.abc import Sequence
 
 
 def eligible_indices(truncated: Sequence[bool]) -> list[int]:
-    """The rung-(b') frozen eligible-candidate rule (pre-reg
-    2026-08-08-prereg-subgoal-draws-cleanlist): every scorer operates on
+    """The clean-list frozen eligible-candidate rule: every scorer
+    operates on
     the candidates with ``truncated == False``; when ALL candidates are
     truncated the list falls back to ``[0]`` (greedy as decoded — the
     caller records the fallback row). Returned indices are
@@ -56,7 +56,7 @@ def eligible_indices(truncated: Sequence[bool]) -> list[int]:
 
 def _argmax_lowest(scores: Sequence[float]) -> int:
     """Index of the maximum; exact ties break toward the lowest index
-    (the pre-reg's greedy-first rule). Loud on an empty sequence."""
+    (the frozen greedy-first rule). Loud on an empty sequence."""
     if not scores:
         raise ValueError("argmax over zero candidates")
     best = 0
@@ -144,7 +144,7 @@ def medoid_pick(texts: Sequence[str]) -> int:
 def ceiling_pick(texts: Sequence[str], true_label: str) -> int:
     """The record-only ORACLE-similarity ceiling: argmax token-F1 vs
     the TRUE segment label. The explicit ``true_label`` argument is the
-    provenance boundary — no deployment-named path may call this
-    (pre-reg oracle v); label-less frames never reach it (their ceil
-    row renders no subgoal, the rung-(a) oracle-arm convention)."""
+    provenance boundary — no deployment-named path may call this;
+    label-less frames never reach it (their ceil
+    row renders no subgoal, the self-subgoal probe's oracle-arm convention)."""
     return _argmax_lowest([token_f1(text, true_label) for text in texts])

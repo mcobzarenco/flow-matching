@@ -1,11 +1,11 @@
-"""#6 subgoal-swap content read: the swap-map builder and donor lookup.
+"""The subgoal-swap content probe: the swap-map builder and donor lookup.
 
-Pre-reg 2026-08-09-prereg-subgoal-swap.md. The swap arm re-runs the
-rung-(a) oracle arm with each labeled frame's segment label replaced by
+The swap arm re-runs the
+oracle subgoal-conditioning arm with each labeled frame's segment label replaced by
 a DIFFERENT episode's label — format-valid, content-wrong — so the read
 separates "the slot consumes content" from "any plausible words help".
 
-The pinned mapping rule (frozen in the pre-reg before implementation):
+The pinned mapping rule (frozen before implementation):
 
 - Episode-level seeded derangement over the labeled episodes of each
   dataset (``repo_id``) — never cross-dataset (plausible-but-wrong
@@ -19,7 +19,7 @@ The pinned mapping rule (frozen in the pre-reg before implementation):
   truth — the swap arm's conditioned frames must be 100% content-wrong)
   and the count is recorded.
 - Frames that are label-less under the oracle arm stay label-less
-  (byte-identical to baseline — pre-reg oracle iii).
+  (byte-identical to baseline).
 
 The builder is a pure-CPU metadata pre-pass: segment spans come from
 ``meta/judgments.json`` under the dataset's own materialization stamp
@@ -30,8 +30,8 @@ tables. No frame or video data is touched. The span model reproduces
 the materialized persistent-row semantics exactly (segments tile from
 frame 0; a segment stays active until superseded; the last segment runs
 to episode end), so forcing the map to identity reproduces the banked
-oracle arm byte-exactly — the launcher-side pre-launch check (oracle
-ii) runs precisely that.
+oracle arm byte-exactly — the launcher-side pre-launch check runs
+precisely that.
 """
 
 from __future__ import annotations
@@ -100,7 +100,7 @@ class SubgoalSwapMap:
 
 def fraction_matched_label(donor: LabeledEpisode, p: float) -> str:
     """The donor's label at its labeled frame nearest to p·donor_len,
-    ties → the earlier frame (the pre-reg's pinned rule). A frame
+    ties → the earlier frame (the pinned rule). A frame
     inside a span is its own nearest labeled frame, so an identity
     mapping reproduces the active segment label exactly."""
     target = p * donor.length

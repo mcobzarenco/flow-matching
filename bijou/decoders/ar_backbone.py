@@ -161,9 +161,10 @@ def _sample_action_ids(
 
 @dataclass(frozen=True, slots=True)
 class ValueCandidate:
-    """One text-only decode of a single free-text aux value line (#6
-    rung (b) candidate): the parsed value (the ``_parse_aux`` stripped
-    convention, so conditioning on it is byte-compatible with rung (a)'s
+    """One text-only decode of a single free-text aux value line (a
+    subgoal-draws candidate): the parsed value (the ``_parse_aux`` stripped
+    convention, so conditioning on it is byte-compatible with the
+    self-subgoal probe's
     ``generated_subgoal``) plus the per-step distribution stats that
     make the frozen scorers exactly recomputable offline
     (``bijou.eval.subgoal_scoring``). Per decode step — every step the
@@ -185,7 +186,7 @@ class ValueCandidate:
 
 @dataclass(frozen=True, slots=True)
 class ActionCaptureStep:
-    """One ACTION-phase decode step's scoring surface (#6 rung (c) —
+    """One ACTION-phase decode step's scoring surface (mcselect —
     the masked-contrast scorer's conditional side, collected during the
     decode rather than re-forwarded): the pre-mask BLOCK logits the
     step chose from, the grammar mask it applied, which rows were still
@@ -357,7 +358,7 @@ class ARSuffixDecoder[B: nn.Module](nn.Module, abc.ABC):
         Deterministic greedy by default; ``sampling`` switches the
         ACTION block (only) to per-row temperature sampling — the
         sampled-draws eval instrument. ``generator``/``noise``
-        unused/must be None. ``action_capture`` (#6 rung (c)): a list
+        unused/must be None. ``action_capture`` (mcselect): a list
         the ACTION phase appends one :class:`ActionCaptureStep` to per
         decode step — the conditional scoring surface, captured from
         the very logits the decode chose from (no re-forward, no
@@ -621,7 +622,7 @@ class ARSuffixDecoder[B: nn.Module](nn.Module, abc.ABC):
     ) -> list[Tensor | None]:
         """Teacher-forced next-token BLOCK logits over given per-row
         action-id sequences (CODEC space) against an already-encoded
-        memory — the #6 rung-(c) masked-reference forward: the
+        memory — the masked-contrast (mcselect) masked-reference forward: the
         planner-less prompt's distribution at every position of a
         sequence DECODED ELSEWHERE (under a candidate's conditioning).
         The suffix is exactly the deployment fast path's —
@@ -684,7 +685,7 @@ class ARSuffixDecoder[B: nn.Module](nn.Module, abc.ABC):
     ) -> list[ValueCandidate]:
         """Text-ONLY decode of one free-text value line per row against
         the memory's CURRENT cache state — the subgoal-draws candidate
-        instrument (#6 rung (b)). The caller owns the cache protocol:
+        instrument. The caller owns the cache protocol:
         ``cache_restore`` to the post-prefill snapshot before every
         call, so all candidates (and the full greedy pass) share one
         prefill. The value loop mirrors :meth:`predict_chunk`'s free
@@ -1227,7 +1228,7 @@ def ar_backbone_loss_sums[B: nn.Module](
     # nonzero + a host sync per reduction (x chunks/step on the live
     # path). CE with reduction="none" writes exact 0.0 at IGNORE_INDEX
     # positions, so these sums equal the indexed sums up to fp
-    # reduction order (declared in the perf pass-1 pre-reg; the CPU
+    # reduction order (the CPU
     # loss oracles re-pin on the sum form, mean form untouched).
     if is_aux is None:
         return elementwise.sum(), valid.sum(), None, None

@@ -311,8 +311,8 @@ class Molmo2Encoder(ObservationEncoder[Molmo2Inputs, Molmo2Model]):
     (``retain_cache=True``). ``residual_exports`` are trunk layers whose
     post-layer hidden states ride along as RAW residual taps
     (``ObservationMemory.residuals``, the gemma pattern — projected into
-    conditioning streams decoder-side), the flow-phase attachment surface
-    (pre-registered 2026-08-07, molmo2-attach-screen).
+    conditioning streams decoder-side), the flow-phase attachment
+    surface.
 
     The trunk is NOT owned here — BijouModel owns it once and passes it
     into the compute methods; this module carries exactly the prompt-side

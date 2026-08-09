@@ -100,7 +100,7 @@ from .report import THEMES, ReportSample, ReportTable, render_report
 from .sharding import ShardResults, merge_shards
 from .smolvla import SmolVLAEvalPolicy
 
-# #6 rung (c) npz key namespace — the mcselect_results.py contract
+# Masked-contrast (mcselect) npz key namespace — the mcselect_results.py contract
 # (mcselect:kl / mcselect:cand_pred / mcselect:pred_masked).
 MCSELECT_PREFIX = "mcselect:"
 
@@ -141,54 +141,54 @@ class EvalReport:
     # only) — with euler/1 this is the 1-NFE read.
     target_time: str
     noise_key: str
-    # Golden-ticket mode (#1 screen): the tickets file and its sha256
+    # Golden-ticket noise mode: the tickets file and its sha256
     # (None = keyed noise). A ticket read must never pass as a keyed
     # read — consumers check these before pairing against keyed npzs.
     noise_tickets: str | None
     tickets_sha256: str | None
-    # Noise-ladder rung 2 (#1): per-dataset ticket routing map and the
+    # Per-dataset ticket routing map and the
     # sha of its canonical form (None = unrouted). A routed (_ticketmap)
     # read must never pool as a single-ticket (_ticket) read — the
-    # stage-2 scorer checks this sha against the pre-registered map.
+    # downstream scorer checks this sha against the committed map.
     noise_ticket_map: str | None
     ticket_map_sha256: str | None
     # State-reliance probe: bijou policy fed the dataset state mean
     # (zero-information soft state token) — a diagnostic, never a
     # deployment read; the policy name carries _state-masked too.
     mask_state: bool
-    # #6 rung (a)/(b) subgoal-conditioning probes: None = every eval
+    # Subgoal-conditioning probes: None = every eval
     # before 2026-08-07; "oracle" = per-frame TRUE-label [subgoal|…]
     # conditioning; "self" = the two-pass self-subgoal arms (policy
     # names carry _oraclesubgoal / _narrsubgoal / _selfsubgoal);
-    # "draws" = rung (b) candidate selection — pass 1 additionally
+    # "draws" = subgoal-draws candidate selection — pass 1 additionally
     # decodes sampled subgoal candidates, pass 2 runs BOTH selection
     # arms (_bonsubgoal / _ceilsubgoal) on the same rows.
     subgoal_mode: str | None
-    # #6 subgoal-swap content read (pre-reg 2026-08-09): oracle-path
+    # The subgoal-swap content probe: oracle-path
     # derangement seed (None = every eval before 2026-08-09; the policy
     # name carries _swapsubgoal) and the identity-check flag (donor =
-    # self on every episode — the launcher's byte-reproduction oracle,
+    # self on every episode — the launcher's byte-reproduction check,
     # name _swapidentity, NEVER a read).
     subgoal_swap_seed: int | None
     subgoal_swap_identity: bool
-    # Rung (b) candidate set: sampled draws beyond the greedy candidate
+    # Subgoal-draws candidate set: sampled draws beyond the greedy candidate
     # and their sampling temperature (None outside draws mode; 0 draws
     # = the bit-exactness preflight limit).
     subgoal_draws: int | None
     subgoal_temperature: float | None
-    # Rung (b') clean-list rule (None = unfiltered rung (b)): "clean"
+    # Clean-list rule (None = unfiltered subgoal-draws): "clean"
     # means every scorer operated on the eligible (non-truncated)
     # candidate list, greedy fallback on all-truncated rows — the
-    # report records the filter alongside the scorer id (pre-reg).
+    # report records the filter alongside the scorer id.
     subgoal_candidate_filter: str | None
-    # Oracle-(i)/(ii) live check: pass 2 ran with every hint forced
+    # Empty-hint live check: pass 2 ran with every hint forced
     # EMPTY (must reproduce the baseline decode; the policy names carry
     # _emptyhint) — never an arm read.
     selfsubgoal_force_empty: bool
-    # #6 rung (c) mcselect mode (None/absent outside it): the reference
+    # Masked-contrast (mcselect) mode (None/absent outside it): the reference
     # tempering τ, the injected candidates file, and its sha256 — the
     # read script refuses a run whose sha does not match the banked
-    # rung-(b') width (every comparator would be void).
+    # candidate-list width (every comparator would be void).
     mcselect_tau: float | None
     mcselect_candidates_file: str | None
     candidates_sha256: str | None
@@ -438,7 +438,8 @@ def parse_args() -> argparse.Namespace:
         "--noise-tickets",
         type=Path,
         default=None,
-        help="golden-ticket noise mode (#1 screen): path to a committed "
+        help="golden-ticket noise mode (a frozen bank of candidate "
+        "noise vectors): path to a committed "
         "tickets npz ([count, chunk, dim] float32) replacing per-frame "
         "flow-noise keying entirely — draw d at EVERY frame integrates "
         "from tickets[d], so one --sample-draws M run scores every "
@@ -451,7 +452,7 @@ def parse_args() -> argparse.Namespace:
         "--noise-ticket-map",
         type=Path,
         default=None,
-        help="noise-ladder rung 2 (#1): per-dataset ticket routing — a "
+        help="per-dataset ticket routing — a "
         "json {repo_id: bank index} map (bare, or the committed stage-01 "
         "analysis json's stage1.routing_map). Every frame integrates "
         "from its DATASET's routed ticket of the --noise-tickets bank; "
@@ -543,7 +544,7 @@ def parse_args() -> argparse.Namespace:
         "--subgoal-mode",
         choices=["oracle", "self", "draws", "mcselect"],
         default=None,
-        help="#6 rung (a)/(b) subgoal-conditioning probes "
+        help="subgoal-conditioning probes "
         "(condition-trained ar_backbone checkpoints): 'oracle' renders "
         "each frame's TRUE segment label through the trained "
         "[subgoal|…] slot (label-less frames decode identically to "
@@ -552,15 +553,15 @@ def parse_args() -> argparse.Namespace:
         "on the planner-less prompt ([generate|subgoal actions]; its "
         "actions are the _narrsubgoal arm, free), pass 2 feeds that "
         "text back through the prompt slot and decodes on the "
-        "deployment fast path (_selfsubgoal); 'draws' is rung (b) "
+        "deployment fast path (_selfsubgoal); 'draws' is subgoal-draws "
         "candidate selection — pass 1 additionally decodes "
         "--subgoal-draws sampled candidates off the shared prefill, "
         "pass 2 runs BOTH selection arms on the same rows: the frozen "
         "self-certainty pick (_bonsubgoal, deployment-honest) and the "
         "record-only oracle-similarity ceiling (_ceilsubgoal); "
-        "'mcselect' is rung (c) masked-contrast scoring — NO in-run "
-        "sampling: candidates are injected from the banked rung-(b') "
-        "file (--subgoal-candidates-file), each eligible candidate gets "
+        "'mcselect' is masked-contrast scoring — NO in-run "
+        "sampling: candidates are injected from the banked clean-list "
+        "candidates file (--subgoal-candidates-file), each eligible candidate gets "
         "a conditioned greedy decode + a teacher-forced planner-less "
         "reference forward, and the per-candidate KL(p_cond || "
         "p_masked^(1/tau)) is dumped for the offline argmax "
@@ -572,7 +573,7 @@ def parse_args() -> argparse.Namespace:
         "--subgoal-candidates-file",
         type=Path,
         default=None,
-        help="requires --subgoal-mode mcselect: the banked rung-(b') "
+        help="requires --subgoal-mode mcselect: the banked clean-list "
         "candidates JSON (rows keyed by global frame index, 9 "
         "candidates each) — the run scores EXACTLY this width; the "
         "file's sha256 lands in the report for the read script's "
@@ -583,28 +584,28 @@ def parse_args() -> argparse.Namespace:
         type=float,
         default=None,
         help="requires --subgoal-mode mcselect: the masked reference's "
-        "tempering τ (the pre-reg pins 4.0, MG-Select's setting, "
+        "tempering τ (pinned to 4.0, MG-Select's setting, "
         "adopted verbatim — the read script refuses any other value); "
-        "explicit, no silent default on a pre-registered knob",
+        "explicit, no silent default on a pinned knob",
     )
     parser.add_argument(
         "--subgoal-swap-seed",
         type=int,
         default=None,
-        help="requires --subgoal-mode oracle: #6 subgoal-swap content "
-        "read (pre-reg 2026-08-09) — replace each labeled frame's TRUE "
+        help="requires --subgoal-mode oracle: the subgoal-swap content "
+        "probe — replace each labeled frame's TRUE "
         "segment label with a DIFFERENT episode's fraction-matched label "
         "(seeded within-dataset derangement; single-labeled-episode "
         "datasets render an EMPTY slot, recorded; label-less frames stay "
         "baseline-identical). Policy name gains _swapsubgoal; the "
-        "pre-reg seed is 0",
+        "pinned seed is 0",
     )
     parser.add_argument(
         "--subgoal-swap-identity",
         action="store_true",
         help="requires --subgoal-swap-seed: force every episode to be "
-        "its own donor (ALL swap plumbing live) — the pre-launch oracle "
-        "(ii) run, which must reproduce the banked oracle arm "
+        "its own donor (ALL swap plumbing live) — the pre-launch "
+        "identity check, which must reproduce the banked oracle arm "
         "byte-exactly. Policy name gains _swapidentity; never a read",
     )
     parser.add_argument(
@@ -613,7 +614,7 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="requires --subgoal-swap-seed: write the per-frame swap "
         "provenance as JSON (identity triple, TRUE label, donor episode, "
-        "rendered text) — the mechanical oracle-(iv) check recomputes "
+        "rendered text) — a mechanical offline check recomputes "
         "every row from the judgment sidecars and compares",
     )
     parser.add_argument(
@@ -621,7 +622,7 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=None,
         help="requires --subgoal-mode draws: sampled subgoal candidates "
-        "beyond the greedy candidate (pre-reg width 8; 0 = the greedy-"
+        "beyond the greedy candidate (pinned width 8; 0 = the greedy-"
         "only bit-exactness preflight limit)",
     )
     parser.add_argument(
@@ -629,15 +630,15 @@ def parse_args() -> argparse.Namespace:
         type=float,
         default=None,
         help="requires --subgoal-mode draws with --subgoal-draws > 0: "
-        "candidate sampling temperature (pre-reg 1.0); the greedy "
+        "candidate sampling temperature (pinned 1.0); the greedy "
         "candidate and both conditioned decodes stay greedy",
     )
     parser.add_argument(
         "--subgoal-candidate-filter",
         choices=["clean"],
         default=None,
-        help="requires --subgoal-mode draws: rung (b') clean-list rule "
-        "(pre-reg 2026-08-08-…-cleanlist) — every scorer (both selection "
+        help="requires --subgoal-mode draws: clean-list rule "
+        "— every scorer (both selection "
         "arms and the record-only alternates in the candidates dump) "
         "operates on the eligible list: candidates with truncated == "
         "false, empty list -> greedy fallback (recorded). Pass-1 decode "
@@ -817,7 +818,7 @@ def parse_args() -> argparse.Namespace:
         if args.mask_state:
             parser.error(
                 "--subgoal-mode with --mask-state mixes two probes in "
-                "one read — not pre-registered; run them separately",
+                "one read — run them separately",
             )
         if any(pair.partition("=")[0] == "subgoal" for pair in args.condition_override):
             parser.error(
@@ -854,15 +855,15 @@ def parse_args() -> argparse.Namespace:
         if args.subgoal_draws is None:
             parser.error(
                 "--subgoal-mode draws needs an explicit --subgoal-draws "
-                "(the pre-reg width is 8; 0 is the preflight limit) — "
-                "no silent default on a pre-registered knob",
+                "(the pinned width is 8; 0 is the preflight limit) — "
+                "no silent default on a pinned knob",
             )
         if args.subgoal_draws < 0:
             parser.error(f"--subgoal-draws must be >= 0, got {args.subgoal_draws}")
         if args.subgoal_draws > 0 and args.subgoal_temperature is None:
             parser.error(
                 "--subgoal-draws > 0 samples candidates — set "
-                "--subgoal-temperature explicitly (the pre-reg value is 1.0)",
+                "--subgoal-temperature explicitly (the pinned value is 1.0)",
             )
         if args.subgoal_draws == 0 and args.subgoal_temperature is not None:
             parser.error(
@@ -882,13 +883,13 @@ def parse_args() -> argparse.Namespace:
         if args.subgoal_candidates_file is None:
             parser.error(
                 "--subgoal-mode mcselect injects banked candidates — "
-                "set --subgoal-candidates-file (the rung-(b') dump)",
+                "set --subgoal-candidates-file (the clean-list candidates dump)",
             )
         if args.mcselect_tau is None:
             parser.error(
                 "--subgoal-mode mcselect needs an explicit --mcselect-tau "
-                "(the pre-reg value is 4.0) — no silent default on a "
-                "pre-registered knob",
+                "(the pinned value is 4.0) — no silent default on a "
+                "pinned knob",
             )
         if args.dump_predictions is None:
             parser.error(
@@ -934,7 +935,7 @@ def main() -> int:
     is_main = rank == 0
 
     if args.subgoal_swap_seed is not None and distributed:
-        # The pre-registered swap arm is a single-process local run; the
+        # The swap arm is a single-process local run; the
         # per-frame provenance records live on the policy object and are
         # not shard-gathered — refuse rather than dump a partial map.
         raise SystemExit(
@@ -1152,7 +1153,7 @@ def main() -> int:
             )
         if args.subgoal_mode == "self":
             # The two-pass arms REPLACE the plain bijou row: the
-            # planner-less baseline is banked, never re-run (pre-reg).
+            # planner-less baseline is banked, never re-run.
             # Pass 1 must sit before pass 2 in the list — the runner
             # scores policies in order per batch, and pass 2 reads pass
             # 1's generations for exactly those frames.
@@ -1205,7 +1206,7 @@ def main() -> int:
                     "ceiling); plain bijou row skipped (baseline is "
                     "banked)"
                     + (
-                        "; CLEAN-LIST filter active (rung (b'): scorers "
+                        "; CLEAN-LIST filter active (scorers "
                         "see non-truncated candidates only, greedy "
                         "fallback recorded)"
                         if args.subgoal_candidate_filter == "clean"
@@ -1214,7 +1215,7 @@ def main() -> int:
                     flush=True,
                 )
         elif args.subgoal_mode == "mcselect":
-            # Rung (c): candidates are INJECTED from the banked rung-(b')
+            # Mcselect: candidates are INJECTED from the banked clean-list
             # file — no in-run sampling; the plain bijou row is skipped
             # (the masked reference rides the policy itself and the
             # baseline is banked — the npz must never re-carry it).
@@ -1552,7 +1553,7 @@ def main() -> int:
         for name, chunks in results.dump_predictions.items():
             payload[f"pred:{name}"] = torch.stack(chunks).numpy()
         if mcselect_policy is not None:
-            # The rung-(c) contract keys (mcselect_results.py): KL
+            # The mcselect contract keys (mcselect_results.py): KL
             # [N, C] float64 NaN-at-ineligible, per-candidate decoded
             # chunks [N, C, S, D], the planner-less reference [N, S, D]
             # — all row-aligned with the identity columns.
@@ -1567,7 +1568,7 @@ def main() -> int:
                 [results.mcselect_pred_masked[i] for i in results.dump_index],
             ).numpy()
         if args.noise_tickets is not None:
-            # Ticket-mode provenance (pre-reg 2026-08-08 rung 2, item 5):
+            # Ticket-mode provenance:
             # the single-decode npz must carry the bank sha — and, when
             # routed, the map sha — so a scorer can refuse to pool a
             # ticket/routed npz against keyed or single-ticket anchors.
@@ -1683,7 +1684,7 @@ def main() -> int:
                 )
             # Every scorer — the live picks and the record-only
             # alternates — operates on the same eligible list (the full
-            # list when unfiltered; the rung-(b') clean list otherwise).
+            # list when unfiltered; the clean list otherwise).
             eligible = (
                 eligible_indices([c.truncated for c in row_candidates])
                 if args.subgoal_candidate_filter == "clean"
@@ -1711,7 +1712,7 @@ def main() -> int:
                     "bon": results.subgoal_picks.get("bon", {}).get(index),
                     "ceil": results.subgoal_picks.get("ceil", {}).get(index),
                     # Record-only alternates, computed offline here —
-                    # never conditioned on (pre-reg: no post-hoc
+                    # never conditioned on (no post-hoc
                     # promotion).
                     "likelihood": eligible[
                         likelihood_pick(
@@ -2215,8 +2216,8 @@ def main() -> int:
         # Subgoal modes skip the plain bijou row (the baseline is
         # banked), so the sorter must be a policy that actually RAN —
         # sorting by the absent bare name was a KeyError that silently
-        # cost the rung-(b') q4 run its HTML (caught by the mcselect
-        # smoke 2026-08-09).
+        # cost an earlier subgoal-draws run its HTML (caught by the
+        # mcselect smoke test).
         if self_policy is not None:
             sort_policy = self_policy.name
         elif bon_policy is not None:

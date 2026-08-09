@@ -204,7 +204,7 @@ def stable_sample_rng(
     return np.random.Generator(np.random.PCG64(sequence))
 
 
-# Golden-ticket noise mode (#1 screen, pre-reg 2026-08-07): a frozen
+# Golden-ticket noise mode: a frozen
 # bank of candidate noise vectors replaces per-frame keying entirely —
 # draw d at EVERY frame integrates from tickets[d] (the defining
 # ticket property), so one batched draws-M eval scores every candidate
@@ -251,7 +251,7 @@ def load_ticket_map(path: Path, bank_count: int) -> tuple[dict[str, int], str]:
     """(dataset → bank-index routing map, sha256 of its canonical form).
 
     Accepts the committed stage-0/1 analysis json (map under
-    ``stage1.routing_map`` — the noise-ladder rung-2 artifact) or a bare
+    ``stage1.routing_map`` — the per-dataset routing artifact) or a bare
     ``{repo_id: index}`` json. The sha is computed over
     ``json.dumps(map, sort_keys=True)`` — byte-identical to the
     committing script's — so a routed run's provenance can be checked
@@ -434,7 +434,7 @@ class BijouPolicy:
             # report/dump provenance).
             self.tickets, self.tickets_sha256 = load_tickets(tickets)
             if ticket_map is not None:
-                # Noise-ladder rung 2 (#1): per-dataset routing. The
+                # Per-dataset ticket routing. The
                 # distinct suffix keeps a routed read from ever pooling
                 # as a single-ticket (_ticket) read.
                 if sample_draws != 1:
@@ -596,7 +596,7 @@ class BijouPolicy:
                 "an untrained field would render text the model never saw",
             )
         if subgoal_mode is not None:
-            # #6 rung (a): both modes need the trained [subgoal|…] slot;
+            # Self-subgoal probe: both modes need the trained [subgoal|…] slot;
             # the self mode additionally decodes the model's own subgoal.
             if ConditionField.SUBGOAL.value not in self.info.condition_fields:
                 raise SystemExit(
@@ -695,15 +695,14 @@ class BijouPolicy:
         ]
 
     def _swap_subgoal(self, item: dict[str, Any]) -> dict[str, Any]:
-        """The pinned swap rewrite for one frame (pre-reg
-        2026-08-09-prereg-subgoal-swap.md): label-less frames pass
-        UNTOUCHED (oracle iii — byte-identical to baseline); labeled
+        """The pinned swap rewrite for one frame: label-less frames pass
+        UNTOUCHED (byte-identical to baseline); labeled
         frames render the donor's fraction-matched label through the
         ``condition_subgoal`` override — or an EMPTY slot when the
         dataset contributed no swapped frames (single labeled episode:
         the slot must never fall back to the truth). Every labeled
-        frame's outcome is recorded for --dump-subgoal-swaps (the
-        mechanical oracle-iv check recomputes the dump from sidecars)."""
+        frame's outcome is recorded for --dump-subgoal-swaps (a
+        mechanical offline check recomputes the dump from sidecars)."""
         assert self.subgoal_swap is not None
         true_label = subgoal_text(item)
         if true_label is None:
@@ -843,8 +842,8 @@ class BijouPolicy:
             means, self.last_draws = collapse_draws(stacked)
             return means, None
         if self.ar_temperature is not None and isinstance(decoder, ARSuffixDecoder):
-            # AR sampled-draws instrument (the flow ensembling's mirror,
-            # ideas #19): encode the prefix ONCE, snapshot the cache,
+            # AR sampled-draws instrument (the flow ensembling's
+            # mirror): encode the prefix ONCE, snapshot the cache,
             # temperature-sample one chunk per draw against the restored
             # prefill, average the decoded chunks in raw units. Value
             # lines stay greedy, so generations are draw-invariant —
@@ -951,7 +950,7 @@ class NarratedBijouPolicy:
 
 @dataclasses.dataclass(frozen=True, slots=True)
 class SubgoalRecord:
-    """One frame's self-subgoal provenance row (#6 rung (a)): the frame
+    """One frame's self-subgoal provenance row: the frame
     identity triple, the instruction, the TRUE segment label (None =
     unjudged frame) and what pass 1 generated — machine-readable for
     the stage-1 validity table and the results post's qualitative
@@ -969,7 +968,7 @@ class SubgoalRecord:
 
 
 class SelfSubgoalPass1Policy:
-    """Pass 1 of the self-subgoal probe (#6 rung (a)) — and the
+    """Pass 1 of the self-subgoal probe — and the
     narrated-subgoal-only arm, free: the PLANNER-LESS prompt requests
     ``[generate|subgoal actions]``, the greedy decode's actions are
     this policy's prediction, and each frame's generated subgoal is
@@ -1010,8 +1009,9 @@ class SelfSubgoalPass1Policy:
                 "(greedy is the draws-0 limit, not a temperature limit)",
             )
         self.base = base
-        # None = rung (a): the legacy single-greedy path, byte-for-byte.
-        # An int >= 0 = rung (b) candidates mode: the same greedy full
+        # None = plain self-subgoal probe: the legacy single-greedy
+        # path, byte-for-byte.
+        # An int >= 0 = subgoal-draws candidates mode: the same greedy full
         # pass PLUS `draws + 1` text-only candidate decodes off one
         # shared prefill (0 sampled draws still captures the greedy
         # candidate's stats — the bit-exactness preflight limit).
@@ -1092,11 +1092,11 @@ class SelfSubgoalPolicy:
     generated subgoal rendered through the trained ``[subgoal|…]``
     prompt slot and decode actions on the deployment fast path
     ``[generate|actions]``. The request NEVER includes subgoal
-    (condition-plus-generate is an untrained context — pre-reg oracle
-    iv); rendering goes through the one shared Collator path, never a
-    re-implementation (oracle iii). An empty or absent pass-1
+    (condition-plus-generate is an untrained
+    context); rendering goes through the one shared Collator path, never a
+    re-implementation. An empty or absent pass-1
     generation renders nothing, so the prompt is byte-identical to the
-    planner-less baseline's (the no-hint limit — oracle i);
+    planner-less baseline's (the no-hint limit);
     ``force_empty`` forces that limit on EVERY frame, the live
     pre-launch check, and suffixes the name so a forced run can never
     pass as the self arm."""
@@ -1149,12 +1149,12 @@ class SelfSubgoalPolicy:
 
 
 class MaskedContrastSubgoalPolicy:
-    """#6 rung (c) producer — the masked-contrast (MG-Select-form)
-    scorer's measurement pass (pre-reg 2026-08-09-prereg-subgoal-
-    mcselect.md; the frozen reads and the ARGMAX live in
+    """Masked-contrast (mcselect) producer — the masked-contrast
+    (MG-Select-form)
+    scorer's measurement pass (the frozen reads and the ARGMAX live in
     ``fontaine/scripts/mcselect_results.py``, never here).
 
-    Candidates come from the banked rung-(b') candidates FILE — no
+    Candidates come from the banked clean-list candidates FILE — no
     in-run sampling, so the scorer re-ranks exactly the width whose
     ceiling and floor are on the board. Per frame: ONE planner-less
     greedy decode (the masked reference prediction, record-only), then
@@ -1198,7 +1198,7 @@ class MaskedContrastSubgoalPolicy:
         if not first or not {"text", "truncated"} <= set(first[0]):
             raise SystemExit(
                 "candidates file rows must carry candidate dicts with "
-                "'text' and 'truncated' — not a rung-(b') candidates dump",
+                "'text' and 'truncated' — not a clean-list candidates dump",
             )
         self.base = base
         self.candidates_by_index = candidates_by_index
@@ -1233,7 +1233,7 @@ class MaskedContrastSubgoalPolicy:
                 raise SystemExit(
                     f"frame index {index} has no row in the candidates "
                     "file — this run's plan does not match the banked "
-                    "rung-(b') width, stop",
+                    "candidate-list width, stop",
                 )
             rows_cands.append(cands)
         model = self.base.model
@@ -1340,31 +1340,31 @@ class MaskedContrastSubgoalPolicy:
 
 
 class SelectedSubgoalPolicy:
-    """Pass 2 of the subgoal-draws rung (#6 rung (b)): condition each
+    """Pass 2 of subgoal-draws candidate selection: condition each
     frame on a SELECTED candidate from pass 1's candidate list and
     decode actions on the deployment fast path — the SelfSubgoalPolicy
     machinery with the selection swapped in.
 
     ``mode='bon'`` (primary, deployment-honest): the frozen
     self-certainty pick — distribution stats only, no candidate text
-    comparison, no label access anywhere on the path (pre-reg oracle v:
-    the scorer function's signature has no label argument).
+    comparison, no label access anywhere on the path (the scorer
+    function's signature has no label argument).
     ``mode='ceil'`` (record-only ceiling): the candidate maximizing
     token-F1 vs the frame's TRUE segment label; label-less frames
-    render NO subgoal (the rung-(a) oracle-arm convention). The name
+    render NO subgoal (the oracle-arm convention). The name
     carries the mode (``_bonsubgoal``/``_ceilsubgoal``) so an
     oracle-informed read can never pass as a deployment read.
 
-    ``candidate_filter='clean'`` applies the rung-(b') frozen
-    eligible-list rule (pre-reg 2026-08-08-…-cleanlist): every scorer
+    ``candidate_filter='clean'`` applies the clean-list frozen
+    eligible-list rule: every scorer
     operates on the non-truncated candidates only, an all-truncated row
     falls back to the greedy candidate as decoded (recorded), and the
     name carries the filter (``_boncleansubgoal``/``_ceilcleansubgoal``)
-    so a filtered read can never pool as a rung-(b) read. Pass 1 and
+    so a filtered read can never pool as an unfiltered read. Pass 1 and
     the dump bytes are untouched — the filter is selection-side only.
 
     ``force_empty`` forces the no-hint limit on every frame (the
-    pre-launch oracle-(ii) run) and suffixes the name."""
+    pre-launch consistency run) and suffixes the name."""
 
     def __init__(
         self,

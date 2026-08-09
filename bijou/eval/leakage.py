@@ -1,6 +1,6 @@
 """Panel-leakage checker: training selection ∩ panel episodes = ∅.
 
-Panel episodes are radioactive (fontaine/charter.md §2): nothing on
+Panel holdout episodes must never be trained on: nothing on
 the holdout side of the panel's split may ever be trained on. The trap
 is DERIVED corpora — the episode holdout hashes ``(split_seed,
 repo_id)`` and draws from ``total_episodes``, so a filtered/merged/

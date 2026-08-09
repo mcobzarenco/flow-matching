@@ -190,7 +190,7 @@ def _ambient_sdpa_backends() -> list[SDPBackend]:
     full dispatcher) is active at call time. ``_checkpointed_block``
     captures this at forward time and re-applies it inside the
     checkpointed region, because backward recompute runs outside the
-    caller's pin (#20 CUDA crash: suffix forward pinned to non-cuDNN
+    caller's pin (observed CUDA crash: suffix forward pinned to non-cuDNN
     landed on MATH fp32; the unpinned recompute dispatched a fused bf16
     kernel and aborted on saved-vs-recomputed metadata mismatch).
     """
@@ -463,7 +463,7 @@ class Molmo2Transformer(nn.Module):
             dtype=dtype,
         )
         self.rotary_emb = Molmo2RotaryEmbedding(config, device=device)
-        # Activation checkpointing over the decoder blocks (#20):
+        # Activation checkpointing over the decoder blocks:
         # recompute each block in backward instead of retaining its
         # interior activations. Runtime toggle (bijou.train
         # --activation-checkpointing), not config — memory only, the

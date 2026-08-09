@@ -97,8 +97,8 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
         # self-distillation mix (flow decoders with φ_s only). Never
         # serialized — a run property, not a checkpoint property.
         self.distill: str | None = None
-        # The KI-joint CE rider (attach-screen pre-reg, 2026-08-07, K
-        # arm): a Molmo2ARDecoder whose phase-1 CE objective continues
+        # The KI-joint CE rider (joint flow+CE training): a
+        # Molmo2ARDecoder whose phase-1 CE objective continues
         # verbatim beside the flow decoder's objective at fixed weight
         # 1.0 (KI's no-tuning result — deliberately NOT a knob). None =
         # every existing composition, byte-identical behavior. train.py's
@@ -240,7 +240,7 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
         The joint-CE arm (``joint_ce`` set) returns (CE total + flow
         total, detached FLOW loss, detached CE ACTION component, count 1)
         — the aux slots carry the CE branch's action CE (the phase-1
-        ``loss_action`` analog, the pre-registered CE-health read), not
+        ``loss_action`` analog, the pinned CE-health read), not
         the rider's own aux fields (those contribute to the total and
         stay unlogged)."""
         decoder = self.decoder
@@ -551,7 +551,7 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
         action_capture: list[ActionCaptureStep] | None = None,
     ) -> BijouPrediction:
         """Greedy AR suffix decode against an ALREADY-ENCODED memory —
-        the #6 rung-(c) per-candidate call: the caller encodes each
+        the masked-contrast (mcselect) per-candidate call: the caller encodes each
         conditioned prompt once and decodes with ``action_capture``
         recording the conditional scoring surface from the decode's own
         logits (:class:`ActionCaptureStep`). ``ar_predict_sampled``'s
@@ -587,7 +587,7 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
     ) -> list[Tensor | None]:
         """Teacher-forced BLOCK logits over per-row action-id sequences
         against an already-encoded memory (consumes its cache —
-        snapshot/restore around calls): the #6 rung-(c)
+        snapshot/restore around calls): the masked-contrast (mcselect)
         masked-reference forward. See
         :meth:`ARSuffixDecoder.teacher_forced_block_logits`."""
         match self.decoder:
@@ -619,10 +619,10 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
         draws: int,
         sampling_for_draw: Callable[[int], ARSampling],
     ) -> tuple[BijouPrediction, list[list[ValueCandidate]]]:
-        """The subgoal-draws pass-1 decode (#6 rung (b)): ONE prefill,
-        then (a) the full greedy decode — actions + value lines,
+        """The subgoal-draws pass-1 decode (candidate selection): ONE
+        prefill, then (a) the full greedy decode — actions + value lines,
         op-identical to :meth:`predict_chunk` so the draws-0 limit stays
-        bit-exact against rung (a)'s pass 1 — and (b) ``draws + 1``
+        bit-exact against the self-subgoal probe's pass 1 — and (b) ``draws + 1``
         text-only decodes of ``field`` against the restored prefix
         cache: candidate 0 greedy (its per-step stats make the greedy
         candidate scorable), candidates 1..draws temperature-sampled

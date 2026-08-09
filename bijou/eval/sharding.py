@@ -69,13 +69,13 @@ class ShardResults:
     # Self-subgoal pass 1's per-frame provenance rows ({} when no
     # subgoal-mode run) — --dump-subgoals serializes the merged map.
     subgoal_records: dict[int, SubgoalRecord]
-    # Rung (b) draws mode: pass 1's per-frame candidate lists and each
+    # Subgoal-draws mode: pass 1's per-frame candidate lists and each
     # selection arm's per-frame pick (arm name → index → candidate
     # index; None = label-less ceil row). {} outside draws mode —
     # --dump-subgoal-candidates serializes the merged maps.
     subgoal_candidates: dict[int, list[ValueCandidate]]
     subgoal_picks: dict[str, dict[int, int | None]]
-    # #6 rung (c) mcselect mode: the producer's per-frame measurement
+    # Masked-contrast (mcselect) mode: the producer's per-frame measurement
     # rows (KL [C] with NaN at ineligible, per-candidate decoded chunks
     # [C, S, D], the planner-less reference chunk [S, D]) — {} outside
     # mcselect mode; --dump-predictions serializes them as mcselect:*.

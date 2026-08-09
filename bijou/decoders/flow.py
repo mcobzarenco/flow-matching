@@ -898,8 +898,8 @@ def flow_matching_loss_sums(
     return squared.sum(), torch.tensor(squared.numel(), device=squared.device)
 
 
-# SnapFlow (arXiv:2604.05656) loss mix, frozen by the 2026-08-06 distill
-# pre-registration: L = α·L_FM + (1−α)·λ·L_shortcut.
+# SnapFlow (arXiv:2604.05656) loss mix, frozen in
+# code: L = α·L_FM + (1−α)·λ·L_shortcut.
 SNAPFLOW_ALPHA = 0.5
 SNAPFLOW_LAMBDA = 0.1
 

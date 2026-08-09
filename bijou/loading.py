@@ -231,7 +231,7 @@ class Molmo2PromptConfig:
     generate_bracket: bool
     # Trunk layers whose post-layer hidden states are exported as raw
     # residual taps (named ``res{layer}``, projected decoder-side — the
-    # flow-phase attachment surface, pre-registered 2026-08-07); () on
+    # flow-phase attachment surface); () on
     # every AR-phase checkpoint. Molmo2 has no K/V-export conditioning
     # arm — the AR suffix reads the CACHE — so no ``exports`` mirror.
     residual_exports: tuple[int, ...] = ()
@@ -587,7 +587,7 @@ def residual_expert_config(
     )
 
 
-# The pinned molmo2 tap rule (attach-screen pre-reg, 2026-08-07): gemma's
+# The pinned molmo2 tap rule: gemma's
 # rule keys off first_kv_shared_layer_idx, a KV-share boundary molmo2's
 # uniform full-attention stack does not have — so the rule here is uniform
 # stride 3 with the LAST tap anchored on the final layer (the π0.5
@@ -905,8 +905,8 @@ class CheckpointMetadata:
     per_dataset_normalization: dict[str, DatasetStats]
     train_args: dict[str, Any]
     step: int
-    # The K-arm CE rider's decoder schema (attach-screen pre-reg,
-    # 2026-08-07); its weights ride as ``joint_ce.safetensors``. None on
+    # The joint flow+CE rider's decoder schema; its
+    # weights ride as ``joint_ce.safetensors``. None on
     # every non-joint checkpoint — the key is then absent, so files
     # round-trip byte-identically to the pre-field format.
     joint_ce: dict[str, Any] | None = None
