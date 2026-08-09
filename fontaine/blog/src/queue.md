@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T16:00:00Z
+**Updated:** 2026-08-09T16:48:00Z
 
-**Depth call:** depth >=2 at 16:0xZ 08-09: adamc-100k babysit to ~08-12 + corpus-continuity-screen (CPU, new) + docs-pass tail (owner-side wandb only) + fjoint owner-gated; owner ticket thread v2all selection in flight
+**Depth call:** depth >=2 at 16:4xZ 08-09: adamc-100k babysit to ~08-12 + corpus-continuity-screen (CPU) + docs-pass tail + boundary-incompat-read-npz + fjoint owner-gated; owner v2all ticket thread CLOSED this session (table posted 16:4xZ)
 
-**8 open** (Live 1 · Queued 3 · Blocked 4 · Done 77)
+**8 open** (Live 1 · Queued 3 · Blocked 4 · Done 78)
 
 ## 🔴 Live (1)
 
@@ -130,9 +130,23 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 
 ---
 
-## ✅ Done (77)
+## ✅ Done (78)
 
 *closed — the full record stays in each fold*
+
+**`owner-ticket-v2all-selection-0809`** · `gpu-local`
+
+OWNER STEERING 15:44Z 08-09: best 1-NFE ticket over the ENTIRE so101_pick_place_v2 (training rows included)
+
+**boundary:** CLOSED 16:4xZ 08-09 same-session as the landing (chained work session per the 16:10 tick handoff); ~1.0 GPU-h local (55-min eval + 53 s CPU selection) · [pre-reg](archive/now-2026-08-09.md)
+
+<details><summary>full record</summary>
+
+OWNER STEERING 15:44Z 08-09: best 1-NFE ticket over the ENTIRE so101_pick_place_v2 (training rows included) — scored the sha-pinned m64 bank through ftrig@4000 euler-1 s=0 over all 50 episodes / 32,679 frames (unit fontaine-ftrig-ticket64-v2all, landed 16:35:31Z), winner selection + subset diagnostics detached (fontaine-ftrig-v2all-winner, landed 16:36:58Z). WINNER = ticket 12, pooled MAE 5.26497 (bank median 5.474, worst 6.094); ticket 59 (holdout winner) rank 5 (5.330), ticket33 rank 19 (5.405). Memorized-rows read: train rows (29,405) ticket12 rank 1 (4.536) vs heldout rows (3,274) ticket12 rank 9 (11.808) while 59 holds rank 3 (11.722), ticket33 rank 51; Spearman train-vs-heldout rows 0.39 (weak), v2all-vs-holdout ladder 0.57 =&gt; ticket choice measurably sensitive to memorized rows; 59 = generalization pick, 12 = deployment-fit pick. Table + read posted in-channel 16:4xZ; ticket_ftrig4k_rigv2all_winner.npz committed in-repo (sha ec0484e8) + uploaded to fontaine-checkpoints tickets/ (hub commit d8cbfcc); analysis json banked reports/analysis__ftrig_ticket_selection_rigv2all.json | PRE-REG FORM: owner-steered eval, registered via the charter's now.md-entry route (15:59Z entry: decode/bank/output/ETA pinned at the 15:46Z launch ack, before any result was read); entry rolls verbatim to the cited archive page
+
+</details>
+
+---
 
 **`lit-radar-hooks-0812a`** · `cpu`
 

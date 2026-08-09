@@ -3,7 +3,45 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-09 16:38–16:5xZ (real `date -u`) — work session
+(chained, bounded): **v2-all ticket thread CLOSED — winner ticket 12
+(pooled MAE 5.265 over 32,679 frames), table + memorized-rows read
+posted in-channel 16:4xZ; winner npz in-repo + on
+fontaine-checkpoints.***
+
+**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE — babysit exit 0, 8
+procs, ~75.3 GiB ×4 vs 77 bar, step 3860 @ 16:39, 11.9/310 GPU-h;
+probe ladder unchanged (14.03@2500 = @10k kill-bar ref). Next
+boundary: **step-5000 async-save line ~17:2xZ — quote owed in-channel,
+falls to the next tick (`run_work_next` armed).** LOCAL GPU free
+(`fontaine-ftrig-v2all-winner` consumed 53 s CPU, landed 16:36:58Z).
+
+**Steering**: none new — `read` empty at 16:39 (both polls), no
+reactions in history -n 5. 13:48Z gate default (let run, gate 310)
+governs.
+
+**Done**: 16:10 handoff bundle (1)–(4) executed. Winner+subsets
+service verified landed; **owner table posted 16:4xZ**: winner ticket
+12 5.265 · 59 (holdout winner) 5.330 rank-5 · 33 (teacher) 5.405
+rank-19 · bank median 5.474. Memorized-rows read: train rows ticket 12
+rank-1 (4.536) vs heldout rows rank-9 (11.808) while 59 holds rank-3
+(11.722), ticket33 rank-51; Spearman train-vs-heldout rows **0.39** →
+ticket choice measurably memorization-sensitive; 59 = generalization
+pick, 12 = deployment-fit pick. `ticket_ftrig4k_rigv2all_winner.npz`
+(sha ec0484e8) committed in-repo + uploaded to fontaine-checkpoints
+`tickets/` (hub commit d8cbfcc); analysis json banked
+(`reports/analysis__ftrig_ticket_selection_rigv2all.json`, subset
+diagnostics appended). Queue item `owner-ticket-v2all-selection-0809`
+recorded done, prereg cited via the now.md-entry route (validate green
+depth 3, 8 open); blog built + Space pushed.
+
+**Next**: `queue_cli.py next` → `docs-pass-followups-0809` /
+`corpus-continuity-screen` (CPU, any GPU-busy window); step-5000 save
+quote ~17:2xZ (tick, `run_work_next` armed); adamc endpoint ~08-12
+~17:00Z → chained k4l2 panel. fjoint stays owner-gated post-endpoint.
 
 *Updated 2026-08-09 16:10–16:4xZ (real `date -u`) — tick (babysit, held
 through the v2all landing): **adamc_100k healthy step 3240; v2-all
@@ -90,92 +128,6 @@ the unit lands (~16:3xZ), then the step-5000 async-save quote
 `boundary-incompat-read-npz` / docs-pass tail (owner-side wandb
 only). fjoint launch remains owner-gated post-adamc-endpoint
 (~08-12 ~17:00Z+).
-
-*Updated 2026-08-09 14:54–15:0xZ (real `date -u`) — tick (babysit):
-**adamc_100k healthy through step 1560 — probe@1500 banked at
-16.8716, down hard again from 24.48@1000.***
-
-**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE (launch 3) —
-babysit exit 0, 8 procs, ~75.1–75.3 GiB ×4 vs the 77 bar, step 1560
-at the 14:55 poll, window 18.7 f/min (probe eval@1500 inside the
-window; steady neighbors 2.54–2.57 s/step). **Probe@1500:
-eval_chunk_mae 16.8716, train_mae 18.1248** — the fall continues
-(31.30@500 → 24.48@1000 → 16.87@1500), far under the 25
-sustained-×3 bar that only binds after step 5000. Loss 4.99@1560
-falling smoothly, grad-norm 5–7 flat (record-only AdamC watch —
-no ramp), vram alloc peak 70.57, zero NaN/inf in the log.
-Cumulative 5.0/310 GPU-h. Next boundary: **first async-save line at
-step 5000 (~17:2xZ, quote owed in-channel — the chained session
-catches it)**; kill-bar comparison binds at eval@2500 vs @10k
-(~08-10); endpoint ~08-12 ~17:00Z → chained k4l2 panel (--report).
-
-**Steering**: none — `read` surfaced only our own fjoint-instrument
-post; history -n 5 all our own posts, no reactions. The 13:48Z gate
-question stays unanswered; declared default (let it run, gate 310)
-governs.
-
-**Done**: babysit poll (exit 0, unfiltered) + log-level anomaly scan
-(probe@1500 pulled from the box log; grad-norm flat 5–7; NaN/inf
-count zero; the window-rate dip attributed to the in-window
-eval@1500); queue validate green depth 4 (9 open); `run_work_next`
-left armed (GPUs busy + CPU items queued). Stable stretch → exited
-rather than held.
-
-**Next**: chained work session → `queue_cli.py next` pointer
-(`boundary-incompat-read-npz` free npz read, or
-`docs-pass-followups-0809` / `lit-radar-hooks-0812a`); `queue.json`
-canonical. fjoint launch remains owner-gated post-adamc-endpoint
-(~08-12 ~17:00Z+), sequencing question to the owner at finalization.
-adamc_100k boundaries: async-save quote ~17:2xZ (chained session),
-eval@2500-vs-@10k comparison ~08-10, endpoint ~08-12 ~17:00Z →
-chained panel → leaderboard row + grad-norm chart.
-
-*Updated 2026-08-09 14:37–14:5xZ (real `date -u`) — work session
-(bounded, one item): **the fjoint instrument is LANDED oracle-gated
-(pre-reg finalization condition 1 of 3) — the rung now waits only on
-the owner's sequencing go.***
-
-**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE (launch 3) —
-babysit exit 0 ×2 this session (14:37, 14:49), 8 procs, ~75.1–75.3
-GiB ×4 vs the 77 bar, step 1460 at the 14:49 poll, window 23.6 f/min
-≈ 2.54 s/step (no eval in window), loss falling smoothly, 4.7/310
-GPU-h. Next boundary: **first async-save line at step 5000 (~17:2xZ,
-quote owed in-channel — the chained tick catches it)**; kill-bar
-comparison binds at eval@2500 vs @10k (~08-10); endpoint ~08-12
-~17:00Z → chained k4l2 panel (--report).
-
-**Steering**: none — read clean at boot and both babysit polls;
-history all our own posts, no reactions. The 13:48Z gate question
-stays unanswered; declared default (let it run, gate 310) governs.
-
-**Done** (`49ee316`): **fjoint instrument, pre-reg Instrument §1–§3**
-(the queue-head CPU part of `idea4-fjoint-rung-finalize-exec`):
-(1) `materialize_fjoint_init.py` — composite warm start (F@10k
-expert/prompt/trunk bytes verbatim + phase-1 FAST tables as
-`joint_ce.safetensors`, joint metadata section; trunk-coherence
-byte-guard refuses a wrong phase-1 source, inode fast path for the
-box's hardlinked layout); (2) `--joint-unfrozen-seam` guard escape
-in train.py — warm-start-only (requires `--init-from`, contradicts
-`--seam-stop-grad`, naive-joint refusal verbatim-preserved for fresh
-runs), banner prints `seam UNFROZEN (flow grads enter the trunk)`,
-plus a real hole closed: the molmo2-only runtime guard now checks
-`--joint-ce` too (a gemma joint run under the escape would have
-silently dropped the rider); (3) AR-view compat verified against
-J-written checkpoints via the real writer on the fixture family.
-12 new oracles (`tests/test_fjoint_init.py`), `check.py` 596 green
-(was 584). Draft post's Instrument section updated in place + idea
-#4 page + index hook; queue item updated, validate green depth 4
-(9 open); Discord summary posted; blog built + Space pushed,
-draft page curl-verified 200.
-
-**Next**: `queue_cli.py next` pointer → `boundary-incompat-read-npz`
-(CPU, free npz read) or `docs-pass-followups-0809` /
-`lit-radar-hooks-0812a`; `queue.json` canonical. fjoint launch
-remains owner-gated post-adamc-endpoint (~08-12 ~17:00Z+), the
-sequencing question goes to the owner at finalization. adamc_100k
-boundaries: async-save quote ~17:2xZ (chained tick), eval@2500-vs-@10k
-comparison ~08-10, endpoint ~08-12 ~17:00Z → chained panel →
-leaderboard row + grad-norm chart. `run_work_next` armed.
 
 ## Utilization footer
 

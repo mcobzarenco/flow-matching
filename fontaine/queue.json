@@ -1,6 +1,6 @@
 {
- "updated_utc": "2026-08-09T16:00:00Z",
- "depth_reason": "depth >=2 at 16:0xZ 08-09: adamc-100k babysit to ~08-12 + corpus-continuity-screen (CPU, new) + docs-pass tail (owner-side wandb only) + fjoint owner-gated; owner ticket thread v2all selection in flight",
+ "updated_utc": "2026-08-09T16:48:00Z",
+ "depth_reason": "depth >=2 at 16:4xZ 08-09: adamc-100k babysit to ~08-12 + corpus-continuity-screen (CPU) + docs-pass tail + boundary-incompat-read-npz + fjoint owner-gated; owner v2all ticket thread CLOSED this session (table posted 16:4xZ)",
  "items": [
   {
    "id": "owner-molmo2-perf-review",
@@ -766,6 +766,15 @@
    "owner_hold": false,
    "title": "#9 corpus kinematic-continuity screen (CPU, record-only, VISTA hook 08-09 papers/vista-umi-validation.md \u2014 exploratory read on our own data, SDN-read precedent, no pre-reg; any curation change from it DOES need one): score every episode of community_curated_v0 (+ the 2 rig repos as calibration anchors) for per-tick action-displacement continuity \u2014 VISTA's three-regime scoring (full marks / linear / exponential) recalibrated to so100 joint space from the rig repos' own displacement distribution; episode score = min over ticks. AUDIT FIRST per standing rule: check what dup_content_census.py / frame-mining machinery already computes per-episode before writing anything new. Oracle-gate on synthetic planted-dropout fixtures (teleport jump in/out, clean episode = full marks); quote score distribution + tail episodes, cross-check low-continuity repos against the banked LORO influential-repo lists (arch/box-batch reads). A null (no corrupted tail) closes the hook at zero cost; a signal is a #9 curation lever with its own pre-reg",
    "boundary": "any GPU-busy window; born 15:5xZ 08-09 from the VISTA read; zero GPU (pure function of dataset actions on disk)"
+  },
+  {
+   "id": "owner-ticket-v2all-selection-0809",
+   "title": "OWNER STEERING 15:44Z 08-09: best 1-NFE ticket over the ENTIRE so101_pick_place_v2 (training rows included) \u2014 scored the sha-pinned m64 bank through ftrig@4000 euler-1 s=0 over all 50 episodes / 32,679 frames (unit fontaine-ftrig-ticket64-v2all, landed 16:35:31Z), winner selection + subset diagnostics detached (fontaine-ftrig-v2all-winner, landed 16:36:58Z). WINNER = ticket 12, pooled MAE 5.26497 (bank median 5.474, worst 6.094); ticket 59 (holdout winner) rank 5 (5.330), ticket33 rank 19 (5.405). Memorized-rows read: train rows (29,405) ticket12 rank 1 (4.536) vs heldout rows (3,274) ticket12 rank 9 (11.808) while 59 holds rank 3 (11.722), ticket33 rank 51; Spearman train-vs-heldout rows 0.39 (weak), v2all-vs-holdout ladder 0.57 => ticket choice measurably sensitive to memorized rows; 59 = generalization pick, 12 = deployment-fit pick. Table + read posted in-channel 16:4xZ; ticket_ftrig4k_rigv2all_winner.npz committed in-repo (sha ec0484e8) + uploaded to fontaine-checkpoints tickets/ (hub commit d8cbfcc); analysis json banked reports/analysis__ftrig_ticket_selection_rigv2all.json | PRE-REG FORM: owner-steered eval, registered via the charter's now.md-entry route (15:59Z entry: decode/bank/output/ETA pinned at the 15:46Z launch ack, before any result was read); entry rolls verbatim to the cited archive page",
+   "class": "gpu-local",
+   "status": "done",
+   "prereg": "fontaine/blog/src/archive/now-2026-08-09.md",
+   "owner_hold": false,
+   "boundary": "CLOSED 16:4xZ 08-09 same-session as the landing (chained work session per the 16:10 tick handoff); ~1.0 GPU-h local (55-min eval + 53 s CPU selection)"
   }
  ],
  "updated": "2026-08-09T11:08:00Z"
