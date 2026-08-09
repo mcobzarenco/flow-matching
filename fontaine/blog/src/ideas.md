@@ -128,6 +128,17 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   unit. ELASTIC (same slice) independently names verifier noise as
   THE parallel-scaling bottleneck — the Δ_ceil/Δ_bon split is
   built to price exactly that.
+  **Rung (b′) READ OUT 2026-08-09
+  ([results](posts/2026-08-09-subgoal-draws-cleanlist-results.md)):
+  E6 FALSIFIED, adjudication NO-SCORER — SC pick is +0.210
+  [+0.113, +0.312] WORSE than greedy self head-to-head (and +0.142
+  worse than the bare baseline: it anti-selects), while the oracle
+  ceiling is alive at −0.250 [−0.353, −0.148], concentrated
+  late-horizon (−0.464 last-10%). Width is fine (eligible 8.06/9,
+  0 fallback rows); the scorer is the whole gap. SC is dead as the
+  picker; scorer-side escalations (learned verifier per RoVer,
+  probe ranker, or distilling the 4,298 dumped oracle-pick pairs)
+  each need their own pre-reg.**
 - **`noise-draws` [#1 Noise-draw ensembling](ideas/01-noise-draw-ensembling.md)** —
   flow mean-of-10 banked (5.365); batched draws merged 2026-08-07.
   **GOLDEN-TICKET SCREEN R1+R2 READ OUT 2026-08-08

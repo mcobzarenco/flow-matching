@@ -45,11 +45,20 @@ dumped eligible/fallback fields must byte-agree with a recompute from
 the truncated flags, and the agreement block gains the per-row
 eligible-list size distribution + fallback-row count.
 
+Row pairing: a full-panel draws npz must byte-match the baseline on
+the identity columns; a shorter draws npz (the pre-registered q4
+cost-gate fallback, stateprobe_q4 plan) is joined on the corpus concat
+``index`` (the draws10/energy-score join convention) and the baseline +
+banked-self comparators re-pooled onto those rows — recorded as
+subset_mode, never silent.
+
 ``--oracle`` runs the pre-data selftest: exact-arithmetic fixtures,
 degenerate arm ⇒ delta exactly 0 with CI [0, 0] and the falsifier
 firing, and every abort branch exercised — in BOTH conventions,
 including the planted filter-binds world (full-list argmax truncated ⇒
-filtered pick differs, both scorers) and the all-truncated fallback.
+filtered pick differs, both scorers), the all-truncated fallback, and
+the q4-shaped slice fixture (joins, re-pools, reproduces the sliced
+direct computation; duplicate/foreign-index and identity-drift aborts).
 """
 
 from __future__ import annotations
@@ -139,6 +148,39 @@ def check_pairing(base: dict, probe: dict, label: str) -> None:
     for key in IDENTITY_KEYS:
         if not np.array_equal(base[key], probe[key]):
             sys.exit(f"{label}: panel pairing broken on {key} — stop")
+
+
+def join_rows(base: dict, probe: dict, label: str) -> tuple[np.ndarray, bool]:
+    """Rows of the baseline npz pairing the probe npz, in probe order.
+
+    Equal length ⇒ the identity columns must byte-match (no silent
+    reordering); shorter probe ⇒ the pre-registered q4 fallback, joined
+    on `index` with identity equality re-checked on the joined rows
+    (the draws10_t1/energy-score convention). Anything else aborts.
+    """
+    bi, pi = base["index"], probe["index"]
+    if len(pi) == len(bi):
+        check_pairing(base, probe, label)
+        return np.arange(len(bi)), False
+    if len(pi) > len(bi):
+        sys.exit(
+            f"{label}: probe npz has MORE rows ({len(pi)}) than the "
+            f"baseline panel ({len(bi)}) — stop",
+        )
+    if len(np.unique(pi)) != len(pi):
+        sys.exit(f"{label}: probe npz has duplicate index values — refusing the join")
+    pos = {int(ix): i for i, ix in enumerate(bi)}
+    missing = [int(ix) for ix in pi if int(ix) not in pos]
+    if missing:
+        sys.exit(
+            f"{label}: {len(missing)} probe rows absent from the baseline "
+            f"panel (first: {missing[:3]}) — subset join broken",
+        )
+    rows = np.array([pos[int(ix)] for ix in pi])
+    for key in ("truth", "valid", "repo_id", "core"):
+        if not np.array_equal(base[key][rows], probe[key]):
+            sys.exit(f"{label}: subset rows disagree with the baseline panel on {key}")
+    return rows, True
 
 
 def check_state_rows(base: dict, probe: dict, label: str) -> None:
@@ -429,7 +471,20 @@ def analyze(
                 "convention for this read, stop",
             )
     check_pairing(base, self_npz, "banked self arm")
-    check_pairing(base, draws_npz, "draws run")
+    rows, subset = join_rows(base, draws_npz, "draws run")
+    if subset:
+        n_full = len(base["index"])
+        base = {k: v[rows] for k, v in base.items()}
+        self_npz = {k: v[rows] for k, v in self_npz.items()}
+        truth, valid, core, w = bbr.masks(base)
+        base_err = np.abs(base[BASELINE_KEY] - truth)
+        bc = bbr.pooled_chunk(base_err, core, w)
+        bf = bbr.pooled_first(base_err, valid, core)
+        print(
+            f"subset join: {len(rows)}/{n_full} panel rows (pre-registered "
+            f"q4 fallback); baseline + banked self re-pooled onto the "
+            f"subset ({bc:.4f}/{bf:.4f})",
+        )
     check_state_rows(base, draws_npz, "draws run")
     check_report(draws_npz, bon_key, draws_rep, "bon arm", candidate_filter)
     check_report(draws_npz, ceil_key, draws_rep, "ceil arm", candidate_filter)
@@ -513,6 +568,13 @@ def analyze(
 
     out: dict[str, Any] = {
         "candidate_filter": candidate_filter,
+        "subset_mode": subset,
+        "row_pairing": (
+            f"subset-join on index (q4 fallback, {len(rows)} rows; baseline "
+            "+ banked self re-pooled onto the subset)"
+            if subset
+            else "full-panel identity byte-match"
+        ),
         "baseline": {"chunk_mae": round(bc, 5), "first_mae": round(bf, 5)},
         "baseline_curve": [round(v, 5) for v in step_curve(base_err, valid, core)],
         "banked_self": {
@@ -1088,6 +1150,112 @@ def oracle() -> None:
         ),
         "scorer drift",
         "unfiltered-pick regression (filter binds)",
+    )
+
+    # ---- q4-shaped subset slice (the draws10/energy oracle-(f) style) ----
+    # Slice the clean fixture's draws artifacts to 8 of 12 rows (keeps
+    # both planted worlds, all 4 labeled rows and a non-core row); the
+    # full-panel base/self join + re-pool must reproduce the sliced
+    # direct computation — planted constants make every delta carry.
+    keep = np.array([0, 1, 2, 3, 5, 7, 8, 10])
+    sdraws = {k: v[keep] for k, v in cdraws.items()}
+    scands = json.loads(json.dumps(ccands))
+    scands["rows"] = [scands["rows"][i] for i in keep]
+
+    def _summaries(npz: dict, keys: tuple[str, ...]) -> list[dict]:
+        t, v, c, w_ = bbr.masks(npz)
+        return [
+            {
+                "policy": key.removeprefix("pred:"),
+                "chunk_mae": bbr.pooled_chunk(np.abs(npz[key] - t), c, w_),
+                "first_mae": bbr.pooled_first(np.abs(npz[key] - t), v, c),
+            }
+            for key in keys
+        ]
+
+    srep = dict(
+        crep,
+        summaries=_summaries(sdraws, (CLEAN_BON_KEY, CLEAN_CEIL_KEY, NARR_KEY)),
+    )
+    sout = analyze(
+        cbase,
+        cself,
+        sdraws,
+        srep,
+        scands,
+        anchor,
+        None,
+        candidate_filter="clean",
+    )
+    assert sout["subset_mode"] is True, sout
+    assert "subset-join" in sout["row_pairing"], sout
+    # Constant planted errors ⇒ the exact-arithmetic reads carry onto
+    # the joined subset verbatim.
+    assert sout["arms"]["bon"]["core"]["delta_pooled"] == -0.05, sout
+    shh = sout["head_to_head_bon_minus_self"]
+    assert shh["delta_frame_mean"] == -0.03 and shh["ci95"] == [-0.03, -0.03], sout
+    assert sout["arms"]["ceil"]["labeled_subset"]["delta_pooled"] == -0.1, sout
+    sadj = sout["adjudication_ceil_minus_self_labeled"]
+    assert sadj["delta_frame_mean"] == -0.08 and sadj["ci95"] == [-0.08, -0.08], sout
+    sagree = sout["agreement"]
+    assert sagree["n_frames"] == 8, sagree
+    assert sagree["fallback_rows"] == 1, sagree
+    assert sagree["eligible_list_size"]["hist"] == {"1": 1, "2": 1, "3": 6}, sagree
+    # Rows 0/1 pick the greedy text under the filter ⇒ 6/8 differ.
+    assert sagree["pick_text_differs_from_greedy"] == 0.75, sagree
+    print("  q4-style subset join OK (re-pooled reads reproduce the slice)")
+
+    dup = {k: v.copy() for k, v in sdraws.items()}
+    dup["index"][1] = dup["index"][0]
+    dup["truth"][1] = dup["truth"][0]
+    dup["valid"][1] = dup["valid"][0]
+    dup["repo_id"][1] = dup["repo_id"][0]
+    dup["core"][1] = dup["core"][0]
+    expect_exit(
+        lambda: analyze(
+            cbase,
+            cself,
+            dup,
+            srep,
+            scands,
+            anchor,
+            None,
+            candidate_filter="clean",
+        ),
+        "duplicate index",
+        "subset duplicate-index refusal",
+    )
+    foreign = {k: v.copy() for k, v in sdraws.items()}
+    foreign["index"][0] = 9999
+    expect_exit(
+        lambda: analyze(
+            cbase,
+            cself,
+            foreign,
+            srep,
+            scands,
+            anchor,
+            None,
+            candidate_filter="clean",
+        ),
+        "absent from the baseline panel",
+        "subset foreign-index refusal",
+    )
+    drift = {k: v.copy() for k, v in sdraws.items()}
+    drift["truth"][0] += 1.0
+    expect_exit(
+        lambda: analyze(
+            cbase,
+            cself,
+            drift,
+            srep,
+            scands,
+            anchor,
+            None,
+            candidate_filter="clean",
+        ),
+        "subset rows disagree",
+        "subset identity-drift refusal",
     )
     print("oracle: ALL branches OK")
 

@@ -37,7 +37,9 @@ name="eval__${RUN}__step_${STEP}__panel_curated_v0_k4l2_fields"
 
 # Guards: fixed code, endpoint + chained eval landed, frozen plan,
 # all 4 GPUs free (also proves the training run is over).
-grep -q "isinstance(decoder, ARSuffixDecoder)" bijou/eval/policies.py \
+# the aux gate is the 2f4d575 change; the bare ARSuffixDecoder isinstance
+# also exists PRE-fix (the ar_temperature gate) and would false-pass
+grep -q "isinstance(decoder, ARSuffixDecoder) and decoder.config.aux" bijou/eval/policies.py \
     || { echo "checkout PRE-DATES 2f4d575 (narrated-pass fix) — refresh_ctrl.sh first; abort"; exit 1; }
 [ -d "$CKPT" ] || { echo "no endpoint checkpoint $CKPT — abort"; exit 1; }
 [ -s "$chained_json" ] || { echo "chained endpoint eval json missing ($chained_json) — it runs first; abort"; exit 1; }

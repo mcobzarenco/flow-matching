@@ -322,3 +322,26 @@ structural decoupling fixes it. Missing cell for our slot named: a
 frame vs true-subgoal pass) would close the presence(−0.29) /
 channel(+0.043) / CONTENT triangle for ~1 panel pass — meta-report
 open-questions candidate, own pre-reg if it graduates.
+
+**2026-08-09 ~00:2xZ — RUNG (b′) READ OUT, E6 FALSIFIED →
+NO-SCORER
+([results](../posts/2026-08-09-subgoal-draws-cleanlist-results.md)):**
+run landed 23:52Z 08-08 on the pre-registered q4 fallback (4,301
+rows, rate gate fired at launch); reads ran after the subset-join
+path landed in `subgoal_draws_results.py` (draws10/energy join
+convention, q4-shaped slice fixture in the oracle). Head-to-head
+(bon − self) **+0.210 [+0.113, +0.312]** — entirely above 0, and
+Δ_bon vs bare baseline **+0.142 [+0.027, +0.260]**: the SC pick
+*anti-selects* (E3 failed too — bon below both self and ceiling).
+Ceiling ALIVE: Δ_ceil **−0.250 [−0.353, −0.148]**, ceil − self
+−0.181 CI clear, late-horizon −0.464 last-10% (the rung-(a) slot
+signature). Filter did its structural job (eligible 8.06/9 mean, 0
+fallback rows, 97.7% rows ≥ 2 unique texts) — width is not the
+constraint, the scorer is. Alternates agree with SC ~40%, with the
+oracle ~45%: nothing in the free family tracks the ceiling. All
+execution oracles green (picks byte-match offline recompute,
+state-copy byte-match on joined rows). ~1.4 GPU-h ≤ 5 gate.
+**Selection family closed on scorer-free tricks; named next rungs
+(each its own pre-reg): learned verifier (RoVer shape,
+chunk-as-unit), fields-probe ranker, or distillation from the
+4,298 dumped picked-vs-oracle pairs.**
