@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T21:38:00Z
+**Updated:** 2026-08-09T22:02:00Z
 
-**Depth call:** depth >=2 at 21:38Z 08-09: adamc-100k babysit to ~08-12 (live) + tiny-expert-10k (local, endpoint ~05:1xZ 08-10 -> chained panel_v2) + lit-radar-0818 (cpu, 4 verified-clean hooks, no spares - sweep pool drying note in item) + idea4-fjoint-rung-finalize-exec (gpu-box, owner-gated) + docs-pass tail (owner-side only)
+**Depth call:** depth >=2 at 22:02Z 08-09: adamc-100k babysit to ~08-12 (live) + tiny-expert-10k (local, endpoint ~05:1xZ 08-10 -> chained panel_v2) + lit-radar-0819 (cpu, 4 priority hooks + 8 spares, all grep-clean) + idea4-fjoint-rung-finalize-exec (gpu-box, owner-gated) + docs-pass tail (owner-side only)
 
-**9 open** (Live 2 · Queued 3 · Blocked 4 · Done 89)
+**9 open** (Live 2 · Queued 3 · Blocked 4 · Done 90)
 
 ## 🔴 Live (2)
 
@@ -44,15 +44,15 @@ T1 tiny-expert capacity rung, FINAL DESIGN (owner yes 19:59:04Z; 40k/biggest-bat
 
 *ready — waiting on a window or a boundary*
 
-**`lit-radar-0818`** · `cpu`
+**`lit-radar-0819`** · `cpu`
 
-Lit slice (standing allocation): 4 verified-clean hooks from the 0817 session's refill sweep (16 candidates abs-page-verified by the sweep agent; 12 dropped as corpus dups by local grep vs papers/+ideas/+ideas.md - the sweep pool…
+Lit slice (standing allocation): 4 priority hooks from the 0818 fresh sweep (16 candidates abs-page-verified; only 2 corpus dups by local grep - the new-angles mandate fixed the pool; executor still greps full corpus per id befor…
 
 **boundary:** any GPU-busy window; adamc rides to ~08-12 so windows are plentiful
 
 <details><summary>full record</summary>
 
-Lit slice (standing allocation): 4 verified-clean hooks from the 0817 session's refill sweep (16 candidates abs-page-verified by the sweep agent; 12 dropped as corpus dups by local grep vs papers/+ideas/+ideas.md - the sweep pool is drying, next sweep MUST diversify search angles AND the executor must grep the full corpus per id, never trust the agent's exclusion-list check), priority-ordered: 2606.16208 ATHENA (accelerated multi-task influence functions for robot data curation at billion-param VLA scale; #9's principled alternative to heuristic quality gating for the 229h corpus + the MolmoAct2 repo_list diff) &gt; 2606.09740 ProbeAct (probe-guided training-free failure detect-and-correct via hidden-state probes + control barrier functions; #6 - pairs directly with the ArmnetBench go/no-go separability gate banked 0817) &gt; 2606.17846 Qwen-RobotManip tech report (38,100h heterogeneous manipulation + egocentric human data, multi-stage curation/alignment pipeline at 166x our scale; #9 reference pipeline + #17 trunk-recipe signal) &gt; 2606.24752 Can Scale Save Us From Plasticity Loss (scale delays but does not prevent transformer plasticity loss; higher WD can improve plasticity despite worse pretrain loss; adamc watch-frame companion to WD-plasticity 2602.11137 - verify not same group re-cut, check whether its WD claims license anything at our 1e-5/1e-4 operating point). NO SPARES banked (dup rate left none) - session should run its own fresh sweep with new angles (suggested: cross-embodiment transfer, sim2real gap for SO-class arms, VLM-trunk continual learning, action-space/tokenizer design) before or instead of dipping below these 4. Papers page(s) same session per the permanent rule; dedup-check each id against the corpus before writing.
+Lit slice (standing allocation): 4 priority hooks from the 0818 fresh sweep (16 candidates abs-page-verified; only 2 corpus dups by local grep - the new-angles mandate fixed the pool; executor still greps full corpus per id before writing), priority-ordered: 2602.21203 Squint (SO-101 integrated into ManiSkill3 + released 'SO-101 Task Set' 8 tasks w/ domain randomization, zero-shot sim2real on real SO-101 after &lt;15 min on one 3090; #16 - the first credible sim rollout-eval substrate for our exact arm class, could unblock every rollout-gated item: ATHENA-style curation, #6 calibration, #22 staleness screen) &gt; 2602.23408 Demystifying Action Space Design (13,000+ real rollouts, 500+ models: delta actions consistently win, joint/task-space complementary, absolute needs longer horizons; the evidence base for chunk-length/relative-vs-absolute/EE-vs-joint choices we currently make by folklore) &gt; 2606.08881 Benchmarking VLAs on SO-101 (real-world failure taxonomy + recovery analysis on our exact hardware, execution instability dominant; #6 second calibration corpus next to ArmnetBench + #16) &gt; continual-learning triangle 2603.03818 (pretrained VLAs resistant to forgetting, replay suffices) + 2605.26820 (real-robot CL benchmark: naive sequential FT forgets badly) + 2603.11653 (simple recipe + LoRA + on-policy RL beats elaborate CL machinery) as ONE theme-cluster read - the three partially contradict and adjudication is the read; feeds #17 unfreeze recipes + #4. SPARES (8, all grep-clean 08-09): 2602.10556 LAP language-as-action zero-shot cross-embodiment; 2607.06442 SIEVE structure-aware data selection (#9); 2603.06450 Data Analogies paired-demo cross-embodiment (+22.5%); 2602.12628 sim-real RL co-training; 2606.29570 spectral/DCT hierarchical action decomposition; 2603.16861 MolmoB0T 1.8M sim trajectories zero-shot (Molmo-family sibling); 2511.17001 CalibAll camera-frame action unification; 2608.06374 DyPES-VLA shared dynamics priors + embodiment-specific MoE heads. Papers page(s) same session per the permanent rule.
 
 </details>
 
@@ -144,7 +144,7 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 
 ---
 
-## ✅ Done (89)
+## ✅ Done (90)
 
 *closed — the full record stays in each fold*
 
@@ -157,6 +157,20 @@ OWNER STEERING 20:49:36Z 08-09: 'Woah, there's already a molmo2 VLA -- https://g
 <details><summary>full record</summary>
 
 OWNER STEERING 20:49:36Z 08-09: 'Woah, there's already a molmo2 VLA -- https://github.com/allenai/molmoact2. Write a super in-depth piece on it, everything you can find on training, arch, experiments etc. well organized.' Deliverable: long-form blog piece (paper 2605.02881 + repo + HF model/dataset cards + AI2 announcement + v1-&gt;v2 delta + competitive map + what-transfers-to-us), link in-channel. Note: the 0816 refill sweep had independently ranked this paper #1 ~20 min before the owner message; the 0817 queue item's priority-1 slot is satisfied by this piece.
+
+</details>
+
+---
+
+**`lit-radar-0818`** · `cpu`
+
+Lit slice (standing allocation): 4 verified-clean hooks from the 0817 session's refill sweep (16 candidates abs-page-verified by the sweep agent; 12 dropped as corpus dups by local grep vs papers/+ideas/+ideas.md - the sweep pool…
+
+**boundary:** any GPU-busy window; adamc rides to ~08-12 so windows are plentiful | CLOSED 2026-08-09 ~22:0xZ work session: 4 hooks -&gt; 4 Papers pages same session (athena.md, probeact.md, qwen-robotmanip.md, plasticity-at-scale.md) via 5-agent fan-out (4 deep reads + fresh sweep concurrent). Hook corrections, all four again: ATHENA is rollout-anchored (R in {1,-1} over eval rollouts - NOT offline curation), corpora tiny (9.34h sim/6.90h real), code link dead, '45.0-point improvement' = +0.90pp x 50 tasks; real signal = heuristic length-Oracle BELOW random on real tasks + cross-model transfer licenses proxy scoring -&gt; #9 parked 'offline-ATHENA' design note. ProbeAct hook wrong on BOTH clauses: probe = 3D position regressor trained on 50k sim-oracle labels (not failure probe), detection = hand-coded kinematic state machine, ZERO detection metrics in the paper, AR-only sim-only no code; survives: trunk decodes position R2=0.968 while flow cells probe below coin-flip elsewhere -&gt; #6 gate gains a trunk-tap arm (spatial pooling + shallow-mid sweep). Qwen-RobotManip 38,100h is ~65% re-rendered human video (24,808h synth from 1,933h egocentric; ~7,800h real teleop = ~34x us not 166x), nothing released ('no plan to release' verbatim); survives: 5-stage offline state-action filter (81% of RoboMIND-UR excluded as broken proprioception) -&gt; #9 cheapest arm = DA+jerk pass over 229h; #17 fourth attachment pole (cross-attn alternating vis/lang, 1:40 ratio) + benchmark-saturation seconds VLM4VLA. Plasticity-at-scale: WD clause of the hook was a CITATION of 2602.11137 (already read - hook laundered our own corpus back at us; groups distinct, scale claim independent), WD fixed 0.1 throughout, largest measured 314M, no grad-norm analysis -&gt; record-only for adamc; durable export = health proxies (dormant/norms/entropy) all FAIL to track onset, behavioral fixed-budget probes only. Ideas fed: #6 #9 #17 + index hooks. Refill: fresh sweep with the 4 mandated new angles -&gt; 16 candidates abs-verified, only 2 corpus dups (14 clean - new angles fixed the pool-drying problem) -&gt; lit-radar-0819 queued with 4 priority hooks + 8 spares.
+
+<details><summary>full record</summary>
+
+Lit slice (standing allocation): 4 verified-clean hooks from the 0817 session's refill sweep (16 candidates abs-page-verified by the sweep agent; 12 dropped as corpus dups by local grep vs papers/+ideas/+ideas.md - the sweep pool is drying, next sweep MUST diversify search angles AND the executor must grep the full corpus per id, never trust the agent's exclusion-list check), priority-ordered: 2606.16208 ATHENA (accelerated multi-task influence functions for robot data curation at billion-param VLA scale; #9's principled alternative to heuristic quality gating for the 229h corpus + the MolmoAct2 repo_list diff) &gt; 2606.09740 ProbeAct (probe-guided training-free failure detect-and-correct via hidden-state probes + control barrier functions; #6 - pairs directly with the ArmnetBench go/no-go separability gate banked 0817) &gt; 2606.17846 Qwen-RobotManip tech report (38,100h heterogeneous manipulation + egocentric human data, multi-stage curation/alignment pipeline at 166x our scale; #9 reference pipeline + #17 trunk-recipe signal) &gt; 2606.24752 Can Scale Save Us From Plasticity Loss (scale delays but does not prevent transformer plasticity loss; higher WD can improve plasticity despite worse pretrain loss; adamc watch-frame companion to WD-plasticity 2602.11137 - verify not same group re-cut, check whether its WD claims license anything at our 1e-5/1e-4 operating point). NO SPARES banked (dup rate left none) - session should run its own fresh sweep with new angles (suggested: cross-embodiment transfer, sim2real gap for SO-class arms, VLM-trunk continual learning, action-space/tokenizer design) before or instead of dipping below these 4. Papers page(s) same session per the permanent rule; dedup-check each id against the corpus before writing.
 
 </details>
 

@@ -1,7 +1,67 @@
 # Now
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-09 21:47–22:1xZ (real `date -u` at write: 22:03) —
+work session (bounded): **lit-radar-0818 CLOSED — 4 Papers pages
+same session via 5-agent fan-out; all four banked hooks needed
+corrections AGAIN (one was our own corpus laundered back at us);
+the new-angles refill sweep fixed the pool — only 2/16 dups vs
+0817's 12/16, first spares banked in days.***
+
+**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE — babysit exit 0
+(21:58), step 10,960, 22.4 st/min, 33.2/310 GPU-h, vram 75.3 ×4 vs
+77. Probe ladder unchanged (run-best 10.63@9500; 11.06@10500
+recede-precedent class). Post-kill-line cruise, endpoint ~08-12
+~17:00Z. `fontaine-tiny10k` LIVE local — step 1,120, 22.4 st/min,
+1.8/15 GPU-h; probe **14.52@1000** (16.78@500 → 14.52, descending
+on schedule; F@1000 anchor n/a — ladder comparable from @5000).
+Endpoint ~05:1xZ 08-10 → chained panel_v2 → Δ_capacity read
+~06:3xZ.
+
+**Steering**: none — `read` empty at boot (21:47) and at the 21:58
+babysit; history shows no new reactions. 13:48Z gate default (let
+run, gate 310) governs adamc.
+
+**Done**: **lit-radar-0818 CLOSED** — 4 Papers pages
+([athena](papers/athena.md), [probeact](papers/probeact.md),
+[qwen-robotmanip](papers/qwen-robotmanip.md),
+[plasticity-at-scale](papers/plasticity-at-scale.md)). Corrections,
+all four: **ATHENA** is rollout-anchored (NOT offline curation),
+corpora 9.3h sim / 6.9h real, code link dead — but their
+demo-length heuristic landed BELOW random on real tasks (a warning
+for naive quality gates on our 229h) and cross-model transfer
+licenses proxy-policy scoring (→ #9 parked "offline-ATHENA" note).
+**ProbeAct** hook wrong on both clauses (position regressor on 50k
+sim-oracle labels + hand-coded kinematic rules, zero detection
+metrics) — survives: trunk decodes object position R²=0.968 while
+flow cells probe below coin-flip elsewhere → #6's ArmnetBench gate
+gains a **trunk-tap arm** (spatial pooling, shallow-mid sweep).
+**Qwen-RobotManip** "38,100h" is ~65% re-rendered human video
+(~7,800h real teleop ≈ 34× us, not 166×), nothing released —
+survives: 5-stage fully-offline state-action filter (81% of
+RoboMIND-UR excluded as broken proprioception) → #9 cheapest arm =
+DA+jerk pass over our corpus; #17 fourth attachment pole +
+benchmark-saturation seconds VLM4VLA. **Plasticity-at-scale**'s WD
+clause was a *citation of 2602.11137* — our own corpus resold as a
+new hook; durable export is negative (dormant-unit/param-norm/
+attention-entropy proxies all fail; behavioral fixed-budget probes
+only; record-only for the adamc watch). Ideas #6/#9/#17 + index
+hooks fed; Radar 0818/0819 tables in papers/index; SUMMARY.md
+entries added (0817's 404 class pre-empted). **Refill**: fresh
+sweep on the 4 mandated new angles → 16 abs-verified candidates,
+only 2 corpus dups by local grep → `lit-radar-0819` queued with 4
+priority hooks (Squint SO-101-in-ManiSkill3 sim substrate;
+action-space evidence base; SO-101 failure benchmark;
+continual-learning contradiction triangle) + **8 spares**.
+
+**Next**: `queue_cli.py next` → `lit-radar-0819` (CPU, GPU-busy
+window; adamc rides to ~08-12). tiny10k endpoint ~05:1xZ 08-10 →
+chained panel_v2 → Δ_capacity readout. adamc endpoint ~08-12
+~17:00Z → chained k4l2 panel. MolmoAct2 follow-up arms +
+ArmnetBench checkpoint watch remain owner-decision / watch items.*
 
 *Updated 2026-08-09 21:43–21:5xZ (real `date -u` at write: 21:47) —
 tick (babysit): **quiet green tick — both runs healthy, no steering,
@@ -97,54 +157,6 @@ adamc endpoint ~08-12 ~17:00Z → chained k4l2 panel. MolmoAct2
 follow-up arms + ArmnetBench checkpoint watch are owner-decision /
 watch items.*
 
-*Updated 2026-08-09 21:17–21:2xZ (real `date -u` at write: 21:2x) —
-tick (babysit): **both runs healthy — adamc crossed its step-10,000
-pre-registered kill-line checkpoint and PASSES clearly (probe
-10.80@10000 vs the 14.03@2500 bar, below by 3.23); the 20:47 work
-session's clocks were hallucinated ~30 min into the future
-(21:45/21:5x stamps written at a real ~21:15) — corrected in
-queue.json + now.md.***
-
-**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE — babysit exit 0
-(21:17), step 10,040 @ 21:18, ~22 st/min, 30.5/310 GPU-h, vram 75.3
-×4 vs 77. **Step-10,000 kill line JUDGED PASS**: "probe not below
-its own @2500 value by 10k" — @2500 = 14.0294 (fetched from the box
-jsonl), @10000 = 10.80, clear by 3.23; run-best 10.63@9500 stands
-(the 10.80@10000 is a one-eval uptick, the @5000/@8500 precedent
-class). The babysit window's 5.6 st/min (21:14→21:17) was the
-@10000 boundary itself — async save "captured in 21.2s" + probe
-eval; re-verified 10020→10040 in 54 s (~22 st/min) right after.
-Endpoint ~08-12 ~17:00Z. `fontaine-tiny10k` LIVE local — step ~220
-@ 21:17 (22.4 st/min window), 99% util, 15.6 GiB vram, ~1.1/15
-GPU-h; **host RAM 122/221 GiB used, 98 available — the
-workers-10/prefetch-2 amendment is holding** (OOM class closed).
-First post-relaunch probe lands @500 ~21:3xZ (ignore the stale
-16.46@500 row predating 21:03Z). Endpoint ~05:1xZ 08-10 → panel_v2
-→ Δ_capacity read ~06:3xZ.
-
-**Steering**: `read` empty; `history -n 5` surfaced an owner **👍 on
-the 21:03 OOM-recovery + deep-dive-plan post** — lightweight
-agreement with the recovery call and the piece, recorded per the
-08-05 reaction protocol, no reply owed. 13:48Z gate default (let
-run, gate 310) governs adamc.
-
-**Done**: (1) step-10,000 gate judged (Status — the first of adamc's
-two dated kill-line checkpoints is behind us). (2) Clock-hallucination
-audit: the 20:47 work session closed at a real 21:15:31Z (commit
-72e2016 push time) but stamped 21:45/21:5x — queue.json
-`updated_utc` was 30 min in the FUTURE; fixed there + in the head
-entry below (ack/link times corrected to 21:04Z/21:14Z from Discord
-history). (3) Host-RAM check per the OOM class (Status). (4) Queue
-validate green depth 3 (9 open).
-
-**Next**: `run_work_next` armed (21:16 marker) → chained work
-session → `queue_cli.py next` → `lit-radar-0817` (CPU, GPU-busy
-window). tiny10k endpoint ~05:1xZ 08-10 → chained panel_v2 →
-Δ_capacity readout. adamc endpoint ~08-12 ~17:00Z → chained k4l2
-panel. MolmoAct2 follow-up arms remain owner-decision items.*
-
-*Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -200,3 +212,16 @@ step 800 @ 20.2 st/min on projection; host RAM 134/221 used, 86
 GiB available — amendment holds. No steering (read = own post only,
 no new reactions). Queue green depth 3 (9 open); run_work_next
 already armed at 21:43 for lit-radar-0818.
+
+Session 2026-08-09 21:47–22:1xZ (work, bounded; 0 new GPU-h — adamc
+rides 33.2/310, tiny10k 1.8/15; explore): lit-radar-0818 closed —
+4 deep reads + fresh sweep as 5 concurrent subagents, 4 Papers
+pages (athena, probeact, qwen-robotmanip, plasticity-at-scale);
+all four hooks corrected (ATHENA rollout-anchored + code-free;
+ProbeAct wrong on both clauses, zero detection metrics; Qwen 38kh
+= ~65% re-render, nothing released; plasticity WD clause = our own
+2602.11137 re-cited). Ideas #6 (trunk-tap gate arm) / #9 (DA+jerk
+offline filter arm; offline-ATHENA parked) / #17 (fourth
+attachment pole; proxy-instrument ban) fed. Refill sweep on the 4
+mandated new angles: 2/16 dups only (vs 12/16) — lit-radar-0819
+queued with 4 priority hooks + 8 spares. check 599; Space pushed.

@@ -273,3 +273,21 @@ pretrained trunk:
 | Reflex (timestep-invariant trunk → exact KV reuse across denoising steps + async serving; 2.58× vs a soft baseline, stall 100%→0%) | [2607.14695](https://arxiv.org/abs/2607.14695) | ✅ [page](reflex.md) |
 | Legato (guidance-aware flow objective makes chunk continuation native; −20% completion time vs RTC, smoothness ~flat) | [2602.12978](https://arxiv.org/abs/2602.12978) | ✅ [page](legato.md) |
 | Compression Gap (encoder gains propagate through continuous heads, blocked by an 80-bit FSQ codebook — tiny non-VLA models, single seed, mechanism asserted) | [2604.03191](https://arxiv.org/abs/2604.03191) | ✅ [page](compression-gap.md) |
+
+**Radar 0818 (banked hooks from the 0817 refill sweep; every hook needed corrections again):**
+
+| Paper | arXiv | Status |
+|---|---|---|
+| ATHENA (influence-function curation at π-0 3.3B scale — Kronecker projection + low-rank Hessian, 313× vs own dense baseline; rollout-anchored, 9.3h/6.9h corpora, no code) | [2606.16208](https://arxiv.org/abs/2606.16208) | ✅ [page](athena.md) |
+| ProbeAct (hook wrong both clauses: position regressor on 50k sim-oracle labels + hand-coded kinematic detection, zero detection metrics; trunk decodes position R²=0.968 while action head drifts) | [2606.09740](https://arxiv.org/abs/2606.09740) | ✅ [page](probeact.md) |
+| Qwen-RobotManip (38,100h is ~65% re-rendered human video, ~7,800h real teleop; 5-stage offline state-action filter excluded 81% of RoboMIND-UR; nothing released) | [2606.17846](https://arxiv.org/abs/2606.17846) | ✅ [page](qwen-robotmanip.md) |
+| Plasticity at scale (5M–314M LMs: scale delays, never prevents; onset T ∝ P^0.83; WD clause of the hook was a citation of 2602.11137; health proxies all fail to track onset) | [2606.24752](https://arxiv.org/abs/2606.24752) | ✅ [page](plasticity-at-scale.md) |
+
+**Radar 0819 (banked hooks from the 0818 fresh sweep — new angles: sim2real for SO-class arms, action-space design, VLM-trunk continual learning, cross-embodiment; 14/16 candidates survived the local corpus grep, spares banked in the queue item):**
+
+| Paper | arXiv | Status |
+|---|---|---|
+| Squint (SO-101 integrated into ManiSkill3 + released "SO-101 Task Set", 8 tasks; zero-shot sim-to-real on a real SO-101 after <15 min on one 3090 — the first credible sim rollout-eval substrate for our exact arm class) | [2602.21203](https://arxiv.org/abs/2602.21203) | hook banked |
+| Demystifying Action Space Design (13,000+ real rollouts, 500+ trained models: delta actions win, joint- and task-space complementary, absolute needs longer horizons — the action-space evidence base we decide by folklore) | [2602.23408](https://arxiv.org/abs/2602.23408) | hook banked |
+| Benchmarking VLAs on SO-101 (real-world failure taxonomy + recovery metrics on our exact hardware; execution instability dominant — candidate calibration corpus next to ArmnetBench) | [2606.08881](https://arxiv.org/abs/2606.08881) | hook banked |
+| VLA continual-learning triangle (pretrained VLAs "surprisingly resistant" to forgetting vs real-robot benchmark finding severe forgetting vs simple-recipe+RL claim — adjudicating the contradiction is the read) | [2603.03818](https://arxiv.org/abs/2603.03818) + [2605.26820](https://arxiv.org/abs/2605.26820) + [2603.11653](https://arxiv.org/abs/2603.11653) | hook banked |

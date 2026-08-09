@@ -248,7 +248,19 @@ record; the line here is the hook). *Index last updated 2026-08-09.*
   our trunk family, embodied-specialized, released — lifts
   LIBERO-Long +6.0 at fixed everything-else**; frozen-ER-swap under
   the F recipe is the cheapest externally-priced trunk arm we have.
-  621M expert on a 4B trunk = production capacity anchor.
+  621M expert on a 4B trunk = production capacity anchor. Lit
+  `0818` ([Qwen-RobotManip](papers/qwen-robotmanip.md) +
+  [plasticity-at-scale](papers/plasticity-at-scale.md)): a fourth
+  attachment pole (cross-attn to hidden states, alternating
+  visual/language per block, ~1:40 expert:trunk, joint-trained with
+  λ=0.1 aux LM loss on a 9:1 mix — the priced anti-forgetting
+  recipe if we ever unfreeze; no frozen ablation, no vote against
+  F) + benchmark-saturation seconds VLM4VLA from the action side
+  (only OOD suites separate pretraining). Plasticity hook
+  corrected: its WD clause just cites 2602.11137 (not new
+  evidence); durable export is negative — dormant-unit/param-norm/
+  attention-entropy proxies all failed to track onset; behavioral
+  fixed-budget probes only.
 - **`aux-subgoals` [#6 Aux attribution](ideas/06-aux-attribution.md)** —
   `confirmed` (aux HELPS actions, +0.462 cost when off).
   **CONSOLIDATED REPORT 2026-08-09
@@ -422,7 +434,16 @@ record; the line here is the hook). *Index last updated 2026-08-09.*
   transport detects 96.6% @1.3% FA (forward scoring: 52.2%); hook
   corrected: calibration needs ~19 successful deployed-policy
   rollouts per task (rig-day line item, not zero), and the wrist
-  camera carries the result.
+  camera carries the result. Lit `0818`
+  ([ProbeAct](papers/probeact.md), 2606.09740): hook corrected on
+  both clauses (position regressor on 50k sim-oracle labels +
+  hand-coded kinematic rules, zero detection metrics) — but the
+  dissociation datum stands: the frozen VLM *trunk* decodes object
+  position at R²=0.968 while flow cells probe below coin-flip
+  elsewhere → the ArmnetBench separability gate gains a
+  **trunk-tap arm** (probe Molmo2 residual taps AND flow-expert
+  states; spatial pooling, shallow-mid layer sweep; flow-fails +
+  trunk-passes still GOes).
 - **`noise-draws` [#1 Noise-draw ensembling](ideas/01-noise-draw-ensembling.md)** —
   flow mean-of-10 banked (5.365); batched draws merged 2026-08-07.
   **GOLDEN-TICKET SCREEN R1+R2 READ OUT 2026-08-08
@@ -677,7 +698,16 @@ record; the line here is the hook). *Index last updated 2026-08-09.*
   (1,222 quality-gated repos) makes the community_curated_v0
   intersection a set operation, and the 16,205 re-annotated
   SO-100/101 instructions join onto our copies directly;
-  owner-decision, not queued.
+  owner-decision, not queued. Lit `0818`
+  ([ATHENA](papers/athena.md) +
+  [Qwen-RobotManip](papers/qwen-robotmanip.md)): the curation axis
+  splits — ATHENA validates influence functions at π-0 scale but is
+  rollout-anchored + code-free (parked design note; warning: their
+  demo-length heuristic landed BELOW random on real tasks), while
+  Qwen's 5-stage state-action filter is fully offline and
+  mechanizable at 229h (their DA check excluded 81% of RoboMIND-UR
+  as broken proprioception — our corpus's hazard class); cheapest
+  arm: DA + jerk pass, panel MAE with/without excluded episodes.
 - **`base-vs-it` [#10 E2B base-vs-IT swap](ideas/10-e2b-base-vs-it.md)** —
   backbone-swap arm, pre-registered prediction ±0.2.
 - **`visual-grounding` [#11 Visual grounding arms](ideas/11-visual-grounding.md)** —

@@ -603,3 +603,23 @@ ACT→π₀.₅ 0.56) — failure logs age across policy generations.
   that test measures "does my policy see THIS logged trajectory
   failing," not "will MY rollout fail" — a mismatch no paper in
   the thread has touched.
+
+- **Lit `0818` 2026-08-09 — the go/no-go gate gains a trunk-tap arm
+  ([ProbeAct](../papers/probeact.md), 2606.09740):** the banked
+  "training-free hidden-state failure probe" hook was wrong on both
+  clauses — ProbeAct's probe is a 3D *object-position regressor*
+  trained on 50k sim-oracle labels, and failure detection is a
+  hand-coded kinematic state machine with **zero detection metrics
+  reported** (no AUROC/precision/recall anywhere; sim-only, AR-only,
+  no code). What survives is the dissociation datum: the frozen VLM
+  *trunk* decodes object position at R²=0.968 (layer 8,
+  spatial-preserving pooling; mean-pool −0.04, last-token −0.15)
+  while the action endpoint drifts 34.9 cm on failures vs 7.8 on
+  successes. Read jointly with SAFECAST's below-coin-flip flow
+  cells, this localizes the probeable signal to trunks, not action
+  heads → the ArmnetBench separability gate should probe **both**
+  our flow-expert states AND the Molmo2 residual taps as separate
+  arms (flow fails + trunk passes = gate still GOes on trunk
+  features), with spatial pooling and a shallow-mid layer sweep.
+  ArmnetBench labels stay the supervision — no label-free shortcut
+  exists here.

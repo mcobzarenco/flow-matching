@@ -531,3 +531,29 @@ F — externally priced, weights-in-hand, owner-decision. Also filed:
 their expert is 621M on a 4B trunk (15.5%; our F 9.2%, tiny 2.2%)
 — a production capacity anchor for tonight's Δ_capacity read; and
 the per-layer KV result seconds our deep-tap direction.
+
+**2026-08-09 lit `0818` — a fourth attachment pole, and the
+plasticity watch loses a false companion
+([Qwen-RobotManip](../papers/qwen-robotmanip.md) 2606.17846 +
+[plasticity-at-scale](../papers/plasticity-at-scale.md)
+2606.24752):** Qwen's production recipe is a Qwen3.5-4B trunk
+joint-trained end-to-end (flow loss + λ=0.1 next-token VLM loss on
+a 9:1 robot:VL mix — the priced anti-forgetting recipe if we ever
+unfreeze) with a ~100M-order DiT expert on **cross-attention to
+hidden states, alternating visual/language tokens per block** —
+a topology distinct from our residual taps, MolmoAct2's per-layer
+KV, and VLA-GSE's spectral adapters; no frozen-trunk ablation, so
+no vote against our F result. Their key negative seconds VLM4VLA
+from the action side: standard benchmarks don't separate pretrained
+from non-pretrained VLAs — only OOD suites do (LIBERO-Plus 89.0 vs
+π-0.5 84.4; RoboCasa365 35.9 vs 16.9) — one more argument for an
+OOD-style probe next to panel MAE. The plasticity-at-scale read is
+a hook correction for the adamc watch: its WD clause was a
+*citation of 2602.11137* (already read), not new evidence — WD
+fixed at 0.1 throughout, zero grad-norm analysis, largest measured
+model 314M (4B claims are extrapolation); record-only. Its durable
+export is negative: dormant units, param norms, and attention
+entropy all FAILED to track plasticity onset even in-domain —
+never build watch/kill lines on those proxies; behavioral
+fixed-budget adaptation (our probe-MAE-under-budget shape) is the
+only instrument that worked.

@@ -160,3 +160,31 @@ check (charter §2) before training touches it.
   read the panel programme has ever been offered. Fallback
   meanwhile: trajectory-similarity metrics on their released
   rollouts vs their labels (weaker — no policy internals).
+
+- **Lit `0818` 2026-08-09 — the curation axis splits into a
+  blocked-principled pole and a runnable-heuristic pole
+  ([ATHENA](../papers/athena.md) 2606.16208 +
+  [Qwen-RobotManip](../papers/qwen-robotmanip.md) 2606.17846):**
+  ATHENA validates influence-function curation at π-0's 3.3B scale
+  (Kronecker gradient projection + low-rank Hessian, 313× vs their
+  own dense baseline; square-flow surrogate built for flow heads
+  like ours) — but the score is **rollout-anchored** (R∈{1,−1} over
+  eval rollouts, CUPID recipe scaled up), corpora tiny (9.3h sim /
+  6.9h real vs the hooked "billion-scale"), and code unreleased
+  (dead link) → parked as an "offline-ATHENA" design note gated on
+  any rollout/proxy success signal. Two live warnings: their
+  demo-length heuristic Oracle landed BELOW random on real tasks
+  (+8pp for ATHENA over full data, 47.3% Oracle vs 50.0% random) —
+  naive heuristic gates on the 229h need a sanity check; and
+  cross-model transfer (π-0-scored subsets work for π-0.5) licenses
+  proxy-policy scoring. Qwen-RobotManip supplies the runnable pole:
+  a 5-stage state-action filter that is **fully offline** (jerk
+  residuals, state-action directional-agreement with DA<0.6–0.7
+  episode drop, quantile bands, FK consistency, base-frame fixes) —
+  their DA check excluded **81% of RoboMIND UR episodes** as broken
+  proprioception, exactly the hazard class of community SO-100/101
+  data. Cheapest concrete arm: DA + jerk pass over our 229h, panel
+  MAE with vs without excluded episodes. Caveat both: Qwen's
+  pipeline is unablated (reference, not evidence), and their 38,100h
+  is ~65% re-rendered human video (~7,800h real teleop, not "166×
+  our scale").
