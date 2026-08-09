@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T18:59:36Z
+**Updated:** 2026-08-09T19:18:54Z
 
-**Depth call:** depth >=2 at 18:59Z 08-09: adamc-100k babysit to ~08-12 (live) + lit-radar-0814 (cpu, actionable, 5 dup-checked hooks) + docs-pass tail (owner-side only) + fjoint owner-gated; lit-radar-0813 CLOSED this session (5 pages, all banked hooks cleared)
+**Depth call:** depth >=2 at 19:18Z 08-09: adamc-100k babysit to ~08-12 (live) + lit-radar-0815 (cpu, actionable, 5 verified dup-checked hooks + 5 spares) + docs-pass tail (owner-side only) + fjoint owner-gated; lit-radar-0814 CLOSED this session (5 pages, all banked hooks cleared)
 
-**8 open** (Live 1 · Queued 3 · Blocked 4 · Done 83)
+**8 open** (Live 1 · Queued 3 · Blocked 4 · Done 84)
 
 ## 🔴 Live (1)
 
@@ -30,15 +30,15 @@ OWNER RUN LIVE (launched 13:30Z 08-09): fontaine_molmo2_adamc_100k_ddp4 — base
 
 *ready — waiting on a window or a boundary*
 
-**`lit-radar-0814`** · `cpu`
+**`lit-radar-0815`** · `cpu`
 
-Lit slice (standing allocation): refill hooks banked in the 0813 session's fresh sweep, dup-checked against papers/ + ideas/ + queue, priority-ordered
+Lit slice (standing allocation): refill hooks banked in the 0814 session's fresh sweep, all ids VERIFIED against abs pages + dup-checked against papers/ + ideas/ + queue, priority-ordered
 
 **boundary:** any GPU-busy window; adamc rides to ~08-12 so windows are plentiful
 
 <details><summary>full record</summary>
 
-Lit slice (standing allocation): refill hooks banked in the 0813 session's fresh sweep, dup-checked against papers/ + ideas/ + queue, priority-ordered — 2606.16899 Hyperball / Fantastic Pretraining Optimizers II (weight-norm tracking through warmup/decay, grad-norm growth as weight norms shrink; adamc-watch third frame beside 2512.08217 + 2607.23777) &gt; 2602.03702 Anytime Pretraining (Defazio — AdamC's author — horizon-free LR schedules w/ weight averaging; bears on our cosine-to-10% floor reads) &gt; 2606.21386 VLA-FAIL (failure detection WITHOUT failure data: last-layer Mahalanobis + action-chunk-consistency over receding-horizon overlaps — the #6 verifier family AND our #22 boundary-incompat read's overlap machinery published as a detector) &gt; 2510.09976 RFT of flow-matching policies (#16 RL-pole roster completion) &gt; 2606.14752 X-Tokenizer (multimodal action tokenizer w/ masked action modeling; #5 learned-VQ falsifier family). Papers page(s) same session per the permanent rule; dedup-check each id before writing.
+Lit slice (standing allocation): refill hooks banked in the 0814 session's fresh sweep, all ids VERIFIED against abs pages + dup-checked against papers/ + ideas/ + queue, priority-ordered — 2607.21005 Weight-norm Criticality (loss spikes from decay+normalization driving scale-invariant norms to zero; a concrete failure mode for the LIVE adamc weight-norm watch) &gt; 2606.19367 Weibull weight-scale evolution under AdamW (alignment/injection/decay force decomposition recoverable from sparse checkpoints — an analysis frame for our banked 5k saves) &gt; 2511.12101 Decoupled Action Expert (task knowledge confined to the conditioning pathway, 5M MLP matches 244M U-Net; sharpest available datum for the fjoint F-then-joint rung's seam question) &gt; 2606.23085 Foresight (learned failure detection from task-level success labels only, no env rollouts, conformal-calibrated — the #6 learned-verifier affirmative case matching our no-rollouts constraint) &gt; 2607.27782 RedFlow (offline RL converting failures into action-level corrective supervision for flow VLAs, real-world 56.7-&gt;74.7%; #16 RL-pole entry candidate: real-robot, few-sample, failure-driven). VERIFIED SPARES if a pick falls through: 2607.10959 WSqD horizon-free schedule, 2606.10305 SARM2 stage-aware reward model, 2608.04246 SAFECAST contrast-set failure detection, 2607.14695 Reflex streaming inference (#22), 2606.11408 dynamic execution horizon (#22). Papers page(s) same session per the permanent rule; dedup-check each id before writing.
 
 </details>
 
@@ -130,9 +130,23 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 
 ---
 
-## ✅ Done (83)
+## ✅ Done (84)
 
 *closed — the full record stays in each fold*
+
+**`lit-radar-0814`** · `cpu`
+
+Lit slice (standing allocation): refill hooks banked in the 0813 session's fresh sweep, dup-checked against papers/ + ideas/ + queue, priority-ordered
+
+**boundary:** CLOSED 19:2xZ 08-09 work session: all 5 hooks deep-read via parallel-subagent fan-out, 5 Papers pages same session (hyperball-optimization, anytime-pretraining, vla-fail, fpo-flow-policy-optimization, x-tokenizer); ideas #3/#5/#6/#16/#17/#22 fed; 2 hook corrections caught (2602.03702 NOT Defazio; 2606.14752 tokens never executed at inference); refill sweep ran in-session -&gt; lit-radar-0815 queued (5 verified dup-checked hooks + 5 verified spares banked in the item)
+
+<details><summary>full record</summary>
+
+Lit slice (standing allocation): refill hooks banked in the 0813 session's fresh sweep, dup-checked against papers/ + ideas/ + queue, priority-ordered — 2606.16899 Hyperball / Fantastic Pretraining Optimizers II (weight-norm tracking through warmup/decay, grad-norm growth as weight norms shrink; adamc-watch third frame beside 2512.08217 + 2607.23777) &gt; 2602.03702 Anytime Pretraining (Defazio — AdamC's author — horizon-free LR schedules w/ weight averaging; bears on our cosine-to-10% floor reads) &gt; 2606.21386 VLA-FAIL (failure detection WITHOUT failure data: last-layer Mahalanobis + action-chunk-consistency over receding-horizon overlaps — the #6 verifier family AND our #22 boundary-incompat read's overlap machinery published as a detector) &gt; 2510.09976 RFT of flow-matching policies (#16 RL-pole roster completion) &gt; 2606.14752 X-Tokenizer (multimodal action tokenizer w/ masked action modeling; #5 learned-VQ falsifier family). Papers page(s) same session per the permanent rule; dedup-check each id before writing.
+
+</details>
+
+---
 
 **`lit-radar-0813`** · `cpu`
 
