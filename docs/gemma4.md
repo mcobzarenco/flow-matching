@@ -20,7 +20,7 @@ read 2026-08-05; repo status from `bijou/gemma4/`):
 
 | Model | Params | Context | Modalities | Status in this repo |
 |-------|--------|---------|------------|--------------------|
-| **E2B** (`google/gemma-4-e2b-it`) | 2.3B effective (5.1B with embeddings) | 128k | text + image + audio | Implemented; **the bijou trunk** |
+| **E2B** (`google/gemma-4-e2b-it`) | 2.3B effective (5.1B with embeddings) | 128k | text + image + audio | Implemented; **one of the two supported trunks** (see docs/molmo2.md for the current training trunk) |
 | **E4B** (`google/gemma-4-e4b-it`) | 4.5B effective (8B with embeddings) | 128k | text + image + audio | Implemented |
 | **12B Unified** | 11.95B dense | 256k | text + image + audio, **encoder-free** | Not implemented (`use_bidirectional_attention="vision"` — bidirectional attention within image blocks) |
 | **26B-A4B** | 26B total, **4B active** (MoE, 8 of 128 experts) | 256k | — | Not implemented (MoE blocks) |
@@ -90,7 +90,7 @@ RMSNorm + projection into LM space. hidden 768, 12 heads.
 
 ## How bijou uses it
 
-- Trunk = **E2B**, truncated: prefix encode runs layers < 15 (of 35);
+- As bijou's Gemma trunk: **E2B**, truncated: prefix encode runs layers < 15 (of 35);
   export streams for the action expert are the global-attention prefix
   layers **{4, 9, 14}** (see `docs/architecture.md` §1).
 - `bijou/gemma4/` takes explicit `device`/`dtype` factory args so

@@ -150,8 +150,11 @@ Fetched 2026-08-06 from `modeling_molmo2.py` + the safetensors index
 
 ## Port status
 
-See the port plan post
-(`fontaine/blog/src/posts/2026-08-06-molmo2-port-plan.md`) for the
-implementation plan: Qwen3 decoder port shared across the trio,
-SigLIP tower + connector, stream-export mapping, parity harness,
-memory budget.
+**Shipped** — `bijou/molmo2/` (model, vision tower, processor,
+tokenizer, KV cache, config, loading, `verify_parity.py`, tiny-
+checkpoint `testing.py`). Conventions the port pinned: FAST action
+block as a second extension range at id 152064 (`fast_block_base`),
+shipped `wte`/`lm_head` frozen (fresh untied `fast_embed`/`fast_head`
+rows instead — `bijou/decoders/ar_molmo2.py`), `rope_scaling: null`
+only. Architecture-level integration is described in
+`docs/architecture.md` (§1 prompt note, §2.3 Molmo2 variant).

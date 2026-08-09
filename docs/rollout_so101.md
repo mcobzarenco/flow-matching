@@ -1,8 +1,16 @@
 # Rolling out Bijou on a physical SO-101
 
-Runbook for `python -m bijou.rollout` (added `15da227`). Status: verified
-hardware-free (`--check` + a synthetic robot observation through the full
-predict path); **not yet run on a physical arm**.
+Runbook for `python -m bijou.rollout` (added `15da227`). Status: **runs
+on the physical arm** (owner's laptop deployment; measured mean-of-10
+replan at ~576 ms with `--sample-draws 10`). This runbook covers the
+core path; flags added since it was written — `--sample-draws`,
+`--async-inference`, `--return-home`/`--return-home-seconds`,
+`--camera-kind name=kind`, `--generate [fields…]`,
+`--outcome`/`--smoothness`/`--subgoal` conditioning, `--switch-blend`,
+`--offload-ple`, `--target-time`, `--control-fps`, and the safety
+envelope gate (`--unclamped`/`--skip-envelope-check` escape hatches) —
+are documented in `python -m bijou.rollout --help` and
+architecture.md §6.
 
 ## What it is
 

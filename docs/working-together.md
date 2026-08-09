@@ -208,7 +208,7 @@ seed future runs and pruned for the rest.
 - **Eval reports are named after the checkpoint they scored**:
 `reports/eval__<run_name>__step_<N>__<variant>.{html,json,log}` —
 run-dir name and zero-padded step verbatim from the checkpoint path,
-`<variant>` for the eval config (frame count, `panel_<id>`,
+`<variant>` for the eval config (frame count, frozen frame-plan id,
 `heun30`, …). The report records its provenance internally, but the
 filename is what survives an `ls`, an scp, and a six-week-old
 download folder. (Added 2026-08-05 after `eval_flow40k_1024.html`

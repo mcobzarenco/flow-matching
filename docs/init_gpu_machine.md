@@ -1,5 +1,7 @@
 # Initializing a new GPU training machine
 
+> Note (2026-08): the smoke test below predates the curated corpus and current CLI defaults — it exercises the flow path only. Current runs train on `community_curated_v0` with the Molmo2 trunk; see the launchers under `fontaine/scripts/box/` for working full command lines (weights gates, `--zero1`, chunked backward, async saves).
+
 Audience: an agent (or human) with **no prior context** tasked with
 bringing up a fresh cloud GPU instance (e.g. Lambda, Ubuntu 24.04) until
 it can run Bijou training. What Bijou is: see `README.md` and

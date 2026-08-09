@@ -1,5 +1,7 @@
 # Ablation: 4 arms × 40k steps, single H100 each (2026-07-26)
 
+> **Historical record** (2026-07). Two conclusions have since moved: the retained 4-4-8 stream schedule is a per-run override now (CLI default 4-4-7), and "bidirectional is catastrophic cross-rig" was later complicated — the best banked flow checkpoint is an adaRMS + bidirectional lineage (architecture.md §7).
+
 Matched-budget architecture ablation on v1+v2+v3 community data with the
 episode holdout active. Two rounds: 20k steps from scratch, then a
 lossless resume to 40k (cosine re-evaluated over the 40k horizon). This

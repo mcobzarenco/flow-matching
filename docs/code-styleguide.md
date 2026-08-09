@@ -70,7 +70,7 @@ cited, and the doc-cited `probe_rollout_vram.py` is lost outright
   and converts on the way in (see `bijou/gemma4/config.py`).
 - Prefer enums (`EpisodeSplit`, `SamplingMethod`) over string constants;
   parse strings into enums at the CLI/JSON boundary.
-- **One word per concept: the Gemma network is the `backbone`** — in
+- **One word per concept: the pretrained trunk network (Gemma or Molmo2) is the `backbone`** — in
   both senses (the pretrained artifact: `--backbone`,
   `BackboneConfig.id`, `backbone.safetensors`; and the mounted module:
   `model.backbone`, `backbone_text`/`backbone_vision` groups,
@@ -127,7 +127,7 @@ cited, and the doc-cited `probe_rollout_vram.py` is lost outright
   landed with absolute self-imports.)
 - **The import DAG is strict** and reviewed:
   `train`/`eval`/`rollout`/`judge` → `loading` → `model` →
-  `encoders`/`decoders` → `interface` → `gemma4`, importing downward
+  `encoders`/`decoders` → `interface` → `gemma4`/`molmo2`, importing downward
   only; `data` sits beside `model` (loading imports both; `judge`
   touches only `data`); `aux_text` and `annotations` are leaves beside
   `gemma4`. `annotations` is the judge-annotation ARTIFACT contract

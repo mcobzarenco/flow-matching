@@ -1,5 +1,7 @@
 # fast_tokenizer_v1 review — degenerate BPE vocabulary (findings, 2026-07-30)
 
+> **Historical record.** Superseded: `fast_tokenizer_v2` shipped with the fixes below (alphabet 159 + 865 merges, 22.3 tok/chunk) and is the artifact every current run uses. A v3 refit against the curated corpus's exact quantiles is a queued follow-up.
+
 Audience: whoever is building/running the AR FAST decoder arms.
 Artifact under review: `mcobzarenco/bijou-checkpoints/fast_tokenizer_v1`
 (fit 2026-07 on 1,040 datasets / 4,919,596 chunks, stride 5, scale 10,

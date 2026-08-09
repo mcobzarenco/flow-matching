@@ -1,5 +1,7 @@
 # Community datasets → one filtered v3.0 corpus: pipeline plan
 
+> **Historical record** (pipeline plan). The corpus shipped as `community_curated_v0`; see docs/data-curation.md for what actually landed.
+
 Goal: take the union of `HuggingFaceVLA/community_dataset_{v1,v2,v3}`
 (disjoint release batches, not format versions), migrate every sub-dataset to
 LeRobot **v3.0**, filter episodes with VLM judges, and assemble a single

@@ -1,41 +1,67 @@
 # Bijou architecture
 
 Bijou is a vision-language-action (VLA) model for SO-100/101 robot
-arms, built from ONE pretrained multimodal transformer — **Gemma-4
-E2B-IT** (vision tower + 35-layer text stack, 262k vocabulary,
-per-layer input embeddings, ~5.2B parameters) — reused in every role
-it can serve. Each observation (a task instruction, a variable set of
-camera frames, the arm's proprioceptive state) is rendered as one
-chat-templated user turn and prefill-encoded once per control step;
-action generation then follows one of two trained families:
+arms, built by reusing one pretrained multimodal transformer in every
+role it can serve. Two trunk backbones are supported behind one
+encoder/decoder seam:
 
-- **Decoder-only (`ar_backbone`) — the mainline, and the current
-  ledger best (§2.3, §7).** The full backbone simply continues its
-  own prefill as a model turn: Gemma's real generation opener, then —
-  under full-vocabulary cross-entropy through the frozen tied LM head
-  — one headerless VALUE line per field the prompt's `[generate|…]`
-  conditioning requested (subgoal / holding / progress / event /
-  per-camera visibility: weak labels from the LLM judging pipeline),
-  then `[BOA]` and the action chunk as **FAST tokens** (BPE over
-  quantized DCT coefficients of the 50-step chunk), which occupy a
-  ~1k-id reserved-unused block at the tail of the vocabulary. New
-  parameters: ~11M (the prompt-side state projection + the block's
-  embedding/PLE rows); everything else is the backbone itself
-  fine-tuning at low LR (bf16 autocast, fp32 masters). What speaks is
-  COMMANDED by the prompt: the model learns p(value | observation,
-  asked) — never "was this frame judged" — and inference requests
-  exactly the fields it wants (`[generate|actions]` = the deployment
-  fast path, straight to grammar-constrained greedy action decoding).
+- **Gemma-4 E2B-IT** — vision tower + 35-layer text stack, 262k
+  vocabulary, per-layer input embeddings, tied LM head, ~5.2B params.
+  The original trunk; most of the measured history in §7.
+- **Molmo2-4B** (`bijou/molmo2/`, fact sheet in `docs/molmo2.md`) —
+  SigLIP-so400m tower + Qwen3-4B decoder, 4.85B params, untied
+  embeddings/LM head. Adopted 2026-08 after a matched-topology screen
+  (§7): at 2.5× fewer training steps it decisively beat the equivalent
+  Gemma composition on the frozen evaluation set, and it is the trunk
+  of the current training runs.
 
-- **Cross-attention (§2.1–2.2).** The backbone truncated at layer 14
-  (2.55B) encodes the prompt — E-series KV sharing makes the deep
-  half query-only, so the truncated prefix's exported K/V is
-  bitwise-identical to a full forward — and a separate **404M fp32
-  flow-matching expert** cross-attends the exported global-layer
-  streams {4, 9, 14} and denoises the chunk (τ: 1 → 0, Heun
-  integration); an AR FAST decoder over the same blocks is the
-  token-based variant. This family is also the planned stage 2:
-  a flow expert over a frozen AR-pretrained backbone (§8.11).
+Each observation (a task instruction, a variable set of camera frames,
+the arm's proprioceptive state) is rendered as one chat-templated user
+turn and prefill-encoded once per control step; action generation then
+follows one of two trained families:
+
+- **Decoder-only (`ar_backbone` on Gemma, `Molmo2ARDecoder` on
+  Molmo2) — the phase-1 recipe (§2.3, §7).** The full backbone simply
+  continues its own prefill as a model turn: the trunk's real
+  generation opener, then — under full-vocabulary cross-entropy
+  through the frozen shipped LM head — one headerless VALUE line per
+  field the prompt's `[generate|…]` conditioning requested (subgoal /
+  holding / progress / event / per-camera visibility: weak labels from
+  the LLM judging pipeline), then `[BOA]` and the action chunk as
+  **FAST tokens** (BPE over quantized DCT coefficients of the 50-step
+  chunk). On Gemma these occupy a ~1k-id reserved-unused block at the
+  tail of the vocabulary (~11M new params: prompt-side state
+  projection + the block's embedding/PLE rows); on Molmo2 — whose
+  embeddings and LM head are untied and carry no spare block — the
+  FAST block gets fresh untied embedding rows and head rows
+  (`fast_embed`/`fast_head`), mean-initialized from the frozen shipped
+  tables. Everything else is the backbone itself fine-tuning at low LR
+  (bf16 autocast, fp32 masters). What speaks is COMMANDED by the
+  prompt: the model learns p(value | observation, asked) — never "was
+  this frame judged" — and inference requests exactly the fields it
+  wants (`[generate|actions]` = the deployment fast path, straight to
+  grammar-constrained greedy action decoding).
+
+- **Flow expert (§2.1–2.2) — the continuous-action head, phase 2.** A
+  separate fp32 flow-matching expert (shape configurable; the trained
+  instances are ~404M at hidden 1024) denoises the action chunk
+  (velocity at flow time τ, Heun integration, τ: 1 → 0), conditioned
+  on the trunk in one of two ways: *cross-attention* over exported
+  K/V streams (on Gemma, the trunk truncated at layer 14 — 2.55B —
+  encodes the prompt; E-series KV sharing makes the deep half
+  query-only, so the truncated prefix's exported K/V is
+  bitwise-identical to a full forward), or *residual-stream adapters*
+  (`--conditioning-streams residual`): learned RMSNorm + K/V
+  projections over raw residual taps of a **frozen** phase-1-trained
+  trunk, one stream per prefix layer. Both recipes have trained
+  instances: the expert over the frozen decoder-only **Gemma** trunk
+  is the best banked checkpoint overall (§7, decoded as a 10-draw
+  ensemble), and the expert over the frozen decoder-only **Molmo2**
+  trunk (residual adapters) trained cleanly with its readout in
+  progress. A matched joint-fine-tuning arm was stopped at ~4× the
+  frozen arm's step cost — frozen-trunk attachment is the working
+  recipe. An AR FAST decoder over the same expert blocks (`ar_fast`)
+  is the token-based variant of the family.
 
 The prompt side is shared and annotation-aware (§1, §2.4): every
 camera's image block is tagged with its judge-voted semantic kind
@@ -76,7 +102,7 @@ in wandb, the HF hub, and `reports/` — not in docs.
 
 Package layout (strict downward-only imports):
 `train`/`eval`/`rollout`/`judge` → `loading` → `model` →
-`encoders`/`decoders` → `interface` → `gemma4` (`data` beside `model`,
+`encoders`/`decoders` → `interface` → `gemma4`/`molmo2` (`data` beside `model`,
 imported by `loading`; `judge` touches only `data`; `aux_text` and
 `annotations` are leaves beside `gemma4` — `annotations` is the
 judge-annotation artifact CONTRACT, the shapes both the judge writer
@@ -91,10 +117,15 @@ suffix runner for the decoder-only path). The root also owns the
 objective dispatch (`BijouModel.loss` / `loss_components`) and the named
 trainable-group routing (`param_groups`: decoder / backbone_text /
 backbone_vision).
-Naming: **backbone** is the one identifier for the Gemma network — the
-pretrained artifact (`--backbone`, `BackboneConfig.id`,
-`backbone.safetensors`) and the mounted module (`model.backbone`) alike;
-"trunk" survives only as informal prose.
+Naming: **backbone** is the one identifier for the pretrained trunk
+network (Gemma-4 or Molmo2) — the artifact (`--backbone`,
+`BackboneConfig.id`, `backbone.safetensors`) and the mounted module
+(`model.backbone`) alike; "trunk" survives only as informal prose.
+
+The diagram below shows the Gemma composition; Molmo2 is analogous
+with a full-depth prefix (no truncation point exists — Qwen3 layers
+all carry K/V) and the decoder-only suffix running against the
+retained prefix KV cache.
 
 ```
 {task}[{kind_i} camera|<imgs_i>]..[{cond}|{v}][generate|{fields} actions]{task}⟨state⟩
@@ -149,7 +180,7 @@ Batch & sequence:
   across the batch as the tower returns them)
 
 Feature & head axes:
-- `hidden` — model hidden size (backbone 1536; expert 1024/1536)
+- `hidden` — model hidden size (Gemma trunk 1536; Molmo2 trunk 2560; expert default 768, trained instances 1024/1536)
 - `head_dim` — per-attention-head dimension
 - `heads` — query attention heads; `kv_heads` — key/value heads
   (`kv_heads ≤ heads` under GQA)
@@ -157,16 +188,26 @@ Feature & head axes:
 - `action_dim` / `state_dim` — action / state dimensionality (6/6 here)
 - `time_embed_dim` — sinusoidal time-embedding dimension
 - `vocab` — token vocabulary size
-- `num_layers` — decoder layer count (the PLE per-layer axis)
+- `num_layers` — decoder layer count (also the PLE per-layer axis on Gemma; Molmo2 has no per-layer embeddings)
 - `ple_dim` — per-layer-embedding dimension (`hidden_size_per_layer_input`)
 
 Inline literals where an axis is a fixed small constant: `2` = the (x, y)
 spatial pair in `image_position_ids`; `head_dim/2` = RoPE inverse-freq
 length; `3·patch_size²` = a raw-RGB vision patch row.
 
-## 1. Prompt side — the Gemma-4 E2B prefix encode
+## 1. Prompt side — the prefix encode
 
-**One backbone, mounted at a depth.** `BackboneConfig.depth ∈ {prefix,
+This section describes the Gemma-4 E2B prompt path in detail; the
+prompt *format* (camera kinds, conditioning block, request set,
+sandwich, soft state token) is shared by both trunks. The Molmo2
+encoder strategy (`bijou/encoders/molmo2.py`) differs where the
+architecture forces it: Molmo2's own chat template and image
+processor (SigLIP tower, pooled patches, `--max-crops`), a full-depth
+prefill (no truncation point exists), and — for the flow expert —
+residual-stream taps with learned adapters instead of exported K/V
+(§2.1); trunk fact sheet in `docs/molmo2.md`.
+
+**One backbone, mounted at a depth (Gemma).** `BackboneConfig.depth ∈ {prefix,
 full}`: the cross-attention decoders mount layers 0–14 only
 (**truncated**); `ar_backbone` mounts the full 35-layer stack (its
 suffix runs the KV-shared deep half). Either way the prompt encode
@@ -296,15 +337,23 @@ visual tokens is.
 
 ## 2. Action decoders
 
-Three decoder kinds share the seam (`--decoder flow | ar_fast |
-ar_backbone`); a checkpoint's `decoder.kind` tags which one it carries.
+Four decoder classes share the seam — `FlowDecoder`, `ARFastDecoder`,
+`ARBackboneDecoder`, `Molmo2ARDecoder` — behind three CLI kinds
+(`--decoder flow | ar_fast | ar_backbone`): `ar_backbone` dispatches
+to the trunk-matching decoder-only class (`ARBackboneDecoder` on a
+Gemma backbone, `Molmo2ARDecoder` on Molmo2). A checkpoint's
+`decoder.kind` tags which one it carries.
 
 ### 2.1 Flow-matching expert (cross-attention)
 
 A narrow decoder over the suffix `[state][a_1..a_50]` (`suffix_length =
-1 + chunk_size`). Default shape: **hidden 1024, 8 self-attn heads
-(head_dim 128), intermediate 4096 (GLU), 8 cross-attn heads, 16 layers,
-~404M fp32**. Freshly initialized, never loaded from the backbone.
+1 + chunk_size`). CLI default shape: **hidden 768, 6 self-attn heads,
+intermediate 3072 (GLU), 4 cross-attn heads, 15 layers**
+(`--decoder-{hidden,heads,intermediate,cross-heads}`,
+`--stream-counts 4 4 7`); the trained mainline instances override to
+**hidden 1024, 8 heads, intermediate 4096, 8 cross-heads, 16 layers,
+~404M fp32** with a 4-4-8 schedule. Freshly initialized, never loaded
+from the backbone.
 
 Each `SuffixBlock` (`bijou/decoders/blocks.py`, shared with ar_fast) is
 a Gemma-style sandwich of three sublayers, each
@@ -314,10 +363,11 @@ a Gemma-style sandwich of three sublayers, each
   backbone's global geometry exactly: `head_dim 512`, q-RMSNorm, p-RoPE
   continuing at positions after each sample's REAL (unpadded) prefix
   length, scaling 1.0. GQA against the stream's single K/V head. The
-  per-layer stream assignment is `cross_attention_schedule`, default
-  blocks **4-4-8** (4 layers on stream 4, 4 on 9, 8 on 14 — deepest-heavy,
-  since layer 14 is the one the backbone's own deep half consumes). Its
-  length is the expert depth; cycle/hybrid schedules are config diffs.
+  per-layer stream assignment is `cross_attention_schedule` — CLI
+  default **4-4-7**, trained mainline **4-4-8** (4 layers on stream 4,
+  4 on 9, the rest on 14 — deepest-heavy, since layer 14 is the one
+  the backbone's own deep half consumes). Its length is the expert
+  depth; cycle/hybrid schedules are config diffs.
 - **Self-attention** over the suffix. `SelfAttentionMode`:
   CAUSAL_ACTIONS (default — state visible to/from all; actions attend
   only earlier actions) or BIDIRECTIONAL. State is a token at position 0.
@@ -336,7 +386,31 @@ inputs, and slow visual context is decoupled from fast proprioception.
 (geometric periods 4e-3..4, π0's unit-interval choice) → MLP → added to
 the action-token embeddings at the input; the state token gets no time;
 layers are unconditioned. An alternative per-layer adaRMS scheme is
-implemented and under evaluation (§8.2).
+implemented and the trained flow mainline uses it (§8.2).
+
+**Residual-stream conditioning** (`--conditioning-streams residual`;
+the default `kv` is the exported-K/V path above). Instead of adopting
+exported K/V, the expert cross-attends streams *produced by learned
+adapters*: one `ResidualStreamAdapter` per prefix layer (RMSNorm →
+K/V projections → per-head learned k-norm, matching the trunk's own
+projection convention), fed by raw residual taps of the trunk. This is
+how the expert attaches to trunks without exportable K/V geometry
+(Molmo2), and the adapters train even when the trunk is frozen. Two
+seam options exist for attaching over a *live* trunk:
+`--seam-stop-grad` detaches the taps before adapter projection
+(flow-loss gradients into the trunk are exactly zero — the π0.5/KI
+recipe), and `--joint-ce` runs the phase-1 CE objective beside the
+flow loss at fixed weight 1.0. The measured outcome (§7): the joint
+arm costs ~4× the frozen arm per step; frozen-trunk attachment is the
+working recipe.
+
+**One-step distillation** (`--distill snapflow`). SnapFlow-style
+self-distillation trains the expert to jump straight from noise to the
+endpoint (1 network evaluation instead of a Heun integration):
+stop-gradient two-step-Euler shortcut targets mixed with the standard
+flow loss (α=0.5, λ=0.1, no EMA teacher). The distilled student holds
+within ~0.2 chunk MAE of the teacher's best ensemble at ~30× less
+decode compute (§7 curated-plan ledger).
 
 Params live ~50% in the MLPs, ~33% in cross-attention (8 heads × 512
 over the residual 1024), ~17% in self-attention.
@@ -369,6 +443,21 @@ network; the module owns only **~11M new parameters** at E2B scale:
 `GemmaEncoder.state_proj`, §1 — and the format-4 mode tables are
 deleted: the request conditioning subsumed the fed `[ACT]`/`[AUX]`
 mode.)
+
+**Molmo2 variant** (`Molmo2ARDecoder`,
+`bijou/decoders/ar_molmo2.py`): the same recipe on the Molmo2 trunk,
+with the differences the architecture forces. The prefill is
+full-depth (Qwen3 has no KV-sharing truncation point) with the cache
+retained; the suffix runs all 36 layers against it. Molmo2's
+embeddings and LM head are **untied**, ship no reserved-unused block,
+and both stay frozen — so the FAST block gets *fresh untied rows*: a
+`fast_embed` input table and `fast_head` output rows appended beside
+the shipped head (base-vocab logits from the frozen `lm_head`, block
+logits from `fast_head`), both mean-initialized from the corresponding
+frozen tables. No input-embedding scaling and no per-layer embeddings
+(Molmo2 conventions). Auxiliary text reads the frozen shipped head —
+for the original vocabulary both embedding and head sides stay frozen
+by design.
 
 **FAST block placement.** The action vocabulary (BPE + BOA + PAD,
 `vocab_total` = 1026 for fast_tokenizer_v2) is TAIL-anchored at
@@ -723,6 +812,51 @@ except ar_backbone, whose full-vocab CE runs larger grad norms:
 convention is `--grad-clip 100` there (step-1 norms in the 10^4 range
 are softcap saturation, clipped in practice).
 
+**Optimizer variants.** `--optimizer {adamw,adamc}` (default adamw).
+AdamC ([arXiv 2506.02285](https://arxiv.org/abs/2506.02285)) corrects
+decoupled weight decay for the LR schedule: with AdamW, a layer's
+steady-state gradient-to-weight ratio is `√(2λ/γt)`, so LR decay
+*raises* equilibrium gradient norms late in training; AdamC scales the
+decay coefficient with the schedule (`λ̂_t = λ·γt/γmax`) on hidden
+("normalized") layers, while the output head keeps standard decay and
+1-D parameters stay undecayed. Implemented as stock fused AdamW with a
+per-group time-varying `weight_decay` written immediately before each
+step — bit-exact, no custom kernel. Tied/shared parameters are handled
+by construction: each parameter object sits in exactly one group
+(asserted, both modes — a tied embedding/head pair decayed from two
+groups is the classic failure), and decoder types whose output-layer
+partition hasn't been audited are refused. Oracles:
+`tests/test_adamc.py` (bitwise AdamW equivalence at peak LR, exact λ̂
+trajectory, ZeRO-1 group-sync contract).
+
+**Memory and throughput machinery** (all oracle-gated, semantics
+exact): `--zero1` shards Adam moments across ranks (torch
+ZeroRedundancyOptimizer: each parameter's state lives on one rank,
+updated shards broadcast after each step — per-rank optimizer memory
+~1/world); with chunked backward, `--chunk-grad-allreduce` replaces
+the DDP wrapper with one explicit in-place gradient all-reduce per
+step (DDP's reducer buckets — a full fp32 gradient copy — are
+allocated at construction even when unused; measured 13.6 GiB on the
+Molmo2 recipe); `--activation-checkpointing` recomputes trunk blocks
+in backward (memory-only, gradient bitwise-pinned).
+
+**Asynchronous checkpointing** (`bijou/async_save.py`, default on;
+`--sync-save` = legacy path). A save boundary captures a device→CPU
+snapshot in seconds and gathers/merges/writes on a background thread
+over a dedicated gloo group (never the training NCCL communicator);
+under ZeRO-1 the background gather replaces a measured ~15.5 min/save
+synchronous consolidate (~14% of wall time on the Molmo2 4×DDP
+recipe). Written bytes are oracle-pinned identical to the sync path;
+publishes are atomic (`.tmp` dir rename); the final save joins before
+process-group teardown.
+
+**Resume seed discipline.** Nothing restores the data-stream position
+on `--resume`: the loop restarts at epoch 0 with the `--seed` shuffle
+and per-rank noise streams, so resuming with the checkpoint's own seed
+would replay exactly the batches (and flow-matching τ/ε draws) already
+trained on. Resume therefore *demands* a fresh `--seed`
+(`--allow-same-seed-resume` exists for deliberate reproduction).
+
 **Component learning rates.** `--decoder-lr` (always > 0), plus optional
 `--backbone-text-lr` / `--backbone-vision-lr` — omitting a component's
 lr keeps it frozen (explicit 0 is rejected); the flags mirror the
@@ -784,7 +918,14 @@ outcome/smoothness (§4). Train step returns
 component losses; `train/loss_action` + `train/loss_aux` log beside
 `train/loss` on aux runs (aux aggregates as CE-sum/token-count across
 the window and all ranks — a position-weighted mean, immune to the
-sparse-batch dilution a mean-of-means would suffer).
+sparse-batch dilution a mean-of-means would suffer). Later additions
+not detailed above: `--conditioning-streams {kv,residual}` (§2.1),
+`--joint-ce` / `--seam-stop-grad` (live-trunk attach seams, §2.1),
+`--distill snapflow` + `--target-time-embed` (one-step distillation,
+§2.1), `--state-dropout` (proprioception dropout), `--max-crops`
+(Molmo2 image crops), `--bucket-by-length` (length-bucketed batching),
+`--rewarmup-steps` (resume re-warm ramp, see the resume paragraph),
+`--prompt-generate-bracket`.
 
 **In-training probes.** `--eval-samples N` sizes two MAE probes
 (eval_chunk_mae on holdout, train_mae on train), drawn exactly as
@@ -902,8 +1043,11 @@ with
 additionally gate on `verify_parity` (needs a big GPU). Any new
 architecture path records its own oracle loudly.
 
-**Step split** (H100, batch 64, measured): observation encode 79.3% / expert
-fwd 4.6% / bwd 15.4% / opt 0.7%. The frozen backbone forward dominates —
+**Step split** (Gemma E2B trunk, H100, batch 64, measured):
+observation encode 79.3% / expert fwd 4.6% / bwd 15.4% / opt 0.7%.
+(Molmo2 anchors, 4×H100 DDP: decoder-only training ~2.25 s/step at
+12/rank; the frozen-trunk expert attach ran 0.92 s/step vs 3.74 with
+the trunk trained jointly.) The frozen backbone forward dominates —
 expert width is nearly free wall-clock; the perf wins are prefix-side
 (§8.8). Unfrozen-text steps run ~2× frozen at matched batch; live-trunk
 DDP runs measured 69–79 GB/rank (batch 32–64, H100) —
@@ -938,7 +1082,6 @@ prompt slots; task string must match the recorded instruction. Deployment
 always fine-tunes on rig data first (zero-shot cross-rig transfer is the
 wall, §7) — so the operative metric for any change is fine-tuned-then-
 scored rig MAE, not zero-shot. All decoder kinds serve `predict_chunk`
-All decoder kinds serve `predict_chunk`
 behind one policy interface, returning a `BijouPrediction` (`actions`,
 mirroring the batch's ground-truth field, + aux `generations`);
 ar_backbone picks its request set via `--generate [fields…]` on eval
@@ -991,7 +1134,7 @@ run narratives live in git history. Detailed setup + fit narratives for
 mainline runs live in "Experiment reports" at the end of this section —
 the ledger tables are the index, those are the record.
 
-### Leaderboard — best checkpoint per family, community holdout
+### Leaderboard — best checkpoint per family, community holdout (Gemma era, pre-2026-08-06 frame sets)
 
 | family | best checkpoint | frame set (copy baseline, frames) | chunk_mae | ×copy | first_mae (copy) |
 |---|---|---|---|---|---|
@@ -1007,14 +1150,63 @@ frame sets, and only coarsely** — the 0.52-vs-0.49 inversion between
 the two ar_backbone rows is within cross-set distortion (the ≤2-cam
 filter drops hard multi-camera scenes AND lowers the copy baseline;
 they never met on a shared frame set, and pre-format-3 checkpoints are
-refused by current code, so they can't). The **mainline** is the
-request-conditioned row: current-format, on the hub with optimizer,
-scored at 16× the sample size of every other row, and the only row
-whose first_mae beats its own copy baseline. Flow rows are
-frozen-trunk-family bests, kept for the stage-2 plan (§8.11), not as
-deployment candidates.
+refused by current code, so they can't). The request-conditioned row
+was the project best of the Gemma era: current-format, on the hub with
+optimizer, scored at 16× the sample size of every other row, and the
+only row whose first_mae beats its own copy baseline. For the current
+picture — the curated-corpus frozen plan, the Molmo2 trunk swap, and
+the flow-side bests that now lead overall — see the next subsection.
 
-### Ledger — fps-30 + ≤2-camera frame set (current mainline; copy 10.88 holdout / 10.81 norm-copy, 16,384 frames)
+### Ledger — curated-corpus frozen plan (2026-08; copy 11.785 / first 2.620, 17,204 core frames)
+
+The current evaluation standard: `community_curated_v0` holdout scored
+against one *frozen, versioned frame plan* (25,800 frames drawn once,
+17,204 "core" frames pooled for headline numbers — identical rows for
+every entry, so per-frame paired deltas with bootstrap CIs replace
+cross-run eyeballing). All later results, including everything the
+research agent banks, live on this set; the living version of this
+table (with decode-cost columns and per-result links) is the
+[leaderboard on the agent's blog](https://mcobzarenco-fontaine-blog.static.hf.space/leaderboard.html).
+
+| checkpoint × decode | chunk MAE | first_mae | note |
+|---|---|---|---|
+| Flow expert on frozen AR-pretrained Gemma trunk @80k, Heun-30, best 10-draw ensemble | **5.185** | **1.383** | best banked overall (`bijou_flow_artrunk_h1024_40k_ddp2` — the §8.11 recipe realized); noise-vector selection over a searched bank |
+| SnapFlow 1-NFE student, mean-of-10 | 5.368 | 1.593 | one-step distilled flow — ~30× cheaper than the teacher config above |
+| Gemma AR-100k, greedy (deployment anchor) | 5.803 | 2.143 | `bijou_arb_rcond_100k_ddp4` rescored on this plan |
+| **Molmo2 AR 60k, greedy** | **5.860** | **2.072** | 40k + 20k fresh-data continuation; paired Δ(60k−40k) −0.139 [CI95 −0.194, −0.090] |
+| Molmo2 AR 40k, greedy | 6.008 | 2.187 | the trunk-swap screen readout (below) |
+| state-copy control | 11.785 | 2.620 | byte-matched on every eval |
+
+**The trunk swap (2026-08-06→08).** Molmo2-4B replaced Gemma-4 E2B as
+the training trunk on a matched-topology screen: the same decoder-only
+recipe at 40k steps beat an *equivalent-topology Gemma control*
+(7.797 on this plan) by a paired per-frame **−1.717 [CI95 −1.80,
+−1.63]** — and reached within 0.21 of the Gemma line's fully-trained
+100k checkpoint at 2.5× fewer steps, with ~3× cheaper greedy decode
+(measured ~678 vs ~2157 ms per single-frame decode, same GPU class).
+The 60k continuation closed most of the remaining gap on first-step
+error while chunk MAE still trails the 100k anchor by ~0.06
+(cross-trunk, unpaired — treated as parity pending longer training).
+
+**Sampled decoding, both trunks.** Sampling the AR decode at T=1 and
+averaging 10 draws buys only −0.145 (Gemma) / −0.154 (Molmo2) chunk
+MAE — the same "mean collapse" on both trunks (greedy AR decode
+already sits near the predictive mean), versus a ~9× larger
+multi-draw gain in the flow families. Ensembling is a flow-side
+lever here, not an AR-side one.
+
+**Flow expert over the frozen Molmo2 trunk (2026-08-09).** The 404M
+expert attached via residual-stream adapters to the frozen Molmo2
+decoder-only checkpoint trained 10k steps cleanly (probes beat their
+pre-registered bars throughout; state-copy beaten decisively on the
+banked endpoint eval). A matched joint-fine-tuning arm (trunk
+continues its CE objective beside the expert's flow loss, stop-grad
+seam) was stopped on cost: ~4× the frozen arm's step time, consistent
+with production recipes that also train the expert against a frozen
+trunk. The attachment-recipe decision memo is in progress on the
+agent's blog.
+
+### Ledger — fps-30 + ≤2-camera frame set (Gemma-era mainline; copy 10.88 holdout / 10.81 norm-copy, 16,384 frames)
 
 | checkpoint | comm holdout | note |
 |---|---|---|
@@ -1291,9 +1483,10 @@ refit queued).
 Each subsection: the change, its justification, status, and the key
 design decisions. Full blow-by-blow lives in git history (these subsume
 the retired `plan_*.md`). Smaller queued arms not detailed below:
-`--trim-leading-idle` (~6.7% of frames are leading idle), state-noise
-augmentation, a lerobot policy plugin (`--policy.type=bijou`), suffix
-KV-caching for AR decode. Hygiene owed: rotate the wandb API key (it
+`--trim-leading-idle` (~6.7% of frames are leading idle), a lerobot
+policy plugin (`--policy.type=bijou`), suffix KV-caching for AR decode.
+(State-noise augmentation shipped as `--state-dropout` — train-time
+proprioception dropout against the state-shortcut failure mode.) Hygiene owed: rotate the wandb API key (it
 reached a since-deleted box's shell history).
 
 ### 8.1 Trunk unfreezing (IMPLEMENTED; the live-trunk AR result is the headline)
@@ -1318,10 +1511,10 @@ shapes the trunk far better than flow MSE did, through the exported-K/V
 pathway and natively in the decoder-only path alike.
 LR regime is narrow: decoder at its native LR, trunk ≤2.5e-5; hotter
 (3e-4) churns features faster than any decoder tracks and lands below
-from-scratch. **Open dials.** freeze-then-thaw; ZeRO-1 / activation
-checkpointing for batch; whether a flow decoder trained on the FROZEN
-adapted trunk inherits the win — the decisive attribution test, now
-specced as stage-2 (§8.11).
+from-scratch. **Open dials.** freeze-then-thaw. (ZeRO-1 and
+activation checkpointing both shipped — §5 memory machinery; the
+flow-decoder-on-frozen-adapted-trunk attribution test executed as
+stage-2, §8.11 — the win transfers.)
 
 ### 8.2 adaRMS time conditioning (IMPLEMENTED; signature confirmed)
 
@@ -1401,8 +1594,10 @@ decoder (§2.3) — trained with the deep half LIVE under
 `--backbone-text-lr` rather than frozen-with-thaw-dial, which dissolved
 the frozen-deep-half risk the option table worried about. What remains
 of the co-training idea is the two-stage form: §8.11 (flow decoder on
-the frozen AR-pretrained trunk). A literal joint-loss run stays
-available if stage-2 disappoints, but no code path for it exists today.
+the frozen AR-pretrained trunk). The literal joint-loss path has since
+shipped (`--joint-ce` + `--seam-stop-grad`, §2.1) and a matched joint
+arm was run and stopped on step cost (~4× the frozen arm), not
+quality — the two-stage form stands.
 
 ### 8.4 Cross-attention stream schedule re-test
 
@@ -1426,30 +1621,32 @@ retrieval is exactly where the measured problems live, so shrink only with
 a matched arm. (Width 1536 shipped in the adaRMS lineage; the AR lineage
 runs 1024.)
 
-### 8.6 Backbone variants
+### 8.6 Backbone variants (EXECUTED — Molmo2-4B adopted)
 
-E4B (4 exported streams, needs a 4-entry `--stream-counts`) for capacity;
-E2B **base vs IT** to test whether the instruct tuning matters for our
-narrow instruction distribution (prediction: ±0.2 MAE, IT edge grows only
-with language-diverse data; verify the -pt checkpoint ships the vision
-tower). Both are backbone-swap arms, not code changes beyond config.
+The variant question was answered by a full trunk swap rather than the
+Gemma-family arms sketched here (E4B for capacity, base-vs-IT): a
+matched-topology screen against Molmo2-4B (§7, curated-plan ledger)
+came out decisively for Molmo2, which is now the trunk of the current
+training runs. The Gemma E-series compositions remain fully supported
+and are the measured history of §7.
 
-### 8.7 Inference-time noise-draw ensembling (no training)
+### 8.7 Inference-time noise-draw ensembling (SHIPPED)
 
-**Change.** `--sample-draws N` in rollout: batch N noise draws through the
-expert (prefix encoded once), average the chunks. **Justification.** The
-strongest measured accuracy lever anywhere: mean-of-10 took a fine-tune's
-single-draw 5.30° → 2.88° on motion frames. ~20 lines; prefix cost
-unchanged; check unimodality on the sampling report first (averaging
-multi-modal draws is wrong). Directly attacks the level-uncertainty the
-re-anchor/τ probes found.
+`--sample-draws N` shipped in eval AND rollout (draws batched through
+the expert, prefix encoded once; measured 576 ms for a mean-of-10
+replan on the deployment laptop). It is the decode config of the best
+banked checkpoint (§7: mean-of-10 and searched pinned-noise-vector
+ensembles on the flow families) — while the same lever on the AR
+families buys almost nothing (mean collapse, §7). Original
+justification held up: mean-of-10 took a fine-tune's single-draw
+5.30° → 2.88° on motion frames.
 
 ### 8.8 Throughput (prefix-side)
 
-Length-bucketed batching (batches pad to ~452 vs ~292 typical) and
-`torch.compile` of the frozen backbone — the backbone forward is 79% of
-the step, so these are the real multipliers; a `kv_stop_layer` win already
-landed. Expert-side autocast is dead (expert is only ~20%).
+Length-bucketed batching shipped as `--bucket-by-length`; a
+`kv_stop_layer` win landed earlier. Still open: `torch.compile` of the
+frozen backbone (the backbone forward dominates the step — 79% on the
+Gemma profile). Expert-side autocast is dead (expert is only ~20%).
 
 ### 8.9 Rejected / deprioritized
 
@@ -1509,13 +1706,21 @@ only today); "vision frozen" wording in the model-summary line.
 ### 8.11 Stage-2: flow decoder on the frozen AR-pretrained backbone
 
 **Change.** Train a flow expert (§2.1) against the FROZEN backbone of
-an ar_backbone pretrain: slice a full-depth snapshot to the prefix
-layers, then `--init-backbone-from` it with unfreeze flags off. The
-decisive attribution test from §8.1 (does the AR-shaped trunk transfer
-through exported K/V?) and the deployment answer if AR decode latency
-ever binds (flow replans in ~233 ms; AR is ~30–80 sequential backbone
-forwards). **Status.** Parked pending §8.10; needs the snapshot-slicing
-+ init plumbing (small, loading-side) before any run.
+a decoder-only pretrain — the deployment answer if AR decode latency
+ever binds (flow replans in a few hundred ms; AR is ~30–80 sequential
+backbone forwards). **Status: EXECUTED, twice.** (1) On the Gemma
+trunk via `--backbone-init-from` (warm start from the AR-pretrained
+snapshot, unfreeze flags off): `bijou_flow_artrunk_h1024_40k_ddp2`
+@80k is the **best banked checkpoint overall** (§7 curated-plan
+ledger, 5.185 as a 10-draw ensemble). (2) On the Molmo2 trunk via
+residual-stream adapters (`--conditioning-streams residual`, §2.1)
+over the frozen decoder-only checkpoint — trained 10k steps cleanly,
+readout in progress. A matched joint arm — the trunk continuing its
+CE objective beside the expert's flow loss through a stop-gradient
+seam (`--joint-ce`, `--seam-stop-grad`) — was stopped at ~4× the
+frozen arm's step cost; frozen-trunk attachment is the working
+recipe, consistent with production systems (RDT2, Qwen-VLA Stage I)
+that also train the expert against a frozen trunk.
 
 ### 8.12 Multi-turn action context (K interaction pairs)
 

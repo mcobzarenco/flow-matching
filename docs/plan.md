@@ -1,5 +1,7 @@
 # Plan: modular observation encoders × action decoders
 
+> **Historical record** (2026-07-30 refactor plan; superseded by architecture.md §2/§5). The seam shipped as planned; since then: AR option C shipped as `ar_backbone` (the doc rules it out for the original seam — the seam grew instead), checkpoint format is 3, four decoder classes exist (incl. `Molmo2ARDecoder`), and the SigLIP2 encoder cell was never built (SigLIP arrived inside the Molmo2 trunk instead).
+
 Status: **steps 1–4 IMPLEMENTED** (2026-07-30) — the refactor landed
 without new encoder/decoder types: `bijou/nn.py` + `bijou/interface.py`
 (seam types, ABCs, shared Collator), format-2 tagged checkpoint schema
