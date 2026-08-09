@@ -99,13 +99,15 @@ class Molmo2Embedding(nn.Module):
         base_rows = self.embedding.shape[0]
         embeds = F.embedding(input_ids.clamp(max=base_rows - 1), self.embedding)
         is_extension = input_ids >= base_rows
-        if bool(is_extension.any()):
-            extension = F.embedding(
-                (input_ids - base_rows).clamp(min=0),
-                self.new_embedding,
-            )
-            embeds = torch.where(is_extension[..., None], extension, embeds)
-        return embeds
+        # Branchless on purpose: bool(any()) host-synced every call
+        # (>=2x/step). where with an all-False mask returns the base
+        # rows bitwise, so both regimes stay exact; the cost is one
+        # extension-table lookup per call, traded for CPU run-ahead.
+        extension = F.embedding(
+            (input_ids - base_rows).clamp(min=0),
+            self.new_embedding,
+        )
+        return torch.where(is_extension[..., None], extension, embeds)
 
 
 class Molmo2RotaryEmbedding(nn.Module):
