@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T12:31:00Z
+**Updated:** 2026-08-09T12:43:00Z
 
-**Depth call:** depth >=2 at 12:3xZ 08-09: attach screen EXECUTING (arm K live ~4k/10k, endpoint ~18:3xZ) + lit-radar-hooks-0811a queued (CPU, any GPU-busy window); blocked behind: stage-2 decision (K readout tonight), actckpt ladder, f-then-joint draft (Delta_seam), #17 vu5k (owner go), owner-held items
+**Depth call:** depth >=2 at 12:4xZ 08-09: owner-molmo2-adamc-run-prep-0809 (TOP, 'start with it' 12:37Z) + owner-docs-pass-0809 (owner prio 12:28Z, follows) + stage-2 memo (re-scoped F-only) + lit-radar-hooks-0811a; attach screen CLOSED (owner killed K 12:31Z), box GPUs free pending AdamC run approval
 
-**8 open** (Live 0 · Queued 2 · Blocked 6 · Done 69)
+**9 open** (Live 0 · Queued 4 · Blocked 5 · Done 70)
 
 ## 🔴 Live (0)
 
@@ -14,7 +14,7 @@
 
 *(empty)*
 
-## 🟢 Queued (2)
+## 🟢 Queued (4)
 
 *ready — waiting on a window or a boundary*
 
@@ -32,21 +32,49 @@ Lit slice (standing allocation): clear the 08-09 second sweep's banked hooks —
 
 ---
 
-**`idea4-attach-screen-execution`** · `gpu-box`
+**`molmo2-stage2-attachment-decision`** · `cpu`
 
-#4 attachment seam screen execution (box, 4xDDP, sequential F then K): F frozen-trunk vs K KI-joint (phase-1 CE verbatim + stop-grad seam, alpha=1) at matched 10k steps / eff-48 from the 40k endpoint; residual surface constant; g…
+Molmo2 stage-2 attachment decision at endpoint — now EXECUTABLE via the seam-screen pre-reg (2026-08-07-prereg-molmo2-attach-screen.md: frozen vs KI-joint is the first measurement; the depth-of-reads arm stays open for its own sc…
 
-**boundary:** ARM F LIVE since 04:57:51Z 08-09 (unit fontaine-attach-f, box 6be4e8e, B12c6 from the 60k endpoint). Rate gate PASS 05:05Z (50.3 projected &lt;= 70, full 10k). Kill-bar judgments at save boundaries: @5000 PASS 10.2595 vs 12.6394 (phase-1 matched +0.62), @7500 PASS 9.9391 vs 11.6356 (phase-1 matched +1.30); @10000 bar 10.1652. Rate ~0.92 s/step, 62-63 steps/min effective; vram 19.05 GiB. Async-save validated live at 1250. F endpoint ~07:4xZ -&gt; chained panel_v2 eval in-unit -&gt; THEN launch K (K_MEM_READY=1 BATCH=12 BACKWARD_CHUNKS=6, EXTRA_GPU_HOURS recomputed from F actual ~10.2 train + evals; babysit attach_K entry at launch). Frozen reads after both arms | F TRAIN COMPLETE 07:42:08Z (all bars passed, endpoint probe 9.3798@10000); panel_v2 eval live 5645 frames ~1.6h (done ~09:2xZ), eval gate raised 6-&gt;8 judged CONTINUE (session estimate vs pre-reg EXTRA budget). F expert capital uploaded to fontaine-checkpoints same-session (expert+prompt+config+README; backbone DEDUPLICATED — byte-identical sha e6ed78 to the 60k trunk, freeze verified at upload). K LAUNCH = next session first action once box frees | F panel_v2 eval COMPLETE 08:01:0xZ 08-09 (~1.24 GPU-h actual — scoring hit ~457 f/min steady-state, the 6.4 estimate was load-phase-contaminated; json/npz/html banked on box, NOTHING read alone). ARM K LAUNCHED 08:01:19Z same tick (unit fontaine-attach-k, K_MEM_READY=1 B12c6, EXTRA_GPU_HOURS=17 from F actuals 10.2 train + 1.25 eval + K eval ~2 + AR panel ~3); in-launcher rate gate binds at first jsonl window (rc 2 =&gt; matched 5k downshift both arms, F re-evals step_005000). Babysit attach_K entry live (3 probe bars + vram 71 + CE-health watch) · [pre-reg](posts/2026-08-07-prereg-molmo2-attach-screen.md)
+**boundary:** STEER WINDOW CLOSED 04:57Z 08-09 into the named default (posted 04:42Z, Discord read clean at 04:56Z boot): arm F LAUNCHED 04:57:51Z. The decision itself now lands at the screen readout: Delta_seam frozen read (attach_seam_results.py) after BOTH arms + their panel_v2 evals complete; blocked on idea4-attach-screen-execution | RE-SCOPED 12:4xZ 08-09 (owner killed K): decision basis = F arm only (panel_v2 banked, state-copy beaten decisively) + production frozen-first votes (RDT2, Qwen-VLA) — no Delta_seam number. Write the decision memo from banked artifacts (CPU); if a seam number is ever wanted, pre-register a CHEAPER matched read (short-K or CE-probe-only) as a separate item. AFTER the docs pass (owner prio).
 
 <details><summary>full record</summary>
 
-#4 attachment seam screen execution (box, 4xDDP, sequential F then K): F frozen-trunk vs K KI-joint (phase-1 CE verbatim + stop-grad seam, alpha=1) at matched 10k steps / eff-48 from the 40k endpoint; residual surface constant; gates vram&lt;=71, K1-style probe kill (phase-1 curve + 3.0 at &gt;=5k; bars 12.6394@5000, 11.6356@7500 in babysit.toml prepared entries), 70 GPU-h ceiling w/ matched 5k downshift; frozen reads Delta_seam paired CI + K trunk-drift band 0.3 (READ SCRIPT LANDED 08-07 ~07:2xZ: attach_seam_results.py, one command, oracle-gated all branches) — INSTRUMENT LANDED 08-07 ~06:0xZ; LAUNCH PREP LANDED 08-07 ~06:1xZ (launch_box_fontaine_molmo2_attach_{F,K}_10k_ddp4.sh: mechanized attach_rate_gate.py 70 GPU-h gate + 5k-downshift marker both launchers honor, sha256-pinned plans, chained panel_v2 evals; K chains materialize_joint_ar_view.py + greedy k4l2 drift panel; K_MEM_READY guard refuses blind K launch; 10 new oracles, check.py 433)
+Molmo2 stage-2 attachment decision at endpoint — now EXECUTABLE via the seam-screen pre-reg (2026-08-07-prereg-molmo2-attach-screen.md: frozen vs KI-joint is the first measurement; the depth-of-reads arm stays open for its own screen); owner steer window before the screen launches
 
 </details>
 
 ---
 
-## 🟡 Blocked (6)
+**`owner-docs-pass-0809`** · `cpu`
+
+OWNER STEERING 12:28:59Z 08-09, TOP PRIORITY: docs/ modernization pass ahead of owner's main-rebase
+
+**boundary:** Audit docs/ + README against git state first (audit-queue-items-against-git). Deliverable = updated docs + README section, plain-language, no fontaine jargon; blog/Discord note when done. Chained work session executes (4-h budget).
+
+<details><summary>full record</summary>
+
+OWNER STEERING 12:28:59Z 08-09, TOP PRIORITY: docs/ modernization pass ahead of owner's main-rebase — (a) update flow-matching/docs (architecture.md and friends) to reflect the CURRENT codebase + trained models, written in standard ML language for an ML expert, NO internal vocabulary (rungs/panels/idea-numbers/arm codenames); (b) repo README: clear statement that fontaine/... is an autonomous research agent's harness/notes/blog and the rest is the shared codebase (owner will rebase main on fontaine and develop with local agents); (c) tech-debt sweep at my discretion (stale docs, dead scripts/flags, confusing leftovers). Acknowledged in-channel 12:40Z with plan; post links when it lands for owner review pre-rebase.
+
+</details>
+
+---
+
+**`owner-molmo2-adamc-run-prep-0809`** · `cpu`
+
+OWNER STEERING 12:37:56Z 08-09, TOP PRIORITY ('let's start with it'): new molmo2 run from BASE 4B
+
+**boundary:** Order: read paper + shared conversation -&gt; AdamC implementation + tests (tied-weight/param-group handling verified) -&gt; parameter sheet posted for owner approval -&gt; LAUNCH ONLY AFTER explicit approval (owner_hold semantics on the launch, not the prep). Box GPUs free since the 12:38Z attach_K kill. Docs pass (owner-docs-pass-0809) follows in the same/next work session — owner's 'start with it' puts AdamC first.
+
+<details><summary>full record</summary>
+
+OWNER STEERING 12:37:56Z 08-09, TOP PRIORITY ('let's start with it'): new molmo2 run from BASE 4B — spec: (1) 100k steps; (2) effective batch 32 = 8/rank x 4; (3) vision encoder UNFROZEN from step 0, --{backbone,text}-vision-lr 2e-5; (4) warmup 1000; (5) optimizer AdamC per arxiv 2506.02285v1 (AdamW with time-varying per-group decay coefficient) — implement AdamC FIRST, efficiently, mindful of shared/tied layers (Gemma tied lm_head); owner-supplied context conversation https://claude.ai/share/52f07abb-4b00-48f0-9c62-6627868b5209 must be read as part of implementing. GATE: before ANY launch, post an in-depth description of ALL run parameters for owner approval.
+
+</details>
+
+---
+
+## 🟡 Blocked (5)
 
 *waiting on a prerequisite, a boundary, or the owner*
 
@@ -82,7 +110,7 @@ Lit slice (standing allocation): clear the 08-09 second sweep's banked hooks —
 
 #4 F-then-joint escalation rung — pre-reg DRAFT (CPU; the APT-named recipe, papers/apt-expert-pretraining.md): warm-start a joint run (unfrozen trunk, seam per readout) from the F arm's converged expert instead of from noise; APT…
 
-**boundary:** opens after the #4 attach-screen frozen reads (~08-09+); the draft is CPU work at any GPU-busy window AFTER Delta_seam is banked; execution needs its own posted pre-reg + owner-visible queue entry
+**boundary:** opens after the #4 attach-screen frozen reads (~08-09+); the draft is CPU work at any GPU-busy window AFTER Delta_seam is banked; execution needs its own posted pre-reg + owner-visible queue entry | 12:4xZ 08-09: Delta_seam readout will NOT arrive (owner killed K); draft basis re-anchors on F-arm curves + the 4x step-cost fact — joint-anything must now argue against that cost. Stays blocked pending stage-2 decision memo.
 
 <details><summary>full record</summary>
 
@@ -118,21 +146,7 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 
 ---
 
-**`molmo2-stage2-attachment-decision`** · `cpu`
-
-Molmo2 stage-2 attachment decision at endpoint — now EXECUTABLE via the seam-screen pre-reg (2026-08-07-prereg-molmo2-attach-screen.md: frozen vs KI-joint is the first measurement; the depth-of-reads arm stays open for its own sc…
-
-**boundary:** STEER WINDOW CLOSED 04:57Z 08-09 into the named default (posted 04:42Z, Discord read clean at 04:56Z boot): arm F LAUNCHED 04:57:51Z. The decision itself now lands at the screen readout: Delta_seam frozen read (attach_seam_results.py) after BOTH arms + their panel_v2 evals complete; blocked on idea4-attach-screen-execution
-
-<details><summary>full record</summary>
-
-Molmo2 stage-2 attachment decision at endpoint — now EXECUTABLE via the seam-screen pre-reg (2026-08-07-prereg-molmo2-attach-screen.md: frozen vs KI-joint is the first measurement; the depth-of-reads arm stays open for its own screen); owner steer window before the screen launches
-
-</details>
-
----
-
-## ✅ Done (69)
+## ✅ Done (70)
 
 *closed — the full record stays in each fold*
 
@@ -915,6 +929,20 @@ Standing lit slice (~20-30 min, owner allocation 2026-08-05) in the attach_F tra
 <details><summary>full record</summary>
 
 Standing lit slice (~20-30 min, owner allocation 2026-08-05) in the attach_F train window: web/arXiv sweep for ideas worth trying; current open hooks = FlowDAgger follow-ups (latent-DAgger family), anything re-ranking the #4 F-vs-K readout before it lands, #17 trunk/init radar. PERMANENT RULE (owner 08-07 08:42Z): papers page(s) land on the blog SAME session; ideas.md line is the index hook only — EXECUTED 05:1x-05:3xZ 08-09: Hy-Embodied-0.5-VLA 2606.14409 deep-read + papers page SAME SESSION (hy-embedded... hy-embodied-stack.md) — full-stack blueprint: FlowPRO preference RL on flow policies (flow loss as implicit reward, intervention-and-rollback pairs, +6-12 pts over DAgger, 94-99% SR, retention UNMEASURED = FlowDAgger critique stands) + H=50 Bezier chunk-stitch async deployment + 10k-h UMI human data. Fed #16 (weight-space pole of post-SFT menu + deployment lever), #4 (joint-pole ledger entry under APT's pretrained-VLM condition, 11:1 expert sizing). Dup-check win: VLAFlow 2607.01586 re-surfaced by search, caught as ALREADY covered (5433814) before writing. Radar hooks banked unread: FASTER 2603.19199 (real-time flow VLAs), ABPolicy 2602.23901 + DEFLECT 2605.19294 (async execution family), RDT2 2602.03310 (UMI scaling), QDepth-VLA 2510.14836 (depth aux)
+
+</details>
+
+---
+
+**`idea4-attach-screen-execution`** · `gpu-box`
+
+#4 attachment seam screen execution (box, 4xDDP, sequential F then K): F frozen-trunk vs K KI-joint (phase-1 CE verbatim + stop-grad seam, alpha=1) at matched 10k steps / eff-48 from the 40k endpoint; residual surface constant; g…
+
+**boundary:** ARM F LIVE since 04:57:51Z 08-09 (unit fontaine-attach-f, box 6be4e8e, B12c6 from the 60k endpoint). Rate gate PASS 05:05Z (50.3 projected &lt;= 70, full 10k). Kill-bar judgments at save boundaries: @5000 PASS 10.2595 vs 12.6394 (phase-1 matched +0.62), @7500 PASS 9.9391 vs 11.6356 (phase-1 matched +1.30); @10000 bar 10.1652. Rate ~0.92 s/step, 62-63 steps/min effective; vram 19.05 GiB. Async-save validated live at 1250. F endpoint ~07:4xZ -&gt; chained panel_v2 eval in-unit -&gt; THEN launch K (K_MEM_READY=1 BATCH=12 BACKWARD_CHUNKS=6, EXTRA_GPU_HOURS recomputed from F actual ~10.2 train + evals; babysit attach_K entry at launch). Frozen reads after both arms | F TRAIN COMPLETE 07:42:08Z (all bars passed, endpoint probe 9.3798@10000); panel_v2 eval live 5645 frames ~1.6h (done ~09:2xZ), eval gate raised 6-&gt;8 judged CONTINUE (session estimate vs pre-reg EXTRA budget). F expert capital uploaded to fontaine-checkpoints same-session (expert+prompt+config+README; backbone DEDUPLICATED — byte-identical sha e6ed78 to the 60k trunk, freeze verified at upload). K LAUNCH = next session first action once box frees | F panel_v2 eval COMPLETE 08:01:0xZ 08-09 (~1.24 GPU-h actual — scoring hit ~457 f/min steady-state, the 6.4 estimate was load-phase-contaminated; json/npz/html banked on box, NOTHING read alone). ARM K LAUNCHED 08:01:19Z same tick (unit fontaine-attach-k, K_MEM_READY=1 B12c6, EXTRA_GPU_HOURS=17 from F actuals 10.2 train + 1.25 eval + K eval ~2 + AR panel ~3); in-launcher rate gate binds at first jsonl window (rc 2 =&gt; matched 5k downshift both arms, F re-evals step_005000). Babysit attach_K entry live (3 probe bars + vram 71 + CE-health watch) | OWNER KILL 12:31:43Z 08-09: 'way too slow per step' — attach_K stopped 12:38Z at step ~4160/10k (3.74 s/step vs F's 0.92, ~4x; unit fontaine-attach-k stopped, box GPUs 0 MiB x4, checkpoints through step_003750 retained on box, NOT uploaded — partial arm, nothing consumes it). NO K endpoint =&gt; Delta_seam matched read and read-4 AR-view drift are OFF under this pre-reg. Screen closes on F evidence: all F bars passed, F panel_v2 banked, F expert capital uploaded. ~13.6 GPU-h spent on K (08:01-12:38Z). · [pre-reg](posts/2026-08-07-prereg-molmo2-attach-screen.md)
+
+<details><summary>full record</summary>
+
+#4 attachment seam screen execution (box, 4xDDP, sequential F then K): F frozen-trunk vs K KI-joint (phase-1 CE verbatim + stop-grad seam, alpha=1) at matched 10k steps / eff-48 from the 40k endpoint; residual surface constant; gates vram&lt;=71, K1-style probe kill (phase-1 curve + 3.0 at &gt;=5k; bars 12.6394@5000, 11.6356@7500 in babysit.toml prepared entries), 70 GPU-h ceiling w/ matched 5k downshift; frozen reads Delta_seam paired CI + K trunk-drift band 0.3 (READ SCRIPT LANDED 08-07 ~07:2xZ: attach_seam_results.py, one command, oracle-gated all branches) — INSTRUMENT LANDED 08-07 ~06:0xZ; LAUNCH PREP LANDED 08-07 ~06:1xZ (launch_box_fontaine_molmo2_attach_{F,K}_10k_ddp4.sh: mechanized attach_rate_gate.py 70 GPU-h gate + 5k-downshift marker both launchers honor, sha256-pinned plans, chained panel_v2 evals; K chains materialize_joint_ar_view.py + greedy k4l2 drift panel; K_MEM_READY guard refuses blind K launch; 10 new oracles, check.py 433)
 
 </details>
 

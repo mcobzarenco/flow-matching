@@ -1,7 +1,9 @@
 # Babysit run registry (#21 P1). One entry per LIVE run; update at
 # launch time, prune at completion. Schema: fontaine/scripts/babysit.py.
 
-# (no_live_runs_reason cleared 00:03Z 08-09 — fields panel live below)
+no_live_runs_reason = "attach_K killed by OWNER STEERING 12:31:43Z 08-09 (cost call, stopped 12:38Z at step ~4160/10k) — attach screen closed on F evidence; box + local GPUs idle-by-design pending owner approval of the molmo2 base-4B 100k AdamC run (parameter sheet gate, queue owner-molmo2-adamc-run-prep-0809)"
+
+# (previous no_live_runs_reason cleared 00:03Z 08-09 — fields panel was live then)
 
 # molmo2 40k TRAIN entry pruned 04:2xZ 08-08 — run COMPLETE (40000/40000,
 # endpoint probe 6.2075@40000, low 5.91@26500 stands; weights uploaded to
@@ -115,42 +117,24 @@
 # kind = "vram_max_gib"
 # value = 71.0
 #
-[[run]]
-name = "attach_K"
-kind = "train-jsonl"
-host = "192.222.55.210"
-pgrep = "fontaine_molmo2_flow_kijoint_10k_ddp4"
-pgrep_min = 4                     # 4 DDP ranks
-gpu_indices = [0, 1, 2, 3]
-gpu_mem_min_mib = 30000           # trunk-live arm: full-scale floor is right here (unlike F's 12000)
-jsonl = "/home/ubuntu/flow-matching/outputs/train/fontaine_molmo2_flow_kijoint_10k_ddp4/train_log.jsonl"
-total_steps = 10000
-probe_key = "eval_chunk_mae"
-vram_key = "vram_alloc_peak_gib"
-started_utc = "2026-08-09T08:01:19Z"  # unit fontaine-attach-k (systemd-run); K_MEM_READY=1 B12c6, EXTRA_GPU_HOURS=17 (F actual 10.2 train + 1.25 eval + K eval ~2 + AR-view panel ~3); rate gate binds in-launcher (rc 2 => matched 5k downshift, F re-evals step_005000)
-boundary = "COST GATE PASS 08:18:50Z 08-09 (median 3.729 s/step x 10k x 4 + 17 extra = 58.4 <= 70) — FULL 10k, no downshift (the smoke's 5.675 carried warmup; steady windows run 3.7-3.87). At 3.73 s/step from step ~200: endpoint ~18:3xZ 08-09; saves every 1250, probes every 500 (first probe @500 ~08:35Z, kill-bars bind at >=5k); chains panel_v2 + AR-view drift panel"
-anchors = [
-    "kill rule: probe > phase-1 curve at matched step + 3.0 at any eval >= 5k, kill at next save boundary",
-    "CE-health watch (record): jsonl loss_aux vs phase-1 loss_action at matched step — rising CE under stop-grad = AEGIS drift signal",
-    "read 4 at endpoint: AR-view greedy panel vs 60k endpoint AR number (amendment-2 repoint), band |Delta_AR| <= 0.3",
-    "Delta_seam frozen read at matched endpoints after this arm's panel_v2 (attach_seam_results.py); F side banked 08:01Z",
-    "READOUT RUNBOOK (pre-audited ~11:00Z 08-09, oracle re-run green at 9939e33; all stems verified vs box files + launcher %06d padding; endpoint 60k json already local): at K eval rc=0 -> (1) rsync -av 'ubuntu@192.222.55.210:flow-matching/reports/eval__fontaine_molmo2_flow_*_10k_ddp4__step_010000__panel_v2_heun30_draws1_stable.*' reports/  (2) rsync -av 'ubuntu@192.222.55.210:flow-matching/reports/eval__fontaine_molmo2_flow_kijoint_10k_ddp4_ar_view__step_010000__panel_curated_v0_k4l2.json' reports/  (3) uv run python fontaine/scripts/attach_seam_results.py  (defaults resolve; NOTE prints if drift inputs missing = read 4 pending, hard-aborts on plan/pairing drift)",
-]
-[[run.gates]]
-kind = "probe_below_by_step"
-value = 12.6394                   # phase-1 9.6394@5000 + 3.0
-step = 5000
-[[run.gates]]
-kind = "probe_below_by_step"
-value = 11.6356                   # phase-1 8.6356@7500 + 3.0
-step = 7500
-[[run.gates]]
-kind = "probe_below_by_step"
-value = 10.1652                   # phase-1 7.1652@10000 + 3.0 (K1 crossing green 08-07 06:0xZ)
-step = 10000
-[[run.gates]]
-kind = "vram_max_gib"
-value = 71.0
+# PRUNED 12:4xZ 08-09 — attach_K KILLED BY OWNER STEERING 12:31:43Z
+# ('way too slow per step'): unit fontaine-attach-k stopped 12:38Z at
+# step ~4160/10k (3.74 s/step vs F's 0.92, ~4x cost; probes healthy,
+# 10.9664@4000 best, all bars would have bound >=5k — the kill was a
+# COST call, not a gate). Box GPUs verified 0 MiB x4; checkpoints
+# through step_003750 retained on box, NOT uploaded (partial arm,
+# nothing consumes it). ~13.6 GPU-h spent (08:01-12:38Z). NO K
+# endpoint => Delta_seam matched read + read-4 AR-view drift OFF;
+# stage-2 decision re-scoped to F-only basis (queue item). Chained
+# panel_v2/AR-view evals never started. Entry commented per the
+# retained-entry liveness-fail footgun.
+# [[run]]
+# name = "attach_K"
+# kind = "train-jsonl"
+# host = "192.222.55.210"
+# pgrep = "fontaine_molmo2_flow_kijoint_10k_ddp4"
+# jsonl = "/home/ubuntu/flow-matching/outputs/train/fontaine_molmo2_flow_kijoint_10k_ddp4/train_log.jsonl"
+# started_utc = "2026-08-09T08:01:19Z"  # unit fontaine-attach-k; killed 12:38Z
 
 # PREPARED — #6 rung (c) mcselect run (local GPU, launcher
 # eval_ar100k_mcselect_q4.sh via run_detached.sh fontaine-mcselect-q4;

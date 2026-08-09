@@ -6,6 +6,69 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-09 12:36–12:5xZ (real `date -u`) — tick (babysit →
+conversational): **owner steering burst, three messages in 10 min —
+attach_K KILLED on owner instruction (cost call, ~4× F per step), a
+docs-modernization pass prioritized ahead of an owner main-rebase,
+and a brand-new top-priority run spec: molmo2 from base 4B, 100k
+steps, vision unfrozen from step 0, AdamC optimizer (implement
+first, parameter sheet for approval before launch).***
+
+**Status**: NO live runs — `fontaine_molmo2_flow_kijoint_10k_ddp4`
+(attach_K) stopped 12:38Z at step ~4160/10k per owner instruction
+(unit fontaine-attach-k; box GPUs verified 0 MiB ×4; checkpoints
+through step_003750 retained on box, not uploaded — partial arm,
+nothing consumes it; ~13.6 GPU-h spent 08:01–12:38Z). Probes were
+healthy at kill (10.9664@4000 best, ~1.7 under the 5k bar) — this
+was a COST kill (3.74 s/step vs F's 0.92), not a gate. Local GPU
+free. Δ_seam matched read + read-4 AR-view drift are OFF (no K
+endpoint); the attach screen closes on F evidence.
+
+**Steering** (owner, 12:28:59Z / 12:31:43Z / 12:37:56Z + 👍 on our
+12:37Z reply): (1) **docs pass prioritized** — update `docs/`
+(architecture etc.) to reflect the current codebase/models in
+standard ML language, no internal vocabulary (rungs/panels/idea
+numbers), for an ML expert; README must state `fontaine/...` = the
+research agent, rest = shared codebase (owner will rebase main on
+fontaine and develop with local agents); tech-debt sweep at my
+discretion. (2) **kill attach_K** — "way too slow per step";
+executed 12:38Z. (3) **new molmo2 run from base 4B, TOP priority
+("let's start with it")** — 100k steps, eff-batch 32 (8/rank),
+vision encoder unfrozen from step 0 with `--{backbone,text}-
+vision-lr 2e-5`, warmup 1000, **AdamC** per arxiv 2506.02285v1
+(AdamW + time-varying per-group decay; implement efficiently,
+mindful of tied/shared layers e.g. Gemma lm_head; read the owner's
+shared conversation claude.ai/share/52f07abb… as part of
+implementing); **in-depth description of ALL run parameters for
+owner approval BEFORE launch**. All three acknowledged in-channel
+(12:37Z + 12:40Z posts). ⚠ Process near-miss ×2: the 12:28/12:31Z
+messages never surfaced via `read` (cursor already past them —
+history check caught them), and the 12:37:56Z spec was consumed by
+a `head -4`-truncated babysit read, recovered via the cursor
+snowflake timestamp + history. New standing rule (memory): NEVER
+pipe read/babysit output through head/tail; cross-check cursor
+timestamp vs history each poll.
+
+**Done**: kill executed + verified (procs gone, 4×0 MiB); babysit
+attach_K entry pruned (kill note in babysit.toml); queue updated —
+`idea4-attach-screen-execution` CLOSED (owner-kill note, F-side
+complete), `owner-molmo2-adamc-run-prep-0809` added at HEAD,
+`owner-docs-pass-0809` added second,
+`molmo2-stage2-attachment-decision` re-scoped to F-only basis
+(unblocked, after docs pass), f-then-joint draft re-anchored (must
+argue against the measured 4× step cost); validate green depth 4
+(9 open). Both owner replies posted (kill readout + AdamC plan:
+paper + shared conversation first, thin AdamW variant with
+per-group time-varying decay, tied-lm_head group-partition audit +
+tests, then the full parameter sheet; no launch without sign-off).
+`run_work_next` armed.
+
+**Next**: chained work session (4-h budget) executes in owner order:
+**AdamC implementation → parameter sheet posted for approval →
+docs pass (a/b/c)**; launch of the 100k run ONLY after explicit
+owner approval (box GPUs free and waiting). Then stage-2 memo
+(F-only basis) + `lit-radar-hooks-0811a` in any gap.
+
 *Updated 2026-08-09 12:16–12:4xZ (real `date -u`) — work session
 (bounded, chained via `run_work_next`): **the radar backlog cleared
 TWICE over — four papers deep-read, four pages landed same session
@@ -85,59 +148,6 @@ currently 11.20; next tick catches the crossing); endpoint ~18:3xZ
 → chained panel_v2 + AR-view drift panel → **Δ_seam frozen read
 (runbook staged, pre-audited)** → stage-2 decision.
 
-*Updated 2026-08-09 11:56–12:1xZ (real `date -u`) — work session
-(bounded, chained via `run_work_next`): **the async-execution radar
-cluster cleared and then some — FIVE papers read, THREE papers pages
-landed same session (async II cluster + Spatial Forcing + RDT2); #22's
-arm menu re-ranked around FASTER's "the delay is a scheduling
-artifact" result, and RDT2 files a production-scale F-shape vote
-hours before tonight's Δ_seam read.***
-
-**Status**: attach_K healthy at the 11:57Z + 12:08Z polls — step
-3740/10k, loss 3.21, 3.74 s/step (endpoint ~18:3xZ holds), vram
-59.07 ≤ 71, liveness 7 procs / 4 GPUs. Probe **11.2033@3500** (new
-best); first kill-bar 12.6394 binds ≥5k (~13:2xZ) with ~1.4 margin.
-CE aux flat. Local GPU free.
-
-**Steering**: none — `read` clean at boot and at the 12:08Z babysit;
-no new owner messages after the answered 11:43:03Z loss_action
-question, no new reactions.
-
-**Done**: **`lit-radar-async-exec` EXECUTED, both ride-along clauses
-fired** (the cluster closed early, so Spatial Forcing AND RDT2 rode
-per the item's own text): (1)
-[async execution II](papers/async-execution-2.md) — FASTER
-2603.19199 (TTFA theory + horizon-aware schedule: first action in 1
-flow step of N, streams while the tail refines, 1.29–3.09×; tiles
-across our draws-major batch, so the 18-tick mean-of-10 staleness
-may be a scheduling artifact), ABPolicy 2602.23901 (B-spline
-control-point flow + continuity refitting; jerk instruments banked),
-DEFLECT 2605.19294 (stale-vs-fresh FM-DPO where RTC/BID measure ≤5%
-at d≥5; carried at its restart-corrected +1.6–2.3 pp, not the +6.4
-headline) → **#22 arm order: measure naive-switch → HAS-on-decode →
-PAINT → A2C2 → TT-RTC/DEFLECT**; d≈18 untested by anyone stays
-loud. (2) [Spatial Forcing](papers/spatial-forcing.md) 2510.12276 —
-teacher×depth interact (VGGT works at LLM-24, collapsed at encoder
-in VEGA); the 3.8× is a **fewer-steps** lever (≈50k vs 150k iters,
-+25.8 pp at 5% data), a new column in the throughput accounting;
-teacher overhead unreported. (3)
-[RDT2](papers/rdt2-umi-scaling.md) 2602.03310 — 10k h robot-free
-UMI data, zero-shot cross-embodiment; recipe = AR-first +
-**frozen-trunk** flow expert + 1-step distill, no joint stage —
-F-pole ledger context for tonight's decision (frozen read
-untouched); #16 β≈0.23 data exponent; #5 RVQ ~⅓ tokens of FAST;
-#12 second production 1-NFE point. Ideas #4/#5/#11/#12/#16/#17/#22
-records + index hooks updated; papers index/SUMMARY rows. Queue:
-item closed, refill `lit-radar-hooks-0809b` (QDepth-VLA + fresh
-sweep — the banked radar backlog is now EMPTY), validate green
-depth 2.
-
-**Next**: 5k kill-bar binds ~13:2xZ (probe must be < 12.6394 —
-currently 11.20); endpoint ~18:3xZ → chained panel_v2 + AR-view
-drift panel → **Δ_seam frozen read (runbook staged, pre-audited)**
-→ stage-2 decision. `queue_cli.py next` → `lit-radar-hooks-0809b`
-(any GPU-busy window).
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -163,22 +173,12 @@ to ~04:0xZ, greedy ~1.7 GPU-h, draws10_t1 04:54–07:22Z **~10 GPU-h
 (~49 GPU-h ≤ 60 gate, chained evals incl.); local subgoal-swap arms
 08-09 ~02:1x–03:42Z +~1.5 GPU-h ≤ 3 gate; box K-smoke ladder 08-09
 04:02–04:39Z **+~0.5 GPU-h ≤ 6 gate (rung 1 GREEN first try)**; box
-attach_F 08-09 04:58–07:42Z train COMPLETE **+~10.2 GPU-h** + chained
-panel_v2 eval live (~1–2 GPU-h; batch gate 70, rate-gate projection
-50.3 incl. K estimate)). Older
+attach_F 08-09 04:58–07:42Z train COMPLETE **+~10.2 GPU-h** + panel_v2
+eval COMPLETE ~08:01Z (+~1.24 GPU-h); box attach_K 08:01–12:38Z
+**KILLED by owner steering at step ~4160/10k (+~13.6 GPU-h, cost
+call — no endpoint, no chained evals)**). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
-
-Session 2026-08-09 11:49–12:0xZ (tick, babysit; 0 GPU-h): attach_K
-step 3460/10k healthy (3.799 s/step, probe 11.6124@3000 best,
-kill-bar margin ~1.0, binds ~13:2xZ, endpoint ~18:3xZ); Discord
-clean — only our own 11:48Z loss_action answer surfaced, reply-watch
-held to ~11:59Z via background history poll, quiet. Two integrity
-fixes: queue.json `updated_utc` future-dated 12:05Z → corrected to
-11:45Z (78cace5 class), and 89 root-relative links across
-`archive/*.md` (papers/posts/journal/reports, all 404 one level
-deep) rewritten to `../` paths, grep-verified 0 left. Queue validate
-green depth 2; run_work_next armed (lit-radar-async-exec next).
 
 Session 2026-08-09 12:12–12:2xZ (tick, babysit; 0 GPU-h): attach_K
 step 3800/10k healthy (loss 3.10, 3.78 s/step, probe 11.2033@3500
@@ -188,3 +188,19 @@ after our 12:12Z session post, no new reactions. Queue validate
 green depth 2 (8 open); run_work_next armed (lit-radar-hooks-0809b
 next: QDepth-VLA + fresh sweep). Stable stretch → exited rather
 than held; next tick catches the 5k crossing.
+
+Session 2026-08-09 12:36–12:5xZ (tick, babysit → conversational; 0
+GPU-h new): OWNER STEERING BURST — attach_K killed 12:38Z on owner
+instruction (step ~4160/10k, ~13.6 GPU-h spent, cost call: 3.74
+s/step vs F's 0.92; box 0 MiB ×4, ckpts to 3750 retained; Δ_seam +
+read-4 OFF, screen closes on F evidence); docs-modernization pass
+prioritized (plain ML language, README fontaine-vs-shared split,
+pre-rebase); NEW top-priority run spec: molmo2 base-4B 100k,
+eff-batch 32, vision unfrozen from step 0 (lr 2e-5), warmup 1000,
+AdamC (2506.02285) — implement first, parameter sheet for owner
+approval before launch. Both replies posted; 👍 on the kill/docs
+reply. Queue: attach item closed, adamc-prep + docs-pass items at
+head, stage-2 re-scoped F-only; validate green depth 4.
+Consume-once near-miss ×2 (cursor skip + head-truncated read) →
+new standing rule banked in memory: never truncate read/babysit
+output. run_work_next armed (AdamC first, docs pass second).
