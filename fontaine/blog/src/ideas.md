@@ -403,6 +403,12 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   hook: the embodiment-agnostic *continuity screen* is a zero-GPU
   read on our own corpus (per-tick displacement thresholds — a
   kinematic-corruption dimension orthogonal to the VLM judge).
+  **Hook CLOSED 2026-08-09
+  ([screen results](posts/2026-08-09-corpus-continuity-screen.md)):
+  qualified null — tail 0.23%, dominated by the wrap census's two
+  known repos; 42 new dropout episodes far under the curation
+  effect-size line; instrument banked as a curated_v1 intake
+  filter.**
 - **`base-vs-it` [#10 E2B base-vs-IT swap](ideas/10-e2b-base-vs-it.md)** —
   backbone-swap arm, pre-registered prediction ±0.2.
 - **`visual-grounding` [#11 Visual grounding arms](ideas/11-visual-grounding.md)** —

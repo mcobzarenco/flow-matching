@@ -136,3 +136,14 @@ to training today.
 - `codebase_version` is uniform (v3.0) post-mirror, so the version
   correlation the causal story predicts is untestable locally (noted
   above).
+
+---
+
+*2026-08-09 addendum: the
+[kinematic-continuity screen](2026-08-09-corpus-continuity-screen.md)
+(idea #9, VISTA-style rig-calibrated scoring, no wrap-specific
+threshold) independently re-derived this census's two structural
+repos from scratch and closed the sub-300° gap noted in the
+limitations above: 42 further episodes across 30 repos carry
+single-tick dropout jumps under the 300° line (0.08% of the corpus —
+the effect-size verdict here is unchanged).*

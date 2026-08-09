@@ -1,6 +1,6 @@
 {
- "updated_utc": "2026-08-09T16:48:00Z",
- "depth_reason": "depth >=2 at 16:4xZ 08-09: adamc-100k babysit to ~08-12 + corpus-continuity-screen (CPU) + docs-pass tail + boundary-incompat-read-npz + fjoint owner-gated; owner v2all ticket thread CLOSED this session (table posted 16:4xZ)",
+ "updated_utc": "2026-08-09T17:22:00Z",
+ "depth_reason": "depth >=2 at 17:2xZ 08-09: adamc-100k babysit to ~08-12 (live) + docs-pass tail (owner-side wandb rotation only) + fjoint owner-gated post-endpoint + standing lit slice this session; corpus-continuity-screen CLOSED this session (qualified null)",
  "items": [
   {
    "id": "owner-molmo2-perf-review",
@@ -761,11 +761,11 @@
   {
    "id": "corpus-continuity-screen",
    "class": "cpu",
-   "status": "queued",
+   "status": "done",
    "prereg": null,
    "owner_hold": false,
-   "title": "#9 corpus kinematic-continuity screen (CPU, record-only, VISTA hook 08-09 papers/vista-umi-validation.md \u2014 exploratory read on our own data, SDN-read precedent, no pre-reg; any curation change from it DOES need one): score every episode of community_curated_v0 (+ the 2 rig repos as calibration anchors) for per-tick action-displacement continuity \u2014 VISTA's three-regime scoring (full marks / linear / exponential) recalibrated to so100 joint space from the rig repos' own displacement distribution; episode score = min over ticks. AUDIT FIRST per standing rule: check what dup_content_census.py / frame-mining machinery already computes per-episode before writing anything new. Oracle-gate on synthetic planted-dropout fixtures (teleport jump in/out, clean episode = full marks); quote score distribution + tail episodes, cross-check low-continuity repos against the banked LORO influential-repo lists (arch/box-batch reads). A null (no corrupted tail) closes the hook at zero cost; a signal is a #9 curation lever with its own pre-reg",
-   "boundary": "any GPU-busy window; born 15:5xZ 08-09 from the VISTA read; zero GPU (pure function of dataset actions on disk)"
+   "title": "#9 corpus kinematic-continuity screen (CPU, record-only, VISTA hook 08-09 papers/vista-umi-validation.md \u2014 exploratory read on our own data, SDN-read precedent, no pre-reg; any curation change from it DOES need one): score every episode of community_curated_v0 (+ the 2 rig repos as calibration anchors) for per-tick action-displacement continuity \u2014 VISTA's three-regime scoring (full marks / linear / exponential) recalibrated to so100 joint space from the rig repos' own displacement distribution; episode score = min over ticks. AUDIT FIRST per standing rule: check what dup_content_census.py / frame-mining machinery already computes per-episode before writing anything new. Oracle-gate on synthetic planted-dropout fixtures (teleport jump in/out, clean episode = full marks); quote score distribution + tail episodes, cross-check low-continuity repos against the banked LORO influential-repo lists (arch/box-batch reads). A null (no corrupted tail) closes the hook at zero cost; a signal is a #9 curation lever with its own pre-reg | EXECUTED 17:1xZ 08-09 (same session as queued+1): corpus_continuity_screen.py landed (oracle 7 fixture families; own two-layout parquet loader \u2014 census loader assumed list arrays, v3.0 rig repos are FixedSizeList). 52,507 episodes / 981 repos scored, zero read failures. QUALIFIED NULL: EXP tail 123 eps (0.23%) = wrap census's two known repos (kevin510 40/40 wrap seam, willnorris 41/42 counts-units) + 42 genuinely-new sub-300-deg dropout eps in 30 repos (0.08%, order of magnitude under the census's curation kill line \u2014 NO pre-reg queued, would re-litigate the owner's 08-05 16:13Z drop). Zero LORO overlap; 8 tail eps are panel rows (bounded ~0.05 pooled, per-repo diagnostics on those 2 repos untrustworthy \u2014 standing caveat). Results post 2026-08-09-corpus-continuity-screen.md (2 dark charts); wrap-census post cross-annotated; ideas #9 hook CLOSED; instrument banked as curated_v1 intake filter.",
+   "boundary": "CLOSED 17:1xZ 08-09 at zero GPU; reads banked reports/analysis__corpus_continuity_screen.json (+ .max_ratios.npy sidecar)"
   },
   {
    "id": "owner-ticket-v2all-selection-0809",

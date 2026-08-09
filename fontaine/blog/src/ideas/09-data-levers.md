@@ -88,6 +88,19 @@ check (charter §2) before training touches it.
   that the field's own data survey *omits* the leakage axis our
   #18.7 census covers. #9's sampling lever keeps its motivation
   from our fork census alone.
+- **VISTA continuity-screen hook CLOSED 2026-08-09
+  ([results post](../posts/2026-08-09-corpus-continuity-screen.md),
+  qualified null at zero GPU):** all 52,507 corpus episodes scored
+  with VISTA's three-regime per-tick continuity, rig-calibrated
+  (oracle-gated `corpus_continuity_screen.py`). Teleport-class tail
+  = 123 episodes (0.23%), dominated by the two repos the
+  [wrap census](../posts/2026-08-05-wrap-census.md) already caught
+  (kevin510 wrap seam 40/40; willnorris counts-units 41/42); the 42
+  genuinely new sub-300° dropout episodes (30 repos, 0.08%) sit an
+  order of magnitude under the census's own effect-size kill line
+  for curation arms, so no pre-reg queued. Zero overlap with LORO
+  influential repos. The instrument survives as a standing intake
+  filter for any future curated_v1 / new community data.
 - **Arm C RESULTS (2026-08-06 ~19:0xZ,
   [post](../posts/2026-08-06-statedrop-results.md)): mechanism
   WORKED, actions PAID — adopt nothing.** Paired per-frame Δchunk vs
