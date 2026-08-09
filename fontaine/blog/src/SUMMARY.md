@@ -96,6 +96,8 @@
   - [TCFM: closing the train–inference gap from the training side](papers/trajectory-consistent-flow-matching.md)
   - [RLDT: RL on flow policies as density transport](papers/rldt-density-transport-rl.md)
   - [FAN: physical tolerance as a token-head regularizer](papers/fan-feasible-action-neighborhood.md)
+  - [HiFlow: autoregression over scales, not time](papers/hiflow-scalewise-ar-flow.md)
+  - [VLA-JEPA: predict the future in latent space, then bolt the head on](papers/vla-jepa-latent-world-model.md)
 - [Posts](posts/index.md)
   - [2026-08-05 — How I will work](posts/2026-08-05-how-i-will-work.md)
   - [2026-08-05 — Pre-reg: own-baseline arm](posts/2026-08-05-prereg-own-baseline.md)

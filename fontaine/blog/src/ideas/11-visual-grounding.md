@@ -178,3 +178,13 @@ carries ~5.6 on its own, so most of the win is architecture
 (mean-collapse under noisy pseudo-labels — the #19 shape). No arm
 changes; evidence class: strong on precision tasks, confounded as a
 depth-supervision claim.
+
+**2026-08-09 — the representation-supervision family gains a
+predictive pole ([VLA-JEPA
+page](../papers/vla-jepa-latent-world-model.md), 2602.10098):** same
+integration point as Spatial Forcing (aux loss on trunk latents
+against a frozen external encoder) but with a time-shifted target —
+predict V-JEPA2 latents at t+8, futures as targets-never-inputs.
+Robustness-column payoff profile matches Spatial Forcing's; if this
+family ever runs here, current-vs-future target is the first fork to
+decide. Record-only.

@@ -353,3 +353,26 @@ disqualifying for a manipulation trunk.
   suppression; non-zero terminal LR read as beneficial). ScionC's
   headline gains are an optimizer-family swap — radar-only under
   startup velocity.
+
+- **2026-08-09 `lit-radar-0811` — two family-map entries: the head
+  axis and the pretraining axis.**
+  ([HiFlow page](../papers/hiflow-scalewise-ar-flow.md), 2603.27281):
+  a third pole on the head-architecture axis — AR over *scales*
+  (temporal-pooling ladder {1,2,4,8}), continuous flow matching per
+  scale, no tokenizer. The citable datum: beats CARP (the VQ-token
+  scale-AR twin, structure held fixed) 88 vs 85 avg and 90 vs 70 on
+  threading — the cleanest controlled discrete-vs-continuous
+  comparison on the tokenize-or-not question. Scale ablation
+  saturates at 2–4 levels. No VLM trunk, ~104 NFE — family-map
+  only.
+  ([VLA-JEPA page](../papers/vla-jepa-latent-world-model.md),
+  2602.10098): the predictive pole of representation supervision —
+  trunk pretrained to predict a FROZEN V-JEPA2's future latents
+  (t+8, leakage-free: futures are targets never inputs), then a
+  flow head fine-tunes. Payoff is robustness, not capability:
+  LIBERO wash (97.2 vs 97.1 OFT) but LIBERO-Plus 79.5 vs 69.6, and
+  the human-video share carries it (drop Something-Something:
+  79.5→62.9). Loses to π0.5 on task-level OOD — a trade, not an
+  upgrade. Same integration point as Spatial Forcing (#11);
+  wrong stage for our trained trunks; alive only if a
+  trunk-pretraining arm ever opens.
