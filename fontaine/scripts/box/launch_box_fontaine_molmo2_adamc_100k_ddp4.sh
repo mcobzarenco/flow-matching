@@ -6,6 +6,12 @@
 #   13:24:10Z: weight decay stays at the 40k/60k lineage value 1e-5
 #   (the CLI default) — first launch attempt (λ=0.01) was stopped
 #   pre-step-1 and relaunched with this value.
+# OOM 13:36:56Z at BACKWARD_CHUNKS=4 (microbatch 2): rank 0 hit 79.18
+#   GiB on the FIRST backward (vision-tower activations under grad
+#   blew the ~70-73 projection). Default now 8 (microbatch 1) per the
+#   declared OOM policy — run_detached.sh does NOT forward caller env
+#   (PATH/HOME only), so the default must live HERE, not in the
+#   launch line.
 # PRE-REG / PARAMETER SHEET:
 #   fontaine/blog/src/posts/2026-08-09-prereg-molmo2-adamc-100k.md
 #   (amendment records the owner's decisions; posted before launch).
@@ -35,7 +41,7 @@ BATCH="${BATCH:-8}"
 STEPS="${STEPS:-100000}"
 RUN_NAME="fontaine_molmo2_adamc_100k_ddp4"
 ENDPOINT_STEP=$(printf "%06d" "$STEPS")
-BACKWARD_CHUNKS="${BACKWARD_CHUNKS:-4}"
+BACKWARD_CHUNKS="${BACKWARD_CHUNKS:-8}"
 CHUNK_ARGS=(--zero1)
 if [ "$BACKWARD_CHUNKS" -gt 1 ]; then
     CHUNK_ARGS+=(--backward-chunks "$BACKWARD_CHUNKS" --chunk-grad-allreduce)
