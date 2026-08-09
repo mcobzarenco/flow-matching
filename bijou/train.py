@@ -302,6 +302,15 @@ class TrainArgs:
     # (unlike every field above) so checkpoints predating the flag
     # replay their train_args cleanly.
     sync_save: bool = False
+    # "adamw" (default) or "adamc" — AdamC (arXiv 2506.02285) is AdamW
+    # with a time-varying decay coefficient on the hidden ("normalized")
+    # layers: λ̂_t = λ·γ_t/γ_max, written into the corrected param
+    # groups' weight_decay before every step so the stock (fused) AdamW
+    # kernel applies it bit-exactly. Output-head parameters keep
+    # standard AdamW decay per the paper's Algorithm 1; 1-D parameters
+    # stay undecayed as everywhere else. Defaulted (like sync_save) so
+    # checkpoints predating the flag replay their train_args cleanly.
+    optimizer: str = "adamw"
 
     @property
     def backbone_trained(self) -> bool:
@@ -565,6 +574,169 @@ def decay_split(
     for parameter in parameters:
         (decayed if parameter.dim() >= 2 else undecayed).append(parameter)
     return decayed, undecayed
+
+
+def adamc_output_head_parameters(
+    model: BijouModel[Any, Any],
+) -> list[torch.nn.Parameter]:
+    """The trainable output-layer parameters for --optimizer adamc.
+
+    AdamC (2506.02285, Algorithm 1) applies the corrected decay to
+    "normalized" layers only — in a transformer, every hidden matrix —
+    while the OUTPUT layer keeps standard AdamW decay. The audited
+    decoders:
+
+    - ``Molmo2ARDecoder``: ``fast_head`` (fresh untied logit rows; the
+      shipped trunk ``lm_head`` and ``wte`` are frozen and never reach
+      the optimizer). ``fast_embed`` is an untied input table and stays
+      on the corrected side with the other hidden matrices.
+    - ``ARBackboneDecoder`` (Gemma trunk): ``fast_embed.weight`` — the
+      table doubles as the block-logits head (``hidden @ fast_embed.Tᵀ``),
+      a TIED embedding/head pair. One parameter object, one group,
+      standard decay; the group-disjointness assert at construction
+      keeps any future tied pair from being decayed twice.
+
+    Any other decoder (flow, ar_fast) aborts loudly: its output layer
+    has not been audited for the corrected/standard split. Likewise, if
+    a trunk's tied ``lm_head``/embedding is ever unfrozen it must be
+    added here (today every trunk head is frozen by design)."""
+    decoder = model.decoder
+    if isinstance(decoder, Molmo2ARDecoder):
+        return list(decoder.fast_head.parameters())
+    if isinstance(decoder, ARBackboneDecoder):
+        return list(decoder.fast_embed.parameters())
+    raise SystemExit(
+        f"--optimizer adamc: the output-head partition is not audited "
+        f"for {type(decoder).__name__} — extend "
+        "adamc_output_head_parameters with its logits/output parameters "
+        "before training this decoder with adamc",
+    )
+
+
+def build_optimizer_param_groups(
+    model: BijouModel[Any, Any],
+    *,
+    optimizer_name: str,
+    decoder_lr: float,
+    backbone_text_lr: float | None,
+    backbone_vision_lr: float | None,
+    weight_decay: float,
+) -> tuple[list[dict[str, Any]], list[tuple[str, float, float]], list[bool]]:
+    """Optimizer param groups + bookkeeping, in construction order.
+
+    Returns ``(param_groups, cli_groups, adamc_corrected)``:
+    ``param_groups`` in torch's optimizer API format (fixed-key dicts, a
+    third-party boundary); ``cli_groups`` the CLI intent per group as
+    (name, lr, weight_decay) — what --resume's restored optimizer state
+    is checked against; ``adamc_corrected`` flags the groups that take
+    the AdamC corrected decay (parallel to param_groups; all-False under
+    adamw, where the training loop never reads it).
+
+    adamw: the historical construction, byte-identical — one decoder
+    group (decoder + prompt-side encoder params, all at the default
+    decay) plus a decayed/undecayed split per unfrozen backbone subset.
+
+    adamc: the decoder group splits by role — hidden matrices →
+    corrected decay, output head (adamc_output_head_parameters) →
+    standard decay, 1-D (norm scales, biases) → no decay. Backbone
+    hidden matrices are exactly the paper's "normalized" layers (the
+    trunk head/embeddings are frozen out of the groups by design), so
+    the existing decayed split takes the corrected flag.
+
+    Both modes end with the shared/tied-parameter guard: a parameter
+    object appearing in two groups would be stepped and decayed twice
+    (the tied-lm_head failure mode); one appearing in none would take
+    gradients but never step. Groups must exactly cover the trainable
+    set, disjointly — loud SystemExit otherwise."""
+    named_groups = model.param_groups()
+    param_groups: list[dict[str, Any]] = []
+    cli_groups: list[tuple[str, float, float]] = []
+    adamc_corrected: list[bool] = []
+    if optimizer_name == "adamc":
+        head_ids = {id(p) for p in adamc_output_head_parameters(model) if p.dim() >= 2}
+        decayed, undecayed = decay_split(named_groups["decoder"])
+        hidden = [p for p in decayed if id(p) not in head_ids]
+        heads = [p for p in decayed if id(p) in head_ids]
+        if len(heads) != len(head_ids):
+            raise SystemExit(
+                "--optimizer adamc: an output-head parameter is not in "
+                "the decoder param group — the corrected/standard "
+                "partition would misroute it (audit "
+                "adamc_output_head_parameters vs model.param_groups)",
+            )
+        param_groups.append({"params": hidden, "lr": decoder_lr})
+        cli_groups.append(("decoder (corrected decay)", decoder_lr, weight_decay))
+        adamc_corrected.append(True)
+        param_groups.append({"params": heads, "lr": decoder_lr})
+        cli_groups.append(("decoder head (standard decay)", decoder_lr, weight_decay))
+        adamc_corrected.append(False)
+        param_groups.append(
+            {"params": undecayed, "lr": decoder_lr, "weight_decay": 0.0},
+        )
+        cli_groups.append(("decoder (no decay)", decoder_lr, 0.0))
+        adamc_corrected.append(False)
+    else:
+        param_groups.append({"params": named_groups["decoder"], "lr": decoder_lr})
+        cli_groups.append(("decoder", decoder_lr, weight_decay))
+        adamc_corrected.append(False)
+    for group_name, group_lr in (
+        ("backbone_text", backbone_text_lr),
+        ("backbone_vision", backbone_vision_lr),
+    ):
+        if group_lr is None:
+            continue
+        assert named_groups[group_name]  # unfreeze_backbone validated
+        decayed, undecayed = decay_split(named_groups[group_name])
+        param_groups.append({"params": decayed, "lr": group_lr})
+        cli_groups.append((f"{group_name} (decayed)", group_lr, weight_decay))
+        adamc_corrected.append(optimizer_name == "adamc")
+        param_groups.append(
+            {
+                "params": undecayed,
+                "lr": group_lr,
+                "weight_decay": 0.0,
+            },
+        )
+        cli_groups.append((f"{group_name} (no decay)", group_lr, 0.0))
+        adamc_corrected.append(False)
+    flat_group_params = [p for group in param_groups for p in group["params"]]
+    if len(flat_group_params) != len({id(p) for p in flat_group_params}):
+        raise SystemExit(
+            "param groups overlap — a shared/tied parameter appears in "
+            "two optimizer groups and would be decayed twice",
+        )
+    trainable_ids = {id(p) for p in model.parameters() if p.requires_grad}
+    if {id(p) for p in flat_group_params} != trainable_ids:
+        raise SystemExit(
+            "param groups do not cover the trainable parameter set "
+            "exactly — a trainable parameter is missing from (or frozen "
+            "yet present in) the optimizer groups",
+        )
+    return param_groups, cli_groups, adamc_corrected
+
+
+def apply_adamc_weight_decay(
+    optimizer: torch.optim.Optimizer,
+    corrected_indices: Sequence[int],
+    weight_decay: float,
+) -> None:
+    """One AdamC decay update, called immediately BEFORE optimizer.step().
+
+    λ̂_t = λ·γ_t/γ_max per corrected group, written into the group's
+    ``weight_decay`` so the stock (possibly fused) AdamW kernel applies
+    it — bit-exact AdamC, no custom kernel, O(#groups) Python per step.
+    ``group["lr"]`` holds γ_t at this point (the scheduler steps after
+    the optimizer), and γ_max per group is its ``initial_lr`` (LambdaLR
+    records it; every lr_lambda branch peaks at exactly 1.0, warmup and
+    the re-warmup ramp included — during warmup λ̂_t < λ is the paper's
+    intended behavior). ZeRO-1's step() copies group attributes wrapper
+    → local optimizer before the sharded step, so this same write covers
+    the --zero1 path exactly."""
+    for index in corrected_indices:
+        group = optimizer.param_groups[index]
+        group["weight_decay"] = (
+            weight_decay * float(group["lr"]) / float(group["initial_lr"])
+        )
 
 
 class BijouTrainStep[I: BatchInputs](torch.nn.Module):
@@ -1613,25 +1785,41 @@ def check_resume_seed(resume: Path, seed: int, *, allow_same_seed: bool) -> str:
 def resume_hyperparameter_notes(
     optimizer: torch.optim.Optimizer,
     cli_groups: Sequence[tuple[str, float, float]],
+    adamc_corrected: Sequence[bool] | None = None,
 ) -> list[str]:
     """After optimizer.load_state_dict on --resume the checkpoint's
     hyperparameters win and CLI values are ignored — surface EVERY
     ignored difference. (The historical note checked param group 0 only:
     a changed --backbone-*-lr on resume was silently ignored.)
     ``cli_groups`` carries (name, lr, weight_decay) per param group, in
-    construction order."""
+    construction order. AdamC corrected groups are the one exception to
+    "the checkpoint wins" for weight decay: their group weight_decay is
+    recomputed from the CLI λ before every step, so the checkpoint's
+    saved λ̂ (λ scaled by the save-time LR ratio) is transient state,
+    not a hyperparameter — noted, never compared."""
     assert len(optimizer.param_groups) == len(cli_groups)
+    if adamc_corrected is not None:
+        assert len(adamc_corrected) == len(cli_groups)
     notes: list[str] = []
-    for group, (name, cli_lr, cli_decay) in zip(
-        optimizer.param_groups,
-        cli_groups,
-        strict=True,
+    for index, (group, (name, cli_lr, cli_decay)) in enumerate(
+        zip(
+            optimizer.param_groups,
+            cli_groups,
+            strict=True,
+        ),
     ):
         base_lr = float(group.get("initial_lr", group["lr"]))
         if base_lr != cli_lr:
             notes.append(
                 f"{name}: base lr {base_lr:.2e} (CLI {cli_lr:.2e} ignored)",
             )
+        if adamc_corrected is not None and adamc_corrected[index]:
+            notes.append(
+                f"{name}: weight decay is schedule-managed (adamc) — "
+                f"recomputed each step as --weight-decay {cli_decay} "
+                "x γt/γmax; the CLI value GOVERNS here",
+            )
+            continue
         if float(group["weight_decay"]) != cli_decay:
             notes.append(
                 f"{name}: weight decay {group['weight_decay']} "
@@ -2142,6 +2330,16 @@ def parse_args() -> TrainArgs:
         help="AdamW weight decay",
     )
     parser.add_argument(
+        "--optimizer",
+        choices=["adamw", "adamc"],
+        default="adamw",
+        help="adamc = AdamW with corrected weight decay (arXiv "
+        "2506.02285): hidden matrices decay at λ·γt/γmax (the group's "
+        "weight_decay tracks the LR schedule), output heads keep "
+        "standard decay, 1-D parameters stay undecayed; adamw is the "
+        "unchanged default",
+    )
+    parser.add_argument(
         "--grad-clip",
         type=float,
         default=10.0,
@@ -2552,6 +2750,7 @@ def parse_args() -> TrainArgs:
         warmup_steps=raw.warmup_steps,
         rewarmup_steps=raw.rewarmup_steps,
         weight_decay=raw.weight_decay,
+        optimizer=raw.optimizer,
         grad_clip=raw.grad_clip,
         log_every=raw.log_every,
         eval_every=raw.eval_every,
@@ -3413,33 +3612,14 @@ def main() -> int:
     # API format (a third-party boundary), consumed by AdamW below. The
     # model's named groups route to per-component learning rates; the
     # head group always trains at --decoder-lr.
-    named_groups = model.param_groups()
-    param_groups: list[dict[str, Any]] = [
-        {"params": named_groups["decoder"], "lr": args.decoder_lr},
-    ]
-    # CLI intent per param group, in construction order — what --resume's
-    # restored optimizer state is checked against (hyperparameter notes).
-    cli_groups: list[tuple[str, float, float]] = [
-        ("decoder", args.decoder_lr, args.weight_decay),
-    ]
-    for group_name, group_lr in (
-        ("backbone_text", args.backbone_text_lr),
-        ("backbone_vision", args.backbone_vision_lr),
-    ):
-        if group_lr is None:
-            continue
-        assert named_groups[group_name]  # unfreeze_backbone validated
-        decayed, undecayed = decay_split(named_groups[group_name])
-        param_groups.append({"params": decayed, "lr": group_lr})
-        cli_groups.append((f"{group_name} (decayed)", group_lr, args.weight_decay))
-        param_groups.append(
-            {
-                "params": undecayed,
-                "lr": group_lr,
-                "weight_decay": 0.0,
-            },
-        )
-        cli_groups.append((f"{group_name} (no decay)", group_lr, 0.0))
+    param_groups, cli_groups, adamc_corrected = build_optimizer_param_groups(
+        model,
+        optimizer_name=args.optimizer,
+        decoder_lr=args.decoder_lr,
+        backbone_text_lr=args.backbone_text_lr,
+        backbone_vision_lr=args.backbone_vision_lr,
+        weight_decay=args.weight_decay,
+    )
     adamw_kwargs: dict[str, Any] = {
         "lr": args.decoder_lr,
         "betas": (0.9, 0.95),
@@ -3481,6 +3661,33 @@ def main() -> int:
         optimizer,
         lambda step: lr_lambda(step, args, resume_step),
     )
+    # AdamC: the corrected groups' indices, read by the pre-step decay
+    # update in the loop. None ⇒ adamw, loop takes zero extra work.
+    adamc_indices: list[int] | None = None
+    if args.optimizer == "adamc":
+        adamc_indices = [
+            index for index, corrected in enumerate(adamc_corrected) if corrected
+        ]
+        assert adamc_indices  # the decoder hidden group always exists
+        if is_main:
+            n_corrected = n_standard = n_undecayed = 0
+            for index, group in enumerate(param_groups):
+                n_params = sum(p.numel() for p in group["params"])
+                if adamc_corrected[index]:
+                    n_corrected += n_params
+                elif float(group.get("weight_decay", 1.0)) == 0.0:
+                    n_undecayed += n_params
+                else:
+                    n_standard += n_params
+            print(
+                f"optimizer: AdamC (2506.02285) — corrected decay "
+                f"λ·γt/γmax on {n_corrected / 1e6:.1f}M hidden params, "
+                f"standard AdamW decay on {n_standard / 1e6:.1f}M "
+                f"output-head params, {n_undecayed / 1e6:.1f}M 1-D "
+                f"params undecayed; λ={args.weight_decay:g}, γmax per "
+                "group = its peak (post-warmup) lr",
+                flush=True,
+            )
 
     async_saver: AsyncCheckpointSaver | None = None
     if not args.sync_save:
@@ -3665,7 +3872,11 @@ def main() -> int:
                 f"(lr {scheduler.get_last_lr()[0]:.2e})",
                 flush=True,
             )
-        hyper_notes = resume_hyperparameter_notes(optimizer, cli_groups)
+        hyper_notes = resume_hyperparameter_notes(
+            optimizer,
+            cli_groups,
+            adamc_corrected if args.optimizer == "adamc" else None,
+        )
         if is_main and hyper_notes:
             print(
                 "note: --resume keeps the checkpoint's optimizer "
@@ -3945,6 +4156,8 @@ def main() -> int:
                 clipped_parameters,
                 args.grad_clip,
             )
+            if adamc_indices is not None:
+                apply_adamc_weight_decay(optimizer, adamc_indices, args.weight_decay)
             optimizer.step()
             scheduler.step()
             step += 1
