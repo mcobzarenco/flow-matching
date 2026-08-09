@@ -67,3 +67,4 @@ corrections are follow-up posts.
 - [2026-08-08 — Aliased frames, mined — and the subgoal gain doesn't live there](2026-08-08-framemining-aliased-frames.md)
 - [2026-08-09 — Subgoal-draws rung (b′) FALSIFIED: better subgoals exist, the scorer anti-selects (#6)](2026-08-09-subgoal-draws-cleanlist-results.md)
 - [2026-08-09 — Molmo2 60k continuation IMPROVED −0.139 paired; attach screen repoints to step_060000](2026-08-09-molmo2-60k-results.md)
+- [2026-08-09 — Accuracy by field: Molmo2's aux head reads the scene far better — visible slots 0.32 → 0.82](2026-08-09-molmo2-fields-panel-results.md)

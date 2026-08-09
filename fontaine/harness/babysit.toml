@@ -323,32 +323,14 @@
 # delta -0.180, record-only); R4a/b banked. Entry pruned same session
 # (retained-entry footgun). No live local run; next local claim =
 # idea6 rung-(b) preflight (next session).
-# LIVE (fieldgen-accuracy-eval, pre-reg 2026-08-08-prereg-accuracy-by-field.md):
-# molmo2 60k fields panel — LAUNCHED 00:03Z 08-09, unit
-# fontaine-fields-panel-60k (run_detached.sh; box checkout bundle-synced
-# 2c10d96 -> bb03557 first — box deploy key can't fetch github, sync via
-# git bundle over scp; launcher guards passed: post-2f4d575 code, chained
-# eval json present, plan sha, all 4 GPUs free).
-[[run]]
-name = "molmo2_60k_fields"
-kind = "progress-log"
-host = "192.222.55.210"
-pgrep = "panel_curated_v0_k4l2_fields"
-pgrep_min = 4                     # 4 torchrun ranks
-gpu_indices = [0, 1, 2, 3]
-gpu_mem_min_mib = 8000
-log = "/home/ubuntu/logs/eval__fontaine_molmo2_ar_60k_ddp4__step_060000__panel_curated_v0_k4l2_fields.log"
-progress_re = "scored [0-9]+/[0-9]+ frames"
-started_utc = "2026-08-09T00:03:30Z"
-gpu_hours_per_wall_hour = 4.0
-boundary = "25,800 rows x (base + narrated) decode ~= 2x the 40k chained panel => ~50 min wall, ~3.5 GPU-h <= 6 gate; record-only reads printed by the launcher at rc=0 (accuracy block, narration delta, read-3 base-equality oracle)"
-anchors = [
-    "read 3 (mechanized in the launcher): base bijou@60000 chunk MAE must equal the chained eval json exactly — disagreement is an instrument finding, not a result",
-    "AR-100k anchors: holding 0.807 / progress MAE 0.062 / event 0.878 / visible 0.319; narration cost +0.054 — weak-label ceilings, record-only",
-]
-[[run.gates]]
-kind = "gpu_hours_max"
-value = 6.0
+# PRUNED 01:0xZ 08-09 (fieldgen-accuracy-eval CLOSED): fields panel
+# rc=0 00:49:43Z (unit journal), ~3.1 GPU-h <= 6 gate. All mechanized
+# reads green at rc=0: read-3 base-equality EXACT (5.86022663460471),
+# accuracy block holding 0.897 / progress 0.059 / event 0.880 /
+# visible 0.819 (AR-100k anchor 0.319!), narration delta +0.0865
+# (anchor +0.054). Results post 2026-08-09-molmo2-fields-panel-results.md;
+# json mirrored to local reports/ for the chart. Next box claim =
+# perf-pass1 ladder (prepared entry below).
 
 # PRUNED 08-08 15:1xZ — LOCAL PHASE CLOSED (unit exited 15:04:06Z,
 # parity-only mode after 4 aborted full-ladder attempts): one-step
@@ -393,33 +375,32 @@ value = 6.0
 # kind = "gpu_hours_max"
 # value = 3.0
 
-# PREPARED (molmo2-perf-pass1-exec BOX ladder; pre-reg
+# LIVE (molmo2-perf-pass1-exec BOX ladder; pre-reg
 # 2026-08-08-prereg-molmo2-perf-pass1.md + the box-form amendment):
-# uncomment + fill started_utc AT LAUNCH (run_detached.sh
-# fontaine-perfpass1-box bash fontaine/scripts/box/perf_pass1_bench_box_ddp4.sh;
-# prereqs done ~00:2xZ 08-09: branch bundled to box, worktree
-# /home/ubuntu/flow-matching-perfpass1 at 22e8148).
-# [[run]]
-# name = "perfpass1_box"
-# kind = "progress-log"
-# host = "192.222.55.210"
-# pgrep = "perfpass1_box"
-# pgrep_min = 4
-# gpu_indices = [0, 1, 2, 3]
-# gpu_mem_min_mib = 8000
-# log = "/home/ubuntu/flow-matching/outputs/train/perfpass1_box_overlay_A.launch.log"  # REPOINT as rungs roll: overlay_A -> overlay_B -> bench_A -> bench_B -> bench_C (.launch.log)
-# progress_re = "\"step\": [0-9]+"
-# started_utc = "FILL-AT-LAUNCH"
-# gpu_hours_per_wall_hour = 4.0
-# boundary = "5 sequential runs (2x 50-step overlay + 3x 320-step bench, ~12 min each + 5 model loads) ~2.5-3 GPU-h <= 3 ceiling; readout = the unit's OVERLAY + LADDER(BOX) summary lines"
-# anchors = [
-#     "P1 gate: LOSS BOUND FAILED AS BANKED locally (|d|=8.7e-3 vs frozen 1e-3 abs; 5.1e-4 relative) — P1 stays DROPPED unless owner amends a relative bound; ladder runs A/B/C for the record either way",
-#     "decision (pre-reg): C >= 5% median step-time vs A => bundle lands post-evals; < 5% => P2 + bitwise-free items only",
-#     "vram guard: C steady peak <= A * 1.02",
-# ]
-# [[run.gates]]
-# kind = "gpu_hours_max"
-# value = 3.0
+# LAUNCHED 01:04Z 08-09, unit fontaine-perfpass1-box (run_detached.sh;
+# prereq worktree /home/ubuntu/flow-matching-perfpass1 at 22e8148 with
+# 00cdafe reachable, box checkout bb03557, all guards passed).
+[[run]]
+name = "perfpass1_box"
+kind = "progress-log"
+host = "192.222.55.210"
+pgrep = "perfpass1_box"
+pgrep_min = 4
+gpu_indices = [0, 1, 2, 3]
+gpu_mem_min_mib = 8000
+log = "/home/ubuntu/flow-matching/outputs/train/perfpass1_box_overlay_A.launch.log"  # REPOINT as rungs roll: overlay_A -> overlay_B -> bench_A -> bench_B -> bench_C (.launch.log)
+progress_re = "\"step\": [0-9]+"
+started_utc = "2026-08-09T01:04:30Z"
+gpu_hours_per_wall_hour = 4.0
+boundary = "5 sequential runs (2x 50-step overlay + 3x 320-step bench, ~12 min each + 5 model loads) ~2.5-3 GPU-h <= 3 ceiling; readout = the unit's OVERLAY + LADDER(BOX) summary lines"
+anchors = [
+    "P1 gate: LOSS BOUND FAILED AS BANKED locally (|d|=8.7e-3 vs frozen 1e-3 abs; 5.1e-4 relative) — P1 stays DROPPED unless owner amends a relative bound; ladder runs A/B/C for the record either way",
+    "decision (pre-reg): C >= 5% median step-time vs A => bundle lands post-evals; < 5% => P2 + bitwise-free items only",
+    "vram guard: C steady peak <= A * 1.02",
+]
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 3.0
 
 # noise-ladder rung 2 (#1) PREFLIGHT — PRUNED 08-08 16:5xZ: relaunch
 # (16:43Z, extended map per amendment 1) COMPLETE rc=0 ~16:55Z, all

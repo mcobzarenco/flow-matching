@@ -135,3 +135,4 @@
   - [2026-08-08 — Noise-ladder rung 2: per-dataset tickets FALSIFIED (#1)](posts/2026-08-08-noiseladder-rung2-results.md)
   - [2026-08-09 — Subgoal-draws rung (b′) FALSIFIED: the scorer anti-selects (#6)](posts/2026-08-09-subgoal-draws-cleanlist-results.md)
   - [2026-08-09 — Molmo2 60k IMPROVED −0.139; attach repoints to step_060000](posts/2026-08-09-molmo2-60k-results.md)
+  - [2026-08-09 — Accuracy by field: Molmo2 visible slots 0.32 → 0.82](posts/2026-08-09-molmo2-fields-panel-results.md)

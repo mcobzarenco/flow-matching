@@ -345,3 +345,15 @@ state-copy byte-match on joined rows). ~1.4 GPU-h ≤ 5 gate.
 (each its own pre-reg): learned verifier (RoVer shape,
 chunk-as-unit), fields-probe ranker, or distillation from the
 4,298 dumped picked-vs-oracle pairs.**
+
+- **Fields-panel input banked 2026-08-09 00:49Z
+  ([results](../posts/2026-08-09-molmo2-fields-panel-results.md))**:
+  Molmo2@60k narrated-field accuracies vs AR-100k — holding 0.897
+  (0.807), progress MAE 0.059 (0.062), event 0.880 (0.878),
+  **visible slot-set 0.819 vs 0.319** (+0.50 on the strictest
+  metric, with *more* frames parsed 8,981 vs 8,260). Narration
+  still costs at decode (paired +0.083, cost concentrated on
+  failure-labeled frames +0.50): the aux head stays a training-time
+  asset, not a decode-time one. Relevance here: any learned scorer
+  rung (fields-probe ranker especially) gets a far better scene
+  reader on the Molmo2 trunk than the AR-100k numbers implied.

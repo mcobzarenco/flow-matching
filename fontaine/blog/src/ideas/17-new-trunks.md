@@ -227,3 +227,13 @@ conditioning mixed into shared tokens — DISC's combinatorial
 identical-scene bench (86.4% vs Octo 78.5%) is the cleanest number.
 Not an arm; its hypernetwork form costs fine-placement precision,
 disqualifying for a manipulation trunk.
+
+- **Field-level grounding evidence 2026-08-09
+  ([fields panel](../posts/2026-08-09-molmo2-fields-panel-results.md),
+  record-only)**: on the narrated-field table, Molmo2@60k ≈ AR-100k
+  on the action-adjacent fields (event 0.880/0.878, progress at the
+  label floor) but **visible slot-set accuracy 0.819 vs 0.319** —
+  the pointing-supervised trunk's advantage shows up exactly where
+  scene grounding is measured, first direct field-level support for
+  the vision-side half of the Molmo2 bet (and consistent with
+  VLM4VLA's vision-pathway criterion above).

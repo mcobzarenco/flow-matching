@@ -2,8 +2,9 @@
 item `fieldcond-subgoal-meta-report`) — the sections whose inputs are
 already banked (§1 aux attribution, §2 selfsubgoal horizon reads).
 Every value is read from the frozen analysis jsons; nothing is
-recomputed. §3's fields grouped bar waits on the 60k fields panel and
-is NOT rendered here.
+recomputed. §3's fields grouped bar reads the 60k fields-panel json
+(landed 2026-08-09 00:49Z) against the pre-registered AR-100k
+panel_k4l2 anchor json.
 
 Output: fontaine/blog/src/img/fieldcond/*.svg (committed).
 
@@ -31,6 +32,16 @@ ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "fontaine/blog/src/img/fieldcond"
 SELFSUBGOAL = ROOT / "reports/analysis__selfsubgoal_ar100k_k4l2.json"
 BOXBATCH = ROOT / "reports/analysis__box_batch_40k_k4l2.json"
+# §3 fields panel: the AR-100k anchor is the panel the pre-reg quotes
+# (2026-08-08-prereg-accuracy-by-field.md); the molmo2 side is the 60k
+# fields run banked 2026-08-09 00:49Z.
+AR100K_FIELDS = (
+    ROOT / "reports/eval__bijou_arb_rcond_100k_ddp4__step_100000__panel_k4l2.json"
+)
+MOLMO2_FIELDS = (
+    ROOT
+    / "reports/eval__fontaine_molmo2_ar_60k_ddp4__step_060000__panel_curated_v0_k4l2_fields.json"
+)
 
 PAGE = "#121417"
 BLUE = "#648fff"  # oracle-truth subgoal arm
@@ -160,11 +171,85 @@ def horizon_curves_chart(d: dict) -> None:
         plt.close(fig)
 
 
+def fields_accuracy_chart(ar100k: dict, molmo2: dict) -> None:
+    acc_fields = [
+        ("holding\n(accuracy)", "holding_accuracy"),
+        ("event presence\n(accuracy)", "event_accuracy"),
+        ("visible slots\n(set accuracy)", "visible_accuracy"),
+    ]
+    series = [("AR-100k (Gemma trunk)", ar100k, BLUE), ("Molmo2 60k", molmo2, AMBER)]
+
+    with plt.style.context("dark_background"):
+        fig, (ax, axp) = plt.subplots(
+            1,
+            2,
+            figsize=(9.2, 4.4),
+            dpi=110,
+            width_ratios=[2.6, 1.0],
+        )
+        fig.patch.set_facecolor(PAGE)
+        for a in (ax, axp):
+            style_axes(a)
+
+        x = np.arange(len(acc_fields))
+        for i, (label, d, color) in enumerate(series):
+            off = (i - 0.5) * 0.4
+            vals = [d[key] for _, key in acc_fields]
+            ax.bar(x + off, vals, width=0.34, color=color, linewidth=0, label=label)
+            for xi, v in zip((x + off).tolist(), vals, strict=True):
+                ax.text(xi, v + 0.015, f"{v:.3f}", ha="center", color=TEXT, fontsize=9)
+        ax.set_xticks(x)
+        ax.set_xticklabels([n for n, _ in acc_fields], color=META, fontsize=9.5)
+        ax.set_ylim(0, 1.18)
+        ax.set_yticks(np.arange(0, 1.01, 0.2))
+        ax.set_ylabel("accuracy vs weak judge labels", color=META, fontsize=10)
+        ax.legend(loc="upper left", frameon=False, fontsize=9, labelcolor=TEXT)
+        ax.annotate(
+            "+0.50",
+            xy=(2 + 0.2, molmo2["visible_accuracy"] - 0.06),
+            xytext=(2 - 0.28, 0.62),
+            color=AMBER,
+            fontsize=11,
+            arrowprops={"arrowstyle": "->", "color": META, "linewidth": 1.0},
+        )
+        ax.set_title(
+            "Accuracy by narrated field — the two trunks' aux heads\n"
+            "~9k judge-labeled holdout frames; weak-label ceilings apply",
+            color=TEXT,
+            fontsize=11,
+            loc="left",
+            pad=12,
+        )
+
+        for i, (_label, d, color) in enumerate(series):
+            v = d["progress_mae"]
+            axp.bar([i], [v], width=0.62, color=color, linewidth=0)
+            axp.text(i, v + 0.002, f"{v:.4f}", ha="center", color=TEXT, fontsize=9)
+        axp.set_xticks([0, 1])
+        axp.set_xticklabels(["AR-100k", "Molmo2 60k"], color=META, fontsize=9.5)
+        axp.set_ylim(0, 0.085)
+        axp.set_ylabel("progress MAE (lower is better)", color=META, fontsize=10)
+        axp.set_title(
+            "progress\n(regression field)",
+            color=TEXT,
+            fontsize=11,
+            loc="left",
+            pad=12,
+        )
+        fig.tight_layout()
+        fig.savefig(OUT / "fields_accuracy.svg", facecolor=PAGE)
+        plt.close(fig)
+
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     aux_arms_chart(json.loads(BOXBATCH.read_text()))
     horizon_curves_chart(json.loads(SELFSUBGOAL.read_text()))
-    print(f"wrote {OUT}/aux_arms.svg + selfsubgoal_horizon.svg")
+    fields_accuracy_chart(
+        json.loads(AR100K_FIELDS.read_text()),
+        json.loads(MOLMO2_FIELDS.read_text()),
+    )
+    print(f"wrote {OUT}/aux_arms.svg + selfsubgoal_horizon.svg + fields_accuracy.svg")
 
 
 if __name__ == "__main__":
