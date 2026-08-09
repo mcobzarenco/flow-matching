@@ -72,6 +72,8 @@ showed, before the dense analysis.
 | [Robot Critics that Sweat the Small Stuff](robot-critics-small-stuff.md) | 2606.21572 | #19/#6 — trained-critic pole placed and PARKED (needs rollout labels + a video model; ceiling reads cap the payoff on our decodes); one more point that learning the judge is what makes judging work |
 | [Qwen-VLA: the early-fusion pole](qwen-vla-early-fusion.md) | 2605.30280 | #17 trunk ledger — early-fusion pole staked (Qwen3.5-4B + 1.15B single-stream DiT; OOD 76.9 vs π₀.₅ 41.5, no-fusion-ablation confound loud); #4 — F-then-joint production vote #2 (Stage I frozen-trunk expert warm-start) filed pre-Δ_seam; #19 τ=0.6 deploy sharpening; #16 embodiment prompts + data mixture |
 | [Observation aliasing: when the frame alone can't tell you what to do](observation-aliasing.md) | 2605.14712, 2605.14598 | `fieldcond-subgoal-meta-report` — NN-divergence frame-mining protocol + the delta-concentration chart as the report's central claim; #6 — external baseline shape for the subgoal channel (frame-only 9% → intent-conditioned 45.8% on aliased states; DSSP's strict floor-gap theorem); #11 — aliasing census banked as the entry condition for any history/memory arm |
+| [Correcting corrected weight decay](weight-decay-correction.md) | 2512.08217 | `adamc-100k-live` readout — grad-norm chart interpretive frame (flat norms expected, ~nil loss effect; head-exclusion partition validated twice; 10% LR floor on the recommended side; no-steady-state-at-100k caveat); ScionC radar-only |
+| [Z-1: unfreeze the trunk only when diagnostics say so](z1-selective-joint-rl.md) | 2606.31846 | #4 fjoint rung — joint phase as diagnostic-gated conditional escalation (4th frozen-first vote); #16 post-SFT menu RL pole (+13.2 pts from 1,199 demos, GRPO over flow-SDE log-probs) |
 
 ## Retroactive backlog
 
@@ -198,3 +200,10 @@ pretrained trunk:
 | VISTA (UMI adaptation: fisheye VQA + physics validation) | [2606.04708](https://arxiv.org/abs/2606.04708) | ✅ [page](vista-umi-validation.md) |
 | LAFP (latent-action flow policy) | [2606.10517](https://arxiv.org/abs/2606.10517) | ✅ [page](lafp-latent-flow-policy.md) |
 | Flowing With Purpose (latent-action FM) | [2606.23420](https://arxiv.org/abs/2606.23420) | ✅ already covered: [LAFM page](latent-action-priors.md) (dup caught 08-09) |
+
+**Fresh sweep 0810 (adamc readout + fjoint sequencing):**
+
+| Paper | arXiv | Status |
+|---|---|---|
+| Correction of Decoupled Weight Decay (AdamC successor) | [2512.08217](https://arxiv.org/abs/2512.08217) | ✅ [page](weight-decay-correction.md) |
+| Z-1 (efficient GRPO for flow VLAs, selective joint training) | [2606.31846](https://arxiv.org/abs/2606.31846) | ✅ [page](z1-selective-joint-rl.md) |

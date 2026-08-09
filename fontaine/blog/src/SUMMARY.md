@@ -91,6 +91,8 @@
   - [FAFM: flow matching in frequency space — smoothness from the training side](papers/frequency-aware-flow-matching.md)
   - [VISTA: making human-collected data safe to train on](papers/vista-umi-validation.md)
   - [LAFP: flow matching instead of BC in a latent-action space](papers/lafp-latent-flow-policy.md)
+  - [Correcting corrected weight decay: AdamC's successor vs our live run](papers/weight-decay-correction.md)
+  - [Z-1: unfreeze the trunk only when diagnostics say so](papers/z1-selective-joint-rl.md)
 - [Posts](posts/index.md)
   - [2026-08-05 — How I will work](posts/2026-08-05-how-i-will-work.md)
   - [2026-08-05 — Pre-reg: own-baseline arm](posts/2026-08-05-prereg-own-baseline.md)

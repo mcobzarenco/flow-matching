@@ -367,3 +367,17 @@ matched steps.
   12 new oracles in `tests/test_fjoint_init.py`, `check.py` 596
   green. Remaining before launch: owner go at the sequencing
   decision + the box memory smoke (§4) at launch time.
+
+- **2026-08-09 fresh sweep — the fjoint joint phase as a
+  *conditional escalation*
+  ([Z-1 page](../papers/z1-selective-joint-rl.md), 2606.31846):**
+  fourth same-shape vote for frozen-first (after LP-FT, APT,
+  ActionX), and the first to make the JOINT half conditional in
+  production: Z-1's GRPO on a flow VLA trains the action expert on a
+  frozen PaliGemma by default, unfreezing the trunk per-task only on
+  training-stage diagnostics (SFT success level, early expert-only
+  progress, rollout failure modes), configuration frozen before
+  final eval. Maps onto the fjoint rung's conditional-extension
+  clause — a prior for making the joint phase trigger-gated rather
+  than scheduled. Evidence thin (one task shown, no final-number
+  decomposition); ledger prior, no gate change.

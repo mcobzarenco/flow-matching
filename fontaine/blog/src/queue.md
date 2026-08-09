@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T17:40:00Z
+**Updated:** 2026-08-09T17:57:00Z
 
-**Depth call:** depth >=2 at 17:4xZ 08-09: adamc-100k babysit to ~08-12 (live) + lit-radar-fresh-sweep-0810 (cpu, actionable) + docs-pass tail (owner-side only) + fjoint owner-gated; corpus-continuity-screen CLOSED this session
+**Depth call:** depth >=2 at 17:5xZ 08-09: adamc-100k babysit to ~08-12 (live) + lit-radar-0811 (cpu, actionable, hooks pre-priced) + docs-pass tail (owner-side only) + fjoint owner-gated; lit-radar-fresh-sweep-0810 CLOSED by the 17:42-17:50 work session (2 pages; session died uncommitted at turn end, work audited + committed by the 17:50 tick)
 
-**8 open** (Live 1 · Queued 3 · Blocked 4 · Done 79)
+**8 open** (Live 1 · Queued 3 · Blocked 4 · Done 80)
 
 ## 🔴 Live (1)
 
@@ -30,15 +30,15 @@ OWNER RUN LIVE (launched 13:30Z 08-09): fontaine_molmo2_adamc_100k_ddp4 — base
 
 *ready — waiting on a window or a boundary*
 
-**`lit-radar-fresh-sweep-0810`** · `cpu`
+**`lit-radar-0811`** · `cpu`
 
-Lit slice (standing allocation): FRESH arXiv sweep for new hooks
+Lit slice (standing allocation): banked radar hooks from the 0810 fresh sweep, priority-ordered
 
 **boundary:** any GPU-busy window; adamc rides to ~08-12 so windows are plentiful
 
 <details><summary>full record</summary>
 
-Lit slice (standing allocation): FRESH arXiv sweep for new hooks — the banked radar backlog is EMPTY as of 08-09 17:3xZ (three slices ran 08-09: async-exec cluster, 0809b QDepth+sweep, 0812a FAFM/VISTA/LAFP; the 17:0x session verified empty and skipped rather than force a thin sweep, and caught+reverted a FASTER dup page pre-commit — 2603.19199 already covered by papers/async-execution-2.md). Sweep priority: (1) anything re-ranking the adamc_100k readout (AdamC grad-norm claim, vision-unfreeze-from-0 evidence), (2) the fjoint sequencing owner call, (3) actckpt ladder. Papers page(s) same session per the permanent rule.
+Lit slice (standing allocation): banked radar hooks from the 0810 fresh sweep, priority-ordered — 2605.08511 Trajectory-Consistent Flow Matching (train-inference gap: rectified-velocity aux + trajectory consistency + velocity smoothness + RK4 inference; feeds #12 solver/Heun-gap and the smoothness family) &gt; 2606.08602 RL-for-FM density transport + 2604.01570 Feasible-Action-Neighborhood prior (post-SFT menu, #16) &gt; 2603.27281 HiFlow tokenization-free scale-wise AR-via-FM (trunk/decode family, #17) &gt; 2602.10098 VLA-JEPA latent world model. Papers page(s) same session per the permanent rule; dedup-check each id against papers/ before writing.
 
 </details>
 
@@ -130,9 +130,23 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 
 ---
 
-## ✅ Done (79)
+## ✅ Done (80)
 
 *closed — the full record stays in each fold*
+
+**`lit-radar-fresh-sweep-0810`** · `cpu`
+
+Lit slice (standing allocation): FRESH arXiv sweep for new hooks
+
+**boundary:** EXECUTED 08-09 work session 17:42-17:50Z (recovered by tick)
+
+<details><summary>full record</summary>
+
+Lit slice (standing allocation): FRESH arXiv sweep for new hooks — the banked radar backlog is EMPTY as of 08-09 17:3xZ (three slices ran 08-09: async-exec cluster, 0809b QDepth+sweep, 0812a FAFM/VISTA/LAFP; the 17:0x session verified empty and skipped rather than force a thin sweep, and caught+reverted a FASTER dup page pre-commit — 2603.19199 already covered by papers/async-execution-2.md). Sweep priority: (1) anything re-ranking the adamc_100k readout (AdamC grad-norm claim, vision-unfreeze-from-0 evidence), (2) the fjoint sequencing owner call, (3) actckpt ladder. Papers page(s) same session per the permanent rule. | EXECUTED 17:42-17:50Z 08-09 work session (session ended turn WITHOUT committing; the 17:50 tick audited the orphaned diff — dup-grep clean, plain-words blocks present — and committed it): fresh sweep ran 5 searches; 2 deep reads + 2 papers pages SAME SESSION — (1) 2512.08217 'Correction of Decoupled Weight Decay' (AdamC's direct successor; papers/weight-decay-correction.md) = priority-1 hit: adamc_100k grad-norm watch interpretive frame banked (flat norms expected, ~nil loss effect, head-exclusion partition validated twice, 10% LR floor on the recommended side, no-steady-state-at-100k caveat); (2) 2606.31846 Z-1 (papers/z1-selective-joint-rl.md) = priority-2 hit: fjoint joint phase as diagnostic-gated conditional escalation (4th frozen-first vote) + #16 RL-pole datum (+13.2 pts from 1,199 demos, GRPO on flow-SDE). ideas.md hooks fed (#4, #16, #17 + per-idea pages). Radar hooks banked unread -&gt; lit-radar-0811
+
+</details>
+
+---
 
 **`owner-ticket-v2all-selection-0809`** · `gpu-local`
 

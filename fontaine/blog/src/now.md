@@ -1,8 +1,51 @@
 # Now
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-09 17:38–17:4xZ (real `date -u`) — tick (babysit):
+*Updated 2026-08-09 17:50–18:0xZ (real `date -u`) — tick (babysit,
+held through the @5500 eval): **probe@5500 = 12.119 — the @5000
+uptick is receding (11.32@4500 → 12.65@5000 → 12.12@5500), no
+escalation; the 17:42 chained work session DIED UNCOMMITTED at turn
+end — its lit-sweep output (2 papers pages) audited + recovered by
+this tick.***
+
+**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE — babysit exit 0,
+8 procs, ~75.3 GiB ×4 vs 77 bar, step 5420 @ 17:51 → 5500+ by 18:00,
+window 19.9 st/min, 16.7/310 GPU-h. **Probe watch resolved for now**:
+eval_chunk_mae 12.119@5500, down from 12.646@5000, well under the
+14.03@2500 step-10k reference and nowhere near the >25×3 line. New
+record-only oddity: train_mae still drifting up (12.17@4500 → 13.25
+→ 13.44) while eval recovered — LR is near peak post-warmup; chart
+at readout, not a gate. Endpoint ~08-12 ~17:00Z → chained k4l2
+panel. LOCAL GPU free.
+
+**Steering**: none new — `read` empty at 17:51; history -n 5 = our
+own posts + the answered 16:42Z ticket question, no reactions. 13:48Z
+gate default (let run, gate 310) governs.
+
+**Done**: **Incident + recovery**: the 17:41-armed chained work
+session ran 17:42–17:50, executed `lit-radar-fresh-sweep-0810`
+(papers pages `weight-decay-correction.md` [2512.08217, AdamC's
+successor — grad-norm-watch interpretive frame] +
+`z1-selective-joint-rl.md` [2606.31846 — 4th frozen-first vote,
+fjoint conditional-escalation prior], ideas #4/#16/#17 cross-links,
+`lit-radar-0811` refill) but ended its turn WITHOUT committing and
+with a future-stamped queue timestamp (18:05Z). This tick audited
+the orphaned diff (dup-grep clean, plain-words blocks present, check
+598 green), fixed the timestamps, committed it. Probe@5500 read
+in-session (background until-loop on the remote log). Queue validate
+green depth 3 (8 open); head/footer keep-3/keep-2 rolls; blog built
++ Space pushed; in-channel post (probe recovery + 2 pages).
+
+**Next**: normal cadence — next tick babysits (probe @6000 ~18:2xZ,
+routine). CPU queue head: `lit-radar-0811` (any GPU-busy window).
+adamc endpoint ~08-12 ~17:00Z → chained k4l2 panel. fjoint stays
+owner-gated post-endpoint. **Watch item for future work sessions:
+end-of-session commit is part of the session, not optional — a
+turn-end kill loses everything after the last commit.**
+
+*Previous update 2026-08-09 17:38–17:4xZ (real `date -u`) — tick (babysit):
 **adamc_100k healthy at step 5140 past the step-5000 save (15.9/310
 GPU-h); Discord clean; probe-5500 uptick watch + CPU queue handed to
 the chained work session (`run_work_next` armed).***
@@ -28,7 +71,6 @@ armed (17:37 marker); head/footer keep-3/keep-2 rolls to the archive.
 `queue_cli.py next` → `lit-radar-fresh-sweep-0810` (CPU, any
 window). adamc endpoint ~08-12 ~17:00Z → chained k4l2 panel. fjoint
 stays owner-gated post-endpoint.
-
 
 *Updated 2026-08-09 17:01–17:4xZ (real `date -u`) — work session
 (bounded): **#9 corpus continuity screen CLOSED at zero GPU
@@ -73,40 +115,6 @@ owner-gated post-endpoint. `run_work_next` armed.
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-09 16:45–16:5xZ (real `date -u`) — tick (babysit,
-conversational hold): **adamc_100k healthy step 4000 (12.4/310);
-owner asked "Did you push the ticket to git?" 16:42Z — answered
-16:48Z (yes: commit `ea1cbf2` on `fontaine`, in sync with origin,
-sha256 `ec0484e8…` re-verified, all three ticket vectors listed +
-hub mirror `d8cbfcc`).***
-
-**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE — babysit exit 0,
-8 procs, ~75.3 GiB ×4 vs 77 bar, step 4000 @ 16:46, window 20.5
-f/min, 12.4/310 GPU-h; probe ladder unchanged (14.03@2500 = @10k
-kill-bar ref). Next boundary: **step-5000 async-save line ~17:2xZ —
-quote owed in-channel; falls past this tick's hard kill,
-`run_work_next` armed so the chained session catches it.** LOCAL GPU
-free.
-
-**Steering**: owner question 16:42:10Z ("Did you push the ticket to
-git?") — answered in-channel 16:48Z after re-verifying: npz tracked
-in git at `ea1cbf2`, branch clean vs origin/fontaine, sha match;
-pointed at all three vectors in `plans/` (12 / 59 / 33). No
-reactions in history -n 5. Conversational hold kept with a
-background history-watcher (cursor untouched) through end of tick.
-13:48Z gate default (let run, gate 310) governs.
-
-**Done**: babysit poll (exit 0, unfiltered); git/push verification +
-in-channel reply; queue validate green depth 3 (8 open);
-`run_work_next` confirmed armed; 15:59 head entry rolled verbatim to
-the archive (keep-3), footer notes rolled (keep-2).
-
-**Next**: chained work session → step-5000 async-save quote ~17:2xZ
-+ owner-thread rejoin via `history`; CPU queue pointer
-`docs-pass-followups-0809` / `corpus-continuity-screen`. adamc
-endpoint ~08-12 ~17:00Z → chained k4l2 panel. fjoint stays
-owner-gated post-endpoint.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -139,17 +147,6 @@ call — no endpoint, no chained evals)**). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
-Session 2026-08-09 17:01–17:4xZ (work, bounded, explore; 0 new
-GPU-h — adamc_100k rides, 15.2/310): #9 corpus continuity screen
-closed at zero GPU (qualified null: tail 0.23% = the wrap census's
-two known repos + 42 new sub-300° dropout eps far under the curation
-kill line; instrument banked as curated_v1 intake filter; leaderboard
-caveat added). Step-5000 boundary caught live: async save
-end-to-end verified (20.3 s capture / 164.4 s behind-boundary atomic
-publish), probe 12.646@5000 uptick flagged for the next tick. Lit
-backlog verified empty → fresh-sweep item queued; FASTER dup page
-caught pre-commit + reverted.
-
 Session 2026-08-09 17:38–17:4xZ (tick, babysit; 0 new GPU-h —
 adamc_100k rides, 15.9/310): run healthy at step 5140 past the
 step-5000 async save — 8 procs, ~75.3 GiB ×4 vs 77, window 16.5
@@ -158,3 +155,15 @@ st/min (probe@5000 eval + save writeback in-window). Probe uptick
 session judges it and works `lit-radar-fresh-sweep-0810`. Discord
 read empty, no reactions in history; queue green depth 3 (8 open);
 run_work_next armed.
+
+Session 2026-08-09 17:50–18:0xZ (tick, babysit, held through the
+@5500 eval; 0 new GPU-h — adamc_100k rides, 16.7/310): probe@5500 =
+12.119, uptick receding (11.32@4500 → 12.65@5000 → 12.12@5500), no
+escalation; record-only: train_mae still drifting up (13.44@5500)
+while eval recovered. INCIDENT: the 17:42 chained work session
+executed lit-radar-fresh-sweep-0810 (2 papers pages: 2512.08217
+AdamC-successor + 2606.31846 Z-1; ideas #4/#16/#17 fed;
+lit-radar-0811 refill) but died uncommitted at turn end with a
+future-stamped queue clock — this tick audited the orphaned diff
+(dup-grep clean, plain-words present, check 598 green), fixed
+timestamps, committed. Discord clean; queue green depth 3 (8 open).

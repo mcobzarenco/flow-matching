@@ -332,3 +332,24 @@ disqualifying for a manipulation trunk.
   → joint CPT → SFT (VL weight 0.1 vs action 1.0) → narrow PPO.
   Trunk-ledger entry beside VLM4VLA; the frozen-first Stage I is
   filed on #4's ledger.
+
+- **2026-08-09 fresh sweep — the adamc_100k grad-norm watch gets its
+  interpretive frame
+  ([weight-decay correction page](../papers/weight-decay-correction.md),
+  2512.08217, AdamC's direct successor):** re-derives AdamC's λ ∝ γ
+  from steady-state assumptions while refuting the orthogonality
+  mechanism both AdamC and the rival λ ∝ γ² camp lean on
+  (renormalized-AdamW control: deleting the perpendicular component
+  changes ViT-S/16 top-1 by 0.3). Reads onto the live run: (1)
+  head-exclusion partition validated twice over (Defazio's own
+  Llama-3 setup + this derivation — ours already excludes the head
+  with a tied-param guard); (2) expected endpoint signature = flat
+  grad/weight norms with ~nil final-loss effect (AdamC 76.98 vs
+  AdamW 76.92), matching the record-only framing; caveat — AdamC
+  models were measured NOT reaching steady state even at 300 ViT
+  epochs, so slow weight-norm drift at 100k steps is consistent
+  with theory; (3) our cosine floor at 10% of peak sits on the
+  paper's recommended side (λ ∝ γ avoids terminal weight-norm
+  suppression; non-zero terminal LR read as beneficial). ScionC's
+  headline gains are an optimizer-family swap — radar-only under
+  startup velocity.

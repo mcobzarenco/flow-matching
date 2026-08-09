@@ -70,7 +70,15 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   vote for the F shape hours before the Δ_seam read — RDT2's 7B
   recipe is AR-first (protects VLM knowledge, ablated) + flow expert
   on a FROZEN backbone + 1-step distill, **no joint stage**; ledger
-  context only, the frozen read is untouched.
+  context only, the frozen read is untouched. New 2026-08-09 fresh
+  sweep ([Z-1](papers/z1-selective-joint-rl.md), 2606.31846): a
+  FOURTH same-shape vote with a sharper second half — production
+  GRPO on a flow VLA keeps the trunk frozen by default and unfreezes
+  it per-task only on measured diagnostics (SFT success, early
+  expert-only progress, rollout failure modes); joint as
+  *conditional escalation*, not a scheduled phase — exactly the
+  fjoint rung's conditional-extension clause (evidence thin: one
+  task, no final-number decomposition).
 - **`new-trunks` [#17 New trunks / architectures](ideas/17-new-trunks.md)** —
   standing owner mandate. **Molmo2-4B AR 40k ENDPOINT READ OUT
   2026-08-08 ([results](posts/2026-08-08-molmo2-endpoint-results.md)):
@@ -127,7 +135,17 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   latent-action-from-video pole of the family map (LAOM +
   flow-in-latent beats BC on multimodal envs; Procgen only,
   skim-to-place) — the documented recipe if unlabeled-video
-  pretraining ever enters via the RDT2/VISTA data premise.
+  pretraining ever enters via the RDT2/VISTA data premise. New
+  2026-08-09 fresh sweep
+  ([weight-decay correction](papers/weight-decay-correction.md),
+  2512.08217, AdamC's direct successor): the live adamc_100k
+  grad-norm watch gets its interpretive frame — expect flat
+  grad/weight norms through decay but ~nil final-loss effect
+  (AdamC 76.98 vs AdamW 76.92 ViT-S/16); our head-exclusion
+  partition validated in two papers; our 10%-of-peak LR floor sits
+  on the paper's recommended side (λ ∝ γ avoids terminal weight-norm
+  suppression); caveat banked — AdamC may not reach steady state in
+  a 100k window, so slow weight-norm drift ≠ falsification.
 - **`aux-subgoals` [#6 Aux attribution](ideas/06-aux-attribution.md)** —
   `confirmed` (aux HELPS actions, +0.462 cost when off).
   **CONSOLIDATED REPORT 2026-08-09
@@ -353,7 +371,12 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   premise gains its hours-scale existence proof — 10k h of
   robot-free UMI data transfers zero-shot cross-embodiment with a
   predictable data exponent (β≈0.23), though the zero-shot column
-  needs a UMI-twin gripper the SO101 rig lacks.
+  needs a UMI-twin gripper the SO101 rig lacks. New 2026-08-09 fresh
+  sweep ([Z-1](papers/z1-selective-joint-rl.md)): the post-SFT
+  menu's RL pole gains a data-efficiency datum — +13.2 pts over SFT
+  on 24 RoboCasa tasks from 1,199 public demos and sparse success
+  rewards only (flow-SDE log-probs + task-wise GRPO); sim-only, zero
+  compute accounting.
 - **`lit-arms` [#15 Literature-sourced arms](ideas/15-literature-arms.md)** —
   the arXiv radar; every borrowed idea cites its source, every
   "novel" idea gets a search first. Feeds the Papers section.

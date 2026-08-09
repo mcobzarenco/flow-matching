@@ -196,3 +196,15 @@
   unmeasured in both (the FlowDAgger critique stands). Needs stage
   labels + mixed-quality rollouts — a rig-data-era option, not a
   panel-era one.
+
+- **2026-08-09 fresh sweep — RL pole data-efficiency datum
+  ([Z-1 page](../papers/z1-selective-joint-rl.md), 2606.31846):**
+  task-wise GRPO over a flow-SDE conversion of the flow decode
+  (Gaussian noise into intermediate transitions → per-action
+  log-probs) lifts a π0.5-based policy +13.2 pts over its SFT init
+  (67.4 → 80.6 avg on 24 RoboCasa tasks) from 1,199 public demos and
+  sparse binary success rewards with a 0.998 success-aware decay —
+  no reward engineering. Shared-prefix rollouts + tree branching are
+  the cost levers; paper reports zero compute figures and is
+  sim-only. Sits in the post-SFT menu beside FlowPRO/ForesightFlow
+  (weight-space) and the noise-space column.
