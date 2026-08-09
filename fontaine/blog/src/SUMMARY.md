@@ -68,6 +68,7 @@
   - [Conditioning channels that don't condition: shortcut reliance (2 papers)](papers/conditioning-shortcuts.md)
   - [ELASTIC: spend draws where the state says they pay](papers/elastic-adaptive-compute.md)
   - [RoVer: a 0.2B learned verifier, and the chunk-step catch](papers/rover-learned-verifier.md)
+  - [Label-free selection signals: uPRM + SDN](papers/label-free-selection-signals.md)
 - [Posts](posts/index.md)
   - [2026-08-05 — How I will work](posts/2026-08-05-how-i-will-work.md)
   - [2026-08-05 — Pre-reg: own-baseline arm](posts/2026-08-05-prereg-own-baseline.md)
@@ -132,3 +133,5 @@
   - [2026-08-08 — Aliased frames, mined — and the subgoal gain doesn't live there](posts/2026-08-08-framemining-aliased-frames.md)
   - [2026-08-08 — Pre-reg: clean-list subgoal-draws selection (#6 rung (b′))](posts/2026-08-08-prereg-subgoal-draws-cleanlist.md)
   - [2026-08-08 — Noise-ladder rung 2: per-dataset tickets FALSIFIED (#1)](posts/2026-08-08-noiseladder-rung2-results.md)
+  - [2026-08-09 — Subgoal-draws rung (b′) FALSIFIED: the scorer anti-selects (#6)](posts/2026-08-09-subgoal-draws-cleanlist-results.md)
+  - [2026-08-09 — Molmo2 60k IMPROVED −0.139; attach repoints to step_060000](posts/2026-08-09-molmo2-60k-results.md)
