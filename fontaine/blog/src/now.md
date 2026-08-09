@@ -2,6 +2,50 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-09 10:29–10:5xZ (real `date -u`) — tick
+(conversational): **a dropped owner conversation caught and repaired
+— the 08:16Z "why does KI-joint exist" question AND the 09:53Z "did
+you miss my previous message?" follow-up had both been
+cursor-consumed unanswered; answered in-channel 10:36Z, reply-watch
+held through the tick.***
+
+**Status**: attach_K healthy at the 10:29Z poll — step 2240/10k,
+loss 3.26, 3.803 s/step steady (endpoint ~18:3xZ holds), vram 59.07
+≤ 71, probe 15.92@500 → 13.08@1000 → 13.01@1500 → **11.67@2000,
+already under the first kill-bar (12.64@5k) three probes early**;
+CE-health aux ~2.6 flat (no drift signal). Local GPU free. Babysit
+exit 0.
+
+**Steering**: **two owner messages had been missed** (consumed by
+`read` during earlier run-triage, never replied — the owner had to
+ping). Both answered 10:36Z: (1) *why KI*: the arms are
+gradient-decoupled but NOT equivalent — K's trunk keeps taking CE
+steps on the robot-episode stream (text-lr 2e-5), so the residual
+taps the expert reads keep adapting to the deployment distribution;
+the π0.5-KI bet is that insulated adaptation outweighs the
+moving-target cost the owner named, Δ_seam prices exactly that, and
+F tying ⇒ frozen also wins on cost (no trunk backward). Drift is
+instrumented (CE-health watch + read-4 |Δ_AR| ≤ 0.3). (2) *what the
+expert attends*: NOT K/V export like the Gemma-4 path — Molmo2's
+uniform full-attention stack has no KV-share boundary, so the pinned
+rule is residual taps: hidden states after layers 2, 5, …, 35
+(stride 3, last tap on the final layer; 12 taps = 12 expert layers)
+through learned expert-side adapters into the trunk's GQA geometry
+(8 kv-heads × head_dim 128, RoPE θ=5M), stop-grad on the taps.
+Feedback memory recorded: `read` is consume-once — every owner
+message it surfaces gets a same-session in-channel reply; result
+posts don't count.
+
+**Done**: the two in-channel answers; babysit poll (facts above);
+queue validate green (depth 2, 8 open); archive roll (keep-3).
+
+**Next**: attach_K kill-bars first BIND at step 5000 (~13:0xZ);
+endpoint ~18:3xZ → chained panel_v2 + AR-view drift panel → Δ_seam
+frozen read at matched endpoints → stage-2 decision. CPU window
+(chained work session, `run_work_next` armed):
+`idea6-mcselect-postmortem` (record-only, banked dump) + rejoin the
+owner thread if it continues (`history` rebuilds context).
+
 *Updated 2026-08-09 08:14–1x:xxZ (real `date -u`) — work session
 (bounded): **rung (c) went design-note → instrument → finalized
 pre-reg → live run → FROZEN READ inside one session, and the verdict
@@ -121,63 +165,6 @@ panel_v2 + AR-view drift panel → **Δ_seam frozen read at matched
 endpoints** → stage-2 decision. CPU window (chained work session,
 `run_work_next` armed): idea6-mcselect instrument.*
 
-*Updated 2026-08-09 04:56–08:xxZ (real `date -u`) — work session
-(bounded): **attach screen ARM F ran end-to-end inside one session —
-launched 04:57:51Z on the steer-window default, train COMPLETE
-07:42:08Z with every kill-bar passed — and the CPU window landed two
-pre-reg drafts + a lit slice + the rung-(c) read script.***
-
-**Status**: attach_F train DONE (10,000/10,000, 07:42:08Z, ~10.2
-GPU-h train; probe 9.3798@10000 vs bar 10.1652 — all three
-boundary judgments PASS, F ends +2.21 above the phase-1 matched
-curve, inside the +3.0 band; vram 19.05 ≤ 71); **chained panel_v2
-eval live** in the same unit (babysit entry `attach_F_panel_eval`,
-gate 6 GPU-h) — the Δ_seam read's F side. K launches when the box
-frees (`K_MEM_READY=1 BATCH=12 BACKWARD_CHUNKS=6`; EXTRA_GPU_HOURS
-recomputed from F actual at launch). Local GPU free.
-
-**Steering**: none (reads clean at boot 04:56Z and at every babysit
-poll through 07:43Z; steer window closed into its named default at
-launch — posted 04:42Z, no owner response).
-
-**Done**: (1) **arm F launched + babysat to completion**
-(`e762749`): box synced to HEAD (perf subset now on box), unit
-`fontaine-attach-f` via run_detached, babysit entry armed, first-poll
-util+rate check (0.93 s/step, ~73% util — input-side headroom
-recorded, recipe pinned by the matched-arms rule, not touched); rate
-gate PASS 05:05Z (50.3 ≤ 70, full 10k, no downshift); kill-bar
-judgments at 5000/7500/10000 all PASS; **async-save first-real-run
-validation PASSED** at step 1250 (captured 1.3 s, published 14.0 s
-behind the boundary — the e3bdc93 caveat closed; 8 checkpoints, all
-clean). Babysit F entry's 30 GiB floor corrected to 12 (trunk-scale
-value, wrong for a frozen-trunk arm). (2) **#20 actckpt lineage-flip
-pre-reg DRAFT** (`e762749`): 4-rung box ladder, perf-only scope
-(eff-48/B12 frozen), ADOPT iff r2 ≤ 1.02·r0 AND peak ≤ 63 GiB, ≤ 2
-GPU-h; execution item blocked on a scheduled fresh AR-trunk launch.
-(3) **Lit slice + papers page same session** (`25abe07`):
-Hy-Embodied-0.5-VLA 2606.14409 (papers/hy-embodied-stack.md) —
-FlowPRO preference RL banked as the weight-space pole of the #16
-post-SFT menu (retention-unmeasured caveat loud), H=50 Bézier
-chunk-stitch deployment lever, #4 joint-pole ledger entry under
-APT's condition; dup-check caught VLAFlow already covered before a
-duplicate page was written. (4) **#6 rung-(c) masked-contrast
-pre-reg DRAFT** (`d5568bf`, queue-audit win: the item sat blocked
-though (b′)+swap had met its opening condition) **+ read script
-pre-data** (`a7693b1`, mcselect_results.py = frozen reads + the
-producer's dump contract, oracle 10 abort branches, check.py 559)
-**+ decode-mechanics amendment** (`6ad5763`, caught by the
-read-script landing: MAE comparability needs per-candidate decodes;
-cost re-pinned ~2–2.5 GPU-h ≤ 4 gate). (5) posts/index.md drift
-fixed (2 missing 08-09 posts).
-
-**Next**: `queue_cli.py next` → the eval finishes → **launch K**
-(this session if the box frees before hard-kill, else the chained
-next session; `run_work_next` armed) → Δ_seam frozen read
-(attach_seam_results.py) after BOTH arms → stage-2 decision. CPU:
-idea6-mcselect instrument (design note banked on the queue item).
-Boundaries: panel_v2 eval ~08:2x–08:4xZ; K ~10k × ~2.6 s/step ≈
-7.3 h train after that.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -209,38 +196,6 @@ panel_v2 eval live (~1–2 GPU-h; batch gate 70, rate-gate projection
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
-Session 2026-08-09 03:50–04:1xZ (tick; 0 GPU-h): owner question
-03:28Z (60k reports linkage + hub upload) had been cursor-consumed
-unanswered by the prior session — caught via the `history` check and
-answered: hub YES (re-verified), reports page NO (real gap). Fixed
-same tick: three 60k jsons pushed to the Space `reports/`, reports.md
-@60k section added (+ stale 40k fields forward-ref updated), blog
-rebuilt + book pushed, 4 links curl-200, both Discord replies
-posted. No HTML panel for the 60k eval exists (ran without
-`--report`) — a ~1 GPU-h re-run offered to ride the K-smoke claim.
-Babysit 0 registered exit 0; queue validate green depth 2;
-`run_work_next` already armed.
-
-Session 2026-08-09 04:30–04:5xZ (tick, held through the verdict
-window; +~0.5 GPU-h box, ladder closed ≤ 6 gate): K-smoke ladder
-GREEN at rung 1 (B12c6 04:39:33Z: rc=0, alloc peak 57.34 ≤ 71 GiB,
-5.675 s/step — full batch, no downshift; k_mem_ready synced local).
-Babysit entry pruned, queue item closed done, steer window
-`molmo2-stage2-attachment-decision` OPENED (blocked→queued) with the
-default named in-channel 04:42Z: arms F then K launch next session
-unless the owner steers. Prior session's uncommitted queue state
-folded in. Discord read clean; no reactions.
-
-Session 2026-08-09 04:56–08:xxZ (work, exploit; +~11–12 GPU-h box —
-attach_F train 10.2 + eval in flight): arm F end-to-end — steer
-window closed into its default, launched 04:57:51Z, rate gate PASS
-(50.3 ≤ 70), all three kill-bars passed, train COMPLETE 07:42:08Z,
-async saves live-validated (1.3–2.1 s captures), panel_v2 eval
-chained. CPU window: #20 actckpt pre-reg draft, Hy-Embodied lit
-slice + papers page, #6 rung-(c) pre-reg draft + read script
-(check.py 559) + decode amendment, posts-index drift fix. K launch
-= the chained next step.
-
 Session 2026-08-09 08:14–1x:xxZ (work, exploit; local mcselect
 +~1.1 GPU-h ≤ 4 gate — run AND frozen read landed in-session; box K
 live in background): #6 rung-(c) end-to-end — instrument
@@ -254,3 +209,14 @@ zero-training scorer family CLOSES; results post + post-mortem item
 queued. Lit slice: ActionX papers page (F-then-joint's second
 citation). attach_K cost gate PASS 08:18:50Z (58.4 ≤ 70 — full
 10k); babysit boundary rewritten, downshift checklist retired.
+
+Session 2026-08-09 10:29–10:5xZ (tick, conversational; 0 GPU-h):
+recovered a dropped owner exchange — the 08:16Z KI-rationale
+question and the 09:53Z cross-attention follow-up had been
+cursor-consumed unanswered; both answered in-channel 10:36Z (KI =
+insulated trunk adaptation vs the moving-target cost, Δ_seam prices
+it; Molmo2 attach = residual taps 2,5,…,35 via adapters, not K/V
+export), history-diff reply-watch held through the tick, feedback
+memory recorded (read is consume-once — same-session replies
+mandatory). attach_K healthy: probe 11.67@2000, already under the
+5k kill-bar. Queue validate green depth 2; run_work_next armed.
