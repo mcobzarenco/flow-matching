@@ -405,3 +405,29 @@ freeze direction is *inverted* vs our seam (they freeze the action
 backbone and train conditioning); and "5M matches 244M" is partly
 plain capacity (DP-MLP beats DP-C end-to-end too, 84.7 vs 79.3).
 Capacity datum only; silent on frozen-vs-joint.
+
+**2026-08-09 — lit `0816`: a third pole for the attachment
+frontier, and a sixth production frozen vote
+([VLA-GSE page](../papers/vla-gse.md), 2605.06175 +
+[LWD page](../papers/learning-while-deploying.md), 2605.00416):**
+VLA-GSE initializes a tiny adapter-MoE from the frozen backbone's
+own SVD spectrum (leading components → always-on shared expert,
+disjoint residual blocks → 7 routed rank-2 experts, 2.51% params)
+and beats full finetune on LIBERO-Plus perturbation robustness
+(81.2 vs 74.9) while retaining LoRA-grade VLM knowledge — an
+anti-unfreeze datum from the PEFT direction, though it never tests
+our sequential-converged-F-then-brief-joint design. The ablation
+isolates the mechanism: Gaussian-init same-architecture lands at
+60.9, *below plain LoRA's* 69.2 — the spectral init carries the
+gain, the MoE plumbing is worth ~4–6 pts (PiSSA already at 74.5).
+Frontier now has three poles: pure-frozen F (ours), spectral-init
+trunk adapters (F-cost, trunk never moves), brief joint unfreeze
+(fjoint, ~32 GPU-h). Cheapest decisive probe if this pole ever
+opens: PiSSA-vs-LoRA-vs-nothing on the tap layers. Hook
+corrections logged: "zero-shot" = held-out *perturbations* of
+trained tasks; "insulation-by-construction" oversells — retention
+is empirical and LoRA-grade (51.1 vs LoRA 51.8 MMMU). And LWD's
+production datum for the ledger: 16-robot fleet RL updates **only
+the flow expert on a frozen trunk** even mid-RL with every
+incentive to adapt — the sixth production frozen-first vote. The
+fjoint pre-reg's frozen reads are untouched.

@@ -257,3 +257,8 @@ pretrained trunk:
 | Decoupled Action Expert (5M MLP ≈ 244M U-Net; task knowledge fits in the conditioning pathway) | [2511.12101](https://arxiv.org/abs/2511.12101) | ✅ [page](decoupled-action-expert.md) |
 | Foresight (learned failure detection over action-conditioned world-model latents, outcome labels only, conformal FPR band) | [2606.23085](https://arxiv.org/abs/2606.23085) | ✅ [page](foresight-failure-detection.md) |
 | RedFlow (offline failure→correction RL for flow VLAs) | [2607.27782](https://arxiv.org/abs/2607.27782) | ✅ [page](redflow.md) |
+| Weight decay improves LM plasticity (pretrain λ 0.5–1.0 beats 0.1 downstream; base loss under-predicts post-finetune quality) | [2602.11137](https://arxiv.org/abs/2602.11137) | ✅ [page](weight-decay-plasticity.md) |
+| Learning While Deploying (16-robot fleet offline-to-online RL; DIVL distributional critic + QAM flow-native extraction, frozen trunk) | [2605.00416](https://arxiv.org/abs/2605.00416) | ✅ [page](learning-while-deploying.md) |
+| FoMo-FD (inverse-transport nonconformity on a success-only flow world model; 96.6% detection @1.3% FA, wrist-cam-dependent) | [2607.27511](https://arxiv.org/abs/2607.27511) | ✅ [page](fomo-fd.md) |
+| VLA-GSE (spectral-init adapter-MoE from the frozen backbone's SVD; init carries the gain, Gaussian-init lands below LoRA) | [2605.06175](https://arxiv.org/abs/2605.06175) | ✅ [page](vla-gse.md) |
+| ActionCache (training-free retrieval cache over the flow decode; head-only speedups, trunk untouched — our bottleneck unaddressed) | [2607.06370](https://arxiv.org/abs/2607.06370) | ✅ [page](actioncache.md) |

@@ -305,3 +305,28 @@ component. Caveats for the roster: retention/OOD unmeasured (the
 FlowDAgger critique stands), the headline gain is from a
 *deliberately weakened* base policy, per-task real numbers are
 figure reads, and the GRM is unvalidated on rig-like scenes.
+
+**2026-08-09 — lit `0816`: RL-pole entry 8, the fleet-scale tier
+([Learning While Deploying page](../papers/learning-while-deploying.md),
+2605.00416, AgiBot):** the pole's first offline-to-online entry on
+real hardware at fleet scale — 16 dual-arm G1 robots stream
+experience to a central learner (policy broadcast every 50 steps),
+humans intervene reactively, and the **VLM trunk stays frozen with
+only the flow expert updating, in production RL**. Avg task score
+SFT 0.76 → offline RL 0.88 → online 0.95 (short-horizon 0.99,
+long-horizon 0.91) after ~60 robot-hours online. The load-bearing
+ablation: their novel DIVL critic (categorical distribution over
+dataset action-values, quantile-extracted implicit max, entropy-
+adaptive τ) vs plain expectile is a wash short-horizon but
+**+9.7/+16.7 pts on long-horizon** — the distributional
+representation keeps rare successes visible in heterogeneous fleet
+data. Policy extraction is QAM — flow-native critic-gradient-to-
+velocity-field regression via adjoint dynamics — **adopted from Li
+& Levine, not theirs** (hook corrected). Borrowable pre-rig: the
+whole offline column (0.88 beats SFT before any online loop), with
+the stated prerequisite that their offline buffer contains failures
++ play data with terminal labels — success-only corpora collapse
+the advantage signal, so our entry runs through banked rig-day
+failure rollouts. Honesty flags: 0.95 mixes binary success with
+human rubric scores, trial counts and intervention rates
+unreported, per-task robot pools not one generalist deployment.

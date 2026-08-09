@@ -557,3 +557,26 @@ anywhere despite the name; short-horizon LIBERO-Long ROC-AUC 0.89
 trails SAFE-LSTM's 0.91 (the advantage is specifically
 long-horizon); cross-policy transfer asymmetric (π₀.₅→ACT 0.94,
 ACT→π₀.₅ 0.56) — failure logs age across policy generations.
+
+- **Lit `0816` 2026-08-09 — the no-rollouts detector slot gets its
+  closest fit yet, with the boundary measured precisely
+  ([FoMo-FD page](../papers/fomo-fd.md), 2607.27511, dVRK/RA-L
+  submission):** an action-conditioned flow-matching world model
+  (DINOv2+β-VAE latents, endpoint of a K=4 window) trained **only
+  on the same success demos the policy uses**, scored by
+  inverse-transport nonconformity — integrate the learned ODE
+  *backward* from the observed endpoint and alarm on an improbable
+  base residual. 96.6% episode-level detection at 1.3% false
+  alarms (vs logpZO 45.3%, RND 42.8%); the backward direction is
+  the trick — the same model scored by forward prediction error
+  gets 52.2%. Two hook corrections logged loudly: "FDR" = failure
+  *detection* rate, and "no env rollouts" is FALSE — the conformal
+  threshold needs ~19 *successful deployed-policy rollouts* per
+  task (their limitation #1). Net vs Foresight: the rollout
+  requirement shrinks from "collect failures" to "19 successes on
+  rig day" — cheap, not zero. Offline-now slice banked: train the
+  WM on community_curated_v0, validate score discrimination by
+  ranking true vs perturbed-action windows on held-out demos, defer
+  calibration to deployment. Rig caveat: the wrist camera carries
+  the result (96.6% vs 45.9% fixed view) — a camera-config
+  prerequisite for our slot.

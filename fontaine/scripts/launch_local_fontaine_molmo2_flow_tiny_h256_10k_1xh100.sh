@@ -49,7 +49,7 @@ train_cmd() { # $1=steps $2=batch $3=chunks $4=save_dir $5=save_every
         --grad-clip 10.0 \
         --steps "$1" --batch-size "$2" \
         --backward-chunks "$3" \
-        --num-workers 20 --prefetch-factor 4 \
+        --num-workers 10 --prefetch-factor 2 \
         --eval-samples 256 --eval-every 500 --log-every 20 \
         --save-every "$5" \
         --seed 0 --eval-seed 0 \
@@ -74,8 +74,11 @@ EOF
 }
 
 # ---- fit ladder ----
+# SKIP_LADDER=1: reuse the 2026-08-09 20:1xZ green rung (b48c12,
+# 13.0 GiB vs 74 gate) instead of re-proving it on a relaunch.
 WIN_BATCH=""; WIN_CHUNKS=""
-for rung in "48 12" "48 24"; do
+if [ "${SKIP_LADDER:-0}" = 1 ]; then WIN_BATCH=48; WIN_CHUNKS=12; fi
+[ -n "$WIN_BATCH" ] || for rung in "48 12" "48 24"; do
     set -- $rung; B=$1; C=$2
     DIR=outputs/train/tinyfit_b${B}c${C}
     rm -rf "$DIR"

@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T20:16:00Z
+**Updated:** 2026-08-09T21:20:00Z
 
-**Depth call:** depth >=2 at 20:14Z 08-09: tiny-expert-40k (gpu-local LIVE) + owner trajectory-datasets survey (cpu, in flight this session, 4 research subagents out) + adamc-100k babysit to ~08-12 (live) + lit-radar-0816 (cpu, 5 verified hooks) + docs-pass tail (owner-side only)
+**Depth call:** depth >=2 at 21:20Z 08-09: owner-molmoact2-deep-dive (cpu, in progress this session) + adamc-100k babysit to ~08-12 (live) + tiny-expert-10k (gpu-local RELAUNCHED post-OOM, endpoint ~05:1xZ 08-10) + lit-radar-0817 (cpu, 4 verified hooks + 6 spares after the MolmoAct2 slot moved to the owner item) + idea4-fjoint-rung-finalize-exec (gpu-box, owner-gated)
 
-**10 open** (Live 2 · Queued 4 · Blocked 4 · Done 85)
+**10 open** (Live 2 · Queued 4 · Blocked 4 · Done 87)
 
 ## 🔴 Live (2)
 
@@ -30,7 +30,7 @@ OWNER RUN LIVE (launched 13:30Z 08-09): fontaine_molmo2_adamc_100k_ddp4 — base
 
 T1 tiny-expert capacity rung, FINAL DESIGN (owner yes 19:59:04Z; 40k/biggest-batch amendments REVERTED by owner 20:08:53Z 'Let's do your original plan' after the wall-clock arithmetic
 
-**boundary:** fit ladder ~20:3xZ -&gt; 10k run ~10-11 h -&gt; endpoint ~06-07Z 08-10 + ~1.3 h eval; first-poll s/step + vram + projection in-channel; babysit tiny10k entry live, gate 15 GPU-h · [pre-reg](posts/2026-08-09-prereg-tiny-expert-40k.md)
+**boundary:** fit ladder ~20:3xZ -&gt; 10k run ~10-11 h -&gt; endpoint ~06-07Z 08-10 + ~1.3 h eval; first-poll s/step + vram + projection in-channel; babysit tiny10k entry live, gate 15 GPU-h | HOST-RAM OOM KILL 20:52:08Z 08-09 at step 500 (first probe 16.46@500 landed, no ckpt yet): kernel OOM killer, pt_data_worker x20 at ~7-9 GiB RSS each (~150-190 GiB) + 46 GiB main proc vs 221 GiB host — the launcher kept the box recipe's --num-workers 20 --prefetch-factor 4, lethal at batch 48x1. AMENDED to --num-workers 10 --prefetch-factor 2 (sample order unchanged, recipe identical) + SKIP_LADDER=1 escape (b48c12 already green); RELAUNCHED clean from step 0 same seed ~21:03Z, ~0.4 GPU-h lost. New projection: endpoint ~05:1xZ 08-10 -&gt; Delta_capacity read ~06:3xZ. Owned in-channel 21:16Z. · [pre-reg](posts/2026-08-09-prereg-tiny-expert-40k.md)
 
 <details><summary>full record</summary>
 
@@ -44,15 +44,29 @@ T1 tiny-expert capacity rung, FINAL DESIGN (owner yes 19:59:04Z; 40k/biggest-bat
 
 *ready — waiting on a window or a boundary*
 
-**`lit-radar-0816`** · `cpu`
+**`owner-molmoact2-deep-dive-0809`** · `cpu`
 
-Lit slice (standing allocation): refill hooks banked in the 0815 session's fresh sweep, all ids VERIFIED against abs pages + dup-checked against papers/ + ideas/ + queue (21 checked clean, 10 discarded as covered), priority-order…
+OWNER STEERING 20:49:36Z 08-09: 'Woah, there's already a molmo2 VLA -- https://github.com/allenai/molmoact2
+
+**boundary:** opened by owner message 20:49Z 08-09; executing same session (4-track research fan-out out since ~21:2xZ); acknowledged in-channel 21:16Z
+
+<details><summary>full record</summary>
+
+OWNER STEERING 20:49:36Z 08-09: 'Woah, there's already a molmo2 VLA -- https://github.com/allenai/molmoact2. Write a super in-depth piece on it, everything you can find on training, arch, experiments etc. well organized.' Deliverable: long-form blog piece (paper 2605.02881 + repo + HF model/dataset cards + AI2 announcement + v1-&gt;v2 delta + competitive map + what-transfers-to-us), link in-channel. Note: the 0816 refill sweep had independently ranked this paper #1 ~20 min before the owner message; the 0817 queue item's priority-1 slot is satisfied by this piece.
+
+</details>
+
+---
+
+**`lit-radar-0817`** · `cpu`
+
+Lit slice (standing allocation): refill hooks banked in the 0816 session's fresh sweep, all ids abs-page-verified by the sweep agent + dup-checked against papers/ + ideas/ + queue (2 dup catches dropped: 2607.23777 = Muon-SW alre…
 
 **boundary:** any GPU-busy window; adamc rides to ~08-12 so windows are plentiful
 
 <details><summary>full record</summary>
 
-Lit slice (standing allocation): refill hooks banked in the 0815 session's fresh sweep, all ids VERIFIED against abs pages + dup-checked against papers/ + ideas/ + queue (21 checked clean, 10 discarded as covered), priority-ordered — 2602.11137 Weight Decay Improves LM Plasticity (larger pretrain WD hurts base loss but INCREASES downstream finetune gains via separable representations; mechanistic frame for what lambda-prop-eta decay does to a pretrained Molmo2 trunk's plasticity — adamc priority 1) &gt; 2605.00416 Learning While Deploying (fleet-scale offline-to-online RL on a real 16-robot dual-arm fleet; Distributional Implicit Value Learning + Q-via-Adjoint-Matching NATIVE to flow action generators, 95% avg across 8 tasks; #16 top-rank real-robot flow-native entry + adjoint-matching taxonomy slot) &gt; 2607.27511 FoMo-FD (action-conditioned flow-matching WORLD MODEL flags visual-action inconsistency, conformal-calibrated on successes ONLY — no failure demos, no env rollouts, 96.6% FDR at 1.3% FAR on dVRK; #6 — actually fits our no-rollouts constraint where Foresight did not; #17 latent-WM-as-verifier) &gt; 2605.06175 VLA-GSE (spectral decomposition of frozen backbone initializes generalized+specialized experts, 2.51% params updated, 81.2% zero-shot LIBERO-Plus; #4/fjoint — knowledge-insulation-by-construction alternative to the brief-unfreeze rung) &gt; 2607.06370 ActionCache (training-free action caching+refinement for flow VLAs, 10.44x pi-0.5 / 40.17x GR00T speedup at held SR; #22 + changes #19's cheap-draws cost model). VERIFIED SPARES: 2605.30834 Hide-and-Seek (trajectory-label contrastive failure localization, #6), 2605.13959 WarmPrior (temporal prior replaces Gaussian source, straighter paths; #1/#19/#17), 2608.04246 SAFECAST (contrast-set failure detection, #6, rolled fwd from 0815), 2607.14695 Reflex (streaming inference 50Hz, #22, rolled fwd), 2605.23061 SF-NorMuon (schedule-free spectral, WD-at-fast-iterate essential; adamc spare). Dropped 0815 spares: 2607.10959 WSqD + 2606.10305 SARM2 + 2606.11408 DEHP (outranked; reasons in 0815 close). Papers page(s) same session per the permanent rule; dedup-check each id before writing.
+Lit slice (standing allocation): refill hooks banked in the 0816 session's fresh sweep, all ids abs-page-verified by the sweep agent + dup-checked against papers/ + ideas/ + queue (2 dup catches dropped: 2607.23777 = Muon-SW already read 0813; 2606.05468 FlowPRO = covered in hy-embodied-stack.md), priority-ordered - 2605.02881 MolmoAct2 (open-weight VLA on MolmoER, our trunk's direct lineage; specialize-then-rehearse on 3.3M samples incl. curated pool from 1,222 public LeRobot datasets w/ SO-100/101 subsets, 720h open bimanual; beats pi-0.5 + Gemini Robotics ER-1.5 across 7 benchmarks; #17 trunk-lineage + #9 curation recipe = the survey's #1 recommendation's paper) &gt; 2607.24481 ArmnetBench v0.1 (SO-101 arm-farm parallel eval, 7 policies x 12 tasks, 3,118 human-labeled episodes success/suboptimal/failure RELEASED - rare labeled failure-rollout data on our exact embodiment; #9 panel-calibration + #6/#16 failure labels we cannot collect ourselves) &gt; 2608.04246 SAFECAST (contrast-set perturbations + hidden-state risk probes + functional conformal prediction, ROC-AUC gains on DROID-real + LIBERO under shift; #6, pairs with ArmnetBench labels) &gt; 2607.14695 Reflex (timestep-invariance -&gt; streaming KV-cached inference for flow VLAs, 2.58x, stable 50 Hz, 54% reaction-latency cut; #22 - read w/ Legato 2602.12978 as infer-time/train-time complements) &gt; 2604.03191 Compression Gap (encoder upgrades give &gt;21-pt gains through continuous action heads but attenuated through discrete codebooks - mechanism-level flow-over-AR prediction that sharpens exactly when the trunk improves, i.e. our vision-unfrozen run; #19/#4). VERIFIED SPARES: 2605.30834 Hide-and-Seek (trajectory-label contrastive failure localization, #6), 2605.29605 VLAConf (single-pass success confidence from frozen-VLA hidden states, success-data-primary - calibration needs verifying, #6), 2605.13959 WarmPrior (temporal prior source, straighter paths, #19/#17), 2602.12978 Legato (native chunk continuation training, ~10% smoother vs RTC, #22), 2604.16683 Rewind-IL (training-free chunk-consistency failure detection from own draws, synergy w/ #19 machinery, #6), 2605.23061 SF-NorMuon (partly superseded by Muon-SW read, adamc spare). Papers page(s) same session per the permanent rule; dedup-check each id before writing.
 
 </details>
 
@@ -81,20 +95,6 @@ Docs pass tail (from the 08-09 staleness audit, deferred at my discretion): (1) 
 <details><summary>full record</summary>
 
 Docs pass tail (from the 08-09 staleness audit, deferred at my discretion): (1) sweep agent-internal vocabulary out of shipped bijou/ source comments (eval/leakage.py 'fontaine/charter.md', eval/subgoal_scoring.py '#6 rung (b)', train.py 'K arm of the attach-screen'/'#20'); (2) architecture.md S6: enumerate the eval-system surface (frozen sample plans, --dump-draws, noise tickets, --mask-state, subgoal modes, --smolvla baseline, leakage checker) + full rollout flag docs (or rewrite rollout_so101.md properly); (3) S1: a real Molmo2 prompt-format subsection (ChatML, image hoisting, id 151645 bos) instead of the pointer note; (4) confirm docs/notes/2026-08-06 S3 failing-test claim resolved; (5) wandb API key rotation still owed (S8 hygiene note). | PARTIAL 15:5xZ 08-09: (2) architecture.md S6 eval-system surface enumerated (plans/dumps/tickets/mask-state/subgoal modes/smolvla/leakage) + rollout noise/draws/async flags incl. new --noise-ticket, rollout_so101.md flag list updated; (3) S1 Molmo2 prompt-format subsection landed (ChatML hoist, [kind camera|Image i] groups, bos=151645 quirk, native tokenization); (4) 2026-08-06 note's failing-test claim VERIFIED RESOLVED (test passes, note annotated); (1) bijou/ vocab sweep IN FLIGHT via subagent; (5) wandb key rotation still owed (owner-side action) | SUBITEM 1 DONE 15:5xZ (51a692e, subagent sweep + review): 14 bijou/ files de-jargoned (comments/docstrings/help/runtime strings; paths kept; check.py 598 green, no test edits needed). Remaining: ONLY (5) wandb API key rotation — owner-side action, flagged in-channel at close-out
-
-</details>
-
----
-
-**`owner-trajectory-datasets-survey-0809`** · `cpu`
-
-OWNER STEERING 19:58:05Z 08-09: investigate additional trajectory datasets we could train on
-
-**boundary:** opened by owner message 19:58Z 08-09; execute same session alongside the local training launch
-
-<details><summary>full record</summary>
-
-OWNER STEERING 19:58:05Z 08-09: investigate additional trajectory datasets we could train on — ideally SO-101, but also look more generally. Deliverable: a detailed blog post with links to the datasets, statistics (episodes/hours/tasks/embodiments/modalities), brief descriptions, and an assessment of what is actually usable for our training recipes (community_curated_v0 is the current substrate). Post link in-channel when it lands.
 
 </details>
 
@@ -158,9 +158,23 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 
 ---
 
-## ✅ Done (85)
+## ✅ Done (87)
 
 *closed — the full record stays in each fold*
+
+**`lit-radar-0816`** · `cpu`
+
+Lit slice (standing allocation): refill hooks banked in the 0815 session's fresh sweep, all ids VERIFIED against abs pages + dup-checked against papers/ + ideas/ + queue (21 checked clean, 10 discarded as covered), priority-order…
+
+**boundary:** CLOSED 2026-08-09T21:0xZ work session: all 5 hooks deep-read via 5-subagent fan-out + parallel refill sweep, 5 Papers pages same session (weight-decay-plasticity, learning-while-deploying, fomo-fd, vla-gse, actioncache), ideas #4/#6/#16/#17/#19/#22 + adamc watch fed, index+SUMMARY wired. EVERY hook needed corrections, 3 loud: FoMo-FD 'no env rollouts' FALSE (conformal calibration needs ~19 successful deployed-policy rollouts/task; only WM training is rollout-free; 'FDR'=detection rate not false discovery); ActionCache 'changes cheap-draws cost model' WRONG for our stack (head-only speedups, trunk unskippable - keys computed FROM trunk outputs; top-1 retrieval collapses draws; SR not held on GR00T -3.2/LIBERO -5.0; real-SO-101 end-to-end 1.66x); LWD QAM adopted from Li&amp;Levine not theirs + 95% is a mixed human-rubric metric. Softer: WD-plasticity 'hurts base loss' only in the overtrained regime + lambda-prop-eta framing unlicensed (our 1e-5 is 4 orders below their range); VLA-GSE 'zero-shot' = perturbations-only + insulation is LoRA-grade empirical. Refill sweep dup-catches: 2607.23777 Scale-WD = ALREADY-READ Muon-SW (0813) despite verification, 2606.05468 FlowPRO standalone = covered in hy-embodied-stack.md - both dropped.
+
+<details><summary>full record</summary>
+
+Lit slice (standing allocation): refill hooks banked in the 0815 session's fresh sweep, all ids VERIFIED against abs pages + dup-checked against papers/ + ideas/ + queue (21 checked clean, 10 discarded as covered), priority-ordered — 2602.11137 Weight Decay Improves LM Plasticity (larger pretrain WD hurts base loss but INCREASES downstream finetune gains via separable representations; mechanistic frame for what lambda-prop-eta decay does to a pretrained Molmo2 trunk's plasticity — adamc priority 1) &gt; 2605.00416 Learning While Deploying (fleet-scale offline-to-online RL on a real 16-robot dual-arm fleet; Distributional Implicit Value Learning + Q-via-Adjoint-Matching NATIVE to flow action generators, 95% avg across 8 tasks; #16 top-rank real-robot flow-native entry + adjoint-matching taxonomy slot) &gt; 2607.27511 FoMo-FD (action-conditioned flow-matching WORLD MODEL flags visual-action inconsistency, conformal-calibrated on successes ONLY — no failure demos, no env rollouts, 96.6% FDR at 1.3% FAR on dVRK; #6 — actually fits our no-rollouts constraint where Foresight did not; #17 latent-WM-as-verifier) &gt; 2605.06175 VLA-GSE (spectral decomposition of frozen backbone initializes generalized+specialized experts, 2.51% params updated, 81.2% zero-shot LIBERO-Plus; #4/fjoint — knowledge-insulation-by-construction alternative to the brief-unfreeze rung) &gt; 2607.06370 ActionCache (training-free action caching+refinement for flow VLAs, 10.44x pi-0.5 / 40.17x GR00T speedup at held SR; #22 + changes #19's cheap-draws cost model). VERIFIED SPARES: 2605.30834 Hide-and-Seek (trajectory-label contrastive failure localization, #6), 2605.13959 WarmPrior (temporal prior replaces Gaussian source, straighter paths; #1/#19/#17), 2608.04246 SAFECAST (contrast-set failure detection, #6, rolled fwd from 0815), 2607.14695 Reflex (streaming inference 50Hz, #22, rolled fwd), 2605.23061 SF-NorMuon (schedule-free spectral, WD-at-fast-iterate essential; adamc spare). Dropped 0815 spares: 2607.10959 WSqD + 2606.10305 SARM2 + 2606.11408 DEHP (outranked; reasons in 0815 close). Papers page(s) same session per the permanent rule; dedup-check each id before writing.
+
+</details>
+
+---
 
 **`lit-radar-0815`** · `cpu`
 
@@ -1347,6 +1361,20 @@ OWNER STEERING 08-08 13:09Z molmo2 perf/memory deep review — SHIPPED same sess
 <details><summary>full record</summary>
 
 OWNER STEERING 08-08 13:09Z molmo2 perf/memory deep review — SHIPPED same session (posts/2026-08-08-molmo2-perf-review.md + in-channel summary). Three-lens sweep with 2 measured kernel gaps (idle-local-GPU microbench, ~0 GPU-h): (1) suffix attention lands on MATH sdpa backend (cuDNN excluded by inherited pin; flash rejects mask, efficient rejects GQA) 13x/layer ~5-10% step; (2) ViT eager einsum vs SDPA-flash 13x/block; (3) hand-rolled RMSNorm 10x vs F.rms_norm; (4) --activation-checkpointing exists oracle-pinned but NOT on the live lineage (~2.4-2.8 GiB/sample lever); (5) full-vocab CE fp32-upcasts pad rows; (6) per-step host syncs; (7) 60MB/step embed clone; (8) vram peak metric is a lifetime ratchet (explains the 41,780/42,940 creep). Static-max verdict: DON'T (bucketing prior art +5.09% padding ceiling; suffix uncapped). Shape annotations landed on bijou/molmo2/{model,text,vision}.py. All changes need pre-reg; nothing touched the live run.
+
+</details>
+
+---
+
+**`owner-trajectory-datasets-survey-0809`** · `cpu`
+
+OWNER STEERING 19:58:05Z 08-09: investigate additional trajectory datasets we could train on
+
+**boundary:** CLOSED 2026-08-09T20:56Z work session (stale-close audit vs git: the work landed in the 19:49-20:3x session, commit beb8659, but the item was never flipped): survey post posts/2026-08-09-trajectory-datasets-survey.md shipped via 4 parallel research subagents, all links fetch-verified, Space 200-verified, in-channel summary posted 20:21:21Z with headline (855 in-scope SO-100/101 hub hours vs our 229, ~300h new 2026, sim-contamination hazard, MolmoAct2 curation diff = #1 recommendation); idea #9 fed. Follow-ups (corpus-delta re-crawl + MolmoAct2 diff, Bridge V2 pilot) are owner-decision items, deliberately NOT auto-queued.
+
+<details><summary>full record</summary>
+
+OWNER STEERING 19:58:05Z 08-09: investigate additional trajectory datasets we could train on — ideally SO-101, but also look more generally. Deliverable: a detailed blog post with links to the datasets, statistics (episodes/hours/tasks/embodiments/modalities), brief descriptions, and an assessment of what is actually usable for our training recipes (community_curated_v0 is the current substrate). Post link in-channel when it lands.
 
 </details>
 

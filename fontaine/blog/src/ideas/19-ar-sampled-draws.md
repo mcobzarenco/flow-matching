@@ -286,3 +286,16 @@ between these two priors on our own panel before any escalation.
   external vote that mean-collapse is a property of well-trained
   manipulation heads, not a defect of ours. Record-only; no rank
   change, family decodes stand.
+
+- **Lit `0816` 2026-08-09 — the cheap-draws hook died on
+  verification ([ActionCache page](../papers/actioncache.md),
+  2607.06370):** the banked "changes #19's cheap-draws cost model"
+  claim is corrected — ActionCache's retrieval is top-1 and returns
+  ONE deterministic cached chunk (it *collapses* the draw
+  distribution rather than amortizing N draws), and it accelerates
+  only the flow head while the trunk — our dominant cost — runs
+  every tick to produce the cache key. Our draws economics are
+  unchanged (the 1191 ms 10-draw figure is the AR decoder anyway).
+  A top-k retrieval variant would be a cheap-diverse-draws
+  mechanism, but that is our extrapolation, not the paper.
+  Record-only; family decodes stand.

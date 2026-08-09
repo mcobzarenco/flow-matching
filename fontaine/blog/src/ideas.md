@@ -9,7 +9,7 @@ mainline ledger, `docs/architecture.md` §7–8). Status tags: `queued`
 
 This page is the **index**: what is hot right now vs what is on ice.
 It is updated whenever an idea moves (the per-idea page is the
-record; the line here is the hook). *Index last updated 2026-08-07.*
+record; the line here is the hook). *Index last updated 2026-08-09.*
 
 ## Hot — actively pursued
 
@@ -37,7 +37,11 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   −2.3% of the oracle gap; ODE draws uniformly smooth), AR
   real-but-small and T-monotone (5.6/7.5/20.9% of the gap at
   T=0.5/0.7/1.3, Spearman +0.36); never approaches mean-of-N —
-  family decodes stand. Molmo2 stack half at the #19 landing.
+  family decodes stand. Molmo2 stack half at the #19 landing. Lit
+  `0816` ([ActionCache](papers/actioncache.md), 2607.06370): the
+  banked "cheap-draws cost model" hook corrected — top-1 retrieval
+  collapses the draw distribution rather than amortizing N draws;
+  our draws economics unchanged.
 - **`seam-screen` [#4 Stage-2 attachment seam](ideas/04-stage2-attachment.md)** —
   `decided` 2026-08-09
   ([memo](posts/2026-08-09-molmo2-stage2-attachment-decision.md)):
@@ -91,7 +95,14 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   makes the banked F@10k expert task/trunk-entangled capital, not
   portable. Framing caveats loud: testbed is Diffusion Policy (no
   VLM anywhere), and the freeze direction is inverted vs our seam —
-  capacity datum only, silent on frozen-vs-joint.
+  capacity datum only, silent on frozen-vs-joint. Lit `0816`
+  ([VLA-GSE](papers/vla-gse.md), 2605.06175 +
+  [LWD](papers/learning-while-deploying.md)): a third attachment
+  pole — spectral-init trunk adapters beat full FT on robustness at
+  2.51% params (the SVD init carries it: Gaussian-init lands below
+  LoRA); cheapest probe = PiSSA-vs-LoRA-vs-nothing on tap layers.
+  Plus the sixth production frozen vote (LWD's fleet RL trains only
+  the flow expert). fjoint frozen reads untouched.
 - **`new-trunks` [#17 New trunks / architectures](ideas/17-new-trunks.md)** —
   standing owner mandate. **Molmo2-4B AR 40k ENDPOINT READ OUT
   2026-08-08 ([results](posts/2026-08-08-molmo2-endpoint-results.md)):
@@ -213,7 +224,13 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   into the cosine tail = the AdamC balance is real. Bonus: the
   Muon-SW alignment-cosine probe becomes computable weights-only.
   Two offline probes join the endpoint list (distance-to-criticality
-  margin; force chronicle).
+  margin; force chronicle). Lit `0816`
+  ([WD-plasticity](papers/weight-decay-plasticity.md), 2602.11137):
+  pretrain λ 0.5–1.0 beats 0.1 downstream and base loss
+  under-predicts finetune quality — weight finetuned probes in
+  trunk selection; layer-wise linear-probe separability banked as a
+  cheap plasticity instrument. The λ∝η framing is analogy only
+  (hook corrected: our 1e-5 is 4 orders below their range).
 - **`aux-subgoals` [#6 Aux attribution](ideas/06-aux-attribution.md)** —
   `confirmed` (aux HELPS actions, +0.462 cost when off).
   **CONSOLIDATED REPORT 2026-08-09
@@ -373,7 +390,13 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   anytime FPR ≤ α) is a borrowable no-failure-data upgrade for the
   VLA-FAIL recipe; cross-policy transfer is asymmetric (π₀.₅→ACT
   0.94, ACT→π₀.₅ 0.56) — failure logs age across policy
-  generations.
+  generations. Lit `0816` ([FoMo-FD](papers/fomo-fd.md),
+  2607.27511): closest fit yet to the no-rollouts slot — a
+  success-only flow world model scored by *backward* inverse
+  transport detects 96.6% @1.3% FA (forward scoring: 52.2%); hook
+  corrected: calibration needs ~19 successful deployed-policy
+  rollouts per task (rig-day line item, not zero), and the wrist
+  camera carries the result.
 - **`noise-draws` [#1 Noise-draw ensembling](ideas/01-noise-draw-ensembling.md)** —
   flow mean-of-10 banked (5.365); batched draws merged 2026-08-07.
   **GOLDEN-TICKET SCREEN R1+R2 READ OUT 2026-08-08
@@ -528,7 +551,14 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   knowing which failures NOT to correct carries −11.5 avg alone.
   Caveats: retention unmeasured (FlowDAgger critique stands),
   deliberately weakened base policy, progress model unvalidated on
-  rig scenes.
+  rig scenes. Lit `0816`
+  ([LWD](papers/learning-while-deploying.md), 2605.00416): RL-pole
+  entry 8, the fleet tier — 16 real robots, offline-to-online,
+  frozen trunk + flow-expert-only updates; DIVL distributional
+  critic carries +9.7/+16.7 long-horizon over expectile; QAM is
+  adopted (Li & Levine), not theirs (hook corrected); offline
+  column alone beats SFT 0.88 vs 0.76 but needs failure-containing
+  buffers — success-only corpora collapse the signal.
 - **`lit-arms` [#15 Literature-sourced arms](ideas/15-literature-arms.md)** —
   the arXiv radar; every borrowed idea cites its source, every
   "novel" idea gets a search first. Feeds the Papers section.
@@ -670,7 +700,12 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   conformal-band recipe; and the cross-read — they fix prior noise
   for features but NOT for ACC's actions, so our shared noise
   ticket would tighten their own detector (the ~3.3-unit
-  fresh-noise mode term is their undecomposed noise floor).
+  fresh-noise mode term is their undecomposed noise floor). Lit
+  `0816` ([ActionCache](papers/actioncache.md)): real-SO-101 anchor
+  banked — π0.5-class VLA ≈ 102 ms/decision end-to-end, VLM+embed
+  ≈ 47 ms structurally unskippable (their 40× head speedup nets
+  1.66× end-to-end) — trunk overlap, not decode acceleration, is
+  the lever.
 
 ## Answered — banked results
 

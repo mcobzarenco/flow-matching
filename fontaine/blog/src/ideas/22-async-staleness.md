@@ -161,3 +161,20 @@ but NOT for ACC's actions, so our shared noise ticket would shrink
 their null distribution and make the detector strictly more
 sensitive. Population-level confirmation: detection degrades as
 overlap shrinks. Menu unchanged; still parked on #16.
+
+- **2026-08-09 lit `0816` — a real-SO-101 latency anchor, and the
+  cache lever measured ([ActionCache page](../papers/actioncache.md),
+  2607.06370):** training-free retrieval cache over the flow
+  decode — intermediate noisy chunks keyed by a sparse ternary
+  random projection of trunk output embeddings, hit → warm-start
+  the ODE (or execute directly). Banked anchor: **a π0.5-class VLA
+  on a real SO-101 runs ~102 ms/decision end-to-end, VLM ≈ 22 ms +
+  embedding ≈ 24 ms**, and because the cache key is computed FROM
+  trunk outputs, the trunk forward is structurally unskippable —
+  their end-to-end best is 1.66× despite 40× head-only headlines.
+  Confirms the trunk-overlap thread (this idea), not decode
+  acceleration, is the lever that addresses our bottleneck. Filed
+  as reusable: the ~0.3 ms trunk-embedding fingerprint (offline
+  dedup/retrieval primitive); cautionary: their Falcon baseline —
+  naive warm-start from the previous timestep's action — collapses
+  to 7.6% SR vs 41.0%. Menu unchanged; still parked on #16.

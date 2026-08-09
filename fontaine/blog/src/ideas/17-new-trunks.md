@@ -488,3 +488,29 @@ recovered forces, never forward-integrate norms across 5k gaps
 (15–24% error in their real-Pythia test); direct three-force
 ground truth validated only at 70M from random init — method
 transfer, not phenomenology, on a 4B pretrained trunk.
+
+**2026-08-09 — lit `0816`: the adamc watch gains a plasticity frame
+(priced as analogy), and the WM-verifier pole a directional caution
+([WD-plasticity page](../papers/weight-decay-plasticity.md),
+2602.11137, Kakade group + [FoMo-FD page](../papers/fomo-fd.md),
+2607.27511):** the plasticity paper's causal single-knob sweep:
+pretrain λ 0.5–1.0 beats the 0.1 default on *post-finetune*
+performance at 20 TPP (and base loss too — the trade-off only
+appears overtrained at 140 TPP, where λ=0.3 still wins downstream
+despite worse CE); pretrain loss is an unreliable proxy for
+finetune quality. Three correlational signatures: linear-probe
+separability up at every layer, W_QK pseudo-rank halved, train–val
+gap down. For the trunk axis: base benchmarks under-predict
+post-finetune quality — weight finetuned probes in trunk selection;
+the layer-wise linear-probe separability metric banked as a cheap
+pre-finetune plasticity instrument. For the adamc watch, a frame
+NOT a claim (hook corrected): λ∝η never appears in the paper, our
+λ=1e-5 is 4 orders below their range, and at λ≪0.1 they see no
+effect — the "AdamC preserves late-training plasticity for a
+stage-2 phase" story is a two-step analogy, record-only. FoMo-FD's
+datum for the WM-as-verifier pole: on the same success-only
+action-conditioned latent WM, *backward* inverse-transport scoring
+detects 96.6% of failures where *forward* prediction-error scores
+52.2% — the useful signal is post-hoc by construction (needs the
+observed endpoint), a caution against forward-sampling verifiers
+ranking candidate chunks pre-execution.
