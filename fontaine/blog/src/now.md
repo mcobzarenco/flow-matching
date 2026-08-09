@@ -6,6 +6,40 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-09 16:45–16:5xZ (real `date -u`) — tick (babysit,
+conversational hold): **adamc_100k healthy step 4000 (12.4/310);
+owner asked "Did you push the ticket to git?" 16:42Z — answered
+16:48Z (yes: commit `ea1cbf2` on `fontaine`, in sync with origin,
+sha256 `ec0484e8…` re-verified, all three ticket vectors listed +
+hub mirror `d8cbfcc`).***
+
+**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE — babysit exit 0,
+8 procs, ~75.3 GiB ×4 vs 77 bar, step 4000 @ 16:46, window 20.5
+f/min, 12.4/310 GPU-h; probe ladder unchanged (14.03@2500 = @10k
+kill-bar ref). Next boundary: **step-5000 async-save line ~17:2xZ —
+quote owed in-channel; falls past this tick's hard kill,
+`run_work_next` armed so the chained session catches it.** LOCAL GPU
+free.
+
+**Steering**: owner question 16:42:10Z ("Did you push the ticket to
+git?") — answered in-channel 16:48Z after re-verifying: npz tracked
+in git at `ea1cbf2`, branch clean vs origin/fontaine, sha match;
+pointed at all three vectors in `plans/` (12 / 59 / 33). No
+reactions in history -n 5. Conversational hold kept with a
+background history-watcher (cursor untouched) through end of tick.
+13:48Z gate default (let run, gate 310) governs.
+
+**Done**: babysit poll (exit 0, unfiltered); git/push verification +
+in-channel reply; queue validate green depth 3 (8 open);
+`run_work_next` confirmed armed; 15:59 head entry rolled verbatim to
+the archive (keep-3), footer notes rolled (keep-2).
+
+**Next**: chained work session → step-5000 async-save quote ~17:2xZ
++ owner-thread rejoin via `history`; CPU queue pointer
+`docs-pass-followups-0809` / `corpus-continuity-screen`. adamc
+endpoint ~08-12 ~17:00Z → chained k4l2 panel. fjoint stays
+owner-gated post-endpoint.
+
 *Updated 2026-08-09 16:38–16:5xZ (real `date -u`) — work session
 (chained, bounded): **v2-all ticket thread CLOSED — winner ticket 12
 (pooled MAE 5.265 over 32,679 frames), table + memorized-rows read
@@ -83,52 +117,6 @@ save quote ~17:2xZ, then CPU queue (`corpus-continuity-screen` /
 `boundary-incompat-read-npz`). fjoint stays owner-gated
 post-adamc-endpoint (~08-12 ~17:00Z+).*
 
-*Updated 2026-08-09 15:59–16:1xZ (real `date -u`) — tick (babysit):
-**adamc_100k healthy through step 3000 — probe@2500 banked at
-14.0294, now the @10k kill-bar reference; local v2-all ticket
-selection riding for the owner, ETA ~16:3xZ.***
-
-**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE (launch 3) —
-babysit exit 0, 8 procs, ~75.1–75.3 GiB ×4 vs the 77 bar, step 3000
-at the 16:00 poll, window 19.9 f/min steady, 9.4/310 GPU-h. Probe
-trajectory 31.30@500 → 24.48@1000 → 16.87@1500 → **14.03@2500**
-(banked at the 15:52 poll, quoted in-channel with the ticket post).
-LOCAL GPU: `fontaine-ftrig-ticket64-v2all.service` live — the owner's
-15:44Z request (best 1-NFE ticket over all of so101_pick_place_v2,
-training rows included), launched 15:46Z by the work session;
-9,792/32,679 frames at 16:00:34Z, steady 160-frame ticks, util bursty
-0–100% (~50% duty — GPU forwards alternating with CPU scoring, same
-shape as the holdout run; judged inherent to the eval loop, not input
-starvation — no intervention at 30%-done). ETA ~16:30–16:40Z →
-`plans/ticket_ftrig4k_rigv2all_winner.npz` + table owed in-channel
-(vs ticket 59 holdout winner and ticket33). Next adamc boundary:
-**first async-save line at step 5000 (~17:2xZ, quote owed
-in-channel — the chained session catches it)**; kill-bar comparison
-binds at eval@2500 vs @10k (~08-10); endpoint ~08-12 ~17:00Z →
-chained k4l2 panel (--report).
-
-**Steering**: none new — `read` empty; history -n 5 = the owner's
-two ticket questions (15:39Z tickets×--target-time, 15:44Z v2-all
-selection), both answered same-session by the 15:2x–15:5x work
-sessions (composition explainer 15:42Z, v2all launch ack 15:46Z);
-no reactions. The 13:48Z gate question stays unanswered; declared
-default (let it run, gate 310) governs.
-
-**Done**: babysit poll (exit 0, unfiltered); v2all unit health check
-(journal progress steady, util pattern attributed, left riding);
-queue validate green depth 3 (8 open) — committed the previous
-session's pending queue.json (docs-pass subitem 1 DONE per 51a692e +
-new `corpus-continuity-screen` CPU item from the VISTA hook);
-`run_work_next` armed — v2all landing, the step-5000 save line and
-the CPU queue all fall to the chained session.
-
-**Next**: chained work session → post the v2-all ticket table when
-the unit lands (~16:3xZ), then the step-5000 async-save quote
-~17:2xZ; queue pointer `corpus-continuity-screen` /
-`boundary-incompat-read-npz` / docs-pass tail (owner-side wandb
-only). fjoint launch remains owner-gated post-adamc-endpoint
-(~08-12 ~17:00Z+).
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -161,17 +149,6 @@ call — no endpoint, no chained evals)**). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
-Session 2026-08-09 14:54–15:0xZ (tick, babysit; 0 GPU-h new —
-adamc_100k rides, 5.0/310): run healthy at step 1560 — probe@1500
-16.8716 (from 24.48@1000, 31.30@500), loss 4.99 falling, grad-norm
-5–7 flat, vram alloc 70.57, zero NaN/inf, 8 procs, ~75 GiB ×4;
-window 18.7 f/min attributed to the in-window eval@1500. Discord:
-read = our own instrument post only, history no reactions, gate
-question still open (default governs). Queue green depth 4 (9 open);
-run_work_next stays armed (GPUs busy + CPU items queued). Stable
-stretch → exited; next boundary the step-5000 async-save line
-~17:2xZ.
-
 Session 2026-08-09 15:59–16:1xZ (tick, babysit; 0 new GPU-h —
 adamc_100k rides, 9.4/310; local v2all ticket eval in flight, cost
 booked at landing): adamc healthy at step 3000 — 19.9 f/min, probe
@@ -182,3 +159,13 @@ history = the owner ticket thread, fully answered by the work
 sessions. Queue green depth 3 (8 open, prior session's queue.json
 committed); run_work_next armed → chained session posts the v2all
 table + catches the step-5000 save line ~17:2xZ.
+
+Session 2026-08-09 16:45–16:5xZ (tick, babysit + conversational
+hold; 0 new GPU-h — adamc_100k rides, 12.4/310): run healthy at step
+4000 — 20.5 f/min window, ~75.3 GiB ×4 vs 77, probe ladder unchanged
+(14.03@2500). Owner 16:42Z "Did you push the ticket to git?" —
+re-verified (commit ea1cbf2 in sync with origin, sha256 match) and
+answered in-channel 16:48Z with all three ticket vectors' paths;
+conversational hold kept via background history-watcher. Queue green
+depth 3 (8 open); run_work_next armed → chained session catches the
+step-5000 async-save quote ~17:2xZ.
