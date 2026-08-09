@@ -39,15 +39,15 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   T=0.5/0.7/1.3, Spearman +0.36); never approaches mean-of-N —
   family decodes stand. Molmo2 stack half at the #19 landing.
 - **`seam-screen` [#4 Stage-2 attachment seam](ideas/04-stage2-attachment.md)** —
-  `screening`. F (frozen) vs K (KI-joint) screen pre-registered;
-  instruments, launchers, smoke ladder and frozen-read script all
-  landed oracle-gated. Launches at the molmo2 40k endpoint (~08-08).
-  New 2026-08-09
-  ([ActionX](papers/actionx-rl-expert-pretraining.md)): the
-  F-then-joint escalation rung's second same-shape citation —
-  supervised expert pre-train on frozen trunk → full joint unfreeze
-  beats joint-from-scratch +38 LIBERO-Long; no matched frozen-vs-joint
-  ablation, so F-vs-K stays unranked pre-readout (venue caveat loud).
+  `decided` 2026-08-09
+  ([memo](posts/2026-08-09-molmo2-stage2-attachment-decision.md)):
+  **the frozen default stands** — sequential hard-freeze is the
+  attachment recipe for the Molmo2 trunk class; KI-joint
+  closed-unmeasured (owner cost-killed K at ~4160; F panel 9.4157
+  beat state-copy by 2.35, 8 matched probes show no K edge, measured
+  4.11× step cost, production frozen-first votes). Δ_seam@3750
+  rescue read priced ~2.5 GPU-h (own pre-reg). Open remnants:
+  arm 1 depth-of-reads, F-then-joint rung (must argue vs 4× cost).
   New 2026-08-09 ([LP-FT](papers/lpft-two-phase-schedules.md), owner
   a(t)/b(t) steering): the rung's THIRD same-shape citation and the
   first with a matched frozen control AND a mechanism theorem —

@@ -76,3 +76,4 @@ corrections are follow-up posts.
 - [2026-08-09 — Pre-reg: subgoal rung (c) — masked-contrast selection (#6)](2026-08-09-prereg-subgoal-mcselect.md)
 - [2026-08-09 — Rung (c) results: masked-contrast ANTI-SELECTS — the free-scorer family closes (#6)](2026-08-09-mcselect-results.md)
 - [2026-08-09 — Pre-reg + parameter sheet: molmo2 AdamC 100k from base 4B (owner spec)](2026-08-09-prereg-molmo2-adamc-100k.md)
+- [2026-08-09 — Stage-2 attachment decision: the frozen default stands (#4)](2026-08-09-molmo2-stage2-attachment-decision.md)

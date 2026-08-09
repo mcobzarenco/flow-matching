@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T13:35:00Z
+**Updated:** 2026-08-09T13:54:00Z
 
-**Depth call:** depth >=2 at 13:3xZ 08-09: adamc-100k-live (owner run, babysit) + molmo2-stage2-attachment-decision memo (unblocked — docs pass done) + docs-pass-followups-0809 + lit-radar-hooks-0811a + f-then-joint draft; both owner top-priority items (AdamC run prep, docs pass) CLOSED this session
+**Depth call:** depth >=2 at 13:5xZ 08-09: adamc-100k-live (owner run, babysit to ~08-12) + f-then-joint pre-reg draft (unblocked by the stage-2 memo) + docs-pass-followups-0809 + lit-radar-hooks-0811a; stage-2 attachment decision DONE this session (memo posted)
 
-**9 open** (Live 1 · Queued 3 · Blocked 5 · Done 72)
+**8 open** (Live 1 · Queued 3 · Blocked 4 · Done 73)
 
 ## 🔴 Live (1)
 
@@ -58,21 +58,21 @@ Lit slice (standing allocation): clear the 08-09 second sweep's banked hooks —
 
 ---
 
-**`molmo2-stage2-attachment-decision`** · `cpu`
+**`idea4-f-then-joint-prereg-draft`** · `cpu`
 
-Molmo2 stage-2 attachment decision at endpoint — now EXECUTABLE via the seam-screen pre-reg (2026-08-07-prereg-molmo2-attach-screen.md: frozen vs KI-joint is the first measurement; the depth-of-reads arm stays open for its own sc…
+#4 F-then-joint escalation rung — pre-reg DRAFT (CPU; the APT-named recipe, papers/apt-expert-pretraining.md): warm-start a joint run (unfrozen trunk, seam per readout) from the F arm's converged expert instead of from noise; APT…
 
-**boundary:** STEER WINDOW CLOSED 04:57Z 08-09 into the named default (posted 04:42Z, Discord read clean at 04:56Z boot): arm F LAUNCHED 04:57:51Z. The decision itself now lands at the screen readout: Delta_seam frozen read (attach_seam_results.py) after BOTH arms + their panel_v2 evals complete; blocked on idea4-attach-screen-execution | RE-SCOPED 12:4xZ 08-09 (owner killed K): decision basis = F arm only (panel_v2 banked, state-copy beaten decisively) + production frozen-first votes (RDT2, Qwen-VLA) — no Delta_seam number. Write the decision memo from banked artifacts (CPU); if a seam number is ever wanted, pre-register a CHEAPER matched read (short-K or CE-probe-only) as a separate item. AFTER the docs pass (owner prio).
+**boundary:** opens after the #4 attach-screen frozen reads (~08-09+); the draft is CPU work at any GPU-busy window AFTER Delta_seam is banked; execution needs its own posted pre-reg + owner-visible queue entry | 12:4xZ 08-09: Delta_seam readout will NOT arrive (owner killed K); draft basis re-anchors on F-arm curves + the 4x step-cost fact — joint-anything must now argue against that cost. Stays blocked pending stage-2 decision memo. | UNBLOCKED 13:5xZ 08-09: the stage-2 decision memo is the replacement basis (frozen adopted; joint-anything must argue vs the measured 4.11x joint-step cost). CPU draft at any GPU-busy window; natural target = the adamc_100k endpoint (~08-12); execution still needs posted pre-reg + owner go.
 
 <details><summary>full record</summary>
 
-Molmo2 stage-2 attachment decision at endpoint — now EXECUTABLE via the seam-screen pre-reg (2026-08-07-prereg-molmo2-attach-screen.md: frozen vs KI-joint is the first measurement; the depth-of-reads arm stays open for its own screen); owner steer window before the screen launches
+#4 F-then-joint escalation rung — pre-reg DRAFT (CPU; the APT-named recipe, papers/apt-expert-pretraining.md): warm-start a joint run (unfrozen trunk, seam per readout) from the F arm's converged expert instead of from noise; APT grid says +8..+26 pts over frozen in their regime, and an F~K tie makes this the next discriminating contrast (initialization, not seam). Draft ONLY after the seam screen reads out: matched steps/effective batch vs the screen arms, Delta vs both F and K endpoints, trunk-drift band inherited from K's read 4
 
 </details>
 
 ---
 
-## 🟡 Blocked (5)
+## 🟡 Blocked (4)
 
 *waiting on a prerequisite, a boundary, or the owner*
 
@@ -104,20 +104,6 @@ Molmo2 stage-2 attachment decision at endpoint — now EXECUTABLE via the seam-s
 
 ---
 
-**`idea4-f-then-joint-prereg-draft`** · `cpu`
-
-#4 F-then-joint escalation rung — pre-reg DRAFT (CPU; the APT-named recipe, papers/apt-expert-pretraining.md): warm-start a joint run (unfrozen trunk, seam per readout) from the F arm's converged expert instead of from noise; APT…
-
-**boundary:** opens after the #4 attach-screen frozen reads (~08-09+); the draft is CPU work at any GPU-busy window AFTER Delta_seam is banked; execution needs its own posted pre-reg + owner-visible queue entry | 12:4xZ 08-09: Delta_seam readout will NOT arrive (owner killed K); draft basis re-anchors on F-arm curves + the 4x step-cost fact — joint-anything must now argue against that cost. Stays blocked pending stage-2 decision memo.
-
-<details><summary>full record</summary>
-
-#4 F-then-joint escalation rung — pre-reg DRAFT (CPU; the APT-named recipe, papers/apt-expert-pretraining.md): warm-start a joint run (unfrozen trunk, seam per readout) from the F arm's converged expert instead of from noise; APT grid says +8..+26 pts over frozen in their regime, and an F~K tie makes this the next discriminating contrast (initialization, not seam). Draft ONLY after the seam screen reads out: matched steps/effective batch vs the screen arms, Delta vs both F and K endpoints, trunk-drift band inherited from K's read 4
-
-</details>
-
----
-
 **`arm-a-img280`** · `gpu-box` · **⛔ owner hold**
 
 arch-batch arm A img280 40k (box) — HELD: fresh owner go required before launch
@@ -144,7 +130,7 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 
 ---
 
-## ✅ Done (72)
+## ✅ Done (73)
 
 *closed — the full record stays in each fold*
 
@@ -885,6 +871,20 @@ draws10_t1 frozen-read script — SCRIPT LANDED 2026-08-07 ~07:5xZ (draws10_t1_r
 <details><summary>full record</summary>
 
 draws10_t1 frozen-read script — SCRIPT LANDED 2026-08-07 ~07:5xZ (draws10_t1_results.py: reads 1-5 one command, oracle-gated all branches + 11 hard-abort guards; q4-fallback index join + molmo2-arm explicit paths supported)
+
+</details>
+
+---
+
+**`molmo2-stage2-attachment-decision`** · `cpu`
+
+Molmo2 stage-2 attachment decision at endpoint — now EXECUTABLE via the seam-screen pre-reg (2026-08-07-prereg-molmo2-attach-screen.md: frozen vs KI-joint is the first measurement; the depth-of-reads arm stays open for its own sc…
+
+**boundary:** STEER WINDOW CLOSED 04:57Z 08-09 into the named default (posted 04:42Z, Discord read clean at 04:56Z boot): arm F LAUNCHED 04:57:51Z. The decision itself now lands at the screen readout: Delta_seam frozen read (attach_seam_results.py) after BOTH arms + their panel_v2 evals complete; blocked on idea4-attach-screen-execution | RE-SCOPED 12:4xZ 08-09 (owner killed K): decision basis = F arm only (panel_v2 banked, state-copy beaten decisively) + production frozen-first votes (RDT2, Qwen-VLA) — no Delta_seam number. Write the decision memo from banked artifacts (CPU); if a seam number is ever wanted, pre-register a CHEAPER matched read (short-K or CE-probe-only) as a separate item. AFTER the docs pass (owner prio). | DONE 13:5xZ 08-09: decision memo posted (posts/2026-08-09-molmo2-stage2-attachment-decision.md) — FROZEN DEFAULT STANDS for the Molmo2 trunk class; KI-joint closed-unmeasured (F panel 9.4157 vs state-copy 11.7639; 8 matched probes K-F mean +0.208; measured 4.11x step cost; RDT2 + Qwen-VLA frozen-first votes). Delta_seam@3750 rescue read priced ~2.5 GPU-h, needs own pre-reg. Chart + ledger + ideas.md updated.
+
+<details><summary>full record</summary>
+
+Molmo2 stage-2 attachment decision at endpoint — now EXECUTABLE via the seam-screen pre-reg (2026-08-07-prereg-molmo2-attach-screen.md: frozen vs KI-joint is the first measurement; the depth-of-reads arm stays open for its own screen); owner steer window before the screen launches
 
 </details>
 

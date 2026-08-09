@@ -1,4 +1,4 @@
-# 4. Stage-2 follow-ups (flow expert on AR trunk) — `screening` (attachment seam screen PRE-REGISTERED 2026-08-07 ~05:1xZ)
+# 4. Stage-2 follow-ups (flow expert on AR trunk) — `decided` (frozen default ADOPTED 2026-08-09; arm 1 depth-of-reads + F-then-joint rung stay open)
 
 *Tag: `seam-screen` · idea #4 · [index](../ideas.md)*
 
@@ -312,3 +312,23 @@ matched steps.
   week whose first move protects the trunk from a random-init
   expert; ledger context only, the frozen read still decides on our
   own numbers.
+- **DECISION 2026-08-09 ~13:5xZ
+  ([memo](../posts/2026-08-09-molmo2-stage2-attachment-decision.md)):
+  the frozen default STANDS — sequential hard-freeze is the stage-2
+  attachment recipe for the Molmo2 trunk class; KI-joint
+  closed-unmeasured (not falsified).** The screen ended with one
+  complete arm (owner killed K at ~4160 on cost, 12:38Z). Basis: F
+  valid (panel 9.4157 vs state-copy 11.7639, −2.35 ≥ the 1.0
+  decisive bar; cond-sens 0.828); 8 matched in-run probe evals show
+  no K advantage (K−F mean +0.208, K ahead 2/8) with K's CE branch
+  healthy throughout (2.6–2.8 vs phase-1 tail ~3.68 — trunk fine,
+  still not paying); measured cost 4.11× (3.782 vs 0.920 s/step);
+  production frozen-first votes (RDT2, Qwen-VLA). Wall-OSS reading
+  recorded: phase-1 CE already routed the action gradients. Binds:
+  full-length stage-2 on this trunk attaches FROZEN on the pinned
+  surface (taps 12@stride3, h1024×12), pre-reg cites the memo;
+  scale caveat carried (re-screen on trunk/scale change). Residuals
+  priced: Δ_seam@3750 from retained checkpoints ~2.5 GPU-h (own
+  pre-reg, rescue-only); F-then-joint draft must argue vs the 4×
+  joint-step cost; AEGIS repair unbanked-never (its trigger outcome
+  can no longer occur); arm 1 depth-of-reads untouched.
