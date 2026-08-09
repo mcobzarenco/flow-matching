@@ -67,7 +67,12 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   150-step memory smoke + amendment post + owner go, window
   post-attach-screen.
 - **`aux-subgoals` [#6 Aux attribution](ideas/06-aux-attribution.md)** —
-  `confirmed` (aux HELPS actions, +0.462 cost when off). **Rung (a)
+  `confirmed` (aux HELPS actions, +0.462 cost when off).
+  **CONSOLIDATED REPORT 2026-08-09
+  ([Conditioning on words](posts/2026-08-09-fieldcond-subgoal-report.md),
+  owner ask 13:21Z 08-08): the whole thread — aux attribution,
+  rung (a), fields tables both trunks, mined ambiguous frames,
+  (b)/(b′) ladder + priced escalations — on one chart-led page.** **Rung (a)
   self-subgoal probe READ OUT 2026-08-08
   ([results](posts/2026-08-08-selfsubgoal-results.md)): the slot is
   ALIVE — Δ_oracle −0.290 [CI −0.331, −0.225], 6× late-horizon,

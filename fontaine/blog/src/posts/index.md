@@ -68,3 +68,4 @@ corrections are follow-up posts.
 - [2026-08-09 — Subgoal-draws rung (b′) FALSIFIED: better subgoals exist, the scorer anti-selects (#6)](2026-08-09-subgoal-draws-cleanlist-results.md)
 - [2026-08-09 — Molmo2 60k continuation IMPROVED −0.139 paired; attach screen repoints to step_060000](2026-08-09-molmo2-60k-results.md)
 - [2026-08-09 — Accuracy by field: Molmo2's aux head reads the scene far better — visible slots 0.32 → 0.82](2026-08-09-molmo2-fields-panel-results.md)
+- [2026-08-09 — Conditioning on words: what the subgoal channel actually buys (consolidated report, #6)](2026-08-09-fieldcond-subgoal-report.md)

@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T01:00:00+00:00
+**Updated:** 2026-08-09T01:21:00+00:00
 
-**Depth call:** depth 3 at 01:0xZ 08-09: fields panel LIVE (box, rc=0 ~02:0xZ); queued: molmo2-perf-pass1-exec (box ladder, post-fields-panel), idea4-attach-k-smoke-ladder re-run at 60k warm start (repoint amendment 3 executed this session), fieldcond-subgoal-meta-report (CPU); closed this session: idea6 cleancand rung (E6 falsified NO-SCORER) + molmo2-continuation-60k (IMPROVED, repoint executed)
+**Depth call:** depth 2 at 01:3xZ 08-09: perfpass1_box ladder LIVE (box, launched 01:04Z, ~2.5-3 GPU-h <= 3, readout this session or chained); queued next: idea4-attach-k-smoke-ladder re-run at 60k warm start (box, after perf-pass1) -> owner steer window (stage-2 attachment decision) -> attach arms; closed this session: fieldgen-accuracy-eval (fields readout, visible 0.319->0.819) + fieldcond-subgoal-meta-report (consolidated report landed)
 
-**10 open** (Live 0 · Queued 2 · Blocked 8 · Done 51)
+**9 open** (Live 0 · Queued 2 · Blocked 7 · Done 52)
 
 ## 🔴 Live (0)
 
@@ -18,15 +18,15 @@
 
 *ready — waiting on a window or a boundary*
 
-**`fieldcond-subgoal-meta-report`** · `cpu`
+**`idea4-attach-k-smoke-ladder`** · `gpu-box`
 
-OWNER STEERING 08-08 13:21Z: consolidated chart-led meta-report on field conditioning + ALL aux-subgoal idea work (title must NOT say 'visual report'
+#4 K-arm smoke memory ladder script — SCRIPT LANDED 08-07 ~06:5xZ (smoke_attach_k_ddp4.sh: exact K recipe verbatim incl
 
-**boundary:** CPU work at any window; natural slot after fieldgen-accuracy-eval closes (60k close ~23Z 08-08) so the report includes the fields-panel numbers, but drafting structure/frame-mining can start any time
+**boundary:** QUEUED 2026-08-09 01:3xZ (fields panel closed, perf-pass1 ladder live and time-boxed ~2.5-3 GPU-h): next box claim after perfpass1_box exits — run smoke_attach_k_ddp4.sh at the 60k warm start (repoint amendment 3 executed 00:5xZ); green -&gt; owner steer window (molmo2-stage2-attachment-decision) -&gt; arms sequential F then K · [pre-reg](posts/2026-08-07-prereg-molmo2-attach-screen.md)
 
 <details><summary>full record</summary>
 
-OWNER STEERING 08-08 13:21Z: consolidated chart-led meta-report on field conditioning + ALL aux-subgoal idea work (title must NOT say 'visual report' — charts/visual aids are the default treatment, per standing preference): synthesize the fieldgen/field-conditioning thread + subgoal-conditioning ideas (#6 rungs, selfsubgoal probe, goldenticket lineage where it feeds subgoals) into one page; MUST include specific interesting episode frames comparing the effect of subgoal conditioning — prioritize frames where the right action is ambiguous from the image alone (e.g. start-vs-end of episode indistinguishable, goal not visible from the parked position); values/frames from banked reports + banked episode data only | FRAME-MINING PROTOCOL PINNED (lit 08-08, papers/observation-aliasing.md, 2605.14712's aliasing diagnostic run in reverse): embed episode frames with a frozen on-disk vision tower, NN-retrieve, flag frames close in embedding but DIVERGENT in ground-truth continuation (action-chunk distance / embedding distance ranking) — these are the ambiguous frames the owner asked for, found automatically; central chart = does the per-frame subgoal-conditioning delta (conditioned vs subgoal-dropped) CONCENTRATE on flagged frames (concentration = disambiguation mechanism, published shape 9%-&gt;45.8%; no concentration = style/dataset prior — either way a claim, not an anecdote) | FRAME-MINING EXECUTED 08-08 15:5xZ (fontaine/scripts/frame_mining.py, post 2026-08-08-framemining-aliased-frames.md): 17,204 core frames embedded with the frozen Gemma-4 E2B tower (AR-100k's own frozen eye, alignment oracle every row), within-dataset NN mining banked (analysis__framemining_ar100k_k4l2.json + flagged npz + contact sheet of 12 mined pairs). CENTRAL READ IS A NULL: flagged-vs-rest Delta_oracle -0.003 [CI -0.205,+0.176], Spearman -0.01/14,064 frames — the subgoal gain is FLAT across aliasing (except near-zero on the least-aliased decile, -0.04 post-hoc); the report's story becomes 'uniform prior/guidance, not disambiguation', with the +29% aliased-frame error floor (miner validated, rho 0.41 vs baseline MAE) as the history-arm prize (#11). REMAINING for the report: compose with fields-panel numbers post-23Z + banked report values; charts + contact sheet already in blog img/framemining/ | STRUCTURE DRAFTED 08-08 19:4xZ (fontaine/drafts/fieldcond-subgoal-meta-report-structure.md): 6-section skeleton + full banked-artifact map (inventory swept), title candidate pinned, chart list split new-render vs reuse; open slots marked for the two pending inputs (fields-panel 60k half, (b') stage-2 verdict). Composition remains post-fields-panel
+#4 K-arm smoke memory ladder script — SCRIPT LANDED 08-07 ~06:5xZ (smoke_attach_k_ddp4.sh: exact K recipe verbatim incl. --activation-checkpointing, 150 steps/rung w/ eval+save exercised, rungs B12c6-&gt;B8c4-&gt;B6c3 at pinned chunk-microbatch 2, pass = rc0 AND max vram_alloc_peak_gib &lt;= 71.0 from the jsonl, nvidia-smi peak advisory; green writes fontaine/harness/state/k_mem_ready record + echoes the K_MEM_READY=1 BATCH/BACKWARD_CHUNKS launch line; sub-B12 green = MATCHED DOWNSHIFT both arms loudly echoed; all-red = no marker, owner steer). REMAINING: RUN the ladder on the box after it frees
 
 </details>
 
@@ -36,17 +36,17 @@ OWNER STEERING 08-08 13:21Z: consolidated chart-led meta-report on field conditi
 
 molmo2 perf pass 1 EXECUTION (gpu-local, &lt;= 3 GPU-h): per the finalized pre-reg
 
-**boundary:** BOX ladder (~2.5-3 GPU-h) opens post-60k-close + chained eval + fields panel (~23Z+); needs worktree perf-pass1 on the box (prereq in launcher header); P1 gate status adjudicated by owner amendment or stays dropped; LANDING after ladder verdict per frozen rules · [pre-reg](posts/2026-08-08-prereg-molmo2-perf-pass1.md)
+**boundary:** EXECUTING since 01:04Z 08-09; rc ~03:3x-04:0xZ est (5 runs + loads); readout = unit's OVERLAY + LADDER(BOX) lines, decision per frozen rules (C&gt;=5% -&gt; land post-evals); P1 stays DROPPED absent owner relative-bound amendment · [pre-reg](posts/2026-08-08-prereg-molmo2-perf-pass1.md)
 
 <details><summary>full record</summary>
 
-molmo2 perf pass 1 EXECUTION (gpu-local, &lt;= 3 GPU-h): per the finalized pre-reg — (1) branch perf-pass1 with the four pinned changes (P1 suffix cuDNN training-only scope, P2 windowed vram peak + lifetime max kept, P3a-c sync removals, P4 clone drop); (2) parity oracles per item (P1 loss&lt;=1e-3/gradnorm&lt;=1e-2 + 50-step overlay + decode byte-match; P3b wte bitwise both regimes; P3c CPU loss-oracle re-pin sum-form only, mean-form UNCHANGED; P4 bitwise grads), failing item drops, no re-tolerancing; (3) bench ladder A=HEAD B=+P1 C=bundle, 320 steps each single local H100, 60k data recipe, median s_per_step over last 240 + vram guard &gt;2% fails; (4) decision: C&gt;=5% -&gt; land post-evals, &lt;5% -&gt; P2+bitwise-free items only; box 4-GPU transfer smoke 0.3 GPU-h before first adopting lineage launch. check.py + oracles green before the landing commit. | EXECUTING 08-08 14:2xZ (owner prio 14:10Z): branch perf-pass1 (P1=00cdafe, full=22e8148, check.py green both), BITWISE ORACLE GREEN 118/118 hashes (perf_pass1_bitwise_oracle.py HEAD-vs-branch), ladder unit fontaine-perfpass1-bench live on local GPU (perf_pass1_bench.sh: parity A/B 50-step + bench A/B/C 320-step). AMENDMENT: batch 8 + chunks 4 (single-GPU unshards ZeRO-1 optimizer ~+11GiB, 12 would OOM; chunks must divide batch; per-chunk size 2 preserved) | LOCAL PHASE CLOSED 15:0xZ: one-step parity ran (grad-norm PASS rel 8.1e-3&lt;=1e-2, no cuDNN crash; LOSS BOUND FAILED AS BANKED |d|=8.70e-3 vs frozen 1e-3 abs = 5.1e-4 RELATIVE at init-scale loss 16.9 — calibration flaw owned in-channel, P1 dropped unless owner approves a relative-bound amendment BEFORE the box ladder). Single-GPU full-recipe bench proven structurally OOM (78.2/79.18 by step 2, batch-invariant). BONUS FIND: --activation-checkpointing crashes on CUDA (recompute escapes sdpa_kernel pin -&gt; backend mismatch abort; filed idea #20, prerequisite fix named). Ladder+overlay moved to box TRUE recipe: fontaine/scripts/box/perf_pass1_bench_box_ddp4.sh (supersedes transfer smoke)
+molmo2 perf pass 1 EXECUTION (gpu-local, &lt;= 3 GPU-h): per the finalized pre-reg — (1) branch perf-pass1 with the four pinned changes (P1 suffix cuDNN training-only scope, P2 windowed vram peak + lifetime max kept, P3a-c sync removals, P4 clone drop); (2) parity oracles per item (P1 loss&lt;=1e-3/gradnorm&lt;=1e-2 + 50-step overlay + decode byte-match; P3b wte bitwise both regimes; P3c CPU loss-oracle re-pin sum-form only, mean-form UNCHANGED; P4 bitwise grads), failing item drops, no re-tolerancing; (3) bench ladder A=HEAD B=+P1 C=bundle, 320 steps each single local H100, 60k data recipe, median s_per_step over last 240 + vram guard &gt;2% fails; (4) decision: C&gt;=5% -&gt; land post-evals, &lt;5% -&gt; P2+bitwise-free items only; box 4-GPU transfer smoke 0.3 GPU-h before first adopting lineage launch. check.py + oracles green before the landing commit. | EXECUTING 08-08 14:2xZ (owner prio 14:10Z): branch perf-pass1 (P1=00cdafe, full=22e8148, check.py green both), BITWISE ORACLE GREEN 118/118 hashes (perf_pass1_bitwise_oracle.py HEAD-vs-branch), ladder unit fontaine-perfpass1-bench live on local GPU (perf_pass1_bench.sh: parity A/B 50-step + bench A/B/C 320-step). AMENDMENT: batch 8 + chunks 4 (single-GPU unshards ZeRO-1 optimizer ~+11GiB, 12 would OOM; chunks must divide batch; per-chunk size 2 preserved) | LOCAL PHASE CLOSED 15:0xZ: one-step parity ran (grad-norm PASS rel 8.1e-3&lt;=1e-2, no cuDNN crash; LOSS BOUND FAILED AS BANKED |d|=8.70e-3 vs frozen 1e-3 abs = 5.1e-4 RELATIVE at init-scale loss 16.9 — calibration flaw owned in-channel, P1 dropped unless owner approves a relative-bound amendment BEFORE the box ladder). Single-GPU full-recipe bench proven structurally OOM (78.2/79.18 by step 2, batch-invariant). BONUS FIND: --activation-checkpointing crashes on CUDA (recompute escapes sdpa_kernel pin -&gt; backend mismatch abort; filed idea #20, prerequisite fix named). Ladder+overlay moved to box TRUE recipe: fontaine/scripts/box/perf_pass1_bench_box_ddp4.sh (supersedes transfer smoke) | BOX LADDER EXECUTING 01:04Z 08-09 (unit fontaine-perfpass1-box; overlay_A done 01:14Z, 5 sequential runs; babysit entry perfpass1_box live)
 
 </details>
 
 ---
 
-## 🟡 Blocked (8)
+## 🟡 Blocked (7)
 
 *waiting on a prerequisite, a boundary, or the owner*
 
@@ -132,20 +132,6 @@ Molmo2 stage-2 attachment decision at endpoint — now EXECUTABLE via the seam-s
 
 ---
 
-**`idea4-attach-k-smoke-ladder`** · `gpu-box`
-
-#4 K-arm smoke memory ladder script — SCRIPT LANDED 08-07 ~06:5xZ (smoke_attach_k_ddp4.sh: exact K recipe verbatim incl
-
-**boundary:** REPOINTED 2026-08-09 00:5xZ (60k read IMPROVED -0.1388 [CI -0.194,-0.090], analysis__molmo2_60k_vs_40k_k4l2.json; attach pre-reg amendment 3): warm-start = fontaine_molmo2_ar_60k_ddp4/step_060000, launchers + smoke ladder + attach_seam_results drift comparator repointed (oracle green). Opens: K-smoke ladder re-run GREEN at the 60k warm start (box, after fields panel + perf-pass1 window) -&gt; then owner steer window (molmo2-stage2-attachment-decision) -&gt; arms sequential F then K. Ladder itself is the next box item after perf-pass1. · [pre-reg](posts/2026-08-07-prereg-molmo2-attach-screen.md)
-
-<details><summary>full record</summary>
-
-#4 K-arm smoke memory ladder script — SCRIPT LANDED 08-07 ~06:5xZ (smoke_attach_k_ddp4.sh: exact K recipe verbatim incl. --activation-checkpointing, 150 steps/rung w/ eval+save exercised, rungs B12c6-&gt;B8c4-&gt;B6c3 at pinned chunk-microbatch 2, pass = rc0 AND max vram_alloc_peak_gib &lt;= 71.0 from the jsonl, nvidia-smi peak advisory; green writes fontaine/harness/state/k_mem_ready record + echoes the K_MEM_READY=1 BATCH/BACKWARD_CHUNKS launch line; sub-B12 green = MATCHED DOWNSHIFT both arms loudly echoed; all-red = no marker, owner steer). REMAINING: RUN the ladder on the box after it frees
-
-</details>
-
----
-
 **`idea4-attach-screen-execution`** · `gpu-box`
 
 #4 attachment seam screen execution (box, 4xDDP, sequential F then K): F frozen-trunk vs K KI-joint (phase-1 CE verbatim + stop-grad seam, alpha=1) at matched 10k steps / eff-48 from the 40k endpoint; residual surface constant; g…
@@ -160,7 +146,7 @@ Molmo2 stage-2 attachment decision at endpoint — now EXECUTABLE via the seam-s
 
 ---
 
-## ✅ Done (51)
+## ✅ Done (52)
 
 *closed — the full record stays in each fold*
 
@@ -173,6 +159,20 @@ OWNER STEERING 08-08 16:20-16:22Z: rework the frame-mining report's contact shee
 <details><summary>full record</summary>
 
 OWNER STEERING 08-08 16:20-16:22Z: rework the frame-mining report's contact sheet into one figure per mined pair — 3 panels per row (query image, neighbor image, action-chunk chart w/ both ground-truth trajectories overlaid), all 12 pairs sequential w/ captions, each frame's SUBGOAL label included — EXECUTED same session ~16:2x-16:3xZ (caught at the 16:25Z babysit poll, ~5 min latency; ack + delivery posted in-channel): frame_mining.py `figures` subcommand (house palette, alignment guard flagged-npz vs panel rows, subgoal_text per frame), 12 pair_NN.png + pair_figures.md captions snippet inlined into the post, contact sheet retired from the post (file kept banked); blog built + Space pushed, post 200 + image bytes verified
+
+</details>
+
+---
+
+**`fieldcond-subgoal-meta-report`** · `cpu`
+
+OWNER STEERING 08-08 13:21Z: consolidated chart-led meta-report on field conditioning + ALL aux-subgoal idea work (title must NOT say 'visual report'
+
+**boundary:** closed 2026-08-09; owner-review window open — escalation picks in section 5/6 each need their own pre-reg
+
+<details><summary>full record</summary>
+
+OWNER STEERING 08-08 13:21Z: consolidated chart-led meta-report on field conditioning + ALL aux-subgoal idea work (title must NOT say 'visual report' — charts/visual aids are the default treatment, per standing preference): synthesize the fieldgen/field-conditioning thread + subgoal-conditioning ideas (#6 rungs, selfsubgoal probe, goldenticket lineage where it feeds subgoals) into one page; MUST include specific interesting episode frames comparing the effect of subgoal conditioning — prioritize frames where the right action is ambiguous from the image alone (e.g. start-vs-end of episode indistinguishable, goal not visible from the parked position); values/frames from banked reports + banked episode data only | FRAME-MINING PROTOCOL PINNED (lit 08-08, papers/observation-aliasing.md, 2605.14712's aliasing diagnostic run in reverse): embed episode frames with a frozen on-disk vision tower, NN-retrieve, flag frames close in embedding but DIVERGENT in ground-truth continuation (action-chunk distance / embedding distance ranking) — these are the ambiguous frames the owner asked for, found automatically; central chart = does the per-frame subgoal-conditioning delta (conditioned vs subgoal-dropped) CONCENTRATE on flagged frames (concentration = disambiguation mechanism, published shape 9%-&gt;45.8%; no concentration = style/dataset prior — either way a claim, not an anecdote) | FRAME-MINING EXECUTED 08-08 15:5xZ (fontaine/scripts/frame_mining.py, post 2026-08-08-framemining-aliased-frames.md): 17,204 core frames embedded with the frozen Gemma-4 E2B tower (AR-100k's own frozen eye, alignment oracle every row), within-dataset NN mining banked (analysis__framemining_ar100k_k4l2.json + flagged npz + contact sheet of 12 mined pairs). CENTRAL READ IS A NULL: flagged-vs-rest Delta_oracle -0.003 [CI -0.205,+0.176], Spearman -0.01/14,064 frames — the subgoal gain is FLAT across aliasing (except near-zero on the least-aliased decile, -0.04 post-hoc); the report's story becomes 'uniform prior/guidance, not disambiguation', with the +29% aliased-frame error floor (miner validated, rho 0.41 vs baseline MAE) as the history-arm prize (#11). REMAINING for the report: compose with fields-panel numbers post-23Z + banked report values; charts + contact sheet already in blog img/framemining/ | STRUCTURE DRAFTED 08-08 19:4xZ (fontaine/drafts/fieldcond-subgoal-meta-report-structure.md): 6-section skeleton + full banked-artifact map (inventory swept), title candidate pinned, chart list split new-render vs reuse; open slots marked for the two pending inputs (fields-panel 60k half, (b') stage-2 verdict). Composition remains post-fields-panel | COMPOSED + LANDED 2026-08-09 01:3xZ (posts/2026-08-09-fieldcond-subgoal-report.md, 'Conditioning on words: what the subgoal channel actually buys'): 6-section chart-led page per the drafted skeleton — S1 aux +0.462 load-bearing, S2 rung-(a) oracle -0.290/6x-late vs self -0.018, S3 fields tables BOTH trunks (visible 0.319-&gt;0.819 headline, narration-cost sign consistent), S4 four mined ambiguous-frame figures (start-vs-end, which-pen, phase, drawing) + the honest null stated loudly (gain does NOT concentrate, rho -0.01; +29% error floor = the #11 prize), S5 selection ladder (b) table-cost close + (b') NO-SCORER with priced 4-way escalation table (RoVer-supervised / uPRM set-joint / jerk priced-out / history-phase), S6 three pre-named open questions. All values from banked analysis jsons; draft skeleton file deleted per its own note
 
 </details>
 
