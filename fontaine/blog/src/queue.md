@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T13:54:00Z
+**Updated:** 2026-08-09T14:45:00Z
 
-**Depth call:** depth >=2 at 13:5xZ 08-09: adamc-100k-live (owner run, babysit to ~08-12) + f-then-joint pre-reg draft (unblocked by the stage-2 memo) + docs-pass-followups-0809 + lit-radar-hooks-0811a; stage-2 attachment decision DONE this session (memo posted)
+**Depth call:** depth >=2 at 14:4xZ 08-09: adamc-100k babysit to ~08-12 + idea4-fjoint-rung-finalize-exec (instrument CPU-ready) + boundary-incompat-read-npz (new, CPU) + docs-pass-followups-0809 + lit-radar-hooks-0812a (refilled); f-then-joint draft + SEAM/Robot-Critics lit slice both DONE this session
 
-**8 open** (Live 1 · Queued 3 · Blocked 4 · Done 73)
+**9 open** (Live 1 · Queued 4 · Blocked 4 · Done 75)
 
 ## 🔴 Live (1)
 
@@ -26,9 +26,51 @@ OWNER RUN LIVE (launched 13:30Z 08-09): fontaine_molmo2_adamc_100k_ddp4 — base
 
 ---
 
-## 🟢 Queued (3)
+## 🟢 Queued (4)
 
 *ready — waiting on a window or a boundary*
+
+**`lit-radar-hooks-0812a`** · `cpu`
+
+Lit slice (standing allocation): fresh-sweep hooks banked 08-09 14:4xZ, unread skim-class
+
+**boundary:** any GPU-busy window; adamc_100k babysit boundaries outrank it
+
+<details><summary>full record</summary>
+
+Lit slice (standing allocation): fresh-sweep hooks banked 08-09 14:4xZ, unread skim-class — Frequency-Aware Flow Matching 2606.20135 (continuous/consistent action generation: the SEAM boundary family from the TRAINING side; #22/#1); VISTA 2606.04708 (vision-grounded physics-validated UMI data adaptation — beside RDT2's 10k-h premise; #16/#9); latent-action-guided FM pair LAFP 2606.10517 + Flowing With Purpose 2606.23420 (latent-action bias on flow policies; #17/#12). Papers page(s) same session per the permanent rule; dup-check against the index tracker before writing
+
+</details>
+
+---
+
+**`boundary-incompat-read-npz`** · `cpu`
+
+#1/#22 boundary-incompatibility CPU read (record-only, SDN-read precedent
+
+**boundary:** CPU work at any GPU-busy window (pure function of banked npz); no gate; born from the SEAM read 08-09 (papers/seam-boundary-steering.md)
+
+<details><summary>full record</summary>
+
+#1/#22 boundary-incompatibility CPU read (record-only, SDN-read precedent — exploratory read on banked stacks, NO pre-reg needed, any escalation does): measure cross-chunk mode incompatibility from banked panel npz — for temporally adjacent panel frames of the same episode (Delta-t = a few ticks), compare earlier chunk's tail vs later chunk's head on their overlap (per-frame index join, the draws_fairness/SDN join pattern); quote vs within-chunk smoothness as the anchor. AUDIT FIRST per standing rule: check which panel plans place multiple ordered frames per episode close enough to overlap at chunk 50, and whether flow + AR stacks both qualify. Oracle-gate on synthetic fixtures (planted compatible/incompatible chunk pairs in/out; degenerate same-frame overlap must read exactly 0). A null (chunks already agree at the seam) closes the #22 bridging direction for our stack at zero GPU cost; a real signal is the design input for any SEAM/PAINT-class arm at the #16 rig bench
+
+</details>
+
+---
+
+**`idea4-fjoint-rung-finalize-exec`** · `gpu-box`
+
+#4 F-then-joint rung FINALIZE + EXECUTE (per the posted DRAFT posts/2026-08-09-prereg-fjoint-rung.md): (1) CPU instrument, oracle-gated, any GPU-busy window
+
+**boundary:** instrument = CPU work at any GPU-busy window from now; LAUNCH gated on owner go (draft finalization condition 2) + box free after the adamc_100k endpoint + chained panel (~08-12 ~17:00Z+); sequencing vs the adamc stage-2 frozen attach is an owner call at finalization — do NOT launch on the default · [pre-reg](posts/2026-08-09-prereg-fjoint-rung.md)
+
+<details><summary>full record</summary>
+
+#4 F-then-joint rung FINALIZE + EXECUTE (per the posted DRAFT posts/2026-08-09-prereg-fjoint-rung.md): (1) CPU instrument, oracle-gated, any GPU-busy window — composite warm-start materializer (F@10k + phase-1 rider tables from the 60k endpoint expert.safetensors + config section; oracles: expert bytes == F@10k, rider bytes == phase-1 tables, --init-from --joint-ce round-trip), naive-joint guard escape (opt-in flag; refusal verbatim-preserved without it; negative-control oracle becomes the positive contract), materialize_joint_ar_view.py compat vs J checkpoints on the fixture family; (2) at finalization: owner go + the rung-vs-adamc-attach sequencing question posted in-channel; (3) box execution post-adamc-endpoint (~08-12 17Z+): J-config B12c6 memory smoke 150 steps, then F2 first (0.92 s/step measured) then J (~4.0 assumed from K 3.782 measured), 5k phase ceiling 35 GPU-h, babysit entries at launch; reads via attach_seam_results.py explicit stems + drift AR-view panel
+
+</details>
+
+---
 
 **`docs-pass-followups-0809`** · `cpu`
 
@@ -39,34 +81,6 @@ Docs pass tail (from the 08-09 staleness audit, deferred at my discretion): (1) 
 <details><summary>full record</summary>
 
 Docs pass tail (from the 08-09 staleness audit, deferred at my discretion): (1) sweep agent-internal vocabulary out of shipped bijou/ source comments (eval/leakage.py 'fontaine/charter.md', eval/subgoal_scoring.py '#6 rung (b)', train.py 'K arm of the attach-screen'/'#20'); (2) architecture.md S6: enumerate the eval-system surface (frozen sample plans, --dump-draws, noise tickets, --mask-state, subgoal modes, --smolvla baseline, leakage checker) + full rollout flag docs (or rewrite rollout_so101.md properly); (3) S1: a real Molmo2 prompt-format subsection (ChatML, image hoisting, id 151645 bos) instead of the pointer note; (4) confirm docs/notes/2026-08-06 S3 failing-test claim resolved; (5) wandb API key rotation still owed (S8 hygiene note).
-
-</details>
-
----
-
-**`lit-radar-hooks-0811a`** · `cpu`
-
-Lit slice (standing allocation): clear the 08-09 second sweep's banked hooks
-
-**boundary:** any GPU-busy window; K endpoint chain (~18:3xZ 08-09) outranks it when it opens
-
-<details><summary>full record</summary>
-
-Lit slice (standing allocation): clear the 08-09 second sweep's banked hooks — SEAM 2607.04609 (smooth execution of action-chunked motion: adjacent independently-sampled chunks pick incompatible modes -&gt; boundary discontinuities; directly on the #1/#22 boundary-jerk open term the SDN read left unmeasured) + Robot Critics 2606.21572 skim-to-place (#6/#19 verifier family; read or drop). Papers page(s) same session per the permanent rule
-
-</details>
-
----
-
-**`idea4-f-then-joint-prereg-draft`** · `cpu`
-
-#4 F-then-joint escalation rung — pre-reg DRAFT (CPU; the APT-named recipe, papers/apt-expert-pretraining.md): warm-start a joint run (unfrozen trunk, seam per readout) from the F arm's converged expert instead of from noise; APT…
-
-**boundary:** opens after the #4 attach-screen frozen reads (~08-09+); the draft is CPU work at any GPU-busy window AFTER Delta_seam is banked; execution needs its own posted pre-reg + owner-visible queue entry | 12:4xZ 08-09: Delta_seam readout will NOT arrive (owner killed K); draft basis re-anchors on F-arm curves + the 4x step-cost fact — joint-anything must now argue against that cost. Stays blocked pending stage-2 decision memo. | UNBLOCKED 13:5xZ 08-09: the stage-2 decision memo is the replacement basis (frozen adopted; joint-anything must argue vs the measured 4.11x joint-step cost). CPU draft at any GPU-busy window; natural target = the adamc_100k endpoint (~08-12); execution still needs posted pre-reg + owner go.
-
-<details><summary>full record</summary>
-
-#4 F-then-joint escalation rung — pre-reg DRAFT (CPU; the APT-named recipe, papers/apt-expert-pretraining.md): warm-start a joint run (unfrozen trunk, seam per readout) from the F arm's converged expert instead of from noise; APT grid says +8..+26 pts over frozen in their regime, and an F~K tie makes this the next discriminating contrast (initialization, not seam). Draft ONLY after the seam screen reads out: matched steps/effective batch vs the screen arms, Delta vs both F and K endpoints, trunk-drift band inherited from K's read 4
 
 </details>
 
@@ -130,9 +144,23 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 
 ---
 
-## ✅ Done (73)
+## ✅ Done (75)
 
 *closed — the full record stays in each fold*
+
+**`lit-radar-hooks-0811a`** · `cpu`
+
+Lit slice (standing allocation): clear the 08-09 second sweep's banked hooks
+
+**boundary:** any GPU-busy window; K endpoint chain (~18:3xZ 08-09) outranks it when it opens | EXECUTED 14:3x-14:4xZ 08-09 (adamc_100k shadow): SEAM 2607.04609 deep-read + papers page SAME SESSION (seam-boundary-steering.md) — closed-form lambda(1-t) nudge toward the previous chunk unexecuted tail, +1% cost, jerk -28% success preserved (vs RTC -54%@1.22x, ACT-TE -84% but success -12pts); #22 arm order updated (SEAM ahead of PAINT on cost, PAINT stays the async-robust one); NEW free hook banked = boundary-incompatibility CPU read on banked panel npz (split to boundary-incompat-read-npz). Robot Critics 2606.21572 skim-to-place DONE + compact page (robot-critics-small-stuff.md): trained-critic pole placed and PARKED (needs rollout labels + video model; ceiling reads cap payoff). Fresh sweep hooks banked to lit-radar-hooks-0812a.
+
+<details><summary>full record</summary>
+
+Lit slice (standing allocation): clear the 08-09 second sweep's banked hooks — SEAM 2607.04609 (smooth execution of action-chunked motion: adjacent independently-sampled chunks pick incompatible modes -&gt; boundary discontinuities; directly on the #1/#22 boundary-jerk open term the SDN read left unmeasured) + Robot Critics 2606.21572 skim-to-place (#6/#19 verifier family; read or drop). Papers page(s) same session per the permanent rule
+
+</details>
+
+---
 
 **`lit-radar-hooks-0810b`** · `cpu`
 
@@ -731,6 +759,20 @@ Standing lit slice (~20-30 min, owner allocation 2026-08-05): async/overlapped-c
 <details><summary>full record</summary>
 
 #19 dT diagnostic read EXECUTED 23:09Z 08-07: monotone table chunk 6.5004/6.5668/6.7812/7.1843 at T=0.5/0.7/1.0/1.3 (record-only, primary stays T=1.0; T=1.3-asymmetry prior confirmed); babysit entry pruned, local GPU confirmed free; ledger entry on idea page 19 + Discord line
+
+</details>
+
+---
+
+**`idea4-f-then-joint-prereg-draft`** · `cpu`
+
+#4 F-then-joint escalation rung — pre-reg DRAFT (CPU; the APT-named recipe, papers/apt-expert-pretraining.md): warm-start a joint run (unfrozen trunk, seam per readout) from the F arm's converged expert instead of from noise; APT…
+
+**boundary:** opens after the #4 attach-screen frozen reads (~08-09+); the draft is CPU work at any GPU-busy window AFTER Delta_seam is banked; execution needs its own posted pre-reg + owner-visible queue entry | 12:4xZ 08-09: Delta_seam readout will NOT arrive (owner killed K); draft basis re-anchors on F-arm curves + the 4x step-cost fact — joint-anything must now argue against that cost. Stays blocked pending stage-2 decision memo. | UNBLOCKED 13:5xZ 08-09: the stage-2 decision memo is the replacement basis (frozen adopted; joint-anything must argue vs the measured 4.11x joint-step cost). CPU draft at any GPU-busy window; natural target = the adamc_100k endpoint (~08-12); execution still needs posted pre-reg + owner go. | DONE 14:2xZ 08-09 work session: pre-reg DRAFT posted (posts/2026-08-09-prereg-fjoint-rung.md) — J (unfrozen, no stop-grad, CE rider, warm-start from banked F@10k expert) vs F2 (frozen continuation control), matched +5k eff-48 shared fresh seed 2, primary Delta_joint paired CI, conditional 10k extension, adoption bar -0.3, drift band 0.3 vs 60k 5.8602; committed ~32 GPU-h ceiling 35 (extension -&gt; global 70), J rate anchored on K measured 3.782 s/step; 4x-cost burden argued up front (bounded final phase, not a lineage). Code audit: --init-from does the warm-start; instrument gaps named (composite materializer, naive-joint guard escape narrowly scoped, AR-view compat, J-config memory smoke). Finalize+execute split to idea4-fjoint-rung-finalize-exec. · [pre-reg](posts/2026-08-09-prereg-fjoint-rung.md)
+
+<details><summary>full record</summary>
+
+#4 F-then-joint escalation rung — pre-reg DRAFT (CPU; the APT-named recipe, papers/apt-expert-pretraining.md): warm-start a joint run (unfrozen trunk, seam per readout) from the F arm's converged expert instead of from noise; APT grid says +8..+26 pts over frozen in their regime, and an F~K tie makes this the next discriminating contrast (initialization, not seam). Draft ONLY after the seam screen reads out: matched steps/effective batch vs the screen arms, Delta vs both F and K endpoints, trunk-drift band inherited from K's read 4
 
 </details>
 

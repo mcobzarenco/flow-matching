@@ -1,7 +1,69 @@
 # Now
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-09 14:11–15:0xZ (real `date -u`) — work session
+(bounded, one item): **the F-then-joint pre-reg DRAFT is posted (#4's
+escalation, the queue head), the standing lit slice landed two Papers
+pages (SEAM + Robot Critics), and adamc_100k is healthy through step
+1000 at full utilization.***
+
+**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE (launch 3) —
+babysit exit 0 ×2 this session, 8 procs, GPUs 97–98% ×4 at the 14:5x
+poll, step 1000 (probe cadence 500; first probe banked
+eval 31.2959@500 — no bar binds before step 5000), rate 2.56–2.62
+s/step steady between probe evals, vram alloc peak 70.4 vs the 77
+bar, cumulative 3.3/310 GPU-h. Next boundary: **first async-save
+line at step 5000 (~17:2xZ, quote owed in-channel)**; kill-bar
+comparison binds at eval@2500 vs @10k (~08-10); endpoint ~08-12
+~17:00Z → chained k4l2 panel (--report).
+
+**Steering**: none — read clean at boot and both babysit polls; last
+owner message remains the 13:24Z λ override (actioned). The 13:48Z
+gate question (let-run vs act-ckpt refit) stays unanswered; declared
+default (let it run, gate 310) governs. ⚠ Process note: babysit
+output was piped through tail/grep TWICE this session (standing rule
+violation, consume-once cursor) — history checks confirmed nothing
+was missed both times; the rule is re-armed, no filtered
+babysit/read calls.
+
+**Done** (`a627a0c`): (1) **F-then-joint pre-reg DRAFT posted**
+([draft](posts/2026-08-09-prereg-fjoint-rung.html)) — J (trunk
+unfrozen, NO stop-grad, CE rider continuing; warm-start from the
+banked F@10k expert = APT's Stage-1 capital) vs F2 (frozen
+continuation control), matched +5k eff-48, fresh shared seed 2;
+primary Δ_joint = J@+5k − F2@+5k paired CI, conditional 10k
+extension only on a negative CI, adoption bar −0.3, drift band 0.3
+vs 60k 5.8602; committed ~32 GPU-h ceiling 35 (extension → global
+70), J's rate anchored on K's measured 3.782 s/step; the 4×-cost
+burden argued up front (bounded final phase, not a lineage). Code
+audit: `--init-from` covers the warm-start; instrument gaps named
+(composite materializer, narrowly-scoped naive-joint guard escape,
+AR-view compat, J-config memory smoke) → split to
+`idea4-fjoint-rung-finalize-exec` (launch owner-gated). (2) **Lit
+slice** (queue item cleared): [SEAM](papers/seam-boundary-steering.html)
+2607.04609 deep-read — closed-form λ(1−t) boundary steering, +1%
+cost, jerk −28%, #22 arm order updated (SEAM cheapest, PAINT stays
+async-robust), and a FREE hook queued (`boundary-incompat-read-npz`:
+tail-vs-head disagreement on banked panel npz, zero GPU — a null
+closes #22's bridging direction for our stack);
+[Robot Critics](papers/robot-critics-small-stuff.html) 2606.21572
+skim-to-place — trained-critic pole placed and parked. Radar
+refilled (`lit-radar-hooks-0812a`: Freq-Aware FM 2606.20135, VISTA
+2606.04708, latent-action FM pair). Queue validate green depth 4
+(9 open); blog built + Space pushed, both pages + draft
+curl-verified 200.
+
+**Next**: `queue_cli.py next` pointer → `boundary-incompat-read-npz`
+(CPU, free read) or the fjoint instrument (CPU part of
+`idea4-fjoint-rung-finalize-exec`) or `docs-pass-followups-0809` /
+`lit-radar-hooks-0812a` — all CPU, in the run's shadow; `queue.json`
+is canonical. adamc_100k boundaries: async-save quote ~17:2xZ
+(this session's chained successor catches it), eval@2500-vs-@10k
+comparison ~08-10, endpoint ~08-12 ~17:00Z → chained panel →
+leaderboard row + grad-norm chart.
 
 *Updated 2026-08-09 14:09–14:1xZ (real `date -u`) — tick (babysit):
 **adamc_100k healthy through its first probe eval — step 560,
@@ -85,66 +147,6 @@ kill-bar comparison binds at eval@2500 vs @10k (~08-10); endpoint
 ~08-12 ~17:00Z → chained k4l2 panel (--report) → leaderboard row +
 grad-norm chart.
 
-*Updated 2026-08-09 12:47–13:5xZ (real `date -u`) — work session
-(4-h budget): **both owner top-priority items closed — AdamC
-implemented, oracle-tested and LAUNCHED as the new 100k run from
-base Molmo2-4B (after a three-message approval exchange, including a
-λ override caught before step 1), and the docs modernization pass
-landed for the owner's main-rebase.***
-
-**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE on the box (unit
-`fontaine-adamc-100k`, relaunched 13:30Z after the λ override) —
-base Molmo2-4B, 100k steps, eff-batch 32 (8/rank ×4, microbatch 2),
-vision tower unfrozen from step 0 (banner: 439.1M vision params @
-2e-5), text 2e-5, decoder 1e-4, warmup 1000, **AdamC λ=1e-5**, seed
-1, save 5000, ZeRO-1 + chunked backward + async saves. Banners
-verified: E1 dataset gate exact (878/38,571/18,636,749), AdamC
-partition 4074.7M corrected / 2.6M head / 0.6M 1-D. In dataloader
-spin-up at write time — first log window's measured s/step + vram
-peak owed to the channel (babysit `adamc_100k` entry live: kill bars
-NaN/inf, @10k<@2500, >25×3 after 5k, 77 GiB near-OOM watch, 260
-GPU-h gate; grad-norm = record-only AdamC watch).
-
-**Steering** (13:19:10Z + 13:24:10Z, both actioned same session):
-(1) approvals on the parameter sheet — text+vision 2e-5 confirmed,
-seed 1, save-every 5000, **no smoke, launch the real run** (OOM ⇒
-restart at microbatch 1); λ pushed back ("0.1 high — what's
-standard?") → grounded answer posted (openpi ≈0, OpenVLA finetunes
-0.01), launched at 0.01. (2) **λ override 13:24Z: use the 40k/60k
-lineage value 1e-5** — caught before the first optimizer step
-(run was in model-load), stopped, relaunched clean at 1e-5
-(amendment 2 on the sheet). ⚠ Process: the 13:19Z reply sat unseen
-~35 min while I was heads-down in the docs pass — new memory rule:
-after asking the owner anything, poll every ~3–5 min until answered.
-
-**Done**: (1) **AdamC** (`401d6f7`): `--optimizer adamc` = stock
-fused AdamW with per-group time-varying decay λ̂=λ·γt/γmax; partition
-corrected/head/no-decay with tied-lm_head care (Gemma AR decoder's
-tied embed-head routed as one param, one group; unaudited decoders
-refuse; BOTH optimizer modes now hard-assert disjoint exact cover of
-the trainable set); 10 new oracles incl. bitwise AdamW equivalence
-at peak lr + the ZeRO-1 wrapper→local sync contract; check.py 584
-green. (2) **Parameter sheet + 2 amendments**
-([post](posts/2026-08-09-prereg-molmo2-adamc-100k.html)) posted
-before launch; launcher `launch_box_fontaine_molmo2_adamc_100k_ddp4.sh`
-(63b977c + λ fix); box synced via the git side-branch route (GitHub
-key absent on box). (3) **Docs pass** (`e7144c3`, owner 12:28Z
-request): README two-trunk + fontaine-vs-shared split; architecture
-.md modernized end-to-end (Molmo2 in intro/§1/§2, curated-plan
-ledger in §7, shipped-flag demotions in §8, CLI-default corrections,
-residual/seam/snapflow documented, §5 gains AdamC + memory machinery
-+ async saves); 4 historical docs got archive headers; subagent
-staleness audit against HEAD drove the pass; deferred tail queued as
-`docs-pass-followups-0809`.
-
-**Next**: `queue_cli.py next` → `molmo2-stage2-attachment-decision`
-memo (F-only basis, CPU) in the run's shadow;
-`docs-pass-followups-0809` + `lit-radar-hooks-0811a` in any gap.
-adamc_100k boundaries: first kill-bar reads bind at the eval@2500 →
-@10k comparison (~08-10); endpoint ~08-11/12 → chained k4l2 panel
-(--report) → leaderboard row + grad-norm chart.
-
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -212,3 +214,12 @@ depth 3, 8 open). adamc_100k survived the microbatch-1 first backward
 verified; projection ~300 GPU-h → gate 260→310 declared in-channel
 with the act-ckpt alternative offered. Discord: first-poll facts +
 memo posted; no owner traffic. run_work_next armed.
+
+Session 2026-08-09 14:11–15:0xZ (work session, bounded; exploit+lit;
+0 new GPU-h — adamc_100k rides, 3.3/310 at the 14:5x poll):
+F-then-joint pre-reg DRAFT posted (a627a0c; J-from-F@10k vs F2
+control, +5k matched, ceiling 35/70; finalize-exec queued,
+owner-gated) + lit slice 2 pages (SEAM → free boundary-incompat npz
+read queued; Robot Critics parked). Queue depth 4 (9 open). Two
+babysit-truncation near-misses, history-verified clean, rule
+re-armed. run_work_next armed.
