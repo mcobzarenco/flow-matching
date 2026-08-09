@@ -71,70 +71,56 @@ subgoal set (candidates are alternatives, not sequential steps).
 The mechanics need re-derivation, not reuse — this is a
 design-principle transfer, not a recipe.
 
-## SDN: masked-contrast + jerk — two signals, zero labels, zero training
+## SDN revisited: its set-level half is the part we haven't used
 
-**Contribution.** Treat initial diffusion noise as a controllable
-input: per step, draw N=12 candidates, then filter in two stages.
-**Stage 1 (visual grounding):** decode candidates twice — from the
-real observation and from an *object-masked* observation (target
-zeroed out); score each real candidate by kNN-density distance to
-the masked set minus distance to the real set. Candidates that look
-the same whether or not the object is visible are hallucinating
-their confidence — drop them. **Stage 2 (kinematics):** of the
-survivors, execute the minimum-jerk candidate (RMS of third-order
-finite differences over the chunk). Training-free, no external VLM.
+**Correction first (the audit catch).** SDN already has a full page
+— [noise-space steering III](noise-space-steering-3.md), read
+2026-08-08 — and its cheap half was **already executed on our banked
+stacks the same day** (`analysis__jerkpick_selector.json`): min-jerk
+draw-picking is a clean NULL on the flow family (ODE draws are
+uniformly smooth) and small-but-real on the AR family (oracle-gap
+recovered 8.0% on the molmo2 stack, Spearman +0.55, agreement 12.1%
+vs 10% null) — never approaching mean-of-N on either family. This
+page does not re-bank any of that; what it adds is the *other*
+stage, re-read through tonight's verdict.
 
-**Experiments.** π0 and GR00T N1.6 on SIMPLER (+5.1–8.7% average
-success over nine tasks), GR00T N1.5 on a real ALOHA
-(+18.3 pts absolute, 48.3% vs 30.0%, jerk −5.2%); beats CFG / WNG /
-ACG and Policy Contrastive Decoding while running 1.53× faster than
-PCD (zero-masking instead of inpainting; 245 ms/step on an
-RTX 4070). Stated limitations: masking only catches object-level
-hallucination (not lighting/texture/distractor failures), and the
-fixed N=12 doesn't adapt to task difficulty — they name adaptive
-candidate allocation as future work, which is exactly the
-ELASTIC-flavored rung-3 candidate already on #1's board.
+**Stage 1 is a set-joint scorer, and that's the transferable part.**
+SDN's grounding filter never scores a candidate in isolation: it
+decodes the candidate set twice (real observation vs target-masked
+observation) and scores by **kNN-density contrast between the two
+sets** — a candidate is trustworthy if it sits far from how the
+policy behaves when it *cannot see what matters*. That is the same
+structural move as uPRM's batch-joint inference, in a different
+modality: the label-free signal lives in the *relation between
+decodes*, not in any single decode's confidence. MG-Select masked
+text/state per-candidate; SDN shows the masked contrast working as
+a set-level density, which is stronger.
 
-**What transfers — three concrete hooks.**
-1. **A jerk selector is testable tonight for free.** We hold banked
-   `--dump-draws` npzs (10 draws/frame, molmo2 endpoint + AR-100k
-   q4): rank draws by chunk JerkRMS offline and read the selection
-   delta against the banked best-of-10 ceiling — a CPU-only,
-   record-only read that prices a zero-cost selector before anyone
-   builds a learned one. (#19/#1.)
-2. **Masked-contrast is now precedented for *frames*, not just
-   text/state.** MG-Select masked text/state; SDN masks the visual
-   target and uses a *set-level density contrast* rather than a
-   per-candidate score — the same "score the set jointly" shape uPRM
-   argues for. A subgoal-scorer variant would ask: does conditioning
-   on this candidate *change* the action distribution vs a masked
-   subgoal slot? Candidates whose conditioning does nothing are
-   noise; candidates that move the actions toward the
-   subgoal-consistent mode are live. (#6 scorer rung.)
-3. **Per-step noise selection is the dynamic cousin of golden
-   tickets** — our tickets are searched once and frozen; SDN
-   re-selects every step from intrinsic signals. If ticket gains and
-   SDN-style gains stack is an open empirical question; their
-   fixed-N limitation and our dispersion-gated-allocation rung-3
-   candidate are the same idea from two directions. (#1.)
-
-**What doesn't.** Their policies are flow/diffusion with cheap
-parallel candidate decode; our AR family pays serially for width
-(the #19 cost story), so per-step N=12 is a flow-family-only
-pattern for us. Success-rate benchmarks ≠ our MAE panel; magnitudes
-don't map. And stage 1 needs target-object masks we don't have —
-our nearest usable analogue is the subgoal-slot masking already in
-the instrument (the planner-less path), not image masking.
+**The #6 sketch this licenses.** A subgoal-scorer variant would
+ask: does conditioning the action head on candidate *i* move the
+action distribution away from the *masked-slot* (planner-less)
+decode, toward a mode the other candidates corroborate? Candidates
+whose conditioning does nothing are noise; the planner-less path
+needed for the masked side already exists in our instrument
+(50%-dropout training, the masked-contrast prerequisite verified on
+the [progress-from-logits](progress-from-logits.md) page). Cost
+shape: one extra masked decode per frame plus the K conditioned
+decodes we already pay for in any selection arm — no new model, no
+labels.
 
 ## Where this leaves the scorer question
 
 The falsified SC scorer was per-candidate, probability-based, and
-label-free. The three published escalation shapes are now: (a)
-**supervised-from-demos** ([RoVer](rover-learned-verifier.md) — the
-chunk-unit caveat pre-registered as ammunition); (b) **label-free
-but set-joint** (uPRM's principle, SDN's density contrast); (c)
-**physics-side, scorer-free** (jerk — testable on banked dumps
-before any pre-reg). The cheap discriminating read is (c); the
-design constraint for (a)/(b) is "score the set, not the
-candidate". Any escalation still needs its own pre-reg per the
+label-free. The escalation map, with tonight's and the banked
+evidence in place: (a) **physics-side, scorer-free** — already
+priced: jerk-pick recovers ~8% of the oracle gap on the AR family
+(banked 08-08), nowhere near the −0.25 ceiling; not the answer
+alone. (b) **supervised-from-demos**
+([RoVer](rover-learned-verifier.md) — chunk-unit caveat
+pre-registered as ammunition), now with 4,298 in-domain
+picked-vs-oracle pairs dumped by the rung-(b′) run itself. (c)
+**label-free but set-joint** (uPRM's principle; SDN's density
+contrast; the masked-conditioning sketch above). The design
+constraint for (b)/(c) is the same: **score the set, not the
+candidate**. Any escalation still needs its own pre-reg per the
 rung-(b′) close.

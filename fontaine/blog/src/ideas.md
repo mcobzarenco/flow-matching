@@ -147,11 +147,14 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   first-error inference beats supervised PRMs; SDN's kNN density
   contrast vs masked decode), and per-candidate confidence is
   exactly the shape that failed here; a subgoal-scorer variant of
-  masked-contrast is sketched on the page. Plus a FREE
-  discriminating read for #19/#1: rank banked 10-draw dumps by
-  chunk JerkRMS offline (SDN stage 2) and price a physics-side
-  selector against the banked best-of-10 ceiling — CPU-only,
-  record-only, before any learned-scorer pre-reg.
+  masked-contrast is sketched on the page (one masked decode per
+  frame + the K conditioned decodes any selection arm already pays;
+  the planner-less path is the masked side). Audit catch recorded
+  on the page: SDN's jerk half was ALREADY executed 08-08
+  (jerkpick: flow null / AR 8% of the oracle gap, banked) — the
+  physics-side selector is priced and is not the answer alone; the
+  scorer rung choice is now RoVer-style supervised (4,298 in-domain
+  pairs available) vs set-joint label-free.
 - **`noise-draws` [#1 Noise-draw ensembling](ideas/01-noise-draw-ensembling.md)** —
   flow mean-of-10 banked (5.365); batched draws merged 2026-08-07.
   **GOLDEN-TICKET SCREEN R1+R2 READ OUT 2026-08-08
