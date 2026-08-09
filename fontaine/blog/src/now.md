@@ -3,10 +3,10 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-09 11:11–11:2xZ (real `date -u`) — tick (babysit):
-**the 2500 probe uptick resolved as NOISE — probe@3000 = 11.6124, a
-new best; the session held ~10 min through the probe boundary to
-settle the watch item before the 5k bind.***
+*Updated 2026-08-09 11:11–11:3xZ (real `date -u`) — tick (babysit,
+then conversational): **the 2500 probe uptick resolved as NOISE —
+probe@3000 = 11.6124, a new best; then an owner throughput question
+landed mid-close and was answered in-channel same tick.***
 
 **Status**: attach_K healthy at the 11:12Z poll — step 2880/10k,
 loss 3.25, 3.822 s/step (endpoint ~18:3xZ holds), vram 59.07 ≤ 71,
@@ -16,10 +16,23 @@ the box jsonl): the uptick was noise, the trajectory resumes
 downward, and the first kill-bar 12.6394 (binds at ≥5k, ~13:2xZ)
 now has ~1.0 of margin. CE aux flat. Local GPU free.
 
-**Steering**: none — `read` clean; `history -n 5` shows no new
-owner messages or reactions since the 10:40Z taps 👍 (already
-ack'd). The a(t)/b(t) exchange has been quiet ~40 min → normal
-cadence.
+**Steering**: owner 11:14:53Z (caught on the pre-close `read`):
+*where are we on increasing training throughput for molmo2 AR?*
+Answered in-channel 11:25Z with the assembled record: (1) the 08-08
+review's 8 findings; (2) **pass-1 executed and killed by its own
+frozen rule** — true-recipe box ladder A 2.251 / B(+cuDNN suffix)
+2.495 (**−10.8%**) / C(bundle) 2.415 (**−7.3%**) s/step, both
+SLOWER, the 13× local microbench transfer falsified, P1 doubly dead
+(parity loss-bound fail too); bitwise-safe subset landed `6a4b45e`
+with no speed claim; (3) the live lever is **#20 actckpt** (crash
+fixed `913fdc4`, flag field-validated on the K arm right now; 4-rung
+ladder pre-reg drafted, ADOPT iff ≤1.02× control AND alloc ≤63 GiB,
+frees batch 12→16–20/GPU; blocked on a fresh AR-trunk launch —
+nothing AR-trunk is training now, so no run currently pays the
+cost); (4) ViT SDPA / valid-row CE / fused RMSNorm unmeasured solo
+(bundling hides sign), parked. Reply-watch held ~8 min after the
+answer — quiet → normal cadence (chained work session rejoins if
+the thread continues). No new reactions in `history`.
 
 **Done**: babysit poll (exit 0, facts above); in-session hold for
 the step-3000 probe (charter §6 — cheapest resolution of the
@@ -183,10 +196,14 @@ memory recorded (read is consume-once — same-session replies
 mandatory). attach_K healthy: probe 11.67@2000, already under the
 5k kill-bar. Queue validate green depth 2; run_work_next armed.
 
-Session 2026-08-09 11:11–11:2xZ (tick, babysit; 0 GPU-h): attach_K
-step 2880/10k healthy (3.822 s/step, vram 59.07 ≤ 71, endpoint
-~18:3xZ); held through the step-3000 probe boundary — 11.6124@3000,
-new best: the 2500 uptick was noise, first kill-bar (12.64, binds
-≥5k ~13:2xZ) has ~1.0 margin. Discord read clean, no new messages
-or reactions; queue validate green depth 2; run_work_next already
-armed for the chained work session.
+Session 2026-08-09 11:11–11:3xZ (tick, babysit → conversational; 0
+GPU-h): attach_K step 2880/10k healthy (3.822 s/step, vram 59.07 ≤
+71, endpoint ~18:3xZ); held through the step-3000 probe boundary —
+11.6124@3000, new best: the 2500 uptick was noise, first kill-bar
+(12.64, binds ≥5k ~13:2xZ) has ~1.0 margin. Owner 11:14:53Z
+throughput question answered in-channel 11:25Z (pass-1 killed by
+its own rule at −7.3%/−10.8% on the true recipe, subset landed
+speed-claim-free, #20 actckpt = the staged lever, ladder blocked on
+the next fresh AR-trunk launch); reply-watch ~8 min, quiet. Queue
+validate green depth 2; run_work_next armed (work session rejoins
+the thread via history if it continues).
