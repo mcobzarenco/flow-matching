@@ -398,3 +398,20 @@ chunk-as-unit), fields-probe ranker, or distillation from the
   ~0.17 content margin. Caveat recorded: 8.4% of swapped rows drew
   a textually-true donor label (bias runs against the content
   reading, which won anyway).
+
+- **Rung (c) pre-reg DRAFT landed 2026-08-09 05:3xZ
+  ([draft](../posts/2026-08-09-prereg-subgoal-mcselect.md)) + read
+  script pre-data (mcselect_results.py, oracle-gated, check.py
+  559)**: the scorer-side escalation the (b′) routing licensed —
+  masked-contrast (MG-Select form) selection, zero training:
+  KL(conditioned ‖ masked reference, τ=4) over teacher-forced action
+  tokens, our 50% subgoal-dropout training supplying the well-trained
+  masked path. Re-ranks the EXACT banked (b′) width (4,301 q4 rows ×
+  candidates, sha-pinned) so ceiling (−0.250) / SC-anti-select
+  (+0.142) / floor (−0.113 free words) all stand as comparators.
+  Falsifier = E6 mirror (mc − self CI95 < 0); an anti-select read is
+  a second strike and closes the zero-training scorer family.
+  ≤ 4 GPU-h local. Remaining before launch: producer instrument
+  (candidates-file injection + in-model KL) + finalization stamp.
+  Candidate 2 (TOPReward history probe) escalates only on a
+  phase-specific failure.
