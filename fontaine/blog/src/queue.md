@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T15:57:00Z
+**Updated:** 2026-08-09T16:00:00Z
 
-**Depth call:** depth >=2 at 15:5xZ 08-09: adamc-100k babysit to ~08-12 + docs-pass-followups-0809 (subitems 1 in flight/5 owner-side remain) + fjoint owner-gated launch + owner ticket thread (v2all selection in flight)
+**Depth call:** depth >=2 at 16:0xZ 08-09: adamc-100k babysit to ~08-12 + corpus-continuity-screen (CPU, new) + docs-pass tail (owner-side wandb only) + fjoint owner-gated; owner ticket thread v2all selection in flight
 
-**7 open** (Live 1 · Queued 2 · Blocked 4 · Done 77)
+**8 open** (Live 1 · Queued 3 · Blocked 4 · Done 77)
 
 ## 🔴 Live (1)
 
@@ -26,9 +26,23 @@ OWNER RUN LIVE (launched 13:30Z 08-09): fontaine_molmo2_adamc_100k_ddp4 — base
 
 ---
 
-## 🟢 Queued (2)
+## 🟢 Queued (3)
 
 *ready — waiting on a window or a boundary*
+
+**`corpus-continuity-screen`** · `cpu`
+
+#9 corpus kinematic-continuity screen (CPU, record-only, VISTA hook 08-09 papers/vista-umi-validation.md
+
+**boundary:** any GPU-busy window; born 15:5xZ 08-09 from the VISTA read; zero GPU (pure function of dataset actions on disk)
+
+<details><summary>full record</summary>
+
+#9 corpus kinematic-continuity screen (CPU, record-only, VISTA hook 08-09 papers/vista-umi-validation.md — exploratory read on our own data, SDN-read precedent, no pre-reg; any curation change from it DOES need one): score every episode of community_curated_v0 (+ the 2 rig repos as calibration anchors) for per-tick action-displacement continuity — VISTA's three-regime scoring (full marks / linear / exponential) recalibrated to so100 joint space from the rig repos' own displacement distribution; episode score = min over ticks. AUDIT FIRST per standing rule: check what dup_content_census.py / frame-mining machinery already computes per-episode before writing anything new. Oracle-gate on synthetic planted-dropout fixtures (teleport jump in/out, clean episode = full marks); quote score distribution + tail episodes, cross-check low-continuity repos against the banked LORO influential-repo lists (arch/box-batch reads). A null (no corrupted tail) closes the hook at zero cost; a signal is a #9 curation lever with its own pre-reg
+
+</details>
+
+---
 
 **`idea4-fjoint-rung-finalize-exec`** · `gpu-box`
 
@@ -52,7 +66,7 @@ Docs pass tail (from the 08-09 staleness audit, deferred at my discretion): (1) 
 
 <details><summary>full record</summary>
 
-Docs pass tail (from the 08-09 staleness audit, deferred at my discretion): (1) sweep agent-internal vocabulary out of shipped bijou/ source comments (eval/leakage.py 'fontaine/charter.md', eval/subgoal_scoring.py '#6 rung (b)', train.py 'K arm of the attach-screen'/'#20'); (2) architecture.md S6: enumerate the eval-system surface (frozen sample plans, --dump-draws, noise tickets, --mask-state, subgoal modes, --smolvla baseline, leakage checker) + full rollout flag docs (or rewrite rollout_so101.md properly); (3) S1: a real Molmo2 prompt-format subsection (ChatML, image hoisting, id 151645 bos) instead of the pointer note; (4) confirm docs/notes/2026-08-06 S3 failing-test claim resolved; (5) wandb API key rotation still owed (S8 hygiene note). | PARTIAL 15:5xZ 08-09: (2) architecture.md S6 eval-system surface enumerated (plans/dumps/tickets/mask-state/subgoal modes/smolvla/leakage) + rollout noise/draws/async flags incl. new --noise-ticket, rollout_so101.md flag list updated; (3) S1 Molmo2 prompt-format subsection landed (ChatML hoist, [kind camera|Image i] groups, bos=151645 quirk, native tokenization); (4) 2026-08-06 note's failing-test claim VERIFIED RESOLVED (test passes, note annotated); (1) bijou/ vocab sweep IN FLIGHT via subagent; (5) wandb key rotation still owed (owner-side action)
+Docs pass tail (from the 08-09 staleness audit, deferred at my discretion): (1) sweep agent-internal vocabulary out of shipped bijou/ source comments (eval/leakage.py 'fontaine/charter.md', eval/subgoal_scoring.py '#6 rung (b)', train.py 'K arm of the attach-screen'/'#20'); (2) architecture.md S6: enumerate the eval-system surface (frozen sample plans, --dump-draws, noise tickets, --mask-state, subgoal modes, --smolvla baseline, leakage checker) + full rollout flag docs (or rewrite rollout_so101.md properly); (3) S1: a real Molmo2 prompt-format subsection (ChatML, image hoisting, id 151645 bos) instead of the pointer note; (4) confirm docs/notes/2026-08-06 S3 failing-test claim resolved; (5) wandb API key rotation still owed (S8 hygiene note). | PARTIAL 15:5xZ 08-09: (2) architecture.md S6 eval-system surface enumerated (plans/dumps/tickets/mask-state/subgoal modes/smolvla/leakage) + rollout noise/draws/async flags incl. new --noise-ticket, rollout_so101.md flag list updated; (3) S1 Molmo2 prompt-format subsection landed (ChatML hoist, [kind camera|Image i] groups, bos=151645 quirk, native tokenization); (4) 2026-08-06 note's failing-test claim VERIFIED RESOLVED (test passes, note annotated); (1) bijou/ vocab sweep IN FLIGHT via subagent; (5) wandb key rotation still owed (owner-side action) | SUBITEM 1 DONE 15:5xZ (51a692e, subagent sweep + review): 14 bijou/ files de-jargoned (comments/docstrings/help/runtime strings; paths kept; check.py 598 green, no test edits needed). Remaining: ONLY (5) wandb API key rotation — owner-side action, flagged in-channel at close-out
 
 </details>
 

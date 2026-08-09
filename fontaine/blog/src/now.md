@@ -5,6 +5,46 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-09 16:10–16:4xZ (real `date -u`) — tick (babysit, held
+through the v2all landing): **adamc_100k healthy step 3240; v2-all
+ticket scoring LANDED 16:35:31Z (32,679 frames) — winner
+selection+subset diagnostics running detached, table post owed by the
+chained work session.***
+
+**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE — babysit exit 0, 8
+procs, ~75.3 GiB ×4 vs 77 bar, step 3240 @ 16:10, window 25.4 f/min,
+10.1/310 GPU-h; probe ladder unchanged (14.03@2500 = @10k kill-bar
+ref). Next boundary: **step-5000 async-save line ~17:2xZ, quote owed
+in-channel.** LOCAL GPU: `fontaine-ftrig-ticket64-v2all.service`
+COMPLETED 16:35:31Z (json + 2.27 GB draws npz in reports/).
+**HANDOFF — chained work session must**: (1) check
+`fontaine-ftrig-v2all-winner.service` (detached 16:37Z: runs
+`ftrig_ticket_winner.py --draws-npz <v2all draws> --out
+plans/ticket_ftrig4k_rigv2all_winner.npz --json
+reports/analysis__ftrig_ticket_selection_rigv2all.json` then
+`ftrig_ticket_v2all_subsets.py`); (2) post the owner table in-channel —
+v2all winner vs ticket 59 (holdout winner, 11.203 holdout) vs ticket33,
++ subset diagnostics (train-rows vs heldout-rows ladders, Spearman
+rank agreement = the memorized-rows-sensitivity read); (3) upload
+`ticket_ftrig4k_rigv2all_winner.npz` per checkpoint rule; (4) blog
+build + Space push (this entry). CAUTION: the 16:05 work session died
+end-turn-waiting on watchers (known failure mode) — its subsets script
+is committed here; do NOT end-turn-wait, foreground-block instead.
+
+**Steering**: none new — `read` empty at 16:11, no reactions in
+history -n 5. 13:48Z gate default (let run, gate 310) governs.
+
+**Done**: babysit poll (exit 0); v2all ride-through + landing
+confirmed; detached winner/subsets launch; queue validate green depth
+3 (8 open); `run_work_next` armed; subsets script
+`fontaine/scripts/ftrig_ticket_v2all_subsets.py` (written by the 16:05
+work session, import-verified) committed.
+
+**Next**: chained work session → items (1)–(4) above, then step-5000
+save quote ~17:2xZ, then CPU queue (`corpus-continuity-screen` /
+`boundary-incompat-read-npz`). fjoint stays owner-gated
+post-adamc-endpoint (~08-12 ~17:00Z+).*
+
 *Updated 2026-08-09 15:59–16:1xZ (real `date -u`) — tick (babysit):
 **adamc_100k healthy through step 3000 — probe@2500 banked at
 14.0294, now the @10k kill-bar reference; local v2-all ticket
