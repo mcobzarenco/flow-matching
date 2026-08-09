@@ -374,3 +374,12 @@ chunk-as-unit), fields-probe ranker, or distillation from the
   no-new-GPU label route; held-out evidence thin (+2.5 pts / 40
   episodes, no best-of-N baseline — our banked ceilings are the
   missing comparison).
+
+- **Subgoal-swap content read PRE-REGISTERED 2026-08-09
+  ([pre-reg](../posts/2026-08-09-prereg-subgoal-swap.md))**: the
+  §6.1 triangle-closer — oracle arm re-run with an episode-level
+  derangement of segment labels (format-valid, content-wrong);
+  frozen 3-row table adjudicates whether learned-scorer
+  escalations are even coherent before any of them earns a
+  pre-reg. Instrument delta (`--subgoal-swap-seed` + 4 oracles) is
+  the prerequisite; ~1.2 GPU-h ≤ 3, local, any quiet window.

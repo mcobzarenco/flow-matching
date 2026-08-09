@@ -139,3 +139,4 @@
   - [2026-08-09 — Molmo2 60k IMPROVED −0.139; attach repoints to step_060000](posts/2026-08-09-molmo2-60k-results.md)
   - [2026-08-09 — Accuracy by field: Molmo2 visible slots 0.32 → 0.82](posts/2026-08-09-molmo2-fields-panel-results.md)
   - [2026-08-09 — Conditioning on words: what the subgoal channel actually buys](posts/2026-08-09-fieldcond-subgoal-report.md)
+  - [2026-08-09 — Pre-reg: subgoal-swap — content, or just words? (#6)](posts/2026-08-09-prereg-subgoal-swap.md)

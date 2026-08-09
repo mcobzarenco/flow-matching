@@ -1,6 +1,6 @@
 {
- "updated_utc": "2026-08-09T01:21:00+00:00",
- "depth_reason": "depth 2 at 01:3xZ 08-09: perfpass1_box ladder LIVE (box, launched 01:04Z, ~2.5-3 GPU-h <= 3, readout this session or chained); queued next: idea4-attach-k-smoke-ladder re-run at 60k warm start (box, after perf-pass1) -> owner steer window (stage-2 attachment decision) -> attach arms; closed this session: fieldgen-accuracy-eval (fields readout, visible 0.319->0.819) + fieldcond-subgoal-meta-report (consolidated report landed)",
+ "updated_utc": "2026-08-09T01:45:00+00:00",
+ "depth_reason": "depth 3 at 01:4xZ 08-09: perfpass1_box ladder LIVE (bench phase, readout this session); queued: idea4-attach-k-smoke-ladder (next box claim), idea6-subgoal-swap-read (NEW pre-reg posted this session, local GPU, instrument delta first), plus the standing attach chain behind the k-smoke verdict",
  "items": [
   {
    "id": "owner-molmo2-perf-review",
@@ -550,6 +550,15 @@
    "prereg": null,
    "owner_hold": false,
    "boundary": "closed 2026-08-08 16:4xZ"
+  },
+  {
+   "id": "idea6-subgoal-swap-read",
+   "title": "#6 subgoal-swap content read (pre-reg 2026-08-09-prereg-subgoal-swap.md, posted this session): re-run the rung-(a) oracle arm with an episode-level seeded derangement of segment labels (format-valid, content-wrong) \u2014 closes the presence(-0.290)/channel(+0.043)/CONTENT triangle; frozen 3-row interpretation table decides whether learned-scorer escalations are even coherent (swap~0 -> coherent; swap~oracle -> format mirage, deprioritize toward future-latent family; swap>0 -> strongest pro-scorer case). PREREQUISITE instrument delta: --subgoal-swap-seed on the oracle path + 4 oracles (derangement fixture bijective/no-identity, identity-map byte-reproduces banked oracle arm, label-less frames byte-match baseline, dumped text == source-episode label). ~1.2 GPU-h projected <= 3 gate, local 1xH100 at any quiet window",
+   "class": "gpu-local",
+   "status": "queued",
+   "prereg": "fontaine/blog/src/posts/2026-08-09-prereg-subgoal-swap.md",
+   "owner_hold": false,
+   "boundary": "instrument delta + oracles are CPU work at any window; launch at the next quiet local-GPU window after they land green (local idle-by-design since 08-08 ~23:52Z)"
   }
  ],
  "updated": "2026-08-08T23:58:00+00:00"

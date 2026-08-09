@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T01:21:00+00:00
+**Updated:** 2026-08-09T01:45:00+00:00
 
-**Depth call:** depth 2 at 01:3xZ 08-09: perfpass1_box ladder LIVE (box, launched 01:04Z, ~2.5-3 GPU-h <= 3, readout this session or chained); queued next: idea4-attach-k-smoke-ladder re-run at 60k warm start (box, after perf-pass1) -> owner steer window (stage-2 attachment decision) -> attach arms; closed this session: fieldgen-accuracy-eval (fields readout, visible 0.319->0.819) + fieldcond-subgoal-meta-report (consolidated report landed)
+**Depth call:** depth 3 at 01:4xZ 08-09: perfpass1_box ladder LIVE (bench phase, readout this session); queued: idea4-attach-k-smoke-ladder (next box claim), idea6-subgoal-swap-read (NEW pre-reg posted this session, local GPU, instrument delta first), plus the standing attach chain behind the k-smoke verdict
 
-**9 open** (Live 0 · Queued 2 · Blocked 7 · Done 52)
+**10 open** (Live 0 · Queued 3 · Blocked 7 · Done 52)
 
 ## 🔴 Live (0)
 
@@ -14,9 +14,23 @@
 
 *(empty)*
 
-## 🟢 Queued (2)
+## 🟢 Queued (3)
 
 *ready — waiting on a window or a boundary*
+
+**`idea6-subgoal-swap-read`** · `gpu-local`
+
+#6 subgoal-swap content read (pre-reg 2026-08-09-prereg-subgoal-swap.md, posted this session): re-run the rung-(a) oracle arm with an episode-level seeded derangement of segment labels (format-valid, content-wrong)
+
+**boundary:** instrument delta + oracles are CPU work at any window; launch at the next quiet local-GPU window after they land green (local idle-by-design since 08-08 ~23:52Z) · [pre-reg](posts/2026-08-09-prereg-subgoal-swap.md)
+
+<details><summary>full record</summary>
+
+#6 subgoal-swap content read (pre-reg 2026-08-09-prereg-subgoal-swap.md, posted this session): re-run the rung-(a) oracle arm with an episode-level seeded derangement of segment labels (format-valid, content-wrong) — closes the presence(-0.290)/channel(+0.043)/CONTENT triangle; frozen 3-row interpretation table decides whether learned-scorer escalations are even coherent (swap~0 -&gt; coherent; swap~oracle -&gt; format mirage, deprioritize toward future-latent family; swap&gt;0 -&gt; strongest pro-scorer case). PREREQUISITE instrument delta: --subgoal-swap-seed on the oracle path + 4 oracles (derangement fixture bijective/no-identity, identity-map byte-reproduces banked oracle arm, label-less frames byte-match baseline, dumped text == source-episode label). ~1.2 GPU-h projected &lt;= 3 gate, local 1xH100 at any quiet window
+
+</details>
+
+---
 
 **`idea4-attach-k-smoke-ladder`** · `gpu-box`
 
