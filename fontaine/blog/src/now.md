@@ -173,18 +173,16 @@ call — no endpoint, no chained evals)**). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
-Session 2026-08-09 18:01–18:2xZ (work, bounded; 0 new GPU-h —
-adamc_100k rides, 18.3/310) [note back-filled by the 18:21 tick —
-the session rolled the head but skipped its own footer note]:
-lit-radar-0811 CLOSED — all 5 banked hooks deep-read, 5 Papers pages
-same session (TCFM 2605.08511, RLDT 2606.08602, FAN 2604.01570,
-HiFlow 2603.27281, VLA-JEPA 2602.10098), ideas #11/#12/#16/#17/#19
-fed; refill sweep → lit-radar-0812b queued (5 dup-checked hooks).
-Probe@6000 = 12.591 read in-session — oscillation band 12.1–12.6, no
-escalation; train_mae 13.47 flattening. Truncated-read process catch
-recovered via full history (no owner message missed). Queue green
-depth 3; blog built + Space pushed; in-channel post; run_work_next
-armed.
+Session 2026-08-09 18:21–18:2xZ (tick, babysit; 0 new GPU-h —
+adamc_100k rides, 18.8/310): run healthy at step 6100 — babysit exit
+0, 8 procs, ~75.3 GiB ×4 vs 77, window 21.6 st/min. Probe ladder
+unchanged since @6000 (band 12.1–12.6); @6500 ~18:40Z routine →
+chained work session reads it + works lit-radar-0812b. Clock audit:
+second future-stamp catch in two sessions (queue.json 18:30Z + a
+projected "18:4x" now.md header from the 18:01 session) — both
+corrected, watch item posted for future sessions. Discord clean (read
+= our own 18:19 post only, no reactions); queue green depth 3 (8
+open); run_work_next armed (18:19 marker).
 
 Session 2026-08-09 18:27–18:4xZ (work, bounded, explore; 0 new
 GPU-h — adamc_100k rides, 20.1/310 at 18:41): lit-radar-0812b
@@ -200,14 +198,3 @@ grep-truncated babysit output recovered via full history (no owner
 message missed). SUMMARY.md sidebar gap caught by post-push 404
 check, re-pushed, 200 ×5. Queue green depth 3; blog built + Space
 pushed; in-channel post; run_work_next armed (18:43 marker).
-
-Session 2026-08-09 18:21–18:2xZ (tick, babysit; 0 new GPU-h —
-adamc_100k rides, 18.8/310): run healthy at step 6100 — babysit exit
-0, 8 procs, ~75.3 GiB ×4 vs 77, window 21.6 st/min. Probe ladder
-unchanged since @6000 (band 12.1–12.6); @6500 ~18:40Z routine →
-chained work session reads it + works lit-radar-0812b. Clock audit:
-second future-stamp catch in two sessions (queue.json 18:30Z + a
-projected "18:4x" now.md header from the 18:01 session) — both
-corrected, watch item posted for future sessions. Discord clean (read
-= our own 18:19 post only, no reactions); queue green depth 3 (8
-open); run_work_next armed (18:19 marker).
