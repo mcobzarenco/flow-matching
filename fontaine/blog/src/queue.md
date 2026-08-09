@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T15:47:00Z
+**Updated:** 2026-08-09T15:57:00Z
 
-**Depth call:** depth >=2 at 15:2xZ 08-09: adamc-100k babysit to ~08-12 + docs-pass-followups-0809 + lit-radar-hooks-0812a (CPU) + fjoint owner-gated launch; boundary-incompat-read-npz DONE this session (NOT a null)
+**Depth call:** depth >=2 at 15:5xZ 08-09: adamc-100k babysit to ~08-12 + docs-pass-followups-0809 (subitems 1 in flight/5 owner-side remain) + fjoint owner-gated launch + owner ticket thread (v2all selection in flight)
 
-**8 open** (Live 1 · Queued 3 · Blocked 4 · Done 76)
+**7 open** (Live 1 · Queued 2 · Blocked 4 · Done 77)
 
 ## 🔴 Live (1)
 
@@ -26,23 +26,9 @@ OWNER RUN LIVE (launched 13:30Z 08-09): fontaine_molmo2_adamc_100k_ddp4 — base
 
 ---
 
-## 🟢 Queued (3)
+## 🟢 Queued (2)
 
 *ready — waiting on a window or a boundary*
-
-**`lit-radar-hooks-0812a`** · `cpu`
-
-Lit slice (standing allocation): fresh-sweep hooks banked 08-09 14:4xZ, unread skim-class
-
-**boundary:** any GPU-busy window; adamc_100k babysit boundaries outrank it
-
-<details><summary>full record</summary>
-
-Lit slice (standing allocation): fresh-sweep hooks banked 08-09 14:4xZ, unread skim-class — Frequency-Aware Flow Matching 2606.20135 (continuous/consistent action generation: the SEAM boundary family from the TRAINING side; #22/#1); VISTA 2606.04708 (vision-grounded physics-validated UMI data adaptation — beside RDT2's 10k-h premise; #16/#9); latent-action-guided FM pair LAFP 2606.10517 + Flowing With Purpose 2606.23420 (latent-action bias on flow policies; #17/#12). Papers page(s) same session per the permanent rule; dup-check against the index tracker before writing | PARTIAL 15:4xZ 08-09: FAFM 2606.20135 deep-read + papers page SAME SESSION (frequency-aware-flow-matching.md, smoothness/boundary family section added to the index tracker) — DCT-coefficient flow matching + H1 Sobolev loss; fed #12 (17x6 target for distill rungs), #9 (mixed-Hz ill-posedness theorem + 94-&gt;0 collapse demo), #16 (LDLJ metric), #22 (training-side family map: does NOT touch the cross-chunk term our boundary read measured). REMAINING hooks unread: VISTA 2606.04708, LAFP 2606.10517 + Flowing With Purpose 2606.23420
-
-</details>
-
----
 
 **`idea4-fjoint-rung-finalize-exec`** · `gpu-box`
 
@@ -66,7 +52,7 @@ Docs pass tail (from the 08-09 staleness audit, deferred at my discretion): (1) 
 
 <details><summary>full record</summary>
 
-Docs pass tail (from the 08-09 staleness audit, deferred at my discretion): (1) sweep agent-internal vocabulary out of shipped bijou/ source comments (eval/leakage.py 'fontaine/charter.md', eval/subgoal_scoring.py '#6 rung (b)', train.py 'K arm of the attach-screen'/'#20'); (2) architecture.md S6: enumerate the eval-system surface (frozen sample plans, --dump-draws, noise tickets, --mask-state, subgoal modes, --smolvla baseline, leakage checker) + full rollout flag docs (or rewrite rollout_so101.md properly); (3) S1: a real Molmo2 prompt-format subsection (ChatML, image hoisting, id 151645 bos) instead of the pointer note; (4) confirm docs/notes/2026-08-06 S3 failing-test claim resolved; (5) wandb API key rotation still owed (S8 hygiene note).
+Docs pass tail (from the 08-09 staleness audit, deferred at my discretion): (1) sweep agent-internal vocabulary out of shipped bijou/ source comments (eval/leakage.py 'fontaine/charter.md', eval/subgoal_scoring.py '#6 rung (b)', train.py 'K arm of the attach-screen'/'#20'); (2) architecture.md S6: enumerate the eval-system surface (frozen sample plans, --dump-draws, noise tickets, --mask-state, subgoal modes, --smolvla baseline, leakage checker) + full rollout flag docs (or rewrite rollout_so101.md properly); (3) S1: a real Molmo2 prompt-format subsection (ChatML, image hoisting, id 151645 bos) instead of the pointer note; (4) confirm docs/notes/2026-08-06 S3 failing-test claim resolved; (5) wandb API key rotation still owed (S8 hygiene note). | PARTIAL 15:5xZ 08-09: (2) architecture.md S6 eval-system surface enumerated (plans/dumps/tickets/mask-state/subgoal modes/smolvla/leakage) + rollout noise/draws/async flags incl. new --noise-ticket, rollout_so101.md flag list updated; (3) S1 Molmo2 prompt-format subsection landed (ChatML hoist, [kind camera|Image i] groups, bos=151645 quirk, native tokenization); (4) 2026-08-06 note's failing-test claim VERIFIED RESOLVED (test passes, note annotated); (1) bijou/ vocab sweep IN FLIGHT via subagent; (5) wandb key rotation still owed (owner-side action)
 
 </details>
 
@@ -130,9 +116,23 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 
 ---
 
-## ✅ Done (76)
+## ✅ Done (77)
 
 *closed — the full record stays in each fold*
+
+**`lit-radar-hooks-0812a`** · `cpu`
+
+Lit slice (standing allocation): fresh-sweep hooks banked 08-09 14:4xZ, unread skim-class
+
+**boundary:** CLEARED 15:5xZ 08-09 — all pages same-session per the permanent rule
+
+<details><summary>full record</summary>
+
+Lit slice (standing allocation): fresh-sweep hooks banked 08-09 14:4xZ, unread skim-class — Frequency-Aware Flow Matching 2606.20135 (continuous/consistent action generation: the SEAM boundary family from the TRAINING side; #22/#1); VISTA 2606.04708 (vision-grounded physics-validated UMI data adaptation — beside RDT2's 10k-h premise; #16/#9); latent-action-guided FM pair LAFP 2606.10517 + Flowing With Purpose 2606.23420 (latent-action bias on flow policies; #17/#12). Papers page(s) same session per the permanent rule; dup-check against the index tracker before writing | PARTIAL 15:4xZ 08-09: FAFM 2606.20135 deep-read + papers page SAME SESSION (frequency-aware-flow-matching.md, smoothness/boundary family section added to the index tracker) — DCT-coefficient flow matching + H1 Sobolev loss; fed #12 (17x6 target for distill rungs), #9 (mixed-Hz ill-posedness theorem + 94-&gt;0 collapse demo), #16 (LDLJ metric), #22 (training-side family map: does NOT touch the cross-chunk term our boundary read measured). REMAINING hooks unread: VISTA 2606.04708, LAFP 2606.10517 + Flowing With Purpose 2606.23420 | VISTA 2606.04708 read + page 15:5xZ same session (vista-umi-validation.md): physics-validation pipeline (continuity/collision/fidelity, 65-vs-0% OSR prediction), fisheye-matched VQA (mismatched VQA HURTS -13pts), stage-2 frozen+flow = third production KI vote; fed #4/#9/#11/#16; NEW #9 hook banked: continuity screen on our corpus, zero GPU. Remaining unread: LAFP 2606.10517 + Flowing With Purpose 2606.23420 (latent-action FM pair) | CLEARED 15:5xZ 08-09: LAFP 2606.10517 read + page (lafp-latent-flow-policy.md, Procgen skim-to-place: latent-action flow family map for #17, x-vs-v-prediction stability note); pair 2606.23420 caught as ALREADY covered (latent-action-priors.md) by dup-check. All 4 radar hooks resolved in one session (FAFM, VISTA, LAFP pages + 1 dup)
+
+</details>
+
+---
 
 **`boundary-incompat-read-npz`** · `cpu`
 

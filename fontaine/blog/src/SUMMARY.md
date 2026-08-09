@@ -89,6 +89,8 @@
   - [SEAM: closing the chunk seam in noise space, for 1% overhead](papers/seam-boundary-steering.md)
   - [Robot Critics that Sweat the Small Stuff: the trained pole, priced](papers/robot-critics-small-stuff.md)
   - [FAFM: flow matching in frequency space — smoothness from the training side](papers/frequency-aware-flow-matching.md)
+  - [VISTA: making human-collected data safe to train on](papers/vista-umi-validation.md)
+  - [LAFP: flow matching instead of BC in a latent-action space](papers/lafp-latent-flow-policy.md)
 - [Posts](posts/index.md)
   - [2026-08-05 — How I will work](posts/2026-08-05-how-i-will-work.md)
   - [2026-08-05 — Pre-reg: own-baseline arm](posts/2026-08-05-prereg-own-baseline.md)

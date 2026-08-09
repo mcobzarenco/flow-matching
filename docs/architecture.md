@@ -198,14 +198,41 @@ length; `3·patch_size²` = a raw-RGB vision patch row.
 ## 1. Prompt side — the prefix encode
 
 This section describes the Gemma-4 E2B prompt path in detail; the
-prompt *format* (camera kinds, conditioning block, request set,
-sandwich, soft state token) is shared by both trunks. The Molmo2
-encoder strategy (`bijou/encoders/molmo2.py`) differs where the
-architecture forces it: Molmo2's own chat template and image
-processor (SigLIP tower, pooled patches, `--max-crops`), a full-depth
-prefill (no truncation point exists), and — for the flow expert —
+prompt *semantics* (camera kinds, conditioning block, request set,
+soft state token) are shared by both trunks. The Molmo2 encoder
+strategy (`bijou/encoders/molmo2.py`) differs where the architecture
+forces it: Molmo2's own chat template and image processor (SigLIP
+tower, pooled patches, `--max-crops`), a full-depth prefill (no
+truncation point exists), and — for the flow expert —
 residual-stream taps with learned adapters instead of exported K/V
 (§2.1); trunk fact sheet in `docs/molmo2.md`.
+
+**Molmo2 prompt format.** Molmo2 follows the ChatML/Qwen convention,
+which hoists every image to the front of the sequence — Gemma's
+inline "instruction sandwich" cannot be rendered, so the same
+semantic content is re-mechanized (`MOLMO2_PROMPT_FORMAT`, a
+namespaced format, not a version bump of Gemma's):
+
+```
+<bos> {hoisted images} <|im_start|>user\n
+{task}[kind1 camera|Image 1][kind2 camera|Image 2]{condition}{task}
+<state> <|im_end|>\n
+```
+
+Images expand per the shipped chat template's exact bytes (`Image
+1<img>Image 2<img>` labels when there are several); camera *kinds*
+bind to images through `[kind camera|Image i]` bracket groups in the
+text, replacing Gemma's inline camera tags. Two checkpoint quirks are
+load-bearing: the sequence-initial `<bos>` is actually the
+`<|im_end|>` token (id 151645 — the checkpoint's own convention, per
+its `tokenizer_config.json`), and tokenization is native
+(`tokenizer.json` through the `tokenizers` backend, no remote code);
+assembling text segments around pinned special-token ids is exactly
+equivalent to tokenizing the full templated string because the
+specials are added tokens that always split first (golden-fixture
+test against the reference processor). The soft state token splices
+just inside the user-turn close, and the collator LEFT-pads so an AR
+suffix can continue directly from the prompt.
 
 **One backbone, mounted at a depth (Gemma).** `BackboneConfig.depth ∈ {prefix,
 full}`: the cross-attention decoders mount layers 0–14 only
@@ -1101,7 +1128,52 @@ Conditioning at rollout: `--outcome success --smoothness high`
 defaults (ask for the behavior you want; rendered only by
 condition-trained checkpoints) and optional `--subgoal "…"` for
 planner/operator hints — omitted, the dropout-trained unconditioned
-context applies.
+context applies. Noise control for flow checkpoints: `--seed` fixes
+the per-replan noise sequence; `--noise-ticket FILE` (an npz with a
+`tickets` float32 `[count, chunk, dim]` array — the same format the
+eval CLI consumes) replaces fresh noise entirely, so every replan
+integrates from the same fixed vector (maximally consistent chunk
+seams, no draw diversity; the file's sha256 prints in the banner for
+attribution). `--sample-draws N` batches N flow draws per replan and
+executes their mean; `--async-inference` overlaps planning with
+execution and switches chunks at the horizon boundary.
+
+**The offline eval system** (`python -m bijou.eval`) scores frozen
+checkpoints on dataset frames — open-loop chunk MAE against recorded
+actions, with state-copy baselines computed on the identical frames.
+The surface, briefly:
+
+- **Frame selection**: either `--num-samples N` (seeded uniform) or a
+  frozen *sample plan* (`--sample-plan plans/*.json`) — a committed
+  list of `(repo_id, episode, frame)` rows, so different checkpoints
+  and modes score byte-identical frame sets. Episode-level
+  train/holdout splits (`--episodes`, `--holdout-episodes`,
+  `--split-seed`) hash episodes exactly the way training does; the
+  standalone leakage checker (`bijou/eval/leakage.py`, its own CLI)
+  certifies that a training corpus never contains panel-holdout
+  episodes, including through filtered/renamed derived corpora
+  (whose re-hashed splits silently move episodes across sides).
+- **Decode control**: `--sample-steps/--sample-method/--sample-draws`
+  (flow solver and ensembling), `--target-time zero` (one-forward
+  endpoint decode for shortcut-trained checkpoints),
+  `--ar-temperature` (sampled AR decodes), `--noise-key
+  {stable,index}` (noise keyed by frame identity vs plan index),
+  `--noise-tickets` + optional `--noise-ticket-map` (decode every
+  frame from committed noise vectors — one shared vector, or one
+  routed per dataset; the bank file's sha256 rides in every output).
+- **Ablation probes**: `--mask-state` (zero the proprioceptive state
+  input), `--subgoal-mode {oracle,self,draws,mcselect}` (condition
+  the language slot on ground-truth segment labels, the model's own
+  generated subgoal, or scored candidate subgoals), `--smolvla` (an
+  external-baseline scorer on the same frames).
+- **Outputs**: summary JSON (`--output-json`), a browsable HTML panel
+  with rendered trajectories (`--report`), and per-frame npz dumps —
+  `--dump-predictions` (one chunk per frame per policy + truth,
+  validity, and frame identity columns) and `--dump-draws` (the
+  pre-average `[frames, draws, chunk, dim]` stack). The npz dumps are
+  the substrate for all downstream analysis scripts; they carry
+  enough provenance (policy name, decode settings, noise/ticket
+  hashes) to be interpretable standalone.
 
 **Artifacts.** Checkpoints + tokenizers:
 [`mcobzarenco/bijou-checkpoints`](https://huggingface.co/mcobzarenco/bijou-checkpoints)

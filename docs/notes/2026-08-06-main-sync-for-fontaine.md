@@ -54,6 +54,9 @@ hair on your branch as pulled: rel error **1.0004e-4** vs the 1e-4
 bound. Pre-existing (fails with our changes stashed); a tolerance
 call for you, not us — every other check is green (337 passed).
 
+*Resolved (verified 2026-08-09): the test passes on the current
+branch — no open action.*
+
 ## 4. Incidental
 
 `bijou/train.py`: import-group reorder only (`wandb` into the

@@ -190,3 +190,11 @@ pretrained trunk:
 |---|---|---|
 | SEAM (inference-side seam steering) | [2607.04609](https://arxiv.org/abs/2607.04609) | ✅ [page](seam-boundary-steering.md) |
 | FAFM (training-side frequency-space smoothness) | [2606.20135](https://arxiv.org/abs/2606.20135) | ✅ [page](frequency-aware-flow-matching.md) |
+
+**Data ingestion / heterogeneous collection (radar set 08-09):**
+
+| Paper | arXiv | Status |
+|---|---|---|
+| VISTA (UMI adaptation: fisheye VQA + physics validation) | [2606.04708](https://arxiv.org/abs/2606.04708) | ✅ [page](vista-umi-validation.md) |
+| LAFP (latent-action flow policy) | [2606.10517](https://arxiv.org/abs/2606.10517) | ✅ [page](lafp-latent-flow-policy.md) |
+| Flowing With Purpose (latent-action FM) | [2606.23420](https://arxiv.org/abs/2606.23420) | ✅ already covered: [LAFM page](latent-action-priors.md) (dup caught 08-09) |

@@ -7,10 +7,12 @@ core path; flags added since it was written — `--sample-draws`,
 `--async-inference`, `--return-home`/`--return-home-seconds`,
 `--camera-kind name=kind`, `--generate [fields…]`,
 `--outcome`/`--smoothness`/`--subgoal` conditioning, `--switch-blend`,
-`--offload-ple`, `--target-time`, `--control-fps`, and the safety
-envelope gate (`--unclamped`/`--skip-envelope-check` escape hatches) —
-are documented in `python -m bijou.rollout --help` and
-architecture.md §6.
+`--offload-ple`, `--target-time`, `--control-fps`, `--noise-ticket`
+(fixed noise vector for every replan, npz `tickets [count, chunk,
+dim]` — the eval CLI's ticket format; sha256 echoed in the banner),
+and the safety envelope gate (`--unclamped`/`--skip-envelope-check`
+escape hatches) — are documented in `python -m bijou.rollout --help`
+and architecture.md §6.
 
 ## What it is
 

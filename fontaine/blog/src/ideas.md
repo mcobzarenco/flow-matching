@@ -122,7 +122,12 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   25.8 pp at 5% data; a fewer-steps lever for the throughput
   accounting, teacher overhead unreported. SF may fit single-tower
   Molmo2 better than the VEGA recipe; escalation order unchanged
-  (VEGA won head-to-head).
+  (VEGA won head-to-head). New 2026-08-09: LAFP
+  ([page](papers/lafp-latent-flow-policy.md), 2606.10517) fills the
+  latent-action-from-video pole of the family map (LAOM +
+  flow-in-latent beats BC on multimodal envs; Procgen only,
+  skim-to-place) — the documented recipe if unlabeled-video
+  pretraining ever enters via the RDT2/VISTA data premise.
 - **`aux-subgoals` [#6 Aux attribution](ideas/06-aux-attribution.md)** —
   `confirmed` (aux HELPS actions, +0.462 cost when off).
   **CONSOLIDATED REPORT 2026-08-09
@@ -391,6 +396,13 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
 - **`data-levers` [#9 Data levers](ideas/09-data-levers.md)** — state-dropout arm
   C answered "adopt nothing"; p=0.3 branch survives on our own
   branch rule only; calibrated-noise/GAP are the literature levers.
+  New 2026-08-09: VISTA
+  ([page](papers/vista-umi-validation.md), 2606.04708) — physics
+  validation of human-collected data (continuity/collision/fidelity
+  scores predict deployment: 65% vs 0% OSR at matched grasp); banked
+  hook: the embodiment-agnostic *continuity screen* is a zero-GPU
+  read on our own corpus (per-tick displacement thresholds — a
+  kinematic-corruption dimension orthogonal to the VLM judge).
 - **`base-vs-it` [#10 E2B base-vs-IT swap](ideas/10-e2b-base-vs-it.md)** —
   backbone-swap arm, pre-registered prediction ±0.2.
 - **`visual-grounding` [#11 Visual grounding arms](ideas/11-visual-grounding.md)** —
@@ -442,3 +454,4 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   item.
 - **`loop-review` [#21 Agentic-loop deep review](ideas/21-agentic-loop-review.md)**
   — CLOSED: P1–P7 all landed, owner-signed.
+
