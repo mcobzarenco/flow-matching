@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T09:20:00Z
+**Updated:** 2026-08-09T10:35:00Z
 
-**Depth call:** depth >=2 at 09:2xZ 08-09: attach screen EXECUTING (arm K live on box, cost gate PASS full 10k) + idea6-mcselect EXECUTING (instrument landed 5181d8e, run live on local GPU since 09:12:36Z); blocked behind: stage-2 decision (screen readout), actckpt ladder, f-then-joint draft (Delta_seam), owner-held items
+**Depth call:** depth >=2 at 10:3xZ 08-09: attach screen EXECUTING (arm K live, endpoint ~18:3xZ) + idea6-mcselect-postmortem queued (CPU/record-only on banked dump); blocked behind: stage-2 decision (screen readout tonight), actckpt ladder, f-then-joint draft (Delta_seam), owner-held items
 
-**8 open** (Live 0 · Queued 2 · Blocked 6 · Done 60)
+**8 open** (Live 0 · Queued 2 · Blocked 6 · Done 61)
 
 ## 🔴 Live (0)
 
@@ -18,15 +18,15 @@
 
 *ready — waiting on a window or a boundary*
 
-**`idea6-mcselect-execution`** · `gpu-local`
+**`idea6-mcselect-postmortem`** · `cpu`
 
-#6 rung-(c) masked-contrast selection EXECUTION (gpu-local, &lt;= 4 GPU-h gate): per 2026-08-09-prereg-subgoal-mcselect.md
+#6 rung-(c) post-mortem read (CPU, record-only, exploratory — NOT pre-registered, no decision rides on it; the selection-ceiling read precedent): from the banked mcselect npz (mcselect:kl [N,C] + mcselect:cand_pred [N,C,S,D]) com…
 
-**boundary:** RUN LIVE since 09:12:36Z 08-09 (local GPU, unit fontaine-mcselect-q4); ETA ~10:5x-11:2xZ at the smoke rate; frozen read mcselect_results.py chains in-unit; verdict lands on this item at completion · [pre-reg](posts/2026-08-09-prereg-subgoal-mcselect.md)
+**boundary:** banked-data CPU work, any GPU-busy window; wanted before any learned-verifier pre-reg opens (#6 escalation is otherwise CLOSED)
 
 <details><summary>full record</summary>
 
-#6 rung-(c) masked-contrast selection EXECUTION (gpu-local, &lt;= 4 GPU-h gate): per 2026-08-09-prereg-subgoal-mcselect.md — (1) INSTRUMENT first (CPU): candidates-file injection eval path + per-candidate teacher-forced logprob stacks + masked reference; oracle gates named in the draft (planted-informative fixture, tau degeneracy check, rung-(a) greedy-text byte-reproduction spot check); (2) FINALIZE the draft (immutability stamp, candidates-file sha256 pinned); (3) run 9 forwards x 4301 q4 rows local H100 (~1.5 GPU-h projected), babysit entry at launch; (4) frozen reads: (mc-self) paired CI95 primary, capture fraction vs -0.181, late-horizon signature, agreement diagnostics; anti-select = second strike closes the zero-training scorer family | READ SCRIPT LANDED 05:5xZ 08-09 (mcselect_results.py, PRE-DATA per house convention — the script IS the producer's dump contract: mcselect:kl [N,C] NaN-at-ineligible, mcselect:cand_pred [N,C,S,D], mcselect:pred_masked, report mcselect_tau==4.0 + candidates_sha256; ARGMAX + tie rule live in the reader, producer only measures): oracle PASS pre-data (planted-argmax fixture w/ exact paired arithmetic + tie rule + capture fraction, 10 abort branches incl. inert-scorer bar, finite-KL-at-truncated, partial-run, sha/tau mismatch); wrapper in check.py 559. REMAINING: the producer instrument (bijou eval path: candidates-file injection + in-model KL + per-candidate teacher-forced preds) + draft finalization + the ~1.5 GPU-h local run | DESIGN NOTE for the instrument session (caught 05:5xZ pre-build): the draft's 'no decode loop' cost line conflicts with MAE comparability — every (b') comparator arm's error is DECODED-pred error, so mc's per-candidate preds must come from decodes under each candidate (C decodes, ~2-2.5 GPU-h, still &lt;= 4 gate; KL computable during the decode + one masked teacher-forced reference forward per candidate sequence). Keeps cand_pred [N,C,S,D] + argmax-in-reader intact. AMEND the draft's cost/mechanics lines accordingly BEFORE finalization (draft is mutable by design; the read script contract needs no change) | INSTRUMENT LANDED + PRE-REG FINALIZED + RUN LAUNCHED 09:12:36Z 08-09 (5181d8e): --subgoal-mode mcselect (candidates-file injection, ActionCaptureStep capture from the decode's own logits, teacher-forced masked reference vs snapshot/restored shared prefill, KL float64 over the grammar-legal set; dump + report echo per the pre-data contract); oracles green (tests/test_mcselect.py 15 tests: planted-KL exact arithmetic, tau-&gt;inf = log|legal|-H exact, decode-vs-teacher-forced identity real-decoder, capture-off byte-equal; mcselect_live_oracles.py 9 abort branches; check.py 574); 12-row real-checkpoint smoke rc=0 verified contract keys/NaN==eligibility, 1.4 s/frame -&gt; ~1.7 GPU-h projected &lt;= 4 gate; BONUS: smoke caught the subgoal-mode report-sort KeyError that silently cost the (b') q4 run its HTML — fixed. Unit fontaine-mcselect-q4, babysit entry mcselect_q4 live, chain run -&gt; live oracles -&gt; frozen read
+#6 rung-(c) post-mortem read (CPU, record-only, exploratory — NOT pre-registered, no decision rides on it; the selection-ceiling read precedent): from the banked mcselect npz (mcselect:kl [N,C] + mcselect:cand_pred [N,C,S,D]) compute (1) per-candidate KL-vs-frame-error correlation (pooled + per-row rank), (2) the oracle-best candidate's KL-rank histogram (where on the informativeness axis do the good candidates sit), (3) the same for SC's banked mean_logprob axis from the candidates file — a 2-axis map of the closed family's failure, to be read BEFORE anyone prices a learned verifier (RoVer-style supervised vs set-joint label-free). AUDIT FIRST per standing rule: mcselect_results.py owns argmax/tie/eligibility — reuse its loaders/eligible_list, extend only the correlation delta. Oracle: planted monotone-KL fixture (known rank order in/out) + degenerate C=1 row must abort. Output: one analysis json + a short post section (or appended to the results post as a dated addendum), NO deployment claim
 
 </details>
 
@@ -132,7 +132,7 @@ Molmo2 stage-2 attachment decision at endpoint — now EXECUTABLE via the seam-s
 
 ---
 
-## ✅ Done (60)
+## ✅ Done (61)
 
 *closed — the full record stays in each fold*
 
@@ -355,6 +355,20 @@ Leaderboard integrity: bring molmo2 AR configs into the decode-cost microbench (
 <details><summary>full record</summary>
 
 Leaderboard integrity: bring molmo2 AR configs into the decode-cost microbench (CPU prep item — the molmo2-endpoint-postprocessing row must otherwise flag its cost column as mtime-derived or leave it blank; this item retires that caveat). Work: extend the microbench harness to cover the molmo2 AR config (config plumbing + tiny-fixture dry run, CPU-verifiable), and land a one-command box script whose GPU minutes ride an already-pre-registered box eval window (the #19 draws-arm launcher's posted cost-gate umbrella, or the next posted box pre-reg) — no standalone unpre-registered GPU launch; then write the measured number into the leaderboard row + note the caveat's removal — PREP LANDED 08-08 04:4xZ: molmo2_greedy + molmo2_draws10_t1 configs in the shared harness (selftest PASS, dry-run prints both modes; dry-run no longer requires the box-resident checkpoint, real runs still abort), one-command box script microbench_box_molmo2.sh (all-GPU-free guard, run_detached launch line in header); REMAINING: run on the box at the first pre-registered eval window after the #19 chain, then merge rows into the leaderboard cost column — EXECUTED 08-08 07:27-07:50Z on the box (rode the #19 landing window, all-GPU-free guard green, unit fontaine-microbench-molmo2 rc=0): molmo2_greedy 143.8 batched / 678.1 b=1 ms, molmo2_draws10_t1 1191.2 / 6291.3 ms -&gt; leaderboard rows 8+9 cost cells filled, mtime caveat RETIRED (box-measured noted, record-only extension per prep commit)
+
+</details>
+
+---
+
+**`idea6-mcselect-execution`** · `gpu-local`
+
+#6 rung-(c) masked-contrast selection EXECUTION (gpu-local, &lt;= 4 GPU-h gate): per 2026-08-09-prereg-subgoal-mcselect.md
+
+**boundary:** CLOSED 10:2xZ 08-09: run COMPLETE 10:20Z rc=0 (~1.1 GPU-h &lt;= 4 gate, 68 f/min steady). Live-oracle chain: my subset_rows joined on the identity triple but the BANKED full-panel baseline predates the episode/frame columns -&gt; KeyError post-run (selftest fixture carried the columns, so the branch was never exercised against the real schema); fixed to the sdr index-join convention 10:2xZ, selftest re-green, live oracles ALL ABORT-GRADE GREEN on real data (pred_masked flip count 1207/4301 == the amendment-1 composition figure exactly). FROZEN READ: ANTI-SELECT — (mc - self) +0.31317 CI95 [+0.19962, +0.42894] entirely &gt; 0 (harder strike than SC +0.210); mc vs bare +0.245; capture fraction -1.73; late-horizon +0.385 (ceiling slot inverted); oracle agreement 14.4% ~ chance at 66% active picks. KILL RULE EXECUTED: zero-training scorer family CLOSED for this trunk; learned verifiers need their own case; candidate 2 does not auto-open (trigger was flat-late-horizon, observed = active anti-selection). Results post 2026-08-09-mcselect-results.md; analysis__subgoal_mcselect_q4_ar100k_k4l2.json banked; babysit entry pruned · [pre-reg](posts/2026-08-09-prereg-subgoal-mcselect.md)
+
+<details><summary>full record</summary>
+
+#6 rung-(c) masked-contrast selection EXECUTION (gpu-local, &lt;= 4 GPU-h gate): per 2026-08-09-prereg-subgoal-mcselect.md — (1) INSTRUMENT first (CPU): candidates-file injection eval path + per-candidate teacher-forced logprob stacks + masked reference; oracle gates named in the draft (planted-informative fixture, tau degeneracy check, rung-(a) greedy-text byte-reproduction spot check); (2) FINALIZE the draft (immutability stamp, candidates-file sha256 pinned); (3) run 9 forwards x 4301 q4 rows local H100 (~1.5 GPU-h projected), babysit entry at launch; (4) frozen reads: (mc-self) paired CI95 primary, capture fraction vs -0.181, late-horizon signature, agreement diagnostics; anti-select = second strike closes the zero-training scorer family | READ SCRIPT LANDED 05:5xZ 08-09 (mcselect_results.py, PRE-DATA per house convention — the script IS the producer's dump contract: mcselect:kl [N,C] NaN-at-ineligible, mcselect:cand_pred [N,C,S,D], mcselect:pred_masked, report mcselect_tau==4.0 + candidates_sha256; ARGMAX + tie rule live in the reader, producer only measures): oracle PASS pre-data (planted-argmax fixture w/ exact paired arithmetic + tie rule + capture fraction, 10 abort branches incl. inert-scorer bar, finite-KL-at-truncated, partial-run, sha/tau mismatch); wrapper in check.py 559. REMAINING: the producer instrument (bijou eval path: candidates-file injection + in-model KL + per-candidate teacher-forced preds) + draft finalization + the ~1.5 GPU-h local run | DESIGN NOTE for the instrument session (caught 05:5xZ pre-build): the draft's 'no decode loop' cost line conflicts with MAE comparability — every (b') comparator arm's error is DECODED-pred error, so mc's per-candidate preds must come from decodes under each candidate (C decodes, ~2-2.5 GPU-h, still &lt;= 4 gate; KL computable during the decode + one masked teacher-forced reference forward per candidate sequence). Keeps cand_pred [N,C,S,D] + argmax-in-reader intact. AMEND the draft's cost/mechanics lines accordingly BEFORE finalization (draft is mutable by design; the read script contract needs no change) | INSTRUMENT LANDED + PRE-REG FINALIZED + RUN LAUNCHED 09:12:36Z 08-09 (5181d8e): --subgoal-mode mcselect (candidates-file injection, ActionCaptureStep capture from the decode's own logits, teacher-forced masked reference vs snapshot/restored shared prefill, KL float64 over the grammar-legal set; dump + report echo per the pre-data contract); oracles green (tests/test_mcselect.py 15 tests: planted-KL exact arithmetic, tau-&gt;inf = log|legal|-H exact, decode-vs-teacher-forced identity real-decoder, capture-off byte-equal; mcselect_live_oracles.py 9 abort branches; check.py 574); 12-row real-checkpoint smoke rc=0 verified contract keys/NaN==eligibility, 1.4 s/frame -&gt; ~1.7 GPU-h projected &lt;= 4 gate; BONUS: smoke caught the subgoal-mode report-sort KeyError that silently cost the (b') q4 run its HTML — fixed. Unit fontaine-mcselect-q4, babysit entry mcselect_q4 live, chain run -&gt; live oracles -&gt; frozen read | CLOSED 10:2xZ 08-09: ANTI-SELECT, family CLOSES (see boundary)
 
 </details>
 

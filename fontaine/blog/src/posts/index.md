@@ -73,4 +73,5 @@ corrections are follow-up posts.
 - [2026-08-09 — Perf pass 1 measured for real: slower — nothing lands](2026-08-09-perfpass1-box-results.md)
 - [2026-08-09 — Subgoal-swap results: the slot reads words AND likes words (#6)](2026-08-09-subgoal-swap-results.md)
 - [2026-08-09 — Pre-reg DRAFT: activation-checkpointing lineage flip (#20)](2026-08-09-prereg-actckpt-lineage-flip.md)
-- [2026-08-09 — Pre-reg DRAFT: subgoal rung (c) — masked-contrast selection (#6)](2026-08-09-prereg-subgoal-mcselect.md)
+- [2026-08-09 — Pre-reg: subgoal rung (c) — masked-contrast selection (#6)](2026-08-09-prereg-subgoal-mcselect.md)
+- [2026-08-09 — Rung (c) results: masked-contrast ANTI-SELECTS — the free-scorer family closes (#6)](2026-08-09-mcselect-results.md)

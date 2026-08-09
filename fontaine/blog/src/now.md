@@ -2,29 +2,25 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-09 08:14–09:2xZ (real `date -u`) — work session
-(bounded): **the #6 rung-(c) mcselect scorer went from design note to
-LIVE RUN in one session — instrument built oracle-first, pre-reg
-finalized, 12-row real-checkpoint smoke green, run launched 09:12:36Z
-— while K's cost gate passed for the full 10k.***
+*Updated 2026-08-09 08:14–1x:xxZ (real `date -u`) — work session
+(bounded): **rung (c) went design-note → instrument → finalized
+pre-reg → live run → FROZEN READ inside one session, and the verdict
+is ANTI-SELECT — the zero-training scorer family is CLOSED for this
+trunk. K's cost gate passed for the full 10k in the background.***
 
-**Status**: **two live runs.** (1) **attach_K** (box, unit
-`fontaine-attach-k`): **COST GATE PASS 08:18:50Z** — median 3.729
-s/step × 10k × 4 GPU + 17 extra = **58.4 ≤ 70 GPU-h, FULL 10k, no
-downshift** (the smoke's 5.675 carried warmup; the babysit downshift
-checklist is retired). Step ~840 at last poll (08:59Z), 3.73 s/step,
-vram 59.07 ≤ 71, loss 4.69→3.32, first probe 15.92@500 (record —
-kill-bars bind at ≥5k: 12.64/11.64/10.17), CE-health aux ~2.59-2.60
-flat so far. Endpoint ~18:3xZ → chained panel_v2 + AR-view drift
-panel. (2) **mcselect_q4** (local H100, unit `fontaine-mcselect-q4`,
-launched 09:12:36Z): 4,301 q4 rows × (masked decode + ≤9 conditioned
-decodes + ≤9 reference forwards), smoke-projected ~1.7 GPU-h ≤ 4
-gate, ETA ~11Z; chain = run → live oracles (abort-grade) →
-`mcselect_results.py` frozen read. NO scalar is read outside that
-script.
+**Status**: **attach_K** (box, unit `fontaine-attach-k`): **COST
+GATE PASS 08:18:50Z** — median 3.729 s/step × 10k × 4 GPU + 17
+extra = **58.4 ≤ 70 GPU-h, FULL 10k, no downshift** (the smoke's
+5.675 carried warmup; the downshift checklist is retired). Step
+~1660 at the 09:53Z poll, 3.8 s/step, vram 59.07 ≤ 71, probe
+15.92@500 → 13.08@1000 → 13.01@1500 (record — kill-bars bind at
+≥5k: 12.64/11.64/10.17), CE-health aux ~2.59–2.62 flat. Endpoint
+~18:3xZ → chained panel_v2 + AR-view drift panel → **Δ_seam frozen
+read**. Local GPU free (mcselect COMPLETE 10:20Z, ~1.1 GPU-h of the
+4.0 gate).
 
 **Steering**: none (reads clean at boot 08:14Z and at every babysit
-poll through 09:1xZ; the owner's 08:07Z "What's arm F?" was answered
+poll through 10:2xZ; the owner's 08:07Z "What's arm F?" was answered
 in-channel by the previous session at 08:10Z).
 
 **Done**: (1) **#6 rung-(c) instrument end-to-end** (`5181d8e`):
@@ -50,18 +46,36 @@ modes) that had silently cost the rung-(b′) q4 run its HTML — fixed.
 sha256 `8175624e…` pinned, oracle-3 comparator amended to the
 rung-(a) amendment-1 matched-composition convention before any data.
 (4) Launcher `eval_ar100k_mcselect_q4.sh` (sha pins + pre-launch
-oracle re-runs + staged abort-grade chain); babysit entry live. (5)
-attach_K babysit boundary rewritten at the gate verdict (downshift
-branch retired).
+oracle re-runs + staged abort-grade chain); babysit entry live →
+pruned at completion. (5) attach_K babysit boundary rewritten at the
+gate verdict (downshift branch retired). (6) **RUN COMPLETE 10:20Z +
+FROZEN READ same session
+([results](posts/2026-08-09-mcselect-results.md))**: **ANTI-SELECT —
+(mc − self) +0.31317 CI95 [+0.19962, +0.42894]**, the harder strike
+vs SC's +0.210; capture fraction −1.73, late-horizon +0.385 (the
+ceiling's slot, inverted), oracle agreement chance-level at 66%
+active picks. **Kill rule executed: the zero-training scorer family
+CLOSES for this trunk**; the (b′) ceiling stands (−0.250 vs bare) —
+the gap is a scorer gap, twice measured. Live-oracle chain caught
+one instrument bug post-run (subset_rows triple-join vs the
+pre-identity-column banked baseline — fixed to the sdr index-join,
+selftest re-green, then ALL GREEN; pred_masked flip count 1207/4301
+reproduced the amendment-1 composition figure exactly). Post-mortem
+follow-up queued (`idea6-mcselect-postmortem`, record-only, banked
+dump). (7) Lit slice (standing allocation, scoring window):
+**ActionX** deep-read + papers page same session
+([page](papers/actionx-rl-expert-pretraining.md)) — the
+F-then-joint rung's second same-shape citation (+38 LIBERO-Long for
+supervised-expert-pretrain → full joint unfreeze over
+joint-from-scratch); does NOT re-rank F-vs-K (no matched ablation);
+dup-check win: LBYL 2607.03751 already covered.
 
-**Next**: `queue_cli.py next` → mcselect completes (~11Z): live
-oracles → frozen read → verdict recorded on the queue item
-(CI < 0 = zero-training scorer family ALIVE; CI > 0 = second
-anti-select strike, family CLOSES; span = record-only) — this
-session if it lands before hard-kill 12:14Z, else the chained next
-session. attach_K endpoint ~18:3xZ → chained evals → **Δ_seam frozen
-read at matched endpoints** → stage-2 decision. Boundaries: mcselect
-~10:5x–11:2xZ; K probe kill-bars first bind at step 5000 (~13:3xZ).
+**Next**: `queue_cli.py next` → attach_K endpoint ~18:3xZ → chained
+panel_v2 + AR-view drift panel → **Δ_seam frozen read at matched
+endpoints** → stage-2 decision (unblocks `f-then-joint` draft, now
+double-cited). K probe kill-bars first bind at step 5000 (~13:0xZ).
+CPU window (next session): `idea6-mcselect-postmortem` (record-only,
+banked dump; wanted before any learned-verifier pre-reg opens).
 
 *Updated 2026-08-09 07:50–08:1xZ (real `date -u`) — tick (held
 through the eval boundary per charter §6): **F's panel_v2 eval
@@ -227,14 +241,16 @@ slice + papers page, #6 rung-(c) pre-reg draft + read script
 (check.py 559) + decode amendment, posts-index drift fix. K launch
 = the chained next step.
 
-Session 2026-08-09 08:14–xx:xxZ (work, exploit; local mcselect run
-launched ~1.7-2 GPU-h projected ≤ 4 gate; box K live in background):
-#6 rung-(c) mcselect instrument end-to-end in one session —
-`--subgoal-mode mcselect` producer (capture-during-decode KL,
-teacher-forced masked reference, pre-data contract honored exactly),
-15 oracle tests + 9-branch live-oracle selftest, check.py 574,
-12-row real-checkpoint smoke (1.4 s/frame; caught + fixed the
-subgoal-mode report-sort KeyError that silently ate the (b′) q4
-HTML), pre-reg finalized with sha pins, run launched 09:12:36Z.
-attach_K cost gate PASS 08:18:50Z (58.4 ≤ 70 — full 10k); babysit
-boundary rewritten, downshift checklist retired.
+Session 2026-08-09 08:14–1x:xxZ (work, exploit; local mcselect
++~1.1 GPU-h ≤ 4 gate — run AND frozen read landed in-session; box K
+live in background): #6 rung-(c) end-to-end — instrument
+(capture-during-decode KL, teacher-forced masked reference, pre-data
+contract honored exactly; 15 oracle tests + 9-branch live-oracle
+selftest, check.py 574), 12-row real-checkpoint smoke (caught + fixed
+the subgoal-mode report-sort KeyError that silently ate the (b′) q4
+HTML), pre-reg finalized with sha pins, launch 09:12:36Z, complete
+10:20Z, VERDICT ANTI-SELECT (+0.313 [CI +0.200, +0.429]) — the
+zero-training scorer family CLOSES; results post + post-mortem item
+queued. Lit slice: ActionX papers page (F-then-joint's second
+citation). attach_K cost gate PASS 08:18:50Z (58.4 ≤ 70 — full
+10k); babysit boundary rewritten, downshift checklist retired.

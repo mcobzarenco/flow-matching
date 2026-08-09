@@ -165,7 +165,19 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   (jerkpick: flow null / AR 8% of the oracle gap, banked) — the
   physics-side selector is priced and is not the answer alone; the
   scorer rung choice is now RoVer-style supervised (4,298 in-domain
-  pairs available) vs set-joint label-free.
+  pairs available) vs set-joint label-free. **Rung (c) READ OUT
+  2026-08-09 ([results](posts/2026-08-09-mcselect-results.md)):
+  masked-contrast ANTI-SELECTS — (mc − self) +0.313 [CI +0.200,
+  +0.429], worse than SC's +0.210; capture fraction −1.73,
+  late-horizon +0.385 (the ceiling's slot, inverted), oracle
+  agreement chance-level at 66% active picks. Informativeness is
+  anti-correlated with quality: max-KL candidates are disruptive,
+  not phase-right. Second strike ⇒ the pre-registered kill rule
+  executed: the ZERO-TRAINING SCORER FAMILY IS CLOSED for this
+  trunk — learned-verifier shapes need their own affirmative case.
+  The ceiling itself stays alive (−0.250 vs bare); a record-only
+  KL-vs-quality post-mortem on the banked dump is queued before
+  anyone prices a learned verifier.**
 - **`noise-draws` [#1 Noise-draw ensembling](ideas/01-noise-draw-ensembling.md)** —
   flow mean-of-10 banked (5.365); batched draws merged 2026-08-07.
   **GOLDEN-TICKET SCREEN R1+R2 READ OUT 2026-08-08

@@ -77,27 +77,25 @@ def _bytes_equal(a: np.ndarray, b: np.ndarray) -> bool:
 
 
 def subset_rows(base: dict, probe: dict, label: str) -> np.ndarray:
-    """Positions of probe rows inside the banked panel npz (the q4
-    subset join — identity triple keyed, order-preserving)."""
-    key = {}
-    for position, (repo, episode, frame) in enumerate(
-        zip(base["repo_id"], base["episode_index"], base["frame_index"], strict=True),
-    ):
-        key[str(repo), int(episode), int(frame)] = position
+    """Positions of probe rows inside the banked panel npz — joined on
+    the concat ``index`` (the sdr.join_rows convention; the banked
+    full-panel baseline PREDATES the episode/frame identity columns,
+    which is what the first live run's crash taught: fixed 10:2xZ
+    08-09, join key now matches the frozen reader's; identity is then
+    proven by the state-copy/truth byte-match, not assumed)."""
+    positions = {int(ix): i for i, ix in enumerate(base["index"])}
     rows = []
-    for repo, episode, frame in zip(
-        probe["repo_id"],
-        probe["episode_index"],
-        probe["frame_index"],
-        strict=True,
-    ):
-        position = key.get((str(repo), int(episode), int(frame)))
+    for ix in probe["index"]:
+        position = positions.get(int(ix))
         if position is None:
             sys.exit(
-                f"{label}: probe row ({repo}, {episode}, {frame}) absent "
-                "from the banked panel npz — wrong plan or corpus, stop",
+                f"{label}: probe row index {int(ix)} absent from the "
+                "banked panel npz — wrong plan or corpus, stop",
             )
         rows.append(position)
+    repo = np.asarray(base["repo_id"])[rows]
+    if not np.array_equal(repo, probe["repo_id"]):
+        sys.exit(f"{label}: repo_id mismatch on the joined rows — stop")
     return np.array(rows, dtype=np.int64)
 
 
@@ -428,12 +426,24 @@ def selftest() -> int:
 
         # foreign row (identity not in the banked panel)
         broken = dict(scores)
-        broken["frame_index"] = scores["frame_index"].copy()
-        broken["frame_index"][0] = 9999
+        broken["index"] = scores["index"].copy()
+        broken["index"][0] = 9999
         np.savez(root / "broken6.npz", **broken)
-        (root / "broken6.json").write_text(good)
+        foreign_cands = json.loads((root / "cands.json").read_text())
+        foreign_cands["rows"][0]["index"] = 9999
+        (root / "cands6.json").write_text(json.dumps(foreign_cands))
+        report6 = {
+            "mcselect_tau": 4.0,
+            "candidates_sha256": hashlib.sha256(
+                (root / "cands6.json").read_bytes(),
+            ).hexdigest(),
+        }
+        (root / "broken6.json").write_text(json.dumps(report6))
         expect_abort(
-            lambda: go(scores_stem=str(root / "broken6")),
+            lambda: go(
+                scores_stem=str(root / "broken6"),
+                candidates=str(root / "cands6.json"),
+            ),
             "absent from the banked panel",
             "foreign row",
         )

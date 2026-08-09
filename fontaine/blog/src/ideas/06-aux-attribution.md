@@ -415,3 +415,26 @@ chunk-as-unit), fields-probe ranker, or distillation from the
   (candidates-file injection + in-model KL) + finalization stamp.
   Candidate 2 (TOPReward history probe) escalates only on a
   phase-specific failure.
+
+- **Rung (c) READ OUT 2026-08-09
+  ([results](../posts/2026-08-09-mcselect-results.md), run 09:12:36Z
+  → 10:20Z, ~1.1 GPU-h ≤ 4 gate)**: masked-contrast (MG-Select form,
+  τ=4, KL from the decode's own logits vs the tempered planner-less
+  reference) **ANTI-SELECTS** — primary (mc − self) **+0.31317 CI95
+  [+0.19962, +0.42894]**, the harder strike vs SC's +0.210; Δ vs
+  bare +0.245 (worse than no subgoal); capture fraction **−1.73**;
+  late-horizon signature **+0.385** (the ceiling's −0.464 slot,
+  inverted — max-KL candidates are disruptive, not phase-right);
+  oracle-pick agreement 14.4% ≈ chance at width 9 while 66% of
+  picks differ from greedy (decidedly not inert). Execution oracles
+  green; pred_masked composition-flip count 1207/4301 reproduced
+  the rung-(a) amendment-1 figure exactly. **Kill rule executed:
+  the zero-training scorer family CLOSES for this trunk** —
+  [RoVer](../papers/rover-learned-verifier.md) /
+  [Q-guided](../papers/qguided-flow-critic.md) shapes now need
+  their own affirmative case; candidate 2 (TOPReward history probe)
+  does not auto-open (its trigger was flat-late-horizon, the
+  observed failure is active anti-selection). The (b′) ceiling
+  stands (−0.250 vs bare) — the gap is a scorer gap, twice
+  measured. Free follow-up queued: record-only KL-vs-quality
+  post-mortem on the banked [N,C] KL + [N,C,S,D] error dump.

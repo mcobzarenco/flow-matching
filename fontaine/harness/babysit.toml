@@ -154,32 +154,15 @@ value = 71.0
 # PREPARED — #6 rung (c) mcselect run (local GPU, launcher
 # eval_ar100k_mcselect_q4.sh via run_detached.sh fontaine-mcselect-q4;
 # pre-reg 2026-08-09-prereg-subgoal-mcselect.md FINALIZED 08-09).
-# LIVE since 09:12:36Z 08-09 (unit fontaine-mcselect-q4); prune at completion.
-# Smoke-measured 1.4 s/frame -> ~1.7 GPU-h scoring projected, gate 4.
-# Chain: run -> mcselect_live_oracles.py (abort-grade) ->
-# mcselect_results.py (frozen read).
-
-[[run]]
-name = "mcselect_q4"
-kind = "progress-log"
-host = "local"
-pgrep = "stateprobe_q4_subgoalmcselect"
-pgrep_min = 1                      # eval python (launcher bash carries the stem too)
-gpu_indices = [0]
-gpu_mem_min_mib = 8000
-log = "/home/ubuntu/eval__ar100k_mcselect_q4.log"
-progress_re = "scored [0-9]+/[0-9]+ frames"
-started_utc = "2026-08-09T09:12:36Z"  # unit fontaine-mcselect-q4 (systemd-run via run_detached.sh)
-gpu_hours_per_wall_hour = 1.0      # single local GPU
-boundary = "4,301 q4 rows x (1 masked decode + <=9 conditioned decodes + <=9 reference forwards); smoke 1.4 s/frame -> ~1.7 GPU-h + load, GATE 4.0 (pre-reg); ETA ~10:5x-11:2xZ"
-anchors = [
-    "NO scalar reads at any poll — the verdict is mcselect_results.py's frozen read (argmax + tie rule live THERE)",
-    "rate check at first poll (q4-shaped, max-GPU-utilization standing rule): expect ~0.7+ f/s scoring; input starvation = fix before letting it run",
-    "chain rc: live oracles abort-grade BEFORE the read; a red = instrument break, no verdict either way",
-]
-[[run.gates]]
-kind = "gpu_hours_max"
-value = 4.0                        # pre-reg cost gate (smoke projects ~1.7)
+# PRUNED 10:3xZ 08-09 — mcselect_q4 COMPLETE 10:20Z rc=0 (~1.1 GPU-h
+# <= 4 gate, 68 f/min steady; unit fontaine-mcselect-q4 exited).
+# Live-oracle chain crashed once post-run (subset_rows triple-join vs
+# the pre-identity-column banked baseline npz — fixed to the sdr
+# index-join, selftest re-green), then ALL ABORT-GRADE GREEN.
+# FROZEN READ: ANTI-SELECT — (mc - self) +0.31317 [+0.19962,
+# +0.42894]; zero-training scorer family CLOSED for this trunk.
+# Results post 2026-08-09-mcselect-results.md; entry removed per the
+# retained-entry liveness-fail footgun. Local GPU free.
 
 # PREPARED — #17 vision-unfreeze screen arms (vu5k, sequential FROZEN
 # FIRST; pre-reg 2026-08-07-prereg-molmo2-vision-unfreeze.md,
