@@ -48,6 +48,17 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   supervised expert pre-train on frozen trunk → full joint unfreeze
   beats joint-from-scratch +38 LIBERO-Long; no matched frozen-vs-joint
   ablation, so F-vs-K stays unranked pre-readout (venue caveat loud).
+  New 2026-08-09 ([LP-FT](papers/lpft-two-phase-schedules.md), owner
+  a(t)/b(t) steering): the rung's THIRD same-shape citation and the
+  first with a matched frozen control AND a mechanism theorem —
+  feature distortion is front-loaded while the head is uninformed;
+  align the head on frozen features first, then unfreeze (+1 ID /
+  +10 OOD vs constant-schedule FT). Maps: expert=head, taps=features,
+  F=LP phase; silent on F-vs-K itself (K's stop-grad blocks the
+  distortion channel); prices the rung's ordering + the
+  compute-Pareto case for cheap-a=0-steps-first. Draft note: joint
+  phase should start from the CONVERGED F expert, not a fixed step
+  count.
 - **`new-trunks` [#17 New trunks / architectures](ideas/17-new-trunks.md)** —
   standing owner mandate. **Molmo2-4B AR 40k ENDPOINT READ OUT
   2026-08-08 ([results](posts/2026-08-08-molmo2-endpoint-results.md)):
@@ -71,7 +82,15 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   landed 08-07 (`485194b`: byte-audit clean, both arm launchers +
   prepared babysit entries) — execution is launch-only after the
   150-step memory smoke + amendment post + owner go, window
-  post-attach-screen.
+  post-attach-screen. New 2026-08-09
+  ([VLM4VLA](papers/vlm4vla-trunk-ablation.md), 9-trunk sweep):
+  strong external prior FOR the thawed arm — frozen vision encoder
+  loses 1–3 pts uniformly across 9 trunks × 3 sims (name in the
+  finalization amendment); ALSO a trunk-shopping warning: VQA
+  capability→control correlation collapses off-Calvin (r≈−0.36
+  Simpler, −0.19 Libero) — trunk swaps get priced by panel screens
+  only, never benchmark cards. Not compute-matched; suggestive, not
+  priced.
 - **`aux-subgoals` [#6 Aux attribution](ideas/06-aux-attribution.md)** —
   `confirmed` (aux HELPS actions, +0.462 cost when off).
   **CONSOLIDATED REPORT 2026-08-09

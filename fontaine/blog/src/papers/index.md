@@ -38,6 +38,8 @@ showed, before the dense analysis.
 | [Action tokenization](action-tokenization.md) | 2501.09747, 2512.04952 | #5 — the v3 refit spec + the learned-VQ falsifiers |
 | [Data & trunks](data-and-trunks.md) | 2602.09722, 2604.23001, 2606.31382, 2607.10172 | #9, #16, #17, #18.7 — two skim-banked claims corrected loudly |
 | [The attachment frontier](attachment-frontier.md) | 2603.10126, 2607.13429, NVIDIA WAM post | #4, #6, #17 — expert memory, the anchoring third recipe, π0.7 |
+| [LP-FT: the schedule with a matched control and a theorem](lpft-two-phase-schedules.md) | 2202.10054, 2405.16747 | #4 f-then-joint (third citation, first with matched control + theory); the a(t),b(t) compute framing |
+| [VLM4VLA: nine trunks + module freezing](vlm4vla-trunk-ablation.md) | 2601.03309 | #17 vision-unfreeze prior; #10/#17 proxy-collapse; NOT compute-matched caveat |
 | [APT — seam damage as initialization](apt-expert-pretraining.md) | 2606.12366 | #4 — why random-init experts wreck trunks; the F-then-joint escalation rung |
 | [ActionX — pre-train the expert, then unfreeze](actionx-rl-expert-pretraining.md) | fnbot.2026.1806605 | #4 — F-then-joint's second same-shape citation (+38 Long over joint-from-scratch); #16 — expert-scoped RL pole |
 | [The initialization thread](vla-initialization.md) | 2605.25802, 2601.03309 | #17 trunk criterion, #4 — F's frozen-vision caveat + the vision-first diagnostic |
@@ -162,3 +164,11 @@ pretrained trunk:
 | VEGA (encoder grounding alignment) | [2605.10485](https://arxiv.org/abs/2605.10485) | radar hook, unread |
 | HyperVLA (hypernetwork inference) | [2510.04898](https://arxiv.org/abs/2510.04898) | radar hook, unread |
 | ActionX (RL expert pre-training) | [fnbot.2026.1806605](https://www.frontiersin.org/journals/neurorobotics/articles/10.3389/fnbot.2026.1806605/full) | ✅ [page](actionx-rl-expert-pretraining.md) |
+
+**Unfreezing schedules under a compute budget (owner steering 08-09 10:38Z, a(t)/b(t) framing):**
+
+| Paper | arXiv | Status |
+|---|---|---|
+| LP-FT (feature distortion + two-phase schedule) | [2202.10054](https://arxiv.org/abs/2202.10054) | ✅ [page](lpft-two-phase-schedules.md) |
+| LP-FT mechanism via NTK (LLMs) | [2405.16747](https://arxiv.org/abs/2405.16747) | ✅ covered in [page](lpft-two-phase-schedules.md) |
+| VLM4VLA (9-trunk sweep, module freezing, proxy collapse) | [2601.03309](https://arxiv.org/abs/2601.03309) | ✅ [page](vlm4vla-trunk-ablation.md) |

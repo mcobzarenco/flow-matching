@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-09T10:57:00Z",
+ "updated_utc": "2026-08-09T11:50:00Z",
  "depth_reason": "depth >=2 at 10:3xZ 08-09: attach screen EXECUTING (arm K live, endpoint ~18:3xZ) + idea6-mcselect-postmortem queued (CPU/record-only on banked dump); blocked behind: stage-2 decision (screen readout tonight), actckpt ladder, f-then-joint draft (Delta_seam), owner-held items",
  "items": [
   {
@@ -625,22 +625,31 @@
   },
   {
    "id": "attach-seam-readout-audit",
-   "status": "queued",
+   "status": "done",
    "title": "#4 Delta_seam readout PRE-AUDIT (CPU, before the ~18:3xZ K endpoint; the audit-queue-items-against-git standing rule applied to tonight's frozen read): (1) re-run attach_seam_results.py --oracle at HEAD; (2) verify its default stems/paths against what unit fontaine-attach-k actually writes on the box (panel_v2 eval json/npz names, AR-view materialization output, F-side banked 08:01Z artifacts) \u2014 name drift here would stall the readout at the endpoint; (3) stage the exact one-command invocation + expected abort-grade branches into the babysit boundary so the readout is copy-paste at endpoint. Record-only prep; the read itself stays frozen as landed 08-07.",
-   "boundary": "executable any GPU-busy window before ~18:3xZ 2026-08-09",
+   "boundary": "DONE 11:1xZ 08-09 same session it was queued: oracle re-run green at HEAD (all 5 branches); default stems cross-checked against the box (F arm files present under the EXACT expected names; K launcher writes matching names, %06d padding verified at launcher line 150; ar_view stem matches; endpoint 60k k4l2 json already local); dry-run confirms the pre-endpoint abort is the clean 'arms not rsynced yet?' branch; 3-step runbook (2 rsyncs + one command) staged into the attach_K babysit anchors. Nothing in the frozen read was touched.",
    "class": "cpu",
    "prereg": null,
    "owner_hold": false
   },
   {
    "id": "lit-unfreeze-schedules",
-   "status": "queued",
+   "status": "done",
    "title": "Lit slice (standing allocation, owner steering 2026-08-09 10:38Z): the owner reframed F-vs-K as schedule curves a(t)*AR + b(t)*flow under FIXED COMPUTE \u2014 sweep for compute-matched frozen-vs-joint / unfreezing-schedule evidence in VLA + adjacent transfer literature (progressive unfreezing, staged joint training, compute-matched fine-tuning ablations). Papers page(s) same session per the permanent rule; feed #4 f-then-joint rung pricing + the post-Delta_seam compute-matched follow-up pre-reg if the a>0 region opens.",
-   "boundary": "executable any GPU-busy window; feeds the stage-2 decision chain",
+   "boundary": "DONE same session 11:4xZ 08-09, 2 papers pages landed: lpft-two-phase-schedules.md (LP-FT 2202.10054 + NTK 2405.16747 \u2014 the f-then-joint rung's THIRD citation, first with matched frozen control + feature-distortion theorem; compute-Pareto case for the step-function a(t); silent on F-vs-K since K's stop-grad blocks the distortion channel) + vlm4vla-trunk-ablation.md (2601.03309 \u2014 9-trunk sweep: frozen vision encoder loses uniformly => external prior for #17 thawed arm; VQA->control proxy collapse off-Calvin => trunk swaps priced by panel screens only; NOT compute-matched, caveat loud). index/SUMMARY/ideas #4+#17 hooks updated. Open question fed forward: nobody in the lineage measures the schedule family compute-matched \u2014 that comparison is ours if the a>0 region opens.",
    "class": "cpu",
    "prereg": null,
    "owner_hold": false
+  },
+  {
+   "id": "lit-radar-hooks-17",
+   "class": "cpu",
+   "status": "queued",
+   "prereg": null,
+   "owner_hold": false,
+   "title": "Lit slice (standing allocation): clear the two unread #17 radar hooks \u2014 VEGA 2605.10485 (encoder grounding alignment) + HyperVLA 2510.04898 (hypernetwork inference) \u2014 papers page(s) same session per the permanent rule; both feed the vision-unfreeze finalization amendment's citation set (VLM4VLA prior now banked) and the #17 trunk ledger.",
+   "boundary": "executable any GPU-busy window"
   }
  ],
- "updated": "2026-08-09T10:57:00Z"
+ "updated": "2026-08-09T11:50:00Z"
 }

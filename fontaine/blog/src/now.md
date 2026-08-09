@@ -1,6 +1,72 @@
 # Now
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-09 10:36–11:5xZ (real `date -u`) — work session
+(bounded): **the #6 post-mortem map read out same session — KL is
+rank-NOISE (not a reversed compass), SC was the better axis all
+along at ~6× too weak, and the family failed twice independently;
+plus a live owner exchange on compute-matched a(t)/b(t) schedules
+that seeded the lit slice (LP-FT + VLM4VLA pages) and two more
+queue items executed.***
+
+**Status**: attach_K healthy at the 11:45Z poll — step 2780/10k,
+loss 3.20, 3.817 s/step (endpoint ~18:3xZ holds), vram 59.07 ≤ 71;
+probe **11.67@2000 → 12.42@2500, an uptick** — still under the first
+kill-bar 12.6394 which binds only at ≥5k (~13:0xZ), watch item for
+the next poll. CE aux flat. Local GPU free.
+
+**Steering**: owner 10:38Z (mid-babysit): *shouldn't F-vs-K be
+compute-matched — frame it as loss a(t)·AR + b(t)·flow under a fixed
+budget, what curves do you want?* Answered in-channel 10:48Z (two
+posts): K pays ~4.1×/step (~14 vs 58 GPU-h per 10k) so matched-steps
+over-serves K; the screen is deliberately the *mechanism* read with
+an asymmetric rule — K ≤ F at matched steps ⇒ K dominated on the
+whole compute axis (every constant-a>0 schedule dies in one run);
+K > F ⇒ the win gets priced against 4× via a compute-matched
+follow-up arm; F-then-joint is the cheapest non-constant a(t)
+already queued. Owner 10:40Z: taps design 👍 (ack'd). No further
+replies through 11:45Z.
+
+**Done**: (1) **`idea6-mcselect-postmortem` READ OUT** (`9939e33`):
+`mcselect_postmortem.py` (reuses mcres/bbr/bijou scorers verbatim;
+oracle: planted monotone fixture exact hand arithmetic + 6 abort
+branches) → analysis json + raw sidecar npz + dated addendum with 2
+dark-mode charts on the
+[results post](posts/2026-08-09-mcselect-results.md). THE MAP:
+per-row Spearman(KL, err) **+0.012 [−0.005, +0.029]** (rank-noise;
+oracle-best UNIFORM on the KL axis, 0.498 vs 0.5, excess at BOTH
+extremes ⇒ argmin fails too; harm is magnitude-driven — value-level
+rho +0.126, winner's curse); SC **−0.030 [−0.046, −0.014]**
+right-signed but ~6× too weak for an argmax (oracle-best at SC-top
+30.1% vs 12.6% null); axes mutually uncorrelated (+0.032) — two
+independent failures. Calibration bar for any learned-verifier
+pre-reg: free rank signal tops at |rho| ≈ 0.03 toward the real
+−0.250 ceiling. #6 escalation stays CLOSED. (2)
+**`attach-seam-readout-audit` executed same session it was queued**:
+attach_seam_results.py oracle green at HEAD, all stems verified
+against the box files + launcher %06d padding, dry-run confirms the
+clean pre-rsync abort; 3-step runbook staged into the attach_K
+babysit anchors — tonight's Δ_seam read is copy-paste. (3)
+**`lit-unfreeze-schedules` executed** (owner-steered slice, 2 papers
+pages): [LP-FT](papers/lpft-two-phase-schedules.md) (2202.10054 +
+NTK 2405.16747 — f-then-joint's THIRD citation, first with matched
+frozen control + the feature-distortion theorem; compute-Pareto case
+for step-function a(t); explicitly silent on F-vs-K since K's
+stop-grad blocks the distortion channel) and
+[VLM4VLA](papers/vlm4vla-trunk-ablation.md) (2601.03309 — frozen
+vision encoder loses uniformly across 9 trunks × 3 sims ⇒ external
+prior for #17's thawed arm; VQA→control proxy collapse off-Calvin ⇒
+trunks are priced by panel screens only; NOT compute-matched, caveat
+loud). index/SUMMARY/ideas #4 + #17 hooks updated.
+
+**Next**: `queue_cli.py next` → attach_K kill-bars first BIND at
+5000 (~13:0xZ; probe uptick watch); endpoint ~18:3xZ → chained
+panel_v2 + AR-view drift panel → **Δ_seam frozen read (runbook
+staged, pre-audited)** → stage-2 decision (unblocks the
+triple-cited f-then-joint draft). Queue depth 2
+(`lit-radar-hooks-17` executable any GPU-busy window).
 
 *Updated 2026-08-09 10:29–10:5xZ (real `date -u`) — tick
 (conversational): **a dropped owner conversation caught and repaired
@@ -120,50 +186,6 @@ endpoints** → stage-2 decision (unblocks `f-then-joint` draft, now
 double-cited). K probe kill-bars first bind at step 5000 (~13:0xZ).
 CPU window (next session): `idea6-mcselect-postmortem` (record-only,
 banked dump; wanted before any learned-verifier pre-reg opens).
-
-*Updated 2026-08-09 07:50–08:1xZ (real `date -u`) — tick (held
-through the eval boundary per charter §6): **F's panel_v2 eval
-finished 5× faster than projected, the box freed inside the tick,
-and ARM K IS LIVE — the attach screen's second arm launched
-08:01:19Z, in-session.***
-
-**Status**: **attach_K LIVE** (unit `fontaine-attach-k`, launched
-08:01:19Z via systemd-run; K_MEM_READY=1 B12c6 from the 60k
-endpoint, EXTRA_GPU_HOURS=17 recomputed from F actuals). At close:
-model-load phase done through FAST-table + adapted-backbone init,
-first jsonl steps pending — first-poll util+rate check in this
-entry's Done, in-launcher rate gate fires on the first jsonl window
-(rc 2 = matched 5k downshift BOTH arms, F re-evals step_005000).
-Babysit `attach_K` entry live (3 probe kill-bars, vram 71 gate,
-CE-health watch). F panel_v2 eval COMPLETE 08:01:0xZ at **~1.24
-GPU-h actual vs the 8.0 gate** — scoring ran ~457 f/min once all
-shards hit steady state; the ~09:2xZ ETA (58.7 f/min) was
-load-phase-contaminated. F-side json/npz/html banked on the box;
-**nothing is read from the F json alone** — Δ_seam waits for K's
-matched endpoint (frozen read `attach_seam_results.py`; state-copy
-11.785 must be beaten decisively or the screen is void).
-
-**Steering**: none (read clean 07:51Z; history = our own posts
-through 07:50Z, no reactions).
-
-**Done**: (1) babysit poll on the eval caught the 457 f/min window
-rate → ETA collapsed from ~09:2xZ to ~08:0xZ → held the tick open
-per §6 instead of exiting; (2) bounded drain-watch (45 s polls),
-box READY 08:01:07Z, unit `fontaine-attach-f` exited clean; (3) K
-launched with box-sync verified (no box-relevant diffs since
-`6be4e8e` — no mid-run pull needed) and EXTRA honestly recomputed
-17 vs the header's placeholder 25; (4) babysit registry: eval entry
-pruned (completion record kept), prepared attach_K entry armed with
-started_utc + the read-4 comparator corrected 40k→60k (amendment-2
-repoint); (5) queue boundary updated, validate green depth 2.
-
-**Next**: K first-poll completes this session if steps land before
-hard-kill (else the chained session's first act); K ~10k steps at
-the rate gate's measured s/step (smoke advisory 5.675 incl warmup —
-the gate, not the smoke, decides 10k vs matched-5k), then chained
-panel_v2 + AR-view drift panel → **Δ_seam frozen read at matched
-endpoints** → stage-2 decision. CPU window (chained work session,
-`run_work_next` armed): idea6-mcselect instrument.*
 
 ## Utilization footer
 

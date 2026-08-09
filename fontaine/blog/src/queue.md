@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T10:35:00Z
+**Updated:** 2026-08-09T11:50:00Z
 
 **Depth call:** depth >=2 at 10:3xZ 08-09: attach screen EXECUTING (arm K live, endpoint ~18:3xZ) + idea6-mcselect-postmortem queued (CPU/record-only on banked dump); blocked behind: stage-2 decision (screen readout tonight), actckpt ladder, f-then-joint draft (Delta_seam), owner-held items
 
-**8 open** (Live 0 · Queued 2 · Blocked 6 · Done 61)
+**8 open** (Live 0 · Queued 2 · Blocked 6 · Done 64)
 
 ## 🔴 Live (0)
 
@@ -18,15 +18,15 @@
 
 *ready — waiting on a window or a boundary*
 
-**`idea6-mcselect-postmortem`** · `cpu`
+**`lit-radar-hooks-17`** · `cpu`
 
-#6 rung-(c) post-mortem read (CPU, record-only, exploratory — NOT pre-registered, no decision rides on it; the selection-ceiling read precedent): from the banked mcselect npz (mcselect:kl [N,C] + mcselect:cand_pred [N,C,S,D]) com…
+Lit slice (standing allocation): clear the two unread #17 radar hooks
 
-**boundary:** banked-data CPU work, any GPU-busy window; wanted before any learned-verifier pre-reg opens (#6 escalation is otherwise CLOSED)
+**boundary:** executable any GPU-busy window
 
 <details><summary>full record</summary>
 
-#6 rung-(c) post-mortem read (CPU, record-only, exploratory — NOT pre-registered, no decision rides on it; the selection-ceiling read precedent): from the banked mcselect npz (mcselect:kl [N,C] + mcselect:cand_pred [N,C,S,D]) compute (1) per-candidate KL-vs-frame-error correlation (pooled + per-row rank), (2) the oracle-best candidate's KL-rank histogram (where on the informativeness axis do the good candidates sit), (3) the same for SC's banked mean_logprob axis from the candidates file — a 2-axis map of the closed family's failure, to be read BEFORE anyone prices a learned verifier (RoVer-style supervised vs set-joint label-free). AUDIT FIRST per standing rule: mcselect_results.py owns argmax/tie/eligibility — reuse its loaders/eligible_list, extend only the correlation delta. Oracle: planted monotone-KL fixture (known rank order in/out) + degenerate C=1 row must abort. Output: one analysis json + a short post section (or appended to the results post as a dated addendum), NO deployment claim
+Lit slice (standing allocation): clear the two unread #17 radar hooks — VEGA 2605.10485 (encoder grounding alignment) + HyperVLA 2510.04898 (hypernetwork inference) — papers page(s) same session per the permanent rule; both feed the vision-unfreeze finalization amendment's citation set (VLM4VLA prior now banked) and the #17 trunk ledger.
 
 </details>
 
@@ -132,9 +132,51 @@ Molmo2 stage-2 attachment decision at endpoint — now EXECUTABLE via the seam-s
 
 ---
 
-## ✅ Done (61)
+## ✅ Done (64)
 
 *closed — the full record stays in each fold*
+
+**`lit-unfreeze-schedules`** · `cpu`
+
+Lit slice (standing allocation, owner steering 2026-08-09 10:38Z): the owner reframed F-vs-K as schedule curves a(t)*AR + b(t)*flow under FIXED COMPUTE
+
+**boundary:** DONE same session 11:4xZ 08-09, 2 papers pages landed: lpft-two-phase-schedules.md (LP-FT 2202.10054 + NTK 2405.16747 — the f-then-joint rung's THIRD citation, first with matched frozen control + feature-distortion theorem; compute-Pareto case for the step-function a(t); silent on F-vs-K since K's stop-grad blocks the distortion channel) + vlm4vla-trunk-ablation.md (2601.03309 — 9-trunk sweep: frozen vision encoder loses uniformly =&gt; external prior for #17 thawed arm; VQA-&gt;control proxy collapse off-Calvin =&gt; trunk swaps priced by panel screens only; NOT compute-matched, caveat loud). index/SUMMARY/ideas #4+#17 hooks updated. Open question fed forward: nobody in the lineage measures the schedule family compute-matched — that comparison is ours if the a&gt;0 region opens.
+
+<details><summary>full record</summary>
+
+Lit slice (standing allocation, owner steering 2026-08-09 10:38Z): the owner reframed F-vs-K as schedule curves a(t)*AR + b(t)*flow under FIXED COMPUTE — sweep for compute-matched frozen-vs-joint / unfreezing-schedule evidence in VLA + adjacent transfer literature (progressive unfreezing, staged joint training, compute-matched fine-tuning ablations). Papers page(s) same session per the permanent rule; feed #4 f-then-joint rung pricing + the post-Delta_seam compute-matched follow-up pre-reg if the a&gt;0 region opens.
+
+</details>
+
+---
+
+**`attach-seam-readout-audit`** · `cpu`
+
+#4 Delta_seam readout PRE-AUDIT (CPU, before the ~18:3xZ K endpoint; the audit-queue-items-against-git standing rule applied to tonight's frozen read): (1) re-run attach_seam_results.py --oracle at HEAD; (2) verify its default st…
+
+**boundary:** DONE 11:1xZ 08-09 same session it was queued: oracle re-run green at HEAD (all 5 branches); default stems cross-checked against the box (F arm files present under the EXACT expected names; K launcher writes matching names, %06d padding verified at launcher line 150; ar_view stem matches; endpoint 60k k4l2 json already local); dry-run confirms the pre-endpoint abort is the clean 'arms not rsynced yet?' branch; 3-step runbook (2 rsyncs + one command) staged into the attach_K babysit anchors. Nothing in the frozen read was touched.
+
+<details><summary>full record</summary>
+
+#4 Delta_seam readout PRE-AUDIT (CPU, before the ~18:3xZ K endpoint; the audit-queue-items-against-git standing rule applied to tonight's frozen read): (1) re-run attach_seam_results.py --oracle at HEAD; (2) verify its default stems/paths against what unit fontaine-attach-k actually writes on the box (panel_v2 eval json/npz names, AR-view materialization output, F-side banked 08:01Z artifacts) — name drift here would stall the readout at the endpoint; (3) stage the exact one-command invocation + expected abort-grade branches into the babysit boundary so the readout is copy-paste at endpoint. Record-only prep; the read itself stays frozen as landed 08-07.
+
+</details>
+
+---
+
+**`idea6-mcselect-postmortem`** · `cpu`
+
+#6 rung-(c) post-mortem read (CPU, record-only, exploratory — NOT pre-registered, no decision rides on it; the selection-ceiling read precedent): from the banked mcselect npz (mcselect:kl [N,C] + mcselect:cand_pred [N,C,S,D]) com…
+
+**boundary:** READ OUT same session 2026-08-09T10:55:00Z (commit to follow): mcselect_postmortem.py (oracle-gated: planted monotone fixture exact hand arithmetic incl. tie-rank + constant-KL exclusion, 6 abort branches: degenerate &lt;2-eligible row, finite-KL-at-ineligible, NaN-at-eligible, partial dump, missing key, mixed vocab) -&gt; analysis__subgoal_mcselect_postmortem_q4_ar100k_k4l2.json + raw sidecar npz. MAP: KL is rank-NOISE (per-row Spearman(KL,err) +0.012 [-0.005,+0.029]; oracle-best uniform on the axis 0.498 vs 0.5, excess at BOTH extremes -&gt; argmin fails too; harm is magnitude-driven, value-level rho +0.126, winner's curse); SC was the better axis (-0.030, CI&lt;0, oracle-best at top 30.1% vs 12.6% null) but ~6x too weak for argmax; axes mutually uncorrelated (+0.032) -&gt; family failed twice INDEPENDENTLY. Calibration bar for any learned-verifier pre-reg: zero-training rank signal tops at |rho|~0.03 toward a real -0.250 ceiling. Addendum + 2 dark-mode charts on the results post; ideas.md #6 + idea page ledger updated. #6 escalation remains CLOSED.
+
+<details><summary>full record</summary>
+
+#6 rung-(c) post-mortem read (CPU, record-only, exploratory — NOT pre-registered, no decision rides on it; the selection-ceiling read precedent): from the banked mcselect npz (mcselect:kl [N,C] + mcselect:cand_pred [N,C,S,D]) compute (1) per-candidate KL-vs-frame-error correlation (pooled + per-row rank), (2) the oracle-best candidate's KL-rank histogram (where on the informativeness axis do the good candidates sit), (3) the same for SC's banked mean_logprob axis from the candidates file — a 2-axis map of the closed family's failure, to be read BEFORE anyone prices a learned verifier (RoVer-style supervised vs set-joint label-free). AUDIT FIRST per standing rule: mcselect_results.py owns argmax/tie/eligibility — reuse its loaders/eligible_list, extend only the correlation delta. Oracle: planted monotone-KL fixture (known rank order in/out) + degenerate C=1 row must abort. Output: one analysis json + a short post section (or appended to the results post as a dated addendum), NO deployment claim
+
+</details>
+
+---
 
 **`actckpt-lineage-flip-prereg`** · `cpu`
 
