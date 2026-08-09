@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T18:19:00Z
+**Updated:** 2026-08-09T18:39:09Z
 
-**Depth call:** depth >=2 at 18:1xZ 08-09: adamc-100k babysit to ~08-12 (live) + lit-radar-0812b (cpu, actionable, 5 dup-checked hooks) + docs-pass tail (owner-side only) + fjoint owner-gated; lit-radar-0811 CLOSED this session (5 pages, all banked hooks cleared)
+**Depth call:** depth >=2 at 18:3xZ 08-09: adamc-100k babysit to ~08-12 (live) + lit-radar-0813 (cpu, actionable, 5 dup-checked hooks) + docs-pass tail (owner-side only) + fjoint owner-gated; lit-radar-0812b CLOSED this session (5 pages, all banked hooks cleared)
 
-**8 open** (Live 1 · Queued 3 · Blocked 4 · Done 81)
+**8 open** (Live 1 · Queued 3 · Blocked 4 · Done 82)
 
 ## 🔴 Live (1)
 
@@ -30,15 +30,15 @@ OWNER RUN LIVE (launched 13:30Z 08-09): fontaine_molmo2_adamc_100k_ddp4 — base
 
 *ready — waiting on a window or a boundary*
 
-**`lit-radar-0812b`** · `cpu`
+**`lit-radar-0813`** · `cpu`
 
-Lit slice (standing allocation): refill hooks banked 08-09 18:2xZ fresh sweep, dup-checked against papers/ + ideas/, priority-ordered
+Lit slice (standing allocation): refill hooks banked 08-09 18:3xZ fresh sweep, dup-checked against papers/ + ideas/, priority-ordered
 
 **boundary:** any GPU-busy window; adamc rides to ~08-12 so windows are plentiful
 
 <details><summary>full record</summary>
 
-Lit slice (standing allocation): refill hooks banked 08-09 18:2xZ fresh sweep, dup-checked against papers/ + ideas/, priority-ordered — 2607.01804 VLA-Corrector (lightweight detect-and-correct inference, adaptive action horizon; #6/#19 verifier family + #22 async adjacency) &gt; 2603.02083 pi-StepNFT (online RL for flow VLAs, 'wider space needs finer steps'; #16 RL pole beside RLDT/Z-1/FlowPRO) &gt; 2603.26320 DFM-VLA (DISCRETE flow matching iterative refinement; #17 head axis — sits exactly between our AR-token and continuous-flow poles, beside HiFlow) &gt; 2605.07931 One-Token-Per-Frame (visual bandwidth in world models for VLA; VLA-JEPA family, #17) &gt; 2512.09928 HiF-VLA (hindsight/insight/foresight motion representation; skim-to-place). Papers page(s) same session per the permanent rule; dedup-check each id before writing.
+Lit slice (standing allocation): refill hooks banked 08-09 18:3xZ fresh sweep, dup-checked against papers/ + ideas/, priority-ordered — 2607.23777 Scale-Weight-Decay/Muon-SW (steady-state weight-norm analysis, AdamC-family sibling; feeds the live adamc_100k grad/weight-norm watch interpretive frame beside 2512.08217) &gt; 2511.14148 AsyncVLA (asynchronous flow matching w/ self-correction; #22 family, VLA-Corrector adjacency) &gt; 2606.03134 silent-failure observability (false-success detection, proprio-vs-vision detectors on bimanual ALOHA; #6/#16 verifier family) &gt; 2602.00743 SA-VLA (spatially-aware FM for VLA RL; #16 RL pole x #11 spatial-aux crossover) &gt; 2602.01100 StreamVLA (reason-act cycle via completion-state gating; #6 phase-estimation adjacency, skim-to-place). Papers page(s) same session per the permanent rule; dedup-check each id before writing.
 
 </details>
 
@@ -130,9 +130,23 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 
 ---
 
-## ✅ Done (81)
+## ✅ Done (82)
 
 *closed — the full record stays in each fold*
+
+**`lit-radar-0812b`** · `cpu`
+
+Lit slice (standing allocation): refill hooks banked 08-09 18:2xZ fresh sweep, dup-checked against papers/ + ideas/, priority-ordered
+
+**boundary:** EXECUTED 18:27-18:3xZ 08-09 work session (commit 7e78c9d): all 5 banked hooks deep-read, 5 papers pages landed same session (vla-corrector / pi-stepnft / dfm-vla / onewm-vla-one-token / hif-vla); ideas #1/#5/#6/#11/#16/#17/#22 fed; refill sweep ran -&gt; lit-radar-0813 queued (5 dup-checked hooks; 2605.08168 candidate caught as already covered)
+
+<details><summary>full record</summary>
+
+Lit slice (standing allocation): refill hooks banked 08-09 18:2xZ fresh sweep, dup-checked against papers/ + ideas/, priority-ordered — 2607.01804 VLA-Corrector (lightweight detect-and-correct inference, adaptive action horizon; #6/#19 verifier family + #22 async adjacency) &gt; 2603.02083 pi-StepNFT (online RL for flow VLAs, 'wider space needs finer steps'; #16 RL pole beside RLDT/Z-1/FlowPRO) &gt; 2603.26320 DFM-VLA (DISCRETE flow matching iterative refinement; #17 head axis — sits exactly between our AR-token and continuous-flow poles, beside HiFlow) &gt; 2605.07931 One-Token-Per-Frame (visual bandwidth in world models for VLA; VLA-JEPA family, #17) &gt; 2512.09928 HiF-VLA (hindsight/insight/foresight motion representation; skim-to-place). Papers page(s) same session per the permanent rule; dedup-check each id before writing.
+
+</details>
+
+---
 
 **`lit-radar-0811`** · `cpu`
 

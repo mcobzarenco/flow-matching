@@ -2,9 +2,60 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-09 18:21–18:2xZ (real `date -u`) — tick (babysit):
+*Updated 2026-08-09 18:27–18:4xZ (real `date -u` at write: 18:43) —
+work session (bounded): **`lit-radar-0812b` CLOSED — all 5 banked
+hooks deep-read, 5 Papers pages landed same session; probe @6500 =
+12.6027 — the 12.1–12.6 oscillation band holds, no escalation; a
+third future-stamp caught PRE-commit this time (queue clock 18:53 →
+real 18:39).***
+
+**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE — babysit exit 0
+×3 (18:27, 18:33, 18:41), 8 procs, ~75.3 GiB ×4 vs 77 bar, windows
+21.5–23.4 st/min, step 6560 / 20.1/310 GPU-h at 18:41. **Probe ladder
+11.32@4500 → 12.65@5000 → 12.12@5500 → 12.59@6000 → 12.60@6500**:
+oscillation band 12.1–12.6 unchanged at near-peak LR, well under
+the 14.03@2500 step-10k reference, nowhere near >25×3. Record-only
+train_mae watch: 13.4473@6500 vs 13.47@6000 — flattened. Endpoint
+~08-12 ~17:00Z → chained k4l2 panel. LOCAL GPU free.
+
+**Steering**: none new — `read` empty at 18:27 and 18:33; the 18:41
+read consumed only our own 18:41 lit-radar post (process catch: that
+babysit's output was piped through `grep` against the
+never-truncate rule — full-history recovery run immediately, **no
+owner message was missed**; last owner message remains the answered
+16:42Z ticket question). 13:48Z gate default (let run, gate 310)
+governs.
+
+**Done**: **`lit-radar-0812b` CLOSED** (commit `7e78c9d`, check 598
+green): all 5 banked hooks deep-read with Papers pages same session
+— VLA-Corrector 2607.01804 (`vla-corrector.md`; 40M external drift
+monitor, truncation-only carries +11.65 of +15.65 pp → #6
+learned-verifier design constraints + #22 when-to-cut datum),
+π-StepNFT 2603.02083 (`pi-stepnft.md`; critic-free step-wise RL,
+first measured IND-vs-OOD trade vs PPO → #16 RL-pole entry 4),
+DFM-VLA 2603.26320 (`dfm-vla.md`; discrete-FM refinement completes
+the #17 head-axis fourth quadrant + MAAT +4.4 pp → #5), OneWM-VLA
+2605.07931 (`onewm-vla-one-token.md`; self-anchored predictive
+pole, monotone bandwidth sweep → #17/#11), HiF-VLA 2512.09928
+(`hif-vla.md`; codec motion vectors → #11 history-arm candidate).
+Ideas #1/#5/#6/#11/#16/#17/#22 fed. Refill sweep ran →
+`lit-radar-0813` queued (5 dup-checked hooks; 2605.08168 candidate
+caught as already covered). **Clock discipline: the queue
+updated_utc was written 18:53Z from a projected end while real time
+was 18:39:09Z — caught and fixed BEFORE commit (3rd occurrence of
+the class, 1st pre-commit catch); the fix is mechanical: run `date
+-u` in the same command that writes the stamp.** Probe@6500 read
+in-session. Queue validate green depth 3.
+
+**Next**: `queue_cli.py next` → `lit-radar-0813` (CPU, any GPU-busy
+window); probe watch routine at next tick (@7000+). adamc endpoint
+~08-12 ~17:00Z → chained k4l2 panel. fjoint stays owner-gated
+post-endpoint. `run_work_next` armed.
+
+*Previous update 2026-08-09 18:21–18:2xZ (real `date -u`) — tick (babysit):
 **adamc_100k healthy at step 6100 (18.8/310 GPU-h, 21.6 st/min);
 Discord clean; second future-stamped queue clock caught + fixed;
 probe @6500 (~18:40Z, routine) + `lit-radar-0812b` handed to the
@@ -89,48 +140,6 @@ queued (5 new dup-checked hooks). Queue validate green depth 3.
 GPU-busy window); probe watch routine at next tick (@6500+). adamc
 endpoint ~08-12 ~17:00Z → chained k4l2 panel. fjoint stays
 owner-gated post-endpoint. `run_work_next` armed.
-
-*Previous update 2026-08-09 17:50–18:0xZ (real `date -u`) — tick (babysit,
-held through the @5500 eval): **probe@5500 = 12.119 — the @5000
-uptick is receding (11.32@4500 → 12.65@5000 → 12.12@5500), no
-escalation; the 17:42 chained work session DIED UNCOMMITTED at turn
-end — its lit-sweep output (2 papers pages) audited + recovered by
-this tick.***
-
-**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE — babysit exit 0,
-8 procs, ~75.3 GiB ×4 vs 77 bar, step 5420 @ 17:51 → 5500+ by 18:00,
-window 19.9 st/min, 16.7/310 GPU-h. **Probe watch resolved for now**:
-eval_chunk_mae 12.119@5500, down from 12.646@5000, well under the
-14.03@2500 step-10k reference and nowhere near the >25×3 line. New
-record-only oddity: train_mae still drifting up (12.17@4500 → 13.25
-→ 13.44) while eval recovered — LR is near peak post-warmup; chart
-at readout, not a gate. Endpoint ~08-12 ~17:00Z → chained k4l2
-panel. LOCAL GPU free.
-
-**Steering**: none new — `read` empty at 17:51; history -n 5 = our
-own posts + the answered 16:42Z ticket question, no reactions. 13:48Z
-gate default (let run, gate 310) governs.
-
-**Done**: **Incident + recovery**: the 17:41-armed chained work
-session ran 17:42–17:50, executed `lit-radar-fresh-sweep-0810`
-(papers pages `weight-decay-correction.md` [2512.08217, AdamC's
-successor — grad-norm-watch interpretive frame] +
-`z1-selective-joint-rl.md` [2606.31846 — 4th frozen-first vote,
-fjoint conditional-escalation prior], ideas #4/#16/#17 cross-links,
-`lit-radar-0811` refill) but ended its turn WITHOUT committing and
-with a future-stamped queue timestamp (18:05Z). This tick audited
-the orphaned diff (dup-grep clean, plain-words blocks present, check
-598 green), fixed the timestamps, committed it. Probe@5500 read
-in-session (background until-loop on the remote log). Queue validate
-green depth 3 (8 open); head/footer keep-3/keep-2 rolls; blog built
-+ Space pushed; in-channel post (probe recovery + 2 pages).
-
-**Next**: normal cadence — next tick babysits (probe @6000 ~18:2xZ,
-routine). CPU queue head: `lit-radar-0811` (any GPU-busy window).
-adamc endpoint ~08-12 ~17:00Z → chained k4l2 panel. fjoint stays
-owner-gated post-endpoint. **Watch item for future work sessions:
-end-of-session commit is part of the session, not optional — a
-turn-end kill loses everything after the last commit.**
 
 ## Utilization footer
 
