@@ -37,3 +37,10 @@
   boolean-index `nonzero` in the chunked losses) — 2b's molmo2 prep
   now rides that bundle. Static-shapes question answered in the
   review: keep dynamic (+5.09% padding ceiling stands).
+- **2026-08-09:** box ladder
+  [FALSIFIED the bundle](../posts/2026-08-09-perfpass1-box-results.md)
+  (C −7.3%, P1 cuDNN −10.8% on the true 4×DDP recipe — kernel
+  microbenches don't predict end-to-end under comms overlap). The
+  P3 sync removals 2b wanted stay bitwise-proven and ride the
+  hygiene subset item (`molmo2-perf-pass1-subset-landing`), with no
+  speed claim.

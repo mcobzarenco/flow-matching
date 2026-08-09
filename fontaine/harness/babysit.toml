@@ -408,33 +408,18 @@ value = 3.0
 # kind = "gpu_hours_max"
 # value = 3.0
 
-# LIVE (molmo2-perf-pass1-exec BOX ladder; pre-reg
-# 2026-08-08-prereg-molmo2-perf-pass1.md + the box-form amendment):
-# LAUNCHED 01:04Z 08-09, unit fontaine-perfpass1-box (run_detached.sh;
-# prereq worktree /home/ubuntu/flow-matching-perfpass1 at 22e8148 with
-# 00cdafe reachable, box checkout bb03557, all guards passed).
-[[run]]
-name = "perfpass1_box"
-kind = "progress-log"
-host = "192.222.55.210"
-pgrep = "perfpass1_box"
-pgrep_min = 4
-gpu_indices = [0, 1, 2, 3]
-gpu_mem_min_mib = 8000
-log = "/home/ubuntu/flow-matching/outputs/train/perfpass1_box_bench_A.launch.log"  # REPOINTED 01:2xZ (overlay pair done ~01:14-01:2x); roll bench_A -> bench_B -> bench_C
-progress_re = "\"step\": [0-9]+"
-started_utc = "2026-08-09T01:04:30Z"
-gpu_hours_per_wall_hour = 4.0
-boundary = "5 sequential runs (2x 50-step overlay + 3x 320-step bench, ~12 min each + 5 model loads) ~2.5-3 GPU-h <= 3 ceiling; readout = the unit's OVERLAY + LADDER(BOX) summary lines"
-anchors = [
-    "P1 gate: LOSS BOUND FAILED AS BANKED locally (|d|=8.7e-3 vs frozen 1e-3 abs; 5.1e-4 relative) — P1 stays DROPPED unless owner amends a relative bound; ladder runs A/B/C for the record either way",
-    "decision (pre-reg): C >= 5% median step-time vs A => bundle lands post-evals; < 5% => P2 + bitwise-free items only",
-    "vram guard: C steady peak <= A * 1.02",
-    "FALSE-POSITIVE window: 5 sequential runs => between-rung model loads (~3-5 min each) show 0% util + stale/absent progress lines at a single poll — judge by unit active + rung log roll (overlay_A -> ... -> bench_C), not one poll (transients seen 01:07/01:27/01:33Z)",
-]
-[[run.gates]]
-kind = "gpu_hours_max"
-value = 3.0
+# PRUNED 02:3xZ 08-09 (molmo2-perf-pass1-exec BOX ladder) — DONE
+# 02:26:32Z rc=0, all 5 rungs. READOUT: OVERLAY PASS (max |dloss|
+# 0.0816 <= A's own band 0.3919); LADDER A=2.251s B=2.495s C=2.415s —
+# B -10.8% / C -7.3% vs A = the bundle is SLOWER on the true box
+# recipe; vram A=B=C=66.6 (guard pass), P2 windowed metric live on C.
+# Frozen <5% branch: bundle does NOT land; P2 + bitwise items (P3a-c,
+# P4) may land as a P1-free subset (follow-up queue item). P1 doubly
+# dead (loss-bound fail + -10.8%): owner relative-bound question MOOT.
+# True cost ~5.5 GPU-h claimed vs 3.0 ceiling (CONTINUE judged
+# in-channel 01:42Z; model loads undercounted — count loads in future
+# gates). analysis banked reports/analysis__perfpass1_box_ladder.json.
+# Box GPUs FREE; next box claim = idea4-attach-k-smoke-ladder.
 
 # noise-ladder rung 2 (#1) PREFLIGHT — PRUNED 08-08 16:5xZ: relaunch
 # (16:43Z, extended map per amendment 1) COMPLETE rc=0 ~16:55Z, all

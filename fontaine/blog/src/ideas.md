@@ -271,6 +271,11 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   suffix attention on the MATH backend (13×/layer measured), ViT
   eager einsum (13×/block), act-ckpt absent from live launchers;
   S-bundle queued (`molmo2-perf-fix-prereg`, ~8–15% step expected).
+  **2026-08-09: the box ladder FALSIFIED the bundle**
+  ([results](posts/2026-08-09-perfpass1-box-results.md)) — C −7.3%
+  (a regression; P1 cuDNN alone −10.8%; the local microbench did not
+  transfer to 4×DDP). Frozen <5% branch: nothing perf-claiming
+  lands; P2 + bitwise items split to a hygiene item; P1 dead.
   Same-session lit ([loss + mask page](papers/memory-efficient-loss-attention.md)):
   CCE (2411.09009) banked as the CE escalation ladder
   (valid-row → two-segment lse → CCE; entry = wanting

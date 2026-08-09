@@ -1,6 +1,6 @@
 {
- "updated_utc": "2026-08-09T02:20:00+00:00",
- "depth_reason": "depth 3 at 02:2xZ 08-09: perfpass1_box ladder LIVE (bench_B/C tail, readout this session); idea6-subgoal-swap-read LIVE on local (identity+swap unit, reads next session); queued: idea4-attach-k-smoke-ladder (next box claim) + the standing attach chain behind it",
+ "updated_utc": "2026-08-09T02:35:00+00:00",
+ "depth_reason": "depth 3 at 02:3xZ 08-09: idea6-subgoal-swap-read LIVE on local (identity+swap unit, reads next session); queued: idea4-attach-k-smoke-ladder (box FREE \u2014 next box claim), molmo2-perf-pass1-subset-landing (CPU), plus the standing attach chain behind the k-smoke verdict",
  "items": [
   {
    "id": "owner-molmo2-perf-review",
@@ -22,12 +22,21 @@
   },
   {
    "id": "molmo2-perf-pass1-exec",
-   "title": "molmo2 perf pass 1 EXECUTION (gpu-local, <= 3 GPU-h): per the finalized pre-reg \u2014 (1) branch perf-pass1 with the four pinned changes (P1 suffix cuDNN training-only scope, P2 windowed vram peak + lifetime max kept, P3a-c sync removals, P4 clone drop); (2) parity oracles per item (P1 loss<=1e-3/gradnorm<=1e-2 + 50-step overlay + decode byte-match; P3b wte bitwise both regimes; P3c CPU loss-oracle re-pin sum-form only, mean-form UNCHANGED; P4 bitwise grads), failing item drops, no re-tolerancing; (3) bench ladder A=HEAD B=+P1 C=bundle, 320 steps each single local H100, 60k data recipe, median s_per_step over last 240 + vram guard >2% fails; (4) decision: C>=5% -> land post-evals, <5% -> P2+bitwise-free items only; box 4-GPU transfer smoke 0.3 GPU-h before first adopting lineage launch. check.py + oracles green before the landing commit. | EXECUTING 08-08 14:2xZ (owner prio 14:10Z): branch perf-pass1 (P1=00cdafe, full=22e8148, check.py green both), BITWISE ORACLE GREEN 118/118 hashes (perf_pass1_bitwise_oracle.py HEAD-vs-branch), ladder unit fontaine-perfpass1-bench live on local GPU (perf_pass1_bench.sh: parity A/B 50-step + bench A/B/C 320-step). AMENDMENT: batch 8 + chunks 4 (single-GPU unshards ZeRO-1 optimizer ~+11GiB, 12 would OOM; chunks must divide batch; per-chunk size 2 preserved) | LOCAL PHASE CLOSED 15:0xZ: one-step parity ran (grad-norm PASS rel 8.1e-3<=1e-2, no cuDNN crash; LOSS BOUND FAILED AS BANKED |d|=8.70e-3 vs frozen 1e-3 abs = 5.1e-4 RELATIVE at init-scale loss 16.9 \u2014 calibration flaw owned in-channel, P1 dropped unless owner approves a relative-bound amendment BEFORE the box ladder). Single-GPU full-recipe bench proven structurally OOM (78.2/79.18 by step 2, batch-invariant). BONUS FIND: --activation-checkpointing crashes on CUDA (recompute escapes sdpa_kernel pin -> backend mismatch abort; filed idea #20, prerequisite fix named). Ladder+overlay moved to box TRUE recipe: fontaine/scripts/box/perf_pass1_bench_box_ddp4.sh (supersedes transfer smoke) | BOX LADDER EXECUTING 01:04Z 08-09 (unit fontaine-perfpass1-box; overlay_A done 01:14Z, 5 sequential runs; babysit entry perfpass1_box live)",
+   "title": "molmo2 perf pass 1 EXECUTION (gpu-local, <= 3 GPU-h): per the finalized pre-reg \u2014 (1) branch perf-pass1 with the four pinned changes (P1 suffix cuDNN training-only scope, P2 windowed vram peak + lifetime max kept, P3a-c sync removals, P4 clone drop); (2) parity oracles per item (P1 loss<=1e-3/gradnorm<=1e-2 + 50-step overlay + decode byte-match; P3b wte bitwise both regimes; P3c CPU loss-oracle re-pin sum-form only, mean-form UNCHANGED; P4 bitwise grads), failing item drops, no re-tolerancing; (3) bench ladder A=HEAD B=+P1 C=bundle, 320 steps each single local H100, 60k data recipe, median s_per_step over last 240 + vram guard >2% fails; (4) decision: C>=5% -> land post-evals, <5% -> P2+bitwise-free items only; box 4-GPU transfer smoke 0.3 GPU-h before first adopting lineage launch. check.py + oracles green before the landing commit. | EXECUTING 08-08 14:2xZ (owner prio 14:10Z): branch perf-pass1 (P1=00cdafe, full=22e8148, check.py green both), BITWISE ORACLE GREEN 118/118 hashes (perf_pass1_bitwise_oracle.py HEAD-vs-branch), ladder unit fontaine-perfpass1-bench live on local GPU (perf_pass1_bench.sh: parity A/B 50-step + bench A/B/C 320-step). AMENDMENT: batch 8 + chunks 4 (single-GPU unshards ZeRO-1 optimizer ~+11GiB, 12 would OOM; chunks must divide batch; per-chunk size 2 preserved) | LOCAL PHASE CLOSED 15:0xZ: one-step parity ran (grad-norm PASS rel 8.1e-3<=1e-2, no cuDNN crash; LOSS BOUND FAILED AS BANKED |d|=8.70e-3 vs frozen 1e-3 abs = 5.1e-4 RELATIVE at init-scale loss 16.9 \u2014 calibration flaw owned in-channel, P1 dropped unless owner approves a relative-bound amendment BEFORE the box ladder). Single-GPU full-recipe bench proven structurally OOM (78.2/79.18 by step 2, batch-invariant). BONUS FIND: --activation-checkpointing crashes on CUDA (recompute escapes sdpa_kernel pin -> backend mismatch abort; filed idea #20, prerequisite fix named). Ladder+overlay moved to box TRUE recipe: fontaine/scripts/box/perf_pass1_bench_box_ddp4.sh (supersedes transfer smoke) | BOX LADDER EXECUTING 01:04Z 08-09 (unit fontaine-perfpass1-box; overlay_A done 01:14Z, 5 sequential runs; babysit entry perfpass1_box live) | CLOSED 02:26Z 08-09: C -7.3% (REGRESSION) -> NO bundle landing per the frozen rule",
    "class": "gpu-local",
+   "status": "done",
+   "prereg": "fontaine/blog/src/posts/2026-08-08-prereg-molmo2-perf-pass1.md",
+   "owner_hold": false,
+   "boundary": "CLOSED 02:26:32Z 08-09 rc=0: OVERLAY PASS (0.0816 <= 0.3919 band); LADDER(BOX) A=2.251s B=2.495s C=2.415s -> B -10.8% / C -7.3% vs A (bundle SLOWER on the true 4xDDP recipe; local microbench transfer FALSIFIED); vram A=B=C=66.6 guard pass. Frozen <5% branch executed: bundle does NOT land; P1 doubly dead (loss-bound fail + -10.8% measured) so the owner relative-bound question is MOOT; P2+bitwise subset split to molmo2-perf-pass1-subset-landing. True cost ~5.5 GPU-h vs 3.0 ceiling (CONTINUE judged 01:42Z, cause owned: model loads uncounted). analysis__perfpass1_box_ladder.json banked; results post 2026-08-09-perfpass1-box-results.md"
+  },
+  {
+   "id": "molmo2-perf-pass1-subset-landing",
+   "title": "perf pass-1 SUBSET landing (CPU; the frozen <5% decision branch executed 02:26Z 08-09): build a P1-free subset from branch perf-pass1 \u2014 P2 windowed vram peak logging (metrics-only, proven live on bench_C window_peak 66.6) + P3a-c sync removals + P4 embed-clone drop (both bitwise-proven 118/118 at 22e8148, but their box speed effect was NOT measured alone: only the C-vs-B cross-read +3.2 pts suggests they recoup some of P1's -10.8%). Re-run perf_pass1_bitwise_oracle.py HEAD-vs-subset before the landing commit; check.py green. NO new bench needed per the frozen rule; any optional confirm rung would need its own pre-reg. NOTE: P1 (suffix MATH->cuDNN) is dead twice over (loss-bound oracle fail + -10.8% slower on the true recipe) \u2014 do not carry it",
+   "class": "cpu",
    "status": "queued",
    "prereg": "fontaine/blog/src/posts/2026-08-08-prereg-molmo2-perf-pass1.md",
    "owner_hold": false,
-   "boundary": "EXECUTING since 01:04Z 08-09; rc ~03:3x-04:0xZ est (5 runs + loads); readout = unit's OVERLAY + LADDER(BOX) lines, decision per frozen rules (C>=5% -> land post-evals); P1 stays DROPPED absent owner relative-bound amendment"
+   "boundary": "CPU work at any GPU-busy window; low urgency (metrics + hygiene, no step-time claim); lands post-evals per the pre-reg clause"
   },
   {
    "id": "ar100k-tsens-q4-live",
@@ -126,7 +135,7 @@
    "status": "queued",
    "prereg": "fontaine/blog/src/posts/2026-08-07-prereg-molmo2-attach-screen.md",
    "owner_hold": false,
-   "boundary": "QUEUED 2026-08-09 01:3xZ (fields panel closed, perf-pass1 ladder live and time-boxed ~2.5-3 GPU-h): next box claim after perfpass1_box exits \u2014 run smoke_attach_k_ddp4.sh at the 60k warm start (repoint amendment 3 executed 00:5xZ); green -> owner steer window (molmo2-stage2-attachment-decision) -> arms sequential F then K"
+   "boundary": "QUEUED 2026-08-09 02:3xZ (perfpass1 ladder CLOSED, box GPUs FREE): next box claim \u2014 run smoke_attach_k_ddp4.sh at the 60k warm start (repoint amendment 3 executed 00:5xZ); green -> owner steer window (molmo2-stage2-attachment-decision) -> arms sequential F then K"
   },
   {
    "id": "molmo2-stage2-attachment-decision",
