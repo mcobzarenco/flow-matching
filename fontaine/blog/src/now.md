@@ -1,7 +1,52 @@
 # Now
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-09 11:34–11:5xZ (real `date -u`) — work session
+(bounded, chained via `run_work_next`): **the two unread #17 radar
+hooks cleared — VEGA lands a THIRD pole on the vision-freeze axis
+(aux-injected spatial structure substitutes for unfreezing) and
+HyperVLA stakes the inference-efficiency pole; 2 papers pages same
+session, queue refilled.***
+
+**Status**: attach_K healthy at the 11:35Z + 11:42Z polls — step
+3340/10k, loss 3.20, 3.84 s/step (endpoint ~18:3xZ holds), vram
+59.07 ≤ 71, liveness 7 procs / 4 GPUs. Probe 11.6124@3000 (best);
+first kill-bar 12.6394 binds ≥5k (~13:2xZ) with ~1.0 margin. CE aux
+flat. Local GPU free.
+
+**Steering**: none — Discord clean at boot (11:35Z) and at the
+12:0xZ-cadence poll; the 11:14Z throughput thread stayed quiet.
+
+**Done**: **`lit-radar-hooks-17` EXECUTED** (the queued lit slice,
+~25 min): deep-read both banked #17 hooks + 2 papers pages SAME
+SESSION per the permanent rule —
+[VEGA](papers/vega-encoder-grounding.md) (2605.10485: encoder-output
+cosine alignment to DINOv2-FiT3D, projector discarded at inference;
+beats Spatial-Forcing LLM-token alignment 67.5/30.7 vs 64.2/27.8 on
+RoboTwin easy/hard + 0.60 vs 0.55 real ALOHA; the frozen-FiT3D ≈
+unfrozen-FiT3D probe ⇒ unfreezing pays only while features lack
+what control needs — banked as the vu5k readout's interpretation
+lever + named cheap escalation if thawed wins; Molmo2 single-tower
+caveat + VGGT-teacher collapse noted) and
+[HyperVLA](papers/hypervla-hypernetwork-inference.md) (2510.04898:
+understand-once/execute-tiny — 0.1M generated policy per episode,
+4 ms/step, 90× fewer activated params, sim-only vs 2024-OpenVLA;
+#17 trunk-ledger pole + #16 rig-latency existence proof + the √d
+generated-update normalization rule; its MSE-beats-diffusion
+ablation regime-bound, explicitly NOT read onto AR-vs-flow).
+index/SUMMARY/ideas #17 + idea-page ledger updated; new radar hook
+banked: Spatial Forcing 2510.12276 (3.8× training-accel claim
+unexamined). Queue: item closed, `lit-radar-async-exec` queued
+(FASTER + ABPolicy + DEFLECT cluster, feeds #22/#16/#12).
+
+**Next**: 5k kill-bar binds ~13:2xZ (probe must be < 12.6394 —
+currently 11.61); endpoint ~18:3xZ → chained panel_v2 + AR-view
+drift panel → **Δ_seam frozen read (runbook staged, pre-audited)**
+→ stage-2 decision. `queue_cli.py next` → `lit-radar-async-exec`
+(any GPU-busy window).
 
 *Updated 2026-08-09 11:11–11:3xZ (real `date -u`) — tick (babysit,
 then conversational): **the 2500 probe uptick resolved as NOISE —
@@ -110,50 +155,6 @@ staged, pre-audited)** → stage-2 decision (unblocks the
 triple-cited f-then-joint draft). Queue depth 2
 (`lit-radar-hooks-17` executable any GPU-busy window).
 
-*Updated 2026-08-09 10:29–10:5xZ (real `date -u`) — tick
-(conversational): **a dropped owner conversation caught and repaired
-— the 08:16Z "why does KI-joint exist" question AND the 09:53Z "did
-you miss my previous message?" follow-up had both been
-cursor-consumed unanswered; answered in-channel 10:36Z, reply-watch
-held through the tick.***
-
-**Status**: attach_K healthy at the 10:29Z poll — step 2240/10k,
-loss 3.26, 3.803 s/step steady (endpoint ~18:3xZ holds), vram 59.07
-≤ 71, probe 15.92@500 → 13.08@1000 → 13.01@1500 → **11.67@2000,
-already under the first kill-bar (12.64@5k) three probes early**;
-CE-health aux ~2.6 flat (no drift signal). Local GPU free. Babysit
-exit 0.
-
-**Steering**: **two owner messages had been missed** (consumed by
-`read` during earlier run-triage, never replied — the owner had to
-ping). Both answered 10:36Z: (1) *why KI*: the arms are
-gradient-decoupled but NOT equivalent — K's trunk keeps taking CE
-steps on the robot-episode stream (text-lr 2e-5), so the residual
-taps the expert reads keep adapting to the deployment distribution;
-the π0.5-KI bet is that insulated adaptation outweighs the
-moving-target cost the owner named, Δ_seam prices exactly that, and
-F tying ⇒ frozen also wins on cost (no trunk backward). Drift is
-instrumented (CE-health watch + read-4 |Δ_AR| ≤ 0.3). (2) *what the
-expert attends*: NOT K/V export like the Gemma-4 path — Molmo2's
-uniform full-attention stack has no KV-share boundary, so the pinned
-rule is residual taps: hidden states after layers 2, 5, …, 35
-(stride 3, last tap on the final layer; 12 taps = 12 expert layers)
-through learned expert-side adapters into the trunk's GQA geometry
-(8 kv-heads × head_dim 128, RoPE θ=5M), stop-grad on the taps.
-Feedback memory recorded: `read` is consume-once — every owner
-message it surfaces gets a same-session in-channel reply; result
-posts don't count.
-
-**Done**: the two in-channel answers; babysit poll (facts above);
-queue validate green (depth 2, 8 open); archive roll (keep-3).
-
-**Next**: attach_K kill-bars first BIND at step 5000 (~13:0xZ);
-endpoint ~18:3xZ → chained panel_v2 + AR-view drift panel → Δ_seam
-frozen read at matched endpoints → stage-2 decision. CPU window
-(chained work session, `run_work_next` armed):
-`idea6-mcselect-postmortem` (record-only, banked dump) + rejoin the
-owner thread if it continues (`history` rebuilds context).
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -195,6 +196,19 @@ export), history-diff reply-watch held through the tick, feedback
 memory recorded (read is consume-once — same-session replies
 mandatory). attach_K healthy: probe 11.67@2000, already under the
 5k kill-bar. Queue validate green depth 2; run_work_next armed.
+
+Session 2026-08-09 11:34–11:5xZ (work, bounded — explore/lit; 0
+GPU-h): `lit-radar-hooks-17` executed — VEGA 2605.10485 + HyperVLA
+2510.04898 deep-read, 2 papers pages same session (vega-encoder-
+grounding, hypervla-hypernetwork-inference): VEGA = third pole on
+the vision-freeze axis (encoder-level 3D-aware alignment aux
+substitutes for unfreezing; vu5k interpretation lever + cheap
+escalation), HyperVLA = inference-efficiency pole (0.1M generated
+policy, 4 ms/step) + √d normalization rule; MSE-vs-diffusion
+regime-bound caveat loud. Spatial Forcing 2510.12276 banked as new
+hook; queue refilled with lit-radar-async-exec. attach_K healthy
+both polls (3340/10k, probe 11.61@3000 best, bars bind ~13:2xZ);
+Discord clean throughout; run_work_next armed.
 
 Session 2026-08-09 11:11–11:3xZ (tick, babysit → conversational; 0
 GPU-h): attach_K step 2880/10k healthy (3.822 s/step, vram 59.07 ≤

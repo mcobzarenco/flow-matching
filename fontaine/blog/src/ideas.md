@@ -90,7 +90,18 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   capability→control correlation collapses off-Calvin (r≈−0.36
   Simpler, −0.19 Libero) — trunk swaps get priced by panel screens
   only, never benchmark cards. Not compute-matched; suggestive, not
-  priced.
+  priced. New 2026-08-09 (radar hooks cleared,
+  [VEGA](papers/vega-encoder-grounding.md) +
+  [HyperVLA](papers/hypervla-hypernetwork-inference.md)): VEGA =
+  the *third pole* between freeze and thaw — a 3D-aware-teacher
+  alignment aux at the encoder output (projector discarded at
+  inference) substitutes for unfreezing when the missing ingredient
+  is spatial structure (frozen-FiT3D ≈ unfrozen-FiT3D probe); banked
+  as vu5k interpretation lever + named cheap escalation if thawed
+  wins. HyperVLA = the inference-efficiency pole for the trunk
+  ledger (0.1M generated policy/episode, 4 ms/step, sim-only,
+  2024-baseline caveats loud) + the generated-update normalization
+  design rule; radar-only, changes no queued arm.
 - **`aux-subgoals` [#6 Aux attribution](ideas/06-aux-attribution.md)** —
   `confirmed` (aux HELPS actions, +0.462 cost when off).
   **CONSOLIDATED REPORT 2026-08-09

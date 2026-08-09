@@ -244,3 +244,26 @@ disqualifying for a manipulation trunk.
   future-prediction targets* (not as the trunk) were the biggest
   single transfer lever in a controlled 4-recipe bake-off. Cheaper
   entry point than a trunk swap; hook shared with #6.
+
+- **Lit 2026-08-09 (radar hooks cleared:
+  [VEGA](../papers/vega-encoder-grounding.md) 2605.10485 +
+  [HyperVLA](../papers/hypervla-hypernetwork-inference.md)
+  2510.04898)**: VEGA lands the *third pole* on the
+  vision-freeze axis — an encoder-output alignment aux to a
+  3D-aware teacher (DINOv2-FiT3D), projector discarded at
+  inference, beats LLM-token-level alignment (Spatial Forcing)
+  on RoboTwin easy AND hard; its frozen-FiT3D ≈ unfrozen-FiT3D
+  probe says unfreezing pays only while features lack what
+  control needs ⇒ banked as the vu5k readout's interpretation
+  lever + the named cheap escalation if thawed wins (caveat:
+  Molmo2 is single-tower — no clean "spatial branch only"
+  split; teacher fragility real, VGGT-as-teacher collapses to
+  0.04 hard). HyperVLA stakes the inference-efficiency pole:
+  understand-once/execute-tiny (0.1M generated policy per
+  episode over shared DINOv2, 4 ms/step, 90× fewer activated
+  params vs OpenVLA, sim-only) — trunk-ledger entry for the
+  rig-latency conversation + the generated-update √d
+  normalization rule (OOD-specific failure) for any future
+  weight-modulation adapters; its MSE-beats-diffusion ablation
+  is regime-bound (per-task specialist policies) and does NOT
+  read onto AR-vs-flow.

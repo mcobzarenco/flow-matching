@@ -54,6 +54,8 @@
   - [ActionX: pre-train the expert first, then unfreeze everything](papers/actionx-rl-expert-pretraining.md)
   - [LP-FT: the two-phase schedule with a matched control and a theorem](papers/lpft-two-phase-schedules.md)
   - [VLM4VLA: nine trunks, module freezing, proxy collapse](papers/vlm4vla-trunk-ablation.md)
+  - [VEGA: align the vision tower to a 3D-aware teacher](papers/vega-encoder-grounding.md)
+  - [HyperVLA: a 0.1M generated policy per episode](papers/hypervla-hypernetwork-inference.md)
   - [The initialization thread: APT's siblings](papers/vla-initialization.md)
   - [Checkpointing without stalling (6 papers)](papers/checkpointing-systems.md)
   - [Decode-time stochasticity (5 papers)](papers/decode-temperature.md)
