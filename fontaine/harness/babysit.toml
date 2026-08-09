@@ -332,12 +332,17 @@
 # (no_live_runs_reason cleared 04:02Z 08-09 — K-smoke ladder live below)
 
 # LIVE — #4 attach-screen K-arm memory smoke LADDER (box, 4xDDP; unit
-# fontaine-attach-ksmoke, launched 04:02:34Z 08-09 via run_detached on
-# box at HEAD 28dc7bb; pre-reg instrument item 4 of
+# fontaine-attach-ksmoke; pre-reg instrument item 4 of
 # 2026-08-07-prereg-molmo2-attach-screen.md, warm start REPOINTED to
-# the 60k endpoint per amendment 3). Rungs B12c6 -> B8c4 -> B6c3, 150
-# steps each, first GREEN stops the ladder + writes
-# fontaine/harness/state/k_mem_ready ON THE BOX (sync it back).
+# the 60k endpoint per amendment 3). ATTEMPT 1 (04:02:34Z at 28dc7bb)
+# crashed at rung 1's FIRST BACKWARD with the KNOWN #20 CUDA bug
+# (act-ckpt recompute escapes the suffix sdpa pin -> CheckpointError;
+# predicted 08-08 15:0xZ, fired live here) — unit stopped 04:14Z, fix
+# landed 913fdc4 (recompute re-applies the forward's captured pin;
+# keystones bitwise-green, gpu regression PASS on local H100).
+# ATTEMPT 2 launched 04:18:29Z on box at 913fdc4. Rungs B12c6 ->
+# B8c4 -> B6c3, 150 steps each, first GREEN stops the ladder +
+# writes fontaine/harness/state/k_mem_ready ON THE BOX (sync back).
 # Log rolls per rung: repoint `log` b12c6 -> b8c4 -> b6c3 as rungs
 # roll (RED rungs only; GREEN exits).
 [[run]]
@@ -350,9 +355,9 @@ gpu_indices = [0, 1, 2, 3]
 gpu_mem_min_mib = 8000
 log = "/home/ubuntu/smoke_attach_k_b12c6ckpt.log"
 progress_re = "\"step\": [0-9]+"
-started_utc = "2026-08-09T04:02:34Z"
+started_utc = "2026-08-09T04:18:29Z"
 gpu_hours_per_wall_hour = 4.0
-boundary = "150 steps/rung; rung 1 ETA ~04:25-04:35Z (load ~5 min + 150 steps at est 2.4-3 s/step + eval@100 + save@100); worst case 3 rungs ~1.2 h wall; verdict line '=== K SMOKE RUNG ...' tees into the rung log, unit journal is the record"
+boundary = "150 steps/rung; rung 1 ETA ~04:45-05:00Z (load+first-batch ~10 min + 150 steps at est 2.4-3 s/step + eval@100 + save@100); worst case 3 rungs ~1.5 h wall; verdict line '=== K SMOKE RUNG ...' tees into the rung log, unit journal is the record; attempt-1 crash was #20, FIXED at 913fdc4 — a recurrence of CheckpointError is a NEW finding, stop and diagnose"
 anchors = [
     "pass rule per rung: rc=0 AND max vram_alloc_peak_gib <= 71.0 from the rung jsonl (torch alloc peak, NOT nvidia-smi reserved); nvidia-smi peak advisory ~75000 MiB",
     "GREEN below B12 = MATCHED DOWNSHIFT loudly echoed (both arms take the same BATCH/BACKWARD_CHUNKS, pre-reg: never K alone); ALL-RED = no marker, owner steer, screen does not launch",
