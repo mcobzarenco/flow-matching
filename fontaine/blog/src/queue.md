@@ -2,25 +2,25 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T22:33:00Z
+**Updated:** 2026-08-09T23:37:00Z
 
-**Depth call:** depth >=2 at 22:33Z 08-09: adamc-100k babysit to ~08-12 (live, owner kill proposal pending own confirmation) + tiny-expert-10k (local, endpoint ~05:1xZ 08-10 -> chained panel_v2) + lit-radar-0820 (cpu, 4 priority hooks + 10 spares, grep-clean) + owner-er60k-run-prep (gpu-box, blocked on owner inputs) + idea4-fjoint-rung-finalize-exec (gpu-box, owner-gated) + docs-pass tail (owner-side only)
+**Depth call:** depth 2 at 23:37Z 08-09: lit-radar-0820 (cpu, executable now) + er60k-init-delta-midrun-chart (cpu, opens ~02:0xZ 08-10); plus 2 live runs babysat (er-60k box to ~08-11 ~12:00Z, tiny10k local to ~05:1xZ 08-10 -> chained panel_v2) and 5 owner-gated/blocked items
 
-**10 open** (Live 2 · Queued 3 · Blocked 5 · Done 91)
+**10 open** (Live 2 · Queued 2 · Blocked 6 · Done 94)
 
 ## 🔴 Live (2)
 
 *running right now (GPU or owner-window)*
 
-**`adamc-100k-live`** · `gpu-box`
+**`er-60k-live`** · `gpu-box`
 
-OWNER RUN LIVE (launched 13:30Z 08-09): fontaine_molmo2_adamc_100k_ddp4
+OWNER RUN LIVE (launched 22:47-53Z 08-09, unit fontaine-er-60k): fontaine_molmo2_er_60k_ddp4
 
-**boundary:** endpoint ~08-11/12 (est 1.7-2.1 s/step =&gt; 47-58 h from 13:32Z); chained k4l2 panel eval (--report + npz) in-unit; then leaderboard row + grad-norm chart readout · [pre-reg](posts/2026-08-09-prereg-molmo2-adamc-100k.md)
+**boundary:** step 5000 (~02:0xZ 08-10): first async-save capture line + probe ladder vs 40k curve; K1 kill lines at save boundaries; endpoint ~08-11 ~12:00Z -&gt; chained panel_v2; babysit er_60k entry live (gate 155) · [pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md)
 
 <details><summary>full record</summary>
 
-OWNER RUN LIVE (launched 13:30Z 08-09): fontaine_molmo2_adamc_100k_ddp4 — base Molmo2-4B, 100k steps, eff-32 (8/rank x4, chunks 4), vision unfrozen step 0, decoder 1e-4 / text 2e-5 / vision 2e-5, warmup 1000, AdamC lambda=1e-5 (amendment 2), seed 1, save 5000, ZeRO-1 + chunk-grad-allreduce + async saves. Babysit entry adamc_100k (kill bars: NaN/inf, @10k&lt;@2500, &gt;25 x3 after 5k, vram 77 near-OOM; grad-norm RECORD-ONLY AdamC watch). First-poll facts owed to channel: measured s/step, vram peak, wall projection, first async-save line. OOM policy: relaunch chunks 8 microbatch 1; second OOM = owner steer.
+OWNER RUN LIVE (launched 22:47-53Z 08-09, unit fontaine-er-60k): fontaine_molmo2_er_60k_ddp4 — 60k AR steps from allenai/Molmo2-ER (byte-verified drop-in), 40k recipe verbatim + rig datasets at natural share (owner pick 22:45Z), seed 0 (owner override), save 5000. FIRST POLL DONE 22:5x-23:0xZ: E1 banner exact, 2.23 s/step steady, vram 66.6 vs 77, util 68-99%. RATE-CLASS CORRECTION posted in-channel + gate re-pinned 65-&gt;155 GPU-h (the 65 came from attach_F's 0.92 s/step frozen-trunk rate, wrong class; true trunk class 2.2-2.6 = 60k-continuation actuals). Corrected endpoint ~08-11 ~12:00Z (~37 h wall, ~149 train + ~2 eval GPU-h). Primary read = ER-init delta: probe ladder vs the 40k curve at matched steps; endpoint chains panel_v2 k4l2 (--report + npz), paired CI95 vs banked 40k (6.0079) + 60k-continuation (5.8602).
 
 </details>
 
@@ -40,9 +40,23 @@ T1 tiny-expert capacity rung, FINAL DESIGN (owner yes 19:59:04Z; 40k/biggest-bat
 
 ---
 
-## 🟢 Queued (3)
+## 🟢 Queued (2)
 
 *ready — waiting on a window or a boundary*
+
+**`er60k-init-delta-midrun-chart-0810`** · `cpu`
+
+er_60k ER-init-delta mid-run chart (CPU, zero GPU-h): once the probe ladder has ~10 points (step &gt;= 5000, ~02:0xZ 08-10), chart eval_chunk_mae vs the 40k run's curve at matched steps (seed 0 shared per the owner's 22:51Z seed pol…
+
+**boundary:** opens at er_60k step 5000 (~02:0xZ 08-10); any CPU window after that; superseded by the endpoint readout ~08-11 ~12:00Z if unexecuted · [pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md)
+
+<details><summary>full record</summary>
+
+er_60k ER-init-delta mid-run chart (CPU, zero GPU-h): once the probe ladder has ~10 points (step &gt;= 5000, ~02:0xZ 08-10), chart eval_chunk_mae vs the 40k run's curve at matched steps (seed 0 shared per the owner's 22:51Z seed policy — shuffle-order variance removed from the comparison, so the curve delta IS the init effect + rig-data 0.19%). Same dark eval-report style as adamc_postmortem_chart.py (reuse the 40k curve transcription). Record-only per pre-reg (never a kill line); post the chart in-channel with the step-5000 async-save fact. If the delta is boring (overlapping curves), one line in now.md suffices and the full chart waits for the endpoint readout — do not manufacture a post.
+
+</details>
+
+---
 
 **`lit-radar-0820`** · `cpu`
 
@@ -58,11 +72,15 @@ Lit slice (standing allocation): 4 priority hooks from the 0819 fresh sweep (16 
 
 ---
 
-**`idea4-fjoint-rung-finalize-exec`** · `gpu-box`
+## 🟡 Blocked (6)
+
+*waiting on a prerequisite, a boundary, or the owner*
+
+**`idea4-fjoint-rung-finalize-exec`** · `gpu-box` · **⛔ owner hold**
 
 #4 F-then-joint rung FINALIZE + EXECUTE (per the posted DRAFT posts/2026-08-09-prereg-fjoint-rung.md): (1) CPU instrument DONE 15:0xZ 08-09 (check.py 596 green, 12 new oracles tests/test_fjoint_init.py): materialize_fjoint_init.p…
 
-**boundary:** instrument LANDED 15:0xZ 08-09 (draft Instrument section updated in place — finalization condition 1 satisfied); LAUNCH gated on owner go (draft finalization condition 2) + box free after the adamc_100k endpoint + chained panel (~08-12 ~17:00Z+); sequencing vs the adamc stage-2 frozen attach is an owner call at finalization — do NOT launch on the default · [pre-reg](posts/2026-08-09-prereg-fjoint-rung.md)
+**boundary:** instrument LANDED 15:0xZ 08-09 (draft Instrument section updated in place — finalization condition 1 satisfied); LAUNCH gated on owner go (draft finalization condition 2) + box free after the adamc_100k endpoint + chained panel (~08-12 ~17:00Z+); sequencing vs the adamc stage-2 frozen attach is an owner call at finalization — do NOT launch on the default | RE-STATUSED blocked/owner_hold 23:0xZ 08-09 queue audit: its own text gates launch on an explicit owner go + box-free; ALSO STALE: 'post-adamc-endpoint ~08-12' predates the adamc owner-kill — box is now er-60k's to ~08-11 ~12:00Z, and F2's '0.92 s/step measured' cost row is attach_F-class (correct for the frozen F2 arm, but re-check the J-arm assumption at finalization). · [pre-reg](posts/2026-08-09-prereg-fjoint-rung.md)
 
 <details><summary>full record</summary>
 
@@ -72,33 +90,15 @@ Lit slice (standing allocation): 4 priority hooks from the 0819 fresh sweep (16 
 
 ---
 
-**`docs-pass-followups-0809`** · `cpu`
+**`docs-pass-followups-0809`** · `cpu` · **⛔ owner hold**
 
 Docs pass tail (from the 08-09 staleness audit, deferred at my discretion): (1) sweep agent-internal vocabulary out of shipped bijou/ source comments (eval/leakage.py 'fontaine/charter.md', eval/subgoal_scoring.py '#6 rung (b)',…
 
-**boundary:** any GPU-busy window; low priority vs stage-2 memo + lit radar
+**boundary:** any GPU-busy window; low priority vs stage-2 memo + lit radar | RE-STATUSED blocked/owner_hold 23:0xZ 08-09 queue audit: subitems 1-4 done; the only remainder (5) wandb API key rotation is an OWNER-side action (flagged in-channel at the docs-pass close-out) — nothing for the queue pointer to execute here.
 
 <details><summary>full record</summary>
 
 Docs pass tail (from the 08-09 staleness audit, deferred at my discretion): (1) sweep agent-internal vocabulary out of shipped bijou/ source comments (eval/leakage.py 'fontaine/charter.md', eval/subgoal_scoring.py '#6 rung (b)', train.py 'K arm of the attach-screen'/'#20'); (2) architecture.md S6: enumerate the eval-system surface (frozen sample plans, --dump-draws, noise tickets, --mask-state, subgoal modes, --smolvla baseline, leakage checker) + full rollout flag docs (or rewrite rollout_so101.md properly); (3) S1: a real Molmo2 prompt-format subsection (ChatML, image hoisting, id 151645 bos) instead of the pointer note; (4) confirm docs/notes/2026-08-06 S3 failing-test claim resolved; (5) wandb API key rotation still owed (S8 hygiene note). | PARTIAL 15:5xZ 08-09: (2) architecture.md S6 eval-system surface enumerated (plans/dumps/tickets/mask-state/subgoal modes/smolvla/leakage) + rollout noise/draws/async flags incl. new --noise-ticket, rollout_so101.md flag list updated; (3) S1 Molmo2 prompt-format subsection landed (ChatML hoist, [kind camera|Image i] groups, bos=151645 quirk, native tokenization); (4) 2026-08-06 note's failing-test claim VERIFIED RESOLVED (test passes, note annotated); (1) bijou/ vocab sweep IN FLIGHT via subagent; (5) wandb key rotation still owed (owner-side action) | SUBITEM 1 DONE 15:5xZ (51a692e, subagent sweep + review): 14 bijou/ files de-jargoned (comments/docstrings/help/runtime strings; paths kept; check.py 598 green, no test edits needed). Remaining: ONLY (5) wandb API key rotation — owner-side action, flagged in-channel at close-out
-
-</details>
-
----
-
-## 🟡 Blocked (5)
-
-*waiting on a prerequisite, a boundary, or the owner*
-
-**`owner-er60k-run-prep-0809`** · `cpu` · **⛔ owner hold**
-
-OWNER STEERING 22:14:00Z 08-09: proposed 60k training run init from allenai/Molmo2-ER (MolmoAct2's embodied-specialized Molmo2-4B, released) with params matched to our molmo2 AR 40k recipe, 60k steps, owner rig datasets mixed in…
-
-**boundary:** opens on owner reply (go + rig dataset pointers); param sheet ~30 min after; launch only on owner approval of the sheet
-
-<details><summary>full record</summary>
-
-OWNER STEERING 22:14:00Z 08-09: proposed 60k training run init from allenai/Molmo2-ER (MolmoAct2's embodied-specialized Molmo2-4B, released) with params matched to our molmo2 AR 40k recipe, 60k steps, owner rig datasets mixed in from step 0; owner would KILL adamc_100k ('not looking great' — matches our named probe-rise watch, 3 consecutive rises 11.41@11000 vs 10.63@9500 run-best) and reuse the 4x box GPUs. FEASIBILITY VERIFIED + ANSWERED IN-CHANNEL 22:19Z: ER is a drop-in init — config diff vs base = max_position_embeddings 36864-&gt;16384 (RoPE metadata) + transformers_version only; safetensors manifests identical key set + identical total 19,403,476,800 bytes; launcher change = --backbone allenai/Molmo2-ER. ER snapshot download COMPLETE on box (verified 22:35Z 08-09: 0 incomplete blobs, all 4 shards + processor/code files present, 19,403,574,432 bytes on disk) — launch not blocked on weights. AWAITING OWNER: (1) explicit go to kill adamc_100k (keep step-10000 ckpt + bank logs for zero-GPU AdamC post-mortem chart unless owner says drop); (2) rig dataset pointers (HF ids or box paths) + mixture call (CL-triangle evidence: prior-data replay 2-20% share; rig-from-step-0 is the evidence-backed shape). THEN: pre-reg param sheet re-pinned verbatim from the 40k pre-reg/launcher (fresh shuffle seed per standing rule) posted for approval BEFORE launch per the standing gate.
 
 </details>
 
@@ -158,9 +158,37 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 
 ---
 
-## ✅ Done (91)
+## ✅ Done (94)
 
 *closed — the full record stays in each fold*
+
+**`adamc-postmortem-chart-0809`** · `cpu`
+
+AdamC-100k post-mortem chart + short post (CPU, zero GPU-h; the queued item now.md promised 22:4xZ but never landed in queue.json
+
+**boundary:** DONE 23:3xZ 08-09 same work session that queued it: chart script fontaine/scripts/adamc_postmortem_chart.py (2-panel matched-steps + matched-samples, eval-report dark theme) + post posts/2026-08-09-adamc-postmortem.md (three matched views: 10.80 vs 7.17 @10k steps; run-best 10.30 vs ~8.6 samples-matched; 35.7 GPU-h vs 31.6-for-7.09 compute-matched; loss near-parity 3.74 vs 3.44 = gap lives in the held-out probe; explicit 3-confound caveat, no AdamC verdict; lr_backbone artifact annotated w/ f112f08). SUMMARY wired, Space pushed, page+svg curl-200, in-channel link posted. VERIFICATION WIN en route: the log's lr_backbone=1e-4 trace investigated before writing — confirmed the known owner-caught logging artifact (training groups always 2e-5), so the post carries the annotation instead of a false misconfiguration claim.
+
+<details><summary>full record</summary>
+
+AdamC-100k post-mortem chart + short post (CPU, zero GPU-h; the queued item now.md promised 22:4xZ but never landed in queue.json — added at the 23:0xZ 08-09 queue audit): from the banked train_log.jsonl (box+local), chart-led per owner preference — probe eval_chunk_mae ladder to the 10.30@11500 run-best kill point, train loss/grad-norm, vs the 40k-run probe curve at matched steps as CONTEXT ONLY (different recipe: AdamC vs AdamW, vision unfrozen vs frozen, eff-32 vs eff-48 — descriptive post-mortem, no causal claim without a matched arm). Dark-mode per standing rule. What the run bought: AdamC implementation 401d6f7 (10 oracles, stays landed), step-10k weights on fontaine-checkpoints, the 3-rise-then-recede probe-watch precedent.
+
+</details>
+
+---
+
+**`owner-er60k-run-prep-0809`** · `cpu`
+
+OWNER STEERING 22:14:00Z 08-09: proposed 60k training run init from allenai/Molmo2-ER (MolmoAct2's embodied-specialized Molmo2-4B, released) with params matched to our molmo2 AR 40k recipe, 60k steps, owner rig datasets mixed in…
+
+**boundary:** opens on owner reply (go + rig dataset pointers); param sheet ~30 min after; launch only on owner approval of the sheet | CLOSED 22:5xZ 08-09: all owner inputs landed (go 22:36Z, rig ids 22:40Z, sheet approved verbatim 22:45Z uniform sampling, seed override 22:46Z) -&gt; launched 22:47-53Z unit fontaine-er-60k seed 0. Live-run tracking moved to er-60k-live + babysit er_60k entry.
+
+<details><summary>full record</summary>
+
+OWNER STEERING 22:14:00Z 08-09: proposed 60k training run init from allenai/Molmo2-ER (MolmoAct2's embodied-specialized Molmo2-4B, released) with params matched to our molmo2 AR 40k recipe, 60k steps, owner rig datasets mixed in from step 0; owner would KILL adamc_100k ('not looking great' — matches our named probe-rise watch, 3 consecutive rises 11.41@11000 vs 10.63@9500 run-best) and reuse the 4x box GPUs. FEASIBILITY VERIFIED + ANSWERED IN-CHANNEL 22:19Z: ER is a drop-in init — config diff vs base = max_position_embeddings 36864-&gt;16384 (RoPE metadata) + transformers_version only; safetensors manifests identical key set + identical total 19,403,476,800 bytes; launcher change = --backbone allenai/Molmo2-ER. ER snapshot download COMPLETE on box (verified 22:35Z 08-09: 0 incomplete blobs, all 4 shards + processor/code files present, 19,403,574,432 bytes on disk) — launch not blocked on weights. AWAITING OWNER: (1) explicit go to kill adamc_100k (keep step-10000 ckpt + bank logs for zero-GPU AdamC post-mortem chart unless owner says drop); (2) rig dataset pointers (HF ids or box paths) + mixture call (CL-triangle evidence: prior-data replay 2-20% share; rig-from-step-0 is the evidence-backed shape). THEN: pre-reg param sheet re-pinned verbatim from the 40k pre-reg/launcher (fresh shuffle seed per standing rule) posted for approval BEFORE launch per the standing gate.
+
+</details>
+
+---
 
 **`owner-molmoact2-deep-dive-0809`** · `cpu`
 
@@ -367,6 +395,20 @@ Lit slice (standing allocation): fresh-sweep hooks banked 08-09 14:4xZ, unread s
 <details><summary>full record</summary>
 
 #1/#22 boundary-incompatibility CPU read (record-only, SDN-read precedent — exploratory read on banked stacks, NO pre-reg needed, any escalation does): measure cross-chunk mode incompatibility from banked panel npz — for temporally adjacent panel frames of the same episode (Delta-t = a few ticks), compare earlier chunk's tail vs later chunk's head on their overlap (per-frame index join, the draws_fairness/SDN join pattern); quote vs within-chunk smoothness as the anchor. AUDIT FIRST per standing rule: check which panel plans place multiple ordered frames per episode close enough to overlap at chunk 50, and whether flow + AR stacks both qualify. Oracle-gate on synthetic fixtures (planted compatible/incompatible chunk pairs in/out; degenerate same-frame overlap must read exactly 0). A null (chunks already agree at the seam) closes the #22 bridging direction for our stack at zero GPU cost; a real signal is the design input for any SEAM/PAINT-class arm at the #16 rig bench | EXECUTED 15:2xZ 08-09 (work session): boundary_incompat_results.py landed oracle-gated (planted pairs exact, dt=0 degenerate 0, NaN poison, 6 abort branches) + run on 5 banked stacks (flow80k stablekey/ticket33/draws10mean, molmo2 AR 40k/60k greedy), 13,693 pairs, truth overlaps byte-identical on all. NOT A NULL: seam D 1.1-1.27x model err; boundary jump 11-14x per-step motion (smooth within, jerky between); dt-&gt;0 intercept fresh-noise 6.04 vs AR-greedy ~2.7 vs shared-ticket 2.07 (noise coupling deletes the mode term; ticket33 = free ablation). json banked reports/analysis__boundary_incompat_panels.json + dark-mode dt-curve chart; results post 2026-08-09-boundary-incompat-results.md; #22 direction CONFIRMED not closed, still parked on #16; escalation needs own pre-reg
+
+</details>
+
+---
+
+**`adamc-100k-live`** · `gpu-box`
+
+OWNER RUN LIVE (launched 13:30Z 08-09): fontaine_molmo2_adamc_100k_ddp4
+
+**boundary:** endpoint ~08-11/12 (est 1.7-2.1 s/step =&gt; 47-58 h from 13:32Z); chained k4l2 panel eval (--report + npz) in-unit; then leaderboard row + grad-norm chart readout | CLOSED 22:40Z 08-09: OWNER KILL ('not looking great', GPUs reassigned to ER-60k) at step ~11,840, ~35.7/310 GPU-h. Final probe ladder ended 10.30@11500 = run-best (the 3-rise watch receded). step_010000 kept on box + weights-only upload to fontaine-checkpoints VERIFIED DONE; train_log.jsonl banked box+local. babysit entry pruned 22:4xZ. Post-mortem chart split to adamc-postmortem-chart-0809. · [pre-reg](posts/2026-08-09-prereg-molmo2-adamc-100k.md)
+
+<details><summary>full record</summary>
+
+OWNER RUN LIVE (launched 13:30Z 08-09): fontaine_molmo2_adamc_100k_ddp4 — base Molmo2-4B, 100k steps, eff-32 (8/rank x4, chunks 4), vision unfrozen step 0, decoder 1e-4 / text 2e-5 / vision 2e-5, warmup 1000, AdamC lambda=1e-5 (amendment 2), seed 1, save 5000, ZeRO-1 + chunk-grad-allreduce + async saves. Babysit entry adamc_100k (kill bars: NaN/inf, @10k&lt;@2500, &gt;25 x3 after 5k, vram 77 near-OOM; grad-norm RECORD-ONLY AdamC watch). First-poll facts owed to channel: measured s/step, vram peak, wall projection, first async-save line. OOM policy: relaunch chunks 8 microbatch 1; second OOM = owner steer.
 
 </details>
 

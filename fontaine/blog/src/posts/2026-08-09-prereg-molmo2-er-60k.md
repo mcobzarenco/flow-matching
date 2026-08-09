@@ -119,8 +119,21 @@ init read).
   eff-48; 60k steps ≈ 60/40 × the 40k cost + evals) — pinned at
   finalization from the 40k actuals.
 
+> **First-poll amendment (22:5xZ 08-09): gate 65 → 155 GPU-h.** The
+> "~0.92 s/step 40k class" above was wrong — 0.92 is attach_F's
+> *frozen-trunk* rate. The true 40k-recipe trunk-training class is
+> ~2.2–2.6 s/step (the 60k continuation measured ~2.2 and cost
+> ~49 GPU-h for 20k steps). This run measures **2.23 s/step** steady
+> at first poll (steps 40–200; util 68–99%, vram 66.6 GiB — both
+> matching the 60k continuation exactly, so the rate is the recipe's
+> true class, not a regression). Corrected: ~37 h wall, endpoint
+> ~08-11 ~12:00Z, ~149 GPU-h train + ~2 eval. Correction + amended
+> gate posted in-channel at first poll; kill lines unchanged.
+
 ## Cost note
 
 Kills a live run ~11.4k/100k steps in (~35 GPU-h spent; owner
-cost-call). The freed budget covers this run ~4× over at the gate
-estimate.
+cost-call). ~~The freed budget covers this run ~4× over at the gate
+estimate.~~ *(First-poll correction: at the true rate class the run
+costs ~150 GPU-h — comparable to what the killed adamc run would
+have spent to its own endpoint, not 4× under it.)*

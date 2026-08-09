@@ -1,10 +1,61 @@
 # Now
 
-
-
-
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-09 22:51–23:4xZ (real `date -u` at write: 23:37) —
+work session (bounded): **er_60k first poll = green run, wrong
+arithmetic — the launch post's "~0.92 s/step 40k class" was
+attach_F's frozen-trunk rate; measured 2.23 s/step ⇒ ~150 GPU-h /
+endpoint ~08-11, correction + gate re-pin 65→155 posted in-channel.
+Work item: AdamC post-mortem shipped (chart-led, three matched
+views).***
+
+**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — first
+poll DONE: E1 banner exact (880 ds / 38,622 eps / 18.67M fr / dims
+6/6, holdout 4,307 incl. ~6 rig), **2.23 s/step** steady, util
+68–99%, vram alloc peak 66.6 vs 77 bar (all matching the 60k
+continuation = the recipe's true class, not a regression). Corrected
+projection ~37 h wall → endpoint **~08-11 ~12:00Z**, ~149 train + ~2
+eval GPU-h; babysit gate re-pinned 65→155 per the entry's first-poll
+re-pin clause; pre-reg amended in place. Journal shows actual
+relaunch ~22:47–48Z (prior tick's 22:53Z stamp ran fast,
+record-only). Next owed at step 5000 (~02:0xZ 08-10): async-save
+capture line + probe ladder vs 40k curve (ER-init delta primary
+read). `fontaine-tiny10k` LIVE local — step 2,700, 21.5 f/min, probe
+16.78@500 → … → 11.74@2000 → **11.64@2500** descending, 3.0/15
+GPU-h; endpoint ~05:1xZ 08-10 → chained panel_v2 → Δ_capacity read.
+
+**Steering**: owner 22:51:54Z seed-policy clarification (fresh seed
+on resume/extension or for explicit variance reasons; otherwise SAME
+seed for comparability) — replied in-channel 23:04Z, policy recorded
+in memory; reframes er_60k seed 0 as the policy default, not an
+override. My cost-correction post (23:01Z) invited an objection to
+the ~150 GPU-h spend — none as of 23:4xZ; run rides.
+
+**Done**: babysit ×2 (22:51 exit 1 = er_60k pre-step-1 startup,
+verified in-journal not a hang; 23:2x exit 0). er_60k first-poll
+facts + rate-class correction in-channel; babysit.toml + pre-reg
+amended (gate 155). Queue audit: adamc-100k-live → done,
+owner-er60k-run-prep → done, er-60k-live opened, docs-tail + fjoint
+re-statused blocked/owner-hold (owner-side / owner-gated), the
+never-queued AdamC post-mortem item added and **executed same
+session**: `posts/2026-08-09-adamc-postmortem.md` + 2-panel chart
+(`adamc_postmortem_chart.py`) — matched steps 10.80 vs 7.17 @10k,
+matched samples 10.30 vs ~8.6, matched compute 35.7 GPU-h vs
+31.6-for-7.09; loss near-parity 3.74 vs 3.44 (gap lives in the
+held-out probe); 3-confound caveat explicit, no AdamC verdict; the
+log's lr_backbone=1e-4 trace verified as the known f112f08 logging
+artifact BEFORE writing (a false misconfiguration claim avoided).
+SUMMARY wired, Space pushed, pages curl-200, link posted in-channel.
+check.py 599 green. Seed-policy memory updated.
+
+**Next**: `queue_cli.py next` → lit-radar-0820 (cpu, GPU-busy
+window). er60k-init-delta-midrun-chart opens at step 5000 (~02:0xZ
+08-10, with the async-save fact owed in-channel). tiny10k endpoint
+~05:1xZ 08-10 → chained panel_v2 → Δ_capacity readout. er_60k
+endpoint ~08-11 ~12:00Z → chained panel_v2 k4l2. MolmoAct2 follow-up
+arms + ArmnetBench checkpoint watch remain owner-decision / watch
+items.*
 
 *Updated 2026-08-09 22:34–22:5xZ (real `date -u` at write: 22:44) —
 tick (babysit): **the whole ER-60k arc closed inside one tick —
@@ -137,43 +188,6 @@ readout. adamc endpoint ~08-12 ~17:00Z if it rides the kill call.
 MolmoAct2 follow-up arms + ArmnetBench checkpoint watch remain
 owner-decision / watch items.*
 
-*Previous update 2026-08-09 22:03–22:1xZ (real `date -u` at write: 22:06) —
-tick (babysit): **green tick, no steering — one new watch item:
-adamc's probe has now risen three consecutive evals (10.63@9500 →
-10.80@10000 → 11.06@10500 → 11.41@11000), a trend rather than the
-usual one-eval blip; record-only per the pre-reg, no kill line
-touches it.***
-
-**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE — babysit exit 0
-(22:03), step 11,080, 22.3 st/min, 33.6/310 GPU-h, vram 75.3 ×4 vs
-77. **Probe-rise watch**: prior upticks (@5000, @8000, @10500-as-of-
-last-tick) each receded within 1–2 evals; this one is 3-for-3
-rising. Kill lines unaffected (would need >25 ×3; the @2500 line was
-passed at @10000); same record-only class as the train_mae drift —
-chart at readout. Next eval @11500 ~22:2xZ. Post-kill-line cruise,
-endpoint ~08-12 ~17:00Z. `fontaine-tiny10k` LIVE local — step 1,240,
-22.3 st/min, 1.9/15 GPU-h; probe 14.52@1000 descending on schedule;
-first save boundary @1250 imminent. Host RAM 141/221 used, **80 GiB
-available** — workers-10/prefetch-2 amendment holds (mild drift
-86→80 GiB free across two ticks, record-only). Endpoint ~05:1xZ
-08-10 → chained panel_v2 → Δ_capacity read ~06:3xZ.
-
-**Steering**: none — `read` surfaced only our own 22:01
-lit-radar-0818 post; `history -n 5` shows no new reactions. 13:48Z
-gate default (let run, gate 310) governs adamc.
-
-**Done**: babysit ×1 both entries; host-RAM check per the OOM class;
-queue validate green depth 3 (9 open); `run_work_next` armed (22:04)
-for lit-radar-0819.
-
-**Next**: chained work session → `queue_cli.py next` →
-`lit-radar-0819` (CPU, GPU-busy window; 4 priority hooks + 8
-spares). adamc probe-rise watch rides with the next babysit. tiny10k
-endpoint ~05:1xZ 08-10 → chained panel_v2 → Δ_capacity readout.
-adamc endpoint ~08-12 ~17:00Z → chained k4l2 panel. MolmoAct2
-follow-up arms + ArmnetBench checkpoint watch remain owner-decision
-/ watch items.*
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -230,6 +244,19 @@ drop-in + draft pre-reg posted + box snapshot download started
 within the hour; adamc 3-rise watch resolved recede (10.30@11500
 new run-best), surfaced for the kill call. Refill 14/16 clean →
 0820 queued (4 hooks + 10 spares). check 599; Space pushed ×2.
+
+Session 2026-08-09 22:51–23:4xZ (work, bounded; 0 new GPU-h spent by
+the session itself — er_60k rides ~3/155 at write, tiny10k 3.0/15;
+exploit): er_60k first poll green (E1 exact, 2.23 s/step, vram 66.6,
+util 68–99%) BUT the launch projection was wrong-class — 0.92 s/step
+was attach_F's frozen-trunk rate; correction + endpoint ~08-11
+~12:00Z + gate re-pin 65→155 posted in-channel, babysit.toml +
+pre-reg amended. Owner seed-policy clarification 22:51Z recorded +
+replied. Queue audit fixed 4 stale statuses + queued-then-executed
+the AdamC post-mortem: chart-led post (three matched views, 10.80 vs
+7.17 @10k / 10.30 vs ~8.6 samples-matched / compute-matched worse;
+loss near-parity), lr_backbone artifact verified not a
+misconfiguration before writing. check 599; Space pushed, pages 200.
 
 Session 2026-08-09 22:34–22:5xZ (tick, babysit; 0 new GPU-h — adamc
 stopped at ~35.7/310 final, tiny10k rides 2.4/15): ER-60k GO landed

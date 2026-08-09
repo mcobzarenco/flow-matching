@@ -19,7 +19,7 @@ jsonl = "/home/ubuntu/train_fontaine_molmo2_er_60k_ddp4.log"
 probe_key = "eval_chunk_mae"
 started_utc = "2026-08-09T22:50:00Z"
 gpu_hours_per_wall_hour = 4.0
-boundary = "60k AR run from allenai/Molmo2-ER (owner spec 22:14Z 08-09, go 22:36Z, param sheet approved verbatim 22:45Z: uniform/natural sampling incl. rig data, no oversample — owner will fine-tune later). Pre-reg posts/2026-08-09-prereg-molmo2-er-60k.md. Recipe = 40k AR launcher verbatim + named deltas: ER backbone (byte-verified drop-in), 60k steps, rig datasets so101_pick_place_clean (7 ep/3,399 fr) + so101_pick_place_v2 (50 ep/32,679 fr) in --train-data from step 0 at natural share (0.19% — owner-accepted), save-every 5000, seed 0 (owner override 22:46:40Z 'let's use the same seed too' = 40k's shuffle seed; fresh-seed standing rule explicitly owner-overridden). LAUNCH HISTORY: 22:50Z at seed 2 (sheet value; the override message crossed it) stopped PRE-STEP-1 22:52Z ~0 GPU-h, relaunched 22:53Z at seed 0 via run_detached.sh unit fontaine-er-60k; adamc_100k owner-kill 22:40Z freed the 4x GPUs. FIRST POLL OWED (next session): E1 banner MUST read 880 datasets / 38,628 episodes / 18,672,827 frames / dims 6/6 pre-holdout (deviation = kill + diagnose); measured s/step (40k class ~0.92 => ~15.3 h wall => endpoint ~08-10 ~14:00Z; adamc's 2.65+ class would mean chunks-8 fallback territory — diagnose); vram alloc peak vs 77 bar; first async-save 'captured in Xs' line owed at step 5000; wall projection in-channel."
+boundary = "60k AR run from allenai/Molmo2-ER (owner spec 22:14Z 08-09, go 22:36Z, param sheet approved verbatim 22:45Z: uniform/natural sampling incl. rig data, no oversample — owner will fine-tune later). Pre-reg posts/2026-08-09-prereg-molmo2-er-60k.md. Recipe = 40k AR launcher verbatim + named deltas: ER backbone (byte-verified drop-in), 60k steps, rig datasets so101_pick_place_clean (7 ep/3,399 fr) + so101_pick_place_v2 (50 ep/32,679 fr) in --train-data from step 0 at natural share (0.19% — owner-accepted), save-every 5000, seed 0 (owner override 22:46:40Z 'let's use the same seed too' = 40k's shuffle seed; fresh-seed standing rule explicitly owner-overridden). LAUNCH HISTORY: 22:50Z at seed 2 (sheet value; the override message crossed it) stopped PRE-STEP-1 22:52Z ~0 GPU-h, relaunched 22:53Z at seed 0 via run_detached.sh unit fontaine-er-60k (journal shows banner 22:48:31Z — the prior tick's launch clock ran ~5 min fast, record-only); adamc_100k owner-kill 22:40Z freed the 4x GPUs. FIRST POLL DONE 22:5x-23:0xZ 08-09: E1 banner EXACT (880 ds / 38,622 eps / 18,669,180 fr / dims 6/6 post-holdout, 4,307 eps held out incl. ~6 rig — matches the pre-launch reconciliation); measured s/step 2.23 steady (steps 40-200; step-20 window 11.7 = load-contaminated), util 68-99%, vram alloc peak 66.6 vs 77 bar (identical to the 60k continuation). RATE-CLASS CORRECTION posted in-channel 22:5xZ: the launch post's '40k class ~0.92' was attach_F's frozen-trunk rate, WRONG CLASS — true 40k-recipe trunk class is ~2.2-2.6 (60k continuation measured 2.2, ~49 GPU-h/20k steps; this run matches it exactly). Corrected projection: ~37 h wall, endpoint ~08-11 ~12:00Z, train ~149 GPU-h + ~2 eval; gate re-pinned 65 -> 155 per the gate comment's first-poll re-pin clause; owner told to object if ~150 GPU-h changes the call. NEXT OWED at step 5000 (~02:0xZ 08-10): first async-save 'captured in Xs' line + probe ladder vs the 40k curve (ER-init delta = primary read)."
 anchors = [
     "kill lines (save boundaries): NaN/inf loss; probe not below its own @2500 value by step 10000; probe > 25 sustained x3 consecutive evals after step 5000 (K1 class inherited from the 40k/adamc pre-regs)",
     "vram: alloc peak > 77 GiB = near-OOM kill; 40k measured green at this exact rung (6-chunk backward + ZeRO-1 + chunk-grad-allreduce, B12/rank)",
@@ -30,9 +30,12 @@ anchors = [
 ]
 [[run.gates]]
 kind = "gpu_hours_max"
-value = 65.0
-# 65 = pre-reg gate (60/40 x 40k actuals ~0.92 s/step at eff-48 + evals);
-# re-pin at first poll if measured s/step lands off the 40k class.
+value = 155.0
+# 155 = first-poll re-pin 22:5xZ 08-09 (the original 65 was 60/40 x a
+# phantom ~0.92 s/step = attach_F's frozen-trunk rate, wrong class):
+# measured 2.23 s/step x 60k steps x 4 GPUs = ~149 train + ~2 eval + slack.
+# Correction + amended gate posted in-channel 22:5xZ; owner invited to
+# object to the ~150 GPU-h spend; kill lines unchanged.
 
 # adamc_100k entry pruned 22:4xZ 08-09 — OWNER KILL 22:36Z (ER-60k
 # steering: 'not looking great', GPUs reassigned to the ER-60k run).

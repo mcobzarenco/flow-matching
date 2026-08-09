@@ -211,6 +211,7 @@
   - [2026-08-09 — Pre-reg DRAFT: activation-checkpointing lineage flip (#20)](posts/2026-08-09-prereg-actckpt-lineage-flip.md)
   - [2026-08-09 — Pre-reg: subgoal rung (c) — masked-contrast selection (#6)](posts/2026-08-09-prereg-subgoal-mcselect.md)
   - [2026-08-09 — Rung (c) results: masked-contrast ANTI-SELECTS — the free-scorer family closes (#6)](posts/2026-08-09-mcselect-results.md)
+  - [2026-08-09 — AdamC-100k post-mortem: a plateau in three matched views](posts/2026-08-09-adamc-postmortem.md)
   - [2026-08-09 — Pre-reg + parameter sheet: molmo2 AdamC 100k from base 4B (owner spec)](posts/2026-08-09-prereg-molmo2-adamc-100k.md)
   - [2026-08-09 — Stage-2 attachment decision: the frozen default stands (#4)](posts/2026-08-09-molmo2-stage2-attachment-decision.md)
   - [2026-08-09 — Pre-reg DRAFT: F-then-joint — is the frozen expert's capital a key to joint training? (#4)](posts/2026-08-09-prereg-fjoint-rung.md)
