@@ -382,3 +382,30 @@ literally 2605.26820's experiment: pre-register that rig FT carries
 naive rig-only FT wipes prior competence within a few thousand steps
 (BWT −81 by 4×4k), and replay beat joint retraining at matched
 compute.
+
+Lit `0820` 2026-08-09 ([rollout-free eval](../papers/rollout-free-eval.md)
+2607.01060 + 2512.16881, + [FACTR 2](../papers/factr2-torque-estimation.md)):
+the eval-substrate menu gets its priced third tier. PolaRiS (MIT
+code live, 224 stars) scans a real scene into IsaacSim in <1 h
+(2DGS→mesh + TRELLIS assets, wrist cams render — the SIMPLER
+blocker gone) and calibrates at r=0.9 over 24 policy-env points
+(worst env 0.81, best MMRV) — but the certificate needs
+per-checkpoint co-training (1k steps, 10% sim, ~350 teleop sim
+demos; over-tuning degrades the instrument) and is DROID-only, so
+SO-101 restarts calibration from zero. The world-model route
+(RoboWorld r=0.989 vs RoboArena, n=8) is not actionable: no
+artifact, GPT-4o judge never human-validated. Shared lesson: every
+rollout-free certificate was purchased with real rollouts. Two
+rig-day riders banked: (a) capture a 2–5 min workspace scan + a
+calibration board when the better rig dataset is collected —
+minutes of cost, unlocks the PolaRiS route retroactively; (b)
+FACTR 2's 10-min free-motion protocol — log Present_Load +
+positions, train the 1-minute LSTM, check residual spikes on
+contact (unproven at the STS3215 servo class; paper floor is a
+$2,500 Piper). Design constants worth keeping: 20 real
+rollouts/policy/env sufficed for ranking ground truth;
+progress-scale scoring beat binary (ρ 0.970 vs 0.922); report
+Pearson + MMRV. PolaRiS also independently replicates our
+offline-validation read (action MSE poorly correlated; sim-success
+saturation with real performance spanning the spectrum). No new
+arm — execution stays parked.

@@ -188,3 +188,45 @@ check (charter §2) before training touches it.
   pipeline is unablated (reference, not evidence), and their 38,100h
   is ~65% re-rendered human video (~7,800h real teleop, not "166×
   our scale").
+
+- **Lit `0820` 2026-08-09 — three data-lever reads in one slice
+  ([FACTR 2](../papers/factr2-torque-estimation.md) 2606.12406 +
+  [Is Diversity All You Need](../papers/is-diversity-all-you-need.md)
+  2507.06219 + [H2R emergence](../papers/human-to-robot-transfer-emergence.md)
+  2512.22414):** (1) The weighted-sampling slot gets a
+  literature-backed sibling — phase-weighted BC sampling by
+  estimated contact proximity (FIRST: pre-contact upsampling 0.818
+  vs contact-only 0.670, both torque-conditioned; the +17% headline
+  bundles torque-as-observation with re-sampling and sampling-only
+  is never ablated). NEXT proper needs 100 Hz motor current we
+  don't log, but its own input ablation crowns Δq_d = commanded −
+  measured position = `action − observation.state`, present in
+  every corpus episode. Cheapest gate (zero GPU): offline contact
+  segmentation from tracking-error residuals, validated against
+  gripper-close commands as weak grasp labels. (2) Velocity
+  multimodality costs ~15% (≈2.5× pre-train data) even on a
+  diffusion action expert — "expert diversity hurts" is inferred
+  from the debias gain, never operator-ablated; recipe unreleased
+  but trivial (chunk time-rescale toward a canonical speed).
+  Falsification chain on our corpus: zero-GPU operator-speed census
+  (per-dataset |Δq| stats) → free correlation of per-dataset panel
+  MAE vs velocity dispersion on banked npz → only if both read, a
+  speed-normalization screen rung with probe targets transformed
+  identically (velocity spread inflates our chunk-MAE floor by
+  construction — an eval confound their rollout evals never face).
+  Two levers repriced by the same paper: episode-sampling beat
+  task-relevant curation (+0.10 despite fewer target-skill
+  episodes) — warns against rig-relevance filtering; and
+  single-embodiment RDT-AWB ≥ 22-embodiment RDT-OXE demotes the
+  survey's Bridge V2 cross-embodiment pilot. (3) The human-video
+  lever gets its gate: the one measured co-training recipe
+  (π0.5+ego, 14 h pseudo-action ego video) nearly doubles
+  generalization (spice 32→71) but ONLY atop diverse
+  target-embodiment robot pretraining; base-VLM init gains ~zero —
+  we sit at the measured no-transfer corner. Parked, not dead;
+  reopening condition = an ER-class embodied trunk in our stack
+  (the live er_60k is exactly this) or external evidence of
+  human-video gains at ≤~250 h single-embodiment scale. Caveats
+  banked: no absolute threshold units published; diversity
+  confounded with hours; rig-collected pseudo-labeled demos mean
+  latent-action-on-unlabeled-video is untested, not refuted.

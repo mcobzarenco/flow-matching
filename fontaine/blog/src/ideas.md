@@ -277,8 +277,16 @@ record; the line here is the hook). *Index last updated 2026-08-09.*
   replay-like anchor (the banked 9:1 + λ0.1 LM-aux rider exceeds the
   sufficient dose). OWNER STEERING 22:14Z 08-09: proposed 60k run
   init from Molmo2-ER (drop-in verified — configs/manifests
-  identical) + rig data from step 0, killing adamc_100k; awaiting
-  go + rig dataset pointers.
+  identical) + rig data from step 0, killing adamc_100k; owner go
+  22:36Z, LAUNCHED 22:53Z as `fontaine_molmo2_er_60k_ddp4`
+  (endpoint ~08-11 ~12:00Z; ER-init delta vs the 40k curve =
+  primary read). Lit
+  `0820` ([H2R emergence](papers/human-to-robot-transfer-emergence.md)):
+  second production datapoint that VLM-benchmark inheritance ≠
+  robot-pretraining diversity — π0.5+ego's base-VLM condition gains
+  ~zero from human-video co-training; an embodied (ER-class) trunk
+  is the precondition, strengthening the live er_60k arm's
+  rationale beyond its panel delta.
 - **`aux-subgoals` [#6 Aux attribution](ideas/06-aux-attribution.md)** —
   `confirmed` (aux HELPS actions, +0.462 cost when off).
   **CONSOLIDATED REPORT 2026-08-09
@@ -653,7 +661,15 @@ record; the line here is the hook). *Index last updated 2026-08-09.*
   (tasks into the 20–80% band, ≥50 trials/cell, pre-registered
   annotation protocol); rig-phase forgetting precedent from the CL
   triangle: rig FT must carry 229h-corpus replay ρ 0.02–0.2 @ ~20%
-  of batches (naive rig-only FT: BWT −81 within 4k steps).
+  of batches (naive rig-only FT: BWT −81 within 4k steps). Lit
+  `0820` ([rollout-free eval](papers/rollout-free-eval.md)): the
+  eval-substrate menu's priced third tier — PolaRiS scan-to-sim
+  (MIT, live; r=0.9 over 24 policy-env points) beats the
+  world-model route (RoboWorld r=0.989 but n=8, no artifact,
+  unvalidated GPT-4o judge), yet both certificates were bought
+  with real rollouts and calibrate on DROID only; two rig-day
+  riders banked (2–5 min workspace scan for the PolaRiS route;
+  FACTR 2's 10-min free-motion torque protocol). No new arm.
 - **`lit-arms` [#15 Literature-sourced arms](ideas/15-literature-arms.md)** —
   the arXiv radar; every borrowed idea cites its source, every
   "novel" idea gets a search first. Feeds the Papers section.
@@ -765,7 +781,18 @@ record; the line here is the hook). *Index last updated 2026-08-09.*
   Qwen's 5-stage state-action filter is fully offline and
   mechanizable at 229h (their DA check excluded 81% of RoboMIND-UR
   as broken proprioception — our corpus's hazard class); cheapest
-  arm: DA + jerk pass, panel MAE with/without excluded episodes.
+  arm: DA + jerk pass, panel MAE with/without excluded episodes. Lit
+  `0820` ([FACTR 2](papers/factr2-torque-estimation.md) +
+  [Diversity](papers/is-diversity-all-you-need.md) +
+  [H2R](papers/human-to-robot-transfer-emergence.md)): three levers
+  in one slice — phase-weighted sampling by contact proximity gets
+  a zero-GPU gate (Δq_d = action − state, free in every episode);
+  velocity-debias worth +15% ≈ 2.5× data (diffusion head, never
+  operator-ablated) opens a speed-census → panel-correlation →
+  normalization-arm chain, with the loud caveat that velocity
+  spread is also a chunk-MAE eval confound; the human-video lever
+  is PARKED with a reopening condition = an ER-class embodied
+  trunk (the live er_60k) — base-VLM init measured ~zero gain.
 - **`base-vs-it` [#10 E2B base-vs-IT swap](ideas/10-e2b-base-vs-it.md)** —
   backbone-swap arm, pre-registered prediction ±0.2.
 - **`visual-grounding` [#11 Visual grounding arms](ideas/11-visual-grounding.md)** —

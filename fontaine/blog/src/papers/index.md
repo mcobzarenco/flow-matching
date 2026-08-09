@@ -84,6 +84,10 @@ showed, before the dense analysis.
 | [Silent failures: proprio vs vision observability](silent-failure-observability.md) | 2606.03134 | #16 bench constraint (telemetry success flags 32–48% false-positive in clean sim → exteroceptive label audit); #6 verifier ledger (modality > capacity; final-state exteroception carries the precision signal) |
 | [SA-VLA: spatially-aware flow-matching RL](sa-vla.md) | 2602.00743 | #16 RL-pole entry 5 (naive sparse RL measured NEGATIVE, 77.5 vs 81.0 no-RL; protective-machinery framing; noise-parameterization taxonomy); #11/#17 aux-family fourth mode (frozen feature injection, erosion-proof under RL) |
 | [StreamVLA: completion-state gating](streamvla.md) | 2602.01100 | #6 phase-estimation constraint (completion-anchored gate sidesteps the measured mid-execution bottleneck; event-triggered refresh ≈ always-reason at half latency); #22 adjacency (re-reasons, never cuts the chunk) |
+| [Rollout-free eval: RoboWorld + PolaRiS](rollout-free-eval.md) | 2607.01060, 2512.16881 | #16 eval-substrate menu third tier (PolaRiS scan-to-sim priced, co-training load-bearing, DROID-only calibration; RoboWorld no artifact, judge unvalidated; rig-day scan rider banked); independently replicates our offline-validation read |
+| [FACTR 2: sensorless torque + force-informed sampling](factr2-torque-estimation.md) | 2606.12406 | #9 phase-weighted sampling candidate + zero-GPU contact-segmentation gate (Δq_d = action − state, free in every episode); #16 rig-day 10-min free-motion protocol note; current sensor load-bearing, +17% bundles conditioning, code unreleased |
+| [Is Diversity All You Need?](is-diversity-all-you-need.md) | 2507.06219 | #9 velocity-debias lever (+15% ≈ 2.5× data, diffusion head, never operator-ablated; zero-GPU speed census → panel-MAE correlation → normalization arm chain); rig-relevance-filtering warning; Bridge V2 pilot demoted |
+| [H2R emergence: the human-video gate](human-to-robot-transfer-emergence.md) | 2512.22414 | #9 human-video lever parked with reopening condition (pays ~2× only atop diverse robot pretraining; base VLM ~zero); #17 embodied-trunk precondition — strengthens er_60k's rationale; angle-A spares (CLAP/Motus/LingBot) gated off |
 
 ## Retroactive backlog
 
@@ -296,7 +300,24 @@ pretrained trunk:
 
 | Paper | arXiv | Status |
 |---|---|---|
-| Rollout-free eval cluster: RoboWorld (AR video world model + VLM scorer, Pearson 0.989 vs RoboArena — on only 8 policies) + PolaRiS (video scans of real scenes → neural interactive sim, paired sim/real correlation — the scan-our-own-workspace template; natural Squint complement/rival as the eval substrate) | [2607.01060](https://arxiv.org/abs/2607.01060) + [2512.16881](https://arxiv.org/abs/2512.16881) | hook banked |
-| FACTR 2 (external joint-torque estimation with NO force sensor from ~10 min of motion data on commodity arms + force-informed BC re-sampling, +17% task progress — the cheapest force recovery for a cameras+joints-only SO-101; re-sampling idea may transfer to corpus curation) | [2606.12406](https://arxiv.org/abs/2606.12406) | hook banked |
-| Is Diversity All You Need? (task diversity beats per-task count; EXPERT diversity actively hurts via velocity multimodality — debiasing worth +15% ≈ 2.5× data; a directly checkable hypothesis on our multi-operator community corpus) | [2507.06219](https://arxiv.org/abs/2507.06219) | hook banked |
-| Emergence of human-to-robot transfer (human-video co-training pays only above a pretraining scene/task/embodiment diversity threshold — decides whether angle-A recipes like CLAP/Motus can work at our 229h scale before we spend on them) | [2512.22414](https://arxiv.org/abs/2512.22414) | hook banked |
+| Rollout-free eval cluster: RoboWorld (r=0.989 vs RoboArena confirmed but n=8, no artifact released, GPT-4o judge never human-validated) + PolaRiS (r=0.9 over 24 policy-env points, MIT code live — but per-checkpoint co-training is load-bearing and calibration is DROID-only) | [2607.01060](https://arxiv.org/abs/2607.01060) + [2512.16881](https://arxiv.org/abs/2512.16881) | ✅ [page](rollout-free-eval.md) |
+| FACTR 2 ("no force sensor" hid a load-bearing 100 Hz current sensor; +17% bundles torque-as-observation with re-sampling, sampling-only never ablated; cheapest arm touched is a $2,500 Piper; but the load-bearing input Δq_d = action − state is free in our corpus) | [2606.12406](https://arxiv.org/abs/2606.12406) | ✅ [page](factr2-torque-estimation.md) |
+| Is Diversity All You Need? ("expert diversity hurts" was never operator-ablated — the evidence is the velocity-debias gain +15% ≈ 2.5× data, on a DIFFUSION action expert, so flow-head immunity is exactly what their setup contradicts; recipe unreleased; velocity spread is also an eval confound for chunk-MAE panels) | [2507.06219](https://arxiv.org/abs/2507.06219) | ✅ [page](is-diversity-all-you-need.md) |
+| Emergence of human-to-robot transfer (π0.5+ego: human video ~doubles generalization but ONLY atop diverse robot pretraining; base-VLM init pays ~zero — we sit at the measured no-transfer corner; "threshold" partly our compression, no absolute units published; angle-A spares gated off) | [2512.22414](https://arxiv.org/abs/2512.22414) | ✅ [page](human-to-robot-transfer-emergence.md) |
+
+**Radar 0821 (banked hooks from the 0820 refill sweep — angles: eval
+methodology (rich again), imitation scaling laws, extra sensing
+(audio/current), data curation for robot corpora (new angle, hot);
+16 candidates abs-verified by the sweep, 12 survived the corpus grep
+— the four casualties were all papers we had ALREADY deep-read
+(MolmoAct2, ArmnetBench, CI-MSE, Compression Gap), a sign the sweep
+is converging on our own reading list):**
+
+| Paper | arXiv | Status |
+|---|---|---|
+| Quality over Quantity (influence functions with max-over-validation scoring + trajectory-level aggregation rank demos; consistent sim+real gains over prior selection — a principled per-episode weighting computable against our held-out panel; the #9 curation lever) | [2603.09056](https://arxiv.org/abs/2603.09056) | hook banked |
+| The Curse of Precision (demos needed grow super-exponentially with target precision, log N ∝ 1/(P−c); the ceiling is a property of the sensor+expert system, not the task — bounds what demo-scaling buys on hobby-arm precision tasks) | [2607.23108](https://arxiv.org/abs/2607.23108) | hook banked |
+| NeuralActuator (neural actuation model: torque dynamics + external-force detection on platforms from ~$500 to $30K, teleop dataset, improves BC — torque-from-current for exactly our cost class; the FACTR 2 successor niche) | [2607.11734](https://arxiv.org/abs/2607.11734) | hook banked |
+| GigaWorld-1 / WMBench (7 video world models × 4 action representations, 324K+ simulated rollouts: long-horizon action-faithful consistency matters more than visual realism for eval alignment — frames the sim-grading question the rollout-free-eval page opened) | [2607.02642](https://arxiv.org/abs/2607.02642) | hook banked |
+| SPARES (8, grep-clean 08-09): 2606.27375 ABC-130K open BC scaling substrate (3,500 h / 130K eps / 195 tasks + recipe sweeps); 2601.18723 Eval-Actions graded execution-quality labels (13K episodes, SRCC 0.81–0.84); 2603.13616 Beyond Binary Success anytime-valid sequential policy comparison (−70% eval burden); 2511.09958 Audio-VLA contact-mic template; 2512.08405 audio world models (flow-matching audio prediction); 2606.17598 MuseVLA frozen-trunk multimodal sensing; 2607.21588 AXIS community data engine (+5.8% from auto-QA); 2605.26349 episode-level teleop quality scoring | — | banked in queue |
+

@@ -577,3 +577,15 @@ anchor; our banked Qwen-RobotManip 9:1 + λ=0.1 LM-aux rider already
 exceeds the sufficient dose. Replay-free CL claims are scoped to
 LoRA + on-policy RL (both ablations collapse without either) — no
 license for replay-free offline BC.
+
+Lit `0820` 2026-08-09 ([H2R emergence](../papers/human-to-robot-transfer-emergence.md)
+2512.22414): second production datapoint on the pretraining axis —
+π0.5+ego's 0% condition (base VLM only) shows human/cross-embodiment
+co-training pays ~nothing without diverse robot pretraining already
+in the trunk, i.e. VLM-benchmark inheritance ≠ robot-pretraining
+diversity (consistent with VLM4VLA's proxy-collapse read). Together
+with MolmoAct2's ER gain this says embodied trunk pretraining both
+improves action decoding AND unlocks data levers downstream —
+strengthening the live er_60k arm's rationale beyond its panel
+delta: an ER-class trunk is the zero-cost way up their x-axis and
+the reopening condition for the #9 human-video lever.
