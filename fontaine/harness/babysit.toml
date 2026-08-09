@@ -331,42 +331,35 @@
 
 # (no_live_runs_reason cleared 04:57Z 08-09 — attach_F live below)
 
+# attach_F TRAIN phase COMPLETE 07:42:08Z 08-09 — 10000/10000, ALL
+# THREE probe kill-bars PASSED at save boundaries (@5000 10.2595 vs
+# 12.6394; @7500 9.9391 vs 11.6356; @10000 9.3798 vs 10.1652 — F ends
+# +2.21 above the phase-1 matched curve, inside the +3.0 band). Rate
+# gate PASS 05:05Z (50.3 <= 70). Async saves validated live (1.3-2.1s
+# capture, ~14s publish lag, 8 checkpoints). vram 19.05 <= 71. Train
+# cost 10000 x ~0.92 s/step x 4 ~= 10.2 GPU-h. Entry below watches the
+# chained panel_v2 eval phase (same unit fontaine-attach-f).
+
 [[run]]
-name = "attach_F"
-kind = "train-jsonl"
+name = "attach_F_panel_eval"
+kind = "progress-log"
 host = "192.222.55.210"
-pgrep = "fontaine_molmo2_flow_frozen_10k_ddp4"
-pgrep_min = 4                     # 4 DDP ranks
+pgrep = "panel_v2_heun30_draws1_stable"
+pgrep_min = 4                     # 4-GPU sharded bijou.eval ranks
 gpu_indices = [0, 1, 2, 3]
-gpu_mem_min_mib = 30000
-jsonl = "/home/ubuntu/flow-matching/outputs/train/fontaine_molmo2_flow_frozen_10k_ddp4/train_log.jsonl"
-total_steps = 10000
-probe_key = "eval_chunk_mae"
-vram_key = "vram_alloc_peak_gib"
-started_utc = "2026-08-09T04:57:51Z"  # unit fontaine-attach-f (run_detached.sh), box at 6be4e8e; steer window closed into the named default (posted 04:42Z, read clean 04:56Z)
-gpu_hours_per_wall_hour = 4.0     # 4x DDP on the box
-boundary = "10k at F-rate TBD at launch; saves every 1250, probes every 500; K launches after"
+gpu_mem_min_mib = 4000
+log = "/home/ubuntu/logs/eval__fontaine_molmo2_flow_frozen_10k_ddp4__step_010000__panel_v2_heun30_draws1_stable.log"
+progress_re = "scored [0-9]+/[0-9]+ frames"
+started_utc = "2026-08-09T07:42:30Z"  # chained in-unit after the 10k endpoint save
+gpu_hours_per_wall_hour = 4.0
+boundary = "panel_v2 heun30/draws1/stable, 4-GPU sharded; the Delta_seam read's F side; K launches when this frees the box (K_MEM_READY=1 BATCH=12 BACKWARD_CHUNKS=6)"
 anchors = [
-    "kill rule: probe > phase-1 curve at matched step + 3.0 at any eval >= 5k, kill at next save boundary",
-    "Delta_seam frozen read at matched endpoints (panel_v2 heun30/draws1/stable, paired CI); state-copy 11.785 must be beaten decisively or the screen is void",
-    "attach_rate_gate.py fires in-unit after ~200 steps: >70 GPU-h batch projection => 5k matched downshift BOTH arms (marker + in-unit relaunch; jsonl run-name segment becomes 5k)",
-    "async-save first-real-run validation (e3bdc93): at first save (step 1250) check the 'captured in Xs' + 'saved ... (async, Xs behind the boundary)' lines",
+    "Delta_seam frozen read at matched endpoints (attach_seam_results.py) — needs BOTH arms; nothing is read from this json alone",
+    "state-copy 11.785 must be beaten decisively at the read or the screen is void",
 ]
 [[run.gates]]
-kind = "probe_below_by_step"
-value = 12.6394                   # phase-1 9.6394@5000 + 3.0
-step = 5000
-[[run.gates]]
-kind = "probe_below_by_step"
-value = 11.6356                   # phase-1 8.6356@7500 + 3.0
-step = 7500
-[[run.gates]]
-kind = "probe_below_by_step"
-value = 10.1652                   # phase-1 7.1652@10000 + 3.0 (K1 crossing green 08-07 06:0xZ)
-step = 10000
-[[run.gates]]
-kind = "vram_max_gib"
-value = 71.0
+kind = "gpu_hours_max"
+value = 6.0                       # panel eval alone; the 70 GPU-h batch gate tracks separately
 
 # LIVE — #4 attach-screen K-arm memory smoke LADDER (box, 4xDDP; unit
 # fontaine-attach-ksmoke; pre-reg instrument item 4 of

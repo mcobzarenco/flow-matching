@@ -3,7 +3,65 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-09 04:56–08:xxZ (real `date -u`) — work session
+(bounded): **attach screen ARM F ran end-to-end inside one session —
+launched 04:57:51Z on the steer-window default, train COMPLETE
+07:42:08Z with every kill-bar passed — and the CPU window landed two
+pre-reg drafts + a lit slice + the rung-(c) read script.***
+
+**Status**: attach_F train DONE (10,000/10,000, 07:42:08Z, ~10.2
+GPU-h train; probe 9.3798@10000 vs bar 10.1652 — all three
+boundary judgments PASS, F ends +2.21 above the phase-1 matched
+curve, inside the +3.0 band; vram 19.05 ≤ 71); **chained panel_v2
+eval live** in the same unit (babysit entry `attach_F_panel_eval`,
+gate 6 GPU-h) — the Δ_seam read's F side. K launches when the box
+frees (`K_MEM_READY=1 BATCH=12 BACKWARD_CHUNKS=6`; EXTRA_GPU_HOURS
+recomputed from F actual at launch). Local GPU free.
+
+**Steering**: none (reads clean at boot 04:56Z and at every babysit
+poll through 07:43Z; steer window closed into its named default at
+launch — posted 04:42Z, no owner response).
+
+**Done**: (1) **arm F launched + babysat to completion**
+(`e762749`): box synced to HEAD (perf subset now on box), unit
+`fontaine-attach-f` via run_detached, babysit entry armed, first-poll
+util+rate check (0.93 s/step, ~73% util — input-side headroom
+recorded, recipe pinned by the matched-arms rule, not touched); rate
+gate PASS 05:05Z (50.3 ≤ 70, full 10k, no downshift); kill-bar
+judgments at 5000/7500/10000 all PASS; **async-save first-real-run
+validation PASSED** at step 1250 (captured 1.3 s, published 14.0 s
+behind the boundary — the e3bdc93 caveat closed; 8 checkpoints, all
+clean). Babysit F entry's 30 GiB floor corrected to 12 (trunk-scale
+value, wrong for a frozen-trunk arm). (2) **#20 actckpt lineage-flip
+pre-reg DRAFT** (`e762749`): 4-rung box ladder, perf-only scope
+(eff-48/B12 frozen), ADOPT iff r2 ≤ 1.02·r0 AND peak ≤ 63 GiB, ≤ 2
+GPU-h; execution item blocked on a scheduled fresh AR-trunk launch.
+(3) **Lit slice + papers page same session** (`25abe07`):
+Hy-Embodied-0.5-VLA 2606.14409 (papers/hy-embodied-stack.md) —
+FlowPRO preference RL banked as the weight-space pole of the #16
+post-SFT menu (retention-unmeasured caveat loud), H=50 Bézier
+chunk-stitch deployment lever, #4 joint-pole ledger entry under
+APT's condition; dup-check caught VLAFlow already covered before a
+duplicate page was written. (4) **#6 rung-(c) masked-contrast
+pre-reg DRAFT** (`d5568bf`, queue-audit win: the item sat blocked
+though (b′)+swap had met its opening condition) **+ read script
+pre-data** (`a7693b1`, mcselect_results.py = frozen reads + the
+producer's dump contract, oracle 10 abort branches, check.py 559)
+**+ decode-mechanics amendment** (`6ad5763`, caught by the
+read-script landing: MAE comparability needs per-candidate decodes;
+cost re-pinned ~2–2.5 GPU-h ≤ 4 gate). (5) posts/index.md drift
+fixed (2 missing 08-09 posts).
+
+**Next**: `queue_cli.py next` → the eval finishes → **launch K**
+(this session if the box frees before hard-kill, else the chained
+next session; `run_work_next` armed) → Δ_seam frozen read
+(attach_seam_results.py) after BOTH arms → stage-2 decision. CPU:
+idea6-mcselect instrument (design note banked on the queue item).
+Boundaries: panel_v2 eval ~08:2x–08:4xZ; K ~10k × ~2.6 s/step ≈
+7.3 h train after that.
 
 *Updated 2026-08-09 04:30–04:5xZ (real `date -u`) — tick (babysit,
 held through the verdict window per charter §6): **K-smoke ladder
@@ -90,50 +148,6 @@ page.
 HTML panel re-run to that claim), then
 `molmo2-stage2-attachment-decision` steer window.
 
-*Updated 2026-08-09 03:17–04:0xZ (real `date -u`) — work session
-(bounded, the chained rc owner): **subgoal-swap CLOSED end-to-end —
-arm rc=0 03:42:36Z, all oracles green, frozen reads banked, verdict
-MIXED (both mechanisms real: ~40% format floor + ~60% content margin
-of the −0.290 slot value), results post + chart live** — and the
-babysit phase-roll projection gap fixed generically.*
-
-**Status**: no live GPU runs — local GPU free 03:42Z (swap arm
-complete, ~1.5 GPU-h ≤ 3 gate), box free since 02:26Z. Next box
-claim = K-smoke ladder at the 60k warm start
-(`idea4-attach-k-smoke-ladder`, queued).
-
-**Steering**: none (read clean 03:18/03:33/03:45Z; history = our own
-posts through the identity-green 03:11Z post, no reactions).
-
-**Done** (this session): (1) **babysit.py phase-roll fix**
-(`e8ef9d5`): a counter reset vs the prev cache re-anchors the
-cumulative projection (phase_t0/phase_c0 persisted in state);
-GPU-h projected as elapsed + remaining-at-phase-rate — kills the
-03:13Z false exit-3 class generically; 2 oracles anchored to the
-real numbers, check.py 556. (2) **subgoal_swap_results.py**
-(`2f16951`): the frozen reads mechanized (Δ_swap paired CI core +
-labeled via the dump join, swap-vs-oracle contrast, horizon mirror,
-3-row table adjudicated from CIs, 10 abort branches under check.py,
-557). (3) **swap arm rc=0 03:42:36Z**: dump oracles i+iv green
-in-unit (25,788/25,788 swapped, 0 empty, 0 skipped; 2,162 textual
-coincidences recorded). (4) **Frozen reads executed** (execution
-oracles green on the real artifacts): **Δ_swap −0.113 [−0.161,
-−0.060]** (wrong words HELP), **swap−oracle +0.166 [+0.127,
-+0.205]** (truth clearly better), horizon last-10 swap −0.175 vs
-oracle −0.480 (the banked −0.464 signature reproduced; NOT flat →
-the format floor compounds too). Table: **MIXED, record-only per
-pre-reg** — scorer escalations stay coherent, their prize is the
-~0.17 content margin over a free ~0.11 any-words floor. (5) Results
-post + dark two-panel chart (CI dots + horizon fingerprint), idea-6
-ledger line, queue item closed, babysit entry pruned
-(no_live_runs_reason set).
-
-**Next**: `queue_cli.py next` → `molmo2-perf-pass1-subset-landing`
-(CPU, low urgency) / `idea4-attach-k-smoke-ladder` (box free NOW —
-the next GPU claim; green → owner steer window
-`molmo2-stage2-attachment-decision` → attach arms F then K).
-`run_work_next` armed at close.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -159,7 +173,9 @@ to ~04:0xZ, greedy ~1.7 GPU-h, draws10_t1 04:54–07:22Z **~10 GPU-h
 (~49 GPU-h ≤ 60 gate, chained evals incl.); local subgoal-swap arms
 08-09 ~02:1x–03:42Z +~1.5 GPU-h ≤ 3 gate; box K-smoke ladder 08-09
 04:02–04:39Z **+~0.5 GPU-h ≤ 6 gate (rung 1 GREEN first try)**; box
-+ local idle 04:4xZ pending the stage-2 attachment steer window). Older
+attach_F 08-09 04:58–07:42Z train COMPLETE **+~10.2 GPU-h** + chained
+panel_v2 eval live (~1–2 GPU-h; batch gate 70, rate-gate projection
+50.3 incl. K estimate)). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
@@ -184,3 +200,13 @@ Babysit entry pruned, queue item closed done, steer window
 default named in-channel 04:42Z: arms F then K launch next session
 unless the owner steers. Prior session's uncommitted queue state
 folded in. Discord read clean; no reactions.
+
+Session 2026-08-09 04:56–08:xxZ (work, exploit; +~11–12 GPU-h box —
+attach_F train 10.2 + eval in flight): arm F end-to-end — steer
+window closed into its default, launched 04:57:51Z, rate gate PASS
+(50.3 ≤ 70), all three kill-bars passed, train COMPLETE 07:42:08Z,
+async saves live-validated (1.3–2.1 s captures), panel_v2 eval
+chained. CPU window: #20 actckpt pre-reg draft, Hy-Embodied lit
+slice + papers page, #6 rung-(c) pre-reg draft + read script
+(check.py 559) + decode amendment, posts-index drift fix. K launch
+= the chained next step.
