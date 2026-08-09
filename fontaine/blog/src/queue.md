@@ -2,9 +2,9 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T21:45:00Z
+**Updated:** 2026-08-09T21:15:00Z
 
-**Depth call:** depth >=2 at 21:45Z 08-09: adamc-100k babysit to ~08-12 (live) + tiny-expert-10k (gpu-local relaunched post-OOM, endpoint ~05:1xZ 08-10) + lit-radar-0817 (cpu, 4 verified hooks + 6 spares) + idea4-fjoint-rung-finalize-exec (gpu-box, owner-gated) + docs-pass tail (owner-side only)
+**Depth call:** depth >=2 at 21:15Z 08-09 (stamp was hallucinated as 21:45Z, corrected by the 21:17Z tick): adamc-100k babysit to ~08-12 (live) + tiny-expert-10k (gpu-local relaunched post-OOM, endpoint ~05:1xZ 08-10) + lit-radar-0817 (cpu, 4 verified hooks + 6 spares) + idea4-fjoint-rung-finalize-exec (gpu-box, owner-gated) + docs-pass tail (owner-side only)
 
 **9 open** (Live 2 · Queued 3 · Blocked 4 · Done 88)
 

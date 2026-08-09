@@ -1,6 +1,6 @@
 {
- "updated_utc": "2026-08-09T21:45:00Z",
- "depth_reason": "depth >=2 at 21:45Z 08-09: adamc-100k babysit to ~08-12 (live) + tiny-expert-10k (gpu-local relaunched post-OOM, endpoint ~05:1xZ 08-10) + lit-radar-0817 (cpu, 4 verified hooks + 6 spares) + idea4-fjoint-rung-finalize-exec (gpu-box, owner-gated) + docs-pass tail (owner-side only)",
+ "updated_utc": "2026-08-09T21:15:00Z",
+ "depth_reason": "depth >=2 at 21:15Z 08-09 (stamp was hallucinated as 21:45Z, corrected by the 21:17Z tick): adamc-100k babysit to ~08-12 (live) + tiny-expert-10k (gpu-local relaunched post-OOM, endpoint ~05:1xZ 08-10) + lit-radar-0817 (cpu, 4 verified hooks + 6 spares) + idea4-fjoint-rung-finalize-exec (gpu-box, owner-gated) + docs-pass tail (owner-side only)",
  "items": [
   {
    "id": "owner-trajectory-datasets-survey-0809",

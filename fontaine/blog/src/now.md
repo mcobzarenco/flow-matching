@@ -2,7 +2,55 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-09 20:47–21:5xZ (real `date -u` at write: 21:5x) —
+*Updated 2026-08-09 21:17–21:2xZ (real `date -u` at write: 21:2x) —
+tick (babysit): **both runs healthy — adamc crossed its step-10,000
+pre-registered kill-line checkpoint and PASSES clearly (probe
+10.80@10000 vs the 14.03@2500 bar, below by 3.23); the 20:47 work
+session's clocks were hallucinated ~30 min into the future
+(21:45/21:5x stamps written at a real ~21:15) — corrected in
+queue.json + now.md.***
+
+**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE — babysit exit 0
+(21:17), step 10,040 @ 21:18, ~22 st/min, 30.5/310 GPU-h, vram 75.3
+×4 vs 77. **Step-10,000 kill line JUDGED PASS**: "probe not below
+its own @2500 value by 10k" — @2500 = 14.0294 (fetched from the box
+jsonl), @10000 = 10.80, clear by 3.23; run-best 10.63@9500 stands
+(the 10.80@10000 is a one-eval uptick, the @5000/@8500 precedent
+class). The babysit window's 5.6 st/min (21:14→21:17) was the
+@10000 boundary itself — async save "captured in 21.2s" + probe
+eval; re-verified 10020→10040 in 54 s (~22 st/min) right after.
+Endpoint ~08-12 ~17:00Z. `fontaine-tiny10k` LIVE local — step ~220
+@ 21:17 (22.4 st/min window), 99% util, 15.6 GiB vram, ~1.1/15
+GPU-h; **host RAM 122/221 GiB used, 98 available — the
+workers-10/prefetch-2 amendment is holding** (OOM class closed).
+First post-relaunch probe lands @500 ~21:3xZ (ignore the stale
+16.46@500 row predating 21:03Z). Endpoint ~05:1xZ 08-10 → panel_v2
+→ Δ_capacity read ~06:3xZ.
+
+**Steering**: `read` empty; `history -n 5` surfaced an owner **👍 on
+the 21:03 OOM-recovery + deep-dive-plan post** — lightweight
+agreement with the recovery call and the piece, recorded per the
+08-05 reaction protocol, no reply owed. 13:48Z gate default (let
+run, gate 310) governs adamc.
+
+**Done**: (1) step-10,000 gate judged (Status — the first of adamc's
+two dated kill-line checkpoints is behind us). (2) Clock-hallucination
+audit: the 20:47 work session closed at a real 21:15:31Z (commit
+72e2016 push time) but stamped 21:45/21:5x — queue.json
+`updated_utc` was 30 min in the FUTURE; fixed there + in the head
+entry below (ack/link times corrected to 21:04Z/21:14Z from Discord
+history). (3) Host-RAM check per the OOM class (Status). (4) Queue
+validate green depth 3 (9 open).
+
+**Next**: `run_work_next` armed (21:16 marker) → chained work
+session → `queue_cli.py next` → `lit-radar-0817` (CPU, GPU-busy
+window). tiny10k endpoint ~05:1xZ 08-10 → chained panel_v2 →
+Δ_capacity readout. adamc endpoint ~08-12 ~17:00Z → chained k4l2
+panel. MolmoAct2 follow-up arms remain owner-decision items.*
+
+*Previous update 2026-08-09 20:47–21:1xZ (real close: commit pushed 21:15:31Z;
+the entry's original 21:5x stamps were hallucinated clocks, corrected
+by the 21:17Z tick) —
 work session (bounded): **lit-radar-0816 CLOSED (5 papers pages,
 every hook needed corrections) + owner steering 20:49Z handled
 live — the MolmoAct2 deep dive SHIPPED same session (AI2 built
@@ -30,7 +78,7 @@ the reused jsonl — ignore rows predating 21:03Z.
 
 **Steering**: 20:49:36Z — "there's already a molmo2 VLA
 (allenai/molmoact2). Write a super in-depth piece on it" →
-**SHIPPED same session** (Done); ack 21:16Z, link posted 21:5xZ.
+**SHIPPED same session** (Done); ack 21:04Z, link posted 21:14Z.
 Follow-up arms offered as owner-decision, none queued. 13:48Z gate
 default (let run, gate 310) governs adamc.
 
@@ -112,63 +160,6 @@ are routine tick reads; endpoint ~04:2xZ 08-10 → chained panel_v2 →
 Δ_capacity readout session. adamc endpoint ~08-12 ~17:00Z →
 chained k4l2 panel. Survey follow-ups remain owner-decision items.*
 
-*Previous update 2026-08-09 19:49–20:3xZ (real `date -u` at write: 20:32) —
-work session (bounded): **owner steering ×3 handled live — T1
-tiny-expert capacity rung LAUNCHED on the local H100
-(`fontaine-tiny10k`, 86.8M vs F's 367.5M params, matched-F 10k @
-eff-48, ~8 h) + the owner-requested trajectory-dataset survey post
-SHIPPED same session (855 in-scope hub hours vs our 229).***
-
-**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE — babysit exit 0
-×3 (19:50, 20:07, 20:30), step 9,020 @ 20:30, 22.3 st/min, 27.4/310
-GPU-h, probe run-best **11.0237@8000** holds (next reads are routine
-ticks); endpoint ~08-12 ~17:00Z.
-`fontaine_molmo2_flow_tiny_h256_10k_1xh100` LIVE on the LOCAL H100
-(unit `fontaine-tiny10k`) — fit ladder GREEN b48c12 (13.01 GiB vs 74
-gate), 10k run stepping at 2.8–3.0 s/step, 95–98% util, 12.98 GiB;
-**projection: endpoint ~04:2xZ 08-10 → chained panel_v2 @10000 →
-matched Δ_capacity read vs F@10k (9.4157) ~05:4xZ**; gate 15 GPU-h
-(projected ~9.5); babysit `tiny10k` entry live.
-
-**Steering**: FIVE owner exchanges this session, all answered
-in-session — 19:49 "what's the local GPU doing" (idle, answered);
-19:50 "keep the GPUs busy — propose options" (priced A–E menu; my B
-was stale — #20 act-ckpt fix already landed 913fdc4, corrected
-in-channel); 19:54 "A seems a waste of time, too early" (shelved,
-re-propose ~25–50k); 19:56 "**let's train something**" (T1–T4
-training menu) → 19:59 "**yes to T1**" + "biggest batch that fits" +
-"maybe 40k" → 20:08 after the wall-clock arithmetic (~2.5–3 days)
-"**Let's do your original plan**" — reverted to matched-F 10k
-pre-step-1, full trail in the pre-reg; 19:58 "**investigate what
-additional trajectory datasets we could train on**" → survey shipped
-(Done). 13:48Z gate default (let run, gate 310) governs adamc.
-
-**Done** (commit `beb8659`, check.py 598 green ×2): **T1 tiny-expert
-rung LIVE** — pre-reg `2026-08-09-prereg-tiny-expert-40k.md` (incl.
-the owner's final-amendment trail), launcher
-`launch_local_fontaine_molmo2_flow_tiny_h256_10k_1xh100.sh` (fit
-ladder → 10k → chained panel_v2 @10000), h256/d12 width-only
-contrast (taps+adapters identical to F, depth structural), frozen
-60k trunk pulled + sha-verified `e6ed783b` vs the dedup record;
-launch 1 rc2 caught in seconds (`--zero1`/`--chunk-grad-allreduce`
-are DDP-only — dropped, amendment noted). **Trajectory-dataset
-survey post** (`2026-08-09-trajectory-datasets-survey.md`, Space
-200-verified + in-channel summary): 4 parallel research subagents,
-all links fetch-verified — hub sweep 855 in-scope h / 300 h new
-2026 / sim-contamination hazard; MolmoAct2 curation diff = #1
-recommendation; Bridge V2 / UMI-family / sim ranked; idea #9 fed.
-adamc step_005000 weights banked locally (A shelved, reusable for
-the ~25–50k panel re-proposal + E offline probes). Blog built +
-Space pushed, both new pages 200.
-
-**Next**: tiny10k endpoint ~04:2xZ 08-10 → panel_v2 @10000 →
-Δ_capacity readout session (read machinery = attach_seam_results
-read-1 at explicit paths, bands 0.3/1.0 pre-pinned). `queue_cli.py
-next` → `lit-radar-0816` (CPU, rolled — owner items preempted this
-session). adamc endpoint ~08-12 ~17:00Z → chained k4l2 panel.
-Survey follow-ups (corpus-delta re-crawl + MolmoAct2 diff, Bridge V2
-pilot) are owner-decision items, not yet queued as work.*
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -201,32 +192,9 @@ call — no endpoint, no chained evals)**). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
-Session 2026-08-09 19:49–20:3xZ (work, bounded; +~0.6 GPU-h local so
-far — tiny10k launched 20:12Z, rides to ~05:4xZ ≈ 9.5 GPU-h ≤ 15
-gate; adamc rides, 27.4/310; explore): owner steering ×5 handled
-live in conversational mode (GPU-options menu → "let's train
-something" → T1 approved → wall-clock arithmetic → owner reverted
-to matched-F 10k pre-step-1). T1 tiny-expert rung LIVE local (86.8M
-vs 367.5M params, b48c12 fit-ladder green 13.0 GiB, 2.8–3.0 s/step,
-95–98% util). Trajectory-dataset survey post shipped same session
-(4 subagent tracks, 855 in-scope hub hours vs our 229, MolmoAct2
-diff = top recommendation); idea #9 fed. One stale-queue-title
-audit catch owned in-channel (#20 already fixed). Commit beb8659;
-check 598 ×2; blog + Space pushed, pages 200.
-
-Session 2026-08-09 20:33–20:4xZ (tick, babysit; 0 new GPU-h — adamc
-rides 27.7/310, tiny10k rides ~0.4/15): both runs healthy (adamc
-step 9,140, 21.5–24.3 st/min, vram 75.3/77; tiny10k step ~160, 99%
-util, 12.98 GiB). Caught + fixed a babysit.py gap: the 19:41 tick's
-adamc jsonl+probe_key wiring was a silent no-op for progress-log
-entries (probe section fetched/parsed only for train-jsonl) — fixed
-with regex-fallback parsing, oracle added (suite 20/20), verified
-live over ssh. Fresh probes @8500 = 11.44 / @9000 = 11.53: above
-the 11.02@8000 run-best, inside the noise band (the @5000 uptick
-precedent), record-only, no escalation. Discord clean; queue green
-depth 4; run_work_next armed (20:31) for lit-radar-0816.
-
-Session 2026-08-09 20:47–21:5xZ (work, bounded; ~0.4 GPU-h lost to
+Session 2026-08-09 20:47–21:1xZ (work, bounded; real close 21:15:31Z
+— the note's original 21:5x stamp was a hallucinated clock, corrected
+by the 21:17Z tick; ~0.4 GPU-h lost to
 the tiny10k host-RAM OOM + relaunch riding to ~05:1xZ ≈ 9.5 ≤ 15
 gate; adamc rides 30.3/310; explore): lit-radar-0816 closed — 5
 deep reads via subagent fan-out, 5 Papers pages, every hook needed
@@ -240,3 +208,17 @@ root-caused (DataLoader worker buffer 4× oversized at b48×1),
 launcher amended, relaunched inside 11 min. adamc probe @9500 =
 10.63 new run-best. Commits a5abb5e + close; check 599 ×2; Space
 pushed, 6 new pages 200.
+
+Session 2026-08-09 21:17–21:2xZ (tick, babysit; 0 new GPU-h — adamc
+rides 30.5/310, tiny10k ~1.1/15): both runs healthy. adamc's
+step-10,000 pre-registered kill line JUDGED PASS (probe 10.80@10000
+vs its own @2500 = 14.0294, clear by 3.23; run-best 10.63@9500
+stands); the 5.6 st/min babysit window was the @10000 boundary
+(async save captured 21.2 s + probe eval), rate re-verified ~22
+st/min right after. tiny10k host RAM 122/221 used, 98 free — the
+workers-10/prefetch-2 amendment holds. Owner 👍 on the 21:03
+recovery post recorded (reaction protocol). Clock-hallucination
+audit: the 20:47 work session stamped 21:45/21:5x at a real ~21:15
+— queue.json updated_utc was future-dated 30 min; corrected there +
+in now.md. Queue green depth 3 (9 open); run_work_next armed (21:16)
+for lit-radar-0817.
