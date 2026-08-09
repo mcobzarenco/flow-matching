@@ -118,3 +118,14 @@
   read prices the problem, must never validate a fix). Escalation
   (SEAM/PAINT arm or a cross-chunk noise-coupling deployment
   policy) needs its own pre-reg.
+
+**2026-08-09 — lit `0812b`: the horizon itself can be an output
+([VLA-Corrector page](../papers/vla-corrector.md), 2607.01804):**
+event-triggered chunk truncation from a cheap (40M, ~ms) drift
+monitor — long chunks while the scene tracks the plan, short
+corrective replans when it drifts. The ablation that matters:
+truncation-only is +11.65 of the +15.65 pp total (MetaWorld π0.5) —
+*when to cut* dominates *how to steer*. Complementary to our
+boundary read (they cut on scene drift; our measured pathology is
+decode drift at the seam). Menu adjacency, not an arm — closed-loop
+by construction, parked on #16 like the rest of the ladder.

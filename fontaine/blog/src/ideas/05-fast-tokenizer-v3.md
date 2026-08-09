@@ -53,3 +53,13 @@ noisy monocular pseudo-depth — the same
 discretize-and-predict-distributions argument FAST makes on the
 action side, with mean-collapse under noise as the stated mechanism.
 Strengthens the token-quality premise; no v3 status change.
+
+**2026-08-09 — first measured order-preservation datum
+([DFM-VLA page](../papers/dfm-vla.md), 2603.26320):** MAAT tokenizer
+— uniform 2,001-value grid (no BPE compression) + triplet-margin
+embeddings forced to preserve numeric order — is worth +4.4 pp on
+LIBERO-Plus for a *refinement* decoder that moves through token
+neighborhoods. The trade vs FAST is explicit: compression vs metric
+structure. For a pure-AR consumer nothing refines through
+neighborhoods, so the answer may differ — "ablate embedding metric
+structure" banked as a free rider on any v3 refit. No status change.

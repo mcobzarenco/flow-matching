@@ -252,3 +252,12 @@
   within-chunk SDN read could not see shows up whole at the seam,
   and noise coupling deletes it. Record-only; any deployment-side
   use is #16/#22 territory ([full record](22-async-staleness.md)).
+
+- **2026-08-09 — ladder footnote ([π-StepNFT
+  page](../papers/pi-stepnft.md), 2603.02083):** online RL explores
+  through per-step SDE noise *blindly* and lets binary outcomes sort
+  it — the same channel our screen measured as directional and
+  context-interacting (interaction 39.4% vs noise main effect 1.4%).
+  A ticket-informed exploration prior is an obvious unpublished
+  hybrid; named on the ladder, no rung, everything still gated as
+  before.

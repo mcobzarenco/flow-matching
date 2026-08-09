@@ -145,7 +145,17 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   partition validated in two papers; our 10%-of-peak LR floor sits
   on the paper's recommended side (λ ∝ γ avoids terminal weight-norm
   suppression); caveat banked — AdamC may not reach steady state in
-  a 100k window, so slow weight-norm drift ≠ falsification.
+  a 100k window, so slow weight-norm drift ≠ falsification. New
+  2026-08-09 lit `0812b` ([DFM-VLA](papers/dfm-vla.md) +
+  [OneWM-VLA](papers/onewm-vla-one-token.md)): head-axis map
+  completes to four quadrants — DFM-VLA (discrete tokens +
+  whole-sequence refinement, LIBERO-Plus 77.8 vs π0.5 75.7) pairs
+  with HiFlow to show *commitment, not discreteness*, is the
+  expensive property, measured from both directions; and the
+  predictive-supervision pole gains its cheap self-anchored variant
+  (one pooled token/frame jointly denoised with actions, 14.7M LoRA,
+  monotone bandwidth sweep, unsupervised-scaffold-worse-than-nothing
+  ablation) — the plausible aux-rider entry for a trained trunk.
 - **`aux-subgoals` [#6 Aux attribution](ideas/06-aux-attribution.md)** —
   `confirmed` (aux HELPS actions, +0.462 cost when off).
   **CONSOLIDATED REPORT 2026-08-09
@@ -260,6 +270,14 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   null) but ~6× too weak for an argmax. Axes mutually uncorrelated
   (+0.032) — two independent failures. Calibration bar for any
   learned verifier: beat |rho| ≈ 0.03 by ~an order of magnitude.**
+  New 2026-08-09 lit `0812b`
+  ([VLA-Corrector](papers/vla-corrector.md), 2607.01804): a
+  *drift-monitor* verifier that escapes the closed candidate-scorer
+  family on both axes (trained 40M from demos alone; judges temporal
+  drift, not candidates) — two design constraints banked for any
+  learned-verifier case: predict residuals not states, and keep the
+  judge decoupled from the policy (+14.8 pp external vs internal
+  head). Closed-loop only; parked on #16.
 - **`noise-draws` [#1 Noise-draw ensembling](ideas/01-noise-draw-ensembling.md)** —
   flow mean-of-10 banked (5.365); batched draws merged 2026-08-07.
   **GOLDEN-TICKET SCREEN R1+R2 READ OUT 2026-08-08
@@ -376,7 +394,13 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   menu's RL pole gains a data-efficiency datum — +13.2 pts over SFT
   on 24 RoboCasa tasks from 1,199 public demos and sparse success
   rewards only (flow-SDE log-probs + task-wise GRPO); sim-only, zero
-  compute accounting.
+  compute accounting. New 2026-08-09 lit `0812b`
+  ([π-StepNFT](papers/pi-stepnft.md), 2603.02083): RL-pole entry 4
+  and the pole's first measured IND-vs-OOD trade — critic-free
+  step-wise contrastive on flow-SDE transitions matches PPO IND but
+  beats it +11.1 pp OOD (semantic 49.1 vs 25.4); for the
+  few-demo/shifted rig regime the trade favors critic-free. Pole
+  stays sim-first (8×H100, co-located rollouts, success flags).
 - **`lit-arms` [#15 Literature-sourced arms](ideas/15-literature-arms.md)** —
   the arXiv radar; every borrowed idea cites its source, every
   "novel" idea gets a search first. Feeds the Papers section.
@@ -411,7 +435,11 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   own-baseline reference arm first.
 - **`tokenizer-v3` [#5 FAST tokenizer v3](ideas/05-fast-tokenizer-v3.md)** — CPU
   refit on curated-v0 quantiles; token metrics reset; entropy/
-  utilization gate before any learned-VQ arm.
+  utilization gate before any learned-VQ arm. New 2026-08-09
+  ([DFM-VLA](papers/dfm-vla.md)): MAAT's metric-aligned embeddings
+  (+4.4 pp for a refinement decoder) = the first measured
+  order-preservation datum; "ablate embedding metric structure"
+  banked as a free rider on any v3 refit.
 - **`stream-schedule` [#7 Stream-schedule re-test](ideas/07-stream-schedule.md)** —
   enters at the short-run screen rung.
 - **`vocab-head` [#8 Shortlist/output-vocab head](ideas/08-shortlist-vocab-head.md)**
@@ -436,7 +464,11 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   backbone-swap arm, pre-registered prediction ±0.2.
 - **`visual-grounding` [#11 Visual grounding arms](ideas/11-visual-grounding.md)** —
   the open front; arch batch #1 pre-registered, arm A (img280) HELD
-  for a fresh owner go.
+  for a fresh owner go. New 2026-08-09 lit `0812b`
+  ([HiF-VLA](papers/hif-vla.md), CVPR26): codec motion vectors
+  (~free from stored video) + decode-stage AdaLN banked as the
+  cheapest history-arm representation, strictly behind the
+  aliasing-census entry condition.
 - **`one-step` [#12 Solver/Heun-gap + 1-NFE distill](ideas/12-solver-heun-gap.md)**
   — SnapFlow 1-NFE student banked (holds the panel, single draw
   beats AR); rig fine-tune diagnosed, next rung opens with rig data
@@ -472,7 +504,12 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   motion, and the dt→0 split shows fresh noise carries a ~3.3-unit
   mode term that a shared noise ticket deletes entirely (2.07 vs
   6.04, below even greedy AR). The direction is confirmed, with a
-  measured target; still parked on #16 for any fix.
+  measured target; still parked on #16 for any fix. New 2026-08-09
+  lit `0812b` ([VLA-Corrector](papers/vla-corrector.md)):
+  event-triggered truncation datum — a 40M drift monitor cutting
+  stale chunks is +11.65 of +15.65 pp before any steering; *when to
+  cut* dominates *how to steer*. Menu adjacency, closed-loop,
+  parked on #16.
 
 ## Answered — banked results
 

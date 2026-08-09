@@ -74,6 +74,11 @@ showed, before the dense analysis.
 | [Observation aliasing: when the frame alone can't tell you what to do](observation-aliasing.md) | 2605.14712, 2605.14598 | `fieldcond-subgoal-meta-report` — NN-divergence frame-mining protocol + the delta-concentration chart as the report's central claim; #6 — external baseline shape for the subgoal channel (frame-only 9% → intent-conditioned 45.8% on aliased states; DSSP's strict floor-gap theorem); #11 — aliasing census banked as the entry condition for any history/memory arm |
 | [Correcting corrected weight decay](weight-decay-correction.md) | 2512.08217 | `adamc-100k-live` readout — grad-norm chart interpretive frame (flat norms expected, ~nil loss effect; head-exclusion partition validated twice; 10% LR floor on the recommended side; no-steady-state-at-100k caveat); ScionC radar-only |
 | [Z-1: unfreeze the trunk only when diagnostics say so](z1-selective-joint-rl.md) | 2606.31846 | #4 fjoint rung — joint phase as diagnostic-gated conditional escalation (4th frozen-first vote); #16 post-SFT menu RL pole (+13.2 pts from 1,199 demos, GRPO over flow-SDE log-probs) |
+| [VLA-Corrector: a 40M drift monitor](vla-corrector.md) | 2607.01804 | #6 learned-verifier design constraints (residual target; decoupled external judge +14.8 pp); #22 event-triggered truncation datum (+11.65 of +15.65 pp is *when to cut*); #19 verifier-family sighting |
+| [π-StepNFT: step-wise critic-free RL](pi-stepnft.md) | 2603.02083 | #16 RL-pole entry 4 — the pole's first measured IND-vs-OOD trade (critic-free +11.1 OOD over PPO, −5.5 IND); #1 ticket-informed-exploration footnote |
+| [DFM-VLA: discrete tokens that get to change their mind](dfm-vla.md) | 2603.26320 | #17 head-axis fourth quadrant (commitment, not discreteness, is the expensive property); #5 MAAT metric-aligned embedding +4.4 pp datum; #16 low-data column (10%: 3.21 vs AR 1.71) |
+| [OneWM-VLA: a world model on one token per frame](onewm-vla-one-token.md) | 2605.07931 | #17 predictive-supervision pole, self-anchored variant (14.7M LoRA, no teacher; monotone bandwidth sweep; unsupervised scaffold < nothing); #11 dynamics-aux adjacency |
+| [HiF-VLA: codec motion vectors as temporal context](hif-vla.md) | 2512.09928 | #11 history-arm candidate representation (MPEG-4 MVs + decode-stage AdaLN), behind the aliasing-census gate |
 
 ## Retroactive backlog
 
@@ -217,3 +222,13 @@ pretrained trunk:
 | FAN (feasible-action-neighborhood prior) | [2604.01570](https://arxiv.org/abs/2604.01570) | ✅ [page](fan-feasible-action-neighborhood.md) |
 | HiFlow (tokenization-free scale-wise AR-via-FM) | [2603.27281](https://arxiv.org/abs/2603.27281) | ✅ [page](hiflow-scalewise-ar-flow.md) |
 | VLA-JEPA (latent world model) | [2602.10098](https://arxiv.org/abs/2602.10098) | ✅ [page](vla-jepa-latent-world-model.md) |
+
+**Radar 0812b (banked hooks from the 0811 refill sweep):**
+
+| Paper | arXiv | Status |
+|---|---|---|
+| VLA-Corrector (detect-and-correct inference, adaptive horizon) | [2607.01804](https://arxiv.org/abs/2607.01804) | ✅ [page](vla-corrector.md) |
+| π-StepNFT (step-wise negative-aware online RL for flow VLAs) | [2603.02083](https://arxiv.org/abs/2603.02083) | ✅ [page](pi-stepnft.md) |
+| DFM-VLA (discrete flow matching iterative refinement) | [2603.26320](https://arxiv.org/abs/2603.26320) | ✅ [page](dfm-vla.md) |
+| One-Token-Per-Frame / OneWM-VLA (visual bandwidth in world models) | [2605.07931](https://arxiv.org/abs/2605.07931) | ✅ [page](onewm-vla-one-token.md) |
+| HiF-VLA (hindsight/insight/foresight motion representation) | [2512.09928](https://arxiv.org/abs/2512.09928) | ✅ [page](hif-vla.md) |

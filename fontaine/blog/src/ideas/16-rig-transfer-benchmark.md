@@ -229,3 +229,19 @@
   their hardest real task). Discrete-token heads only → AR-trunk
   candidate for a future rig fine-tune pre-reg; α benchmark-tuned,
   unimodality-per-state assumption untested on bimodal states.
+
+**2026-08-09 — lit `0812b`: RL-pole entry 4, and the pole's first
+measured IND-vs-OOD trade
+([π-StepNFT page](../papers/pi-stepnft.md), 2603.02083):**
+critic-free step-wise contrastive updates on flow-SDE transitions
+(binary success only, no value net, no likelihoods, one forward
+pass) roughly match PPO in-distribution but beat it +11.1 pp OOD on
+ManiSkill (semantic shift 49.1 vs 25.4, π0) — value-based buys peak
+IND, critic-free buys OOD retention. For the few-demo/shifted rig
+regime that trade favors the critic-free end. Price unchanged:
+8×H100, co-located sim rollouts, sparse success flags; the pole
+stays sim-first. Weakness noted: LIBERO-Long 86.7 vs PPO 90.2 —
+sparse credit assignment degrades on long horizons. Also filed
+([DFM-VLA page](../papers/dfm-vla.md)): iterative-refinement
+decoders nearly double AR at 10% data (CALVIN 3.21 vs 1.71) — a
+few-shot-regime prior for the head axis.

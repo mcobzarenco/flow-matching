@@ -376,3 +376,26 @@ disqualifying for a manipulation trunk.
   upgrade. Same integration point as Spatial Forcing (#11);
   wrong stage for our trained trunks; alive only if a
   trunk-pretraining arm ever opens.
+
+**2026-08-09 — lit `0812b`: the head-axis map completes to four
+quadrants ([DFM-VLA page](../papers/dfm-vla.md), 2603.26320):**
+discrete flow matching = discrete tokens + whole-sequence iterative
+refinement (16 steps, revisable tokens, metric-aligned tokenizer).
+CALVIN 4.58 / LIBERO 98.0 / LIBERO-Plus 77.8 vs π0.5 75.7; 2.4× AR
+decode with caching. With HiFlow the meta-lesson is now measured
+from both directions: **commitment, not discreteness, is the
+expensive property** — HiFlow holds structure fixed and swaps
+continuous-vs-quantized; DFM holds tokens fixed and swaps
+revisable-vs-committed; both wins point the same way, and our
+AR-trunk-vs-flow-expert panel gap is what that predicts. And the
+predictive-supervision pole gains its cheap self-anchored variant
+([OneWM-VLA page](../papers/onewm-vla-one-token.md), 2605.07931):
+one pooled semantic token per frame, jointly denoised with actions
+under one flow objective, 14.7M LoRA on π0 — +10.4 LIBERO-Long,
++40 pp real cloth-fold; monotone bandwidth sweep (1 token 53.1% →
+12 tokens 20.5%) and the sharp scaffold ablation (unsupervised
+latent tokens 21.5% < no tokens 43.0% < supervised 58.1%). The
+pole now spans teacher-anchored (VLA-JEPA) to self-anchored
+(OneWM); the self-anchored end is the plausible entry for a
+trained trunk — aux rider, not architecture change. Regime caveat
+loud: LoRA-budget-scoped by their own admission.

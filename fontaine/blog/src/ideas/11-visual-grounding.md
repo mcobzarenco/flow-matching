@@ -188,3 +188,17 @@ predict V-JEPA2 latents at t+8, futures as targets-never-inputs.
 Robustness-column payoff profile matches Spatial Forcing's; if this
 family ever runs here, current-vs-future target is the first fork to
 decide. Record-only.
+
+**2026-08-09 — lit `0812b`: a cheap candidate representation for the
+history arm, behind the census gate
+([HiF-VLA page](../papers/hif-vla.md), 2512.09928):** MPEG-4 codec
+motion vectors (16×16 macroblock displacements, decoded ~free from
+stored video) as temporal-context tokens, injected at the *decoding*
+stage via AdaLN — their ablation says decode-stage beats VLM-side
+injection (pretrained alignment survives). Gains modest (+2.4–3.4 pp
+LIBERO-Long over OpenVLA-OFT) at 1.67× latency vs 3.15× for frame
+stacking. Strictly behind the aliasing-census entry condition — the
+ambiguity must be measured before buying context. Also adjacent
+([OneWM-VLA page](../papers/onewm-vla-one-token.md)): a *dynamics*
+aux (future-latent forecast) beside the spatial aux family
+(VEGA/SF/QDepth), same single-tower seam-free argument. Record-only.

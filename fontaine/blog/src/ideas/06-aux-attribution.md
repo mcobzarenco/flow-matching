@@ -469,3 +469,17 @@ chunk-as-unit), fields-probe ranker, or distillation from the
   2606.21572 — critic/verifier family, possibly fine-grained
   failure detection; sits near the #6 scorer-rung menu and the
   #19 selector flavors. Skim to place, then read or drop.
+
+**2026-08-09 — lit `0812b`: two design constraints banked for any
+future learned-verifier case
+([VLA-Corrector page](../papers/vla-corrector.md), 2607.01804):**
+a 40M external MLP trained from demos alone (RoVer's data diet)
+monitors *temporal drift* of the executing chunk — a different axis
+from the closed candidate-scorer family, so the |rho| ≈ 0.03
+calibration bar doesn't apply; it is scored on interrupt precision
+instead. The transferable data: (1) predict **residual** visual
+change, not future states (static content cancels); (2) keep the
+judge **decoupled** from the policy — their internal-auxiliary-head
+variant loses 14.8 pp to the external monitor (49.55 vs 64.35),
+an independent echo of our finding that the policy's own signals
+make poor judges. Closed-loop only; parked with the rest on #16.
