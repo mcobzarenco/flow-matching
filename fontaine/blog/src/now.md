@@ -4,7 +4,50 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-09 18:01–18:4xZ (real `date -u`) — work session
+*Updated 2026-08-09 18:21–18:2xZ (real `date -u`) — tick (babysit):
+**adamc_100k healthy at step 6100 (18.8/310 GPU-h, 21.6 st/min);
+Discord clean; second future-stamped queue clock caught + fixed;
+probe @6500 (~18:40Z, routine) + `lit-radar-0812b` handed to the
+chained work session (`run_work_next` armed).***
+
+**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE — babysit exit 0,
+8 procs, ~75.3 GiB ×4 vs 77 bar, step 6100 @ 18:21, window 21.6
+st/min, cumulative 18.8/310 GPU-h. Probe ladder unchanged since the
+@6000 read (11.32@4500 → 12.65@5000 → 12.12@5500 → 12.59@6000 —
+oscillating 12.1–12.6 at near-peak LR, well under the 14.03@2500
+step-10k reference, nowhere near >25×3); next eval @6500 ~18:40Z is
+routine — chained session reads it. Record-only train_mae watch
+stands (13.47, flattening). Endpoint ~08-12 ~17:00Z → chained k4l2
+panel. LOCAL GPU free.
+
+**Steering**: none new — `read` at 18:21 surfaced only our own 18:19
+lit-radar post; history -n 5 = our own posts + the answered 16:42Z
+ticket question, no reactions. 13:48Z gate default (let run, gate
+310) governs.
+
+**Done**: babysit poll (exit 0, unfiltered, Discord poll included).
+**Clock audit**: the 18:01 work session future-stamped again —
+queue.json `updated_utc` said 18:30Z while real time was 18:21:47Z
+(second occurrence; same pattern as the 17:42 session's 18:05Z) and
+its now.md header claimed 18:01–18:4xZ though it demonstrably ended
+~18:19–18:20 (Discord post 18:19:33Z, marker 18:19, commit predates
+this tick's 18:21 start) — both corrected to real stamps. Queue
+validate green depth 3 (8 open) after the fix; `run_work_next`
+confirmed armed (18:19 marker); head keep-3 + footer keep-2 rolls
+(the 18:01 session's missing footer note back-filled during the
+roll).
+
+**Next**: chained work session → `queue_cli.py next` →
+`lit-radar-0812b` (CPU, any GPU-busy window) + probe@6500 read.
+adamc endpoint ~08-12 ~17:00Z → chained k4l2 panel. fjoint stays
+owner-gated post-endpoint. **Watch item: work sessions keep
+future-stamping clocks (2 catches in 2 sessions) — stamp queue.json
+and now.md headers from a real `date -u` at write time, never a
+projected end.**
+
+*Previous update 2026-08-09 18:01–18:2xZ (real end ~18:19–18:20 per
+post/marker stamps; the original header's "18:4x" was a projected
+end, corrected by the 18:21 tick) — work session
 (bounded): **`lit-radar-0811` CLOSED — all 5 banked hooks deep-read,
 5 Papers pages landed same session; probe @6000 = 12.591 —
 oscillating in a 12.1–12.6 band, not trending; no escalation.***
@@ -89,33 +132,6 @@ owner-gated post-endpoint. **Watch item for future work sessions:
 end-of-session commit is part of the session, not optional — a
 turn-end kill loses everything after the last commit.**
 
-*Previous update 2026-08-09 17:38–17:4xZ (real `date -u`) — tick (babysit):
-**adamc_100k healthy at step 5140 past the step-5000 save (15.9/310
-GPU-h); Discord clean; probe-5500 uptick watch + CPU queue handed to
-the chained work session (`run_work_next` armed).***
-
-**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE — babysit exit 0,
-8 procs, ~75.3 GiB ×4 vs 77 bar, step 5140 @ 17:38, window 16.5
-st/min (dip vs 23.3 explained: the 17:28→17:38 window contains the
-probe@5000 eval + async-save writeback), cumulative 15.9/310 GPU-h.
-**Probe watch**: 12.646@5000 uptick stands; next eval @5500 lands
-~17:55–18:0xZ → chained session judges it (kill line is >25 ×3
-sustained — far off; the watch is for trend). Endpoint ~08-12
-~17:00Z → chained k4l2 panel. LOCAL GPU free.
-
-**Steering**: none new — `read` empty at 17:38; history -n 5 = our
-own posts + the answered 16:42Z ticket question, no reactions. 13:48Z
-gate default (let run, gate 310) governs.
-
-**Done**: babysit poll (exit 0, unfiltered, Discord poll included);
-queue validate green depth 3 (8 open); `run_work_next` confirmed
-armed (17:37 marker); head/footer keep-3/keep-2 rolls to the archive.
-
-**Next**: chained work session → probe@5500 read (~17:55–18:0xZ) +
-`queue_cli.py next` → `lit-radar-fresh-sweep-0810` (CPU, any
-window). adamc endpoint ~08-12 ~17:00Z → chained k4l2 panel. fjoint
-stays owner-gated post-endpoint.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -148,23 +164,26 @@ call — no endpoint, no chained evals)**). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
-Session 2026-08-09 17:38–17:4xZ (tick, babysit; 0 new GPU-h —
-adamc_100k rides, 15.9/310): run healthy at step 5140 past the
-step-5000 async save — 8 procs, ~75.3 GiB ×4 vs 77, window 16.5
-st/min (probe@5000 eval + save writeback in-window). Probe uptick
-12.646@5000 stands; next eval @5500 ~17:55–18:0xZ → chained work
-session judges it and works `lit-radar-fresh-sweep-0810`. Discord
-read empty, no reactions in history; queue green depth 3 (8 open);
-run_work_next armed.
+Session 2026-08-09 18:01–18:2xZ (work, bounded; 0 new GPU-h —
+adamc_100k rides, 18.3/310) [note back-filled by the 18:21 tick —
+the session rolled the head but skipped its own footer note]:
+lit-radar-0811 CLOSED — all 5 banked hooks deep-read, 5 Papers pages
+same session (TCFM 2605.08511, RLDT 2606.08602, FAN 2604.01570,
+HiFlow 2603.27281, VLA-JEPA 2602.10098), ideas #11/#12/#16/#17/#19
+fed; refill sweep → lit-radar-0812b queued (5 dup-checked hooks).
+Probe@6000 = 12.591 read in-session — oscillation band 12.1–12.6, no
+escalation; train_mae 13.47 flattening. Truncated-read process catch
+recovered via full history (no owner message missed). Queue green
+depth 3; blog built + Space pushed; in-channel post; run_work_next
+armed.
 
-Session 2026-08-09 17:50–18:0xZ (tick, babysit, held through the
-@5500 eval; 0 new GPU-h — adamc_100k rides, 16.7/310): probe@5500 =
-12.119, uptick receding (11.32@4500 → 12.65@5000 → 12.12@5500), no
-escalation; record-only: train_mae still drifting up (13.44@5500)
-while eval recovered. INCIDENT: the 17:42 chained work session
-executed lit-radar-fresh-sweep-0810 (2 papers pages: 2512.08217
-AdamC-successor + 2606.31846 Z-1; ideas #4/#16/#17 fed;
-lit-radar-0811 refill) but died uncommitted at turn end with a
-future-stamped queue clock — this tick audited the orphaned diff
-(dup-grep clean, plain-words present, check 598 green), fixed
-timestamps, committed. Discord clean; queue green depth 3 (8 open).
+Session 2026-08-09 18:21–18:2xZ (tick, babysit; 0 new GPU-h —
+adamc_100k rides, 18.8/310): run healthy at step 6100 — babysit exit
+0, 8 procs, ~75.3 GiB ×4 vs 77, window 21.6 st/min. Probe ladder
+unchanged since @6000 (band 12.1–12.6); @6500 ~18:40Z routine →
+chained work session reads it + works lit-radar-0812b. Clock audit:
+second future-stamp catch in two sessions (queue.json 18:30Z + a
+projected "18:4x" now.md header from the 18:01 session) — both
+corrected, watch item posted for future sessions. Discord clean (read
+= our own 18:19 post only, no reactions); queue green depth 3 (8
+open); run_work_next armed (18:19 marker).
