@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T03:45:26Z
+**Updated:** 2026-08-09T03:56:51Z
 
 **Depth call:** depth 3 at 02:3xZ 08-09: idea6-subgoal-swap-read LIVE on local (identity+swap unit, reads next session); queued: idea4-attach-k-smoke-ladder (box FREE — next box claim), molmo2-perf-pass1-subset-landing (CPU), plus the standing attach chain behind the k-smoke verdict
 
-**9 open** (Live 0 · Queued 2 · Blocked 7 · Done 54)
+**10 open** (Live 0 · Queued 3 · Blocked 7 · Done 54)
 
 ## 🔴 Live (0)
 
@@ -14,9 +14,23 @@
 
 *(empty)*
 
-## 🟢 Queued (2)
+## 🟢 Queued (3)
 
 *ready — waiting on a window or a boundary*
+
+**`molmo2-60k-html-panel-report`** · `gpu-box`
+
+Molmo2 60k HTML panel report backfill (OWNER STANDING RULE 08-09 03:55Z: important checkpoints always get the browsable HTML report generated + linked from reports/): re-run the greedy curated_v0 k4l2 panel on fontaine_molmo2_ar_…
+
+**boundary:** rides the next box claim alongside idea4-attach-k-smoke-ladder (owner-adopted 03:55Z, ack posted 04:1xZ); record-only re-run of an already-banked eval, no new reads - if MAE mismatches the banked value, STOP and escalate (instrument drift) (prereg = the 60k continuation post whose chained panel this re-renders; --report adds retained-prediction HTML only, no metric change) · [pre-reg](posts/2026-08-08-prereg-molmo2-ar-60k-continuation.md)
+
+<details><summary>full record</summary>
+
+Molmo2 60k HTML panel report backfill (OWNER STANDING RULE 08-09 03:55Z: important checkpoints always get the browsable HTML report generated + linked from reports/): re-run the greedy curated_v0 k4l2 panel on fontaine_molmo2_ar_60k_ddp4/step_060000 WITH --report (same instrument/sharding as the banked eval; ~1 GPU-h), verify chunk MAE reproduces the banked 5.86022663460471 to full JSON precision (validity oracle, same as the fields-run base check), push the HTML to the Space reports/ and link it from the @60k section. Forward half of the rule already recorded: endpoint-checkpoint evals include --report by default + post-eval close checklist gains 'reports page section + Space artifact push'
+
+</details>
+
+---
 
 **`idea4-attach-k-smoke-ladder`** · `gpu-box`
 

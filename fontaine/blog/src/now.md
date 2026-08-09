@@ -23,7 +23,16 @@ no — a real gap**: the 60k panel json/npz/fields + the frozen
 `analysis__molmo2_60k_vs_40k_k4l2.json` were banked locally but
 never pushed to the Space, and reports.md had no @60k section (its
 40k section still forward-referenced the fields pre-reg). Replied
-03:57Z, fix confirmed in-channel 04:02Z.
+03:57Z, fix confirmed in-channel 04:02Z. **Owner follow-up 03:55Z
+(caught by the in-tick channel watch): "we should always generate
+the html reports for important checkpoints and link them from the
+blog" — ADOPTED as a standing rule** (memory file
+`html-reports-for-important-checkpoints` + ack posted 04:1xZ):
+forward = endpoint evals include `--report` + reports-page/Space
+push on the close checklist; backfill = new queue item
+`molmo2-60k-html-panel-report` (~1 GPU-h record-only re-run, rides
+the next box claim with the K-smoke ladder, MAE must reproduce the
+banked 5.86022663460471 else stop-and-escalate).
 
 **Done**: (1) pushed the three 60k jsons to the Space `reports/`
 (panel, fields table, 60k-vs-40k analysis; npz stays banked local —
