@@ -2,7 +2,7 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T11:50:00Z
+**Updated:** 2026-08-09T11:08:00Z
 
 **Depth call:** depth >=2 at 10:3xZ 08-09: attach screen EXECUTING (arm K live, endpoint ~18:3xZ) + idea6-mcselect-postmortem queued (CPU/record-only on banked dump); blocked behind: stage-2 decision (screen readout tonight), actckpt ladder, f-then-joint draft (Delta_seam), owner-held items
 
@@ -140,7 +140,7 @@ Molmo2 stage-2 attachment decision at endpoint — now EXECUTABLE via the seam-s
 
 Lit slice (standing allocation, owner steering 2026-08-09 10:38Z): the owner reframed F-vs-K as schedule curves a(t)*AR + b(t)*flow under FIXED COMPUTE
 
-**boundary:** DONE same session 11:4xZ 08-09, 2 papers pages landed: lpft-two-phase-schedules.md (LP-FT 2202.10054 + NTK 2405.16747 — the f-then-joint rung's THIRD citation, first with matched frozen control + feature-distortion theorem; compute-Pareto case for the step-function a(t); silent on F-vs-K since K's stop-grad blocks the distortion channel) + vlm4vla-trunk-ablation.md (2601.03309 — 9-trunk sweep: frozen vision encoder loses uniformly =&gt; external prior for #17 thawed arm; VQA-&gt;control proxy collapse off-Calvin =&gt; trunk swaps priced by panel screens only; NOT compute-matched, caveat loud). index/SUMMARY/ideas #4+#17 hooks updated. Open question fed forward: nobody in the lineage measures the schedule family compute-matched — that comparison is ours if the a&gt;0 region opens.
+**boundary:** DONE same session ~11:07Z 08-09, 2 papers pages landed: lpft-two-phase-schedules.md (LP-FT 2202.10054 + NTK 2405.16747 — the f-then-joint rung's THIRD citation, first with matched frozen control + feature-distortion theorem; compute-Pareto case for the step-function a(t); silent on F-vs-K since K's stop-grad blocks the distortion channel) + vlm4vla-trunk-ablation.md (2601.03309 — 9-trunk sweep: frozen vision encoder loses uniformly =&gt; external prior for #17 thawed arm; VQA-&gt;control proxy collapse off-Calvin =&gt; trunk swaps priced by panel screens only; NOT compute-matched, caveat loud). index/SUMMARY/ideas #4+#17 hooks updated. Open question fed forward: nobody in the lineage measures the schedule family compute-matched — that comparison is ours if the a&gt;0 region opens.
 
 <details><summary>full record</summary>
 
@@ -154,7 +154,7 @@ Lit slice (standing allocation, owner steering 2026-08-09 10:38Z): the owner ref
 
 #4 Delta_seam readout PRE-AUDIT (CPU, before the ~18:3xZ K endpoint; the audit-queue-items-against-git standing rule applied to tonight's frozen read): (1) re-run attach_seam_results.py --oracle at HEAD; (2) verify its default st…
 
-**boundary:** DONE 11:1xZ 08-09 same session it was queued: oracle re-run green at HEAD (all 5 branches); default stems cross-checked against the box (F arm files present under the EXACT expected names; K launcher writes matching names, %06d padding verified at launcher line 150; ar_view stem matches; endpoint 60k k4l2 json already local); dry-run confirms the pre-endpoint abort is the clean 'arms not rsynced yet?' branch; 3-step runbook (2 rsyncs + one command) staged into the attach_K babysit anchors. Nothing in the frozen read was touched.
+**boundary:** DONE ~11:00Z 08-09 same session it was queued: oracle re-run green at HEAD (all 5 branches); default stems cross-checked against the box (F arm files present under the EXACT expected names; K launcher writes matching names, %06d padding verified at launcher line 150; ar_view stem matches; endpoint 60k k4l2 json already local); dry-run confirms the pre-endpoint abort is the clean 'arms not rsynced yet?' branch; 3-step runbook (2 rsyncs + one command) staged into the attach_K babysit anchors. Nothing in the frozen read was touched.
 
 <details><summary>full record</summary>
 

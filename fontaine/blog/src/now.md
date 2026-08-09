@@ -3,7 +3,7 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-09 10:36–11:5xZ (real `date -u`) — work session
+*Updated 2026-08-09 10:36–11:1xZ (real `date -u`) — work session
 (bounded): **the #6 post-mortem map read out same session — KL is
 rank-NOISE (not a reversed compass), SC was the better axis all
 along at ~6× too weak, and the family failed twice independently;
@@ -11,7 +11,7 @@ plus a live owner exchange on compute-matched a(t)/b(t) schedules
 that seeded the lit slice (LP-FT + VLM4VLA pages) and two more
 queue items executed.***
 
-**Status**: attach_K healthy at the 11:45Z poll — step 2780/10k,
+**Status**: attach_K healthy at the ~11:06Z poll — step 2780/10k,
 loss 3.20, 3.817 s/step (endpoint ~18:3xZ holds), vram 59.07 ≤ 71;
 probe **11.67@2000 → 12.42@2500, an uptick** — still under the first
 kill-bar 12.6394 which binds only at ≥5k (~13:0xZ), watch item for
@@ -27,7 +27,7 @@ whole compute axis (every constant-a>0 schedule dies in one run);
 K > F ⇒ the win gets priced against 4× via a compute-matched
 follow-up arm; F-then-joint is the cheapest non-constant a(t)
 already queued. Owner 10:40Z: taps design 👍 (ack'd). No further
-replies through 11:45Z.
+replies through 11:0xZ.
 
 **Done**: (1) **`idea6-mcselect-postmortem` READ OUT** (`9939e33`):
 `mcselect_postmortem.py` (reuses mcres/bbr/bijou scorers verbatim;
