@@ -34,15 +34,26 @@ in the oracle arm).
   paired against banked rung-(a) arms on identical frames).
 - Panel: same full holdout panel / plan as rung (a); greedy decode;
   4-rank sharding; `_swapsubgoal` stem.
+- **Mapping rule (pinned before any implementation, same session as
+  the post)**: the derangement is over labeled episodes *within the
+  same dataset* (`repo_id`) — plausible-but-wrong beats
+  implausible-and-wrong; a cross-dataset swap would confound
+  content with format/embodiment register. For a frame at
+  fractional position p = frame/episode_len, the donor text is the
+  donor episode's label at its labeled frame nearest to fraction p
+  (ties → earlier frame). Datasets with a single labeled episode
+  contribute no swapped frames (recorded, expected rare). Receiving
+  frames that are label-less under the oracle arm stay label-less.
 - Instrument delta (prerequisite, oracle-gated): a
   `--subgoal-swap-seed` option on the oracle path that applies the
-  episode-level derangement before rendering. Oracles before
-  launch: (i) derangement fixture — no identity mappings, bijective
-  over labeled episodes; (ii) with the swap map forced to identity,
-  the arm must reproduce the banked oracle arm byte-exactly;
-  (iii) label-less frames byte-match baseline; (iv) the dumped
-  per-frame subgoal text must equal the source episode's label
-  (spot-checked mechanically over the full dump).
+  pinned mapping before rendering. Oracles before launch:
+  (i) derangement fixture — no identity mappings, bijective over
+  each dataset's labeled episodes; (ii) with the swap map forced to
+  identity, the arm must reproduce the banked oracle arm
+  byte-exactly; (iii) label-less frames byte-match baseline;
+  (iv) the dumped per-frame subgoal text must equal the donor
+  episode's fraction-matched label (checked mechanically over the
+  full dump).
 
 ## Frozen reads
 
