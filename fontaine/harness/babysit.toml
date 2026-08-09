@@ -346,6 +346,7 @@ anchors = [
     "swap arm read is RECORD-PLUS-DECISION per the frozen 3-row table; no scalar judged before the read session",
     "unswappable labeled frames (single-labeled-episode datasets) render an EMPTY slot by design — the dump's empty_rendered count is expected non-zero, rare",
     "SELF-MATCH note: driver-session log watchers grep this run's log path, so pgrep 'subgoal_swap_arm' can surface a DRIVER-CGROUP false positive (seen 02:37Z) — the real run is transient unit fontaine-subgoal-swap.service (PID under systemd, teardown-safe); judge by systemctl, not the cgroup line",
+    "PHASE-ROLL PROJECTION FALSE POSITIVE (judged CONTINUE 03:13Z): the frame counter resets to 0 at the identity->swap roll, so babysit's cumulative rate (counter / time-since-02:13:47Z) reads ~130 f/min and projects ~3.2 GPU-h > 3 gate — an artifact, not an overrun; true swap-phase rate ~590 f/min (7,712 frames in ~13 min at 03:13Z), rc ~03:45Z, total ~1.6 GPU-h <= 3. Generic babysit.py gap (multi-phase logs with per-phase counters) — fix owed to the chained work session alongside the rc prune",
 ]
 [[run.gates]]
 kind = "gpu_hours_max"
