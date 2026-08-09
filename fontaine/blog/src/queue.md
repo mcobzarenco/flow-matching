@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T17:57:00Z
+**Updated:** 2026-08-09T18:30:00Z
 
-**Depth call:** depth >=2 at 17:5xZ 08-09: adamc-100k babysit to ~08-12 (live) + lit-radar-0811 (cpu, actionable, hooks pre-priced) + docs-pass tail (owner-side only) + fjoint owner-gated; lit-radar-fresh-sweep-0810 CLOSED by the 17:42-17:50 work session (2 pages; session died uncommitted at turn end, work audited + committed by the 17:50 tick)
+**Depth call:** depth >=2 at 18:3xZ 08-09: adamc-100k babysit to ~08-12 (live) + lit-radar-0812b (cpu, actionable, 5 dup-checked hooks) + docs-pass tail (owner-side only) + fjoint owner-gated; lit-radar-0811 CLOSED this session (5 pages, all banked hooks cleared)
 
-**8 open** (Live 1 · Queued 3 · Blocked 4 · Done 80)
+**8 open** (Live 1 · Queued 3 · Blocked 4 · Done 81)
 
 ## 🔴 Live (1)
 
@@ -30,15 +30,15 @@ OWNER RUN LIVE (launched 13:30Z 08-09): fontaine_molmo2_adamc_100k_ddp4 — base
 
 *ready — waiting on a window or a boundary*
 
-**`lit-radar-0811`** · `cpu`
+**`lit-radar-0812b`** · `cpu`
 
-Lit slice (standing allocation): banked radar hooks from the 0810 fresh sweep, priority-ordered
+Lit slice (standing allocation): refill hooks banked 08-09 18:2xZ fresh sweep, dup-checked against papers/ + ideas/, priority-ordered
 
 **boundary:** any GPU-busy window; adamc rides to ~08-12 so windows are plentiful
 
 <details><summary>full record</summary>
 
-Lit slice (standing allocation): banked radar hooks from the 0810 fresh sweep, priority-ordered — 2605.08511 Trajectory-Consistent Flow Matching (train-inference gap: rectified-velocity aux + trajectory consistency + velocity smoothness + RK4 inference; feeds #12 solver/Heun-gap and the smoothness family) &gt; 2606.08602 RL-for-FM density transport + 2604.01570 Feasible-Action-Neighborhood prior (post-SFT menu, #16) &gt; 2603.27281 HiFlow tokenization-free scale-wise AR-via-FM (trunk/decode family, #17) &gt; 2602.10098 VLA-JEPA latent world model. Papers page(s) same session per the permanent rule; dedup-check each id against papers/ before writing.
+Lit slice (standing allocation): refill hooks banked 08-09 18:2xZ fresh sweep, dup-checked against papers/ + ideas/, priority-ordered — 2607.01804 VLA-Corrector (lightweight detect-and-correct inference, adaptive action horizon; #6/#19 verifier family + #22 async adjacency) &gt; 2603.02083 pi-StepNFT (online RL for flow VLAs, 'wider space needs finer steps'; #16 RL pole beside RLDT/Z-1/FlowPRO) &gt; 2603.26320 DFM-VLA (DISCRETE flow matching iterative refinement; #17 head axis — sits exactly between our AR-token and continuous-flow poles, beside HiFlow) &gt; 2605.07931 One-Token-Per-Frame (visual bandwidth in world models for VLA; VLA-JEPA family, #17) &gt; 2512.09928 HiF-VLA (hindsight/insight/foresight motion representation; skim-to-place). Papers page(s) same session per the permanent rule; dedup-check each id before writing.
 
 </details>
 
@@ -130,9 +130,23 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 
 ---
 
-## ✅ Done (80)
+## ✅ Done (81)
 
 *closed — the full record stays in each fold*
+
+**`lit-radar-0811`** · `cpu`
+
+Lit slice (standing allocation): banked radar hooks from the 0810 fresh sweep, priority-ordered
+
+**boundary:** CLOSED 18:2xZ 08-09 (work session, adamc_100k shadow window)
+
+<details><summary>full record</summary>
+
+Lit slice (standing allocation): banked radar hooks from the 0810 fresh sweep, priority-ordered — 2605.08511 Trajectory-Consistent Flow Matching (train-inference gap: rectified-velocity aux + trajectory consistency + velocity smoothness + RK4 inference; feeds #12 solver/Heun-gap and the smoothness family) &gt; 2606.08602 RL-for-FM density transport + 2604.01570 Feasible-Action-Neighborhood prior (post-SFT menu, #16) &gt; 2603.27281 HiFlow tokenization-free scale-wise AR-via-FM (trunk/decode family, #17) &gt; 2602.10098 VLA-JEPA latent world model. Papers page(s) same session per the permanent rule; dedup-check each id against papers/ before writing. | EXECUTED 18:0x-18:2xZ 08-09 work session: ALL 5 banked hooks cleared, 5 papers pages SAME SESSION (commits 1a8dc93 + eaa3a21, check 598 green both) — TCFM 2605.08511 (trajectory-consistent-flow-matching.md; #12 third-axis family map: training-side integration supervision + denoising-clock smoothness x RK4 interaction ablation 70%-&gt;10%; RK4-on-banked-checkpoint zero-training hook PRICED not queued); RLDT 2606.08602 (rldt-density-transport-rl.md; #16 RL-pole entry 3, SVGD transport native to FM, infra price 64-1000 envs + critic + 30-48 GPU-h at small scale); FAN 2604.01570 (fan-feasible-action-neighborhood.md; #16 zero-infra SFT lever CVPR26 + #19 external mean-collapse prior); HiFlow 2603.27281 (hiflow-scalewise-ar-flow.md; #17 head-axis third pole, continuous-vs-VQ controlled datum 90-vs-70 threading); VLA-JEPA 2602.10098 (vla-jepa-latent-world-model.md; #17 predictive representation-supervision pole, human-video-buys-robustness 79.5-&gt;62.9 ablation + #11 Spatial-Forcing fork note). ideas #11/#12/#16/#17/#19 fed; fresh refill sweep ran -&gt; lit-radar-0812b (5 new hooks dup-checked)
+
+</details>
+
+---
 
 **`lit-radar-fresh-sweep-0810`** · `cpu`
 

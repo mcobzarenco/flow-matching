@@ -1,9 +1,53 @@
 # Now
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-09 17:50–18:0xZ (real `date -u`) — tick (babysit,
+*Updated 2026-08-09 18:01–18:4xZ (real `date -u`) — work session
+(bounded): **`lit-radar-0811` CLOSED — all 5 banked hooks deep-read,
+5 Papers pages landed same session; probe @6000 = 12.591 —
+oscillating in a 12.1–12.6 band, not trending; no escalation.***
+
+**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE — babysit exit 0
+×3 (18:01, 18:11, 18:14), 8 procs, ~75.3 GiB ×4 vs 77 bar, windows
+22.0–25.1 st/min, 18.3/310 GPU-h. **Probe ladder now 11.32@4500 →
+12.65@5000 → 12.12@5500 → 12.59@6000**: reads as oscillation at
+near-peak LR, not divergence — well under the 14.03@2500 kill
+reference, nowhere near >25×3. Record-only train_mae watch: 13.44 →
+13.47 (flattening). Endpoint ~08-12 ~17:00Z → chained k4l2 panel.
+LOCAL GPU free.
+
+**Steering**: none new — `read` empty at 18:01 and 18:11; history
+re-checked in full at 18:1x (process catch: one babysit output got
+piped through `sed` mid-session, against the never-truncate rule —
+full-history recovery confirmed **no owner message was missed**;
+last owner message remains the answered 16:42Z ticket question).
+
+**Done**: **`lit-radar-0811` CLOSED** (commits `1a8dc93` +
+`eaa3a21`, check 598 green both): all 5 banked hooks deep-read with
+Papers pages same session — TCFM 2605.08511
+(`trajectory-consistent-flow-matching.md`; #12 third-axis family
+map — training-side integration supervision, the smoothness×RK4
+interaction ablation, an RK4-on-banked-checkpoint zero-training
+hook PRICED not queued), RLDT 2606.08602
+(`rldt-density-transport-rl.md`; #16 RL-pole entry 3 — SVGD density
+transport, native-to-FM gradients, honest infra price), FAN
+2604.01570 (`fan-feasible-action-neighborhood.md`; #16
+zero-infrastructure SFT lever + #19 external mean-collapse prior),
+HiFlow 2603.27281 (`hiflow-scalewise-ar-flow.md`; #17 head-axis
+third pole, continuous-vs-VQ controlled datum), VLA-JEPA 2602.10098
+(`vla-jepa-latent-world-model.md`; #17 predictive
+representation-supervision pole + #11 Spatial-Forcing fork note).
+Ideas #11/#12/#16/#17/#19 fed. Refill sweep ran → `lit-radar-0812b`
+queued (5 new dup-checked hooks). Queue validate green depth 3.
+
+**Next**: `queue_cli.py next` → `lit-radar-0812b` (CPU, any
+GPU-busy window); probe watch routine at next tick (@6500+). adamc
+endpoint ~08-12 ~17:00Z → chained k4l2 panel. fjoint stays
+owner-gated post-endpoint. `run_work_next` armed.
+
+*Previous update 2026-08-09 17:50–18:0xZ (real `date -u`) — tick (babysit,
 held through the @5500 eval): **probe@5500 = 12.119 — the @5000
 uptick is receding (11.32@4500 → 12.65@5000 → 12.12@5500), no
 escalation; the 17:42 chained work session DIED UNCOMMITTED at turn
@@ -71,49 +115,6 @@ armed (17:37 marker); head/footer keep-3/keep-2 rolls to the archive.
 `queue_cli.py next` → `lit-radar-fresh-sweep-0810` (CPU, any
 window). adamc endpoint ~08-12 ~17:00Z → chained k4l2 panel. fjoint
 stays owner-gated post-endpoint.
-
-*Updated 2026-08-09 17:01–17:4xZ (real `date -u`) — work session
-(bounded): **#9 corpus continuity screen CLOSED at zero GPU
-(qualified null — post + charts live); adamc_100k step-5000 async
-save verified live end-to-end (captured 20.3 s, published 164.4 s
-behind the boundary, stepped through the write), probe 12.646@5000.***
-
-**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE — babysit exit 0
-twice (17:11, 17:28), 8 procs, ~75.3 GiB ×4 vs 77 bar, 23.3 st/min,
-15.2/310 GPU-h. **Step-5000 boundary caught**: probe ladder
-14.03@2500 → 12.07@3500 → 11.40@4000 → 11.32@4500 → **12.646@5000 —
-an UPTICK, still well under the @2500 kill reference; watch the next
-evals at the ~18:1x tick**. First async save verified: "captured in
-20.3s" → "saved …/step_005000 (async, 164.4s behind the boundary)",
-atomic publish, step 5020 logged mid-write. Endpoint ~08-12 ~17:00Z
-→ chained k4l2 panel. LOCAL GPU free.
-
-**Steering**: none new — `read` empty at 17:01, 17:11, 17:28; owner
-thread (v2all tickets) closed since 16:48Z. 13:48Z gate default (let
-run, gate 310) governs.
-
-**Done**: `corpus-continuity-screen` queue item CLOSED (commit
-`83de76d`): oracle-gated `corpus_continuity_screen.py` (VISTA
-three-regime scoring, rig-calibrated p99.9 bars, own two-layout
-parquet loader), 52,507 eps / 981 repos, zero read failures.
-Qualified null: teleport tail 123 eps (0.23%) = wrap census's two
-known repos + 42 new sub-300° dropout eps (0.08%, ~10× under the
-08-05 curation kill line → NO pre-reg queued); zero LORO overlap; 8
-panel rows → standing caveat added to the leaderboard page. Results
-post + 2 dark charts live (curl 200 ×3); ideas #9 hook closed;
-wrap-census post cross-annotated; in-channel summary + save quote
-posted 17:3xZ. Lit slice: backlog verified EMPTY (3 slices already
-ran 08-09); a FASTER dup page was caught pre-commit and reverted
-(2603.19199 = papers/async-execution-2.md); fresh-sweep item queued
-instead of forcing a thin sweep.
-
-**Next**: `queue_cli.py next` → `lit-radar-fresh-sweep-0810` (CPU,
-any window); probe-uptick watch at the next tick (~18:1xZ);
-adamc endpoint ~08-12 ~17:00Z → chained k4l2 panel. fjoint stays
-owner-gated post-endpoint. `run_work_next` armed.
-
-
-*Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
 ## Utilization footer
 
