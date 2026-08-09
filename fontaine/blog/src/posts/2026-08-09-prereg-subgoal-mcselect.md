@@ -33,12 +33,23 @@ at `--subgoal-dropout 0.5`, so the masked distribution is
 well-trained; the MG-Select headline configuration's 10%-dropout
 prerequisite is MET at 50%). Score
 `s(c) = KL( p_cond(·|c) ‖ p_masked^{1/τ} )` averaged over the
-row's action tokens, reference tempered **τ = 4** (their setting,
-adopted verbatim — not tuned on our data). Execute the argmax:
-the candidate whose conditioning is most *informative*, not most
-*likely* — precisely the axis on which SC failed (its pick was
-plausible and phase-wrong). N+1 = 9 forwards per row, **no decode
-loop anywhere**.
+candidate's action sequence, reference tempered **τ = 4** (their
+setting, adopted verbatim — not tuned on our data). Execute the
+argmax: the candidate whose conditioning is most *informative*, not
+most *likely* — precisely the axis on which SC failed (its pick was
+plausible and phase-wrong).
+
+*Amended 05:5xZ same day (pre-finalization, caught while landing the
+read script):* the original cost line here said "no decode loop" —
+wrong for the MAE side. Every rung-(b′) comparator arm's error is
+**decoded**-prediction error, so the mc arm's per-candidate errors
+must come from a greedy decode under each candidate (comparability,
+non-negotiable). Mechanics as amended: **C greedy decodes per row**
+(one per candidate; the conditional distributions for the KL are
+collected during the decode) **+ C masked teacher-forced reference
+forwards** on each candidate's decoded sequence. The scorer itself
+still never samples — decode is greedy, KL is the score, the argmax
+lives in the read script (`mcselect_results.py`, the dump contract).
 
 Rows and candidates are FROZEN to the banked rung-(b′) artifacts
 (`eval__..._subgoalcleandraws_candidates.json`, 4,301 q4 rows × 8
@@ -91,11 +102,11 @@ conditioned loss on a spot-check subset byte-exactly.
 
 ## Cost + gates
 
-9 teacher-forced forwards × 4,301 rows on the local H100 —
-comparable passes ran ~500+ f/min single-forward, so ~1.5 GPU-h
-projected; **gate ≤ 4 GPU-h** (babysit entry at launch, q4-shaped
-rate check at first poll). Zero new decode, zero training, zero box
-time. Out of scope, named for the map: candidate 2
+Per the amendment above: ~9 greedy decodes + 9 reference forwards ×
+4,301 rows on the local H100 — comparable single-pass decodes ran
+~540 f/min, so **~2–2.5 GPU-h projected; gate ≤ 4 GPU-h** (babysit
+entry at launch, q4-shaped rate check at first poll). Zero
+training, zero box time. Out of scope, named for the map: candidate 2
 (history-conditioned phase estimation, the TOPReward shape — M
 effort, needs episode-prefix plumbing our panel doesn't have) stays
 the escalation IF mc fails specifically on phase (late-horizon
