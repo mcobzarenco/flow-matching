@@ -6,35 +6,41 @@
 # AdamC parameter-sheet approval, which landed 13:19Z.)
 
 [[run]]
-name = "adamc_100k"
+name = "er_60k"
 kind = "progress-log"
 host = "192.222.55.210"
-pgrep = "fontaine_molmo2_adamc_100k"
+pgrep = "fontaine_molmo2_er_60k"
 pgrep_min = 4
 gpu_indices = [0, 1, 2, 3]
 gpu_mem_min_mib = 8000
-log = "/home/ubuntu/train_fontaine_molmo2_adamc_100k_ddp4.log"
+log = "/home/ubuntu/train_fontaine_molmo2_er_60k_ddp4.log"
 progress_re = "\"step\": [0-9]+"
-jsonl = "/home/ubuntu/train_fontaine_molmo2_adamc_100k_ddp4.log"
+jsonl = "/home/ubuntu/train_fontaine_molmo2_er_60k_ddp4.log"
 probe_key = "eval_chunk_mae"
-started_utc = "2026-08-09T13:40:00Z"
+started_utc = "2026-08-09T22:50:00Z"
 gpu_hours_per_wall_hour = 4.0
-boundary = "100k steps from BASE Molmo2-4B (owner spec 12:37Z + approvals 13:19Z; pre-reg + 2 amendments). THIRD LAUNCH 13:40Z at BACKWARD_CHUNKS=8 microbatch 1 (launch 1 stopped pre-step-1 on the lambda override; launch 2 OOM 13:36:56Z on the FIRST backward at microbatch 2 — 79.18 GiB rank 0; declared OOM policy executed). NO SMOKE ran (owner call): first poll must record measured s/step + vram alloc peak + the AdamC banner (partition counts, lambda=1e-05) + async-save first 'captured in Xs' line + E1 dataset banner + first-jsonl wall projection (~1.7-2.1 s/step est => endpoint ~47-58 h => ~08-11/12). OOM policy: chunks-8 branch NOW IN USE; a further OOM at microbatch 1 = owner steer (batch semantics change would be needed). FIRST POLL 13:5xZ: survived first backward; 2.65-2.75 s/step settling, vram alloc peak 70.29 vs 77 bar, banners verified, loss 16.3->11.7 by step 80; projection ~75 h / ~300 GPU-h => endpoint ~08-12 ~17:00Z (facts posted in-channel; gate raised 260->310, act-ckpt alternative offered). Async-save first line owed at step 5000 (~17:2xZ) — SATISFIED: verified live end-to-end 17:2xZ (captured 20.3s, atomic publish 164.4s behind boundary) + quoted in-channel 17:33Z. Probe @5000 uptick 12.646 RECEDED at @5500 = 12.119 (judged 17:5xZ tick, no escalation); record-only watch: train_mae drift (13.44@5500) while eval recovers — chart at readout."
+boundary = "60k AR run from allenai/Molmo2-ER (owner spec 22:14Z 08-09, go 22:36Z, param sheet approved verbatim 22:45Z: uniform/natural sampling incl. rig data, no oversample — owner will fine-tune later). Pre-reg posts/2026-08-09-prereg-molmo2-er-60k.md. Recipe = 40k AR launcher verbatim + named deltas: ER backbone (byte-verified drop-in), 60k steps, rig datasets so101_pick_place_clean (7 ep/3,399 fr) + so101_pick_place_v2 (50 ep/32,679 fr) in --train-data from step 0 at natural share (0.19% — owner-accepted), save-every 5000, seed 0 (owner override 22:46:40Z 'let's use the same seed too' = 40k's shuffle seed; fresh-seed standing rule explicitly owner-overridden). LAUNCH HISTORY: 22:50Z at seed 2 (sheet value; the override message crossed it) stopped PRE-STEP-1 22:52Z ~0 GPU-h, relaunched 22:53Z at seed 0 via run_detached.sh unit fontaine-er-60k; adamc_100k owner-kill 22:40Z freed the 4x GPUs. FIRST POLL OWED (next session): E1 banner MUST read 880 datasets / 38,628 episodes / 18,672,827 frames / dims 6/6 pre-holdout (deviation = kill + diagnose); measured s/step (40k class ~0.92 => ~15.3 h wall => endpoint ~08-10 ~14:00Z; adamc's 2.65+ class would mean chunks-8 fallback territory — diagnose); vram alloc peak vs 77 bar; first async-save 'captured in Xs' line owed at step 5000; wall projection in-channel."
 anchors = [
-    "kill lines (save boundaries): NaN/inf loss; probe not below its own @2500 value by step 10000; probe > 25 sustained x3 consecutive evals after step 5000",
-    "vram: alloc peak > 77 GiB = near-OOM kill (amendment 1 replaced the smoke-calibrated 71 bar; projection ~70-73 at microbatch 2); record actual at first poll",
-    "grad-norm trajectory = RECORD-ONLY AdamC watch (the paper's claim: no late-training grad-norm ramp); chart at readout, never a kill line",
-    "probe cadence 500; saves every 5000 (async); seed 1; eff-batch 32 = 8/rank x4; AdamC lambda=1e-5 (owner override 13:24Z: 40k/60k lineage value; the 0.01 first launch was stopped PRE-STEP-1 at 13:29Z and relaunched), decoder 1e-4 / text 2e-5 / vision 2e-5 (vision unfrozen from step 0), warmup 1000, cosine to 10%",
-    "endpoint chains panel_v2 k4l2 eval in-unit (--report + npz dumps); leaderboard row + grad-norm chart at readout",
+    "kill lines (save boundaries): NaN/inf loss; probe not below its own @2500 value by step 10000; probe > 25 sustained x3 consecutive evals after step 5000 (K1 class inherited from the 40k/adamc pre-regs)",
+    "vram: alloc peak > 77 GiB = near-OOM kill; 40k measured green at this exact rung (6-chunk backward + ZeRO-1 + chunk-grad-allreduce, B12/rank)",
+    "record-only: probe vs the 40k run's curve at matched steps = the ER-init delta, the PRIMARY curve read (40k: low 5.91@26500, endpoint 6.2075@40000); never a kill line",
+    "record-only: rig-data effect at endpoint (held-out rig episodes if split-compatible); natural share 0.19% accepted by owner 22:45Z — no oversample, owner fine-tunes later",
+    "recipe: eff-48 (12/rank x4), decoder-lr 1e-4 / text-lr 2e-5, grad-clip 100, warmup 1000, AdamW (no AdamC), vision tower FROZEN, workers 20/prefetch 4, eval-every 500, seed 0 (owner override 22:46:40Z)",
+    "endpoint chains panel_v2 k4l2 eval in-unit (--report + npz); paired CI95 vs banked 40k endpoint (6.0079) + 60k-continuation (5.8602) panels at readout",
 ]
 [[run.gates]]
 kind = "gpu_hours_max"
-value = 310.0
-# 260 -> 310 at first poll 13:5xZ 08-09 (declared in-channel, id ...768):
-# measured 2.65-2.75 s/step at microbatch 1 (OOM-forced chunks 8) projects
-# ~75 h wall / ~300 GPU-h; the 260 was set from the microbatch-2 estimate
-# (1.7-2.1 s/step) that OOM'd. Owner offered stop+act-ckpt alternative,
-# default let-it-run.
+value = 65.0
+# 65 = pre-reg gate (60/40 x 40k actuals ~0.92 s/step at eff-48 + evals);
+# re-pin at first poll if measured s/step lands off the 40k class.
+
+# adamc_100k entry pruned 22:4xZ 08-09 — OWNER KILL 22:36Z (ER-60k
+# steering: 'not looking great', GPUs reassigned to the ER-60k run).
+# Killed clean at step ~11,840 (~35.7/310 GPU-h); final probe ladder
+# ... 10.63@9500 -> 10.80@10000 -> 11.06@10500 -> 11.41@11000 ->
+# 10.30@11500 (run-best at kill). step_010000 kept on box + weights-only
+# upload to fontaine-checkpoints (unit hf-up-adamc10k); train_log.jsonl
+# banked box+local for the zero-GPU AdamC post-mortem chart (queued).
 
 [[run]]
 name = "tiny10k"

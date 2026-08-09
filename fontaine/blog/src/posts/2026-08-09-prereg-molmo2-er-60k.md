@@ -31,9 +31,9 @@ Molmo2 → Molmo2-ER at fixed everything-else lifts LIBERO-Long
 - Safetensors manifests: identical key sets, identical total size
   (19,403,476,800 bytes). Loader change is exactly
   `--backbone allenai/Molmo2-ER`.
-- ER snapshot download to the box HF cache started 22:2xZ
-  (transient unit `hf-dl-molmo2-er`) so launch is not gated on the
-  19.4 GB fetch.
+- ER snapshot download to the box HF cache COMPLETE (verified
+  22:35Z: 0 incomplete blobs, all 4 shards + processor/code files) —
+  launch is not gated on weights.
 
 ## Recipe (re-pinned verbatim from the 40k launcher, deltas marked)
 
@@ -58,9 +58,12 @@ saves (default-on).
 4. `--save-every 5000` at 60k (keeps ~12 saves; the 40k cadence
    2500 at 60k would double checkpoint I/O; **owner may override to
    2500**).
-5. Seed: fresh shuffle seed (standing rule for any new lineage;
-   proposed `--seed 2` — 40k used 0, adamc used 1). Init is ER
-   weights, so seed touches data order + head init only.
+5. Seed: `--seed 0` — owner override 22:46:40Z ("let's use the same
+   seed too"): SAME shuffle seed as the 40k run; the fresh-seed
+   standing rule was proposed (seed 2) in the sheet and explicitly
+   overridden. Seed touches data order + head init only (init is ER
+   weights). First launch 22:50Z at seed 2 stopped PRE-STEP-1
+   22:52Z (~0 GPU-h), relaunched 22:53Z at seed 0.
 6. `--num-workers 20 --prefetch-factor 4` kept (box has 1.4 TB host
    RAM headroom at batch 12/rank — the tiny10k OOM class was
    local-host-specific at batch 48×1; re-checked at first poll per
@@ -72,24 +75,31 @@ pass vision LR; the vu5k screen owns that question separately —
 mixing an untested unfreeze into this run would confound the ER
 init read).
 
-## Open inputs (block finalization)
+## Open inputs — updated 22:4xZ after owner go (22:36Z)
 
-- **Rig datasets**: HF ids or box paths; LeRobot format assumed
-  (`--train-data` takes multiple roots, mixed freely).
-- **Mixture**: no oversample flag exists in `bijou.train` —
-  datasets pool at natural frame-count share, so rig hours will
-  enter at their natural (small) proportion. Options: (a) natural
-  share, zero code; (b) add a per-root repeat/oversample flag
-  (small change + oracle before launch). CL-triangle context
-  ([page](../papers/cl-triangle.md)): the community corpus IS the
-  replay anchor here — mixing from step 0 is the evidence-backed
-  anti-forgetting shape; the open question is only whether rig data
-  needs oversampling to register at 60k steps.
-- **adamc_100k disposition**: explicit go to kill; default plan =
-  keep step-10000 checkpoint on box + bank jsonl/logs for a
-  zero-GPU AdamC post-mortem chart (grad-norm watch readout still
-  has record value against the banked AdamC/weight-decay
-  literature thread).
+- **Rig datasets — RESOLVED**: `mcobzarenco/so101_pick_place_clean`
+  (7 ep / 3,399 frames) + `mcobzarenco/so101_pick_place_v2` (50 ep /
+  32,679 frames), ids confirmed by owner 22:40Z; both already on the
+  box in `~/datasets/mcobzarenco/`, LeRobot v3.0, fps 30, action
+  dims 6/6 — pipeline-compatible as-is.
+- **Mixture — OPEN, arithmetic now pinned**: natural share =
+  36,078 / 18.67M frames = **0.19%** → ~5.5k rig samples across the
+  whole 60k×48 run ≈ each rig frame seen 0.15× in expectation — it
+  cannot register. The loader dedups repeated roots (`bijou/data.py`
+  path-dedup + cross-root duplicate-repo-id error), so there is no
+  zero-code oversample. Recommended to owner in the param sheet
+  (posted 22:43Z): a small per-root `--dataset-repeat` flag +
+  oracle test, rig at ~5% (≈27× repeat ≈ 4 rig epochs) — inside the
+  CL-triangle 2–20% replay evidence band
+  ([page](../papers/cl-triangle.md)). Awaiting natural / 5% / other.
+- **adamc_100k disposition — EXECUTED**: owner go 22:36Z; unit
+  stopped 22:40Z at step ~11,840 (~35.7/310 GPU-h), all 4 GPUs
+  verified 0 MiB. Final probe ladder ended 10.30@11500 = run-best
+  (the 3-rise watch receded). step_010000 kept on box; weights-only
+  upload to `fontaine-checkpoints` in flight (unit
+  `hf-up-adamc10k`; optimizer.pt 32.6 GB stays box-local);
+  `train_log.jsonl` banked box + local for the zero-GPU AdamC
+  post-mortem chart.
 
 ## Frozen reads (finalize with numbers at param-sheet time)
 

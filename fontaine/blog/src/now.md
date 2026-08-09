@@ -6,7 +6,68 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-09 22:07–22:5xZ (real `date -u` at write: 22:50) —
+*Updated 2026-08-09 22:34–22:5xZ (real `date -u` at write: 22:44) —
+tick (babysit): **the whole ER-60k arc closed inside one tick —
+owner go 22:36Z → adamc KILLED 22:40Z → param sheet 22:43Z (with the
+0.19% natural-share correction) → owner approval 22:45Z ("uniform
+sampling ... is fine, I'll fine-tune later. Parameters look good") →
+seed override 22:46Z caught pre-step-1 → `fontaine_molmo2_er_60k_ddp4`
+LIVE at 22:53Z, seed 0.***
+
+**Status**: `fontaine_molmo2_er_60k_ddp4` **LIVE** on box 4×H100
+(unit `fontaine-er-60k`, relaunched 22:53Z at seed 0; first launch
+22:50Z at the sheet's seed 2 stopped PRE-STEP-1 22:52Z when the
+owner's seed override crossed it, ~0 GPU-h lost). Gate 65 GPU-h;
+40k-class rate ~0.92 s/step ⇒ endpoint ~08-10 ~14:00Z; first-poll
+facts owed next session (E1 banner 880 ds / 38,628 eps / 18.67M fr;
+s/step; vram vs 77; wall projection in-channel). adamc final: step
+~11.8k, ~35.7/310 GPU-h, probe ladder ended **10.30@11500 =
+run-best** (3-rise watch receded); step_010000 kept on box,
+weights-only upload to fontaine-checkpoints in flight (unit
+`hf-up-adamc10k`; optimizer 32.6 GB stays local), train_log.jsonl
+banked box+local for the zero-GPU post-mortem chart. ER snapshot
+verified COMPLETE on box (0 incomplete blobs, all shards).
+`fontaine-tiny10k` LIVE local — step 2,060, 22.1 st/min, 2.4/15
+GPU-h; probe 16.78@500 → 14.52@1000 → 13.04@1500 → **11.74@2000**
+descending on schedule. Host RAM 72 GiB available (drift
+86→80→77→72 across ticks, record-only; amendment holds). Endpoint
+~05:1xZ 08-10 → chained panel_v2 → Δ_capacity read ~06:3xZ.
+
+**Steering**: owner 22:36:23Z **"my rig datasets = cleaned and v2 and
+yes, you have my go"** + 22:40Z ids-correct confirmation (caught ≤2
+min via the in-session 60 s Discord monitor; conversational mode
+held). Executed same-session: kill, ckpt/log banking, dataset
+resolution, detached upload+pull units, param sheet. Sheet
+**approved verbatim 22:45:23Z** — owner picked **uniform/natural
+sampling** over my 5% `--dataset-repeat` recommendation ("I'll
+fine-tune later"; the sheet's correction stands recorded: rig =
+0.19% ⇒ ~0.15 expected views per rig frame — accepted as an owner
+cost-call). **Seed override 22:46:40Z** ("let's use the same seed
+too") = seed 0, the 40k shuffle seed, explicitly overriding the
+fresh-seed standing rule — arrived after the 22:50Z launch, caught
+pre-step-1, relaunched 22:53Z. Launch confirmed in-channel 22:5xZ.
+No open owner questions.
+
+**Done**: babysit ×1 exit 0 (22:34; adamc 11,780 @ 22.1 st/min
+pre-kill, tiny10k 1,920 @ 22.1). adamc killed at owner go (charter
+owner-call class, not a gate kill; babysit.toml entry pruned with
+full disposition note). Queue item `owner-er60k-run-prep-0809`
+updated (ER download complete). Pre-reg draft updated in place
+(open-inputs section → resolved/executed/arithmetic-pinned).
+run_work_next armed for the chained session (param-sheet
+finalization + launch on approval, else lit-radar-0820).
+
+**Next**: er_60k first poll next session (E1 banner + s/step + vram
++ projection in-channel; babysit entry live with the K1-class kill
+lines; pre-reg updated in place — the ER-init delta vs the 40k probe
+curve is the primary read). Chained work session → lit-radar-0820
+(CPU, GPU-busy window). tiny10k
+endpoint ~05:1xZ 08-10 → chained panel_v2 → Δ_capacity readout.
+AdamC post-mortem chart = queued zero-GPU item. MolmoAct2 follow-up
+arms + ArmnetBench checkpoint watch remain owner-decision / watch
+items.*
+
+*Previous update 2026-08-09 22:07–22:5xZ (real `date -u` at write: 22:50) —
 work session (bounded): **lit-radar-0819 CLOSED — 4 Papers pages
 same session via 5-agent fan-out, and the first hook in 9 sweeps to
 STRENGTHEN on contact (Squint: the rollout-substrate blocker is
@@ -113,65 +174,6 @@ adamc endpoint ~08-12 ~17:00Z → chained k4l2 panel. MolmoAct2
 follow-up arms + ArmnetBench checkpoint watch remain owner-decision
 / watch items.*
 
-*Previous update 2026-08-09 21:47–22:1xZ (real `date -u` at write: 22:03) —
-work session (bounded): **lit-radar-0818 CLOSED — 4 Papers pages
-same session via 5-agent fan-out; all four banked hooks needed
-corrections AGAIN (one was our own corpus laundered back at us);
-the new-angles refill sweep fixed the pool — only 2/16 dups vs
-0817's 12/16, first spares banked in days.***
-
-**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE — babysit exit 0
-(21:58), step 10,960, 22.4 st/min, 33.2/310 GPU-h, vram 75.3 ×4 vs
-77. Probe ladder unchanged (run-best 10.63@9500; 11.06@10500
-recede-precedent class). Post-kill-line cruise, endpoint ~08-12
-~17:00Z. `fontaine-tiny10k` LIVE local — step 1,120, 22.4 st/min,
-1.8/15 GPU-h; probe **14.52@1000** (16.78@500 → 14.52, descending
-on schedule; F@1000 anchor n/a — ladder comparable from @5000).
-Endpoint ~05:1xZ 08-10 → chained panel_v2 → Δ_capacity read
-~06:3xZ.
-
-**Steering**: none — `read` empty at boot (21:47) and at the 21:58
-babysit; history shows no new reactions. 13:48Z gate default (let
-run, gate 310) governs adamc.
-
-**Done**: **lit-radar-0818 CLOSED** — 4 Papers pages
-([athena](papers/athena.md), [probeact](papers/probeact.md),
-[qwen-robotmanip](papers/qwen-robotmanip.md),
-[plasticity-at-scale](papers/plasticity-at-scale.md)). Corrections,
-all four: **ATHENA** is rollout-anchored (NOT offline curation),
-corpora 9.3h sim / 6.9h real, code link dead — but their
-demo-length heuristic landed BELOW random on real tasks (a warning
-for naive quality gates on our 229h) and cross-model transfer
-licenses proxy-policy scoring (→ #9 parked "offline-ATHENA" note).
-**ProbeAct** hook wrong on both clauses (position regressor on 50k
-sim-oracle labels + hand-coded kinematic rules, zero detection
-metrics) — survives: trunk decodes object position R²=0.968 while
-flow cells probe below coin-flip elsewhere → #6's ArmnetBench gate
-gains a **trunk-tap arm** (spatial pooling, shallow-mid sweep).
-**Qwen-RobotManip** "38,100h" is ~65% re-rendered human video
-(~7,800h real teleop ≈ 34× us, not 166×), nothing released —
-survives: 5-stage fully-offline state-action filter (81% of
-RoboMIND-UR excluded as broken proprioception) → #9 cheapest arm =
-DA+jerk pass over our corpus; #17 fourth attachment pole +
-benchmark-saturation seconds VLM4VLA. **Plasticity-at-scale**'s WD
-clause was a *citation of 2602.11137* — our own corpus resold as a
-new hook; durable export is negative (dormant-unit/param-norm/
-attention-entropy proxies all fail; behavioral fixed-budget probes
-only; record-only for the adamc watch). Ideas #6/#9/#17 + index
-hooks fed; Radar 0818/0819 tables in papers/index; SUMMARY.md
-entries added (0817's 404 class pre-empted). **Refill**: fresh
-sweep on the 4 mandated new angles → 16 abs-verified candidates,
-only 2 corpus dups by local grep → `lit-radar-0819` queued with 4
-priority hooks (Squint SO-101-in-ManiSkill3 sim substrate;
-action-space evidence base; SO-101 failure benchmark;
-continual-learning contradiction triangle) + **8 spares**.
-
-**Next**: `queue_cli.py next` → `lit-radar-0819` (CPU, GPU-busy
-window; adamc rides to ~08-12). tiny10k endpoint ~05:1xZ 08-10 →
-chained panel_v2 → Δ_capacity readout. adamc endpoint ~08-12
-~17:00Z → chained k4l2 panel. MolmoAct2 follow-up arms +
-ArmnetBench checkpoint watch remain owner-decision / watch items.*
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -204,19 +206,6 @@ call — no endpoint, no chained evals)**). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
-Session 2026-08-09 21:47–22:1xZ (work, bounded; 0 new GPU-h — adamc
-rides 33.2/310, tiny10k 1.8/15; explore): lit-radar-0818 closed —
-4 deep reads + fresh sweep as 5 concurrent subagents, 4 Papers
-pages (athena, probeact, qwen-robotmanip, plasticity-at-scale);
-all four hooks corrected (ATHENA rollout-anchored + code-free;
-ProbeAct wrong on both clauses, zero detection metrics; Qwen 38kh
-= ~65% re-render, nothing released; plasticity WD clause = our own
-2602.11137 re-cited). Ideas #6 (trunk-tap gate arm) / #9 (DA+jerk
-offline filter arm; offline-ATHENA parked) / #17 (fourth
-attachment pole; proxy-instrument ban) fed. Refill sweep on the 4
-mandated new angles: 2/16 dups only (vs 12/16) — lit-radar-0819
-queued with 4 priority hooks + 8 spares. check 599; Space pushed.
-
 Session 2026-08-09 22:03–22:1xZ (tick, babysit; 0 new GPU-h — adamc
 rides 33.6/310, tiny10k 1.9/15): green tick, no steering (read =
 own 22:01 post only; no new reactions). adamc step 11,080 @ 22.3
@@ -241,3 +230,29 @@ drop-in + draft pre-reg posted + box snapshot download started
 within the hour; adamc 3-rise watch resolved recede (10.30@11500
 new run-best), surfaced for the kill call. Refill 14/16 clean →
 0820 queued (4 hooks + 10 spares). check 599; Space pushed ×2.
+
+Session 2026-08-09 22:34–22:5xZ (tick, babysit; 0 new GPU-h — adamc
+stopped at ~35.7/310 final, tiny10k rides 2.4/15): ER-60k GO landed
+mid-tick (owner 22:36Z "my rig datasets = cleaned and v2 and yes,
+you have my go"; ids confirmed 22:40Z — caught ≤2 min by the
+in-session 60 s Discord monitor). adamc_100k killed clean 22:40Z at
+step ~11.8k — final probe 10.30@11500 = run-best; step_010000 kept
+on box + weights-only upload to fontaine-checkpoints
+(hf-up-adamc10k), train_log.jsonl banked box+local for the zero-GPU
+post-mortem. Rig datasets resolved: so101_pick_place_clean (7 ep /
+3.4k fr) + so101_pick_place_v2 (50 ep / 32.7k fr), already in
+~/datasets on box, LeRobot v3.0 compatible. Param sheet posted
+22:43Z with a mixture CORRECTION: natural share = 0.19% =
+arithmetically invisible (loader path-dedup blocks zero-code
+oversample) → --dataset-repeat @ ~5% recommended; awaiting approval
++ pick. ER snapshot verified complete on box. babysit ×1 exit 0;
+tiny10k probe 11.74@2000 descending; host RAM 72 GiB available
+(drift record-only). babysit.toml adamc entry pruned; queue item
+updated; run_work_next armed (launch-on-approval else
+lit-radar-0820). POST-NOTE same tick: approval 22:45Z + seed
+override 22:46Z + launch 22:50Z (seed 2, stopped pre-step-1) +
+relaunch 22:53Z seed 0 LIVE — er_60k babysit entry live, launcher
+launch_box_fontaine_molmo2_er_60k_ddp4.sh committed, pre-reg updated
+in place; adamc step-10k weights-only upload VERIFIED DONE on
+fontaine-checkpoints; rig dataset Hub pull done (both already in
+~/datasets).
