@@ -3,11 +3,42 @@
 
 
 
-
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-09 19:08–19:3xZ (real `date -u` at write: 19:26) —
+*Updated 2026-08-09 19:25–19:3xZ (real `date -u` at write: 19:27) —
+tick (babysit): **adamc_100k healthy at step 7560 (23.1/310 GPU-h,
+21.6 st/min window); probe ladder unchanged since @7500 = 11.7238 —
+the @7000 downward break holds; Discord clean; queue green depth 3;
+`run_work_next` armed for `lit-radar-0815`.***
+
+**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE — babysit exit 0,
+8 procs, ~75.3 GiB ×4 vs 77 bar, step 7560 @ 19:26, window 21.6
+st/min, cumulative 23.1/310 GPU-h. Probe ladder unchanged since the
+@7500 read (11.32@4500 → 12.65@5000 → 12.12@5500 → 12.59@6000 →
+12.60@6500 → 11.69@7000 → 11.72@7500 — the downward break holds,
+train_mae 12.49 and falling); next eval @8000 ~19:46Z is routine —
+the chained work session reads it. No escalation, nothing near a
+kill line. Endpoint ~08-12 ~17:00Z → chained k4l2 panel. LOCAL GPU
+free.
+
+**Steering**: none new — the 19:26 `read` (unfiltered, via babysit)
+consumed only our own 19:24 lit-radar post; `history -n 5` = our own
+posts only, no reactions. Last owner message remains the answered
+16:42Z ticket question. 13:48Z gate default (let run, gate 310)
+governs.
+
+**Done**: babysit poll (exit 0, unfiltered, Discord poll included).
+Queue validate green depth 3 (8 open; 19:18:54Z stamp clean).
+`run_work_next` confirmed armed (19:25 marker). Head keep-3 +
+footer keep-2 rolls (the 18:49 head entry + the 19:05 footer note →
+day archive, verbatim).
+
+**Next**: chained work session → `queue_cli.py next` →
+`lit-radar-0815` (CPU, any GPU-busy window) + probe@8000 read
+(~19:46Z, routine). adamc endpoint ~08-12 ~17:00Z → chained k4l2
+panel. fjoint stays owner-gated post-endpoint.
+
+*Previous update 2026-08-09 19:08–19:3xZ (real `date -u` at write: 19:26) —
 work session (bounded): **`lit-radar-0814` CLOSED — all 5 hooks
 deep-read, 5 Papers pages landed same session (2 hook corrections
 caught); probe @7500 = 11.7238 — the @7000 downward break holds.***
@@ -88,50 +119,6 @@ entry + the 18:27 and 18:45 footer notes → day archive, verbatim).
 (~19:24Z, routine). adamc endpoint ~08-12 ~17:00Z → chained k4l2
 panel. fjoint stays owner-gated post-endpoint.
 
-*Previous update 2026-08-09 18:49–19:0xZ (real `date -u` at write: 19:04) —
-work session (bounded): **`lit-radar-0813` CLOSED — all 5 hooks
-deep-read, 5 Papers pages landed same session; probe @7000 =
-11.6945 — below the 12.1–12.6 band, best read since 11.32@4500, and
-the record-only train_mae drift reversed (13.45 → 12.67).***
-
-**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE — babysit exit 0
-×2 (18:50, 18:59), 8 procs, ~75.3 GiB ×4 vs 77 bar, windows
-19.5–24.8 st/min, step 7000 / 21.3/310 GPU-h at 18:59. **Probe
-ladder 11.32@4500 → 12.65@5000 → 12.12@5500 → 12.59@6000 →
-12.60@6500 → 11.69@7000**: the oscillation band broke DOWNWARD at
-near-peak LR; train_mae 12.6677@7000 vs 13.4473@6500 — the drift
-watch reversed with it. No escalation, nothing near a kill line.
-Endpoint ~08-12 ~17:00Z → chained k4l2 panel. LOCAL GPU free.
-
-**Steering**: none new — `read` empty at 18:50 and 18:59
-(unfiltered, via babysit); history = our own posts only, no
-reactions. Last owner message remains the answered 16:42Z ticket
-question. 13:48Z gate default (let run, gate 310) governs.
-
-**Done**: **`lit-radar-0813` CLOSED** (commit `c34e831`, check 598
-green): all 5 banked hooks deep-read with Papers pages same session
-— Muon-SW 2607.23777 (`muon-sw.md`; the AdamC correction re-derived
-for Muon → adamc weight-norm plateau signature + free
-alignment-cosine probe), AsyncVLA 2511.14148 (`asyncvla.md`; NOT
-async execution — two-pass masked regeneration; coin-flip selector
-keeps 2/3 → #17 within-model commitment datum + #6 dense-labels
-constraint), silent-failures 2606.03134
-(`silent-failure-observability.md`; success flags 32–48%
-false-positive in clean sim → #16 exteroceptive-label-audit bench
-rule), SA-VLA 2602.00743 (`sa-vla.md`; naive sparse RL measured
-NEGATIVE 77.5 vs 81.0 → #16 RL-pole entry 5 + #11 frozen-injection
-fourth aux mode), StreamVLA 2602.01100 (`streamvla.md`;
-completion-anchored gating → #6 phase-at-boundary constraint +
-refresh-rule datum). Ideas #6/#11/#16/#17/#22 fed. Refill sweep ran
-in-session → `lit-radar-0814` queued (5 dup-checked hooks, all 9
-candidates checked clean). Blog built + Space pushed, 200 ×5
-verified; in-channel post 19:0xZ. Queue validate green depth 3.
-
-**Next**: `queue_cli.py next` → `lit-radar-0814` (CPU, any GPU-busy
-window); probe watch routine at next tick (@7500+, and whether the
-11.69 holds). adamc endpoint ~08-12 ~17:00Z → chained k4l2 panel.
-fjoint stays owner-gated post-endpoint. `run_work_next` armed.
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -164,17 +151,6 @@ call — no endpoint, no chained evals)**). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
-Session 2026-08-09 19:05–19:1xZ (tick, babysit; 0 new GPU-h —
-adamc_100k rides, 21.7/310): run healthy at step 7100 — babysit exit
-0, 8 procs, ~75.3 GiB ×4 vs 77, window 20.8 st/min. Probe ladder
-unchanged since @7000 = 11.6945 (band broke downward, train_mae
-reversed 13.45 → 12.67); @7500 ~19:24Z routine → chained work
-session reads it + works lit-radar-0814. Discord clean (read
-consumed only our own 19:04 post, history our own posts only, no
-reactions); queue green depth 3 (8 open, 18:59:36Z stamp clean);
-run_work_next armed (19:05 marker); 18:27 head entry + 18:27/18:45
-footer notes rolled to the day archive.
-
 Session 2026-08-09 19:08–19:3xZ (work, bounded, explore; 0 new
 GPU-h — adamc_100k rides, ~23/310): lit-radar-0814 CLOSED — all 5
 banked hooks deep-read via a 5-subagent fan-out + a parallel
@@ -189,3 +165,14 @@ verified hooks + 5 spares). Probe@7500 = 11.7238 read in-session —
 the @7000 break holds, train_mae 12.49. Queue green depth 3; blog
 built + Space pushed (200 ×5); in-channel post; run_work_next
 armed.
+
+Session 2026-08-09 19:25–19:3xZ (tick, babysit; 0 new GPU-h —
+adamc_100k rides, 23.1/310): run healthy at step 7560 — babysit exit
+0, 8 procs, ~75.3 GiB ×4 vs 77, window 21.6 st/min. Probe ladder
+unchanged since @7500 = 11.7238 (the @7000 downward break holds,
+train_mae 12.49 falling); @8000 ~19:46Z routine → chained work
+session reads it + works lit-radar-0815. Discord clean (read
+consumed only our own 19:24 post, history our own posts only, no
+reactions); queue green depth 3 (8 open, 19:18:54Z stamp clean);
+run_work_next armed (19:25 marker); 18:49 head entry + 19:05
+footer note rolled to the day archive.
