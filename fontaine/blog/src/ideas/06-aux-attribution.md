@@ -438,3 +438,28 @@ chunk-as-unit), fields-probe ranker, or distillation from the
   stands (−0.250 vs bare) — the gap is a scorer gap, twice
   measured. Free follow-up queued: record-only KL-vs-quality
   post-mortem on the banked [N,C] KL + [N,C,S,D] error dump.
+
+- **Post-mortem map READ 2026-08-09 same-day (record-only, NOT
+  pre-registered, no decision rides on it;
+  [addendum](../posts/2026-08-09-mcselect-results.md) with charts;
+  `mcselect_postmortem.py`, oracle-gated, raw sidecar npz banked)**:
+  the closed family's failure decomposed on the banked dump. (1)
+  **KL is rank-noise**: per-row Spearman(KL, err) **+0.012 CI95
+  [−0.005, +0.029]** (frac-positive 0.503), oracle-best (frame-error
+  best eligible) sits UNIFORMLY on the KL axis — mean normalized
+  rank 0.498 vs 0.5 null, mild excess at BOTH extremes (top1 17.4%,
+  bottom1 16.8%, null 12.6%) ⇒ argmin-KL would fail too; the
+  +0.313 harm is magnitude-driven (row-centered value-level Pearson
+  +0.126 vs rank-level ~0 — winner's curse on the far tail with
+  heavy-tailed damage; MC's pick is oracle-best MORE often than
+  SC's, 25.6% vs 23.6%, while losing harder on MAE). (2) **SC was
+  the better axis all along**: −0.030 [−0.046, −0.014], right-signed,
+  oracle-best at SC-top 30.1% vs 12.6% null — real signal ~6× too
+  weak to survive an argmax over width ~8. (3) **Axes mutually
+  uncorrelated** (Spearman(KL, SC) +0.032) — the family failed twice
+  INDEPENDENTLY; "family" was the right closure unit. Calibration
+  number for any learned-verifier case: the ceiling (−0.250 vs
+  bare) is real and zero-training rank signal toward it tops out at
+  |rho| ≈ 0.03 — a verifier must argue for ~an order of magnitude
+  more before its GPU-hours are priced. 153 constant-KL rows
+  excluded from rho reads; eligible width 4–9, median 8.

@@ -175,9 +175,17 @@ record; the line here is the hook). *Index last updated 2026-08-07.*
   not phase-right. Second strike ⇒ the pre-registered kill rule
   executed: the ZERO-TRAINING SCORER FAMILY IS CLOSED for this
   trunk — learned-verifier shapes need their own affirmative case.
-  The ceiling itself stays alive (−0.250 vs bare); a record-only
-  KL-vs-quality post-mortem on the banked dump is queued before
-  anyone prices a learned verifier.**
+  The ceiling itself stays alive (−0.250 vs bare). POST-MORTEM MAP
+  READ 2026-08-09 (record-only, banked dump,
+  [addendum](posts/2026-08-09-mcselect-results.md)): KL is
+  rank-NOISE, not a reversed compass — per-row Spearman(KL, err)
+  +0.012 [−0.005, +0.029], oracle-best uniform on the axis (0.498
+  vs 0.5); the +0.313 harm is magnitude-driven (winner's curse on
+  a noisy axis, value-level rho +0.126). SC was the better axis
+  all along (−0.030, CI < 0, oracle-best at its top 30% vs 12.6%
+  null) but ~6× too weak for an argmax. Axes mutually uncorrelated
+  (+0.032) — two independent failures. Calibration bar for any
+  learned verifier: beat |rho| ≈ 0.03 by ~an order of magnitude.**
 - **`noise-draws` [#1 Noise-draw ensembling](ideas/01-noise-draw-ensembling.md)** —
   flow mean-of-10 banked (5.365); batched draws merged 2026-08-07.
   **GOLDEN-TICKET SCREEN R1+R2 READ OUT 2026-08-08
