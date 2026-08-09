@@ -160,3 +160,12 @@ variants, consistency/distillation toward 1–2-step deployment decodes
   10k-hours scale ("UltraFast", fastest inference in their fleet at
   2× π0.5's size, +97 ms button-press reaction vs human). Same
   adopted-signal shape as our SnapFlow row.
+
+- **1-NFE mean read gains a ranking-fidelity number (2026-08-09,
+  [ForesightFlow page](../papers/foresightflow-self-scored-bestofk.md)):**
+  their value baseline is exactly the 1-NFE endpoint estimate
+  (`x₀ + v(x₀,0,c)`, stop-grad), and they measure it: candidate
+  ranking by 1-NFE preview agrees with NFE=100 at Kendall τ
+  0.80–0.86, top-1 ~87%, ~97% of the Monte-Carlo selection gain
+  retained. A citable external anchor for how much the one-step
+  mean read preserves ordering on our stack.

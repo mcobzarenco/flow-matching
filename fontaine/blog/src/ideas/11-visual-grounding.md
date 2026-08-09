@@ -160,3 +160,21 @@ Evidence class: strong on convergence speed + low-data (+25.8 pp at
 grounding-aux sibling of VEGA's encoder recipe (teacher×depth
 interact — see the #17 record); no arm changes, the acuity-probe
 triangulation stays the entry point.
+
+**2026-08-09 — aux-family third recipe
+([QDepth-VLA page](../papers/qdepth-vla.md), 2510.14836):**
+generative rather than alignment — a dedicated 18-layer expert
+beside the trunk predicts VQ-VAE-quantized depth tokens (K=256,
+16×16 grid) from the vision tokens, supervised by monocular
+Video-Depth-Anything pseudo-labels (no sensors); depth tokens stay
+in the attention context at inference (NOT deleted — unlike
+VEGA/SF, deploy cost is nonzero and unreported). LIBERO
+single-view +7.7 avg over open-π₀, Simpler WidowX stack-block +23.8.
+**Ablation caveat carried loudly**: removing the depth *loss* costs
+only −2.9 of the +8.5 — the expert-with-hybrid-attention scaffold
+carries ~5.6 on its own, so most of the win is architecture
+(scratchpad in the context), not geometry. Quote −2.9 for any
+"depth supervision buys X" claim. Quantized-beats-regression +3.9
+(mean-collapse under noisy pseudo-labels — the #19 shape). No arm
+changes; evidence class: strong on precision tasks, confounded as a
+depth-supervision claim.

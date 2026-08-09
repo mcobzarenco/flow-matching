@@ -3,7 +3,61 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-09 12:16–12:4xZ (real `date -u`) — work session
+(bounded, chained via `run_work_next`): **the radar backlog cleared
+TWICE over — four papers deep-read, four pages landed same session
+(QDepth-VLA, ForesightFlow, CLP fewer-layers, Qwen-VLA); two fresh
+production frozen-first votes filed on #4's ledger hours before
+tonight's Δ_seam read, and the selection cluster gets its first
+direct evidence that selector shape beats selector size.***
+
+**Status**: attach_K healthy at the 12:22Z poll — step 3940/10k,
+loss 3.13, 3.776 s/step (endpoint ~18:3xZ holds), vram 59.07 ≤ 71,
+liveness 7 procs / 4 GPUs. Probe **11.2033@3500** (best); first
+kill-bar 12.6394 binds ≥5k (~13:3xZ) with ~1.4 margin. CE aux flat.
+Local GPU free.
+
+**Steering**: none — `read` clean at boot and at the 12:22Z babysit;
+nothing from the owner after the answered 11:43:03Z loss_action
+question, no new reactions.
+
+**Done**: **three lit queue items executed same session they were
+queued** (`lit-radar-hooks-0809b` → `-0810a` → `-0810b`, each
+refill consumed in-window per the standing precedent), four papers
+pages: (1) [QDepth-VLA](papers/qdepth-vla.md) 2510.14836 — third
+aux-spatial recipe class (expert-generative VQ depth tokens,
+monocular pseudo-labels, tokens RIDE the inference context unlike
+VEGA/SF); ablation split carried loudly (−2.9 loss vs −8.5 expert:
+the scaffold, not the geometry, carries most of the win) → #11/#17/
+#5. (2) [ForesightFlow](papers/foresightflow-self-scored-bestofk.md)
+2606.04968 — seventh selection flavor; the K-sweep is the evidence
+anchor (separate 500M critic FLAT K=1→5, self-scored +5.0 = third
+strike on post-hoc probe selectors); 1-NFE endpoint preview
+instrument (τ 0.83, ~97% gain retained) → #19/#1/#12/#16.
+(3) [CLP fewer-layers](papers/fewer-layers-clp.md) 2606.20246 —
+33–50% of finetuned-VLA depth is CKA twins (8/16 DiT expert layers
+free); throughput fourth lever class, CKA map banked as a
+one-forward-pass diagnostic → #17. (4)
+[Qwen-VLA](papers/qwen-vla-early-fusion.md) 2605.30280 —
+early-fusion pole staked; Stage I trains the expert trunk-FROZEN =
+**F-then-joint production vote #2 beside RDT2, filed pre-Δ_seam**;
+τ=0.6 deploy sharpening = production cool-side dT sighting →
+#17/#4/#19/#16. Two sweeps: no stage-2/actckpt re-ranker found; 2
+new hooks banked (SEAM 2607.04609 boundary-jerk, Robot Critics
+2606.21572). Papers-index integrity fix (2 stale "unread" rows →
+page links); 2 future-dated queue stamps caught at write time and
+corrected against `date -u` (the 78cace5 class — my pacing sense
+runs fast; stamp at write, not at projected finish).
+
+**Next**: 5k kill-bar binds ~13:3xZ (probe must be < 12.6394 —
+currently 11.20; babysit before session end catches or brackets
+the crossing); endpoint ~18:3xZ → chained panel_v2 + AR-view drift
+panel → **Δ_seam frozen read (runbook staged, pre-audited)** →
+stage-2 decision. `queue_cli.py next` → `lit-radar-hooks-0811a`
+(any GPU-busy window).
 
 *Updated 2026-08-09 12:12–12:2xZ (real `date -u`) — tick (babysit):
 **attach_K healthy past the run's midpoint approach — probe margin
@@ -82,40 +136,6 @@ depth 2.
 currently 11.20); endpoint ~18:3xZ → chained panel_v2 + AR-view
 drift panel → **Δ_seam frozen read (runbook staged, pre-audited)**
 → stage-2 decision. `queue_cli.py next` → `lit-radar-hooks-0809b`
-(any GPU-busy window).
-
-*Updated 2026-08-09 11:49–12:0xZ (real `date -u`) — tick (babysit):
-**attach_K healthy at mid-run — probe margin ~1.0 held going into
-the 5k bar window; plus a future-dated queue stamp and 89 broken
-archive links caught and fixed.***
-
-**Status**: attach_K healthy at the 11:50Z poll — step 3460/10k,
-loss 3.18, 3.799 s/step (15.7 steps/min window; endpoint ~18:3xZ
-holds), vram 59.07 ≤ 71, liveness 7 procs / 4 GPUs. Probe
-11.6124@3000 (best); first kill-bar 12.6394 binds ≥5k (~13:2xZ)
-with ~1.0 margin. CE aux flat. Local GPU free.
-
-**Steering**: none new — `read` surfaced only our own 11:48Z
-loss_action answer; `history` shows nothing from the owner after
-11:43:03Z and no new reactions. Reply-watch on the loss_action
-thread held via a background history poll to ~11:59Z: quiet →
-normal cadence.
-
-**Done**: babysit poll (exit 0, facts above); queue validate green
-(depth 2, 8 open) + **two integrity fixes**: (1) `queue.json`
-`updated_utc` was stamped 12:05:00Z — ~20 min ahead of the real
-clock (written during the 11:34–11:45Z work session; same class as
-`78cace5`) — corrected to 11:45Z against the `1a41ffc` commit-time
-anchor; (2) 89 root-relative links in `archive/*.md` (rolled
-verbatim from now.md, so `papers/`, `posts/`, `journal.md`,
-`reports.md` all 404'd one level deep) rewritten to `../` paths,
-grep-verified 0 remaining. `run_work_next` armed (chained work
-session takes `lit-radar-async-exec`).
-
-**Next**: 5k kill-bar binds ~13:2xZ (probe must be < 12.6394 —
-currently 11.61); endpoint ~18:3xZ → chained panel_v2 + AR-view
-drift panel → **Δ_seam frozen read (runbook staged, pre-audited)**
-→ stage-2 decision. `queue_cli.py next` → `lit-radar-async-exec`
 (any GPU-busy window).
 
 ## Utilization footer

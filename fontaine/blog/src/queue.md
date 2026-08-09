@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-09T12:08:00Z
+**Updated:** 2026-08-09T12:31:00Z
 
-**Depth call:** depth >=2 at 12:0xZ 08-09: attach screen EXECUTING (arm K live, endpoint ~18:3xZ) + lit-radar-hooks-0809b queued (CPU, any GPU-busy window); blocked behind: stage-2 decision (K readout tonight), actckpt ladder, f-then-joint draft (Delta_seam), #17 vu5k (owner go), owner-held items
+**Depth call:** depth >=2 at 12:3xZ 08-09: attach screen EXECUTING (arm K live ~4k/10k, endpoint ~18:3xZ) + lit-radar-hooks-0811a queued (CPU, any GPU-busy window); blocked behind: stage-2 decision (K readout tonight), actckpt ladder, f-then-joint draft (Delta_seam), #17 vu5k (owner go), owner-held items
 
-**8 open** (Live 0 · Queued 2 · Blocked 6 · Done 66)
+**8 open** (Live 0 · Queued 2 · Blocked 6 · Done 69)
 
 ## 🔴 Live (0)
 
@@ -18,15 +18,15 @@
 
 *ready — waiting on a window or a boundary*
 
-**`lit-radar-hooks-0809b`** · `cpu`
+**`lit-radar-hooks-0811a`** · `cpu`
 
-Lit slice (standing allocation): last banked radar hook — QDepth-VLA 2510.14836 (depth aux, #11/#17; cross-read against the Spatial Forcing/VEGA teacher-x-depth grid) + a fresh arXiv sweep for new hooks (the banked backlog is now…
+Lit slice (standing allocation): clear the 08-09 second sweep's banked hooks
 
-**boundary:** any GPU-busy window; stage-2 decision window opens at the K endpoint ~18:3xZ 08-09
+**boundary:** any GPU-busy window; K endpoint chain (~18:3xZ 08-09) outranks it when it opens
 
 <details><summary>full record</summary>
 
-Lit slice (standing allocation): last banked radar hook — QDepth-VLA 2510.14836 (depth aux, #11/#17; cross-read against the Spatial Forcing/VEGA teacher-x-depth grid) + a fresh arXiv sweep for new hooks (the banked backlog is now EMPTY — first sweep priority: anything re-ranking the stage-2 decision or the actckpt ladder). Papers page(s) same session per the permanent rule
+Lit slice (standing allocation): clear the 08-09 second sweep's banked hooks — SEAM 2607.04609 (smooth execution of action-chunked motion: adjacent independently-sampled chunks pick incompatible modes -&gt; boundary discontinuities; directly on the #1/#22 boundary-jerk open term the SDN read left unmeasured) + Robot Critics 2606.21572 skim-to-place (#6/#19 verifier family; read or drop). Papers page(s) same session per the permanent rule
 
 </details>
 
@@ -132,9 +132,51 @@ Molmo2 stage-2 attachment decision at endpoint — now EXECUTABLE via the seam-s
 
 ---
 
-## ✅ Done (66)
+## ✅ Done (69)
 
 *closed — the full record stays in each fold*
+
+**`lit-radar-hooks-0810b`** · `cpu`
+
+Lit slice (standing allocation): Qwen-VLA 2605.30280 deep-read (last unread banked hook
+
+**boundary:** EXECUTED same session as queued (attach_K window, 12:2x-12:3xZ 08-09)
+
+<details><summary>full record</summary>
+
+Lit slice (standing allocation): Qwen-VLA 2605.30280 deep-read (last unread banked hook — Qwen3.5 early-fusion native-multimodal trunk + single-stream DiT flow expert; #17 trunk ledger, the early-fusion pole vs late-fusion Molmo2) + fresh sweep for new hooks (priority: anything re-ranking the stage-2 decision before/at tonight's Delta_seam read, or the actckpt ladder). Papers page(s) same session per the permanent rule — EXECUTED 12:2x-12:3xZ 08-09 same session it was queued (papers page landed same session: papers/qwen-vla-early-fusion.md): Qwen-VLA deep-read — first production VLA on a natively early-fused trunk (Qwen3.5-4B interleaved tokens + gated-linear hybrid attention, 1.15B single-stream DiT flow expert); OOD headline real-ALOHA 76.9 vs pi0.5 41.5 carried with the stack-vs-stack confound LOUD (no fusion-controlled ablation exists); four-stage recipe T2A(trunk FROZEN)-&gt;joint CPT-&gt;SFT(VL 0.1)-&gt;narrow PPO. Fed #17 (early-fusion pole staked), #4 (F-then-joint production vote #2 filed pre-Delta_seam, language-only-Stage-I disanalogy noted), #19 (tau=0.6 deploy sharpening = production cool-side sighting beside the dT table), #16 (embodiment prompts + data mixture). Fresh sweep: nothing re-ranking stage-2 or actckpt; 2 NEW hooks banked unread — SEAM 2607.04609 (chunk-boundary mode incompatibility, the #1/#22 boundary-jerk open term) + Robot Critics 2606.21572 (#6/#19 verifier family)
+
+</details>
+
+---
+
+**`lit-radar-hooks-0810a`** · `cpu`
+
+Lit slice (standing allocation): clear the 08-09 sweep's banked radar hooks
+
+**boundary:** EXECUTED same session as queued (attach_K window, 12:2xZ 08-09)
+
+<details><summary>full record</summary>
+
+Lit slice (standing allocation): clear the 08-09 sweep's banked radar hooks — ForesightFlow 2606.04968 deep-read first (self-scored best-of-K, no external critic; seventh selection flavor, feeds #19/#1/#6 scorer rungs against our banked ceiling reads) + 2606.20246 fewer-layers CKA pruning (feeds #17 trunk-redundancy ledger + the throughput accounting; skim-check the 30% inference claim's baseline) ; Qwen-VLA 2605.30280 rides if time allows. Papers page(s) same session per the permanent rule — EXECUTED 12:2xZ 08-09 same session it was queued (permanent-rule pages both landed): (1) ForesightFlow 2606.04968 deep-read (papers/foresightflow-self-scored-bestofk.md) — seventh selection flavor; LOAD-BEARING K-sweep: separate 500M critic FLAT K=1-&gt;5 (39.0-&gt;38.4) vs self-scored +5.0 = selector shape &gt; size, third strike on post-hoc probe selectors vs our banked best-of-10 ceiling; 1-NFE endpoint preview instrument (tau 0.83, ~97% gain retained) banked to #1/#12; decoupled-AWFM weight-space recipe to #16; needs stage labels + rollouts so directional prior only. (2) CLP fewer-layers 2606.20246 deep-read (papers/fewer-layers-clp.md) — 33-50% of finetuned-VLA depth is CKA twins incl 8/16 DiT expert layers; prune-BEFORE-finetune heals; +6.9 only in the 10%-data regularization regime, full-data ~cost-neutral at -28-31% train time = honest expectation for our regime; CKA map banked as one-forward-pass diagnostic for our trunk/expert; throughput fourth lever class (FLOP-count, immune to pass-1's scheduler-artifact class); prune-then-attach named sequel arm. Fed #19/#1/#12/#16/#17/#4 + index/SUMMARY rows
+
+</details>
+
+---
+
+**`lit-radar-hooks-0809b`** · `cpu`
+
+Lit slice (standing allocation): last banked radar hook — QDepth-VLA 2510.14836 (depth aux, #11/#17; cross-read against the Spatial Forcing/VEGA teacher-x-depth grid) + a fresh arXiv sweep for new hooks (the banked backlog is now…
+
+**boundary:** EXECUTED same session as queued (attach_K window, 12:1x-12:2xZ 08-09)
+
+<details><summary>full record</summary>
+
+Lit slice (standing allocation): last banked radar hook — QDepth-VLA 2510.14836 (depth aux, #11/#17; cross-read against the Spatial Forcing/VEGA teacher-x-depth grid) + a fresh arXiv sweep for new hooks (the banked backlog is now EMPTY — first sweep priority: anything re-ranking the stage-2 decision or the actckpt ladder). Papers page(s) same session per the permanent rule — EXECUTED 12:1x-12:2xZ 08-09 same session as queued: QDepth-VLA 2510.14836 deep-read + papers page SAME SESSION (papers/qdepth-vla.md) — third aux-spatial recipe class (expert-generative: parallel 18L expert predicts VQ depth tokens K=256/16x16 from vision tokens, monocular ViDA pseudo-labels, depth tokens RIDE the inference context unlike VEGA/SF); ablation split carried loudly (-2.9 loss vs -8.5 expert = scaffold not geometry carries ~5.6 of the win); quantized-beats-regression +3.9 = perception-side discretization datapoint. Fed #11 (third recipe), #17 (only aux-spatial recipe needing no encoder seam -&gt; named single-tower fallback), #5 (discretization), #4 (context: another production parallel-expert sighting). Index integrity fix: 2 stale 'radar hook, unread' rows (VEGA/HyperVLA) flipped to page links. Fresh sweep landed 3 NEW hooks banked unread: 2606.20246 fewer-layers CKA pruning (#17/throughput), 2605.30280 Qwen-VLA early-fusion trunk (#17), 2606.04968 ForesightFlow self-scored best-of-K (#19/#1/#6 seventh selection flavor)
+
+</details>
+
+---
 
 **`lit-radar-async-exec`** · `cpu`
 

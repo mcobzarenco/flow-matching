@@ -301,3 +301,14 @@ matched steps.
   as F-pole ledger context only — the frozen read decides on our own
   numbers, unchanged; a K win would now have to explain away both
   APT's diagnosis and a shipped 10k-hour stack that never unfroze.
+- **Lit 2026-08-09 12:3xZ session
+  ([Qwen-VLA page](../papers/qwen-vla-early-fusion.md),
+  2605.30280)**: F-then-joint production vote #2, also filed
+  pre-Δ_seam — Qwen-VLA's Stage I trains its 1.15B expert with the
+  trunk FROZEN (text-to-action warm-start) before any joint stage;
+  exactly the APT/ActionX escalation shape our f-then-joint rung
+  names. Disanalogy carried: their Stage I is language-only, not a
+  full-recipe F arm. With RDT2 that's two production stacks this
+  week whose first move protects the trunk from a random-init
+  expert; ledger context only, the frozen read still decides on our
+  own numbers.

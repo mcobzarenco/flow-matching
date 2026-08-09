@@ -217,3 +217,14 @@
   The 1-NFE student's distillation target moved: it now trails the
   teacher's best ensemble by 0.18 at 30× less compute — re-screening
   the student's ticket response is the natural next rung.
+
+- **2026-08-09 — score-before-integrate instrument banked
+  ([ForesightFlow page](../papers/foresightflow-self-scored-bestofk.md),
+  2606.04968):** the 1-NFE endpoint preview (`x₀ + v(x₀,0,c)`)
+  ranks flow candidates at Kendall τ ≈ 0.83 vs full integration,
+  keeping ~97% of the best-of-K gain — a measured license to score
+  draws cheaply before deciding which to integrate; composes with
+  the ELASTIC dispersion-gated allocation rung. Also the K-sweep
+  caution for any selector rung here: an external critic ranked
+  its policy's own candidates at chance; jointly-trained scoring
+  did not.

@@ -74,3 +74,11 @@
   post-training.** Caveat carried loud: nobody tests d≈18; d=7 is
   the field's ceiling. Gate unchanged: parked until #16's rig bench
   exists.
+
+- **Fresh radar hook banked 2026-08-09 12:3xZ (sweep; unread,
+  skim-class only):** SEAM 2607.04609 — "smooth execution of
+  action-chunked motion": adjacent independently-sampled chunks
+  can pick incompatible modes → boundary discontinuities. Directly
+  on the #1/#22 boundary-jerk open term (the SDN jerk read showed
+  our draws smooth within-chunk, boundary unmeasured). Needs the
+  read before any instrument talk.

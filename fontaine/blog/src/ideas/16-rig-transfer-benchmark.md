@@ -184,3 +184,15 @@
   draws already uniformly smooth within-chunk (boundary jerk is the
   open term). Zero measurement now; both slot into the bench design
   when the owner's better rig dataset lands.
+
+- **2026-08-09 — weight-space post-training pole, second recipe
+  ([ForesightFlow page](../papers/foresightflow-self-scored-bestofk.md),
+  2606.04968):** decoupled advantage-weighted flow matching
+  (advantage weights on action velocities ONLY; uniform on the
+  self-scoring potential channel — coupled weighting demonstrably
+  hallucinates value, staged ablation 42.0 vs 51.0 final-stage).
+  One joint stage, −38% compute vs critic-based IDQL, ~1K added
+  params. Sits beside FlowPRO in the post-SFT menu; retention
+  unmeasured in both (the FlowDAgger critique stands). Needs stage
+  labels + mixed-quality rollouts — a rig-data-era option, not a
+  panel-era one.

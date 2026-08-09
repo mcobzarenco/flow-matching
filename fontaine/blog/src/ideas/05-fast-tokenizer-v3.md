@@ -44,3 +44,12 @@ of FAST or uniform binning; their codebook-collapse mitigations
 (low-dim codes, cosine similarity, EMA, dead-entry restart) are the
 practical recipe. If v3 ever reopens, price RVQ before another FAST
 refit.
+
+**2026-08-09 — discretization datapoint from the perception side
+([QDepth-VLA page](../papers/qdepth-vla.md), 2510.14836):** CE over
+VQ depth codes beats pixelwise depth *regression* by +3.9 avg on
+Simpler-WidowX (−14.6 on the worst task) when the supervision is
+noisy monocular pseudo-depth — the same
+discretize-and-predict-distributions argument FAST makes on the
+action side, with mean-collapse under noise as the stated mechanism.
+Strengthens the token-quality premise; no v3 status change.

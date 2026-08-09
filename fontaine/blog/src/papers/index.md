@@ -65,6 +65,10 @@ showed, before the dense analysis.
 | [Async execution II: shrink, smooth, or train](async-execution-2.md) | 2603.19199, 2602.23901, 2605.19294 | #22 arm menu re-ranked (HAS-on-decode new rung 2; DEFLECT's restart-corrected +1.6–2.3 pp; d≈18 still untested by anyone); #16 TTFA accounting + jerk instruments; #12 fourth pole (one-step head, many-step tail) |
 | [Spatial Forcing: convergence, not score](spatial-forcing.md) | 2510.12276 | #17 — the aux pole's second recipe (teacher×depth interaction: VGGT works at LLM-24, collapses at encoder); the 3.8× is a fewer-steps lever, teacher overhead unreported; #11 aux-family; SF may fit single-tower Molmo2 better than VEGA's |
 | [RDT2: 10k hours of UMI + the F-shaped recipe](rdt2-umi-scaling.md) | 2602.03310 | #4 F-pole ledger context (AR-first + frozen-trunk expert + distill, no joint stage) pre-Δ_seam; #16 hours-scale data premise + β≈0.23; #5 RVQ priced-first; #12 second 1-NFE production point |
+| [QDepth-VLA: predict quantized depth tokens](qdepth-vla.md) | 2510.14836 | #11 aux-family third recipe (generative expert, monocular pseudo-labels); #17 — the only aux-spatial recipe needing no encoder seam (single-tower fallback); #5 quantized-beats-regression +3.9; the −2.9 loss vs −8.5 expert ablation split carried loudly |
+| [ForesightFlow: teaching the flow to score its own draws](foresightflow-self-scored-bestofk.md) | 2606.04968 | #19/#1 — seventh selection flavor; the K-sweep evidence anchor (separate 500M critic FLAT K=1→5, self-scored +5.0 — selector shape > size, third strike on post-hoc probes); #12 — 1-NFE endpoint preview with measured ranking fidelity (τ 0.83); #16 — decoupled-AWFM weight-space recipe |
+| [Fewer layers than you think (CLP)](fewer-layers-clp.md) | 2606.20246 | #17 — trunk-redundancy ledger opens (33–50% of finetuned-VLA depth is CKA twins; 8 of 16 DiT expert layers free); throughput accounting fourth lever class (fewer layers, train+inference, FLOP-count mechanism); #4 — prune-then-attach named sequel arm |
+| [Qwen-VLA: the early-fusion pole](qwen-vla-early-fusion.md) | 2605.30280 | #17 trunk ledger — early-fusion pole staked (Qwen3.5-4B + 1.15B single-stream DiT; OOD 76.9 vs π₀.₅ 41.5, no-fusion-ablation confound loud); #4 — F-then-joint production vote #2 (Stage I frozen-trunk expert warm-start) filed pre-Δ_seam; #19 τ=0.6 deploy sharpening; #16 embodiment prompts + data mixture |
 | [Observation aliasing: when the frame alone can't tell you what to do](observation-aliasing.md) | 2605.14712, 2605.14598 | `fieldcond-subgoal-meta-report` — NN-divergence frame-mining protocol + the delta-concentration chart as the report's central claim; #6 — external baseline shape for the subgoal channel (frame-only 9% → intent-conditioned 45.8% on aliased states; DSSP's strict floor-gap theorem); #11 — aliasing census banked as the entry condition for any history/memory arm |
 
 ## Retroactive backlog
@@ -166,8 +170,8 @@ pretrained trunk:
 | OpenVLA (vision-FT ablation) | [2406.09246](https://arxiv.org/abs/2406.09246) | ✅ [page](vision-encoder-freeze.md) |
 | MAPS (module-wise proximity scheduling) | [2511.19878](https://arxiv.org/abs/2511.19878) | ✅ [page](vision-encoder-freeze.md) |
 | Dual-encoder representation preservation | [2509.11417](https://arxiv.org/abs/2509.11417) | ✅ [page](vision-encoder-freeze.md) |
-| VEGA (encoder grounding alignment) | [2605.10485](https://arxiv.org/abs/2605.10485) | radar hook, unread |
-| HyperVLA (hypernetwork inference) | [2510.04898](https://arxiv.org/abs/2510.04898) | radar hook, unread |
+| VEGA (encoder grounding alignment) | [2605.10485](https://arxiv.org/abs/2605.10485) | ✅ [page](vega-encoder-grounding.md) |
+| HyperVLA (hypernetwork inference) | [2510.04898](https://arxiv.org/abs/2510.04898) | ✅ [page](hypervla-hypernetwork-inference.md) |
 | ActionX (RL expert pre-training) | [fnbot.2026.1806605](https://www.frontiersin.org/journals/neurorobotics/articles/10.3389/fnbot.2026.1806605/full) | ✅ [page](actionx-rl-expert-pretraining.md) |
 
 **Unfreezing schedules under a compute budget (owner steering 08-09 10:38Z, a(t)/b(t) framing):**

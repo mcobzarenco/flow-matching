@@ -463,3 +463,9 @@ chunk-as-unit), fields-probe ranker, or distillation from the
   |rho| ≈ 0.03 — a verifier must argue for ~an order of magnitude
   more before its GPU-hours are priced. 153 constant-KL rows
   excluded from rho reads; eligible width 4–9, median 8.
+
+- **Fresh radar hook banked 2026-08-09 12:3xZ (sweep; unread,
+  skim-class only):** "Robot Critics that Sweat the Small Stuff"
+  2606.21572 — critic/verifier family, possibly fine-grained
+  failure detection; sits near the #6 scorer-rung menu and the
+  #19 selector flavors. Skim to place, then read or drop.

@@ -236,3 +236,31 @@ between these two priors on our own panel before any escalation.
   T-guard delta via the q4 subset join. Local GPU confirmed free
   23:09Z (transient unit exited, 0 MiB) — the selfsubgoal probe
   window is open.
+- **2026-08-09 — seventh selection flavor, with the first direct
+  evidence on WHY external critics fail best-of-K ([ForesightFlow
+  page](../papers/foresightflow-self-scored-bestofk.md),
+  2606.04968, deep-read same session the sweep banked it):** the
+  same flow network generates a per-step success-potential track
+  beside each action chunk (~1K extra params); best-of-K picks the
+  highest-mean track. **The load-bearing table is the K-sweep**:
+  IDQL's separate 500M critic ranks the policy's own candidates at
+  chance (39.0 → 38.4 SR from K=1→5) while the jointly-generated
+  scorer climbs +5.0 — selector *shape* beats selector *size*, and
+  that's the third strike on post-hoc probe selectors against our
+  banked best-of-10 ceiling. Training = decoupled
+  advantage-weighted FM (weights on action velocities only —
+  coupled weighting lets an overconfident scorer mask its own
+  corrective gradient). Carried as a directional prior, not a
+  plan: needs stage labels + mixed-quality rollouts, which the
+  offline panel doesn't have. Bonus instrument: 1-NFE endpoint
+  preview ranks candidates at Kendall τ ≈ 0.83 vs full
+  integration (~97% of the selection gain) — score-before-
+  integrate is available to any future selector rung.
+- **Production dT sighting (2026-08-09,
+  [Qwen-VLA page](../papers/qwen-vla-early-fusion.md)):** RL
+  rollouts sample at τ=1.0, deployment sharpens to **τ=0.6** — a
+  production stack independently landing on the cool side, the
+  same direction as our record-only dT table's mild monotone
+  toward T=0.5. Banked beside the table as a sighting, not
+  evidence (their mechanism is exploration-vs-exploitation, not
+  mean-collapse); primary stays T=1.0 per pre-reg.

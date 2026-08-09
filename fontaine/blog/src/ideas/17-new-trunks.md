@@ -286,3 +286,49 @@ disqualifying for a manipulation trunk.
   on RoboTwin), with SF's LLM-interior hook as the named sibling
   that may fit our single-tower Molmo2 better (no encoder/LLM seam
   needed).
+- **Lit 2026-08-09 12:1xZ ([QDepth-VLA
+  page](../papers/qdepth-vla.md) 2510.14836, last banked radar hook
+  cleared):** the aux-spatial menu gains its third recipe class —
+  {encoder-align (VEGA), LLM-interior-align (SF),
+  **expert-generative** (QDepth: parallel 18-layer expert predicts
+  VQ depth tokens from vision tokens, monocular pseudo-labels)}.
+  The third is the only one needing NO encoder seam — vision tokens
+  in, depth codes out — so it is the named single-tower-Molmo2
+  fallback if the family is ever pre-registered. Two teeth pulled
+  before citing: the depth tokens ride the inference context
+  (deploy cost nonzero, unmeasured — the family's zero-cost selling
+  point is traded away with no head-to-head vs VEGA/SF anywhere),
+  and the ablation splits the +8.5 into ~−2.9 supervision / ~−5.6
+  scaffold — the aux-*signal* claim is the small half.
+- **Lit 2026-08-09 12:xZ — the trunk-redundancy ledger opens with
+  numbers ([Fewer layers / CLP page](../papers/fewer-layers-clp.md)
+  2606.20246, deep-read same session the sweep banked it):** CKA
+  twin-layer pruning *before* finetuning (one calibration forward
+  pass, keep the first of each high-similarity run, finetune heals
+  the seams): 33–50% of π₀/GR00T-N1.5 depth removable — including
+  **8 of GR00T's 16 DiT expert layers** — at ~−28-31% train time
+  and ~−28-30% inference; low-data finetunes *gain* (+6.9 π₀
+  LIBERO at 10% demos = implicit regularization; full-data GR00T
+  −0.9 ≈ cost-neutral, which is our regime's honest expectation).
+  CKA beats MSE/cosine/random selection. Banked: the CKA map as a
+  one-forward-pass diagnostic for our trunk+expert checkpoints
+  (the fractional-depth mount discussion has no redundancy
+  evidence behind it); expert-sizing datapoint beside HyperVLA;
+  throughput fourth lever class (FLOP-count mechanism — immune to
+  the kernel-scheduling artifacts that killed perf pass-1's
+  microbench transfer). Prune-then-attach = named sequel arm for
+  any future attach screen, own pre-reg required.
+- **Lit 2026-08-09 12:3xZ — the early-fusion pole staked
+  ([Qwen-VLA page](../papers/qwen-vla-early-fusion.md) 2605.30280,
+  read same session):** first production VLA on a *natively*
+  early-fused trunk (Qwen3.5-4B, ViT tokens interleaved in the
+  text stream, gated-linear hybrid attention) + 1.15B
+  single-stream DiT flow expert (joint self-attention over
+  concatenated VLM states + noisy chunk, AdaLN). Strong
+  everywhere, and the OOD headline — real-ALOHA 76.9 vs π₀.₅'s
+  41.5 — is the claim early fusion is supposed to buy;
+  **stack-vs-stack confound loud, no fusion-controlled ablation
+  exists**. Four-stage recipe: T2A (expert trains, trunk FROZEN)
+  → joint CPT → SFT (VL weight 0.1 vs action 1.0) → narrow PPO.
+  Trunk-ledger entry beside VLM4VLA; the frozen-first Stage I is
+  filed on #4's ledger.
