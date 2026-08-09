@@ -2,6 +2,37 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-09 23:21–23:2xZ (real `date -u` at write: 23:26) —
+tick (babysit): **green tick, no steering — er_60k first probe
+33.03@500 = the same early class as the 40k baseline (30.844@500),
+the ER init starts on equal footing.***
+
+**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
+~760 @ 23.6 st/min (2.5 s/step window, inside the corrected 2.2–2.6
+class), vram ~71.5 GiB ×4, util 69–99%, 2.1/155 GPU-h. First probe
+**33.03@500** vs 40k baseline 30.844@500 / adamc 31.30@500 — same
+early class, no anomaly; the primary ER-init delta read stays at
+step 5000 (~02:0xZ 08-10, with the async-save capture line owed
+in-channel). `fontaine-tiny10k` LIVE local — step 2,960 @ 21.9
+f/min, probe 11.64@2500 descending, 3.2/15 GPU-h.
+
+**Steering**: none — `read` empty, no new reactions (history ×5
+checked). The ~150 GPU-h cost correction (posted 23:01Z) remains
+unobjected → er_60k rides.
+
+**Done**: babysit ×1 exit 0 (both runs green). Pulled the 40k
+early-probe anchor (30.844@500) from the post-mortem chart's
+transcribed curve for the @500 comparison. Queue validate green
+depth 2 (10 open). now.md footer rolled to the last-2 rule (22:34 /
+22:07 blocks + 22:03/22:07/22:34 notes → archive). run_work_next
+confirmed armed.
+
+**Next**: chained work session → lit-radar-0820 (cpu, GPU-busy
+window). er_60k step-5000 boundary ~02:0xZ 08-10 → probe ladder vs
+40k (ER-init delta) + er60k-init-delta-midrun-chart item. tiny10k
+endpoint ~05:1xZ 08-10 → chained panel_v2 → Δ_capacity read. er_60k
+endpoint ~08-11 ~12:00Z → chained panel_v2 k4l2.*
+
 *Updated 2026-08-09 22:51–23:4xZ (real `date -u` at write: 23:37) —
 work session (bounded): **er_60k first poll = green run, wrong
 arithmetic — the launch post's "~0.92 s/step 40k class" was
@@ -57,137 +88,6 @@ endpoint ~08-11 ~12:00Z → chained panel_v2 k4l2. MolmoAct2 follow-up
 arms + ArmnetBench checkpoint watch remain owner-decision / watch
 items.*
 
-*Updated 2026-08-09 22:34–22:5xZ (real `date -u` at write: 22:44) —
-tick (babysit): **the whole ER-60k arc closed inside one tick —
-owner go 22:36Z → adamc KILLED 22:40Z → param sheet 22:43Z (with the
-0.19% natural-share correction) → owner approval 22:45Z ("uniform
-sampling ... is fine, I'll fine-tune later. Parameters look good") →
-seed override 22:46Z caught pre-step-1 → `fontaine_molmo2_er_60k_ddp4`
-LIVE at 22:53Z, seed 0.***
-
-**Status**: `fontaine_molmo2_er_60k_ddp4` **LIVE** on box 4×H100
-(unit `fontaine-er-60k`, relaunched 22:53Z at seed 0; first launch
-22:50Z at the sheet's seed 2 stopped PRE-STEP-1 22:52Z when the
-owner's seed override crossed it, ~0 GPU-h lost). Gate 65 GPU-h;
-40k-class rate ~0.92 s/step ⇒ endpoint ~08-10 ~14:00Z; first-poll
-facts owed next session (E1 banner 880 ds / 38,628 eps / 18.67M fr;
-s/step; vram vs 77; wall projection in-channel). adamc final: step
-~11.8k, ~35.7/310 GPU-h, probe ladder ended **10.30@11500 =
-run-best** (3-rise watch receded); step_010000 kept on box,
-weights-only upload to fontaine-checkpoints in flight (unit
-`hf-up-adamc10k`; optimizer 32.6 GB stays local), train_log.jsonl
-banked box+local for the zero-GPU post-mortem chart. ER snapshot
-verified COMPLETE on box (0 incomplete blobs, all shards).
-`fontaine-tiny10k` LIVE local — step 2,060, 22.1 st/min, 2.4/15
-GPU-h; probe 16.78@500 → 14.52@1000 → 13.04@1500 → **11.74@2000**
-descending on schedule. Host RAM 72 GiB available (drift
-86→80→77→72 across ticks, record-only; amendment holds). Endpoint
-~05:1xZ 08-10 → chained panel_v2 → Δ_capacity read ~06:3xZ.
-
-**Steering**: owner 22:36:23Z **"my rig datasets = cleaned and v2 and
-yes, you have my go"** + 22:40Z ids-correct confirmation (caught ≤2
-min via the in-session 60 s Discord monitor; conversational mode
-held). Executed same-session: kill, ckpt/log banking, dataset
-resolution, detached upload+pull units, param sheet. Sheet
-**approved verbatim 22:45:23Z** — owner picked **uniform/natural
-sampling** over my 5% `--dataset-repeat` recommendation ("I'll
-fine-tune later"; the sheet's correction stands recorded: rig =
-0.19% ⇒ ~0.15 expected views per rig frame — accepted as an owner
-cost-call). **Seed override 22:46:40Z** ("let's use the same seed
-too") = seed 0, the 40k shuffle seed, explicitly overriding the
-fresh-seed standing rule — arrived after the 22:50Z launch, caught
-pre-step-1, relaunched 22:53Z. Launch confirmed in-channel 22:5xZ.
-No open owner questions.
-
-**Done**: babysit ×1 exit 0 (22:34; adamc 11,780 @ 22.1 st/min
-pre-kill, tiny10k 1,920 @ 22.1). adamc killed at owner go (charter
-owner-call class, not a gate kill; babysit.toml entry pruned with
-full disposition note). Queue item `owner-er60k-run-prep-0809`
-updated (ER download complete). Pre-reg draft updated in place
-(open-inputs section → resolved/executed/arithmetic-pinned).
-run_work_next armed for the chained session (param-sheet
-finalization + launch on approval, else lit-radar-0820).
-
-**Next**: er_60k first poll next session (E1 banner + s/step + vram
-+ projection in-channel; babysit entry live with the K1-class kill
-lines; pre-reg updated in place — the ER-init delta vs the 40k probe
-curve is the primary read). Chained work session → lit-radar-0820
-(CPU, GPU-busy window). tiny10k
-endpoint ~05:1xZ 08-10 → chained panel_v2 → Δ_capacity readout.
-AdamC post-mortem chart = queued zero-GPU item. MolmoAct2 follow-up
-arms + ArmnetBench checkpoint watch remain owner-decision / watch
-items.*
-
-*Previous update 2026-08-09 22:07–22:5xZ (real `date -u` at write: 22:50) —
-work session (bounded): **lit-radar-0819 CLOSED — 4 Papers pages
-same session via 5-agent fan-out, and the first hook in 9 sweeps to
-STRENGTHEN on contact (Squint: the rollout-substrate blocker is
-mechanically gone). Mid-session owner steering (22:14Z): proposed
-Molmo2-ER 60k run replacing adamc — feasibility verified + draft
-pre-reg posted within the hour; and adamc's 3-rise probe watch
-RESOLVED as a recede (10.30@11500, new run-best) — surfaced
-in-channel for the kill call.***
-
-**Status**: `fontaine_molmo2_adamc_100k_ddp4` LIVE — babysit ×3 exit
-0 (22:11/22:26/22:45), step 11,640, ~21–23.5 st/min, 35.3/310 GPU-h,
-vram 75.3 ×4. **Probe 10.30@11500 = NEW RUN-BEST** — the
-3-consecutive-rise watch resolved as the recede-precedent class
-predicted; owner kill proposal (22:14Z) pending owner confirmation
-with this fact posted. Endpoint ~08-12 ~17:00Z if it rides.
-`fontaine-tiny10k` LIVE local — step 1,520+, ~20 st/min on
-projection, 2.1/15 GPU-h; probe 16.78@500 → 14.52@1000 →
-13.04@1500 descending on schedule. Host RAM 143/221 used, 77 GiB
-available (80→77 drift, record-only; amendment holds). Endpoint
-~05:1xZ 08-10 → chained panel_v2 → Δ_capacity read ~06:3xZ.
-
-**Steering**: owner 22:14:00Z — Molmo2-ER init question + proposed
-ER-60k run (matched 40k params, rig data from step 0, kill adamc).
-Answered 22:19Z: **ER verified drop-in** (config diff = RoPE
-metadata only; safetensors manifests identical keys + identical
-19,403,476,800 bytes; launcher change = `--backbone
-allenai/Molmo2-ER`). Draft pre-reg posted
-([post](posts/2026-08-09-prereg-molmo2-er-60k.md)); ER snapshot
-download started on box (unit `hf-dl-molmo2-er`); queue item
-`owner-er60k-run-prep-0809` opened. **Awaiting: kill go + rig
-dataset pointers + mixture call** (no oversample flag exists —
-natural share vs small code addition). Tight-polling until
-answered.
-
-**Done**: **lit-radar-0819 CLOSED** — 4 Papers pages
-([squint](papers/squint.md), [action-space-design](papers/action-space-design.md),
-[so101-vla-benchmark](papers/so101-vla-benchmark.md),
-[cl-triangle](papers/cl-triangle.md)), all curl-200. Headlines:
-**Squint** — MIT SO-101 twin in ManiSkill3, install-verified,
-96.1→91.3% ranking-preserving sim→real; correction: vendored not
-upstreamed; far-OOD default visuals → relative screens first; #16
-gains a design problem not an access problem, #6 gains free sim
-labels, #22 unparks as relative screens. **Action-space** — hook
-strengthened: code+data verified, chunk-wise delta-joint beats our
-absolute cell 88.0 vs 79.6 in-class → **idea #23 opened**
-([page](ideas/23-action-space.md)); decode-identical cells differ
-8–15pp in rollouts = standing offline↔rollout inversion caveat.
-**SO-101 bench** — n=20/cell, leaky multi-label taxonomy, execution
-labels saturate 91–100%; prize = 16 unlisted `rollout_*` Hub
-datasets (unlabeled, ~2–3 h self-label pass to use). **CL
-triangle** — contradiction dissolves: zero-replay FT always
-forgets; replay ρ 0.02–0.2 @ ~20% batches suffices (real-robot 3B
-full-FT) → #17 unfreeze price list, #4 free drift instrument +
-LoRA-joint rung candidate, #16 rig-phase replay clause. Ideas
-#4/#5/#6/#16/#17/#22 fed + #23 opened; Radar 0819 flipped ✅ +
-Radar 0820 table added. Refill: 4 new angles → 16 verified, only
-2/16 dups (both already deep-read; one independently re-converged
-on our banked offline-validation page) → `lit-radar-0820` queued
-(4 priority hooks + 10 spares). check.py 599 green; Space pushed,
-7 new/changed pages curl-200.
-
-**Next**: owner reply opens `owner-er60k-run-prep-0809` (param
-sheet ~30 min after inputs; launch only on sheet approval). Else
-`queue_cli.py next` → `lit-radar-0820` (CPU, GPU-busy window).
-tiny10k endpoint ~05:1xZ 08-10 → chained panel_v2 → Δ_capacity
-readout. adamc endpoint ~08-12 ~17:00Z if it rides the kill call.
-MolmoAct2 follow-up arms + ArmnetBench checkpoint watch remain
-owner-decision / watch items.*
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -220,31 +120,6 @@ call — no endpoint, no chained evals)**). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
-Session 2026-08-09 22:03–22:1xZ (tick, babysit; 0 new GPU-h — adamc
-rides 33.6/310, tiny10k 1.9/15): green tick, no steering (read =
-own 22:01 post only; no new reactions). adamc step 11,080 @ 22.3
-st/min; probe 11.41@11000 = third consecutive rise off the
-10.63@9500 run-best — logged as a named probe-rise watch
-(record-only per pre-reg, no kill line touches it; prior upticks
-receded within 1–2 evals). tiny10k step 1,240 on projection, probe
-14.52@1000 descending; host RAM 141/221 used, 80 GiB available —
-amendment holds. Queue green depth 3 (9 open); run_work_next armed
-(22:04) for lit-radar-0819.
-
-Session 2026-08-09 22:07–22:5xZ (work, bounded; 0 new GPU-h — adamc
-rides 35.3/310, tiny10k 2.1/15; explore): lit-radar-0819 closed —
-4 deep reads + fresh sweep as 5 concurrent subagents, 4 Papers
-pages (squint, action-space-design, so101-vla-benchmark,
-cl-triangle); Squint = first hook in 9 sweeps to strengthen on
-contact (rollout-substrate blocker mechanically gone); idea #23
-opened (chunk-wise delta-joint, 88.0 vs 79.6 in-class); CL
-triangle adjudicated (replay ρ 0.02–0.2 suffices). Mid-session
-owner steering 22:14Z: ER-60k proposal — ER init byte-verified
-drop-in + draft pre-reg posted + box snapshot download started
-within the hour; adamc 3-rise watch resolved recede (10.30@11500
-new run-best), surfaced for the kill call. Refill 14/16 clean →
-0820 queued (4 hooks + 10 spares). check 599; Space pushed ×2.
-
 Session 2026-08-09 22:51–23:4xZ (work, bounded; 0 new GPU-h spent by
 the session itself — er_60k rides ~3/155 at write, tiny10k 3.0/15;
 exploit): er_60k first poll green (E1 exact, 2.23 s/step, vram 66.6,
@@ -258,28 +133,13 @@ the AdamC post-mortem: chart-led post (three matched views, 10.80 vs
 loss near-parity), lr_backbone artifact verified not a
 misconfiguration before writing. check 599; Space pushed, pages 200.
 
-Session 2026-08-09 22:34–22:5xZ (tick, babysit; 0 new GPU-h — adamc
-stopped at ~35.7/310 final, tiny10k rides 2.4/15): ER-60k GO landed
-mid-tick (owner 22:36Z "my rig datasets = cleaned and v2 and yes,
-you have my go"; ids confirmed 22:40Z — caught ≤2 min by the
-in-session 60 s Discord monitor). adamc_100k killed clean 22:40Z at
-step ~11.8k — final probe 10.30@11500 = run-best; step_010000 kept
-on box + weights-only upload to fontaine-checkpoints
-(hf-up-adamc10k), train_log.jsonl banked box+local for the zero-GPU
-post-mortem. Rig datasets resolved: so101_pick_place_clean (7 ep /
-3.4k fr) + so101_pick_place_v2 (50 ep / 32.7k fr), already in
-~/datasets on box, LeRobot v3.0 compatible. Param sheet posted
-22:43Z with a mixture CORRECTION: natural share = 0.19% =
-arithmetically invisible (loader path-dedup blocks zero-code
-oversample) → --dataset-repeat @ ~5% recommended; awaiting approval
-+ pick. ER snapshot verified complete on box. babysit ×1 exit 0;
-tiny10k probe 11.74@2000 descending; host RAM 72 GiB available
-(drift record-only). babysit.toml adamc entry pruned; queue item
-updated; run_work_next armed (launch-on-approval else
-lit-radar-0820). POST-NOTE same tick: approval 22:45Z + seed
-override 22:46Z + launch 22:50Z (seed 2, stopped pre-step-1) +
-relaunch 22:53Z seed 0 LIVE — er_60k babysit entry live, launcher
-launch_box_fontaine_molmo2_er_60k_ddp4.sh committed, pre-reg updated
-in place; adamc step-10k weights-only upload VERIFIED DONE on
-fontaine-checkpoints; rig dataset Hub pull done (both already in
-~/datasets).
+Session 2026-08-09 23:21–23:2xZ (tick, babysit; 0 new GPU-h —
+er_60k rides 2.1/155, tiny10k 3.2/15): green tick, no steering
+(read empty, no new reactions; the ~150 GPU-h correction
+unobjected → rides). er_60k step ~760 @ 23.6 st/min in the
+corrected rate class, vram ~71.5 ×4; first probe 33.03@500 vs 40k
+baseline 30.844@500 / adamc 31.30@500 = ER init in the same early
+class, no anomaly — primary delta read at step 5000 (~02:0xZ
+08-10). tiny10k step 2,960, probe 11.64@2500 descending. Queue
+green depth 2 (10 open); footer rolled to last-2; run_work_next
+armed → lit-radar-0820.
