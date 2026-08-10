@@ -5,6 +5,54 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-10 04:25–04:3xZ (real `date -u` at write: 04:27) —
+tick (babysit): **tiny10k rate RECOVERED — ~22 st/min steady**, back
+in the pre-kill 21.7–23.6 band (log `s_per_step` 2.67–2.70; babysit
+window 20.9 st/min over 8840→9080). Last tick's 13.3 st/min was a
+post-resume transient (worker/cache warm-up), NOT a steady
+input-bound state — the workers-6 config is fine, the ride-don't-
+restart call cost nothing. **Endpoint moves back to ~05:1xZ**
+(projection back to ~8.2/15 GPU-h). Host RAM 93/221 used, 128
+available — slight growth vs 84 last tick; record-only watch, ~40
+min of run left, no OOM risk at this margin. Loss 0.13x in-band,
+vram 36.6 alloc peak unchanged.*
+
+**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
+~8,720, probe … 7.65@8000 → 8.29@8500 (latest; @9000 eval ~10 min
+out — next tick's fact), 27.9 st/min, util 65–100% ×4, vram ~71.7
+×4 vs 77 bar, projection 22.4/155 GPU-h; endpoint ~08-11 ~12:00Z.
+`fontaine-tiny10k-r8750` LIVE local — step ~9,120/10,000 at ~22
+st/min, rung @9500 next (~04:4xZ), then the @10000 primary read vs
+banked F@10k 9.4157; endpoint ~05:1xZ + chained panel eval.
+
+**Steering**: none — `read` empty, history ×5 unchanged (lit-pause
+exchange still the last owner message, no new reactions).
+
+**Done**: babysit ×1 exit 0 (both live; tiny window valid again
+post-reset — 20.9 st/min over 11.5 min). Rate cross-checked by hand:
+75 s grep window misfired (matched the resume banner), so read the
+log's own `s_per_step` field directly — 2.67–2.70 s/step steady =
+~22 st/min, transient-recovery confirmed. free -g host-RAM check
+(standing OOM-class rule): 93/221, 128 available, watch noted.
+babysit.toml boundary updated (RATE RECOVERED block, endpoint back
+to ~05:1xZ). No post — a rate recovery that un-slips an endpoint is
+record-only good news; the Δ_capacity endpoint post carries it.
+Queue validate OK: depth 0 pickable WITH stated depth_reason (lit
+pause). run_work_next left unarmed — the ~05:1x–05:3xZ tick chain
+owns tiny10k post-processing (panel_v2 → Δ_capacity read). Body +
+footer rolled per last-2 (04:13 + 04:03 blocks, 04:03 note → 08-10
+archive).
+
+**Next**: tiny10k @9500 rung ~04:4xZ (record-only, wobble band
+~0.25), endpoint ~05:1xZ → chained panel_v2 → Δ_capacity read @10k
+(vs banked F@10k 9.4157) — pre-kill was 0.05 UNDER at @9000, the
+resumed path re-ran @9000 at 9.56 (0.15 above), the tiny-wins lean
+is genuinely open; |Δ|≤0.3 "prior confirmed" vs "tiny wins", the
+@10k paired CI95 decides. er_60k @9000 rung imminent, record-only
+to endpoint ~08-11 ~12:00Z; @7500-class transient recurrence
+upgrades to a posted fact. No lit refills until the owner
+re-enables.*
+
 *Updated 2026-08-10 04:13–04:3xZ (real `date -u` at write: 04:21) —
 tick (babysit): **resumed tiny10k runs ~40% slower at workers 6 —
 13.3 st/min measured (90 s window, steps 8860→8880) vs 21.7–23.6
@@ -58,53 +106,6 @@ decides. er_60k rungs record-only to endpoint ~08-11 ~12:00Z;
 @7500-class transient recurrence upgrades to a posted fact. No lit
 refills until the owner re-enables.*
 
-*Updated 2026-08-10 04:03–04:2xZ (real `date -u` at write: 04:15) —
-tick (babysit): **tiny10k HOST-RAM OOM at step ~9,060 → RESUMED from
-step_008750.** The 04:00:55Z systemd oom-kill (host RAM, not GPU —
-vram 36.6/80, loss 0.13x, probe **9.37@9000** run-best at death) cost
-~310 steps; relaunched 04:06Z as unit `fontaine-tiny10k-r8750` with
-full `--resume` (optimizer/scheduler verified at lr 1.38e-05, exactly
-on the pre-kill cosine), fresh shuffle seed 1 (trainer-enforced +
-standing resume-seed policy; eval-seed stays 0 → probe ladder
-comparable), workers 10→6 for RAM headroom. One rc2 false start:
-`--backbone-init-from` is mutually exclusive with `--resume` —
-dropped. **New endpoint ~05:1xZ** + chained panel_v2 @10000; the
-Δ_capacity read still lands this morning.*
-
-**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
-~8,120, probe … 15.75@7500 (transient) → **7.65@8000** run-best
-(matched deltas … −0.48, +7.11 transient, **−0.98**), 26.3 st/min,
-util 95–96% ×4, vram ~71.7 ×4 vs 77 bar, ~20.9/155 GPU-h; endpoint
-~08-11 ~12:00Z. `fontaine-tiny10k-r8750` LIVE local — resumed at
-step 8,750/10,000, rungs @9000–@9500 re-run on the resumed path,
-then the @10000 primary read vs banked F@10k 9.4157; endpoint
-~05:1xZ + chained panel eval.
-
-**Steering**: none — `read` empty, history ×5 unchanged (lit-pause
-exchange still the last owner message, no new reactions).
-
-**Done**: babysit ×1 exit 1 → diagnosed: tiny10k unit oom-killed by
-the host at 04:00:55Z (journal), GPU empty, step_008750 async save
-complete on disk. Wrote `launch_local_tiny10k_resume8750.sh`
-(verbatim recipe + the three resume deltas above), launched via
-systemd-run, verified the resume banner (expert + adapted backbone +
-optimizer at step 8750). Incident + relaunch posted in-channel.
-babysit.toml re-pointed (r8750 log, OOM+RESUME history in boundary).
-Queue validate OK: depth 0 pickable WITH stated depth_reason (lit
-pause). run_work_next left unarmed — the ~05:1x–05:3xZ tick chain
-owns tiny10k post-processing (panel_v2 → Δ_capacity read). Body +
-footer rolled per last-2 (03:23 block + 03:34 note → 08-10 archive).
-
-**Next**: tiny10k endpoint ~05:1xZ → chained panel_v2 → Δ_capacity
-read @10k (vs banked F@10k 9.4157) — tiny was 0.05 UNDER F's
-endpoint at step 9000 pre-kill; |Δ|≤0.3 "prior confirmed" vs "tiny
-wins" leaning tiny-wins, the @10k paired CI95 decides. Watch the
-resumed run's first probe rung (@9000 re-run, fresh data order) for
-seed-1 consistency with the pre-kill 9.37. er_60k rungs record-only
-to endpoint ~08-11 ~12:00Z; @7500-class transient recurrence
-upgrades to a posted fact. No lit refills until the owner
-re-enables.*
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -138,18 +139,6 @@ dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
 
-Session 2026-08-10 04:03–04:2xZ (tick, babysit; 0 new GPU-h logged —
-er_60k rides ~20.9/155, tiny10k ~8.0/15 incl. ~0.25 lost to the OOM
-window): incident tick — tiny10k HOST-RAM OOM-killed at step ~9,060
-(04:00:55Z, host RAM not GPU; probe 9.37@9000 run-best at death);
-resumed 04:06Z from step_008750 as fontaine-tiny10k-r8750 (full
---resume, fresh seed 1 per policy, eval-seed 0, workers 10→6), ~310
-steps lost, endpoint slips to ~05:1xZ + chained panel_v2 @10k.
-Incident posted in-channel. er_60k untouched, 7.65@8000 run-best
-riding. No steering. Queue depth 0 pickable with stated reason (lit
-pause). run_work_next unarmed — the ~05:1x–05:3xZ tick chain owns
-tiny10k post-processing.
-
 Session 2026-08-10 04:13–04:3xZ (tick, babysit; 0 new GPU-h logged —
 er_60k rides ~21.6/155, tiny10k ~8.1/15): steady-state poll on the
 resumed tiny10k — 13.3 st/min at workers 6 vs 21.7–23.6 pre-kill
@@ -165,3 +154,15 @@ pre-kill was 0.05 under — @10k decides). No
 steering. Queue depth 0 pickable with stated reason (lit pause).
 run_work_next unarmed — the ~05:4x–06:0xZ tick chain owns tiny10k
 post-processing.
+
+Session 2026-08-10 04:25–04:3xZ (tick, babysit; 0 new GPU-h logged —
+er_60k rides ~22.4/155 projection, tiny10k ~8.2/15): recovery tick —
+tiny10k rate back to ~22 st/min (log s_per_step 2.67–2.70; babysit
+window 20.9), last tick's 13.3 was a post-resume transient, not
+input starvation; endpoint back ~05:4x → ~05:1xZ, ride call
+vindicated at zero cost. Host RAM 93/221 with 128 available (mild
+growth vs 84, ~40 min run left — record-only watch). er_60k no new
+rung (8.29@8500 latest, @9000 ~10 min out), step ~8,720 @27.9
+st/min. No steering. Queue depth 0 pickable with stated reason (lit
+pause). run_work_next unarmed — the ~05:1x–05:3xZ tick chain owns
+tiny10k post-processing.
