@@ -3,6 +3,47 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-10 00:54–01:0xZ (real `date -u` at write: 00:56) —
+tick (babysit): **green tick — er_60k probe **10.79@3000**, sixth
+consecutive descent; tiny10k hits the first matched rung:
+**10.94@5000** vs F **10.2595@5000**, interim record-only Δ
+**+0.68** (between the 0.3 prior-confirmed and 1.0 capacity-binds
+bands — the real Δ_capacity read stays @10k, paired per-frame
+CI95). No steering; run_work_next stays unarmed by the same
+decision — the ~02:1xZ tick owns the step-5000 boundary.***
+
+**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
+~3,180, probe 33.03@500 → 22.05@1000 → 16.78@1500 → 15.43@2000 →
+11.43@2500 → **10.79@3000**, 23.5 st/min window, util 84–100%, vram
+~71.5 ×4, 8.3/155 GPU-h; step-5000 boundary ~02:1xZ at the current
+rate (1,820 steps out at 00:55). `fontaine-tiny10k` LIVE local —
+step ~5,000, probe 10.88@4500 → **10.94@5000** (tiny wobble at the
+matched rung; F@5000 10.2595 → interim Δ +0.68 record-only), 21.7
+f/min, 4.7/15 GPU-h; endpoint ~05:1xZ 08-10.
+
+**Steering**: none — `read` empty, history ×5 shows the lit-pause
+exchange complete (owner 00:23Z, our ack 00:28Z last message), no
+new reactions; the ~150 GPU-h correction remains unobjected →
+er_60k rides.
+
+**Done**: babysit ×1 exit 0 (both runs green, no gate crossings;
+the tiny10k matched-rung interim delta noted above is record-only
+by pre-reg — capacity gap is the hypothesis under test, never a
+kill line). Queue validate: depth 1 <2 WITH stated reason (lit
+pause; post-pause supply is run-boundary-driven). run_work_next
+left unarmed again — same reasoning as 00:33: lit is paused so a
+chained session would idle ~1.2 h to the boundary, and the chart
+item is small/CPU with the instrument pre-built. Body + footer
+rolled per last-2 (23:55 work block + 00:1x-work footer note →
+08-10 archive).
+
+**Next**: ~02:1xZ tick → step-5000 boundary: async-save capture
+line + `er60k_init_delta_chart.py` → chart + facts in-channel
+(er60k-init-delta-midrun-chart item). tiny10k endpoint ~05:1xZ
+08-10 → chained panel_v2 → Δ_capacity read @10k. er_60k endpoint
+~08-11 ~12:00Z → chained panel_v2 k4l2. No lit refills until the
+owner re-enables.*
+
 *Updated 2026-08-10 00:33–00:4xZ (real `date -u` at write: 00:35) —
 tick (babysit): **green tick — er_60k probe **11.43@2500**, fifth
 consecutive descent; tiny10k **10.88@4500** breaks below its ~11.5
@@ -82,54 +123,6 @@ lit-radar-0822 (cpu, GPU-busy window). tiny10k endpoint ~05:1xZ
 08-10 → chained panel_v2 → Δ_capacity read. er_60k endpoint ~08-11
 ~12:00Z → chained panel_v2 k4l2.*
 
-*Updated 2026-08-09/10 23:55–02:xxZ (real `date -u` at write: 00:11) —
-work session (bounded): **lit-radar-0821 CLOSED — 4 Papers pages
-landed + wired via a 5-agent fan-out; find of the slice:
-NeuralActuator's third platform IS the SO-101, everything released
-(3 SO-101 checkpoints + teleop code), the rig-day force-sensing
-rider is now shovel-ready. Session stays live for the er_60k
-step-5000 boundary (~02:0xZ): ER-init delta chart + facts
-in-channel.***
-
-**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
-~2,040, probe 33.03@500 → 22.05@1000 → 16.78@1500 → **15.43@2000**
-descending, ~27 st/min, util 53–94%, vram ~71.5 ×4, 5.4/155 GPU-h;
-step-5000 boundary ~02:0xZ. `fontaine-tiny10k` LIVE local — step
-~4,040, probe 11.56@4000 (plateau forming ~11.5 vs F@5000 10.26),
-4.0/15 GPU-h; endpoint ~05:1xZ 08-10.
-
-**Steering**: none — `read` surfaced only my own slice post; the
-~150 GPU-h correction remains unobjected → er_60k rides.
-
-**Done**: lit-radar-0821 executed end-to-end (7951bac): 4 Papers
-pages same-session per the permanent rule —
-[Quality over Quantity](papers/quality-over-quantity.md) (offline
-influence pole, runnable no-rollout; gains only on 40–50% injected
-failures, hard top-N not weighting; cheapest #9 arm sketched),
-[Curse of Precision](papers/curse-of-precision.md) (sim-only R²>0.97
-fit, worst points 23–65× extrapolated; hook's "not the task"
-corrected — c moved 2.35→1.00 mm by randomization alone; #16
-tolerance-dial + Δc design rule; #9 clarity-filter lever),
-[NeuralActuator](papers/neuralactuator.md) (SO-101 IS the third
-platform: force 0.47–0.73 N MAE from load registers, no current
-sensor, MIT everything; "torque-from-current" hook wrong twice; #16
-rider superseded, #9 Δq_d gate stands),
-[GigaWorld-1 / WMBench](papers/gigaworld-wmbench.md) (324K
-"rollouts" = graded videos under replayed actions, real-ranking
-never computed; Apache-2.0 release kills the 0820 "no artifact"
-objection; screen ≠ certificate stands). Ideas #9/#16 pages + index
-hooks fed; Radar 0821 flipped; 0822 queued (18 checked, 15
-abs-verified, 12 survived; 3 dups already-read — sweep converging).
-check.py 599 green ×2; Space pushed, 4 pages curl-200; slice
-summary in-channel. Babysit ×2 exit 0.
-
-**Next**: er_60k step-5000 boundary ~02:0xZ THIS SESSION →
-async-save capture line + `er60k_init_delta_chart.py` → chart +
-facts in-channel (er60k-init-delta-midrun-chart item). tiny10k
-endpoint ~05:1xZ 08-10 → chained panel_v2 → Δ_capacity read. er_60k
-endpoint ~08-11 ~12:00Z → chained panel_v2 k4l2. `queue_cli.py
-next` after the boundary → lit-radar-0822 (cpu, GPU-busy window).*
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -162,22 +155,6 @@ call — no endpoint, no chained evals)**). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
-Session 2026-08-10 00:1x–00:3xZ (work, chained; 0 new GPU-h;
-note written retroactively at the 00:33 tick — the session ended
-without rolling now.md): lit-radar-0822 CLOSED as the FINAL slice
-before the owner pause (e887451). Steering 00:23:47Z "Can we pause
-the lit slices for now" caught mid-flight (fan-out already reading
-~00:20Z), acked in-channel 00:28Z; the 4 finished pages landed
-quietly, no summary post, shelve-entirely offer open: Ambient
-Diffusion Policy (flow-time band-mask lever, ports to rectified
-flow in sigma-space, composes with QoQ), the curation-metrics pair
-(detection/policy DECOUPLED 0.804→13.3%, length confound →
-rank-by-length null arm, velocity census demoted to coverage-only),
-PhAIL (KM/RMST/macro-KS resolves 2/3 pairs at 25–30 ep/cell, human
-anchor zero statistical power). Ideas #9/#16/#15 wired; NO 0823
-queued (allocation suspended, spares recorded in the closed item);
-check.py 599 green.
-
 Session 2026-08-10 00:33–00:4xZ (tick, babysit; 0 new GPU-h —
 er_60k rides 6.9/155, tiny10k 4.4/15): green tick — er_60k
 11.43@2500 fifth consecutive descent, 23.5 st/min; tiny10k
@@ -189,3 +166,13 @@ real ~00:35Z) and committed its orphaned queue.md regen. Queue
 depth 1 with stated reason (lit pause, run-boundary-driven supply).
 run_work_next LEFT unarmed by decision — the ~02:0xZ tick owns the
 step-5000 ER-init delta read (in-tick, or arm-on-overrun).
+
+Session 2026-08-10 00:54–01:0xZ (tick, babysit; 0 new GPU-h —
+er_60k rides 8.3/155, tiny10k 4.7/15): green tick — er_60k
+10.79@3000 sixth consecutive descent, 23.5 st/min, boundary
+re-estimated ~02:1xZ. tiny10k first fully matched rung:
+10.94@5000 vs F 10.2595@5000, interim Δ +0.68 record-only
+(between the 0.3/1.0 bands; real Δ_capacity read @10k). No
+steering, no new reactions. Queue depth 1 (lit-pause reason
+stands). run_work_next left unarmed again — the ~02:1xZ tick owns
+the step-5000 ER-init delta read.
