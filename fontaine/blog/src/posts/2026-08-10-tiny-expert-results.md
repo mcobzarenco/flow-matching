@@ -100,9 +100,9 @@ pre-kill curve: 9.37@9000 pre-kill → 9.56/9.50 wobble → 9.35@10000.
 Chained panel_v2 @10000: pre-reg args verbatim, k4l2 panel_v2 plan
 sha-verified, heun30/draws1/stable, eval ~38 min / ~0.6 GPU-h at ~660 f/min single-GPU — run total ~9.3 of the 15 GPU-h gate.
 
-Artifacts: [panel report (tiny)](https://mcobzarenco-fontaine-blog.static.hf.space/reports/eval__fontaine_molmo2_flow_tiny_h256_10k_1xh100__step_010000__panel_v2_heun30_draws1_stable.html)
-· [panel report (F comparator)](https://mcobzarenco-fontaine-blog.static.hf.space/reports/eval__fontaine_molmo2_flow_frozen_10k_ddp4__step_010000__panel_v2_heun30_draws1_stable.html)
-· [frozen analysis JSON](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__tiny10k_delta_capacity.json)
+Artifacts: [panel report (tiny)](https://mcobzarenco-fontaine-reports.static.hf.space/eval__fontaine_molmo2_flow_tiny_h256_10k_1xh100__step_010000__panel_v2_heun30_draws1_stable.html)
+· [panel report (F comparator)](https://mcobzarenco-fontaine-reports.static.hf.space/eval__fontaine_molmo2_flow_frozen_10k_ddp4__step_010000__panel_v2_heun30_draws1_stable.html)
+· [frozen analysis JSON](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__tiny10k_delta_capacity.json)
 · checkpoint `fontaine_molmo2_flow_tiny_h256_10k_1xh100/step_010000`
 (weights-only, backbone deduplicated) on
 [fontaine-checkpoints](https://huggingface.co/mcobzarenco/fontaine-checkpoints).

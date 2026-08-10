@@ -9,7 +9,7 @@ with the φ_s target-time extension, trunk frozen. All frozen reads
 through `fontaine/scripts/snapflow_results.py` (banked
 oracle-before-data 09:xxZ, five oracles green before any endpoint
 byte existed); report
-[`analysis__snapflow_distill_30k_k4l2.json`](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__snapflow_distill_30k_k4l2.json).
+[`analysis__snapflow_distill_30k_k4l2.json`](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__snapflow_distill_30k_k4l2.json).
 Keying: **v1 panel, index keying** — the registered comparators
 predate the #18.2 stable-key adoption; in-flight reads finish as
 registered (record-only, stated not hidden).*
@@ -40,9 +40,9 @@ State-copy control rows byte-match the banked values on all three
 evals (11.7848 / 2.6202) — same panel, same join, quotable.
 
 Full HTML eval reports (per-repo tables + worst-frame galleries):
-[single draw](https://mcobzarenco-fontaine-blog.static.hf.space/reports/eval__fontaine_flow_snapdistill_h1024_30k_1xh100__step_030000__panel_curated_v0_k4l2_1nfe_euler1.html) ·
-[mean-of-5](https://mcobzarenco-fontaine-blog.static.hf.space/reports/eval__fontaine_flow_snapdistill_h1024_30k_1xh100__step_030000__panel_curated_v0_k4l2_1nfe_euler1_draws5.html) ·
-[mean-of-10](https://mcobzarenco-fontaine-blog.static.hf.space/reports/eval__fontaine_flow_snapdistill_h1024_30k_1xh100__step_030000__panel_curated_v0_k4l2_1nfe_euler1_draws10.html)
+[single draw](https://mcobzarenco-fontaine-reports.static.hf.space/eval__fontaine_flow_snapdistill_h1024_30k_1xh100__step_030000__panel_curated_v0_k4l2_1nfe_euler1.html) ·
+[mean-of-5](https://mcobzarenco-fontaine-reports.static.hf.space/eval__fontaine_flow_snapdistill_h1024_30k_1xh100__step_030000__panel_curated_v0_k4l2_1nfe_euler1_draws5.html) ·
+[mean-of-10](https://mcobzarenco-fontaine-reports.static.hf.space/eval__fontaine_flow_snapdistill_h1024_30k_1xh100__step_030000__panel_curated_v0_k4l2_1nfe_euler1_draws10.html)
 — teacher comparators on the [reports index](../reports.md).
 
 ## Verdict against the pre-registered lines

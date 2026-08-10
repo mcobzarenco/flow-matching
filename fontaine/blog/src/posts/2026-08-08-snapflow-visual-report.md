@@ -78,7 +78,7 @@ draw distribution. This is the fairness-probe finding operating in
 reverse: chunk-MAE rewards mode non-commitment, the 1-NFE endpoint
 approximates the posterior mean, so the distillation banked most of
 the ensembling gain *into every draw*. The AR family's curve
-(−0.145, [readout](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__draws10_t1_ar100k_k4l2.json))
+(−0.145, [readout](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__draws10_t1_ar100k_k4l2.json))
 shows the same mean-collapse from the other side: greedy AR decode
 already sits near its predictive mean, so draws buy little there too.
 Mean-of-draws is a flow-teacher superpower, and the student

@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-10T12:05:00Z
+**Updated:** 2026-08-10T14:55:00Z
 
-**Depth call:** depth 0 open at 05:5xZ 08-10 (STATED REASON for <2: owner lit-pause steering 00:23Z 08-10 suspends the refill lane; the T1 rung closed this session and every remaining item is owner-gated/blocked — fjoint finalize on owner go ~08-12 post-er-endpoint, vu5k/actckpt/img280/docs-tail/box-home-sweep all blocked or owner_hold). Work supply is run-boundary-driven: er-60k babysat to ~08-11 ~12:00Z endpoint -> chained panel_v2 -> paired reads vs 40k/60k banked panels. Local GPU free 05:45Z — next local launch needs a fresh pre-reg (T2 depth rung and tiny decode microbench are the named candidates, not yet pre-registered).
+**Depth call:** depth 0 open at 14:5xZ 08-10 (STATED REASON for <2: owner lit-pause steering 00:23Z 08-10 suspends the refill lane; molmoact2-oob-panel-eval closed DELIVERED this session and every remaining item is owner-gated/blocked — fjoint finalize on owner go ~08-12 post-er-endpoint, vu5k/actckpt/img280/docs-tail/box-home-sweep all blocked or owner_hold). Work supply is run-boundary-driven: er-60k babysat to ~08-11 ~12:00Z endpoint -> chained panel_v2 -> paired reads vs 40k/60k banked panels; blog-Space squash lands via unit fontaine-blog-migrate when HF storage GC clears (next session verifies + posts). Local GPU free again 14:24Z — next local launch needs a fresh pre-reg (T2 depth rung and tiny decode microbench remain the named candidates, not yet pre-registered).
 
-**8 open** (Live 1 · Queued 1 · Blocked 6 · Done 99)
+**7 open** (Live 1 · Queued 0 · Blocked 6 · Done 100)
 
 ## 🔴 Live (1)
 
@@ -26,23 +26,11 @@ OWNER RUN LIVE (launched 22:47-53Z 08-09, unit fontaine-er-60k): fontaine_molmo2
 
 ---
 
-## 🟢 Queued (1)
+## 🟢 Queued (0)
 
 *ready — waiting on a window or a boundary*
 
-**`molmoact2-oob-panel-eval`** · `gpu-local`
-
-OWNER STEERING 10:50Z+11:06Z 08-10: MolmoAct2 (allenai/MolmoAct2-SO100_101) out-of-band eval on the k4l2 panel
-
-**boundary:** local H100 free since 11:51Z 08-10 (er15k panel done). Owner explicitly requested the eval (10:50Z) and the plan (11:06Z, delivered); full sweep waits on smoke green + the pre-reg objection window. If the owner asks for a base-MolmoAct2 second arm, +1 sweep on the same harness. GO given 11:59Z; objection window on the finalized pre-reg still applies before the full sweep (smoke may start now). · [pre-reg](posts/2026-08-10-molmoact2-oob-eval-plan.md)
-
-<details><summary>full record</summary>
-
-OWNER STEERING 10:50Z+11:06Z 08-10: MolmoAct2 (allenai/MolmoAct2-SO100_101) out-of-band eval on the k4l2 panel. Deep implementation read DONE + in-depth plan posted (posts/2026-08-10-molmoact2-oob-eval-plan.md, in-channel 11:38Z): 30-step/1.0s chunk at native fps vs our 50-step/1.67s -&gt; matched-window (steps 0-29) re-pool of banked npzs is the primary read; their predict_action end-to-end (q01/q99 norm from checkpoint norm_stats.json); contamination measured 245/878 panel repos = 31.0% core frames -&gt; pooled/clean/contaminated splits. EXECUTE: (1) FINALIZE the pre-reg (the plan post is the registered sketch; finalization adds frames, seeds, abort oracles, immutability stamp) BEFORE any GPU minute; (2) predictor script molmoact2_panel_predict.py + oracle-gated matched-window reads instrument; (3) 500-frame stratified smoke + scale sanity; (4) full 25,800 sweep (systemd unit) after smoke green + owner objection window; (5) OWNER GO 11:59Z 08-10 ('plan sounds good, let's eval the so101 checkpoint'): side-by-side HTML report REQUIRED — same frames, three policies per frame: snapflow 80k (bijou_flow_artrunk@80k banked panel npzs: top-10-tickets 5.1847 headline + stable-key single-draw 6.5997) vs MolmoAct2 vs state-copy, plus summary-stats block (pooled/clean-633/contaminated-245, paired CI95, chunk+first MAE, matched 30-step window primary, 50-step secondary); reports page + in-channel numbers. Gate &lt;= 8 GPU-h (est 2-5). Record-only: nothing gates or repoints our runs.
-
-</details>
-
----
+*(empty)*
 
 ## 🟡 Blocked (6)
 
@@ -130,7 +118,7 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 
 ---
 
-## ✅ Done (99)
+## ✅ Done (100)
 
 *closed — the full record stays in each fold*
 
@@ -1515,6 +1503,20 @@ OWNER STEERING 19:58:05Z 08-09: investigate additional trajectory datasets we co
 <details><summary>full record</summary>
 
 OWNER STEERING 19:58:05Z 08-09: investigate additional trajectory datasets we could train on — ideally SO-101, but also look more generally. Deliverable: a detailed blog post with links to the datasets, statistics (episodes/hours/tasks/embodiments/modalities), brief descriptions, and an assessment of what is actually usable for our training recipes (community_curated_v0 is the current substrate). Post link in-channel when it lands.
+
+</details>
+
+---
+
+**`molmoact2-oob-panel-eval`** · `gpu-local`
+
+OWNER STEERING 10:50Z+11:06Z 08-10: MolmoAct2 (allenai/MolmoAct2-SO100_101) out-of-band eval on the k4l2 panel
+
+**boundary:** CLOSED 14:4xZ 08-10, DELIVERED END-TO-END IN ONE SESSION (~1.3/8 GPU-h): sweep rc=0 14:23:47Z (25,800 frames, 352 f/min sorted-index locality), frozen reads + contamination json banked (matched-window core, willnorris/bbox-2 excluded per owner amendment 13:14Z: snapflow top10tickets 3.90 / 60k-cont 4.46 / 40k 4.56 / stablekey 5.06 / er15k 5.89 / state-copy 8.32 / MolmoAct2 13.87 pooled = 16.97 clean-633 vs 7.00 contaminated-245; every paired read MOLMOACT2-WORSE, tight CIs; on their own training repos they beat state-copy -0.75 but trail snapflow +3.29 [+3.11,+3.48]), 3-policy HTML report rendered first try (32-frame gallery, 4 policies/joint, horizon visible) + uploaded to the NEW fontaine-reports static Space + reports.md section + numbers in-channel 14:37Z. HEADLINE FINDING: the released SO100_101 fine-tune does not transfer outside its 1,220-repo mixture (predicts sane joint-unit motion in the wrong workspace frame on unseen rigs). Owner threads answered same-session: 12:59Z inference-correctness challenge (contamination-split proof), 13:14Z exclusion amendment (applied + oracle branch), 13:48Z blog-storage question, 13:51Z reports-migration directive (fontaine-reports static Space live - dataset repo serves text/plain, tested; 72 blog links rewritten + 31 redirect stubs; squash queued behind HF GC via unit fontaine-blog-migrate), 14:13Z navbar bug (missing hashed toc js from the morning incident, re-uploaded, fixed). ORIGINAL EXECUTION RECORD: pre-reg finalized 00a9feb, smoke green 12:5xZ, sweep launched 13:2xZ after objection window. · [pre-reg](posts/2026-08-10-prereg-molmoact2-oob-panel.md)
+
+<details><summary>full record</summary>
+
+OWNER STEERING 10:50Z+11:06Z 08-10: MolmoAct2 (allenai/MolmoAct2-SO100_101) out-of-band eval on the k4l2 panel. Deep implementation read DONE + in-depth plan posted (posts/2026-08-10-molmoact2-oob-eval-plan.md, in-channel 11:38Z): 30-step/1.0s chunk at native fps vs our 50-step/1.67s -&gt; matched-window (steps 0-29) re-pool of banked npzs is the primary read; their predict_action end-to-end (q01/q99 norm from checkpoint norm_stats.json); contamination measured 245/878 panel repos = 31.0% core frames -&gt; pooled/clean/contaminated splits. EXECUTE: (1) FINALIZE the pre-reg (the plan post is the registered sketch; finalization adds frames, seeds, abort oracles, immutability stamp) BEFORE any GPU minute; (2) predictor script molmoact2_panel_predict.py + oracle-gated matched-window reads instrument; (3) 500-frame stratified smoke + scale sanity; (4) full 25,800 sweep (systemd unit) after smoke green + owner objection window; (5) OWNER GO 11:59Z 08-10 ('plan sounds good, let's eval the so101 checkpoint'): side-by-side HTML report REQUIRED — same frames, three policies per frame: snapflow 80k (bijou_flow_artrunk@80k banked panel npzs: top-10-tickets 5.1847 headline + stable-key single-draw 6.5997) vs MolmoAct2 vs state-copy, plus summary-stats block (pooled/clean-633/contaminated-245, paired CI95, chunk+first MAE, matched 30-step window primary, 50-step secondary); reports page + in-channel numbers. Gate &lt;= 8 GPU-h (est 2-5). Record-only: nothing gates or repoints our runs.
 
 </details>
 

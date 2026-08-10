@@ -21,12 +21,12 @@ first_mae ≤ 1.6 · ☆☆☆ mainline adoption.
 | 2 | **Flow teacher @80k, Heun-30, mean-of-top-10-tickets** | **5.1847** | **1.3831** | 300 | 409.6⁵ | 1245.0⁵ | [results](posts/2026-08-08-goldenticket-results.md) |
 | 3 | SnapFlow student, 1-NFE, mean-of-5 | 5.3918 | 1.6056 | 5 | 50.0 | 111.2 | [results](posts/2026-08-06-snapflow-results.md) |
 | 4 | SnapFlow student, 1-NFE, single draw | 5.6036 | 1.7039 | 1 | 46.9 | 100.1 | [results](posts/2026-08-06-snapflow-results.md) |
-| 5 | AR-100k, draws-10 mean, T=1.0 | 5.6515 | 1.9477 | 10 (serial) | 2107.3 | 7993.0 | [readout](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__draws10_t1_ar100k_k4l2.json) |
-| 6 | AR-100k, greedy decode (deployment anchor) | 5.8026 | 2.1431 | 1 (serial) | 247.0 | 2156.6 | [report](https://mcobzarenco-fontaine-blog.static.hf.space/reports/eval__bijou_arb_rcond_100k_ddp4__step_100000__panel_k4l2.html) |
+| 5 | AR-100k, draws-10 mean, T=1.0 | 5.6515 | 1.9477 | 10 (serial) | 2107.3 | 7993.0 | [readout](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__draws10_t1_ar100k_k4l2.json) |
+| 6 | AR-100k, greedy decode (deployment anchor) | 5.8026 | 2.1431 | 1 (serial) | 247.0 | 2156.6 | [report](https://mcobzarenco-fontaine-reports.static.hf.space/eval__bijou_arb_rcond_100k_ddp4__step_100000__panel_k4l2.html) |
 | 7 | **Flow teacher @80k, Heun-30, single draw (ticket 33)** | **5.6468** | 1.8963 | 30 | 115.7³ | 1234.0³ | [results](posts/2026-08-08-goldenticket-results.md) |
 | 8 | **Molmo2 AR 60k, greedy decode** | **5.8602** | **2.0719** | 1 (serial) | 143.8⁴ | 678.1⁴ | [results](posts/2026-08-09-molmo2-60k-results.md) |
 | 9 | Molmo2 AR 40k, greedy decode | 6.0079 | 2.1871 | 1 (serial) | 143.8⁴ | 678.1⁴ | [results](posts/2026-08-08-molmo2-endpoint-results.md) |
-| 10 | Molmo2 AR 40k, draws-10 mean, T=1.0 | 5.8492 | 1.9736 | 10 (serial) | 1191.2⁴ | 6291.3⁴ | [readout](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__draws10_t1_molmo2_40k_k4l2.json) |
+| 10 | Molmo2 AR 40k, draws-10 mean, T=1.0 | 5.8492 | 1.9736 | 10 (serial) | 1191.2⁴ | 6291.3⁴ | [readout](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__draws10_t1_molmo2_40k_k4l2.json) |
 | 11 | Flow teacher @80k, Heun-30, single draw (stable-key) | 6.5997 | 1.9355 | 30 | 115.7 | 1234.0 | [rebank](posts/2026-08-06-stablekey-rebank-results.md) |
 | 12 | state-copy (control) | 11.785 | 2.620 | 0 | — | — | banked, byte-matched every eval |
 
@@ -42,7 +42,7 @@ and decode config, ⁴).
 per-frame): the mean-of-**top-10-tickets** ensemble replaces the
 random mean-of-10 (5.3645/1.4242) it was measured against — paired
 Δ −0.174 [CI95 −0.196, −0.152] on 17,204 core frames, clustered CI
-agrees ([analysis](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__noise_ladder_seating.json)).
+agrees ([analysis](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__noise_ladder_seating.json)).
 ⁵ cost cells inherited from the random mean-of-10 row — identical
 decode config (10 draws × Heun-30), only the noise source differs.
 The ☆☆ first-mae arm (≤ 1.6) is **crossed** — 1.3831 is the best

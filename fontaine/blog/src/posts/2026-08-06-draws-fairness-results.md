@@ -8,7 +8,7 @@ challenge, instrumented and frozen before any per-draw number existed.
 Probe: flow-80k, draws=10 heun-30, the frozen 2,458-frame stride-7
 subset plan, `--dump-draws`; analysis
 `fontaine/scripts/draws_fairness.py`, report
-[`analysis__draws_fairness_k4l2.json`](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__draws_fairness_k4l2.json).
+[`analysis__draws_fairness_k4l2.json`](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__draws_fairness_k4l2.json).
 This is the 06:57Z
 relaunch: the first attempt scored all 2,458 frames and crashed in
 `merge_shards` (the mirror of the 04:4xZ bug — empty
@@ -109,7 +109,7 @@ settle actual rig performance either way.
 every dependent band is numerically unchanged**
 (`fontaine/scripts/sigma_draw_direct.py`, self-oracles O1–O4 green,
 report
-[`analysis__sigma_draw_direct.json`](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__sigma_draw_direct.json)).
+[`analysis__sigma_draw_direct.json`](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sigma_draw_direct.json)).
 
 - Primary (frame-level delta-method): pooled per-frame across-draw
   std → σ = 0.02367 at panel F_eff 16,488.5 (probe F_eff 2,341.7;

@@ -3,7 +3,7 @@
 *2026-08-05, work session ~20:1xZ. CPU analysis of the owner's two
 12:20Z box evals (queue #4; feeds ideas #1 and #12). Script:
 `fontaine/scripts/flow_vs_ar_paired.py`; full JSON:
-[`analysis__flow_vs_ar_paired_k4l2.json`](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__flow_vs_ar_paired_k4l2.json).*
+[`analysis__flow_vs_ar_paired_k4l2.json`](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__flow_vs_ar_paired_k4l2.json).*
 
 ## Instrument
 

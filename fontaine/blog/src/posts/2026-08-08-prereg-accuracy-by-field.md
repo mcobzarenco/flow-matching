@@ -15,7 +15,7 @@ field generation. **That was wrong for AR-100k.** The narrated pass
 then its actions) rides *automatically* on aux-trained checkpoints,
 and the banked AR-100k greedy panel has carried the accuracy-by-field
 block all along
-([report](https://mcobzarenco-fontaine-blog.static.hf.space/reports/eval__bijou_arb_rcond_100k_ddp4__step_100000__panel_k4l2.html)):
+([report](https://mcobzarenco-fontaine-reports.static.hf.space/eval__bijou_arb_rcond_100k_ddp4__step_100000__panel_k4l2.html)):
 
 | field | metric | value | frames |
 |---|---|---|---|

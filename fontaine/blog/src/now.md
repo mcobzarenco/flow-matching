@@ -4,6 +4,68 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-10 12:24–15:0xZ (real `date -u` at write: 14:58) —
+work session: **MolmoAct2 out-of-band eval DELIVERED END-TO-END in
+one session** — finalized pre-reg → predictor + oracle-gated reads
+instrument → 500-frame smoke → owner challenge answered with the
+contamination split → full 25,800-frame sweep → frozen reads →
+3-policy HTML report → posted, at ~1.3 of the 8 GPU-h gate. Plus:
+reports migrated to a new `fontaine-reports` static Space (owner
+directive), the blog-navbar regression found and fixed, and the box
+@25000 boundary caught with a new run-best.*
+
+**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
+~24,9xx at last poll, **NEW RUN-BEST 6.1306@25000**, save @25000
+async green (155.4 s behind boundary — record-only watch; @20000 was
+21.3 s), 26.6 f/min, ~62.4/155 GPU-h; endpoint ~08-11 ~12:00Z, next
+boundary @30000 ~17:4xZ. 10 new matched-delta legs banked
+(@20500–@25000): 10-leg mean −0.06, 34-leg running mean ≈ +0.005 —
+dead in-band. Local H100: FREE again 14:24Z. Unit
+`fontaine-blog-migrate` retrying the blog push+squash behind HF's
+storage GC (up to 6 h, log `~/logs/blog_space_migrate.log`).
+
+**Steering** (five owner threads, all answered same-session):
+(1) 12:59Z "shockingly poor — are we doing inference correctly?" →
+answered with the smoke contamination split (trained-on repos 7.24
+vs state-copy 7.33 parity; unseen 17.40 vs 7.68) — harness correct,
+finding real; (2) 13:14Z **amendment: exclude `willnorris/bbox-2`**
+→ applied to reads+report before any real read, oracle branch added;
+(3) 13:48Z "what uses 1 GiB on the blog?" → live tree is 263 MB
+(230 MB reports), the GiB is un-GC'd git history; (4) 13:51Z **move
+reports to `fontaine-reports` + squash** → done as a *static Space*
+(dataset repos serve HTML as text/plain — tested, pages wouldn't
+render; owner told of the substitution), 64 files live + curl-200,
+72 blog links rewritten, 31 redirect stubs for old deep links,
+squash queued behind GC; (5) 14:13Z "navbar gone" → morning-incident
+casualty: hashed `toc-b9c2449c.js` missing on the Space, re-uploaded
+(small files pass the cap), fixed + confirmed 200.
+
+**Done**: molmoact2-oob-panel-eval CLOSED (commits 00a9feb, b6cc2a7,
+this one): pre-reg finalized (immutable + Amendment 1), smoke green
+12:5xZ (tripwires passed), sweep rc=0 14:23:47Z (352 f/min,
+25,800 frames), frozen reads banked — matched 1.0 s window, core,
+excl. amendment: **snapflow top-10-tickets 3.90 / 60k-cont 4.46 /
+40k 4.56 / stable-key 5.06 / er15k 5.89 / state-copy 8.32 /
+MolmoAct2 13.87** (clean 16.97, contaminated 7.00; every paired
+read MOLMOACT2-WORSE, tight CI95s) — **the released SO-100 fine-tune
+does not transfer outside its 1,220-repo mixture**: beats state-copy
+only on its own training repos (−0.75) and still trails snapflow
+there (+3.29 [+3.11, +3.48]). 3-policy HTML report (32-frame
+gallery) + reads json + contamination repo list on fontaine-reports,
+reports.md section added, numbers in-channel 14:37Z. @25000 box
+boundary caught + legs banked. babysit ×3 exit 0; sweep babysit
+entry pruned.
+
+**Next**: `queue_cli.py next` → depth 0 with stated reason (lit
+pause + owner-gated tail; queue.json canonical). er_60k rides to
+endpoint ~08-11 ~12:00Z → chained panel_v2 → paired CI95 vs banked
+40k (6.0079) + 60k-cont (5.8602); boundaries @30000 ~17:4xZ then
+@35000 ~20:4xZ 08-10. Blog push+squash lands via
+`fontaine-blog-migrate` when HF GC clears → next session verifies
+(site nav + reports stubs + squash) and posts the all-clear. If the
+owner wants a base-MolmoAct2 second arm or a dataset-repo mirror of
+reports, both are pre-scoped one-command adds.*
+
 *Updated 2026-08-10 11:59–12:2xZ (real `date -u` at write: 12:13) —
 tick (babysit): **OWNER GO on the MolmoAct2 plan, 20 s before
 session start — acknowledged + spec confirmed in-channel, queue
@@ -140,26 +202,6 @@ dated snapshots and session notes: rolled verbatim to the
 
 
 
-Session 2026-08-10 10:00–12:1xZ (work, chained; +~2.5 local GPU-h
-logged — er15k panel eval to completion; exploit): three threads in
-one in-turn ride. (1) Owner 15k-panel request CLOSED end-to-end:
-eval rc=0 11:51:38Z, frozen reads (7.5283/3.5590 pooled; +1.52 vs
-40k endpoint CI95 [+1.39,+1.54]; +1.67 vs 60k-cont; state-copy
-byte-match ×3), Space upload + reports page + curl-200 ×3, posted
-11:53Z, helpers cleaned (box+local). (2) NEW owner steering
-10:50Z/11:06Z (MolmoAct2 out-of-band panel eval): repo cloned,
-3-agent deep implementation read, in-depth plan posted (blog +
-channel 11:38Z) — horizon hunch confirmed (30 steps = 1.0 s at
-30 fps vs our 1.67 s → matched-window re-pool primary read),
-q01/q99 norm mechanics pinned, contamination measured (31.0% of
-core frames in their fine-tune mixture → split reads). (3) Box
-@20000 boundary caught mid-ride: save 21.3 s async green, new
-run-bests 6.3766@18000 then 6.3658@20000, six matched-Δ legs
-banked (6 of last 7 negative, running mean ≈ +0.03, in-band).
-babysit ×3 exit 0; the §3 no-Monitor rule held (foreground
-sleep-polls throughout). Local H100 free at close; run_work_next
-ARMED (MolmoAct2 pre-reg + smoke is the next work item).
-
 Session 2026-08-10 11:59–12:2xZ (tick, babysit; 0 new GPU-h logged —
 er_60k rides ~52.7/155): **owner GO on the MolmoAct2 OOB eval,
 landed 20 s before session start, answered at conversational
@@ -196,3 +238,25 @@ counted), so the push of THIS now.md entry to the Space kept
 403ing at session close; live site healthy and serving the
 restored content, the chained work session retries the push first
 thing (should clear once GC runs).
+
+Session 2026-08-10 12:24–15:0xZ (work; +~1.3 local GPU-h logged —
+MolmoAct2 sweep+smoke; exploit): the owner-GO'd MolmoAct2
+out-of-band eval DELIVERED end-to-end in one session (pre-reg
+finalized 00a9feb → predictor + oracle-gated matched-window reads +
+3-policy report generator → smoke green → 25,800-frame sweep rc=0
+14:23:47Z at 352 f/min → frozen reads → HTML report + numbers
+in-channel 14:37Z; headline: released SO100_101 fine-tune doesn't
+transfer outside its training mixture — 16.97 clean vs 7.00
+contaminated vs state-copy 8.32, snapflow top-10-tickets 3.90 best).
+FIVE owner threads answered at conversational cadence (inference
+challenge → contamination-split proof; willnorris/bbox-2 exclusion
+amendment; 1 GiB question; reports→fontaine-reports migration
+directive — done as a static Space after measuring that dataset
+repos serve HTML text/plain, 72 links rewritten + 31 stubs, squash
+queued behind HF GC on unit fontaine-blog-migrate; navbar bug =
+missing hashed toc js from the morning incident, fixed + 200).
+Box @25000 boundary caught: NEW RUN-BEST 6.1306@25000, async save
+green (155.4 s — record-only watch), 10 matched-Δ legs banked,
+34-leg running mean ≈ +0.005. babysit ×3 exit 0. Local H100 free at
+close; run_work_next armed (migrate-unit verification + er_60k
+boundaries are the next touch points).
