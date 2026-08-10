@@ -7,6 +7,45 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-10 23:19–23:3xZ (real `date -u` at write: 23:26) —
+tick (babysit): **quiet green tick — both runs healthy, owner
+👍-answered "anything to reprioritize?" (= no), run_work_next still
+armed for the ~00:3xZ eval endpoint.***
+
+**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — count
+38,820, 26.5 f/min window, 98.0/155 GPU-h, babysit exit 0; rungs
+since @35000: 5.63 / 5.53 / 5.58 / 5.73 / 5.75 / 5.51@37500 / 5.75 /
+5.64@38500 — run-best **5.43@34500 stands**, curve flat in the
+5.5–5.75 band; @40000 save boundary ~00:0xZ (chained session owns
+it), endpoint ~08-11 ~12:00Z. `eval-er35k-panel` LIVE local H100 —
+8,992/25,800 frames, 221.8 f/min window (192.8 cumulative), 98%
+util, projection 2.2/8 GPU-h; **rc ~00:3xZ** → on-completion
+contract in babysit entry `er35k_panel` (class-matched reads key
+bijou@35000, report, in-channel, prune). Blog Space GC: 822.6 →
+**662.6 MB** — still above the ~500 line, no push.
+
+**Steering**: no new messages. Three owner 👍 reactions on the
+close-out posts (21:14Z first-poll, 22:33Z aux-eval report, 22:47Z
+day summary) — the 22:47Z one answered its closing question
+"Anything you want reprioritized?": **no reprioritization**, current
+plan stands (35k standard eval → port items 1–4, er endpoint panel
+decides).
+
+**Done**: babysit exit 0 both runs (box 8 procs/4 GPUs 55–100%, eval
+3 procs/98%); Discord read (empty) + history (reactions above);
+queue validate OK depth 3; Space usedStorage re-checked (662.6 MB,
+GC still running); run_work_next confirmed armed (22:45 marker
+un-consumed — the chained work session is still ahead, its 4-h
+budget covers the eval rc and the @40000 boundary).
+
+**Next**: unchanged from the 22:5xZ close — chained work session:
+(1) er35k standard-eval postprocess at rc ~00:3xZ (class-matched
+reads → report + in-channel + prune), (2) port item 1 remainder
+(backbone↔AE wiring) as the GPU-busy CPU item, (3) box @40000
+boundary ~00:0xZ + legs @35500–@40000; er endpoint ~08-11 ~12:00Z →
+chained panel_v2 → paired CI95 vs banked 40k (6.0079) + 60k-cont
+(5.8602). Blog-Space: one-shot push when < ~500 MB.*
+
 *Updated 2026-08-10 20:09–22:5xZ (real `date -u` at write: 22:37) —
 work session: **rig-ft postprocess CLOSED (pre-reg PASS, MAE 3.23@2000)
 + the owner's 20:47Z 35k-aux request executed end-to-end + port item 1
@@ -197,6 +236,16 @@ Box boundaries @35000 ~20:5xZ, @40000 ~00:0xZ; er endpoint ~08-11
 
 ## Utilization footer
 
+Session 2026-08-10 23:19–23:3xZ (tick, babysit; 0 new GPU-h — box
+rides 98.0/155, er35k standard eval rides 2.2/8 local): quiet green
+tick. babysit exit 0 ×2 (box 26.5 f/min flat in the 5.5–5.75 rung
+band, run-best 5.43@34500 stands, @40000 boundary ~00:0xZ; eval
+8,992/25,800 at 222 f/min, rc ~00:3xZ). No new messages; three owner
+👍 reactions recorded — the day-summary 👍 = no reprioritization.
+Space GC 822.6 → 662.6 MB (no push). Queue depth 3 OK;
+run_work_next already armed (22:45 marker un-consumed) — chained
+work session owns the eval postprocess + port wiring + boundary.
+
 Session 2026-08-10 20:09–22:5xZ (work; +~1.8 local GPU-h logged —
 rig-ft tail ~0.3 + rung-2000 read + 35k aux eval 1.5; standard 35k
 eval ~2.5 projected rides on; exploit): rig-ft postprocess CLOSED with
@@ -248,57 +297,3 @@ dated snapshots and session notes: rolled verbatim to the
 
 
 
-Session 2026-08-10 12:24–15:0xZ (work; +~1.3 local GPU-h logged —
-MolmoAct2 sweep+smoke; exploit): the owner-GO'd MolmoAct2
-out-of-band eval DELIVERED end-to-end in one session (pre-reg
-finalized 00a9feb → predictor + oracle-gated matched-window reads +
-3-policy report generator → smoke green → 25,800-frame sweep rc=0
-14:23:47Z at 352 f/min → frozen reads → HTML report + numbers
-in-channel 14:37Z; headline: released SO100_101 fine-tune doesn't
-transfer outside its training mixture — 16.97 clean vs 7.00
-contaminated vs state-copy 8.32, snapflow top-10-tickets 3.90 best).
-FIVE owner threads answered at conversational cadence (inference
-challenge → contamination-split proof; willnorris/bbox-2 exclusion
-amendment; 1 GiB question; reports→fontaine-reports migration
-directive — done as a static Space after measuring that dataset
-repos serve HTML text/plain, 72 links rewritten + 31 stubs, squash
-queued behind HF GC on unit fontaine-blog-migrate; navbar bug =
-missing hashed toc js from the morning incident, fixed + 200).
-Box @25000 boundary caught: NEW RUN-BEST 6.1306@25000, async save
-green (155.4 s — record-only watch), 10 matched-Δ legs banked,
-34-leg running mean ≈ +0.005. babysit ×3 exit 0. Local H100 free at
-close; run_work_next armed (migrate-unit verification + er_60k
-boundaries are the next touch points).
-
-Session 2026-08-10 16:11–18:1xZ (work; rig fine-tune launched —
-~0.1 local GPU-h logged this session for preflight+smoke, train
-~2.6 GPU-h projected rides on; exploit): owner-GO'd MolmoAct2 rig
-fine-tune end-to-end to LAUNCH in one session — v3.0 codebase read
-off both rig repos, pre-reg + param sheet (objection window 16:20→
-17:50Z, silence honored), preflights P1–P4 with a real finding
-(joint1 offset tripwire = posture-collapse via state-norm saturation,
-97% rig frames outside their joint1 range; Amendment 1 in-window; no
-sign mirrors — the owner's v2.1/v3.0 question answered with data),
-anchors banked (zero-shot 28.95 / state-copy 9.08, 240 frames),
-runbook page landed (their-repo patches on branch fontaine-so101-rig,
-SO-101 server adaptation, conversion-OFF rollout rule, safety
-rails), LAUNCH 17:48:18Z + first-poll green (830 f/min, ~2.6 GPU-h
-projected vs 12 gate). Box @30000 boundary caught same minute: NEW
-RUN-BEST 5.9214@29000, save 21.7 s, legs @25500–@30000 banked —
-10-leg mean −0.40, ER's strongest window (44-leg ≈ −0.09). babysit
-×3 exit 0; queue refilled depth 2; run_work_next armed for the
-~20:20Z endpoint postprocess.
-
-Session 2026-08-10 16:07–16:1xZ (tick, babysit; 0 new GPU-h —
-er_60k rides 69.2/155): quiet tick. No new owner traffic (the
-15:48/15:52Z joint-convention thread stands answered 15:54Z, folded
-into the runbook item c013413; no new reactions). Box healthy:
-**NEW RUN-BEST 5.96@27000** (rungs since @25000: 6.21 / 6.20 / 6.58
-/ 5.96), 27.4 f/min, vram in-band, babysit exit 0; @30000 boundary
-~17:4xZ + matched-Δ legs @25500–@30000 left to the chained session
-or next tick. Blog Space GC still pending (usedStorage 998.6 MB
-unchanged — no push, manual-only tail stands). Queue depth 1 →
-run_work_next armed: the chained work session opens with the
-owner-GO'd **molmoact2-rig-finetune-runbook** (codebase_version
-check → runbook + param sheet in-channel → objection window →
-launch on the local H100) and refills the queue.
