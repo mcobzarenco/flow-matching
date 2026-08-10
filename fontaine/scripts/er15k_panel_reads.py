@@ -120,6 +120,7 @@ def analyze(
     cand_rep: dict,
     baselines: list[tuple[dict, dict, dict]],
     out_path: str | None,
+    key_cand: str = KEY_CAND,
 ) -> dict:
     # ---- execution oracles gate every number below ----
     for npz, _rep, spec in baselines:
@@ -138,12 +139,12 @@ def analyze(
                     f"{key} rows do NOT byte-match between er15k and "
                     f"{spec['label']} — stop",
                 )
-    _check_report(cand_npz, KEY_CAND, cand_rep, RUN_CAND, "er15k arm")
+    _check_report(cand_npz, key_cand, cand_rep, RUN_CAND, "candidate arm")
     for npz, rep, spec in baselines:
         _check_report(npz, spec["key"], rep, spec["run"], spec["label"])
 
     truth, valid, core, w = bbr.masks(cand_npz)
-    err_c = np.abs(cand_npz[KEY_CAND] - truth)
+    err_c = np.abs(cand_npz[key_cand] - truth)
     cc = bbr.pooled_chunk(err_c, core, w)
     cf = bbr.pooled_first(err_c, valid, core)
     frame_c, nvalid = bbr.frame_mae(err_c, w)
@@ -308,11 +309,23 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--oracle", action="store_true")
     parser.add_argument("--stem-cand", default=STEM_CAND)
+    parser.add_argument(
+        "--key-cand",
+        default=None,
+        help="prediction key in the candidate npz (default: derived "
+        "from --stem-cand's step_NNNNNN as pred:bijou@N)",
+    )
     parser.add_argument("--out", default=OUT_DEFAULT)
     args = parser.parse_args()
     if args.oracle:
         oracle()
         return
+    key_cand = args.key_cand
+    if key_cand is None:
+        import re
+
+        m = re.search(r"step_0*([0-9]+)", args.stem_cand)
+        key_cand = f"pred:bijou@{m.group(1)}" if m else KEY_CAND
     baselines = [
         (
             _load_npz(f"{spec['stem']}.npz"),
@@ -326,6 +339,7 @@ def main() -> None:
         json.loads(Path(f"{args.stem_cand}.json").read_text()),
         baselines,
         args.out,
+        key_cand=key_cand,
     )
 
 
