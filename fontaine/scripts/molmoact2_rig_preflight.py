@@ -47,7 +47,46 @@ OUT_JSON = REPO_ROOT / "reports/analysis__molmoact2_rig_preflight.json"
 
 
 def main() -> None:
+    import argparse
+
     from bijou.data import EpisodeSplit, select_datasets
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--model",
+        default=None,
+        help=(
+            "HF repo id or local converted-checkpoint dir; default = the "
+            "released checkpoint. Post-training rung reads pass the "
+            "convert_molmoact2_to_hf output dir here — same 240 rows, same "
+            "table, MAE comparable to the banked zero-shot/state-copy anchors."
+        ),
+    )
+    parser.add_argument(
+        "--out-stem",
+        default=None,
+        help="basename for the json/npz outputs (default: the preflight stem)",
+    )
+    args = parser.parse_args()
+
+    out_json = (
+        REPO_ROOT / f"reports/{args.out_stem}.json" if args.out_stem else OUT_JSON
+    )
+    if args.model:
+        if Path(args.model).exists():
+            # load_model resolves via snapshot_download at call time; make it
+            # a pass-through for local converted-checkpoint dirs.
+            import huggingface_hub
+
+            _orig_snapshot = huggingface_hub.snapshot_download
+
+            def _resolve(repo_id: str, **kw: object) -> str:
+                if Path(repo_id).exists():
+                    return str(Path(repo_id).resolve())
+                return _orig_snapshot(repo_id=repo_id, **kw)  # type: ignore[arg-type]
+
+            huggingface_hub.snapshot_download = _resolve
+        mp.MODEL_REPO = args.model
 
     selection = select_datasets(
         RIG_REPOS,
@@ -120,7 +159,7 @@ def main() -> None:
             rate = (i + 1) / max(time.monotonic() - started, 1e-6) * 60
             print(f"progress: {i + 1}/{len(rows)} ({rate:.1f} f/min)", flush=True)
 
-    valid = np.isfinite(truths).all(-1)  # (N, H)
+    valid = np.asarray(np.isfinite(truths).all(-1))  # (N, H)
     report: dict = {"n_frames": len(rows), "horizon": HORIZON, "joints": []}
     hard_fail = []
     for d in range(6):
@@ -135,7 +174,7 @@ def main() -> None:
         # corr(err, truth) ~ -1 with err std comparable to the truth std.
         err0 = preds[:, 0, d] - truths[:, 0, d]
         err_truth_corr = float(np.corrcoef(err0, truths[:, 0, d])[0, 1])
-        row = {
+        row: dict[str, object] = {
             "joint": d,
             "motion_corr": round(corr, 4),
             "step0_signed_offset": round(offset0, 3),
@@ -170,13 +209,13 @@ def main() -> None:
     report["hard_failures"] = hard_fail
 
     np.savez_compressed(
-        OUT_JSON.with_suffix(".npz"),
+        out_json.with_suffix(".npz"),
         preds=preds,
         truths=truths,
         states=states,
         rows=rows,
     )
-    OUT_JSON.write_text(json.dumps(report, indent=2))
+    out_json.write_text(json.dumps(report, indent=2))
     print(json.dumps(report, indent=2), flush=True)
     if hard_fail:
         sys.exit("PREFLIGHT P3 FAILED: " + "; ".join(hard_fail))
