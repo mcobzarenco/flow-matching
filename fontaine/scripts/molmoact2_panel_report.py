@@ -71,12 +71,37 @@ MOTOR_NAMES = [
     "gripper",
 ]
 # Display order: our best first (owner's ask), then theirs, then floor.
+# Trunk in every displayed name (owner 2026-08-10 14:49Z).
 POLICIES = [
-    ("snapflow80k top10tickets", "top10", "pred:bijou@80000_draws10_ticket"),
-    ("snapflow80k stablekey", "stable", "pred:bijou@80000"),
-    ("molmoact2 so100_101", "cand", mpr.CAND_KEY),
-    ("state-copy", "cand", "pred:state-copy"),
+    (
+        "snapflow 80k top10tickets [gemma4-E2B]",
+        "top10",
+        "pred:bijou@80000_draws10_ticket",
+    ),
+    ("snapflow 80k stablekey [gemma4-E2B]", "stable", "pred:bijou@80000"),
+    ("MolmoAct2 SO100_101 [molmo2-ER]", "cand", mpr.CAND_KEY),
+    ("state-copy [no model]", "cand", "pred:state-copy"),
 ]
+# analysis-json keys (stable) -> displayed names with trunk
+DISPLAY = {
+    "snapflow80k top10tickets": (
+        "snapflow 80k top-10-tickets — Gemma-4-E2B trunk (frozen, AR-pretrained) + flow expert h1024"
+    ),
+    "snapflow80k stablekey": (
+        "snapflow 80k stable-key — Gemma-4-E2B trunk (frozen, AR-pretrained) + flow expert h1024"
+    ),
+    "molmoact2": "MolmoAct2 SO100_101 — Molmo2-ER trunk + their flow action expert",
+    "state-copy": "state-copy — no model (repeat current state)",
+    "ar_40k endpoint": "ar 40k endpoint — Molmo2-4B trunk, AR decoder",
+    "ar_60k continuation": "ar 60k continuation — Molmo2-4B trunk, AR decoder",
+    "er_60k@15000": "er 60k @15000 — Molmo2-ER trunk, AR decoder (mid-training)",
+}
+
+
+def display(label: str) -> str:
+    return DISPLAY.get(label, label)
+
+
 OUT_DEFAULT = "reports/eval__molmoact2_oob_3policy__panel_curated_v0_k4l2.html"
 
 
@@ -105,7 +130,7 @@ def summary_tables(analysis: dict, rt: ModuleType) -> list:
     ]
     rows = [
         [
-            label,
+            display(label),
             *(
                 f"{mw[label][split]['chunk_mae']:.4f}"
                 for split in ("pooled", "clean", "contaminated")
@@ -138,7 +163,7 @@ def summary_tables(analysis: dict, rt: ModuleType) -> list:
             lo, hi = r["ci95"]
             rows2.append(
                 [
-                    f"molmoact2 − {label}",
+                    f"MolmoAct2 − {display(label)}",
                     split,
                     f"{r['delta_frame_mean']:+.4f}",
                     f"[{lo:+.4f}, {hi:+.4f}]",
@@ -152,7 +177,7 @@ def summary_tables(analysis: dict, rt: ModuleType) -> list:
         rows=rows2,
     )
     rows3 = [
-        [label, f"{v['chunk_mae']:.4f}", f"{v['first_mae']:.4f}"]
+        [display(label), f"{v['chunk_mae']:.4f}", f"{v['first_mae']:.4f}"]
         for label, v in analysis["secondary_full50"].items()
     ]
     t3 = rt.ReportTable(
@@ -272,10 +297,14 @@ def main() -> None:
     config_lines = [
         "MolmoAct2 out-of-band 3-policy comparison — record-only",
         f"panel: {mpr.CAND_STEM}.npz (25,800 rows, 17,204 core)",
-        "molmoact2: allenai/MolmoAct2-SO100_101, their predict_action end-to-end,",
-        "  continuous mode, 10-step Euler, bf16, seed = global concat index",
-        "snapflow 80k: banked bijou_flow_artrunk_h1024@80000 panel npzs",
+        "molmoact2: allenai/MolmoAct2-SO100_101 — Molmo2-ER trunk + their flow",
+        "  action expert; their predict_action end-to-end, continuous mode,",
+        "  10-step Euler, bf16, seed = global concat index",
+        "snapflow 80k: banked bijou_flow_artrunk_h1024@80000 panel npzs —",
+        "  Gemma-4-E2B trunk (frozen, AR-pretrained) + flow expert h1024",
         "  (top-10-tickets = our best decode config; stable-key single draw)",
+        "ar 40k / ar 60k-cont: Molmo2-4B trunk, AR decoder;",
+        "  er 60k@15000: Molmo2-ER trunk, AR decoder (mid-training)",
         "PRIMARY WINDOW: chunk steps 0-29 (their native 30-step / 1.0 s horizon);",
         "  our full-50 numbers are secondary and never quoted against theirs",
         f"contamination: {contam['repos']} of 878 panel repos are in their",
