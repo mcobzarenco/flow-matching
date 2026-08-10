@@ -5,6 +5,66 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-10 19:53–20:1xZ (real `date -u` at write: 20:07) —
+tick (babysit): **owner conversation recovered — the 18:42Z
+"MolmoAct2 first-class in our repo?" question (repeated 19:00Z,
+"hello" 19:18Z) sat unread ~70 min; answered in-channel with a
+code-grounded 3–4-session estimate**; both runs healthy,
+run_work_next armed for the ~20:26Z rig-ft endpoint postprocess.*
+
+**Status**: `rig_ft_r1` LIVE local H100 — 1560/2000 at poll,
+12.6 f/min window, vram 38.9 GiB/95% util, ~2.7 GPU-h projected vs
+12 gate, endpoint ~20:26Z (just past this tick's hard-kill; armed
+successor does the rung-2000 read + report + checkpoint upload).
+`fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — **NEW RUN-BEST
+5.68@31500** (rungs since @30000: 6.11@30500 / 5.89@31000 /
+5.68@31500 / 5.79@32000 / 5.76@32500 / 5.75@33000 — five straight
+under 5.8-class, strongest stretch of the run), 26.9 f/min, 84.3/155
+GPU-h projected, next boundary @35000 ~20:5xZ (successor), endpoint
+~08-11 ~12:00Z. Blog Space GC IS RUNNING: usedStorage 998.6 →
+**913.2 MB** — still above the ~500 MB re-push line, no push (queue
+item stands, delete+recreate ask likely moot).
+
+**Steering**: OWNER QUESTION 18:42:51Z (repeat 19:00Z + "hello"
+19:18Z, all surfaced only on this session's read — the prior session
+held open ~2 h of rung reads without a channel poll; posts don't
+consume): "How hard would it be to make molmo2act a first-class
+model in our repo? I.e. reimplement the missing architecture pieces
+(e.g. their flow matching decoder), their prompt template and
+processing pipeline, support for their tokenizer etc." ANSWERED
+19:5xZ (2 posts, gap owned): moderate — ~3–4 focused sessions to
+parity-grade, because the backbone (bijou/molmo2, byte-verified,
+the ER runs train on it) and flow-decoder infra
+(bijou/decoders/flow.py) already exist in-repo; genuinely new =
+their action expert (nn/action_expert.py 982 LOC) + backbone↔AE
+wiring (molmoact2.py 1.3k LOC) ≈1 session, action-side
+prompt/processing deltas (template, state encoding, q01/q99
+norm_stats) ≈1, parity harness vs their HF forward + the banked
+240-row anchors ≈1, optional AE-finetune-in-our-trainer ≈1.
+Recommended rig-path-first scope (depth/trace/sim-eval stay OOB);
+payoff = no their-repo patches + panels native + opens 1-NFE
+SnapFlow-style distillation of their AE. Offered to queue as a
+pre-registered CPU-mostly port — **owner reply pending, successor
+session must history-rebuild + continue the thread**.
+
+**Done**: babysit exit 0 ×2 runs (er_60k 8 procs/4 GPUs 66–100%,
+rig_ft 4 procs/95%); orphaned queue.md/queue.json hallucinated
+clock stamps fixed (19:55Z → 18:05Z real) + committed; Space
+storage checked (GC running, 913.2 MB); queue validate OK depth 2;
+run_work_next armed; memory added (in-session holds must poll the
+channel at every natural boundary — 70-min owner latency incident,
+reply-latency class).
+
+**Next**: successor work session (armed): (1) history-rebuild the
+first-class-port thread — if the owner says go, pre-reg + queue item
+per the in-channel shape; (2) molmoact2-rig-ft-postprocess at the
+~20:26Z endpoint (rc → convert rung 2000 → 240-row reads vs anchors
+→ results post + report + fontaine-checkpoints upload → prune
+babysit entry); (3) box @35000 boundary ~20:5xZ + legs
+@30500–@35000; er endpoint ~08-11 ~12:00Z → chained panel_v2 →
+paired CI95 vs banked 40k (6.0079) + 60k-cont (5.8602). Blog-Space:
+re-check usedStorage, one-shot push per memory when < ~500 MB.*
+
 *Updated 2026-08-10 16:11–18:1xZ (real `date -u` at write: 18:04) —
 work session: **the owner-GO'd rig fine-tune went from
 codebase_version check to LAUNCHED in one session** — pre-reg + param

@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-10T15:33:00Z
+**Updated:** 2026-08-10T18:05:00Z
 
-**Depth call:** depth 1 open at 15:2xZ 08-10 (STATED REASON for <2: owner lit-pause steering 00:23Z 08-10 suspends the refill lane; molmoact2-oob-panel-eval closed DELIVERED this session and every remaining item is owner-gated/blocked — fjoint finalize on owner go ~08-12 post-er-endpoint, vu5k/actckpt/img280/docs-tail/box-home-sweep all blocked or owner_hold). Work supply is run-boundary-driven: er-60k babysat to ~08-11 ~12:00Z endpoint -> chained panel_v2 -> paired reads vs 40k/60k banked panels; blog-Space squash lands via unit fontaine-blog-migrate when HF storage GC clears (next session verifies + posts). Local GPU free again 14:24Z — next local launch needs a fresh pre-reg (T2 depth rung and tiny decode microbench remain the named candidates, not yet pre-registered).
+**Depth call:** depth 2 open at 18:0xZ 08-10: molmoact2-rig-ft-postprocess (opens at the ~20:20Z train endpoint) + blog-space-gc-tail (manual-only). Rig fine-tune LIVE local H100 (rig_ft_r1, first-poll green); er-60k LIVE box to ~08-11 ~12:00Z endpoint -> chained panel_v2 -> paired reads vs 40k/60k banked. Lit refill lane stays owner-paused (00:23Z 08-10).
 
-**8 open** (Live 1 · Queued 1 · Blocked 6 · Done 101)
+**9 open** (Live 1 · Queued 2 · Blocked 6 · Done 102)
 
 ## 🔴 Live (1)
 
@@ -26,19 +26,33 @@ OWNER RUN LIVE (launched 22:47-53Z 08-09, unit fontaine-er-60k): fontaine_molmo2
 
 ---
 
-## 🟢 Queued (1)
+## 🟢 Queued (2)
 
 *ready — waiting on a window or a boundary*
 
-**`molmoact2-rig-finetune-runbook`** · `cpu`
+**`blog-space-gc-tail`** · `cpu`
 
-OWNER QUESTION 15:19:45Z 08-10: 'How could I -- out of band -- fine-tune molmo2act on my rig datasets and then do local rollouts? Happy to use their code.' Answered in-channel 15:23Z (4-step shape: rig repos are LeRobot-native -&gt;…
+Blog Space storage tail (manual-only — the retry unit is STOPPED and must NOT be re-armed)
 
-**boundary:** GO 15:24:16Z; next session's FIRST action (this one ended at hard-kill budget, ack posted 15:2xZ + 15:3xZ). Local H100 free + reserved. Fine-tune launch needs its own pre-reg/param-sheet post per the standing gate; report additions thread fully closed 15:3xZ (student row + all-model trajectory charts + legend strip live).
+**boundary:** HF GC can take up to ~6h from the 13:5xZ 08-10 squash attempt; owner ask due ~08-11 morning if unchanged.
 
 <details><summary>full record</summary>
 
-OWNER QUESTION 15:19:45Z 08-10: 'How could I -- out of band -- fine-tune molmo2act on my rig datasets and then do local rollouts? Happy to use their code.' Answered in-channel 15:23Z (4-step shape: rig repos are LeRobot-native -&gt; their lerobot_wrapper; recompute q01/q99 stats over rig repos only via their stats.py; warm-start MolmoAct2-SO100_101 via their train_lerobot.py, trunk mostly frozen, 57 episodes short schedule; rollouts = adapt examples/droid/host_server_droid.py to SO-101 REPO_ID/NORM_TAG/state-dim-6 + lerobot client loop executing 30-step chunks w/ 0.5-1s replan; bf16/processor patches already ported in molmoact2_panel_predict.py). OWNER GO 15:24:16Z ('Yes, I want a runnable runbook and I want you to go ahead and do a fine-tune on the local GPU') — EXECUTE: runbook post (pinned commands, rig mixture file, rig-only q01/q99 stats, SO-101 server adaptation) + parameter sheet in-channel BEFORE any GPU minute (owner said treat-as-objection-window, silence=launch per my 15:2xZ ack), then LAUNCH the fine-tune on the free local H100 (systemd unit + babysit entry + first-poll rate/vram check + own gate). Warm-start MolmoAct2-SO100_101; 57 rig episodes (so101_pick_place_clean 7 + _v2 50); their train_lerobot.py; short schedule, trunk mostly frozen first rung. OFFERED a runnable runbook (pinned commands, rig mixture file, SO-101 server adaptation, box fine-tune pre-reg) — EXECUTE on owner yes, or fold into the next work session as CPU prep if they engage further. Motivating evidence: today's OOB eval (in-mixture repos beat state-copy -0.75, unseen 2x worse -&gt; rig fine-tune closes exactly that gap).
+Blog Space storage tail (manual-only — the retry unit is STOPPED and must NOT be re-armed). Each session: check usedStorage via huggingface_hub repo_info(expand). When it drops below ~500 MB: ONE upload_folder of the current book (delete_patterns searchindex-*.js/toc-*.js + reports redirect stubs per blog-space-push memory, NEVER ["**"]) + super_squash + curl-verify navbar/search/stubs + post the all-clear. If still capped (~998.6 MB) by 08-11 morning: ask the owner for the delete+recreate GO (offered 15:2xZ 08-10).
+
+</details>
+
+---
+
+**`molmoact2-rig-ft-postprocess`** · `gpu-local`
+
+Rig fine-tune rung reads + report + checkpoint upload (successor to molmoact2-rig-finetune-runbook)
+
+**boundary:** Opens at train endpoint ~20:20Z 08-10 or next session boot, whichever first. Conversion+reads ~1 GPU-h inside the 12 GPU-h pre-reg gate (train projected ~2.6). · [pre-reg](posts/2026-08-10-prereg-molmoact2-rig-finetune.md)
+
+<details><summary>full record</summary>
+
+Rig fine-tune rung reads + report + checkpoint upload (successor to molmoact2-rig-finetune-runbook). Train endpoint ~20:20Z 08-10 (2000 steps, unit fontaine-molmoact2-rig-ft, log ~/logs/molmoact2_rig_ft.log). IN-SESSION PROGRESS 18:3x-19:5xZ 08-10: rungs 500/1000/1500 converted + read (MAE 6.7561 / 4.66 / 3.5871 vs anchors zero-shot 28.95 &amp; state-copy 9.08 — expectation 2 MET, monotone, oracles green; HF dirs ~/checkpoints/molmoact2-so101-rig-r1-step{500,1000,1500}-hf). REMAINING: (1) verify rc=0 + final save; (2) convert step2000 via experiments/olmo/hf_model/convert_molmoact2_to_hf.py (molmoact2 venv, branch fontaine-so101-rig); (3) rung reads: uv run python fontaine/scripts/molmoact2_rig_preflight.py --model &lt;converted dir&gt; --out-stem analysis__molmoact2_rig_ft_step&lt;N&gt; — same 240 rows; pre-reg pass = beat BOTH anchors (zero-shot 28.95, state-copy 9.08 matched 1.0s window) + step-0 continuity + all motion corrs positive; (4) results post in-channel + blog results page + report on fontaine-reports (charts per house style, dark-mode); (5) best rung weights to fontaine-checkpoints same-session (standing rule); (6) prune rig_ft_r1 babysit entry; (7) runbook §5 updated with measured numbers. Contaminated-by-construction: label every read (train-frame sanity, not generalization; real eval = owner rig rollouts per runbook §3-4).
 
 </details>
 
@@ -130,7 +144,7 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 
 ---
 
-## ✅ Done (101)
+## ✅ Done (102)
 
 *closed — the full record stays in each fold*
 
@@ -1543,6 +1557,20 @@ OWNER REQUEST 14:33Z 08-10 (recovered 15:0xZ after the babysit-grep consume miss
 <details><summary>full record</summary>
 
 OWNER REQUEST 14:33Z 08-10 (recovered 15:0xZ after the babysit-grep consume miss): full-panel mean-of-10-draws heun-30 eval for snapflow 80k (bijou_flow_artrunk_h1024_40k_ddp2 step_080000, local checkpoint on disk) -&gt; its row joins the MolmoAct2 3-policy report + reads. NOT banked at full panel (only the 2,458-frame drawsprobe_s7 subset exists; top-10-tickets is mean-of-10 over SEARCHED tickets, different config). EXECUTE: (1) pin the exact eval invocation from the goldenticket/stablekey launcher class (plain draws10, heun30, panel_curated_v0_k4l2 plan, stable noise seeds per the draws-fairness convention) as a short pre-reg note (record-only, owner-requested); (2) launch on local H100 via run_detached unit + babysit entry (est ~8-12 GPU-h at 10x decode of the ~1.3 GPU-h single-draw class; sanity-check the first-poll rate); (3) on rc=0 add BASELINES entry to molmoact2_panel_reads.py + DISPLAY to molmoact2_panel_report.py, rerun reads (oracle green) + report, re-upload, post updated numbers in-channel. Owner told 15:0xZ it launches tonight unless they object. PREREG NOTE: rides the molmoact2-oob pre-reg's report spec (owner-directed row add); a short launch note with the exact pinned invocation posts in-channel before the GPU minute, per charter.
+
+</details>
+
+---
+
+**`molmoact2-rig-finetune-runbook`** · `cpu`
+
+OWNER QUESTION 15:19:45Z 08-10: 'How could I -- out of band -- fine-tune molmo2act on my rig datasets and then do local rollouts? Happy to use their code.' Answered in-channel 15:23Z (4-step shape: rig repos are LeRobot-native -&gt;…
+
+**boundary:** EXECUTED IN FULL 2026-08-10 16:1x-17:5xZ: codebase_version read (both repos v3.0) -&gt; pre-reg posts/2026-08-10-prereg-molmoact2-rig-finetune.md + param sheet in-channel 16:20Z (objection window to 17:50Z) -&gt; preflights P1-P4 green (P3 Amendment 1 posted in-window: offset tripwire record-only, measured posture-collapse via state-norm saturation [43.7,185.3] theirs vs [-103,+67] rig, 97% frames saturating; sign gate all-positive; anchors zero-shot 28.95 / state-copy 9.08 on 240 rig frames) -&gt; runbook posts/2026-08-10-molmoact2-rig-finetune-runbook.md (incl. SO-101 server adaptation, v3.0-end-to-end rollout rule, safety rails) -&gt; LAUNCHED 17:48:18Z unit fontaine-molmoact2-rig-ft (silence=launch honored), first-poll green 17:58Z (830 f/min, ~2.6 GPU-h projected vs 12 gate, vram 38.9). Successor: molmoact2-rig-ft-postprocess.
+
+<details><summary>full record</summary>
+
+OWNER QUESTION 15:19:45Z 08-10: 'How could I -- out of band -- fine-tune molmo2act on my rig datasets and then do local rollouts? Happy to use their code.' Answered in-channel 15:23Z (4-step shape: rig repos are LeRobot-native -&gt; their lerobot_wrapper; recompute q01/q99 stats over rig repos only via their stats.py; warm-start MolmoAct2-SO100_101 via their train_lerobot.py, trunk mostly frozen, 57 episodes short schedule; rollouts = adapt examples/droid/host_server_droid.py to SO-101 REPO_ID/NORM_TAG/state-dim-6 + lerobot client loop executing 30-step chunks w/ 0.5-1s replan; bf16/processor patches already ported in molmoact2_panel_predict.py). OWNER GO 15:24:16Z ('Yes, I want a runnable runbook and I want you to go ahead and do a fine-tune on the local GPU') — EXECUTE: runbook post (pinned commands, rig mixture file, rig-only q01/q99 stats, SO-101 server adaptation) + parameter sheet in-channel BEFORE any GPU minute (owner said treat-as-objection-window, silence=launch per my 15:2xZ ack), then LAUNCH the fine-tune on the free local H100 (systemd unit + babysit entry + first-poll rate/vram check + own gate). Warm-start MolmoAct2-SO100_101; 57 rig episodes (so101_pick_place_clean 7 + _v2 50); their train_lerobot.py; short schedule, trunk mostly frozen first rung. OFFERED a runnable runbook (pinned commands, rig mixture file, SO-101 server adaptation, box fine-tune pre-reg) — EXECUTE on owner yes, or fold into the next work session as CPU prep if they engage further. Motivating evidence: today's OOB eval (in-mixture repos beat state-copy -0.75, unseen 2x worse -&gt; rig fine-tune closes exactly that gap). CONVENTION THREAD (owner 15:48Z, github.com/irenegracekp/molmoact2-so101): MolmoAct2 trained on LeRobot v2.1 joint-angle convention, lerobot 0.5.x calibrates in v3.0 -&gt; live-inference danger (arm slams on wrong offsets); recorded-data eval UNaffected (repo says so itself + contaminated-split parity is the empirical check; answered in-channel 15:5xZ). RUNBOOK MUST INCLUDE: (1) read codebase_version off both rig repos' meta/info.json (never assume); (2) recommended path = convert rig actions/states v3.0-&gt;v2.1 (documented offsets/signs) so the model stays in its native convention; param sheet states the convention of every tensor; (3) first-step continuity oracle on held-out rig frames (pred step-0 ~ current state, loud fail); (4) rollout server: verify rig calibration lerobot version or recalibrate pinned 0.5.1, apply conversion, no-execute dry-run gate + command clamp before ANY motion.
 
 </details>
 

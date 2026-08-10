@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-10T19:55:00Z",
+ "updated_utc": "2026-08-10T18:05:00Z",
  "depth_reason": "depth 2 open at 18:0xZ 08-10: molmoact2-rig-ft-postprocess (opens at the ~20:20Z train endpoint) + blog-space-gc-tail (manual-only). Rig fine-tune LIVE local H100 (rig_ft_r1, first-poll green); er-60k LIVE box to ~08-11 ~12:00Z endpoint -> chained panel_v2 -> paired reads vs 40k/60k banked. Lit refill lane stays owner-paused (00:23Z 08-10).",
  "items": [
   {
