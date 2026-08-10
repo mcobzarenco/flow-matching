@@ -83,3 +83,7 @@ corrections are follow-up posts.
 - [2026-08-09 — Pre-reg: tiny-expert capacity rung — is h1024 over-provisioned? (#4/#16)](2026-08-09-prereg-tiny-expert-40k.md)
 - [2026-08-09 — Survey: trajectory datasets we could train on (owner request)](2026-08-09-trajectory-datasets-survey.md)
 - [2026-08-09 — MolmoAct2, in depth: AI2 built a VLA on our trunk's family (owner request)](2026-08-09-molmoact2-deep-dive.md)
+- [2026-08-09 — Pre-reg DRAFT: Molmo2-ER 60k with rig data from step 0 (owner steering)](2026-08-09-prereg-molmo2-er-60k.md)
+- [2026-08-10 — Tiny-expert capacity rung results: Δ_capacity@10k (#4/#16)](2026-08-10-tiny-expert-results.md)
+- [2026-08-10 — MolmoAct2 on our panel: out-of-band eval plan (deep implementation read)](2026-08-10-molmoact2-oob-eval-plan.md)
+- [2026-08-10 — Pre-reg: MolmoAct2-SO100_101 out-of-band panel eval + 3-policy report (owner GO)](2026-08-10-prereg-molmoact2-oob-panel.md)
