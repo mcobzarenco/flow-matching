@@ -409,3 +409,42 @@ Pearson + MMRV. PolaRiS also independently replicates our
 offline-validation read (action MSE poorly correlated; sim-success
 saturation with real performance spanning the spectrum). No new
 arm — execution stays parked.
+
+**Lit `0821` 2026-08-10
+([Curse of Precision](../papers/curse-of-precision.md), 2607.23108 +
+[NeuralActuator](../papers/neuralactuator.md), 2607.11734 +
+[GigaWorld-1 / WMBench](../papers/gigaworld-wmbench.md),
+2607.02642).** Three bench-design inputs in one slice. (1) Precision
+tasks get a design rule: build ONE task at 2–3 tolerance levels
+(re-sleeving the peg/hole is the knob that keeps cells inside the
+banked 20–80% band), fit the precision ceiling c across levels as a
+target-SR-independent headline metric, and report config changes as
+Δc rather than ΔSR-at-one-tolerance (their wrist-cam removal =
++1.5 mm on c; the smooth-vs-erratic degradation curve doubles as a
+debug instrument). Caveat carried: c is a rollout-sweep fit —
+sim-only, Franka-only, diffusion-only in the paper — so it is a
+rig-phase instrument, not a pre-rig computable. (2) The FACTR 2
+rig-day rider is SUPERSEDED by a shovel-ready one: NeuralActuator's
+third platform is our exact arm — force MAE 0.47–0.73 N from
+Feetech load registers alone (no current sensor; torque via
+differentiable simulation, no calibration), MIT code + 3 SO-101
+checkpoints + teleop code all verified live. Rig day should log
+their 46-column servo schema (pos/goal/vel/load/volts/temp
+@~62 Hz); that makes a virtual force sensor + motor-health monitor
+nearly off-the-shelf. Caveats: vertical-payload-only validation at
+our class, ~0.5 N noise floor; and the corpus still can't feed it —
+the #9 zero-GPU Δq_d contact gate stands exactly as banked (their
+two-stage contact-probability gate shape is the one upgrade). (3)
+The eval-substrate menu's world-model tier updates: the banked
+"no artifact" half of the verdict is dead (GigaWorld-1 Nano 1.3B /
+Pro 5B Apache-2.0 weights + LeRobot-format pipeline + a VLM judge
+with measured 87.8% human agreement, all verified live 08-10;
+Ctrl-World MIT + DROID checkpoint live too) — and WMBench
+contributes a zero-rollout *pre-trust replay screen* that runs on
+our corpus as-is (replay held-out actions, compare generated vs
+real video). But the "uncalibratable" half stands: its 324K
+"rollouts" are human-graded world-model videos under replayed
+actions — no policy drives, and Corr(real policy success, WM score)
+is defined in the paper and never computed. Screen ≠ certificate
+(Ctrl-World's MMRV 0.22 is the proof); policy-ranking calibration
+still costs real rollouts. No new arm; execution stays parked.

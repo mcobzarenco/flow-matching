@@ -230,3 +230,41 @@ check (charter §2) before training touches it.
   banked: no absolute threshold units published; diversity
   confounded with hours; rig-collected pseudo-labeled demos mean
   latent-action-on-unlabeled-video is untested, not refuted.
+
+**Lit `0821` 2026-08-10
+([Quality over Quantity](../papers/quality-over-quantity.md),
+2603.09056 + [Curse of Precision](../papers/curse-of-precision.md),
+2607.23108).** The curation axis gets its missing middle pole. QoQ
+is influence-function curation anchored to 10–20 held-out
+*demonstrations*, not rollouts — between ATHENA (principled but
+rollout-anchored) and Qwen-RobotManip (offline but heuristic), it is
+the only one of the three runnable in our no-rollout regime, and its
+own ablation says action-head-only gradients suffice (83.6% vs
+82.1% full-model) — cheap for a small flow expert. Hook corrections
+banked on the page: every policy gain is on 40–50% author-injected
+failures at 200–500-trajectory scale (the only natural-dirt test is
+ranking-only, no retrain); baselines are retrieval methods, never
+the influence competitors; "per-episode weighting" was an overread —
+it is hard top-N selection with strong budget sensitivity
+(36.7→86.7% across cuts, peak exactly at the true clean count) and
+no principled cut rule; no code. Cheapest arm sketched on the page:
+spot-verify ~20 clean panel episodes as the anchor → one scoring
+pass on a banked expert checkpoint (per-chunk flow-loss gradients,
+OPORP-compressed, max-cosine vs anchor, episode-mean) → free sanity
+gate (bottom-decile spot-check + correlation with the Qwen
+stage-1–3 flags) → one paired arm, top-70% vs same-size random,
+panel chunk-MAE CI95. Own pre-reg required. The Curse of Precision
+adds a *bound* on what curation/volume can buy: near a task's
+precision ceiling the data exponent collapses (a=−0.19 at 4 mm —
+volume worthless), and the actionable corpus lever is
+clarity-filtering — their aggressive one-shot expert (50% own SR!)
+gave c=1.27 mm vs the cautious 98%-SR expert's 2.35 — i.e.
+down-weighting retry/jiggle episodes is worth more than collecting
+more of them; zero-GPU detectable in action/state traces and
+composable with the QoQ scoring pass. Sweep note: the 0822 refill
+surfaced a curation-metrics testbed cluster (2606.10229 /
+2606.05588 / 2606.15064) whose headline — detection accuracy and
+policy quality sharply decoupled, 5 of 7 metrics secretly exploit
+episode length, action-only scorers blind to structural defects —
+is a standing confound warning for every arm above; read before
+executing any curation pre-reg.

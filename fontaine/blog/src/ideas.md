@@ -669,7 +669,26 @@ record; the line here is the hook). *Index last updated 2026-08-09.*
   unvalidated GPT-4o judge), yet both certificates were bought
   with real rollouts and calibrate on DROID only; two rig-day
   riders banked (2–5 min workspace scan for the PolaRiS route;
-  FACTR 2's 10-min free-motion torque protocol). No new arm.
+  FACTR 2's 10-min free-motion torque protocol). No new arm. Lit
+  `0821` ([Curse of Precision](papers/curse-of-precision.md) +
+  [NeuralActuator](papers/neuralactuator.md) +
+  [GigaWorld-1 / WMBench](papers/gigaworld-wmbench.md)): three bench
+  inputs — precision tasks built as one task × 2–3 tolerance levels
+  (keeps cells in the 20–80% band), with the fitted ceiling c as the
+  headline metric and config changes reported as Δc (rig-phase
+  instrument: c needs rollout sweeps, not pre-computable); the
+  FACTR 2 rig-day rider SUPERSEDED — NeuralActuator's third platform
+  is our exact arm (force MAE 0.47–0.73 N from Feetech load
+  registers, no current sensor; MIT code + 3 SO-101 checkpoints +
+  teleop code verified live) → rig day logs their 46-column servo
+  schema and gets a virtual force sensor nearly off-the-shelf; and
+  the world-model eval tier updates — the "no artifact" objection is
+  dead (GigaWorld-1 Apache-2.0 weights + validated VLM judge;
+  Ctrl-World live too), a zero-rollout pre-trust replay screen runs
+  on our corpus as-is, but its 324K "rollouts" are graded videos
+  under replayed actions and real-policy-ranking correlation is
+  never computed — screen ≠ certificate, calibration still costs
+  real rollouts.
 - **`lit-arms` [#15 Literature-sourced arms](ideas/15-literature-arms.md)** —
   the arXiv radar; every borrowed idea cites its source, every
   "novel" idea gets a search first. Feeds the Papers section.
@@ -792,7 +811,23 @@ record; the line here is the hook). *Index last updated 2026-08-09.*
   normalization-arm chain, with the loud caveat that velocity
   spread is also a chunk-MAE eval confound; the human-video lever
   is PARKED with a reopening condition = an ER-class embodied
-  trunk (the live er_60k) — base-VLM init measured ~zero gain.
+  trunk (the live er_60k) — base-VLM init measured ~zero gain. Lit
+  `0821` ([QoQ](papers/quality-over-quantity.md) +
+  [Curse of Precision](papers/curse-of-precision.md)): the curation
+  axis gets its missing middle pole — influence scoring anchored to
+  10–20 held-out demos, the only pole runnable in our no-rollout
+  regime (gains proven only on 40–50% injected failures; hard top-N
+  with budget sensitivity, not per-episode weighting — hook
+  corrected), cheapest arm sketched on the page (action-head-only
+  gradients suffice per their own ablation); and a bound from the
+  precision side — near a task's precision ceiling the data
+  exponent collapses (−0.19 at 4 mm), the corpus lever is
+  clarity-filtering (aggressive 50%-SR expert c=1.27 mm vs cautious
+  98%-SR expert 2.35 — down-weight retry/jiggle episodes, zero-GPU
+  detectable, composes with the QoQ pass). The 0822 sweep's
+  curation-metrics testbed cluster (2606.10229/2606.05588) is a
+  standing confound warning: read before executing any curation
+  pre-reg.
 - **`base-vs-it` [#10 E2B base-vs-IT swap](ideas/10-e2b-base-vs-it.md)** —
   backbone-swap arm, pre-registered prediction ±0.2.
 - **`visual-grounding` [#11 Visual grounding arms](ideas/11-visual-grounding.md)** —
