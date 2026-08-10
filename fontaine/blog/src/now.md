@@ -70,7 +70,7 @@ toc restored at the referenced path (200). Measured: cap headroom
 ≈1.4 MB (998.6 MB of 10⁹ un-GC'd) — search stays broken (14 MB
 index) until HF GC clears; offered the owner delete+recreate of the
 blog Space as the clean escape if GC hasn't run by tomorrow.
-FINAL THREAD 15:1x–16:0x: (10) navbar STILL broken for owner →
+FINAL THREAD 15:1x–15:2x: (10) navbar STILL broken for owner →
 real cause found: partial pushes left MIXED page generations (some
 live pages reference the NEW `toc-16164281.js` which didn't exist);
 both toc hashes now uploaded, every page generation verified 200;

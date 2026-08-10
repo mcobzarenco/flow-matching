@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-10T15:20:00Z
+**Updated:** 2026-08-10T15:24:00Z
 
-**Depth call:** depth 1 open at 15:0xZ 08-10 (STATED REASON for <2: owner lit-pause steering 00:23Z 08-10 suspends the refill lane; molmoact2-oob-panel-eval closed DELIVERED this session and every remaining item is owner-gated/blocked — fjoint finalize on owner go ~08-12 post-er-endpoint, vu5k/actckpt/img280/docs-tail/box-home-sweep all blocked or owner_hold). Work supply is run-boundary-driven: er-60k babysat to ~08-11 ~12:00Z endpoint -> chained panel_v2 -> paired reads vs 40k/60k banked panels; blog-Space squash lands via unit fontaine-blog-migrate when HF storage GC clears (next session verifies + posts). Local GPU free again 14:24Z — next local launch needs a fresh pre-reg (T2 depth rung and tiny decode microbench remain the named candidates, not yet pre-registered).
+**Depth call:** depth 1 open at 15:2xZ 08-10 (STATED REASON for <2: owner lit-pause steering 00:23Z 08-10 suspends the refill lane; molmoact2-oob-panel-eval closed DELIVERED this session and every remaining item is owner-gated/blocked — fjoint finalize on owner go ~08-12 post-er-endpoint, vu5k/actckpt/img280/docs-tail/box-home-sweep all blocked or owner_hold). Work supply is run-boundary-driven: er-60k babysat to ~08-11 ~12:00Z endpoint -> chained panel_v2 -> paired reads vs 40k/60k banked panels; blog-Space squash lands via unit fontaine-blog-migrate when HF storage GC clears (next session verifies + posts). Local GPU free again 14:24Z — next local launch needs a fresh pre-reg (T2 depth rung and tiny decode microbench remain the named candidates, not yet pre-registered).
 
-**7 open** (Live 1 · Queued 0 · Blocked 6 · Done 101)
+**8 open** (Live 1 · Queued 1 · Blocked 6 · Done 101)
 
 ## 🔴 Live (1)
 
@@ -26,11 +26,23 @@ OWNER RUN LIVE (launched 22:47-53Z 08-09, unit fontaine-er-60k): fontaine_molmo2
 
 ---
 
-## 🟢 Queued (0)
+## 🟢 Queued (1)
 
 *ready — waiting on a window or a boundary*
 
-*(empty)*
+**`molmoact2-rig-finetune-runbook`** · `cpu`
+
+OWNER QUESTION 15:19:45Z 08-10: 'How could I -- out of band -- fine-tune molmo2act on my rig datasets and then do local rollouts? Happy to use their code.' Answered in-channel 15:23Z (4-step shape: rig repos are LeRobot-native -&gt;…
+
+**boundary:** opened by owner question 15:19Z; runbook prep is CPU-only; any actual fine-tune launch needs its own pre-reg + param sheet + owner approval per the standing gate.
+
+<details><summary>full record</summary>
+
+OWNER QUESTION 15:19:45Z 08-10: 'How could I -- out of band -- fine-tune molmo2act on my rig datasets and then do local rollouts? Happy to use their code.' Answered in-channel 15:23Z (4-step shape: rig repos are LeRobot-native -&gt; their lerobot_wrapper; recompute q01/q99 stats over rig repos only via their stats.py; warm-start MolmoAct2-SO100_101 via their train_lerobot.py, trunk mostly frozen, 57 episodes short schedule; rollouts = adapt examples/droid/host_server_droid.py to SO-101 REPO_ID/NORM_TAG/state-dim-6 + lerobot client loop executing 30-step chunks w/ 0.5-1s replan; bf16/processor patches already ported in molmoact2_panel_predict.py). OFFERED a runnable runbook (pinned commands, rig mixture file, SO-101 server adaptation, box fine-tune pre-reg) — EXECUTE on owner yes, or fold into the next work session as CPU prep if they engage further. Motivating evidence: today's OOB eval (in-mixture repos beat state-copy -0.75, unseen 2x worse -&gt; rig fine-tune closes exactly that gap).
+
+</details>
+
+---
 
 ## 🟡 Blocked (6)
 
