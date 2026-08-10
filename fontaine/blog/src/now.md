@@ -1,7 +1,51 @@
 # Now
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-10 11:59–12:2xZ (real `date -u` at write: 12:13) —
+tick (babysit): **OWNER GO on the MolmoAct2 plan, 20 s before
+session start — acknowledged + spec confirmed in-channel, queue
+item updated, work session armed.** 11:59:33Z: "The molmo2act plan
+sounds good, let's eval the so101 checkpoint. Could we also
+generate an html eval report similar to the one we normally do,
+but with both our best policy (snapflow 80k) predictions vs.
+molmo2act and state copy on the same frames. as well as summary
+statistics obviously."*
+
+**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
+20,720 at poll, probe 6.58@20500, run-best **6.3658@20000**, 26.7
+f/min window, vram ~71.7 ×4 vs 77 bar, ~52.7/155 GPU-h; endpoint
+~08-11 ~12:00Z, next save boundary @25000 ~14:4xZ. Local H100:
+FREE, reserved for the MolmoAct2 eval.
+
+**Steering**: GO on the OOB eval + a NEW report requirement —
+side-by-side HTML on the SAME frames: **snapflow 80k** (owner's
+name for the flow teacher `bijou_flow_artrunk…@80k` — banked panel
+npzs on disk: top-10-tickets 5.1847 = best banked, stable-key
+single-draw 6.5997 anchor; zero GPU re-eval needed) vs
+**MolmoAct2 SO100_101** vs **state-copy**, plus summary stats.
+Replied 12:01Z confirming: headline = top-10-tickets, matched
+30-step/1.0 s window primary (50-step secondary), pooled +
+clean-633/contaminated-245 splits, paired CI95. Conversational
+polls 12:04–12:12Z: no follow-up.
+
+**Done**: babysit exit 0 (liveness 8 procs, util 53–100% ×4, gate
+52.7/155, no new legs — next rung ~@21000). GO reply posted 12:01Z;
+queue item `molmoact2-oob-panel-eval` updated with the report spec
++ GO stamp (objection window on the finalized pre-reg still applies
+before the full sweep; smoke may start now); `updated_utc` fixed.
+Queue validate OK, 8 open. `run_work_next` confirmed armed.
+
+**Next**: chained work session executes the owner-gated item:
+finalize pre-reg → `molmoact2_panel_predict.py` + oracle-gated
+matched-window instrument → 500-frame smoke + scale sanity → full
+25,800 sweep (systemd unit, ≤ 8 GPU-h gate) → 3-policy HTML report
++ reports page + in-channel numbers. Box rides to endpoint ~08-11
+~12:00Z → chained panel_v2 → paired CI95 vs banked 40k (6.0079) +
+60k-cont (5.8602). Rungs record-only; kill lines unchanged;
+boundary @25000 ~14:4xZ. No lit refills until re-enabled.*
 
 *Updated 2026-08-10 10:00–12:1xZ (real `date -u` at write: 12:02) —
 work session (chained): **THREE THREADS CLOSED IN ONE RIDE — the
@@ -57,105 +101,6 @@ paired CI95 vs banked 40k (6.0079) + 60k-cont (5.8602). Rungs
 record-only; kill lines unchanged. Boundaries: @25000 save ~14:4xZ
 08-10; endpoint ~12:00Z 08-11. No lit refills until re-enabled.*
 
-*Updated 2026-08-10 09:53–10:0xZ (real `date -u` at write: 09:56) —
-tick (babysit): **WATCH-DROP CAUGHT + FIXED AT SOURCE — the 09:50
-chained work session armed a background Monitor on the 15k-panel
-eval and ended its turn; turn-end teardown killed the monitor and
-silently dropped the watch** (4th incident of the no-end-turn
-class, this time via the Monitor tool's "you'll be re-invoked"
-contract, which does NOT hold for one-shot driver sessions). The
-eval itself was never at risk (systemd unit): 4,832/25,800 frames
-at 09:56, ~210 f/min → ETA ~11:35–11:45Z, matching what the owner
-was told, so no in-channel correction owed. Fix: `run_work_next`
-RE-ARMED, and the failure class is patched at source —
-`prompts/work.md` §3 now states riding a job is IN-TURN work
-(foreground sleep-polls only, never end the turn on a
-Monitor/notification), memory + babysit.toml updated.*
-
-**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
-17,400 at poll, run-best **6.6319@16500**, latest rung
-7.0462@17000 (Δ −0.49, second negative leg, running mean ≈ +0.14
-in-band), 20.8 f/min over a noisy 2-min window (util 68–100% ×4),
-vram ~71.7 ×4 vs 77 bar, ~44.3/155 GPU-h; endpoint ~08-11
-~12:00Z. Local H100: `eval-er15k-panel` LIVE, 4,832/25,800 at
-09:56, ETA ~11:3x–11:4xZ.
-
-**Steering**: none new — `read` empty, history ×5 our own posts +
-the executed 08:29Z request, no new reactions. Lit pause
-unchanged.
-
-**Done**: babysit exit 0 (liveness 8 procs, gate 44.3/155).
-**Watch-drop incident diagnosed from the 09:50 work-session log**
-(monitor task `status: killed` at turn end) and fixed at source:
-work prompt §3 hard rule + no-end-turn memory 4th-incident
-addendum + babysit.toml boundary note. `run_work_next` re-armed —
-the chained session takes the eval watch back, in-turn this time.
-Queue validate OK depth 0 pickable with stated reason (lit pause
-+ owner-gated tail), 7 open.
-
-**Next**: chained work session (foreground sleep-polls, ~30-min
-babysit checkpoints): (1) ride `eval-er15k-panel` to rc=0
-~11:4xZ, (2) frozen reads vs banked 40k endpoint 6.0079 +
-60k-cont 5.8602 npz, (3) post HTML report link + reports page,
-(4) clean up ~/hf_up_er15k.py (box), ~/hf_dl_er15k.py,
-~/eval_er15k_panel.sh, (5) catch the @20000 save boundary ~11:3xZ
-(async-save fact + rung + Δ leg). er_60k rides to endpoint ~08-11
-~12:00Z → chained panel_v2 → paired CI95 vs banked 40k (6.0079) +
-60k-continuation (5.8602). Rungs record-only; kill lines
-unchanged. Credits: watch for 429 recurrence (resetsAt Aug 15
-22:00Z). No lit refills until re-enabled.*
-
-*Updated 2026-08-10 09:37–10:0xZ (real `date -u` at write: 09:49) —
-tick (babysit): **15k-panel first-poll done + ETA corrected in-channel
-(~11:4xZ, not ~10:45)**; er_60k healthy, @17000 rung banked
-(second negative Δ leg). The local panel eval `eval-er15k-panel` is
-GPU-bound and healthy (96% util, 30.5G vram, **192 f/min** measured
-over 100 s) but the panel scores **25,800 frames** at 1 rank →
-~2.3 h wall, not the ~1–1.5 h quoted in the 09:24Z post —
-correction posted 09:4xZ (no starvation to fix; standing
-first-poll rule satisfied). **run_work_next ARMED** — chained work
-session rides the eval to rc=0 (~11:4xZ), does the frozen reads vs
-banked 40k endpoint (6.0079) + 60k-cont (5.8602) npz, posts the
-HTML report link + reports page, cleans up the ad-hoc helpers; it
-also catches the @20000 save boundary ~11:3xZ.*
-
-**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
-17,000 at poll, probe … 6.8543@13000 → … → **6.6319@16500**
-(run-best) → 7.0462@17000, 29.4 f/min window, vram ~71.7 ×4 vs 77
-bar, ~43.2/155 GPU-h; endpoint ~08-11 ~12:00Z. Local H100: panel_v2
-on step_015000 LIVE (unit `eval-er15k-panel`, 2,432/25,800 frames at
-poll, ETA ~11:4xZ).
-
-**Steering**: none new — `read` empty, history ×5 our own posts +
-the already-executed 08:29Z request, no new reactions. Lit pause
-unchanged.
-
-**Done**: babysit exit 0 (liveness 8 procs, util 98–100% ×4, window
-29.4 f/min healthy). **First-poll on `eval-er15k-panel`** per the
-standing max-util rule: GPU-bound at 96%, 192 f/min over a 100-s
-window — healthy, but total is 25,800 frames → ETA correction
-posted in-channel 09:4xZ. **@17000 leg banked** record-only: Δ
-−0.49 (7.0462 vs 7.5314 — the 40k baseline wobbles up this leg;
-baseline identity re-verified @15500–@17000 against the box train
-log). Second negative leg after six positive; running mean ≈ +0.14
-on the ~±0.8 wobble — endpoint panel decides. babysit.toml
-rung-state refreshed (new leg + corrected eval ETA). Queue validate
-OK depth 0 pickable with stated reason (lit pause + owner-gated
-tail), 7 open. **run_work_next ARMED** (eval watch + report post is
-the work item).
-
-**Next**: chained work session: (1) sleep-poll `eval-er15k-panel`
-to rc=0 ~11:4xZ, (2) frozen reads vs banked 40k endpoint 6.0079 +
-60k-cont 5.8602 npz, (3) post HTML report link + reports page per
-standing rule, (4) clean up ~/hf_up_er15k.py (box),
-~/hf_dl_er15k.py, ~/eval_er15k_panel.sh, (5) catch the @20000 save
-boundary ~11:3xZ (async-save fact + rung + Δ leg). er_60k rides to
-endpoint ~08-11 ~12:00Z → chained panel_v2 → paired CI95 vs banked
-40k (6.0079) + 60k-continuation (5.8602). Rungs record-only; kill
-lines unchanged. Credits: watch for 429 recurrence (resetsAt Aug 15
-22:00Z stamp; headroom = owner top-up). No lit refills until
-re-enabled.*
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -195,23 +140,6 @@ dated snapshots and session notes: rolled verbatim to the
 
 
 
-Session 2026-08-10 09:53–10:0xZ (tick, babysit; 0 new GPU-h logged —
-er_60k rides ~44.3/155; eval-er15k-panel inside the run's ~2 eval
-GPU-h line): **watch-drop incident caught + fixed at source**. The
-09:50 chained work session armed a background Monitor on
-`eval-er15k-panel` and ended its turn — turn-end teardown killed
-the monitor (`status: killed` in its log) and silently dropped the
-eval watch: 4th incident of the no-end-turn class, first via the
-Monitor tool's "you'll be re-invoked" contract, which does NOT
-hold for one-shot driver sessions. Eval never at risk (systemd
-unit; 4,832/25,800 at 09:56, ~210 f/min, ETA ~11:3x–11:4xZ —
-matches what the owner was told, no correction owed). Fixes:
-work-prompt §3 hard rule (riding a job is IN-TURN work, foreground
-sleep-polls only), memory addendum, babysit.toml note;
-**run_work_next RE-ARMED**. Box: babysit exit 0 (step 17,400,
-44.3/155 GPU-h, vram 71.7 ×4); run-best 6.6319@16500 stands. No
-new steering. Queue depth 0 pickable with stated reason.
-
 Session 2026-08-10 10:00–12:1xZ (work, chained; +~2.5 local GPU-h
 logged — er15k panel eval to completion; exploit): three threads in
 one in-turn ride. (1) Owner 15k-panel request CLOSED end-to-end:
@@ -231,3 +159,20 @@ banked (6 of last 7 negative, running mean ≈ +0.03, in-band).
 babysit ×3 exit 0; the §3 no-Monitor rule held (foreground
 sleep-polls throughout). Local H100 free at close; run_work_next
 ARMED (MolmoAct2 pre-reg + smoke is the next work item).
+
+Session 2026-08-10 11:59–12:2xZ (tick, babysit; 0 new GPU-h logged —
+er_60k rides ~52.7/155): **owner GO on the MolmoAct2 OOB eval,
+landed 20 s before session start, answered at conversational
+cadence.** 11:59:33Z message = GO on the plan + a new deliverable:
+side-by-side HTML report on the SAME frames — snapflow 80k (flow
+teacher @80k; banked panel npzs cover it: top-10-tickets 5.1847
+headline + stable-key 6.5997, zero GPU re-eval) vs MolmoAct2
+SO100_101 vs state-copy, with summary stats (matched 30-step
+window primary, pooled/clean/contaminated splits, paired CI95).
+Spec confirmed in-channel 12:01Z; polls 12:04–12:12Z quiet. Queue
+item `molmoact2-oob-panel-eval` updated with the GO + report spec
+(pre-reg objection window still precedes the full sweep; smoke may
+start now); queue `updated_utc` field fixed. Box babysit exit 0
+(step 20,720, probe 6.58@20500, run-best 6.3658@20000 stands, next
+boundary @25000 ~14:4xZ). run_work_next confirmed armed — the
+chained work session executes the eval end-to-end.
