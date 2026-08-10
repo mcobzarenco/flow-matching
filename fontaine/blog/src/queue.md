@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-10T20:15:00Z
+**Updated:** 2026-08-10T22:36:00Z
 
-**Depth call:** depth 3 open at 20:15Z 08-10: molmoact2-rig-ft-postprocess (rig-ft endpoint ~20:26Z, successor armed) + molmoact2-firstclass-port (owner GO 20:06:37Z, items 1-4) + blog-space-gc-tail (GC running, 913 MB, below-500 push pending). Rig fine-tune LIVE local to ~20:26Z; er-60k LIVE box to ~08-11 ~12:00Z. Lit refill lane stays owner-paused (00:23Z 08-10).
+**Depth call:** depth 3 open at 22:36Z 08-10: er35k-aux-panel-eval (aux arm banked, standard eval LIVE local ETA ~01:0xZ, postprocess remains) + molmoact2-firstclass-port (owner GO; item 1 HALF-LANDED this session: AE module + G1 CPU parity byte-exact ed3f6e8; wiring/items 2-4 remain) + blog-space-gc-tail (GC at 822.6 MB 21:0xZ, still above the ~500 push line). er-60k LIVE box to ~08-11 ~12:00Z. Lit refill lane stays owner-paused (00:23Z 08-10).
 
-**10 open** (Live 1 · Queued 3 · Blocked 6 · Done 102)
+**10 open** (Live 1 · Queued 3 · Blocked 6 · Done 103)
 
 ## 🔴 Live (1)
 
@@ -44,29 +44,29 @@ Blog Space storage tail (manual-only — the retry unit is STOPPED and must NOT 
 
 ---
 
-**`molmoact2-rig-ft-postprocess`** · `gpu-local`
+**`molmoact2-firstclass-port`** · `cpu`
 
-Rig fine-tune rung reads + report + checkpoint upload (successor to molmoact2-rig-finetune-runbook)
+OWNER GO 20:06:37Z 08-10 ('Let's do it, 1 through 4' on the 19:5xZ in-channel estimate): make MolmoAct2 first-class in-repo, rig-path-first
 
-**boundary:** Opens at train endpoint ~20:20Z 08-10 or next session boot, whichever first. Conversion+reads ~1 GPU-h inside the 12 GPU-h pre-reg gate (train projected ~2.6). · [pre-reg](posts/2026-08-10-prereg-molmoact2-rig-finetune.md)
+**boundary:** Opens after molmoact2-rig-ft-postprocess (endpoint read is time-sensitive); ~3-4 focused sessions, items in order 1-&gt;2-&gt;3-&gt;4, each with its own parity/oracle gate before the next. PRE-REG POSTED 21:0xZ 08-10 (parity gates G1-G4 frozen: G1 AE-module bf16 forward parity, G2 end-to-end 240-row anchor reproduction 28.9454/3.2301, G3 check.py oracle harness, G4 our-trainer rung-1 repro &lt;=6 GPU-h; port GPU total &lt;=8). · [pre-reg](posts/2026-08-10-prereg-molmoact2-firstclass-port.md)
 
 <details><summary>full record</summary>
 
-Rig fine-tune rung reads + report + checkpoint upload (successor to molmoact2-rig-finetune-runbook). Train endpoint ~20:20Z 08-10 (2000 steps, unit fontaine-molmoact2-rig-ft, log ~/logs/molmoact2_rig_ft.log). IN-SESSION PROGRESS 18:3x-19:5xZ 08-10: rungs 500/1000/1500 converted + read (MAE 6.7561 / 4.66 / 3.5871 vs anchors zero-shot 28.95 &amp; state-copy 9.08 — expectation 2 MET, monotone, oracles green; HF dirs ~/checkpoints/molmoact2-so101-rig-r1-step{500,1000,1500}-hf). REMAINING: (1) verify rc=0 + final save; (2) convert step2000 via experiments/olmo/hf_model/convert_molmoact2_to_hf.py (molmoact2 venv, branch fontaine-so101-rig); (3) rung reads: uv run python fontaine/scripts/molmoact2_rig_preflight.py --model &lt;converted dir&gt; --out-stem analysis__molmoact2_rig_ft_step&lt;N&gt; — same 240 rows; pre-reg pass = beat BOTH anchors (zero-shot 28.95, state-copy 9.08 matched 1.0s window) + step-0 continuity + all motion corrs positive; (4) results post in-channel + blog results page + report on fontaine-reports (charts per house style, dark-mode); (5) best rung weights to fontaine-checkpoints same-session (standing rule); (6) prune rig_ft_r1 babysit entry; (7) runbook §5 updated with measured numbers. Contaminated-by-construction: label every read (train-frame sanity, not generalization; real eval = owner rig rollouts per runbook §3-4).
+OWNER GO 20:06:37Z 08-10 ('Let's do it, 1 through 4' on the 19:5xZ in-channel estimate): make MolmoAct2 first-class in-repo, rig-path-first. Scope: (1) action expert port (their nn/action_expert.py 982 LOC + backbone-AE wiring molmoact2.py 1.3k LOC) + weight load; (2) action-side prompt/processing deltas (template, state encoding, q01/q99 norm_stats) on top of bijou/molmo2 processor; (3) parity harness vs their HF forward + banked 240-row anchors (zero-shot 28.95 / state-copy 9.08) + rig-ft rung checkpoints; (4) AE fine-tune in OUR trainer, retiring the 3 train_lerobot.py patches. Backbone reused from bijou/molmo2 (byte-verified); depth/trace/sim-eval stay out-of-band. Pre-reg post first (parity gates falsifiable), CPU-mostly, GPU only for parity checks.
 
 </details>
 
 ---
 
-**`molmoact2-firstclass-port`** · `cpu`
+**`er35k-aux-panel-eval`** · `gpu-local`
 
-OWNER GO 20:06:37Z 08-10 ('Let's do it, 1 through 4' on the 19:5xZ in-channel estimate): make MolmoAct2 first-class in-repo, rig-path-first
+OWNER REQUEST 20:47:38Z 08-10 (35k -&gt; hub + aux-enabled eval report on local GPU)
 
-**boundary:** Opens after molmoact2-rig-ft-postprocess (endpoint read is time-sensitive); ~3-4 focused sessions, items in order 1-&gt;2-&gt;3-&gt;4, each with its own parity/oracle gate before the next.
+**boundary:** Standard eval live since 22:33:30Z 08-10, ETA ~01:0xZ 08-11; successor session/tick postprocesses via babysit entry er35k_panel + run_work_next. · [pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md)
 
 <details><summary>full record</summary>
 
-OWNER GO 20:06:37Z 08-10 ('Let's do it, 1 through 4' on the 19:5xZ in-channel estimate): make MolmoAct2 first-class in-repo, rig-path-first. Scope: (1) action expert port (their nn/action_expert.py 982 LOC + backbone-AE wiring molmoact2.py 1.3k LOC) + weight load; (2) action-side prompt/processing deltas (template, state encoding, q01/q99 norm_stats) on top of bijou/molmo2 processor; (3) parity harness vs their HF forward + banked 240-row anchors (zero-shot 28.95 / state-copy 9.08) + rig-ft rung checkpoints; (4) AE fine-tune in OUR trainer, retiring the 3 train_lerobot.py patches. Backbone reused from bijou/molmo2 (byte-verified); depth/trace/sim-eval stay out-of-band. Pre-reg post first (parity gates falsifiable), CPU-mostly, GPU only for parity checks.
+OWNER REQUEST 20:47:38Z 08-10 (35k -&gt; hub + aux-enabled eval report on local GPU). AUX ARM DONE 22:30:45Z rc=0 (~1.5/8 GPU-h): hub upload 42.4s + local dl 31.1s + eval unit eval-er35k-aux ~250 f/min; core 6.3425/2.3770 (aux-narrated decode); paired reads banked (vs 40k endpoint +0.335 [+0.247,+0.387] CROSS-CLASS narrated-vs-fastpath; vs 60k-cont +0.482); report+json+analysis on fontaine-reports; numbers in-channel 22:3xZ. HARNESS GAP FOUND: explicit --generate makes the MAIN arm narrate but discards its generations -&gt; per-field aux metrics (holding/progress/event/visible) empty + no base-vs-narrated pairing (bijou/eval/cli.py results.generations only fills from NarratedBijouPolicy). STANDARD EVAL RELAUNCHED 22:33:30Z unit eval-er35k-panel (both arms + full aux metrics, the er15k report shape, ETA ~01:0xZ; babysit entry er35k_panel). REMAINING (next session): rc=0 -&gt; class-matched reads via er15k_panel_reads.py (key bijou@35000, fast path vs banked 40k 6.0079 + 60k-cont 5.8602 — supersedes the cross-class read) -&gt; report/json/analysis to fontaine-reports + reports.md + in-channel numbers -&gt; prune babysit entry. OPTIONAL instrument-debt follow-up (own small item if pursued): retain main-policy generations under --generate so aux metrics survive without the second pass.
 
 </details>
 
@@ -158,7 +158,7 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 
 ---
 
-## ✅ Done (102)
+## ✅ Done (103)
 
 *closed — the full record stays in each fold*
 
@@ -1585,6 +1585,20 @@ OWNER QUESTION 15:19:45Z 08-10: 'How could I -- out of band -- fine-tune molmo2a
 <details><summary>full record</summary>
 
 OWNER QUESTION 15:19:45Z 08-10: 'How could I -- out of band -- fine-tune molmo2act on my rig datasets and then do local rollouts? Happy to use their code.' Answered in-channel 15:23Z (4-step shape: rig repos are LeRobot-native -&gt; their lerobot_wrapper; recompute q01/q99 stats over rig repos only via their stats.py; warm-start MolmoAct2-SO100_101 via their train_lerobot.py, trunk mostly frozen, 57 episodes short schedule; rollouts = adapt examples/droid/host_server_droid.py to SO-101 REPO_ID/NORM_TAG/state-dim-6 + lerobot client loop executing 30-step chunks w/ 0.5-1s replan; bf16/processor patches already ported in molmoact2_panel_predict.py). OWNER GO 15:24:16Z ('Yes, I want a runnable runbook and I want you to go ahead and do a fine-tune on the local GPU') — EXECUTE: runbook post (pinned commands, rig mixture file, rig-only q01/q99 stats, SO-101 server adaptation) + parameter sheet in-channel BEFORE any GPU minute (owner said treat-as-objection-window, silence=launch per my 15:2xZ ack), then LAUNCH the fine-tune on the free local H100 (systemd unit + babysit entry + first-poll rate/vram check + own gate). Warm-start MolmoAct2-SO100_101; 57 rig episodes (so101_pick_place_clean 7 + _v2 50); their train_lerobot.py; short schedule, trunk mostly frozen first rung. OFFERED a runnable runbook (pinned commands, rig mixture file, SO-101 server adaptation, box fine-tune pre-reg) — EXECUTE on owner yes, or fold into the next work session as CPU prep if they engage further. Motivating evidence: today's OOB eval (in-mixture repos beat state-copy -0.75, unseen 2x worse -&gt; rig fine-tune closes exactly that gap). CONVENTION THREAD (owner 15:48Z, github.com/irenegracekp/molmoact2-so101): MolmoAct2 trained on LeRobot v2.1 joint-angle convention, lerobot 0.5.x calibrates in v3.0 -&gt; live-inference danger (arm slams on wrong offsets); recorded-data eval UNaffected (repo says so itself + contaminated-split parity is the empirical check; answered in-channel 15:5xZ). RUNBOOK MUST INCLUDE: (1) read codebase_version off both rig repos' meta/info.json (never assume); (2) recommended path = convert rig actions/states v3.0-&gt;v2.1 (documented offsets/signs) so the model stays in its native convention; param sheet states the convention of every tensor; (3) first-step continuity oracle on held-out rig frames (pred step-0 ~ current state, loud fail); (4) rollout server: verify rig calibration lerobot version or recalibrate pinned 0.5.1, apply conversion, no-execute dry-run gate + command clamp before ANY motion.
+
+</details>
+
+---
+
+**`molmoact2-rig-ft-postprocess`** · `gpu-local`
+
+Rig fine-tune rung reads + report + checkpoint upload (successor to molmoact2-rig-finetune-runbook)
+
+**boundary:** CLOSED 21:0xZ 08-10 work session, all 7 steps: rc=0 20:27:44Z verified (2000 steps, ~2.7/12 GPU-h); step2000 converted (~/checkpoints/molmoact2-so101-rig-r1-step2000-hf, rig norm_stats verified); rung read MAE 3.2301 (PRE-REG PASS: monotone 6.76/4.66/3.59/3.23, beats zero-shot 28.95 + state-copy 9.08, all 6 corrs +0.885..+0.965, offsets &lt;=0.63, oracles green); results post posts/2026-08-10-molmoact2-rig-ft-results.md + HTML report eval__fontaine_so101_rig_ae_r1__anchor_rungs.html on fontaine-reports (curl 200) + 5 frozen jsons uploaded + reports.md section; weights delta to fontaine-checkpoints/molmoact2_so101_rig_r1_step2000 (AE 588 tensors + resized wte/lm_head, trunk dedup sha-verified 704/707 byte-identical); babysit entry pruned; runbook section 5 updated with measured numbers. Numbers + joint1-wording correction posted in-channel (owner 👍 on the 20:30Z results post). · [pre-reg](posts/2026-08-10-prereg-molmoact2-rig-finetune.md)
+
+<details><summary>full record</summary>
+
+Rig fine-tune rung reads + report + checkpoint upload (successor to molmoact2-rig-finetune-runbook). Train endpoint ~20:20Z 08-10 (2000 steps, unit fontaine-molmoact2-rig-ft, log ~/logs/molmoact2_rig_ft.log). IN-SESSION PROGRESS 18:3x-19:5xZ 08-10: rungs 500/1000/1500 converted + read (MAE 6.7561 / 4.66 / 3.5871 vs anchors zero-shot 28.95 &amp; state-copy 9.08 — expectation 2 MET, monotone, oracles green; HF dirs ~/checkpoints/molmoact2-so101-rig-r1-step{500,1000,1500}-hf). REMAINING: (1) verify rc=0 + final save; (2) convert step2000 via experiments/olmo/hf_model/convert_molmoact2_to_hf.py (molmoact2 venv, branch fontaine-so101-rig); (3) rung reads: uv run python fontaine/scripts/molmoact2_rig_preflight.py --model &lt;converted dir&gt; --out-stem analysis__molmoact2_rig_ft_step&lt;N&gt; — same 240 rows; pre-reg pass = beat BOTH anchors (zero-shot 28.95, state-copy 9.08 matched 1.0s window) + step-0 continuity + all motion corrs positive; (4) results post in-channel + blog results page + report on fontaine-reports (charts per house style, dark-mode); (5) best rung weights to fontaine-checkpoints same-session (standing rule); (6) prune rig_ft_r1 babysit entry; (7) runbook §5 updated with measured numbers. Contaminated-by-construction: label every read (train-frame sanity, not generalization; real eval = owner rig rollouts per runbook §3-4).
 
 </details>
 

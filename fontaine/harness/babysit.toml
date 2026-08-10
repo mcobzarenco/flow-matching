@@ -37,7 +37,7 @@ value = 155.0
 # Correction + amended gate posted in-channel 22:5xZ; owner invited to
 # object to the ~150 GPU-h spend; kill lines unchanged.
 
-# adamc_100k entry pruned 22:4xZ 08-09 — OWNER KILL 22:36Z (ER-60k
+# adamc_100k entry pruned 22:3xZ 08-09 — OWNER KILL 22:36Z (ER-60k
 # steering: 'not looking great', GPUs reassigned to the ER-60k run).
 # Killed clean at step ~11,840 (~35.7/310 GPU-h); final probe ladder
 # ... 10.63@9500 -> 10.80@10000 -> 11.06@10500 -> 11.41@11000 ->
@@ -591,26 +591,29 @@ value = 155.0
 
 # rig_ft_r1 entry pruned 20:3xZ 08-10 — TRAIN COMPLETE rc=0 20:27:44Z (2000 steps, ~2.7/12 GPU-h); rung 2000 MAE 3.2301 (pre-reg PASS: monotone 6.76/4.66/3.59/3.23 vs anchors 28.95 zero-shot / 9.08 state-copy, all corrs positive, continuity green); step2000 delta uploaded to fontaine-checkpoints (molmoact2_so101_rig_r1_step2000); serve dir ~/checkpoints/molmoact2-so101-rig-r1-step2000-hf.
 
+# er35k_aux entry pruned 22:3xZ 08-10 — COMPLETE rc=0 22:30:45Z (~1.5/8 GPU-h, 25,800 frames at ~250 f/min): aux-narrated arm core 6.3425/2.3770; paired reads banked analysis__er35k_aux_panel_vs_banked_k4l2.json (+0.335 [+0.247,+0.387] vs 40k endpoint CROSS-CLASS narrated-vs-fastpath, +0.482 [+0.399,+0.517] vs 60k-cont); report+json+analysis on fontaine-reports, numbers in-channel 22:3xZ. HARNESS GAP found: explicit --generate discards main-policy generations -> per-field aux metrics empty; standard eval relaunched as the complete read (entry below).
+
 [[run]]
-name = "er35k_aux"
+name = "er35k_panel"
 kind = "progress-log"
 host = "local"
 pgrep = "bijou.eval"
 pgrep_min = 1
 gpu_indices = [0]
 gpu_mem_min_mib = 8000
-log = "/home/ubuntu/logs/eval__fontaine_molmo2_er_60k_ddp4__step_035000__panel_curated_v0_k4l2_aux.log"
+log = "/home/ubuntu/logs/eval__fontaine_molmo2_er_60k_ddp4__step_035000__panel_curated_v0_k4l2.log"
 progress_re = "scored [0-9]+/25800 frames"
-started_utc = "2026-08-10T21:00:30Z"
+started_utc = "2026-08-10T22:33:30Z"
 gpu_hours_per_wall_hour = 1.0
-boundary = "OWNER REQUEST 20:47:38Z 08-10: er_60k step_035000 (run-best window 5.43@34500, rung 5.6261@35000) -> hub upload DONE 20:5xZ (42.4s box-side, 4 files weights-only, verified) -> local download DONE (31.1s, 9.1G) -> AUX-ENABLED panel eval LIVE local H100 unit eval-er35k-aux launched 21:00:30Z: er_60k endpoint eval verbatim at 1 rank PLUS --generate subgoal holding progress event visible (the run's full trained aux-field set; report gains aux-vs-weak-labels block + narrated pass), stem eval__fontaine_molmo2_er_60k_ddp4__step_035000__panel_curated_v0_k4l2_aux. Rate class: er15k no-aux ran 192-210 f/min ~2.5 GPU-h; aux decode is slower — first-poll rate sets the ETA. On rc=0: report + json + npz to fontaine-reports, numbers in-channel (record-only vs banked er15k 7.5283 + 40k endpoint 6.0079 + 60k-cont 5.8602; quarter-vs-58%-training caveat, decision stays at the ~08-11 endpoint panel)."
+boundary = "COMPLETION of the owner 20:47Z request (aux-arm read banked 22:30Z, cross-class caveat): STANDARD er_60k panel eval on step_035000, local H100 unit eval-er35k-panel launched 22:33:30Z — no --generate, so the narrated pass rides automatically: bijou@35000 (fast path) + bijou@35000+fields (aux-narrated) + per-field aux metrics (holding/progress/event/visible vs weak labels, ~9k labeled frames) + does-narration-help pairing, exactly the er15k report shape. ETA ~01:0xZ 08-11 at the 250 f/min class x2 arms (er15k both-arms ran 2.5h at 192 f/min). ON rc=0 (next session): er15k_panel_reads.py --stem-cand reports/eval__fontaine_molmo2_er_60k_ddp4__step_035000__panel_curated_v0_k4l2 --out reports/analysis__er35k_panel_vs_banked_k4l2.json (fast-path key bijou@35000 = CLASS-MATCHED vs banked 40k 6.0079 + 60k-cont 5.8602 — supersedes the aux-arm cross-class read), report+json+analysis to fontaine-reports + reports.md, numbers in-channel, prune this entry. Record-only: nothing gates the box run (endpoint ~08-11 ~12:00Z decides)."
 anchors = [
     "record-only owner-requested read; nothing gates or repoints the box run",
-    "first-poll (standing rule): util + f/min + vram within ~15 min of launch; aux decode expected slower than 192 f/min no-aux class; fix starvation before letting it ride",
-    "kill lines: unit inactive with no rc=0 wrote-lines; f/min collapse under ~30 sustained x3 polls (would blow past ~8 GPU-h eval class)",
-    "progress: 'scored N/25800 frames' lines; done = three 'wrote reports/...' lines (json/html/npz)",
+    "first-poll: util + f/min + vram; both-arms class ~2x single-arm decode, expect ~120-250 f/min",
+    "kill lines: unit inactive with no wrote-lines rc!=0; f/min collapse under ~30 sustained x3 polls",
+    "progress: 'scored N/25800 frames'; done = dumped npz + wrote json + wrote html lines",
+    "on-completion contract: class-matched paired reads via er15k_panel_reads.py (key bijou@35000), then in-channel numbers + Space upload; the 22:4xZ aux-arm post told the owner this report supersedes",
 ]
 [[run.gates]]
 kind = "gpu_hours_max"
 value = 8.0
-# eval-class ceiling: er15k measured ~2.5 GPU-h no-aux; aux decode may run 2-3x
+# shared eval-class ceiling with the aux arm: ~1.5 spent there + ~2.5 here <= 8

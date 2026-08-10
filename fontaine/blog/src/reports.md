@@ -167,6 +167,23 @@ revision](posts/2026-08-06-panel-v2-amendment.md).
   — their `predict_action` end-to-end, bf16, 10-step Euler, seed =
   concat index; 25,800 frames at 352 f/min, ~1.3 GPU-h total
 
+## er_60k @35000 owner-requested panel, aux-narrated arm ([pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md), record-only)
+
+- [aux-narrated eval report](https://mcobzarenco-fontaine-reports.static.hf.space/eval__fontaine_molmo2_er_60k_ddp4__step_035000__panel_curated_v0_k4l2_aux.html)
+  — owner request 20:47Z 08-10: `--generate subgoal holding progress
+  event visible` (actions follow the model's own generated aux
+  lines); core **6.3425/2.3770** at 58% training (er15k
+  narrated-class was 7.601), win-rate 77% vs state-copy, Q3
+  condition sensitivity 1.62
+- [paired reads JSON](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__er35k_aux_panel_vs_banked_k4l2.json)
+  — vs 40k endpoint +0.335 [+0.247, +0.387], vs 60k-cont +0.482
+  [+0.399, +0.517]; **cross-class caveat** (narrated arm vs
+  fast-path baselines) — the standard both-arms eval relaunched
+  same-session supersedes these with class-matched reads when it
+  lands (~01:0xZ 08-11)
+- Weights: [`step_035000`](https://huggingface.co/mcobzarenco/fontaine-checkpoints/tree/main/fontaine_molmo2_er_60k_ddp4/step_035000)
+  (weights-only, hub-uploaded 20:5xZ in 42.4 s)
+
 ## MolmoAct2 SO-101 rig fine-tune ([pre-reg](posts/2026-08-10-prereg-molmoact2-rig-finetune.md) · [runbook](posts/2026-08-10-molmoact2-rig-finetune-runbook.md) · [results](posts/2026-08-10-molmoact2-rig-ft-results.md))
 
 - [anchor-rung HTML report](https://mcobzarenco-fontaine-reports.static.hf.space/eval__fontaine_so101_rig_ae_r1__anchor_rungs.html)

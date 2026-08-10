@@ -3,7 +3,69 @@
 
 
 
+
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-10 20:09–22:5xZ (real `date -u` at write: 22:37) —
+work session: **rig-ft postprocess CLOSED (pre-reg PASS, MAE 3.23@2000)
++ the owner's 20:47Z 35k-aux request executed end-to-end + port item 1
+landed with a byte-exact G1** — and the aux run surfaced a real
+harness gap, with the corrected standard eval already riding.*
+
+**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — **RUN-BEST
+5.43@34500** (then 5.63@35000 / 5.53@35500), 25.8 f/min, 90.7/155
+GPU-h, babysit exit 0 ×2; @35000 save published 20:58:25Z (uploaded to
+hub 42.4 s on owner request); next boundary @40000 ~00:0xZ, endpoint
+~08-11 ~12:00Z → chained panel_v2. `eval-er35k-panel` LIVE local H100
+— STANDARD both-arms panel eval on step_035000 (fast-path +
+auto-narrated + full aux metrics, the er15k report shape), launched
+22:33:25Z, ETA ~01:0xZ 08-11; babysit entry `er35k_panel` carries the
+on-completion contract (class-matched reads via er15k_panel_reads.py
+key bijou@35000). Blog Space GC: 998.6 → 913 → **822.6 MB** — still
+above the ~500 push line, no push.
+
+**Steering**: OWNER REQUEST 20:47:38Z ("once 35k checkpoint lands on
+box, upload to hub + run the eval report with aux tasks enabled on
+the local gpu") — EXECUTED same session: hub upload 42.4 s + local dl
+31.1 s + aux eval rc=0 22:30:45Z (~1.5/8 GPU-h). **Aux-narrated arm:
+core 6.3425/2.3770** (er15k narrated-class 7.601 → −1.26 at 58%
+training); paired +0.335 [+0.247, +0.387] vs 40k endpoint /
++0.482 vs 60k-cont — but CROSS-CLASS (narrated vs fast-path
+baselines), and a **harness gap surfaced**: explicit `--generate`
+discards the main policy's generations, so per-field aux metrics came
+back empty (results.generations only fills from NarratedBijouPolicy).
+Owned in-channel 22:3xZ with numbers + the fix: the STANDARD eval
+(both arms + aux metrics) relaunched, supersedes on landing. Also:
+owner 👍 on the rig-ft results post; joint-1 wording correction posted
+(zero-shot corr was +0.22, the offset was the Amendment-1 finding).
+
+**Done** (commits 9312626, ed3f6e8, 6db919d + close): (1) rig-ft
+postprocess CLOSED — rc=0 verified, step2000 converted, rung read
+**3.2301** (pre-reg PASS at every gate: monotone 6.76/4.66/3.59/3.23
+vs anchors 28.95/9.08, corrs +0.885..+0.965), results post + anchor-
+rung HTML report (new molmoact2_rig_ft_report.py, npz-vs-json oracle,
+house dark theme) + 5 frozen jsons on fontaine-reports (curl 200),
+weights delta to fontaine-checkpoints (trunk dedup sha-verified
+704/707; vocab-resize finding documented), runbook §5 measured,
+babysit entry pruned. (2) 35k-aux request end-to-end (above). (3)
+**Port item 1 half-landed**: pre-reg posted (gates G1–G4 frozen),
+`bijou/molmoact2/action_expert.py` (config measured off the export:
+h768/36 blocks/8 heads, 577,564,448 params exact), 9 CPU oracles in
+check.py (608 green), **G1 CPU parity PASS byte-identical (max|Δ|
+0.0e+00, real weights, 3 seeds)** vs their HF remote-code module;
+item-2 finding: their HF inference expert has NO continuous-state
+path (state enters as prompt tokens). (4) er15k_panel_reads
+generalized (--stem-cand key derivation, oracle green).
+
+**Next**: `queue_cli.py next` → **er35k-aux-panel-eval** remaining
+half (standard eval rc=0 ~01:0xZ → class-matched reads → report +
+in-channel + prune); then **molmoact2-firstclass-port** items 1
+(wiring: backbone↔AE + flow loop, G1 bf16 GPU rung when local frees)
+→ 2 → 3 → 4. Box @40000 boundary ~00:0xZ + legs @35500–@40000; er
+endpoint ~08-11 ~12:00Z → chained panel_v2 → paired CI95 vs banked
+40k (6.0079) + 60k-cont (5.8602). Blog-Space: re-check usedStorage,
+one-shot push per memory when < ~500 MB. run_work_next armed.*
 
 *Updated 2026-08-10 19:53–20:1xZ (real `date -u` at write: 20:07) —
 tick (babysit): **owner conversation recovered — the 18:42Z
@@ -132,164 +194,21 @@ Box boundaries @35000 ~20:5xZ, @40000 ~00:0xZ; er endpoint ~08-11
 60k-cont (5.8602). Blog-Space tail per its queue item (owner ask due
 ~08-11 morning if still capped).*
 
-*Updated 2026-08-10 16:07–16:1xZ (real `date -u` at write: 16:13) —
-tick (babysit): **quiet interval — no new owner traffic, box healthy
-with a NEW RUN-BEST, work session armed for the owner-GO'd rig
-fine-tune runbook.***
-
-**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
-~27,320 at poll, **NEW RUN-BEST 5.96@27000** (prior 6.1306@25000;
-rungs since @25000: 6.21@25500 / 6.20@26000 / 6.58@26500 /
-5.96@27000), 27.4 f/min, gate 69.2/155 GPU-h, vram ~71.7 ×4 vs 77
-bar, babysit exit 0; next save boundary @30000 ~17:4xZ (matched-Δ
-legs @25500–@30000 bank at that catch), endpoint ~08-11 ~12:00Z.
-Local H100 FREE, reserved for the rig fine-tune. Blog Space still
-capped: `usedStorage` 998.6 MB — HF GC hasn't run; no push
-attempted, the delete+recreate ask stands for ~08-11 morning if
-unchanged.
-
-**Steering**: none new — `read` empty, `history -n 5` shows the
-15:48/15:52Z LeRobot v2.1/v3.0 joint-convention thread already
-answered 15:54Z (requirements folded into the runbook item, commit
-c013413); no new reactions.
-
-**Done**: babysit exit 0 (liveness 8 procs, util 58–100% ×4);
-registry updated with the run-best + rung state; queue validate — 8
-open but depth 1 (< 2) → refill flagged; `run_work_next` re-armed;
-Space storage checked (998.6 MB, unchanged).
-
-**Next**: chained work session opens with
-**molmoact2-rig-finetune-runbook** (owner GO 15:24Z: read
-`codebase_version` off both rig repos → runbook post + param sheet
-in-channel → objection window, silence=launch → fine-tune on the
-local H100 with its own pre-reg + babysit entry + gate), then
-refills the queue to depth ≥ 2. @30000 boundary ~17:4xZ falls to
-that session or the next tick. Blog-Space tail stays manual-only.*
-
-*Updated 2026-08-10 12:24–15:0xZ (real `date -u` at write: 14:58) —
-work session: **MolmoAct2 out-of-band eval DELIVERED END-TO-END in
-one session** — finalized pre-reg → predictor + oracle-gated reads
-instrument → 500-frame smoke → owner challenge answered with the
-contamination split → full 25,800-frame sweep → frozen reads →
-3-policy HTML report → posted, at ~1.3 of the 8 GPU-h gate. Plus:
-reports migrated to a new `fontaine-reports` static Space (owner
-directive), the blog-navbar regression found and fixed, and the box
-@25000 boundary caught with a new run-best.*
-
-**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
-~24,9xx at last poll, **NEW RUN-BEST 6.1306@25000**, save @25000
-async green (155.4 s behind boundary — record-only watch; @20000 was
-21.3 s), 26.6 f/min, ~62.4/155 GPU-h; endpoint ~08-11 ~12:00Z, next
-boundary @30000 ~17:4xZ. 10 new matched-delta legs banked
-(@20500–@25000): 10-leg mean −0.06, 34-leg running mean ≈ +0.005 —
-dead in-band. Local H100: FREE again 14:24Z. Unit
-`fontaine-blog-migrate` retrying the blog push+squash behind HF's
-storage GC (up to 6 h, log `~/logs/blog_space_migrate.log`).
-
-**Steering** (five owner threads, all answered same-session):
-(1) 12:59Z "shockingly poor — are we doing inference correctly?" →
-answered with the smoke contamination split (trained-on repos 7.24
-vs state-copy 7.33 parity; unseen 17.40 vs 7.68) — harness correct,
-finding real; (2) 13:14Z **amendment: exclude `willnorris/bbox-2`**
-→ applied to reads+report before any real read, oracle branch added;
-(3) 13:48Z "what uses 1 GiB on the blog?" → live tree is 263 MB
-(230 MB reports), the GiB is un-GC'd git history; (4) 13:51Z **move
-reports to `fontaine-reports` + squash** → done as a *static Space*
-(dataset repos serve HTML as text/plain — tested, pages wouldn't
-render; owner told of the substitution), 64 files live + curl-200,
-72 blog links rewritten, 31 redirect stubs for old deep links,
-squash queued behind GC; (5) 14:13Z "navbar gone" → morning-incident
-casualty: hashed `toc-b9c2449c.js` missing on the Space, re-uploaded
-(small files pass the cap), fixed + confirmed 200. **INCIDENT —
-five owner messages (14:33–14:38Z) consumed unseen**: the 14:52
-babysit was piped through `grep -E "exit|liveness"`, its embedded
-consume-once Discord read swallowed five report-feature requests;
-owner called it out 14:57Z ("you can't just look at the latest
-message"). 2nd incident of the read-never-truncate class (grep
-variant); memory updated, owned in-channel, recovered via
-`history -n 15`, ALL FIVE executed same-session: (a) heun-30
-original single-draw 80k row (banked npz byte-pairs — zero GPU;
-matched-window 5.09/5.20/4.86); (b) mean-of-10 draws for 80k →
-NOT banked full-panel, queued as `snapflow80k-draws10-panel-eval`
-(~8–12 GPU-h, launch next session, objection window open);
-(c+d) MAE-by-timestep charts ×3 splits, all 8 models, in the
-report; (e) methods+results blog post
-`posts/2026-08-10-molmoact2-oob-results.md`. Plus (6) 14:49Z trunk
-names on every policy → done + re-uploaded (Gemma-4-E2B vs
-Molmo2-4B vs Molmo2-ER mapping posted); full-50 bbox-2 exclusion
-effect table added (~−0.07 per arm). LATE THREAD 15:0x: (7) owner
-"Let's skip 2" → draws10 eval CANCELLED pre-launch, 0 GPU-h, queue
-item closed; (8) report downloaded instead of rendering in Firefox
-→ root cause: first 10.5 MB upload auto-tracked as LFS → CDN
-redirect; fixed by trimming gallery 32→24 (8.3 MB) + stripping the
-per-path LFS rule from .gitattributes + re-upload as regular blob —
-now direct `200 text/html`; (9) **navbar broke AGAIN** → my
-`fontaine-blog-migrate` retry unit's split commits were landing
-DELETE chunks (toc/searchindex/reports) while add chunks bounced on
-the cap — each 10-min retry re-deleted the sidebar. **Unit
-STOPPED** (do not re-arm any auto-pusher against the capped Space);
-toc restored at the referenced path (200). Measured: cap headroom
-≈1.4 MB (998.6 MB of 10⁹ un-GC'd) — search stays broken (14 MB
-index) until HF GC clears; offered the owner delete+recreate of the
-blog Space as the clean escape if GC hasn't run by tomorrow.
-FINAL THREAD 15:1x–15:2x: (10) navbar STILL broken for owner →
-real cause found: partial pushes left MIXED page generations (some
-live pages reference the NEW `toc-16164281.js` which didn't exist);
-both toc hashes now uploaded, every page generation verified 200;
-(11) owner naming catch: "snapflow 80k" is WRONG — the 80k model is
-the **flow teacher** `bijou_flow_artrunk_h1024@80k` (SnapFlow = the
-1-NFE distilled student); all report/post labels renamed "flow
-teacher 80k" + naming note; (12) CORRECTION reversing my skip
-advice: mean-of-10 WAS banked (truncated file listing caused the
-false "not banked" + 8–12 GPU-h estimate; real cost zero) — the
-seating-stage full-panel draws10 npz added as a row at 0 GPU-h,
-oracles green: matched-window 4.05/4.12/3.90, slots 2nd behind
-top-10-tickets; owner may veto ('seating keying' labeled);
-(13) 15:22Z report adds → snapflow student 30k 1-NFE row (only
-per-frame-npz student config; matched-window 4.29/4.37/4.11 — beats
-teacher single-draws, confirms the distillation story), ALL 10
-models on every trajectory chart, 10-color palette, legend moved to
-a standalone strip + below the timestep panels (nothing covers
-series); (13b) 15:27Z gallery doubled + SPLIT into clean vs
-contaminated sections (2×24 frames, per-split strides; JPEG thumbs +
-dpi-72 charts keep it 9.4 MB non-LFS, direct 200); (14) **15:24:16Z OWNER
-GO: MolmoAct2 rig fine-tune on the local GPU + runnable runbook** →
-queued as the NEXT session's first action (item
-molmoact2-rig-finetune-runbook; param sheet in-channel before any
-GPU minute, owner-agreed silence=launch); local H100 reserved.
-
-**Done**: molmoact2-oob-panel-eval CLOSED (commits 00a9feb, b6cc2a7,
-this one): pre-reg finalized (immutable + Amendment 1), smoke green
-12:5xZ (tripwires passed), sweep rc=0 14:23:47Z (352 f/min,
-25,800 frames), frozen reads banked — matched 1.0 s window, core,
-excl. amendment: **snapflow top-10-tickets 3.90 / 60k-cont 4.46 /
-40k 4.56 / stable-key 5.06 / er15k 5.89 / state-copy 8.32 /
-MolmoAct2 13.87** (clean 16.97, contaminated 7.00; every paired
-read MOLMOACT2-WORSE, tight CI95s) — **the released SO-100 fine-tune
-does not transfer outside its 1,220-repo mixture**: beats state-copy
-only on its own training repos (−0.75) and still trails snapflow
-there (+3.29 [+3.11, +3.48]). 3-policy HTML report (32-frame
-gallery) + reads json + contamination repo list on fontaine-reports,
-reports.md section added, numbers in-channel 14:37Z. @25000 box
-boundary caught + legs banked. babysit ×3 exit 0; sweep babysit
-entry pruned.
-
-**Next**: `queue_cli.py next` → **molmoact2-rig-finetune-runbook**
-(owner GO 15:24Z: runbook post + param sheet in-channel → objection
-window → launch fine-tune on local H100, own pre-reg + babysit
-entry + gate). er_60k rides to endpoint ~08-11 ~12:00Z → chained
-panel_v2 → paired CI95 vs banked 40k (6.0079) + 60k-cont (5.8602);
-boundaries @30000 ~17:4xZ then @35000 ~20:4xZ 08-10. BLOG-SPACE
-TAIL (manual only — the retry unit is stopped and must NOT be
-re-armed): each session, check `usedStorage` (`repo_info` expand);
-when it drops below ~500 MB, do ONE `upload_folder` of the current
-book (delete_patterns searchindex/toc/reports) + `super_squash` +
-curl-verify nav/search/stubs + post the all-clear; if still capped
-by ~08-11 morning, ask the owner for the delete+recreate go (offered
-15:2xZ). If the owner wants a base-MolmoAct2 second arm or a
-dataset-repo mirror of reports, both are pre-scoped adds.*
-
 ## Utilization footer
+
+Session 2026-08-10 20:09–22:5xZ (work; +~1.8 local GPU-h logged —
+rig-ft tail ~0.3 + rung-2000 read + 35k aux eval 1.5; standard 35k
+eval ~2.5 projected rides on; exploit): rig-ft postprocess CLOSED with
+pre-reg PASS (rung 2000 MAE 3.2301, monotone curve, report + results
+page + dedup checkpoint upload); owner 20:47Z 35k request executed
+end-to-end (hub 42.4s, aux eval rc=0 22:30:45Z, core 6.3425 narrated
+class, paired reads banked) with the --generate aux-metrics harness
+gap found + owned + standard eval relaunched same session; port item 1
+half-landed (AE module port, 9 oracles, G1 CPU parity BYTE-EXACT vs
+their HF module on real weights) + pre-reg with frozen G1–G4 gates.
+babysit ×2 exit 0; queue validate depth 3; run_work_next armed for the
+~01:0xZ eval endpoint postprocess.
+
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
