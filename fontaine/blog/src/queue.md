@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-10T01:00:00Z
+**Updated:** 2026-08-10T00:35:00Z
 
-**Depth call:** depth 2 at 01:0xZ 08-10: er60k-init-delta-midrun-chart (cpu, opens ~02:0xZ 08-10 THIS session, instrument pre-built) + lit-radar-0822 (cpu, executable any GPU-busy window); plus 2 live runs babysat (er-60k box to ~08-11 ~12:00Z, tiny10k local to ~05:1xZ 08-10 -> chained panel_v2) and 5 owner-gated/blocked items
+**Depth call:** depth 1 at 00:3xZ 08-10 (STATED REASON for <2: owner steering 00:23Z 08-10 "Can we pause the lit slices for now" — lit-radar-0823 deliberately NOT queued, standing lit allocation suspended): open = er60k-init-delta-midrun-chart (cpu, opens ~02:0xZ THIS session, instrument pre-built); plus 2 live runs babysat (er-60k box to ~08-11 ~12:00Z -> chained panel_v2 k4l2; tiny10k local to ~05:1xZ 08-10 -> chained panel_v2 -> Delta_capacity read) and the owner-gated/blocked items (fjoint finalize on owner go, vu5k post-attach window, actckpt ladder, docs tail) — post-pause work supply is run-boundary-driven
 
-**10 open** (Live 2 · Queued 2 · Blocked 6 · Done 96)
+**9 open** (Live 2 · Queued 1 · Blocked 6 · Done 97)
 
 ## 🔴 Live (2)
 
@@ -40,7 +40,7 @@ T1 tiny-expert capacity rung, FINAL DESIGN (owner yes 19:59:04Z; 40k/biggest-bat
 
 ---
 
-## 🟢 Queued (2)
+## 🟢 Queued (1)
 
 *ready — waiting on a window or a boundary*
 
@@ -53,20 +53,6 @@ er_60k ER-init-delta mid-run chart (CPU, zero GPU-h): once the probe ladder has 
 <details><summary>full record</summary>
 
 er_60k ER-init-delta mid-run chart (CPU, zero GPU-h): once the probe ladder has ~10 points (step &gt;= 5000, ~02:0xZ 08-10), chart eval_chunk_mae vs the 40k run's curve at matched steps (seed 0 shared per the owner's 22:51Z seed policy — shuffle-order variance removed from the comparison, so the curve delta IS the init effect + rig-data 0.19%). Same dark eval-report style as adamc_postmortem_chart.py (reuse the 40k curve transcription). Record-only per pre-reg (never a kill line); post the chart in-channel with the step-5000 async-save fact. If the delta is boring (overlapping curves), one line in now.md suffices and the full chart waits for the endpoint readout — do not manufacture a post.
-
-</details>
-
----
-
-**`lit-radar-0822`** · `cpu`
-
-Lit slice (standing allocation): 4 priority hooks from the 0821 refill sweep (18 candidates checked, 15 abs-page-verified, 12 grep-clean -- 3 dups all already-deep-read papers, sweep converging), priority-ordered: 2606.12365 Ambi…
-
-**boundary:** any GPU-busy window
-
-<details><summary>full record</summary>
-
-Lit slice (standing allocation): 4 priority hooks from the 0821 refill sweep (18 candidates checked, 15 abs-page-verified, 12 grep-clean -- 3 dups all already-deep-read papers, sweep converging), priority-ordered: 2606.12365 Ambient Diffusion Policy (MIT/Tedrake, RSS demos spotlight: suboptimal demos contribute only at high/low diffusion times via a spectral power law in robot actions, +33% over naive co-training, purely offline -- the #9 re-weighting lever on the flow TIME axis; check the spectral argument transfers to rectified flow + how the suboptimal split is designated; composes with the QoQ influence pass) &gt; 2606.10229 What Demonstration Curation Metrics Do to Your Policy (best defect detector AUROC 0.804 -&gt; WORST policy 13.3%, weak 0.638 detector ~matches oracle 90.0 vs 93.3; 5/7 metrics secretly exploit episode length -- confound warning for every #9 arm AND for chunk-MAE panels; testbed released; read WITH its companion) &gt; 2606.05588 Auditing Demonstration Curation Metrics (action-only scorers blind to structural defects, two actively prefer defective episodes; our positions-only corpus IS the failing feature space -- stress test for label-free-selection-signals conclusions; check whether their state metrics need visual state) &gt; 2605.29710 PhAIL (Franka open bench: time-to-success CDFs + Human-Relative Throughput + bootstrap CIs + per-object KS, claims resolution at N&lt;=30 rollouts/cell -- THE #16 rig-day statistical protocol question; check the claim isn't carried by the human anchor; artifacts released, phail.ai). SPARES (8, abs-verified grep-clean 08-10): 2607.04434 RoboDojo sim+real cloud-eval leaderboard; 2605.20774 VLA-REPLICA low-cost reproducible bench (closest #16 analogue); 2607.15330 Xiaomi-Robotics-1 100K-h scaling report; 2606.15064 Phase-Localized Curation Does Not Help (negative, same testbed); 2606.20521 HumanScale (ego-video-beats-robot-data claim -- candidate h2r-lowdata-counterexample trigger, check for hidden diverse robot corpus in the alignment stage); 2603.05504 RoboPocket foresight-guided collection; 2606.30988 MuSe post-hoc force attachment; 2607.26047 S2A2 contact audio. EXTRA HOOKS (unverified ids, triage first): 2605.24934 HumanEgo, 2606.14665 EgoGuide, 2602.22088 Force Policy; 2511.19861 GigaWorld-0 (data-engine predecessor, #9 synthetic-data); 2511.11520 scalable-policy-eval-with-video-WMs (abs-verified, no code). Sweep planning note for 0823: angle E curation richest -- mine the 2606.10229/2606.05588/2606.15064 testbed cluster citation trails + recheck RSS 'It's the demos' workshop for 4 accepted titles with no arXiv ids yet (Maintaining Demonstration Quality in a 100-Robot Teleoperation Pipeline; From Action Labels to Sets; Beyond Clean Demonstrations; Better Demonstrations, Not More) in 2-3 weeks; angle D eval citation-thin (ArmnetBench 0 citations, Eval-Actions 1) -- retry late August, try 'distributional evaluation robot policy' / 'cloud evaluation manipulation leaderboard'; angle C try 'compute-optimal imitation learning' / 'action expert capacity ablation' (leads: LAP 2602.10556, A1 2604.05672); angle B one more query ('joint current contact detection low-cost arm') then REST the angle. Papers page(s) same session per the permanent rule.
 
 </details>
 
@@ -158,7 +144,7 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 
 ---
 
-## ✅ Done (96)
+## ✅ Done (97)
 
 *closed — the full record stays in each fold*
 
@@ -190,11 +176,25 @@ OWNER STEERING 22:14:00Z 08-09: proposed 60k training run init from allenai/Molm
 
 ---
 
+**`lit-radar-0822`** · `cpu`
+
+Lit slice (standing allocation): 4 priority hooks from the 0821 refill sweep (18 candidates checked, 15 abs-page-verified, 12 grep-clean -- 3 dups all already-deep-read papers, sweep converging), priority-ordered: 2606.12365 Ambi…
+
+**boundary:** CLOSED 2026-08-10 00:5xZ work session AS THE FINAL SLICE BEFORE THE OWNER PAUSE (owner 00:23:47Z "Can we pause the lit slices for now" landed mid-flight at the 00:27Z babysit poll; acknowledged in-channel 00:28Z, pages landed quietly, NO summary post, NO 0823 queued): 4 Papers pages via 4-agent fan-out — ambient-diffusion-policy.md (flow-time band-mask lever, rectified-flow port via sigma-space mapping, +33% hook corrected to tower height, partition user-supplied -&gt; composes with QoQ; zero-GPU PSD/sigma_tmin first arm sketched), what-curation-metrics-do.md (0.804 AUROC -&gt; 13.3% policy dissociation CONFIRMED but one-cell; episode-length confound + truncation control -&gt; rank-by-length null arm fed to #9), auditing-curation-metrics.md (action-only scorers chance on wrong-action defects; entropy/ensemble actively inverted; state-rescue = object pose NOT proprio, ablation never run — their released testbed settles it), phail.md (KM/RMST/macro-KS+clustered-bootstrap resolves 2/3 close pairs at 25-30 episodes/cell; human anchor ZERO statistical power; 22pp spatial-nuisance warning; &gt;=50 trials stays the budget, KS-on-CDFs adopted as analysis). Ideas #9/#16/#15 wired. SPARES (8 abs-verified) + EXTRA HOOKS + the 0823 sweep-planning note remain in this item title for whenever the pause lifts.
+
+<details><summary>full record</summary>
+
+Lit slice (standing allocation): 4 priority hooks from the 0821 refill sweep (18 candidates checked, 15 abs-page-verified, 12 grep-clean -- 3 dups all already-deep-read papers, sweep converging), priority-ordered: 2606.12365 Ambient Diffusion Policy (MIT/Tedrake, RSS demos spotlight: suboptimal demos contribute only at high/low diffusion times via a spectral power law in robot actions, +33% over naive co-training, purely offline -- the #9 re-weighting lever on the flow TIME axis; check the spectral argument transfers to rectified flow + how the suboptimal split is designated; composes with the QoQ influence pass) &gt; 2606.10229 What Demonstration Curation Metrics Do to Your Policy (best defect detector AUROC 0.804 -&gt; WORST policy 13.3%, weak 0.638 detector ~matches oracle 90.0 vs 93.3; 5/7 metrics secretly exploit episode length -- confound warning for every #9 arm AND for chunk-MAE panels; testbed released; read WITH its companion) &gt; 2606.05588 Auditing Demonstration Curation Metrics (action-only scorers blind to structural defects, two actively prefer defective episodes; our positions-only corpus IS the failing feature space -- stress test for label-free-selection-signals conclusions; check whether their state metrics need visual state) &gt; 2605.29710 PhAIL (Franka open bench: time-to-success CDFs + Human-Relative Throughput + bootstrap CIs + per-object KS, claims resolution at N&lt;=30 rollouts/cell -- THE #16 rig-day statistical protocol question; check the claim isn't carried by the human anchor; artifacts released, phail.ai). SPARES (8, abs-verified grep-clean 08-10): 2607.04434 RoboDojo sim+real cloud-eval leaderboard; 2605.20774 VLA-REPLICA low-cost reproducible bench (closest #16 analogue); 2607.15330 Xiaomi-Robotics-1 100K-h scaling report; 2606.15064 Phase-Localized Curation Does Not Help (negative, same testbed); 2606.20521 HumanScale (ego-video-beats-robot-data claim -- candidate h2r-lowdata-counterexample trigger, check for hidden diverse robot corpus in the alignment stage); 2603.05504 RoboPocket foresight-guided collection; 2606.30988 MuSe post-hoc force attachment; 2607.26047 S2A2 contact audio. EXTRA HOOKS (unverified ids, triage first): 2605.24934 HumanEgo, 2606.14665 EgoGuide, 2602.22088 Force Policy; 2511.19861 GigaWorld-0 (data-engine predecessor, #9 synthetic-data); 2511.11520 scalable-policy-eval-with-video-WMs (abs-verified, no code). Sweep planning note for 0823: angle E curation richest -- mine the 2606.10229/2606.05588/2606.15064 testbed cluster citation trails + recheck RSS 'It's the demos' workshop for 4 accepted titles with no arXiv ids yet (Maintaining Demonstration Quality in a 100-Robot Teleoperation Pipeline; From Action Labels to Sets; Beyond Clean Demonstrations; Better Demonstrations, Not More) in 2-3 weeks; angle D eval citation-thin (ArmnetBench 0 citations, Eval-Actions 1) -- retry late August, try 'distributional evaluation robot policy' / 'cloud evaluation manipulation leaderboard'; angle C try 'compute-optimal imitation learning' / 'action expert capacity ablation' (leads: LAP 2602.10556, A1 2604.05672); angle B one more query ('joint current contact detection low-cost arm') then REST the angle. Papers page(s) same session per the permanent rule.
+
+</details>
+
+---
+
 **`lit-radar-0821`** · `cpu`
 
 Lit slice (standing allocation): 4 priority hooks from the 0820 refill sweep (16 candidates abs-page-verified by the sweep agent, 12/16 grep-clean
 
-**boundary:** CLOSED 2026-08-10 00:0x-01:0xZ work session via 5-agent fan-out: 4 Papers pages landed SAME session per the permanent rule -- quality-over-quantity.md (offline influence pole, runnable no-rollout vs ATHENA/Qwen; gains only on 40-50% injected failures, hard top-N not weighting, no code; cheapest #9 arm sketched: ~20 verified-clean anchor episodes + action-head-only gradient scoring pass + paired top-70%-vs-random arm), curse-of-precision.md (log N prop 1/(P-c) is a sim-only R2&gt;0.97 FIT with 23-65x extrapolated points; 'sensor+expert not task' hook corrected -- randomization ablation moved c 2.35-&gt;1.00mm; c = rollout-sweep fit = rig-phase instrument; #16 tolerance-dial + delta-c design rule; #9 clarity-filter lever: aggressive 50%-SR expert c=1.27 vs cautious 2.35), neuralactuator.md (cost floor broken: third platform IS the SO-101, force MAE 0.47-0.73N from Feetech load registers, no current sensor, torque via diffsim; 'torque-from-current' hook wrong twice at our class; MIT code + NAD dataset + 3 SO-101 checkpoints + teleop code ALL verified live; #16 rig-day rider superseded shovel-ready 46-column schema; #9 dq_d gate stands as banked), gigaworld-wmbench.md (324K 'rollouts' are human-graded WM VIDEOS under replayed actions, no policy drives, real-ranking corr defined never computed; action-faithfulness&gt;realism measured but partly definitional; hook missed the Apache-2.0 release Nano 1.3B/Pro 5B + 87.8%-agreement VLM judge; Ctrl-World artifact verified live too -&gt; rollout-free-eval 'no artifact' half dead, 'costs real rollouts' half stands; zero-rollout replay screen banked for #16). Ideas #9/#16 pages + index hooks fed. Radar 0821 table flipped; 0822 queued from the sweep (18 checked, 15 abs-verified, 12 survived, 3 dups all already-read).
+**boundary:** CLOSED 2026-08-10 00:1x-00:3xZ work session via 5-agent fan-out: 4 Papers pages landed SAME session per the permanent rule -- quality-over-quantity.md (offline influence pole, runnable no-rollout vs ATHENA/Qwen; gains only on 40-50% injected failures, hard top-N not weighting, no code; cheapest #9 arm sketched: ~20 verified-clean anchor episodes + action-head-only gradient scoring pass + paired top-70%-vs-random arm), curse-of-precision.md (log N prop 1/(P-c) is a sim-only R2&gt;0.97 FIT with 23-65x extrapolated points; 'sensor+expert not task' hook corrected -- randomization ablation moved c 2.35-&gt;1.00mm; c = rollout-sweep fit = rig-phase instrument; #16 tolerance-dial + delta-c design rule; #9 clarity-filter lever: aggressive 50%-SR expert c=1.27 vs cautious 2.35), neuralactuator.md (cost floor broken: third platform IS the SO-101, force MAE 0.47-0.73N from Feetech load registers, no current sensor, torque via diffsim; 'torque-from-current' hook wrong twice at our class; MIT code + NAD dataset + 3 SO-101 checkpoints + teleop code ALL verified live; #16 rig-day rider superseded shovel-ready 46-column schema; #9 dq_d gate stands as banked), gigaworld-wmbench.md (324K 'rollouts' are human-graded WM VIDEOS under replayed actions, no policy drives, real-ranking corr defined never computed; action-faithfulness&gt;realism measured but partly definitional; hook missed the Apache-2.0 release Nano 1.3B/Pro 5B + 87.8%-agreement VLM judge; Ctrl-World artifact verified live too -&gt; rollout-free-eval 'no artifact' half dead, 'costs real rollouts' half stands; zero-rollout replay screen banked for #16). Ideas #9/#16 pages + index hooks fed. Radar 0821 table flipped; 0822 queued from the sweep (18 checked, 15 abs-verified, 12 survived, 3 dups all already-read).
 
 <details><summary>full record</summary>
 
