@@ -5,6 +5,61 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-10 04:56–05:1xZ (real `date -u` at write: 05:09) —
+tick (babysit): **tiny10k COMPLETE — step 10,000 hit 05:06Z, caught
+in-session (§6 hold). Final probe 9.3469@10000 vs banked F@10k
+9.4157 → probe-level Δ_capacity −0.069**, deep inside the |Δ|≤0.3
+"prior confirmed" band: at the fully matched read, width alone does
+not separate tiny (h256/d12) from F. The resumed path converged
+back onto the pre-kill curve (9.37@9000 pre-kill → 9.56/9.50 wobble
+→ 9.35@10000) — the OOM cost ~310 replayed steps and ~30 min,
+nothing else. Checkpoint `step_010000` saved (async, 0.6 s);
+**chained panel_v2 @10000 LIVE** in-unit, pre-reg args verbatim
+(k4l2 plan sha-verified, heun30/draws1/stable, npz + HTML report) —
+the paired per-frame CI95 vs F's banked panel npz is the PRIMARY
+read. F's npz verified BOX-SIDE ONLY
+(`eval__fontaine_molmo2_flow_frozen_10k_ddp4__step_010000__panel_v2…​.npz`)
+— scp before pairing. Endpoint posted in-channel 05:07Z;
+**run_work_next ARMED** — the chained work session owns the panel
+readout, Δ chart, follow-up post, ledger row, and the step_010000
+weights-only upload to fontaine-checkpoints.*
+
+**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
+~9,520, probe … 7.65@8000 → 8.29@8500 → 7.82@9000 → **7.92@9500**
+(in-band wobble), 22.5–26.7 st/min, vram ~71.7 ×4 vs 77 bar,
+projection 24.4/155 GPU-h; endpoint ~08-11 ~12:00Z.
+`fontaine-tiny10k-r8750` — **train COMPLETE 05:06Z (~8.7/15
+GPU-h incl. OOM replay)**; chained panel_v2 eval LIVE (CPU
+dataset-load phase at write, GPU engages when sampling starts).
+
+**Steering**: none — `read` empty, history ×5 unchanged (lit-pause
+exchange still the last owner message, no new reactions).
+
+**Done**: babysit ×1 exit 0 (both live; er @9500 rung surfaced).
+free -g host-RAM check: 98/221, 122 available — mild growth, run
+ended before it mattered. §6 hold: 10-min until-loop watcher caught
+the endpoint in-session — wandb summary, probe line, async save,
+and panel launch all verified. Endpoint post in-channel 05:07Z
+(one cosmetic mangle: zsh command-substitution ate the backticked
+checkpoint name — post otherwise clean, no correction sent; lesson:
+single-quote Discord post strings). babysit.toml tiny entry flipped
+to panel phase (eval log, gpu_mem_min 0 during CPU load, boundary +
+box-side F-npz path pinned, PRUNE-at-completion note).
+run_work_next ARMED with queue depth 0 stated-reason OK (lit
+pause) — the work chain is post-processing, not queue-driven. Body
++ footer rolled per last-2 (04:35 block kept, 04:25 block + note →
+08-10 archive).
+
+**Next**: chained work session (immediately after this tick):
+babysit the panel eval to completion, scp F's box-side npz, compute
+the paired per-frame CI95 Δ_capacity (tiny minus F), build the Δ
+chart (dark-mode, eval-report scheme), follow-up post + blog +
+ledger row, upload step_010000 weights-only to fontaine-checkpoints,
+then prune the tiny babysit entry. er_60k: rungs record-only to
+endpoint ~08-11 ~12:00Z; @9000 matched Δ vs 40k still owed (needs
+the box-side 40k curve); @7500-class transient recurrence upgrades
+to a posted fact. No lit refills until the owner re-enables.*
+
 *Updated 2026-08-10 04:35–05:0xZ (real `date -u` at write: 04:52) —
 tick (babysit): **both rungs caught in-session (§6 hold): tiny10k
 9.5045@9500** — record-only, sits between the resumed-path 9.56@9000
@@ -52,54 +107,6 @@ record-only to endpoint ~08-11 ~12:00Z; @7500-class transient
 recurrence upgrades to a posted fact. No lit refills until the
 owner re-enables.*
 
-*Updated 2026-08-10 04:25–04:3xZ (real `date -u` at write: 04:27) —
-tick (babysit): **tiny10k rate RECOVERED — ~22 st/min steady**, back
-in the pre-kill 21.7–23.6 band (log `s_per_step` 2.67–2.70; babysit
-window 20.9 st/min over 8840→9080). Last tick's 13.3 st/min was a
-post-resume transient (worker/cache warm-up), NOT a steady
-input-bound state — the workers-6 config is fine, the ride-don't-
-restart call cost nothing. **Endpoint moves back to ~05:1xZ**
-(projection back to ~8.2/15 GPU-h). Host RAM 93/221 used, 128
-available — slight growth vs 84 last tick; record-only watch, ~40
-min of run left, no OOM risk at this margin. Loss 0.13x in-band,
-vram 36.6 alloc peak unchanged.*
-
-**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
-~8,720, probe … 7.65@8000 → 8.29@8500 (latest; @9000 eval ~10 min
-out — next tick's fact), 27.9 st/min, util 65–100% ×4, vram ~71.7
-×4 vs 77 bar, projection 22.4/155 GPU-h; endpoint ~08-11 ~12:00Z.
-`fontaine-tiny10k-r8750` LIVE local — step ~9,120/10,000 at ~22
-st/min, rung @9500 next (~04:4xZ), then the @10000 primary read vs
-banked F@10k 9.4157; endpoint ~05:1xZ + chained panel eval.
-
-**Steering**: none — `read` empty, history ×5 unchanged (lit-pause
-exchange still the last owner message, no new reactions).
-
-**Done**: babysit ×1 exit 0 (both live; tiny window valid again
-post-reset — 20.9 st/min over 11.5 min). Rate cross-checked by hand:
-75 s grep window misfired (matched the resume banner), so read the
-log's own `s_per_step` field directly — 2.67–2.70 s/step steady =
-~22 st/min, transient-recovery confirmed. free -g host-RAM check
-(standing OOM-class rule): 93/221, 128 available, watch noted.
-babysit.toml boundary updated (RATE RECOVERED block, endpoint back
-to ~05:1xZ). No post — a rate recovery that un-slips an endpoint is
-record-only good news; the Δ_capacity endpoint post carries it.
-Queue validate OK: depth 0 pickable WITH stated depth_reason (lit
-pause). run_work_next left unarmed — the ~05:1x–05:3xZ tick chain
-owns tiny10k post-processing (panel_v2 → Δ_capacity read). Body +
-footer rolled per last-2 (04:13 + 04:03 blocks, 04:03 note → 08-10
-archive).
-
-**Next**: tiny10k @9500 rung ~04:4xZ (record-only, wobble band
-~0.25), endpoint ~05:1xZ → chained panel_v2 → Δ_capacity read @10k
-(vs banked F@10k 9.4157) — pre-kill was 0.05 UNDER at @9000, the
-resumed path re-ran @9000 at 9.56 (0.15 above), the tiny-wins lean
-is genuinely open; |Δ|≤0.3 "prior confirmed" vs "tiny wins", the
-@10k paired CI95 decides. er_60k @9000 rung imminent, record-only
-to endpoint ~08-11 ~12:00Z; @7500-class transient recurrence
-upgrades to a posted fact. No lit refills until the owner
-re-enables.*
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -128,22 +135,12 @@ to ~04:0xZ, greedy ~1.7 GPU-h, draws10_t1 04:54–07:22Z **~10 GPU-h
 attach_F 08-09 04:58–07:42Z train COMPLETE **+~10.2 GPU-h** + panel_v2
 eval COMPLETE ~08:01Z (+~1.24 GPU-h); box attach_K 08:01–12:38Z
 **KILLED by owner steering at step ~4160/10k (+~13.6 GPU-h, cost
-call — no endpoint, no chained evals)**). Older
+call — no endpoint, no chained evals)**; local tiny10k 08-09 20:1xZ
+→ 08-10 05:06Z train COMPLETE **~8.7/15 GPU-h incl. OOM replay** +
+chained panel_v2 eval live). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
-
-Session 2026-08-10 04:25–04:3xZ (tick, babysit; 0 new GPU-h logged —
-er_60k rides ~22.4/155 projection, tiny10k ~8.2/15): recovery tick —
-tiny10k rate back to ~22 st/min (log s_per_step 2.67–2.70; babysit
-window 20.9), last tick's 13.3 was a post-resume transient, not
-input starvation; endpoint back ~05:4x → ~05:1xZ, ride call
-vindicated at zero cost. Host RAM 93/221 with 128 available (mild
-growth vs 84, ~40 min run left — record-only watch). er_60k no new
-rung (8.29@8500 latest, @9000 ~10 min out), step ~8,720 @27.9
-st/min. No steering. Queue depth 0 pickable with stated reason (lit
-pause). run_work_next unarmed — the ~05:1x–05:3xZ tick chain owns
-tiny10k post-processing.
 
 Session 2026-08-10 04:35–05:0xZ (tick, babysit; 0 new GPU-h logged —
 er_60k rides 24.1/155 projection, tiny10k ~8.4/15): double-rung tick
@@ -157,3 +154,17 @@ grep it via babysit/ssh, never locally. No steering. Queue depth 0
 pickable with stated reason (lit pause). run_work_next unarmed — the
 ~05:1x–05:3xZ tick chain owns tiny10k endpoint + panel_v2 +
 Δ_capacity read.
+
+Session 2026-08-10 04:56–05:1xZ (tick, babysit; tiny10k train
+COMPLETE at ~8.7/15 GPU-h incl. OOM replay; er_60k rides 24.4/155):
+endpoint tick — §6 hold caught step 10,000 at 05:06Z in-session:
+final probe 9.3469@10000 vs banked F@10k 9.4157 → probe-level
+Δ_capacity −0.069, prior-confirmed band (|Δ|≤0.3); resumed path
+converged back onto the pre-kill curve. Checkpoint step_010000
+saved async; chained panel_v2 launched in-unit (pre-reg args
+verbatim, sha-verified plan). F's panel npz confirmed box-side only
+— path pinned in babysit.toml for the scp. Endpoint posted
+in-channel 05:07Z. er_60k 7.92@9500 in-band wobble, record-only.
+No steering. Queue depth 0 with stated reason (lit pause).
+run_work_next ARMED — the chained work session owns panel readout →
+paired CI95 → chart → post → ledger → checkpoint upload.
