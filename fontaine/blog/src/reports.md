@@ -126,6 +126,22 @@ revision](posts/2026-08-06-panel-v2-amendment.md).
 - Checkpoint weights on the hub:
   [`fontaine-checkpoints/fontaine_molmo2_ar_60k_ddp4/step_060000`](https://huggingface.co/mcobzarenco/fontaine-checkpoints/tree/main/fontaine_molmo2_ar_60k_ddp4/step_060000)
 
+## Molmo2-ER trunk `fontaine_molmo2_er_60k_ddp4` @15k (mid-training, owner-requested)
+
+- [browsable HTML panel, greedy (curated v0 k4l2)](https://mcobzarenco-fontaine-blog.static.hf.space/reports/eval__fontaine_molmo2_er_60k_ddp4__step_015000__panel_curated_v0_k4l2.html)
+  — owner request 08:29Z 08-10: the @15000 checkpoint hub-copied,
+  downloaded locally, and panel-evaled mid-run; per-frame retained
+  predictions (32 samples), rendered 11:51Z 08-10
+- [panel json](https://mcobzarenco-fontaine-blog.static.hf.space/reports/eval__fontaine_molmo2_er_60k_ddp4__step_015000__panel_curated_v0_k4l2.json)
+  — pooled 7.5283/3.5590 (quarter-training snapshot; the run's own
+  decision point stays the @60k endpoint panel)
+- [frozen record-only reads JSON](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__er15k_panel_vs_banked_k4l2.json)
+  (`er15k_panel_reads.py`) — paired vs banked 40k endpoint
+  +1.52 CI95 [+1.39, +1.54], vs 60k continuation +1.67
+  [+1.52, +1.68], both ABOVE-BASELINE as expected at 15k/60k steps
+- Checkpoint weights on the hub:
+  [`fontaine-checkpoints/fontaine_molmo2_er_60k_ddp4/step_015000`](https://huggingface.co/mcobzarenco/fontaine-checkpoints/tree/main/fontaine_molmo2_er_60k_ddp4/step_015000)
+
 ## Golden-ticket noise screen ([close-out](posts/2026-08-08-goldenticket-results.md) · [visual report](posts/2026-08-08-goldenticket-visual-report.md))
 
 - Frozen stage analyses:

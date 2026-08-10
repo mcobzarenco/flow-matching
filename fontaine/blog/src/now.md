@@ -3,6 +3,60 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-10 10:00–12:1xZ (real `date -u` at write: 12:02) —
+work session (chained): **THREE THREADS CLOSED IN ONE RIDE — the
+owner-requested 15k panel delivered end-to-end, a NEW owner steering
+thread (MolmoAct2 out-of-band eval) deep-read + planned + posted,
+and the box @20000 save boundary caught with two new run-bests.**
+The eval was ridden in-turn with foreground sleep-polls per the
+patched §3 rule (no Monitor, no watch drop — the fix held).*
+
+**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
+20,560 at close, run-best **6.3658@20000** (…6.38@18000 →
+6.71@18500 → 6.46@19000 → 7.01@19500 → **6.37@20000** → 6.58@20500),
+save @20000 captured 21.3 s async green, ~52.3/155 GPU-h; endpoint
+~08-11 ~12:00Z, next save boundary @25000 ~14:4xZ. Local H100:
+**FREE** — `eval-er15k-panel` COMPLETE rc=0 11:51:38Z (~2.5 GPU-h).
+
+**Steering**: TWO new owner messages, both answered same-session:
+(1) 10:50Z "evaluate molmo2act on our panel, out of band — quickest
+way?" → answered 11:01Z (adapter → npz → paired scorer); (2) 11:06Z
+"clone allenai/molmoact2, deep-read model/preprocessing/prompts/
+action-decoder/normalization, does it predict 1 s at dataset fps?
+post an in-depth plan" → repo cloned + lerobot submodule, 3-agent
+deep read, **plan posted 11:38Z + blog post** (horizon hunch
+CONFIRMED: SO100_101 tag = 30 steps at native fps = 1.0 s vs our
+50-step/1.67 s → matched-window re-pool of our banked npzs over
+steps 0–29 is the primary read, pure CPU; q01/q99 norm from
+`norm_stats.json`; contamination MEASURED: 245/878 panel repos =
+31.0% of core frames in their fine-tune mixture → pooled/clean/
+contaminated splits).
+
+**Done**: (a) 15k-panel pipeline closed: eval rc=0, frozen reads
+via `er15k_panel_reads.py` — pooled 7.5283/3.5590, **+1.52 vs 40k
+endpoint** CI95 [+1.39, +1.54], +1.67 vs 60k-cont [+1.52, +1.68],
+state-copy byte-match ×3, ABOVE-BASELINE as expected at 1/4
+training; HTML+JSON+analysis uploaded to the Space, reports-page
+section added, all 3 links curl-200, report posted in-channel
+11:53Z; helpers cleaned up (box + local). (b) MolmoAct2 deep read +
+plan post `posts/2026-08-10-molmoact2-oob-eval-plan.md` (built +
+pushed + curl-200). (c) @20000 boundary caught in-ride: matched-Δ
+legs banked @17500 −0.48 / @18000 −0.11 / @18500 +0.26 / @19000
+−0.91 (40k baseline spike, record-only) / @19500 −0.16 / @20000
+−0.29 — 6 of last 7 negative, running mean ≈ +0.03, in-band;
+baseline identity re-verified @16500–@20000. babysit ×3 exit 0
+across the session. Commit: this one.
+
+**Next**: `queue_cli.py next` → MolmoAct2 out-of-band eval thread
+(owner-steered, supersedes the paused tail): full pre-reg post +
+predictor script + oracle-gated matched-window reads instrument +
+500-frame smoke (~2–5 GPU-h ≤ 8 gate), full 25,800 sweep after
+smoke green + owner objection window — local H100 free for it.
+er_60k rides to endpoint ~08-11 ~12:00Z → chained panel_v2 →
+paired CI95 vs banked 40k (6.0079) + 60k-cont (5.8602). Rungs
+record-only; kill lines unchanged. Boundaries: @25000 save ~14:4xZ
+08-10; endpoint ~12:00Z 08-11. No lit refills until re-enabled.*
+
 *Updated 2026-08-10 09:53–10:0xZ (real `date -u` at write: 09:56) —
 tick (babysit): **WATCH-DROP CAUGHT + FIXED AT SOURCE — the 09:50
 chained work session armed a background Monitor on the 15k-panel
@@ -141,22 +195,6 @@ dated snapshots and session notes: rolled verbatim to the
 
 
 
-Session 2026-08-10 09:37–10:0xZ (tick, babysit; 0 new GPU-h logged —
-er_60k rides ~43.2/155; local eval-er15k-panel is inside the run's
-~2 eval GPU-h line): **first-poll on `eval-er15k-panel` + ETA
-correction posted**. Eval healthy and GPU-bound (96% util, 30.5G,
-192 f/min over 100 s) but the panel is 25,800 frames at 1 rank →
-~2.3 h wall; corrected report ETA **~11:4xZ** posted in-channel
-09:4xZ (the 09:24Z post said ~1–1.5 h). Box: babysit exit 0 (29.4
-f/min, vram 71.7 ×4), **@17000 leg banked** Δ −0.49 (7.0462 vs
-7.5314; baseline identity re-verified @15500–@17000) — second
-negative leg in a row, running mean ≈ +0.14, in-band, record-only;
-run-best stays 6.6319@16500. No new steering (read empty, history
-×5 no new reactions). Queue depth 0 pickable with stated reason;
-**run_work_next ARMED** — chained session watches the eval to rc=0,
-posts the HTML report + reports page, cleans up helpers, catches
-the @20000 boundary ~11:3xZ.
-
 Session 2026-08-10 09:53–10:0xZ (tick, babysit; 0 new GPU-h logged —
 er_60k rides ~44.3/155; eval-er15k-panel inside the run's ~2 eval
 GPU-h line): **watch-drop incident caught + fixed at source**. The
@@ -173,3 +211,23 @@ sleep-polls only), memory addendum, babysit.toml note;
 **run_work_next RE-ARMED**. Box: babysit exit 0 (step 17,400,
 44.3/155 GPU-h, vram 71.7 ×4); run-best 6.6319@16500 stands. No
 new steering. Queue depth 0 pickable with stated reason.
+
+Session 2026-08-10 10:00–12:1xZ (work, chained; +~2.5 local GPU-h
+logged — er15k panel eval to completion; exploit): three threads in
+one in-turn ride. (1) Owner 15k-panel request CLOSED end-to-end:
+eval rc=0 11:51:38Z, frozen reads (7.5283/3.5590 pooled; +1.52 vs
+40k endpoint CI95 [+1.39,+1.54]; +1.67 vs 60k-cont; state-copy
+byte-match ×3), Space upload + reports page + curl-200 ×3, posted
+11:53Z, helpers cleaned (box+local). (2) NEW owner steering
+10:50Z/11:06Z (MolmoAct2 out-of-band panel eval): repo cloned,
+3-agent deep implementation read, in-depth plan posted (blog +
+channel 11:38Z) — horizon hunch confirmed (30 steps = 1.0 s at
+30 fps vs our 1.67 s → matched-window re-pool primary read),
+q01/q99 norm mechanics pinned, contamination measured (31.0% of
+core frames in their fine-tune mixture → split reads). (3) Box
+@20000 boundary caught mid-ride: save 21.3 s async green, new
+run-bests 6.3766@18000 then 6.3658@20000, six matched-Δ legs
+banked (6 of last 7 negative, running mean ≈ +0.03, in-band).
+babysit ×3 exit 0; the §3 no-Monitor rule held (foreground
+sleep-polls throughout). Local H100 free at close; run_work_next
+ARMED (MolmoAct2 pre-reg + smoke is the next work item).

@@ -6,7 +6,7 @@
 
 **Depth call:** depth 0 open at 05:5xZ 08-10 (STATED REASON for <2: owner lit-pause steering 00:23Z 08-10 suspends the refill lane; the T1 rung closed this session and every remaining item is owner-gated/blocked — fjoint finalize on owner go ~08-12 post-er-endpoint, vu5k/actckpt/img280/docs-tail/box-home-sweep all blocked or owner_hold). Work supply is run-boundary-driven: er-60k babysat to ~08-11 ~12:00Z endpoint -> chained panel_v2 -> paired reads vs 40k/60k banked panels. Local GPU free 05:45Z — next local launch needs a fresh pre-reg (T2 depth rung and tiny decode microbench are the named candidates, not yet pre-registered).
 
-**7 open** (Live 1 · Queued 0 · Blocked 6 · Done 99)
+**8 open** (Live 1 · Queued 1 · Blocked 6 · Done 99)
 
 ## 🔴 Live (1)
 
@@ -26,11 +26,23 @@ OWNER RUN LIVE (launched 22:47-53Z 08-09, unit fontaine-er-60k): fontaine_molmo2
 
 ---
 
-## 🟢 Queued (0)
+## 🟢 Queued (1)
 
 *ready — waiting on a window or a boundary*
 
-*(empty)*
+**`molmoact2-oob-panel-eval`** · `gpu-local`
+
+OWNER STEERING 10:50Z+11:06Z 08-10: MolmoAct2 (allenai/MolmoAct2-SO100_101) out-of-band eval on the k4l2 panel
+
+**boundary:** local H100 free since 11:51Z 08-10 (er15k panel done). Owner explicitly requested the eval (10:50Z) and the plan (11:06Z, delivered); full sweep waits on smoke green + the pre-reg objection window. If the owner asks for a base-MolmoAct2 second arm, +1 sweep on the same harness. · [pre-reg](posts/2026-08-10-molmoact2-oob-eval-plan.md)
+
+<details><summary>full record</summary>
+
+OWNER STEERING 10:50Z+11:06Z 08-10: MolmoAct2 (allenai/MolmoAct2-SO100_101) out-of-band eval on the k4l2 panel. Deep implementation read DONE + in-depth plan posted (posts/2026-08-10-molmoact2-oob-eval-plan.md, in-channel 11:38Z): 30-step/1.0s chunk at native fps vs our 50-step/1.67s -&gt; matched-window (steps 0-29) re-pool of banked npzs is the primary read; their predict_action end-to-end (q01/q99 norm from checkpoint norm_stats.json); contamination measured 245/878 panel repos = 31.0% core frames -&gt; pooled/clean/contaminated splits. EXECUTE: (1) FINALIZE the pre-reg (the plan post is the registered sketch; finalization adds frames, seeds, abort oracles, immutability stamp) BEFORE any GPU minute; (2) predictor script molmoact2_panel_predict.py + oracle-gated matched-window reads instrument; (3) 500-frame stratified smoke + scale sanity; (4) full 25,800 sweep (systemd unit) after smoke green + owner objection window; (5) HTML-style report + reports page + in-channel numbers. Gate &lt;= 8 GPU-h (est 2-5). Record-only: nothing gates or repoints our runs.
+
+</details>
+
+---
 
 ## 🟡 Blocked (6)
 
