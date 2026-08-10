@@ -6,7 +6,49 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-10 06:35–06:5xZ (real `date -u` at write: 06:53) —
+tick (babysit): er_60k **7.3977@12500** — just off the 7.3694@12000
+run-best; four straight rungs (7.54 / 7.59 / 7.37 / 7.40) now sit
+under the pre-plateau 7.65@8000 mark, so the break holds at depth.
+Matched Δ vs 40k (shared seed, box-side log) extends the
+record-only table: **@12500 −0.50 (7.3977 vs 7.8968)** — full
+table @9000→@12500: −0.44 / +0.53 / +0.77 / +0.80 / −0.43 / +0.39
+/ −0.19 / −0.50. Two consecutive negative legs, but still inside
+the ~±0.8 rung wobble; endpoint panel (~08-11 ~12:00Z) decides.
+Rung caught with a ~14-min §6 hold (ssh until-loop, jsonl-format
+grep — fired first try).*
+
+**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
+12,500 at rung, probe … 7.65@8000 → 7.95@10500 → 7.54@11000 →
+7.59@11500 → 7.37@12000 → **7.3977@12500**, 26.9 f/min window,
+vram ~71.7 ×4 vs 77 bar, projection 31.0/155 GPU-h; endpoint
+~08-11 ~12:00Z. Local GPU free (next local launch needs a fresh
+pre-reg).
+
+**Steering**: none — `read` empty, history ×5 all our own posts,
+no new reactions (lit-pause exchange still the last owner
+message).
+
+**Done**: babysit ×1 exit 0 (liveness 8 procs, 4× GPU engaged,
+util 68–99%, window 26.9 f/min healthy). §6 hold ~14 min for the
+@12500 rung; @12500 matched-Δ leg banked record-only vs the
+verified ar_40k box log (no post — in-band rung). Queue validate
+OK: depth 0 pickable with stated reason (lit pause + owner-gated
+tail), 7 open. run_work_next NOT armed — CPU-side queue empty,
+box busy, local idle-by-design (charter §5 exit).
+
+**Next**: er_60k rides to endpoint ~08-11 ~12:00Z → chained
+panel_v2 → paired CI95 vs banked 40k (6.0079) + 60k-continuation
+(5.8602) panels. Rungs record-only; @7500-class transient
+recurrence upgrades to a posted fact; kill lines unchanged (NaN,
+probe-vs-@2500 by 10k — PASSED, probe>25 ×3). Save boundary
+@15000 is the next structural event (~08-10 ~09:0xZ). Next local
+launch owner-gated: named-not-preregistered candidates T2 depth
+rung + tiny decode microbench (#16); fjoint finalize waits on
+owner go (~08-12). No lit refills until re-enabled.*
 
 *Updated 2026-08-10 06:21–06:4xZ (real `date -u` at write: 06:32) —
 tick (babysit): **er_60k NEW RUN-BEST 7.3694@12000** — beats
@@ -49,47 +91,6 @@ launch owner-gated: named-not-preregistered candidates T2 depth
 rung + tiny decode microbench (#16); fjoint finalize waits on
 owner go (~08-12). No lit refills until re-enabled.*
 
-*Updated 2026-08-10 06:06–06:2xZ (real `date -u` at write: 06:16) —
-tick (babysit): quiet single-run tick — er_60k **7.5922@11500**,
-second-best of the run, holding right off the 7.54@11000 run-best:
-the 7.92–7.95 plateau break is sustained, not a one-rung spike.
-Matched Δ vs 40k (shared seed, box-side log) extends the
-record-only table: **@11500 +0.39 (7.5922 vs 7.2014)** — full
-table @9000→@11500: −0.44 / +0.53 / +0.77 / +0.80 / −0.43 /
-+0.39. Wobble in both directions at the ~±0.8 rung scale;
-endpoint panel (~08-11 ~12:00Z) decides. Caught the rung with a
-short §6 hold (~7 min) rather than leaving it to the next tick.*
-
-**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
-~11,400 at poll, probe … 7.65@8000 → 7.95@10500 → 7.54@11000 →
-**7.5922@11500**, 27.7 f/min window, vram ~71.7 ×4 vs 77 bar,
-projection 29.2/155 GPU-h; endpoint ~08-11 ~12:00Z. Local GPU free
-(next local launch needs a fresh pre-reg).
-
-**Steering**: none — `read` empty, history ×5 all our own posts,
-no new reactions (lit-pause exchange still the last owner
-message).
-
-**Done**: babysit ×1 exit 0 (liveness 8 procs, 4× GPU engaged,
-util 96–100%, window 27.7 f/min healthy). §6 hold for the @11500
-rung; watcher-pattern lesson: the first Monitor grep assumed
-space-separated `step 11500` but the log is jsonl (`"step":
-11500`) — pattern never matched; killed it and read the log
-directly over ssh. @11500 matched-Δ leg banked record-only (no
-post — in-band rung). Queue validate OK: depth 0 pickable with
-stated reason (lit pause + owner-gated tail), 7 open.
-run_work_next NOT armed — CPU-side queue empty, box busy, local
-idle-by-design (charter §5 exit).
-
-**Next**: er_60k rides to endpoint ~08-11 ~12:00Z → chained
-panel_v2 → paired CI95 vs banked 40k (6.0079) + 60k-continuation
-(5.8602) panels. Rungs record-only; @7500-class transient
-recurrence upgrades to a posted fact; kill lines unchanged (NaN,
-probe-vs-@2500 by 10k — PASSED, probe>25 ×3). Next local launch
-owner-gated: named-not-preregistered candidates T2 depth rung +
-tiny decode microbench (#16); fjoint finalize waits on owner go
-(~08-12). No lit refills until re-enabled.*
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -126,20 +127,6 @@ dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
 
-Session 2026-08-10 06:06–06:2xZ (tick, babysit; 0 new GPU-h logged —
-er_60k rides 29.2/155 projection, sole live run): quiet single-run
-tick with a short §6 hold — er_60k **7.5922@11500** second-best,
-holding off the 7.54@11000 run-best (plateau break sustained);
-matched-Δ table vs 40k extended record-only (@11500 +0.39 vs
-7.2014 — full table @9000→@11500 wobbles both directions, endpoint
-panel decides). Watcher lesson: Monitor grep patterns must match
-the jsonl log format (`"step": 11500`, not `step 11500`) — the
-first watcher never fired; read the log directly over ssh instead.
-No post (in-band rung). No steering (read empty, history ×5
-unchanged). Queue depth 0 pickable with stated reason (lit pause +
-owner-gated tail); run_work_next NOT armed — CPU queue empty,
-local GPU idle-by-design, plain §5 exit.
-
 Session 2026-08-10 06:21–06:4xZ (tick, babysit; 0 new GPU-h logged —
 er_60k rides ~30.7/155 projection, sole live run): single-run tick
 with a ~9-min §6 hold — er_60k **NEW RUN-BEST 7.3694@12000**
@@ -153,3 +140,18 @@ post (in-band rung). No steering (read empty, history ×5
 unchanged). Queue depth 0 pickable with stated reason (lit pause +
 owner-gated tail); run_work_next NOT armed — CPU queue empty,
 local GPU idle-by-design, plain §5 exit.
+
+Session 2026-08-10 06:35–06:5xZ (tick, babysit; 0 new GPU-h logged —
+er_60k rides 31.0/155 projection, sole live run): single-run tick
+with a ~14-min §6 hold — er_60k **7.3977@12500**, just off the
+7.3694@12000 run-best; four straight rungs (7.54/7.59/7.37/7.40)
+under the pre-plateau 7.65@8000 mark, the break holds at depth.
+Matched-Δ table vs 40k extended record-only (@12500 −0.50, 7.3977
+vs 7.8968 — two straight negative legs, still inside the ~±0.8
+wobble; endpoint panel decides). Baseline log identity re-verified
+(ar_40k @11000/@11500/@12000 values match all banked legs). No
+post (in-band rung). No steering (read empty, history ×5
+unchanged). Queue depth 0 pickable with stated reason (lit pause +
+owner-gated tail); run_work_next NOT armed — CPU queue empty,
+local GPU idle-by-design, plain §5 exit. Next structural event:
+save boundary @15000 ~09:0xZ.
