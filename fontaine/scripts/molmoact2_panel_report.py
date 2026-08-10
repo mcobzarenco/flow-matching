@@ -329,7 +329,28 @@ def traj_chart(sample, motor_names: list, order: list, rt: ModuleType) -> str:  
             name = motor_names[dim] if dim < len(motor_names) else f"dim {dim}"
             ax.set_title(name, fontsize=9)
             ax.tick_params(labelsize=8)
-        fig.tight_layout()
+        from matplotlib.lines import Line2D
+
+        handles = [
+            Line2D(
+                [0],
+                [0],
+                color=STEP_COLORS[i % len(STEP_COLORS)],
+                linewidth=2.0,
+                linestyle="--" if name_.startswith("state-copy") else "-",
+            )
+            for i, name_ in enumerate(order)
+        ]
+        handles.append(Line2D([0], [0], color=theme.truth_color, linewidth=2.0))
+        fig.legend(
+            handles,
+            [*order, "truth"],
+            loc="lower center",
+            ncol=4,
+            fontsize=7,
+            frameon=False,
+        )
+        fig.tight_layout(rect=(0, 0.16, 1, 1))
         buffer = io.BytesIO()
         fig.savefig(buffer, format="png", dpi=72, facecolor=fig.get_facecolor())
         plt.close(fig)
@@ -534,7 +555,6 @@ def main() -> None:
         "contaminated": core & contam_mask,
     }
     step_chart = per_step_chart(all_preds, truth, valid, step_splits, rt)
-    legend = legend_strip(list(all_preds), rt)
     print("per-step charts rendered", flush=True)
 
     # gallery doubled + split clean/contaminated (owner 15:27Z):
@@ -603,8 +623,7 @@ def main() -> None:
         f"<h2>Sample predictions ({sum(len(b) for _, _, b in sections)} of "
         f"{len(core_rows)} core frames, evenly strided per split; "
         "MolmoAct2's line stops at step 30 — its native horizon). "
-        "Series legend (applies to every chart below):</h2>"
-        f'<img class="chart" src="{legend}">'
+        "Legend is under each chart.</h2>"
         + "".join(
             f"<h2>Samples — {escape(name)} ({len(blocks)} of {n} frames)</h2>"
             + "".join(blocks)
