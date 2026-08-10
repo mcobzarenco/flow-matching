@@ -17,9 +17,13 @@ window yet.*
 fine-tune on the 2 rig repos (unit `fontaine-molmoact2-rig-ft`, 2000
 steps), first poll 17:58Z step 100: **830 f/min** (5.5× kill line),
 flow loss 0.135@20 → ~0.06@100, vram 38.9/78 bar, host RAM 41/221G,
-**~2.6 GPU-h projected vs 12 gate**, endpoint ~20:20Z → successor
-item picks up rung reads. `fontaine_molmo2_er_60k_ddp4` LIVE box
-4×H100 — **NEW RUN-BEST 5.9214@29000**, @30000 save captured 21.7 s
+**~2.7 GPU-h projected vs 12 gate**, endpoint ~20:26Z → successor
+item does the final read; **rungs 500/1000/1500 already read
+in-session: MAE 6.76 → 4.66 → 3.59** on the 240 anchor rows (vs
+zero-shot 28.95 / state-copy 9.08 — pre-reg expectation 2 MET at ¼
+training, monotone since; joint1 corr +0.22 → +0.96, oracles green;
+serve-ready HF dirs `~/checkpoints/molmoact2-so101-rig-r1-step*-hf`). `fontaine_molmo2_er_60k_ddp4` LIVE box
+4×H100 — **NEW RUN-BEST 5.89@31000** (prior 5.9214@29000), @30000 save captured 21.7 s
 (the @25000 155-s gather = one-off, IO watch retired), 26.9 f/min,
 75.8/155 GPU-h, halfway; next boundary @35000 ~20:5xZ, endpoint
 ~08-11 ~12:00Z. Blog Space still capped (998.6 MB, GC pending) —
