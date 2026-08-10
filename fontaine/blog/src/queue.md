@@ -6,7 +6,7 @@
 
 **Depth call:** depth 1 at 00:3xZ 08-10 (STATED REASON for <2: owner steering 00:23Z 08-10 "Can we pause the lit slices for now" — lit-radar-0823 deliberately NOT queued, standing lit allocation suspended): open = er60k-init-delta-midrun-chart (cpu, opens ~02:0xZ THIS session, instrument pre-built); plus 2 live runs babysat (er-60k box to ~08-11 ~12:00Z -> chained panel_v2 k4l2; tiny10k local to ~05:1xZ 08-10 -> chained panel_v2 -> Delta_capacity read) and the owner-gated/blocked items (fjoint finalize on owner go, vu5k post-attach window, actckpt ladder, docs tail) — post-pause work supply is run-boundary-driven
 
-**9 open** (Live 2 · Queued 1 · Blocked 6 · Done 97)
+**8 open** (Live 2 · Queued 0 · Blocked 6 · Done 98)
 
 ## 🔴 Live (2)
 
@@ -40,23 +40,11 @@ T1 tiny-expert capacity rung, FINAL DESIGN (owner yes 19:59:04Z; 40k/biggest-bat
 
 ---
 
-## 🟢 Queued (1)
+## 🟢 Queued (0)
 
 *ready — waiting on a window or a boundary*
 
-**`er60k-init-delta-midrun-chart-0810`** · `cpu`
-
-er_60k ER-init-delta mid-run chart (CPU, zero GPU-h): once the probe ladder has ~10 points (step &gt;= 5000, ~02:0xZ 08-10), chart eval_chunk_mae vs the 40k run's curve at matched steps (seed 0 shared per the owner's 22:51Z seed pol…
-
-**boundary:** opens at er_60k step 5000 (~02:0xZ 08-10); any CPU window after that; superseded by the endpoint readout ~08-11 ~12:00Z if unexecuted · [pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md)
-
-<details><summary>full record</summary>
-
-er_60k ER-init-delta mid-run chart (CPU, zero GPU-h): once the probe ladder has ~10 points (step &gt;= 5000, ~02:0xZ 08-10), chart eval_chunk_mae vs the 40k run's curve at matched steps (seed 0 shared per the owner's 22:51Z seed policy — shuffle-order variance removed from the comparison, so the curve delta IS the init effect + rig-data 0.19%). Same dark eval-report style as adamc_postmortem_chart.py (reuse the 40k curve transcription). Record-only per pre-reg (never a kill line); post the chart in-channel with the step-5000 async-save fact. If the delta is boring (overlapping curves), one line in now.md suffices and the full chart waits for the endpoint readout — do not manufacture a post.
-
-</details>
-
----
+*(empty)*
 
 ## 🟡 Blocked (6)
 
@@ -144,9 +132,23 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 
 ---
 
-## ✅ Done (97)
+## ✅ Done (98)
 
 *closed — the full record stays in each fold*
+
+**`er60k-init-delta-midrun-chart-0810`** · `cpu`
+
+er_60k ER-init-delta mid-run chart (CPU, zero GPU-h): once the probe ladder has ~10 points (step &gt;= 5000, ~02:0xZ 08-10), chart eval_chunk_mae vs the 40k run's curve at matched steps (seed 0 shared per the owner's 22:51Z seed pol…
+
+**boundary:** opens at er_60k step 5000 (~02:0xZ 08-10); any CPU window after that; superseded by the endpoint readout ~08-11 ~12:00Z if unexecuted · [pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md)
+
+<details><summary>full record</summary>
+
+er_60k ER-init-delta mid-run chart (CPU, zero GPU-h): once the probe ladder has ~10 points (step &gt;= 5000, ~02:0xZ 08-10), chart eval_chunk_mae vs the 40k run's curve at matched steps (seed 0 shared per the owner's 22:51Z seed policy — shuffle-order variance removed from the comparison, so the curve delta IS the init effect + rig-data 0.19%). Same dark eval-report style as adamc_postmortem_chart.py (reuse the 40k curve transcription). Record-only per pre-reg (never a kill line); post the chart in-channel with the step-5000 async-save fact. If the delta is boring (overlapping curves), one line in now.md suffices and the full chart waits for the endpoint readout — do not manufacture a post.
+
+</details>
+
+---
 
 **`adamc-postmortem-chart-0809`** · `cpu`
 

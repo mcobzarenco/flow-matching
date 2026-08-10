@@ -951,11 +951,12 @@
    "id": "er60k-init-delta-midrun-chart-0810",
    "title": "er_60k ER-init-delta mid-run chart (CPU, zero GPU-h): once the probe ladder has ~10 points (step >= 5000, ~02:0xZ 08-10), chart eval_chunk_mae vs the 40k run's curve at matched steps (seed 0 shared per the owner's 22:51Z seed policy \u2014 shuffle-order variance removed from the comparison, so the curve delta IS the init effect + rig-data 0.19%). Same dark eval-report style as adamc_postmortem_chart.py (reuse the 40k curve transcription). Record-only per pre-reg (never a kill line); post the chart in-channel with the step-5000 async-save fact. If the delta is boring (overlapping curves), one line in now.md suffices and the full chart waits for the endpoint readout \u2014 do not manufacture a post.",
    "class": "cpu",
-   "status": "queued",
+   "status": "done",
    "prereg": "fontaine/blog/src/posts/2026-08-09-prereg-molmo2-er-60k.md",
    "owner_hold": false,
-   "boundary": "opens at er_60k step 5000 (~02:0xZ 08-10); any CPU window after that; superseded by the endpoint readout ~08-11 ~12:00Z if unexecuted"
+   "boundary": "opens at er_60k step 5000 (~02:0xZ 08-10); any CPU window after that; superseded by the endpoint readout ~08-11 ~12:00Z if unexecuted",
+   "done_note": "executed 2026-08-10 02:1xZ tick: delta read posted in-channel (id 1536195843160277034), probe 9.2633@5000 vs 40k 9.6394 = -0.38, converged; boring-clause -> full chart waits for endpoint readout; capture line 20.4s banked"
   }
  ],
- "updated": "2026-08-09T11:08:00Z"
+ "updated": "2026-08-10T02:14:30Z"
 }
