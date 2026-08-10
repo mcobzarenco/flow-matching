@@ -1,6 +1,55 @@
 # Now
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-09/10 23:55–02:xxZ (real `date -u` at write: 00:11) —
+work session (bounded): **lit-radar-0821 CLOSED — 4 Papers pages
+landed + wired via a 5-agent fan-out; find of the slice:
+NeuralActuator's third platform IS the SO-101, everything released
+(3 SO-101 checkpoints + teleop code), the rig-day force-sensing
+rider is now shovel-ready. Session stays live for the er_60k
+step-5000 boundary (~02:0xZ): ER-init delta chart + facts
+in-channel.***
+
+**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
+~2,040, probe 33.03@500 → 22.05@1000 → 16.78@1500 → **15.43@2000**
+descending, ~27 st/min, util 53–94%, vram ~71.5 ×4, 5.4/155 GPU-h;
+step-5000 boundary ~02:0xZ. `fontaine-tiny10k` LIVE local — step
+~4,040, probe 11.56@4000 (plateau forming ~11.5 vs F@5000 10.26),
+4.0/15 GPU-h; endpoint ~05:1xZ 08-10.
+
+**Steering**: none — `read` surfaced only my own slice post; the
+~150 GPU-h correction remains unobjected → er_60k rides.
+
+**Done**: lit-radar-0821 executed end-to-end (7951bac): 4 Papers
+pages same-session per the permanent rule —
+[Quality over Quantity](papers/quality-over-quantity.md) (offline
+influence pole, runnable no-rollout; gains only on 40–50% injected
+failures, hard top-N not weighting; cheapest #9 arm sketched),
+[Curse of Precision](papers/curse-of-precision.md) (sim-only R²>0.97
+fit, worst points 23–65× extrapolated; hook's "not the task"
+corrected — c moved 2.35→1.00 mm by randomization alone; #16
+tolerance-dial + Δc design rule; #9 clarity-filter lever),
+[NeuralActuator](papers/neuralactuator.md) (SO-101 IS the third
+platform: force 0.47–0.73 N MAE from load registers, no current
+sensor, MIT everything; "torque-from-current" hook wrong twice; #16
+rider superseded, #9 Δq_d gate stands),
+[GigaWorld-1 / WMBench](papers/gigaworld-wmbench.md) (324K
+"rollouts" = graded videos under replayed actions, real-ranking
+never computed; Apache-2.0 release kills the 0820 "no artifact"
+objection; screen ≠ certificate stands). Ideas #9/#16 pages + index
+hooks fed; Radar 0821 flipped; 0822 queued (18 checked, 15
+abs-verified, 12 survived; 3 dups already-read — sweep converging).
+check.py 599 green ×2; Space pushed, 4 pages curl-200; slice
+summary in-channel. Babysit ×2 exit 0.
+
+**Next**: er_60k step-5000 boundary ~02:0xZ THIS SESSION →
+async-save capture line + `er60k_init_delta_chart.py` → chart +
+facts in-channel (er60k-init-delta-midrun-chart item). tiny10k
+endpoint ~05:1xZ 08-10 → chained panel_v2 → Δ_capacity read. er_60k
+endpoint ~08-11 ~12:00Z → chained panel_v2 k4l2. `queue_cli.py
+next` after the boundary → lit-radar-0822 (cpu, GPU-busy window).*
 
 *Updated 2026-08-09 23:51–00:0xZ (real `date -u` at write: 23:53) —
 tick (babysit): **green tick, no steering — er_60k probe
@@ -85,37 +134,6 @@ in-channel (er60k-init-delta-midrun-chart item). tiny10k endpoint
 ~05:1xZ 08-10 → chained panel_v2 → Δ_capacity read. er_60k endpoint
 ~08-11 ~12:00Z → chained panel_v2 k4l2.*
 
-*Updated 2026-08-09 23:21–23:2xZ (real `date -u` at write: 23:26) —
-tick (babysit): **green tick, no steering — er_60k first probe
-33.03@500 = the same early class as the 40k baseline (30.844@500),
-the ER init starts on equal footing.***
-
-**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
-~760 @ 23.6 st/min (2.5 s/step window, inside the corrected 2.2–2.6
-class), vram ~71.5 GiB ×4, util 69–99%, 2.1/155 GPU-h. First probe
-**33.03@500** vs 40k baseline 30.844@500 / adamc 31.30@500 — same
-early class, no anomaly; the primary ER-init delta read stays at
-step 5000 (~02:0xZ 08-10, with the async-save capture line owed
-in-channel). `fontaine-tiny10k` LIVE local — step 2,960 @ 21.9
-f/min, probe 11.64@2500 descending, 3.2/15 GPU-h.
-
-**Steering**: none — `read` empty, no new reactions (history ×5
-checked). The ~150 GPU-h cost correction (posted 23:01Z) remains
-unobjected → er_60k rides.
-
-**Done**: babysit ×1 exit 0 (both runs green). Pulled the 40k
-early-probe anchor (30.844@500) from the post-mortem chart's
-transcribed curve for the @500 comparison. Queue validate green
-depth 2 (10 open). now.md footer rolled to the last-2 rule (22:34 /
-22:07 blocks + 22:03/22:07/22:34 notes → archive). run_work_next
-confirmed armed.
-
-**Next**: chained work session → lit-radar-0820 (cpu, GPU-busy
-window). er_60k step-5000 boundary ~02:0xZ 08-10 → probe ladder vs
-40k (ER-init delta) + er60k-init-delta-midrun-chart item. tiny10k
-endpoint ~05:1xZ 08-10 → chained panel_v2 → Δ_capacity read. er_60k
-endpoint ~08-11 ~12:00Z → chained panel_v2 k4l2.*
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -169,3 +187,15 @@ correction unobjected → rides). er_60k step ~1,500, probe
 ~2-min poll gap, not a stall). tiny10k step ~3,600, probe
 11.52@3500. Queue green depth 2 (10 open); run_work_next armed →
 lit-radar-0821; body + footer rolled per last-2.
+
+Session 2026-08-09/10 23:55–02:xxZ (work, bounded; 0 new GPU-h by
+the session itself — er_60k rides 5.4/155 at write, tiny10k 4.0/15;
+explore): lit-radar-0821 closed in one pass via a 5-agent fan-out —
+4 Papers pages (QoQ offline-influence pole, Curse of Precision
+sim-only-fit + clarity-filter lever, NeuralActuator SO-101-is-the-
+platform with everything released, GigaWorld/WMBench
+graded-videos-not-rollouts + artifact objection dead), hook
+corrections on all four, ideas #9/#16 fed, Radar 0821 flipped +
+0822 queued (12/18 survived, 3 dups already-read). Space pushed, 4
+pages 200; summary in-channel; check.py 599 ×2. Held live for the
+er_60k step-5000 ER-init delta boundary (~02:0xZ).
