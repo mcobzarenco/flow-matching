@@ -97,6 +97,9 @@ DISPLAY = {
     "flow80k draws10 seating": (
         "flow teacher 80k mean-of-10 draws (seating keying) — Gemma-4-E2B trunk + flow expert h1024 (Heun-30)"
     ),
+    "snapflow student 30k 1nfe": (
+        "snapflow student 30k 1-NFE single draw — Gemma-4-E2B trunk + distilled flow expert (1 Euler step)"
+    ),
     "state-copy": "state-copy — no model (repeat current state)",
     "ar_40k endpoint": "ar 40k endpoint — Molmo2-4B trunk, AR decoder",
     "ar_60k continuation": "ar 60k continuation — Molmo2-4B trunk, AR decoder",
@@ -130,6 +133,7 @@ def summary_tables(analysis: dict, rt: ModuleType) -> list:
         "flow80k draws10 seating",
         "snapflow80k stablekey",
         "snapflow80k heun30",
+        "snapflow student 30k 1nfe",
         "molmoact2",
         "state-copy",
         "ar_40k endpoint",
@@ -224,6 +228,8 @@ def per_motor_table(arms: dict, truth: np.ndarray, m2: np.ndarray, rt: ModuleTyp
     )
 
 
+# 10 mutually-legible series colors on the dark page (state-copy last,
+# gray + dashed by convention below).
 STEP_COLORS = [
     "#648fff",
     "#ffb000",
@@ -232,8 +238,102 @@ STEP_COLORS = [
     "#fe6100",
     "#4ec9b0",
     "#e8e857",
+    "#38d430",
+    "#ff7eb6",
     "#9aa0a8",
 ]
+
+
+def legend_strip(labels: list, rt: ModuleType) -> str:
+    """Standalone legend image (owner 15:22Z: the in-chart legend was
+    covering series) — one strip reused above the charts."""
+    import base64
+    import io
+
+    import matplotlib
+    import matplotlib.pyplot as plt
+    from matplotlib.lines import Line2D
+
+    matplotlib.use("Agg", force=True)
+    theme = rt.THEMES["dark"]
+    with plt.style.context(theme.mpl_style):
+        fig = plt.figure(figsize=(13, 1.4))
+        fig.patch.set_facecolor(theme.page_bg)
+        handles = [
+            Line2D(
+                [0],
+                [0],
+                color=STEP_COLORS[i % len(STEP_COLORS)],
+                linewidth=2.2,
+                linestyle="--" if label.startswith("state-copy") else "-",
+            )
+            for i, label in enumerate(labels)
+        ]
+        handles.append(Line2D([0], [0], color=theme.truth_color, linewidth=2.2))
+        fig.legend(
+            handles,
+            [*labels, "truth"],
+            loc="center",
+            ncol=3,
+            fontsize=9,
+            frameon=False,
+        )
+        buffer = io.BytesIO()
+        fig.savefig(buffer, format="png", dpi=110, facecolor=fig.get_facecolor())
+        plt.close(fig)
+    return "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode()
+
+
+def traj_chart(sample, motor_names: list, order: list, rt: ModuleType) -> str:  # noqa: ANN001
+    """Per-joint truth-vs-all-policies chart — the house chart with the
+    10-color palette and NO in-axes legend (the strip above carries it)."""
+    import base64
+    import io
+
+    import matplotlib
+    import matplotlib.pyplot as plt
+
+    matplotlib.use("Agg", force=True)
+    theme = rt.THEMES["dark"]
+    dims = sample.truth.shape[-1]
+    ncols = 3
+    nrows = (dims + ncols - 1) // ncols
+    n_valid = int(sample.valid.sum())
+    steps = range(n_valid)
+    with plt.style.context(theme.mpl_style):
+        fig, axes = plt.subplots(
+            nrows,
+            ncols,
+            figsize=(4.2 * ncols, 2.6 * nrows),
+            squeeze=False,
+        )
+        fig.patch.set_facecolor(theme.page_bg)
+        for dim in range(dims):
+            ax = axes[dim // ncols][dim % ncols]
+            ax.set_facecolor(theme.page_bg)
+            ax.plot(
+                steps,
+                sample.truth[:n_valid, dim].tolist(),
+                color=theme.truth_color,
+                linewidth=1.9,
+            )
+            for series, name in enumerate(order):
+                predicted = sample.predictions[name]
+                ax.plot(
+                    steps,
+                    predicted[:n_valid, dim].tolist(),
+                    color=STEP_COLORS[series % len(STEP_COLORS)],
+                    linestyle="--" if name.startswith("state-copy") else "-",
+                    linewidth=1.1,
+                )
+            name = motor_names[dim] if dim < len(motor_names) else f"dim {dim}"
+            ax.set_title(name, fontsize=9)
+            ax.tick_params(labelsize=8)
+        fig.tight_layout()
+        buffer = io.BytesIO()
+        fig.savefig(buffer, format="png", dpi=90, facecolor=fig.get_facecolor())
+        plt.close(fig)
+    return "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode()
 
 
 def per_step_chart(
@@ -257,6 +357,7 @@ def per_step_chart(
     with plt.style.context(theme.mpl_style):
         fig, axes = plt.subplots(1, 3, figsize=(15, 4.6), sharey=True)
         fig.patch.set_facecolor(theme.page_bg)
+        handles = []
         for ax, (split_name, sel) in zip(axes, splits.items(), strict=True):
             ax.set_facecolor(theme.page_bg)
             for i, (label, pred) in enumerate(all_preds.items()):
@@ -269,7 +370,7 @@ def per_step_chart(
                 num = (err * m).sum(0)
                 den = np.maximum(m.sum(0), 1)
                 curve = np.where(m.sum(0) > 0, num / den, np.nan)
-                ax.plot(
+                (line,) = ax.plot(
                     range(n_steps),
                     curve,
                     label=label,
@@ -277,13 +378,23 @@ def per_step_chart(
                     linewidth=1.5,
                     linestyle="--" if label.startswith("state-copy") else "-",
                 )
+                if ax is axes[0]:
+                    handles.append(line)
             ax.set_title(f"{split_name} (n={int(sel.sum())})", fontsize=10)
             ax.set_xlabel("chunk step (30 fps)")
             ax.tick_params(labelsize=8)
             ax.axvline(29.5, color=theme.meta, linewidth=0.8, linestyle=":")
         axes[0].set_ylabel("MAE (raw action units)")
-        axes[0].legend(fontsize=7, loc="upper left")
-        fig.tight_layout()
+        # legend below the axes, never over the series (owner 15:22Z)
+        fig.legend(
+            handles,
+            list(all_preds),
+            loc="lower center",
+            ncol=4,
+            fontsize=8,
+            frameon=False,
+        )
+        fig.tight_layout(rect=(0, 0.14, 1, 1))
         buffer = io.BytesIO()
         fig.savefig(buffer, format="png", dpi=110, facecolor=fig.get_facecolor())
         plt.close(fig)
@@ -293,7 +404,6 @@ def per_step_chart(
 
 def gallery(cand: dict, preds: dict, indices: np.ndarray, rt: ModuleType) -> list[str]:
     """Re-fetch images/state/task for the sampled rows; render blocks."""
-    theme = rt.THEMES["dark"]
     dataset = mpp.build_dataset()
     blocks = []
     for row in indices.tolist():
@@ -307,7 +417,8 @@ def gallery(cand: dict, preds: dict, indices: np.ndarray, rt: ModuleType) -> lis
         truth_t = torch.as_tensor(cand["truth"][row])
         valid_t = torch.as_tensor(cand["valid"][row])
         predictions = {
-            label: torch.as_tensor(pred[row]) for label, pred in preds.items()
+            label: torch.as_tensor(np.ascontiguousarray(pred[row]))
+            for label, pred in preds.items()
         }
         sample = rt.ReportSample(
             index=int(cand["index"][row]),
@@ -339,7 +450,7 @@ def gallery(cand: dict, preds: dict, indices: np.ndarray, rt: ModuleType) -> lis
             f'title="{escape(name)}">'
             for name, image in sorted(sample.cameras.items())
         )
-        chart = rt._chart_data_uri(sample, MOTOR_NAMES, theme)
+        chart = traj_chart(sample, MOTOR_NAMES, list(preds), rt)
         blocks.append(
             f'<div class="sample">'
             f"<h3>{escape(sample.repo_id)} &mdash; episode {sample.episode}, "
@@ -365,20 +476,28 @@ def main() -> None:
     from bijou.eval import report as rt
 
     analysis = json.loads(Path(args.analysis).read_text())
-    cand, top10, stable = load_arms()
-    src = {"top10": top10, "stable": stable, "cand": cand}
-    preds = {label: src[which][key] for label, which, key in POLICIES}
+    cand, _top10, _stable = load_arms()
 
     truth, valid = cand["truth"], cand["valid"]
     # owner amendment 13:14Z: excluded repos out of every surface here too
     core = cand["core"] & ~np.isin(cand["repo_id"], list(mpr.EXCLUDED_REPOS))
     m2 = (valid[:, :WINDOW] & np.isfinite(truth[:, :WINDOW]).all(-1))[core]
-    arms_core = {label: pred[core] for label, pred in preds.items()}
+
+    # every arm, loaded once; pairing was oracle-verified by the reads
+    # run that produced the analysis json
+    all_preds = {}
+    for spec in mpr.BASELINES:
+        npz = mpr._load_npz(f"{spec['stem']}.npz")
+        short = spec["label"].replace(" endpoint", "").replace(" continuation", "-cont")
+        all_preds[short] = npz[spec["key"]]
+    all_preds["MolmoAct2 [molmo2-ER]"] = cand[mpr.CAND_KEY]
+    all_preds["state-copy"] = cand["pred:state-copy"]
+
+    arms_core = {label: pred[core] for label, pred in all_preds.items()}
     motor = per_motor_table(arms_core, truth[core], m2, rt)
 
     # MAE-by-timestep charts, all models x {pooled, clean, contaminated}
-    # (owner 14:35Z/14:38Z). Loads every baseline npz; pairing was
-    # oracle-verified by the reads run that produced the analysis json.
+    # (owner 14:35Z/14:38Z)
     contam_mask, _stats = mpr.contamination_masks(
         cand["repo_id"],
         cand["core"],
@@ -390,24 +509,15 @@ def main() -> None:
         "clean": core & ~contam_mask,
         "contaminated": core & contam_mask,
     }
-    all_preds = {"MolmoAct2 [molmo2-ER]": cand[mpr.CAND_KEY]}
-    for spec in mpr.BASELINES:
-        npz = mpr._load_npz(f"{spec['stem']}.npz")
-        short = (
-            spec["label"]
-            .replace("snapflow80k", "snapflow80k")
-            .replace(" endpoint", "")
-            .replace(" continuation", "-cont")
-        )
-        all_preds[short] = npz[spec["key"]]
-    all_preds["state-copy"] = cand["pred:state-copy"]
     step_chart = per_step_chart(all_preds, truth, valid, step_splits, rt)
+    legend = legend_strip(list(all_preds), rt)
     print("per-step charts rendered", flush=True)
 
     core_rows = np.flatnonzero(core)
     stride = max(len(core_rows) // args.samples, 1)
     sampled = core_rows[::stride][: args.samples]
-    blocks = gallery(cand, preds, sampled, rt)
+    # all models on the trajectory charts (owner 15:22Z)
+    blocks = gallery(cand, all_preds, sampled, rt)
 
     theme = rt.THEMES["dark"]
     tables = summary_tables(analysis, rt)
@@ -453,7 +563,8 @@ def main() -> None:
         f'<img class="chart" src="{step_chart}">'
         f"<h2>Sample predictions ({len(blocks)} of {len(core_rows)} core "
         "frames, evenly strided; MolmoAct2's line stops at step 30 — its "
-        f"native horizon)</h2>{''.join(blocks)}"
+        "native horizon). Series legend (applies to every chart below):"
+        f'</h2><img class="chart" src="{legend}">{"".join(blocks)}'
         "</body></html>"
     )
     Path(args.out).write_text(document)

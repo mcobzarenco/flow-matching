@@ -95,6 +95,18 @@ BASELINES = [
         "run": "bijou_flow_artrunk_h1024_40k_ddp2",
     },
     {
+        # owner add 15:22Z 08-10: the SnapFlow 1-NFE distilled student
+        # (only the single-draw bank kept a per-frame npz; draws5/10
+        # exist as summary json+html only)
+        "label": "snapflow student 30k 1nfe",
+        "stem": (
+            "reports/eval__fontaine_flow_snapdistill_h1024_30k_1xh100"
+            "__step_030000__panel_curated_v0_k4l2_1nfe_euler1_npz"
+        ),
+        "key": "pred:bijou@30000",
+        "run": "fontaine_flow_snapdistill_h1024_30k_1xh100",
+    },
+    {
         # owner add 14:33Z 08-10: the original heun-30 single-draw bank
         # (the 6.6232 anchor eval; identity byte-pairs with the curated
         # stems — verified before adding)

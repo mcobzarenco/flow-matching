@@ -82,7 +82,17 @@ advice: mean-of-10 WAS banked (truncated file listing caused the
 false "not banked" + 8–12 GPU-h estimate; real cost zero) — the
 seating-stage full-panel draws10 npz added as a row at 0 GPU-h,
 oracles green: matched-window 4.05/4.12/3.90, slots 2nd behind
-top-10-tickets; owner may veto ('seating keying' labeled).
+top-10-tickets; owner may veto ('seating keying' labeled);
+(13) 15:22Z report adds → snapflow student 30k 1-NFE row (only
+per-frame-npz student config; matched-window 4.29/4.37/4.11 — beats
+teacher single-draws, confirms the distillation story), ALL 10
+models on every trajectory chart, 10-color palette, legend moved to
+a standalone strip + below the timestep panels (nothing covers
+series); report 7.6 MB non-LFS, direct 200; (14) **15:24:16Z OWNER
+GO: MolmoAct2 rig fine-tune on the local GPU + runnable runbook** →
+queued as the NEXT session's first action (item
+molmoact2-rig-finetune-runbook; param sheet in-channel before any
+GPU minute, owner-agreed silence=launch); local H100 reserved.
 
 **Done**: molmoact2-oob-panel-eval CLOSED (commits 00a9feb, b6cc2a7,
 this one): pre-reg finalized (immutable + Amendment 1), smoke green
@@ -100,9 +110,10 @@ reports.md section added, numbers in-channel 14:37Z. @25000 box
 boundary caught + legs banked. babysit ×3 exit 0; sweep babysit
 entry pruned.
 
-**Next**: `queue_cli.py next` → depth 0 with stated reason
-(draws10 owner-cancelled; lit pause + owner-gated tail; queue.json
-canonical). er_60k rides to endpoint ~08-11 ~12:00Z → chained
+**Next**: `queue_cli.py next` → **molmoact2-rig-finetune-runbook**
+(owner GO 15:24Z: runbook post + param sheet in-channel → objection
+window → launch fine-tune on local H100, own pre-reg + babysit
+entry + gate). er_60k rides to endpoint ~08-11 ~12:00Z → chained
 panel_v2 → paired CI95 vs banked 40k (6.0079) + 60k-cont (5.8602);
 boundaries @30000 ~17:4xZ then @35000 ~20:4xZ 08-10. BLOG-SPACE
 TAIL (manual only — the retry unit is stopped and must NOT be
