@@ -4,6 +4,41 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-10 03:34–03:3xZ (real `date -u` at write: 03:36) —
+tick (babysit): **tiny10k **9.62@8500** — a +0.03 wobble off the
+9.59@8000 run-best (no F anchor at 8500; every prior wobble this run
+resolved downward — record-only), step 8,500, ≈1,500 steps ≈70 min
+to the ~04:4xZ endpoint and the Δ_capacity read @10k. er_60k no new
+rung (8.30@7000 latest), step ~7,380 — the @7500 eval is imminent,
+next tick's fact.***
+
+**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
+~7,380, probe … 8.21@6500 → 8.30@7000 (matched deltas −0.57, +0.12,
+−0.38, −0.47, +0.44, −0.73, −0.48), 27.4 st/min window, util 62–88%,
+vram ~71.7 ×4 vs 77 bar, ~19.0/155 GPU-h; endpoint ~08-11 ~12:00Z.
+`fontaine-tiny10k` LIVE local — step 8,500, probe 9.59@8000 →
+**9.62@8500** (rungs @9000/@9500 remain, then the @10000 primary
+read vs F 9.4157), 21.9 f/min, 7.4/15 GPU-h; endpoint ~04:4xZ
+(≈1,500 steps left).
+
+**Steering**: none — `read` empty, history ×5 unchanged (lit-pause
+exchange still the last owner message, no new reactions).
+
+**Done**: babysit ×1 exit 0 (both green, no gate crossings; the
+tiny10k @8500 rung above is the fact). Queue validate OK: depth 0
+pickable WITH stated depth_reason (lit pause; 8 open = 2 live + 6
+owner-gated/blocked). run_work_next left unarmed — no CPU items
+open; the ~04:4xZ tick chain owns tiny10k post-processing (panel_v2
+→ Δ_capacity read). Body + footer rolled per last-2 (03:02 block +
+03:12 note → 08-10 archive).
+
+**Next**: tiny10k endpoint ~04:4xZ → chained panel_v2 → Δ_capacity
+read @10k (vs banked F@10k 9.4157) — with tiny −0.34 under F at the
+matched 7500 rung, |Δ|≤0.3 "prior confirmed" vs "tiny wins" is a
+live question. er_60k @7500 rung next tick; rungs record-only to
+endpoint ~08-11 ~12:00Z → chained panel_v2 k4l2 + full ER-init
+convergence chart. No lit refills until the owner re-enables.*
+
 *Updated 2026-08-10 03:23–03:2xZ (real `date -u` at write: 03:26) —
 tick (babysit): **er_60k **8.30@7000** — a hair (+0.09) off the
 8.21@6500 run-best, and the matched delta stays solidly negative:
@@ -78,42 +113,6 @@ live question. er_60k rungs record-only to endpoint ~08-11 ~12:00Z →
 chained panel_v2 k4l2 + full ER-init convergence chart. No lit
 refills until the owner re-enables.*
 
-*Updated 2026-08-10 03:02–03:0xZ (real `date -u` at write: 03:02) —
-tick (babysit): **quiet green tick between rungs — no new probe
-points on either run. er_60k rides its first-uptick reading
-(**8.98@6000**, @6500 eval imminent at step ~6,500 — the
-does-it-resolve-downward question is next tick's fact); tiny10k
-rides the matched-rung **9.60@7500** (−0.34 under F), step ~7,780,
-@8000 next, endpoint ~04:4xZ ≈1.7 h out.***
-
-**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
-~6,500, probe … 8.77@5500 → **8.98@6000** (@6500 due now; matched
-deltas −0.57, +0.12, −0.38, −0.47, +0.44), 27.3 st/min window, util
-97–98%, vram ~71.6 ×4 vs 77 bar, ~16.8/155 GPU-h; endpoint ~08-11
-~12:00Z. `fontaine-tiny10k` LIVE local — step ~7,780, probe
-**9.60@7500** (Δ −0.34 vs F matched; next @8000, then the @10000
-primary read vs F 9.4157), 21.8 f/min, 6.8/15 GPU-h; endpoint
-~04:4xZ (≈2,220 steps left).
-
-**Steering**: none — `read` empty, history ×5 unchanged (lit-pause
-exchange still the last owner message, no new reactions).
-
-**Done**: babysit ×1 exit 0 (both green, no gate crossings, no new
-rungs — pure between-rungs tick). Queue validate OK: depth 0
-pickable WITH stated depth_reason (lit pause; 8 open = 2 live + 6
-owner-gated/blocked). run_work_next left unarmed — no CPU items
-open, both runs mid-flight; the ~04:4xZ tick chain owns tiny10k
-post-processing (panel_v2 → Δ_capacity read). Body + footer rolled
-per last-2 (02:17 block + 02:29 note → 08-10 archive).
-
-**Next**: tiny10k endpoint ~04:4xZ → chained panel_v2 → Δ_capacity
-read @10k (vs banked F@10k 9.4157) — with tiny already −0.34 under F
-at 7500, |Δ|≤0.3 "prior confirmed" vs "tiny wins" is a live
-question. er_60k @6500 next tick: does the @6000 uptick resolve
-downward like every tiny10k wobble did? Rungs record-only to
-endpoint ~08-11 ~12:00Z → chained panel_v2 k4l2 + full ER-init
-convergence chart. No lit refills until the owner re-enables.*
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -146,15 +145,6 @@ call — no endpoint, no chained evals)**). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
-Session 2026-08-10 03:12–03:1xZ (tick, babysit; 0 new GPU-h —
-er_60k rides ~17.5/155, tiny10k 7.0/15): green tick, both watch
-questions resolve — er_60k 8.21@6500, the @6000 uptick resolved
-downward into a new run-best (Δ −0.73 vs 40k's 8.9431 matched, the
-largest negative delta since convergence, flattered by the 40k's own
-uptick at this rung; record-only); tiny10k 9.59@8000 run-best by a
-hair, endpoint ~04:4xZ ≈90 min out. No steering. Queue depth 0
-pickable with stated reason (lit pause). run_work_next unarmed —
-the ~04:4xZ tick chain owns tiny10k post-processing.
 
 Session 2026-08-10 03:23–03:2xZ (tick, babysit; 0 new GPU-h —
 er_60k rides ~18.3/155, tiny10k 7.2/15): green tick, one new rung —
@@ -164,3 +154,12 @@ record-only); tiny10k no new rung (9.59@8000 latest), step ~8,260,
 endpoint ~04:4xZ ≈80 min out. No steering. Queue depth 0 pickable
 with stated reason (lit pause). run_work_next unarmed — the ~04:4xZ
 tick chain owns tiny10k post-processing.
+
+Session 2026-08-10 03:34–03:3xZ (tick, babysit; 0 new GPU-h —
+er_60k rides ~19.0/155, tiny10k 7.4/15): green tick, one new rung —
+tiny10k 9.62@8500, a +0.03 wobble off the 9.59@8000 run-best (no F
+anchor at 8500; record-only), ≈1,500 steps to the ~04:4xZ endpoint
+and the Δ_capacity read @10k; er_60k no new rung (8.30@7000 latest),
+step ~7,380, @7500 eval imminent. No steering. Queue depth 0
+pickable with stated reason (lit pause). run_work_next unarmed — the
+~04:4xZ tick chain owns tiny10k post-processing.
