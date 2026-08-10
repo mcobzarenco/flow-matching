@@ -5,6 +5,59 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-10 04:13–04:3xZ (real `date -u` at write: 04:21) —
+tick (babysit): **resumed tiny10k runs ~40% slower at workers 6 —
+13.3 st/min measured (90 s window, steps 8860→8880) vs 21.7–23.6
+pre-kill; input-bound, util avg ~82% with dips to 59–70%, vram 15.7
+GiB. Restart-to-fix REJECTED**: a kill forfeits everything back to
+the 8750 save again, costing more than the ~25–30 min it saves, and
+host RAM is exactly what the workers cut bought (84/221 used, 136
+available — no growth pressure). **Endpoint slips again → ~05:4xZ**
+(+~0.6 GPU-h, projection ~8.6/15); the Δ_capacity read still lands
+this morning. er_60k **8.29@8500**, matched Δ **+0.63** vs the 40k's
+7.6695 — the largest POSITIVE delta of the run (the 40k dipped at
+this rung while er wobbled up off the 7.65@8000 run-best); band
+intact, no @7500-class transient recurrence, record-only. tiny @9000
+re-run landed in-session: **9.5612** vs pre-kill 9.3703 — +0.19 from
+the seed-1 data order over the 250 resumed steps, within the run's
+own rung wobble band (~0.25); consistency confirmed, no anomaly. It
+does flip the sign vs F's banked endpoint (0.15 ABOVE 9.4157 where
+pre-kill was 0.05 under) — the @10k paired read decides.*
+
+**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
+~8,500, probe … 7.65@8000 → **8.29@8500** (matched deltas … −0.98,
+**+0.63**), 26.8 st/min, util 90–100% ×4, vram ~71.7 ×4 vs 77 bar,
+~21.6/155 GPU-h; endpoint ~08-11 ~12:00Z. `fontaine-tiny10k-r8750`
+LIVE local — step ~8,920/10,000 at 13.3 st/min (workers-6 rate),
+rung @9000 imminent, then @9500 and the @10000 primary read vs
+banked F@10k 9.4157; endpoint ~05:4xZ + chained panel eval.
+
+**Steering**: none — `read` empty, history ×5 unchanged (lit-pause
+exchange still the last owner message, no new reactions).
+
+**Done**: babysit ×1 exit 0 (both live; tiny window degenerate from
+the counter reset → measured the rate by hand, 90 s live window +
+nvidia-smi sampling — the 13.3 st/min fact above, judged
+ride-don't-restart). free -g host-RAM check (standing OOM-class
+rule): 84/221, comfortable. er_60k @8500 caught in-session via a
+background until-loop watcher (§6 hold, boundary was ~1 min out).
+babysit.toml boundary updated with the steady-state rate + ~05:4xZ
+endpoint. No post — rung wobble and a ~30 min slip are record-only;
+the Δ_capacity endpoint post carries both. Queue validate OK: depth
+0 pickable WITH stated depth_reason (lit pause). run_work_next left
+unarmed — the ~05:4x–06:0xZ tick chain owns tiny10k post-processing
+(panel_v2 → Δ_capacity read). Body + footer rolled per last-2
+(03:45 + 03:34 blocks, 03:45 note → 08-10 archive).
+
+**Next**: tiny10k @9500 rung then endpoint ~05:4xZ → chained
+panel_v2 → Δ_capacity read @10k (vs banked F@10k 9.4157) — tiny was
+0.05 UNDER F's endpoint pre-kill but the resumed path re-ran @9000
+at 9.56 (0.15 above) — the tiny-wins lean is now genuinely open;
+|Δ|≤0.3 "prior confirmed" vs "tiny wins", the @10k paired CI95
+decides. er_60k rungs record-only to endpoint ~08-11 ~12:00Z;
+@7500-class transient recurrence upgrades to a posted fact. No lit
+refills until the owner re-enables.*
+
 *Updated 2026-08-10 04:03–04:2xZ (real `date -u` at write: 04:15) —
 tick (babysit): **tiny10k HOST-RAM OOM at step ~9,060 → RESUMED from
 step_008750.** The 04:00:55Z systemd oom-kill (host RAM, not GPU —
@@ -52,88 +105,6 @@ to endpoint ~08-11 ~12:00Z; @7500-class transient recurrence
 upgrades to a posted fact. No lit refills until the owner
 re-enables.*
 
-*Updated 2026-08-10 03:45–04:0xZ (real `date -u` at write: 04:00) —
-tick (babysit): **er_60k spike-and-recover — probe **15.75@7500**
-(a 2× excursion off 8.30@7000) resolved at @8000 into **7.65 NEW
-RUN-BEST**, Δ −0.98 vs the 40k's 8.6371 matched, the largest
-negative delta of the run. Anomaly scan on the spike: flow loss FLAT
-through it (3.65–3.73 over steps 7300–7800), train_mae spiked and
-recovered in lockstep with eval (16.93 → 7.71) → a one-rung
-decode-probe excursion, not training divergence; the 40k baseline
-never spiked like this at any rung; kill line (>25 ×3) never
-approached. Held the session through both eval boundaries (§6) to
-see it resolve. tiny10k **9.37@9000** run-best — already 0.05 UNDER
-the banked F@10k endpoint 9.4157, with @9500 + the @10000 primary
-read still to come.***
-
-**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
-8,000, probe … 8.30@7000 → 15.75@7500 → **7.65@8000** (matched
-deltas −0.57, +0.12, −0.38, −0.47, +0.44, −0.73, −0.48, +7.11
-transient, **−0.98**), 25.4 st/min window, util 100% ×4, vram ~71.7
-×4 vs 77 bar, ~20.7/155 GPU-h; endpoint ~08-11 ~12:00Z.
-`fontaine-tiny10k` LIVE local — step ~9,040, probe 9.62@8500 →
-**9.37@9000** (rung @9500 remains, then the @10000 primary read vs F
-9.4157), 23.6 f/min, ~7.8/15 GPU-h; endpoint ~04:4xZ (≈960 steps
-left).
-
-**Steering**: none — `read` empty, history ×5 unchanged (lit-pause
-exchange still the last owner message, no new reactions).
-
-**Done**: babysit ×1 exit 0, then the anomaly scan above (remote
-log: loss window + full probe ladder with train_mae pairs) and an
-in-session hold through the @8000/@9000 boundaries — both resolved
-green; record-only, no escalation (the spike self-resolved within
-one rung; next tick's Δ_capacity post carries it as a rider). Queue
-validate OK: depth 0 pickable WITH stated depth_reason (lit pause; 8
-open = 2 live + 6 owner-gated/blocked). run_work_next left unarmed —
-no CPU items open; the ~04:4xZ tick chain owns tiny10k
-post-processing (panel_v2 → Δ_capacity read). Body + footer rolled
-per last-2 (03:12 block + 03:23 note → 08-10 archive).
-
-**Next**: tiny10k @9500 rung then endpoint ~04:4xZ → chained
-panel_v2 → Δ_capacity read @10k (vs banked F@10k 9.4157) — with tiny
-already under F's endpoint at step 9000, |Δ|≤0.3 "prior confirmed"
-vs "tiny wins" is now leaning tiny-wins; the @10k paired CI95
-decides. er_60k rungs record-only to endpoint ~08-11 ~12:00Z; watch
-for @7500-class transient recurrence — a repeat upgrades it from
-record-only to a posted fact. No lit refills until the owner
-re-enables.*
-
-*Updated 2026-08-10 03:34–03:3xZ (real `date -u` at write: 03:36) —
-tick (babysit): **tiny10k **9.62@8500** — a +0.03 wobble off the
-9.59@8000 run-best (no F anchor at 8500; every prior wobble this run
-resolved downward — record-only), step 8,500, ≈1,500 steps ≈70 min
-to the ~04:4xZ endpoint and the Δ_capacity read @10k. er_60k no new
-rung (8.30@7000 latest), step ~7,380 — the @7500 eval is imminent,
-next tick's fact.***
-
-**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
-~7,380, probe … 8.21@6500 → 8.30@7000 (matched deltas −0.57, +0.12,
-−0.38, −0.47, +0.44, −0.73, −0.48), 27.4 st/min window, util 62–88%,
-vram ~71.7 ×4 vs 77 bar, ~19.0/155 GPU-h; endpoint ~08-11 ~12:00Z.
-`fontaine-tiny10k` LIVE local — step 8,500, probe 9.59@8000 →
-**9.62@8500** (rungs @9000/@9500 remain, then the @10000 primary
-read vs F 9.4157), 21.9 f/min, 7.4/15 GPU-h; endpoint ~04:4xZ
-(≈1,500 steps left).
-
-**Steering**: none — `read` empty, history ×5 unchanged (lit-pause
-exchange still the last owner message, no new reactions).
-
-**Done**: babysit ×1 exit 0 (both green, no gate crossings; the
-tiny10k @8500 rung above is the fact). Queue validate OK: depth 0
-pickable WITH stated depth_reason (lit pause; 8 open = 2 live + 6
-owner-gated/blocked). run_work_next left unarmed — no CPU items
-open; the ~04:4xZ tick chain owns tiny10k post-processing (panel_v2
-→ Δ_capacity read). Body + footer rolled per last-2 (03:02 block +
-03:12 note → 08-10 archive).
-
-**Next**: tiny10k endpoint ~04:4xZ → chained panel_v2 → Δ_capacity
-read @10k (vs banked F@10k 9.4157) — with tiny −0.34 under F at the
-matched 7500 rung, |Δ|≤0.3 "prior confirmed" vs "tiny wins" is a
-live question. er_60k @7500 rung next tick; rungs record-only to
-endpoint ~08-11 ~12:00Z → chained panel_v2 k4l2 + full ER-init
-convergence chart. No lit refills until the owner re-enables.*
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -167,18 +138,6 @@ dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
 
-Session 2026-08-10 03:45–04:0xZ (tick, babysit; 0 new GPU-h —
-er_60k rides ~20.7/155, tiny10k ~7.8/15): spike-and-recover tick —
-er_60k probe 15.75@7500 (2× excursion; flow loss flat, train_mae in
-lockstep → decode-probe transient, no 40k precedent, kill line >25
-×3 never approached) resolved at @8000 into 7.65 NEW RUN-BEST, Δ
-−0.98 vs 40k 8.6371 matched, largest negative of the run; held the
-session through both boundaries to see it. tiny10k 9.37@9000
-run-best, already 0.05 under banked F@10k 9.4157; @9500 then the
-@10000 primary read, endpoint ~04:4xZ. No steering. Queue depth 0
-pickable with stated reason (lit pause). run_work_next unarmed — the
-~04:4xZ tick chain owns tiny10k post-processing.
-
 Session 2026-08-10 04:03–04:2xZ (tick, babysit; 0 new GPU-h logged —
 er_60k rides ~20.9/155, tiny10k ~8.0/15 incl. ~0.25 lost to the OOM
 window): incident tick — tiny10k HOST-RAM OOM-killed at step ~9,060
@@ -190,3 +149,19 @@ Incident posted in-channel. er_60k untouched, 7.65@8000 run-best
 riding. No steering. Queue depth 0 pickable with stated reason (lit
 pause). run_work_next unarmed — the ~05:1x–05:3xZ tick chain owns
 tiny10k post-processing.
+
+Session 2026-08-10 04:13–04:3xZ (tick, babysit; 0 new GPU-h logged —
+er_60k rides ~21.6/155, tiny10k ~8.1/15): steady-state poll on the
+resumed tiny10k — 13.3 st/min at workers 6 vs 21.7–23.6 pre-kill
+(~40% slower, input-bound; util avg ~82%, vram 15.7 GiB);
+restart-to-fix rejected (forfeits back to 8750 again, host RAM
+healthy 84/221 — the cut is doing its job); endpoint slips ~05:1x →
+~05:4xZ (+~0.6 GPU-h, ~8.6/15), Δ_capacity read still this morning.
+er_60k 8.29@8500, matched Δ +0.63 vs 40k 7.6695 — largest positive
+of the run (40k dipped at this rung), band intact, no transient
+recurrence, record-only. tiny @9000 re-run 9.5612 vs pre-kill 9.3703
+(+0.19, in-band, seed-1 consistency OK; now 0.15 above F@10k where
+pre-kill was 0.05 under — @10k decides). No
+steering. Queue depth 0 pickable with stated reason (lit pause).
+run_work_next unarmed — the ~05:4x–06:0xZ tick chain owns tiny10k
+post-processing.
