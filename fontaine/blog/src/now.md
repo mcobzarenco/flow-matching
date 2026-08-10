@@ -1,11 +1,61 @@
 # Now
 
-
-
-
-
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-10 09:37–10:0xZ (real `date -u` at write: 09:49) —
+tick (babysit): **15k-panel first-poll done + ETA corrected in-channel
+(~11:4xZ, not ~10:45)**; er_60k healthy, @17000 rung banked
+(second negative Δ leg). The local panel eval `eval-er15k-panel` is
+GPU-bound and healthy (96% util, 30.5G vram, **192 f/min** measured
+over 100 s) but the panel scores **25,800 frames** at 1 rank →
+~2.3 h wall, not the ~1–1.5 h quoted in the 09:24Z post —
+correction posted 09:4xZ (no starvation to fix; standing
+first-poll rule satisfied). **run_work_next ARMED** — chained work
+session rides the eval to rc=0 (~11:4xZ), does the frozen reads vs
+banked 40k endpoint (6.0079) + 60k-cont (5.8602) npz, posts the
+HTML report link + reports page, cleans up the ad-hoc helpers; it
+also catches the @20000 save boundary ~11:3xZ.*
+
+**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
+17,000 at poll, probe … 6.8543@13000 → … → **6.6319@16500**
+(run-best) → 7.0462@17000, 29.4 f/min window, vram ~71.7 ×4 vs 77
+bar, ~43.2/155 GPU-h; endpoint ~08-11 ~12:00Z. Local H100: panel_v2
+on step_015000 LIVE (unit `eval-er15k-panel`, 2,432/25,800 frames at
+poll, ETA ~11:4xZ).
+
+**Steering**: none new — `read` empty, history ×5 our own posts +
+the already-executed 08:29Z request, no new reactions. Lit pause
+unchanged.
+
+**Done**: babysit exit 0 (liveness 8 procs, util 98–100% ×4, window
+29.4 f/min healthy). **First-poll on `eval-er15k-panel`** per the
+standing max-util rule: GPU-bound at 96%, 192 f/min over a 100-s
+window — healthy, but total is 25,800 frames → ETA correction
+posted in-channel 09:4xZ. **@17000 leg banked** record-only: Δ
+−0.49 (7.0462 vs 7.5314 — the 40k baseline wobbles up this leg;
+baseline identity re-verified @15500–@17000 against the box train
+log). Second negative leg after six positive; running mean ≈ +0.14
+on the ~±0.8 wobble — endpoint panel decides. babysit.toml
+rung-state refreshed (new leg + corrected eval ETA). Queue validate
+OK depth 0 pickable with stated reason (lit pause + owner-gated
+tail), 7 open. **run_work_next ARMED** (eval watch + report post is
+the work item).
+
+**Next**: chained work session: (1) sleep-poll `eval-er15k-panel`
+to rc=0 ~11:4xZ, (2) frozen reads vs banked 40k endpoint 6.0079 +
+60k-cont 5.8602 npz, (3) post HTML report link + reports page per
+standing rule, (4) clean up ~/hf_up_er15k.py (box),
+~/hf_dl_er15k.py, ~/eval_er15k_panel.sh, (5) catch the @20000 save
+boundary ~11:3xZ (async-save fact + rung + Δ leg). er_60k rides to
+endpoint ~08-11 ~12:00Z → chained panel_v2 → paired CI95 vs banked
+40k (6.0079) + 60k-continuation (5.8602). Rungs record-only; kill
+lines unchanged. Credits: watch for 429 recurrence (resetsAt Aug 15
+22:00Z stamp; headroom = owner top-up). No lit refills until
+re-enabled.*
+
+
+
+
 
 *Updated 2026-08-10 09:14–09:3xZ (real `date -u` at write: 09:21) —
 tick (babysit): **owner steering 08:29Z executed — er_60k @15000
@@ -69,59 +119,6 @@ if 429s recur, sessions die again — resetsAt stamp says Aug 15
 22:00Z, so current headroom is whatever the owner topped up. No
 lit refills until re-enabled.*
 
-*Updated 2026-08-10 08:08–08:3xZ (real `date -u` at write: 08:28) —
-tick (babysit): **SAVE BOUNDARY @15000 caught — er_60k 6.9230,
-second sub-7** (just off the 6.8543@13000 run-best); nine straight
-rungs (7.54 / 7.59 / 7.37 / 7.40 / 6.85 / 7.15 / 7.37 / 7.42 /
-6.92) under the pre-plateau 7.65@8000 mark. Async save green:
-`captured in 21.7s; gather+write continue in background`, util back
-at 100% after the pause. Matched Δ vs 40k (shared seed, box-side
-log) extends the record-only table: **@15000 +0.19 (6.9230 vs
-6.7311)** — full table @9000→@15000: −0.44 / +0.53 / +0.77 / +0.80
-/ −0.43 / +0.39 / −0.19 / −0.50 / −0.24 / +0.17 / +0.47 / +0.73 /
-+0.19. Fourth positive leg in a row but back off the +0.73 upper
-edge; running mean ≈ +0.17 on the ~±0.8 wobble — endpoint panel
-(~08-11 ~12:00Z) decides. **Morning results post landed
-in-channel 08:2xZ** (the pre-declared post moment — sub-7.65 band
-held). Rung caught with a ~13-min §6 hold (ssh until-loop keyed on
-the eval_chunk_mae jsonl line — fired first try; the corrected
-~08:2xZ ETA was right).*
-
-**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
-15,000 saved + posted, probe … 7.65@8000 → 7.95@10500 → 7.54@11000
-→ 7.59@11500 → 7.37@12000 → 7.40@12500 → 6.8543@13000 →
-7.1503@13500 → 7.3734@14000 → 7.4229@14500 → **6.9230@15000**,
-27.0 f/min window, vram ~71.7 ×4 vs 77 bar, ~38/155 GPU-h;
-endpoint ~08-11 ~12:00Z. Local GPU free (next local launch needs a
-fresh pre-reg).
-
-**Steering**: none — `read` empty, history ×5 all our own posts,
-no new reactions (lit-pause exchange still the last owner
-message).
-
-**Done**: babysit exit 0 (liveness 8 procs, 4× GPU engaged, util
-94–100%, window 27.0 f/min healthy). §6 hold ~13 min for the
-@15000 boundary; baseline identity re-verified (ar_40k
-@13000–@14500 all match banked legs) and the @15000 leg banked;
-save-boundary fact captured (21.7 s async capture, util 100%
-after). **Posted** the morning results post (ladder + full Δ table
-+ save fact + health + endpoint plan). babysit.toml rung-state
-block refreshed (@15000 boundary + @20000 ETA ~11:3xZ). Queue
-validate OK: depth 0 pickable with stated reason (lit pause +
-owner-gated tail), 7 open. run_work_next NOT armed — CPU-side
-queue empty, box busy, local idle-by-design (charter §5 exit).
-
-**Next**: er_60k rides to endpoint ~08-11 ~12:00Z → chained
-panel_v2 → paired CI95 vs banked 40k (6.0079) + 60k-continuation
-(5.8602) panels. Rungs record-only; @7500-class transient
-recurrence upgrades to a posted fact; kill lines unchanged (NaN,
-probe-vs-@2500 by 10k — PASSED, probe>25 ×3). Next save boundary
-@20000 ~11:3xZ (rungs every ~18.5 min stay in-band unless the Δ
-table breaks ±0.8). Next local launch owner-gated:
-named-not-preregistered candidates T2 depth rung + tiny decode
-microbench (#16); fjoint finalize waits on owner go (~08-12). No
-lit refills until re-enabled.*
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -161,26 +158,6 @@ dated snapshots and session notes: rolled verbatim to the
 
 
 
-Session 2026-08-10 08:08–08:3xZ (tick, babysit; 0 new GPU-h logged —
-er_60k rides ~38/155, sole live run): single-run tick with a ~13-min
-§6 hold — **SAVE BOUNDARY @15000 caught: er_60k 6.9230, second
-sub-7** (just off the 6.8543@13000 run-best); nine straight rungs
-(7.54/7.59/7.37/7.40/6.85/7.15/7.37/7.42/6.92) under the
-pre-plateau 7.65@8000 mark. Async save green (captured 21.7 s,
-util 100% after the pause). Matched-Δ table vs 40k extended
-record-only (@15000 +0.19, 6.9230 vs 6.7311 — fourth positive leg
-in a row but back off the +0.73 upper edge; running mean ≈ +0.17
-on the ~±0.8 wobble; endpoint panel decides). Baseline log
-identity re-verified (ar_40k @13000–@14500 match all banked legs).
-Watcher: single until-loop keyed on the eval_chunk_mae jsonl line
-fired first try — the corrected ~08:2xZ ETA was right. **Morning
-results post landed in-channel 08:2xZ** (pre-declared post moment,
-sub-7.65 band held). Next save boundary @20000 ~11:3xZ. No
-steering (read empty, history ×5 unchanged). Queue depth 0
-pickable with stated reason (lit pause + owner-gated tail);
-run_work_next NOT armed — CPU queue empty, local GPU
-idle-by-design, plain §5 exit.
-
 Session 2026-08-10 09:14–09:3xZ (tick, babysit; 0 new GPU-h logged —
 er_60k rides ~41.7/155, sole live run): owner-steering tick.
 **08:29Z owner request executed**: er_60k step_015000 weights-only
@@ -197,3 +174,19 @@ fifth/sixth positive legs, running mean ≈ +0.21, in-band,
 record-only. babysit exit 0 (27.1 f/min, vram 71.7 ×4). Queue
 depth 0 pickable with stated reason; next save boundary @20000
 ~11:3xZ.
+
+Session 2026-08-10 09:37–10:0xZ (tick, babysit; 0 new GPU-h logged —
+er_60k rides ~43.2/155; local eval-er15k-panel is inside the run's
+~2 eval GPU-h line): **first-poll on `eval-er15k-panel` + ETA
+correction posted**. Eval healthy and GPU-bound (96% util, 30.5G,
+192 f/min over 100 s) but the panel is 25,800 frames at 1 rank →
+~2.3 h wall; corrected report ETA **~11:4xZ** posted in-channel
+09:4xZ (the 09:24Z post said ~1–1.5 h). Box: babysit exit 0 (29.4
+f/min, vram 71.7 ×4), **@17000 leg banked** Δ −0.49 (7.0462 vs
+7.5314; baseline identity re-verified @15500–@17000) — second
+negative leg in a row, running mean ≈ +0.14, in-band, record-only;
+run-best stays 6.6319@16500. No new steering (read empty, history
+×5 no new reactions). Queue depth 0 pickable with stated reason;
+**run_work_next ARMED** — chained session watches the eval to rc=0,
+posts the HTML report + reports page, cleans up helpers, catches
+the @20000 boundary ~11:3xZ.
