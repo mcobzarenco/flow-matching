@@ -552,6 +552,19 @@ class ActionExpert(nn.Module):
         _init_linear(self.final_layer.modulation.linear, zero=True)
         _init_linear(self.final_layer.linear, zero=True)
 
+    def _time_conditioning(self, timesteps: torch.Tensor) -> torch.Tensor:
+        """Their HF inference semantics: the sinusoid runs at the
+        timestep dtype (the flow loop feeds fp32 grids), then the
+        embedding is cast to the MLP weight dtype — a no-op at uniform
+        dtype, load-bearing for fp32 timesteps on a bf16 expert."""
+        sinusoid, first_linear = self.time_embed[0], self.time_embed[1]
+        conditioning = sinusoid(timesteps)
+        assert isinstance(first_linear, nn.Linear)
+        conditioning = conditioning.to(dtype=first_linear.weight.dtype)
+        for module in list(self.time_embed.children())[1:]:
+            conditioning = module(conditioning)
+        return conditioning
+
     def _encode_states(self, states: torch.Tensor | None) -> torch.Tensor | None:
         if states is None:
             return None
@@ -667,7 +680,7 @@ class ActionExpert(nn.Module):
                 f"action sequence length {seq_len} exceeds max_horizon={self.config.max_horizon}",
             )
 
-        conditioning = self.time_embed(timesteps)
+        conditioning = self._time_conditioning(timesteps)
         encoded_states = self._encode_states(state_embeddings)
         x = self.action_embed(actions)
         valid_action = None

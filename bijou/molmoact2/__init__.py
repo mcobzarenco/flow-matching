@@ -11,9 +11,23 @@ from bijou.molmoact2.action_expert import (
     ActionExpertConfig,
     load_action_expert_state,
 )
+from bijou.molmoact2.wiring import (
+    encoder_attention_mask,
+    extract_kv_states,
+    flow_timesteps,
+    generate_actions,
+    layer_kv_to_sequence,
+    validate_inference_config,
+)
 
 __all__ = [
     "ActionExpert",
     "ActionExpertConfig",
+    "encoder_attention_mask",
+    "extract_kv_states",
+    "flow_timesteps",
+    "generate_actions",
+    "layer_kv_to_sequence",
     "load_action_expert_state",
+    "validate_inference_config",
 ]
