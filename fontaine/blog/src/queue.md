@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-10T14:55:00Z
+**Updated:** 2026-08-10T15:05:00Z
 
-**Depth call:** depth 0 open at 14:5xZ 08-10 (STATED REASON for <2: owner lit-pause steering 00:23Z 08-10 suspends the refill lane; molmoact2-oob-panel-eval closed DELIVERED this session and every remaining item is owner-gated/blocked — fjoint finalize on owner go ~08-12 post-er-endpoint, vu5k/actckpt/img280/docs-tail/box-home-sweep all blocked or owner_hold). Work supply is run-boundary-driven: er-60k babysat to ~08-11 ~12:00Z endpoint -> chained panel_v2 -> paired reads vs 40k/60k banked panels; blog-Space squash lands via unit fontaine-blog-migrate when HF storage GC clears (next session verifies + posts). Local GPU free again 14:24Z — next local launch needs a fresh pre-reg (T2 depth rung and tiny decode microbench remain the named candidates, not yet pre-registered).
+**Depth call:** depth 1 open at 15:0xZ 08-10 (STATED REASON for <2: owner lit-pause steering 00:23Z 08-10 suspends the refill lane; molmoact2-oob-panel-eval closed DELIVERED this session and every remaining item is owner-gated/blocked — fjoint finalize on owner go ~08-12 post-er-endpoint, vu5k/actckpt/img280/docs-tail/box-home-sweep all blocked or owner_hold). Work supply is run-boundary-driven: er-60k babysat to ~08-11 ~12:00Z endpoint -> chained panel_v2 -> paired reads vs 40k/60k banked panels; blog-Space squash lands via unit fontaine-blog-migrate when HF storage GC clears (next session verifies + posts). Local GPU free again 14:24Z — next local launch needs a fresh pre-reg (T2 depth rung and tiny decode microbench remain the named candidates, not yet pre-registered).
 
-**7 open** (Live 1 · Queued 0 · Blocked 6 · Done 100)
+**8 open** (Live 1 · Queued 1 · Blocked 6 · Done 100)
 
 ## 🔴 Live (1)
 
@@ -26,11 +26,23 @@ OWNER RUN LIVE (launched 22:47-53Z 08-09, unit fontaine-er-60k): fontaine_molmo2
 
 ---
 
-## 🟢 Queued (0)
+## 🟢 Queued (1)
 
 *ready — waiting on a window or a boundary*
 
-*(empty)*
+**`snapflow80k-draws10-panel-eval`** · `gpu-local`
+
+OWNER REQUEST 14:33Z 08-10 (recovered 15:0xZ after the babysit-grep consume miss): full-panel mean-of-10-draws heun-30 eval for snapflow 80k (bijou_flow_artrunk_h1024_40k_ddp2 step_080000, local checkpoint on disk) -&gt; its row joi…
+
+**boundary:** local H100 free; launch from the next work/tick session with enough runway to pin flags carefully (this session ended at its hard-kill budget). Owner objection window open since the 15:0xZ message. · [pre-reg](posts/2026-08-10-prereg-molmoact2-oob-panel.md)
+
+<details><summary>full record</summary>
+
+OWNER REQUEST 14:33Z 08-10 (recovered 15:0xZ after the babysit-grep consume miss): full-panel mean-of-10-draws heun-30 eval for snapflow 80k (bijou_flow_artrunk_h1024_40k_ddp2 step_080000, local checkpoint on disk) -&gt; its row joins the MolmoAct2 3-policy report + reads. NOT banked at full panel (only the 2,458-frame drawsprobe_s7 subset exists; top-10-tickets is mean-of-10 over SEARCHED tickets, different config). EXECUTE: (1) pin the exact eval invocation from the goldenticket/stablekey launcher class (plain draws10, heun30, panel_curated_v0_k4l2 plan, stable noise seeds per the draws-fairness convention) as a short pre-reg note (record-only, owner-requested); (2) launch on local H100 via run_detached unit + babysit entry (est ~8-12 GPU-h at 10x decode of the ~1.3 GPU-h single-draw class; sanity-check the first-poll rate); (3) on rc=0 add BASELINES entry to molmoact2_panel_reads.py + DISPLAY to molmoact2_panel_report.py, rerun reads (oracle green) + report, re-upload, post updated numbers in-channel. Owner told 15:0xZ it launches tonight unless they object. PREREG NOTE: rides the molmoact2-oob pre-reg's report spec (owner-directed row add); a short launch note with the exact pinned invocation posts in-channel before the GPU minute, per charter.
+
+</details>
+
+---
 
 ## 🟡 Blocked (6)
 

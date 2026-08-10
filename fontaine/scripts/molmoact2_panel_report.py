@@ -91,6 +91,9 @@ DISPLAY = {
         "snapflow 80k stable-key — Gemma-4-E2B trunk (frozen, AR-pretrained) + flow expert h1024"
     ),
     "molmoact2": "MolmoAct2 SO100_101 — Molmo2-ER trunk + their flow action expert",
+    "snapflow80k heun30": (
+        "snapflow 80k heun-30 original single-draw — Gemma-4-E2B trunk + flow expert h1024"
+    ),
     "state-copy": "state-copy — no model (repeat current state)",
     "ar_40k endpoint": "ar 40k endpoint — Molmo2-4B trunk, AR decoder",
     "ar_60k continuation": "ar 60k continuation — Molmo2-4B trunk, AR decoder",
@@ -122,6 +125,7 @@ def summary_tables(analysis: dict, rt: ModuleType) -> list:
     order = [
         "snapflow80k top10tickets",
         "snapflow80k stablekey",
+        "snapflow80k heun30",
         "molmoact2",
         "state-copy",
         "ar_40k endpoint",
@@ -177,12 +181,27 @@ def summary_tables(analysis: dict, rt: ModuleType) -> list:
         rows=rows2,
     )
     rows3 = [
-        [display(label), f"{v['chunk_mae']:.4f}", f"{v['first_mae']:.4f}"]
+        [
+            display(label),
+            f"{v['chunk_mae']:.4f}",
+            f"{v.get('chunk_mae_excl', float('nan')):.4f}",
+            f"{v['chunk_mae'] - v.get('chunk_mae_excl', float('nan')):+.4f}",
+            f"{v['first_mae']:.4f}",
+        ]
         for label, v in analysis["secondary_full50"].items()
     ]
     t3 = rt.ReportTable(
-        title="Secondary: our arms on the full 50-step chunk (never vs theirs)",
-        header=["policy", "chunk_mae (50)", "first_mae"],
+        title=(
+            "Secondary: our arms on the full 50-step chunk (never vs theirs) "
+            "— as-banked vs willnorris/bbox-2 excluded (the exclusion effect)"
+        ),
+        header=[
+            "policy",
+            "chunk_mae (50, banked)",
+            "chunk_mae (50, excl bbox-2)",
+            "bbox-2 effect",
+            "first_mae (banked)",
+        ],
         rows=rows3,
     )
     return [t1, t2, t3]
@@ -199,6 +218,73 @@ def per_motor_table(arms: dict, truth: np.ndarray, m2: np.ndarray, rt: ModuleTyp
         header=["policy", *MOTOR_NAMES],
         rows=rows,
     )
+
+
+STEP_COLORS = [
+    "#648fff",
+    "#ffb000",
+    "#dc267f",
+    "#785ef0",
+    "#fe6100",
+    "#4ec9b0",
+    "#e8e857",
+    "#9aa0a8",
+]
+
+
+def per_step_chart(
+    all_preds: dict,
+    truth: np.ndarray,
+    valid: np.ndarray,
+    splits: dict,
+    rt: ModuleType,
+) -> str:
+    """MAE by chunk timestep, one panel per split, all models (owner
+    14:35Z/14:38Z). MolmoAct2's curve ends at step 30 (NaN tail)."""
+    import base64
+    import io
+
+    import matplotlib
+    import matplotlib.pyplot as plt
+
+    matplotlib.use("Agg", force=True)
+    theme = rt.THEMES["dark"]
+    n_steps = truth.shape[1]
+    with plt.style.context(theme.mpl_style):
+        fig, axes = plt.subplots(1, 3, figsize=(15, 4.6), sharey=True)
+        fig.patch.set_facecolor(theme.page_bg)
+        for ax, (split_name, sel) in zip(axes, splits.items(), strict=True):
+            ax.set_facecolor(theme.page_bg)
+            for i, (label, pred) in enumerate(all_preds.items()):
+                m = (
+                    valid[sel]
+                    & np.isfinite(truth[sel]).all(-1)
+                    & np.isfinite(pred[sel]).all(-1)
+                )
+                err = np.abs(np.nan_to_num(pred[sel]) - truth[sel]).mean(-1)
+                num = (err * m).sum(0)
+                den = np.maximum(m.sum(0), 1)
+                curve = np.where(m.sum(0) > 0, num / den, np.nan)
+                ax.plot(
+                    range(n_steps),
+                    curve,
+                    label=label,
+                    color=STEP_COLORS[i % len(STEP_COLORS)],
+                    linewidth=1.5,
+                    linestyle="--" if label.startswith("state-copy") else "-",
+                )
+            ax.set_title(f"{split_name} (n={int(sel.sum())})", fontsize=10)
+            ax.set_xlabel("chunk step (30 fps)")
+            ax.tick_params(labelsize=8)
+            ax.axvline(29.5, color=theme.meta, linewidth=0.8, linestyle=":")
+        axes[0].set_ylabel("MAE (raw action units)")
+        axes[0].legend(fontsize=7, loc="upper left")
+        fig.tight_layout()
+        buffer = io.BytesIO()
+        fig.savefig(buffer, format="png", dpi=110, facecolor=fig.get_facecolor())
+        plt.close(fig)
+    encoded = base64.b64encode(buffer.getvalue()).decode("ascii")
+    return f"data:image/png;base64,{encoded}"
 
 
 def gallery(cand: dict, preds: dict, indices: np.ndarray, rt: ModuleType) -> list[str]:
@@ -286,6 +372,34 @@ def main() -> None:
     arms_core = {label: pred[core] for label, pred in preds.items()}
     motor = per_motor_table(arms_core, truth[core], m2, rt)
 
+    # MAE-by-timestep charts, all models x {pooled, clean, contaminated}
+    # (owner 14:35Z/14:38Z). Loads every baseline npz; pairing was
+    # oracle-verified by the reads run that produced the analysis json.
+    contam_mask, _stats = mpr.contamination_masks(
+        cand["repo_id"],
+        cand["core"],
+        mpr.mixture_repo_set(),
+        None,
+    )
+    step_splits = {
+        "pooled": core,
+        "clean": core & ~contam_mask,
+        "contaminated": core & contam_mask,
+    }
+    all_preds = {"MolmoAct2 [molmo2-ER]": cand[mpr.CAND_KEY]}
+    for spec in mpr.BASELINES:
+        npz = mpr._load_npz(f"{spec['stem']}.npz")
+        short = (
+            spec["label"]
+            .replace("snapflow80k", "snapflow80k")
+            .replace(" endpoint", "")
+            .replace(" continuation", "-cont")
+        )
+        all_preds[short] = npz[spec["key"]]
+    all_preds["state-copy"] = cand["pred:state-copy"]
+    step_chart = per_step_chart(all_preds, truth, valid, step_splits, rt)
+    print("per-step charts rendered", flush=True)
+
     core_rows = np.flatnonzero(core)
     stride = max(len(core_rows) // args.samples, 1)
     sampled = core_rows[::stride][: args.samples]
@@ -330,6 +444,9 @@ def main() -> None:
         "<h1>MolmoAct2 vs snapflow-80k vs state-copy — same frames</h1>"
         f"<pre>{escape(chr(10).join(config_lines))}</pre>"
         f"{extra}"
+        "<h2>MAE by chunk timestep — all models (dotted line = their "
+        "30-step horizon; MolmoAct2 has no prediction past it)</h2>"
+        f'<img class="chart" src="{step_chart}">'
         f"<h2>Sample predictions ({len(blocks)} of {len(core_rows)} core "
         "frames, evenly strided; MolmoAct2's line stops at step 30 — its "
         f"native horizon)</h2>{''.join(blocks)}"

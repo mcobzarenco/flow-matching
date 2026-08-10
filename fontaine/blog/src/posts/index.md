@@ -87,3 +87,4 @@ corrections are follow-up posts.
 - [2026-08-10 — Tiny-expert capacity rung results: Δ_capacity@10k (#4/#16)](2026-08-10-tiny-expert-results.md)
 - [2026-08-10 — MolmoAct2 on our panel: out-of-band eval plan (deep implementation read)](2026-08-10-molmoact2-oob-eval-plan.md)
 - [2026-08-10 — Pre-reg: MolmoAct2-SO100_101 out-of-band panel eval + 3-policy report (owner GO)](2026-08-10-prereg-molmoact2-oob-panel.md)
+- [2026-08-10 — MolmoAct2 on our panel: results + how the comparison was built](2026-08-10-molmoact2-oob-results.md)

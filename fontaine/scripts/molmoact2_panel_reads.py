@@ -83,6 +83,18 @@ BASELINES = [
         "run": "bijou_flow_artrunk_h1024_40k_ddp2",
     },
     {
+        # owner add 14:33Z 08-10: the original heun-30 single-draw bank
+        # (the 6.6232 anchor eval; identity byte-pairs with the curated
+        # stems — verified before adding)
+        "label": "snapflow80k heun30",
+        "stem": (
+            "reports/eval__bijou_flow_artrunk_h1024_40k_ddp2__step_080000"
+            "__panel_k4l2_heun30"
+        ),
+        "key": "pred:bijou@80000",
+        "run": "bijou_flow_artrunk_h1024_40k_ddp2",
+    },
+    {
         "label": "ar_40k endpoint",
         "stem": (
             "reports/eval__fontaine_molmo2_ar_40k_ddp4__step_040000"
@@ -343,12 +355,17 @@ def analyze(
                 f"{deltas.mean():+.4f}  CI95 [{lo:+.5f}, {hi:+.5f}]  "
                 f"({cls}, n={int(sel.sum())})",
             )
-        # full-50 secondary anchor, ours only, never paired vs theirs
+        # full-50 secondary anchor, ours only, never paired vs theirs;
+        # banked (as-reported, incl. excluded repos) AND with the owner
+        # exclusion applied, so the bbox-2 effect is visible (owner 14:33Z)
         truth50, valid50, core50, w50 = bbr.masks(npz)
         err50 = np.abs(npz[spec["key"]] - truth50)
+        excl50 = core50 & ~excluded
         out["secondary_full50"][spec["label"]] = {
             "chunk_mae": round(bbr.pooled_chunk(err50, core50, w50), 5),
             "first_mae": round(bbr.pooled_first(err50, valid50, core50), 5),
+            "chunk_mae_excl": round(bbr.pooled_chunk(err50, excl50, w50), 5),
+            "first_mae_excl": round(bbr.pooled_first(err50, valid50, excl50), 5),
         }
 
     if out_path:

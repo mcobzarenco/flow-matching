@@ -38,7 +38,24 @@ render; owner told of the substitution), 64 files live + curl-200,
 72 blog links rewritten, 31 redirect stubs for old deep links,
 squash queued behind GC; (5) 14:13Z "navbar gone" → morning-incident
 casualty: hashed `toc-b9c2449c.js` missing on the Space, re-uploaded
-(small files pass the cap), fixed + confirmed 200.
+(small files pass the cap), fixed + confirmed 200. **INCIDENT —
+five owner messages (14:33–14:38Z) consumed unseen**: the 14:52
+babysit was piped through `grep -E "exit|liveness"`, its embedded
+consume-once Discord read swallowed five report-feature requests;
+owner called it out 14:57Z ("you can't just look at the latest
+message"). 2nd incident of the read-never-truncate class (grep
+variant); memory updated, owned in-channel, recovered via
+`history -n 15`, ALL FIVE executed same-session: (a) heun-30
+original single-draw 80k row (banked npz byte-pairs — zero GPU;
+matched-window 5.09/5.20/4.86); (b) mean-of-10 draws for 80k →
+NOT banked full-panel, queued as `snapflow80k-draws10-panel-eval`
+(~8–12 GPU-h, launch next session, objection window open);
+(c+d) MAE-by-timestep charts ×3 splits, all 8 models, in the
+report; (e) methods+results blog post
+`posts/2026-08-10-molmoact2-oob-results.md`. Plus (6) 14:49Z trunk
+names on every policy → done + re-uploaded (Gemma-4-E2B vs
+Molmo2-4B vs Molmo2-ER mapping posted); full-50 bbox-2 exclusion
+effect table added (~−0.07 per arm).
 
 **Done**: molmoact2-oob-panel-eval CLOSED (commits 00a9feb, b6cc2a7,
 this one): pre-reg finalized (immutable + Amendment 1), smoke green
@@ -56,14 +73,17 @@ reports.md section added, numbers in-channel 14:37Z. @25000 box
 boundary caught + legs banked. babysit ×3 exit 0; sweep babysit
 entry pruned.
 
-**Next**: `queue_cli.py next` → depth 0 with stated reason (lit
-pause + owner-gated tail; queue.json canonical). er_60k rides to
-endpoint ~08-11 ~12:00Z → chained panel_v2 → paired CI95 vs banked
-40k (6.0079) + 60k-cont (5.8602); boundaries @30000 ~17:4xZ then
-@35000 ~20:4xZ 08-10. Blog push+squash lands via
-`fontaine-blog-migrate` when HF GC clears → next session verifies
-(site nav + reports stubs + squash) and posts the all-clear. If the
-owner wants a base-MolmoAct2 second arm or a dataset-repo mirror of
+**Next**: `queue_cli.py next` → `snapflow80k-draws10-panel-eval`
+(owner 14:33Z request; pin the exact draws10-heun30 invocation from
+the goldenticket/stablekey launcher class, post the launch note,
+launch on the free local H100 ~8–12 GPU-h, then add the row to
+reads+report and re-post). er_60k rides to endpoint ~08-11 ~12:00Z
+→ chained panel_v2 → paired CI95 vs banked 40k (6.0079) + 60k-cont
+(5.8602); boundaries @30000 ~17:4xZ then @35000 ~20:4xZ 08-10.
+Blog push+squash lands via `fontaine-blog-migrate` when HF GC
+clears → next session verifies (site nav + reports stubs + squash +
+the results post going live) and posts the all-clear. If the owner
+wants a base-MolmoAct2 second arm or a dataset-repo mirror of
 reports, both are pre-scoped one-command adds.*
 
 *Updated 2026-08-10 11:59–12:2xZ (real `date -u` at write: 12:13) —
