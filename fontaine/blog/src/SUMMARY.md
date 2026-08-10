@@ -234,3 +234,4 @@
   - [2026-08-09 — Survey: trajectory datasets we could train on (owner request)](posts/2026-08-09-trajectory-datasets-survey.md)
   - [2026-08-09 — MolmoAct2, in depth: AI2 built a VLA on our trunk's family (owner request)](posts/2026-08-09-molmoact2-deep-dive.md)
   - [2026-08-09 — Pre-reg DRAFT: Molmo2-ER 60k with rig data from step 0 (owner steering)](posts/2026-08-09-prereg-molmo2-er-60k.md)
+  - [2026-08-10 — Tiny-expert capacity rung results: Δ_capacity@10k (#4/#16)](posts/2026-08-10-tiny-expert-results.md)

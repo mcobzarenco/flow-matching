@@ -480,3 +480,14 @@ rather than re-derive. Rider: their aggregation-disagreement
 result (macro-AUC and RMST rank the same three models in opposite
 order) is the loudest argument yet for publishing the full CDF
 panel, not one scalar.
+
+**2026-08-10 — deployment-cost rider from the T1 capacity rung
+([results](../posts/2026-08-10-tiny-expert-results.md)):** a 4.2×
+smaller flow expert (86.8M vs 367.5M; h256 vs h1024 blocks on the
+identical tap surface) holds the frozen-60k-trunk panel score to
+within +0.188 [+0.155, +0.221] paired (+2.0%, late-horizon). For the
+rig VLA this re-prices the expert side of inference: the expert's
+per-draw FLOPs are the marginal cost of every extra noise draw
+(Reflex cost-model split), so a near-free 4× shrink there compounds
+with any draws-based decode. Decode-latency microbench on the tiny
+expert not yet run — would need its own (cheap) registered read.

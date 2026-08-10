@@ -461,3 +461,23 @@ insufficient alone under SFT but cheap insurance under a joint phase.
 Downside bound banked: "forgotten" competence recovers in <10% of
 original training steps — a bad joint phase is a recoverable
 experiment, not a lost trunk.
+
+**2026-08-10 — T1 tiny-expert capacity rung READ OUT
+([results](../posts/2026-08-10-tiny-expert-results.md),
+[pre-reg](../posts/2026-08-09-prereg-tiny-expert-40k.md)): the
+Decoupled-Action-Expert width prior CONFIRMED at the pinned band on
+our stack.** h256/d12 (86.8M expert, 4.2× smaller total — the
+identical tap/adapter surface is a fixed cost) vs F h1024/d12
+(367.5M), same frozen 60k trunk, fully step- and batch-matched at
+10k. Primary paired read on 15,056 panel-v2 core frames:
+**Δ_capacity@10k = +0.188 [CI95 +0.155, +0.221]** — inside |Δ| ≤ 0.3
+("prior confirmed"), far from the ≥ +1.0 capacity-binds line, but
+the CI excludes zero: width buys a real, small +2.0% margin,
+concentrated late-horizon (per-step Δ grows +0.106 → +0.374 across
+the 50-step chunk). State-copy execution oracle byte-green across
+machines. Consequences for this idea: the fjoint expert does not
+need h1024 to hold the frozen-trunk score — expert sizing is now a
+cost knob, not a risk knob, and the cheap-expert pole (#16 rig
+inference) has a measured price tag. Probe-vs-panel sign flip logged
+(probe had tiny −0.069 UNDER F; the panel flips it to +0.188 over) —
+small-sample probes kill runs, panels make claims.

@@ -102,7 +102,13 @@ record; the line here is the hook). *Index last updated 2026-08-10.*
   makes the banked F@10k expert task/trunk-entangled capital, not
   portable. Framing caveats loud: testbed is Diffusion Policy (no
   VLM anywhere), and the freeze direction is inverted vs our seam —
-  capacity datum only, silent on frozen-vs-joint. Lit `0816`
+  capacity datum only, silent on frozen-vs-joint. **T1 rung READ OUT
+  2026-08-10 ([results](posts/2026-08-10-tiny-expert-results.md)):
+  that prior CONFIRMED on our stack at the pinned band —
+  Δ_capacity@10k = +0.188 [+0.155, +0.221], tiny h256 (86.8M) vs F
+  h1024 (367.5M), fully matched on the frozen 60k trunk; the width
+  cost is real but small (+2.0%, late-horizon), so expert sizing is
+  a cost knob, not a risk knob.** Lit `0816`
   ([VLA-GSE](papers/vla-gse.md), 2605.06175 +
   [LWD](papers/learning-while-deploying.md)): a third attachment
   pole — spectral-init trunk adapters beat full FT on robustness at

@@ -2,13 +2,13 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-10T00:35:00Z
+**Updated:** 2026-08-10T05:55:00Z
 
-**Depth call:** depth 1 at 00:3xZ 08-10 (STATED REASON for <2: owner steering 00:23Z 08-10 "Can we pause the lit slices for now" — lit-radar-0823 deliberately NOT queued, standing lit allocation suspended): open = er60k-init-delta-midrun-chart (cpu, opens ~02:0xZ THIS session, instrument pre-built); plus 2 live runs babysat (er-60k box to ~08-11 ~12:00Z -> chained panel_v2 k4l2; tiny10k local to ~05:1xZ 08-10 -> chained panel_v2 -> Delta_capacity read) and the owner-gated/blocked items (fjoint finalize on owner go, vu5k post-attach window, actckpt ladder, docs tail) — post-pause work supply is run-boundary-driven
+**Depth call:** depth 0 open at 05:5xZ 08-10 (STATED REASON for <2: owner lit-pause steering 00:23Z 08-10 suspends the refill lane; the T1 rung closed this session and every remaining item is owner-gated/blocked — fjoint finalize on owner go ~08-12 post-er-endpoint, vu5k/actckpt/img280/docs-tail/box-home-sweep all blocked or owner_hold). Work supply is run-boundary-driven: er-60k babysat to ~08-11 ~12:00Z endpoint -> chained panel_v2 -> paired reads vs 40k/60k banked panels. Local GPU free 05:45Z — next local launch needs a fresh pre-reg (T2 depth rung and tiny decode microbench are the named candidates, not yet pre-registered).
 
-**8 open** (Live 2 · Queued 0 · Blocked 6 · Done 98)
+**7 open** (Live 1 · Queued 0 · Blocked 6 · Done 99)
 
-## 🔴 Live (2)
+## 🔴 Live (1)
 
 *running right now (GPU or owner-window)*
 
@@ -21,20 +21,6 @@ OWNER RUN LIVE (launched 22:47-53Z 08-09, unit fontaine-er-60k): fontaine_molmo2
 <details><summary>full record</summary>
 
 OWNER RUN LIVE (launched 22:47-53Z 08-09, unit fontaine-er-60k): fontaine_molmo2_er_60k_ddp4 — 60k AR steps from allenai/Molmo2-ER (byte-verified drop-in), 40k recipe verbatim + rig datasets at natural share (owner pick 22:45Z), seed 0 (owner override), save 5000. FIRST POLL DONE 22:5x-23:0xZ: E1 banner exact, 2.23 s/step steady, vram 66.6 vs 77, util 68-99%. RATE-CLASS CORRECTION posted in-channel + gate re-pinned 65-&gt;155 GPU-h (the 65 came from attach_F's 0.92 s/step frozen-trunk rate, wrong class; true trunk class 2.2-2.6 = 60k-continuation actuals). Corrected endpoint ~08-11 ~12:00Z (~37 h wall, ~149 train + ~2 eval GPU-h). Primary read = ER-init delta: probe ladder vs the 40k curve at matched steps; endpoint chains panel_v2 k4l2 (--report + npz), paired CI95 vs banked 40k (6.0079) + 60k-continuation (5.8602).
-
-</details>
-
----
-
-**`tiny-expert-capacity-10k`** · `gpu-local`
-
-T1 tiny-expert capacity rung, FINAL DESIGN (owner yes 19:59:04Z; 40k/biggest-batch amendments REVERTED by owner 20:08:53Z 'Let's do your original plan' after the wall-clock arithmetic
-
-**boundary:** fit ladder ~20:3xZ -&gt; 10k run ~10-11 h -&gt; endpoint ~06-07Z 08-10 + ~1.3 h eval; first-poll s/step + vram + projection in-channel; babysit tiny10k entry live, gate 15 GPU-h | HOST-RAM OOM KILL 20:52:08Z 08-09 at step 500 (first probe 16.46@500 landed, no ckpt yet): kernel OOM killer, pt_data_worker x20 at ~7-9 GiB RSS each (~150-190 GiB) + 46 GiB main proc vs 221 GiB host — the launcher kept the box recipe's --num-workers 20 --prefetch-factor 4, lethal at batch 48x1. AMENDED to --num-workers 10 --prefetch-factor 2 (sample order unchanged, recipe identical) + SKIP_LADDER=1 escape (b48c12 already green); RELAUNCHED clean from step 0 same seed ~21:03Z, ~0.4 GPU-h lost. New projection: endpoint ~05:1xZ 08-10 -&gt; Delta_capacity read ~06:3xZ. Owned in-channel 21:16Z. · [pre-reg](posts/2026-08-09-prereg-tiny-expert-40k.md)
-
-<details><summary>full record</summary>
-
-T1 tiny-expert capacity rung, FINAL DESIGN (owner yes 19:59:04Z; 40k/biggest-batch amendments REVERTED by owner 20:08:53Z 'Let's do your original plan' after the wall-clock arithmetic — no training step had run): h256/d12 width-only contrast vs F (tap surface + adapters identical; depth structural), frozen 60k trunk (backbone sha e6ed783b verified), LOCAL 1xH100 unit fontaine-tiny10k, 10k steps @ eff-48 (48x1 vs F 12x4, same LR schedule), saves 1250 (F cadence). Launcher launch_local_fontaine_molmo2_flow_tiny_h256_10k_1xh100.sh: fit ladder b48c12 -&gt; b48c24 -&gt; 10k run -&gt; chained panel_v2 @10000. Frozen read: Delta_capacity@10k fully matched (tiny minus F, paired per-frame CI95) vs banked F@10k 9.4157 + state-copy execution oracle; bands |d|&lt;=0.3 prior confirmed / &gt;=1.0 capacity binds. LAUNCH HISTORY: 20:03Z rc2 (--zero1/--chunk-grad-allreduce DDP-only guards, dropped, pre-reg amended); 20:05Z b96 ladder started, owner re-scoped pre-step-1; 20:1xZ relaunch at final design.
 
 </details>
 
@@ -132,7 +118,7 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 
 ---
 
-## ✅ Done (98)
+## ✅ Done (99)
 
 *closed — the full record stays in each fold*
 
@@ -1489,6 +1475,20 @@ OWNER STEERING 08-08 13:09Z molmo2 perf/memory deep review — SHIPPED same sess
 <details><summary>full record</summary>
 
 OWNER STEERING 08-08 13:09Z molmo2 perf/memory deep review — SHIPPED same session (posts/2026-08-08-molmo2-perf-review.md + in-channel summary). Three-lens sweep with 2 measured kernel gaps (idle-local-GPU microbench, ~0 GPU-h): (1) suffix attention lands on MATH sdpa backend (cuDNN excluded by inherited pin; flash rejects mask, efficient rejects GQA) 13x/layer ~5-10% step; (2) ViT eager einsum vs SDPA-flash 13x/block; (3) hand-rolled RMSNorm 10x vs F.rms_norm; (4) --activation-checkpointing exists oracle-pinned but NOT on the live lineage (~2.4-2.8 GiB/sample lever); (5) full-vocab CE fp32-upcasts pad rows; (6) per-step host syncs; (7) 60MB/step embed clone; (8) vram peak metric is a lifetime ratchet (explains the 41,780/42,940 creep). Static-max verdict: DON'T (bucketing prior art +5.09% padding ceiling; suffix uncapped). Shape annotations landed on bijou/molmo2/{model,text,vision}.py. All changes need pre-reg; nothing touched the live run.
+
+</details>
+
+---
+
+**`tiny-expert-capacity-10k`** · `gpu-local`
+
+T1 tiny-expert capacity rung, FINAL DESIGN (owner yes 19:59:04Z; 40k/biggest-batch amendments REVERTED by owner 20:08:53Z 'Let's do your original plan' after the wall-clock arithmetic
+
+**boundary:** fit ladder ~20:3xZ -&gt; 10k run ~10-11 h -&gt; endpoint ~06-07Z 08-10 + ~1.3 h eval; first-poll s/step + vram + projection in-channel; babysit tiny10k entry live, gate 15 GPU-h | HOST-RAM OOM KILL 20:52:08Z 08-09 at step 500 (first probe 16.46@500 landed, no ckpt yet): kernel OOM killer, pt_data_worker x20 at ~7-9 GiB RSS each (~150-190 GiB) + 46 GiB main proc vs 221 GiB host — the launcher kept the box recipe's --num-workers 20 --prefetch-factor 4, lethal at batch 48x1. AMENDED to --num-workers 10 --prefetch-factor 2 (sample order unchanged, recipe identical) + SKIP_LADDER=1 escape (b48c12 already green); RELAUNCHED clean from step 0 same seed ~21:03Z, ~0.4 GPU-h lost. New projection: endpoint ~05:1xZ 08-10 -&gt; Delta_capacity read ~06:3xZ. Owned in-channel 21:16Z. | CLOSED 05:5xZ 08-10: train COMPLETE 05:06Z (~8.7 GPU-h incl the second host-RAM OOM at step ~9,060 04:00:55Z + resume-from-8750 replay, workers 10-&gt;6), chained panel_v2 @10000 COMPLETE 05:45Z (~0.6 GPU-h, ~9.3/15 gate). PRIMARY READ: Delta_capacity@10k = +0.188 [CI95 +0.155, +0.221] paired per-frame on 15,056 panel-v2 core frames (tiny 9.6094/3.0758 vs F 9.4157/2.9581) = capacity prior CONFIRMED at the pre-registered |d|&lt;=0.3 band; CI excludes zero so the width cost is real-but-small (+2.0%, late-horizon: per-step delta +0.106 -&gt; +0.374 across the 50-step chunk); state-copy execution oracle byte-green ACROSS MACHINES (box F vs local tiny); probe-vs-panel sign flip logged (probe -0.069 under, panel +0.188 over). Expert sizes measured: tiny 86.8M vs F 367.5M (4.2x total; tap/adapter surface is the fixed cost). Results post 2026-08-10-tiny-expert-results.md + 3-panel chart; analysis__tiny10k_delta_capacity.json + both panel html/json on the Space; step_010000 weights-only uploaded to fontaine-checkpoints (backbone deduplicated, sha verified); babysit entry pruned; local GPU FREE 05:45Z. · [pre-reg](posts/2026-08-09-prereg-tiny-expert-40k.md)
+
+<details><summary>full record</summary>
+
+T1 tiny-expert capacity rung, FINAL DESIGN (owner yes 19:59:04Z; 40k/biggest-batch amendments REVERTED by owner 20:08:53Z 'Let's do your original plan' after the wall-clock arithmetic — no training step had run): h256/d12 width-only contrast vs F (tap surface + adapters identical; depth structural), frozen 60k trunk (backbone sha e6ed783b verified), LOCAL 1xH100 unit fontaine-tiny10k, 10k steps @ eff-48 (48x1 vs F 12x4, same LR schedule), saves 1250 (F cadence). Launcher launch_local_fontaine_molmo2_flow_tiny_h256_10k_1xh100.sh: fit ladder b48c12 -&gt; b48c24 -&gt; 10k run -&gt; chained panel_v2 @10000. Frozen read: Delta_capacity@10k fully matched (tiny minus F, paired per-frame CI95) vs banked F@10k 9.4157 + state-copy execution oracle; bands |d|&lt;=0.3 prior confirmed / &gt;=1.0 capacity binds. LAUNCH HISTORY: 20:03Z rc2 (--zero1/--chunk-grad-allreduce DDP-only guards, dropped, pre-reg amended); 20:05Z b96 ladder started, owner re-scoped pre-step-1; 20:1xZ relaunch at final design.
 
 </details>
 

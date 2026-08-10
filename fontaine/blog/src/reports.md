@@ -135,6 +135,25 @@ revision](posts/2026-08-06-panel-v2-amendment.md).
 - [jerk-pick selector read](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__jerkpick_selector.json)
   — SDN smoothness-prior test on banked draw stacks (flow null / AR small)
 
+## Frozen-trunk flow experts @10k, panel_v2 ([attach memo](posts/2026-08-09-molmo2-stage2-attachment-decision.md) · [tiny results](posts/2026-08-10-tiny-expert-results.md))
+
+Both experts sit on the hard-frozen 60k trunk (sha `e6ed783b`),
+scored on the panel_v2 k4l2 plan (15,056 core frames pooled) —
+numbers compare within this section, not with the v1 scoreboard.
+
+- [F arm `fontaine_molmo2_flow_frozen_10k_ddp4` @10k, Heun-30 single-draw stable](https://mcobzarenco-fontaine-blog.static.hf.space/reports/eval__fontaine_molmo2_flow_frozen_10k_ddp4__step_010000__panel_v2_heun30_draws1_stable.html)
+  — 9.4157/2.9581, the attach-screen F endpoint (previously box-only;
+  pushed with the tiny readout)
+- [tiny arm `fontaine_molmo2_flow_tiny_h256_10k_1xh100` @10k, same decode](https://mcobzarenco-fontaine-blog.static.hf.space/reports/eval__fontaine_molmo2_flow_tiny_h256_10k_1xh100__step_010000__panel_v2_heun30_draws1_stable.html)
+  — the T1 capacity rung endpoint
+- [frozen Δ_capacity analysis JSON](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__tiny10k_delta_capacity.json)
+  (`attach_seam_results.py` read-1 machinery at explicit paths, per
+  the pre-reg)
+- Checkpoints on the hub:
+  [`F/step_010000`](https://huggingface.co/mcobzarenco/fontaine-checkpoints/tree/main/fontaine_molmo2_flow_frozen_10k_ddp4/step_010000) ·
+  [`tiny/step_010000`](https://huggingface.co/mcobzarenco/fontaine-checkpoints/tree/main/fontaine_molmo2_flow_tiny_h256_10k_1xh100/step_010000)
+  (both weights-only, backbone deduplicated to the 60k trunk)
+
 ## Cross-family analyses
 
 - [flow-vs-AR paired per-step read](https://mcobzarenco-fontaine-blog.static.hf.space/reports/analysis__flow_vs_ar_paired_k4l2.json)
