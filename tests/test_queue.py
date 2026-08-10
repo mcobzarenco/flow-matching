@@ -149,7 +149,12 @@ class TestCommands:
     def test_real_queue_has_a_next_pick(self) -> None:
         data = queue_cli.load_queue(queue_cli.QUEUE)
         queued = queue_cli.queued_items(data)
-        assert queued, "canonical queue has no pickable item"
+        # an empty pick list is legal only under the same rule validate
+        # applies to depth < 2: a stated depth_reason (e.g. an owner
+        # pause with supply gated on run boundaries)
+        assert queued or data.get("depth_reason"), (
+            "canonical queue has no pickable item and no depth_reason"
+        )
         # every queued item must be pickable without a GPU decision:
         # gpu-* items enter as blocked/live and are promoted explicitly
         assert all(it["class"] == "cpu" or it["prereg"] for it in queued)
