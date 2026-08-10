@@ -52,17 +52,18 @@ babysit entry pruned. (2) 35k-aux request end-to-end (above). (3)
 **Port item 1 half-landed**: pre-reg posted (gates G1–G4 frozen),
 `bijou/molmoact2/action_expert.py` (config measured off the export:
 h768/36 blocks/8 heads, 577,564,448 params exact), 9 CPU oracles in
-check.py (608 green), **G1 CPU parity PASS byte-identical (max|Δ|
-0.0e+00, real weights, 3 seeds)** vs their HF remote-code module;
+check.py (608 green), **G1 CLOSED BOTH RUNGS — byte-identical
+(max|Δ| 0.0e+00) on CPU/fp32 AND cuda/bf16, real weights, 3 seeds
+each** vs their HF remote-code module;
 item-2 finding: their HF inference expert has NO continuous-state
 path (state enters as prompt tokens). (4) er15k_panel_reads
 generalized (--stem-cand key derivation, oracle green).
 
 **Next**: `queue_cli.py next` → **er35k-aux-panel-eval** remaining
 half (standard eval rc=0 ~01:0xZ → class-matched reads → report +
-in-channel + prune); then **molmoact2-firstclass-port** items 1
-(wiring: backbone↔AE + flow loop, G1 bf16 GPU rung when local frees)
-→ 2 → 3 → 4. Box @40000 boundary ~00:0xZ + legs @35500–@40000; er
+in-channel + prune); then **molmoact2-firstclass-port** item 1
+remainder (wiring: backbone↔AE KV extraction + flow sampling loop;
+G1 is fully closed) → items 2 → 3 → 4. Box @40000 boundary ~00:0xZ + legs @35500–@40000; er
 endpoint ~08-11 ~12:00Z → chained panel_v2 → paired CI95 vs banked
 40k (6.0079) + 60k-cont (5.8602). Blog-Space: re-check usedStorage,
 one-shot push per memory when < ~500 MB. run_work_next armed.*
