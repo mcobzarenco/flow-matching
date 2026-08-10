@@ -51,12 +51,17 @@ note). Queue validate OK depth 0 pickable (lit pause + owner-gated
 tail), 7 open. **run_work_next ARMED** (owner-requested panel
 pipeline is the work item).
 
-**Next**: chained work session: (1) confirm `hf-up-er15k` rc=0 +
-hub files present, (2) download step_015000 weights locally, (3)
-panel_v2 k4l2 --report via systemd-run (same plan/frames as the
-banked 40k/60k panels for comparability), (4) post HTML report
-link in-channel + blog reports page per standing rule, (5) delete
-box-side /home/ubuntu/hf_up_er15k.py. er_60k rides to endpoint
+**Next** (pipeline ran ahead of plan in-tick: upload DONE 09:18:58Z
+in 43 s [hub commit cb05e71, 4 files verified], local download DONE
+09:23:27Z in 16 s [9.1G], **panel_v2 LIVE** on the local H100 as
+unit `eval-er15k-panel` since 09:3xZ — verbatim er_60k endpoint
+eval at 1 rank, ~1–1.5 h wall; progress posted 09:3xZ): chained
+work session: (1) first-poll util check on the eval, (2) watch to
+rc=0, (3) frozen reads vs banked 40k endpoint (6.0079) +
+60k-continuation (5.8602) npz, (4) post HTML report link
+in-channel + reports page per standing rule, (5) clean up the
+ad-hoc helpers (~/hf_up_er15k.py on box, ~/hf_dl_er15k.py,
+~/eval_er15k_panel.sh). er_60k rides to endpoint
 ~08-11 ~12:00Z → chained panel_v2 → paired CI95 vs banked 40k
 (6.0079) + 60k-continuation (5.8602). Rungs record-only; kill
 lines unchanged. Next save boundary @20000 ~11:3xZ. Watch credits:
@@ -179,10 +184,11 @@ idle-by-design, plain §5 exit.
 Session 2026-08-10 09:14–09:3xZ (tick, babysit; 0 new GPU-h logged —
 er_60k rides ~41.7/155, sole live run): owner-steering tick.
 **08:29Z owner request executed**: er_60k step_015000 weights-only
-→ fontaine-checkpoints via box transient unit `hf-up-er15k`
-(launched 09:18Z, verified active; ~10.5G payload); run_work_next
-ARMED — chained work session downloads locally, runs panel_v2 k4l2
---report, posts the HTML link. Ack + plan posted 09:17Z. **Credits
+→ fontaine-checkpoints via box transient unit `hf-up-er15k` —
+upload DONE in 43 s, local download DONE in 16 s, panel_v2 eval
+LIVE on the local H100 (unit `eval-er15k-panel`); run_work_next
+ARMED — chained work session watches to rc=0 and posts the HTML
+link. Ack 09:17Z + progress post 09:3xZ. **Credits
 outage diagnosed**: ticks 08:28/08:42/08:52/09:03 all died on
 out-of-credits 429 (the 08:42 harness alert); 09:14Z first
 surviving session, run never at risk, owner told. Rungs banked
