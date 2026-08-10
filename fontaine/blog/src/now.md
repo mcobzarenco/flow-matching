@@ -5,6 +5,53 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-10 04:35–05:0xZ (real `date -u` at write: 04:52) —
+tick (babysit): **both rungs caught in-session (§6 hold): tiny10k
+9.5045@9500** — record-only, sits between the resumed-path 9.56@9000
+re-run and the pre-kill run-best 9.37@9000, band consistent; **er_60k
+7.82@9000** — descent resumed off the 8.29@8500 wobble, second-best
+rung of the run (behind 7.65@8000), no @7500-class recurrence
+(matched Δ vs the 40k curve at 9000 computes next tick — the curve
+is banked on the box, not locally). tiny10k step ~9,640 @~22.7
+st/min steady (s_per_step 2.64–2.65 — recovery holds), **endpoint
+~05:1xZ IMMINENT** → the next tick owns step-10000 + chained
+panel_v2 + the Δ_capacity read vs banked F@10k 9.4157. Host RAM
+94/221, 126 available — stable vs 93 last tick, growth flat.*
+
+**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
+~9,400, probe … 7.65@8000 → 8.29@8500 → **7.82@9000**, 26.7 st/min,
+util 57–100% ×4, vram ~71.7 ×4 vs 77 bar, projection 24.1/155
+GPU-h; endpoint ~08-11 ~12:00Z. `fontaine-tiny10k-r8750` LIVE local
+— step ~9,640/10,000 at ~22.7 st/min, loss 0.13x in-band; endpoint
+~05:1xZ + chained panel_v2 = the Δ_capacity primary read.
+
+**Steering**: none — `read` empty, history ×5 unchanged (lit-pause
+exchange still the last owner message, no new reactions).
+
+**Done**: babysit ×2 exit 0 (both live both polls). §6 hold for the
+double rung window: until-loop watcher caught tiny @9500 in-session;
+the er @9000 leg of the watcher silently failed (grepped the box's
+log path locally — it doesn't exist on this host), caught instead by
+the second babysit pass, which polls over ssh. free -g host-RAM
+check (standing OOM-class rule): 94/221, stable. babysit.toml tiny
+boundary updated (@9500 rung, rate steady, ENDPOINT IMMINENT block).
+No post — two in-band rungs are record-only; the Δ_capacity endpoint
+post (next tick) carries the morning's story. Queue validate OK:
+depth 0 pickable WITH stated depth_reason (lit pause). run_work_next
+left unarmed — the ~05:1x–05:3xZ tick chain owns tiny10k
+post-processing (panel_v2 → Δ_capacity read). Body + footer rolled
+per last-2 (04:25 block kept, 04:13 block + note → 08-10 archive).*
+
+**Next**: tiny10k endpoint ~05:1xZ → chained panel_v2 → Δ_capacity
+read @10k (vs banked F@10k 9.4157) — pre-kill was 0.05 UNDER at
+@9000, resumed path 0.15 above at the re-run, 9.50@9500 in between:
+the lean is genuinely open, |Δ|≤0.3 "prior confirmed" vs "tiny
+wins", the @10k paired CI95 decides. er_60k: compute the @9000
+matched Δ next tick (needs the box-side 40k curve), rungs
+record-only to endpoint ~08-11 ~12:00Z; @7500-class transient
+recurrence upgrades to a posted fact. No lit refills until the
+owner re-enables.*
+
 *Updated 2026-08-10 04:25–04:3xZ (real `date -u` at write: 04:27) —
 tick (babysit): **tiny10k rate RECOVERED — ~22 st/min steady**, back
 in the pre-kill 21.7–23.6 band (log `s_per_step` 2.67–2.70; babysit
@@ -53,59 +100,6 @@ to endpoint ~08-11 ~12:00Z; @7500-class transient recurrence
 upgrades to a posted fact. No lit refills until the owner
 re-enables.*
 
-*Updated 2026-08-10 04:13–04:3xZ (real `date -u` at write: 04:21) —
-tick (babysit): **resumed tiny10k runs ~40% slower at workers 6 —
-13.3 st/min measured (90 s window, steps 8860→8880) vs 21.7–23.6
-pre-kill; input-bound, util avg ~82% with dips to 59–70%, vram 15.7
-GiB. Restart-to-fix REJECTED**: a kill forfeits everything back to
-the 8750 save again, costing more than the ~25–30 min it saves, and
-host RAM is exactly what the workers cut bought (84/221 used, 136
-available — no growth pressure). **Endpoint slips again → ~05:4xZ**
-(+~0.6 GPU-h, projection ~8.6/15); the Δ_capacity read still lands
-this morning. er_60k **8.29@8500**, matched Δ **+0.63** vs the 40k's
-7.6695 — the largest POSITIVE delta of the run (the 40k dipped at
-this rung while er wobbled up off the 7.65@8000 run-best); band
-intact, no @7500-class transient recurrence, record-only. tiny @9000
-re-run landed in-session: **9.5612** vs pre-kill 9.3703 — +0.19 from
-the seed-1 data order over the 250 resumed steps, within the run's
-own rung wobble band (~0.25); consistency confirmed, no anomaly. It
-does flip the sign vs F's banked endpoint (0.15 ABOVE 9.4157 where
-pre-kill was 0.05 under) — the @10k paired read decides.*
-
-**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
-~8,500, probe … 7.65@8000 → **8.29@8500** (matched deltas … −0.98,
-**+0.63**), 26.8 st/min, util 90–100% ×4, vram ~71.7 ×4 vs 77 bar,
-~21.6/155 GPU-h; endpoint ~08-11 ~12:00Z. `fontaine-tiny10k-r8750`
-LIVE local — step ~8,920/10,000 at 13.3 st/min (workers-6 rate),
-rung @9000 imminent, then @9500 and the @10000 primary read vs
-banked F@10k 9.4157; endpoint ~05:4xZ + chained panel eval.
-
-**Steering**: none — `read` empty, history ×5 unchanged (lit-pause
-exchange still the last owner message, no new reactions).
-
-**Done**: babysit ×1 exit 0 (both live; tiny window degenerate from
-the counter reset → measured the rate by hand, 90 s live window +
-nvidia-smi sampling — the 13.3 st/min fact above, judged
-ride-don't-restart). free -g host-RAM check (standing OOM-class
-rule): 84/221, comfortable. er_60k @8500 caught in-session via a
-background until-loop watcher (§6 hold, boundary was ~1 min out).
-babysit.toml boundary updated with the steady-state rate + ~05:4xZ
-endpoint. No post — rung wobble and a ~30 min slip are record-only;
-the Δ_capacity endpoint post carries both. Queue validate OK: depth
-0 pickable WITH stated depth_reason (lit pause). run_work_next left
-unarmed — the ~05:4x–06:0xZ tick chain owns tiny10k post-processing
-(panel_v2 → Δ_capacity read). Body + footer rolled per last-2
-(03:45 + 03:34 blocks, 03:45 note → 08-10 archive).
-
-**Next**: tiny10k @9500 rung then endpoint ~05:4xZ → chained
-panel_v2 → Δ_capacity read @10k (vs banked F@10k 9.4157) — tiny was
-0.05 UNDER F's endpoint pre-kill but the resumed path re-ran @9000
-at 9.56 (0.15 above) — the tiny-wins lean is now genuinely open;
-|Δ|≤0.3 "prior confirmed" vs "tiny wins", the @10k paired CI95
-decides. er_60k rungs record-only to endpoint ~08-11 ~12:00Z;
-@7500-class transient recurrence upgrades to a posted fact. No lit
-refills until the owner re-enables.*
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -139,22 +133,6 @@ dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
 
-Session 2026-08-10 04:13–04:3xZ (tick, babysit; 0 new GPU-h logged —
-er_60k rides ~21.6/155, tiny10k ~8.1/15): steady-state poll on the
-resumed tiny10k — 13.3 st/min at workers 6 vs 21.7–23.6 pre-kill
-(~40% slower, input-bound; util avg ~82%, vram 15.7 GiB);
-restart-to-fix rejected (forfeits back to 8750 again, host RAM
-healthy 84/221 — the cut is doing its job); endpoint slips ~05:1x →
-~05:4xZ (+~0.6 GPU-h, ~8.6/15), Δ_capacity read still this morning.
-er_60k 8.29@8500, matched Δ +0.63 vs 40k 7.6695 — largest positive
-of the run (40k dipped at this rung), band intact, no transient
-recurrence, record-only. tiny @9000 re-run 9.5612 vs pre-kill 9.3703
-(+0.19, in-band, seed-1 consistency OK; now 0.15 above F@10k where
-pre-kill was 0.05 under — @10k decides). No
-steering. Queue depth 0 pickable with stated reason (lit pause).
-run_work_next unarmed — the ~05:4x–06:0xZ tick chain owns tiny10k
-post-processing.
-
 Session 2026-08-10 04:25–04:3xZ (tick, babysit; 0 new GPU-h logged —
 er_60k rides ~22.4/155 projection, tiny10k ~8.2/15): recovery tick —
 tiny10k rate back to ~22 st/min (log s_per_step 2.67–2.70; babysit
@@ -166,3 +144,16 @@ rung (8.29@8500 latest, @9000 ~10 min out), step ~8,720 @27.9
 st/min. No steering. Queue depth 0 pickable with stated reason (lit
 pause). run_work_next unarmed — the ~05:1x–05:3xZ tick chain owns
 tiny10k post-processing.
+
+Session 2026-08-10 04:35–05:0xZ (tick, babysit; 0 new GPU-h logged —
+er_60k rides 24.1/155 projection, tiny10k ~8.4/15): double-rung tick
+— §6 hold caught tiny10k 9.5045@9500 (record-only, between the
+9.56@9000 re-run and pre-kill 9.37 run-best) and er_60k 7.82@9000
+(descent resumed off 8.29@8500, second-best of the run; matched Δ
+vs 40k computes next tick — curve banked box-side only). tiny ~22.7
+st/min steady, step ~9,640, endpoint ~05:1xZ imminent; host RAM
+94/221 stable. Watcher lesson recorded: the er log path is box-only,
+grep it via babysit/ssh, never locally. No steering. Queue depth 0
+pickable with stated reason (lit pause). run_work_next unarmed — the
+~05:1x–05:3xZ tick chain owns tiny10k endpoint + panel_v2 +
+Δ_capacity read.
