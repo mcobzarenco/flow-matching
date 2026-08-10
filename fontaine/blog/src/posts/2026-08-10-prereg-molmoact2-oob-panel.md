@@ -133,3 +133,16 @@ from a 1,220-repo fine-tune on partially-seen data.
 *Immutability: from this post on, any change to frames, seeds,
 window, splits, tripwires, or read list is an amendment logged
 in-channel before the affected stage runs.*
+
+---
+
+**Amendment 1** (owner 2026-08-10 13:14:54Z, logged in-channel
+13:2xZ, applied before any real read ran): **`willnorris/bbox-2` is
+excluded from every read and from the report** — 24 panel frames
+(16 core), wraparound-unit ground truth (|max| ≈ 3141); one of its
+smoke frames alone moved the pooled mean ~+4. The contamination pin
+stays full-panel (it verifies their mixture list, not our row
+selection); the exclusion is a row-mask applied downstream, recorded
+in the analysis json (`excluded` block) and printed on the report.
+The sweep itself is unchanged — the frames are predicted, just never
+scored.

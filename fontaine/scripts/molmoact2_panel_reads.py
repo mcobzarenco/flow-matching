@@ -118,6 +118,14 @@ MIXTURE_CONSTANTS = Path(
 ).expanduser()
 # Pinned at measurement time (2026-08-10 ~11:3xZ session, plan post §5).
 CONTAM_EXPECT = {"repos": 245, "frames": 7996, "core_frames": 5332}
+# AMENDMENT (owner 2026-08-10 13:14:54Z, logged in-channel before any
+# real read ran): wraparound-unit repo excluded from every statistic —
+# truth |max| ~3141 on 24 panel frames (16 core) makes any policy
+# comparison there meaningless and one frame alone moved the smoke
+# pooled mean ~+4. The contamination PIN above stays full-panel (it
+# verifies their mixture list, not our row selection); exclusion is
+# applied downstream to the row mask.
+EXCLUDED_REPOS = ("willnorris/bbox-2",)
 
 
 def _load_npz(path: str | Path) -> dict:
@@ -264,7 +272,15 @@ def analyze(
     truth, valid, core, w = bbr.masks(wv_cand)
     err_cand = np.abs(wv_cand[CAND_KEY] - truth)
     frame_cand, nvalid = bbr.frame_mae(err_cand, w)
-    keep = (nvalid > 0) & core
+    excluded = np.isin(cand_npz["repo_id"], list(EXCLUDED_REPOS))
+    excluded_stats = {
+        "repos": list(EXCLUDED_REPOS),
+        "frames": int(excluded.sum()),
+        "core_frames": int((excluded & cand_npz["core"]).sum()),
+        "reason": "owner amendment 2026-08-10 13:14Z: wraparound-unit truth",
+    }
+    print(f"excluded rows: {excluded_stats}")
+    keep = (nvalid > 0) & core & ~excluded
     splits = {
         "pooled": keep,
         "clean": keep & ~contam,
@@ -285,6 +301,7 @@ def analyze(
         ),
         "window_steps": WINDOW,
         "contamination": contam_stats,
+        "excluded": excluded_stats,
         "matched_window": {},
         "paired_reads": {},
         "secondary_full50": {},
@@ -420,7 +437,29 @@ def oracle() -> None:
             out["paired_reads"][BASELINES[0]["label"]]["contaminated"]["n_frames"] == 3
         )
         assert out["contamination"]["repos"] == 1
+        assert out["excluded"]["frames"] == 0  # no fixture repo matches
         print("  planted −1.0 OK (exact Δ, degenerate CI, splits 9/6/3)")
+
+        # owner-amendment exclusion: dropping repo2 (core rows 2, 5, 8)
+        # shrinks pooled 9 -> 6 and clean 6 -> 3; contaminated untouched.
+        global EXCLUDED_REPOS  # noqa: PLW0603
+        excl_saved = EXCLUDED_REPOS
+        EXCLUDED_REPOS = ("repo2",)
+        try:
+            out = analyze(cand, baselines, contam_set, expect, None)
+        finally:
+            EXCLUDED_REPOS = excl_saved
+        pr = out["paired_reads"][BASELINES[0]["label"]]
+        assert pr["pooled"]["n_frames"] == 6, out
+        assert pr["clean"]["n_frames"] == 3, out
+        assert pr["contaminated"]["n_frames"] == 3, out
+        assert out["excluded"] == {
+            "repos": ["repo2"],
+            "frames": 4,
+            "core_frames": 3,
+            "reason": "owner amendment 2026-08-10 13:14Z: wraparound-unit truth",
+        }, out
+        print("  exclusion OK (repo2 dropped: splits 6/3/3, stats recorded)")
 
         cand, baselines = _fixture(0.0)
         out = analyze(cand, baselines, contam_set, expect, None)

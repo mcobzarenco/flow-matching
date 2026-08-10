@@ -115,12 +115,20 @@ def summary_tables(analysis: dict, rt: ModuleType) -> list:
         for label in order
         if label in mw
     ]
+    ns = next(iter(analysis["paired_reads"].values()))
     t1 = rt.ReportTable(
         title=(
             "Matched-window chunk MAE (steps 0-29 = 1.0 s, core frames; "
             "clean = repos absent from their SO-100/101 fine-tune mix)"
         ),
-        header=["policy", "pooled (17204)", "clean (11872)", "contam (5332)", "first"],
+        header=[
+            "policy",
+            *(
+                f"{split} ({ns[split]['n_frames']})"
+                for split in ("pooled", "clean", "contaminated")
+            ),
+            "first",
+        ],
         rows=rows,
     )
     rows2 = []
@@ -246,7 +254,9 @@ def main() -> None:
     src = {"top10": top10, "stable": stable, "cand": cand}
     preds = {label: src[which][key] for label, which, key in POLICIES}
 
-    truth, valid, core = cand["truth"], cand["valid"], cand["core"]
+    truth, valid = cand["truth"], cand["valid"]
+    # owner amendment 13:14Z: excluded repos out of every surface here too
+    core = cand["core"] & ~np.isin(cand["repo_id"], list(mpr.EXCLUDED_REPOS))
     m2 = (valid[:, :WINDOW] & np.isfinite(truth[:, :WINDOW]).all(-1))[core]
     arms_core = {label: pred[core] for label, pred in preds.items()}
     motor = per_motor_table(arms_core, truth[core], m2, rt)
@@ -270,6 +280,14 @@ def main() -> None:
         "  our full-50 numbers are secondary and never quoted against theirs",
         f"contamination: {contam['repos']} of 878 panel repos are in their",
         f"  SO-100/101 fine-tune mixture = {contam['core_frames']} core frames",
+        "CAVEAT: our arms trained on this panel's repo distribution (holdout",
+        "  episodes, same repos) — 'clean' is repo-level OOD for MolmoAct2 only;",
+        "  the contaminated split is the closest to a fair fight",
+        (
+            f"excluded (owner amendment 13:14Z): {analysis['excluded']['repos']}"
+            f" — {analysis['excluded']['frames']} frames"
+            f" ({analysis['excluded']['core_frames']} core), wraparound-unit truth"
+        ),
         "prereg: posts/2026-08-10-prereg-molmoact2-oob-panel.md",
     ]
     extra = "".join(
