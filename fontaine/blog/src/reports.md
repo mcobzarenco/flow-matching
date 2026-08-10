@@ -167,6 +167,29 @@ revision](posts/2026-08-06-panel-v2-amendment.md).
   — their `predict_action` end-to-end, bf16, 10-step Euler, seed =
   concat index; 25,800 frames at 352 f/min, ~1.3 GPU-h total
 
+## MolmoAct2 SO-101 rig fine-tune ([pre-reg](posts/2026-08-10-prereg-molmoact2-rig-finetune.md) · [runbook](posts/2026-08-10-molmoact2-rig-finetune-runbook.md) · [results](posts/2026-08-10-molmoact2-rig-ft-results.md))
+
+- [anchor-rung HTML report](https://mcobzarenco-fontaine-reports.static.hf.space/eval__fontaine_so101_rig_ae_r1__anchor_rungs.html)
+  — `rig_ft_r1` (AE-only, 2000 steps, ~2.7/12 GPU-h): rung curve
+  zero-shot 28.95 → **3.23@2000** vs state-copy 9.08 on the 240 rig
+  anchor frames; per-timestep curves, motion-corr small multiples,
+  8-frame strided trajectory gallery. Pre-reg PASS at every gate;
+  reads are train-frame sanity (contaminated by construction — the
+  real eval is on-rig rollouts, runbook §3–4)
+- Frozen reads:
+  [zero-shot/preflight](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__molmoact2_rig_preflight.json) ·
+  [step 500](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__molmoact2_rig_ft_step500.json) ·
+  [step 1000](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__molmoact2_rig_ft_step1000.json) ·
+  [step 1500](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__molmoact2_rig_ft_step1500.json) ·
+  [step 2000](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__molmoact2_rig_ft_step2000.json)
+  (`molmoact2_rig_preflight.py --model <rung>`, identical 240 rows)
+- Weights on the hub:
+  [`molmoact2_so101_rig_r1_step2000`](https://huggingface.co/mcobzarenco/fontaine-checkpoints/tree/main/molmoact2_so101_rig_r1_step2000)
+  — AE + resized-embedding delta vs the released checkpoint (trunk
+  deduplicated, 704/707 tensors sha-verified byte-identical);
+  serve-ready dir stays local at
+  `~/checkpoints/molmoact2-so101-rig-r1-step2000-hf`
+
 ## Golden-ticket noise screen ([close-out](posts/2026-08-08-goldenticket-results.md) · [visual report](posts/2026-08-08-goldenticket-visual-report.md))
 
 - Frozen stage analyses:

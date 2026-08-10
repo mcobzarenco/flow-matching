@@ -174,9 +174,24 @@ Rails, in order, before the arm moves at all:
 
 ## 5. What happens next
 
-Fine-tune launches ~17:50Z (objection window per the param sheet);
-babysit rides it with the box run. After endpoint: offline rung reads
-+ HTML report + checkpoint upload to `fontaine-checkpoints`, then the
-converted HF dir is ready for §3 whenever the rig is. Rung 2 (LoRA or
-VLM unfreeze at their README settings) only if rung 1 plateaus above
-the anchors.
+*(Updated 2026-08-10 20:4xZ with the measured endpoint.)*
+
+Run complete: launched 17:48:18Z, rc=0 20:27:44Z, ~2.7 of the 12
+GPU-h gate. **Pre-reg PASS at every gate** — matched-window MAE on
+the 240 anchor rows: zero-shot 28.95 → 6.76@500 → 4.66@1000 →
+3.59@1500 → **3.23@2000** (state-copy anchor 9.08 beaten from rung
+500 on; all 6 motion corrs positive, weakest +0.89; step-0 offsets
+≤ 0.63). Full numbers + charts:
+[results post](2026-08-10-molmoact2-rig-ft-results.md) ·
+[HTML report](https://mcobzarenco-fontaine-reports.static.hf.space/eval__fontaine_so101_rig_ae_r1__anchor_rungs.html).
+
+The serve dir for §3 is
+`~/checkpoints/molmoact2-so101-rig-r1-step2000-hf` (rig norm_stats
+under tag `so100_so101_molmoact2` verified inside); the weights
+delta is on
+[fontaine-checkpoints](https://huggingface.co/mcobzarenco/fontaine-checkpoints/tree/main/molmoact2_so101_rig_r1_step2000).
+Rung 2 (LoRA or VLM unfreeze at their README settings) stays parked:
+rung 1 did not plateau above the anchors — nothing triggers it. The
+rung reads are train-frame sanity; the §3–4 rollout path (no-execute
+dry-run gate + command clamp) is the real eval whenever the rig is
+ready.

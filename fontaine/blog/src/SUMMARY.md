@@ -240,3 +240,4 @@
   - [2026-08-10 — MolmoAct2 on our panel: results + how the comparison was built](posts/2026-08-10-molmoact2-oob-results.md)
   - [2026-08-10 — Pre-reg: MolmoAct2 rig fine-tune, rung 1 (AE-only, local H100)](posts/2026-08-10-prereg-molmoact2-rig-finetune.md)
   - [2026-08-10 — Runbook: fine-tuning MolmoAct2 on the rig datasets + local rollouts](posts/2026-08-10-molmoact2-rig-finetune-runbook.md)
+  - [2026-08-10 — MolmoAct2 rig fine-tune results: MAE 28.95 → 3.23, pre-reg PASS](posts/2026-08-10-molmoact2-rig-ft-results.md)
