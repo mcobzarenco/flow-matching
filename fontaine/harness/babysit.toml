@@ -586,3 +586,25 @@ value = 155.0
 # [[run.gates]]
 # kind = "gpu_hours_max"
 # value = 5.5
+
+[[run]]
+name = "molmoact2_sweep"
+kind = "progress-log"
+host = "local"
+pgrep = "molmoact2_panel_predict"
+pgrep_min = 1
+gpu_indices = [0]
+gpu_mem_min_mib = 8000
+log = "/home/ubuntu/logs/molmoact2_sweep.log"
+progress_re = "progress: [0-9]+"
+started_utc = "2026-08-10T13:19:30Z"
+gpu_hours_per_wall_hour = 1.0
+boundary = "MolmoAct2-SO100_101 out-of-band panel sweep, 25,800 frames, unit fontaine-molmoact2-sweep (owner GO 11:59Z 08-10; pre-reg posts/2026-08-10-prereg-molmoact2-oob-panel.md; queue item molmoact2-oob-panel-eval). Smoke green 12:5xZ (tripwires passed; owner 12:59Z inference-correctness challenge answered with the contamination split: trained-on repos 7.24 vs copy 7.33 parity, unseen 17.40 vs 7.68). ~110-130 f/min, ETA ~16:5x-17:1xZ; resumable: .partial.npz every 500 frames, relaunch same unit+command resumes from last save. RECORD-ONLY: no kill bars beyond liveness; on rc=0 run molmoact2_panel_reads.py (frozen reads + contamination json) then molmoact2_panel_report.py (3-policy HTML, UNTESTED until real npz exists — first run may need fixes) -> Space reports/ + in-channel numbers with the two pre-agreed caveats (panel-domain asymmetry; wraparound repo willnorris/bbox-2 inflates pooled means ~+4, medians+splits honest)."
+anchors = [
+    "gate <= 8 GPU-h total incl. smoke ~0.1 (rate 112 f/min -> ~3.8 GPU-h projection; kill + in-channel re-plan if projection exceeds 8)",
+    "record-only: nothing gates or repoints our runs; er_60k untouched",
+    "on completion: reads instrument re-verifies contamination pin 245/7996/5332 (hard abort on drift) + all identity/state-copy byte-match oracles",
+]
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 8.0
