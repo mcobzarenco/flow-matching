@@ -331,7 +331,7 @@ def traj_chart(sample, motor_names: list, order: list, rt: ModuleType) -> str:  
             ax.tick_params(labelsize=8)
         fig.tight_layout()
         buffer = io.BytesIO()
-        fig.savefig(buffer, format="png", dpi=90, facecolor=fig.get_facecolor())
+        fig.savefig(buffer, format="png", dpi=72, facecolor=fig.get_facecolor())
         plt.close(fig)
     return "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode()
 
@@ -402,9 +402,33 @@ def per_step_chart(
     return f"data:image/png;base64,{encoded}"
 
 
-def gallery(cand: dict, preds: dict, indices: np.ndarray, rt: ModuleType) -> list[str]:
+def _image_jpeg_uri(image, height: int = 200) -> str:  # noqa: ANN001
+    """Camera thumbnail as JPEG (~6x smaller than the house PNG — buys
+    the doubled gallery without tripping the 10 MB LFS auto-track)."""
+    import base64
+    import io
+
+    from PIL import Image
+
+    array = (image.clamp(0, 1) * 255).to(torch.uint8).permute(1, 2, 0).numpy()
+    pil = Image.fromarray(array)
+    width = max(1, round(pil.width * height / pil.height))
+    pil = pil.resize((width, height))
+    buffer = io.BytesIO()
+    pil.save(buffer, format="JPEG", quality=80)
+    return "data:image/jpeg;base64," + base64.b64encode(buffer.getvalue()).decode()
+
+
+def gallery(
+    cand: dict,
+    preds: dict,
+    indices: np.ndarray,
+    rt: ModuleType,
+    dataset=None,  # noqa: ANN001
+) -> list[str]:
     """Re-fetch images/state/task for the sampled rows; render blocks."""
-    dataset = mpp.build_dataset()
+    if dataset is None:
+        dataset = mpp.build_dataset()
     blocks = []
     for row in indices.tolist():
         item = dataset[int(cand["index"][row])]
@@ -446,7 +470,7 @@ def gallery(cand: dict, preds: dict, indices: np.ndarray, rt: ModuleType) -> lis
         )
         state_line = ", ".join(f"{x:.1f}" for x in sample.state.tolist())
         cams = "".join(
-            f'<img src="{rt._image_data_uri(image)}" alt="{escape(name)}" '
+            f'<img src="{_image_jpeg_uri(image)}" alt="{escape(name)}" '
             f'title="{escape(name)}">'
             for name, image in sorted(sample.cameras.items())
         )
@@ -513,11 +537,26 @@ def main() -> None:
     legend = legend_strip(list(all_preds), rt)
     print("per-step charts rendered", flush=True)
 
+    # gallery doubled + split clean/contaminated (owner 15:27Z):
+    # per-section evenly-strided rows, all models on every chart
     core_rows = np.flatnonzero(core)
-    stride = max(len(core_rows) // args.samples, 1)
-    sampled = core_rows[::stride][: args.samples]
-    # all models on the trajectory charts (owner 15:22Z)
-    blocks = gallery(cand, all_preds, sampled, rt)
+    dataset = mpp.build_dataset()
+    sections = []
+    for name, rows in [
+        (
+            "clean (repos NOT in their fine-tune mixture)",
+            np.flatnonzero(core & ~contam_mask),
+        ),
+        (
+            "contaminated (repos in their fine-tune mixture)",
+            np.flatnonzero(core & contam_mask),
+        ),
+    ]:
+        stride = max(len(rows) // args.samples, 1)
+        sampled = rows[::stride][: args.samples]
+        sections.append(
+            (name, len(rows), gallery(cand, all_preds, sampled, rt, dataset)),
+        )
 
     theme = rt.THEMES["dark"]
     tables = summary_tables(analysis, rt)
@@ -561,11 +600,17 @@ def main() -> None:
         "<h2>MAE by chunk timestep — all models (dotted line = their "
         "30-step horizon; MolmoAct2 has no prediction past it)</h2>"
         f'<img class="chart" src="{step_chart}">'
-        f"<h2>Sample predictions ({len(blocks)} of {len(core_rows)} core "
-        "frames, evenly strided; MolmoAct2's line stops at step 30 — its "
-        "native horizon). Series legend (applies to every chart below):"
-        f'</h2><img class="chart" src="{legend}">{"".join(blocks)}'
-        "</body></html>"
+        f"<h2>Sample predictions ({sum(len(b) for _, _, b in sections)} of "
+        f"{len(core_rows)} core frames, evenly strided per split; "
+        "MolmoAct2's line stops at step 30 — its native horizon). "
+        "Series legend (applies to every chart below):</h2>"
+        f'<img class="chart" src="{legend}">'
+        + "".join(
+            f"<h2>Samples — {escape(name)} ({len(blocks)} of {n} frames)</h2>"
+            + "".join(blocks)
+            for name, n, blocks in sections
+        )
+        + "</body></html>"
     )
     Path(args.out).write_text(document)
     print(f"wrote {args.out}", flush=True)

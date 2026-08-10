@@ -88,7 +88,9 @@ per-frame-npz student config; matched-window 4.29/4.37/4.11 — beats
 teacher single-draws, confirms the distillation story), ALL 10
 models on every trajectory chart, 10-color palette, legend moved to
 a standalone strip + below the timestep panels (nothing covers
-series); report 7.6 MB non-LFS, direct 200; (14) **15:24:16Z OWNER
+series); (13b) 15:27Z gallery doubled + SPLIT into clean vs
+contaminated sections (2×24 frames, per-split strides; JPEG thumbs +
+dpi-72 charts keep it 9.4 MB non-LFS, direct 200); (14) **15:24:16Z OWNER
 GO: MolmoAct2 rig fine-tune on the local GPU + runnable runbook** →
 queued as the NEXT session's first action (item
 molmoact2-rig-finetune-runbook; param sheet in-channel before any
