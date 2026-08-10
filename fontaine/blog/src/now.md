@@ -175,4 +175,24 @@ item `molmoact2-oob-panel-eval` updated with the GO + report spec
 start now); queue `updated_utc` field fixed. Box babysit exit 0
 (step 20,720, probe 6.58@20500, run-best 6.3658@20000 stands, next
 boundary @25000 ~14:4xZ). run_work_next confirmed armed — the
-chained work session executes the eval end-to-end.
+chained work session executes the eval end-to-end. **SPACE STORAGE
+INCIDENT, resolved in-session**: blog push 403'd — the Space hit
+its 1 GB cap: ~190 mdbook builds each rename their hashed assets
+(`searchindex-<hash>.js` ~14 MB + `toc-<hash>.js`) and
+`upload_folder` never deletes old ones → 2.7 GB of stale build
+artifacts. History squash alone didn't clear it; a mirror push with
+`delete_patterns=["**"]` did — but ALSO deleted `reports/` (39
+owner-facing report HTML/JSONs incl. the er15k links posted
+11:53Z), the Space `README.md` (static-SDK config → whole Space
+404'd) and `style.css`, which live only on the Space, not in the
+book build. Restored same-session (63 files from local `reports/`
++ 3 from the pre-delete revision); all links curl-200 by 12:18:38Z
+(~10 min of 404 exposure, owner quiet throughout — no correction
+owed, links they hold now work). Memory `blog-space-push` updated:
+correct hygiene = `delete_patterns=["searchindex-*.js","toc-*.js"]`
+on every book push, never a full mirror. RESIDUAL: storage
+accounting lags the squash (async GC — old revisions' objects still
+counted), so the push of THIS now.md entry to the Space kept
+403ing at session close; live site healthy and serving the
+restored content, the chained work session retries the push first
+thing (should clear once GC runs).
