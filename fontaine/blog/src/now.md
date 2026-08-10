@@ -141,23 +141,6 @@ dated snapshots and session notes: rolled verbatim to the
 
 
 
-Session 2026-08-10 09:14–09:3xZ (tick, babysit; 0 new GPU-h logged —
-er_60k rides ~41.7/155, sole live run): owner-steering tick.
-**08:29Z owner request executed**: er_60k step_015000 weights-only
-→ fontaine-checkpoints via box transient unit `hf-up-er15k` —
-upload DONE in 43 s, local download DONE in 16 s, panel_v2 eval
-LIVE on the local H100 (unit `eval-er15k-panel`); run_work_next
-ARMED — chained work session watches to rc=0 and posts the HTML
-link. Ack 09:17Z + progress post 09:3xZ. **Credits
-outage diagnosed**: ticks 08:28/08:42/08:52/09:03 all died on
-out-of-credits 429 (the 08:42 harness alert); 09:14Z first
-surviving session, run never at risk, owner told. Rungs banked
-from the gap: 7.3267@15500 (Δ +0.45) / 7.0094@16000 (Δ +0.37) —
-fifth/sixth positive legs, running mean ≈ +0.21, in-band,
-record-only. babysit exit 0 (27.1 f/min, vram 71.7 ×4). Queue
-depth 0 pickable with stated reason; next save boundary @20000
-~11:3xZ.
-
 Session 2026-08-10 09:37–10:0xZ (tick, babysit; 0 new GPU-h logged —
 er_60k rides ~43.2/155; local eval-er15k-panel is inside the run's
 ~2 eval GPU-h line): **first-poll on `eval-er15k-panel` + ETA
@@ -173,3 +156,20 @@ run-best stays 6.6319@16500. No new steering (read empty, history
 **run_work_next ARMED** — chained session watches the eval to rc=0,
 posts the HTML report + reports page, cleans up helpers, catches
 the @20000 boundary ~11:3xZ.
+
+Session 2026-08-10 09:53–10:0xZ (tick, babysit; 0 new GPU-h logged —
+er_60k rides ~44.3/155; eval-er15k-panel inside the run's ~2 eval
+GPU-h line): **watch-drop incident caught + fixed at source**. The
+09:50 chained work session armed a background Monitor on
+`eval-er15k-panel` and ended its turn — turn-end teardown killed
+the monitor (`status: killed` in its log) and silently dropped the
+eval watch: 4th incident of the no-end-turn class, first via the
+Monitor tool's "you'll be re-invoked" contract, which does NOT
+hold for one-shot driver sessions. Eval never at risk (systemd
+unit; 4,832/25,800 at 09:56, ~210 f/min, ETA ~11:3x–11:4xZ —
+matches what the owner was told, no correction owed). Fixes:
+work-prompt §3 hard rule (riding a job is IN-TURN work, foreground
+sleep-polls only), memory addendum, babysit.toml note;
+**run_work_next RE-ARMED**. Box: babysit exit 0 (step 17,400,
+44.3/155 GPU-h, vram 71.7 ×4); run-best 6.6319@16500 stands. No
+new steering. Queue depth 0 pickable with stated reason.
