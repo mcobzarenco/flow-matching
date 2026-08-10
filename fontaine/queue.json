@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-10T21:05:00Z",
+ "updated_utc": "2026-08-10T21:06:00Z",
  "depth_reason": "depth 3 open at 21:05Z 08-10: er35k-aux-panel-eval (owner request 20:47Z, eval LIVE local) + molmoact2-firstclass-port (owner GO 20:06:37Z, items 1-4, opens once the aux eval is postprocessed or in its GPU-wait windows) + blog-space-gc-tail (GC running, 913 MB at last check). molmoact2-rig-ft-postprocess CLOSED this session (pre-reg PASS, MAE 3.23@2000). er-60k LIVE box to ~08-11 ~12:00Z. Lit refill lane stays owner-paused (00:23Z 08-10).",
  "items": [
   {
@@ -16,9 +16,9 @@
    "title": "OWNER GO 20:06:37Z 08-10 ('Let's do it, 1 through 4' on the 19:5xZ in-channel estimate): make MolmoAct2 first-class in-repo, rig-path-first. Scope: (1) action expert port (their nn/action_expert.py 982 LOC + backbone-AE wiring molmoact2.py 1.3k LOC) + weight load; (2) action-side prompt/processing deltas (template, state encoding, q01/q99 norm_stats) on top of bijou/molmo2 processor; (3) parity harness vs their HF forward + banked 240-row anchors (zero-shot 28.95 / state-copy 9.08) + rig-ft rung checkpoints; (4) AE fine-tune in OUR trainer, retiring the 3 train_lerobot.py patches. Backbone reused from bijou/molmo2 (byte-verified); depth/trace/sim-eval stay out-of-band. Pre-reg post first (parity gates falsifiable), CPU-mostly, GPU only for parity checks.",
    "class": "cpu",
    "status": "queued",
-   "prereg": null,
+   "prereg": "fontaine/blog/src/posts/2026-08-10-prereg-molmoact2-firstclass-port.md",
    "owner_hold": false,
-   "boundary": "Opens after molmoact2-rig-ft-postprocess (endpoint read is time-sensitive); ~3-4 focused sessions, items in order 1->2->3->4, each with its own parity/oracle gate before the next."
+   "boundary": "Opens after molmoact2-rig-ft-postprocess (endpoint read is time-sensitive); ~3-4 focused sessions, items in order 1->2->3->4, each with its own parity/oracle gate before the next. PRE-REG POSTED 21:0xZ 08-10 (parity gates G1-G4 frozen: G1 AE-module bf16 forward parity, G2 end-to-end 240-row anchor reproduction 28.9454/3.2301, G3 check.py oracle harness, G4 our-trainer rung-1 repro <=6 GPU-h; port GPU total <=8)."
   },
   {
    "id": "molmoact2-rig-ft-postprocess",
