@@ -2,7 +2,69 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-10 16:11–18:1xZ (real `date -u` at write: 18:04) —
+work session: **the owner-GO'd rig fine-tune went from
+codebase_version check to LAUNCHED in one session** — pre-reg + param
+sheet → four preflights (one real finding + in-window amendment) →
+runbook page → launch 17:48:18Z with a green first poll; plus the box
+@30000 boundary caught with a new run-best and ER's strongest 10-leg
+window yet.*
+
+**Status**: `rig_ft_r1` LIVE local H100 — MolmoAct2-SO100_101 AE-only
+fine-tune on the 2 rig repos (unit `fontaine-molmoact2-rig-ft`, 2000
+steps), first poll 17:58Z step 100: **830 f/min** (5.5× kill line),
+flow loss 0.135@20 → ~0.06@100, vram 38.9/78 bar, host RAM 41/221G,
+**~2.6 GPU-h projected vs 12 gate**, endpoint ~20:20Z → successor
+item picks up rung reads. `fontaine_molmo2_er_60k_ddp4` LIVE box
+4×H100 — **NEW RUN-BEST 5.9214@29000**, @30000 save captured 21.7 s
+(the @25000 155-s gather = one-off, IO watch retired), 26.9 f/min,
+75.8/155 GPU-h, halfway; next boundary @35000 ~20:5xZ, endpoint
+~08-11 ~12:00Z. Blog Space still capped (998.6 MB, GC pending) —
+manual-only tail, now queue item `blog-space-gc-tail`.
+
+**Steering**: none new this session (channel quiet through the whole
+16:20→17:50Z objection window — silence=launch honored per the
+owner's 15:24Z GO + agreed protocol). All owner-facing traffic was
+mine: param sheet (2 msgs 16:20Z), preflight finding + Amendment 1
+(16:2xZ), P4 pass (16:33Z), launch + boundary + first-poll
+(17:4x–17:5xZ).
+
+**Done** (commits 06bf22a, 0c3987b, this one): pre-reg
+posts/2026-08-10-prereg-molmoact2-rig-finetune.md (v3.0 end-to-end
+decision, AE-only rung 1, 12 GPU-h gate) + **Amendment 1** posted
+inside the window — the P3 offset tripwire fired on joint1 (+79) and
+the added diagnostic reclassified it: **posture-collapse, not
+convention** (pred0_std 2.0 vs truth0_std 44.8, err~truth −0.999;
+mechanism measured: their joint1 state-norm range [43.7, 185.3] vs
+rig [−103, +67] → 97% of rig frames saturate their state encoding —
+the affine gap the owner's 15:48Z thread suspected is real AND is
+exactly what rig-only q01/q99 absorbs; no sign mirrors, all 6 motion
+corrs positive). Preflights P1–P4 green (P2: trainer-resolved stats
+= count-weighted rig quantiles exactly; P4: their 20-step smoke
+rc=0). Anchors banked on 240 rig frames: zero-shot MAE 28.95 /
+state-copy 9.08 (reports/analysis__molmoact2_rig_preflight.json +
+npz). Runbook page posts/2026-08-10-molmoact2-rig-finetune-runbook.md
+(setup, the 3 ~/molmoact2 patches on branch fontaine-so101-rig
+89f6204, fine-tune cmd, HF conversion, SO-101 server deltas incl.
+conversion-OFF rollout rule, safety rails). Preflight script
+generalized to `--model/--out-stem` = the rung-read contract.
+LAUNCH 17:48:18Z + babysit entry rig_ft_r1 + first-poll green. Box:
+@30000 boundary caught, legs @25500–@30000 banked (10-leg mean
+**−0.40**, 8/10 negative, 44-leg running mean ≈ −0.09 — ER pulling
+ahead, record-only). babysit ×3 exit 0. Queue refilled to depth 2
+(postprocess successor + blog-space-gc-tail).
+
+**Next**: `queue_cli.py next` → **molmoact2-rig-ft-postprocess**
+(opens at the ~20:20Z rig-ft endpoint or next session boot): rc
+check → convert rungs → 240-row reads vs the banked anchors →
+results post + report + checkpoint upload → prune babysit entry.
+Box boundaries @35000 ~20:5xZ, @40000 ~00:0xZ; er endpoint ~08-11
+~12:00Z → chained panel_v2 → paired CI95 vs banked 40k (6.0079) +
+60k-cont (5.8602). Blog-Space tail per its queue item (owner ask due
+~08-11 morning if still capped).*
 
 *Updated 2026-08-10 16:07–16:1xZ (real `date -u` at write: 16:13) —
 tick (babysit): **quiet interval — no new owner traffic, box healthy
@@ -161,49 +223,6 @@ by ~08-11 morning, ask the owner for the delete+recreate go (offered
 15:2xZ). If the owner wants a base-MolmoAct2 second arm or a
 dataset-repo mirror of reports, both are pre-scoped adds.*
 
-*Updated 2026-08-10 11:59–12:2xZ (real `date -u` at write: 12:13) —
-tick (babysit): **OWNER GO on the MolmoAct2 plan, 20 s before
-session start — acknowledged + spec confirmed in-channel, queue
-item updated, work session armed.** 11:59:33Z: "The molmo2act plan
-sounds good, let's eval the so101 checkpoint. Could we also
-generate an html eval report similar to the one we normally do,
-but with both our best policy (snapflow 80k) predictions vs.
-molmo2act and state copy on the same frames. as well as summary
-statistics obviously."*
-
-**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
-20,720 at poll, probe 6.58@20500, run-best **6.3658@20000**, 26.7
-f/min window, vram ~71.7 ×4 vs 77 bar, ~52.7/155 GPU-h; endpoint
-~08-11 ~12:00Z, next save boundary @25000 ~14:4xZ. Local H100:
-FREE, reserved for the MolmoAct2 eval.
-
-**Steering**: GO on the OOB eval + a NEW report requirement —
-side-by-side HTML on the SAME frames: **snapflow 80k** (owner's
-name for the flow teacher `bijou_flow_artrunk…@80k` — banked panel
-npzs on disk: top-10-tickets 5.1847 = best banked, stable-key
-single-draw 6.5997 anchor; zero GPU re-eval needed) vs
-**MolmoAct2 SO100_101** vs **state-copy**, plus summary stats.
-Replied 12:01Z confirming: headline = top-10-tickets, matched
-30-step/1.0 s window primary (50-step secondary), pooled +
-clean-633/contaminated-245 splits, paired CI95. Conversational
-polls 12:04–12:12Z: no follow-up.
-
-**Done**: babysit exit 0 (liveness 8 procs, util 53–100% ×4, gate
-52.7/155, no new legs — next rung ~@21000). GO reply posted 12:01Z;
-queue item `molmoact2-oob-panel-eval` updated with the report spec
-+ GO stamp (objection window on the finalized pre-reg still applies
-before the full sweep; smoke may start now); `updated_utc` fixed.
-Queue validate OK, 8 open. `run_work_next` confirmed armed.
-
-**Next**: chained work session executes the owner-gated item:
-finalize pre-reg → `molmoact2_panel_predict.py` + oracle-gated
-matched-window instrument → 500-frame smoke + scale sanity → full
-25,800 sweep (systemd unit, ≤ 8 GPU-h gate) → 3-policy HTML report
-+ reports page + in-channel numbers. Box rides to endpoint ~08-11
-~12:00Z → chained panel_v2 → paired CI95 vs banked 40k (6.0079) +
-60k-cont (5.8602). Rungs record-only; kill lines unchanged;
-boundary @25000 ~14:4xZ. No lit refills until re-enabled.*
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -264,6 +283,25 @@ green (155.4 s — record-only watch), 10 matched-Δ legs banked,
 34-leg running mean ≈ +0.005. babysit ×3 exit 0. Local H100 free at
 close; run_work_next armed (migrate-unit verification + er_60k
 boundaries are the next touch points).
+
+Session 2026-08-10 16:11–18:1xZ (work; rig fine-tune launched —
+~0.1 local GPU-h logged this session for preflight+smoke, train
+~2.6 GPU-h projected rides on; exploit): owner-GO'd MolmoAct2 rig
+fine-tune end-to-end to LAUNCH in one session — v3.0 codebase read
+off both rig repos, pre-reg + param sheet (objection window 16:20→
+17:50Z, silence honored), preflights P1–P4 with a real finding
+(joint1 offset tripwire = posture-collapse via state-norm saturation,
+97% rig frames outside their joint1 range; Amendment 1 in-window; no
+sign mirrors — the owner's v2.1/v3.0 question answered with data),
+anchors banked (zero-shot 28.95 / state-copy 9.08, 240 frames),
+runbook page landed (their-repo patches on branch fontaine-so101-rig,
+SO-101 server adaptation, conversion-OFF rollout rule, safety
+rails), LAUNCH 17:48:18Z + first-poll green (830 f/min, ~2.6 GPU-h
+projected vs 12 gate). Box @30000 boundary caught same minute: NEW
+RUN-BEST 5.9214@29000, save 21.7 s, legs @25500–@30000 banked —
+10-leg mean −0.40, ER's strongest window (44-leg ≈ −0.09). babysit
+×3 exit 0; queue refilled depth 2; run_work_next armed for the
+~20:20Z endpoint postprocess.
 
 Session 2026-08-10 16:07–16:1xZ (tick, babysit; 0 new GPU-h —
 er_60k rides 69.2/155): quiet tick. No new owner traffic (the
