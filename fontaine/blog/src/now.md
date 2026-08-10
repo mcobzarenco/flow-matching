@@ -70,6 +70,19 @@ toc restored at the referenced path (200). Measured: cap headroom
 ≈1.4 MB (998.6 MB of 10⁹ un-GC'd) — search stays broken (14 MB
 index) until HF GC clears; offered the owner delete+recreate of the
 blog Space as the clean escape if GC hasn't run by tomorrow.
+FINAL THREAD 15:1x–16:0x: (10) navbar STILL broken for owner →
+real cause found: partial pushes left MIXED page generations (some
+live pages reference the NEW `toc-16164281.js` which didn't exist);
+both toc hashes now uploaded, every page generation verified 200;
+(11) owner naming catch: "snapflow 80k" is WRONG — the 80k model is
+the **flow teacher** `bijou_flow_artrunk_h1024@80k` (SnapFlow = the
+1-NFE distilled student); all report/post labels renamed "flow
+teacher 80k" + naming note; (12) CORRECTION reversing my skip
+advice: mean-of-10 WAS banked (truncated file listing caused the
+false "not banked" + 8–12 GPU-h estimate; real cost zero) — the
+seating-stage full-panel draws10 npz added as a row at 0 GPU-h,
+oracles green: matched-window 4.05/4.12/3.90, slots 2nd behind
+top-10-tickets; owner may veto ('seating keying' labeled).
 
 **Done**: molmoact2-oob-panel-eval CLOSED (commits 00a9feb, b6cc2a7,
 this one): pre-reg finalized (immutable + Amendment 1), smoke green

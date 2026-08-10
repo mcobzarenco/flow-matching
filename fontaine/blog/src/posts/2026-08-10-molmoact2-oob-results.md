@@ -29,11 +29,11 @@ units):
 
 | policy (trunk) | pooled | clean-632 | contam-245 |
 |---|---|---|---|
-| snapflow 80k top-10-tickets (Gemma-4-E2B + flow) | **3.90** | 3.97 | 3.75 |
+| flow teacher 80k top-10-tickets (Gemma-4-E2B + flow) | **3.90** | 3.97 | 3.75 |
 | ar 60k continuation (Molmo2-4B, AR) | 4.46 | 4.58 | 4.22 |
 | ar 40k endpoint (Molmo2-4B, AR) | 4.56 | 4.68 | 4.31 |
-| snapflow 80k stable-key (Gemma-4-E2B + flow) | 5.06 | 5.17 | 4.84 |
-| snapflow 80k heun-30 original (Gemma-4-E2B + flow) | 5.09 | 5.20 | 4.86 |
+| flow teacher 80k stable-key (Gemma-4-E2B + flow) | 5.06 | 5.17 | 4.84 |
+| flow teacher 80k heun-30 original (Gemma-4-E2B + flow) | 5.09 | 5.20 | 4.86 |
 | er 60k @15000 (Molmo2-ER, AR, mid-training) | 5.89 | 6.04 | 5.57 |
 | state-copy (no model) | 8.32 | 8.58 | 7.75 |
 | **MolmoAct2 SO100_101 (Molmo2-ER + their flow expert)** | **13.87** | **16.97** | **7.00** |
@@ -114,6 +114,12 @@ Artifacts: [report](https://mcobzarenco-fontaine-reports.static.hf.space/eval__m
 [contaminated repo list](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__molmoact2_contamination_repos.json) ·
 [sweep metadata](https://mcobzarenco-fontaine-reports.static.hf.space/eval__molmoact2_so100_release__panel_curated_v0_k4l2_oob.meta.json).
 Instruments: `fontaine/scripts/molmoact2_panel_{predict,reads,report}.py`.
-Pending add: full-panel mean-of-10-draws for snapflow 80k (not
-banked; ~8–12 GPU-h eval queued) — its row joins the report when it
-lands.
+(The proposed full-panel mean-of-10-draws add was cancelled by the
+owner at 15:01Z — 0 GPU-h spent.)
+
+*Naming note (owner question 15:10Z): the 80k model here is the
+**flow teacher** `bijou_flow_artrunk_h1024_40k_ddp2@80k` — a
+Heun-30 multi-step flow expert on the frozen Gemma-4-E2B AR trunk.
+Earlier messages called it "snapflow 80k"; strictly, *SnapFlow* is
+the 1-NFE student distilled FROM this teacher (a different, faster,
+slightly worse checkpoint). All report labels now say flow teacher.*

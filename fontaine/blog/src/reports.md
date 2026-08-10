@@ -149,17 +149,17 @@ revision](posts/2026-08-06-panel-v2-amendment.md).
 ## MolmoAct2-SO100_101 out-of-band panel ([pre-reg](posts/2026-08-10-prereg-molmoact2-oob-panel.md) · [plan/deep-read](posts/2026-08-10-molmoact2-oob-eval-plan.md))
 
 - [3-policy side-by-side HTML report](https://mcobzarenco-fontaine-reports.static.hf.space/eval__molmoact2_oob_3policy__panel_curated_v0_k4l2.html)
-  — owner spec 11:59Z 08-10: snapflow 80k (top-10-tickets + stable-key)
+  — owner spec 11:59Z 08-10: flow teacher 80k (top-10-tickets + stable-key + heun-30 original)
   vs the released MolmoAct2 SO-100/101 fine-tune vs state-copy, same
   25,800 frames, matched 30-step/1.0 s window, 32-frame gallery with
   4 policies overlaid per joint; rendered 14:25Z 08-10
 - [frozen matched-window reads JSON](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__molmoact2_oob_panel_k4l2.json)
   (`molmoact2_panel_reads.py`) — matched-window chunk MAE core
   frames (`willnorris/bbox-2` excluded, owner amendment 13:14Z):
-  snapflow top-10-tickets **3.90** / state-copy 8.32 / MolmoAct2
+  flow-teacher top-10-tickets **3.90** / state-copy 8.32 / MolmoAct2
   **13.87** pooled, **16.97** clean-633 vs **7.00** contaminated-245
   (beats state-copy only on repos in its own fine-tune mixture,
-  −0.75; trails snapflow by +3.29 [+3.11, +3.48] even there)
+  −0.75; trails the flow teacher by +3.29 [+3.11, +3.48] even there)
 - [contamination repo list](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__molmoact2_contamination_repos.json)
   — 245/878 panel repos in their `SO100_SO101_MOLMOACT2` mixture
   (7,996 frames, 5,332 core), derived live from their repo file

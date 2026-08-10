@@ -83,6 +83,18 @@ BASELINES = [
         "run": "bijou_flow_artrunk_h1024_40k_ddp2",
     },
     {
+        # owner ask 14:33Z (skipped 15:01Z on a wrong not-banked claim,
+        # corrected 15:5xZ): mean-of-10 draws, seating noise assignment —
+        # full-panel per-frame npz banked by the noise-ladder seating stage
+        "label": "flow80k draws10 seating",
+        "stem": (
+            "reports/eval__bijou_flow_artrunk_h1024_40k_ddp2__step_080000"
+            "__panel_curated_v0_k4l2_draws10_seating_heun30"
+        ),
+        "key": "pred:bijou@80000_draws10",
+        "run": "bijou_flow_artrunk_h1024_40k_ddp2",
+    },
+    {
         # owner add 14:33Z 08-10: the original heun-30 single-draw bank
         # (the 6.6232 anchor eval; identity byte-pairs with the curated
         # stems — verified before adding)

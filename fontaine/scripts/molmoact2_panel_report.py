@@ -74,25 +74,28 @@ MOTOR_NAMES = [
 # Trunk in every displayed name (owner 2026-08-10 14:49Z).
 POLICIES = [
     (
-        "snapflow 80k top10tickets [gemma4-E2B]",
+        "flow teacher 80k top10tickets [gemma4-E2B]",
         "top10",
         "pred:bijou@80000_draws10_ticket",
     ),
-    ("snapflow 80k stablekey [gemma4-E2B]", "stable", "pred:bijou@80000"),
+    ("flow teacher 80k stablekey [gemma4-E2B]", "stable", "pred:bijou@80000"),
     ("MolmoAct2 SO100_101 [molmo2-ER]", "cand", mpr.CAND_KEY),
     ("state-copy [no model]", "cand", "pred:state-copy"),
 ]
 # analysis-json keys (stable) -> displayed names with trunk
 DISPLAY = {
     "snapflow80k top10tickets": (
-        "snapflow 80k top-10-tickets — Gemma-4-E2B trunk (frozen, AR-pretrained) + flow expert h1024"
+        "flow teacher 80k top-10-tickets — Gemma-4-E2B trunk (frozen, AR-pretrained) + flow expert h1024 (Heun-30)"
     ),
     "snapflow80k stablekey": (
-        "snapflow 80k stable-key — Gemma-4-E2B trunk (frozen, AR-pretrained) + flow expert h1024"
+        "flow teacher 80k stable-key — Gemma-4-E2B trunk (frozen, AR-pretrained) + flow expert h1024 (Heun-30)"
     ),
     "molmoact2": "MolmoAct2 SO100_101 — Molmo2-ER trunk + their flow action expert",
     "snapflow80k heun30": (
-        "snapflow 80k heun-30 original single-draw — Gemma-4-E2B trunk + flow expert h1024"
+        "flow teacher 80k heun-30 original single-draw — Gemma-4-E2B trunk + flow expert h1024"
+    ),
+    "flow80k draws10 seating": (
+        "flow teacher 80k mean-of-10 draws (seating keying) — Gemma-4-E2B trunk + flow expert h1024 (Heun-30)"
     ),
     "state-copy": "state-copy — no model (repeat current state)",
     "ar_40k endpoint": "ar 40k endpoint — Molmo2-4B trunk, AR decoder",
@@ -124,6 +127,7 @@ def summary_tables(analysis: dict, rt: ModuleType) -> list:
     mw = analysis["matched_window"]
     order = [
         "snapflow80k top10tickets",
+        "flow80k draws10 seating",
         "snapflow80k stablekey",
         "snapflow80k heun30",
         "molmoact2",
@@ -414,7 +418,7 @@ def main() -> None:
         "molmoact2: allenai/MolmoAct2-SO100_101 — Molmo2-ER trunk + their flow",
         "  action expert; their predict_action end-to-end, continuous mode,",
         "  10-step Euler, bf16, seed = global concat index",
-        "snapflow 80k: banked bijou_flow_artrunk_h1024@80000 panel npzs —",
+        "flow teacher 80k: banked bijou_flow_artrunk_h1024@80000 panel npzs —",
         "  Gemma-4-E2B trunk (frozen, AR-pretrained) + flow expert h1024",
         "  (top-10-tickets = our best decode config; stable-key single draw)",
         "ar 40k / ar 60k-cont: Molmo2-4B trunk, AR decoder;",
@@ -441,7 +445,7 @@ def main() -> None:
         "<!doctype html><html><head><meta charset='utf-8'>"
         "<title>MolmoAct2 out-of-band 3-policy report</title>"
         f"<style>{theme.css()}</style></head><body>"
-        "<h1>MolmoAct2 vs snapflow-80k vs state-copy — same frames</h1>"
+        "<h1>MolmoAct2 vs flow-teacher-80k vs state-copy — same frames</h1>"
         f"<pre>{escape(chr(10).join(config_lines))}</pre>"
         f"{extra}"
         "<h2>MAE by chunk timestep — all models (dotted line = their "
