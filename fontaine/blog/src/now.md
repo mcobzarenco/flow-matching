@@ -44,8 +44,10 @@ norm_stats) ≈1, parity harness vs their HF forward + the banked
 Recommended rig-path-first scope (depth/trace/sim-eval stay OOB);
 payoff = no their-repo patches + panels native + opens 1-NFE
 SnapFlow-style distillation of their AE. Offered to queue as a
-pre-registered CPU-mostly port — **owner reply pending, successor
-session must history-rebuild + continue the thread**.
+pre-registered CPU-mostly port — **OWNER GO 20:06:37Z ("Let's do
+it, 1 through 4")**, ack posted 20:1xZ, queued as
+`molmoact2-firstclass-port` (depth 3; opens after the rig-ft
+postprocess; pre-reg post first, parity gates falsifiable).
 
 **Done**: babysit exit 0 ×2 runs (er_60k 8 procs/4 GPUs 66–100%,
 rig_ft 4 procs/95%); orphaned queue.md/queue.json hallucinated
@@ -57,7 +59,7 @@ reply-latency class).
 
 **Next**: successor work session (armed): (1) history-rebuild the
 first-class-port thread — if the owner says go, pre-reg + queue item
-per the in-channel shape; (2) molmoact2-rig-ft-postprocess at the
+per the in-channel shape; (2) rig-ft postprocess at the
 ~20:26Z endpoint (rc → convert rung 2000 → 240-row reads vs anchors
 → results post + report + fontaine-checkpoints upload → prune
 babysit entry); (3) box @35000 boundary ~20:5xZ + legs

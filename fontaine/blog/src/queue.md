@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-10T18:05:00Z
+**Updated:** 2026-08-10T20:15:00Z
 
-**Depth call:** depth 2 open at 18:0xZ 08-10: molmoact2-rig-ft-postprocess (opens at the ~20:20Z train endpoint) + blog-space-gc-tail (manual-only). Rig fine-tune LIVE local H100 (rig_ft_r1, first-poll green); er-60k LIVE box to ~08-11 ~12:00Z endpoint -> chained panel_v2 -> paired reads vs 40k/60k banked. Lit refill lane stays owner-paused (00:23Z 08-10).
+**Depth call:** depth 3 open at 20:15Z 08-10: molmoact2-rig-ft-postprocess (rig-ft endpoint ~20:26Z, successor armed) + molmoact2-firstclass-port (owner GO 20:06:37Z, items 1-4) + blog-space-gc-tail (GC running, 913 MB, below-500 push pending). Rig fine-tune LIVE local to ~20:26Z; er-60k LIVE box to ~08-11 ~12:00Z. Lit refill lane stays owner-paused (00:23Z 08-10).
 
-**9 open** (Live 1 · Queued 2 · Blocked 6 · Done 102)
+**10 open** (Live 1 · Queued 3 · Blocked 6 · Done 102)
 
 ## 🔴 Live (1)
 
@@ -26,7 +26,7 @@ OWNER RUN LIVE (launched 22:47-53Z 08-09, unit fontaine-er-60k): fontaine_molmo2
 
 ---
 
-## 🟢 Queued (2)
+## 🟢 Queued (3)
 
 *ready — waiting on a window or a boundary*
 
@@ -53,6 +53,20 @@ Rig fine-tune rung reads + report + checkpoint upload (successor to molmoact2-ri
 <details><summary>full record</summary>
 
 Rig fine-tune rung reads + report + checkpoint upload (successor to molmoact2-rig-finetune-runbook). Train endpoint ~20:20Z 08-10 (2000 steps, unit fontaine-molmoact2-rig-ft, log ~/logs/molmoact2_rig_ft.log). IN-SESSION PROGRESS 18:3x-19:5xZ 08-10: rungs 500/1000/1500 converted + read (MAE 6.7561 / 4.66 / 3.5871 vs anchors zero-shot 28.95 &amp; state-copy 9.08 — expectation 2 MET, monotone, oracles green; HF dirs ~/checkpoints/molmoact2-so101-rig-r1-step{500,1000,1500}-hf). REMAINING: (1) verify rc=0 + final save; (2) convert step2000 via experiments/olmo/hf_model/convert_molmoact2_to_hf.py (molmoact2 venv, branch fontaine-so101-rig); (3) rung reads: uv run python fontaine/scripts/molmoact2_rig_preflight.py --model &lt;converted dir&gt; --out-stem analysis__molmoact2_rig_ft_step&lt;N&gt; — same 240 rows; pre-reg pass = beat BOTH anchors (zero-shot 28.95, state-copy 9.08 matched 1.0s window) + step-0 continuity + all motion corrs positive; (4) results post in-channel + blog results page + report on fontaine-reports (charts per house style, dark-mode); (5) best rung weights to fontaine-checkpoints same-session (standing rule); (6) prune rig_ft_r1 babysit entry; (7) runbook §5 updated with measured numbers. Contaminated-by-construction: label every read (train-frame sanity, not generalization; real eval = owner rig rollouts per runbook §3-4).
+
+</details>
+
+---
+
+**`molmoact2-firstclass-port`** · `cpu`
+
+OWNER GO 20:06:37Z 08-10 ('Let's do it, 1 through 4' on the 19:5xZ in-channel estimate): make MolmoAct2 first-class in-repo, rig-path-first
+
+**boundary:** Opens after molmoact2-rig-ft-postprocess (endpoint read is time-sensitive); ~3-4 focused sessions, items in order 1-&gt;2-&gt;3-&gt;4, each with its own parity/oracle gate before the next.
+
+<details><summary>full record</summary>
+
+OWNER GO 20:06:37Z 08-10 ('Let's do it, 1 through 4' on the 19:5xZ in-channel estimate): make MolmoAct2 first-class in-repo, rig-path-first. Scope: (1) action expert port (their nn/action_expert.py 982 LOC + backbone-AE wiring molmoact2.py 1.3k LOC) + weight load; (2) action-side prompt/processing deltas (template, state encoding, q01/q99 norm_stats) on top of bijou/molmo2 processor; (3) parity harness vs their HF forward + banked 240-row anchors (zero-shot 28.95 / state-copy 9.08) + rig-ft rung checkpoints; (4) AE fine-tune in OUR trainer, retiring the 3 train_lerobot.py patches. Backbone reused from bijou/molmo2 (byte-verified); depth/trace/sim-eval stay out-of-band. Pre-reg post first (parity gates falsifiable), CPU-mostly, GPU only for parity checks.
 
 </details>
 
