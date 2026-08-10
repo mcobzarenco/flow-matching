@@ -55,7 +55,21 @@ report; (e) methods+results blog post
 `posts/2026-08-10-molmoact2-oob-results.md`. Plus (6) 14:49Z trunk
 names on every policy → done + re-uploaded (Gemma-4-E2B vs
 Molmo2-4B vs Molmo2-ER mapping posted); full-50 bbox-2 exclusion
-effect table added (~−0.07 per arm).
+effect table added (~−0.07 per arm). LATE THREAD 15:0x: (7) owner
+"Let's skip 2" → draws10 eval CANCELLED pre-launch, 0 GPU-h, queue
+item closed; (8) report downloaded instead of rendering in Firefox
+→ root cause: first 10.5 MB upload auto-tracked as LFS → CDN
+redirect; fixed by trimming gallery 32→24 (8.3 MB) + stripping the
+per-path LFS rule from .gitattributes + re-upload as regular blob —
+now direct `200 text/html`; (9) **navbar broke AGAIN** → my
+`fontaine-blog-migrate` retry unit's split commits were landing
+DELETE chunks (toc/searchindex/reports) while add chunks bounced on
+the cap — each 10-min retry re-deleted the sidebar. **Unit
+STOPPED** (do not re-arm any auto-pusher against the capped Space);
+toc restored at the referenced path (200). Measured: cap headroom
+≈1.4 MB (998.6 MB of 10⁹ un-GC'd) — search stays broken (14 MB
+index) until HF GC clears; offered the owner delete+recreate of the
+blog Space as the clean escape if GC hasn't run by tomorrow.
 
 **Done**: molmoact2-oob-panel-eval CLOSED (commits 00a9feb, b6cc2a7,
 this one): pre-reg finalized (immutable + Amendment 1), smoke green
@@ -73,18 +87,19 @@ reports.md section added, numbers in-channel 14:37Z. @25000 box
 boundary caught + legs banked. babysit ×3 exit 0; sweep babysit
 entry pruned.
 
-**Next**: `queue_cli.py next` → `snapflow80k-draws10-panel-eval`
-(owner 14:33Z request; pin the exact draws10-heun30 invocation from
-the goldenticket/stablekey launcher class, post the launch note,
-launch on the free local H100 ~8–12 GPU-h, then add the row to
-reads+report and re-post). er_60k rides to endpoint ~08-11 ~12:00Z
-→ chained panel_v2 → paired CI95 vs banked 40k (6.0079) + 60k-cont
-(5.8602); boundaries @30000 ~17:4xZ then @35000 ~20:4xZ 08-10.
-Blog push+squash lands via `fontaine-blog-migrate` when HF GC
-clears → next session verifies (site nav + reports stubs + squash +
-the results post going live) and posts the all-clear. If the owner
-wants a base-MolmoAct2 second arm or a dataset-repo mirror of
-reports, both are pre-scoped one-command adds.*
+**Next**: `queue_cli.py next` → depth 0 with stated reason
+(draws10 owner-cancelled; lit pause + owner-gated tail; queue.json
+canonical). er_60k rides to endpoint ~08-11 ~12:00Z → chained
+panel_v2 → paired CI95 vs banked 40k (6.0079) + 60k-cont (5.8602);
+boundaries @30000 ~17:4xZ then @35000 ~20:4xZ 08-10. BLOG-SPACE
+TAIL (manual only — the retry unit is stopped and must NOT be
+re-armed): each session, check `usedStorage` (`repo_info` expand);
+when it drops below ~500 MB, do ONE `upload_folder` of the current
+book (delete_patterns searchindex/toc/reports) + `super_squash` +
+curl-verify nav/search/stubs + post the all-clear; if still capped
+by ~08-11 morning, ask the owner for the delete+recreate go (offered
+15:2xZ). If the owner wants a base-MolmoAct2 second arm or a
+dataset-repo mirror of reports, both are pre-scoped adds.*
 
 *Updated 2026-08-10 11:59–12:2xZ (real `date -u` at write: 12:13) —
 tick (babysit): **OWNER GO on the MolmoAct2 plan, 20 s before

@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-10T15:05:00Z
+**Updated:** 2026-08-10T15:20:00Z
 
 **Depth call:** depth 1 open at 15:0xZ 08-10 (STATED REASON for <2: owner lit-pause steering 00:23Z 08-10 suspends the refill lane; molmoact2-oob-panel-eval closed DELIVERED this session and every remaining item is owner-gated/blocked — fjoint finalize on owner go ~08-12 post-er-endpoint, vu5k/actckpt/img280/docs-tail/box-home-sweep all blocked or owner_hold). Work supply is run-boundary-driven: er-60k babysat to ~08-11 ~12:00Z endpoint -> chained panel_v2 -> paired reads vs 40k/60k banked panels; blog-Space squash lands via unit fontaine-blog-migrate when HF storage GC clears (next session verifies + posts). Local GPU free again 14:24Z — next local launch needs a fresh pre-reg (T2 depth rung and tiny decode microbench remain the named candidates, not yet pre-registered).
 
-**8 open** (Live 1 · Queued 1 · Blocked 6 · Done 100)
+**7 open** (Live 1 · Queued 0 · Blocked 6 · Done 101)
 
 ## 🔴 Live (1)
 
@@ -26,23 +26,11 @@ OWNER RUN LIVE (launched 22:47-53Z 08-09, unit fontaine-er-60k): fontaine_molmo2
 
 ---
 
-## 🟢 Queued (1)
+## 🟢 Queued (0)
 
 *ready — waiting on a window or a boundary*
 
-**`snapflow80k-draws10-panel-eval`** · `gpu-local`
-
-OWNER REQUEST 14:33Z 08-10 (recovered 15:0xZ after the babysit-grep consume miss): full-panel mean-of-10-draws heun-30 eval for snapflow 80k (bijou_flow_artrunk_h1024_40k_ddp2 step_080000, local checkpoint on disk) -&gt; its row joi…
-
-**boundary:** local H100 free; launch from the next work/tick session with enough runway to pin flags carefully (this session ended at its hard-kill budget). Owner objection window open since the 15:0xZ message. · [pre-reg](posts/2026-08-10-prereg-molmoact2-oob-panel.md)
-
-<details><summary>full record</summary>
-
-OWNER REQUEST 14:33Z 08-10 (recovered 15:0xZ after the babysit-grep consume miss): full-panel mean-of-10-draws heun-30 eval for snapflow 80k (bijou_flow_artrunk_h1024_40k_ddp2 step_080000, local checkpoint on disk) -&gt; its row joins the MolmoAct2 3-policy report + reads. NOT banked at full panel (only the 2,458-frame drawsprobe_s7 subset exists; top-10-tickets is mean-of-10 over SEARCHED tickets, different config). EXECUTE: (1) pin the exact eval invocation from the goldenticket/stablekey launcher class (plain draws10, heun30, panel_curated_v0_k4l2 plan, stable noise seeds per the draws-fairness convention) as a short pre-reg note (record-only, owner-requested); (2) launch on local H100 via run_detached unit + babysit entry (est ~8-12 GPU-h at 10x decode of the ~1.3 GPU-h single-draw class; sanity-check the first-poll rate); (3) on rc=0 add BASELINES entry to molmoact2_panel_reads.py + DISPLAY to molmoact2_panel_report.py, rerun reads (oracle green) + report, re-upload, post updated numbers in-channel. Owner told 15:0xZ it launches tonight unless they object. PREREG NOTE: rides the molmoact2-oob pre-reg's report spec (owner-directed row add); a short launch note with the exact pinned invocation posts in-channel before the GPU minute, per charter.
-
-</details>
-
----
+*(empty)*
 
 ## 🟡 Blocked (6)
 
@@ -130,7 +118,7 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 
 ---
 
-## ✅ Done (100)
+## ✅ Done (101)
 
 *closed — the full record stays in each fold*
 
@@ -1529,6 +1517,20 @@ OWNER STEERING 10:50Z+11:06Z 08-10: MolmoAct2 (allenai/MolmoAct2-SO100_101) out-
 <details><summary>full record</summary>
 
 OWNER STEERING 10:50Z+11:06Z 08-10: MolmoAct2 (allenai/MolmoAct2-SO100_101) out-of-band eval on the k4l2 panel. Deep implementation read DONE + in-depth plan posted (posts/2026-08-10-molmoact2-oob-eval-plan.md, in-channel 11:38Z): 30-step/1.0s chunk at native fps vs our 50-step/1.67s -&gt; matched-window (steps 0-29) re-pool of banked npzs is the primary read; their predict_action end-to-end (q01/q99 norm from checkpoint norm_stats.json); contamination measured 245/878 panel repos = 31.0% core frames -&gt; pooled/clean/contaminated splits. EXECUTE: (1) FINALIZE the pre-reg (the plan post is the registered sketch; finalization adds frames, seeds, abort oracles, immutability stamp) BEFORE any GPU minute; (2) predictor script molmoact2_panel_predict.py + oracle-gated matched-window reads instrument; (3) 500-frame stratified smoke + scale sanity; (4) full 25,800 sweep (systemd unit) after smoke green + owner objection window; (5) OWNER GO 11:59Z 08-10 ('plan sounds good, let's eval the so101 checkpoint'): side-by-side HTML report REQUIRED — same frames, three policies per frame: snapflow 80k (bijou_flow_artrunk@80k banked panel npzs: top-10-tickets 5.1847 headline + stable-key single-draw 6.5997) vs MolmoAct2 vs state-copy, plus summary-stats block (pooled/clean-633/contaminated-245, paired CI95, chunk+first MAE, matched 30-step window primary, 50-step secondary); reports page + in-channel numbers. Gate &lt;= 8 GPU-h (est 2-5). Record-only: nothing gates or repoints our runs.
+
+</details>
+
+---
+
+**`snapflow80k-draws10-panel-eval`** · `gpu-local`
+
+OWNER REQUEST 14:33Z 08-10 (recovered 15:0xZ after the babysit-grep consume miss): full-panel mean-of-10-draws heun-30 eval for snapflow 80k (bijou_flow_artrunk_h1024_40k_ddp2 step_080000, local checkpoint on disk) -&gt; its row joi…
+
+**boundary:** OWNER SKIP 15:01:04Z 08-10 ('Let's skip 2') — cancelled before launch, 0 GPU-h spent; the heun-30 single-draw row (zero-GPU) covers the single-draw reference in the report. Reopen only on explicit owner ask. · [pre-reg](posts/2026-08-10-prereg-molmoact2-oob-panel.md)
+
+<details><summary>full record</summary>
+
+OWNER REQUEST 14:33Z 08-10 (recovered 15:0xZ after the babysit-grep consume miss): full-panel mean-of-10-draws heun-30 eval for snapflow 80k (bijou_flow_artrunk_h1024_40k_ddp2 step_080000, local checkpoint on disk) -&gt; its row joins the MolmoAct2 3-policy report + reads. NOT banked at full panel (only the 2,458-frame drawsprobe_s7 subset exists; top-10-tickets is mean-of-10 over SEARCHED tickets, different config). EXECUTE: (1) pin the exact eval invocation from the goldenticket/stablekey launcher class (plain draws10, heun30, panel_curated_v0_k4l2 plan, stable noise seeds per the draws-fairness convention) as a short pre-reg note (record-only, owner-requested); (2) launch on local H100 via run_detached unit + babysit entry (est ~8-12 GPU-h at 10x decode of the ~1.3 GPU-h single-draw class; sanity-check the first-poll rate); (3) on rc=0 add BASELINES entry to molmoact2_panel_reads.py + DISPLAY to molmoact2_panel_report.py, rerun reads (oracle green) + report, re-upload, post updated numbers in-channel. Owner told 15:0xZ it launches tonight unless they object. PREREG NOTE: rides the molmoact2-oob pre-reg's report spec (owner-directed row add); a short launch note with the exact pinned invocation posts in-channel before the GPU minute, per charter.
 
 </details>
 
