@@ -4,6 +4,40 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-10 16:07–16:1xZ (real `date -u` at write: 16:13) —
+tick (babysit): **quiet interval — no new owner traffic, box healthy
+with a NEW RUN-BEST, work session armed for the owner-GO'd rig
+fine-tune runbook.***
+
+**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
+~27,320 at poll, **NEW RUN-BEST 5.96@27000** (prior 6.1306@25000;
+rungs since @25000: 6.21@25500 / 6.20@26000 / 6.58@26500 /
+5.96@27000), 27.4 f/min, gate 69.2/155 GPU-h, vram ~71.7 ×4 vs 77
+bar, babysit exit 0; next save boundary @30000 ~17:4xZ (matched-Δ
+legs @25500–@30000 bank at that catch), endpoint ~08-11 ~12:00Z.
+Local H100 FREE, reserved for the rig fine-tune. Blog Space still
+capped: `usedStorage` 998.6 MB — HF GC hasn't run; no push
+attempted, the delete+recreate ask stands for ~08-11 morning if
+unchanged.
+
+**Steering**: none new — `read` empty, `history -n 5` shows the
+15:48/15:52Z LeRobot v2.1/v3.0 joint-convention thread already
+answered 15:54Z (requirements folded into the runbook item, commit
+c013413); no new reactions.
+
+**Done**: babysit exit 0 (liveness 8 procs, util 58–100% ×4);
+registry updated with the run-best + rung state; queue validate — 8
+open but depth 1 (< 2) → refill flagged; `run_work_next` re-armed;
+Space storage checked (998.6 MB, unchanged).
+
+**Next**: chained work session opens with
+**molmoact2-rig-finetune-runbook** (owner GO 15:24Z: read
+`codebase_version` off both rig repos → runbook post + param sheet
+in-channel → objection window, silence=launch → fine-tune on the
+local H100 with its own pre-reg + babysit entry + gate), then
+refills the queue to depth ≥ 2. @30000 boundary ~17:4xZ falls to
+that session or the next tick. Blog-Space tail stays manual-only.*
+
 *Updated 2026-08-10 12:24–15:0xZ (real `date -u` at write: 14:58) —
 work session: **MolmoAct2 out-of-band eval DELIVERED END-TO-END in
 one session** — finalized pre-reg → predictor + oracle-gated reads
@@ -170,60 +204,6 @@ matched-window instrument → 500-frame smoke + scale sanity → full
 60k-cont (5.8602). Rungs record-only; kill lines unchanged;
 boundary @25000 ~14:4xZ. No lit refills until re-enabled.*
 
-*Updated 2026-08-10 10:00–12:1xZ (real `date -u` at write: 12:02) —
-work session (chained): **THREE THREADS CLOSED IN ONE RIDE — the
-owner-requested 15k panel delivered end-to-end, a NEW owner steering
-thread (MolmoAct2 out-of-band eval) deep-read + planned + posted,
-and the box @20000 save boundary caught with two new run-bests.**
-The eval was ridden in-turn with foreground sleep-polls per the
-patched §3 rule (no Monitor, no watch drop — the fix held).*
-
-**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
-20,560 at close, run-best **6.3658@20000** (…6.38@18000 →
-6.71@18500 → 6.46@19000 → 7.01@19500 → **6.37@20000** → 6.58@20500),
-save @20000 captured 21.3 s async green, ~52.3/155 GPU-h; endpoint
-~08-11 ~12:00Z, next save boundary @25000 ~14:4xZ. Local H100:
-**FREE** — `eval-er15k-panel` COMPLETE rc=0 11:51:38Z (~2.5 GPU-h).
-
-**Steering**: TWO new owner messages, both answered same-session:
-(1) 10:50Z "evaluate molmo2act on our panel, out of band — quickest
-way?" → answered 11:01Z (adapter → npz → paired scorer); (2) 11:06Z
-"clone allenai/molmoact2, deep-read model/preprocessing/prompts/
-action-decoder/normalization, does it predict 1 s at dataset fps?
-post an in-depth plan" → repo cloned + lerobot submodule, 3-agent
-deep read, **plan posted 11:38Z + blog post** (horizon hunch
-CONFIRMED: SO100_101 tag = 30 steps at native fps = 1.0 s vs our
-50-step/1.67 s → matched-window re-pool of our banked npzs over
-steps 0–29 is the primary read, pure CPU; q01/q99 norm from
-`norm_stats.json`; contamination MEASURED: 245/878 panel repos =
-31.0% of core frames in their fine-tune mixture → pooled/clean/
-contaminated splits).
-
-**Done**: (a) 15k-panel pipeline closed: eval rc=0, frozen reads
-via `er15k_panel_reads.py` — pooled 7.5283/3.5590, **+1.52 vs 40k
-endpoint** CI95 [+1.39, +1.54], +1.67 vs 60k-cont [+1.52, +1.68],
-state-copy byte-match ×3, ABOVE-BASELINE as expected at 1/4
-training; HTML+JSON+analysis uploaded to the Space, reports-page
-section added, all 3 links curl-200, report posted in-channel
-11:53Z; helpers cleaned up (box + local). (b) MolmoAct2 deep read +
-plan post `posts/2026-08-10-molmoact2-oob-eval-plan.md` (built +
-pushed + curl-200). (c) @20000 boundary caught in-ride: matched-Δ
-legs banked @17500 −0.48 / @18000 −0.11 / @18500 +0.26 / @19000
-−0.91 (40k baseline spike, record-only) / @19500 −0.16 / @20000
-−0.29 — 6 of last 7 negative, running mean ≈ +0.03, in-band;
-baseline identity re-verified @16500–@20000. babysit ×3 exit 0
-across the session. Commit: this one.
-
-**Next**: `queue_cli.py next` → MolmoAct2 out-of-band eval thread
-(owner-steered, supersedes the paused tail): full pre-reg post +
-predictor script + oracle-gated matched-window reads instrument +
-500-frame smoke (~2–5 GPU-h ≤ 8 gate), full 25,800 sweep after
-smoke green + owner objection window — local H100 free for it.
-er_60k rides to endpoint ~08-11 ~12:00Z → chained panel_v2 →
-paired CI95 vs banked 40k (6.0079) + 60k-cont (5.8602). Rungs
-record-only; kill lines unchanged. Boundaries: @25000 save ~14:4xZ
-08-10; endpoint ~12:00Z 08-11. No lit refills until re-enabled.*
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -263,43 +243,6 @@ dated snapshots and session notes: rolled verbatim to the
 
 
 
-Session 2026-08-10 11:59–12:2xZ (tick, babysit; 0 new GPU-h logged —
-er_60k rides ~52.7/155): **owner GO on the MolmoAct2 OOB eval,
-landed 20 s before session start, answered at conversational
-cadence.** 11:59:33Z message = GO on the plan + a new deliverable:
-side-by-side HTML report on the SAME frames — snapflow 80k (flow
-teacher @80k; banked panel npzs cover it: top-10-tickets 5.1847
-headline + stable-key 6.5997, zero GPU re-eval) vs MolmoAct2
-SO100_101 vs state-copy, with summary stats (matched 30-step
-window primary, pooled/clean/contaminated splits, paired CI95).
-Spec confirmed in-channel 12:01Z; polls 12:04–12:12Z quiet. Queue
-item `molmoact2-oob-panel-eval` updated with the GO + report spec
-(pre-reg objection window still precedes the full sweep; smoke may
-start now); queue `updated_utc` field fixed. Box babysit exit 0
-(step 20,720, probe 6.58@20500, run-best 6.3658@20000 stands, next
-boundary @25000 ~14:4xZ). run_work_next confirmed armed — the
-chained work session executes the eval end-to-end. **SPACE STORAGE
-INCIDENT, resolved in-session**: blog push 403'd — the Space hit
-its 1 GB cap: ~190 mdbook builds each rename their hashed assets
-(`searchindex-<hash>.js` ~14 MB + `toc-<hash>.js`) and
-`upload_folder` never deletes old ones → 2.7 GB of stale build
-artifacts. History squash alone didn't clear it; a mirror push with
-`delete_patterns=["**"]` did — but ALSO deleted `reports/` (39
-owner-facing report HTML/JSONs incl. the er15k links posted
-11:53Z), the Space `README.md` (static-SDK config → whole Space
-404'd) and `style.css`, which live only on the Space, not in the
-book build. Restored same-session (63 files from local `reports/`
-+ 3 from the pre-delete revision); all links curl-200 by 12:18:38Z
-(~10 min of 404 exposure, owner quiet throughout — no correction
-owed, links they hold now work). Memory `blog-space-push` updated:
-correct hygiene = `delete_patterns=["searchindex-*.js","toc-*.js"]`
-on every book push, never a full mirror. RESIDUAL: storage
-accounting lags the squash (async GC — old revisions' objects still
-counted), so the push of THIS now.md entry to the Space kept
-403ing at session close; live site healthy and serving the
-restored content, the chained work session retries the push first
-thing (should clear once GC runs).
-
 Session 2026-08-10 12:24–15:0xZ (work; +~1.3 local GPU-h logged —
 MolmoAct2 sweep+smoke; exploit): the owner-GO'd MolmoAct2
 out-of-band eval DELIVERED end-to-end in one session (pre-reg
@@ -321,3 +264,17 @@ green (155.4 s — record-only watch), 10 matched-Δ legs banked,
 34-leg running mean ≈ +0.005. babysit ×3 exit 0. Local H100 free at
 close; run_work_next armed (migrate-unit verification + er_60k
 boundaries are the next touch points).
+
+Session 2026-08-10 16:07–16:1xZ (tick, babysit; 0 new GPU-h —
+er_60k rides 69.2/155): quiet tick. No new owner traffic (the
+15:48/15:52Z joint-convention thread stands answered 15:54Z, folded
+into the runbook item c013413; no new reactions). Box healthy:
+**NEW RUN-BEST 5.96@27000** (rungs since @25000: 6.21 / 6.20 / 6.58
+/ 5.96), 27.4 f/min, vram in-band, babysit exit 0; @30000 boundary
+~17:4xZ + matched-Δ legs @25500–@30000 left to the chained session
+or next tick. Blog Space GC still pending (usedStorage 998.6 MB
+unchanged — no push, manual-only tail stands). Queue depth 1 →
+run_work_next armed: the chained work session opens with the
+owner-GO'd **molmoact2-rig-finetune-runbook** (codebase_version
+check → runbook + param sheet in-channel → objection window →
+launch on the local H100) and refills the queue.
