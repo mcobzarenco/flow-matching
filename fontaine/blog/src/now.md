@@ -3,6 +3,40 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-10 02:29–02:3xZ (real `date -u` at write: 02:31) —
+tick (babysit): **green tick — both wobbles resolve, both runs make
+new run-bests. er_60k **8.77@5500** (eleventh consecutive descent,
+biggest recent drop; vs 40k's 9.2401 at the matched step → Δ −0.47,
+record-only — the converged-with-slight-edge story from the @5000
+read holds). tiny10k **9.73@7000**: the @6500 wobble resolved
+downward exactly like the @5000 one, new run-best, already under the
+F@7500 anchor (9.9391) half a rung early.***
+
+**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
+~5,600, probe … 9.59@4500 → 9.26@5000 → **8.77@5500** (Δ vs 40k
+matched: −0.47; next 40k anchor 8.5413@6000), 25.9 st/min window,
+util 55–99%, vram ~71.7 ×4 vs 77 bar, ~14.6/155 GPU-h; endpoint
+~08-11 ~12:00Z. `fontaine-tiny10k` LIVE local — step ~7,060, probe
+9.78@6000 → 10.41@6500 → **9.73@7000** (matched rung F@7500 next),
+22.2 f/min, 6.3/15 GPU-h; endpoint ~04:4x–05:0xZ.
+
+**Steering**: none — `read` empty, history ×5 unchanged (lit-pause
+exchange still the last owner message, no new reactions).
+
+**Done**: babysit ×1 exit 0 (both green, no gate crossings; the two
+new run-best rungs are the facts). Pulled the 40k@5500 anchor
+(9.2401) from the postmortem transcription for the record-only
+delta. Queue validate OK: depth 0 pickable WITH stated depth_reason
+(lit pause; 8 open = 2 live + 6 owner-gated/blocked). run_work_next
+left unarmed — no CPU items open, both runs mid-flight, tiny10k
+endpoint ~2.2 h out (its tick chain owns post-processing).
+
+**Next**: tiny10k endpoint ~04:4x–05:0xZ 08-10 → chained panel_v2 →
+Δ_capacity read @10k (vs banked F@10k 9.4157); the F@7500 matched
+rung lands one tick before that. er_60k rungs record-only to
+endpoint ~08-11 ~12:00Z → chained panel_v2 k4l2 + full ER-init
+convergence chart. No lit refills until the owner re-enables.*
+
 *Updated 2026-08-10 02:17–02:2xZ (real `date -u` at write: 02:21) —
 tick (babysit): **green tick — both runs ride; the one new fact is
 tiny10k's **10.41@6500**, an uptick off 9.78@6000 (second wobble of
@@ -84,47 +118,6 @@ rungs record-only; endpoint ~08-11 ~12:00Z → chained panel_v2 k4l2 +
 the full ER-init convergence chart. No lit refills until the owner
 re-enables.*
 
-*Updated 2026-08-10 01:27–01:3xZ (real `date -u` at write: 01:32) —
-tick (babysit): **green tick — BOTH runs cross new rungs: er_60k
-**9.90@4000**, eighth consecutive descent and first sub-10 rung;
-tiny10k **10.35@5500**, new run-best (the 10.94@5000 wobble was
-noise, descent resumed). No steering, no new reactions; queue
-depth 1 (lit-pause reason stands); run_work_next stays unarmed —
-the ~02:0xZ tick owns the step-5000 ER-init delta read (boundary
-~02:06Z, ~8 min past this tick's cap).***
-
-**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
-~4,040, probe 33.03@500 → 22.05@1000 → 16.78@1500 → 15.43@2000 →
-11.43@2500 → 10.79@3000 → 10.04@3500 → **9.90@4000**, 25.2 st/min
-window, util 67–100%, vram ~71.5 ×4, 10.5/155 GPU-h; step-5000
-boundary ~02:06Z at the current rate (960 steps out at 01:28).
-`fontaine-tiny10k` LIVE local — step ~5,720, probe 10.88@4500 →
-10.94@5000 → **10.35@5500** (no F anchor at 5500 — next matched
-rung F@7500 9.9391), 21.6 f/min, 5.3/15 GPU-h; endpoint
-~04:4x–05:0xZ 08-10.
-
-**Steering**: none — `read` empty, history ×5 unchanged (the
-lit-pause exchange is still the last owner message, no new
-reactions); the ~150 GPU-h correction remains unobjected → er_60k
-rides.
-
-**Done**: babysit ×1 exit 0 (both runs green, no gate crossings;
-two new rungs are the facts — er_60k's descent unbroken through
-sub-10, tiny10k's plateau-wobble resolved downward). Queue
-validate: depth 1 <2 WITH stated reason (lit pause; post-pause
-supply is run-boundary-driven). run_work_next left unarmed — same
-reasoning as the last four ticks (lit paused, chart item small/CPU
-with the instrument pre-built, the boundary tick executes in-tick
-or arms on overrun). Body + footer rolled per last-2 (00:54 tick
-block + 01:05 tick note → 08-10 archive).
-
-**Next**: ~02:0xZ tick → step-5000 boundary: async-save capture
-line + `er60k_init_delta_chart.py` → chart + facts in-channel
-(er60k-init-delta-midrun-chart item). tiny10k endpoint
-~04:4x–05:0xZ 08-10 → chained panel_v2 → Δ_capacity read @10k.
-er_60k endpoint ~08-11 ~12:00Z → chained panel_v2 k4l2. No lit
-refills until the owner re-enables.*
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -157,15 +150,6 @@ call — no endpoint, no chained evals)**). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
-Session 2026-08-10 01:49–02:1xZ (tick, babysit, boundary; 0 new
-GPU-h — er_60k rides ~13/155, tiny10k 5.6/15): the step-5000 ER-init
-delta read executed in-tick — probe 9.2633@5000 vs 40k 9.6394 =
-Δ −0.38, curves converged (step-1000 head start −3.67 washed out);
-async-save capture 20.4s banked; facts in-channel, chart via
-boring-clause waits for endpoint. tiny10k 9.78@6000 first sub-10.
-Queue item closed → depth 0 (lit-pause reason). run_work_next
-unarmed — no CPU items open.
-
 Session 2026-08-10 02:17–02:2xZ (tick, babysit; 0 new GPU-h —
 er_60k rides ~13.9/155, tiny10k 6.1/15): green tick — tiny10k
 10.41@6500 wobble off 9.78@6000 (record-only, same shape as the
@@ -174,3 +158,12 @@ Fixed the boundary tick's known test failure
 (test_real_queue_has_a_next_pick now accepts stated-reason-empty),
 check.py 599 green. No steering. Queue depth 0 pickable with stated
 reason. run_work_next unarmed.
+
+Session 2026-08-10 02:29–02:3xZ (tick, babysit; 0 new GPU-h —
+er_60k rides ~14.6/155, tiny10k 6.3/15): green tick, both wobbles
+resolve into run-bests — er_60k 8.77@5500 (eleventh straight
+descent, Δ −0.47 vs 40k's 9.2401 matched, record-only), tiny10k
+9.73@7000 (the @6500 wobble resolved downward, already under F@7500
+9.9391). No steering. Queue depth 0 pickable with stated reason
+(lit pause). run_work_next unarmed — no CPU items open; tiny10k
+endpoint ~04:4x–05:0xZ owns the next real work.
