@@ -34,7 +34,15 @@ and finish it; leave the rest queued. Repo `~/flow-matching`, branch
    at every launch) — the poll at every babysit checkpoint, not only
    at boot/end, is the point (class fix
    2026-08-06: two owner messages sat unseen ~70 min inside a long
-   session that held the lock through a boundary). If the owner starts
+   session that held the lock through a boundary). **Riding a job to
+   completion (an eval, an upload, a boundary) is IN-TURN work**:
+   block on foreground sleep-polls / until-loops (single commands may
+   run up to 1 h). NEVER end the turn expecting a Monitor or
+   background-task notification to re-invoke the session — sessions
+   die at turn completion and teardown kills their background tasks
+   (class failure 2026-08-10 09:5xZ: work session armed a Monitor on
+   the 15k-panel eval, ended its turn, watch silently dropped; fourth
+   incident of this class, see memory). If the owner starts
    chatting mid-session, conversational mode applies (tick prompt
    §2): reply promptly and sleep-poll the channel at 30–120 s while
    the exchange is live — steering outranks the task in hand.

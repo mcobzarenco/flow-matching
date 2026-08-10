@@ -1,6 +1,55 @@
 # Now
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-10 09:53–10:0xZ (real `date -u` at write: 09:56) —
+tick (babysit): **WATCH-DROP CAUGHT + FIXED AT SOURCE — the 09:50
+chained work session armed a background Monitor on the 15k-panel
+eval and ended its turn; turn-end teardown killed the monitor and
+silently dropped the watch** (4th incident of the no-end-turn
+class, this time via the Monitor tool's "you'll be re-invoked"
+contract, which does NOT hold for one-shot driver sessions). The
+eval itself was never at risk (systemd unit): 4,832/25,800 frames
+at 09:56, ~210 f/min → ETA ~11:35–11:45Z, matching what the owner
+was told, so no in-channel correction owed. Fix: `run_work_next`
+RE-ARMED, and the failure class is patched at source —
+`prompts/work.md` §3 now states riding a job is IN-TURN work
+(foreground sleep-polls only, never end the turn on a
+Monitor/notification), memory + babysit.toml updated.*
+
+**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
+17,400 at poll, run-best **6.6319@16500**, latest rung
+7.0462@17000 (Δ −0.49, second negative leg, running mean ≈ +0.14
+in-band), 20.8 f/min over a noisy 2-min window (util 68–100% ×4),
+vram ~71.7 ×4 vs 77 bar, ~44.3/155 GPU-h; endpoint ~08-11
+~12:00Z. Local H100: `eval-er15k-panel` LIVE, 4,832/25,800 at
+09:56, ETA ~11:3x–11:4xZ.
+
+**Steering**: none new — `read` empty, history ×5 our own posts +
+the executed 08:29Z request, no new reactions. Lit pause
+unchanged.
+
+**Done**: babysit exit 0 (liveness 8 procs, gate 44.3/155).
+**Watch-drop incident diagnosed from the 09:50 work-session log**
+(monitor task `status: killed` at turn end) and fixed at source:
+work prompt §3 hard rule + no-end-turn memory 4th-incident
+addendum + babysit.toml boundary note. `run_work_next` re-armed —
+the chained session takes the eval watch back, in-turn this time.
+Queue validate OK depth 0 pickable with stated reason (lit pause
++ owner-gated tail), 7 open.
+
+**Next**: chained work session (foreground sleep-polls, ~30-min
+babysit checkpoints): (1) ride `eval-er15k-panel` to rc=0
+~11:4xZ, (2) frozen reads vs banked 40k endpoint 6.0079 +
+60k-cont 5.8602 npz, (3) post HTML report link + reports page,
+(4) clean up ~/hf_up_er15k.py (box), ~/hf_dl_er15k.py,
+~/eval_er15k_panel.sh, (5) catch the @20000 save boundary ~11:3xZ
+(async-save fact + rung + Δ leg). er_60k rides to endpoint ~08-11
+~12:00Z → chained panel_v2 → paired CI95 vs banked 40k (6.0079) +
+60k-continuation (5.8602). Rungs record-only; kill lines
+unchanged. Credits: watch for 429 recurrence (resetsAt Aug 15
+22:00Z). No lit refills until re-enabled.*
 
 *Updated 2026-08-10 09:37–10:0xZ (real `date -u` at write: 09:49) —
 tick (babysit): **15k-panel first-poll done + ETA corrected in-channel
@@ -52,72 +101,6 @@ endpoint ~08-11 ~12:00Z → chained panel_v2 → paired CI95 vs banked
 lines unchanged. Credits: watch for 429 recurrence (resetsAt Aug 15
 22:00Z stamp; headroom = owner top-up). No lit refills until
 re-enabled.*
-
-
-
-
-
-*Updated 2026-08-10 09:14–09:3xZ (real `date -u` at write: 09:21) —
-tick (babysit): **owner steering 08:29Z executed — er_60k @15000
-checkpoint → hub → local panel_v2 → HTML report.** Weights-only
-upload (backbone/expert/prompt safetensors + config, ~10.5G)
-launched 09:18Z on the box as transient unit `hf-up-er15k` →
-`fontaine-checkpoints/fontaine_molmo2_er_60k_ddp4/step_015000`;
-**run_work_next ARMED** — the chained work session watches the
-upload, downloads locally, runs panel_v2 k4l2 `--report` on
-step_015000 (local GPU free since 05:45Z), posts the HTML link
-in-channel. Ack + plan + ETA (~2–3 h) posted 09:17Z. **CREDITS
-OUTAGE**: ticks 08:28 / 08:42 / 08:52 / 09:03 all died on an
-out-of-credits 429 (the 08:42 harness alert); 09:14Z is the first
-surviving session — the run was never at risk, owner told
-in-channel. Two rungs banked from the outage window: 7.3267@15500
-(Δ +0.45 vs 6.8736) and 7.0094@16000 (Δ +0.37 vs 6.6439) — fifth
-and sixth positive legs in a row, running mean ≈ +0.21, still
-inside the ~±0.8 wobble; endpoint panel decides.*
-
-**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
-16,380 at poll, probe … 6.8543@13000 → 7.15 → 7.37 → 7.42 →
-6.9230@15000 → 7.3267@15500 → **7.0094@16000**, 27.1 f/min window,
-vram ~71.7 ×4 vs 77 bar, ~41.7/155 GPU-h; endpoint ~08-11 ~12:00Z.
-Box also carries upload unit `hf-up-er15k` (CPU/network only).
-Local GPU free — reserved for the owner-requested step_015000
-panel_v2 (chained session).
-
-**Steering**: **08:29Z owner**: "copy the 15k checkpoint … to the
-hub, then download it on your local machine, run the eval panel
-and post html report link here" — acknowledged 09:17Z (delay =
-credits outage, explained in the ack), execution in flight per
-Status. Lit pause unchanged.
-
-**Done**: babysit exit 0 (liveness 8 procs, util 58–97% at snapshot,
-window 27.1 f/min healthy). Diagnosed the exit-1 harness alert:
-four ticks 08:28–09:03 killed by out-of-credits 429 (log tails all
-show `api_error_status: 429`), not auth — first surviving session
-09:14Z. @15500 + @16000 matched-Δ legs banked record-only
-(baseline values pulled from the verified ar_40k box log). Hub
-upload unit launched + verified active ~6 s. babysit.toml
-rung-state block refreshed (new legs + upload-in-flight + outage
-note). Queue validate OK depth 0 pickable (lit pause + owner-gated
-tail), 7 open. **run_work_next ARMED** (owner-requested panel
-pipeline is the work item).
-
-**Next** (pipeline ran ahead of plan in-tick: upload DONE 09:18:58Z
-in 43 s [hub commit cb05e71, 4 files verified], local download DONE
-09:23:27Z in 16 s [9.1G], **panel_v2 LIVE** on the local H100 as
-unit `eval-er15k-panel` since 09:3xZ — verbatim er_60k endpoint
-eval at 1 rank, ~1–1.5 h wall; progress posted 09:3xZ): chained
-work session: (1) first-poll util check on the eval, (2) watch to
-rc=0, (3) frozen reads vs banked 40k endpoint (6.0079) +
-60k-continuation (5.8602) npz, (4) post HTML report link
-in-channel + reports page per standing rule, (5) clean up the
-ad-hoc helpers (~/hf_up_er15k.py on box, ~/hf_dl_er15k.py,
-~/eval_er15k_panel.sh). er_60k rides to endpoint
-~08-11 ~12:00Z → chained panel_v2 → paired CI95 vs banked 40k
-(6.0079) + 60k-continuation (5.8602). Rungs record-only; kill
-lines unchanged. Next save boundary @20000 ~11:3xZ. Watch credits:
-if 429s recur, sessions die again — resetsAt stamp says Aug 15
-22:00Z, so current headroom is whatever the owner topped up. No
-lit refills until re-enabled.*
 
 ## Utilization footer
 
