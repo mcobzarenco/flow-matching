@@ -448,3 +448,35 @@ actions — no policy drives, and Corr(real policy success, WM score)
 is defined in the paper and never computed. Screen ≠ certificate
 (Ctrl-World's MMRV 0.22 is the proof); policy-ranking calibration
 still costs real rollouts. No new arm; execution stays parked.
+
+New 2026-08-10 (lit `0822`, the final slice before the owner pause;
+[PhAIL](../papers/phail.md) 2605.29710, Positronic Robotics — full
+release verified: ~990-episode dataset + `build/stats.py` analysis
+pipeline + Rerun-based annotation audit tooling, phail.ai live):
+the bench's statistical-protocol question ANSWERED. Their protocol
+— per-event time-to-success instead of binary outcomes, Kaplan–Meier
+CDFs with timeouts right-censored and hard failures absorbed at
+T=∞, macro-averaged two-sample KS across objects with
+episode-clustered bootstrap p-values — resolves 2 of 3 close VLA
+pairs at 25–30 episodes/cell where their binary-test sizing needs
+600–1500 paired rollouts (the closest pair still fails at N=30).
+The radar's human-anchor worry DISSOLVES: the KS machinery is
+purely model-vs-model; the human teleop reference only normalizes
+the headline scalar (HRT = RMST ratio at τ=240 s, best VLA 13.8% of
+human pace) — collect one teleop block per rig day for the readable
+number, skip it with zero statistical cost. Adopted as design
+inputs (not commitments): keep ≥50 single-attempt trials/cell as
+the BUDGET (their N counts ~4.4-event episodes ⇒ ~130 correlated
+events per cell — 30 episodes ≠ 30 trials; SO-101 servo noise
+pushes required N up), adopt KS-on-CDFs as the ANALYSIS that lets
+some comparisons close early; blinded same-session policy rotation
++ spatial-nuisance logging become hard protocol requirements
+(their camera/tote side swap moved GR00T 22.2 pp — larger than the
+model gap under study); per-item timestamps from synchronized
+video with telemetry as proposer-not-truth (their 42%
+telemetry/operator disagreement independently replicates our
+32–48% telemetry false-positive finding); lift `build/stats.py`
+rather than re-derive. Rider: their aggregation-disagreement
+result (macro-AUC and RMST rank the same three models in opposite
+order) is the loudest argument yet for publishing the full CDF
+panel, not one scalar.

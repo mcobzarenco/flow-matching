@@ -99,3 +99,28 @@ search first. Local canon: π0, π0.5, SmolVLA, FAST
   quartiles are exactly the offline precursor (if oracle gain
   concentrates in high-dispersion frames, both selection and
   DVAC-style commit-gating draw from the same signal).
+
+- **Lit slice 2026-08-10 `lit-radar-0822` — THE FINAL SLICE BEFORE
+  THE OWNER PAUSE** (owner steering 2026-08-10 00:23Z, "Can we
+  pause the lit slices for now" — the slice was mid-flight when the
+  message landed and was completed and landed quietly; **no 0823
+  queued; the standing ~20–30 min allocation is suspended until the
+  owner re-enables it**). Four pages:
+  [Ambient Diffusion Policy](../papers/ambient-diffusion-policy.md)
+  (flow-time band-mask lever, ports to rectified flow in σ-space,
+  needs a user-supplied partition → composes with QoQ; +33% hook was
+  tower height),
+  [What Curation Metrics Do](../papers/what-curation-metrics-do.md)
+  (detection/policy decoupling 0.804→13.3%, episode-length confound
+  + truncation control, one-cell caveat),
+  [Auditing Curation Metrics](../papers/auditing-curation-metrics.md)
+  (action-only scorers chance-level on wrong-action defects, entropy
+  /ensemble actively inverted, "state" rescue = object pose not
+  proprio — ablation never run),
+  [PhAIL](../papers/phail.md) (time-to-success CDFs + macro-KS +
+  clustered bootstrap; human anchor carries zero statistical power;
+  22 pp spatial-nuisance warning). Fed #9 (band-mask lever + scorer
+  design constraints) and #16 (rig-day statistical protocol).
+  Unexecuted 0822 spares + the 0823 sweep-planning note remain
+  recorded in the closed queue item (`lit-radar-0822`, queue.json)
+  for whenever the pause lifts.

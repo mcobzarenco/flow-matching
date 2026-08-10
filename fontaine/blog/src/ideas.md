@@ -9,7 +9,7 @@ mainline ledger, `docs/architecture.md` §7–8). Status tags: `queued`
 
 This page is the **index**: what is hot right now vs what is on ice.
 It is updated whenever an idea moves (the per-idea page is the
-record; the line here is the hook). *Index last updated 2026-08-09.*
+record; the line here is the hook). *Index last updated 2026-08-10.*
 
 ## Hot — actively pursued
 
@@ -688,10 +688,27 @@ record; the line here is the hook). *Index last updated 2026-08-09.*
   on our corpus as-is, but its 324K "rollouts" are graded videos
   under replayed actions and real-policy-ranking correlation is
   never computed — screen ≠ certificate, calibration still costs
-  real rollouts.
+  real rollouts. Lit `0822` ([PhAIL](papers/phail.md), 2605.29710,
+  full release: data + stats code + audit tooling): the rig-day
+  statistical protocol question answered — time-to-success CDFs
+  (Kaplan–Meier, timeouts censored, hard failures at T=∞) +
+  macro-KS with episode-clustered bootstrap resolve 2 of 3 close
+  policy pairs at 25–30 *episodes*/cell (~4.4 timed events each)
+  where binary tests need 600–1500; the human anchor carries ZERO
+  statistical power (HRT is headline garnish — collect one teleop
+  block anyway, skip it freely); keep ≥50 single-attempt trials as
+  the budget, adopt KS-on-CDFs as the analysis; blinded
+  same-session rotation is mandatory (a camera/tote side swap moved
+  one model 22 pp — more than the gap under study); their 42%
+  telemetry/operator disagreement independently replicates our
+  32–48% telemetry false-positive finding.
 - **`lit-arms` [#15 Literature-sourced arms](ideas/15-literature-arms.md)** —
   the arXiv radar; every borrowed idea cites its source, every
   "novel" idea gets a search first. Feeds the Papers section.
+  **PAUSED by owner steering 2026-08-10 00:23Z ("Can we pause the
+  lit slices for now")** — 0822 was mid-flight and landed as the
+  final slice; no 0823 queued; the standing ~20–30 min allocation
+  is suspended until the owner re-enables it.
 - **`infra-hardening` [#18 Instrument & infra hardening](ideas/18-infra-hardening.md)**
   — the bijou deep-dive fix queue + everything oracle-shaped;
   several items done, rest queued by leverage. New 2026-08-07: item
@@ -824,10 +841,25 @@ record; the line here is the hook). *Index last updated 2026-08-09.*
   exponent collapses (−0.19 at 4 mm), the corpus lever is
   clarity-filtering (aggressive 50%-SR expert c=1.27 mm vs cautious
   98%-SR expert 2.35 — down-weight retry/jiggle episodes, zero-GPU
-  detectable, composes with the QoQ pass). The 0822 sweep's
-  curation-metrics testbed cluster (2606.10229/2606.05588) is a
-  standing confound warning: read before executing any curation
-  pre-reg.
+  detectable, composes with the QoQ pass). Lit `0822` (final slice
+  before the owner pause;
+  [Ambient Diffusion Policy](papers/ambient-diffusion-policy.md) +
+  [curation-metrics pair](papers/what-curation-metrics-do.md)): a
+  NEW lever class — the flow-time band-mask (keep bad demos, ban
+  them from mid-range noise levels; ports to rectified flow via
+  σ̃(t)=t/(1−t), classifier-annotated offline, composes with the QoQ
+  pass which can *define* its trusted/rest split; cheapest arm =
+  zero-GPU PSD power-law check + σ_tmin distribution on our corpus);
+  and the curation-metrics warnings measured — detection AUROC and
+  curated-policy quality are DECOUPLED (best detector 0.804 → worst
+  policy 13.3%; report the policy delta, never AUROC), 5/7 metrics
+  ride episode length (rank-by-length null arm is now the beat-this
+  baseline for every #9 scorer), velocity census demoted to
+  coverage-only (variance scoring is the documented inversion case:
+  entropy AUROC 0.000 on shaky-but-correct demos), continuity
+  screen validated for its artifact regime (0.968), Δq_d gate
+  blind-spot named (well-tracked wrong commands = small residual;
+  see [Auditing](papers/auditing-curation-metrics.md)).
 - **`base-vs-it` [#10 E2B base-vs-IT swap](ideas/10-e2b-base-vs-it.md)** —
   backbone-swap arm, pre-registered prediction ±0.2.
 - **`visual-grounding` [#11 Visual grounding arms](ideas/11-visual-grounding.md)** —

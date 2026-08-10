@@ -268,3 +268,52 @@ policy quality sharply decoupled, 5 of 7 metrics secretly exploit
 episode length, action-only scorers blind to structural defects —
 is a standing confound warning for every arm above; read before
 executing any curation pre-reg.
+
+New 2026-08-10 (lit `0822`, the final slice before the owner pause;
+[Ambient Diffusion Policy](../papers/ambient-diffusion-policy.md)
+2606.12365 +
+[What Curation Metrics Do](../papers/what-curation-metrics-do.md)
+2606.10229 +
+[Auditing Curation Metrics](../papers/auditing-curation-metrics.md)
+2606.05588): the 0822-refill "read before executing any curation
+pre-reg" warning is now READ, and it lands as design constraints on
+every arm above. (1) NEW lever class — the **flow-time band-mask**
+(MIT/Tedrake): keep suboptimal data but ban it from mid-range noise
+levels; trusted data teaches everywhere, untrusted only at high
+noise (where jitter is buried) and optionally at low noise (where
+only local finesse is at stake). Ports to our rectified flow — the
+argument needs only additive-Gaussian marginals with monotone noise
+scale, satisfied via σ̃(t) = t/(1−t); thresholds map in σ-space,
+never raw t. It REQUIRES a user-supplied trusted/rest partition —
+which the QoQ influence pass can define, so the two levers compose
+into one pipeline. Hooks corrected: the "+33%" is tower height on
+20 trials (success gains are +10–12 pp on OXE table-cleaning); the
+method is offline for *annotation* only — every validation number
+is a rollout. Cheapest arm (zero-GPU, CPU): PSD power-law check on
+community_curated_v0 + per-dataset σ_tmin distribution from small
+chunk classifiers — if σ_tmin ≈ 0 everywhere the lever has no
+grip, if it spreads a band-masked retrain becomes a priced arm.
+(2) The curation-metrics pair (same sole author, controlled
+testbeds, both released): detection AUROC and curated-policy
+quality are DECOUPLED (best detector 0.804 → worst policy 13.3% vs
+90.0% from a 0.638 detector; Spearman −0.14) — the policy delta is
+the only honest readout for any #9 arm, AUROC never; 5/7 metrics
+ride episode length (defective = timeout ⇒ raw AUROC 1.000,
+truncation control collapses them) — every #9 scorer now owes a
+length/speed-correlation report and must beat a **rank-by-length
+null arm**; the velocity census is DEMOTED to coverage-only
+(variance scoring is the documented inversion: entropy AUROC 0.000
+— shaky-but-correct demos score as "expressive"); the kinematic
+continuity screen is VALIDATED for its regime (isolation-forest
+class hits 0.968 on splice/tremor/truncation artifacts, full gap
+recovered) and scoped away from intent errors; the Δq_d gate's
+blind spot is named (a wrong command the plant tracks faithfully
+gives a small action−state residual — it detects bad
+tracking/contact, not bad intent); and the "state metrics rescue
+detection" result rides on a noisy *object-position* channel, not
+proprioception (the proprio-only ablation was never run — their
+released testbed settles it in an afternoon if it ever matters).
+Panel-side rider: our chunk-MAE pools per-frame, so curation-induced
+length/speed composition shifts move panel numbers silently —
+per-episode-mean and length-stratified panel variants are the
+cheap visibility fix.
