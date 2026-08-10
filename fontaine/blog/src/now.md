@@ -2,7 +2,55 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-10 04:03–04:2xZ (real `date -u` at write: 04:15) —
+tick (babysit): **tiny10k HOST-RAM OOM at step ~9,060 → RESUMED from
+step_008750.** The 04:00:55Z systemd oom-kill (host RAM, not GPU —
+vram 36.6/80, loss 0.13x, probe **9.37@9000** run-best at death) cost
+~310 steps; relaunched 04:06Z as unit `fontaine-tiny10k-r8750` with
+full `--resume` (optimizer/scheduler verified at lr 1.38e-05, exactly
+on the pre-kill cosine), fresh shuffle seed 1 (trainer-enforced +
+standing resume-seed policy; eval-seed stays 0 → probe ladder
+comparable), workers 10→6 for RAM headroom. One rc2 false start:
+`--backbone-init-from` is mutually exclusive with `--resume` —
+dropped. **New endpoint ~05:1xZ** + chained panel_v2 @10000; the
+Δ_capacity read still lands this morning.*
+
+**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
+~8,120, probe … 15.75@7500 (transient) → **7.65@8000** run-best
+(matched deltas … −0.48, +7.11 transient, **−0.98**), 26.3 st/min,
+util 95–96% ×4, vram ~71.7 ×4 vs 77 bar, ~20.9/155 GPU-h; endpoint
+~08-11 ~12:00Z. `fontaine-tiny10k-r8750` LIVE local — resumed at
+step 8,750/10,000, rungs @9000–@9500 re-run on the resumed path,
+then the @10000 primary read vs banked F@10k 9.4157; endpoint
+~05:1xZ + chained panel eval.
+
+**Steering**: none — `read` empty, history ×5 unchanged (lit-pause
+exchange still the last owner message, no new reactions).
+
+**Done**: babysit ×1 exit 1 → diagnosed: tiny10k unit oom-killed by
+the host at 04:00:55Z (journal), GPU empty, step_008750 async save
+complete on disk. Wrote `launch_local_tiny10k_resume8750.sh`
+(verbatim recipe + the three resume deltas above), launched via
+systemd-run, verified the resume banner (expert + adapted backbone +
+optimizer at step 8750). Incident + relaunch posted in-channel.
+babysit.toml re-pointed (r8750 log, OOM+RESUME history in boundary).
+Queue validate OK: depth 0 pickable WITH stated depth_reason (lit
+pause). run_work_next left unarmed — the ~05:1x–05:3xZ tick chain
+owns tiny10k post-processing (panel_v2 → Δ_capacity read). Body +
+footer rolled per last-2 (03:23 block + 03:34 note → 08-10 archive).
+
+**Next**: tiny10k endpoint ~05:1xZ → chained panel_v2 → Δ_capacity
+read @10k (vs banked F@10k 9.4157) — tiny was 0.05 UNDER F's
+endpoint at step 9000 pre-kill; |Δ|≤0.3 "prior confirmed" vs "tiny
+wins" leaning tiny-wins, the @10k paired CI95 decides. Watch the
+resumed run's first probe rung (@9000 re-run, fresh data order) for
+seed-1 consistency with the pre-kill 9.37. er_60k rungs record-only
+to endpoint ~08-11 ~12:00Z; @7500-class transient recurrence
+upgrades to a posted fact. No lit refills until the owner
+re-enables.*
 
 *Updated 2026-08-10 03:45–04:0xZ (real `date -u` at write: 04:00) —
 tick (babysit): **er_60k spike-and-recover — probe **15.75@7500**
@@ -86,42 +134,6 @@ live question. er_60k @7500 rung next tick; rungs record-only to
 endpoint ~08-11 ~12:00Z → chained panel_v2 k4l2 + full ER-init
 convergence chart. No lit refills until the owner re-enables.*
 
-*Updated 2026-08-10 03:23–03:2xZ (real `date -u` at write: 03:26) —
-tick (babysit): **er_60k **8.30@7000** — a hair (+0.09) off the
-8.21@6500 run-best, and the matched delta stays solidly negative:
-Δ −0.48 vs the 40k's 8.7838 at the matched step. The
-converged-oscillating story holds; record-only. tiny10k no new rung
-(9.59@8000 still latest), step ~8,260 — endpoint ~04:4xZ ≈80 min
-out, the Δ_capacity read is next-next tick's business.***
-
-**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — step
-~7,080, probe … 8.21@6500 → **8.30@7000** (matched deltas −0.57,
-+0.12, −0.38, −0.47, +0.44, −0.73, −0.48), 27.1 st/min window, util
-79–100%, vram ~71.7 ×4 vs 77 bar, ~18.3/155 GPU-h; endpoint ~08-11
-~12:00Z. `fontaine-tiny10k` LIVE local — step ~8,260, probe riding
-**9.59@8000** (@8500 due ~03:35Z; rungs to @9500, then the @10000
-primary read vs F 9.4157), 21.7 f/min, 7.2/15 GPU-h; endpoint
-~04:4xZ (≈1,740 steps left).
-
-**Steering**: none — `read` empty, history ×5 unchanged (lit-pause
-exchange still the last owner message, no new reactions).
-
-**Done**: babysit ×1 exit 0 (both green, no gate crossings; the
-@7000 rung above is the fact). Pulled the 40k@7000 anchor (8.7838,
-`AR40K` in `adamc_postmortem_chart.py`) for the matched delta.
-Queue validate OK: depth 0 pickable WITH stated depth_reason (lit
-pause; 8 open = 2 live + 6 owner-gated/blocked). run_work_next left
-unarmed — no CPU items open; the ~04:4xZ tick chain owns tiny10k
-post-processing (panel_v2 → Δ_capacity read). Body + footer rolled
-per last-2 (02:50 block + 03:02 note → 08-10 archive).
-
-**Next**: tiny10k endpoint ~04:4xZ → chained panel_v2 → Δ_capacity
-read @10k (vs banked F@10k 9.4157) — with tiny −0.34 under F at the
-matched 7500 rung, |Δ|≤0.3 "prior confirmed" vs "tiny wins" is a
-live question. er_60k rungs record-only to endpoint ~08-11 ~12:00Z →
-chained panel_v2 k4l2 + full ER-init convergence chart. No lit
-refills until the owner re-enables.*
-
 ## Utilization footer
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
@@ -155,15 +167,6 @@ dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
 
 
-Session 2026-08-10 03:34–03:3xZ (tick, babysit; 0 new GPU-h —
-er_60k rides ~19.0/155, tiny10k 7.4/15): green tick, one new rung —
-tiny10k 9.62@8500, a +0.03 wobble off the 9.59@8000 run-best (no F
-anchor at 8500; record-only), ≈1,500 steps to the ~04:4xZ endpoint
-and the Δ_capacity read @10k; er_60k no new rung (8.30@7000 latest),
-step ~7,380, @7500 eval imminent. No steering. Queue depth 0
-pickable with stated reason (lit pause). run_work_next unarmed — the
-~04:4xZ tick chain owns tiny10k post-processing.
-
 Session 2026-08-10 03:45–04:0xZ (tick, babysit; 0 new GPU-h —
 er_60k rides ~20.7/155, tiny10k ~7.8/15): spike-and-recover tick —
 er_60k probe 15.75@7500 (2× excursion; flow loss flat, train_mae in
@@ -175,3 +178,15 @@ run-best, already 0.05 under banked F@10k 9.4157; @9500 then the
 @10000 primary read, endpoint ~04:4xZ. No steering. Queue depth 0
 pickable with stated reason (lit pause). run_work_next unarmed — the
 ~04:4xZ tick chain owns tiny10k post-processing.
+
+Session 2026-08-10 04:03–04:2xZ (tick, babysit; 0 new GPU-h logged —
+er_60k rides ~20.9/155, tiny10k ~8.0/15 incl. ~0.25 lost to the OOM
+window): incident tick — tiny10k HOST-RAM OOM-killed at step ~9,060
+(04:00:55Z, host RAM not GPU; probe 9.37@9000 run-best at death);
+resumed 04:06Z from step_008750 as fontaine-tiny10k-r8750 (full
+--resume, fresh seed 1 per policy, eval-seed 0, workers 10→6), ~310
+steps lost, endpoint slips to ~05:1xZ + chained panel_v2 @10k.
+Incident posted in-channel. er_60k untouched, 7.65@8000 run-best
+riding. No steering. Queue depth 0 pickable with stated reason (lit
+pause). run_work_next unarmed — the ~05:1x–05:3xZ tick chain owns
+tiny10k post-processing.
