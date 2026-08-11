@@ -16,10 +16,12 @@ Faithful to the checkpoint's ``modeling_molmo2.py`` (conventions re-read
   iff ``kv <= q`` (causal) OR both positions are image-typed — then key
   padding is excluded. Any two image-typed positions in a sequence are
   mutually visible (the function does not segment per image block).
-- Greedy decode: no KV cache exists under design decision D1 (taps are
-  the only export), so ``greedy_generate`` recomputes the full forward
-  per emitted token. Probe/parity-scale tool, not a serving path; newly
-  emitted tokens are text-typed (causal) by construction.
+- Greedy decode: ``greedy_generate`` is cache-free — it recomputes the
+  full forward per emitted token. Probe/parity-scale tool, not a serving
+  path; newly emitted tokens are text-typed (causal) by construction.
+  (The cached paths live elsewhere: ``bijou.decoders.ar_molmo2`` and the
+  MolmoAct2 predictor drive ``Molmo2KVCache`` directly; the FLOW path
+  stays cache-free per design decision D1, taps only.)
 """
 
 from __future__ import annotations
@@ -56,7 +58,7 @@ def build_multimodal_mask(
     batch, seq_len = image_type_mask.shape
     q_idx = torch.arange(seq_len, device=device)[None, None, :, None]
     kv_idx = torch.arange(seq_len, device=device)[None, None, None, :]
-    image = image_type_mask.to(device=device, dtype=torch.bool)
+    image = image_type_mask.to(device=device, dtype=torch.bool)  # [B, S]
     image_block = image[:, None, :, None] & image[:, None, None, :]
     allowed = (kv_idx <= q_idx) | image_block
     if padding_mask is not None:
@@ -71,6 +73,36 @@ def build_multimodal_mask(
         ),
         is_causal=False,
     )
+
+
+def ensure_per_sample_patch_alignment(
+    input_ids: Tensor,
+    pooled_patches_idx: Tensor,
+    *,
+    image_patch_id: int,
+) -> None:
+    """Per-sample injection contract: each row's ``image_patch_id`` token
+    count must equal its valid pooled rows (rows with any member >= 0).
+
+    ``build_input_embeddings``' device-side guard checks the GLOBAL count
+    only (async by design, no host sync) — a per-sample mismatch that
+    conserves the total would cross-assign features between batch rows
+    there and never fire it. Collators call this CPU-side at batch
+    assembly, where the check is free and the failure is loud.
+
+    Shapes:
+    - ``input_ids``: [B, S] long
+    - ``pooled_patches_idx``: [B, P, G] long, -1 = missing member /
+      padding row
+    """
+    patch_counts = (input_ids == image_patch_id).sum(-1)
+    valid_pooled = (pooled_patches_idx >= 0).any(-1).sum(-1)
+    if not torch.equal(patch_counts, valid_pooled):
+        raise ValueError(
+            f"per-sample patch-token counts {patch_counts.tolist()} != "
+            f"valid pooled rows {valid_pooled.tolist()} — inputs and "
+            "vision grid disagree",
+        )
 
 
 class Molmo2Model(nn.Module):
@@ -104,7 +136,14 @@ class Molmo2Model(nn.Module):
         crops: Tensor,  # [B, M, patches, patch_dim] (-1 padded)
         pooled_patches_idx: Tensor,  # [B, P, pool_group] long (-1 padded)
     ) -> Tensor:  # [B, S, hidden]
-        """Token embeddings with image features added at patch positions."""
+        """Token embeddings with image features added at patch positions.
+
+        Shapes:
+        - ``input_ids``: [B, S] long
+        - ``crops``: [B, M, patches, patch_dim] fp32, -1-filled pad views
+        - ``pooled_patches_idx``: [B, P, pool_group] long, -1 padded
+        - returns: [B, S, hidden]
+        """
         embeds = self.text.transformer.wte(input_ids)
         features = self.vision(crops, pooled_patches_idx).to(
             device=embeds.device,
@@ -129,8 +168,13 @@ class Molmo2Model(nn.Module):
         return flat.view_as(embeds)
 
     @staticmethod
-    def logical_positions(attention_mask: Tensor) -> Tensor:  # [B, S] -> [B, S]
-        """Positions of real tokens under left padding: [B, S] long."""
+    def logical_positions(attention_mask: Tensor) -> Tensor:
+        """Positions of real tokens under left padding.
+
+        Shapes:
+        - ``attention_mask``: [B, S], 1 = real token
+        - returns: [B, S] long (pad positions clamp to 0)
+        """
         return (attention_mask.long().cumsum(-1) - 1).clamp(min=0)
 
     @override
@@ -142,10 +186,18 @@ class Molmo2Model(nn.Module):
         pooled_patches_idx: Tensor,  # [B, P, pool_group] long (-1 padded)
         image_type_mask: Tensor,  # [B, S] bool, True = image-typed
         attention_mask: Tensor | None = None,  # [B, S], 1 = real; None = no pad
-    ) -> Tensor:  # [B, S, vocab]
-        """Logits [B, S, vocab] for one full multimodal forward.
+    ) -> Tensor:
+        """One full multimodal forward.
 
         ``attention_mask`` is the collator's field; None means no padding.
+
+        Shapes:
+        - ``input_ids``: [B, S] long
+        - ``crops``: [B, M, patches, patch_dim] (-1 padded)
+        - ``pooled_patches_idx``: [B, P, pool_group] long (-1 padded)
+        - ``image_type_mask``: [B, S] bool, True = image-typed
+        - ``attention_mask``: [B, S], 1 = real (or None)
+        - returns: [B, S, vocab] logits
         """
         embeds = self.build_input_embeddings(
             input_ids,
@@ -180,7 +232,16 @@ class Molmo2Model(nn.Module):
         stop_ids: frozenset[int] = frozenset(),
     ) -> list[list[int]]:
         """Cache-free greedy continuation; returns the NEW ids per row
-        (a finished row stops contributing after its stop id)."""
+        (a finished row stops contributing after its stop id).
+
+        Shapes:
+        - ``input_ids``: [B, S] long (left-padded)
+        - ``crops``: [B, M, patches, patch_dim] (-1 padded)
+        - ``pooled_patches_idx``: [B, P, pool_group] long (-1 padded)
+        - ``image_type_mask``: [B, S] bool
+        - ``attention_mask``: [B, S], 1 = real (or None = no padding)
+        - returns: B lists of emitted token ids
+        """
         if max_new_tokens < 1:
             raise ValueError(f"max_new_tokens must be >= 1, got {max_new_tokens}")
         batch = input_ids.shape[0]

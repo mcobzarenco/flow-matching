@@ -300,6 +300,7 @@ def _collator() -> MolmoAct2TrainCollator:
     # checkpoint's tokenizer.json).
     collator._tokenizer = _StubTokenizer()  # type: ignore[assignment]
     collator._image_ids = (IM_START_ID, IM_END_ID, IM_PATCH_ID)
+    collator._patch_id = IM_PATCH_ID
     return collator
 
 

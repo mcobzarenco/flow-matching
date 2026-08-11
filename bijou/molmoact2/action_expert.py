@@ -501,17 +501,9 @@ class SinusoidalTimeEmbedding(nn.Module):
 @dataclass(frozen=True, slots=True)
 class ActionExpertConfig:
     """Geometry of one MolmoAct2 action expert. No field defaults —
-    construction sites spell out every field (the released SO-100/101
-    values live where checkpoints are parsed: ``action_expert_from_config``).
-
-    Parameter accounting at the released size (h768, 36 blocks, 8 heads
-    of head_dim 96, MLP inner 3072, Molmo2-4B KV dim 1024), measured on
-    this module 2026-08-11 (``outputs/probe_molmoact2_param_count.py``):
-    620,677,664 instantiated — the paper's "621M" — of which 42,522,624
-    are the 36 frozen/inactive ``cross_attn.kv_proj`` compat tensors and
-    590,592 the identity-injected ``state_encoder``; the HF exports omit
-    both, shipping the active 577,564,448 (588 tensors). Same expert,
-    two counting conventions."""
+    construction sites spell out every field; checkpoints are parsed by
+    ``action_expert_from_config`` and the released shape lives in ONE
+    place, :meth:`released_so100_101`."""
 
     max_horizon: int
     max_action_dim: int
@@ -528,6 +520,38 @@ class ActionExpertConfig:
     qk_norm_eps: float
     rope: bool
     causal_attn: bool
+
+    @staticmethod
+    def released_so100_101() -> ActionExpertConfig:
+        """The released ``allenai/MolmoAct2-SO100_101`` expert (matches
+        its config.json; also the rig-ft exports' shape): h768, 36
+        blocks, 8 heads of head_dim 96, MLP inner 3072, conditioned on
+        the Molmo2-4B KV dim 1024.
+
+        Parameter accounting, measured on this module
+        (``outputs/probe_molmoact2_param_count.py``): 620,677,664
+        instantiated — the paper's "621M" — of which 42,522,624 are the
+        36 frozen/inactive ``cross_attn.kv_proj`` compat tensors and
+        590,592 the identity-injected ``state_encoder``; the HF exports
+        omit both, shipping the active 577,564,448 (588 tensors). Same
+        expert, two counting conventions."""
+        return ActionExpertConfig(
+            max_horizon=30,
+            max_action_dim=32,
+            hidden_size=768,
+            num_layers=36,
+            num_heads=8,
+            mlp_ratio=4.0,
+            ffn_multiple_of=256,
+            timestep_embed_dim=256,
+            dropout=0.0,
+            attn_dropout=0.0,
+            context_layer_norm=True,
+            qk_norm=True,
+            qk_norm_eps=1e-6,
+            rope=True,
+            causal_attn=False,
+        )
 
     def build(self, llm_kv_dim: int) -> ActionExpert:
         return ActionExpert(self, llm_kv_dim=llm_kv_dim)

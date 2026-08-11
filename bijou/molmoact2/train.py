@@ -83,7 +83,11 @@ from torchvision.transforms import functional as TF
 
 from ..gemma4.loading import resolve_checkpoint_dir
 from ..molmo2.cache import Molmo2KVCache
-from ..molmo2.model import Molmo2Model, build_multimodal_mask
+from ..molmo2.model import (
+    Molmo2Model,
+    build_multimodal_mask,
+    ensure_per_sample_patch_alignment,
+)
 from ..molmo2.model import load_model as load_trunk
 from ..molmo2.tokenizer import Molmo2TextTokenizer
 from .action_expert import ActionExpert
@@ -297,6 +301,7 @@ class MolmoAct2TrainCollator:
         self.augment = augment
         self._tokenizer: Molmo2TextTokenizer | None = None
         self._image_ids: tuple[int, ...] | None = None
+        self._patch_id: int | None = None
         self._augmenter: RigAugmenter | None = None
         self._rng: np.random.RandomState | None = None
 
@@ -306,6 +311,7 @@ class MolmoAct2TrainCollator:
             **self.__dict__,
             "_tokenizer": None,
             "_image_ids": None,
+            "_patch_id": None,
             "_augmenter": None,
             "_rng": None,
         }
@@ -314,6 +320,10 @@ class MolmoAct2TrainCollator:
         if self._tokenizer is None:
             self._tokenizer = Molmo2TextTokenizer(self.checkpoint)
             self._image_ids = resolve_image_token_ids(self._tokenizer)
+            patch_id = self._tokenizer.tokenizer.token_to_id("<im_patch>")
+            if patch_id is None:
+                raise ValueError("tokenizer has no <im_patch> token")
+            self._patch_id = int(patch_id)
             if self.augment:
                 self._augmenter = RigAugmenter()
             self._rng = np.random.RandomState(torch.initial_seed() % (2**32 - 1))
@@ -417,6 +427,12 @@ class MolmoAct2TrainCollator:
         for row, example in enumerate(examples):
             crops[row, : example.crops.shape[0]] = example.crops
             pooled_idx[row, : example.pooled_idx.shape[0]] = example.pooled_idx
+        assert self._patch_id is not None  # _materialize set it
+        ensure_per_sample_patch_alignment(
+            input_ids,
+            pooled_idx,
+            image_patch_id=self._patch_id,
+        )
         return {
             "input_ids": input_ids,
             "attention_mask": attention_mask,

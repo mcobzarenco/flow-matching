@@ -70,6 +70,15 @@ cited, and the doc-cited `probe_rollout_vram.py` is lost outright
   and converts on the way in (see `bijou/gemma4/config.py`).
 - Prefer enums (`EpisodeSplit`, `SamplingMethod`) over string constants;
   parse strings into enums at the CLI/JSON boundary.
+- **Released/standard model shapes are staticmethod constructors on the
+  config dataclass**, named for the artifact and stating what they match:
+  `Gemma4Config.e2b()`, `Molmo2TextConfig.molmo2_4b()`,
+  `ActionExpertConfig.released_so100_101()`. The literals for a released
+  architecture live in exactly ONE place — probes and tests that need the
+  shape call the constructor, never restate the numbers. (Added
+  2026-08-11: the MolmoAct2 released expert's 15 fields were spelled out
+  in a probe AND a test; module-level `*_config()` factories were the
+  older form and were migrated the same day.)
 - **One word per concept: the pretrained trunk network (Gemma or Molmo2) is the `backbone`** — in
   both senses (the pretrained artifact: `--backbone`,
   `BackboneConfig.id`, `backbone.safetensors`; and the mounted module:
@@ -167,6 +176,12 @@ cited, and the doc-cited `probe_rollout_vram.py` is lost outright
 - Comments explain *why*, not *what*. A comment restating the code is
   noise; a comment recording a measurement, an upstream bug, or a rejected
   alternative is documentation.
+- **Docs state the up-to-date truth, never their own edit history.** No
+  "corrected on X", "originally said Y", or strike-through trails in any
+  markdown — fix the text as if it had always been right; git is the
+  history. Dated notes that explain why a RULE or DESIGN exists (the
+  incident annotations in this file and working-together.md) are fine:
+  they document the world, not the document.
 - Docstrings state contracts: shapes, units, device expectations,
   collective behavior (e.g. "every rank must call this at the same step").
   Math typography (τ, ε, σ, −) is welcome; the confusables whitelist in

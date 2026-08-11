@@ -7,9 +7,10 @@ field here.
 
 Config dataclasses carry no defaults: they describe a specific checkpoint
 architecture and every field must be explicit. In practice configs are read
-from disk (:meth:`Gemma4Config.from_json` via ``load_model``); for from-scratch
-construction and tests, :func:`e2b_config` and :func:`e4b_config` build the
-released E-series architectures in code.
+from disk (:meth:`Gemma4Config.from_json` via ``load_model``); for
+from-scratch construction and tests, :meth:`Gemma4Config.e2b` and
+:meth:`Gemma4Config.e4b` build the released E-series architectures in code
+(released shapes live as staticmethods on the config, per the styleguide).
 """
 
 from __future__ import annotations
@@ -33,8 +34,6 @@ __all__ = [
     "LayerType",
     "RopeParameters",
     "RopeType",
-    "e2b_config",
-    "e4b_config",
 ]
 
 
@@ -47,8 +46,8 @@ class LayerType(StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class Gemma4TextConfig:
-    """Decoder architecture. See :func:`e2b_config` / :func:`e4b_config` for
-    the released E-series values."""
+    """Decoder architecture. See :meth:`Gemma4Config.e2b` /
+    :meth:`Gemma4Config.e4b` for the released E-series values."""
 
     vocab_size: int
     hidden_size: int
@@ -273,8 +272,80 @@ class Gemma4Config:
         with Path(path).open() as f:
             return cls.from_dict(json.load(f))
 
+    @staticmethod
+    def e2b() -> Gemma4Config:
+        """The ``google/gemma-4-e2b-it`` architecture (matches its
+        config.json)."""
+        return _e_series_config(
+            Gemma4TextConfig(
+                vocab_size=262_144,
+                hidden_size=1536,
+                intermediate_size=6144,
+                num_hidden_layers=35,
+                num_attention_heads=8,
+                num_key_value_heads=1,
+                head_dim=256,
+                hidden_activation="gelu_pytorch_tanh",
+                rms_norm_eps=1e-6,
+                pad_token_id=0,
+                eos_token_ids=(1,),
+                bos_token_id=2,
+                tie_word_embeddings=True,
+                attention_bias=False,
+                sliding_window=512,
+                layer_types=_hybrid_layer_types(35, period=5),
+                final_logit_softcapping=30.0,
+                use_bidirectional_attention=None,
+                rope_parameters=_e_series_rope_parameters(),
+                vocab_size_per_layer_input=262_144,
+                hidden_size_per_layer_input=256,
+                global_head_dim=512,
+                num_global_key_value_heads=None,
+                attention_k_eq_v=False,
+                num_kv_shared_layers=20,
+                use_double_wide_mlp=True,
+                enable_moe_block=False,
+            ),
+        )
 
-# -- released architectures ---------------------------------------------------
+    @staticmethod
+    def e4b() -> Gemma4Config:
+        """The ``google/gemma-4-e4b-it`` architecture (matches its
+        config.json)."""
+        return _e_series_config(
+            Gemma4TextConfig(
+                vocab_size=262_144,
+                hidden_size=2560,
+                intermediate_size=10_240,
+                num_hidden_layers=42,
+                num_attention_heads=8,
+                num_key_value_heads=2,
+                head_dim=256,
+                hidden_activation="gelu_pytorch_tanh",
+                rms_norm_eps=1e-6,
+                pad_token_id=0,
+                eos_token_ids=(1,),
+                bos_token_id=2,
+                tie_word_embeddings=True,
+                attention_bias=False,
+                sliding_window=512,
+                layer_types=_hybrid_layer_types(42, period=6),
+                final_logit_softcapping=30.0,
+                use_bidirectional_attention=None,
+                rope_parameters=_e_series_rope_parameters(),
+                vocab_size_per_layer_input=262_144,
+                hidden_size_per_layer_input=256,
+                global_head_dim=512,
+                num_global_key_value_heads=None,
+                attention_k_eq_v=False,
+                num_kv_shared_layers=18,
+                use_double_wide_mlp=False,
+                enable_moe_block=False,
+            ),
+        )
+
+
+# -- released architectures (private assembly helpers) ------------------------
 
 
 def _hybrid_layer_types(num_layers: int, period: int) -> tuple[LayerType, ...]:
@@ -335,74 +406,4 @@ def _e_series_config(text: Gemma4TextConfig) -> Gemma4Config:
         boi_token_id=255_999,
         eoi_token_id=258_882,
         dtype=torch.bfloat16,
-    )
-
-
-def e2b_config() -> Gemma4Config:
-    """The ``google/gemma-4-e2b-it`` architecture (matches its config.json)."""
-    return _e_series_config(
-        Gemma4TextConfig(
-            vocab_size=262_144,
-            hidden_size=1536,
-            intermediate_size=6144,
-            num_hidden_layers=35,
-            num_attention_heads=8,
-            num_key_value_heads=1,
-            head_dim=256,
-            hidden_activation="gelu_pytorch_tanh",
-            rms_norm_eps=1e-6,
-            pad_token_id=0,
-            eos_token_ids=(1,),
-            bos_token_id=2,
-            tie_word_embeddings=True,
-            attention_bias=False,
-            sliding_window=512,
-            layer_types=_hybrid_layer_types(35, period=5),
-            final_logit_softcapping=30.0,
-            use_bidirectional_attention=None,
-            rope_parameters=_e_series_rope_parameters(),
-            vocab_size_per_layer_input=262_144,
-            hidden_size_per_layer_input=256,
-            global_head_dim=512,
-            num_global_key_value_heads=None,
-            attention_k_eq_v=False,
-            num_kv_shared_layers=20,
-            use_double_wide_mlp=True,
-            enable_moe_block=False,
-        ),
-    )
-
-
-def e4b_config() -> Gemma4Config:
-    """The ``google/gemma-4-e4b-it`` architecture (matches its config.json)."""
-    return _e_series_config(
-        Gemma4TextConfig(
-            vocab_size=262_144,
-            hidden_size=2560,
-            intermediate_size=10_240,
-            num_hidden_layers=42,
-            num_attention_heads=8,
-            num_key_value_heads=2,
-            head_dim=256,
-            hidden_activation="gelu_pytorch_tanh",
-            rms_norm_eps=1e-6,
-            pad_token_id=0,
-            eos_token_ids=(1,),
-            bos_token_id=2,
-            tie_word_embeddings=True,
-            attention_bias=False,
-            sliding_window=512,
-            layer_types=_hybrid_layer_types(42, period=6),
-            final_logit_softcapping=30.0,
-            use_bidirectional_attention=None,
-            rope_parameters=_e_series_rope_parameters(),
-            vocab_size_per_layer_input=262_144,
-            hidden_size_per_layer_input=256,
-            global_head_dim=512,
-            num_global_key_value_heads=None,
-            attention_k_eq_v=False,
-            num_kv_shared_layers=18,
-            use_double_wide_mlp=False,
-            enable_moe_block=False,
-        ),
     )

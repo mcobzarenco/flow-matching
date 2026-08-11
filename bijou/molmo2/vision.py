@@ -95,13 +95,19 @@ class ViTAttention(nn.Module):
         self,
         inputs_q: Tensor,  # [B, Q, input_dim]
         inputs_kv: Tensor | None = None,  # [B, K, input_dim]; None = self-attn
-        attn_mask: Tensor | None = None,  # bool, broadcastable [B, H, Q, K]
-    ) -> Tensor:  # [B, Q, hidden_size]
+        attn_mask: Tensor | None = None,
+    ) -> Tensor:
         """Attention over full sequences (no causality).
 
         ``attn_mask`` True = attend — the reference passes it only on
         the SDPA path; the eager path applies it additively for
         identical semantics.
+
+        Shapes:
+        - ``inputs_q``: [B, Q, input_dim]
+        - ``inputs_kv``: [B, K, input_dim] (None = self-attention)
+        - ``attn_mask``: bool, broadcastable to [B, H, Q, K] (or None)
+        - returns: [B, Q, hidden_size]
         """
         if inputs_kv is None:
             inputs_kv = inputs_q
@@ -157,7 +163,11 @@ class ViTMLP(nn.Module):
         self.act = activation_fn(hidden_act)
 
     @override
-    def forward(self, x: Tensor) -> Tensor:  # [B, N, dim] -> same
+    def forward(self, x: Tensor) -> Tensor:
+        """Shapes:
+        - ``x``: [B, N, dim]
+        - returns: [B, N, dim]
+        """
         return self.w2(self.act(self.w1(x)))
 
 
@@ -201,7 +211,11 @@ class VisionBlock(nn.Module):
         )
 
     @override
-    def forward(self, x: Tensor) -> Tensor:  # [B, N, hidden] -> same
+    def forward(self, x: Tensor) -> Tensor:
+        """Shapes:
+        - ``x``: [B, N, hidden]
+        - returns: [B, N, hidden]
+        """
         x = x + self.attention(self.attention_norm(x))
         return x + self.feed_forward(self.ffn_norm(x))
 
@@ -223,7 +237,11 @@ class BlockCollection(nn.Module):
         )
 
     @override
-    def forward(self, x: Tensor) -> list[Tensor]:  # [B, N, hidden] -> per block
+    def forward(self, x: Tensor) -> list[Tensor]:
+        """Shapes:
+        - ``x``: [B, N, hidden]
+        - returns: one [B, N, hidden] per block, in depth order
+        """
         hidden_states: list[Tensor] = []
         for block in self.resblocks:
             x = block(x)
@@ -268,10 +286,14 @@ class Molmo2VisionTransformer(nn.Module):
 
     @override
     def forward(self, x: Tensor) -> list[Tensor]:
-        """Shapes: x [B, N, patch_dim] (flattened patch pixels); N must be
-        ``image_num_pos`` — dynamic grids (the reference's bicubic
-        position-embedding interpolation, video path) are not implemented
-        and refuse loudly."""
+        """Dynamic grids (the reference's bicubic position-embedding
+        interpolation, video path) are not implemented and refuse loudly.
+
+        Shapes:
+        - ``x``: [B, N, patch_dim] flattened patch pixels; N must equal
+          ``image_num_pos``
+        - returns: one [B, N, hidden] per block
+        """
         if x.shape[1] != self.config.image_num_pos:
             raise NotImplementedError(
                 f"{x.shape[1]} patches != image_num_pos "
@@ -322,7 +344,11 @@ class ImageProjectorMLP(nn.Module):
         self.act = activation_fn(hidden_act)
 
     @override
-    def forward(self, x: Tensor) -> Tensor:  # [.., input_dim] -> [.., output_dim]
+    def forward(self, x: Tensor) -> Tensor:
+        """Shapes:
+        - ``x``: [..., input_dim]
+        - returns: [..., output_dim]
+        """
         return self.w2(self.act(self.w1(x)) * self.w3(x))
 
 
@@ -380,8 +406,8 @@ class Molmo2VisionBackbone(nn.Module):
         """Tower features at the adapter taps, concatenated.
 
         Shapes:
-          - images: [B, T, N, patch_dim]  (T = crops/views per sample)
-          - returns [B, T, N, hidden * num_taps]
+        - ``images``: [B, T, N, patch_dim] (T = crops/views per sample)
+        - returns: [B, T, N, hidden * num_taps]
         """
         batch, views, num_patches, _ = images.shape
         hidden_states = self.image_vit(images.view(batch * views, num_patches, -1))
@@ -394,13 +420,13 @@ class Molmo2VisionBackbone(nn.Module):
     @override
     def forward(
         self,
-        images: Tensor,  # [B, T, N, patch_dim]
-        pooled_patches_idx: Tensor,  # [B, P, G] long, -1 padded
-    ) -> Tensor:  # [num_valid_tokens, text_hidden]
+        images: Tensor,
+        pooled_patches_idx: Tensor,
+    ) -> Tensor:
         """Pooled, projected image features for the valid output tokens.
 
-        ``pooled_patches_idx`` [B, P, G] names, for each of P output tokens,
-        the G member patches in the sample's FLATTENED (view, patch) feature
+        ``pooled_patches_idx`` names, for each of P output tokens, the G
+        member patches in the sample's FLATTENED (view, patch) feature
         grid; -1 marks missing members (crop edges) and all--1 rows mark
         padding tokens, which are dropped from the output — mirroring the
         reference exactly (the scatter target is the caller's
@@ -408,9 +434,9 @@ class Molmo2VisionBackbone(nn.Module):
         emits in the same order).
 
         Shapes:
-          - images: [B, T, N, patch_dim]
-          - pooled_patches_idx: [B, P, G] (long)
-          - returns [num_valid_tokens, text_hidden]
+        - ``images``: [B, T, N, patch_dim]
+        - ``pooled_patches_idx``: [B, P, G] long, -1 padded
+        - returns: [num_valid_tokens, text_hidden]
         """
         batch = images.shape[0]
         weight = self.image_vit.patch_embedding.weight

@@ -36,6 +36,7 @@ from bijou.molmo2.bank_processor_goldens import (
     PIXEL_STRIDES,
     sample_for,
 )
+from bijou.molmo2.config import Molmo2TextConfig
 from bijou.molmo2.processor import (
     IM_COL_ID,
     IM_END_ID,
@@ -267,8 +268,6 @@ def test_collator_refuses_bad_construction() -> None:
 
 
 def test_fast_block_base_anchors_after_image_specials() -> None:
-    from bijou.molmo2.config import molmo2_4b_text_config
-
-    config = molmo2_4b_text_config()
+    config = Molmo2TextConfig.molmo2_4b()
     assert config.fast_block_base == 152_064
     assert config.fast_block_base == config.total_vocab_size

@@ -17,8 +17,10 @@ path (conventions pinned in ``docs/molmo2.md``):
 The forward supports the ``residual_taps``/``residual_sink`` protocol of
 ``bijou.gemma4.text.TextModel`` (tap = the hidden state AFTER a layer, post
 both residual adds) — under design decision D1 of the port plan this is the
-ONLY export the flow expert consumes, so there is no KV cache and no
-``kv_stop_layer`` here.
+ONLY export the FLOW expert consumes (no ``kv_stop_layer``). The AR suffix
+role and the MolmoAct2 expert conditioning use ``Molmo2KVCache`` instead:
+each layer appends its post-RoPE K/V at prefill and attends over the full
+T = seen + S keys on continuation (see ``cache.py``).
 """
 
 from __future__ import annotations
@@ -83,7 +85,7 @@ class Molmo2Embedding(nn.Module):
             self.new_embedding.normal_(std=0.02)
 
     @override
-    def forward(self, input_ids: Tensor) -> Tensor:  # [B, S] -> [B, S, hidden]
+    def forward(self, input_ids: Tensor) -> Tensor:
         """Embed token ids.
 
         Row-select against the two matrices directly instead of the
@@ -94,7 +96,8 @@ class Molmo2Embedding(nn.Module):
         computed); the WP1/WP2 parity suites gate that equivalence.
 
         Shapes:
-          - input_ids: [B, S]  (returns [B, S, embedding_dim])
+        - ``input_ids``: [B, S] long
+        - returns: [B, S, embedding_dim]
         """
         base_rows = self.embedding.shape[0]
         embeds = F.embedding(input_ids.clamp(max=base_rows - 1), self.embedding)
@@ -137,10 +140,15 @@ class Molmo2RotaryEmbedding(nn.Module):
     @override
     def forward(
         self,
-        position_ids: Tensor,  # [B, S] long
+        position_ids: Tensor,
         dtype: torch.dtype,
-    ) -> tuple[Tensor, Tensor]:  # (cos, sin), each [B, S, head_dim]
-        """(cos, sin) tables for the given positions, each [B, S, head_dim]."""
+    ) -> tuple[Tensor, Tensor]:
+        """(cos, sin) tables for the given positions.
+
+        Shapes:
+        - ``position_ids``: [B, S] long
+        - returns: (cos, sin), each [B, S, head_dim] at ``dtype``
+        """
         return rope_cos_sin(self.inv_freq, position_ids, dtype)
 
 
@@ -155,7 +163,6 @@ def build_causal_mask(
 ) -> MaskSpec:  # .tensor: [B, 1, q_len, T] additive (0 / dtype-min)
     """Full causal attention mask for one forward.
 
-    ``padding_mask``: [B, T] (T = seen + q_len), True/1 = real token.
     ``seen`` > 0 is the cache-continuation case (the AR suffix role):
     the q_len query positions sit at logical offsets seen..seen+q_len−1
     and attend causally over all T key positions. The additive tensor is
@@ -163,6 +170,12 @@ def build_causal_mask(
     padding or a cache the pattern is exactly lower-triangular and
     ``is_causal`` lets SDPA take its native causal path instead (the
     gemma4 convention).
+
+    Shapes:
+    - ``padding_mask``: [B, T] with T = seen + q_len, True/1 = real token
+      (or None)
+    - returns: MaskSpec whose tensor is [B, 1, q_len, T] additive
+      (0 / dtype-min)
     """
     kv_len = seen + q_len
     q_idx = torch.arange(q_len, device=device)[None, None, :, None] + seen
@@ -225,9 +238,14 @@ class _CheckpointLayerKV:
     def update(
         self,
         layer_idx: int,
-        keys: Tensor,  # [B, kv_heads, S, head_dim] (this forward's, post-RoPE)
-        values: Tensor,  # [B, kv_heads, S, head_dim]
-    ) -> tuple[Tensor, Tensor]:  # full [B, kv_heads, T, head_dim] each
+        keys: Tensor,
+        values: Tensor,
+    ) -> tuple[Tensor, Tensor]:
+        """Shapes:
+        - ``keys``: [B, kv_heads, S, head_dim] (this forward's, post-RoPE)
+        - ``values``: [B, kv_heads, S, head_dim]
+        - returns: full (K, V), each [B, kv_heads, T, head_dim]
+        """
         del layer_idx
         self.new_kv = (keys, values)
         if self.past is None:
@@ -297,12 +315,19 @@ class TextAttention(nn.Module):
         position_embeddings: tuple[Tensor, Tensor],  # (cos, sin): [B, S, head_dim]
         attention_mask: MaskSpec,  # .tensor (when present): [B, 1, S, T]
         cache: Molmo2KVCache | _CheckpointLayerKV | None = None,
-    ) -> Tensor:  # [B, S, hidden]
-        """Grouped-query self-attention; returns [B, S, hidden].
+    ) -> Tensor:
+        """Grouped-query self-attention.
 
         With a ``cache``, this forward's (post-RoPE) K/V are appended to
         the layer's entry and attention runs over the full T = seen + S
         key positions (the mask must then be [B, 1, S, T]).
+
+        Shapes:
+        - ``hidden_states``: [B, S, hidden]
+        - ``position_embeddings``: (cos, sin), each [B, S, head_dim]
+        - ``attention_mask``: MaskSpec tensor [B, 1, S, T] (T = S without
+          a cache)
+        - returns: [B, S, hidden]
         """
         batch, seq_len, _ = hidden_states.shape
         hidden_shape = (batch, seq_len, -1, self.head_dim)
@@ -365,8 +390,13 @@ class TextMLP(nn.Module):
         self.act = activation_fn(config.hidden_act)
 
     @override
-    def forward(self, x: Tensor) -> Tensor:  # [B, S, hidden] -> same
-        """Gated GLU MLP; shape-preserving."""
+    def forward(self, x: Tensor) -> Tensor:
+        """Gated GLU MLP.
+
+        Shapes:
+        - ``x``: [B, S, hidden]
+        - returns: [B, S, hidden]
+        """
         # ff_proj output [B, S, 2*intermediate] chunks into (up, gate).
         x, gate = self.ff_proj(x).chunk(2, dim=-1)
         return self.ff_out(self.act(gate) * x)
@@ -414,8 +444,15 @@ class DecoderLayer(nn.Module):
         position_embeddings: tuple[Tensor, Tensor],  # (cos, sin): [B, S, head_dim]
         attention_mask: MaskSpec,  # .tensor (when present): [B, 1, S, T]
         cache: Molmo2KVCache | _CheckpointLayerKV | None = None,
-    ) -> Tensor:  # [B, S, hidden]
-        """self-attn -> MLP with pre-norms; returns [B, S, hidden]."""
+    ) -> Tensor:
+        """self-attn -> MLP with pre-norms.
+
+        Shapes:
+        - ``hidden_states``: [B, S, hidden]
+        - ``position_embeddings``: (cos, sin), each [B, S, head_dim]
+        - ``attention_mask``: MaskSpec tensor [B, 1, S, T]
+        - returns: [B, S, hidden]
+        """
         hidden_states = hidden_states + self.self_attn(
             self.attn_norm(hidden_states),
             position_embeddings,
@@ -502,8 +539,17 @@ class Molmo2Transformer(nn.Module):
 
         ``residual_taps``/``residual_sink``: record the hidden state AFTER
         each listed layer (post both residual adds — the residual stream the
-        next layer consumes, WITHOUT ``ln_f``) into the caller's sink dict,
-        [B, S, hidden] per tap. Both or neither.
+        next layer consumes, WITHOUT ``ln_f``) into the caller's sink dict.
+        Both or neither.
+
+        Shapes:
+        - ``input_ids``: [B, S] long (XOR ``inputs_embeds``)
+        - ``inputs_embeds``: [B, S, hidden]
+        - ``position_ids``: [B, S] long logical positions (or None)
+        - ``attention_mask``: MaskSpec tensor [B, 1, S, T] (or None)
+        - ``padding_mask``: [B, T], True/1 = real token (or None)
+        - ``residual_sink`` values: [B, S, hidden] per tap
+        - returns: [B, S, hidden] (post ``ln_f``)
         """
         if (input_ids is None) == (inputs_embeds is None):
             raise ValueError("specify exactly one of input_ids or inputs_embeds")
@@ -590,6 +636,12 @@ class Molmo2Transformer(nn.Module):
         the same recompute as gradients on the hidden output; the
         retained memory per block is its boundary hidden state plus the
         K/V any cached forward keeps anyway.
+
+        Shapes:
+        - ``hidden_states``: [B, S, hidden]
+        - ``position_embeddings``: (cos, sin), each [B, S, head_dim]
+        - ``attention_mask``: MaskSpec tensor [B, 1, S, T]
+        - returns: [B, S, hidden]
         """
         shim: _CheckpointLayerKV | None = None
         if cache is not None:
@@ -690,8 +742,13 @@ class Molmo2TextModel(nn.Module):
         padding_mask: Tensor | None = None,  # [B, T], True/1 = real token
         residual_taps: Sequence[int] = (),
         residual_sink: dict[int, Tensor] | None = None,  # tap -> [B, S, hidden]
-    ) -> Tensor:  # [B, S, vocab] with a head, else [B, S, hidden]
-        """Logits [B, S, vocab] with a head, else hidden states [B, S, hidden]."""
+    ) -> Tensor:
+        """Decode (see ``Molmo2Transformer.forward`` for the full contract).
+
+        Shapes:
+        - ``input_ids``: [B, S] long (XOR ``inputs_embeds`` [B, S, hidden])
+        - returns: [B, S, vocab] logits with a head, else [B, S, hidden]
+        """
         hidden_states = self.transformer(
             input_ids,
             inputs_embeds=inputs_embeds,

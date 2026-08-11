@@ -47,7 +47,11 @@ from torch import Tensor
 
 from ..gemma4.loading import resolve_checkpoint_dir
 from ..molmo2.cache import Molmo2KVCache
-from ..molmo2.model import Molmo2Model, build_multimodal_mask
+from ..molmo2.model import (
+    Molmo2Model,
+    build_multimodal_mask,
+    ensure_per_sample_patch_alignment,
+)
 from ..molmo2.model import load_model as load_trunk
 from ..molmo2.tokenizer import Molmo2TextTokenizer
 from .action_expert import (
@@ -322,7 +326,13 @@ class MolmoAct2Predictor:
             idx = image.pooled_idx
             pooled.append(torch.where(idx >= 0, idx + crop_base, idx))
             crop_base += image.crops.shape[0] * image.crops.shape[1]
-        input_ids = pack.input_ids[None].to(self.device)
+        input_ids = pack.input_ids[None]
+        ensure_per_sample_patch_alignment(
+            input_ids,
+            torch.cat(pooled, dim=0)[None],
+            image_patch_id=self.trunk.image_patch_id,
+        )
+        input_ids = input_ids.to(self.device)
         image_ids = torch.tensor(
             sorted(self.image_token_ids),
             dtype=torch.long,

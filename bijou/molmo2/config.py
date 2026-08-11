@@ -27,14 +27,13 @@ import torch
 __all__ = [
     "Molmo2Config",
     "Molmo2TextConfig",
-    "molmo2_4b_text_config",
 ]
 
 
 @dataclass(frozen=True, slots=True)
 class Molmo2TextConfig:
-    """Decoder architecture. See :func:`molmo2_4b_text_config` for the
-    released Molmo2-4B values."""
+    """Decoder architecture. See :meth:`molmo2_4b` for the released
+    Molmo2-4B values."""
 
     vocab_size: int
     # Separate extension embedding matrix (``wte.new_embedding``); ids in
@@ -82,6 +81,25 @@ class Molmo2TextConfig:
         decoder-owned trainable parameters (Molmo2's own new_embedding
         pattern), while ``wte`` and the shipped ``lm_head`` stay frozen."""
         return self.total_vocab_size
+
+    @staticmethod
+    def molmo2_4b() -> Molmo2TextConfig:
+        """The ``allenai/Molmo2-4B`` decoder architecture (matches its
+        config.json — stock Qwen3-4B geometry)."""
+        return Molmo2TextConfig(
+            vocab_size=151_936,
+            additional_vocab_size=128,
+            hidden_size=2560,
+            intermediate_size=9728,
+            num_hidden_layers=36,
+            num_attention_heads=32,
+            num_key_value_heads=8,
+            head_dim=128,
+            hidden_act="silu",
+            layer_norm_eps=1e-6,
+            rope_theta=5_000_000.0,
+            tie_word_embeddings=False,
+        )
 
     @classmethod
     def from_dict(cls, data: dict[str, Any], *, tie_word_embeddings: bool) -> Self:
@@ -273,22 +291,3 @@ class Molmo2Config:
     def from_json(cls, path: Path | str) -> Self:
         with Path(path).open() as f:
             return cls.from_dict(json.load(f))
-
-
-def molmo2_4b_text_config() -> Molmo2TextConfig:
-    """The ``allenai/Molmo2-4B`` decoder architecture (matches its
-    config.json — stock Qwen3-4B geometry)."""
-    return Molmo2TextConfig(
-        vocab_size=151_936,
-        additional_vocab_size=128,
-        hidden_size=2560,
-        intermediate_size=9728,
-        num_hidden_layers=36,
-        num_attention_heads=32,
-        num_key_value_heads=8,
-        head_dim=128,
-        hidden_act="silu",
-        layer_norm_eps=1e-6,
-        rope_theta=5_000_000.0,
-        tie_word_embeddings=False,
-    )

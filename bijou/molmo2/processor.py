@@ -135,8 +135,8 @@ def _resize_normalize(image: Tensor, out_h: int, out_w: int) -> Tensor:
     float image, clipped, then (x - 0.5) / 0.5 per channel.
 
     Shapes:
-      - image: [3, H, W]  (float, [0, 1] — the LeRobot decode convention)
-      - returns [out_h, out_w, 3]  (float32, normalized)
+    - ``image``: [3, H, W] float in [0, 1] (the LeRobot decode convention)
+    - returns: [out_h, out_w, 3] float32, normalized
     """
     if image.dtype == torch.uint8 or not torch.is_floating_point(image):
         raise ValueError(
@@ -184,9 +184,13 @@ def select_tiling(
 
 
 def _arange_for_pooling(idx_arr: np.ndarray) -> np.ndarray:
-    """Group a [H, W] patch-index grid into 2x2 pooling groups, padding the
-    edges with -1 (centered: extra pad goes bottom/right). Returns
-    [ceil(H/2), ceil(W/2), 4]."""
+    """Group a patch-index grid into 2x2 pooling groups, padding the
+    edges with -1 (centered: extra pad goes bottom/right).
+
+    Shapes:
+    - ``idx_arr``: [H, W] patch indices
+    - returns: [ceil(H/2), ceil(W/2), 4]
+    """
     h_pad = POOL_H * -(idx_arr.shape[0] // -POOL_H) - idx_arr.shape[0]
     w_pad = POOL_W * -(idx_arr.shape[1] // -POOL_W) - idx_arr.shape[1]
     idx_arr = np.pad(
@@ -201,7 +205,12 @@ def _arange_for_pooling(idx_arr: np.ndarray) -> np.ndarray:
 
 
 def _pixels_to_patches(views: Tensor) -> Tensor:
-    """[T, H, W, 3] -> [T, (H/14)*(W/14), 14*14*3] (the ViT input rows)."""
+    """Flatten pixel views into ViT input rows.
+
+    Shapes:
+    - ``views``: [T, H, W, 3]
+    - returns: [T, (H/14)*(W/14), 14*14*3]
+    """
     num, height, width, channels = views.shape
     h_patches, w_patches = height // PATCH_SIZE, width // PATCH_SIZE
     views = views.reshape(num, h_patches, PATCH_SIZE, w_patches, PATCH_SIZE, channels)
@@ -216,7 +225,8 @@ def process_image(image: Tensor, *, max_crops: int) -> ImageCrops:
     crop stack and the pooling index.
 
     Shapes:
-      - image: [3, H, W]  (float, [0, 1])
+    - ``image``: [3, H, W] float in [0, 1]
+    - returns: ImageCrops (crops [T, 729, 588], pooled_idx [P, 4])
     """
     height, width = int(image.shape[1]), int(image.shape[2])
 

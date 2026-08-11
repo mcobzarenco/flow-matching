@@ -3,8 +3,8 @@
 Loads HF checkpoints (``google/gemma-4-e2b-it``, ``google/gemma-4-e4b-it``)
 and reproduces the reference transformers implementation bit-exactly in bf16
 (eager attention). Text and vision towers are implemented; the audio tower is
-not. Architectures are fully config-driven (:func:`e2b_config` /
-:func:`e4b_config` build them in code for from-scratch use).
+not. Architectures are fully config-driven (:meth:`Gemma4Config.e2b` /
+:meth:`Gemma4Config.e4b` build them in code for from-scratch use).
 
 Correctness is checked with ``python -m bijou.gemma4.verify_parity``: greedy
 tokens must match HF exactly and logits must agree within a small tolerance
@@ -34,8 +34,6 @@ from .config import (
     LayerType,
     RopeParameters,
     RopeType,
-    e2b_config,
-    e4b_config,
 )
 from .generation import GenerationResult, SamplingParams, generate
 from .loading import load_config, load_model, resolve_checkpoint_dir
@@ -58,8 +56,6 @@ __all__ = [
     "SamplingParams",
     "TextModel",
     "VisionModel",
-    "e2b_config",
-    "e4b_config",
     "generate",
     "load_config",
     "load_model",

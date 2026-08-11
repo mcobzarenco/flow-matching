@@ -13,6 +13,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, override
 
+from tokenizers import Tokenizer
+
 from ..gemma4.loading import resolve_checkpoint_dir
 
 __all__ = ["Molmo2TextTokenizer", "newline_carrier_ids"]
@@ -34,12 +36,13 @@ class Molmo2TextTokenizer:
     @property
     def tokenizer(self) -> Any:
         if self._tokenizer is None:
-            from tokenizers import Tokenizer
-
             checkpoint_dir = resolve_checkpoint_dir(self.checkpoint)
             tokenizer_file = Path(checkpoint_dir) / "tokenizer.json"
             if not tokenizer_file.exists():
-                raise SystemExit(f"no tokenizer.json in {checkpoint_dir}")
+                # An exception, not SystemExit: this fires deep inside
+                # library code (often a dataloader worker), not at a CLI
+                # boundary.
+                raise FileNotFoundError(f"no tokenizer.json in {checkpoint_dir}")
             self._tokenizer = Tokenizer.from_file(str(tokenizer_file))
         return self._tokenizer
 

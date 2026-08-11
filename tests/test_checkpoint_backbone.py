@@ -30,7 +30,7 @@ from bijou.decoders.flow import (
     TimeConditioning,
 )
 from bijou.encoders.gemma4 import GemmaEncoder
-from bijou.gemma4.config import Gemma4Config, e2b_config
+from bijou.gemma4.config import Gemma4Config
 from bijou.gemma4.loading import truncated_config
 from bijou.gemma4.model import Gemma4Model
 from bijou.loading import BackboneDepth, checkpoint_sections, load_backbone_init
@@ -80,7 +80,7 @@ def tiny_model() -> BijouModel:
     # test never touch its weights (only encoder.exports for metadata).
     # Truncated exactly as the real build (depth derivation reads the
     # backbone's config: no KV-shared layers <=> prefix depth).
-    config = truncated_config(e2b_config(), 15)
+    config = truncated_config(Gemma4Config.e2b(), 15)
     encoder = GemmaEncoder(
         config,
         exports=(4, 9, 14),

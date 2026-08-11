@@ -38,9 +38,14 @@ class Molmo2KVCache:
         keys: Tensor,
         values: Tensor,
     ) -> tuple[Tensor, Tensor]:
-        """Append new K/V states [B, kv_heads, S, head_dim]; return the
-        full states to attend to, [B, kv_heads, T, head_dim]
-        (T = seen + S)."""
+        """Append this forward's K/V; return the full states to attend to.
+
+        Shapes:
+        - ``keys``: [B, kv_heads, S, head_dim] (post-RoPE)
+        - ``values``: [B, kv_heads, S, head_dim]
+        - returns: full (K, V), each [B, kv_heads, T, head_dim] with
+          T = seen + S
+        """
         layer = self.layers[layer_idx]
         if layer.keys is None or layer.values is None:
             layer.keys, layer.values = keys, values

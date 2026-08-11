@@ -3,7 +3,7 @@ format-1 read-side synthesizers, and the --init-from config guard across
 formats.
 
 Offline by construction: the backbone architecture comes from
-``e2b_config()`` (built in code, matching google/gemma-4-e2b-it), and the
+``Gemma4Config.e2b()`` (built in code, matching google/gemma-4-e2b-it), and the
 legacy fixture is a real pre-format-2 ``bijou_config.json`` (the adaRMS
 rig fine-tune's, per-dataset table trimmed).
 """
@@ -18,7 +18,7 @@ import pytest
 
 from bijou.data import DatasetStats
 from bijou.decoders.flow import ExpertConfig, FlowDecoder
-from bijou.gemma4.config import e2b_config
+from bijou.gemma4.config import Gemma4Config
 from bijou.loading import (
     BackboneConfig,
     BackboneDepth,
@@ -46,7 +46,7 @@ def legacy_meta() -> dict:
 def legacy_expert_config() -> ExpertConfig:
     meta = legacy_meta()
     return expert_config_from_train_args(
-        e2b_config(),
+        Gemma4Config.e2b(),
         CheckpointTrainArgs.from_dict(meta["train_args"]),
         action_dim=len(meta["normalization"]["action"]["mean"]),
         state_dim=len(meta["normalization"]["observation.state"]["mean"]),
@@ -99,7 +99,7 @@ def test_prompt_decoder_bridge_roundtrips_expert_config() -> None:
     )
     decoder = flow_decoder_config_from_expert(expert_config)
     assert decoder.schedule[:5] == ("kv4", "kv4", "kv4", "kv4", "kv9")
-    rebuilt = expert_config_from_architecture(prompt, decoder, e2b_config())
+    rebuilt = expert_config_from_architecture(prompt, decoder, Gemma4Config.e2b())
     assert rebuilt == expert_config
 
 
@@ -148,7 +148,7 @@ def test_unknown_stream_and_unused_export_fail_loudly() -> None:
         generate_bracket=False,
     )
     with pytest.raises(SystemExit, match="unknown stream"):
-        expert_config_from_architecture(prompt, decoder, e2b_config())
+        expert_config_from_architecture(prompt, decoder, Gemma4Config.e2b())
 
     schedule_without_kv9 = tuple(
         "kv4" if name == "kv9" else name for name in decoder.schedule
@@ -163,7 +163,7 @@ def test_unknown_stream_and_unused_export_fail_loudly() -> None:
         generate_bracket=False,
     )
     with pytest.raises(SystemExit, match="not consumed"):
-        expert_config_from_architecture(prompt_full, decoder_unused, e2b_config())
+        expert_config_from_architecture(prompt_full, decoder_unused, Gemma4Config.e2b())
 
 
 def tiny_stats(dim: int = 6) -> DatasetStats:
@@ -240,7 +240,7 @@ def test_metadata_writes_format3_and_reads_back() -> None:
     rebuilt = expert_config_from_architecture(
         sections.prompt,
         sections.decoder,
-        e2b_config(),
+        Gemma4Config.e2b(),
     )
     assert rebuilt == legacy_expert_config()
 

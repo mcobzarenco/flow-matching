@@ -104,26 +104,8 @@ def test_released_config_parameter_count() -> None:
     # 577,564,448 measured exactly on the real exports (588 tensors);
     # instantiated, the module additionally carries the compat-only
     # state_encoder + kv_proj — 620,677,664 total, the paper's "621M"
-    # (reconciliation measured 2026-08-11,
-    # outputs/probe_molmoact2_param_count.py).
-    cfg = ActionExpertConfig(
-        max_horizon=30,
-        max_action_dim=32,
-        hidden_size=768,
-        num_layers=36,
-        num_heads=8,
-        mlp_ratio=4.0,
-        ffn_multiple_of=256,
-        timestep_embed_dim=256,
-        dropout=0.0,
-        attn_dropout=0.0,
-        context_layer_norm=True,
-        qk_norm=True,
-        qk_norm_eps=1e-6,
-        rope=True,
-        causal_attn=False,
-    )
-    expert = cfg.build(llm_kv_dim=1024)
+    # (outputs/probe_molmoact2_param_count.py has the breakdown).
+    expert = ActionExpertConfig.released_so100_101().build(llm_kv_dim=1024)
     hf_visible = sum(
         p.numel()
         for name, p in expert.named_parameters()

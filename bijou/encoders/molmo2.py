@@ -54,8 +54,13 @@ from ..interface import (
     residual_stream_name,
 )
 from ..molmo2.cache import Molmo2KVCache
-from ..molmo2.model import Molmo2Model, build_multimodal_mask
+from ..molmo2.model import (
+    Molmo2Model,
+    build_multimodal_mask,
+    ensure_per_sample_patch_alignment,
+)
 from ..molmo2.processor import (
+    IM_PATCH_ID,
     IMAGE_TYPE_IDS,
     ImageCrops,
     image_token_ids,
@@ -289,6 +294,11 @@ class Molmo2InputsCollator:
             crops[row, : sample_crops[row].shape[0]] = sample_crops[row]
             pooled_patches_idx[row, : sample_pooled[row].shape[0]] = sample_pooled[row]
 
+        ensure_per_sample_patch_alignment(
+            input_ids,
+            pooled_patches_idx,
+            image_patch_id=IM_PATCH_ID,
+        )
         return Molmo2Inputs(
             input_ids=input_ids,
             attention_mask=attention_mask,

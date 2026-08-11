@@ -44,7 +44,7 @@ just 4B active params.
 The E-series ("E" ≈ effective/on-device) are multimodal: text + vision
 towers are implemented in `bijou/gemma4/`; the checkpoints also carry
 an audio tower, which is not. Architectures are fully config-driven —
-`e2b_config()` / `e4b_config()` build them in code for from-scratch
+`Gemma4Config.e2b()` / `Gemma4Config.e4b()` build them in code for from-scratch
 use.
 
 ## E-series text decoder — the facts (from `config.py` / `text.py`)

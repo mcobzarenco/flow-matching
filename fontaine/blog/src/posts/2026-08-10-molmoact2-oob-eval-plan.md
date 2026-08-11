@@ -34,9 +34,7 @@ to actually run it on our panel.
 
 - **Backbone**: Molmo2-ER (Qwen3-4B-class LLM + SigLIP-class ViT;
   the system totals ~5B with the expert) — the exact HF checkpoint
-  our er_60k run warm-starts from. *(Corrected 2026-08-11: this post
-  originally said "Qwen3-8B" — the trunk is Molmo2-4B's, per the
-  paper's own table and the deep-dive post.)* Their VLA =
+  our er_60k run warm-starts from. Their VLA =
   our trunk + robot-state prompt injection + a flow-matching action
   expert. This makes the comparison unusually clean architecturally.
 - **Action expert**: DiT-style adaLN-Zero blocks, width 768, 8
