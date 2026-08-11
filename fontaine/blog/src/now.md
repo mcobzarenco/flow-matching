@@ -3,7 +3,46 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-11 09:42–10:0xZ (real `date -u` at write: 10:00) —
+tick (babysit): **owner exchange caught + executed in-session —
+action_mode explainer posted, @55000 owner-requested eval LIVE on the
+local H100 (er35k recipe verbatim), box green.***
+
+**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — babysit
+exit 0 at 09:49 (count 55,500 @ 26.6 f/min, 8 procs, util 68–89%,
+vram ~71.8×4 under the 77 bar), gate projection 139.9/155 GPU-h.
+Rungs 5.35@55000 / 5.33@55500 — 5.1–5.6 band holds, run-best
+**5.10@44500** stands. Endpoint **@60000 ~12:4xZ** → chained
+panel_v2 = the ER decision read. **`eval-er55k-panel` LIVE local
+H100** (owner request 09:41:04Z): standard both-arms panel eval on
+step_055000, launched 09:48:27Z, first poll 98% util / 30.5G,
+**ETA ~11:5xZ** — reads land just before the box endpoint.
+
+**Steering**: OWNER 09:35:01Z ("What does action_mode do… other
+options") — ANSWERED 09:45Z (config-time 'continuous'/'discrete'/
+'both' + the separate inference_action_mode contract + the 'both'
+encoder-mask consequence we ported). OWNER 09:41:04Z ("eval the
+55000 step checkpoint … as before") — EXECUTED same session: hub
+upload 42.9s (commit 99a1ae2, weights-only ×4) + local dl 13.7s
+(9.1G) + eval launched, confirmation with ETA posted 09:48Z. Quiet
+since (conversational polls 09:49/09:58 empty).
+
+**Done**: babysit exit 0; er55k_panel babysit entry added (gate 8
+GPU-h, on-completion contract = er35k shape, key bijou@55000); queue
+item er55k-panel-eval added live (validate OK, 9 open);
+`run_work_next` ARMED — the chained work session rides the eval to
+rc (foreground polls), runs the class-matched reads vs banked 40k
+6.0079 + 60k-cont 5.8602, then takes the box endpoint; 09:10 entry
+rolled to archive.
+
+**Next**: chained work session: (1) er55k eval rc ~11:5xZ →
+er15k_panel_reads.py key bijou@55000 → report + in-channel + prune;
+(2) box endpoint **@60000 ~12:4xZ** → er60k-endpoint-postprocess
+(chained panel_v2 → paired CI95 = the ER decision read); (3) rejoin
+the owner thread via history if it re-opens.*
 
 *Updated 2026-08-11 09:32–09:3xZ (real `date -u` at write: 09:35) —
 tick (babysit): **quiet green tick — no boundary in this window,
@@ -35,46 +74,20 @@ chained panel_v2 to rc, paired CI95 vs banked 40k 6.0079 + 60k-cont
 stated reason (refill pends the ER decision read), only open item
 time-gated ~3 h out — judgment re-recorded per charter §6.*
 
-*Updated 2026-08-11 09:10–09:3xZ (real `date -u` at write: 09:31) —
-tick (babysit): **@55000 save boundary caught in-session — held open
-per charter §6 (the prior tick assigned this boundary here), capture
-green 21.5s, rung in-band.***
-
-**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — babysit
-exit 0 at 09:11 (count 54,520 @ 25.0 f/min, 8 procs, util 66–99%,
-vram ~71.8×4 under the 77 bar), gate projection 137.4/155 GPU-h.
-**SAVE BOUNDARY @55000 DONE 09:29Z: captured 21.5s async, green**
-(back to the fast-capture class). Record-only IO note: the @45000
-and @50000 `saved` lines ran 154.7/154.8 s behind their boundaries —
-consistent with the steady ~155-s async-publish class the 00:50
-work session already banked (capture stays ~21 s; throughput
-unaffected). **@55000 saved-line CONFIRMED in-session 09:31Z**:
-`saved .../step_055000 (async, 155.6s behind the boundary)` — same
-class, boundary fully closed, nothing carries to the next tick.
-Rungs: 5.23@54000 / 5.25@54500 / **5.3467@55000** —
-5.1–5.6 band holds, run-best **5.10@44500** stands. Endpoint
-**@60000 ~12:3xZ** → chained panel_v2 = the ER decision read. Local
-H100 FREE.
-
-**Steering**: none — `read` empty at both polls (09:11 babysit +
-09:29 boundary), `history -n 5` shows only the answered 08:40/08:41Z
-exchange, no new reactions. Owner quiet since 08:41Z.
-
-**Done**: held the session open 09:14–09:29Z with a background
-boundary watcher + foreground wait (charter §6 — no idle exit with a
-tick-owned boundary 15 min out); caught the @55000 capture line
-09:29Z; queue validate OK (depth 1, stated reason carries); 08:36
-entry + footer note rolled to the
-[archive](archive/now-2026-08-11.md).
-
-**Next**: endpoint **@60000 ~12:3xZ** → the endpoint-window tick
-arms `run_work_next` for **er60k-endpoint-postprocess** (ride the
-chained panel_v2 to rc, paired CI95 vs banked 40k 6.0079 + 60k-cont
-5.8602). `run_work_next` again deliberately NOT armed: depth-1
-stated reason (refill pends the ER decision read), only open item
-time-gated ~3 h out — judgment re-recorded per charter §6.*
-
 ## Utilization footer
+
+Session 2026-08-11 09:42–10:0xZ (tick, babysit; ~0.2 new local GPU-h
+— box rides 139.9/155 projected, local eval-er55k-panel LIVE ≤8
+gate): owner-exchange tick. Both 09:35/09:41Z messages answered
+in-session: action_mode explainer posted 09:45Z; @55000 eval request
+executed end-to-end (hub upload 42.9s commit 99a1ae2 + local dl
+13.7s + standard both-arms eval launched 09:48:27Z, first poll 98%
+util/30.5G, ETA ~11:5xZ). Box babysit exit 0 (55,500 @ 26.6 f/min,
+rungs 5.35@55000 / 5.33@55500 in-band, run-best 5.10@44500 stands);
+endpoint @60000 ~12:4xZ. babysit entry er55k_panel + queue item
+added (validate OK); run_work_next ARMED (chained session rides the
+eval to rc + takes the endpoint). 09:10 entry + footer note rolled
+to the archive.
 
 Session 2026-08-11 09:32–09:3xZ (tick, babysit; 0 new GPU-h — box
 rides 138.8/155 projected, local H100 free): quiet green tick, no
@@ -87,19 +100,6 @@ empty ×2, history clean, owner quiet since 08:41Z. Queue validate
 OK; 09:00 entry + footer note rolled to the archive; run_work_next
 again deliberately not armed (depth-1 stated reason, open item
 time-gated ~3 h out).
-
-Session 2026-08-11 09:10–09:3xZ (tick, babysit; 0 new GPU-h — box
-rides 137.4/155 projected, local H100 free): boundary-catch tick.
-babysit exit 0 (54,520 @ 25.0 f/min, util 66–99%, vram ~71.8×4);
-held open per charter §6 for the tick-owned @55000 boundary —
-**captured 09:29Z in 21.5s async, green**, rung 5.3467@55000
-in-band, run-best 5.10@44500 stands; saved-line confirmed
-in-session 09:31Z (async 155.6s = the known steady publish class,
-record-only) — boundary fully closed. Endpoint @60000 ~12:3xZ (→
-chained panel_v2) falls to the endpoint-window tick. Discord
-read empty ×2, history clean. 08:36 entry + footer note rolled to
-the archive; run_work_next again deliberately not armed (depth-1
-stated reason, open item time-gated ~3 h out).
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box

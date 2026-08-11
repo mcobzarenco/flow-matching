@@ -37,6 +37,31 @@ value = 155.0
 # Correction + amended gate posted in-channel 22:5xZ; owner invited to
 # object to the ~150 GPU-h spend; kill lines unchanged.
 
+[[run]]
+name = "er55k_panel"
+kind = "progress-log"
+host = "local"
+pgrep = "bijou.eval"
+pgrep_min = 1
+gpu_indices = [0]
+gpu_mem_min_mib = 8000
+log = "/home/ubuntu/logs/eval__fontaine_molmo2_er_60k_ddp4__step_055000__panel_curated_v0_k4l2.log"
+progress_re = "scored [0-9]+/25800 frames"
+started_utc = "2026-08-11T09:48:27Z"
+gpu_hours_per_wall_hour = 1.0
+boundary = "OWNER REQUEST 09:41:04Z 08-11 ('eval the 55000 step checkpoint that just landed on the box as before'): STANDARD er_60k panel eval on step_055000, local H100 unit eval-er55k-panel launched 09:48:27Z — the er35k recipe verbatim (no --generate, so the narrated arm rides automatically): bijou@55000 (fast path) + bijou@55000+fields (aux-narrated) + per-field aux metrics + does-narration-help pairing, the er15k/er35k report shape. Hub upload 42.9s (commit 99a1ae2, 4 files weights-only) + local dl 13.7s (9.1G). FIRST POLL DONE 09:5xZ launch session: 98% util / 30.5G, scoring started. ETA ~11:5xZ (35k both-arms ran ~2.1h). ON rc=0: er15k_panel_reads.py --stem-cand reports/eval__fontaine_molmo2_er_60k_ddp4__step_055000__panel_curated_v0_k4l2 --out reports/analysis__er55k_panel_vs_banked_k4l2.json (fast-path key bijou@55000 = CLASS-MATCHED vs banked 40k 6.0079 + 60k-cont 5.8602; 35k precedent read 6.2892 core / +0.2813), report+json+analysis to fontaine-reports + reports.md, numbers in-channel, prune this entry. Record-only: nothing gates the box run (its endpoint @60000 ~12:4xZ decides ER; the 55k read lands just before it)."
+anchors = [
+    "record-only owner-requested read; nothing gates or repoints the box run",
+    "first-poll DONE: 98% util, 30.5G, both-arms class expect ~120-250 f/min",
+    "kill lines: unit inactive with no wrote-lines rc!=0; f/min collapse under ~30 sustained x3 polls",
+    "progress: 'scored N/25800 frames'; done = dumped npz + wrote json + wrote html lines",
+    "on-completion contract: class-matched paired reads via er15k_panel_reads.py (key bijou@55000), then in-channel numbers + Space upload; owner told ETA ~11:5xZ",
+]
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 8.0
+# 8 = the er15k/er35k local-eval gate class (both ran ~2.2-2.5 GPU-h).
+
 # molmoact2_ae_ours entry PRUNED 08:4xZ 08-11 tick (orphan cleanup: the
 # 07:0x work session that closed the run exited 1 before committing) —
 # run COMPLETE rc=0 06:56Z, ~1.9/6 GPU-h (port total ~2.6/8). G4 PASS
