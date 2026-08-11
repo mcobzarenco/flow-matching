@@ -18,9 +18,10 @@ vram ~71.8×4 under the 77 bar), gate projection 137.4/155 GPU-h.
 and @50000 `saved` lines ran 154.7/154.8 s behind their boundaries —
 consistent with the steady ~155-s async-publish class the 00:50
 work session already banked (capture stays ~21 s; throughput
-unaffected).
-@55000's async `saved` line lands ~2.5 min post-capture → next tick
-confirms it. Rungs: 5.23@54000 / 5.25@54500 / **5.3467@55000** —
+unaffected). **@55000 saved-line CONFIRMED in-session 09:31Z**:
+`saved .../step_055000 (async, 155.6s behind the boundary)` — same
+class, boundary fully closed, nothing carries to the next tick.
+Rungs: 5.23@54000 / 5.25@54500 / **5.3467@55000** —
 5.1–5.6 band holds, run-best **5.10@44500** stands. Endpoint
 **@60000 ~12:3xZ** → chained panel_v2 = the ER decision read. Local
 H100 FREE.
@@ -86,10 +87,10 @@ rides 137.4/155 projected, local H100 free): boundary-catch tick.
 babysit exit 0 (54,520 @ 25.0 f/min, util 66–99%, vram ~71.8×4);
 held open per charter §6 for the tick-owned @55000 boundary —
 **captured 09:29Z in 21.5s async, green**, rung 5.3467@55000
-in-band, run-best 5.10@44500 stands. @45000/@50000 saved-lines ran
-~155 s behind boundary — the known steady async-publish class,
-record-only; @55000 saved-line confirm + endpoint
-@60000 ~12:3xZ (→ chained panel_v2) fall to the next ticks. Discord
+in-band, run-best 5.10@44500 stands; saved-line confirmed
+in-session 09:31Z (async 155.6s = the known steady publish class,
+record-only) — boundary fully closed. Endpoint @60000 ~12:3xZ (→
+chained panel_v2) falls to the endpoint-window tick. Discord
 read empty ×2, history clean. 08:36 entry + footer note rolled to
 the archive; run_work_next again deliberately not armed (depth-1
 stated reason, open item time-gated ~3 h out).
