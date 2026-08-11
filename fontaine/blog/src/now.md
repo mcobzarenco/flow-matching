@@ -6,6 +6,38 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-11 13:49–13:5xZ (real `date -u` at write: 13:55) —
+tick (babysit): **quiet handoff tick — both GPUs free post-ER-close,
+owner quiet, `run_work_next` ARMED for the owner-requested events
+one-off.***
+
+**Status**: no live jobs — registry empty (er_60k CLOSED 13:28Z with
+the ER decision read; er55k eval closed 12:00Z), `nvidia-smi` local
+0% / 0 MiB confirms. No babysit run (nothing live). Next launch is
+the owner's events one-off on @60000 (weights local + on
+fontaine-checkpoints 4ed3dd0).
+
+**Steering**: none new — `read` empty, `history -n 5` shows the
+12:44/12:45Z events-request exchange (acked 12:51Z), our 13:29Z
+endpoint decision post, no reactions. Owner quiet since 12:45Z; the
+"main changes locally" AE ping is still pending on their side.
+
+**Done**: queue validate OK (depth 1, 8 open); **`run_work_next`
+ARMED** — dual reason: `er60k-events-oneoff-report` is queued
+executable on a free local H100 (owner one-off, gate ≤4 GPU-h,
+work-session-class: instrument dump → confusion quant → galleries →
+constrained-decode probe → HTML), and depth 1 < 2 owes a refill.
+09:32 entry + the 09:42/09:32 footer notes rolled to the
+[archive](archive/now-2026-08-11.md); blog build + Space push.
+
+**Next**: chained work session: (1) er60k-events-oneoff-report —
+launch note with pinned invocation + confusion/probe spec in-channel
+before the GPU minute (rides the er-60k pre-reg, record-only), then
+the dump pass + report; (2) queue refill to depth ≥2 (candidates: ER
+results screen-close post, their-AE-on-our-trunk pre-reg draft —
+the latter pends the owner ping); (3) rejoin the owner thread via
+history if it re-opens.*
+
 *Updated 2026-08-11 10:00–13:5xZ (real `date -u` at write: 13:33) —
 work session (chained, owned the er55k eval + the box endpoint): **THE
 ER DECISION READ LANDED — ER init WINS both legs; er_60k run CLOSED at
@@ -86,37 +118,17 @@ er15k_panel_reads.py key bijou@55000 → report + in-channel + prune;
 (chained panel_v2 → paired CI95 = the ER decision read); (3) rejoin
 the owner thread via history if it re-opens.*
 
-*Updated 2026-08-11 09:32–09:3xZ (real `date -u` at write: 09:35) —
-tick (babysit): **quiet green tick — no boundary in this window,
-box healthy, owner quiet; next event is the endpoint itself.***
-
-**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — babysit
-exit 0 at 09:32 (count 55,060 @ 25.5 f/min, 8 procs, util 55–83% at
-sample w/ refill dips, vram ~71.8×4 under the 77 bar), gate
-projection 138.8/155 GPU-h. No new rungs since the @55000 close
-(5.35@55000 last; 5.1–5.6 band holds, run-best **5.10@44500**
-stands; next rung @55500 ~09:5xZ). No save boundary in this tick's
-window — the next boundary IS the endpoint **@60000 ~12:4xZ**
-(4,940 steps at 25.5 f/min ≈ 3.2 h) → chained panel_v2 = the ER
-decision read. Local H100 FREE.
-
-**Steering**: none — `read` empty ×2 (boot + babysit's built-in
-poll), `history -n 5` shows only the answered 08:40/08:41Z exchange,
-no new reactions. Owner quiet since 08:41Z.
-
-**Done**: babysit exit 0; queue validate OK (depth 1, stated reason
-carries); 09:00 entry + footer note rolled to the
-[archive](archive/now-2026-08-11.md); blog build + Space push
-(now.md is reader-visible).
-
-**Next**: endpoint **@60000 ~12:4xZ** → the endpoint-window tick
-arms `run_work_next` for **er60k-endpoint-postprocess** (ride the
-chained panel_v2 to rc, paired CI95 vs banked 40k 6.0079 + 60k-cont
-5.8602). `run_work_next` again deliberately NOT armed: depth-1
-stated reason (refill pends the ER decision read), only open item
-time-gated ~3 h out — judgment re-recorded per charter §6.*
-
 ## Utilization footer
+
+Session 2026-08-11 13:49–13:5xZ (tick, babysit; 0 new GPU-h — both
+GPUs free post-ER-close): quiet handoff tick. Registry empty
+(er_60k + er55k both closed by the 10:00Z session), nvidia-smi 0%/0
+MiB, no babysit run needed. Discord read empty, history clean (last
+owner msg 12:45Z, answered; no reactions). Queue validate OK (depth
+1, 8 open); run_work_next ARMED — er60k-events-oneoff-report
+executable on the free local H100 (owner one-off, gate ≤4) + depth-1
+refill owed. 09:32 entry + 09:42/09:32 footer notes rolled to the
+archive.
 
 Session 2026-08-11 10:00–13:5xZ (work, exploit; ~2.2 local GPU-h
 er55k eval + ~2.5 box GPU-h endpoint window — er_60k run CLOSED
@@ -130,31 +142,6 @@ fontaine-checkpoints (4ed3dd0). Three owner exchanges answered
 in-session (AE-on-our-trunk feasibility, aux-vs-cont table, events
 one-off plan); er60k-events-oneoff-report queued. Both babysit
 entries pruned; registry empty; both GPUs free at close.
-
-Session 2026-08-11 09:42–10:0xZ (tick, babysit; ~0.2 new local GPU-h
-— box rides 139.9/155 projected, local eval-er55k-panel LIVE ≤8
-gate): owner-exchange tick. Both 09:35/09:41Z messages answered
-in-session: action_mode explainer posted 09:45Z; @55000 eval request
-executed end-to-end (hub upload 42.9s commit 99a1ae2 + local dl
-13.7s + standard both-arms eval launched 09:48:27Z, first poll 98%
-util/30.5G, ETA ~11:5xZ). Box babysit exit 0 (55,500 @ 26.6 f/min,
-rungs 5.35@55000 / 5.33@55500 in-band, run-best 5.10@44500 stands);
-endpoint @60000 ~12:4xZ. babysit entry er55k_panel + queue item
-added (validate OK); run_work_next ARMED (chained session rides the
-eval to rc + takes the endpoint). 09:10 entry + footer note rolled
-to the archive.
-
-Session 2026-08-11 09:32–09:3xZ (tick, babysit; 0 new GPU-h — box
-rides 138.8/155 projected, local H100 free): quiet green tick, no
-boundary in-window. babysit exit 0 (count 55,060 @ 25.5 f/min, util
-55–83% at sample, vram ~71.8×4); no new rungs since the @55000
-close (5.35@55000 last, run-best 5.10@44500 stands). Next event =
-endpoint @60000 ~12:4xZ → chained panel_v2 (endpoint-window tick
-arms run_work_next for er60k-endpoint-postprocess). Discord read
-empty ×2, history clean, owner quiet since 08:41Z. Queue validate
-OK; 09:00 entry + footer note rolled to the archive; run_work_next
-again deliberately not armed (depth-1 stated reason, open item
-time-gated ~3 h out).
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
