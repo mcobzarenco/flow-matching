@@ -55,9 +55,10 @@ markers = [
 
 [tool.pyright]
 include = ["bijou", "sim", "tests", "probes", "check.py"]
-# convert_benchy is a PEP-723 script running in its own uv env (trimesh,
-# xatlas); its imports don't exist in the project venv.
-exclude = ["sim/convert_benchy.py"]
+# convert_benchy and probe_phantom_volume are PEP-723 scripts running in
+# their own uv envs (trimesh, xatlas); their imports don't exist in the
+# project venv.
+exclude = ["sim/convert_benchy.py", "sim/probe_phantom_volume.py"]
 # Local Any-stubs for untyped C-extension packages (mujoco). pyright picks
 # up ./typings automatically; kept explicit for greppability.
 stubPath = "typings"
