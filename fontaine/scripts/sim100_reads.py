@@ -42,7 +42,11 @@ PANEL_MAE = {
 # record-only either way.
 GATED_PAIR_MIN_GAP = 0.1
 
-ARMS = ("er60k", "hold", "er15k", "er35k", "er55k")
+# Phase-1 arms + the phase-2 owner amendment (22:58Z 08-11: rung arms
+# killed, replaced by the can-anything-succeed set). Reads run over
+# whichever arm JSONs exist; er60k + hold are required.
+ARMS = ("er60k", "hold", "er15k", "er35k", "er55k", "ftrig4k", "snap30k", "teacher80k")
+REQUIRED_ARMS = ("er60k", "hold")
 HOLD_FLOOR_CM = 0.5
 BOOTSTRAP_RESAMPLES = 10_000
 BOOTSTRAP_SEED = 0
@@ -55,7 +59,7 @@ def load_arm(path: Path) -> dict[str, Any]:
         "config": payload["config"],
         "seeds": np.array([e["seed"] for e in episodes]),
         "progress_final": np.array([e["progress_final_cm"] for e in episodes]),
-        "progress_min": np.array([e["progress_cm"] for e in episodes]),
+        "progress_min": np.array([e["initial_cm"] - e["min_cm"] for e in episodes]),
         "success": np.array([e["success_tick"] is not None for e in episodes]),
         "success_ticks": [
             e["success_tick"] for e in episodes if e["success_tick"] is not None
@@ -88,9 +92,12 @@ def ordering_read(mean_progress: dict[str, float]) -> dict[str, Any]:
 
     Correct ranking for a pair = the panel-better rung (lower MAE) has
     strictly higher sim progress. Gated pairs are those with panel gap
-    >= GATED_PAIR_MIN_GAP.
+    >= GATED_PAIR_MIN_GAP. Operates on the rungs present (the phase-2
+    amendment killed three of the four); <2 rungs = nothing to rank.
     """
-    rungs = sorted(PANEL_MAE)
+    rungs = sorted(set(PANEL_MAE) & set(mean_progress))
+    if len(rungs) < 2:
+        return {"skipped": f"only {rungs} present — no pairs to rank"}
     pairs = []
     violations = []
     for i, a in enumerate(rungs):
@@ -130,7 +137,13 @@ def main() -> int:
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
 
-    arms = {name: load_arm(args.in_dir / f"{name}.json") for name in ARMS}
+    arms = {
+        name: load_arm(args.in_dir / f"{name}.json")
+        for name in ARMS
+        if (args.in_dir / f"{name}.json").exists()
+    }
+    for name in REQUIRED_ARMS:
+        assert name in arms, f"required arm {name} missing from {args.in_dir}"
 
     # Gate: identical seed lists (paired design) + zero reset strikes.
     seeds = arms["er60k"]["seeds"]
@@ -159,15 +172,14 @@ def main() -> int:
             "panel_mae": PANEL_MAE.get(name),
         }
 
+    pairs = [(a, "hold") for a in arms if a != "hold"]
+    pairs += [(a, "er60k") for a in ("ftrig4k", "snap30k", "teacher80k")]
+    pairs += [("er60k", b) for b in ("er15k", "er35k", "er55k")]
+    pairs += [("er55k", "er35k"), ("er35k", "er15k")]
     paired = {}
-    for a, b in [
-        ("er60k", "hold"),
-        ("er60k", "er15k"),
-        ("er60k", "er35k"),
-        ("er60k", "er55k"),
-        ("er55k", "er35k"),
-        ("er35k", "er15k"),
-    ]:
+    for a, b in pairs:
+        if a not in arms or b not in arms:
+            continue
         deltas = arms[a]["progress_final"] - arms[b]["progress_final"]
         low, high = bootstrap_ci(deltas)
         paired[f"{a}_minus_{b}"] = {
@@ -177,7 +189,8 @@ def main() -> int:
             "win_rate": round(float((deltas > 0).mean()), 4),
         }
 
-    mean_progress = {r: summary[r]["mean_progress_final_cm"] for r in PANEL_MAE}
+    rungs_present = [r for r in PANEL_MAE if r in summary]
+    mean_progress = {r: summary[r]["mean_progress_final_cm"] for r in rungs_present}
     hold_mean = summary["hold"]["mean_progress_final_cm"]
     gates = {
         "reset_strikes_total": total_strikes,

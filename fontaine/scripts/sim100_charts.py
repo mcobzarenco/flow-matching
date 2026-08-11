@@ -47,9 +47,23 @@ ARM_COLORS = {
     "er35k": "#f593bd",
     "er55k": "#a3125d",
     "er60k": "#dc267f",
+    # Phase-2 arms are distinct model families -> categorical IBM
+    # CVD-safe hues (house set), not ramp steps.
+    "ftrig4k": "#ffb000",
+    "snap30k": "#648fff",
+    "teacher80k": "#785ef0",
     "hold": "#9aa0a8",
 }
-ARM_ORDER = ("er15k", "er35k", "er55k", "er60k", "hold")
+ARM_ORDER = (
+    "er15k",
+    "er35k",
+    "er55k",
+    "er60k",
+    "ftrig4k",
+    "snap30k",
+    "teacher80k",
+    "hold",
+)
 CONTROL_HZ = 30
 
 

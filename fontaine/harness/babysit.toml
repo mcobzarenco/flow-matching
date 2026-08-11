@@ -8,28 +8,28 @@
 # (no_live_runs_reason cleared 21:40Z 08-11 — sim100_eval launched.)
 
 [[run]]
-name = "sim100_eval"
+name = "sim100b_eval"
 kind = "progress-log"
 host = "local"
 pgrep = "sim.rollout_sim"
 pgrep_min = 1
 gpu_indices = [0]
-gpu_mem_min_mib = 100  # hold arm holds only the EGL context; policy arms ~10-30 GiB
+gpu_mem_min_mib = 100  # euler-1 students hold little; teacher heun-30 ~10+ GiB
 log = "/home/ubuntu/logs/sim100_eval.log"
 progress_re = "seed [0-9]+ replan [0-9]+"
-started_utc = "2026-08-11T21:40:31Z"
+started_utc = "2026-08-11T23:44:39Z"
 gpu_hours_per_wall_hour = 1.0
-boundary = "5 sequential arms x 100 seeds (er60k, hold, er15k, er35k, er55k), ~35 s/episode measured => ~1 h/policy arm, ~4-5 h wall total, ETA ~02:0xZ 08-12; registered run of posts/2026-08-11-prereg-sim-policy-eval-100seeds.md (unit fontaine-sim100)"
+boundary = "PHASE 2 (owner amendment 22:58Z 08-11 'kill the arms, try other policies for >0 success'): 3 sequential arms x seeds 0-99 - ftrig4k (rig-ft student, euler-1, ~50 min), snap30k (student, euler-1, ~50 min), teacher80k (heun-30, ~110 min); ETA ~03:2xZ 08-12; unit fontaine-sim100b. Phase 1 (unit fontaine-sim100): er60k+hold BANKED (er60k mean progress -0.03 cm, 0/100 success, strikes 0/100; hold floor 0.0002 cm), er15k/35k/55k killed per owner ~2.0 GPU-h in"
 anchors = [
-    "RECORD-ONLY: nothing gates or repoints runs; primary read = er60k mean progress_final (initial-final boat->disk cm) over seeds 0-99",
-    "validation ordering read: the 5 rung pairs with panel gap >= 0.1 MAE must rank correctly (panel 15k 7.5283 / 35k 6.2892 / 55k 5.8269 / 60k 5.7782); (55k,60k) record-only",
-    "hold arm = metric floor (|mean| < 0.5 cm gate); reset strikes must be 0/100 per arm",
-    "abort rule: er60k arm > 2 h wall => pause after in-flight arm + reassess in-channel; reads via fontaine/scripts/sim100_reads.py on rc=0",
+    "RECORD-ONLY; the question is binary-ish: does ANY policy family engage the boat (>0 successes / progress distribution off zero) in the v0 sim",
+    "phase-1 finding: er_60k reaches over the table but never at the boat = visual-gap fingerprint (AutoEval caveat pre-declared); sim-visual-matching is the named lever",
+    "gate arithmetic: phase 1 spent ~2.0 GPU-h of the 6 gate; this entry's projection restarts at 23:44:39Z - crossing fires at 4.0 on this entry",
+    "on rc=0: reads over whatever arms exist (er60k, hold, ftrig4k, snap30k, teacher80k) - sim100_reads.py ARMS list needs the phase-2 names before running",
 ]
 
 [[run.gates]]
 kind = "gpu_hours_max"
-value = 6.0
+value = 4.0
 
 # er60k_events_dump entry PRUNED 16:0xZ 08-11 work session — dump pass
 # rc=0 15:5xZ (~1.55/4 GPU-h, 25,800 rows at ~275 f/min). Instrument

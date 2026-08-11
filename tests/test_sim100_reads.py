@@ -59,3 +59,9 @@ def test_bootstrap_ci_brackets_mean_and_is_deterministic() -> None:
     assert (low, high) == bootstrap_ci(deltas)  # seeded resamples
     # A clearly positive effect at n=100 excludes zero.
     assert low > 0
+
+
+def test_ordering_skips_below_two_rungs() -> None:
+    # The phase-2 amendment can leave a single rung banked.
+    read = ordering_read({"er60k": 1.0})
+    assert "skipped" in read
