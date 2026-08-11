@@ -707,7 +707,25 @@ record; the line here is the hook). *Index last updated 2026-08-10.*
   same-session rotation is mandatory (a camera/tote side swap moved
   one model 22 pp — more than the gap under study); their 42%
   telemetry/operator disagreement independently replicates our
-  32–48% telemetry false-positive finding.
+  32–48% telemetry false-positive finding. Sim lane 2026-08-11
+  (owner pivot; [sim-as-eval](papers/sim-as-eval.md) +
+  [SO-101 sim landscape](papers/so101-sim-landscape.md) +
+  [contact fidelity](papers/sim-contact-fidelity.md)): the
+  100-seed sim panel's design citations banked — SIMPLER's recipe
+  (controller sysid + visual matching, MMRV 0.056 / r 0.924) with
+  its ablation ordering the work (controller gains first-order,
+  friction values second-order — don't tune coefficients);
+  continuous progress separates policies at up to 70% fewer trials
+  than binary success (2603.13616 — the owner's distance metric is
+  the statistically right primary); the free validation experiment =
+  run the panel on er_60k@15k/35k/60k and check sim ordering matches
+  the banked panel-MAE trajectory; AutoEval's 0/50-sim-vs-47/50-real
+  on an unvalidated policy family is the standing caveat (fidelity
+  is per-family, resets on MolmoAct2); census says no public SO-101
+  sim eval with a continuous metric exists — our substrate leads the
+  field; and a live sysid question surfaced: menagerie vs
+  TheRobotStudio publish kp 998 vs kp 17.8 for the same STS3215,
+  with BAM's identified servo model as the informed prior.
 - **`lit-arms` [#15 Literature-sourced arms](ideas/15-literature-arms.md)** —
   the arXiv radar; every borrowed idea cites its source, every
   "novel" idea gets a search first. Feeds the Papers section.

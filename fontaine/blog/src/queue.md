@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-11T18:18:00Z
+**Updated:** 2026-08-11T18:55:00Z
 
-**Depth call:** depth 4 open at 18:1xZ 08-11: sim-lit-review (head, CPU, owner re-opened lit lane for sim) + molmo-flow-step1-cli-rule (CPU, NEW from owner design record §8.13 @128a863; priority vs sim lane asked in-channel) + sim-policy-eval-100seeds (protocol draftable behind findings 1-2 fixes) + rig-mixture-screen-exec (owner_hold, C-defer unless owner calls A). ae-on-our-trunk-prereg-draft re-statused: absorbed by molmo_flow step 7 pending owner confirm.
+**Depth call:** depth 3 open at 18:5xZ 08-11: sim-fixes-reset-contact + sim-servo-sysid (both CPU, queued, from the closed sim-lit-review fix list) + sim-policy-eval-100seeds (blocked behind fixes batch 1); molmo-flow-step1 + rig-mixture-exec owner_hold. Sim lane per owner 18:15Z '100% simulations'.
 
-**11 open** (Live 0 · Queued 2 · Blocked 9 · Done 114)
+**12 open** (Live 0 · Queued 2 · Blocked 10 · Done 115)
 
 ## 🔴 Live (0)
 
@@ -18,35 +18,35 @@
 
 *ready — waiting on a window or a boundary*
 
-**`molmo-flow-step1-cli-rule`** · `cpu`
+**`sim-servo-sysid`** · `cpu`
 
-molmo_flow migration STEP 1 — CLI inferred-args rule (CPU, per owner design record docs/architecture.md §8.13, main @128a863, approved 08-11): --resume refuses every architecture-determining flag (run-policy flags stay legal); --…
+Servo/controller sysid (CPU + minutes of local GPU-free sim): resolve the 56x kp discrepancy (our menagerie robotstudio_so101 kp=998.22 kv=2.731 forcerange ±2.94 vs TheRobotStudio upstream kp=17.8 kv=0 ±3.35 for the same STS3215)…
 
-**boundary:** Priority vs the sim lane is an OWNER CALL (asked in-channel 18:1xZ 08-11): the 17:07Z sim pivot said next-day focus = sims, but the 17:50Z design record says 'step 1 next'. Default until answered: rides BEHIND sim-lit-review. Steps 2+ (converter, decoder, encoder mode, integration, narration) queue as follow-ons gated on step-1 green; estimated 5-6 sessions, &lt;=10 GPU-h total, step-5 gate dominant.
+**boundary:** Recommended before the 100-seed pre-reg freezes physics, but the pre-reg MAY pin current gains as explicit 'v0 physics' if the owner prefers speed — call it out in the pre-reg either way.
 
 <details><summary>full record</summary>
 
-molmo_flow migration STEP 1 — CLI inferred-args rule (CPU, per owner design record docs/architecture.md §8.13, main @128a863, approved 08-11): --resume refuses every architecture-determining flag (run-policy flags stay legal); --init-from refuses flags for inherited sections and REQUIRES them for explicitly replaced sections (stage-2 decoder-swap path); sentinel None defaults + one reviewable arch-vs-policy partition table; upgrades 'validate equality if passed' to 'refuse at the door'; prompt-format-change guard falls out as a special case. Gate: resume-with-arch-flag and inherited-section init-from flags error naming the checkpoint value; decoder-replacement init-from still works; flag-free resume of a mainline checkpoint parses unchanged; check.py green.
+Servo/controller sysid (CPU + minutes of local GPU-free sim): resolve the 56x kp discrepancy (our menagerie robotstudio_so101 kp=998.22 kv=2.731 forcerange ±2.94 vs TheRobotStudio upstream kp=17.8 kv=0 ±3.35 for the same STS3215) by SIMPLER's recipe — open-loop replay of real rig episodes (we hold 229h; use held-out rig episodes' recorded qpos streams) through the sim, fit kp/kv/damping (BAM's identified STS3215 model github.com/Rhoban/bam as informed prior; their friction params converge via CMA-ES in ~5min) minimizing joint-trajectory MAE. SIMPLER ablation says this is the FIRST-order eval-fidelity lever (control loss 0.131-&gt;0.432 moved MMRV 0.031-&gt;0.100). Deliverable: fitted params + before/after replay MAE + a one-page note; feeds the 100-seed pre-reg's physics pin.
 
 </details>
 
 ---
 
-**`sim-lit-review`** · `cpu`
+**`sim-fixes-reset-contact`** · `cpu`
 
-Sim + sim-to-real literature review (CPU, OWNER DIRECTIVE 17:07Z 08-11
+Sim fixes, batch 1 (CPU, from sim-review findings 1-4 + the contact-fidelity fix list papers/sim-contact-fidelity.md): (1) home pose reachable (fix camera_box2 mount collision vs shoulder) + spawn-after-settle so reset never stri…
 
-**boundary:** Rides behind sim-review; the general lit-slice pause (00:23Z 08-10) stays for non-sim topics.
+**boundary:** Blocks sim-policy-eval-100seeds pre-reg finalization (findings 1-2 corrupt the start state). Probes exist and are committed (probe_home_pose/probe_benchy_contact/probe_phantom_volume).
 
 <details><summary>full record</summary>
 
-Sim + sim-to-real literature review (CPU, OWNER DIRECTIVE 17:07Z 08-11 — explicitly re-opens the paused lit lane for sim topics): (a) simulators/task suites usable for so101-class tabletop manipulation (existing so100/so101 ports, MuJoCo-family and other ecosystems) — final rig is so101; (b) sim-to-real transfer + the inverse (eval fidelity: sim success as a policy-quality metric alongside BC MAE). Papers pages with plain-words openers.
+Sim fixes, batch 1 (CPU, from sim-review findings 1-4 + the contact-fidelity fix list papers/sim-contact-fidelity.md): (1) home pose reachable (fix camera_box2 mount collision vs shoulder) + spawn-after-settle so reset never strikes the boat — re-verify 0 reset strikes over candidate seed list; (2) explicit &lt;contact&gt;&lt;pair&gt; for jaw-boat seam (condim&gt;=4, elliptic cones, impratio~10, Newton) — re-run pinch probe, compare 6.9deg spin / 0.84 tilt; (3) re-run CoACD threshold-driven (-t 0.01-0.02, uncapped hulls, higher -pr) OR native-SDF experiment (MuJoCo&gt;=3.3.5; also closes the CC-BY-ND per-machine derived-asset hazard) — re-run phantom-volume probe vs p99 3.78mm baseline; keep friction VALUES untuned (SIMPLER Table X citation). Gates: all three probes improved + bit-determinism re-verified + tick cost still ~&lt;30ms.
 
 </details>
 
 ---
 
-## 🟡 Blocked (9)
+## 🟡 Blocked (10)
 
 *waiting on a prerequisite, a boundary, or the owner*
 
@@ -136,7 +136,7 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 
 AE-on-our-trunk pre-reg draft (CPU): the owner's action-expert implementation (every-layer KV off our AR trunk, exchange 11:56Z 08-11) evaluated/trained against er_60k/step_060000 (the new reference trunk)
 
-**boundary:** UNBLOCKED 17:2xZ 08-11: the rebase landed (main @36afff0 merged, check.py 688 green) — draft against ActionExpertConfig frozen/staticmethod-factory shapes at HEAD. Executable CPU next. DEPRIORITIZED 17:4xZ 08-11 behind the sim lane (owner 17:07Z: next-day focus is simulations). | SUPERSEDED-PENDING-CONFIRM 18:1xZ 08-11: owner design record §8.13 (main @128a863) IS the full AE-on-our-trunk design — its step 7 registers 'molmo_flow-from-scratch on our AR trunk + bijou prompt vs §2.1 at matched compute' with separate pre-regs post-migration. This draft item is absorbed by the molmo-flow migration lane unless the owner says the §2.1-style few-stream AE still wants its own pre-reg.
+**boundary:** UNBLOCKED 17:2xZ 08-11: the rebase landed (main @36afff0 merged, check.py 688 green) — draft against ActionExpertConfig frozen/staticmethod-factory shapes at HEAD. Executable CPU next. DEPRIORITIZED 17:4xZ 08-11 behind the sim lane (owner 17:07Z: next-day focus is simulations). | SUPERSEDED-PENDING-CONFIRM 18:1xZ 08-11: owner design record §8.13 (main @128a863) IS the full AE-on-our-trunk design — its step 7 registers 'molmo_flow-from-scratch on our AR trunk + bijou prompt vs §2.1 at matched compute' with separate pre-regs post-migration. This draft item is absorbed by the molmo-flow migration lane unless the owner says the §2.1-style few-stream AE still wants its own pre-reg. | 18:15Z owner call reinforces: molmo_flow lane is owner-side; this stays absorbed/parked.
 
 <details><summary>full record</summary>
 
@@ -150,11 +150,25 @@ AE-on-our-trunk pre-reg draft (CPU): the owner's action-expert implementation (e
 
 GOAL (owner 17:07Z 08-11): evaluate one good policy (candidate er_60k/step_060000, the reference trunk) in sim on 100 fixed seeds; primary metric = boat-&gt;disk distance reduction (continuous), success rate secondary
 
-**boundary:** Protocol pre-reg DRAFTABLE 18:1xZ 08-11 (sim-review findings landed, commit f14948f): pre-reg must (a) fix findings 1-2 first (reachable home pose + spawn-after-settle; re-verify 0 reset strikes over the registered seed list), (b) pin eval machine + menagerie SHA + asset build (CoACD assets are per-machine), (c) primary read = settled initial minus final (or min) benchy-&gt;disk distance, (d) caveat grasp-phase fidelity (phantom margin p99 3.8 mm, weak jaw torsion) until those fixes land. Owner contact-physics flag is CONFIRMED and mechanism-attributed. Classed cpu while the deliverable is the protocol pre-reg.
+**boundary:** Protocol pre-reg draftable; design citations banked 18:5xZ 08-11 (papers/sim-as-eval.md): primary = settled-initial minus final (or min) benchy-&gt;disk distance (continuous — 2603.13616 precedent), success rate secondary column (keeps MMRV/Pearson computable); free validation arm = run panel on er_60k@15k/35k/60k, check sim ordering vs banked panel-MAE trajectory (SIMPLER's weak-to-strong-checkpoints trick; target MMRV&lt;~0.06 when a real anchor exists); standing caveat = fidelity is per-policy-family (AutoEval), resets for MolmoAct2/other stacks; pin eval machine + menagerie SHA + asset build, or adopt the SDF path from sim-fixes. BLOCKED behind sim-fixes-reset-contact (findings 1-2 corrupt the start state itself); sim-servo-sysid is strongly-recommended-first per SIMPLER's ablation but the pre-reg may pin current gains as 'v0 physics' explicitly if the owner wants speed.
 
 <details><summary>full record</summary>
 
 GOAL (owner 17:07Z 08-11): evaluate one good policy (candidate er_60k/step_060000, the reference trunk) in sim on 100 fixed seeds; primary metric = boat-&gt;disk distance reduction (continuous), success rate secondary. Local GPU inference-only while sims run. Protocol (seed list, horizon, metric definition) pre-registered before running.
+
+</details>
+
+---
+
+**`molmo-flow-step1-cli-rule`** · `cpu` · **⛔ owner hold**
+
+molmo_flow migration STEP 1 — CLI inferred-args rule (CPU, per owner design record docs/architecture.md §8.13, main @128a863, approved 08-11): --resume refuses every architecture-determining flag (run-policy flags stay legal); --…
+
+**boundary:** OWNER CALL 18:15Z 08-11 ('your focus is 100% simulations, I have a local agent working on the molmo_flow migration plan'): the migration lane is OWNER-SIDE — do not execute; this item + steps 2-8 parked until the owner hands the lane back or asks for review. Priority question resolved: sim lane 100%.
+
+<details><summary>full record</summary>
+
+molmo_flow migration STEP 1 — CLI inferred-args rule (CPU, per owner design record docs/architecture.md §8.13, main @128a863, approved 08-11): --resume refuses every architecture-determining flag (run-policy flags stay legal); --init-from refuses flags for inherited sections and REQUIRES them for explicitly replaced sections (stage-2 decoder-swap path); sentinel None defaults + one reviewable arch-vs-policy partition table; upgrades 'validate equality if passed' to 'refuse at the door'; prompt-format-change guard falls out as a special case. Gate: resume-with-arch-flag and inherited-section init-from flags error naming the checkpoint value; decoder-replacement init-from still works; flag-free resume of a mainline checkpoint parses unchanged; check.py green.
 
 </details>
 
@@ -174,7 +188,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (114)
+## ✅ Done (115)
 
 *closed — the full record stays in each fold*
 
@@ -1741,6 +1755,20 @@ MAIN-AGENT DIRECTIVE (owner-relayed 14:34:48Z 08-11, message.txt attachment): re
 <details><summary>full record</summary>
 
 MAIN-AGENT DIRECTIVE (owner-relayed 14:34:48Z 08-11, message.txt attachment): rebase fontaine on main @36afff0 (owner-session correctness reviews of bijou/molmoact2 + bijou/molmo2 landed as code) and adapt — NOT merge-resolve in our favor: (1) ActionExpertConfig now frozen=True/slots=True, NO field defaults, all 15 fields explicit everywhere; released shape ONLY via ActionExpertConfig.released_so100_101(); (2) config factories moved to staticmethods: Gemma4Config.e2b()/.e4b(), Molmo2TextConfig.molmo2_4b() (module-level e2b_config()/e4b_config()/molmo2_4b_text_config() gone; styleguide: released shapes are staticmethod constructors, literals never restated); (3) new loud molmoact2 guards each with a test: --norm-stats must be named norm_stats.json; MolmoAct2Predictor.load refuses n_obs_steps missing or !=1 (require_single_obs); nonzero *dropout* keys in action_expert_config refused; extract_kv_states raises on unfilled cache layer; load_norm_stats requires non-empty setup_type/control_mode; (4) ensure_per_sample_patch_alignment now CPU-side in all three collators; (5) main edited two of our scripts (molmoact2_ae_parity.py build_ours passes dropout=0.0/attn_dropout=0.0 explicitly; molmoact2_ours_ft_rung_read.py n_obs_steps truthiness fix) and two posts (OOB plan Qwen3-8B-&gt;4B-class x2; deep dive parameter-accounting note: 621M and 577,564,448 are the same expert — 620,677,664 minus 36x frozen cross_attn.kv_proj 42,522,624 minus identity state_encoder 590,592, pinned in test_released_config_parameter_count) — main's versions authoritative; (6) styleguide adds: Shapes: docstring bullets on tensor-taking functions, intra-package imports relative, docs state present-truth (no corrected-on trails); (7) Molmo2TextTokenizer raises FileNotFoundError not SystemExit on missing tokenizer.json. Sister ask (check.py green on artifact-less clones) DONE d7b6864 same session (option a: frozen stage-01 analysis committed, oracle chain clone-verifiable).
+
+</details>
+
+---
+
+**`sim-lit-review`** · `cpu`
+
+Sim + sim-to-real literature review (CPU, OWNER DIRECTIVE 17:07Z 08-11
+
+**boundary:** CLOSED 18:5xZ 08-11 work session: 3 Papers pages landed same-session (papers/sim-as-eval.md, papers/so101-sim-landscape.md, papers/sim-contact-fidelity.md) via 3 parallel research agents, all links fetch-verified. Headlines: (1) SIMPLER lineage = the protocol design citations (sysid+visual-matching MMRV 0.056/r 0.924; controller gains FIRST-order for eval fidelity, friction values second-order; continuous progress metrics separate policies at up to 70% fewer trials than binary success = owner's distance metric vindicated; AutoEval 0/50-sim-vs-47/50-real caution: fidelity is per-policy-family; SureSim paired-rectification for when rig rollouts exist; 2026 head-to-head: simulator choice moves Spearman 0.400-0.700 on identical real evals). (2) Census: NO public SO-101 sim eval with continuous metric exists — 2026 SO-101 benchmarks all real-world; our substrate leads; steal LIBERO frozen init-states, so-frame REAL|SIM|OVERLAY; LeRobot EnvHub = later publication channel. (3) All 4 sim-review findings have documented mechanisms + named fixes (CoACD threshold-not-cap or native SDF — the SDF path also fixes the CC-BY-ND per-machine asset hazard; priority override is spec, fix = explicit contact pair + condim&gt;=4 + elliptic cones + impratio~10; BAM ships identified STS3215 model). (4) NEW FINDING from asset diff: our menagerie model kp 998.22/forcerange ±2.94 vs TheRobotStudio upstream kp 17.8/±3.35 for the same servo — ±2.94 is exactly the review's measured saturation; sysid question queued. ideas.md #16 fed; successor items sim-fixes-reset-contact + sim-servo-sysid queued.
+
+<details><summary>full record</summary>
+
+Sim + sim-to-real literature review (CPU, OWNER DIRECTIVE 17:07Z 08-11 — explicitly re-opens the paused lit lane for sim topics): (a) simulators/task suites usable for so101-class tabletop manipulation (existing so100/so101 ports, MuJoCo-family and other ecosystems) — final rig is so101; (b) sim-to-real transfer + the inverse (eval fidelity: sim success as a policy-quality metric alongside BC MAE). Papers pages with plain-words openers.
 
 </details>
 

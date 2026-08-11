@@ -2,7 +2,47 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-11 18:13–18:4xZ — work session: **sim-lit-review
+CLOSED (owner sim lane confirmed 18:15Z): 3 Papers pages live
+same-session; the 100-seed protocol now has its design citations and
+a fix list with named mechanisms.***
+
+**Status**: no live jobs — GPU 0% / 0 MiB (inference-only steer
+respected; research was CPU + web only).
+
+**Steering**: owner 18:15Z answered the lane question — **"your
+focus is 100% simulations, I have a local agent working on the
+molmo_flow migration plan"** — acked in-channel 18:17Z (👍 received);
+`molmo-flow-step1-cli-rule` parked owner_hold (owner-side lane,
+steps 2–8 too). No other messages.
+
+**Done**: **sim-lit-review CLOSED** — three Papers pages
+([sim-as-eval](papers/sim-as-eval.md),
+[SO-101 sim landscape](papers/so101-sim-landscape.md),
+[contact fidelity](papers/sim-contact-fidelity.md)) via 3 parallel
+research agents, links fetch-verified, Space pushed (all four pages
+curl-200), summary + owner-facing headlines in-channel 18:34Z.
+Substance: continuous distance metric vindicated (up to 70% fewer
+trials than binary, 2603.13616); controller sysid is the first-order
+eval-fidelity lever (SIMPLER ablation) and an asset diff surfaced a
+56× kp discrepancy (menagerie 998.22/±2.94 — exactly the review's
+measured saturation — vs TheRobotStudio 17.8/±3.35; BAM's identified
+STS3215 model banked as prior); census: no public SO-101 sim eval
+with a continuous metric exists; all four sim-review findings have
+documented mechanisms + named fixes (CoACD threshold-not-cap or
+native SDF which also closes the CC-BY-ND asset hazard; priority
+override is spec → explicit jaw–boat pair + condim≥4 + elliptic
+cones). ideas #16 fed. Queue: +`sim-fixes-reset-contact`,
++`sim-servo-sysid` (both CPU, from the fix list);
+`sim-policy-eval-100seeds` boundary updated with the design
+citations.
+
+**Next**: `queue_cli.py next` → **sim-fixes-reset-contact** (CPU,
+blocks the 100-seed pre-reg), then `sim-servo-sysid`.
+`run_work_next` armed. No dated boundaries — `queue.json` canonical.*
 
 *Updated 2026-08-11 18:07–18:3xZ — tick (babysit): **owner landed the
 molmo_flow migration plan on main (§8.13, `128a863`, 17:50Z) — read,
@@ -79,99 +119,16 @@ fold in findings 1–2 fixes first. `rig-mixture-screen-exec` stays
 owner-held (🅰️-vs-🅲). `run_work_next` armed. No dated boundaries —
 `queue.json` canonical.*
 
-*Updated 2026-08-11 17:27–17:5xZ (real `date -u` at write: 17:34) —
-tick (babysit): **big tick — OWNER SIM PIVOT (17:07Z) acked + queue
-re-shaped around it; option-🅱️ preflight verdict FITS posted; the
-killed 16:29 work session's state salvaged.***
-
-**Status**: no live jobs — `nvidia-smi` 0% / 0 MiB. The 16:29 work
-session was hard-killed 17:26Z (exit 143, harness alert in-channel —
-watch for repeats: possible usage cap) but its detached preflight
-COMPLETED 17:14Z, log `~/train_mixture_fit_preflight.log`.
-
-**Steering**: OWNER 17:07Z — **next-day focus = SIMULATIONS**:
-review `sim/` first, lit review on so101-suitable sims + sim-to-real
-(re-opens the paused lit lane for sim topics specifically), local
-GPU dedicated to inference while sims run, initial goal = one good
-policy on **100 fixed seeds** measuring boat→disk distance
-reduction; boat (benchy) contact physics flagged as poor. ACKED
-in-channel 17:36Z with the 3-step plan. (Owner 16:52Z box-deletion
-fyi was already acked 17:03Z by the work session.)
-
-**Done**: (1) boot audit: killed session's orphaned now.md/queue
-state committed (`fb3e61f`), hallucinated clocks corrected (~30 min
-fast vs file mtimes). (2) **Preflight read posted 17:35Z: FITS** —
-peak 69.2/80 GiB, ~12.0 s/step steady ⇒ 10k steps ≈ **33.5 h**
-single-H100 (above the 14–16 h estimate); `--dataset-repeat`
-live-fired (clean 0.42% + v2 4.07% = **4.49%** combined effective
-share vs the ~4.97% pre-reg estimate — reconcile before any exec);
-🅱️ collides with the GPU-for-inference steer → rig-mixture treated
-as **🅲 defer** unless the owner calls 🅰️. (3) Queue re-shaped:
-+`sim-review` (new head), +`sim-lit-review`,
-+`sim-policy-eval-100seeds` (blocked behind sim-review + protocol
-pre-reg); `ae-on-our-trunk-prereg-draft` deprioritized behind the
-sim lane. (4) `run_work_next` ARMED — chained work session starts
-`sim-review`.
-
-**Next**: work session: **sim-review** (map `sim/`:
-so101_sim/rollout_sim/benchy scene, observation surface vs policy
-input contract, determinism/seeds, contact-physics investigation),
-then **sim-lit-review**. `rig-mixture-screen-exec` owner-held
-(🅰️-vs-🅲 call pending). 16:26 + 16:07 entries and their footer
-notes rolled to the [archive](archive/now-2026-08-11.md). No dated
-boundaries — `queue.json` canonical.*
-
-*Updated 2026-08-11 16:29–17:2xZ (written ~17:01Z per file mtime —
-the entry's original in-session clocks ran ~30 min fast and were
-corrected at the 17:27Z tick boot; session hard-killed 17:26Z exit
-143 mid-preflight-babysit, state committed by the tick) —
-work session: **rig-mixture-instrument-prereg CLOSED (instrument +
-pre-reg draft + compute ask) AND the main rebase executed mid-session
-on owner steering — `fontaine` now sits on main @36afff0, check.py
-688 green.***
-
-**Status**: no live jobs — `nvidia-smi` 0% / 0 MiB. `origin/main`
-moved fdd9aa3 → **36afff0** (owner push 16:43Z) and the rebase is
-DONE + force-pushed (`2a31981`); the blocker footer is retired.
-
-**Steering**: owner 16:42/16:43Z — main pushed to GitHub + explicit
-rebase ask; seen mid-session at the post-instrument Discord poll,
-executed immediately (clean rebase, zero conflicts, only
-`bijou/train.py` both-sides: wandb import move vs our new import; one
-ruff I001 fixup). All 7 directive items sentinel-verified at HEAD;
-result posted in-channel 17:00:42Z. **Compute ask A/B/C for the
-rig-mixture rung posted ≤17:00Z — awaiting the owner call**; the
-option-🅱️ fit-preflight was launched detached ~17:04Z (ack post
-17:03:58Z) and survived the session kill.
-
-**Done**: (1) **`--dataset-repeat` instrument landed** (`d6a9579`,
-pre-rebase `1b1c314`): per-repo PATTERN=COUNT oversample specs in
-`bijou.data`/`bijou.train`, first-match-wins, loud no-match, replicas
-share objects (no host-RAM cost), training-only; oracle test
-`tests/test_dataset_repeat.py` (16 tests incl. the pinned
-0.19%→4.97%@27× arithmetic). (2) **Rig-mixture pre-reg DRAFT**
-[posts/2026-08-11-prereg-er60k-rig-mixture.md](posts/2026-08-11-prereg-er60k-rig-mixture.md):
-`--init-from er_60k/step_060000`, rig clean=27 v2=27 (~4.97% share),
-10k steps seed 3; primary read = paired CI95 on the deterministic rig
-holdout (1+5 episodes er_60k never trained on); guard = panel
-non-regression +0.05 band vs banked 5.7782; compute ask (A) new 4×
-box ~28 GPU-h / (B) local 1×H100 after an act-ckpt fit-preflight
-(full recipe measured OOM single-GPU 08-08) / (C) defer. Space
-pushed, post curl-200, ask in-channel. (3) **Main rebase CLOSED**
-(`2a31981`): 11 branch commits replayed onto 36afff0, check.py 688
-green, sentinels verified (released_so100_101, frozen no-default
-ActionExpertConfig, staticmethod factories, 5 loud guards + tests,
-CPU-side patch alignment, both edited fontaine scripts, tokenizer
-FileNotFoundError).
-
-**Next**: `queue_cli.py next` → **ae-on-our-trunk-prereg-draft**
-(CPU, UNBLOCKED by the rebase — draft against the frozen-config
-shapes at HEAD on `er_60k/step_060000`); `run_work_next` armed.
-`rig-mixture-screen-exec` blocked on the owner compute call (ask
-in-channel 17:1xZ) — tight-ish poll cadence owed while it pends. No
-dated boundaries — `queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-11 18:13–18:4xZ (work, explore-lit; 0 GPU-h — CPU +
+web research only): sim-lit-review CLOSED — 3 Papers pages
+(sim-as-eval, so101-sim-landscape, sim-contact-fidelity) live +
+curl-verified; owner lane call 18:15Z (100% sims) acked +
+molmo_flow item parked owner-side; 56× servo-kp discrepancy found
+vs upstream; queue +2 fix items (sim-fixes-reset-contact,
+sim-servo-sysid); ideas #16 fed. run_work_next armed for
+sim-fixes-reset-contact.
 
 Session 2026-08-11 17:38–18:2xZ (work, explore-infra; ~0 GPU-h —
 probe renders only, no launches): sim-review CLOSED (f14948f):
