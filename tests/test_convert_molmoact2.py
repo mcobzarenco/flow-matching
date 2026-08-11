@@ -81,6 +81,11 @@ def _source_config() -> dict[str, Any]:
         "max_action_dim": _MAX_ACTION_DIM,
         "mask_action_dim_padding": True,
         "flow_matching_num_steps": 10,
+        "flow_matching_time_offset": 0.001,
+        "flow_matching_time_scale": 0.999,
+        "flow_matching_beta_alpha": 1.0,
+        "flow_matching_beta_beta": 1.5,
+        "flow_matching_cutoff": 1.0,
         "add_setup_tokens": True,
         "add_control_tokens": True,
         "action_expert_config": {
@@ -197,6 +202,10 @@ def test_happy_path_round_trips(source_dir: Path, tmp_path: Path) -> None:
     assert decoder.action_horizon == _HORIZON
     assert decoder.num_flow_steps == 10
     assert decoder.normalization == "q01q99"
+    assert decoder.time_offset == 0.001
+    assert decoder.time_scale == 0.999
+    assert decoder.beta_alpha == 1.0
+    assert decoder.beta_beta == 1.5
 
     # The q01/q99 fields of the normalization table ARE the clamp table.
     assert info.normalization.action_q01 == (-3.0,) * _ACTION_DIM
@@ -283,6 +292,9 @@ def test_guards_refuse_bad_sources(source_dir: Path, tmp_path: Path) -> None:
     def missing_mean(_config: dict, stats: dict) -> None:
         del stats["metadata_by_tag"]["tiny_tag"]["action_stats"]["mean"]
 
+    def truncated_cutoff(config: dict, _stats: dict) -> None:
+        config["flow_matching_cutoff"] = 0.9
+
     for index, (mutate, error) in enumerate(
         (
             (nonzero_dropout, SystemExit),
@@ -290,6 +302,7 @@ def test_guards_refuse_bad_sources(source_dir: Path, tmp_path: Path) -> None:
             (discrete_mode, NotImplementedError),
             (continuous_state, SystemExit),
             (missing_mean, SystemExit),
+            (truncated_cutoff, SystemExit),
         ),
     ):
         broken = _broken_source(source_dir, tmp_path / f"case{index}", mutate)

@@ -89,6 +89,13 @@ def _validate_source_config(config: dict[str, Any]) -> None:
             f"state_format={config.get('state_format')!r} is not wired "
             "(their serving stack embeds state as discrete prompt tokens)",
         )
+    cutoff = float(config.get("flow_matching_cutoff", 1.0))
+    if cutoff != 1.0:
+        raise SystemExit(
+            f"flow_matching_cutoff={cutoff} is not wired (released/rig "
+            "checkpoints ship 1.0; a truncated t-law would change the "
+            "training objective silently)",
+        )
 
 
 def _stats_vector(stats: dict[str, Any], field: str, *, what: str) -> tuple[float, ...]:
@@ -231,6 +238,10 @@ def convert(
         action_horizon=int(tag["action_horizon"]),
         n_action_steps=int(tag["n_action_steps"]),
         normalization="q01q99",
+        time_offset=float(config["flow_matching_time_offset"]),
+        time_scale=float(config["flow_matching_time_scale"]),
+        beta_alpha=float(config["flow_matching_beta_alpha"]),
+        beta_beta=float(config["flow_matching_beta_beta"]),
     )
     if action_dim not in (real_action_dim, decoder_config.max_action_dim):
         raise SystemExit(

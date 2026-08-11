@@ -31,6 +31,15 @@ Flow-matching convention (matches lerobot's π0/SmolVLA):
 ``x_τ = τ·ε + (1−τ)·actions`` with ε ~ N(0, I), so τ=1 is pure noise; the
 velocity target is ``u = ε − actions``; sampling integrates from τ=1 to 0
 with steps of ``dτ = −1/num_steps``.
+
+CONVENTION FREEZE (architecture.md §8.13 decision 2): this π 0-style
+parametrization is legacy-frozen with this module and its checkpoint
+lineage. New flow code uses the ASCENDING convention (t=0 noise → t=1
+data, target ``x − ε`` — ``decoders/molmo_flow.py``); the two modules
+deliberately share no code, so a sign can never be "harmonized" across
+them by accident. An exact weight-space converter exists on paper
+(sinusoid reflection into ``time_in_proj``, sign into
+``action_out_proj``) if unification is ever worth a lineage migration.
 """
 
 from __future__ import annotations

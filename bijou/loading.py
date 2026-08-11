@@ -382,6 +382,13 @@ class MolmoFlowDecoderConfig:
     action_horizon: int
     n_action_steps: int
     normalization: str
+    # The training t-law, ``t = offset + scale·Beta(α, β)`` — recorded
+    # from the source config (released: 0.001 + 0.999·Beta(1, 1.5)),
+    # never assumed; the step-5 trainer samples exactly this law.
+    time_offset: float
+    time_scale: float
+    beta_alpha: float
+    beta_beta: float
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -406,6 +413,10 @@ class MolmoFlowDecoderConfig:
             "action_horizon": self.action_horizon,
             "n_action_steps": self.n_action_steps,
             "normalization": self.normalization,
+            "time_offset": self.time_offset,
+            "time_scale": self.time_scale,
+            "beta_alpha": self.beta_alpha,
+            "beta_beta": self.beta_beta,
         }
 
     @classmethod
@@ -431,6 +442,10 @@ class MolmoFlowDecoderConfig:
             action_horizon=int(data["action_horizon"]),
             n_action_steps=int(data["n_action_steps"]),
             normalization=str(data["normalization"]),
+            time_offset=float(data["time_offset"]),
+            time_scale=float(data["time_scale"]),
+            beta_alpha=float(data["beta_alpha"]),
+            beta_beta=float(data["beta_beta"]),
         )
 
 
