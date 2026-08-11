@@ -3,6 +3,37 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-11 16:26–16:3xZ (real `date -u` at write: 16:27) —
+tick (babysit): **quiet tick — GPUs free, 👍 reaction on the ER-init
+long-form recorded, `run_work_next` ARMED for
+rig-mixture-instrument-prereg.***
+
+**Status**: no live jobs — registry empty, `nvidia-smi` 0% / 0 MiB.
+`git ls-remote origin main` still **fdd9aa3** →
+`rebase-fontaine-on-main-postreview` stays BLOCKED on the owner-side
+push; re-check every boot.
+
+**Steering**: `read` empty; `history -n 5` shows a new **👍 on our
+16:24Z ER-init long-form post** — lightweight owner agreement with
+the screen close + the named next lever (rig-mixture), recorded per
+the 08-05 reaction protocol. No reply owed (reaction on our own
+result post).
+
+**Done**: queue validate OK (depth 2, 9 open). **`run_work_next`
+ARMED 16:27Z** — next item `rig-mixture-instrument-prereg` is
+executable CPU but work-session-class (loader `--dataset-repeat`
+instrument + oracle test + mixture-screen pre-reg draft, not a
+30-min-tick job); GPU-busy-window rule N/A (GPUs idle-by-design, no
+launchable GPU item — the mixture GPU leg pends the owner compute
+call). 13:53 entry + 16:03/13:53 footer notes rolled to the
+[archive](archive/now-2026-08-11.md).
+
+**Next**: chained work session executes
+**rig-mixture-instrument-prereg**; its pre-reg draft must name the
+compute ask (local 1×H100 rung vs a new box) and hold for owner
+steering. Rebase unblocks the moment origin/main moves past fdd9aa3.
+No dated boundaries — `queue.json` canonical.*
+
 *Updated 2026-08-11 16:07–16:4xZ (real `date -u` at write: 16:28) —
 work session (chained via run_work_next): **er-screen-results-post
 CLOSED — the durable ER-init long-form is live with 3 house charts;
@@ -66,56 +97,16 @@ opener, Space push, link in-channel; (2) queue refill to depth ≥2
 housekeeping: drop the dead `box` git remote. Rebase unblocks the
 moment origin/main moves past fdd9aa3.*
 
-*Updated 2026-08-11 13:53–16:1xZ (real `date -u` at write: 16:08) —
-work session: **events one-off CLOSED end-to-end (probe headline: 63%
-of event misses are saw-it-under-threshold) + box teardown reviewed,
-salvaged and owner-executed + main-agent directive triaged (artifact
-committed; rebase blocked on their push).***
-
-**Status**: no live jobs — registry empty (er60k_events_dump rc=0
-15:5xZ, ~1.55/4 GPU-h, pruned), local `nvidia-smi` 0%/0 MiB. **The 4×
-box is GONE** — owner deleted it 14:37Z after my review (salvage
-archive local `~/box_archive`, ~1 GB); drop the `box` git remote on
-the next housekeeping pass.
-
-**Steering**: three exchanges, all answered in-session. (1) OWNER
-14:04Z box-teardown review → full banked-vs-at-risk audit posted
-14:36Z (everything decision-relevant on
-fontaine-checkpoints/bijou-checkpoints/fontaine-reports; 3 unbanked
-relics released by owner; salvage done pre-teardown), owner deleted
-14:37Z. (2) OWNER 14:34Z relayed a **main-agent directive**
-(message.txt): rebase on main @36afff0 + make check.py green on
-artifact-less clones — the second half DONE d7b6864 (option a: frozen
-stage-01 analysis committed, oracle chain clone-verifiable), the
-rebase BLOCKED (GitHub main still fdd9aa3, 36afff0 unpushed — owner
-told 15:08Z; queue item `rebase-fontaine-on-main-postreview` holds
-the full adaptation list). (3) Incident owned: my poll loop ran
-`read` inside an `until` condition and consumed the 14:34 message
-unseen (4th consume-once incident, new variant; memory updated) —
-recovered via history, owner acknowledged.
-
-**Done**: er60k-events-oneoff-report CLOSED (owner request 12:44Z),
-all six scope steps: instrument 7f43c54 (`--dump-generations` +
-main-arm retention under `--generate`, closes the 35k debt; 667
-tests green), launch note + frozen 13-class/probe spec pre-GPU
-14:13Z, dump pass rc=0 (25,800 rows, oracle: presence 0.8568 vs
-banked 0.8582 = 13-frame Δ inside the documented cross-world-size
-bf16 band), confusion quant (misses **683** / false alarms 604 /
-hits 333 / swaps 129; model speaks on 40% of gt-event frames,
-class-agrees 72% when it does), constrained probe (**428/679 = 63%
-forced guesses land the gt class**; replay oracle bit-exact 679/683
-— miss mode is threshold, not blindness), 136-card HTML + 5
-artifacts on fontaine-reports curl-verified, numbers in-channel
-16:0xZ. Idea #23 `event-none-calibration` fed (on-ice, named
-trigger). Commits 7f43c54 · 00eaf7a · d7b6864 + close-out.
-
-**Next**: `queue_cli.py next` → **er-screen-results-post** (CPU,
-chart-led ER-screen close). `rebase-fontaine-on-main-postreview`
-unblocks the moment `git ls-remote origin main` moves past fdd9aa3 —
-check at every boot; the AE-on-our-trunk pre-reg rides behind that
-rebase. No dated boundaries — `queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-11 16:26–16:3xZ (tick, babysit; 0 new GPU-h — both
+GPUs free): quiet tick. Registry empty, nvidia-smi 0%/0 MiB, no
+babysit run needed. Discord read empty; history surfaced a 👍 on the
+16:24Z ER-init long-form post — owner agreement recorded, no reply
+owed. Remote main still fdd9aa3 → rebase item stays blocked. Queue
+validate OK (depth 2, 9 open); run_work_next ARMED 16:27Z —
+rig-mixture-instrument-prereg is CPU work-session-class. 13:53 entry
++ 16:03/13:53 footer notes rolled to the archive.
 
 Session 2026-08-11 16:07–16:4xZ (work, exploit-postprocess; 0 new
 GPU-h — no launches, GPUs free): ER screen close long-form landed
@@ -123,24 +114,6 @@ GPU-h — no launches, GPUs free): ER screen close long-form landed
 artifacts only), queue refilled to depth 2 (rig-mixture instrument
 + AE pre-reg draft), er-60k-live status audit-fixed, posts-index
 drift fixed, box git remote dropped. Discord quiet all session.
-
-Session 2026-08-11 16:03–16:1xZ (tick, babysit; 0 new GPU-h — both
-GPUs free): quiet tick. Registry empty (events dump closed last
-session), nvidia-smi 0%/0 MiB, no babysit run needed. Discord read
-empty, history clean (owner 14:55Z already answered, no reactions).
-Remote main still fdd9aa3 → rebase item stays blocked. Queue
-validate OK (depth 1, 9 open); run_work_next ARMED 16:04Z —
-er-screen-results-post is CPU work-session-class + depth-1 refill
-owed. 10:00 entry + 13:49/10:00 footer notes rolled to the archive.
-
-Session 2026-08-11 13:53–16:1xZ (work, exploit; ~1.55 local GPU-h —
-events dump pass ≤4 gate): owner-requested events one-off closed
-end-to-end (instrument + dump + confusion + constrained probe + HTML;
-headline: 63% of event misses are saw-it-under-threshold). Box
-teardown reviewed/salvaged in-session, owner deleted 14:37Z — box
-GPU-h line ends here. Main-agent directive: artifact committed
-(d7b6864), rebase blocked on their push. One consume-once incident
-owned (read-in-loop-condition variant, memory updated).
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
