@@ -37,6 +37,29 @@ value = 155.0
 # Correction + amended gate posted in-channel 22:5xZ; owner invited to
 # object to the ~150 GPU-h spend; kill lines unchanged.
 
+[[run]]
+name = "molmoact2_ae_ours"
+kind = "progress-log"
+host = "local"
+pgrep = "bijou.molmoact2.train"
+pgrep_min = 1
+gpu_indices = [0]
+gpu_mem_min_mib = 4000
+log = "/home/ubuntu/logs/molmoact2_ae_ours_r1.log"
+progress_re = "\\[step=([0-9]+)/2000\\]"
+started_utc = "2026-08-11T05:19:51Z"
+gpu_hours_per_wall_hour = 1.0
+boundary = "Port item 4 (G4): MolmoAct2 AE fine-tune in OUR trainer (bijou/molmoact2/train.py, unit fontaine-molmoact2-ae-ours, local H100). Pre-reg posts/2026-08-10-prereg-molmoact2-firstclass-port.md; exec note in-channel 05:1xZ 08-11. Recipe = their run-1 verbatim (2000 steps, 64 global = 8x8 micro, AE-only 577,564,448 trainable, AdamW 5e-5, warmup 200 -> cosine 0.1x, clip 1.0, rig-only q01/q99, their img_aug), named deltas: deterministic frozen trunk + per-frame sqrt sampling. Measured 2.9 s/step -> train ~1.6 h, endpoint ~07:0xZ 08-11 -> chained G4 rung read in-unit (240 anchor rows x rungs 500-2000). Saves every 500 as predictor-consumable step dirs under outputs/train/molmoact2_ae_ours_r1."
+anchors = [
+    "kill lines: NaN/inf loss; loss not below 0.135 (their @20 value) by step 500; step time > 3x the 2.9 s/step class sustained",
+    "G4 frozen reads (chained script molmoact2_ours_ft_rung_read.py): final rung < 28.9454 AND < 9.0824 on the 240 banked rows; monotone-or-flat rungs; corridor = 5-pt rolling median in [0.5x, 2x] of the run-1 series at matched steps >= 100 (reports/analysis__molmoact2_rig_ft_r1_loss_corridor.json)",
+    "record-only: measured pre-launch lag converging 4.1@20 -> ~1.25 entering the corridor window (named-delta class, judged by the frozen rule)",
+    "gate <= 6 GPU-h (train ~2.3 + reads); port total <= 8",
+]
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 6.0
+
 # adamc_100k entry pruned 22:3xZ 08-09 — OWNER KILL 22:36Z (ER-60k
 # steering: 'not looking great', GPUs reassigned to the ER-60k run).
 # Killed clean at step ~11,840 (~35.7/310 GPU-h); final probe ladder
