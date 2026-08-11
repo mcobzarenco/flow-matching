@@ -96,3 +96,4 @@ corrections are follow-up posts.
 - [2026-08-11 — Pre-reg DRAFT: rig-mixture fine-tune rung on the er_60k trunk (holding for the compute call)](2026-08-11-prereg-er60k-rig-mixture.md)
 - [2026-08-11 — Sim review: what the SO-101 digital twin gets right, and where the boat physics hurts](2026-08-11-sim-review-findings.md)
 - [2026-08-11 — Sim fixes, batch 1: clean starts, honest grasps — all four findings closed](2026-08-11-sim-fixes-batch1.md)
+- [2026-08-11 — Servo sysid: the 56× kp question answered — replay error 3.31° → 1.76°](2026-08-11-sim-servo-sysid.md)

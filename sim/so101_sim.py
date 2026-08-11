@@ -7,8 +7,9 @@ rollout loops can drive it with minimal glue:
     joint order = the rig motor order (shoulder_pan .. gripper)
   - action: 6 absolute joint targets in degrees, applied at 30 Hz
 
-The arm model is menagerie's robotstudio_so101 (position actuators with
-lerobot-derived STS3215 gains; wrist_cam included). The scene adds a top
+The arm model is menagerie's robotstudio_so101 (wrist_cam included), with
+the STS3215 position-servo params replaced at load by the replay-identified
+SERVO_SYSID set (sim.sysid_servo). The scene adds a top
 camera, a wooden disk, and a free benchy whose color/texture randomizes
 per reset.
 
@@ -64,6 +65,20 @@ HOME_DEGREES = np.array([4.6, -102.7, 97.0, 78.7, 77.6, 3.5])
 # The leader arm mirrors the follower during teleop; at episode start the
 # operator holds it at the same rest pose.
 LEADER_DEGREES = np.array([4.6, -102.7, 97.0, 78.7, 77.6, 3.5])
+# Servo params identified by open-loop replay of real rig episodes
+# (sim.sysid_servo, outputs/sim/sysid_servo.json): held-out-episode arm
+# MAE 1.76 deg vs 3.31 with the vendored menagerie gains (whose kp 998
+# with forcerange 2.94 saturates at 0.17 deg of error - a force-clamped
+# bang-bang servo, not the STS3215's measured response). Applied at load,
+# shared by all six STS3215 actuators on BOTH arms.
+SERVO_SYSID = {
+    "kp": 108.18,
+    "kv": 13.377,
+    "forcerange": 3.478,
+    "damping": 0.722,
+    "frictionloss": 0.0183,
+    "armature": 0.2045,
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -85,6 +100,7 @@ class SO101Sim:
     def __init__(self, width: int = 640, height: int = 480) -> None:
         self.model = mujoco.MjModel.from_xml_path(str(SCENE_PATH))
         self._widen_joint_limits()
+        self._apply_servo_sysid()
         self.data = mujoco.MjData(self.model)
         self.renderer = mujoco.Renderer(self.model, height=height, width=width)
         self._joint_qpos = np.array(
@@ -116,7 +132,7 @@ class SO101Sim:
         the model cannot represent the recorded start state (and the
         clamped shoulder tips the forearm low enough that the elbow stalls
         on the table ~8 deg short of home). Widen at runtime rather than
-        editing the vendored XML; the servo-sysid item pins final values."""
+        editing the vendored XML."""
         widened = {"shoulder_lift": 110.0, "elbow_flex": 100.0}
         for prefix in ("", "leader-"):
             for name, limit in widened.items():
@@ -125,6 +141,25 @@ class SO101Sim:
                 self.model.actuator_ctrlrange[self.model.actuator(prefix + name).id] = (
                     bound
                 )
+
+    def _apply_servo_sysid(self) -> None:
+        """Overwrite the vendored STS3215 actuator/joint params with the
+        replay-identified SERVO_SYSID values (runtime, both arms - same
+        convention as _widen_joint_limits: never edit the vendored XML)."""
+        for prefix in ("", "leader-"):
+            for name in JOINTS:
+                actuator = self.model.actuator(prefix + name)
+                actuator.gainprm[0] = SERVO_SYSID["kp"]
+                actuator.biasprm[1] = -SERVO_SYSID["kp"]
+                actuator.biasprm[2] = -SERVO_SYSID["kv"]
+                actuator.forcerange[:] = (
+                    -SERVO_SYSID["forcerange"],
+                    SERVO_SYSID["forcerange"],
+                )
+                dof = self.model.joint(prefix + name).dofadr[0]
+                self.model.dof_damping[dof] = SERVO_SYSID["damping"]
+                self.model.dof_frictionloss[dof] = SERVO_SYSID["frictionloss"]
+                self.model.dof_armature[dof] = SERVO_SYSID["armature"]
 
     def _recolor_arm(self) -> None:
         """Menagerie ships the yellow-print arm; the rig's are black, and
