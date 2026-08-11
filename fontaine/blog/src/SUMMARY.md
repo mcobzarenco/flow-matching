@@ -243,3 +243,4 @@
   - [2026-08-10 — Runbook: fine-tuning MolmoAct2 on the rig datasets + local rollouts](posts/2026-08-10-molmoact2-rig-finetune-runbook.md)
   - [2026-08-10 — MolmoAct2 rig fine-tune results: MAE 28.95 → 3.23, pre-reg PASS](posts/2026-08-10-molmoact2-rig-ft-results.md)
   - [2026-08-10 — Pre-reg: MolmoAct2 first-class in-repo port, items 1–4 (owner GO)](posts/2026-08-10-prereg-molmoact2-firstclass-port.md)
+  - [2026-08-11 — ER-init screen closed: Molmo2-ER init wins both legs; new reference trunk](posts/2026-08-11-er-init-screen-results.md)

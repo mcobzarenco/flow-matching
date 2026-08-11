@@ -2,43 +2,45 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-11T16:05:00Z
+**Updated:** 2026-08-11T16:23:00Z
 
-**Depth call:** depth 2 open at 16:0xZ 08-11: er-screen-results-post (executable CPU) + rebase-fontaine-on-main-postreview (blocked, pends the owner-side main push — directive fully pinned in the title; check git ls-remote origin main vs fdd9aa3 at every boot). er60k-events-oneoff-report CLOSED this session. Box DELETED by owner 14:37Z (salvage archived ~/box_archive ~1 GB; remove the box remote on next housekeeping pass). Lit refill lane owner-paused (00:23Z 08-10).
+**Depth call:** depth 2 open at 16:2xZ 08-11: rig-mixture-instrument-prereg (executable CPU) + ae-on-our-trunk-prereg-draft (pends the rebase; rebase-fontaine-on-main-postreview itself still blocked on the owner-side main push — ls-remote checked 16:07Z, still fdd9aa3). er-screen-results-post CLOSED this session (durable ER long-form landed); er-60k-live status audit-fixed to done. Box git remote dropped (housekeeping done in-session). Lit refill lane owner-paused (00:23Z 08-10).
 
-**9 open** (Live 1 · Queued 1 · Blocked 7 · Done 109)
+**9 open** (Live 0 · Queued 2 · Blocked 7 · Done 111)
 
-## 🔴 Live (1)
+## 🔴 Live (0)
 
 *running right now (GPU or owner-window)*
 
-**`er-60k-live`** · `gpu-box`
+*(empty)*
 
-OWNER RUN LIVE (launched 22:47-53Z 08-09, unit fontaine-er-60k): fontaine_molmo2_er_60k_ddp4
+## 🟢 Queued (2)
 
-**boundary:** step 5000 (~02:0xZ 08-10): first async-save capture line + probe ladder vs 40k curve; K1 kill lines at save boundaries; endpoint ~08-11 ~12:00Z -&gt; chained panel_v2; babysit er_60k entry live (gate 155) · [pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md)
+*ready — waiting on a window or a boundary*
+
+**`ae-on-our-trunk-prereg-draft`** · `cpu`
+
+AE-on-our-trunk pre-reg draft (CPU): the owner's action-expert implementation (every-layer KV off our AR trunk, exchange 11:56Z 08-11) evaluated/trained against er_60k/step_060000 (the new reference trunk)
+
+**boundary:** pends the rebase item (owner-side main push); check git ls-remote origin main vs fdd9aa3 every boot.
 
 <details><summary>full record</summary>
 
-OWNER RUN LIVE (launched 22:47-53Z 08-09, unit fontaine-er-60k): fontaine_molmo2_er_60k_ddp4 — 60k AR steps from allenai/Molmo2-ER (byte-verified drop-in), 40k recipe verbatim + rig datasets at natural share (owner pick 22:45Z), seed 0 (owner override), save 5000. FIRST POLL DONE 22:5x-23:0xZ: E1 banner exact, 2.23 s/step steady, vram 66.6 vs 77, util 68-99%. RATE-CLASS CORRECTION posted in-channel + gate re-pinned 65-&gt;155 GPU-h (the 65 came from attach_F's 0.92 s/step frozen-trunk rate, wrong class; true trunk class 2.2-2.6 = 60k-continuation actuals). Corrected endpoint ~08-11 ~12:00Z (~37 h wall, ~149 train + ~2 eval GPU-h). Primary read = ER-init delta: probe ladder vs the 40k curve at matched steps; endpoint chains panel_v2 k4l2 (--report + npz), paired CI95 vs banked 40k (6.0079) + 60k-continuation (5.8602).
+AE-on-our-trunk pre-reg draft (CPU): the owner's action-expert implementation (every-layer KV off our AR trunk, exchange 11:56Z 08-11) evaluated/trained against er_60k/step_060000 (the new reference trunk). Rides BEHIND rebase-fontaine-on-main-postreview — main @36afff0 lands ActionExpertConfig frozen/staticmethod-factory shape the draft must target; do not draft config surfaces against the pre-rebase tree. Unblocks when origin/main moves past fdd9aa3 and the rebase item closes.
 
 </details>
 
 ---
 
-## 🟢 Queued (1)
+**`rig-mixture-instrument-prereg`** · `cpu`
 
-*ready — waiting on a window or a boundary*
+Rig-mixture lever, step 1 (CPU, executable now): implement the per-root --dataset-repeat flag + oracle test exactly as pinned in the er-60k pre-reg mixture note (loader dedups repeated roots today, so there is no zero-code oversa…
 
-**`er-screen-results-post`** · `cpu`
-
-ER screen close: chart-led consolidated results post (deliberately rolled from the 10:00Z 08-11 session that closed er_60k)
-
-**boundary:** CPU-only, no gate; natural slot = the session after er60k-events-oneoff-report closes (that report is the owner-requested priority). No dated deadline. · [pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md)
+**boundary:** CPU-only instrument + draft; no gate. GPU execution pends owner compute decision.
 
 <details><summary>full record</summary>
 
-ER screen close: chart-led consolidated results post (deliberately rolled from the 10:00Z 08-11 session that closed er_60k). The full ER-init story in one blog page, house chart style (dark-mode, eval-report scheme): rung trajectory vs 40k endpoint (+1.52 -&gt; +0.28 -&gt; -0.18 -&gt; -0.23), the decision read (endpoint 5.7782/1.9898; -0.2297 [-0.281,-0.154] vs 40k endpoint; -0.0821 [-0.126,-0.025] vs 60k-cont, both CI-excludes-zero), aux-heads table across rungs (holding er-better, event cont-better, rest tied), probe-curve overlay (shared seed), what-it-means-for-follow-ons (every new arm sits on er_60k/step_060000). Owner already has headline + report links (13:29Z post); this is the durable long-form. posts/ page + Papers-style plain-words opener per house rule; Space push; link in-channel.
+Rig-mixture lever, step 1 (CPU, executable now): implement the per-root --dataset-repeat flag + oracle test exactly as pinned in the er-60k pre-reg mixture note (loader dedups repeated roots today, so there is no zero-code oversample), then draft the mixture-screen pre-reg on the new reference trunk er_60k/step_060000: rig at ~5% effective share (~27x repeat, inside the CL-triangle 2-20% replay band) vs the natural-share 0.19% passenger baseline this screen just banked. The ER results post names this lever explicitly unpriced. GPU leg NOT launchable without owner input: the 4x box is gone — the pre-reg draft must name the compute ask (local 1xH100 rung vs a new box) and hold for owner steering.
 
 </details>
 
@@ -144,7 +146,7 @@ MAIN-AGENT DIRECTIVE (owner-relayed 14:34:48Z 08-11, message.txt attachment): re
 
 ---
 
-## ✅ Done (109)
+## ✅ Done (111)
 
 *closed — the full record stays in each fold*
 
@@ -171,6 +173,20 @@ AdamC-100k post-mortem chart + short post (CPU, zero GPU-h; the queued item now.
 <details><summary>full record</summary>
 
 AdamC-100k post-mortem chart + short post (CPU, zero GPU-h; the queued item now.md promised 22:4xZ but never landed in queue.json — added at the 23:0xZ 08-09 queue audit): from the banked train_log.jsonl (box+local), chart-led per owner preference — probe eval_chunk_mae ladder to the 10.30@11500 run-best kill point, train loss/grad-norm, vs the 40k-run probe curve at matched steps as CONTEXT ONLY (different recipe: AdamC vs AdamW, vision unfrozen vs frozen, eff-32 vs eff-48 — descriptive post-mortem, no causal claim without a matched arm). Dark-mode per standing rule. What the run bought: AdamC implementation 401d6f7 (10 oracles, stays landed), step-10k weights on fontaine-checkpoints, the 3-rise-then-recede probe-watch precedent.
+
+</details>
+
+---
+
+**`er-60k-live`** · `gpu-box`
+
+OWNER RUN LIVE (launched 22:47-53Z 08-09, unit fontaine-er-60k): fontaine_molmo2_er_60k_ddp4
+
+**boundary:** CLOSED (status audit 16:2xZ 08-11: run actually finished 08-11 — train @60000 12:36Z, chained panel_v2 rc=0 13:28Z, ~153/155 GPU-h; decision read = ER init WINS both legs, er_60k/step_060000 = new reference trunk, weights banked to fontaine-checkpoints 4ed3dd0; the 10:00-13:5xZ session closed the run but left this item status=live — fixed this session). Durable long-form: posts/2026-08-11-er-init-screen-results.md. · [pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md)
+
+<details><summary>full record</summary>
+
+OWNER RUN LIVE (launched 22:47-53Z 08-09, unit fontaine-er-60k): fontaine_molmo2_er_60k_ddp4 — 60k AR steps from allenai/Molmo2-ER (byte-verified drop-in), 40k recipe verbatim + rig datasets at natural share (owner pick 22:45Z), seed 0 (owner override), save 5000. FIRST POLL DONE 22:5x-23:0xZ: E1 banner exact, 2.23 s/step steady, vram 66.6 vs 77, util 68-99%. RATE-CLASS CORRECTION posted in-channel + gate re-pinned 65-&gt;155 GPU-h (the 65 came from attach_F's 0.92 s/step frozen-trunk rate, wrong class; true trunk class 2.2-2.6 = 60k-continuation actuals). Corrected endpoint ~08-11 ~12:00Z (~37 h wall, ~149 train + ~2 eval GPU-h). Primary read = ER-init delta: probe ladder vs the 40k curve at matched steps; endpoint chains panel_v2 k4l2 (--report + npz), paired CI95 vs banked 40k (6.0079) + 60k-continuation (5.8602).
 
 </details>
 
@@ -1669,6 +1685,20 @@ OWNER REQUEST 09:41:04Z 08-11 ('eval the 55000 step checkpoint that just landed 
 <details><summary>full record</summary>
 
 OWNER REQUEST 09:41:04Z 08-11 ('eval the 55000 step checkpoint that just landed on the box as before'): step_055000 -&gt; hub (42.9s, commit 99a1ae2, weights-only) + local dl (13.7s) + STANDARD both-arms panel eval LIVE local H100 unit eval-er55k-panel launched 09:48:27Z (er35k recipe verbatim, no --generate; first poll 98% util/30.5G). REMAINING (owning session, ride to rc ~11:5xZ with foreground polls, NEVER a Monitor): rc=0 -&gt; er15k_panel_reads.py --stem-cand reports/eval__fontaine_molmo2_er_60k_ddp4__step_055000__panel_curated_v0_k4l2 --out reports/analysis__er55k_panel_vs_banked_k4l2.json (fast-path key bijou@55000, CLASS-MATCHED vs banked 40k 6.0079 + 60k-cont 5.8602; 35k precedent 6.2892 / +0.2813) -&gt; report+json+analysis to fontaine-reports (curl 200) + reports.md + numbers in-channel -&gt; prune babysit entry er55k_panel. Record-only; nothing gates the box run. NOTE: the box endpoint @60000 ~12:4xZ lands right after — the same owning session likely takes er60k-endpoint-postprocess next.
+
+</details>
+
+---
+
+**`er-screen-results-post`** · `cpu`
+
+ER screen close: chart-led consolidated results post (deliberately rolled from the 10:00Z 08-11 session that closed er_60k)
+
+**boundary:** CLOSED 16:2xZ 08-11 work session: posts/2026-08-11-er-init-screen-results.md landed with plain-words opener + 3 house-style charts (probe overlay from the salvaged box train logs, panel rung trajectory, decision CIs) + aux-heads table across rungs; chart script fontaine/scripts/er60k_screen_close_charts.py reads only banked files (regenerable, no live hosts); all artifact links curl-verified; SUMMARY + posts index registered (index drift fixed: four 08-10 posts were missing from posts/index.md); check.py green; Space pushed + link in-channel same session. · [pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md)
+
+<details><summary>full record</summary>
+
+ER screen close: chart-led consolidated results post (deliberately rolled from the 10:00Z 08-11 session that closed er_60k). The full ER-init story in one blog page, house chart style (dark-mode, eval-report scheme): rung trajectory vs 40k endpoint (+1.52 -&gt; +0.28 -&gt; -0.18 -&gt; -0.23), the decision read (endpoint 5.7782/1.9898; -0.2297 [-0.281,-0.154] vs 40k endpoint; -0.0821 [-0.126,-0.025] vs 60k-cont, both CI-excludes-zero), aux-heads table across rungs (holding er-better, event cont-better, rest tied), probe-curve overlay (shared seed), what-it-means-for-follow-ons (every new arm sits on er_60k/step_060000). Owner already has headline + report links (13:29Z post); this is the durable long-form. posts/ page + Papers-style plain-words opener per house rule; Space push; link in-channel.
 
 </details>
 

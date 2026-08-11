@@ -1,7 +1,25 @@
 {
- "updated_utc": "2026-08-11T16:05:00Z",
- "depth_reason": "depth 2 open at 16:0xZ 08-11: er-screen-results-post (executable CPU) + rebase-fontaine-on-main-postreview (blocked, pends the owner-side main push \u2014 directive fully pinned in the title; check git ls-remote origin main vs fdd9aa3 at every boot). er60k-events-oneoff-report CLOSED this session. Box DELETED by owner 14:37Z (salvage archived ~/box_archive ~1 GB; remove the box remote on next housekeeping pass). Lit refill lane owner-paused (00:23Z 08-10).",
+ "updated_utc": "2026-08-11T16:23:00Z",
+ "depth_reason": "depth 2 open at 16:2xZ 08-11: rig-mixture-instrument-prereg (executable CPU) + ae-on-our-trunk-prereg-draft (pends the rebase; rebase-fontaine-on-main-postreview itself still blocked on the owner-side main push \u2014 ls-remote checked 16:07Z, still fdd9aa3). er-screen-results-post CLOSED this session (durable ER long-form landed); er-60k-live status audit-fixed to done. Box git remote dropped (housekeeping done in-session). Lit refill lane owner-paused (00:23Z 08-10).",
  "items": [
+  {
+   "id": "rig-mixture-instrument-prereg",
+   "title": "Rig-mixture lever, step 1 (CPU, executable now): implement the per-root --dataset-repeat flag + oracle test exactly as pinned in the er-60k pre-reg mixture note (loader dedups repeated roots today, so there is no zero-code oversample), then draft the mixture-screen pre-reg on the new reference trunk er_60k/step_060000: rig at ~5% effective share (~27x repeat, inside the CL-triangle 2-20% replay band) vs the natural-share 0.19% passenger baseline this screen just banked. The ER results post names this lever explicitly unpriced. GPU leg NOT launchable without owner input: the 4x box is gone \u2014 the pre-reg draft must name the compute ask (local 1xH100 rung vs a new box) and hold for owner steering.",
+   "class": "cpu",
+   "status": "queued",
+   "prereg": null,
+   "owner_hold": false,
+   "boundary": "CPU-only instrument + draft; no gate. GPU execution pends owner compute decision."
+  },
+  {
+   "id": "ae-on-our-trunk-prereg-draft",
+   "title": "AE-on-our-trunk pre-reg draft (CPU): the owner's action-expert implementation (every-layer KV off our AR trunk, exchange 11:56Z 08-11) evaluated/trained against er_60k/step_060000 (the new reference trunk). Rides BEHIND rebase-fontaine-on-main-postreview \u2014 main @36afff0 lands ActionExpertConfig frozen/staticmethod-factory shape the draft must target; do not draft config surfaces against the pre-rebase tree. Unblocks when origin/main moves past fdd9aa3 and the rebase item closes.",
+   "class": "cpu",
+   "status": "queued",
+   "prereg": null,
+   "owner_hold": false,
+   "boundary": "pends the rebase item (owner-side main push); check git ls-remote origin main vs fdd9aa3 every boot."
+  },
   {
    "id": "rebase-fontaine-on-main-postreview",
    "title": "MAIN-AGENT DIRECTIVE (owner-relayed 14:34:48Z 08-11, message.txt attachment): rebase fontaine on main @36afff0 (owner-session correctness reviews of bijou/molmoact2 + bijou/molmo2 landed as code) and adapt \u2014 NOT merge-resolve in our favor: (1) ActionExpertConfig now frozen=True/slots=True, NO field defaults, all 15 fields explicit everywhere; released shape ONLY via ActionExpertConfig.released_so100_101(); (2) config factories moved to staticmethods: Gemma4Config.e2b()/.e4b(), Molmo2TextConfig.molmo2_4b() (module-level e2b_config()/e4b_config()/molmo2_4b_text_config() gone; styleguide: released shapes are staticmethod constructors, literals never restated); (3) new loud molmoact2 guards each with a test: --norm-stats must be named norm_stats.json; MolmoAct2Predictor.load refuses n_obs_steps missing or !=1 (require_single_obs); nonzero *dropout* keys in action_expert_config refused; extract_kv_states raises on unfilled cache layer; load_norm_stats requires non-empty setup_type/control_mode; (4) ensure_per_sample_patch_alignment now CPU-side in all three collators; (5) main edited two of our scripts (molmoact2_ae_parity.py build_ours passes dropout=0.0/attn_dropout=0.0 explicitly; molmoact2_ours_ft_rung_read.py n_obs_steps truthiness fix) and two posts (OOB plan Qwen3-8B->4B-class x2; deep dive parameter-accounting note: 621M and 577,564,448 are the same expert \u2014 620,677,664 minus 36x frozen cross_attn.kv_proj 42,522,624 minus identity state_encoder 590,592, pinned in test_released_config_parameter_count) \u2014 main's versions authoritative; (6) styleguide adds: Shapes: docstring bullets on tensor-taking functions, intra-package imports relative, docs state present-truth (no corrected-on trails); (7) Molmo2TextTokenizer raises FileNotFoundError not SystemExit on missing tokenizer.json. Sister ask (check.py green on artifact-less clones) DONE d7b6864 same session (option a: frozen stage-01 analysis committed, oracle chain clone-verifiable).",
@@ -15,10 +33,10 @@
    "id": "er-screen-results-post",
    "title": "ER screen close: chart-led consolidated results post (deliberately rolled from the 10:00Z 08-11 session that closed er_60k). The full ER-init story in one blog page, house chart style (dark-mode, eval-report scheme): rung trajectory vs 40k endpoint (+1.52 -> +0.28 -> -0.18 -> -0.23), the decision read (endpoint 5.7782/1.9898; -0.2297 [-0.281,-0.154] vs 40k endpoint; -0.0821 [-0.126,-0.025] vs 60k-cont, both CI-excludes-zero), aux-heads table across rungs (holding er-better, event cont-better, rest tied), probe-curve overlay (shared seed), what-it-means-for-follow-ons (every new arm sits on er_60k/step_060000). Owner already has headline + report links (13:29Z post); this is the durable long-form. posts/ page + Papers-style plain-words opener per house rule; Space push; link in-channel.",
    "class": "cpu",
-   "status": "queued",
+   "status": "done",
    "prereg": "fontaine/blog/src/posts/2026-08-09-prereg-molmo2-er-60k.md",
    "owner_hold": false,
-   "boundary": "CPU-only, no gate; natural slot = the session after er60k-events-oneoff-report closes (that report is the owner-requested priority). No dated deadline."
+   "boundary": "CLOSED 16:2xZ 08-11 work session: posts/2026-08-11-er-init-screen-results.md landed with plain-words opener + 3 house-style charts (probe overlay from the salvaged box train logs, panel rung trajectory, decision CIs) + aux-heads table across rungs; chart script fontaine/scripts/er60k_screen_close_charts.py reads only banked files (regenerable, no live hosts); all artifact links curl-verified; SUMMARY + posts index registered (index drift fixed: four 08-10 posts were missing from posts/index.md); check.py green; Space pushed + link in-channel same session."
   },
   {
    "id": "er55k-panel-eval",
@@ -1042,10 +1060,10 @@
    "id": "er-60k-live",
    "title": "OWNER RUN LIVE (launched 22:47-53Z 08-09, unit fontaine-er-60k): fontaine_molmo2_er_60k_ddp4 \u2014 60k AR steps from allenai/Molmo2-ER (byte-verified drop-in), 40k recipe verbatim + rig datasets at natural share (owner pick 22:45Z), seed 0 (owner override), save 5000. FIRST POLL DONE 22:5x-23:0xZ: E1 banner exact, 2.23 s/step steady, vram 66.6 vs 77, util 68-99%. RATE-CLASS CORRECTION posted in-channel + gate re-pinned 65->155 GPU-h (the 65 came from attach_F's 0.92 s/step frozen-trunk rate, wrong class; true trunk class 2.2-2.6 = 60k-continuation actuals). Corrected endpoint ~08-11 ~12:00Z (~37 h wall, ~149 train + ~2 eval GPU-h). Primary read = ER-init delta: probe ladder vs the 40k curve at matched steps; endpoint chains panel_v2 k4l2 (--report + npz), paired CI95 vs banked 40k (6.0079) + 60k-continuation (5.8602).",
    "class": "gpu-box",
-   "status": "live",
+   "status": "done",
    "prereg": "fontaine/blog/src/posts/2026-08-09-prereg-molmo2-er-60k.md",
    "owner_hold": false,
-   "boundary": "step 5000 (~02:0xZ 08-10): first async-save capture line + probe ladder vs 40k curve; K1 kill lines at save boundaries; endpoint ~08-11 ~12:00Z -> chained panel_v2; babysit er_60k entry live (gate 155)"
+   "boundary": "CLOSED (status audit 16:2xZ 08-11: run actually finished 08-11 \u2014 train @60000 12:36Z, chained panel_v2 rc=0 13:28Z, ~153/155 GPU-h; decision read = ER init WINS both legs, er_60k/step_060000 = new reference trunk, weights banked to fontaine-checkpoints 4ed3dd0; the 10:00-13:5xZ session closed the run but left this item status=live \u2014 fixed this session). Durable long-form: posts/2026-08-11-er-init-screen-results.md."
   },
   {
    "id": "adamc-postmortem-chart-0809",

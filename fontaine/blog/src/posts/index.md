@@ -88,3 +88,8 @@ corrections are follow-up posts.
 - [2026-08-10 — MolmoAct2 on our panel: out-of-band eval plan (deep implementation read)](2026-08-10-molmoact2-oob-eval-plan.md)
 - [2026-08-10 — Pre-reg: MolmoAct2-SO100_101 out-of-band panel eval + 3-policy report (owner GO)](2026-08-10-prereg-molmoact2-oob-panel.md)
 - [2026-08-10 — MolmoAct2 on our panel: results + how the comparison was built](2026-08-10-molmoact2-oob-results.md)
+- [2026-08-10 — Pre-reg: MolmoAct2 rig fine-tune, rung 1 (AE-only, local H100)](2026-08-10-prereg-molmoact2-rig-finetune.md)
+- [2026-08-10 — Runbook: fine-tuning MolmoAct2 on the rig datasets + local rollouts](2026-08-10-molmoact2-rig-finetune-runbook.md)
+- [2026-08-10 — MolmoAct2 rig fine-tune results: MAE 28.95 → 3.23, pre-reg PASS](2026-08-10-molmoact2-rig-ft-results.md)
+- [2026-08-10 — Pre-reg: MolmoAct2 first-class in-repo port, items 1–4 (owner GO)](2026-08-10-prereg-molmoact2-firstclass-port.md)
+- [2026-08-11 — ER-init screen closed: Molmo2-ER init wins both legs; new reference trunk](2026-08-11-er-init-screen-results.md)

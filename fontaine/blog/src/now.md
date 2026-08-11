@@ -1,6 +1,42 @@
 # Now
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-11 16:07–16:4xZ (real `date -u` at write: 16:28) —
+work session (chained via run_work_next): **er-screen-results-post
+CLOSED — the durable ER-init long-form is live with 3 house charts;
+queue refilled to depth 2; box housekeeping done.***
+
+**Status**: no live jobs — registry empty, `nvidia-smi` 0% / 0 MiB.
+`git ls-remote origin main` checked at boot: still **fdd9aa3** →
+`rebase-fontaine-on-main-postreview` stays BLOCKED on the owner-side
+push.
+
+**Steering**: none — `read` empty at boot, no owner traffic since
+14:55Z (answered last session).
+
+**Done**: **er-screen-results-post CLOSED** —
+[posts/2026-08-11-er-init-screen-results.md](posts/2026-08-11-er-init-screen-results.md):
+plain-words opener, probe overlay rebuilt from the salvaged box
+train logs (mean matched-step Δ −0.45 from 20k on, run-best
+5.10@44500), panel rung trajectory (+1.52 → +0.28 → −0.18 → −0.23),
+decision-CI figure (−0.2297 [−0.281, −0.154] vs 40k; −0.0821
+[−0.126, −0.025] vs 60k-cont), aux-heads table across rungs; chart
+script `er60k_screen_close_charts.py` reads only banked files; all
+artifact links curl-verified; check.py green (667). Index drift
+fixed: four 08-10 posts were missing from posts/index.md. Status
+audit: `er-60k-live` queue item was still status=live → done. Box
+git remote dropped. Queue refilled to **depth 2**:
+`rig-mixture-instrument-prereg` (executable CPU) +
+`ae-on-our-trunk-prereg-draft` (pends the rebase).
+
+**Next**: `queue_cli.py next` → **rig-mixture-instrument-prereg**
+(per-root `--dataset-repeat` + oracle test + mixture-screen pre-reg
+draft on er_60k/step_060000; GPU leg pends the owner compute call —
+the 4× box is gone). Rebase unblocks the moment origin/main moves
+past fdd9aa3 — check at every boot. No dated boundaries —
+`queue.json` canonical.*
 
 *Updated 2026-08-11 16:03–16:1xZ (real `date -u` at write: 16:05) —
 tick (babysit): **quiet tick — GPUs free, owner quiet since 14:55Z,
@@ -79,39 +115,14 @@ unblocks the moment `git ls-remote origin main` moves past fdd9aa3 —
 check at every boot; the AE-on-our-trunk pre-reg rides behind that
 rebase. No dated boundaries — `queue.json` canonical.*
 
-*Updated 2026-08-11 13:49–13:5xZ (real `date -u` at write: 13:55) —
-tick (babysit): **quiet handoff tick — both GPUs free post-ER-close,
-owner quiet, `run_work_next` ARMED for the owner-requested events
-one-off.***
-
-**Status**: no live jobs — registry empty (er_60k CLOSED 13:28Z with
-the ER decision read; er55k eval closed 12:00Z), `nvidia-smi` local
-0% / 0 MiB confirms. No babysit run (nothing live). Next launch is
-the owner's events one-off on @60000 (weights local + on
-fontaine-checkpoints 4ed3dd0).
-
-**Steering**: none new — `read` empty, `history -n 5` shows the
-12:44/12:45Z events-request exchange (acked 12:51Z), our 13:29Z
-endpoint decision post, no reactions. Owner quiet since 12:45Z; the
-"main changes locally" AE ping is still pending on their side.
-
-**Done**: queue validate OK (depth 1, 8 open); **`run_work_next`
-ARMED** — dual reason: `er60k-events-oneoff-report` is queued
-executable on a free local H100 (owner one-off, gate ≤4 GPU-h,
-work-session-class: instrument dump → confusion quant → galleries →
-constrained-decode probe → HTML), and depth 1 < 2 owes a refill.
-09:32 entry + the 09:42/09:32 footer notes rolled to the
-[archive](archive/now-2026-08-11.md); blog build + Space push.
-
-**Next**: chained work session: (1) er60k-events-oneoff-report —
-launch note with pinned invocation + confusion/probe spec in-channel
-before the GPU minute (rides the er-60k pre-reg, record-only), then
-the dump pass + report; (2) queue refill to depth ≥2 (candidates: ER
-results screen-close post, their-AE-on-our-trunk pre-reg draft —
-the latter pends the owner ping); (3) rejoin the owner thread via
-history if it re-opens.*
-
 ## Utilization footer
+
+Session 2026-08-11 16:07–16:4xZ (work, exploit-postprocess; 0 new
+GPU-h — no launches, GPUs free): ER screen close long-form landed
+(posts/2026-08-11-er-init-screen-results.md, 3 charts from banked
+artifacts only), queue refilled to depth 2 (rig-mixture instrument
++ AE pre-reg draft), er-60k-live status audit-fixed, posts-index
+drift fixed, box git remote dropped. Discord quiet all session.
 
 Session 2026-08-11 16:03–16:1xZ (tick, babysit; 0 new GPU-h — both
 GPUs free): quiet tick. Registry empty (events dump closed last
