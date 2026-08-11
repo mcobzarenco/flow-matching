@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-11T17:05:00Z
+**Updated:** 2026-08-11T17:44:00Z
 
-**Depth call:** depth 2 open at 17:0xZ 08-11: rig-mixture-screen-exec (owner_hold — compute ask A/B/C posted in-channel, pre-reg draft live) + ae-on-our-trunk-prereg-draft (pends the rebase; rebase-fontaine-on-main-postreview itself still blocked on the owner-side main push, ls-remote checked 16:30Z still fdd9aa3). rig-mixture-instrument-prereg CLOSED this session (instrument 1b1c314 + pre-reg draft). Both open items are holds — no CPU-executable item remains; next refill candidate on unblock or owner steering. Lit refill lane owner-paused (00:23Z 08-10).
+**Depth call:** depth 5 open at 17:4xZ 08-11 after the owner sim pivot (17:07Z directive): sim-review (head, CPU) + sim-lit-review (CPU, owner re-opened lit lane for sim) + sim-policy-eval-100seeds (gpu-inference, blocked behind sim-review) + ae-on-our-trunk-prereg-draft (CPU, deprioritized behind sim lane) + rig-mixture-screen-exec (owner_hold: preflight FITS but collides with GPU-for-inference steer; C-defer unless owner calls A). General lit-slice pause stays for non-sim topics (00:23Z 08-10).
 
-**9 open** (Live 0 · Queued 1 · Blocked 8 · Done 112)
+**11 open** (Live 0 · Queued 3 · Blocked 8 · Done 113)
 
 ## 🔴 Live (0)
 
@@ -14,7 +14,7 @@
 
 *(empty)*
 
-## 🟢 Queued (1)
+## 🟢 Queued (3)
 
 *ready — waiting on a window or a boundary*
 
@@ -22,11 +22,39 @@
 
 AE-on-our-trunk pre-reg draft (CPU): the owner's action-expert implementation (every-layer KV off our AR trunk, exchange 11:56Z 08-11) evaluated/trained against er_60k/step_060000 (the new reference trunk)
 
-**boundary:** pends the rebase item (owner-side main push); check git ls-remote origin main vs fdd9aa3 every boot.
+**boundary:** UNBLOCKED 17:2xZ 08-11: the rebase landed (main @36afff0 merged, check.py 688 green) — draft against ActionExpertConfig frozen/staticmethod-factory shapes at HEAD. Executable CPU next. DEPRIORITIZED 17:4xZ 08-11 behind the sim lane (owner 17:07Z: next-day focus is simulations).
 
 <details><summary>full record</summary>
 
-AE-on-our-trunk pre-reg draft (CPU): the owner's action-expert implementation (every-layer KV off our AR trunk, exchange 11:56Z 08-11) evaluated/trained against er_60k/step_060000 (the new reference trunk). Rides BEHIND rebase-fontaine-on-main-postreview — main @36afff0 lands ActionExpertConfig frozen/staticmethod-factory shape the draft must target; do not draft config surfaces against the pre-rebase tree. Unblocks when origin/main moves past fdd9aa3 and the rebase item closes.
+AE-on-our-trunk pre-reg draft (CPU): the owner's action-expert implementation (every-layer KV off our AR trunk, exchange 11:56Z 08-11) evaluated/trained against er_60k/step_060000 (the new reference trunk). UNBLOCKED (rebase closed 08-11 17:2xZ) — main @36afff0 landed ActionExpertConfig frozen/staticmethod-factory shape the draft must target; do not draft config surfaces against the pre-rebase tree.
+
+</details>
+
+---
+
+**`sim-lit-review`** · `cpu`
+
+Sim + sim-to-real literature review (CPU, OWNER DIRECTIVE 17:07Z 08-11
+
+**boundary:** Rides behind sim-review; the general lit-slice pause (00:23Z 08-10) stays for non-sim topics.
+
+<details><summary>full record</summary>
+
+Sim + sim-to-real literature review (CPU, OWNER DIRECTIVE 17:07Z 08-11 — explicitly re-opens the paused lit lane for sim topics): (a) simulators/task suites usable for so101-class tabletop manipulation (existing so100/so101 ports, MuJoCo-family and other ecosystems) — final rig is so101; (b) sim-to-real transfer + the inverse (eval fidelity: sim success as a policy-quality metric alongside BC MAE). Papers pages with plain-words openers.
+
+</details>
+
+---
+
+**`sim-review`** · `cpu`
+
+Sim review (CPU, OWNER DIRECTIVE 17:07Z 08-11 — next-day focus is simulations): review sim/ (so101_sim.py, rollout_sim.py, convert_benchy.py, demo_scene.py, view.py, probe_*.py, fetch_assets.sh)
+
+**boundary:** Queue head 17:4xZ 08-11. Local GPU stays inference-only per the owner steer.
+
+<details><summary>full record</summary>
+
+Sim review (CPU, OWNER DIRECTIVE 17:07Z 08-11 — next-day focus is simulations): review sim/ (so101_sim.py, rollout_sim.py, convert_benchy.py, demo_scene.py, view.py, probe_*.py, fetch_assets.sh) — map capabilities: observation surface vs the policy input contract (cameras, proprio), actuation/stepping model, seed &amp; determinism story, asset pipeline; investigate the owner-reported boat (benchy) contact-physics problem (findings first, fixes after). Output: findings report; feeds the 100-seed eval protocol pre-reg.
 
 </details>
 
@@ -118,15 +146,15 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 
 ---
 
-**`rebase-fontaine-on-main-postreview`** · `cpu` · **⛔ owner hold**
+**`sim-policy-eval-100seeds`** · `cpu`
 
-MAIN-AGENT DIRECTIVE (owner-relayed 14:34:48Z 08-11, message.txt attachment): rebase fontaine on main @36afff0 (owner-session correctness reviews of bijou/molmoact2 + bijou/molmo2 landed as code) and adapt
+GOAL (owner 17:07Z 08-11): evaluate one good policy (candidate er_60k/step_060000, the reference trunk) in sim on 100 fixed seeds; primary metric = boat-&gt;disk distance reduction (continuous), success rate secondary
 
-**boundary:** BLOCKED on the owner-side push: GitHub main is still fdd9aa3 (pre-review), 36afff0 unreachable (box remote gone). Owner told in-channel 15:08Z — rebase + adapt + check.py green executes the session the push lands; unblock by flipping owner_hold when origin/main moves past fdd9aa3.
+**boundary:** BLOCKED behind sim-review findings + eval-protocol pre-reg; owner flagged boat contact physics as poor — protocol must state how that caveats the read. Classed cpu while the deliverable is the protocol pre-reg; reclass gpu-local (with prereg link) when the eval itself launches.
 
 <details><summary>full record</summary>
 
-MAIN-AGENT DIRECTIVE (owner-relayed 14:34:48Z 08-11, message.txt attachment): rebase fontaine on main @36afff0 (owner-session correctness reviews of bijou/molmoact2 + bijou/molmo2 landed as code) and adapt — NOT merge-resolve in our favor: (1) ActionExpertConfig now frozen=True/slots=True, NO field defaults, all 15 fields explicit everywhere; released shape ONLY via ActionExpertConfig.released_so100_101(); (2) config factories moved to staticmethods: Gemma4Config.e2b()/.e4b(), Molmo2TextConfig.molmo2_4b() (module-level e2b_config()/e4b_config()/molmo2_4b_text_config() gone; styleguide: released shapes are staticmethod constructors, literals never restated); (3) new loud molmoact2 guards each with a test: --norm-stats must be named norm_stats.json; MolmoAct2Predictor.load refuses n_obs_steps missing or !=1 (require_single_obs); nonzero *dropout* keys in action_expert_config refused; extract_kv_states raises on unfilled cache layer; load_norm_stats requires non-empty setup_type/control_mode; (4) ensure_per_sample_patch_alignment now CPU-side in all three collators; (5) main edited two of our scripts (molmoact2_ae_parity.py build_ours passes dropout=0.0/attn_dropout=0.0 explicitly; molmoact2_ours_ft_rung_read.py n_obs_steps truthiness fix) and two posts (OOB plan Qwen3-8B-&gt;4B-class x2; deep dive parameter-accounting note: 621M and 577,564,448 are the same expert — 620,677,664 minus 36x frozen cross_attn.kv_proj 42,522,624 minus identity state_encoder 590,592, pinned in test_released_config_parameter_count) — main's versions authoritative; (6) styleguide adds: Shapes: docstring bullets on tensor-taking functions, intra-package imports relative, docs state present-truth (no corrected-on trails); (7) Molmo2TextTokenizer raises FileNotFoundError not SystemExit on missing tokenizer.json. Sister ask (check.py green on artifact-less clones) DONE d7b6864 same session (option a: frozen stage-01 analysis committed, oracle chain clone-verifiable).
+GOAL (owner 17:07Z 08-11): evaluate one good policy (candidate er_60k/step_060000, the reference trunk) in sim on 100 fixed seeds; primary metric = boat-&gt;disk distance reduction (continuous), success rate secondary. Local GPU inference-only while sims run. Protocol (seed list, horizon, metric definition) pre-registered before running.
 
 </details>
 
@@ -136,7 +164,7 @@ MAIN-AGENT DIRECTIVE (owner-relayed 14:34:48Z 08-11, message.txt attachment): re
 
 Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft posts/2026-08-11-prereg-er60k-rig-mixture.md posted + in-channel 08-11): finalize the pre-reg (freeze probe bars, panel band, param sheet in-channel, obje…
 
-**boundary:** BLOCKED on the owner compute decision (ask posted in-channel 08-11 ~17:0xZ); unblock by flipping owner_hold when the owner picks A/B or provisions compute. · [pre-reg](posts/2026-08-11-prereg-er60k-rig-mixture.md)
+**boundary:** BLOCKED on the owner compute decision (ask posted in-channel 08-11 ~17:0xZ); unblock by flipping owner_hold when the owner picks A/B or provisions compute. UPDATE 17:4xZ 08-11: option-B preflight FITS (69.2 GiB peak, ~12.0 s/step =&gt; ~33.5 h for 10k steps single-H100; --dataset-repeat live-fired, 4.49% combined share vs ~4.97% pre-reg estimate — reconcile before exec) BUT the owner sim pivot (17:07Z) dedicates the local GPU to inference =&gt; treated as C-defer unless the owner calls A (new box); results posted in-channel 17:35Z. · [pre-reg](posts/2026-08-11-prereg-er60k-rig-mixture.md)
 
 <details><summary>full record</summary>
 
@@ -146,7 +174,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (112)
+## ✅ Done (113)
 
 *closed — the full record stays in each fold*
 
@@ -1699,6 +1727,20 @@ ER screen close: chart-led consolidated results post (deliberately rolled from t
 <details><summary>full record</summary>
 
 ER screen close: chart-led consolidated results post (deliberately rolled from the 10:00Z 08-11 session that closed er_60k). The full ER-init story in one blog page, house chart style (dark-mode, eval-report scheme): rung trajectory vs 40k endpoint (+1.52 -&gt; +0.28 -&gt; -0.18 -&gt; -0.23), the decision read (endpoint 5.7782/1.9898; -0.2297 [-0.281,-0.154] vs 40k endpoint; -0.0821 [-0.126,-0.025] vs 60k-cont, both CI-excludes-zero), aux-heads table across rungs (holding er-better, event cont-better, rest tied), probe-curve overlay (shared seed), what-it-means-for-follow-ons (every new arm sits on er_60k/step_060000). Owner already has headline + report links (13:29Z post); this is the durable long-form. posts/ page + Papers-style plain-words opener per house rule; Space push; link in-channel.
+
+</details>
+
+---
+
+**`rebase-fontaine-on-main-postreview`** · `cpu`
+
+MAIN-AGENT DIRECTIVE (owner-relayed 14:34:48Z 08-11, message.txt attachment): rebase fontaine on main @36afff0 (owner-session correctness reviews of bijou/molmoact2 + bijou/molmo2 landed as code) and adapt
+
+**boundary:** CLOSED 17:2xZ 08-11 work session (owner push 16:43Z seen mid-session, executed immediately): origin/main fetched fdd9aa3 -&gt; 36afff0, git rebase origin/main CLEAN — zero conflicts (only both-sides file bijou/train.py: main's wandb import move vs our parse_repeat_specs import; auto-merged + one ruff I001 fixup). All 7 directive items sentinel-verified at HEAD: released_so100_101 staticmethod, frozen no-default ActionExpertConfig, Gemma4Config.e2b()/.e4b() staticmethods, the 5 loud molmoact2 guards + tests (688 vs 683 pre-rebase), CPU-side patch alignment, main's authoritative versions of molmoact2_ae_parity.py (explicit dropout=0.0) + molmoact2_ours_ft_rung_read.py (n_obs_steps truthiness) + the 2 posts, tokenizer FileNotFoundError, styleguide adds. check.py green 688; pushed --force-with-lease 2a31981. Result posted in-channel same session.
+
+<details><summary>full record</summary>
+
+MAIN-AGENT DIRECTIVE (owner-relayed 14:34:48Z 08-11, message.txt attachment): rebase fontaine on main @36afff0 (owner-session correctness reviews of bijou/molmoact2 + bijou/molmo2 landed as code) and adapt — NOT merge-resolve in our favor: (1) ActionExpertConfig now frozen=True/slots=True, NO field defaults, all 15 fields explicit everywhere; released shape ONLY via ActionExpertConfig.released_so100_101(); (2) config factories moved to staticmethods: Gemma4Config.e2b()/.e4b(), Molmo2TextConfig.molmo2_4b() (module-level e2b_config()/e4b_config()/molmo2_4b_text_config() gone; styleguide: released shapes are staticmethod constructors, literals never restated); (3) new loud molmoact2 guards each with a test: --norm-stats must be named norm_stats.json; MolmoAct2Predictor.load refuses n_obs_steps missing or !=1 (require_single_obs); nonzero *dropout* keys in action_expert_config refused; extract_kv_states raises on unfilled cache layer; load_norm_stats requires non-empty setup_type/control_mode; (4) ensure_per_sample_patch_alignment now CPU-side in all three collators; (5) main edited two of our scripts (molmoact2_ae_parity.py build_ours passes dropout=0.0/attn_dropout=0.0 explicitly; molmoact2_ours_ft_rung_read.py n_obs_steps truthiness fix) and two posts (OOB plan Qwen3-8B-&gt;4B-class x2; deep dive parameter-accounting note: 621M and 577,564,448 are the same expert — 620,677,664 minus 36x frozen cross_attn.kv_proj 42,522,624 minus identity state_encoder 590,592, pinned in test_released_config_parameter_count) — main's versions authoritative; (6) styleguide adds: Shapes: docstring bullets on tensor-taking functions, intra-package imports relative, docs state present-truth (no corrected-on trails); (7) Molmo2TextTokenizer raises FileNotFoundError not SystemExit on missing tokenizer.json. Sister ask (check.py green on artifact-less clones) DONE d7b6864 same session (option a: frozen stage-01 analysis committed, oracle chain clone-verifiable).
 
 </details>
 

@@ -1,6 +1,6 @@
 {
- "updated_utc": "2026-08-11T17:01:00Z",
- "depth_reason": "depth 2 open at 17:0xZ 08-11: ae-on-our-trunk-prereg-draft (CPU, UNBLOCKED by the rebase this session) + rig-mixture-screen-exec (blocked, owner_hold \u2014 compute ask A/B/C posted in-channel <=17:00Z). rebase-fontaine-on-main-postreview CLOSED this session (owner pushed main 16:43Z; clean rebase, check.py 688 green, force-pushed 2a31981). Lit refill lane owner-paused (00:23Z 08-10).",
+ "updated_utc": "2026-08-11T17:44:00Z",
+ "depth_reason": "depth 5 open at 17:4xZ 08-11 after the owner sim pivot (17:07Z directive): sim-review (head, CPU) + sim-lit-review (CPU, owner re-opened lit lane for sim) + sim-policy-eval-100seeds (gpu-inference, blocked behind sim-review) + ae-on-our-trunk-prereg-draft (CPU, deprioritized behind sim lane) + rig-mixture-screen-exec (owner_hold: preflight FITS but collides with GPU-for-inference steer; C-defer unless owner calls A). General lit-slice pause stays for non-sim topics (00:23Z 08-10).",
  "items": [
   {
    "id": "rig-mixture-instrument-prereg",
@@ -18,7 +18,34 @@
    "status": "blocked",
    "prereg": "fontaine/blog/src/posts/2026-08-11-prereg-er60k-rig-mixture.md",
    "owner_hold": true,
-   "boundary": "BLOCKED on the owner compute decision (ask posted in-channel 08-11 ~17:0xZ); unblock by flipping owner_hold when the owner picks A/B or provisions compute."
+   "boundary": "BLOCKED on the owner compute decision (ask posted in-channel 08-11 ~17:0xZ); unblock by flipping owner_hold when the owner picks A/B or provisions compute. UPDATE 17:4xZ 08-11: option-B preflight FITS (69.2 GiB peak, ~12.0 s/step => ~33.5 h for 10k steps single-H100; --dataset-repeat live-fired, 4.49% combined share vs ~4.97% pre-reg estimate \u2014 reconcile before exec) BUT the owner sim pivot (17:07Z) dedicates the local GPU to inference => treated as C-defer unless the owner calls A (new box); results posted in-channel 17:35Z."
+  },
+  {
+   "id": "sim-review",
+   "title": "Sim review (CPU, OWNER DIRECTIVE 17:07Z 08-11 \u2014 next-day focus is simulations): review sim/ (so101_sim.py, rollout_sim.py, convert_benchy.py, demo_scene.py, view.py, probe_*.py, fetch_assets.sh) \u2014 map capabilities: observation surface vs the policy input contract (cameras, proprio), actuation/stepping model, seed & determinism story, asset pipeline; investigate the owner-reported boat (benchy) contact-physics problem (findings first, fixes after). Output: findings report; feeds the 100-seed eval protocol pre-reg.",
+   "class": "cpu",
+   "status": "queued",
+   "prereg": null,
+   "owner_hold": false,
+   "boundary": "Queue head 17:4xZ 08-11. Local GPU stays inference-only per the owner steer."
+  },
+  {
+   "id": "sim-lit-review",
+   "title": "Sim + sim-to-real literature review (CPU, OWNER DIRECTIVE 17:07Z 08-11 \u2014 explicitly re-opens the paused lit lane for sim topics): (a) simulators/task suites usable for so101-class tabletop manipulation (existing so100/so101 ports, MuJoCo-family and other ecosystems) \u2014 final rig is so101; (b) sim-to-real transfer + the inverse (eval fidelity: sim success as a policy-quality metric alongside BC MAE). Papers pages with plain-words openers.",
+   "class": "cpu",
+   "status": "queued",
+   "prereg": null,
+   "owner_hold": false,
+   "boundary": "Rides behind sim-review; the general lit-slice pause (00:23Z 08-10) stays for non-sim topics."
+  },
+  {
+   "id": "sim-policy-eval-100seeds",
+   "title": "GOAL (owner 17:07Z 08-11): evaluate one good policy (candidate er_60k/step_060000, the reference trunk) in sim on 100 fixed seeds; primary metric = boat->disk distance reduction (continuous), success rate secondary. Local GPU inference-only while sims run. Protocol (seed list, horizon, metric definition) pre-registered before running.",
+   "class": "cpu",
+   "status": "blocked",
+   "prereg": null,
+   "owner_hold": false,
+   "boundary": "BLOCKED behind sim-review findings + eval-protocol pre-reg; owner flagged boat contact physics as poor \u2014 protocol must state how that caveats the read. Classed cpu while the deliverable is the protocol pre-reg; reclass gpu-local (with prereg link) when the eval itself launches."
   },
   {
    "id": "ae-on-our-trunk-prereg-draft",
@@ -27,7 +54,7 @@
    "status": "queued",
    "prereg": null,
    "owner_hold": false,
-   "boundary": "UNBLOCKED 17:2xZ 08-11: the rebase landed (main @36afff0 merged, check.py 688 green) \u2014 draft against ActionExpertConfig frozen/staticmethod-factory shapes at HEAD. Executable CPU next."
+   "boundary": "UNBLOCKED 17:2xZ 08-11: the rebase landed (main @36afff0 merged, check.py 688 green) \u2014 draft against ActionExpertConfig frozen/staticmethod-factory shapes at HEAD. Executable CPU next. DEPRIORITIZED 17:4xZ 08-11 behind the sim lane (owner 17:07Z: next-day focus is simulations)."
   },
   {
    "id": "rebase-fontaine-on-main-postreview",

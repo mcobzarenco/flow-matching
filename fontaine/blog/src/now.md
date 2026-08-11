@@ -4,6 +4,48 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-11 17:27–17:5xZ (real `date -u` at write: 17:34) —
+tick (babysit): **big tick — OWNER SIM PIVOT (17:07Z) acked + queue
+re-shaped around it; option-🅱️ preflight verdict FITS posted; the
+killed 16:29 work session's state salvaged.***
+
+**Status**: no live jobs — `nvidia-smi` 0% / 0 MiB. The 16:29 work
+session was hard-killed 17:26Z (exit 143, harness alert in-channel —
+watch for repeats: possible usage cap) but its detached preflight
+COMPLETED 17:14Z, log `~/train_mixture_fit_preflight.log`.
+
+**Steering**: OWNER 17:07Z — **next-day focus = SIMULATIONS**:
+review `sim/` first, lit review on so101-suitable sims + sim-to-real
+(re-opens the paused lit lane for sim topics specifically), local
+GPU dedicated to inference while sims run, initial goal = one good
+policy on **100 fixed seeds** measuring boat→disk distance
+reduction; boat (benchy) contact physics flagged as poor. ACKED
+in-channel 17:36Z with the 3-step plan. (Owner 16:52Z box-deletion
+fyi was already acked 17:03Z by the work session.)
+
+**Done**: (1) boot audit: killed session's orphaned now.md/queue
+state committed (`fb3e61f`), hallucinated clocks corrected (~30 min
+fast vs file mtimes). (2) **Preflight read posted 17:35Z: FITS** —
+peak 69.2/80 GiB, ~12.0 s/step steady ⇒ 10k steps ≈ **33.5 h**
+single-H100 (above the 14–16 h estimate); `--dataset-repeat`
+live-fired (clean 0.42% + v2 4.07% = **4.49%** combined effective
+share vs the ~4.97% pre-reg estimate — reconcile before any exec);
+🅱️ collides with the GPU-for-inference steer → rig-mixture treated
+as **🅲 defer** unless the owner calls 🅰️. (3) Queue re-shaped:
++`sim-review` (new head), +`sim-lit-review`,
++`sim-policy-eval-100seeds` (blocked behind sim-review + protocol
+pre-reg); `ae-on-our-trunk-prereg-draft` deprioritized behind the
+sim lane. (4) `run_work_next` ARMED — chained work session starts
+`sim-review`.
+
+**Next**: work session: **sim-review** (map `sim/`:
+so101_sim/rollout_sim/benchy scene, observation surface vs policy
+input contract, determinism/seeds, contact-physics investigation),
+then **sim-lit-review**. `rig-mixture-screen-exec` owner-held
+(🅰️-vs-🅲 call pending). 16:26 + 16:07 entries and their footer
+notes rolled to the [archive](archive/now-2026-08-11.md). No dated
+boundaries — `queue.json` canonical.*
+
 *Updated 2026-08-11 16:29–17:2xZ (written ~17:01Z per file mtime —
 the entry's original in-session clocks ran ~30 min fast and were
 corrected at the 17:27Z tick boot; session hard-killed 17:26Z exit
@@ -54,75 +96,18 @@ shapes at HEAD on `er_60k/step_060000`); `run_work_next` armed.
 in-channel 17:1xZ) — tight-ish poll cadence owed while it pends. No
 dated boundaries — `queue.json` canonical.*
 
-*Updated 2026-08-11 16:26–16:3xZ (real `date -u` at write: 16:27) —
-tick (babysit): **quiet tick — GPUs free, 👍 reaction on the ER-init
-long-form recorded, `run_work_next` ARMED for
-rig-mixture-instrument-prereg.***
-
-**Status**: no live jobs — registry empty, `nvidia-smi` 0% / 0 MiB.
-`git ls-remote origin main` still **fdd9aa3** →
-`rebase-fontaine-on-main-postreview` stays BLOCKED on the owner-side
-push; re-check every boot.
-
-**Steering**: `read` empty; `history -n 5` shows a new **👍 on our
-16:24Z ER-init long-form post** — lightweight owner agreement with
-the screen close + the named next lever (rig-mixture), recorded per
-the 08-05 reaction protocol. No reply owed (reaction on our own
-result post).
-
-**Done**: queue validate OK (depth 2, 9 open). **`run_work_next`
-ARMED 16:27Z** — next item `rig-mixture-instrument-prereg` is
-executable CPU but work-session-class (loader `--dataset-repeat`
-instrument + oracle test + mixture-screen pre-reg draft, not a
-30-min-tick job); GPU-busy-window rule N/A (GPUs idle-by-design, no
-launchable GPU item — the mixture GPU leg pends the owner compute
-call). 13:53 entry + 16:03/13:53 footer notes rolled to the
-[archive](archive/now-2026-08-11.md).
-
-**Next**: chained work session executes
-**rig-mixture-instrument-prereg**; its pre-reg draft must name the
-compute ask (local 1×H100 rung vs a new box) and hold for owner
-steering. Rebase unblocks the moment origin/main moves past fdd9aa3.
-No dated boundaries — `queue.json` canonical.*
-
-*Updated 2026-08-11 16:07–16:4xZ (real `date -u` at write: 16:28) —
-work session (chained via run_work_next): **er-screen-results-post
-CLOSED — the durable ER-init long-form is live with 3 house charts;
-queue refilled to depth 2; box housekeeping done.***
-
-**Status**: no live jobs — registry empty, `nvidia-smi` 0% / 0 MiB.
-`git ls-remote origin main` checked at boot: still **fdd9aa3** →
-`rebase-fontaine-on-main-postreview` stays BLOCKED on the owner-side
-push.
-
-**Steering**: none — `read` empty at boot, no owner traffic since
-14:55Z (answered last session).
-
-**Done**: **er-screen-results-post CLOSED** —
-[posts/2026-08-11-er-init-screen-results.md](posts/2026-08-11-er-init-screen-results.md):
-plain-words opener, probe overlay rebuilt from the salvaged box
-train logs (mean matched-step Δ −0.45 from 20k on, run-best
-5.10@44500), panel rung trajectory (+1.52 → +0.28 → −0.18 → −0.23),
-decision-CI figure (−0.2297 [−0.281, −0.154] vs 40k; −0.0821
-[−0.126, −0.025] vs 60k-cont), aux-heads table across rungs; chart
-script `er60k_screen_close_charts.py` reads only banked files; all
-artifact links curl-verified; check.py green (667). Index drift
-fixed: four 08-10 posts were missing from posts/index.md. Status
-audit: `er-60k-live` queue item was still status=live → done. Box
-git remote dropped. Queue refilled to **depth 2**:
-`rig-mixture-instrument-prereg` (executable CPU) +
-`ae-on-our-trunk-prereg-draft` (pends the rebase).
-
-**Next**: `queue_cli.py next` → **rig-mixture-instrument-prereg**
-(per-root `--dataset-repeat` + oracle test + mixture-screen pre-reg
-draft on er_60k/step_060000; GPU leg pends the owner compute call —
-the 4× box is gone). Rebase unblocks the moment origin/main moves
-past fdd9aa3 — check at every boot. No dated boundaries —
-`queue.json` canonical.*
-
 ## Utilization footer
 
-Session 2026-08-11 16:29–17:3xZ (work, exploit-infra; 0 new GPU-h —
+Session 2026-08-11 17:27–17:5xZ (tick, babysit; ~0.2 GPU-h banked
+from the detached preflight, 0 launched this session): OWNER SIM
+PIVOT 17:07Z acked in-channel + queue re-shaped (+3 sim items,
+sim-review head; AE draft deprioritized). Preflight verdict FITS
+posted (69.2/80 GiB, ~12.0 s/step ⇒ ~33.5 h for 10k; 🅱️ collides
+with the inference-only steer → 🅲 unless the owner calls 🅰️).
+Killed 16:29 session salvaged at boot (exit 143, clocks fixed,
+fb3e61f). run_work_next ARMED for sim-review.
+
+Session 2026-08-11 16:29–17:2xZ (work, exploit-infra; killed 17:26Z exit 143; 0 new GPU-h —
 GPUs free, no launches): rig-mixture-instrument-prereg CLOSED
 (--dataset-repeat + 16-test oracle + pre-reg draft w/ compute ask
 A/B/C in-channel) AND the main rebase executed on owner steering
@@ -130,22 +115,6 @@ mid-session (16:43Z push seen at the post-instrument poll; clean
 rebase onto 36afff0, check.py 688 green, force-pushed 2a31981, all 7
 directive items sentinel-verified, result in-channel). AE-draft item
 unblocked; queue depth 1 + stated reason (exec item owner-held).
-
-Session 2026-08-11 16:26–16:3xZ (tick, babysit; 0 new GPU-h — both
-GPUs free): quiet tick. Registry empty, nvidia-smi 0%/0 MiB, no
-babysit run needed. Discord read empty; history surfaced a 👍 on the
-16:24Z ER-init long-form post — owner agreement recorded, no reply
-owed. Remote main still fdd9aa3 → rebase item stays blocked. Queue
-validate OK (depth 2, 9 open); run_work_next ARMED 16:27Z —
-rig-mixture-instrument-prereg is CPU work-session-class. 13:53 entry
-+ 16:03/13:53 footer notes rolled to the archive.
-
-Session 2026-08-11 16:07–16:4xZ (work, exploit-postprocess; 0 new
-GPU-h — no launches, GPUs free): ER screen close long-form landed
-(posts/2026-08-11-er-init-screen-results.md, 3 charts from banked
-artifacts only), queue refilled to depth 2 (rig-mixture instrument
-+ AE pre-reg draft), er-60k-live status audit-fixed, posts-index
-drift fixed, box git remote dropped. Discord quiet all session.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
