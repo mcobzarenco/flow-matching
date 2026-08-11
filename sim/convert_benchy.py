@@ -42,10 +42,14 @@ import xatlas
 
 TARGET_FACES = 24_000
 BENCHY_MASS_KG = 0.04
-# Piece budget: enough to open the deck/bow concavities, few enough to
-# keep contact checks trivial.
-COACD_THRESHOLD = 0.05
-COACD_MAX_HULLS = 16
+# Threshold-driven decomposition (CoACD's intended fidelity knob): the
+# earlier 16-hull cap forced CoACD to stop at 0.149 achieved concavity
+# (3x the request) and left a p99 3.8 mm phantom margin around the
+# boat. Uncapped at grasping-grade threshold + doubled preprocessing
+# resolution; hull count floats and contact cost stays trivial at this
+# scene scale.
+COACD_THRESHOLD = 0.015
+COACD_PREPROCESS_RESOLUTION = 100
 
 
 def main() -> int:
@@ -84,7 +88,7 @@ def main() -> int:
     parts = coacd.run_coacd(
         coacd.Mesh(visual.vertices, visual.faces),
         threshold=COACD_THRESHOLD,
-        max_convex_hull=COACD_MAX_HULLS,
+        preprocess_resolution=COACD_PREPROCESS_RESOLUTION,
     )
     pieces = [
         trimesh.Trimesh(vertices=verts, faces=np.asarray(fcs)).convex_hull
@@ -105,9 +109,15 @@ def main() -> int:
         name = f"benchy_col_{index:02d}"
         piece.export(out_dir / f"{name}.obj")
         asset_lines.append(f'    <mesh name="{name}" file="../../benchy/{name}.obj"/>')
+        # priority 2 beats the gripper class's priority="1", so the
+        # boat's condim-6 torsional/rolling friction governs the jaw
+        # seam instead of being silently replaced by the gripper's
+        # near-zero values (MuJoCo uses the higher-priority geom's
+        # friction wholesale; measured 6.9 deg in-grip spin before).
         geom_lines.append(
             f'  <geom name="{name}" type="mesh" mesh="{name}" '
-            f'density="{density:.1f}" condim="6" friction="1 0.05 0.01" '
+            f'density="{density:.1f}" condim="6" priority="2" '
+            f'friction="1 0.05 0.01" '
             f'solref="0.005 1" group="3" rgba="0.5 0.5 0.5 0.3"/>',
         )
     asset_lines += ["  </asset>", "</mujocoinclude>"]

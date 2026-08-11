@@ -17,7 +17,7 @@ import numpy as np
 from PIL import Image
 
 from . import OUTPUT_DIR
-from .so101_sim import HOME_DEGREES, LEADER_DEGREES, SO101Sim
+from .so101_sim import HOME_DEGREES, SO101Sim
 
 # Arm pose of menagerie's scene_box.xml "pickup" keyframe (radians,
 # gripper open); the grasp point sits ~0.22 m forward of the base.
@@ -68,38 +68,23 @@ def probe_settle() -> None:
 
 
 def probe_reset_strike() -> None:
-    print("== P2 reset strike: does the arm hit the boat during the settle? ==")
+    print("== P2 reset strike: does the arm hit the boat during reset()? ==")
     sim = SO101Sim()
     struck = 0
     moved = []
-    seeds = range(20)
+    seeds = range(100)  # the candidate 100-seed eval list
     for seed in seeds:
-        # Re-run reset() by hand so the settle window is observable.
-        rng = np.random.default_rng(seed)
-        mujoco.mj_resetData(sim.model, sim.data)
-        x = rng.uniform(0.17, 0.27)
-        y = rng.uniform(-0.005, 0.04)
-        yaw = rng.uniform(-np.pi, np.pi)
-        adr = sim._benchy_qpos
-        sim.data.qpos[adr : adr + 3] = (x, y, 0.001)
-        sim.data.qpos[adr + 3 : adr + 7] = (
-            np.cos(yaw / 2),
-            0.0,
-            0.0,
-            np.sin(yaw / 2),
-        )
-        sim.data.ctrl[sim._actuator_ids] = np.deg2rad(HOME_DEGREES)
-        sim.data.ctrl[sim._leader_actuators] = np.deg2rad(LEADER_DEGREES)
-        hit = False
-        for _ in range(200):
-            mujoco.mj_step(sim.model, sim.data)
-            if gripper_benchy_contacts(sim):
-                hit = True
+        sim.reset(seed)
+        hit = sim.reset_strike_contacts > 0
         struck += hit
         xy, _ = benchy_xy_yaw(sim)
+        x, y = sim.reset_spawn_xy
         moved.append(np.hypot(xy[0] - x, xy[1] - y) * 1000)
         if hit:
-            print(f" seed {seed}: ARM-BOAT CONTACT during reset settle")
+            print(
+                f" seed {seed}: ARM-BOAT CONTACT during reset "
+                f"({sim.reset_strike_contacts} contact-steps)",
+            )
     moved_arr = np.array(moved)
     print(
         f" {struck}/{len(list(seeds))} seeds strike the boat; spawn->settled "

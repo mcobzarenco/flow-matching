@@ -6,6 +6,16 @@
        pickup keyframe: graspable objects ~0.22 m along +x. -->
   <include file="so101.xml"/>
 
+  <!-- so101.xml's solver caps (iterations 10 / ls_iterations 20) are
+       tuned for the bare arm and under-converge with the benchy's
+       threshold-driven CoACD decomposition resting ~30-80 simultaneous
+       keel-table contacts: measured 6.2 mm/10 s rest creep, and MORE
+       free-joint damping made it worse (slower decay of the biased
+       solve). ls_iterations 50 alone kills it to 0.001 mm at unchanged
+       tick cost (caps only bind when the solve is hard); iterations
+       raised with the same margin. -->
+  <option iterations="50" ls_iterations="50"/>
+
   <visual>
     <!-- Bright diffuse daylight look of the rig frames. -->
     <headlight diffuse="0.45 0.45 0.45" ambient="0.35 0.35 0.35" specular="0 0 0"/>
@@ -35,6 +45,22 @@
     <mesh name="benchy_visual" file="../../benchy/benchy_visual.obj"/>
   </asset>
   <include file="../benchy/benchy_col_assets.xml"/>
+
+  <!-- The wrist-camera mount's collision box over-approximates the real
+       bracket: at the rig's episode-start pose it wedges 0.46 mm into a
+       shoulder collision geom, pinning elbow/wrist_flex/wrist_roll at the
+       +-2.94 Nm force limit (~20 deg steady-state elbow error, seed-
+       dependent wrist_roll). The real arm folds into this pose in every
+       recorded episode, so the mount<->shoulder contact is excluded. -->
+  <contact>
+    <exclude body1="camera_mount" body2="shoulder"/>
+    <exclude body1="leader-camera_mount" body2="leader-shoulder"/>
+    <!-- Same class, second layer: with the mount pair excluded the wrist
+         link's own collision geom still wedges 0.87 mm into the shoulder
+         geom at home (elbow pinned at +2.94 Nm, ~9 deg short). -->
+    <exclude body1="wrist" body2="shoulder"/>
+    <exclude body1="leader-wrist" body2="leader-shoulder"/>
+  </contact>
 
   <worldbody>
     <light pos="0.2 0 1.5" dir="0 0 -1" directional="true" diffuse="0.45 0.45 0.45"/>

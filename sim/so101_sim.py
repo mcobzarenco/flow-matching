@@ -45,15 +45,21 @@ PHYSICS_STEPS_PER_TICK = 7
 # Benchy spawn region: in front of the disk, inside comfortable reach
 # (menagerie pickup keyframe grasps at ~0.22 m forward). Ranges chosen
 # for mean benchy->disk distance ~9.5 cm (halved from the original
-# ~18.3 cm); the near bound keeps hull (3 cm half-length) clear of the
-# 4 cm disk. Relative to the disk at (0.22, 0.11).
-SPAWN_X = (0.17, 0.27)
+# ~18.3 cm); the near x bound keeps the hull (3 cm half-length) >=1 cm
+# clear of the settled home pose's jaw tips (x=0.155 - spawns from 0.17
+# used to land the boat ON the parked jaw for ~4% of seeds), and the
+# hull stays clear of the 4 cm disk. Relative to the disk at (0.22, 0.11).
+SPAWN_X = (0.195, 0.27)
 SPAWN_Y = (-0.005, 0.04)
 # Episode-initial pose: the median first-frame observation.state across
 # the 50 episodes of so101_pick_place_v2 (measured from the dataset
-# parquet; per-joint std 2-20 deg). NOTE the real shoulder_lift median
-# (-102.7) exceeds the menagerie ctrlrange clamp (+-100 deg): the sim
-# rests at -100, a ~2.7 deg mismatch vs the rig's calibration.
+# parquet; per-joint std 2-20 deg). Menagerie's shoulder_lift/elbow_flex
+# ranges are widened at load (_widen_joint_limits) so this pose is
+# representable; the settled arm still rests with the jaw tip on the
+# table at elbow ~90.4 (6.6 deg shy of the rig median) - the reachable
+# projection of this pose given zero-perfect sim joints vs the rig's
+# calibration offsets. The eval protocol pins the SETTLED start state,
+# which is seed-independent (spread <0.003 deg across seeds).
 HOME_DEGREES = np.array([4.6, -102.7, 97.0, 78.7, 77.6, 3.5])
 # The leader arm mirrors the follower during teleop; at episode start the
 # operator holds it at the same rest pose.
@@ -78,6 +84,7 @@ class SO101Sim:
 
     def __init__(self, width: int = 640, height: int = 480) -> None:
         self.model = mujoco.MjModel.from_xml_path(str(SCENE_PATH))
+        self._widen_joint_limits()
         self.data = mujoco.MjData(self.model)
         self.renderer = mujoco.Renderer(self.model, height=height, width=width)
         self._joint_qpos = np.array(
@@ -102,6 +109,23 @@ class SO101Sim:
         self.disk_radius: float = float(disk.size[0])
         self._recolor_arm()
 
+    def _widen_joint_limits(self) -> None:
+        """Menagerie's shoulder_lift (+-100 deg) and elbow_flex (+-96.8)
+        ranges are narrower than the rig's measured excursions: the median
+        real episode STARTS at shoulder_lift -102.7 / elbow_flex 97.0, so
+        the model cannot represent the recorded start state (and the
+        clamped shoulder tips the forearm low enough that the elbow stalls
+        on the table ~8 deg short of home). Widen at runtime rather than
+        editing the vendored XML; the servo-sysid item pins final values."""
+        widened = {"shoulder_lift": 110.0, "elbow_flex": 100.0}
+        for prefix in ("", "leader-"):
+            for name, limit in widened.items():
+                bound = np.deg2rad((-limit, limit))
+                self.model.jnt_range[self.model.joint(prefix + name).id] = bound
+                self.model.actuator_ctrlrange[self.model.actuator(prefix + name).id] = (
+                    bound
+                )
+
     def _recolor_arm(self) -> None:
         """Menagerie ships the yellow-print arm; the rig's are black, and
         only the FOLLOWER has the bright orange moving jaw (owner-confirmed,
@@ -119,16 +143,24 @@ class SO101Sim:
 
     def reset(self, seed: int) -> SimObservation:
         """Home the arm, place benchy at a seeded pose, randomize its
-        color, settle physics until contacts are quiet."""
+        color, settle physics until contacts are quiet.
+
+        The arm settles FIRST, with the benchy parked outside its sweep
+        (mj_resetData lays the arm out over the workspace, and driving up
+        to home used to strike an already-spawned boat on ~10% of seeds,
+        displacing it up to 30 mm); the benchy is placed at its seeded
+        pose only after the arm is home, then given a short settle of its
+        own. `reset_strike_contacts` counts gripper-benchy contacts seen
+        during the whole reset - 0 for every seed is an eval-protocol
+        gate."""
         rng = np.random.default_rng(seed)
         mujoco.mj_resetData(self.model, self.data)
 
         x = rng.uniform(*SPAWN_X)
         y = rng.uniform(*SPAWN_Y)
         yaw = rng.uniform(-np.pi, np.pi)
-        adr = self._benchy_qpos
-        self.data.qpos[adr : adr + 3] = (x, y, 0.001)
-        self.data.qpos[adr + 3 : adr + 7] = (np.cos(yaw / 2), 0.0, 0.0, np.sin(yaw / 2))
+        quat = (np.cos(yaw / 2), 0.0, 0.0, np.sin(yaw / 2))
+        self.reset_spawn_xy: tuple[float, float] = (float(x), float(y))
 
         # Cheap texture randomization: tint the flat-white texture via the
         # material color (full tex_data painting is the follow-up). Biased
@@ -140,12 +172,46 @@ class SO101Sim:
         )
         self.model.mat_rgba[self._benchy_mat] = rgba
 
+        # Park the benchy far down-table while the arm settles.
+        adr = self._benchy_qpos
+        self.data.qpos[adr : adr + 3] = (0.9, 0.1, 0.001)
+        self.data.qpos[adr + 3 : adr + 7] = (1.0, 0.0, 0.0, 0.0)
+
         # Drive (not teleport) to home so the reset respects servo
-        # dynamics; 1 s settles both arms and the spawned benchy.
+        # dynamics; 1 s settles both arms.
+        self.reset_strike_contacts = 0
         self.data.ctrl[self._actuator_ids] = np.deg2rad(HOME_DEGREES)
         self.data.ctrl[self._leader_actuators] = np.deg2rad(LEADER_DEGREES)
-        mujoco.mj_step(self.model, self.data, nstep=200)
+        self._settle_counting_strikes(200)
+
+        # Now place the benchy at its seeded pose and let it settle onto
+        # the table (spawned 1 mm up, at rest within a few steps).
+        self.data.qpos[adr : adr + 3] = (x, y, 0.001)
+        self.data.qpos[adr + 3 : adr + 7] = quat
+        vadr = self.model.joint("benchy_free").dofadr[0]
+        self.data.qvel[vadr : vadr + 6] = 0.0
+        self._settle_counting_strikes(30)
         return self.observe()
+
+    def _settle_counting_strikes(self, nstep: int) -> None:
+        """Step one-by-one, tallying arm-benchy contacts into
+        `reset_strike_contacts` (single steps are bit-identical to one
+        batched mj_step call). Any non-world body touching the benchy
+        during reset is a strike - the table is the only thing it should
+        rest on before the episode starts."""
+        world = 0
+        for _ in range(nstep):
+            mujoco.mj_step(self.model, self.data)
+            for index in range(self.data.ncon):
+                contact = self.data.contact[index]
+                bodies = (
+                    self.model.geom(contact.geom1).bodyid[0],
+                    self.model.geom(contact.geom2).bodyid[0],
+                )
+                benchy = self._benchy_body in bodies
+                arm = all(b != world for b in bodies)
+                if benchy and arm and bodies != (self._benchy_body,) * 2:
+                    self.reset_strike_contacts += 1
 
     def step(self, action_degrees: np.ndarray) -> SimObservation:
         """Apply absolute joint targets (degrees, rig order) for one
