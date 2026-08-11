@@ -1,6 +1,6 @@
 {
-  "updated_utc": "2026-08-11T12:12:00Z",
-  "depth_reason": "depth 1 open at 12:1xZ 08-11 (stated reason): er60k-endpoint-postprocess is the only open item and its gate opens in-session (box endpoint @60000 ~12:3xZ; the owning session is riding it). er55k-panel-eval CLOSED this session (below-baseline headline -0.181 vs 40k endpoint). Lit refill lane owner-paused (00:23Z 08-10); new pre-registrations deliberately pend the ER endpoint decision read landing within the hour, which sets the next arm (fjoint venue, vu5k window, or ER-trunk follow-ons).",
+  "updated_utc": "2026-08-11T12:52:00Z",
+  "depth_reason": "depth 2 open at 12:5xZ 08-11: er60k-endpoint-postprocess (gate open \u2014 endpoint @60000 hit 12:36Z, chained panel eval mid-flight, owning session riding it) + er60k-events-oneoff-report (owner request 12:44Z, next session's first item). Owner doing action-expert changes in main locally (12:44Z) \u2014 their-AE-on-our-trunk pre-reg pends their ping + the ER decision read. Lit refill lane owner-paused (00:23Z 08-10).",
   "items": [
     {
       "id": "er55k-panel-eval",
@@ -28,6 +28,15 @@
       "prereg": "fontaine/blog/src/posts/2026-08-09-prereg-molmo2-er-60k.md",
       "owner_hold": false,
       "boundary": "Time-sensitive: endpoint ~12:3xZ 08-11 at ~26-27 f/min from 45,040 @ 03:16Z; the chained eval adds ~1-2 GPU-h inside the 155 gate (113.7 projected at @45000). Next save boundary @50000 ~06:2xZ (tick-owned)."
+    },
+    {
+      "id": "er60k-events-oneoff-report",
+      "title": "OWNER REQUEST 12:44:35Z + 12:45:13Z 08-11 (one-off, 'post a neat html report', 'I want to see many varied examples of events'): quantitative + qualitative investigation of the events the model generates vs ground truth (weak judge labels), on the fresh @60000 endpoint checkpoint. Scope: (1) INSTRUMENT: extend the narrated arm to dump per-frame (identity triple, generated event string, weak-label event) \u2014 the standard eval computes event acc in-memory and discards generations (bijou/eval/cli.py results.generations only fills from NarratedBijouPolicy and is never written; same gap class as the 35k aux arm); (2) DUMP PASS: one-off generation pass on step_060000 (local disk after the endpoint dl) over the ~8,987 labeled panel frames; (3) QUANT: full model-class x gt-class event confusion INCLUDING none/none \u2014 counts + per-class precision/recall + the (model none, gt event) miss bucket sized exactly; (4) QUAL: frame galleries per confusion bucket (hit / miss / false alarm / class swap) \u2014 camera image + generated line vs gt, MANY varied examples across repos/tasks; (5) CONSTRAINED PROBE: on (gt event, model none) frames re-decode the event slot with 'none' banned (1-step constrained decode, logit mask on the event slot) \u2014 does the forced guess match gt class ('didn't see it' vs 'saw it, under-threshold'); (6) neat standalone HTML -> fontaine-reports (curl 200) + link in-channel. Plan acked in-channel 12:51Z. One-off: record-only, no run gating. PREREG NOTE: rides the er-60k pre-reg like the er15k/35k/55k owner-requested reads; a short launch note with the pinned invocation + confusion/probe spec posts in-channel before the GPU minute, per charter.",
+      "class": "gpu-local",
+      "status": "queued",
+      "prereg": "fontaine/blog/src/posts/2026-08-09-prereg-molmo2-er-60k.md",
+      "owner_hold": false,
+      "boundary": "Owner-requested one-off; GPU ~1-2 h class on the local H100, gate <= 4 GPU-h; needs step_060000 local (rides the endpoint-postprocess dl or re-pulls from fontaine-checkpoints commit 4ed3dd0). Next session's first item unless owner bumps."
     },
     {
       "id": "molmoact2-firstclass-port",
