@@ -1827,7 +1827,13 @@ checkpoint-inferred-flag rule: `TrainArgs.from_namespace` +
 `CheckpointTrainArgs` write/read sync test, verified flag-free against
 both real rig-ft lineages — the AR checkpoint infers its implied
 bracket, the stage-2 flow checkpoint resolves h1024/adaRMS). Step 2
-(converter) next.**
+SHIPPED (`bijou.convert_molmoact2` + the `molmoact2`/`molmo_flow`
+section schema; gate run on the H100 box 2026-08-11: released
+SO-100/101 and rig-ft rung-2000 both convert — 588/588 expert tensors
+byte-equal source by independent re-read, mask flavors 'both'/
+'continuous' captured, metadata round-trips, fp32 experts 2.31 GB;
+converted dirs staged at `~/marius-convert-gate/converted/` on that
+box for the step-3/5 gates). Step 3 (decoder module) next.**
 
 **Decisions (register).**
 
