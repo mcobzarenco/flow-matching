@@ -5,7 +5,46 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-11 20:44–00:0xZ 08-12 — work session: **the 100-seed
+sim eval ran — and answered: er_60k does NOT engage the boat in the v0
+sim (0/100, mean progress −0.03 cm). Owner redirected mid-ride; phase 2
+(rig-ft student, snapflow student, 80k teacher) live overnight.***
+
+**Status**: `fontaine-sim100b` LIVE on the local H100 (launched
+23:44:39Z, first poll 92% util / 6.1 GiB, ~30 s/episode): 3 arms ×
+seeds 0–99 — `ftrig4k` (rig-ft snapflow student, euler-1), `snap30k`
+(student, euler-1), `teacher80k` (artrunk@80k, heun-30); ETA ~03:2xZ
+08-12, gate 4 GPU-h on the entry (phase 1 spent ~2.0 of the pre-reg 6).
+
+**Steering**: owner engaged mid-ride (22:28 "how's it going" answered
+by the 22:51 preliminary post; 22:58+22:59 directives): **kill the rung
+arms, try other policies for >0 success — rig-fine-tuned first, then
+snapflow distilled, then the heun-30 80k teacher**. Executed: unit
+stopped 23:41Z, phase 2 launched 23:44Z, all three picks found on
+local disk; replies posted 22:51 + 23:41.
+
+**Done**: **sim-policy-eval-100seeds pre-reg + phase 1** (commits
+`4d24893`…`cc5716b`): protocol pre-reg posted + param sheet
+in-channel 20:58Z, objection window honored, launch 21:40Z. Instrument:
+`rollout_sim.py` `--out-json`/`--hold`/`--method` + stable-key noise
+identity; runner scripts; frozen reads `sim100_reads.py` (6 oracles) +
+house dark-mode charts `sim100_charts.py` (palette OKLab-validated).
+**Phase-1 findings banked**: er60k arm 100/100 episodes — mean
+progress_final **−0.03 cm**, 0/100 successes, boat untouched on 96/100
+seeds; videos show confident reaching *over the table but never at the
+boat* = the visual-gap fingerprint (AutoEval per-policy-family caveat,
+pre-declared). Gates green: reset strikes 0/100, hold floor −0.00002 cm,
+~423 ms/predict heun-10. **`sim-visual-matching` is now THE lever for
+the owner's 100-seed goal.** Rung ordering read moot (arms killed).
+
+**Next**: `queue_cli.py next` → **sim100-postprocess** at
+`fontaine-sim100b` rc (~03:2xZ 08-12): reads over 5 arms + report +
+gallery + results post; per-arm numbers in-channel as they land.
+`run_work_next` armed. No other dated boundaries — `queue.json`
+canonical.*
 
 *Updated 2026-08-11 20:42–20:4xZ — tick (babysit): **quiet tick —
 GPUs free, no new messages; `run_work_next` armed for the 100-seeds
@@ -63,30 +102,15 @@ pre-reg, nothing blocking (v0 physics = widened ranges + solver caps
 50/50 + 340-hull assets + SERVO_SYSID). `run_work_next` armed. No dated
 boundaries — `queue.json` canonical.*
 
-*Updated 2026-08-11 19:23–19:3xZ — tick (babysit): **quiet tick —
-GPUs free, no new messages; `run_work_next` already armed (19:20) for
-the next sim work session.***
-
-**Status**: no live jobs — registry empty, `nvidia-smi` 0% / 0 MiB.
-100%-sim lane in effect.
-
-**Steering**: Discord read empty; history clean — 👍s on the 18:17Z
-ack and 18:36Z lit-review summary already recorded; no reaction yet on
-the 19:19Z sim-fixes results post.
-
-**Done**: stray `MUJOCO_LOG.TXT` audited — benign attach-conflict
-warnings confirming the scene's solver caps (50/50) correctly override
-the vendored model's (10/20) at attach time, i.e. the solver-cap fix
-lands through MuJoCo's attach conflict policy as intended; gitignored.
-Queue validate green (depth 2, 11 open). 18:13 body entry + 2 footer
-notes rolled to the archive.
-
-**Next**: `run_work_next` armed (19:20, pre-existing) — chained work
-session: **sim-servo-sysid** (the 56× kp question, SIMPLER's
-first-order lever) then the **sim-policy-eval-100seeds** pre-reg. No
-dated boundaries — `queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-11 20:44–00:0xZ 08-12 (work, exploit; ~2.1 GPU-h spent
+in-session + fontaine-sim100b live overnight ≤ 4 gate): 100-seed sim
+eval pre-reg → launch → phase-1 result (er_60k 0/100, boat untouched
+96/100 — the v0 sim is not yet a policy meter; visual matching is the
+lever) → owner redirect executed mid-ride (rung arms killed, 3
+replacement policy arms launched 23:44Z). Instrument: rollout_sim
+out-json/hold/method flags, reads + charts + 6 oracles.
 
 Session 2026-08-11 20:42–20:4xZ (tick, babysit; 0 new GPU-h — GPUs
 free): quiet tick. Registry empty, nvidia-smi 0%/0 MiB. Discord read

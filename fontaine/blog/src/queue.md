@@ -2,17 +2,29 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-11T20:30:00Z
+**Updated:** 2026-08-11T23:55:00Z
 
-**Depth call:** depth 2 open at 20:3xZ 08-11: sim-policy-eval-100seeds (pre-reg draftable, nothing blocking - v0 physics fully pinned incl. SERVO_SYSID) + sim-visual-matching (SIMPLER second lever, optional before the eval); molmo-flow-step1 + rig-mixture-exec owner_hold. Sim lane per owner 18:15Z '100% simulations'.
+**Depth call:** depth 2 open at 23:5xZ 08-11: sim100-postprocess (rc ~03:2xZ 08-12) + sim-visual-matching (now THE lever for the owner 100-seed goal after the phase-1 negative); sim-policy-eval-100seeds phase 2 LIVE (fontaine-sim100b); molmo-flow-step1 + rig-mixture-exec owner_hold. Sim lane per owner 18:15Z.
 
-**11 open** (Live 0 · Queued 2 · Blocked 9 · Done 117)
+**12 open** (Live 1 · Queued 2 · Blocked 9 · Done 117)
 
-## 🔴 Live (0)
+## 🔴 Live (1)
 
 *running right now (GPU or owner-window)*
 
-*(empty)*
+**`sim-policy-eval-100seeds`** · `cpu`
+
+GOAL (owner 17:07Z 08-11): evaluate one good policy (candidate er_60k/step_060000, the reference trunk) in sim on 100 fixed seeds; primary metric = boat-&gt;disk distance reduction (continuous), success rate secondary
+
+**boundary:** PHASE 2 LIVE (owner amendment 22:58+22:59Z 08-11 seen mid-ride, unit fontaine-sim100 stopped 23:41Z, fontaine-sim100b launched 23:44:39Z, ETA ~03:2xZ 08-12): rung arms KILLED per owner; new arms x seeds 0-99 same protocol - ftrig4k (rig-ft snapflow student, euler-1), snap30k (student, euler-1), teacher80k (artrunk@80k, heun-30). PHASE 1 BANKED (~2.0 GPU-h): er60k mean progress_final -0.03 cm, 0/100 success, 96/100 boat untouched, strikes 0/100, hold floor -0.00002 cm - er_60k does NOT engage the boat in the v0 sim (visual-gap fingerprint, AutoEval caveat pre-declared); ordering read moot (rungs killed). sim-visual-matching now THE lever for the owner goal. Instrument delta committed: --method euler|heun + stable-key noise identity (owner-acked in-channel 23:41Z). · [pre-reg](posts/2026-08-11-prereg-sim-policy-eval-100seeds.md)
+
+<details><summary>full record</summary>
+
+GOAL (owner 17:07Z 08-11): evaluate one good policy (candidate er_60k/step_060000, the reference trunk) in sim on 100 fixed seeds; primary metric = boat-&gt;disk distance reduction (continuous), success rate secondary. Local GPU inference-only while sims run. Protocol (seed list, horizon, metric definition) pre-registered before running.
+
+</details>
+
+---
 
 ## 🟢 Queued (2)
 
@@ -32,15 +44,15 @@ Sim visual matching (CPU + render minutes, SIMPLER's second lever after controll
 
 ---
 
-**`sim-policy-eval-100seeds`** · `cpu`
+**`sim100-postprocess`** · `cpu`
 
-GOAL (owner 17:07Z 08-11): evaluate one good policy (candidate er_60k/step_060000, the reference trunk) in sim on 100 fixed seeds; primary metric = boat-&gt;disk distance reduction (continuous), success rate secondary
+100-seed sim eval postprocess (successor, executable on unit fontaine-sim100b rc=0 ~03:2xZ 08-12): (1) verify ALL PHASE2 ARMS DONE + rc=0 in ~/logs/sim100_eval.log; (2) frozen reads sim100_reads.py --in-dir outputs/sim/eval100 --…
 
-**boundary:** Protocol pre-reg draftable NOW - nothing blocking: sim-fixes batch 1 CLOSED + servo sysid CLOSED 20:3xZ 08-11 (SERVO_SYSID pinned, held-out replay MAE 1.76 deg vs 3.31 vendored - posts/2026-08-11-sim-servo-sysid.md). Pre-reg pins v0 physics = widened joint ranges + solver caps 50/50 + 340-hull asset build + SERVO_SYSID, with the replay-MAE table as measured justification (SIMPLER's sysid-before-freeze DONE). Design citations banked (papers/sim-as-eval.md): primary = settled-initial minus final (or min) benchy-&gt;disk distance (continuous), success rate secondary; free validation arm = er_60k@15k/35k/60k sim ordering vs banked panel-MAE trajectory (target MMRV&lt;~0.06); fidelity is per-policy-family (AutoEval caveat); pin eval machine + menagerie SHA + asset build. Settled home elbow residual now 7.1 deg (softer fitted servo) - pre-reg pins the SETTLED state.
+**boundary:** Executable at fontaine-sim100b rc (~03:2xZ 08-12); numbers per arm land in-channel as each arm finishes (owner promise 23:41Z). · [pre-reg](posts/2026-08-11-prereg-sim-policy-eval-100seeds.md)
 
 <details><summary>full record</summary>
 
-GOAL (owner 17:07Z 08-11): evaluate one good policy (candidate er_60k/step_060000, the reference trunk) in sim on 100 fixed seeds; primary metric = boat-&gt;disk distance reduction (continuous), success rate secondary. Local GPU inference-only while sims run. Protocol (seed list, horizon, metric definition) pre-registered before running.
+100-seed sim eval postprocess (successor, executable on unit fontaine-sim100b rc=0 ~03:2xZ 08-12): (1) verify ALL PHASE2 ARMS DONE + rc=0 in ~/logs/sim100_eval.log; (2) frozen reads sim100_reads.py --in-dir outputs/sim/eval100 --out reports/analysis__sim100_seed_eval.json (arms er60k/hold/ftrig4k/snap30k/teacher80k; gates strikes+hold-floor; ordering read auto-skips - rungs killed); (3) charts via sim100_charts.py (phase-2 colors in) + HTML report + video gallery (per-arm best/median/worst; er60k reach-but-miss clips are the money shot) -&gt; fontaine-reports curl-200; (4) results post w/ plain-words opener + reports.md + numbers in-channel: headline is the phase-1 negative (er_60k 0/100, boat untouched 96/100) + whether ANY family engages the boat; (5) prune babysit entry sim100b_eval; (6) name sim-visual-matching as the unblocking lever; wire-MolmoAct2-rig-ft-into-sim is an offered follow-up (owner told 23:41Z it needs a closed-loop adapter + v2.1/v3.0 convention care).
 
 </details>
 

@@ -1,6 +1,6 @@
 {
- "updated_utc": "2026-08-11T21:45:00Z",
- "depth_reason": "depth 2 open at 21:4xZ 08-11: sim100-postprocess (rc=0 boundary ~02:0xZ 08-12) + sim-visual-matching (SIMPLER second lever); sim-policy-eval-100seeds LIVE (unit fontaine-sim100); molmo-flow-step1 + rig-mixture-exec owner_hold. Sim lane per owner 18:15Z.",
+ "updated_utc": "2026-08-11T23:55:00Z",
+ "depth_reason": "depth 2 open at 23:5xZ 08-11: sim100-postprocess (rc ~03:2xZ 08-12) + sim-visual-matching (now THE lever for the owner 100-seed goal after the phase-1 negative); sim-policy-eval-100seeds phase 2 LIVE (fontaine-sim100b); molmo-flow-step1 + rig-mixture-exec owner_hold. Sim lane per owner 18:15Z.",
  "items": [
   {
    "id": "rig-mixture-instrument-prereg",
@@ -54,16 +54,16 @@
    "status": "live",
    "prereg": "fontaine/blog/src/posts/2026-08-11-prereg-sim-policy-eval-100seeds.md",
    "owner_hold": false,
-   "boundary": "LAUNCHED 21:40:31Z 08-11 (unit fontaine-sim100, babysit entry sim100_eval): pre-reg registered posts/2026-08-11-prereg-sim-policy-eval-100seeds.md + param sheet in-channel 20:58Z, objection window to 21:40Z honored (silence). 5 sequential arms x seeds 0-99: er60k (primary), hold (floor), er15k/er35k/er55k (ordering validation vs banked panel 7.5283/6.2892/5.8269/5.7782, 5 gated pairs). Instrument: sim/rollout_sim.py --out-json/--hold (4d24893) + runner sim_eval_100seeds.sh + frozen reads sim100_reads.py w/ 5 oracles. Measured ~370 ms/predict in-run, ~40 s/episode => ETA ~02:0xZ 08-12, gate 6 GPU-h. On rc=0: sim100_reads.py -> analysis json -> report + charts + results post + in-channel numbers."
+   "boundary": "PHASE 2 LIVE (owner amendment 22:58+22:59Z 08-11 seen mid-ride, unit fontaine-sim100 stopped 23:41Z, fontaine-sim100b launched 23:44:39Z, ETA ~03:2xZ 08-12): rung arms KILLED per owner; new arms x seeds 0-99 same protocol - ftrig4k (rig-ft snapflow student, euler-1), snap30k (student, euler-1), teacher80k (artrunk@80k, heun-30). PHASE 1 BANKED (~2.0 GPU-h): er60k mean progress_final -0.03 cm, 0/100 success, 96/100 boat untouched, strikes 0/100, hold floor -0.00002 cm - er_60k does NOT engage the boat in the v0 sim (visual-gap fingerprint, AutoEval caveat pre-declared); ordering read moot (rungs killed). sim-visual-matching now THE lever for the owner goal. Instrument delta committed: --method euler|heun + stable-key noise identity (owner-acked in-channel 23:41Z)."
   },
   {
    "id": "sim100-postprocess",
-   "title": "100-seed sim eval postprocess (successor to sim-policy-eval-100seeds, executable on unit fontaine-sim100 rc=0, ETA ~02:0xZ 08-12): (1) verify ALL ARMS DONE + rc=0 in ~/logs/sim100_eval.log; (2) frozen reads fontaine/scripts/sim100_reads.py --in-dir outputs/sim/eval100 --out reports/analysis__sim100_seed_eval.json (gates: strikes 0/100 per arm, hold floor |mean|<0.5cm; primary er60k mean progress_final; ordering read 5 gated pairs vs panel 15k 7.5283 / 35k 6.2892 / 55k 5.8269 / 60k 5.7782); (3) HTML report + house dark-mode charts (per-arm mean distance-over-time curves, progress distributions, ordering-vs-panel scatter) + video gallery (best/median/worst per arm) -> fontaine-reports (curl 200 every link); (4) results post w/ plain-words opener + reports.md section + numbers in-channel; (5) prune babysit entry sim100_eval; (6) if the ordering read fails, the finding IS the post (v0 sim not yet a policy meter -> sim-visual-matching is the named lever, AutoEval caveat pre-declared).",
+   "title": "100-seed sim eval postprocess (successor, executable on unit fontaine-sim100b rc=0 ~03:2xZ 08-12): (1) verify ALL PHASE2 ARMS DONE + rc=0 in ~/logs/sim100_eval.log; (2) frozen reads sim100_reads.py --in-dir outputs/sim/eval100 --out reports/analysis__sim100_seed_eval.json (arms er60k/hold/ftrig4k/snap30k/teacher80k; gates strikes+hold-floor; ordering read auto-skips - rungs killed); (3) charts via sim100_charts.py (phase-2 colors in) + HTML report + video gallery (per-arm best/median/worst; er60k reach-but-miss clips are the money shot) -> fontaine-reports curl-200; (4) results post w/ plain-words opener + reports.md + numbers in-channel: headline is the phase-1 negative (er_60k 0/100, boat untouched 96/100) + whether ANY family engages the boat; (5) prune babysit entry sim100b_eval; (6) name sim-visual-matching as the unblocking lever; wire-MolmoAct2-rig-ft-into-sim is an offered follow-up (owner told 23:41Z it needs a closed-loop adapter + v2.1/v3.0 convention care).",
    "class": "cpu",
    "status": "queued",
    "prereg": "fontaine/blog/src/posts/2026-08-11-prereg-sim-policy-eval-100seeds.md",
    "owner_hold": false,
-   "boundary": "Blocked in practice until fontaine-sim100 rc (~02:0xZ 08-12); the owning/next session rides or picks it up at the boundary."
+   "boundary": "Executable at fontaine-sim100b rc (~03:2xZ 08-12); numbers per arm land in-channel as each arm finishes (owner promise 23:41Z)."
   },
   {
    "id": "ae-on-our-trunk-prereg-draft",
