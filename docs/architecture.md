@@ -1807,3 +1807,174 @@ layers 0–14 over everything, 15–34 over action-turn tokens only:
 deep-half compute independent of context length, total step cost
 ≈2–2.5× single-turn at K=3. **Status.** Parked — design only; revisit
 after aux value is measured.
+
+### 8.13 `molmo_flow` — the MolmoAct2 action expert as a first-class decoder
+
+**Change.** Adopt MolmoAct2's action-expert scheme wholesale as a new
+decoder kind beside §2.1: a DiT expert (adaLN-Zero 9-way modulation,
+RoPE+QK-norm self-attention, SwiGLU) whose block *i* cross-attends the
+trunk's layer-*i* post-RoPE prompt KV through ONE shared bias-free
+context projection — the whole prefix cache as conditioning, no
+residual taps, no per-stream adapters, no exports. Their measured case
+for the deep read: flattened per-layer KV beats final-hidden-state by
++1.9 LIBERO at ceiling; our executed-horizon analysis says our flow's
+headroom is trajectory modeling, not grounding — a bigger,
+deeper-conditioned expert is the right next arm. Hard requirement:
+their released checkpoints load into our models (via conversion).
+**Status: plan approved 2026-08-11 (chat); step 1 next.**
+
+**Decisions (register).**
+
+1. **Naming**: `decoders/molmo_flow.py`, `MolmoFlowDecoder`,
+   `MolmoFlowConfig`, checkpoint wire kind `"molmo_flow"` — named for
+   the ARCHITECTURE's provenance (there are many ways to build a
+   KV-conditioned expert; this is theirs). Not a trunk requirement:
+   the module's contract is trunk-neutral — N post-RoPE (K, V) pairs
+   `[B, S, kv_dim]` + prompt mask, N == block count, one uniform
+   `kv_dim`. Molmo2 (36 uniform full-attention layers, kv_dim 1024) is
+   the only wired producer; a gemma4 variant is possible-not-built
+   (KV sharing leaves only 15 real surfaces, mixed 256/512 kv_dim,
+   sliding windows — the few-stream §2.1 design is what "read the
+   trunk's KV" collapses to on that architecture).
+2. **Time convention**: ascending t (0 = noise → 1 = data, target
+   x − ε, left-endpoint Euler 0→1, t ~ 0.001 + 0.999·Beta(1, 1.5))
+   is the repo standard for ALL new flow code. `flow.py` keeps its
+   name and its π0 convention (τ = 1 − t, target ε − x, integrate
+   1→0), frozen, retiring with its checkpoint lineage — flipping it
+   in place would break every deployed flow checkpoint or plant a
+   sign-shim landmine. Known escape hatch, documented not built: an
+   EXACT weight-space converter (sinusoid features of 1−t are a fixed
+   per-frequency rotation absorbable into `time_in_proj`; the sign
+   flip absorbs into `action_out_proj`; same for φ_s). The two τ-laws
+   are near-mirrors with opposite endpoint asymmetry (ours includes
+   pure noise and excludes pure data; theirs the reverse) — adopted
+   as-is, pinned by a convention-direction test so nobody "fixes" it.
+3. **Parallel copy, not delegation**: `bijou/molmoact2/` stays
+   untouched as the frozen parity reference; the decoder owns its
+   architecture copy (it must be free to grow — narration
+   conditioning, horizon, Heun, φ_s). A byte-parity oracle (same
+   weights into both modules → byte-equal forwards) pins them while
+   both exist.
+4. **Conversion-first loading**: runtime never reads their HF layout.
+   A converter emits a normal bijou checkpoint: trunk verbatim
+   (backbone always present — never pristine), expert section with
+   tensor names preserved 1:1, q01/q99 table + horizon + setup/control
+   strings into metadata, THEIR tokenizer in-checkpoint (it re-homes
+   image ids and carries the state-token block), the `'both'`-mode
+   EOS-strip mask flavor (load-bearing for the weights — the expert
+   trained with BOS/EOS stripped from its context), `n_obs_steps == 1`
+   and dropout-zero asserted at convert time, full provenance.
+5. **Prompt format is an encoder mode**, `{bijou, molmoact2}`,
+   checkpoint-recorded. molmoact2 mode = their verbatim template,
+   256-bin discrete state tokens, their UINT8 single-view 378×378
+   image path (double quantization is part of the trained
+   distribution — not our molmo2 crops pipeline), special ids resolved
+   from the checkpoint tokenizer. bijou mode stays available for
+   from-scratch runs on our trunks (the decoder never sees the prompt,
+   only the cache).
+6. **Normalization is decoder-owned** for this kind: checkpoint-
+   resident q01/q99 buffers, clamp on input and output (their tail).
+   The per-dataset mean/std machinery is untouched for every other
+   decoder; fine-tunes recompute ONE merged table (their semantics,
+   rig-ft precedent). Accepted: loss values are not comparable across
+   decoder kinds; eval MAE (raw units) is.
+7. **Narration = the `joint_ce` rider, format-aware.** OFF (default,
+   converted checkpoints): `<action_output>` sits in the prefill and
+   the expert reads the prompt-only KV slice — byte-for-byte their
+   serving path (the parity gate). ON: the prefill stops at the ChatML
+   opener (== `MOLMO2_GENERATION_OPENER`, no new contract), aux text
+   decodes as suffix, `<action_output>` appends, and the expert
+   conditions on the EXTENDED slice — teacher-forced at train,
+   generated at inference, so both see the same kind of context.
+   FAST-token spans are always masked out of the expert's context
+   (their own `'both'`-mode span-strip concept). Narration on their
+   trunk requires trunk training — it never narrated — which composes
+   as their own staging: knowledge insulation on the flow gradients,
+   CE flowing to the trunk (the discrete co-training rider's analog).
+8. **Knowledge insulation is a seam flag**: `--insulate-expert`
+   detaches the extracted KV before the expert (their post-train);
+   off = expert gradients reach the trunk THROUGH the cached K/V
+   (their finetune; the checkpointed-block cache machinery already
+   carries gradients through the cache). Same pattern as
+   `--seam-stop-grad`. `ar_molmo2.py` needs zero changes — the
+   `joint_ce` slot already composes an AR CE rider with a training
+   decoder.
+9. **CLI inferred-args rule** (general, built first): `--resume`
+   refuses every architecture-determining flag (run-policy flags —
+   steps, LRs, `--rewarmup-steps`, fresh `--seed`, cadence — stay
+   legal); `--init-from` refuses flags for inherited sections and
+   REQUIRES them for explicitly replaced sections (the stage-2
+   decoder-swap path). Sentinel `None` defaults + one reviewable
+   arch-vs-policy partition table. Upgrades "validate equality if
+   passed" to "refuse at the door"; the prompt-format-change guard
+   falls out as a special case.
+10. Behind flags, zero-cost at parity: Heun, K>1 noise draws per
+    chunk (their monotone +1.75 ablation; batched over one KV
+    extraction), continuous-state reconditioning via their dormant
+    `state_encoder` path. Out of scope: depth gate, their discrete
+    head, CUDA graphs.
+
+**Steps (each gates the next; every step lands green through
+check.py).**
+
+- **1 — CLI inferred-args rule.** Gate: resume-with-arch-flag and
+  inherited-section init-from flags error naming the checkpoint value;
+  decoder-replacement init-from still works; a flag-free resume of a
+  mainline checkpoint parses unchanged.
+- **2 — Converter** (pure-CPU, deterministic, idempotent, P2 guards
+  at convert time). Gate: released SO-100/101 + one rig-ft rung
+  convert; trunk tensors byte-verified; metadata round-trips through
+  `bijou.loading`.
+- **3 — Decoder module** (config with released shape as staticmethod,
+  copied architecture with load-compatible tensor names, ascending
+  loss + sum form for chunked backward, Euler sampler with Heun
+  flagged, clamp+unnormalize tail). Gates: byte-equal forward vs
+  `bijou.molmoact2.ActionExpert` on shared random tiny weights (CPU)
+  and released weights (script); solver-loop equality vs
+  `wiring.generate_actions` under a shared generator; the
+  convention-direction test.
+- **4 — Encoder mode** (molmoact2 template, discrete state, uint8
+  image path, dynamic ids, mask flavor, the PREFILL SPLIT POINT —
+  narration-off through `<action_output>`, narration-on through the
+  opener — `retain_cache` for the new kind, empty streams). Gate:
+  collator byte-equals `pack_action_example` on the golden fixtures;
+  both split-point byte-layouts pinned.
+- **5 — Integration** (BijouModel match-arms, loading schema,
+  bijou.train: expert-only default group / `--insulate-expert` /
+  q01q99 flow / joint_ce slice wiring; eval + rollout dispatch;
+  draws-ensembling tiles the cache). Gates in order: converted
+  released checkpoint vs `MolmoAct2Predictor` on the 240 banked
+  anchors — expect 0.0, budget ≤ 0.075; 2-step training-loss corridor
+  vs `molmoact2/train.py`; KI gradient tests both ways (insulated ⇒
+  flow-term trunk grads exactly zero; uninsulated ⇒ nonzero through
+  cached K/V, composing with activation checkpointing); rig-ft rung
+  repeat through bijou.train reproducing the G4 result class
+  (≤ 6 GPU-h).
+- **6 — Narration on** (flip slice + split point; CE via the rider;
+  `aux_loss_weight` pre-registered — CE nats vs clamped-MSE are
+  different units, decide the balance up front). Gates: narration-off
+  bitwise unchanged from step 5; narration-on smoke + eval aux
+  columns.
+- **7 — Experiments** (separate pre-regs, post-migration): their-init
+  vs from-scratch on our corpus; molmo_flow-from-scratch on our AR
+  trunk + bijou prompt vs §2.1 at matched compute (577M-vs-367M
+  params confound handled); K ∈ {1,4,8}; KI on/off at unfrozen trunk;
+  narration-as-conditioning value; horizon-50 extension (RoPE
+  extrapolation — an experiment, not an assumption); SnapFlow distill
+  of molmo_flow.
+- **8 — Retirement checkpoint.** After a shipped rung:
+  `molmoact2/train.py` first; `predictor`/`processing`/`action_expert`
+  stay until the parity scripts migrate; then the package folds and
+  the decoder's copy is the only implementation.
+
+**Known consequences.** Two mirrored flow conventions coexist until
+`flow.py` retires (mitigated: no shared code, different variable
+vocabulary — `tau` vs `t` — convention notes at both module tops, one
+direction-pinning test per kind). Laptop rollout of converted
+checkpoints is likely infeasible (4.9B trunk + 578M expert bf16 ≈
+11 GB, no PLE to offload). Horizon 30 vs 50 makes matched-window
+reporting a first-class eval flag. Checkpoint schema grows (new kind,
+embedded q01/q99, prompt-format + mask-flavor fields, foreign
+tokenizer in-checkpoint). Estimated cost (estimate, not budget):
+steps 1–6 ≈ 5–6 focused sessions, ≤ 10 GPU-h, dominated by step-5
+gates.
