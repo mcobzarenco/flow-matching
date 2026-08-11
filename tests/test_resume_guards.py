@@ -21,10 +21,13 @@ from pathlib import Path
 import pytest
 import torch
 
+from bijou.data import DatasetStats
+from bijou.decoders.flow import SelfAttentionMode, TimeConditioning
+from bijou.loading import CheckpointInfo, CheckpointTrainArgs
 from bijou.train import (
     TrainArgs,
+    _build_parser,
     check_resume_seed,
-    parse_args,
     resume_hyperparameter_notes,
 )
 
@@ -82,26 +85,57 @@ def test_not_a_checkpoint_dies_cleanly(tmp_path: Path) -> None:
 # ---- the CLI flag only applies to --resume -------------------------
 
 
-def _parse(monkeypatch: pytest.MonkeyPatch, *extra: str) -> TrainArgs:
-    monkeypatch.setattr(
-        "sys.argv",
-        ["bijou.train", "--train-data", "corpus", *extra],
+def _flow_checkpoint_info() -> CheckpointInfo:
+    """A fabricated flow checkpoint's metadata — parse-time resume tests
+    go through TrainArgs.from_namespace so no fixture checkpoint (and no
+    file I/O) is needed (the from_json/from_dict split)."""
+    stats = DatasetStats.from_state_dict(
+        {
+            "action": {"mean": [0.0], "std": [1.0]},
+            "observation.state": {"mean": [0.0], "std": [1.0]},
+        },
     )
-    return parse_args()
+    return CheckpointInfo(
+        backbone="google/gemma-4-e2b-it",
+        train_args=CheckpointTrainArgs(
+            decoder="flow",
+            decoder_hidden=768,
+            decoder_heads=6,
+            decoder_intermediate=3072,
+            decoder_cross_heads=4,
+            stream_counts=(4, 4, 7),
+            conditioning_streams="kv",
+            self_attention_mode=SelfAttentionMode.CAUSAL_ACTIONS,
+            chunk_size=50,
+            max_soft_tokens=140,
+            max_crops=1,
+            time_conditioning=TimeConditioning.ADDITIVE,
+            target_time_embed=False,
+            fast_tokenizer=None,
+            joint_ce=False,
+        ),
+        step=100,
+        normalization=stats,
+        per_dataset_normalization={},
+        condition_fields=(),
+        generate_bracket=False,
+    )
 
 
-def test_escape_hatch_without_resume_refused(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def _parse(*extra: str) -> TrainArgs:
+    parser = _build_parser()
+    raw = parser.parse_args(["--train-data", "corpus", *extra])
+    checkpoint = _flow_checkpoint_info() if raw.resume is not None else None
+    return TrainArgs.from_namespace(raw, parser, checkpoint=checkpoint)
+
+
+def test_escape_hatch_without_resume_refused() -> None:
     with pytest.raises(SystemExit):
-        _parse(monkeypatch, "--allow-same-seed-resume")
+        _parse("--allow-same-seed-resume")
 
 
-def test_escape_hatch_with_resume_parses(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_escape_hatch_with_resume_parses() -> None:
     args = _parse(
-        monkeypatch,
         "--resume",
         "ckpt/step_000100",
         "--allow-same-seed-resume",

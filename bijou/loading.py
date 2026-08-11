@@ -810,28 +810,45 @@ def build_gemma_encoder(
 @dataclass(frozen=True, slots=True)
 class CheckpointTrainArgs:
     """The architecture-determining subset of a checkpoint's recorded train
-    args — every field a loader needs to rebuild the model. Present in all
-    checkpoints since the format's introduction; newer recorded args (lr,
-    seeds, data paths, ...) stay in the raw JSON but are not needed here."""
+    args — every field a loader (or a resumed/warm-started run) needs to
+    rebuild the model. Present in all checkpoints since the format's
+    introduction; newer recorded args (lr, seeds, data paths, ...) stay in
+    the raw JSON but are not needed here.
 
+    This is the READ-side encoding of "what rebuilds the model"; the
+    write side is bijou.train's architecture-flag partition (its
+    checkpoint-inferred flags resolve from these fields under
+    --resume/--init-from). tests/test_train_args.py pins the two
+    encodings to each other so they cannot drift."""
+
+    decoder: str
     decoder_hidden: int
     decoder_heads: int
     decoder_intermediate: int
     decoder_cross_heads: int
     stream_counts: tuple[int, ...]
+    conditioning_streams: str
     self_attention_mode: SelfAttentionMode
     chunk_size: int
     max_soft_tokens: int
+    max_crops: int
     time_conditioning: TimeConditioning
+    target_time_embed: bool
+    fast_tokenizer: str | None
+    joint_ce: bool
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> CheckpointTrainArgs:
         # Old checkpoints recorded the decoder shape under the historical
-        # "expert_*" arg names; both spellings load forever.
+        # "expert_*" arg names; both spellings load forever. Keys a
+        # checkpoint predates read as the value its era implied (the
+        # pre-AR era was flow-on-KV-exports with no riders).
         def either(new: str, old: str) -> Any:
             return data[new] if new in data else data[old]
 
+        fast_tokenizer = data.get("fast_tokenizer")
         return cls(
+            decoder=str(data.get("decoder", "flow")),
             decoder_hidden=int(either("decoder_hidden", "expert_hidden")),
             decoder_heads=int(either("decoder_heads", "expert_heads")),
             decoder_intermediate=int(
@@ -841,13 +858,18 @@ class CheckpointTrainArgs:
                 either("decoder_cross_heads", "expert_cross_heads"),
             ),
             stream_counts=tuple(int(n) for n in data["stream_counts"]),
+            conditioning_streams=str(data.get("conditioning_streams", "kv")),
             self_attention_mode=SelfAttentionMode(data["self_attention_mode"]),
             chunk_size=int(data["chunk_size"]),
             max_soft_tokens=int(data["max_soft_tokens"]),
+            max_crops=int(data.get("max_crops", 1)),
             # Pre-adaRMS checkpoints (no such key) are additive.
             time_conditioning=TimeConditioning(
                 data.get("time_conditioning", TimeConditioning.ADDITIVE.value),
             ),
+            target_time_embed=bool(data.get("target_time_embed", False)),
+            fast_tokenizer=None if fast_tokenizer is None else str(fast_tokenizer),
+            joint_ce=bool(data.get("joint_ce", False)),
         )
 
 
@@ -1255,6 +1277,33 @@ def load_backbone_init(model: BijouModel, checkpoint: Path) -> None:
     )
 
 
+def read_checkpoint_info(checkpoint: str | Path) -> CheckpointInfo:
+    """Parse a checkpoint directory's ``bijou_config.json`` into
+    :class:`CheckpointInfo` — metadata only, no weights touched. The
+    train CLI uses this to resolve checkpoint-inferred architecture
+    flags under --resume/--init-from before any model is built;
+    :func:`from_checkpoint` composes it with the weight load."""
+    checkpoint = Path(checkpoint)
+    meta = json.loads((checkpoint / "bijou_config.json").read_text())
+    sections = checkpoint_sections(meta)
+    return CheckpointInfo(
+        backbone=sections.backbone.id,
+        condition_fields=(
+            sections.prompt.condition_fields if sections.prompt is not None else ()
+        ),
+        generate_bracket=(
+            sections.prompt.generate_bracket if sections.prompt is not None else False
+        ),
+        train_args=CheckpointTrainArgs.from_dict(meta["train_args"]),
+        step=int(meta["step"]),
+        normalization=DatasetStats.from_state_dict(meta["normalization"]),
+        per_dataset_normalization={
+            repo_id: DatasetStats.from_state_dict(entry)
+            for repo_id, entry in meta.get("per_dataset_normalization", {}).items()
+        },
+    )
+
+
 def from_checkpoint(
     checkpoint: str | Path,
     *,
@@ -1275,22 +1324,7 @@ def from_checkpoint(
     checkpoint = Path(checkpoint)
     meta = json.loads((checkpoint / "bijou_config.json").read_text())
     sections = checkpoint_sections(meta)
-    info = CheckpointInfo(
-        backbone=sections.backbone.id,
-        condition_fields=(
-            sections.prompt.condition_fields if sections.prompt is not None else ()
-        ),
-        generate_bracket=(
-            sections.prompt.generate_bracket if sections.prompt is not None else False
-        ),
-        train_args=CheckpointTrainArgs.from_dict(meta["train_args"]),
-        step=int(meta["step"]),
-        normalization=DatasetStats.from_state_dict(meta["normalization"]),
-        per_dataset_normalization={
-            repo_id: DatasetStats.from_state_dict(entry)
-            for repo_id, entry in meta.get("per_dataset_normalization", {}).items()
-        },
-    )
+    info = read_checkpoint_info(checkpoint)
     checkpoint_dir = resolve_checkpoint_dir(info.backbone)
     if isinstance(sections.prompt, Molmo2PromptConfig):
         if not isinstance(sections.decoder, ARBackboneConfig | FlowDecoderConfig):

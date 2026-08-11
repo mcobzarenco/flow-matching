@@ -1821,7 +1821,13 @@ for the deep read: flattened per-layer KV beats final-hidden-state by
 headroom is trajectory modeling, not grounding — a bigger,
 deeper-conditioned expert is the right next arm. Hard requirement:
 their released checkpoints load into our models (via conversion).
-**Status: plan approved 2026-08-11 (chat); step 1 next.**
+**Status: plan approved 2026-08-11 (chat). Step 1 SHIPPED (the CLI
+checkpoint-inferred-flag rule: `TrainArgs.from_namespace` +
+`__post_init__` single-encoding validation, `ARCH_FLAGS`/
+`CheckpointTrainArgs` write/read sync test, verified flag-free against
+both real rig-ft lineages — the AR checkpoint infers its implied
+bracket, the stage-2 flow checkpoint resolves h1024/adaRMS). Step 2
+(converter) next.**
 
 **Decisions (register).**
 

@@ -46,15 +46,22 @@ from test_joint_ar_view import write_char_tokenizer
 from test_molmo2_ar import FIXTURE, build_decoder, build_encoder, codec
 from test_molmo2_residual import build_flow_model, build_joint_model, fresh_model
 
+from bijou.data import DatasetStats
 from bijou.decoders.ar_molmo2 import Molmo2ARDecoder
-from bijou.loading import from_checkpoint, load_adapted_backbone
+from bijou.decoders.flow import SelfAttentionMode, TimeConditioning
+from bijou.loading import (
+    CheckpointInfo,
+    CheckpointTrainArgs,
+    from_checkpoint,
+    load_adapted_backbone,
+)
 from bijou.model import BijouModel
 from bijou.train import (
     Normalizer,
     Normalizers,
     TrainArgs,
+    _build_parser,
     ensure_matching_decoder_config,
-    parse_args,
     save_checkpoint,
 )
 
@@ -337,6 +344,9 @@ def test_j_checkpoint_materializes_ar_view(
         seam_stop_grad=False,
         joint_ce=True,
         joint_unfrozen_seam=True,
+        # The escape is warm-start-only — a J run is always --init-from,
+        # and TrainArgs.__post_init__ now enforces it at construction.
+        init_from=Path("composite/step_000010"),
         fast_tokenizer=str(FIXTURE),
         backbone_text_lr=2e-5,
     )
@@ -354,6 +364,12 @@ def test_j_checkpoint_materializes_ar_view(
 
 
 # -- (v) the guard escape's parse contract -----------------------------
+#
+# Under the checkpoint-inferred-flag rule (architecture.md §8.13
+# decision 9) a J launch passes --decoder (the replacement declarator,
+# opening the decoder-section flags) and inherits the prompt section —
+# --prompt-generate-bracket is checkpoint-inferred, so the fabricated
+# source records the bracket the F arm trained with.
 
 J_ARGV = [
     "--train-data",
@@ -367,7 +383,6 @@ J_ARGV = [
     "tok",
     "--backbone-text-lr",
     "2e-5",
-    "--prompt-generate-bracket",
     "--init-from",
     "ckpt/step_010000",
 ]
@@ -378,36 +393,71 @@ NAIVE_JOINT_REFUSAL = (
 )
 
 
-def _parse(monkeypatch: pytest.MonkeyPatch, *argv: str) -> TrainArgs:
-    monkeypatch.setattr("sys.argv", ["bijou.train", *argv])
-    return parse_args()
+def _source_info() -> CheckpointInfo:
+    """The fabricated --init-from source: an F-arm-shaped checkpoint
+    whose prompts carried the [generate|…] bracket (stage-2 trunk
+    consistency — the inherited value the J run rides)."""
+    stats = DatasetStats.from_state_dict(
+        {
+            "action": {"mean": [0.0], "std": [1.0]},
+            "observation.state": {"mean": [0.0], "std": [1.0]},
+        },
+    )
+    return CheckpointInfo(
+        backbone="tiny-molmo2",
+        train_args=CheckpointTrainArgs(
+            decoder="flow",
+            decoder_hidden=768,
+            decoder_heads=6,
+            decoder_intermediate=3072,
+            decoder_cross_heads=4,
+            stream_counts=(4, 4, 7),
+            conditioning_streams="residual",
+            self_attention_mode=SelfAttentionMode.CAUSAL_ACTIONS,
+            chunk_size=50,
+            max_soft_tokens=140,
+            max_crops=1,
+            time_conditioning=TimeConditioning.ADDITIVE,
+            target_time_embed=False,
+            fast_tokenizer=None,
+            joint_ce=False,
+        ),
+        step=10_000,
+        normalization=stats,
+        per_dataset_normalization={},
+        condition_fields=(),
+        generate_bracket=True,
+    )
+
+
+def _parse(*argv: str) -> TrainArgs:
+    parser = _build_parser()
+    raw = parser.parse_args(list(argv))
+    checkpoint = _source_info() if raw.init_from is not None else None
+    return TrainArgs.from_namespace(raw, parser, checkpoint=checkpoint)
 
 
 def test_naive_joint_refusal_is_verbatim_without_the_flag(
-    monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     with pytest.raises(SystemExit):
-        _parse(monkeypatch, *J_ARGV)
+        _parse(*J_ARGV)
     assert NAIVE_JOINT_REFUSAL in capsys.readouterr().err
 
 
-def test_escape_admits_the_warm_started_combination(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    args = _parse(monkeypatch, *J_ARGV, "--joint-unfrozen-seam")
+def test_escape_admits_the_warm_started_combination() -> None:
+    args = _parse(*J_ARGV, "--joint-unfrozen-seam")
     assert args.joint_ce is True
     assert args.seam_stop_grad is False
     assert args.joint_unfrozen_seam is True
+    assert args.prompt_generate_bracket is True  # inherited, not a flag
 
 
 def test_escape_without_joint_ce_refused(
-    monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     with pytest.raises(SystemExit):
         _parse(
-            monkeypatch,
             "--train-data",
             "corpus",
             "--init-from",
@@ -418,19 +468,19 @@ def test_escape_without_joint_ce_refused(
 
 
 def test_escape_contradicting_stop_grad_refused(
-    monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     with pytest.raises(SystemExit):
-        _parse(monkeypatch, *J_ARGV, "--seam-stop-grad", "--joint-unfrozen-seam")
+        _parse(*J_ARGV, "--seam-stop-grad", "--joint-unfrozen-seam")
     assert "contradicts --seam-stop-grad" in capsys.readouterr().err
 
 
 def test_escape_for_a_fresh_run_refused(
-    monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     fresh = [flag for flag in J_ARGV if flag not in ("--init-from", "ckpt/step_010000")]
+    # Fresh J attempts must also spell the bracket themselves (nothing
+    # to inherit) — the refusal under test is the escape's, not its.
     with pytest.raises(SystemExit):
-        _parse(monkeypatch, *fresh, "--joint-unfrozen-seam")
+        _parse(*fresh, "--prompt-generate-bracket", "--joint-unfrozen-seam")
     assert "requires --init-from" in capsys.readouterr().err

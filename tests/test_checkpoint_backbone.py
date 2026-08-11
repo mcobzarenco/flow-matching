@@ -413,6 +413,9 @@ def test_lr_lambda_rewarmup_anchors_at_resume_step() -> None:
         steps=80_000,
         warmup_steps=500,
         rewarmup_steps=1_000,
+        # __post_init__ enforces the rewarmup⇔resume coupling the CLI
+        # always had; the fabricated extension run must carry its resume.
+        resume=Path("ckpt/step_040000"),
     )
     plain = dataclasses.replace(args, rewarmup_steps=0)
     resume = 40_000

@@ -58,6 +58,7 @@ import time
 from collections.abc import Callable, Iterable, Iterator, Sequence
 from contextlib import nullcontext
 from dataclasses import dataclass
+from enum import StrEnum
 from pathlib import Path
 from typing import Any, TextIO, override
 
@@ -128,6 +129,7 @@ from .interface import (
 from .loading import (
     BackboneConfig,
     BackboneDepth,
+    CheckpointInfo,
     CheckpointMetadata,
     GemmaPromptConfig,
     Molmo2PromptConfig,
@@ -140,6 +142,7 @@ from .loading import (
     load_backbone_init,
     molmo2_residual_expert_config,
     prefix_global_layers,
+    read_checkpoint_info,
     residual_expert_config,
     resolve_action_codec,
 )
@@ -155,6 +158,76 @@ DEFAULT_BACKBONE = "google/gemma-4-e2b-it"
 # and the all-fields table): a spot check, deliberately small — 32 rows
 # of figures were a measured ~34s/eval rank-0 straggler (2026-08-03).
 EVAL_TABLE_ROWS = 12
+
+
+class ArchSection(StrEnum):
+    """Which checkpoint section an architecture flag belongs to — the
+    unit of inheritance under --init-from (see ARCH_FLAGS)."""
+
+    BACKBONE = "backbone"
+    PROMPT = "prompt"
+    DECODER = "decoder"
+    # Zero-init structure additions whose extended model IS the source
+    # checkpoint until trained (φ_s, the joint-CE rider tables): legal
+    # to declare on --init-from, refused on --resume (the optimizer
+    # param groups would not match).
+    EXTENSION = "extension"
+
+
+#: The checkpoint-inferred architecture flags: TrainArgs field ->
+#: (CLI flag, section). Under --resume ALL of these are refused as
+#: flags and resolve from the checkpoint; under --init-from, BACKBONE/
+#: PROMPT flags are refused (inherited sections), DECODER flags are
+#: legal only when --decoder itself is passed (the section-replacement
+#: declarator — the stage-2 path), EXTENSION flags stay legal.
+#: This is the WRITE-side encoding of "what rebuilds the model"; the
+#: read side is loading.CheckpointTrainArgs — tests/test_train_args.py
+#: pins the two to each other.
+ARCH_FLAGS: dict[str, tuple[str, ArchSection]] = {
+    "backbone": ("--backbone", ArchSection.BACKBONE),
+    "max_soft_tokens": ("--max-soft-tokens", ArchSection.PROMPT),
+    "max_crops": ("--max-crops", ArchSection.PROMPT),
+    "prompt_generate_bracket": (
+        "--prompt-generate-bracket",
+        ArchSection.PROMPT,
+    ),
+    "decoder": ("--decoder", ArchSection.DECODER),
+    "decoder_hidden": ("--decoder-hidden", ArchSection.DECODER),
+    "decoder_heads": ("--decoder-heads", ArchSection.DECODER),
+    "decoder_intermediate": ("--decoder-intermediate", ArchSection.DECODER),
+    "decoder_cross_heads": ("--decoder-cross-heads", ArchSection.DECODER),
+    "chunk_size": ("--chunk-size", ArchSection.DECODER),
+    "stream_counts": ("--stream-counts", ArchSection.DECODER),
+    "conditioning_streams": ("--conditioning-streams", ArchSection.DECODER),
+    "self_attention_mode": ("--self-attention-mode", ArchSection.DECODER),
+    "time_conditioning": ("--time-conditioning", ArchSection.DECODER),
+    "fast_tokenizer": ("--fast-tokenizer", ArchSection.DECODER),
+    "target_time_embed": ("--target-time-embed", ArchSection.EXTENSION),
+    "joint_ce": ("--joint-ce", ArchSection.EXTENSION),
+}
+
+#: Fresh-run values for the ARCH_FLAGS sentinels (argparse defaults
+#: moved here so "omitted" is distinguishable from "passed the
+#: default" — the refusal rule needs explicitness).
+ARCH_DEFAULTS: dict[str, Any] = {
+    "backbone": DEFAULT_BACKBONE,
+    "max_soft_tokens": 140,
+    "max_crops": 1,
+    "prompt_generate_bracket": False,
+    "decoder": "flow",
+    "decoder_hidden": 768,
+    "decoder_heads": 6,
+    "decoder_intermediate": 3072,
+    "decoder_cross_heads": 4,
+    "chunk_size": 50,
+    "stream_counts": (4, 4, 7),
+    "conditioning_streams": "kv",
+    "self_attention_mode": "causal_actions",
+    "time_conditioning": TimeConditioning.ADDITIVE.value,
+    "fast_tokenizer": None,
+    "target_time_embed": False,
+    "joint_ce": False,
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -319,6 +392,483 @@ class TrainArgs:
     @property
     def backbone_trained(self) -> bool:
         return self.backbone_text_lr is not None or self.backbone_vision_lr is not None
+
+    def __post_init__(self) -> None:
+        """Value invariants of the RESOLVED config — the single encoding
+        (from_namespace translates these to parser.error for the CLI;
+        direct construction gets the same text as ValueError). Rules
+        needing flag EXPLICITNESS (checkpoint-inferred refusals,
+        "drop the flag") live in from_namespace: this class only sees
+        resolved values."""
+        if self.rewarmup_steps > 0 and self.resume is None:
+            raise ValueError(
+                "--rewarmup-steps anchors at the resume step — it requires "
+                "--resume (fresh runs use --warmup-steps)",
+            )
+        if self.allow_same_seed_resume and self.resume is None:
+            raise ValueError(
+                "--allow-same-seed-resume only applies to --resume "
+                "(fresh runs and --init-from have no seed to collide with)",
+            )
+        if not 0.0 <= self.holdout_episodes < 1.0:
+            raise ValueError("--holdout-episodes must be in [0, 1)")
+        if self.holdout_episodes > 0 and self.eval_samples is None:
+            raise ValueError(
+                "--eval-samples is required when --holdout-episodes > 0 "
+                "(it sizes the held-out eval_chunk_mae probe)",
+            )
+        if self.eval_samples is not None and self.eval_samples < 1:
+            raise ValueError("--eval-samples must be >= 1")
+        if self.decoder_lr <= 0:
+            raise ValueError("--decoder-lr must be > 0 (the decoder always trains)")
+        for name, value in (
+            ("--backbone-text-lr", self.backbone_text_lr),
+            ("--backbone-vision-lr", self.backbone_vision_lr),
+        ):
+            if value is not None and value <= 0:
+                raise ValueError(
+                    f"{name} {value} is not a usable learning rate — omit "
+                    "the flag entirely to keep that component frozen",
+                )
+        if self.decoder in ("ar_fast", "ar_backbone") and self.fast_tokenizer is None:
+            raise ValueError(f"--decoder {self.decoder} requires --fast-tokenizer")
+        if (
+            self.decoder == "flow"
+            and self.fast_tokenizer is not None
+            and not self.joint_ce
+        ):
+            raise ValueError(
+                "--fast-tokenizer is only consumed by the AR decoders "
+                "(or the --joint-ce CE rider)",
+            )
+        if self.conditioning_streams == "residual" and self.decoder != "flow":
+            raise ValueError(
+                "--conditioning-streams residual is a flow-expert "
+                f"architecture; --decoder {self.decoder} conditions on "
+                "K/V exports only",
+            )
+        if self.seam_stop_grad and (
+            self.decoder != "flow" or self.conditioning_streams != "residual"
+        ):
+            raise ValueError(
+                "--seam-stop-grad detaches residual taps at the expert seam — "
+                "it requires --decoder flow --conditioning-streams residual",
+            )
+        if self.joint_ce:
+            # Joint flow+CE preconditions: the CE branch is the phase-1
+            # objective continuing VERBATIM (live trunk, FAST suffix,
+            # bracketed prompts), and the seam must be stop-grad —
+            # random-init naive joint (flow gradients into the trunk) is
+            # an oracle-only negative control; --joint-unfrozen-seam is
+            # the warm-start-only escape.
+            if self.decoder != "flow" or self.conditioning_streams != "residual":
+                raise ValueError(
+                    "--joint-ce rides the flow expert — it requires --decoder "
+                    "flow --conditioning-streams residual",
+                )
+            if not self.seam_stop_grad and not self.joint_unfrozen_seam:
+                raise ValueError(
+                    "--joint-ce without --seam-stop-grad is the naive-joint "
+                    "arm — a published collapse (KI), refused as a run",
+                )
+            if self.fast_tokenizer is None:
+                raise ValueError("--joint-ce requires --fast-tokenizer (its CE suffix)")
+            if self.backbone_text_lr is None:
+                raise ValueError(
+                    "--joint-ce without --backbone-text-lr trains no trunk — "
+                    "the CE branch would ride frozen; use the F arm instead",
+                )
+            if not self.prompt_generate_bracket:
+                raise ValueError(
+                    "--joint-ce requires --prompt-generate-bracket: phase-1 "
+                    "prompts carried the [generate|…] request block, and the "
+                    "CE branch continuing verbatim means rendering it",
+                )
+            if self.distill is not None:
+                raise ValueError("--joint-ce and --distill are mutually exclusive")
+        if self.joint_unfrozen_seam:
+            # The escape's own scope: it modifies --joint-ce only,
+            # contradicts an explicit stop-grad, and is warm-start-only —
+            # the collapse the guard refuses is a random-init expert's
+            # early gradients, so a fresh run gets no escape.
+            if not self.joint_ce:
+                raise ValueError(
+                    "--joint-unfrozen-seam is the naive-joint guard escape — "
+                    "it modifies --joint-ce and does nothing without it",
+                )
+            if self.seam_stop_grad:
+                raise ValueError(
+                    "--joint-unfrozen-seam contradicts --seam-stop-grad — the "
+                    "escape exists to run the seam open; pick one",
+                )
+            if self.init_from is None:
+                raise ValueError(
+                    "--joint-unfrozen-seam requires --init-from: the naive-"
+                    "joint collapse (KI) is a random-init pathology, so the "
+                    "open seam is admitted only for warm starts whose expert "
+                    "is already informed",
+                )
+        if self.decoder != "flow" and self.time_conditioning != "additive":
+            raise ValueError(
+                "--time-conditioning is flow-only (AR decoders have no τ)",
+            )
+        if self.decoder != "flow" and self.distill is not None:
+            raise ValueError("--distill is flow-only (it distills the velocity field)")
+        if self.decoder != "flow" and self.target_time_embed:
+            raise ValueError("--target-time-embed is flow-only (φ_s conditions τ)")
+        if self.distill == "snapflow" and not self.target_time_embed:
+            raise ValueError(
+                "--distill snapflow needs the φ_s extension "
+                "(target_time_embed) — from_namespace implies it on fresh/"
+                "--init-from runs; a resumed checkpoint without φ_s cannot "
+                "grow it (extend via --init-from --target-time-embed)",
+            )
+        if (
+            self.aux_fields is not None
+            and self.decoder != "ar_backbone"
+            and (not self.joint_ce)
+        ):
+            raise ValueError(
+                "--aux-fields is ar_backbone-only (aux rides its suffix — or "
+                "the --joint-ce rider's)",
+            )
+        if self.aux_fields is not None and len(self.aux_fields) == 0:
+            raise ValueError(
+                "--aux-fields given with no fields — omit the flag instead",
+            )
+        if self.aux_fields is not None:
+            # Template order is an invariant, not a preference (AuxSpec
+            # re-guards, but that fires only after dataset selection).
+            ordered = [f.value for f in AuxField if f.value in self.aux_fields]
+            if list(self.aux_fields) != ordered:
+                raise ValueError(
+                    f"--aux-fields must keep template order {ordered} "
+                    f"(got {list(self.aux_fields)})",
+                )
+            if self.cameras is not None or self.max_cameras is not None:
+                # The 'visible' aux indices are positions in the full
+                # sorted camera set; camera selection would silently
+                # shift them (the Collator re-guards, but that fires
+                # only after dataset selection).
+                raise ValueError(
+                    "--aux-fields cannot combine with --cameras/--max-cameras",
+                )
+        if self.aux_loss_weight <= 0:
+            raise ValueError(
+                "--aux-loss-weight must be > 0 (omit --aux-fields to disable)",
+            )
+        for name, value in (
+            ("--aux-dropout", self.aux_dropout),
+            ("--field-dropout", self.field_dropout),
+            ("--camera-kind-dropout", self.camera_kind_dropout),
+            ("--state-dropout", self.state_dropout),
+            ("--condition-dropout", self.condition_dropout),
+            ("--subgoal-dropout", self.subgoal_dropout),
+        ):
+            if not 0.0 <= value < 1.0:
+                raise ValueError(f"{name} {value} outside [0, 1)")
+        if not 0.0 <= self.instruction_augment <= 1.0:
+            raise ValueError(
+                f"--instruction-augment {self.instruction_augment} outside [0, 1]",
+            )
+        if self.condition_fields is not None and len(self.condition_fields) == 0:
+            raise ValueError("--condition-fields given with no fields — omit the flag")
+        if self.condition_fields is not None:
+            ordered = [
+                f.value for f in ConditionField if f.value in self.condition_fields
+            ]
+            if list(self.condition_fields) != ordered:
+                raise ValueError(
+                    f"--condition-fields must keep template order {ordered} "
+                    f"(got {list(self.condition_fields)})",
+                )
+
+    @classmethod
+    def from_namespace(
+        cls,
+        raw: argparse.Namespace,
+        parser: argparse.ArgumentParser,
+        *,
+        checkpoint: CheckpointInfo | None,
+    ) -> TrainArgs:
+        """Parse the RAW namespace (arch flags carry None sentinels, so
+        explicitness is visible) into a validated TrainArgs.
+
+        Owns everything that needs the namespace or the checkpoint:
+        the checkpoint-inferred-flag refusals (ARCH_FLAGS), resolution
+        (sentinel -> ARCH_DEFAULTS on fresh runs, -> the checkpoint's
+        recorded architecture under --resume/--init-from), and the
+        "flag X requires flag Y" explicitness checks. Value invariants
+        of the resolved config live once, in __post_init__ — raised
+        ValueErrors are translated to parser.error here, so the CLI
+        keeps its usage-line UX while direct construction gets the
+        same message. ``checkpoint`` is the parsed metadata of
+        --resume/--init-from (read by the caller: I/O stays at the
+        CLI edge, like from_json wrapping from_dict)."""
+        if raw.init_from is not None and raw.resume is not None:
+            parser.error("--init-from and --resume are mutually exclusive")
+        if raw.backbone_init_from is not None and (
+            raw.init_from is not None or raw.resume is not None
+        ):
+            parser.error(
+                "--backbone-init-from is mutually exclusive with --init-from/"
+                "--resume (those load the decoder too)",
+            )
+        resume = raw.resume is not None
+        assert (checkpoint is None) == (raw.init_from is None and not resume)
+
+        # -- checkpoint-inferred flag refusals ----------------------------
+        replacing_decoder = raw.decoder is not None and checkpoint is not None
+        if checkpoint is not None:
+            recorded = dataclasses.asdict(checkpoint.train_args)
+            recorded["backbone"] = checkpoint.backbone
+            recorded["prompt_generate_bracket"] = (
+                checkpoint.generate_bracket
+                or checkpoint.train_args.decoder == "ar_backbone"
+            )
+            for field, (flag, section) in ARCH_FLAGS.items():
+                if getattr(raw, field) is None:
+                    continue
+                shown = recorded.get(field)
+                shown = shown.value if isinstance(shown, StrEnum) else shown
+                if resume:
+                    parser.error(
+                        f"{flag} is checkpoint-inferred under --resume "
+                        f"(checkpoint records {field}={shown!r}) — drop the "
+                        "flag; --resume rebuilds the recorded architecture",
+                    )
+                if section in (ArchSection.BACKBONE, ArchSection.PROMPT):
+                    parser.error(
+                        f"{flag} is inherited from the --init-from checkpoint "
+                        f"(it records {field}={shown!r}) — drop the flag; "
+                        "only the decoder section is replaceable (--decoder)",
+                    )
+                if section is ArchSection.DECODER and not replacing_decoder:
+                    parser.error(
+                        f"{flag} is inherited from the --init-from checkpoint "
+                        f"(it records {field}={shown!r}) — drop the flag, or "
+                        "pass --decoder to declare a fresh decoder section "
+                        "(the stage-2 path)",
+                    )
+                # EXTENSION flags (φ_s, --joint-ce) stay legal on
+                # --init-from: zero-init additions, the sanctioned
+                # warm-start extensions.
+
+        # -- resolution ----------------------------------------------------
+        arch: dict[str, Any] = {}
+        for field, (_flag, section) in ARCH_FLAGS.items():
+            explicit = getattr(raw, field)
+            if explicit is not None:
+                arch[field] = explicit
+                continue
+            if checkpoint is None:
+                arch[field] = ARCH_DEFAULTS[field]
+                continue
+            # A replaced decoder section resolves fresh (its EXTENSION
+            # riders too — they are decoder-adjacent structure); every
+            # inherited section resolves from the checkpoint.
+            if replacing_decoder and section in (
+                ArchSection.DECODER,
+                ArchSection.EXTENSION,
+            ):
+                arch[field] = ARCH_DEFAULTS[field]
+                continue
+            match field:
+                case "backbone":
+                    arch[field] = checkpoint.backbone
+                case "prompt_generate_bracket":
+                    # ar_backbone sources rendered the bracket implicitly
+                    # (the flag itself is refused there) — inheriting the
+                    # recorded False would silently drop it from stage-2
+                    # prompts, the exact drift this rule exists to stop.
+                    arch[field] = (
+                        checkpoint.generate_bracket
+                        or checkpoint.train_args.decoder == "ar_backbone"
+                    )
+                case "self_attention_mode" | "time_conditioning":
+                    arch[field] = getattr(checkpoint.train_args, field).value
+                case _:
+                    arch[field] = getattr(checkpoint.train_args, field)
+        arch["stream_counts"] = tuple(arch["stream_counts"])
+
+        if raw.distill == "snapflow" and not arch["target_time_embed"]:
+            # φ_s is implied — but only where the structure is mutable
+            # (fresh decoders); a resumed checkpoint cannot grow it.
+            if resume:
+                parser.error(
+                    "--distill snapflow on a checkpoint without φ_s — the "
+                    "resumed optimizer would not match an extended model; "
+                    "extend via --init-from --target-time-embed first",
+                )
+            arch["target_time_embed"] = True
+
+        # -- explicitness checks needing the resolved decoder --------------
+        if arch["decoder"] == "ar_backbone":
+            # The backbone IS the architecture: decoder shape flags and
+            # the cross-attention schedule describe models this run
+            # doesn't build.
+            for flag, attribute in (
+                ("--decoder-hidden", "decoder_hidden"),
+                ("--decoder-heads", "decoder_heads"),
+                ("--decoder-intermediate", "decoder_intermediate"),
+                ("--decoder-cross-heads", "decoder_cross_heads"),
+                ("--stream-counts", "stream_counts"),
+            ):
+                if getattr(raw, attribute) is not None:
+                    parser.error(
+                        f"{flag} sizes the flow/ar_fast decoders; ar_backbone "
+                        "IS the backbone — drop the flag",
+                    )
+            if raw.prompt_generate_bracket is not None:
+                parser.error(
+                    "--prompt-generate-bracket is implied (always on) for "
+                    "ar_backbone — drop the flag so runs have one spelling",
+                )
+            # Value-side consistency: the implied bracket IS the
+            # architecture (resolution above already infers True from
+            # ar_backbone sources; fresh ar_backbone runs render it
+            # implicitly downstream either way).
+        if arch["conditioning_streams"] == "residual" and (
+            raw.stream_counts is not None
+        ):
+            parser.error(
+                "--stream-counts schedules K/V conditioning; under "
+                "--conditioning-streams residual the schedule is structural "
+                "(one stream per prefix layer, 1:1 ascending) — drop the "
+                "flag",
+            )
+
+        # -- "flag X requires flag Y" + conditional defaults ---------------
+        if raw.aux_dropout is not None and raw.aux_fields is None:
+            parser.error("--aux-dropout requires --aux-fields (it drops aux labels)")
+        if raw.aux_prompt_hash is not None and raw.aux_fields is None:
+            parser.error(
+                "--aux-prompt-hash requires --aux-fields (it gates aux labels)",
+            )
+        if raw.field_dropout is not None and raw.aux_fields is None:
+            parser.error("--field-dropout requires --aux-fields (it drops requests)")
+        if raw.condition_dropout is not None and raw.condition_fields is None:
+            parser.error("--condition-dropout requires --condition-fields")
+        subgoal_conditioned = raw.condition_fields is not None and (
+            "subgoal" in raw.condition_fields
+        )
+        if raw.subgoal_dropout is not None and not subgoal_conditioned:
+            parser.error("--subgoal-dropout requires subgoal in --condition-fields")
+        aux_dropout = (
+            raw.aux_dropout
+            if raw.aux_dropout is not None
+            else (0.1 if raw.aux_fields is not None else 0.0)
+        )
+        field_dropout = (
+            raw.field_dropout
+            if raw.field_dropout is not None
+            else (0.1 if raw.aux_fields is not None else 0.0)
+        )
+        condition_dropout = (
+            raw.condition_dropout
+            if raw.condition_dropout is not None
+            else (0.1 if raw.condition_fields is not None else 0.0)
+        )
+        subgoal_dropout = (
+            raw.subgoal_dropout
+            if raw.subgoal_dropout is not None
+            else (0.5 if subgoal_conditioned else 0.0)
+        )
+
+        if raw.backbone_vision_lr is not None and raw.backbone_text_lr is None:
+            print(
+                "NOTE: vision tower unfrozen with the text stack FROZEN - "
+                "gradients still traverse the frozen text stack to reach the "
+                "tower (activation cost without text adaptation). Legitimate "
+                "but unusual; the standard move is --backbone-text-lr alone.",
+                file=sys.stderr,
+                flush=True,
+            )
+
+        try:
+            return cls(
+                train_data=tuple(raw.train_data),
+                exclude=tuple(raw.exclude),
+                fps=tuple(raw.fps) if raw.fps else None,
+                camera_counts=(tuple(raw.camera_counts) if raw.camera_counts else None),
+                holdout_episodes=raw.holdout_episodes,
+                split_seed=raw.split_seed,
+                backbone=arch["backbone"],
+                save_dir=raw.save_dir,
+                init_from=raw.init_from,
+                resume=raw.resume,
+                allow_same_seed_resume=raw.allow_same_seed_resume,
+                backbone_init_from=raw.backbone_init_from,
+                prompt_generate_bracket=arch["prompt_generate_bracket"],
+                instruction=raw.instruction,
+                cameras=tuple(raw.cameras) if raw.cameras else None,
+                max_cameras=raw.max_cameras,
+                max_soft_tokens=arch["max_soft_tokens"],
+                max_crops=arch["max_crops"],
+                stream_counts=arch["stream_counts"],
+                conditioning_streams=arch["conditioning_streams"],
+                seam_stop_grad=raw.seam_stop_grad,
+                joint_ce=arch["joint_ce"],
+                joint_unfrozen_seam=raw.joint_unfrozen_seam,
+                self_attention_mode=arch["self_attention_mode"],
+                time_conditioning=arch["time_conditioning"],
+                target_time_embed=arch["target_time_embed"],
+                distill=raw.distill,
+                decoder=arch["decoder"],
+                fast_tokenizer=arch["fast_tokenizer"],
+                aux_fields=(
+                    tuple(raw.aux_fields) if raw.aux_fields is not None else None
+                ),
+                aux_loss_weight=raw.aux_loss_weight,
+                aux_dropout=aux_dropout,
+                field_dropout=field_dropout,
+                aux_prompt_hash=raw.aux_prompt_hash,
+                camera_kind_dropout=raw.camera_kind_dropout,
+                instruction_augment=raw.instruction_augment,
+                condition_fields=(
+                    tuple(raw.condition_fields)
+                    if raw.condition_fields is not None
+                    else None
+                ),
+                condition_dropout=condition_dropout,
+                subgoal_dropout=subgoal_dropout,
+                state_dropout=raw.state_dropout,
+                decoder_hidden=arch["decoder_hidden"],
+                decoder_heads=arch["decoder_heads"],
+                decoder_intermediate=arch["decoder_intermediate"],
+                decoder_cross_heads=arch["decoder_cross_heads"],
+                chunk_size=arch["chunk_size"],
+                batch_size=raw.batch_size,
+                bucket_by_length=raw.bucket_by_length,
+                backward_chunks=raw.backward_chunks,
+                zero1=raw.zero1,
+                sync_save=raw.sync_save,
+                chunk_grad_allreduce=raw.chunk_grad_allreduce,
+                activation_checkpointing=raw.activation_checkpointing,
+                steps=raw.steps,
+                decoder_lr=raw.decoder_lr,
+                backbone_text_lr=raw.backbone_text_lr,
+                backbone_vision_lr=raw.backbone_vision_lr,
+                warmup_steps=raw.warmup_steps,
+                rewarmup_steps=raw.rewarmup_steps,
+                weight_decay=raw.weight_decay,
+                optimizer=raw.optimizer,
+                grad_clip=raw.grad_clip,
+                log_every=raw.log_every,
+                eval_every=raw.eval_every,
+                save_every=raw.save_every,
+                num_workers=raw.num_workers,
+                prefetch_factor=raw.prefetch_factor,
+                video_decoder_cache=raw.video_decoder_cache,
+                device=raw.device,
+                seed=raw.seed,
+                eval_samples=raw.eval_samples,
+                eval_seed=raw.eval_seed,
+                wandb_project=raw.wandb_project,
+                wandb_run_name=raw.wandb_run_name,
+            )
+        except ValueError as error:
+            parser.error(str(error))
 
 
 class DevicePrefetcher[I: BatchInputs]:
@@ -1905,7 +2455,11 @@ def length_bucket_keys(
     return keys
 
 
-def parse_args() -> TrainArgs:
+def _build_parser() -> argparse.ArgumentParser:
+    """The train CLI's flag surface. Checkpoint-inferred architecture
+    flags (ARCH_FLAGS) carry ``None`` sentinel defaults so
+    ``TrainArgs.from_namespace`` can tell "omitted" from "passed the
+    default" — fresh-run values live in ARCH_DEFAULTS."""
     parser = argparse.ArgumentParser(
         prog="python -m bijou.train",
         description="Train the Bijou action expert on LeRobot v3 datasets "
@@ -1965,8 +2519,10 @@ def parse_args() -> TrainArgs:
     )
     parser.add_argument(
         "--backbone",
-        default=DEFAULT_BACKBONE,
-        help="backbone HF model id or local checkpoint path",
+        default=None,
+        help=f"backbone HF model id or local checkpoint path (fresh-run "
+        f"default {DEFAULT_BACKBONE}; checkpoint-inferred under "
+        "--resume/--init-from — drop the flag there)",
     )
     parser.add_argument(
         "--save-dir",
@@ -1995,30 +2551,33 @@ def parse_args() -> TrainArgs:
     parser.add_argument(
         "--max-soft-tokens",
         type=int,
-        default=140,
+        default=None,
         help="vision soft-token budget per camera in the prompt "
-        "(Gemma trunks; molmo2 trunks use --max-crops)",
+        "(Gemma trunks; molmo2 trunks use --max-crops; fresh-run "
+        "default 140, checkpoint-inferred under --resume/--init-from)",
     )
     parser.add_argument(
         "--max-crops",
         type=int,
-        default=1,
-        help="molmo2 trunks: crops per camera image (1 = the port plan's "
-        "operating point, 410 image tokens/camera — the smallest layout "
-        "inside the shipped distribution); ignored for Gemma trunks",
+        default=None,
+        help="molmo2 trunks: crops per camera image (fresh-run default 1 "
+        "= the port plan's operating point, 410 image tokens/camera — "
+        "the smallest layout inside the shipped distribution; ignored "
+        "for Gemma trunks; checkpoint-inferred under --resume/--init-from)",
     )
     parser.add_argument(
         "--stream-counts",
         type=int,
         nargs="*",
-        default=[4, 4, 7],
+        default=None,
         help="decoder cross-attention layers per backbone KV stream, "
-        "shallow to deep (0 skips a stream)",
+        "shallow to deep (0 skips a stream); fresh-run default 4 4 7, "
+        "checkpoint-inferred under --resume/--init-from",
     )
     parser.add_argument(
         "--conditioning-streams",
         choices=["kv", "residual"],
-        default="kv",
+        default=None,
         help="flow-expert conditioning surface: 'kv' = exported K/V of the "
         "global prefix layers (default; scheduled by --stream-counts), "
         "'residual' = FULL residual streams — the hidden state after every "
@@ -2038,6 +2597,7 @@ def parse_args() -> TrainArgs:
     parser.add_argument(
         "--joint-ce",
         action="store_true",
+        default=None,
         help="joint flow+CE training: keep the pretrained autoregressive "
         "CE objective "
         "(Molmo2ARDecoder suffix — --fast-tokenizer/--aux-fields flags "
@@ -2062,13 +2622,15 @@ def parse_args() -> TrainArgs:
     parser.add_argument(
         "--self-attention-mode",
         choices=["causal_actions", "bidirectional"],
-        default="causal_actions",
-        help="decoder self-attention over the action chunk",
+        default=None,
+        help="decoder self-attention over the action chunk (fresh-run "
+        "default causal_actions, checkpoint-inferred under "
+        "--resume/--init-from)",
     )
     parser.add_argument(
         "--time-conditioning",
         choices=[m.value for m in TimeConditioning],
-        default=TimeConditioning.ADDITIVE.value,
+        default=None,
         help="how flow time τ conditions the flow decoder: 'additive' (π0-style "
         "input add, the default) or 'adarms' (DiT-style per-layer scale/"
         "gate, identity at init). adarms changes the architecture — a fresh "
@@ -2077,6 +2639,7 @@ def parse_args() -> TrainArgs:
     parser.add_argument(
         "--target-time-embed",
         action="store_true",
+        default=None,
         help="extend the flow decoder with the SnapFlow φ_s target-time "
         "embedding (zero-initialized output: inert until trained; may "
         "--init-from an unextended checkpoint — step 0 is then exactly "
@@ -2095,8 +2658,9 @@ def parse_args() -> TrainArgs:
     parser.add_argument(
         "--decoder",
         choices=["flow", "ar_fast", "ar_backbone"],
-        default="flow",
-        help="action decoder: 'flow' (velocity field, the default), "
+        default=None,
+        help="action decoder: 'flow' (velocity field, the fresh-run "
+        "default), "
         "'ar_fast' (autoregressive FAST tokens through a fresh "
         "cross-attention decoder) or 'ar_backbone' (FAST tokens decoded "
         "by the FULL backbone itself — the decoder-only path; trains a "
@@ -2222,32 +2786,34 @@ def parse_args() -> TrainArgs:
     parser.add_argument(
         "--decoder-hidden",
         type=int,
-        default=768,
-        help="decoder hidden size",
+        default=None,
+        help="decoder hidden size (fresh-run default 768)",
     )
     parser.add_argument(
         "--decoder-heads",
         type=int,
-        default=6,
-        help="decoder self-attention heads",
+        default=None,
+        help="decoder self-attention heads (fresh-run default 6)",
     )
     parser.add_argument(
         "--decoder-intermediate",
         type=int,
-        default=3072,
-        help="decoder MLP intermediate size",
+        default=None,
+        help="decoder MLP intermediate size (fresh-run default 3072)",
     )
     parser.add_argument(
         "--decoder-cross-heads",
         type=int,
-        default=4,
-        help="decoder cross-attention heads",
+        default=None,
+        help="decoder cross-attention heads (fresh-run default 4)",
     )
     parser.add_argument(
         "--chunk-size",
         type=int,
-        default=50,
-        help="actions predicted per sample (frames at the dataset fps)",
+        default=None,
+        help="actions predicted per sample (frames at the dataset fps; "
+        "fresh-run default 50, checkpoint-inferred under "
+        "--resume/--init-from)",
     )
     parser.add_argument(
         "--batch-size",
@@ -2452,11 +3018,14 @@ def parse_args() -> TrainArgs:
     parser.add_argument(
         "--prompt-generate-bracket",
         action="store_true",
+        default=None,
         help="render [generate|actions] in prompts for non-AR decoders "
         "(stage-2 trunk consistency: an AR-pretrained trunk shaped its "
         "conditioning/state positions WITH the bracket). ar_backbone "
         "always renders it — passing this there is an error, not a "
-        "no-op",
+        "no-op. Checkpoint-inferred under --resume/--init-from (an "
+        "ar_backbone source infers True — its prompts carried the "
+        "bracket implicitly)",
     )
     parser.add_argument(
         "--device",
@@ -2494,336 +3063,17 @@ def parse_args() -> TrainArgs:
         "(WANDB_API_KEY must be set)",
     )
     parser.add_argument("--wandb-run-name", default=None, help="wandb run display name")
+    return parser
+
+
+def parse_args() -> TrainArgs:
+    parser = _build_parser()
     raw = parser.parse_args()
-    if raw.init_from is not None and raw.resume is not None:
-        parser.error("--init-from and --resume are mutually exclusive")
-    if raw.backbone_init_from is not None and (
-        raw.init_from is not None or raw.resume is not None
-    ):
-        parser.error(
-            "--backbone-init-from is mutually exclusive with --init-from/"
-            "--resume (those load the decoder too)",
-        )
-    if raw.prompt_generate_bracket and raw.decoder == "ar_backbone":
-        parser.error(
-            "--prompt-generate-bracket is implied (always on) for "
-            "ar_backbone — drop the flag so runs have one spelling",
-        )
-    if raw.rewarmup_steps > 0 and raw.resume is None:
-        parser.error(
-            "--rewarmup-steps anchors at the resume step — it requires "
-            "--resume (fresh runs use --warmup-steps)",
-        )
-    if raw.allow_same_seed_resume and raw.resume is None:
-        parser.error(
-            "--allow-same-seed-resume only applies to --resume "
-            "(fresh runs and --init-from have no seed to collide with)",
-        )
-    if not 0.0 <= raw.holdout_episodes < 1.0:
-        parser.error("--holdout-episodes must be in [0, 1)")
-    if raw.holdout_episodes > 0 and raw.eval_samples is None:
-        parser.error(
-            "--eval-samples is required when --holdout-episodes > 0 "
-            "(it sizes the held-out eval_chunk_mae probe)",
-        )
-    if raw.eval_samples is not None and raw.eval_samples < 1:
-        parser.error("--eval-samples must be >= 1")
-    if raw.decoder_lr <= 0:
-        parser.error("--decoder-lr must be > 0 (the decoder always trains)")
-    if raw.decoder in ("ar_fast", "ar_backbone") and raw.fast_tokenizer is None:
-        parser.error(f"--decoder {raw.decoder} requires --fast-tokenizer")
-    if raw.decoder == "flow" and raw.fast_tokenizer is not None and not raw.joint_ce:
-        parser.error(
-            "--fast-tokenizer is only consumed by the AR decoders "
-            "(or the --joint-ce CE rider)",
-        )
-    if raw.seam_stop_grad and (
-        raw.decoder != "flow" or raw.conditioning_streams != "residual"
-    ):
-        parser.error(
-            "--seam-stop-grad detaches residual taps at the expert seam — "
-            "it requires --decoder flow --conditioning-streams residual",
-        )
-    if raw.joint_ce:
-        # Joint flow+CE frozen preconditions:
-        # the CE branch is the phase-1 objective continuing
-        # VERBATIM (live trunk, FAST suffix, bracketed prompts), and the
-        # seam must be stop-grad — random-init naive joint (flow
-        # gradients into the trunk) exists only as an oracle negative
-        # control. --joint-unfrozen-seam (guarded below) is the
-        # warm-start-only escape.
-        if raw.decoder != "flow" or raw.conditioning_streams != "residual":
-            parser.error(
-                "--joint-ce rides the flow expert — it requires --decoder "
-                "flow --conditioning-streams residual",
-            )
-        if not raw.seam_stop_grad and not raw.joint_unfrozen_seam:
-            parser.error(
-                "--joint-ce without --seam-stop-grad is the naive-joint "
-                "arm — a published collapse (KI), refused as a run",
-            )
-        if raw.fast_tokenizer is None:
-            parser.error("--joint-ce requires --fast-tokenizer (its CE suffix)")
-        if raw.backbone_text_lr is None:
-            parser.error(
-                "--joint-ce without --backbone-text-lr trains no trunk — "
-                "the CE branch would ride frozen; use the F arm instead",
-            )
-        if not raw.prompt_generate_bracket:
-            parser.error(
-                "--joint-ce requires --prompt-generate-bracket: phase-1 "
-                "prompts carried the [generate|…] request block, and the "
-                "CE branch continuing verbatim means rendering it",
-            )
-        if raw.distill is not None:
-            parser.error("--joint-ce and --distill are mutually exclusive")
-    if raw.joint_unfrozen_seam:
-        # The escape's own scope: it
-        # modifies --joint-ce only, contradicts an explicit stop-grad,
-        # and is warm-start-only — the collapse the guard refuses is a
-        # random-init expert's early gradients, so a fresh run gets no
-        # escape.
-        if not raw.joint_ce:
-            parser.error(
-                "--joint-unfrozen-seam is the naive-joint guard escape — "
-                "it modifies --joint-ce and does nothing without it",
-            )
-        if raw.seam_stop_grad:
-            parser.error(
-                "--joint-unfrozen-seam contradicts --seam-stop-grad — the "
-                "escape exists to run the seam open; pick one",
-            )
-        if raw.init_from is None:
-            parser.error(
-                "--joint-unfrozen-seam requires --init-from: the naive-"
-                "joint collapse (KI) is a random-init pathology, so the "
-                "open seam is admitted only for warm starts whose expert "
-                "is already informed",
-            )
-    if raw.decoder != "flow" and raw.time_conditioning != "additive":
-        parser.error(
-            "--time-conditioning is flow-only (AR decoders have no \u03c4)",
-        )
-    if raw.decoder != "flow" and raw.distill is not None:
-        parser.error("--distill is flow-only (it distills the velocity field)")
-    if raw.decoder != "flow" and raw.target_time_embed:
-        parser.error("--target-time-embed is flow-only (\u03c6_s conditions \u03c4)")
-    if raw.distill == "snapflow":
-        # The shortcut term forwards at s=0 \u2014 \u03c6_s is required, not optional.
-        raw.target_time_embed = True
-    if raw.aux_fields is not None and raw.decoder != "ar_backbone" and not raw.joint_ce:
-        parser.error(
-            "--aux-fields is ar_backbone-only (aux rides its suffix — or "
-            "the --joint-ce rider's)",
-        )
-    if raw.aux_fields is not None and not raw.aux_fields:
-        parser.error("--aux-fields given with no fields — omit the flag instead")
-    if raw.aux_fields is not None:
-        # Template order is an invariant, not a preference (AuxSpec
-        # re-guards, but that fires only after dataset selection).
-        ordered = [f.value for f in AuxField if f.value in raw.aux_fields]
-        if list(raw.aux_fields) != ordered:
-            parser.error(
-                f"--aux-fields must keep template order {ordered} "
-                f"(got {list(raw.aux_fields)})",
-            )
-    if raw.aux_loss_weight <= 0:
-        parser.error("--aux-loss-weight must be > 0 (omit --aux-fields to disable)")
-    if raw.aux_fields is not None and (raw.cameras or raw.max_cameras is not None):
-        # The 'visible' aux indices are positions in the full sorted
-        # camera set; camera selection would silently shift them (the
-        # Collator re-guards, but that fires only after dataset
-        # selection).
-        parser.error("--aux-fields cannot combine with --cameras/--max-cameras")
-    if raw.aux_dropout is not None and raw.aux_fields is None:
-        parser.error("--aux-dropout requires --aux-fields (it drops aux labels)")
-    if raw.aux_prompt_hash is not None and raw.aux_fields is None:
-        parser.error("--aux-prompt-hash requires --aux-fields (it gates aux labels)")
-    if raw.aux_dropout is not None and not 0.0 <= raw.aux_dropout < 1.0:
-        parser.error(f"--aux-dropout {raw.aux_dropout} outside [0, 1)")
-    if not 0.0 <= raw.camera_kind_dropout < 1.0:
-        parser.error(
-            f"--camera-kind-dropout {raw.camera_kind_dropout} outside [0, 1)",
-        )
-    if not 0.0 <= raw.instruction_augment <= 1.0:
-        parser.error(
-            f"--instruction-augment {raw.instruction_augment} outside [0, 1]",
-        )
-    if not 0.0 <= raw.state_dropout < 1.0:
-        parser.error(f"--state-dropout {raw.state_dropout} outside [0, 1)")
-    if raw.condition_fields is not None and not raw.condition_fields:
-        parser.error("--condition-fields given with no fields — omit the flag")
-    if raw.condition_fields is not None:
-        ordered = [f.value for f in ConditionField if f.value in raw.condition_fields]
-        if list(raw.condition_fields) != ordered:
-            parser.error(
-                f"--condition-fields must keep template order {ordered} "
-                f"(got {list(raw.condition_fields)})",
-            )
-    if raw.condition_dropout is not None and raw.condition_fields is None:
-        parser.error("--condition-dropout requires --condition-fields")
-    if raw.condition_dropout is not None and not 0.0 <= raw.condition_dropout < 1.0:
-        parser.error(
-            f"--condition-dropout {raw.condition_dropout} outside [0, 1)",
-        )
-    condition_dropout = (
-        raw.condition_dropout
-        if raw.condition_dropout is not None
-        else (0.1 if raw.condition_fields is not None else 0.0)
+    checkpoint_path = raw.resume if raw.resume is not None else raw.init_from
+    checkpoint = (
+        read_checkpoint_info(checkpoint_path) if checkpoint_path is not None else None
     )
-    subgoal_conditioned = raw.condition_fields is not None and (
-        "subgoal" in raw.condition_fields
-    )
-    if raw.subgoal_dropout is not None and not subgoal_conditioned:
-        parser.error("--subgoal-dropout requires subgoal in --condition-fields")
-    if raw.subgoal_dropout is not None and not 0.0 <= raw.subgoal_dropout < 1.0:
-        parser.error(f"--subgoal-dropout {raw.subgoal_dropout} outside [0, 1)")
-    subgoal_dropout = (
-        raw.subgoal_dropout
-        if raw.subgoal_dropout is not None
-        else (0.5 if subgoal_conditioned else 0.0)
-    )
-    aux_dropout = (
-        raw.aux_dropout
-        if raw.aux_dropout is not None
-        else (0.1 if raw.aux_fields is not None else 0.0)
-    )
-    if raw.field_dropout is not None and raw.aux_fields is None:
-        parser.error("--field-dropout requires --aux-fields (it drops requests)")
-    if raw.field_dropout is not None and not 0.0 <= raw.field_dropout < 1.0:
-        parser.error(f"--field-dropout {raw.field_dropout} outside [0, 1)")
-    field_dropout = (
-        raw.field_dropout
-        if raw.field_dropout is not None
-        else (0.1 if raw.aux_fields is not None else 0.0)
-    )
-    if raw.decoder == "ar_backbone":
-        # The backbone IS the architecture: decoder shape flags and the
-        # cross-attention schedule describe models this run doesn't build.
-        for flag, attribute in (
-            ("--decoder-hidden", "decoder_hidden"),
-            ("--decoder-heads", "decoder_heads"),
-            ("--decoder-intermediate", "decoder_intermediate"),
-            ("--decoder-cross-heads", "decoder_cross_heads"),
-            ("--stream-counts", "stream_counts"),
-        ):
-            if getattr(raw, attribute) != parser.get_default(attribute):
-                parser.error(
-                    f"{flag} sizes the flow/ar_fast decoders; ar_backbone "
-                    "IS the backbone — drop the flag",
-                )
-    if raw.conditioning_streams == "residual":
-        # Residual conditioning is a flow-expert architecture: the schedule
-        # is structural (layer i reads trunk layer i), so the K/V schedule
-        # knob has nothing to size.
-        if raw.decoder != "flow":
-            parser.error(
-                "--conditioning-streams residual is a flow-expert "
-                f"architecture; --decoder {raw.decoder} conditions on "
-                "K/V exports only",
-            )
-        if raw.stream_counts != parser.get_default("stream_counts"):
-            parser.error(
-                "--stream-counts schedules K/V conditioning; under "
-                "--conditioning-streams residual the schedule is structural "
-                "(one stream per prefix layer, 1:1 ascending) — drop the "
-                "flag",
-            )
-    for name, value in (
-        ("--backbone-text-lr", raw.backbone_text_lr),
-        ("--backbone-vision-lr", raw.backbone_vision_lr),
-    ):
-        if value is not None and value <= 0:
-            parser.error(
-                f"{name} {value} is not a usable learning rate — omit the "
-                "flag entirely to keep that component frozen",
-            )
-    if raw.backbone_vision_lr is not None and raw.backbone_text_lr is None:
-        print(
-            "NOTE: vision tower unfrozen with the text stack FROZEN - "
-            "gradients still traverse the frozen text stack to reach the "
-            "tower (activation cost without text adaptation). Legitimate "
-            "but unusual; the standard move is --backbone-text-lr alone.",
-            file=sys.stderr,
-            flush=True,
-        )
-    return TrainArgs(
-        train_data=tuple(raw.train_data),
-        exclude=tuple(raw.exclude),
-        fps=tuple(raw.fps) if raw.fps else None,
-        camera_counts=tuple(raw.camera_counts) if raw.camera_counts else None,
-        holdout_episodes=raw.holdout_episodes,
-        split_seed=raw.split_seed,
-        backbone=raw.backbone,
-        save_dir=raw.save_dir,
-        init_from=raw.init_from,
-        resume=raw.resume,
-        allow_same_seed_resume=raw.allow_same_seed_resume,
-        backbone_init_from=raw.backbone_init_from,
-        prompt_generate_bracket=raw.prompt_generate_bracket,
-        instruction=raw.instruction,
-        cameras=tuple(raw.cameras) if raw.cameras else None,
-        max_cameras=raw.max_cameras,
-        max_soft_tokens=raw.max_soft_tokens,
-        max_crops=raw.max_crops,
-        stream_counts=tuple(raw.stream_counts),
-        conditioning_streams=raw.conditioning_streams,
-        seam_stop_grad=raw.seam_stop_grad,
-        joint_ce=raw.joint_ce,
-        joint_unfrozen_seam=raw.joint_unfrozen_seam,
-        self_attention_mode=raw.self_attention_mode,
-        time_conditioning=raw.time_conditioning,
-        target_time_embed=raw.target_time_embed,
-        distill=raw.distill,
-        decoder=raw.decoder,
-        fast_tokenizer=raw.fast_tokenizer,
-        aux_fields=tuple(raw.aux_fields) if raw.aux_fields is not None else None,
-        aux_loss_weight=raw.aux_loss_weight,
-        aux_dropout=aux_dropout,
-        field_dropout=field_dropout,
-        aux_prompt_hash=raw.aux_prompt_hash,
-        camera_kind_dropout=raw.camera_kind_dropout,
-        instruction_augment=raw.instruction_augment,
-        condition_fields=(
-            tuple(raw.condition_fields) if raw.condition_fields is not None else None
-        ),
-        condition_dropout=condition_dropout,
-        subgoal_dropout=subgoal_dropout,
-        state_dropout=raw.state_dropout,
-        decoder_hidden=raw.decoder_hidden,
-        decoder_heads=raw.decoder_heads,
-        decoder_intermediate=raw.decoder_intermediate,
-        decoder_cross_heads=raw.decoder_cross_heads,
-        chunk_size=raw.chunk_size,
-        batch_size=raw.batch_size,
-        bucket_by_length=raw.bucket_by_length,
-        backward_chunks=raw.backward_chunks,
-        zero1=raw.zero1,
-        sync_save=raw.sync_save,
-        chunk_grad_allreduce=raw.chunk_grad_allreduce,
-        activation_checkpointing=raw.activation_checkpointing,
-        steps=raw.steps,
-        decoder_lr=raw.decoder_lr,
-        backbone_text_lr=raw.backbone_text_lr,
-        backbone_vision_lr=raw.backbone_vision_lr,
-        warmup_steps=raw.warmup_steps,
-        rewarmup_steps=raw.rewarmup_steps,
-        weight_decay=raw.weight_decay,
-        optimizer=raw.optimizer,
-        grad_clip=raw.grad_clip,
-        log_every=raw.log_every,
-        eval_every=raw.eval_every,
-        save_every=raw.save_every,
-        num_workers=raw.num_workers,
-        prefetch_factor=raw.prefetch_factor,
-        video_decoder_cache=raw.video_decoder_cache,
-        device=raw.device,
-        seed=raw.seed,
-        eval_samples=raw.eval_samples,
-        eval_seed=raw.eval_seed,
-        wandb_project=raw.wandb_project,
-        wandb_run_name=raw.wandb_run_name,
-    )
+    return TrainArgs.from_namespace(raw, parser, checkpoint=checkpoint)
 
 
 def main() -> int:

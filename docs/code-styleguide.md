@@ -109,9 +109,24 @@ cited, and the doc-cited `probe_rollout_vram.py` is lost outright
   defaulted is printed with the reason (see `select_datasets`' dropped
   list, `StatsAttachedDataset`'s substitution warnings). Silent fallbacks
   are bugs waiting to be discovered in a wandb chart.
-- Fail **early**: validate CLI combinations in `parse_args`
-  (`parser.error`), config compatibility before loading weights
-  (`ensure_matching_expert_config`), stats before training on them.
+- Fail **early**: validate CLI combinations at the parse boundary —
+  `parser.error` in `parse_args`, or for a large CLI a `from_namespace`
+  classmethod on the args dataclass that receives the parser
+  (`bijou.train.TrainArgs`: explicitness rules and checkpoint
+  resolution live there; value invariants of the RESOLVED config live
+  once in `__post_init__`, whose ValueError `from_namespace` translates
+  to `parser.error` — the CLI keeps its usage-line UX and direct
+  construction can never build an invalid config). Config compatibility
+  before loading weights (`ensure_matching_expert_config`), stats
+  before training on them.
+- **Checkpoint-inferred flags are refused, not re-validated**: under
+  `--resume` every architecture-determining flag errors at the door and
+  resolves from the checkpoint (`bijou.train.ARCH_FLAGS`, the write
+  side; `loading.CheckpointTrainArgs`, the read side — a sync test pins
+  the two). Under `--init-from`, inherited sections refuse their flags;
+  `--decoder` is the section-replacement declarator (stage-2). "Flag
+  says X, checkpoint says Y, code silently prefers one" is the drift
+  class this kills. (Added 2026-08-11, molmo_flow plan step 1.)
 - Error messages carry the *values* that failed and, where possible, the
   remedy (`"--eval-samples is required when --holdout-episodes > 0"`).
 - Exceptions for programming errors; `SystemExit` with a message for
