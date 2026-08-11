@@ -167,6 +167,28 @@ revision](posts/2026-08-06-panel-v2-amendment.md).
   — their `predict_action` end-to-end, bf16, 10-step Euler, seed =
   concat index; 25,800 frames at 352 f/min, ~1.3 GPU-h total
 
+## er_60k ENDPOINT @60000 — THE ER decision read ([pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md)): ER init WINS both legs
+
+- [endpoint eval report](https://mcobzarenco-fontaine-reports.static.hf.space/eval__fontaine_molmo2_er_60k_ddp4__step_060000__panel_curated_v0_k4l2.html)
+  — chained in-unit panel (rc 13:28Z 08-11, ~153/155 GPU-h run
+  total): fast path **5.7782/1.9898** core — the best banked trunk
+  number to date; narrated arm 5.83 (+0.055 pairing, 45% win); aux
+  holding 0.915 / progress MAE 0.060 / event 0.858 / visible 0.822
+- [paired decision reads JSON](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__er60k_endpoint_vs_banked_k4l2.json)
+  (`er15k_panel_reads.py`, key `bijou@60000`) — vs 40k endpoint
+  (6.0079) pooled **−0.2297** [CI95 −0.281, −0.154] BELOW-BASELINE;
+  vs 60k-cont (5.8602) pooled **−0.0821** [CI95 −0.126, −0.025]
+  **BELOW-BASELINE, CI excludes zero** = the pre-registered decision
+  read: the ER-init trunk beats both banked baselines at matched
+  panel class; state-copy integrity byte-match ×3. Rung trajectory
+  15k +1.52 → 35k +0.28 → 55k −0.18 → **60k −0.23** vs the 40k
+  endpoint. Rig-data effect read at endpoint: NOT split-compatible —
+  the panel contains no owner-rig repos (checked against the npz
+  `repo_id` identity), recorded as skipped per the pre-reg's
+  if-clause
+- Weights: [`step_060000`](https://huggingface.co/mcobzarenco/fontaine-checkpoints/tree/main/fontaine_molmo2_er_60k_ddp4/step_060000)
+  (weights-only, hub-uploaded 12:44Z in 42.0 s, commit 4ed3dd0)
+
 ## er_60k @55000 owner-requested panel, standard both-arms ([pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md), record-only)
 
 - [standard eval report](https://mcobzarenco-fontaine-reports.static.hf.space/eval__fontaine_molmo2_er_60k_ddp4__step_055000__panel_curated_v0_k4l2.html)

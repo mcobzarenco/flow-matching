@@ -6,6 +6,48 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-11 10:00–13:5xZ (real `date -u` at write: 13:33) —
+work session (chained, owned the er55k eval + the box endpoint): **THE
+ER DECISION READ LANDED — ER init WINS both legs; er_60k run CLOSED at
+~153/155 GPU-h; two owner exchanges answered in-session; events
+one-off queued.***
+
+**Status**: no live jobs — both GPUs FREE (first time since 08-09).
+`fontaine_molmo2_er_60k_ddp4` COMPLETE: train @60000 12:36Z + chained
+panel_v2 eval rc 13:28Z; babysit registry empty.
+
+**Steering**: OWNER 11:56Z (their AE impl off our AR trunk, every-layer
+KV) — ANSWERED 12:38Z (port supports it directly: shared trunk loader,
+per-layer KV cache, 4 pre-reg decisions named); owner 12:44Z says
+they'll do the main changes locally, wants a ping when 60k lands (DONE
+13:32Z). OWNER 12:03Z (aux vs 60k-cont) — ANSWERED 12:38Z (table:
+holding er-better +2.3, event cont-better +2.3, progress/visible
+tied). OWNER 12:44/12:45Z (events one-off report, many varied
+examples + constrained-decode probe) — plan ACKED in-channel 12:51Z,
+queued `er60k-events-oneoff-report`, next session's first item.
+
+**Done**: er55k-panel-eval CLOSED (rc=0 12:00Z ~2.2/8 GPU-h; 5.8269
+core, **first BELOW-baseline ER read** −0.181 vs 40k endpoint; parity
+with 60k-cont; posted 12:0xZ; fdd9aa3). er60k-endpoint-postprocess
+CLOSED (this commit): endpoint **5.7782/1.9898** core; **vs 40k
+endpoint −0.2297 [−0.281, −0.154]; vs 60k-cont −0.0821 [−0.126,
+−0.025] — BELOW-BASELINE both legs, CI excludes zero = ER init wins,
+new reference trunk**; rung trajectory +1.52 → +0.28 → −0.18 → −0.23;
+rig-data read not split-compatible (no owner-rig repos in the panel,
+skipped per pre-reg if-clause); step_060000 weights →
+fontaine-checkpoints (42.0s, 4ed3dd0); reports + decision JSON on
+fontaine-reports (curl 200); chart-led post + owner ping 13:32Z.
+Boot audit: orphaned queue.md regen committed (151a861).
+
+**Next**: `queue_cli.py next` → **er60k-events-oneoff-report** (owner
+12:44Z: model-vs-gt event confusion + galleries + none-banned
+constrained-decode probe on @60000; needs the narrated-arm
+generations dump first — instrument gap pinned at bijou/eval/cli.py
+`results.generations`). Then: ER results post (chart-led screen
+close, deliberately rolled); their-AE-on-our-trunk pre-reg pends the
+owner's main-changes ping. No dated boundaries pending —
+`queue.json` canonical.*
+
 *Updated 2026-08-11 09:42–10:0xZ (real `date -u` at write: 10:00) —
 tick (babysit): **owner exchange caught + executed in-session —
 action_mode explainer posted, @55000 owner-requested eval LIVE on the
@@ -75,6 +117,19 @@ stated reason (refill pends the ER decision read), only open item
 time-gated ~3 h out — judgment re-recorded per charter §6.*
 
 ## Utilization footer
+
+Session 2026-08-11 10:00–13:5xZ (work, exploit; ~2.2 local GPU-h
+er55k eval + ~2.5 box GPU-h endpoint window — er_60k run CLOSED
+~153/155 total): the chained owning session. Rode the er55k eval
+foreground to rc=0 12:00Z (5.8269 core, first BELOW-baseline ER read
+−0.181 vs 40k endpoint) and the box endpoint @60000 12:36Z + chained
+panel_v2 to rc 13:28Z. THE ER DECISION READ: 5.7782/1.9898; −0.2297
+vs 40k endpoint, −0.0821 vs 60k-cont, both CI-excludes-zero
+BELOW-BASELINE → ER init wins, new reference trunk. step_060000 →
+fontaine-checkpoints (4ed3dd0). Three owner exchanges answered
+in-session (AE-on-our-trunk feasibility, aux-vs-cont table, events
+one-off plan); er60k-events-oneoff-report queued. Both babysit
+entries pruned; registry empty; both GPUs free at close.
 
 Session 2026-08-11 09:42–10:0xZ (tick, babysit; ~0.2 new local GPU-h
 — box rides 139.9/155 projected, local eval-er55k-panel LIVE ≤8

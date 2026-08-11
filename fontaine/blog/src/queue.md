@@ -2,13 +2,13 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-11T09:57:00Z
+**Updated:** 2026-08-11T13:33:00Z
 
-**Depth call:** depth 1 open at 07:1xZ 08-11 (stated reason): er60k-endpoint-postprocess is the only open item and is time-gated on the box endpoint @60000 ~12:3xZ (chained panel_v2 rides in-unit; the postprocess session owns the paired ER decision reads). molmoact2-firstclass-port CLOSED this session (item 4 G4-PASS: our-trainer AE fine-tune, all four frozen clauses, ~1.9/6 GPU-h, port total ~2.6/8 — all owner-GO'd scope 1-4 done). Lit refill lane owner-paused (00:23Z 08-10); new pre-registrations deliberately pend the ER endpoint decision read, which sets the next arm (fjoint venue, vu5k window, or ER-trunk follow-ons).
+**Depth call:** depth 1 open at 13:3xZ 08-11 (stated reason): er60k-events-oneoff-report (owner request 12:44Z, plan acked in-channel 12:51Z) is the next session's first item — the only open item because the ER decision read JUST landed (13:2xZ, ER wins both legs) and sets the follow-on menu: owner is doing the every-layer-KV action-expert changes in main locally (12:44Z, pre-reg pends their ping), ER-trunk results post + further arms pend a fresh prioritization against that. Lit refill lane owner-paused (00:23Z 08-10).
 
-**9 open** (Live 2 · Queued 1 · Blocked 6 · Done 106)
+**8 open** (Live 1 · Queued 1 · Blocked 6 · Done 108)
 
-## 🔴 Live (2)
+## 🔴 Live (1)
 
 *running right now (GPU or owner-window)*
 
@@ -26,33 +26,19 @@ OWNER RUN LIVE (launched 22:47-53Z 08-09, unit fontaine-er-60k): fontaine_molmo2
 
 ---
 
-**`er55k-panel-eval`** · `gpu-local`
-
-OWNER REQUEST 09:41:04Z 08-11 ('eval the 55000 step checkpoint that just landed on the box as before'): step_055000 -&gt; hub (42.9s, commit 99a1ae2, weights-only) + local dl (13.7s) + STANDARD both-arms panel eval LIVE local H100 u…
-
-**boundary:** eval rc ~11:5xZ 08-11; babysit entry er55k_panel carries the on-completion contract (gate 8 GPU-h, ~2.2 class) · [pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md)
-
-<details><summary>full record</summary>
-
-OWNER REQUEST 09:41:04Z 08-11 ('eval the 55000 step checkpoint that just landed on the box as before'): step_055000 -&gt; hub (42.9s, commit 99a1ae2, weights-only) + local dl (13.7s) + STANDARD both-arms panel eval LIVE local H100 unit eval-er55k-panel launched 09:48:27Z (er35k recipe verbatim, no --generate; first poll 98% util/30.5G). REMAINING (owning session, ride to rc ~11:5xZ with foreground polls, NEVER a Monitor): rc=0 -&gt; er15k_panel_reads.py --stem-cand reports/eval__fontaine_molmo2_er_60k_ddp4__step_055000__panel_curated_v0_k4l2 --out reports/analysis__er55k_panel_vs_banked_k4l2.json (fast-path key bijou@55000, CLASS-MATCHED vs banked 40k 6.0079 + 60k-cont 5.8602; 35k precedent 6.2892 / +0.2813) -&gt; report+json+analysis to fontaine-reports (curl 200) + reports.md + numbers in-channel -&gt; prune babysit entry er55k_panel. Record-only; nothing gates the box run. NOTE: the box endpoint @60000 ~12:4xZ lands right after — the same owning session likely takes er60k-endpoint-postprocess next.
-
-</details>
-
----
-
 ## 🟢 Queued (1)
 
 *ready — waiting on a window or a boundary*
 
-**`er60k-endpoint-postprocess`** · `gpu-box`
+**`er60k-events-oneoff-report`** · `gpu-local`
 
-er_60k endpoint postprocess (pre-reg posts/2026-08-09-prereg-molmo2-er-60k.md): box hits @60000 ~12:3xZ 08-11 -&gt; chained panel_v2 k4l2 eval runs in-unit (--report + npz)
+OWNER REQUEST 12:44:35Z + 12:45:13Z 08-11 (one-off, 'post a neat html report', 'I want to see many varied examples of events'): quantitative + qualitative investigation of the events the model generates vs ground truth (weak judg…
 
-**boundary:** Time-sensitive: endpoint ~12:3xZ 08-11 at ~26-27 f/min from 45,040 @ 03:16Z; the chained eval adds ~1-2 GPU-h inside the 155 gate (113.7 projected at @45000). Next save boundary @50000 ~06:2xZ (tick-owned). · [pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md)
+**boundary:** Owner-requested one-off; GPU ~1-2 h class on the local H100, gate &lt;= 4 GPU-h; needs step_060000 local (rides the endpoint-postprocess dl or re-pulls from fontaine-checkpoints commit 4ed3dd0). Next session's first item unless owner bumps. · [pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md)
 
 <details><summary>full record</summary>
 
-er_60k endpoint postprocess (pre-reg posts/2026-08-09-prereg-molmo2-er-60k.md): box hits @60000 ~12:3xZ 08-11 -&gt; chained panel_v2 k4l2 eval runs in-unit (--report + npz). Owning session: ride the chained eval to rc in-turn (foreground polls, NEVER a Monitor), then paired CI95 reads vs banked 40k endpoint (6.0079) + 60k-continuation (5.8602) panels — THE ER decision read (in-run evidence so far: 20 straight negative matched legs to @40000, er − 40k endpoint-matched −0.67, run-best 5.10@44500 vs 40k best-ever 5.91; all record-only, panel decides) -&gt; HTML report + JSON + analysis to fontaine-reports (curl-audit every link 200) + reports.md + chart-led in-channel post + owner ping. Also: rig-data effect read at endpoint if split-compatible (held-out rig episodes, natural share 0.19%). Then prune the babysit entry and decide checkpoint upload (banked/consumable -&gt; fontaine-checkpoints same-session per standing rule; weights-only unless seeding training).
+OWNER REQUEST 12:44:35Z + 12:45:13Z 08-11 (one-off, 'post a neat html report', 'I want to see many varied examples of events'): quantitative + qualitative investigation of the events the model generates vs ground truth (weak judge labels), on the fresh @60000 endpoint checkpoint. Scope: (1) INSTRUMENT: extend the narrated arm to dump per-frame (identity triple, generated event string, weak-label event) — the standard eval computes event acc in-memory and discards generations (bijou/eval/cli.py results.generations only fills from NarratedBijouPolicy and is never written; same gap class as the 35k aux arm); (2) DUMP PASS: one-off generation pass on step_060000 (local disk after the endpoint dl) over the ~8,987 labeled panel frames; (3) QUANT: full model-class x gt-class event confusion INCLUDING none/none — counts + per-class precision/recall + the (model none, gt event) miss bucket sized exactly; (4) QUAL: frame galleries per confusion bucket (hit / miss / false alarm / class swap) — camera image + generated line vs gt, MANY varied examples across repos/tasks; (5) CONSTRAINED PROBE: on (gt event, model none) frames re-decode the event slot with 'none' banned (1-step constrained decode, logit mask on the event slot) — does the forced guess match gt class ('didn't see it' vs 'saw it, under-threshold'); (6) neat standalone HTML -&gt; fontaine-reports (curl 200) + link in-channel. Plan acked in-channel 12:51Z. One-off: record-only, no run gating. PREREG NOTE: rides the er-60k pre-reg like the er15k/35k/55k owner-requested reads; a short launch note with the pinned invocation + confusion/probe spec posts in-channel before the GPU minute, per charter.
 
 </details>
 
@@ -144,7 +130,7 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 
 ---
 
-## ✅ Done (106)
+## ✅ Done (108)
 
 *closed — the full record stays in each fold*
 
@@ -1618,6 +1604,20 @@ OWNER GO 20:06:37Z 08-10 ('Let's do it, 1 through 4' on the 19:5xZ in-channel es
 
 ---
 
+**`er60k-endpoint-postprocess`** · `gpu-box`
+
+er_60k endpoint postprocess (pre-reg posts/2026-08-09-prereg-molmo2-er-60k.md): box hits @60000 ~12:3xZ 08-11 -&gt; chained panel_v2 k4l2 eval runs in-unit (--report + npz)
+
+**boundary:** CLOSED 13:3xZ 08-11 work session (owning chained session rode endpoint + eval foreground): train hit @60000 12:36Z rc-clean (~153/155 GPU-h incl. chained eval); final async save published; chained panel_v2 k4l2 eval rc 13:28Z (4-way shard). THE ER DECISION READ: endpoint fast path 5.7782/1.9898 core (best banked trunk to date); vs 40k endpoint 6.0079 pooled -0.2297 [CI95 -0.281, -0.154] BELOW-BASELINE; vs 60k-cont 5.8602 pooled -0.0821 [CI95 -0.126, -0.025] BELOW-BASELINE CI excludes zero -&gt; ER INIT WINS BOTH LEGS, the ER trunk is the new reference trunk. Rung trajectory vs 40k endpoint: 15k +1.52 / 35k +0.28 / 55k -0.18 / 60k -0.23. Aux endpoint n~8,987: holding 0.915 / progress 0.060 / event 0.858 / visible 0.822; pairing +0.055 (45%). Rig-data effect read NOT split-compatible (panel repo_id identity contains no owner-rig repos) — skipped per the pre-reg if-clause. Artifacts on fontaine-reports (curl 200), reports.md endpoint section, chart-led in-channel post + owner ping 13:32Z (init-delta chart attached); step_060000 weights-only on fontaine-checkpoints (42.0s, commit 4ed3dd0, uploaded mid-eval); babysit entry er_60k pruned. Results blog post (chart-led consolidated ER-screen close) deliberately rolled to the next session — owner has headline + report; the events one-off (owner 12:44Z) takes priority next. · [pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md)
+
+<details><summary>full record</summary>
+
+er_60k endpoint postprocess (pre-reg posts/2026-08-09-prereg-molmo2-er-60k.md): box hits @60000 ~12:3xZ 08-11 -&gt; chained panel_v2 k4l2 eval runs in-unit (--report + npz). Owning session: ride the chained eval to rc in-turn (foreground polls, NEVER a Monitor), then paired CI95 reads vs banked 40k endpoint (6.0079) + 60k-continuation (5.8602) panels — THE ER decision read (in-run evidence so far: 20 straight negative matched legs to @40000, er − 40k endpoint-matched −0.67, run-best 5.10@44500 vs 40k best-ever 5.91; all record-only, panel decides) -&gt; HTML report + JSON + analysis to fontaine-reports (curl-audit every link 200) + reports.md + chart-led in-channel post + owner ping. Also: rig-data effect read at endpoint if split-compatible (held-out rig episodes, natural share 0.19%). Then prune the babysit entry and decide checkpoint upload (banked/consumable -&gt; fontaine-checkpoints same-session per standing rule; weights-only unless seeding training).
+
+</details>
+
+---
+
 **`er35k-aux-panel-eval`** · `gpu-local`
 
 OWNER REQUEST 20:47:38Z 08-10 (35k -&gt; hub + aux-enabled eval report on local GPU)
@@ -1627,6 +1627,20 @@ OWNER REQUEST 20:47:38Z 08-10 (35k -&gt; hub + aux-enabled eval report on local 
 <details><summary>full record</summary>
 
 OWNER REQUEST 20:47:38Z 08-10 (35k -&gt; hub + aux-enabled eval report on local GPU). AUX ARM DONE 22:30:45Z rc=0 (~1.5/8 GPU-h): hub upload 42.4s + local dl 31.1s + eval unit eval-er35k-aux ~250 f/min; core 6.3425/2.3770 (aux-narrated decode); paired reads banked (vs 40k endpoint +0.335 [+0.247,+0.387] CROSS-CLASS narrated-vs-fastpath; vs 60k-cont +0.482); report+json+analysis on fontaine-reports; numbers in-channel 22:3xZ. HARNESS GAP FOUND: explicit --generate makes the MAIN arm narrate but discards its generations -&gt; per-field aux metrics (holding/progress/event/visible) empty + no base-vs-narrated pairing (bijou/eval/cli.py results.generations only fills from NarratedBijouPolicy). STANDARD EVAL RELAUNCHED 22:33:30Z unit eval-er35k-panel (both arms + full aux metrics, the er15k report shape, ETA ~01:0xZ; babysit entry er35k_panel). REMAINING (next session): rc=0 -&gt; class-matched reads via er15k_panel_reads.py (key bijou@35000, fast path vs banked 40k 6.0079 + 60k-cont 5.8602 — supersedes the cross-class read) -&gt; report/json/analysis to fontaine-reports + reports.md + in-channel numbers -&gt; prune babysit entry. OPTIONAL instrument-debt follow-up (own small item if pursued): retain main-policy generations under --generate so aux metrics survive without the second pass.
+
+</details>
+
+---
+
+**`er55k-panel-eval`** · `gpu-local`
+
+OWNER REQUEST 09:41:04Z 08-11 ('eval the 55000 step checkpoint that just landed on the box as before'): step_055000 -&gt; hub (42.9s, commit 99a1ae2, weights-only) + local dl (13.7s) + STANDARD both-arms panel eval LIVE local H100 u…
+
+**boundary:** CLOSED 12:1xZ 08-11 work session (owning chained session rode it foreground to rc): eval rc=0 12:00:11Z (~2.2/8 GPU-h). Class-matched reads (key bijou@55000, core 17,204): fast path 5.8269/2.0172; vs 40k endpoint 6.0079 pooled -0.1810 [CI95 -0.232, -0.105] BELOW-BASELINE — first below-baseline read for the ER trunk (@35000 was +0.281 above); vs 60k-cont 5.8602 -0.0334 [-0.078, +0.024] CI-SPANS-0 = parity at 92% training; state-copy byte-match x3. Aux n~8,987: holding 0.920 / progress MAE 0.060 / event 0.858 / visible 0.822 (holding+progress improved from 35k, event -0.017); narration pairing +0.039 chunk, 46% win (er15k/er35k class). Artifacts on fontaine-reports (curl 200 x3) + reports.md @55000 section + numbers in-channel 12:0xZ; babysit entry er55k_panel pruned. Record-only as pre-registered; the @60000 endpoint panel (~12:3xZ) is the ER decision read. · [pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md)
+
+<details><summary>full record</summary>
+
+OWNER REQUEST 09:41:04Z 08-11 ('eval the 55000 step checkpoint that just landed on the box as before'): step_055000 -&gt; hub (42.9s, commit 99a1ae2, weights-only) + local dl (13.7s) + STANDARD both-arms panel eval LIVE local H100 unit eval-er55k-panel launched 09:48:27Z (er35k recipe verbatim, no --generate; first poll 98% util/30.5G). REMAINING (owning session, ride to rc ~11:5xZ with foreground polls, NEVER a Monitor): rc=0 -&gt; er15k_panel_reads.py --stem-cand reports/eval__fontaine_molmo2_er_60k_ddp4__step_055000__panel_curated_v0_k4l2 --out reports/analysis__er55k_panel_vs_banked_k4l2.json (fast-path key bijou@55000, CLASS-MATCHED vs banked 40k 6.0079 + 60k-cont 5.8602; 35k precedent 6.2892 / +0.2813) -&gt; report+json+analysis to fontaine-reports (curl 200) + reports.md + numbers in-channel -&gt; prune babysit entry er55k_panel. Record-only; nothing gates the box run. NOTE: the box endpoint @60000 ~12:4xZ lands right after — the same owning session likely takes er60k-endpoint-postprocess next.
 
 </details>
 
