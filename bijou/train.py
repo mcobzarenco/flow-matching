@@ -91,6 +91,7 @@ from .data import (
     EpisodeSplit,
     LengthBucketedBatchSampler,
     StatsAttachedDataset,
+    parse_repeat_specs,
     select_datasets,
     worker_init,
 )
@@ -315,6 +316,14 @@ class TrainArgs:
     # stay undecayed as everywhere else. Defaulted (like sync_save) so
     # checkpoints predating the flag replay their train_args cleanly.
     optimizer: str = "adamw"
+    # Raw --dataset-repeat PATTERN=COUNT specs (bijou.data.parse_repeat_specs
+    # parses at use): replicate matching datasets in the concatenated train
+    # set — the oversample lever for vanishing-share datasets. Training-only
+    # (the in-train holdout eval never repeats); changes the concatenated
+    # frame indexing, so a resume must pass the identical spec. Defaulted
+    # (like sync_save) so checkpoints predating the flag replay their
+    # train_args cleanly.
+    dataset_repeat: tuple[str, ...] = ()
 
     @property
     def backbone_trained(self) -> bool:
@@ -1927,6 +1936,18 @@ def parse_args() -> TrainArgs:
         help="fnmatch patterns against <user>/<dataset> repo ids to skip",
     )
     parser.add_argument(
+        "--dataset-repeat",
+        nargs="*",
+        default=[],
+        metavar="PATTERN=COUNT",
+        help="oversample matching datasets: fnmatch PATTERN against "
+        "<user>/<dataset> repo ids, COUNT (>= 1) replicas in the "
+        "concatenated train set (first matching spec wins; a spec matching "
+        "no selected dataset is fatal). Training-only — the in-train "
+        "holdout eval never repeats. Changes the concatenated frame "
+        "indexing: resumes must pass the identical spec",
+    )
+    parser.add_argument(
         "--fps",
         type=float,
         nargs="+",
@@ -2747,9 +2768,16 @@ def parse_args() -> TrainArgs:
             file=sys.stderr,
             flush=True,
         )
+    try:
+        # Fail fast, before any data/model build; select_datasets re-parses
+        # at use (TrainArgs keeps the raw strings for checkpoint replay).
+        parse_repeat_specs(tuple(raw.dataset_repeat))
+    except ValueError as error:
+        raise SystemExit(str(error)) from None
     return TrainArgs(
         train_data=tuple(raw.train_data),
         exclude=tuple(raw.exclude),
+        dataset_repeat=tuple(raw.dataset_repeat),
         fps=tuple(raw.fps) if raw.fps else None,
         camera_counts=tuple(raw.camera_counts) if raw.camera_counts else None,
         holdout_episodes=raw.holdout_episodes,
@@ -2968,17 +2996,31 @@ def main() -> int:
         load_episode_annotations=(
             args.instruction_augment > 0 or args.condition_fields is not None
         ),
+        repeats=parse_repeat_specs(args.dataset_repeat),
     )
     action_dim, state_dim = selection.action_dim, selection.state_dim
     per_dataset_stats = selection.per_dataset_stats
     dataset = selection.concat()
     if is_main:
+        # per_dataset_stats counts unique datasets (selection.datasets
+        # carries --dataset-repeat replicas); frame count is effective.
         print(
-            f"train data: {len(selection.datasets)} datasets, "
+            f"train data: {len(selection.per_dataset_stats)} datasets, "
             f"{selection.total_episodes} episodes, {len(dataset)} frames, "
             f"action/state dim {action_dim}/{state_dim}",
             flush=True,
         )
+        # len(dataset) above already includes the replicas, so the share
+        # printed here is the effective (post-repeat) mixture share.
+        unique_frames = {sub.dataset.repo_id: len(sub) for sub in selection.datasets}
+        for repo_id, count in selection.repeats.items():
+            frames = unique_frames[repo_id]
+            print(
+                f"dataset repeat: {repo_id} x{count} ({frames} -> "
+                f"{count * frames} frames, {count * frames / len(dataset):.2%} "
+                "effective share)",
+                flush=True,
+            )
         if args.holdout_episodes > 0:
             print(
                 f"episode holdout: {selection.held_out_episodes} episodes "
@@ -3105,8 +3147,11 @@ def main() -> int:
             flush=True,
         )
     if is_main and (args.instruction_augment > 0 or args.condition_fields):
+        # Deduped by repo id: selection.datasets carries --dataset-repeat
+        # replicas of the same objects.
         labeled_episodes = sum(
-            len(dataset.episode_annotations) for dataset in selection.datasets
+            len(sub.episode_annotations)
+            for sub in {sub.dataset.repo_id: sub for sub in selection.datasets}.values()
         )
         print(
             f"episode annotations: {labeled_episodes} labeled episode(s); "

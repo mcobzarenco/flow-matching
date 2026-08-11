@@ -433,6 +433,10 @@ class DataSelection:
     # datasets whose kinds file matches their own stamp's prompt hash;
     # missing repos/cameras render "unknown" in the prompt.
     camera_kinds: dict[str, dict[str, str]]
+    # Resolved --dataset-repeat replica counts (repo id → count > 1, empty
+    # without the flag). ``datasets`` already contains the replicas;
+    # ``per_dataset_stats``/``total_episodes`` stay per unique dataset.
+    repeats: dict[str, int]
 
     def concat(self) -> torch.utils.data.ConcatDataset[dict[str, Any]]:
         return torch.utils.data.ConcatDataset(self.datasets)
@@ -590,6 +594,67 @@ def camera_kinds_of(
     return kinds
 
 
+def parse_repeat_specs(specs: Sequence[str]) -> tuple[tuple[str, int], ...]:
+    """Parse ``--dataset-repeat`` ``PATTERN=COUNT`` specs: an fnmatch
+    pattern against ``<user>/<dataset>`` repo ids and an integer replica
+    count >= 1 (1 is an explicit no-op)."""
+    parsed: list[tuple[str, int]] = []
+    for spec in specs:
+        pattern, sep, raw_count = spec.rpartition("=")
+        if not sep or not pattern:
+            raise ValueError(f"--dataset-repeat {spec!r}: expected PATTERN=COUNT")
+        try:
+            count = int(raw_count)
+        except ValueError:
+            raise ValueError(
+                f"--dataset-repeat {spec!r}: COUNT {raw_count!r} is not an integer",
+            ) from None
+        if count < 1:
+            raise ValueError(f"--dataset-repeat {spec!r}: COUNT must be >= 1")
+        parsed.append((pattern, count))
+    return tuple(parsed)
+
+
+def resolve_repeats(
+    specs: tuple[tuple[str, int], ...],
+    repo_ids: Sequence[str],
+) -> dict[str, int]:
+    """Replica counts per selected repo id. The first spec matching a repo
+    wins (CLI order is precedence); counts of 1 resolve to no entry. A spec
+    matching NO selected repo is fatal — a silently unapplied oversample
+    (typo, or the target dataset dropped by a filter) would corrupt the
+    mixture the run was registered with.
+    """
+    counts: dict[str, int] = {}
+    for repo_id in repo_ids:
+        for pattern, count in specs:
+            if fnmatch(repo_id, pattern):
+                if count > 1:
+                    counts[repo_id] = count
+                break
+    for pattern, _ in specs:
+        if not any(fnmatch(repo_id, pattern) for repo_id in repo_ids):
+            raise ValueError(
+                f"--dataset-repeat pattern {pattern!r} matches no selected "
+                "dataset (typo, or its target was dropped by a filter — "
+                "see the drop list)",
+            )
+    return counts
+
+
+def repeat_datasets(
+    datasets: list[StatsAttachedDataset],
+    counts: dict[str, int],
+) -> list[StatsAttachedDataset]:
+    """Replicate selection entries per ``counts`` — the same objects, so no
+    extra host memory and a shared substitution counter. The concatenated
+    index space (and everything derived from it: the shuffle, the
+    length-bucket keys, ``DistributedSampler``) sees each repeated frame
+    ``count`` times per epoch, which IS the oversample.
+    """
+    return [sub for sub in datasets for _ in range(counts.get(sub.dataset.repo_id, 1))]
+
+
 def select_datasets(
     paths: tuple[Path, ...],
     exclude: tuple[str, ...],
@@ -602,6 +667,7 @@ def select_datasets(
     required_prompt_hash: str | None = None,
     *,
     load_episode_annotations: bool = False,
+    repeats: tuple[tuple[str, int], ...] = (),
 ) -> DataSelection:
     """Discover, validate and wrap datasets; drop the incompatible loudly.
 
@@ -627,6 +693,15 @@ def select_datasets(
     keep all (the historical behavior). NOTE: any filter changes the
     concatenated frame indexing, so eval scores are only comparable
     between runs using the same filter.
+
+    ``repeats`` (parsed ``--dataset-repeat`` specs, see
+    ``parse_repeat_specs``/``resolve_repeats``) replicates matching
+    datasets in the returned selection AFTER all guards and the episode
+    split — the oversample lever for vanishing-share datasets (a repo at
+    natural share 0.19% cannot register in a mixture). Training-only by
+    convention: eval call sites must not pass it. The same
+    frame-indexing caveat applies, and a resume must pass the identical
+    spec.
     """
     if episode_split is EpisodeSplit.HOLDOUT and holdout_fraction <= 0:
         raise ValueError("episode_split=HOLDOUT requires holdout_fraction > 0")
@@ -789,6 +864,10 @@ def select_datasets(
         reasons = "\n".join(f"  - {reason}" for reason in dropped)
         raise ValueError(f"no compatible datasets selected; dropped:\n{reasons}")
 
+    repeat_counts = resolve_repeats(repeats, tuple(selected_dirs))
+    if repeat_counts:
+        datasets = repeat_datasets(datasets, repeat_counts)
+
     return DataSelection(
         annotated_repos=frozenset(annotated_repos),
         annotation_stamps=tuple(
@@ -798,6 +877,7 @@ def select_datasets(
             ),
         ),
         camera_kinds=camera_kinds,
+        repeats=repeat_counts,
         datasets=datasets,
         per_dataset_stats=per_dataset_stats,
         lerobot_stats=lerobot_stats,
