@@ -78,6 +78,9 @@ def _shard(
         sensitivity_deltas=[float(len(frame_ids))],
         report_samples={},
         generations={},
+        generation_identity={
+            frame_ids[0]: (repo_id, frame_ids[0], 10 * frame_ids[0], "task"),
+        },
         subgoal_records={},
         subgoal_candidates={},
         subgoal_picks={},
@@ -112,6 +115,11 @@ def test_merge_shards_sorts_and_is_world_size_invariant() -> None:
         s.index for s in merged.scores["bijou"]
     ]
     assert merged.outcomes == {0: "success", 5: "success", 3: None, 8: None}
+    # The generation-identity map unions across shards like the labels.
+    assert merged.generation_identity == {
+        0: ("user/a", 0, 0, "task"),
+        3: ("user/b", 3, 30, "task"),
+    }
     assert merged.holding_labels == {0: 1.0, 3: 1.0}
     assert merged.event_labels == {0: "none", 3: "none"}
     assert merged.visible_labels == {

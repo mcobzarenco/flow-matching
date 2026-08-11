@@ -499,6 +499,12 @@ class BijouPolicy:
         # ensembled batch — and always None at draws=1.
         self.last_draws: list[Tensor] | None = None
         self.generate = generate
+        # Per-frame generations under an EXPLICIT --generate (the main
+        # arm narrates; no second pass runs) — the NarratedBijouPolicy
+        # retention pattern, so aux metrics and --dump-generations
+        # survive without re-running a narrated arm. Empty when
+        # generate=() (the deployment fast path emits no value lines).
+        self.generations: dict[int, AuxGeneration] = {}
         if noise_key not in NOISE_KEYS:
             raise SystemExit(
                 f"--noise-key must be one of {NOISE_KEYS}, got {noise_key!r}",
@@ -901,7 +907,10 @@ class BijouPolicy:
 
     @torch.no_grad()
     def predict(self, items: list[dict[str, Any]], indices: list[int]) -> list[Tensor]:
-        chunks, _generations = self.predict_with_text(items, indices)
+        chunks, generations = self.predict_with_text(items, indices)
+        if self.generate and generations is not None:
+            for index, generation in zip(indices, generations, strict=True):
+                self.generations[index] = generation
         return chunks
 
 

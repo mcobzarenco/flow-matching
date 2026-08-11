@@ -46,6 +46,7 @@ import torch
 
 from ..aux_text import (
     EVENT_NONE,
+    HOLDING_VALUES,
     AuxField,
     aux_label_text,
     label_values,
@@ -711,6 +712,17 @@ def parse_args() -> argparse.Namespace:
         "dispersion, best-of-N bounds); the prediction path is untouched",
     )
     parser.add_argument(
+        "--dump-generations",
+        type=Path,
+        default=None,
+        help="write every retained per-frame aux generation as JSON "
+        "(frame identity triple, instruction, raw generated text, "
+        "parsed field values, weak judge labels where present) — from "
+        "the narrated pass, or from the main arm under an explicit "
+        "--generate. The standard eval otherwise consumes generations "
+        "in-memory (aux metrics) and discards the strings",
+    )
+    parser.add_argument(
         "--report",
         type=Path,
         default=None,
@@ -760,6 +772,17 @@ def parse_args() -> argparse.Namespace:
         parser.error(
             "--ar-temperature samples the bijou policy's AR action "
             "decode — it requires --checkpoint",
+        )
+    if args.dump_generations is not None and args.checkpoint is None:
+        parser.error(
+            "--dump-generations serializes the bijou policy's aux "
+            "generations — it requires --checkpoint",
+        )
+    if args.dump_generations is not None and args.ar_temperature is not None:
+        parser.error(
+            "--dump-generations needs a greedy aux voice, but the "
+            "narrated pass is skipped under --ar-temperature — nothing "
+            "would be retained",
         )
     if args.noise_tickets is not None:
         if args.checkpoint is None:
@@ -1349,6 +1372,9 @@ def main() -> int:
     progress_labels: dict[int, float] = {}
     event_labels: dict[int, str] = {}
     visible_labels: dict[int, str] = {}
+    # --dump-generations: frame identity + instruction per scored index
+    # (generations alone are index-keyed and unaddressable offline).
+    generation_identity: dict[int, tuple[str, int, int, str]] = {}
     # Q3: measured iff outcome-conditioning is trained AND the run isn't
     # already a manual counterfactual — nor a subgoal-mode probe (its
     # rows are conditioned reads; flipping outcome on top would measure
@@ -1379,6 +1405,13 @@ def main() -> int:
                 event_labels[index] = event
             if (visible := texts.get(AuxField.VISIBLE)) is not None:
                 visible_labels[index] = visible
+            if args.dump_generations is not None:
+                generation_identity[index] = (
+                    str(item["repo_id"]),
+                    int(item["episode_index"]),
+                    int(item["frame_index"]),
+                    str(item["task"]),
+                )
         batch_predictions: dict[str, list[torch.Tensor]] = {}
         for policy in policies:
             start = time.perf_counter()
@@ -1463,7 +1496,13 @@ def main() -> int:
                     {**item, "condition_outcome": "success"} for _, item in flipped
                 ]
                 forced_indices = [batch_indices[position] for position, _ in flipped]
-                forced = bijou_policy.predict(forced_items, forced_indices)
+                # predict_with_text, NOT predict: the counterfactual
+                # pass must never overwrite retained generations with
+                # success-forced value lines (--generate retention).
+                forced, _ = bijou_policy.predict_with_text(
+                    forced_items,
+                    forced_indices,
+                )
                 for (position, item), prediction in zip(flipped, forced, strict=True):
                     base = batch_predictions[bijou_policy.name][position]
                     valid = ~item["action_is_pad"]
@@ -1495,8 +1534,11 @@ def main() -> int:
         sensitivity_deltas=sensitivity_deltas,
         report_samples=report_samples,
         generations=(
-            narrated_policy.generations if narrated_policy is not None else {}
+            narrated_policy.generations
+            if narrated_policy is not None
+            else (bijou_policy.generations if bijou_policy is not None else {})
         ),
+        generation_identity=generation_identity,
         subgoal_records=(pass1_policy.records if pass1_policy is not None else {}),
         subgoal_candidates=(
             pass1_policy.candidates if pass1_policy is not None else {}
@@ -1547,6 +1589,79 @@ def main() -> int:
             # Core-panel membership (all-True without a sample plan).
             "core": np.array([i in core_indices for i in results.dump_index]),
         }
+
+    if args.dump_generations is not None:
+        if not results.generations:
+            raise SystemExit(
+                "--dump-generations retained nothing — no narrated pass "
+                "ran and no explicit --generate was set (or the "
+                "checkpoint has no aux fields)",
+            )
+        generation_rows: list[dict[str, Any]] = []
+        for index in sorted(results.generations):
+            generation = results.generations[index]
+            identity = results.generation_identity.get(index)
+            labels: dict[str, Any] = {}
+            if (numeric := results.holding_labels.get(index)) is not None:
+                labels["holding"] = HOLDING_VALUES[int(numeric)]
+            if (numeric := results.progress_labels.get(index)) is not None:
+                labels["progress"] = numeric
+            if (label := results.event_labels.get(index)) is not None:
+                labels["event"] = label
+            if (label := results.visible_labels.get(index)) is not None:
+                labels["visible"] = label
+            generation_rows.append(
+                {
+                    "index": index,
+                    "repo_id": identity[0] if identity else None,
+                    "episode_index": identity[1] if identity else None,
+                    "frame_index": identity[2] if identity else None,
+                    "instruction": identity[3] if identity else None,
+                    "core": index in core_indices,
+                    "text": generation.text,
+                    "generated": {
+                        "subgoal": generation.subgoal,
+                        "holding": generation.holding,
+                        "progress": generation.progress,
+                        "event": generation.event,
+                        "visible": generation.visible,
+                    },
+                    "labels": labels,
+                },
+            )
+        assert bijou_policy is not None  # --dump-generations requires --checkpoint
+        args.dump_generations.parent.mkdir(parents=True, exist_ok=True)
+        args.dump_generations.write_text(
+            json.dumps(
+                {
+                    "checkpoint": str(args.checkpoint),
+                    "policy": (
+                        narrated_policy.name
+                        if narrated_policy is not None
+                        else bijou_policy.name
+                    ),
+                    "requested_fields": [
+                        f.value
+                        for f in (
+                            narrated_policy.fields
+                            if narrated_policy is not None
+                            else bijou_policy.generate
+                        )
+                    ],
+                    "sample_plan": (
+                        str(args.sample_plan) if args.sample_plan is not None else None
+                    ),
+                    "seed": args.seed,
+                    "frames": len(generation_rows),
+                    "rows": generation_rows,
+                },
+                indent=1,
+            ),
+        )
+        print(
+            f"wrote {args.dump_generations} ({len(generation_rows)} generation rows)",
+            flush=True,
+        )
 
     if args.dump_predictions is not None:
         payload: dict[str, np.ndarray] = dump_identity()
@@ -1804,7 +1919,10 @@ def main() -> int:
     event_frames = 0
     visible_accuracy: float | None = None
     visible_frames = 0
-    if narrated_policy is not None:
+    # Any retained greedy aux voice feeds the metrics: the narrated
+    # pass, or the main arm under an explicit --generate (whose
+    # generations BijouPolicy now retains — the 35k aux-arm gap).
+    if results.generations:
         holding_hits = [
             int(generation.holding == bool(int(label)))
             for index, label in results.holding_labels.items()
@@ -1910,10 +2028,13 @@ def main() -> int:
             "(outcome forced to 'success' vs true-label conditioning)",
             flush=True,
         )
-    if narrated_policy is not None and holding_frames + progress_frames > 0:
+    if results.generations and holding_frames + progress_frames > 0:
         nan = float("nan")
+        aux_voice = (
+            narrated_policy.name if narrated_policy is not None else bijou_policy.name  # type: ignore[union-attr]  # generations imply the policy
+        )
         print(
-            f"\n== aux vs weak labels ({narrated_policy.name}) == "
+            f"\n== aux vs weak labels ({aux_voice}) == "
             f"holding acc "
             f"{holding_accuracy if holding_accuracy is not None else nan:.3f} "
             f"(n={holding_frames}), progress MAE "
