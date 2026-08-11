@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-11T19:17:00Z
+**Updated:** 2026-08-11T20:30:00Z
 
-**Depth call:** depth 2 open at 19:1xZ 08-11: sim-servo-sysid (CPU, recommended-first per SIMPLER ablation) + sim-policy-eval-100seeds (UNBLOCKED by sim-fixes batch 1, pre-reg draftable); molmo-flow-step1 + rig-mixture-exec owner_hold. Sim lane per owner 18:15Z '100% simulations'.
+**Depth call:** depth 2 open at 20:3xZ 08-11: sim-policy-eval-100seeds (pre-reg draftable, nothing blocking - v0 physics fully pinned incl. SERVO_SYSID) + sim-visual-matching (SIMPLER second lever, optional before the eval); molmo-flow-step1 + rig-mixture-exec owner_hold. Sim lane per owner 18:15Z '100% simulations'.
 
-**11 open** (Live 0 · Queued 2 · Blocked 9 · Done 116)
+**11 open** (Live 0 · Queued 2 · Blocked 9 · Done 117)
 
 ## 🔴 Live (0)
 
@@ -18,15 +18,15 @@
 
 *ready — waiting on a window or a boundary*
 
-**`sim-servo-sysid`** · `cpu`
+**`sim-visual-matching`** · `cpu`
 
-Servo/controller sysid (CPU + minutes of local GPU-free sim): resolve the 56x kp discrepancy (our menagerie robotstudio_so101 kp=998.22 kv=2.731 forcerange ±2.94 vs TheRobotStudio upstream kp=17.8 kv=0 ±3.35 for the same STS3215)…
+Sim visual matching (CPU + render minutes, SIMPLER's second lever after controller sysid): close the sim-vs-rig APPEARANCE gap for the two policy cameras - compare sim renders vs real rig frames (so-frame REAL|SIM|OVERLAY per the…
 
-**boundary:** Recommended before the 100-seed pre-reg freezes physics, but the pre-reg MAY pin current gains as explicit 'v0 physics' if the owner prefers speed — call it out in the pre-reg either way.
+**boundary:** Queued 20:3xZ 08-11 at sim-servo-sysid close. Explicitly OPTIONAL before the 100-seed eval (visual gap affects policy inputs, not physics); if the eval's free validation arm shows sim ordering matching the banked panel trajectory, this may stay a v1 rung.
 
 <details><summary>full record</summary>
 
-Servo/controller sysid (CPU + minutes of local GPU-free sim): resolve the 56x kp discrepancy (our menagerie robotstudio_so101 kp=998.22 kv=2.731 forcerange ±2.94 vs TheRobotStudio upstream kp=17.8 kv=0 ±3.35 for the same STS3215) by SIMPLER's recipe — open-loop replay of real rig episodes (we hold 229h; use held-out rig episodes' recorded qpos streams) through the sim, fit kp/kv/damping (BAM's identified STS3215 model github.com/Rhoban/bam as informed prior; their friction params converge via CMA-ES in ~5min) minimizing joint-trajectory MAE. SIMPLER ablation says this is the FIRST-order eval-fidelity lever (control loss 0.131-&gt;0.432 moved MMRV 0.031-&gt;0.100). Deliverable: fitted params + before/after replay MAE + a one-page note; feeds the 100-seed pre-reg's physics pin.
+Sim visual matching (CPU + render minutes, SIMPLER's second lever after controller sysid): close the sim-vs-rig APPEARANCE gap for the two policy cameras - compare sim renders vs real rig frames (so-frame REAL|SIM|OVERLAY per the LIBERO/SIMPLER convention, sim/probe_visual_match.py is the seed), tune camera pose/FOV, table+background texture, benchy albedo, lighting direction; deliverable = before/after side-by-side page + any so101_sim.py visual deltas. Second-order for eval fidelity per SIMPLER's ablation (gains first, DONE) - the 100-seed pre-reg MAY pin current visuals as v0 and run before this lands; visual matching then becomes a v1-physics/visuals rung with its own re-baseline.
 
 </details>
 
@@ -36,7 +36,7 @@ Servo/controller sysid (CPU + minutes of local GPU-free sim): resolve the 56x kp
 
 GOAL (owner 17:07Z 08-11): evaluate one good policy (candidate er_60k/step_060000, the reference trunk) in sim on 100 fixed seeds; primary metric = boat-&gt;disk distance reduction (continuous), success rate secondary
 
-**boundary:** Protocol pre-reg draftable; design citations banked 18:5xZ 08-11 (papers/sim-as-eval.md): primary = settled-initial minus final (or min) benchy-&gt;disk distance (continuous — 2603.13616 precedent), success rate secondary column (keeps MMRV/Pearson computable); free validation arm = run panel on er_60k@15k/35k/60k, check sim ordering vs banked panel-MAE trajectory (SIMPLER's weak-to-strong-checkpoints trick; target MMRV&lt;~0.06 when a real anchor exists); standing caveat = fidelity is per-policy-family (AutoEval), resets for MolmoAct2/other stacks; pin eval machine + menagerie SHA + asset build, or adopt the SDF path from sim-fixes. UNBLOCKED 19:1xZ 08-11: sim-fixes batch 1 CLOSED (0/100 reset strikes, seed-independent start state &lt;0.003 deg, phantom p99 0.45mm, spin 0.4 deg - posts/2026-08-11-sim-fixes-batch1.md); pre-reg must pin the widened joint ranges + solver caps 50/50 + the 340-hull asset build as v0 physics; sim-servo-sysid is strongly-recommended-first per SIMPLER's ablation but the pre-reg may pin current gains as 'v0 physics' explicitly if the owner wants speed.
+**boundary:** Protocol pre-reg draftable NOW - nothing blocking: sim-fixes batch 1 CLOSED + servo sysid CLOSED 20:3xZ 08-11 (SERVO_SYSID pinned, held-out replay MAE 1.76 deg vs 3.31 vendored - posts/2026-08-11-sim-servo-sysid.md). Pre-reg pins v0 physics = widened joint ranges + solver caps 50/50 + 340-hull asset build + SERVO_SYSID, with the replay-MAE table as measured justification (SIMPLER's sysid-before-freeze DONE). Design citations banked (papers/sim-as-eval.md): primary = settled-initial minus final (or min) benchy-&gt;disk distance (continuous), success rate secondary; free validation arm = er_60k@15k/35k/60k sim ordering vs banked panel-MAE trajectory (target MMRV&lt;~0.06); fidelity is per-policy-family (AutoEval caveat); pin eval machine + menagerie SHA + asset build. Settled home elbow residual now 7.1 deg (softer fitted servo) - pre-reg pins the SETTLED state.
 
 <details><summary>full record</summary>
 
@@ -174,9 +174,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (116)
+## ✅ Done (117)
 
 *closed — the full record stays in each fold*
+
+**`sim-servo-sysid`** · `cpu`
+
+Servo/controller sysid (CPU + minutes of local GPU-free sim): resolve the 56x kp discrepancy (our menagerie robotstudio_so101 kp=998.22 kv=2.731 forcerange ±2.94 vs TheRobotStudio upstream kp=17.8 kv=0 ±3.35 for the same STS3215)…
+
+**boundary:** CLOSED 20:3xZ 08-11 work session (post posts/2026-08-11-sim-servo-sysid.md): 56x kp question ANSWERED by open-loop replay sysid (sim/sysid_servo.py, SIMPLER recipe) - held-out-episode arm replay MAE menagerie 3.31 deg / upstream 2.80 / FITTED 1.76 (-47%), beats the 2.19-deg teleport-servo scale so the lag dynamics are genuinely modeled; vendored kp 998 + forcerange 2.94 saturates at 0.17 deg = bang-bang servo, measured sagging ~19 deg below a commanded plateau the real arm holds; upstream directionally right, neither exact. Fitted set PINNED as so101_sim.SERVO_SYSID (kp 108.18 kv 13.377 fr 3.478 damping 0.722 friction 0.0183 armature 0.2045 - the large armature reads as reflected gear-train inertia), applied at load to both arms, vendored XML untouched; sysid_servo.json banked. ALL sim-fixes gates re-verified under new params: 0/100 strikes, settled state bit-identical across seeds, drift 0.001mm/10s, pinch-lift HELD spin 0.1 deg (improved from 0.4), determinism green, 28.0 ms/tick. Known residual: elbow_flex 3.89 deg (unmodeled boat payload); per-joint gains the named next rung if elbow ever gates. Fit deps-free coordinate descent, ~240 evals/start.
+
+<details><summary>full record</summary>
+
+Servo/controller sysid (CPU + minutes of local GPU-free sim): resolve the 56x kp discrepancy (our menagerie robotstudio_so101 kp=998.22 kv=2.731 forcerange ±2.94 vs TheRobotStudio upstream kp=17.8 kv=0 ±3.35 for the same STS3215) by SIMPLER's recipe — open-loop replay of real rig episodes (we hold 229h; use held-out rig episodes' recorded qpos streams) through the sim, fit kp/kv/damping (BAM's identified STS3215 model github.com/Rhoban/bam as informed prior; their friction params converge via CMA-ES in ~5min) minimizing joint-trajectory MAE. SIMPLER ablation says this is the FIRST-order eval-fidelity lever (control loss 0.131-&gt;0.432 moved MMRV 0.031-&gt;0.100). Deliverable: fitted params + before/after replay MAE + a one-page note; feeds the 100-seed pre-reg's physics pin.
+
+</details>
+
+---
 
 **`sim-fixes-reset-contact`** · `cpu`
 

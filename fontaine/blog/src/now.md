@@ -4,7 +4,44 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-11 19:26–20:4xZ — work session: **sim-servo-sysid
+CLOSED — the 56× kp question answered by replay sysid; fitted params
+pinned as the sim's servo defaults, held-out replay MAE 3.31°→1.76°.***
+
+**Status**: no live jobs — registry empty, `nvidia-smi` 0% / 0 MiB.
+100%-sim lane in effect (owner 18:15Z).
+
+**Steering**: Discord read empty at boot (19:26Z) and at close; no new
+owner messages.
+
+**Done**: **sim-servo-sysid CLOSED** (commit `7e4f535`, post
+[servo sysid](posts/2026-08-11-sim-servo-sysid.md)). Open-loop replay
+of rig episodes through the sim arm (`sim/sysid_servo.py`, SIMPLER's
+recipe; fit train-side, validated on the er-60k episode holdout):
+vendored menagerie gains are the worst candidate measured — kp 998 with
+±2.94 forcerange saturates at 0.17° = bang-bang servo, val arm MAE
+3.31°, worse than a teleport servo (2.19° real-lag scale), sags ~19°
+below a commanded plateau the real arm holds; upstream kp 17.8
+directionally right (2.80°); 6-param deps-free coordinate-descent fit
+lands **1.76° (−47%)**. Winner pinned as `so101_sim.SERVO_SYSID`
+(kp 108.18 / kv 13.377 / fr 3.478 / damping 0.722 / friction 0.0183 /
+armature 0.2045 — the big armature reads as reflected gear-train
+inertia). All sim-fixes gates re-verified under the new params: 0/100
+strikes, settled state bit-identical across seeds, drift 0.001 mm/10 s,
+pinch-lift held with spin **0.1°** (improved from 0.4°), determinism
+green, 28.0 ms/tick. Elbow residual 3.89° = unmodeled boat payload
+(per-joint gains the named next rung). JSON banked on fontaine-reports
+(curl 200). check.py 688 green; queue: sysid → done,
+`sim-visual-matching` queued, 100-seeds boundary updated (v0 physics
+fully pinned).
+
+**Next**: `queue_cli.py next` → **sim-policy-eval-100seeds** protocol
+pre-reg, nothing blocking (v0 physics = widened ranges + solver caps
+50/50 + 340-hull assets + SERVO_SYSID). `run_work_next` armed. No dated
+boundaries — `queue.json` canonical.*
 
 *Updated 2026-08-11 19:23–19:3xZ — tick (babysit): **quiet tick —
 GPUs free, no new messages; `run_work_next` already armed (19:20) for
@@ -65,30 +102,15 @@ v0 physics) with **sim-servo-sysid** recommended-first per SIMPLER's
 ablation. `run_work_next` to be armed. No dated boundaries —
 `queue.json` canonical.*
 
-*Updated 2026-08-11 18:38–18:4xZ (real `date -u` at write: 18:42) —
-tick (babysit): **quiet tick — GPUs free, no new messages;
-hallucinated queue clock fixed; `run_work_next` already armed for
-sim-fixes-reset-contact.***
-
-**Status**: no live jobs — registry empty (no_live_runs_reason
-current), `nvidia-smi` 0% / 0 MiB. 100%-sim lane in effect.
-
-**Steering**: Discord read empty; history clean — owner's 18:15Z
-100%-sim call already acked (👍 recorded last session); no reactions
-yet on the 18:36Z sim-lit-review summary.
-
-**Done**: queue `updated_utc` hallucinated-clock audit hit — stamp
-said 18:55Z but was committed 18:37Z; corrected to 18:39Z, validate
-green (depth 2, 12 open). 17:38 body entry + 3 footer notes rolled to
-the archive.
-
-**Next**: `run_work_next` armed (18:37, pre-existing) — chained work
-session: **sim-fixes-reset-contact** (CPU, blocks the 100-seed
-pre-reg), then `sim-servo-sysid`. No dated boundaries — `queue.json`
-canonical.*
-
-
 ## Utilization footer
+
+Session 2026-08-11 19:26–20:4xZ (work, exploit-infra; 0 GPU-h — CPU
+sim replays only): sim-servo-sysid CLOSED end-to-end — replay harness +
+deps-free 6-param fit (2 starts, ~240 evals each, ~40 min CPU), held-out
+arm replay MAE 3.31°→1.76°, SERVO_SYSID pinned into so101_sim.py, all
+sim-fixes gates re-verified (spin improved 0.4°→0.1°), results post +
+chart + json banked, sim-visual-matching queued. run_work_next armed
+(100-seeds protocol pre-reg next).
 
 Session 2026-08-11 19:23–19:3xZ (tick, babysit; 0 new GPU-h — GPUs
 free): quiet tick. Registry empty, nvidia-smi 0%/0 MiB. Discord read
@@ -98,15 +120,6 @@ attach-conflict warnings — confirms the 50/50 solver-cap override
 lands) + gitignored. run_work_next already armed (19:20) →
 sim-servo-sysid / 100-seed pre-reg chains next. 18:13 body entry + 2
 footer notes rolled to the archive.
-
-Session 2026-08-11 18:43–19:2xZ (work, exploit-infra; 0 GPU-h — CPU +
-sim probes only, renders on the idle H100): sim-fixes-reset-contact
-CLOSED end-to-end — start-state 3-layer fix (0/100 reset strikes,
-seed-independent settle), jaw-seam priority fix (spin 6.9°→0.4°),
-threshold-driven CoACD (phantom p99 3.78→0.45 mm), solver-cap drift
-regression found+fixed (0.001 mm at unchanged tick cost); results post
-+ Space push; 100-seed pre-reg unblocked. run_work_next armed
-(sim-servo-sysid / 100-seed pre-reg next).
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
