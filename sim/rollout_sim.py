@@ -67,6 +67,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--execute-horizon", type=int, default=30)
     parser.add_argument("--sample-steps", type=int, default=10)
     parser.add_argument(
+        "--method",
+        default="heun",
+        choices=["euler", "heun"],
+        help="ODE solver: heun for full-flow checkpoints, euler for "
+        "1-NFE SnapFlow students (euler-1 IS their training target)",
+    )
+    parser.add_argument(
         "--expert-dtype",
         default="bfloat16",
         choices=["float32", "bfloat16"],
@@ -166,6 +173,11 @@ def run_episode(
                 chunk_size,
                 camera_kinds_from_names(SIM_CAMERAS),
             )
+            # Identity triple for stable-key noise checkpoints (the
+            # SnapFlow lineage): deterministic per (env seed, replan).
+            item["repo_id"] = "sim/eval100"
+            item["episode_index"] = seed
+            item["frame_index"] = replan
             start = time.perf_counter()
             chunk = policy.predict([item], [replan])[0].numpy()
             latencies.append((time.perf_counter() - start) * 1000)
@@ -230,11 +242,14 @@ def main() -> int:
             device=device,
             seed=args.seed,
             sample_steps=args.sample_steps,
-            method=SamplingMethod.HEUN,
+            method=SamplingMethod[args.method.upper()],
             expert_dtype=getattr(torch, args.expert_dtype),
         )
         horizon = min(args.execute_horizon, policy.info.chunk_size)
-        print(f"policy: {policy.name} (heun-{args.sample_steps}, horizon {horizon})")
+        print(
+            f"policy: {policy.name} "
+            f"({args.method}-{args.sample_steps}, horizon {horizon})",
+        )
 
     sim = SO101Sim()
     args.out_dir.mkdir(parents=True, exist_ok=True)
@@ -281,6 +296,7 @@ def main() -> int:
                 "replans": args.replans,
                 "execute_horizon": horizon,
                 "sample_steps": args.sample_steps,
+                "method": args.method,
                 "expert_dtype": args.expert_dtype,
                 "control_hz": CONTROL_HZ,
                 "task": TASK,
