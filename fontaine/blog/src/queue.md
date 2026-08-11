@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-11T16:23:00Z
+**Updated:** 2026-08-11T17:05:00Z
 
-**Depth call:** depth 2 open at 16:2xZ 08-11: rig-mixture-instrument-prereg (executable CPU) + ae-on-our-trunk-prereg-draft (pends the rebase; rebase-fontaine-on-main-postreview itself still blocked on the owner-side main push — ls-remote checked 16:07Z, still fdd9aa3). er-screen-results-post CLOSED this session (durable ER long-form landed); er-60k-live status audit-fixed to done. Box git remote dropped (housekeeping done in-session). Lit refill lane owner-paused (00:23Z 08-10).
+**Depth call:** depth 2 open at 17:0xZ 08-11: rig-mixture-screen-exec (owner_hold — compute ask A/B/C posted in-channel, pre-reg draft live) + ae-on-our-trunk-prereg-draft (pends the rebase; rebase-fontaine-on-main-postreview itself still blocked on the owner-side main push, ls-remote checked 16:30Z still fdd9aa3). rig-mixture-instrument-prereg CLOSED this session (instrument 1b1c314 + pre-reg draft). Both open items are holds — no CPU-executable item remains; next refill candidate on unblock or owner steering. Lit refill lane owner-paused (00:23Z 08-10).
 
-**9 open** (Live 0 · Queued 2 · Blocked 7 · Done 111)
+**9 open** (Live 0 · Queued 1 · Blocked 8 · Done 112)
 
 ## 🔴 Live (0)
 
@@ -14,7 +14,7 @@
 
 *(empty)*
 
-## 🟢 Queued (2)
+## 🟢 Queued (1)
 
 *ready — waiting on a window or a boundary*
 
@@ -32,21 +32,7 @@ AE-on-our-trunk pre-reg draft (CPU): the owner's action-expert implementation (e
 
 ---
 
-**`rig-mixture-instrument-prereg`** · `cpu`
-
-Rig-mixture lever, step 1 (CPU, executable now): implement the per-root --dataset-repeat flag + oracle test exactly as pinned in the er-60k pre-reg mixture note (loader dedups repeated roots today, so there is no zero-code oversa…
-
-**boundary:** CPU-only instrument + draft; no gate. GPU execution pends owner compute decision.
-
-<details><summary>full record</summary>
-
-Rig-mixture lever, step 1 (CPU, executable now): implement the per-root --dataset-repeat flag + oracle test exactly as pinned in the er-60k pre-reg mixture note (loader dedups repeated roots today, so there is no zero-code oversample), then draft the mixture-screen pre-reg on the new reference trunk er_60k/step_060000: rig at ~5% effective share (~27x repeat, inside the CL-triangle 2-20% replay band) vs the natural-share 0.19% passenger baseline this screen just banked. The ER results post names this lever explicitly unpriced. GPU leg NOT launchable without owner input: the 4x box is gone — the pre-reg draft must name the compute ask (local 1xH100 rung vs a new box) and hold for owner steering.
-
-</details>
-
----
-
-## 🟡 Blocked (7)
+## 🟡 Blocked (8)
 
 *waiting on a prerequisite, a boundary, or the owner*
 
@@ -146,7 +132,21 @@ MAIN-AGENT DIRECTIVE (owner-relayed 14:34:48Z 08-11, message.txt attachment): re
 
 ---
 
-## ✅ Done (111)
+**`rig-mixture-screen-exec`** · `gpu-box` · **⛔ owner hold**
+
+Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft posts/2026-08-11-prereg-er60k-rig-mixture.md posted + in-channel 08-11): finalize the pre-reg (freeze probe bars, panel band, param sheet in-channel, obje…
+
+**boundary:** BLOCKED on the owner compute decision (ask posted in-channel 08-11 ~17:0xZ); unblock by flipping owner_hold when the owner picks A/B or provisions compute. · [pre-reg](posts/2026-08-11-prereg-er60k-rig-mixture.md)
+
+<details><summary>full record</summary>
+
+Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft posts/2026-08-11-prereg-er60k-rig-mixture.md posted + in-channel 08-11): finalize the pre-reg (freeze probe bars, panel band, param sheet in-channel, objection window) then run the registered arm: --init-from er_60k/step_060000 (dl from fontaine-checkpoints), --dataset-repeat mcobzarenco/so101_pick_place_clean=27 mcobzarenco/so101_pick_place_v2=27 (~4.97% effective share), 10k steps eff-48, seed 3, warmup 500, save-every 2500, er-60k recipe verbatim otherwise. Reads: primary rig-holdout paired CI95 (1+5 held-out episodes, ~3.7k frames) mixture-endpoint vs er_60k/step_060000 + state-copy anchor; guard k4l2 panel_v2 paired vs banked endpoint npz (fail = worse than +0.05 CI-excl-0); aux/probe record-only. Compute options priced in the draft: (A) new 4x box ~28 GPU-h gate 32; (B) local 1xH100 ONLY after an act-ckpt fit-preflight ladder (full recipe measured structurally OOM single-GPU 08-08); (C) defer. 20%-share variant (x129, ~2.7 rig epochs) named as an owner option.
+
+</details>
+
+---
+
+## ✅ Done (112)
 
 *closed — the full record stays in each fold*
 
@@ -1699,6 +1699,20 @@ ER screen close: chart-led consolidated results post (deliberately rolled from t
 <details><summary>full record</summary>
 
 ER screen close: chart-led consolidated results post (deliberately rolled from the 10:00Z 08-11 session that closed er_60k). The full ER-init story in one blog page, house chart style (dark-mode, eval-report scheme): rung trajectory vs 40k endpoint (+1.52 -&gt; +0.28 -&gt; -0.18 -&gt; -0.23), the decision read (endpoint 5.7782/1.9898; -0.2297 [-0.281,-0.154] vs 40k endpoint; -0.0821 [-0.126,-0.025] vs 60k-cont, both CI-excludes-zero), aux-heads table across rungs (holding er-better, event cont-better, rest tied), probe-curve overlay (shared seed), what-it-means-for-follow-ons (every new arm sits on er_60k/step_060000). Owner already has headline + report links (13:29Z post); this is the durable long-form. posts/ page + Papers-style plain-words opener per house rule; Space push; link in-channel.
+
+</details>
+
+---
+
+**`rig-mixture-instrument-prereg`** · `cpu`
+
+Rig-mixture lever, step 1 (CPU, executable now): implement the per-root --dataset-repeat flag + oracle test exactly as pinned in the er-60k pre-reg mixture note (loader dedups repeated roots today, so there is no zero-code oversa…
+
+**boundary:** CLOSED 17:0xZ 08-11 work session, both legs: (1) INSTRUMENT landed commit 1b1c314 — --dataset-repeat PATTERN=COUNT in bijou.train/bijou.data (fnmatch per-repo specs, first-match-wins, spec matching no selected dataset is FATAL, replicas share objects so no host-RAM cost; training-only, eval call sites never repeat; TrainArgs field defaulted for old-checkpoint replay); oracle test tests/test_dataset_repeat.py (16 tests: parse/precedence/no-match/concat expansion + the pinned 0.19%-&gt;4.97%@27x mixture arithmetic); check.py green 683. (2) PRE-REG DRAFT posted posts/2026-08-11-prereg-er60k-rig-mixture.md: single arm --init-from er_60k/step_060000 (weights-only suffices, optimizer state died with the box), explicit specs clean=27 v2=27 (~4.97% share, no wildcard), 10k steps eff-48 seed 3 warmup 500, primary read = paired CI95 on the deterministic rig holdout (1+5 episodes ~3.7k frames er_60k never trained on) vs the endpoint, guard = panel non-regression band +0.05 vs banked 5.7782; COMPUTE ASK named: (A) new 4x box ~28 GPU-h/7h wall gate 32, (B) local 1xH100 needs act-ckpt fit-preflight (full recipe measured OOM single-GPU 08-08), (C) defer. HOLDING for owner steering — successor item rig-mixture-screen-exec carries the hold. · [pre-reg](posts/2026-08-11-prereg-er60k-rig-mixture.md)
+
+<details><summary>full record</summary>
+
+Rig-mixture lever, step 1 (CPU, executable now): implement the per-root --dataset-repeat flag + oracle test exactly as pinned in the er-60k pre-reg mixture note (loader dedups repeated roots today, so there is no zero-code oversample), then draft the mixture-screen pre-reg on the new reference trunk er_60k/step_060000: rig at ~5% effective share (~27x repeat, inside the CL-triangle 2-20% replay band) vs the natural-share 0.19% passenger baseline this screen just banked. The ER results post names this lever explicitly unpriced. GPU leg NOT launchable without owner input: the 4x box is gone — the pre-reg draft must name the compute ask (local 1xH100 rung vs a new box) and hold for owner steering.
 
 </details>
 
