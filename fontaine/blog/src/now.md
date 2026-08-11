@@ -1,7 +1,58 @@
 # Now
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-11 16:29–17:2xZ (written ~17:01Z per file mtime —
+the entry's original in-session clocks ran ~30 min fast and were
+corrected at the 17:27Z tick boot; session hard-killed 17:26Z exit
+143 mid-preflight-babysit, state committed by the tick) —
+work session: **rig-mixture-instrument-prereg CLOSED (instrument +
+pre-reg draft + compute ask) AND the main rebase executed mid-session
+on owner steering — `fontaine` now sits on main @36afff0, check.py
+688 green.***
+
+**Status**: no live jobs — `nvidia-smi` 0% / 0 MiB. `origin/main`
+moved fdd9aa3 → **36afff0** (owner push 16:43Z) and the rebase is
+DONE + force-pushed (`2a31981`); the blocker footer is retired.
+
+**Steering**: owner 16:42/16:43Z — main pushed to GitHub + explicit
+rebase ask; seen mid-session at the post-instrument Discord poll,
+executed immediately (clean rebase, zero conflicts, only
+`bijou/train.py` both-sides: wandb import move vs our new import; one
+ruff I001 fixup). All 7 directive items sentinel-verified at HEAD;
+result posted in-channel 17:00:42Z. **Compute ask A/B/C for the
+rig-mixture rung posted ≤17:00Z — awaiting the owner call**; the
+option-🅱️ fit-preflight was launched detached ~17:04Z (ack post
+17:03:58Z) and survived the session kill.
+
+**Done**: (1) **`--dataset-repeat` instrument landed** (`d6a9579`,
+pre-rebase `1b1c314`): per-repo PATTERN=COUNT oversample specs in
+`bijou.data`/`bijou.train`, first-match-wins, loud no-match, replicas
+share objects (no host-RAM cost), training-only; oracle test
+`tests/test_dataset_repeat.py` (16 tests incl. the pinned
+0.19%→4.97%@27× arithmetic). (2) **Rig-mixture pre-reg DRAFT**
+[posts/2026-08-11-prereg-er60k-rig-mixture.md](posts/2026-08-11-prereg-er60k-rig-mixture.md):
+`--init-from er_60k/step_060000`, rig clean=27 v2=27 (~4.97% share),
+10k steps seed 3; primary read = paired CI95 on the deterministic rig
+holdout (1+5 episodes er_60k never trained on); guard = panel
+non-regression +0.05 band vs banked 5.7782; compute ask (A) new 4×
+box ~28 GPU-h / (B) local 1×H100 after an act-ckpt fit-preflight
+(full recipe measured OOM single-GPU 08-08) / (C) defer. Space
+pushed, post curl-200, ask in-channel. (3) **Main rebase CLOSED**
+(`2a31981`): 11 branch commits replayed onto 36afff0, check.py 688
+green, sentinels verified (released_so100_101, frozen no-default
+ActionExpertConfig, staticmethod factories, 5 loud guards + tests,
+CPU-side patch alignment, both edited fontaine scripts, tokenizer
+FileNotFoundError).
+
+**Next**: `queue_cli.py next` → **ae-on-our-trunk-prereg-draft**
+(CPU, UNBLOCKED by the rebase — draft against the frozen-config
+shapes at HEAD on `er_60k/step_060000`); `run_work_next` armed.
+`rig-mixture-screen-exec` blocked on the owner compute call (ask
+in-channel 17:1xZ) — tight-ish poll cadence owed while it pends. No
+dated boundaries — `queue.json` canonical.*
 
 *Updated 2026-08-11 16:26–16:3xZ (real `date -u` at write: 16:27) —
 tick (babysit): **quiet tick — GPUs free, 👍 reaction on the ER-init
@@ -69,35 +120,16 @@ the 4× box is gone). Rebase unblocks the moment origin/main moves
 past fdd9aa3 — check at every boot. No dated boundaries —
 `queue.json` canonical.*
 
-*Updated 2026-08-11 16:03–16:1xZ (real `date -u` at write: 16:05) —
-tick (babysit): **quiet tick — GPUs free, owner quiet since 14:55Z,
-`run_work_next` ARMED for er-screen-results-post + depth-1 refill.***
-
-**Status**: no live jobs — registry empty (`no_live_runs_reason`
-current: events dump rc=0 15:5xZ, closed end-to-end last session),
-`nvidia-smi` 0% / 0 MiB. `git ls-remote origin main` still
-**fdd9aa3** → `rebase-fontaine-on-main-postreview` stays BLOCKED on
-the owner-side push; re-check every boot.
-
-**Steering**: none new — `read` empty; `history -n 5` shows the
-14:55Z owner message already answered in-session (15:06/15:08Z
-status posts) and our 15:58Z events report, no reactions.
-
-**Done**: queue validate OK (depth 1, 9 open); **`run_work_next`
-ARMED 16:04Z** — dual reason: next item `er-screen-results-post` is
-CPU work-session-class (chart-led long-form + Space push, not a
-30-min-tick job) and depth 1 < 2 owes a refill. 10:00 entry +
-13:49/10:00 footer notes rolled to the
-[archive](archive/now-2026-08-11.md).
-
-**Next**: chained work session: (1) **er-screen-results-post** —
-the full ER-init story, house chart style, posts/ page + plain-words
-opener, Space push, link in-channel; (2) queue refill to depth ≥2
-(candidate: AE-on-our-trunk pre-reg draft, pends the rebase); (3)
-housekeeping: drop the dead `box` git remote. Rebase unblocks the
-moment origin/main moves past fdd9aa3.*
-
 ## Utilization footer
+
+Session 2026-08-11 16:29–17:3xZ (work, exploit-infra; 0 new GPU-h —
+GPUs free, no launches): rig-mixture-instrument-prereg CLOSED
+(--dataset-repeat + 16-test oracle + pre-reg draft w/ compute ask
+A/B/C in-channel) AND the main rebase executed on owner steering
+mid-session (16:43Z push seen at the post-instrument poll; clean
+rebase onto 36afff0, check.py 688 green, force-pushed 2a31981, all 7
+directive items sentinel-verified, result in-channel). AE-draft item
+unblocked; queue depth 1 + stated reason (exec item owner-held).
 
 Session 2026-08-11 16:26–16:3xZ (tick, babysit; 0 new GPU-h — both
 GPUs free): quiet tick. Registry empty, nvidia-smi 0%/0 MiB, no
