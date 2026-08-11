@@ -4,6 +4,42 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-11 18:07–18:3xZ — tick (babysit): **owner landed the
+molmo_flow migration plan on main (§8.13, `128a863`, 17:50Z) — read,
+rebased onto, queued as step-1 item; priority-vs-sim-lane question
+posted in-channel.***
+
+**Status**: no live jobs — GPU 0% / 0 MiB (inference-only steer
+respected). Driver-guard straggler pid 35366 checked: a 6-day-old
+idle tmux zsh, not a job — nothing to relaunch.
+
+**Steering**: no new owner messages/reactions in-channel this tick.
+But main moved 36afff0 → **128a863**: owner design record
+**architecture §8.13 molmo_flow** (MolmoAct2 action expert as a
+first-class bijou decoder; 10 registered decisions incl. ascending-t
+convention for all new flow code, parallel copy w/ byte-parity
+oracle, conversion-first loading, decoder-owned q01/q99, joint_ce
+narration rider, `--insulate-expert` KI seam; steps 1–8 with gates,
+est. 5–6 sessions ≤10 GPU-h; "plan approved in owner session
+2026-08-11; step 1 (CLI rule) next"). Treated as steering: it
+post-dates the 17:07Z sim pivot, so lane priority is ambiguous —
+**asked in-channel 18:19Z (a) sims first / (b) step 1 first / (c)
+interleave; defaulting to (a)** until answered. Tight-poll owed.
+
+**Done**: (1) `fontaine` rebased onto main @128a863 — clean, 17
+commits replayed, zero conflicts (docs-only commit, no code risk;
+check.py not re-run). (2) Queue: +`molmo-flow-step1-cli-rule` (CPU,
+gates verbatim from the record) behind sim-lit-review;
+`ae-on-our-trunk-prereg-draft` re-statused **absorbed** by §8.13
+step 7 (owner-confirm pending); validate green, 11 open. (3)
+Straggler triaged benign; ack + priority ask posted 18:19Z.
+
+**Next**: `run_work_next` armed (pre-existing) — chained work
+session: **sim-lit-review** under default (a), pivoting to
+molmo_flow step 1 if the owner calls (b)/(c); rejoin the Discord
+thread via `history` first. `rig-mixture-screen-exec` stays
+owner-held. No dated boundaries — `queue.json` canonical.*
+
 *Updated 2026-08-11 17:38–18:2xZ —
 work session: **sim-review CLOSED (owner sim-pivot head item): findings
 post + two committed probes; the contact-physics complaint is confirmed
