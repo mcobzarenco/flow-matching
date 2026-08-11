@@ -44,12 +44,13 @@ from __future__ import annotations
 import math
 from collections.abc import Iterator, Sequence
 from dataclasses import dataclass
-from enum import Enum
 from typing import cast, override
 
 import torch
 import torch.nn.functional as F
 from torch import Tensor, nn
+
+from ..interface import SamplingMethod
 
 
 def _modulate(x: Tensor, shift: Tensor, scale: Tensor) -> Tensor:
@@ -506,23 +507,6 @@ class MolmoFlowTimeEmbedding(nn.Module):
         return emb
 
 
-class SamplingMethod(Enum):
-    """ODE solver for the ascending integration (0 = noise → 1 = data).
-
-    Deliberately NOT imported from ``decoders.flow`` — the two modules
-    share no code so their mirrored conventions can never cross-
-    contaminate, and this one must survive flow.py's retirement.
-
-    EULER: their serving default — left-endpoint, ``x += v/n``.
-    HEUN: trapezoidal predictor-corrector, 2 evaluations per step;
-    its final corrector evaluates at exactly t=1, which IS in this
-    convention's training support (unlike flow.py's τ=0 extrapolation).
-    """
-
-    EULER = "euler"
-    HEUN = "heun"
-
-
 @dataclass(frozen=True, slots=True)
 class TimeLaw:
     """The training t-distribution, ``t = offset + scale·Beta(α, β)``
@@ -585,7 +569,7 @@ class TimeLaw:
 class MolmoFlowConfig:
     """Architecture of the molmo_flow expert. No field defaults — the
     checkpoint bridge (bijou.loading) and tests spell out every field.
-    ``llm_kv_dim`` is the trunk's flattened KV width (kv_heads ×
+    ``llm_kv_dim`` is the trunk's flattened KV width (kv_heads *
     head_dim; 1024 for Molmo2-4B) — the ONE trunk-derived number."""
 
     max_horizon: int

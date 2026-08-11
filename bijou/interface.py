@@ -25,6 +25,7 @@ from __future__ import annotations
 import abc
 import dataclasses
 from dataclasses import dataclass
+from enum import Enum
 from typing import Any, Protocol, Self, override
 
 import torch
@@ -43,6 +44,28 @@ from .aux_text import (
 )
 from .fast.codec import ActionCodec
 from .nn import RopeParameters
+
+
+class SamplingMethod(Enum):
+    """ODE solver for integrating a flow decoder's velocity field — part
+    of the decoder-facing API surface (it rides ``predict_chunk``), and
+    convention-NEUTRAL: "Euler"/"Heun" mean the same thing under either
+    time parametrization, so both flow decoders (``decoders/flow.py``'s
+    π 0 descent, ``decoders/molmo_flow.py``'s ascending integration)
+    share this ONE name. The loops themselves stay per-module — they
+    carry the mirrored conventions and independent byte-parity
+    obligations (§8.13 decision 2).
+
+    EULER: 1 model evaluation per step, first-order (global error
+    O(1/n)); molmo_flow's serving default (their reference loop).
+    HEUN: explicit trapezoidal predictor-corrector, 2 evaluations per
+    step, second-order (O(1/n²)); the better quality-per-evaluation
+    trade for all but the very smallest step counts (Karras et al.,
+    EDM); flow.py's default.
+    """
+
+    EULER = "euler"
+    HEUN = "heun"
 
 
 def kv_stream_name(layer_idx: int) -> str:

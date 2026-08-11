@@ -47,7 +47,7 @@ from __future__ import annotations
 import dataclasses
 import math
 from dataclasses import dataclass
-from enum import Enum, StrEnum
+from enum import StrEnum
 from typing import Any, cast, override
 
 import torch
@@ -58,6 +58,7 @@ from ..interface import (
     CollatedBatch,
     MemoryStream,
     ObservationMemory,
+    SamplingMethod,
     kv_stream_name,
     residual_stream_name,
 )
@@ -201,19 +202,6 @@ class ExpertConfig:
     @property
     def suffix_length(self) -> int:
         return 1 + self.chunk_size
-
-
-class SamplingMethod(Enum):
-    """ODE solver for integrating the velocity field from noise to actions.
-
-    EULER: 1 model evaluation per step, first-order (global error O(1/n)).
-    HEUN: explicit trapezoidal predictor-corrector, 2 evaluations per step,
-    second-order (O(1/n²)); the better quality-per-evaluation trade for all
-    but the very smallest step counts (Karras et al., EDM).
-    """
-
-    EULER = "euler"
-    HEUN = "heun"
 
 
 def sinusoidal_time_embedding(
