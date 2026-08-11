@@ -40,6 +40,7 @@ from bijou.molmoact2.train import (
     apply_reference_freeze,
     cosine_warmup_lambda,
     flow_matching_loss_sums,
+    parse_args,
     sample_flow_times,
     save_step_dir,
     trainable_parameters,
@@ -112,7 +113,17 @@ def _tiny_expert_config() -> ActionExpertConfig:
         hidden_size=16,
         num_layers=2,
         num_heads=2,
+        mlp_ratio=4.0,
+        # 256 matches the round-trip test's config.json dict below.
+        ffn_multiple_of=256,
         timestep_embed_dim=8,
+        dropout=0.0,
+        attn_dropout=0.0,
+        context_layer_norm=True,
+        qk_norm=True,
+        qk_norm_eps=1e-6,
+        rope=True,
+        causal_attn=False,
     )
 
 
@@ -121,6 +132,26 @@ def _stats(dim: int, offset: float) -> QuantileStats:
         q01=torch.arange(dim, dtype=torch.float32) - offset,
         q99=torch.arange(dim, dtype=torch.float32) + offset,
     )
+
+
+def test_parse_args_rejects_misnamed_norm_stats() -> None:
+    """load_norm_stats reads <parent>/norm_stats.json while
+    save_step_dir ships the literal file passed — any other filename
+    would train against one quantile table and ship another into every
+    checkpoint. parse_args refuses the divergence at the door."""
+    argv = [
+        "--checkpoint",
+        "ckpt",
+        "--train-data",
+        "data",
+        "--save-dir",
+        "out",
+        "--norm-stats",
+    ]
+    with pytest.raises(SystemExit):
+        parse_args([*argv, "rig/stats_v2.json"])
+    args = parse_args([*argv, "rig/norm_stats.json"])
+    assert args.norm_stats == Path("rig/norm_stats.json")
 
 
 def test_cosine_warmup_schedule_closed_form() -> None:

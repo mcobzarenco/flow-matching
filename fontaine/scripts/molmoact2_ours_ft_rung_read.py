@@ -97,7 +97,9 @@ def compose_predictor(
         ),
         max_action_horizon=int(config["max_action_horizon"]),
         max_action_dim=int(config["max_action_dim"]),
-        n_obs_steps=int(config.get("n_obs_steps") or 1),
+        n_obs_steps=(
+            1 if config.get("n_obs_steps") is None else int(config["n_obs_steps"])
+        ),
         num_state_tokens=int(config["num_state_tokens"]),
         flow_matching_num_steps=int(config["flow_matching_num_steps"]),
         mask_action_dim_padding=bool(config["mask_action_dim_padding"]),

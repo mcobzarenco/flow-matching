@@ -34,8 +34,8 @@ from collections.abc import Mapping, Sequence
 import torch
 from torch import Tensor
 
-from bijou.molmo2.cache import Molmo2KVCache
-from bijou.molmoact2.action_expert import ActionExpert
+from ..molmo2.cache import Molmo2KVCache
+from .action_expert import ActionExpert
 
 #: Inference scope this wiring implements: the CONTINUOUS action path,
 #: on checkpoints whose ``action_mode`` is ``'continuous'`` (rig-ft
@@ -71,11 +71,16 @@ def layer_kv_to_sequence(
     num_attention_heads: int,
     num_key_value_heads: int,
 ) -> Tensor:
-    """Flatten one cached layer's K or V to ``[B, S, heads * head_dim]``.
+    """Flatten one cached layer's K or V to sequence-major layout.
 
     Mirror of their ``_cache_to_sequence`` including its layout
     inference: a dim matching a known head count identifies the head
     axis; otherwise the smaller of dims 1/2 is assumed to be heads.
+
+    Shapes:
+    - ``cache_tensor``: [B, heads, S, head_dim] (Molmo2KVCache layout) or
+      [B, S, heads, head_dim]
+    - returns: [B, S, heads * head_dim]
     """
     if cache_tensor.dim() != 4:
         raise ValueError(
@@ -105,16 +110,26 @@ def extract_kv_states(
     num_key_value_heads: int,
     seq_len: int | None = None,
 ) -> list[tuple[Tensor, Tensor]]:
-    """Per-layer conditioning states off a filled prompt cache:
-    ``[(K, V)] * num_layers`` in ``[B, S, kv_dim]`` layout, truncated
-    to ``seq_len`` (default: the cache's seen length). Trunk layers
-    map 1:1 onto expert blocks — the count is a hard check."""
+    """Per-layer conditioning states off a filled prompt cache,
+    truncated to ``seq_len`` (default: the cache's seen length). Trunk
+    layers map 1:1 onto expert blocks — the count is a hard check, and
+    an unfilled layer is an error (a silent skip would mis-align every
+    deeper layer against its expert block while passing the count).
+
+    Shapes:
+    - ``cache.layers[i]``: K/V [B, kv_heads, S, head_dim] each
+    - returns: ``num_expert_blocks`` pairs of [B, S', kv_heads * head_dim]
+      with S' = min(S, seq_len)
+    """
     limit = cache.seen_tokens if seq_len is None else seq_len
     kv_states: list[tuple[Tensor, Tensor]] = []
-    for layer in cache.layers:
+    for layer_idx, layer in enumerate(cache.layers):
         keys, values = layer.keys, layer.values
         if keys is None or values is None:
-            continue
+            raise ValueError(
+                f"cache layer {layer_idx} has no K/V — the prompt forward "
+                "must fill every layer before KV extraction",
+            )
         if keys.shape[-2] > limit:
             keys = keys[..., :limit, :]
             values = values[..., :limit, :]
@@ -148,7 +163,12 @@ def _mask_discrete_output_span(
 ) -> None:
     """Their ``_mask_discrete_output_span`` verbatim: each ``start``
     pairs with the next ``end`` at-or-after it (inclusive); an unmatched
-    start masks through the end of the row."""
+    start masks through the end of the row.
+
+    Shapes:
+    - ``row_ids``: [S] one row's token ids
+    - ``row_mask``: [S] bool, mutated in place
+    """
     if start_id is None or end_id is None:
         return
     start_positions = (row_ids == start_id).nonzero(as_tuple=False).flatten().tolist()
@@ -181,7 +201,13 @@ def encoder_attention_mask(
     ``attention_mask`` (or ``input_ids != -1``); under ``action_mode
     'both'`` every EOS position is additionally excluded — including
     the leading BOS, which IS ``<|im_end|>`` under their convention —
-    along with any discrete ``<action_start>..<action_end>`` spans."""
+    along with any discrete ``<action_start>..<action_end>`` spans.
+
+    Shapes:
+    - ``input_ids``: [B, S] (or None)
+    - ``attention_mask``: [B, S], 1 = real token (or None)
+    - returns: [B, S] bool (True = attendable), or None if neither input
+    """
     if action_mode not in _SUPPORTED_ACTION_MODES:
         raise NotImplementedError(
             f"action_mode={action_mode!r} encoder masking is not wired",
@@ -211,7 +237,13 @@ def _action_dim_valid_mask(
     action_dim_is_pad: Tensor | None,
 ) -> Tensor | None:
     """Mirror of their ``_action_dim_valid_mask``: broadcastable bool
-    mask of VALID action dims, or None when nothing is padded."""
+    mask of VALID action dims, or None when nothing is padded.
+
+    Shapes:
+    - ``target``: [B, ..., D] tensor the mask must broadcast against
+    - ``action_dim_is_pad``: [D] or [B, D] bool, True = padded dim
+    - returns: [B, 1..., D] bool (True = valid), or None
+    """
     if action_dim_is_pad is None:
         return None
     mask = ~action_dim_is_pad.to(device=target.device, dtype=torch.bool)
@@ -240,6 +272,11 @@ def _mask_action_dims(
     action_dim_is_pad: Tensor | None,
     enabled: bool,
 ) -> Tensor:
+    """Shapes:
+    - ``tensor``: [B, T, D]
+    - ``action_dim_is_pad``: [D] or [B, D] bool (or None)
+    - returns: [B, T, D] with padded dims zeroed (or unchanged)
+    """
     if not enabled:
         return tensor
     valid = _action_dim_valid_mask(tensor, action_dim_is_pad)
@@ -276,9 +313,18 @@ def generate_actions(
     mask_action_dim_padding: bool = True,
     generator: torch.Generator | None = None,
 ) -> Tensor:
-    """Sample an action chunk ``[B, horizon, max_action_dim]`` from the
-    expert conditioned on extracted trunk KV — their
-    ``generate_actions_from_inputs`` flow loop on our modules."""
+    """Sample an action chunk from the expert conditioned on extracted
+    trunk KV — their ``generate_actions_from_inputs`` flow loop on our
+    modules. ``generator`` must live on the KV device (CUDA KV needs a
+    CUDA generator — ``torch.randn`` raises on a mismatch).
+
+    Shapes:
+    - ``encoder_kv_states``: one ([B, S_ctx, llm_kv_dim], same) pair per
+      expert block
+    - ``encoder_attention_mask``: [B, S_ctx] bool (or None)
+    - ``action_dim_is_pad``: [D] or [B, D] bool (or None)
+    - returns: [B, horizon, max_action_dim] normalized action chunk
+    """
     if len(encoder_kv_states) == 0:
         raise ValueError("expected at least one encoder KV state")
     horizon = expert.config.max_horizon if action_horizon is None else action_horizon

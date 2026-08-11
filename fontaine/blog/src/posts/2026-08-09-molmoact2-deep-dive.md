@@ -142,6 +142,16 @@ gap between "read the top" and "read every layer" is ~2 points at
 the benchmark ceiling — real but not dramatic; the deeper read is
 the architecture's identity.
 
+*(Parameter accounting, added 2026-08-11 after the first-class port:
+the paper's "621M" and the HF export's measured 577,564,448 are the
+same expert under two counting conventions. Instantiated, the module
+is 620,677,664 params; the exports omit the 36 frozen/inactive
+per-block ``cross_attn.kv_proj`` adapters (42,522,624) and the
+identity-injected ``state_encoder`` (590,592), both re-created by the
+loader. Measured on the port —
+``outputs/probe_molmoact2_param_count.py``, pinned in
+``tests/test_molmoact2_action_expert.py``.)*
+
 Training the expert: flow loss with **K=4 noise samples per chunk
 in post-training, K=8 in finetuning** (their K ablation is
 monotone: 94.15/95.05/95.15/95.90 for K=1/2/4/8), and — in

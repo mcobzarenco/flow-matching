@@ -42,25 +42,26 @@ from pathlib import Path
 from typing import Any
 
 import torch
+from safetensors import safe_open
 from torch import Tensor
 
-from bijou.gemma4.loading import resolve_checkpoint_dir
-from bijou.molmo2.cache import Molmo2KVCache
-from bijou.molmo2.model import Molmo2Model, build_multimodal_mask
-from bijou.molmo2.model import load_model as load_trunk
-from bijou.molmo2.tokenizer import Molmo2TextTokenizer
-from bijou.molmoact2.action_expert import (
+from ..gemma4.loading import resolve_checkpoint_dir
+from ..molmo2.cache import Molmo2KVCache
+from ..molmo2.model import Molmo2Model, build_multimodal_mask
+from ..molmo2.model import load_model as load_trunk
+from ..molmo2.tokenizer import Molmo2TextTokenizer
+from .action_expert import (
     ActionExpert,
     ActionExpertConfig,
     load_action_expert_state,
 )
-from bijou.molmoact2.processing import (
+from .processing import (
     QuantileStats,
     load_norm_stats,
     pack_action_example,
     unnormalize_action,
 )
-from bijou.molmoact2.wiring import (
+from .wiring import (
     encoder_attention_mask,
     extract_kv_states,
     generate_actions,
@@ -97,9 +98,23 @@ def resolve_image_token_ids(tokenizer: Molmo2TextTokenizer) -> tuple[int, ...]:
 
 def action_expert_from_config(config: dict[str, Any]) -> ActionExpert:
     """Build the (unloaded) expert exactly off a checkpoint's top-level
-    ``config.json`` dict; ``llm_kv_dim`` derives from the text config."""
+    ``config.json`` dict; ``llm_kv_dim`` derives from the text config.
+
+    Any dropout-like key in ``action_expert_config`` must be 0.0: this
+    builder pins both our dropout fields to 0.0 (correct for the
+    released/rig checkpoints), so a checkpoint fine-tuned WITH expert
+    dropout would otherwise silently train off-recipe in
+    ``bijou.molmoact2.train``. The substring scan is deliberate — their
+    config key names are theirs to change."""
     ae_cfg = config["action_expert_config"]
     text_cfg = config["text_config"]
+    for key, value in ae_cfg.items():
+        if "dropout" in key and float(value) != 0.0:
+            raise NotImplementedError(
+                f"action_expert_config.{key}={value}: nonzero expert dropout "
+                "is not wired (this port builds the expert with all dropout "
+                "pinned to 0.0, the released/rig configuration)",
+            )
     expert_config = ActionExpertConfig(
         max_horizon=int(config["max_action_horizon"]),
         max_action_dim=int(config["max_action_dim"]),
@@ -109,6 +124,8 @@ def action_expert_from_config(config: dict[str, Any]) -> ActionExpert:
         mlp_ratio=float(ae_cfg["mlp_ratio"]),
         ffn_multiple_of=int(ae_cfg["ffn_multiple_of"]),
         timestep_embed_dim=int(ae_cfg["timestep_embed_dim"]),
+        dropout=0.0,
+        attn_dropout=0.0,
         context_layer_norm=bool(ae_cfg["context_layer_norm"]),
         qk_norm=bool(ae_cfg["qk_norm"]),
         qk_norm_eps=float(ae_cfg["qk_norm_eps"]),
@@ -128,8 +145,6 @@ def load_action_expert(
 ) -> ActionExpert:
     """Load the checkpoint's ``model.action_expert.*`` tensors into our
     expert module (compat tensors injected by ``load_action_expert_state``)."""
-    from safetensors import safe_open
-
     prefix = "model.action_expert."
     state: dict[str, Tensor] = {}
     weight_files = sorted(checkpoint_dir.glob("*.safetensors"))
@@ -155,6 +170,25 @@ def _positive_int(value: Any, *, default: int, what: str) -> int:
     if resolved < 1:
         raise ValueError(f"{what} must be >= 1, got {resolved}")
     return resolved
+
+
+def require_single_obs(config: dict[str, Any]) -> int:
+    """Guard a checkpoint config's ``n_obs_steps``: this port packs
+    exactly ONE observation per prompt, so only 1 is loadable.
+
+    Refuses a MISSING key too, loudly: their HF config class defaults to
+    30 while training used 1 — under their reference a missing key
+    silently shifts chunk slicing to start at index 29, and silently
+    picking either side of that divergence is worse than stopping."""
+    value = config.get("n_obs_steps")
+    if value is None or int(value) != 1:
+        raise NotImplementedError(
+            f"n_obs_steps={value!r}: this port packs exactly one observation "
+            "per prompt (all released/rig checkpoints ship 1). A missing key "
+            "is refused rather than defaulted — their HF config class "
+            "defaults to 30, which shifts the chunk slice to index 29",
+        )
+    return 1
 
 
 @dataclass(frozen=True, slots=True)
@@ -206,6 +240,7 @@ class MolmoAct2Predictor:
                 f"the tokenizer's <im_patch> id {patch_id}",
             )
         action_stats, state_stats, metadata = load_norm_stats(checkpoint_dir, norm_tag)
+        n_obs_steps = require_single_obs(config)
         return cls(
             trunk=load_trunk(checkpoint_dir, device=device, dtype=dtype),
             expert=load_action_expert(
@@ -241,11 +276,7 @@ class MolmoAct2Predictor:
                 what="max_action_horizon",
             ),
             max_action_dim=int(config["max_action_dim"]),
-            n_obs_steps=_positive_int(
-                config.get("n_obs_steps"),
-                default=1,
-                what="n_obs_steps",
-            ),
+            n_obs_steps=n_obs_steps,
             num_state_tokens=int(config["num_state_tokens"]),
             flow_matching_num_steps=int(config["flow_matching_num_steps"]),
             mask_action_dim_padding=bool(config["mask_action_dim_padding"]),
@@ -265,15 +296,22 @@ class MolmoAct2Predictor:
     ) -> dict[str, Tensor]:
         """Pack one observation (item 2) and collate it to the batch-1
         trunk inputs: per-image pooled indices shift into the sample's
-        concatenated view grid exactly like ``Molmo2InputsCollator``."""
+        concatenated view grid exactly like ``Molmo2InputsCollator``.
+
+        Shapes:
+        - ``images``: per camera [H, W, 3]-coercible frames
+        - ``state``: [D] raw joint units
+        - returns: input_ids [1, S], crops [1, V, 729, 588],
+          pooled_patches_idx [1, V * 196, 4], image_type_mask [1, S]
+        """
         pack = pack_action_example(
             images=images,
             state=state,
             task=task,
             tokenizer=self.tokenizer,
             state_stats=self.state_stats,
-            setup_type=str(self.metadata.get("setup_type", "") or ""),
-            control_mode=str(self.metadata.get("control_mode", "") or ""),
+            setup_type=str(self.metadata["setup_type"]),
+            control_mode=str(self.metadata["control_mode"]),
             normalize_language=normalize_language,
             num_state_tokens=self.num_state_tokens,
         )
@@ -304,7 +342,13 @@ class MolmoAct2Predictor:
     ) -> tuple[list[tuple[Tensor, Tensor]], Tensor]:
         """Run the trunk prompt forward (vision inject + causal-OR-image
         mask), retain the cache, and return (per-layer KV states, encoder
-        attention mask) for the expert."""
+        attention mask) for the expert.
+
+        Shapes:
+        - ``inputs``: the ``batch_inputs`` dict (see its docstring)
+        - returns: per-layer ([1, S, kv_dim], same) pairs and a [1, S]
+          bool encoder mask
+        """
         embeds = self.trunk.build_input_embeddings(
             inputs["input_ids"],
             crops=inputs["crops"],
@@ -351,9 +395,14 @@ class MolmoAct2Predictor:
         generator: torch.Generator | None = None,
         normalize_language: bool = True,
     ) -> Tensor:
-        """One observation -> the executed action chunk
-        ``[1, n_action_steps, action_dim]`` (fp32, CPU, joint units) —
-        their ``predict_action`` continuous path end-to-end."""
+        """One observation -> the executed action chunk — their
+        ``predict_action`` continuous path end-to-end.
+
+        Shapes:
+        - ``images``: per camera [H, W, 3]-coercible frames
+        - ``state``: [D] raw joint units
+        - returns: [1, n_action_steps, action_dim] fp32, CPU, joint units
+        """
         inputs = self.batch_inputs(
             images,
             task,

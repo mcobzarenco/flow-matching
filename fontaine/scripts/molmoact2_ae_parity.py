@@ -94,6 +94,8 @@ def build_ours(hf_dir: Path, ae_state: dict[str, torch.Tensor], llm_kv_dim: int)
         mlp_ratio=ae_cfg["mlp_ratio"],
         ffn_multiple_of=ae_cfg["ffn_multiple_of"],
         timestep_embed_dim=ae_cfg["timestep_embed_dim"],
+        dropout=0.0,
+        attn_dropout=0.0,
         context_layer_norm=ae_cfg["context_layer_norm"],
         qk_norm=ae_cfg["qk_norm"],
         qk_norm_eps=ae_cfg["qk_norm_eps"],

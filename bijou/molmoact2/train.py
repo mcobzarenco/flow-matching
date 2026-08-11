@@ -45,8 +45,12 @@ trunk runs DETERMINISTIC — their trainer leaves ``model.train()`` on
 with ``llm.residual_dropout=0.1``, so their conditioning KV was
 stochastic; ours is our standard frozen-trunk recipe. Dataset mixing is
 sqrt-weighted per-frame WITH replacement (theirs: sqrt-weighted source
-draw over per-epoch shuffles). Both are regularization-class deltas;
-the G4 corridor + anchor reads judge them.
+draw over per-epoch shuffles). Frame quantization: this collator
+converts LeRobot float frames with round() where their serving-path
+coercion truncates (``to_uint8_rgb`` mirrors THAT for inference parity)
+— a <=1/255-per-pixel distributional delta. AdamW runs fused on CUDA
+(kernel-order numerics vs their unfused optimizer). All are
+regularization-class deltas; the G4 corridor + anchor reads judge them.
 
 Saves land every ``--save-every`` steps as predictor-consumable step
 dirs: ``model.action_expert.*``-prefixed bf16 safetensors +
@@ -68,25 +72,33 @@ from typing import Any, override
 import numpy as np
 import torch
 import torch.nn.functional as F
+from lerobot.datasets.lerobot_dataset import LeRobotDataset
+from PIL import Image
+from safetensors.torch import save_file
 from torch import Tensor, nn
+from torch.utils.data import ConcatDataset, DataLoader, WeightedRandomSampler
+from torchvision import transforms
+from torchvision.transforms import InterpolationMode
+from torchvision.transforms import functional as TF
 
-from bijou.gemma4.loading import resolve_checkpoint_dir
-from bijou.molmo2.cache import Molmo2KVCache
-from bijou.molmo2.model import Molmo2Model, build_multimodal_mask
-from bijou.molmo2.model import load_model as load_trunk
-from bijou.molmo2.tokenizer import Molmo2TextTokenizer
-from bijou.molmoact2.action_expert import ActionExpert
-from bijou.molmoact2.predictor import (
+from ..gemma4.loading import resolve_checkpoint_dir
+from ..molmo2.cache import Molmo2KVCache
+from ..molmo2.model import Molmo2Model, build_multimodal_mask
+from ..molmo2.model import load_model as load_trunk
+from ..molmo2.tokenizer import Molmo2TextTokenizer
+from .action_expert import ActionExpert
+from .predictor import (
     load_action_expert,
     resolve_image_token_ids,
 )
-from bijou.molmoact2.processing import (
+from .processing import (
+    PAD_ID,
     QuantileStats,
     load_norm_stats,
     normalize_state,
     pack_action_example,
 )
-from bijou.molmoact2.wiring import encoder_attention_mask, extract_kv_states
+from .wiring import encoder_attention_mask, extract_kv_states
 
 #: Their AE-side freeze set under discrete state: substrings of
 #: parameter names that stay frozen (``freeze_continuous_state_
@@ -135,8 +147,12 @@ def sample_flow_times(
     device: torch.device | str,
 ) -> Tensor:
     """Their ``_sample_beta_timesteps``: ``t = offset + scale * B`` with
-    ``B ~ Beta(alpha, beta)`` i.i.d. per example, fp32 [B], drawn from
-    the ambient RNG (theirs too — flow times are not example-seeded)."""
+    ``B ~ Beta(alpha, beta)`` i.i.d. per example, drawn from the ambient
+    RNG (theirs too — flow times are not example-seeded).
+
+    Shapes:
+    - returns: [batch_size] fp32 on ``device``
+    """
     b = (
         torch.distributions.Beta(alpha, beta)
         .sample(torch.Size((batch_size,)))
@@ -158,7 +174,17 @@ def flow_matching_loss_sums(
     """Their ``_compute_flow_matching_loss`` at ``num_flow_timesteps=1``,
     sum form: (sum over [B, T] of the per-position valid-dim means, with
     graph; position count B*T). Mean form = sum / count; the sum form
-    keeps micro-batch accumulation exact under unequal batch sizes."""
+    keeps micro-batch accumulation exact under unequal batch sizes.
+
+    Shapes:
+    - ``kv_states``: one ([B, S, llm_kv_dim], same) pair per expert block
+    - ``enc_mask``: [B, S] bool
+    - ``actions_norm``: [B, T, max_action_dim] fp32 normalized+clamped
+    - ``action_dim_is_pad``: [B, max_action_dim] bool
+    - ``times``: [B] fp32
+    - ``noise``: [B, T, max_action_dim] fp32
+    - returns: (scalar loss sum, scalar position count B*T)
+    """
     valid = ~action_dim_is_pad  # [B, D]
     dim_mask = valid[:, None, :].to(actions_norm.dtype)  # [B, 1, D]
     actions_masked = actions_norm * dim_mask
@@ -192,8 +218,6 @@ class RigAugmenter:
     torch's ambient RNG (their torchvision calls do too)."""
 
     def __init__(self) -> None:
-        from torchvision import transforms
-
         self._jitter = transforms.ColorJitter(
             brightness=0.2,
             contrast=(0.8, 1.2),
@@ -203,10 +227,10 @@ class RigAugmenter:
         self._blur = transforms.GaussianBlur(kernel_size=5, sigma=(0.1, 1.0))
 
     def __call__(self, image: np.ndarray, rng: np.random.RandomState) -> np.ndarray:
-        from PIL import Image
-        from torchvision.transforms import InterpolationMode
-        from torchvision.transforms import functional as TF
-
+        """Shapes:
+        - ``image``: [H, W, 3] uint8
+        - returns: [H, W, 3] uint8, augmented (writable copy)
+        """
         pil = Image.fromarray(image)
         h, w = pil.height, pil.width
         crop_h = max(int(h * 0.95), 1)
@@ -225,12 +249,14 @@ class RigAugmenter:
         angle = rng.uniform(-5.0, 5.0)
         pil = TF.rotate(pil, angle=angle, interpolation=InterpolationMode.BILINEAR)
         pil = self._jitter(pil)
+        # The <3px guard skips the blur AND its RNG draw — a stream delta
+        # vs the reference, unreachable on real rig frames.
         if min(pil.size) > 2 and torch.rand(()) < 0.2:
             pil = self._blur(pil)
         return np.array(pil, dtype=np.uint8)  # writable copy: pack wraps it in a tensor
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True, slots=True)
 class PackedTrainExample:
     """One example after worker-side packing (item-2 pipeline + the
     normalized action target)."""
@@ -295,6 +321,11 @@ class MolmoAct2TrainCollator:
         return self._tokenizer, self._image_ids
 
     def _pack(self, item: dict[str, Any]) -> PackedTrainExample:
+        """Shapes (LeRobot item fields consumed):
+        - ``item[camera_key]``: [3, H, W] float in [0, 1]
+        - ``item["observation.state"]``: [D] raw units
+        - ``item["action"]``: [T, D] raw units (delta_timestamps window)
+        """
         tokenizer, _ = self._materialize()
         images: list[np.ndarray] = []
         for key in self.camera_keys:
@@ -350,9 +381,16 @@ class MolmoAct2TrainCollator:
         )
 
     def __call__(self, items: list[dict[str, Any]]) -> dict[str, Tensor]:
+        """Shapes (returned batch, B = len(items), W = max prompt len):
+        - ``input_ids``: [B, W] long, left-padded with PAD_ID
+        - ``attention_mask``: [B, W] long, 1 = real token
+        - ``image_type_mask``: [B, W] bool
+        - ``crops``: [B, V_max, 729, 588] fp32, -1-filled pad views
+        - ``pooled_patches_idx``: [B, P_max, 4] long, -1-filled
+        - ``actions_norm``: [B, T, max_action_dim] fp32
+        - ``action_dim_is_pad``: [B, max_action_dim] bool
+        """
         _, image_ids = self._materialize()
-        from bijou.molmoact2.processing import PAD_ID
-
         examples = [self._pack(item) for item in items]
         batch = len(examples)
         width = max(e.input_ids.shape[0] for e in examples)
@@ -405,7 +443,13 @@ def prompt_kv_batch(
     (logical positions + padding-aware multimodal mask); the encoder
     mask reproduces their train-time ``_get_encoder_attention_mask``
     (attention_mask minus EOS positions; span strip is a no-op on these
-    prompts — no action tokens present)."""
+    prompts — no action tokens present).
+
+    Shapes:
+    - ``batch``: the collator dict (see ``MolmoAct2TrainCollator.__call__``)
+    - returns: per-layer ([B, W, kv_dim], same) pairs and a [B, W] bool
+      encoder mask
+    """
     attention_mask = batch["attention_mask"]
     has_padding = bool((attention_mask == 0).any())
     padding_mask = attention_mask if has_padding else None
@@ -485,8 +529,6 @@ def save_step_dir(
     """One predictor-consumable step dir, written atomically:
     ``model.action_expert.*``-prefixed bf16 tensors (their export dtype)
     + config.json + the rig norm_stats.json."""
-    from safetensors.torch import save_file
-
     step_dir = save_dir / f"step_{step:06d}"
     tmp_dir = save_dir / f".tmp_step_{step:06d}"
     if tmp_dir.exists():
@@ -540,14 +582,19 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--device", default="cuda")
     args = parser.parse_args(argv)
     if args.global_batch % args.micro_batch != 0:
-        raise SystemExit("--global-batch must be a multiple of --micro-batch")
+        parser.error("--global-batch must be a multiple of --micro-batch")
+    if args.norm_stats.name != "norm_stats.json":
+        # load_norm_stats reads <parent>/norm_stats.json while
+        # save_step_dir ships the literal file passed here — any other
+        # name would train with one table and ship another.
+        parser.error(
+            f"--norm-stats must point at a file named norm_stats.json "
+            f"(got {args.norm_stats})",
+        )
     return args
 
 
 def main(argv: list[str] | None = None) -> None:
-    from lerobot.datasets.lerobot_dataset import LeRobotDataset
-    from torch.utils.data import ConcatDataset, DataLoader, WeightedRandomSampler
-
     args = parse_args(argv)
     torch.manual_seed(args.seed)
     device = torch.device(args.device)
@@ -603,8 +650,8 @@ def main(argv: list[str] | None = None) -> None:
         state_stats=state_stats,
         action_stats=action_stats,
         camera_keys=camera_keys,
-        setup_type=str(metadata.get("setup_type", "") or ""),
-        control_mode=str(metadata.get("control_mode", "") or ""),
+        setup_type=str(metadata["setup_type"]),
+        control_mode=str(metadata["control_mode"]),
         max_action_dim=max_action_dim,
         num_state_tokens=int(config["num_state_tokens"]),
         augment=args.img_aug == "full",

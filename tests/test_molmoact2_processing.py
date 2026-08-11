@@ -22,6 +22,7 @@ that banked them.
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
 from typing import Any
 
@@ -279,6 +280,38 @@ def test_infer_max_sequence_length_reference_values() -> None:
         )
         == 768
     )
+
+
+def test_load_norm_stats_rejects_empty_prompt_metadata(tmp_path: Path) -> None:
+    """setup_type/control_mode render verbatim into the prompt — a
+    missing or empty value must be loud, not a silent 'The setup is .'
+    off-distribution prompt."""
+    rows = {"q01": [0.0], "q99": [1.0]}
+    base = {
+        "action_stats": rows,
+        "state_stats": rows,
+        "setup_type": "tiny rig",
+        "control_mode": "absolute joint pose",
+    }
+    for key, value in (
+        ("setup_type", ""),
+        ("control_mode", "  "),
+        ("setup_type", None),
+    ):
+        broken = {**base, key: value}
+        if value is None:
+            del broken[key]
+        (tmp_path / "norm_stats.json").write_text(
+            json.dumps({"metadata_by_tag": {"tag": broken}}),
+        )
+        with pytest.raises(ValueError, match=key):
+            load_norm_stats(tmp_path, "tag")
+    (tmp_path / "norm_stats.json").write_text(
+        json.dumps({"metadata_by_tag": {"tag": base}}),
+    )
+    action_stats, state_stats, meta = load_norm_stats(tmp_path, "tag")
+    assert meta["setup_type"] == "tiny rig"
+    assert action_stats.q01.shape == state_stats.q01.shape == (1,)
 
 
 def test_quantile_normalize_roundtrip_and_eps() -> None:

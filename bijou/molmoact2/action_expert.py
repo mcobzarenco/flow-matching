@@ -44,6 +44,14 @@ def _modulate(
     shift: torch.Tensor,
     scale: torch.Tensor,
 ) -> torch.Tensor:
+    """AdaLN modulation.
+
+    Shapes:
+    - ``x``: [B, T, hidden] normalized stream
+    - ``shift``: [B, hidden] additive term (broadcast over T)
+    - ``scale``: [B, hidden] multiplicative term (broadcast over T)
+    - returns: [B, T, hidden]
+    """
     return x * (1 + scale.unsqueeze(1)) + shift.unsqueeze(1)
 
 
@@ -90,6 +98,10 @@ class ActionExpertRMSNorm(nn.Module):
 
     @override
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Shapes:
+        - ``x``: [..., size] any leading dims
+        - returns: [..., size] in ``x``'s dtype (variance in fp32)
+        """
         with torch.autocast(enabled=False, device_type=x.device.type):
             dtype = x.dtype
             x_float = x.to(torch.float32)
@@ -118,6 +130,11 @@ class ActionExpertRotaryEmbedding(nn.Module):
         q: torch.Tensor,
         k: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Shapes:
+        - ``q``: [B, heads, S, head_dim]
+        - ``k``: [B, heads, S, head_dim] (same S as q — self-attention only)
+        - returns: (q, k) rotated, same shapes/dtypes
+        """
         seq_len = q.shape[-2]
         half_dim = self.head_dim // 2
         inv_freq = 1.0 / (
@@ -148,7 +165,15 @@ def _sdpa(
     dropout_p: float,
     is_causal: bool,
 ) -> torch.Tensor:
-    """(b, s, h, d) in/out — their SDPA fallback path verbatim."""
+    """Their SDPA fallback path verbatim.
+
+    Shapes:
+    - ``q``: [B, S_q, heads, head_dim]
+    - ``k``: [B, S_kv, heads, head_dim]
+    - ``v``: [B, S_kv, heads, head_dim]
+    - ``attn_mask``: [B, 1, S_q, S_kv] additive (or None)
+    - returns: [B, S_q, heads, head_dim] contiguous
+    """
     out = F.scaled_dot_product_attention(
         q.transpose(1, 2),
         k.transpose(1, 2),
@@ -198,6 +223,11 @@ class ActionExpertSelfAttention(nn.Module):
         attn_mask: torch.Tensor | None = None,
         is_causal: bool = False,
     ) -> torch.Tensor:
+        """Shapes:
+        - ``x``: [B, T, hidden] action stream
+        - ``attn_mask``: [B, 1, T, T] additive (or None)
+        - returns: [B, T, hidden]
+        """
         bsz, seq_len, _ = x.shape
         qkv = self.qkv(x).view(bsz, seq_len, 3, self.num_heads, self.head_dim)
         q, k, v = qkv[:, :, 0], qkv[:, :, 1], qkv[:, :, 2]
@@ -264,6 +294,13 @@ class ActionExpertCrossAttention(nn.Module):
         kv_v: torch.Tensor,
         attn_mask: torch.Tensor | None = None,
     ) -> torch.Tensor:
+        """Shapes:
+        - ``x``: [B, T, hidden] action stream (queries)
+        - ``kv_k``: [B, S_ctx, heads, head_dim] pre-projected context keys
+        - ``kv_v``: [B, S_ctx, heads, head_dim] pre-projected context values
+        - ``attn_mask``: [B, 1, 1, S_ctx] additive (or None)
+        - returns: [B, T, hidden]
+        """
         bsz, tgt_len, _ = x.shape
         q = self.q_proj(x).view(bsz, tgt_len, self.num_heads, self.head_dim)
         k, v = kv_k, kv_v
@@ -303,6 +340,10 @@ class ActionExpertMLP(nn.Module):
 
     @override
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Shapes:
+        - ``x``: [B, T, hidden]
+        - returns: [B, T, hidden] (SwiGLU through inner_dim)
+        """
         x = F.silu(self.gate_proj(x)) * self.up_proj(x)
         x = self.dropout(x)
         return self.dropout(self.down_proj(x))
@@ -316,6 +357,10 @@ class ActionExpertModulation(nn.Module):
 
     @override
     def forward(self, conditioning: torch.Tensor) -> torch.Tensor:
+        """Shapes:
+        - ``conditioning``: [B, hidden] timestep embedding
+        - returns: [B, num_chunks * hidden] stacked shift/scale/gate rows
+        """
         return self.linear(self.act(conditioning))
 
 
@@ -373,6 +418,14 @@ class ActionExpertBlock(nn.Module):
         attn_mask: torch.Tensor | None = None,
         is_causal: bool = False,
     ) -> torch.Tensor:
+        """Shapes:
+        - ``x``: [B, T, hidden] action stream
+        - ``conditioning``: [B, hidden] timestep embedding
+        - ``cross_kv``: ([B, S_ctx, heads, head_dim], same) context K/V
+        - ``self_attn_mask``: [B, 1, T, T] additive (or None)
+        - ``attn_mask``: [B, 1, 1, S_ctx] additive cross mask (or None)
+        - returns: [B, T, hidden]
+        """
         (
             shift_msa,
             scale_msa,
@@ -410,6 +463,11 @@ class ActionExpertFinalLayer(nn.Module):
 
     @override
     def forward(self, x: torch.Tensor, conditioning: torch.Tensor) -> torch.Tensor:
+        """Shapes:
+        - ``x``: [B, T, hidden]
+        - ``conditioning``: [B, hidden] timestep embedding
+        - returns: [B, T, output_dim] velocity rows
+        """
         shift, scale = self.modulation(conditioning).chunk(2, dim=1)
         return self.linear(_modulate(self.norm(x), shift, scale))
 
@@ -421,6 +479,11 @@ class SinusoidalTimeEmbedding(nn.Module):
 
     @override
     def forward(self, timesteps: torch.Tensor) -> torch.Tensor:
+        """Shapes:
+        - ``timesteps``: [B] (multi-dim inputs collapse to their first
+          column, their convention)
+        - returns: [B, dim] sin|cos features at ``timesteps``' dtype
+        """
         if timesteps.dim() > 1:
             timesteps = timesteps.view(timesteps.shape[0], -1)[:, 0]
         half_dim = self.dim // 2
@@ -435,28 +498,36 @@ class SinusoidalTimeEmbedding(nn.Module):
         return emb
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class ActionExpertConfig:
-    """Defaults = the released MolmoAct2 SO-100/101 expert, measured
-    off the HF export + config.json (577,564,448 params): h768, 36
-    blocks, 8 heads (head_dim 96), MLP inner 3072, conditioned on the
-    Molmo2 4B KV dim 1024."""
+    """Geometry of one MolmoAct2 action expert. No field defaults —
+    construction sites spell out every field (the released SO-100/101
+    values live where checkpoints are parsed: ``action_expert_from_config``).
 
-    max_horizon: int = 30
-    max_action_dim: int = 32
-    hidden_size: int = 768
-    num_layers: int = 36
-    num_heads: int = 8
-    mlp_ratio: float = 4.0
-    ffn_multiple_of: int = 256
-    timestep_embed_dim: int = 256
-    dropout: float = 0.0
-    attn_dropout: float = 0.0
-    context_layer_norm: bool = True
-    qk_norm: bool = True
-    qk_norm_eps: float = 1e-6
-    rope: bool = True
-    causal_attn: bool = False
+    Parameter accounting at the released size (h768, 36 blocks, 8 heads
+    of head_dim 96, MLP inner 3072, Molmo2-4B KV dim 1024), measured on
+    this module 2026-08-11 (``outputs/probe_molmoact2_param_count.py``):
+    620,677,664 instantiated — the paper's "621M" — of which 42,522,624
+    are the 36 frozen/inactive ``cross_attn.kv_proj`` compat tensors and
+    590,592 the identity-injected ``state_encoder``; the HF exports omit
+    both, shipping the active 577,564,448 (588 tensors). Same expert,
+    two counting conventions."""
+
+    max_horizon: int
+    max_action_dim: int
+    hidden_size: int
+    num_layers: int
+    num_heads: int
+    mlp_ratio: float
+    ffn_multiple_of: int
+    timestep_embed_dim: int
+    dropout: float
+    attn_dropout: float
+    context_layer_norm: bool
+    qk_norm: bool
+    qk_norm_eps: float
+    rope: bool
+    causal_attn: bool
 
     def build(self, llm_kv_dim: int) -> ActionExpert:
         return ActionExpert(self, llm_kv_dim=llm_kv_dim)
@@ -523,6 +594,10 @@ class ActionExpert(nn.Module):
             yield block
 
     def _reshape_hidden_to_heads(self, x: torch.Tensor) -> torch.Tensor:
+        """Shapes:
+        - ``x``: [B, S, hidden]
+        - returns: [B, S, num_heads, head_dim] view
+        """
         return x.view(
             x.shape[0],
             x.shape[1],
@@ -556,7 +631,12 @@ class ActionExpert(nn.Module):
         """Their HF inference semantics: the sinusoid runs at the
         timestep dtype (the flow loop feeds fp32 grids), then the
         embedding is cast to the MLP weight dtype — a no-op at uniform
-        dtype, load-bearing for fp32 timesteps on a bf16 expert."""
+        dtype, load-bearing for fp32 timesteps on a bf16 expert.
+
+        Shapes:
+        - ``timesteps``: [B] flow times
+        - returns: [B, hidden] conditioning at the MLP weight dtype
+        """
         sinusoid, first_linear = self.time_embed[0], self.time_embed[1]
         conditioning = sinusoid(timesteps)
         assert isinstance(first_linear, nn.Linear)
@@ -566,6 +646,10 @@ class ActionExpert(nn.Module):
         return conditioning
 
     def _encode_states(self, states: torch.Tensor | None) -> torch.Tensor | None:
+        """Shapes:
+        - ``states``: [B, D] or [B, S_state, D]; D pads/truncates to hidden
+        - returns: [B, S_state, hidden] (S_state = 1 for 2-D input), or None
+        """
         if states is None:
             return None
         if states.dim() == 2:
@@ -583,6 +667,12 @@ class ActionExpert(nn.Module):
         encoder_kv_states: Sequence[tuple[torch.Tensor, torch.Tensor]],
         encoded_states: torch.Tensor | None,
     ) -> list[tuple[torch.Tensor, torch.Tensor]]:
+        """Shapes:
+        - ``encoder_kv_states``: one ([B, S_ctx, llm_kv_dim], same) pair
+          per block
+        - ``encoded_states``: [B, S_state, hidden] (or None)
+        - returns: per block ([B, S_ctx + S_state, heads, head_dim], same)
+        """
         if len(encoder_kv_states) != len(self.blocks):
             raise ValueError(
                 "expected one KV state per action expert block "
@@ -614,6 +704,13 @@ class ActionExpert(nn.Module):
         batch_size: int,
         dtype: torch.dtype,
     ) -> torch.Tensor | None:
+        """Shapes:
+        - ``encoder_attention_mask``: [B, S_ctx] bool/int (or pre-built
+          [B, 1, 1, S_ctx]); True/1 = attendable
+        - ``encoded_states``: [B, S_state, hidden] (or None) — states are
+          appended as always-attendable columns
+        - returns: [B, 1, 1, S_ctx + S_state] additive, or None
+        """
         # Source quirk preserved: a state-only context with no encoder
         # mask returns None (states are never masked anyway).
         if encoder_attention_mask is None:
@@ -642,6 +739,11 @@ class ActionExpert(nn.Module):
         device: torch.device,
         dtype: torch.dtype,
     ) -> torch.Tensor | None:
+        """Shapes:
+        - ``action_attention_mask``: [B, T] (1 = real action row), or None
+        - returns: [B, 1, T, T] additive (or [1, 1, T, T] pure-causal), or
+          None when nothing masks
+        """
         mask = None
         if action_attention_mask is not None:
             valid = action_attention_mask.to(device=device, dtype=torch.bool)
@@ -672,6 +774,18 @@ class ActionExpert(nn.Module):
         action_attention_mask: torch.Tensor | None = None,
         state_embeddings: torch.Tensor | None = None,
     ) -> torch.Tensor:
+        """Predict the velocity field at ``timesteps``.
+
+        Shapes:
+        - ``actions``: [B, T <= max_horizon, max_action_dim] noisy chunk
+        - ``timesteps``: [B] flow times
+        - ``encoder_kv_states``: one ([B, S_ctx, llm_kv_dim], same) pair
+          per block (post-RoPE trunk K/V, flattened)
+        - ``encoder_attention_mask``: [B, S_ctx] bool/int, or None
+        - ``action_attention_mask``: [B, T], 1 = real row, or None
+        - ``state_embeddings``: [B, D] or [B, S_state, D], or None
+        - returns: [B, T, max_action_dim] velocity
+        """
         if len(encoder_kv_states) == 0:
             raise ValueError("expected at least one encoder KV state")
         bsz, seq_len, _ = actions.shape

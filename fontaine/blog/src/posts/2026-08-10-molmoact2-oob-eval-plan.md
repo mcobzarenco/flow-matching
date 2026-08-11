@@ -32,8 +32,11 @@ to actually run it on our panel.
 
 ## 1. What the model is
 
-- **Backbone**: Molmo2-ER (Qwen3-8B LLM + SigLIP-class ViT) — the
-  exact HF checkpoint our er_60k run warm-starts from. Their VLA =
+- **Backbone**: Molmo2-ER (Qwen3-4B-class LLM + SigLIP-class ViT;
+  the system totals ~5B with the expert) — the exact HF checkpoint
+  our er_60k run warm-starts from. *(Corrected 2026-08-11: this post
+  originally said "Qwen3-8B" — the trunk is Molmo2-4B's, per the
+  paper's own table and the deep-dive post.)* Their VLA =
   our trunk + robot-state prompt injection + a flow-matching action
   expert. This makes the comparison unusually clean architecturally.
 - **Action expert**: DiT-style adaLN-Zero blocks, width 768, 8
@@ -191,7 +194,7 @@ still carry an asterisk vs a truly unseen benchmark.)
 Out-of-band throughout: **no bijou.eval changes, record-only, no
 gate on our runs, nothing repoints.** GPU: local H100, free after
 the 15k-panel eval. Est. ~2–5 GPU-h (gate ≤ 8 — batch-1 prefill of
-an 8B VLM × 25,800 frames dominates; CUDA-graph capture for the
+a ~5B VLM × 25,800 frames dominates; CUDA-graph capture for the
 expert loop is ~2× and we enable it).
 
 1. **Predictor script** (`fontaine/scripts/molmoact2_panel_predict.py`):

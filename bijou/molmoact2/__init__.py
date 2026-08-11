@@ -8,19 +8,19 @@ action-side processing — prompt template, discrete state tokens,
 q01/q99 norm stats (item 2).
 """
 
-from bijou.molmoact2.action_expert import (
+from .action_expert import (
     ActionExpert,
     ActionExpertConfig,
     load_action_expert_state,
 )
-from bijou.molmoact2.predictor import (
+from .predictor import (
     IMAGE_TOKEN_STRINGS,
     MolmoAct2Predictor,
     action_expert_from_config,
     load_action_expert,
     resolve_image_token_ids,
 )
-from bijou.molmoact2.processing import (
+from .processing import (
     PackedActionExample,
     QuantileStats,
     build_robot_prompt,
@@ -34,7 +34,7 @@ from bijou.molmoact2.processing import (
     to_uint8_rgb,
     unnormalize_action,
 )
-from bijou.molmoact2.wiring import (
+from .wiring import (
     encoder_attention_mask,
     extract_kv_states,
     flow_timesteps,

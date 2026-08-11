@@ -144,6 +144,13 @@ cited, and the doc-cited `probe_rollout_vram.py` is lost outright
   (`loading` owns the checkpoint schema — both the write side,
   `CheckpointMetadata`, and the read side, `CheckpointInfo`/
   `checkpoint_sections` — because `train` and `eval` both sit above it.)
+  The Molmo2 lineage is a parallel spur with the same discipline:
+  `molmoact2` → `molmo2` → `nn`/`gemma4.loading`, importing downward
+  only — the MolmoAct2 port never reaches into `model`/`decoders`, and
+  nothing outside the spur imports it. (Added 2026-08-11: the port
+  landed with absolute self-imports — the same class bijou.judge
+  taught us on 2026-07-30 — normalized to relative in the review
+  sweep.)
 - Package CLIs live in `cli.py`, not `__main__.py` (spawn-based
   multiprocessing cannot unpickle objects defined in a package
   `__main__`).
@@ -164,6 +171,12 @@ cited, and the doc-cited `probe_rollout_vram.py` is lost outright
   collective behavior (e.g. "every rank must call this at the same step").
   Math typography (τ, ε, σ, −) is welcome; the confusables whitelist in
   `pyproject.toml` covers it.
+- **Every function that takes tensors documents their shapes as
+  docstring bullets** — a `Shapes:` block, one line per tensor argument
+  (and the return): ``- ``x``: [B, T, hidden] role``. Inline `# [B, S]`
+  comments may stay, but the docstring is the contract a caller reads.
+  (Added 2026-08-11 with the molmoact2 port review; `bijou/molmoact2`
+  is the reference example.)
 
 ## Determinism and measurement
 

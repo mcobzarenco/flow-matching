@@ -22,8 +22,16 @@ TINY = ActionExpertConfig(
     hidden_size=64,
     num_layers=2,
     num_heads=4,
+    mlp_ratio=4.0,
     ffn_multiple_of=32,
     timestep_embed_dim=16,
+    dropout=0.0,
+    attn_dropout=0.0,
+    context_layer_norm=True,
+    qk_norm=True,
+    qk_norm_eps=1e-6,
+    rope=True,
+    causal_attn=False,
 )
 TINY_KV_DIM = 40
 
@@ -68,7 +76,7 @@ COMPAT_TEMPLATES = {
 
 def tiny_expert() -> ActionExpert:
     torch.manual_seed(0)
-    return ActionExpertConfig(**vars(TINY)).build(llm_kv_dim=TINY_KV_DIM)
+    return TINY.build(llm_kv_dim=TINY_KV_DIM)
 
 
 def tiny_inputs(batch: int = 2, ctx_len: int = 5):  # noqa: ANN201
@@ -94,9 +102,27 @@ def test_state_dict_key_set_matches_hf_export_template() -> None:
 
 def test_released_config_parameter_count() -> None:
     # 577,564,448 measured exactly on the real exports (588 tensors);
-    # the module additionally carries the compat-only state_encoder +
-    # kv_proj.
-    cfg = ActionExpertConfig()
+    # instantiated, the module additionally carries the compat-only
+    # state_encoder + kv_proj — 620,677,664 total, the paper's "621M"
+    # (reconciliation measured 2026-08-11,
+    # outputs/probe_molmoact2_param_count.py).
+    cfg = ActionExpertConfig(
+        max_horizon=30,
+        max_action_dim=32,
+        hidden_size=768,
+        num_layers=36,
+        num_heads=8,
+        mlp_ratio=4.0,
+        ffn_multiple_of=256,
+        timestep_embed_dim=256,
+        dropout=0.0,
+        attn_dropout=0.0,
+        context_layer_norm=True,
+        qk_norm=True,
+        qk_norm_eps=1e-6,
+        rope=True,
+        causal_attn=False,
+    )
     expert = cfg.build(llm_kv_dim=1024)
     hf_visible = sum(
         p.numel()
@@ -104,6 +130,7 @@ def test_released_config_parameter_count() -> None:
         if "kv_proj" not in name and not name.startswith("state_encoder")
     )
     assert hf_visible == 577_564_448
+    assert sum(p.numel() for p in expert.parameters()) == 620_677_664
     n_tensors = sum(
         1
         for name in expert.state_dict()

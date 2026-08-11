@@ -30,15 +30,23 @@ TINY = ActionExpertConfig(
     hidden_size=64,
     num_layers=2,
     num_heads=4,
+    mlp_ratio=4.0,
     ffn_multiple_of=32,
     timestep_embed_dim=16,
+    dropout=0.0,
+    attn_dropout=0.0,
+    context_layer_norm=True,
+    qk_norm=True,
+    qk_norm_eps=1e-6,
+    rope=True,
+    causal_attn=False,
 )
 TINY_KV_DIM = 40
 
 
 def tiny_expert() -> ActionExpert:
     torch.manual_seed(0)
-    return ActionExpertConfig(**vars(TINY)).build(llm_kv_dim=TINY_KV_DIM)
+    return TINY.build(llm_kv_dim=TINY_KV_DIM)
 
 
 SUPPORTED_CONFIG = {
@@ -136,6 +144,22 @@ def test_extract_kv_states_truncates_to_seq_len() -> None:
 def test_extract_kv_states_layer_count_mismatch_raises() -> None:
     cache = filled_cache(num_layers=3)
     with pytest.raises(ValueError, match="expected 2 KV layers"):
+        extract_kv_states(
+            cache,
+            num_expert_blocks=2,
+            num_attention_heads=8,
+            num_key_value_heads=4,
+        )
+
+
+def test_extract_kv_states_unfilled_layer_raises() -> None:
+    # An unfilled layer must be loud: a silent skip would mis-align
+    # every deeper layer against its expert block while the total count
+    # still checked out (e.g. 37 cache layers with one gap -> 36).
+    cache = filled_cache(num_layers=3)
+    cache.layers[1].keys = None
+    cache.layers[1].values = None
+    with pytest.raises(ValueError, match="cache layer 1 has no K/V"):
         extract_kv_states(
             cache,
             num_expert_blocks=2,

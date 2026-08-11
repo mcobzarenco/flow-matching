@@ -41,7 +41,7 @@ from bijou.molmoact2 import (
     resolve_image_token_ids,
     unnormalize_action,
 )
-from bijou.molmoact2.predictor import action_expert_from_config
+from bijou.molmoact2.predictor import action_expert_from_config, require_single_obs
 from bijou.molmoact2.processing import (
     ACTION_OUTPUT_ID,
     BOS_ID,
@@ -216,7 +216,16 @@ def predictor() -> MolmoAct2Predictor:
         hidden_size=16,
         num_layers=2,
         num_heads=2,
+        mlp_ratio=4.0,
+        ffn_multiple_of=16,
         timestep_embed_dim=8,
+        dropout=0.0,
+        attn_dropout=0.0,
+        context_layer_norm=True,
+        qk_norm=True,
+        qk_norm_eps=1e-6,
+        rope=True,
+        causal_attn=False,
     ).build(llm_kv_dim=config.text.head_dim * config.text.num_key_value_heads)
     expert.eval()
     expert.requires_grad_(False)
@@ -444,6 +453,51 @@ def test_action_expert_from_config_derives_kv_dim() -> None:
     assert expert.llm_kv_dim == 16
     assert expert.config.max_horizon == _MAX_HORIZON
     assert len(expert.blocks) == 2
+
+
+def test_action_expert_from_config_rejects_nonzero_dropout() -> None:
+    """Any dropout-like ae-config key with a nonzero value is refused —
+    the builder pins dropout to 0.0, so accepting such a checkpoint
+    would silently train off-recipe (the guard is a substring scan
+    because their key spelling is theirs to change)."""
+    ae_cfg: dict[str, Any] = {
+        "hidden_size": 16,
+        "num_layers": 2,
+        "num_heads": 2,
+        "mlp_ratio": 4.0,
+        "ffn_multiple_of": 16,
+        "timestep_embed_dim": 8,
+        "context_layer_norm": True,
+        "qk_norm": True,
+        "qk_norm_eps": 1e-6,
+        "rope": True,
+        "causal_attn": False,
+    }
+
+    def config_with(extra: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "max_action_horizon": _MAX_HORIZON,
+            "max_action_dim": _MAX_ACTION_DIM,
+            "action_expert_config": {**ae_cfg, **extra},
+            "text_config": {"head_dim": 8, "num_key_value_heads": 2},
+        }
+
+    for spelling in ("dropout", "attention_dropout", "attn_dropout"):
+        with pytest.raises(NotImplementedError, match=spelling):
+            action_expert_from_config(config_with({spelling: 0.1}))
+    # Zero-valued dropout keys are the released configuration: accepted.
+    assert len(action_expert_from_config(config_with({"dropout": 0.0})).blocks) == 2
+
+
+def test_require_single_obs() -> None:
+    """n_obs_steps must be present AND 1: their HF config class defaults
+    a missing key to 30 (which shifts chunk slicing to index 29), so a
+    missing key is refused rather than silently defaulted either way."""
+    assert require_single_obs({"n_obs_steps": 1}) == 1
+    with pytest.raises(NotImplementedError, match="n_obs_steps=None"):
+        require_single_obs({})
+    with pytest.raises(NotImplementedError, match="n_obs_steps=30"):
+        require_single_obs({"n_obs_steps": 30})
 
 
 def test_pack_rejects_missing_camera(predictor: MolmoAct2Predictor) -> None:

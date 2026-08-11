@@ -45,20 +45,18 @@ path is train-only and unused here (see ``wiring.py``).
 from __future__ import annotations
 
 import json
+import math
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import numpy as np
 import torch
 import torchvision.transforms
 from torch import Tensor
 
-from bijou.molmo2.processor import _arange_for_pooling, _pixels_to_patches
-
-if TYPE_CHECKING:
-    from bijou.molmo2.processor import ImageCrops
+from ..molmo2.processor import ImageCrops, _arange_for_pooling, _pixels_to_patches
 
 __all__ = [
     "ACTION_OUTPUT_ID",
@@ -182,7 +180,10 @@ def load_norm_stats(
 ) -> tuple[QuantileStats, QuantileStats, dict[str, Any]]:
     """Read ``norm_stats.json`` and return (action, state, metadata) for
     one tag. Metadata carries the prompt facts the pack step consumes
-    (setup_type, control_mode, camera_keys, action_horizon)."""
+    (setup_type, control_mode, camera_keys, action_horizon); the two
+    prompt-load-bearing strings are validated non-empty here — the
+    template renders them verbatim, so an empty value would silently
+    build an off-distribution prompt ("The setup is .")."""
     stats_path = Path(checkpoint_dir).expanduser() / "norm_stats.json"
     payload = json.loads(stats_path.read_text())
     metadata_by_tag = payload.get("metadata_by_tag")
@@ -190,6 +191,14 @@ def load_norm_stats(
         available = sorted(metadata_by_tag) if isinstance(metadata_by_tag, dict) else []
         raise ValueError(f"norm_tag {tag!r} not in {stats_path} (tags: {available})")
     metadata = metadata_by_tag[tag]
+    for key in ("setup_type", "control_mode"):
+        value = metadata.get(key)
+        if value is None or str(value).strip() == "":
+            raise ValueError(
+                f"{stats_path}: {tag!r}.{key} is missing/empty — the robot "
+                "prompt renders it verbatim; refusing to build degenerate "
+                "prompts",
+            )
 
     def quantiles(key: str) -> QuantileStats:
         stats = metadata.get(key)
@@ -205,8 +214,12 @@ def load_norm_stats(
 
 def normalize_q01q99(value: Tensor, stats: QuantileStats) -> Tensor:
     """Their QUANTILES normalization: ``2 * (x - q01) / (q99 - q01) - 1``
-    in float32, zero-width quantile ranges replaced by eps. Shapes:
-    value [..., D] -> same."""
+    in float32, zero-width quantile ranges replaced by eps.
+
+    Shapes:
+    - ``value``: [..., D] raw units
+    - returns: [..., D] float32 normalized
+    """
     value = torch.as_tensor(value, dtype=torch.float32)
     denom = stats.q99 - stats.q01
     denom = torch.where(denom == 0, torch.tensor(_NORM_EPS, dtype=torch.float32), denom)
@@ -214,7 +227,12 @@ def normalize_q01q99(value: Tensor, stats: QuantileStats) -> Tensor:
 
 
 def unnormalize_q01q99(value: Tensor, stats: QuantileStats) -> Tensor:
-    """Inverse map: ``(x + 1) * (q99 - q01) / 2 + q01`` (their op order)."""
+    """Inverse map: ``(x + 1) * (q99 - q01) / 2 + q01`` (their op order).
+
+    Shapes:
+    - ``value``: [..., D] normalized
+    - returns: [..., D] float32 raw units
+    """
     value = torch.as_tensor(value, dtype=torch.float32)
     denom = stats.q99 - stats.q01
     denom = torch.where(denom == 0, torch.tensor(_NORM_EPS, dtype=torch.float32), denom)
@@ -223,14 +241,24 @@ def unnormalize_q01q99(value: Tensor, stats: QuantileStats) -> Tensor:
 
 def normalize_state(value: Tensor, stats: QuantileStats) -> Tensor:
     """Input-side state path: q01/q99 normalize then clamp to [-1, 1]
-    (their ``MolmoAct2ClampNormalizedProcessorStep``)."""
+    (their ``MolmoAct2ClampNormalizedProcessorStep``).
+
+    Shapes:
+    - ``value``: [..., D] raw units
+    - returns: [..., D] float32 in [-1, 1]
+    """
     return normalize_q01q99(value, stats).clamp(-1.0, 1.0)
 
 
 def unnormalize_action(value: Tensor, stats: QuantileStats) -> Tensor:
     """Output-side action path: clamp the sampled normalized chunk to
     [-1, 1] (their ``MolmoAct2ClampActionProcessorStep``) then invert
-    the q01/q99 map back to joint units."""
+    the q01/q99 map back to joint units.
+
+    Shapes:
+    - ``value``: [..., D] sampled normalized chunk
+    - returns: [..., D] float32 joint units
+    """
     value = torch.as_tensor(value, dtype=torch.float32).clamp(-1.0, 1.0)
     return unnormalize_q01q99(value, stats)
 
@@ -266,7 +294,12 @@ def discrete_state_string(
 ) -> str:
     """The normalized state as 256-bin prompt tokens: nan->0 / +-inf->+-1,
     clip to [-1, 1], scale to [0, N-1], round half-to-even (their
-    ``np.rint``), emit ``<state_start><state_i>...<state_end>``."""
+    ``np.rint``), emit ``<state_start><state_i>...<state_end>``.
+
+    Shapes:
+    - ``state``: [D] (any layout flattens row-major)
+    - returns: str with D ``<state_i>`` tokens
+    """
     if num_state_tokens <= 0:
         raise ValueError(f"num_state_tokens must be > 0, got {num_state_tokens}")
     arr = np.asarray(
@@ -345,9 +378,15 @@ def build_robot_prompt(
 def to_uint8_rgb(value: np.ndarray | Tensor) -> np.ndarray:
     """Their pack step's image coercion (``_normalize_image``): any
     reasonable frame layout -> HWC uint8 RGB. Floats with max <= 1 are
-    scaled by 255; everything is clipped THEN cast — this uint8
-    quantization precedes the resize and is part of the reference
-    distribution (see module docstring)."""
+    scaled by 255; everything is clipped THEN cast (astype = truncation,
+    their op) — this uint8 quantization precedes the resize and is part
+    of the reference distribution (see module docstring).
+
+    Shapes:
+    - ``value``: [H, W], [C, H, W], [H, W, C] or [1, ...] thereof
+      (C in {1, 3, 4}); float 0-1, float 0-255, or integer
+    - returns: [H, W, 3] uint8
+    """
     arr = (
         value.detach().cpu().numpy() if isinstance(value, Tensor) else np.asarray(value)
     )
@@ -377,9 +416,13 @@ def process_image_resize(image: np.ndarray) -> ImageCrops:
     378x378 view (their uint8 resize: bilinear WITHOUT antialias on the
     uint8 tensor, clipped and rounded back to uint8, then /255 and
     ``x * 2 - 1``), grid ``(14, 14, 0, 0)``, and the 196-row 2x2 pooling
-    index. Mirrors ``image_to_patches_and_grids(crop_mode='resize')``."""
-    from bijou.molmo2.processor import ImageCrops
+    index. Mirrors ``image_to_patches_and_grids(crop_mode='resize')``.
 
+    Shapes:
+    - ``image``: [H, W, 3] uint8 (``to_uint8_rgb`` output)
+    - returns: ImageCrops(crops [1, 729, 588], pooled_idx [196, 4],
+      grid (14, 14, 0, 0))
+    """
     if image.dtype != np.uint8 or image.ndim != 3 or image.shape[-1] != 3:
         raise ValueError(
             f"expected an HWC uint8 RGB frame (to_uint8_rgb), got {image.dtype} {image.shape}",
@@ -424,8 +467,6 @@ def infer_max_sequence_length(
     """Their fixed sequence budget (``infer_molmoact2_max_sequence_length``),
     continuous rig scope: discrete-action terms kept for fidelity but off
     by default."""
-    import math
-
     if num_images < 1:
         num_images = _DEFAULT_NUM_IMAGES
     state_dim = max(state_dim, 0)
@@ -486,7 +527,14 @@ def pack_action_example(
     """The full input-side path for one rig observation, in their order:
     normalize+clamp state -> discrete state string -> task normalization
     -> prompt -> uint8 image coercion + resize-mode processing -> token
-    expansion + BOS -> loud sequence-budget guard."""
+    expansion + BOS -> loud sequence-budget guard.
+
+    Shapes:
+    - ``images``: per camera [H, W, 3]-coercible frames (``to_uint8_rgb``)
+    - ``state``: [D] raw joint units
+    - returns: PackedActionExample(input_ids [S], images tuple of
+      ImageCrops, normalized_state [D])
+    """
     if not images:
         raise ValueError("MolmoAct2 requires at least one camera frame")
     state = torch.as_tensor(state, dtype=torch.float32)
