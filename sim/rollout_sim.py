@@ -20,8 +20,10 @@ Usage:
 """
 
 import argparse
+import json
+import subprocess
 import time
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
 import av
@@ -46,7 +48,14 @@ TASK = "Pick up the toy boat and place it on the wooden disk."
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--checkpoint", type=Path, required=True)
+    parser.add_argument("--checkpoint", type=Path, default=None)
+    parser.add_argument(
+        "--hold",
+        action="store_true",
+        help="no policy: command the settled reset state every tick "
+        "(the sim analog of state-copy — metric floor + reset-artifact "
+        "anchor)",
+    )
     parser.add_argument("--seed", type=int, default=0, help="first env + noise seed")
     parser.add_argument(
         "--num-seeds",
@@ -63,7 +72,17 @@ def parse_args() -> argparse.Namespace:
         choices=["float32", "bfloat16"],
     )
     parser.add_argument("--out-dir", type=Path, default=OUTPUT_DIR)
-    return parser.parse_args()
+    parser.add_argument(
+        "--out-json",
+        type=Path,
+        default=None,
+        help="write a config header + per-seed rows (incl. per-tick "
+        "distance series) for the reads instrument",
+    )
+    args = parser.parse_args()
+    if (args.checkpoint is None) == (not args.hold):
+        parser.error("exactly one of --checkpoint / --hold is required")
+    return args
 
 
 @dataclass(frozen=True, slots=True)
@@ -73,11 +92,23 @@ class EpisodeResult:
     min_cm: float
     final_cm: float
     success_tick: int | None
+    spawn_xy: tuple[float, float]
+    reset_strikes: int
+    final_z_mm: float
+    final_upright: float
+    ticks: int
+    latency_ms: list[float] = field(default_factory=list)
+    distance_cm: list[float] = field(default_factory=list)
 
     @property
     def progress_cm(self) -> float:
         """Distance recovered from spawn to the episode's closest point."""
         return self.initial_cm - self.min_cm
+
+    @property
+    def progress_final_cm(self) -> float:
+        """PRIMARY metric: distance recovered from spawn to episode end."""
+        return self.initial_cm - self.final_cm
 
 
 def to_observation(obs: SimObservation) -> dict[str, object]:
@@ -107,7 +138,7 @@ def write_video(path: Path, frames: list[np.ndarray]) -> None:
 
 
 def run_episode(
-    policy: BijouPolicy,
+    policy: BijouPolicy | None,
     sim: SO101Sim,
     seed: int,
     *,
@@ -116,33 +147,50 @@ def run_episode(
     video_path: Path,
 ) -> EpisodeResult:
     obs = sim.reset(seed)
-    chunk_size = policy.info.chunk_size
-    stats = policy.info.per_dataset_normalization[STATS_REPO_ID]
     frames: list[np.ndarray] = []
     initial = sim.benchy_disk_distance()
     closest = initial
     success_tick: int | None = None
+    latencies: list[float] = []
+    distances: list[float] = [initial * 100]
+
+    if policy is not None:
+        chunk_size = policy.info.chunk_size
+        stats = policy.info.per_dataset_normalization[STATS_REPO_ID]
+
+        def next_chunk(obs: SimObservation, replan: int) -> np.ndarray:
+            item = observation_to_item(
+                to_observation(obs),
+                TASK,
+                stats,
+                chunk_size,
+                camera_kinds_from_names(SIM_CAMERAS),
+            )
+            start = time.perf_counter()
+            chunk = policy.predict([item], [replan])[0].numpy()
+            latencies.append((time.perf_counter() - start) * 1000)
+            return chunk
+    else:
+        # Hold arm: command the settled reset state for every tick.
+        hold_action = np.tile(obs.state.copy(), (horizon, 1))
+
+        def next_chunk(obs: SimObservation, replan: int) -> np.ndarray:
+            return hold_action
 
     for replan in range(replans):
-        item = observation_to_item(
-            to_observation(obs),
-            TASK,
-            stats,
-            chunk_size,
-            camera_kinds_from_names(SIM_CAMERAS),
-        )
-        start = time.perf_counter()
-        chunk = policy.predict([item], [replan])[0]
-        latency = time.perf_counter() - start
+        chunk = next_chunk(obs, replan)
         print(
-            f"  seed {seed} replan {replan}: {latency * 1000:.0f} ms | "
+            f"  seed {seed} replan {replan}: "
+            f"{latencies[-1] if latencies else 0:.0f} ms | "
             f"benchy->disk {sim.benchy_disk_distance() * 100:.1f} cm",
             flush=True,
         )
         for step in range(horizon):
-            obs = sim.step(chunk[step].numpy())
+            obs = sim.step(chunk[step])
             frames.append(np.concatenate([obs.top, obs.wrist], axis=1))
-            closest = min(closest, sim.benchy_disk_distance())
+            distance = sim.benchy_disk_distance()
+            distances.append(distance * 100)
+            closest = min(closest, distance)
             if sim.success():
                 success_tick = replan * horizon + step
                 break
@@ -150,12 +198,20 @@ def run_episode(
             break
 
     write_video(video_path, frames)
+    pos, upright = sim.benchy_pose()
     return EpisodeResult(
         seed=seed,
         initial_cm=initial * 100,
         min_cm=closest * 100,
         final_cm=sim.benchy_disk_distance() * 100,
         success_tick=success_tick,
+        spawn_xy=sim.reset_spawn_xy,
+        reset_strikes=sim.reset_strike_contacts,
+        final_z_mm=float(pos[2]) * 1000,
+        final_upright=upright,
+        ticks=len(frames),
+        latency_ms=[round(v, 1) for v in latencies],
+        distance_cm=[round(v, 3) for v in distances],
     )
 
 
@@ -164,16 +220,21 @@ def main() -> int:
     torch.set_float32_matmul_precision("high")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    policy = BijouPolicy(
-        args.checkpoint,
-        device=device,
-        seed=args.seed,
-        sample_steps=args.sample_steps,
-        method=SamplingMethod.HEUN,
-        expert_dtype=getattr(torch, args.expert_dtype),
-    )
-    horizon = min(args.execute_horizon, policy.info.chunk_size)
-    print(f"policy: {policy.name} (heun-{args.sample_steps}, horizon {horizon})")
+    if args.hold:
+        policy = None
+        horizon = args.execute_horizon
+        print(f"policy: hold (settled reset state, horizon {horizon})")
+    else:
+        policy = BijouPolicy(
+            args.checkpoint,
+            device=device,
+            seed=args.seed,
+            sample_steps=args.sample_steps,
+            method=SamplingMethod.HEUN,
+            expert_dtype=getattr(torch, args.expert_dtype),
+        )
+        horizon = min(args.execute_horizon, policy.info.chunk_size)
+        print(f"policy: {policy.name} (heun-{args.sample_steps}, horizon {horizon})")
 
     sim = SO101Sim()
     args.out_dir.mkdir(parents=True, exist_ok=True)
@@ -202,6 +263,37 @@ def main() -> int:
     print(
         f"\nbest seed by progress: {best.seed} (video rollout_seed{best.seed:03d}.mp4)",
     )
+
+    if args.out_json is not None:
+        commit = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=Path(__file__).parent,
+            capture_output=True,
+            text=True,
+            check=False,
+        ).stdout.strip()
+        payload = {
+            "config": {
+                "checkpoint": str(args.checkpoint) if args.checkpoint else None,
+                "hold": args.hold,
+                "seed": args.seed,
+                "num_seeds": args.num_seeds,
+                "replans": args.replans,
+                "execute_horizon": horizon,
+                "sample_steps": args.sample_steps,
+                "expert_dtype": args.expert_dtype,
+                "control_hz": CONTROL_HZ,
+                "task": TASK,
+                "stats_repo_id": STATS_REPO_ID,
+                "commit": commit,
+            },
+            "episodes": [
+                {**asdict(r), "progress_final_cm": r.progress_final_cm} for r in results
+            ],
+        }
+        args.out_json.parent.mkdir(parents=True, exist_ok=True)
+        args.out_json.write_text(json.dumps(payload, indent=1))
+        print(f"wrote {args.out_json}")
     return 0
 
 

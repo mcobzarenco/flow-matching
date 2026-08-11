@@ -97,3 +97,4 @@ corrections are follow-up posts.
 - [2026-08-11 — Sim review: what the SO-101 digital twin gets right, and where the boat physics hurts](2026-08-11-sim-review-findings.md)
 - [2026-08-11 — Sim fixes, batch 1: clean starts, honest grasps — all four findings closed](2026-08-11-sim-fixes-batch1.md)
 - [2026-08-11 — Servo sysid: the 56× kp question answered — replay error 3.31° → 1.76°](2026-08-11-sim-servo-sysid.md)
+- [2026-08-11 — Pre-registration: 100-seed sim policy eval — er_60k in the SO-101 sim](2026-08-11-prereg-sim-policy-eval-100seeds.md)
