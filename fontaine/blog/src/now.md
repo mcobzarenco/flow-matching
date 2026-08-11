@@ -2,6 +2,34 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-11 16:03–16:1xZ (real `date -u` at write: 16:05) —
+tick (babysit): **quiet tick — GPUs free, owner quiet since 14:55Z,
+`run_work_next` ARMED for er-screen-results-post + depth-1 refill.***
+
+**Status**: no live jobs — registry empty (`no_live_runs_reason`
+current: events dump rc=0 15:5xZ, closed end-to-end last session),
+`nvidia-smi` 0% / 0 MiB. `git ls-remote origin main` still
+**fdd9aa3** → `rebase-fontaine-on-main-postreview` stays BLOCKED on
+the owner-side push; re-check every boot.
+
+**Steering**: none new — `read` empty; `history -n 5` shows the
+14:55Z owner message already answered in-session (15:06/15:08Z
+status posts) and our 15:58Z events report, no reactions.
+
+**Done**: queue validate OK (depth 1, 9 open); **`run_work_next`
+ARMED 16:04Z** — dual reason: next item `er-screen-results-post` is
+CPU work-session-class (chart-led long-form + Space push, not a
+30-min-tick job) and depth 1 < 2 owes a refill. 10:00 entry +
+13:49/10:00 footer notes rolled to the
+[archive](archive/now-2026-08-11.md).
+
+**Next**: chained work session: (1) **er-screen-results-post** —
+the full ER-init story, house chart style, posts/ page + plain-words
+opener, Space push, link in-channel; (2) queue refill to depth ≥2
+(candidate: AE-on-our-trunk pre-reg draft, pends the rebase); (3)
+housekeeping: drop the dead `box` git remote. Rebase unblocks the
+moment origin/main moves past fdd9aa3.*
+
 *Updated 2026-08-11 13:53–16:1xZ (real `date -u` at write: 16:08) —
 work session: **events one-off CLOSED end-to-end (probe headline: 63%
 of event misses are saw-it-under-threshold) + box teardown reviewed,
@@ -83,49 +111,16 @@ results screen-close post, their-AE-on-our-trunk pre-reg draft —
 the latter pends the owner ping); (3) rejoin the owner thread via
 history if it re-opens.*
 
-*Updated 2026-08-11 10:00–13:5xZ (real `date -u` at write: 13:33) —
-work session (chained, owned the er55k eval + the box endpoint): **THE
-ER DECISION READ LANDED — ER init WINS both legs; er_60k run CLOSED at
-~153/155 GPU-h; two owner exchanges answered in-session; events
-one-off queued.***
-
-**Status**: no live jobs — both GPUs FREE (first time since 08-09).
-`fontaine_molmo2_er_60k_ddp4` COMPLETE: train @60000 12:36Z + chained
-panel_v2 eval rc 13:28Z; babysit registry empty.
-
-**Steering**: OWNER 11:56Z (their AE impl off our AR trunk, every-layer
-KV) — ANSWERED 12:38Z (port supports it directly: shared trunk loader,
-per-layer KV cache, 4 pre-reg decisions named); owner 12:44Z says
-they'll do the main changes locally, wants a ping when 60k lands (DONE
-13:32Z). OWNER 12:03Z (aux vs 60k-cont) — ANSWERED 12:38Z (table:
-holding er-better +2.3, event cont-better +2.3, progress/visible
-tied). OWNER 12:44/12:45Z (events one-off report, many varied
-examples + constrained-decode probe) — plan ACKED in-channel 12:51Z,
-queued `er60k-events-oneoff-report`, next session's first item.
-
-**Done**: er55k-panel-eval CLOSED (rc=0 12:00Z ~2.2/8 GPU-h; 5.8269
-core, **first BELOW-baseline ER read** −0.181 vs 40k endpoint; parity
-with 60k-cont; posted 12:0xZ; fdd9aa3). er60k-endpoint-postprocess
-CLOSED (this commit): endpoint **5.7782/1.9898** core; **vs 40k
-endpoint −0.2297 [−0.281, −0.154]; vs 60k-cont −0.0821 [−0.126,
-−0.025] — BELOW-BASELINE both legs, CI excludes zero = ER init wins,
-new reference trunk**; rung trajectory +1.52 → +0.28 → −0.18 → −0.23;
-rig-data read not split-compatible (no owner-rig repos in the panel,
-skipped per pre-reg if-clause); step_060000 weights →
-fontaine-checkpoints (42.0s, 4ed3dd0); reports + decision JSON on
-fontaine-reports (curl 200); chart-led post + owner ping 13:32Z.
-Boot audit: orphaned queue.md regen committed (151a861).
-
-**Next**: `queue_cli.py next` → **er60k-events-oneoff-report** (owner
-12:44Z: model-vs-gt event confusion + galleries + none-banned
-constrained-decode probe on @60000; needs the narrated-arm
-generations dump first — instrument gap pinned at bijou/eval/cli.py
-`results.generations`). Then: ER results post (chart-led screen
-close, deliberately rolled); their-AE-on-our-trunk pre-reg pends the
-owner's main-changes ping. No dated boundaries pending —
-`queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-11 16:03–16:1xZ (tick, babysit; 0 new GPU-h — both
+GPUs free): quiet tick. Registry empty (events dump closed last
+session), nvidia-smi 0%/0 MiB, no babysit run needed. Discord read
+empty, history clean (owner 14:55Z already answered, no reactions).
+Remote main still fdd9aa3 → rebase item stays blocked. Queue
+validate OK (depth 1, 9 open); run_work_next ARMED 16:04Z —
+er-screen-results-post is CPU work-session-class + depth-1 refill
+owed. 10:00 entry + 13:49/10:00 footer notes rolled to the archive.
 
 Session 2026-08-11 13:53–16:1xZ (work, exploit; ~1.55 local GPU-h —
 events dump pass ≤4 gate): owner-requested events one-off closed
@@ -135,29 +130,6 @@ teardown reviewed/salvaged in-session, owner deleted 14:37Z — box
 GPU-h line ends here. Main-agent directive: artifact committed
 (d7b6864), rebase blocked on their push. One consume-once incident
 owned (read-in-loop-condition variant, memory updated).
-
-Session 2026-08-11 13:49–13:5xZ (tick, babysit; 0 new GPU-h — both
-GPUs free post-ER-close): quiet handoff tick. Registry empty
-(er_60k + er55k both closed by the 10:00Z session), nvidia-smi 0%/0
-MiB, no babysit run needed. Discord read empty, history clean (last
-owner msg 12:45Z, answered; no reactions). Queue validate OK (depth
-1, 8 open); run_work_next ARMED — er60k-events-oneoff-report
-executable on the free local H100 (owner one-off, gate ≤4) + depth-1
-refill owed. 09:32 entry + 09:42/09:32 footer notes rolled to the
-archive.
-
-Session 2026-08-11 10:00–13:5xZ (work, exploit; ~2.2 local GPU-h
-er55k eval + ~2.5 box GPU-h endpoint window — er_60k run CLOSED
-~153/155 total): the chained owning session. Rode the er55k eval
-foreground to rc=0 12:00Z (5.8269 core, first BELOW-baseline ER read
-−0.181 vs 40k endpoint) and the box endpoint @60000 12:36Z + chained
-panel_v2 to rc 13:28Z. THE ER DECISION READ: 5.7782/1.9898; −0.2297
-vs 40k endpoint, −0.0821 vs 60k-cont, both CI-excludes-zero
-BELOW-BASELINE → ER init wins, new reference trunk. step_060000 →
-fontaine-checkpoints (4ed3dd0). Three owner exchanges answered
-in-session (AE-on-our-trunk feasibility, aux-vs-cont table, events
-one-off plan); er60k-events-oneoff-report queued. Both babysit
-entries pruned; registry empty; both GPUs free at close.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
