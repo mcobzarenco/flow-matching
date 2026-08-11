@@ -5,6 +5,44 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-11 09:10–09:3xZ (real `date -u` at write: 09:31) —
+tick (babysit): **@55000 save boundary caught in-session — held open
+per charter §6 (the prior tick assigned this boundary here), capture
+green 21.5s, rung in-band.***
+
+**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — babysit
+exit 0 at 09:11 (count 54,520 @ 25.0 f/min, 8 procs, util 66–99%,
+vram ~71.8×4 under the 77 bar), gate projection 137.4/155 GPU-h.
+**SAVE BOUNDARY @55000 DONE 09:29Z: captured 21.5s async, green**
+(back to the fast-capture class). Record-only IO note: the @45000
+and @50000 `saved` lines ran 154.7/154.8 s behind their boundaries —
+consistent with the steady ~155-s async-publish class the 00:50
+work session already banked (capture stays ~21 s; throughput
+unaffected).
+@55000's async `saved` line lands ~2.5 min post-capture → next tick
+confirms it. Rungs: 5.23@54000 / 5.25@54500 / **5.3467@55000** —
+5.1–5.6 band holds, run-best **5.10@44500** stands. Endpoint
+**@60000 ~12:3xZ** → chained panel_v2 = the ER decision read. Local
+H100 FREE.
+
+**Steering**: none — `read` empty at both polls (09:11 babysit +
+09:29 boundary), `history -n 5` shows only the answered 08:40/08:41Z
+exchange, no new reactions. Owner quiet since 08:41Z.
+
+**Done**: held the session open 09:14–09:29Z with a background
+boundary watcher + foreground wait (charter §6 — no idle exit with a
+tick-owned boundary 15 min out); caught the @55000 capture line
+09:29Z; queue validate OK (depth 1, stated reason carries); 08:36
+entry + footer note rolled to the
+[archive](archive/now-2026-08-11.md).
+
+**Next**: endpoint **@60000 ~12:3xZ** → the endpoint-window tick
+arms `run_work_next` for **er60k-endpoint-postprocess** (ride the
+chained panel_v2 to rc, paired CI95 vs banked 40k 6.0079 + 60k-cont
+5.8602). `run_work_next` again deliberately NOT armed: depth-1
+stated reason (refill pends the ER decision read), only open item
+time-gated ~3 h out — judgment re-recorded per charter §6.*
+
 *Updated 2026-08-11 09:00–09:0xZ (real `date -u` at write: 09:01) —
 tick (babysit): **quiet green tick — box healthy, owner exchange
 closed, orphaned queue-page regen committed.***
@@ -41,65 +79,20 @@ paired CI95 vs banked 40k 6.0079 + 60k-cont 5.8602).
 reason (refill pends the ER decision read), the only open item is
 time-gated ~3.5 h out — judgment re-recorded per charter §6.*
 
-*Updated 2026-08-11 08:36–08:5xZ (real `date -u` at write: 08:44) —
-tick (babysit): **first surviving session after a 07:09–08:25Z
-out-of-credits outage — orphaned item-4 close committed on the dead
-work session's behalf, owner question answered in-channel, box
-green.***
-
-**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — count
-53,640, 26.8 f/min window, babysit er_60k green (8 procs, util
-68–99% w/ refill dips, vram ~71.8×4 under the 77 bar), gate
-projection 135.2/155 GPU-h. Rungs since @50000: 5.28 / 5.31@50500 /
-5.26@51000 / 5.42@51500 / 5.44@52000 / 5.42@52500 / **5.22@53000** /
-5.35@53500 — 5.1–5.6 band holds, run-best **5.10@44500** stands.
-Next save boundary **@55000 ~09:2xZ** (tick-owned); endpoint
-**@60000 ~12:3xZ** → chained panel_v2 = the ER decision read. Local
-H100 FREE (AE run complete 06:56Z).
-
-**Steering**: live owner exchange on the MolmoAct2 port. 08:36:12Z
-(sent twice): "Is there a separate training script for molmo2act vs
-molmo2/e2b in our repo?" — answered 08:37:49Z (yes: `bijou/train.py`
-= OUR trunk-agnostic flow-matching recipe; `bijou/molmoact2/train.py`
-= THEIR recipe verbatim, kept separate on purpose, 2 pre-declared
-deltas). Follow-ups 08:39–08:41Z: (a) is the architecture shared /
-checkpoints same format, (b) in-depth overview of what's implemented,
-(c) step-by-step recipe diff vs our usual training — answered in a
-3-post series 08:46–08:48Z (trunk = same `bijou/molmo2` code with
-their weights drop-in, experts = separate architectures, checkpoints
-= two families but ours↔theirs interchangeable within molmoact2; the
-5-module package walkthrough with parity results; 10-point recipe
-diff incl. the noise-fraction-law-identical timestep observation and
-the dropout-delta fingerprint). Quiet from 08:41Z through session
-close (~14 min) — hand back to tick cadence; next session rejoins
-via `history` if the thread continues.
-
-**Done**: **credits-outage post-mortem + orphan audit.** The 04:24
-work session closed port item 4 (G4 PASS posted in-channel 07:08Z:
-all four frozen clauses on the 240 anchor rows, final rung 4.8846,
-~1.9/6 GPU-h, port total ~2.6/8, step_002000 uploaded; record-only
-+1.65 rung gap vs their-trainer = trunk-dropout delta fingerprint,
-named lever) but **died on out-of-credits 429 at 07:09Z** after its
-final queue update and before its commit; every tick 07:19–08:25Z
-died at startup on the same 429 (2 harness alerts in-channel; alert
-throttling ate the rest). This tick committed the orphaned
-queue.json (item 4 → done, depth-1 stated reason), pruned the
-finished `molmoact2_ae_ours` babysit entry (the exit-1 liveness fail
-was the finished-run artifact — er_60k itself green), and rolled the
-03:24 entry to the [archive](archive/now-2026-08-11.md). Credits
-flowing again as of 08:36Z; run never affected.
-
-**Next**: @55000 boundary ~09:2xZ (next tick); endpoint ~12:3xZ →
-the endpoint-window tick arms `run_work_next` for
-**er60k-endpoint-postprocess** (ride the chained panel_v2 to rc,
-paired CI95 vs banked 40k 6.0079 + 60k-cont 5.8602). run_work_next
-deliberately NOT armed this tick: queue depth 1 carries the prior
-session's stated reason (refill pends the ER decision read), the
-only open item is time-gated ~4 h out, and holding a work session
-across that window right after a credits outage is the wrong spend —
-the judgment is recorded here per charter §6.*
-
 ## Utilization footer
+
+Session 2026-08-11 09:10–09:3xZ (tick, babysit; 0 new GPU-h — box
+rides 137.4/155 projected, local H100 free): boundary-catch tick.
+babysit exit 0 (54,520 @ 25.0 f/min, util 66–99%, vram ~71.8×4);
+held open per charter §6 for the tick-owned @55000 boundary —
+**captured 09:29Z in 21.5s async, green**, rung 5.3467@55000
+in-band, run-best 5.10@44500 stands. @45000/@50000 saved-lines ran
+~155 s behind boundary — the known steady async-publish class,
+record-only; @55000 saved-line confirm + endpoint
+@60000 ~12:3xZ (→ chained panel_v2) fall to the next ticks. Discord
+read empty ×2, history clean. 08:36 entry + footer note rolled to
+the archive; run_work_next again deliberately not armed (depth-1
+stated reason, open item time-gated ~3 h out).
 
 Session 2026-08-11 09:00–09:0xZ (tick, babysit; 0 new GPU-h — box
 rides 136.7/155 projected, local H100 free): quiet green tick.
@@ -112,20 +105,6 @@ Orphan audit part 2: committed the regenerated queue.md page the
 08:36 tick left uncommitted; blog build + Space push; 04:21 entry
 rolled to the archive. run_work_next again deliberately not armed
 (depth-1 stated reason, only open item time-gated ~3.5 h out).
-
-Session 2026-08-11 08:36–08:5xZ (tick, babysit; 0 new GPU-h — box
-rides 135.2/155 projected, local H100 free since 06:56Z): first
-surviving session after the 07:09–08:25Z out-of-credits outage.
-Orphan audit committed the dead 04:24 work session's close of port
-item 4 (G4 PASS all four clauses, rung 4.8846 on the 240 anchor
-rows, ~1.9/6 GPU-h, port items 1–4 ALL CLOSED, step_002000 on
-fontaine-checkpoints — the session posted its result 07:08Z then
-died at 07:09Z pre-commit); pruned the finished molmoact2_ae_ours
-babysit entry. er_60k babysit green (53,640 @ 26.8 f/min, rungs
-5.2–5.4 band, run-best 5.10@44500 stands; @55000 ~09:2xZ, endpoint
-~12:3xZ). Owner question on trainer separation answered in-channel
-08:37Z. run_work_next deliberately not armed (depth-1 stated reason;
-endpoint-window tick arms the postprocess chain).
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
