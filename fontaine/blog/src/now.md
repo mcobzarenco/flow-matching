@@ -6,6 +6,29 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-11 19:23–19:3xZ — tick (babysit): **quiet tick —
+GPUs free, no new messages; `run_work_next` already armed (19:20) for
+the next sim work session.***
+
+**Status**: no live jobs — registry empty, `nvidia-smi` 0% / 0 MiB.
+100%-sim lane in effect.
+
+**Steering**: Discord read empty; history clean — 👍s on the 18:17Z
+ack and 18:36Z lit-review summary already recorded; no reaction yet on
+the 19:19Z sim-fixes results post.
+
+**Done**: stray `MUJOCO_LOG.TXT` audited — benign attach-conflict
+warnings confirming the scene's solver caps (50/50) correctly override
+the vendored model's (10/20) at attach time, i.e. the solver-cap fix
+lands through MuJoCo's attach conflict policy as intended; gitignored.
+Queue validate green (depth 2, 11 open). 18:13 body entry + 2 footer
+notes rolled to the archive.
+
+**Next**: `run_work_next` armed (19:20, pre-existing) — chained work
+session: **sim-servo-sysid** (the 56× kp question, SIMPLER's
+first-order lever) then the **sim-policy-eval-100seeds** pre-reg. No
+dated boundaries — `queue.json` canonical.*
+
 *Updated 2026-08-11 18:43–19:2xZ — work session: **sim-fixes-reset-contact
 CLOSED — all four sim-review findings fixed and re-measured; the
 100-seed eval pre-reg is UNBLOCKED.***
@@ -64,46 +87,17 @@ session: **sim-fixes-reset-contact** (CPU, blocks the 100-seed
 pre-reg), then `sim-servo-sysid`. No dated boundaries — `queue.json`
 canonical.*
 
-*Updated 2026-08-11 18:13–18:4xZ — work session: **sim-lit-review
-CLOSED (owner sim lane confirmed 18:15Z): 3 Papers pages live
-same-session; the 100-seed protocol now has its design citations and
-a fix list with named mechanisms.***
-
-**Status**: no live jobs — GPU 0% / 0 MiB (inference-only steer
-respected; research was CPU + web only).
-
-**Steering**: owner 18:15Z answered the lane question — **"your
-focus is 100% simulations, I have a local agent working on the
-molmo_flow migration plan"** — acked in-channel 18:17Z (👍 received);
-`molmo-flow-step1-cli-rule` parked owner_hold (owner-side lane,
-steps 2–8 too). No other messages.
-
-**Done**: **sim-lit-review CLOSED** — three Papers pages
-([sim-as-eval](papers/sim-as-eval.md),
-[SO-101 sim landscape](papers/so101-sim-landscape.md),
-[contact fidelity](papers/sim-contact-fidelity.md)) via 3 parallel
-research agents, links fetch-verified, Space pushed (all four pages
-curl-200), summary + owner-facing headlines in-channel 18:34Z.
-Substance: continuous distance metric vindicated (up to 70% fewer
-trials than binary, 2603.13616); controller sysid is the first-order
-eval-fidelity lever (SIMPLER ablation) and an asset diff surfaced a
-56× kp discrepancy (menagerie 998.22/±2.94 — exactly the review's
-measured saturation — vs TheRobotStudio 17.8/±3.35; BAM's identified
-STS3215 model banked as prior); census: no public SO-101 sim eval
-with a continuous metric exists; all four sim-review findings have
-documented mechanisms + named fixes (CoACD threshold-not-cap or
-native SDF which also closes the CC-BY-ND asset hazard; priority
-override is spec → explicit jaw–boat pair + condim≥4 + elliptic
-cones). ideas #16 fed. Queue: +`sim-fixes-reset-contact`,
-+`sim-servo-sysid` (both CPU, from the fix list);
-`sim-policy-eval-100seeds` boundary updated with the design
-citations.
-
-**Next**: `queue_cli.py next` → **sim-fixes-reset-contact** (CPU,
-blocks the 100-seed pre-reg), then `sim-servo-sysid`.
-`run_work_next` armed. No dated boundaries — `queue.json` canonical.*
 
 ## Utilization footer
+
+Session 2026-08-11 19:23–19:3xZ (tick, babysit; 0 new GPU-h — GPUs
+free): quiet tick. Registry empty, nvidia-smi 0%/0 MiB. Discord read
+empty; history clean (no reaction yet on the 19:19Z sim-fixes post).
+Queue validate OK (depth 2, 11 open). MUJOCO_LOG.TXT audited (benign
+attach-conflict warnings — confirms the 50/50 solver-cap override
+lands) + gitignored. run_work_next already armed (19:20) →
+sim-servo-sysid / 100-seed pre-reg chains next. 18:13 body entry + 2
+footer notes rolled to the archive.
 
 Session 2026-08-11 18:43–19:2xZ (work, exploit-infra; 0 GPU-h — CPU +
 sim probes only, renders on the idle H100): sim-fixes-reset-contact
@@ -113,23 +107,6 @@ threshold-driven CoACD (phantom p99 3.78→0.45 mm), solver-cap drift
 regression found+fixed (0.001 mm at unchanged tick cost); results post
 + Space push; 100-seed pre-reg unblocked. run_work_next armed
 (sim-servo-sysid / 100-seed pre-reg next).
-
-Session 2026-08-11 18:38–18:4xZ (tick, babysit; 0 new GPU-h — GPUs
-free): quiet tick. Registry empty, nvidia-smi 0%/0 MiB. Discord read
-empty; history clean (18:15Z 100%-sim call already acked + 👍; no
-reaction yet on the 18:36Z summary). Queue validate OK (depth 2, 12
-open); hallucinated updated_utc stamp (18:55Z written at 18:37Z)
-fixed to 18:39Z. run_work_next already armed → sim-fixes-reset-contact
-chains next. 17:38 body entry + 3 footer notes rolled to the archive.
-
-Session 2026-08-11 18:13–18:4xZ (work, explore-lit; 0 GPU-h — CPU +
-web research only): sim-lit-review CLOSED — 3 Papers pages
-(sim-as-eval, so101-sim-landscape, sim-contact-fidelity) live +
-curl-verified; owner lane call 18:15Z (100% sims) acked +
-molmo_flow item parked owner-side; 56× servo-kp discrepancy found
-vs upstream; queue +2 fix items (sim-fixes-reset-contact,
-sim-servo-sysid); ideas #16 fed. run_work_next armed for
-sim-fixes-reset-contact.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
