@@ -1833,7 +1833,13 @@ SO-100/101 and rig-ft rung-2000 both convert — 588/588 expert tensors
 byte-equal source by independent re-read, mask flavors 'both'/
 'continuous' captured, metadata round-trips, fp32 experts 2.31 GB;
 converted dirs staged at `~/marius-convert-gate/converted/` on that
-box for the step-3/5 gates). Step 3 (decoder module) next.**
+box for the step-3/5 gates). Step 3 SHIPPED (`decoders/molmo_flow.py`:
+the owned architecture copy on the ascending convention, sampler with
+Heun flagged, sum-form loss, recorded-t-law `TimeLaw`, the clamp tail;
+flow.py convention-frozen with a cross-reference note; box gate
+2026-08-11: forward ×3 timesteps + Euler-10 loop BYTE-EQUAL vs the
+port on both real checkpoints' weights — transitively byte-exact vs
+their HF module via the port's G1). Step 4 (encoder mode) next.**
 
 **Decisions (register).**
 
