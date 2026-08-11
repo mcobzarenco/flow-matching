@@ -305,6 +305,12 @@ class MolmoAct2PromptConfig:
     action_mode: str
     n_obs_steps: int
     camera_keys: tuple[str, ...]
+    # The prefill split point (§8.13 decision 7): False = their serving
+    # prompt verbatim (``<action_output>`` in the prefill, the parity
+    # surface); True = the prefill stops at the ChatML opener and aux
+    # text decodes as suffix. Converted checkpoints are always False
+    # (their models never narrated); a narration-on RUN records True.
+    narration: bool
 
     # The bracket/conditioning surfaces are bijou-prompt concepts; this
     # format has neither. Properties (not fields) so generic consumers
@@ -330,6 +336,7 @@ class MolmoAct2PromptConfig:
             "action_mode": self.action_mode,
             "n_obs_steps": self.n_obs_steps,
             "camera_keys": list(self.camera_keys),
+            "narration": self.narration,
         }
 
     @classmethod
@@ -344,6 +351,8 @@ class MolmoAct2PromptConfig:
             action_mode=str(data["action_mode"]),
             n_obs_steps=int(data["n_obs_steps"]),
             camera_keys=tuple(str(key) for key in data["camera_keys"]),
+            # Absent on step-2-era conversions == their serving layout.
+            narration=bool(data.get("narration", False)),
         )
 
 

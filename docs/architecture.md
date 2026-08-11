@@ -1839,7 +1839,16 @@ Heun flagged, sum-form loss, recorded-t-law `TimeLaw`, the clamp tail;
 flow.py convention-frozen with a cross-reference note; box gate
 2026-08-11: forward ×3 timesteps + Euler-10 loop BYTE-EQUAL vs the
 port on both real checkpoints' weights — transitively byte-exact vs
-their HF module via the port's G1). Step 4 (encoder mode) next.**
+their HF module via the port's G1). Step 4 SHIPPED
+(`encoders/molmoact2.py`: `MolmoAct2InputsCollator`/`MolmoAct2Encoder`
+— assembly owned, leaf transforms imported from the golden-pinned
+port; per-row assembly byte-equals `pack_action_example`; both
+split-point layouts pinned, off-ids == on-ids + `<action_output>`;
+`conditioning_mask` rides `ObservationMemory` carrying the
+`action_mode` flavor while `attention_mask` keeps counting EOS — the
+positions source is untouched; uint8 TRUNCATION coercion serves both
+train and inference, zero train/serve skew; the prompt section gained
+the `narration` split-point field). Step 5 (integration) next.**
 
 **Decisions (register).**
 

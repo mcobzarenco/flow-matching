@@ -49,6 +49,7 @@ from safetensors.torch import save_file
 from torch import Tensor
 
 from .data import DatasetStats
+from .encoders.molmoact2 import MOLMOACT2_PROMPT_FORMAT
 from .gemma4.loading import resolve_checkpoint_dir
 from .loading import (
     BackboneConfig,
@@ -63,9 +64,6 @@ from .molmoact2.processing import load_norm_stats
 from .molmoact2.wiring import validate_inference_config
 
 _EXPERT_PREFIX = "model.action_expert."
-#: Provisional home (step 2): the constant moves to the molmoact2
-#: encoder mode with §8.13 step 4, which will import it back from there.
-MOLMOACT2_PROMPT_FORMAT = 1
 
 
 def _validate_source_config(config: dict[str, Any]) -> None:
@@ -259,6 +257,9 @@ def convert(
         action_mode=str(config.get("action_mode", "continuous")),
         n_obs_steps=int(config["n_obs_steps"]),
         camera_keys=tuple(str(key) for key in tag.get("camera_keys", [])),
+        # Their checkpoints never narrate; narration-on is a bijou
+        # training choice (§8.13 decision 7) recorded when a run makes it.
+        narration=False,
     )
 
     recorded_backbone = backbone_ref if backbone_ref is not None else source

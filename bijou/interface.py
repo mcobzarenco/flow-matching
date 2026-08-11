@@ -168,6 +168,13 @@ class ObservationMemory:
     padding_mask: Tensor | None
     cache: object | None = None
     residuals: dict[str, Tensor] | None = None
+    # The decoder-conditioning mask over the PROMPT, [B, P] bool (True =
+    # a cross-attending decoder may attend) — distinct from
+    # ``padding_mask`` (real tokens: the positions/attention source,
+    # which must keep counting EOS). Carries the molmoact2 formats'
+    # ``action_mode`` flavor (EOS/span-strip under 'both', load-bearing
+    # for converted expert weights); None = padding semantics apply.
+    conditioning_mask: Tensor | None = None
 
     @property
     def batch_size(self) -> int:

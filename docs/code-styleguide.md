@@ -170,11 +170,15 @@ cited, and the doc-cited `probe_rollout_vram.py` is lost outright
   `checkpoint_sections` — because `train` and `eval` both sit above it.)
   The Molmo2 lineage is a parallel spur with the same discipline:
   `molmoact2` → `molmo2` → `nn`/`gemma4.loading`, importing downward
-  only — the MolmoAct2 port never reaches into `model`/`decoders`, and
-  nothing outside the spur imports it. (Added 2026-08-11: the port
-  landed with absolute self-imports — the same class bijou.judge
-  taught us on 2026-07-30 — normalized to relative in the review
-  sweep.)
+  only — the MolmoAct2 port never reaches into `model`/`decoders`.
+  Above the spur, `encoders/molmoact2` and `convert_molmoact2` import
+  the port's LEAF surfaces only (`processing`, the id tables, the mask
+  builder — golden-pinned reference semantics that relocate when the
+  port folds, §8.13 step 8); `decoders/molmo_flow` imports nothing
+  from it — the architecture is an owned copy, byte-parity-pinned.
+  (Added 2026-08-11: the port landed with absolute self-imports — the
+  same class bijou.judge taught us on 2026-07-30 — normalized to
+  relative in the review sweep.)
 - Package CLIs live in `cli.py`, not `__main__.py` (spawn-based
   multiprocessing cannot unpickle objects defined in a package
   `__main__`).
