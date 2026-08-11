@@ -21,12 +21,22 @@ Next save boundary **@55000 ~09:2xZ** (tick-owned); endpoint
 **@60000 ~12:3xZ** → chained panel_v2 = the ER decision read. Local
 H100 FREE (AE run complete 06:56Z).
 
-**Steering**: owner 08:36:12Z (sent twice): "Is there a separate
-training script for molmo2act vs molmo2/e2b in our repo?" — answered
-08:37:49Z (yes: `bijou/train.py` = OUR trunk-agnostic flow-matching
-recipe for molmo2/gemma4-e2b; `bijou/molmoact2/train.py` = THEIR
-recipe verbatim for MolmoAct2 AE fine-tunes, kept separate on
-purpose, 2 pre-declared deltas). No follow-up through session end.
+**Steering**: live owner exchange on the MolmoAct2 port. 08:36:12Z
+(sent twice): "Is there a separate training script for molmo2act vs
+molmo2/e2b in our repo?" — answered 08:37:49Z (yes: `bijou/train.py`
+= OUR trunk-agnostic flow-matching recipe; `bijou/molmoact2/train.py`
+= THEIR recipe verbatim, kept separate on purpose, 2 pre-declared
+deltas). Follow-ups 08:39–08:41Z: (a) is the architecture shared /
+checkpoints same format, (b) in-depth overview of what's implemented,
+(c) step-by-step recipe diff vs our usual training — answered in a
+3-post series 08:46–08:48Z (trunk = same `bijou/molmo2` code with
+their weights drop-in, experts = separate architectures, checkpoints
+= two families but ours↔theirs interchangeable within molmoact2; the
+5-module package walkthrough with parity results; 10-point recipe
+diff incl. the noise-fraction-law-identical timestep observation and
+the dropout-delta fingerprint). Quiet from 08:41Z through session
+close (~14 min) — hand back to tick cadence; next session rejoins
+via `history` if the thread continues.
 
 **Done**: **credits-outage post-mortem + orphan audit.** The 04:24
 work session closed port item 4 (G4 PASS posted in-channel 07:08Z:
