@@ -5,12 +5,31 @@
 # prior reason: attach_K owner-killed 12:31Z, box idle pending the
 # AdamC parameter-sheet approval, which landed 13:19Z.)
 
-no_live_runs_reason = """er_60k run COMPLETE 13:28Z 08-11 (train @60000 \
-+ chained panel_v2 eval, ~153/155 GPU-h, ER decision read: ER init wins \
-both legs) and er55k_panel eval COMPLETE 12:00Z same day — both entries \
-pruned at their close by the 10:00Z work session. Next launches: \
-er60k-events-oneoff-report (local, gate <=4) and the owner's \
-every-layer-KV AE arm (pends their main-changes ping)."""
+[[run]]
+name = "er60k_events_dump"
+kind = "progress-log"
+host = "local"
+pgrep = "bijou.eval"
+pgrep_min = 1
+gpu_indices = [0]
+gpu_mem_min_mib = 8000
+log = "/home/ubuntu/logs/eval__fontaine_molmo2_er_60k_ddp4__step_060000__panel_curated_v0_k4l2_events.log"
+progress_re = "scored [0-9]+/25800 frames"
+started_utc = "2026-08-11T14:18:00Z"
+gpu_hours_per_wall_hour = 1.0
+boundary = "OWNER REQUEST 12:44Z 08-11 events one-off, DUMP PASS on @60000 (launch note + confusion/probe spec in-channel 14:1xZ pre-GPU; rides the er-60k pre-reg, record-only): single narrated arm via explicit --generate all-fields, er35k/55k recipe otherwise verbatim, unit eval-er60k-events-dump launched 14:18Z. NEW INSTRUMENT under test (commit 7f43c54): --dump-generations + main-arm retention — ORACLE: printed event acc must reproduce the banked endpoint 0.858 (byte-identical greedy voice). ON rc=0 (owning session rides foreground): confusion quant (13 frozen classes) + galleries + constrained none-ban probe on miss frames + standalone HTML -> fontaine-reports + link in-channel. Then prune this entry."
+anchors = [
+    "record-only owner-requested one-off; nothing gates or repoints any run",
+    "single-arm all-fields class: expect ~200-300 f/min (er35k aux arm ran ~250)",
+    "kill lines: unit inactive with no wrote-lines rc!=0; f/min collapse under ~60 sustained x3 polls",
+    "progress: 'scored N/25800 frames'; done = wrote json + wrote generations json lines",
+    "on-completion contract: event confusion + galleries + probe + HTML report, numbers + link in-channel",
+]
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 4.0
+# 4 = the owner-stated one-off gate (12:44Z class); single arm ran
+# ~1.5 GPU-h at 35k, expect similar.
 
 # er_60k entry PRUNED 13:3xZ 08-11 work session — RUN COMPLETE: train
 # @60000 12:36Z + chained panel_v2 eval rc 13:28Z, ~153/155 GPU-h. THE
