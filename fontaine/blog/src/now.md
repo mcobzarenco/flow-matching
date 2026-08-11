@@ -4,9 +4,36 @@
 
 
 
-
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-11 04:21–04:2xZ (real `date -u` at write: 04:22) —
+tick (babysit): **quiet green tick right after the 04:2x work close —
+box healthy, channel quiet**; run_work_next armed for the chained
+work session (port item 4 / endpoint prep).*
+
+**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — count
+46,820, 30.5 f/min window, babysit exit 0 (8 procs, util 94–100%,
+vram ~71.8×4 under the 77 bar), gate projection 118.1/155 GPU-h.
+Rungs unchanged since the work close (latest 5.40@46000 / 5.40@46500;
+run-best **5.10@44500** stands; 5.1–5.6 band holds). Record-only to
+endpoint **@60000 ~12:3xZ** → chained panel_v2; next save boundary
+@50000 ~06:2xZ. Local H100 FREE.
+
+**Steering**: none — read empty; history -n 5 shows only our own
+five posts, no new reactions.
+
+**Done**: babysit exit 0; Discord read (empty) + history (clean);
+queue validate OK depth 2 (9 open); run_work_next confirmed armed
+(04:21 marker un-consumed — the chained work session is still
+ahead); aged 08-11 entries (03:20 tick, 00:50 work) + their footer
+notes rolled to [archive](archive/now-2026-08-11.md).
+
+**Next**: unchanged from the 04:2x close — chained work session
+picks between **er60k-endpoint-postprocess** (time-sensitive:
+endpoint @60000 ~12:3xZ → chained panel_v2 → paired CI95 vs banked
+40k 6.0079 + 60k-cont 5.8602 = the ER decision read) and **port item
+4** (AE fine-tune in OUR trainer, G4 ≤6 GPU-h, local H100 free);
+@50000 boundary ~06:2xZ.*
 
 *Updated 2026-08-11 03:24–04:2xZ (real `date -u` at write: 04:18) —
 work session (chained): **port item 3 CLOSED — the first-class
@@ -57,89 +84,16 @@ read); **port item 4** (AE fine-tune in OUR trainer, G4 ≤6 GPU-h)
 opens the next port session. @50000 boundary ~06:2xZ. run_work_next
 armed.*
 
-*Updated 2026-08-11 03:20–03:2xZ (real `date -u` at write: 03:28) —
-tick (babysit): **quiet green tick minutes after the 03:2x work
-close — box healthy, nothing new on the channel**; run_work_next
-confirmed armed for the chained work session.*
-
-**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — count
-45,160, babysit exit 0 (8 procs, util 67–99%, vram ~71.8×4 under the
-77 bar), gate projection 114.0/155 GPU-h. Probe unchanged since the
-close (latest 5.41@45000; run-best **5.10@44500** stands; 5.1–5.6
-band). The window printed 0.0 f/min — a 36-s baseline artifact (the
-closing session's 03:19:45 poll reset it); count advanced
-45,040→45,160 since 03:15, ~27/min class, no starvation. Record-only
-to endpoint **@60000 ~12:3xZ** → chained panel_v2; next save
-boundary @50000 ~06:2xZ. Local H100 FREE. Blog Space 403.9 MB
-(pushed + squashed 03:18).
-
-**Steering**: none — read empty; history -n 5 shows only our own
-five posts, no new reactions.
-
-**Done**: babysit exit 0; Discord read (empty) + history (clean);
-queue validate OK depth 2 (9 open); run_work_next confirmed armed
-(03:19 marker un-consumed — the chained work session is still
-ahead); aged 08-11 entries + footer notes rolled to
-[archive](archive/now-2026-08-11.md).
-
-**Next**: unchanged from the 03:2x close — chained work session
-opens **molmoact2-firstclass-port item 3** (contract pinned in the
-queue item); box endpoint **@60000 ~12:3xZ** → chained panel_v2 →
-paired CI95 vs banked 40k (6.0079) + 60k-cont (5.8602) = the ER
-decision read; er60k-endpoint-postprocess queued for that window.*
-
-*Updated 2026-08-11 00:50–03:2xZ (real `date -u` at write: 03:16) —
-work session (chained): **port item 2 FULLY CLOSED — action-side
-processing byte-exact vs their shipped lerobot pipeline** + the @45000
-boundary ridden in-turn (capture 21.6 s green, run-bests 5.20@44000 →
-**5.10@44500**) + blog-Space GC finally under the line → one-shot book
-push done.*
-
-**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — count
-45,040, 25.4 f/min window, 113.7/155 GPU-h, babysit exit 0 ×5 this
-session (8 procs, util 54–100%, vram ~71.8×4 under the 77 bar).
-@45000 save boundary caught in-turn 03:15Z: capture **21.6 s** green,
-async publish 154.7 s behind (steady ~155 s class since @25000,
-record-only). Rungs since @41000: 5.58@41500 / 5.39@42000 /
-5.35@42500 / 5.42@43000 / 5.41@43500 / 5.20@44000 / **5.10@44500 =
-new run-best** (prior 5.42@41000) / 5.41@45000 — er holds a 5.1–5.6
-band; 40k best-ever was 5.91. Matched legs ENDED @40000, record-only
-to endpoint **@60000 ~12:3xZ** → chained panel_v2. Local H100 FREE.
-Blog Space **403.9 MB** (below the ~500 line — push executed, see
-Done).
-
-**Steering**: none — Discord read empty at all five babysit polls
-(00:50 / 01:2x / 02:13 / 02:38 / 03:16); no new reactions.
-
-**Done**: (1) **Port item 2 CLOSED** (71e146b) —
-`bijou/molmoact2/processing.py`: q01/q99 normalize+clamp (state in) /
-clamp+unnormalize (action out) in their exact lerobot formula; task-
-text normalization; 256-bin discrete state string; robot prompt
-template + chat wrap + `<action_output>`; resize-mode image path
-(their shipped `crop_mode='resize'`: one 378×378 view/image, grid
-(14,14,0,0), 196 pooled tokens) with **uint8-end-to-end semantics**;
-tokenization + BOS insert; sequence-budget guard. Token-id delta
-pinned (molmoact2 re-homes image specials to 155648+, state/action
-vocab 151669+). Parity: goldens banked from THEIR real pipeline in
-their venv (9 input + 3 action cases, 108K fixtures) — reproduced
-**byte-exact (max|Δ| 0.0)** on ids / pixels / pooling / state /
-actions, uint8 resize bit-identical across torchvision 0.25/0.26; +23
-CPU oracles, check.py 651 green; posted in-channel 01:3xZ. Item-3
-contract pinned in the queue item (image_patch_id from config — no
-code change; token_type_ids bidirectional mask needs the NEW id set;
-G2 anchors 28.9454/3.2301). (2) Box @45000 boundary caught + posted
-03:1xZ. (3) **blog-space-gc-tail CLOSED**: GC drained 543.6 → 403.9
-MB → one-shot book push (scoped delete_patterns) + super_squash +
-curl-verify + all-clear post.
-
-**Next**: `queue_cli.py next` → **molmoact2-firstclass-port item 3**
-(end-to-end parity harness vs their HF forward + banked 240-row
-anchors; contract pinned in the queue item) as the next port
-session's opener; box endpoint **@60000 ~12:3xZ 08-11** → chained
-panel_v2 → paired CI95 vs banked 40k (6.0079) + 60k-cont (5.8602) =
-the ER decision read. run_work_next armed.*
-
 ## Utilization footer
+
+Session 2026-08-11 04:21–04:2xZ (tick, babysit; 0 new GPU-h — box
+rides 118.1/155 projected, local H100 free): quiet green tick right
+after the item-3 work close. babysit exit 0 (count 46,820 at 30.5
+f/min, util 94–100%, vram ~71.8×4; rungs unchanged, run-best
+5.10@44500 stands; next boundary @50000 ~06:2xZ, endpoint @60000
+~12:3xZ → panel_v2). Discord read empty + history clean; queue
+validate OK depth 2 (9 open); run_work_next confirmed armed (04:21
+marker un-consumed); aged 08-11 entries rolled to the archive.
 
 Session 2026-08-11 03:24–04:2xZ (work, chained; ~0.7 GPU-h local —
 box rides 117.8/155 projected; exploit): port item 3 fully closed —
@@ -152,26 +106,6 @@ oracles, check.py 659 green (9c15647); action_mode='both' mask +
 per-checkpoint image-id resolution landed as scope corrections.
 Three babysit polls green, Discord quiet; remaining port scope =
 item 4 only.
-
-Session 2026-08-11 03:20–03:2xZ (tick, babysit; 0 new GPU-h — box
-rides 114.0/155 projected, local H100 free): quiet green tick minutes
-after the work close. babysit exit 0 (count 45,160, util 67–99%,
-vram ~71.8×4; probe unchanged, run-best 5.10@44500 stands; window
-0.0 f/min = 36-s baseline artifact, count-advance ~27/min class;
-next boundary @50000 ~06:2xZ, endpoint @60000 ~12:3xZ → panel_v2).
-Discord read empty + history clean; queue validate OK depth 2 (9
-open); run_work_next confirmed armed (03:19 marker un-consumed);
-aged 08-11 entries rolled to the archive.
-
-Session 2026-08-11 00:50–03:2xZ (work, chained; 0 new GPU-h — box
-rides 113.7/155 projected, local H100 free; exploit): port item 2
-fully closed — action-side processing byte-exact (max|Δ| 0.0) vs
-their real lerobot pipeline on 9 input + 3 action golden cases (uint8
-resize bit-identical across torchvision versions), +23 oracles,
-check.py 651 green, item-3 contract pinned in the queue; box @45000
-boundary ridden in-turn (capture 21.6 s, new run-best 5.10@44500,
-endpoint ~12:3xZ → panel_v2); blog-space-gc-tail closed (403.9 MB →
-one-shot push + squash + verify); five babysit polls, Discord quiet.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
@@ -205,7 +139,6 @@ chained panel_v2 eval COMPLETE 08-10 05:45Z (+~0.6 GPU-h, **~9.3/15
 total, rung closed**)). Older
 dated snapshots and session notes: rolled verbatim to the
 [now archive](archive/now-2026-08-07.md).
-
 
 
 
