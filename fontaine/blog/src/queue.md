@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-11T17:44:00Z
+**Updated:** 2026-08-11T18:15:00Z
 
-**Depth call:** depth 5 open at 17:4xZ 08-11 after the owner sim pivot (17:07Z directive): sim-review (head, CPU) + sim-lit-review (CPU, owner re-opened lit lane for sim) + sim-policy-eval-100seeds (gpu-inference, blocked behind sim-review) + ae-on-our-trunk-prereg-draft (CPU, deprioritized behind sim lane) + rig-mixture-screen-exec (owner_hold: preflight FITS but collides with GPU-for-inference steer; C-defer unless owner calls A). General lit-slice pause stays for non-sim topics (00:23Z 08-10).
+**Depth call:** depth 4 open at 18:1xZ 08-11: sim-lit-review (head, CPU, owner re-opened lit lane for sim) + sim-policy-eval-100seeds (UNBLOCKED for protocol drafting by the sim-review findings; protocol pre-reg must fold in findings 1-2 fixes first) + ae-on-our-trunk-prereg-draft (CPU, deprioritized behind sim lane) + rig-mixture-screen-exec (owner_hold, C-defer unless owner calls A). General lit-slice pause stays for non-sim topics (00:23Z 08-10).
 
-**11 open** (Live 0 · Queued 3 · Blocked 8 · Done 113)
+**10 open** (Live 0 · Queued 2 · Blocked 8 · Done 114)
 
 ## 🔴 Live (0)
 
@@ -14,7 +14,7 @@
 
 *(empty)*
 
-## 🟢 Queued (3)
+## 🟢 Queued (2)
 
 *ready — waiting on a window or a boundary*
 
@@ -41,20 +41,6 @@ Sim + sim-to-real literature review (CPU, OWNER DIRECTIVE 17:07Z 08-11
 <details><summary>full record</summary>
 
 Sim + sim-to-real literature review (CPU, OWNER DIRECTIVE 17:07Z 08-11 — explicitly re-opens the paused lit lane for sim topics): (a) simulators/task suites usable for so101-class tabletop manipulation (existing so100/so101 ports, MuJoCo-family and other ecosystems) — final rig is so101; (b) sim-to-real transfer + the inverse (eval fidelity: sim success as a policy-quality metric alongside BC MAE). Papers pages with plain-words openers.
-
-</details>
-
----
-
-**`sim-review`** · `cpu`
-
-Sim review (CPU, OWNER DIRECTIVE 17:07Z 08-11 — next-day focus is simulations): review sim/ (so101_sim.py, rollout_sim.py, convert_benchy.py, demo_scene.py, view.py, probe_*.py, fetch_assets.sh)
-
-**boundary:** Queue head 17:4xZ 08-11. Local GPU stays inference-only per the owner steer.
-
-<details><summary>full record</summary>
-
-Sim review (CPU, OWNER DIRECTIVE 17:07Z 08-11 — next-day focus is simulations): review sim/ (so101_sim.py, rollout_sim.py, convert_benchy.py, demo_scene.py, view.py, probe_*.py, fetch_assets.sh) — map capabilities: observation surface vs the policy input contract (cameras, proprio), actuation/stepping model, seed &amp; determinism story, asset pipeline; investigate the owner-reported boat (benchy) contact-physics problem (findings first, fixes after). Output: findings report; feeds the 100-seed eval protocol pre-reg.
 
 </details>
 
@@ -150,7 +136,7 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 
 GOAL (owner 17:07Z 08-11): evaluate one good policy (candidate er_60k/step_060000, the reference trunk) in sim on 100 fixed seeds; primary metric = boat-&gt;disk distance reduction (continuous), success rate secondary
 
-**boundary:** BLOCKED behind sim-review findings + eval-protocol pre-reg; owner flagged boat contact physics as poor — protocol must state how that caveats the read. Classed cpu while the deliverable is the protocol pre-reg; reclass gpu-local (with prereg link) when the eval itself launches.
+**boundary:** Protocol pre-reg DRAFTABLE 18:1xZ 08-11 (sim-review findings landed, commit f14948f): pre-reg must (a) fix findings 1-2 first (reachable home pose + spawn-after-settle; re-verify 0 reset strikes over the registered seed list), (b) pin eval machine + menagerie SHA + asset build (CoACD assets are per-machine), (c) primary read = settled initial minus final (or min) benchy-&gt;disk distance, (d) caveat grasp-phase fidelity (phantom margin p99 3.8 mm, weak jaw torsion) until those fixes land. Owner contact-physics flag is CONFIRMED and mechanism-attributed. Classed cpu while the deliverable is the protocol pre-reg.
 
 <details><summary>full record</summary>
 
@@ -174,7 +160,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (113)
+## ✅ Done (114)
 
 *closed — the full record stays in each fold*
 
@@ -1741,6 +1727,20 @@ MAIN-AGENT DIRECTIVE (owner-relayed 14:34:48Z 08-11, message.txt attachment): re
 <details><summary>full record</summary>
 
 MAIN-AGENT DIRECTIVE (owner-relayed 14:34:48Z 08-11, message.txt attachment): rebase fontaine on main @36afff0 (owner-session correctness reviews of bijou/molmoact2 + bijou/molmo2 landed as code) and adapt — NOT merge-resolve in our favor: (1) ActionExpertConfig now frozen=True/slots=True, NO field defaults, all 15 fields explicit everywhere; released shape ONLY via ActionExpertConfig.released_so100_101(); (2) config factories moved to staticmethods: Gemma4Config.e2b()/.e4b(), Molmo2TextConfig.molmo2_4b() (module-level e2b_config()/e4b_config()/molmo2_4b_text_config() gone; styleguide: released shapes are staticmethod constructors, literals never restated); (3) new loud molmoact2 guards each with a test: --norm-stats must be named norm_stats.json; MolmoAct2Predictor.load refuses n_obs_steps missing or !=1 (require_single_obs); nonzero *dropout* keys in action_expert_config refused; extract_kv_states raises on unfilled cache layer; load_norm_stats requires non-empty setup_type/control_mode; (4) ensure_per_sample_patch_alignment now CPU-side in all three collators; (5) main edited two of our scripts (molmoact2_ae_parity.py build_ours passes dropout=0.0/attn_dropout=0.0 explicitly; molmoact2_ours_ft_rung_read.py n_obs_steps truthiness fix) and two posts (OOB plan Qwen3-8B-&gt;4B-class x2; deep dive parameter-accounting note: 621M and 577,564,448 are the same expert — 620,677,664 minus 36x frozen cross_attn.kv_proj 42,522,624 minus identity state_encoder 590,592, pinned in test_released_config_parameter_count) — main's versions authoritative; (6) styleguide adds: Shapes: docstring bullets on tensor-taking functions, intra-package imports relative, docs state present-truth (no corrected-on trails); (7) Molmo2TextTokenizer raises FileNotFoundError not SystemExit on missing tokenizer.json. Sister ask (check.py green on artifact-less clones) DONE d7b6864 same session (option a: frozen stage-01 analysis committed, oracle chain clone-verifiable).
+
+</details>
+
+---
+
+**`sim-review`** · `cpu`
+
+Sim review (CPU, OWNER DIRECTIVE 17:07Z 08-11 — next-day focus is simulations): review sim/ (so101_sim.py, rollout_sim.py, convert_benchy.py, demo_scene.py, view.py, probe_*.py, fetch_assets.sh)
+
+**boundary:** CLOSED 18:1xZ 08-11 work session (commit f14948f): findings post posts/2026-08-11-sim-review-findings.md + two committed probes (sim/probe_benchy_contact.py, sim/probe_phantom_volume.py). Contract seam ALL GREEN (camera kinds: judge stamped rig 'front' as kind top so sim 'top' naming matches training tags; kind-sorted image order identical; SO_MOTORS order + degrees match; er_60k stats table has both rig repos; AR-greedy + B=1 =&gt; deterministic, measured bit-identical qpos AND renders; 26.9 ms/tick =&gt; ~20 min sim-side per 100-seed eval). FOUR FINDINGS, fixes NOT executed (findings-first): (1) home pose UNREACHABLE - camera_box2 (wrist-cam mount) jams into a shoulder geom, elbow/wrist_flex/wrist_roll pinned at +-2.94 force limit, elbow -19deg steady-state, wrist_roll bimodal (0 or ~15deg) per seed = seed-dependent start state; (2) 2/20 seeds the arm STRIKES the boat during the reset settle (zero-qpos start lays the arm over the workspace), up to 30.4 mm pre-episode displacement; (3) phantom collision margin median 0.34 / p99 3.78 / max 5.39 mm, 74% of collision surface outside the visible boat, CoACD concavity 0.149 at the 16-hull cap (vs 0.05 asked); (4) grasp seam: 2.5 mm penetration acceptable BUT gripper priority=1 overrides the benchy drift-fix friction =&gt; torsional 5e-3 at the seam, 6.9deg in-grip spin + tilt to upright 0.84 on lift; rest drift 0.000 mm (drift fix healthy). INFRA: menagerie commit UNPINNED in fetch_assets.sh + CoACD assets regenerated per machine =&gt; cross-machine trajectory repro NOT guaranteed (pin one eval machine in the protocol); EGL libs installed on this box (libegl1 + libnvidia-gl-580); success() docstring claims a gripper-open check the code lacks. Protocol implications written into the post's final section.
+
+<details><summary>full record</summary>
+
+Sim review (CPU, OWNER DIRECTIVE 17:07Z 08-11 — next-day focus is simulations): review sim/ (so101_sim.py, rollout_sim.py, convert_benchy.py, demo_scene.py, view.py, probe_*.py, fetch_assets.sh) — map capabilities: observation surface vs the policy input contract (cameras, proprio), actuation/stepping model, seed &amp; determinism story, asset pipeline; investigate the owner-reported boat (benchy) contact-physics problem (findings first, fixes after). Output: findings report; feeds the 100-seed eval protocol pre-reg.
 
 </details>
 

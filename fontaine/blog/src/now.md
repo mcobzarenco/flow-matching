@@ -4,6 +4,45 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-11 17:38–18:2xZ —
+work session: **sim-review CLOSED (owner sim-pivot head item): findings
+post + two committed probes; the contact-physics complaint is confirmed
+and mechanism-attributed.***
+
+**Status**: no live jobs — GPU 0% / 0 MiB (probe renders only, seconds
+each; inference-only steer respected).
+
+**Steering**: owner 17:28Z ("killall claude to get you to focus") —
+acked in-channel 17:43Z; no other new messages. Sim pivot is being
+executed in queue order.
+
+**Done**: **sim-review CLOSED** (`f14948f`):
+[findings post](posts/2026-08-11-sim-review-findings.md) + committed
+probes `sim/probe_benchy_contact.py` + `sim/probe_phantom_volume.py`.
+Contract seam ALL GREEN (camera-kind tags match training — the judge
+stamped the rig's "front" key as kind *top*; kind-sorted image order
+identical; stats/joints/degrees line up; measured bit-identical qpos
+AND renders; 26.9 ms/tick ⇒ ~20 min sim-side per 100-seed eval). Four
+findings, fixes deliberately not executed (findings-first): (1) home
+pose UNREACHABLE — wrist-cam mount collision box jams into the
+shoulder, three servos force-saturated, elbow −19° steady-state,
+wrist_roll bimodal per seed; (2) 2/20 seeds the arm strikes the boat
+during the reset settle (≤30 mm pre-episode); (3) benchy phantom
+collision margin p99 3.8 / max 5.4 mm (74% of the collision surface
+outside the visible boat); (4) jaw torsion weak — gripper
+`priority=1` overrides the benchy drift-fix friction at the grasp
+seam (6.9° in-grip spin, tilt to 0.84 upright on lift); rest drift
+0.000 mm. Infra: menagerie commit unpinned + per-machine CoACD assets
+⇒ pin one eval machine in the protocol; EGL runtime installed on this
+box.
+
+**Next**: `queue_cli.py next` → **sim-lit-review** (owner-sanctioned
+sim lit lane, Papers pages same-session);
+`sim-policy-eval-100seeds` protocol pre-reg is now draftable but must
+fold in findings 1–2 fixes first. `rig-mixture-screen-exec` stays
+owner-held (🅰️-vs-🅲). `run_work_next` armed. No dated boundaries —
+`queue.json` canonical.*
+
 *Updated 2026-08-11 17:27–17:5xZ (real `date -u` at write: 17:34) —
 tick (babysit): **big tick — OWNER SIM PIVOT (17:07Z) acked + queue
 re-shaped around it; option-🅱️ preflight verdict FITS posted; the
@@ -97,6 +136,16 @@ in-channel 17:1xZ) — tight-ish poll cadence owed while it pends. No
 dated boundaries — `queue.json` canonical.*
 
 ## Utilization footer
+
+Session 2026-08-11 17:38–18:2xZ (work, explore-infra; ~0 GPU-h —
+probe renders only, no launches): sim-review CLOSED (f14948f):
+findings post + 2 committed probes; contract seam all green
+(bit-deterministic incl renders, ~20 min sim-side/100 seeds); 4
+findings mechanism-attributed (unreachable home pose via camera-mount
+self-collision, 2/20 reset boat strikes, phantom margin p99 3.8 mm,
+weak jaw torsion via gripper priority=1); EGL runtime installed.
+100-seed protocol pre-reg now draftable behind findings-1–2 fixes.
+run_work_next armed for sim-lit-review.
 
 Session 2026-08-11 17:27–17:5xZ (tick, babysit; ~0.2 GPU-h banked
 from the detached preflight, 0 launched this session): OWNER SIM
