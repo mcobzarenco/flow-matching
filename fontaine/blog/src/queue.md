@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-11T18:15:00Z
+**Updated:** 2026-08-11T18:18:00Z
 
-**Depth call:** depth 4 open at 18:1xZ 08-11: sim-lit-review (head, CPU, owner re-opened lit lane for sim) + sim-policy-eval-100seeds (UNBLOCKED for protocol drafting by the sim-review findings; protocol pre-reg must fold in findings 1-2 fixes first) + ae-on-our-trunk-prereg-draft (CPU, deprioritized behind sim lane) + rig-mixture-screen-exec (owner_hold, C-defer unless owner calls A). General lit-slice pause stays for non-sim topics (00:23Z 08-10).
+**Depth call:** depth 4 open at 18:1xZ 08-11: sim-lit-review (head, CPU, owner re-opened lit lane for sim) + molmo-flow-step1-cli-rule (CPU, NEW from owner design record §8.13 @128a863; priority vs sim lane asked in-channel) + sim-policy-eval-100seeds (protocol draftable behind findings 1-2 fixes) + rig-mixture-screen-exec (owner_hold, C-defer unless owner calls A). ae-on-our-trunk-prereg-draft re-statused: absorbed by molmo_flow step 7 pending owner confirm.
 
-**10 open** (Live 0 · Queued 2 · Blocked 8 · Done 114)
+**11 open** (Live 0 · Queued 2 · Blocked 9 · Done 114)
 
 ## 🔴 Live (0)
 
@@ -18,15 +18,15 @@
 
 *ready — waiting on a window or a boundary*
 
-**`ae-on-our-trunk-prereg-draft`** · `cpu`
+**`molmo-flow-step1-cli-rule`** · `cpu`
 
-AE-on-our-trunk pre-reg draft (CPU): the owner's action-expert implementation (every-layer KV off our AR trunk, exchange 11:56Z 08-11) evaluated/trained against er_60k/step_060000 (the new reference trunk)
+molmo_flow migration STEP 1 — CLI inferred-args rule (CPU, per owner design record docs/architecture.md §8.13, main @128a863, approved 08-11): --resume refuses every architecture-determining flag (run-policy flags stay legal); --…
 
-**boundary:** UNBLOCKED 17:2xZ 08-11: the rebase landed (main @36afff0 merged, check.py 688 green) — draft against ActionExpertConfig frozen/staticmethod-factory shapes at HEAD. Executable CPU next. DEPRIORITIZED 17:4xZ 08-11 behind the sim lane (owner 17:07Z: next-day focus is simulations).
+**boundary:** Priority vs the sim lane is an OWNER CALL (asked in-channel 18:1xZ 08-11): the 17:07Z sim pivot said next-day focus = sims, but the 17:50Z design record says 'step 1 next'. Default until answered: rides BEHIND sim-lit-review. Steps 2+ (converter, decoder, encoder mode, integration, narration) queue as follow-ons gated on step-1 green; estimated 5-6 sessions, &lt;=10 GPU-h total, step-5 gate dominant.
 
 <details><summary>full record</summary>
 
-AE-on-our-trunk pre-reg draft (CPU): the owner's action-expert implementation (every-layer KV off our AR trunk, exchange 11:56Z 08-11) evaluated/trained against er_60k/step_060000 (the new reference trunk). UNBLOCKED (rebase closed 08-11 17:2xZ) — main @36afff0 landed ActionExpertConfig frozen/staticmethod-factory shape the draft must target; do not draft config surfaces against the pre-rebase tree.
+molmo_flow migration STEP 1 — CLI inferred-args rule (CPU, per owner design record docs/architecture.md §8.13, main @128a863, approved 08-11): --resume refuses every architecture-determining flag (run-policy flags stay legal); --init-from refuses flags for inherited sections and REQUIRES them for explicitly replaced sections (stage-2 decoder-swap path); sentinel None defaults + one reviewable arch-vs-policy partition table; upgrades 'validate equality if passed' to 'refuse at the door'; prompt-format-change guard falls out as a special case. Gate: resume-with-arch-flag and inherited-section init-from flags error naming the checkpoint value; decoder-replacement init-from still works; flag-free resume of a mainline checkpoint parses unchanged; check.py green.
 
 </details>
 
@@ -46,7 +46,7 @@ Sim + sim-to-real literature review (CPU, OWNER DIRECTIVE 17:07Z 08-11 — expli
 
 ---
 
-## 🟡 Blocked (8)
+## 🟡 Blocked (9)
 
 *waiting on a prerequisite, a boundary, or the owner*
 
@@ -127,6 +127,20 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 <details><summary>full record</summary>
 
 Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era mainline artifacts) — HELD: charter Loaned-compute READ-ONLY rule; needs explicit owner all-clear (asked in-channel 03:1xZ 08-07)
+
+</details>
+
+---
+
+**`ae-on-our-trunk-prereg-draft`** · `cpu`
+
+AE-on-our-trunk pre-reg draft (CPU): the owner's action-expert implementation (every-layer KV off our AR trunk, exchange 11:56Z 08-11) evaluated/trained against er_60k/step_060000 (the new reference trunk)
+
+**boundary:** UNBLOCKED 17:2xZ 08-11: the rebase landed (main @36afff0 merged, check.py 688 green) — draft against ActionExpertConfig frozen/staticmethod-factory shapes at HEAD. Executable CPU next. DEPRIORITIZED 17:4xZ 08-11 behind the sim lane (owner 17:07Z: next-day focus is simulations). | SUPERSEDED-PENDING-CONFIRM 18:1xZ 08-11: owner design record §8.13 (main @128a863) IS the full AE-on-our-trunk design — its step 7 registers 'molmo_flow-from-scratch on our AR trunk + bijou prompt vs §2.1 at matched compute' with separate pre-regs post-migration. This draft item is absorbed by the molmo-flow migration lane unless the owner says the §2.1-style few-stream AE still wants its own pre-reg.
+
+<details><summary>full record</summary>
+
+AE-on-our-trunk pre-reg draft (CPU): the owner's action-expert implementation (every-layer KV off our AR trunk, exchange 11:56Z 08-11) evaluated/trained against er_60k/step_060000 (the new reference trunk). UNBLOCKED (rebase closed 08-11 17:2xZ) — main @36afff0 landed ActionExpertConfig frozen/staticmethod-factory shape the draft must target; do not draft config surfaces against the pre-rebase tree.
 
 </details>
 

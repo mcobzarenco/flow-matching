@@ -27,8 +27,8 @@ post-dates the 17:07Z sim pivot, so lane priority is ambiguous —
 interleave; defaulting to (a)** until answered. Tight-poll owed.
 
 **Done**: (1) `fontaine` rebased onto main @128a863 — clean, 17
-commits replayed, zero conflicts (docs-only commit, no code risk;
-check.py not re-run). (2) Queue: +`molmo-flow-step1-cli-rule` (CPU,
+commits replayed, zero conflicts (docs-only commit; check.py 688
+green via the pre-commit hook at push). (2) Queue: +`molmo-flow-step1-cli-rule` (CPU,
 gates verbatim from the record) behind sim-lit-review;
 `ae-on-our-trunk-prereg-draft` re-statused **absorbed** by §8.13
 step 7 (owner-confirm pending); validate green, 11 open. (3)
