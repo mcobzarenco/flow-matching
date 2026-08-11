@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-11T18:39:00Z
+**Updated:** 2026-08-11T19:17:00Z
 
-**Depth call:** depth 3 open at 18:5xZ 08-11: sim-fixes-reset-contact + sim-servo-sysid (both CPU, queued, from the closed sim-lit-review fix list) + sim-policy-eval-100seeds (blocked behind fixes batch 1); molmo-flow-step1 + rig-mixture-exec owner_hold. Sim lane per owner 18:15Z '100% simulations'.
+**Depth call:** depth 2 open at 19:1xZ 08-11: sim-servo-sysid (CPU, recommended-first per SIMPLER ablation) + sim-policy-eval-100seeds (UNBLOCKED by sim-fixes batch 1, pre-reg draftable); molmo-flow-step1 + rig-mixture-exec owner_hold. Sim lane per owner 18:15Z '100% simulations'.
 
-**12 open** (Live 0 · Queued 2 · Blocked 10 · Done 115)
+**11 open** (Live 0 · Queued 2 · Blocked 9 · Done 116)
 
 ## 🔴 Live (0)
 
@@ -32,21 +32,21 @@ Servo/controller sysid (CPU + minutes of local GPU-free sim): resolve the 56x kp
 
 ---
 
-**`sim-fixes-reset-contact`** · `cpu`
+**`sim-policy-eval-100seeds`** · `cpu`
 
-Sim fixes, batch 1 (CPU, from sim-review findings 1-4 + the contact-fidelity fix list papers/sim-contact-fidelity.md): (1) home pose reachable (fix camera_box2 mount collision vs shoulder) + spawn-after-settle so reset never stri…
+GOAL (owner 17:07Z 08-11): evaluate one good policy (candidate er_60k/step_060000, the reference trunk) in sim on 100 fixed seeds; primary metric = boat-&gt;disk distance reduction (continuous), success rate secondary
 
-**boundary:** Blocks sim-policy-eval-100seeds pre-reg finalization (findings 1-2 corrupt the start state). Probes exist and are committed (probe_home_pose/probe_benchy_contact/probe_phantom_volume).
+**boundary:** Protocol pre-reg draftable; design citations banked 18:5xZ 08-11 (papers/sim-as-eval.md): primary = settled-initial minus final (or min) benchy-&gt;disk distance (continuous — 2603.13616 precedent), success rate secondary column (keeps MMRV/Pearson computable); free validation arm = run panel on er_60k@15k/35k/60k, check sim ordering vs banked panel-MAE trajectory (SIMPLER's weak-to-strong-checkpoints trick; target MMRV&lt;~0.06 when a real anchor exists); standing caveat = fidelity is per-policy-family (AutoEval), resets for MolmoAct2/other stacks; pin eval machine + menagerie SHA + asset build, or adopt the SDF path from sim-fixes. UNBLOCKED 19:1xZ 08-11: sim-fixes batch 1 CLOSED (0/100 reset strikes, seed-independent start state &lt;0.003 deg, phantom p99 0.45mm, spin 0.4 deg - posts/2026-08-11-sim-fixes-batch1.md); pre-reg must pin the widened joint ranges + solver caps 50/50 + the 340-hull asset build as v0 physics; sim-servo-sysid is strongly-recommended-first per SIMPLER's ablation but the pre-reg may pin current gains as 'v0 physics' explicitly if the owner wants speed.
 
 <details><summary>full record</summary>
 
-Sim fixes, batch 1 (CPU, from sim-review findings 1-4 + the contact-fidelity fix list papers/sim-contact-fidelity.md): (1) home pose reachable (fix camera_box2 mount collision vs shoulder) + spawn-after-settle so reset never strikes the boat — re-verify 0 reset strikes over candidate seed list; (2) explicit &lt;contact&gt;&lt;pair&gt; for jaw-boat seam (condim&gt;=4, elliptic cones, impratio~10, Newton) — re-run pinch probe, compare 6.9deg spin / 0.84 tilt; (3) re-run CoACD threshold-driven (-t 0.01-0.02, uncapped hulls, higher -pr) OR native-SDF experiment (MuJoCo&gt;=3.3.5; also closes the CC-BY-ND per-machine derived-asset hazard) — re-run phantom-volume probe vs p99 3.78mm baseline; keep friction VALUES untuned (SIMPLER Table X citation). Gates: all three probes improved + bit-determinism re-verified + tick cost still ~&lt;30ms.
+GOAL (owner 17:07Z 08-11): evaluate one good policy (candidate er_60k/step_060000, the reference trunk) in sim on 100 fixed seeds; primary metric = boat-&gt;disk distance reduction (continuous), success rate secondary. Local GPU inference-only while sims run. Protocol (seed list, horizon, metric definition) pre-registered before running.
 
 </details>
 
 ---
 
-## 🟡 Blocked (10)
+## 🟡 Blocked (9)
 
 *waiting on a prerequisite, a boundary, or the owner*
 
@@ -146,20 +146,6 @@ AE-on-our-trunk pre-reg draft (CPU): the owner's action-expert implementation (e
 
 ---
 
-**`sim-policy-eval-100seeds`** · `cpu`
-
-GOAL (owner 17:07Z 08-11): evaluate one good policy (candidate er_60k/step_060000, the reference trunk) in sim on 100 fixed seeds; primary metric = boat-&gt;disk distance reduction (continuous), success rate secondary
-
-**boundary:** Protocol pre-reg draftable; design citations banked 18:5xZ 08-11 (papers/sim-as-eval.md): primary = settled-initial minus final (or min) benchy-&gt;disk distance (continuous — 2603.13616 precedent), success rate secondary column (keeps MMRV/Pearson computable); free validation arm = run panel on er_60k@15k/35k/60k, check sim ordering vs banked panel-MAE trajectory (SIMPLER's weak-to-strong-checkpoints trick; target MMRV&lt;~0.06 when a real anchor exists); standing caveat = fidelity is per-policy-family (AutoEval), resets for MolmoAct2/other stacks; pin eval machine + menagerie SHA + asset build, or adopt the SDF path from sim-fixes. BLOCKED behind sim-fixes-reset-contact (findings 1-2 corrupt the start state itself); sim-servo-sysid is strongly-recommended-first per SIMPLER's ablation but the pre-reg may pin current gains as 'v0 physics' explicitly if the owner wants speed.
-
-<details><summary>full record</summary>
-
-GOAL (owner 17:07Z 08-11): evaluate one good policy (candidate er_60k/step_060000, the reference trunk) in sim on 100 fixed seeds; primary metric = boat-&gt;disk distance reduction (continuous), success rate secondary. Local GPU inference-only while sims run. Protocol (seed list, horizon, metric definition) pre-registered before running.
-
-</details>
-
----
-
 **`molmo-flow-step1-cli-rule`** · `cpu` · **⛔ owner hold**
 
 molmo_flow migration STEP 1 — CLI inferred-args rule (CPU, per owner design record docs/architecture.md §8.13, main @128a863, approved 08-11): --resume refuses every architecture-determining flag (run-policy flags stay legal); --…
@@ -188,9 +174,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (115)
+## ✅ Done (116)
 
 *closed — the full record stays in each fold*
+
+**`sim-fixes-reset-contact`** · `cpu`
+
+Sim fixes, batch 1 (CPU, from sim-review findings 1-4 + the contact-fidelity fix list papers/sim-contact-fidelity.md): (1) home pose reachable (fix camera_box2 mount collision vs shoulder) + spawn-after-settle so reset never stri…
+
+**boundary:** CLOSED 19:1xZ 08-11 work session (all 3 legs + gates green, results post posts/2026-08-11-sim-fixes-batch1.md): (1) START STATE - three layers, not one: camera_box2&lt;-&gt;shoulder exclude (0.46mm wedge) + wrist&lt;-&gt;shoulder exclude (0.87mm, same class) + shoulder_lift/elbow_flex ranges widened at load (menagerie +-100/+-96.8 could not REPRESENT the rig median start -102.7/97.0); wrist_roll bimodality gone, settled state seed-independent &lt;0.003 deg across seeds; elbow 6.6 deg residual = jaw tip physically resting on table (reachable projection per the review; NOT excluded - real physics); reset() reworked spawn-after-settle w/ public reset_strike_contacts counter, probe reads API not a hand-replica; second strike channel found+fixed (jaw tips at x=0.155 sat INSIDE the old spawn region - near bound 0.17-&gt;0.195, design target preserved: mean initial distance 9.5cm range 7.1-12.1 over seeds 0-99); 0/100 strikes, max displacement 0.7mm. (2) JAW SEAM - priority=2 on generated benchy geoms (NOT the queued &lt;contact&gt;&lt;pair&gt;: menagerie's actual jaw contact meshes are UNNAMED so pairs would miss them; priority is the same documented wholesale-friction override); elliptic+impratio10+Newton verified already present; in-grip spin 6.9-&gt;0.4 deg, tilt 0.84-&gt;0.91, pen 2.2mm, firm hold. (3) COACD threshold-driven (0.015, uncapped, pr 100): 340 hulls, volume 1.75x-&gt;1.13x, phantom p99 3.78-&gt;0.45mm max 5.39-&gt;0.69mm; SDF not needed (26.7ms/tick unchanged). REGRESSION FOUND+FIXED: rest drift came back 6.2mm/10s with the fine decomposition - NOT friction/damping (damping made it WORSE 76mm); root cause vendored solver caps iterations=10/ls_iterations=20 under-converge 30-80 simultaneous keel-table contacts; scene now sets 50/50, drift 0.001mm at zero cost. Gates: all probes improved, bit-determinism green, 26.7ms/tick (&lt;30 gate). check.py 688 green. Servo sysid deliberately NOT touched (own item, next).
+
+<details><summary>full record</summary>
+
+Sim fixes, batch 1 (CPU, from sim-review findings 1-4 + the contact-fidelity fix list papers/sim-contact-fidelity.md): (1) home pose reachable (fix camera_box2 mount collision vs shoulder) + spawn-after-settle so reset never strikes the boat — re-verify 0 reset strikes over candidate seed list; (2) explicit &lt;contact&gt;&lt;pair&gt; for jaw-boat seam (condim&gt;=4, elliptic cones, impratio~10, Newton) — re-run pinch probe, compare 6.9deg spin / 0.84 tilt; (3) re-run CoACD threshold-driven (-t 0.01-0.02, uncapped hulls, higher -pr) OR native-SDF experiment (MuJoCo&gt;=3.3.5; also closes the CC-BY-ND per-machine derived-asset hazard) — re-run phantom-volume probe vs p99 3.78mm baseline; keep friction VALUES untuned (SIMPLER Table X citation). Gates: all three probes improved + bit-determinism re-verified + tick cost still ~&lt;30ms.
+
+</details>
+
+---
 
 **`er60k-init-delta-midrun-chart-0810`** · `cpu`
 

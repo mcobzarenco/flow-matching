@@ -3,7 +3,44 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-11 18:43–19:2xZ — work session: **sim-fixes-reset-contact
+CLOSED — all four sim-review findings fixed and re-measured; the
+100-seed eval pre-reg is UNBLOCKED.***
+
+**Status**: no live jobs — registry empty, GPU free. 100%-sim lane in
+effect (owner 18:15Z).
+
+**Steering**: Discord read empty at boot and at the work boundary; no
+new owner messages.
+
+**Done**: **sim-fixes-reset-contact CLOSED** (commit `4cb1f70`, results
+post [sim fixes batch 1](posts/2026-08-11-sim-fixes-batch1.md)).
+Start state: the unreachable home pose was three layers deep —
+camera-mount↔shoulder exclude, wrist↔shoulder exclude, and
+shoulder_lift/elbow_flex ranges widened at load (menagerie couldn't
+*represent* the rig's median start; the 6.6° elbow residual is the jaw
+tip physically on the table = the reachable projection, pinned for the
+protocol; settled state now seed-independent <0.003°). reset() reworked
+spawn-after-settle with a public strike counter; a second strike
+channel found (jaw tips sat inside the spawn region) → near bound
+0.17→0.195; **0/100 strikes**, initial-distance design target preserved
+(mean 9.5 cm). Jaw seam: priority=2 on benchy geoms (pairs impossible —
+vendored jaw meshes unnamed) → in-grip spin **6.9°→0.4°**, tilt
+0.84→0.91. Threshold-driven CoACD (0.015, uncapped, 340 hulls):
+phantom p99 **3.78→0.45 mm**, volume 1.75×→1.13×. Regression caught:
+rest drift returned at 6.2 mm/10 s — root cause the vendored solver
+caps (ls_iterations 20) under-converging 30–80 keel–table contacts,
+not friction; scene sets 50/50 → 0.001 mm at unchanged 26.7 ms/tick.
+All gates green, check.py 688, bit-determinism re-verified.
+
+**Next**: `queue_cli.py next` → **sim-policy-eval-100seeds** (pre-reg
+now draftable; must pin widened ranges + solver caps + asset build as
+v0 physics) with **sim-servo-sysid** recommended-first per SIMPLER's
+ablation. `run_work_next` to be armed. No dated boundaries —
+`queue.json` canonical.*
 
 *Updated 2026-08-11 18:38–18:4xZ (real `date -u` at write: 18:42) —
 tick (babysit): **quiet tick — GPUs free, no new messages;
@@ -66,43 +103,16 @@ citations.
 blocks the 100-seed pre-reg), then `sim-servo-sysid`.
 `run_work_next` armed. No dated boundaries — `queue.json` canonical.*
 
-*Updated 2026-08-11 18:07–18:3xZ — tick (babysit): **owner landed the
-molmo_flow migration plan on main (§8.13, `128a863`, 17:50Z) — read,
-rebased onto, queued as step-1 item; priority-vs-sim-lane question
-posted in-channel.***
-
-**Status**: no live jobs — GPU 0% / 0 MiB (inference-only steer
-respected). Driver-guard straggler pid 35366 checked: a 6-day-old
-idle tmux zsh, not a job — nothing to relaunch.
-
-**Steering**: no new owner messages/reactions in-channel this tick.
-But main moved 36afff0 → **128a863**: owner design record
-**architecture §8.13 molmo_flow** (MolmoAct2 action expert as a
-first-class bijou decoder; 10 registered decisions incl. ascending-t
-convention for all new flow code, parallel copy w/ byte-parity
-oracle, conversion-first loading, decoder-owned q01/q99, joint_ce
-narration rider, `--insulate-expert` KI seam; steps 1–8 with gates,
-est. 5–6 sessions ≤10 GPU-h; "plan approved in owner session
-2026-08-11; step 1 (CLI rule) next"). Treated as steering: it
-post-dates the 17:07Z sim pivot, so lane priority is ambiguous —
-**asked in-channel 18:19Z (a) sims first / (b) step 1 first / (c)
-interleave; defaulting to (a)** until answered. Tight-poll owed.
-
-**Done**: (1) `fontaine` rebased onto main @128a863 — clean, 17
-commits replayed, zero conflicts (docs-only commit; check.py 688
-green via the pre-commit hook at push). (2) Queue: +`molmo-flow-step1-cli-rule` (CPU,
-gates verbatim from the record) behind sim-lit-review;
-`ae-on-our-trunk-prereg-draft` re-statused **absorbed** by §8.13
-step 7 (owner-confirm pending); validate green, 11 open. (3)
-Straggler triaged benign; ack + priority ask posted 18:19Z.
-
-**Next**: `run_work_next` armed (pre-existing) — chained work
-session: **sim-lit-review** under default (a), pivoting to
-molmo_flow step 1 if the owner calls (b)/(c); rejoin the Discord
-thread via `history` first. `rig-mixture-screen-exec` stays
-owner-held. No dated boundaries — `queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-11 18:43–19:2xZ (work, exploit-infra; 0 GPU-h — CPU +
+sim probes only, renders on the idle H100): sim-fixes-reset-contact
+CLOSED end-to-end — start-state 3-layer fix (0/100 reset strikes,
+seed-independent settle), jaw-seam priority fix (spin 6.9°→0.4°),
+threshold-driven CoACD (phantom p99 3.78→0.45 mm), solver-cap drift
+regression found+fixed (0.001 mm at unchanged tick cost); results post
++ Space push; 100-seed pre-reg unblocked. run_work_next armed
+(sim-servo-sysid / 100-seed pre-reg next).
 
 Session 2026-08-11 18:38–18:4xZ (tick, babysit; 0 new GPU-h — GPUs
 free): quiet tick. Registry empty, nvidia-smi 0%/0 MiB. Discord read
