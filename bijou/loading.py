@@ -111,6 +111,11 @@ class PromptKind(StrEnum):
     # stable identity from day one; loading dispatches once the Molmo2
     # prompt config lands (WP4).
     MOLMO2 = "molmo2"
+    # The MolmoAct2 prompt format (architecture.md §8.13 decision 5):
+    # their verbatim QA template, discrete state tokens, uint8
+    # single-view images — written by the converter from day one; the
+    # encoder mode lands with step 4.
+    MOLMOACT2 = "molmoact2"
 
 
 class DecoderKind(StrEnum):
@@ -119,6 +124,11 @@ class DecoderKind(StrEnum):
     FLOW = "flow"
     AR_FAST = "ar_fast"
     AR_BACKBONE = "ar_backbone"
+    # The MolmoAct2 action expert as a first-class decoder
+    # (architecture.md §8.13): per-layer-KV-conditioned DiT, ascending-t
+    # flow. Written by the converter (step 2); the decoder module lands
+    # with step 3, model assembly with step 5.
+    MOLMO_FLOW = "molmo_flow"
 
 
 @dataclass(frozen=True, slots=True)
@@ -272,6 +282,159 @@ class Molmo2PromptConfig:
 
 
 @dataclass(frozen=True, slots=True)
+class MolmoAct2PromptConfig:
+    """The MolmoAct2 prompt-side strategy as recorded in a checkpoint
+    (§8.13 decision 5): their verbatim template with the tag's
+    ``setup_type``/``control_mode`` rendered in special-token wrappers,
+    the q01/q99-normalized state as ``num_state_tokens``-bin discrete
+    prompt tokens, and their uint8 single-view 378x378 image path.
+
+    ``action_mode`` is the SOURCE checkpoint's mask flavor and is
+    load-bearing for the expert weights: under ``'both'`` the encoder
+    mask strips EOS positions (including the leading BOS, which IS
+    ``<|im_end|>``) and discrete action spans from the expert's
+    cross-attention context. ``n_obs_steps`` is asserted 1 at convert
+    time and recorded for provenance."""
+
+    format: int
+    norm_tag: str
+    setup_type: str
+    control_mode: str
+    num_state_tokens: int
+    state_dim: int
+    action_mode: str
+    n_obs_steps: int
+    camera_keys: tuple[str, ...]
+
+    # The bracket/conditioning surfaces are bijou-prompt concepts; this
+    # format has neither. Properties (not fields) so generic consumers
+    # (read_checkpoint_info, BijouPolicy) read them uniformly without
+    # the schema pretending they are configurable.
+    @property
+    def condition_fields(self) -> tuple[str, ...]:
+        return ()
+
+    @property
+    def generate_bracket(self) -> bool:
+        return False
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "kind": PromptKind.MOLMOACT2.value,
+            "format": self.format,
+            "norm_tag": self.norm_tag,
+            "setup_type": self.setup_type,
+            "control_mode": self.control_mode,
+            "num_state_tokens": self.num_state_tokens,
+            "state_dim": self.state_dim,
+            "action_mode": self.action_mode,
+            "n_obs_steps": self.n_obs_steps,
+            "camera_keys": list(self.camera_keys),
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> MolmoAct2PromptConfig:
+        return cls(
+            format=int(data["format"]),
+            norm_tag=str(data["norm_tag"]),
+            setup_type=str(data["setup_type"]),
+            control_mode=str(data["control_mode"]),
+            num_state_tokens=int(data["num_state_tokens"]),
+            state_dim=int(data["state_dim"]),
+            action_mode=str(data["action_mode"]),
+            n_obs_steps=int(data["n_obs_steps"]),
+            camera_keys=tuple(str(key) for key in data["camera_keys"]),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class MolmoFlowDecoderConfig:
+    """The MolmoAct2 action expert as recorded in a checkpoint (§8.13):
+    the expert geometry (mirrors the port's ``ActionExpertConfig``
+    fields), the trunk KV width it conditions on (``llm_kv_dim`` —
+    recorded so the decoder builds without re-deriving from the trunk
+    config), their inference flow parameters, and the REAL action
+    geometry of the tag (``action_dim`` of ``max_action_dim`` padded
+    dims, ``action_horizon`` of ``max_horizon``).
+
+    ``normalization`` is the decoder-owned scheme tag (decision 6):
+    ``"q01q99"`` = clamp-normalized targets against the checkpoint's
+    ``normalization`` DatasetStats table (whose q01/q99 fields ARE the
+    tag's merged table — stored once, not duplicated here)."""
+
+    max_horizon: int
+    max_action_dim: int
+    hidden_size: int
+    num_layers: int
+    num_heads: int
+    mlp_ratio: float
+    ffn_multiple_of: int
+    timestep_embed_dim: int
+    context_layer_norm: bool
+    qk_norm: bool
+    qk_norm_eps: float
+    rope: bool
+    causal_attn: bool
+    llm_kv_dim: int
+    num_flow_steps: int
+    mask_action_dim_padding: bool
+    action_dim: int
+    action_horizon: int
+    n_action_steps: int
+    normalization: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "kind": DecoderKind.MOLMO_FLOW.value,
+            "max_horizon": self.max_horizon,
+            "max_action_dim": self.max_action_dim,
+            "hidden_size": self.hidden_size,
+            "num_layers": self.num_layers,
+            "num_heads": self.num_heads,
+            "mlp_ratio": self.mlp_ratio,
+            "ffn_multiple_of": self.ffn_multiple_of,
+            "timestep_embed_dim": self.timestep_embed_dim,
+            "context_layer_norm": self.context_layer_norm,
+            "qk_norm": self.qk_norm,
+            "qk_norm_eps": self.qk_norm_eps,
+            "rope": self.rope,
+            "causal_attn": self.causal_attn,
+            "llm_kv_dim": self.llm_kv_dim,
+            "num_flow_steps": self.num_flow_steps,
+            "mask_action_dim_padding": self.mask_action_dim_padding,
+            "action_dim": self.action_dim,
+            "action_horizon": self.action_horizon,
+            "n_action_steps": self.n_action_steps,
+            "normalization": self.normalization,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> MolmoFlowDecoderConfig:
+        return cls(
+            max_horizon=int(data["max_horizon"]),
+            max_action_dim=int(data["max_action_dim"]),
+            hidden_size=int(data["hidden_size"]),
+            num_layers=int(data["num_layers"]),
+            num_heads=int(data["num_heads"]),
+            mlp_ratio=float(data["mlp_ratio"]),
+            ffn_multiple_of=int(data["ffn_multiple_of"]),
+            timestep_embed_dim=int(data["timestep_embed_dim"]),
+            context_layer_norm=bool(data["context_layer_norm"]),
+            qk_norm=bool(data["qk_norm"]),
+            qk_norm_eps=float(data["qk_norm_eps"]),
+            rope=bool(data["rope"]),
+            causal_attn=bool(data["causal_attn"]),
+            llm_kv_dim=int(data["llm_kv_dim"]),
+            num_flow_steps=int(data["num_flow_steps"]),
+            mask_action_dim_padding=bool(data["mask_action_dim_padding"]),
+            action_dim=int(data["action_dim"]),
+            action_horizon=int(data["action_horizon"]),
+            n_action_steps=int(data["n_action_steps"]),
+            normalization=str(data["normalization"]),
+        )
+
+
+@dataclass(frozen=True, slots=True)
 class FlowDecoderConfig:
     """The flow-matching action decoder as recorded in a checkpoint.
 
@@ -341,13 +504,15 @@ class FlowDecoderConfig:
 
 def parse_prompt_config(
     data: dict[str, Any],
-) -> GemmaPromptConfig | Molmo2PromptConfig:
+) -> GemmaPromptConfig | Molmo2PromptConfig | MolmoAct2PromptConfig:
     kind = PromptKind(data["kind"])
     match kind:
         case PromptKind.GEMMA4:
             return GemmaPromptConfig.from_dict(data)
         case PromptKind.MOLMO2:
             return Molmo2PromptConfig.from_dict(data)
+        case PromptKind.MOLMOACT2:
+            return MolmoAct2PromptConfig.from_dict(data)
 
 
 def ar_fast_config_to_dict(config: ARFastConfig) -> dict[str, Any]:
@@ -417,7 +582,7 @@ def ar_backbone_config_from_dict(data: dict[str, Any]) -> ARBackboneConfig:
 
 def parse_decoder_config(
     data: dict[str, Any],
-) -> FlowDecoderConfig | ARFastConfig | ARBackboneConfig:
+) -> FlowDecoderConfig | ARFastConfig | ARBackboneConfig | MolmoFlowDecoderConfig:
     kind = DecoderKind(data["kind"])
     match kind:
         case DecoderKind.FLOW:
@@ -426,6 +591,8 @@ def parse_decoder_config(
             return ar_fast_config_from_dict(data)
         case DecoderKind.AR_BACKBONE:
             return ar_backbone_config_from_dict(data)
+        case DecoderKind.MOLMO_FLOW:
+            return MolmoFlowDecoderConfig.from_dict(data)
 
 
 def decoder_schema_dict(
@@ -921,7 +1088,7 @@ class CheckpointMetadata:
     """
 
     backbone: BackboneConfig
-    prompt: GemmaPromptConfig | Molmo2PromptConfig
+    prompt: GemmaPromptConfig | Molmo2PromptConfig | MolmoAct2PromptConfig
     decoder: dict[str, Any]
     normalization: DatasetStats
     per_dataset_normalization: dict[str, DatasetStats]
@@ -966,8 +1133,14 @@ class CheckpointSections:
     beyond max_soft_tokens, which lives in train_args)."""
 
     backbone: BackboneConfig
-    prompt: GemmaPromptConfig | Molmo2PromptConfig | None
-    decoder: FlowDecoderConfig | ARFastConfig | ARBackboneConfig | None
+    prompt: GemmaPromptConfig | Molmo2PromptConfig | MolmoAct2PromptConfig | None
+    decoder: (
+        FlowDecoderConfig
+        | ARFastConfig
+        | ARBackboneConfig
+        | MolmoFlowDecoderConfig
+        | None
+    )
 
 
 def checkpoint_sections(meta: dict[str, Any]) -> CheckpointSections:
@@ -1325,6 +1498,17 @@ def from_checkpoint(
     meta = json.loads((checkpoint / "bijou_config.json").read_text())
     sections = checkpoint_sections(meta)
     info = read_checkpoint_info(checkpoint)
+    if isinstance(sections.decoder, MolmoFlowDecoderConfig) or isinstance(
+        sections.prompt,
+        MolmoAct2PromptConfig,
+    ):
+        # Before the backbone resolve: the guard must fire without hub
+        # access (the recorded ref may not even exist yet locally).
+        raise NotImplementedError(
+            f"{checkpoint} is a converted MolmoAct2 checkpoint — its metadata "
+            "parses (read_checkpoint_info) but model assembly lands with "
+            "architecture.md §8.13 step 5 (the molmo_flow decoder)",
+        )
     checkpoint_dir = resolve_checkpoint_dir(info.backbone)
     if isinstance(sections.prompt, Molmo2PromptConfig):
         if not isinstance(sections.decoder, ARBackboneConfig | FlowDecoderConfig):
