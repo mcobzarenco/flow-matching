@@ -5,13 +5,31 @@
 # prior reason: attach_K owner-killed 12:31Z, box idle pending the
 # AdamC parameter-sheet approval, which landed 13:19Z.)
 
-no_live_runs_reason = """er60k_events_dump COMPLETE rc=0 15:5xZ 08-11 \
-(~1.55/4 GPU-h) and CLOSED end-to-end same session (confusion + probe \
-+ galleries + HTML on fontaine-reports; probe headline: 63% of misses \
-are saw-it-under-threshold). The 4x box was DELETED by the owner \
-14:37Z (salvage in ~/box_archive). Next launches: nothing gated; the \
-AE-on-ER-trunk arm pends the owner's main push (rebase item blocked \
-on it), er-screen-results-post is CPU-only."""
+# (no_live_runs_reason cleared 21:40Z 08-11 — sim100_eval launched.)
+
+[[run]]
+name = "sim100_eval"
+kind = "progress-log"
+host = "local"
+pgrep = "sim.rollout_sim"
+pgrep_min = 1
+gpu_indices = [0]
+gpu_mem_min_mib = 100  # hold arm holds only the EGL context; policy arms ~10-30 GiB
+log = "/home/ubuntu/logs/sim100_eval.log"
+progress_re = "seed [0-9]+ replan [0-9]+"
+started_utc = "2026-08-11T21:40:31Z"
+gpu_hours_per_wall_hour = 1.0
+boundary = "5 sequential arms x 100 seeds (er60k, hold, er15k, er35k, er55k), ~35 s/episode measured => ~1 h/policy arm, ~4-5 h wall total, ETA ~02:0xZ 08-12; registered run of posts/2026-08-11-prereg-sim-policy-eval-100seeds.md (unit fontaine-sim100)"
+anchors = [
+    "RECORD-ONLY: nothing gates or repoints runs; primary read = er60k mean progress_final (initial-final boat->disk cm) over seeds 0-99",
+    "validation ordering read: the 5 rung pairs with panel gap >= 0.1 MAE must rank correctly (panel 15k 7.5283 / 35k 6.2892 / 55k 5.8269 / 60k 5.7782); (55k,60k) record-only",
+    "hold arm = metric floor (|mean| < 0.5 cm gate); reset strikes must be 0/100 per arm",
+    "abort rule: er60k arm > 2 h wall => pause after in-flight arm + reassess in-channel; reads via fontaine/scripts/sim100_reads.py on rc=0",
+]
+
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 6.0
 
 # er60k_events_dump entry PRUNED 16:0xZ 08-11 work session — dump pass
 # rc=0 15:5xZ (~1.55/4 GPU-h, 25,800 rows at ~275 f/min). Instrument
