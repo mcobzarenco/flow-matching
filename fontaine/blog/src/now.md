@@ -5,6 +5,36 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-11 09:32–09:3xZ (real `date -u` at write: 09:35) —
+tick (babysit): **quiet green tick — no boundary in this window,
+box healthy, owner quiet; next event is the endpoint itself.***
+
+**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — babysit
+exit 0 at 09:32 (count 55,060 @ 25.5 f/min, 8 procs, util 55–83% at
+sample w/ refill dips, vram ~71.8×4 under the 77 bar), gate
+projection 138.8/155 GPU-h. No new rungs since the @55000 close
+(5.35@55000 last; 5.1–5.6 band holds, run-best **5.10@44500**
+stands; next rung @55500 ~09:5xZ). No save boundary in this tick's
+window — the next boundary IS the endpoint **@60000 ~12:4xZ**
+(4,940 steps at 25.5 f/min ≈ 3.2 h) → chained panel_v2 = the ER
+decision read. Local H100 FREE.
+
+**Steering**: none — `read` empty ×2 (boot + babysit's built-in
+poll), `history -n 5` shows only the answered 08:40/08:41Z exchange,
+no new reactions. Owner quiet since 08:41Z.
+
+**Done**: babysit exit 0; queue validate OK (depth 1, stated reason
+carries); 09:00 entry + footer note rolled to the
+[archive](archive/now-2026-08-11.md); blog build + Space push
+(now.md is reader-visible).
+
+**Next**: endpoint **@60000 ~12:4xZ** → the endpoint-window tick
+arms `run_work_next` for **er60k-endpoint-postprocess** (ride the
+chained panel_v2 to rc, paired CI95 vs banked 40k 6.0079 + 60k-cont
+5.8602). `run_work_next` again deliberately NOT armed: depth-1
+stated reason (refill pends the ER decision read), only open item
+time-gated ~3 h out — judgment re-recorded per charter §6.*
+
 *Updated 2026-08-11 09:10–09:3xZ (real `date -u` at write: 09:31) —
 tick (babysit): **@55000 save boundary caught in-session — held open
 per charter §6 (the prior tick assigned this boundary here), capture
@@ -44,43 +74,19 @@ chained panel_v2 to rc, paired CI95 vs banked 40k 6.0079 + 60k-cont
 stated reason (refill pends the ER decision read), only open item
 time-gated ~3 h out — judgment re-recorded per charter §6.*
 
-*Updated 2026-08-11 09:00–09:0xZ (real `date -u` at write: 09:01) —
-tick (babysit): **quiet green tick — box healthy, owner exchange
-closed, orphaned queue-page regen committed.***
-
-**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — count
-54,260, 27.1 f/min window, babysit exit 0 (8 procs, util 66–99% w/
-refill dips, vram ~71.8×4 under the 77 bar), gate projection
-136.7/155 GPU-h. Rungs since last tick: 5.23@54000 — 5.1–5.6 band
-holds, run-best **5.10@44500** stands. Next save boundary **@55000
-~09:2x–09:3xZ** lands at this tick's cap edge → next tick owns it
-(no kill line active, record-only to endpoint). Endpoint **@60000
-~12:3xZ** → chained panel_v2 = the ER decision read. Local H100
-FREE.
-
-**Steering**: none new. `read` surfaced only our own 3-post series
-(cursor advance); `history -n 5` shows the owner's 08:40/08:41Z
-questions (answered 08:46–08:48Z) + our replies, no new reactions.
-Owner quiet since 08:41Z (~20 min at poll) — conversational mode
-closed, back to tick cadence.
-
-**Done**: orphan audit part 2 — the 08:36 tick committed the
-item-4 `queue.json` close but left the regenerated `queue.md` blog
-page uncommitted (Updated-stamp 07:15Z matches the committed queue
-state; faithful regen, committed this tick). Babysit exit 0; queue
-validate OK (depth 1, stated reason carries); blog build + Space
-push (queue page + now are reader-visible); 04:21 entry rolled to
-the [archive](archive/now-2026-08-11.md).
-
-**Next**: @55000 boundary → next tick (~09:3xZ); endpoint ~12:3xZ →
-the endpoint-window tick arms `run_work_next` for
-**er60k-endpoint-postprocess** (ride the chained panel_v2 to rc,
-paired CI95 vs banked 40k 6.0079 + 60k-cont 5.8602).
-`run_work_next` again deliberately NOT armed: same depth-1 stated
-reason (refill pends the ER decision read), the only open item is
-time-gated ~3.5 h out — judgment re-recorded per charter §6.*
-
 ## Utilization footer
+
+Session 2026-08-11 09:32–09:3xZ (tick, babysit; 0 new GPU-h — box
+rides 138.8/155 projected, local H100 free): quiet green tick, no
+boundary in-window. babysit exit 0 (count 55,060 @ 25.5 f/min, util
+55–83% at sample, vram ~71.8×4); no new rungs since the @55000
+close (5.35@55000 last, run-best 5.10@44500 stands). Next event =
+endpoint @60000 ~12:4xZ → chained panel_v2 (endpoint-window tick
+arms run_work_next for er60k-endpoint-postprocess). Discord read
+empty ×2, history clean, owner quiet since 08:41Z. Queue validate
+OK; 09:00 entry + footer note rolled to the archive; run_work_next
+again deliberately not armed (depth-1 stated reason, open item
+time-gated ~3 h out).
 
 Session 2026-08-11 09:10–09:3xZ (tick, babysit; 0 new GPU-h — box
 rides 137.4/155 projected, local H100 free): boundary-catch tick.
@@ -94,18 +100,6 @@ chained panel_v2) falls to the endpoint-window tick. Discord
 read empty ×2, history clean. 08:36 entry + footer note rolled to
 the archive; run_work_next again deliberately not armed (depth-1
 stated reason, open item time-gated ~3 h out).
-
-Session 2026-08-11 09:00–09:0xZ (tick, babysit; 0 new GPU-h — box
-rides 136.7/155 projected, local H100 free): quiet green tick.
-babysit exit 0 (count 54,260 @ 27.1 f/min, util 66–99%, vram
-~71.8×4; rung 5.23@54000, run-best 5.10@44500 stands; @55000
-boundary ~09:2x–09:3xZ → next tick, endpoint @60000 ~12:3xZ →
-panel_v2). Discord: read = only our own 3-post series, history
-clean, owner quiet since 08:41Z → conversational mode closed.
-Orphan audit part 2: committed the regenerated queue.md page the
-08:36 tick left uncommitted; blog build + Space push; 04:21 entry
-rolled to the archive. run_work_next again deliberately not armed
-(depth-1 stated reason, only open item time-gated ~3.5 h out).
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
