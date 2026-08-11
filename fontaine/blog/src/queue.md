@@ -2,13 +2,13 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-11T07:15:00Z
+**Updated:** 2026-08-11T09:57:00Z
 
 **Depth call:** depth 1 open at 07:1xZ 08-11 (stated reason): er60k-endpoint-postprocess is the only open item and is time-gated on the box endpoint @60000 ~12:3xZ (chained panel_v2 rides in-unit; the postprocess session owns the paired ER decision reads). molmoact2-firstclass-port CLOSED this session (item 4 G4-PASS: our-trainer AE fine-tune, all four frozen clauses, ~1.9/6 GPU-h, port total ~2.6/8 — all owner-GO'd scope 1-4 done). Lit refill lane owner-paused (00:23Z 08-10); new pre-registrations deliberately pend the ER endpoint decision read, which sets the next arm (fjoint venue, vu5k window, or ER-trunk follow-ons).
 
-**8 open** (Live 1 · Queued 1 · Blocked 6 · Done 106)
+**9 open** (Live 2 · Queued 1 · Blocked 6 · Done 106)
 
-## 🔴 Live (1)
+## 🔴 Live (2)
 
 *running right now (GPU or owner-window)*
 
@@ -21,6 +21,20 @@ OWNER RUN LIVE (launched 22:47-53Z 08-09, unit fontaine-er-60k): fontaine_molmo2
 <details><summary>full record</summary>
 
 OWNER RUN LIVE (launched 22:47-53Z 08-09, unit fontaine-er-60k): fontaine_molmo2_er_60k_ddp4 — 60k AR steps from allenai/Molmo2-ER (byte-verified drop-in), 40k recipe verbatim + rig datasets at natural share (owner pick 22:45Z), seed 0 (owner override), save 5000. FIRST POLL DONE 22:5x-23:0xZ: E1 banner exact, 2.23 s/step steady, vram 66.6 vs 77, util 68-99%. RATE-CLASS CORRECTION posted in-channel + gate re-pinned 65-&gt;155 GPU-h (the 65 came from attach_F's 0.92 s/step frozen-trunk rate, wrong class; true trunk class 2.2-2.6 = 60k-continuation actuals). Corrected endpoint ~08-11 ~12:00Z (~37 h wall, ~149 train + ~2 eval GPU-h). Primary read = ER-init delta: probe ladder vs the 40k curve at matched steps; endpoint chains panel_v2 k4l2 (--report + npz), paired CI95 vs banked 40k (6.0079) + 60k-continuation (5.8602).
+
+</details>
+
+---
+
+**`er55k-panel-eval`** · `gpu-local`
+
+OWNER REQUEST 09:41:04Z 08-11 ('eval the 55000 step checkpoint that just landed on the box as before'): step_055000 -&gt; hub (42.9s, commit 99a1ae2, weights-only) + local dl (13.7s) + STANDARD both-arms panel eval LIVE local H100 u…
+
+**boundary:** eval rc ~11:5xZ 08-11; babysit entry er55k_panel carries the on-completion contract (gate 8 GPU-h, ~2.2 class) · [pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md)
+
+<details><summary>full record</summary>
+
+OWNER REQUEST 09:41:04Z 08-11 ('eval the 55000 step checkpoint that just landed on the box as before'): step_055000 -&gt; hub (42.9s, commit 99a1ae2, weights-only) + local dl (13.7s) + STANDARD both-arms panel eval LIVE local H100 unit eval-er55k-panel launched 09:48:27Z (er35k recipe verbatim, no --generate; first poll 98% util/30.5G). REMAINING (owning session, ride to rc ~11:5xZ with foreground polls, NEVER a Monitor): rc=0 -&gt; er15k_panel_reads.py --stem-cand reports/eval__fontaine_molmo2_er_60k_ddp4__step_055000__panel_curated_v0_k4l2 --out reports/analysis__er55k_panel_vs_banked_k4l2.json (fast-path key bijou@55000, CLASS-MATCHED vs banked 40k 6.0079 + 60k-cont 5.8602; 35k precedent 6.2892 / +0.2813) -&gt; report+json+analysis to fontaine-reports (curl 200) + reports.md + numbers in-channel -&gt; prune babysit entry er55k_panel. Record-only; nothing gates the box run. NOTE: the box endpoint @60000 ~12:4xZ lands right after — the same owning session likely takes er60k-endpoint-postprocess next.
 
 </details>
 
