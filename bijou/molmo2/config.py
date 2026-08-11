@@ -90,7 +90,9 @@ class Molmo2TextConfig:
         ``tie_word_embeddings`` lives on the TOP-LEVEL Molmo2 config, not in
         ``text_config`` — the caller passes it down.
         """
-        if data.get("model_type") not in (None, "molmo2_text"):
+        # molmoact2_text is the same decoder config nested in MolmoAct2
+        # checkpoints (see the top-level from_dict note).
+        if data.get("model_type") not in (None, "molmo2_text", "molmoact2_text"):
             raise ValueError(
                 f"not a molmo2 text config: model_type={data.get('model_type')}",
             )
@@ -237,7 +239,10 @@ class Molmo2Config:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
-        if data.get("model_type") not in (None, "molmo2"):
+        # "molmoact2" checkpoints ARE Molmo2 backbones (same nested
+        # text/vit/adapter sections) plus an action expert the molmoact2
+        # package loads separately — the trunk config parses here as-is.
+        if data.get("model_type") not in (None, "molmo2", "molmoact2"):
             raise ValueError(
                 f"not a molmo2 config: model_type={data.get('model_type')}",
             )

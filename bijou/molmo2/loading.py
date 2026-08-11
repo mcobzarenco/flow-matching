@@ -32,6 +32,9 @@ from .text import Molmo2TextModel
 from .vision import Molmo2VisionBackbone
 
 _VISION_PREFIX = "model.vision_backbone."
+# MolmoAct2 checkpoints carry the flow action expert alongside the trunk;
+# bijou.molmoact2 loads those tensors into its own module.
+_ACTION_EXPERT_PREFIX = "model.action_expert."
 _LM_HEAD_KEY = "lm_head.weight"
 _BLOCK_RE = re.compile(r"^transformer\.blocks\.(\d+)\.")
 
@@ -96,7 +99,7 @@ def load_text_model(
         with safe_open(weight_file, framework="pt", device=str(device)) as f:
             # it exposes .keys() but not iteration/__contains__.
             for key in f.keys():  # noqa: SIM118
-                if key.startswith(_VISION_PREFIX):
+                if key.startswith((_VISION_PREFIX, _ACTION_EXPERT_PREFIX)):
                     continue
                 if key == _LM_HEAD_KEY:
                     if not with_lm_head:
@@ -104,6 +107,10 @@ def load_text_model(
                     name = key
                 else:
                     name = key.removeprefix("model.")
+                    # MolmoAct2 exports persist the derived RoPE table;
+                    # ours is a computed non-persistent buffer.
+                    if name == "transformer.rotary_emb.inv_freq":
+                        continue
                     if truncate_layers is not None and _is_truncated_block_key(
                         name,
                         truncate_layers,

@@ -164,9 +164,12 @@ def test_encoder_attention_mask_falls_back_to_input_ids() -> None:
     assert encoder_attention_mask(None, None) is None
 
 
-def test_encoder_attention_mask_rejects_both_mode() -> None:
+def test_encoder_attention_mask_rejects_unknown_mode() -> None:
+    # 'both' is wired since the item-3 released-checkpoint finding (its
+    # EOS/span branch is oracled in tests/test_molmoact2_predictor.py);
+    # discrete-only checkpoints stay out of scope.
     with pytest.raises(NotImplementedError, match="action_mode"):
-        encoder_attention_mask(None, torch.ones(1, 3), action_mode="both")
+        encoder_attention_mask(None, torch.ones(1, 3), action_mode="discrete")
 
 
 def test_validate_inference_config_accepts_released_shape() -> None:
@@ -178,7 +181,7 @@ def test_validate_inference_config_accepts_released_shape() -> None:
     [
         ({"add_action_expert": False}, ValueError),
         ({"action_expert_depth_gate": True}, NotImplementedError),
-        ({"action_mode": "both"}, NotImplementedError),
+        ({"action_mode": "discrete"}, NotImplementedError),
     ],
 )
 def test_validate_inference_config_guards(override: dict, error: type) -> None:

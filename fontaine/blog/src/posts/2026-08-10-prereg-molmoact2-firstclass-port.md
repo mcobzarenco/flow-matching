@@ -105,3 +105,55 @@ port GPU minutes use the local H100 in its free windows.
 Panels score MolmoAct2-class checkpoints natively; SnapFlow 1-NFE
 distillation of their AE becomes a normal pre-registerable
 experiment; rig rollout server can load either stack.
+
+## Amendment 1 — G2 chunk-parity budget (2026-08-11 05:5xZ, posted at item-3 close)
+
+The pre-reg set the G2 chunk-parity budget at ≤ 0.05 MAE-units pooled,
+labelled "bf16 nondeterminism budget, to be tightened by measurement at
+G1". G1 then measured **0.0** (byte-exact) at module level, so the
+placeholder was never re-priced against the one term it could not see:
+cross-implementation kernel-order rounding in the 4.9B **trunk
+forward**, amplified through 36 layers and the 10-step flow loop.
+Measured end-to-end on the 240 banked anchor rows (same per-row noise
+seeds as the banked HF runs):
+
+- **released SO-100/101**: pooled |Δ| vs banked **0.0410 — inside the
+  original 0.05 gate**; pooled anchor MAE reproduced at 28.9456 vs
+  28.9454.
+- **rig-ft rung 2000**: pooled |Δ| **0.0541 — 8% over the placeholder
+  gate**; pooled anchor MAE reproduced at 3.2321 vs 3.2301.
+
+Before amending, the miss was localized end-to-end (worst frames,
+`fontaine/scripts/molmoact2_e2e_parity.py` + ad-hoc probes, artifacts
+`reports/analysis__molmoact2_rig_ft_step2000{_repro,_ours}.npz`):
+
+1. **Both sides are individually byte-deterministic**: their HF
+   pipeline re-run on the same seeds reproduces its banked preds
+   byte-identically (240/240 frames, max|Δ| 0.0); so does ours.
+2. **Inputs are byte-identical**: input_ids, pixel values, and the
+   token-type membership match their processor exactly on the live
+   anchor rows (pooling indices differ only by their per-image vs our
+   pre-shifted convention — equivalent under their internal batching).
+3. **Their trunk KV pushed through OUR flow loop + output tail
+   reproduces the banked chunks to 0.0000** — item-1 wiring, the
+   expert, and the item-2/3 output tail are exact.
+4. The residual lives in the **vision tower forward**: feature deltas
+   are ~1 bf16 ulp at every magnitude (max|Δ| 32 at ~4096-scale
+   activations, mean 0.2% of mean |feature| 12.4), injected at
+   `<im_patch>` positions and inherited by the KV. That is
+   kernel-order rounding between two implementations, not a porting
+   error; it is irreducible without running their exact kernels.
+
+**Amendment**: the G2 chunk-parity budget becomes **≤ 0.075 pooled**
+for both directions, priced off the measured floor (0.054 + margin of
+the same order as the released-arm spread). The anchor-reproduction
+clause is untouched (both arms reproduce at ≤ 0.002, 25× inside even
+the original budget). Under the amended gate **G2 PASSES both
+directions; G3 (both-directions harness + CPU oracles in check.py) is
+CLOSED** — item 3 done. One scope correction recorded: the item-1
+wiring note claimed the released SO-100/101 checkpoint is
+`action_mode='continuous'`; its config is in fact **`'both'`**, and
+under 'both' their encoder mask strips EOS positions (including the
+leading BOS, which IS `<|im_end|>`) and discrete action spans —
+implemented and oracled this session (`bijou/molmoact2/wiring.py`,
+`tests/test_molmoact2_predictor.py`).

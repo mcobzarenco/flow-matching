@@ -37,10 +37,14 @@ from torch import Tensor
 from bijou.molmo2.cache import Molmo2KVCache
 from bijou.molmoact2.action_expert import ActionExpert
 
-#: Rig-path inference scope this wiring implements. ``action_mode
-#: 'both'`` (discrete+continuous heads) and the depth gate are absent
-#: from the released SO-100/101 + rig-ft checkpoints.
-_SUPPORTED_ACTION_MODE = "continuous"
+#: Inference scope this wiring implements: the CONTINUOUS action path,
+#: on checkpoints whose ``action_mode`` is ``'continuous'`` (rig-ft
+#: exports) or ``'both'`` (the released SO-100/101 — its discrete head
+#: exists but the flow path is what we run; under 'both' the encoder
+#: mask additionally strips EOS positions and discrete action spans,
+#: see :func:`encoder_attention_mask`). Discrete-only checkpoints and
+#: the depth gate stay out of scope.
+_SUPPORTED_ACTION_MODES = ("continuous", "both")
 
 
 def validate_inference_config(config: Mapping[str, object]) -> None:
@@ -53,12 +57,11 @@ def validate_inference_config(config: Mapping[str, object]) -> None:
             "action_expert_depth_gate=true is not wired (off in the released "
             "SO-100/101 and rig-ft checkpoints)",
         )
-    mode = config.get("action_mode", _SUPPORTED_ACTION_MODE)
-    if mode != _SUPPORTED_ACTION_MODE:
+    mode = config.get("action_mode", "continuous")
+    if mode not in _SUPPORTED_ACTION_MODES:
         raise NotImplementedError(
-            f"action_mode={mode!r} is not wired (rig-path scope is "
-            f"{_SUPPORTED_ACTION_MODE!r}; 'both' needs EOS/discrete-span "
-            "encoder masking)",
+            f"action_mode={mode!r} is not wired (continuous-path scope: "
+            f"{_SUPPORTED_ACTION_MODES})",
         )
 
 
@@ -137,25 +140,70 @@ def extract_kv_states(
     return kv_states
 
 
+def _mask_discrete_output_span(
+    row_ids: Tensor,
+    row_mask: Tensor,
+    start_id: int | None,
+    end_id: int | None,
+) -> None:
+    """Their ``_mask_discrete_output_span`` verbatim: each ``start``
+    pairs with the next ``end`` at-or-after it (inclusive); an unmatched
+    start masks through the end of the row."""
+    if start_id is None or end_id is None:
+        return
+    start_positions = (row_ids == start_id).nonzero(as_tuple=False).flatten().tolist()
+    if not start_positions:
+        return
+    end_positions = (row_ids == end_id).nonzero(as_tuple=False).flatten().tolist()
+    end_ptr = 0
+    for start_pos in start_positions:
+        while end_ptr < len(end_positions) and end_positions[end_ptr] < start_pos:
+            end_ptr += 1
+        if end_ptr >= len(end_positions):
+            row_mask[start_pos:] = False
+            break
+        end_pos = end_positions[end_ptr]
+        row_mask[start_pos : end_pos + 1] = False
+        end_ptr += 1
+
+
 def encoder_attention_mask(
     input_ids: Tensor | None,
     attention_mask: Tensor | None,
     *,
-    action_mode: str = _SUPPORTED_ACTION_MODE,
+    action_mode: str = "continuous",
+    eos_token_id: int | None = None,
+    action_start_token_id: int | None = None,
+    action_end_token_id: int | None = None,
 ) -> Tensor | None:
     """Bool mask over the prompt for cross-attention. Mirror of their
-    ``_get_encoder_attention_mask`` restricted to the continuous
-    action mode (the 'both' mode additionally strips EOS + discrete
-    action-output spans — out of the rig-path scope)."""
-    if action_mode != _SUPPORTED_ACTION_MODE:
+    ``_get_encoder_attention_mask``: the base mask is the prompt
+    ``attention_mask`` (or ``input_ids != -1``); under ``action_mode
+    'both'`` every EOS position is additionally excluded — including
+    the leading BOS, which IS ``<|im_end|>`` under their convention —
+    along with any discrete ``<action_start>..<action_end>`` spans."""
+    if action_mode not in _SUPPORTED_ACTION_MODES:
         raise NotImplementedError(
             f"action_mode={action_mode!r} encoder masking is not wired",
         )
     if attention_mask is not None:
-        return attention_mask.to(dtype=torch.bool).clone()
-    if input_ids is not None:
-        return input_ids != -1
-    return None
+        mask = attention_mask.to(dtype=torch.bool).clone()
+    elif input_ids is not None:
+        mask = input_ids != -1
+    else:
+        return None
+    if action_mode != "both" or input_ids is None:
+        return mask
+    if eos_token_id is not None:
+        mask &= input_ids != int(eos_token_id)
+    for batch_idx in range(input_ids.shape[0]):
+        _mask_discrete_output_span(
+            input_ids[batch_idx],
+            mask[batch_idx],
+            action_start_token_id,
+            action_end_token_id,
+        )
+    return mask
 
 
 def _action_dim_valid_mask(

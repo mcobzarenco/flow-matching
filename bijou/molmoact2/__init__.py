@@ -13,6 +13,13 @@ from bijou.molmoact2.action_expert import (
     ActionExpertConfig,
     load_action_expert_state,
 )
+from bijou.molmoact2.predictor import (
+    IMAGE_TOKEN_STRINGS,
+    MolmoAct2Predictor,
+    action_expert_from_config,
+    load_action_expert,
+    resolve_image_token_ids,
+)
 from bijou.molmoact2.processing import (
     PackedActionExample,
     QuantileStats,
@@ -37,10 +44,13 @@ from bijou.molmoact2.wiring import (
 )
 
 __all__ = [
+    "IMAGE_TOKEN_STRINGS",
     "ActionExpert",
     "ActionExpertConfig",
+    "MolmoAct2Predictor",
     "PackedActionExample",
     "QuantileStats",
+    "action_expert_from_config",
     "build_robot_prompt",
     "discrete_state_string",
     "encode_action_prompt",
@@ -49,12 +59,14 @@ __all__ = [
     "flow_timesteps",
     "generate_actions",
     "layer_kv_to_sequence",
+    "load_action_expert",
     "load_action_expert_state",
     "load_norm_stats",
     "normalize_state",
     "normalize_task_text",
     "pack_action_example",
     "process_image_resize",
+    "resolve_image_token_ids",
     "to_uint8_rgb",
     "unnormalize_action",
     "validate_inference_config",
