@@ -593,27 +593,5 @@ value = 155.0
 
 # er35k_aux entry pruned 22:3xZ 08-10 — COMPLETE rc=0 22:30:45Z (~1.5/8 GPU-h, 25,800 frames at ~250 f/min): aux-narrated arm core 6.3425/2.3770; paired reads banked analysis__er35k_aux_panel_vs_banked_k4l2.json (+0.335 [+0.247,+0.387] vs 40k endpoint CROSS-CLASS narrated-vs-fastpath, +0.482 [+0.399,+0.517] vs 60k-cont); report+json+analysis on fontaine-reports, numbers in-channel 22:3xZ. HARNESS GAP found: explicit --generate discards main-policy generations -> per-field aux metrics empty; standard eval relaunched as the complete read (entry below).
 
-[[run]]
-name = "er35k_panel"
-kind = "progress-log"
-host = "local"
-pgrep = "bijou.eval"
-pgrep_min = 1
-gpu_indices = [0]
-gpu_mem_min_mib = 8000
-log = "/home/ubuntu/logs/eval__fontaine_molmo2_er_60k_ddp4__step_035000__panel_curated_v0_k4l2.log"
-progress_re = "scored [0-9]+/25800 frames"
-started_utc = "2026-08-10T22:33:30Z"
-gpu_hours_per_wall_hour = 1.0
-boundary = "COMPLETION of the owner 20:47Z request (aux-arm read banked 22:30Z, cross-class caveat): STANDARD er_60k panel eval on step_035000, local H100 unit eval-er35k-panel launched 22:33:30Z — no --generate, so the narrated pass rides automatically: bijou@35000 (fast path) + bijou@35000+fields (aux-narrated) + per-field aux metrics (holding/progress/event/visible vs weak labels, ~9k labeled frames) + does-narration-help pairing, exactly the er15k report shape. ETA ~01:0xZ 08-11 at the 250 f/min class x2 arms (er15k both-arms ran 2.5h at 192 f/min). ON rc=0 (next session): er15k_panel_reads.py --stem-cand reports/eval__fontaine_molmo2_er_60k_ddp4__step_035000__panel_curated_v0_k4l2 --out reports/analysis__er35k_panel_vs_banked_k4l2.json (fast-path key bijou@35000 = CLASS-MATCHED vs banked 40k 6.0079 + 60k-cont 5.8602 — supersedes the aux-arm cross-class read), report+json+analysis to fontaine-reports + reports.md, numbers in-channel, prune this entry. Record-only: nothing gates the box run (endpoint ~08-11 ~12:00Z decides)."
-anchors = [
-    "record-only owner-requested read; nothing gates or repoints the box run",
-    "first-poll: util + f/min + vram; both-arms class ~2x single-arm decode, expect ~120-250 f/min",
-    "kill lines: unit inactive with no wrote-lines rc!=0; f/min collapse under ~30 sustained x3 polls",
-    "progress: 'scored N/25800 frames'; done = dumped npz + wrote json + wrote html lines",
-    "on-completion contract: class-matched paired reads via er15k_panel_reads.py (key bijou@35000), then in-channel numbers + Space upload; the 22:4xZ aux-arm post told the owner this report supersedes",
-]
-[[run.gates]]
-kind = "gpu_hours_max"
-value = 8.0
-# shared eval-class ceiling with the aux arm: ~1.5 spent there + ~2.5 here <= 8
+# er35k_panel entry pruned 00:4xZ 08-11 — COMPLETE rc=0 00:41Z (~2.2/8 GPU-h incl. the 1.5 aux arm, 25,800 frames ~204 f/min): standard both-arms read banked — fast path core 6.2892/2.3746, class-matched paired reads analysis__er35k_panel_vs_banked_k4l2.json (+0.2813 [+0.199,+0.337] vs 40k endpoint, +0.4290 [+0.353,+0.467] vs 60k-cont; 15k gap ~82% closed at 58% training); aux table full-n (holding .915 / progress .065 / event .875 / visible .823, all improved from 15k); narration pairing +0.047 (44% win). Report+json+analysis on fontaine-reports (curl 200), reports.md updated, numbers in-channel. Owner 20:47Z 08-10 request CLOSED end-to-end.
+

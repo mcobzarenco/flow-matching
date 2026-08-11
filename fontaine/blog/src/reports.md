@@ -167,7 +167,22 @@ revision](posts/2026-08-06-panel-v2-amendment.md).
   — their `predict_action` end-to-end, bf16, 10-step Euler, seed =
   concat index; 25,800 frames at 352 f/min, ~1.3 GPU-h total
 
-## er_60k @35000 owner-requested panel, aux-narrated arm ([pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md), record-only)
+## er_60k @35000 owner-requested panel, standard both-arms ([pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md), record-only — SUPERSEDES the aux-arm read below)
+
+- [standard eval report](https://mcobzarenco-fontaine-reports.static.hf.space/eval__fontaine_molmo2_er_60k_ddp4__step_035000__panel_curated_v0_k4l2.html)
+  — the complete 35k read (rc=0 00:41Z 08-11, ~2.2/8 GPU-h): fast
+  path **6.2892/2.3746** core + narrated arm 6.342 (+0.047 pairing,
+  44% win — narration costs the same ~0.05-class as at 15k); aux vs
+  weak labels at full n≈8,987, ALL FOUR improved from 15k: holding
+  acc 0.899→**0.915**, progress MAE 0.075→**0.065**, event acc
+  0.862→**0.875**, visible acc 0.704→**0.823**
+- [class-matched paired reads JSON](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__er35k_panel_vs_banked_k4l2.json)
+  (`er15k_panel_reads.py`, key `bijou@35000`) — vs 40k endpoint
+  (6.0079) pooled **+0.2813** [CI95 +0.199, +0.337], vs 60k-cont
+  (5.8602) +0.4290 [+0.353, +0.467]; ABOVE-BASELINE at 58% training,
+  the 15k gap (+1.52) ~82% closed; state-copy integrity byte-match ×3
+
+## er_60k @35000 aux-narrated arm (superseded by the standard read above)
 
 - [aux-narrated eval report](https://mcobzarenco-fontaine-reports.static.hf.space/eval__fontaine_molmo2_er_60k_ddp4__step_035000__panel_curated_v0_k4l2_aux.html)
   — owner request 20:47Z 08-10: `--generate subgoal holding progress
