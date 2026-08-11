@@ -1,10 +1,55 @@
 # Now
 
-
-
-
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-11 13:53–16:1xZ (real `date -u` at write: 16:08) —
+work session: **events one-off CLOSED end-to-end (probe headline: 63%
+of event misses are saw-it-under-threshold) + box teardown reviewed,
+salvaged and owner-executed + main-agent directive triaged (artifact
+committed; rebase blocked on their push).***
+
+**Status**: no live jobs — registry empty (er60k_events_dump rc=0
+15:5xZ, ~1.55/4 GPU-h, pruned), local `nvidia-smi` 0%/0 MiB. **The 4×
+box is GONE** — owner deleted it 14:37Z after my review (salvage
+archive local `~/box_archive`, ~1 GB); drop the `box` git remote on
+the next housekeeping pass.
+
+**Steering**: three exchanges, all answered in-session. (1) OWNER
+14:04Z box-teardown review → full banked-vs-at-risk audit posted
+14:36Z (everything decision-relevant on
+fontaine-checkpoints/bijou-checkpoints/fontaine-reports; 3 unbanked
+relics released by owner; salvage done pre-teardown), owner deleted
+14:37Z. (2) OWNER 14:34Z relayed a **main-agent directive**
+(message.txt): rebase on main @36afff0 + make check.py green on
+artifact-less clones — the second half DONE d7b6864 (option a: frozen
+stage-01 analysis committed, oracle chain clone-verifiable), the
+rebase BLOCKED (GitHub main still fdd9aa3, 36afff0 unpushed — owner
+told 15:08Z; queue item `rebase-fontaine-on-main-postreview` holds
+the full adaptation list). (3) Incident owned: my poll loop ran
+`read` inside an `until` condition and consumed the 14:34 message
+unseen (4th consume-once incident, new variant; memory updated) —
+recovered via history, owner acknowledged.
+
+**Done**: er60k-events-oneoff-report CLOSED (owner request 12:44Z),
+all six scope steps: instrument 7f43c54 (`--dump-generations` +
+main-arm retention under `--generate`, closes the 35k debt; 667
+tests green), launch note + frozen 13-class/probe spec pre-GPU
+14:13Z, dump pass rc=0 (25,800 rows, oracle: presence 0.8568 vs
+banked 0.8582 = 13-frame Δ inside the documented cross-world-size
+bf16 band), confusion quant (misses **683** / false alarms 604 /
+hits 333 / swaps 129; model speaks on 40% of gt-event frames,
+class-agrees 72% when it does), constrained probe (**428/679 = 63%
+forced guesses land the gt class**; replay oracle bit-exact 679/683
+— miss mode is threshold, not blindness), 136-card HTML + 5
+artifacts on fontaine-reports curl-verified, numbers in-channel
+16:0xZ. Idea #23 `event-none-calibration` fed (on-ice, named
+trigger). Commits 7f43c54 · 00eaf7a · d7b6864 + close-out.
+
+**Next**: `queue_cli.py next` → **er-screen-results-post** (CPU,
+chart-led ER-screen close). `rebase-fontaine-on-main-postreview`
+unblocks the moment `git ls-remote origin main` moves past fdd9aa3 —
+check at every boot; the AE-on-our-trunk pre-reg rides behind that
+rebase. No dated boundaries — `queue.json` canonical.*
 
 *Updated 2026-08-11 13:49–13:5xZ (real `date -u` at write: 13:55) —
 tick (babysit): **quiet handoff tick — both GPUs free post-ER-close,
@@ -80,45 +125,16 @@ close, deliberately rolled); their-AE-on-our-trunk pre-reg pends the
 owner's main-changes ping. No dated boundaries pending —
 `queue.json` canonical.*
 
-*Updated 2026-08-11 09:42–10:0xZ (real `date -u` at write: 10:00) —
-tick (babysit): **owner exchange caught + executed in-session —
-action_mode explainer posted, @55000 owner-requested eval LIVE on the
-local H100 (er35k recipe verbatim), box green.***
-
-**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — babysit
-exit 0 at 09:49 (count 55,500 @ 26.6 f/min, 8 procs, util 68–89%,
-vram ~71.8×4 under the 77 bar), gate projection 139.9/155 GPU-h.
-Rungs 5.35@55000 / 5.33@55500 — 5.1–5.6 band holds, run-best
-**5.10@44500** stands. Endpoint **@60000 ~12:4xZ** → chained
-panel_v2 = the ER decision read. **`eval-er55k-panel` LIVE local
-H100** (owner request 09:41:04Z): standard both-arms panel eval on
-step_055000, launched 09:48:27Z, first poll 98% util / 30.5G,
-**ETA ~11:5xZ** — reads land just before the box endpoint.
-
-**Steering**: OWNER 09:35:01Z ("What does action_mode do… other
-options") — ANSWERED 09:45Z (config-time 'continuous'/'discrete'/
-'both' + the separate inference_action_mode contract + the 'both'
-encoder-mask consequence we ported). OWNER 09:41:04Z ("eval the
-55000 step checkpoint … as before") — EXECUTED same session: hub
-upload 42.9s (commit 99a1ae2, weights-only ×4) + local dl 13.7s
-(9.1G) + eval launched, confirmation with ETA posted 09:48Z. Quiet
-since (conversational polls 09:49/09:58 empty).
-
-**Done**: babysit exit 0; er55k_panel babysit entry added (gate 8
-GPU-h, on-completion contract = er35k shape, key bijou@55000); queue
-item er55k-panel-eval added live (validate OK, 9 open);
-`run_work_next` ARMED — the chained work session rides the eval to
-rc (foreground polls), runs the class-matched reads vs banked 40k
-6.0079 + 60k-cont 5.8602, then takes the box endpoint; 09:10 entry
-rolled to archive.
-
-**Next**: chained work session: (1) er55k eval rc ~11:5xZ →
-er15k_panel_reads.py key bijou@55000 → report + in-channel + prune;
-(2) box endpoint **@60000 ~12:4xZ** → er60k-endpoint-postprocess
-(chained panel_v2 → paired CI95 = the ER decision read); (3) rejoin
-the owner thread via history if it re-opens.*
-
 ## Utilization footer
+
+Session 2026-08-11 13:53–16:1xZ (work, exploit; ~1.55 local GPU-h —
+events dump pass ≤4 gate): owner-requested events one-off closed
+end-to-end (instrument + dump + confusion + constrained probe + HTML;
+headline: 63% of event misses are saw-it-under-threshold). Box
+teardown reviewed/salvaged in-session, owner deleted 14:37Z — box
+GPU-h line ends here. Main-agent directive: artifact committed
+(d7b6864), rebase blocked on their push. One consume-once incident
+owned (read-in-loop-condition variant, memory updated).
 
 Session 2026-08-11 13:49–13:5xZ (tick, babysit; 0 new GPU-h — both
 GPUs free post-ER-close): quiet handoff tick. Registry empty

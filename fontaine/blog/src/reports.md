@@ -189,6 +189,37 @@ revision](posts/2026-08-06-panel-v2-amendment.md).
 - Weights: [`step_060000`](https://huggingface.co/mcobzarenco/fontaine-checkpoints/tree/main/fontaine_molmo2_er_60k_ddp4/step_060000)
   (weights-only, hub-uploaded 12:44Z in 42.0 s, commit 4ed3dd0)
 
+## er_60k @60000 events one-off (owner request 12:44Z 08-11, record-only)
+
+What events does the model actually see? Generated event strings vs
+the weak judge labels on the 8,987 judge-labeled panel frames, via
+the new `--dump-generations` instrument (commit 7f43c54 — main-arm
+generations retained under explicit `--generate`).
+
+- [standalone report](https://mcobzarenco-fontaine-reports.static.hf.space/report__er60k_events_oneoff.html)
+  — 13-class model×gt confusion (incl. none/none), per-class P/R,
+  and 136 image cards across hit / class-swap / miss / false-alarm
+  galleries + probe examples (repo-diverse selection)
+- Headline: both-none 7,238 · hits 333 · swaps 129 · **misses 683** ·
+  false alarms 604. On the 1,145 gt-event frames the model speaks on
+  40%, but class-agrees 72% when it does; exact-string match 3.6%
+  (same event, different words)
+- [constrained-probe JSON](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__er60k_events_probe.json)
+  — on the misses, a 1-step `none`-ban re-decode (frame's own
+  generated prefix replayed; unbanned replay reproduced `none`
+  bit-exact 679/683): **forced guess lands the gt class 63%** →
+  the dominant miss mode is *saw-it-under-threshold*, not blindness
+  (idle 86% / release-place 80% / occlusion 72% / blur 62%; camera
+  quirks 10% and episode markers 0% are the genuinely-not-encoded
+  tail)
+- [confusion JSON](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__er60k_events_confusion.json)
+  · [dump-pass eval json](https://mcobzarenco-fontaine-reports.static.hf.space/eval__fontaine_molmo2_er_60k_ddp4__step_060000__panel_curated_v0_k4l2_events.json)
+  · [per-frame generations dump](https://mcobzarenco-fontaine-reports.static.hf.space/eval__fontaine_molmo2_er_60k_ddp4__step_060000__panel_curated_v0_k4l2_events_generations.json)
+  (25,800 rows, ~1.55/4 GPU-h). Instrument oracle: presence acc
+  0.8568 vs banked 0.8582 — Δ 13 frames, inside the documented
+  cross-world-size bf16 batch-composition band (banked ran 4-way on
+  the box)
+
 ## er_60k @55000 owner-requested panel, standard both-arms ([pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md), record-only)
 
 - [standard eval report](https://mcobzarenco-fontaine-reports.static.hf.space/eval__fontaine_molmo2_er_60k_ddp4__step_055000__panel_curated_v0_k4l2.html)

@@ -739,6 +739,18 @@ record; the line here is the hook). *Index last updated 2026-08-10.*
 
 ## On ice — queued or parked, each with its named trigger
 
+- **`event-none-calibration` #23 Event-slot none-calibration** — new
+  2026-08-11 from the er_60k events one-off
+  ([report](https://mcobzarenco-fontaine-reports.static.hf.space/report__er60k_events_oneoff.html)):
+  on the 683 (gt: event, model: none) misses a 1-step `none`-ban
+  re-decode lands the gt class **63%** of the time (idle 86%,
+  release-place 80%, occlusion 72%) — event recall is
+  threshold-limited, not perception-limited. Named lever: a
+  decode-time none-penalty / event-slot temperature (zero training),
+  read against the same 8,987-frame labeled panel. Trigger: an owner
+  ask for better event narration, or the first consumer of event
+  strings (e.g. rollout-side anomaly flagging). Needs its own
+  pre-reg; no page yet — the probe JSON is the record.
 - **`throughput-compile` [#2 Throughput: bucketing + compile](ideas/02-throughput-bucketing-compile.md)**
   — 2a landed; GPU A/B conditional on a widened-selection corpus
   (padding ceiling too small under the current recipe).

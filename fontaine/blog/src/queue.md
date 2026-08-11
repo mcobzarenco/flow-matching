@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-11T13:33:00Z
+**Updated:** 2026-08-11T16:05:00Z
 
-**Depth call:** depth 1 open at 13:3xZ 08-11 (stated reason): er60k-events-oneoff-report (owner request 12:44Z, plan acked in-channel 12:51Z) is the next session's first item — the only open item because the ER decision read JUST landed (13:2xZ, ER wins both legs) and sets the follow-on menu: owner is doing the every-layer-KV action-expert changes in main locally (12:44Z, pre-reg pends their ping), ER-trunk results post + further arms pend a fresh prioritization against that. Lit refill lane owner-paused (00:23Z 08-10).
+**Depth call:** depth 2 open at 16:0xZ 08-11: er-screen-results-post (executable CPU) + rebase-fontaine-on-main-postreview (blocked, pends the owner-side main push — directive fully pinned in the title; check git ls-remote origin main vs fdd9aa3 at every boot). er60k-events-oneoff-report CLOSED this session. Box DELETED by owner 14:37Z (salvage archived ~/box_archive ~1 GB; remove the box remote on next housekeeping pass). Lit refill lane owner-paused (00:23Z 08-10).
 
-**8 open** (Live 1 · Queued 1 · Blocked 6 · Done 108)
+**9 open** (Live 1 · Queued 1 · Blocked 7 · Done 109)
 
 ## 🔴 Live (1)
 
@@ -30,21 +30,21 @@ OWNER RUN LIVE (launched 22:47-53Z 08-09, unit fontaine-er-60k): fontaine_molmo2
 
 *ready — waiting on a window or a boundary*
 
-**`er60k-events-oneoff-report`** · `gpu-local`
+**`er-screen-results-post`** · `cpu`
 
-OWNER REQUEST 12:44:35Z + 12:45:13Z 08-11 (one-off, 'post a neat html report', 'I want to see many varied examples of events'): quantitative + qualitative investigation of the events the model generates vs ground truth (weak judg…
+ER screen close: chart-led consolidated results post (deliberately rolled from the 10:00Z 08-11 session that closed er_60k)
 
-**boundary:** Owner-requested one-off; GPU ~1-2 h class on the local H100, gate &lt;= 4 GPU-h; needs step_060000 local (rides the endpoint-postprocess dl or re-pulls from fontaine-checkpoints commit 4ed3dd0). Next session's first item unless owner bumps. · [pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md)
+**boundary:** CPU-only, no gate; natural slot = the session after er60k-events-oneoff-report closes (that report is the owner-requested priority). No dated deadline. · [pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md)
 
 <details><summary>full record</summary>
 
-OWNER REQUEST 12:44:35Z + 12:45:13Z 08-11 (one-off, 'post a neat html report', 'I want to see many varied examples of events'): quantitative + qualitative investigation of the events the model generates vs ground truth (weak judge labels), on the fresh @60000 endpoint checkpoint. Scope: (1) INSTRUMENT: extend the narrated arm to dump per-frame (identity triple, generated event string, weak-label event) — the standard eval computes event acc in-memory and discards generations (bijou/eval/cli.py results.generations only fills from NarratedBijouPolicy and is never written; same gap class as the 35k aux arm); (2) DUMP PASS: one-off generation pass on step_060000 (local disk after the endpoint dl) over the ~8,987 labeled panel frames; (3) QUANT: full model-class x gt-class event confusion INCLUDING none/none — counts + per-class precision/recall + the (model none, gt event) miss bucket sized exactly; (4) QUAL: frame galleries per confusion bucket (hit / miss / false alarm / class swap) — camera image + generated line vs gt, MANY varied examples across repos/tasks; (5) CONSTRAINED PROBE: on (gt event, model none) frames re-decode the event slot with 'none' banned (1-step constrained decode, logit mask on the event slot) — does the forced guess match gt class ('didn't see it' vs 'saw it, under-threshold'); (6) neat standalone HTML -&gt; fontaine-reports (curl 200) + link in-channel. Plan acked in-channel 12:51Z. One-off: record-only, no run gating. PREREG NOTE: rides the er-60k pre-reg like the er15k/35k/55k owner-requested reads; a short launch note with the pinned invocation + confusion/probe spec posts in-channel before the GPU minute, per charter.
+ER screen close: chart-led consolidated results post (deliberately rolled from the 10:00Z 08-11 session that closed er_60k). The full ER-init story in one blog page, house chart style (dark-mode, eval-report scheme): rung trajectory vs 40k endpoint (+1.52 -&gt; +0.28 -&gt; -0.18 -&gt; -0.23), the decision read (endpoint 5.7782/1.9898; -0.2297 [-0.281,-0.154] vs 40k endpoint; -0.0821 [-0.126,-0.025] vs 60k-cont, both CI-excludes-zero), aux-heads table across rungs (holding er-better, event cont-better, rest tied), probe-curve overlay (shared seed), what-it-means-for-follow-ons (every new arm sits on er_60k/step_060000). Owner already has headline + report links (13:29Z post); this is the durable long-form. posts/ page + Papers-style plain-words opener per house rule; Space push; link in-channel.
 
 </details>
 
 ---
 
-## 🟡 Blocked (6)
+## 🟡 Blocked (7)
 
 *waiting on a prerequisite, a boundary, or the owner*
 
@@ -130,7 +130,21 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 
 ---
 
-## ✅ Done (108)
+**`rebase-fontaine-on-main-postreview`** · `cpu` · **⛔ owner hold**
+
+MAIN-AGENT DIRECTIVE (owner-relayed 14:34:48Z 08-11, message.txt attachment): rebase fontaine on main @36afff0 (owner-session correctness reviews of bijou/molmoact2 + bijou/molmo2 landed as code) and adapt
+
+**boundary:** BLOCKED on the owner-side push: GitHub main is still fdd9aa3 (pre-review), 36afff0 unreachable (box remote gone). Owner told in-channel 15:08Z — rebase + adapt + check.py green executes the session the push lands; unblock by flipping owner_hold when origin/main moves past fdd9aa3.
+
+<details><summary>full record</summary>
+
+MAIN-AGENT DIRECTIVE (owner-relayed 14:34:48Z 08-11, message.txt attachment): rebase fontaine on main @36afff0 (owner-session correctness reviews of bijou/molmoact2 + bijou/molmo2 landed as code) and adapt — NOT merge-resolve in our favor: (1) ActionExpertConfig now frozen=True/slots=True, NO field defaults, all 15 fields explicit everywhere; released shape ONLY via ActionExpertConfig.released_so100_101(); (2) config factories moved to staticmethods: Gemma4Config.e2b()/.e4b(), Molmo2TextConfig.molmo2_4b() (module-level e2b_config()/e4b_config()/molmo2_4b_text_config() gone; styleguide: released shapes are staticmethod constructors, literals never restated); (3) new loud molmoact2 guards each with a test: --norm-stats must be named norm_stats.json; MolmoAct2Predictor.load refuses n_obs_steps missing or !=1 (require_single_obs); nonzero *dropout* keys in action_expert_config refused; extract_kv_states raises on unfilled cache layer; load_norm_stats requires non-empty setup_type/control_mode; (4) ensure_per_sample_patch_alignment now CPU-side in all three collators; (5) main edited two of our scripts (molmoact2_ae_parity.py build_ours passes dropout=0.0/attn_dropout=0.0 explicitly; molmoact2_ours_ft_rung_read.py n_obs_steps truthiness fix) and two posts (OOB plan Qwen3-8B-&gt;4B-class x2; deep dive parameter-accounting note: 621M and 577,564,448 are the same expert — 620,677,664 minus 36x frozen cross_attn.kv_proj 42,522,624 minus identity state_encoder 590,592, pinned in test_released_config_parameter_count) — main's versions authoritative; (6) styleguide adds: Shapes: docstring bullets on tensor-taking functions, intra-package imports relative, docs state present-truth (no corrected-on trails); (7) Molmo2TextTokenizer raises FileNotFoundError not SystemExit on missing tokenizer.json. Sister ask (check.py green on artifact-less clones) DONE d7b6864 same session (option a: frozen stage-01 analysis committed, oracle chain clone-verifiable).
+
+</details>
+
+---
+
+## ✅ Done (109)
 
 *closed — the full record stays in each fold*
 
@@ -1599,6 +1613,20 @@ OWNER GO 20:06:37Z 08-10 ('Let's do it, 1 through 4' on the 19:5xZ in-channel es
 <details><summary>full record</summary>
 
 OWNER GO 20:06:37Z 08-10 ('Let's do it, 1 through 4' on the 19:5xZ in-channel estimate): make MolmoAct2 first-class in-repo, rig-path-first. Scope: (1) action expert port (their nn/action_expert.py 982 LOC + backbone-AE wiring molmoact2.py 1.3k LOC) + weight load; (2) action-side prompt/processing deltas (template, state encoding, q01/q99 norm_stats) on top of bijou/molmo2 processor; (3) parity harness vs their HF forward + banked 240-row anchors (zero-shot 28.95 / state-copy 9.08) + rig-ft rung checkpoints; (4) AE fine-tune in OUR trainer, retiring the 3 train_lerobot.py patches. Backbone reused from bijou/molmo2 (byte-verified); depth/trace/sim-eval stay out-of-band. Pre-reg post first (parity gates falsifiable), CPU-mostly, GPU only for parity checks.
+
+</details>
+
+---
+
+**`er60k-events-oneoff-report`** · `gpu-local`
+
+OWNER REQUEST 12:44:35Z + 12:45:13Z 08-11 (one-off, 'post a neat html report', 'I want to see many varied examples of events'): quantitative + qualitative investigation of the events the model generates vs ground truth (weak judg…
+
+**boundary:** CLOSED 16:0xZ 08-11 work session, all 6 scope steps end-to-end (~1.55/4 GPU-h): (1) INSTRUMENT landed commit 7f43c54 (--dump-generations + main-arm retention under explicit --generate + aux metrics from any retained voice + Q3 predict_with_text guard; ShardResults.generation_identity shard-safe; closes the 35k aux-arm debt); (2) DUMP PASS rc=0 15:5xZ unit eval-er60k-events-dump (25,800 rows, single narrated all-fields arm, ~275 f/min; launch note + frozen spec in-channel 14:13Z pre-GPU; 24-frame smoke first). Instrument oracle: presence acc 0.8568 vs banked 0.8582 = delta 13/8,987 frames, INSIDE the documented cross-world-size bf16 batch-composition band (banked was a 4-way box shard) — near-reproduction reported with the caveat, not claimed exact; (3) QUANT analysis__er60k_events_confusion.json: both-none 7,238 / hits 333 / swaps 129 / MISSES 683 / false alarms 604; model speaks on 40% of the 1,145 gt-event frames, class-agrees 72% when it does; exact-string 3.6%; (4) QUAL report__er60k_events_oneoff.html — 136 image cards, repo-diverse galleries per bucket; (5) PROBE analysis__er60k_events_probe.json: 683 misses -&gt; 679 forced (replay oracle bit-exact 679/683, 0 none-variants post-ban): forced guess lands gt class 428/679 = 63% -&gt; dominant miss mode is saw-it-under-threshold (idle 86/release 80/occlusion 72/blur 62%; camera_view 10%, episode markers 0% = the genuinely-not-encoded tail); (6) HTML + all 5 artifacts on fontaine-reports curl-verified (html serves via 302-&gt;CDN-&gt;200 full 10.7 MB), reports.md section, numbers in-channel 16:0xZ. Named lever FED TO IDEAS (#23 event-none-calibration, on-ice w/ trigger): decode-time none-penalty, zero training. Babysit entry pruned. · [pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md)
+
+<details><summary>full record</summary>
+
+OWNER REQUEST 12:44:35Z + 12:45:13Z 08-11 (one-off, 'post a neat html report', 'I want to see many varied examples of events'): quantitative + qualitative investigation of the events the model generates vs ground truth (weak judge labels), on the fresh @60000 endpoint checkpoint. Scope: (1) INSTRUMENT: extend the narrated arm to dump per-frame (identity triple, generated event string, weak-label event) — the standard eval computes event acc in-memory and discards generations (bijou/eval/cli.py results.generations only fills from NarratedBijouPolicy and is never written; same gap class as the 35k aux arm); (2) DUMP PASS: one-off generation pass on step_060000 (local disk after the endpoint dl) over the ~8,987 labeled panel frames; (3) QUANT: full model-class x gt-class event confusion INCLUDING none/none — counts + per-class precision/recall + the (model none, gt event) miss bucket sized exactly; (4) QUAL: frame galleries per confusion bucket (hit / miss / false alarm / class swap) — camera image + generated line vs gt, MANY varied examples across repos/tasks; (5) CONSTRAINED PROBE: on (gt event, model none) frames re-decode the event slot with 'none' banned (1-step constrained decode, logit mask on the event slot) — does the forced guess match gt class ('didn't see it' vs 'saw it, under-threshold'); (6) neat standalone HTML -&gt; fontaine-reports (curl 200) + link in-channel. Plan acked in-channel 12:51Z. One-off: record-only, no run gating. PREREG NOTE: rides the er-60k pre-reg like the er15k/35k/55k owner-requested reads; a short launch note with the pinned invocation + confusion/probe spec posts in-channel before the GPU minute, per charter.
 
 </details>
 
