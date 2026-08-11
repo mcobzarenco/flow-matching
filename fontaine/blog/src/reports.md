@@ -167,6 +167,25 @@ revision](posts/2026-08-06-panel-v2-amendment.md).
   — their `predict_action` end-to-end, bf16, 10-step Euler, seed =
   concat index; 25,800 frames at 352 f/min, ~1.3 GPU-h total
 
+## er_60k @55000 owner-requested panel, standard both-arms ([pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md), record-only)
+
+- [standard eval report](https://mcobzarenco-fontaine-reports.static.hf.space/eval__fontaine_molmo2_er_60k_ddp4__step_055000__panel_curated_v0_k4l2.html)
+  — the @55000 read (rc=0 12:00Z 08-11, ~2.2/8 GPU-h): fast path
+  **5.8269/2.0172** core + narrated arm 5.869 (+0.039 pairing, 46%
+  win — same ~0.04–0.05 narration-cost class as 15k/35k); aux vs
+  weak labels at full n≈8,987: holding acc 0.915→**0.920**, progress
+  MAE 0.065→**0.060**, event acc 0.875→0.858, visible acc
+  0.823→0.822
+- [class-matched paired reads JSON](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__er55k_panel_vs_banked_k4l2.json)
+  (`er15k_panel_reads.py`, key `bijou@55000`) — vs 40k endpoint
+  (6.0079) pooled **−0.1810** [CI95 −0.232, −0.105]
+  **BELOW-BASELINE** (first such read for the ER trunk; @35000 was
+  +0.281 above), vs 60k-cont (5.8602) −0.0334 [−0.078, +0.024]
+  CI-SPANS-0 = parity at 92% training; state-copy integrity
+  byte-match ×3; record-only — the @60000 endpoint panel decides
+- Weights: [`step_055000`](https://huggingface.co/mcobzarenco/fontaine-checkpoints/tree/main/fontaine_molmo2_er_60k_ddp4/step_055000)
+  (weights-only, hub-uploaded 09:4xZ in 42.9 s)
+
 ## er_60k @35000 owner-requested panel, standard both-arms ([pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md), record-only — SUPERSEDES the aux-arm read below)
 
 - [standard eval report](https://mcobzarenco-fontaine-reports.static.hf.space/eval__fontaine_molmo2_er_60k_ddp4__step_035000__panel_curated_v0_k4l2.html)
