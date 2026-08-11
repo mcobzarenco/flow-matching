@@ -2,7 +2,7 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-11T18:55:00Z
+**Updated:** 2026-08-11T18:39:00Z
 
 **Depth call:** depth 3 open at 18:5xZ 08-11: sim-fixes-reset-contact + sim-servo-sysid (both CPU, queued, from the closed sim-lit-review fix list) + sim-policy-eval-100seeds (blocked behind fixes batch 1); molmo-flow-step1 + rig-mixture-exec owner_hold. Sim lane per owner 18:15Z '100% simulations'.
 

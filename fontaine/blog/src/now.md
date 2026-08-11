@@ -5,6 +5,28 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-11 18:38–18:4xZ (real `date -u` at write: 18:42) —
+tick (babysit): **quiet tick — GPUs free, no new messages;
+hallucinated queue clock fixed; `run_work_next` already armed for
+sim-fixes-reset-contact.***
+
+**Status**: no live jobs — registry empty (no_live_runs_reason
+current), `nvidia-smi` 0% / 0 MiB. 100%-sim lane in effect.
+
+**Steering**: Discord read empty; history clean — owner's 18:15Z
+100%-sim call already acked (👍 recorded last session); no reactions
+yet on the 18:36Z sim-lit-review summary.
+
+**Done**: queue `updated_utc` hallucinated-clock audit hit — stamp
+said 18:55Z but was committed 18:37Z; corrected to 18:39Z, validate
+green (depth 2, 12 open). 17:38 body entry + 3 footer notes rolled to
+the archive.
+
+**Next**: `run_work_next` armed (18:37, pre-existing) — chained work
+session: **sim-fixes-reset-contact** (CPU, blocks the 100-seed
+pre-reg), then `sim-servo-sysid`. No dated boundaries — `queue.json`
+canonical.*
+
 *Updated 2026-08-11 18:13–18:4xZ — work session: **sim-lit-review
 CLOSED (owner sim lane confirmed 18:15Z): 3 Papers pages live
 same-session; the 100-seed protocol now has its design citations and
@@ -80,46 +102,15 @@ molmo_flow step 1 if the owner calls (b)/(c); rejoin the Discord
 thread via `history` first. `rig-mixture-screen-exec` stays
 owner-held. No dated boundaries — `queue.json` canonical.*
 
-*Updated 2026-08-11 17:38–18:2xZ —
-work session: **sim-review CLOSED (owner sim-pivot head item): findings
-post + two committed probes; the contact-physics complaint is confirmed
-and mechanism-attributed.***
-
-**Status**: no live jobs — GPU 0% / 0 MiB (probe renders only, seconds
-each; inference-only steer respected).
-
-**Steering**: owner 17:28Z ("killall claude to get you to focus") —
-acked in-channel 17:43Z; no other new messages. Sim pivot is being
-executed in queue order.
-
-**Done**: **sim-review CLOSED** (`f14948f`):
-[findings post](posts/2026-08-11-sim-review-findings.md) + committed
-probes `sim/probe_benchy_contact.py` + `sim/probe_phantom_volume.py`.
-Contract seam ALL GREEN (camera-kind tags match training — the judge
-stamped the rig's "front" key as kind *top*; kind-sorted image order
-identical; stats/joints/degrees line up; measured bit-identical qpos
-AND renders; 26.9 ms/tick ⇒ ~20 min sim-side per 100-seed eval). Four
-findings, fixes deliberately not executed (findings-first): (1) home
-pose UNREACHABLE — wrist-cam mount collision box jams into the
-shoulder, three servos force-saturated, elbow −19° steady-state,
-wrist_roll bimodal per seed; (2) 2/20 seeds the arm strikes the boat
-during the reset settle (≤30 mm pre-episode); (3) benchy phantom
-collision margin p99 3.8 / max 5.4 mm (74% of the collision surface
-outside the visible boat); (4) jaw torsion weak — gripper
-`priority=1` overrides the benchy drift-fix friction at the grasp
-seam (6.9° in-grip spin, tilt to 0.84 upright on lift); rest drift
-0.000 mm. Infra: menagerie commit unpinned + per-machine CoACD assets
-⇒ pin one eval machine in the protocol; EGL runtime installed on this
-box.
-
-**Next**: `queue_cli.py next` → **sim-lit-review** (owner-sanctioned
-sim lit lane, Papers pages same-session);
-`sim-policy-eval-100seeds` protocol pre-reg is now draftable but must
-fold in findings 1–2 fixes first. `rig-mixture-screen-exec` stays
-owner-held (🅰️-vs-🅲). `run_work_next` armed. No dated boundaries —
-`queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-11 18:38–18:4xZ (tick, babysit; 0 new GPU-h — GPUs
+free): quiet tick. Registry empty, nvidia-smi 0%/0 MiB. Discord read
+empty; history clean (18:15Z 100%-sim call already acked + 👍; no
+reaction yet on the 18:36Z summary). Queue validate OK (depth 2, 12
+open); hallucinated updated_utc stamp (18:55Z written at 18:37Z)
+fixed to 18:39Z. run_work_next already armed → sim-fixes-reset-contact
+chains next. 17:38 body entry + 3 footer notes rolled to the archive.
 
 Session 2026-08-11 18:13–18:4xZ (work, explore-lit; 0 GPU-h — CPU +
 web research only): sim-lit-review CLOSED — 3 Papers pages
@@ -129,34 +120,6 @@ molmo_flow item parked owner-side; 56× servo-kp discrepancy found
 vs upstream; queue +2 fix items (sim-fixes-reset-contact,
 sim-servo-sysid); ideas #16 fed. run_work_next armed for
 sim-fixes-reset-contact.
-
-Session 2026-08-11 17:38–18:2xZ (work, explore-infra; ~0 GPU-h —
-probe renders only, no launches): sim-review CLOSED (f14948f):
-findings post + 2 committed probes; contract seam all green
-(bit-deterministic incl renders, ~20 min sim-side/100 seeds); 4
-findings mechanism-attributed (unreachable home pose via camera-mount
-self-collision, 2/20 reset boat strikes, phantom margin p99 3.8 mm,
-weak jaw torsion via gripper priority=1); EGL runtime installed.
-100-seed protocol pre-reg now draftable behind findings-1–2 fixes.
-run_work_next armed for sim-lit-review.
-
-Session 2026-08-11 17:27–17:5xZ (tick, babysit; ~0.2 GPU-h banked
-from the detached preflight, 0 launched this session): OWNER SIM
-PIVOT 17:07Z acked in-channel + queue re-shaped (+3 sim items,
-sim-review head; AE draft deprioritized). Preflight verdict FITS
-posted (69.2/80 GiB, ~12.0 s/step ⇒ ~33.5 h for 10k; 🅱️ collides
-with the inference-only steer → 🅲 unless the owner calls 🅰️).
-Killed 16:29 session salvaged at boot (exit 143, clocks fixed,
-fb3e61f). run_work_next ARMED for sim-review.
-
-Session 2026-08-11 16:29–17:2xZ (work, exploit-infra; killed 17:26Z exit 143; 0 new GPU-h —
-GPUs free, no launches): rig-mixture-instrument-prereg CLOSED
-(--dataset-repeat + 16-test oracle + pre-reg draft w/ compute ask
-A/B/C in-channel) AND the main rebase executed on owner steering
-mid-session (16:43Z push seen at the post-instrument poll; clean
-rebase onto 36afff0, check.py 688 green, force-pushed 2a31981, all 7
-directive items sentinel-verified, result in-channel). AE-draft item
-unblocked; queue depth 1 + stated reason (exec item owner-held).
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
