@@ -59,7 +59,12 @@ ARM_LABELS = {
     "snap30k": "snapflow student (euler-1)",
     "teacher80k": "artrunk 80k teacher (heun-30)",
 }
-CHARTS = ("distance_over_time.png", "progress_strip.png", "ordering_vs_panel.png")
+CHARTS = (
+    "engagement.png",
+    "distance_over_time.png",
+    "progress_strip.png",
+    "ordering_vs_panel.png",
+)
 UNTOUCHED_CM = 0.5
 REACH_MISS_CLIPS = 2
 

@@ -222,6 +222,74 @@ def chart_ordering_vs_panel(arms: dict[str, dict[str, Any]], out: Path) -> None:
     plt.close(fig)
 
 
+ENGAGE_CM = 0.5
+ENGAGE_COLORS = {"toward": "#42be65", "away": "#dc267f", "untouched": "#3a3f46"}
+
+
+def chart_engagement(arms: dict[str, dict[str, Any]], out: Path) -> None:
+    """Per-arm engagement split: seeds where the boat moved >= ENGAGE_CM
+    toward the disk / away / untouched — the phase-2 headline read."""
+    present = [n for n in ARM_ORDER if n in arms and n != "hold"]
+    fig, ax = new_fig(7.5, 0.62 * len(present) + 1.6)
+    for y, name in enumerate(present):
+        values = np.array(
+            [e["progress_final_cm"] for e in arms[name]["episodes"]],
+        )
+        toward = int((values >= ENGAGE_CM).sum())
+        away = int((values <= -ENGAGE_CM).sum())
+        untouched = len(values) - toward - away
+        left = 0
+        for part, count in (
+            ("toward", toward),
+            ("away", away),
+            ("untouched", untouched),
+        ):
+            ax.barh(y, count, left=left, color=ENGAGE_COLORS[part], height=0.55)
+            if count >= 6:
+                ax.annotate(
+                    str(count),
+                    (left + count / 2, y),
+                    color=TEXT if part == "untouched" else "#121417",
+                    fontsize=9,
+                    ha="center",
+                    va="center",
+                    fontweight="bold",
+                )
+            left += count
+        ax.annotate(
+            name,
+            (0, y),
+            xytext=(-8, 0),
+            textcoords="offset points",
+            color=ARM_COLORS[name],
+            fontsize=10,
+            ha="right",
+            va="center",
+        )
+    ax.set_yticks([])
+    ax.set_ylim(len(present) - 0.4, -0.6)
+    ax.set_xlim(0, 100)
+    ax.xaxis.grid(False)
+    ax.yaxis.grid(False)
+    ax.set_xlabel(f"seeds (boat moved ≥ {ENGAGE_CM} cm toward | away | untouched)")
+    ax.set_title("Engagement: does the policy touch the boat at all?")
+    handles = [
+        plt.Rectangle((0, 0), 1, 1, color=ENGAGE_COLORS[k]) for k in ENGAGE_COLORS
+    ]
+    legend = ax.legend(
+        handles,
+        list(ENGAGE_COLORS),
+        loc="lower right",
+        fontsize=8,
+        facecolor=PAGE,
+        edgecolor=GRID,
+        labelcolor=TEXT,
+    )
+    legend.set_zorder(5)
+    fig.savefig(out, bbox_inches="tight", facecolor=PAGE)
+    plt.close(fig)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--in-dir", type=Path, required=True)
@@ -235,6 +303,7 @@ def main() -> int:
     chart_distance_over_time(arms, args.out_dir / "distance_over_time.png")
     chart_progress_strip(arms, args.out_dir / "progress_strip.png")
     chart_ordering_vs_panel(arms, args.out_dir / "ordering_vs_panel.png")
+    chart_engagement(arms, args.out_dir / "engagement.png")
     print(f"charts for arms {sorted(arms)} -> {args.out_dir}")
     return 0
 
