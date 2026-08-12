@@ -5,6 +5,30 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-12 06:23–06:3xZ (real `date -u` at write: 06:24) —
+tick (babysit): **quiet tick — the wrist-periphery close (06:19Z
+post) stands as latest; nothing live, no owner traffic, chained work
+session armed.***
+
+**Status**: no live jobs — registry empty (babysit exit 0),
+`nvidia-smi` 0% / 0 MiB, GPU idle-by-design. Queue validate green
+(depth 2, 12 open). Next items: **sim-content-diversity** +
+**sim100-v2-rerun-amendment-draft**; **sim100-v1-rerun** stays
+owner_hold with its gate at double-GO (top 0.773, wrist 0.548 — both
+under their registered lines; the 05:01Z spot-check ask unanswered).
+
+**Steering**: none — Discord read empty; history shows our 06:19Z
+wrist-periphery close as latest, no new reactions (owner asleep
+since 01:11Z).
+
+**Done**: babysit poll exit 0; queue validate green; `run_work_next`
+armed (06:23Z). Archive roll: 05:09 body entry + 05:49 footer note.
+
+**Next**: chained work session → `queue_cli.py next` →
+**sim-content-diversity** (or the owner's rerun/spot-check call if
+it lands first — the gate is double-GO). No dated boundaries —
+`queue.json` canonical.*
+
 *Updated 2026-08-12 05:52–06:2xZ (real `date -u` at write: 06:17) —
 work session: **sim-wrist-periphery-fix CLOSED — registered bar
 SMASHED on the first candidate: wrist 5-NN AUROC 0.900 → 0.548 vs
@@ -70,50 +94,16 @@ footer note.
 **sim-wrist-periphery-fix** (or the owner's rerun/spot-check call if
 it lands first). No dated boundaries — `queue.json` canonical.*
 
-*Previous update 2026-08-12 05:09–05:5xZ (real `date -u` at write: 05:47) —
-work session: **sim-visual-inpainting CLOSED — the registered bar is
-MET, first registered win on the visual-gap axis: top-cam 5-NN AUROC
-0.890 (v0) → 0.876 (v1) → 0.773 (v2) vs the ≤0.790 line.
-`render_style="v2"` (real clean plates + segmentation composite)
-ships as the new default; wrist composite reported as an honest
-negative (0.951 — mush plate) and v2 keeps the v1 wrist path.***
-
-**Status**: no live jobs — registry empty, `nvidia-smi` 0% / 0 MiB
-between probe reads (~0.06 GPU-h foreground total, gate 0.3). Next
-items: **sim-wrist-periphery-fix** + **sim-content-diversity** (both
-CPU + probe minutes); **sim100-v1-rerun** stays owner_hold but its
-registered gate now reads **GO with v2 frames** (0.773 ≤ 0.790) —
-spot-check ask from 05:01Z still pending.
-
-**Steering**: none — Discord read at boot and at the 05:45Z boundary
-both empty of owner messages (owner asleep since 01:11Z). One
-self-caught process fix: my pre-reg link used a wrong Space domain
-(fix posted in-channel 05:15Z, memory updated); and a clock audit
-caught this session stamping 06:xxZ into queue/post drafts at real
-05:45Z — corrected before commit.
-
-**Done**: **sim-visual-inpainting CLOSED** (commits 3156c14 pre-reg,
-f75c341 v2 landed, close commit this entry): clean-plate miner
-(`make_clean_plates.py` → `assets/real_plates/`, 26 A-half episodes,
-video-frame disjointness from held-out B verified 17066 < 17100),
-segmentation composite in `SO101Sim` (dynamic = arms + benchy + disk
-+ on-table clutter whose real twins move between episodes and median
-away; fisheye-shared mask, graded/blurred foreground, full-frame
-sensor noise), probe `--render-style` flag. Reads: top 0.773
-(100 seeds; 0.774 at 20×5 — stable), centroid 0.730, k-ratio 1.54×
-→ 1.16×; overfit tripwire clear; homogeneity unchanged (~4% vs 45%
-— content variation named the lever, successor queued). Oracles 6
-green (qpos bit-identical v0/v1/v2, spawn stream banked), check.py
-green. 3 probe jsons + 2 REAL|v1|v2 galleries on fontaine-reports
-(all curl 200). Results post + reports.md section; queue: inpainting
-done, sim-content-diversity queued, rerun gate fact updated.
-
-**Next**: `queue_cli.py next` → **sim-wrist-periphery-fix** (or the
-owner's rerun/spot-check call if it lands first — the registered
-gate now reads GO). `run_work_next` armed. No dated boundaries —
-`queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-12 06:23–06:3xZ (tick, babysit; 0 new GPU-h — GPU
+idle-by-design after the wrist-periphery close): quiet tick.
+Registry empty, nvidia-smi 0%/0 MiB. Discord read empty, no new
+reactions (rerun spot-check + double-GO call both pending with the
+owner, asleep since 01:11Z). Queue validate green (depth 2, 12
+open); run_work_next armed → sim-content-diversity (or the owner's
+rerun call) chains next. Archive roll: 05:09 body entry + 05:49
+footer note.
 
 Session 2026-08-12 05:52–06:2xZ (work, exploit; ~0.04 GPU-h
 foreground probe reads, gate 0.2): sim-wrist-periphery-fix closed —
@@ -125,14 +115,6 @@ top guard green (0.773 bit-identical). Per-episode wrist-plate axis
 retired; sim100 rerun gate now double-GO (still owner_hold on the
 spot-check ask). Queue refilled: sim100-v2-rerun-amendment-draft
 (depth 2). run_work_next armed.
-
-Session 2026-08-12 05:49–05:5xZ (tick, babysit; 0 new GPU-h — GPU
-idle-by-design after the inpainting close): quiet tick. Registry
-empty, nvidia-smi 0%/0 MiB. Discord read empty, no new reactions
-(rerun spot-check + GO-with-v2 call both pending with the owner,
-asleep since 01:11Z). Queue validate green (depth 2, 12 open);
-run_work_next armed → wrist-periphery (or the owner's rerun call)
-chains next. Archive roll: 04:09 body entry + 05:04 footer note.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
