@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-12T05:03:00Z
+**Updated:** 2026-08-12T05:45:00Z
 
-**Depth call:** depth 2 open at 05:0xZ 08-12: sim-visual-inpainting (cpu, the named lever after the v1 registered miss) + sim-wrist-periphery-fix (cpu, the wrist fisheye regression 0.786->0.900 has a mechanical cause worth one iteration loop); sim100-v1-rerun owner_hold (probe gate missed, behavioral spot-check offered); sim-visual-matching CLOSED this session (bar missed, honest negative, v1 renders ship as default).
+**Depth call:** depth 2 open at 05:4xZ 08-12: sim-wrist-periphery-fix (cpu, wrist 0.786-bar iteration loop) + sim-content-diversity (cpu, the named diversity lever after v2; plate banks / clutter states / disk distribution). sim-visual-inpainting CLOSED this session (bar MET, 0.773 vs <=0.790, v2 ships as default); sim100-v1-rerun stays owner_hold but its registered gate now reads GO with v2 frames (spot-check ask still pending).
 
-**12 open** (Live 0 · Queued 2 · Blocked 10 · Done 121)
+**12 open** (Live 0 · Queued 2 · Blocked 10 · Done 122)
 
 ## 🔴 Live (0)
 
@@ -18,29 +18,29 @@
 
 *ready — waiting on a window or a boundary*
 
-**`sim-wrist-periphery-fix`** · `cpu`
+**`sim-content-diversity`** · `cpu`
 
-Wrist-cam periphery re-tune under the v1 fisheye (small, CPU + ~0.04 GPU-h probe reads): the scene pass moved wrist 5-NN AUROC 0.835-&gt;0.786 (best read of the whole v1 study - content/pose is what the wrist tracks) but the fisheye…
+Sim content diversity v3 (the axis every read since the OOD probe names: sim is ~4% k std/mean vs real 45%, and neither lighting jitter (v1) nor a fixed real background (v2) moved it): per-reset CONTENT variation for the composit…
 
-**boundary:** Queued 05:0xZ 08-12 at the v1 close (rides the v1 pre-reg's instrument + axes; wrist was explicitly secondary there). Executable now; independent of the inpainting item. · [pre-reg](posts/2026-08-12-prereg-sim-visual-matching.md)
+**boundary:** Queued 05:4xZ 08-12 at the v2 close. Executable now (CPU + ~0.02 GPU-h probe reads); pends nothing. Sequencing: sim-wrist-periphery-fix is the other executable-now item and is independent; if the owner calls the sim100 rerun/spot-check, that outranks both.
 
 <details><summary>full record</summary>
 
-Wrist-cam periphery re-tune under the v1 fisheye (small, CPU + ~0.04 GPU-h probe reads): the scene pass moved wrist 5-NN AUROC 0.835-&gt;0.786 (best read of the whole v1 study - content/pose is what the wrist tracks) but the fisheye+grade passes regressed it to 0.900 because the 72deg source pulls sim-specific periphery (arm body mass, table far edge, floor band) into frame. Iterate ONLY the wrist: camera pose/height under the wider source, what the periphery shows (table extent, background band), gripper-mass framing vs the real bottom-quarter jaws - reset-render probe per iteration, wrist 5-NN &lt;=0.786 (scene-only level) as the bar, top read must not regress. Fold any deltas into _repose_wrist_cam / the scene XML.
+Sim content diversity v3 (the axis every read since the OOD probe names: sim is ~4% k std/mean vs real 45%, and neither lighting jitter (v1) nor a fixed real background (v2) moved it): per-reset CONTENT variation for the composite - (a) per-episode plate banks from the A half (needs a mining pass that masks the boat's real positions so no ghosts bake in; per-episode plates carry real lighting/clutter states), (b) clutter-state draws (mouse/laptop/pcb poses drawn per appearance seed from the real between-episode spread), (c) disk position drawn from the real distribution - NOTE (c) changes task semantics (success geometry), needs its own pre-reg beyond appearance-only. Read: same reset-render probe + the homogeneity 20x5; bar to be registered (candidate: sim k std/mean toward &gt;=15% without top 5-NN AUROC regressing past 0.790).
 
 </details>
 
 ---
 
-**`sim-visual-inpainting`** · `cpu`
+**`sim-wrist-periphery-fix`** · `cpu`
 
-Sim visual matching v2 - real-frame INPAINTING (the named lever after v1's registered miss, SIMPLER-RT recipe): bake actual rig pixels as the static scene instead of approximating materials/optics - per camera, composite the real…
+Wrist-cam periphery re-tune under the v1 fisheye (small, CPU + ~0.04 GPU-h probe reads): the scene pass moved wrist 5-NN AUROC 0.835-&gt;0.786 (best read of the whole v1 study - content/pose is what the wrist tracks) but the fisheye…
 
-**boundary:** Queued 05:0xZ 08-12 at the v1 close. Executable now (CPU + ~0.02 GPU-h probe reads); pends nothing. If the owner instead calls the behavioral spot-check on sim100-v1-rerun, run that first - it may show the geometry fixes already changed behavior, re-scoping what inpainting must buy.
+**boundary:** Queued 05:0xZ 08-12 at the v1 close (rides the v1 pre-reg's instrument + axes; wrist was explicitly secondary there). Executable now; independent of the inpainting item. | NOTE 05:4xZ 08-12: the v2 wrist composite read WORSE (0.951) than the v1 wrist path (0.900) - episode-start wrist poses differ by degrees across episodes so the clean plate is mush (coverage 0.36); shipped v2 keeps the v1 wrist path. This item's bar unchanged (&lt;=0.786 scene-only level); a per-episode-aligned wrist plate is a possible extra axis once the pose/periphery is right. · [pre-reg](posts/2026-08-12-prereg-sim-visual-matching.md)
 
 <details><summary>full record</summary>
 
-Sim visual matching v2 - real-frame INPAINTING (the named lever after v1's registered miss, SIMPLER-RT recipe): bake actual rig pixels as the static scene instead of approximating materials/optics - per camera, composite the real background (median/clean-plate of real frames, table + clutter + room) with rendered dynamic content (arms, benchy, disk) via render masks; the v1 fisheye/pose matching makes the geometric alignment feasible. Read: same reset-render probe (top 5-NN AUROC 0.890 baseline unmoved by v1; target the registered 0.79 line first, then 0.5); per-iteration cost ~0.02 GPU-h. Pre-reg (short, reuses the v1 instrument + bar semantics) before any GPU minute. Also carries v1's diversity finding: sim is ~10x too homogeneous at the encoder and lighting jitter does not fix it - content variation (hand/cable clutter states, real-plate rotation) is the axis.
+Wrist-cam periphery re-tune under the v1 fisheye (small, CPU + ~0.04 GPU-h probe reads): the scene pass moved wrist 5-NN AUROC 0.835-&gt;0.786 (best read of the whole v1 study - content/pose is what the wrist tracks) but the fisheye+grade passes regressed it to 0.900 because the 72deg source pulls sim-specific periphery (arm body mass, table far edge, floor band) into frame. Iterate ONLY the wrist: camera pose/height under the wider source, what the periphery shows (table extent, background band), gripper-mass framing vs the real bottom-quarter jaws - reset-render probe per iteration, wrist 5-NN &lt;=0.786 (scene-only level) as the bar, top read must not regress. Fold any deltas into _repose_wrist_cam / the scene XML.
 
 </details>
 
@@ -54,7 +54,7 @@ Sim visual matching v2 - real-frame INPAINTING (the named lever after v1's regis
 
 100-seed eval v1 rung (successor, pends sim-visual-matching landing): re-run the sim100 protocol (same 100 seeds, same metric/gates, posts/2026-08-11-prereg-sim-policy-eval-100seeds.md conventions) on the v1 matched visuals for e…
 
-**boundary:** Queued 03:4xZ 08-12 at the OOD-probe close. Executable only after sim-visual-matching lands its so101_sim.py visual deltas; the probe re-read (~0.02 GPU-h) is the cheap go/no-go gate before the ~2-4 GPU-h eval. | GATE READ 05:0xZ 08-12: probe re-read MISSED the bar (top 5-NN 0.876 vs &lt;=0.790 target) =&gt; by the registered gate the 2-4 GPU-h rerun does NOT auto-launch. OWNER DECISION OFFERED in the results post: the probe measures encoder separability, not policy behavior - the fisheye+wrist-repose geometry fixes change where things appear in the image, and er60k's reach-over-the-table fingerprint is exactly a pinhole-vs-fisheye spatial-mismatch signature; a 20-seed er60k spot-check (~0.5 GPU-h) would answer it cheaply. HOLDING for owner call: spot-check / full rerun / park behind inpainting. · [pre-reg](posts/2026-08-11-prereg-sim-policy-eval-100seeds.md)
+**boundary:** Queued 03:4xZ 08-12 at the OOD-probe close. Executable only after sim-visual-matching lands its so101_sim.py visual deltas; the probe re-read (~0.02 GPU-h) is the cheap go/no-go gate before the ~2-4 GPU-h eval. | GATE READ 05:0xZ 08-12: probe re-read MISSED the bar (top 5-NN 0.876 vs &lt;=0.790 target) =&gt; by the registered gate the 2-4 GPU-h rerun does NOT auto-launch. OWNER DECISION OFFERED in the results post: the probe measures encoder separability, not policy behavior - the fisheye+wrist-repose geometry fixes change where things appear in the image, and er60k's reach-over-the-table fingerprint is exactly a pinhole-vs-fisheye spatial-mismatch signature; a 20-seed er60k spot-check (~0.5 GPU-h) would answer it cheaply. HOLDING for owner call: spot-check / full rerun / park behind inpainting. | GATE RE-READ 05:4xZ 08-12: v2 inpainting MET the registered line (top 5-NN 0.773 &lt;= 0.790) =&gt; by the item's own registered criterion the rerun is now GO **with v2 frames** (render_style=v2 default; wrist rides the v1 path inside v2). Still owner_hold: the 20-seed behavioral spot-check ask (05:01Z) is unanswered and remains the cheaper first step; on unhold, the short pre-reg amendment renames arms to v2 visuals and re-baselines. · [pre-reg](posts/2026-08-11-prereg-sim-policy-eval-100seeds.md)
 
 <details><summary>full record</summary>
 
@@ -188,9 +188,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (121)
+## ✅ Done (122)
 
 *closed — the full record stays in each fold*
+
+**`sim-visual-inpainting`** · `cpu`
+
+Sim visual matching v2 - real-frame INPAINTING (the named lever after v1's registered miss, SIMPLER-RT recipe): bake actual rig pixels as the static scene instead of approximating materials/optics - per camera, composite the real…
+
+**boundary:** Queued 05:0xZ 08-12 at the v1 close. Executable now (CPU + ~0.02 GPU-h probe reads); pends nothing. If the owner instead calls the behavioral spot-check on sim100-v1-rerun, run that first - it may show the geometry fixes already changed behavior, re-scoping what inpainting must buy. | CLOSED 05:4xZ 08-12 (work session): registered bar MET - top 5-NN AUROC 0.890 (v0) -&gt; 0.876 (v1) -&gt; 0.773 (v2) vs &lt;=0.790; overfit tripwire clear (&gt;&gt;0.5). A-half clean plates (26 eps, video-frame disjointness from held-out B verified: last plate frame 17066 &lt; first B frame 17100) + segmentation composite; wrist composite regressed (0.951 vs 0.900 - cross-episode mush plate) so shipped render_style=v2 (NEW DEFAULT) keeps the v1 wrist path (pure-composite read reproducible at f75c341). Homogeneity unchanged (~4% vs 45%) - content variation named the diversity lever (successor item queued). Results post 2026-08-12-sim-visual-inpainting-results.md; 3 probe jsons + 2 galleries on fontaine-reports (curl 200). ~0.06 GPU-h (gate 0.3). · [pre-reg](posts/2026-08-12-prereg-sim-visual-inpainting.md)
+
+<details><summary>full record</summary>
+
+Sim visual matching v2 - real-frame INPAINTING (the named lever after v1's registered miss, SIMPLER-RT recipe): bake actual rig pixels as the static scene instead of approximating materials/optics - per camera, composite the real background (median/clean-plate of real frames, table + clutter + room) with rendered dynamic content (arms, benchy, disk) via render masks; the v1 fisheye/pose matching makes the geometric alignment feasible. Read: same reset-render probe (top 5-NN AUROC 0.890 baseline unmoved by v1; target the registered 0.79 line first, then 0.5); per-iteration cost ~0.02 GPU-h. Pre-reg (short, reuses the v1 instrument + bar semantics) before any GPU minute. Also carries v1's diversity finding: sim is ~10x too homogeneous at the encoder and lighting jitter does not fix it - content variation (hand/cable clutter states, real-plate rotation) is the axis.
+
+</details>
+
+---
 
 **`sim-visual-matching`** · `cpu`
 

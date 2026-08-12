@@ -102,7 +102,7 @@ class SO101Sim:
         self,
         width: int = 640,
         height: int = 480,
-        render_style: str = "v1",
+        render_style: str = "v2",
     ) -> None:
         if render_style not in ("v0", "v1", "v2"):
             raise ValueError(
@@ -508,7 +508,13 @@ class SO101Sim:
             wrist = self._grade(self._apply_fisheye(wrist), "wrist")
         elif self.render_style == "v2":
             top = self._composite(top, self._render_mask("top_cam"), "top")
-            wrist = self._composite(wrist, self._render_mask("wrist_cam"), "wrist")
+            # Wrist keeps the v1 render path: the wrist plate is a
+            # cross-episode mush (start-pose viewpoints differ by
+            # degrees between episodes) and the wrist composite READ
+            # WORSE than the v1 path on the pinned probe (5-NN AUROC
+            # 0.951 vs 0.900, 08-12; pure-composite read reproducible
+            # at commit f75c341). Real fix = the queued wrist item.
+            wrist = self._grade(self._apply_fisheye(wrist), "wrist")
         return SimObservation(top=top, wrist=wrist, state=state)
 
     def _grade(self, frame: np.ndarray, camera: str) -> np.ndarray:

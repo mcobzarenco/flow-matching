@@ -1,7 +1,51 @@
 # Now
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-12 05:09–05:5xZ (real `date -u` at write: 05:47) —
+work session: **sim-visual-inpainting CLOSED — the registered bar is
+MET, first registered win on the visual-gap axis: top-cam 5-NN AUROC
+0.890 (v0) → 0.876 (v1) → 0.773 (v2) vs the ≤0.790 line.
+`render_style="v2"` (real clean plates + segmentation composite)
+ships as the new default; wrist composite reported as an honest
+negative (0.951 — mush plate) and v2 keeps the v1 wrist path.***
+
+**Status**: no live jobs — registry empty, `nvidia-smi` 0% / 0 MiB
+between probe reads (~0.06 GPU-h foreground total, gate 0.3). Next
+items: **sim-wrist-periphery-fix** + **sim-content-diversity** (both
+CPU + probe minutes); **sim100-v1-rerun** stays owner_hold but its
+registered gate now reads **GO with v2 frames** (0.773 ≤ 0.790) —
+spot-check ask from 05:01Z still pending.
+
+**Steering**: none — Discord read at boot and at the 05:45Z boundary
+both empty of owner messages (owner asleep since 01:11Z). One
+self-caught process fix: my pre-reg link used a wrong Space domain
+(fix posted in-channel 05:15Z, memory updated); and a clock audit
+caught this session stamping 06:xxZ into queue/post drafts at real
+05:45Z — corrected before commit.
+
+**Done**: **sim-visual-inpainting CLOSED** (commits 3156c14 pre-reg,
+f75c341 v2 landed, close commit this entry): clean-plate miner
+(`make_clean_plates.py` → `assets/real_plates/`, 26 A-half episodes,
+video-frame disjointness from held-out B verified 17066 < 17100),
+segmentation composite in `SO101Sim` (dynamic = arms + benchy + disk
++ on-table clutter whose real twins move between episodes and median
+away; fisheye-shared mask, graded/blurred foreground, full-frame
+sensor noise), probe `--render-style` flag. Reads: top 0.773
+(100 seeds; 0.774 at 20×5 — stable), centroid 0.730, k-ratio 1.54×
+→ 1.16×; overfit tripwire clear; homogeneity unchanged (~4% vs 45%
+— content variation named the lever, successor queued). Oracles 6
+green (qpos bit-identical v0/v1/v2, spawn stream banked), check.py
+green. 3 probe jsons + 2 REAL|v1|v2 galleries on fontaine-reports
+(all curl 200). Results post + reports.md section; queue: inpainting
+done, sim-content-diversity queued, rerun gate fact updated.
+
+**Next**: `queue_cli.py next` → **sim-wrist-periphery-fix** (or the
+owner's rerun/spot-check call if it lands first — the registered
+gate now reads GO). `run_work_next` armed. No dated boundaries —
+`queue.json` canonical.*
 
 *Updated 2026-08-12 05:04–05:1xZ (real `date -u` at write: 05:07) —
 tick (babysit): **quiet tick + clock audit — GPU idle-by-design
@@ -79,32 +123,17 @@ rerun owner_hold.
 owner's rerun call if it lands first). `run_work_next` armed. No
 dated boundaries — `queue.json` canonical.*
 
-*Updated 2026-08-12 04:05–04:1xZ (real `date -u` at write: 04:07) —
-tick (babysit): **quiet tick — GPU idle-by-design between the OOD
-probe close and the sim-visual-matching pre-reg; no owner messages
-or reactions; chained work session already armed.***
-
-**Status**: no live jobs — registry empty (`no_live_runs_reason`
-current), `nvidia-smi` 0% / 0 MiB. Next item:
-**sim-visual-matching** (CPU + render minutes; pre-reg combines the
-measured OOD baseline — move top-cam 5-NN AUROC 0.885 → ~0.5 —
-with matching v1 + a 20-seed texture-sensitivity read), then
-**sim100-v1-rerun**.
-
-**Steering**: none — Discord read empty; history shows our 03:47Z
-probe-result post as the latest message, no new reactions (owner
-asleep since 01:11Z).
-
-**Done**: babysit CLI skipped per registry (no live entry); queue
-validate green (depth 2, 11 open); `run_work_next` confirmed armed →
-work session chains at tick end. Archive roll: 00:40 body entry +
-03:25/00:40 footer notes.
-
-**Next**: chained work session → **sim-visual-matching** pre-reg
-(in-channel first, promised 01:30Z; owner goal: ≥1 success on the
-100 seeds). No dated boundaries — `queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-12 05:09–05:5xZ (work, exploit; ~0.06 GPU-h
+foreground probe reads, gate 0.3): sim-visual-inpainting closed —
+pre-reg 05:15Z, clean plates + segmentation composite landed as
+render_style v2 (new default), **registered bar MET: top 5-NN AUROC
+0.876 → 0.773 vs ≤0.790** (first registered win on the axis); wrist
+composite honest negative (0.951, v2 keeps the v1 wrist path);
+homogeneity unchanged → sim-content-diversity queued (depth 2).
+sim100-v1-rerun gate fact now GO-with-v2-frames, still owner_hold on
+the pending spot-check ask. GPU otherwise idle; run_work_next armed.
 
 Session 2026-08-12 05:04–05:1xZ (tick, babysit; 0 new GPU-h — GPU
 idle-by-design between the v1 close and the inpainting pre-reg):
@@ -115,14 +144,6 @@ session's hallucinated clock (+~2 h: records claimed a 07:2xZ close,
 commit landed 05:03:49Z) in now.md + queue.json. Queue validate green
 (depth 2, 12 open); run_work_next armed → inpainting pre-reg chains
 next. Archive roll: 03:30 body entry + 04:05/03:30 footer notes.
-
-Session 2026-08-12 04:09–05:0xZ (work, exploit; ~0.12 GPU-h foreground
-probe reads): sim-visual-matching closed — pre-reg + all appearance
-axes landed as render_style v1 (texture, layout, wrist re-pose,
-fisheye, grade, sensor, jitter), registered bar missed honestly (top
-5-NN AUROC 0.890→0.876 vs ≤0.790), inpainting + wrist-periphery
-queued, sim100-v1-rerun flipped owner_hold with a spot-check ask
-in-channel. GPU otherwise idle; run_work_next armed.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box

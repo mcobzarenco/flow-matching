@@ -336,6 +336,26 @@ the engagement/direction split is the finding.
   ordering read auto-skipped — rung arms killed by the phase-2
   amendment)
 
+## Sim visual matching v2 — real-frame inpainting ([pre-reg](posts/2026-08-12-prereg-sim-visual-inpainting.md), [results](posts/2026-08-12-sim-visual-inpainting-results.md), 08-12)
+
+Real clean plates (per-pixel median over the 26 reference-half
+episodes; A/B pixel-disjointness verified in video-frame indices)
+composited under segmentation-masked rendered dynamic content (arms,
+benchy, disk + on-table clutter whose real twins move between
+episodes). Registered bar (top-cam 5-NN AUROC ≤ 0.790) **MET**:
+0.890 (v0) → 0.876 (v1) → **0.773**; overfit tripwire clear. Wrist
+composite regressed (0.951 vs 0.900 — the plate is cross-episode
+mush) so the shipped `render_style="v2"` (new default) keeps the v1
+wrist path. Homogeneity unchanged (~4% vs 45% k std/mean) — content
+variation stays the diversity lever. ~0.06 GPU-h (gate 0.3).
+
+- [v2 primary](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_encoder_ood_probe_v2_inpaint.json)
+  · [homogeneity 20×5](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_encoder_ood_probe_v2_homog.json)
+  · [shipped config](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_encoder_ood_probe_v2_shipped.json)
+- REAL | v1 | v2 galleries:
+  [top](https://mcobzarenco-fontaine-reports.static.hf.space/chart__sim_visual_inpaint_top_before_after.png)
+  · [wrist](https://mcobzarenco-fontaine-reports.static.hf.space/chart__sim_visual_inpaint_wrist_before_after.png)
+
 ## Sim visual matching v1 — appearance pass + probe re-reads ([pre-reg](posts/2026-08-12-prereg-sim-visual-matching.md), [results](posts/2026-08-12-sim-visual-matching-results.md), 08-12)
 
 Scene rebuild (real table texture, clutter layout, wrist-cam re-pose,

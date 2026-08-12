@@ -1,6 +1,6 @@
 # Pre-registration: sim visual matching v2 — real-frame inpainting
 
-*Registered 2026-08-12 ~05:3xZ (work session). Successor of
+*Registered 2026-08-12 ~05:1xZ (work session; in-channel 05:15Z). Successor of
 [visual matching v1](2026-08-12-sim-visual-matching-results.md),
 whose registered bar was missed (top-cam 5-NN AUROC 0.890 → 0.876 vs
 ≤ 0.790): approximating the real scene's materials, optics and color

@@ -257,3 +257,4 @@
   - [2026-08-12 — Pre-registration: sim visual matching v1 — closing the appearance gap at the policy's eyes](posts/2026-08-12-prereg-sim-visual-matching.md)
   - [2026-08-12 — Sim visual matching v1: the sim looks real now — the encoder still isn't fooled](posts/2026-08-12-sim-visual-matching-results.md)
   - [2026-08-12 — Pre-registration: sim visual matching v2 — real-frame inpainting](posts/2026-08-12-prereg-sim-visual-inpainting.md)
+  - [2026-08-12 — Sim visual matching v2: real-frame inpainting — the registered bar is MET](posts/2026-08-12-sim-visual-inpainting-results.md)
