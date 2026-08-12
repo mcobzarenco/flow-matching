@@ -741,7 +741,26 @@ record; the line here is the hook). *Index last updated 2026-08-12.*
   frames, ≤3 GPU-h parallel-path) measuring within-group
   progress-reward variance + competence cost of stochastic decoding
   before any RL infra is built — pends owner review, sequenced
-  after parallel-oracle → v3 rerun.
+  after parallel-oracle → v3 rerun. Sim lane 2026-08-12 `0823`
+  (owner-called sim-improvement levers;
+  [composite shadows](papers/composite-shadows.md) +
+  [fisheye lens fitting](papers/fisheye-lens-fitting.md) +
+  [DR schedules](papers/dr-schedules.md)): three probe-priced
+  levers banked — `composite-contact-shadows` (the pasted arm casts
+  no shadow, an axis NO published pipeline measures; ConCent's
+  silhouette-projection recipe adapted to matching, gate = top 5-NN
+  AUROC must drop from 0.773, ~0.02 GPU-h);
+  `fit-real-lens-model` (cubemap→equirect→any-lens replaces the 72°
+  source that the wrist-periphery fix worked around; calibrate the
+  real 130° module's θ→r, scale-overfitting = policies use pixel
+  scale as a distance ruler, so mis-fit lens ⇒ perceived-distance
+  error invisible to appearance probes; RSA as train-side fix +
+  eval-side sensitivity knob); `dr-schedule-for-sim-rl` (conditional
+  on the GRPO probe firing: one-scalar success-throttled width
+  curriculum from the sysid'd center, throttle on progress-cm at
+  our floor; eval rows stay at the matched center — the
+  randomize-in-training/match-in-eval firewall, same split
+  GreenAug-Rand vs SIMPLER Table III forces for backgrounds).
 - **`lit-arms` [#15 Literature-sourced arms](ideas/15-literature-arms.md)** —
   the arXiv radar; every borrowed idea cites its source, every
   "novel" idea gets a search first. Feeds the Papers section.
