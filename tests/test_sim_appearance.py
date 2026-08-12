@@ -84,3 +84,23 @@ def test_appearance_seed_changes_only_appearance(sim: SO101Sim) -> None:
 def test_render_style_validated() -> None:
     with pytest.raises(ValueError, match="render_style"):
         SO101Sim(render_style="v9")
+    with pytest.raises(ValueError, match="post_backend"):
+        SO101Sim(post_backend="cupy")
+
+
+@pytest.mark.gpu
+def test_torch_post_matches_numpy_reference() -> None:
+    # The CUDA post path (owner-approved 08-12) must reproduce the
+    # numpy float64 reference to within float32 rounding: same seeded
+    # noise stream, arithmetic-only differences, <= 2/255 counts.
+    reference = SO101Sim(render_style="v3", post_backend="numpy")
+    fast = SO101Sim(render_style="v3", post_backend="torch")
+    for seed in (0, 7):
+        obs_ref = reference.reset(seed)
+        obs_fast = fast.reset(seed)
+        for name in ("top", "wrist"):
+            a = getattr(obs_ref, name).astype(np.int16)
+            b = getattr(obs_fast, name).astype(np.int16)
+            diff = np.abs(a - b)
+            assert diff.max() <= 2, f"{name} seed {seed}: max diff {diff.max()}"
+            assert (diff > 0).mean() < 0.05, f"{name} seed {seed}: widespread drift"

@@ -23,7 +23,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
+
+if TYPE_CHECKING:
+    import torch as _torch_types
 
 import mujoco
 import numpy as np
@@ -82,6 +85,89 @@ SERVO_SYSID = {
 }
 
 
+class _TorchPost:
+    """CUDA implementation of the per-tick image post-processing
+    (fisheye remap, PSF blur, grade/composite arithmetic) — the
+    rollout profile is render-bound on the numpy reference path
+    (~0.3 s/tick, owner-approved port 08:12Z 2026-08-12). Numerics
+    are float32 on GPU vs the reference's float64; frames may differ
+    by ±2/255 counts (oracle-pinned in tests/test_sim_appearance.py).
+    The sensor-noise stream stays on the seeded numpy RNG."""
+
+    def __init__(
+        self,
+        fisheye: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray],
+        blur_sigma: float,
+    ) -> None:
+        import torch
+
+        self._torch = torch
+        self.device = torch.device("cuda")
+        x0, y0, wx, wy = fisheye
+        self.x0 = torch.from_numpy(x0).to(self.device)
+        self.y0 = torch.from_numpy(y0).to(self.device)
+        self.wx = torch.from_numpy(wx.astype(np.float32)).to(self.device)
+        self.wy = torch.from_numpy(wy.astype(np.float32)).to(self.device)
+        radius = max(1, int(np.ceil(2.5 * blur_sigma)))
+        taps = np.arange(-radius, radius + 1, dtype=np.float64)
+        kernel = np.exp(-0.5 * (taps / blur_sigma) ** 2)
+        kernel /= kernel.sum()
+        self.radius = radius
+        self.kernel = torch.from_numpy(kernel.astype(np.float32)).to(self.device)
+        self._cache: dict[int, _torch_types.Tensor] = {}
+
+    def upload(self, array: np.ndarray) -> _torch_types.Tensor:
+        """[H, W, C] float numpy -> cached float32 CUDA tensor."""
+        key = id(array)
+        if key not in self._cache:
+            self._cache[key] = self._torch.from_numpy(
+                np.ascontiguousarray(array, dtype=np.float32),
+            ).to(self.device)
+        return self._cache[key]
+
+    def frame(self, frame: np.ndarray) -> _torch_types.Tensor:
+        """[H, W, C] uint8/float numpy -> float32 CUDA tensor (no cache)."""
+        return self._torch.from_numpy(
+            np.ascontiguousarray(frame, dtype=np.float32),
+        ).to(self.device)
+
+    def remap(self, src: _torch_types.Tensor) -> _torch_types.Tensor:
+        """Bilinear fisheye remap, [H, W, C] float32 tensor in/out."""
+        top = (
+            src[self.y0, self.x0] * (1 - self.wx) + src[self.y0, self.x0 + 1] * self.wx
+        )
+        bottom = (
+            src[self.y0 + 1, self.x0] * (1 - self.wx)
+            + src[self.y0 + 1, self.x0 + 1] * self.wx
+        )
+        return top * (1 - self.wy) + bottom * self.wy
+
+    def blur(self, image: _torch_types.Tensor) -> _torch_types.Tensor:
+        """Separable Gaussian PSF with edge padding, [H, W, C]
+        float32 tensor in/out — mirrors the numpy reference."""
+        torch = self._torch
+        channels = image.shape[-1]
+        t = image.permute(2, 0, 1).unsqueeze(0)  # [1, C, H, W]
+        weight_h = self.kernel.view(1, 1, -1, 1).expand(channels, 1, -1, 1)
+        weight_w = self.kernel.view(1, 1, 1, -1).expand(channels, 1, 1, -1)
+        t = torch.nn.functional.pad(
+            t,
+            (0, 0, self.radius, self.radius),
+            mode="replicate",
+        )
+        t = torch.nn.functional.conv2d(t, weight_h, groups=channels)
+        t = torch.nn.functional.pad(
+            t,
+            (self.radius, self.radius, 0, 0),
+            mode="replicate",
+        )
+        t = torch.nn.functional.conv2d(t, weight_w, groups=channels)
+        return t.squeeze(0).permute(1, 2, 0)
+
+    def to_uint8(self, image: _torch_types.Tensor) -> np.ndarray:
+        return image.clamp(0, 255).to(self._torch.uint8).cpu().numpy()
+
+
 @dataclass(frozen=True, slots=True)
 class SimObservation:
     """One control-tick observation.
@@ -103,12 +189,18 @@ class SO101Sim:
         width: int = 640,
         height: int = 480,
         render_style: str = "v3",
+        post_backend: str = "auto",
     ) -> None:
         if render_style not in ("v0", "v1", "v2", "v3"):
             raise ValueError(
                 f"render_style {render_style!r} not in ('v0', 'v1', 'v2', 'v3')",
             )
+        if post_backend not in ("auto", "numpy", "torch"):
+            raise ValueError(
+                f"post_backend {post_backend!r} not in ('auto', 'numpy', 'torch')",
+            )
         self.render_style = render_style
+        self.post_backend = post_backend
         self.model = mujoco.MjModel.from_xml_path(str(SCENE_PATH))
         self._widen_joint_limits()
         self._apply_servo_sysid()
@@ -155,6 +247,22 @@ class SO101Sim:
             self._init_inpainting(width, height)
         if self.render_style == "v3":
             self._init_bank(width, height)
+        # GPU post-processing (owner-approved 08:12Z 08-12): rollouts
+        # are render-bound on the numpy path; "auto" takes CUDA when
+        # available. Physics is untouched either way; frames may
+        # differ from the reference by +-2/255 counts (oracle-pinned).
+        self._post: _TorchPost | None = None
+        if self.render_style != "v0" and post_backend != "numpy":
+            try:
+                import torch
+
+                cuda = torch.cuda.is_available()
+            except ImportError:
+                cuda = False
+            if cuda:
+                self._post = _TorchPost(self._fisheye, self.V1_BLUR_SIGMA)
+            elif post_backend == "torch":
+                raise ValueError("post_backend='torch' needs CUDA torch")
 
     def _widen_joint_limits(self) -> None:
         """Menagerie's shoulder_lift (+-100 deg) and elbow_flex (+-96.8)
@@ -284,6 +392,8 @@ class SO101Sim:
     def _apply_fisheye(self, frame: np.ndarray) -> np.ndarray:
         """Bilinear remap of a source pinhole render into the distorted
         output — [H, W, 3] uint8 in, same out."""
+        if self._post is not None:
+            return self._post.to_uint8(self._post.remap(self._post.frame(frame)))
         remapped = self._remap(frame.astype(np.float64))
         return np.clip(remapped, 0, 255).astype(np.uint8)
 
@@ -446,8 +556,33 @@ class SO101Sim:
         already carries the real optics, so only the foreground gets
         the PSF blur)."""
         gain, bias = self.V1_GRADE[camera]
+        episode_affine = self.render_style == "v3" and camera == "top"
+        plate = (
+            self._active_top_plate
+            if self.render_style == "v3" and camera == "top"
+            else self._plates[camera]
+        )
+        noise = (
+            self._noise_rng.standard_normal((*mask.shape, 3), dtype=np.float32)
+            * self.V1_NOISE_SIGMA
+        )
+        if self._post is not None:
+            post = self._post
+            foreground = post.remap(post.frame(frame)) * post.frame(
+                np.array(gain),
+            ) + post.frame(np.array(bias))
+            if episode_affine:
+                foreground = foreground * post.frame(
+                    self._active_gain,
+                ) + post.frame(self._active_bias)
+            foreground = post.blur(foreground)
+            weight = post.blur(post.remap(post.frame(mask[..., None])))
+            weight = weight.clamp(0.0, 1.0)
+            out = weight * foreground + (1.0 - weight) * post.upload(plate)
+            out = out + post.frame(noise)
+            return post.to_uint8(out)
         foreground = self._remap(frame.astype(np.float64)) * gain + bias
-        if self.render_style == "v3" and camera == "top":
+        if episode_affine:
             # The drawn plate's photometric state (global -> episode
             # affine, from the bank manifest) applies to the rendered
             # foreground too: composite lighting stays coherent and
@@ -456,13 +591,8 @@ class SO101Sim:
         foreground = self._blur(foreground)
         weight = self._blur(self._remap(mask[..., None]))
         weight = np.clip(weight, 0.0, 1.0)
-        plate = (
-            self._active_top_plate
-            if self.render_style == "v3" and camera == "top"
-            else self._plates[camera]
-        )
         out = weight * foreground + (1.0 - weight) * plate
-        out += self._noise_rng.normal(0.0, self.V1_NOISE_SIGMA, out.shape)
+        out += noise
         return np.clip(out, 0, 255).astype(np.uint8)
 
     def _recolor_arm(self) -> None:
@@ -654,9 +784,20 @@ class SO101Sim:
 
     def _grade(self, frame: np.ndarray, camera: str) -> np.ndarray:
         gain, bias = self.V1_GRADE[camera]
+        noise = (
+            self._noise_rng.standard_normal(frame.shape, dtype=np.float32)
+            * self.V1_NOISE_SIGMA
+        )
+        if self._post is not None:
+            post = self._post
+            graded = post.frame(frame) * post.frame(np.array(gain)) + post.frame(
+                np.array(bias),
+            )
+            graded = post.blur(graded) + post.frame(noise)
+            return post.to_uint8(graded)
         graded = frame.astype(np.float64) * gain + bias
         graded = self._blur(graded)
-        graded += self._noise_rng.normal(0.0, self.V1_NOISE_SIGMA, graded.shape)
+        graded += noise
         return np.clip(graded, 0, 255).astype(np.uint8)
 
     def _blur(self, frame: np.ndarray) -> np.ndarray:
