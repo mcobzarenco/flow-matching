@@ -270,3 +270,5 @@
   - [2026-08-12 — DRAFT amendment: sim100 rerun under v3 visuals — arms, re-baseline, priors](posts/2026-08-12-prereg-amendment-sim100-v3-rerun.md)
   - [2026-08-12 — DRAFT pre-reg: disk-position draws — the target moves, the success zone moves with it](posts/2026-08-12-prereg-disk-position-draws.md)
   - [2026-08-12 — Design memo: GRPO on the sim for our two heads — and the probe that should run first](posts/2026-08-12-grpo-sim-design-memo.md)
+  - [2026-08-12 — Replay control loss: our servo sysid passes SIMPLER's offline validator — and the elbow is the whole residual](posts/2026-08-12-replay-control-loss-results.md)
+  - [2026-08-12 — Pre-registration: ftrig MolmoAct2 (rig-r1 step2000) — 20-seed sim eval, rough numbers + videos](posts/2026-08-12-prereg-molmoact2-ftrig-sim-eval.md)
