@@ -169,6 +169,24 @@ canonical.*
 
 ## Utilization footer
 
+Session 2026-08-12 15:11–15:3xZ (tick, babysit; 0 new GPU-h — local
+GPU idle since ~14:50Z, owner-released 14:17Z): post-flip tick.
+Babysit exit 1 = the retained-entry footgun (the ftrig-eval registry
+entry outlived its ~14:50Z completion) — pruned to a completion note,
+no real failure; no live jobs. Discord read empty; history check: no
+reactions or messages since our 15:10Z flip-done post. **OPEN ASK
+posted 15:13Z**: v3-rerun unhold + arm-set proposal (er60k + ftrig4k
++ teacher80k + hold, v3 frames, flipped-mount physics `d5cf9fd`, same
+100 seeds/metrics/gates, sequential driver ~6–9 h wall) — both
+registered gates GO, amendment drafted, the GRPO probe's anchor rows
+join free from its rows, and post-flip the rerun is the re-baseline
+carrier for every banked sim row. Channel change-watch armed through
+the tick; UNANSWERED at commit — next session picks it up (tight-poll
+rule active). Queue validate green (depth 3, 13 open); run_work_next
+armed → CPU lanes (grpo pre-reg finalize, wrist-compositing design,
+sim-levers lit). Archive roll: 2 footer notes (12:17 tick, 11:25
+work).
+
 Session 2026-08-12 13:10–15:1xZ (work, bounded; **+~0.4 GPU-h** —
 oracle ~0.25 + ftrig eval ~0.15, both ridden in-session after the
 14:17Z owner release; exploit + instrument): replay control-loss
@@ -178,35 +196,6 @@ FAIL banked (sequential stays registered), ftrig molmoact2 0/20
 first look with videos, bracket-flip finding (owner-spotted,
 probe-sized at ~62% of the servo-replay gap). 6 owner messages
 dispositioned; 1 ask open (re-baseline OK).
-
-Session 2026-08-12 12:17–12:2xZ (tick, babysit; 0 new GPU-h — box
-owner-reserved since 09:23Z, 0% util / 0 MiB observed 12:17Z —
-release-in-channel rule stands, no launches): quiet tick. Registry
-empty, babysit exit 0. Discord read empty, no new owner messages or
-reactions since our 11:43Z GRPO-memo post (its two review asks stand
-open: probe yes/no + optional SDE cell, and the oracle → rerun →
-probe sequencing). Owner active on main: pushed the molmo_flow
-migration through step 5 — train smoke GREEN + checkpoint round-trip
-(`3547c5c`, ~20 commits since `cba0c15`; owner-side work, no action
-for us). Objection windows stay open (parallel-rollouts pre-reg,
-rerun amendment, disk-position draft). Queue validate green (depth
-3, 14 open); run_work_next armed → CPU lanes (the two open lit
-items). Archive roll: 2 footer notes (11:10 tick, 11:20 tick).
-
-Session 2026-08-12 11:25–11:4xZ (work, bounded; 0 new GPU-h — box
-owner-reserved since 09:23Z, 0% util / 0 MiB observed, no launches;
-explore): GRPO-on-sim design-research item closed — three deep
-reads (agent fan-out: SimpleVLA-RL, Flow-GRPO, πRL), design memo
-posted with the signal-probe proposal (asks in-channel 11:41Z),
-papers cluster page upgraded with the πRL correction, successor
-probe item queued owner_hold. check.py 710 green; blog + Space
-pushed (200); queue validate green depth 3. Incident, resolved
-in-session: the close-out Space push hit the 1 GB storage cap
-(revision accumulation — same class as 08-10); super_squash +
-~25 min async-GC drain (987→823 MB) → push landed 12:1xZ, now/queue
-pages verified current, squashed again after. Channel polled 60 s
-through the window (post 11:43Z, quiet through 12:1xZ). run_work_next
-armed → CPU lanes: the two open lit items.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
