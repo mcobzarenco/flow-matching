@@ -78,6 +78,7 @@ class WorkerConfig:
     hold: bool
     out_dir: Path | None
     post_backend: str
+    flip_camera_mount: bool = True
 
 
 def parse_args() -> argparse.Namespace:
@@ -125,6 +126,13 @@ def parse_args() -> argparse.Namespace:
         help="SO101Sim compositor per worker (auto/torch means one CUDA "
         "context per worker, ~0.5-1 GiB VRAM each; numpy frames differ "
         "from torch by the pinned <=2/255 compositor tolerance)",
+    )
+    parser.add_argument(
+        "--no-mount-flip",
+        action="store_true",
+        help="run the PRE-flip wrist-bracket physics (mirrored Menagerie "
+        "mount) — paired flip-effect reads only; flipped is the "
+        "registered geometry",
     )
     parser.add_argument("--out-dir", type=Path, default=OUTPUT_DIR)
     parser.add_argument(
@@ -202,7 +210,10 @@ def run_worker_episodes(
 
 def _worker_main(config: WorkerConfig, conn: Connection) -> None:
     try:
-        sim = SO101Sim(post_backend=config.post_backend)
+        sim = SO101Sim(
+            post_backend=config.post_backend,
+            flip_camera_mount=config.flip_camera_mount,
+        )
         run_worker_episodes(sim, config, conn.send, conn.recv)
     except Exception:  # noqa: BLE001 — shipped whole to the parent, which raises
         conn.send(("error", config.worker_id, traceback.format_exc()))
@@ -305,6 +316,7 @@ def main() -> int:
             hold=args.hold,
             out_dir=args.out_dir,
             post_backend=args.post_backend,
+            flip_camera_mount=not args.no_mount_flip,
         )
         process = context.Process(
             target=_worker_main,
@@ -326,7 +338,13 @@ def main() -> int:
             raise WorkerDiedError("hold arm workers must not request predicts")
     else:
         chunk_size = policy.info.chunk_size
-        stats = policy.info.per_dataset_normalization[STATS_REPO_ID]
+        # Converted checkpoints (molmoact2 lineage) carry no per-dataset
+        # table — their items must wear the checkpoint's MERGED stats
+        # (same fallback as the sequential driver).
+        stats = policy.info.per_dataset_normalization.get(
+            STATS_REPO_ID,
+            policy.info.normalization,
+        )
 
         def predict_batch(requests: list[tuple[Any, ...]]) -> list[np.ndarray]:
             items = []
@@ -388,6 +406,7 @@ def main() -> int:
                 "control_hz": CONTROL_HZ,
                 "task": TASK,
                 "stats_repo_id": STATS_REPO_ID,
+                "mount_flip": not args.no_mount_flip,
                 "commit": commit,
             },
             "parallel": {

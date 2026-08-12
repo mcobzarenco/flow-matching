@@ -116,3 +116,4 @@ corrections are follow-up posts.
 - [2026-08-12 — Replay control loss: our servo sysid passes SIMPLER's offline validator — and the elbow is the whole residual](2026-08-12-replay-control-loss-results.md)
 - [2026-08-12 — Pre-registration: ftrig MolmoAct2 (rig-r1 step2000) — 20-seed sim eval, rough numbers + videos](2026-08-12-prereg-molmoact2-ftrig-sim-eval.md)
 - [2026-08-12 — GPU release results: parallel oracle FAILS · ftrig MolmoAct2 moves with intent (0/20) · the wrist bracket is 180° off](2026-08-12-gpu-release-results.md)
+- [2026-08-12 — Pre-registration: ftrig MolmoAct2 20-seed rerun on flipped-mount physics — both arms parallel](2026-08-12-prereg-ftrig-eval20-flipped-parallel.md)
