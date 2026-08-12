@@ -44,13 +44,19 @@ from __future__ import annotations
 import math
 from collections.abc import Iterator, Sequence
 from dataclasses import dataclass
-from typing import cast, override
+from typing import Any, cast, override
 
 import torch
 import torch.nn.functional as F
 from torch import Tensor, nn
 
-from ..interface import SamplingMethod
+from ..interface import (
+    BijouPrediction,
+    CollatedBatch,
+    ObservationMemory,
+    SamplingMethod,
+)
+from ..molmo2.cache import Molmo2KVCache
 
 
 def _modulate(x: Tensor, shift: Tensor, scale: Tensor) -> Tensor:
@@ -543,7 +549,7 @@ class TimeLaw:
                 .to(device=device, dtype=torch.float32)
             )
         else:
-            gamma_a = torch._standard_gamma(  # pyright: ignore[reportPrivateUsage] — no public generator-threaded gamma; stable ATen op
+            gamma_a = torch._standard_gamma(  # pyright: ignore[reportPrivateImportUsage] — no public generator-threaded gamma; stable ATen op
                 torch.full(
                     (batch_size,),
                     self.beta_alpha,
@@ -552,7 +558,7 @@ class TimeLaw:
                 ),
                 generator=generator,
             )
-            gamma_b = torch._standard_gamma(  # pyright: ignore[reportPrivateUsage]
+            gamma_b = torch._standard_gamma(  # pyright: ignore[reportPrivateImportUsage] — same stub gap as above
                 torch.full(
                     (batch_size,),
                     self.beta_beta,
@@ -563,6 +569,22 @@ class TimeLaw:
             )
             b = (gamma_a / (gamma_a + gamma_b)).to(device=device)
         return self.offset + self.scale * b
+
+
+@dataclass(frozen=True, slots=True)
+class MolmoFlowRuntime:
+    """Deployment facts a built decoder needs beyond its architecture —
+    set by the loader (``MolmoFlowDecoder.configure``) from the
+    checkpoint's decoder section, never guessed: the REAL action
+    geometry of the tag, their serving flow-step count, and the
+    recorded training t-law."""
+
+    action_dim: int
+    action_horizon: int
+    n_action_steps: int
+    num_flow_steps: int
+    mask_action_dim_padding: bool
+    time_law: TimeLaw
 
 
 @dataclass(frozen=True, slots=True)
@@ -688,7 +710,143 @@ class MolmoFlowDecoder(nn.Module):
             config.hidden_size,
             config.max_action_dim,
         )
+        # Deployment configuration (``configure``): the loader supplies
+        # the checkpoint's action geometry + t-law, the q01/q99 clamp
+        # table (non-persistent buffers — the table's serialized home is
+        # the checkpoint metadata's normalization row, stored ONCE), and
+        # the write-side schema dict (loading owns the schema; a decoder
+        # cannot import it, so the dict is stashed here by the loader).
+        self.runtime: MolmoFlowRuntime | None = None
+        self.checkpoint_schema: dict[str, object] | None = None
+        self.action_q01: Tensor
+        self.action_q99: Tensor
+        self.register_buffer(
+            "action_q01",
+            torch.zeros(config.max_action_dim),
+            persistent=False,
+        )
+        self.register_buffer(
+            "action_q99",
+            torch.zeros(config.max_action_dim),
+            persistent=False,
+        )
         self.reset_parameters()
+
+    def configure(
+        self,
+        runtime: MolmoFlowRuntime,
+        *,
+        action_q01: Tensor,
+        action_q99: Tensor,
+        checkpoint_schema: dict[str, object],
+    ) -> None:
+        """Attach the deployment facts (loader-called; predict/loss refuse
+        an unconfigured decoder loudly).
+
+        Shapes:
+        - ``action_q01``/``action_q99``: [action_dim] raw-unit quantiles
+          (the checkpoint normalization row's, or the run's recomputed
+          merge — padded here to max_action_dim with 0/1 inert rows)
+        """
+        if action_q01.shape != (runtime.action_dim,) or action_q99.shape != (
+            runtime.action_dim,
+        ):
+            raise ValueError(
+                f"expected [{runtime.action_dim}] quantile rows, got "
+                f"{tuple(action_q01.shape)} / {tuple(action_q99.shape)}",
+            )
+        pad = self.config.max_action_dim - runtime.action_dim
+        with torch.no_grad():
+            self.action_q01.copy_(
+                F.pad(action_q01.to(self.action_q01.dtype), (0, pad), value=0.0),
+            )
+            # Padded dims get a unit-width box (0..1) so the normalize/
+            # unnormalize maps stay finite there; the dim mask keeps them
+            # out of every loss and the sampler zeroes them anyway.
+            self.action_q99.copy_(
+                F.pad(action_q99.to(self.action_q99.dtype), (0, pad), value=1.0),
+            )
+        self.runtime = runtime
+        self.checkpoint_schema = checkpoint_schema
+
+    def _configured(self) -> MolmoFlowRuntime:
+        if self.runtime is None:
+            raise ValueError(
+                "MolmoFlowDecoder is unconfigured — the loader must call "
+                "configure() with the checkpoint's action geometry and "
+                "q01/q99 table before predict/loss",
+            )
+        return self.runtime
+
+    def dim_pad_mask(self) -> Tensor:
+        """[max_action_dim] bool, True = padded dim (their
+        ``action_dim_is_pad``), derived from the configured geometry."""
+        runtime = self._configured()
+        mask = torch.ones(
+            self.config.max_action_dim,
+            dtype=torch.bool,
+            device=self.action_q01.device,
+        )
+        mask[: runtime.action_dim] = False
+        return mask
+
+    @torch.no_grad()
+    def predict_chunk(
+        self,
+        memory: ObservationMemory,
+        batch: CollatedBatch[Any],
+        *,
+        generator: torch.Generator | None = None,
+        noise: Tensor | None = None,
+        num_steps: int | None = None,
+        method: SamplingMethod = SamplingMethod.EULER,
+    ) -> BijouPrediction:
+        """RAW-unit chunk prediction — their serving tail on our seam:
+        extract per-layer KV off the prefix cache, integrate (default =
+        the checkpoint's recorded ``num_flow_steps``, Euler — their
+        deployment operating point), slice the real action width, clamp
+        + q01/q99-unnormalize, and the reference's dtype round-trip.
+        ``batch`` stats are deliberately unused — normalization is
+        decoder-owned (§8.13 decision 6).
+
+        Shapes:
+        - ``noise`` (when given): [B, action_horizon, max_action_dim]
+        - returns: BijouPrediction actions [B, n_action_steps,
+          action_dim] fp32 raw units; generations None
+        """
+        del batch  # stats intentionally unused; signature mirrors flow's
+        runtime = self._configured()
+        kv_states = layer_kv_pairs(memory, num_blocks=len(self.blocks))
+        conditioning = conditioning_mask_of(memory)
+        if noise is None:
+            source = kv_states[0][0]
+            noise = torch.randn(
+                (source.shape[0], runtime.action_horizon, self.config.max_action_dim),
+                device=source.device,
+                dtype=self.action_embed.weight.dtype,
+                generator=generator,
+            )
+        chunk = self.sample_actions(
+            kv_states,
+            encoder_attention_mask=conditioning,
+            action_horizon=runtime.action_horizon,
+            action_dim_is_pad=self.dim_pad_mask(),
+            num_steps=runtime.num_flow_steps if num_steps is None else num_steps,
+            method=method,
+            mask_action_dim_padding=runtime.mask_action_dim_padding,
+            noise=noise,
+        )
+        sliced = chunk[:, : runtime.n_action_steps, : runtime.action_dim]
+        unnormalized = unnormalize_chunk(
+            sliced.cpu(),
+            self.action_q01[: runtime.action_dim].cpu(),
+            self.action_q99[: runtime.action_dim].cpu(),
+        )
+        # The reference's output dtype path: unnormalize in fp32, cast
+        # BACK to the sampled dtype, then fp32 — the bf16 quantization is
+        # part of the reference output when the expert runs bf16.
+        actions = unnormalized.to(sliced.dtype).to(torch.float32)
+        return BijouPrediction(actions=actions, generations=None, noise=noise)
 
     def iter_blocks(self) -> Iterator[MolmoFlowBlock]:
         for block in self.blocks:
@@ -786,12 +944,17 @@ class MolmoFlowDecoder(nn.Module):
             else None
         )
         kv_contexts = []
+        # The trunk may run a different precision than the expert (bf16
+        # mount vs fp32 expert — the FlowDecoder stream convention); the
+        # cast is a no-op at uniform dtype, so byte-parity with the
+        # reference (which only ever runs uniform) is preserved.
+        dtype = self.context_k_proj.weight.dtype
         for k_in, v_in in encoder_kv_states:
             k_ctx = self._reshape_hidden_to_heads(
-                self.context_norm(self.context_k_proj(k_in)),
+                self.context_norm(self.context_k_proj(k_in.to(dtype))),
             )
             v_ctx = self._reshape_hidden_to_heads(
-                self.context_norm(self.context_v_proj(v_in)),
+                self.context_norm(self.context_v_proj(v_in.to(dtype))),
             )
             if state_heads is not None:
                 k_ctx = torch.cat([k_ctx, state_heads], dim=1)
@@ -1024,6 +1187,161 @@ class MolmoFlowDecoder(nn.Module):
                 enabled=mask_action_dim_padding,
             )
         return trajectory
+
+
+def layer_kv_pairs(
+    memory: ObservationMemory,
+    *,
+    num_blocks: int,
+    detach: bool = False,
+) -> list[tuple[Tensor, Tensor]]:
+    """Per-layer conditioning pairs off the prefix cache in the memory —
+    the trunk-specific extraction at the seam (the ``ar_molmo2``
+    precedent: this decoder consumes the Molmo2 cache directly; the
+    cache layout [B, kv_heads, S, head_dim] is OUR contract, so the
+    flatten needs no layout inference). ``detach`` is the knowledge-
+    insulation seam (§8.13 decision 8): detached pairs carry no graph,
+    so flow gradients into every trunk parameter are exactly zero.
+
+    Shapes:
+    - ``memory.cache`` layers: K/V [B, kv_heads, S, head_dim] each
+    - returns: ``num_blocks`` pairs of [B, S, kv_heads * head_dim]
+    """
+    cache = memory.cache
+    if cache is None:
+        raise ValueError(
+            "ObservationMemory carries no prefix cache — encode with "
+            "retain_cache=True (BijouModel does this for molmo_flow)",
+        )
+    if not isinstance(cache, Molmo2KVCache):
+        raise TypeError(
+            f"molmo_flow conditions on the Molmo2 prefix cache; the memory "
+            f"carries {type(cache).__name__}",
+        )
+    pairs: list[tuple[Tensor, Tensor]] = []
+    for layer_idx, layer in enumerate(cache.layers):
+        keys, values = layer.keys, layer.values
+        if keys is None or values is None:
+            raise ValueError(
+                f"cache layer {layer_idx} has no K/V — the prompt forward "
+                "must fill every layer before KV extraction",
+            )
+        batch, kv_heads, seq_len, head_dim = keys.shape
+        key = keys.permute(0, 2, 1, 3).reshape(batch, seq_len, kv_heads * head_dim)
+        value = values.permute(0, 2, 1, 3).reshape(batch, seq_len, kv_heads * head_dim)
+        if detach:
+            key, value = key.detach(), value.detach()
+        pairs.append((key, value))
+    if len(pairs) != num_blocks:
+        raise ValueError(
+            f"expected {num_blocks} KV layers (one per molmo_flow block), "
+            f"got {len(pairs)}",
+        )
+    return pairs
+
+
+def conditioning_mask_of(memory: ObservationMemory) -> Tensor | None:
+    """The expert's prompt mask: the encoder-computed conditioning mask
+    (the ``action_mode`` flavor) when present, else the padding mask —
+    None only for unpadded memories with no flavor (everything
+    attendable, their unbatched serving case).
+
+    Shapes:
+    - returns: [B, S] bool, or None
+    """
+    if memory.conditioning_mask is not None:
+        return memory.conditioning_mask
+    if memory.padding_mask is not None:
+        return memory.padding_mask.to(dtype=torch.bool)
+    return None
+
+
+def molmo_flow_loss_sums(
+    decoder: MolmoFlowDecoder,
+    memory: ObservationMemory,
+    batch: CollatedBatch[Any],
+    *,
+    insulate: bool = False,
+    times: Tensor | None = None,
+    noise: Tensor | None = None,
+) -> tuple[Tensor, Tensor]:
+    """The batch-facing objective (BijouModel dispatches here): extract
+    KV off the prefix cache (detached under ``insulate`` — their
+    post-train KI), q01/q99-clamp-normalize the RAW batch actions with
+    the DECODER'S table (decision 6: per-sample stats deliberately
+    unused), pad to max_action_dim, draw t from the RECORDED law and
+    ε ~ N(0, I) (ambient RNG — the trainer's seeded stream, matching
+    every other decoder's loss), and return the sum-form objective.
+    ``times``/``noise`` overrides are for oracles.
+
+    Episode-end repeated actions train as real targets — the same call
+    as flow.py's loss and their reference wrapper (lerobot's clamped
+    delta-timestamps already hold the reach-and-hold target).
+
+    Shapes:
+    - ``batch.actions``: [B, T == action_horizon, action_dim] raw units
+    - returns: (scalar loss sum with graph, scalar position count B*T)
+    """
+    runtime = decoder._configured()
+    kv_states = layer_kv_pairs(
+        memory,
+        num_blocks=len(decoder.blocks),
+        detach=insulate,
+    )
+    enc_mask = conditioning_mask_of(memory)
+    actions = batch.actions.to(torch.float32)
+    if actions.shape[-1] != runtime.action_dim:
+        raise ValueError(
+            f"batch action width {actions.shape[-1]} != the configured "
+            f"action_dim {runtime.action_dim}",
+        )
+    if actions.shape[1] != runtime.action_horizon:
+        raise ValueError(
+            f"batch chunk length {actions.shape[1]} != the configured "
+            f"action_horizon {runtime.action_horizon} — --chunk-size must "
+            "match the checkpoint's horizon",
+        )
+    normalized = normalize_targets(
+        actions,
+        decoder.action_q01[: runtime.action_dim].to(actions.device),
+        decoder.action_q99[: runtime.action_dim].to(actions.device),
+    )
+    padded = F.pad(
+        normalized,
+        (0, decoder.config.max_action_dim - runtime.action_dim),
+    )
+    dim_is_pad = decoder.dim_pad_mask().to(actions.device).expand(actions.shape[0], -1)
+    if times is None:
+        times = runtime.time_law.sample(actions.shape[0], device=actions.device)
+    if noise is None:
+        noise = torch.randn_like(padded)
+    return flow_matching_loss_sums(
+        decoder,
+        kv_states=kv_states,
+        enc_mask=enc_mask,
+        actions_norm=padded,
+        action_dim_is_pad=dim_is_pad,
+        times=times,
+        noise=noise,
+    )
+
+
+def molmo_flow_loss(
+    decoder: MolmoFlowDecoder,
+    memory: ObservationMemory,
+    batch: CollatedBatch[Any],
+    *,
+    insulate: bool = False,
+) -> Tensor:
+    """Mean form of :func:`molmo_flow_loss_sums` — the unchunked
+    objective (sum / count; same contract as flow.py's pair)."""
+    loss_sum, count = molmo_flow_loss_sums(
+        decoder,
+        memory,
+        batch,
+        insulate=insulate,
+    )
+    return loss_sum / count
 
 
 def _padded_dim_mask(target: Tensor, action_dim_is_pad: Tensor | None) -> Tensor | None:

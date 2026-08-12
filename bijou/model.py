@@ -66,6 +66,11 @@ from .decoders.flow import (
     snapflow_distill_loss,
     snapflow_distill_loss_sums,
 )
+from .decoders.molmo_flow import (
+    MolmoFlowDecoder,
+    molmo_flow_loss,
+    molmo_flow_loss_sums,
+)
 from .encoders.gemma4 import GemmaEncoder
 from .gemma4.model import Gemma4Model
 from .interface import (
@@ -86,7 +91,13 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
         self,
         backbone: B,
         encoder: ObservationEncoder[I, B],
-        decoder: FlowDecoder | ARFastDecoder | ARBackboneDecoder | Molmo2ARDecoder,
+        decoder: (
+            FlowDecoder
+            | ARFastDecoder
+            | ARBackboneDecoder
+            | Molmo2ARDecoder
+            | MolmoFlowDecoder
+        ),
     ) -> None:
         super().__init__()
         self.backbone = backbone
@@ -112,6 +123,12 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
         # zero while the (with_grad) trunk still receives CE gradients.
         # Run property like ``distill`` — never serialized.
         self.seam_stop_grad: bool = False
+        # Knowledge insulation on the molmo_flow KV seam (§8.13 decision
+        # 8, their post-train): extracted per-layer K/V detach before
+        # the expert, so flow gradients into every trunk parameter are
+        # exactly zero while a live trunk still trains through the
+        # joint_ce rider. Run property — never serialized.
+        self.insulate_expert: bool = False
 
     def param_groups(self) -> dict[str, list[nn.Parameter]]:
         """Named trainable-parameter groups — the routing vocabulary for
@@ -157,8 +174,9 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
             inputs,
             with_grad=with_grad,
             # The joint-CE rider is a suffix consumer too: its CE branch
-            # continues the prefix cache exactly like a phase-1 step.
-            retain_cache=isinstance(self.decoder, ARSuffixDecoder)
+            # continues the prefix cache exactly like a phase-1 step;
+            # molmo_flow CONDITIONS on the whole cache (§8.13).
+            retain_cache=isinstance(self.decoder, ARSuffixDecoder | MolmoFlowDecoder)
             or self.joint_ce is not None,
         )
         if isinstance(self.decoder, FlowDecoder):
@@ -180,7 +198,13 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
     @property
     def expert(
         self,
-    ) -> FlowDecoder | ARFastDecoder | ARBackboneDecoder | Molmo2ARDecoder:
+    ) -> (
+        FlowDecoder
+        | ARFastDecoder
+        | ARBackboneDecoder
+        | Molmo2ARDecoder
+        | MolmoFlowDecoder
+    ):
         return self.decoder
 
     def _flow_decoder(self) -> FlowDecoder:
@@ -299,6 +323,14 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                     None if aux_sum is None else aux_sum.detach(),
                     aux_count,
                 )
+            case MolmoFlowDecoder():
+                total = molmo_flow_loss(
+                    decoder,
+                    memory,
+                    batch,
+                    insulate=self.insulate_expert,
+                )
+                return total, total.detach(), None, None
 
     def loss_count_normalizers(
         self,
@@ -324,6 +356,16 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                 return ar_fast_counts(decoder, batch), None
             case ARBackboneDecoder() | Molmo2ARDecoder():
                 return ar_backbone_counts(decoder, batch)
+            case MolmoFlowDecoder():
+                # Position count B*T (the per-position valid-dim mean is
+                # the inner reduction — molmo_flow_loss_sums' contract).
+                return (
+                    torch.tensor(
+                        batch.actions.shape[0] * batch.actions.shape[1],
+                        device=batch.actions.device,
+                    ),
+                    None,
+                )
 
     def loss_component_sums(
         self,
@@ -365,6 +407,14 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                     memory,
                     batch,
                 )
+            case MolmoFlowDecoder():
+                loss_sum, count = molmo_flow_loss_sums(
+                    decoder,
+                    memory,
+                    batch,
+                    insulate=self.insulate_expert,
+                )
+                return loss_sum, count, None, None
 
     def joint_loss_count_normalizers(
         self,
@@ -447,22 +497,23 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
         *,
         generator: torch.Generator | None = None,
         noise: Tensor | None = None,
-        num_steps: int = 5,
-        method: SamplingMethod = SamplingMethod.HEUN,
+        num_steps: int | None = None,
+        method: SamplingMethod | None = None,
         target_time: float | None = None,
         generate: tuple[AuxField, ...] = (),
     ) -> BijouPrediction:
         """Collated batch → :class:`BijouPrediction` (RAW-unit chunks
         [B, chunk, action_dim] + per-row aux generations for decoders
         with a text surface): encode the observation (no grad) and run
-        the decoder's chunk-space inference with the batch's per-sample
-        stats. ``num_steps``/``method``/``noise``/``target_time`` are
-        flow solver knobs;
-        an AR decoder decodes greedily and ignores them (``noise`` must
-        then be None). ``generate`` is ar_backbone's request set — it
-        must match the request the batch's prompts were collated with
-        (Collator.generate_override); () = the deployment fast path;
-        ignored by other decoder kinds."""
+        the decoder's chunk-space inference. ``num_steps``/``method``
+        default to each flow kind's OWN operating point when None
+        (flow: Heun-5; molmo_flow: the checkpoint's recorded steps,
+        Euler — their serving semantics); ``noise``/``target_time`` are
+        flow solver knobs. An AR decoder decodes greedily and ignores
+        them (``noise`` must then be None). ``generate`` is
+        ar_backbone's request set — it must match the request the
+        batch's prompts were collated with (Collator.generate_override);
+        () = the deployment fast path; ignored by other decoder kinds."""
         memory = self.encode(batch.encoder_inputs, with_grad=False)
         decoder = self.decoder
         match decoder:
@@ -472,8 +523,8 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                     batch,
                     generator=generator,
                     noise=noise,
-                    num_steps=num_steps,
-                    method=method,
+                    num_steps=5 if num_steps is None else num_steps,
+                    method=SamplingMethod.HEUN if method is None else method,
                     target_time=target_time,
                 )
             case ARFastDecoder():
@@ -500,6 +551,20 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                     generate=generate,
                     generator=generator,
                     noise=noise,
+                )
+            case MolmoFlowDecoder():
+                if target_time is not None:
+                    raise ValueError(
+                        "target_time is the SnapFlow φ_s knob — molmo_flow "
+                        "has no shortcut embedding (§8.13 step 7)",
+                    )
+                return decoder.predict_chunk(
+                    memory,
+                    batch,
+                    generator=generator,
+                    noise=noise,
+                    num_steps=num_steps,
+                    method=SamplingMethod.EULER if method is None else method,
                 )
 
     @torch.no_grad()

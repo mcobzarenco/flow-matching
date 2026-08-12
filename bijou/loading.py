@@ -37,8 +37,16 @@ from .decoders.flow import (
     SelfAttentionMode,
     TimeConditioning,
 )
+from .decoders.molmo_flow import (
+    MolmoFlowConfig,
+    MolmoFlowDecoder,
+    MolmoFlowRuntime,
+    TimeLaw,
+    load_expert_state,
+)
 from .encoders.gemma4 import PROMPT_FORMAT, GemmaEncoder
 from .encoders.molmo2 import Molmo2Encoder
+from .encoders.molmoact2 import MolmoAct2Encoder
 from .fast.codec import ActionCodec
 from .gemma4.config import Gemma4Config, LayerType, RopeParameters, RopeType
 from .gemma4.loading import (
@@ -1474,6 +1482,75 @@ def load_backbone_init(model: BijouModel, checkpoint: Path) -> None:
     )
 
 
+def build_molmo_flow_decoder(
+    section: MolmoFlowDecoderConfig,
+    normalization: DatasetStats,
+    *,
+    device: DeviceLike = None,
+    dtype: torch.dtype | None = None,
+) -> MolmoFlowDecoder:
+    """The section → module bridge: build the expert from the recorded
+    geometry, configure it with the tag's action geometry, recorded
+    t-law and the q01/q99 clamp table (the checkpoint normalization
+    row's quantile fields — stored once, §8.13 decision 6), and stash
+    the write-side schema dict (decoders cannot import this module).
+    Weights are NOT loaded here — the caller owns that (converted
+    checkpoints inject compat tensors; fresh sections would init)."""
+    if normalization.action_q01 is None or normalization.action_q99 is None:
+        raise SystemExit(
+            "molmo_flow needs the q01/q99 quantile rows in the checkpoint "
+            "normalization table (decision 6: the decoder-owned clamp "
+            "table) — this table predates them",
+        )
+    if len(normalization.action_q01) != section.action_dim:
+        raise SystemExit(
+            f"normalization action rows are {len(normalization.action_q01)}-wide "
+            f"but the decoder section records action_dim={section.action_dim}",
+        )
+    config = MolmoFlowConfig(
+        max_horizon=section.max_horizon,
+        max_action_dim=section.max_action_dim,
+        hidden_size=section.hidden_size,
+        num_layers=section.num_layers,
+        num_heads=section.num_heads,
+        mlp_ratio=section.mlp_ratio,
+        ffn_multiple_of=section.ffn_multiple_of,
+        timestep_embed_dim=section.timestep_embed_dim,
+        dropout=0.0,
+        attn_dropout=0.0,
+        context_layer_norm=section.context_layer_norm,
+        qk_norm=section.qk_norm,
+        qk_norm_eps=section.qk_norm_eps,
+        rope=section.rope,
+        causal_attn=section.causal_attn,
+        llm_kv_dim=section.llm_kv_dim,
+    )
+    decoder = config.build()
+    decoder.configure(
+        MolmoFlowRuntime(
+            action_dim=section.action_dim,
+            action_horizon=section.action_horizon,
+            n_action_steps=section.n_action_steps,
+            num_flow_steps=section.num_flow_steps,
+            mask_action_dim_padding=section.mask_action_dim_padding,
+            time_law=TimeLaw(
+                offset=section.time_offset,
+                scale=section.time_scale,
+                beta_alpha=section.beta_alpha,
+                beta_beta=section.beta_beta,
+            ),
+        ),
+        action_q01=torch.tensor(normalization.action_q01, dtype=torch.float32),
+        action_q99=torch.tensor(normalization.action_q99, dtype=torch.float32),
+        checkpoint_schema=section.to_dict(),
+    )
+    if dtype is not None:
+        decoder = decoder.to(dtype)
+    if device is not None:
+        decoder = decoder.to(device)
+    return decoder
+
+
 def read_checkpoint_info(checkpoint: str | Path) -> CheckpointInfo:
     """Parse a checkpoint directory's ``bijou_config.json`` into
     :class:`CheckpointInfo` — metadata only, no weights touched. The
@@ -1526,13 +1603,60 @@ def from_checkpoint(
         sections.prompt,
         MolmoAct2PromptConfig,
     ):
-        # Before the backbone resolve: the guard must fire without hub
-        # access (the recorded ref may not even exist yet locally).
-        raise NotImplementedError(
-            f"{checkpoint} is a converted MolmoAct2 checkpoint — its metadata "
-            "parses (read_checkpoint_info) but model assembly lands with "
-            "architecture.md §8.13 step 5 (the molmo_flow decoder)",
+        if not (
+            isinstance(sections.decoder, MolmoFlowDecoderConfig)
+            and isinstance(sections.prompt, MolmoAct2PromptConfig)
+        ):
+            raise SystemExit(
+                f"{checkpoint} mixes the molmo_flow decoder and the "
+                "molmoact2 prompt format with foreign sections — the two "
+                "travel together (§8.13; converted and molmo_flow-trained "
+                "checkpoints carry both)",
+            )
+        if offload_ple:
+            raise SystemExit(
+                "--offload-ple parks Gemma's PLE token table; molmo2-family "
+                "trunks have no PLE — drop the flag",
+            )
+        trunk_dir = resolve_checkpoint_dir(info.backbone)
+        backbone = load_molmo2_model(
+            trunk_dir,
+            device="cpu" if device is None else device,
+            dtype=torch.bfloat16 if dtype is None else dtype,
         )
+        molmo_flow_encoder = MolmoAct2Encoder(
+            info.backbone,
+            setup_type=sections.prompt.setup_type,
+            control_mode=sections.prompt.control_mode,
+            num_state_tokens=sections.prompt.num_state_tokens,
+            action_mode=sections.prompt.action_mode,
+            narration=sections.prompt.narration,
+        )
+        molmo_flow = build_molmo_flow_decoder(
+            sections.decoder,
+            info.normalization,
+            device=device,
+            dtype=expert_dtype,
+        )
+        load_expert_state(
+            molmo_flow,
+            load_file(str(checkpoint / "expert.safetensors"), device="cpu"),
+        )
+        molmo_flow.to(device=device, dtype=expert_dtype)
+        model = BijouModel(
+            backbone=backbone,
+            encoder=molmo_flow_encoder,
+            decoder=molmo_flow,
+        )
+        # No prompt.safetensors (the encoder has zero parameters) and no
+        # backbone.safetensors (the trunk IS the recorded artifact —
+        # conversion invariant); a future trunk-trained molmo_flow run
+        # will write and reload one through the standard path below.
+        if (checkpoint / "backbone.safetensors").exists():
+            load_adapted_backbone(model, checkpoint)
+            print(f"loaded adapted backbone from {checkpoint}", flush=True)
+        model.eval()
+        return model, info
     checkpoint_dir = resolve_checkpoint_dir(info.backbone)
     if isinstance(sections.prompt, Molmo2PromptConfig):
         if not isinstance(sections.decoder, ARBackboneConfig | FlowDecoderConfig):

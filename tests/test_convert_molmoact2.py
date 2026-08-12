@@ -71,6 +71,8 @@ def _source_config() -> dict[str, Any]:
     return {
         "model_type": "molmoact2",
         "dtype": "float32",
+        "tie_word_embeddings": False,
+        "image_patch_id": 155_650,
         "add_action_expert": True,
         "action_expert_depth_gate": False,
         "action_mode": "both",
@@ -104,7 +106,63 @@ def _source_config() -> dict[str, Any]:
             "dropout": 0.0,
             "attn_dropout": 0.0,
         },
-        "text_config": {"head_dim": 8, "num_key_value_heads": 2},
+        # A full tiny trunk config (the predictor-test fixture's shape):
+        # the assembly test loads it for real.
+        "text_config": {
+            "model_type": "molmo2_text",
+            "vocab_size": 151_936,
+            "additional_vocab_size": 4_096,
+            "hidden_size": 32,
+            "intermediate_size": 64,
+            "num_hidden_layers": 2,
+            "num_attention_heads": 4,
+            "num_key_value_heads": 2,
+            "head_dim": 8,
+            "hidden_act": "silu",
+            "layer_norm_eps": 1e-6,
+            "rope_theta": 10_000.0,
+            "use_qk_norm": True,
+            "qk_norm_type": "qwen3",
+            "qkv_bias": False,
+            "norm_after": False,
+            "rope_scaling": None,
+            "rope_scaling_layers": None,
+            "attention_dropout": 0.0,
+            "embedding_dropout": 0.0,
+            "residual_dropout": 0.0,
+        },
+        "vit_config": {
+            "model_type": "molmo2",
+            "hidden_size": 32,
+            "intermediate_size": 64,
+            "num_hidden_layers": 3,
+            "num_attention_heads": 2,
+            "num_key_value_heads": 2,
+            "head_dim": 16,
+            "hidden_act": "gelu_pytorch_tanh",
+            "layer_norm_eps": 1e-6,
+            "image_patch_size": 14,
+            "image_num_pos": 729,
+            "float32_attention": True,
+            "attention_dropout": 0.0,
+            "residual_dropout": 0.0,
+        },
+        "adapter_config": {
+            "model_type": "molmo2",
+            "hidden_size": 32,
+            "intermediate_size": 64,
+            "num_attention_heads": 2,
+            "num_key_value_heads": 2,
+            "head_dim": 16,
+            "hidden_act": "silu",
+            "text_hidden_size": 32,
+            "vit_layers": [-1, -2],
+            "float32_attention": True,
+            "pooling_attention_mask": True,
+            "attention_dropout": 0.0,
+            "residual_dropout": 0.0,
+            "image_feature_dropout": 0.0,
+        },
     }
 
 
@@ -158,15 +216,32 @@ def _expert_state() -> dict[str, torch.Tensor]:
 
 @pytest.fixture(scope="module")
 def source_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """A tiny checkpoint in their exact layout: expert tensors + a REAL
+    tiny trunk (text + vision, their key prefixes), so the step-5
+    assembly path loads end-to-end with no hub access."""
+    from bijou.molmo2.config import Molmo2Config
+    from bijou.molmo2.model import Molmo2Model
+    from bijou.molmo2.text import Molmo2TextModel
+    from bijou.molmo2.vision import Molmo2VisionBackbone
+
     source = tmp_path_factory.mktemp("molmoact2-src") / "tiny-hf"
     source.mkdir()
-    (source / "config.json").write_text(json.dumps(_source_config()))
+    config = _source_config()
+    (source / "config.json").write_text(json.dumps(config))
     (source / "norm_stats.json").write_text(json.dumps(_norm_stats()))
     (source / "tokenizer.json").write_text("{}")
     state = _expert_state()
-    # Trunk-ish keys ride in the same file — the extractor must skip them.
-    state["model.transformer.blocks.0.attn_norm.weight"] = torch.ones(4)
-    state["lm_head.weight"] = torch.ones(2, 2)
+    torch.manual_seed(1)
+    parsed = Molmo2Config.from_dict(config)
+    assert parsed.vit is not None and parsed.adapter is not None
+    text = Molmo2TextModel(parsed.text, lm_head=True)
+    vision = Molmo2VisionBackbone(parsed.vit, parsed.adapter)
+    trunk = Molmo2Model(text, vision, image_patch_id=parsed.image_patch_id)
+    for name, tensor in trunk.text.state_dict().items():
+        key = name if name == "lm_head.weight" else f"model.{name}"
+        state[key] = tensor.clone()
+    for name, tensor in trunk.vision.state_dict().items():
+        state[f"model.vision_backbone.{name}"] = tensor.clone()
     save_file(state, str(source / "model.safetensors"))
     return source
 
@@ -254,13 +329,57 @@ def test_idempotent_and_deterministic(source_dir: Path, tmp_path: Path) -> None:
     assert meta["converted_from"]["source_config_sha256"] == digest
 
 
-def test_model_assembly_refuses_until_step_5(
+def test_from_checkpoint_assembles_molmo_flow(
     source_dir: Path,
     tmp_path: Path,
 ) -> None:
-    out = _convert(source_dir, tmp_path / "converted")
-    with pytest.raises(NotImplementedError, match="step 5"):
-        from_checkpoint(out)
+    """The step-5 assembly path end-to-end on the tiny converted
+    checkpoint (backbone ref = the source dir, no hub access): decoder
+    built + configured off the sections, expert weights byte-equal the
+    source, compat tensors injected, encoder carries the prompt facts,
+    q01/q99 table on the decoder buffers."""
+    from bijou.decoders.molmo_flow import MolmoFlowDecoder
+    from bijou.encoders.molmoact2 import MolmoAct2Encoder
+
+    out = _convert(source_dir, tmp_path / "converted", backbone_ref=str(source_dir))
+    model, info = from_checkpoint(out)
+    decoder = model.decoder
+    assert isinstance(decoder, MolmoFlowDecoder)
+    assert decoder.config.num_layers == _TINY_AE.num_layers
+    assert decoder.config.llm_kv_dim == 16
+    runtime = decoder.runtime
+    assert runtime is not None
+    assert runtime.action_dim == _ACTION_DIM
+    assert runtime.action_horizon == _HORIZON
+    assert runtime.num_flow_steps == 10
+    assert runtime.time_law.beta_beta == 1.5
+    assert torch.equal(
+        decoder.action_q01[:_ACTION_DIM].cpu(),
+        torch.full((_ACTION_DIM,), -3.0),
+    )
+    assert torch.equal(
+        decoder.action_q99[_ACTION_DIM:].cpu(),
+        torch.ones(_MAX_ACTION_DIM - _ACTION_DIM),  # inert unit box on pads
+    )
+    source = {
+        key.removeprefix("model.action_expert."): value
+        for key, value in _expert_state().items()
+        if key.startswith("model.action_expert.")
+    }
+    for name, tensor in source.items():
+        loaded = decoder.state_dict()[name]
+        assert torch.equal(loaded.cpu(), tensor), name
+    assert torch.equal(
+        decoder.state_dict()["state_encoder.weight"].cpu().float(),
+        torch.eye(_TINY_AE.hidden_size),  # compat-injected
+    )
+    encoder = model.encoder
+    assert isinstance(encoder, MolmoAct2Encoder)
+    assert encoder.setup_type == "tiny rig"
+    assert encoder.action_mode == "both"
+    assert encoder.narration is False
+    assert info.train_args.decoder == "molmo_flow"
+    assert len(list(encoder.parameters())) == 0
 
 
 def _broken_source(source_dir: Path, tmp_path: Path, mutate: Any) -> Path:
