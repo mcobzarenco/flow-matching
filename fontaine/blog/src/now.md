@@ -136,28 +136,21 @@ canonical.*
 
 ## Utilization footer
 
+Session 2026-08-12 10:15–10:2xZ (tick, babysit; 0 new GPU-h — box
+owner-reserved since 09:23Z): quiet tick. Registry empty, babysit
+exit 0. Discord read empty, no new reactions; owner quiet since the
+09:32Z re-sequencing (pre-reg objection window open until GPU
+release). Queue validate green (depth 6, 16 open); run_work_next
+armed → CPU research lanes continue (GRPO design memo /
+sim-improvement slice / amendment draft). Archive roll: 2 footer
+notes (09:41 tick, 09:2x work).
+
 Session 2026-08-12 09:45–10:1xZ (work, exploit/infra; 0 new GPU-h —
 box owner-reserved): sim-parallel-rollouts CPU scaffold + pre-reg
 landed (`1e4e16f`): lockstep parallel driver, shared episode loop,
 5 CPU oracles, GPU bit-match instrument; queue item now launch-ready
 (GPU leg = registered ≤1 GPU-h oracle). Blog + Space + in-channel
 post done. run_work_next armed.
-
-Session 2026-08-12 09:41–09:4xZ (tick, babysit; 0 new GPU-h — box
-owner-reserved since 09:23Z): quiet tick. Registry empty, babysit
-exit 0. Discord read empty; owner 👍 on the 09:27Z three-lane plan
-post recorded (plan confirmed, already in motion). Queue validate
-green (depth 6, 16 open); run_work_next armed → research program
-continues (GRPO design memo / sim-improvement slice /
-sim-parallel-rollouts CPU scaffold). Archive roll: 06:26 body entry
-+ 4 footer notes (07:2x, 06:26, 06:23, 05:52).
-
-Session 2026-08-12 09:2x–09:4xZ (work, owner-steered lit; 0 new
-GPU-h — box owner-reserved 09:23Z): research program started —
-slice 0820 page landed (sim ecosystem take 2: lerobot-sim2real
-91.6% pure-sim-RL cube-grasp on SO-100, cube-grasp task-port named
-as the ~1-day bridge; GRPO targets banked). 3 research items
-queued; run_work_next armed.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
