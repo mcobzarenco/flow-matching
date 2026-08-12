@@ -661,3 +661,11 @@ no_live_runs_reason = "declared 16:0xZ 08-12 work session: ftrig_eval20_flip_par
 # Local GPU FREE as of ~14:50Z (owner released the box 14:17Z).
 
 # release_officialmap entry pruned 19:1xZ 08-12 — COMPLETE 19:06:43Z same session (ridden in-turn, per-episode Discord watcher): both 20-seed arms done, ~0.25/0.4 GPU-h. INERT re-disposition: PARTIALLY OVERTURNED — official lift sign unlocks scene engagement (arm A: 1.4 cm near-touch s6, knock-away s16; arm B: 2 approaches) but 0/20 pickups both arms; A vs B null (11/20 ties). Canonical shim = snippet map exactly. Results on pre-reg amendment 1 + in-channel 19:0xZ.
+
+
+# seed6_30s entry pruned 20:0xZ 08-12 — COMPLETE 19:56:09Z same session
+# (ridden in-turn, 1.4 min wall, ~0.02/0.05 GPU-h): GRAB CONFIRMED at
+# 30 s — boat carried in the gripper to 1.04 cm of the disk (t=15.9 s),
+# never released, set back down at spawn (10.14 final). Failure mode on
+# seed 6 = place/release, not grasp. Results on pre-reg amendment 2 +
+# in-channel 20:0xZ; video curl-verified on fontaine-reports.
