@@ -34,9 +34,16 @@ home (77.6°) above the box ceiling (43.5°) — our −90 may absorb a
 rig-specific zero. **Consequence**: wrong lift sign direction-inverts
 decoded lift motion — matches the filmed swing-down-and-park; the
 first-action detector is sign-blind at rest (any bijection preserves
-action≈state). Full comparison + rerun plan posted 18:2xZ. Open asks:
-v3-rerun unhold + arm set (15:13Z), GRPO memo review, disk-draws
-sign-off.
+action≈state). Full comparison + rerun plan posted 18:2xZ. Live
+exchange 18:32–18:3xZ: owner *how is it going?* → status posted;
+owner 18:34:34Z — *running the seeds now with the snippet's map?
+Update me on episodes 1 by 1* → confirmed 18:36Z: snippet map EXACTLY
+as primary (wrist_roll identity per snippet; our −90 arm optional
+secondary), per-episode in-channel posts as rows land (completion
+order under workers=8; strict-sequential offered if wanted — check
+channel before launch). Steering recorded in the queue item. Open
+asks: v3-rerun unhold + arm set (15:13Z), GRPO memo review,
+disk-draws sign-off.
 
 **Done**: per-joint audit banked (this entry + queue item);
 `release-eval20-officialmap` queued (sign-carrying override CLI
