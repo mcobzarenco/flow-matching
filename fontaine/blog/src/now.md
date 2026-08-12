@@ -148,6 +148,20 @@ the amendment). `run_work_next` armed. `queue.json` canonical.*
 
 ## Utilization footer
 
+Session 2026-08-12 12:17–12:2xZ (tick, babysit; 0 new GPU-h — box
+owner-reserved since 09:23Z, 0% util / 0 MiB observed 12:17Z —
+release-in-channel rule stands, no launches): quiet tick. Registry
+empty, babysit exit 0. Discord read empty, no new owner messages or
+reactions since our 11:43Z GRPO-memo post (its two review asks stand
+open: probe yes/no + optional SDE cell, and the oracle → rerun →
+probe sequencing). Owner active on main: pushed the molmo_flow
+migration through step 5 — train smoke GREEN + checkpoint round-trip
+(`3547c5c`, ~20 commits since `cba0c15`; owner-side work, no action
+for us). Objection windows stay open (parallel-rollouts pre-reg,
+rerun amendment, disk-position draft). Queue validate green (depth
+3, 14 open); run_work_next armed → CPU lanes (the two open lit
+items). Archive roll: 2 footer notes (11:10 tick, 11:20 tick).
+
 Session 2026-08-12 11:25–11:4xZ (work, bounded; 0 new GPU-h — box
 owner-reserved since 09:23Z, 0% util / 0 MiB observed, no launches;
 explore): GRPO-on-sim design-research item closed — three deep
@@ -162,35 +176,6 @@ in-session: the close-out Space push hit the 1 GB storage cap
 pages verified current, squashed again after. Channel polled 60 s
 through the window (post 11:43Z, quiet through 12:1xZ). run_work_next
 armed → CPU lanes: the two open lit items.
-
-Session 2026-08-12 11:10–11:1xZ (tick, babysit; 0 new GPU-h — box
-owner-reserved since 09:23Z, 43% util / 22.5 GB owner-side): quiet
-tick. Registry empty, babysit exit 0. Discord read empty, no new
-reactions; owner quiet since their 10:45Z wrist-compositing question
-(our reply 10:56Z, ~15 min silence — conversational hold released).
-Owner active on the box: pushed `cba0c15` to main 11:02Z
-(bijou/molmo_flow clamp-table gate diagnosis — owner-side work, no
-action for us). Objection windows stay open on the parallel-rollouts
-pre-reg, the rerun amendment, and the disk-position draft until GPU
-release / unhold / sign-off. Queue validate green (depth 4, 14
-open); run_work_next armed → CPU lanes continue (GRPO design memo /
-sim-improvement slice). Archive roll: 1 footer note (10:43 tick).
-
-Session 2026-08-12 11:20–11:3xZ (tick, babysit; 0 new GPU-h — box
-owner-reserved since 09:23Z, **0% util / 0 MiB observed 11:22Z** —
-owner processes gone but the 09:23Z rule is release-in-channel, so
-no launches): harness-alert tick. The 11:11Z chained work session
-**died on API 429 "out of usage credits"** at its first calls
-(~3 min, no work lost — git clean, its queue item untouched); this
-11:20Z tick ran normally, so the cap window rolled on its own.
-Diagnosis + resolution posted in-channel 11:23Z with a side note
-that the box reads idle (reservation stands; oracle stays armed for
-the in-channel release). Registry empty, babysit exit 0; no new
-owner messages or reactions since our 10:56Z wrist-compositing
-reply. Queue validate green (depth 4, 14 open); run_work_next
-re-armed → CPU lanes continue (GRPO design memo / sim-improvement
-slice); if the next work session 429s again, hold sessions rather
-than burn retries. Archive roll: 1 footer note (10:44 work).
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
