@@ -17,26 +17,29 @@
   <option iterations="50" ls_iterations="50"/>
 
   <visual>
-    <!-- Bright diffuse daylight look of the rig frames. -->
-    <headlight diffuse="0.45 0.45 0.45" ambient="0.35 0.35 0.35" specular="0 0 0"/>
+    <!-- Bright diffuse daylight look of the rig frames, slightly warm
+         (the real frames carry a mild warm cast; per-reset jitter in
+         so101_sim._jitter_appearance varies it). -->
+    <headlight diffuse="0.42 0.42 0.42" ambient="0.36 0.36 0.36" specular="0 0 0"/>
     <global azimuth="160" elevation="-20" offwidth="640" offheight="480"/>
   </visual>
 
   <asset>
     <model name="so101_leader" file="so101.xml"/>
-    <!-- Photo texture cropped from a real front frame (assets/table). The
-         real planks run along +x (away from the camera). -->
+    <!-- Photo texture cropped from a pinned real top frame (assets/table).
+         The real planks run along +x (away from the camera). -->
     <texture type="2d" name="tabletop" file="../table/table_texture.png"/>
-    <!-- Mirror-tiled seamless texture (sim/make_table_texture.py); one
-         2x2-mirrored tile covers ~0.4 m, sized to the 2.4 x 1.0 top so
-         plank scale reads naturally. -->
-    <material name="tabletop" texture="tabletop" texrepeat="6 2.5" reflectance="0.02"
-      rgba="0.74 0.72 0.70 1"/>
+    <!-- Mirror-tiled seamless texture (sim/make_table_texture.py): grain
+         along s->world x, ~7 cm planks along t->world y; one tile spans
+         ~0.34 x 0.7 m, sized to the 2.4 x 1.0 top so plank scale matches
+         the real frames (~65 px vs the 8 cm disk's ~76 px). -->
+    <material name="tabletop" texture="tabletop" texrepeat="7 1.43" reflectance="0.02"
+      rgba="0.77 0.77 0.78 1"/>
     <!-- Flat white texture: the runtime tints it via geom rgba (cheap
          randomization) or paints tex_data directly (full randomization). -->
     <texture type="2d" name="benchy_tex" builtin="flat" rgb1="1 1 1" width="256" height="256"/>
     <material name="benchy_mat" texture="benchy_tex" specular="0.3" shininess="0.3"/>
-    <material name="wood_disk" rgba="0.87 0.78 0.62 1" specular="0.1" shininess="0.1"/>
+    <material name="wood_disk" rgba="0.84 0.78 0.66 1" specular="0.1" shininess="0.1"/>
     <!-- meshdir="assets" (from so101.xml) resolves relative to THIS file's
          dir, so benchy at assets/benchy needs ../../. Collision pieces
          are a generated CoACD decomposition (convert_benchy.py): a single
@@ -63,8 +66,13 @@
   </contact>
 
   <worldbody>
-    <light pos="0.2 0 1.5" dir="0 0 -1" directional="true" diffuse="0.45 0.45 0.45"/>
-    <light pos="0.6 0.4 0.8" dir="-0.4 -0.4 -0.8" diffuse="0.25 0.25 0.25"/>
+    <!-- Named so the appearance jitter can address them: "sun" is the
+         window daylight (direction/intensity/temperature jittered per
+         reset), "fill" a weak bounce. -->
+    <light name="sun" pos="0.2 0 1.5" dir="0 0 -1" directional="true"
+      diffuse="0.45 0.45 0.45"/>
+    <light name="fill" pos="0.6 0.4 0.8" dir="-0.4 -0.4 -0.8"
+      diffuse="0.23 0.23 0.23"/>
     <!-- Rig geometry (owner-measured): 1 m x 2.4 m table; both arms on
          the short (1 m, along y) edge; follower base = origin, 28 cm
          from the +y corner; leader 25 cm along -y; table extends 2.4 m
@@ -72,7 +80,7 @@
          rear face (measured from the model: x = -0.056) IS the table
          edge. -->
     <geom name="table" type="box" size="1.2 0.5 0.02" pos="1.144 -0.22 -0.02" material="tabletop"/>
-    <geom name="room_floor" size="0 0 0.05" pos="0 0 -0.8" type="plane" rgba="0.55 0.55 0.58 1"/>
+    <geom name="room_floor" size="0 0 0.05" pos="0 0 -0.8" type="plane" rgba="0.58 0.56 0.53 1"/>
 
     <!-- "front" rig camera: on a rectangular pole between the two arms,
          lens 56 cm above the table, pitched 20 deg off vertical into the
@@ -81,24 +89,40 @@
          the table like the arms' clamps: its rear face flush with the
          edge (x = -0.056), body over the table. Lens on the pole's
          front face. -->
-    <geom name="camera_pole" type="box" size="0.015 0.02 0.28" pos="-0.041 -0.125 0.28"
+    <geom name="camera_pole" type="box" size="0.015 0.02 0.265" pos="-0.041 -0.125 0.265"
       contype="0" conaffinity="0" rgba="0.2 0.2 0.2 1"/>
     <!-- fovy: the modules are "130 deg wide-angle" 1080p UVC cams, but
          that spec is the 16:9 diagonal - the rig captures 4:3 640x480,
          a heavy center crop. Disk pixel-size in the real frame implies
          an effective vertical FOV near 48 deg. -->
     <camera name="top_cam" pos="-0.02 -0.125 0.555"
-      xyaxes="0 -1 0 0.9397 0 0.3420" fovy="52"/>
+      xyaxes="0 -1 0 0.9063 0 0.4226" fovy="55"/>
 
     <!-- Beech disk, ~8 cm like the real one. -->
     <geom name="disk" type="cylinder" size="0.04 0.006" pos="0.22 0.11 0.006" material="wood_disk"/>
 
-    <!-- Stand-ins for the persistent clutter in the rig frames. -->
-    <geom name="mouse" type="ellipsoid" size="0.032 0.055 0.02" pos="0.40 -0.22 0.02"
-      euler="0 0 0.4" rgba="0.35 0.36 0.38 1"/>
-    <body name="mug" pos="0.48 -0.02 0.045">
-      <geom name="mug" type="cylinder" size="0.042 0.045" rgba="0.92 0.91 0.88 1"/>
-    </body>
+    <!-- Stand-ins for the persistent clutter in the rig frames, laid out
+         to the pinned real_v2 top frames: dark mouse up-table right of
+         center, white ceramic mug up-table left of it, the owner laptop
+         entering the image-right (-y) edge, the servo-driver PCB between
+         the arms. All contype 0: appearance only. -->
+    <geom name="mouse" type="ellipsoid" size="0.030 0.045 0.018" pos="0.50 -0.085 0.018"
+      contype="0" conaffinity="0" euler="0 0 0.35" rgba="0.22 0.23 0.25 1"/>
+    <geom name="mug" type="cylinder" size="0.041 0.048" pos="0.50 0.055 0.048"
+      contype="0" conaffinity="0" rgba="0.93 0.92 0.89 1"/>
+    <geom name="laptop" type="box" size="0.16 0.11 0.008" pos="0.30 -0.52 0.008"
+      contype="0" conaffinity="0" euler="0 0 0.15" rgba="0.13 0.14 0.16 1"/>
+    <geom name="pcb" type="box" size="0.048 0.030 0.002" pos="0.10 -0.035 0.002"
+      contype="0" conaffinity="0" euler="0 0 0.2" rgba="0.10 0.12 0.10 1"/>
+    <!-- Background band past the table's visible periphery (only in view
+         once the fisheye render style lands): gray office chairs and the
+         yellow floor bag the real frames show at the edges. -->
+    <geom name="chair_a" type="box" size="0.22 0.25 0.30" pos="1.9 0.35 -0.5"
+      contype="0" conaffinity="0" rgba="0.45 0.46 0.48 1"/>
+    <geom name="chair_b" type="box" size="0.22 0.25 0.28" pos="2.0 -0.75 -0.52"
+      contype="0" conaffinity="0" rgba="0.50 0.50 0.52 1"/>
+    <geom name="floor_bag" type="box" size="0.15 0.10 0.12" pos="0.90 0.75 -0.68"
+      contype="0" conaffinity="0" euler="0 0 0.5" rgba="0.82 0.68 0.20 1"/>
 
     <!-- The teleop leader arm: 25 cm along -y from the follower, same
          edge, same facing; joints posed raised per reset (the operator's

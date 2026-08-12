@@ -336,6 +336,28 @@ the engagement/direction split is the finding.
   ordering read auto-skipped — rung arms killed by the phase-2
   amendment)
 
+## Sim visual matching v1 — appearance pass + probe re-reads ([pre-reg](posts/2026-08-12-prereg-sim-visual-matching.md), [results](posts/2026-08-12-sim-visual-matching-results.md), 08-12)
+
+Scene rebuild (real table texture, clutter layout, wrist-cam re-pose,
+fisheye remap, color grade, sensor emulation, per-reset appearance
+jitter) shipped as `render_style="v1"`; physics oracle-pinned
+bit-identical. Registered bar (top-cam 5-NN AUROC 0.890 → ≤0.790 on
+the reset-render probe) **missed**: best 0.874, final 0.876. Wrist
+responded to the camera re-pose (0.835 → 0.786 scene-only) then
+regressed under fisheye+grade (0.900). Sim stays ~10× too homogeneous
+at the encoder; lighting jitter moves per-seed distance only ~3%.
+Named next lever: real-frame inpainting (SIMPLER-RT style).
+
+- [v0-render baseline](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_visual_match_v0render.json)
+  · [scene](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_visual_match_v1scene.json)
+  · [fisheye](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_visual_match_v1fisheye.json)
+  · [grade](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_visual_match_v1grade.json)
+  · [sensor](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_visual_match_v1sensor.json)
+  · [sensitivity 20×5](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_visual_match_v1sensitivity.json)
+- before/after composites:
+  [top](https://mcobzarenco-fontaine-reports.static.hf.space/chart__sim_visual_match_top_before_after.png)
+  · [wrist](https://mcobzarenco-fontaine-reports.static.hf.space/chart__sim_visual_match_wrist_before_after.png)
+
 ## Encoder OOD probe — sim-vs-real at the policy's eyes (rides the [sim100 pre-reg](posts/2026-08-11-prereg-sim-policy-eval-100seeds.md), owner ask 01:11Z 08-12)
 
 Sim frames (banked er60k-arm rollouts) vs real rig frames through the

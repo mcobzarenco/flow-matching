@@ -23,6 +23,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import ClassVar
 
 import mujoco
 import numpy as np
@@ -97,12 +98,23 @@ class SimObservation:
 class SO101Sim:
     """Seeded, deterministic-per-seed SO-101 pick-place environment."""
 
-    def __init__(self, width: int = 640, height: int = 480) -> None:
+    def __init__(
+        self,
+        width: int = 640,
+        height: int = 480,
+        render_style: str = "v1",
+    ) -> None:
+        if render_style not in ("v0", "v1"):
+            raise ValueError(f"render_style {render_style!r} not in ('v0', 'v1')")
+        self.render_style = render_style
         self.model = mujoco.MjModel.from_xml_path(str(SCENE_PATH))
         self._widen_joint_limits()
         self._apply_servo_sysid()
         self.data = mujoco.MjData(self.model)
-        self.renderer = mujoco.Renderer(self.model, height=height, width=width)
+        # Lazy: constructed on first observe() — physics-only consumers
+        # (and GL-less test environments) never pay for a GL context.
+        self._render_size = (height, width)
+        self._renderer: mujoco.Renderer | None = None
         self._joint_qpos = np.array(
             [self.model.joint(name).qposadr[0] for name in JOINTS],
         )
@@ -115,6 +127,15 @@ class SO101Sim:
         self._benchy_body = self.model.body("benchy").id
         self._benchy_qpos = self.model.joint("benchy_free").qposadr[0]
         self._benchy_mat = self.model.geom("benchy_visual").matid[0]
+        self._table_mat = self.model.geom("table").matid[0]
+        # Appearance-jitter baselines: jitter multiplies/offsets these
+        # stored scene values, never the (already-jittered) live ones.
+        self._sun = self.model.light("sun").id
+        self._fill = self.model.light("fill").id
+        self._base_sun_diffuse = self.model.light_diffuse[self._sun].copy()
+        self._base_sun_dir = self.model.light_dir[self._sun].copy()
+        self._base_fill_diffuse = self.model.light_diffuse[self._fill].copy()
+        self._base_table_rgba = self.model.mat_rgba[self._table_mat].copy()
         self._leader_actuators = np.array(
             [self.model.actuator(f"leader-{name}").id for name in JOINTS],
         )
@@ -124,6 +145,10 @@ class SO101Sim:
         self.disk_center: tuple[float, float] = (float(disk.pos[0]), float(disk.pos[1]))
         self.disk_radius: float = float(disk.size[0])
         self._recolor_arm()
+        self._repose_wrist_cam()
+        self._noise_rng = np.random.default_rng(0)  # re-seeded per reset
+        if self.render_style == "v1":
+            self._init_fisheye(width, height)
 
     def _widen_joint_limits(self) -> None:
         """Menagerie's shoulder_lift (+-100 deg) and elbow_flex (+-96.8)
@@ -161,6 +186,89 @@ class SO101Sim:
                 self.model.dof_frictionloss[dof] = SERVO_SYSID["frictionloss"]
                 self.model.dof_armature[dof] = SERVO_SYSID["armature"]
 
+    def _repose_wrist_cam(self) -> None:
+        """Menagerie's wrist_cam does not match the rig's bracket view:
+        its image-right is world +y at the home pose, which puts the
+        orange moving jaw on the image-RIGHT — the real wrist frames
+        show it on the LEFT, looking from above/behind the wrist over
+        the jaw tips at the table. Re-pose at load (runtime, vendored
+        XML untouched): mount-local pose computed from the settled home
+        pose as a lookat — camera at the wrist top (world ~(0.096,
+        -0.004, 0.160) at home), looking ~55 deg below horizontal past
+        the jaw tips at the table ahead, image-right = world -y — and
+        the 16:9 sensor model swapped for the top cam's fovy (the rig
+        captures 4:3 640x480 center crops on both modules)."""
+        for prefix in ("", "leader-"):
+            cam = self.model.camera(prefix + "wrist_cam")
+            cam.pos[:] = (0.00406, -0.01253, 0.06089)
+            cam.quat[:] = (-0.23797, -0.07383, 0.11404, 0.96172)
+            self.model.cam_sensorsize[cam.id] = 0.0
+            cam.fovy[0] = 52.0
+
+    # v1 render style (visual matching, prereg 2026-08-12): the rig's
+    # cameras are 130-deg wide-angle modules center-cropped to 4:3 —
+    # straight table planks visibly bow in every real frame, and the
+    # frame periphery holds content a pinhole cannot see. The sim
+    # renders a wider pinhole source, then remaps it through a
+    # center-matched equidistant fisheye: output radius r shows the ray
+    # at angle theta = r / F_DIST, with F_DIST equal to the pinhole
+    # focal of the previously-matched 52-deg view — so magnification at
+    # the image center is unchanged and distortion grows toward the
+    # edges like the real lens.
+    V1_SRC_FOVY = 72.0
+    V1_CENTER_FOVY = 52.0
+    # Fixed per-channel affine grade (out = in * gain + bias), computed
+    # once per camera from 25 v1 fisheye reset renders vs the pinned 150
+    # real_v2 reference frames (global per-channel mean/std match). The
+    # rig modules auto-white-balance the warm wood to near-neutral and
+    # compress contrast; the raw render does neither.
+    V1_GRADE: ClassVar[dict[str, tuple[tuple[float, ...], tuple[float, ...]]]] = {
+        "top": ((0.8149, 0.8607, 0.8889), (30.61, 26.29, 29.44)),
+        "wrist": ((0.7432, 0.7720, 0.8600), (57.88, 54.04, 47.57)),
+    }
+    # Sensor emulation (amendment to the registered post-process axes,
+    # labeled in the results post): the real modules' optics soften
+    # CG-crisp edges and every real frame carries sensor noise; raw
+    # renders have neither. Gaussian PSF sigma in px; noise sigma in
+    # 8-bit counts, drawn from the appearance RNG (deterministic per
+    # reset seed, fresh each tick).
+    V1_BLUR_SIGMA = 0.7
+    V1_NOISE_SIGMA = 2.0
+
+    def _init_fisheye(self, width: int, height: int) -> None:
+        """Precompute the bilinear remap grid (output pixel -> source
+        pinhole pixel) shared by both cameras, and widen both cameras'
+        fovy to the source value."""
+        for name in ("top_cam", "wrist_cam"):
+            self.model.camera(name).fovy[0] = self.V1_SRC_FOVY
+        f_dist = (height / 2.0) / np.tan(np.deg2rad(self.V1_CENTER_FOVY) / 2.0)
+        f_src = (height / 2.0) / np.tan(np.deg2rad(self.V1_SRC_FOVY) / 2.0)
+        v, u = np.mgrid[0:height, 0:width].astype(np.float64)
+        x = u - (width - 1) / 2.0
+        y = v - (height - 1) / 2.0
+        r_out = np.hypot(x, y)
+        theta = r_out / f_dist
+        # Rays past the source's diagonal never occur: corner theta
+        # (~47 deg) stays inside the 72-deg-fovy source diagonal (~50).
+        with np.errstate(invalid="ignore", divide="ignore"):
+            scale = np.where(r_out > 0, f_src * np.tan(theta) / r_out, f_src / f_dist)
+        sx = x * scale + (width - 1) / 2.0
+        sy = y * scale + (height - 1) / 2.0
+        x0 = np.clip(np.floor(sx).astype(np.int64), 0, width - 2)
+        y0 = np.clip(np.floor(sy).astype(np.int64), 0, height - 2)
+        wx = np.clip(sx - x0, 0.0, 1.0)[..., None]
+        wy = np.clip(sy - y0, 0.0, 1.0)[..., None]
+        self._fisheye = (x0, y0, wx, wy)
+
+    def _apply_fisheye(self, frame: np.ndarray) -> np.ndarray:
+        """Bilinear remap of a source pinhole render into the distorted
+        output — [H, W, 3] uint8 in, same out."""
+        x0, y0, wx, wy = self._fisheye
+        src = frame.astype(np.float64)
+        top = src[y0, x0] * (1 - wx) + src[y0, x0 + 1] * wx
+        bottom = src[y0 + 1, x0] * (1 - wx) + src[y0 + 1, x0 + 1] * wx
+        return np.clip(top * (1 - wy) + bottom * wy, 0, 255).astype(np.uint8)
+
     def _recolor_arm(self) -> None:
         """Menagerie ships the yellow-print arm; the rig's are black, and
         only the FOLLOWER has the bright orange moving jaw (owner-confirmed,
@@ -176,9 +284,10 @@ class SO101Sim:
             follower_jaw = "moving_jaw" in name and not name.startswith("leader-")
             self.model.mat_rgba[index] = orange if follower_jaw else black
 
-    def reset(self, seed: int) -> SimObservation:
-        """Home the arm, place benchy at a seeded pose, randomize its
-        color, settle physics until contacts are quiet.
+    def reset(self, seed: int, appearance_seed: int | None = None) -> SimObservation:
+        """Home the arm, place benchy at a seeded pose, randomize
+        appearance (benchy tint, lighting), settle physics until
+        contacts are quiet.
 
         The arm settles FIRST, with the benchy parked outside its sweep
         (mj_resetData lays the arm out over the workspace, and driving up
@@ -187,8 +296,17 @@ class SO101Sim:
         pose only after the arm is home, then given a short settle of its
         own. `reset_strike_contacts` counts gripper-benchy contacts seen
         during the whole reset - 0 for every seed is an eval-protocol
-        gate."""
+        gate.
+
+        Appearance draws come from their own RNG stream
+        (``appearance_seed``, defaulting to ``seed``): spawn draws keep
+        the original stream and order, so seed -> benchy pose -> settled
+        qpos is bit-identical across appearance seeds (oracle-pinned in
+        tests/test_sim_appearance.py)."""
         rng = np.random.default_rng(seed)
+        looks = np.random.default_rng(
+            seed if appearance_seed is None else appearance_seed,
+        )
         mujoco.mj_resetData(self.model, self.data)
 
         x = rng.uniform(*SPAWN_X)
@@ -197,15 +315,19 @@ class SO101Sim:
         quat = (np.cos(yaw / 2), 0.0, 0.0, np.sin(yaw / 2))
         self.reset_spawn_xy: tuple[float, float] = (float(x), float(y))
 
-        # Cheap texture randomization: tint the flat-white texture via the
-        # material color (full tex_data painting is the follow-up). Biased
-        # light like the real light-gray print, with occasional color.
-        base = rng.uniform(0.55, 0.95)
+        # Benchy tint: the real print is a consistent light gray; keep a
+        # narrow band around it with a mild per-channel cast (the old
+        # wide color draw made the boat a random-colored outlier).
+        base = looks.uniform(0.72, 0.92)
         rgba = np.append(
-            np.clip(base + rng.uniform(-0.25, 0.1, size=3), 0.05, 1.0),
+            np.clip(base + looks.uniform(-0.06, 0.04, size=3), 0.05, 1.0),
             1.0,
         )
         self.model.mat_rgba[self._benchy_mat] = rgba
+        self._jitter_appearance(looks)
+        # Sensor-noise stream for this episode: seeded from the
+        # appearance stream, fresh draw every observe().
+        self._noise_rng = np.random.default_rng(looks.integers(2**63))
 
         # Park the benchy far down-table while the arm settles.
         adr = self._benchy_qpos
@@ -227,6 +349,39 @@ class SO101Sim:
         self.data.qvel[vadr : vadr + 6] = 0.0
         self._settle_counting_strikes(30)
         return self.observe()
+
+    def _jitter_appearance(self, rng: np.random.Generator) -> None:
+        """Per-reset lighting/tone variation, matched to the real frames'
+        episode-to-episode spread (window daylight: direction, intensity,
+        color temperature). The encoder OOD probe measured sim renders 7x
+        too homogeneous — this is the diversity axis. Multiplies the
+        stored scene baselines, so repeated resets never compound."""
+        # Window daylight direction: jitter the sun's tilt around its
+        # baseline (straight down) — a gentle off-vertical swing moves
+        # highlights/shading like the real window light does.
+        tilt = rng.uniform(0.0, 0.45)
+        azimuth = rng.uniform(-np.pi, np.pi)
+        direction = np.array(
+            [
+                np.sin(tilt) * np.cos(azimuth),
+                np.sin(tilt) * np.sin(azimuth),
+                -np.cos(tilt),
+            ],
+        )
+        self.model.light_dir[self._sun] = direction
+        # Intensity and color temperature: warm <-> cool around baseline.
+        gain = rng.uniform(0.85, 1.18)
+        warmth = rng.uniform(-0.05, 0.07)
+        temp = np.array([1.0 + warmth, 1.0, 1.0 - warmth])
+        self.model.light_diffuse[self._sun] = self._base_sun_diffuse * gain * temp
+        self.model.light_diffuse[self._fill] = self._base_fill_diffuse * rng.uniform(
+            0.8,
+            1.2,
+        )
+        # Table tone rides the same daylight variation slightly.
+        table = self._base_table_rgba.copy()
+        table[:3] *= rng.uniform(0.94, 1.06)
+        self.model.mat_rgba[self._table_mat] = np.clip(table, 0.0, 1.0)
 
     def _settle_counting_strikes(self, nstep: int) -> None:
         """Step one-by-one, tallying arm-benchy contacts into
@@ -259,13 +414,46 @@ class SO101Sim:
         mujoco.mj_step(self.model, self.data, nstep=PHYSICS_STEPS_PER_TICK)
         return self.observe()
 
+    @property
+    def renderer(self) -> mujoco.Renderer:
+        if self._renderer is None:
+            height, width = self._render_size
+            self._renderer = mujoco.Renderer(self.model, height=height, width=width)
+        return self._renderer
+
     def observe(self) -> SimObservation:
         state = np.rad2deg(self.data.qpos[self._joint_qpos])
         self.renderer.update_scene(self.data, camera="top_cam")
         top = self.renderer.render()
         self.renderer.update_scene(self.data, camera="wrist_cam")
         wrist = self.renderer.render()
+        if self.render_style == "v1":
+            top = self._grade(self._apply_fisheye(top), "top")
+            wrist = self._grade(self._apply_fisheye(wrist), "wrist")
         return SimObservation(top=top, wrist=wrist, state=state)
+
+    def _grade(self, frame: np.ndarray, camera: str) -> np.ndarray:
+        gain, bias = self.V1_GRADE[camera]
+        graded = frame.astype(np.float64) * gain + bias
+        graded = self._blur(graded)
+        graded += self._noise_rng.normal(0.0, self.V1_NOISE_SIGMA, graded.shape)
+        return np.clip(graded, 0, 255).astype(np.uint8)
+
+    def _blur(self, frame: np.ndarray) -> np.ndarray:
+        """Separable Gaussian PSF, [H, W, 3] float in/out."""
+        radius = max(1, int(np.ceil(2.5 * self.V1_BLUR_SIGMA)))
+        taps = np.arange(-radius, radius + 1, dtype=np.float64)
+        kernel = np.exp(-0.5 * (taps / self.V1_BLUR_SIGMA) ** 2)
+        kernel /= kernel.sum()
+        padded = np.pad(frame, ((radius, radius), (0, 0), (0, 0)), mode="edge")
+        rows = np.zeros_like(frame)
+        for i, k in enumerate(kernel):
+            rows += padded[i : i + frame.shape[0]] * k
+        padded = np.pad(rows, ((0, 0), (radius, radius), (0, 0)), mode="edge")
+        out = np.zeros_like(frame)
+        for i, k in enumerate(kernel):
+            out += padded[:, i : i + frame.shape[1]] * k
+        return out
 
     def benchy_pose(self) -> tuple[np.ndarray, float]:
         """Benchy base position [3] and upright score (world-z of the

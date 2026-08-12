@@ -96,6 +96,23 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="also write the selected frames as PNGs (chart/gallery fuel)",
     )
+    parser.add_argument(
+        "--render-resets",
+        type=int,
+        default=None,
+        metavar="N",
+        help="sim source = live settled reset frames of seeds 0..N-1 "
+        "(the visual-matching iteration read; needs MUJOCO_GL=egl) "
+        "instead of the banked rollout videos",
+    )
+    parser.add_argument(
+        "--appearance-draws",
+        type=int,
+        default=1,
+        metavar="K",
+        help="with --render-resets: render each seed K times with "
+        "appearance seed 1000*draw+seed (texture-sensitivity read)",
+    )
     return parser.parse_args()
 
 
@@ -201,6 +218,32 @@ def auroc(positive: np.ndarray, negative: np.ndarray) -> float:
     return float(u / (len(positive) * len(negative)))
 
 
+def rendered_reset_frames(
+    n_seeds: int,
+    appearance_draws: int,
+) -> dict[str, list[np.ndarray]]:
+    """Live settled reset frames, seeds 0..n_seeds-1 (x appearance
+    draws), through the exact SO101Sim.observe() path the policy sees.
+    Frame order: seed-major, draw-minor."""
+    from sim.so101_sim import SO101Sim
+
+    sim = SO101Sim()
+    per_camera: dict[str, list[np.ndarray]] = {name: [] for name in CAMERAS}
+    for seed in range(n_seeds):
+        for draw in range(appearance_draws):
+            kwargs = (
+                {}
+                if appearance_draws == 1
+                else {
+                    "appearance_seed": 1000 * draw + seed,
+                }
+            )
+            obs = sim.reset(seed, **kwargs)
+            per_camera["top"].append(obs.top)
+            per_camera["wrist"].append(obs.wrist)
+    return per_camera
+
+
 def main() -> int:
     args = parse_args()
     model, info = from_checkpoint(args.checkpoint, device="cuda")
@@ -208,7 +251,10 @@ def main() -> int:
     del model.decoder  # inference on the vision trunk only
 
     groups: dict[str, dict[str, list[np.ndarray]]] = {}
-    sim = sim_frames(args.sim_dir)
+    if args.render_resets is not None:
+        sim = rendered_reset_frames(args.render_resets, args.appearance_draws)
+    else:
+        sim = sim_frames(args.sim_dir)
     for name in CAMERAS:
         groups.setdefault("sim", {})[name] = sim[name]
     for group, root, count in (
@@ -256,7 +302,8 @@ def main() -> int:
 
         d_held, d_clean, d_sim = dist(held), dist(emb["real_clean"]), dist(emb["sim"])
         k_held, k_clean, k_sim = knn5(held), knn5(emb["real_clean"]), knn5(emb["sim"])
-        ticks = np.array([SIM_TICKS[i % len(SIM_TICKS)] for i in range(len(d_sim))])
+        sim_ticks = (0,) if args.render_resets is not None else SIM_TICKS
+        ticks = np.array([sim_ticks[i % len(sim_ticks)] for i in range(len(d_sim))])
         knn = {
             "real_heldout": {"mean": float(k_held.mean()), "std": float(k_held.std())},
             "real_clean": {"mean": float(k_clean.mean()), "std": float(k_clean.std())},
@@ -297,7 +344,7 @@ def main() -> int:
                     "mean": float(d_sim[ticks == tick].mean()),
                     "std": float(d_sim[ticks == tick].std()),
                 }
-                for tick in SIM_TICKS
+                for tick in sim_ticks
             },
             "distances": {
                 "real_heldout": [float(f"{v:.3e}") for v in d_held],
@@ -333,8 +380,15 @@ def main() -> int:
             "bf16 eval mount",
             "distance": "1 - cosine to the L2-normalized real_v2 "
             "reference-half centroid (first 150 strided frames)",
-            "sim_source": str(args.sim_dir),
-            "sim_ticks": list(SIM_TICKS),
+            "sim_source": (
+                f"live reset renders, seeds 0..{args.render_resets - 1}"
+                f" x {args.appearance_draws} appearance draws"
+                if args.render_resets is not None
+                else str(args.sim_dir)
+            ),
+            "sim_ticks": list(
+                (0,) if args.render_resets is not None else SIM_TICKS,
+            ),
             "real_v2": {
                 "root": str(args.v2_root),
                 "n": N_REAL_V2,

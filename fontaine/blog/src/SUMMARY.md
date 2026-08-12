@@ -255,3 +255,4 @@
   - [2026-08-11 — Pre-registration: 100-seed sim policy eval — er_60k in the SO-101 sim](posts/2026-08-11-prereg-sim-policy-eval-100seeds.md)
   - [2026-08-12 — 100-seed sim eval: 0/500 successes, but the sim already separates policy families](posts/2026-08-12-sim100-results.md)
   - [2026-08-12 — Pre-registration: sim visual matching v1 — closing the appearance gap at the policy's eyes](posts/2026-08-12-prereg-sim-visual-matching.md)
+  - [2026-08-12 — Sim visual matching v1: the sim looks real now — the encoder still isn't fooled](posts/2026-08-12-sim-visual-matching-results.md)
