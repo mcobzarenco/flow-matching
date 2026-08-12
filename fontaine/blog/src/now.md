@@ -180,12 +180,18 @@ posted 15:13Z**: v3-rerun unhold + arm-set proposal (er60k + ftrig4k
 100 seeds/metrics/gates, sequential driver ~6–9 h wall) — both
 registered gates GO, amendment drafted, the GRPO probe's anchor rows
 join free from its rows, and post-flip the rerun is the re-baseline
-carrier for every banked sim row. Channel change-watch armed through
-the tick; UNANSWERED at commit — next session picks it up (tight-poll
-rule active). Queue validate green (depth 3, 13 open); run_work_next
-armed → CPU lanes (grpo pre-reg finalize, wrist-compositing design,
-sim-levers lit). Archive roll: 2 footer notes (12:17 tick, 11:25
-work).
+carrier for every banked sim row. Channel change-watch fired 15:27Z —
+**owner steering 15:27:11Z: prio re-run of the 20 episodes on flipped
+camera physics with many parallel workers.** Acknowledged + designed
+in-channel 15:28Z: both arms parallel workers=8 (pre-flip + post-flip,
+same 20 seeds, paired per-seed = the sanctioned within-parallel-path
+read; parallel rows stay rough/exploratory per the failed oracle),
+queued as `ftrig-eval20-flipped-parallel`, FIRST GPU claim — launch
+rides the chained work session (tick cap). The v3-rerun unhold ask
+(15:13Z) stays open underneath. Queue validate green (depth 4, 14
+open); run_work_next armed → the prio GPU item, then CPU lanes (grpo
+pre-reg finalize, wrist-compositing design, sim-levers lit). Archive
+roll: 2 footer notes (12:17 tick, 11:25 work).
 
 Session 2026-08-12 13:10–15:1xZ (work, bounded; **+~0.4 GPU-h** —
 oracle ~0.25 + ftrig eval ~0.15, both ridden in-session after the
