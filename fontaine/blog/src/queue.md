@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-12T15:00:58Z
+**Updated:** 2026-08-12T15:08:06Z
 
 **Depth call:** depth 4 open at 11:4xZ 08-12: sim-parallel-rollouts (gpu-local, owner-sequenced first on release) + 2 lit items still open; grpo-on-sim-design-research CLOSED this session (memo posted), successor grpo-signal-probe is owner_hold pending memo review.
 
-**14 open** (Live 0 · Queued 3 · Blocked 11 · Done 131)
+**13 open** (Live 0 · Queued 3 · Blocked 10 · Done 132)
 
 ## 🔴 Live (0)
 
@@ -60,23 +60,9 @@ Lit slice (owner-called 09:23Z 08-12): sim-improvement levers beyond shipped pla
 
 ---
 
-## 🟡 Blocked (11)
+## 🟡 Blocked (10)
 
 *waiting on a prerequisite, a boundary, or the owner*
-
-**`sim-wrist-bracket-flip`** · `cpu` · **⛔ owner hold**
-
-Flip the wrist camera-mount GEOMETRY to the real bracket-up side (owner spot 14:45Z 08-12 from the ftrig videos; probe-confirmed 15:00Z): the mount body (visual mesh + camera_box1/2 collision geoms + 12 g mass) sits 180 deg about…
-
-**boundary:** Queued 15:0xZ 08-12, owner_hold: PHYSICS RE-BASELINE - flipping changes dynamics for every banked sim row (same class as the v3 rerun amendment); owner asked in-channel 15:00Z whether to execute next session. On unhold: fix + verify + short results post, then fold the re-baseline into the sim100 v3 rerun plan (one re-baseline, not two).
-
-<details><summary>full record</summary>
-
-Flip the wrist camera-mount GEOMETRY to the real bracket-up side (owner spot 14:45Z 08-12 from the ftrig videos; probe-confirmed 15:00Z): the mount body (visual mesh + camera_box1/2 collision geoms + 12 g mass) sits 180 deg about the roll axis from the real assembly - at settled home it hangs 40 mm above the table on the JAW side; over the 26 reference episodes' recorded real poses its volume is below-table on 31.9% of frames (box2 center down to -46 mm), and dynamic replay of ep 21 grinds bracket-table contact on 22% of ticks. Sized: bracket-collisions-off replay control loss 0.0831 -&gt; 0.0751 vs floor 0.0701 (~62% of the servo-replay gap); elbow residual 3.78-&gt;3.37, wrist_flex 1.83-&gt;1.15. FIX = rotate the mount to the real side (not collision-delete: the real bracket can hit things on ITS side), runtime like _repose_wrist_cam, vendored XML untouched; camera view pose must stay pinned (already re-posed correctly). Verify: kinematic sweep ~0% below-table, replay control loss re-run (expect &lt;=~0.075), reset-strike 0/100 + settle determinism + 26.7ms tick oracles green.
-
-</details>
-
----
 
 **`sim100-v1-rerun`** · `gpu-local` · **⛔ owner hold**
 
@@ -216,9 +202,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (131)
+## ✅ Done (132)
 
 *closed — the full record stays in each fold*
+
+**`sim-wrist-bracket-flip`** · `cpu`
+
+Flip the wrist camera-mount GEOMETRY to the real bracket-up side (owner spot 14:45Z 08-12 from the ftrig videos; probe-confirmed 15:00Z): the mount body (visual mesh + camera_box1/2 collision geoms + 12 g mass) sits 180 deg about…
+
+**boundary:** Queued 15:0xZ 08-12, owner_hold: PHYSICS RE-BASELINE - flipping changes dynamics for every banked sim row (same class as the v3 rerun amendment); owner asked in-channel 15:00Z whether to execute next session. On unhold: fix + verify + short results post, then fold the re-baseline into the sim100 v3 rerun plan (one re-baseline, not two). | OWNER GO 15:01Z ('Let's do asap') -&gt; EXECUTED same session: _flip_camera_mount() at load (180 deg about mount-local x, both arms, geoms only - camera view bit-unchanged at world [0.15,-0,0.15]). VERIFIED: kinematic sweep below-table 31.9% -&gt; 1.4% bounding-conservative (center never below, min +5.3 mm; box1 0.00%); home bracket now 137/157 mm up (was 60/40 down); reset strikes 0/100; settle determinism + banked-spawn oracles green (7/7 EGL); physics tick 1.5 ms. REPLAY CONTROL LOSS RE-RUN: pinned L 0.0831 -&gt; 0.0751 vs floor 0.0701 (gap over floor -62%, exactly the counterfactual - the real-side bracket adds no new interference on the 26 reference episodes); arm MAE 1.88 -&gt; 1.50 deg. PHYSICS RE-BASELINE BOUNDARY: banked sim rows = pre-flip physics; rows from this commit on = flipped-mount physics; fold into the v3-rerun re-baseline. Known residual: body inertia still compiled with the 12 g mount on the old side (runtime geom moves don't recompile inertia).
+
+<details><summary>full record</summary>
+
+Flip the wrist camera-mount GEOMETRY to the real bracket-up side (owner spot 14:45Z 08-12 from the ftrig videos; probe-confirmed 15:00Z): the mount body (visual mesh + camera_box1/2 collision geoms + 12 g mass) sits 180 deg about the roll axis from the real assembly - at settled home it hangs 40 mm above the table on the JAW side; over the 26 reference episodes' recorded real poses its volume is below-table on 31.9% of frames (box2 center down to -46 mm), and dynamic replay of ep 21 grinds bracket-table contact on 22% of ticks. Sized: bracket-collisions-off replay control loss 0.0831 -&gt; 0.0751 vs floor 0.0701 (~62% of the servo-replay gap); elbow residual 3.78-&gt;3.37, wrist_flex 1.83-&gt;1.15. FIX = rotate the mount to the real side (not collision-delete: the real bracket can hit things on ITS side), runtime like _repose_wrist_cam, vendored XML untouched; camera view pose must stay pinned (already re-posed correctly). Verify: kinematic sweep ~0% below-table, replay control loss re-run (expect &lt;=~0.075), reset-strike 0/100 + settle determinism + 26.7ms tick oracles green.
+
+</details>
+
+---
 
 **`grpo-on-sim-design-research`** · `cpu`
 
