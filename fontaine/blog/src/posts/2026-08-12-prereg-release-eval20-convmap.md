@@ -180,3 +180,60 @@ existing `release_convmap` rows and the step-500/step-2000 arms).
 **The INERT claim gets explicitly re-dispositioned either way** —
 correction posted if lift sign changes the behavior, confirmation if
 not.
+
+### Amendment 1 results (2026-08-12 19:0xZ, same session)
+
+**Re-disposition: the INERT characterization is PARTIALLY OVERTURNED.**
+Under the official lift sign the release is *not* inert — it reaches
+down over the table toward the boat and makes contact on 2 of 20 seeds
+— but it remains task-incapable: **0/20 pickups on both arms**, median
+progress exactly 0.00, mean ≈ 0. The parent's flat 0.00×20 was an
+artifact of the wrong lift sign parking the arm off-task; the parent's
+*conclusion* (units are not the main blocker; scene/task grounding is)
+stands.
+
+Tripwires first (both arms): lift mirror (−1,+90) covers the release
+box at 7.5% uncovered vs the old +180's 27.9%; first-action arm mean
+2.62° (arm B) vs contract anchor 6.31° — the detector is sign-blind at
+rest, so it can't distinguish +180 from the mirror, but nothing flags.
+Arm A's wrist_roll-identity leg read 34.0° on wrist_roll (the known
+clamp signature); run anyway per the owner's call.
+
+![per-seed progress_final, official map vs parent](https://mcobzarenco-fontaine-reports.static.hf.space/ftrig_eval20_flip_parallel/release_officialmap_a/chart__release_officialmap_per_seed.png)
+
+| arm | mean cm | median | knock-aways | approaches ≥1 cm | best | worst |
+|---|---|---|---|---|---|---|
+| A: official map exactly (wrist identity) | −0.11 | 0.00 | 1 | 1 | +4.61 | −5.26 |
+| B: official + wrist_roll −90 | −0.09 | 0.00 | 1 | 2 | +1.25 | −3.06 |
+| parent: fitted map, lift +180 | 0.00 | 0.00 | 0 | 0 | +0.00 | −0.00 |
+
+- **Arm A seed 6**: directed reach to **1.4 cm** from the boat (wrist
+  camera ends looking straight at it), retreats without closing;
+  progress_final +4.61. Seed 16: sweeps through the boat, knock-away
+  −5.26 — **the boat was touched**, which never happened in 20×
+  parent episodes.
+- **A vs B (wrist_roll identity vs −90): NULL** — paired −0.02 CI95
+  [−0.75, +0.66], 11/20 exact ties. 20 seeds cannot separate the wrist
+  arms behaviorally; the official identity stays canonical (external
+  documentation), arm B's cleaner first-action (0.47° vs 34.0°) noted
+  as mechanism, not outcome.
+- **Paired vs the ftrig arms**: A−step2000 +0.35 [−0.55, +1.29],
+  B−step2000 +0.37 [−0.27, +1.08]; A−step500 −0.13 [−0.89, +0.62] —
+  all CI-include-0. The earlier bracket claim softens accordingly: the
+  unit-corrected base shows *occasional* scene-directed reaching
+  (1–2/20 approaches vs the rig fine-tune's 7/20), so 500–2000 ft
+  steps buy *more frequent* engagement, not engagement from zero.
+- **Instrument lesson (for the box)**: the pre-registered
+  `MIRROR_MARGIN=0.25` rule rejected a *real, externally documented*
+  mirror that also won on coverage (20.4 pt margin loss). Mirror
+  adjudication should carry a coverage tiebreak or an external-doc
+  override; our sign-carrying `--convmap-override` is the escape hatch.
+
+**Canonical shim going forward**: the official snippet map exactly —
+signs `1,-1,1,1,1,1`, offsets `0,90,90,0,0,0`.
+
+Artifacts: rows + 20 videos per arm on the reports Space
+([arm A](https://mcobzarenco-fontaine-reports.static.hf.space/ftrig_eval20_flip_parallel/release_officialmap_a/rows.json),
+[arm B](https://mcobzarenco-fontaine-reports.static.hf.space/ftrig_eval20_flip_parallel/release_officialmap_b/rows.json)).
+GPU spend ≈0.25 GPU-h (2× tripwires ~0.07 + 2×20-seed arms 0.18) of
+the ≤0.4 gate.
