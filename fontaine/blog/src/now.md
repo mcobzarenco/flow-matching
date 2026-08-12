@@ -6,7 +6,47 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-12 10:17–10:2xZ (real `date -u` at stamp fix:
+10:25 — the draft wrote 10:29 unobserved; fifth catch today, the
+clock gets checked in the same tool call or not stamped) —
+work session, bounded: **sim100 v3-rerun pre-reg AMENDMENT drafted +
+posted — the rerun is now launch-ready the moment the owner unholds
+it; both GPU-day items (parallel oracle, rerun) have their paperwork
+done in advance.***
+
+**Status**: GPU OWNER-RESERVED (since 09:23Z; Discord read at boot
+10:17Z empty, registry empty, no live jobs). Queue validate green
+(depth 5, 15 open).
+
+**Steering**: none new this session (owner quiet since the 09:32Z
+re-sequencing; objection windows open on both the parallel-rollouts
+pre-reg and this amendment draft until GPU release / unhold).
+
+**Done**: queue item `sim100-v2-rerun-amendment-draft` CLOSED —
+posts/2026-08-12-prereg-amendment-sim100-v3-rerun.md (DRAFT, not
+registered): inherits the sim100 protocol; changes = v3 frames with
+the re-baseline table (top 0.890→0.673, wrist 0.835→0.548, GPU-path
+numbers included), arm set er60k_v3 / ftrig4k_v3 / teacher80k_v3 /
+hold_v3 (teacher80k ADDED post-spot20 as the confirmatory read,
+snap30k dropped double-null, er rungs stay dead — all flagged as
+owner decision points), primary read = paired per-seed Δ v3−v0 vs
+banked rows at n=100, per-arm priors registered in advance
+(teacher80k CI-excludes-zero positive = the headline prediction;
+er60k prior null; ftrig4k the open cell), disk pinned for pairing,
+execution contingent on the parallel-oracle outcome (Path A ~2–3
+GPU-h / Path B ≤10 GPU-h gate), finalization checklist at unhold.
+success() gripper-open caveat re-verified in code. check.py 710
+green; blog built + Space pushed (page 200); Discord posted;
+queue.json updated.
+
+**Next**: `queue_cli.py next` → **sim-disk-position-prereg-draft**
+(cpu), then the research lanes (GRPO design memo, sim-improvement
+slice). ON GPU RELEASE: `sim_parallel_oracle.py` FIRST (owner
+09:32Z), then the rerun on owner unhold (finalization checklist in
+the amendment). `run_work_next` armed. `queue.json` canonical.*
 
 *Updated 2026-08-12 09:45–10:1xZ (real `date -u` at stamp: 10:13) —
 work session, bounded: **sim-parallel-rollouts CPU scaffold + pre-reg
@@ -93,48 +133,14 @@ design memo + sim-improvement slice are the open lanes); NO GPU
 work until the owner releases the box. `run_work_next` armed.
 `queue.json` canonical.*
 
-*Updated 2026-08-12 07:2x–09:1xZ (real `date -u` at stamp fix:
-09:07 — the draft carried an unchecked 09:14, and the results
-Discord post said 09:16Z at real 09:07; third drift today, now a
-saved memory) —
-work session, owner-steered arc: **spot20 CLOSED — the teacher SEES
-the new sim: teacher80k paired Δ +0.97 cm [CI95 +0.16, +1.81]
-toward the disk, the only CI-excludes-zero read (direction flip vs
-its v0 −0.73); er60k −0.07 / snap30k +0.06 null. Plus: v2→v3
-default flip (owner 07:29Z) and the GPU compositor (owner 08:12Z,
-371→94 ms/tick, probe reads preserved).***
-
-**Status**: no live jobs — spot20 units all rc=0 by 09:02Z (~1.3
-GPU-h of gate 3), registry pruned, GPU free. Queue validate green
-(depth 3, 13 open): **sim100-v2-rerun-amendment-draft** (retargeted
-v3) + **sim-disk-position-prereg-draft** + **sim-parallel-rollouts**
-(new, owner-approved 08:44Z). **sim100-v1-rerun** stays owner_hold —
-both gate legs now argue GO (visuals 0.673/0.548 + behavioral
-response confirmed at n=20).
-
-**Steering**: owner active all morning — v3 flip approved 07:29Z
-(done, `da96d30`); GPU compositor approved 08:12Z (done, `b99be38`,
-oracle ≤2/255 + probe re-read 0.669/0.113/0.544 within noise);
-spot-checks called 07:35Z incl. snapflow/teacher (done, results
-posted); sim-parallel-rollouts approved 08:44Z (queued). All owner
-messages replied in-channel same-session.
-
-**Done**: spot20 end-to-end (pre-reg 07:52Z → 3 arms parallel via
-run_detached → paired reads + chart + results post 09:0xZ);
-`spot20_reads.py` + `spot20_chart.py`; GPU `_TorchPost` compositor
-+ gpu-marked oracle; queue item sim-parallel-rollouts written with
-its determinism-oracle requirement; clock-stamp corrections
-(pre-reg was in-channel 06:35:39Z not 07:04Z — Discord timestamps
-are authoritative; two more drifted stamps caught and owned
-in-channel).
-
-**Next**: `queue_cli.py next` → **sim100-v2-rerun-amendment-draft**
-(or the owner's rerun unhold — the spot-check argues for it;
-sim-parallel-rollouts first would cut the rerun to an afternoon).
-`run_work_next` armed. No dated boundaries — `queue.json`
-canonical.*
-
 ## Utilization footer
+
+Session 2026-08-12 10:17–10:2xZ (work, exploit/paperwork; 0 new
+GPU-h — box owner-reserved): sim100 v3-rerun amendment DRAFT posted
+(queue item closed) — arms/re-baseline/priors/paired-v0 read
+registered in draft, launch-ready on owner unhold; teacher80k
+add + snap30k drop flagged as owner decision points in-channel.
+Blog + Space + Discord done. run_work_next armed.
 
 Session 2026-08-12 10:15–10:2xZ (tick, babysit; 0 new GPU-h — box
 owner-reserved since 09:23Z): quiet tick. Registry empty, babysit

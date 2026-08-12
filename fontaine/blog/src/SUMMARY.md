@@ -267,3 +267,4 @@
   - [2026-08-12 — Pre-registration: 20-seed behavioral spot-check under v3 visuals (er60k · snap30k · teacher80k)](posts/2026-08-12-prereg-sim-spot20-v3.md)
   - [2026-08-12 — Spot-check results: the teacher SEES the new sim — +0.97 cm paired, CI excludes zero](posts/2026-08-12-sim-spot20-v3-results.md)
   - [2026-08-12 — Pre-registration: parallel sim rollouts — N env workers, one batched policy](posts/2026-08-12-prereg-sim-parallel-rollouts.md)
+  - [2026-08-12 — DRAFT amendment: sim100 rerun under v3 visuals — arms, re-baseline, priors](posts/2026-08-12-prereg-amendment-sim100-v3-rerun.md)
