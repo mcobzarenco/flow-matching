@@ -260,3 +260,4 @@
   - [2026-08-12 — Sim visual matching v2: real-frame inpainting — the registered bar is MET](posts/2026-08-12-sim-visual-inpainting-results.md)
   - [2026-08-12 — Pre-registration: sim wrist-cam periphery re-tune under the v1 fisheye](posts/2026-08-12-prereg-sim-wrist-periphery.md)
   - [2026-08-12 — Sim wrist-cam periphery: bar smashed — wrist AUROC 0.900 → 0.548, inside the real spread](posts/2026-08-12-sim-wrist-periphery-results.md)
+  - [2026-08-12 — Pre-registration: sim content diversity v3 — per-episode plate bank + clutter-state draws](posts/2026-08-12-prereg-sim-content-diversity.md)
