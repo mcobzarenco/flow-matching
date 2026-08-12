@@ -237,3 +237,62 @@ Artifacts: rows + 20 videos per arm on the reports Space
 [arm B](https://mcobzarenco-fontaine-reports.static.hf.space/ftrig_eval20_flip_parallel/release_officialmap_b/rows.json)).
 GPU spend ≈0.25 GPU-h (2× tripwires ~0.07 + 2×20-seed arms 0.18) of
 the ≤0.4 gate.
+
+## Amendment 2: seed-6 30-second extension (registered 2026-08-12 19:53Z, pre-launch)
+
+Owner call 19:25Z (watched the arm-A seed-6 video: "a clear grab and
+lift — can we rerun just seed 6 with a longer time horizon; the idea
+was 30 seconds"): the eval-20 protocol above ran `--replans 15` × 30
+ticks = **15 s** of sim time, half the sim100 protocol's 30 replans =
+30 s. The owner's read is right — the seed-6 reach was cut off at half
+the intended budget.
+
+- **Arm**: arm A verbatim (release checkpoint, official snippet map
+  exactly), **seed 6 only**, same euler-10 decode, same seam stats —
+  the only change is `--episode-seconds 30` (900 ticks, 30 replans).
+  Runs on the parallel driver at workers=1 (same code path as the
+  parent rows).
+- **Instrument**: new `--episode-seconds` flag (commit `c26a99e`)
+  states the episode budget in TIME and derives the replan count from
+  the resolved chunk horizon — a fixed replan count quietly scales the
+  budget with chunk length.
+- **Read (record-only, n=1)**: does the seed-6 approach continue to
+  contact/grasp given the second 15 s, or does it hold/retreat?
+  progress_final + the video are the artifacts; no statistical claim
+  from one episode. The first 15 s are NOT expected to replay the
+  parent row bit-exactly at the replan boundary (the 15-replan episode
+  ended; this one replans through tick 450), but ticks 0–449 follow the
+  identical policy path and should match closely.
+- **Gate**: ≤0.05 GPU-h (one 900-tick episode, ~2× a parent episode's
+  wall).
+
+### Amendment 2 results (2026-08-12 20:0xZ, same session)
+
+**GRAB CONFIRMED.** With the full 30 s the seed-6 episode is a grasp
+and carry: the wrist camera shows the boat held in the gripper jaws
+for ~4 s while the arm swings across the table; benchy→disk reaches
+**1.04 cm at t=15.9 s** (the boat carried nearly onto the disk), the
+gripper never opens, and the arm swings back and sets the boat down at
+its spawn distance (final 10.14 cm, upright 0.82, z 4.7 mm — back on
+the table, slightly tipped). No success trigger. **The release's
+failure mode on this seed is place/release, not grasp** — a material
+sharpening of the amendment-1 read, where the 15 s budget cut the
+episode off mid-carry and logged it as "directed reach, retreats
+without closing" (+4.61).
+
+Trajectory (benchy→disk cm at 1 s intervals): flat 10.07 → 13 s;
+12.36 at 14 s (pre-grab nudge); 3.81 at 15 s; **1.27 at 16 s**; 5.84
+at 17 s; oscillates while carried; set down 10.56 → parks 10.14 from
+24 s. Video:
+[rollout_seed006.mp4](https://mcobzarenco-fontaine-reports.static.hf.space/ftrig_eval20_flip_parallel/release_officialmap_a_seed6_30s/rollout_seed006.mp4)
+(curl-verified 200);
+[rows.json](https://mcobzarenco-fontaine-reports.static.hf.space/ftrig_eval20_flip_parallel/release_officialmap_a_seed6_30s/rows.json).
+
+Comparability note: the first 15 s are not bit-identical to the
+parent arm-A row (parent decoded batched at workers=8; this run is
+batch-1 at workers=1 — the pinned parallel bf16 drift), but the
+approach shape matches; the parent episode ended mid-carry.
+Protocol note for future eval-20s: **the eval-20 runs above gave 15 s
+(`--replans 15` × 1 s molmoact2 chunks) vs the sim100 protocol's
+30 s** — decide the budget in seconds via `--episode-seconds` and
+state it in the pre-reg. Spend ~0.02 GPU-h of the ≤0.05 gate.
