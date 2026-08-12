@@ -1848,7 +1848,30 @@ split-point layouts pinned, off-ids == on-ids + `<action_output>`;
 `action_mode` flavor while `attention_mask` keeps counting EOS — the
 positions source is untouched; uint8 TRUNCATION coercion serves both
 train and inference, zero train/serve skew; the prompt section gained
-the `narration` split-point field). Step 5 (integration) next.**
+the `narration` split-point field). Step 5 PART 1 SHIPPED (eval-side
+integration): `from_checkpoint` assembles converted checkpoints
+(`build_molmo_flow_decoder` bridge; expert compat injection; no
+prompt.safetensors — the encoder has zero parameters), BijouModel
+grew the molmo_flow arms (loss/sums/normalizers, predict dispatch with
+per-kind operating-point defaults, `retain_cache`, the
+`insulate_expert` KI run property), and the KI gradient contract is
+test-pinned both ways (insulated ⇒ trunk grads exactly zero; open ⇒
+nonzero through the cached K/V, composing with activation
+checkpointing — the fixture expert perturbed off zero-init, where the
+open-seam test is provably vacuous). **E2E parity gate GREEN** (box,
+2026-08-11, 240 anchors × both arms, bf16): OURS vs the PORT live =
+**0.0 pooled, 0.0 max** — byte-identical end-to-end (collation →
+encode → KV extraction → flow loop → tail) — and vs the banked HF
+npz exactly the port's own kernel floors (released 0.041 / rung
+0.0541 ≤ 0.075), anchor MAEs reproduced (28.9456 / 3.2321). One real
+bug caught by the gate and fixed under diagnosis: the q01/q99 clamp
+table briefly lived in buffers and was swept to bf16 by the
+deployment `module.to()` — denorm constants rounded to ~3 significant
+digits (measured 0.027/0.119 pooled divergence) — now plain fp32
+tensors, data not weights. Remaining for step 5: bijou.train wiring
+(--decoder molmo_flow, --insulate-expert, the q01/99 state-collation
+mode, save side), the 2-step corridor vs molmoact2/train.py, and the
+GPU train smoke; then the rig-rung repeat (gate d).**
 
 **Decisions (register).**
 
