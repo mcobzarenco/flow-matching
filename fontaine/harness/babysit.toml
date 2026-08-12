@@ -669,3 +669,26 @@ no_live_runs_reason = "declared 16:0xZ 08-12 work session: ftrig_eval20_flip_par
 # never released, set back down at spawn (10.14 final). Failure mode on
 # seed 6 = place/release, not grasp. Results on pre-reg amendment 2 +
 # in-channel 20:0xZ; video curl-verified on fontaine-reports.
+
+[[run]]
+name = "release_100ep_30s"
+kind = "progress-log"
+host = "local"
+pgrep = "rollout_sim_parallel"
+pgrep_min = 1
+gpu_indices = [0]
+gpu_mem_min_mib = 4000
+log = "/home/ubuntu/flow-matching/outputs/sim/ftrig_eval20_flip_parallel/run_100ep_30s_launcher.log"
+progress_re = "100ep 30s (start|end)|episode budget|episodes in"
+started_utc = "2026-08-12T20:20:00Z"
+gpu_hours_per_wall_hour = 1.0
+boundary = "100 x 900-tick episodes at workers=8 (~50-60 min wall, officialmap pace x2 budget); ridden IN-SESSION by the 19:20Z work session with the batched rows watcher posting every 10 episodes - PRUNE THIS ENTRY at completion same session (retained-entry footgun)"
+anchors = [
+    "pre-reg amendment 3 on posts/2026-08-12-prereg-release-eval20-convmap.md: arm-A canonical shim verbatim, seeds 0-99, --episode-seconds 30, workers=8",
+    "reads frozen: mean/median progress_final, engagement split (progress_cm>1), knock-aways (<=-1), successes, per-seed chart; grab ID qualitative from videos (seed-6 lesson: distance rows under-report grabs)",
+    "20-seed 15 s arm-A rows are record-only comparators (budget doubled + batch composition differs => bf16-drift class)",
+    "gate <=1.5 GPU-h",
+]
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 1.5
