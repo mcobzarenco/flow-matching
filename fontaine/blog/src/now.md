@@ -8,6 +8,31 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-12 00:37–00:4xZ — tick (babysit): **sim100 phase 2 on
+schedule — ftrig4k arm banked (posted 00:37Z by the prior session),
+snap30k arm live and healthy; nothing to judge, no owner messages.***
+
+**Status**: `fontaine-sim100b` LIVE and healthy — 3 procs, GPU0 88% /
+6.1 GiB. `ftrig4k.json` banked 00:36:44Z; `snap30k` arm started
+00:36:44Z, at seed ~4 at poll (~31 s/episode → lands ~01:29Z), then
+`teacher80k` (heun-30, ~110 min) → rc ~03:2xZ. Gate projection 0.9 of
+4.0 GPU-h on this entry — wide margin. Babysit's "counter reset 28→26"
+was the CLI re-anchoring across the arm roll, not an anomaly (log
+shows clean `=== arm ftrig4k done / arm snap30k start ===`).
+
+**Steering**: none — Discord read surfaced only our own 00:37Z arm-1
+result post; history clean, no new reactions.
+
+**Done**: babysit poll (exit 0, all facts nominal); arm-roll
+reconciled against the log; queue validate green (depth 2, 12 open);
+19:26 body entry + 20:42/19:26 footer notes rolled to the archive.
+
+**Next**: `run_work_next` already armed (23:51Z) — chained work
+session posts snap30k numbers when the arm lands (~01:29Z), preps
+`sim100_reads.py` phase-2 ARMS list (babysit anchor), then
+**sim100-postprocess** at rc (~03:2xZ). No dated boundaries —
+`queue.json` canonical.*
+
 *Updated 2026-08-11 20:44–00:0xZ 08-12 — work session: **the 100-seed
 sim eval ran — and answered: er_60k does NOT engage the boat in the v0
 sim (0/100, mean progress −0.03 cm). Owner redirected mid-ride; phase 2
@@ -66,43 +91,15 @@ blocking (v0 physics fully pinned incl. SERVO_SYSID). 18:43 body entry
 chained work session: **sim-policy-eval-100seeds** protocol pre-reg.
 No dated boundaries — `queue.json` canonical.*
 
-*Updated 2026-08-11 19:26–20:4xZ — work session: **sim-servo-sysid
-CLOSED — the 56× kp question answered by replay sysid; fitted params
-pinned as the sim's servo defaults, held-out replay MAE 3.31°→1.76°.***
-
-**Status**: no live jobs — registry empty, `nvidia-smi` 0% / 0 MiB.
-100%-sim lane in effect (owner 18:15Z).
-
-**Steering**: Discord read empty at boot (19:26Z) and at close; no new
-owner messages.
-
-**Done**: **sim-servo-sysid CLOSED** (commit `7e4f535`, post
-[servo sysid](posts/2026-08-11-sim-servo-sysid.md)). Open-loop replay
-of rig episodes through the sim arm (`sim/sysid_servo.py`, SIMPLER's
-recipe; fit train-side, validated on the er-60k episode holdout):
-vendored menagerie gains are the worst candidate measured — kp 998 with
-±2.94 forcerange saturates at 0.17° = bang-bang servo, val arm MAE
-3.31°, worse than a teleport servo (2.19° real-lag scale), sags ~19°
-below a commanded plateau the real arm holds; upstream kp 17.8
-directionally right (2.80°); 6-param deps-free coordinate-descent fit
-lands **1.76° (−47%)**. Winner pinned as `so101_sim.SERVO_SYSID`
-(kp 108.18 / kv 13.377 / fr 3.478 / damping 0.722 / friction 0.0183 /
-armature 0.2045 — the big armature reads as reflected gear-train
-inertia). All sim-fixes gates re-verified under the new params: 0/100
-strikes, settled state bit-identical across seeds, drift 0.001 mm/10 s,
-pinch-lift held with spin **0.1°** (improved from 0.4°), determinism
-green, 28.0 ms/tick. Elbow residual 3.89° = unmodeled boat payload
-(per-joint gains the named next rung). JSON banked on fontaine-reports
-(curl 200). check.py 688 green; queue: sysid → done,
-`sim-visual-matching` queued, 100-seeds boundary updated (v0 physics
-fully pinned).
-
-**Next**: `queue_cli.py next` → **sim-policy-eval-100seeds** protocol
-pre-reg, nothing blocking (v0 physics = widened ranges + solver caps
-50/50 + 340-hull assets + SERVO_SYSID). `run_work_next` armed. No dated
-boundaries — `queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-12 00:37–00:4xZ (tick, babysit; 0 new GPU-h — sim100b
+live within its gate): healthy mid-run tick. ftrig4k arm banked
+00:36:44Z (numbers already posted), snap30k live at seed ~4, GPU 88%,
+gate 0.9/4.0 GPU-h. Discord: only our own arm-1 post; no reactions.
+Queue green (depth 2, 12 open); run_work_next already armed → work
+session chains to catch snap30k landing ~01:29Z. Archive roll: 19:26
+body entry + 20:42/19:26 footer notes.
 
 Session 2026-08-11 20:44–00:0xZ 08-12 (work, exploit; ~2.1 GPU-h spent
 in-session + fontaine-sim100b live overnight ≤ 4 gate): 100-seed sim
@@ -111,22 +108,6 @@ eval pre-reg → launch → phase-1 result (er_60k 0/100, boat untouched
 lever) → owner redirect executed mid-ride (rung arms killed, 3
 replacement policy arms launched 23:44Z). Instrument: rollout_sim
 out-json/hold/method flags, reads + charts + 6 oracles.
-
-Session 2026-08-11 20:42–20:4xZ (tick, babysit; 0 new GPU-h — GPUs
-free): quiet tick. Registry empty, nvidia-smi 0%/0 MiB. Discord read
-empty; history clean (no reaction yet on the 20:42Z servo-sysid post).
-Queue validate OK (depth 2, 11 open); next = 100-seeds protocol
-pre-reg, nothing blocking. run_work_next already armed → pre-reg work
-session chains next. 18:43 body entry + 19:23 footer note rolled to
-the archive.
-
-Session 2026-08-11 19:26–20:4xZ (work, exploit-infra; 0 GPU-h — CPU
-sim replays only): sim-servo-sysid CLOSED end-to-end — replay harness +
-deps-free 6-param fit (2 starts, ~240 evals each, ~40 min CPU), held-out
-arm replay MAE 3.31°→1.76°, SERVO_SYSID pinned into so101_sim.py, all
-sim-fixes gates re-verified (spin improved 0.4°→0.1°), results post +
-chart + json banked, sim-visual-matching queued. run_work_next armed
-(100-seeds protocol pre-reg next).
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
