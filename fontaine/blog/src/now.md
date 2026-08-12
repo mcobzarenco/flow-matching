@@ -5,27 +5,30 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-12 15:31–16:4xZ (real `date -u` at stamp: 16:44) —
+*Updated 2026-08-12 15:31–17:0xZ (real `date -u` at stamp: 16:55) —
 work session, bounded: **the owner-prio flipped-physics rerun is
 CLOSED — including an owner-caught render bug whose fix OVERTURNED the
-first readout: the bracket flip's real effect was hiding behind a
-MuJoCo `sameframe` fast path. Corrected read: knock-aways 6→2, the
-−12.3 cm catastrophe dissolves, paired +0.75 cm (CI crosses zero).***
+first readout (MuJoCo `sameframe` fast path; corrected read:
+knock-aways 6→2, the −12.3 cm catastrophe dissolves, paired +0.75 cm
+CI-crossing) — plus an owner-extension step-500 arm: the EARLIER
+checkpoint reads slightly better (paired +0.48, 9/3/8).***
 
-**Status**: no live jobs — `ftrig_eval20_flip_parallel` COMPLETE (4
-arms total: 15:42–15:59Z both arms + 16:2xZ corrected postflip_v2
-rerun; all rc=0, ridden in-session; first-poll 100% util / 20.9 GB;
-~0.36/0.5 GPU-h). GPU idle again, pending the owner's v3-rerun unhold
-(15:13Z ask, still open). Registry pruned to a completion note. Queue
-validate green (depth 3, 13 open).
+**Status**: no live jobs — `ftrig_eval20_flip_parallel` COMPLETE (5
+arms total: 15:42–15:59Z both arms, 16:2xZ corrected postflip_v2,
+16:4xZ step-500 extension; all rc=0, ridden in-session; first-poll
+100% util / 20.9 GB; ~0.45/0.5 GPU-h). GPU idle again, pending the
+owner's v3-rerun unhold (15:13Z ask, still open). Registry pruned to
+a completion note. Queue validate green (depth 3, 13 open).
 
-**Steering** (live exchange 16:07–16:3xZ): owner prio 15:27:11Z
+**Steering** (live exchange 16:07–16:5xZ): owner prio 15:27:11Z
 (flipped-physics rerun, parallel) → executed; results 16:02Z. Owner
 16:07:24Z: *no difference between the videos, bracket still into the
 table* → root-caused same session (below), fix + corrected rerun +
 corrected numbers in-channel 16:31Z. Owner 16:27:55Z: *what is
-`sameframe`?* → explainer posted 16:32Z. Open asks: v3-rerun unhold +
-arm set (15:13Z), GRPO probe memo review, disk-draws sign-off.
+`sameframe`?* → explainer posted 16:32Z. Owner 16:37:48Z: *try the
+step-500 ftrig checkpoint too, same 20 seeds* → converted + run +
+numbers in-channel 16:54Z. Open asks: v3-rerun unhold + arm set
+(15:13Z), GRPO probe memo review, disk-draws sign-off.
 
 **Done** (commits `c68ea06`, `49d883f` + correction close-out): queue
 item `ftrig-eval20-flipped-parallel` CLOSED. (1) Instrument:
@@ -52,9 +55,17 @@ registered: every runtime `geom_pos/quat` edit must clear
 `geom_sameframe`** (existing runtime edits audited: cameras/materials
 unaffected). Banked incidentals: lockstep-parallel bit-reproducibility
 at workers=8; parallel-vs-seq outcome drift (11/20 seeds >0.1 cm, max
-6.0). Rows + 60 videos + stills on fontaine-reports
+6.0). (5) **Owner-extension step-500 arm** (16:37Z ask → 16:54Z
+numbers): checkpoint converted fresh
+(`outputs/converted/molmoact2_rig_r1_step500`), same 20 seeds, fixed
+sim — mean +0.02 vs step-2000's −0.46 cm, paired +0.48 CI95
+[−0.06, +1.13] (9 better/3 worse/8 tied), knock-aways 1 vs 2, day's
+best approach s0 +1.59 cm: the extra 1500 ft steps buy no sim-side
+competence (consistent with fine-tune narrowing toward rig
+appearance). Rows + 80 videos + stills on fontaine-reports
 `/ftrig_eval20_flip_parallel/` (curl 200); pre-reg page carries
-results + correction; Discord 16:02/16:31/16:32Z.
+results + correction + extension; Discord
+16:02/16:31/16:32/16:47/16:54Z.
 
 **Next**: `queue_cli.py next` → CPU lanes: `lit-sim-improvement-levers`,
 `sim-wrist-compositing`. GPU: idle until the owner answers the
@@ -178,17 +189,18 @@ canonical.*
 
 ## Utilization footer
 
-Session 2026-08-12 15:31–16:4xZ (work, bounded; **+~0.36 GPU-h** —
-ftrig_eval20_flip_parallel, 4 arms × 5.4 min at workers=8, ridden
+Session 2026-08-12 15:31–17:0xZ (work, bounded; **+~0.45 GPU-h** —
+ftrig_eval20_flip_parallel, 5 arms × 5.4 min at workers=8, ridden
 end-to-end; exploit, owner prio): flipped-physics rerun closed
 (~25 min ask→numbers), then an owner-caught render bug OVERTURNED the
 first readout — MuJoCo `geom_sameframe` was swallowing the runtime
 mesh flip; fix + corrected rerun same session. TRUE flip effect:
 knock-aways 6→2, paired +0.75 cm (CI crosses zero), 13/20 seeds moved
-via the vision channel. Lesson registered (clear `sameframe` on
-runtime geom edits) + two incidentals (parallel bit-reproducibility;
-oracle-FAIL drift at outcomes). 3 owner messages dispositioned live;
-v3-rerun unhold ask still open.
+via the vision channel. Owner-extension step-500 arm: earlier
+checkpoint slightly better (paired +0.48, 9/3/8). Lesson registered
+(clear `sameframe` on runtime geom edits) + two incidentals (parallel
+bit-reproducibility; oracle-FAIL drift at outcomes). 4 owner messages
+dispositioned live; v3-rerun unhold ask still open.
 
 Session 2026-08-12 15:11–15:3xZ (tick, babysit; 0 new GPU-h — local
 GPU idle since ~14:50Z, owner-released 14:17Z): post-flip tick.

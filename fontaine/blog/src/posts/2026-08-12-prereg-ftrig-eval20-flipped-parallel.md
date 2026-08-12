@@ -178,3 +178,33 @@ was a physics-only read, and the TRUE flip effect is:
 - Corrected totals: 4 arms ≈ **0.36 / 0.5 GPU-h**. Corrected rows +
   videos under
   [`/ftrig_eval20_flip_parallel/postflip_v2/`](https://mcobzarenco-fontaine-reports.static.hf.space/ftrig_eval20_flip_parallel/postflip_v2/rows.json).
+
+## Owner extension (16:37Z): the step-500 checkpoint, same seeds
+
+The owner asked for the rig fine-tune's step-500 checkpoint through
+the same read. Converted fresh (`bijou.convert_molmoact2`, same
+recipe/norm tag as step-2000, kept at
+`outputs/converted/molmoact2_rig_r1_step500`), then the same 20 seeds
+on the fixed post-flip sim, same parallel driver:
+
+| read | step-500 | step-2000 (corrected) |
+|---|---|---|
+| success | 0/20 | 0/20 |
+| mean progress_final | **+0.02 cm** | −0.46 cm |
+| moved (>0.05 cm) | **9** | 6 |
+| knock-aways ≥1 cm | **1** | 2 |
+| best seed | s0 **+1.59 cm** | s19 +0.13 |
+
+Paired per-seed (500 − 2000): **+0.48 cm, CI95 [−0.06, +1.13]** — 9
+better / 3 worse / 8 tied. step-500 dissolves step-2000's two worst
+episodes (s11 −3.6 → −0.25, s14 −5.0 → +0.03) and posts the day's
+best approach
+([seed 0](https://mcobzarenco-fontaine-reports.static.hf.space/ftrig_eval20_flip_parallel/step500/rollout_seed000.mp4)
++1.59 cm); its one knock-away is
+[seed 1](https://mcobzarenco-fontaine-reports.static.hf.space/ftrig_eval20_flip_parallel/step500/rollout_seed001.mp4)
+(−1.8). Not CI-clean at n=20, but directionally: the extra 1500
+fine-tune steps are not buying sim-side competence — the earlier
+checkpoint engages more and shoves less, consistent with the
+fine-tune narrowing toward rig appearance (sim frames sit further
+from step-2000's distribution). Both checkpoints freeze on the same
+~8–10 seeds. Day total across all 5 arms: **~0.45 / 0.5 GPU-h**.
