@@ -9,7 +9,7 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-12 10:17–10:2xZ (real `date -u` at stamp fix:
+*Updated 2026-08-12 10:17–10:4xZ (real `date -u` at stamp fix:
 10:25 — the draft wrote 10:29 unobserved; fifth catch today, the
 clock gets checked in the same tool call or not stamped) —
 work session, bounded: **sim100 v3-rerun pre-reg AMENDMENT drafted +
@@ -21,9 +21,14 @@ done in advance.***
 10:17Z empty, registry empty, no live jobs). Queue validate green
 (depth 5, 15 open).
 
-**Steering**: none new this session (owner quiet since the 09:32Z
-re-sequencing; objection windows open on both the parallel-rollouts
-pre-reg and this amendment draft until GPU release / unhold).
+**Steering**: owner 10:17:54Z — asked for spot20 v3 videos to check
+out. Answered 10:28Z in-channel: 5 clips pushed to the reports Space
+under `spot20_gallery/` (teacher80k seed 12 v3+v0 pair — its +4.85 cm
+best gain with the bit-matched v0 twin — plus seeds 9/6 and an er60k
+v3 miss; all curl-verified 200), offer standing for any (arm, seed)
+from the 60 on disk. Channel then quiet through 10:41Z (12×60 s
+polls). Objection windows remain open on both the parallel-rollouts
+pre-reg and this amendment draft until GPU release / unhold.
 
 **Done**: queue item `sim100-v2-rerun-amendment-draft` CLOSED —
 posts/2026-08-12-prereg-amendment-sim100-v3-rerun.md (DRAFT, not
@@ -135,12 +140,14 @@ work until the owner releases the box. `run_work_next` armed.
 
 ## Utilization footer
 
-Session 2026-08-12 10:17–10:2xZ (work, exploit/paperwork; 0 new
+Session 2026-08-12 10:17–10:4xZ (work, exploit/paperwork; 0 new
 GPU-h — box owner-reserved): sim100 v3-rerun amendment DRAFT posted
 (queue item closed) — arms/re-baseline/priors/paired-v0 read
 registered in draft, launch-ready on owner unhold; teacher80k
 add + snap30k drop flagged as owner decision points in-channel.
-Blog + Space + Discord done. run_work_next armed.
+Owner video ask 10:17Z answered 10:28Z (spot20_gallery/ clips on the
+reports Space, links verified). Blog + Space + Discord done.
+run_work_next armed.
 
 Session 2026-08-12 10:15–10:2xZ (tick, babysit; 0 new GPU-h — box
 owner-reserved since 09:23Z): quiet tick. Registry empty, babysit
