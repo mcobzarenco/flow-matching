@@ -1,13 +1,41 @@
 # Now
 
-
-
-
-
-
-
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-12 03:30–03:5xZ (real `date -u` at write: 03:49) —
+work session: **encoder OOD probe CLOSED end-to-end — the visual gap
+is REAL and measured at the policy's eyes, top-cam-heavier, but sim
+sits at the EDGE of the real manifold, not off it. The
+sim-visual-matching pre-reg now has its baseline: move top-cam 5-NN
+AUROC 0.885 → ~0.5.***
+
+**Status**: no live jobs — registry empty, `nvidia-smi` 0% / 0 MiB
+(probe ran foreground, ~0.02 GPU-h). Next GPU item:
+**sim100-v1-rerun** (queued this session, pends the visual-matching
+landing; probe re-read is its go/no-go gate).
+
+**Steering**: none — Discord read empty at boot (owner asleep since
+01:11Z); their 01:11Z visual-gap question now has a measured answer
+in-channel (launch note + results post + chart, 03:3x–03:4xZ).
+
+**Done**: **sim-encoder-ood-probe CLOSED** (this commit): launch note
+pre-GPU, `fontaine/scripts/sim_encoder_ood_probe.py` (er_60k
+eval-mount vision trunk, pinned frames: 300 sim er60k-arm + 300 real
+v2 A/B-split + 100 clean anchor per camera), AUROC oracle tests (5
+green). Reads: centroid AUROC top 0.802 / wrist 0.707; 5-NN
+secondary top 0.885 (ratio 1.54×) / wrist 0.828 (1.33×); clean
+control INSIDE the real spread (0.26/0.28) = shift is sim-specific;
+sim renders 7× too homogeneous (lighting/blur diversity is part of
+the gap); per-tick flat = scene not poses. Artifacts: analysis json +
+strip chart on fontaine-reports (curl 200 ×2), reports.md section,
+house dark chart via `sim_encoder_ood_chart.py`. Queue:
+sim-visual-matching enriched with the measured baseline,
+sim100-v1-rerun queued as successor.
+
+**Next**: `queue_cli.py next` → **sim-visual-matching** (CPU + render
+minutes; pre-reg promised in-channel 01:30Z combines this baseline +
+matching v1 + 20-seed texture-sensitivity read). `run_work_next`
+armed. No dated boundaries — `queue.json` canonical.*
 
 *Updated 2026-08-12 03:25–03:3xZ (real `date -u` at write: 03:28) —
 tick (babysit): **quiet tick — GPU idle-by-design after the sim100
@@ -68,32 +96,15 @@ launch note in-channel first), then the **sim-visual-matching**
 pre-reg (owner goal: ≥1 success on the 100 seeds). `run_work_next`
 armed. No dated boundaries — `queue.json` canonical.*
 
-*Updated 2026-08-12 00:37–00:4xZ — tick (babysit): **sim100 phase 2 on
-schedule — ftrig4k arm banked (posted 00:37Z by the prior session),
-snap30k arm live and healthy; nothing to judge, no owner messages.***
-
-**Status**: `fontaine-sim100b` LIVE and healthy — 3 procs, GPU0 88% /
-6.1 GiB. `ftrig4k.json` banked 00:36:44Z; `snap30k` arm started
-00:36:44Z, at seed ~4 at poll (~31 s/episode → lands ~01:29Z), then
-`teacher80k` (heun-30, ~110 min) → rc ~03:2xZ. Gate projection 0.9 of
-4.0 GPU-h on this entry — wide margin. Babysit's "counter reset 28→26"
-was the CLI re-anchoring across the arm roll, not an anomaly (log
-shows clean `=== arm ftrig4k done / arm snap30k start ===`).
-
-**Steering**: none — Discord read surfaced only our own 00:37Z arm-1
-result post; history clean, no new reactions.
-
-**Done**: babysit poll (exit 0, all facts nominal); arm-roll
-reconciled against the log; queue validate green (depth 2, 12 open);
-19:26 body entry + 20:42/19:26 footer notes rolled to the archive.
-
-**Next**: `run_work_next` already armed (23:51Z) — chained work
-session posts snap30k numbers when the arm lands (~01:29Z), preps
-`sim100_reads.py` phase-2 ARMS list (babysit anchor), then
-**sim100-postprocess** at rc (~03:2xZ). No dated boundaries —
-`queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-12 03:30–03:5xZ (work, exploit; ~0.02 GPU-h foreground
+probe): sim-encoder-ood-probe closed end-to-end — launch note, probe
+script + AUROC oracles, measured baseline (top 5-NN AUROC 0.885 /
+wrist 0.828; clean control inside the real spread), json + chart on
+fontaine-reports, results in-channel, reports.md section;
+sim100-v1-rerun queued as successor. GPU idle otherwise;
+run_work_next armed for the sim-visual-matching pre-reg.
 
 Session 2026-08-12 03:25–03:3xZ (tick, babysit; 0 new GPU-h — GPU
 idle-by-design after the sim100 close): quiet tick. Registry empty,

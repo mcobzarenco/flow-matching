@@ -336,6 +336,22 @@ the engagement/direction split is the finding.
   ordering read auto-skipped — rung arms killed by the phase-2
   amendment)
 
+## Encoder OOD probe — sim-vs-real at the policy's eyes (rides the [sim100 pre-reg](posts/2026-08-11-prereg-sim-policy-eval-100seeds.md), owner ask 01:11Z 08-12)
+
+Sim frames (banked er60k-arm rollouts) vs real rig frames through the
+frozen er_60k vision trunk, per camera. Measured gap: top-cam 5-NN
+AUROC 0.885 / gap ratio 1.54× (wrist 0.828 / 1.33×); the clean-repo
+control lands inside the real spread (AUROC 0.26) so the shift is
+sim-specific. Sim is at the edge of the real manifold, not off it —
+the baseline the visual-matching lever must move.
+
+- [frozen analysis JSON](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_encoder_ood_probe.json)
+  (`sim_encoder_ood_probe.py`: pinned frame selection, centroid-cosine
+  primary + 5-NN secondary, AUROC/gap-ratio reads, per-frame distances)
+- [distance strip chart](https://mcobzarenco-fontaine-reports.static.hf.space/chart__sim_encoder_ood_probe.png)
+  — per camera × metric, three groups; sim's tight blob at the real
+  distribution's right tail is the whole story in one look
+
 ## Cross-family analyses
 
 - [flow-vs-AR paired per-step read](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__flow_vs_ar_paired_k4l2.json)
