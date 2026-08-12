@@ -7,7 +7,68 @@
 
 # (no_live_runs_reason cleared 21:40Z 08-11 — sim100_eval launched.)
 
-no_live_runs_reason = "sim100b rc=0 03:16:37Z 08-12, all arms banked + entry pruned; GPU free. Next GPU item = sim-encoder-ood-probe (queued, needs its in-channel launch note first)."
+# (no_live_runs_reason cleared 07:59Z 08-12 — spot20 3-arm parallel launch.)
+
+[[run]]
+name = "spot20_er60k"
+kind = "progress-log"
+host = "local"
+pgrep = "spot20/er60k"
+pgrep_min = 1
+gpu_indices = [0]
+gpu_mem_min_mib = 100  # 3 parallel arms share GPU 0; this arm ~10-30 GiB
+log = "/home/ubuntu/logs/spot20_er60k.log"
+progress_re = "seed [0-9]+ replan [0-9]+"
+started_utc = "2026-08-12T07:59:00Z"
+gpu_hours_per_wall_hour = 0.34  # one GPU split across 3 parallel arms
+boundary = "20 seeds (heun-10, the reference trunk), ~5.4 min/episode v3 render-bound => ~1.8-2 h wall, ETA ~09:5xZ 08-12; registered run of posts/2026-08-12-prereg-sim-spot20-v3.md (unit spot20-er60k); gate <= 3 GPU-h across the 3 arms"
+anchors = [
+    "RECORD-ONLY: paired per-seed delta progress_final_cm (v3 - v0, same seed) vs the banked outputs/sim/eval100/er60k.json rows; no success bar",
+    "integrity: reset_strikes 0 on every episode; spawn_xy must bit-match the banked v0 rows per seed (physics identity across render styles) or the run voids",
+    "banked v0 20-seed baseline (seeds 0-19): recompute at read time from the banked json",
+]
+gates = []
+
+[[run]]
+name = "spot20_snap30k"
+kind = "progress-log"
+host = "local"
+pgrep = "spot20/snap30k"
+pgrep_min = 1
+gpu_indices = [0]
+gpu_mem_min_mib = 100  # 3 parallel arms share GPU 0; this arm ~2-6 GiB
+log = "/home/ubuntu/logs/spot20_snap30k.log"
+progress_re = "seed [0-9]+ replan [0-9]+"
+started_utc = "2026-08-12T07:59:00Z"
+gpu_hours_per_wall_hour = 0.34  # one GPU split across 3 parallel arms
+boundary = "20 seeds (euler-1 snapflow student), ~5.4 min/episode v3 render-bound => ~1.8-2 h wall, ETA ~09:5xZ 08-12; registered run of posts/2026-08-12-prereg-sim-spot20-v3.md (unit spot20-snap30k); gate <= 3 GPU-h across the 3 arms"
+anchors = [
+    "RECORD-ONLY: paired per-seed delta progress_final_cm (v3 - v0, same seed) vs the banked outputs/sim/eval100/snap30k.json rows; no success bar",
+    "integrity: reset_strikes 0 on every episode; spawn_xy must bit-match the banked v0 rows per seed (physics identity across render styles) or the run voids",
+    "banked v0 20-seed baseline (seeds 0-19): recompute at read time from the banked json",
+]
+gates = []
+
+[[run]]
+name = "spot20_teacher80k"
+kind = "progress-log"
+host = "local"
+pgrep = "spot20/teacher80k"
+pgrep_min = 1
+gpu_indices = [0]
+gpu_mem_min_mib = 100  # 3 parallel arms share GPU 0; this arm ~2-6 GiB
+log = "/home/ubuntu/logs/spot20_teacher80k.log"
+progress_re = "seed [0-9]+ replan [0-9]+"
+started_utc = "2026-08-12T07:59:00Z"
+gpu_hours_per_wall_hour = 0.34  # one GPU split across 3 parallel arms
+boundary = "20 seeds (heun-30 flow teacher), ~5.4 min/episode v3 render-bound => ~1.8-2 h wall, ETA ~09:5xZ 08-12; registered run of posts/2026-08-12-prereg-sim-spot20-v3.md (unit spot20-teacher80k); gate <= 3 GPU-h across the 3 arms"
+anchors = [
+    "RECORD-ONLY: paired per-seed delta progress_final_cm (v3 - v0, same seed) vs the banked outputs/sim/eval100/teacher80k.json rows; no success bar",
+    "integrity: reset_strikes 0 on every episode; spawn_xy must bit-match the banked v0 rows per seed (physics identity across render styles) or the run voids",
+    "banked v0 20-seed baseline (seeds 0-19): recompute at read time from the banked json",
+]
+gates = []
+
 
 # sim100b_eval entry PRUNED 03:2xZ 08-12 work session — ALL PHASE2 ARMS
 # DONE rc=0 03:16:37Z (~3.5/4.0 GPU-h this entry; ~5.5 total incl. phase
