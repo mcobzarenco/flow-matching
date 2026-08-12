@@ -1,13 +1,55 @@
 # Now
 
-
-
-
-
-
-
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-12 10:44–11:0xZ (real `date -u` at stamp: 11:07) —
+work session, bounded: **disk-position draws pre-reg DRAFTED — the
+(c) task-semantics leg is now paperwork-complete like the other two
+GPU-day items; the draft surfaces a new finding: the sim's pinned
+disk sits OUTSIDE the measured real y range.***
+
+**Status**: GPU OWNER-RESERVED (since 09:23Z; 30% util / 12 GB
+observed at boot 10:44Z — owner active on the box). Registry empty,
+babysit exit 0, no live jobs. Queue validate green (depth 4, 14
+open).
+
+**Steering**: owner 10:45:20Z — "Do we not do the compositing on
+the wrist camera?" Answered 10:55:50Z in-channel: we do (both
+cameras get the v2 inpainting composite, per-camera real plates);
+what's top-only is the v3 *diversity draws* — wrist kept
+bit-identical to v2 as the registered guard, its gap having been
+closed by the geometric periphery re-tune (0.835→0.548); offered a
+cheap v3.1 (episode photometric affine on the wrist, no plate
+change) to queue on request. Channel quiet through 11:07Z (60 s
+polls ×10). Objection windows open: parallel-rollouts pre-reg +
+rerun amendment (until GPU release/unhold) + the new disk-position
+draft (until sign-off with the rerun call).
+
+**Done**: queue item `sim-disk-position-prereg-draft` CLOSED —
+posts/2026-08-12-prereg-disk-position-draws.md (DRAFT, holds for
+owner sign-off): six registered decisions — ABSOLUTE draws from the
+measured box (21/26 episodes, x 0.083–0.288, y −0.193–0.097; frame
+alignment trusted on the mouse precedent; **pinned (0.22, 0.11) is
+outside the measured y range** — the pinned eval tests a placement
+the rig never exhibited), success/metrics follow via `disk_center`,
+spawn goes DISK-RELATIVE (current box as deltas, ~9.5 cm tasks
+preserved), joint validity clamp by rejection (constants finalized
+by a 1000-seed policy-free sweep, truncation fraction reported),
+banked rows declared NON-comparable (protocol v2 "sim100-D";
+within-run per-seed pairing survives fully), spawn-stream
+discipline + `disk_draws=False` bit-identity guard. Grounding-probe
+diagnostic registered (tracker-vs-memorizer slope; teacher80k the
+candidate tracker, er60k predicted flat). Sequenced AFTER the v3
+rerun. check.py 710 green; blog built + Space pushed (page 200);
+Discord posted; queue.json updated.
+
+**Next**: `queue_cli.py next` → **sim-parallel-rollouts** (gpu-local;
+its remaining leg is GPU-only — `sim_parallel_oracle.py` FIRST on
+release, owner 09:32Z). CPU lanes for chained sessions: GRPO design
+memo, sim-improvement lit slice. Rerun launches on owner unhold
+(amendment checklist); disk-draws implementation is a follow-up CPU
+item on owner sign-off. `run_work_next` armed. `queue.json`
+canonical.*
 
 *Updated 2026-08-12 10:17–10:4xZ (real `date -u` at stamp fix:
 10:25 — the draft wrote 10:29 unobserved; fifth catch today, the
@@ -93,52 +135,16 @@ GRPO design memo, sim-improvement slice). ON GPU RELEASE:
 babysit.toml `no_live_runs_reason`). `run_work_next` armed.
 `queue.json` canonical.*
 
-*Updated 2026-08-12 09:2x–09:4xZ (real `date -u` at stamp fix:
-09:31 — the draft guessed 09:55; my internal clock runs ~25 min
-fast today, fourth catch, memory updated) —
-work session, owner-steered arc 2: **GPU handed to the owner
-(09:23Z, few hours) — no launches until released in-channel;
-sessions switch to the owner-called research program: sim
-improvement lit, SO-101-adjacent benchmark envs, GRPO-on-sim
-design.***
-
-**Status**: GPU OWNER-RESERVED (babysit no_live_runs_reason carries
-the rule). Queue validate green (depth 6, 16 open): 3 research
-items queued (`lit-so101-benchmark-envs` — first page landed,
-`lit-sim-improvement-levers`, `grpo-on-sim-design-research`) ahead
-of the amendment/disk-position drafts and `sim-parallel-rollouts`.
-
-**Steering**: owner 09:23Z — GPU reserved + research program set
-(supersedes the 08-10 lit pause for these threads). Acked 09:2xZ
-with the three-lane plan. Earlier arcs this morning: v3 flip,
-GPU compositor, spot20 (all closed, see the 07:2x entry).
-
-**Done**: lit slice `0820` — **papers/so101-sim-ecosystem.md**
-(update to the 08-11 census, training-in-sim angle):
-lerobot-sim2real's 91.6% real cube-grasp from pure-sim RL on SO-100
-= embodiment is not the blocker; named cheap bridge = port their
-cube-grasp task+predicate into our sim (~1 day) to sit next to the
-only published SO-100 sim2real number; ManiSkill3 throughput vs our
-fidelity play (GRPO could train v0 / eval v3); GRPO deep-read
-targets banked (SimpleVLA-RL for the AR head, πRL for flow-head
-logprobs). ideas.md hook; queue updated. THEN slice `0821` —
-**papers/grpo-for-vla-heads.md** (survey-depth mechanism map): the
-flow-head logprob obstacle is solved twice in the literature
-(Flow-GRPO ODE→SDE with closed-form per-step logprobs; πRL
-Flow-Noise exact likelihood); SimpleVLA-RL proves token-GRPO on the
-AR head from 1-demo cold start (17.3→91.7 LIBERO); our paired
-seeded groups + progress_final are a ready-made reward; design memo
-= the queued item's deliverable. Owner re-sequenced (09:32Z):
-sim-parallel-rollouts FIRST on GPU release — encoded in queue +
-registry. Both pages + ideas hooks committed (real 09:35 at this
-edit).
-
-**Next**: chained sessions continue the research program (GRPO
-design memo + sim-improvement slice are the open lanes); NO GPU
-work until the owner releases the box. `run_work_next` armed.
-`queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-12 10:44–11:1xZ (work, exploit/paperwork; 0 new
+GPU-h — box owner-reserved, 30% util owner-side at boot):
+disk-position draws pre-reg DRAFT posted (queue item closed) — six
+registered decisions incl. sim100-D non-comparability call +
+grounding-probe diagnostic; new finding: pinned disk (0.22, 0.11)
+outside the measured real y range. Owner wrist-compositing question
+10:45Z answered 10:56Z (conversational hold ~11 min, then quiet).
+Blog + Space + Discord done. run_work_next armed.
 
 Session 2026-08-12 10:43–10:4xZ (tick, babysit; 0 new GPU-h — box
 owner-reserved since 09:23Z): quiet tick. Registry empty, babysit
@@ -150,15 +156,6 @@ rerun amendment until GPU release / unhold. Queue validate green
 (sim-disk-position-prereg-draft next, then GRPO design memo /
 sim-improvement slice). Archive roll: 2 footer notes (10:15 tick,
 09:45 work).
-
-Session 2026-08-12 10:17–10:4xZ (work, exploit/paperwork; 0 new
-GPU-h — box owner-reserved): sim100 v3-rerun amendment DRAFT posted
-(queue item closed) — arms/re-baseline/priors/paired-v0 read
-registered in draft, launch-ready on owner unhold; teacher80k
-add + snap30k drop flagged as owner decision points in-channel.
-Owner video ask 10:17Z answered 10:28Z (spot20_gallery/ clips on the
-reports Space, links verified). Blog + Space + Discord done.
-run_work_next armed.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box

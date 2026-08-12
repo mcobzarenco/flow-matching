@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-12T10:24:00Z
+**Updated:** 2026-08-12T10:52:21Z
 
-**Depth call:** depth 5 open at 10:2xZ 08-12: sim-disk-position-prereg-draft (cpu) + sim-parallel-rollouts (gpu-local, owner-sequenced first on release) + 2 lit items + grpo design research. sim100-v2-rerun-amendment-draft CLOSED this session (DRAFT amendment posted; rerun launch-ready on owner unhold).
+**Depth call:** depth 4 open at 11:0xZ 08-12: sim-parallel-rollouts (gpu-local, owner-sequenced first on release) + 2 lit items + grpo design research. sim-disk-position-prereg-draft CLOSED this session (DRAFT pre-reg posted; implementation pends owner sign-off with the rerun call).
 
-**15 open** (Live 0 · Queued 5 · Blocked 10 · Done 125)
+**14 open** (Live 0 · Queued 4 · Blocked 10 · Done 126)
 
 ## 🔴 Live (0)
 
@@ -14,7 +14,7 @@
 
 *(empty)*
 
-## 🟢 Queued (5)
+## 🟢 Queued (4)
 
 *ready — waiting on a window or a boundary*
 
@@ -69,20 +69,6 @@ OWNER-SEQUENCED FIRST GPU ITEM (09:32Z 08-12: 'Once I relinquish the GPU, rememb
 <details><summary>full record</summary>
 
 OWNER-SEQUENCED FIRST GPU ITEM (09:32Z 08-12: 'Once I relinquish the GPU, remember to do sim-parallel-rollouts before any other experiments'). Parallel sim rollouts with a shared policy (owner-approved 08:44Z 08-12): N env workers (each owns its SO101Sim + EGL context, physics+render) feeding ONE batched policy server holding a single checkpoint copy - the lerobot-style policy-server split already in the repo for rig rollouts. At batch 1 the H100 idles during heun-10; batching N obs is near-free into the low tens. Box has 26 cores -&gt; ~8-12 render workers before CPU contention; target: a 100-seed arm in ~20-30 min (vs ~1.5 h), the 5-arm sim100 rerun within an afternoon. MUST ship with a determinism oracle: batched rollouts reproduce the sequential per-seed rows bit-for-bit (or within a stated decode tolerance, registered before use). Pre-reg the oracle + a 2-worker smoke before any registered eval uses the parallel path.
-
-</details>
-
----
-
-**`sim-disk-position-prereg-draft`** · `cpu`
-
-Disk-position draws pre-reg draft (the (c) leg the content-diversity item scoped out as task semantics): draw the disk's world xy per SPAWN seed (not appearance - success geometry moves with it) from the measured real between-epi…
-
-**boundary:** Queued 07:2xZ 08-12 at the content-diversity close. Executable now (pure drafting); pends nothing. Sequencing: after sim100-v2-rerun-amendment-draft if the owner unholds the rerun first.
-
-<details><summary>full record</summary>
-
-Disk-position draws pre-reg draft (the (c) leg the content-diversity item scoped out as task semantics): draw the disk's world xy per SPAWN seed (not appearance - success geometry moves with it) from the measured real between-episode spread, now banked in assets/real_plates/bank/bank_manifest.json (disk_record_only: present 21/26 A episodes, x 0.083-0.288, y -0.193-0.097; the sim pins it at (0.22, 0.11)). Draft must handle: success() geometry follows the drawn disk; spawn-region overlap (benchy spawns relative to a disk that now moves); paired-arm comparability (same seed -&gt; same disk across arms); and whether banked sim100 spawns stay bit-comparable (they do not if spawn ranges become disk-relative - the draft must choose and say so). CPU only; the eval-protocol change itself holds for owner sign-off with the rerun call.
 
 </details>
 
@@ -230,9 +216,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (125)
+## ✅ Done (126)
 
 *closed — the full record stays in each fold*
+
+**`sim-disk-position-prereg-draft`** · `cpu`
+
+Disk-position draws pre-reg draft (the (c) leg the content-diversity item scoped out as task semantics): draw the disk's world xy per SPAWN seed (not appearance - success geometry moves with it) from the measured real between-epi…
+
+**boundary:** Queued 07:2xZ 08-12 at the content-diversity close. Executable now (pure drafting); pends nothing. Sequencing: after sim100-v2-rerun-amendment-draft if the owner unholds the rerun first. | DONE 11:0xZ 08-12: DRAFT pre-reg posted (posts/2026-08-12-prereg-disk-position-draws.md) - six registered decisions: ABSOLUTE draws from the measured box (frame alignment trusted on the mouse precedent; the pinned (0.22,0.11) sits OUTSIDE the measured y range - new finding), success/metrics follow via disk_center update, spawn goes DISK-RELATIVE (current box re-expressed as deltas, ~9.5 cm task preserved), joint validity clamp by rejection (constants finalized by a 1000-seed policy-free sweep, truncation fraction reported), banked rows declared NON-comparable (protocol v2 'sim100-D', within-run pairing survives fully), spawn-stream discipline keeps it style-orthogonal with a disk_draws=False bit-identity guard. Grounding-probe diagnostic registered (tracker vs memorizer slope). Sequenced AFTER the v3 rerun to avoid confounding. Implementation (6 oracles + sweep) = follow-up CPU item on owner sign-off. · [pre-reg](posts/2026-08-12-prereg-disk-position-draws.md)
+
+<details><summary>full record</summary>
+
+Disk-position draws pre-reg draft (the (c) leg the content-diversity item scoped out as task semantics): draw the disk's world xy per SPAWN seed (not appearance - success geometry moves with it) from the measured real between-episode spread, now banked in assets/real_plates/bank/bank_manifest.json (disk_record_only: present 21/26 A episodes, x 0.083-0.288, y -0.193-0.097; the sim pins it at (0.22, 0.11)). Draft must handle: success() geometry follows the drawn disk; spawn-region overlap (benchy spawns relative to a disk that now moves); paired-arm comparability (same seed -&gt; same disk across arms); and whether banked sim100 spawns stay bit-comparable (they do not if spawn ranges become disk-relative - the draft must choose and say so). CPU only; the eval-protocol change itself holds for owner sign-off with the rerun call.
+
+</details>
+
+---
 
 **`sim100-v2-rerun-amendment-draft`** · `cpu`
 
