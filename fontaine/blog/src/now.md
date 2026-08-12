@@ -2,7 +2,57 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-12 15:31–16:0xZ (real `date -u` at stamp: 16:02) —
+work session, bounded: **the owner-prio flipped-physics rerun is
+CLOSED end-to-end in ~30 min — and the answer is a clean pre-registered
+null: 18/20 episodes are bit-identical across the two bracket
+geometries; the MolmoAct2 knock-aways are jaw contact, not the
+bracket.***
+
+**Status**: no live jobs — `ftrig_eval20_flip_parallel` COMPLETE
+(launched 15:42:03Z, all arms rc=0 by 15:59:46Z, ridden in-session;
+first-poll 100% util / 20.9 GB; ~0.27/0.5 GPU-h). GPU idle again,
+pending the owner's v3-rerun unhold (15:13Z ask, still open).
+Registry pruned to a completion note. Queue validate green (depth 3,
+13 open).
+
+**Steering**: owner prio 15:27:11Z (re-run the 20 episodes on flipped
+physics, many parallel workers) → **executed and closed this
+session**; results in-channel 16:02Z. No new messages through 16:02Z
+polls. Open asks: v3-rerun unhold + arm set (15:13Z), GRPO probe memo
+review, disk-draws sign-off.
+
+**Done** (commit `c68ea06` + close-out): queue item
+`ftrig-eval20-flipped-parallel` CLOSED — pre-reg posted before
+launch, both arms parallel workers=8 (postflip + `--no-mount-flip`
+preflip, same 20 seeds, euler-10/v3, videos), paired within the
+parallel path only per the failed-oracle rule. Instrument landed:
+`SO101Sim(flip_camera_mount=)` toggle (CPU probe: all 3 mount geoms
+mirror back, settled bracket 40.2 mm = the probe-measured pre-flip
+value), parallel driver gains the merged-stats fallback +
+`--no-mount-flip` + `mount_flip` in rows JSON; harness oracle 5/5,
+check.py 773 green. RESULTS: paired flip effect ~null — 18/20 seeds
+bit-identical (mount geoms enter dynamics only via contact; the
+policy fails before reaching bracket-blocked poses), 2/20 improved
+post-flip (s15 +0.81 cm, s5 +0.60 cm), 0 worsened; knock-aways 6/6
+unchanged = jaw-side; the sequential-run diagnosis stands on fixed
+physics. Banked incidentals: identical-config parallel runs
+bit-identical at workers=8 (a launcher-flag slip became a
+reproducibility datum — lockstep scheduling is exactly replayable,
+GRPO-probe-relevant), and parallel-vs-sequential outcome drift
+quantified (mean −0.37 cm, 11/20 seeds >0.1 cm, max 6.0 —
+the 14:37Z oracle FAIL confirmed at outcome level). Rows + 40 videos
+on fontaine-reports `/ftrig_eval20_flip_parallel/` (curl 200);
+results appended to the pre-reg page; Discord 16:02Z.
+
+**Next**: `queue_cli.py next` → CPU lanes: `lit-sim-improvement-levers`,
+`sim-wrist-compositing`. GPU: idle until the owner answers the
+v3-rerun unhold ask (15:13Z — the rerun is the re-baseline carrier
+for every banked sim row post-flip); `grpo-signal-probe` owner_hold.
+`queue.json` canonical.*
 
 *Updated 2026-08-12 13:10–15:0xZ (real `date -u` at stamp: 15:02) —
 work session, bounded, mid-session owner release of the GPU: **both
@@ -118,56 +168,15 @@ rerun launches on owner unhold (amendment checklist); disk-draws
 implementation pends sign-off. `run_work_next` armed. `queue.json`
 canonical.*
 
-*Updated 2026-08-12 10:44–11:0xZ (real `date -u` at stamp: 11:07) —
-work session, bounded: **disk-position draws pre-reg DRAFTED — the
-(c) task-semantics leg is now paperwork-complete like the other two
-GPU-day items; the draft surfaces a new finding: the sim's pinned
-disk sits OUTSIDE the measured real y range.***
-
-**Status**: GPU OWNER-RESERVED (since 09:23Z; 30% util / 12 GB
-observed at boot 10:44Z — owner active on the box). Registry empty,
-babysit exit 0, no live jobs. Queue validate green (depth 4, 14
-open).
-
-**Steering**: owner 10:45:20Z — "Do we not do the compositing on
-the wrist camera?" Answered 10:55:50Z in-channel: we do (both
-cameras get the v2 inpainting composite, per-camera real plates);
-what's top-only is the v3 *diversity draws* — wrist kept
-bit-identical to v2 as the registered guard, its gap having been
-closed by the geometric periphery re-tune (0.835→0.548); offered a
-cheap v3.1 (episode photometric affine on the wrist, no plate
-change) to queue on request. Channel quiet through 11:07Z (60 s
-polls ×10). Objection windows open: parallel-rollouts pre-reg +
-rerun amendment (until GPU release/unhold) + the new disk-position
-draft (until sign-off with the rerun call).
-
-**Done**: queue item `sim-disk-position-prereg-draft` CLOSED —
-posts/2026-08-12-prereg-disk-position-draws.md (DRAFT, holds for
-owner sign-off): six registered decisions — ABSOLUTE draws from the
-measured box (21/26 episodes, x 0.083–0.288, y −0.193–0.097; frame
-alignment trusted on the mouse precedent; **pinned (0.22, 0.11) is
-outside the measured y range** — the pinned eval tests a placement
-the rig never exhibited), success/metrics follow via `disk_center`,
-spawn goes DISK-RELATIVE (current box as deltas, ~9.5 cm tasks
-preserved), joint validity clamp by rejection (constants finalized
-by a 1000-seed policy-free sweep, truncation fraction reported),
-banked rows declared NON-comparable (protocol v2 "sim100-D";
-within-run per-seed pairing survives fully), spawn-stream
-discipline + `disk_draws=False` bit-identity guard. Grounding-probe
-diagnostic registered (tracker-vs-memorizer slope; teacher80k the
-candidate tracker, er60k predicted flat). Sequenced AFTER the v3
-rerun. check.py 710 green; blog built + Space pushed (page 200);
-Discord posted; queue.json updated.
-
-**Next**: `queue_cli.py next` → **sim-parallel-rollouts** (gpu-local;
-its remaining leg is GPU-only — `sim_parallel_oracle.py` FIRST on
-release, owner 09:32Z). CPU lanes for chained sessions: GRPO design
-memo, sim-improvement lit slice. Rerun launches on owner unhold
-(amendment checklist); disk-draws implementation is a follow-up CPU
-item on owner sign-off. `run_work_next` armed. `queue.json`
-canonical.*
-
 ## Utilization footer
+
+Session 2026-08-12 15:31–16:0xZ (work, bounded; **+~0.27 GPU-h** —
+ftrig_eval20_flip_parallel, 3 arms × 5.4 min at workers=8, ridden
+end-to-end; exploit, owner prio): flipped-physics rerun closed same
+session as the ask (~25 min ask→numbers). Paired null banked (18/20
+bit-identical, bracket innocent of the knock-aways) + two incidentals
+(parallel bit-reproducibility; oracle-FAIL drift quantified at
+outcomes). 1 owner prio dispositioned; v3-rerun unhold ask still open.
 
 Session 2026-08-12 15:11–15:3xZ (tick, babysit; 0 new GPU-h — local
 GPU idle since ~14:50Z, owner-released 14:17Z): post-flip tick.
