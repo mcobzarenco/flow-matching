@@ -3,7 +3,39 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-12 04:09–07:2xZ (real `date -u` at write: 07:15) —
+*Updated 2026-08-12 05:04–05:1xZ (real `date -u` at write: 05:07) —
+tick (babysit): **quiet tick + clock audit — GPU idle-by-design
+between the v1 close and the inpainting pre-reg; no owner messages
+or reactions; corrected the prior session's hallucinated clock
+(+~2 h) in now.md and queue.json.***
+
+**Status**: no live jobs — registry empty (babysit exit 0),
+`nvidia-smi` 0% / 0 MiB. Next item: **sim-visual-inpainting** (CPU +
+~0.02 GPU-h probe reads); **sim100-v1-rerun** stays owner_hold —
+spot-check ask posted 05:01Z, unanswered.
+
+**Steering**: none — Discord read empty; history shows our
+05:01/05:03Z results + link-fix posts as latest, no new reactions
+(owner asleep since 01:11Z).
+
+**Done**: clock audit — the 04:09 work session's records claimed a
+04:09–07:2xZ span ("real 07:15") but its commit landed 05:03:49Z and
+its Discord posts at 05:01–05:03Z; corrected the now.md entry header,
+Steering line and footer note, plus queue.json (`updated_utc`
+07:00→05:03Z, `07:0xZ` depth_reason, three `06:5xZ` boundary stamps;
+commit messages ade7479/5c281f2 keep the wrong times — immutable,
+noted here). Queue validate green (depth 2, 12 open);
+`run_work_next` confirmed armed (05:02Z). Archive roll: 03:30 body
+entry + 04:05/03:30 footer notes.
+
+**Next**: chained work session → **sim-visual-inpainting** pre-reg
+(or the owner's rerun call if it lands first). No dated boundaries —
+`queue.json` canonical.*
+
+*Updated 2026-08-12 04:09–05:0xZ (clock corrected by the 05:04Z
+tick: this entry originally claimed 07:2xZ / "real 07:15", but the
+session's commit landed 05:03:49Z and its Discord posts at
+05:01–05:03Z) —
 work session: **sim-visual-matching CLOSED end-to-end — pre-reg,
 every named appearance axis landed (ships as `render_style="v1"`
 default), and the registered bar was MISSED honestly: top-cam 5-NN
@@ -22,7 +54,7 @@ pinhole-vs-fisheye signature).
 
 **Steering**: none — Discord read at boot and pre-post both empty of
 owner messages (owner asleep since 01:11Z); their promised pre-reg
-posted 04:15Z, results + owner-decision ask posted 07:1xZ.
+posted 04:15Z, results + owner-decision ask posted 05:0xZ.
 
 **Done**: **sim-visual-matching CLOSED** (commits 7ae1c8c pre-reg,
 5c281f2 close): reset-render probe instrument
@@ -72,66 +104,25 @@ work session chains at tick end. Archive roll: 00:40 body entry +
 (in-channel first, promised 01:30Z; owner goal: ≥1 success on the
 100 seeds). No dated boundaries — `queue.json` canonical.*
 
-*Updated 2026-08-12 03:30–03:5xZ (real `date -u` at write: 03:49) —
-work session: **encoder OOD probe CLOSED end-to-end — the visual gap
-is REAL and measured at the policy's eyes, top-cam-heavier, but sim
-sits at the EDGE of the real manifold, not off it. The
-sim-visual-matching pre-reg now has its baseline: move top-cam 5-NN
-AUROC 0.885 → ~0.5.***
-
-**Status**: no live jobs — registry empty, `nvidia-smi` 0% / 0 MiB
-(probe ran foreground, ~0.02 GPU-h). Next GPU item:
-**sim100-v1-rerun** (queued this session, pends the visual-matching
-landing; probe re-read is its go/no-go gate).
-
-**Steering**: none — Discord read empty at boot (owner asleep since
-01:11Z); their 01:11Z visual-gap question now has a measured answer
-in-channel (launch note + results post + chart, 03:3x–03:4xZ).
-
-**Done**: **sim-encoder-ood-probe CLOSED** (this commit): launch note
-pre-GPU, `fontaine/scripts/sim_encoder_ood_probe.py` (er_60k
-eval-mount vision trunk, pinned frames: 300 sim er60k-arm + 300 real
-v2 A/B-split + 100 clean anchor per camera), AUROC oracle tests (5
-green). Reads: centroid AUROC top 0.802 / wrist 0.707; 5-NN
-secondary top 0.885 (ratio 1.54×) / wrist 0.828 (1.33×); clean
-control INSIDE the real spread (0.26/0.28) = shift is sim-specific;
-sim renders 7× too homogeneous (lighting/blur diversity is part of
-the gap); per-tick flat = scene not poses. Artifacts: analysis json +
-strip chart on fontaine-reports (curl 200 ×2), reports.md section,
-house dark chart via `sim_encoder_ood_chart.py`. Queue:
-sim-visual-matching enriched with the measured baseline,
-sim100-v1-rerun queued as successor.
-
-**Next**: `queue_cli.py next` → **sim-visual-matching** (CPU + render
-minutes; pre-reg promised in-channel 01:30Z combines this baseline +
-matching v1 + 20-seed texture-sensitivity read). `run_work_next`
-armed. No dated boundaries — `queue.json` canonical.*
-
 ## Utilization footer
 
-Session 2026-08-12 04:09–07:2xZ (work, exploit; ~0.12 GPU-h foreground
+Session 2026-08-12 05:04–05:1xZ (tick, babysit; 0 new GPU-h — GPU
+idle-by-design between the v1 close and the inpainting pre-reg):
+quiet tick + clock audit. Registry empty, nvidia-smi 0%/0 MiB.
+Discord read empty, no new reactions (owner asleep since 01:11Z;
+rerun spot-check ask still pending). Corrected the prior work
+session's hallucinated clock (+~2 h: records claimed a 07:2xZ close,
+commit landed 05:03:49Z) in now.md + queue.json. Queue validate green
+(depth 2, 12 open); run_work_next armed → inpainting pre-reg chains
+next. Archive roll: 03:30 body entry + 04:05/03:30 footer notes.
+
+Session 2026-08-12 04:09–05:0xZ (work, exploit; ~0.12 GPU-h foreground
 probe reads): sim-visual-matching closed — pre-reg + all appearance
 axes landed as render_style v1 (texture, layout, wrist re-pose,
 fisheye, grade, sensor, jitter), registered bar missed honestly (top
 5-NN AUROC 0.890→0.876 vs ≤0.790), inpainting + wrist-periphery
 queued, sim100-v1-rerun flipped owner_hold with a spot-check ask
 in-channel. GPU otherwise idle; run_work_next armed.
-
-Session 2026-08-12 04:05–04:1xZ (tick, babysit; 0 new GPU-h — GPU
-idle-by-design between the OOD-probe close and the visual-matching
-pre-reg): quiet tick. Registry empty, nvidia-smi 0%/0 MiB. Discord
-read empty; no new reactions (owner asleep since 01:11Z). Queue
-validate green (depth 2, 11 open); run_work_next armed → the
-sim-visual-matching pre-reg chains next. Archive roll: 00:40 body
-entry + 03:25/00:40 footer notes.
-
-Session 2026-08-12 03:30–03:5xZ (work, exploit; ~0.02 GPU-h foreground
-probe): sim-encoder-ood-probe closed end-to-end — launch note, probe
-script + AUROC oracles, measured baseline (top 5-NN AUROC 0.885 /
-wrist 0.828; clean control inside the real spread), json + chart on
-fontaine-reports, results in-channel, reports.md section;
-sim100-v1-rerun queued as successor. GPU idle otherwise;
-run_work_next armed for the sim-visual-matching pre-reg.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
