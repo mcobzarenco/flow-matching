@@ -274,3 +274,4 @@
   - [2026-08-12 — Pre-registration: ftrig MolmoAct2 (rig-r1 step2000) — 20-seed sim eval, rough numbers + videos](posts/2026-08-12-prereg-molmoact2-ftrig-sim-eval.md)
   - [2026-08-12 — GPU release results: parallel oracle FAILS · ftrig MolmoAct2 moves with intent (0/20) · the wrist bracket is 180° off](posts/2026-08-12-gpu-release-results.md)
   - [2026-08-12 — Pre-reg + results: ftrig MolmoAct2 rerun on flipped-mount physics — 18/20 bit-identical, the bracket is innocent](posts/2026-08-12-prereg-ftrig-eval20-flipped-parallel.md)
+  - [2026-08-12 — Pre-reg + results: released MolmoAct2 in sim through a verified unit shim — inert zero on all 20 seeds](posts/2026-08-12-prereg-release-eval20-convmap.md)
