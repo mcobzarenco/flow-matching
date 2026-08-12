@@ -197,15 +197,22 @@ class SO101Sim:
         show it on the LEFT, looking from above/behind the wrist over
         the jaw tips at the table. Re-pose at load (runtime, vendored
         XML untouched): mount-local pose computed from the settled home
-        pose as a lookat — camera at the wrist top (world ~(0.096,
-        -0.004, 0.160) at home), looking ~55 deg below horizontal past
-        the jaw tips at the table ahead, image-right = world -y — and
-        the 16:9 sensor model swapped for the top cam's fovy (the rig
-        captures 4:3 640x480 center crops on both modules)."""
+        pose as a lookat — camera over the jaw base (world ~(0.150,
+        0.000, 0.150) at home), looking ~65 deg below horizontal down
+        the jaws at the table, image-right = world -y — and the 16:9
+        sensor model swapped for the top cam's fovy (the rig captures
+        4:3 640x480 center crops on both modules).
+
+        Re-tuned 2026-08-12 (sim-wrist-periphery-fix): the original
+        pose sat at the wrist top behind the gripper (world ~(0.096,
+        -0.004, 0.160), ~55 deg), which under the 72-deg v1 source
+        filled the bottom ~40% of frame with the gripper body — real
+        start frames show only slim jaw tips in the bottom quarter
+        over full-frame table."""
         for prefix in ("", "leader-"):
             cam = self.model.camera(prefix + "wrist_cam")
-            cam.pos[:] = (0.00406, -0.01253, 0.06089)
-            cam.quat[:] = (-0.23797, -0.07383, 0.11404, 0.96172)
+            cam.pos[:] = (0.02416, -0.05504, 0.03225)
+            cam.quat[:] = (-0.24345, -0.05192, 0.02663, 0.96816)
             self.model.cam_sensorsize[cam.id] = 0.0
             cam.fovy[0] = 52.0
 

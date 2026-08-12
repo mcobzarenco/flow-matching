@@ -2,7 +2,49 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-12 05:52–06:2xZ (real `date -u` at write: 06:17) —
+work session: **sim-wrist-periphery-fix CLOSED — registered bar
+SMASHED on the first candidate: wrist 5-NN AUROC 0.900 → 0.548 vs
+≤ 0.786 (0.5 = can't tell sim from real; k-ratio 0.97× — sim wrist
+frames now sit INSIDE the real embedding spread). One runtime pose
+change: the camera moves ~10 cm forward, over the jaw base, 55°→65°
+down.***
+
+**Status**: no live jobs — registry empty, `nvidia-smi` 0% / 0 MiB
+between probe reads (~0.04 GPU-h foreground total, gate 0.2). Queue
+validate green (depth 2, 12 open): **sim-content-diversity** +
+**sim100-v2-rerun-amendment-draft** (new, makes the rerun
+launch-ready on unhold); **sim100-v1-rerun** stays owner_hold but
+its gate now reads **double-GO** (top 0.773 ≤ 0.790 AND wrist
+0.548 ≤ 0.786 — both cameras at/under their registered lines).
+
+**Steering**: none — Discord read empty at boot (05:52Z) and at the
+close poll (06:16Z, surfaced only our own pre-reg post); owner
+asleep since 01:11Z. Rerun spot-check ask (05:01Z) still pending.
+
+**Done**: **sim-wrist-periphery-fix CLOSED** (pre-reg posted
+05:59Z, close commit this entry): `_repose_wrist_cam` re-derived —
+camera from the wrist top behind the gripper (world ~(0.096,−0.004,
+0.160), 55°) to over the jaw base (~(0.150,0,0.150), 65°), found in
+3 encoder-free iteration rounds vs pinned A-half real starts; the
+gripper-body mass filling the bottom ~40% of frame drops out,
+leaving jaw tips in the bottom quarter like every real start frame.
+Reads: wrist 0.548 (100 seeds; 0.550 at 20×5 — stable), centroid
+0.587; guard green (top 0.773 bit-identical). Per-episode
+wrist-plate axis retired. Oracles 10 green (qpos bit-identity
+across styles, spawn stream vs banked v0), check.py 704 green. 2
+probe jsons + REAL|old|new gallery on fontaine-reports (all curl
+200). Results post + reports.md section; queue: wrist item done,
+amendment-draft queued, rerun gate fact double-GO. Archive roll:
+05:04 body entry + 05:09 footer note.
+
+**Next**: `queue_cli.py next` → **sim-content-diversity** (or the
+owner's rerun/spot-check call if it lands first — the gate is
+double-GO). `run_work_next` armed. No dated boundaries —
+`queue.json` canonical.*
 
 *Updated 2026-08-12 05:49–05:5xZ (real `date -u` at write: 05:51) —
 tick (babysit): **quiet tick — the inpainting close (05:47Z post)
@@ -71,36 +113,18 @@ owner's rerun/spot-check call if it lands first — the registered
 gate now reads GO). `run_work_next` armed. No dated boundaries —
 `queue.json` canonical.*
 
-*Updated 2026-08-12 05:04–05:1xZ (real `date -u` at write: 05:07) —
-tick (babysit): **quiet tick + clock audit — GPU idle-by-design
-between the v1 close and the inpainting pre-reg; no owner messages
-or reactions; corrected the prior session's hallucinated clock
-(+~2 h) in now.md and queue.json.***
-
-**Status**: no live jobs — registry empty (babysit exit 0),
-`nvidia-smi` 0% / 0 MiB. Next item: **sim-visual-inpainting** (CPU +
-~0.02 GPU-h probe reads); **sim100-v1-rerun** stays owner_hold —
-spot-check ask posted 05:01Z, unanswered.
-
-**Steering**: none — Discord read empty; history shows our
-05:01/05:03Z results + link-fix posts as latest, no new reactions
-(owner asleep since 01:11Z).
-
-**Done**: clock audit — the 04:09 work session's records claimed a
-04:09–07:2xZ span ("real 07:15") but its commit landed 05:03:49Z and
-its Discord posts at 05:01–05:03Z; corrected the now.md entry header,
-Steering line and footer note, plus queue.json (`updated_utc`
-07:00→05:03Z, `07:0xZ` depth_reason, three `06:5xZ` boundary stamps;
-commit messages ade7479/5c281f2 keep the wrong times — immutable,
-noted here). Queue validate green (depth 2, 12 open);
-`run_work_next` confirmed armed (05:02Z). Archive roll: 03:30 body
-entry + 04:05/03:30 footer notes.
-
-**Next**: chained work session → **sim-visual-inpainting** pre-reg
-(or the owner's rerun call if it lands first). No dated boundaries —
-`queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-12 05:52–06:2xZ (work, exploit; ~0.04 GPU-h
+foreground probe reads, gate 0.2): sim-wrist-periphery-fix closed —
+pre-reg 05:59Z, one runtime wrist-cam pose change (over the jaw
+base, 65° down), **registered bar SMASHED: wrist 5-NN AUROC
+0.900 → 0.548 vs ≤ 0.786** (k-ratio 0.97× — sim wrist inside the
+real spread; first camera to reach statistically-indistinguishable);
+top guard green (0.773 bit-identical). Per-episode wrist-plate axis
+retired; sim100 rerun gate now double-GO (still owner_hold on the
+spot-check ask). Queue refilled: sim100-v2-rerun-amendment-draft
+(depth 2). run_work_next armed.
 
 Session 2026-08-12 05:49–05:5xZ (tick, babysit; 0 new GPU-h — GPU
 idle-by-design after the inpainting close): quiet tick. Registry
@@ -109,16 +133,6 @@ empty, nvidia-smi 0%/0 MiB. Discord read empty, no new reactions
 asleep since 01:11Z). Queue validate green (depth 2, 12 open);
 run_work_next armed → wrist-periphery (or the owner's rerun call)
 chains next. Archive roll: 04:09 body entry + 05:04 footer note.
-
-Session 2026-08-12 05:09–05:5xZ (work, exploit; ~0.06 GPU-h
-foreground probe reads, gate 0.3): sim-visual-inpainting closed —
-pre-reg 05:15Z, clean plates + segmentation composite landed as
-render_style v2 (new default), **registered bar MET: top 5-NN AUROC
-0.876 → 0.773 vs ≤0.790** (first registered win on the axis); wrist
-composite honest negative (0.951, v2 keeps the v1 wrist path);
-homogeneity unchanged → sim-content-diversity queued (depth 2).
-sim100-v1-rerun gate fact now GO-with-v2-frames, still owner_hold on
-the pending spot-check ask. GPU otherwise idle; run_work_next armed.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box

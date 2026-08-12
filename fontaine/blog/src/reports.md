@@ -336,6 +336,22 @@ the engagement/direction split is the finding.
   ordering read auto-skipped — rung arms killed by the phase-2
   amendment)
 
+## Sim wrist-cam periphery re-tune ([pre-reg](posts/2026-08-12-prereg-sim-wrist-periphery.md), [results](posts/2026-08-12-sim-wrist-periphery-results.md), 08-12)
+
+One runtime pose change in `_repose_wrist_cam`: camera moved from
+the wrist top behind the gripper to over the jaw base (≈10 cm
+forward, 55°→65° down) — under the 72° fisheye source the old pose
+filled the bottom ~40% of frame with gripper-body mass the real
+camera never sees. Registered bar (wrist 5-NN AUROC ≤ 0.786)
+**smashed on the first candidate**: 0.900 → **0.548**, k-ratio
+0.97× — sim wrist frames sit inside the real embedding spread.
+Guard green (top 0.773 bit-identical); 20×5 sensitivity 0.550.
+Per-episode wrist-plate axis retired. ~0.04 GPU-h (gate 0.2).
+
+- [primary 100-seed](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_wrist_periphery_fix.json)
+  · [sensitivity 20×5](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_wrist_periphery_sensitivity.json)
+- [REAL | old | new gallery](https://mcobzarenco-fontaine-reports.static.hf.space/chart__sim_wrist_periphery_before_after.png)
+
 ## Sim visual matching v2 — real-frame inpainting ([pre-reg](posts/2026-08-12-prereg-sim-visual-inpainting.md), [results](posts/2026-08-12-sim-visual-inpainting-results.md), 08-12)
 
 Real clean plates (per-pixel median over the 26 reference-half

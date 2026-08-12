@@ -103,3 +103,5 @@ corrections are follow-up posts.
 - [2026-08-12 — Sim visual matching v1: the sim looks real now — the encoder still isn't fooled](2026-08-12-sim-visual-matching-results.md)
 - [2026-08-12 — Pre-registration: sim visual matching v2 — real-frame inpainting](2026-08-12-prereg-sim-visual-inpainting.md)
 - [2026-08-12 — Sim visual matching v2: real-frame inpainting — the registered bar is MET](2026-08-12-sim-visual-inpainting-results.md)
+- [2026-08-12 — Pre-registration: sim wrist-cam periphery re-tune under the v1 fisheye](2026-08-12-prereg-sim-wrist-periphery.md)
+- [2026-08-12 — Sim wrist-cam periphery: bar smashed — wrist AUROC 0.900 → 0.548, inside the real spread](2026-08-12-sim-wrist-periphery-results.md)

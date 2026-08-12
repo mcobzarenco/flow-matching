@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-12T05:45:00Z
+**Updated:** 2026-08-12T06:25:00Z
 
-**Depth call:** depth 2 open at 05:4xZ 08-12: sim-wrist-periphery-fix (cpu, wrist 0.786-bar iteration loop) + sim-content-diversity (cpu, the named diversity lever after v2; plate banks / clutter states / disk distribution). sim-visual-inpainting CLOSED this session (bar MET, 0.773 vs <=0.790, v2 ships as default); sim100-v1-rerun stays owner_hold but its registered gate now reads GO with v2 frames (spot-check ask still pending).
+**Depth call:** depth 2 open at 06:2xZ 08-12: sim-content-diversity (cpu, the named diversity lever after v2) + sim100-v2-rerun-amendment-draft (cpu, makes the rerun launch-ready on owner unhold). sim-wrist-periphery-fix CLOSED this session (bar smashed, wrist 0.900 -> 0.548 vs <=0.786); sim100-v1-rerun stays owner_hold with its gate now double-GO (both cameras at/under their registered lines).
 
-**12 open** (Live 0 · Queued 2 · Blocked 10 · Done 122)
+**12 open** (Live 0 · Queued 2 · Blocked 10 · Done 123)
 
 ## 🔴 Live (0)
 
@@ -17,6 +17,20 @@
 ## 🟢 Queued (2)
 
 *ready — waiting on a window or a boundary*
+
+**`sim100-v2-rerun-amendment-draft`** · `cpu`
+
+sim100 v2-rerun pre-reg AMENDMENT draft (CPU only, no launch): the rerun item's own protocol requires a short amendment before launch (new arm names for v2 visuals, re-baseline) - draft it now so the eval is launch-ready the mome…
+
+**boundary:** Queued 06:2xZ 08-12 at the wrist-periphery close. Executable now (pure CPU writing); pends nothing. Its EXECUTION twin (the eval itself) remains sim100-v1-rerun, owner_hold.
+
+<details><summary>full record</summary>
+
+sim100 v2-rerun pre-reg AMENDMENT draft (CPU only, no launch): the rerun item's own protocol requires a short amendment before launch (new arm names for v2 visuals, re-baseline) - draft it now so the eval is launch-ready the moment the owner unholds. Content: arms er60k + ftrig4k + hold re-rendered under render_style=v2 (real-plate top, re-tuned wrist pose 06:2xZ), same 100 seeds / metric / gates as posts/2026-08-11-prereg-sim-policy-eval-100seeds.md; visual re-baseline table = probe reads (top 0.890-&gt;0.773, wrist 0.835-&gt;0.548); expected-behavior priors stated in advance (the fisheye+pose geometry deltas are exactly the spatial-mismatch signature named at the v1 close - register what a behavior change would look like vs the 0/500 baseline). Post as DRAFT pending owner call; the 20-seed er60k spot-check option stays first-listed.
+
+</details>
+
+---
 
 **`sim-content-diversity`** · `cpu`
 
@@ -32,20 +46,6 @@ Sim content diversity v3 (the axis every read since the OOD probe names: sim is 
 
 ---
 
-**`sim-wrist-periphery-fix`** · `cpu`
-
-Wrist-cam periphery re-tune under the v1 fisheye (small, CPU + ~0.04 GPU-h probe reads): the scene pass moved wrist 5-NN AUROC 0.835-&gt;0.786 (best read of the whole v1 study - content/pose is what the wrist tracks) but the fisheye…
-
-**boundary:** Queued 05:0xZ 08-12 at the v1 close (rides the v1 pre-reg's instrument + axes; wrist was explicitly secondary there). Executable now; independent of the inpainting item. | NOTE 05:4xZ 08-12: the v2 wrist composite read WORSE (0.951) than the v1 wrist path (0.900) - episode-start wrist poses differ by degrees across episodes so the clean plate is mush (coverage 0.36); shipped v2 keeps the v1 wrist path. This item's bar unchanged (&lt;=0.786 scene-only level); a per-episode-aligned wrist plate is a possible extra axis once the pose/periphery is right. · [pre-reg](posts/2026-08-12-prereg-sim-visual-matching.md)
-
-<details><summary>full record</summary>
-
-Wrist-cam periphery re-tune under the v1 fisheye (small, CPU + ~0.04 GPU-h probe reads): the scene pass moved wrist 5-NN AUROC 0.835-&gt;0.786 (best read of the whole v1 study - content/pose is what the wrist tracks) but the fisheye+grade passes regressed it to 0.900 because the 72deg source pulls sim-specific periphery (arm body mass, table far edge, floor band) into frame. Iterate ONLY the wrist: camera pose/height under the wider source, what the periphery shows (table extent, background band), gripper-mass framing vs the real bottom-quarter jaws - reset-render probe per iteration, wrist 5-NN &lt;=0.786 (scene-only level) as the bar, top read must not regress. Fold any deltas into _repose_wrist_cam / the scene XML.
-
-</details>
-
----
-
 ## 🟡 Blocked (10)
 
 *waiting on a prerequisite, a boundary, or the owner*
@@ -54,7 +54,7 @@ Wrist-cam periphery re-tune under the v1 fisheye (small, CPU + ~0.04 GPU-h probe
 
 100-seed eval v1 rung (successor, pends sim-visual-matching landing): re-run the sim100 protocol (same 100 seeds, same metric/gates, posts/2026-08-11-prereg-sim-policy-eval-100seeds.md conventions) on the v1 matched visuals for e…
 
-**boundary:** Queued 03:4xZ 08-12 at the OOD-probe close. Executable only after sim-visual-matching lands its so101_sim.py visual deltas; the probe re-read (~0.02 GPU-h) is the cheap go/no-go gate before the ~2-4 GPU-h eval. | GATE READ 05:0xZ 08-12: probe re-read MISSED the bar (top 5-NN 0.876 vs &lt;=0.790 target) =&gt; by the registered gate the 2-4 GPU-h rerun does NOT auto-launch. OWNER DECISION OFFERED in the results post: the probe measures encoder separability, not policy behavior - the fisheye+wrist-repose geometry fixes change where things appear in the image, and er60k's reach-over-the-table fingerprint is exactly a pinhole-vs-fisheye spatial-mismatch signature; a 20-seed er60k spot-check (~0.5 GPU-h) would answer it cheaply. HOLDING for owner call: spot-check / full rerun / park behind inpainting. | GATE RE-READ 05:4xZ 08-12: v2 inpainting MET the registered line (top 5-NN 0.773 &lt;= 0.790) =&gt; by the item's own registered criterion the rerun is now GO **with v2 frames** (render_style=v2 default; wrist rides the v1 path inside v2). Still owner_hold: the 20-seed behavioral spot-check ask (05:01Z) is unanswered and remains the cheaper first step; on unhold, the short pre-reg amendment renames arms to v2 visuals and re-baselines. · [pre-reg](posts/2026-08-11-prereg-sim-policy-eval-100seeds.md)
+**boundary:** Queued 03:4xZ 08-12 at the OOD-probe close. Executable only after sim-visual-matching lands its so101_sim.py visual deltas; the probe re-read (~0.02 GPU-h) is the cheap go/no-go gate before the ~2-4 GPU-h eval. | GATE READ 05:0xZ 08-12: probe re-read MISSED the bar (top 5-NN 0.876 vs &lt;=0.790 target) =&gt; by the registered gate the 2-4 GPU-h rerun does NOT auto-launch. OWNER DECISION OFFERED in the results post: the probe measures encoder separability, not policy behavior - the fisheye+wrist-repose geometry fixes change where things appear in the image, and er60k's reach-over-the-table fingerprint is exactly a pinhole-vs-fisheye spatial-mismatch signature; a 20-seed er60k spot-check (~0.5 GPU-h) would answer it cheaply. HOLDING for owner call: spot-check / full rerun / park behind inpainting. | GATE RE-READ 05:4xZ 08-12: v2 inpainting MET the registered line (top 5-NN 0.773 &lt;= 0.790) =&gt; by the item's own registered criterion the rerun is now GO **with v2 frames** (render_style=v2 default; wrist rides the v1 path inside v2). Still owner_hold: the 20-seed behavioral spot-check ask (05:01Z) is unanswered and remains the cheaper first step; on unhold, the short pre-reg amendment renames arms to v2 visuals and re-baselines. | GATE RE-READ 06:2xZ 08-12: sim-wrist-periphery-fix closed - wrist 5-NN 0.900 -&gt; 0.548 (inside the real spread), top stays 0.773. BOTH cameras now read at-or-under their registered lines; the rerun gate is GO with v2 frames + re-tuned wrist pose. Still owner_hold: spot-check ask (05:01Z) unanswered. · [pre-reg](posts/2026-08-11-prereg-sim-policy-eval-100seeds.md)
 
 <details><summary>full record</summary>
 
@@ -188,9 +188,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (122)
+## ✅ Done (123)
 
 *closed — the full record stays in each fold*
+
+**`sim-wrist-periphery-fix`** · `cpu`
+
+Wrist-cam periphery re-tune under the v1 fisheye (small, CPU + ~0.04 GPU-h probe reads): the scene pass moved wrist 5-NN AUROC 0.835-&gt;0.786 (best read of the whole v1 study - content/pose is what the wrist tracks) but the fisheye…
+
+**boundary:** Queued 05:0xZ 08-12 at the v1 close (rides the v1 pre-reg's instrument + axes; wrist was explicitly secondary there). Executable now; independent of the inpainting item. | NOTE 05:4xZ 08-12: the v2 wrist composite read WORSE (0.951) than the v1 wrist path (0.900) - episode-start wrist poses differ by degrees across episodes so the clean plate is mush (coverage 0.36); shipped v2 keeps the v1 wrist path. This item's bar unchanged (&lt;=0.786 scene-only level); a per-episode-aligned wrist plate is a possible extra axis once the pose/periphery is right. | CLOSED 06:2xZ 08-12 (work session): registered bar SMASHED on the first candidate - wrist 5-NN AUROC 0.900 -&gt; 0.548 vs &lt;=0.786 (k-ratio 0.97x: sim wrist now sits INSIDE the real spread; 20x5 sensitivity 0.550, stable). Camera moved from the wrist top behind the gripper (world ~(0.096,-0.004,0.160), 55deg) to over the jaw base (~(0.150,0,0.150), 65deg, same image-right=-y roll): the gripper-body mass that filled the bottom ~40% of frame drops out, leaving jaw tips in the bottom quarter over full-frame table like every real start frame. Guard green: top 0.773 bit-identical (render path untouched). Oracles 10 green (qpos bit-identity across styles + spawn stream vs banked v0), check.py 704 green. Shipped as the _repose_wrist_cam default (all render styles). The per-episode-aligned wrist plate axis named at the v2 close is RETIRED - a composite cannot beat inside-the-real-spread. · [pre-reg](posts/2026-08-12-prereg-sim-wrist-periphery.md)
+
+<details><summary>full record</summary>
+
+Wrist-cam periphery re-tune under the v1 fisheye (small, CPU + ~0.04 GPU-h probe reads): the scene pass moved wrist 5-NN AUROC 0.835-&gt;0.786 (best read of the whole v1 study - content/pose is what the wrist tracks) but the fisheye+grade passes regressed it to 0.900 because the 72deg source pulls sim-specific periphery (arm body mass, table far edge, floor band) into frame. Iterate ONLY the wrist: camera pose/height under the wider source, what the periphery shows (table extent, background band), gripper-mass framing vs the real bottom-quarter jaws - reset-render probe per iteration, wrist 5-NN &lt;=0.786 (scene-only level) as the bar, top read must not regress. Fold any deltas into _repose_wrist_cam / the scene XML.
+
+</details>
+
+---
 
 **`sim-visual-inpainting`** · `cpu`
 
