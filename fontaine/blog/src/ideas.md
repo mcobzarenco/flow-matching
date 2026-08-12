@@ -9,7 +9,7 @@ mainline ledger, `docs/architecture.md` §7–8). Status tags: `queued`
 
 This page is the **index**: what is hot right now vs what is on ice.
 It is updated whenever an idea moves (the per-idea page is the
-record; the line here is the hook). *Index last updated 2026-08-10.*
+record; the line here is the hook). *Index last updated 2026-08-12.*
 
 ## Hot — actively pursued
 
@@ -725,7 +725,23 @@ record; the line here is the hook). *Index last updated 2026-08-10.*
   sim eval with a continuous metric exists — our substrate leads the
   field; and a live sysid question surfaced: menagerie vs
   TheRobotStudio publish kp 998 vs kp 17.8 for the same STS3215,
-  with BAM's identified servo model as the informed prior.
+  with BAM's identified servo model as the informed prior. Sim lane
+  2026-08-12 `0821` (owner-called GRPO design research;
+  [GRPO for our two heads](papers/grpo-for-vla-heads.md), deep-read
+  upgrade + [design memo](posts/2026-08-12-grpo-sim-design-memo.md)):
+  the RL-on-sim mechanism set is now priced — AR head maps onto
+  SimpleVLA-RL's recipe (T=1.6, G=8, clip-higher, KL dropped) minus
+  its binary reward, which our 0/500 success floor kills (their own
+  0%-base dead-start result); flow head needs Flow-GRPO's ODE→SDE
+  (~30 lines, exact Gaussian step logprobs, velocity-MSE KL,
+  action-scale noise a≈0.5/K≈4 per πRL); πRL corrected: PPO+critic
+  is its main algorithm, GRPO loses its own appendix head-to-head;
+  trunk stays frozen (4th vote). Memo's proposed first spend = a
+  rollout-only **signal probe** (4 cells × 15 seeds × K=8, v3
+  frames, ≤3 GPU-h parallel-path) measuring within-group
+  progress-reward variance + competence cost of stochastic decoding
+  before any RL infra is built — pends owner review, sequenced
+  after parallel-oracle → v3 rerun.
 - **`lit-arms` [#15 Literature-sourced arms](ideas/15-literature-arms.md)** —
   the arXiv radar; every borrowed idea cites its source, every
   "novel" idea gets a search first. Feeds the Papers section.

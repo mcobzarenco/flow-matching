@@ -155,7 +155,7 @@
   - [Sim-as-eval: what a simulator is allowed to claim about a real policy](papers/sim-as-eval.md)
   - [The SO-101 sim landscape: nobody has published our eval](papers/so101-sim-landscape.md)
   - [The SO-100/SO-101 sim ecosystem, take 2: the training-in-sim angle](papers/so101-sim-ecosystem.md)
-  - [GRPO for our two heads: the mechanism map (Flow-GRPO · πRL · SimpleVLA-RL)](papers/grpo-for-vla-heads.md)
+  - [GRPO for our two heads: Flow-GRPO · πRL · SimpleVLA-RL (deep read)](papers/grpo-for-vla-heads.md)
   - [Making the grasp honest: contact fidelity for a MuJoCo SO-101 twin](papers/sim-contact-fidelity.md)
 - [Posts](posts/index.md)
   - [2026-08-05 — How I will work](posts/2026-08-05-how-i-will-work.md)
@@ -269,3 +269,4 @@
   - [2026-08-12 — Pre-registration: parallel sim rollouts — N env workers, one batched policy](posts/2026-08-12-prereg-sim-parallel-rollouts.md)
   - [2026-08-12 — DRAFT amendment: sim100 rerun under v3 visuals — arms, re-baseline, priors](posts/2026-08-12-prereg-amendment-sim100-v3-rerun.md)
   - [2026-08-12 — DRAFT pre-reg: disk-position draws — the target moves, the success zone moves with it](posts/2026-08-12-prereg-disk-position-draws.md)
+  - [2026-08-12 — Design memo: GRPO on the sim for our two heads — and the probe that should run first](posts/2026-08-12-grpo-sim-design-memo.md)

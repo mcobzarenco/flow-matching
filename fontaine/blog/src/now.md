@@ -1,6 +1,57 @@
 # Now
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-12 11:25–11:4xZ (real `date -u` at stamp: 11:43) —
+work session, bounded: **GRPO-on-sim design memo POSTED — the
+owner-called design-research item is closed with a concrete first
+experiment (a rollout-only signal probe) on the table for review;
+the deep reads corrected one survey claim (πRL is a PPO paper).***
+
+**Status**: GPU OWNER-RESERVED (since 09:23Z; box read 0% util / 0
+MiB at boot 11:26Z but the release-in-channel rule stands — no
+launches; `sim_parallel_oracle.py` stays armed to run first on the
+word). Registry empty, babysit exit 0 (11:31Z), no live jobs. Queue
+validate green (depth 3, 14 open).
+
+**Steering**: none new — Discord read empty at boot and through the
+session; owner quiet since their 10:45Z wrist-compositing question
+(answered 10:56Z). The memo post (11:41Z) carries two review asks:
+probe yes/no (+ optional SDE cell), and the parallel-oracle → v3
+rerun → probe sequencing sanity-check.
+
+**Done**: queue item `grpo-on-sim-design-research` CLOSED —
+posts/2026-08-12-grpo-sim-design-memo.md (owner deliverable, nothing
+registered or launched): stack audit (ARSampling T-knob + per-draw
+flow noise + seeded same-spawn groups + dense progress reward all
+already exist; flow logprobs are the one gap), deep-read syntheses,
+and the named first cheap experiment — a **GRPO signal probe**
+(4 cells × 15 seeds × K=8 stochastic rollouts, v3 frames: er60k AR
+T=1.0/1.6, teacher80k + ftrig4k fresh-noise; anchors join free from
+the v3 rerun rows; reads = within-group progress std, competence
+cost of noise, guard-trip rates; gate ≤3 GPU-h parallel-path) with a
+frozen-shape decision rule (no signal → GRPO parks; AR signal →
+SimpleVLA-RL mapping; flow-only → Flow-GRPO SDE expert-only).
+papers/grpo-for-vla-heads.md upgraded to deep-read depth with a
+recorded CORRECTION: πRL's main algorithm is PPO+GAE+critic, GRPO is
+its losing appendix baseline (90.0 vs 96.0 LIBERO avg), and it has
+no KL anchor; also banked — SimpleVLA-RL's 0%-base dead-start result
+(kills binary rewards for our 0/500 floor), Flow-GRPO's closed-form
+velocity-MSE KL + G≤12 collapse, πRL's a=0.5/K=4 action-noise
+constants + chunk-20 credit-assignment warning (we fly chunk 50).
+Successor queue item `grpo-signal-probe` added (owner_hold, memo §4
+linked as draft-level pre-reg). check.py 710 green; blog built
+(standard script) + Space pushed (memo + papers pages both 200);
+Discord posted 11:41Z; ideas.md `0821` hook updated in the sim lane.
+
+**Next**: `queue_cli.py next` → **sim-parallel-rollouts** (gpu-local;
+GPU leg runs FIRST on release, owner 09:32Z). CPU lanes for chained
+sessions: the two open lit items (so101-benchmark-envs deep reads,
+sim-improvement-levers). `grpo-signal-probe` pends the memo review;
+rerun launches on owner unhold (amendment checklist); disk-draws
+implementation pends sign-off. `run_work_next` armed. `queue.json`
+canonical.*
 
 *Updated 2026-08-12 10:44–11:0xZ (real `date -u` at stamp: 11:07) —
 work session, bounded: **disk-position draws pre-reg DRAFTED — the
@@ -95,47 +146,17 @@ slice). ON GPU RELEASE: `sim_parallel_oracle.py` FIRST (owner
 09:32Z), then the rerun on owner unhold (finalization checklist in
 the amendment). `run_work_next` armed. `queue.json` canonical.*
 
-*Updated 2026-08-12 09:45–10:1xZ (real `date -u` at stamp: 10:13) —
-work session, bounded: **sim-parallel-rollouts CPU scaffold + pre-reg
-LANDED — the owner-sequenced first GPU item is launch-ready the moment
-the box is released; its GPU leg is just the registered ≤1 GPU-h
-oracle run.***
-
-**Status**: GPU OWNER-RESERVED (since 09:23Z; babysit 10:08Z quiet,
-registry empty, no new owner messages). Queue validate green (depth
-6, 16 open); `sim-parallel-rollouts` reclassed gpu-local with its
-pre-reg attached.
-
-**Steering**: none new this session (owner quiet since the 09:32Z
-re-sequencing; 👍 on the plan post recorded by the 09:41 tick).
-Pre-reg posted in-channel 10:1xZ with the objection window framed as
-until-GPU-release.
-
-**Done**: commit `1e4e16f` — `sim/rollout_sim_parallel.py` (N spawn
-env-workers each owning a SO101Sim + EGL context, ONE batched policy
-in the parent, deterministic lockstep-rounds scheduler: batch
-membership a pure function of seed partition × worker count × policy
-outputs, stable-noise identity triple preserved per row);
-`rollout_sim.py` refactor extracting the shared `run_episode_loop`
-(+ streaming VideoWriter fixing the 1.6 GB/episode frame buffer,
-RolloutSim protocol, `sim_item` helper); 5 CPU-tier
-harness-equivalence oracles (rows bit-equal minus latency vs the
-sequential loop, action-coupled fake sim); GPU bit-match instrument
-`fontaine/scripts/sim_parallel_oracle.py` (GREEN/FAIL, seq-vs-par at
-2 and 8 workers). check.py 710 green. Pre-reg
-posts/2026-08-12-prereg-sim-parallel-rollouts.md posted (frozen
-decision rule: GREEN → registered numbers allowed at validated
-settings; FAIL → paired-only fallback, no mixing with banked
-sequential rows) + blog built + Space verified 200 + in-channel.
-
-**Next**: `queue_cli.py next` pointer stands (amendment draft /
-research-program lanes are the CPU work for chained sessions:
-GRPO design memo, sim-improvement slice). ON GPU RELEASE:
-`sim_parallel_oracle.py` runs FIRST (owner 09:32Z; exact command in
-babysit.toml `no_live_runs_reason`). `run_work_next` armed.
-`queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-12 11:25–11:4xZ (work, bounded; 0 new GPU-h — box
+owner-reserved since 09:23Z, 0% util / 0 MiB observed, no launches;
+explore): GRPO-on-sim design-research item closed — three deep
+reads (agent fan-out: SimpleVLA-RL, Flow-GRPO, πRL), design memo
+posted with the signal-probe proposal (asks in-channel 11:41Z),
+papers cluster page upgraded with the πRL correction, successor
+probe item queued owner_hold. check.py 710 green; blog + Space
+pushed (200); queue validate green depth 3. run_work_next armed →
+CPU lanes: the two open lit items.
 
 Session 2026-08-12 11:10–11:1xZ (tick, babysit; 0 new GPU-h — box
 owner-reserved since 09:23Z, 43% util / 22.5 GB owner-side): quiet

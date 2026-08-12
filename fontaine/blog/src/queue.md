@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-12T10:52:21Z
+**Updated:** 2026-08-12T11:43:30Z
 
-**Depth call:** depth 4 open at 11:0xZ 08-12: sim-parallel-rollouts (gpu-local, owner-sequenced first on release) + 2 lit items + grpo design research. sim-disk-position-prereg-draft CLOSED this session (DRAFT pre-reg posted; implementation pends owner sign-off with the rerun call).
+**Depth call:** depth 4 open at 11:4xZ 08-12: sim-parallel-rollouts (gpu-local, owner-sequenced first on release) + 2 lit items still open; grpo-on-sim-design-research CLOSED this session (memo posted), successor grpo-signal-probe is owner_hold pending memo review.
 
-**14 open** (Live 0 · Queued 4 · Blocked 10 · Done 126)
+**14 open** (Live 0 · Queued 3 · Blocked 11 · Done 127)
 
 ## 🔴 Live (0)
 
@@ -14,23 +14,9 @@
 
 *(empty)*
 
-## 🟢 Queued (4)
+## 🟢 Queued (3)
 
 *ready — waiting on a window or a boundary*
-
-**`grpo-on-sim-design-research`** · `cpu`
-
-Design research (owner-called 09:23Z 08-12, research-only, no training): GRPO on the sim for our two heads
-
-**boundary:** Mechanism map landed 09:3xZ 08-12 (papers/grpo-for-vla-heads.md, survey-depth). Remaining: deep reads (piRL group/KL details, Flow-GRPO SDE noise scale vs heun-10, SimpleVLA-RL exploration/budgets at 1xH100) -&gt; design memo post with the first cheap experiment for owner review. Sequencing: memo is CPU work, fine during the GPU-reserved window; any actual training pends sim-parallel-rollouts (owner 09:32Z) + its own pre-reg.
-
-<details><summary>full record</summary>
-
-Design research (owner-called 09:23Z 08-12, research-only, no training): GRPO on the sim for our two heads. AR objective: token-level GRPO is standard - map group sampling onto rollout returns (progress_final as reward; k rollouts per seed = the group). Flow-matching head: the logprob problem - survey Flow-GRPO (ODE-&gt;SDE stochasticization), ReinFlow, DPPO (diffusion policy PO); what gives usable per-action logprobs for our heun-10 decode. Deliverable: a design memo post naming the first cheap experiment (arms, reward, group size, GPU gate) for owner review; papers pages for what it reads.
-
-</details>
-
----
 
 **`lit-sim-improvement-levers`** · `cpu`
 
@@ -74,9 +60,23 @@ OWNER-SEQUENCED FIRST GPU ITEM (09:32Z 08-12: 'Once I relinquish the GPU, rememb
 
 ---
 
-## 🟡 Blocked (10)
+## 🟡 Blocked (11)
 
 *waiting on a prerequisite, a boundary, or the owner*
+
+**`grpo-signal-probe`** · `gpu-local` · **⛔ owner hold**
+
+GRPO signal probe (proposed in posts/2026-08-12-grpo-sim-design-memo.md SS4, pends owner review - the memo's ask #1): rollout-only measurement of whether group-relative advantage has signal at our competence floor
+
+**boundary:** Queued 11:4xZ 08-12 at memo close. BLOCKED on owner review of the memo (ask posted in-channel 11:4xZ). Memo SS4 is the draft-level design (linked as prereg); on approval: finalized pre-reg with final thresholds + instrument delta FIRST, then sequenced strictly after sim_parallel_oracle.py (owner 09:32Z first-GPU-item rule) AND the v3 rerun (anchor rows come from it). · [pre-reg](posts/2026-08-12-grpo-sim-design-memo.md)
+
+<details><summary>full record</summary>
+
+GRPO signal probe (proposed in posts/2026-08-12-grpo-sim-design-memo.md SS4, pends owner review - the memo's ask #1): rollout-only measurement of whether group-relative advantage has signal at our competence floor. 4 cells x 15 seeds x K=8 stochastic rollouts, v3 frames, sim100 conventions: er60k AR T=1.0, er60k AR T=1.6 (SimpleVLA-RL setting), teacher80k flow fresh-ODE-noise draws, ftrig4k flow fresh-ODE-noise draws; optional cell 5 on owner ask = teacher80k SDE a=0.5 (needs the ~30-line Euler-Maruyama sampler + bit-identity-at-a=0 oracle). Deterministic per-seed anchors join FREE from the v3 rerun rows (same seeds, same spawn stream - ordering logically forced). Instrument delta: --ar-temperature + --flow-draws K flags on rollout_sim over existing BijouPolicy knobs, per-draw RNG keyed (seed, replan, draw), draw-0 bit-identity oracle. Primary read: within-group std of progress_final_cm (+ best-point) per cell + fraction of groups surviving the dynamic-sampling filter; candidate bar (finalize at pre-reg) median group std &gt;= 0.25 cm. Secondary: competence cost vs anchor, guard-trip rates (strikes/upright/knock-offs), AR token entropy. Decision rule: no cell clears -&gt; GRPO-on-sim parks; AR clears -&gt; phase 2 = token-GRPO per SimpleVLA-RL recipe; flow-only clears -&gt; phase 2 = Flow-GRPO SDE expert-only; both -&gt; AR first. Gate &lt;=3 GPU-h parallel-path, &lt;=8 sequential.
+
+</details>
+
+---
 
 **`sim100-v1-rerun`** · `gpu-local` · **⛔ owner hold**
 
@@ -216,9 +216,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (126)
+## ✅ Done (127)
 
 *closed — the full record stays in each fold*
+
+**`grpo-on-sim-design-research`** · `cpu`
+
+Design research (owner-called 09:23Z 08-12, research-only, no training): GRPO on the sim for our two heads
+
+**boundary:** CLOSED 11:4xZ 08-12 work session, deliverable landed: design memo posts/2026-08-12-grpo-sim-design-memo.md (for owner review, nothing registered/launched) + papers/grpo-for-vla-heads.md upgraded to deep-read depth (correction recorded: piRL's main algorithm is PPO+GAE+critic, GRPO is its losing appendix baseline 90.0-vs-96.0 LIBERO; no KL anchor anywhere in piRL). Memo's named first cheap experiment = GRPO SIGNAL PROBE (rollout-only, no training, no RL code): 4 cells x 15 seeds x K=8 stochastic rollouts on v3 frames (er60k AR T=1.0 / T=1.6; teacher80k + ftrig4k flow fresh-noise draws), deterministic anchors joined from the v3 rerun rows, primary read = within-group std of progress_final_cm + dynamic-sampling survival rate; secondary = competence cost vs anchor + guard-trip rates (hacking price) + AR token entropy; gate &lt;=3 GPU-h parallel-path (&lt;=8 sequential). Decision rule in the memo: no signal -&gt; GRPO parks; AR signal -&gt; SimpleVLA-RL mapping phase 2; flow-only signal -&gt; Flow-GRPO SDE expert-only. Successor item grpo-signal-probe carries the owner hold.
+
+<details><summary>full record</summary>
+
+Design research (owner-called 09:23Z 08-12, research-only, no training): GRPO on the sim for our two heads. AR objective: token-level GRPO is standard - map group sampling onto rollout returns (progress_final as reward; k rollouts per seed = the group). Flow-matching head: the logprob problem - survey Flow-GRPO (ODE-&gt;SDE stochasticization), ReinFlow, DPPO (diffusion policy PO); what gives usable per-action logprobs for our heun-10 decode. Deliverable: a design memo post naming the first cheap experiment (arms, reward, group size, GPU gate) for owner review; papers pages for what it reads.
+
+</details>
+
+---
 
 **`sim-disk-position-prereg-draft`** · `cpu`
 
