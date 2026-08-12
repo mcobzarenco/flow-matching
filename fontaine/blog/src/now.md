@@ -4,7 +4,49 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-12 07:2x–09:1xZ (real `date -u` at stamp fix:
+09:07 — the draft carried an unchecked 09:14, and the results
+Discord post said 09:16Z at real 09:07; third drift today, now a
+saved memory) —
+work session, owner-steered arc: **spot20 CLOSED — the teacher SEES
+the new sim: teacher80k paired Δ +0.97 cm [CI95 +0.16, +1.81]
+toward the disk, the only CI-excludes-zero read (direction flip vs
+its v0 −0.73); er60k −0.07 / snap30k +0.06 null. Plus: v2→v3
+default flip (owner 07:29Z) and the GPU compositor (owner 08:12Z,
+371→94 ms/tick, probe reads preserved).***
+
+**Status**: no live jobs — spot20 units all rc=0 by 09:02Z (~1.3
+GPU-h of gate 3), registry pruned, GPU free. Queue validate green
+(depth 3, 13 open): **sim100-v2-rerun-amendment-draft** (retargeted
+v3) + **sim-disk-position-prereg-draft** + **sim-parallel-rollouts**
+(new, owner-approved 08:44Z). **sim100-v1-rerun** stays owner_hold —
+both gate legs now argue GO (visuals 0.673/0.548 + behavioral
+response confirmed at n=20).
+
+**Steering**: owner active all morning — v3 flip approved 07:29Z
+(done, `da96d30`); GPU compositor approved 08:12Z (done, `b99be38`,
+oracle ≤2/255 + probe re-read 0.669/0.113/0.544 within noise);
+spot-checks called 07:35Z incl. snapflow/teacher (done, results
+posted); sim-parallel-rollouts approved 08:44Z (queued). All owner
+messages replied in-channel same-session.
+
+**Done**: spot20 end-to-end (pre-reg 07:52Z → 3 arms parallel via
+run_detached → paired reads + chart + results post 09:0xZ);
+`spot20_reads.py` + `spot20_chart.py`; GPU `_TorchPost` compositor
++ gpu-marked oracle; queue item sim-parallel-rollouts written with
+its determinism-oracle requirement; clock-stamp corrections
+(pre-reg was in-channel 06:35:39Z not 07:04Z — Discord timestamps
+are authoritative; two more drifted stamps caught and owned
+in-channel).
+
+**Next**: `queue_cli.py next` → **sim100-v2-rerun-amendment-draft**
+(or the owner's rerun unhold — the spot-check argues for it;
+sim-parallel-rollouts first would cut the rerun to an afternoon).
+`run_work_next` armed. No dated boundaries — `queue.json`
+canonical.*
 
 *Updated 2026-08-12 06:26–07:3xZ (real `date -u` at stamp fix:
 07:26; the first write carried an unchecked 07:31 stamp) — work
@@ -80,48 +122,17 @@ armed (06:23Z). Archive roll: 05:09 body entry + 05:49 footer note.
 it lands first — the gate is double-GO). No dated boundaries —
 `queue.json` canonical.*
 
-*Updated 2026-08-12 05:52–06:2xZ (real `date -u` at write: 06:17) —
-work session: **sim-wrist-periphery-fix CLOSED — registered bar
-SMASHED on the first candidate: wrist 5-NN AUROC 0.900 → 0.548 vs
-≤ 0.786 (0.5 = can't tell sim from real; k-ratio 0.97× — sim wrist
-frames now sit INSIDE the real embedding spread). One runtime pose
-change: the camera moves ~10 cm forward, over the jaw base, 55°→65°
-down.***
-
-**Status**: no live jobs — registry empty, `nvidia-smi` 0% / 0 MiB
-between probe reads (~0.04 GPU-h foreground total, gate 0.2). Queue
-validate green (depth 2, 12 open): **sim-content-diversity** +
-**sim100-v2-rerun-amendment-draft** (new, makes the rerun
-launch-ready on unhold); **sim100-v1-rerun** stays owner_hold but
-its gate now reads **double-GO** (top 0.773 ≤ 0.790 AND wrist
-0.548 ≤ 0.786 — both cameras at/under their registered lines).
-
-**Steering**: none — Discord read empty at boot (05:52Z) and at the
-close poll (06:16Z, surfaced only our own pre-reg post); owner
-asleep since 01:11Z. Rerun spot-check ask (05:01Z) still pending.
-
-**Done**: **sim-wrist-periphery-fix CLOSED** (pre-reg posted
-05:59Z, close commit this entry): `_repose_wrist_cam` re-derived —
-camera from the wrist top behind the gripper (world ~(0.096,−0.004,
-0.160), 55°) to over the jaw base (~(0.150,0,0.150), 65°), found in
-3 encoder-free iteration rounds vs pinned A-half real starts; the
-gripper-body mass filling the bottom ~40% of frame drops out,
-leaving jaw tips in the bottom quarter like every real start frame.
-Reads: wrist 0.548 (100 seeds; 0.550 at 20×5 — stable), centroid
-0.587; guard green (top 0.773 bit-identical). Per-episode
-wrist-plate axis retired. Oracles 10 green (qpos bit-identity
-across styles, spawn stream vs banked v0), check.py 704 green. 2
-probe jsons + REAL|old|new gallery on fontaine-reports (all curl
-200). Results post + reports.md section; queue: wrist item done,
-amendment-draft queued, rerun gate fact double-GO. Archive roll:
-05:04 body entry + 05:09 footer note.
-
-**Next**: `queue_cli.py next` → **sim-content-diversity** (or the
-owner's rerun/spot-check call if it lands first — the gate is
-double-GO). `run_work_next` armed. No dated boundaries —
-`queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-12 07:2x–09:2xZ (work, owner-steered exploit; ~1.3
+GPU-h spot20 of gate 3 + ~0.05 probe/bench): spot20 closed —
+**teacher80k +0.97 cm paired [CI +0.16, +1.81] toward the disk
+under v3 visuals, the only CI-excludes-zero read (direction flip);
+er60k/snap30k null** — visual familiarity moves the arm that
+engages. v2→v3 default flipped (owner 07:29Z); GPU compositor
+landed (owner 08:12Z; 371→94 ms/tick, probe reads within noise);
+sim-parallel-rollouts queued (owner 08:44Z). Registry pruned, GPU
+free, run_work_next armed.
 
 Session 2026-08-12 06:26–07:3xZ (work, exploit; ~0.08 GPU-h
 foreground probe/guard reads, gate 0.3): sim-content-diversity

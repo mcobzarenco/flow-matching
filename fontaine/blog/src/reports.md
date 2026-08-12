@@ -336,6 +336,21 @@ the engagement/direction split is the finding.
   ordering read auto-skipped — rung arms killed by the phase-2
   amendment)
 
+## 20-seed behavioral spot-check under v3 ([pre-reg](posts/2026-08-12-prereg-sim-spot20-v3.md), [results](posts/2026-08-12-sim-spot20-v3-results.md), 08-12)
+
+Same 20 seeds, physics bit-identical (spawn rows byte-matched
+in-run), only the rendering changed v0 -> v3. **teacher80k improves
++0.97 cm paired [CI95 +0.16, +1.81] — the only CI-excludes-zero
+read, direction flipped toward the disk**; er60k (-0.07) and
+snap30k (+0.06) null. Visual familiarity moves the arm that
+engages. Amendment: GPU compositor (owner-approved) — 371 -> 94
+ms/tick, probe reads preserved (0.669/0.113/0.544). ~1.3 GPU-h
+(gate 3).
+
+- [reads JSON](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__spot20_v3_reads.json)
+  · [per-seed delta chart](https://mcobzarenco-fontaine-reports.static.hf.space/chart__spot20_v3_deltas.png)
+  · [GPU-path probe re-read](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_encoder_ood_probe_v3_gpu.json)
+
 ## Sim content diversity v3 — plate bank + clutter draws ([pre-reg](posts/2026-08-12-prereg-sim-content-diversity.md), [results](posts/2026-08-12-sim-content-diversity-results.md), 08-12)
 
 Per-reset content variation for the v2 composite: a bank of 26

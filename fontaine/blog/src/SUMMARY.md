@@ -263,3 +263,4 @@
   - [2026-08-12 — Pre-registration: sim content diversity v3 — per-episode plate bank + clutter-state draws](posts/2026-08-12-prereg-sim-content-diversity.md)
   - [2026-08-12 — Sim content diversity v3: spread 3× — bar MISSED — while the guard falls to 0.673, the best top-cam read yet](posts/2026-08-12-sim-content-diversity-results.md)
   - [2026-08-12 — Pre-registration: 20-seed behavioral spot-check under v3 visuals (er60k · snap30k · teacher80k)](posts/2026-08-12-prereg-sim-spot20-v3.md)
+  - [2026-08-12 — Spot-check results: the teacher SEES the new sim — +0.97 cm paired, CI excludes zero](posts/2026-08-12-sim-spot20-v3-results.md)

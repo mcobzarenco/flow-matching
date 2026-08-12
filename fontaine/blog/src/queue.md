@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-12T07:33:00Z
+**Updated:** 2026-08-12T09:10:00Z
 
 **Depth call:** depth 2 open at 06:1xZ 08-12: sim-content-diversity (cpu, the named diversity lever after v2) + sim100-v2-rerun-amendment-draft (cpu, makes the rerun launch-ready on owner unhold). sim-wrist-periphery-fix CLOSED this session (bar smashed, wrist 0.900 -> 0.548 vs <=0.786); sim100-v1-rerun stays owner_hold with its gate now double-GO (both cameras at/under their registered lines).
 
-**12 open** (Live 0 · Queued 2 · Blocked 10 · Done 124)
+**13 open** (Live 0 · Queued 3 · Blocked 10 · Done 124)
 
 ## 🔴 Live (0)
 
@@ -14,9 +14,23 @@
 
 *(empty)*
 
-## 🟢 Queued (2)
+## 🟢 Queued (3)
 
 *ready — waiting on a window or a boundary*
+
+**`sim-parallel-rollouts`** · `cpu`
+
+Parallel sim rollouts with a shared policy (owner-approved 08:44Z 08-12): N env workers (each owns its SO101Sim + EGL context, physics+render) feeding ONE batched policy server holding a single checkpoint copy - the lerobot-style…
+
+**boundary:** Queued 08:5xZ 08-12 mid spot-check ride (owner yes 08:44Z). Executable next session; pays for itself at the first full rerun.
+
+<details><summary>full record</summary>
+
+Parallel sim rollouts with a shared policy (owner-approved 08:44Z 08-12): N env workers (each owns its SO101Sim + EGL context, physics+render) feeding ONE batched policy server holding a single checkpoint copy - the lerobot-style policy-server split already in the repo for rig rollouts. At batch 1 the H100 idles during heun-10; batching N obs is near-free into the low tens. Box has 26 cores -&gt; ~8-12 render workers before CPU contention; target: a 100-seed arm in ~20-30 min (vs ~1.5 h), the 5-arm sim100 rerun within an afternoon. MUST ship with a determinism oracle: batched rollouts reproduce the sequential per-seed rows bit-for-bit (or within a stated decode tolerance, registered before use). Pre-reg the oracle + a 2-worker smoke before any registered eval uses the parallel path.
+
+</details>
+
+---
 
 **`sim-disk-position-prereg-draft`** · `cpu`
 
@@ -54,7 +68,7 @@ sim100 v2-rerun pre-reg AMENDMENT draft (CPU only, no launch): the rerun item's 
 
 100-seed eval v1 rung (successor, pends sim-visual-matching landing): re-run the sim100 protocol (same 100 seeds, same metric/gates, posts/2026-08-11-prereg-sim-policy-eval-100seeds.md conventions) on the v1 matched visuals for e…
 
-**boundary:** Queued 03:4xZ 08-12 at the OOD-probe close. Executable only after sim-visual-matching lands its so101_sim.py visual deltas; the probe re-read (~0.02 GPU-h) is the cheap go/no-go gate before the ~2-4 GPU-h eval. | GATE READ 05:0xZ 08-12: probe re-read MISSED the bar (top 5-NN 0.876 vs &lt;=0.790 target) =&gt; by the registered gate the 2-4 GPU-h rerun does NOT auto-launch. OWNER DECISION OFFERED in the results post: the probe measures encoder separability, not policy behavior - the fisheye+wrist-repose geometry fixes change where things appear in the image, and er60k's reach-over-the-table fingerprint is exactly a pinhole-vs-fisheye spatial-mismatch signature; a 20-seed er60k spot-check (~0.5 GPU-h) would answer it cheaply. HOLDING for owner call: spot-check / full rerun / park behind inpainting. | GATE RE-READ 05:4xZ 08-12: v2 inpainting MET the registered line (top 5-NN 0.773 &lt;= 0.790) =&gt; by the item's own registered criterion the rerun is now GO **with v2 frames** (render_style=v2 default; wrist rides the v1 path inside v2). Still owner_hold: the 20-seed behavioral spot-check ask (05:01Z) is unanswered and remains the cheaper first step; on unhold, the short pre-reg amendment renames arms to v2 visuals and re-baselines. | GATE RE-READ 06:2xZ 08-12: sim-wrist-periphery-fix closed - wrist 5-NN 0.900 -&gt; 0.548 (inside the real spread), top stays 0.773. BOTH cameras now read at-or-under their registered lines; the rerun gate is GO with v2 frames + re-tuned wrist pose. Still owner_hold: spot-check ask (05:01Z) unanswered. UPDATE 07:3xZ 08-12: owner approved the v2-&gt;v3 default flip (07:29Z); gate facts with v3 frames: top 0.673 + wrist 0.548, both under their registered lines. Still owner_hold on the rerun-vs-spot-check call itself. · [pre-reg](posts/2026-08-11-prereg-sim-policy-eval-100seeds.md)
+**boundary:** Queued 03:4xZ 08-12 at the OOD-probe close. Executable only after sim-visual-matching lands its so101_sim.py visual deltas; the probe re-read (~0.02 GPU-h) is the cheap go/no-go gate before the ~2-4 GPU-h eval. | GATE READ 05:0xZ 08-12: probe re-read MISSED the bar (top 5-NN 0.876 vs &lt;=0.790 target) =&gt; by the registered gate the 2-4 GPU-h rerun does NOT auto-launch. OWNER DECISION OFFERED in the results post: the probe measures encoder separability, not policy behavior - the fisheye+wrist-repose geometry fixes change where things appear in the image, and er60k's reach-over-the-table fingerprint is exactly a pinhole-vs-fisheye spatial-mismatch signature; a 20-seed er60k spot-check (~0.5 GPU-h) would answer it cheaply. HOLDING for owner call: spot-check / full rerun / park behind inpainting. | GATE RE-READ 05:4xZ 08-12: v2 inpainting MET the registered line (top 5-NN 0.773 &lt;= 0.790) =&gt; by the item's own registered criterion the rerun is now GO **with v2 frames** (render_style=v2 default; wrist rides the v1 path inside v2). Still owner_hold: the 20-seed behavioral spot-check ask (05:01Z) is unanswered and remains the cheaper first step; on unhold, the short pre-reg amendment renames arms to v2 visuals and re-baselines. | GATE RE-READ 06:2xZ 08-12: sim-wrist-periphery-fix closed - wrist 5-NN 0.900 -&gt; 0.548 (inside the real spread), top stays 0.773. BOTH cameras now read at-or-under their registered lines; the rerun gate is GO with v2 frames + re-tuned wrist pose. Still owner_hold: spot-check ask (05:01Z) unanswered. UPDATE 07:3xZ 08-12: owner approved the v2-&gt;v3 default flip (07:29Z); gate facts with v3 frames: top 0.673 + wrist 0.548, both under their registered lines. Still owner_hold on the rerun-vs-spot-check call itself. UPDATE 09:1xZ 08-12: spot20 DONE (owner-called) - teacher80k +0.97 cm paired CI-excludes-zero under v3 (direction flipped toward the disk), er60k/snap30k null; behavioral response to visuals CONFIRMED for the engaging arm. Rerun still owner_hold but now both gate legs (visual + behavioral) argue GO; ~6-9 h wall at GPU-compositor pace, ~20-30 min/arm if sim-parallel-rollouts lands first. · [pre-reg](posts/2026-08-11-prereg-sim-policy-eval-100seeds.md)
 
 <details><summary>full record</summary>
 
