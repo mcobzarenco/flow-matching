@@ -104,8 +104,10 @@ class SO101Sim:
         height: int = 480,
         render_style: str = "v1",
     ) -> None:
-        if render_style not in ("v0", "v1"):
-            raise ValueError(f"render_style {render_style!r} not in ('v0', 'v1')")
+        if render_style not in ("v0", "v1", "v2"):
+            raise ValueError(
+                f"render_style {render_style!r} not in ('v0', 'v1', 'v2')",
+            )
         self.render_style = render_style
         self.model = mujoco.MjModel.from_xml_path(str(SCENE_PATH))
         self._widen_joint_limits()
@@ -147,8 +149,10 @@ class SO101Sim:
         self._recolor_arm()
         self._repose_wrist_cam()
         self._noise_rng = np.random.default_rng(0)  # re-seeded per reset
-        if self.render_style == "v1":
+        if self.render_style in ("v1", "v2"):
             self._init_fisheye(width, height)
+        if self.render_style == "v2":
+            self._init_inpainting(width, height)
 
     def _widen_joint_limits(self) -> None:
         """Menagerie's shoulder_lift (+-100 deg) and elbow_flex (+-96.8)
@@ -260,14 +264,86 @@ class SO101Sim:
         wy = np.clip(sy - y0, 0.0, 1.0)[..., None]
         self._fisheye = (x0, y0, wx, wy)
 
+    def _remap(self, src: np.ndarray) -> np.ndarray:
+        """Bilinear fisheye remap of a source pinhole image — [H, W, C]
+        float in/out (any channel count)."""
+        x0, y0, wx, wy = self._fisheye
+        top = src[y0, x0] * (1 - wx) + src[y0, x0 + 1] * wx
+        bottom = src[y0 + 1, x0] * (1 - wx) + src[y0 + 1, x0 + 1] * wx
+        return top * (1 - wy) + bottom * wy
+
     def _apply_fisheye(self, frame: np.ndarray) -> np.ndarray:
         """Bilinear remap of a source pinhole render into the distorted
         output — [H, W, 3] uint8 in, same out."""
-        x0, y0, wx, wy = self._fisheye
-        src = frame.astype(np.float64)
-        top = src[y0, x0] * (1 - wx) + src[y0, x0 + 1] * wx
-        bottom = src[y0 + 1, x0] * (1 - wx) + src[y0 + 1, x0 + 1] * wx
-        return np.clip(top * (1 - wy) + bottom * wy, 0, 255).astype(np.uint8)
+        remapped = self._remap(frame.astype(np.float64))
+        return np.clip(remapped, 0, 255).astype(np.uint8)
+
+    # v2 render style (real-frame inpainting, prereg 2026-08-12): the
+    # background is a real photo — a per-camera clean plate mined from
+    # the real_v2 reference-half episodes (fontaine/scripts/
+    # make_clean_plates.py) — and only dynamic content is rendered:
+    # every geom on a non-world body (both arms, benchy) plus the
+    # named on-table statics whose real twins move across episodes and
+    # median out of the plate (disk, clutter stand-ins). Off-table
+    # statics (table, floor, pole, chairs, bag) come from the plate.
+    PLATES_DIR = Path(__file__).parents[1] / "assets" / "real_plates"
+    V2_DYNAMIC_STATICS = ("disk", "mouse", "mug", "laptop", "pcb")
+
+    def _init_inpainting(self, width: int, height: int) -> None:
+        """Load the per-camera clean plates and precompute the dynamic
+        geom-id set for the segmentation mask."""
+        from PIL import Image
+
+        self._plates: dict[str, np.ndarray] = {}
+        for camera in ("top", "wrist"):
+            plate = np.asarray(
+                Image.open(self.PLATES_DIR / f"{camera}_plate.png"),
+                dtype=np.float64,
+            )
+            if plate.shape != (height, width, 3):
+                raise ValueError(
+                    f"{camera} plate {plate.shape} does not match the "
+                    f"render size ({height}, {width}, 3)",
+                )
+            self._plates[camera] = plate
+        dynamic = [
+            index
+            for index in range(self.model.ngeom)
+            if self.model.geom_bodyid[index] != 0
+        ] + [self.model.geom(name).id for name in self.V2_DYNAMIC_STATICS]
+        self._dynamic_geoms = np.array(sorted(dynamic))
+
+    def _render_mask(self, camera: str) -> np.ndarray:
+        """[H, W] float 0/1 dynamic-content mask in source pinhole
+        space, from a segmentation pass of the same scene."""
+        renderer = self.renderer
+        renderer.enable_segmentation_rendering()
+        renderer.update_scene(self.data, camera=camera)
+        seg = renderer.render()
+        renderer.disable_segmentation_rendering()
+        is_geom = seg[..., 1] == mujoco.mjtObj.mjOBJ_GEOM.value
+        return (is_geom & np.isin(seg[..., 0], self._dynamic_geoms)).astype(
+            np.float64,
+        )
+
+    def _composite(
+        self,
+        frame: np.ndarray,
+        mask: np.ndarray,
+        camera: str,
+    ) -> np.ndarray:
+        """Inpainting composite: graded/blurred rendered foreground over
+        the real clean plate, sensor noise on the full frame (the
+        median plate is denoised below single-frame noise; the plate
+        already carries the real optics, so only the foreground gets
+        the PSF blur)."""
+        gain, bias = self.V1_GRADE[camera]
+        foreground = self._blur(self._remap(frame.astype(np.float64)) * gain + bias)
+        weight = self._blur(self._remap(mask[..., None]))
+        weight = np.clip(weight, 0.0, 1.0)
+        out = weight * foreground + (1.0 - weight) * self._plates[camera]
+        out += self._noise_rng.normal(0.0, self.V1_NOISE_SIGMA, out.shape)
+        return np.clip(out, 0, 255).astype(np.uint8)
 
     def _recolor_arm(self) -> None:
         """Menagerie ships the yellow-print arm; the rig's are black, and
@@ -430,6 +506,9 @@ class SO101Sim:
         if self.render_style == "v1":
             top = self._grade(self._apply_fisheye(top), "top")
             wrist = self._grade(self._apply_fisheye(wrist), "wrist")
+        elif self.render_style == "v2":
+            top = self._composite(top, self._render_mask("top_cam"), "top")
+            wrist = self._composite(wrist, self._render_mask("wrist_cam"), "wrist")
         return SimObservation(top=top, wrist=wrist, state=state)
 
     def _grade(self, frame: np.ndarray, camera: str) -> np.ndarray:

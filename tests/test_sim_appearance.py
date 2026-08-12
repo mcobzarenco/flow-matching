@@ -49,11 +49,12 @@ def test_qpos_identical_across_appearance_seeds(sim: SO101Sim) -> None:
 
 def test_qpos_identical_across_render_styles() -> None:
     qpos = {}
-    for style in ("v0", "v1"):
+    for style in ("v0", "v1", "v2"):
         sim = _physics_only(SO101Sim(render_style=style))
         sim.reset(5)
         qpos[style] = sim.data.qpos.copy()
     np.testing.assert_array_equal(qpos["v0"], qpos["v1"])
+    np.testing.assert_array_equal(qpos["v0"], qpos["v2"])
 
 
 def test_appearance_seed_changes_only_appearance(sim: SO101Sim) -> None:
@@ -67,4 +68,4 @@ def test_appearance_seed_changes_only_appearance(sim: SO101Sim) -> None:
 
 def test_render_style_validated() -> None:
     with pytest.raises(ValueError, match="render_style"):
-        SO101Sim(render_style="v2")
+        SO101Sim(render_style="v9")
