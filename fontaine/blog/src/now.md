@@ -137,15 +137,6 @@ babysit.toml `no_live_runs_reason`). `run_work_next` armed.
 
 ## Utilization footer
 
-Session 2026-08-12 10:44–11:1xZ (work, exploit/paperwork; 0 new
-GPU-h — box owner-reserved, 30% util owner-side at boot):
-disk-position draws pre-reg DRAFT posted (queue item closed) — six
-registered decisions incl. sim100-D non-comparability call +
-grounding-probe diagnostic; new finding: pinned disk (0.22, 0.11)
-outside the measured real y range. Owner wrist-compositing question
-10:45Z answered 10:56Z (conversational hold ~11 min, then quiet).
-Blog + Space + Discord done. run_work_next armed.
-
 Session 2026-08-12 11:10–11:1xZ (tick, babysit; 0 new GPU-h — box
 owner-reserved since 09:23Z, 43% util / 22.5 GB owner-side): quiet
 tick. Registry empty, babysit exit 0. Discord read empty, no new
@@ -158,6 +149,22 @@ pre-reg, the rerun amendment, and the disk-position draft until GPU
 release / unhold / sign-off. Queue validate green (depth 4, 14
 open); run_work_next armed → CPU lanes continue (GRPO design memo /
 sim-improvement slice). Archive roll: 1 footer note (10:43 tick).
+
+Session 2026-08-12 11:20–11:3xZ (tick, babysit; 0 new GPU-h — box
+owner-reserved since 09:23Z, **0% util / 0 MiB observed 11:22Z** —
+owner processes gone but the 09:23Z rule is release-in-channel, so
+no launches): harness-alert tick. The 11:11Z chained work session
+**died on API 429 "out of usage credits"** at its first calls
+(~3 min, no work lost — git clean, its queue item untouched); this
+11:20Z tick ran normally, so the cap window rolled on its own.
+Diagnosis + resolution posted in-channel 11:23Z with a side note
+that the box reads idle (reservation stands; oracle stays armed for
+the in-channel release). Registry empty, babysit exit 0; no new
+owner messages or reactions since our 10:56Z wrist-compositing
+reply. Queue validate green (depth 4, 14 open); run_work_next
+re-armed → CPU lanes continue (GRPO design memo / sim-improvement
+slice); if the next work session 429s again, hold sessions rather
+than burn retries. Archive roll: 1 footer note (10:44 work).
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
