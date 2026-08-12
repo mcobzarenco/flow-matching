@@ -51,24 +51,27 @@ from torch import Tensor
 from ..data import DatasetStats
 
 # The discrete convention family (degrees) and the decision
-# thresholds. Pre-registered 2026-08-12: the probe measures adequacy;
-# widening the family or loosening thresholds after seeing panel
-# residuals would be fishing.
+# thresholds. The FAMILY is pre-registered (2026-08-12); the decision
+# rule was re-gated the same day after the first panel probe failed
+# the cross-instrument check (1% "covered" vs the floors analysis's
+# ~45–55% — a coverage-fraction gate cannot tell a convention SHIFT
+# from a workspace TAIL sticking a few degrees past a 1st/99th
+# percentile box, and near-symmetric intervals let spurious mirrors
+# win). The rule keys on MIDPOINT displacement instead: the family's
+# members move midpoints by >= 90 deg, tails do not.
 CONVENTION_OFFSETS = (0.0, 90.0, -90.0, 180.0, -180.0)
 CONVENTION_SIGNS = (1.0, -1.0)
-# A candidate FITS a joint when at most this fraction of the mapped
-# dataset interval falls outside the table box (uncovered fraction —
-# NOT floor distance: the real rig table touches the release box on a
-# 3.4° sliver, so disjointness alone would call a 97%-outside joint
-# "covered"). The identity is preferred whenever IT fits, so covered
-# joints are never translated.
-COVERAGE_SLACK = 0.10
-# When nothing fits cleanly, translate anyway iff the best member
-# uncovers at least this much LESS of the interval than the identity
-# (a decisive improvement — e.g. a workspace wider than the table box,
-# where the right offset still clips tails); otherwise the joint keeps
-# identity and is flagged needs_affine.
-DECISIVE_IMPROVEMENT = 0.50
+# A joint is IN CONVENTION (and a candidate QUALIFIES) when its
+# (mapped) interval midpoint lies within the table box padded by this
+# many degrees per side — percentile boxes clip legitimate tails, so
+# midpoints near the edge are normal; midpoints far outside are not.
+BOX_PAD_DEG = 10.0
+# A mirror (sign -1) candidate must beat the best sign +1 qualifier by
+# at least this much uncovered-fraction to be chosen: mirrored joints
+# are physically rare across lerobot calibration eras, and stats alone
+# cannot distinguish a mirror from an offset on near-symmetric
+# intervals — demand decisive evidence.
+MIRROR_MARGIN = 0.25
 # Quantile equating with a (near-)zero dataset span would decode the
 # model's whole normalized range into nothing / explode the state
 # stretch; joints narrower than this fall back to a pure offset map
@@ -139,15 +142,16 @@ class ConventionFit:
     snapped_floor: Tensor
     # Per joint: a non-identity member was chosen (and accepted).
     translated: tuple[bool, ...]
-    # Per joint: nothing fit and no member improved decisively — the
-    # joint keeps the identity map (pure-translation discipline) and
-    # only the affine per-dataset mode can rescue it.
+    # Per joint: out of convention (midpoint outside the padded box)
+    # and NO family member brings it in — the joint keeps the identity
+    # map (pure-translation discipline) and only the affine per-dataset
+    # mode can rescue it.
     needs_affine: tuple[bool, ...]
-    # Per joint: how many family members (incl. identity) FIT cleanly
-    # (uncovered ≤ COVERAGE_SLACK) — >1 means the stats under-determine
-    # the map and the mean tiebreak decided; 0 with translated=True
-    # marks a decisive-improvement (partial-coverage) choice.
-    clean_fits: tuple[int, ...]
+    # Per joint: how many family members QUALIFIED (mapped midpoint
+    # inside the padded box) — >1 means the stats under-determine the
+    # map and the (floor, uncovered, mean-distance) ranking plus the
+    # mirror margin decided.
+    qualified: tuple[int, ...]
 
 
 def _quantile_tensors(stats: DatasetStats, *, modality: str) -> tuple[Tensor, Tensor]:
@@ -218,23 +222,24 @@ def _uncovered(low: float, high: float, box_low: float, box_high: float) -> floa
 def fit_convention_map(stats: DatasetStats, table: DatasetStats) -> ConventionFit:
     """Snap one dataset onto the checkpoint table's convention.
 
-    Per joint, over sign ∈ {±1} x offset ∈ {0, ±90, ±180}: score each
-    candidate by (uncovered fraction of the mapped action interval,
-    floor distance, |mapped action mean − table mean|), lexicographic.
-    Decision per joint:
+    The gate is MIDPOINT DISPLACEMENT, not interval coverage: the
+    family's members move a joint's midpoint by >= 90 deg, while
+    legitimate workspace tails past a 1st/99th-percentile box move it
+    by a few. Decision per joint:
 
-    1. identity FITS (uncovered ≤ COVERAGE_SLACK) → identity, always —
-       covered joints are never translated, even when a shifted member
-       also fits;
-    2. else the best candidate FITS → translate (ambiguity between
-       clean fits is broken by the mean distance and recorded in
-       ``clean_fits``);
-    3. else the best candidate uncovers DECISIVE_IMPROVEMENT less of
-       the interval than identity → translate (workspaces genuinely
-       wider than the table box);
-    4. else → identity + ``needs_affine`` (tick-scale units, exotic
-       conventions) — the pure-translation discipline: never a silent
-       quantile swap.
+    1. the interval midpoint lies inside the table box padded by
+       BOX_PAD_DEG → IN CONVENTION → identity, always — tails are
+       normal, and a shifted member that also happens to fit must
+       never flip a whole joint's convention;
+    2. else, over sign ∈ {±1} x offset ∈ {0, ±90, ±180}: candidates
+       whose mapped midpoint enters the padded box QUALIFY; they rank
+       by (floor distance, uncovered fraction, |mapped action mean −
+       table mean|), and a mirror (sign −1) wins only by beating the
+       best sign +1 qualifier by MIRROR_MARGIN uncovered — mirrors are
+       physically rare and near-symmetric intervals fake them;
+    3. no qualifier → identity + ``needs_affine`` (tick-scale units,
+       exotic conventions) — the pure-translation discipline: never a
+       silent quantile swap.
 
     Fit on ACTION stats (the box governs reachability); the caller
     applies the same map to state — one physical convention per rig.
@@ -253,50 +258,71 @@ def fit_convention_map(stats: DatasetStats, table: DatasetStats) -> ConventionFi
     snapped_floor = torch.zeros(dims)
     translated: list[bool] = []
     needs_affine: list[bool] = []
-    clean_fits: list[int] = []
+    qualified_counts: list[int] = []
 
     for j in range(dims):
         box = (float(t01[j]), float(t99[j]))
+        padded = (box[0] - BOX_PAD_DEG, box[1] + BOX_PAD_DEG)
         ends_id = (float(d01[j]), float(d99[j]))
         identity_uncovered[j] = _uncovered(*ends_id, *box)
         identity_floor[j] = _floor(*ends_id, *box)
+        mid_id = (ends_id[0] + ends_id[1]) / 2
 
-        best: tuple[float, float, float] | None = None
-        best_member = (1.0, 0.0)
-        fits = 0
+        if padded[0] <= mid_id <= padded[1]:
+            # In convention: tails past the percentile box are normal.
+            translated.append(False)
+            needs_affine.append(False)
+            qualified_counts.append(1)  # identity
+            snapped_uncovered[j] = identity_uncovered[j]
+            snapped_floor[j] = identity_floor[j]
+            continue
+
+        best_plus: tuple[tuple[float, float, float], tuple[float, float]] | None = None
+        best_mirror: tuple[tuple[float, float, float], tuple[float, float]] | None = (
+            None
+        )
+        qualifying = 0
         for sign in CONVENTION_SIGNS:
             for shift in CONVENTION_OFFSETS:
+                if sign == 1.0 and shift == 0.0:
+                    continue  # the identity was already rejected above
                 ends = (
                     sign * float(d01[j]) + shift,
                     sign * float(d99[j]) + shift,
                 )
                 low, high = min(ends), max(ends)
+                mid = (low + high) / 2
+                if not padded[0] <= mid <= padded[1]:
+                    continue
+                qualifying += 1
                 score = (
-                    _uncovered(low, high, *box),
                     _floor(low, high, *box),
+                    _uncovered(low, high, *box),
                     abs(sign * float(mean_d[j]) + shift - float(mean_t[j])),
                 )
-                if score[0] <= COVERAGE_SLACK:
-                    fits += 1
-                if best is None or score < best:
-                    best = score
-                    best_member = (sign, shift)
-        assert best is not None  # the family is non-empty
-        clean_fits.append(fits)
+                if sign == 1.0:
+                    if best_plus is None or score < best_plus[0]:
+                        best_plus = (score, (sign, shift))
+                elif best_mirror is None or score < best_mirror[0]:
+                    best_mirror = (score, (sign, shift))
+        qualified_counts.append(qualifying)
 
-        identity_fits = float(identity_uncovered[j]) <= COVERAGE_SLACK
-        decisive = float(identity_uncovered[j]) - best[0] >= DECISIVE_IMPROVEMENT
-        if identity_fits or not (best[0] <= COVERAGE_SLACK or decisive):
+        chosen = best_plus
+        if best_mirror is not None and (
+            best_plus is None or best_mirror[0][1] <= best_plus[0][1] - MIRROR_MARGIN
+        ):
+            chosen = best_mirror
+        if chosen is None:
             translated.append(False)
-            needs_affine.append(not identity_fits)
+            needs_affine.append(True)
             snapped_uncovered[j] = identity_uncovered[j]
             snapped_floor[j] = identity_floor[j]
         else:
-            sign, shift = best_member
+            (floor_score, uncovered_score, _), (sign, shift) = chosen
             scale[j] = sign
             offset[j] = shift
-            snapped_uncovered[j] = best[0]
-            snapped_floor[j] = best[1]
+            snapped_uncovered[j] = uncovered_score
+            snapped_floor[j] = floor_score
             translated.append(True)
             needs_affine.append(False)
 
@@ -308,7 +334,7 @@ def fit_convention_map(stats: DatasetStats, table: DatasetStats) -> ConventionFi
         snapped_floor=snapped_floor,
         translated=tuple(translated),
         needs_affine=tuple(needs_affine),
-        clean_fits=tuple(clean_fits),
+        qualified=tuple(qualified_counts),
     )
 
 

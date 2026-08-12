@@ -74,8 +74,9 @@ def test_covered_dataset_is_identity() -> None:
 
 def test_offset_180_recovery() -> None:
     """The dopaul signature: new-convention lift box [-100, -80] vs the
-    table's [45, 186] — only +180 brings it inside (+90 maps to
-    [-10, 10], still floored by 35)."""
+    table's [45, 186] — only +180 brings the midpoint into the padded
+    box (+90 lands it at 0, still out); the mirror ([80, 100] too)
+    ties on coverage but lacks the margin, so the offset wins."""
     q01 = (-30.0, -100.0, -50.0, -10.0, -5.0, 2.0)
     q99 = (30.0, -80.0, 50.0, 10.0, 5.0, 40.0)
     fit = fit_convention_map(stats(q01, q99), TABLE)
@@ -100,16 +101,15 @@ def test_sign_flip_recovery() -> None:
     assert float(fit.snapped_floor[1]) == 0.0
 
 
-def test_wide_box_stats_prefer_the_mirror_fit() -> None:
-    """The identifiability limit, pinned: the rig-table-shaped lift box
-    [-104, 49] fits the table band BEST under sign -1, offset +90
-    ([41, 194], 92% covered) — cleanly — while the offset-only members
-    cover 72% (+180) and 61% (+90). Interval+mean stats cannot tell a
-    mirrored joint from an offset one (both exist in lerobot's
-    calibration history); the estimator takes the stats-optimal member,
-    the printed per-dataset map makes the choice reviewable, and the
-    GPU arm adjudicates the physics. The mapped mean agrees here too
-    (-(-32)+90 = 122 vs table 120)."""
+def test_mirror_needs_decisive_margin() -> None:
+    """The identifiability limit, gated: on the rig-table-shaped lift
+    box [-104, 49] the mirror member (sign -1, +90 → [41, 194]) covers
+    MORE of the table band (92%) than the best offset (+180 → 72%) —
+    but not by MIRROR_MARGIN, and mirrored joints are physically rare,
+    so the offset wins. Stats alone cannot tell a mirror from an
+    offset on near-symmetric intervals; the margin encodes the prior,
+    the printed map keeps the choice reviewable, and the GPU arm
+    adjudicates the physics."""
     q01 = (-30.0, -104.0, -50.0, -10.0, -5.0, 2.0)
     q99 = (30.0, 49.0, 50.0, 10.0, 5.0, 40.0)
     fit = fit_convention_map(
@@ -117,18 +117,18 @@ def test_wide_box_stats_prefer_the_mirror_fit() -> None:
         TABLE,
     )
     assert fit.translated[1]
-    assert float(fit.map.scale[1]) == -1.0
-    assert float(fit.map.offset[1]) == 90.0
-    assert fit.clean_fits[1] == 1
-    assert float(fit.snapped_uncovered[1]) < 0.10
+    assert float(fit.map.scale[1]) == 1.0
+    assert float(fit.map.offset[1]) == 180.0
+    assert fit.qualified[1] == 3  # +90, +180 and the suppressed mirror
+    assert 0.2 < float(fit.snapped_uncovered[1]) < 0.4
     assert float(fit.identity_uncovered[1]) > 0.9
 
 
-def test_decisive_improvement_translates_without_clean_fit() -> None:
-    """A box wider than any clean fit allows ([-160, 5] lift): +180
-    still leaves ~15% uncovered (no member is clean) but beats
-    identity's 100% by far more than DECISIVE_IMPROVEMENT — translate,
-    with clean_fits = 0 marking the partial-coverage choice."""
+def test_wider_than_box_workspace_still_translates() -> None:
+    """A workspace wider than the table band ([-160, 5] lift): +180
+    qualifies (mapped midpoint 102.5 well inside the padded box) and
+    translates even though ~15% of the interval stays uncovered —
+    partial coverage is recorded, not a refusal."""
     q01 = (-30.0, -160.0, -50.0, -10.0, -5.0, 2.0)
     q99 = (30.0, 5.0, 50.0, 10.0, 5.0, 40.0)
     fit = fit_convention_map(
@@ -138,9 +138,24 @@ def test_decisive_improvement_translates_without_clean_fit() -> None:
     assert fit.translated[1]
     assert float(fit.map.scale[1]) == 1.0
     assert float(fit.map.offset[1]) == 180.0
-    assert fit.clean_fits[1] == 0
     assert 0.10 < float(fit.snapped_uncovered[1]) < 0.20
     assert float(fit.identity_uncovered[1]) == 1.0
+
+
+def test_tail_past_percentile_box_is_in_convention() -> None:
+    """The re-gate's reason for existing (the first panel probe called
+    99% of frames out-of-convention): a workspace tail a few degrees
+    past the 1st/99th-percentile box — midpoint inside the padded box
+    — is NORMAL data, not a convention shift. Identity, no diagnostics,
+    even though the naive uncovered fraction is well over any slack."""
+    # Lift [30, 60]: pokes 15 deg below the box floor (uncovered 0.5!)
+    # but the midpoint 45 is inside [35, 196].
+    q01 = (-30.0, 30.0, -50.0, -10.0, -5.0, 2.0)
+    q99 = (30.0, 60.0, 50.0, 10.0, 5.0, 40.0)
+    fit = fit_convention_map(stats(q01, q99), TABLE)
+    assert fit.map.is_identity
+    assert not any(fit.translated)
+    assert not any(fit.needs_affine)
 
 
 def test_scale_family_keeps_identity_loudly() -> None:
