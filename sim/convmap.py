@@ -44,30 +44,42 @@ class SeamConventionMap:
     seam_stats: DatasetStats
     fit: ConventionFit
     map: AffineMap
-    overrides: dict[str, float]
+    overrides: dict[str, tuple[float, float]]
 
     @property
     def item_maps(self) -> ItemMaps:
         return ItemMaps(state=self.map, action=self.map)
 
 
-def parse_overrides(specs: list[str]) -> dict[str, float]:
-    """``joint=offset`` specs (degrees, sign +1 only — mirrors are
-    physically rare and never override-worthy without evidence the
-    discrete fit itself would have accepted)."""
-    overrides: dict[str, float] = {}
+def parse_overrides(specs: list[str]) -> dict[str, tuple[float, float]]:
+    """``joint=offset`` or ``joint=sign,offset`` specs (degrees). The
+    bare form keeps sign +1; the two-part form carries a mirror — the
+    official LeRobot v3.0->v2.1 conversion sign-flips shoulder_lift
+    ((−1,+90) = 90−arm), which the bare syntax could not express and the
+    fit's MIRROR_MARGIN gate rejected despite qualifying. Sign must be
+    exactly +1 or −1 (the discrete convention family has no other
+    members)."""
+    overrides: dict[str, tuple[float, float]] = {}
     for spec in specs:
-        joint, _, offset = spec.partition("=")
+        joint, _, value = spec.partition("=")
         if joint not in SO_MOTORS:
             raise SystemExit(
                 f"--convmap-override joint {joint!r} not in {SO_MOTORS}",
             )
+        sign_str, comma, offset_str = value.partition(",")
+        if not comma:
+            sign_str, offset_str = "1", value
         try:
-            overrides[joint] = float(offset)
+            sign, offset = float(sign_str), float(offset_str)
         except ValueError:
             raise SystemExit(
-                f"--convmap-override offset {offset!r} is not a number",
+                f"--convmap-override value {value!r} is not OFFSET or SIGN,OFFSET",
             ) from None
+        if sign not in (1.0, -1.0):
+            raise SystemExit(
+                f"--convmap-override sign {sign_str!r} must be 1 or -1",
+            )
+        overrides[joint] = (sign, offset)
     return overrides
 
 
@@ -99,15 +111,18 @@ def seam_convention_map(
     )
 
 
-def resolve_map(fitted: AffineMap, overrides: dict[str, float]) -> AffineMap:
+def resolve_map(
+    fitted: AffineMap,
+    overrides: dict[str, tuple[float, float]],
+) -> AffineMap:
     """The final seam map: the gated fit with any overridden joints
-    replaced by (scale 1, the explicit offset). Non-overridden joints
+    replaced by the explicit (sign, offset). Non-overridden joints
     keep the fit's choice bit-exactly."""
     scale = fitted.scale.clone()
     offset = fitted.offset.clone()
-    for joint, value in overrides.items():
+    for joint, (sign, value) in overrides.items():
         index = SO_MOTORS.index(joint)
-        scale[index] = 1.0
+        scale[index] = sign
         offset[index] = value
     return AffineMap(scale=scale, offset=offset)
 
