@@ -25,6 +25,7 @@ from torch import Tensor
 
 from ..annotations import ConditionField
 from ..aux_text import AuxField, AuxGeneration, subgoal_text
+from ..data import DatasetStats
 from ..decoders.ar_backbone import (
     ActionCaptureStep,
     ARSampling,
@@ -43,6 +44,7 @@ from ..interface import (
 )
 from ..loading import CheckpointInfo, from_checkpoint, molmo_flow_state_table
 from ..model import BijouModel, SamplingMethod
+from .molmo_norm import ItemMaps, MolmoNorm, fit_item_maps
 from .subgoal_scoring import ceiling_pick, eligible_indices, self_certainty_pick
 from .subgoal_swap import SubgoalSwapMap, SwapRecord
 
@@ -405,6 +407,7 @@ class BijouPolicy:
         tickets: Path | None = None,
         ticket_map: Path | None = None,
         mask_state: bool = False,
+        molmo_norm: MolmoNorm = MolmoNorm.CHECKPOINT,
     ) -> None:
         self.name = f"bijou@{checkpoint.name.removeprefix('step_').lstrip('0') or '0'}"
         if sample_draws > 1:
@@ -565,6 +568,24 @@ class BijouPolicy:
                     f"tickets shaped for chunk {self.tickets.shape[1]}, "
                     f"checkpoint chunk size {self.info.chunk_size}",
                 )
+        self.molmo_norm = molmo_norm
+        # Per-repo fitted maps (stats are per-dataset constants, so one
+        # fit serves every frame of a dataset) - see molmo_norm.py for
+        # the two modes' semantics.
+        self._molmo_norm_maps: dict[str, ItemMaps] = {}
+        if molmo_norm is not MolmoNorm.CHECKPOINT:
+            if not isinstance(self.model.decoder, MolmoFlowDecoder):
+                raise SystemExit(
+                    "--molmo-norm re-maps a molmo_flow checkpoint's global "
+                    "q01/q99 table; this checkpoint's decoder is "
+                    f"{type(self.model.decoder).__name__} (per-dataset "
+                    "normalization is already its native scheme)",
+                )
+            # Off-contract inference class: the suffix keeps these reads
+            # from ever pooling with contract reads (charter §2).
+            self.name += (
+                "_pdnorm" if molmo_norm is MolmoNorm.PER_DATASET else "_convmap"
+            )
         if sample_draws > 1 and isinstance(self.model.decoder, MolmoFlowDecoder):
             # The decode IS stochastic (flow noise), but draw ensembling
             # tiles the prefix memory and the molmo2 KV cache has no
@@ -760,6 +781,85 @@ class BijouPolicy:
         )
         return {**item, "condition_subgoal": text}
 
+    def _molmo_norm_rewrite(
+        self,
+        items: list[dict[str, Any]],
+    ) -> tuple[list[dict[str, Any]], list[ItemMaps]]:
+        """The off-contract normalization seam (--molmo-norm): fit each
+        item's dataset -> checkpoint-table affine maps (cached per repo
+        — stats are per-dataset constants), rewrite the raw state
+        through A on the way IN (the collator then runs the standard
+        checkpoint-table path on it), and hand back the maps so predict
+        can pull chunks through A⁻¹ on the way OUT. Items are copied,
+        never mutated — the runner hands the same dicts to every
+        policy."""
+        rewritten: list[dict[str, Any]] = []
+        maps: list[ItemMaps] = []
+        for item in items:
+            repo_id = str(item["repo_id"])
+            fitted = self._molmo_norm_maps.get(repo_id)
+            if fitted is None:
+                stats = DatasetStats(
+                    action_mean=tuple(item["action_mean"].tolist()),
+                    action_std=tuple(item["action_std"].tolist()),
+                    state_mean=tuple(item["state_mean"].tolist()),
+                    state_std=tuple(item["state_std"].tolist()),
+                    action_q01=(
+                        tuple(item["action_q01"].tolist())
+                        if "action_q01" in item
+                        else None
+                    ),
+                    action_q99=(
+                        tuple(item["action_q99"].tolist())
+                        if "action_q99" in item
+                        else None
+                    ),
+                    state_q01=(
+                        tuple(item["state_q01"].tolist())
+                        if "state_q01" in item
+                        else None
+                    ),
+                    state_q99=(
+                        tuple(item["state_q99"].tolist())
+                        if "state_q99" in item
+                        else None
+                    ),
+                )
+                fitted, fit = fit_item_maps(
+                    stats,
+                    self.info.normalization,
+                    self.molmo_norm,
+                )
+                self._molmo_norm_maps[repo_id] = fitted
+                if fit is not None and (any(fit.translated) or any(fit.needs_affine)):
+                    # One reviewable line per dataset, first visit — the
+                    # chosen convention is part of the read's provenance.
+                    print(
+                        f"convention-map {repo_id}: "
+                        f"scale {fit.map.scale.tolist()} "
+                        f"offset {fit.map.offset.tolist()} "
+                        f"(identity floor {fit.identity_floor.tolist()}, "
+                        f"residual {fit.snapped_floor.tolist()}"
+                        + (
+                            f"; UNTRANSLATABLE joints "
+                            f"{[i for i, n in enumerate(fit.needs_affine) if n]}"
+                            if any(fit.needs_affine)
+                            else ""
+                        )
+                        + ")",
+                        flush=True,
+                    )
+            maps.append(fitted)
+            rewritten.append(
+                {
+                    **item,
+                    "observation.state": fitted.state.apply(
+                        item["observation.state"],
+                    ),
+                },
+            )
+        return rewritten, maps
+
     def _flow_noise(
         self,
         items: list[dict[str, Any]],
@@ -840,6 +940,14 @@ class BijouPolicy:
         that generate no text. Rollout prints these live; eval's
         ChunkPolicy protocol keeps consuming ``predict``."""
         items = self.apply_overrides(items)
+        item_maps: list[ItemMaps] | None = None
+        if self.molmo_norm is not MolmoNorm.CHECKPOINT:
+            # Off-contract normalization (molmo_flow only — __init__
+            # guard): state passes through A here; chunks come back
+            # through A⁻¹ below. Only the plain single-decode branch is
+            # reachable with the modes active (draws/temperature arms
+            # are refused for molmo_flow at construction).
+            items, item_maps = self._molmo_norm_rewrite(items)
         batch = self.collator(items).to(self.device)
         decoder = self.model.decoder
         if isinstance(decoder, FlowDecoder) and self.sample_draws > 1:
@@ -940,7 +1048,15 @@ class BijouPolicy:
             target_time=self.target_time,
             generate=self.generate,
         )
-        return [chunk.cpu() for chunk in prediction.actions], prediction.generations
+        chunks = [chunk.cpu() for chunk in prediction.actions]
+        if item_maps is not None:
+            # Decoded raw chunks are in checkpoint-table units — pull
+            # them back into each item's dataset units.
+            chunks = [
+                maps.action.invert(chunk)
+                for maps, chunk in zip(item_maps, chunks, strict=True)
+            ]
+        return chunks, prediction.generations
 
     @torch.no_grad()
     def predict(self, items: list[dict[str, Any]], indices: list[int]) -> list[Tensor]:

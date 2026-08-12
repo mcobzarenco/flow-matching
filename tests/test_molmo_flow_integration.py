@@ -34,6 +34,7 @@ import torch
 from test_convert_molmoact2 import _ACTION_DIM, _HORIZON, _convert, source_dir
 
 from bijou.decoders.molmo_flow import MolmoFlowDecoder, molmo_flow_loss
+from bijou.eval.molmo_norm import MolmoNorm
 from bijou.eval.policies import BijouPolicy
 from bijou.interface import (
     CameraFrame,
@@ -372,3 +373,89 @@ def test_eval_policy_refuses_draw_ensembling(tiny_checkpoint: Path) -> None:
             seed=7,
             sample_draws=2,
         )
+
+
+def _offset_item(
+    index: int,
+    *,
+    state: torch.Tensor,
+    q01: float,
+    q99: float,
+    mean: float,
+) -> dict[str, Any]:
+    """An eval item whose dataset stats put every joint in the box
+    [q01, q99] (vs the tiny checkpoint table's [-3, 3]); images/actions
+    are seeded off ``index`` so paired items collate identical prompts
+    when their (translated) states match."""
+    generator = torch.Generator().manual_seed(1000 + index)
+    dim = torch.ones(_ACTION_DIM)
+    return {
+        "task": "pick up the cube",
+        "repo_id": "user/offset",
+        "episode_index": 0,
+        "frame_index": index,
+        "observation.images.cam0": torch.rand((3, 48, 64), generator=generator),
+        "observation.state": state,
+        "action": torch.randn(_HORIZON, _ACTION_DIM, generator=generator),
+        "action_is_pad": torch.zeros(_HORIZON, dtype=torch.bool),
+        "action_mean": dim * mean,
+        "action_std": dim * 1.0,
+        "action_q01": dim * q01,
+        "action_q99": dim * q99,
+        "state_mean": dim * mean,
+        "state_std": dim * 1.0,
+        "state_q01": dim * q01,
+        "state_q99": dim * q99,
+    }
+
+
+def test_convention_map_mode_is_offset_equivariant(
+    tiny_checkpoint: Path,
+    tiny_policy: BijouPolicy,
+) -> None:
+    """The convmap arm's end-to-end contract on the REAL composition: a
+    dataset offset by +180 from the table decodes to EXACTLY the
+    contract read's chunks + 180 — same translated state (so identical
+    prompt bytes), same frame-identity noise, inverse map on the way
+    out. Pins state rewrite, map fit (offset −180 per joint), and the
+    chunk pull-back in one oracle."""
+    convmap = BijouPolicy(
+        tiny_checkpoint,
+        device=torch.device("cpu"),
+        seed=7,
+        molmo_norm=MolmoNorm.CONVENTION_MAP,
+    )
+    _stub_ids(convmap.collator.inputs)
+    assert convmap.name.endswith("_convmap")
+    generator = torch.Generator().manual_seed(33)
+    inbox = torch.rand((6,), generator=generator) * 4 - 2  # within [-2, 2]
+    shifted = _offset_item(0, state=inbox + 180.0, q01=178.0, q99=182.0, mean=180.5)
+    reference = _offset_item(0, state=inbox, q01=-3.0, q99=3.0, mean=1.0)
+    ours = convmap.predict([shifted], [0])
+    contract = tiny_policy.predict([reference], [0])
+    torch.testing.assert_close(ours[0], contract[0] + 180.0, atol=1e-4, rtol=0)
+
+
+def test_per_dataset_mode_is_scale_equivariant(
+    tiny_checkpoint: Path,
+    tiny_policy: BijouPolicy,
+) -> None:
+    """The pdnorm arm's contract: a dataset spanning [-6, 6] (2x the
+    table box) quantile-equates through A(x) = x/2 — the translated
+    state collates the same prompt as the contract read on x/2, and
+    the decoded chunks come back exactly 2x the contract chunks."""
+    pdnorm = BijouPolicy(
+        tiny_checkpoint,
+        device=torch.device("cpu"),
+        seed=7,
+        molmo_norm=MolmoNorm.PER_DATASET,
+    )
+    _stub_ids(pdnorm.collator.inputs)
+    assert pdnorm.name.endswith("_pdnorm")
+    generator = torch.Generator().manual_seed(44)
+    inbox = torch.rand((6,), generator=generator) * 4 - 2
+    wide = _offset_item(1, state=inbox * 2, q01=-6.0, q99=6.0, mean=0.0)
+    reference = _offset_item(1, state=inbox, q01=-3.0, q99=3.0, mean=1.0)
+    ours = pdnorm.predict([wide], [1])
+    contract = tiny_policy.predict([reference], [1])
+    torch.testing.assert_close(ours[0], contract[0] * 2.0, atol=1e-4, rtol=0)

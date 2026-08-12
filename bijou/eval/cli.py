@@ -65,6 +65,7 @@ from .metrics import (
     slice_by_dataset,
     summarize,
 )
+from .molmo_norm import MolmoNorm
 from .policies import (
     NOISE_KEYS,
     BijouPolicy,
@@ -157,6 +158,12 @@ class EvalReport:
     # (zero-information soft state token) — a diagnostic, never a
     # deployment read; the policy name carries _state-masked too.
     mask_state: bool
+    # --molmo-norm: how a molmo_flow checkpoint's global q01/q99 table
+    # met the data ("checkpoint" = the trained contract; "per-dataset"
+    # / "convention-map" = off-contract diagnostics, policy name
+    # carries _pdnorm/_convmap). Always "checkpoint" for other decoder
+    # kinds.
+    molmo_norm: str
     # Subgoal-conditioning probes: None = every eval
     # before 2026-08-07; "oracle" = per-frame TRUE-label [subgoal|…]
     # conditioning; "self" = the two-pass self-subgoal arms (policy
@@ -256,6 +263,7 @@ class EvalReport:
             "noise_ticket_map": self.noise_ticket_map,
             "ticket_map_sha256": self.ticket_map_sha256,
             "mask_state": self.mask_state,
+            "molmo_norm": self.molmo_norm,
             "subgoal_mode": self.subgoal_mode,
             "subgoal_swap_seed": self.subgoal_swap_seed,
             "subgoal_swap_identity": self.subgoal_swap_identity,
@@ -540,6 +548,43 @@ def parse_args() -> argparse.Namespace:
         "_state-masked suffix; baselines keep the intact state "
         "(state-copy stays the reference). Diagnostic only — never a "
         "deployment read",
+    )
+    parser.add_argument(
+        "--molmo-norm",
+        choices=[m.value for m in MolmoNorm],
+        default=MolmoNorm.CHECKPOINT.value,
+        help="how a molmo_flow checkpoint's normalization meets the eval "
+        "data (other decoder kinds reject non-default values — "
+        "per-dataset stats are already their native scheme). "
+        "'checkpoint' (default) = the trained contract: state clamps/"
+        "bins and actions unnormalize through the ONE global q01/q99 "
+        "table baked in at conversion — the only deployment-honest "
+        "read, but truth outside the table's box is unreachable by "
+        "construction (the 2026-08-12 curated-v0 read: 55% of panel "
+        "frames floored, >=13.9 of 21.4 MAE). "
+        "'per-dataset' = quantile equating: per joint, affinely map "
+        "each dataset's own q01/q99 onto the table's before the "
+        "contract path, and pull decoded chunks back through the "
+        "inverse — evaluating with per-dataset statistics under their "
+        "clamp semantics. Absorbs convention offsets AND rescales "
+        "spans: narrow task workspaces stretch across the model's "
+        "whole normalized range (an off-distribution state marginal) "
+        "and decode gain shifts by span_dataset/span_table per joint "
+        "— expect covered datasets to regress slightly. Policy name "
+        "gains _pdnorm. "
+        "'convention-map' = pure calibration translation: snap each "
+        "dataset onto the table's frame over the discrete family "
+        "sign x {0, +-90, +-180} deg per joint (fit on the action box, "
+        "mean tiebreak; the same map applies to state — one physical "
+        "convention per rig; every chosen map is printed). Scale is "
+        "untouched, so covered datasets stay bitwise on-contract and "
+        "joints the family cannot bring in-box (tick-scale units) keep "
+        "identity, LOUDLY — never a silent quantile swap. Policy name "
+        "gains _convmap. "
+        "Both non-default modes are UNCONSTRAINED-class diagnostics "
+        "(is the zero-shot failure the units or the policy?), never "
+        "deployment reads — their sanctioned adaptation path stays "
+        "fine-tune-with-recomputed-table",
     )
     parser.add_argument(
         "--subgoal-mode",
@@ -1160,6 +1205,7 @@ def main() -> int:
             tickets=args.noise_tickets,
             ticket_map=args.noise_ticket_map,
             mask_state=args.mask_state,
+            molmo_norm=MolmoNorm(args.molmo_norm),
             generate=tuple(AuxField(f) for f in (args.generate or ())),
             condition_override=overrides,
             # Subgoal conditioning renders only when explicitly forced
@@ -2134,6 +2180,7 @@ def main() -> int:
                 bijou_policy.ticket_map_sha256 if bijou_policy is not None else None
             ),
             mask_state=args.mask_state,
+            molmo_norm=args.molmo_norm,
             subgoal_mode=args.subgoal_mode,
             subgoal_swap_seed=args.subgoal_swap_seed,
             subgoal_swap_identity=args.subgoal_swap_identity,
@@ -2203,6 +2250,7 @@ def main() -> int:
             f"checkpoint: {args.checkpoint or '-'}",
             f"smolvla: {args.smolvla or '-'}",
             f"sampler: {args.sample_method}-{args.sample_steps}",
+            f"molmo-norm: {args.molmo_norm}",
             "target time: "
             + (
                 "zero (SnapFlow one-step shortcut field)"
