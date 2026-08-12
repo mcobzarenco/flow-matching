@@ -146,16 +146,18 @@ outside the measured real y range. Owner wrist-compositing question
 10:45Z answered 10:56Z (conversational hold ~11 min, then quiet).
 Blog + Space + Discord done. run_work_next armed.
 
-Session 2026-08-12 10:43–10:4xZ (tick, babysit; 0 new GPU-h — box
-owner-reserved since 09:23Z): quiet tick. Registry empty, babysit
-exit 0. Discord read empty, no new reactions; owner quiet since our
-10:28Z spot20-video reply (~15 min, conversational hold released).
-Objection windows stay open on the parallel-rollouts pre-reg and the
-rerun amendment until GPU release / unhold. Queue validate green
-(depth 5, 15 open); run_work_next armed → CPU lanes continue
-(sim-disk-position-prereg-draft next, then GRPO design memo /
-sim-improvement slice). Archive roll: 2 footer notes (10:15 tick,
-09:45 work).
+Session 2026-08-12 11:10–11:1xZ (tick, babysit; 0 new GPU-h — box
+owner-reserved since 09:23Z, 43% util / 22.5 GB owner-side): quiet
+tick. Registry empty, babysit exit 0. Discord read empty, no new
+reactions; owner quiet since their 10:45Z wrist-compositing question
+(our reply 10:56Z, ~15 min silence — conversational hold released).
+Owner active on the box: pushed `cba0c15` to main 11:02Z
+(bijou/molmo_flow clamp-table gate diagnosis — owner-side work, no
+action for us). Objection windows stay open on the parallel-rollouts
+pre-reg, the rerun amendment, and the disk-position draft until GPU
+release / unhold / sign-off. Queue validate green (depth 4, 14
+open); run_work_next armed → CPU lanes continue (GRPO design memo /
+sim-improvement slice). Archive roll: 1 footer note (10:43 tick).
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
