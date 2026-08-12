@@ -338,6 +338,10 @@ def test_molmo_flow_is_inherit_only() -> None:
         decoder="molmo_flow",
         conditioning_streams="kv_cache",
         chunk_size=30,
+        # Converted checkpoints record the placeholder defaults for the
+        # flow-only knobs (the converter's synthesized train_args).
+        time_conditioning=TimeConditioning.ADDITIVE,
+        self_attention_mode=SelfAttentionMode.BIDIRECTIONAL,
     )
     args = _parse(["--resume", "ckpt"], info)
     assert args.decoder == "molmo_flow"
