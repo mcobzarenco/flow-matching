@@ -296,3 +296,27 @@ Protocol note for future eval-20s: **the eval-20 runs above gave 15 s
 (`--replans 15` × 1 s molmoact2 chunks) vs the sim100 protocol's
 30 s** — decide the budget in seconds via `--episode-seconds` and
 state it in the pre-reg. Spend ~0.02 GPU-h of the ≤0.05 gate.
+
+## Amendment 3: 100-episode arm-A eval at 30 s (registered 2026-08-12 20:1xZ, pre-launch)
+
+Owner call 20:16:53Z ("I want to evaluate the release checkpoint with
+the correct mapping (arm-A) on 100 episodes in parallel"):
+
+- **Arm**: release checkpoint + the canonical shim (official snippet
+  map exactly: signs `1,-1,1,1,1,1`, offsets `0,90,90,0,0,0`), arm-A
+  settings verbatim (euler-10, bf16, seam stats = the ftrig
+  rig-recomputed table). **Seeds 0–99**, parallel driver
+  **workers=8**, **`--episode-seconds 30`** (900 ticks — the fixed
+  budget; the 20-seed runs above were 15 s).
+- **Reads (frozen)**: mean/median `progress_final_cm`; engagement
+  split (`progress_cm` > 1 cm count); knock-aways (progress_final ≤
+  −1 cm); successes; per-seed chart. Grab/carry identification is
+  qualitative from videos (record-only) — the seed-6 lesson is that
+  distance rows under-report grabs (a carried boat set back at spawn
+  reads 0.00).
+- **Comparisons**: within-run + descriptive vs the 20-seed 15 s arm-A
+  rows (record-only: same driver/workers but doubled budget and
+  different batch composition ⇒ bf16-drift class, no pooled claims).
+- **Gate ≤ 1.5 GPU-h** (~50–60 min at the officialmap pace scaled
+  2×); babysit entry at launch; per-episode `--rows-jsonl` stream
+  with in-channel updates every ~10 episodes.
