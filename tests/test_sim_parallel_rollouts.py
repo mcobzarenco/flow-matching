@@ -14,6 +14,7 @@ scope here (GEMM reduction order moves with batch shape); that is the
 registered smoke in fontaine/scripts/sim_parallel_oracle.py.
 """
 
+import dataclasses
 import queue
 import threading
 from collections.abc import Callable
@@ -89,15 +90,23 @@ class FakeSim:
         return position, 0.9 + 0.001 * (self._seed % 5)
 
 
-def fake_chunk(seed: int, replan: int, obs: SimObservation) -> np.ndarray:
+def fake_chunk(
+    seed: int,
+    replan: int,
+    obs: SimObservation,
+    draw: int = 0,
+) -> np.ndarray:
     """Deterministic per-item 'policy': keyed off the identity pair AND
-    the observation bytes, and batch-composition invariant by
-    construction — the same property the real stable-key noise has."""
+    the observation bytes AND the draw (the real policy re-keys its
+    noise per draw through the repo_id suffix), and batch-composition
+    invariant by construction — the same property the real stable-key
+    noise has."""
     digest = blake2b(
         b"|".join(
             [
                 str(seed).encode(),
                 str(replan).encode(),
+                str(draw).encode(),
                 obs.top.tobytes(),
                 obs.wrist.tobytes(),
                 obs.state.tobytes(),
@@ -111,33 +120,40 @@ def fake_chunk(seed: int, replan: int, obs: SimObservation) -> np.ndarray:
 
 def fake_predict_batch(requests: list[tuple[Any, ...]]) -> list[np.ndarray]:
     chunks = []
-    for _, _, seed, replan, top, wrist, state in requests:
+    for _, _, seed, replan, draw, top, wrist, state in requests:
         obs = SimObservation(top=top, wrist=wrist, state=state)
-        chunks.append(fake_chunk(seed, replan, obs))
+        chunks.append(fake_chunk(seed, replan, obs, draw))
     return chunks
 
 
-def sequential_rows(seeds: list[int], *, hold: bool = False) -> list[Any]:
+def sequential_rows(
+    seeds: list[int],
+    *,
+    hold: bool = False,
+    draws: int = 1,
+) -> list[Any]:
+    """Seed-major, draw-minor — the sequential driver's loop order."""
     rows = []
     for seed in seeds:
-        sim = FakeSim()
-        latencies: list[float] = []
-        next_chunk: Callable[[SimObservation, int], np.ndarray]
-        if hold:
-            next_chunk = hold_chunk_fn(HORIZON)
-        else:
+        for draw in range(draws):
+            sim = FakeSim()
+            latencies: list[float] = []
+            next_chunk: Callable[[SimObservation, int], np.ndarray]
+            if hold:
+                next_chunk = hold_chunk_fn(HORIZON)
+            else:
 
-            def scripted_chunk(
-                obs: SimObservation,
-                replan: int,
-                _seed: int = seed,
-            ) -> np.ndarray:
-                return fake_chunk(_seed, replan, obs)
+                def scripted_chunk(
+                    obs: SimObservation,
+                    replan: int,
+                    _seed: int = seed,
+                    _draw: int = draw,
+                ) -> np.ndarray:
+                    return fake_chunk(_seed, replan, obs, _draw)
 
-            next_chunk = scripted_chunk
+                next_chunk = scripted_chunk
 
-        rows.append(
-            run_episode_loop(
+            row = run_episode_loop(
                 sim,
                 seed,
                 next_chunk,
@@ -145,8 +161,10 @@ def sequential_rows(seeds: list[int], *, hold: bool = False) -> list[Any]:
                 horizon=HORIZON,
                 video_path=None,
                 latencies=latencies,
-            ),
-        )
+            )
+            if draw:
+                row = dataclasses.replace(row, draw=draw)
+            rows.append(row)
     return rows
 
 
@@ -171,17 +189,19 @@ def parallel_rows(
     workers: int,
     *,
     hold: bool = False,
+    draws: int = 1,
     predict_batch: Any = fake_predict_batch,
 ) -> tuple[list[Any], list[int]]:
     """Drive the PRODUCTION scheduler + worker loop in-process: worker
     threads run run_worker_episodes over QueueConn transports while the
     main thread runs serve()."""
+    units = [(seed, draw) for seed in seeds for draw in range(draws)]
     conns = [QueueConn() for _ in range(workers)]
     threads = []
     for worker_id, conn in enumerate(conns):
         config = WorkerConfig(
             worker_id=worker_id,
-            seeds=tuple(seeds[worker_id::workers]),
+            units=tuple(units[worker_id::workers]),
             replans=REPLANS,
             horizon=HORIZON,
             hold=hold,
@@ -206,7 +226,7 @@ def parallel_rows(
     for thread in threads:
         thread.join(timeout=30)
         assert not thread.is_alive()
-    rows.sort(key=lambda r: r.seed)
+    rows.sort(key=lambda r: (r.seed, r.draw))
     return rows, batch_sizes
 
 
@@ -230,6 +250,18 @@ def test_parallel_rows_match_sequential_single_worker() -> None:
     expected = sequential_rows(seeds)
     actual, _ = parallel_rows(seeds, workers=1)
     assert [comparable(r) for r in actual] == [comparable(r) for r in expected]
+
+
+def test_parallel_draws_match_sequential() -> None:
+    """(seed, draw) work units: the parallel driver must produce exactly
+    the sequential seed-major/draw-minor rows, with each unit's chunks
+    routed under its OWN draw (the fake policy keys on draw, so a
+    draw-routing bug changes every downstream row field)."""
+    seeds = list(range(5))
+    expected = sequential_rows(seeds, draws=3)
+    actual, _ = parallel_rows(seeds, workers=3, draws=3)
+    assert [comparable(r) for r in actual] == [comparable(r) for r in expected]
+    assert [r.draw for r in actual] == [d for _ in seeds for d in range(3)]
 
 
 def test_hold_arm_runs_worker_local() -> None:

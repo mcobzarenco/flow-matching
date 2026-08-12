@@ -37,6 +37,7 @@ Usage (MUJOCO_GL=egl must be set — spawn workers inherit it):
 """
 
 import argparse
+import dataclasses
 import json
 import multiprocessing as mp
 import subprocess
@@ -72,7 +73,11 @@ from .so101_sim import CONTROL_HZ, SimObservation, SO101Sim
 @dataclass(frozen=True, slots=True)
 class WorkerConfig:
     worker_id: int
-    seeds: tuple[int, ...]
+    # (seed, draw) work units: the GRPO-probe draws extension makes the
+    # unit a stochastic rollout, not a seed — draw 0 keeps the banked
+    # identity (and is the only unit that records video), exactly the
+    # sequential driver's convention.
+    units: tuple[tuple[int, int], ...]
     replans: int
     horizon: int
     hold: bool
@@ -107,6 +112,34 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--replans", type=int, default=15)
     parser.add_argument("--execute-horizon", type=int, default=30)
     parser.add_argument("--sample-steps", type=int, default=10)
+    parser.add_argument(
+        "--draws",
+        type=int,
+        default=1,
+        help="stochastic rollouts per seed (GRPO signal probe): draw 0 "
+        "is the deterministic banked-identity row and the only one that "
+        "records video; draws >= 1 re-key every policy noise/sampling "
+        "stream per draw (flow fresh-noise groups need no other flag; "
+        "AR groups also want --ar-temperature)",
+    )
+    parser.add_argument(
+        "--ar-temperature",
+        type=float,
+        default=None,
+        help="sample the AR head at this temperature instead of the "
+        "greedy deployment decode (BijouPolicy knob; the row/report "
+        "name carries _t<T>)",
+    )
+    parser.add_argument(
+        "--sde-noise-level",
+        type=float,
+        default=None,
+        help="decode flow actions with the Euler–Maruyama SDE at this "
+        "noise scale a instead of the deterministic ODE (GRPO probe "
+        "cell 5; requires --method euler; the row/report name carries "
+        "_sde<a>; per-step noise is keyed per (seed, replan, draw) so "
+        "rows stay batch-invariant and reproducible)",
+    )
     parser.add_argument(
         "--method",
         default="heun",
@@ -179,6 +212,20 @@ def parse_args() -> argparse.Namespace:
         parser.error("--convmap-seam-stats wraps a policy — meaningless with --hold")
     if args.convmap_override and args.convmap_seam_stats is None:
         parser.error("--convmap-override requires --convmap-seam-stats")
+    if args.draws < 1:
+        parser.error(f"--draws must be >= 1, got {args.draws}")
+    if args.draws > 1 and args.hold:
+        parser.error("--draws > 1 is meaningless for --hold (deterministic)")
+    if args.sde_noise_level is not None:
+        if args.hold:
+            parser.error("--sde-noise-level decodes a policy — meaningless with --hold")
+        if args.ar_temperature is not None:
+            parser.error(
+                "--sde-noise-level and --ar-temperature sample "
+                "different decoder families — pick one",
+            )
+        if args.method != "euler":
+            parser.error("the SDE decode is Euler-only — pass --method euler")
     return args
 
 
@@ -188,11 +235,12 @@ def run_worker_episodes(
     send: Callable[[tuple[Any, ...]], None],
     recv: Callable[[], np.ndarray],
 ) -> None:
-    """One worker's seed slice, strictly in order. ``send``/``recv`` are
-    the predict round-trip transport — a Pipe in production, plain queues
-    in the CPU-tier oracle. Timing recorded per replan is the round-trip
-    wait (batch forward + lockstep barrier), not a solo forward."""
-    for seed in config.seeds:
+    """One worker's (seed, draw) slice, strictly in order.
+    ``send``/``recv`` are the predict round-trip transport — a Pipe in
+    production, plain queues in the CPU-tier oracle. Timing recorded per
+    replan is the round-trip wait (batch forward + lockstep barrier),
+    not a solo forward."""
+    for seed, draw in config.units:
         latencies: list[float] = []
         next_chunk: Callable[[SimObservation, int], np.ndarray]
 
@@ -204,6 +252,7 @@ def run_worker_episodes(
                 obs: SimObservation,
                 replan: int,
                 _seed: int = seed,
+                _draw: int = draw,
                 _latencies: list[float] = latencies,
             ) -> np.ndarray:
                 start = time.perf_counter()
@@ -213,6 +262,7 @@ def run_worker_episodes(
                         config.worker_id,
                         _seed,
                         replan,
+                        _draw,
                         obs.top,
                         obs.wrist,
                         obs.state,
@@ -226,7 +276,7 @@ def run_worker_episodes(
 
         video_path = (
             config.out_dir / f"rollout_seed{seed:03d}.mp4"
-            if config.out_dir is not None
+            if config.out_dir is not None and draw == 0
             else None
         )
         row = run_episode_loop(
@@ -238,6 +288,8 @@ def run_worker_episodes(
             video_path=video_path,
             latencies=latencies,
         )
+        if draw:
+            row = dataclasses.replace(row, draw=draw)
         send(("row", config.worker_id, row))
     send(("done", config.worker_id))
 
@@ -328,6 +380,8 @@ def main() -> int:
             seed=args.seed,
             sample_steps=args.sample_steps,
             method=SamplingMethod[args.method.upper()],
+            ar_temperature=args.ar_temperature,
+            sde_noise_level=args.sde_noise_level,
             expert_dtype=getattr(torch, args.expert_dtype),
             molmo_norm=(
                 MolmoNorm.CONVENTION_MAP
@@ -342,7 +396,11 @@ def main() -> int:
         )
 
     seeds = list(range(args.seed, args.seed + args.num_seeds))
-    workers = max(1, min(args.workers, len(seeds)))
+    # Seed-major, draw-minor — the sequential driver's loop order, so
+    # the round-robin partition (and therefore the lockstep batch
+    # trace) is a pure function of (seed range, draws, worker count).
+    units = [(seed, draw) for seed in seeds for draw in range(args.draws)]
+    workers = max(1, min(args.workers, len(units)))
     args.out_dir.mkdir(parents=True, exist_ok=True)
 
     context = mp.get_context("spawn")
@@ -352,7 +410,7 @@ def main() -> int:
         parent_conn, child_conn = context.Pipe()
         config = WorkerConfig(
             worker_id=worker_id,
-            seeds=tuple(seeds[worker_id::workers]),
+            units=tuple(units[worker_id::workers]),
             replans=args.replans,
             horizon=horizon,
             hold=args.hold,
@@ -369,7 +427,10 @@ def main() -> int:
         child_conn.close()
         processes.append(process)
         conns.append(parent_conn)
-    print(f"spawned {workers} env workers for {len(seeds)} seeds", flush=True)
+    print(
+        f"spawned {workers} env workers for {len(seeds)} seeds x {args.draws} draw(s)",
+        flush=True,
+    )
 
     results: list[EpisodeResult] = []
     predict_ms: list[float] = []
@@ -414,10 +475,17 @@ def main() -> int:
         def predict_batch(requests: list[tuple[Any, ...]]) -> list[np.ndarray]:
             items = []
             indices = []
-            for _, _, seed, replan, top, wrist, state in requests:
+            for _, _, seed, replan, draw, top, wrist, state in requests:
                 obs = SimObservation(top=top, wrist=wrist, state=state)
                 items.append(
-                    sim_item(obs, seed, replan, stats=stats, chunk_size=chunk_size),
+                    sim_item(
+                        obs,
+                        seed,
+                        replan,
+                        stats=stats,
+                        chunk_size=chunk_size,
+                        draw=draw,
+                    ),
                 )
                 indices.append(replan)
             start = time.perf_counter()
@@ -449,13 +517,13 @@ def main() -> int:
             if process.is_alive():
                 process.terminate()
     wall_s = time.perf_counter() - started
-    results.sort(key=lambda r: r.seed)
+    results.sort(key=lambda r: (r.seed, r.draw))
 
-    print("\nseed | init cm | min cm | final cm | progress cm | success")
+    print("\nseed | draw | init cm | min cm | final cm | progress cm | success")
     for r in sorted(results, key=lambda r: -r.progress_cm):
         success = f"tick {r.success_tick}" if r.success_tick is not None else "-"
         print(
-            f"{r.seed:4d} | {r.initial_cm:7.1f} | {r.min_cm:6.1f} | "
+            f"{r.seed:4d} | {r.draw:4d} | {r.initial_cm:7.1f} | {r.min_cm:6.1f} | "
             f"{r.final_cm:8.1f} | {r.progress_cm:11.1f} | {success}",
         )
     mean_batch = sum(batch_sizes) / len(batch_sizes) if batch_sizes else 0.0
@@ -482,6 +550,9 @@ def main() -> int:
                 "execute_horizon": horizon,
                 "sample_steps": args.sample_steps,
                 "method": args.method,
+                "draws": args.draws,
+                "ar_temperature": args.ar_temperature,
+                "sde_noise_level": args.sde_noise_level,
                 "expert_dtype": args.expert_dtype,
                 "control_hz": CONTROL_HZ,
                 "task": TASK,

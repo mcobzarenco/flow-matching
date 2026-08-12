@@ -601,6 +601,7 @@ class FlowDecoder(nn.Module):
         noise_level: float = 0.5,
         num_steps: int = 10,
         noise: Tensor | None = None,
+        step_noise: Tensor | None = None,
         generator: torch.Generator | None = None,
         return_logprob: bool = False,
     ) -> Tensor | tuple[Tensor, Tensor]:
@@ -627,6 +628,12 @@ class FlowDecoder(nn.Module):
         transition. φ_s shortcut conditioning is not offered (standard
         s=t models only).
 
+        ``step_noise`` [num_steps, B, chunk, action_dim] supplies every
+        step's ε explicitly instead of drawing from ``generator`` — the
+        batch-composition-invariant path (per-item keyed streams stacked
+        by the caller; a shared generator makes step ε depend on batch
+        membership).
+
         ``return_logprob`` (requires ``noise_level > 0``): also return
         [B] per-sample logprob summed over steps and chunk/action dims.
         """
@@ -636,6 +643,13 @@ class FlowDecoder(nn.Module):
         device = state.device
         if return_logprob and noise_level == 0.0:
             raise ValueError("logprob is undefined at noise_level=0 (deterministic)")
+        if step_noise is not None:
+            expected = (num_steps, batch, config.chunk_size, config.action_dim)
+            if tuple(step_noise.shape) != expected:
+                raise ValueError(
+                    f"step_noise shaped {tuple(step_noise.shape)}, expected {expected}",
+                )
+            step_noise = step_noise.to(device=device, dtype=dtype)
         if noise is None:
             noise = torch.randn(
                 batch,
@@ -663,18 +677,22 @@ class FlowDecoder(nn.Module):
                 actions = mean
                 continue
             std = sigma * math.sqrt(-dt)
-            step_noise = torch.randn(
-                batch,
-                config.chunk_size,
-                config.action_dim,
-                dtype=dtype,
-                device=device,
-                generator=generator,
+            epsilon = (
+                step_noise[k]
+                if step_noise is not None
+                else torch.randn(
+                    batch,
+                    config.chunk_size,
+                    config.action_dim,
+                    dtype=dtype,
+                    device=device,
+                    generator=generator,
+                )
             )
-            actions = mean + std * step_noise
+            actions = mean + std * epsilon
             if return_logprob:
                 logprob += (
-                    -0.5 * step_noise.square() - math.log(std) - _HALF_LOG_TWO_PI
+                    -0.5 * epsilon.square() - math.log(std) - _HALF_LOG_TWO_PI
                 ).sum(dim=(1, 2))
         if return_logprob:
             return actions, logprob
@@ -691,12 +709,19 @@ class FlowDecoder(nn.Module):
         num_steps: int = 5,
         method: SamplingMethod = SamplingMethod.HEUN,
         target_time: float | None = None,
+        sde_noise_level: float | None = None,
+        sde_step_noise: Tensor | None = None,
     ) -> BijouPrediction:
         """RAW-unit chunk prediction (BijouPrediction, generations None —
         flow has no text surface): normalize the batch's state with its
         per-sample stats, integrate the field, and unnormalize with the
         action stats. ``num_steps``/``method``/``target_time`` are
-        flow-specific solver knobs (other decoder kinds have none)."""
+        flow-specific solver knobs (other decoder kinds have none).
+
+        ``sde_noise_level`` routes the decode through
+        :meth:`sample_actions_sde` (Euler-only, no φ_s) with the same
+        normalization seam — ``method`` must be EULER and ``target_time``
+        None so an SDE read can never silently wear ODE solver knobs."""
         state = (batch.state - batch.state_stats.mean) / batch.state_stats.std
         if noise is None:
             # The identical draw sample_actions would make (same shape/
@@ -710,15 +735,39 @@ class FlowDecoder(nn.Module):
                 device=state.device,
                 generator=generator,
             )
-        sampled = self.sample_actions(
-            memory,
-            state,
-            num_steps=num_steps,
-            method=method,
-            noise=noise,
-            generator=generator,
-            target_time=target_time,
-        )
+        if sde_noise_level is not None:
+            if method is not SamplingMethod.EULER:
+                raise ValueError(
+                    "the SDE decode is Euler-only (a Heun corrector breaks "
+                    f"the Gaussian transition), got method={method.name}",
+                )
+            if target_time is not None:
+                raise ValueError(
+                    "sample_actions_sde offers no φ_s shortcut conditioning "
+                    f"— target_time must be None, got {target_time}",
+                )
+            sampled = self.sample_actions_sde(
+                memory,
+                state,
+                noise_level=sde_noise_level,
+                num_steps=num_steps,
+                noise=noise,
+                step_noise=sde_step_noise,
+                generator=generator,
+            )
+            assert isinstance(sampled, Tensor)  # return_logprob not requested
+        elif sde_step_noise is not None:
+            raise ValueError("sde_step_noise without sde_noise_level")
+        else:
+            sampled = self.sample_actions(
+                memory,
+                state,
+                num_steps=num_steps,
+                method=method,
+                noise=noise,
+                generator=generator,
+                target_time=target_time,
+            )
         chunks = (
             sampled.float() * batch.action_stats.std[:, None, :]
             + batch.action_stats.mean[:, None, :]
