@@ -331,7 +331,14 @@ def run_episode(
 
     if policy is not None:
         chunk_size = policy.info.chunk_size
-        stats = policy.info.per_dataset_normalization[STATS_REPO_ID]
+        # Converted checkpoints (molmoact2 lineage) carry no per-dataset
+        # table — their items must wear the checkpoint's MERGED stats
+        # (the exact normalization the model trained with; its state
+        # binning already rides BijouPolicy's molmo_flow state table).
+        stats = policy.info.per_dataset_normalization.get(
+            STATS_REPO_ID,
+            policy.info.normalization,
+        )
 
         def policy_chunk(obs: SimObservation, replan: int) -> np.ndarray:
             item = sim_item(

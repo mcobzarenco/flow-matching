@@ -240,6 +240,7 @@ class SO101Sim:
         self.disk_radius: float = float(disk.size[0])
         self._recolor_arm()
         self._repose_wrist_cam()
+        self._flip_camera_mount()
         self._noise_rng = np.random.default_rng(0)  # re-seeded per reset
         if self.render_style in ("v1", "v2", "v3"):
             self._init_fisheye(width, height)
@@ -325,6 +326,36 @@ class SO101Sim:
             cam.quat[:] = (-0.24345, -0.05192, 0.02663, 0.96816)
             self.model.cam_sensorsize[cam.id] = 0.0
             cam.fovy[0] = 52.0
+
+    def _flip_camera_mount(self) -> None:
+        """Menagerie mounts the wrist camera BRACKET mirrored, 180 deg
+        from the real assembly (owner spot 2026-08-12 from rollout
+        videos; the real bracket starts rotated toward the ceiling).
+        Probe-measured: at the settled home the bracket hangs on the JAW
+        side 40 mm over the table, its volume dips below the table on
+        31.9% of the 26 reference episodes' recorded REAL poses (center
+        to -46 mm), and dynamic replays grind bracket-table contact on
+        up to 22% of ticks - physically blocking poses the real arm
+        demonstrably reaches (~62% of the residual replay control loss).
+
+        Fix at load (runtime, vendored XML untouched, both arms): rotate
+        the mount's geoms - visual mesh + camera_box1/2 - 180 deg about
+        the mount-local x axis, which lands the bracket around the
+        already-re-posed camera view (that pose was fit to real frames,
+        so it marks where the real bracket holds the module). The camera
+        itself is posed independently above and is NOT touched. Known
+        residual: body inertia was compiled with the mount mass (12 g)
+        on the old side; runtime geom moves do not recompile it."""
+        for prefix in ("", "leader-"):
+            body = self.model.body(prefix + "camera_mount").id
+            flip = np.array([0.0, 1.0, 0.0, 0.0])  # 180 deg about x
+            for geom in range(self.model.ngeom):
+                if self.model.geom_bodyid[geom] != body:
+                    continue
+                self.model.geom_pos[geom, 1:] *= -1.0
+                rotated = np.empty(4)
+                mujoco.mju_mulQuat(rotated, flip, self.model.geom_quat[geom])
+                self.model.geom_quat[geom] = rotated
 
     # v1 render style (visual matching, prereg 2026-08-12): the rig's
     # cameras are 130-deg wide-angle modules center-cropped to 4:3 —
