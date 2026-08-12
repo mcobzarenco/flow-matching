@@ -2,7 +2,7 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-12T09:52:00Z
+**Updated:** 2026-08-12T09:35:00Z
 
 **Depth call:** depth 2 open at 06:1xZ 08-12: sim-content-diversity (cpu, the named diversity lever after v2) + sim100-v2-rerun-amendment-draft (cpu, makes the rerun launch-ready on owner unhold). sim-wrist-periphery-fix CLOSED this session (bar smashed, wrist 0.900 -> 0.548 vs <=0.786); sim100-v1-rerun stays owner_hold with its gate now double-GO (both cameras at/under their registered lines).
 
@@ -22,7 +22,7 @@
 
 Design research (owner-called 09:23Z 08-12, research-only, no training): GRPO on the sim for our two heads
 
-**boundary:** Queued 09:3xZ 08-12.
+**boundary:** Mechanism map landed 09:3xZ 08-12 (papers/grpo-for-vla-heads.md, survey-depth). Remaining: deep reads (piRL group/KL details, Flow-GRPO SDE noise scale vs heun-10, SimpleVLA-RL exploration/budgets at 1xH100) -&gt; design memo post with the first cheap experiment for owner review. Sequencing: memo is CPU work, fine during the GPU-reserved window; any actual training pends sim-parallel-rollouts (owner 09:32Z) + its own pre-reg.
 
 <details><summary>full record</summary>
 
@@ -62,13 +62,13 @@ Lit slice (owner-called 09:23Z 08-12, supersedes the lit pause for this thread):
 
 **`sim-parallel-rollouts`** · `cpu`
 
-Parallel sim rollouts with a shared policy (owner-approved 08:44Z 08-12): N env workers (each owns its SO101Sim + EGL context, physics+render) feeding ONE batched policy server holding a single checkpoint copy - the lerobot-style…
+OWNER-SEQUENCED FIRST GPU ITEM (09:32Z 08-12: 'Once I relinquish the GPU, remember to do sim-parallel-rollouts before any other experiments')
 
-**boundary:** Queued 08:5xZ 08-12 mid spot-check ride (owner yes 08:44Z). Executable next session; pays for itself at the first full rerun.
+**boundary:** Queued 08:5xZ 08-12 (owner yes 08:44Z); RE-SEQUENCED 09:32Z: runs FIRST when the owner releases the GPU, before any other experiment (incl. the rerun). CPU design/scaffold work may start during the reserved window.
 
 <details><summary>full record</summary>
 
-Parallel sim rollouts with a shared policy (owner-approved 08:44Z 08-12): N env workers (each owns its SO101Sim + EGL context, physics+render) feeding ONE batched policy server holding a single checkpoint copy - the lerobot-style policy-server split already in the repo for rig rollouts. At batch 1 the H100 idles during heun-10; batching N obs is near-free into the low tens. Box has 26 cores -&gt; ~8-12 render workers before CPU contention; target: a 100-seed arm in ~20-30 min (vs ~1.5 h), the 5-arm sim100 rerun within an afternoon. MUST ship with a determinism oracle: batched rollouts reproduce the sequential per-seed rows bit-for-bit (or within a stated decode tolerance, registered before use). Pre-reg the oracle + a 2-worker smoke before any registered eval uses the parallel path.
+OWNER-SEQUENCED FIRST GPU ITEM (09:32Z 08-12: 'Once I relinquish the GPU, remember to do sim-parallel-rollouts before any other experiments'). Parallel sim rollouts with a shared policy (owner-approved 08:44Z 08-12): N env workers (each owns its SO101Sim + EGL context, physics+render) feeding ONE batched policy server holding a single checkpoint copy - the lerobot-style policy-server split already in the repo for rig rollouts. At batch 1 the H100 idles during heun-10; batching N obs is near-free into the low tens. Box has 26 cores -&gt; ~8-12 render workers before CPU contention; target: a 100-seed arm in ~20-30 min (vs ~1.5 h), the 5-arm sim100 rerun within an afternoon. MUST ship with a determinism oracle: batched rollouts reproduce the sequential per-seed rows bit-for-bit (or within a stated decode tolerance, registered before use). Pre-reg the oracle + a 2-worker smoke before any registered eval uses the parallel path.
 
 </details>
 

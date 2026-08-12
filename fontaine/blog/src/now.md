@@ -36,7 +36,17 @@ cube-grasp task+predicate into our sim (~1 day) to sit next to the
 only published SO-100 sim2real number; ManiSkill3 throughput vs our
 fidelity play (GRPO could train v0 / eval v3); GRPO deep-read
 targets banked (SimpleVLA-RL for the AR head, πRL for flow-head
-logprobs). ideas.md hook; queue updated.
+logprobs). ideas.md hook; queue updated. THEN slice `0821` —
+**papers/grpo-for-vla-heads.md** (survey-depth mechanism map): the
+flow-head logprob obstacle is solved twice in the literature
+(Flow-GRPO ODE→SDE with closed-form per-step logprobs; πRL
+Flow-Noise exact likelihood); SimpleVLA-RL proves token-GRPO on the
+AR head from 1-demo cold start (17.3→91.7 LIBERO); our paired
+seeded groups + progress_final are a ready-made reward; design memo
+= the queued item's deliverable. Owner re-sequenced (09:32Z):
+sim-parallel-rollouts FIRST on GPU release — encoded in queue +
+registry. Both pages + ideas hooks committed (real 09:35 at this
+edit).
 
 **Next**: chained sessions continue the research program (GRPO
 design memo + sim-improvement slice are the open lanes); NO GPU
