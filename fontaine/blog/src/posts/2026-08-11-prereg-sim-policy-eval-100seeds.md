@@ -149,3 +149,31 @@ the reads analysis JSON on `fontaine-reports`; HTML report with the
 house dark-mode charts (per-arm distance-over-time mean curves,
 progress distributions, ordering-vs-panel scatter) + a video gallery
 (best/median/worst seeds per arm); results post; numbers in-channel.
+
+## Amendment 4 (2026-08-12 22:3xZ): camera-channel asymmetry is protocol, not accident
+
+Owner-decided 22:31Z (after the wrist-compositing investigation,
+`wrist_composite_feasibility.py`): the two observation channels are
+*deliberately* produced by different visual pipelines, and every
+consumer of sim eval rows should know it.
+
+- **`top` is a composite**: real clean-plate photograph (which
+  therefore carries the true rig lens for every background pixel)
+  with the sim-rendered arm + objects inpaint-composited over it
+  (v2/v3 render styles).
+- **`wrist` is fully rendered**: scene-matched render through the
+  center-matched equidistant fisheye + fixed grade. It sits inside
+  the real spread on the encoder probe (5-NN AUROC 0.548 after the
+  08-12 re-pose), but every pixel carries the *synthetic* lens model.
+
+A wrist composite was investigated and rejected: episode-start plate
+poses spread 20.8 mm / 5.1° median (static plates mush — the 0.951
+read), and although plane-homography warping from the 26-plate bank
+is geometrically sound (the wrist is table-plane-dominated, median
+100% of rays), nearest-plate warp fill is p10 49% before
+arm-footprint and parked-boat holes — residual sim-texture seams are
+SIMPLER Table III's partial-matching hazard. The residual synthetic-
+lens risk on the wrist channel (pixel-scale-as-distance-ruler,
+2603.02139) is instead addressed render-side: `sim-fit-real-lens-model`
+(plumb-line θ→r fit on the pinned real frames + cubemap two-stage
+render), probe-gated, queued 08-12.

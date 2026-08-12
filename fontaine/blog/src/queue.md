@@ -6,7 +6,7 @@
 
 **Depth call:** depth 3 open at 16:0xZ 08-12: ftrig-eval20-flipped-parallel CLOSED this session (owner prio, ridden end-to-end); remaining open: sim-wrist-compositing + 2 lit items; grpo-signal-probe owner_hold (memo review), v3-rerun unhold ask 15:13Z still open.
 
-**13 open** (Live 0 · Queued 3 · Blocked 10 · Done 136)
+**13 open** (Live 0 · Queued 3 · Blocked 10 · Done 137)
 
 ## 🔴 Live (0)
 
@@ -32,15 +32,15 @@ GRPO signal probe (proposed in posts/2026-08-12-grpo-sim-design-memo.md SS4, pen
 
 ---
 
-**`sim-wrist-compositing`** · `cpu`
+**`sim-fit-real-lens-model`** · `cpu`
 
-Wrist-camera compositing for eval renders (owner steering 14:27Z 08-12: 'for eval we should be doing on both cameras'): today v2/v3 inpainting composites the TOP cam only; wrist is fully rendered (scene-matched + fisheye + grade)
+Fit the REAL rig lens into the wrist render (lit 0823 papers/fisheye-lens-fitting.md, owner-adopted 22:31Z 08-12 over wrist compositing): replace the assumed ideal-equidistant warp (V1_SRC_FOVY 72 source) with (a) theta-&gt;r fit by…
 
-**boundary:** Queued 15:0xZ 08-12 on owner steering. Sequenced in the sim-visuals lane at my discretion; before the next registered eval that reads wrist-driven behavior.
+**boundary:** Queued 22:3xZ 08-12 on owner adoption. Sim-visuals lane; natural sequence: plumb-line fit (pure CPU, this or next session) -&gt; cubemap render path -&gt; probe-gated swap. Pairs with sim-composite-contact-shadows (same probe harness).
 
 <details><summary>full record</summary>
 
-Wrist-camera compositing for eval renders (owner steering 14:27Z 08-12: 'for eval we should be doing on both cameras'): today v2/v3 inpainting composites the TOP cam only; wrist is fully rendered (scene-matched + fisheye + grade). Design constraint from SIMPLER Table III (partial matching WORSE than none) + our own pure-composite wrist attempt reading worse on the pinned probe (0.951 vs 0.900): ship as one complete package or not at all. The wrist moves with the arm, so a static clean plate only matches the episode-start rest pose - candidate approaches: per-pose plate from the 26-episode start windows (probe-gated), or accept render-only wrist and DOCUMENT the asymmetry in the eval protocol. Gate: encoder-OOD probe rerun (~0.02 GPU-h), wrist 5-NN AUROC must not regress from 0.548 (current v3, inside real spread).
+Fit the REAL rig lens into the wrist render (lit 0823 papers/fisheye-lens-fitting.md, owner-adopted 22:31Z 08-12 over wrist compositing): replace the assumed ideal-equidistant warp (V1_SRC_FOVY 72 source) with (a) theta-&gt;r fit by PLUMB-LINE calibration on the 150 pinned real reference frames (table planks = known-straight lines; no rig time needed), (b) cubemap-&gt;equirectangular-&gt;fitted-lens two-stage render (2603.02139's MuJoCo recipe, removes the 72-deg source ceiling entirely). Why it matters beyond appearance: policies use absolute pixel scale as a distance ruler (0.0025-&gt;0.60 cross-lens with RSA) - a mis-fit lens shifts perceived distance in ways the AUROC probe cannot see. Gates: plank-curvature residual vs real frames (direct theta-&gt;r readout), wrist 5-NN AUROC holds &lt;=0.548 (20x5 sensitivity), top-cam composite path bit-identical (real plate already carries the true lens; only the rendered-arm overlay changes if applied to top), reset-render probe ~0.02 GPU-h.
 
 </details>
 
@@ -202,7 +202,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (136)
+## ✅ Done (137)
 
 *closed — the full record stays in each fold*
 
@@ -229,6 +229,20 @@ OWNER PRIO 17:13:24Z 08-12 (FIRST GPU claim): released MolmoAct2-SO100_101 check
 <details><summary>full record</summary>
 
 OWNER PRIO 17:13:24Z 08-12 (FIRST GPU claim): released MolmoAct2-SO100_101 checkpoint directly in sim, WITH the unit shim per the owner-forwarded box note (/tmp/owner_note_molmoact2_norm.txt, committed copy fontaine/notes/molmoact2-unit-contracts-box-note.md). Raw-in-v3-sim is pre-declared MEANINGLESS (v3 rest lift ~-30 sits below the release box floor +45.2 -&gt; state tokens saturate, model blind, number = unit mismatch); run case 3: per-joint affine shim state-in (v3 -&gt; model units before its q01/q99 table) + action-out (model units -&gt; v3 before controller), labeled OFF-CONTRACT _convmap, never pooled with ftrig contract reads, treated as lower bound (release trained on mixed conventions through one table). Converted release already on disk: ~/marius-convert-gate/converted/molmoact2_so100_101_release. MANDATORY pre-run tripwires (from the note): (a) print release box from its norm_stats + verify mapped reachable set A-inv(box) covers the sim task workspace (clamp travels with the model); (b) first-action-vs-current-state check as unit-bug detector (release contract read: first_mae 18.0 vs state-copy 2.5 - a correct shim collapses this to ~state-copy scale; if it does not, STOP, do not spend the GPU). Then: same 20 seeds (sim100 list 0-19), fixed post-flip sim, parallel driver workers=8, paired vs step-500/step-2000 corrected arms (parallel-path rough rows). Also bank the cross-check the box asked for: does our sim calibration imply the same lift +180 / elbow +90 old-convention map as fit_convention_map snapped - flag disagreement in-channel. Ack posted 17:2xZ.
+
+</details>
+
+---
+
+**`sim-wrist-compositing`** · `cpu`
+
+Wrist-camera compositing for eval renders (owner steering 14:27Z 08-12: 'for eval we should be doing on both cameras'): today v2/v3 inpainting composites the TOP cam only; wrist is fully rendered (scene-matched + fisheye + grade)
+
+**boundary:** Queued 15:0xZ 08-12 on owner steering. Sequenced in the sim-visuals lane at my discretion; before the next registered eval that reads wrist-driven behavior. | INVESTIGATED 22:29Z 08-12 (owner ask 22:21Z, ridden alongside the GRPO probe): CPU-only feasibility read landed (wrist_composite_feasibility.py, d177c0d) - plate start poses spread 20.8mm/5.1deg median (max 111mm/26.7deg, why the static plate mushed at 0.951); wrist is table-plane-dominated (median 100% of fisheye rays hit the plane, p10 75%) and pose is known per tick from FK, so plane-homography warp from the 26-plate bank is geometrically sound; BUT nearest-plate fill = median 87% / p10 49% BEFORE arm-footprint + parked-boat holes -&gt; residual sim-texture seams = SIMPLER T-III partial-matching hazard. RECOMMENDED render-only wrist + document the asymmetry + spend the effort on fit-real-lens-model instead (probe headroom ~zero at 0.548; a composite's real prize - true-lens pixel scale - the cubemap+calibrated-lens render gets seamlessly on ALL pixels). Option B (warp bank + one-time plate inpaint, ~1-2 sessions, gate AUROC &lt;=0.548) specced in-channel 22:29Z; pends owner pick. | DECIDED 22:31Z 08-12 (owner: 'Fair enough, let's go with your recommendation'): wrist stays RENDER-ONLY; the composite option is rejected (probe headroom ~zero at 0.548, warp-fill p10 49% before arm/boat holes -&gt; T-III seam hazard); the top-composited/wrist-rendered asymmetry gets a documented paragraph in the sim eval protocol; the effort redirects to fit-real-lens-model (promoted to its own queue item this session). CLOSED.
+
+<details><summary>full record</summary>
+
+Wrist-camera compositing for eval renders (owner steering 14:27Z 08-12: 'for eval we should be doing on both cameras'): today v2/v3 inpainting composites the TOP cam only; wrist is fully rendered (scene-matched + fisheye + grade). Design constraint from SIMPLER Table III (partial matching WORSE than none) + our own pure-composite wrist attempt reading worse on the pinned probe (0.951 vs 0.900): ship as one complete package or not at all. The wrist moves with the arm, so a static clean plate only matches the episode-start rest pose - candidate approaches: per-pose plate from the 26-episode start windows (probe-gated), or accept render-only wrist and DOCUMENT the asymmetry in the eval protocol. Gate: encoder-OOD probe rerun (~0.02 GPU-h), wrist 5-NN AUROC must not regress from 0.548 (current v3, inside real spread).
 
 </details>
 
