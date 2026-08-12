@@ -109,15 +109,16 @@ reset render can produce.
    v2 bit-identical.
 4. Charts + probe JSONs pushed; guard script; oracle added.
 
-## The flip question (owner call)
+## The flip question (owner call) — ANSWERED: flipped
 
-By the registered rule the default stays v2 — but v3 dominates v2 on
+By the registered rule the default stayed v2 — v3 dominates v2 on
 every measured axis (spread 3×, AUROC −0.100, both ratios at ~1.0)
-and costs nothing at runtime. **Ask: 👍 on the results post to flip
-the sim default to v3** (one line, `so101_sim.py`); the sim100 rerun
-gate then reads GO-with-v3-frames on both cameras (top 0.673 +
-wrist 0.548). The spot-check ask from the v1 close stands either
-way.
+and costs nothing at runtime, so the flip went to the owner.
+**Owner approved in-channel 07:29Z 08-12 ("should we swing to v3
+then?") and the default is now `render_style="v3"`** (one line,
+`so101_sim.py`; oracles + wrist guard re-run green). The sim100
+rerun gate now reads GO-with-v3-frames on both cameras (top 0.673 +
+wrist 0.548). The spot-check option from the v1 close stands.
 
 ## Why the spread bar was probably unreachable
 

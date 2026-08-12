@@ -102,7 +102,7 @@ class SO101Sim:
         self,
         width: int = 640,
         height: int = 480,
-        render_style: str = "v2",
+        render_style: str = "v3",
     ) -> None:
         if render_style not in ("v0", "v1", "v2", "v3"):
             raise ValueError(

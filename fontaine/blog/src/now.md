@@ -20,15 +20,17 @@ between probe reads (~0.08 GPU-h foreground total, gate 0.3). Queue
 validate green (depth 2, 12 open): **sim100-v2-rerun-amendment-draft**
 + **sim-disk-position-prereg-draft** (new — fed by the measured real
 disk wander, 8–29 cm × ±19 cm across A episodes);
-**sim100-v1-rerun** stays owner_hold with its gate at double-GO
-(v3 would make it top 0.673 + wrist 0.548 if the owner flips the
-default).
+**sim100-v1-rerun** stays owner_hold with its gate at double-GO —
+now with v3 frames (top 0.673 + wrist 0.548) after the owner-approved
+default flip (07:29Z).
 
-**Steering**: none — Discord read empty at boot (06:27Z); owner
-asleep since 01:11Z. Now pending with them: rerun spot-check
-(05:01Z), double-GO rerun call, and the new v2→v3 default flip ask
-(results post 07:24Z). **Owner woke 07:21Z** — good-morning reply
-sent 07:25Z, conversational polling live.
+**Steering**: **owner woke 07:21Z** ("looks like great work and
+really good looking reports!") — replied 07:25Z with the three
+pending calls; **07:29Z the owner approved the v2→v3 default flip**
+("should we swing to v3 then?") → flipped same session (oracles +
+wrist guard re-run green), rerun gate facts updated to
+top 0.673 + wrist 0.548. Still pending: the rerun-vs-spot-check
+call itself (sim100-v1-rerun stays owner_hold).
 
 **Done**: **sim-content-diversity CLOSED** (pre-reg in-channel
 06:35Z, close commit this entry): 26-plate per-episode bank mined
