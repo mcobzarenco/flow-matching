@@ -5,6 +5,47 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-12 17:20–17:2xZ (real `date -u` at stamp: 17:25) —
+tick, babysit: **new owner prio landed and is queued — run the RELEASED
+MolmoAct2 checkpoint in sim through a unit shim; ack + design posted,
+owner 👍, chained work session armed to execute.***
+
+**Status**: no live jobs, GPU idle (0% / 0 MiB). Queue validate green
+(depth 4, 14 open) — new item `release-eval20-convmap` is FIRST GPU
+claim. The 17:15Z harness exit-1 alert was benign: the 15:31Z work
+session died on API-529 overload retries AFTER its work was committed
+(log-verified); nothing lost.
+
+**Steering**: owner 17:13:24Z — *run the released checkpoint directly;
+molmoact2 normalizes actions by global quantile stats assuming v2.1
+lerobot format; read the note in depth* + attached box-side note on
+molmoact2 unit contracts (committed:
+`fontaine/notes/molmoact2-unit-contracts-box-note.md`). Read in depth;
+key mechanics: the release's q01/q99 table is a *unit contract* (lift
+box [+45.2, +186.1]) near-disjoint from our rig table ([−103.7,
++48.6]); tag equality ≠ table equality; raw-in-v3-sim is meaningless
+(state below box floor → blind), so we execute the note's case 3 — a
+per-joint affine shim (state-in / action-out), labeled off-contract
+`_convmap`, lower-bound interpretation. Ack + 4-step plan posted
+17:22Z, **owner 👍 confirmed**. Open asks: v3-rerun unhold (15:13Z),
+GRPO probe memo review, disk-draws sign-off.
+
+**Done**: `release-eval20-convmap` queued (owner prio, pre-reg page
+`posts/2026-08-12-prereg-release-eval20-convmap.md` with the two
+mandatory pre-GPU tripwires from the note: A⁻¹(box) workspace
+coverage + first-action-vs-state unit-bug detector, ≤0.5 GPU-h gate);
+box note committed into the repo; converted release located on disk
+(`~/marius-convert-gate/converted/molmoact2_so100_101_release` — no
+conversion step needed); exit-1 alert root-caused benign;
+`run_work_next` armed.
+
+**Next**: chained work session executes `release-eval20-convmap`
+(shim → tripwires → 20 seeds parallel, paired vs step-500/step-2000
+corrected arms; cross-check bank: our sim calibration's implied
+lift/elbow map vs the box's fit_convention_map snap). Then CPU lanes:
+`lit-sim-improvement-levers`, `sim-wrist-compositing`. v3-rerun still
+pends the owner unhold. `queue.json` canonical.*
+
 *Updated 2026-08-12 15:31–17:0xZ (real `date -u` at stamp: 16:55) —
 work session, bounded: **the owner-prio flipped-physics rerun is
 CLOSED — including an owner-caught render bug whose fix OVERTURNED the
@@ -137,57 +178,16 @@ for prep: finalized pre-reg is the remaining CPU step (sampler +
 flags landed); GPU sequence now at owner discretion post-eval.
 `run_work_next` armed. `queue.json` canonical.*
 
-*Updated 2026-08-12 11:25–11:4xZ (real `date -u` at stamp: 11:43) —
-work session, bounded: **GRPO-on-sim design memo POSTED — the
-owner-called design-research item is closed with a concrete first
-experiment (a rollout-only signal probe) on the table for review;
-the deep reads corrected one survey claim (πRL is a PPO paper).***
-
-**Status**: GPU OWNER-RESERVED (since 09:23Z; box read 0% util / 0
-MiB at boot 11:26Z but the release-in-channel rule stands — no
-launches; `sim_parallel_oracle.py` stays armed to run first on the
-word). Registry empty, babysit exit 0 (11:31Z), no live jobs. Queue
-validate green (depth 3, 14 open).
-
-**Steering**: none new — Discord read empty at boot and through the
-session; owner quiet since their 10:45Z wrist-compositing question
-(answered 10:56Z). The memo post (11:41Z) carries two review asks:
-probe yes/no (+ optional SDE cell), and the parallel-oracle → v3
-rerun → probe sequencing sanity-check.
-
-**Done**: queue item `grpo-on-sim-design-research` CLOSED —
-posts/2026-08-12-grpo-sim-design-memo.md (owner deliverable, nothing
-registered or launched): stack audit (ARSampling T-knob + per-draw
-flow noise + seeded same-spawn groups + dense progress reward all
-already exist; flow logprobs are the one gap), deep-read syntheses,
-and the named first cheap experiment — a **GRPO signal probe**
-(4 cells × 15 seeds × K=8 stochastic rollouts, v3 frames: er60k AR
-T=1.0/1.6, teacher80k + ftrig4k fresh-noise; anchors join free from
-the v3 rerun rows; reads = within-group progress std, competence
-cost of noise, guard-trip rates; gate ≤3 GPU-h parallel-path) with a
-frozen-shape decision rule (no signal → GRPO parks; AR signal →
-SimpleVLA-RL mapping; flow-only → Flow-GRPO SDE expert-only).
-papers/grpo-for-vla-heads.md upgraded to deep-read depth with a
-recorded CORRECTION: πRL's main algorithm is PPO+GAE+critic, GRPO is
-its losing appendix baseline (90.0 vs 96.0 LIBERO avg), and it has
-no KL anchor; also banked — SimpleVLA-RL's 0%-base dead-start result
-(kills binary rewards for our 0/500 floor), Flow-GRPO's closed-form
-velocity-MSE KL + G≤12 collapse, πRL's a=0.5/K=4 action-noise
-constants + chunk-20 credit-assignment warning (we fly chunk 50).
-Successor queue item `grpo-signal-probe` added (owner_hold, memo §4
-linked as draft-level pre-reg). check.py 710 green; blog built
-(standard script) + Space pushed (memo + papers pages both 200);
-Discord posted 11:41Z; ideas.md `0821` hook updated in the sim lane.
-
-**Next**: `queue_cli.py next` → **sim-parallel-rollouts** (gpu-local;
-GPU leg runs FIRST on release, owner 09:32Z). CPU lanes for chained
-sessions: the two open lit items (so101-benchmark-envs deep reads,
-sim-improvement-levers). `grpo-signal-probe` pends the memo review;
-rerun launches on owner unhold (amendment checklist); disk-draws
-implementation pends sign-off. `run_work_next` armed. `queue.json`
-canonical.*
-
 ## Utilization footer
+
+Session 2026-08-12 17:20–17:3xZ (tick, babysit; 0 new GPU-h — GPU
+idle): owner prio 17:13:24Z landed (released-checkpoint-in-sim +
+unit-contracts note) → note read in depth, design ack posted 17:22Z
+(case-3 shim, off-contract `_convmap`, two pre-GPU tripwires), owner
+👍; item queued with pre-reg page as first GPU claim; exit-1 harness
+alert root-caused benign (API-529 storm post-commit); run_work_next
+armed → the prio item rides the chained work session. Archive roll:
+1 main entry (11:25 work), 2 footer notes (15:11 tick, 13:10 work).
 
 Session 2026-08-12 15:31–17:0xZ (work, bounded; **+~0.45 GPU-h** —
 ftrig_eval20_flip_parallel, 5 arms × 5.4 min at workers=8, ridden
@@ -201,40 +201,6 @@ checkpoint slightly better (paired +0.48, 9/3/8). Lesson registered
 (clear `sameframe` on runtime geom edits) + two incidentals (parallel
 bit-reproducibility; oracle-FAIL drift at outcomes). 4 owner messages
 dispositioned live; v3-rerun unhold ask still open.
-
-Session 2026-08-12 15:11–15:3xZ (tick, babysit; 0 new GPU-h — local
-GPU idle since ~14:50Z, owner-released 14:17Z): post-flip tick.
-Babysit exit 1 = the retained-entry footgun (the ftrig-eval registry
-entry outlived its ~14:50Z completion) — pruned to a completion note,
-no real failure; no live jobs. Discord read empty; history check: no
-reactions or messages since our 15:10Z flip-done post. **OPEN ASK
-posted 15:13Z**: v3-rerun unhold + arm-set proposal (er60k + ftrig4k
-+ teacher80k + hold, v3 frames, flipped-mount physics `d5cf9fd`, same
-100 seeds/metrics/gates, sequential driver ~6–9 h wall) — both
-registered gates GO, amendment drafted, the GRPO probe's anchor rows
-join free from its rows, and post-flip the rerun is the re-baseline
-carrier for every banked sim row. Channel change-watch fired 15:27Z —
-**owner steering 15:27:11Z: prio re-run of the 20 episodes on flipped
-camera physics with many parallel workers.** Acknowledged + designed
-in-channel 15:28Z: both arms parallel workers=8 (pre-flip + post-flip,
-same 20 seeds, paired per-seed = the sanctioned within-parallel-path
-read; parallel rows stay rough/exploratory per the failed oracle),
-queued as `ftrig-eval20-flipped-parallel`, FIRST GPU claim — launch
-rides the chained work session (tick cap). The v3-rerun unhold ask
-(15:13Z) stays open underneath. Queue validate green (depth 4, 14
-open); run_work_next armed → the prio GPU item, then CPU lanes (grpo
-pre-reg finalize, wrist-compositing design, sim-levers lit). Archive
-roll: 2 footer notes (12:17 tick, 11:25 work).
-
-Session 2026-08-12 13:10–15:1xZ (work, bounded; **+~0.4 GPU-h** —
-oracle ~0.25 + ftrig eval ~0.15, both ridden in-session after the
-14:17Z owner release; exploit + instrument): replay control-loss
-validator closed (sysid passes, elbow-lever finding), SDE sampler +
-draws instrument landed, branch rebased onto main, parallel oracle
-FAIL banked (sequential stays registered), ftrig molmoact2 0/20
-first look with videos, bracket-flip finding (owner-spotted,
-probe-sized at ~62% of the servo-replay gap). 6 owner messages
-dispositioned; 1 ask open (re-baseline OK).
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
