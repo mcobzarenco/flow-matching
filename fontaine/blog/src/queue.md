@@ -6,7 +6,7 @@
 
 **Depth call:** depth 3 open at 16:0xZ 08-12: ftrig-eval20-flipped-parallel CLOSED this session (owner prio, ridden end-to-end); remaining open: sim-wrist-compositing + 2 lit items; grpo-signal-probe owner_hold (memo review), v3-rerun unhold ask 15:13Z still open.
 
-**13 open** (Live 0 · Queued 3 · Blocked 10 · Done 135)
+**13 open** (Live 0 · Queued 3 · Blocked 10 · Done 136)
 
 ## 🔴 Live (0)
 
@@ -46,15 +46,15 @@ Wrist-camera compositing for eval renders (owner steering 14:27Z 08-12: 'for eva
 
 ---
 
-**`lit-sim-improvement-levers`** · `cpu`
+**`sim-composite-contact-shadows`** · `cpu`
 
-Lit slice (owner-called 09:23Z 08-12): sim-improvement levers beyond shipped plates/clutter/sysid - contact shadows for composites, camera-parameter fitting (real lens model vs our equidistant), DR schedules with measured transfe…
+Contact-shadow pass for the v3 composites (lit 0823, papers/composite-shadows.md): the pasted sim arm casts no shadow on the real clean plate - the one physics law every real frame obeys that no composite frame does, and an axis…
 
-**boundary:** Queued 09:3xZ 08-12.
+**boundary:** Queued 22:0xZ 08-12 at the lit-slice close. Sim-visuals lane, sequenced at my discretion; natural pairing with sim-wrist-compositing (same probe harness). Independent of the GRPO probe outcome.
 
 <details><summary>full record</summary>
 
-Lit slice (owner-called 09:23Z 08-12): sim-improvement levers beyond shipped plates/clutter/sysid - contact shadows for composites, camera-parameter fitting (real lens model vs our equidistant), DR schedules with measured transfer, SIMPLER-class visual-matching refinements. Feed the sim axis; papers pages same session.
+Contact-shadow pass for the v3 composites (lit 0823, papers/composite-shadows.md): the pasted sim arm casts no shadow on the real clean plate - the one physics law every real frame obeys that no composite frame does, and an axis no published pipeline measures (ConCent 2606.30268 randomizes it, ReBot/Re3Sim skip it). Recipe: estimate the room's dominant light direction once from static shadows already in the clean plates, project arm+boat silhouette onto the table plane, multiply-darken with soft edge, one strength parameter. Pure compositing arithmetic, no renderer change. Gate exactly like every render-style change: reset-render probe (~0.02 GPU-h), top-cam 5-NN AUROC must DROP from 0.773 (wrist path untouched, 0.548 must not regress); if the encoder does not care, the axis dies cheap.
 
 </details>
 
@@ -202,7 +202,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (135)
+## ✅ Done (136)
 
 *closed — the full record stays in each fold*
 
@@ -257,6 +257,20 @@ Design research (owner-called 09:23Z 08-12, research-only, no training): GRPO on
 <details><summary>full record</summary>
 
 Design research (owner-called 09:23Z 08-12, research-only, no training): GRPO on the sim for our two heads. AR objective: token-level GRPO is standard - map group sampling onto rollout returns (progress_final as reward; k rollouts per seed = the group). Flow-matching head: the logprob problem - survey Flow-GRPO (ODE-&gt;SDE stochasticization), ReinFlow, DPPO (diffusion policy PO); what gives usable per-action logprobs for our heun-10 decode. Deliverable: a design memo post naming the first cheap experiment (arms, reward, group size, GPU gate) for owner review; papers pages for what it reads.
+
+</details>
+
+---
+
+**`lit-sim-improvement-levers`** · `cpu`
+
+Lit slice (owner-called 09:23Z 08-12): sim-improvement levers beyond shipped plates/clutter/sysid - contact shadows for composites, camera-parameter fitting (real lens model vs our equidistant), DR schedules with measured transfe…
+
+**boundary:** Queued 09:3xZ 08-12. | CLOSED 22:0xZ 08-12 (work session, ridden alongside the live GRPO probe): 3 papers pages landed same session per the permanent rule - papers/composite-shadows.md (ConCent 2606.30268 shadow recipe + ReBot 2503.14526 no-shadow collage + Re3Sim 2502.08645 foreground-realism-null ablation 0.70-&gt;0.70 + GreenAug 2407.07868 randomize-vs-match split), papers/fisheye-lens-fitting.md (2603.02139: cubemap-&gt;equirect-&gt;any-lens MuJoCo pipeline removes the 72-deg source ceiling; scale-overfitting 0.0025-&gt;0.60 with RSA; fit the real 130-deg module's theta-&gt;r), papers/dr-schedules.md (DORAEMON 2311.01885 60% vs AutoDR 26.7% real, alpha=0.5; one-scalar curriculum 2505.05753; eval/train firewall). 3 ideas.md hooks into #16 sim lane 0823: composite-contact-shadows (probe-priced ~0.02 GPU-h, gate top AUROC &lt;0.773), fit-real-lens-model, dr-schedule-for-sim-rl (conditional on probe decision rule). Contact shadows + lens fitting are the executable next probes in the sim-visuals lane.
+
+<details><summary>full record</summary>
+
+Lit slice (owner-called 09:23Z 08-12): sim-improvement levers beyond shipped plates/clutter/sysid - contact shadows for composites, camera-parameter fitting (real lens model vs our equidistant), DR schedules with measured transfer, SIMPLER-class visual-matching refinements. Feed the sim axis; papers pages same session.
 
 </details>
 
