@@ -10,7 +10,7 @@
 # (no_live_runs_reason cleared 15:4xZ 08-12 work session — ftrig_eval20_flip_parallel launched, owner prio 15:27Z.)
 # PRIOR: "declared 15:2xZ 08-12 tick: both 08-12 GPU legs COMPLETE and pruned (sim_parallel_oracle 14:37Z, molmoact2_ftrig_eval20 ~14:50Z); local GPU idle pending the owner's v3-rerun unhold + arm-set call (ask posted in-channel 15:13Z — on GO, the rerun launches from the finalized amendment and its entry activates here)."
 
-no_live_runs_reason = "declared 16:0xZ 08-12 work session: ftrig_eval20_flip_parallel COMPLETE and pruned (all arms rc=0 by 15:59:46Z, ridden in-session); local GPU idle pending the owner's v3-rerun unhold + arm-set call (ask posted in-channel 15:13Z, still open - on GO, the rerun launches from the finalized amendment and its entry activates here)."
+# (no_live_runs_reason cleared 21:33Z 08-12 tick — grpo_signal_probe launched below per the owner 13:36Z standing sequence at GPU handback.)
 
 # ftrig_eval20_flip_parallel entry PRUNED 16:0xZ 08-12 work session —
 # COMPLETE, ridden end-to-end (~0.36/0.5 GPU-h, 4 arms incl. the
@@ -679,3 +679,27 @@ no_live_runs_reason = "declared 16:0xZ 08-12 work session: ftrig_eval20_flip_par
 # INERT claim FULLY overturned (lift sign x time budget stacked).
 # Results on pre-reg amendment 3 + in-channel 21:15Z; rows/chart/9
 # videos curl-verified on fontaine-reports.
+
+[[run]]
+name = "grpo_signal_probe"
+kind = "progress-log"
+host = "local"
+pgrep = "rollout_sim_parallel"
+pgrep_min = 1
+gpu_indices = [0]
+gpu_mem_min_mib = 4000
+log = "/home/ubuntu/flow-matching/outputs/sim/grpo_signal_probe/launcher.log"
+progress_re = "probe pass \\w+ (start|done)|episode budget|episodes in|ALL PROBE PASSES DONE"
+started_utc = "2026-08-12T21:33:58Z"
+gpu_hours_per_wall_hour = 1.0
+boundary = "2 anchor passes + 5 cells (launch_grpo_signal_probe.sh unit fontaine-grpo-probe), 660 episodes at 30 s, workers=8, ~2.8 h wall projected; kill only at a pass boundary; PRUNE at completion + results post same session"
+anchors = [
+    "pre-reg posts/2026-08-12-prereg-grpo-signal-probe.md FROZEN 20:0xZ: seeds 0-14, --episode-seconds 30, bf16 expert, v3 frames; launched at HEAD 85e9a16",
+    "signal bar: median (over 15 seeds) within-group std of progress_final_cm >= 0.25 cm per cell; decision rule frozen on the pre-reg (no cell -> park; AR -> token-GRPO; flow-only -> Flow-GRPO SDE; both -> AR first)",
+    "competence cost per cell vs its registered anchor (cells 1-2 -> anchor_er60k_greedy; 3/4 -> in-cell draw 0; 5 -> anchor_teacher80k_euler10), paired bootstrap CI95; cell 5b hedge (a=0.3) runs ONLY if cell 5 cost CI excludes -1.0 on the bad side",
+    "tripwire: first completed cell's pace projects total past 3.5 GPU-h -> stop at the cell boundary, re-scope in-channel; partial cells discarded never pooled",
+    "validity: reset strikes must be 0; all comparisons within-driver (parallel-oracle FAIL rule)",
+]
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 3.5
