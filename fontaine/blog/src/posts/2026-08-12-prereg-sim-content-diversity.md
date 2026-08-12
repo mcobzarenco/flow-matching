@@ -1,6 +1,8 @@
 # Pre-registration: sim content diversity v3 — per-episode plate bank + clutter-state draws
 
-*Registered 2026-08-12 ~07:0xZ (work session). Successor of
+*Registered 2026-08-12 ~06:3xZ (work session; in-channel
+06:35:39Z — stamp corrected 07:2xZ, first draft used an unchecked
+clock). Successor of
 [visual matching v2](2026-08-12-sim-visual-inpainting-results.md),
 which met its AUROC bar (top 0.773 ≤ 0.790) but left the
 homogeneity read untouched: **sim k std/mean ~4% vs real ~45%** —

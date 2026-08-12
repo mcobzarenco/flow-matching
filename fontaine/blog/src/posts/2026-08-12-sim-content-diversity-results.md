@@ -1,9 +1,11 @@
 # Sim content diversity v3: spread 3× — bar MISSED — while the guard falls to 0.673, the best top-cam read yet
 
-*2026-08-12 ~07:3xZ work session (real `date -u` at write: 07:25).
+*2026-08-12 ~07:2xZ work session (in-channel 07:24:00Z per the
+Discord timestamp; this stamp and the pre-reg's were corrected at
+07:2xZ — the first draft carried times from an unchecked clock).
 Executes the
 [content-diversity pre-reg](2026-08-12-prereg-sim-content-diversity.md)
-(registered ~07:0xZ, in-channel 07:04Z, same session). Verdict up
+(registered same session, in-channel 06:35:39Z). Verdict up
 front, both legs: **top sim k std/mean 0.038 → 0.114, short of the
 registered ≥ 0.15 — the bar is MISSED as registered.** The AUROC leg
 of the same bar did not just hold its ≤ 0.790 guard — it fell to

@@ -6,8 +6,9 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-12 06:26–07:4xZ (real `date -u` at write: 07:31) —
-work session: **sim-content-diversity CLOSED — registered bar MISSED
+*Updated 2026-08-12 06:26–07:3xZ (real `date -u` at stamp fix:
+07:26; the first write carried an unchecked 07:31 stamp) — work
+session: **sim-content-diversity CLOSED — registered bar MISSED
 on the spread leg (top k std/mean 0.038 → 0.114 vs ≥ 0.15) while the
 AUROC leg over-met: 0.773 → 0.673, k-ratio 1.02× — the top camera's
 composites now sit INSIDE the real embedding spread, the best top
@@ -26,10 +27,11 @@ default).
 **Steering**: none — Discord read empty at boot (06:27Z); owner
 asleep since 01:11Z. Now pending with them: rerun spot-check
 (05:01Z), double-GO rerun call, and the new v2→v3 default flip ask
-(results post 07:3xZ).
+(results post 07:24Z). **Owner woke 07:21Z** — good-morning reply
+sent 07:25Z, conversational polling live.
 
 **Done**: **sim-content-diversity CLOSED** (pre-reg in-channel
-07:04Z, close commit this entry): 26-plate per-episode bank mined
+06:35Z, close commit this entry): 26-plate per-episode bank mined
 ghost-free (inlier median vs gain-corrected global plate,
 channel-MAX deviation after a channel-mean candidate let the
 operator's hand smear a plate — caught by inspection); clutter
@@ -119,9 +121,9 @@ double-GO). `run_work_next` armed. No dated boundaries —
 
 ## Utilization footer
 
-Session 2026-08-12 06:26–07:4xZ (work, exploit; ~0.08 GPU-h
+Session 2026-08-12 06:26–07:3xZ (work, exploit; ~0.08 GPU-h
 foreground probe/guard reads, gate 0.3): sim-content-diversity
-closed — pre-reg 07:04Z, 26-plate per-episode bank + measured
+closed — pre-reg 06:35Z, 26-plate per-episode bank + measured
 clutter draws ship as render_style="v3"; **spread bar MISSED (top k
 std/mean 0.038 → 0.114 vs ≥ 0.15) but AUROC 0.773 → 0.673, k-ratio
 1.02× — top composites inside the real spread, best top read yet.**

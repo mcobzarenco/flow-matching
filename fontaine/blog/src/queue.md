@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-12T06:20:00Z
+**Updated:** 2026-08-12T07:26:00Z
 
 **Depth call:** depth 2 open at 06:1xZ 08-12: sim-content-diversity (cpu, the named diversity lever after v2) + sim100-v2-rerun-amendment-draft (cpu, makes the rerun launch-ready on owner unhold). sim-wrist-periphery-fix CLOSED this session (bar smashed, wrist 0.900 -> 0.548 vs <=0.786); sim100-v1-rerun stays owner_hold with its gate now double-GO (both cameras at/under their registered lines).
 
-**12 open** (Live 0 · Queued 2 · Blocked 10 · Done 123)
+**12 open** (Live 0 · Queued 2 · Blocked 10 · Done 124)
 
 ## 🔴 Live (0)
 
@@ -18,6 +18,20 @@
 
 *ready — waiting on a window or a boundary*
 
+**`sim-disk-position-prereg-draft`** · `cpu`
+
+Disk-position draws pre-reg draft (the (c) leg the content-diversity item scoped out as task semantics): draw the disk's world xy per SPAWN seed (not appearance - success geometry moves with it) from the measured real between-epi…
+
+**boundary:** Queued 07:2xZ 08-12 at the content-diversity close. Executable now (pure drafting); pends nothing. Sequencing: after sim100-v2-rerun-amendment-draft if the owner unholds the rerun first.
+
+<details><summary>full record</summary>
+
+Disk-position draws pre-reg draft (the (c) leg the content-diversity item scoped out as task semantics): draw the disk's world xy per SPAWN seed (not appearance - success geometry moves with it) from the measured real between-episode spread, now banked in assets/real_plates/bank/bank_manifest.json (disk_record_only: present 21/26 A episodes, x 0.083-0.288, y -0.193-0.097; the sim pins it at (0.22, 0.11)). Draft must handle: success() geometry follows the drawn disk; spawn-region overlap (benchy spawns relative to a disk that now moves); paired-arm comparability (same seed -&gt; same disk across arms); and whether banked sim100 spawns stay bit-comparable (they do not if spawn ranges become disk-relative - the draft must choose and say so). CPU only; the eval-protocol change itself holds for owner sign-off with the rerun call.
+
+</details>
+
+---
+
 **`sim100-v2-rerun-amendment-draft`** · `cpu`
 
 sim100 v2-rerun pre-reg AMENDMENT draft (CPU only, no launch): the rerun item's own protocol requires a short amendment before launch (new arm names for v2 visuals, re-baseline) - draft it now so the eval is launch-ready the mome…
@@ -27,20 +41,6 @@ sim100 v2-rerun pre-reg AMENDMENT draft (CPU only, no launch): the rerun item's 
 <details><summary>full record</summary>
 
 sim100 v2-rerun pre-reg AMENDMENT draft (CPU only, no launch): the rerun item's own protocol requires a short amendment before launch (new arm names for v2 visuals, re-baseline) - draft it now so the eval is launch-ready the moment the owner unholds. Content: arms er60k + ftrig4k + hold re-rendered under render_style=v2 (real-plate top, re-tuned wrist pose 06:2xZ), same 100 seeds / metric / gates as posts/2026-08-11-prereg-sim-policy-eval-100seeds.md; visual re-baseline table = probe reads (top 0.890-&gt;0.773, wrist 0.835-&gt;0.548); expected-behavior priors stated in advance (the fisheye+pose geometry deltas are exactly the spatial-mismatch signature named at the v1 close - register what a behavior change would look like vs the 0/500 baseline). Post as DRAFT pending owner call; the 20-seed er60k spot-check option stays first-listed.
-
-</details>
-
----
-
-**`sim-content-diversity`** · `cpu`
-
-Sim content diversity v3 (the axis every read since the OOD probe names: sim is ~4% k std/mean vs real 45%, and neither lighting jitter (v1) nor a fixed real background (v2) moved it): per-reset CONTENT variation for the composit…
-
-**boundary:** Queued 05:4xZ 08-12 at the v2 close. Executable now (CPU + ~0.02 GPU-h probe reads); pends nothing. Sequencing: sim-wrist-periphery-fix is the other executable-now item and is independent; if the owner calls the sim100 rerun/spot-check, that outranks both.
-
-<details><summary>full record</summary>
-
-Sim content diversity v3 (the axis every read since the OOD probe names: sim is ~4% k std/mean vs real 45%, and neither lighting jitter (v1) nor a fixed real background (v2) moved it): per-reset CONTENT variation for the composite - (a) per-episode plate banks from the A half (needs a mining pass that masks the boat's real positions so no ghosts bake in; per-episode plates carry real lighting/clutter states), (b) clutter-state draws (mouse/laptop/pcb poses drawn per appearance seed from the real between-episode spread), (c) disk position drawn from the real distribution - NOTE (c) changes task semantics (success geometry), needs its own pre-reg beyond appearance-only. Read: same reset-render probe + the homogeneity 20x5; bar to be registered (candidate: sim k std/mean toward &gt;=15% without top 5-NN AUROC regressing past 0.790).
 
 </details>
 
@@ -188,9 +188,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (123)
+## ✅ Done (124)
 
 *closed — the full record stays in each fold*
+
+**`sim-content-diversity`** · `cpu`
+
+Sim content diversity v3 (the axis every read since the OOD probe names: sim is ~4% k std/mean vs real 45%, and neither lighting jitter (v1) nor a fixed real background (v2) moved it): per-reset CONTENT variation for the composit…
+
+**boundary:** CLOSED 07:2xZ 08-12: registered bar MISSED on the spread leg (top k std/mean 0.038 -&gt; 0.114 vs &gt;= 0.15) while the AUROC leg over-met (0.773 -&gt; 0.673, k-ratio 1.02x - top composites inside the real spread, best top read yet). Wrist guard bit-identical GREEN (0.548). render_style='v3' shipped, default STAYS v2 per the registered flip rule; flip is an owner ask (thumbs-up on the results post). Results: posts/2026-08-12-sim-content-diversity-results.md · [pre-reg](posts/2026-08-12-prereg-sim-content-diversity.md)
+
+<details><summary>full record</summary>
+
+Sim content diversity v3 (the axis every read since the OOD probe names: sim is ~4% k std/mean vs real 45%, and neither lighting jitter (v1) nor a fixed real background (v2) moved it): per-reset CONTENT variation for the composite - (a) per-episode plate banks from the A half (needs a mining pass that masks the boat's real positions so no ghosts bake in; per-episode plates carry real lighting/clutter states), (b) clutter-state draws (mouse/laptop/pcb poses drawn per appearance seed from the real between-episode spread), (c) disk position drawn from the real distribution - NOTE (c) changes task semantics (success geometry), needs its own pre-reg beyond appearance-only. Read: same reset-render probe + the homogeneity 20x5; bar to be registered (candidate: sim k std/mean toward &gt;=15% without top 5-NN AUROC regressing past 0.790).
+
+</details>
+
+---
 
 **`sim-wrist-periphery-fix`** · `cpu`
 
