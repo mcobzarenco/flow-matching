@@ -78,6 +78,8 @@ from .blocks import (
     cross_attention_mask,
 )
 
+_HALF_LOG_TWO_PI = 0.5 * math.log(2.0 * math.pi)
+
 
 class SelfAttentionMode(StrEnum):
     """Masking of the expert's self-attention over ``[state][actions]``.
@@ -588,6 +590,94 @@ class FlowDecoder(nn.Module):
                 velocity_next = self(memory, state, predicted, time_next, target)
                 velocity = 0.5 * (velocity + velocity_next)
             actions = actions + dt * velocity.to(actions.dtype)
+        return actions
+
+    @torch.no_grad()
+    def sample_actions_sde(
+        self,
+        memory: ObservationMemory,
+        state: Tensor,
+        *,
+        noise_level: float = 0.5,
+        num_steps: int = 10,
+        noise: Tensor | None = None,
+        generator: torch.Generator | None = None,
+        return_logprob: bool = False,
+    ) -> Tensor | tuple[Tensor, Tensor]:
+        """Euler–Maruyama decode on Flow-GRPO's marginal-preserving SDE
+        (2505.05470 §4/App. A) — the *trainable* stochastic sampler: each
+        step's transition is an explicit Gaussian, so its logprob (the
+        GRPO ratio numerator) is exact. Fresh-noise ODE re-decodes give
+        diversity with no logprob; this is the sampler phase 2 would
+        actually train, and the signal probe's cell 5.
+
+        Same τ convention and uniform grid as :meth:`sample_actions`
+        (τ=1 noise → τ=0 data). With σ_τ = a·√(τ/(1−τ)) (a =
+        ``noise_level``) and signed dt = −1/num_steps:
+
+            x_next = x + [v + (σ_τ²/2τ)·(x + (1−τ)·v)]·dt + σ_τ·√|dt|·ε
+
+        The τ=1 endpoint follows the reference implementation
+        (flow_grpo sd3 sde step): the divergent 1/(1−τ) is evaluated at
+        the SECOND grid point, so σ at τ=1 is a·√num_steps here. Noise ε
+        is drawn per step from ``generator``; ``noise_level=0`` adds
+        exactly-zero terms and reproduces Euler :meth:`sample_actions`
+        bit-for-bit (oracle: tests/test_flow_sde.py). Euler-only by
+        construction — a Heun corrector would break the Gaussian
+        transition. φ_s shortcut conditioning is not offered (standard
+        s=t models only).
+
+        ``return_logprob`` (requires ``noise_level > 0``): also return
+        [B] per-sample logprob summed over steps and chunk/action dims.
+        """
+        config = self.config
+        batch = state.shape[0]
+        dtype = state.dtype
+        device = state.device
+        if return_logprob and noise_level == 0.0:
+            raise ValueError("logprob is undefined at noise_level=0 (deterministic)")
+        if noise is None:
+            noise = torch.randn(
+                batch,
+                config.chunk_size,
+                config.action_dim,
+                dtype=dtype,
+                device=device,
+                generator=generator,
+            )
+        actions = noise
+        logprob = torch.zeros(batch, dtype=dtype, device=device)
+        for k in range(num_steps):
+            t = 1.0 - k / num_steps
+            t_next = 1.0 - (k + 1) / num_steps
+            dt = t_next - t
+            time = torch.full((batch,), t, dtype=dtype, device=device)
+            velocity = self(memory, state, actions, time, None).to(actions.dtype)
+            # Endpoint rule: at k=0 (τ=1) the 1−τ denominator comes from
+            # the second grid point (see docstring).
+            denominator = 1.0 - t if k > 0 else 1.0 - (1.0 - 1.0 / num_steps)
+            sigma = noise_level * math.sqrt(t / denominator)
+            drift = velocity + (sigma**2 / (2.0 * t)) * (actions + (1.0 - t) * velocity)
+            mean = actions + dt * drift
+            if noise_level == 0.0:
+                actions = mean
+                continue
+            std = sigma * math.sqrt(-dt)
+            step_noise = torch.randn(
+                batch,
+                config.chunk_size,
+                config.action_dim,
+                dtype=dtype,
+                device=device,
+                generator=generator,
+            )
+            actions = mean + std * step_noise
+            if return_logprob:
+                logprob += (
+                    -0.5 * step_noise.square() - math.log(std) - _HALF_LOG_TWO_PI
+                ).sum(dim=(1, 2))
+        if return_logprob:
+            return actions, logprob
         return actions
 
     @torch.no_grad()
