@@ -94,57 +94,16 @@ sim-parallel-rollouts first would cut the rerun to an afternoon).
 `run_work_next` armed. No dated boundaries — `queue.json`
 canonical.*
 
-*Updated 2026-08-12 06:26–07:3xZ (real `date -u` at stamp fix:
-07:26; the first write carried an unchecked 07:31 stamp) — work
-session: **sim-content-diversity CLOSED — registered bar MISSED
-on the spread leg (top k std/mean 0.038 → 0.114 vs ≥ 0.15) while the
-AUROC leg over-met: 0.773 → 0.673, k-ratio 1.02× — the top camera's
-composites now sit INSIDE the real embedding spread, the best top
-read this axis has produced. Default stays v2 per the registered
-flip rule; the flip is a one-👍 owner ask on the results post.***
-
-**Status**: no live jobs — registry empty, `nvidia-smi` 0% / 0 MiB
-between probe reads (~0.08 GPU-h foreground total, gate 0.3). Queue
-validate green (depth 2, 12 open): **sim100-v2-rerun-amendment-draft**
-+ **sim-disk-position-prereg-draft** (new — fed by the measured real
-disk wander, 8–29 cm × ±19 cm across A episodes);
-**sim100-v1-rerun** stays owner_hold with its gate at double-GO —
-now with v3 frames (top 0.673 + wrist 0.548) after the owner-approved
-default flip (07:29Z).
-
-**Steering**: **owner woke 07:21Z** ("looks like great work and
-really good looking reports!") — replied 07:25Z with the three
-pending calls; **07:29Z the owner approved the v2→v3 default flip**
-("should we swing to v3 then?") → flipped same session (oracles +
-wrist guard re-run green), rerun gate facts updated to
-top 0.673 + wrist 0.548. Still pending: the rerun-vs-spot-check
-call itself (sim100-v1-rerun stays owner_hold).
-
-**Done**: **sim-content-diversity CLOSED** (pre-reg in-channel
-06:35Z, close commit this entry): 26-plate per-episode bank mined
-ghost-free (inlier median vs gain-corrected global plate,
-channel-MAX deviation after a channel-mean candidate let the
-operator's hand smear a plate — caught by inspection); clutter
-spread measured through the sim's own camera model
-(displace-and-recover selfcheck 0.4/1.7 cm; mouse present 27% of A
-episodes, mug-item 15%, laptop 77% as deltas, pcb static);
-`render_style="v3"` ships (plate + clutter draws after every v2
-draw; wrist path bit-identical to v2 — guard script GREEN, probe
-wrist 0.548 reproduced). Reads: top k std/mean 0.114 (100 seeds;
-0.114 at 20×5 — stable), AUROC 0.673/0.655, per-draw spread
-0.5%→2.5%; between-plate variation carries most of the new spread.
-Encoder-null iteration banked: composing per-episode gain onto the
-foreground moved nothing — third confirmation that content moves
-this encoder, light does not. Oracles 6 green, check.py green. 2
-probe jsons + 2 charts on fontaine-reports; results post +
-reports.md section. Queue: content-diversity done,
-disk-position-prereg-draft queued (depth 2).
-
-**Next**: `queue_cli.py next` → **sim100-v2-rerun-amendment-draft**
-(or the owner's rerun/spot-check/flip call if it lands first).
-`run_work_next` armed. No dated boundaries — `queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-12 09:41–09:4xZ (tick, babysit; 0 new GPU-h — box
+owner-reserved since 09:23Z): quiet tick. Registry empty, babysit
+exit 0. Discord read empty; owner 👍 on the 09:27Z three-lane plan
+post recorded (plan confirmed, already in motion). Queue validate
+green (depth 6, 16 open); run_work_next armed → research program
+continues (GRPO design memo / sim-improvement slice /
+sim-parallel-rollouts CPU scaffold). Archive roll: 06:26 body entry
++ 4 footer notes (07:2x, 06:26, 06:23, 05:52).
 
 Session 2026-08-12 09:2x–09:4xZ (work, owner-steered lit; 0 new
 GPU-h — box owner-reserved 09:23Z): research program started —
@@ -152,47 +111,6 @@ slice 0820 page landed (sim ecosystem take 2: lerobot-sim2real
 91.6% pure-sim-RL cube-grasp on SO-100, cube-grasp task-port named
 as the ~1-day bridge; GRPO targets banked). 3 research items
 queued; run_work_next armed.
-
-Session 2026-08-12 07:2x–09:2xZ (work, owner-steered exploit; ~1.3
-GPU-h spot20 of gate 3 + ~0.05 probe/bench): spot20 closed —
-**teacher80k +0.97 cm paired [CI +0.16, +1.81] toward the disk
-under v3 visuals, the only CI-excludes-zero read (direction flip);
-er60k/snap30k null** — visual familiarity moves the arm that
-engages. v2→v3 default flipped (owner 07:29Z); GPU compositor
-landed (owner 08:12Z; 371→94 ms/tick, probe reads within noise);
-sim-parallel-rollouts queued (owner 08:44Z). Registry pruned, GPU
-free, run_work_next armed.
-
-Session 2026-08-12 06:26–07:3xZ (work, exploit; ~0.08 GPU-h
-foreground probe/guard reads, gate 0.3): sim-content-diversity
-closed — pre-reg 06:35Z, 26-plate per-episode bank + measured
-clutter draws ship as render_style="v3"; **spread bar MISSED (top k
-std/mean 0.038 → 0.114 vs ≥ 0.15) but AUROC 0.773 → 0.673, k-ratio
-1.02× — top composites inside the real spread, best top read yet.**
-Wrist guard bit-identical (0.548). Default stays v2 per the
-registered flip rule → owner flip ask posted. Queue refilled:
-sim-disk-position-prereg-draft (real disk wanders 8–29 cm × ±19 cm,
-measured). run_work_next armed.
-
-Session 2026-08-12 06:23–06:3xZ (tick, babysit; 0 new GPU-h — GPU
-idle-by-design after the wrist-periphery close): quiet tick.
-Registry empty, nvidia-smi 0%/0 MiB. Discord read empty, no new
-reactions (rerun spot-check + double-GO call both pending with the
-owner, asleep since 01:11Z). Queue validate green (depth 2, 12
-open); run_work_next armed → sim-content-diversity (or the owner's
-rerun call) chains next. Archive roll: 05:09 body entry + 05:49
-footer note.
-
-Session 2026-08-12 05:52–06:2xZ (work, exploit; ~0.04 GPU-h
-foreground probe reads, gate 0.2): sim-wrist-periphery-fix closed —
-pre-reg 05:59Z, one runtime wrist-cam pose change (over the jaw
-base, 65° down), **registered bar SMASHED: wrist 5-NN AUROC
-0.900 → 0.548 vs ≤ 0.786** (k-ratio 0.97× — sim wrist inside the
-real spread; first camera to reach statistically-indistinguishable);
-top guard green (0.773 bit-identical). Per-episode wrist-plate axis
-retired; sim100 rerun gate now double-GO (still owner_hold on the
-spot-check ask). Queue refilled: sim100-v2-rerun-amendment-draft
-(depth 2). run_work_next armed.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
