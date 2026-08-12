@@ -23,13 +23,16 @@ import argparse
 import json
 import subprocess
 import time
+from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
+from typing import Any, Protocol
 
 import av
 import numpy as np
 import torch
 
+from bijou.data import DatasetStats
 from bijou.decoders.flow import SamplingMethod
 from bijou.eval.policies import BijouPolicy
 from bijou.rollout import SO_MOTORS, observation_to_item
@@ -44,6 +47,21 @@ SIM_CAMERAS = ("top", "wrist")
 
 STATS_REPO_ID = "mcobzarenco/so101_pick_place_v2"
 TASK = "Pick up the toy boat and place it on the wooden disk."
+
+
+class RolloutSim(Protocol):
+    """What the episode loop needs from an environment — SO101Sim in
+    production; the parallel-harness oracle substitutes a pure-python
+    fake to pin scheduler equivalence without a GL context."""
+
+    reset_spawn_xy: tuple[float, float]
+    reset_strike_contacts: int
+
+    def reset(self, seed: int) -> SimObservation: ...
+    def step(self, action_degrees: np.ndarray) -> SimObservation: ...
+    def benchy_disk_distance(self) -> float: ...
+    def success(self) -> bool: ...
+    def benchy_pose(self) -> tuple[np.ndarray, float]: ...
 
 
 def parse_args() -> argparse.Namespace:
@@ -130,64 +148,58 @@ def to_observation(obs: SimObservation) -> dict[str, object]:
     return observation
 
 
-def write_video(path: Path, frames: list[np.ndarray]) -> None:
-    container = av.open(str(path), mode="w")
-    stream = container.add_stream("h264", rate=CONTROL_HZ)
-    stream.width = frames[0].shape[1]
-    stream.height = frames[0].shape[0]
-    stream.pix_fmt = "yuv420p"
-    for frame in frames:
-        for packet in stream.encode(av.VideoFrame.from_ndarray(frame, format="rgb24")):
-            container.mux(packet)
-    for packet in stream.encode():
-        container.mux(packet)
-    container.close()
+class VideoWriter:
+    """Streaming H.264 writer: frames are encoded as they arrive (a full
+    900-tick episode buffered at 640x960 is ~1.6 GB RSS — untenable when
+    N env workers each hold one)."""
+
+    def __init__(self, path: Path) -> None:
+        self._path = path
+        self._container: Any = None
+        self._stream: Any = None
+
+    def append(self, frame: np.ndarray) -> None:
+        if self._container is None:
+            self._container = av.open(str(self._path), mode="w")
+            self._stream = self._container.add_stream("h264", rate=CONTROL_HZ)
+            self._stream.width = frame.shape[1]
+            self._stream.height = frame.shape[0]
+            self._stream.pix_fmt = "yuv420p"
+        for packet in self._stream.encode(
+            av.VideoFrame.from_ndarray(frame, format="rgb24"),
+        ):
+            self._container.mux(packet)
+
+    def close(self) -> None:
+        if self._container is None:
+            return
+        for packet in self._stream.encode():
+            self._container.mux(packet)
+        self._container.close()
 
 
-def run_episode(
-    policy: BijouPolicy | None,
-    sim: SO101Sim,
+def run_episode_loop(
+    sim: RolloutSim,
     seed: int,
+    next_chunk: Callable[[SimObservation, int], np.ndarray],
     *,
     replans: int,
     horizon: int,
-    video_path: Path,
+    video_path: Path | None,
+    latencies: list[float],
 ) -> EpisodeResult:
+    """One episode's control loop, with the chunk source abstracted:
+    ``next_chunk(obs, replan)`` is the policy call in the sequential
+    driver and the predict round-trip in the parallel one (it appends its
+    own timing to ``latencies``). The parallel-vs-sequential determinism
+    oracle rides on both drivers sharing this exact loop."""
     obs = sim.reset(seed)
-    frames: list[np.ndarray] = []
+    writer = VideoWriter(video_path) if video_path is not None else None
     initial = sim.benchy_disk_distance()
     closest = initial
     success_tick: int | None = None
-    latencies: list[float] = []
     distances: list[float] = [initial * 100]
-
-    if policy is not None:
-        chunk_size = policy.info.chunk_size
-        stats = policy.info.per_dataset_normalization[STATS_REPO_ID]
-
-        def next_chunk(obs: SimObservation, replan: int) -> np.ndarray:
-            item = observation_to_item(
-                to_observation(obs),
-                TASK,
-                stats,
-                chunk_size,
-                camera_kinds_from_names(SIM_CAMERAS),
-            )
-            # Identity triple for stable-key noise checkpoints (the
-            # SnapFlow lineage): deterministic per (env seed, replan).
-            item["repo_id"] = "sim/eval100"
-            item["episode_index"] = seed
-            item["frame_index"] = replan
-            start = time.perf_counter()
-            chunk = policy.predict([item], [replan])[0].numpy()
-            latencies.append((time.perf_counter() - start) * 1000)
-            return chunk
-    else:
-        # Hold arm: command the settled reset state for every tick.
-        hold_action = np.tile(obs.state.copy(), (horizon, 1))
-
-        def next_chunk(obs: SimObservation, replan: int) -> np.ndarray:
-            return hold_action
+    ticks = 0
 
     for replan in range(replans):
         chunk = next_chunk(obs, replan)
@@ -199,7 +211,9 @@ def run_episode(
         )
         for step in range(horizon):
             obs = sim.step(chunk[step])
-            frames.append(np.concatenate([obs.top, obs.wrist], axis=1))
+            if writer is not None:
+                writer.append(np.concatenate([obs.top, obs.wrist], axis=1))
+            ticks += 1
             distance = sim.benchy_disk_distance()
             distances.append(distance * 100)
             closest = min(closest, distance)
@@ -209,7 +223,8 @@ def run_episode(
         if success_tick is not None:
             break
 
-    write_video(video_path, frames)
+    if writer is not None:
+        writer.close()
     pos, upright = sim.benchy_pose()
     return EpisodeResult(
         seed=seed,
@@ -221,9 +236,87 @@ def run_episode(
         reset_strikes=sim.reset_strike_contacts,
         final_z_mm=float(pos[2]) * 1000,
         final_upright=upright,
-        ticks=len(frames),
+        ticks=ticks,
         latency_ms=[round(v, 1) for v in latencies],
         distance_cm=[round(v, 3) for v in distances],
+    )
+
+
+def hold_chunk_fn(horizon: int) -> Callable[[SimObservation, int], np.ndarray]:
+    """Hold arm: command the settled reset state for every tick (the sim
+    analog of state-copy). The chunk is tiled lazily from the first
+    observation the loop hands over — which is the reset observation."""
+    hold_action: np.ndarray | None = None
+
+    def next_chunk(obs: SimObservation, replan: int) -> np.ndarray:
+        nonlocal hold_action
+        if hold_action is None:
+            hold_action = np.tile(obs.state.copy(), (horizon, 1))
+        return hold_action
+
+    return next_chunk
+
+
+def sim_item(
+    obs: SimObservation,
+    seed: int,
+    replan: int,
+    *,
+    stats: DatasetStats,
+    chunk_size: int,
+) -> dict[str, object]:
+    """Observation -> policy item, with the identity triple for stable-key
+    noise checkpoints (the SnapFlow lineage): deterministic per
+    (env seed, replan), invariant to batch composition — the property the
+    parallel driver's determinism claim leans on."""
+    item = observation_to_item(
+        to_observation(obs),
+        TASK,
+        stats,
+        chunk_size,
+        camera_kinds_from_names(SIM_CAMERAS),
+    )
+    item["repo_id"] = "sim/eval100"
+    item["episode_index"] = seed
+    item["frame_index"] = replan
+    return item
+
+
+def run_episode(
+    policy: BijouPolicy | None,
+    sim: SO101Sim,
+    seed: int,
+    *,
+    replans: int,
+    horizon: int,
+    video_path: Path,
+) -> EpisodeResult:
+    latencies: list[float] = []
+    next_chunk: Callable[[SimObservation, int], np.ndarray]
+
+    if policy is not None:
+        chunk_size = policy.info.chunk_size
+        stats = policy.info.per_dataset_normalization[STATS_REPO_ID]
+
+        def policy_chunk(obs: SimObservation, replan: int) -> np.ndarray:
+            item = sim_item(obs, seed, replan, stats=stats, chunk_size=chunk_size)
+            start = time.perf_counter()
+            chunk = policy.predict([item], [replan])[0].numpy()
+            latencies.append((time.perf_counter() - start) * 1000)
+            return chunk
+
+        next_chunk = policy_chunk
+    else:
+        next_chunk = hold_chunk_fn(horizon)
+
+    return run_episode_loop(
+        sim,
+        seed,
+        next_chunk,
+        replans=replans,
+        horizon=horizon,
+        video_path=video_path,
+        latencies=latencies,
     )
 
 
