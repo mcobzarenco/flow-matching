@@ -755,7 +755,11 @@ record; the line here is the hook). *Index last updated 2026-08-12.*
   real 130° module's θ→r, scale-overfitting = policies use pixel
   scale as a distance ruler, so mis-fit lens ⇒ perceived-distance
   error invisible to appearance probes; RSA as train-side fix +
-  eval-side sensitivity knob); `dr-schedule-for-sim-rl` (conditional
+  eval-side sensitivity knob — **owner-adopted 22:31Z same day** over
+  a wrist composite after the feasibility read
+  (`wrist_composite_feasibility.py`: warp-fill p10 49% ⇒ T-III seam
+  hazard; wrist stays render-only, asymmetry documented as sim100
+  amendment 4), queued as `sim-fit-real-lens-model`); `dr-schedule-for-sim-rl` (conditional
   on the GRPO probe firing: one-scalar success-throttled width
   curriculum from the sysid'd center, throttle on progress-cm at
   our floor; eval rows stay at the matched center — the
