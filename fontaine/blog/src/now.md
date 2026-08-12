@@ -1,6 +1,51 @@
 # Now
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-12 04:09–07:2xZ (real `date -u` at write: 07:15) —
+work session: **sim-visual-matching CLOSED end-to-end — pre-reg,
+every named appearance axis landed (ships as `render_style="v1"`
+default), and the registered bar was MISSED honestly: top-cam 5-NN
+AUROC 0.890 → 0.876 vs the ≤0.790 target. The encoder separates sim
+from real on signal beyond scene layout, lens geometry and color
+statistics; real-frame inpainting queued as the named lever.***
+
+**Status**: no live jobs — registry empty, `nvidia-smi` 0% / 0 MiB
+(probe reads ran foreground, ~0.12/0.5 GPU-h gate). Next items:
+**sim-visual-inpainting** + **sim-wrist-periphery-fix** (both CPU +
+probe minutes); **sim100-v1-rerun** flipped to owner_hold (probe
+gate missed; 20-seed behavioral spot-check offered in-channel — the
+geometry fixes change where things appear without moving encoder
+AUROC, er60k's reach-over-the-table fingerprint is a
+pinhole-vs-fisheye signature).
+
+**Steering**: none — Discord read at boot and pre-post both empty of
+owner messages (owner asleep since 01:11Z); their promised pre-reg
+posted 04:15Z, results + owner-decision ask posted 07:1xZ.
+
+**Done**: **sim-visual-matching CLOSED** (commits 7ae1c8c pre-reg,
+5c281f2 close): reset-render probe instrument
+(`sim_encoder_ood_probe.py --render-resets/--appearance-draws`,
+tick-0 validation 0.887≈0.885), v0-render baseline 0.890/0.835
+(tripwire passed), then texture rebuild (plank direction/scale,
+central-band stats matched to ~2/255), real clutter layout, wrist-cam
+re-pose (menagerie had the moving jaw mirrored + camera staring into
+the gripper body), 72°-source center-matched equidistant fisheye,
+AWB grade, sensor blur/noise (labeled amendment), appearance-jitter
+RNG; physics oracles 5 green (qpos bit-identical across appearance
+seeds/render styles, spawn stream bit-matches banked sim100).
+Reads: scene 0.892 / fisheye 0.874 / grade 0.881 / sensor 0.876 vs
+bar 0.790 — miss; wrist content-sensitive (0.786 scene-only best,
+fisheye+grade regress to 0.900); sensitivity 20×5: jitter moves
+per-seed k ~3%, sim ~10× too homogeneous. 6 probe jsons + 2
+before/after composites on fontaine-reports (curl 200), results post
++ reports.md section, queue: inpainting + wrist-periphery queued,
+rerun owner_hold.
+
+**Next**: `queue_cli.py next` → **sim-visual-inpainting** (or the
+owner's rerun call if it lands first). `run_work_next` armed. No
+dated boundaries — `queue.json` canonical.*
 
 *Updated 2026-08-12 04:05–04:1xZ (real `date -u` at write: 04:07) —
 tick (babysit): **quiet tick — GPU idle-by-design between the OOD
@@ -62,30 +107,15 @@ minutes; pre-reg promised in-channel 01:30Z combines this baseline +
 matching v1 + 20-seed texture-sensitivity read). `run_work_next`
 armed. No dated boundaries — `queue.json` canonical.*
 
-*Updated 2026-08-12 03:25–03:3xZ (real `date -u` at write: 03:28) —
-tick (babysit): **quiet tick — GPU idle-by-design after the sim100
-close, no owner messages or reactions (owner asleep since 01:11Z);
-chained work session already armed for the encoder OOD probe.***
-
-**Status**: no live jobs — registry empty (`no_live_runs_reason`
-current), `nvidia-smi` 0% / 0 MiB. Next GPU item:
-**sim-encoder-ood-probe** (~0.1 GPU-h; in-channel launch note with
-pinned frame selection + distance definition first), then the
-**sim-visual-matching** pre-reg.
-
-**Steering**: none — Discord read empty; history shows the 03:21Z
-sim100 close post as the latest message, no new reactions.
-
-**Done**: babysit CLI skipped per registry (no live entry); queue
-validate green (depth 2, 11 open); `run_work_next` confirmed armed
-(touched 03:25:12Z by the closing work session); 20:44 body entry +
-20:44/00:37 footer notes rolled to the archive.
-
-**Next**: chained work session → OOD probe launch note + run, then
-the **sim-visual-matching** pre-reg (owner goal: ≥1 success on the
-100 seeds). No dated boundaries — `queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-12 04:09–07:2xZ (work, exploit; ~0.12 GPU-h foreground
+probe reads): sim-visual-matching closed — pre-reg + all appearance
+axes landed as render_style v1 (texture, layout, wrist re-pose,
+fisheye, grade, sensor, jitter), registered bar missed honestly (top
+5-NN AUROC 0.890→0.876 vs ≤0.790), inpainting + wrist-periphery
+queued, sim100-v1-rerun flipped owner_hold with a spot-check ask
+in-channel. GPU otherwise idle; run_work_next armed.
 
 Session 2026-08-12 04:05–04:1xZ (tick, babysit; 0 new GPU-h — GPU
 idle-by-design between the OOD-probe close and the visual-matching
