@@ -7,29 +7,16 @@
 
 # (no_live_runs_reason cleared 21:40Z 08-11 — sim100_eval launched.)
 
-[[run]]
-name = "sim100b_eval"
-kind = "progress-log"
-host = "local"
-pgrep = "sim.rollout_sim"
-pgrep_min = 1
-gpu_indices = [0]
-gpu_mem_min_mib = 100  # euler-1 students hold little; teacher heun-30 ~10+ GiB
-log = "/home/ubuntu/logs/sim100_eval.log"
-progress_re = "seed [0-9]+ replan [0-9]+"
-started_utc = "2026-08-11T23:44:39Z"
-gpu_hours_per_wall_hour = 1.0
-boundary = "PHASE 2 (owner amendment 22:58Z 08-11 'kill the arms, try other policies for >0 success'): 3 sequential arms x seeds 0-99 - ftrig4k (rig-ft student, euler-1, ~50 min), snap30k (student, euler-1, ~50 min), teacher80k (heun-30, ~110 min); ETA ~03:2xZ 08-12; unit fontaine-sim100b. Phase 1 (unit fontaine-sim100): er60k+hold BANKED (er60k mean progress -0.03 cm, 0/100 success, strikes 0/100; hold floor 0.0002 cm), er15k/35k/55k killed per owner ~2.0 GPU-h in"
-anchors = [
-    "RECORD-ONLY; the question is binary-ish: does ANY policy family engage the boat (>0 successes / progress distribution off zero) in the v0 sim",
-    "phase-1 finding: er_60k reaches over the table but never at the boat = visual-gap fingerprint (AutoEval caveat pre-declared); sim-visual-matching is the named lever",
-    "gate arithmetic: phase 1 spent ~2.0 GPU-h of the 6 gate; this entry's projection restarts at 23:44:39Z - crossing fires at 4.0 on this entry",
-    "on rc=0: reads over whatever arms exist (er60k, hold, ftrig4k, snap30k, teacher80k) - sim100_reads.py ARMS list needs the phase-2 names before running",
-]
+no_live_runs_reason = "sim100b rc=0 03:16:37Z 08-12, all arms banked + entry pruned; GPU free. Next GPU item = sim-encoder-ood-probe (queued, needs its in-channel launch note first)."
 
-[[run.gates]]
-kind = "gpu_hours_max"
-value = 4.0
+# sim100b_eval entry PRUNED 03:2xZ 08-12 work session — ALL PHASE2 ARMS
+# DONE rc=0 03:16:37Z (~3.5/4.0 GPU-h this entry; ~5.5 total incl. phase
+# 1's ~2.0/6). 0/500 successes across er60k/hold/ftrig4k/snap30k/
+# teacher80k; strikes 0/500, hold floor -0.0 — gates green. Teacher80k:
+# engages MOST (56/100 moved) but misdirected (18 toward/38 away, mean
+# -0.73, the study's only CI-excludes-zero read vs hold — negative).
+# Engagement/direction split = the finding; visual matching the lever.
+# Report + gallery + analysis on fontaine-reports (curl 200).
 
 # er60k_events_dump entry PRUNED 16:0xZ 08-11 work session — dump pass
 # rc=0 15:5xZ (~1.55/4 GPU-h, 25,800 rows at ~275 f/min). Instrument

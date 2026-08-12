@@ -98,3 +98,4 @@ corrections are follow-up posts.
 - [2026-08-11 — Sim fixes, batch 1: clean starts, honest grasps — all four findings closed](2026-08-11-sim-fixes-batch1.md)
 - [2026-08-11 — Servo sysid: the 56× kp question answered — replay error 3.31° → 1.76°](2026-08-11-sim-servo-sysid.md)
 - [2026-08-11 — Pre-registration: 100-seed sim policy eval — er_60k in the SO-101 sim](2026-08-11-prereg-sim-policy-eval-100seeds.md)
+- [2026-08-12 — 100-seed sim eval: 0/500 successes, but the sim already separates policy families](2026-08-12-sim100-results.md)

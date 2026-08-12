@@ -2,29 +2,17 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-11T23:55:00Z
+**Updated:** 2026-08-12T03:45:00Z
 
-**Depth call:** depth 2 open at 23:5xZ 08-11: sim100-postprocess (rc ~03:2xZ 08-12) + sim-visual-matching (now THE lever for the owner 100-seed goal after the phase-1 negative); sim-policy-eval-100seeds phase 2 LIVE (fontaine-sim100b); molmo-flow-step1 + rig-mixture-exec owner_hold. Sim lane per owner 18:15Z.
+**Depth call:** depth 2 open at 03:4xZ 08-12: sim-encoder-ood-probe (gpu-local, executable, owner-ask 01:11Z) + sim-visual-matching (cpu pre-reg, THE lever for the owner >=1-success goal); sim100 eval + postprocess both CLOSED this session; molmo-flow lane owner-side; rig-mixture-screen-exec owner_hold on the compute call.
 
-**12 open** (Live 1 · Queued 2 · Blocked 9 · Done 117)
+**11 open** (Live 0 · Queued 2 · Blocked 9 · Done 119)
 
-## 🔴 Live (1)
+## 🔴 Live (0)
 
 *running right now (GPU or owner-window)*
 
-**`sim-policy-eval-100seeds`** · `cpu`
-
-GOAL (owner 17:07Z 08-11): evaluate one good policy (candidate er_60k/step_060000, the reference trunk) in sim on 100 fixed seeds; primary metric = boat-&gt;disk distance reduction (continuous), success rate secondary
-
-**boundary:** PHASE 2 LIVE (owner amendment 22:58+22:59Z 08-11 seen mid-ride, unit fontaine-sim100 stopped 23:41Z, fontaine-sim100b launched 23:44:39Z, ETA ~03:2xZ 08-12): rung arms KILLED per owner; new arms x seeds 0-99 same protocol - ftrig4k (rig-ft snapflow student, euler-1), snap30k (student, euler-1), teacher80k (artrunk@80k, heun-30). PHASE 1 BANKED (~2.0 GPU-h): er60k mean progress_final -0.03 cm, 0/100 success, 96/100 boat untouched, strikes 0/100, hold floor -0.00002 cm - er_60k does NOT engage the boat in the v0 sim (visual-gap fingerprint, AutoEval caveat pre-declared); ordering read moot (rungs killed). sim-visual-matching now THE lever for the owner goal. Instrument delta committed: --method euler|heun + stable-key noise identity (owner-acked in-channel 23:41Z). · [pre-reg](posts/2026-08-11-prereg-sim-policy-eval-100seeds.md)
-
-<details><summary>full record</summary>
-
-GOAL (owner 17:07Z 08-11): evaluate one good policy (candidate er_60k/step_060000, the reference trunk) in sim on 100 fixed seeds; primary metric = boat-&gt;disk distance reduction (continuous), success rate secondary. Local GPU inference-only while sims run. Protocol (seed list, horizon, metric definition) pre-registered before running.
-
-</details>
-
----
+*(empty)*
 
 ## 🟢 Queued (2)
 
@@ -34,7 +22,7 @@ GOAL (owner 17:07Z 08-11): evaluate one good policy (candidate er_60k/step_06000
 
 Sim visual matching (CPU + render minutes, SIMPLER's second lever after controller sysid): close the sim-vs-rig APPEARANCE gap for the two policy cameras - compare sim renders vs real rig frames (so-frame REAL|SIM|OVERLAY per the…
 
-**boundary:** Queued 20:3xZ 08-11 at sim-servo-sysid close. Explicitly OPTIONAL before the 100-seed eval (visual gap affects policy inputs, not physics); if the eval's free validation arm shows sim ordering matching the banked panel trajectory, this may stay a v1 rung.
+**boundary:** Queued 20:3xZ 08-11 at sim-servo-sysid close. Explicitly OPTIONAL before the 100-seed eval (visual gap affects policy inputs, not physics); if the eval's free validation arm shows sim ordering matching the banked panel trajectory, this may stay a v1 rung. | UPDATE 03:4xZ 08-12: now THE named lever after sim100 close (0/500; direction tracks visual familiarity — see sim-policy-eval-100seeds close). Promised in-channel 01:30Z: one pre-reg combining the encoder-OOD-probe baseline + visual matching v1 (real top-cam background/table baked as scene textures, boat+disk color match, camera pose match; then a 20-seed texture-sensitivity read). Owner goal: &gt;=1 success on the 100 seeds.
 
 <details><summary>full record</summary>
 
@@ -44,15 +32,15 @@ Sim visual matching (CPU + render minutes, SIMPLER's second lever after controll
 
 ---
 
-**`sim100-postprocess`** · `cpu`
+**`sim-encoder-ood-probe`** · `gpu-local`
 
-100-seed sim eval postprocess (successor, executable on unit fontaine-sim100b rc=0 ~03:2xZ 08-12): (1) verify ALL PHASE2 ARMS DONE + rc=0 in ~/logs/sim100_eval.log; (2) frozen reads sim100_reads.py --in-dir outputs/sim/eval100 --…
+Encoder OOD probe (OWNER ASK 01:11Z 08-12 'figuring out if that's really the issue', answered 01:30Z with this design): quantify the sim-vs-real visual gap at the policy's own eyes
 
-**boundary:** Executable at fontaine-sim100b rc (~03:2xZ 08-12); numbers per arm land in-channel as each arm finishes (owner promise 23:41Z). · [pre-reg](posts/2026-08-11-prereg-sim-policy-eval-100seeds.md)
+**boundary:** Executable next session (GPU free since 03:16Z 08-12); short launch note with the pinned frame selection + distance definition posts in-channel before the GPU minute (record-only, rides the owner ask). Run BEFORE or WITH the sim-visual-matching pre-reg — its number is the baseline the matching lever must move. · [pre-reg](posts/2026-08-11-prereg-sim-policy-eval-100seeds.md)
 
 <details><summary>full record</summary>
 
-100-seed sim eval postprocess (successor, executable on unit fontaine-sim100b rc=0 ~03:2xZ 08-12): (1) verify ALL PHASE2 ARMS DONE + rc=0 in ~/logs/sim100_eval.log; (2) frozen reads sim100_reads.py --in-dir outputs/sim/eval100 --out reports/analysis__sim100_seed_eval.json (arms er60k/hold/ftrig4k/snap30k/teacher80k; gates strikes+hold-floor; ordering read auto-skips - rungs killed); (3) charts via sim100_charts.py (phase-2 colors in) + HTML report + video gallery (per-arm best/median/worst; er60k reach-but-miss clips are the money shot) -&gt; fontaine-reports curl-200; (4) results post w/ plain-words opener + reports.md + numbers in-channel: headline is the phase-1 negative (er_60k 0/100, boat untouched 96/100) + whether ANY family engages the boat; (5) prune babysit entry sim100b_eval; (6) name sim-visual-matching as the unblocking lever; wire-MolmoAct2-rig-ft-into-sim is an offered follow-up (owner told 23:41Z it needs a closed-loop adapter + v2.1/v3.0 convention care).
+Encoder OOD probe (OWNER ASK 01:11Z 08-12 'figuring out if that's really the issue', answered 01:30Z with this design): quantify the sim-vs-real visual gap at the policy's own eyes. Push N sim frames (from the banked sim100 rollout videos/scenes, both cameras) + N real rig frames (so101_pick_place_v2 episodes) through the frozen er_60k vision trunk; read = sim-vs-real feature distance vs the real-vs-real spread (per camera, top vs wrist separately — camera pose mismatch shows up as a top-cam-specific gap). GPU-light (~0.1 GPU-h, few hundred frames, inference only). Deliverable: analysis json + small chart + numbers in-channel; feeds the sim-visual-matching pre-reg with a measured baseline the matching work must move. PREREG NOTE: rides the sim100 pre-reg (consumes its banked artifacts, answers its follow-up question) like the er15k/35k/55k owner-requested reads rode the er-60k pre-reg; the in-channel launch note is the frozen spec, per charter.
 
 </details>
 
@@ -186,7 +174,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (117)
+## ✅ Done (119)
 
 *closed — the full record stays in each fold*
 
@@ -1781,6 +1769,34 @@ MAIN-AGENT DIRECTIVE (owner-relayed 14:34:48Z 08-11, message.txt attachment): re
 <details><summary>full record</summary>
 
 MAIN-AGENT DIRECTIVE (owner-relayed 14:34:48Z 08-11, message.txt attachment): rebase fontaine on main @36afff0 (owner-session correctness reviews of bijou/molmoact2 + bijou/molmo2 landed as code) and adapt — NOT merge-resolve in our favor: (1) ActionExpertConfig now frozen=True/slots=True, NO field defaults, all 15 fields explicit everywhere; released shape ONLY via ActionExpertConfig.released_so100_101(); (2) config factories moved to staticmethods: Gemma4Config.e2b()/.e4b(), Molmo2TextConfig.molmo2_4b() (module-level e2b_config()/e4b_config()/molmo2_4b_text_config() gone; styleguide: released shapes are staticmethod constructors, literals never restated); (3) new loud molmoact2 guards each with a test: --norm-stats must be named norm_stats.json; MolmoAct2Predictor.load refuses n_obs_steps missing or !=1 (require_single_obs); nonzero *dropout* keys in action_expert_config refused; extract_kv_states raises on unfilled cache layer; load_norm_stats requires non-empty setup_type/control_mode; (4) ensure_per_sample_patch_alignment now CPU-side in all three collators; (5) main edited two of our scripts (molmoact2_ae_parity.py build_ours passes dropout=0.0/attn_dropout=0.0 explicitly; molmoact2_ours_ft_rung_read.py n_obs_steps truthiness fix) and two posts (OOB plan Qwen3-8B-&gt;4B-class x2; deep dive parameter-accounting note: 621M and 577,564,448 are the same expert — 620,677,664 minus 36x frozen cross_attn.kv_proj 42,522,624 minus identity state_encoder 590,592, pinned in test_released_config_parameter_count) — main's versions authoritative; (6) styleguide adds: Shapes: docstring bullets on tensor-taking functions, intra-package imports relative, docs state present-truth (no corrected-on trails); (7) Molmo2TextTokenizer raises FileNotFoundError not SystemExit on missing tokenizer.json. Sister ask (check.py green on artifact-less clones) DONE d7b6864 same session (option a: frozen stage-01 analysis committed, oracle chain clone-verifiable).
+
+</details>
+
+---
+
+**`sim100-postprocess`** · `cpu`
+
+100-seed sim eval postprocess (successor, executable on unit fontaine-sim100b rc=0 ~03:2xZ 08-12): (1) verify ALL PHASE2 ARMS DONE + rc=0 in ~/logs/sim100_eval.log; (2) frozen reads sim100_reads.py --in-dir outputs/sim/eval100 --…
+
+**boundary:** CLOSED 03:4xZ 08-12 work session, all 6 steps: (1) rc=0 + ALL PHASE2 ARMS DONE verified 03:16:37Z; (2) frozen reads analysis__sim100_seed_eval.json (5 arms, gates green, ordering auto-skipped as pre-declared); (3) 4 house charts (engagement split NEW) + report__sim100_seed_eval.html + 14-clip gallery (best/median/worst per arm + 2 er60k reach-but-miss) -&gt; fontaine-reports, curl 200 x5; (4) results post posts/2026-08-12-sim100-results.md (plain-words opener) + reports.md section + numbers in-channel; (5) babysit entry pruned; (6) sim-visual-matching named the lever + encoder-OOD-probe queued as its own item (owner 01:11Z ask). Per-arm numbers were posted in-channel as each arm landed (00:37Z ftrig4k, 01:30Z snap30k, 03:4xZ teacher80k) per the 23:41Z promise. wire-MolmoAct2-rig-ft-into-sim remains offered, not queued. · [pre-reg](posts/2026-08-11-prereg-sim-policy-eval-100seeds.md)
+
+<details><summary>full record</summary>
+
+100-seed sim eval postprocess (successor, executable on unit fontaine-sim100b rc=0 ~03:2xZ 08-12): (1) verify ALL PHASE2 ARMS DONE + rc=0 in ~/logs/sim100_eval.log; (2) frozen reads sim100_reads.py --in-dir outputs/sim/eval100 --out reports/analysis__sim100_seed_eval.json (arms er60k/hold/ftrig4k/snap30k/teacher80k; gates strikes+hold-floor; ordering read auto-skips - rungs killed); (3) charts via sim100_charts.py (phase-2 colors in) + HTML report + video gallery (per-arm best/median/worst; er60k reach-but-miss clips are the money shot) -&gt; fontaine-reports curl-200; (4) results post w/ plain-words opener + reports.md + numbers in-channel: headline is the phase-1 negative (er_60k 0/100, boat untouched 96/100) + whether ANY family engages the boat; (5) prune babysit entry sim100b_eval; (6) name sim-visual-matching as the unblocking lever; wire-MolmoAct2-rig-ft-into-sim is an offered follow-up (owner told 23:41Z it needs a closed-loop adapter + v2.1/v3.0 convention care).
+
+</details>
+
+---
+
+**`sim-policy-eval-100seeds`** · `cpu`
+
+GOAL (owner 17:07Z 08-11): evaluate one good policy (candidate er_60k/step_060000, the reference trunk) in sim on 100 fixed seeds; primary metric = boat-&gt;disk distance reduction (continuous), success rate secondary
+
+**boundary:** CLOSED 03:2xZ 08-12 work session — BOTH PHASES COMPLETE, rc=0 03:16:37Z (phase 2 ~3.5/4 GPU-h; total ~5.5). FINAL: 0/500 successes; gates green (strikes 0/500, hold floor -0.0). Per-arm mean progress / moved&gt;=0.5cm: er60k -0.03 / 4 (96 untouched, reach-over-the-table fingerprint); snap30k -0.12 / 38; ftrig4k +0.08 / 47 (27 toward vs 20 away — the ONLY arm tilted toward the goal, best +3.64); teacher80k -0.73 / 56 (18 toward/38 away, the study's only CI-excludes-zero reads: vs hold -0.73 [-1.18,-0.34], vs er60k -0.70 — the strongest offline policy is measurably worse than doing nothing). THE FINDING: contact tracks family/capability, DIRECTION tracks visual familiarity — checkpoint-quality explanation dead (teacher engages most), visual gap confirmed as the lever. Owner question 01:11Z answered in-channel 01:30Z (diagnostics + SIMPLER recipe). · [pre-reg](posts/2026-08-11-prereg-sim-policy-eval-100seeds.md)
+
+<details><summary>full record</summary>
+
+GOAL (owner 17:07Z 08-11): evaluate one good policy (candidate er_60k/step_060000, the reference trunk) in sim on 100 fixed seeds; primary metric = boat-&gt;disk distance reduction (continuous), success rate secondary. Local GPU inference-only while sims run. Protocol (seed list, horizon, metric definition) pre-registered before running.
 
 </details>
 

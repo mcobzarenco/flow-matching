@@ -322,6 +322,20 @@ numbers compare within this section, not with the v1 scoreboard.
   [`tiny/step_010000`](https://huggingface.co/mcobzarenco/fontaine-checkpoints/tree/main/fontaine_molmo2_flow_tiny_h256_10k_1xh100/step_010000)
   (both weights-only, backbone deduplicated to the 60k trunk)
 
+## 100-seed sim policy eval ([pre-reg](posts/2026-08-11-prereg-sim-policy-eval-100seeds.md) · [results](posts/2026-08-12-sim100-results.md))
+
+Five arms × seeds 0–99 in the v0 SO-101 sim (sysid'd servos), paired
+design; primary metric = boat→disk progress (cm). 0/500 successes;
+the engagement/direction split is the finding.
+
+- [HTML report + video gallery](https://mcobzarenco-fontaine-reports.static.hf.space/report__sim100_seed_eval.html)
+  — per-arm tables, paired CIs, four charts, best/median/worst clips
+  per arm (+ the er60k reach-but-miss money shots)
+- [frozen analysis JSON](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim100_seed_eval.json)
+  (`sim100_reads.py`: gates, summaries, paired bootstrap reads,
+  ordering read auto-skipped — rung arms killed by the phase-2
+  amendment)
+
 ## Cross-family analyses
 
 - [flow-vs-AR paired per-step read](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__flow_vs_ar_paired_k4l2.json)

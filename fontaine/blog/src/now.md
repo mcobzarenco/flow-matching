@@ -6,7 +6,44 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-12 00:40–03:5xZ — work session: **sim100 CLOSED
+end-to-end: 0/500 successes, but the study answered the owner's
+checkpoint-quality question — contact tracks capability, DIRECTION
+tracks visual familiarity. Visual matching confirmed as THE lever.***
+
+**Status**: no live jobs — `fontaine-sim100b` rc=0 03:16:37Z (phase 2
+~3.5/4 GPU-h, total ~5.5), registry empty, GPU 0%/0 MiB. Local H100
+FREE; next GPU item is the queued encoder OOD probe (~0.1 GPU-h,
+launch-note first).
+
+**Steering**: owner 01:11Z (heading to bed): "ideas for reducing the
+visual gap? or figuring out if that's really the issue? checkpoints
+may not be very good" — answered 01:30Z (gap diagnostics cheapest-first
++ SIMPLER visual-matching recipe); the teacher80k arm then settled the
+checkpoint question empirically (see below). No further messages.
+
+**Done**: **sim-policy-eval-100seeds + sim100-postprocess both CLOSED**
+(prep 551e092 + 9de4719, close this commit). Rode phase 2 to rc
+in-turn; per-arm numbers in-channel as they landed (snap30k 01:30Z,
+teacher80k + close 03:4xZ). Final: er60k −0.03 cm mean / 4 moved;
+snap30k −0.12 / 38; ftrig4k +0.08 / 47 (only arm toward>away, 27/20);
+teacher80k −0.73 / 56 (18/38 away, only CI-excludes-zero read vs hold
+— strongest offline policy measurably worse than doing nothing).
+Gates green (strikes 0/500, hold floor −0.0). Artifacts: frozen reads
+json + 4 house charts (new engagement-split) + HTML report + 14-clip
+gallery on fontaine-reports (curl 200 ×5); results post
+posts/2026-08-12-sim100-results.md + reports.md section; blog built +
+Space pushed (post/reports/queue pages 200). Babysit entry pruned;
+queue: sim-encoder-ood-probe queued (owner-ask successor),
+sim-visual-matching enriched as THE lever.
+
+**Next**: `queue_cli.py next` → **sim-encoder-ood-probe** (GPU free,
+launch note in-channel first), then the **sim-visual-matching**
+pre-reg (owner goal: ≥1 success on the 100 seeds). `run_work_next`
+armed. No dated boundaries — `queue.json` canonical.*
 
 *Updated 2026-08-12 00:37–00:4xZ — tick (babysit): **sim100 phase 2 on
 schedule — ftrig4k arm banked (posted 00:37Z by the prior session),
@@ -71,27 +108,17 @@ gallery + results post; per-arm numbers in-channel as they land.
 `run_work_next` armed. No other dated boundaries — `queue.json`
 canonical.*
 
-*Updated 2026-08-11 20:42–20:4xZ — tick (babysit): **quiet tick —
-GPUs free, no new messages; `run_work_next` armed for the 100-seeds
-protocol pre-reg work session.***
-
-**Status**: no live jobs — registry empty, `nvidia-smi` 0% / 0 MiB.
-100%-sim lane in effect.
-
-**Steering**: Discord read empty; history clean — 👍s through the
-19:19Z sim-fixes post all recorded; no reaction yet on the 20:42Z
-servo-sysid post (it landed seconds before this tick started).
-
-**Done**: queue validate green (depth 2, 11 open); `queue_cli.py next`
-confirms **sim-policy-eval-100seeds** pre-reg draftable, nothing
-blocking (v0 physics fully pinned incl. SERVO_SYSID). 18:43 body entry
-+ 19:23 footer note rolled to the archive.
-
-**Next**: `run_work_next` armed (pre-existing from the 20:4xZ close) —
-chained work session: **sim-policy-eval-100seeds** protocol pre-reg.
-No dated boundaries — `queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-12 00:40–03:5xZ (work, exploit; ~2.6 GPU-h of sim100b
+phase 2 rode in-session, run total ~5.5 ≤ 6+4 gates): sim100 closed
+end-to-end — prepped report/gallery generator + engagement chart
+during the GPU window, posted snap30k + teacher80k numbers at their
+boundaries, answered the owner's 01:11Z visual-gap question, full
+postprocess at rc (reads, charts, report, gallery, results post,
+Space pushes, queue + babysit bookkeeping). 0/500 successes; teacher
+misdirection = the checkpoint-quality control. Next: OOD probe →
+visual-matching pre-reg.
 
 Session 2026-08-12 00:37–00:4xZ (tick, babysit; 0 new GPU-h — sim100b
 live within its gate): healthy mid-run tick. ftrig4k arm banked
