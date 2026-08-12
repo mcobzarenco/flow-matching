@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-12T15:08:06Z
+**Updated:** 2026-08-12T16:05:00Z
 
-**Depth call:** depth 4 open at 11:4xZ 08-12: sim-parallel-rollouts (gpu-local, owner-sequenced first on release) + 2 lit items still open; grpo-on-sim-design-research CLOSED this session (memo posted), successor grpo-signal-probe is owner_hold pending memo review.
+**Depth call:** depth 3 open at 16:0xZ 08-12: ftrig-eval20-flipped-parallel CLOSED this session (owner prio, ridden end-to-end); remaining open: sim-wrist-compositing + 2 lit items; grpo-signal-probe owner_hold (memo review), v3-rerun unhold ask 15:13Z still open.
 
-**13 open** (Live 0 · Queued 3 · Blocked 10 · Done 132)
+**13 open** (Live 0 · Queued 3 · Blocked 10 · Done 133)
 
 ## 🔴 Live (0)
 
@@ -202,7 +202,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (132)
+## ✅ Done (133)
 
 *closed — the full record stays in each fold*
 
@@ -2049,6 +2049,20 @@ Rig-mixture lever, step 1 (CPU, executable now): implement the per-root --datase
 <details><summary>full record</summary>
 
 Rig-mixture lever, step 1 (CPU, executable now): implement the per-root --dataset-repeat flag + oracle test exactly as pinned in the er-60k pre-reg mixture note (loader dedups repeated roots today, so there is no zero-code oversample), then draft the mixture-screen pre-reg on the new reference trunk er_60k/step_060000: rig at ~5% effective share (~27x repeat, inside the CL-triangle 2-20% replay band) vs the natural-share 0.19% passenger baseline this screen just banked. The ER results post names this lever explicitly unpriced. GPU leg NOT launchable without owner input: the 4x box is gone — the pre-reg draft must name the compute ask (local 1xH100 rung vs a new box) and hold for owner steering.
+
+</details>
+
+---
+
+**`ftrig-eval20-flipped-parallel`** · `gpu-local`
+
+OWNER PRIO (15:27Z 08-12): re-run the ftrig 20 episodes on flipped-mount physics (d5cf9fd) with parallel workers for speed
+
+**boundary:** CLOSED 16:0xZ 08-12 work session, ridden end-to-end (~0.27/0.5 GPU-h incl. one accidental replicate): pre-reg + results in posts/2026-08-12-prereg-ftrig-eval20-flipped-parallel.md, commit c68ea06 landed the instrument (SO101Sim flip_camera_mount toggle, physics-verified to reproduce pre-flip 40.2mm bracket height; parallel driver merged-stats fallback + --no-mount-flip). RESULT: paired flip effect ~NULL — 18/20 seeds BIT-identical across physics (policy rarely reaches bracket-contact poses), 2/20 improved post-flip (s15 +0.81, s5 +0.60 cm), 0 worsened; knock-aways 6/6 unchanged = jaw-side, not bracket-side; MolmoAct2 diagnosis stands on fixed physics. Incidental data banked: identical-config parallel runs bit-identical at workers=8 (lockstep reproducibility, GRPO-probe-relevant); parallel-vs-sequential outcome drift quantified (mean -0.37 cm, 11/20 seeds &gt;0.1, max 6.0 - oracle FAIL confirmed at outcome level). Rows + 40 videos on fontaine-reports /ftrig_eval20_flip_parallel/ (curl 200); numbers + videos in-channel same session. · [pre-reg](posts/2026-08-12-prereg-ftrig-eval20-flipped-parallel.md)
+
+<details><summary>full record</summary>
+
+OWNER PRIO (15:27Z 08-12): re-run the ftrig 20 episodes on flipped-mount physics (d5cf9fd) with parallel workers for speed. Design (confirmed in-channel 15:28Z): BOTH arms parallel workers=8 — pre-flip (flip disabled) + post-flip, same 20 seeds as molmoact2_ftrig_eval20, paired per-seed = the sanctioned within-parallel-path read (parallel oracle FAILED 14:37Z: rows are rough/exploratory, never registered-comparable to sequential banked rows; state the asterisk in the readout). Reads: paired progress_final_cm delta (flip effect), knock-away count change (4/20 pre-flip, bracket-collision hypothesis), videos. Est ~2x ~5 min wall, &lt;=0.5 GPU-h. Rough numbers + videos in-channel same session.
 
 </details>
 

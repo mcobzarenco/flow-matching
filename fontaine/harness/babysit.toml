@@ -10,24 +10,16 @@
 # (no_live_runs_reason cleared 15:4xZ 08-12 work session — ftrig_eval20_flip_parallel launched, owner prio 15:27Z.)
 # PRIOR: "declared 15:2xZ 08-12 tick: both 08-12 GPU legs COMPLETE and pruned (sim_parallel_oracle 14:37Z, molmoact2_ftrig_eval20 ~14:50Z); local GPU idle pending the owner's v3-rerun unhold + arm-set call (ask posted in-channel 15:13Z — on GO, the rerun launches from the finalized amendment and its entry activates here)."
 
-[[run]]
-name = "ftrig_eval20_flip_parallel"
-kind = "progress-log"
-host = "local"
-pgrep = "sim.rollout_sim_parallel"
-pgrep_min = 1
-gpu_indices = [0]
-gpu_mem_min_mib = 2000
-anchors = [
-    "pre-reg posts/2026-08-12-prereg-ftrig-eval20-flipped-parallel.md: owner prio 15:27Z, both arms parallel workers=8, paired per-seed read WITHIN the parallel path only (oracle FAILED 14:37Z - rows rough/exploratory, never comparable to banked sequential)",
-    "banked sequential pre-flip context: 0/20, mean progress_final -0.84 cm, 7/20 approaches, 4 knock-aways >=1 cm",
-]
-gates = [{ kind = "gpu_hours_max", value = 0.5 }]
-boundary = "two back-to-back arms (postflip then preflip), ~5-8 min each at workers=8; ridden in-session from 15:4xZ 08-12 (hard kill 19:31Z); rough numbers + videos in-channel same session"
-log = "outputs/sim/ftrig_eval20_flip_parallel/launcher.log"
-progress_re = "(\\d+) episodes in"
-started_utc = "2026-08-12T15:40:00Z"
-gpu_hours_per_wall_hour = 1.0
+no_live_runs_reason = "declared 16:0xZ 08-12 work session: ftrig_eval20_flip_parallel COMPLETE and pruned (all arms rc=0 by 15:59:46Z, ridden in-session); local GPU idle pending the owner's v3-rerun unhold + arm-set call (ask posted in-channel 15:13Z, still open - on GO, the rerun launches from the finalized amendment and its entry activates here)."
+
+# ftrig_eval20_flip_parallel entry PRUNED 16:0xZ 08-12 work session —
+# COMPLETE, ridden end-to-end (~0.27/0.5 GPU-h): postflip + preflip arms
+# 5.4 min each at workers=8 (plus one accidental postflip replicate from
+# a launcher-flag slip — banked as a bit-identity reproducibility datum).
+# RESULT: paired flip effect ~null, 18/20 seeds bit-identical, 2
+# improved post-flip, knock-aways 6/6 unchanged (jaw-side). Rows + 40
+# videos on fontaine-reports /ftrig_eval20_flip_parallel/. Results in
+# posts/2026-08-12-prereg-ftrig-eval20-flipped-parallel.md.
 
 # (no_live_runs_reason cleared 14:2xZ 08-12 - owner released in-channel 14:17Z; parallel-oracle GPU leg riding in-session.)
 # PRIOR: "GPU OWNER-RESERVED since 09:23Z 08-12 (owner needs it for a few hours) - NO GPU launches until the owner releases it in-channel. Sessions do literature research meanwhile (owner steering 09:23Z: sim-improvement lit, so101-adjacent benchmark envs, GRPO-on-sim design). WHEN RELEASED: sim-parallel-rollouts runs FIRST, before any other experiment (owner 09:32Z) - the GPU leg is READY (scaffold + pre-reg landed 10:1xZ, commit 1e4e16f): MUJOCO_GL=egl uv run python fontaine/scripts/sim_parallel_oracle.py --checkpoint <er_60k/step_060000> --num-seeds 6 --workers 2, then --workers 8; frozen decision rule + <=1 GPU-h gate in posts/2026-08-12-prereg-sim-parallel-rollouts.md. spot20 done 09:02Z (~1.25/3 GPU-h), teacher80k +0.97 paired CI-excludes-zero."
