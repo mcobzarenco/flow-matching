@@ -167,6 +167,59 @@ revision](posts/2026-08-06-panel-v2-amendment.md).
   — their `predict_action` end-to-end, bf16, 10-step Euler, seed =
   concat index; 25,800 frames at 352 f/min, ~1.3 GPU-h total
 
+## er_60k ENDPOINT @60000 — THE ER decision read ([pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md)): ER init WINS both legs
+
+- [endpoint eval report](https://mcobzarenco-fontaine-reports.static.hf.space/eval__fontaine_molmo2_er_60k_ddp4__step_060000__panel_curated_v0_k4l2.html)
+  — chained in-unit panel (rc 13:28Z 08-11, ~153/155 GPU-h run
+  total): fast path **5.7782/1.9898** core — the best banked trunk
+  number to date; narrated arm 5.83 (+0.055 pairing, 45% win); aux
+  holding 0.915 / progress MAE 0.060 / event 0.858 / visible 0.822
+- [paired decision reads JSON](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__er60k_endpoint_vs_banked_k4l2.json)
+  (`er15k_panel_reads.py`, key `bijou@60000`) — vs 40k endpoint
+  (6.0079) pooled **−0.2297** [CI95 −0.281, −0.154] BELOW-BASELINE;
+  vs 60k-cont (5.8602) pooled **−0.0821** [CI95 −0.126, −0.025]
+  **BELOW-BASELINE, CI excludes zero** = the pre-registered decision
+  read: the ER-init trunk beats both banked baselines at matched
+  panel class; state-copy integrity byte-match ×3. Rung trajectory
+  15k +1.52 → 35k +0.28 → 55k −0.18 → **60k −0.23** vs the 40k
+  endpoint. Rig-data effect read at endpoint: NOT split-compatible —
+  the panel contains no owner-rig repos (checked against the npz
+  `repo_id` identity), recorded as skipped per the pre-reg's
+  if-clause
+- Weights: [`step_060000`](https://huggingface.co/mcobzarenco/fontaine-checkpoints/tree/main/fontaine_molmo2_er_60k_ddp4/step_060000)
+  (weights-only, hub-uploaded 12:44Z in 42.0 s, commit 4ed3dd0)
+
+## er_60k @60000 events one-off (owner request 12:44Z 08-11, record-only)
+
+What events does the model actually see? Generated event strings vs
+the weak judge labels on the 8,987 judge-labeled panel frames, via
+the new `--dump-generations` instrument (commit 7f43c54 — main-arm
+generations retained under explicit `--generate`).
+
+- [standalone report](https://mcobzarenco-fontaine-reports.static.hf.space/report__er60k_events_oneoff.html)
+  — 13-class model×gt confusion (incl. none/none), per-class P/R,
+  and 136 image cards across hit / class-swap / miss / false-alarm
+  galleries + probe examples (repo-diverse selection)
+- Headline: both-none 7,238 · hits 333 · swaps 129 · **misses 683** ·
+  false alarms 604. On the 1,145 gt-event frames the model speaks on
+  40%, but class-agrees 72% when it does; exact-string match 3.6%
+  (same event, different words)
+- [constrained-probe JSON](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__er60k_events_probe.json)
+  — on the misses, a 1-step `none`-ban re-decode (frame's own
+  generated prefix replayed; unbanned replay reproduced `none`
+  bit-exact 679/683): **forced guess lands the gt class 63%** →
+  the dominant miss mode is *saw-it-under-threshold*, not blindness
+  (idle 86% / release-place 80% / occlusion 72% / blur 62%; camera
+  quirks 10% and episode markers 0% are the genuinely-not-encoded
+  tail)
+- [confusion JSON](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__er60k_events_confusion.json)
+  · [dump-pass eval json](https://mcobzarenco-fontaine-reports.static.hf.space/eval__fontaine_molmo2_er_60k_ddp4__step_060000__panel_curated_v0_k4l2_events.json)
+  · [per-frame generations dump](https://mcobzarenco-fontaine-reports.static.hf.space/eval__fontaine_molmo2_er_60k_ddp4__step_060000__panel_curated_v0_k4l2_events_generations.json)
+  (25,800 rows, ~1.55/4 GPU-h). Instrument oracle: presence acc
+  0.8568 vs banked 0.8582 — Δ 13 frames, inside the documented
+  cross-world-size bf16 batch-composition band (banked ran 4-way on
+  the box)
+
 ## er_60k @55000 owner-requested panel, standard both-arms ([pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md), record-only)
 
 - [standard eval report](https://mcobzarenco-fontaine-reports.static.hf.space/eval__fontaine_molmo2_er_60k_ddp4__step_055000__panel_curated_v0_k4l2.html)
@@ -268,6 +321,128 @@ numbers compare within this section, not with the v1 scoreboard.
   [`F/step_010000`](https://huggingface.co/mcobzarenco/fontaine-checkpoints/tree/main/fontaine_molmo2_flow_frozen_10k_ddp4/step_010000) ·
   [`tiny/step_010000`](https://huggingface.co/mcobzarenco/fontaine-checkpoints/tree/main/fontaine_molmo2_flow_tiny_h256_10k_1xh100/step_010000)
   (both weights-only, backbone deduplicated to the 60k trunk)
+
+## 100-seed sim policy eval ([pre-reg](posts/2026-08-11-prereg-sim-policy-eval-100seeds.md) · [results](posts/2026-08-12-sim100-results.md))
+
+Five arms × seeds 0–99 in the v0 SO-101 sim (sysid'd servos), paired
+design; primary metric = boat→disk progress (cm). 0/500 successes;
+the engagement/direction split is the finding.
+
+- [HTML report + video gallery](https://mcobzarenco-fontaine-reports.static.hf.space/report__sim100_seed_eval.html)
+  — per-arm tables, paired CIs, four charts, best/median/worst clips
+  per arm (+ the er60k reach-but-miss money shots)
+- [frozen analysis JSON](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim100_seed_eval.json)
+  (`sim100_reads.py`: gates, summaries, paired bootstrap reads,
+  ordering read auto-skipped — rung arms killed by the phase-2
+  amendment)
+
+## 20-seed behavioral spot-check under v3 ([pre-reg](posts/2026-08-12-prereg-sim-spot20-v3.md), [results](posts/2026-08-12-sim-spot20-v3-results.md), 08-12)
+
+Same 20 seeds, physics bit-identical (spawn rows byte-matched
+in-run), only the rendering changed v0 -> v3. **teacher80k improves
++0.97 cm paired [CI95 +0.16, +1.81] — the only CI-excludes-zero
+read, direction flipped toward the disk**; er60k (-0.07) and
+snap30k (+0.06) null. Visual familiarity moves the arm that
+engages. Amendment: GPU compositor (owner-approved) — 371 -> 94
+ms/tick, probe reads preserved (0.669/0.113/0.544). ~1.3 GPU-h
+(gate 3).
+
+- [reads JSON](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__spot20_v3_reads.json)
+  · [per-seed delta chart](https://mcobzarenco-fontaine-reports.static.hf.space/chart__spot20_v3_deltas.png)
+  · [GPU-path probe re-read](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_encoder_ood_probe_v3_gpu.json)
+
+## Sim content diversity v3 — plate bank + clutter draws ([pre-reg](posts/2026-08-12-prereg-sim-content-diversity.md), [results](posts/2026-08-12-sim-content-diversity-results.md), 08-12)
+
+Per-reset content variation for the v2 composite: a bank of 26
+per-episode clean plates (each carrying its real episode's lighting;
+ghost-free by inlier-median mining) + clutter presence/pose draws
+from the measured real between-episode spread. Registered bar (top
+k std/mean ≥ 0.15 AND 5-NN AUROC ≤ 0.790) **MISSED on the spread
+leg** (0.038 → 0.114) while the AUROC leg fell 0.773 → **0.673**
+(k-ratio 1.02× — top composites inside the real spread, best
+top-cam read yet). Wrist bit-identical to v2 (0.548). Default stays
+v2 per the registered flip rule; flip put to the owner. Record-only:
+the real disk wanders 8–29 cm × ±19 cm between episodes. ~0.08
+GPU-h (gate 0.3).
+
+- [v3 primary](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_encoder_ood_probe_v3_content.json)
+  · [homogeneity 20×5](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_encoder_ood_probe_v3_homog.json)
+- [k-distance strips](https://mcobzarenco-fontaine-reports.static.hf.space/chart__sim_content_diversity_kdist.png)
+  · [REAL | v2 | v3 gallery](https://mcobzarenco-fontaine-reports.static.hf.space/chart__sim_content_diversity_top_gallery.png)
+
+## Sim wrist-cam periphery re-tune ([pre-reg](posts/2026-08-12-prereg-sim-wrist-periphery.md), [results](posts/2026-08-12-sim-wrist-periphery-results.md), 08-12)
+
+One runtime pose change in `_repose_wrist_cam`: camera moved from
+the wrist top behind the gripper to over the jaw base (≈10 cm
+forward, 55°→65° down) — under the 72° fisheye source the old pose
+filled the bottom ~40% of frame with gripper-body mass the real
+camera never sees. Registered bar (wrist 5-NN AUROC ≤ 0.786)
+**smashed on the first candidate**: 0.900 → **0.548**, k-ratio
+0.97× — sim wrist frames sit inside the real embedding spread.
+Guard green (top 0.773 bit-identical); 20×5 sensitivity 0.550.
+Per-episode wrist-plate axis retired. ~0.04 GPU-h (gate 0.2).
+
+- [primary 100-seed](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_wrist_periphery_fix.json)
+  · [sensitivity 20×5](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_wrist_periphery_sensitivity.json)
+- [REAL | old | new gallery](https://mcobzarenco-fontaine-reports.static.hf.space/chart__sim_wrist_periphery_before_after.png)
+
+## Sim visual matching v2 — real-frame inpainting ([pre-reg](posts/2026-08-12-prereg-sim-visual-inpainting.md), [results](posts/2026-08-12-sim-visual-inpainting-results.md), 08-12)
+
+Real clean plates (per-pixel median over the 26 reference-half
+episodes; A/B pixel-disjointness verified in video-frame indices)
+composited under segmentation-masked rendered dynamic content (arms,
+benchy, disk + on-table clutter whose real twins move between
+episodes). Registered bar (top-cam 5-NN AUROC ≤ 0.790) **MET**:
+0.890 (v0) → 0.876 (v1) → **0.773**; overfit tripwire clear. Wrist
+composite regressed (0.951 vs 0.900 — the plate is cross-episode
+mush) so the shipped `render_style="v2"` (new default) keeps the v1
+wrist path. Homogeneity unchanged (~4% vs 45% k std/mean) — content
+variation stays the diversity lever. ~0.06 GPU-h (gate 0.3).
+
+- [v2 primary](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_encoder_ood_probe_v2_inpaint.json)
+  · [homogeneity 20×5](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_encoder_ood_probe_v2_homog.json)
+  · [shipped config](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_encoder_ood_probe_v2_shipped.json)
+- REAL | v1 | v2 galleries:
+  [top](https://mcobzarenco-fontaine-reports.static.hf.space/chart__sim_visual_inpaint_top_before_after.png)
+  · [wrist](https://mcobzarenco-fontaine-reports.static.hf.space/chart__sim_visual_inpaint_wrist_before_after.png)
+
+## Sim visual matching v1 — appearance pass + probe re-reads ([pre-reg](posts/2026-08-12-prereg-sim-visual-matching.md), [results](posts/2026-08-12-sim-visual-matching-results.md), 08-12)
+
+Scene rebuild (real table texture, clutter layout, wrist-cam re-pose,
+fisheye remap, color grade, sensor emulation, per-reset appearance
+jitter) shipped as `render_style="v1"`; physics oracle-pinned
+bit-identical. Registered bar (top-cam 5-NN AUROC 0.890 → ≤0.790 on
+the reset-render probe) **missed**: best 0.874, final 0.876. Wrist
+responded to the camera re-pose (0.835 → 0.786 scene-only) then
+regressed under fisheye+grade (0.900). Sim stays ~10× too homogeneous
+at the encoder; lighting jitter moves per-seed distance only ~3%.
+Named next lever: real-frame inpainting (SIMPLER-RT style).
+
+- [v0-render baseline](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_visual_match_v0render.json)
+  · [scene](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_visual_match_v1scene.json)
+  · [fisheye](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_visual_match_v1fisheye.json)
+  · [grade](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_visual_match_v1grade.json)
+  · [sensor](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_visual_match_v1sensor.json)
+  · [sensitivity 20×5](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_visual_match_v1sensitivity.json)
+- before/after composites:
+  [top](https://mcobzarenco-fontaine-reports.static.hf.space/chart__sim_visual_match_top_before_after.png)
+  · [wrist](https://mcobzarenco-fontaine-reports.static.hf.space/chart__sim_visual_match_wrist_before_after.png)
+
+## Encoder OOD probe — sim-vs-real at the policy's eyes (rides the [sim100 pre-reg](posts/2026-08-11-prereg-sim-policy-eval-100seeds.md), owner ask 01:11Z 08-12)
+
+Sim frames (banked er60k-arm rollouts) vs real rig frames through the
+frozen er_60k vision trunk, per camera. Measured gap: top-cam 5-NN
+AUROC 0.885 / gap ratio 1.54× (wrist 0.828 / 1.33×); the clean-repo
+control lands inside the real spread (AUROC 0.26) so the shift is
+sim-specific. Sim is at the edge of the real manifold, not off it —
+the baseline the visual-matching lever must move.
+
+- [frozen analysis JSON](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_encoder_ood_probe.json)
+  (`sim_encoder_ood_probe.py`: pinned frame selection, centroid-cosine
+  primary + 5-NN secondary, AUROC/gap-ratio reads, per-frame distances)
+- [distance strip chart](https://mcobzarenco-fontaine-reports.static.hf.space/chart__sim_encoder_ood_probe.png)
+  — per camera × metric, three groups; sim's tight blob at the real
+  distribution's right tail is the whole story in one look
 
 ## Cross-family analyses
 

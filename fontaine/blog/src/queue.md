@@ -2,65 +2,95 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-11T09:57:00Z
+**Updated:** 2026-08-12T11:43:30Z
 
-**Depth call:** depth 1 open at 07:1xZ 08-11 (stated reason): er60k-endpoint-postprocess is the only open item and is time-gated on the box endpoint @60000 ~12:3xZ (chained panel_v2 rides in-unit; the postprocess session owns the paired ER decision reads). molmoact2-firstclass-port CLOSED this session (item 4 G4-PASS: our-trainer AE fine-tune, all four frozen clauses, ~1.9/6 GPU-h, port total ~2.6/8 — all owner-GO'd scope 1-4 done). Lit refill lane owner-paused (00:23Z 08-10); new pre-registrations deliberately pend the ER endpoint decision read, which sets the next arm (fjoint venue, vu5k window, or ER-trunk follow-ons).
+**Depth call:** depth 4 open at 11:4xZ 08-12: sim-parallel-rollouts (gpu-local, owner-sequenced first on release) + 2 lit items still open; grpo-on-sim-design-research CLOSED this session (memo posted), successor grpo-signal-probe is owner_hold pending memo review.
 
-**9 open** (Live 2 · Queued 1 · Blocked 6 · Done 106)
+**14 open** (Live 0 · Queued 3 · Blocked 11 · Done 127)
 
-## 🔴 Live (2)
+## 🔴 Live (0)
 
 *running right now (GPU or owner-window)*
 
-**`er-60k-live`** · `gpu-box`
+*(empty)*
 
-OWNER RUN LIVE (launched 22:47-53Z 08-09, unit fontaine-er-60k): fontaine_molmo2_er_60k_ddp4
-
-**boundary:** step 5000 (~02:0xZ 08-10): first async-save capture line + probe ladder vs 40k curve; K1 kill lines at save boundaries; endpoint ~08-11 ~12:00Z -&gt; chained panel_v2; babysit er_60k entry live (gate 155) · [pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md)
-
-<details><summary>full record</summary>
-
-OWNER RUN LIVE (launched 22:47-53Z 08-09, unit fontaine-er-60k): fontaine_molmo2_er_60k_ddp4 — 60k AR steps from allenai/Molmo2-ER (byte-verified drop-in), 40k recipe verbatim + rig datasets at natural share (owner pick 22:45Z), seed 0 (owner override), save 5000. FIRST POLL DONE 22:5x-23:0xZ: E1 banner exact, 2.23 s/step steady, vram 66.6 vs 77, util 68-99%. RATE-CLASS CORRECTION posted in-channel + gate re-pinned 65-&gt;155 GPU-h (the 65 came from attach_F's 0.92 s/step frozen-trunk rate, wrong class; true trunk class 2.2-2.6 = 60k-continuation actuals). Corrected endpoint ~08-11 ~12:00Z (~37 h wall, ~149 train + ~2 eval GPU-h). Primary read = ER-init delta: probe ladder vs the 40k curve at matched steps; endpoint chains panel_v2 k4l2 (--report + npz), paired CI95 vs banked 40k (6.0079) + 60k-continuation (5.8602).
-
-</details>
-
----
-
-**`er55k-panel-eval`** · `gpu-local`
-
-OWNER REQUEST 09:41:04Z 08-11 ('eval the 55000 step checkpoint that just landed on the box as before'): step_055000 -&gt; hub (42.9s, commit 99a1ae2, weights-only) + local dl (13.7s) + STANDARD both-arms panel eval LIVE local H100 u…
-
-**boundary:** eval rc ~11:5xZ 08-11; babysit entry er55k_panel carries the on-completion contract (gate 8 GPU-h, ~2.2 class) · [pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md)
-
-<details><summary>full record</summary>
-
-OWNER REQUEST 09:41:04Z 08-11 ('eval the 55000 step checkpoint that just landed on the box as before'): step_055000 -&gt; hub (42.9s, commit 99a1ae2, weights-only) + local dl (13.7s) + STANDARD both-arms panel eval LIVE local H100 unit eval-er55k-panel launched 09:48:27Z (er35k recipe verbatim, no --generate; first poll 98% util/30.5G). REMAINING (owning session, ride to rc ~11:5xZ with foreground polls, NEVER a Monitor): rc=0 -&gt; er15k_panel_reads.py --stem-cand reports/eval__fontaine_molmo2_er_60k_ddp4__step_055000__panel_curated_v0_k4l2 --out reports/analysis__er55k_panel_vs_banked_k4l2.json (fast-path key bijou@55000, CLASS-MATCHED vs banked 40k 6.0079 + 60k-cont 5.8602; 35k precedent 6.2892 / +0.2813) -&gt; report+json+analysis to fontaine-reports (curl 200) + reports.md + numbers in-channel -&gt; prune babysit entry er55k_panel. Record-only; nothing gates the box run. NOTE: the box endpoint @60000 ~12:4xZ lands right after — the same owning session likely takes er60k-endpoint-postprocess next.
-
-</details>
-
----
-
-## 🟢 Queued (1)
+## 🟢 Queued (3)
 
 *ready — waiting on a window or a boundary*
 
-**`er60k-endpoint-postprocess`** · `gpu-box`
+**`lit-sim-improvement-levers`** · `cpu`
 
-er_60k endpoint postprocess (pre-reg posts/2026-08-09-prereg-molmo2-er-60k.md): box hits @60000 ~12:3xZ 08-11 -&gt; chained panel_v2 k4l2 eval runs in-unit (--report + npz)
+Lit slice (owner-called 09:23Z 08-12): sim-improvement levers beyond shipped plates/clutter/sysid - contact shadows for composites, camera-parameter fitting (real lens model vs our equidistant), DR schedules with measured transfe…
 
-**boundary:** Time-sensitive: endpoint ~12:3xZ 08-11 at ~26-27 f/min from 45,040 @ 03:16Z; the chained eval adds ~1-2 GPU-h inside the 155 gate (113.7 projected at @45000). Next save boundary @50000 ~06:2xZ (tick-owned). · [pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md)
+**boundary:** Queued 09:3xZ 08-12.
 
 <details><summary>full record</summary>
 
-er_60k endpoint postprocess (pre-reg posts/2026-08-09-prereg-molmo2-er-60k.md): box hits @60000 ~12:3xZ 08-11 -&gt; chained panel_v2 k4l2 eval runs in-unit (--report + npz). Owning session: ride the chained eval to rc in-turn (foreground polls, NEVER a Monitor), then paired CI95 reads vs banked 40k endpoint (6.0079) + 60k-continuation (5.8602) panels — THE ER decision read (in-run evidence so far: 20 straight negative matched legs to @40000, er − 40k endpoint-matched −0.67, run-best 5.10@44500 vs 40k best-ever 5.91; all record-only, panel decides) -&gt; HTML report + JSON + analysis to fontaine-reports (curl-audit every link 200) + reports.md + chart-led in-channel post + owner ping. Also: rig-data effect read at endpoint if split-compatible (held-out rig episodes, natural share 0.19%). Then prune the babysit entry and decide checkpoint upload (banked/consumable -&gt; fontaine-checkpoints same-session per standing rule; weights-only unless seeding training).
+Lit slice (owner-called 09:23Z 08-12): sim-improvement levers beyond shipped plates/clutter/sysid - contact shadows for composites, camera-parameter fitting (real lens model vs our equidistant), DR schedules with measured transfer, SIMPLER-class visual-matching refinements. Feed the sim axis; papers pages same session.
 
 </details>
 
 ---
 
-## 🟡 Blocked (6)
+**`lit-so101-benchmark-envs`** · `cpu`
+
+Lit slice (owner-called 09:23Z 08-12, supersedes the lit pause for this thread): benchmark environments near the SO-100/SO-101 embodiment - lerobot-sim2real (ManiSkill3 SO-100), gym-lowcostrobot, LIBERO/SimplerEnv/RoboCasa for pr…
+
+**boundary:** Slice 0820 page LANDED 09:3xZ 08-12 (papers/so101-sim-ecosystem.md, update to the 08-11 census). Remaining deep reads keep this item open: lerobot-sim2real sysid/camera-alignment recipe vs ours; SimplerEnv real-vs-sim correlation methodology; the cube-grasp task-port idea (may graduate to its own instrument item).
+
+<details><summary>full record</summary>
+
+Lit slice (owner-called 09:23Z 08-12, supersedes the lit pause for this thread): benchmark environments near the SO-100/SO-101 embodiment - lerobot-sim2real (ManiSkill3 SO-100), gym-lowcostrobot, LIBERO/SimplerEnv/RoboCasa for protocol; what we could adopt or bridge so our sim numbers land next to published ones. Papers pages same session per the permanent rule; ideas.md hooks.
+
+</details>
+
+---
+
+**`sim-parallel-rollouts`** · `gpu-local`
+
+OWNER-SEQUENCED FIRST GPU ITEM (09:32Z 08-12: 'Once I relinquish the GPU, remember to do sim-parallel-rollouts before any other experiments')
+
+**boundary:** Queued 08:5xZ 08-12 (owner yes 08:44Z); RE-SEQUENCED 09:32Z: runs FIRST when the owner releases the GPU, before any other experiment (incl. the rerun). CPU design/scaffold work may start during the reserved window. | SCAFFOLD LANDED 10:1xZ 08-12 (commit 1e4e16f, check.py 710 green): sim/rollout_sim_parallel.py (spawn env-workers + batched parent policy, deterministic lockstep-rounds scheduler, stable-noise identity triple preserved per row), shared run_episode_loop refactor + streaming VideoWriter, 5 CPU-tier harness-equivalence oracles, and the GPU bit-match oracle instrument fontaine/scripts/sim_parallel_oracle.py. PRE-REG POSTED: posts/2026-08-12-prereg-sim-parallel-rollouts.md - frozen decision rule (GREEN at 2 AND 8 workers on er60k seeds 0-5 =&gt; parallel path may produce registered numbers at validated settings; FAIL =&gt; paired-only fallback with per-use amendment, no mixing with banked sequential rows) + record-only 20-seed throughput read, gate &lt;= 1 GPU-h total. REMAINING = the GPU leg only: run sim_parallel_oracle.py on release (FIRST item per owner 09:32Z), results post same session. · [pre-reg](posts/2026-08-12-prereg-sim-parallel-rollouts.md)
+
+<details><summary>full record</summary>
+
+OWNER-SEQUENCED FIRST GPU ITEM (09:32Z 08-12: 'Once I relinquish the GPU, remember to do sim-parallel-rollouts before any other experiments'). Parallel sim rollouts with a shared policy (owner-approved 08:44Z 08-12): N env workers (each owns its SO101Sim + EGL context, physics+render) feeding ONE batched policy server holding a single checkpoint copy - the lerobot-style policy-server split already in the repo for rig rollouts. At batch 1 the H100 idles during heun-10; batching N obs is near-free into the low tens. Box has 26 cores -&gt; ~8-12 render workers before CPU contention; target: a 100-seed arm in ~20-30 min (vs ~1.5 h), the 5-arm sim100 rerun within an afternoon. MUST ship with a determinism oracle: batched rollouts reproduce the sequential per-seed rows bit-for-bit (or within a stated decode tolerance, registered before use). Pre-reg the oracle + a 2-worker smoke before any registered eval uses the parallel path.
+
+</details>
+
+---
+
+## 🟡 Blocked (11)
 
 *waiting on a prerequisite, a boundary, or the owner*
+
+**`grpo-signal-probe`** · `gpu-local` · **⛔ owner hold**
+
+GRPO signal probe (proposed in posts/2026-08-12-grpo-sim-design-memo.md SS4, pends owner review - the memo's ask #1): rollout-only measurement of whether group-relative advantage has signal at our competence floor
+
+**boundary:** Queued 11:4xZ 08-12 at memo close. BLOCKED on owner review of the memo (ask posted in-channel 11:4xZ). Memo SS4 is the draft-level design (linked as prereg); on approval: finalized pre-reg with final thresholds + instrument delta FIRST, then sequenced strictly after sim_parallel_oracle.py (owner 09:32Z first-GPU-item rule) AND the v3 rerun (anchor rows come from it). · [pre-reg](posts/2026-08-12-grpo-sim-design-memo.md)
+
+<details><summary>full record</summary>
+
+GRPO signal probe (proposed in posts/2026-08-12-grpo-sim-design-memo.md SS4, pends owner review - the memo's ask #1): rollout-only measurement of whether group-relative advantage has signal at our competence floor. 4 cells x 15 seeds x K=8 stochastic rollouts, v3 frames, sim100 conventions: er60k AR T=1.0, er60k AR T=1.6 (SimpleVLA-RL setting), teacher80k flow fresh-ODE-noise draws, ftrig4k flow fresh-ODE-noise draws; optional cell 5 on owner ask = teacher80k SDE a=0.5 (needs the ~30-line Euler-Maruyama sampler + bit-identity-at-a=0 oracle). Deterministic per-seed anchors join FREE from the v3 rerun rows (same seeds, same spawn stream - ordering logically forced). Instrument delta: --ar-temperature + --flow-draws K flags on rollout_sim over existing BijouPolicy knobs, per-draw RNG keyed (seed, replan, draw), draw-0 bit-identity oracle. Primary read: within-group std of progress_final_cm (+ best-point) per cell + fraction of groups surviving the dynamic-sampling filter; candidate bar (finalize at pre-reg) median group std &gt;= 0.25 cm. Secondary: competence cost vs anchor, guard-trip rates (strikes/upright/knock-offs), AR token entropy. Decision rule: no cell clears -&gt; GRPO-on-sim parks; AR clears -&gt; phase 2 = token-GRPO per SimpleVLA-RL recipe; flow-only clears -&gt; phase 2 = Flow-GRPO SDE expert-only; both -&gt; AR first. Gate &lt;=3 GPU-h parallel-path, &lt;=8 sequential.
+
+</details>
+
+---
+
+**`sim100-v1-rerun`** · `gpu-local` · **⛔ owner hold**
+
+100-seed eval v1 rung (successor, pends sim-visual-matching landing): re-run the sim100 protocol (same 100 seeds, same metric/gates, posts/2026-08-11-prereg-sim-policy-eval-100seeds.md conventions) on the v1 matched visuals for e…
+
+**boundary:** Queued 03:4xZ 08-12 at the OOD-probe close. Executable only after sim-visual-matching lands its so101_sim.py visual deltas; the probe re-read (~0.02 GPU-h) is the cheap go/no-go gate before the ~2-4 GPU-h eval. | GATE READ 05:0xZ 08-12: probe re-read MISSED the bar (top 5-NN 0.876 vs &lt;=0.790 target) =&gt; by the registered gate the 2-4 GPU-h rerun does NOT auto-launch. OWNER DECISION OFFERED in the results post: the probe measures encoder separability, not policy behavior - the fisheye+wrist-repose geometry fixes change where things appear in the image, and er60k's reach-over-the-table fingerprint is exactly a pinhole-vs-fisheye spatial-mismatch signature; a 20-seed er60k spot-check (~0.5 GPU-h) would answer it cheaply. HOLDING for owner call: spot-check / full rerun / park behind inpainting. | GATE RE-READ 05:4xZ 08-12: v2 inpainting MET the registered line (top 5-NN 0.773 &lt;= 0.790) =&gt; by the item's own registered criterion the rerun is now GO **with v2 frames** (render_style=v2 default; wrist rides the v1 path inside v2). Still owner_hold: the 20-seed behavioral spot-check ask (05:01Z) is unanswered and remains the cheaper first step; on unhold, the short pre-reg amendment renames arms to v2 visuals and re-baselines. | GATE RE-READ 06:2xZ 08-12: sim-wrist-periphery-fix closed - wrist 5-NN 0.900 -&gt; 0.548 (inside the real spread), top stays 0.773. BOTH cameras now read at-or-under their registered lines; the rerun gate is GO with v2 frames + re-tuned wrist pose. Still owner_hold: spot-check ask (05:01Z) unanswered. UPDATE 07:3xZ 08-12: owner approved the v2-&gt;v3 default flip (07:29Z); gate facts with v3 frames: top 0.673 + wrist 0.548, both under their registered lines. Still owner_hold on the rerun-vs-spot-check call itself. UPDATE 09:1xZ 08-12: spot20 DONE (owner-called) - teacher80k +0.97 cm paired CI-excludes-zero under v3 (direction flipped toward the disk), er60k/snap30k null; behavioral response to visuals CONFIRMED for the engaging arm. Rerun still owner_hold but now both gate legs (visual + behavioral) argue GO; ~6-9 h wall at GPU-compositor pace, ~20-30 min/arm if sim-parallel-rollouts lands first. | AMENDMENT DRAFTED 10:2xZ 08-12: posts/2026-08-12-prereg-amendment-sim100-v3-rerun.md (DRAFT) - launch-ready on unhold after the finalization checklist (arm-set owner call, HEAD/asset re-pin, param sheet + objection window). · [pre-reg](posts/2026-08-11-prereg-sim-policy-eval-100seeds.md)
+
+<details><summary>full record</summary>
+
+100-seed eval v1 rung (successor, pends sim-visual-matching landing): re-run the sim100 protocol (same 100 seeds, same metric/gates, posts/2026-08-11-prereg-sim-policy-eval-100seeds.md conventions) on the v1 matched visuals for er60k + ftrig4k (the only toward-tilted arm) + hold; gate = encoder OOD probe re-read FIRST (did top 5-NN AUROC move from 0.885 toward 0.5? if not, matching did not land — do not spend the eval GPU-h); owner goal &gt;=1 success on the 100 seeds; short pre-reg amendment (v1 visuals = new arm names, re-baseline) before launch.
+
+</details>
+
+---
 
 **`idea4-fjoint-rung-finalize-exec`** · `gpu-box` · **⛔ owner hold**
 
@@ -144,9 +174,191 @@ Run tidy_home.py --apply on the box ~ (133 entries, all movable ones owner-era m
 
 ---
 
-## ✅ Done (106)
+**`ae-on-our-trunk-prereg-draft`** · `cpu`
+
+AE-on-our-trunk pre-reg draft (CPU): the owner's action-expert implementation (every-layer KV off our AR trunk, exchange 11:56Z 08-11) evaluated/trained against er_60k/step_060000 (the new reference trunk)
+
+**boundary:** UNBLOCKED 17:2xZ 08-11: the rebase landed (main @36afff0 merged, check.py 688 green) — draft against ActionExpertConfig frozen/staticmethod-factory shapes at HEAD. Executable CPU next. DEPRIORITIZED 17:4xZ 08-11 behind the sim lane (owner 17:07Z: next-day focus is simulations). | SUPERSEDED-PENDING-CONFIRM 18:1xZ 08-11: owner design record §8.13 (main @128a863) IS the full AE-on-our-trunk design — its step 7 registers 'molmo_flow-from-scratch on our AR trunk + bijou prompt vs §2.1 at matched compute' with separate pre-regs post-migration. This draft item is absorbed by the molmo-flow migration lane unless the owner says the §2.1-style few-stream AE still wants its own pre-reg. | 18:15Z owner call reinforces: molmo_flow lane is owner-side; this stays absorbed/parked.
+
+<details><summary>full record</summary>
+
+AE-on-our-trunk pre-reg draft (CPU): the owner's action-expert implementation (every-layer KV off our AR trunk, exchange 11:56Z 08-11) evaluated/trained against er_60k/step_060000 (the new reference trunk). UNBLOCKED (rebase closed 08-11 17:2xZ) — main @36afff0 landed ActionExpertConfig frozen/staticmethod-factory shape the draft must target; do not draft config surfaces against the pre-rebase tree.
+
+</details>
+
+---
+
+**`molmo-flow-step1-cli-rule`** · `cpu` · **⛔ owner hold**
+
+molmo_flow migration STEP 1 — CLI inferred-args rule (CPU, per owner design record docs/architecture.md §8.13, main @128a863, approved 08-11): --resume refuses every architecture-determining flag (run-policy flags stay legal); --…
+
+**boundary:** OWNER CALL 18:15Z 08-11 ('your focus is 100% simulations, I have a local agent working on the molmo_flow migration plan'): the migration lane is OWNER-SIDE — do not execute; this item + steps 2-8 parked until the owner hands the lane back or asks for review. Priority question resolved: sim lane 100%.
+
+<details><summary>full record</summary>
+
+molmo_flow migration STEP 1 — CLI inferred-args rule (CPU, per owner design record docs/architecture.md §8.13, main @128a863, approved 08-11): --resume refuses every architecture-determining flag (run-policy flags stay legal); --init-from refuses flags for inherited sections and REQUIRES them for explicitly replaced sections (stage-2 decoder-swap path); sentinel None defaults + one reviewable arch-vs-policy partition table; upgrades 'validate equality if passed' to 'refuse at the door'; prompt-format-change guard falls out as a special case. Gate: resume-with-arch-flag and inherited-section init-from flags error naming the checkpoint value; decoder-replacement init-from still works; flag-free resume of a mainline checkpoint parses unchanged; check.py green.
+
+</details>
+
+---
+
+**`rig-mixture-screen-exec`** · `gpu-box` · **⛔ owner hold**
+
+Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft posts/2026-08-11-prereg-er60k-rig-mixture.md posted + in-channel 08-11): finalize the pre-reg (freeze probe bars, panel band, param sheet in-channel, obje…
+
+**boundary:** BLOCKED on the owner compute decision (ask posted in-channel 08-11 ~17:0xZ); unblock by flipping owner_hold when the owner picks A/B or provisions compute. UPDATE 17:4xZ 08-11: option-B preflight FITS (69.2 GiB peak, ~12.0 s/step =&gt; ~33.5 h for 10k steps single-H100; --dataset-repeat live-fired, 4.49% combined share vs ~4.97% pre-reg estimate — reconcile before exec) BUT the owner sim pivot (17:07Z) dedicates the local GPU to inference =&gt; treated as C-defer unless the owner calls A (new box); results posted in-channel 17:35Z. · [pre-reg](posts/2026-08-11-prereg-er60k-rig-mixture.md)
+
+<details><summary>full record</summary>
+
+Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft posts/2026-08-11-prereg-er60k-rig-mixture.md posted + in-channel 08-11): finalize the pre-reg (freeze probe bars, panel band, param sheet in-channel, objection window) then run the registered arm: --init-from er_60k/step_060000 (dl from fontaine-checkpoints), --dataset-repeat mcobzarenco/so101_pick_place_clean=27 mcobzarenco/so101_pick_place_v2=27 (~4.97% effective share), 10k steps eff-48, seed 3, warmup 500, save-every 2500, er-60k recipe verbatim otherwise. Reads: primary rig-holdout paired CI95 (1+5 held-out episodes, ~3.7k frames) mixture-endpoint vs er_60k/step_060000 + state-copy anchor; guard k4l2 panel_v2 paired vs banked endpoint npz (fail = worse than +0.05 CI-excl-0); aux/probe record-only. Compute options priced in the draft: (A) new 4x box ~28 GPU-h gate 32; (B) local 1xH100 ONLY after an act-ckpt fit-preflight ladder (full recipe measured structurally OOM single-GPU 08-08); (C) defer. 20%-share variant (x129, ~2.7 rig epochs) named as an owner option.
+
+</details>
+
+---
+
+## ✅ Done (127)
 
 *closed — the full record stays in each fold*
+
+**`grpo-on-sim-design-research`** · `cpu`
+
+Design research (owner-called 09:23Z 08-12, research-only, no training): GRPO on the sim for our two heads
+
+**boundary:** CLOSED 11:4xZ 08-12 work session, deliverable landed: design memo posts/2026-08-12-grpo-sim-design-memo.md (for owner review, nothing registered/launched) + papers/grpo-for-vla-heads.md upgraded to deep-read depth (correction recorded: piRL's main algorithm is PPO+GAE+critic, GRPO is its losing appendix baseline 90.0-vs-96.0 LIBERO; no KL anchor anywhere in piRL). Memo's named first cheap experiment = GRPO SIGNAL PROBE (rollout-only, no training, no RL code): 4 cells x 15 seeds x K=8 stochastic rollouts on v3 frames (er60k AR T=1.0 / T=1.6; teacher80k + ftrig4k flow fresh-noise draws), deterministic anchors joined from the v3 rerun rows, primary read = within-group std of progress_final_cm + dynamic-sampling survival rate; secondary = competence cost vs anchor + guard-trip rates (hacking price) + AR token entropy; gate &lt;=3 GPU-h parallel-path (&lt;=8 sequential). Decision rule in the memo: no signal -&gt; GRPO parks; AR signal -&gt; SimpleVLA-RL mapping phase 2; flow-only signal -&gt; Flow-GRPO SDE expert-only. Successor item grpo-signal-probe carries the owner hold.
+
+<details><summary>full record</summary>
+
+Design research (owner-called 09:23Z 08-12, research-only, no training): GRPO on the sim for our two heads. AR objective: token-level GRPO is standard - map group sampling onto rollout returns (progress_final as reward; k rollouts per seed = the group). Flow-matching head: the logprob problem - survey Flow-GRPO (ODE-&gt;SDE stochasticization), ReinFlow, DPPO (diffusion policy PO); what gives usable per-action logprobs for our heun-10 decode. Deliverable: a design memo post naming the first cheap experiment (arms, reward, group size, GPU gate) for owner review; papers pages for what it reads.
+
+</details>
+
+---
+
+**`sim-disk-position-prereg-draft`** · `cpu`
+
+Disk-position draws pre-reg draft (the (c) leg the content-diversity item scoped out as task semantics): draw the disk's world xy per SPAWN seed (not appearance - success geometry moves with it) from the measured real between-epi…
+
+**boundary:** Queued 07:2xZ 08-12 at the content-diversity close. Executable now (pure drafting); pends nothing. Sequencing: after sim100-v2-rerun-amendment-draft if the owner unholds the rerun first. | DONE 11:0xZ 08-12: DRAFT pre-reg posted (posts/2026-08-12-prereg-disk-position-draws.md) - six registered decisions: ABSOLUTE draws from the measured box (frame alignment trusted on the mouse precedent; the pinned (0.22,0.11) sits OUTSIDE the measured y range - new finding), success/metrics follow via disk_center update, spawn goes DISK-RELATIVE (current box re-expressed as deltas, ~9.5 cm task preserved), joint validity clamp by rejection (constants finalized by a 1000-seed policy-free sweep, truncation fraction reported), banked rows declared NON-comparable (protocol v2 'sim100-D', within-run pairing survives fully), spawn-stream discipline keeps it style-orthogonal with a disk_draws=False bit-identity guard. Grounding-probe diagnostic registered (tracker vs memorizer slope). Sequenced AFTER the v3 rerun to avoid confounding. Implementation (6 oracles + sweep) = follow-up CPU item on owner sign-off. · [pre-reg](posts/2026-08-12-prereg-disk-position-draws.md)
+
+<details><summary>full record</summary>
+
+Disk-position draws pre-reg draft (the (c) leg the content-diversity item scoped out as task semantics): draw the disk's world xy per SPAWN seed (not appearance - success geometry moves with it) from the measured real between-episode spread, now banked in assets/real_plates/bank/bank_manifest.json (disk_record_only: present 21/26 A episodes, x 0.083-0.288, y -0.193-0.097; the sim pins it at (0.22, 0.11)). Draft must handle: success() geometry follows the drawn disk; spawn-region overlap (benchy spawns relative to a disk that now moves); paired-arm comparability (same seed -&gt; same disk across arms); and whether banked sim100 spawns stay bit-comparable (they do not if spawn ranges become disk-relative - the draft must choose and say so). CPU only; the eval-protocol change itself holds for owner sign-off with the rerun call.
+
+</details>
+
+---
+
+**`sim100-v2-rerun-amendment-draft`** · `cpu`
+
+sim100 v2-rerun pre-reg AMENDMENT draft (CPU only, no launch): the rerun item's own protocol requires a short amendment before launch (new arm names for v2 visuals, re-baseline) - draft it now so the eval is launch-ready the mome…
+
+**boundary:** Queued 06:2xZ 08-12 at the wrist-periphery close. Executable now (pure CPU writing); pends nothing. Its EXECUTION twin (the eval itself) remains sim100-v1-rerun, owner_hold. | DONE 10:2xZ 08-12: DRAFT amendment posted (posts/2026-08-12-prereg-amendment-sim100-v3-rerun.md) - inherits sim100 protocol, changes frames (v3 re-baseline table incl. GPU-path probe numbers), arm set (teacher80k ADDED post-spot20 as the confirmatory read, snap30k dropped double-null, rungs stay dead - all flagged as owner decision points), primary read (paired v3-v0 per-seed at n=100, the spot20 instrument), registered priors per arm, disk stays pinned for pairing, execution contingent on the sim-parallel-oracle outcome (Path A ~2-3 GPU-h / Path B &lt;=10 GPU-h gate). Finalization checklist runs at owner unhold; the eval twin sim100-v1-rerun remains owner_hold. · [pre-reg](posts/2026-08-12-prereg-amendment-sim100-v3-rerun.md)
+
+<details><summary>full record</summary>
+
+sim100 v2-rerun pre-reg AMENDMENT draft (CPU only, no launch): the rerun item's own protocol requires a short amendment before launch (new arm names for v2 visuals, re-baseline) - draft it now so the eval is launch-ready the moment the owner unholds. Content: arms er60k + ftrig4k + hold re-rendered under render_style=v3 (owner-approved default flip 07:29Z 08-12: plate-bank top + clutter draws, re-tuned wrist pose), same 100 seeds / metric / gates as posts/2026-08-11-prereg-sim-policy-eval-100seeds.md; visual re-baseline table = probe reads (top 0.890-&gt;0.673, wrist 0.835-&gt;0.548); expected-behavior priors stated in advance (the fisheye+pose geometry deltas are exactly the spatial-mismatch signature named at the v1 close - register what a behavior change would look like vs the 0/500 baseline). Post as DRAFT pending owner call; the 20-seed er60k spot-check option stays first-listed.
+
+</details>
+
+---
+
+**`sim-content-diversity`** · `cpu`
+
+Sim content diversity v3 (the axis every read since the OOD probe names: sim is ~4% k std/mean vs real 45%, and neither lighting jitter (v1) nor a fixed real background (v2) moved it): per-reset CONTENT variation for the composit…
+
+**boundary:** CLOSED 07:2xZ 08-12: registered bar MISSED on the spread leg (top k std/mean 0.038 -&gt; 0.114 vs &gt;= 0.15) while the AUROC leg over-met (0.773 -&gt; 0.673, k-ratio 1.02x - top composites inside the real spread, best top read yet). Wrist guard bit-identical GREEN (0.548). render_style='v3' shipped, default STAYS v2 per the registered flip rule; flip is an owner ask (thumbs-up on the results post). Results: posts/2026-08-12-sim-content-diversity-results.md · [pre-reg](posts/2026-08-12-prereg-sim-content-diversity.md)
+
+<details><summary>full record</summary>
+
+Sim content diversity v3 (the axis every read since the OOD probe names: sim is ~4% k std/mean vs real 45%, and neither lighting jitter (v1) nor a fixed real background (v2) moved it): per-reset CONTENT variation for the composite - (a) per-episode plate banks from the A half (needs a mining pass that masks the boat's real positions so no ghosts bake in; per-episode plates carry real lighting/clutter states), (b) clutter-state draws (mouse/laptop/pcb poses drawn per appearance seed from the real between-episode spread), (c) disk position drawn from the real distribution - NOTE (c) changes task semantics (success geometry), needs its own pre-reg beyond appearance-only. Read: same reset-render probe + the homogeneity 20x5; bar to be registered (candidate: sim k std/mean toward &gt;=15% without top 5-NN AUROC regressing past 0.790).
+
+</details>
+
+---
+
+**`sim-wrist-periphery-fix`** · `cpu`
+
+Wrist-cam periphery re-tune under the v1 fisheye (small, CPU + ~0.04 GPU-h probe reads): the scene pass moved wrist 5-NN AUROC 0.835-&gt;0.786 (best read of the whole v1 study - content/pose is what the wrist tracks) but the fisheye…
+
+**boundary:** Queued 05:0xZ 08-12 at the v1 close (rides the v1 pre-reg's instrument + axes; wrist was explicitly secondary there). Executable now; independent of the inpainting item. | NOTE 05:4xZ 08-12: the v2 wrist composite read WORSE (0.951) than the v1 wrist path (0.900) - episode-start wrist poses differ by degrees across episodes so the clean plate is mush (coverage 0.36); shipped v2 keeps the v1 wrist path. This item's bar unchanged (&lt;=0.786 scene-only level); a per-episode-aligned wrist plate is a possible extra axis once the pose/periphery is right. | CLOSED 06:2xZ 08-12 (work session): registered bar SMASHED on the first candidate - wrist 5-NN AUROC 0.900 -&gt; 0.548 vs &lt;=0.786 (k-ratio 0.97x: sim wrist now sits INSIDE the real spread; 20x5 sensitivity 0.550, stable). Camera moved from the wrist top behind the gripper (world ~(0.096,-0.004,0.160), 55deg) to over the jaw base (~(0.150,0,0.150), 65deg, same image-right=-y roll): the gripper-body mass that filled the bottom ~40% of frame drops out, leaving jaw tips in the bottom quarter over full-frame table like every real start frame. Guard green: top 0.773 bit-identical (render path untouched). Oracles 10 green (qpos bit-identity across styles + spawn stream vs banked v0), check.py 704 green. Shipped as the _repose_wrist_cam default (all render styles). The per-episode-aligned wrist plate axis named at the v2 close is RETIRED - a composite cannot beat inside-the-real-spread. · [pre-reg](posts/2026-08-12-prereg-sim-wrist-periphery.md)
+
+<details><summary>full record</summary>
+
+Wrist-cam periphery re-tune under the v1 fisheye (small, CPU + ~0.04 GPU-h probe reads): the scene pass moved wrist 5-NN AUROC 0.835-&gt;0.786 (best read of the whole v1 study - content/pose is what the wrist tracks) but the fisheye+grade passes regressed it to 0.900 because the 72deg source pulls sim-specific periphery (arm body mass, table far edge, floor band) into frame. Iterate ONLY the wrist: camera pose/height under the wider source, what the periphery shows (table extent, background band), gripper-mass framing vs the real bottom-quarter jaws - reset-render probe per iteration, wrist 5-NN &lt;=0.786 (scene-only level) as the bar, top read must not regress. Fold any deltas into _repose_wrist_cam / the scene XML.
+
+</details>
+
+---
+
+**`sim-visual-inpainting`** · `cpu`
+
+Sim visual matching v2 - real-frame INPAINTING (the named lever after v1's registered miss, SIMPLER-RT recipe): bake actual rig pixels as the static scene instead of approximating materials/optics - per camera, composite the real…
+
+**boundary:** Queued 05:0xZ 08-12 at the v1 close. Executable now (CPU + ~0.02 GPU-h probe reads); pends nothing. If the owner instead calls the behavioral spot-check on sim100-v1-rerun, run that first - it may show the geometry fixes already changed behavior, re-scoping what inpainting must buy. | CLOSED 05:4xZ 08-12 (work session): registered bar MET - top 5-NN AUROC 0.890 (v0) -&gt; 0.876 (v1) -&gt; 0.773 (v2) vs &lt;=0.790; overfit tripwire clear (&gt;&gt;0.5). A-half clean plates (26 eps, video-frame disjointness from held-out B verified: last plate frame 17066 &lt; first B frame 17100) + segmentation composite; wrist composite regressed (0.951 vs 0.900 - cross-episode mush plate) so shipped render_style=v2 (NEW DEFAULT) keeps the v1 wrist path (pure-composite read reproducible at f75c341). Homogeneity unchanged (~4% vs 45%) - content variation named the diversity lever (successor item queued). Results post 2026-08-12-sim-visual-inpainting-results.md; 3 probe jsons + 2 galleries on fontaine-reports (curl 200). ~0.06 GPU-h (gate 0.3). · [pre-reg](posts/2026-08-12-prereg-sim-visual-inpainting.md)
+
+<details><summary>full record</summary>
+
+Sim visual matching v2 - real-frame INPAINTING (the named lever after v1's registered miss, SIMPLER-RT recipe): bake actual rig pixels as the static scene instead of approximating materials/optics - per camera, composite the real background (median/clean-plate of real frames, table + clutter + room) with rendered dynamic content (arms, benchy, disk) via render masks; the v1 fisheye/pose matching makes the geometric alignment feasible. Read: same reset-render probe (top 5-NN AUROC 0.890 baseline unmoved by v1; target the registered 0.79 line first, then 0.5); per-iteration cost ~0.02 GPU-h. Pre-reg (short, reuses the v1 instrument + bar semantics) before any GPU minute. Also carries v1's diversity finding: sim is ~10x too homogeneous at the encoder and lighting jitter does not fix it - content variation (hand/cable clutter states, real-plate rotation) is the axis.
+
+</details>
+
+---
+
+**`sim-visual-matching`** · `cpu`
+
+Sim visual matching (CPU + render minutes, SIMPLER's second lever after controller sysid): close the sim-vs-rig APPEARANCE gap for the two policy cameras - compare sim renders vs real rig frames (so-frame REAL|SIM|OVERLAY per the…
+
+**boundary:** Queued 20:3xZ 08-11 at sim-servo-sysid close. Explicitly OPTIONAL before the 100-seed eval (visual gap affects policy inputs, not physics); if the eval's free validation arm shows sim ordering matching the banked panel trajectory, this may stay a v1 rung. | UPDATE 03:4xZ 08-12: now THE named lever after sim100 close (0/500; direction tracks visual familiarity — see sim-policy-eval-100seeds close). Promised in-channel 01:30Z: one pre-reg combining the encoder-OOD-probe baseline + visual matching v1 (real top-cam background/table baked as scene textures, boat+disk color match, camera pose match; then a 20-seed texture-sensitivity read). Owner goal: &gt;=1 success on the 100 seeds. | BASELINE MEASURED 03:4xZ 08-12 (encoder OOD probe closed): the pre-reg's success read is pinned — move top-cam 5-NN AUROC 0.885 toward 0.5 (wrist 0.828), k(sim) 1.87e-5 toward the real 1.22e-5; probe rerun is cheap (~0.02 GPU-h, same pinned frames/scripts) so it is the per-iteration read for matching work. Probe also says: prioritize top-cam scene matching (pose/background/table) AND render diversity (sim distances 7x too homogeneous — lighting jitter belongs in the recipe). | CLOSED 05:0xZ 08-12 work session: pre-reg posted+in-channel first, then all named axes landed as render_style='v1' (default): real-frame table texture rebuild (plank direction/scale/contrast matched), real clutter layout, wrist-cam re-pose (menagerie cam had the moving jaw MIRRORED + stared into the gripper body), 72deg-source center-matched equidistant fisheye (real plank bowing reproduced), fixed AWB color grade, sensor blur/noise (labeled amendment), per-reset appearance jitter from a dedicated RNG stream; physics oracle-pinned (tests/test_sim_appearance.py 5 green: qpos bit-identical across appearance seeds/render styles, spawn stream bit-matches banked sim100 v0). REGISTERED BAR MISSED: top 5-NN AUROC 0.890 (v0-render baseline, tripwire vs banked tick-0 0.887 passed) -&gt; best 0.874 / final 0.876 vs bar &lt;=0.790; wrist responded to content (0.835-&gt;0.786 scene-only) then regressed under fisheye+grade (0.900); sensitivity 20x5: appearance draws move per-seed k ~3%, sim stays ~10x too homogeneous. THE FINDING: scene layout, lens geometry and color statistics are NOT the encoder's discriminator - named next lever real-frame inpainting (SIMPLER-RT). 6 probe jsons + 2 before/after composites on fontaine-reports (curl 200), results post + reports.md section. ~0.12/0.5 GPU-h gate. · [pre-reg](posts/2026-08-12-prereg-sim-visual-matching.md)
+
+<details><summary>full record</summary>
+
+Sim visual matching (CPU + render minutes, SIMPLER's second lever after controller sysid): close the sim-vs-rig APPEARANCE gap for the two policy cameras - compare sim renders vs real rig frames (so-frame REAL|SIM|OVERLAY per the LIBERO/SIMPLER convention, sim/probe_visual_match.py is the seed), tune camera pose/FOV, table+background texture, benchy albedo, lighting direction; deliverable = before/after side-by-side page + any so101_sim.py visual deltas. Second-order for eval fidelity per SIMPLER's ablation (gains first, DONE) - the 100-seed pre-reg MAY pin current visuals as v0 and run before this lands; visual matching then becomes a v1-physics/visuals rung with its own re-baseline.
+
+</details>
+
+---
+
+**`sim-encoder-ood-probe`** · `gpu-local`
+
+Encoder OOD probe (OWNER ASK 01:11Z 08-12 'figuring out if that's really the issue', answered 01:30Z with this design): quantify the sim-vs-real visual gap at the policy's own eyes
+
+**boundary:** CLOSED 03:4xZ 08-12 work session, end-to-end in-session (~0.02 GPU-h foreground): launch note (pinned frames + distance def) in-channel pre-GPU; script fontaine/scripts/sim_encoder_ood_probe.py (er_60k eval-mount vision trunk, max_crops=1, fp32 mean-pooled L2-normalized tokens; 300 sim er60k-arm frames ticks {0,300,600} + 300 real v2 strided A/B-split + 100 clean anchor, per camera). MEASURED GAP, top-cam-heavier: centroid AUROC (registered primary) top 0.802 / wrist 0.707; 5-NN secondary (labeled post-hoc; raw cosines ride a dominant constant direction, all distances ~1e-5 residuals) top 0.885 ratio 1.54x / wrist 0.828 ratio 1.33x; clean control INSIDE the real spread (AUROC 0.26/0.28) = shift is sim-specific. Sim at the EDGE of the real manifold, not off it; sim distances ~7x tighter std than real (renders too homogeneous — lighting/blur/hands diversity is part of the gap); per-tick flat = scene not poses. Deviation logged: real stride 114 not 108 (containers 34,332 frames vs meta 32,679). AUROC oracle tests/test_sim_encoder_ood_probe.py (5 green). Artifacts: analysis json + strip chart on fontaine-reports (curl 200 x2), reports.md section, numbers + chart in-channel 03:4xZ. BASELINE FOR THE LEVER: top 5-NN AUROC 0.885 -&gt; ~0.5, k(sim) 1.87e-5 -&gt; 1.22e-5 (real level). · [pre-reg](posts/2026-08-11-prereg-sim-policy-eval-100seeds.md)
+
+<details><summary>full record</summary>
+
+Encoder OOD probe (OWNER ASK 01:11Z 08-12 'figuring out if that's really the issue', answered 01:30Z with this design): quantify the sim-vs-real visual gap at the policy's own eyes. Push N sim frames (from the banked sim100 rollout videos/scenes, both cameras) + N real rig frames (so101_pick_place_v2 episodes) through the frozen er_60k vision trunk; read = sim-vs-real feature distance vs the real-vs-real spread (per camera, top vs wrist separately — camera pose mismatch shows up as a top-cam-specific gap). GPU-light (~0.1 GPU-h, few hundred frames, inference only). Deliverable: analysis json + small chart + numbers in-channel; feeds the sim-visual-matching pre-reg with a measured baseline the matching work must move. PREREG NOTE: rides the sim100 pre-reg (consumes its banked artifacts, answers its follow-up question) like the er15k/35k/55k owner-requested reads rode the er-60k pre-reg; the in-channel launch note is the frozen spec, per charter.
+
+</details>
+
+---
+
+**`sim-servo-sysid`** · `cpu`
+
+Servo/controller sysid (CPU + minutes of local GPU-free sim): resolve the 56x kp discrepancy (our menagerie robotstudio_so101 kp=998.22 kv=2.731 forcerange ±2.94 vs TheRobotStudio upstream kp=17.8 kv=0 ±3.35 for the same STS3215)…
+
+**boundary:** CLOSED 20:3xZ 08-11 work session (post posts/2026-08-11-sim-servo-sysid.md): 56x kp question ANSWERED by open-loop replay sysid (sim/sysid_servo.py, SIMPLER recipe) - held-out-episode arm replay MAE menagerie 3.31 deg / upstream 2.80 / FITTED 1.76 (-47%), beats the 2.19-deg teleport-servo scale so the lag dynamics are genuinely modeled; vendored kp 998 + forcerange 2.94 saturates at 0.17 deg = bang-bang servo, measured sagging ~19 deg below a commanded plateau the real arm holds; upstream directionally right, neither exact. Fitted set PINNED as so101_sim.SERVO_SYSID (kp 108.18 kv 13.377 fr 3.478 damping 0.722 friction 0.0183 armature 0.2045 - the large armature reads as reflected gear-train inertia), applied at load to both arms, vendored XML untouched; sysid_servo.json banked. ALL sim-fixes gates re-verified under new params: 0/100 strikes, settled state bit-identical across seeds, drift 0.001mm/10s, pinch-lift HELD spin 0.1 deg (improved from 0.4), determinism green, 28.0 ms/tick. Known residual: elbow_flex 3.89 deg (unmodeled boat payload); per-joint gains the named next rung if elbow ever gates. Fit deps-free coordinate descent, ~240 evals/start.
+
+<details><summary>full record</summary>
+
+Servo/controller sysid (CPU + minutes of local GPU-free sim): resolve the 56x kp discrepancy (our menagerie robotstudio_so101 kp=998.22 kv=2.731 forcerange ±2.94 vs TheRobotStudio upstream kp=17.8 kv=0 ±3.35 for the same STS3215) by SIMPLER's recipe — open-loop replay of real rig episodes (we hold 229h; use held-out rig episodes' recorded qpos streams) through the sim, fit kp/kv/damping (BAM's identified STS3215 model github.com/Rhoban/bam as informed prior; their friction params converge via CMA-ES in ~5min) minimizing joint-trajectory MAE. SIMPLER ablation says this is the FIRST-order eval-fidelity lever (control loss 0.131-&gt;0.432 moved MMRV 0.031-&gt;0.100). Deliverable: fitted params + before/after replay MAE + a one-page note; feeds the 100-seed pre-reg's physics pin.
+
+</details>
+
+---
+
+**`sim-fixes-reset-contact`** · `cpu`
+
+Sim fixes, batch 1 (CPU, from sim-review findings 1-4 + the contact-fidelity fix list papers/sim-contact-fidelity.md): (1) home pose reachable (fix camera_box2 mount collision vs shoulder) + spawn-after-settle so reset never stri…
+
+**boundary:** CLOSED 19:1xZ 08-11 work session (all 3 legs + gates green, results post posts/2026-08-11-sim-fixes-batch1.md): (1) START STATE - three layers, not one: camera_box2&lt;-&gt;shoulder exclude (0.46mm wedge) + wrist&lt;-&gt;shoulder exclude (0.87mm, same class) + shoulder_lift/elbow_flex ranges widened at load (menagerie +-100/+-96.8 could not REPRESENT the rig median start -102.7/97.0); wrist_roll bimodality gone, settled state seed-independent &lt;0.003 deg across seeds; elbow 6.6 deg residual = jaw tip physically resting on table (reachable projection per the review; NOT excluded - real physics); reset() reworked spawn-after-settle w/ public reset_strike_contacts counter, probe reads API not a hand-replica; second strike channel found+fixed (jaw tips at x=0.155 sat INSIDE the old spawn region - near bound 0.17-&gt;0.195, design target preserved: mean initial distance 9.5cm range 7.1-12.1 over seeds 0-99); 0/100 strikes, max displacement 0.7mm. (2) JAW SEAM - priority=2 on generated benchy geoms (NOT the queued &lt;contact&gt;&lt;pair&gt;: menagerie's actual jaw contact meshes are UNNAMED so pairs would miss them; priority is the same documented wholesale-friction override); elliptic+impratio10+Newton verified already present; in-grip spin 6.9-&gt;0.4 deg, tilt 0.84-&gt;0.91, pen 2.2mm, firm hold. (3) COACD threshold-driven (0.015, uncapped, pr 100): 340 hulls, volume 1.75x-&gt;1.13x, phantom p99 3.78-&gt;0.45mm max 5.39-&gt;0.69mm; SDF not needed (26.7ms/tick unchanged). REGRESSION FOUND+FIXED: rest drift came back 6.2mm/10s with the fine decomposition - NOT friction/damping (damping made it WORSE 76mm); root cause vendored solver caps iterations=10/ls_iterations=20 under-converge 30-80 simultaneous keel-table contacts; scene now sets 50/50, drift 0.001mm at zero cost. Gates: all probes improved, bit-determinism green, 26.7ms/tick (&lt;30 gate). check.py 688 green. Servo sysid deliberately NOT touched (own item, next).
+
+<details><summary>full record</summary>
+
+Sim fixes, batch 1 (CPU, from sim-review findings 1-4 + the contact-fidelity fix list papers/sim-contact-fidelity.md): (1) home pose reachable (fix camera_box2 mount collision vs shoulder) + spawn-after-settle so reset never strikes the boat — re-verify 0 reset strikes over candidate seed list; (2) explicit &lt;contact&gt;&lt;pair&gt; for jaw-boat seam (condim&gt;=4, elliptic cones, impratio~10, Newton) — re-run pinch probe, compare 6.9deg spin / 0.84 tilt; (3) re-run CoACD threshold-driven (-t 0.01-0.02, uncapped hulls, higher -pr) OR native-SDF experiment (MuJoCo&gt;=3.3.5; also closes the CC-BY-ND per-machine derived-asset hazard) — re-run phantom-volume probe vs p99 3.78mm baseline; keep friction VALUES untuned (SIMPLER Table X citation). Gates: all three probes improved + bit-determinism re-verified + tick cost still ~&lt;30ms.
+
+</details>
+
+---
 
 **`er60k-init-delta-midrun-chart-0810`** · `cpu`
 
@@ -171,6 +383,20 @@ AdamC-100k post-mortem chart + short post (CPU, zero GPU-h; the queued item now.
 <details><summary>full record</summary>
 
 AdamC-100k post-mortem chart + short post (CPU, zero GPU-h; the queued item now.md promised 22:4xZ but never landed in queue.json — added at the 23:0xZ 08-09 queue audit): from the banked train_log.jsonl (box+local), chart-led per owner preference — probe eval_chunk_mae ladder to the 10.30@11500 run-best kill point, train loss/grad-norm, vs the 40k-run probe curve at matched steps as CONTEXT ONLY (different recipe: AdamC vs AdamW, vision unfrozen vs frozen, eff-32 vs eff-48 — descriptive post-mortem, no causal claim without a matched arm). Dark-mode per standing rule. What the run bought: AdamC implementation 401d6f7 (10 oracles, stays landed), step-10k weights on fontaine-checkpoints, the 3-rise-then-recede probe-watch precedent.
+
+</details>
+
+---
+
+**`er-60k-live`** · `gpu-box`
+
+OWNER RUN LIVE (launched 22:47-53Z 08-09, unit fontaine-er-60k): fontaine_molmo2_er_60k_ddp4
+
+**boundary:** CLOSED (status audit 16:2xZ 08-11: run actually finished 08-11 — train @60000 12:36Z, chained panel_v2 rc=0 13:28Z, ~153/155 GPU-h; decision read = ER init WINS both legs, er_60k/step_060000 = new reference trunk, weights banked to fontaine-checkpoints 4ed3dd0; the 10:00-13:5xZ session closed the run but left this item status=live — fixed this session). Durable long-form: posts/2026-08-11-er-init-screen-results.md. · [pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md)
+
+<details><summary>full record</summary>
+
+OWNER RUN LIVE (launched 22:47-53Z 08-09, unit fontaine-er-60k): fontaine_molmo2_er_60k_ddp4 — 60k AR steps from allenai/Molmo2-ER (byte-verified drop-in), 40k recipe verbatim + rig datasets at natural share (owner pick 22:45Z), seed 0 (owner override), save 5000. FIRST POLL DONE 22:5x-23:0xZ: E1 banner exact, 2.23 s/step steady, vram 66.6 vs 77, util 68-99%. RATE-CLASS CORRECTION posted in-channel + gate re-pinned 65-&gt;155 GPU-h (the 65 came from attach_F's 0.92 s/step frozen-trunk rate, wrong class; true trunk class 2.2-2.6 = 60k-continuation actuals). Corrected endpoint ~08-11 ~12:00Z (~37 h wall, ~149 train + ~2 eval GPU-h). Primary read = ER-init delta: probe ladder vs the 40k curve at matched steps; endpoint chains panel_v2 k4l2 (--report + npz), paired CI95 vs banked 40k (6.0079) + 60k-continuation (5.8602).
 
 </details>
 
@@ -1618,6 +1844,34 @@ OWNER GO 20:06:37Z 08-10 ('Let's do it, 1 through 4' on the 19:5xZ in-channel es
 
 ---
 
+**`er60k-events-oneoff-report`** · `gpu-local`
+
+OWNER REQUEST 12:44:35Z + 12:45:13Z 08-11 (one-off, 'post a neat html report', 'I want to see many varied examples of events'): quantitative + qualitative investigation of the events the model generates vs ground truth (weak judg…
+
+**boundary:** CLOSED 16:0xZ 08-11 work session, all 6 scope steps end-to-end (~1.55/4 GPU-h): (1) INSTRUMENT landed commit 7f43c54 (--dump-generations + main-arm retention under explicit --generate + aux metrics from any retained voice + Q3 predict_with_text guard; ShardResults.generation_identity shard-safe; closes the 35k aux-arm debt); (2) DUMP PASS rc=0 15:5xZ unit eval-er60k-events-dump (25,800 rows, single narrated all-fields arm, ~275 f/min; launch note + frozen spec in-channel 14:13Z pre-GPU; 24-frame smoke first). Instrument oracle: presence acc 0.8568 vs banked 0.8582 = delta 13/8,987 frames, INSIDE the documented cross-world-size bf16 batch-composition band (banked was a 4-way box shard) — near-reproduction reported with the caveat, not claimed exact; (3) QUANT analysis__er60k_events_confusion.json: both-none 7,238 / hits 333 / swaps 129 / MISSES 683 / false alarms 604; model speaks on 40% of the 1,145 gt-event frames, class-agrees 72% when it does; exact-string 3.6%; (4) QUAL report__er60k_events_oneoff.html — 136 image cards, repo-diverse galleries per bucket; (5) PROBE analysis__er60k_events_probe.json: 683 misses -&gt; 679 forced (replay oracle bit-exact 679/683, 0 none-variants post-ban): forced guess lands gt class 428/679 = 63% -&gt; dominant miss mode is saw-it-under-threshold (idle 86/release 80/occlusion 72/blur 62%; camera_view 10%, episode markers 0% = the genuinely-not-encoded tail); (6) HTML + all 5 artifacts on fontaine-reports curl-verified (html serves via 302-&gt;CDN-&gt;200 full 10.7 MB), reports.md section, numbers in-channel 16:0xZ. Named lever FED TO IDEAS (#23 event-none-calibration, on-ice w/ trigger): decode-time none-penalty, zero training. Babysit entry pruned. · [pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md)
+
+<details><summary>full record</summary>
+
+OWNER REQUEST 12:44:35Z + 12:45:13Z 08-11 (one-off, 'post a neat html report', 'I want to see many varied examples of events'): quantitative + qualitative investigation of the events the model generates vs ground truth (weak judge labels), on the fresh @60000 endpoint checkpoint. Scope: (1) INSTRUMENT: extend the narrated arm to dump per-frame (identity triple, generated event string, weak-label event) — the standard eval computes event acc in-memory and discards generations (bijou/eval/cli.py results.generations only fills from NarratedBijouPolicy and is never written; same gap class as the 35k aux arm); (2) DUMP PASS: one-off generation pass on step_060000 (local disk after the endpoint dl) over the ~8,987 labeled panel frames; (3) QUANT: full model-class x gt-class event confusion INCLUDING none/none — counts + per-class precision/recall + the (model none, gt event) miss bucket sized exactly; (4) QUAL: frame galleries per confusion bucket (hit / miss / false alarm / class swap) — camera image + generated line vs gt, MANY varied examples across repos/tasks; (5) CONSTRAINED PROBE: on (gt event, model none) frames re-decode the event slot with 'none' banned (1-step constrained decode, logit mask on the event slot) — does the forced guess match gt class ('didn't see it' vs 'saw it, under-threshold'); (6) neat standalone HTML -&gt; fontaine-reports (curl 200) + link in-channel. Plan acked in-channel 12:51Z. One-off: record-only, no run gating. PREREG NOTE: rides the er-60k pre-reg like the er15k/35k/55k owner-requested reads; a short launch note with the pinned invocation + confusion/probe spec posts in-channel before the GPU minute, per charter.
+
+</details>
+
+---
+
+**`er60k-endpoint-postprocess`** · `gpu-box`
+
+er_60k endpoint postprocess (pre-reg posts/2026-08-09-prereg-molmo2-er-60k.md): box hits @60000 ~12:3xZ 08-11 -&gt; chained panel_v2 k4l2 eval runs in-unit (--report + npz)
+
+**boundary:** CLOSED 13:3xZ 08-11 work session (owning chained session rode endpoint + eval foreground): train hit @60000 12:36Z rc-clean (~153/155 GPU-h incl. chained eval); final async save published; chained panel_v2 k4l2 eval rc 13:28Z (4-way shard). THE ER DECISION READ: endpoint fast path 5.7782/1.9898 core (best banked trunk to date); vs 40k endpoint 6.0079 pooled -0.2297 [CI95 -0.281, -0.154] BELOW-BASELINE; vs 60k-cont 5.8602 pooled -0.0821 [CI95 -0.126, -0.025] BELOW-BASELINE CI excludes zero -&gt; ER INIT WINS BOTH LEGS, the ER trunk is the new reference trunk. Rung trajectory vs 40k endpoint: 15k +1.52 / 35k +0.28 / 55k -0.18 / 60k -0.23. Aux endpoint n~8,987: holding 0.915 / progress 0.060 / event 0.858 / visible 0.822; pairing +0.055 (45%). Rig-data effect read NOT split-compatible (panel repo_id identity contains no owner-rig repos) — skipped per the pre-reg if-clause. Artifacts on fontaine-reports (curl 200), reports.md endpoint section, chart-led in-channel post + owner ping 13:32Z (init-delta chart attached); step_060000 weights-only on fontaine-checkpoints (42.0s, commit 4ed3dd0, uploaded mid-eval); babysit entry er_60k pruned. Results blog post (chart-led consolidated ER-screen close) deliberately rolled to the next session — owner has headline + report; the events one-off (owner 12:44Z) takes priority next. · [pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md)
+
+<details><summary>full record</summary>
+
+er_60k endpoint postprocess (pre-reg posts/2026-08-09-prereg-molmo2-er-60k.md): box hits @60000 ~12:3xZ 08-11 -&gt; chained panel_v2 k4l2 eval runs in-unit (--report + npz). Owning session: ride the chained eval to rc in-turn (foreground polls, NEVER a Monitor), then paired CI95 reads vs banked 40k endpoint (6.0079) + 60k-continuation (5.8602) panels — THE ER decision read (in-run evidence so far: 20 straight negative matched legs to @40000, er − 40k endpoint-matched −0.67, run-best 5.10@44500 vs 40k best-ever 5.91; all record-only, panel decides) -&gt; HTML report + JSON + analysis to fontaine-reports (curl-audit every link 200) + reports.md + chart-led in-channel post + owner ping. Also: rig-data effect read at endpoint if split-compatible (held-out rig episodes, natural share 0.19%). Then prune the babysit entry and decide checkpoint upload (banked/consumable -&gt; fontaine-checkpoints same-session per standing rule; weights-only unless seeding training).
+
+</details>
+
+---
+
 **`er35k-aux-panel-eval`** · `gpu-local`
 
 OWNER REQUEST 20:47:38Z 08-10 (35k -&gt; hub + aux-enabled eval report on local GPU)
@@ -1627,6 +1881,118 @@ OWNER REQUEST 20:47:38Z 08-10 (35k -&gt; hub + aux-enabled eval report on local 
 <details><summary>full record</summary>
 
 OWNER REQUEST 20:47:38Z 08-10 (35k -&gt; hub + aux-enabled eval report on local GPU). AUX ARM DONE 22:30:45Z rc=0 (~1.5/8 GPU-h): hub upload 42.4s + local dl 31.1s + eval unit eval-er35k-aux ~250 f/min; core 6.3425/2.3770 (aux-narrated decode); paired reads banked (vs 40k endpoint +0.335 [+0.247,+0.387] CROSS-CLASS narrated-vs-fastpath; vs 60k-cont +0.482); report+json+analysis on fontaine-reports; numbers in-channel 22:3xZ. HARNESS GAP FOUND: explicit --generate makes the MAIN arm narrate but discards its generations -&gt; per-field aux metrics (holding/progress/event/visible) empty + no base-vs-narrated pairing (bijou/eval/cli.py results.generations only fills from NarratedBijouPolicy). STANDARD EVAL RELAUNCHED 22:33:30Z unit eval-er35k-panel (both arms + full aux metrics, the er15k report shape, ETA ~01:0xZ; babysit entry er35k_panel). REMAINING (next session): rc=0 -&gt; class-matched reads via er15k_panel_reads.py (key bijou@35000, fast path vs banked 40k 6.0079 + 60k-cont 5.8602 — supersedes the cross-class read) -&gt; report/json/analysis to fontaine-reports + reports.md + in-channel numbers -&gt; prune babysit entry. OPTIONAL instrument-debt follow-up (own small item if pursued): retain main-policy generations under --generate so aux metrics survive without the second pass.
+
+</details>
+
+---
+
+**`er55k-panel-eval`** · `gpu-local`
+
+OWNER REQUEST 09:41:04Z 08-11 ('eval the 55000 step checkpoint that just landed on the box as before'): step_055000 -&gt; hub (42.9s, commit 99a1ae2, weights-only) + local dl (13.7s) + STANDARD both-arms panel eval LIVE local H100 u…
+
+**boundary:** CLOSED 12:1xZ 08-11 work session (owning chained session rode it foreground to rc): eval rc=0 12:00:11Z (~2.2/8 GPU-h). Class-matched reads (key bijou@55000, core 17,204): fast path 5.8269/2.0172; vs 40k endpoint 6.0079 pooled -0.1810 [CI95 -0.232, -0.105] BELOW-BASELINE — first below-baseline read for the ER trunk (@35000 was +0.281 above); vs 60k-cont 5.8602 -0.0334 [-0.078, +0.024] CI-SPANS-0 = parity at 92% training; state-copy byte-match x3. Aux n~8,987: holding 0.920 / progress MAE 0.060 / event 0.858 / visible 0.822 (holding+progress improved from 35k, event -0.017); narration pairing +0.039 chunk, 46% win (er15k/er35k class). Artifacts on fontaine-reports (curl 200 x3) + reports.md @55000 section + numbers in-channel 12:0xZ; babysit entry er55k_panel pruned. Record-only as pre-registered; the @60000 endpoint panel (~12:3xZ) is the ER decision read. · [pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md)
+
+<details><summary>full record</summary>
+
+OWNER REQUEST 09:41:04Z 08-11 ('eval the 55000 step checkpoint that just landed on the box as before'): step_055000 -&gt; hub (42.9s, commit 99a1ae2, weights-only) + local dl (13.7s) + STANDARD both-arms panel eval LIVE local H100 unit eval-er55k-panel launched 09:48:27Z (er35k recipe verbatim, no --generate; first poll 98% util/30.5G). REMAINING (owning session, ride to rc ~11:5xZ with foreground polls, NEVER a Monitor): rc=0 -&gt; er15k_panel_reads.py --stem-cand reports/eval__fontaine_molmo2_er_60k_ddp4__step_055000__panel_curated_v0_k4l2 --out reports/analysis__er55k_panel_vs_banked_k4l2.json (fast-path key bijou@55000, CLASS-MATCHED vs banked 40k 6.0079 + 60k-cont 5.8602; 35k precedent 6.2892 / +0.2813) -&gt; report+json+analysis to fontaine-reports (curl 200) + reports.md + numbers in-channel -&gt; prune babysit entry er55k_panel. Record-only; nothing gates the box run. NOTE: the box endpoint @60000 ~12:4xZ lands right after — the same owning session likely takes er60k-endpoint-postprocess next.
+
+</details>
+
+---
+
+**`er-screen-results-post`** · `cpu`
+
+ER screen close: chart-led consolidated results post (deliberately rolled from the 10:00Z 08-11 session that closed er_60k)
+
+**boundary:** CLOSED 16:2xZ 08-11 work session: posts/2026-08-11-er-init-screen-results.md landed with plain-words opener + 3 house-style charts (probe overlay from the salvaged box train logs, panel rung trajectory, decision CIs) + aux-heads table across rungs; chart script fontaine/scripts/er60k_screen_close_charts.py reads only banked files (regenerable, no live hosts); all artifact links curl-verified; SUMMARY + posts index registered (index drift fixed: four 08-10 posts were missing from posts/index.md); check.py green; Space pushed + link in-channel same session. · [pre-reg](posts/2026-08-09-prereg-molmo2-er-60k.md)
+
+<details><summary>full record</summary>
+
+ER screen close: chart-led consolidated results post (deliberately rolled from the 10:00Z 08-11 session that closed er_60k). The full ER-init story in one blog page, house chart style (dark-mode, eval-report scheme): rung trajectory vs 40k endpoint (+1.52 -&gt; +0.28 -&gt; -0.18 -&gt; -0.23), the decision read (endpoint 5.7782/1.9898; -0.2297 [-0.281,-0.154] vs 40k endpoint; -0.0821 [-0.126,-0.025] vs 60k-cont, both CI-excludes-zero), aux-heads table across rungs (holding er-better, event cont-better, rest tied), probe-curve overlay (shared seed), what-it-means-for-follow-ons (every new arm sits on er_60k/step_060000). Owner already has headline + report links (13:29Z post); this is the durable long-form. posts/ page + Papers-style plain-words opener per house rule; Space push; link in-channel.
+
+</details>
+
+---
+
+**`rebase-fontaine-on-main-postreview`** · `cpu`
+
+MAIN-AGENT DIRECTIVE (owner-relayed 14:34:48Z 08-11, message.txt attachment): rebase fontaine on main @36afff0 (owner-session correctness reviews of bijou/molmoact2 + bijou/molmo2 landed as code) and adapt
+
+**boundary:** CLOSED 17:2xZ 08-11 work session (owner push 16:43Z seen mid-session, executed immediately): origin/main fetched fdd9aa3 -&gt; 36afff0, git rebase origin/main CLEAN — zero conflicts (only both-sides file bijou/train.py: main's wandb import move vs our parse_repeat_specs import; auto-merged + one ruff I001 fixup). All 7 directive items sentinel-verified at HEAD: released_so100_101 staticmethod, frozen no-default ActionExpertConfig, Gemma4Config.e2b()/.e4b() staticmethods, the 5 loud molmoact2 guards + tests (688 vs 683 pre-rebase), CPU-side patch alignment, main's authoritative versions of molmoact2_ae_parity.py (explicit dropout=0.0) + molmoact2_ours_ft_rung_read.py (n_obs_steps truthiness) + the 2 posts, tokenizer FileNotFoundError, styleguide adds. check.py green 688; pushed --force-with-lease 2a31981. Result posted in-channel same session.
+
+<details><summary>full record</summary>
+
+MAIN-AGENT DIRECTIVE (owner-relayed 14:34:48Z 08-11, message.txt attachment): rebase fontaine on main @36afff0 (owner-session correctness reviews of bijou/molmoact2 + bijou/molmo2 landed as code) and adapt — NOT merge-resolve in our favor: (1) ActionExpertConfig now frozen=True/slots=True, NO field defaults, all 15 fields explicit everywhere; released shape ONLY via ActionExpertConfig.released_so100_101(); (2) config factories moved to staticmethods: Gemma4Config.e2b()/.e4b(), Molmo2TextConfig.molmo2_4b() (module-level e2b_config()/e4b_config()/molmo2_4b_text_config() gone; styleguide: released shapes are staticmethod constructors, literals never restated); (3) new loud molmoact2 guards each with a test: --norm-stats must be named norm_stats.json; MolmoAct2Predictor.load refuses n_obs_steps missing or !=1 (require_single_obs); nonzero *dropout* keys in action_expert_config refused; extract_kv_states raises on unfilled cache layer; load_norm_stats requires non-empty setup_type/control_mode; (4) ensure_per_sample_patch_alignment now CPU-side in all three collators; (5) main edited two of our scripts (molmoact2_ae_parity.py build_ours passes dropout=0.0/attn_dropout=0.0 explicitly; molmoact2_ours_ft_rung_read.py n_obs_steps truthiness fix) and two posts (OOB plan Qwen3-8B-&gt;4B-class x2; deep dive parameter-accounting note: 621M and 577,564,448 are the same expert — 620,677,664 minus 36x frozen cross_attn.kv_proj 42,522,624 minus identity state_encoder 590,592, pinned in test_released_config_parameter_count) — main's versions authoritative; (6) styleguide adds: Shapes: docstring bullets on tensor-taking functions, intra-package imports relative, docs state present-truth (no corrected-on trails); (7) Molmo2TextTokenizer raises FileNotFoundError not SystemExit on missing tokenizer.json. Sister ask (check.py green on artifact-less clones) DONE d7b6864 same session (option a: frozen stage-01 analysis committed, oracle chain clone-verifiable).
+
+</details>
+
+---
+
+**`sim100-postprocess`** · `cpu`
+
+100-seed sim eval postprocess (successor, executable on unit fontaine-sim100b rc=0 ~03:2xZ 08-12): (1) verify ALL PHASE2 ARMS DONE + rc=0 in ~/logs/sim100_eval.log; (2) frozen reads sim100_reads.py --in-dir outputs/sim/eval100 --…
+
+**boundary:** CLOSED 03:4xZ 08-12 work session, all 6 steps: (1) rc=0 + ALL PHASE2 ARMS DONE verified 03:16:37Z; (2) frozen reads analysis__sim100_seed_eval.json (5 arms, gates green, ordering auto-skipped as pre-declared); (3) 4 house charts (engagement split NEW) + report__sim100_seed_eval.html + 14-clip gallery (best/median/worst per arm + 2 er60k reach-but-miss) -&gt; fontaine-reports, curl 200 x5; (4) results post posts/2026-08-12-sim100-results.md (plain-words opener) + reports.md section + numbers in-channel; (5) babysit entry pruned; (6) sim-visual-matching named the lever + encoder-OOD-probe queued as its own item (owner 01:11Z ask). Per-arm numbers were posted in-channel as each arm landed (00:37Z ftrig4k, 01:30Z snap30k, 03:4xZ teacher80k) per the 23:41Z promise. wire-MolmoAct2-rig-ft-into-sim remains offered, not queued. · [pre-reg](posts/2026-08-11-prereg-sim-policy-eval-100seeds.md)
+
+<details><summary>full record</summary>
+
+100-seed sim eval postprocess (successor, executable on unit fontaine-sim100b rc=0 ~03:2xZ 08-12): (1) verify ALL PHASE2 ARMS DONE + rc=0 in ~/logs/sim100_eval.log; (2) frozen reads sim100_reads.py --in-dir outputs/sim/eval100 --out reports/analysis__sim100_seed_eval.json (arms er60k/hold/ftrig4k/snap30k/teacher80k; gates strikes+hold-floor; ordering read auto-skips - rungs killed); (3) charts via sim100_charts.py (phase-2 colors in) + HTML report + video gallery (per-arm best/median/worst; er60k reach-but-miss clips are the money shot) -&gt; fontaine-reports curl-200; (4) results post w/ plain-words opener + reports.md + numbers in-channel: headline is the phase-1 negative (er_60k 0/100, boat untouched 96/100) + whether ANY family engages the boat; (5) prune babysit entry sim100b_eval; (6) name sim-visual-matching as the unblocking lever; wire-MolmoAct2-rig-ft-into-sim is an offered follow-up (owner told 23:41Z it needs a closed-loop adapter + v2.1/v3.0 convention care).
+
+</details>
+
+---
+
+**`sim-policy-eval-100seeds`** · `cpu`
+
+GOAL (owner 17:07Z 08-11): evaluate one good policy (candidate er_60k/step_060000, the reference trunk) in sim on 100 fixed seeds; primary metric = boat-&gt;disk distance reduction (continuous), success rate secondary
+
+**boundary:** CLOSED 03:2xZ 08-12 work session — BOTH PHASES COMPLETE, rc=0 03:16:37Z (phase 2 ~3.5/4 GPU-h; total ~5.5). FINAL: 0/500 successes; gates green (strikes 0/500, hold floor -0.0). Per-arm mean progress / moved&gt;=0.5cm: er60k -0.03 / 4 (96 untouched, reach-over-the-table fingerprint); snap30k -0.12 / 38; ftrig4k +0.08 / 47 (27 toward vs 20 away — the ONLY arm tilted toward the goal, best +3.64); teacher80k -0.73 / 56 (18 toward/38 away, the study's only CI-excludes-zero reads: vs hold -0.73 [-1.18,-0.34], vs er60k -0.70 — the strongest offline policy is measurably worse than doing nothing). THE FINDING: contact tracks family/capability, DIRECTION tracks visual familiarity — checkpoint-quality explanation dead (teacher engages most), visual gap confirmed as the lever. Owner question 01:11Z answered in-channel 01:30Z (diagnostics + SIMPLER recipe). · [pre-reg](posts/2026-08-11-prereg-sim-policy-eval-100seeds.md)
+
+<details><summary>full record</summary>
+
+GOAL (owner 17:07Z 08-11): evaluate one good policy (candidate er_60k/step_060000, the reference trunk) in sim on 100 fixed seeds; primary metric = boat-&gt;disk distance reduction (continuous), success rate secondary. Local GPU inference-only while sims run. Protocol (seed list, horizon, metric definition) pre-registered before running.
+
+</details>
+
+---
+
+**`sim-lit-review`** · `cpu`
+
+Sim + sim-to-real literature review (CPU, OWNER DIRECTIVE 17:07Z 08-11
+
+**boundary:** CLOSED 18:5xZ 08-11 work session: 3 Papers pages landed same-session (papers/sim-as-eval.md, papers/so101-sim-landscape.md, papers/sim-contact-fidelity.md) via 3 parallel research agents, all links fetch-verified. Headlines: (1) SIMPLER lineage = the protocol design citations (sysid+visual-matching MMRV 0.056/r 0.924; controller gains FIRST-order for eval fidelity, friction values second-order; continuous progress metrics separate policies at up to 70% fewer trials than binary success = owner's distance metric vindicated; AutoEval 0/50-sim-vs-47/50-real caution: fidelity is per-policy-family; SureSim paired-rectification for when rig rollouts exist; 2026 head-to-head: simulator choice moves Spearman 0.400-0.700 on identical real evals). (2) Census: NO public SO-101 sim eval with continuous metric exists — 2026 SO-101 benchmarks all real-world; our substrate leads; steal LIBERO frozen init-states, so-frame REAL|SIM|OVERLAY; LeRobot EnvHub = later publication channel. (3) All 4 sim-review findings have documented mechanisms + named fixes (CoACD threshold-not-cap or native SDF — the SDF path also fixes the CC-BY-ND per-machine asset hazard; priority override is spec, fix = explicit contact pair + condim&gt;=4 + elliptic cones + impratio~10; BAM ships identified STS3215 model). (4) NEW FINDING from asset diff: our menagerie model kp 998.22/forcerange ±2.94 vs TheRobotStudio upstream kp 17.8/±3.35 for the same servo — ±2.94 is exactly the review's measured saturation; sysid question queued. ideas.md #16 fed; successor items sim-fixes-reset-contact + sim-servo-sysid queued.
+
+<details><summary>full record</summary>
+
+Sim + sim-to-real literature review (CPU, OWNER DIRECTIVE 17:07Z 08-11 — explicitly re-opens the paused lit lane for sim topics): (a) simulators/task suites usable for so101-class tabletop manipulation (existing so100/so101 ports, MuJoCo-family and other ecosystems) — final rig is so101; (b) sim-to-real transfer + the inverse (eval fidelity: sim success as a policy-quality metric alongside BC MAE). Papers pages with plain-words openers.
+
+</details>
+
+---
+
+**`sim-review`** · `cpu`
+
+Sim review (CPU, OWNER DIRECTIVE 17:07Z 08-11 — next-day focus is simulations): review sim/ (so101_sim.py, rollout_sim.py, convert_benchy.py, demo_scene.py, view.py, probe_*.py, fetch_assets.sh)
+
+**boundary:** CLOSED 18:1xZ 08-11 work session (commit f14948f): findings post posts/2026-08-11-sim-review-findings.md + two committed probes (sim/probe_benchy_contact.py, sim/probe_phantom_volume.py). Contract seam ALL GREEN (camera kinds: judge stamped rig 'front' as kind top so sim 'top' naming matches training tags; kind-sorted image order identical; SO_MOTORS order + degrees match; er_60k stats table has both rig repos; AR-greedy + B=1 =&gt; deterministic, measured bit-identical qpos AND renders; 26.9 ms/tick =&gt; ~20 min sim-side per 100-seed eval). FOUR FINDINGS, fixes NOT executed (findings-first): (1) home pose UNREACHABLE - camera_box2 (wrist-cam mount) jams into a shoulder geom, elbow/wrist_flex/wrist_roll pinned at +-2.94 force limit, elbow -19deg steady-state, wrist_roll bimodal (0 or ~15deg) per seed = seed-dependent start state; (2) 2/20 seeds the arm STRIKES the boat during the reset settle (zero-qpos start lays the arm over the workspace), up to 30.4 mm pre-episode displacement; (3) phantom collision margin median 0.34 / p99 3.78 / max 5.39 mm, 74% of collision surface outside the visible boat, CoACD concavity 0.149 at the 16-hull cap (vs 0.05 asked); (4) grasp seam: 2.5 mm penetration acceptable BUT gripper priority=1 overrides the benchy drift-fix friction =&gt; torsional 5e-3 at the seam, 6.9deg in-grip spin + tilt to upright 0.84 on lift; rest drift 0.000 mm (drift fix healthy). INFRA: menagerie commit UNPINNED in fetch_assets.sh + CoACD assets regenerated per machine =&gt; cross-machine trajectory repro NOT guaranteed (pin one eval machine in the protocol); EGL libs installed on this box (libegl1 + libnvidia-gl-580); success() docstring claims a gripper-open check the code lacks. Protocol implications written into the post's final section.
+
+<details><summary>full record</summary>
+
+Sim review (CPU, OWNER DIRECTIVE 17:07Z 08-11 — next-day focus is simulations): review sim/ (so101_sim.py, rollout_sim.py, convert_benchy.py, demo_scene.py, view.py, probe_*.py, fetch_assets.sh) — map capabilities: observation surface vs the policy input contract (cameras, proprio), actuation/stepping model, seed &amp; determinism story, asset pipeline; investigate the owner-reported boat (benchy) contact-physics problem (findings first, fixes after). Output: findings report; feeds the 100-seed eval protocol pre-reg.
+
+</details>
+
+---
+
+**`rig-mixture-instrument-prereg`** · `cpu`
+
+Rig-mixture lever, step 1 (CPU, executable now): implement the per-root --dataset-repeat flag + oracle test exactly as pinned in the er-60k pre-reg mixture note (loader dedups repeated roots today, so there is no zero-code oversa…
+
+**boundary:** CLOSED 17:0xZ 08-11 work session, both legs: (1) INSTRUMENT landed commit 1b1c314 — --dataset-repeat PATTERN=COUNT in bijou.train/bijou.data (fnmatch per-repo specs, first-match-wins, spec matching no selected dataset is FATAL, replicas share objects so no host-RAM cost; training-only, eval call sites never repeat; TrainArgs field defaulted for old-checkpoint replay); oracle test tests/test_dataset_repeat.py (16 tests: parse/precedence/no-match/concat expansion + the pinned 0.19%-&gt;4.97%@27x mixture arithmetic); check.py green 683. (2) PRE-REG DRAFT posted posts/2026-08-11-prereg-er60k-rig-mixture.md: single arm --init-from er_60k/step_060000 (weights-only suffices, optimizer state died with the box), explicit specs clean=27 v2=27 (~4.97% share, no wildcard), 10k steps eff-48 seed 3 warmup 500, primary read = paired CI95 on the deterministic rig holdout (1+5 episodes ~3.7k frames er_60k never trained on) vs the endpoint, guard = panel non-regression band +0.05 vs banked 5.7782; COMPUTE ASK named: (A) new 4x box ~28 GPU-h/7h wall gate 32, (B) local 1xH100 needs act-ckpt fit-preflight (full recipe measured OOM single-GPU 08-08), (C) defer. HOLDING for owner steering — successor item rig-mixture-screen-exec carries the hold. · [pre-reg](posts/2026-08-11-prereg-er60k-rig-mixture.md)
+
+<details><summary>full record</summary>
+
+Rig-mixture lever, step 1 (CPU, executable now): implement the per-root --dataset-repeat flag + oracle test exactly as pinned in the er-60k pre-reg mixture note (loader dedups repeated roots today, so there is no zero-code oversample), then draft the mixture-screen pre-reg on the new reference trunk er_60k/step_060000: rig at ~5% effective share (~27x repeat, inside the CL-triangle 2-20% replay band) vs the natural-share 0.19% passenger baseline this screen just banked. The ER results post names this lever explicitly unpriced. GPU leg NOT launchable without owner input: the 4x box is gone — the pre-reg draft must name the compute ask (local 1xH100 rung vs a new box) and hold for owner steering.
 
 </details>
 

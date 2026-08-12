@@ -66,6 +66,10 @@ class ShardResults:
     sensitivity_deltas: list[float]
     report_samples: dict[int, ReportSample]
     generations: dict[int, AuxGeneration]
+    # --dump-generations: (repo_id, episode_index, frame_index,
+    # instruction) per scored index ({} when the dump is off) — the
+    # offline address of each retained generation.
+    generation_identity: dict[int, tuple[str, int, int, str]]
     # Self-subgoal pass 1's per-frame provenance rows ({} when no
     # subgoal-mode run) — --dump-subgoals serializes the merged map.
     subgoal_records: dict[int, SubgoalRecord]
@@ -144,6 +148,9 @@ def merge_shards(shards: list[ShardResults]) -> ShardResults:
             k: v for shard in shards for k, v in shard.report_samples.items()
         },
         generations={k: v for shard in shards for k, v in shard.generations.items()},
+        generation_identity={
+            k: v for shard in shards for k, v in shard.generation_identity.items()
+        },
         subgoal_records={
             k: v for shard in shards for k, v in shard.subgoal_records.items()
         },

@@ -435,7 +435,7 @@ def test_missing_tokenizer_refused(source_dir: Path, tmp_path: Path) -> None:
     broken = tmp_path / "no-tokenizer"
     shutil.copytree(source_dir, broken)
     (broken / "tokenizer.json").unlink()
-    with pytest.raises(SystemExit, match="tokenizer.json"):
+    with pytest.raises(SystemExit, match=r"tokenizer\.json"):
         _convert(broken, tmp_path / "out")
 
 

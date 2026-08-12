@@ -80,10 +80,7 @@ def _checkpoint_info(**overrides: object) -> CheckpointInfo:
         if k in {f.name for f in dataclasses.fields(CheckpointTrainArgs)}
     }
     if train_args_overrides:
-        fields["train_args"] = dataclasses.replace(
-            train_args,
-            **train_args_overrides,  # type: ignore[arg-type] — test override table
-        )
+        fields["train_args"] = dataclasses.replace(train_args, **train_args_overrides)
     fields.update(
         {k: v for k, v in overrides.items() if k not in train_args_overrides},
     )

@@ -20,14 +20,19 @@ Usage:
 """
 
 import argparse
+import json
+import subprocess
 import time
-from dataclasses import dataclass
+from collections.abc import Callable
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
+from typing import Any, Protocol
 
 import av
 import numpy as np
 import torch
 
+from bijou.data import DatasetStats
 from bijou.decoders.flow import SamplingMethod
 from bijou.eval.policies import BijouPolicy
 from bijou.rollout import SO_MOTORS, observation_to_item
@@ -44,9 +49,31 @@ STATS_REPO_ID = "mcobzarenco/so101_pick_place_v2"
 TASK = "Pick up the toy boat and place it on the wooden disk."
 
 
+class RolloutSim(Protocol):
+    """What the episode loop needs from an environment — SO101Sim in
+    production; the parallel-harness oracle substitutes a pure-python
+    fake to pin scheduler equivalence without a GL context."""
+
+    reset_spawn_xy: tuple[float, float]
+    reset_strike_contacts: int
+
+    def reset(self, seed: int) -> SimObservation: ...
+    def step(self, action_degrees: np.ndarray) -> SimObservation: ...
+    def benchy_disk_distance(self) -> float: ...
+    def success(self) -> bool: ...
+    def benchy_pose(self) -> tuple[np.ndarray, float]: ...
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--checkpoint", type=Path, required=True)
+    parser.add_argument("--checkpoint", type=Path, default=None)
+    parser.add_argument(
+        "--hold",
+        action="store_true",
+        help="no policy: command the settled reset state every tick "
+        "(the sim analog of state-copy — metric floor + reset-artifact "
+        "anchor)",
+    )
     parser.add_argument("--seed", type=int, default=0, help="first env + noise seed")
     parser.add_argument(
         "--num-seeds",
@@ -58,12 +85,29 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--execute-horizon", type=int, default=30)
     parser.add_argument("--sample-steps", type=int, default=10)
     parser.add_argument(
+        "--method",
+        default="heun",
+        choices=["euler", "heun"],
+        help="ODE solver: heun for full-flow checkpoints, euler for "
+        "1-NFE SnapFlow students (euler-1 IS their training target)",
+    )
+    parser.add_argument(
         "--expert-dtype",
         default="bfloat16",
         choices=["float32", "bfloat16"],
     )
     parser.add_argument("--out-dir", type=Path, default=OUTPUT_DIR)
-    return parser.parse_args()
+    parser.add_argument(
+        "--out-json",
+        type=Path,
+        default=None,
+        help="write a config header + per-seed rows (incl. per-tick "
+        "distance series) for the reads instrument",
+    )
+    args = parser.parse_args()
+    if (args.checkpoint is None) == (not args.hold):
+        parser.error("exactly one of --checkpoint / --hold is required")
+    return args
 
 
 @dataclass(frozen=True, slots=True)
@@ -73,11 +117,23 @@ class EpisodeResult:
     min_cm: float
     final_cm: float
     success_tick: int | None
+    spawn_xy: tuple[float, float]
+    reset_strikes: int
+    final_z_mm: float
+    final_upright: float
+    ticks: int
+    latency_ms: list[float] = field(default_factory=list)
+    distance_cm: list[float] = field(default_factory=list)
 
     @property
     def progress_cm(self) -> float:
         """Distance recovered from spawn to the episode's closest point."""
         return self.initial_cm - self.min_cm
+
+    @property
+    def progress_final_cm(self) -> float:
+        """PRIMARY metric: distance recovered from spawn to episode end."""
+        return self.initial_cm - self.final_cm
 
 
 def to_observation(obs: SimObservation) -> dict[str, object]:
@@ -92,22 +148,142 @@ def to_observation(obs: SimObservation) -> dict[str, object]:
     return observation
 
 
-def write_video(path: Path, frames: list[np.ndarray]) -> None:
-    container = av.open(str(path), mode="w")
-    stream = container.add_stream("h264", rate=CONTROL_HZ)
-    stream.width = frames[0].shape[1]
-    stream.height = frames[0].shape[0]
-    stream.pix_fmt = "yuv420p"
-    for frame in frames:
-        for packet in stream.encode(av.VideoFrame.from_ndarray(frame, format="rgb24")):
-            container.mux(packet)
-    for packet in stream.encode():
-        container.mux(packet)
-    container.close()
+class VideoWriter:
+    """Streaming H.264 writer: frames are encoded as they arrive (a full
+    900-tick episode buffered at 640x960 is ~1.6 GB RSS — untenable when
+    N env workers each hold one)."""
+
+    def __init__(self, path: Path) -> None:
+        self._path = path
+        self._container: Any = None
+        self._stream: Any = None
+
+    def append(self, frame: np.ndarray) -> None:
+        if self._container is None:
+            self._container = av.open(str(self._path), mode="w")
+            self._stream = self._container.add_stream("h264", rate=CONTROL_HZ)
+            self._stream.width = frame.shape[1]
+            self._stream.height = frame.shape[0]
+            self._stream.pix_fmt = "yuv420p"
+        for packet in self._stream.encode(
+            av.VideoFrame.from_ndarray(frame, format="rgb24"),
+        ):
+            self._container.mux(packet)
+
+    def close(self) -> None:
+        if self._container is None:
+            return
+        for packet in self._stream.encode():
+            self._container.mux(packet)
+        self._container.close()
+
+
+def run_episode_loop(
+    sim: RolloutSim,
+    seed: int,
+    next_chunk: Callable[[SimObservation, int], np.ndarray],
+    *,
+    replans: int,
+    horizon: int,
+    video_path: Path | None,
+    latencies: list[float],
+) -> EpisodeResult:
+    """One episode's control loop, with the chunk source abstracted:
+    ``next_chunk(obs, replan)`` is the policy call in the sequential
+    driver and the predict round-trip in the parallel one (it appends its
+    own timing to ``latencies``). The parallel-vs-sequential determinism
+    oracle rides on both drivers sharing this exact loop."""
+    obs = sim.reset(seed)
+    writer = VideoWriter(video_path) if video_path is not None else None
+    initial = sim.benchy_disk_distance()
+    closest = initial
+    success_tick: int | None = None
+    distances: list[float] = [initial * 100]
+    ticks = 0
+
+    for replan in range(replans):
+        chunk = next_chunk(obs, replan)
+        print(
+            f"  seed {seed} replan {replan}: "
+            f"{latencies[-1] if latencies else 0:.0f} ms | "
+            f"benchy->disk {sim.benchy_disk_distance() * 100:.1f} cm",
+            flush=True,
+        )
+        for step in range(horizon):
+            obs = sim.step(chunk[step])
+            if writer is not None:
+                writer.append(np.concatenate([obs.top, obs.wrist], axis=1))
+            ticks += 1
+            distance = sim.benchy_disk_distance()
+            distances.append(distance * 100)
+            closest = min(closest, distance)
+            if sim.success():
+                success_tick = replan * horizon + step
+                break
+        if success_tick is not None:
+            break
+
+    if writer is not None:
+        writer.close()
+    pos, upright = sim.benchy_pose()
+    return EpisodeResult(
+        seed=seed,
+        initial_cm=initial * 100,
+        min_cm=closest * 100,
+        final_cm=sim.benchy_disk_distance() * 100,
+        success_tick=success_tick,
+        spawn_xy=sim.reset_spawn_xy,
+        reset_strikes=sim.reset_strike_contacts,
+        final_z_mm=float(pos[2]) * 1000,
+        final_upright=upright,
+        ticks=ticks,
+        latency_ms=[round(v, 1) for v in latencies],
+        distance_cm=[round(v, 3) for v in distances],
+    )
+
+
+def hold_chunk_fn(horizon: int) -> Callable[[SimObservation, int], np.ndarray]:
+    """Hold arm: command the settled reset state for every tick (the sim
+    analog of state-copy). The chunk is tiled lazily from the first
+    observation the loop hands over — which is the reset observation."""
+    hold_action: np.ndarray | None = None
+
+    def next_chunk(obs: SimObservation, replan: int) -> np.ndarray:
+        nonlocal hold_action
+        if hold_action is None:
+            hold_action = np.tile(obs.state.copy(), (horizon, 1))
+        return hold_action
+
+    return next_chunk
+
+
+def sim_item(
+    obs: SimObservation,
+    seed: int,
+    replan: int,
+    *,
+    stats: DatasetStats,
+    chunk_size: int,
+) -> dict[str, object]:
+    """Observation -> policy item, with the identity triple for stable-key
+    noise checkpoints (the SnapFlow lineage): deterministic per
+    (env seed, replan), invariant to batch composition — the property the
+    parallel driver's determinism claim leans on."""
+    item = observation_to_item(
+        to_observation(obs),
+        TASK,
+        stats,
+        chunk_size,
+        camera_kinds_from_names(SIM_CAMERAS),
+    )
+    item["repo_id"] = "sim/eval100"
+    item["episode_index"] = seed
+    item["frame_index"] = replan
+    return item
 
 
 def run_episode(
-    policy: BijouPolicy,
+    policy: BijouPolicy | None,
     sim: SO101Sim,
     seed: int,
     *,
@@ -115,47 +291,32 @@ def run_episode(
     horizon: int,
     video_path: Path,
 ) -> EpisodeResult:
-    obs = sim.reset(seed)
-    chunk_size = policy.info.chunk_size
-    stats = policy.info.per_dataset_normalization[STATS_REPO_ID]
-    frames: list[np.ndarray] = []
-    initial = sim.benchy_disk_distance()
-    closest = initial
-    success_tick: int | None = None
+    latencies: list[float] = []
+    next_chunk: Callable[[SimObservation, int], np.ndarray]
 
-    for replan in range(replans):
-        item = observation_to_item(
-            to_observation(obs),
-            TASK,
-            stats,
-            chunk_size,
-            camera_kinds_from_names(SIM_CAMERAS),
-        )
-        start = time.perf_counter()
-        chunk = policy.predict([item], [replan])[0]
-        latency = time.perf_counter() - start
-        print(
-            f"  seed {seed} replan {replan}: {latency * 1000:.0f} ms | "
-            f"benchy->disk {sim.benchy_disk_distance() * 100:.1f} cm",
-            flush=True,
-        )
-        for step in range(horizon):
-            obs = sim.step(chunk[step].numpy())
-            frames.append(np.concatenate([obs.top, obs.wrist], axis=1))
-            closest = min(closest, sim.benchy_disk_distance())
-            if sim.success():
-                success_tick = replan * horizon + step
-                break
-        if success_tick is not None:
-            break
+    if policy is not None:
+        chunk_size = policy.info.chunk_size
+        stats = policy.info.per_dataset_normalization[STATS_REPO_ID]
 
-    write_video(video_path, frames)
-    return EpisodeResult(
-        seed=seed,
-        initial_cm=initial * 100,
-        min_cm=closest * 100,
-        final_cm=sim.benchy_disk_distance() * 100,
-        success_tick=success_tick,
+        def policy_chunk(obs: SimObservation, replan: int) -> np.ndarray:
+            item = sim_item(obs, seed, replan, stats=stats, chunk_size=chunk_size)
+            start = time.perf_counter()
+            chunk = policy.predict([item], [replan])[0].numpy()
+            latencies.append((time.perf_counter() - start) * 1000)
+            return chunk
+
+        next_chunk = policy_chunk
+    else:
+        next_chunk = hold_chunk_fn(horizon)
+
+    return run_episode_loop(
+        sim,
+        seed,
+        next_chunk,
+        replans=replans,
+        horizon=horizon,
+        video_path=video_path,
+        latencies=latencies,
     )
 
 
@@ -164,16 +325,24 @@ def main() -> int:
     torch.set_float32_matmul_precision("high")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    policy = BijouPolicy(
-        args.checkpoint,
-        device=device,
-        seed=args.seed,
-        sample_steps=args.sample_steps,
-        method=SamplingMethod.HEUN,
-        expert_dtype=getattr(torch, args.expert_dtype),
-    )
-    horizon = min(args.execute_horizon, policy.info.chunk_size)
-    print(f"policy: {policy.name} (heun-{args.sample_steps}, horizon {horizon})")
+    if args.hold:
+        policy = None
+        horizon = args.execute_horizon
+        print(f"policy: hold (settled reset state, horizon {horizon})")
+    else:
+        policy = BijouPolicy(
+            args.checkpoint,
+            device=device,
+            seed=args.seed,
+            sample_steps=args.sample_steps,
+            method=SamplingMethod[args.method.upper()],
+            expert_dtype=getattr(torch, args.expert_dtype),
+        )
+        horizon = min(args.execute_horizon, policy.info.chunk_size)
+        print(
+            f"policy: {policy.name} "
+            f"({args.method}-{args.sample_steps}, horizon {horizon})",
+        )
 
     sim = SO101Sim()
     args.out_dir.mkdir(parents=True, exist_ok=True)
@@ -202,6 +371,38 @@ def main() -> int:
     print(
         f"\nbest seed by progress: {best.seed} (video rollout_seed{best.seed:03d}.mp4)",
     )
+
+    if args.out_json is not None:
+        commit = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=Path(__file__).parent,
+            capture_output=True,
+            text=True,
+            check=False,
+        ).stdout.strip()
+        payload = {
+            "config": {
+                "checkpoint": str(args.checkpoint) if args.checkpoint else None,
+                "hold": args.hold,
+                "seed": args.seed,
+                "num_seeds": args.num_seeds,
+                "replans": args.replans,
+                "execute_horizon": horizon,
+                "sample_steps": args.sample_steps,
+                "method": args.method,
+                "expert_dtype": args.expert_dtype,
+                "control_hz": CONTROL_HZ,
+                "task": TASK,
+                "stats_repo_id": STATS_REPO_ID,
+                "commit": commit,
+            },
+            "episodes": [
+                {**asdict(r), "progress_final_cm": r.progress_final_cm} for r in results
+            ],
+        }
+        args.out_json.parent.mkdir(parents=True, exist_ok=True)
+        args.out_json.write_text(json.dumps(payload, indent=1))
+        print(f"wrote {args.out_json}")
     return 0
 
 

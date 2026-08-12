@@ -9,7 +9,7 @@ mainline ledger, `docs/architecture.md` §7–8). Status tags: `queued`
 
 This page is the **index**: what is hot right now vs what is on ice.
 It is updated whenever an idea moves (the per-idea page is the
-record; the line here is the hook). *Index last updated 2026-08-10.*
+record; the line here is the hook). *Index last updated 2026-08-12.*
 
 ## Hot — actively pursued
 
@@ -707,7 +707,41 @@ record; the line here is the hook). *Index last updated 2026-08-10.*
   same-session rotation is mandatory (a camera/tote side swap moved
   one model 22 pp — more than the gap under study); their 42%
   telemetry/operator disagreement independently replicates our
-  32–48% telemetry false-positive finding.
+  32–48% telemetry false-positive finding. Sim lane 2026-08-11
+  (owner pivot; [sim-as-eval](papers/sim-as-eval.md) +
+  [SO-101 sim landscape](papers/so101-sim-landscape.md) +
+  [contact fidelity](papers/sim-contact-fidelity.md)): the
+  100-seed sim panel's design citations banked — SIMPLER's recipe
+  (controller sysid + visual matching, MMRV 0.056 / r 0.924) with
+  its ablation ordering the work (controller gains first-order,
+  friction values second-order — don't tune coefficients);
+  continuous progress separates policies at up to 70% fewer trials
+  than binary success (2603.13616 — the owner's distance metric is
+  the statistically right primary); the free validation experiment =
+  run the panel on er_60k@15k/35k/60k and check sim ordering matches
+  the banked panel-MAE trajectory; AutoEval's 0/50-sim-vs-47/50-real
+  on an unvalidated policy family is the standing caveat (fidelity
+  is per-family, resets on MolmoAct2); census says no public SO-101
+  sim eval with a continuous metric exists — our substrate leads the
+  field; and a live sysid question surfaced: menagerie vs
+  TheRobotStudio publish kp 998 vs kp 17.8 for the same STS3215,
+  with BAM's identified servo model as the informed prior. Sim lane
+  2026-08-12 `0821` (owner-called GRPO design research;
+  [GRPO for our two heads](papers/grpo-for-vla-heads.md), deep-read
+  upgrade + [design memo](posts/2026-08-12-grpo-sim-design-memo.md)):
+  the RL-on-sim mechanism set is now priced — AR head maps onto
+  SimpleVLA-RL's recipe (T=1.6, G=8, clip-higher, KL dropped) minus
+  its binary reward, which our 0/500 success floor kills (their own
+  0%-base dead-start result); flow head needs Flow-GRPO's ODE→SDE
+  (~30 lines, exact Gaussian step logprobs, velocity-MSE KL,
+  action-scale noise a≈0.5/K≈4 per πRL); πRL corrected: PPO+critic
+  is its main algorithm, GRPO loses its own appendix head-to-head;
+  trunk stays frozen (4th vote). Memo's proposed first spend = a
+  rollout-only **signal probe** (4 cells × 15 seeds × K=8, v3
+  frames, ≤3 GPU-h parallel-path) measuring within-group
+  progress-reward variance + competence cost of stochastic decoding
+  before any RL infra is built — pends owner review, sequenced
+  after parallel-oracle → v3 rerun.
 - **`lit-arms` [#15 Literature-sourced arms](ideas/15-literature-arms.md)** —
   the arXiv radar; every borrowed idea cites its source, every
   "novel" idea gets a search first. Feeds the Papers section.
@@ -739,6 +773,18 @@ record; the line here is the hook). *Index last updated 2026-08-10.*
 
 ## On ice — queued or parked, each with its named trigger
 
+- **`event-none-calibration` #23 Event-slot none-calibration** — new
+  2026-08-11 from the er_60k events one-off
+  ([report](https://mcobzarenco-fontaine-reports.static.hf.space/report__er60k_events_oneoff.html)):
+  on the 683 (gt: event, model: none) misses a 1-step `none`-ban
+  re-decode lands the gt class **63%** of the time (idle 86%,
+  release-place 80%, occlusion 72%) — event recall is
+  threshold-limited, not perception-limited. Named lever: a
+  decode-time none-penalty / event-slot temperature (zero training),
+  read against the same 8,987-frame labeled panel. Trigger: an owner
+  ask for better event narration, or the first consumer of event
+  strings (e.g. rollout-side anomaly flagging). Needs its own
+  pre-reg; no page yet — the probe JSON is the record.
 - **`throughput-compile` [#2 Throughput: bucketing + compile](ideas/02-throughput-bucketing-compile.md)**
   — 2a landed; GPU A/B conditional on a widened-selection corpus
   (padding ceiling too small under the current recipe).

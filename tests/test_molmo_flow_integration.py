@@ -233,6 +233,7 @@ def test_predict_chunk_dispatch_and_tail(tiny_model: BijouModel) -> None:
     # Per-sample stats are decoder-ignored: perturbing them is inert.
     import dataclasses
 
+    assert batch.action_stats.q01 is not None and batch.action_stats.q99 is not None
     perturbed = dataclasses.replace(
         batch,
         action_stats=NormStats(
@@ -263,7 +264,7 @@ def test_loss_arms_sum_form_contract(tiny_model: BijouModel) -> None:
     batch = _batch(tiny_model)
     memory = tiny_model.encode(batch.encoder_inputs, with_grad=False)
     torch.manual_seed(11)  # the loss draws t/ε from the ambient stream
-    total, action, aux_sum, aux_count = tiny_model.loss_components(memory, batch)
+    total, action, aux_sum, _aux_count = tiny_model.loss_components(memory, batch)
     torch.manual_seed(11)
     loss_sum, count, aux2, _ = tiny_model.loss_component_sums(memory, batch)
     normalizer, aux_norm = tiny_model.loss_count_normalizers(batch)

@@ -17,6 +17,7 @@ retires). GPU-scale parity on the released weights is a box script
 from __future__ import annotations
 
 import dataclasses
+from typing import override
 
 import pytest
 import torch
@@ -77,7 +78,15 @@ def _tiny_pair() -> tuple[MolmoFlowDecoder, object]:
     return decoder, port
 
 
-def _inputs(batch: int = 2, ctx_len: int = 5) -> tuple[torch.Tensor, ...]:
+def _inputs(
+    batch: int = 2,
+    ctx_len: int = 5,
+) -> tuple[
+    torch.Tensor,
+    torch.Tensor,
+    list[tuple[torch.Tensor, torch.Tensor]],
+    torch.Tensor,
+]:
     torch.manual_seed(1)
     actions = torch.randn(batch, TINY.max_horizon, TINY.max_action_dim)
     timesteps = torch.rand(batch)
@@ -90,7 +99,7 @@ def _inputs(batch: int = 2, ctx_len: int = 5) -> tuple[torch.Tensor, ...]:
     ]
     enc_mask = torch.ones(batch, ctx_len, dtype=torch.bool)
     enc_mask[1, -2:] = False  # a padded row exercises the additive mask
-    return actions, timesteps, kv_states, enc_mask  # type: ignore[return-value]
+    return actions, timesteps, kv_states, enc_mask
 
 
 def test_released_shape_mirrors_the_port() -> None:
@@ -172,6 +181,7 @@ def test_ascending_direction_ties_loss_to_sampler() -> None:
             self.velocity = velocity
             self.seen: dict[str, torch.Tensor] = {}
 
+        @override
         def forward(
             self,
             xt: torch.Tensor,
@@ -299,6 +309,7 @@ def test_loss_masks_padded_dims_and_sum_form() -> None:
     batch, horizon, dim, valid_dims = 2, 3, 6, 2
 
     class _Zero(torch.nn.Module):
+        @override
         def forward(
             self,
             xt: torch.Tensor,

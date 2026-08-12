@@ -50,6 +50,7 @@ from bijou.molmoact2.processing import (
     IM_START_ID,
     PAD_ID,
     STATE_TOKEN_0_ID,
+    QuantileStats,
     build_robot_prompt,
     pack_action_example,
 )
@@ -172,15 +173,12 @@ def _port_pack(sample: PromptInputs) -> Any:
     )
 
 
-class _IdentityStats:
-    """QuantileStats stand-in mapping normalize_state to the identity on
-    already-normalized inputs: q01=-1, q99=1 -> 2*(x+1)/2-1 = x."""
-
-    q01 = torch.full((6,), -1.0)
-    q99 = torch.full((6,), 1.0)
-
-
-_IDENTITY_STATS = _IdentityStats()
+# Maps normalize_state to the identity on already-normalized inputs:
+# q01=-1, q99=1 -> 2*(x+1)/2-1 = x.
+_IDENTITY_STATS = QuantileStats(
+    q01=torch.full((6,), -1.0),
+    q99=torch.full((6,), 1.0),
+)
 
 
 def test_narration_off_assembly_matches_port_pack() -> None:

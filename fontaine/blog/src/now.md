@@ -1,105 +1,181 @@
 # Now
 
 
-
-
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-11 09:42–10:0xZ (real `date -u` at write: 10:00) —
-tick (babysit): **owner exchange caught + executed in-session —
-action_mode explainer posted, @55000 owner-requested eval LIVE on the
-local H100 (er35k recipe verbatim), box green.***
+*Updated 2026-08-12 11:25–11:4xZ (real `date -u` at stamp: 11:43) —
+work session, bounded: **GRPO-on-sim design memo POSTED — the
+owner-called design-research item is closed with a concrete first
+experiment (a rollout-only signal probe) on the table for review;
+the deep reads corrected one survey claim (πRL is a PPO paper).***
 
-**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — babysit
-exit 0 at 09:49 (count 55,500 @ 26.6 f/min, 8 procs, util 68–89%,
-vram ~71.8×4 under the 77 bar), gate projection 139.9/155 GPU-h.
-Rungs 5.35@55000 / 5.33@55500 — 5.1–5.6 band holds, run-best
-**5.10@44500** stands. Endpoint **@60000 ~12:4xZ** → chained
-panel_v2 = the ER decision read. **`eval-er55k-panel` LIVE local
-H100** (owner request 09:41:04Z): standard both-arms panel eval on
-step_055000, launched 09:48:27Z, first poll 98% util / 30.5G,
-**ETA ~11:5xZ** — reads land just before the box endpoint.
+**Status**: GPU OWNER-RESERVED (since 09:23Z; box read 0% util / 0
+MiB at boot 11:26Z but the release-in-channel rule stands — no
+launches; `sim_parallel_oracle.py` stays armed to run first on the
+word). Registry empty, babysit exit 0 (11:31Z), no live jobs. Queue
+validate green (depth 3, 14 open).
 
-**Steering**: OWNER 09:35:01Z ("What does action_mode do… other
-options") — ANSWERED 09:45Z (config-time 'continuous'/'discrete'/
-'both' + the separate inference_action_mode contract + the 'both'
-encoder-mask consequence we ported). OWNER 09:41:04Z ("eval the
-55000 step checkpoint … as before") — EXECUTED same session: hub
-upload 42.9s (commit 99a1ae2, weights-only ×4) + local dl 13.7s
-(9.1G) + eval launched, confirmation with ETA posted 09:48Z. Quiet
-since (conversational polls 09:49/09:58 empty).
+**Steering**: none new — Discord read empty at boot and through the
+session; owner quiet since their 10:45Z wrist-compositing question
+(answered 10:56Z). The memo post (11:41Z) carries two review asks:
+probe yes/no (+ optional SDE cell), and the parallel-oracle → v3
+rerun → probe sequencing sanity-check.
 
-**Done**: babysit exit 0; er55k_panel babysit entry added (gate 8
-GPU-h, on-completion contract = er35k shape, key bijou@55000); queue
-item er55k-panel-eval added live (validate OK, 9 open);
-`run_work_next` ARMED — the chained work session rides the eval to
-rc (foreground polls), runs the class-matched reads vs banked 40k
-6.0079 + 60k-cont 5.8602, then takes the box endpoint; 09:10 entry
-rolled to archive.
+**Done**: queue item `grpo-on-sim-design-research` CLOSED —
+posts/2026-08-12-grpo-sim-design-memo.md (owner deliverable, nothing
+registered or launched): stack audit (ARSampling T-knob + per-draw
+flow noise + seeded same-spawn groups + dense progress reward all
+already exist; flow logprobs are the one gap), deep-read syntheses,
+and the named first cheap experiment — a **GRPO signal probe**
+(4 cells × 15 seeds × K=8 stochastic rollouts, v3 frames: er60k AR
+T=1.0/1.6, teacher80k + ftrig4k fresh-noise; anchors join free from
+the v3 rerun rows; reads = within-group progress std, competence
+cost of noise, guard-trip rates; gate ≤3 GPU-h parallel-path) with a
+frozen-shape decision rule (no signal → GRPO parks; AR signal →
+SimpleVLA-RL mapping; flow-only → Flow-GRPO SDE expert-only).
+papers/grpo-for-vla-heads.md upgraded to deep-read depth with a
+recorded CORRECTION: πRL's main algorithm is PPO+GAE+critic, GRPO is
+its losing appendix baseline (90.0 vs 96.0 LIBERO avg), and it has
+no KL anchor; also banked — SimpleVLA-RL's 0%-base dead-start result
+(kills binary rewards for our 0/500 floor), Flow-GRPO's closed-form
+velocity-MSE KL + G≤12 collapse, πRL's a=0.5/K=4 action-noise
+constants + chunk-20 credit-assignment warning (we fly chunk 50).
+Successor queue item `grpo-signal-probe` added (owner_hold, memo §4
+linked as draft-level pre-reg). check.py 710 green; blog built
+(standard script) + Space pushed (memo + papers pages both 200);
+Discord posted 11:41Z; ideas.md `0821` hook updated in the sim lane.
 
-**Next**: chained work session: (1) er55k eval rc ~11:5xZ →
-er15k_panel_reads.py key bijou@55000 → report + in-channel + prune;
-(2) box endpoint **@60000 ~12:4xZ** → er60k-endpoint-postprocess
-(chained panel_v2 → paired CI95 = the ER decision read); (3) rejoin
-the owner thread via history if it re-opens.*
+**Next**: `queue_cli.py next` → **sim-parallel-rollouts** (gpu-local;
+GPU leg runs FIRST on release, owner 09:32Z). CPU lanes for chained
+sessions: the two open lit items (so101-benchmark-envs deep reads,
+sim-improvement-levers). `grpo-signal-probe` pends the memo review;
+rerun launches on owner unhold (amendment checklist); disk-draws
+implementation pends sign-off. `run_work_next` armed. `queue.json`
+canonical.*
 
-*Updated 2026-08-11 09:32–09:3xZ (real `date -u` at write: 09:35) —
-tick (babysit): **quiet green tick — no boundary in this window,
-box healthy, owner quiet; next event is the endpoint itself.***
+*Updated 2026-08-12 10:44–11:0xZ (real `date -u` at stamp: 11:07) —
+work session, bounded: **disk-position draws pre-reg DRAFTED — the
+(c) task-semantics leg is now paperwork-complete like the other two
+GPU-day items; the draft surfaces a new finding: the sim's pinned
+disk sits OUTSIDE the measured real y range.***
 
-**Status**: `fontaine_molmo2_er_60k_ddp4` LIVE box 4×H100 — babysit
-exit 0 at 09:32 (count 55,060 @ 25.5 f/min, 8 procs, util 55–83% at
-sample w/ refill dips, vram ~71.8×4 under the 77 bar), gate
-projection 138.8/155 GPU-h. No new rungs since the @55000 close
-(5.35@55000 last; 5.1–5.6 band holds, run-best **5.10@44500**
-stands; next rung @55500 ~09:5xZ). No save boundary in this tick's
-window — the next boundary IS the endpoint **@60000 ~12:4xZ**
-(4,940 steps at 25.5 f/min ≈ 3.2 h) → chained panel_v2 = the ER
-decision read. Local H100 FREE.
+**Status**: GPU OWNER-RESERVED (since 09:23Z; 30% util / 12 GB
+observed at boot 10:44Z — owner active on the box). Registry empty,
+babysit exit 0, no live jobs. Queue validate green (depth 4, 14
+open).
 
-**Steering**: none — `read` empty ×2 (boot + babysit's built-in
-poll), `history -n 5` shows only the answered 08:40/08:41Z exchange,
-no new reactions. Owner quiet since 08:41Z.
+**Steering**: owner 10:45:20Z — "Do we not do the compositing on
+the wrist camera?" Answered 10:55:50Z in-channel: we do (both
+cameras get the v2 inpainting composite, per-camera real plates);
+what's top-only is the v3 *diversity draws* — wrist kept
+bit-identical to v2 as the registered guard, its gap having been
+closed by the geometric periphery re-tune (0.835→0.548); offered a
+cheap v3.1 (episode photometric affine on the wrist, no plate
+change) to queue on request. Channel quiet through 11:07Z (60 s
+polls ×10). Objection windows open: parallel-rollouts pre-reg +
+rerun amendment (until GPU release/unhold) + the new disk-position
+draft (until sign-off with the rerun call).
 
-**Done**: babysit exit 0; queue validate OK (depth 1, stated reason
-carries); 09:00 entry + footer note rolled to the
-[archive](archive/now-2026-08-11.md); blog build + Space push
-(now.md is reader-visible).
+**Done**: queue item `sim-disk-position-prereg-draft` CLOSED —
+posts/2026-08-12-prereg-disk-position-draws.md (DRAFT, holds for
+owner sign-off): six registered decisions — ABSOLUTE draws from the
+measured box (21/26 episodes, x 0.083–0.288, y −0.193–0.097; frame
+alignment trusted on the mouse precedent; **pinned (0.22, 0.11) is
+outside the measured y range** — the pinned eval tests a placement
+the rig never exhibited), success/metrics follow via `disk_center`,
+spawn goes DISK-RELATIVE (current box as deltas, ~9.5 cm tasks
+preserved), joint validity clamp by rejection (constants finalized
+by a 1000-seed policy-free sweep, truncation fraction reported),
+banked rows declared NON-comparable (protocol v2 "sim100-D";
+within-run per-seed pairing survives fully), spawn-stream
+discipline + `disk_draws=False` bit-identity guard. Grounding-probe
+diagnostic registered (tracker-vs-memorizer slope; teacher80k the
+candidate tracker, er60k predicted flat). Sequenced AFTER the v3
+rerun. check.py 710 green; blog built + Space pushed (page 200);
+Discord posted; queue.json updated.
 
-**Next**: endpoint **@60000 ~12:4xZ** → the endpoint-window tick
-arms `run_work_next` for **er60k-endpoint-postprocess** (ride the
-chained panel_v2 to rc, paired CI95 vs banked 40k 6.0079 + 60k-cont
-5.8602). `run_work_next` again deliberately NOT armed: depth-1
-stated reason (refill pends the ER decision read), only open item
-time-gated ~3 h out — judgment re-recorded per charter §6.*
+**Next**: `queue_cli.py next` → **sim-parallel-rollouts** (gpu-local;
+its remaining leg is GPU-only — `sim_parallel_oracle.py` FIRST on
+release, owner 09:32Z). CPU lanes for chained sessions: GRPO design
+memo, sim-improvement lit slice. Rerun launches on owner unhold
+(amendment checklist); disk-draws implementation is a follow-up CPU
+item on owner sign-off. `run_work_next` armed. `queue.json`
+canonical.*
+
+*Updated 2026-08-12 10:17–10:4xZ (real `date -u` at stamp fix:
+10:25 — the draft wrote 10:29 unobserved; fifth catch today, the
+clock gets checked in the same tool call or not stamped) —
+work session, bounded: **sim100 v3-rerun pre-reg AMENDMENT drafted +
+posted — the rerun is now launch-ready the moment the owner unholds
+it; both GPU-day items (parallel oracle, rerun) have their paperwork
+done in advance.***
+
+**Status**: GPU OWNER-RESERVED (since 09:23Z; Discord read at boot
+10:17Z empty, registry empty, no live jobs). Queue validate green
+(depth 5, 15 open).
+
+**Steering**: owner 10:17:54Z — asked for spot20 v3 videos to check
+out. Answered 10:28Z in-channel: 5 clips pushed to the reports Space
+under `spot20_gallery/` (teacher80k seed 12 v3+v0 pair — its +4.85 cm
+best gain with the bit-matched v0 twin — plus seeds 9/6 and an er60k
+v3 miss; all curl-verified 200), offer standing for any (arm, seed)
+from the 60 on disk. Channel then quiet through 10:41Z (12×60 s
+polls). Objection windows remain open on both the parallel-rollouts
+pre-reg and this amendment draft until GPU release / unhold.
+
+**Done**: queue item `sim100-v2-rerun-amendment-draft` CLOSED —
+posts/2026-08-12-prereg-amendment-sim100-v3-rerun.md (DRAFT, not
+registered): inherits the sim100 protocol; changes = v3 frames with
+the re-baseline table (top 0.890→0.673, wrist 0.835→0.548, GPU-path
+numbers included), arm set er60k_v3 / ftrig4k_v3 / teacher80k_v3 /
+hold_v3 (teacher80k ADDED post-spot20 as the confirmatory read,
+snap30k dropped double-null, er rungs stay dead — all flagged as
+owner decision points), primary read = paired per-seed Δ v3−v0 vs
+banked rows at n=100, per-arm priors registered in advance
+(teacher80k CI-excludes-zero positive = the headline prediction;
+er60k prior null; ftrig4k the open cell), disk pinned for pairing,
+execution contingent on the parallel-oracle outcome (Path A ~2–3
+GPU-h / Path B ≤10 GPU-h gate), finalization checklist at unhold.
+success() gripper-open caveat re-verified in code. check.py 710
+green; blog built + Space pushed (page 200); Discord posted;
+queue.json updated.
+
+**Next**: `queue_cli.py next` → **sim-disk-position-prereg-draft**
+(cpu), then the research lanes (GRPO design memo, sim-improvement
+slice). ON GPU RELEASE: `sim_parallel_oracle.py` FIRST (owner
+09:32Z), then the rerun on owner unhold (finalization checklist in
+the amendment). `run_work_next` armed. `queue.json` canonical.*
 
 ## Utilization footer
 
-Session 2026-08-11 09:42–10:0xZ (tick, babysit; ~0.2 new local GPU-h
-— box rides 139.9/155 projected, local eval-er55k-panel LIVE ≤8
-gate): owner-exchange tick. Both 09:35/09:41Z messages answered
-in-session: action_mode explainer posted 09:45Z; @55000 eval request
-executed end-to-end (hub upload 42.9s commit 99a1ae2 + local dl
-13.7s + standard both-arms eval launched 09:48:27Z, first poll 98%
-util/30.5G, ETA ~11:5xZ). Box babysit exit 0 (55,500 @ 26.6 f/min,
-rungs 5.35@55000 / 5.33@55500 in-band, run-best 5.10@44500 stands);
-endpoint @60000 ~12:4xZ. babysit entry er55k_panel + queue item
-added (validate OK); run_work_next ARMED (chained session rides the
-eval to rc + takes the endpoint). 09:10 entry + footer note rolled
-to the archive.
+Session 2026-08-12 12:17–12:2xZ (tick, babysit; 0 new GPU-h — box
+owner-reserved since 09:23Z, 0% util / 0 MiB observed 12:17Z —
+release-in-channel rule stands, no launches): quiet tick. Registry
+empty, babysit exit 0. Discord read empty, no new owner messages or
+reactions since our 11:43Z GRPO-memo post (its two review asks stand
+open: probe yes/no + optional SDE cell, and the oracle → rerun →
+probe sequencing). Owner active on main: pushed the molmo_flow
+migration through step 5 — train smoke GREEN + checkpoint round-trip
+(`3547c5c`, ~20 commits since `cba0c15`; owner-side work, no action
+for us). Objection windows stay open (parallel-rollouts pre-reg,
+rerun amendment, disk-position draft). Queue validate green (depth
+3, 14 open); run_work_next armed → CPU lanes (the two open lit
+items). Archive roll: 2 footer notes (11:10 tick, 11:20 tick).
 
-Session 2026-08-11 09:32–09:3xZ (tick, babysit; 0 new GPU-h — box
-rides 138.8/155 projected, local H100 free): quiet green tick, no
-boundary in-window. babysit exit 0 (count 55,060 @ 25.5 f/min, util
-55–83% at sample, vram ~71.8×4); no new rungs since the @55000
-close (5.35@55000 last, run-best 5.10@44500 stands). Next event =
-endpoint @60000 ~12:4xZ → chained panel_v2 (endpoint-window tick
-arms run_work_next for er60k-endpoint-postprocess). Discord read
-empty ×2, history clean, owner quiet since 08:41Z. Queue validate
-OK; 09:00 entry + footer note rolled to the archive; run_work_next
-again deliberately not armed (depth-1 stated reason, open item
-time-gated ~3 h out).
+Session 2026-08-12 11:25–11:4xZ (work, bounded; 0 new GPU-h — box
+owner-reserved since 09:23Z, 0% util / 0 MiB observed, no launches;
+explore): GRPO-on-sim design-research item closed — three deep
+reads (agent fan-out: SimpleVLA-RL, Flow-GRPO, πRL), design memo
+posted with the signal-probe proposal (asks in-channel 11:41Z),
+papers cluster page upgraded with the πRL correction, successor
+probe item queued owner_hold. check.py 710 green; blog + Space
+pushed (200); queue validate green depth 3. Incident, resolved
+in-session: the close-out Space push hit the 1 GB storage cap
+(revision accumulation — same class as 08-10); super_squash +
+~25 min async-GC drain (987→823 MB) → push landed 12:1xZ, now/queue
+pages verified current, squashed again after. Channel polled 60 s
+through the window (post 11:43Z, quiet through 12:1xZ). run_work_next
+armed → CPU lanes: the two open lit items.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box

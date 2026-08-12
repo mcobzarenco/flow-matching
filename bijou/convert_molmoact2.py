@@ -272,6 +272,7 @@ def convert(
         )
 
     expert = _extract_expert_tensors(source_dir)
+    expert_sha256 = _tensor_digest(expert)
     metadata = CheckpointMetadata(
         backbone=BackboneConfig(id=str(recorded_backbone), depth=BackboneDepth.FULL),
         prompt=prompt_config,
@@ -291,7 +292,7 @@ def convert(
             (source_dir / "norm_stats.json").read_bytes(),
         ).hexdigest(),
         "expert_tensors": len(expert),
-        "expert_sha256": _tensor_digest(expert),
+        "expert_sha256": expert_sha256,
         "converter": "bijou.convert_molmoact2",
     }
 
@@ -307,12 +308,12 @@ def convert(
         raise SystemExit("round-trip failed: train_args decoder kind mismatch")
     with safe_open(out / "expert.safetensors", framework="pt", device="cpu") as f:
         written = {key: f.get_tensor(key) for key in f.keys()}  # noqa: SIM118
-    if _tensor_digest(written) != payload["converted_from"]["expert_sha256"]:
+    if _tensor_digest(written) != expert_sha256:
         raise SystemExit("round-trip failed: written expert bytes differ from source")
     print(
         f"converted {source} [{norm_tag}] -> {out}: "
         f"{len(expert)} expert tensors "
-        f"(sha256 {payload['converted_from']['expert_sha256'][:16]}...), "
+        f"(sha256 {expert_sha256[:16]}...), "
         f"decoder {decoder_config.num_layers}x{decoder_config.hidden_size} "
         f"horizon {decoder_config.action_horizon}/{decoder_config.max_horizon} "
         f"action_dim {decoder_config.action_dim}/{decoder_config.max_action_dim}, "
