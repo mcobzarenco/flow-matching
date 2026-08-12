@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-12T16:45:00Z
+**Updated:** 2026-08-12T17:30:00Z
 
 **Depth call:** depth 3 open at 16:0xZ 08-12: ftrig-eval20-flipped-parallel CLOSED this session (owner prio, ridden end-to-end); remaining open: sim-wrist-compositing + 2 lit items; grpo-signal-probe owner_hold (memo review), v3-rerun unhold ask 15:13Z still open.
 
-**13 open** (Live 0 · Queued 3 · Blocked 10 · Done 133)
+**14 open** (Live 0 · Queued 4 · Blocked 10 · Done 133)
 
 ## 🔴 Live (0)
 
@@ -14,9 +14,23 @@
 
 *(empty)*
 
-## 🟢 Queued (3)
+## 🟢 Queued (4)
 
 *ready — waiting on a window or a boundary*
+
+**`release-eval20-convmap`** · `gpu-local`
+
+OWNER PRIO 17:13:24Z 08-12 (FIRST GPU claim): released MolmoAct2-SO100_101 checkpoint directly in sim, WITH the unit shim per the owner-forwarded box note (/tmp/owner_note_molmoact2_norm.txt, committed copy fontaine/notes/molmoac…
+
+**boundary:** Queued 17:2xZ 08-12 tick on owner message 17:13:24Z. Exploratory rough-numbers pass, not a registered claim; off-contract label is load-bearing in every artifact (rows, report page, post). · [pre-reg](posts/2026-08-12-prereg-release-eval20-convmap.md)
+
+<details><summary>full record</summary>
+
+OWNER PRIO 17:13:24Z 08-12 (FIRST GPU claim): released MolmoAct2-SO100_101 checkpoint directly in sim, WITH the unit shim per the owner-forwarded box note (/tmp/owner_note_molmoact2_norm.txt, committed copy fontaine/notes/molmoact2-unit-contracts-box-note.md). Raw-in-v3-sim is pre-declared MEANINGLESS (v3 rest lift ~-30 sits below the release box floor +45.2 -&gt; state tokens saturate, model blind, number = unit mismatch); run case 3: per-joint affine shim state-in (v3 -&gt; model units before its q01/q99 table) + action-out (model units -&gt; v3 before controller), labeled OFF-CONTRACT _convmap, never pooled with ftrig contract reads, treated as lower bound (release trained on mixed conventions through one table). Converted release already on disk: ~/marius-convert-gate/converted/molmoact2_so100_101_release. MANDATORY pre-run tripwires (from the note): (a) print release box from its norm_stats + verify mapped reachable set A-inv(box) covers the sim task workspace (clamp travels with the model); (b) first-action-vs-current-state check as unit-bug detector (release contract read: first_mae 18.0 vs state-copy 2.5 - a correct shim collapses this to ~state-copy scale; if it does not, STOP, do not spend the GPU). Then: same 20 seeds (sim100 list 0-19), fixed post-flip sim, parallel driver workers=8, paired vs step-500/step-2000 corrected arms (parallel-path rough rows). Also bank the cross-check the box asked for: does our sim calibration imply the same lift +180 / elbow +90 old-convention map as fit_convention_map snapped - flag disagreement in-channel. Ack posted 17:2xZ.
+
+</details>
+
+---
 
 **`grpo-signal-probe`** · `gpu-local`
 
@@ -2058,7 +2072,7 @@ Rig-mixture lever, step 1 (CPU, executable now): implement the per-root --datase
 
 OWNER PRIO (15:27Z 08-12): re-run the ftrig 20 episodes on flipped-mount physics (d5cf9fd) with parallel workers for speed
 
-**boundary:** CLOSED 16:4xZ 08-12 work session, ridden end-to-end incl. an owner-caught CORRECTION (~0.36/0.5 GPU-h total): pre-reg + results + correction in posts/2026-08-12-prereg-ftrig-eval20-flipped-parallel.md. First readout (paired ~null, 18/20 bit-identical) measured only the collision-box half: owner spotted 16:07Z that videos showed the bracket unmoved -&gt; root cause MuJoCo geom_sameframe fast path silently ignoring runtime geom_pos/quat edits on the visual mesh (flag 2) -&gt; one-line fix (clear the flag, so101_sim.py) + postflip arm rerun. TRUE flip effect: 13/20 seeds changed (policy is vision-driven, bracket visible in top cam); knock-aways 6-&gt;2 (s4 -12.3 -&gt; -0.05, s5 -5.5 -&gt; +0.1), mean -1.21 -&gt; -0.46 cm, paired +0.75 cm CI95 [-0.33,+2.26] (n=20 rough, crosses zero); character shift toward freezing over shoving. Physics-side claims (control loss -62%, sweep) box-driven, stand. LESSON REGISTERED: any runtime geom_pos/quat edit must clear geom_sameframe. Also banked: lockstep-parallel bit-reproducibility; parallel-vs-seq outcome drift (11/20 &gt;0.1 cm, max 6.0). Rows + 60 videos + stills on fontaine-reports /ftrig_eval20_flip_parallel/ (curl 200); full exchange in-channel 16:02-16:3xZ. · [pre-reg](posts/2026-08-12-prereg-ftrig-eval20-flipped-parallel.md)
+**boundary:** CLOSED 16:4xZ 08-12 work session, ridden end-to-end incl. an owner-caught CORRECTION (~0.36/0.5 GPU-h total): pre-reg + results + correction in posts/2026-08-12-prereg-ftrig-eval20-flipped-parallel.md. First readout (paired ~null, 18/20 bit-identical) measured only the collision-box half: owner spotted 16:07Z that videos showed the bracket unmoved -&gt; root cause MuJoCo geom_sameframe fast path silently ignoring runtime geom_pos/quat edits on the visual mesh (flag 2) -&gt; one-line fix (clear the flag, so101_sim.py) + postflip arm rerun. TRUE flip effect: 13/20 seeds changed (policy is vision-driven, bracket visible in top cam); knock-aways 6-&gt;2 (s4 -12.3 -&gt; -0.05, s5 -5.5 -&gt; +0.1), mean -1.21 -&gt; -0.46 cm, paired +0.75 cm CI95 [-0.33,+2.26] (n=20 rough, crosses zero); character shift toward freezing over shoving. Physics-side claims (control loss -62%, sweep) box-driven, stand. LESSON REGISTERED: any runtime geom_pos/quat edit must clear geom_sameframe. Also banked: lockstep-parallel bit-reproducibility; parallel-vs-seq outcome drift (11/20 &gt;0.1 cm, max 6.0). OWNER EXTENSION 16:37Z executed same session: step-500 checkpoint converted fresh (bijou.convert_molmoact2 -&gt; outputs/converted/molmoact2_rig_r1_step500) + same 20 seeds on the fixed sim: mean +0.02 vs step2000's -0.46 cm, paired +0.48 CI95 [-0.06,+1.13], 9 better/3 worse/8 tied, knock-aways 1 vs 2, best s0 +1.59 - extra 1500 ft steps buy no sim-side competence (overfit-to-rig-appearance consistent). Day total ~0.45/0.5 GPU-h, 5 arms. Rows + 80 videos + stills on fontaine-reports /ftrig_eval20_flip_parallel/ (curl 200); full exchange in-channel 16:02-16:5xZ. · [pre-reg](posts/2026-08-12-prereg-ftrig-eval20-flipped-parallel.md)
 
 <details><summary>full record</summary>
 
