@@ -1,12 +1,52 @@
 # Now
 
-
-
-
-
-
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-12 19:20–20:1xZ (real `date -u` at stamp: 20:07) —
+work session, bounded: **GRPO signal probe is LAUNCH-READY (pre-reg
+finalized + posted, instrument complete: SDE decode wired end-to-end,
+parallel driver runs stochastic groups) — and a mid-session owner
+steer landed a headline: seed 6 at a 30-second budget GRABS the boat
+and carries it to 1.0 cm of the disk. The failure mode on that seed
+is place/release, not grasp.***
+
+**Status**: no live jobs, GPU idle (seed-6 rerun ran 19:54–19:56Z,
+~0.02 GPU-h, entry pruned). Queue validate green (depth 3, 13 open,
+stamp 20:05:49Z).
+
+**Steering**: owner 19:25:39Z ("seed 6 is a clear grab and lift —
+rerun just seed 6 with a longer time horizon; the idea was 30
+seconds") — replied 19:47Z, executed end-to-end same session: the
+eval-20 runs gave 15 s vs the sim100 protocol's 30 s; new
+`--episode-seconds` states the budget in time (`c26a99e`); the 30 s
+rerun confirms **grab + carry** (boat in the gripper jaws on the wrist
+cam ~4 s, benchy→disk 1.04 cm at t=15.9 s, never releases, sets the
+boat back at spawn). Result + video posted 19:58Z, amendment 2 +
+results on the convmap pre-reg page. Open asks: GRPO probe
+launch-on-handback go (20:0xZ post), seed-16/all-20 30 s extension
+offer (19:58Z), v3-rerun unhold + arm set (15:13Z), disk-draws
+sign-off.
+
+**Done** (commits `8b6d034`, `c26a99e`, `a06c33d`, close-out): (1)
+**GRPO probe prep COMPLETE** per the owner's 13:16Z "get everything
+ready" — SDE sampler wired end-to-end (`--sde-noise-level` on both
+drivers, per-item keyed step noise batch-composition-invariant, new
+`SDE_STEP_DOMAIN` stream), parallel driver work units are now
+(seed, draw) with `--draws`/`--ar-temperature` (the ≤3 GPU-h probe
+path), oracles for all of it (check.py 797 green); **finalized
+pre-reg posted** (frozen: seeds 0–14, 30 s episodes, signal bar
+median group std ≥ 0.25 cm, 5 cells + anchors + a=0.3 hedge cell,
+within-driver paired-only discipline honoring the parallel-oracle
+FAIL; the 13:36Z sequence predecessors are both done ⇒ launches on
+GPU handback, no v3-rerun hard dependency). (2) seed6-30s owner call
+closed (above). (3) Hygiene: convmap post was missing from
+posts/index.md — indexed; queue item updated (prereg pointer → the
+finalized page, "15 replans" drift corrected).
+
+**Next**: `queue_cli.py next` → CPU lanes: `lit-sim-improvement-levers`
+(owner-called lit slice), `sim-wrist-compositing`. GPU on handback:
+GRPO probe (launch-ready), v3 rerun (pends unhold). `queue.json`
+canonical.*
 
 *Updated 2026-08-12 19:15–19:2xZ (real `date -u` at stamp: 19:22) —
 tick, babysit: **caught and closed a dropped owner ask — 19:01:42Z
@@ -87,55 +127,18 @@ reports Space (curl 200); Discord launch + per-episode + results posts
 v3-rerun unhold (15:13Z ask). `run_work_next` armed. `queue.json`
 canonical.*
 
-*Updated 2026-08-12 18:19–18:2xZ (real `date -u` at stamp: 18:24) —
-tick, babysit: **owner 18:19Z caught a real shim discrepancy — the
-official LeRobot v3.0→v2.1 conversion sign-flips shoulder_lift
-((−1,+90) = 90−arm); our fitted map used (+1,+180). The INERT 0.00×20
-release read is now SUSPECT on lift; official-map rerun queued as first
-GPU claim.***
-
-**Status**: no live jobs, GPU idle. Queue validate green (depth 4, 14
-open) — new item `release-eval20-officialmap` is first GPU claim;
-`run_work_next` armed. Driver-guard 18:14Z straggler alert: pid was a
-bare `-zsh` session child, no job attached — noise, nothing to relaunch.
-
-**Steering**: owner 18:19:08Z — does our shim match
-irenegracekp/molmoact2-so101 `inference.py` (offsets `0,90,90,0,0,0`,
-signs `1,-1,1,1,1,1`, the documented v3.0→v2.1 SO-100/101 conversion)?
-Verified on the real tables (CPU, same session): **4/6 joints match
-exactly** (pan/wrist_flex/gripper identity; elbow +90 — our override
-landed the official value). **shoulder_lift MISMATCHES**: the mirror
-(−1,+90) QUALIFIED in our fit and covers the release box better (7.5%
-vs 27.9% uncovered) but lost to the pre-registered MIRROR_MARGIN=0.25
-rule by 20.4 pt — the gate rejected a real mirror (box's panel snap
-+180 has the same exposure). wrist_roll ambiguous: ours −90 vs official
-identity, both 61% uncovered (span mismatch); identity clamps sim wrist
-home (77.6°) above the box ceiling (43.5°) — our −90 may absorb a
-rig-specific zero. **Consequence**: wrong lift sign direction-inverts
-decoded lift motion — matches the filmed swing-down-and-park; the
-first-action detector is sign-blind at rest (any bijection preserves
-action≈state). Full comparison + rerun plan posted 18:2xZ. Live
-exchange 18:32–18:3xZ: owner *how is it going?* → status posted;
-owner 18:34:34Z — *running the seeds now with the snippet's map?
-Update me on episodes 1 by 1* → confirmed 18:36Z: snippet map EXACTLY
-as primary (wrist_roll identity per snippet; our −90 arm optional
-secondary), per-episode in-channel posts as rows land (completion
-order under workers=8; strict-sequential offered if wanted — check
-channel before launch). Steering recorded in the queue item. Open
-asks: v3-rerun unhold + arm set (15:13Z), GRPO memo review,
-disk-draws sign-off.
-
-**Done**: per-joint audit banked (this entry + queue item);
-`release-eval20-officialmap` queued (sign-carrying override CLI
-extension → tripwires under official map → same 20 seeds, ≤0.4 GPU-h,
-amendment on the existing pre-reg page, INERT claim to be explicitly
-re-dispositioned); `run_work_next` armed.
-
-**Next**: chained work session executes the official-map rerun, then
-CPU lanes (`lit-sim-improvement-levers`, `sim-wrist-compositing`).
-v3-rerun still pends the owner unhold. `queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-12 19:20–20:1xZ (work, bounded; **+~0.02 GPU-h**
+seed-6 30 s rerun ridden in-turn; exploit + owner steering): GRPO
+signal probe prep COMPLETE (SDE decode end-to-end, parallel stochastic
+groups, finalized pre-reg posted — launch-ready on GPU handback, owner
+sequence predecessors both done); owner 19:25Z seed-6 steer executed
+end-to-end same session (`--episode-seconds` fix + 30 s rerun: GRAB
+CONFIRMED, carried to 1.04 cm of the disk, failure mode = place/
+release; video + amendment 2 results posted). check.py 797 green ×3
+commits; queue drift fixed ("15 replans" → the sim100 30-replan
+protocol); convmap post indexed into posts/index.md.
 
 Session 2026-08-12 19:15–19:2xZ (tick, babysit; 0 new GPU-h — GPU
 idle): caught a dropped owner ask — 19:01:42Z “Can you link a video?”
