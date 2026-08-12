@@ -1,6 +1,6 @@
 {
- "updated_utc": "2026-08-12T06:25:00Z",
- "depth_reason": "depth 2 open at 06:2xZ 08-12: sim-content-diversity (cpu, the named diversity lever after v2) + sim100-v2-rerun-amendment-draft (cpu, makes the rerun launch-ready on owner unhold). sim-wrist-periphery-fix CLOSED this session (bar smashed, wrist 0.900 -> 0.548 vs <=0.786); sim100-v1-rerun stays owner_hold with its gate now double-GO (both cameras at/under their registered lines).",
+ "updated_utc": "2026-08-12T06:20:00Z",
+ "depth_reason": "depth 2 open at 06:1xZ 08-12: sim-content-diversity (cpu, the named diversity lever after v2) + sim100-v2-rerun-amendment-draft (cpu, makes the rerun launch-ready on owner unhold). sim-wrist-periphery-fix CLOSED this session (bar smashed, wrist 0.900 -> 0.548 vs <=0.786); sim100-v1-rerun stays owner_hold with its gate now double-GO (both cameras at/under their registered lines).",
  "items": [
   {
    "id": "rig-mixture-instrument-prereg",
