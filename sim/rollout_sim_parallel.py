@@ -149,11 +149,20 @@ def parse_args() -> argparse.Namespace:
         "--convmap-override",
         action="append",
         default=[],
-        metavar="JOINT=OFFSET",
-        help="explicit per-joint convention offset (degrees, sign +1) "
-        "overriding the gated fit — only after the tripwire script "
-        "shows the fit failing coverage and the override passing the "
-        "first-action check; recorded verbatim in the rows JSON",
+        metavar="JOINT=[SIGN,]OFFSET",
+        help="explicit per-joint convention override (degrees; "
+        "'lift=-1,90' carries a mirror, bare 'elbow_flex=90' keeps sign "
+        "+1) replacing the gated fit — only with tripwire-script "
+        "evidence (coverage + first-action) or an externally documented "
+        "conversion; recorded verbatim in the rows JSON",
+    )
+    parser.add_argument(
+        "--rows-jsonl",
+        type=Path,
+        default=None,
+        help="append one JSON line per episode AS IT COMPLETES "
+        "(completion order under workers>1) — the live-progress stream "
+        "a watcher can tail; the authoritative rows stay in --out-json",
     )
     parser.add_argument("--out-dir", type=Path, default=OUTPUT_DIR)
     parser.add_argument(
@@ -416,9 +425,24 @@ def main() -> int:
             predict_ms.append((time.perf_counter() - start) * 1000)
             return [chunk.numpy() for chunk in chunks]
 
+    if args.rows_jsonl is not None:
+        args.rows_jsonl.parent.mkdir(parents=True, exist_ok=True)
+        args.rows_jsonl.write_text("")  # truncate a stale stream
+
+    def record_row(row: EpisodeResult) -> None:
+        results.append(row)
+        if args.rows_jsonl is not None:
+            with args.rows_jsonl.open("a") as stream:
+                stream.write(
+                    json.dumps(
+                        {**asdict(row), "progress_final_cm": row.progress_final_cm},
+                    )
+                    + "\n",
+                )
+
     started = time.perf_counter()
     try:
-        batch_sizes = serve(conns, predict_batch, results.append)
+        batch_sizes = serve(conns, predict_batch, record_row)
     finally:
         for process in processes:
             process.join(timeout=30)
