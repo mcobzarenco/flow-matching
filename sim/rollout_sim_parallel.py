@@ -134,6 +134,27 @@ def parse_args() -> argparse.Namespace:
         "mount) — paired flip-effect reads only; flipped is the "
         "registered geometry",
     )
+    parser.add_argument(
+        "--convmap-seam-stats",
+        type=Path,
+        default=None,
+        help="OFF-CONTRACT release-in-sim arm (sim.convmap): checkpoint "
+        "dir whose normalization table states the sim seam's units (the "
+        "ftrig rig-recomputed table); fits the discrete convention map "
+        "seam -> checkpoint table and wraps the policy with it (state "
+        "in through A, chunks back through A⁻¹). The policy name and "
+        "the rows carry _convmap — never pooled with contract reads",
+    )
+    parser.add_argument(
+        "--convmap-override",
+        action="append",
+        default=[],
+        metavar="JOINT=OFFSET",
+        help="explicit per-joint convention offset (degrees, sign +1) "
+        "overriding the gated fit — only after the tripwire script "
+        "shows the fit failing coverage and the override passing the "
+        "first-action check; recorded verbatim in the rows JSON",
+    )
     parser.add_argument("--out-dir", type=Path, default=OUTPUT_DIR)
     parser.add_argument(
         "--out-json",
@@ -145,6 +166,10 @@ def parse_args() -> argparse.Namespace:
     args = parser.parse_args()
     if (args.checkpoint is None) == (not args.hold):
         parser.error("exactly one of --checkpoint / --hold is required")
+    if args.convmap_seam_stats is not None and args.hold:
+        parser.error("--convmap-seam-stats wraps a policy — meaningless with --hold")
+    if args.convmap_override and args.convmap_seam_stats is None:
+        parser.error("--convmap-override requires --convmap-seam-stats")
     return args
 
 
@@ -274,7 +299,10 @@ def main() -> int:
     import torch
 
     from bijou.decoders.flow import SamplingMethod
+    from bijou.eval.molmo_norm import MolmoNorm
     from bijou.eval.policies import BijouPolicy
+
+    from .convmap import seam_convention_map
 
     args = parse_args()
     torch.set_float32_matmul_precision("high")
@@ -292,6 +320,11 @@ def main() -> int:
             sample_steps=args.sample_steps,
             method=SamplingMethod[args.method.upper()],
             expert_dtype=getattr(torch, args.expert_dtype),
+            molmo_norm=(
+                MolmoNorm.CONVENTION_MAP
+                if args.convmap_seam_stats is not None
+                else MolmoNorm.CHECKPOINT
+            ),
         )
         horizon = min(args.execute_horizon, policy.info.chunk_size)
         print(
@@ -331,6 +364,7 @@ def main() -> int:
 
     results: list[EpisodeResult] = []
     predict_ms: list[float] = []
+    seam = None
 
     if policy is None:
 
@@ -338,13 +372,35 @@ def main() -> int:
             raise WorkerDiedError("hold arm workers must not request predicts")
     else:
         chunk_size = policy.info.chunk_size
-        # Converted checkpoints (molmoact2 lineage) carry no per-dataset
-        # table — their items must wear the checkpoint's MERGED stats
-        # (same fallback as the sequential driver).
-        stats = policy.info.per_dataset_normalization.get(
-            STATS_REPO_ID,
-            policy.info.normalization,
-        )
+        if args.convmap_seam_stats is not None:
+            # Off-contract seam (sim.convmap): items wear the SEAM's
+            # stats (the units the sim actually speaks), and the policy's
+            # per-repo map cache is seeded with the resolved fit — so an
+            # override rides the exact rewrite path the gated fit would,
+            # and the policy never re-fits behind our back.
+            seam = seam_convention_map(
+                args.convmap_seam_stats,
+                policy.info.normalization,
+                args.convmap_override,
+            )
+            policy._molmo_norm_maps["sim/eval100"] = seam.item_maps
+            stats = seam.seam_stats
+            print(
+                f"convmap seam {args.convmap_seam_stats.name}: "
+                f"scale {seam.map.scale.tolist()} "
+                f"offset {seam.map.offset.tolist()} "
+                f"(gated fit offset {seam.fit.map.offset.tolist()}, "
+                f"overrides {seam.overrides or 'none'})",
+                flush=True,
+            )
+        else:
+            # Converted checkpoints (molmoact2 lineage) carry no
+            # per-dataset table — their items must wear the checkpoint's
+            # MERGED stats (same fallback as the sequential driver).
+            stats = policy.info.per_dataset_normalization.get(
+                STATS_REPO_ID,
+                policy.info.normalization,
+            )
 
         def predict_batch(requests: list[tuple[Any, ...]]) -> list[np.ndarray]:
             items = []
@@ -408,6 +464,21 @@ def main() -> int:
                 "stats_repo_id": STATS_REPO_ID,
                 "mount_flip": not args.no_mount_flip,
                 "commit": commit,
+                # Off-contract provenance: the resolved seam map (fit +
+                # overrides) — None on contract reads. Rows under a
+                # non-None convmap must never pool with contract rows.
+                "convmap": (
+                    None
+                    if seam is None or policy is None
+                    else {
+                        "seam_stats": str(args.convmap_seam_stats),
+                        "scale": seam.map.scale.tolist(),
+                        "offset": seam.map.offset.tolist(),
+                        "fit_offset": seam.fit.map.offset.tolist(),
+                        "overrides": seam.overrides,
+                        "policy_name": policy.name,
+                    }
+                ),
             },
             "parallel": {
                 "workers": workers,
