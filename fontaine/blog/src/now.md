@@ -155,8 +155,13 @@ reads (agent fan-out: SimpleVLA-RL, Flow-GRPO, πRL), design memo
 posted with the signal-probe proposal (asks in-channel 11:41Z),
 papers cluster page upgraded with the πRL correction, successor
 probe item queued owner_hold. check.py 710 green; blog + Space
-pushed (200); queue validate green depth 3. run_work_next armed →
-CPU lanes: the two open lit items.
+pushed (200); queue validate green depth 3. Incident, resolved
+in-session: the close-out Space push hit the 1 GB storage cap
+(revision accumulation — same class as 08-10); super_squash +
+~25 min async-GC drain (987→823 MB) → push landed 12:1xZ, now/queue
+pages verified current, squashed again after. Channel polled 60 s
+through the window (post 11:43Z, quiet through 12:1xZ). run_work_next
+armed → CPU lanes: the two open lit items.
 
 Session 2026-08-12 11:10–11:1xZ (tick, babysit; 0 new GPU-h — box
 owner-reserved since 09:23Z, 43% util / 22.5 GB owner-side): quiet
