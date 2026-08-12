@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-12T17:30:00Z
+**Updated:** 2026-08-12T18:10:24Z
 
 **Depth call:** depth 3 open at 16:0xZ 08-12: ftrig-eval20-flipped-parallel CLOSED this session (owner prio, ridden end-to-end); remaining open: sim-wrist-compositing + 2 lit items; grpo-signal-probe owner_hold (memo review), v3-rerun unhold ask 15:13Z still open.
 
-**14 open** (Live 0 · Queued 4 · Blocked 10 · Done 133)
+**13 open** (Live 0 · Queued 3 · Blocked 10 · Done 134)
 
 ## 🔴 Live (0)
 
@@ -14,23 +14,9 @@
 
 *(empty)*
 
-## 🟢 Queued (4)
+## 🟢 Queued (3)
 
 *ready — waiting on a window or a boundary*
-
-**`release-eval20-convmap`** · `gpu-local`
-
-OWNER PRIO 17:13:24Z 08-12 (FIRST GPU claim): released MolmoAct2-SO100_101 checkpoint directly in sim, WITH the unit shim per the owner-forwarded box note (/tmp/owner_note_molmoact2_norm.txt, committed copy fontaine/notes/molmoac…
-
-**boundary:** Queued 17:2xZ 08-12 tick on owner message 17:13:24Z. Exploratory rough-numbers pass, not a registered claim; off-contract label is load-bearing in every artifact (rows, report page, post). · [pre-reg](posts/2026-08-12-prereg-release-eval20-convmap.md)
-
-<details><summary>full record</summary>
-
-OWNER PRIO 17:13:24Z 08-12 (FIRST GPU claim): released MolmoAct2-SO100_101 checkpoint directly in sim, WITH the unit shim per the owner-forwarded box note (/tmp/owner_note_molmoact2_norm.txt, committed copy fontaine/notes/molmoact2-unit-contracts-box-note.md). Raw-in-v3-sim is pre-declared MEANINGLESS (v3 rest lift ~-30 sits below the release box floor +45.2 -&gt; state tokens saturate, model blind, number = unit mismatch); run case 3: per-joint affine shim state-in (v3 -&gt; model units before its q01/q99 table) + action-out (model units -&gt; v3 before controller), labeled OFF-CONTRACT _convmap, never pooled with ftrig contract reads, treated as lower bound (release trained on mixed conventions through one table). Converted release already on disk: ~/marius-convert-gate/converted/molmoact2_so100_101_release. MANDATORY pre-run tripwires (from the note): (a) print release box from its norm_stats + verify mapped reachable set A-inv(box) covers the sim task workspace (clamp travels with the model); (b) first-action-vs-current-state check as unit-bug detector (release contract read: first_mae 18.0 vs state-copy 2.5 - a correct shim collapses this to ~state-copy scale; if it does not, STOP, do not spend the GPU). Then: same 20 seeds (sim100 list 0-19), fixed post-flip sim, parallel driver workers=8, paired vs step-500/step-2000 corrected arms (parallel-path rough rows). Also bank the cross-check the box asked for: does our sim calibration imply the same lift +180 / elbow +90 old-convention map as fit_convention_map snapped - flag disagreement in-channel. Ack posted 17:2xZ.
-
-</details>
-
----
 
 **`grpo-signal-probe`** · `gpu-local`
 
@@ -216,9 +202,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (133)
+## ✅ Done (134)
 
 *closed — the full record stays in each fold*
+
+**`release-eval20-convmap`** · `gpu-local`
+
+OWNER PRIO 17:13:24Z 08-12 (FIRST GPU claim): released MolmoAct2-SO100_101 checkpoint directly in sim, WITH the unit shim per the owner-forwarded box note (/tmp/owner_note_molmoact2_norm.txt, committed copy fontaine/notes/molmoac…
+
+**boundary:** DONE 18:1xZ 08-12 work session: shim verified (final map lift+180 elbow+90 wrist_roll-90; first-action 2.98 vs anchor 6.31), both pre-GPU tripwires dispositioned, 20 seeds run — release INERT (0.00 all seeds, boat never touched; repeatable off-task park). Cross-check banked and posted (lift AGREE; elbow agrees past the midpoint-gate near-tie; wrist_roll -90 empirical). Commit 5b3783e; rows/videos/chart on reports Space release_convmap/. · [pre-reg](posts/2026-08-12-prereg-release-eval20-convmap.md)
+
+<details><summary>full record</summary>
+
+OWNER PRIO 17:13:24Z 08-12 (FIRST GPU claim): released MolmoAct2-SO100_101 checkpoint directly in sim, WITH the unit shim per the owner-forwarded box note (/tmp/owner_note_molmoact2_norm.txt, committed copy fontaine/notes/molmoact2-unit-contracts-box-note.md). Raw-in-v3-sim is pre-declared MEANINGLESS (v3 rest lift ~-30 sits below the release box floor +45.2 -&gt; state tokens saturate, model blind, number = unit mismatch); run case 3: per-joint affine shim state-in (v3 -&gt; model units before its q01/q99 table) + action-out (model units -&gt; v3 before controller), labeled OFF-CONTRACT _convmap, never pooled with ftrig contract reads, treated as lower bound (release trained on mixed conventions through one table). Converted release already on disk: ~/marius-convert-gate/converted/molmoact2_so100_101_release. MANDATORY pre-run tripwires (from the note): (a) print release box from its norm_stats + verify mapped reachable set A-inv(box) covers the sim task workspace (clamp travels with the model); (b) first-action-vs-current-state check as unit-bug detector (release contract read: first_mae 18.0 vs state-copy 2.5 - a correct shim collapses this to ~state-copy scale; if it does not, STOP, do not spend the GPU). Then: same 20 seeds (sim100 list 0-19), fixed post-flip sim, parallel driver workers=8, paired vs step-500/step-2000 corrected arms (parallel-path rough rows). Also bank the cross-check the box asked for: does our sim calibration imply the same lift +180 / elbow +90 old-convention map as fit_convention_map snapped - flag disagreement in-channel. Ack posted 17:2xZ.
+
+</details>
+
+---
 
 **`sim-wrist-bracket-flip`** · `cpu`
 

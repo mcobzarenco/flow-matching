@@ -3,7 +3,60 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-12 17:29–18:1xZ (real `date -u` at stamp: 18:10) —
+work session, bounded: **release-eval20-convmap DONE — the released
+MolmoAct2 checkpoint, unit-shimmed into the sim, is INERT: progress
+0.00 on all 20 seeds, the boat never touched; the shim itself is
+verified (first-action 2.98° vs contract anchor 6.31°), so units are
+demonstrably NOT the blocker — scene/task grounding is.***
+
+**Status**: no live jobs, GPU idle again. The one GPU claim ran ridden
+end-to-end (~0.19/0.5 GPU-h gate: 3 tripwire probes + one 20-seed
+parallel arm, 5.5 min at workers=8, first-poll 100% util / 20.8 GB).
+Queue validate green (depth 3, 13 open).
+
+**Steering**: no new owner messages this session (polled at boot,
+pre-post, close). Executed the standing owner prio 17:13:24Z with its
+17:22Z-👍'd design. Open asks unchanged: v3-rerun unhold + arm set
+(15:13Z), GRPO probe memo review, disk-draws sign-off.
+
+**Done** (commits `5b3783e`, close-out): branch REBASED onto latest
+main (brings the box's `--molmo-norm`/`fit_convention_map` machinery,
+`4d54490`/`63155d4`). (1) Instrument: `sim/convmap.py` seam
+(fit + explicit per-joint overrides, off-contract `_convmap`
+provenance in rows) + `--convmap-seam-stats`/`--convmap-override` on
+the parallel driver (state-in A, action-out A⁻¹ through the policy's
+own convention-map path); tripwire script
+`fontaine/scripts/convmap_tripwires.py`; 3 oracles; checks 791 green.
+(2) Tripwires did real work: gated fit gave lift+180 only; coverage
+caught elbow (identity leaves 56% of the rig range below the release
+floor; +90 → 10%) and the first-action probe caught wrist_roll
+(identity delta 34.5° = sim home 77.6° minus release ceiling 43.5°,
+the clamp signature; −90 → 0.97°). Final map lift+180 elbow+90
+wrist_roll−90; first-action 2.98° < anchor 6.31° = the note's
+predicted collapse. (3) The read: INERT 0.00 × 20 — not frozen;
+smooth, repeatable swing to the same off-task park every seed,
+wrist cam ending off-table. 0 knock-aways, 0 approaches. Paired:
+release−step2000 +0.46 [−0.01,+1.11] (pure knock-away artifact),
+release−step500 −0.02 (noise). Clean bracket: 500–2000 ft steps buy
+scene-directed reaching from a unit-corrected base that does nothing
+task-relevant here. (4) Cross-check banked + posted for the box: lift
++180 AGREE; elbow +90 agrees only past the midpoint gate's 2.2°
+near-tie (estimator under-translates rig-table-shaped joints —
+suggested coverage-fraction tiebreak); wrist_roll −90 empirical,
+consistent with the ±90 wrap family; wrist spans stay 53–61%
+uncovered under any offset (release's narrower wrist workspace —
+lower-bound caveat). Artifacts: rows + 20 videos + chart (dark,
+per-seed) on the reports Space `release_convmap/` (curl 200);
+pre-reg page carries full results; Discord 2 posts ~18:0xZ.
+
+**Next**: `queue_cli.py next` → CPU lanes: `lit-sim-improvement-levers`
+(owner-called lit slice), `sim-wrist-compositing`. GPU idle pending
+the v3-rerun unhold (15:13Z ask — the re-baseline carrier).
+`grpo-signal-probe` owner_hold. `queue.json` canonical.*
 
 *Updated 2026-08-12 17:20–17:2xZ (real `date -u` at stamp: 17:25) —
 tick, babysit: **new owner prio landed and is queued — run the RELEASED
@@ -114,71 +167,16 @@ v3-rerun unhold ask (15:13Z — the rerun is the re-baseline carrier
 for every banked sim row post-flip, now WITH the render fix in);
 `grpo-signal-probe` owner_hold. `queue.json` canonical.*
 
-*Updated 2026-08-12 13:10–15:0xZ (real `date -u` at stamp: 15:02) —
-work session, bounded, mid-session owner release of the GPU: **both
-GPU legs ridden — parallel oracle FAIL (sequential stays registered),
-ftrig MolmoAct2 first look 0/20-but-reaches; the owner's video-watching
-caught a 180°-flipped wrist bracket that the probes confirm explains
-~62% of the servo-replay gap. Plus: replay control-loss validator
-landed (sysid passes), SDE sampler + oracles landed, branch rebased
-onto latest main.***
-
-**Status**: GPU RELEASED (owner 14:17Z "GPU is all yours"; confirmed
-14:21Z). No live jobs — both GPU legs completed in-session (~0.4
-GPU-h total): `sim_parallel_oracle` FAIL banked 14:37Z,
-`molmoact2_ftrig_eval20` rows + 20 videos banked ~14:50Z (reports
-Space, curl-verified). Registry entries pruned to completion notes.
-Queue validate green (depth 3, 14 open).
-
-**Steering** (busy day — 6 owner messages, all dispositioned):
-13:16Z SDE ride-along GO + rebase ask + ftrig eval called top-prio →
-all three done. 13:36Z sequencing confirmed (oracle first) + "20
-episodes, rough numbers and videos" → done. 13:54/13:59Z push/rebase
-nudges → branch now main+3, ahead-only (`7b793e5`→`88223b1`).
-14:17/14:21Z GPU release → both legs ridden. 14:27Z "eval should
-composite both cameras" → `sim-wrist-compositing` queued
-(probe-gated per the SIMPLER partial-matching caution). 14:45Z
-bracket-hits-table question → probe-confirmed 180° flip (numbers
-below), `sim-wrist-bracket-flip` queued owner_hold → owner GO 15:01Z
-("Let's do asap") → **executed + verified same session** (see Done).
-No open asks.
-
-**Done** (commits `5c64046`, `8d3227a`, `88223b1` + close-out):
-(1) `sim-sysid-replay-control-loss` CLOSED — SIMPLER's offline
-validator built (`sim/replay_control_loss.py` + oracles): pinned fit
-L 0.083 vs floor 0.070, under SIMPLER's best anchor 0.131; finding:
-joint-MAE wins don't carry to EE space (elbow lever arm 4.6 mm/°);
-results post + dark chart. (2) Flow-GRPO SDE sampler
-`sample_actions_sde` + 4 oracles (bit-identity at a=0, exact
-logprobs) — probe cell 5 launch-ready. (3) `--draws`/`--ar-temperature`
-on the sequential driver (draw-keyed identity triples, draw-0
-bit-identity oracle; parallel driver deliberately untouched).
-(4) Branch REBASED onto latest main per owner (merge commit dropped,
-+ I001 fix main itself needed). (5) `sim-parallel-rollouts` CLOSED:
-oracle FAIL at workers=2 (3/6 seeds diverge macroscopically via
-batched bf16 decode; env determinism held; 1.73× throughput datum);
-frozen rule applied. (6) `molmoact2-ftrig-sim-eval-20` CLOSED: 0/20,
-mean −0.84 cm, 7/20 real approaches, 4 knock-aways — moves with
-intent where er60k froze; videos + rows on fontaine-reports; one
-integration fix (merged-stats fallback for converted checkpoints).
-(7) Bracket probes: 31.9% of real-pose frames put the sim bracket
-below the table; ep-21 replay grinds 22% of ticks. (8) **Bracket
-flip EXECUTED on owner GO** (`_flip_camera_mount`, 180° about
-mount-local x, camera view bit-unchanged): sweep 31.9%→1.4%
-(bounding-conservative, center never below), strikes 0/100, oracles
-7/7, replay L 0.0831→**0.0751** vs floor 0.0701 (gap −62%), arm MAE
-1.88°→1.50°. Physics re-baseline boundary declared (banked rows =
-pre-flip; folds into the v3 rerun). Consolidated results post
-(gpu-release-results). check.py 770 green throughout.
-
-**Next**: `queue_cli.py next` → CPU lanes: `lit-sim-improvement-levers`,
-`sim-wrist-compositing`. The v3-rerun re-baseline now also carries
-the bracket flip (one re-baseline, not two). `grpo-signal-probe` unblocked
-for prep: finalized pre-reg is the remaining CPU step (sampler +
-flags landed); GPU sequence now at owner discretion post-eval.
-`run_work_next` armed. `queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-12 17:29–18:1xZ (work, bounded; **+~0.19 GPU-h** —
+convmap tripwire probes + one 20-seed parallel arm, ridden end-to-end;
+exploit, owner prio): release-eval20-convmap DONE same session as
+queued — rebase onto box's molmo_norm machinery, seam instrument +
+tripwires + oracles, both pre-GPU gates dispositioned (elbow and
+wrist_roll overrides earned by coverage + first-action evidence, not
+assumed), 20-seed read INERT 0.00×20 with verified shim, cross-check
+banked to the box in-channel. No steering traffic; 2 result posts.
 
 Session 2026-08-12 17:20–17:3xZ (tick, babysit; 0 new GPU-h — GPU
 idle): owner prio 17:13:24Z landed (released-checkpoint-in-sim +
