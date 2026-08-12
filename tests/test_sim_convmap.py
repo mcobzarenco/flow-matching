@@ -37,12 +37,24 @@ def stats(q01: list[float], q99: list[float]) -> DatasetStats:
 def test_parse_overrides_rejects_unknown_joint() -> None:
     with pytest.raises(SystemExit, match="not in"):
         parse_overrides(["elbow=90"])  # sim name; the seam speaks SO_MOTORS
-    with pytest.raises(SystemExit, match="not a number"):
+    with pytest.raises(SystemExit, match="is not"):
         parse_overrides(["elbow_flex=ninety"])
     assert parse_overrides(["elbow_flex=90", "wrist_roll=-90"]) == {
-        "elbow_flex": 90.0,
-        "wrist_roll": -90.0,
+        "elbow_flex": (1.0, 90.0),
+        "wrist_roll": (1.0, -90.0),
     }
+
+
+def test_parse_overrides_sign_carrying() -> None:
+    # The official v3.0->v2.1 lift conversion: model = 90 - seam.
+    assert parse_overrides(["shoulder_lift=-1,90"]) == {
+        "shoulder_lift": (-1.0, 90.0),
+    }
+    assert parse_overrides(["shoulder_pan=1,0"]) == {"shoulder_pan": (1.0, 0.0)}
+    with pytest.raises(SystemExit, match="must be 1 or -1"):
+        parse_overrides(["shoulder_lift=-2,90"])
+    with pytest.raises(SystemExit, match="is not"):
+        parse_overrides(["shoulder_lift=minus,90"])
 
 
 def test_resolve_map_touches_only_overridden_joints() -> None:
@@ -50,13 +62,28 @@ def test_resolve_map_touches_only_overridden_joints() -> None:
         scale=torch.tensor([1.0, -1.0, 1.0, 1.0, 1.0, 1.0]),
         offset=torch.tensor([0.0, 180.0, 0.0, 0.0, 90.0, 0.0]),
     )
-    resolved = resolve_map(fitted, {"elbow_flex": 90.0})
+    resolved = resolve_map(fitted, {"elbow_flex": (1.0, 90.0)})
     assert resolved.offset.tolist() == [0.0, 180.0, 90.0, 0.0, 90.0, 0.0]
     assert resolved.scale.tolist() == [1.0, -1.0, 1.0, 1.0, 1.0, 1.0]
     # And the round trip holds where it matters: apply then invert is
     # the identity (the state-in/action-out contract).
     values = torch.tensor([[4.6, -102.7, 97.0, 78.7, 77.6, 3.5]])
     assert torch.allclose(resolved.invert(resolved.apply(values)), values)
+
+
+def test_resolve_map_sign_override_mirrors() -> None:
+    fitted = AffineMap(
+        scale=torch.ones(6),
+        offset=torch.tensor([0.0, 180.0, 0.0, 0.0, 0.0, 0.0]),
+    )
+    resolved = resolve_map(fitted, {"shoulder_lift": (-1.0, 90.0)})
+    assert resolved.scale.tolist() == [1.0, -1.0, 1.0, 1.0, 1.0, 1.0]
+    assert resolved.offset.tolist() == [0.0, 90.0, 0.0, 0.0, 0.0, 0.0]
+    # model = 90 - seam on lift; round trip still exact under the mirror.
+    values = torch.tensor([[4.6, -102.7, 97.0, 78.7, 77.6, 3.5]])
+    mapped = resolved.apply(values)
+    assert mapped[0, 1].item() == pytest.approx(90.0 - (-102.7))
+    assert torch.allclose(resolved.invert(mapped), values)
 
 
 def test_coverage_report_verdicts() -> None:

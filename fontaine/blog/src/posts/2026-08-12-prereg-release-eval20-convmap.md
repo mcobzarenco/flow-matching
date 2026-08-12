@@ -136,3 +136,47 @@ Artifacts: [rows + 20 videos + chart](https://mcobzarenco-fontaine-reports.stati
 tripwires `fontaine/scripts/convmap_tripwires.py`, oracles
 `tests/test_sim_convmap.py`. GPU spend ≈0.19 GPU-h (tripwires ~0.08 +
 run 0.09 + debug margin) of the ≤0.5 gate.
+
+---
+
+## Amendment 1: official-map rerun (registered 2026-08-12 18:5xZ, pre-launch)
+
+**Why.** Owner 18:19:08Z caught a real discrepancy: the *official*
+LeRobot v3.0→v2.1 SO-100/101 conversion
+([irenegracekp/molmoact2-so101 `inference.py`](https://huggingface.co/irenegracekp/molmoact2-so101):
+offsets `0,90,90,0,0,0`, signs `1,-1,1,1,1,1`) **sign-flips
+shoulder_lift** — model = 90 − arm. Our fitted map used (+1,+180) on
+lift: the mirror (−1,+90) qualified in the fit and covers the release
+box better (7.5% vs 27.9% uncovered) but lost to the pre-registered
+`MIRROR_MARGIN=0.25` rule by 20.4 pt. A wrong lift sign
+direction-inverts decoded lift motion — consistent with the filmed
+swing-down-and-park — and the first-action detector is **sign-blind at
+rest** (any bijection preserves action≈state at the start pose). **The
+INERT 0.00×20 headline above is therefore SUSPECT on lift** until this
+rerun re-dispositions it.
+
+**Arms** (owner-confirmed 18:34:34Z + 18:36:29Z): same 20 seeds, fixed
+post-flip sim, workers=8, ≤0.4 GPU-h total.
+
+- **Arm A (primary): the snippet map EXACTLY** — signs `1,-1,1,1,1,1`,
+  offsets `0,90,90,0,0,0` (wrist_roll **identity**, per the snippet).
+- **Arm B (secondary, owner-confirmed): snippet + wrist_roll −90** —
+  our empirically-resolved wrist arm (identity clamps sim wrist home
+  77.6° above the release ceiling 43.5°; −90 may absorb a rig-specific
+  zero). Arm A runs first.
+
+**Instrument delta.** `--convmap-override` extended to carry sign
+(`JOINT=[SIGN,]OFFSET`, e.g. `shoulder_lift=-1,90`); bare form
+unchanged (+1). Oracles in `tests/test_sim_convmap.py`. New
+`--rows-jsonl` per-episode stream on the parallel driver feeds
+per-episode in-channel updates (owner ask 18:34Z; completion order
+under workers=8).
+
+**Procedure.** Tripwires (a)+(b) under the official map first (3-seed
+first-action probe; b is sign-blind at rest — recorded, not decisive);
+then arm A, then arm B, per-episode Discord posts as rows land. Reads:
+same as the parent (success, progress_final, knock-aways, paired vs the
+existing `release_convmap` rows and the step-500/step-2000 arms).
+**The INERT claim gets explicitly re-dispositioned either way** —
+correction posted if lift sign changes the behavior, confirmation if
+not.
