@@ -2,6 +2,31 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-12 04:05–04:1xZ (real `date -u` at write: 04:07) —
+tick (babysit): **quiet tick — GPU idle-by-design between the OOD
+probe close and the sim-visual-matching pre-reg; no owner messages
+or reactions; chained work session already armed.***
+
+**Status**: no live jobs — registry empty (`no_live_runs_reason`
+current), `nvidia-smi` 0% / 0 MiB. Next item:
+**sim-visual-matching** (CPU + render minutes; pre-reg combines the
+measured OOD baseline — move top-cam 5-NN AUROC 0.885 → ~0.5 —
+with matching v1 + a 20-seed texture-sensitivity read), then
+**sim100-v1-rerun**.
+
+**Steering**: none — Discord read empty; history shows our 03:47Z
+probe-result post as the latest message, no new reactions (owner
+asleep since 01:11Z).
+
+**Done**: babysit CLI skipped per registry (no live entry); queue
+validate green (depth 2, 11 open); `run_work_next` confirmed armed →
+work session chains at tick end. Archive roll: 00:40 body entry +
+03:25/00:40 footer notes.
+
+**Next**: chained work session → **sim-visual-matching** pre-reg
+(in-channel first, promised 01:30Z; owner goal: ≥1 success on the
+100 seeds). No dated boundaries — `queue.json` canonical.*
+
 *Updated 2026-08-12 03:30–03:5xZ (real `date -u` at write: 03:49) —
 work session: **encoder OOD probe CLOSED end-to-end — the visual gap
 is REAL and measured at the policy's eyes, top-cam-heavier, but sim
@@ -60,43 +85,15 @@ validate green (depth 2, 11 open); `run_work_next` confirmed armed
 the **sim-visual-matching** pre-reg (owner goal: ≥1 success on the
 100 seeds). No dated boundaries — `queue.json` canonical.*
 
-*Updated 2026-08-12 00:40–03:5xZ — work session: **sim100 CLOSED
-end-to-end: 0/500 successes, but the study answered the owner's
-checkpoint-quality question — contact tracks capability, DIRECTION
-tracks visual familiarity. Visual matching confirmed as THE lever.***
-
-**Status**: no live jobs — `fontaine-sim100b` rc=0 03:16:37Z (phase 2
-~3.5/4 GPU-h, total ~5.5), registry empty, GPU 0%/0 MiB. Local H100
-FREE; next GPU item is the queued encoder OOD probe (~0.1 GPU-h,
-launch-note first).
-
-**Steering**: owner 01:11Z (heading to bed): "ideas for reducing the
-visual gap? or figuring out if that's really the issue? checkpoints
-may not be very good" — answered 01:30Z (gap diagnostics cheapest-first
-+ SIMPLER visual-matching recipe); the teacher80k arm then settled the
-checkpoint question empirically (see below). No further messages.
-
-**Done**: **sim-policy-eval-100seeds + sim100-postprocess both CLOSED**
-(prep 551e092 + 9de4719, close this commit). Rode phase 2 to rc
-in-turn; per-arm numbers in-channel as they landed (snap30k 01:30Z,
-teacher80k + close 03:4xZ). Final: er60k −0.03 cm mean / 4 moved;
-snap30k −0.12 / 38; ftrig4k +0.08 / 47 (only arm toward>away, 27/20);
-teacher80k −0.73 / 56 (18/38 away, only CI-excludes-zero read vs hold
-— strongest offline policy measurably worse than doing nothing).
-Gates green (strikes 0/500, hold floor −0.0). Artifacts: frozen reads
-json + 4 house charts (new engagement-split) + HTML report + 14-clip
-gallery on fontaine-reports (curl 200 ×5); results post
-posts/2026-08-12-sim100-results.md + reports.md section; blog built +
-Space pushed (post/reports/queue pages 200). Babysit entry pruned;
-queue: sim-encoder-ood-probe queued (owner-ask successor),
-sim-visual-matching enriched as THE lever.
-
-**Next**: `queue_cli.py next` → **sim-encoder-ood-probe** (GPU free,
-launch note in-channel first), then the **sim-visual-matching**
-pre-reg (owner goal: ≥1 success on the 100 seeds). `run_work_next`
-armed. No dated boundaries — `queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-12 04:05–04:1xZ (tick, babysit; 0 new GPU-h — GPU
+idle-by-design between the OOD-probe close and the visual-matching
+pre-reg): quiet tick. Registry empty, nvidia-smi 0%/0 MiB. Discord
+read empty; no new reactions (owner asleep since 01:11Z). Queue
+validate green (depth 2, 11 open); run_work_next armed → the
+sim-visual-matching pre-reg chains next. Archive roll: 00:40 body
+entry + 03:25/00:40 footer notes.
 
 Session 2026-08-12 03:30–03:5xZ (work, exploit; ~0.02 GPU-h foreground
 probe): sim-encoder-ood-probe closed end-to-end — launch note, probe
@@ -105,25 +102,6 @@ wrist 0.828; clean control inside the real spread), json + chart on
 fontaine-reports, results in-channel, reports.md section;
 sim100-v1-rerun queued as successor. GPU idle otherwise;
 run_work_next armed for the sim-visual-matching pre-reg.
-
-Session 2026-08-12 03:25–03:3xZ (tick, babysit; 0 new GPU-h — GPU
-idle-by-design after the sim100 close): quiet tick. Registry empty,
-nvidia-smi 0%/0 MiB. Discord read empty; no new reactions (owner
-asleep since 01:11Z, question answered 01:30Z). Queue validate green
-(depth 2, 11 open); run_work_next already armed 03:25:12Z → OOD probe
-launch note + sim-visual-matching pre-reg chain next. Archive roll:
-20:44 body entry + 20:44/00:37 footer notes (08-12 archive page
-started).
-
-Session 2026-08-12 00:40–03:5xZ (work, exploit; ~2.6 GPU-h of sim100b
-phase 2 rode in-session, run total ~5.5 ≤ 6+4 gates): sim100 closed
-end-to-end — prepped report/gallery generator + engagement chart
-during the GPU window, posted snap30k + teacher80k numbers at their
-boundaries, answered the owner's 01:11Z visual-gap question, full
-postprocess at rc (reads, charts, report, gallery, results post,
-Space pushes, queue + babysit bookkeeping). 0/500 successes; teacher
-misdirection = the checkpoint-quality control. Next: OOD probe →
-visual-matching pre-reg.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
