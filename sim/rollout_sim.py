@@ -22,6 +22,7 @@ Usage:
 import argparse
 import dataclasses
 import json
+import math
 import subprocess
 import time
 from collections.abc import Callable
@@ -82,7 +83,17 @@ def parse_args() -> argparse.Namespace:
         default=1,
         help="episodes: seed .. seed+N-1",
     )
-    parser.add_argument("--replans", type=int, default=15)
+    parser.add_argument("--replans", type=int, default=None)
+    parser.add_argument(
+        "--episode-seconds",
+        type=float,
+        default=None,
+        help="episode TIME budget; the replan count derives from the "
+        "resolved chunk horizon at 30 Hz, so 30 seconds means 30 "
+        "seconds for any checkpoint's chunk length (a fixed --replans "
+        "count quietly scales the budget with chunk size: 15 replans "
+        "of 1-second molmoact2 chunks was 15 s, not the intended 30)",
+    )
     parser.add_argument("--execute-horizon", type=int, default=30)
     parser.add_argument("--sample-steps", type=int, default=10)
     parser.add_argument(
@@ -136,6 +147,13 @@ def parse_args() -> argparse.Namespace:
     args = parser.parse_args()
     if (args.checkpoint is None) == (not args.hold):
         parser.error("exactly one of --checkpoint / --hold is required")
+    if args.replans is not None and args.episode_seconds is not None:
+        parser.error(
+            "--replans and --episode-seconds state the same budget in "
+            "two units — pick one",
+        )
+    if args.episode_seconds is not None and args.episode_seconds <= 0:
+        parser.error(f"--episode-seconds must be > 0, got {args.episode_seconds}")
     if args.draws < 1:
         parser.error(f"--draws must be >= 1, got {args.draws}")
     if args.draws > 1 and args.hold:
@@ -182,6 +200,21 @@ class EpisodeResult:
     def progress_final_cm(self) -> float:
         """PRIMARY metric: distance recovered from spawn to episode end."""
         return self.initial_cm - self.final_cm
+
+
+def resolve_replans(
+    replans: int | None,
+    episode_seconds: float | None,
+    horizon: int,
+) -> int:
+    """The replan count for one episode, resolved AFTER the horizon is
+    (min(execute_horizon, chunk_size) needs the loaded policy). Default
+    stays the historical 15; --episode-seconds converts a TIME budget at
+    CONTROL_HZ so short-chunk policies get the same seconds as
+    long-chunk ones."""
+    if episode_seconds is not None:
+        return max(1, math.ceil(episode_seconds * CONTROL_HZ / horizon))
+    return 15 if replans is None else replans
 
 
 def to_observation(obs: SimObservation) -> dict[str, object]:
@@ -415,6 +448,11 @@ def main() -> int:
             f"policy: {policy.name} "
             f"({args.method}-{args.sample_steps}, horizon {horizon})",
         )
+    replans = resolve_replans(args.replans, args.episode_seconds, horizon)
+    print(
+        f"episode budget: {replans} replans x {horizon} ticks = "
+        f"{replans * horizon / CONTROL_HZ:.1f} s at {CONTROL_HZ} Hz",
+    )
 
     sim = SO101Sim()
     args.out_dir.mkdir(parents=True, exist_ok=True)
@@ -429,7 +467,7 @@ def main() -> int:
                     policy,
                     sim,
                     seed,
-                    replans=args.replans,
+                    replans=replans,
                     horizon=horizon,
                     video_path=video_path,
                     draw=draw,
@@ -462,7 +500,8 @@ def main() -> int:
                 "hold": args.hold,
                 "seed": args.seed,
                 "num_seeds": args.num_seeds,
-                "replans": args.replans,
+                "replans": replans,
+                "episode_seconds": args.episode_seconds,
                 "execute_horizon": horizon,
                 "sample_steps": args.sample_steps,
                 "method": args.method,
