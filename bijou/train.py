@@ -4106,6 +4106,10 @@ def main() -> int:
             )
             assert isinstance(banner_backbone, Gemma4Model)
             n_backbone_layers = len(banner_backbone.language_model.layers)
+        elif isinstance(banner_encoder, MolmoAct2Encoder):
+            assert isinstance(banner_backbone, Molmo2Model)
+            streams_desc = "prefix cache (per-layer KV conditioning)"
+            n_backbone_layers = len(banner_backbone.text.transformer.blocks)
         else:
             assert isinstance(banner_backbone, Molmo2Model)
             assert isinstance(banner_encoder, Molmo2Encoder)
