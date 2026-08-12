@@ -7,7 +7,7 @@
 
 # (no_live_runs_reason cleared 21:40Z 08-11 — sim100_eval launched.)
 
-no_live_runs_reason = "GPU OWNER-RESERVED since 09:23Z 08-12 (owner needs it for a few hours) - NO GPU launches until the owner releases it in-channel. Sessions do literature research meanwhile (owner steering 09:23Z: sim-improvement lit, so101-adjacent benchmark envs, GRPO-on-sim design). WHEN RELEASED: sim-parallel-rollouts runs FIRST, before any other experiment (owner 09:32Z). spot20 done 09:02Z (~1.25/3 GPU-h), teacher80k +0.97 paired CI-excludes-zero."
+no_live_runs_reason = "GPU OWNER-RESERVED since 09:23Z 08-12 (owner needs it for a few hours) - NO GPU launches until the owner releases it in-channel. Sessions do literature research meanwhile (owner steering 09:23Z: sim-improvement lit, so101-adjacent benchmark envs, GRPO-on-sim design). WHEN RELEASED: sim-parallel-rollouts runs FIRST, before any other experiment (owner 09:32Z) - the GPU leg is READY (scaffold + pre-reg landed 10:1xZ, commit 1e4e16f): MUJOCO_GL=egl uv run python fontaine/scripts/sim_parallel_oracle.py --checkpoint <er_60k/step_060000> --num-seeds 6 --workers 2, then --workers 8; frozen decision rule + <=1 GPU-h gate in posts/2026-08-12-prereg-sim-parallel-rollouts.md. spot20 done 09:02Z (~1.25/3 GPU-h), teacher80k +0.97 paired CI-excludes-zero."
 
 # spot20 entries PRUNED 09:1xZ 08-12 work session — 3-arm parallel
 # 20-seed spot-check COMPLETE (07:47-09:02Z, ~1.25 GPU-h of gate 3).

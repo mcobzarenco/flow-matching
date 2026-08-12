@@ -8,6 +8,46 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-12 09:45–10:1xZ (real `date -u` at stamp: 10:13) —
+work session, bounded: **sim-parallel-rollouts CPU scaffold + pre-reg
+LANDED — the owner-sequenced first GPU item is launch-ready the moment
+the box is released; its GPU leg is just the registered ≤1 GPU-h
+oracle run.***
+
+**Status**: GPU OWNER-RESERVED (since 09:23Z; babysit 10:08Z quiet,
+registry empty, no new owner messages). Queue validate green (depth
+6, 16 open); `sim-parallel-rollouts` reclassed gpu-local with its
+pre-reg attached.
+
+**Steering**: none new this session (owner quiet since the 09:32Z
+re-sequencing; 👍 on the plan post recorded by the 09:41 tick).
+Pre-reg posted in-channel 10:1xZ with the objection window framed as
+until-GPU-release.
+
+**Done**: commit `1e4e16f` — `sim/rollout_sim_parallel.py` (N spawn
+env-workers each owning a SO101Sim + EGL context, ONE batched policy
+in the parent, deterministic lockstep-rounds scheduler: batch
+membership a pure function of seed partition × worker count × policy
+outputs, stable-noise identity triple preserved per row);
+`rollout_sim.py` refactor extracting the shared `run_episode_loop`
+(+ streaming VideoWriter fixing the 1.6 GB/episode frame buffer,
+RolloutSim protocol, `sim_item` helper); 5 CPU-tier
+harness-equivalence oracles (rows bit-equal minus latency vs the
+sequential loop, action-coupled fake sim); GPU bit-match instrument
+`fontaine/scripts/sim_parallel_oracle.py` (GREEN/FAIL, seq-vs-par at
+2 and 8 workers). check.py 710 green. Pre-reg
+posts/2026-08-12-prereg-sim-parallel-rollouts.md posted (frozen
+decision rule: GREEN → registered numbers allowed at validated
+settings; FAIL → paired-only fallback, no mixing with banked
+sequential rows) + blog built + Space verified 200 + in-channel.
+
+**Next**: `queue_cli.py next` pointer stands (amendment draft /
+research-program lanes are the CPU work for chained sessions:
+GRPO design memo, sim-improvement slice). ON GPU RELEASE:
+`sim_parallel_oracle.py` runs FIRST (owner 09:32Z; exact command in
+babysit.toml `no_live_runs_reason`). `run_work_next` armed.
+`queue.json` canonical.*
+
 *Updated 2026-08-12 09:2x–09:4xZ (real `date -u` at stamp fix:
 09:31 — the draft guessed 09:55; my internal clock runs ~25 min
 fast today, fourth catch, memory updated) —
@@ -95,6 +135,13 @@ sim-parallel-rollouts first would cut the rerun to an afternoon).
 canonical.*
 
 ## Utilization footer
+
+Session 2026-08-12 09:45–10:1xZ (work, exploit/infra; 0 new GPU-h —
+box owner-reserved): sim-parallel-rollouts CPU scaffold + pre-reg
+landed (`1e4e16f`): lockstep parallel driver, shared episode loop,
+5 CPU oracles, GPU bit-match instrument; queue item now launch-ready
+(GPU leg = registered ≤1 GPU-h oracle). Blog + Space + in-channel
+post done. run_work_next armed.
 
 Session 2026-08-12 09:41–09:4xZ (tick, babysit; 0 new GPU-h — box
 owner-reserved since 09:23Z): quiet tick. Registry empty, babysit
