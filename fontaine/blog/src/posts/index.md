@@ -117,5 +117,5 @@ corrections are follow-up posts.
 - [2026-08-12 — Pre-registration: ftrig MolmoAct2 (rig-r1 step2000) — 20-seed sim eval, rough numbers + videos](2026-08-12-prereg-molmoact2-ftrig-sim-eval.md)
 - [2026-08-12 — GPU release results: parallel oracle FAILS · ftrig MolmoAct2 moves with intent (0/20) · the wrist bracket is 180° off](2026-08-12-gpu-release-results.md)
 - [2026-08-12 — Pre-reg + results: ftrig MolmoAct2 rerun on flipped-mount physics — 18/20 bit-identical, the bracket is innocent](2026-08-12-prereg-ftrig-eval20-flipped-parallel.md)
-- [2026-08-12 — Pre-reg + results: released MolmoAct2 in sim through a unit shim — inert under the fitted map; official-map rerun (amendment 1) partially overturns: scene contact, still 0/20 pickups; amendment 2: seed-6 grab confirmed at 30 s](2026-08-12-prereg-release-eval20-convmap.md)
+- [2026-08-12 — Pre-reg + results: released MolmoAct2 in sim — INERT fully overturned: 9/100 successes under the official map at the 30 s budget](2026-08-12-prereg-release-eval20-convmap.md)
 - [2026-08-12 — Pre-registration: GRPO signal probe — 5 cells × 15 seeds × K=8, does group-relative advantage have signal at our competence floor?](2026-08-12-prereg-grpo-signal-probe.md)

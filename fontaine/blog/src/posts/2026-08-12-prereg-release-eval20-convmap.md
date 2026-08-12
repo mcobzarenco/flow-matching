@@ -320,3 +320,39 @@ the correct mapping (arm-A) on 100 episodes in parallel"):
 - **Gate ≤ 1.5 GPU-h** (~50–60 min at the officialmap pace scaled
   2×); babysit entry at launch; per-episode `--rows-jsonl` stream
   with in-channel updates every ~10 episodes.
+
+### Amendment 3 results (2026-08-12 21:1xZ, same session)
+
+**9/100 SUCCESSES — the first sim successes this task has ever
+recorded** (all prior evals, ours and the release's: 0/500, 0/100,
+0/20). Success = the sim's physics criterion (boat resting upright ON
+the disk, within disk radius, at disk height, still, not held). Seeds
+42, 47, 55, 56, 57, 73, 85, 92, 93; final XY center distances
+2.1–4.0 cm with base z 12–30 mm and upright 0.97–1.00.
+
+![per-seed progress_final + success ticks](https://mcobzarenco-fontaine-reports.static.hf.space/ftrig_eval20_flip_parallel/release_officialmap_a_100ep_30s/chart__release_100ep_30s.png)
+
+- **The time budget was the whole story: every success tick (480–886)
+  lands PAST tick 450**, where the old 15 s eval-20 budget ended —
+  under the previous protocol this run scores 0/100. The owner's
+  19:25Z catch (fixed as `--episode-seconds`) is what unlocked the
+  read.
+- Distribution: 9 successes · 27 knock-aways (≤ −1 cm, worst −10.9 at
+  seed 28) · 64 quiet; mean progress_final −0.27 cm, median 0.00;
+  0 reset strikes (validity green); 3 episodes end with the boat
+  tipped.
+- Seed 6 repeats its carry-and-return signature (min 1.4 cm, boat set
+  back down near spawn) — grasp events still under-report in distance
+  rows; video remains the grab detector.
+- **Disposition: the INERT claim is FULLY OVERTURNED.** The release
+  checkpoint is task-capable in our sim at ~9% success once BOTH
+  confounds are removed: the shoulder_lift sign (amendment 1) × the
+  halved time budget (amendment 2/3). The remaining ~91% split into
+  knock-aways and non-engagement — a competence gap, not a harness
+  artifact.
+
+Artifacts: rows + chart + the 9 success videos (+ seed 48
+carry-return, seed 28 worst knock-away) on the reports Space
+([rows](https://mcobzarenco-fontaine-reports.static.hf.space/ftrig_eval20_flip_parallel/release_officialmap_a_100ep_30s/rows.json),
+curl-verified). Spend ~0.86 GPU-h of the ≤1.5 gate; 51.4 min wall at
+workers=8, mean batch 7.5. Results in-channel 21:15Z.
