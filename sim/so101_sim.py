@@ -362,6 +362,15 @@ class SO101Sim:
                 rotated = np.empty(4)
                 mujoco.mju_mulQuat(rotated, flip, self.model.geom_quat[geom])
                 self.model.geom_quat[geom] = rotated
+                # The compiler marks geoms whose frame coincides with the
+                # body/inertial frame with a sameframe fast path that makes
+                # mj_kinematics IGNORE geom_pos/geom_quat (the visual mesh
+                # rode it, so renders kept the bracket on the old side —
+                # owner spot 2026-08-12 16:07Z; physics was unaffected: the
+                # mesh is non-colliding and the one affected box's skipped
+                # rotation is a 180-deg self-symmetry). Clear it so the
+                # edited local pose actually takes effect.
+                self.model.geom_sameframe[geom] = mujoco.mjtSameFrame.mjSAMEFRAME_NONE
 
     # v1 render style (visual matching, prereg 2026-08-12): the rig's
     # cameras are 130-deg wide-angle modules center-cropped to 4:3 —

@@ -65,7 +65,13 @@ an asterisk.
   moves with it; a null is a real answer (the bracket wasn't the
   binding constraint on THIS policy's failures).
 
-## Results (same session, 15:42–15:59Z)
+## Results (same session, 15:42–15:59Z) — SUPERSEDED, see the correction below
+
+*Kept verbatim for the record: this readout measured only the
+collision-box half of the flip. The owner spotted (16:07Z) that the
+videos showed the bracket unmoved — a MuJoCo `sameframe` compile
+optimization was making the kinematics ignore the runtime pose edit
+on the visual mesh. The corrected run is in the next section.*
 
 **The pre-registered null is the answer, almost exactly: 18/20 seeds
 are BIT-IDENTICAL across the two physics — this policy's rollouts
@@ -114,3 +120,61 @@ bracket-side.
 - **Cost**: 3 × 5.4 min arms ≈ **0.27 / 0.5 GPU-h** (incl. the
   accidental replicate). All rows + 40 videos under
   [`/ftrig_eval20_flip_parallel/`](https://mcobzarenco-fontaine-reports.static.hf.space/ftrig_eval20_flip_parallel/postflip/rows.json).
+
+## Correction (16:07–16:4xZ): the render never flipped — and fixing it revealed the real effect
+
+The owner, comparing the two videos (16:07Z): the bracket still
+pointed at the table in *both*. Root cause, probe-confirmed: MuJoCo's
+compiler stamps geoms whose frame coincides with an already-computed
+frame with a `sameframe` fast path, and `mj_kinematics` then **never
+reads `geom_pos`/`geom_quat` again** for them. The bracket's visual
+mesh carried flag 2 (frame ≡ the mount body's inertial frame), so the
+load-time flip edit was written into the model and silently ignored
+every render. `camera_box1` carried flag 3 (rotation-only skip —
+harmless: a 180° flip maps a box onto itself); `camera_box2` carried
+flag 0 and moved correctly. Net: **physics flipped, appearance
+didn't.** The one-line fix: clear `geom_sameframe` on the edited
+geoms. Verified: the mesh's settled world position moves from
+(74, 10, 48) mm — jaw side, table-ward — to (137, −22, 149) mm,
+wrapped around the camera at (150, 0, 150), ceiling side, matching
+the hand-computed prediction. Stills:
+[fixed](https://mcobzarenco-fontaine-reports.static.hf.space/ftrig_eval20_flip_parallel/zoom_fixed_front.png)
+·
+[broken](https://mcobzarenco-fontaine-reports.static.hf.space/ftrig_eval20_flip_parallel/zoom_broken_front.png).
+
+The post-flip arm was then re-run (same 20 seeds, same driver). The
+planned bit-identity oracle **failed — correctly**: 13/20 seeds
+changed. The policy is vision-driven and the bracket is *visible in
+the top camera*; un-sticking the mesh changed the policy's input.
+(The real frames do show the bracket ceiling-side — the fixed render
+closes an appearance gap, it doesn't add one.) So the section above
+was a physics-only read, and the TRUE flip effect is:
+
+| read | TRUE post-flip (v2) | pre-flip | morning's "post-flip" |
+|---|---|---|---|
+| success | 0/20 | 0/20 | 0/20 |
+| mean progress_final | **−0.46 cm** | −1.21 cm | −1.14 cm |
+| knock-aways ≥1 cm | **2** | 6 | 6 |
+| paired Δ vs pre-flip | **+0.75 cm** [−0.33, +2.26] | — | +0.07 |
+
+- The two catastrophes dissolve:
+  [seed 4](https://mcobzarenco-fontaine-reports.static.hf.space/ftrig_eval20_flip_parallel/postflip_v2/rollout_seed004.mp4)
+  −12.3 → −0.05 cm, seed 5 −5.5 → +0.1. Two seeds worsen (s11 −2.4,
+  s14 −2.2); 9 tie exactly. The CI crosses zero — n=20 rough read,
+  as registered.
+- Character shift: less shoving, more freezing — several pre-flip
+  movers now end at exactly 0.00. Plausibly the visible bracket
+  makes frames *more* like the training distribution and the policy
+  defers to its (frozen-ish) prior; the encoder-OOD probe follow-up
+  named in the sequential pre-reg would adjudicate.
+- Physics-side claims are untouched by the correction (the mesh
+  never collides): replay control loss −62%, sweep 31.9%→1.4%, and
+  the box-only paired read above stand as what they measured.
+- Lesson registered for every future runtime geom edit: **clear
+  `geom_sameframe` after editing `geom_pos`/`geom_quat`** — the
+  compiler's fast path silently swallows the edit otherwise. Audited
+  the existing runtime edits: cameras (`_repose_wrist_cam`) have no
+  such flag; material/light edits are unaffected.
+- Corrected totals: 4 arms ≈ **0.36 / 0.5 GPU-h**. Corrected rows +
+  videos under
+  [`/ftrig_eval20_flip_parallel/postflip_v2/`](https://mcobzarenco-fontaine-reports.static.hf.space/ftrig_eval20_flip_parallel/postflip_v2/rows.json).
