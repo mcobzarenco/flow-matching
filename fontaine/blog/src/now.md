@@ -1,6 +1,44 @@
 # Now
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-12 21:30–21:4xZ (real `date -u` at stamp: 21:36) —
+tick, babysit: **GRPO signal probe LAUNCHED 21:33:58Z** (unit
+`fontaine-grpo-probe`, HEAD `85e9a16`) — the tick resolved the
+now.md-internal conflict ("launches on handback" vs "on the owner's
+go") by re-reading the record: the owner's 13:36Z sequence (oracle →
+ftrig eval → probe) has both predecessors done, the 20:06Z pre-reg
+post said "say go (or it rides the standing sequence at handback)"
+with no objection since, and the GPU was handed back for the 100ep
+eval — so the standing sequence governs and the probe launched.*
+
+**Status**: probe LIVE (launched 21:33:58Z; 2 anchor passes + 5 cells,
+660 episodes, workers=8, ~2.8 h wall, gate ≤3.5 GPU-h; first poll
+85% util / 21.8 GB, anchor pass streaming ~0.76 s/replan). Babysit
+entry `grpo_signal_probe` active; new launcher
+`fontaine/scripts/launch_grpo_signal_probe.sh`. Queue validate green
+(depth 3, 13 open). `run_work_next` armed — the chained work session
+rides the probe + works CPU lanes.
+
+**Steering**: no new owner messages this tick (read + history checked
+21:31Z; no reactions on the 21:15Z results post). Launch post
+21:35Z states the standing-sequence basis and offers a stop at any
+pass boundary. Open asks unchanged: v3-rerun unhold + arm set
+(15:13Z), disk-draws sign-off.
+
+**Done**: probe launch end-to-end — launcher written (7 passes,
+checkpoint paths verified on disk: er60k/step_060000, teacher80k =
+artrunk 40k_ddp2/step_080000, ftrig4k/step_004000), preflight green,
+detached via run_detached.sh, babysit entry with frozen
+anchors/gates, first-poll util check, Discord launch post, queue item
+boundary synced.
+
+**Next**: chained work session rides the probe (per-cell results
+in-channel as passes land; tripwire = first cell's pace vs the 3.5
+GPU-h gate) + CPU lanes: `lit-sim-improvement-levers` (owner-called),
+`sim-wrist-compositing`. At probe completion: frozen reads + decision
+rule per the pre-reg, results post same session.*
 
 *Updated 2026-08-12 19:20–21:2xZ (real `date -u` at stamp: 21:17) —
 work session: **🚢 9/100 SUCCESSES — the first sim successes this task
@@ -53,86 +91,15 @@ launch-ready on the owner's go; v3 rerun pends unhold. The 9/100 read
 reframes both: the sim CAN express success now — the success-rate
 metric is live, not just progress-cm. `queue.json` canonical.*
 
-*Updated 2026-08-12 19:15–19:2xZ (real `date -u` at stamp: 19:22) —
-tick, babysit: **caught and closed a dropped owner ask — 19:01:42Z
-"Can you link a video?" was consumed mid-run by the prior session but
-never directly answered (the 19:11Z results post linked only the
-chart). Replied 19:16Z with three direct mp4 links.***
-
-**Status**: no live jobs, GPU idle (0%, 0 MiB). Queue validate green
-(depth 3, 13 open). `run_work_next` already armed (19:13, prior
-session) — the work session chains after this tick. pgrep straggler
-(ssh box checkpoint-ls, 25 s old) = background probe, benign.
-
-**Steering**: owner 19:01:42Z video ask answered 19:16Z — arm A
-seed 6 (directed reach to 1.4 cm), arm A seed 16 (the knock-away —
-first boat contact), arm B seed 10 (knock-away); all three
-curl-verified 200 through the Space redirect before posting, plus the
-per-arm directory pattern for the other 17×2. Conversational hold
-kept in-session ~4 min after the reply (30 s Discord poll loop, no
-follow-up, no reactions at 19:20Z), then handed to the chained work
-session — it boots only when this tick ends, and an idle-tick hold
-delaying a 4-h work session is the banned idle pause; it rejoins the
-thread at boot.
-Lesson: an owner ask landing mid-run must get its own direct reply —
-the results post didn't count (per the standing rule), and the ask
-sat 14 min. Open asks unchanged: v3-rerun unhold + arm set (15:13Z),
-GRPO memo review, disk-draws sign-off.
-
-**Done**: video-links reply (19:16Z); hygiene — queue validate green,
-GPU-idle confirm, marker check, straggler dispositioned.
-
-**Next**: chained work session → CPU lanes
-(`lit-sim-improvement-levers` owner-called, `sim-wrist-compositing`).
-GPU idle pending the v3-rerun unhold. `queue.json` canonical.*
-
-*Updated 2026-08-12 18:39–19:1xZ (real `date -u` at stamp: 19:12) —
-work session, bounded: **release-eval20-officialmap DONE — the INERT
-read is PARTIALLY OVERTURNED: under the official lift sign the release
-engages the scene (a 1.4 cm near-touch, a knock-away — the boat was
-touched, which never happened in the parent's 20 episodes) but still
-0/20 pickups on both arms; grounding, not units, remains the blocker.
-Canonical shim going forward = the snippet map exactly.***
-
-**Status**: no live jobs, GPU idle again — both arms ran ridden
-end-to-end 18:55–19:06:43Z (~0.25/0.4 GPU-h; first-poll 100% util /
-20.8 GB; babysit entry pruned same session). Queue validate green
-(depth 3, 13 open).
-
-**Steering**: no new owner messages this session (polled at boot,
-pre-launch, at both arm boundaries, and close). Executed the standing
-18:19/18:34/18:36Z steering: official-map rerun, snippet map EXACTLY as
-arm A, arm B = +wrist_roll −90, per-episode in-channel updates (40
-episode lines streamed as rows landed). Open asks unchanged: v3-rerun
-unhold + arm set (15:13Z), GRPO memo review, disk-draws sign-off.
-
-**Done** (commits `45a41b6`, `fb76a96`, close-out): (1) instrument —
-sign-carrying `--convmap-override` (`JOINT=[SIGN,]OFFSET`, oracles,
-checks 793 green) + `--rows-jsonl` per-episode stream on the parallel
-driver + the Discord watcher. (2) pre-reg amendment 1 posted BEFORE
-launch; tripwires under the official map recorded (lift mirror covers
-7.5% uncovered vs +180's 27.9%; arm B first-action 2.62° vs anchor
-6.31°; arm A wrist-identity 34.0° = the known clamp signature, run per
-the owner's call). (3) the read: arm A (snippet exact) mean −0.11,
-seed 6 directed reach to 1.4 cm (+4.61), seed 16 knock-away −5.26;
-arm B mean −0.09, 2 approaches, 1 knock-away; **A vs B NULL** (−0.02
-[−0.75,+0.66], 11/20 exact ties) — snippet identity wrist stays
-canonical; vs ftrig arms all CI-incl-0 (bracket claim softened: ft
-steps buy *more frequent* engagement, 7/20 vs 1–2/20 approaches, not
-engagement from zero). (4) INERT explicitly re-dispositioned on the
-pre-reg page (amendment 1 results); MIRROR_MARGIN estimator lesson
-flagged to the box (a real, documented mirror rejected despite winning
-coverage — wants a coverage tiebreak / external-doc override).
-Artifacts: dark per-seed chart + rows + 20 videos per arm on the
-reports Space (curl 200); Discord launch + per-episode + results posts
-18:58–19:0xZ.
-
-**Next**: `queue_cli.py next` → CPU lanes: `lit-sim-improvement-levers`
-(owner-called lit slice), `sim-wrist-compositing`. GPU idle pending the
-v3-rerun unhold (15:13Z ask). `run_work_next` armed. `queue.json`
-canonical.*
-
 ## Utilization footer
+
+Session 2026-08-12 21:30–21:4xZ (tick, babysit; GPU claimed at
+21:33:58Z — probe ~2.8 GPU-h projected ≤ 3.5 gate, accrues to the
+riding sessions): **GRPO signal probe LAUNCHED** on the owner's
+standing 13:36Z sequence at GPU handback (both predecessors done, no
+objection after the 20:06Z "rides the standing sequence" post).
+Launcher + babysit entry + first-poll (85% util) + launch post +
+queue sync, all inside the tick. `run_work_next` armed.
 
 Session 2026-08-12 19:20–21:2xZ (work; **+~0.88 GPU-h** — seed-6
 30 s rerun 0.02 + 100ep arm-A eval 0.86/1.5 gate, both ridden in-turn;
@@ -145,27 +112,6 @@ batched rows watcher, results + chart + 9 videos posted). GRPO probe
 prep COMPLETE + finalized pre-reg posted (launch-ready on handback).
 check.py 797 green × commits; queue "15 replans" drift fixed; convmap
 post indexed.
-
-Session 2026-08-12 19:15–19:2xZ (tick, babysit; 0 new GPU-h — GPU
-idle): caught a dropped owner ask — 19:01:42Z “Can you link a video?”
-was consumed mid-run by the prior session and answered only by the
-results post (chart link — doesn’t count per the standing rule) →
-direct reply 19:16Z with 3 curl-verified mp4 links (arm A seeds 6/16,
-arm B seed 10) + the per-arm directory pattern; ~4-min in-session
-conversational hold (no follow-up, no reactions), handed to the
-chained work session which rejoins the thread at boot. Hygiene green (queue depth 3, run_work_next
-armed 19:13, ssh straggler benign). Archive roll: 1 main entry (17:29
-work), 2 footer notes (18:19 tick, 17:29 work).
-
-Session 2026-08-12 18:39–19:1xZ (work, bounded; **+~0.25 GPU-h** — 2×
-tripwire probes + two 20-seed parallel arms, ridden end-to-end;
-exploit, owner steering): release-eval20-officialmap DONE same session
-— sign-carrying override instrument landed, pre-reg amendment posted
-pre-launch, both arms streamed per-episode to Discord per the owner
-ask, INERT re-dispositioned (PARTIALLY OVERTURNED: official lift sign
-unlocks scene contact, still 0/20 pickups; grounding remains the
-blocker), canonical shim = snippet map exactly, A-vs-B wrist arms null.
-No steering traffic; launch + ~6 per-episode + results posts.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
