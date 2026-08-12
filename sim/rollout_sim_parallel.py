@@ -58,6 +58,7 @@ from .rollout_sim import (
     EpisodeResult,
     RolloutSim,
     hold_chunk_fn,
+    resolve_replans,
     run_episode_loop,
     sim_item,
 )
@@ -109,7 +110,17 @@ def parse_args() -> argparse.Namespace:
         help="env worker processes (each owns a SO101Sim + GL context; "
         "capped at num-seeds)",
     )
-    parser.add_argument("--replans", type=int, default=15)
+    parser.add_argument("--replans", type=int, default=None)
+    parser.add_argument(
+        "--episode-seconds",
+        type=float,
+        default=None,
+        help="episode TIME budget; the replan count derives from the "
+        "resolved chunk horizon at 30 Hz, so 30 seconds means 30 "
+        "seconds for any checkpoint's chunk length (a fixed --replans "
+        "count quietly scales the budget with chunk size: 15 replans "
+        "of 1-second molmoact2 chunks was 15 s, not the intended 30)",
+    )
     parser.add_argument("--execute-horizon", type=int, default=30)
     parser.add_argument("--sample-steps", type=int, default=10)
     parser.add_argument(
@@ -212,6 +223,13 @@ def parse_args() -> argparse.Namespace:
         parser.error("--convmap-seam-stats wraps a policy — meaningless with --hold")
     if args.convmap_override and args.convmap_seam_stats is None:
         parser.error("--convmap-override requires --convmap-seam-stats")
+    if args.replans is not None and args.episode_seconds is not None:
+        parser.error(
+            "--replans and --episode-seconds state the same budget in "
+            "two units — pick one",
+        )
+    if args.episode_seconds is not None and args.episode_seconds <= 0:
+        parser.error(f"--episode-seconds must be > 0, got {args.episode_seconds}")
     if args.draws < 1:
         parser.error(f"--draws must be >= 1, got {args.draws}")
     if args.draws > 1 and args.hold:
@@ -394,6 +412,11 @@ def main() -> int:
             f"policy: {policy.name} "
             f"({args.method}-{args.sample_steps}, horizon {horizon})",
         )
+    replans = resolve_replans(args.replans, args.episode_seconds, horizon)
+    print(
+        f"episode budget: {replans} replans x {horizon} ticks = "
+        f"{replans * horizon / CONTROL_HZ:.1f} s at {CONTROL_HZ} Hz",
+    )
 
     seeds = list(range(args.seed, args.seed + args.num_seeds))
     # Seed-major, draw-minor — the sequential driver's loop order, so
@@ -411,7 +434,7 @@ def main() -> int:
         config = WorkerConfig(
             worker_id=worker_id,
             units=tuple(units[worker_id::workers]),
-            replans=args.replans,
+            replans=replans,
             horizon=horizon,
             hold=args.hold,
             out_dir=args.out_dir,
@@ -546,7 +569,8 @@ def main() -> int:
                 "hold": args.hold,
                 "seed": args.seed,
                 "num_seeds": args.num_seeds,
-                "replans": args.replans,
+                "replans": replans,
+                "episode_seconds": args.episode_seconds,
                 "execute_horizon": horizon,
                 "sample_steps": args.sample_steps,
                 "method": args.method,
