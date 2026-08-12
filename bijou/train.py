@@ -4048,7 +4048,7 @@ def main() -> int:
                 "where the trunk runs under grad)",
                 flush=True,
             )
-    if not args.backbone_trained:
+    if not args.backbone_trained and hasattr(model.encoder, "state_proj"):
         # Frozen runs encode the prefix under no_grad (BijouTrainStep),
         # so the prompt-side state projection CANNOT receive gradients
         # there — freeze it rather than hand DDP a grad-less trainable
@@ -4056,7 +4056,9 @@ def main() -> int:
         # zero init makes the state token exactly inert: frozen-backbone
         # behavior matches the pre-state-token model. Training it under
         # a frozen backbone (stage 2) needs a grad-transparent prefix —
-        # a deliberate future change, not a default.
+        # a deliberate future change, not a default. (The molmoact2
+        # encoder has NO prompt-side parameters — state is discrete in
+        # the ids — so there is nothing to freeze there.)
         model.encoder.state_proj.requires_grad_(False)
         if is_main:
             # Zero-init => exactly inert; a --backbone-init-from load
