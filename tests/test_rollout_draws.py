@@ -11,7 +11,11 @@ import torch
 pytest.importorskip("mujoco")
 
 from bijou.data import DatasetStats
-from bijou.eval.policies import stable_noise, stable_sample_rng
+from bijou.eval.policies import (
+    stable_noise,
+    stable_sample_rng,
+    stable_sde_step_noise,
+)
 from sim.rollout_sim import EpisodeResult, sim_item
 from sim.so101_sim import SimObservation
 
@@ -65,6 +69,33 @@ def test_draws_rekey_both_stochastic_streams() -> None:
     for a in range(len(draws)):
         for b in range(a + 1, len(draws)):
             assert not torch.equal(draws[a], draws[b])
+
+
+def test_sde_step_noise_keyed_and_domain_separated() -> None:
+    """The SDE per-step stream must re-key per draw through the repo_id
+    suffix (like every other policy-side stream), reproduce exactly
+    under the same key, and never replay the initial-noise stream at
+    the same (seed, frame, draw) — different domain constants."""
+    repos = [_repo_id(draw) for draw in range(3)]
+    stacks = [
+        stable_sde_step_noise(0, repo, 3, 2, 0, num_steps=10, shape=(50, 6))
+        for repo in repos
+    ]
+    assert stacks[0].shape == (10, 50, 6)
+    for a in range(len(stacks)):
+        for b in range(a + 1, len(stacks)):
+            assert not torch.equal(stacks[a], stacks[b])
+    assert torch.equal(
+        stacks[1],
+        stable_sde_step_noise(0, repos[1], 3, 2, 0, num_steps=10, shape=(50, 6)),
+    )
+    # Domain separation from the initial-noise stream: same key, same
+    # shape, different bits.
+    initial = stable_noise(0, repos[0], 3, 2, 0, shape=(50, 6))
+    assert not torch.equal(stacks[0][0], initial)
+    # Steps within one stack are distinct (a stuck stream would make
+    # every SDE step reuse one ε).
+    assert not torch.equal(stacks[0][0], stacks[0][1])
 
 
 def test_episode_result_draw_defaults_zero() -> None:

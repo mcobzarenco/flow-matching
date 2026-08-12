@@ -120,6 +120,49 @@ def test_logprob_matches_gaussian_recomputation(decoder: FlowDecoder) -> None:
     torch.testing.assert_close(logprob, expected, rtol=1e-5, atol=1e-5)
 
 
+def test_supplied_step_noise_matches_generator_stream(decoder: FlowDecoder) -> None:
+    """Explicit step_noise (the batch-composition-invariant path the
+    keyed rollout decode uses) must reproduce the generator draw when
+    fed the same ε sequence — the two paths are one sampler."""
+    memory, state, _actions, _time = fabricate()
+    seed = 13
+    from_generator = decoder.sample_actions_sde(
+        memory,
+        state,
+        noise_level=0.5,
+        num_steps=NUM_STEPS,
+        generator=torch.Generator().manual_seed(seed),
+    )
+    replay = torch.Generator().manual_seed(seed)
+    initial = torch.randn(BATCH, 4, 6, generator=replay)
+    steps = torch.stack(
+        [torch.randn(BATCH, 4, 6, generator=replay) for _ in range(NUM_STEPS)],
+    )
+    supplied = decoder.sample_actions_sde(
+        memory,
+        state,
+        noise_level=0.5,
+        num_steps=NUM_STEPS,
+        noise=initial,
+        step_noise=steps,
+    )
+    assert isinstance(from_generator, torch.Tensor)
+    assert isinstance(supplied, torch.Tensor)
+    assert torch.equal(from_generator, supplied)
+
+
+def test_step_noise_shape_refused(decoder: FlowDecoder) -> None:
+    memory, state, _actions, _time = fabricate()
+    with pytest.raises(ValueError, match="step_noise shaped"):
+        decoder.sample_actions_sde(
+            memory,
+            state,
+            noise_level=0.5,
+            num_steps=NUM_STEPS,
+            step_noise=torch.zeros(NUM_STEPS - 1, BATCH, 4, 6),
+        )
+
+
 def test_logprob_refused_at_a0(decoder: FlowDecoder) -> None:
     memory, state, _actions, _time = fabricate()
     with pytest.raises(ValueError, match="noise_level=0"):

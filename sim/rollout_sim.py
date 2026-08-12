@@ -104,6 +104,16 @@ def parse_args() -> argparse.Namespace:
         "name carries _t<T>)",
     )
     parser.add_argument(
+        "--sde-noise-level",
+        type=float,
+        default=None,
+        help="decode flow actions with the Euler–Maruyama SDE at this "
+        "noise scale a instead of the deterministic ODE (GRPO probe "
+        "cell 5; requires --method euler; the row/report name carries "
+        "_sde<a>; per-step noise is keyed per (seed, replan, draw) so "
+        "rows stay batch-invariant and reproducible)",
+    )
+    parser.add_argument(
         "--method",
         default="heun",
         choices=["euler", "heun"],
@@ -130,6 +140,16 @@ def parse_args() -> argparse.Namespace:
         parser.error(f"--draws must be >= 1, got {args.draws}")
     if args.draws > 1 and args.hold:
         parser.error("--draws > 1 is meaningless for --hold (deterministic)")
+    if args.sde_noise_level is not None:
+        if args.hold:
+            parser.error("--sde-noise-level decodes a policy — meaningless with --hold")
+        if args.ar_temperature is not None:
+            parser.error(
+                "--sde-noise-level and --ar-temperature sample "
+                "different decoder families — pick one",
+            )
+        if args.method != "euler":
+            parser.error("the SDE decode is Euler-only — pass --method euler")
     return args
 
 
@@ -387,6 +407,7 @@ def main() -> int:
             sample_steps=args.sample_steps,
             method=SamplingMethod[args.method.upper()],
             ar_temperature=args.ar_temperature,
+            sde_noise_level=args.sde_noise_level,
             expert_dtype=getattr(torch, args.expert_dtype),
         )
         horizon = min(args.execute_horizon, policy.info.chunk_size)
@@ -447,6 +468,7 @@ def main() -> int:
                 "method": args.method,
                 "draws": args.draws,
                 "ar_temperature": args.ar_temperature,
+                "sde_noise_level": args.sde_noise_level,
                 "expert_dtype": args.expert_dtype,
                 "control_hz": CONTROL_HZ,
                 "task": TASK,

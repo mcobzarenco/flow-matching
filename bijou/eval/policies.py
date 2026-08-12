@@ -207,6 +207,41 @@ def stable_sample_rng(
     return np.random.Generator(np.random.PCG64(sequence))
 
 
+# SDE per-STEP noise reuses the stable frame-identity keying with its
+# own domain constant: the Euler–Maruyama decode consumes one ε per
+# solver step ON TOP of the initial noise (which stays stable_noise's
+# stream — same key, different domain, so the two must never replay
+# each other). Per-item keying is what makes the batched SDE decode
+# batch-composition-invariant: a shared generator would hand each item
+# different ε depending on who else sits in the batch.
+SDE_STEP_DOMAIN = 0x53444553  # "SDES"
+
+
+def stable_sde_step_noise(
+    seed: int,
+    repo_id: str,
+    episode_index: int,
+    frame_index: int,
+    draw: int,
+    num_steps: int,
+    shape: tuple[int, int],
+) -> Tensor:
+    """One frame's [num_steps, chunk, dim] SDE step noise for one draw —
+    invariant to corpus composition, evaluation order, batch composition
+    and device (generated CPU-side like stable_noise)."""
+    digest = hashlib.blake2b(
+        f"{repo_id}\x1f{episode_index}\x1f{frame_index}".encode(),
+        digest_size=16,
+    ).digest()
+    words = [int.from_bytes(digest[i : i + 4], "little") for i in range(0, 16, 4)]
+    sequence = np.random.SeedSequence([SDE_STEP_DOMAIN, seed, draw, *words])
+    values = np.random.Generator(np.random.PCG64(sequence)).standard_normal(
+        (num_steps, *shape),
+        dtype=np.float32,
+    )
+    return torch.from_numpy(values)
+
+
 # Golden-ticket noise mode: a frozen
 # bank of candidate noise vectors replaces per-frame keying entirely —
 # draw d at EVERY frame integrates from tickets[d] (the defining
@@ -386,6 +421,7 @@ class BijouPolicy:
         method: SamplingMethod = SamplingMethod.HEUN,
         sample_draws: int = 1,
         ar_temperature: float | None = None,
+        sde_noise_level: float | None = None,
         target_time: float | None = None,
         expert_dtype: torch.dtype = torch.float32,
         generate: tuple[AuxField, ...] = (),
@@ -410,6 +446,11 @@ class BijouPolicy:
             # Same convention: a temperature-sampled AR read is a
             # different voice from the greedy deployment decode.
             self.name += f"_t{ar_temperature:g}"
+        if sde_noise_level is not None:
+            # Same convention: an Euler–Maruyama SDE decode is a
+            # different voice from the deterministic keyed-noise ODE
+            # read (even at a=0, which reproduces euler bit-for-bit).
+            self.name += f"_sde{sde_noise_level:g}"
         if mask_state:
             # Same convention: a state-blind diagnostic read must never
             # be mistakable for a deployment read.
@@ -540,6 +581,51 @@ class BijouPolicy:
                     f"{type(self.model.decoder).__name__}",
                 )
         self.ar_temperature = ar_temperature
+        if sde_noise_level is not None:
+            if sde_noise_level < 0:
+                raise SystemExit(
+                    f"--sde-noise-level must be >= 0, got {sde_noise_level} "
+                    "(0 is the bit-identity-with-euler oracle setting)",
+                )
+            if not isinstance(self.model.decoder, FlowDecoder):
+                raise SystemExit(
+                    "--sde-noise-level is the Euler–Maruyama flow decode; "
+                    "this checkpoint's decoder is "
+                    f"{type(self.model.decoder).__name__}",
+                )
+            if ar_temperature is not None:
+                raise SystemExit(
+                    "--sde-noise-level and --ar-temperature sample different "
+                    "decoder families — pick one",
+                )
+            if sample_draws != 1:
+                raise SystemExit(
+                    "--sample-draws ensembling averages ODE draws; SDE "
+                    "groups ride the rollout driver's per-draw keying "
+                    f"instead — got --sample-draws {sample_draws}",
+                )
+            if tickets is not None:
+                raise SystemExit(
+                    "--noise-tickets substitutes the INITIAL noise bank; "
+                    "the SDE decode's step noise has no ticket semantics",
+                )
+            if target_time is not None:
+                raise SystemExit(
+                    "the SDE sampler offers no φ_s shortcut conditioning — "
+                    f"--target-time must be unset, got {target_time}",
+                )
+            if method is not SamplingMethod.EULER:
+                raise SystemExit(
+                    "the SDE decode is Euler-only (a Heun corrector breaks "
+                    f"the Gaussian transition) — got method {method.name}; "
+                    "pass --method euler",
+                )
+            if noise_key != "stable":
+                raise SystemExit(
+                    "SDE step noise is keyed by the frame identity triple — "
+                    f"it requires --noise-key stable, got {noise_key!r}",
+                )
+        self.sde_noise_level = sde_noise_level
         if self.tickets is not None:
             if not isinstance(self.model.decoder, FlowDecoder):
                 raise SystemExit(
@@ -1009,6 +1095,42 @@ class BijouPolicy:
                 means, self.last_draws = collapse_draws(stacked)
                 return means, generations
             return [chunk.cpu() for chunk in stacked[0]], generations
+        if self.sde_noise_level is not None and isinstance(decoder, FlowDecoder):
+            # SDE stochastic decode (Euler–Maruyama, the trainable
+            # sampler): initial noise stays the stable keyed stream;
+            # per-step ε comes pre-drawn per item from its own keyed
+            # domain, so the batched decode stays batch-composition-
+            # invariant like every other stable stream. Draw identity
+            # rides the item's repo_id (the rollout drivers' draw-suffix
+            # convention), so the in-call draw index is always 0.
+            memory = self.model.encode(batch.encoder_inputs, with_grad=False)
+            shape = (batch.actions.shape[1], batch.actions.shape[2])
+            sde_noise = self._flow_noise(items, indices, 1, shape).to(self.device)
+            step_noise = torch.stack(
+                [
+                    stable_sde_step_noise(
+                        self.seed,
+                        str(item["repo_id"]),
+                        int(item["episode_index"]),
+                        int(item["frame_index"]),
+                        0,
+                        self.sample_steps,
+                        shape,
+                    )
+                    for item in items
+                ],
+                dim=1,
+            ).to(self.device)
+            prediction = decoder.predict_chunk(
+                memory,
+                batch,
+                noise=sde_noise,
+                num_steps=self.sample_steps,
+                method=self.method,
+                sde_noise_level=self.sde_noise_level,
+                sde_step_noise=step_noise,
+            )
+            return [chunk.cpu() for chunk in prediction.actions], None
         # Flow integrates from per-item seeded noise (deterministic and
         # batch-composition-independent); AR decodes greedily and takes
         # none.
