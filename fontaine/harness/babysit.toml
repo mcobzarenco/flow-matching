@@ -659,3 +659,26 @@ no_live_runs_reason = "declared 16:0xZ 08-12 work session: ftrig_eval20_flip_par
 # posts/2026-08-12-gpu-release-results.md; Discord 14:57Z + 15:10Z.
 # NOTE: rows are PRE-FLIP physics (re-baseline boundary d5cf9fd).
 # Local GPU FREE as of ~14:50Z (owner released the box 14:17Z).
+
+[[run]]
+name = "release_officialmap"
+kind = "progress-log"
+host = "local"
+pgrep = "rollout_sim_parallel"
+pgrep_min = 1
+gpu_indices = [0]
+gpu_mem_min_mib = 4000
+log = "/home/ubuntu/flow-matching/outputs/sim/ftrig_eval20_flip_parallel/officialmap_launcher.log"
+progress_re = "=== ARM [a-z_]+ (start|end)|convmap seam|episodes in"
+started_utc = "2026-08-12T18:55:19Z"
+gpu_hours_per_wall_hour = 1.0
+boundary = "two 20-seed arms sequential (~11 min total at prior 5.5 min/arm); ridden IN-SESSION by the 18:39Z work session with a per-episode Discord watcher on rows.jsonl — PRUNE THIS ENTRY at completion same session (retained-entry footgun, see molmoact2_ftrig_eval20 note)"
+anchors = [
+    "pre-reg amendment 1 on posts/2026-08-12-prereg-release-eval20-convmap.md: arm A = official snippet map exactly (lift -1,90; wrist_roll identity), arm B = snippet + wrist_roll -90",
+    "gate <=0.4 GPU-h both arms; prior single-arm run was 5.5 min / ~0.09 GPU-h at workers=8",
+    "INERT 0.00x20 parent claim is SUSPECT on lift and gets explicitly re-dispositioned from these rows",
+    "tripwires 18:5xZ: arm A wrist_roll identity first-action 34.0deg (known clamp signature, owner ordered anyway); arm B passes 2.62 vs anchor 6.31",
+]
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 0.4
