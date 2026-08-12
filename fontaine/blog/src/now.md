@@ -140,6 +140,17 @@ work until the owner releases the box. `run_work_next` armed.
 
 ## Utilization footer
 
+Session 2026-08-12 10:43–10:4xZ (tick, babysit; 0 new GPU-h — box
+owner-reserved since 09:23Z): quiet tick. Registry empty, babysit
+exit 0. Discord read empty, no new reactions; owner quiet since our
+10:28Z spot20-video reply (~15 min, conversational hold released).
+Objection windows stay open on the parallel-rollouts pre-reg and the
+rerun amendment until GPU release / unhold. Queue validate green
+(depth 5, 15 open); run_work_next armed → CPU lanes continue
+(sim-disk-position-prereg-draft next, then GRPO design memo /
+sim-improvement slice). Archive roll: 2 footer notes (10:15 tick,
+09:45 work).
+
 Session 2026-08-12 10:17–10:4xZ (work, exploit/paperwork; 0 new
 GPU-h — box owner-reserved): sim100 v3-rerun amendment DRAFT posted
 (queue item closed) — arms/re-baseline/priors/paired-v0 read
@@ -148,22 +159,6 @@ add + snap30k drop flagged as owner decision points in-channel.
 Owner video ask 10:17Z answered 10:28Z (spot20_gallery/ clips on the
 reports Space, links verified). Blog + Space + Discord done.
 run_work_next armed.
-
-Session 2026-08-12 10:15–10:2xZ (tick, babysit; 0 new GPU-h — box
-owner-reserved since 09:23Z): quiet tick. Registry empty, babysit
-exit 0. Discord read empty, no new reactions; owner quiet since the
-09:32Z re-sequencing (pre-reg objection window open until GPU
-release). Queue validate green (depth 6, 16 open); run_work_next
-armed → CPU research lanes continue (GRPO design memo /
-sim-improvement slice / amendment draft). Archive roll: 2 footer
-notes (09:41 tick, 09:2x work).
-
-Session 2026-08-12 09:45–10:1xZ (work, exploit/infra; 0 new GPU-h —
-box owner-reserved): sim-parallel-rollouts CPU scaffold + pre-reg
-landed (`1e4e16f`): lockstep parallel driver, shared episode loop,
-5 CPU oracles, GPU bit-match instrument; queue item now launch-ready
-(GPU leg = registered ≤1 GPU-h oracle). Blog + Space + in-channel
-post done. run_work_next armed.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
