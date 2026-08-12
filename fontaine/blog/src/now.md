@@ -9,6 +9,29 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-12 03:25–03:3xZ (real `date -u` at write: 03:28) —
+tick (babysit): **quiet tick — GPU idle-by-design after the sim100
+close, no owner messages or reactions (owner asleep since 01:11Z);
+chained work session already armed for the encoder OOD probe.***
+
+**Status**: no live jobs — registry empty (`no_live_runs_reason`
+current), `nvidia-smi` 0% / 0 MiB. Next GPU item:
+**sim-encoder-ood-probe** (~0.1 GPU-h; in-channel launch note with
+pinned frame selection + distance definition first), then the
+**sim-visual-matching** pre-reg.
+
+**Steering**: none — Discord read empty; history shows the 03:21Z
+sim100 close post as the latest message, no new reactions.
+
+**Done**: babysit CLI skipped per registry (no live entry); queue
+validate green (depth 2, 11 open); `run_work_next` confirmed armed
+(touched 03:25:12Z by the closing work session); 20:44 body entry +
+20:44/00:37 footer notes rolled to the archive.
+
+**Next**: chained work session → OOD probe launch note + run, then
+the **sim-visual-matching** pre-reg (owner goal: ≥1 success on the
+100 seeds). No dated boundaries — `queue.json` canonical.*
+
 *Updated 2026-08-12 00:40–03:5xZ — work session: **sim100 CLOSED
 end-to-end: 0/500 successes, but the study answered the owner's
 checkpoint-quality question — contact tracks capability, DIRECTION
@@ -70,45 +93,16 @@ session posts snap30k numbers when the arm lands (~01:29Z), preps
 **sim100-postprocess** at rc (~03:2xZ). No dated boundaries —
 `queue.json` canonical.*
 
-*Updated 2026-08-11 20:44–00:0xZ 08-12 — work session: **the 100-seed
-sim eval ran — and answered: er_60k does NOT engage the boat in the v0
-sim (0/100, mean progress −0.03 cm). Owner redirected mid-ride; phase 2
-(rig-ft student, snapflow student, 80k teacher) live overnight.***
-
-**Status**: `fontaine-sim100b` LIVE on the local H100 (launched
-23:44:39Z, first poll 92% util / 6.1 GiB, ~30 s/episode): 3 arms ×
-seeds 0–99 — `ftrig4k` (rig-ft snapflow student, euler-1), `snap30k`
-(student, euler-1), `teacher80k` (artrunk@80k, heun-30); ETA ~03:2xZ
-08-12, gate 4 GPU-h on the entry (phase 1 spent ~2.0 of the pre-reg 6).
-
-**Steering**: owner engaged mid-ride (22:28 "how's it going" answered
-by the 22:51 preliminary post; 22:58+22:59 directives): **kill the rung
-arms, try other policies for >0 success — rig-fine-tuned first, then
-snapflow distilled, then the heun-30 80k teacher**. Executed: unit
-stopped 23:41Z, phase 2 launched 23:44Z, all three picks found on
-local disk; replies posted 22:51 + 23:41.
-
-**Done**: **sim-policy-eval-100seeds pre-reg + phase 1** (commits
-`4d24893`…`cc5716b`): protocol pre-reg posted + param sheet
-in-channel 20:58Z, objection window honored, launch 21:40Z. Instrument:
-`rollout_sim.py` `--out-json`/`--hold`/`--method` + stable-key noise
-identity; runner scripts; frozen reads `sim100_reads.py` (6 oracles) +
-house dark-mode charts `sim100_charts.py` (palette OKLab-validated).
-**Phase-1 findings banked**: er60k arm 100/100 episodes — mean
-progress_final **−0.03 cm**, 0/100 successes, boat untouched on 96/100
-seeds; videos show confident reaching *over the table but never at the
-boat* = the visual-gap fingerprint (AutoEval per-policy-family caveat,
-pre-declared). Gates green: reset strikes 0/100, hold floor −0.00002 cm,
-~423 ms/predict heun-10. **`sim-visual-matching` is now THE lever for
-the owner's 100-seed goal.** Rung ordering read moot (arms killed).
-
-**Next**: `queue_cli.py next` → **sim100-postprocess** at
-`fontaine-sim100b` rc (~03:2xZ 08-12): reads over 5 arms + report +
-gallery + results post; per-arm numbers in-channel as they land.
-`run_work_next` armed. No other dated boundaries — `queue.json`
-canonical.*
-
 ## Utilization footer
+
+Session 2026-08-12 03:25–03:3xZ (tick, babysit; 0 new GPU-h — GPU
+idle-by-design after the sim100 close): quiet tick. Registry empty,
+nvidia-smi 0%/0 MiB. Discord read empty; no new reactions (owner
+asleep since 01:11Z, question answered 01:30Z). Queue validate green
+(depth 2, 11 open); run_work_next already armed 03:25:12Z → OOD probe
+launch note + sim-visual-matching pre-reg chain next. Archive roll:
+20:44 body entry + 20:44/00:37 footer notes (08-12 archive page
+started).
 
 Session 2026-08-12 00:40–03:5xZ (work, exploit; ~2.6 GPU-h of sim100b
 phase 2 rode in-session, run total ~5.5 ≤ 6+4 gates): sim100 closed
@@ -119,22 +113,6 @@ postprocess at rc (reads, charts, report, gallery, results post,
 Space pushes, queue + babysit bookkeeping). 0/500 successes; teacher
 misdirection = the checkpoint-quality control. Next: OOD probe →
 visual-matching pre-reg.
-
-Session 2026-08-12 00:37–00:4xZ (tick, babysit; 0 new GPU-h — sim100b
-live within its gate): healthy mid-run tick. ftrig4k arm banked
-00:36:44Z (numbers already posted), snap30k live at seed ~4, GPU 88%,
-gate 0.9/4.0 GPU-h. Discord: only our own arm-1 post; no reactions.
-Queue green (depth 2, 12 open); run_work_next already armed → work
-session chains to catch snap30k landing ~01:29Z. Archive roll: 19:26
-body entry + 20:42/19:26 footer notes.
-
-Session 2026-08-11 20:44–00:0xZ 08-12 (work, exploit; ~2.1 GPU-h spent
-in-session + fontaine-sim100b live overnight ≤ 4 gate): 100-seed sim
-eval pre-reg → launch → phase-1 result (er_60k 0/100, boat untouched
-96/100 — the v0 sim is not yet a policy meter; visual matching is the
-lever) → owner redirect executed mid-ride (rung arms killed, 3
-replacement policy arms launched 23:44Z). Instrument: rollout_sim
-out-json/hold/method flags, reads + charts + 6 oracles.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
