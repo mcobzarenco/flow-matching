@@ -712,24 +712,21 @@ class MolmoFlowDecoder(nn.Module):
         )
         # Deployment configuration (``configure``): the loader supplies
         # the checkpoint's action geometry + t-law, the q01/q99 clamp
-        # table (non-persistent buffers — the table's serialized home is
-        # the checkpoint metadata's normalization row, stored ONCE), and
-        # the write-side schema dict (loading owns the schema; a decoder
-        # cannot import it, so the dict is stashed here by the loader).
+        # table, and the write-side schema dict (loading owns the
+        # schema; a decoder cannot import it, so the dict is stashed
+        # here by the loader). The table is PLAIN fp32 CPU tensors —
+        # deliberately NOT buffers: ``module.to(bfloat16)`` would sweep
+        # buffers to bf16 and round the denorm constants (~3 significant
+        # digits over quantile spans up to ~280 raw units — a measured
+        # 0.027 pooled divergence vs the reference on the released arm,
+        # step-5 gate diagnosis 2026-08-11). The reference unnormalizes
+        # with fp32 JSON values; so do we, at every expert dtype. The
+        # table's serialized home is the checkpoint metadata's
+        # normalization row, stored ONCE.
         self.runtime: MolmoFlowRuntime | None = None
         self.checkpoint_schema: dict[str, object] | None = None
-        self.action_q01: Tensor
-        self.action_q99: Tensor
-        self.register_buffer(
-            "action_q01",
-            torch.zeros(config.max_action_dim),
-            persistent=False,
-        )
-        self.register_buffer(
-            "action_q99",
-            torch.zeros(config.max_action_dim),
-            persistent=False,
-        )
+        self.action_q01 = torch.zeros(config.max_action_dim, dtype=torch.float32)
+        self.action_q99 = torch.zeros(config.max_action_dim, dtype=torch.float32)
         self.reset_parameters()
 
     def configure(
@@ -756,16 +753,19 @@ class MolmoFlowDecoder(nn.Module):
                 f"{tuple(action_q01.shape)} / {tuple(action_q99.shape)}",
             )
         pad = self.config.max_action_dim - runtime.action_dim
-        with torch.no_grad():
-            self.action_q01.copy_(
-                F.pad(action_q01.to(self.action_q01.dtype), (0, pad), value=0.0),
-            )
-            # Padded dims get a unit-width box (0..1) so the normalize/
-            # unnormalize maps stay finite there; the dim mask keeps them
-            # out of every loss and the sampler zeroes them anyway.
-            self.action_q99.copy_(
-                F.pad(action_q99.to(self.action_q99.dtype), (0, pad), value=1.0),
-            )
+        self.action_q01 = F.pad(
+            action_q01.to(torch.float32).cpu(),
+            (0, pad),
+            value=0.0,
+        )
+        # Padded dims get a unit-width box (0..1) so the normalize/
+        # unnormalize maps stay finite there; the dim mask keeps them
+        # out of every loss and the sampler zeroes them anyway.
+        self.action_q99 = F.pad(
+            action_q99.to(torch.float32).cpu(),
+            (0, pad),
+            value=1.0,
+        )
         self.runtime = runtime
         self.checkpoint_schema = checkpoint_schema
 
@@ -779,14 +779,11 @@ class MolmoFlowDecoder(nn.Module):
         return self.runtime
 
     def dim_pad_mask(self) -> Tensor:
-        """[max_action_dim] bool, True = padded dim (their
-        ``action_dim_is_pad``), derived from the configured geometry."""
+        """[max_action_dim] bool CPU, True = padded dim (their
+        ``action_dim_is_pad``), derived from the configured geometry;
+        consumers broadcast it to their device."""
         runtime = self._configured()
-        mask = torch.ones(
-            self.config.max_action_dim,
-            dtype=torch.bool,
-            device=self.action_q01.device,
-        )
+        mask = torch.ones(self.config.max_action_dim, dtype=torch.bool)
         mask[: runtime.action_dim] = False
         return mask
 
