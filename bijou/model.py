@@ -51,12 +51,6 @@ from .decoders.ar_backbone import (
     ar_backbone_loss_sums,
     ar_backbone_losses,
 )
-from .decoders.ar_fast import (
-    ARFastDecoder,
-    ar_fast_counts,
-    ar_fast_loss,
-    ar_fast_loss_sums,
-)
 from .decoders.ar_molmo2 import Molmo2ARDecoder
 from .decoders.flow import (
     FlowDecoder,
@@ -91,13 +85,7 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
         self,
         backbone: B,
         encoder: ObservationEncoder[I, B],
-        decoder: (
-            FlowDecoder
-            | ARFastDecoder
-            | ARBackboneDecoder
-            | Molmo2ARDecoder
-            | MolmoFlowDecoder
-        ),
+        decoder: (FlowDecoder | ARBackboneDecoder | Molmo2ARDecoder | MolmoFlowDecoder),
     ) -> None:
         super().__init__()
         self.backbone = backbone
@@ -202,13 +190,7 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
     @property
     def expert(
         self,
-    ) -> (
-        FlowDecoder
-        | ARFastDecoder
-        | ARBackboneDecoder
-        | Molmo2ARDecoder
-        | MolmoFlowDecoder
-    ):
+    ) -> FlowDecoder | ARBackboneDecoder | Molmo2ARDecoder | MolmoFlowDecoder:
         return self.decoder
 
     def _flow_decoder(self) -> FlowDecoder:
@@ -263,7 +245,7 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
         count | None) — the total carries the graph; the rest arrive
         detached for logging (aux as sum+count so the train loop can
         aggregate a position-weighted mean across batches and ranks).
-        Flow and ar_fast have a single-component objective (aux None).
+        Flow has a single-component objective (aux None).
 
         The joint-CE arm (``joint_ce`` set) returns (CE total + flow
         total, detached FLOW loss, detached CE ACTION component, count 1)
@@ -297,9 +279,6 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                         ce_action.detach(),
                         torch.ones((), device=ce_action.device),
                     )
-                return total, total.detach(), None, None
-            case ARFastDecoder():
-                total = ar_fast_loss(decoder, memory, batch)
                 return total, total.detach(), None, None
             case ARBackboneDecoder():
                 total, action, aux_sum, aux_count = ar_backbone_losses(
@@ -356,8 +335,7 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                     ),
                     None,
                 )
-            case ARFastDecoder():
-                return ar_fast_counts(decoder, batch), None
+
             case ARBackboneDecoder() | Molmo2ARDecoder():
                 return ar_backbone_counts(decoder, batch)
             case MolmoFlowDecoder():
@@ -394,9 +372,7 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                 )
                 loss_sum, count = sums(decoder, memory, batch)
                 return loss_sum, count, None, None
-            case ARFastDecoder():
-                loss_sum, count = ar_fast_loss_sums(decoder, memory, batch)
-                return loss_sum, count, None, None
+
             case ARBackboneDecoder():
                 return ar_backbone_loss_sums(
                     self._gemma_backbone(),
@@ -531,13 +507,6 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                     method=SamplingMethod.HEUN if method is None else method,
                     target_time=target_time,
                 )
-            case ARFastDecoder():
-                return decoder.predict_chunk(
-                    memory,
-                    batch,
-                    generator=generator,
-                    noise=noise,
-                )
             case ARBackboneDecoder():
                 return decoder.predict_chunk(
                     self._gemma_backbone(),
@@ -586,7 +555,7 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
         the prefix cache, and restores between draws
         (:meth:`ARSuffixDecoder.cache_snapshot`/``cache_restore``), so
         N draws share one prefill. Loud on decoders without a suffix
-        cache to share (flow samples noise; ar_fast has no trunk)."""
+        cache to share (flow samples noise instead)."""
         match self.decoder:
             case ARBackboneDecoder():
                 return self.decoder.predict_chunk(

@@ -263,25 +263,6 @@ def test_chunked_gradient_matches_unchunked_ar_backbone_aux() -> None:
         assert rel < 5e-4, f"{name}: chunked-vs-unchunked gradient rel {rel}"
 
 
-def test_ar_fast_sums_reconstruct_mean() -> None:
-    from test_ar_fast import batch as fast_batch
-    from test_ar_fast import build as build_fast
-    from test_ar_fast import memory as fast_memory
-
-    from bijou.decoders.ar_fast import (
-        ar_fast_counts,
-        ar_fast_loss,
-        ar_fast_loss_sums,
-    )
-
-    decoder, loaded = build_fast()
-    sample = fast_batch(loaded)
-    mean = ar_fast_loss(decoder, fast_memory(), sample)
-    loss_sum, count = ar_fast_loss_sums(decoder, fast_memory(), sample)
-    assert torch.allclose(loss_sum / count, mean, atol=1e-6)
-    assert torch.equal(ar_fast_counts(decoder, sample), count)
-
-
 def test_flow_sums_reconstruct_mean() -> None:
     decoder = build_flow(TimeConditioning.ADARMS)
     memory, state, actions, _ = fabricate()

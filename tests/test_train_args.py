@@ -273,8 +273,12 @@ def test_post_init_validates_direct_construction() -> None:
     args = _parse([])
     with pytest.raises(ValueError, match="--holdout-episodes must be in"):
         dataclasses.replace(args, holdout_episodes=1.5)
-    with pytest.raises(ValueError, match="--decoder ar_fast requires --fast-tokenizer"):
+    with pytest.raises(ValueError, match="unknown decoder kind 'ar_fast'"):
+        # Retired kind: the CLI's choices= refuses it at parse; direct
+        # construction must hit the same wall (single encoding).
         dataclasses.replace(args, decoder="ar_fast")
+    with pytest.raises(ValueError, match="ar_backbone requires --fast-tokenizer"):
+        dataclasses.replace(args, decoder="ar_backbone")
     with pytest.raises(ValueError, match="--rewarmup-steps anchors at the resume"):
         dataclasses.replace(args, rewarmup_steps=100)
     with pytest.raises(ValueError, match="template order"):
@@ -290,7 +294,7 @@ def test_value_invariants_reach_cli_as_parser_error() -> None:
     with pytest.raises(SystemExit):  # parser.error(str(ValueError))
         _parse(["--holdout-episodes", "1.5"])
     with pytest.raises(SystemExit):
-        _parse(["--decoder", "ar_fast"])  # no --fast-tokenizer
+        _parse(["--decoder", "ar_fast"])  # retired kind: argparse choices
 
 
 def test_resume_and_init_from_are_mutually_exclusive() -> None:

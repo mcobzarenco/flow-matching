@@ -29,7 +29,6 @@ from torch import Tensor
 from .aux_text import AuxDecodeConfig, build_aux_runtime
 from .data import DatasetStats
 from .decoders.ar_backbone import ARBackboneConfig, ARBackboneDecoder
-from .decoders.ar_fast import ARFastConfig, ARFastDecoder
 from .decoders.ar_molmo2 import Molmo2ARDecoder
 from .decoders.flow import (
     ExpertConfig,
@@ -547,43 +546,6 @@ def parse_prompt_config(
             return MolmoAct2PromptConfig.from_dict(data)
 
 
-def ar_fast_config_to_dict(config: ARFastConfig) -> dict[str, Any]:
-    return {
-        "kind": DecoderKind.AR_FAST.value,
-        "hidden_size": config.hidden_size,
-        "num_attention_heads": config.num_attention_heads,
-        "intermediate_size": config.intermediate_size,
-        "hidden_activation": config.hidden_activation,
-        "rms_norm_eps": config.rms_norm_eps,
-        "self_attention_rope_theta": config.self_attention_rope_theta,
-        "cross_attention_heads": config.cross_attention_heads,
-        "schedule": list(config.schedule),
-        "tokenizer": config.tokenizer,
-        "vocab_total": config.vocab_total,
-        "state_dim": config.state_dim,
-        "chunk_size": config.chunk_size,
-        "action_dim": config.action_dim,
-    }
-
-
-def ar_fast_config_from_dict(data: dict[str, Any]) -> ARFastConfig:
-    return ARFastConfig(
-        hidden_size=int(data["hidden_size"]),
-        num_attention_heads=int(data["num_attention_heads"]),
-        intermediate_size=int(data["intermediate_size"]),
-        hidden_activation=str(data["hidden_activation"]),
-        rms_norm_eps=float(data["rms_norm_eps"]),
-        self_attention_rope_theta=float(data["self_attention_rope_theta"]),
-        cross_attention_heads=int(data["cross_attention_heads"]),
-        schedule=tuple(str(name) for name in data["schedule"]),
-        tokenizer=str(data["tokenizer"]),
-        vocab_total=int(data["vocab_total"]),
-        state_dim=int(data["state_dim"]),
-        chunk_size=int(data["chunk_size"]),
-        action_dim=int(data["action_dim"]),
-    )
-
-
 def ar_backbone_config_to_dict(config: ARBackboneConfig) -> dict[str, Any]:
     return {
         "kind": DecoderKind.AR_BACKBONE.value,
@@ -614,13 +576,19 @@ def ar_backbone_config_from_dict(data: dict[str, Any]) -> ARBackboneConfig:
 
 def parse_decoder_config(
     data: dict[str, Any],
-) -> FlowDecoderConfig | ARFastConfig | ARBackboneConfig | MolmoFlowDecoderConfig:
+) -> FlowDecoderConfig | ARBackboneConfig | MolmoFlowDecoderConfig:
     kind = DecoderKind(data["kind"])
     match kind:
         case DecoderKind.FLOW:
             return FlowDecoderConfig.from_dict(data)
         case DecoderKind.AR_FAST:
-            return ar_fast_config_from_dict(data)
+            # Retired 2026-08-13: superseded by ar_backbone on quality,
+            # parameter count and deployment (architecture.md §8.3).
+            raise SystemExit(
+                "this checkpoint records an ar_fast decoder — the ar_fast "
+                "kind was removed after being superseded by ar_backbone; "
+                "load it from git history at tag 'pre-decoder-simplify'",
+            )
         case DecoderKind.AR_BACKBONE:
             return ar_backbone_config_from_dict(data)
         case DecoderKind.MOLMO_FLOW:
@@ -628,13 +596,7 @@ def parse_decoder_config(
 
 
 def decoder_schema_dict(
-    decoder: (
-        FlowDecoder
-        | ARFastDecoder
-        | ARBackboneDecoder
-        | Molmo2ARDecoder
-        | MolmoFlowDecoder
-    ),
+    decoder: (FlowDecoder | ARBackboneDecoder | Molmo2ARDecoder | MolmoFlowDecoder),
 ) -> dict[str, Any]:
     """The checkpoint-schema dict of a built decoder (write side + the
     --init-from config guard). The Molmo2 suffix decoder records the SAME
@@ -654,8 +616,6 @@ def decoder_schema_dict(
             return dict(decoder.checkpoint_schema)
         case FlowDecoder():
             return flow_decoder_config_from_expert(decoder.config).to_dict()
-        case ARFastDecoder():
-            return ar_fast_config_to_dict(decoder.config)
         case ARBackboneDecoder() | Molmo2ARDecoder():
             return ar_backbone_config_to_dict(decoder.config)
 
@@ -1183,13 +1143,7 @@ class CheckpointSections:
 
     backbone: BackboneConfig
     prompt: GemmaPromptConfig | Molmo2PromptConfig | MolmoAct2PromptConfig | None
-    decoder: (
-        FlowDecoderConfig
-        | ARFastConfig
-        | ARBackboneConfig
-        | MolmoFlowDecoderConfig
-        | None
-    )
+    decoder: FlowDecoderConfig | ARBackboneConfig | MolmoFlowDecoderConfig | None
 
 
 def checkpoint_sections(meta: dict[str, Any]) -> CheckpointSections:
@@ -1779,14 +1733,11 @@ def from_checkpoint(
                 encoder=encoder,
                 decoder=molmo2_decoder,
             )
-    elif isinstance(sections.decoder, ARFastConfig | ARBackboneConfig):
+    elif isinstance(sections.decoder, ARBackboneConfig):
         decoder_config = sections.decoder
         assert isinstance(sections.prompt, GemmaPromptConfig)  # molmo2 handled above
         backbone_config = load_config(checkpoint_dir)
-        if (
-            isinstance(decoder_config, ARBackboneConfig)
-            and sections.backbone.depth is not BackboneDepth.FULL
-        ):
+        if sections.backbone.depth is not BackboneDepth.FULL:
             raise SystemExit(
                 f"{checkpoint} records an ar_backbone decoder with a "
                 f"'{sections.backbone.depth}' backbone — its suffix runs "
@@ -1804,37 +1755,26 @@ def from_checkpoint(
             depth=sections.backbone.depth,
             offload_ple=offload_ple,
         )
-        decoder: ARFastDecoder | ARBackboneDecoder
-        if isinstance(decoder_config, ARFastConfig):
-            decoder = ARFastDecoder(
-                decoder_config,
-                encoder.stream_geometries(),
-                resolve_action_codec(decoder_config.tokenizer),
-                attn_backend=attn_backend,
-                device=device,
-                dtype=expert_dtype,
-            )
-        else:
-            # The backbone checkpoint's own tokenizer — the artifact the
-            # collator rendered training text with (opener + value
-            # lines); format 5 always needs it at construction.
-            text_tokenizer = transformers.AutoTokenizer.from_pretrained(
-                str(checkpoint_dir),
-            )
-            aux_runtime = (
-                build_aux_runtime(decoder_config.aux, text_tokenizer)
-                if decoder_config.aux is not None
-                else None
-            )
-            decoder = ARBackboneDecoder(
-                decoder_config,
-                backbone_config.text,
-                resolve_action_codec(decoder_config.tokenizer),
-                tokenizer=text_tokenizer,
-                aux_runtime=aux_runtime,
-                device=device,
-                dtype=expert_dtype,
-            )
+        # The backbone checkpoint's own tokenizer — the artifact the
+        # collator rendered training text with (opener + value
+        # lines); format 5 always needs it at construction.
+        text_tokenizer = transformers.AutoTokenizer.from_pretrained(
+            str(checkpoint_dir),
+        )
+        aux_runtime = (
+            build_aux_runtime(decoder_config.aux, text_tokenizer)
+            if decoder_config.aux is not None
+            else None
+        )
+        decoder = ARBackboneDecoder(
+            decoder_config,
+            backbone_config.text,
+            resolve_action_codec(decoder_config.tokenizer),
+            tokenizer=text_tokenizer,
+            aux_runtime=aux_runtime,
+            device=device,
+            dtype=expert_dtype,
+        )
         model = BijouModel(backbone=backbone, encoder=encoder, decoder=decoder)
     else:
         if sections.decoder is None:

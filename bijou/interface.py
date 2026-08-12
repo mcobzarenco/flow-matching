@@ -117,7 +117,7 @@ class BijouPrediction:
     — the field mirrors ``CollatedBatch.actions``, the ground truth it
     is scored against) plus, for decoders with a text surface
     (ar_backbone), one :class:`AuxGeneration` per row. ``None``
-    generations = this decoder kind produces no text (flow, ar_fast);
+    generations = this decoder kind produces no text (the flow kinds);
     ar_backbone always returns the list — rows are empty-text under ACT
     decode.
 
@@ -125,7 +125,7 @@ class BijouPrediction:
     (supplied or drawn), kept so a paired re-decode can reuse it — the
     Q3 conditioning tripwire needs |Δ| against the SAME draw, or the
     sampling variance floors the signal for a conditioning-blind model.
-    None for decoders that draw none (ar_fast, ar_backbone).
+    None for decoders that draw none (the AR kinds).
 
     Shapes: actions [B, chunk, action_dim] (raw action units);
     noise [B, chunk, action_dim] (normalized units)."""
@@ -421,7 +421,7 @@ class ObservationEncoder[I: BatchInputs, B: nn.Module](nn.Module, abc.ABC):
 # decoder runs against the backbone itself), and every consumer goes
 # through the root. Shared conventions: training objectives are
 # module-level functions beside each decoder (``flow_matching_loss``,
-# ``ar_fast_loss``, ``ar_backbone_loss``), and ``predict_chunk`` returns
+# ``ar_backbone_loss``), and ``predict_chunk`` returns
 # RAW-unit chunks [B, chunk, action_dim] (per-sample stats applied inside).
 
 _IMAGE_KEY_PREFIX = IMAGE_KEY_PREFIX

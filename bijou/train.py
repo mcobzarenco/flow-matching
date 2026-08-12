@@ -101,7 +101,6 @@ from .decoders.ar_backbone import (
     ARBackboneDecoder,
     ARSuffixDecoder,
 )
-from .decoders.ar_fast import ARFastConfig, ARFastDecoder
 from .decoders.ar_molmo2 import Molmo2ARDecoder
 from .decoders.flow import (
     SNAPFLOW_ALPHA,
@@ -127,7 +126,6 @@ from .interface import (
     CollatedBatch,
     Collator,
     ObservationMemory,
-    kv_stream_name,
 )
 from .loading import (
     BackboneConfig,
@@ -149,7 +147,6 @@ from .loading import (
     load_backbone_init,
     molmo2_residual_expert_config,
     molmo_flow_state_table,
-    prefix_global_layers,
     read_checkpoint_info,
     residual_expert_config,
     resolve_action_codec,
@@ -455,8 +452,17 @@ class TrainArgs:
                     f"{name} {value} is not a usable learning rate — omit "
                     "the flag entirely to keep that component frozen",
                 )
-        if self.decoder in ("ar_fast", "ar_backbone") and self.fast_tokenizer is None:
-            raise ValueError(f"--decoder {self.decoder} requires --fast-tokenizer")
+        if self.decoder not in ("flow", "ar_backbone", "molmo_flow"):
+            # The CLI's choices= already refuses these; direct
+            # construction gets the same single encoding (ar_fast
+            # retired 2026-08-13, tag pre-decoder-simplify).
+            raise ValueError(
+                f"unknown decoder kind {self.decoder!r} — one of flow, "
+                "ar_backbone, molmo_flow (ar_fast was retired; load its "
+                "checkpoints from git history at pre-decoder-simplify)",
+            )
+        if self.decoder == "ar_backbone" and self.fast_tokenizer is None:
+            raise ValueError("--decoder ar_backbone requires --fast-tokenizer")
         if (
             self.decoder in ("flow", "molmo_flow")
             and self.fast_tokenizer is not None
@@ -773,7 +779,7 @@ class TrainArgs:
             ):
                 if getattr(raw, attribute) is not None:
                     parser.error(
-                        f"{flag} sizes the flow/ar_fast decoders; ar_backbone "
+                        f"{flag} sizes the flow decoder; ar_backbone "
                         "IS the backbone — drop the flag",
                     )
             if raw.prompt_generate_bracket is not None:
@@ -1209,7 +1215,7 @@ def adamc_output_head_parameters(
       standard decay; the group-disjointness assert at construction
       keeps any future tied pair from being decayed twice.
 
-    Any other decoder (flow, ar_fast) aborts loudly: its output layer
+    Any other decoder (flow) aborts loudly: its output layer
     has not been audited for the corrected/standard split. Likewise, if
     a trunk's tied ``lm_head``/embedding is ever unfrozen it must be
     added here (today every trunk head is frozen by design)."""
@@ -2292,13 +2298,7 @@ def build_checkpoint_metadata(
 
 
 def ensure_matching_decoder_config(
-    decoder: (
-        FlowDecoder
-        | ARFastDecoder
-        | ARBackboneDecoder
-        | Molmo2ARDecoder
-        | MolmoFlowDecoder
-    ),
+    decoder: (FlowDecoder | ARBackboneDecoder | Molmo2ARDecoder | MolmoFlowDecoder),
     checkpoint: Path,
 ) -> dict[str, Any]:
     """Loud, early failure when a checkpoint's decoder differs from the
@@ -2773,16 +2773,15 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--decoder",
-        choices=["flow", "ar_fast", "ar_backbone"],
+        choices=["flow", "ar_backbone"],
         default=None,
         help="action decoder: 'flow' (velocity field, the fresh-run "
-        "default), "
-        "'ar_fast' (autoregressive FAST tokens through a fresh "
-        "cross-attention decoder) or 'ar_backbone' (FAST tokens decoded "
-        "by the FULL backbone itself — the decoder-only path; trains a "
-        "~11M vocabulary patch, usually with --backbone-text-lr). AR "
-        "decoders require --fast-tokenizer; the --decoder-* shape flags "
-        "size flow/ar_fast only",
+        "default) or 'ar_backbone' (FAST tokens decoded by the FULL "
+        "backbone itself — the decoder-only path; trains a ~11M "
+        "vocabulary patch, usually with --backbone-text-lr; requires "
+        "--fast-tokenizer). The --decoder-* shape flags size flow only. "
+        "molmo_flow is inherit-only (--init-from/--resume a converted "
+        "checkpoint); ar_fast retired at tag pre-decoder-simplify",
     )
     parser.add_argument(
         "--aux-fields",
@@ -3319,13 +3318,7 @@ def main() -> int:
             )
         molmo_flow_prompt = source_sections.prompt
         molmo_flow_section = source_sections.decoder
-    if molmo2_trunk and args.decoder == "ar_fast":
-        raise SystemExit(
-            "molmo2 backbones support --decoder ar_backbone (phase 1) "
-            "and --decoder flow with residual conditioning — "
-            "ar_fast conditions on "
-            "K/V exports this trunk does not produce",
-        )
+
     if (
         molmo2_trunk
         and args.decoder == "flow"
@@ -4001,62 +3994,9 @@ def main() -> int:
             f"full-depth suffix, FAST block @ {ar_backbone_config.block_base}"
         )
     else:
-        assert args.fast_tokenizer is not None  # parse_args guard
-        assert action_codec is not None
-        backbone_config = load_config(checkpoint_dir)
-        streams = prefix_global_layers(backbone_config)
-        if len(args.stream_counts) != len(streams):
-            raise SystemExit(
-                f"--stream-counts has {len(args.stream_counts)} entries but "
-                f"the backbone prefix has {len(streams)} global layers "
-                f"({streams})",
-            )
-        ar_schedule = tuple(
-            kv_stream_name(stream)
-            for stream, count in zip(streams, args.stream_counts, strict=True)
-            for _ in range(count)
-        )
-        exports = tuple(
-            stream
-            for stream, count in zip(streams, args.stream_counts, strict=True)
-            if count > 0
-        )
-        backbone, encoder = build_gemma_encoder(
-            checkpoint_dir,
-            backbone_config,
-            exports=exports,
-            max_soft_tokens=args.max_soft_tokens,
-            state_dim=state_dim,
-            device=device,
-            dtype=backbone_dtype,
-        )
-        ar_config = ARFastConfig(
-            hidden_size=args.decoder_hidden,
-            num_attention_heads=args.decoder_heads,
-            intermediate_size=args.decoder_intermediate,
-            hidden_activation=backbone_config.text.hidden_activation,
-            rms_norm_eps=backbone_config.text.rms_norm_eps,
-            self_attention_rope_theta=10_000.0,
-            cross_attention_heads=args.decoder_cross_heads,
-            schedule=ar_schedule,
-            tokenizer=args.fast_tokenizer,
-            vocab_total=action_codec.vocab_total,
-            state_dim=state_dim,
-            chunk_size=args.chunk_size,
-            action_dim=action_dim,
-        )
-        model = BijouModel(
-            backbone=backbone,
-            encoder=encoder,
-            decoder=ARFastDecoder(
-                ar_config,
-                encoder.stream_geometries(),
-                action_codec,
-                device=device,
-                dtype=torch.float32,
-            ),
-        )
-        schedule_desc = str(ar_schedule)
+        # TrainArgs restricts --decoder to the kinds above; reaching here
+        # is a dispatch bug, not a user error.
+        raise AssertionError(f"unhandled decoder kind {args.decoder!r}")
     backbone_counts = unfreeze_backbone(model, args)
     if args.activation_checkpointing:
         if not isinstance(model.backbone, Molmo2Model):

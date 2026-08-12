@@ -28,11 +28,11 @@ from torch import Tensor
 
 from bijou.aux_text import SUFFIX_FORMAT, AuxField
 from bijou.decoders.ar_backbone import (
+    IGNORE_INDEX,
     ARBackboneConfig,
     ARBackboneDecoder,
     ar_backbone_loss,
 )
-from bijou.decoders.ar_fast import IGNORE_INDEX
 from bijou.encoders.gemma4 import GemmaEncoder
 from bijou.fast.codec import ActionCodec
 from bijou.gemma4.config import Gemma4Config

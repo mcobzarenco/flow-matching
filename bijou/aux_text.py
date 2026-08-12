@@ -87,7 +87,7 @@ AUX_TEMPLATE_VERSION = 4
 # away per FIELD — the model learns p(value | obs, asked), never
 # "was this frame judged". BOA survives as the action block's own
 # begin-marker (single-id constrained-decode anchor; codec output
-# consumed verbatim; ar_fast convention unchanged). Formats < 5 (fed
+# consumed verbatim). Formats < 5 (fed
 # [ACT]/[AUX] mode tokens, state as suffix position 0, v≤3 header
 # bytes) are REFUSED — no trained artifact worth loading exists
 # (owner call, 2026-08-03).

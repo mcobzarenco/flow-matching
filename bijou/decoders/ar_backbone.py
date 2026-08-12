@@ -39,8 +39,8 @@ no EOA (action length is fixed by the FAST grammar). Decoding
 (:meth:`ARBackboneDecoder.predict_chunk`) is fully scaffolded by the
 request set: per requested field, greedy value ids under a per-field
 budget until the ``\\n`` terminator (constrained candidates where
-defined), then BOA is FORCED and the ar_fast-style grammar mask
-decodes the chunk by remaining symbol budget.
+defined), then BOA is FORCED and the FAST grammar mask decodes the
+chunk by remaining symbol budget.
 """
 
 from __future__ import annotations
@@ -72,7 +72,11 @@ from ..gemma4.config import Gemma4TextConfig
 from ..gemma4.model import Gemma4Model
 from ..interface import BijouPrediction, CollatedBatch, ObservationMemory
 from ..nn import DeviceLike
-from .ar_fast import IGNORE_INDEX
+
+# CE positions to skip (opener prefix, PAD padding) — torch's
+# cross_entropy convention. Lived in decoders/ar_fast.py until that
+# decoder's retirement (tag pre-decoder-simplify).
+IGNORE_INDEX = -100
 
 
 @dataclass(frozen=True, slots=True)
@@ -373,7 +377,7 @@ class ARSuffixDecoder[B: nn.Module](nn.Module, abc.ABC):
         fallback; HOLDING constrains the first token to its candidate
         set). After the last field — immediately, for ``generate=()``,
         the deployment fast path — BOA is FORCED (its target is trained;
-        its identity is not a decision) and the ar_fast grammar mask
+        its identity is not a decision) and the FAST grammar mask
         decodes the chunk by remaining symbol budget, PAD once finished.
 
         Requires an aux-trained checkpoint for non-empty ``generate``

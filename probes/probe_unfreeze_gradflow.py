@@ -36,7 +36,6 @@ import transformers
 from bijou.aux_text import SUFFIX_FORMAT
 from bijou.data import EpisodeSplit, select_datasets
 from bijou.decoders.ar_backbone import ARBackboneConfig, ARBackboneDecoder
-from bijou.decoders.ar_fast import ARFastConfig, ARFastDecoder
 from bijou.decoders.flow import FlowDecoder
 from bijou.encoders.gemma4 import GemmaEncoder, GemmaInputsCollator
 from bijou.fast.codec import ActionCodec
@@ -59,7 +58,6 @@ TINY = "outputs/tiny-gemma4"
 DATA = Path.home() / "datasets/mcobzarenco/so101_pick_place_v2"
 FIXTURE_TOKENIZER = Path("tests/fixtures/tiny_fast_tokenizer")
 EXPORTS = (1, 3, 5)  # tiny backbone's global layers
-AR_SCHEDULE = ("kv1", "kv3", "kv5", "kv5")
 
 
 def make_args(
@@ -171,47 +169,6 @@ def build_flow(args: TrainArgs) -> BijouTrainStep:
     # from a trained checkpoint; simulate that here (seeded).
     assert isinstance(model.decoder, FlowDecoder)
     torch.nn.init.normal_(model.decoder.action_out_proj.weight, std=0.02)
-    unfreeze_backbone(model, args)
-    return BijouTrainStep(model, backbone_trained=args.backbone_trained)
-
-
-def build_ar(args: TrainArgs) -> BijouTrainStep:
-    torch.manual_seed(args.seed)
-    backbone_config = load_config(Path(TINY))
-    codec = ActionCodec.load(FIXTURE_TOKENIZER)
-    backbone, encoder = build_gemma_encoder(
-        Path(TINY),
-        backbone_config,
-        exports=EXPORTS,
-        max_soft_tokens=args.max_soft_tokens,
-        state_dim=6,
-        device="cpu",
-        dtype=torch.float32 if args.backbone_trained else None,
-    )
-    decoder = ARFastDecoder(
-        ARFastConfig(
-            hidden_size=args.decoder_hidden,
-            num_attention_heads=args.decoder_heads,
-            intermediate_size=args.decoder_intermediate,
-            hidden_activation=backbone_config.text.hidden_activation,
-            rms_norm_eps=backbone_config.text.rms_norm_eps,
-            self_attention_rope_theta=10_000.0,
-            cross_attention_heads=args.decoder_cross_heads,
-            schedule=AR_SCHEDULE,
-            tokenizer=str(FIXTURE_TOKENIZER),
-            vocab_total=codec.vocab_total,
-            state_dim=6,
-            chunk_size=args.chunk_size,
-            action_dim=6,
-        ),
-        encoder.stream_geometries(),
-        codec,
-        device="cpu",
-        dtype=torch.float32,
-    )
-    # NO warm-start hack: lm_head is normal-init, backbone grads must flow
-    # from step 1 (asserted below) - a real difference from the flow arm.
-    model = BijouModel(backbone=backbone, encoder=encoder, decoder=decoder)
     unfreeze_backbone(model, args)
     return BijouTrainStep(model, backbone_trained=args.backbone_trained)
 
@@ -379,30 +336,8 @@ def main() -> None:
         print(f"  offending params: {bad[:10]}")
     assert tower == "nonzero" and not bad, "text+vision grad-flow FAILED"
 
-    # --- ar_fast, text-only unfreeze (the 192.222.54.70 run's config) --------
-    step = build_ar(
-        make_args(backbone_text_lr=3e-4, backbone_vision_lr=None, decoder="ar_fast"),
-    )
-    torch.manual_seed(0)
-    loss, _, _, _ = step(ar_batch(items))
-    loss.backward()
-    print(f"FLAGS-ON ORACLE (ar_fast, text-only, seed 0): {loss.item():.4f}")
-    print(
-        "  expected 4.8395 (re-recorded 2026-08-05: rig-v2 oracle corpus) - MUST match exactly",
-    )
-    assert f"{loss.item():.4f}" == "4.8395", "ar flags-on oracle DRIFTED"
-    decoder = step.model.decoder
-    assert isinstance(decoder, ARFastDecoder)
-    extra = {
-        "ar token_embedding grads": grad_state(decoder.token_embedding.weight)
-        == "nonzero",
-        "ar lm_head grads": grad_state(decoder.lm_head.weight) == "nonzero",
-    }
-    for name, passed in extra.items():
-        print(f"  {'PASS' if passed else 'FAIL'}  {name}")
-    assert all(extra.values()), "ar decoder head/embedding grads FAILED"
-    # Backbone grads from step 1, cold decoder, no warm-start hack:
-    check_text_partition(step, "ar_fast text-only")
+    # (The ar_fast text-only arm retired with the decoder, 2026-08-13 —
+    # tag pre-decoder-simplify; its 4.8395 anchor retired with it.)
 
     # --- ar_backbone, text-only unfreeze (FULL depth: all layers train) ------
     step = build_ar_backbone(

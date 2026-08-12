@@ -60,8 +60,8 @@ follows one of two trained families:
   trunk (residual adapters) trained cleanly with its readout in
   progress. A matched joint-fine-tuning arm was stopped at ~4× the
   frozen arm's step cost — frozen-trunk attachment is the working
-  recipe. An AR FAST decoder over the same expert blocks (`ar_fast`)
-  is the token-based variant of the family.
+  recipe. (An AR FAST decoder over the same expert blocks, `ar_fast`,
+  was the family's token-based variant until its retirement — §2.2.)
 
 The prompt side is shared and annotation-aware (§1, §2.4): every
 camera's image block is tagged with its judge-voted semantic kind
@@ -139,7 +139,6 @@ retained prefix KV cache.
       │    FlowDecoder (404M fp32), 16 layers, each =
       │      cross-attn(one stream) → self-attn([state][a_1..a_50]) → MLP
       │      → velocity at flow time τ → Heun integration τ: 1 → 0
-      │    (ARFastDecoder: same blocks, FAST tokens, constrained greedy)
       │
       └─ decoder-only (ar_backbone): the FULL E2B continues the suffix
            [<|turn>model\n][value\n per requested field][BOA][t_1..t_k]
@@ -364,12 +363,15 @@ visual tokens is.
 
 ## 2. Action decoders
 
-Four decoder classes share the seam — `FlowDecoder`, `ARFastDecoder`,
-`ARBackboneDecoder`, `Molmo2ARDecoder` — behind three CLI kinds
-(`--decoder flow | ar_fast | ar_backbone`): `ar_backbone` dispatches
-to the trunk-matching decoder-only class (`ARBackboneDecoder` on a
-Gemma backbone, `Molmo2ARDecoder` on Molmo2). A checkpoint's
-`decoder.kind` tags which one it carries.
+Four decoder classes share the seam — `FlowDecoder`,
+`ARBackboneDecoder`, `Molmo2ARDecoder`, `MolmoFlowDecoder` — behind
+two trainable CLI kinds (`--decoder flow | ar_backbone`; `molmo_flow`
+is inherit-only via `--init-from`/`--resume`, §8.13): `ar_backbone`
+dispatches to the trunk-matching decoder-only class
+(`ARBackboneDecoder` on a Gemma backbone, `Molmo2ARDecoder` on
+Molmo2). A checkpoint's `decoder.kind` tags which one it carries;
+retired kinds (`ar_fast`, §2.2) are refused by name with the git tag
+that still loads them.
 
 ### 2.1 Flow-matching expert (cross-attention)
 
@@ -382,7 +384,8 @@ intermediate 3072 (GLU), 4 cross-attn heads, 15 layers**
 ~404M fp32** with a 4-4-8 schedule. Freshly initialized, never loaded
 from the backbone.
 
-Each `SuffixBlock` (`bijou/decoders/blocks.py`, shared with ar_fast) is
+Each `SuffixBlock` (`bijou/decoders/blocks.py`, flow-private since
+ar_fast's retirement) is
 a Gemma-style sandwich of three sublayers, each
 `residual → pre_RMSNorm → sublayer → post_RMSNorm → +residual`:
 
@@ -442,13 +445,17 @@ decode compute (§7 curated-plan ledger).
 Params live ~50% in the MLPs, ~33% in cross-attention (8 heads × 512
 over the residual 1024), ~17% in self-attention.
 
-### 2.2 AR FAST decoder (cross-attention)
+### 2.2 AR FAST decoder (cross-attention) — RETIRED 2026-08-13
 
-`ARFastDecoder` (`bijou/decoders/ar_fast.py`): the same sandwich blocks
-over suffix `[state][BOA][t_1..t_k]`, fully causal, teacher-forced CE
-over the FAST token vocabulary (state/PAD positions ignored), greedy
-decode constrained by the FAST grammar. Tokenizer artifact story and
-results: §8.3.
+`ARFastDecoder` (the same sandwich blocks over a causal FAST-token
+suffix, grammar-constrained greedy decode) was removed at tag
+`pre-decoder-simplify` after being superseded by `ar_backbone` on
+quality (5.656 vs 5.96 community holdout), parameter count (~11M
+vocabulary patch vs a 404M expert) and deployment. Its grammar mask
+and `IGNORE_INDEX` convention live on in §2.3 (`ar_backbone.py` owns
+them now); its checkpoints load at the tag, and its results stay in
+the §7 Gemma-era ledger. History and the tokenizer artifact story:
+§8.3.
 
 ### 2.3 Decoder-only path (`ar_backbone`)
 
@@ -1031,12 +1038,25 @@ re-baseline loudly):
       --save-every 1000 --eval-samples 4 --device cpu --seed 0 \
       --save-dir outputs/train/oracle_tmp
 
-must reproduce **flow 2.7903 / 1.9152** exactly; with `--decoder ar_fast
---fast-tokenizer tests/fixtures/tiny_fast_tokenizer` added, **AR
-4.9232 / 4.8631**; with `--decoder ar_backbone --fast-tokenizer
-tests/fixtures/tiny_fast_tokenizer` (and the `--decoder-*` shape flags
-OMITTED — ar_backbone rejects them), **27.8262 / 27.7701** (random tiny
-weights under full-vocabulary CE — an anchor, not a quality signal).
+must reproduce **flow 2.7903 / 1.9152** exactly; with `--decoder
+ar_backbone --fast-tokenizer tests/fixtures/tiny_fast_tokenizer` (and
+the `--decoder-*` shape flags OMITTED — ar_backbone rejects them),
+**27.8306 / 27.767** (random tiny weights under full-vocabulary CE —
+an anchor, not a quality signal). Re-baselined 2026-08-13 at the T1
+(ar_fast-retirement) pre-deletion measurement: flow reproduced its
+2026-08-05 anchor bitwise, ar_backbone had MOVED from 27.8262/27.7701
+somewhere in the 08-05→08-13 window with no re-baseline note — the
+exact change is UNBISECTED (the perf-pass CE-reduction changes are
+the natural suspects, but their landing gate verified 118/118 bitwise
+hashes on its own fixture — and the gradflow probe's single-forward
+flags-on anchor still reproduces its 2026-08-05 value exactly, so the
+mover sits in the train-step/collation path, not the model math). The drift
+predates the T1 deletions — measured before them, twice,
+bitwise-stable — which is what this re-baseline pins; a tripwire that
+moves without a note has failed at its one job, so future oracle-adjacent
+changes must carry the re-run in the same commit. The retired ar_fast
+anchors (4.9232/4.8631 on this corpus) retired with the decoder — tag
+`pre-decoder-simplify` reproduces them.
 Re-baselined 2026-08-05: the oracle corpus is now the rig v2 dataset
 `so101_pick_place_v2` at its standard box-mirror path — staged on
 every machine, unlike the laptop-only `community_dataset_v1_v3` the
@@ -1629,19 +1649,21 @@ would isolate the conditioning effect. Forward-compat: if AR co-training
 ever shares the expert (§8.3 option A), modulation must be MASKED to the
 flow positions (per-position gating, not per-sample broadcast).
 
-### 8.3 Autoregressive FAST decoding (SHIPPED — ar_fast §2.2, ar_backbone §2.3; tokenizer artifact story here)
+### 8.3 Autoregressive FAST decoding (SHIPPED — ar_backbone §2.3; ar_fast retired 2026-08-13, §2.2; tokenizer artifact story here)
 
-**Shipped decoders.** `ARFastDecoder` (§2.2): grammar-constrained
-greedy decode — a valid sequence expands to exactly chunk×dim quantized
-DCT coefficients, so there is NO EOA and no malformed generations by
-construction (each step masks to tokens whose BPE symbol-expansion fits
-the remaining budget). `ARBackboneDecoder` (§2.3) reuses the same
-grammar mask for its action phase. Train: `--decoder ar_fast|ar_backbone
---fast-tokenizer <artifact>`; eval/rollout work unchanged via
-`predict_chunk` (greedy — no Heun knobs); AR inference additionally
-needs quantile stats (rides the checkpoint's per-dataset table).
-Results in §7: frozen-trunk plateau ~8.0 at 10k (≈ flow@40k quality);
-with the live trunk, the project's best lines.
+**Shipped decoder.** `ARBackboneDecoder` (§2.3) decodes the action
+phase under the FAST grammar mask — a valid sequence expands to
+exactly chunk×dim quantized DCT coefficients, so there is NO EOA and
+no malformed generations by construction (each step masks to tokens
+whose BPE symbol-expansion fits the remaining budget; the mask
+originated in `ARFastDecoder`, whose fresh-cross-attention variant
+retired 2026-08-13 after ar_backbone superseded it — §2.2). Train:
+`--decoder ar_backbone --fast-tokenizer <artifact>`; eval/rollout work
+unchanged via `predict_chunk` (greedy — no Heun knobs); AR inference
+additionally needs quantile stats (rides the checkpoint's per-dataset
+table). Results in §7: ar_fast's frozen-trunk plateau ~8.0 at 10k
+(≈ flow@40k quality); with the live trunk, the project's best
+Gemma-era lines (ar_fast 5.96, then ar_backbone 5.656).
 **Tokenizer:** owned DCT+BPE (`bijou/fast/`, arXiv:2501.09747), fit on
 1040 datasets / 4.9M chunks. **Use `fast_tokenizer_v2`**
 (`mcobzarenco/bijou-checkpoints/fast_tokenizer_v2`: alphabet 159 + 865
