@@ -4,7 +4,49 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-12 18:19–18:2xZ (real `date -u` at stamp: 18:24) —
+tick, babysit: **owner 18:19Z caught a real shim discrepancy — the
+official LeRobot v3.0→v2.1 conversion sign-flips shoulder_lift
+((−1,+90) = 90−arm); our fitted map used (+1,+180). The INERT 0.00×20
+release read is now SUSPECT on lift; official-map rerun queued as first
+GPU claim.***
+
+**Status**: no live jobs, GPU idle. Queue validate green (depth 4, 14
+open) — new item `release-eval20-officialmap` is first GPU claim;
+`run_work_next` armed. Driver-guard 18:14Z straggler alert: pid was a
+bare `-zsh` session child, no job attached — noise, nothing to relaunch.
+
+**Steering**: owner 18:19:08Z — does our shim match
+irenegracekp/molmoact2-so101 `inference.py` (offsets `0,90,90,0,0,0`,
+signs `1,-1,1,1,1,1`, the documented v3.0→v2.1 SO-100/101 conversion)?
+Verified on the real tables (CPU, same session): **4/6 joints match
+exactly** (pan/wrist_flex/gripper identity; elbow +90 — our override
+landed the official value). **shoulder_lift MISMATCHES**: the mirror
+(−1,+90) QUALIFIED in our fit and covers the release box better (7.5%
+vs 27.9% uncovered) but lost to the pre-registered MIRROR_MARGIN=0.25
+rule by 20.4 pt — the gate rejected a real mirror (box's panel snap
++180 has the same exposure). wrist_roll ambiguous: ours −90 vs official
+identity, both 61% uncovered (span mismatch); identity clamps sim wrist
+home (77.6°) above the box ceiling (43.5°) — our −90 may absorb a
+rig-specific zero. **Consequence**: wrong lift sign direction-inverts
+decoded lift motion — matches the filmed swing-down-and-park; the
+first-action detector is sign-blind at rest (any bijection preserves
+action≈state). Full comparison + rerun plan posted 18:2xZ. Open asks:
+v3-rerun unhold + arm set (15:13Z), GRPO memo review, disk-draws
+sign-off.
+
+**Done**: per-joint audit banked (this entry + queue item);
+`release-eval20-officialmap` queued (sign-carrying override CLI
+extension → tripwires under official map → same 20 seeds, ≤0.4 GPU-h,
+amendment on the existing pre-reg page, INERT claim to be explicitly
+re-dispositioned); `run_work_next` armed.
+
+**Next**: chained work session executes the official-map rerun, then
+CPU lanes (`lit-sim-improvement-levers`, `sim-wrist-compositing`).
+v3-rerun still pends the owner unhold. `queue.json` canonical.*
 
 *Updated 2026-08-12 17:29–18:1xZ (real `date -u` at stamp: 18:10) —
 work session, bounded: **release-eval20-convmap DONE — the released
@@ -99,75 +141,20 @@ lift/elbow map vs the box's fit_convention_map snap). Then CPU lanes:
 `lit-sim-improvement-levers`, `sim-wrist-compositing`. v3-rerun still
 pends the owner unhold. `queue.json` canonical.*
 
-*Updated 2026-08-12 15:31–17:0xZ (real `date -u` at stamp: 16:55) —
-work session, bounded: **the owner-prio flipped-physics rerun is
-CLOSED — including an owner-caught render bug whose fix OVERTURNED the
-first readout (MuJoCo `sameframe` fast path; corrected read:
-knock-aways 6→2, the −12.3 cm catastrophe dissolves, paired +0.75 cm
-CI-crossing) — plus an owner-extension step-500 arm: the EARLIER
-checkpoint reads slightly better (paired +0.48, 9/3/8).***
-
-**Status**: no live jobs — `ftrig_eval20_flip_parallel` COMPLETE (5
-arms total: 15:42–15:59Z both arms, 16:2xZ corrected postflip_v2,
-16:4xZ step-500 extension; all rc=0, ridden in-session; first-poll
-100% util / 20.9 GB; ~0.45/0.5 GPU-h). GPU idle again, pending the
-owner's v3-rerun unhold (15:13Z ask, still open). Registry pruned to
-a completion note. Queue validate green (depth 3, 13 open).
-
-**Steering** (live exchange 16:07–16:5xZ): owner prio 15:27:11Z
-(flipped-physics rerun, parallel) → executed; results 16:02Z. Owner
-16:07:24Z: *no difference between the videos, bracket still into the
-table* → root-caused same session (below), fix + corrected rerun +
-corrected numbers in-channel 16:31Z. Owner 16:27:55Z: *what is
-`sameframe`?* → explainer posted 16:32Z. Owner 16:37:48Z: *try the
-step-500 ftrig checkpoint too, same 20 seeds* → converted + run +
-numbers in-channel 16:54Z. Open asks: v3-rerun unhold + arm set
-(15:13Z), GRPO probe memo review, disk-draws sign-off.
-
-**Done** (commits `c68ea06`, `49d883f` + correction close-out): queue
-item `ftrig-eval20-flipped-parallel` CLOSED. (1) Instrument:
-`SO101Sim(flip_camera_mount=)` toggle + parallel-driver merged-stats
-fallback + `--no-mount-flip`; harness oracle 5/5, check.py 773 green.
-(2) First paired read (both arms parallel workers=8, same 20 seeds):
-~null, 18/20 bit-identical — **superseded**: it measured only the
-collision boxes. (3) **Owner-caught bug, root-caused**: MuJoCo stamps
-geoms whose frame coincides with a precomputed frame with
-`geom_sameframe`, and `mj_kinematics` then never reads
-`geom_pos/quat` — the bracket's visual mesh (flag 2) silently ignored
-the runtime flip edit, so every video rendered the bracket
-table-side. One-line fix (clear the flag after editing); verified by
-hand-computed world-pose prediction (mesh (74,10,48)→(137,−22,149) mm,
-ceiling-side by the camera). (4) Corrected postflip rerun: the
-bit-identity oracle failed CORRECTLY — 13/20 seeds changed (the
-bracket is visible in the top cam; policy input changed; fixed render
-is MORE real-matching). TRUE flip effect: knock-aways 6→2 (s4 −12.3
-→ −0.05, s5 −5.5 → +0.1), mean −1.21 → −0.46 cm, paired +0.75 cm
-CI95 [−0.33, +2.26], 9 exact ties; character shift shoving→freezing
-(encoder-OOD probe remains the named follow-up). Physics-side claims
-(control loss −62%, sweep 31.9%→1.4%) box-driven — stand. **Lesson
-registered: every runtime `geom_pos/quat` edit must clear
-`geom_sameframe`** (existing runtime edits audited: cameras/materials
-unaffected). Banked incidentals: lockstep-parallel bit-reproducibility
-at workers=8; parallel-vs-seq outcome drift (11/20 seeds >0.1 cm, max
-6.0). (5) **Owner-extension step-500 arm** (16:37Z ask → 16:54Z
-numbers): checkpoint converted fresh
-(`outputs/converted/molmoact2_rig_r1_step500`), same 20 seeds, fixed
-sim — mean +0.02 vs step-2000's −0.46 cm, paired +0.48 CI95
-[−0.06, +1.13] (9 better/3 worse/8 tied), knock-aways 1 vs 2, day's
-best approach s0 +1.59 cm: the extra 1500 ft steps buy no sim-side
-competence (consistent with fine-tune narrowing toward rig
-appearance). Rows + 80 videos + stills on fontaine-reports
-`/ftrig_eval20_flip_parallel/` (curl 200); pre-reg page carries
-results + correction + extension; Discord
-16:02/16:31/16:32/16:47/16:54Z.
-
-**Next**: `queue_cli.py next` → CPU lanes: `lit-sim-improvement-levers`,
-`sim-wrist-compositing`. GPU: idle until the owner answers the
-v3-rerun unhold ask (15:13Z — the rerun is the re-baseline carrier
-for every banked sim row post-flip, now WITH the render fix in);
-`grpo-signal-probe` owner_hold. `queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-12 18:19–18:2xZ (tick, babysit; 0 new GPU-h — GPU
+idle): owner 18:19Z asked whether our convmap shim matches the official
+LeRobot v3.0→v2.1 conversion (linked inference.py) → audited on the
+real tables same session: 4/6 joints match; **shoulder_lift does NOT**
+(official (−1,+90) mirror qualified in our fit, covered better, lost
+only to the MIRROR_MARGIN rule) and wrist_roll is ambiguous both ways.
+INERT 0.00×20 read flagged suspect on lift (sign inverts decoded lift
+motion; first-action detector sign-blind at rest); full comparison
+posted in-channel, `release-eval20-officialmap` queued first GPU claim
+(≤0.4 gate), run_work_next armed. Driver-guard straggler alert
+dispositioned noise (bare zsh). Archive roll: 1 main entry (16:55
+work), 2 footer notes (17:20 tick, 15:31 work).
 
 Session 2026-08-12 17:29–18:1xZ (work, bounded; **+~0.19 GPU-h** —
 convmap tripwire probes + one 20-seed parallel arm, ridden end-to-end;
@@ -177,28 +164,6 @@ tripwires + oracles, both pre-GPU gates dispositioned (elbow and
 wrist_roll overrides earned by coverage + first-action evidence, not
 assumed), 20-seed read INERT 0.00×20 with verified shim, cross-check
 banked to the box in-channel. No steering traffic; 2 result posts.
-
-Session 2026-08-12 17:20–17:3xZ (tick, babysit; 0 new GPU-h — GPU
-idle): owner prio 17:13:24Z landed (released-checkpoint-in-sim +
-unit-contracts note) → note read in depth, design ack posted 17:22Z
-(case-3 shim, off-contract `_convmap`, two pre-GPU tripwires), owner
-👍; item queued with pre-reg page as first GPU claim; exit-1 harness
-alert root-caused benign (API-529 storm post-commit); run_work_next
-armed → the prio item rides the chained work session. Archive roll:
-1 main entry (11:25 work), 2 footer notes (15:11 tick, 13:10 work).
-
-Session 2026-08-12 15:31–17:0xZ (work, bounded; **+~0.45 GPU-h** —
-ftrig_eval20_flip_parallel, 5 arms × 5.4 min at workers=8, ridden
-end-to-end; exploit, owner prio): flipped-physics rerun closed
-(~25 min ask→numbers), then an owner-caught render bug OVERTURNED the
-first readout — MuJoCo `geom_sameframe` was swallowing the runtime
-mesh flip; fix + corrected rerun same session. TRUE flip effect:
-knock-aways 6→2, paired +0.75 cm (CI crosses zero), 13/20 seeds moved
-via the vision channel. Owner-extension step-500 arm: earlier
-checkpoint slightly better (paired +0.48, 9/3/8). Lesson registered
-(clear `sameframe` on runtime geom edits) + two incidentals (parallel
-bit-reproducibility; oracle-FAIL drift at outcomes). 4 owner messages
-dispositioned live; v3-rerun unhold ask still open.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
