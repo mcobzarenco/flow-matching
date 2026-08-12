@@ -261,3 +261,4 @@
   - [2026-08-12 — Pre-registration: sim wrist-cam periphery re-tune under the v1 fisheye](posts/2026-08-12-prereg-sim-wrist-periphery.md)
   - [2026-08-12 — Sim wrist-cam periphery: bar smashed — wrist AUROC 0.900 → 0.548, inside the real spread](posts/2026-08-12-sim-wrist-periphery-results.md)
   - [2026-08-12 — Pre-registration: sim content diversity v3 — per-episode plate bank + clutter-state draws](posts/2026-08-12-prereg-sim-content-diversity.md)
+  - [2026-08-12 — Sim content diversity v3: spread 3× — bar MISSED — while the guard falls to 0.673, the best top-cam read yet](posts/2026-08-12-sim-content-diversity-results.md)

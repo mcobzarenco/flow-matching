@@ -336,6 +336,25 @@ the engagement/direction split is the finding.
   ordering read auto-skipped — rung arms killed by the phase-2
   amendment)
 
+## Sim content diversity v3 — plate bank + clutter draws ([pre-reg](posts/2026-08-12-prereg-sim-content-diversity.md), [results](posts/2026-08-12-sim-content-diversity-results.md), 08-12)
+
+Per-reset content variation for the v2 composite: a bank of 26
+per-episode clean plates (each carrying its real episode's lighting;
+ghost-free by inlier-median mining) + clutter presence/pose draws
+from the measured real between-episode spread. Registered bar (top
+k std/mean ≥ 0.15 AND 5-NN AUROC ≤ 0.790) **MISSED on the spread
+leg** (0.038 → 0.114) while the AUROC leg fell 0.773 → **0.673**
+(k-ratio 1.02× — top composites inside the real spread, best
+top-cam read yet). Wrist bit-identical to v2 (0.548). Default stays
+v2 per the registered flip rule; flip put to the owner. Record-only:
+the real disk wanders 8–29 cm × ±19 cm between episodes. ~0.08
+GPU-h (gate 0.3).
+
+- [v3 primary](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_encoder_ood_probe_v3_content.json)
+  · [homogeneity 20×5](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_encoder_ood_probe_v3_homog.json)
+- [k-distance strips](https://mcobzarenco-fontaine-reports.static.hf.space/chart__sim_content_diversity_kdist.png)
+  · [REAL | v2 | v3 gallery](https://mcobzarenco-fontaine-reports.static.hf.space/chart__sim_content_diversity_top_gallery.png)
+
 ## Sim wrist-cam periphery re-tune ([pre-reg](posts/2026-08-12-prereg-sim-wrist-periphery.md), [results](posts/2026-08-12-sim-wrist-periphery-results.md), 08-12)
 
 One runtime pose change in `_repose_wrist_cam`: camera moved from

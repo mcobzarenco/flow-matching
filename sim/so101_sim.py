@@ -104,9 +104,9 @@ class SO101Sim:
         height: int = 480,
         render_style: str = "v2",
     ) -> None:
-        if render_style not in ("v0", "v1", "v2"):
+        if render_style not in ("v0", "v1", "v2", "v3"):
             raise ValueError(
-                f"render_style {render_style!r} not in ('v0', 'v1', 'v2')",
+                f"render_style {render_style!r} not in ('v0', 'v1', 'v2', 'v3')",
             )
         self.render_style = render_style
         self.model = mujoco.MjModel.from_xml_path(str(SCENE_PATH))
@@ -149,10 +149,12 @@ class SO101Sim:
         self._recolor_arm()
         self._repose_wrist_cam()
         self._noise_rng = np.random.default_rng(0)  # re-seeded per reset
-        if self.render_style in ("v1", "v2"):
+        if self.render_style in ("v1", "v2", "v3"):
             self._init_fisheye(width, height)
-        if self.render_style == "v2":
+        if self.render_style in ("v2", "v3"):
             self._init_inpainting(width, height)
+        if self.render_style == "v3":
+            self._init_bank(width, height)
 
     def _widen_joint_limits(self) -> None:
         """Menagerie's shoulder_lift (+-100 deg) and elbow_flex (+-96.8)
@@ -320,6 +322,105 @@ class SO101Sim:
         ] + [self.model.geom(name).id for name in self.V2_DYNAMIC_STATICS]
         self._dynamic_geoms = np.array(sorted(dynamic))
 
+    # v3 render style (content diversity, prereg 2026-08-12): the v2
+    # composite, except (a) the top plate is drawn per reset from a
+    # bank of per-episode plates (each carrying that real episode's
+    # lighting state; mined ghost-free by make_clean_plates.py --bank)
+    # and (b) the contype-0 clutter stand-ins get per-reset poses and
+    # presence drawn from the measured real between-episode spread
+    # (bank_manifest.json clutter_ranges). Both draws consume the
+    # appearance RNG AFTER every draw the v2 style makes, so the
+    # wrist path stays bit-identical to v2 — the wrist render swaps
+    # the clutter back to canonical (data-side, no mj_forward, so
+    # physics never sees the swap; the stand-ins are contype 0
+    # anyway).
+    V3_ABSENT_POS = (2.5, 0.0, -1.0)  # outside both frusta
+    V3_YAW_JITTER: ClassVar[dict[str, float]] = {"mouse": 0.3, "laptop": 0.15}
+
+    def _init_bank(self, width: int, height: int) -> None:
+        import json
+
+        from PIL import Image
+
+        bank_dir = self.PLATES_DIR / "bank"
+        plates = sorted(bank_dir.glob("top_ep*.png"))
+        if not plates:
+            raise ValueError(f"no bank plates under {bank_dir}")
+        manifest = json.loads((bank_dir / "bank_manifest.json").read_text())
+        # Each entry: (plate, episode gain, episode bias) — the affine
+        # photometric state the mining pass fitted from the global
+        # plate to this episode; the composite applies it to the
+        # rendered foreground too, so foreground and background share
+        # the episode's lighting (iteration 2 of the registered
+        # composite loop: as iteration 1 the foreground kept the fixed
+        # global grade under a varying plate).
+        self._bank: list[tuple[np.ndarray, np.ndarray, np.ndarray]] = []
+        for path in plates:
+            plate = np.asarray(Image.open(path), dtype=np.float64)
+            if plate.shape != (height, width, 3):
+                raise ValueError(f"{path.name} {plate.shape} != render size")
+            episode = manifest["episodes"][str(int(path.stem.removeprefix("top_ep")))]
+            self._bank.append(
+                (plate, np.array(episode["gain"]), np.array(episode["bias"])),
+            )
+        self._clutter_ranges = manifest["clutter_ranges"]
+        self._clutter_base: dict[str, tuple[np.ndarray, np.ndarray, float]] = {}
+        for name in self.V2_DYNAMIC_STATICS[1:]:  # all but the disk
+            geom = self.model.geom(name)
+            quat = self.model.geom_quat[geom.id].copy()
+            yaw = 2.0 * float(np.arctan2(quat[3], quat[0]))
+            self._clutter_base[name] = (geom.pos.copy(), quat, yaw)
+        self._active_top_plate = self._plates["top"]
+        self._active_gain = np.ones(3)
+        self._active_bias = np.zeros(3)
+        # name -> (pos, yaw) as drawn for the current reset
+        self._clutter_drawn: dict[str, tuple[np.ndarray, float]] = {}
+
+    def _draw_content(self, rng: np.random.Generator) -> None:
+        """Per-reset plate + clutter draws (v3). Writes the drawn
+        poses into the model (physics-inert: contype 0) and remembers
+        them for the per-render canonical swap."""
+        plate, gain, bias = self._bank[int(rng.integers(len(self._bank)))]
+        self._active_top_plate = plate
+        self._active_gain = gain
+        self._active_bias = bias
+        self._clutter_drawn = {}
+        for name, (base_pos, _, base_yaw) in self._clutter_base.items():
+            spec = self._clutter_ranges[name]
+            pos = base_pos.copy()
+            yaw = base_yaw
+            if spec["mode"] == "fixed_canonical":
+                pass
+            elif rng.uniform() >= spec["presence"]:
+                pos = np.array(self.V3_ABSENT_POS)
+            else:
+                lo, hi = spec["xy_min"], spec["xy_max"]
+                if spec["mode"] == "delta_about_canonical":
+                    lo, hi = spec["xy_delta_min"], spec["xy_delta_max"]
+                    xy = base_pos[:2] + rng.uniform(lo, hi)
+                else:
+                    xy = rng.uniform(lo, hi)
+                pos[:2] = xy
+                jitter = self.V3_YAW_JITTER.get(name)
+                if jitter is not None:
+                    yaw = base_yaw + float(rng.uniform(-jitter, jitter))
+            self._clutter_drawn[name] = (pos, yaw)
+            gid = self.model.geom(name).id
+            self.model.geom_pos[gid] = pos
+            half = yaw / 2.0
+            self.model.geom_quat[gid] = (np.cos(half), 0.0, 0.0, np.sin(half))
+
+    def _set_clutter(self, *, drawn: bool) -> None:
+        """Point the RENDER state (data.geom_xpos/xmat) at the drawn
+        or the canonical clutter poses — the wrist view renders the
+        canonical scene so its frames stay bit-identical to v2."""
+        for name, (base_pos, _, base_yaw) in self._clutter_base.items():
+            pos, yaw = self._clutter_drawn[name] if drawn else (base_pos, base_yaw)
+            gid = self.model.geom(name).id
+            self.data.geom_xpos[gid] = pos
+            c, s = np.cos(yaw), np.sin(yaw)
+            self.data.geom_xmat[gid] = (c, -s, 0.0, s, c, 0.0, 0.0, 0.0, 1.0)
+
     def _render_mask(self, camera: str) -> np.ndarray:
         """[H, W] float 0/1 dynamic-content mask in source pinhole
         space, from a segmentation pass of the same scene."""
@@ -345,10 +446,22 @@ class SO101Sim:
         already carries the real optics, so only the foreground gets
         the PSF blur)."""
         gain, bias = self.V1_GRADE[camera]
-        foreground = self._blur(self._remap(frame.astype(np.float64)) * gain + bias)
+        foreground = self._remap(frame.astype(np.float64)) * gain + bias
+        if self.render_style == "v3" and camera == "top":
+            # The drawn plate's photometric state (global -> episode
+            # affine, from the bank manifest) applies to the rendered
+            # foreground too: composite lighting stays coherent and
+            # varies per reset like the real episodes do.
+            foreground = foreground * self._active_gain + self._active_bias
+        foreground = self._blur(foreground)
         weight = self._blur(self._remap(mask[..., None]))
         weight = np.clip(weight, 0.0, 1.0)
-        out = weight * foreground + (1.0 - weight) * self._plates[camera]
+        plate = (
+            self._active_top_plate
+            if self.render_style == "v3" and camera == "top"
+            else self._plates[camera]
+        )
+        out = weight * foreground + (1.0 - weight) * plate
         out += self._noise_rng.normal(0.0, self.V1_NOISE_SIGMA, out.shape)
         return np.clip(out, 0, 255).astype(np.uint8)
 
@@ -411,6 +524,11 @@ class SO101Sim:
         # Sensor-noise stream for this episode: seeded from the
         # appearance stream, fresh draw every observe().
         self._noise_rng = np.random.default_rng(looks.integers(2**63))
+        # v3 content draws come LAST on the appearance stream: every
+        # draw the v0-v2 styles make is stream-identical, so the v3
+        # wrist path is bit-identical to v2 (registered guard).
+        if self.render_style == "v3":
+            self._draw_content(looks)
 
         # Park the benchy far down-table while the arm settles.
         adr = self._benchy_qpos
@@ -508,19 +626,29 @@ class SO101Sim:
         state = np.rad2deg(self.data.qpos[self._joint_qpos])
         self.renderer.update_scene(self.data, camera="top_cam")
         top = self.renderer.render()
+        if self.render_style == "v3":
+            # Composite (and its segmentation mask) BEFORE the swap:
+            # drawn clutter is masked at its drawn poses; the wrist
+            # then renders the canonical scene (bit-identical to v2).
+            top = self._composite(top, self._render_mask("top_cam"), "top")
+            self._set_clutter(drawn=False)
         self.renderer.update_scene(self.data, camera="wrist_cam")
         wrist = self.renderer.render()
-        if self.render_style == "v1":
+        if self.render_style == "v3":
+            self._set_clutter(drawn=True)
+            wrist = self._grade(self._apply_fisheye(wrist), "wrist")
+        elif self.render_style == "v1":
             top = self._grade(self._apply_fisheye(top), "top")
             wrist = self._grade(self._apply_fisheye(wrist), "wrist")
         elif self.render_style == "v2":
             top = self._composite(top, self._render_mask("top_cam"), "top")
-            # Wrist keeps the v1 render path: the wrist plate is a
-            # cross-episode mush (start-pose viewpoints differ by
-            # degrees between episodes) and the wrist composite READ
-            # WORSE than the v1 path on the pinned probe (5-NN AUROC
-            # 0.951 vs 0.900, 08-12; pure-composite read reproducible
-            # at commit f75c341). Real fix = the queued wrist item.
+            # Wrist keeps the v1 render path (v3 included): the wrist
+            # plate is a cross-episode mush (start-pose viewpoints
+            # differ by degrees between episodes) and the wrist
+            # composite READ WORSE than the v1 path on the pinned
+            # probe (5-NN AUROC 0.951 vs 0.900, 08-12; pure-composite
+            # read reproducible at commit f75c341). Real fix was the
+            # wrist periphery re-tune (0.548, 08-12).
             wrist = self._grade(self._apply_fisheye(wrist), "wrist")
         return SimObservation(top=top, wrist=wrist, state=state)
 

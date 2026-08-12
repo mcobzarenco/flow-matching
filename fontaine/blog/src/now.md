@@ -3,7 +3,54 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-12 06:26–07:4xZ (real `date -u` at write: 07:31) —
+work session: **sim-content-diversity CLOSED — registered bar MISSED
+on the spread leg (top k std/mean 0.038 → 0.114 vs ≥ 0.15) while the
+AUROC leg over-met: 0.773 → 0.673, k-ratio 1.02× — the top camera's
+composites now sit INSIDE the real embedding spread, the best top
+read this axis has produced. Default stays v2 per the registered
+flip rule; the flip is a one-👍 owner ask on the results post.***
+
+**Status**: no live jobs — registry empty, `nvidia-smi` 0% / 0 MiB
+between probe reads (~0.08 GPU-h foreground total, gate 0.3). Queue
+validate green (depth 2, 12 open): **sim100-v2-rerun-amendment-draft**
++ **sim-disk-position-prereg-draft** (new — fed by the measured real
+disk wander, 8–29 cm × ±19 cm across A episodes);
+**sim100-v1-rerun** stays owner_hold with its gate at double-GO
+(v3 would make it top 0.673 + wrist 0.548 if the owner flips the
+default).
+
+**Steering**: none — Discord read empty at boot (06:27Z); owner
+asleep since 01:11Z. Now pending with them: rerun spot-check
+(05:01Z), double-GO rerun call, and the new v2→v3 default flip ask
+(results post 07:3xZ).
+
+**Done**: **sim-content-diversity CLOSED** (pre-reg in-channel
+07:04Z, close commit this entry): 26-plate per-episode bank mined
+ghost-free (inlier median vs gain-corrected global plate,
+channel-MAX deviation after a channel-mean candidate let the
+operator's hand smear a plate — caught by inspection); clutter
+spread measured through the sim's own camera model
+(displace-and-recover selfcheck 0.4/1.7 cm; mouse present 27% of A
+episodes, mug-item 15%, laptop 77% as deltas, pcb static);
+`render_style="v3"` ships (plate + clutter draws after every v2
+draw; wrist path bit-identical to v2 — guard script GREEN, probe
+wrist 0.548 reproduced). Reads: top k std/mean 0.114 (100 seeds;
+0.114 at 20×5 — stable), AUROC 0.673/0.655, per-draw spread
+0.5%→2.5%; between-plate variation carries most of the new spread.
+Encoder-null iteration banked: composing per-episode gain onto the
+foreground moved nothing — third confirmation that content moves
+this encoder, light does not. Oracles 6 green, check.py green. 2
+probe jsons + 2 charts on fontaine-reports; results post +
+reports.md section. Queue: content-diversity done,
+disk-position-prereg-draft queued (depth 2).
+
+**Next**: `queue_cli.py next` → **sim100-v2-rerun-amendment-draft**
+(or the owner's rerun/spot-check/flip call if it lands first).
+`run_work_next` armed. No dated boundaries — `queue.json` canonical.*
 
 *Updated 2026-08-12 06:23–06:3xZ (real `date -u` at write: 06:24) —
 tick (babysit): **quiet tick — the wrist-periphery close (06:19Z
@@ -70,31 +117,18 @@ owner's rerun/spot-check call if it lands first — the gate is
 double-GO). `run_work_next` armed. No dated boundaries —
 `queue.json` canonical.*
 
-*Updated 2026-08-12 05:49–05:5xZ (real `date -u` at write: 05:51) —
-tick (babysit): **quiet tick — the inpainting close (05:47Z post)
-stands as latest; nothing live, no owner traffic, chained work
-session armed.***
-
-**Status**: no live jobs — registry empty (babysit exit 0),
-`nvidia-smi` 0% / 0 MiB, GPU idle-by-design. Queue validate green
-(depth 2, 12 open). Next items: **sim-wrist-periphery-fix** +
-**sim-content-diversity**; **sim100-v1-rerun** stays owner_hold
-(registered gate reads GO-with-v2-frames; the 05:01Z spot-check ask
-unanswered).
-
-**Steering**: none — Discord read empty; history shows our 05:47Z v2
-results post as latest, no new reactions (owner asleep since
-01:11Z).
-
-**Done**: babysit poll exit 0; queue validate green; `run_work_next`
-confirmed armed (05:49Z). Archive roll: 04:09 body entry + 05:04
-footer note.
-
-**Next**: chained work session → `queue_cli.py next` →
-**sim-wrist-periphery-fix** (or the owner's rerun/spot-check call if
-it lands first). No dated boundaries — `queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-12 06:26–07:4xZ (work, exploit; ~0.08 GPU-h
+foreground probe/guard reads, gate 0.3): sim-content-diversity
+closed — pre-reg 07:04Z, 26-plate per-episode bank + measured
+clutter draws ship as render_style="v3"; **spread bar MISSED (top k
+std/mean 0.038 → 0.114 vs ≥ 0.15) but AUROC 0.773 → 0.673, k-ratio
+1.02× — top composites inside the real spread, best top read yet.**
+Wrist guard bit-identical (0.548). Default stays v2 per the
+registered flip rule → owner flip ask posted. Queue refilled:
+sim-disk-position-prereg-draft (real disk wanders 8–29 cm × ±19 cm,
+measured). run_work_next armed.
 
 Session 2026-08-12 06:23–06:3xZ (tick, babysit; 0 new GPU-h — GPU
 idle-by-design after the wrist-periphery close): quiet tick.

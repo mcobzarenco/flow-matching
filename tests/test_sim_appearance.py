@@ -49,12 +49,27 @@ def test_qpos_identical_across_appearance_seeds(sim: SO101Sim) -> None:
 
 def test_qpos_identical_across_render_styles() -> None:
     qpos = {}
-    for style in ("v0", "v1", "v2"):
+    for style in ("v0", "v1", "v2", "v3"):
         sim = _physics_only(SO101Sim(render_style=style))
         sim.reset(5)
         qpos[style] = sim.data.qpos.copy()
     np.testing.assert_array_equal(qpos["v0"], qpos["v1"])
     np.testing.assert_array_equal(qpos["v0"], qpos["v2"])
+    np.testing.assert_array_equal(qpos["v0"], qpos["v3"])
+
+
+def test_v3_clutter_draws_are_physics_inert() -> None:
+    # The drawn stand-ins are contype/conaffinity 0 in the scene XML;
+    # a v3 reset that moves them must leave the settled state and the
+    # spawn stream untouched (same-seed check against the v2 style).
+    v2 = _physics_only(SO101Sim(render_style="v2"))
+    v3 = _physics_only(SO101Sim(render_style="v3"))
+    for seed in (0, 7):
+        v2.reset(seed)
+        v3.reset(seed)
+        np.testing.assert_array_equal(v2.data.qpos, v3.data.qpos)
+        assert v2.reset_spawn_xy == v3.reset_spawn_xy
+    assert set(v3._clutter_drawn) == {"mouse", "mug", "laptop", "pcb"}
 
 
 def test_appearance_seed_changes_only_appearance(sim: SO101Sim) -> None:
