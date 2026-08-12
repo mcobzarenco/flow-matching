@@ -1568,6 +1568,27 @@ def build_molmo_flow_decoder(
     return decoder
 
 
+def molmo_flow_state_table(normalization: DatasetStats) -> tuple[Tensor, Tensor]:
+    """The merged q01/q99 STATE clamp table (§8.13 decision 6) as the
+    Collator's ``state_q01``/``state_q99`` pair — [state_dim] fp32 CPU
+    tensors. molmo_flow state tokens are BINNED from this normalization
+    (the MolmoAct2 encoder consumes clamp-normalized state), so a table
+    without quantiles is a hard stop: falling back to per-sample
+    mean/std would silently shift every state bin off its trained
+    meaning. Train and eval both build their collators through this
+    helper so the two sides cannot drift."""
+    if normalization.state_q01 is None or normalization.state_q99 is None:
+        raise SystemExit(
+            "molmo_flow needs state q01/q99 in the checkpoint's "
+            "normalization table (the merged state scheme, §8.13 "
+            "decision 6) — this table carries none",
+        )
+    return (
+        torch.tensor(normalization.state_q01, dtype=torch.float32),
+        torch.tensor(normalization.state_q99, dtype=torch.float32),
+    )
+
+
 def read_checkpoint_info(checkpoint: str | Path) -> CheckpointInfo:
     """Parse a checkpoint directory's ``bijou_config.json`` into
     :class:`CheckpointInfo` — metadata only, no weights touched. The

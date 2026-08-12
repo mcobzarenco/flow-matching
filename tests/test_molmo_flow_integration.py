@@ -16,18 +16,25 @@ access): from_checkpoint assembly → MolmoAct2 collation → prefix encode
 - loss arms: mean == sum/count across loss_components /
   loss_component_sums / loss_count_normalizers (the chunked-backward
   contract), and per-sample batch stats are deliberately unused
-  (decision 6: perturbing them changes nothing).
+  (decision 6: perturbing them changes nothing);
+- the eval seam (BijouPolicy): the collator carries the checkpoint's
+  merged q01/q99 STATE table (training's scheme — without it the
+  per-sample mean/std path silently shifts every state bin), predict
+  noise is frame-identity keyed (ambient RNG perturbation is inert),
+  and draw ensembling is refused with the cache-tiling reason.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import pytest
 import torch
 from test_convert_molmoact2 import _ACTION_DIM, _HORIZON, _convert, source_dir
 
 from bijou.decoders.molmo_flow import MolmoFlowDecoder, molmo_flow_loss
+from bijou.eval.policies import BijouPolicy
 from bijou.interface import (
     CameraFrame,
     CollatedBatch,
@@ -42,16 +49,20 @@ assert source_dir is not None  # re-exported pytest fixture (module-scoped)
 
 
 @pytest.fixture(scope="module")
-def tiny_model(
+def tiny_checkpoint(
     source_dir: Path,
     tmp_path_factory: pytest.TempPathFactory,
-) -> BijouModel:
-    out = _convert(
+) -> Path:
+    return _convert(
         source_dir,
         tmp_path_factory.mktemp("molmo-flow-int") / "converted",
         backbone_ref=str(source_dir),
     )
-    model, _info = from_checkpoint(out)
+
+
+@pytest.fixture(scope="module")
+def tiny_model(tiny_checkpoint: Path) -> BijouModel:
+    model, _info = from_checkpoint(tiny_checkpoint)
     # The fixture expert is zero-init (adaLN-Zero: the field is exactly
     # 0 and upstream gradients are Wᵀδ = 0 — the gradient tests would
     # pass vacuously insulated and fail open). Perturb it into a
@@ -73,19 +84,24 @@ def tiny_model(
     return model
 
 
-def _stub_collator(model: BijouModel):  # noqa: ANN202 — encoder-specific collator
+def _stub_ids(collator: Any) -> Any:
+    """Patch the stub tokenizer + special ids onto an EXISTING inputs
+    collator (the tiny source ships no real tokenizer)."""
     from test_molmoact2_encoder import _StubTokenizer
 
     from bijou.molmoact2.processing import BOS_ID, IM_END_ID, IM_PATCH_ID, IM_START_ID
 
-    collator = model.encoder.inputs_collator()
-    collator._tokenizer = _StubTokenizer()  # the tiny source has no real tokenizer
+    collator._tokenizer = _StubTokenizer()
     collator._image_ids = (IM_START_ID, IM_END_ID, IM_PATCH_ID)
     collator._patch_id = IM_PATCH_ID
     collator._eos_id = BOS_ID
     collator._action_start_id = 151_932
     collator._action_end_id = 151_933
     return collator
+
+
+def _stub_collator(model: BijouModel):  # noqa: ANN202 — encoder-specific collator
+    return _stub_ids(model.encoder.inputs_collator())
 
 
 def _batch(model: BijouModel, batch_size: int = 2) -> CollatedBatch:
@@ -272,3 +288,86 @@ def test_chunk_length_mismatch_is_loud(tiny_model: BijouModel) -> None:
     assert isinstance(decoder, MolmoFlowDecoder)
     with pytest.raises(ValueError, match="chunk length"):
         molmo_flow_loss(decoder, memory, wrong)
+
+
+@pytest.fixture(scope="module")
+def tiny_policy(tiny_checkpoint: Path) -> BijouPolicy:
+    policy = BijouPolicy(tiny_checkpoint, device=torch.device("cpu"), seed=7)
+    _stub_ids(policy.collator.inputs)
+    return policy
+
+
+def _eval_item(index: int, generator: torch.Generator) -> dict[str, Any]:
+    """A raw eval item as StatsAttachedDataset would hand over (stats
+    tensors from the tiny fixture's normalization row — mean 1, std 2,
+    q01 −3, q99 3 — plus the identity triple stable noise keys on)."""
+    dim = torch.ones(_ACTION_DIM)
+    return {
+        "task": f"pick up cube {index}",
+        "repo_id": "user/tiny",
+        "episode_index": 0,
+        "frame_index": index,
+        "observation.images.cam0": torch.rand((3, 48, 64), generator=generator),
+        "observation.state": torch.rand((6,), generator=generator) * 6 - 3,
+        "action": torch.randn(_HORIZON, _ACTION_DIM, generator=generator),
+        "action_is_pad": torch.zeros(_HORIZON, dtype=torch.bool),
+        "action_mean": dim * 1.0,
+        "action_std": dim * 2.0,
+        "action_q01": dim * -3.0,
+        "action_q99": dim * 3.0,
+        "state_mean": dim * 1.0,
+        "state_std": dim * 2.0,
+        "state_q01": dim * -3.0,
+        "state_q99": dim * 3.0,
+    }
+
+
+def test_eval_policy_carries_merged_state_table(tiny_policy: BijouPolicy) -> None:
+    """The eval collator normalizes STATE with the checkpoint's merged
+    q01/q99 table (training's scheme, §8.13 decision 6) — the
+    per-sample mean/std path would silently shift every state bin
+    (found in the 2026-08-12 pre-eval review; this is the class fix)."""
+    table = tiny_policy.collator
+    normalization = tiny_policy.info.normalization
+    assert normalization.state_q01 is not None
+    assert table.state_q01 is not None and table.state_q99 is not None
+    assert torch.equal(table.state_q01, torch.tensor(normalization.state_q01))
+    assert torch.equal(
+        table.state_q99,
+        torch.tensor(normalization.state_q99, dtype=torch.float32),
+    )
+
+
+def test_eval_policy_noise_is_keyed_not_ambient(tiny_policy: BijouPolicy) -> None:
+    """Predict noise derives from the frame identity (stable keying),
+    NOT the ambient RNG: perturbing the global stream between calls
+    must be inert. Before the fix the decoder drew ``torch.randn``
+    unseeded — irreproducible and batch-composition-dependent. Success
+    also pins the noise geometry: a [chunk, action_dim]-shaped tensor
+    (flow.py's convention) would fail the [horizon, max_action_dim]
+    action embed."""
+    items = [
+        _eval_item(0, torch.Generator().manual_seed(21)),
+        _eval_item(1, torch.Generator().manual_seed(22)),
+    ]
+    torch.manual_seed(101)
+    first = tiny_policy.predict(items, [0, 1])
+    torch.manual_seed(999)
+    torch.rand(1024)  # a DIFFERENT ambient stream position
+    second = tiny_policy.predict(items, [0, 1])
+    for a, b in zip(first, second, strict=True):
+        assert a.shape == (_HORIZON, _ACTION_DIM)
+        assert torch.equal(a, b)
+
+
+def test_eval_policy_refuses_draw_ensembling(tiny_checkpoint: Path) -> None:
+    """molmo_flow draws>1 needs prefix-memory tiling the molmo2 KV
+    cache does not have — refused with THAT reason (the generic guard's
+    'greedy AR' message would misdiagnose a stochastic decoder)."""
+    with pytest.raises(SystemExit, match="molmo_flow"):
+        BijouPolicy(
+            tiny_checkpoint,
+            device=torch.device("cpu"),
+            seed=7,
+            sample_draws=2,
+        )

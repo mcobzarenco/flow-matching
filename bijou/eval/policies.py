@@ -32,6 +32,7 @@ from ..decoders.ar_backbone import (
     ValueCandidate,
 )
 from ..decoders.flow import FlowDecoder
+from ..decoders.molmo_flow import MolmoFlowDecoder
 from ..interface import (
     CollatedBatch,
     Collator,
@@ -40,7 +41,7 @@ from ..interface import (
     ObservationMemory,
     mask_state_item,
 )
-from ..loading import CheckpointInfo, from_checkpoint
+from ..loading import CheckpointInfo, from_checkpoint, molmo_flow_state_table
 from ..model import BijouModel, SamplingMethod
 from .subgoal_scoring import ceiling_pick, eligible_indices, self_certainty_pick
 from .subgoal_swap import SubgoalSwapMap, SwapRecord
@@ -558,6 +559,16 @@ class BijouPolicy:
                     f"tickets shaped for chunk {self.tickets.shape[1]}, "
                     f"checkpoint chunk size {self.info.chunk_size}",
                 )
+        if sample_draws > 1 and isinstance(self.model.decoder, MolmoFlowDecoder):
+            # The decode IS stochastic (flow noise), but draw ensembling
+            # tiles the prefix memory and the molmo2 KV cache has no
+            # tile path yet (§8.13 loose end) — refuse with the real
+            # reason, not the greedy-AR message below.
+            raise SystemExit(
+                "--sample-draws > 1 is not implemented for molmo_flow: "
+                "draw ensembling tiles the prefix memory, and the "
+                "molmo2 KV cache has no tile path yet — run single-draw",
+            )
         if sample_draws > 1 and not (
             isinstance(self.model.decoder, FlowDecoder) or ar_temperature is not None
         ):
@@ -623,6 +634,15 @@ class BijouPolicy:
         include_subgoal_condition = (
             include_subgoal_condition or subgoal_mode == "oracle"
         )
+        # molmo_flow state tokens are BINNED from the checkpoint's merged
+        # q01/q99 table (§8.13 decision 6) — the same wiring as training's
+        # collator; without it the per-sample mean/std path would silently
+        # shift every state bin off its trained meaning.
+        state_table = (
+            molmo_flow_state_table(self.info.normalization)
+            if isinstance(self.model.decoder, MolmoFlowDecoder)
+            else None
+        )
         self.collator = Collator(
             inputs=self.model.encoder.inputs_collator(),
             instruction=None,
@@ -662,6 +682,8 @@ class BijouPolicy:
             ),
             condition_dropout=0.0,
             subgoal_condition_dropout=0.0,
+            state_q01=state_table[0] if state_table is not None else None,
+            state_q99=state_table[1] if state_table is not None else None,
         )
 
     @property
@@ -889,6 +911,21 @@ class BijouPolicy:
         if isinstance(decoder, FlowDecoder):
             shape = (batch.actions.shape[1], batch.actions.shape[2])
             noise = self._flow_noise(items, indices, 1, shape).to(self.device)
+        elif isinstance(decoder, MolmoFlowDecoder):
+            # Same determinism contract, THEIR geometry: noise lives in
+            # [action_horizon, max_action_dim] (32 padded dims, not the
+            # tag's action_dim) and must match the expert dtype — the
+            # decoder consumes a supplied tensor as-is (parity surface),
+            # so the cast happens here. Without this branch the decoder
+            # draws from ambient RNG: irreproducible and
+            # batch-composition-dependent.
+            runtime = decoder.runtime
+            assert runtime is not None  # from_checkpoint configures at load
+            shape = (runtime.action_horizon, decoder.config.max_action_dim)
+            noise = self._flow_noise(items, indices, 1, shape).to(
+                device=self.device,
+                dtype=decoder.action_embed.weight.dtype,
+            )
         prediction = self.model.predict_chunk(
             batch,
             noise=noise,

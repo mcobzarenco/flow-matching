@@ -147,6 +147,7 @@ from .loading import (
     load_adapted_backbone,
     load_backbone_init,
     molmo2_residual_expert_config,
+    molmo_flow_state_table,
     prefix_global_layers,
     read_checkpoint_info,
     residual_expert_config,
@@ -3454,28 +3455,10 @@ def main() -> int:
             str(checkpoint_dir),
             args.max_soft_tokens,
         )
-    molmo_flow_state_table: tuple[Tensor, Tensor] | None = None
+    state_table: tuple[Tensor, Tensor] | None = None
     if args.decoder == "molmo_flow":
         assert molmo_flow_info is not None
-        if (
-            molmo_flow_info.normalization.state_q01 is None
-            or molmo_flow_info.normalization.state_q99 is None
-        ):
-            raise SystemExit(
-                "molmo_flow needs state q01/q99 in the source checkpoint's "
-                "normalization table (the merged state scheme, §8.13 "
-                "decision 6)",
-            )
-        molmo_flow_state_table = (
-            torch.tensor(
-                molmo_flow_info.normalization.state_q01,
-                dtype=torch.float32,
-            ),
-            torch.tensor(
-                molmo_flow_info.normalization.state_q99,
-                dtype=torch.float32,
-            ),
-        )
+        state_table = molmo_flow_state_table(molmo_flow_info.normalization)
     collator = Collator(
         inputs=inputs_collator,
         instruction=args.instruction,
@@ -3493,12 +3476,8 @@ def main() -> int:
         condition_dropout=args.condition_dropout,
         subgoal_condition_dropout=args.subgoal_dropout,
         state_dropout=args.state_dropout,
-        state_q01=(
-            molmo_flow_state_table[0] if molmo_flow_state_table is not None else None
-        ),
-        state_q99=(
-            molmo_flow_state_table[1] if molmo_flow_state_table is not None else None
-        ),
+        state_q01=state_table[0] if state_table is not None else None,
+        state_q99=state_table[1] if state_table is not None else None,
     )
     if is_main and args.state_dropout > 0:
         print(
@@ -3678,10 +3657,10 @@ def main() -> int:
             narration=molmo_flow_prompt.narration,
         )
         molmo_flow_encoder.prompt_schema = molmo_flow_prompt.to_dict()
-        assert molmo_flow_state_table is not None  # built with the collator
+        assert state_table is not None  # built with the collator
         molmo_flow_encoder.state_table = (
-            tuple(molmo_flow_state_table[0].tolist()),
-            tuple(molmo_flow_state_table[1].tolist()),
+            tuple(state_table[0].tolist()),
+            tuple(state_table[1].tolist()),
         )
         model = BijouModel(
             backbone=molmo_flow_backbone,
