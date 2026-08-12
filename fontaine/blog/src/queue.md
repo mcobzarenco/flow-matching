@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-12T18:10:24Z
+**Updated:** 2026-08-12T19:12:05Z
 
 **Depth call:** depth 3 open at 16:0xZ 08-12: ftrig-eval20-flipped-parallel CLOSED this session (owner prio, ridden end-to-end); remaining open: sim-wrist-compositing + 2 lit items; grpo-signal-probe owner_hold (memo review), v3-rerun unhold ask 15:13Z still open.
 
-**13 open** (Live 0 · Queued 3 · Blocked 10 · Done 134)
+**13 open** (Live 0 · Queued 3 · Blocked 10 · Done 135)
 
 ## 🔴 Live (0)
 
@@ -202,9 +202,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (134)
+## ✅ Done (135)
 
 *closed — the full record stays in each fold*
+
+**`release-eval20-officialmap`** · `gpu-local`
+
+OWNER FOLLOW-UP 18:19:08Z 08-12 (FIRST GPU claim): rerun release-eval20-convmap under the OFFICIAL LeRobot v3.0-&gt;v2.1 conversion the owner linked (irenegracekp/molmoact2-so101 inference.py: offsets 0,90,90,0,0,0; signs 1,-1,1,1,1…
+
+**boundary:** DONE 19:1xZ 08-12 work session (ridden in-turn, per-episode Discord stream per owner ask): sign-carrying --convmap-override landed (JOINT=[SIGN,]OFFSET + oracles) + --rows-jsonl per-episode stream; tripwires under official map recorded (lift mirror covers 7.5% vs +180's 27.9%; arm B first-action 2.62 vs anchor 6.31; arm A wrist identity 34.0 = known clamp signature, owner ordered anyway); both 20-seed arms run ~0.25/0.4 GPU-h. RE-DISPOSITION: INERT PARTIALLY OVERTURNED — official lift sign unlocks scene engagement (arm A seed 6 reach to 1.4 cm +4.61, seed 16 knock-away -5.26 = boat TOUCHED; arm B 2 approaches) but 0/20 pickups both arms, median 0.00; parent conclusion (grounding not units is the blocker) STANDS. A vs B null (-0.02 [-0.75,+0.66], 11/20 ties) — snippet identity wrist stays canonical. vs ftrig arms all CI-incl-0. CANONICAL SHIM = snippet map exactly (1,-1,1,1,1,1 / 0,90,90,0,0,0). MIRROR_MARGIN estimator lesson flagged to the box in-channel. Results: pre-reg amendment 1 + chart + rows + 40 videos on reports Space; Discord launch/per-episode/results posts 18:58-19:0xZ. · [pre-reg](posts/2026-08-12-prereg-release-eval20-convmap.md)
+
+<details><summary>full record</summary>
+
+OWNER FOLLOW-UP 18:19:08Z 08-12 (FIRST GPU claim): rerun release-eval20-convmap under the OFFICIAL LeRobot v3.0-&gt;v2.1 conversion the owner linked (irenegracekp/molmoact2-so101 inference.py: offsets 0,90,90,0,0,0; signs 1,-1,1,1,1,1). Verified discrepancy vs our fitted map (18:2xZ, CPU): shoulder_lift official (-1,+90)=90-arm vs ours (+1,+180) - the mirror QUALIFIED and covers the release box better (7.5% vs 27.9% uncovered) but lost to the pre-registered MIRROR_MARGIN=0.25 rule by 20.4pt; elbow/pan/wrist_flex/gripper match official exactly; wrist_roll ours -90 vs official identity (both 61% uncovered - span mismatch; identity clamps sim wrist home 77.6 above box ceiling 43.5, our -90 may absorb a rig-specific zero). CONSEQUENCE: INERT 0.00x20 read is suspect on lift - wrong sign direction-inverts decoded lift motion, matching the filmed swing-down-and-park; first-action detector is sign-blind at rest (bijection preserves action~state). WORK: (1) extend override syntax to carry sign (sim/convmap.py parse_overrides + resolve_map + driver flag), oracle it; (2) tripwires under official map incl. 3-seed first-action probe; (3) same 20 seeds, fixed post-flip sim, parallel workers=8, TWO wrist_roll arms if budget allows (official identity vs our -90) since ambiguous - else official-lift + our -90 wrist as primary; paired vs the existing release_convmap rows + step500/step2000. Gate &lt;=0.4 GPU-h. Amend the existing pre-reg page (amendment section, not a new page). Post correction/confirmation in-channel either way - the INERT claim must be explicitly re-dispositioned. Ack + plan posted 18:2xZ, owner said queue unless stop. || OWNER STEERING 18:34:34Z: run the snippet map EXACTLY as primary (signs 1,-1,1,1,1,1 / offsets 0,90,90,0,0,0 — wrist_roll IDENTITY per snippet; our -90 wrist arm only as optional secondary), and POST PER-EPISODE UPDATES in-channel as each seed's row lands (completion order under workers=8 is fine unless owner replies asking strict sequential — check channel before launch; confirmation posted 18:36Z). Watcher loop over row files -&gt; discord post per seed. || OWNER 18:36:29Z: second arm CONFIRMED — arm A = snippet exact (wrist_roll identity), arm B = snippet + wrist_roll -90, same 20 seeds both, arm A first, per-episode posts for both; ack 18:38Z. Gate stays &lt;=0.4 GPU-h (two parallel arms ~0.2 total).
+
+</details>
+
+---
 
 **`release-eval20-convmap`** · `gpu-local`
 

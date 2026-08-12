@@ -8,6 +8,35 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-12 19:15–19:2xZ (real `date -u` at stamp: 19:22) —
+tick, babysit: **caught and closed a dropped owner ask — 19:01:42Z
+"Can you link a video?" was consumed mid-run by the prior session but
+never directly answered (the 19:11Z results post linked only the
+chart). Replied 19:16Z with three direct mp4 links.***
+
+**Status**: no live jobs, GPU idle (0%, 0 MiB). Queue validate green
+(depth 3, 13 open). `run_work_next` already armed (19:13, prior
+session) — the work session chains after this tick. pgrep straggler
+(ssh box checkpoint-ls, 25 s old) = background probe, benign.
+
+**Steering**: owner 19:01:42Z video ask answered 19:16Z — arm A
+seed 6 (directed reach to 1.4 cm), arm A seed 16 (the knock-away —
+first boat contact), arm B seed 10 (knock-away); all three
+curl-verified 200 through the Space redirect before posting, plus the
+per-arm directory pattern for the other 17×2. Conversational hold
+kept ~10 min after the reply (30 s Discord poll loop); no follow-up.
+Lesson: an owner ask landing mid-run must get its own direct reply —
+the results post didn't count (per the standing rule), and the ask
+sat 14 min. Open asks unchanged: v3-rerun unhold + arm set (15:13Z),
+GRPO memo review, disk-draws sign-off.
+
+**Done**: video-links reply (19:16Z); hygiene — queue validate green,
+GPU-idle confirm, marker check, straggler dispositioned.
+
+**Next**: chained work session → CPU lanes
+(`lit-sim-improvement-levers` owner-called, `sim-wrist-compositing`).
+GPU idle pending the v3-rerun unhold. `queue.json` canonical.*
+
 *Updated 2026-08-12 18:39–19:1xZ (real `date -u` at stamp: 19:12) —
 work session, bounded: **release-eval20-officialmap DONE — the INERT
 read is PARTIALLY OVERTURNED: under the official lift sign the release
@@ -102,59 +131,17 @@ re-dispositioned); `run_work_next` armed.
 CPU lanes (`lit-sim-improvement-levers`, `sim-wrist-compositing`).
 v3-rerun still pends the owner unhold. `queue.json` canonical.*
 
-*Updated 2026-08-12 17:29–18:1xZ (real `date -u` at stamp: 18:10) —
-work session, bounded: **release-eval20-convmap DONE — the released
-MolmoAct2 checkpoint, unit-shimmed into the sim, is INERT: progress
-0.00 on all 20 seeds, the boat never touched; the shim itself is
-verified (first-action 2.98° vs contract anchor 6.31°), so units are
-demonstrably NOT the blocker — scene/task grounding is.***
-
-**Status**: no live jobs, GPU idle again. The one GPU claim ran ridden
-end-to-end (~0.19/0.5 GPU-h gate: 3 tripwire probes + one 20-seed
-parallel arm, 5.5 min at workers=8, first-poll 100% util / 20.8 GB).
-Queue validate green (depth 3, 13 open).
-
-**Steering**: no new owner messages this session (polled at boot,
-pre-post, close). Executed the standing owner prio 17:13:24Z with its
-17:22Z-👍'd design. Open asks unchanged: v3-rerun unhold + arm set
-(15:13Z), GRPO probe memo review, disk-draws sign-off.
-
-**Done** (commits `5b3783e`, close-out): branch REBASED onto latest
-main (brings the box's `--molmo-norm`/`fit_convention_map` machinery,
-`4d54490`/`63155d4`). (1) Instrument: `sim/convmap.py` seam
-(fit + explicit per-joint overrides, off-contract `_convmap`
-provenance in rows) + `--convmap-seam-stats`/`--convmap-override` on
-the parallel driver (state-in A, action-out A⁻¹ through the policy's
-own convention-map path); tripwire script
-`fontaine/scripts/convmap_tripwires.py`; 3 oracles; checks 791 green.
-(2) Tripwires did real work: gated fit gave lift+180 only; coverage
-caught elbow (identity leaves 56% of the rig range below the release
-floor; +90 → 10%) and the first-action probe caught wrist_roll
-(identity delta 34.5° = sim home 77.6° minus release ceiling 43.5°,
-the clamp signature; −90 → 0.97°). Final map lift+180 elbow+90
-wrist_roll−90; first-action 2.98° < anchor 6.31° = the note's
-predicted collapse. (3) The read: INERT 0.00 × 20 — not frozen;
-smooth, repeatable swing to the same off-task park every seed,
-wrist cam ending off-table. 0 knock-aways, 0 approaches. Paired:
-release−step2000 +0.46 [−0.01,+1.11] (pure knock-away artifact),
-release−step500 −0.02 (noise). Clean bracket: 500–2000 ft steps buy
-scene-directed reaching from a unit-corrected base that does nothing
-task-relevant here. (4) Cross-check banked + posted for the box: lift
-+180 AGREE; elbow +90 agrees only past the midpoint gate's 2.2°
-near-tie (estimator under-translates rig-table-shaped joints —
-suggested coverage-fraction tiebreak); wrist_roll −90 empirical,
-consistent with the ±90 wrap family; wrist spans stay 53–61%
-uncovered under any offset (release's narrower wrist workspace —
-lower-bound caveat). Artifacts: rows + 20 videos + chart (dark,
-per-seed) on the reports Space `release_convmap/` (curl 200);
-pre-reg page carries full results; Discord 2 posts ~18:0xZ.
-
-**Next**: `queue_cli.py next` → CPU lanes: `lit-sim-improvement-levers`
-(owner-called lit slice), `sim-wrist-compositing`. GPU idle pending
-the v3-rerun unhold (15:13Z ask — the re-baseline carrier).
-`grpo-signal-probe` owner_hold. `queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-12 19:15–19:2xZ (tick, babysit; 0 new GPU-h — GPU
+idle): caught a dropped owner ask — 19:01:42Z “Can you link a video?”
+was consumed mid-run by the prior session and answered only by the
+results post (chart link — doesn’t count per the standing rule) →
+direct reply 19:16Z with 3 curl-verified mp4 links (arm A seeds 6/16,
+arm B seed 10) + the per-arm directory pattern; ~10-min conversational
+hold after, no follow-up. Hygiene green (queue depth 3, run_work_next
+armed 19:13, ssh straggler benign). Archive roll: 1 main entry (17:29
+work), 2 footer notes (18:19 tick, 17:29 work).
 
 Session 2026-08-12 18:39–19:1xZ (work, bounded; **+~0.25 GPU-h** — 2×
 tripwire probes + two 20-seed parallel arms, ridden end-to-end;
@@ -165,28 +152,6 @@ ask, INERT re-dispositioned (PARTIALLY OVERTURNED: official lift sign
 unlocks scene contact, still 0/20 pickups; grounding remains the
 blocker), canonical shim = snippet map exactly, A-vs-B wrist arms null.
 No steering traffic; launch + ~6 per-episode + results posts.
-
-Session 2026-08-12 18:19–18:2xZ (tick, babysit; 0 new GPU-h — GPU
-idle): owner 18:19Z asked whether our convmap shim matches the official
-LeRobot v3.0→v2.1 conversion (linked inference.py) → audited on the
-real tables same session: 4/6 joints match; **shoulder_lift does NOT**
-(official (−1,+90) mirror qualified in our fit, covered better, lost
-only to the MIRROR_MARGIN rule) and wrist_roll is ambiguous both ways.
-INERT 0.00×20 read flagged suspect on lift (sign inverts decoded lift
-motion; first-action detector sign-blind at rest); full comparison
-posted in-channel, `release-eval20-officialmap` queued first GPU claim
-(≤0.4 gate), run_work_next armed. Driver-guard straggler alert
-dispositioned noise (bare zsh). Archive roll: 1 main entry (16:55
-work), 2 footer notes (17:20 tick, 15:31 work).
-
-Session 2026-08-12 17:29–18:1xZ (work, bounded; **+~0.19 GPU-h** —
-convmap tripwire probes + one 20-seed parallel arm, ridden end-to-end;
-exploit, owner prio): release-eval20-convmap DONE same session as
-queued — rebase onto box's molmo_norm machinery, seam instrument +
-tripwires + oracles, both pre-GPU gates dispositioned (elbow and
-wrist_roll overrides earned by coverage + first-action evidence, not
-assumed), 20-seed read INERT 0.00×20 with verified shim, cross-check
-banked to the box in-channel. No steering traffic; 2 result posts.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
