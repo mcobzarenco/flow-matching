@@ -628,13 +628,30 @@ def parse_decoder_config(
 
 
 def decoder_schema_dict(
-    decoder: FlowDecoder | ARFastDecoder | ARBackboneDecoder | Molmo2ARDecoder,
+    decoder: (
+        FlowDecoder
+        | ARFastDecoder
+        | ARBackboneDecoder
+        | Molmo2ARDecoder
+        | MolmoFlowDecoder
+    ),
 ) -> dict[str, Any]:
     """The checkpoint-schema dict of a built decoder (write side + the
     --init-from config guard). The Molmo2 suffix decoder records the SAME
     ar_backbone section (identical config shape) — the trunk axis lives
-    in the PROMPT section's kind."""
+    in the PROMPT section's kind. molmo_flow returns the schema the
+    loader stashed at build (this module owns the schema; the decoder
+    cannot import it — geometry, t-law and action facts never change
+    during an AE fine-tune, and the run's table lives in the metadata
+    normalization row)."""
     match decoder:
+        case MolmoFlowDecoder():
+            if decoder.checkpoint_schema is None:
+                raise ValueError(
+                    "molmo_flow decoder has no stashed checkpoint schema — "
+                    "was it built outside build_molmo_flow_decoder?",
+                )
+            return dict(decoder.checkpoint_schema)
         case FlowDecoder():
             return flow_decoder_config_from_expert(decoder.config).to_dict()
         case ARFastDecoder():

@@ -423,6 +423,14 @@ class MolmoAct2Encoder(ObservationEncoder[MolmoAct2Inputs, Molmo2Model]):
         self.num_state_tokens = num_state_tokens
         self.action_mode = action_mode
         self.narration = narration
+        # Save-side stashes (train sets them from the source checkpoint's
+        # sections; loading owns the schema, this module cannot import
+        # it): the prompt section dict for the checkpoint round-trip, and
+        # the state q01/q99 rows the run normalized prompts with — the
+        # written normalization table must carry THE table in use, not
+        # the (quantile-less) run aggregate.
+        self.prompt_schema: dict[str, Any] | None = None
+        self.state_table: tuple[tuple[float, ...], tuple[float, ...]] | None = None
 
     @override
     def stream_geometries(self) -> dict[str, StreamGeometry]:

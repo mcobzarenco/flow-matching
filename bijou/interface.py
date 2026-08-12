@@ -501,6 +501,13 @@ class Collator[I: BatchInputs]:
     # Default 0.0 so every non-train construction site stays inert, and
     # p=0 draws nothing from the RNG (existing streams byte-identical).
     state_dropout: float = 0.0
+    # The molmoact2-format state scheme (§8.13 decision 6): when set
+    # ([state_dim] fp32 each), PromptInputs.state is q01/q99-CLAMP
+    # normalized with this ONE merged table — their semantics — instead
+    # of the per-sample mean/std stats. None keeps every existing path
+    # byte-identical. Both-or-neither, checked at construction.
+    state_q01: Tensor | None = None
+    state_q99: Tensor | None = None
     _generator: torch.Generator | None = dataclasses.field(
         default=None,
         repr=False,
@@ -535,6 +542,11 @@ class Collator[I: BatchInputs]:
         if not 0.0 <= self.state_dropout < 1.0:
             raise ValueError(
                 f"state dropout {self.state_dropout} outside [0, 1)",
+            )
+        if (self.state_q01 is None) != (self.state_q99 is None):
+            raise ValueError(
+                "state_q01/state_q99 travel together (the merged clamp "
+                "table) — got one without the other",
             )
         if self.aux is not None and (
             self.camera_filter is not None or self.max_cameras is not None
@@ -777,6 +789,17 @@ class Collator[I: BatchInputs]:
             if self.generate_bracket:
                 condition_text += generate_text(request)
             state = item["observation.state"]
+            if self.state_q01 is not None and self.state_q99 is not None:
+                # The molmoact2-format scheme: ONE merged table, clamp
+                # to [-1, 1] (their normalizer; the encoder mode only
+                # bins the result into discrete state tokens).
+                denom = self.state_q99 - self.state_q01
+                denom = torch.where(denom == 0, torch.full_like(denom, 1e-8), denom)
+                normalized_state = (
+                    2.0 * (state.to(torch.float32) - self.state_q01) / denom - 1.0
+                ).clamp(-1.0, 1.0)
+            else:
+                normalized_state = (state - item["state_mean"]) / item["state_std"]
             samples.append(
                 PromptInputs(
                     instruction=self._instruction(item),
@@ -789,7 +812,7 @@ class Collator[I: BatchInputs]:
                         )
                         for key in self.cameras_of(item)
                     ),
-                    state=(state - item["state_mean"]) / item["state_std"],
+                    state=normalized_state,
                 ),
             )
         action_tokens = self._action_tokens(items)

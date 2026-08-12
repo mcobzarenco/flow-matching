@@ -328,6 +328,47 @@ def test_train_args_serializes_resolved_values() -> None:
     assert reread == info.train_args
 
 
+def test_molmo_flow_is_inherit_only() -> None:
+    """§8.13 step 5: molmo_flow never appears in --decoder choices (the
+    declarable-fresh kinds); it resolves from a checkpoint. The
+    composition rules ride the resolved value."""
+    with pytest.raises(SystemExit):  # not a choice — argparse refuses
+        _parse(["--decoder", "molmo_flow"])
+    info = _checkpoint_info(
+        decoder="molmo_flow",
+        conditioning_streams="kv_cache",
+        chunk_size=30,
+    )
+    args = _parse(["--resume", "ckpt"], info)
+    assert args.decoder == "molmo_flow"
+    assert args.chunk_size == 30
+    assert args.insulate_expert is False
+    insulated = _parse(["--resume", "ckpt", "--insulate-expert"], info)
+    assert insulated.insulate_expert is True
+    # Frozen-trunk insulation is their post-train; an unfrozen trunk
+    # under insulation trains on nothing (no CE rider until step 6).
+    with pytest.raises(SystemExit):
+        _parse(
+            ["--resume", "ckpt", "--insulate-expert", "--backbone-text-lr", "1e-5"],
+            info,
+        )
+    with pytest.raises(SystemExit):  # bijou bracket surfaces have no bytes
+        _parse(
+            ["--resume", "ckpt", "--condition-fields", "outcome"],
+            info,
+        )
+
+
+def test_insulate_expert_is_molmo_flow_only() -> None:
+    with pytest.raises(SystemExit):
+        _parse(["--insulate-expert"])  # fresh flow run
+    args = _parse([])
+    with pytest.raises(ValueError, match="molmo_flow KV seam"):
+        dataclasses.replace(args, insulate_expert=True)
+    with pytest.raises(ValueError, match="trains from a checkpoint only"):
+        dataclasses.replace(args, decoder="molmo_flow")
+
+
 def test_paths_and_policy_flags_stay_cli_owned() -> None:
     info = _checkpoint_info()
     args = _parse(

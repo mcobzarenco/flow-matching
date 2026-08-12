@@ -135,6 +135,7 @@ def make_args(save_dir: Path) -> TrainArgs:
         seam_stop_grad=False,
         joint_ce=False,
         joint_unfrozen_seam=False,
+        insulate_expert=False,
         self_attention_mode="causal_actions",
         time_conditioning="additive",
         target_time_embed=False,

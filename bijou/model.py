@@ -150,7 +150,11 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
             # phase 1 trained them there (--decoder-lr), and "the CE
             # objective continuing verbatim" includes its optimizer
             # routing.
-            "decoder": list(self.decoder.parameters())
+            # requires_grad-filtered: molmo_flow carries construction-
+            # frozen compat tensors (kv_proj, state_encoder — the
+            # reference trainable set); every other decoder kind is
+            # fully trainable, so the filter is a no-op there.
+            "decoder": [p for p in self.decoder.parameters() if p.requires_grad]
             + (list(self.joint_ce.parameters()) if self.joint_ce is not None else [])
             + [p for p in self.encoder.parameters() if p.requires_grad],
             "backbone_text": backbone_groups["text"],

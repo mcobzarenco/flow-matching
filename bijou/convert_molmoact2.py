@@ -211,7 +211,7 @@ def convert(
         raise SystemExit(f"{source_dir} has no tokenizer.json")
 
     _action_stats, _state_stats, tag = load_norm_stats(source_dir, norm_tag)
-    action_dim = int(tag["action_dim"] if "action_dim" in tag else 32)
+    action_dim = int(tag.get("action_dim", 32))
     real_action_dim = len(tag["action_stats"]["q01"])
     ae_cfg = config["action_expert_config"]
     text_cfg = config["text_config"]
