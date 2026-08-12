@@ -1868,10 +1868,29 @@ bug caught by the gate and fixed under diagnosis: the q01/q99 clamp
 table briefly lived in buffers and was swept to bf16 by the
 deployment `module.to()` — denorm constants rounded to ~3 significant
 digits (measured 0.027/0.119 pooled divergence) — now plain fp32
-tensors, data not weights. Remaining for step 5: bijou.train wiring
-(--decoder molmo_flow, --insulate-expert, the q01/99 state-collation
-mode, save side), the 2-step corridor vs molmoact2/train.py, and the
-GPU train smoke; then the rig-rung repeat (gate d).**
+tensors, data not weights. Step 5 PART 2 SHIPPED (train wiring):
+molmo_flow is INHERIT-ONLY at the CLI (never a --decoder choice; it
+resolves from an --init-from/--resume checkpoint per the step-1 rule —
+from-scratch stays step 7); `--insulate-expert` (refused with an
+unfrozen trunk until the step-6 CE rider); the shared Collator grew
+the merged-table state mode (q01/99-clamp, their scheme; None keeps
+every existing path byte-identical); model build from source sections;
+the init block loads via `load_expert_state` and tolerates the absent
+prompt.safetensors iff the encoder is stateless; the save side writes
+the MolmoAct2 prompt section and SPLICES the in-use q01/q99 tables
+into the normalization row (the run aggregate honestly carries none —
+without the splice a descendant checkpoint would lose its clamp).
+**GPU train smoke GREEN** (box 2026-08-11: 40 steps, batch 8, frozen
+trunk, --init-from the converted rung-2000 on the 2 rig repos — loss
+opens at 0.0132, exactly the reference run's endpoint band (their
+0.135@20 → ~0.008@2000 corridor), grad norms ≤3, 0.31 s/step, 24.2
+GiB peak; async save landed and the written checkpoint ROUND-TRIPS:
+from_checkpoint reload → predict works, rig tables verbatim in the
+saved normalization row). Two integration bugs caught by the smoke and
+fixed: the frozen-trunk `state_proj` freeze assumed every encoder has
+one, and the launch banner lacked the encoder arm. Remaining for
+§8.13: the rig-rung repeat (gate d, ≤6 GPU-h — the pre-registered
+2k-step recipe through bijou.train), then step 6 (narration).**
 
 **Decisions (register).**
 
