@@ -5,7 +5,54 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-12 18:39–19:1xZ (real `date -u` at stamp: 19:12) —
+work session, bounded: **release-eval20-officialmap DONE — the INERT
+read is PARTIALLY OVERTURNED: under the official lift sign the release
+engages the scene (a 1.4 cm near-touch, a knock-away — the boat was
+touched, which never happened in the parent's 20 episodes) but still
+0/20 pickups on both arms; grounding, not units, remains the blocker.
+Canonical shim going forward = the snippet map exactly.***
+
+**Status**: no live jobs, GPU idle again — both arms ran ridden
+end-to-end 18:55–19:06:43Z (~0.25/0.4 GPU-h; first-poll 100% util /
+20.8 GB; babysit entry pruned same session). Queue validate green
+(depth 3, 13 open).
+
+**Steering**: no new owner messages this session (polled at boot,
+pre-launch, at both arm boundaries, and close). Executed the standing
+18:19/18:34/18:36Z steering: official-map rerun, snippet map EXACTLY as
+arm A, arm B = +wrist_roll −90, per-episode in-channel updates (40
+episode lines streamed as rows landed). Open asks unchanged: v3-rerun
+unhold + arm set (15:13Z), GRPO memo review, disk-draws sign-off.
+
+**Done** (commits `45a41b6`, `fb76a96`, close-out): (1) instrument —
+sign-carrying `--convmap-override` (`JOINT=[SIGN,]OFFSET`, oracles,
+checks 793 green) + `--rows-jsonl` per-episode stream on the parallel
+driver + the Discord watcher. (2) pre-reg amendment 1 posted BEFORE
+launch; tripwires under the official map recorded (lift mirror covers
+7.5% uncovered vs +180's 27.9%; arm B first-action 2.62° vs anchor
+6.31°; arm A wrist-identity 34.0° = the known clamp signature, run per
+the owner's call). (3) the read: arm A (snippet exact) mean −0.11,
+seed 6 directed reach to 1.4 cm (+4.61), seed 16 knock-away −5.26;
+arm B mean −0.09, 2 approaches, 1 knock-away; **A vs B NULL** (−0.02
+[−0.75,+0.66], 11/20 exact ties) — snippet identity wrist stays
+canonical; vs ftrig arms all CI-incl-0 (bracket claim softened: ft
+steps buy *more frequent* engagement, 7/20 vs 1–2/20 approaches, not
+engagement from zero). (4) INERT explicitly re-dispositioned on the
+pre-reg page (amendment 1 results); MIRROR_MARGIN estimator lesson
+flagged to the box (a real, documented mirror rejected despite winning
+coverage — wants a coverage tiebreak / external-doc override).
+Artifacts: dark per-seed chart + rows + 20 videos per arm on the
+reports Space (curl 200); Discord launch + per-episode + results posts
+18:58–19:0xZ.
+
+**Next**: `queue_cli.py next` → CPU lanes: `lit-sim-improvement-levers`
+(owner-called lit slice), `sim-wrist-compositing`. GPU idle pending the
+v3-rerun unhold (15:13Z ask). `run_work_next` armed. `queue.json`
+canonical.*
 
 *Updated 2026-08-12 18:19–18:2xZ (real `date -u` at stamp: 18:24) —
 tick, babysit: **owner 18:19Z caught a real shim discrepancy — the
@@ -107,48 +154,17 @@ pre-reg page carries full results; Discord 2 posts ~18:0xZ.
 the v3-rerun unhold (15:13Z ask — the re-baseline carrier).
 `grpo-signal-probe` owner_hold. `queue.json` canonical.*
 
-*Updated 2026-08-12 17:20–17:2xZ (real `date -u` at stamp: 17:25) —
-tick, babysit: **new owner prio landed and is queued — run the RELEASED
-MolmoAct2 checkpoint in sim through a unit shim; ack + design posted,
-owner 👍, chained work session armed to execute.***
-
-**Status**: no live jobs, GPU idle (0% / 0 MiB). Queue validate green
-(depth 4, 14 open) — new item `release-eval20-convmap` is FIRST GPU
-claim. The 17:15Z harness exit-1 alert was benign: the 15:31Z work
-session died on API-529 overload retries AFTER its work was committed
-(log-verified); nothing lost.
-
-**Steering**: owner 17:13:24Z — *run the released checkpoint directly;
-molmoact2 normalizes actions by global quantile stats assuming v2.1
-lerobot format; read the note in depth* + attached box-side note on
-molmoact2 unit contracts (committed:
-`fontaine/notes/molmoact2-unit-contracts-box-note.md`). Read in depth;
-key mechanics: the release's q01/q99 table is a *unit contract* (lift
-box [+45.2, +186.1]) near-disjoint from our rig table ([−103.7,
-+48.6]); tag equality ≠ table equality; raw-in-v3-sim is meaningless
-(state below box floor → blind), so we execute the note's case 3 — a
-per-joint affine shim (state-in / action-out), labeled off-contract
-`_convmap`, lower-bound interpretation. Ack + 4-step plan posted
-17:22Z, **owner 👍 confirmed**. Open asks: v3-rerun unhold (15:13Z),
-GRPO probe memo review, disk-draws sign-off.
-
-**Done**: `release-eval20-convmap` queued (owner prio, pre-reg page
-`posts/2026-08-12-prereg-release-eval20-convmap.md` with the two
-mandatory pre-GPU tripwires from the note: A⁻¹(box) workspace
-coverage + first-action-vs-state unit-bug detector, ≤0.5 GPU-h gate);
-box note committed into the repo; converted release located on disk
-(`~/marius-convert-gate/converted/molmoact2_so100_101_release` — no
-conversion step needed); exit-1 alert root-caused benign;
-`run_work_next` armed.
-
-**Next**: chained work session executes `release-eval20-convmap`
-(shim → tripwires → 20 seeds parallel, paired vs step-500/step-2000
-corrected arms; cross-check bank: our sim calibration's implied
-lift/elbow map vs the box's fit_convention_map snap). Then CPU lanes:
-`lit-sim-improvement-levers`, `sim-wrist-compositing`. v3-rerun still
-pends the owner unhold. `queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-12 18:39–19:1xZ (work, bounded; **+~0.25 GPU-h** — 2×
+tripwire probes + two 20-seed parallel arms, ridden end-to-end;
+exploit, owner steering): release-eval20-officialmap DONE same session
+— sign-carrying override instrument landed, pre-reg amendment posted
+pre-launch, both arms streamed per-episode to Discord per the owner
+ask, INERT re-dispositioned (PARTIALLY OVERTURNED: official lift sign
+unlocks scene contact, still 0/20 pickups; grounding remains the
+blocker), canonical shim = snippet map exactly, A-vs-B wrist arms null.
+No steering traffic; launch + ~6 per-episode + results posts.
 
 Session 2026-08-12 18:19–18:2xZ (tick, babysit; 0 new GPU-h — GPU
 idle): owner 18:19Z asked whether our convmap shim matches the official
