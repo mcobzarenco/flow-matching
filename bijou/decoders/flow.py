@@ -44,7 +44,6 @@ them by accident. An exact weight-space converter exists on paper
 
 from __future__ import annotations
 
-import dataclasses
 import math
 from dataclasses import dataclass
 from enum import StrEnum
@@ -60,7 +59,6 @@ from ..interface import (
     ObservationMemory,
     SamplingMethod,
     kv_stream_name,
-    residual_stream_name,
 )
 from ..nn import (
     DEFAULT_ATTENTION_BACKEND,
@@ -70,7 +68,6 @@ from ..nn import (
     RMSNorm,
     RopeParameters,
     RopeType,
-    apply_rotary_pos_emb,
     buffer_device,
     rope_cos_sin,
     rope_inv_freq_from_params,
@@ -145,19 +142,6 @@ class ExpertConfig:
     # zero-init makes an extended model exactly the unextended one until
     # trained (the distill warm-start identity).
     target_time_embed: bool = False
-    # Residual-stream conditioning (arch-batch-1 arm B): the schedule's
-    # layer indices reference the trunk's residual stream (hidden state
-    # after that layer) instead of exported K/V; each consumed layer gets
-    # a learned adapter (RMSNorm + K/V projections in the geometry above)
-    # owned by THIS decoder — expert.safetensors, trained under a frozen
-    # trunk. Defaults keep every existing checkpoint loading unchanged.
-    residual_streams: bool = False
-    # Adapter input width (the trunk's hidden size) and K/V head count of
-    # the produced streams (the trunk's global-layer kv_heads) — required
-    # exactly when residual_streams is set; backbone-derived like
-    # cross_attention_head_dim/rope above.
-    residual_stream_dim: int | None = None
-    cross_attention_kv_heads: int | None = None
 
     def __post_init__(self) -> None:
         if not self.cross_attention_schedule:
@@ -168,20 +152,6 @@ class ExpertConfig:
             raise ValueError("self-attention head_dim must be even (RoPE)")
         if self.time_embed_dim % 2:
             raise ValueError("time_embed_dim must be even")
-        if self.residual_streams:
-            if (
-                self.residual_stream_dim is None
-                or self.cross_attention_kv_heads is None
-            ):
-                raise ValueError(
-                    "residual_streams requires residual_stream_dim and "
-                    "cross_attention_kv_heads (the adapters' geometry)",
-                )
-            if self.cross_attention_heads % self.cross_attention_kv_heads:
-                raise ValueError(
-                    "cross_attention_heads must be divisible by "
-                    "cross_attention_kv_heads (grouped-query attention)",
-                )
 
     @property
     def num_layers(self) -> int:
@@ -190,14 +160,12 @@ class ExpertConfig:
     @property
     def streams(self) -> tuple[int, ...]:
         """Backbone layers the expert conditions on, ascending (their K/V
-        exports, or their residual taps under ``residual_streams``)."""
+        exports)."""
         return tuple(sorted(set(self.cross_attention_schedule)))
 
     def stream_name(self, layer_idx: int) -> str:
-        """The stream name a schedule entry resolves to under this config's
-        conditioning kind."""
-        name_of = residual_stream_name if self.residual_streams else kv_stream_name
-        return name_of(layer_idx)
+        """The stream name a schedule entry resolves to."""
+        return kv_stream_name(layer_idx)
 
     @property
     def suffix_length(self) -> int:
@@ -220,80 +188,6 @@ def sinusoidal_time_embedding(
     period = min_period * (max_period / min_period) ** fraction
     angle = time[:, None].float() / period[None, :] * (2 * math.pi)
     return torch.cat([torch.sin(angle), torch.cos(angle)], dim=-1)
-
-
-class ResidualStreamAdapter(nn.Module):
-    """Learned K/V producer for ONE trunk residual-stream tap (arch-batch-1
-    arm B): raw hidden states [B, P, stream_dim] -> a MemoryStream in the
-    expert's existing cross-attention geometry. Mirrors the backbone
-    producer convention exactly (TextAttention.project_kv: input norm ->
-    K/V projections -> per-head learned k_norm / scale-less v_norm ->
-    RoPE'd keys), so the produced stream is contract-identical to a
-    backbone K/V export and the consuming blocks need no changes."""
-
-    def __init__(
-        self,
-        *,
-        stream_dim: int,
-        kv_heads: int,
-        head_dim: int,
-        rms_norm_eps: float,
-        device: DeviceLike = None,
-        dtype: torch.dtype | None = None,
-    ) -> None:
-        super().__init__()
-        self.kv_heads = kv_heads
-        self.head_dim = head_dim
-        self.norm = RMSNorm(stream_dim, eps=rms_norm_eps, device=device, dtype=dtype)
-        self.k_proj = nn.Linear(
-            stream_dim,
-            kv_heads * head_dim,
-            bias=False,
-            device=device,
-            dtype=dtype,
-        )
-        self.v_proj = nn.Linear(
-            stream_dim,
-            kv_heads * head_dim,
-            bias=False,
-            device=device,
-            dtype=dtype,
-        )
-        self.k_norm = RMSNorm(head_dim, eps=rms_norm_eps, device=device, dtype=dtype)
-        self.v_norm = RMSNorm(
-            head_dim,
-            eps=rms_norm_eps,
-            with_scale=False,
-            device=device,
-            dtype=dtype,
-        )
-
-    @override
-    def forward(
-        self,
-        hidden_states: Tensor,
-        position_embeddings: tuple[Tensor, Tensor],
-    ) -> MemoryStream:
-        """Project one raw tap; returns key/value each
-        [B, kv_heads, P, head_dim].
-
-        Shapes:
-          - hidden_states: [B, P, stream_dim]  (raw trunk residual stream)
-          - position_embeddings: (cos, sin), each [B or 1, P, head_dim] —
-            the taps' LOGICAL positions (pads clamp to 0), matching the
-            backbone's own K/V position encoding
-        """
-        batch, length, _ = hidden_states.shape
-        shape = (batch, length, self.kv_heads, self.head_dim)
-        cos, sin = position_embeddings
-        normed = self.norm(hidden_states)
-        key = self.k_norm(self.k_proj(normed).view(shape))
-        key = apply_rotary_pos_emb(key, cos, sin, unsqueeze_dim=2)
-        value = self.v_norm(self.v_proj(normed).view(shape))
-        return MemoryStream(
-            key=key.transpose(1, 2),
-            value=value.transpose(1, 2),
-        )
 
 
 class FlowDecoder(nn.Module):
@@ -323,28 +217,6 @@ class FlowDecoder(nn.Module):
             config.stream_name(idx) for idx in config.cross_attention_schedule
         )
         hidden = config.hidden_size
-
-        # Residual-stream conditioning: one learned adapter per consumed
-        # trunk layer, keyed by stream name (safetensors keys
-        # ``res_adapters.res{i}.*``). None on K/V-conditioned experts —
-        # their state_dict is byte-identical to before the field existed.
-        self.res_adapters: nn.ModuleDict | None = None
-        if config.residual_streams:
-            assert config.residual_stream_dim is not None  # __post_init__
-            assert config.cross_attention_kv_heads is not None
-            self.res_adapters = nn.ModuleDict(
-                {
-                    config.stream_name(idx): ResidualStreamAdapter(
-                        stream_dim=config.residual_stream_dim,
-                        kv_heads=config.cross_attention_kv_heads,
-                        head_dim=config.cross_attention_head_dim,
-                        rms_norm_eps=config.rms_norm_eps,
-                        device=device,
-                        dtype=dtype,
-                    )
-                    for idx in config.streams
-                },
-            )
 
         self.state_proj = nn.Linear(
             config.state_dim,
@@ -520,56 +392,6 @@ class FlowDecoder(nn.Module):
             min_value,
         )
         return MaskSpec(tensor=tensor[None, None].expand(batch, 1, length, length))
-
-    def attach_residual_streams(self, memory: ObservationMemory) -> ObservationMemory:
-        """Project the encoder's RAW residual taps into this expert's
-        conditioning streams; no-op for K/V-conditioned experts.
-
-        Runs ONCE per observation (BijouModel.encode/encode_observation),
-        deliberately OUTSIDE the prefix encode's no-grad region: under a
-        frozen trunk the taps arrive grad-less, and the adapters — decoder
-        parameters — still train through their own projections. Keys are
-        RoPE'd at the taps' logical positions (pads clamp to 0, mirroring
-        the encoder's position_ids), so the attached streams obey the same
-        contract as backbone K/V exports and ``forward`` consumes them
-        with zero special-casing."""
-        if self.res_adapters is None:
-            if memory.residuals is not None:
-                raise ValueError(
-                    "observation memory carries raw residual taps but this "
-                    "expert has no residual adapters — encoder/decoder "
-                    "config mismatch",
-                )
-            return memory
-        if memory.residuals is None:
-            raise ValueError(
-                "residual-stream expert needs raw taps in the observation "
-                "memory (ObservationMemory.residuals); this memory has none "
-                "— was it encoded by a K/V-export encoder, or attached "
-                "twice?",
-            )
-        dtype = self.state_proj.weight.dtype
-        first = next(iter(memory.residuals.values()))
-        device = first.device
-        if memory.padding_mask is not None:
-            positions = (
-                memory.padding_mask.to(device=device, dtype=torch.long).cumsum(-1) - 1
-            ).clamp(min=0)
-        else:
-            positions = torch.arange(memory.length, device=device)[None, :]
-        position_embeddings = rope_cos_sin(self.cross_inv_freq, positions, dtype)
-        streams = dict(memory.streams)
-        for name, adapter in self.res_adapters.items():
-            if name not in memory.residuals:
-                raise ValueError(
-                    f"residual tap {name!r} missing from the observation "
-                    f"memory (present: {sorted(memory.residuals)})",
-                )
-            streams[name] = adapter(
-                memory.residuals[name].to(dtype),
-                position_embeddings,
-            )
-        return dataclasses.replace(memory, streams=streams, residuals=None)
 
     @override
     def forward(

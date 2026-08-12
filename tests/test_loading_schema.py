@@ -78,9 +78,6 @@ def test_legacy_synthesizer_reproduces_recorded_expert_config() -> None:
     # added to ExpertConfig after format-1 checkpoints were written are
     # absent from their serialized configs and default-filled on read.
     recorded.setdefault("target_time_embed", False)
-    recorded.setdefault("residual_streams", False)
-    recorded.setdefault("residual_stream_dim", None)
-    recorded.setdefault("cross_attention_kv_heads", None)
     synthesized = json.loads(
         json.dumps(dataclasses.asdict(legacy_expert_config()), default=str),
     )

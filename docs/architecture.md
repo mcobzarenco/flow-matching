@@ -418,21 +418,15 @@ the action-token embeddings at the input; the state token gets no time;
 layers are unconditioned. An alternative per-layer adaRMS scheme is
 implemented and the trained flow mainline uses it (§8.2).
 
-**Residual-stream conditioning** (`--conditioning-streams residual`;
-the default `kv` is the exported-K/V path above). Instead of adopting
-exported K/V, the expert cross-attends streams *produced by learned
-adapters*: one `ResidualStreamAdapter` per prefix layer (RMSNorm →
-K/V projections → per-head learned k-norm, matching the trunk's own
-projection convention), fed by raw residual taps of the trunk. This is
-how the expert attaches to trunks without exportable K/V geometry
-(Molmo2), and the adapters train even when the trunk is frozen. Two
-seam options exist for attaching over a *live* trunk:
-`--seam-stop-grad` detaches the taps before adapter projection
-(flow-loss gradients into the trunk are exactly zero — the π0.5/KI
-recipe), and `--joint-ce` runs the phase-1 CE objective beside the
-flow loss at fixed weight 1.0. The measured outcome (§7): the joint
-arm costs ~4× the frozen arm per step; frozen-trunk attachment is the
-working recipe.
+**Conditioning is the exported-K/V path above, only.** A
+residual-tap alternative (learned adapters over raw trunk hidden
+states — the Molmo2 FlowDecoder attachment arm, with its
+`--seam-stop-grad`/`--joint-ce` live-trunk seam flags) was removed
+2026-08-13 at tag `pre-decoder-simplify`, superseded by `molmo_flow`
+(§8.13) as the flow-on-Molmo2 story; its measured outcomes survive in
+§7/§8.11 (the joint arm cost ~4× the frozen arm per step —
+frozen-trunk attachment is the working recipe). Checkpoints recording
+`residual_exports` are refused by name and load at the tag.
 
 **One-step distillation** (`--distill snapflow`). SnapFlow-style
 self-distillation trains the expert to jump straight from noise to the
@@ -953,8 +947,7 @@ component losses; `train/loss_action` + `train/loss_aux` log beside
 `train/loss` on aux runs (aux aggregates as CE-sum/token-count across
 the window and all ranks — a position-weighted mean, immune to the
 sparse-batch dilution a mean-of-means would suffer). Later additions
-not detailed above: `--conditioning-streams {kv,residual}` (§2.1),
-`--joint-ce` / `--seam-stop-grad` (live-trunk attach seams, §2.1),
+not detailed above:
 `--distill snapflow` + `--target-time-embed` (one-step distillation,
 §2.1), `--state-dropout` (proprioception dropout), `--max-crops`
 (Molmo2 image crops), `--bucket-by-length` (length-bucketed batching),
@@ -1807,14 +1800,19 @@ trunk via `--backbone-init-from` (warm start from the AR-pretrained
 snapshot, unfreeze flags off): `bijou_flow_artrunk_h1024_40k_ddp2`
 @80k is the **best banked checkpoint overall** (§7 curated-plan
 ledger, 5.185 as a 10-draw ensemble). (2) On the Molmo2 trunk via
-residual-stream adapters (`--conditioning-streams residual`, §2.1)
-over the frozen decoder-only checkpoint — trained 10k steps cleanly,
-readout in progress. A matched joint arm — the trunk continuing its
-CE objective beside the expert's flow loss through a stop-gradient
-seam (`--joint-ce`, `--seam-stop-grad`) — was stopped at ~4× the
-frozen arm's step cost; frozen-trunk attachment is the working
-recipe, consistent with production systems (RDT2, Qwen-VLA Stage I)
-that also train the expert against a frozen trunk.
+residual-stream adapters over the frozen decoder-only checkpoint —
+trained 10k steps cleanly. A matched joint arm — the trunk continuing
+its CE objective beside the expert's flow loss through a stop-gradient
+seam — was stopped at ~4× the frozen arm's step cost; frozen-trunk
+attachment is the working recipe, consistent with production systems
+(RDT2, Qwen-VLA Stage I) that also train the expert against a frozen
+trunk. **The Molmo2 attachment arm is RETIRED (2026-08-13, tag
+`pre-decoder-simplify`)**: residual conditioning and its seam flags
+(`--conditioning-streams`, `--seam-stop-grad`, the flow-side
+`--joint-ce` wiring) were removed — `molmo_flow` (§8.13) supersedes
+it as the flow-on-Molmo2 story, and its 10k checkpoint loads at the
+tag. The BijouModel `joint_ce` slot survives dormant as §8.13 step
+6's narration vehicle.
 
 ### 8.12 Multi-turn action context (K interaction pairs)
 

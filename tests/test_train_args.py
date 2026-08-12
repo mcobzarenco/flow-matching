@@ -55,7 +55,6 @@ def _checkpoint_info(**overrides: object) -> CheckpointInfo:
         decoder_intermediate=4096,
         decoder_cross_heads=8,
         stream_counts=(4, 4, 4, 4, 6),
-        conditioning_streams="kv",
         self_attention_mode=SelfAttentionMode.BIDIRECTIONAL,
         chunk_size=50,
         max_soft_tokens=140,
@@ -63,7 +62,6 @@ def _checkpoint_info(**overrides: object) -> CheckpointInfo:
         time_conditioning=TimeConditioning.ADARMS,
         target_time_embed=False,
         fast_tokenizer=None,
-        joint_ce=False,
     )
     fields: dict[str, object] = {
         "backbone": "google/gemma-4-e2b-it",
@@ -117,7 +115,6 @@ def test_fresh_run_resolves_defaults() -> None:
     assert args.chunk_size == 50
     assert args.prompt_generate_bracket is False
     assert args.target_time_embed is False
-    assert args.joint_ce is False
 
 
 def test_fresh_run_explicit_arch_flags_respected() -> None:
@@ -131,12 +128,11 @@ def test_resume_refuses_every_arch_flag() -> None:
     for field, (flag, _section) in ARCH_FLAGS.items():
         argv = ["--resume", "ckpt", flag]
         # Value-taking flags need a value; store_true flags do not.
-        if field not in ("prompt_generate_bracket", "target_time_embed", "joint_ce"):
+        if field not in ("prompt_generate_bracket", "target_time_embed"):
             argv.append(
                 {
                     "backbone": "x",
                     "decoder": "flow",
-                    "conditioning_streams": "kv",
                     "self_attention_mode": "bidirectional",
                     "time_conditioning": "adarms",
                     "fast_tokenizer": "x",
@@ -337,7 +333,6 @@ def test_molmo_flow_is_inherit_only() -> None:
         _parse(["--decoder", "molmo_flow"])
     info = _checkpoint_info(
         decoder="molmo_flow",
-        conditioning_streams="kv_cache",
         chunk_size=30,
         # Converted checkpoints record the placeholder defaults for the
         # flow-only knobs (the converter's synthesized train_args).

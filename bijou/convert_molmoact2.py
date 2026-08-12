@@ -179,7 +179,6 @@ def _synthesized_train_args(
         ),
         "decoder_cross_heads": decoder_config.num_heads,
         "stream_counts": [],
-        "conditioning_streams": "kv_cache",
         "self_attention_mode": "bidirectional",
         "chunk_size": decoder_config.action_horizon,
         "max_soft_tokens": 140,

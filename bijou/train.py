@@ -108,7 +108,6 @@ from .decoders.flow import (
     FlowDecoder,
     SelfAttentionMode,
     TimeConditioning,
-    flow_matching_loss_sums,
 )
 from .decoders.molmo_flow import MolmoFlowDecoder, load_expert_state
 from .encoders.gemma4 import PROMPT_FORMAT, GemmaEncoder, GemmaInputsCollator
@@ -145,10 +144,8 @@ from .loading import (
     from_backbone,
     load_adapted_backbone,
     load_backbone_init,
-    molmo2_residual_expert_config,
     molmo_flow_state_table,
     read_checkpoint_info,
-    residual_expert_config,
     resolve_action_codec,
 )
 from .model import BijouModel
@@ -203,12 +200,10 @@ ARCH_FLAGS: dict[str, tuple[str, ArchSection]] = {
     "decoder_cross_heads": ("--decoder-cross-heads", ArchSection.DECODER),
     "chunk_size": ("--chunk-size", ArchSection.DECODER),
     "stream_counts": ("--stream-counts", ArchSection.DECODER),
-    "conditioning_streams": ("--conditioning-streams", ArchSection.DECODER),
     "self_attention_mode": ("--self-attention-mode", ArchSection.DECODER),
     "time_conditioning": ("--time-conditioning", ArchSection.DECODER),
     "fast_tokenizer": ("--fast-tokenizer", ArchSection.DECODER),
     "target_time_embed": ("--target-time-embed", ArchSection.EXTENSION),
-    "joint_ce": ("--joint-ce", ArchSection.EXTENSION),
 }
 
 #: Fresh-run values for the ARCH_FLAGS sentinels (argparse defaults
@@ -226,12 +221,10 @@ ARCH_DEFAULTS: dict[str, Any] = {
     "decoder_cross_heads": 4,
     "chunk_size": 50,
     "stream_counts": (4, 4, 7),
-    "conditioning_streams": "kv",
     "self_attention_mode": "causal_actions",
     "time_conditioning": TimeConditioning.ADDITIVE.value,
     "fast_tokenizer": None,
     "target_time_embed": False,
-    "joint_ce": False,
 }
 
 
@@ -266,27 +259,6 @@ class TrainArgs:
     max_soft_tokens: int
     max_crops: int
     stream_counts: tuple[int, ...]
-    # Conditioning surface of the flow expert: "kv" = exported K/V of the
-    # global prefix layers (the shipped default, scheduled by
-    # --stream-counts); "residual" = FULL residual streams — hidden state
-    # after every prefix layer through learned decoder-side adapters,
-    # expert layer i reading trunk layer i (the full-residual ablation arm).
-    conditioning_streams: str
-    # The trunk-seam flags (molmo2 flow
-    # phase). --seam-stop-grad: detach the raw residual taps before
-    # adapter projection — flow-loss gradients into the trunk exactly
-    # zero (the π0.5/KI seam). --joint-ce: keep the phase-1 CE objective
-    # (Molmo2ARDecoder suffix, aux fields and all) beside the flow loss
-    # at fixed weight 1.0 — joint flow+CE training; requires a live
-    # trunk and the
-    # stop-grad seam. --joint-unfrozen-seam: the narrowly-scoped escape
-    # admitting --joint-ce with the
-    # seam OPEN — flow gradients into the trunk — for --init-from warm
-    # starts only; random-init naive joint stays refused (the published
-    # KI collapse the guard exists for).
-    seam_stop_grad: bool
-    joint_ce: bool
-    joint_unfrozen_seam: bool
     # Knowledge insulation on the molmo_flow KV seam (§8.13 decision 8):
     # detach the extracted per-layer K/V before the expert. Run
     # property; molmo_flow only.
@@ -463,14 +435,9 @@ class TrainArgs:
             )
         if self.decoder == "ar_backbone" and self.fast_tokenizer is None:
             raise ValueError("--decoder ar_backbone requires --fast-tokenizer")
-        if (
-            self.decoder in ("flow", "molmo_flow")
-            and self.fast_tokenizer is not None
-            and not self.joint_ce
-        ):
+        if self.decoder in ("flow", "molmo_flow") and self.fast_tokenizer is not None:
             raise ValueError(
-                "--fast-tokenizer is only consumed by the AR decoders "
-                "(or the --joint-ce CE rider)",
+                "--fast-tokenizer is only consumed by the AR decoders",
             )
         if self.decoder == "molmo_flow":
             # Inherit-only (§8.13 step 5): the decoder is never declared
@@ -501,76 +468,10 @@ class TrainArgs:
                 )
         elif self.insulate_expert:
             raise ValueError(
-                "--insulate-expert is the molmo_flow KV seam — flow's seam "
-                "knob is --seam-stop-grad",
+                "--insulate-expert is the molmo_flow KV seam; other "
+                "decoders have no insulable conditioning seam (the flow "
+                "decoder trains against a frozen trunk)",
             )
-        if self.conditioning_streams == "residual" and self.decoder != "flow":
-            raise ValueError(
-                "--conditioning-streams residual is a flow-expert "
-                f"architecture; --decoder {self.decoder} conditions on "
-                "K/V exports only",
-            )
-        if self.seam_stop_grad and (
-            self.decoder != "flow" or self.conditioning_streams != "residual"
-        ):
-            raise ValueError(
-                "--seam-stop-grad detaches residual taps at the expert seam — "
-                "it requires --decoder flow --conditioning-streams residual",
-            )
-        if self.joint_ce:
-            # Joint flow+CE preconditions: the CE branch is the phase-1
-            # objective continuing VERBATIM (live trunk, FAST suffix,
-            # bracketed prompts), and the seam must be stop-grad —
-            # random-init naive joint (flow gradients into the trunk) is
-            # an oracle-only negative control; --joint-unfrozen-seam is
-            # the warm-start-only escape.
-            if self.decoder != "flow" or self.conditioning_streams != "residual":
-                raise ValueError(
-                    "--joint-ce rides the flow expert — it requires --decoder "
-                    "flow --conditioning-streams residual",
-                )
-            if not self.seam_stop_grad and not self.joint_unfrozen_seam:
-                raise ValueError(
-                    "--joint-ce without --seam-stop-grad is the naive-joint "
-                    "arm — a published collapse (KI), refused as a run",
-                )
-            if self.fast_tokenizer is None:
-                raise ValueError("--joint-ce requires --fast-tokenizer (its CE suffix)")
-            if self.backbone_text_lr is None:
-                raise ValueError(
-                    "--joint-ce without --backbone-text-lr trains no trunk — "
-                    "the CE branch would ride frozen; use the F arm instead",
-                )
-            if not self.prompt_generate_bracket:
-                raise ValueError(
-                    "--joint-ce requires --prompt-generate-bracket: phase-1 "
-                    "prompts carried the [generate|…] request block, and the "
-                    "CE branch continuing verbatim means rendering it",
-                )
-            if self.distill is not None:
-                raise ValueError("--joint-ce and --distill are mutually exclusive")
-        if self.joint_unfrozen_seam:
-            # The escape's own scope: it modifies --joint-ce only,
-            # contradicts an explicit stop-grad, and is warm-start-only —
-            # the collapse the guard refuses is a random-init expert's
-            # early gradients, so a fresh run gets no escape.
-            if not self.joint_ce:
-                raise ValueError(
-                    "--joint-unfrozen-seam is the naive-joint guard escape — "
-                    "it modifies --joint-ce and does nothing without it",
-                )
-            if self.seam_stop_grad:
-                raise ValueError(
-                    "--joint-unfrozen-seam contradicts --seam-stop-grad — the "
-                    "escape exists to run the seam open; pick one",
-                )
-            if self.init_from is None:
-                raise ValueError(
-                    "--joint-unfrozen-seam requires --init-from: the naive-"
-                    "joint collapse (KI) is a random-init pathology, so the "
-                    "open seam is admitted only for warm starts whose expert "
-                    "is already informed",
-                )
         if self.decoder != "flow" and self.time_conditioning != "additive":
             raise ValueError(
                 "--time-conditioning is flow-only (AR decoders have no τ)",
@@ -586,14 +487,9 @@ class TrainArgs:
                 "--init-from runs; a resumed checkpoint without φ_s cannot "
                 "grow it (extend via --init-from --target-time-embed)",
             )
-        if (
-            self.aux_fields is not None
-            and self.decoder != "ar_backbone"
-            and (not self.joint_ce)
-        ):
+        if self.aux_fields is not None and self.decoder != "ar_backbone":
             raise ValueError(
-                "--aux-fields is ar_backbone-only (aux rides its suffix — or "
-                "the --joint-ce rider's)",
+                "--aux-fields is ar_backbone-only (aux rides its suffix)",
             )
         if self.aux_fields is not None and len(self.aux_fields) == 0:
             raise ValueError(
@@ -713,9 +609,9 @@ class TrainArgs:
                         "pass --decoder to declare a fresh decoder section "
                         "(the stage-2 path)",
                     )
-                # EXTENSION flags (φ_s, --joint-ce) stay legal on
-                # --init-from: zero-init additions, the sanctioned
-                # warm-start extensions.
+                # EXTENSION flags (φ_s) stay legal on --init-from:
+                # zero-init additions, the sanctioned warm-start
+                # extensions.
 
         # -- resolution ----------------------------------------------------
         arch: dict[str, Any] = {}
@@ -791,15 +687,6 @@ class TrainArgs:
             # architecture (resolution above already infers True from
             # ar_backbone sources; fresh ar_backbone runs render it
             # implicitly downstream either way).
-        if arch["conditioning_streams"] == "residual" and (
-            raw.stream_counts is not None
-        ):
-            parser.error(
-                "--stream-counts schedules K/V conditioning; under "
-                "--conditioning-streams residual the schedule is structural "
-                "(one stream per prefix layer, 1:1 ascending) — drop the "
-                "flag",
-            )
 
         # -- "flag X requires flag Y" + conditional defaults ---------------
         if raw.aux_dropout is not None and raw.aux_fields is None:
@@ -870,10 +757,6 @@ class TrainArgs:
                 max_soft_tokens=arch["max_soft_tokens"],
                 max_crops=arch["max_crops"],
                 stream_counts=arch["stream_counts"],
-                conditioning_streams=arch["conditioning_streams"],
-                seam_stop_grad=raw.seam_stop_grad,
-                joint_ce=arch["joint_ce"],
-                joint_unfrozen_seam=raw.joint_unfrozen_seam,
                 insulate_expert=raw.insulate_expert,
                 self_attention_mode=arch["self_attention_mode"],
                 time_conditioning=arch["time_conditioning"],
@@ -1407,9 +1290,7 @@ class BijouTrainStep[I: BatchInputs](torch.nn.Module):
     def forward(
         self,
         batch: CollatedBatch[I],
-        normalizers: (
-            tuple[Tensor, Tensor | None] | tuple[Tensor, Tensor, Tensor | None] | None
-        ) = None,
+        normalizers: tuple[Tensor, Tensor | None] | None = None,
     ) -> tuple[Tensor, Tensor, Tensor | None, Tensor | None]:
         """Batch (shapes in CollatedBatch's docstring) -> (total loss with
         graph, detached action component, detached aux CE sum | None,
@@ -1423,13 +1304,7 @@ class BijouTrainStep[I: BatchInputs](torch.nn.Module):
         SUM, detached aux CE sum | None, aux position count | None) —
         the shares sum over chunks to exactly the unchunked total (up
         to fp reduction order), so backwarding each share accumulates
-        the unchunked gradient.
-
-        The joint arm (``model.joint_ce`` set) uses THREE normalizers
-        (flow count, CE action count, CE aux count | None) and returns
-        the CE branch's action CE in the aux slots (the phase-1
-        ``loss_action`` analog — the pinned CE-health read);
-        the action slot carries the flow component."""
+        the unchunked gradient."""
         inputs = batch.encoder_inputs
         # Any batch tensor names the device; the inputs protocol has no
         # per-field surface (trunk-generic).
@@ -1452,72 +1327,11 @@ class BijouTrainStep[I: BatchInputs](torch.nn.Module):
                 # byte-identical to the historical path (oracle-exact).
                 if normalizers is None:
                     return self.model.loss_components(memory, batch)
-                assert len(normalizers) == 2  # AR runs: (action, aux)
                 return self._chunk_share(memory, batch, normalizers)
-            # The joint-CE rider is a suffix forward too — same autocast
-            # regime as ar_backbone above, for the same [B, S, 153k]
-            # logits reason; its sums leave the region as tensors and
-            # compose with the fp32 flow loss below.
-            joint_ce_sums = (
-                self.model.joint_ce_loss_sums(memory, batch)
-                if self.model.joint_ce is not None
-                else None
-            )
         # Cross-attention decoders are fp32-by-design OUTSIDE autocast.
-        if joint_ce_sums is not None:
-            if normalizers is not None:
-                assert len(normalizers) == 3  # joint runs: 3 normalizers
-                return self._joint_share(memory, batch, joint_ce_sums, normalizers)
-            return self._joint_share(memory, batch, joint_ce_sums, None)
         if normalizers is None:
             return self.model.loss_components(memory, batch)
-        assert len(normalizers) == 2  # non-joint runs: (action, aux)
         return self._chunk_share(memory, batch, normalizers)
-
-    def _joint_share(
-        self,
-        memory: ObservationMemory,
-        batch: CollatedBatch[I],
-        ce_sums: tuple[Tensor, Tensor, Tensor | None, Tensor | None],
-        normalizers: tuple[Tensor, Tensor, Tensor | None] | None,
-    ) -> tuple[Tensor, Tensor, Tensor | None, Tensor | None]:
-        """The joint arm's composition: fp32 flow sums (outside autocast)
-        + the CE branch's sums (computed by the caller inside it), over
-        this batch's own counts (unchunked) or the full-step normalizers
-        (chunked) — ONE composition for both modes, so chunked and
-        unchunked joint numerics agree up to fp reduction order. CE
-        weight 1.0 fixed (KI's no-tuning result), aux weight the
-        rider's own — the phase-1 objective verbatim."""
-        joint_ce = self.model.joint_ce
-        assert joint_ce is not None
-        decoder = self.model.decoder
-        assert isinstance(decoder, FlowDecoder)
-        ce_action_sum, ce_action_count, ce_aux_sum, ce_aux_count = ce_sums
-        flow_sum, flow_count = flow_matching_loss_sums(decoder, memory, batch)
-        if normalizers is None:
-            flow_norm, ce_action_norm, ce_aux_norm = (
-                flow_count,
-                ce_action_count,
-                ce_aux_count,
-            )
-        else:
-            flow_norm, ce_action_norm, ce_aux_norm = normalizers
-        loss = flow_sum / flow_norm + ce_action_sum / ce_action_norm
-        if ce_aux_sum is not None:
-            assert ce_aux_norm is not None
-            loss = loss + joint_ce.aux_loss_weight * (
-                ce_aux_sum / ce_aux_norm.clamp(min=1)
-            )
-        return (
-            loss,
-            (
-                (flow_sum / flow_norm).detach()
-                if normalizers is None
-                else flow_sum.detach()
-            ),
-            ce_action_sum.detach(),
-            ce_action_count,
-        )
 
     def _chunk_share(
         self,
@@ -2209,7 +2023,6 @@ def build_checkpoint_metadata(
     if isinstance(encoder, GemmaEncoder):
         prompt_config = GemmaPromptConfig(
             exports=encoder.exports,
-            residual_exports=encoder.residual_exports,
             max_soft_tokens=args.max_soft_tokens,
             format=PROMPT_FORMAT,
             state_dim=encoder.state_dim,
@@ -2237,7 +2050,6 @@ def build_checkpoint_metadata(
             generate_bracket=(
                 args.decoder == "ar_backbone" or args.prompt_generate_bracket
             ),
-            residual_exports=encoder.residual_exports,
         )
         # The Molmo2 AR trunk is always mounted full-depth (36 layers —
         # the suffix reads the shipped head).
@@ -2325,10 +2137,6 @@ def ensure_matching_decoder_config(
         # additive.
         saved.setdefault("time_conditioning", TimeConditioning.ADDITIVE.value)
         saved.setdefault("target_time_embed", False)
-        # Pre-residual-conditioning checkpoints are K/V-conditioned.
-        saved.setdefault("residual_streams", False)
-        saved.setdefault("residual_stream_dim", None)
-        saved.setdefault("cross_attention_kv_heads", None)
         current = json.loads(
             json.dumps(dataclasses.asdict(decoder.config), default=str),
         )
@@ -2682,58 +2490,13 @@ def _build_parser() -> argparse.ArgumentParser:
         "checkpoint-inferred under --resume/--init-from",
     )
     parser.add_argument(
-        "--conditioning-streams",
-        choices=["kv", "residual"],
-        default=None,
-        help="flow-expert conditioning surface: 'kv' = exported K/V of the "
-        "global prefix layers (default; scheduled by --stream-counts), "
-        "'residual' = FULL residual streams — the hidden state after every "
-        "prefix layer via learned decoder-side adapters, expert layer i "
-        "reading trunk layer i (flow decoder only; --stream-counts must "
-        "stay at its default — the schedule is structural)",
-    )
-    parser.add_argument(
-        "--seam-stop-grad",
-        action="store_true",
-        help="stop-gradient on the expert→trunk seam (molmo2 flow + "
-        "residual conditioning): raw taps are detached before adapter "
-        "projection, so flow-loss gradients into every trunk parameter "
-        "are exactly zero while a live trunk still trains through the "
-        "--joint-ce branch (the π0.5/KI recipe)",
-    )
-    parser.add_argument(
-        "--joint-ce",
-        action="store_true",
-        default=None,
-        help="joint flow+CE training: keep the pretrained autoregressive "
-        "CE objective "
-        "(Molmo2ARDecoder suffix — --fast-tokenizer/--aux-fields flags "
-        "apply to it verbatim) beside the flow loss at fixed weight 1.0 "
-        "(KI's no-tuning result; deliberately not a knob). Requires "
-        "molmo2 + --decoder flow + --conditioning-streams residual + "
-        "--backbone-text-lr + --seam-stop-grad (random-init naive joint "
-        "is an oracle-only negative control, never a run; "
-        "--joint-unfrozen-seam is the warm-start-only escape)",
-    )
-    parser.add_argument(
         "--insulate-expert",
         action="store_true",
         help="knowledge insulation on the molmo_flow KV seam (§8.13 "
         "decision 8, their post-train): the extracted per-layer K/V "
         "detach before the expert, so flow gradients into every trunk "
         "parameter are exactly zero. molmo_flow only; irrelevant (and "
-        "refused) elsewhere — flow's seam knob is --seam-stop-grad",
-    )
-    parser.add_argument(
-        "--joint-unfrozen-seam",
-        action="store_true",
-        help="opt-in escape from the naive-joint guard: "
-        "admits --joint-ce WITHOUT --seam-stop-grad, "
-        "so flow-loss gradients enter the trunk through the taps — the "
-        "APT regime. Sane only when --init-from supplies an already-"
-        "converged expert (required); the guard's collapse reasoning "
-        "(KI: an uninformed head's early gradients wreck the trunk) is "
-        "about random init, so fresh runs stay refused",
+        "refused) elsewhere",
     )
     parser.add_argument(
         "--self-attention-mode",
@@ -3319,26 +3082,6 @@ def main() -> int:
         molmo_flow_prompt = source_sections.prompt
         molmo_flow_section = source_sections.decoder
 
-    if (
-        molmo2_trunk
-        and args.decoder == "flow"
-        and args.conditioning_streams != "residual"
-    ):
-        raise SystemExit(
-            "molmo2 flow experts condition on residual taps only "
-            "(--conditioning-streams residual): the trunk exports no K/V "
-            "streams",
-        )
-    if (args.seam_stop_grad or args.joint_ce) and not molmo2_trunk:
-        # joint_ce checked too: --joint-unfrozen-seam admits joint_ce
-        # without seam_stop_grad, and the rider is built only on the
-        # molmo2 branch — a gemma joint run would silently drop it.
-        raise SystemExit(
-            "--seam-stop-grad / --joint-ce are molmo2 trunk-seam "
-            "flags; the gemma residual arm trains under a frozen "
-            "trunk (no seam to cut)",
-        )
-
     # -- datasets --------------------------------------------------------
     selection = select_datasets(
         args.train_data,
@@ -3719,15 +3462,19 @@ def main() -> int:
             f"{molmo_flow_section.beta_alpha}, "
             f"{molmo_flow_section.beta_beta}))"
         )
-    elif args.decoder == "flow" and molmo2_trunk:
-        # The molmo2 flow composition: full
-        # multimodal Molmo2 trunk + residual-tap encoder (the pinned
-        # stride-3 rule) + flow expert reading the taps 1:1 ascending.
-        molmo2_config = load_molmo2_config(checkpoint_dir)
-        expert_config = molmo2_residual_expert_config(
-            molmo2_config,
+    elif args.decoder == "flow":
+        if molmo2_trunk:
+            raise SystemExit(
+                "flow on a Molmo2 trunk is the molmo_flow decoder (§8.13: "
+                "--init-from a converted MolmoAct2 checkpoint); the "
+                "residual-conditioned FlowDecoder attachment was removed "
+                "at tag 'pre-decoder-simplify'",
+            )
+        expert_config = default_expert_config(
+            load_config(checkpoint_dir),
             action_dim=action_dim,
             state_dim=state_dim,
+            stream_counts=args.stream_counts,
             hidden_size=args.decoder_hidden,
             num_attention_heads=args.decoder_heads,
             intermediate_size=args.decoder_intermediate,
@@ -3737,114 +3484,6 @@ def main() -> int:
             time_conditioning=TimeConditioning(args.time_conditioning),
             target_time_embed=args.target_time_embed,
         )
-        molmo2_backbone = load_molmo2_model(
-            checkpoint_dir,
-            device=device,
-            dtype=(backbone_dtype if backbone_dtype is not None else torch.bfloat16),
-        )
-        molmo2_encoder = Molmo2Encoder(
-            str(checkpoint_dir),
-            max_crops=args.max_crops,
-            state_dim=state_dim,
-            hidden_size=molmo2_config.text.hidden_size,
-            residual_exports=expert_config.streams,
-            device=device,
-            dtype=torch.float32,
-        )
-        model = BijouModel(
-            backbone=molmo2_backbone,
-            encoder=molmo2_encoder,
-            decoder=FlowDecoder(expert_config, device=device, dtype=torch.float32),
-        )
-        model.seam_stop_grad = args.seam_stop_grad
-        if args.joint_ce:
-            # The K arm's CE rider: the phase-1 decoder build VERBATIM
-            # (same config surface, same table init) — its objective,
-            # tables and aux runtime continue exactly as in phase 1.
-            assert args.fast_tokenizer is not None  # parse_args guard
-            assert action_codec is not None
-            joint_ar_config = ARBackboneConfig(
-                tokenizer=args.fast_tokenizer,
-                vocab_total=action_codec.vocab_total,
-                block_base=molmo2_config.text.fast_block_base,
-                chunk_size=args.chunk_size,
-                action_dim=action_dim,
-                suffix_format=SUFFIX_FORMAT,
-                aux=aux_decode_config,
-            )
-            joint_text_tokenizer = Molmo2TextTokenizer(str(checkpoint_dir))
-            joint_carriers = newline_carrier_ids(
-                joint_text_tokenizer,
-                text_vocab_size=molmo2_config.text.vocab_size,
-                terminator_id=joint_text_tokenizer.encode(
-                    "\n",
-                    add_special_tokens=False,
-                )[0],
-            )
-            joint_rider = Molmo2ARDecoder(
-                joint_ar_config,
-                molmo2_config.text,
-                action_codec,
-                tokenizer=joint_text_tokenizer,
-                aux_runtime=(
-                    build_aux_runtime(
-                        aux_decode_config,
-                        joint_text_tokenizer,
-                        newline_carrier_ban=True,
-                    )
-                    if aux_decode_config is not None
-                    else None
-                ),
-                aux_loss_weight=args.aux_loss_weight,
-                newline_carrier_ids=joint_carriers,
-                device=device,
-                dtype=torch.float32,
-            )
-            joint_rider.init_tables_from_backbone(molmo2_backbone)
-            model.joint_ce = joint_rider
-        if args.seam_stop_grad:
-            seam_desc = "stop-grad"
-        elif args.joint_ce:
-            # Only reachable via --joint-unfrozen-seam (parse guard) —
-            # the launch banner must say the trunk takes flow gradients.
-            seam_desc = "UNFROZEN (flow grads enter the trunk)"
-        else:
-            seam_desc = "transparent"
-        schedule_desc = (
-            f"molmo2 residual taps {expert_config.streams} (1:1 ascending, "
-            f"learned adapters; seam {seam_desc}"
-            f"{', joint CE rider' if args.joint_ce else ''})"
-        )
-    elif args.decoder == "flow":
-        if args.conditioning_streams == "residual":
-            expert_config = residual_expert_config(
-                load_config(checkpoint_dir),
-                action_dim=action_dim,
-                state_dim=state_dim,
-                hidden_size=args.decoder_hidden,
-                num_attention_heads=args.decoder_heads,
-                intermediate_size=args.decoder_intermediate,
-                cross_attention_heads=args.decoder_cross_heads,
-                chunk_size=args.chunk_size,
-                self_attention_mode=SelfAttentionMode(args.self_attention_mode),
-                time_conditioning=TimeConditioning(args.time_conditioning),
-                target_time_embed=args.target_time_embed,
-            )
-        else:
-            expert_config = default_expert_config(
-                load_config(checkpoint_dir),
-                action_dim=action_dim,
-                state_dim=state_dim,
-                stream_counts=args.stream_counts,
-                hidden_size=args.decoder_hidden,
-                num_attention_heads=args.decoder_heads,
-                intermediate_size=args.decoder_intermediate,
-                cross_attention_heads=args.decoder_cross_heads,
-                chunk_size=args.chunk_size,
-                self_attention_mode=SelfAttentionMode(args.self_attention_mode),
-                time_conditioning=TimeConditioning(args.time_conditioning),
-                target_time_embed=args.target_time_embed,
-            )
         model = from_backbone(
             checkpoint_dir,
             expert_config,
@@ -3852,12 +3491,7 @@ def main() -> int:
             dtype=backbone_dtype,
             expert_dtype=torch.float32,
         )
-        schedule_desc = (
-            f"residual res0..res{max(expert_config.streams)} (1:1 ascending, "
-            "learned adapters)"
-            if expert_config.residual_streams
-            else str(expert_config.cross_attention_schedule)
-        )
+        schedule_desc = str(expert_config.cross_attention_schedule)
     elif args.decoder == "ar_backbone" and molmo2_trunk:
         assert args.fast_tokenizer is not None  # parse_args guard
         assert action_codec is not None
@@ -4062,11 +3696,7 @@ def main() -> int:
         banner_encoder = model.encoder
         banner_backbone = model.backbone
         if isinstance(banner_encoder, GemmaEncoder):
-            streams_desc = (
-                f"residual taps {banner_encoder.residual_exports}"
-                if banner_encoder.residual_exports
-                else str(banner_encoder.exports)
-            )
+            streams_desc = str(banner_encoder.exports)
             assert isinstance(banner_backbone, Gemma4Model)
             n_backbone_layers = len(banner_backbone.language_model.layers)
         elif isinstance(banner_encoder, MolmoAct2Encoder):
@@ -4076,11 +3706,7 @@ def main() -> int:
         else:
             assert isinstance(banner_backbone, Molmo2Model)
             assert isinstance(banner_encoder, Molmo2Encoder)
-            streams_desc = (
-                f"residual taps {banner_encoder.residual_exports}"
-                if banner_encoder.residual_exports
-                else "prefix cache (AR suffix)"
-            )
+            streams_desc = "prefix cache (AR suffix)"
             n_backbone_layers = len(banner_backbone.text.transformer.blocks)
         print(
             f"model: {backbone_desc} "
@@ -4590,40 +4216,16 @@ def main() -> int:
                 # chunk — the accumulated gradient and every logged
                 # quantity match the unchunked step up to fp reduction
                 # order, at one chunk's activation footprint.
-                step_normalizers: (
-                    tuple[Tensor, Tensor | None] | tuple[Tensor, Tensor, Tensor | None]
-                )
-                if model.joint_ce is not None:
-                    # Joint arm: three full-step normalizers (flow
-                    # elements, CE action tokens, CE aux positions);
-                    # the logged action component is the FLOW loss, so
-                    # its window division uses the flow count.
-                    joint_counts = [
-                        model.joint_loss_count_normalizers(c) for c in batch.chunks
-                    ]
-                    action_norm = torch.stack([c[0] for c in joint_counts]).sum()
-                    ce_action_norm = torch.stack(
-                        [c[1] for c in joint_counts],
+                counts = [model.loss_count_normalizers(c) for c in batch.chunks]
+                action_norm = torch.stack([c[0] for c in counts]).sum()
+                aux_norm = (
+                    torch.stack(
+                        [n for c in counts if (n := c[1]) is not None],
                     ).sum()
-                    ce_aux_norm = (
-                        torch.stack(
-                            [n for c in joint_counts if (n := c[2]) is not None],
-                        ).sum()
-                        if joint_counts[0][2] is not None
-                        else None
-                    )
-                    step_normalizers = (action_norm, ce_action_norm, ce_aux_norm)
-                else:
-                    counts = [model.loss_count_normalizers(c) for c in batch.chunks]
-                    action_norm = torch.stack([c[0] for c in counts]).sum()
-                    aux_norm = (
-                        torch.stack(
-                            [n for c in counts if (n := c[1]) is not None],
-                        ).sum()
-                        if counts[0][1] is not None
-                        else None
-                    )
-                    step_normalizers = (action_norm, aux_norm)
+                    if counts[0][1] is not None
+                    else None
+                )
+                step_normalizers = (action_norm, aux_norm)
                 optimizer.zero_grad(set_to_none=True)
                 loss = torch.zeros((), device=device)
                 action_sum_total = torch.zeros((), device=device)

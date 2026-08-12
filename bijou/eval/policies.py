@@ -316,18 +316,9 @@ def tile_memory(memory: ObservationMemory, draws: int) -> ObservationMemory:
     ensembling: every K/V stream and the padding mask repeat along the
     batch dim ([B, …] → [draws·B, …], whole-batch-major, so row
     d·B + i is (draw d, item i) — the collapse_draws layout). A KV
-    cache cannot be tiled (AR-only surface) and must be absent, as must
-    un-projected residual taps — tiling streams to draws·B while
-    residuals stay at B would hand any later ``attach_residual_streams``
-    caller a silently inconsistent memory (in the policy path the
-    adapters have already consumed them, so the guard costs nothing and
-    fails loud)."""
+    cache cannot be tiled (AR-only surface) and must be absent."""
     if memory.cache is not None:
         raise ValueError("cannot tile an ObservationMemory carrying a KV cache")
-    if memory.residuals:
-        raise ValueError(
-            "cannot tile an ObservationMemory carrying un-projected residual taps",
-        )
     return dataclasses.replace(
         memory,
         streams={

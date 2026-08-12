@@ -51,7 +51,6 @@ from ..interface import (
     ObservationMemory,
     PromptInputs,
     StreamGeometry,
-    residual_stream_name,
 )
 from ..molmo2.cache import Molmo2KVCache
 from ..molmo2.model import (
@@ -315,14 +314,10 @@ class Molmo2Encoder(ObservationEncoder[Molmo2Inputs, Molmo2Model]):
     """The Molmo2 prompt-side strategy: collation, multimodal prefix
     encoding, and the trunk's unfreeze surface.
 
-    Phase 1 is AR-first (port plan §6 amendment): with no
-    ``residual_exports`` the encoder exports NO memory streams — its whole
-    product is the prefix KV cache the suffix decoder continues
-    (``retain_cache=True``). ``residual_exports`` are trunk layers whose
-    post-layer hidden states ride along as RAW residual taps
-    (``ObservationMemory.residuals``, the gemma pattern — projected into
-    conditioning streams decoder-side), the flow-phase attachment
-    surface.
+    Phase 1 is AR-first (port plan §6 amendment): the encoder exports NO
+    memory streams — its whole product is the prefix KV cache the suffix
+    decoder continues (``retain_cache=True``; molmo_flow conditions on
+    every layer of it).
 
     The trunk is NOT owned here — BijouModel owns it once and passes it
     into the compute methods; this module carries exactly the prompt-side
@@ -345,7 +340,6 @@ class Molmo2Encoder(ObservationEncoder[Molmo2Inputs, Molmo2Model]):
         max_crops: int,
         state_dim: int,
         hidden_size: int,
-        residual_exports: tuple[int, ...] = (),
         device: torch.device | str | None = None,
         dtype: torch.dtype | None = None,
     ) -> None:
@@ -353,7 +347,6 @@ class Molmo2Encoder(ObservationEncoder[Molmo2Inputs, Molmo2Model]):
         self.checkpoint = checkpoint
         self.max_crops = max_crops
         self.state_dim = state_dim
-        self.residual_exports = residual_exports
         self.state_proj = nn.Linear(
             state_dim,
             hidden_size,
@@ -372,10 +365,8 @@ class Molmo2Encoder(ObservationEncoder[Molmo2Inputs, Molmo2Model]):
 
     @override
     def stream_geometries(self) -> dict[str, StreamGeometry]:
-        """No K/V streams on this trunk — the prefix cache is the AR
-        export, and residual taps carry no static geometry at the seam
-        (the gemma convention: adapters are decoder parameters whose
-        geometry lives in ExpertConfig)."""
+        """No K/V streams on this trunk — the prefix cache is the
+        export."""
         return {}
 
     @override
@@ -392,11 +383,10 @@ class Molmo2Encoder(ObservationEncoder[Molmo2Inputs, Molmo2Model]):
         retain_cache: bool = False,
     ) -> ObservationMemory:
         """Run the full multimodal prefix (vision inject + state splice +
-        causal-OR-image-block mask), retain the prefix KV cache when
-        asked, and record the configured residual taps. The final-norm
-        output is discarded — the cache and the raw taps are the product;
-        ``with_grad=True`` leaves autograd on so suffix (and, live-trunk,
-        tap) gradients flow back into the trunk."""
+        causal-OR-image-block mask) and retain the prefix KV cache when
+        asked. The final-norm output is discarded — the cache is the
+        product; ``with_grad=True`` leaves autograd on so suffix
+        gradients flow back into the trunk."""
         padding_mask = inputs.attention_mask if inputs.has_padding else None
         with torch.no_grad() if not with_grad else contextlib.nullcontext():
             embeds = backbone.build_input_embeddings(
@@ -426,26 +416,17 @@ class Molmo2Encoder(ObservationEncoder[Molmo2Inputs, Molmo2Model]):
                 if retain_cache
                 else None
             )
-            taps = self.residual_exports
-            residual_sink: dict[int, Tensor] = {}
             backbone.text.transformer(
                 inputs_embeds=embeds,
                 position_ids=position_ids,
                 attention_mask=mask,
                 cache=cache,
-                residual_taps=taps,
-                residual_sink=residual_sink if taps else None,
             )
         return ObservationMemory(
             streams={},
             length=inputs.input_ids.shape[1],
             padding_mask=padding_mask,
             cache=cache,
-            residuals=(
-                {residual_stream_name(idx): residual_sink[idx] for idx in taps}
-                if taps
-                else None
-            ),
         )
 
     @override

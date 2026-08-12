@@ -49,7 +49,6 @@ from ..interface import (
     PromptInputs,
     StreamGeometry,
     kv_stream_name,
-    residual_stream_name,
 )
 
 
@@ -293,11 +292,7 @@ class GemmaInputsCollator:
 class GemmaEncoder(ObservationEncoder[GemmaInputs, Gemma4Model]):
     """The Gemma prompt-side strategy: collation, prefix encoding, and the
     backbone's unfreeze surface (see the module docstring). ``exports`` are
-    the global layers whose K/V become the memory streams;
-    ``residual_exports`` are layers whose post-layer hidden states ride
-    along as RAW residual taps (``ObservationMemory.residuals`` — projected
-    into streams decoder-side, see interface.py). At least one of the two
-    must be non-empty.
+    the global layers whose K/V become the memory streams.
 
     The backbone itself is NOT owned here — BijouModel owns it once and
     passes it into the compute methods; this module carries exactly the
@@ -316,19 +311,16 @@ class GemmaEncoder(ObservationEncoder[GemmaInputs, Gemma4Model]):
         processor_dir: str,
         max_soft_tokens: int,
         state_dim: int,
-        residual_exports: tuple[int, ...] = (),
         device: torch.device | str | None = None,
         dtype: torch.dtype | None = None,
     ) -> None:
         super().__init__()
-        if not exports and not residual_exports:
+        if not exports:
             raise ValueError(
-                "an encoder with neither K/V exports nor residual taps "
-                "produces an empty observation memory",
+                "an encoder with no K/V exports produces an empty observation memory",
             )
         self.config = config
         self.exports = exports
-        self.residual_exports = residual_exports
         self.processor_dir = processor_dir
         self.max_soft_tokens = max_soft_tokens
         self.state_dim = state_dim
@@ -431,35 +423,20 @@ class GemmaEncoder(ObservationEncoder[GemmaInputs, Gemma4Model]):
             if padding_mask is not None
             else None
         )
-        taps = self.residual_exports
         # The deepest exported layer's K/V depend only on its input: its
         # attention/MLP and any deeper layers are dead weight here (~1/15
-        # of decoder compute at the default E2B schedule). A residual tap
-        # needs its layer run FULLY, so the early stop survives only when
-        # the deepest K/V export sits strictly deeper than every tap; a
-        # tapless-deepest encode (arm B: taps to the last prefix layer)
-        # runs the whole stack — the final norm's output is discarded.
-        if taps and not (self.exports and max(self.exports) > max(taps)):
-            kv_stop_layer = None
-        else:
-            kv_stop_layer = max(self.exports)
-        # No K/V consumers -> no cache: residual taps live in the sink.
-        needs_cache = bool(self.exports) or retain_cache
-        cache = KVCache(backbone.config.text) if needs_cache else None
-        residual_sink: dict[int, Tensor] = {}
+        # of decoder compute at the default E2B schedule).
+        cache = KVCache(backbone.config.text)
         backbone.language_model(
             inputs_embeds=inputs_embeds,
             per_layer_inputs=per_layer_inputs,
             position_ids=position_ids,
             padding_mask=padding_mask,
             cache=cache,
-            kv_stop_layer=kv_stop_layer,
-            residual_taps=taps,
-            residual_sink=residual_sink if taps else None,
+            kv_stop_layer=max(self.exports),
         )
         streams: dict[str, MemoryStream] = {}
         for layer_idx in self.exports:
-            assert cache is not None  # needs_cache covered exports
             layer = cache.layers[layer_idx]
             assert layer.keys is not None and layer.values is not None
             streams[kv_stream_name(layer_idx)] = MemoryStream(
@@ -471,11 +448,6 @@ class GemmaEncoder(ObservationEncoder[GemmaInputs, Gemma4Model]):
             length=input_ids.shape[1],
             padding_mask=padding_mask,
             cache=cache if retain_cache else None,
-            residuals=(
-                {residual_stream_name(idx): residual_sink[idx] for idx in taps}
-                if taps
-                else None
-            ),
         )
 
     @override
@@ -523,11 +495,7 @@ class GemmaEncoder(ObservationEncoder[GemmaInputs, Gemma4Model]):
           (= the deepest exported stream): layers below it run fully; the
           stop layer runs only its input layernorm and K/V projections
           (``TextAttention.project_kv``; its v_norm is scale-less — no
-          parameters); deeper layers and the final norm never run. With a
-          residual tap at/after the deepest K/V export the early stop is
-          disabled (encode_tensors): every layer runs fully; the final
-          norm RUNS but its output is discarded, so its parameters
-          receive no gradient and stay out.
+          parameters); deeper layers and the final norm never run.
 
         Either way: token embeddings and the PLE tables stay frozen BY
         DESIGN (few rows touched per batch, dense Adam state for a 262k
@@ -544,11 +512,6 @@ class GemmaEncoder(ObservationEncoder[GemmaInputs, Gemma4Model]):
             for layer in text.layers:
                 yield from layer.parameters()
             yield from text.norm.parameters()
-        elif self.residual_exports and not (
-            self.exports and max(self.exports) > max(self.residual_exports)
-        ):
-            for layer in text.layers:
-                yield from layer.parameters()
         else:
             stop_layer = max(self.exports)
             for idx, layer in enumerate(text.layers):

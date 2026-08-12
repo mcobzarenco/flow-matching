@@ -114,16 +114,11 @@ def test_tile_stats_tiles_exactly_the_predict_chunk_fields() -> None:
         assert torch.equal(tiled.state_stats.std[rows], batch.state_stats.std)
 
 
-def test_tile_memory_refuses_cache_and_residuals() -> None:
+def test_tile_memory_refuses_cache() -> None:
     memory, _ = fabricate_padded()
     with pytest.raises(ValueError, match="cache"):
-        tile_memory(dataclasses.replace(memory, cache=object()), DRAWS)
-    with pytest.raises(ValueError, match="residual"):
         tile_memory(
-            dataclasses.replace(
-                memory,
-                residuals={"res2": torch.zeros(BATCH, PREFIX_LEN, 8)},
-            ),
+            dataclasses.replace(memory, cache=object()),
             DRAWS,
         )
 

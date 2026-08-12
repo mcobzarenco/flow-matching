@@ -47,7 +47,7 @@ from .encoders.gemma4 import PROMPT_FORMAT, GemmaEncoder
 from .encoders.molmo2 import Molmo2Encoder
 from .encoders.molmoact2 import MolmoAct2Encoder
 from .fast.codec import ActionCodec
-from .gemma4.config import Gemma4Config, LayerType, RopeParameters, RopeType
+from .gemma4.config import Gemma4Config, LayerType
 from .gemma4.loading import (
     load_config,
     load_model,
@@ -55,9 +55,8 @@ from .gemma4.loading import (
     truncate_backbone_state,
 )
 from .gemma4.model import Gemma4Model
-from .interface import kv_stream_name, residual_stream_name
+from .interface import kv_stream_name
 from .model import BijouModel
-from .molmo2.config import Molmo2Config
 from .molmo2.loading import load_config as load_molmo2_config
 from .molmo2.model import Molmo2Model
 from .molmo2.model import load_model as load_molmo2_model
@@ -138,16 +137,29 @@ class DecoderKind(StrEnum):
     MOLMO_FLOW = "molmo_flow"
 
 
+def _refuse_residual_exports(data: dict[str, Any], trunk: str) -> None:
+    """Residual conditioning was removed 2026-08-13 (superseded by
+    molmo_flow as the flow-on-Molmo2 story): a checkpoint recording
+    non-empty ``residual_exports`` cannot rebuild at HEAD — refused by
+    name rather than silently dropping its adapters. Absent/empty keys
+    (every surviving checkpoint) parse unchanged."""
+    taps = data.get("residual_exports", [])
+    if taps:
+        raise SystemExit(
+            f"this {trunk} checkpoint records residual-tap exports "
+            f"{list(taps)} — residual conditioning was removed after "
+            "molmo_flow superseded it; load the checkpoint from git "
+            "history at tag 'pre-decoder-simplify'",
+        )
+
+
 @dataclass(frozen=True, slots=True)
 class GemmaPromptConfig:
     """The Gemma prompt-side strategy as recorded in a checkpoint.
 
     ``exports`` are backbone layer indices whose K/V become the memory
     streams (named ``kv{layer}`` — backbone internals live HERE, never in
-    decoder configs); ``residual_exports`` are layer indices whose
-    post-layer hidden states are exported as raw residual taps (named
-    ``res{layer}``, projected decoder-side — empty on every checkpoint
-    predating the field). ``format`` is the prompt layout version
+    decoder configs). ``format`` is the prompt layout version
     (encoders.gemma4.PROMPT_FORMAT when written; 1 = tag-less legacy,
     2 = bracket camera tags, 3 = pipe-unified extended sandwich with
     the [generate|…] request and the soft state token — whose
@@ -171,15 +183,11 @@ class GemmaPromptConfig:
     # WITH the bracket present). Inference must render what training
     # rendered.
     generate_bracket: bool
-    # Raw residual-tap exports (see the class docstring); () on every
-    # checkpoint written before residual conditioning existed.
-    residual_exports: tuple[int, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "kind": PromptKind.GEMMA4.value,
             "exports": list(self.exports),
-            "residual_exports": list(self.residual_exports),
             "max_soft_tokens": self.max_soft_tokens,
             "format": self.format,
             "state_dim": self.state_dim,
@@ -202,13 +210,9 @@ class GemmaPromptConfig:
                 "state token, colon conditioning) are refused — retrain "
                 "(no back-compat, 2026-08-03)",
             )
+        _refuse_residual_exports(data, "gemma4")
         return cls(
             exports=tuple(int(layer) for layer in data["exports"]),
-            # Absent on checkpoints predating residual conditioning
-            # (2026-08-06) — those exported K/V streams only.
-            residual_exports=tuple(
-                int(layer) for layer in data.get("residual_exports", [])
-            ),
             max_soft_tokens=int(data["max_soft_tokens"]),
             format=format_version,
             state_dim=int(data["state_dim"]),
@@ -223,11 +227,8 @@ class GemmaPromptConfig:
 
     @property
     def stream_names(self) -> tuple[str, ...]:
-        """K/V exports then residual taps — index-aligned with
-        ``self.exports + self.residual_exports``."""
-        return tuple(kv_stream_name(layer) for layer in self.exports) + tuple(
-            residual_stream_name(layer) for layer in self.residual_exports
-        )
+        """Index-aligned with ``self.exports``."""
+        return tuple(kv_stream_name(layer) for layer in self.exports)
 
 
 @dataclass(frozen=True, slots=True)
@@ -246,12 +247,6 @@ class Molmo2PromptConfig:
     state_dim: int
     condition_fields: tuple[str, ...]
     generate_bracket: bool
-    # Trunk layers whose post-layer hidden states are exported as raw
-    # residual taps (named ``res{layer}``, projected decoder-side — the
-    # flow-phase attachment surface); () on
-    # every AR-phase checkpoint. Molmo2 has no K/V-export conditioning
-    # arm — the AR suffix reads the CACHE — so no ``exports`` mirror.
-    residual_exports: tuple[int, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -261,11 +256,11 @@ class Molmo2PromptConfig:
             "state_dim": self.state_dim,
             "condition_fields": list(self.condition_fields),
             "generate_bracket": self.generate_bracket,
-            "residual_exports": list(self.residual_exports),
         }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Molmo2PromptConfig:
+        _refuse_residual_exports(data, "molmo2")
         return cls(
             max_crops=int(data["max_crops"]),
             format=int(data["format"]),
@@ -274,18 +269,7 @@ class Molmo2PromptConfig:
                 str(field) for field in data.get("condition_fields", [])
             ),
             generate_bracket=bool(data.get("generate_bracket", False)),
-            # Absent on checkpoints predating the flow phase (2026-08-07)
-            # — those exported the prefix cache only.
-            residual_exports=tuple(
-                int(layer) for layer in data.get("residual_exports", [])
-            ),
         )
-
-    @property
-    def stream_names(self) -> tuple[str, ...]:
-        """Residual taps only — index-aligned with ``residual_exports``
-        (no K/V-export arm exists on this trunk)."""
-        return tuple(residual_stream_name(layer) for layer in self.residual_exports)
 
 
 @dataclass(frozen=True, slots=True)
@@ -711,126 +695,6 @@ def default_expert_config(
     )
 
 
-def residual_expert_config(
-    backbone: Gemma4Config,
-    *,
-    action_dim: int,
-    state_dim: int,
-    hidden_size: int = 768,
-    num_attention_heads: int = 6,
-    intermediate_size: int = 3072,
-    cross_attention_heads: int = 4,
-    chunk_size: int = 50,
-    time_embed_dim: int = 256,
-    self_attention_mode: SelfAttentionMode = SelfAttentionMode.CAUSAL_ACTIONS,
-    self_attention_rope_theta: float = 10_000.0,
-    time_conditioning: TimeConditioning = TimeConditioning.ADDITIVE,
-    target_time_embed: bool = False,
-) -> ExpertConfig:
-    """Expert config with FULL-residual conditioning (arch-batch-1 arm B):
-    one stream per non-KV-shared prefix layer — the hidden state AFTER
-    backbone layer i, through a learned decoder-side adapter — expert
-    layer i reading trunk layer i, 1:1 ascending. Expert depth therefore
-    equals the prefix depth (15 for E2B, same depth as the default
-    (4, 4, 7) K/V schedule). Cross-attention geometry mirrors the K/V
-    exports' (global-layer kv_heads/head_dim/rope), so the adapters
-    produce contract-identical streams."""
-    text = backbone.text
-    schedule = tuple(range(text.first_kv_shared_layer_idx))
-    return ExpertConfig(
-        hidden_size=hidden_size,
-        num_attention_heads=num_attention_heads,
-        intermediate_size=intermediate_size,
-        hidden_activation=text.hidden_activation,
-        rms_norm_eps=text.rms_norm_eps,
-        self_attention_mode=self_attention_mode,
-        self_attention_rope_theta=self_attention_rope_theta,
-        cross_attention_heads=cross_attention_heads,
-        cross_attention_head_dim=text.global_head_dim,
-        cross_attention_rope=text.rope_parameters[LayerType.FULL],
-        cross_attention_schedule=schedule,
-        action_dim=action_dim,
-        state_dim=state_dim,
-        chunk_size=chunk_size,
-        time_embed_dim=time_embed_dim,
-        time_conditioning=time_conditioning,
-        target_time_embed=target_time_embed,
-        residual_streams=True,
-        residual_stream_dim=text.hidden_size,
-        cross_attention_kv_heads=(
-            text.num_global_key_value_heads or text.num_key_value_heads
-        ),
-    )
-
-
-# The pinned molmo2 tap rule: gemma's
-# rule keys off first_kv_shared_layer_idx, a KV-share boundary molmo2's
-# uniform full-attention stack does not have — so the rule here is uniform
-# stride 3 with the LAST tap anchored on the final layer (the π0.5
-# full-stack-span direction). 36 layers ⇒ 12 taps at 2, 5, …, 35.
-MOLMO2_TAP_STRIDE = 3
-
-
-def molmo2_residual_taps(num_hidden_layers: int) -> tuple[int, ...]:
-    """Trunk layers exported as residual taps under the pinned rule
-    (module comment above): ascending, stride 3, last tap = final layer."""
-    start = (num_hidden_layers - 1) % MOLMO2_TAP_STRIDE
-    return tuple(range(start, num_hidden_layers, MOLMO2_TAP_STRIDE))
-
-
-def molmo2_residual_expert_config(
-    backbone: Molmo2Config,
-    *,
-    action_dim: int,
-    state_dim: int,
-    hidden_size: int = 1024,
-    num_attention_heads: int = 8,
-    intermediate_size: int = 4096,
-    cross_attention_heads: int = 8,
-    chunk_size: int = 50,
-    time_embed_dim: int = 256,
-    self_attention_mode: SelfAttentionMode = SelfAttentionMode.CAUSAL_ACTIONS,
-    self_attention_rope_theta: float = 10_000.0,
-    time_conditioning: TimeConditioning = TimeConditioning.ADDITIVE,
-    target_time_embed: bool = False,
-) -> ExpertConfig:
-    """Expert config for residual conditioning on a Molmo2 trunk: one
-    stream per pinned tap (``molmo2_residual_taps``), expert layer i
-    reading tap i, 1:1 ascending — expert depth = tap count (12 for the
-    4B's 36 layers). Adapter geometry mirrors the trunk's own attention
-    (kv_heads/head_dim, plain full-rotary RoPE at the trunk's theta —
-    the exact ``Molmo2RotaryEmbedding`` parameters), so the adapters
-    produce streams in the same contract as gemma's."""
-    text = backbone.text
-    return ExpertConfig(
-        hidden_size=hidden_size,
-        num_attention_heads=num_attention_heads,
-        intermediate_size=intermediate_size,
-        hidden_activation=text.hidden_act,
-        rms_norm_eps=text.layer_norm_eps,
-        self_attention_mode=self_attention_mode,
-        self_attention_rope_theta=self_attention_rope_theta,
-        cross_attention_heads=cross_attention_heads,
-        cross_attention_head_dim=text.head_dim,
-        cross_attention_rope=RopeParameters(
-            rope_type=RopeType.DEFAULT,
-            rope_theta=text.rope_theta,
-            factor=1.0,
-            partial_rotary_factor=1.0,
-        ),
-        cross_attention_schedule=molmo2_residual_taps(text.num_hidden_layers),
-        action_dim=action_dim,
-        state_dim=state_dim,
-        chunk_size=chunk_size,
-        time_embed_dim=time_embed_dim,
-        time_conditioning=time_conditioning,
-        target_time_embed=target_time_embed,
-        residual_streams=True,
-        residual_stream_dim=text.hidden_size,
-        cross_attention_kv_heads=text.num_key_value_heads,
-    )
-
-
 def from_backbone(
     model_id_or_path: str | Path,
     expert_config: ExpertConfig | None = None,
@@ -869,58 +733,20 @@ def from_backbone(
             state_dim=state_dim,
         )
 
-    if expert_config.residual_streams:
-        # Residual taps read the residual stream (post-layer hidden state),
-        # not K/V — any prefix layer qualifies, sliding-window ones
-        # included (no window truncation applies to hidden-state reads).
-        # The geometry asserts are the loader half of the stream contract:
-        # adapters built from a config that disagrees with the backbone
-        # would produce streams the blocks consume silently wrong.
-        prefix_depth = config.text.first_kv_shared_layer_idx
-        for stream in expert_config.streams:
-            if not 0 <= stream < prefix_depth:
-                raise ValueError(
-                    f"residual stream {stream} is not a non-KV-shared prefix "
-                    f"layer of the backbone (prefix depth {prefix_depth})",
-                )
-        if expert_config.residual_stream_dim != config.text.hidden_size:
+    available = prefix_global_layers(config)
+    for stream in expert_config.streams:
+        if stream not in available:
             raise ValueError(
-                f"residual_stream_dim {expert_config.residual_stream_dim} != "
-                f"backbone hidden size {config.text.hidden_size}",
+                f"cross-attention stream {stream} is not a global layer of "
+                f"the backbone prefix (available: {available})",
             )
-        backbone_kv_heads = (
-            config.text.num_global_key_value_heads or config.text.num_key_value_heads
-        )
-        if expert_config.cross_attention_kv_heads != backbone_kv_heads:
-            raise ValueError(
-                f"cross_attention_kv_heads {expert_config.cross_attention_kv_heads} "
-                f"!= backbone global kv_heads {backbone_kv_heads}",
-            )
-        if expert_config.cross_attention_head_dim != config.text.global_head_dim:
-            raise ValueError(
-                f"cross_attention_head_dim {expert_config.cross_attention_head_dim} "
-                f"!= backbone global head_dim {config.text.global_head_dim}",
-            )
-        kv_exports: tuple[int, ...] = ()
-        residual_exports = expert_config.streams
-    else:
-        available = prefix_global_layers(config)
-        for stream in expert_config.streams:
-            if stream not in available:
-                raise ValueError(
-                    f"cross-attention stream {stream} is not a global layer of "
-                    f"the backbone prefix (available: {available})",
-                )
-        kv_exports = expert_config.streams
-        residual_exports = ()
 
     if expert_dtype is None:
         expert_dtype = dtype if dtype is not None else config.dtype
     backbone, encoder = build_gemma_encoder(
         checkpoint_dir,
         config,
-        exports=kv_exports,
-        residual_exports=residual_exports,
+        exports=expert_config.streams,
         max_soft_tokens=max_soft_tokens,
         state_dim=expert_config.state_dim,
         device=device,
@@ -943,7 +769,6 @@ def build_gemma_encoder(
     exports: tuple[int, ...],
     max_soft_tokens: int,
     state_dim: int,
-    residual_exports: tuple[int, ...] = (),
     device: DeviceLike,
     dtype: torch.dtype | None,
     attn_backend: AttentionBackend = DEFAULT_ATTENTION_BACKEND,
@@ -970,7 +795,6 @@ def build_gemma_encoder(
     encoder = GemmaEncoder(
         backbone.config,
         exports=exports,
-        residual_exports=residual_exports,
         processor_dir=str(checkpoint_dir),
         max_soft_tokens=max_soft_tokens,
         state_dim=state_dim,
@@ -1003,7 +827,6 @@ class CheckpointTrainArgs:
     decoder_intermediate: int
     decoder_cross_heads: int
     stream_counts: tuple[int, ...]
-    conditioning_streams: str
     self_attention_mode: SelfAttentionMode
     chunk_size: int
     max_soft_tokens: int
@@ -1011,7 +834,6 @@ class CheckpointTrainArgs:
     time_conditioning: TimeConditioning
     target_time_embed: bool
     fast_tokenizer: str | None
-    joint_ce: bool
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> CheckpointTrainArgs:
@@ -1023,6 +845,19 @@ class CheckpointTrainArgs:
             return data[new] if new in data else data[old]
 
         fast_tokenizer = data.get("fast_tokenizer")
+        if data.get("conditioning_streams", "kv") == "residual" or bool(
+            data.get("joint_ce", False),
+        ):
+            # Defense in depth: the prompt section's residual_exports
+            # refusal fires first on every real artifact (residual and
+            # joint-CE runs both recorded taps); this catches a
+            # hand-edited or truncated config the same loud way.
+            raise SystemExit(
+                "this checkpoint trained with residual conditioning / the "
+                "joint-CE arm — removed after molmo_flow superseded the "
+                "flow-on-Molmo2 attachment; load it from git history at "
+                "tag 'pre-decoder-simplify'",
+            )
         return cls(
             decoder=str(data.get("decoder", "flow")),
             decoder_hidden=int(either("decoder_hidden", "expert_hidden")),
@@ -1034,7 +869,6 @@ class CheckpointTrainArgs:
                 either("decoder_cross_heads", "expert_cross_heads"),
             ),
             stream_counts=tuple(int(n) for n in data["stream_counts"]),
-            conditioning_streams=str(data.get("conditioning_streams", "kv")),
             self_attention_mode=SelfAttentionMode(data["self_attention_mode"]),
             chunk_size=int(data["chunk_size"]),
             max_soft_tokens=int(data["max_soft_tokens"]),
@@ -1045,7 +879,6 @@ class CheckpointTrainArgs:
             ),
             target_time_embed=bool(data.get("target_time_embed", False)),
             fast_tokenizer=None if fast_tokenizer is None else str(fast_tokenizer),
-            joint_ce=bool(data.get("joint_ce", False)),
         )
 
 
@@ -1229,37 +1062,17 @@ def flow_decoder_config_from_expert(expert_config: ExpertConfig) -> FlowDecoderC
 
 
 def expert_config_from_architecture(
-    prompt: GemmaPromptConfig | Molmo2PromptConfig,
+    prompt: GemmaPromptConfig,
     decoder: FlowDecoderConfig,
-    backbone_config: Gemma4Config | Molmo2Config,
+    backbone_config: Gemma4Config,
 ) -> ExpertConfig:
     """Compose the prompt + decoder configs back into the expert's
     construction config: schedule names resolve to backbone layer
-    indices against the prompt section's exports (K/V ``kv{i}`` and
-    residual ``res{i}`` alike); cross-attention geometry comes from the
-    backbone's global layers (gemma) or its uniform attention geometry
-    (molmo2 — residual-only, no K/V arm). Validates the references —
-    unknown stream name, unconsumed export, or a schedule mixing
-    conditioning kinds is a config error."""
-    if isinstance(prompt, Molmo2PromptConfig) != isinstance(
-        backbone_config,
-        Molmo2Config,
-    ):
-        raise SystemExit(
-            f"prompt section {type(prompt).__name__} does not match "
-            f"backbone config {type(backbone_config).__name__} — the "
-            "checkpoint records one trunk family, the backbone id another",
-        )
-    if isinstance(prompt, Molmo2PromptConfig):
-        assert isinstance(backbone_config, Molmo2Config)  # paired above
-        return _molmo2_expert_config_from_architecture(
-            prompt,
-            decoder,
-            backbone_config,
-        )
-    assert isinstance(backbone_config, Gemma4Config)  # paired above
-    all_exports = prompt.exports + prompt.residual_exports
-    by_name = dict(zip(prompt.stream_names, all_exports, strict=True))
+    indices against the prompt section's K/V exports (``kv{i}``);
+    cross-attention geometry comes from the backbone's global layers.
+    Validates the references — an unknown stream name or an unconsumed
+    export is a config error."""
+    by_name = dict(zip(prompt.stream_names, prompt.exports, strict=True))
     unknown = [name for name in decoder.schedule if name not in by_name]
     if unknown:
         raise SystemExit(
@@ -1272,15 +1085,6 @@ def expert_config_from_architecture(
             f"encoder export(s) {unused} are not consumed by the decoder "
             "schedule — remove them from the encoder config or schedule them",
         )
-    residual_names = {residual_stream_name(layer) for layer in prompt.residual_exports}
-    residual_flags = {name in residual_names for name in decoder.schedule}
-    if len(residual_flags) > 1:
-        raise SystemExit(
-            f"decoder schedule {list(decoder.schedule)} mixes K/V and "
-            "residual conditioning — one kind per expert",
-        )
-    residual = residual_flags == {True}
-    text = backbone_config.text
     return ExpertConfig(
         hidden_size=decoder.hidden_size,
         num_attention_heads=decoder.num_attention_heads,
@@ -1299,67 +1103,6 @@ def expert_config_from_architecture(
         time_embed_dim=decoder.time_embed_dim,
         time_conditioning=decoder.time_conditioning,
         target_time_embed=decoder.target_time_embed,
-        residual_streams=residual,
-        # Backbone-derived adapter geometry, exactly as at construction
-        # (residual_expert_config); None on K/V-conditioned experts.
-        residual_stream_dim=text.hidden_size if residual else None,
-        cross_attention_kv_heads=(
-            (text.num_global_key_value_heads or text.num_key_value_heads)
-            if residual
-            else None
-        ),
-    )
-
-
-def _molmo2_expert_config_from_architecture(
-    prompt: Molmo2PromptConfig,
-    decoder: FlowDecoderConfig,
-    backbone_config: Molmo2Config,
-) -> ExpertConfig:
-    """The molmo2 half of ``expert_config_from_architecture``:
-    residual-only (this trunk exports no K/V streams), geometry derived
-    exactly as at construction (``molmo2_residual_expert_config``)."""
-    by_name = dict(zip(prompt.stream_names, prompt.residual_exports, strict=True))
-    unknown = [name for name in decoder.schedule if name not in by_name]
-    if unknown:
-        raise SystemExit(
-            f"decoder schedule references unknown stream(s) {sorted(set(unknown))}; "
-            f"the encoder exports {list(prompt.stream_names)} (molmo2 is "
-            "residual-only — no K/V streams exist on this trunk)",
-        )
-    unused = [name for name in prompt.stream_names if name not in decoder.schedule]
-    if unused:
-        raise SystemExit(
-            f"encoder export(s) {unused} are not consumed by the decoder "
-            "schedule — remove them from the encoder config or schedule them",
-        )
-    text = backbone_config.text
-    return ExpertConfig(
-        hidden_size=decoder.hidden_size,
-        num_attention_heads=decoder.num_attention_heads,
-        intermediate_size=decoder.intermediate_size,
-        hidden_activation=decoder.hidden_activation,
-        rms_norm_eps=decoder.rms_norm_eps,
-        self_attention_mode=decoder.self_attention_mode,
-        self_attention_rope_theta=decoder.self_attention_rope_theta,
-        cross_attention_heads=decoder.cross_attention_heads,
-        cross_attention_head_dim=text.head_dim,
-        cross_attention_rope=RopeParameters(
-            rope_type=RopeType.DEFAULT,
-            rope_theta=text.rope_theta,
-            factor=1.0,
-            partial_rotary_factor=1.0,
-        ),
-        cross_attention_schedule=tuple(by_name[name] for name in decoder.schedule),
-        action_dim=decoder.action_dim,
-        state_dim=decoder.state_dim,
-        chunk_size=decoder.chunk_size,
-        time_embed_dim=decoder.time_embed_dim,
-        time_conditioning=decoder.time_conditioning,
-        target_time_embed=decoder.target_time_embed,
-        residual_streams=True,
-        residual_stream_dim=text.hidden_size,
-        cross_attention_kv_heads=text.num_key_value_heads,
     )
 
 
@@ -1651,12 +1394,16 @@ def from_checkpoint(
         return model, info
     checkpoint_dir = resolve_checkpoint_dir(info.backbone)
     if isinstance(sections.prompt, Molmo2PromptConfig):
-        if not isinstance(sections.decoder, ARBackboneConfig | FlowDecoderConfig):
+        if not isinstance(sections.decoder, ARBackboneConfig):
+            # Flow-on-molmo2 was the residual-conditioning arm — removed
+            # 2026-08-13 (superseded by molmo_flow); its checkpoints are
+            # already refused by the prompt section's residual_exports
+            # guard, so this arm names the general rule.
             raise SystemExit(
                 f"{checkpoint} is a molmo2 checkpoint with a "
                 f"{type(sections.decoder).__name__} decoder — this trunk "
-                "supports the ar_backbone (suffix) and flow (residual "
-                "conditioning) decoders only",
+                "supports the ar_backbone (suffix) decoder only (flow on "
+                "Molmo2 is molmo_flow, §8.13)",
             )
         if offload_ple:
             raise SystemExit(
@@ -1677,62 +1424,42 @@ def from_checkpoint(
             max_crops=sections.prompt.max_crops,
             state_dim=sections.prompt.state_dim,
             hidden_size=molmo2_config.text.hidden_size,
-            residual_exports=sections.prompt.residual_exports,
             device=device,
             dtype=expert_dtype,
         )
-        if isinstance(sections.decoder, FlowDecoderConfig):
-            # Falls through to the common strict weight loads below —
-            # a residual flow checkpoint's expert.safetensors carries
-            # the res_adapters.* keys.
-            model = BijouModel(
-                backbone=backbone,
-                encoder=encoder,
-                decoder=FlowDecoder(
-                    expert_config_from_architecture(
-                        sections.prompt,
-                        sections.decoder,
-                        molmo2_config,
-                    ),
-                    attn_backend=attn_backend,
-                    device=device,
-                    dtype=expert_dtype,
-                ),
-            )
-        else:
-            molmo2_tokenizer = Molmo2TextTokenizer(info.backbone)
-            carriers = newline_carrier_ids(
+        molmo2_tokenizer = Molmo2TextTokenizer(info.backbone)
+        carriers = newline_carrier_ids(
+            molmo2_tokenizer,
+            text_vocab_size=molmo2_config.text.vocab_size,
+            terminator_id=molmo2_tokenizer.encode(
+                "\n",
+                add_special_tokens=False,
+            )[0],
+        )
+        molmo2_aux_runtime = (
+            build_aux_runtime(
+                sections.decoder.aux,
                 molmo2_tokenizer,
-                text_vocab_size=molmo2_config.text.vocab_size,
-                terminator_id=molmo2_tokenizer.encode(
-                    "\n",
-                    add_special_tokens=False,
-                )[0],
+                newline_carrier_ban=True,
             )
-            molmo2_aux_runtime = (
-                build_aux_runtime(
-                    sections.decoder.aux,
-                    molmo2_tokenizer,
-                    newline_carrier_ban=True,
-                )
-                if sections.decoder.aux is not None
-                else None
-            )
-            molmo2_decoder = Molmo2ARDecoder(
-                sections.decoder,
-                molmo2_config.text,
-                resolve_action_codec(sections.decoder.tokenizer),
-                tokenizer=molmo2_tokenizer,
-                aux_runtime=molmo2_aux_runtime,
-                newline_carrier_ids=carriers,
-                device=device,
-                dtype=expert_dtype,
-            )
-            model = BijouModel(
-                backbone=backbone,
-                encoder=encoder,
-                decoder=molmo2_decoder,
-            )
+            if sections.decoder.aux is not None
+            else None
+        )
+        molmo2_decoder = Molmo2ARDecoder(
+            sections.decoder,
+            molmo2_config.text,
+            resolve_action_codec(sections.decoder.tokenizer),
+            tokenizer=molmo2_tokenizer,
+            aux_runtime=molmo2_aux_runtime,
+            newline_carrier_ids=carriers,
+            device=device,
+            dtype=expert_dtype,
+        )
+        model = BijouModel(
+            backbone=backbone,
+            encoder=encoder,
+            decoder=molmo2_decoder,
+        )
     elif isinstance(sections.decoder, ARBackboneConfig):
         decoder_config = sections.decoder
         assert isinstance(sections.prompt, GemmaPromptConfig)  # molmo2 handled above

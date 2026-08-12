@@ -33,7 +33,6 @@ senses — the pretrained artifact (``--backbone``, ``BackboneConfig.id``,
 
 from __future__ import annotations
 
-import dataclasses
 from collections.abc import Callable
 from typing import override
 
@@ -96,26 +95,19 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
         # self-distillation mix (flow decoders with φ_s only). Never
         # serialized — a run property, not a checkpoint property.
         self.distill: str | None = None
-        # The KI-joint CE rider (joint flow+CE training): a
-        # Molmo2ARDecoder whose phase-1 CE objective continues
-        # verbatim beside the flow decoder's objective at fixed weight
-        # 1.0 (KI's no-tuning result — deliberately NOT a knob). None =
-        # every existing composition, byte-identical behavior. train.py's
-        # joint-ce flag assigns it post-construction, and module
+        # The CE-rider slot (dormant since the flow-residual F-arm
+        # retired with residual conditioning, tag pre-decoder-simplify):
+        # a Molmo2ARDecoder whose phase-1 CE objective runs beside a
+        # training decoder. §8.13 step 6 (molmo_flow narration) is the
+        # planned consumer; nothing assigns it until then. Module
         # attribute assignment registers it, so DDP/param_groups/
-        # state_dict all see it.
+        # state_dict all see it when it returns.
         self.joint_ce: Molmo2ARDecoder | None = None
-        # Stop-gradient on the expert→trunk seam (the π0.5/KI recipe):
-        # raw residual taps are detached before adapter projection, so
-        # flow-loss gradients into every trunk parameter are exactly
-        # zero while the (with_grad) trunk still receives CE gradients.
-        # Run property like ``distill`` — never serialized.
-        self.seam_stop_grad: bool = False
         # Knowledge insulation on the molmo_flow KV seam (§8.13 decision
         # 8, their post-train): extracted per-layer K/V detach before
         # the expert, so flow gradients into every trunk parameter are
-        # exactly zero while a live trunk still trains through the
-        # joint_ce rider. Run property — never serialized.
+        # exactly zero while a live trunk still trains. Run property
+        # like ``distill`` — never serialized.
         self.insulate_expert: bool = False
 
     def param_groups(self) -> dict[str, list[nn.Parameter]]:
@@ -154,38 +146,17 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
         backbone. ``with_grad=False`` runs under no_grad (eval/rollout/
         frozen training); True leaves autograd on for live-backbone
         training. The full prefix cache is retained iff this model's
-        decoder consumes it (the ar_backbone suffix role).
-
-        Residual-conditioned flow experts project the encoder's raw taps
-        into conditioning streams HERE — after the (possibly no-grad)
-        prefix encode, in the caller's grad context, once per observation
-        — so the adapters train under a frozen backbone and eval pays the
-        projection once, not per velocity evaluation."""
-        memory = self.encoder.encode(
+        decoder consumes it (the suffix roles and molmo_flow)."""
+        return self.encoder.encode(
             self.backbone,
             inputs,
             with_grad=with_grad,
-            # The joint-CE rider is a suffix consumer too: its CE branch
+            # The CE rider is a suffix consumer too: its CE branch
             # continues the prefix cache exactly like a phase-1 step;
             # molmo_flow CONDITIONS on the whole cache (§8.13).
             retain_cache=isinstance(self.decoder, ARSuffixDecoder | MolmoFlowDecoder)
             or self.joint_ce is not None,
         )
-        if isinstance(self.decoder, FlowDecoder):
-            if self.seam_stop_grad and memory.residuals is not None:
-                # The stop-grad seam: taps enter the expert as constants.
-                # Detached HERE — before adapter projection — so the cut
-                # covers the whole tap-consumption path while the same
-                # live-trunk encode still carries CE gradients through
-                # the retained cache.
-                memory = dataclasses.replace(
-                    memory,
-                    residuals={
-                        name: tap.detach() for name, tap in memory.residuals.items()
-                    },
-                )
-            memory = self.decoder.attach_residual_streams(memory)
-        return memory
 
     @property
     def expert(
@@ -245,14 +216,7 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
         count | None) — the total carries the graph; the rest arrive
         detached for logging (aux as sum+count so the train loop can
         aggregate a position-weighted mean across batches and ranks).
-        Flow has a single-component objective (aux None).
-
-        The joint-CE arm (``joint_ce`` set) returns (CE total + flow
-        total, detached FLOW loss, detached CE ACTION component, count 1)
-        — the aux slots carry the CE branch's action CE (the phase-1
-        ``loss_action`` analog, the pinned CE-health read), not
-        the rider's own aux fields (those contribute to the total and
-        stay unlogged)."""
+        Flow has a single-component objective (aux None)."""
         decoder = self.decoder
         match decoder:
             case FlowDecoder():
@@ -262,23 +226,6 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                     else flow_matching_loss
                 )
                 total = objective(decoder, memory, batch)
-                if self.joint_ce is not None:
-                    # The phase-1 objective verbatim — ar_backbone_losses
-                    # is the exact function a phase-1 step calls, so the
-                    # CE-only α-edge oracle is bitwise by construction.
-                    # Weight 1.0 fixed (KI), deliberately not a knob.
-                    ce_total, ce_action, _, _ = ar_backbone_losses(
-                        self._molmo2_backbone(),
-                        self.joint_ce,
-                        memory,
-                        batch,
-                    )
-                    return (
-                        ce_total + total,
-                        total.detach(),
-                        ce_action.detach(),
-                        torch.ones((), device=ce_action.device),
-                    )
                 return total, total.detach(), None, None
             case ARBackboneDecoder():
                 total, action, aux_sum, aux_count = ar_backbone_losses(
@@ -396,44 +343,6 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                 )
                 return loss_sum, count, None, None
 
-    def joint_loss_count_normalizers(
-        self,
-        batch: CollatedBatch[I],
-    ) -> tuple[Tensor, Tensor, Tensor | None]:
-        """(flow element count, CE action-token count, CE aux position
-        count | None) for one batch/chunk — the joint arm's three
-        normalizers (data-only, no model forward). The chunked-backward
-        contract mirrors ``loss_count_normalizers``: summed over chunks
-        BEFORE the first forward, each chunk's sum-form share divides by
-        the full-batch normalizers."""
-        joint_ce = self.joint_ce
-        assert joint_ce is not None  # joint-arm-only path (train.py routes)
-        ce_action_count, ce_aux_count = ar_backbone_counts(joint_ce, batch)
-        return (
-            torch.tensor(batch.actions.numel(), device=batch.actions.device),
-            ce_action_count,
-            ce_aux_count,
-        )
-
-    def joint_ce_loss_sums(
-        self,
-        memory: ObservationMemory,
-        batch: CollatedBatch[I],
-    ) -> tuple[Tensor, Tensor, Tensor | None, Tensor | None]:
-        """The joint arm's CE branch in sum form — exactly the phase-1
-        chunked objective (``ar_backbone_loss_sums`` on the rider), split
-        out so BijouTrainStep can run the suffix forward INSIDE the
-        autocast region (the [B, S, 153k] logits want bf16) while the
-        flow branch stays fp32-by-design outside it."""
-        joint_ce = self.joint_ce
-        assert joint_ce is not None  # joint-arm-only path (train.py routes)
-        return ar_backbone_loss_sums(
-            self._molmo2_backbone(),
-            joint_ce,
-            memory,
-            batch,
-        )
-
     def encode_observation(
         self,
         input_ids: Tensor,
@@ -447,17 +356,16 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
         """Tensor-level observation encode (shapes in
         GemmaEncoder.encode_tensors);
         grad-transparent — training wraps it in autocast, eval in no_grad.
-        Residual taps are attached exactly as in :meth:`encode`. The
-        signature is Gemma's tensor-level convention — a convenience for
-        Gemma compositions, loud otherwise (encode_tensors is not seam
-        surface; the seam-level path is :meth:`encode`)."""
+        The signature is Gemma's tensor-level convention — a convenience
+        for Gemma compositions, loud otherwise (encode_tensors is not
+        seam surface; the seam-level path is :meth:`encode`)."""
         encoder = self.encoder
         if not isinstance(encoder, GemmaEncoder):
             raise TypeError(
                 "encode_observation speaks the Gemma tensor-level encode "
                 f"convention; the mounted encoder is {type(encoder).__name__}",
             )
-        memory = encoder.encode_tensors(
+        return encoder.encode_tensors(
             self._gemma_backbone(),
             input_ids,
             pixel_values=pixel_values,
@@ -466,9 +374,6 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
             state=state,
             state_slot=state_slot,
         )
-        if isinstance(self.decoder, FlowDecoder):
-            memory = self.decoder.attach_residual_streams(memory)
-        return memory
 
     @torch.no_grad()
     def predict_chunk(

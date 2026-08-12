@@ -397,7 +397,6 @@ def test_encoder_encode_retains_cache_and_conditioning_mask() -> None:
     inputs = collator([_sample("Pick up the cube.", 8), _sample("Pick.", 9)])
     memory = encoder.encode(trunk, inputs, with_grad=False, retain_cache=True)
     assert memory.streams == {}
-    assert memory.residuals is None
     assert isinstance(memory.cache, Molmo2KVCache)
     assert memory.cache.seen_tokens == inputs.input_ids.shape[1]
     for layer in memory.cache.layers:
