@@ -53,3 +53,86 @@ off-contract read.
   same lift +180° / elbow +90° old-convention map that
   `fit_convention_map` snapped? Disagreement → flag in-channel; one of
   the two sides has a sign/offset wrong.
+
+---
+
+## Results (2026-08-12 17:5xZ, same session)
+
+**Headline: the released checkpoint is INERT in our sim — progress_final
+exactly 0.00 on all 20 seeds, the boat never touched.** Not frozen: the
+arm moves smoothly and repeatably (swings down-left to a consistent
+off-task region near the table edge, wrist camera ends staring at
+darkness, every seed) — coordinated in-workspace motion that entirely
+ignores the scene's objects. Zero knock-aways, zero approaches.
+
+![per-seed progress_final, three arms](https://mcobzarenco-fontaine-reports.static.hf.space/ftrig_eval20_flip_parallel/release_convmap/chart__release_convmap_per_seed.png)
+
+| arm | mean cm | knock-aways | best | worst |
+|---|---|---|---|---|
+| release `_convmap` (off-contract) | **0.00** | 0 | +0.00 | −0.00 |
+| ftrig step-2000 (corrected) | −0.46 | 2 | +0.13 | −4.98 |
+| ftrig step-500 | +0.02 | 1 | +1.59 | −1.84 |
+
+Paired (release − step-2000): +0.46 cm CI95 [−0.01, +1.11], 4/2/14 —
+entirely an artifact of step-2000's two knock-aways; the release's zero
+is inertness, not competence. Paired (release − step-500): −0.02
+[−0.26, +0.24], noise. Off-contract lower-bound read, as registered.
+
+### The shim (tripwires did real work)
+
+The gated `fit_convention_map` on rig-table → release-table gave
+**lift +180 only**. Tripwire (a) then failed three joints, and tripwire
+(b) — first-action-vs-state, vs the ftrig contract anchor run through
+the same metric — arbitrated:
+
+- **elbow_flex +90 override**: identity left 56% of the rig range below
+  the release floor (+90: 10%); confirmed empirically (elbow first-action
+  delta 9.2° vs anchor 13.2°). The gate had missed it by 2.2° of
+  midpoint pad — a near-tie the coverage instrument caught.
+- **wrist_roll −90 override**: the smoking gun was the clamp signature —
+  first-action delta 34.5° under identity ≈ exactly the gap from sim
+  home (77.6°) to the release ceiling (43.5°); with −90 the home maps to
+  −12.4°, dead center of the release box, and the delta collapsed to
+  0.97°.
+- **Final map** (lift +180, elbow +90, wrist_roll −90): arm-joint mean
+  first-action delta **2.98° vs contract anchor 6.31°** — the shim
+  collapses the unit-bug detector below state-copy scale, exactly the
+  note's prediction for a correct map.
+- **Residual caveat**: wrist_flex/wrist_roll coverage stays ~53–61%
+  uncovered under ANY discrete offset — a span mismatch (the release
+  corpus's wrist workspace is much narrower than our rig's), so the
+  clamp bites during dynamic wrist motion. Part of why this read is a
+  lower bound.
+
+### Cross-check bank (for the box)
+
+Our seam fit vs the box's curated-panel snaps: **lift +180 AGREE**
+(gated fit, no override needed). **elbow +90 AGREE** — but only via the
+coverage+first-action override; the stats-side midpoint gate alone
+picks identity for our rig table (midpoint 27.6° sits 2.2° inside the
+padded box). If the box's estimator ran on a dataset shaped like our
+rig table it would call elbow in-convention too — the gate's midpoint
+displacement rule under-translates near-tie joints; coverage fraction +
+a first-action probe disambiguates. **wrist_roll: −90 for our rig**
+(sign resolved empirically), consistent with the panel's ±90 wrap
+family. No sign/offset contradiction between the two instruments once
+the near-tie is arbitrated.
+
+### Interpretation
+
+The unit contract is now demonstrably NOT the blocker — state is
+visible, actions land in-workspace, first-action continuity is better
+than the fine-tuned checkpoint's. What remains is everything else:
+scene appearance, camera geometry, task grounding. The release moves
+through its own prior's motion distribution, blind to our boat. This
+cleanly brackets the ftrig fine-tune's contribution: 2000 (or 500)
+steps of rig data buy scene-directed reaching (approaches, knock-aways,
+one +1.59 best) from a base that, unit-corrected, does nothing
+task-relevant in this scene.
+
+Artifacts: [rows + 20 videos + chart](https://mcobzarenco-fontaine-reports.static.hf.space/ftrig_eval20_flip_parallel/release_convmap/rows.json)
+(`/ftrig_eval20_flip_parallel/release_convmap/`), instrument
+`sim/convmap.py` + `--convmap-seam-stats` on the parallel driver,
+tripwires `fontaine/scripts/convmap_tripwires.py`, oracles
+`tests/test_sim_convmap.py`. GPU spend ≈0.19 GPU-h (tripwires ~0.08 +
+run 0.09 + debug margin) of the ≤0.5 gate.
