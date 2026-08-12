@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-12T11:43:30Z
+**Updated:** 2026-08-12T15:00:58Z
 
 **Depth call:** depth 4 open at 11:4xZ 08-12: sim-parallel-rollouts (gpu-local, owner-sequenced first on release) + 2 lit items still open; grpo-on-sim-design-research CLOSED this session (memo posted), successor grpo-signal-probe is owner_hold pending memo review.
 
-**14 open** (Live 0 · Queued 3 · Blocked 11 · Done 127)
+**14 open** (Live 0 · Queued 3 · Blocked 11 · Done 131)
 
 ## 🔴 Live (0)
 
@@ -17,6 +17,34 @@
 ## 🟢 Queued (3)
 
 *ready — waiting on a window or a boundary*
+
+**`grpo-signal-probe`** · `gpu-local`
+
+GRPO signal probe (proposed in posts/2026-08-12-grpo-sim-design-memo.md SS4, pends owner review - the memo's ask #1): rollout-only measurement of whether group-relative advantage has signal at our competence floor
+
+**boundary:** Queued 11:4xZ 08-12 at memo close. BLOCKED on owner review of the memo (ask posted in-channel 11:4xZ). Memo SS4 is the draft-level design (linked as prereg); on approval: finalized pre-reg with final thresholds + instrument delta FIRST, then sequenced strictly after sim_parallel_oracle.py (owner 09:32Z first-GPU-item rule) AND the v3 rerun (anchor rows come from it). | APPROVED 13:16Z 08-12 ('Yes, let's do this, get everything ready for when I give you back the GPU') - 5 cells x 15 seeds x K=8 (+120 episodes vs the 4-cell shape). UNBLOCKED for prep: finalized pre-reg + EM sampler + a=0 bit-identity oracle land CPU-side ahead of release; GPU sequence per owner 13:36Z = parallel oracle -&gt; molmoact2-ftrig-sim-eval-20 -&gt; this probe (anchor rows still want the v3 rerun). · [pre-reg](posts/2026-08-12-grpo-sim-design-memo.md)
+
+<details><summary>full record</summary>
+
+GRPO signal probe (proposed in posts/2026-08-12-grpo-sim-design-memo.md SS4, pends owner review - the memo's ask #1): rollout-only measurement of whether group-relative advantage has signal at our competence floor. 4 cells x 15 seeds x K=8 stochastic rollouts, v3 frames, sim100 conventions: er60k AR T=1.0, er60k AR T=1.6 (SimpleVLA-RL setting), teacher80k flow fresh-ODE-noise draws, ftrig4k flow fresh-ODE-noise draws; cell 5 CONFIRMED (owner 13:16Z 08-12: 'Yes, let's do this') = teacher80k SDE a=0.5 (a=0.3 the hedge constant if competence craters) (needs the ~30-line Euler-Maruyama sampler + bit-identity-at-a=0 oracle). Deterministic per-seed anchors join FREE from the v3 rerun rows (same seeds, same spawn stream - ordering logically forced). Instrument delta: --ar-temperature + --flow-draws K flags on rollout_sim over existing BijouPolicy knobs, per-draw RNG keyed (seed, replan, draw), draw-0 bit-identity oracle. Primary read: within-group std of progress_final_cm (+ best-point) per cell + fraction of groups surviving the dynamic-sampling filter; candidate bar (finalize at pre-reg) median group std &gt;= 0.25 cm. Secondary: competence cost vs anchor, guard-trip rates (strikes/upright/knock-offs), AR token entropy. Decision rule: no cell clears -&gt; GRPO-on-sim parks; AR clears -&gt; phase 2 = token-GRPO per SimpleVLA-RL recipe; flow-only clears -&gt; phase 2 = Flow-GRPO SDE expert-only; both -&gt; AR first. Gate &lt;=3 GPU-h parallel-path, &lt;=8 sequential.
+
+</details>
+
+---
+
+**`sim-wrist-compositing`** · `cpu`
+
+Wrist-camera compositing for eval renders (owner steering 14:27Z 08-12: 'for eval we should be doing on both cameras'): today v2/v3 inpainting composites the TOP cam only; wrist is fully rendered (scene-matched + fisheye + grade)
+
+**boundary:** Queued 15:0xZ 08-12 on owner steering. Sequenced in the sim-visuals lane at my discretion; before the next registered eval that reads wrist-driven behavior.
+
+<details><summary>full record</summary>
+
+Wrist-camera compositing for eval renders (owner steering 14:27Z 08-12: 'for eval we should be doing on both cameras'): today v2/v3 inpainting composites the TOP cam only; wrist is fully rendered (scene-matched + fisheye + grade). Design constraint from SIMPLER Table III (partial matching WORSE than none) + our own pure-composite wrist attempt reading worse on the pinned probe (0.951 vs 0.900): ship as one complete package or not at all. The wrist moves with the arm, so a static clean plate only matches the episode-start rest pose - candidate approaches: per-pose plate from the 26-episode start windows (probe-gated), or accept render-only wrist and DOCUMENT the asymmetry in the eval protocol. Gate: encoder-OOD probe rerun (~0.02 GPU-h), wrist 5-NN AUROC must not regress from 0.548 (current v3, inside real spread).
+
+</details>
+
+---
 
 **`lit-sim-improvement-levers`** · `cpu`
 
@@ -32,47 +60,19 @@ Lit slice (owner-called 09:23Z 08-12): sim-improvement levers beyond shipped pla
 
 ---
 
-**`lit-so101-benchmark-envs`** · `cpu`
-
-Lit slice (owner-called 09:23Z 08-12, supersedes the lit pause for this thread): benchmark environments near the SO-100/SO-101 embodiment - lerobot-sim2real (ManiSkill3 SO-100), gym-lowcostrobot, LIBERO/SimplerEnv/RoboCasa for pr…
-
-**boundary:** Slice 0820 page LANDED 09:3xZ 08-12 (papers/so101-sim-ecosystem.md, update to the 08-11 census). Remaining deep reads keep this item open: lerobot-sim2real sysid/camera-alignment recipe vs ours; SimplerEnv real-vs-sim correlation methodology; the cube-grasp task-port idea (may graduate to its own instrument item).
-
-<details><summary>full record</summary>
-
-Lit slice (owner-called 09:23Z 08-12, supersedes the lit pause for this thread): benchmark environments near the SO-100/SO-101 embodiment - lerobot-sim2real (ManiSkill3 SO-100), gym-lowcostrobot, LIBERO/SimplerEnv/RoboCasa for protocol; what we could adopt or bridge so our sim numbers land next to published ones. Papers pages same session per the permanent rule; ideas.md hooks.
-
-</details>
-
----
-
-**`sim-parallel-rollouts`** · `gpu-local`
-
-OWNER-SEQUENCED FIRST GPU ITEM (09:32Z 08-12: 'Once I relinquish the GPU, remember to do sim-parallel-rollouts before any other experiments')
-
-**boundary:** Queued 08:5xZ 08-12 (owner yes 08:44Z); RE-SEQUENCED 09:32Z: runs FIRST when the owner releases the GPU, before any other experiment (incl. the rerun). CPU design/scaffold work may start during the reserved window. | SCAFFOLD LANDED 10:1xZ 08-12 (commit 1e4e16f, check.py 710 green): sim/rollout_sim_parallel.py (spawn env-workers + batched parent policy, deterministic lockstep-rounds scheduler, stable-noise identity triple preserved per row), shared run_episode_loop refactor + streaming VideoWriter, 5 CPU-tier harness-equivalence oracles, and the GPU bit-match oracle instrument fontaine/scripts/sim_parallel_oracle.py. PRE-REG POSTED: posts/2026-08-12-prereg-sim-parallel-rollouts.md - frozen decision rule (GREEN at 2 AND 8 workers on er60k seeds 0-5 =&gt; parallel path may produce registered numbers at validated settings; FAIL =&gt; paired-only fallback with per-use amendment, no mixing with banked sequential rows) + record-only 20-seed throughput read, gate &lt;= 1 GPU-h total. REMAINING = the GPU leg only: run sim_parallel_oracle.py on release (FIRST item per owner 09:32Z), results post same session. · [pre-reg](posts/2026-08-12-prereg-sim-parallel-rollouts.md)
-
-<details><summary>full record</summary>
-
-OWNER-SEQUENCED FIRST GPU ITEM (09:32Z 08-12: 'Once I relinquish the GPU, remember to do sim-parallel-rollouts before any other experiments'). Parallel sim rollouts with a shared policy (owner-approved 08:44Z 08-12): N env workers (each owns its SO101Sim + EGL context, physics+render) feeding ONE batched policy server holding a single checkpoint copy - the lerobot-style policy-server split already in the repo for rig rollouts. At batch 1 the H100 idles during heun-10; batching N obs is near-free into the low tens. Box has 26 cores -&gt; ~8-12 render workers before CPU contention; target: a 100-seed arm in ~20-30 min (vs ~1.5 h), the 5-arm sim100 rerun within an afternoon. MUST ship with a determinism oracle: batched rollouts reproduce the sequential per-seed rows bit-for-bit (or within a stated decode tolerance, registered before use). Pre-reg the oracle + a 2-worker smoke before any registered eval uses the parallel path.
-
-</details>
-
----
-
 ## 🟡 Blocked (11)
 
 *waiting on a prerequisite, a boundary, or the owner*
 
-**`grpo-signal-probe`** · `gpu-local` · **⛔ owner hold**
+**`sim-wrist-bracket-flip`** · `cpu` · **⛔ owner hold**
 
-GRPO signal probe (proposed in posts/2026-08-12-grpo-sim-design-memo.md SS4, pends owner review - the memo's ask #1): rollout-only measurement of whether group-relative advantage has signal at our competence floor
+Flip the wrist camera-mount GEOMETRY to the real bracket-up side (owner spot 14:45Z 08-12 from the ftrig videos; probe-confirmed 15:00Z): the mount body (visual mesh + camera_box1/2 collision geoms + 12 g mass) sits 180 deg about…
 
-**boundary:** Queued 11:4xZ 08-12 at memo close. BLOCKED on owner review of the memo (ask posted in-channel 11:4xZ). Memo SS4 is the draft-level design (linked as prereg); on approval: finalized pre-reg with final thresholds + instrument delta FIRST, then sequenced strictly after sim_parallel_oracle.py (owner 09:32Z first-GPU-item rule) AND the v3 rerun (anchor rows come from it). · [pre-reg](posts/2026-08-12-grpo-sim-design-memo.md)
+**boundary:** Queued 15:0xZ 08-12, owner_hold: PHYSICS RE-BASELINE - flipping changes dynamics for every banked sim row (same class as the v3 rerun amendment); owner asked in-channel 15:00Z whether to execute next session. On unhold: fix + verify + short results post, then fold the re-baseline into the sim100 v3 rerun plan (one re-baseline, not two).
 
 <details><summary>full record</summary>
 
-GRPO signal probe (proposed in posts/2026-08-12-grpo-sim-design-memo.md SS4, pends owner review - the memo's ask #1): rollout-only measurement of whether group-relative advantage has signal at our competence floor. 4 cells x 15 seeds x K=8 stochastic rollouts, v3 frames, sim100 conventions: er60k AR T=1.0, er60k AR T=1.6 (SimpleVLA-RL setting), teacher80k flow fresh-ODE-noise draws, ftrig4k flow fresh-ODE-noise draws; optional cell 5 on owner ask = teacher80k SDE a=0.5 (needs the ~30-line Euler-Maruyama sampler + bit-identity-at-a=0 oracle). Deterministic per-seed anchors join FREE from the v3 rerun rows (same seeds, same spawn stream - ordering logically forced). Instrument delta: --ar-temperature + --flow-draws K flags on rollout_sim over existing BijouPolicy knobs, per-draw RNG keyed (seed, replan, draw), draw-0 bit-identity oracle. Primary read: within-group std of progress_final_cm (+ best-point) per cell + fraction of groups surviving the dynamic-sampling filter; candidate bar (finalize at pre-reg) median group std &gt;= 0.25 cm. Secondary: competence cost vs anchor, guard-trip rates (strikes/upright/knock-offs), AR token entropy. Decision rule: no cell clears -&gt; GRPO-on-sim parks; AR clears -&gt; phase 2 = token-GRPO per SimpleVLA-RL recipe; flow-only clears -&gt; phase 2 = Flow-GRPO SDE expert-only; both -&gt; AR first. Gate &lt;=3 GPU-h parallel-path, &lt;=8 sequential.
+Flip the wrist camera-mount GEOMETRY to the real bracket-up side (owner spot 14:45Z 08-12 from the ftrig videos; probe-confirmed 15:00Z): the mount body (visual mesh + camera_box1/2 collision geoms + 12 g mass) sits 180 deg about the roll axis from the real assembly - at settled home it hangs 40 mm above the table on the JAW side; over the 26 reference episodes' recorded real poses its volume is below-table on 31.9% of frames (box2 center down to -46 mm), and dynamic replay of ep 21 grinds bracket-table contact on 22% of ticks. Sized: bracket-collisions-off replay control loss 0.0831 -&gt; 0.0751 vs floor 0.0701 (~62% of the servo-replay gap); elbow residual 3.78-&gt;3.37, wrist_flex 1.83-&gt;1.15. FIX = rotate the mount to the real side (not collision-delete: the real bracket can hit things on ITS side), runtime like _repose_wrist_cam, vendored XML untouched; camera view pose must stay pinned (already re-posed correctly). Verify: kinematic sweep ~0% below-table, replay control loss re-run (expect &lt;=~0.075), reset-strike 0/100 + settle determinism + 26.7ms tick oracles green.
 
 </details>
 
@@ -216,7 +216,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (127)
+## ✅ Done (131)
 
 *closed — the full record stays in each fold*
 
@@ -229,6 +229,62 @@ Design research (owner-called 09:23Z 08-12, research-only, no training): GRPO on
 <details><summary>full record</summary>
 
 Design research (owner-called 09:23Z 08-12, research-only, no training): GRPO on the sim for our two heads. AR objective: token-level GRPO is standard - map group sampling onto rollout returns (progress_final as reward; k rollouts per seed = the group). Flow-matching head: the logprob problem - survey Flow-GRPO (ODE-&gt;SDE stochasticization), ReinFlow, DPPO (diffusion policy PO); what gives usable per-action logprobs for our heun-10 decode. Deliverable: a design memo post naming the first cheap experiment (arms, reward, group size, GPU gate) for owner review; papers pages for what it reads.
+
+</details>
+
+---
+
+**`sim-sysid-replay-control-loss`** · `cpu`
+
+Replay control-loss probe (graduated from the 0820 deep-read close, SIMPLER's offline sysid validator - their Table II shows the loss is monotone with eventual ranking fidelity): replay recorded real action sequences from the 26…
+
+**boundary:** Queued 12:xxZ 08-12 at the 0820 deep-read close. CPU-only, any GPU-busy window. Sequenced at my discretion; natural slot before any sim-training work (GRPO phase 2) or the next sysid-touching change, since it is the missing validator for the servo model everything else rides on. | CLOSED 13:5xZ 08-12 work session (sim/replay_control_loss.py + tests/test_replay_control_loss.py oracles, outputs/sim/replay_control_loss.json banked): pinned SERVO_SYSID L=0.0831 all-26 / 0.0849 held-out-23 vs real-command floor 0.0701 (menagerie 0.0973, upstream 0.0819) - under SIMPLER's best Table II anchor 0.131 (their MMRV 0.031 band; scale caveat stated). FINDING: joint-MAE win (pinned 1.88 vs upstream 2.74 deg) does NOT carry to EE space - elbow residual 3.78 deg (unmodeled payload, shared by all candidates) dominates via the largest lever arm (4.64 mm/deg at median pose; wrist_roll 0.21). Read is GOOD -&gt; no tuning item queued; per-joint elbow gains stay the named next rung if elbow ever gates. Zero-bias grep: no additive per-joint constants in the sim consume path (deg2rad only) or bijou normalization (per-dataset stats kill inter-rig offsets by design); the lerobot-sim2real +6.8deg class would live rig-side in calibration shared by action AND state - invisible to replay/training, exposed only via sim world-frame geometry (pinned by visual matching instead).
+
+<details><summary>full record</summary>
+
+Replay control-loss probe (graduated from the 0820 deep-read close, SIMPLER's offline sysid validator - their Table II shows the loss is monotone with eventual ranking fidelity): replay recorded real action sequences from the 26 reference episodes through the sim physics-only (no GL, no GPU, mj_step + servo model), score SIMPLER's loss L = mean EE ||dx|| + mean arcsin(||dR||_F / 2sqrt2) between sim and recorded real trajectories, per episode + pooled. Deliverable: the number for our current servo sysid (menagerie-vs-TheRobotStudio kp question gets its first measurement), a per-joint error breakdown, and - only if the read is bad - a follow-up tuning item (SIMPLER used 3-round simulated annealing over stiffness/damping; BAM's identified STS3215 model is the informed prior). Also grep the calibration path for silent per-joint zero bias (lerobot-sim2real ships a hardcoded +6.8deg elbow offset in the same LeRobot calibration stack we use). Instrument + short results post; pre-reg-light (measurement, no registered claim gates on it).
+
+</details>
+
+---
+
+**`lit-so101-benchmark-envs`** · `cpu`
+
+Lit slice (owner-called 09:23Z 08-12, supersedes the lit pause for this thread): benchmark environments near the SO-100/SO-101 embodiment - lerobot-sim2real (ManiSkill3 SO-100), gym-lowcostrobot, LIBERO/SimplerEnv/RoboCasa for pr…
+
+**boundary:** Slice 0820 page LANDED 09:3xZ 08-12 (papers/so101-sim-ecosystem.md, update to the 08-11 census). | CLOSED 12:xxZ 08-12 work session: both deep reads DONE - (1) lerobot-sim2real at implementation depth (papers/lerobot-sim2real-recipe.md, NEW page): CORRECTION to the survey - the project has NO sysid (system_id_so100.npy is dead code, PD gains untuned 1e3/1e2, one hardcoded +6.8deg elbow offset); transfer bought by target-integrated delta actions (command stream open-loop identical sim&lt;-&gt;real) + per-control-step camera-pose DR (+-2.5cm) + hard-mask greenscreen 128x128 aligned by eye, no quantitative alignment metric; qvel banned from obs (STS3215 too noisy); 91.6% = 22/24 human-judged. (2) SIMPLER spec upgrade (sim-as-eval.md): MMRV formula + repo reference code + hardcoded anchor tables, ~1.5k real episodes total validation bill over 6+3 policy points (early/mid checkpoints manufacture spread), offline-MSE strawman 0.375 vs 0.056, sysid replay control loss MONOTONE with MMRV (Table II), partial visual matching WORSE than none (Table III 0.142 vs complete 0.050 - v3.1-wrist caution). Cube-grasp port RE-SCOPED, does NOT graduate on benchmarking grounds (RL-on-task vs imitation-zero-shot is not a comparison; full port spec recorded in the recipe page as the ready-made GRPO-phase-2 training task). GRADUATED instead: sim-sysid-replay-control-loss (successor queue item, cpu).
+
+<details><summary>full record</summary>
+
+Lit slice (owner-called 09:23Z 08-12, supersedes the lit pause for this thread): benchmark environments near the SO-100/SO-101 embodiment - lerobot-sim2real (ManiSkill3 SO-100), gym-lowcostrobot, LIBERO/SimplerEnv/RoboCasa for protocol; what we could adopt or bridge so our sim numbers land next to published ones. Papers pages same session per the permanent rule; ideas.md hooks.
+
+</details>
+
+---
+
+**`molmoact2-ftrig-sim-eval-20`** · `gpu-local`
+
+ftrig molmoact2 sim eval, 20 seeds + videos (OWNER-CALLED 13:16Z/13:36Z 08-12, top prio on GPU release, sequenced directly after sim_parallel_oracle.py as the parallel path's first consumer - owner: 'sim-parallel-rollouts first a…
+
+**boundary:** Queued 13:5xZ 08-12 on owner call. AutoEval caution applies (different stack family - sim fidelity claim resets to zero until spot-checked): frame the numbers as exploratory. First molmoact2/molmo_flow rollout through BijouPolicy on sim - expect integration edges; budget one debug cycle. | PRE-STAGED 14:2xZ 08-12: BijouPolicy assembles the checkpoint on CPU (bijou@molmoact2_rig_r1_step2000, chunk 30; one API note - BijouPolicy wants a Path, not str). Command: MUJOCO_GL=egl uv run python -m sim.rollout_sim --checkpoint ~/marius-convert-gate/converted/molmoact2_rig_r1_step2000 --num-seeds 20 --method euler --sample-steps 10 (videos default on; parallel driver swap-in if the oracle is green). | CLOSED 15:0xZ 08-12 same session (sequential driver - oracle failed; one integration fix: rollout_sim stats fallback to the checkpoint's merged table for per-dataset-less converted checkpoints): 0/20 success, mean progress_final -0.84 cm (median 0.00), 7/20 real approach progress (best +1.3 cm seed 1), 4 knock-aways &gt;=1 cm (worst -9.1 cm seed 4). QUALITATIVE HEADLINE: the arm moves with intent - reaches the boat, jaws adjacent, then misses/shoves (er60k froze on 13/20). Videos + rows on fontaine-reports /molmoact2_ftrig_eval20/. Watching the videos prompted the owner's bracket question -&gt; see sim-wrist-bracket-flip. · [pre-reg](posts/2026-08-12-prereg-molmoact2-ftrig-sim-eval.md)
+
+<details><summary>full record</summary>
+
+ftrig molmoact2 sim eval, 20 seeds + videos (OWNER-CALLED 13:16Z/13:36Z 08-12, top prio on GPU release, sequenced directly after sim_parallel_oracle.py as the parallel path's first consumer - owner: 'sim-parallel-rollouts first and we test it on the eval of ftrig molmoact2 ... 20 episodes first, keen to get some rough numbers and videos'). Checkpoint = ~/marius-convert-gate/converted/molmoact2_rig_r1_step2000 (in-house format 3, molmo_flow decoder, backbone ref ~/checkpoints/molmoact2-so101-rig-r1-step2000-hf; located + read_checkpoint_info-verified 13:5xZ). Rough-numbers pass, NOT a registered claim: 20 seeds (sim100 seed list 0-19), v3 frames, videos on, progress/success/guard reads vs the er60k v3 anchor rows; results post + report page same session. If the parallel oracle FAILS, fall back to sequential rollout_sim (paired-only rule) rather than blocking the eval.
+
+</details>
+
+---
+
+**`sim-parallel-rollouts`** · `gpu-local`
+
+OWNER-SEQUENCED FIRST GPU ITEM (09:32Z 08-12: 'Once I relinquish the GPU, remember to do sim-parallel-rollouts before any other experiments')
+
+**boundary:** Queued 08:5xZ 08-12 (owner yes 08:44Z); RE-SEQUENCED 09:32Z: runs FIRST when the owner releases the GPU, before any other experiment (incl. the rerun). CPU design/scaffold work may start during the reserved window. | SCAFFOLD LANDED 10:1xZ 08-12 (commit 1e4e16f, check.py 710 green): sim/rollout_sim_parallel.py (spawn env-workers + batched parent policy, deterministic lockstep-rounds scheduler, stable-noise identity triple preserved per row), shared run_episode_loop refactor + streaming VideoWriter, 5 CPU-tier harness-equivalence oracles, and the GPU bit-match oracle instrument fontaine/scripts/sim_parallel_oracle.py. PRE-REG POSTED: posts/2026-08-12-prereg-sim-parallel-rollouts.md - frozen decision rule (GREEN at 2 AND 8 workers on er60k seeds 0-5 =&gt; parallel path may produce registered numbers at validated settings; FAIL =&gt; paired-only fallback with per-use amendment, no mixing with banked sequential rows) + record-only 20-seed throughput read, gate &lt;= 1 GPU-h total. REMAINING = the GPU leg only: run sim_parallel_oracle.py on release (FIRST item per owner 09:32Z), results post same session. | GPU LEG CLOSED 14:37Z 08-12 (owner released 14:17Z, oracle ridden in-session): FAIL at workers=2 - 3/6 seeds bit-identical, 3/6 diverge macroscopically (final_cm off 5.8/7.4/0.8 cm; spawn/reset/strike fields ALL matched, so env determinism held and the divergence is the batched bf16 decode, amplified by contact physics). Frozen rule applied: sequential stays the registered path; parallel = paired-only with per-use amendment, no mixing with banked rows. workers=8 leg skipped (gate decided at 2). Throughput datum: 1.73x at 2 workers (8.8 -&gt; 5.1 min / 6 episodes). Diffs banked outputs/sim/parallel_oracle/. Named follow-ups (not queued): fp32-expert retry, registered tolerance. · [pre-reg](posts/2026-08-12-prereg-sim-parallel-rollouts.md)
+
+<details><summary>full record</summary>
+
+OWNER-SEQUENCED FIRST GPU ITEM (09:32Z 08-12: 'Once I relinquish the GPU, remember to do sim-parallel-rollouts before any other experiments'). Parallel sim rollouts with a shared policy (owner-approved 08:44Z 08-12): N env workers (each owns its SO101Sim + EGL context, physics+render) feeding ONE batched policy server holding a single checkpoint copy - the lerobot-style policy-server split already in the repo for rig rollouts. At batch 1 the H100 idles during heun-10; batching N obs is near-free into the low tens. Box has 26 cores -&gt; ~8-12 render workers before CPU contention; target: a 100-seed arm in ~20-30 min (vs ~1.5 h), the 5-arm sim100 rerun within an afternoon. MUST ship with a determinism oracle: batched rollouts reproduce the sequential per-seed rows bit-for-bit (or within a stated decode tolerance, registered before use). Pre-reg the oracle + a 2-worker smoke before any registered eval uses the parallel path.
 
 </details>
 

@@ -7,7 +7,8 @@
 
 # (no_live_runs_reason cleared 21:40Z 08-11 — sim100_eval launched.)
 
-no_live_runs_reason = "GPU OWNER-RESERVED since 09:23Z 08-12 (owner needs it for a few hours) - NO GPU launches until the owner releases it in-channel. Sessions do literature research meanwhile (owner steering 09:23Z: sim-improvement lit, so101-adjacent benchmark envs, GRPO-on-sim design). WHEN RELEASED: sim-parallel-rollouts runs FIRST, before any other experiment (owner 09:32Z) - the GPU leg is READY (scaffold + pre-reg landed 10:1xZ, commit 1e4e16f): MUJOCO_GL=egl uv run python fontaine/scripts/sim_parallel_oracle.py --checkpoint <er_60k/step_060000> --num-seeds 6 --workers 2, then --workers 8; frozen decision rule + <=1 GPU-h gate in posts/2026-08-12-prereg-sim-parallel-rollouts.md. spot20 done 09:02Z (~1.25/3 GPU-h), teacher80k +0.97 paired CI-excludes-zero."
+# (no_live_runs_reason cleared 14:2xZ 08-12 - owner released in-channel 14:17Z; parallel-oracle GPU leg riding in-session.)
+# PRIOR: "GPU OWNER-RESERVED since 09:23Z 08-12 (owner needs it for a few hours) - NO GPU launches until the owner releases it in-channel. Sessions do literature research meanwhile (owner steering 09:23Z: sim-improvement lit, so101-adjacent benchmark envs, GRPO-on-sim design). WHEN RELEASED: sim-parallel-rollouts runs FIRST, before any other experiment (owner 09:32Z) - the GPU leg is READY (scaffold + pre-reg landed 10:1xZ, commit 1e4e16f): MUJOCO_GL=egl uv run python fontaine/scripts/sim_parallel_oracle.py --checkpoint <er_60k/step_060000> --num-seeds 6 --workers 2, then --workers 8; frozen decision rule + <=1 GPU-h gate in posts/2026-08-12-prereg-sim-parallel-rollouts.md. spot20 done 09:02Z (~1.25/3 GPU-h), teacher80k +0.97 paired CI-excludes-zero."
 
 # spot20 entries PRUNED 09:1xZ 08-12 work session — 3-arm parallel
 # 20-seed spot-check COMPLETE (07:47-09:02Z, ~1.25 GPU-h of gate 3).
@@ -625,3 +626,24 @@ no_live_runs_reason = "GPU OWNER-RESERVED since 09:23Z 08-12 (owner needs it for
 
 # er35k_panel entry pruned 00:4xZ 08-11 — COMPLETE rc=0 00:41Z (~2.2/8 GPU-h incl. the 1.5 aux arm, 25,800 frames ~204 f/min): standard both-arms read banked — fast path core 6.2892/2.3746, class-matched paired reads analysis__er35k_panel_vs_banked_k4l2.json (+0.2813 [+0.199,+0.337] vs 40k endpoint, +0.4290 [+0.353,+0.467] vs 60k-cont; 15k gap ~82% closed at 58% training); aux table full-n (holding .915 / progress .065 / event .875 / visible .823, all improved from 15k); narration pairing +0.047 (44% win). Report+json+analysis on fontaine-reports (curl 200), reports.md updated, numbers in-channel. Owner 20:47Z 08-10 request CLOSED end-to-end.
 
+
+# sim_parallel_oracle COMPLETE 14:37Z 08-12 (ridden in-session): FAIL at
+# workers=2 (3/6 seeds bit-identical, 3/6 diverge macroscopically via
+# batched bf16 decode drift; env determinism held). Frozen rule:
+# sequential stays the registered path; parallel = paired-only w/
+# amendment. workers=8 leg skipped (gate decided). ~0.25 GPU-h.
+[[run]]
+name = "molmoact2_ftrig_eval20"
+kind = "progress-log"
+host = "local"
+pgrep = "sim.rollout_sim"
+pgrep_min = 1
+gpu_indices = [0]
+gpu_mem_min_mib = 2000
+anchors = ["pre-reg posts/2026-08-12-prereg-molmoact2-ftrig-sim-eval.md: record-only, context rows er60k v3 -0.07cm spot20 0/20, teacher80k +0.97cm; AutoEval caution stated"]
+gates = [{ kind = "gpu_hours_max", value = 1.0 }]
+boundary = "20 seeds sequential (oracle FAILED - parallel barred), videos on, ~30-60 min; ridden in-session from 14:4xZ 08-12 (hard kill 17:10Z); results post + Discord same session"
+log = "outputs/sim/molmoact2_ftrig_eval20/eval_run.log"
+progress_re = "seed \\d+ replan (\\d+)"
+started_utc = "2026-08-12T14:40:00Z"
+gpu_hours_per_wall_hour = 1.0

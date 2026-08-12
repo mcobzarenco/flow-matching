@@ -1,7 +1,72 @@
 # Now
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-12 13:10–15:0xZ (real `date -u` at stamp: 15:02) —
+work session, bounded, mid-session owner release of the GPU: **both
+GPU legs ridden — parallel oracle FAIL (sequential stays registered),
+ftrig MolmoAct2 first look 0/20-but-reaches; the owner's video-watching
+caught a 180°-flipped wrist bracket that the probes confirm explains
+~62% of the servo-replay gap. Plus: replay control-loss validator
+landed (sysid passes), SDE sampler + oracles landed, branch rebased
+onto latest main.***
+
+**Status**: GPU RELEASED (owner 14:17Z "GPU is all yours"; confirmed
+14:21Z). No live jobs — both GPU legs completed in-session (~0.4
+GPU-h total): `sim_parallel_oracle` FAIL banked 14:37Z,
+`molmoact2_ftrig_eval20` rows + 20 videos banked ~14:50Z (reports
+Space, curl-verified). Registry entries pruned to completion notes.
+Queue validate green (depth 3, 14 open).
+
+**Steering** (busy day — 6 owner messages, all dispositioned):
+13:16Z SDE ride-along GO + rebase ask + ftrig eval called top-prio →
+all three done. 13:36Z sequencing confirmed (oracle first) + "20
+episodes, rough numbers and videos" → done. 13:54/13:59Z push/rebase
+nudges → branch now main+3, ahead-only (`7b793e5`→`88223b1`).
+14:17/14:21Z GPU release → both legs ridden. 14:27Z "eval should
+composite both cameras" → `sim-wrist-compositing` queued
+(probe-gated per the SIMPLER partial-matching caution). 14:45Z
+bracket-hits-table question → probe-confirmed 180° flip (numbers
+below), `sim-wrist-bracket-flip` queued owner_hold → owner GO 15:01Z
+("Let's do asap") → **executed + verified same session** (see Done).
+No open asks.
+
+**Done** (commits `5c64046`, `8d3227a`, `88223b1` + close-out):
+(1) `sim-sysid-replay-control-loss` CLOSED — SIMPLER's offline
+validator built (`sim/replay_control_loss.py` + oracles): pinned fit
+L 0.083 vs floor 0.070, under SIMPLER's best anchor 0.131; finding:
+joint-MAE wins don't carry to EE space (elbow lever arm 4.6 mm/°);
+results post + dark chart. (2) Flow-GRPO SDE sampler
+`sample_actions_sde` + 4 oracles (bit-identity at a=0, exact
+logprobs) — probe cell 5 launch-ready. (3) `--draws`/`--ar-temperature`
+on the sequential driver (draw-keyed identity triples, draw-0
+bit-identity oracle; parallel driver deliberately untouched).
+(4) Branch REBASED onto latest main per owner (merge commit dropped,
++ I001 fix main itself needed). (5) `sim-parallel-rollouts` CLOSED:
+oracle FAIL at workers=2 (3/6 seeds diverge macroscopically via
+batched bf16 decode; env determinism held; 1.73× throughput datum);
+frozen rule applied. (6) `molmoact2-ftrig-sim-eval-20` CLOSED: 0/20,
+mean −0.84 cm, 7/20 real approaches, 4 knock-aways — moves with
+intent where er60k froze; videos + rows on fontaine-reports; one
+integration fix (merged-stats fallback for converted checkpoints).
+(7) Bracket probes: 31.9% of real-pose frames put the sim bracket
+below the table; ep-21 replay grinds 22% of ticks. (8) **Bracket
+flip EXECUTED on owner GO** (`_flip_camera_mount`, 180° about
+mount-local x, camera view bit-unchanged): sweep 31.9%→1.4%
+(bounding-conservative, center never below), strikes 0/100, oracles
+7/7, replay L 0.0831→**0.0751** vs floor 0.0701 (gap −62%), arm MAE
+1.88°→1.50°. Physics re-baseline boundary declared (banked rows =
+pre-flip; folds into the v3 rerun). Consolidated results post
+(gpu-release-results). check.py 770 green throughout.
+
+**Next**: `queue_cli.py next` → CPU lanes: `lit-sim-improvement-levers`,
+`sim-wrist-compositing`. The v3-rerun re-baseline now also carries
+the bracket flip (one re-baseline, not two). `grpo-signal-probe` unblocked
+for prep: finalized pre-reg is the remaining CPU step (sampler +
+flags landed); GPU sequence now at owner discretion post-eval.
+`run_work_next` armed. `queue.json` canonical.*
 
 *Updated 2026-08-12 11:25–11:4xZ (real `date -u` at stamp: 11:43) —
 work session, bounded: **GRPO-on-sim design memo POSTED — the
@@ -102,51 +167,17 @@ memo, sim-improvement lit slice. Rerun launches on owner unhold
 item on owner sign-off. `run_work_next` armed. `queue.json`
 canonical.*
 
-*Updated 2026-08-12 10:17–10:4xZ (real `date -u` at stamp fix:
-10:25 — the draft wrote 10:29 unobserved; fifth catch today, the
-clock gets checked in the same tool call or not stamped) —
-work session, bounded: **sim100 v3-rerun pre-reg AMENDMENT drafted +
-posted — the rerun is now launch-ready the moment the owner unholds
-it; both GPU-day items (parallel oracle, rerun) have their paperwork
-done in advance.***
-
-**Status**: GPU OWNER-RESERVED (since 09:23Z; Discord read at boot
-10:17Z empty, registry empty, no live jobs). Queue validate green
-(depth 5, 15 open).
-
-**Steering**: owner 10:17:54Z — asked for spot20 v3 videos to check
-out. Answered 10:28Z in-channel: 5 clips pushed to the reports Space
-under `spot20_gallery/` (teacher80k seed 12 v3+v0 pair — its +4.85 cm
-best gain with the bit-matched v0 twin — plus seeds 9/6 and an er60k
-v3 miss; all curl-verified 200), offer standing for any (arm, seed)
-from the 60 on disk. Channel then quiet through 10:41Z (12×60 s
-polls). Objection windows remain open on both the parallel-rollouts
-pre-reg and this amendment draft until GPU release / unhold.
-
-**Done**: queue item `sim100-v2-rerun-amendment-draft` CLOSED —
-posts/2026-08-12-prereg-amendment-sim100-v3-rerun.md (DRAFT, not
-registered): inherits the sim100 protocol; changes = v3 frames with
-the re-baseline table (top 0.890→0.673, wrist 0.835→0.548, GPU-path
-numbers included), arm set er60k_v3 / ftrig4k_v3 / teacher80k_v3 /
-hold_v3 (teacher80k ADDED post-spot20 as the confirmatory read,
-snap30k dropped double-null, er rungs stay dead — all flagged as
-owner decision points), primary read = paired per-seed Δ v3−v0 vs
-banked rows at n=100, per-arm priors registered in advance
-(teacher80k CI-excludes-zero positive = the headline prediction;
-er60k prior null; ftrig4k the open cell), disk pinned for pairing,
-execution contingent on the parallel-oracle outcome (Path A ~2–3
-GPU-h / Path B ≤10 GPU-h gate), finalization checklist at unhold.
-success() gripper-open caveat re-verified in code. check.py 710
-green; blog built + Space pushed (page 200); Discord posted;
-queue.json updated.
-
-**Next**: `queue_cli.py next` → **sim-disk-position-prereg-draft**
-(cpu), then the research lanes (GRPO design memo, sim-improvement
-slice). ON GPU RELEASE: `sim_parallel_oracle.py` FIRST (owner
-09:32Z), then the rerun on owner unhold (finalization checklist in
-the amendment). `run_work_next` armed. `queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-12 13:10–15:1xZ (work, bounded; **+~0.4 GPU-h** —
+oracle ~0.25 + ftrig eval ~0.15, both ridden in-session after the
+14:17Z owner release; exploit + instrument): replay control-loss
+validator closed (sysid passes, elbow-lever finding), SDE sampler +
+draws instrument landed, branch rebased onto main, parallel oracle
+FAIL banked (sequential stays registered), ftrig molmoact2 0/20
+first look with videos, bracket-flip finding (owner-spotted,
+probe-sized at ~62% of the servo-replay gap). 6 owner messages
+dispositioned; 1 ask open (re-baseline OK).
 
 Session 2026-08-12 12:17–12:2xZ (tick, babysit; 0 new GPU-h — box
 owner-reserved since 09:23Z, 0% util / 0 MiB observed 12:17Z —
