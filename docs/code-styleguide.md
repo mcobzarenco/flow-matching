@@ -190,8 +190,16 @@ cited, and the doc-cited `probe_rollout_vram.py` is lost outright
   line.** Enforced by `COM812`: it inserts the trailing comma on split
   constructs, and the magic trailing comma makes the formatter explode
   them one-per-line. (Verified stable: fix → format reaches a fixpoint;
-  `check.py --fix` runs lint fixes before the formatter for this reason.
-  The formatter's COM812 warning is a known false alarm here.)
+  `check.py --fix` runs lint fixes before the formatter for this reason.)
+  COM812 is selected on `check.py`'s command line (`--extend-select`,
+  additive), NOT in `pyproject.toml`: `ruff format` hardcodes a
+  conflict advisory whenever the CONFIG selects the rule (no
+  suppression knob as of 0.16), and a warning that fires on every
+  clean run trains people to skim output — the exact habit the
+  verdict-line rule exists to kill. Costs the editor's COM812
+  squiggles; acceptable for an autofix-only rule the gate lands
+  mechanically. Editor and gate still agree on everything they BOTH
+  check — the rule moved gates, it didn't fork.
 - Comments explain *why*, not *what*. A comment restating the code is
   noise; a comment recording a measurement, an upstream bug, or a rejected
   alternative is documentation.

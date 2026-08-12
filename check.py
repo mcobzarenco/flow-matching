@@ -18,13 +18,20 @@ def steps(*, fix: bool, gpu: bool) -> list[tuple[str, ...]]:
     pytest = (
         ("pytest", "-q", "tests") if gpu else ("pytest", "-q", "-m", "not gpu", "tests")
     )
+    # COM812 rides the command line, NOT pyproject: ruff format prints a
+    # hardcoded conflict advisory whenever the config selects it (no
+    # suppression knob as of 0.16), while --extend-select here is additive
+    # and invisible to the formatter — same enforcement, no warning. The
+    # editor shows no COM812 squiggles as a result; autofix-only rule, the
+    # gate lands it.
+    check = ("ruff", "check", "--extend-select", "COM812")
     # In fix mode, lint fixes run BEFORE the formatter: COM812 inserts
     # trailing commas that the formatter then explodes one-per-line, so a
     # single --fix pass lands on the final (stable) style.
     lint: list[tuple[str, ...]] = (
-        [("ruff", "check", "--fix"), ("ruff", "format")]
+        [(*check, "--fix"), ("ruff", "format")]
         if fix
-        else [("ruff", "format", "--check"), ("ruff", "check")]
+        else [("ruff", "format", "--check"), check]
     )
     return [*lint, ("pyright",), pytest]
 

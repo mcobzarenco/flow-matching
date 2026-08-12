@@ -106,8 +106,16 @@ extend-exclude = ["baselines"]
 # Curated rule families (rationale in docs/code-styleguide.md):
 #   ANN  annotations everywhere            B    bugbear correctness traps
 #   A    builtin shadowing                 C4   comprehension hygiene
-#   COM  trailing commas (one-arg-per-line when split; formatter-stable,
-#        verified: COM812 fix -> format reaches a fixpoint)
+#   COM818/819  the conflict-free trailing-comma rules. COM812 (the
+#        one-arg-per-line enforcer) is deliberately NOT here: ruff
+#        format hardcodes a conflict advisory whenever the CONFIG
+#        selects it (no suppression knob as of 0.16), so check.py
+#        selects it on the command line instead (--extend-select is
+#        additive; enforcement + autofix identical, warning gone).
+#        The editor consequently shows no COM812 squiggles — fine for
+#        an autofix-only rule; check.py --fix lands the commas and the
+#        formatter explodes the construct one-per-line (fix -> format
+#        reaches a fixpoint, verified).
 #   ERA  no commented-out code             FBT  no positional booleans
 #   I    sorted/grouped imports (matches the editor's organize-imports
 #        code action; the formatter deliberately never touches imports)
@@ -127,7 +135,8 @@ extend-select = [
     "ANN",
     "B",
     "C4",
-    "COM",
+    "COM818",
+    "COM819",
     "ERA",
     "FBT",
     "I",
@@ -148,8 +157,6 @@ ignore = [
     # Any is deliberate at untyped third-party boundaries (transformers,
     # lerobot models/tokenizers/items).
     "ANN401",
-    # COM812 is the one COM rule we want; COM819 (banned trailing comma)
-    # never fires with the formatter, COM818 is fine to keep.
     # Positional booleans in CALLS: torch idioms (requires_grad_(False),
     # train(False)) make this unactionable; definitions stay covered by
     # FBT001/FBT002.
