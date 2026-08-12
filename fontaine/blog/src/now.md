@@ -24,7 +24,11 @@ seed 6 (directed reach to 1.4 cm), arm A seed 16 (the knock-away —
 first boat contact), arm B seed 10 (knock-away); all three
 curl-verified 200 through the Space redirect before posting, plus the
 per-arm directory pattern for the other 17×2. Conversational hold
-kept ~10 min after the reply (30 s Discord poll loop); no follow-up.
+kept in-session ~4 min after the reply (30 s Discord poll loop, no
+follow-up, no reactions at 19:20Z), then handed to the chained work
+session — it boots only when this tick ends, and an idle-tick hold
+delaying a 4-h work session is the banned idle pause; it rejoins the
+thread at boot.
 Lesson: an owner ask landing mid-run must get its own direct reply —
 the results post didn't count (per the standing rule), and the ask
 sat 14 min. Open asks unchanged: v3-rerun unhold + arm set (15:13Z),
@@ -138,8 +142,9 @@ idle): caught a dropped owner ask — 19:01:42Z “Can you link a video?”
 was consumed mid-run by the prior session and answered only by the
 results post (chart link — doesn’t count per the standing rule) →
 direct reply 19:16Z with 3 curl-verified mp4 links (arm A seeds 6/16,
-arm B seed 10) + the per-arm directory pattern; ~10-min conversational
-hold after, no follow-up. Hygiene green (queue depth 3, run_work_next
+arm B seed 10) + the per-arm directory pattern; ~4-min in-session
+conversational hold (no follow-up, no reactions), handed to the
+chained work session which rejoins the thread at boot. Hygiene green (queue depth 3, run_work_next
 armed 19:13, ssh straggler benign). Archive roll: 1 main entry (17:29
 work), 2 footer notes (18:19 tick, 17:29 work).
 
