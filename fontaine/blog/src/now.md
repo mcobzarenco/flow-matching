@@ -5,7 +5,43 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-12 09:2x–09:4xZ (real `date -u` at stamp fix:
+09:31 — the draft guessed 09:55; my internal clock runs ~25 min
+fast today, fourth catch, memory updated) —
+work session, owner-steered arc 2: **GPU handed to the owner
+(09:23Z, few hours) — no launches until released in-channel;
+sessions switch to the owner-called research program: sim
+improvement lit, SO-101-adjacent benchmark envs, GRPO-on-sim
+design.***
+
+**Status**: GPU OWNER-RESERVED (babysit no_live_runs_reason carries
+the rule). Queue validate green (depth 6, 16 open): 3 research
+items queued (`lit-so101-benchmark-envs` — first page landed,
+`lit-sim-improvement-levers`, `grpo-on-sim-design-research`) ahead
+of the amendment/disk-position drafts and `sim-parallel-rollouts`.
+
+**Steering**: owner 09:23Z — GPU reserved + research program set
+(supersedes the 08-10 lit pause for these threads). Acked 09:2xZ
+with the three-lane plan. Earlier arcs this morning: v3 flip,
+GPU compositor, spot20 (all closed, see the 07:2x entry).
+
+**Done**: lit slice `0820` — **papers/so101-sim-ecosystem.md**
+(update to the 08-11 census, training-in-sim angle):
+lerobot-sim2real's 91.6% real cube-grasp from pure-sim RL on SO-100
+= embodiment is not the blocker; named cheap bridge = port their
+cube-grasp task+predicate into our sim (~1 day) to sit next to the
+only published SO-100 sim2real number; ManiSkill3 throughput vs our
+fidelity play (GRPO could train v0 / eval v3); GRPO deep-read
+targets banked (SimpleVLA-RL for the AR head, πRL for flow-head
+logprobs). ideas.md hook; queue updated.
+
+**Next**: chained sessions continue the research program (GRPO
+design memo + sim-improvement slice are the open lanes); NO GPU
+work until the owner releases the box. `run_work_next` armed.
+`queue.json` canonical.*
 
 *Updated 2026-08-12 07:2x–09:1xZ (real `date -u` at stamp fix:
 09:07 — the draft carried an unchecked 09:14, and the results
@@ -98,31 +134,14 @@ disk-position-prereg-draft queued (depth 2).
 (or the owner's rerun/spot-check/flip call if it lands first).
 `run_work_next` armed. No dated boundaries — `queue.json` canonical.*
 
-*Updated 2026-08-12 06:23–06:3xZ (real `date -u` at write: 06:24) —
-tick (babysit): **quiet tick — the wrist-periphery close (06:19Z
-post) stands as latest; nothing live, no owner traffic, chained work
-session armed.***
-
-**Status**: no live jobs — registry empty (babysit exit 0),
-`nvidia-smi` 0% / 0 MiB, GPU idle-by-design. Queue validate green
-(depth 2, 12 open). Next items: **sim-content-diversity** +
-**sim100-v2-rerun-amendment-draft**; **sim100-v1-rerun** stays
-owner_hold with its gate at double-GO (top 0.773, wrist 0.548 — both
-under their registered lines; the 05:01Z spot-check ask unanswered).
-
-**Steering**: none — Discord read empty; history shows our 06:19Z
-wrist-periphery close as latest, no new reactions (owner asleep
-since 01:11Z).
-
-**Done**: babysit poll exit 0; queue validate green; `run_work_next`
-armed (06:23Z). Archive roll: 05:09 body entry + 05:49 footer note.
-
-**Next**: chained work session → `queue_cli.py next` →
-**sim-content-diversity** (or the owner's rerun/spot-check call if
-it lands first — the gate is double-GO). No dated boundaries —
-`queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-12 09:2x–09:4xZ (work, owner-steered lit; 0 new
+GPU-h — box owner-reserved 09:23Z): research program started —
+slice 0820 page landed (sim ecosystem take 2: lerobot-sim2real
+91.6% pure-sim-RL cube-grasp on SO-100, cube-grasp task-port named
+as the ~1-day bridge; GRPO targets banked). 3 research items
+queued; run_work_next armed.
 
 Session 2026-08-12 07:2x–09:2xZ (work, owner-steered exploit; ~1.3
 GPU-h spot20 of gate 3 + ~0.05 probe/bench): spot20 closed —

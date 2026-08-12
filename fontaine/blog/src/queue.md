@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-12T09:10:00Z
+**Updated:** 2026-08-12T09:52:00Z
 
 **Depth call:** depth 2 open at 06:1xZ 08-12: sim-content-diversity (cpu, the named diversity lever after v2) + sim100-v2-rerun-amendment-draft (cpu, makes the rerun launch-ready on owner unhold). sim-wrist-periphery-fix CLOSED this session (bar smashed, wrist 0.900 -> 0.548 vs <=0.786); sim100-v1-rerun stays owner_hold with its gate now double-GO (both cameras at/under their registered lines).
 
-**13 open** (Live 0 · Queued 3 · Blocked 10 · Done 124)
+**16 open** (Live 0 · Queued 6 · Blocked 10 · Done 124)
 
 ## 🔴 Live (0)
 
@@ -14,9 +14,51 @@
 
 *(empty)*
 
-## 🟢 Queued (3)
+## 🟢 Queued (6)
 
 *ready — waiting on a window or a boundary*
+
+**`grpo-on-sim-design-research`** · `cpu`
+
+Design research (owner-called 09:23Z 08-12, research-only, no training): GRPO on the sim for our two heads
+
+**boundary:** Queued 09:3xZ 08-12.
+
+<details><summary>full record</summary>
+
+Design research (owner-called 09:23Z 08-12, research-only, no training): GRPO on the sim for our two heads. AR objective: token-level GRPO is standard - map group sampling onto rollout returns (progress_final as reward; k rollouts per seed = the group). Flow-matching head: the logprob problem - survey Flow-GRPO (ODE-&gt;SDE stochasticization), ReinFlow, DPPO (diffusion policy PO); what gives usable per-action logprobs for our heun-10 decode. Deliverable: a design memo post naming the first cheap experiment (arms, reward, group size, GPU gate) for owner review; papers pages for what it reads.
+
+</details>
+
+---
+
+**`lit-sim-improvement-levers`** · `cpu`
+
+Lit slice (owner-called 09:23Z 08-12): sim-improvement levers beyond shipped plates/clutter/sysid - contact shadows for composites, camera-parameter fitting (real lens model vs our equidistant), DR schedules with measured transfe…
+
+**boundary:** Queued 09:3xZ 08-12.
+
+<details><summary>full record</summary>
+
+Lit slice (owner-called 09:23Z 08-12): sim-improvement levers beyond shipped plates/clutter/sysid - contact shadows for composites, camera-parameter fitting (real lens model vs our equidistant), DR schedules with measured transfer, SIMPLER-class visual-matching refinements. Feed the sim axis; papers pages same session.
+
+</details>
+
+---
+
+**`lit-so101-benchmark-envs`** · `cpu`
+
+Lit slice (owner-called 09:23Z 08-12, supersedes the lit pause for this thread): benchmark environments near the SO-100/SO-101 embodiment - lerobot-sim2real (ManiSkill3 SO-100), gym-lowcostrobot, LIBERO/SimplerEnv/RoboCasa for pr…
+
+**boundary:** Slice 0820 page LANDED 09:3xZ 08-12 (papers/so101-sim-ecosystem.md, update to the 08-11 census). Remaining deep reads keep this item open: lerobot-sim2real sysid/camera-alignment recipe vs ours; SimplerEnv real-vs-sim correlation methodology; the cube-grasp task-port idea (may graduate to its own instrument item).
+
+<details><summary>full record</summary>
+
+Lit slice (owner-called 09:23Z 08-12, supersedes the lit pause for this thread): benchmark environments near the SO-100/SO-101 embodiment - lerobot-sim2real (ManiSkill3 SO-100), gym-lowcostrobot, LIBERO/SimplerEnv/RoboCasa for protocol; what we could adopt or bridge so our sim numbers land next to published ones. Papers pages same session per the permanent rule; ideas.md hooks.
+
+</details>
+
+---
 
 **`sim-parallel-rollouts`** · `cpu`
 

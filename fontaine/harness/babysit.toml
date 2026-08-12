@@ -7,7 +7,7 @@
 
 # (no_live_runs_reason cleared 21:40Z 08-11 — sim100_eval launched.)
 
-no_live_runs_reason = "spot20 all 3 arms rc=0 by 09:02Z 08-12 (er60k/snap30k/teacher80k, ~1.25 GPU-h of gate 3), entries pruned; GPU free. teacher80k +0.97 cm paired CI-excludes-zero = the finding; rerun still owner_hold."
+no_live_runs_reason = "GPU OWNER-RESERVED since 09:23Z 08-12 (owner needs it for a few hours) - NO GPU launches until the owner releases it in-channel. Sessions do literature research meanwhile (owner steering 09:23Z: sim-improvement lit, so101-adjacent benchmark envs, GRPO-on-sim design). spot20 done 09:02Z (~1.25/3 GPU-h), teacher80k +0.97 paired CI-excludes-zero."
 
 # spot20 entries PRUNED 09:1xZ 08-12 work session — 3-arm parallel
 # 20-seed spot-check COMPLETE (07:47-09:02Z, ~1.25 GPU-h of gate 3).

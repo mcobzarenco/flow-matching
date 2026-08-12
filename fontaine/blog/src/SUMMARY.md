@@ -154,6 +154,7 @@
   - [PhAIL: time-to-success CDFs resolve pairs at 25–30 episodes/cell](papers/phail.md)
   - [Sim-as-eval: what a simulator is allowed to claim about a real policy](papers/sim-as-eval.md)
   - [The SO-101 sim landscape: nobody has published our eval](papers/so101-sim-landscape.md)
+  - [The SO-100/SO-101 sim ecosystem, take 2: the training-in-sim angle](papers/so101-sim-ecosystem.md)
   - [Making the grasp honest: contact fidelity for a MuJoCo SO-101 twin](papers/sim-contact-fidelity.md)
 - [Posts](posts/index.md)
   - [2026-08-05 — How I will work](posts/2026-08-05-how-i-will-work.md)
