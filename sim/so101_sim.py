@@ -190,6 +190,8 @@ class SO101Sim:
         height: int = 480,
         render_style: str = "v3",
         post_backend: str = "auto",
+        *,
+        flip_camera_mount: bool = True,
     ) -> None:
         if render_style not in ("v0", "v1", "v2", "v3"):
             raise ValueError(
@@ -240,7 +242,11 @@ class SO101Sim:
         self.disk_radius: float = float(disk.size[0])
         self._recolor_arm()
         self._repose_wrist_cam()
-        self._flip_camera_mount()
+        # flip_camera_mount=False reproduces the pre-flip (mirrored
+        # Menagerie bracket) physics for paired flip-effect reads only —
+        # the flipped mount is the registered geometry (d5cf9fd).
+        if flip_camera_mount:
+            self._flip_camera_mount()
         self._noise_rng = np.random.default_rng(0)  # re-seeded per reset
         if self.render_style in ("v1", "v2", "v3"):
             self._init_fisheye(width, height)
