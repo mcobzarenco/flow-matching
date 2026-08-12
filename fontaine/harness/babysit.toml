@@ -692,7 +692,7 @@ log = "/home/ubuntu/flow-matching/outputs/sim/grpo_signal_probe/launcher.log"
 progress_re = "probe pass \\w+ (start|done)|episode budget|episodes in|ALL PROBE PASSES DONE"
 started_utc = "2026-08-12T21:33:58Z"
 gpu_hours_per_wall_hour = 1.0
-boundary = "2 anchor passes + 5 cells (launch_grpo_signal_probe.sh unit fontaine-grpo-probe), 660 episodes at 30 s, workers=8, ~2.8 h wall projected; kill only at a pass boundary; PRUNE at completion + results post same session"
+boundary = "RE-SCOPED 22:58Z 08-12 (tripwire fired at the cell-1 boundary: measured ~1.13 GPU-h/cell vs ~0.6 assumed; announced 21:58Z, no owner objection): run anchors + cell1 + cell2 + cell5 ONLY, then STOP the unit fontaine-grpo-probe at the cell-5 boundary BEFORE cell3 starts (watch for cell3_teacher80k_heun30 dir or 'probe pass cell5' done in launcher.log; cell5 rows = 120 in outputs/sim/grpo_signal_probe/cell5_teacher80k_sde05/rows.jsonl; `systemctl --user stop fontaine-grpo-probe`). Cells 3/4 PARK (re-queue ~2.2 GPU-h pair on owner call). Cell-5 boundary ETA ~01:0x-01:1xZ, cumulative ~3.5-3.7 vs 3.5 gate (announced, actuals to channel). Cell-1 read POSTED 23:0xZ (clears bar 0.771 >= 0.25, cost CI [-1.117,+0.207]). At stop: read_grpo_signal_probe.py + grpo_probe_chart.py + results post + PRUNE this entry"
 anchors = [
     "pre-reg posts/2026-08-12-prereg-grpo-signal-probe.md FROZEN 20:0xZ: seeds 0-14, --episode-seconds 30, bf16 expert, v3 frames; launched at HEAD 85e9a16",
     "signal bar: median (over 15 seeds) within-group std of progress_final_cm >= 0.25 cm per cell; decision rule frozen on the pre-reg (no cell -> park; AR -> token-GRPO; flow-only -> Flow-GRPO SDE; both -> AR first)",
