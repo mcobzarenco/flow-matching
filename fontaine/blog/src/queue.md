@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-13T03:42:00Z
+**Updated:** 2026-08-13T04:17:00Z
 
 **Depth call:** depth 3 open at 16:0xZ 08-12: ftrig-eval20-flipped-parallel CLOSED this session (owner prio, ridden end-to-end); remaining open: sim-wrist-compositing + 2 lit items; grpo-signal-probe owner_hold (memo review), v3-rerun unhold ask 15:13Z still open.
 
-**13 open** (Live 0 · Queued 2 · Blocked 11 · Done 140)
+**13 open** (Live 0 · Queued 2 · Blocked 11 · Done 141)
 
 ## 🔴 Live (0)
 
@@ -18,15 +18,15 @@
 
 *ready — waiting on a window or a boundary*
 
-**`sim-top-gap-foreground-decomposition`** · `cpu`
+**`sim-foreground-appearance-pass`** · `cpu`
 
-Locate the remaining top-cam encoder gap (knn5 AUROC 0.713, unchanged by lens arms - it is the frontier number now that wrist reads 0.523 under curve-only): ablation embeds on the same 20x5 reset renders
+Foreground appearance pass (decomposition verdict 08-13: real-fg 0.328 vs v3 0.713 - the whole residual top-cam gap is the rendered foreground pixels; arithmetic ~nil, shadow lever spent at ~10%)
 
-**boundary:** Queued 03:4xZ 08-13 at lens-item close (charter s4 refill). Pre-reg in-channel before the embed run; no default changes on any outcome.
+**boundary:** Queued 04:3xZ 08-13 at the decomposition close (charter s4 refill; feeds from the registered decision rule). Pre-reg in-channel before any embed run.
 
 <details><summary>full record</summary>
 
-Locate the remaining top-cam encoder gap (knn5 AUROC 0.713, unchanged by lens arms - it is the frontier number now that wrist reads 0.523 under curve-only): ablation embeds on the same 20x5 reset renders. Arms: (1) baseline v3 composite; (2) foreground-&gt;plate (rendered arm/benchy pixels replaced by the plate via the existing dynamic mask - if knn5 collapses toward the plate's own read, the gap lives in the RENDERED pixels, not the composite arithmetic); (3) shadow-region crop read (v4): does the fitted shadow band carry residual signal; (4) real-frame control: real episodes' arm pixels pasted on the plate (upper bound of what compositing can reach). Read: knn5 AUROC per arm vs the 0.713 baseline + per-frame paired deltas, same harness as the lens gate. Decision it feeds: which top-cam lever gets the next leg (arm appearance/materials vs mask edge vs shadow refinement). Cost: renders CPU, ~0.02 GPU-h embeds.
+Foreground appearance pass (decomposition verdict 08-13: real-fg 0.328 vs v3 0.713 - the whole residual top-cam gap is the rendered foreground pixels; arithmetic ~nil, shadow lever spent at ~10%). Leg (a) content split: same 20x5 harness, SELECTIVE fg-&gt;plate per content class (clutter stand-ins / benchy / arm bodies) keeping the rest rendered - no armless confound - to rank which class carries the 0.713; visual prime suspect = the untextured gray clutter stand-ins (cylinder mug, white disk) sitting on photoreal plates (see top_gap_arms_seed0_strip.png). Leg (b) appearance fix for the top class (clutter: real-crop textures or plate-sourced patches; arm: material/color response match vs the real black arms; benchy: tint/roughness), oracle-pinned like v4/lens legs. Leg (c) paired gate on the pinned probe, bar registered at pre-reg time; no default flip without owner sign-off. Cost: renders CPU, ~0.02 GPU-h embeds per round.
 
 </details>
 
@@ -202,9 +202,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (140)
+## ✅ Done (141)
 
 *closed — the full record stays in each fold*
+
+**`sim-top-gap-foreground-decomposition`** · `cpu`
+
+Locate the remaining top-cam encoder gap (knn5 AUROC 0.713, unchanged by lens arms - it is the frontier number now that wrist reads 0.523 under curve-only): ablation embeds on the same 20x5 reset renders
+
+**boundary:** EXECUTED + CLOSED 04:0x-04:3xZ 08-13 (pre-reg 04:03Z, results in-channel same session). Verdict: real-fg arm 0.328 (= clean anchor 0.283, below the 0.5 null) vs v3 0.713 -&gt; the whole residual top-cam gap lives in the RENDERED foreground pixels; arithmetic residue fg-&gt;plate minus plate-only +0.004 AUROC (paired +2.3e-07 CI-excludes-0 but ~5% of the armless shift, under the +0.05 bar); armless arms read FARTHER (0.869/0.865, 0/100 closer) - labeled confound, no-arm is itself OOD; shadow-band crop near-ceiling (0.989/0.988) but the box covers the arm region. v4 paired read replicated (-8.3e-08, 66/100 closer). Registered decision -&gt; next leg = foreground appearance (sim-foreground-appearance-pass queued). Artifacts: reports/analysis__sim_top_gap_decomposition.json + chart + arm strip on fontaine-reports (curl-200); reports.md section; ~0.02 GPU-h.
+
+<details><summary>full record</summary>
+
+Locate the remaining top-cam encoder gap (knn5 AUROC 0.713, unchanged by lens arms - it is the frontier number now that wrist reads 0.523 under curve-only): ablation embeds on the same 20x5 reset renders. Arms: (1) baseline v3 composite; (2) foreground-&gt;plate (rendered arm/benchy pixels replaced by the plate via the existing dynamic mask - if knn5 collapses toward the plate's own read, the gap lives in the RENDERED pixels, not the composite arithmetic); (3) shadow-region crop read (v4): does the fitted shadow band carry residual signal; (4) real-frame control: real episodes' arm pixels pasted on the plate (upper bound of what compositing can reach). Read: knn5 AUROC per arm vs the 0.713 baseline + per-frame paired deltas, same harness as the lens gate. Decision it feeds: which top-cam lever gets the next leg (arm appearance/materials vs mask edge vs shadow refinement). Cost: renders CPU, ~0.02 GPU-h embeds.
+
+</details>
+
+---
 
 **`release-eval20-officialmap`** · `gpu-local`
 
