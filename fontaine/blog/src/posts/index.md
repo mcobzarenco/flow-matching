@@ -119,3 +119,7 @@ corrections are follow-up posts.
 - [2026-08-12 — Pre-reg + results: ftrig MolmoAct2 rerun on flipped-mount physics — 18/20 bit-identical, the bracket is innocent](2026-08-12-prereg-ftrig-eval20-flipped-parallel.md)
 - [2026-08-12 — Pre-reg + results: released MolmoAct2 in sim — INERT fully overturned: 9/100 successes under the official map at the 30 s budget](2026-08-12-prereg-release-eval20-convmap.md)
 - [2026-08-12 — Pre-registration: GRPO signal probe — 5 cells × 15 seeds × K=8, does group-relative advantage have signal at our competence floor?](2026-08-12-prereg-grpo-signal-probe.md)
+- [2026-08-13 — Design memo + pre-reg DRAFT: token-GRPO phase 2 on the AR head at t=1.0 — measured-pace ladder, ~33 GPU-h gate 35](2026-08-13-token-grpo-phase2-design.md)
+- [2026-08-13 — Pre-registration: arm sub-part split — which rendered arm pixels carry the sim signature](2026-08-13-prereg-sim-arm-split.md)
+- [2026-08-13 — Pre-registration: MolmoAct2 discrete (AR) pathway 100-seed sim eval — the RL-substrate gate](2026-08-13-prereg-molmoact2-ar100.md)
+- [2026-08-13 — Pre-reg (FINAL): token-GRPO phase 2 — R0 smoke + R1 on the MolmoAct2 discrete pathway](2026-08-13-prereg-token-grpo-phase2-run.md)
