@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-13T09:36:00Z
+**Updated:** 2026-08-13T10:54:00Z
 
-**Depth call:** depth 2 open at 09:3xZ 08-13: CPU lanes = token-grpo-phase2-instrument items 2-4 (item 1 closed 418715c; veto window per memo ask 3 still open) + sim-arm-photometric-links (pre-reg first); GPU legs pend owner calls (v3-rerun unhold, phase-2 go, promotion sign-off, compute options).
+**Depth call:** depth 3: molmoact2-ar-head-port item (d0) sim-driver discrete adapter (CPU, executable now); token-grpo-phase2-instrument items 3-4 (retargeted, veto window open); sim-arm-photometric-links pre-reg.
 
-**14 open** (Live 0 · Queued 2 · Blocked 12 · Done 144)
+**15 open** (Live 0 · Queued 3 · Blocked 12 · Done 144)
 
 ## 🔴 Live (0)
 
@@ -14,7 +14,7 @@
 
 *(empty)*
 
-## 🟢 Queued (2)
+## 🟢 Queued (3)
 
 *ready — waiting on a window or a boundary*
 
@@ -36,11 +36,25 @@ Arm photometric fix, named target LINKS both instances (arm-split diagnostic 06:
 
 Token-GRPO phase-2 instrument build (CPU, oracle-gated, zero behavior change - all new flags default-off), per posts/2026-08-13-token-grpo-phase2-design.md section 8: (1) --emit-training-rows on the parallel driver (frames + samp…
 
-**boundary:** Queued 06:0xZ 08-13 at the memo close. Sequenced BEHIND sim-arm-appearance-leg (closed). Item 1 landed 09:3xZ 08-13 pre-veto (no veto in-channel as of 09:35Z); memo ask 3 still offers the owner a veto on remaining pre-go instrument spend (items 2-4) - if vetoed in-channel, flip to owner_hold; the RUN itself launches only on the phase-2 go + finalized pre-reg regardless.
+**boundary:** RE-SCOPED by owner steering 10:02Z 08-13 (in-channel): RL focus = the release molmoact2 checkpoint (the only success-capable policy in our sim, 9/100 convmap) AND AR/token GRPO - the run retargets to molmoact2's trained discrete head (2048 OpenFAST action tokens) once molmoact2-ar-head-port lands + its discrete-mode sim eval gate reads success-capable. Items 1-2 are decoder-generic and carry over (TokenRow capture + GRPO step sit on the ARSuffixDecoder/tensor surface); items 3-4 (replay collator, loop harness) build against the molmoact2 surface FIRST; er60k stays the registered fallback arm, not the focus. Sequenced BEHIND molmoact2-ar-head-port. The RUN still launches only on a finalized pre-reg (memo section 5 ladder re-priced for the molmoact2 decode pace) + owner go.
 
 <details><summary>full record</summary>
 
-Token-GRPO phase-2 instrument build (CPU, oracle-gated, zero behavior change - all new flags default-off), per posts/2026-08-13-token-grpo-phase2-design.md section 8: (1) --emit-training-rows on the parallel driver (frames + sampled ids + per-token chosen logprobs off the existing ActionCaptureStep surface; oracle: greedy logprobs bit-match a teacher-forced re-forward, draw-0 rows reproduce banked sequential rows); (2) GRPO step (advantage-weighted clipped token-CE; oracles: ratio-1 reduces to weighted CE, zero-advantage -&gt; zero grad, train-time grammar mask == rollout mask); (3) replay collator rows -&gt; CollatedBatch (fixture-episode bf16 logit-reproduction oracle); (4) loop harness (rollout-&gt;score-&gt;filter-&gt;step-&gt;eval + babysit heartbeat). check.py green per landing; ~2-3 sessions. || ITEM 1 CLOSED 09:3xZ 08-13 (418715c, off outage-recovered WIP 63bb1e2): capture surface + writer + 9 CPU oracles green (tests/test_token_rows.py) - memo section 8 'bit-for-bit' bar AMENDED with measured note (masked-softmax reduction bit-exact; teacher-forced re-forward within 2.4e-6 fixture / 1e-5 bound, one-shot-vs-incremental reduction-shape noise); recorded mask reconstructs from ids alone (trainer half of item 2's mask oracle, already green); draw-0-reproduces-banked check rides the first real GPU emit. Items 2-4 remain (~1-2 sessions).
+Token-GRPO phase-2 instrument build (CPU, oracle-gated, zero behavior change - all new flags default-off), per posts/2026-08-13-token-grpo-phase2-design.md section 8: (1) --emit-training-rows on the parallel driver (frames + sampled ids + per-token chosen logprobs off the existing ActionCaptureStep surface; oracle: greedy logprobs bit-match a teacher-forced re-forward, draw-0 rows reproduce banked sequential rows); (2) GRPO step (advantage-weighted clipped token-CE; oracles: ratio-1 reduces to weighted CE, zero-advantage -&gt; zero grad, train-time grammar mask == rollout mask); (3) replay collator rows -&gt; CollatedBatch (fixture-episode bf16 logit-reproduction oracle); (4) loop harness (rollout-&gt;score-&gt;filter-&gt;step-&gt;eval + babysit heartbeat). check.py green per landing; ~2-3 sessions. || ITEM 1 CLOSED 09:3xZ 08-13 (418715c, off outage-recovered WIP 63bb1e2): capture surface + writer + 9 CPU oracles green (tests/test_token_rows.py) - memo section 8 'bit-for-bit' bar AMENDED with measured note (masked-softmax reduction bit-exact; teacher-forced re-forward within 2.4e-6 fixture / 1e-5 bound, one-shot-vs-incremental reduction-shape noise); recorded mask reconstructs from ids alone (trainer half of item 2's mask oracle, already green); draw-0-reproduces-banked check rides the first real GPU emit. Items 2-4 remain (~1-2 sessions). || ITEM 2 CLOSED 09:5xZ 08-13 (229d80f, pre-veto): GRPO step bijou/train_grpo.py - advantage-weighted clipped token-CE (DAPO clip-higher [0.8,1.28] frozen in GRPOConfig), training forward rides the SFT suffix_targets scaffold with the sampled ids, grammar mask recomputed trainer-side (grammar_masks_from_ids); sum+mean form pair (chunked-backward-ready); GRPOStats (ratio extremes, clip fraction, k3 KL drift). 7 CPU oracles tests/test_grpo_step.py: mask oracle both directions bit-for-bit (greedy+sampled), fresh-policy ratios 1 to the section-8 amended noise bound, ratio==1 reduces to advantage-weighted CE BIT-EXACTLY, zero-advantage -&gt; exact-zero grad every parameter (live-graph control), clip bounds bind with the right gradient stops per advantage sign, padding mask-multiplied out, loud guards. check.py 826 green.
+
+</details>
+
+---
+
+**`molmoact2-ar-head-port`** · `cpu`
+
+MolmoAct2 AR (discrete) head port - owner steering 10:02Z 08-13 ('focus on that checkpoint and also just on AR GRPO for now', plan 👍'd in-channel): wire the release checkpoint's trained discrete pathway into our port so token-GRP…
+
+**boundary:** Item (d0) adapter: CPU, executable now (owner-steered lane, pre-gate instrument). Item (d) eval launch: owner go (asked in-channel 10:46Z 08-13). (b2) parity: after the gate read. Blocks token-grpo-phase2 items 3-4 sequencing and the phase-2 pre-reg finalization.
+
+<details><summary>full record</summary>
+
+MolmoAct2 AR (discrete) head port - owner steering 10:02Z 08-13 ('focus on that checkpoint and also just on AR GRPO for now', plan 👍'd in-channel): wire the release checkpoint's trained discrete pathway into our port so token-GRPO can train it. Audit pinned 10:0xZ (in-channel, 2 posts): action block &lt;action_0..2047&gt; ids 151934-153981 contiguous, scaffold action_output/start/end 151931-3, action_mode 'both'; reference decode = unconstrained greedy full-vocab to EOS (cap 480), span-extract, OpenFAST decode(bins, T=30, D=6), q01q99 unnorm tag so100_so101_molmoact2; FAST artifact = pi's UniversalActionProcessor (DCT x10, min_token -55, chr-string ByteLevelBPE 2048, decode hard-asserts 180 coefficients else ZEROS fallback). Items: (a) FAST artifact behind our ActionCodec interface (oracle: encode/decode round-trip on banked chunks vs their scipy reference, bit-level); (b) greedy AR decode path on the port's existing prefill (oracle: token-for-token parity vs their unconstrained reference semantics on anchor rows - e2e_parity extension); (c) masked decode mode for RL - our budget-arithmetic grammar mask grafted onto their BPE piece lengths so every sampled draw is decodable by construction (oracle: masked greedy == unconstrained greedy wherever the stream was already legal, violation rate recorded); (d) discrete-mode sim eval GATE ~0.9 GPU-h (100 seeds @30 s, convmap shim, workers=8): is the AR pathway success-capable in OUR sim like the flow pathway's 9/100? This number gates all RL spend. check.py green per landing; (a)-(c) ~1-2 CPU sessions, (d) on owner compute go. || ITEMS (a)+(b-CPU)+(c) CLOSED 10:4xZ 08-13 (beeb93e / 526c4ad / 2a9e540, 14 CPU oracles green across tests/test_molmoact2_fast_codec.py + test_molmoact2_discrete.py) + REAL-CHECKPOINT SMOKE PASS (f0afc1e, ~0.01 GPU-h): all 4 anchor-row emissions well-formed + decodable (10-23 bins/chunk, ~0.6 s/chunk bf16); grammar_masked mode 0 violations, bins identical to unconstrained greedy. Audit extras pinned in code: trained BPE = 1005/2048 block rows; 7 quantization-hole symbols (ords 3,9,12,14,19,22,27) vanish in the released tokenizer - loud in our codec. REMAINING: (d0) sim-driver discrete adapter (CPU, executable now): rollout_sim_parallel serves predict_action_discrete (obs-&gt;prompt packing per worker, canonical shim state-in/actions-out like the convmap arm; oracle: adapter greedy chunk == molmoact2_discrete_smoke.py chunk on a pinned observation); (d) the 100-seed @30s AR-pathway eval ~0.9 GPU-h ON OWNER GO (asked 10:46Z + corrected 10:50Z, unanswered at close); (b2) formal token-for-token parity vs THEIR HF reference executing live - sequenced AFTER the gate read (no banked discrete anchors exist).
 
 </details>
 
