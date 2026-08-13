@@ -3,6 +3,56 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-12 21:39Z–2026-08-13 01:xxZ (real `date -u` at stamp:
+00:38 08-13) — work session (the chained session riding the probe):
+**GRPO probe: AR signal is REAL and cheap at t=1.0 (0.771 cm vs the
+0.25 bar, cost CI includes 0); t=1.6 clears 10× but pays −1.08 cm.
+Tripwire fired at cell-1 (measured ~1.13 GPU-h/cell vs ~0.6
+assumed) — re-scoped in-channel to cells 1/2/5, cells 3/4 parked.**
+Plus: lit 0823 sim-improvement levers closed (3 papers pages), and an
+owner steer mid-session — wrist compositing investigated end-to-end
+and DECIDED render-only (22:31Z).*
+
+**Status**: GRPO probe cell 5 (SDE a=0.5, the Flow-GRPO trainability
+cell) finishing ~01:0xZ; unit stopped at its boundary per the
+re-scope; cumulative [CELL5_GPUH] vs the 3.5 gate. Cells 1/2 read out
+at their boundaries (in-channel 23:0x/00:07Z). [CELL5_LINE]
+
+**Steering** (live owner thread): (1) 22:21:54Z "investigate
+compositing for the wrist camera" → executed same session:
+CPU-only feasibility read (`wrist_composite_feasibility.py`,
+`d177c0d`) — plate poses spread 20.8 mm/5.1° median (why the static
+plate mushed), wrist is table-plane-dominated (median 100% of rays)
+so FK+plane-homography is sound, but warp-fill p10 49% before
+arm/boat holes ⇒ T-III seam hazard; recommended render-only wrist +
+redirect to lens fitting; (2) 22:31:50Z owner adopted the
+recommendation → `sim-wrist-compositing` CLOSED as decided, sim100
+**amendment 4** documents the channel asymmetry,
+`sim-fit-real-lens-model` queued (plumb-line θ→r on existing frames,
+no rig time); (3) 22:33:20Z "how does the encoder probe work in
+depth?" → two-part in-depth reply 22:41Z. Probe re-scope default
+posted 21:58Z, no objection at any boundary.
+
+**Done** (commits `49381ca`…`6897fea` + close-out): (1) **lit
+0823 CLOSED** (`ed6ba42`, owner-called): 3 papers pages same session
+— composite-shadows (no published pipeline measures the missing-shadow
+axis; Re³Sim foreground-realism null; randomize-in-training /
+match-in-eval split), fisheye-lens-fitting (scale overfitting as a
+distance ruler; cubemap→any-lens MuJoCo pipeline), dr-schedules
+(DORAEMON success-throttled entropy max; eval stays at matched
+center); 3 ideas hooks (#16 sim lane), `sim-composite-contact-shadows`
+queued. (2) Probe instrument: frozen-reads script (`ece2276`), house
+dark chart (`d2bde2f`), registry re-scope (`6897fea`). (3) Wrist
+compositing decision artifacts (`a5e5784`). (4) Probe results
+amendment on the pre-reg page + results post at cell-5 close.
+
+**Next**: `queue_cli.py next` → CPU lanes: `sim-fit-real-lens-model`
+(owner-adopted), `sim-composite-contact-shadows` (both probe-gated,
+pair on the same harness). GPU idle after the probe stop; cells 3/4
+re-queue only on owner call; phase-2 GRPO call per the frozen
+decision rule (see the results post). v3-rerun unhold + disk-draws
+sign-off still open. `queue.json` canonical.*
+
 *Updated 2026-08-12 21:30–21:4xZ (real `date -u` at stamp: 21:36) —
 tick, babysit: **GRPO signal probe LAUNCHED 21:33:58Z** (unit
 `fontaine-grpo-probe`, HEAD `85e9a16`) — the tick resolved the
@@ -92,6 +142,16 @@ reframes both: the sim CAN express success now — the success-rate
 metric is live, not just progress-cm. `queue.json` canonical.*
 
 ## Utilization footer
+
+Session 2026-08-12 21:39Z–2026-08-13 01:xxZ (work, the chained probe
+ride; **+[CELL5_GPUH] GPU-h** — anchors + cells 1/2/5 ridden in-turn,
+tripwire re-scope at cell-1; exploit + owner steering + lit):
+**GRPO probe re-scoped and read out** — AR t=1.0 clears the signal
+bar 3.1× at a cost CI including 0 (cell 2 t=1.6: 9.8× but −1.08 cm;
+cell 5 SDE: see results post). Lit 0823 (3 papers pages), wrist
+compositing investigated → DECIDED render-only (owner 22:31Z),
+sim100 amendment 4, `sim-fit-real-lens-model` queued. check.py 797
+green × 6 commits.
 
 Session 2026-08-12 21:30–21:4xZ (tick, babysit; GPU claimed at
 21:33:58Z — probe ~2.8 GPU-h projected ≤ 3.5 gate, accrues to the

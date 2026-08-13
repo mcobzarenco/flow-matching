@@ -122,3 +122,40 @@ rather than silently downgrading.
 Launch checklist (at GPU handback): re-pin HEAD + checkpoint paths in
 the launcher, babysit entry + registry at launch, per-cell
 `--rows-jsonl` stream, results post same session.
+
+## Results (amendment 1, 2026-08-13 01:xxZ — re-scoped run)
+
+**Tripwire fired at the cell-1 boundary** (22:58Z 08-12): measured
+pace ~1.13 GPU-h/cell (68 min; the parallel driver runs one seed's 8
+draws as a worker-wave, so a cell is 15 waves of ~4.5 min — the ~4
+episodes/min estimate assumed cross-seed packing). Full 7-pass plan
+projected ~5.9 GPU-h vs the ≤3.5 gate. Re-scope announced in-channel
+21:58Z (before the boundary), no objection: **anchors + cells 1, 2, 5
+ran; cells 3/4 (flow ODE fresh-noise) parked** — the channel our
+banked ceiling-ladder read already measured as NULL for flow;
+cell 5's SDE is the channel Flow-GRPO trains through. Partial cells:
+none (every reported cell is complete, 15/15 groups).
+
+| read (frozen) | cell 1 AR t=1.0 | cell 2 AR t=1.6 | cell 5 SDE a=0.5 |
+|---|---|---|---|
+| median group std (ddof0) | **0.771** | **2.461** | CELL5_STD |
+| vs 0.25 cm bar | CLEARS 3.1× | CLEARS 9.8× | CELL5_BAR |
+| non-degeneracy (≥0.05 cm) | 13/15 | 15/15 | CELL5_NONDEG |
+| competence cost (cm) | −0.351 | −1.081 | CELL5_COST |
+| cost CI95 (paired) | [−1.117, +0.207] | [−1.556, −0.634] | CELL5_CI |
+| knock-aways / tipped | 10 / 6 | 42 / 10 | CELL5_GUARD |
+| successes | 1 | 0 | CELL5_SUCC |
+| reset strikes (must be 0) | 0 | 0 | CELL5_STRIKES |
+
+Anchors: er60k greedy 15/15, teacher80k euler-10 ODE 15/15 (both
+complete before cell 1). Best-point (progress_cm) medians: 0.228 /
+0.891 / CELL5_BEST. ddof=1 medians recorded in the reads JSON (ddof
+was not frozen in the pre-reg; primary is ddof=0, the population std
+GRPO's own advantage normalization uses).
+
+DECISION_BLOCK
+
+Cost: GPU_HOURS GPU-h total vs the 3.5 gate (re-scoped). Instrument:
+`read_grpo_signal_probe.py` (frozen reads), `grpo_probe_chart.py`.
+Chart + reads JSON on the reports Space. Cells 3/4 re-queue as a
+final-word pair (~2.2 GPU-h) on owner call only.
