@@ -59,6 +59,7 @@ from .action_expert import (
     ActionExpertConfig,
     load_action_expert_state,
 )
+from .fast_codec import MolmoAct2FastCodec
 from .processing import (
     IMAGE_TOKEN_STRINGS,
     QuantileStats,
@@ -191,6 +192,13 @@ class MolmoAct2Predictor:
     num_state_tokens: int
     flow_matching_num_steps: int
     mask_action_dim_padding: bool
+    # Discrete (AR) pathway resources — owner steering 2026-08-13
+    # 10:02Z: the release checkpoint's trained FAST head is the RL
+    # target. ``action_token_start_id`` anchors the ``<action_i>``
+    # block (release: 151934); ``fast_codec`` is the released OpenFAST
+    # artifact. Both optional: the continuous path never touches them.
+    action_token_start_id: int | None = None
+    fast_codec: MolmoAct2FastCodec | None = None
 
     @classmethod
     def load(
@@ -200,6 +208,7 @@ class MolmoAct2Predictor:
         *,
         device: torch.device | str = "cpu",
         dtype: torch.dtype | None = None,
+        fast_tokenizer: str | Path | None = None,
     ) -> MolmoAct2Predictor:
         checkpoint_dir = resolve_checkpoint_dir(checkpoint)
         config = json.loads((checkpoint_dir / "config.json").read_text())
@@ -259,6 +268,16 @@ class MolmoAct2Predictor:
             num_state_tokens=int(config["num_state_tokens"]),
             flow_matching_num_steps=int(config["flow_matching_num_steps"]),
             mask_action_dim_padding=bool(config["mask_action_dim_padding"]),
+            action_token_start_id=(
+                None
+                if config.get("action_token_start_id") is None
+                else int(config["action_token_start_id"])
+            ),
+            fast_codec=(
+                None
+                if fast_tokenizer is None
+                else MolmoAct2FastCodec.load(fast_tokenizer)
+            ),
         )
 
     @property
@@ -457,3 +476,226 @@ class MolmoAct2Predictor:
         actions = actions[:, start : start + n_action_steps].cpu()
         unnormalized = unnormalize_action(actions, self.action_stats)
         return unnormalized.to(actions.dtype).to(torch.float32)
+
+    @torch.no_grad()
+    def predict_action_discrete(
+        self,
+        *,
+        images: list,
+        task: str,
+        state: Tensor,
+        normalize_language: bool = True,
+        on_undecodable: str = "raise",
+    ) -> DiscreteActionResult:
+        """One observation -> the executed action chunk through the
+        checkpoint's TRAINED DISCRETE pathway — their ``predict_action``
+        ``inference_action_mode='discrete'`` branch: same prompt as the
+        continuous path, then UNCONSTRAINED greedy argmax over the full
+        vocabulary until the EOS id (cap ``action_horizon × 16``,
+        loud if never hit — the reference raises too), span-extraction
+        between ``<action_start>``/``<action_end>`` (tolerant: missing
+        markers widen the span to the whole emission; non-action ids
+        inside are dropped), OpenFAST decode, their output tail (dim
+        slice, ``n_obs_steps`` chunk slice, q01/q99 unnormalize, fp32).
+
+        ``on_undecodable``: ``"raise"`` (default — instrumentation
+        wants loud) or ``"zeros"`` (the reference's silent fallback:
+        a non-decodable emission becomes a zero NORMALIZED chunk, then
+        unnormalizes like any other — parity/eval callers match their
+        deployed semantics with this).
+
+        Shapes:
+        - ``images``: per camera [H, W, 3]-coercible frames
+        - ``state``: [D] raw joint units
+        - returns actions [1, n_action_steps, action_dim] fp32, CPU,
+          joint units; token_ids = the raw emission (EOS included when
+          hit); bins = the extracted codec ids
+        """
+        if on_undecodable not in ("raise", "zeros"):
+            raise ValueError(
+                f"on_undecodable must be 'raise' or 'zeros', got {on_undecodable!r}",
+            )
+        if self.action_mode not in ("discrete", "both"):
+            raise ValueError(
+                "the discrete pathway requires checkpoint action_mode in "
+                f"{{'discrete', 'both'}}, got {self.action_mode!r}",
+            )
+        codec = self.fast_codec
+        if codec is None:
+            raise ValueError(
+                "no FAST codec attached — load(..., fast_tokenizer=<dir>) "
+                "with the released MolmoAct2-FAST-Tokenizer artifact",
+            )
+        if (
+            self.eos_token_id is None
+            or self.action_start_token_id is None
+            or self.action_end_token_id is None
+            or self.action_token_start_id is None
+        ):
+            raise ValueError(
+                "discrete generation requires eos/action_start/action_end/"
+                "action_token_start ids in the converted config",
+            )
+        lm_head = self.trunk.text.lm_head
+        assert lm_head is not None  # Molmo2Model requires the full decoder
+
+        inputs = self.batch_inputs(
+            images,
+            task,
+            state,
+            normalize_language=normalize_language,
+        )
+        action_dim = int(self.action_stats.q01.numel())
+        action_horizon = _positive_int(
+            self.metadata.get("action_horizon"),
+            default=self.max_action_horizon,
+            what="action_horizon",
+        )
+        n_action_steps = _positive_int(
+            self.metadata.get("n_action_steps"),
+            default=action_horizon,
+            what="n_action_steps",
+        )
+
+        # Prompt prefill: the continuous path's trunk forward (vision
+        # inject + causal-OR-image mask), cache retained for the
+        # incremental continuation.
+        embeds = self.trunk.build_input_embeddings(
+            inputs["input_ids"],
+            crops=inputs["crops"],
+            pooled_patches_idx=inputs["pooled_patches_idx"],
+        )
+        mask = build_multimodal_mask(
+            image_type_mask=inputs["image_type_mask"],
+            padding_mask=None,
+            dtype=embeds.dtype,
+            device=embeds.device,
+        )
+        transformer = self.trunk.text.transformer
+        cache = Molmo2KVCache(len(transformer.blocks))
+        hidden = transformer(
+            inputs_embeds=embeds,
+            attention_mask=mask,
+            cache=cache,
+        )
+        logits = lm_head(hidden[:, -1:])
+
+        # Their _continue_discrete_generation_from_output verbatim:
+        # greedy argmax over the FULL vocabulary, EOS-terminated,
+        # loud when the cap is hit without EOS.
+        prompt_length = int(inputs["input_ids"].shape[1])
+        max_steps = max(1, action_horizon * 16)
+        generated: list[Tensor] = []
+        hit_end = False
+        for step in range(max_steps):
+            next_id = torch.argmax(logits[:, -1, :], dim=-1)
+            generated.append(next_id)
+            if bool((next_id == self.eos_token_id).all()):
+                hit_end = True
+                break
+            positions = torch.full(
+                (1, 1),
+                prompt_length + step,
+                dtype=torch.long,
+                device=embeds.device,
+            )
+            hidden = transformer(
+                inputs_embeds=transformer.wte(next_id[:, None]),
+                position_ids=positions,
+                cache=cache,
+            )
+            logits = lm_head(hidden)
+        if not hit_end:
+            raise RuntimeError(
+                f"discrete continuation did not emit EOS "
+                f"{self.eos_token_id} within {max_steps} steps — the "
+                "reference raises here too",
+            )
+        token_ids = torch.stack(generated, dim=1)
+
+        bins = extract_action_bins(
+            [int(i) for i in token_ids[0].tolist()],
+            action_start_id=self.action_start_token_id,
+            action_end_id=self.action_end_token_id,
+            action_token_start_id=self.action_token_start_id,
+            block_vocab=codec.block_vocab,
+        )
+        try:
+            normalized = torch.from_numpy(
+                codec.decode(
+                    bins,
+                    time_horizon=action_horizon,
+                    action_dim=action_dim,
+                ),
+            ).to(torch.float32)[None]
+        except ValueError:
+            if on_undecodable == "raise":
+                raise
+            normalized = torch.zeros(
+                (1, action_horizon, action_dim),
+                dtype=torch.float32,
+            )
+
+        # Their discrete output tail: dim slice (decode already emits
+        # the tag width), n_obs_steps chunk slice, q01/q99 unnormalize,
+        # fp32 throughout (no bf16 round trip on this path).
+        start = self.n_obs_steps - 1
+        if start + n_action_steps > normalized.shape[1]:
+            raise ValueError(
+                f"chunk rows {start}..{start + n_action_steps} exceed the "
+                f"generated horizon {normalized.shape[1]}",
+            )
+        actions = unnormalize_action(
+            normalized[:, start : start + n_action_steps].cpu(),
+            self.action_stats,
+        ).to(torch.float32)
+        return DiscreteActionResult(
+            actions=actions,
+            token_ids=token_ids.cpu(),
+            bins=bins,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class DiscreteActionResult:
+    """``predict_action_discrete``'s full record: the executed chunk
+    plus the raw emission the parity harness and the RL instrument
+    both need (token_ids includes the terminating EOS when hit)."""
+
+    actions: Tensor  # [1, n_action_steps, action_dim] fp32 CPU
+    token_ids: Tensor  # [1, K] long CPU
+    bins: list[int]
+
+
+def extract_action_bins(
+    token_ids: list[int],
+    *,
+    action_start_id: int,
+    action_end_id: int,
+    action_token_start_id: int,
+    block_vocab: int,
+) -> list[int]:
+    """Their ``_extract_discrete_token_bins`` verbatim, tolerant by
+    design: the span opens after the FIRST ``<action_start>`` (or at 0
+    when absent), closes at the first ``<action_end>`` after it (or at
+    the end when absent), and every id inside that is not an
+    ``<action_i>`` row is silently dropped — exactly the reference's
+    filter, so parity holds on malformed emissions too."""
+    start_index = None
+    end_index = None
+    for index, token_id in enumerate(token_ids):
+        if token_id == action_start_id:
+            start_index = index
+            break
+    if start_index is not None:
+        for index in range(start_index + 1, len(token_ids)):
+            if token_ids[index] == action_end_id:
+                end_index = index
+                break
+    span_start = 0 if start_index is None else start_index + 1
+    span_end = len(token_ids) if end_index is None else end_index
+    return [
+        token_id - action_token_start_id
+        for token_id in token_ids[span_start:span_end]
+        if 0 <= token_id - action_token_start_id < block_vocab
+    ]
