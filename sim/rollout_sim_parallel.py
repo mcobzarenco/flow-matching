@@ -38,6 +38,7 @@ Usage (MUJOCO_GL=egl must be set — spawn workers inherit it):
 
 import argparse
 import dataclasses
+import io
 import json
 import multiprocessing as mp
 import subprocess
@@ -208,6 +209,16 @@ def parse_args() -> argparse.Namespace:
         "(completion order under workers>1) — the live-progress stream "
         "a watcher can tail; the authoritative rows stay in --out-json",
     )
+    parser.add_argument(
+        "--emit-training-rows",
+        type=Path,
+        default=None,
+        metavar="DIR",
+        help="write one NPZ per (seed, draw, replan) predict — frames "
+        "(jpeg), sampled ids, per-token chosen logprobs, state, grammar "
+        "masks — the token-GRPO replay surface (AR-suffix checkpoints "
+        "only; rollout rows are untouched, capture is observation)",
+    )
     parser.add_argument("--out-dir", type=Path, default=OUTPUT_DIR)
     parser.add_argument(
         "--out-json",
@@ -221,6 +232,11 @@ def parse_args() -> argparse.Namespace:
         parser.error("exactly one of --checkpoint / --hold is required")
     if args.convmap_seam_stats is not None and args.hold:
         parser.error("--convmap-seam-stats wraps a policy — meaningless with --hold")
+    if args.emit_training_rows is not None and args.hold:
+        parser.error(
+            "--emit-training-rows records a policy's token stream — "
+            "meaningless with --hold",
+        )
     if args.convmap_override and args.convmap_seam_stats is None:
         parser.error("--convmap-override requires --convmap-seam-stats")
     if args.replans is not None and args.episode_seconds is not None:
@@ -327,6 +343,77 @@ class WorkerDiedError(RuntimeError):
     pass
 
 
+class TrainingRowWriter:
+    """``--emit-training-rows`` sink (token-GRPO phase-2 instrument,
+    design memo 2026-08-13 §8 item 1): one NPZ per (seed, draw, replan)
+    predict — the two observation frames as encoded JPEG bytes, the
+    state vector, and the policy's TokenRow (sampled codec ids,
+    per-token chosen logprobs under the decode's own masked softmax,
+    bit-packed grammar masks) — plus ``meta.json`` (run-level RNG-key
+    provenance: the sampling stream is fully determined by the recorded
+    run seed + each row's (seed, draw, replan) identity through
+    ``stable_sample_rng``) and an append-only ``index.jsonl``. Frames
+    are stored pre-normalization (the raw uint8 the item wore), so the
+    replay collator re-encodes exactly the rollout's prompt inputs;
+    JPEG is the registered lossy budget (~0.3 GB/step, pruned after the
+    gradient pass)."""
+
+    def __init__(self, root: Path, meta: dict[str, Any]) -> None:
+        self.root = root
+        root.mkdir(parents=True, exist_ok=True)
+        (root / "meta.json").write_text(json.dumps(meta, indent=1))
+        self.index_path = root / "index.jsonl"
+        self.index_path.write_text("")  # truncate a stale stream
+        self.rows_written = 0
+
+    @staticmethod
+    def _jpeg(frame: np.ndarray) -> np.ndarray:
+        from PIL import Image  # parent-only; workers never construct a writer
+
+        buffer = io.BytesIO()
+        Image.fromarray(frame).save(buffer, format="JPEG", quality=92)
+        return np.frombuffer(buffer.getvalue(), dtype=np.uint8)
+
+    def write(
+        self,
+        *,
+        seed: int,
+        replan: int,
+        draw: int,
+        top: np.ndarray,
+        wrist: np.ndarray,
+        state: np.ndarray,
+        row: Any,  # bijou.eval.policies.TokenRow (parent-only import)
+    ) -> None:
+        name = f"seed{seed:03d}_draw{draw:02d}_replan{replan:03d}.npz"
+        with (self.root / name).open("wb") as stream:
+            np.savez_compressed(
+                stream,
+                top_jpeg=self._jpeg(top),
+                wrist_jpeg=self._jpeg(wrist),
+                state=np.asarray(state, dtype=np.float32),
+                ids=row.ids,
+                logprobs=row.logprobs,
+                allowed_packed=row.allowed_packed,
+            )
+        with self.index_path.open("a") as stream:
+            stream.write(
+                json.dumps(
+                    {
+                        "path": name,
+                        "seed": seed,
+                        "draw": draw,
+                        "replan": replan,
+                        "tokens": int(row.ids.shape[0]),
+                        "vocab_total": int(row.vocab_total),
+                        "temperature": float(row.temperature),
+                    },
+                )
+                + "\n",
+            )
+        self.rows_written += 1
+
+
 def serve(
     conns: Sequence[Any],
     predict_batch: Callable[[list[tuple[Any, ...]]], list[np.ndarray]],
@@ -386,6 +473,13 @@ def main() -> int:
     args = parse_args()
     torch.set_float32_matmul_precision("high")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    commit = subprocess.run(
+        ["git", "rev-parse", "--short", "HEAD"],
+        cwd=Path(__file__).parent,
+        capture_output=True,
+        text=True,
+        check=False,
+    ).stdout.strip()
 
     if args.hold:
         policy = None
@@ -412,6 +506,38 @@ def main() -> int:
             f"policy: {policy.name} "
             f"({args.method}-{args.sample_steps}, horizon {horizon})",
         )
+    row_writer: TrainingRowWriter | None = None
+    if args.emit_training_rows is not None:
+        from bijou.decoders.ar_backbone import ARSuffixDecoder
+
+        assert policy is not None  # parse_args refused --hold
+        if not isinstance(policy.model.decoder, ARSuffixDecoder):
+            raise SystemExit(
+                "--emit-training-rows records the AR token stream; this "
+                "checkpoint's decoder is "
+                f"{type(policy.model.decoder).__name__}",
+            )
+        policy.capture_token_rows = True
+        row_writer = TrainingRowWriter(
+            args.emit_training_rows,
+            {
+                "checkpoint": str(args.checkpoint),
+                "run_seed": args.seed,
+                "ar_temperature": args.ar_temperature,
+                "sample_steps": args.sample_steps,
+                "method": args.method,
+                "expert_dtype": args.expert_dtype,
+                "stats_repo_id": STATS_REPO_ID,
+                "commit": commit,
+                # The RNG-key convention: each row's sampling stream is
+                # stable_sample_rng(run_seed, repo_id(draw),
+                # episode_index=seed, frame_index=replan, draw=0) with
+                # repo_id "sim/eval100" at draw 0 and
+                # "sim/eval100/drawNN" otherwise (sim_item's keying).
+                "rng_key": "stable_sample_rng(run_seed, repo_id(draw), seed, replan, 0)",
+            },
+        )
+        print(f"training rows -> {args.emit_training_rows}")
     replans = resolve_replans(args.replans, args.episode_seconds, horizon)
     print(
         f"episode budget: {replans} replans x {horizon} ticks = "
@@ -514,6 +640,26 @@ def main() -> int:
             start = time.perf_counter()
             chunks = policy.predict(items, indices)
             predict_ms.append((time.perf_counter() - start) * 1000)
+            if row_writer is not None:
+                rows = policy.last_token_rows
+                if rows is None or len(rows) != len(requests):
+                    raise WorkerDiedError(
+                        "--emit-training-rows: predict retained "
+                        f"{0 if rows is None else len(rows)} token rows "
+                        f"for {len(requests)} requests — the capture "
+                        "surface broke, stop",
+                    )
+                for message, row in zip(requests, rows, strict=True):
+                    _, _, seed, replan, draw, top, wrist, state = message
+                    row_writer.write(
+                        seed=seed,
+                        replan=replan,
+                        draw=draw,
+                        top=top,
+                        wrist=wrist,
+                        state=state,
+                        row=row,
+                    )
             return [chunk.numpy() for chunk in chunks]
 
     if args.rows_jsonl is not None:
