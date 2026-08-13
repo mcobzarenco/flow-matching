@@ -1,6 +1,63 @@
 # Now
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-13 13:45–14:2xZ (real `date -u` at stamp: 14:18) —
+work session: **token-GRPO instrument item 3 CLOSED on the molmoact2
+surface — the RL rollout draw (masked-softmax sampling + TokenRow
+capture on `predict_action_discrete`) and the replay collator landed
+oracle-gated (`a268046`, check.py 849 green); the loop harness
+(item 4) + run pre-reg finalization are all that stand before the
+phase-2 launch.***
+
+**Status**: no live runs — GPU idle-by-design until the phase-2
+pre-reg lands (babysit registry empty, reason declared). Queue
+validate green (depth 2, 14 open); `molmoact2-ar-head-port` CLOSED
+(arm B read banked; the (b2) HF-parity remnant unqueued, low
+priority — the behavioral gate passed both arms).
+
+**Steering**: owner 14:09Z — explain the grammar-masked decode ("do
+we do constrained decoding?") + why seed 73 flipped ("malformed
+actions zero-filled?") → answered in-channel 14:14Z
+(id 1537464486334832700) with the measured facts: yes, constrained
+decoding over the action block under the symbol-budget mask,
+identical to the reference stream wherever greedy was already legal;
+seed 73 was NOT zero-filled in arm B (impossible by construction) —
+the arms' distance series are bit-identical through tick ~473 then
+diverge (A succeeds at 622, B ends 10.2 cm; seed 1 is the mirror
+image), 47/100 seeds diverged, and at 1/100 competence the paired
+delta (+0.728 cm CI95 excl. 0), not the success count, is the
+registered read. Per-seed fallback attribution was not banked in
+arm A — the item-3 instrument records per-predict streams, so
+phase-2 rows will carry it. No reply as of 14:2xZ; the 11:07/11:18Z
+delegation stands.
+
+**Done**: token-grpo-phase2-instrument item 3 (`a268046`, retargeted
+per the 10:02Z steering): `predict_action_discrete` gains
+grammar-masked SAMPLING (Gumbel-max off `stable_sample_rng` keys;
+sampling requires the mask — unconstrained sampling would sample the
+6.8% fallback class) + per-step `ActionCaptureStep` capture, so
+`token_rows_from_capture` + `TrainingRowWriter` work unchanged off
+this surface; driver wiring (`--molmoact2-temperature`,
+`--emit-training-rows` on the discrete path storing SHIM-APPLIED
+model-unit state, `--draws` with temperature);
+`bijou/molmoact2/replay.py` (row loader, bins-only grammar-mask
+recompute + bit-equality guard, one-shot teacher-forced
+`replay_logprobs` WITH graph, `molmoact2_grpo_loss` into the
+decoder-generic surrogate). 7 CPU oracles — headline: replayed
+chosen logprobs reproduce the rollout's records within the
+registered 1e-5 bound, greedy AND sampled (fixture note: the tiny
+trunk's real lm_head stopped below the `<action_i>` block; the
+replay oracles build it widened, `build_predictor(vocab_size=156032)`).
+Queue ×2 (port closed, item 3 folded).
+
+**Next**: `queue_cli.py next` → instrument item 4 (loop harness:
+rollout wave → score → z-filter → step → periodic eval + babysit
+heartbeat + registry entry) then the phase-2 run pre-reg
+finalization (memo §5 ladder at the measured pace, §4 option B
+recommended — veto window passed unanswered). GPU legs launch on the
+finalized pre-reg per the delegation. `queue.json` canonical.*
 
 *Updated 2026-08-13 13:40–13:4xZ (real `date -u` at stamp: 13:42) —
 tick, babysit: **quiet tick after the arm-B close-out — no steering,
@@ -90,30 +147,19 @@ on `predict_action_discrete`, replay collator, loop harness) and the
 phase-2 run pre-reg finalization (ladder re-priced at the measured
 ~0.4 s/chunk pace). `queue.json` canonical.*
 
-*Updated 2026-08-13 09:41–09:5xZ (real `date -u` at stamp: 09:42) —
-tick, babysit: **quiet tick — no steering, no live runs, GPU
-idle-by-design; `run_work_next` re-armed for the CPU lanes.***
-
-**Status**: no live runs — babysit exit 0, 0 registered runs;
-nvidia-smi 0%/0 MiB. Queue validate green (depth 2, 14 open).
-
-**Steering**: none new — read empty 09:41Z, history-5 shows no
-reactions on the 09:13Z outage-recovery or 09:36Z item-1 close
-posts. Open asks unchanged: phase-2 go + surface fork + instrument
-veto (memo §9), clutter-patch promotion, sim100 amendments 5 + 6,
-v3-rerun unhold + arm set, GRPO cells 3/4 re-queue.
-
-**Done**: liveness/queue/GPU verified; `run_work_next` re-armed
-(CPU lanes queued — instrument items 2–4 with the veto window open,
-`sim-arm-photometric-links` pre-reg). Oldest body entry + footer
-note rolled to the archive.
-
-**Next**: chained work session → `queue_cli.py next`: instrument
-items 2–4 (GRPO step, replay collator, loop harness) or
-`sim-arm-photometric-links` (pre-reg first, ~0.02 GPU-h gate read).
-GPU legs launch on owner calls only. `queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-13 13:45–14:3xZ (work; 0 new GPU-h — CPU instrument
+critical path, exploit): token-GRPO instrument item 3 CLOSED
+retargeted to the molmoact2 surface (`a268046`): masked-softmax
+sampling + TokenRow capture on `predict_action_discrete`, driver
+row-emission wiring, replay collator + GRPO glue
+(`bijou/molmoact2/replay.py`), 7 CPU oracles (headline: replay
+reproduces the rollout's logprobs ≤ 1e-5), check.py 849 green. Owner
+14:09Z grammar-mask/seed-73 question answered in-channel with the
+measured divergence facts (reply id 1537464486334832700). Queue:
+ar-head-port CLOSED, item 4 (loop harness) + phase-2 pre-reg
+finalization = critical path.
 
 Session 2026-08-13 13:40–13:4xZ (tick, babysit; 0 new GPU-h — GPU
 idle-by-design, CPU critical path queued): quiet tick — no owner
