@@ -24,7 +24,8 @@ from __future__ import annotations
 
 import dataclasses
 from pathlib import Path
-from typing import override
+from types import SimpleNamespace
+from typing import cast, override
 
 import numpy as np
 import pytest
@@ -275,6 +276,101 @@ def test_masked_mode_repairs_illegal_streams(
         )
         == []
     )
+
+
+def test_driver_adapter_shim_and_fallback_accounting() -> None:
+    """Item (d0)'s CPU oracle: the parallel driver's discrete predict
+    round maps state IN through the official shim, chunks BACK through
+    its inverse, preserves request order, and flags exactly the
+    non-decodable (zeros-fallback) emissions."""
+    import torch as pt
+
+    from bijou.eval.molmo_norm import AffineMap
+    from sim.rollout_sim_parallel import (
+        MOLMOACT2_OFFICIAL_OFFSETS_DEG,
+        MOLMOACT2_OFFICIAL_SIGNS,
+        molmoact2_discrete_chunks,
+    )
+
+    shim = AffineMap(
+        scale=pt.tensor(MOLMOACT2_OFFICIAL_SIGNS),
+        offset=pt.tensor(MOLMOACT2_OFFICIAL_OFFSETS_DEG),
+    )
+    lengths = np.zeros(16, dtype=np.int64)
+    lengths[1], lengths[2], lengths[3] = 1, 2, 3
+    horizon, dim = 2, 6  # total budget 12 symbols; dim matches the shim
+    seen_states: list[pt.Tensor] = []
+    chunks_out = [
+        pt.arange(horizon * dim, dtype=pt.float32).reshape(1, horizon, dim),
+        pt.full((1, horizon, dim), 90.0),
+    ]
+    bins_out = [[3, 3, 3, 3], [3, 3, 3, 2]]  # 12 symbols, then 11 (fallback)
+
+    class _StubPredictor:
+        def __init__(self) -> None:
+            self.calls = 0
+            self.fast_codec = SimpleNamespace(symbol_lengths=lengths)
+            self.metadata = {"action_horizon": horizon}
+            self.action_stats = SimpleNamespace(q01=pt.zeros(dim))
+
+        def predict_action_discrete(self, **kwargs: object):  # noqa: ANN202
+            seen_states.append(cast(pt.Tensor, kwargs["state"]))
+            assert kwargs["task"]
+            assert isinstance(kwargs["images"], list)
+            result = SimpleNamespace(
+                actions=chunks_out[self.calls],
+                bins=bins_out[self.calls],
+            )
+            self.calls += 1
+            return result
+
+    state = np.arange(6, dtype=np.float32)
+    requests = [
+        (0, 0, 7, 0, 0, "top", "wrist", state),
+        (0, 1, 8, 0, 0, "top", "wrist", state + 1),
+    ]
+    chunks, fallbacks = molmoact2_discrete_chunks(
+        _StubPredictor(),
+        shim,
+        requests,
+        task="pick",
+        grammar_masked=False,
+    )
+    assert fallbacks == [False, True]
+    for i, raw in enumerate((state, state + 1)):
+        expected_in = shim.apply(pt.from_numpy(raw))
+        assert pt.equal(seen_states[i], expected_in)
+        expected_out = shim.invert(chunks_out[i][0]).numpy()
+        assert np.array_equal(chunks[i], expected_out)
+
+
+def test_driver_adapter_parser_guards(monkeypatch: pytest.MonkeyPatch) -> None:
+    import sys
+
+    from sim.rollout_sim_parallel import parse_args
+
+    def argv(*extra: str) -> None:
+        monkeypatch.setattr(sys, "argv", ["rollout_sim_parallel.py", *extra])
+
+    argv("--molmoact2-discrete", "ckpt", "--checkpoint", "other")
+    with pytest.raises(SystemExit):
+        parse_args()
+    argv("--molmoact2-discrete", "ckpt", "--ar-temperature", "1.0")
+    with pytest.raises(SystemExit):
+        parse_args()
+    argv("--molmoact2-discrete", "ckpt", "--draws", "2")
+    with pytest.raises(SystemExit):
+        parse_args()
+    argv("--molmoact2-discrete", "ckpt", "--emit-training-rows", "rows")
+    with pytest.raises(SystemExit):
+        parse_args()
+    argv("--checkpoint", "ckpt", "--molmoact2-grammar-masked")
+    with pytest.raises(SystemExit):
+        parse_args()
+    argv("--molmoact2-discrete", "ckpt", "--molmoact2-grammar-masked")
+    args = parse_args()
+    assert args.molmoact2_discrete == "ckpt"
+    assert args.molmoact2_grammar_masked
 
 
 def test_discrete_guards(
