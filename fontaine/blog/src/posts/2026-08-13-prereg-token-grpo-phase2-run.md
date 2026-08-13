@@ -147,3 +147,21 @@ result claim.
 
 *Frozen at commit time; the launch immediately follows the push.
 Amendments only via numbered addenda below.*
+
+---
+
+**Addendum 1 (2026-08-13 16:1xZ — plumbing fix + relaunch, no
+constant changed).** Launch 1 (14:58:55Z) crashed rc 1 at 15:51:26Z
+in the FIRST gradient step: `grpo_objective_sums` moved the caller's
+advantages/rollout-logprob tensors to the training dtype but not the
+training **device** (cuda/cpu mix — invisible to the CPU oracles; the
+exact plumbing class R0 exists to catch). Everything before the step
+was healthy: step-0 baseline banked (held-out greedy composite
+**1.868, 2/20 successes**), wave 0 complete (64 sampled episodes,
+~35 min ≈ 0.58 GPU-h — inside the estimate band), 1,889 training rows
+written, mask verification passed, replay forward ran. Fix: normalize
+`old_logprobs`/`advantages` with `.to(new_logprobs)` (device+dtype)
+at one point in the surrogate — semantics unchanged, check.py 861
+green. Relaunch rides the fix commit; the ~0.9 GPU-h of launch 1
+counts against the R0 gate (honest accounting: R0 total budget may
+land ~3.1 of the 3.5 gate).*
