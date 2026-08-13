@@ -363,6 +363,49 @@ owner call. ~0.04 GPU-h. For scale: v1 scene −0.049, v2 inpainting
 - [direction/softness chart](https://mcobzarenco-fontaine-reports.static.hf.space/chart__contact_shadow_fit.png)
   · [v4 sample frame](https://mcobzarenco-fontaine-reports.static.hf.space/chart__contact_shadow_v4_sample.png)
 
+## Fitted wrist lens — cubemap render path + gate: the fit's center term double-counts the pose, the curve-only refit passes ([lit page](papers/fisheye-lens-fitting.md), 08-13)
+
+The deployed wrist warp assumed an ideal equidistant lens centered
+at the image midpoint; the plumb-line fit on the 150 pinned real
+frames (leg (a), 08-13 01:4xZ) measured the real module off-center
+(22 px left / 14 px down, ~5σ) with stronger peripheral compression
+(−12.8 px at the corner, CI-excludes-0). Leg (b) landed the render
+path that can draw ANY lens: the wrist source is a pinhole cubemap
+around the camera axis (output→face map precomputed, so runtime is
+one bilinear gather; only referenced faces render; face focal
+matched to the deployed source so A/Bs read geometry, not
+sharpness; the camera-riding headlight is re-pointed at the base
+axis per face — without that, face boundaries carry a shading
+seam, caught by the rotated-cubemap oracle at mean|Δ| 6.77). Gate
+read (pre-reg 03:27Z, 20 seeds × 5 draws, er60k trunk, control
+0.560): **full fit 0.667 FAIL — and a labeled post-hoc center-only
+arm reads 0.672, reproducing the whole regression**. The 08-12
+wrist pose re-tune was fit to real frames under the deployed lens,
+so it already absorbed the principal-point offset (~2.6°
+yaw-equivalent); bolting the fitted center on top applies it
+twice. The **curve-only refit (k2 +0.101, k4 −0.036) passes: 0.523
+≤ the 0.548 gate**, paired Δknn5 −7.6e-07 CI95 [−8.5e-07,
+−6.8e-07], **96/100 frames closer** — ~7× the contact-shadow GO
+effect, and cost-neutral (single face covers the frame: 73 vs 70
+ms/tick). `lens_model="fitted"` now pins the curve-only params;
+default stays equidistant pending the sim100 amendment-6 owner
+call. Top cam bit-identical across all arms (0.713 — now the
+frontier number). Full-fit center use is parked behind a joint
+pose+lens refit (`sim-joint-pose-lens-refit`, owner-held).
+~0.04 GPU-h total (4 probe arms).
+
+- [gate chart](https://mcobzarenco-fontaine-reports.static.hf.space/chart__lens_gate.png)
+  · sample frames: [equidistant](https://mcobzarenco-fontaine-reports.static.hf.space/wrist_lens_seed0_equidistant.png)
+  · [full fit](https://mcobzarenco-fontaine-reports.static.hf.space/wrist_lens_seed0_fitted_full.png)
+  · [curve-only](https://mcobzarenco-fontaine-reports.static.hf.space/wrist_lens_seed0_fitted_curveonly.png)
+- gate JSONs: [equidistant](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_encoder_ood_probe_lensgate_equidistant_arm.json)
+  · [full fit](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_encoder_ood_probe_lensgate_fitted_arm.json)
+  · [center-only](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_encoder_ood_probe_lensgate_centeronly_arm.json)
+  · [curve-only](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_encoder_ood_probe_lensgate_curveonly_arm.json)
+- leg (a): [fit JSON](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__wrist_lens_fit.json)
+  · [fit chart](https://mcobzarenco-fontaine-reports.static.hf.space/chart__wrist_lens_fit.png)
+  — plumb-line θ→r fit, decompositions, bootstrap
+
 ## 20-seed behavioral spot-check under v3 ([pre-reg](posts/2026-08-12-prereg-sim-spot20-v3.md), [results](posts/2026-08-12-sim-spot20-v3-results.md), 08-12)
 
 Same 20 seeds, physics bit-identical (spawn rows byte-matched

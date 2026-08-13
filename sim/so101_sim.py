@@ -539,11 +539,25 @@ class SO101Sim:
     # sharpness is unchanged and a fitted-vs-deployed A/B reads lens
     # geometry, not resolution. Wrist only — the top plate composite
     # already carries the real top lens (bit-identical oracle).
+    #
+    # Pinned params are the fit's CURVE-ONLY refit (center at the
+    # image midpoint), not the full fit: the 08-13 paired gate probe
+    # (20 seeds x 5 draws, reports/analysis__sim_encoder_ood_probe_
+    # lensgate_*_arm.json) read the full fit at wrist knn5 AUROC 0.667
+    # vs 0.560 control with the CENTER component alone reproducing the
+    # whole regression (0.672) — the principal-point shift is
+    # degenerate with the 08-12 wrist pose re-tune, which was fit to
+    # real frames under the deployed lens and already absorbed it.
+    # The curve-only refit passes the registered gate: AUROC 0.523,
+    # paired dknn5 -7.6e-07 CI95 [-8.5e-07, -6.8e-07], 96/100 frames
+    # closer to real. Full-fit params (plank residual 0.898 px vs
+    # 0.937 curve-only) stay recorded in wrist_lens_fit.json; using
+    # them requires a JOINT pose+lens refit first.
     WRIST_LENS_FIT: ClassVar[dict[str, float]] = {
-        "cx": 297.72522293567516,
-        "cy": 253.23730631916195,
-        "k2": 0.03263446384297104,
-        "k4": 0.023544191668793214,
+        "cx": 319.5,
+        "cy": 239.5,
+        "k2": 0.1013541981621529,
+        "k4": -0.035671567335666635,
     }
     LENS_FACE_HALF_DEG = 46.0
 
