@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-13T15:02:00Z
+**Updated:** 2026-08-13T21:05:00Z
 
 **Depth call:** depth 3: arm-B read+prune at its ~13:3xZ boundary; token-grpo-phase2-instrument items 3-4 on the molmoact2 surface (gate passed, lane GO); sim-arm-photometric-links pre-reg.
 
-**14 open** (Live 0 · Queued 2 · Blocked 12 · Done 146)
+**14 open** (Live 0 · Queued 2 · Blocked 12 · Done 147)
 
 ## 🔴 Live (0)
 
@@ -18,20 +18,6 @@
 
 *ready — waiting on a window or a boundary*
 
-**`token-grpo-phase2-run`** · `gpu-local`
-
-Token-GRPO phase-2 RUN (LIVE: R0 launched 14:58:55Z 08-13, unit fontaine-grpo-r0, babysit entry grpo_phase2_r0) per the FINALIZED pre-reg 8548969: checkpoint allenai/MolmoAct2-SO100_101, option-B text stack at 5e-6, T=1.0, 8 seed…
-
-**boundary:** R0 boundary at unit rc (ETA ~1.5-3.5 h from 14:58Z; first poll ~1.8 s/round = faster than the arm-B prior): frozen reads per pre-reg - measured GPU-h/step reprices R1/R2; ON-SURFACE signal median group std &gt;= 0.25 cm AND &gt;= 8/16 nondeg else STOP; step-1 mean_ratio in [0.95,1.05] + clip_fraction &lt; 0.2 else STOP; KL numeric line set from R0. On green: R1 resumes step_0002.pt --total-steps 17 (same unit pattern); rung-boundary checkpoint uploads per standing rule. rc 3 = tripwire stop + re-scope in-channel, rows kept. · [pre-reg](posts/2026-08-13-prereg-token-grpo-phase2-run.md)
-
-<details><summary>full record</summary>
-
-Token-GRPO phase-2 RUN (LIVE: R0 launched 14:58:55Z 08-13, unit fontaine-grpo-r0, babysit entry grpo_phase2_r0) per the FINALIZED pre-reg 8548969: checkpoint allenai/MolmoAct2-SO100_101, option-B text stack at 5e-6, T=1.0, 8 seeds x 8 draws/step, held-out greedy seeds 200-219. Ladder: R0 2-step smoke (gate 3.5 GPU-h) -&gt; R1 to step 17 -&gt; R2 sized to the 35 GPU-h total gate. Loop mechanizes the section-7 tripwires (rc 3 = fired).
-
-</details>
-
----
-
 **`sim-arm-photometric-links`** · `cpu`
 
 Arm photometric fix, named target LINKS both instances (arm-split diagnostic 06:4xZ 08-13: links 88% of the arm's keep-only delta on 6.1% px; follower/leader sub-additive so both must be treated): replace the flat recolored link…
@@ -41,6 +27,20 @@ Arm photometric fix, named target LINKS both instances (arm-split diagnostic 06:
 <details><summary>full record</summary>
 
 Arm photometric fix, named target LINKS both instances (arm-split diagnostic 06:4xZ 08-13: links 88% of the arm's keep-only delta on 6.1% px; follower/leader sub-additive so both must be treated): replace the flat recolored link material with a real-arm-derived photometric model — mine link-region pixel stats (median color, specular highlights, texture) from real v2 top frames via the leg-(a) segmentation masks projected onto real-registered poses OR simple material grade (specular+roughness) fit to real crops; gate on the pinned 20x5 probe vs the no_links removal ceiling 0.814 direction (patched-arm target: only_links moves toward plate_only). Record-only rider: mounts are per-pixel most distinctive (no_mount 0.713-&gt;0.654) — include a cheap mount-retexture arm in the same run if it costs no extra RNG draws. Pre-reg with explicit bar before any read.
+
+</details>
+
+---
+
+**`token-grpo-phase2-rescope-prereg`** · `cpu`
+
+Token-GRPO phase-2 RE-SCOPE pre-reg (the R0 STOP boundary's registered fallback, 21:0xZ 08-13): design + pre-register the next rung on option A (patch-only trainable surface
+
+**boundary:** Queued 21:0xZ 08-13 at the R0 STOP close. CPU-side design + pre-reg post; the GPU rung it authorizes prices its own gate inside the remaining ~31 GPU-h of the 35 ladder total.
+
+<details><summary>full record</summary>
+
+Token-GRPO phase-2 RE-SCOPE pre-reg (the R0 STOP boundary's registered fallback, 21:0xZ 08-13): design + pre-register the next rung on option A (patch-only trainable surface — dissolves the VRAM fail: 76.53 GiB steady-state was option B's, and the instability fallback rule named A) + explicit collapse mitigation calibrated off the R0 curves (one step at lr 5e-6: chosen_nll 0.77-&gt;0.33, anchor_kl 0.0215-&gt;0.0885, wave-2 5/8 groups all-8-draws-identical, held-out greedy -1.868 paired). Candidate levers to price IN THE PRE-REG, not ad hoc: lr down 5-10x; advantage tempering/clip tightening; KL penalty ON with the R0-measured scale as the line; eval-every 1 on the early rung so greedy damage is visible per step. step_0001/0002.pt on local disk are the diagnostic calibration artifacts. Pre-reg in-channel BEFORE any launch (delegation 11:07/11:18Z active).
 
 </details>
 
@@ -216,9 +216,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (146)
+## ✅ Done (147)
 
 *closed — the full record stays in each fold*
+
+**`token-grpo-phase2-run`** · `gpu-local`
+
+Token-GRPO phase-2 RUN — R0 COMPLETE 20:54:30Z 08-13 rc 0 (4 launches; crashes: device mix 9ffc1c1, Adam-init OOM d0b9a44, worker-headroom OOM 78cbb65; launch 4 = step_0001.pt resume, R1 resume path validated)
+
+**boundary:** CLOSED 21:0xZ 08-13 at the R0 STOP boundary. Follow-up = token-grpo-phase2-rescope-prereg (queued): the registered option-A fallback + collapse mitigation, NEW pre-reg before any launch. · [pre-reg](posts/2026-08-13-prereg-token-grpo-phase2-run.md)
+
+<details><summary>full record</summary>
+
+Token-GRPO phase-2 RUN — R0 COMPLETE 20:54:30Z 08-13 rc 0 (4 launches; crashes: device mix 9ffc1c1, Adam-init OOM d0b9a44, worker-headroom OOM 78cbb65; launch 4 = step_0001.pt resume, R1 resume path validated). BOUNDARY VERDICT: STOP — VRAM gate FAIL (76.53 GiB steady-state &gt;= 75; option B measured-marginal on 1xH100), signal gate FAIL (wave-2 median group std 0.0087 cm, 5/8 groups all-draws-identical; one step at lr 5e-6 sharpened the 4B stack: chosen_nll 0.77-&gt;0.33, anchor_kl 4x/step), endpoint held-out collapsed 1.868 -&gt; -0.0, 0/20, paired delta -1.868 CI [-4.41,-0.03]. R1 NOT launched by frozen rule; ~3.8/5.5 GPU-h ops gate spent. Results in the pre-reg post.
+
+</details>
+
+---
 
 **`token-grpo-phase2-instrument`** · `cpu`
 
