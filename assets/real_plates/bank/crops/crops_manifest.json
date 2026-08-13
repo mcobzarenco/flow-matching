@@ -1,0 +1,132 @@
+{
+ "prereg": "fg appearance pass leg (b), in-channel 05:23Z 2026-08-13",
+ "novelty_delta": 40.0,
+ "feather_sigma": 2.0,
+ "commit": "e6559d8",
+ "objects": {
+  "mouse": {
+   "episode": 4,
+   "bbox_xywh": [
+    327,
+    47,
+    110,
+    117
+   ],
+   "anchor_world_xy": [
+    0.4915,
+    -0.1898
+   ],
+   "anchor_px": [
+    376.3,
+    88.5
+   ],
+   "area_px": 3510,
+   "manifest_area_px": 3510,
+   "height_m": 0.018,
+   "mode": "absolute",
+   "source_gain": [
+    0.9967,
+    1.0054,
+    1.0248
+   ],
+   "source_bias": [
+    1.49,
+    1.3,
+    -2.34
+   ]
+  },
+  "mug": {
+   "episode": 4,
+   "bbox_xywh": [
+    194,
+    29,
+    92,
+    132
+   ],
+   "anchor_world_xy": [
+    0.4444,
+    -0.014
+   ],
+   "anchor_px": [
+    239.0,
+    88.2
+   ],
+   "area_px": 5134,
+   "manifest_area_px": 5134,
+   "height_m": 0.06,
+   "mode": "absolute",
+   "source_gain": [
+    0.9967,
+    1.0054,
+    1.0248
+   ],
+   "source_bias": [
+    1.49,
+    1.3,
+    -2.34
+   ]
+  },
+  "laptop": {
+   "episode": 11,
+   "bbox_xywh": [
+    552,
+    333,
+    88,
+    145
+   ],
+   "anchor_world_xy": [
+    0.0132,
+    -0.4473
+   ],
+   "anchor_px": [
+    591.9,
+    419.7
+   ],
+   "area_px": 2627,
+   "manifest_area_px": 2627,
+   "height_m": 0.01,
+   "mode": "delta_about_canonical",
+   "source_gain": [
+    1.0019,
+    1.0098,
+    1.0214
+   ],
+   "source_bias": [
+    0.68,
+    -2.27,
+    -4.26
+   ]
+  },
+  "pcb": {
+   "episode": 17,
+   "bbox_xywh": [
+    194,
+    271,
+    92,
+    77
+   ],
+   "anchor_world_xy": [
+    0.1449,
+    -0.0121
+   ],
+   "anchor_px": [
+    231.4,
+    315.4
+   ],
+   "area_px": 694,
+   "manifest_area_px": 694,
+   "height_m": 0.002,
+   "mode": "fixed_canonical",
+   "source_gain": [
+    1.0015,
+    1.0012,
+    1.0205
+   ],
+   "source_bias": [
+    -1.66,
+    0.48,
+    -2.04
+   ]
+  }
+ }
+}
