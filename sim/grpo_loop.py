@@ -572,6 +572,18 @@ def append_jsonl(path: Path, row: dict[str, Any]) -> None:
         stream.write(json.dumps(row) + "\n")
 
 
+def release_cached_vram() -> None:
+    """Return reserved-but-unallocated CUDA cache to the driver before
+    any wave spawns sim workers: after a gradient pass the parent's
+    caching allocator retains the ~70 GiB activation peak as reserved
+    segments, and the spawned workers (own CUDA contexts + GPU post
+    tensors) must allocate against what the driver has left — launch 3
+    OOM'd in a worker at the wave-1 reset with parent allocated ~50
+    GiB but reserved ~78 GiB."""
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+
 def save_checkpoint(
     config: GRPOLoopConfig,
     step: int,
@@ -634,6 +646,7 @@ def run_grpo_loop(
     optimizer: torch.optim.Optimizer | None = None,
     start_step: int = 0,
     baseline: dict[int, float] | None = None,
+    anchor: AnchorSnapshot | None = None,
 ) -> LoopResult:
     """The synchronous loop (module docstring). ``wave_fn(step,
     seeds) -> (episodes, rows_dir)`` runs one sampled training wave
@@ -646,7 +659,11 @@ def run_grpo_loop(
     named = parameters if parameters is not None else apply_option_b_freeze(predictor)
     if optimizer is None:
         optimizer = build_optimizer(named, lr=config.lr)
-    anchor = AnchorSnapshot(named)
+    if anchor is None:
+        # Callers resuming a checkpoint must pass the anchor captured
+        # BEFORE the restore — snapshotting here would silently rebase
+        # the KL reference onto the resumed weights.
+        anchor = AnchorSnapshot(named)
     tripwires = TripwireState()
     eval_seeds = list(
         range(config.eval_seed_base, config.eval_seed_base + config.eval_seed_count),
@@ -657,6 +674,7 @@ def run_grpo_loop(
 
     def run_eval(at_step: int) -> str | None:
         nonlocal baseline, last_eval
+        release_cached_vram()
         episodes = eval_fn(eval_seeds)
         facts = eval_facts(at_step, episodes, baseline)
         last_eval = facts
@@ -699,6 +717,7 @@ def run_grpo_loop(
             config.train_seed_base + step * config.seeds_per_step + i
             for i in range(config.seeds_per_step)
         ]
+        release_cached_vram()
         episodes, rows_root = wave_fn(step, seeds)
         rollout_s = time.perf_counter() - started
         strikes = sum(e.reset_strikes for e in episodes)
@@ -1085,6 +1104,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     named = apply_option_b_freeze(predictor)
     optimizer = build_optimizer(named, lr=config.lr)
+    # Anchor = the step-0 policy as loaded from --checkpoint; captured
+    # before any resume restore overwrites the live tensors.
+    anchor = AnchorSnapshot(named)
     start_step = 0
     baseline: dict[int, float] | None = None
     if args.resume is not None:
@@ -1111,6 +1133,7 @@ def main(argv: list[str] | None = None) -> int:
         optimizer=optimizer,
         start_step=start_step,
         baseline=baseline,
+        anchor=anchor,
     )
     if result.stopped_reason is not None:
         print(f"TRIPWIRE STOP at step {result.steps_done}: {result.stopped_reason}")

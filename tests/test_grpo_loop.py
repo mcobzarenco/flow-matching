@@ -54,6 +54,7 @@ from sim.grpo_loop import (
     accumulate_grpo_grads,
     anchor_kl,
     apply_option_b_freeze,
+    build_optimizer,
     composite_reward,
     eval_facts,
     group_advantages,
@@ -497,6 +498,73 @@ def test_loop_end_to_end(predictor: MolmoAct2Predictor, tmp_path: Path) -> None:
             torch.optim.AdamW([p for _, p in named], lr=1e-3),
         )
         assert step == 2 and loaded_baseline == result.baseline
+    finally:
+        restore(snapshot)
+
+
+def test_resume_uses_step0_anchor_and_completes(
+    predictor: MolmoAct2Predictor,
+    tmp_path: Path,
+) -> None:
+    """A resumed loop keeps the step-0 policy as the KL anchor: main()
+    snapshots BEFORE load_checkpoint restores the live tensors —
+    snapshotting after the restore would silently rebase anchor_kl
+    onto the resumed weights (the reference R1 leans on)."""
+    subject = discrete_predictor(predictor, codec())
+    named = apply_option_b_freeze(subject)
+    snapshot = AnchorSnapshot(named)
+    try:
+        config = loop_config(tmp_path)
+        result = run_grpo_loop(
+            subject,
+            config,
+            wave_fn=make_wave(subject, tmp_path, progress_by_draw=(0.0, 1.0)),
+            eval_fn=eval_wave,
+            parameters=named,
+        )
+        assert result.steps_done == 2
+        # Fresh-process resume in main()'s order: pristine step-0
+        # weights, anchor captured, THEN the restore overwrites live.
+        restore(snapshot)
+        anchor = AnchorSnapshot(named)
+        optimizer = build_optimizer(named, lr=config.lr)
+        start_step, baseline = load_checkpoint(
+            config.out_dir / "step_0001.pt",
+            named,
+            optimizer,
+        )
+        assert start_step == 1 and baseline == result.baseline
+        moved = any(
+            not torch.equal(value, param.detach().cpu())
+            for value, (_, param) in zip(anchor.values, anchor.named, strict=True)
+        )
+        assert moved, "the restored step-1 weights should differ from the anchor"
+        resumed = run_grpo_loop(
+            subject,
+            config,
+            wave_fn=make_wave(subject, tmp_path, progress_by_draw=(0.0, 1.0)),
+            eval_fn=eval_wave,
+            parameters=named,
+            optimizer=optimizer,
+            start_step=start_step,
+            baseline=baseline,
+            anchor=anchor,
+        )
+        assert resumed.stopped_reason is None and resumed.steps_done == 2
+        rows = heartbeat_rows(config)
+        # First run wrote [0, 1, 2, 2]; the resume appends only its
+        # step-2 row + the endpoint eval.
+        assert [r["step"] for r in rows] == [0, 1, 2, 2, 2, 2]
+        assert rows[-2]["anchor_kl"] is not None and rows[-2]["anchor_kl"] >= 0.0
+        assert rows[-1]["eval_delta_mean"] == 0.0
+        assert all(
+            torch.equal(current, original)
+            for current, original in zip(
+                anchor.values,
+                snapshot.values,
+                strict=True,
+            )
+        ), "anchor must still hold the step-0 values bit-exactly"
     finally:
         restore(snapshot)
 
