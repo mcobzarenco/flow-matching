@@ -193,9 +193,9 @@ class SO101Sim:
         *,
         flip_camera_mount: bool = True,
     ) -> None:
-        if render_style not in ("v0", "v1", "v2", "v3"):
+        if render_style not in ("v0", "v1", "v2", "v3", "v4"):
             raise ValueError(
-                f"render_style {render_style!r} not in ('v0', 'v1', 'v2', 'v3')",
+                f"render_style {render_style!r} not in ('v0', 'v1', 'v2', 'v3', 'v4')",
             )
         if post_backend not in ("auto", "numpy", "torch"):
             raise ValueError(
@@ -248,11 +248,11 @@ class SO101Sim:
         if flip_camera_mount:
             self._flip_camera_mount()
         self._noise_rng = np.random.default_rng(0)  # re-seeded per reset
-        if self.render_style in ("v1", "v2", "v3"):
+        if self.render_style in ("v1", "v2", "v3", "v4"):
             self._init_fisheye(width, height)
-        if self.render_style in ("v2", "v3"):
+        if self.render_style in ("v2", "v3", "v4"):
             self._init_inpainting(width, height)
-        if self.render_style == "v3":
+        if self.render_style in ("v3", "v4"):
             self._init_bank(width, height)
         # GPU post-processing (owner-approved 08:12Z 08-12): rollouts
         # are render-bound on the numpy path; "auto" takes CUDA when
@@ -566,6 +566,65 @@ class SO101Sim:
             half = yaw / 2.0
             self.model.geom_quat[gid] = (np.cos(half), 0.0, 0.0, np.sin(half))
 
+    # v4 render style (contact shadows, sim-composite-contact-shadows
+    # leg (a), lit 0823 papers/composite-shadows.md): the v3 composite,
+    # plus the one physics law every real frame obeys that no composite
+    # frame does — the arm darkens the table under it. The dynamic
+    # content's camera-visible pixels are slid along the fitted dominant
+    # light direction onto the table plane and splatted as a soft
+    # occupancy map (sim.shadow) that multiply-darkens the top plate.
+    # All three constants are measured from the real episodes' own arm
+    # shadows (fontaine/scripts/fit_contact_shadow.py, 200 frames of 25
+    # bank episodes, reports/analysis__contact_shadow_fit.json):
+    # direction zenith 30 deg / azimuth 112.5 deg (light travels toward
+    # -x/+y; 85% of frame-bootstrap resamples), darkening contrast
+    # +0.091 CI95 [0.081, 0.100] at the optimum vs a ring control,
+    # strength 0.392 CI95 [0.364, 0.419] by least squares through the
+    # origin, softness argmax of corr(map, darkening) over the sigma
+    # grid. The wrist path is untouched (shadow applies to the top
+    # composite only) and the pass consumes no RNG draws, so v4 wrist
+    # frames are bit-identical to v3 (oracle-pinned).
+    V4_LIGHT_DIR = (-0.19134172, 0.46193977, -0.8660254)
+    V4_SHADOW_STRENGTH = 0.392
+    V4_SHADOW_SIGMA_PX = 24.0
+
+    def _render_shadow(self, camera: str, dynamic_mask: np.ndarray) -> np.ndarray:
+        """[H, W] soft contact-shadow map in source pinhole space (one
+        extra depth pass; the projection itself is numpy on both post
+        backends — the map is remapped/applied inside _composite)."""
+        from sim.shadow import shadow_map
+
+        renderer = self.renderer
+        renderer.enable_depth_rendering()
+        renderer.update_scene(self.data, camera=camera)
+        depth = renderer.render()
+        renderer.disable_depth_rendering()
+        cam_id = self.model.camera(camera).id
+        height, width = self._render_size
+        focal = (height / 2.0) / np.tan(
+            np.deg2rad(float(self.model.cam_fovy[cam_id])) / 2.0,
+        )
+        table = self.model.geom("table")
+        plane_z = float(table.pos[2] + table.size[2])
+        bounds = (
+            float(table.pos[0] - table.size[0]),
+            float(table.pos[0] + table.size[0]),
+            float(table.pos[1] - table.size[1]),
+            float(table.pos[1] + table.size[1]),
+        )
+        return shadow_map(
+            depth,
+            dynamic_mask,
+            (focal, (width - 1) / 2.0, (height - 1) / 2.0),
+            self.data.cam_xpos[cam_id].copy(),
+            self.data.cam_xmat[cam_id].reshape(3, 3).copy(),
+            np.array(self.V4_LIGHT_DIR),
+            self.V4_SHADOW_SIGMA_PX,
+            plane_z=plane_z,
+            bounds_xy=bounds,
+            max_points=20000,
+        )
+
     def _set_clutter(self, *, drawn: bool) -> None:
         """Point the RENDER state (data.geom_xpos/xmat) at the drawn
         or the canonical clutter poses — the wrist view renders the
@@ -595,17 +654,21 @@ class SO101Sim:
         frame: np.ndarray,
         mask: np.ndarray,
         camera: str,
+        shadow: np.ndarray | None = None,
     ) -> np.ndarray:
         """Inpainting composite: graded/blurred rendered foreground over
         the real clean plate, sensor noise on the full frame (the
         median plate is denoised below single-frame noise; the plate
         already carries the real optics, so only the foreground gets
-        the PSF blur)."""
+        the PSF blur). ``shadow`` (v4, source pinhole space) multiply-
+        darkens the plate contribution only — where the foreground
+        covers a pixel its own render wins, like the real arm's body
+        hides the table it darkens."""
         gain, bias = self.V1_GRADE[camera]
-        episode_affine = self.render_style == "v3" and camera == "top"
+        episode_affine = self.render_style in ("v3", "v4") and camera == "top"
         plate = (
             self._active_top_plate
-            if self.render_style == "v3" and camera == "top"
+            if self.render_style in ("v3", "v4") and camera == "top"
             else self._plates[camera]
         )
         noise = (
@@ -624,7 +687,14 @@ class SO101Sim:
             foreground = post.blur(foreground)
             weight = post.blur(post.remap(post.frame(mask[..., None])))
             weight = weight.clamp(0.0, 1.0)
-            out = weight * foreground + (1.0 - weight) * post.upload(plate)
+            plate_term = post.upload(plate)
+            if shadow is not None:
+                plate_term = plate_term * (
+                    1.0
+                    - self.V4_SHADOW_STRENGTH
+                    * post.remap(post.frame(shadow[..., None]))
+                )
+            out = weight * foreground + (1.0 - weight) * plate_term
             out = out + post.frame(noise)
             return post.to_uint8(out)
         foreground = self._remap(frame.astype(np.float64)) * gain + bias
@@ -637,7 +707,12 @@ class SO101Sim:
         foreground = self._blur(foreground)
         weight = self._blur(self._remap(mask[..., None]))
         weight = np.clip(weight, 0.0, 1.0)
-        out = weight * foreground + (1.0 - weight) * plate
+        plate_term = plate
+        if shadow is not None:
+            plate_term = plate * (
+                1.0 - self.V4_SHADOW_STRENGTH * self._remap(shadow[..., None])
+            )
+        out = weight * foreground + (1.0 - weight) * plate_term
         out += noise
         return np.clip(out, 0, 255).astype(np.uint8)
 
@@ -702,8 +777,10 @@ class SO101Sim:
         self._noise_rng = np.random.default_rng(looks.integers(2**63))
         # v3 content draws come LAST on the appearance stream: every
         # draw the v0-v2 styles make is stream-identical, so the v3
-        # wrist path is bit-identical to v2 (registered guard).
-        if self.render_style == "v3":
+        # wrist path is bit-identical to v2 (registered guard). v4
+        # adds NO draws on top of v3 (the shadow pass is deterministic),
+        # so v4 spawn + content state is bit-identical to v3.
+        if self.render_style in ("v3", "v4"):
             self._draw_content(looks)
 
         # Park the benchy far down-table while the arm settles.
@@ -802,15 +879,21 @@ class SO101Sim:
         state = np.rad2deg(self.data.qpos[self._joint_qpos])
         self.renderer.update_scene(self.data, camera="top_cam")
         top = self.renderer.render()
-        if self.render_style == "v3":
+        if self.render_style in ("v3", "v4"):
             # Composite (and its segmentation mask) BEFORE the swap:
             # drawn clutter is masked at its drawn poses; the wrist
             # then renders the canonical scene (bit-identical to v2).
-            top = self._composite(top, self._render_mask("top_cam"), "top")
+            mask = self._render_mask("top_cam")
+            shadow = (
+                self._render_shadow("top_cam", mask)
+                if self.render_style == "v4"
+                else None
+            )
+            top = self._composite(top, mask, "top", shadow=shadow)
             self._set_clutter(drawn=False)
         self.renderer.update_scene(self.data, camera="wrist_cam")
         wrist = self.renderer.render()
-        if self.render_style == "v3":
+        if self.render_style in ("v3", "v4"):
             self._set_clutter(drawn=True)
             wrist = self._grade(self._apply_fisheye(wrist), "wrist")
         elif self.render_style == "v1":
