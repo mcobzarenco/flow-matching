@@ -802,6 +802,15 @@ record; the line here is the hook). *Index last updated 2026-08-13.*
   ~5.1% of pixels); no_arm +0.113 (armless confound, as labeled),
   benchy/disk ~nil; ceiling registered — clutter alone cannot reach
   the real-fg anchor 0.328, the arm's pixels carry the remainder.
+  Legs (b)+(c) EXECUTED 05:4xZ 08-13 ([record](reports.md)):
+  real-crop RGBA patches mined from the bank episodes' own medians,
+  pasted at the drawn poses by inverse fisheye warp — **patched
+  0.556 vs v3 0.713 (−0.157, 100/100 closer), gate PASS at 3× the
+  bar; beats the no_clutter removal ceiling 0.576 by −0.020
+  (75/100, CI-excl-0)** — real-looking clutter outperforms
+  clutter-free plates. Promotion into production v3/v4 pends the
+  owner go (asked 05:40Z); arm appearance (~7% of pixels, the
+  remaining ceiling to 0.328) is the natural next leg.
 - **`lit-arms` [#15 Literature-sourced arms](ideas/15-literature-arms.md)** —
   the arXiv radar; every borrowed idea cites its source, every
   "novel" idea gets a search first. Feeds the Papers section.
