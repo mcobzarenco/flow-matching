@@ -271,19 +271,22 @@ def replay_logprobs(
     return torch.stack(padded), decisions
 
 
-def molmoact2_grpo_loss(
+def molmoact2_grpo_sums(
     predictor: MolmoAct2Predictor,
     rows: list[ReplayRow],
     *,
     task: str,
     advantages: Tensor,
     config: GRPOConfig,
-) -> tuple[Tensor, GRPOStats]:
-    """The full replay step for a row batch: guards (every row sampled
+) -> tuple[Tensor, Tensor, GRPOStats]:
+    """Sum-form replay step for a row batch: guards (every row sampled
     at ``config.temperature``; recorded masks reproduce bit-for-bit
     from bins), teacher-forced new logprobs, then the decoder-generic
-    clipped surrogate (:func:`grpo_objective_sums`) — the NEGATED
-    token-weighted mean, ``advantages`` one scalar per row."""
+    clipped surrogate — (objective SUM with graph, decision count,
+    detached stats). The caller owns normalization: the loop harness's
+    chunked backward divides each chunk's sum by the FULL-batch token
+    count (the ar_backbone_loss_sums discipline), so chunking never
+    changes the gradient."""
     for row in rows:
         if float(row.temperature) != config.temperature:
             raise ValueError(
@@ -304,11 +307,30 @@ def molmoact2_grpo_loss(
         old_logprobs[index, : row.logprobs.shape[0]] = torch.from_numpy(
             row.logprobs,
         )
-    objective_sum, count, stats = grpo_objective_sums(
+    return grpo_objective_sums(
         new_logprobs,
         old_logprobs,
         advantages,
         decisions,
         config,
+    )
+
+
+def molmoact2_grpo_loss(
+    predictor: MolmoAct2Predictor,
+    rows: list[ReplayRow],
+    *,
+    task: str,
+    advantages: Tensor,
+    config: GRPOConfig,
+) -> tuple[Tensor, GRPOStats]:
+    """Single-batch form of :func:`molmoact2_grpo_sums` — the NEGATED
+    token-weighted mean, ``advantages`` one scalar per row."""
+    objective_sum, count, stats = molmoact2_grpo_sums(
+        predictor,
+        rows,
+        task=task,
+        advantages=advantages,
+        config=config,
     )
     return -(objective_sum / count.clamp(min=1)), stats
