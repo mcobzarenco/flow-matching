@@ -2,24 +2,28 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-13 09:44–11:0xZ (real `date -u` at stamp: 10:54) —
-work session: **owner pivot absorbed — RL substrate = the release
-molmoact2 checkpoint, AR GRPO stays**; GRPO step (instrument item 2)
-closed, then the whole molmoact2 AR-head port CPU surface (items
-a/b/c) landed same-session with a real-checkpoint smoke PASS.*
+*Updated 2026-08-13 09:44–12:4xZ (real `date -u` at stamp: 12:32) —
+work session: **owner pivot absorbed AND the gate answered — the
+release molmoact2's AR/token pathway is SUCCESS-CAPABLE in our sim
+(1/100 at greedy), token-GRPO lane is GO on it**; the entire chain
+built and executed same-session: GRPO step → AR-head port (codec,
+discrete decode, masked RL decode, sim adapter) → 100-seed gate
+eval → arm B (masked) live.*
 
-**Status**: no live runs — GPU idle between microreads (~0.02 GPU-h
-spent: 4-row discrete smoke). Queue validate green (depth 3, 15
-open). check.py 840 green.
+**Status**: **LIVE: `molmoact2_ar100b_masked`** (arm B, launched
+12:29Z, unit `fontaine-molmoact2-ar100b`, gate 1.5 GPU-h, boundary
+~13:3xZ — babysit entry active; ~100% util at first poll). Queue
+validate green (depth 3, 15 open). check.py 842 green. Session GPU
+spend ~1.2 GPU-h (arm A 1.15 + microreads).
 
-**Steering**: 09:45Z owner question — should GRPO use the release
-molmoact2 exclusively (only checkpoint with sim successes, 9/100)?
-Answered with the architecture fork (flow expert vs AR head); owner
-10:02Z: **their checkpoint was ALSO trained with an AR/FAST
-objective — wire that head, focus on molmoact2 + AR GRPO**. Plan
-posted and 👍'd. Open asks: item (d) eval go (10:46Z, corrected
-10:50Z — needs the (d0) adapter first), plus the standing phase-2
-memo asks (er60k now the fallback arm).
+**Steering**: heavy and decisive. 09:45Z owner question (use the
+9/100 release ckpt exclusively?) → answered with the flow-vs-AR
+architecture fork → owner 10:02Z: **their FAST/AR head was also
+trained — wire it, focus molmoact2 + AR GRPO** (plan 👍'd) → owner
+11:07Z: **"you make the decisions, ensure we make progress and GPU
+is always busy"** → 11:18Z: **"don't wait for my confirmations"**.
+Delegation active: proceeding by frozen decision rules, full trail
+in-channel.
 
 **Done**: (1) token-GRPO instrument item 2 CLOSED (`229d80f`):
 bijou/train_grpo.py — DAPO-clipped advantage-weighted token-CE off
@@ -35,15 +39,23 @@ decode (budget arithmetic on their BPE piece lengths, every draw
 decodable by construction). (3) Real-checkpoint smoke PASS
 (`f0afc1e`): all emissions well-formed + decodable, masked mode 0
 violations / bins identical to greedy. (4) Port item (d0) CLOSED
-in-session (`931b9a5`): `--molmoact2-discrete` adapter in the
-parallel driver (official shim pinned, fallback accounting) +
-real-checkpoint preflight PASS (1 seed × 2 s, 0 fallbacks). Queue
-re-scoped 10:09Z + 10:54Z + 11:08Z.
+(`931b9a5`): `--molmoact2-discrete` driver adapter + preflight PASS.
+(5) **Item (d) EXECUTED under the 11:07Z delegation** (pre-reg
+frozen `faa5855` pre-launch, results `42c4485`): **1/100 successes**
+(seed 73 — a flow-success seed) ⇒ AR pathway success-capable,
+token-GRPO GO per the frozen rule; validity green (strikes 0,
+1.15/1.5 GPU-h); **finding: 6.8% of greedy predicts (202/2991)
+zero-fallback** — the model's emissions fail their own decoder
+~1-in-15, exactly what the masked decode repairs. (6) Amendment-1
+arm B (grammar-masked, same seeds, paired read) frozen + launched
+12:29Z. Queue re-scoped ×4.
 
-**Next**: item (d) 100-seed @30 s AR-pathway eval is **LAUNCH-READY
-on the owner go** (command in queue item + in-channel; ~0.5–0.9
-GPU-h); else (b2) HF-reference token parity prep or instrument items
-3–4 (molmoact2 surface). `queue.json` canonical.*
+**Next**: arm B boundary ~13:3xZ → paired read + prune (next
+session; `run_work_next` armed). Then the critical path: instrument
+items 3–4 on the molmoact2 surface (sampling mode + TokenRow capture
+on `predict_action_discrete`, replay collator, loop harness) and the
+phase-2 run pre-reg finalization (ladder re-priced at the measured
+~0.4 s/chunk pace). `queue.json` canonical.*
 
 *Updated 2026-08-13 09:41–09:5xZ (real `date -u` at stamp: 09:42) —
 tick, babysit: **quiet tick — no steering, no live runs, GPU
@@ -103,15 +115,16 @@ GPU legs launch on owner calls only. `queue.json` canonical.*
 
 ## Utilization footer
 
-Session 2026-08-13 09:44–11:1xZ (work; ~0.03 GPU-h — CPU lanes +
-discrete smoke/preflight microreads, exploit): owner pivot absorbed
-(RL substrate = release molmoact2, AR GRPO stays); GRPO step closed
-(`229d80f`, 7 oracles); molmoact2 AR-head port items a/b/c/d0 ALL
-closed (`beeb93e`/`526c4ad`/`2a9e540`/`931b9a5`, 16 oracles) +
-real-checkpoint smoke PASS (`f0afc1e`) + driver adapter preflight
-PASS; item (d) eval launch-ready. Queue re-scoped ×3, validate green
-(depth 3, 15 open). Item (d) go asked in-channel, unanswered at
-close.
+Session 2026-08-13 09:44–12:4xZ (work; ~1.2 GPU-h — arm A 1.15 ≤
+1.5 gate + smoke/preflight microreads, exploit): owner pivot
+absorbed (RL substrate = release molmoact2, AR GRPO) then the whole
+chain built AND executed: GRPO step (`229d80f`); AR-head port items
+a/b/c/d0 (`beeb93e`/`526c4ad`/`2a9e540`/`931b9a5`, 18 oracles) +
+real-checkpoint smoke; item (d) gate eval under the 11:07Z owner
+delegation — **1/100 successes, AR pathway success-capable,
+token-GRPO GO** + the 6.8% zero-fallback brittleness finding; arm B
+(grammar-masked, paired) launched 12:29Z, live at close. Queue
+re-scoped ×4, validate green (depth 3, 15 open).
 
 Session 2026-08-13 09:41–09:5xZ (tick, babysit; 0 new GPU-h — GPU
 idle-by-design): quiet tick — no owner messages/reactions (09:41Z),
