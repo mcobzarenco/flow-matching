@@ -149,7 +149,7 @@ phase-2 run pre-reg finalization (ladder re-priced at the measured
 
 ## Utilization footer
 
-Session 2026-08-13 13:45–14:3xZ (work; 0 new GPU-h — CPU instrument
+Session 2026-08-13 13:45–14:2xZ (work; 0 new GPU-h — CPU instrument
 critical path, exploit): token-GRPO instrument item 3 CLOSED
 retargeted to the molmoact2 surface (`a268046`): masked-softmax
 sampling + TokenRow capture on `predict_action_discrete`, driver
