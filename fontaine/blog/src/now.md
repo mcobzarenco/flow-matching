@@ -3,6 +3,33 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+
+*Updated 2026-08-13 01:14–01:2xZ (real `date -u` at stamp: 01:14) —
+tick, babysit: **quiet tick after the probe close** — no owner
+messages or reactions, GPU idle as declared, work session chained
+for the CPU lanes.*
+
+**Status**: no live runs — registry carries the declared reason
+(grpo_signal_probe COMPLETE, unit stopped 01:08:05Z at the cell-5
+boundary); nvidia-smi 0%/0 MiB, no stray procs. Queue validate green
+(depth 2, 12 open).
+
+**Steering**: none new — read empty, history-5 checked 01:15Z; no
+reactions yet on the 01:10Z probe results post. Open asks unchanged:
+v3-rerun unhold + arm set (15:13Z 08-12), disk-draws sign-off, cells
+3/4 re-queue on owner call.
+
+**Done**: boot audit clean (no orphaned diffs); GPU/registry/queue
+verified; `run_work_next` armed — GPU is idle-by-design (next GPU
+legs pend owner calls) and CPU lanes are queued, so the tick chains
+a work session per no-idle-pauses. 08-12 body entries + older footer
+notes rolled to the archive.
+
+**Next**: chained work session → `sim-fit-real-lens-model`
+(owner-adopted), `sim-composite-contact-shadows` (queue head), and
+the phase-2 token-GRPO design memo (CPU-side first per the frozen
+decision rule). GPU legs launch on owner calls only.*
+
 *Updated 2026-08-12 21:39Z–2026-08-13 01:1xZ (real `date -u` at stamp:
 01:10 08-13) — work session (the chained session riding the probe):
 **GRPO probe: AR signal is REAL and cheap at t=1.0 (0.771 cm vs the
@@ -53,95 +80,15 @@ re-queue only on owner call; phase-2 GRPO call per the frozen
 decision rule (see the results post). v3-rerun unhold + disk-draws
 sign-off still open. `queue.json` canonical.*
 
-*Updated 2026-08-12 21:30–21:4xZ (real `date -u` at stamp: 21:36) —
-tick, babysit: **GRPO signal probe LAUNCHED 21:33:58Z** (unit
-`fontaine-grpo-probe`, HEAD `85e9a16`) — the tick resolved the
-now.md-internal conflict ("launches on handback" vs "on the owner's
-go") by re-reading the record: the owner's 13:36Z sequence (oracle →
-ftrig eval → probe) has both predecessors done, the 20:06Z pre-reg
-post said "say go (or it rides the standing sequence at handback)"
-with no objection since, and the GPU was handed back for the 100ep
-eval — so the standing sequence governs and the probe launched.*
-
-**Status**: probe LIVE (launched 21:33:58Z; 2 anchor passes + 5 cells,
-660 episodes, workers=8, ~2.8 h wall, gate ≤3.5 GPU-h; first poll
-85% util / 21.8 GB, anchor pass streaming ~0.76 s/replan). Babysit
-entry `grpo_signal_probe` active; new launcher
-`fontaine/scripts/launch_grpo_signal_probe.sh`. Queue validate green
-(depth 3, 13 open). `run_work_next` armed — the chained work session
-rides the probe + works CPU lanes.
-
-**Steering**: no new owner messages this tick (read + history checked
-21:31Z; no reactions on the 21:15Z results post). Launch post
-21:35Z states the standing-sequence basis and offers a stop at any
-pass boundary. Open asks unchanged: v3-rerun unhold + arm set
-(15:13Z), disk-draws sign-off.
-
-**Done**: probe launch end-to-end — launcher written (7 passes,
-checkpoint paths verified on disk: er60k/step_060000, teacher80k =
-artrunk 40k_ddp2/step_080000, ftrig4k/step_004000), preflight green,
-detached via run_detached.sh, babysit entry with frozen
-anchors/gates, first-poll util check, Discord launch post, queue item
-boundary synced.
-
-**Next**: chained work session rides the probe (per-cell results
-in-channel as passes land; tripwire = first cell's pace vs the 3.5
-GPU-h gate) + CPU lanes: `lit-sim-improvement-levers` (owner-called),
-`sim-wrist-compositing`. At probe completion: frozen reads + decision
-rule per the pre-reg, results post same session.*
-
-*Updated 2026-08-12 19:20–21:2xZ (real `date -u` at stamp: 21:17) —
-work session: **🚢 9/100 SUCCESSES — the first sim successes this task
-has ever recorded.** Released MolmoAct2 under the official arm-A map
-at the restored 30 s budget completes pick-and-place on 9 seeds
-(physics criterion). **Every success tick (480–886) lands past tick
-450 — the old 15 s budget's cutoff — so the entire prior INERT/0-pickup
-literature on this checkpoint was the lift sign × the halved time
-budget stacked. INERT is FULLY overturned.** Also this session: GRPO
-signal probe is LAUNCH-READY (instrument complete + finalized pre-reg
-posted).*
-
-**Status**: no live jobs, GPU idle (100ep eval ran 20:20–21:12:26Z,
-~0.86/1.5 GPU-h, workers=8, entry pruned; seed-6 30 s rerun
-19:54–19:56Z ~0.02 GPU-h, pruned). Queue validate green (depth 3, 13
-open).
-
-**Steering** (a live owner thread all session): (1) 19:25:39Z "seed 6
-is a clear grab and lift — rerun with a longer horizon; the idea was
-30 seconds" → replied 19:47Z, fixed + executed: the eval-20 protocol
-gave 15 s vs sim100's 30 s; `--episode-seconds` lands the budget in
-time units (`c26a99e`); 30 s rerun confirmed **grab + carry to 1.04 cm
-of the disk, no release** (video posted 19:58Z, amendment 2). (2)
-20:16:53Z "evaluate the release checkpoint with the correct mapping
-(arm-A) on 100 episodes in parallel" → acked 20:18Z, amendment 3
-pre-launch, launched 20:20Z, ridden with the batched rows watcher
-(fixed mid-run: watcher unit needed the harness env sourced — posts
-were failing silently), results 21:15Z. Open asks: GRPO probe
-launch go, v3-rerun unhold + arm set (15:13Z), disk-draws sign-off.
-
-**Done** (commits `8b6d034`, `c26a99e`, `a06c33d`, `7fc6eff`, launch
-prep + close-out): (1) 100ep arm-A eval end-to-end (above) — rows +
-dark two-panel chart (per-seed outcomes + success-tick strip vs the
-450 line) + 9 success videos on the reports Space, amendment 3
-results on the pre-reg page, INERT fully re-dispositioned. (2) **GRPO
-probe prep COMPLETE** per the 13:16Z "get everything ready": SDE decode
-wired end-to-end (`--sde-noise-level` both drivers, per-item keyed
-step noise, batch-composition-invariant), parallel driver (seed, draw)
-stochastic groups, oracles green (check.py 797); **finalized pre-reg
-posted** (seeds 0–14, 30 s episodes, signal bar median group std
-≥ 0.25 cm, frozen decision rule, ≤3.5 GPU-h, within-driver paired-only
-per the parallel-oracle FAIL; 13:36Z sequence predecessors both done ⇒
-launches on handback). (3) seed6-30s owner call closed (amendment 2).
-(4) Hygiene: convmap post indexed into posts/index.md; queue "15
-replans" drift corrected; index titles updated to the 9/100 headline.
-
-**Next**: `queue_cli.py next` → CPU lanes: `lit-sim-improvement-levers`
-(owner-called lit slice), `sim-wrist-compositing`. GPU: GRPO probe
-launch-ready on the owner's go; v3 rerun pends unhold. The 9/100 read
-reframes both: the sim CAN express success now — the success-rate
-metric is live, not just progress-cm. `queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-13 01:14–01:2xZ (tick, babysit; 0 new GPU-h — GPU
+idle-by-design after the probe close): quiet tick — no owner
+messages/reactions (01:15Z), registry clean with declared reason,
+nvidia-smi 0%/0 MiB, queue green (depth 2, 12 open), boot audit
+clean. `run_work_next` armed for the CPU lanes (lens fit, contact
+shadows, phase-2 token-GRPO design). 08-12 entries rolled to the
+archive page.
 
 Session 2026-08-12 21:39Z–2026-08-13 01:1xZ (work, the chained probe
 ride; **+3.30 GPU-h this session (run total 3.57 incl. the tick's launch window)** — anchors + cells 1/2/5 ridden in-turn,
@@ -152,26 +99,6 @@ cell 5 SDE: 7.4× at cost CI incl. 0 → BOTH families clear, AR-first). Lit 082
 compositing investigated → DECIDED render-only (owner 22:31Z),
 sim100 amendment 4, `sim-fit-real-lens-model` queued. check.py 797
 green × 6 commits.
-
-Session 2026-08-12 21:30–21:4xZ (tick, babysit; GPU claimed at
-21:33:58Z — probe ~2.8 GPU-h projected ≤ 3.5 gate, accrues to the
-riding sessions): **GRPO signal probe LAUNCHED** on the owner's
-standing 13:36Z sequence at GPU handback (both predecessors done, no
-objection after the 20:06Z "rides the standing sequence" post).
-Launcher + babysit entry + first-poll (85% util) + launch post +
-queue sync, all inside the tick. `run_work_next` armed.
-
-Session 2026-08-12 19:20–21:2xZ (work; **+~0.88 GPU-h** — seed-6
-30 s rerun 0.02 + 100ep arm-A eval 0.86/1.5 gate, both ridden in-turn;
-exploit + owner steering): **9/100 SUCCESSES — first sim successes
-ever on this task** (released MolmoAct2, official map, 30 s budget;
-every success tick past the old 15 s cutoff; INERT FULLY overturned).
-Owner steers executed end-to-end: `--episode-seconds` budget fix +
-seed-6 grab-confirm (amendment 2), 100-episode eval (amendment 3,
-batched rows watcher, results + chart + 9 videos posted). GRPO probe
-prep COMPLETE + finalized pre-reg posted (launch-ready on handback).
-check.py 797 green × commits; queue "15 replans" drift fixed; convmap
-post indexed.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
