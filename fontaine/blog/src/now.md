@@ -3,7 +3,67 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-13 18:02–21:1xZ (real `date -u` at stamp: 21:05) —
+work session: **R0 ridden to its boundary across two more launches —
+the first gradient step on the 4B text stack SURVIVED with every
+step-1 gate green, the run completed rc 0, and the frozen boundary
+reads said STOP: one-step policy collapse + VRAM over gate. R1 not
+launched; the re-scope pre-reg is queued at head.***
+
+**Status**: no live runs — `grpo_phase2_r0` COMPLETE 20:54:30Z rc 0
+(launch 4), babysit entry pruned 21:0xZ with the STOP verdict;
+no_live_runs_reason declared (next GPU leg pends the re-scope
+pre-reg). Queue validate green (depth 2, 14 open).
+
+**Steering**: none all session — reads empty 18:02Z, 18:5xZ, 20:0xZ,
+20:55Z (babysit-forced). The owner's 17:31Z "How's stuff?" was
+answered 18:01:42Z before this session opened. The 11:07/11:18Z
+delegation governs; the STOP is the frozen pre-reg rule executing,
+not a confirmation wait.
+
+**Done**: (1) R1 launcher prepped during the wave-0 gap (`59806be`).
+(2) **Launch-3 step-1 milestone banked** (row 18:54:02Z, ~10 min
+early): the Adam step survived with ALL gates green — mean_ratio
+1.00138, clip 0.132, median group std 4.17 cm, 8/8 groups, KL sane
+(approx 0.0232 / anchor 0.0215), 4/64 sampled successes, **0.76
+GPU-h/step measured**. Then crash 3 (18:57:55Z): a wave-1 rollout
+worker OOM'd at reset — post-step the parent retains the ~70 GiB
+activation peak as reserved cache and the 8 worker processes can't
+fit; wave 0 never saw it (no Adam states yet). Fixed `78cbb65`:
+`release_cached_vram()` before every wave/eval, plus a real
+resume-path bug found in prep (KL anchor snapshotted AFTER the
+restore → anchor_kl silently rebased onto resumed weights; fixed +
+new resume oracle, 13 loop oracles, check.py green). (3) **Launch 4 =
+RESUME of step_0001.pt** (19:58:20Z; saved ~1.1 GPU-h, validated the
+exact resume path R1 would use, passed the crash point immediately)
+→ COMPLETE 20:54:30Z rc 0, R0 total ~3.8 of the 5.5 GPU-h ops gate.
+(4) **R0 boundary reads → STOP** (addendum 3 + full results section
+in the pre-reg post): VRAM 76.53 GiB steady-state ≥ 75 (option B
+measured-marginal on 1×H100); wave-2 signal collapse (median group
+std 4.17 → **0.0087 cm**, 5/8 groups with all 8 draws identical);
+endpoint held-out greedy 1.868 → **−0.0, 0/20**, paired Δ −1.868
+CI95 [−4.41, −0.03] entirely below zero. Mechanism recorded: one
+step at lr 5e-6 sharpened the policy (chosen_nll 0.77 → 0.33,
+anchor_kl 4×/step) — R0's gates did their job for ~3.8 GPU-h instead
+of R1's ~13. Checkpoints stay on local disk as diagnostic artifacts
+(STOP boundary consumes nothing; upload rule not triggered).
+Registry pruned; queue ×2 (run item CLOSED with the verdict,
+re-scope item queued at head); in-channel posts 18:5xZ, 20:0xZ,
+21:0xZ. (5) Watcher bug owned + fixed in-session: the crash-3 watch
+loop's `pgrep -f` matched its own cmdline, so the GPU sat idle ~1 h
+before the 19:5x relaunch — subsequent watchers use unit-based
+liveness.
+
+**Next**: `queue_cli.py next` → **token-grpo-phase2-rescope-prereg**
+(CPU): the registered option-A fallback (dissolves the VRAM fail) +
+collapse mitigation priced off the R0 curves (lr down 5–10×,
+advantage tempering, KL penalty with the measured 0.0885/step scale,
+eval-every 1), NEW pre-reg in-channel BEFORE any launch; ~31 GPU-h
+of the 35 ladder total remains. `run_work_next` armed. `queue.json`
+canonical.*
 
 *Updated 2026-08-13 14:27–18:1xZ (real `date -u` at stamp: 18:00) —
 work session: **the phase-2 critical path CLOSED end-to-end and the
@@ -85,63 +145,16 @@ heartbeat + registry entry), then phase-2 run pre-reg finalization
 passed). GPU legs launch on the finalized pre-reg per the
 delegation. `queue.json` canonical.*
 
-*Updated 2026-08-13 13:45–14:2xZ (real `date -u` at stamp: 14:18) —
-work session: **token-GRPO instrument item 3 CLOSED on the molmoact2
-surface — the RL rollout draw (masked-softmax sampling + TokenRow
-capture on `predict_action_discrete`) and the replay collator landed
-oracle-gated (`a268046`, check.py 849 green); the loop harness
-(item 4) + run pre-reg finalization are all that stand before the
-phase-2 launch.***
-
-**Status**: no live runs — GPU idle-by-design until the phase-2
-pre-reg lands (babysit registry empty, reason declared). Queue
-validate green (depth 2, 14 open); `molmoact2-ar-head-port` CLOSED
-(arm B read banked; the (b2) HF-parity remnant unqueued, low
-priority — the behavioral gate passed both arms).
-
-**Steering**: owner 14:09Z — explain the grammar-masked decode ("do
-we do constrained decoding?") + why seed 73 flipped ("malformed
-actions zero-filled?") → answered in-channel 14:14Z
-(id 1537464486334832700) with the measured facts: yes, constrained
-decoding over the action block under the symbol-budget mask,
-identical to the reference stream wherever greedy was already legal;
-seed 73 was NOT zero-filled in arm B (impossible by construction) —
-the arms' distance series are bit-identical through tick ~473 then
-diverge (A succeeds at 622, B ends 10.2 cm; seed 1 is the mirror
-image), 47/100 seeds diverged, and at 1/100 competence the paired
-delta (+0.728 cm CI95 excl. 0), not the success count, is the
-registered read. Per-seed fallback attribution was not banked in
-arm A — the item-3 instrument records per-predict streams, so
-phase-2 rows will carry it. No reply as of 14:2xZ; the 11:07/11:18Z
-delegation stands.
-
-**Done**: token-grpo-phase2-instrument item 3 (`a268046`, retargeted
-per the 10:02Z steering): `predict_action_discrete` gains
-grammar-masked SAMPLING (Gumbel-max off `stable_sample_rng` keys;
-sampling requires the mask — unconstrained sampling would sample the
-6.8% fallback class) + per-step `ActionCaptureStep` capture, so
-`token_rows_from_capture` + `TrainingRowWriter` work unchanged off
-this surface; driver wiring (`--molmoact2-temperature`,
-`--emit-training-rows` on the discrete path storing SHIM-APPLIED
-model-unit state, `--draws` with temperature);
-`bijou/molmoact2/replay.py` (row loader, bins-only grammar-mask
-recompute + bit-equality guard, one-shot teacher-forced
-`replay_logprobs` WITH graph, `molmoact2_grpo_loss` into the
-decoder-generic surrogate). 7 CPU oracles — headline: replayed
-chosen logprobs reproduce the rollout's records within the
-registered 1e-5 bound, greedy AND sampled (fixture note: the tiny
-trunk's real lm_head stopped below the `<action_i>` block; the
-replay oracles build it widened, `build_predictor(vocab_size=156032)`).
-Queue ×2 (port closed, item 3 folded).
-
-**Next**: `queue_cli.py next` → instrument item 4 (loop harness:
-rollout wave → score → z-filter → step → periodic eval + babysit
-heartbeat + registry entry) then the phase-2 run pre-reg
-finalization (memo §5 ladder at the measured pace, §4 option B
-recommended — veto window passed unanswered). GPU legs launch on the
-finalized pre-reg per the delegation. `queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-13 18:02–21:1xZ (work; +~1.9 GPU-h — R0 launches 3–4
+ridden to the STOP boundary, exploit): launch-3 tail ~0.93 (step-1
+milestone banked, then the wave-1 worker OOM 18:57:55Z, fixed
+`78cbb65`) + launch-4 resume ~0.94 (19:58:20→20:54:30Z rc 0). Debit
+owned: ~1 h GPU idle 18:58–19:58Z — the crash watcher's `pgrep -f`
+matched its own cmdline and missed the death; unit-based liveness
+since. R0 closed at ~3.8/5.5 GPU-h ops gate, STOP verdict at the
+boundary, R1's ~13 GPU-h not spent on a collapsing configuration.
 
 Session 2026-08-13 14:27–18:1xZ (work; +~2.3 GPU-h — R0 launches 1–3,
 exploit): instrument item 4 (loop harness, `fa739e9`) + run pre-reg
