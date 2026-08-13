@@ -511,6 +511,7 @@ class MolmoAct2Predictor:
         state: Tensor,
         normalize_language: bool = True,
         on_undecodable: str = "raise",
+        grammar_masked: bool = False,
     ) -> DiscreteActionResult:
         """One observation -> the executed action chunk through the
         checkpoint's TRAINED DISCRETE pathway — their ``predict_action``
@@ -529,12 +530,25 @@ class MolmoAct2Predictor:
         unnormalizes like any other — parity/eval callers match their
         deployed semantics with this).
 
+        ``grammar_masked`` (the RL decode mode, item (c)): the
+        ar_backbone scaffold discipline grafted onto their vocab —
+        ``<action_start>`` is FED (a scaffold constant, not a
+        decision), every bin step argmaxes over the action block under
+        the budget-arithmetic legality mask (piece symbol-length fits
+        the remaining T×D budget), and ``<action_end>`` closes the
+        stream at budget 0. Every emission decodes by construction —
+        no EOS race, no zeros fallback, no cap. Wherever the
+        unconstrained argmax was already a legal bin the two modes
+        emit identical streams; ``masked_violations`` counts the steps
+        where they differ (the record-only divergence instrument).
+
         Shapes:
         - ``images``: per camera [H, W, 3]-coercible frames
         - ``state``: [D] raw joint units
         - returns actions [1, n_action_steps, action_dim] fp32, CPU,
           joint units; token_ids = the raw emission (EOS included when
-          hit); bins = the extracted codec ids
+          hit; masked mode: ``[<action_start>, bins, <action_end>]``);
+          bins = the extracted codec ids
         """
         if on_undecodable not in ("raise", "zeros"):
             raise ValueError(
@@ -605,37 +619,88 @@ class MolmoAct2Predictor:
         )
         logits = lm_head(hidden[:, -1:])
 
-        # Their _continue_discrete_generation_from_output verbatim:
-        # greedy argmax over the FULL vocabulary, EOS-terminated,
-        # loud when the cap is hit without EOS.
         prompt_length = int(inputs["input_ids"].shape[1])
-        max_steps = max(1, action_horizon * 16)
-        generated: list[Tensor] = []
-        hit_end = False
-        for step in range(max_steps):
-            next_id = torch.argmax(logits[:, -1, :], dim=-1)
-            generated.append(next_id)
-            if bool((next_id == self.eos_token_id).all()):
-                hit_end = True
-                break
+        device = embeds.device
+
+        def advance(next_id: Tensor, step: int) -> Tensor:
             positions = torch.full(
                 (1, 1),
                 prompt_length + step,
                 dtype=torch.long,
-                device=embeds.device,
+                device=device,
             )
-            hidden = transformer(
+            fed = transformer(
                 inputs_embeds=transformer.wte(next_id[:, None]),
                 position_ids=positions,
                 cache=cache,
             )
-            logits = lm_head(hidden)
-        if not hit_end:
-            raise RuntimeError(
-                f"discrete continuation did not emit EOS "
-                f"{self.eos_token_id} within {max_steps} steps — the "
-                "reference raises here too",
+            return lm_head(fed)
+
+        generated: list[Tensor] = []
+        masked_violations: int | None = None
+        if grammar_masked:
+            # The RL decode: scaffold fed, bins budget-masked — every
+            # stream consumes exactly T×D symbols and decodes.
+            base = self.action_token_start_id
+            lengths = torch.from_numpy(codec.symbol_lengths).to(device)
+            remaining = action_horizon * action_dim
+            masked_violations = 0
+            opener = torch.full(
+                (1,),
+                self.action_start_token_id,
+                dtype=torch.long,
+                device=device,
             )
+            generated.append(opener)
+            logits = advance(opener, 0)
+            step = 1
+            while remaining > 0:
+                row = logits[0, -1].float()
+                legal = (lengths > 0) & (lengths <= remaining)
+                block = row[base : base + codec.block_vocab]
+                choice = int(
+                    torch.argmax(block.masked_fill(~legal, float("-inf"))),
+                )
+                if int(torch.argmax(row)) != base + choice:
+                    masked_violations += 1
+                remaining -= int(lengths[choice])
+                chosen = torch.full(
+                    (1,),
+                    base + choice,
+                    dtype=torch.long,
+                    device=device,
+                )
+                generated.append(chosen)
+                if remaining > 0:
+                    logits = advance(chosen, step)
+                    step += 1
+            generated.append(
+                torch.full(
+                    (1,),
+                    self.action_end_token_id,
+                    dtype=torch.long,
+                    device=device,
+                ),
+            )
+        else:
+            # Their _continue_discrete_generation_from_output verbatim:
+            # greedy argmax over the FULL vocabulary, EOS-terminated,
+            # loud when the cap is hit without EOS.
+            max_steps = max(1, action_horizon * 16)
+            hit_end = False
+            for step in range(max_steps):
+                next_id = torch.argmax(logits[:, -1, :], dim=-1)
+                generated.append(next_id)
+                if bool((next_id == self.eos_token_id).all()):
+                    hit_end = True
+                    break
+                logits = advance(next_id, step)
+            if not hit_end:
+                raise RuntimeError(
+                    f"discrete continuation did not emit EOS "
+                    f"{self.eos_token_id} within {max_steps} steps — the "
+                    "reference raises here too",
+                )
         token_ids = torch.stack(generated, dim=1)
 
         bins = extract_action_bins(
@@ -678,6 +743,7 @@ class MolmoAct2Predictor:
             actions=actions,
             token_ids=token_ids.cpu(),
             bins=bins,
+            masked_violations=masked_violations,
         )
 
 
@@ -685,11 +751,16 @@ class MolmoAct2Predictor:
 class DiscreteActionResult:
     """``predict_action_discrete``'s full record: the executed chunk
     plus the raw emission the parity harness and the RL instrument
-    both need (token_ids includes the terminating EOS when hit)."""
+    both need (token_ids includes the terminating EOS when hit).
+    ``masked_violations`` is None on the unconstrained (reference)
+    mode; under ``grammar_masked`` it counts the bin steps where the
+    unconstrained full-vocab argmax differed from the masked choice
+    (0 ⟺ the two modes emitted identical streams)."""
 
     actions: Tensor  # [1, n_action_steps, action_dim] fp32 CPU
     token_ids: Tensor  # [1, K] long CPU
     bins: list[int]
+    masked_violations: int | None = None
 
 
 def extract_action_bins(
