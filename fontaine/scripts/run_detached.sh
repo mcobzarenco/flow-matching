@@ -36,9 +36,15 @@ if systemctl --user is-active --quiet "$NAME"; then
     exit 1
 fi
 
+# Forward MUJOCO_GL when the caller sets it (e.g. `MUJOCO_GL=egl
+# run_detached.sh ...`): the transient unit gets the user manager's
+# clean env, NOT the caller's — R0-A launch 1 (21:55Z 08-13) died in
+# its first sim worker on exactly this (FatalError: no OpenGL platform
+# library; the env prefix silently stopped at this script).
 systemd-run --user --unit="$NAME" --collect --same-dir \
     --setenv=PATH="$HOME/.local/bin:/usr/local/bin:/usr/bin:/bin" \
     --setenv=HOME="$HOME" \
+    ${MUJOCO_GL:+--setenv=MUJOCO_GL="$MUJOCO_GL"} \
     "$@"
 
 # A launch that dies inside the grace window is a failed launch (the

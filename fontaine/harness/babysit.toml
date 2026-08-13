@@ -40,7 +40,43 @@
 # NEW pre-reg (option-A fallback + collapse mitigation), in-channel.
 # Results in posts/2026-08-13-prereg-token-grpo-phase2-run.md.
 
-no_live_runs_reason = "declared 20:55Z 08-13 work session: grpo_phase2_r0 COMPLETE and pruned (STOP boundary 20:54:30Z — VRAM + signal gates failed, endpoint competence dropped; R1 not launched by frozen rule). Next GPU leg pends the re-scope pre-reg (CPU-side critical path, queued)."
+# (no_live_runs_reason cleared 21:55:48Z 08-13 work session —
+# grpo_phase2_r0a launched off the frozen re-scope pre-reg 81e020c.
+# PRIOR: "declared 20:55Z 08-13 work session: grpo_phase2_r0 COMPLETE
+# and pruned (STOP boundary 20:54:30Z — VRAM + signal gates failed,
+# endpoint competence dropped; R1 not launched by frozen rule). Next
+# GPU leg pends the re-scope pre-reg (CPU-side critical path,
+# queued).")
+
+[[run]]
+name = "grpo_phase2_r0a"
+kind = "train-jsonl"
+host = "local"
+pgrep = "sim.grpo_loop"
+pgrep_min = 1                     # parent loop (waves spawn 8 transient workers); unit fontaine-grpo-r0a
+gpu_indices = [0]
+gpu_mem_min_mib = 8000
+jsonl = "/home/ubuntu/flow-matching/outputs/sim/grpo_phase2_a/train.jsonl"
+total_steps = 2
+probe_key = "eval_reward_mean"
+vram_key = "vram_gib"
+started_utc = "2026-08-13T21:58:04Z"
+gpu_hours_per_wall_hour = 1.0
+boundary = "R0-A smoke: 2 steps at ~1.1 GPU-h/step est (rollout 0.7 + grad 0.15 + anchor pass 0.1 + eval 0.19; eval-every 1) => complete ~2.2-2.5 GPU-h; ops gate 3.0. Pre-reg posts/2026-08-13-prereg-token-grpo-phase2-r0a.md frozen at 81e020c. LAUNCH 2 21:58:04Z (launch 1 21:55:48Z died pre-GPU in worker 0: MUJOCO_GL not forwarded into the transient unit — addendum 1; env fixed both manager-side and in run_detached.sh)."
+anchors = [
+    "surface OPTION A: only FAST-block rows [151934,153982) of wte.embedding + lm_head train (~10.5M params); lr 1e-6, adv clip 2.0, kl_beta 0.5 differentiable, kl_stop 0.06 in-loop",
+    "step-0 held-out baseline must reproduce 1.868 composite 2/20 greedy (third bit-identical reproduction expected — same seeds/frozen decode as R0)",
+    "R0 comparators: step-1 gates ratio in [0.95,1.05], clip<0.2; wave stds vs R0's 4.17 cm wave-1; anchor_kl floor ~0.0215 is JPEG noise, NOT drift; expect VRAM ~45-55 GiB (R0 measured 76.53 at the option-B step)",
+    "INERT rule at boundary: anchor_kl within noise of floor at BOTH steps AND endpoint delta 0.0 AND chosen_nll drift <0.005 => R1-A does NOT auto-launch, lr/beta re-price addendum in-channel first",
+    "GO => R1-A resumes step_0002.pt --total-steps 17 same flags iff ALL boundary reads green (incl. R1-A projection <= 22 GPU-h cum of remaining ~31.2)",
+    "knockaway watch: R0 step-1 measured 0.234 vs 0.167 tripwire line (x3 consecutive fires); R0-A's own baseline lands at the boundary",
+]
+[[run.gates]]
+kind = "vram_max_gib"
+value = 75.0
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 3.0                       # R0-A ops gate (pre-reg ladder)
 
 # molmoact2_ar100b_masked entry PRUNED 13:3xZ 08-13 work session —
 # COMPLETE 13:31Z rc 0, ridden end-to-end (~1.05/1.5 GPU-h, 63.1
