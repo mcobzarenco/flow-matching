@@ -450,9 +450,7 @@ def token_rows_from_capture(
                 continue
             legal = allowed[row]
             step_logprobs = (
-                (logits[row] / scale)
-                .masked_fill(~legal, float("-inf"))
-                .log_softmax(-1)
+                (logits[row] / scale).masked_fill(~legal, float("-inf")).log_softmax(-1)
             )
             codec_id = int(chosen[row]) - block_base
             ids.append(codec_id)

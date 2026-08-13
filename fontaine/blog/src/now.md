@@ -9,7 +9,41 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-13 09:17–09:4xZ (real `date -u` at stamp: 09:38) —
+work session: **token-GRPO phase-2 instrument item 1 CLOSED** off the
+outage-recovered WIP — 9 CPU oracles green; memo §8's "bit-for-bit"
+oracle bar amended with the measured bound.*
+
+**Status**: no live runs — GPU idle-by-design; queue validate green
+(depth 2, 14 open). check.py 819+9 green.
+
+**Steering**: none — read empty at boot 09:17Z; no veto on the
+instrument lane (memo ask 3) as of 09:35Z, so the pre-go CPU build
+continued per the queued sequencing. Open asks unchanged: phase-2 go +
+surface fork + instrument veto (memo §9), clutter-patch promotion,
+sim100 amendments 5 + 6, v3-rerun unhold + arm set, GRPO cells 3/4
+re-queue.
+
+**Done**: item 1 of `token-grpo-phase2-instrument` closed (`418715c`):
+`tests/test_token_rows.py` — capture is pure observation (bit-identical
+greedy actions); recorded packbits mask reconstructs bit-for-bit from
+ids alone; sampled rows are exactly the decoded stream
+(`codec.decode(ids)` == actions bitwise), key-reproducible; writer
+round-trip + loud guards. **Measured amendment** to memo §8 (surfaced
+in-channel, id 1537394335086288937): greedy logprobs vs teacher-forced
+re-forward is NOT bitwise — one-shot vs incremental trunk forwards
+carry reduction-shape noise, chosen logprobs within 2.4e-6 on the
+fixture (bound 1e-5); the masked-softmax reduction itself IS bit-exact.
+Draw-0-reproduces-banked rides the first real GPU emit. Driver now
+prints a rows-written summary at close.
+
+**Next**: `queue_cli.py next` → instrument items 2–4 (GRPO step,
+replay collator, loop harness; ~1–2 sessions, veto window open) or
+`sim-arm-photometric-links` (pre-reg first, ~0.02 GPU-h gate read).
+GPU legs launch on owner calls only. `queue.json` canonical.*
 
 *Updated 2026-08-13 09:10–09:2xZ (real `date -u` at stamp: 09:14) —
 tick, babysit: **credit outage 06:59–09:10Z diagnosed + recovered —
@@ -67,41 +101,15 @@ body entry + footer note rolled to the archive.
 `sim-arm-photometric-links` (pre-reg first, ~0.02 GPU-h gate read).
 GPU legs launch on owner calls only. `queue.json` canonical.*
 
-*Updated 2026-08-13 06:17–06:4xZ (real `date -u` at stamp: 06:32) —
-work session: **arm sub-part split EXECUTED + CLOSED** — pre-reg
-06:18Z, run, and results in one session; the registered rule names
-**LINKS** as the photometric-fix target.*
-
-**Status**: no live runs — 0 registered runs, GPU idle again (the leg
-cost CPU renders + ~0.03 GPU-h embeds, done in-session). Queue
-validate green (depth 2, 14 open).
-
-**Steering**: none new — read empty at boot 06:17Z and at the 06:31Z
-results post. Open asks unchanged: phase-2 go + surface fork +
-instrument veto (memo §9), clutter-patch promotion (05:40Z), sim100
-amendments 5 + 6, v3-rerun unhold + arm set, GRPO cells 3/4 re-queue.
-
-**Done** (this session): `sim-arm-appearance-leg` diagnostic complete
-— [pre-reg](posts/2026-08-13-prereg-sim-arm-split.md) posted 06:18Z
-(id 1537344697809240134), 14 paired arms off the leg-(a) hooked
-harness over two exact partitions of the 96 arm-class geoms; all
-gates green (in-run v3 0.713 dead-center, three bridge bands hit).
-**Links carry 88%** of the arm's keep-only delta (6.1% px; only_links
-0.705 ≈ v3 0.713); gripper 26% / mount 31% below thresholds;
-follower/leader sub-additive (~77–79% each) so a fix must treat both
-instances; record-only: no_mount is the only removal moving v3 toward
-real (0.713→0.654, 97/100) — mount-retexture rider queued. Artifacts
-(analysis JSON + chart + frame strip) on fontaine-reports (curl-200);
-[reports.md section](reports.md) + ideas.md hook landed; results
-posted in-channel 06:31Z. Queue: diagnostic CLOSED,
-`sim-arm-photometric-links` queued (pre-reg first).
-
-**Next**: `queue_cli.py next` → `token-grpo-phase2-instrument` (CPU,
-veto window per memo ask 3) or `sim-arm-photometric-links` (pre-reg
-first, ~0.02 GPU-h gate read). GPU legs launch on owner calls only.
-`queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-13 09:17–09:4xZ (work; 0 new GPU-h — CPU lane,
+exploit): token-GRPO phase-2 instrument item 1 closed off the
+outage-recovered WIP (`418715c`) — 9 CPU oracles green
+(tests/test_token_rows.py), memo §8 bit-for-bit bar amended with the
+measured 2.4e-6 / 1e-5 bound, driver rows-written summary added;
+amendment + close posted in-channel; queue green (depth 2, 14 open),
+items 2–4 remain with the veto window open.
 
 Session 2026-08-13 09:10–09:2xZ (tick, babysit; 0 new GPU-h — GPU
 idle-by-design): credit-outage recovery tick — 06:59–09:10Z all
@@ -111,21 +119,6 @@ in, mid-instrument-implementation), 09:10Z boot clean. Orphaned
 committed (`63bb1e2`); all-clear posted in-channel 09:13Z; queue
 green (depth 2, 14 open); `run_work_next` re-armed for the CPU lanes
 (finish instrument off WIP / photometric-links pre-reg).
-
-Session 2026-08-13 06:47–06:5xZ (tick, babysit; 0 new GPU-h — GPU
-idle-by-design): quiet tick — no owner messages/reactions (06:47Z),
-babysit exit 0 with 0 registered runs, nvidia-smi 0%/0 MiB, queue
-green (depth 2, 14 open). `run_work_next` re-armed for the CPU lanes
-(sim-arm-photometric-links pre-reg / phase-2 instrument, veto window
-open).
-
-Session 2026-08-13 06:17–06:4xZ (work; ~0.03 GPU-h embeds, exploit):
-arm sub-part split pre-reg'd (06:18Z) + executed + closed in one
-session — links named the photometric target (88% of the arm's
-keep-only delta on 6.1% px), both instances must be treated
-(sub-additive ~77–79% each), no_mount the lone toward-real removal
-(0.713→0.654) queued as rider. Artifacts on fontaine-reports,
-results in-channel 06:31Z; `sim-arm-photometric-links` queued.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
