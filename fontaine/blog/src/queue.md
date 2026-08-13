@@ -2,9 +2,9 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-13T06:45:00Z
+**Updated:** 2026-08-13T09:36:00Z
 
-**Depth call:** depth 2 open at 06:4xZ 08-13: arm-split diagnostic CLOSED (links named); CPU lanes = token-grpo-phase2-instrument (veto window per memo ask 3) + sim-arm-photometric-links (pre-reg first); GPU legs pend owner calls (v3-rerun unhold, phase-2 go, promotion sign-off, compute options).
+**Depth call:** depth 2 open at 09:3xZ 08-13: CPU lanes = token-grpo-phase2-instrument items 2-4 (item 1 closed 418715c; veto window per memo ask 3 still open) + sim-arm-photometric-links (pre-reg first); GPU legs pend owner calls (v3-rerun unhold, phase-2 go, promotion sign-off, compute options).
 
 **14 open** (Live 0 · Queued 2 · Blocked 12 · Done 144)
 
@@ -36,11 +36,11 @@ Arm photometric fix, named target LINKS both instances (arm-split diagnostic 06:
 
 Token-GRPO phase-2 instrument build (CPU, oracle-gated, zero behavior change - all new flags default-off), per posts/2026-08-13-token-grpo-phase2-design.md section 8: (1) --emit-training-rows on the parallel driver (frames + samp…
 
-**boundary:** Queued 06:0xZ 08-13 at the memo close. Sequenced BEHIND sim-arm-appearance-leg; memo ask 3 offers the owner a veto on pre-go instrument spend - if vetoed in-channel, flip to owner_hold; the RUN itself launches only on the phase-2 go + finalized pre-reg regardless.
+**boundary:** Queued 06:0xZ 08-13 at the memo close. Sequenced BEHIND sim-arm-appearance-leg (closed). Item 1 landed 09:3xZ 08-13 pre-veto (no veto in-channel as of 09:35Z); memo ask 3 still offers the owner a veto on remaining pre-go instrument spend (items 2-4) - if vetoed in-channel, flip to owner_hold; the RUN itself launches only on the phase-2 go + finalized pre-reg regardless.
 
 <details><summary>full record</summary>
 
-Token-GRPO phase-2 instrument build (CPU, oracle-gated, zero behavior change - all new flags default-off), per posts/2026-08-13-token-grpo-phase2-design.md section 8: (1) --emit-training-rows on the parallel driver (frames + sampled ids + per-token chosen logprobs off the existing ActionCaptureStep surface; oracle: greedy logprobs bit-match a teacher-forced re-forward, draw-0 rows reproduce banked sequential rows); (2) GRPO step (advantage-weighted clipped token-CE; oracles: ratio-1 reduces to weighted CE, zero-advantage -&gt; zero grad, train-time grammar mask == rollout mask); (3) replay collator rows -&gt; CollatedBatch (fixture-episode bf16 logit-reproduction oracle); (4) loop harness (rollout-&gt;score-&gt;filter-&gt;step-&gt;eval + babysit heartbeat). check.py green per landing; ~2-3 sessions.
+Token-GRPO phase-2 instrument build (CPU, oracle-gated, zero behavior change - all new flags default-off), per posts/2026-08-13-token-grpo-phase2-design.md section 8: (1) --emit-training-rows on the parallel driver (frames + sampled ids + per-token chosen logprobs off the existing ActionCaptureStep surface; oracle: greedy logprobs bit-match a teacher-forced re-forward, draw-0 rows reproduce banked sequential rows); (2) GRPO step (advantage-weighted clipped token-CE; oracles: ratio-1 reduces to weighted CE, zero-advantage -&gt; zero grad, train-time grammar mask == rollout mask); (3) replay collator rows -&gt; CollatedBatch (fixture-episode bf16 logit-reproduction oracle); (4) loop harness (rollout-&gt;score-&gt;filter-&gt;step-&gt;eval + babysit heartbeat). check.py green per landing; ~2-3 sessions. || ITEM 1 CLOSED 09:3xZ 08-13 (418715c, off outage-recovered WIP 63bb1e2): capture surface + writer + 9 CPU oracles green (tests/test_token_rows.py) - memo section 8 'bit-for-bit' bar AMENDED with measured note (masked-softmax reduction bit-exact; teacher-forced re-forward within 2.4e-6 fixture / 1e-5 bound, one-shot-vs-incremental reduction-shape noise); recorded mask reconstructs from ids alone (trainer half of item 2's mask oracle, already green); draw-0-reproduces-banked check rides the first real GPU emit. Items 2-4 remain (~1-2 sessions).
 
 </details>
 

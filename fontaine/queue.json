@@ -1,6 +1,6 @@
 {
- "updated_utc": "2026-08-13T06:45:00Z",
- "depth_reason": "depth 2 open at 06:4xZ 08-13: arm-split diagnostic CLOSED (links named); CPU lanes = token-grpo-phase2-instrument (veto window per memo ask 3) + sim-arm-photometric-links (pre-reg first); GPU legs pend owner calls (v3-rerun unhold, phase-2 go, promotion sign-off, compute options).",
+ "updated_utc": "2026-08-13T09:36:00Z",
+ "depth_reason": "depth 2 open at 09:3xZ 08-13: CPU lanes = token-grpo-phase2-instrument items 2-4 (item 1 closed 418715c; veto window per memo ask 3 still open) + sim-arm-photometric-links (pre-reg first); GPU legs pend owner calls (v3-rerun unhold, phase-2 go, promotion sign-off, compute options).",
  "items": [
   {
    "id": "ftrig-eval20-flipped-parallel",
@@ -1415,8 +1415,8 @@
    "status": "queued",
    "owner_hold": false,
    "prereg": null,
-   "title": "Token-GRPO phase-2 instrument build (CPU, oracle-gated, zero behavior change - all new flags default-off), per posts/2026-08-13-token-grpo-phase2-design.md section 8: (1) --emit-training-rows on the parallel driver (frames + sampled ids + per-token chosen logprobs off the existing ActionCaptureStep surface; oracle: greedy logprobs bit-match a teacher-forced re-forward, draw-0 rows reproduce banked sequential rows); (2) GRPO step (advantage-weighted clipped token-CE; oracles: ratio-1 reduces to weighted CE, zero-advantage -> zero grad, train-time grammar mask == rollout mask); (3) replay collator rows -> CollatedBatch (fixture-episode bf16 logit-reproduction oracle); (4) loop harness (rollout->score->filter->step->eval + babysit heartbeat). check.py green per landing; ~2-3 sessions.",
-   "boundary": "Queued 06:0xZ 08-13 at the memo close. Sequenced BEHIND sim-arm-appearance-leg; memo ask 3 offers the owner a veto on pre-go instrument spend - if vetoed in-channel, flip to owner_hold; the RUN itself launches only on the phase-2 go + finalized pre-reg regardless."
+   "title": "Token-GRPO phase-2 instrument build (CPU, oracle-gated, zero behavior change - all new flags default-off), per posts/2026-08-13-token-grpo-phase2-design.md section 8: (1) --emit-training-rows on the parallel driver (frames + sampled ids + per-token chosen logprobs off the existing ActionCaptureStep surface; oracle: greedy logprobs bit-match a teacher-forced re-forward, draw-0 rows reproduce banked sequential rows); (2) GRPO step (advantage-weighted clipped token-CE; oracles: ratio-1 reduces to weighted CE, zero-advantage -> zero grad, train-time grammar mask == rollout mask); (3) replay collator rows -> CollatedBatch (fixture-episode bf16 logit-reproduction oracle); (4) loop harness (rollout->score->filter->step->eval + babysit heartbeat). check.py green per landing; ~2-3 sessions. || ITEM 1 CLOSED 09:3xZ 08-13 (418715c, off outage-recovered WIP 63bb1e2): capture surface + writer + 9 CPU oracles green (tests/test_token_rows.py) - memo section 8 'bit-for-bit' bar AMENDED with measured note (masked-softmax reduction bit-exact; teacher-forced re-forward within 2.4e-6 fixture / 1e-5 bound, one-shot-vs-incremental reduction-shape noise); recorded mask reconstructs from ids alone (trainer half of item 2's mask oracle, already green); draw-0-reproduces-banked check rides the first real GPU emit. Items 2-4 remain (~1-2 sessions).",
+   "boundary": "Queued 06:0xZ 08-13 at the memo close. Sequenced BEHIND sim-arm-appearance-leg (closed). Item 1 landed 09:3xZ 08-13 pre-veto (no veto in-channel as of 09:35Z); memo ask 3 still offers the owner a veto on remaining pre-go instrument spend (items 2-4) - if vetoed in-channel, flip to owner_hold; the RUN itself launches only on the phase-2 go + finalized pre-reg regardless."
   },
   {
    "id": "sim-arm-photometric-links",
@@ -1428,5 +1428,5 @@
    "boundary": "Queued 06:4xZ 08-13 at the arm-split close; CPU render + ~0.02 GPU-h embeds per gate read."
   }
  ],
- "updated": "2026-08-13T06:45:00Z"
+ "updated": "2026-08-13T09:36:00Z"
 }
