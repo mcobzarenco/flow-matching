@@ -34,13 +34,16 @@ reference op-for-op + tolerant span extraction), grammar_masked RL
 decode (budget arithmetic on their BPE piece lengths, every draw
 decodable by construction). (3) Real-checkpoint smoke PASS
 (`f0afc1e`): all emissions well-formed + decodable, masked mode 0
-violations / bins identical to greedy. Queue re-scoped 10:09Z +
-10:54Z.
+violations / bins identical to greedy. (4) Port item (d0) CLOSED
+in-session (`931b9a5`): `--molmoact2-discrete` adapter in the
+parallel driver (official shim pinned, fallback accounting) +
+real-checkpoint preflight PASS (1 seed × 2 s, 0 fallbacks). Queue
+re-scoped 10:09Z + 10:54Z + 11:08Z.
 
-**Next**: `queue_cli.py next` → port item (d0) sim-driver discrete
-adapter (CPU, executable now); item (d) 100-seed AR-pathway eval
-(~0.9 GPU-h) fires on the owner go; (b2) HF-reference token parity
-after the gate read. `queue.json` canonical.*
+**Next**: item (d) 100-seed @30 s AR-pathway eval is **LAUNCH-READY
+on the owner go** (command in queue item + in-channel; ~0.5–0.9
+GPU-h); else (b2) HF-reference token parity prep or instrument items
+3–4 (molmoact2 surface). `queue.json` canonical.*
 
 *Updated 2026-08-13 09:41–09:5xZ (real `date -u` at stamp: 09:42) —
 tick, babysit: **quiet tick — no steering, no live runs, GPU
@@ -100,14 +103,15 @@ GPU legs launch on owner calls only. `queue.json` canonical.*
 
 ## Utilization footer
 
-Session 2026-08-13 09:44–11:0xZ (work; ~0.02 GPU-h — CPU lanes +
-discrete-smoke microread, exploit): owner pivot absorbed (RL
-substrate = release molmoact2, AR GRPO stays); GRPO step closed
-(`229d80f`, 7 oracles); molmoact2 AR-head port items a/b/c closed
-(`beeb93e`/`526c4ad`/`2a9e540`, 14 oracles) + real-checkpoint smoke
-PASS (`f0afc1e` — masked decode 0 violations, all streams
-decodable); queue re-scoped twice, validate green (depth 3, 15
-open). Item (d) eval go asked in-channel, unanswered at close.
+Session 2026-08-13 09:44–11:1xZ (work; ~0.03 GPU-h — CPU lanes +
+discrete smoke/preflight microreads, exploit): owner pivot absorbed
+(RL substrate = release molmoact2, AR GRPO stays); GRPO step closed
+(`229d80f`, 7 oracles); molmoact2 AR-head port items a/b/c/d0 ALL
+closed (`beeb93e`/`526c4ad`/`2a9e540`/`931b9a5`, 16 oracles) +
+real-checkpoint smoke PASS (`f0afc1e`) + driver adapter preflight
+PASS; item (d) eval launch-ready. Queue re-scoped ×3, validate green
+(depth 3, 15 open). Item (d) go asked in-channel, unanswered at
+close.
 
 Session 2026-08-13 09:41–09:5xZ (tick, babysit; 0 new GPU-h — GPU
 idle-by-design): quiet tick — no owner messages/reactions (09:41Z),
