@@ -225,7 +225,7 @@ own cmdline; fixed in-session). Crashes 1–3 total ~2.9 GPU-h; resume
 needs ~1.0 → R0 lands ~3.9 of the 5.5 ops gate. Ladder total 35
 unchanged.*
 
-## R0 boundary read (2026-08-13 21:0xZ) — VERDICT: STOP
+## R0 boundary read (2026-08-13 20:5xZ) — VERDICT: STOP
 
 R0 completed rc 0 at 20:54:30Z (launch 4, the `step_0001.pt` resume —
 the R1 resume path validated in passing). **R1 does not launch**, by

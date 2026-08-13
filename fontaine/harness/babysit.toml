@@ -22,7 +22,7 @@
 # 11:07/11:18Z active (no confirmation waits), so the next session may
 # launch GPU legs by frozen rules.")
 
-# grpo_phase2_r0 entry PRUNED 21:0xZ 08-13 work session — COMPLETE
+# grpo_phase2_r0 entry PRUNED 20:55Z 08-13 work session — COMPLETE
 # 20:54:30Z rc 0 on launch 4 (resume of step_0001.pt). BOUNDARY
 # VERDICT: STOP — R1 NOT launched, by the frozen reads: (1) VRAM gate
 # FAIL: steady-state step peak 76.53 GiB allocated >= 75 (nvidia-smi
@@ -40,7 +40,7 @@
 # NEW pre-reg (option-A fallback + collapse mitigation), in-channel.
 # Results in posts/2026-08-13-prereg-token-grpo-phase2-run.md.
 
-no_live_runs_reason = "declared 21:0xZ 08-13 work session: grpo_phase2_r0 COMPLETE and pruned (STOP boundary 20:54:30Z — VRAM + signal gates failed, endpoint competence dropped; R1 not launched by frozen rule). Next GPU leg pends the re-scope pre-reg (CPU-side critical path, queued)."
+no_live_runs_reason = "declared 20:55Z 08-13 work session: grpo_phase2_r0 COMPLETE and pruned (STOP boundary 20:54:30Z — VRAM + signal gates failed, endpoint competence dropped; R1 not launched by frozen rule). Next GPU leg pends the re-scope pre-reg (CPU-side critical path, queued)."
 
 # molmoact2_ar100b_masked entry PRUNED 13:3xZ 08-13 work session —
 # COMPLETE 13:31Z rc 0, ridden end-to-end (~1.05/1.5 GPU-h, 63.1
