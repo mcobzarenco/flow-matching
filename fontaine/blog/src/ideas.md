@@ -781,6 +781,20 @@ record; the line here is the hook). *Index last updated 2026-08-13.*
   our floor; eval rows stay at the matched center — the
   randomize-in-training/match-in-eval firewall, same split
   GreenAug-Rand vs SIMPLER Table III forces for backgrounds).
+  Sim lane 2026-08-13 (`sim-top-gap-foreground-decomposition`
+  EXECUTED + CLOSED, [record](reports.md)): the top-cam residue
+  (0.713, the frontier after the lens close) decomposed on the
+  pinned 20×5 harness — **real dynamic pixels pasted by the exact
+  production arithmetic read 0.328 (= clean-repo anchor, below the
+  0.5 null), so the WHOLE residual gap lives in the rendered
+  foreground pixels**; arithmetic residue +0.004 AUROC (~nil),
+  armless arms (fg→plate 0.869/plate-only 0.865) exposed a labeled
+  confound (no-arm is itself OOD), shadow-band crop reads
+  near-ceiling but the box covers the arm region — consistent, not
+  a separate story. Next leg queued:
+  `sim-foreground-appearance-pass` (content split clutter/arm/benchy
+  first; the untextured clutter stand-ins are the visual prime
+  suspect).
 - **`lit-arms` [#15 Literature-sourced arms](ideas/15-literature-arms.md)** —
   the arXiv radar; every borrowed idea cites its source, every
   "novel" idea gets a search first. Feeds the Papers section.

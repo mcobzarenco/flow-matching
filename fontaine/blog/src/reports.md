@@ -406,6 +406,53 @@ pose+lens refit (`sim-joint-pose-lens-refit`, owner-held).
   · [fit chart](https://mcobzarenco-fontaine-reports.static.hf.space/chart__wrist_lens_fit.png)
   — plumb-line θ→r fit, decompositions, bootstrap
 
+## Top-cam gap decomposition — the whole 0.713 residue lives in the rendered foreground pixels (08-13)
+
+With the wrist at 0.523 under the curve-only fitted lens, the
+frontier is the top cam's 5-NN AUROC 0.713 — unmoved by every lens
+arm. The decomposition probe asked WHERE it lives before spending on
+any lever: five ablation arms on the pinned 20×5 reset-render
+harness (numpy backend, fresh in-run v3 baseline reproduces the
+banked anchor exactly at 0.713). The verdict is unambiguous.
+**Swapping the rendered foreground for real dynamic pixels — real
+arm/boat/hand pixels mined from bank-episode frames, re-lit
+source→target episode via the bank affines, pasted on a *different*
+drawn plate by the exact production arithmetic — collapses the read
+to 0.328**, at the clean-repo anchor (0.283) and below the 0.5 null:
+the compositing pipeline (plates, mask feathering, grade, noise) can
+reach real-level; only the pixels it pastes are wrong. The
+arithmetic residue read agrees from the other side: fg→plate (0.869)
+vs plate-only (0.865) differ by +0.004 AUROC (paired Δknn5 +2.3e-07
+CI95 [1.4e-07, 3.3e-07] — real but ~5% of the armless shift and far
+under the +0.05 registered bar), so edge-weighting + foreground-PSF
+carry ~nothing. Two labeled surprises: (1) the fg→plate/plate-only
+arms read FARTHER than v3 (0/100 frames closer, +4.5e-06) — an
+armless frame is itself OOD (every real frame has the arm
+somewhere), so registered rule 1's first clause misfired for a
+measured, explainable reason; the real-fg arm carries the
+localization instead. (2) The shadow-band crop read is near-ceiling
+(v3 0.989, v4 0.988, crop clean anchor 0.304): within the table
+region the encoder separates sim from real almost perfectly, and the
+fitted shadow does NOT close it locally (paired crop Δ CI includes
+0) — but the registered box grew to cover most of the lower frame
+(89:480, 81:640), i.e. it includes the rendered arm itself, so it
+localizes the signal to "the region containing the pasted render",
+consistent with the real-fg verdict rather than a separate shadow
+story. v4's full-frame paired read replicated the shadow gate on the
+20×5 protocol (−8.3e-08 CI [−1.34e-07, −3.1e-08], 66/100 closer).
+**Decision (registered rule): the next leg is foreground appearance**
+— and the sample frames name the prime suspect: the untextured
+gray clutter stand-ins (cylinder mug, white disk) sit next to
+photoreal plates; queued as `sim-foreground-appearance-pass` with a
+content-split leg (clutter vs arm vs benchy, keeping the rest
+rendered to dodge the armless confound) before any material work.
+~0.02 GPU-h embeds; renders CPU.
+
+- [analysis JSON](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_top_gap_decomposition.json)
+  · [chart](https://mcobzarenco-fontaine-reports.static.hf.space/chart__top_gap_decomposition.png)
+- [arm strip](https://mcobzarenco-fontaine-reports.static.hf.space/top_gap_arms_seed0_strip.png)
+  — v3 render / real-fg composite / plate-only, same slot
+
 ## 20-seed behavioral spot-check under v3 ([pre-reg](posts/2026-08-12-prereg-sim-spot20-v3.md), [results](posts/2026-08-12-sim-spot20-v3-results.md), 08-12)
 
 Same 20 seeds, physics bit-identical (spawn rows byte-matched
