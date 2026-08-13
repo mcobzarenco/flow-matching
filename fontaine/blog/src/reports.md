@@ -453,6 +453,46 @@ rendered to dodge the armless confound) before any material work.
 - [arm strip](https://mcobzarenco-fontaine-reports.static.hf.space/top_gap_arms_seed0_strip.png)
   — v3 render / real-fg composite / plate-only, same slot
 
+## Foreground content split — the clutter stand-ins (~5% of pixels) carry the removable share (08-13)
+
+Leg (a) of the appearance pass asked WHICH rendered class carries
+the 0.713: arm bodies (96 geoms, ~7.1% of pixels), benchy (341,
+~0.1%), the clutter stand-ins mouse/mug/laptop/pcb (~5.1%), or the
+disk (~0.5%, split out of "clutter" as the always-rendered named
+suspect). One production v3 instance was hooked at `_composite`, so
+every slot yields all 10 arms — v3, plate-only, no_(class),
+only_(class) — through the exact production arithmetic with a
+segmentation-restricted mask: same physics, same drawn plate, same
+sensor noise (RNG-state restore), making the paired Δ exactly the
+class's visible-pixel effect (in-run oracle: hooked v3 bit-exact ==
+the production observation, all 100 slots; fresh v3 read 0.7127,
+inside the registered abort band). **Removing the clutter stand-ins
+alone collapses the read 0.713 → 0.576** (paired Δknn5 −1.73e-06
+CI95 [−1.92e-06, −1.54e-06], 99/100 frames closer) — the unique
+class past the registered ±0.05 material bar: no_disk −0.006 and
+no_benchy −0.002 are CI-excl-0 but immaterial, and no_arm reads
++0.113 WORSE, the armless-content confound the decomposition
+labeled (every real frame has the arm). The keep-only duals all
+pull toward real when added to the bare plate (only_arm 0.654,
+only_clutter 0.824, only_benchy/only_disk 0.832 vs plate-only
+0.866), so no class is rendered badly enough to overwhelm its own
+content benefit — the ranking rests on the removal direction, which
+is also the honest one for clutter (real episodes genuinely vary
+clutter presence; the bank plates are mined clutter-free).
+**Registered primary rule fires: leg (b) target = clutter
+appearance** (real-crop textures or plate-sourced patches for the
+gray untextured stand-ins). Ceiling note, registered before leg
+(b): no_clutter's 0.576 still sits far above the real-fg anchor
+0.328, and the arm carries most of that remainder (only_arm 0.654
+vs the real-content direction ~0.33) — clutter alone cannot close
+the gap, it is just the best ROI per rendered pixel. Renders CPU
+(~5 min), embeds 12 groups ~0.02 GPU-h.
+
+- [analysis JSON](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_fg_content_split.json)
+  · [chart](https://mcobzarenco-fontaine-reports.static.hf.space/chart__sim_fg_content_split.png)
+- [arm strip](https://mcobzarenco-fontaine-reports.static.hf.space/fg_split_arms_seed0_strip.png)
+  — v3 / no_clutter / only_clutter, same slot
+
 ## 20-seed behavioral spot-check under v3 ([pre-reg](posts/2026-08-12-prereg-sim-spot20-v3.md), [results](posts/2026-08-12-sim-spot20-v3-results.md), 08-12)
 
 Same 20 seeds, physics bit-identical (spawn rows byte-matched

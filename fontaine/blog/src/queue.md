@@ -2,9 +2,9 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-13T04:17:00Z
+**Updated:** 2026-08-13T04:54:18Z
 
-**Depth call:** depth 3 open at 16:0xZ 08-12: ftrig-eval20-flipped-parallel CLOSED this session (owner prio, ridden end-to-end); remaining open: sim-wrist-compositing + 2 lit items; grpo-signal-probe owner_hold (memo review), v3-rerun unhold ask 15:13Z still open.
+**Depth call:** depth 2 open at 04:5xZ 08-13: fg-content-split leg (a) executed inside sim-foreground-appearance-pass (item stays queued for legs b/c, target class = clutter); token-grpo-phase2-design-memo the other CPU lane; GPU legs pend owner calls (v3-rerun unhold, phase-2 go, compute options).
 
 **13 open** (Live 0 · Queued 2 · Blocked 11 · Done 141)
 
@@ -20,13 +20,13 @@
 
 **`sim-foreground-appearance-pass`** · `cpu`
 
-Foreground appearance pass (decomposition verdict 08-13: real-fg 0.328 vs v3 0.713 - the whole residual top-cam gap is the rendered foreground pixels; arithmetic ~nil, shadow lever spent at ~10%)
+Foreground appearance pass - LEG (A) DONE 04:5xZ 08-13 (pre-reg 04:41Z, results in-channel 04:52Z, analysis__sim_fg_content_split.json): 10 paired arms off ONE hooked production v3 instance (same physics/plate/noise per slot, hoo…
 
-**boundary:** Queued 04:3xZ 08-13 at the decomposition close (charter s4 refill; feeds from the registered decision rule). Pre-reg in-channel before any embed run.
+**boundary:** Leg (a) closed 04:5xZ 08-13 (commit pending this session). Leg (b) pre-reg in-channel before any material/texture work lands; leg (c) gate before any default consideration.
 
 <details><summary>full record</summary>
 
-Foreground appearance pass (decomposition verdict 08-13: real-fg 0.328 vs v3 0.713 - the whole residual top-cam gap is the rendered foreground pixels; arithmetic ~nil, shadow lever spent at ~10%). Leg (a) content split: same 20x5 harness, SELECTIVE fg-&gt;plate per content class (clutter stand-ins / benchy / arm bodies) keeping the rest rendered - no armless confound - to rank which class carries the 0.713; visual prime suspect = the untextured gray clutter stand-ins (cylinder mug, white disk) sitting on photoreal plates (see top_gap_arms_seed0_strip.png). Leg (b) appearance fix for the top class (clutter: real-crop textures or plate-sourced patches; arm: material/color response match vs the real black arms; benchy: tint/roughness), oracle-pinned like v4/lens legs. Leg (c) paired gate on the pinned probe, bar registered at pre-reg time; no default flip without owner sign-off. Cost: renders CPU, ~0.02 GPU-h embeds per round.
+Foreground appearance pass - LEG (A) DONE 04:5xZ 08-13 (pre-reg 04:41Z, results in-channel 04:52Z, analysis__sim_fg_content_split.json): 10 paired arms off ONE hooked production v3 instance (same physics/plate/noise per slot, hooked-v3 bit-exact oracle green, in-run v3 0.7127 inside the registered abort band) - REGISTERED PRIMARY RULE FIRED: target class = CLUTTER (no_clutter 0.576 = -0.137 vs v3, paired dknn5 -1.73e-06 CI-excl-0, 99/100 closer; unique class past the +/-0.05 material bar; no_disk -0.006 / no_benchy -0.002 immaterial; no_arm +0.113 = the labeled armless confound). REMAINING LEGS: (b) appearance fix for the clutter stand-ins mouse/mug/laptop/pcb (~5.1% of pixels; real-crop textures or plate-sourced patches; the stand-ins are untextured gray primitives on photoreal plates - see fg_split_arms_seed0_strip.png), oracle-pinned like the v4/lens legs; (c) paired gate on the pinned 20x5 probe, bar registered at leg-(b) pre-reg time; no default flip without owner sign-off. REGISTERED CEILING: no_clutter 0.576 still far above the real-fg anchor 0.328 - the arm's ~7.1% of pixels carries most of the remainder (only_arm 0.654); an arm-appearance leg is a separate future item, not this one. Cost: renders CPU, ~0.02 GPU-h embeds per gate read.
 
 </details>
 
