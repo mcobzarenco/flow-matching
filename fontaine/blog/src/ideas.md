@@ -810,7 +810,24 @@ record; the line here is the hook). *Index last updated 2026-08-13.*
   (75/100, CI-excl-0)** — real-looking clutter outperforms
   clutter-free plates. Promotion into production v3/v4 pends the
   owner go (asked 05:40Z); arm appearance (~7% of pixels, the
-  remaining ceiling to 0.328) is the natural next leg.
+  remaining ceiling to 0.328) is the natural next leg. GRPO thread
+  2026-08-13: the signal probe EXECUTED overnight (re-scoped at the
+  registered tripwire — cells 1/2/5 + anchors, 3.57 GPU-h;
+  [results as amendment 1](posts/2026-08-12-prereg-grpo-signal-probe.md))
+  — **both families clear the 0.25 cm bar** (AR t=1.0 median group
+  std 0.771 = 3.1×; t=1.6 buys 3.2× the spread at 3× the competence
+  cost; SDE a=0.5 1.860 with cost CI including 0); the frozen rule
+  fires: **phase 2 = token-GRPO on the AR head at t=1.0, Flow-GRPO
+  SDE second**; the spread is knock-away-tailed, so the first
+  learnable signal ≈ "don't swat the boat." Same-day
+  [phase-2 design memo + pre-reg DRAFT](posts/2026-08-13-token-grpo-phase2-design.md):
+  measured rollout pace reprices the run ~5× over the 08-12 sketch
+  (~0.75 GPU-h/step → ladder 2/15/+25 steps, ~33 GPU-h gate 35, two
+  decision boundaries), composite reward (progress + success bonus +
+  guard penalties, z-scored in-group), recommended trainable surface
+  = FAST patch + text stack at 5e-6 (vision frozen), old-policy
+  logprobs ride the existing `ActionCaptureStep` surface. Launch
+  pends the owner phase-2 go (open since 08-12).
 - **`lit-arms` [#15 Literature-sourced arms](ideas/15-literature-arms.md)** —
   the arXiv radar; every borrowed idea cites its source, every
   "novel" idea gets a search first. Feeds the Papers section.
