@@ -5,7 +5,46 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-13 04:34–05:0xZ (real `date -u` at stamp: 05:05) —
+work session: **`sim-foreground-appearance-pass` LEG (A) EXECUTED —
+the clutter stand-ins (~5% of pixels) carry the removable share of
+the top-cam gap: no_clutter 0.576 vs v3 0.713; the registered rule
+fires, leg (b) target = clutter appearance.***
+
+**Status**: no live runs — GPU idle-by-design (this session's spend
+~0.02 GPU-h: the pre-registered content-split embeds). Queue
+validate green (depth 2, 13 open).
+
+**Steering**: none new — read empty at boot 04:34Z and at the
+04:54Z close poll (only my own pre-reg/results posts). Open asks
+unchanged: sim100 amendments 5 (v4 default) + 6 (curve-only fitted
+wrist lens default), v3-rerun unhold + arm set, disk-draws
+sign-off, GRPO cells 3/4 re-queue, phase-2 token-GRPO go.
+
+**Done** (commit `e51773f`; pre-reg 04:41Z, results in-channel
+04:52Z): `sim_fg_content_split.py` — 10 paired arms off ONE hooked
+production v3 instance (same physics/plate/noise per slot via
+rng-state restore; hooked-v3 bit-exact oracle green on all 100
+slots; in-run v3 0.7127 inside the registered abort band, plate_only
+0.866, clean anchor 0.283). **no_clutter 0.576 (−0.137 vs v3,
+paired Δknn5 −1.73e-06 CI-excl-0, 99/100 closer) — the unique class
+past the ±0.05 material bar**; no_disk −0.006 / no_benchy −0.002
+immaterial; no_arm +0.113 (the labeled armless confound); keep-only
+duals all pull toward real (only_arm 0.654) so the ranking rests on
+the removal direction. Registered ceiling: 0.576 ≫ real-fg 0.328 —
+the arm's ~7% of pixels carries the remainder. Artifacts: analysis
+JSON + chart + strip on fontaine-reports (curl-200); reports.md
+section, ideas.md hook, queue item updated (legs b/c remain, target
+= clutter).
+
+**Next**: `queue_cli.py next` → `token-grpo-phase2-design-memo` or
+`sim-foreground-appearance-pass` leg (b) (clutter appearance fix —
+real-crop textures / plate-sourced patches; pre-reg first, ~0.02
+GPU-h per gate read). GPU legs launch on owner calls only.
+`queue.json` canonical.*
 
 *Updated 2026-08-13 04:31–04:3xZ (real `date -u` at stamp: 04:33) —
 tick, babysit: **quiet tick — no steering, no live runs, GPU
@@ -71,46 +110,22 @@ content split clutter/arm/benchy → fix top class → paired gate).
 latter's embeds ~0.02 GPU-h, pre-reg first). GPU legs launch on
 owner calls only. `queue.json` canonical.*
 
-*Updated 2026-08-13 03:48–03:5xZ (real `date -u` at stamp: 03:49) —
-tick, babysit: **quiet tick — no steering, no live runs, GPU
-idle-by-design; `run_work_next` re-armed for the CPU lanes.***
-
-**Status**: no live runs — babysit exit 0, 0 registered runs;
-nvidia-smi 0%/0 MiB. Queue validate green (depth 2, 13 open).
-
-**Steering**: none new — read empty 03:48Z, history-5 shows no
-reactions on the 03:27Z pre-reg or 03:40Z lens-gate results posts.
-Open asks unchanged: sim100 amendment 5 (v4 default), amendment 6
-(curve-only fitted wrist lens default), v3-rerun unhold + arm set,
-disk-draws sign-off, GRPO cells 3/4 re-queue, phase-2 token-GRPO go.
-
-**Done**: liveness/queue/GPU verified; `run_work_next` re-armed
-(CPU lanes queued — `sim-top-gap-foreground-decomposition`,
-`token-grpo-phase2-design-memo` — GPU idle-by-design per
-no-idle-pauses). Footer notes >2 rolled to the archive.
-
-**Next**: chained work session → `queue_cli.py next`:
-`token-grpo-phase2-design-memo` or
-`sim-top-gap-foreground-decomposition` (CPU-side; the latter's
-~0.02 GPU-h embeds pre-reg first). GPU legs launch on owner calls
-only. `queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-13 04:34–05:0xZ (work; +~0.02 GPU-h — the
+pre-registered content-split embeds, exploit): fg content split leg
+(a) EXECUTED (`e51773f`) — no_clutter 0.576 vs v3 0.713 (−0.137,
+99/100 closer, the unique material class): leg (b) target = clutter
+appearance (mouse/mug/laptop/pcb, ~5.1% of pixels); armless
+confound reproduced (+0.113), ceiling registered (real-fg 0.328,
+arm pixels carry the remainder). Queue item updated for legs b/c;
+`run_work_next` re-armed (CPU lanes queued).
 
 Session 2026-08-13 04:31–04:3xZ (tick, babysit; 0 new GPU-h — GPU
 idle-by-design): quiet tick — no owner messages/reactions (04:31Z),
 babysit exit 0 with 0 registered runs, nvidia-smi 0%/0 MiB, queue
 green (depth 2, 13 open). `run_work_next` stays armed for the CPU
 lanes (foreground-appearance pass / token-GRPO phase-2 memo).
-
-Session 2026-08-13 03:50–04:3xZ (work; +~0.02 GPU-h — the
-pre-registered decomposition embeds, exploit):
-`sim-top-gap-foreground-decomposition` EXECUTED + CLOSED
-(`d2ec169`) — real-fg arm 0.328 vs v3 0.713 (= clean anchor): the
-whole residual top-cam gap is the rendered foreground pixels;
-arithmetic residue ~nil, armless confound labeled, shadow-band crop
-near-ceiling (box covers the arm region). Next leg queued:
-`sim-foreground-appearance-pass`.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
