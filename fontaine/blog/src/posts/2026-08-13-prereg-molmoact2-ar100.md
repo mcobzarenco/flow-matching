@@ -121,3 +121,20 @@ bins budget-masked, end forced; every emission decodes).
 - **Gate ≤ 1.5 GPU-h** (arm A measured 1.15). Launched detached at
   the amendment commit under the 11:07Z delegation; results ride
   the next session if the wall crosses the session deadline.
+
+### Amendment 1 results (2026-08-13 13:3xZ, same session — arm B 12:29–13:31Z, rc 0)
+
+**The grammar-masked decode is a registered improvement.** Paired
+per-seed delta (B − A, same 100 seeds): **+0.728 cm, CI95 [+0.147,
++1.325] — excludes zero**. Knock-aways **27 → 13** (halved); mean
+`progress_final` −0.87 → −0.14 cm; 47/100 seeds behaviorally
+different; zero-fallbacks **0/2,996 by construction** (vs arm A's
+202); strikes 0; ~1.05/1.5 GPU-h (63.1 min — faster than arm A:
+masked decode never overruns to EOS). Successes 1/100 on each arm at
+different seeds (A: 73, B: 1) — the success count didn't move, the
+competence floor did.
+
+**Standing decision (owner delegation 11:07Z/11:18Z): the masked
+decode is the default serving mode for the AR pathway** — it is the
+RL rollout decode anyway, and it deployment-dominates the reference
+on every read that moved.
