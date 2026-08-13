@@ -10,6 +10,30 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-13 06:14–06:1xZ (real `date -u` at stamp: 06:15) —
+tick, babysit: **quiet tick — no steering, no live runs, GPU
+idle-by-design; `run_work_next` re-armed for the CPU lanes.***
+
+**Status**: no live runs — babysit exit 0, 0 registered runs;
+nvidia-smi 0%/0 MiB. Queue validate green (depth 2, 14 open).
+
+**Steering**: none new — read empty 06:14Z, history-5 shows no
+reactions on the 05:39Z appearance-pass results or the 06:09Z
+phase-2 memo posts. Open asks unchanged: **phase-2 go + surface
+fork + instrument veto** (memo §9, 06:09Z), clutter-patch promotion
+(05:40Z), sim100 amendments 5 + 6, v3-rerun unhold + arm set, GRPO
+cells 3/4 re-queue.
+
+**Done**: liveness/queue/GPU verified; `run_work_next` re-armed
+(CPU lanes queued — `sim-arm-appearance-leg` pre-reg,
+`token-grpo-phase2-instrument` behind it, veto window open). Oldest
+body entry + footer note rolled to the archive.
+
+**Next**: chained work session → `queue_cli.py next`:
+`sim-arm-appearance-leg` diagnostic (pre-reg first, ~0.02 GPU-h),
+then `token-grpo-phase2-instrument` (CPU, unless vetoed). Promotion
++ GPU legs launch on owner calls only. `queue.json` canonical.*
+
 *Updated 2026-08-13 05:59–06:1xZ (real `date -u` at stamp: 06:10) —
 work session: **token-GRPO phase-2 design memo + pre-reg DRAFT
 POSTED** — the probe decision rule's follow-through; ~33 GPU-h gate
@@ -73,45 +97,13 @@ archive.
 diagnostic (pre-reg first, ~0.02 GPU-h). Promotion + GPU legs
 launch on owner calls only. `queue.json` canonical.*
 
-*Updated 2026-08-13 05:17–05:5xZ (real `date -u` at stamp: 05:56) —
-work session: **fg appearance pass legs (b)+(c) EXECUTED, registered
-gate PASS — real-crop clutter patches read 0.556 vs v3 0.713 (−0.157,
-100/100 closer) and beat the no_clutter removal ceiling 0.576; the
-appearance pass is CLOSED, promotion pends the owner go.***
-
-**Status**: no live runs — GPU idle-by-design (this session's spend
-~0.02 GPU-h: the pre-registered gate embeds). Queue validate green
-(depth 2, 14 open).
-
-**Steering**: none new — read empty at boot 05:17Z and at the 05:55Z
-close poll (only my own pre-reg/results posts). Open asks unchanged
-plus one new: **clutter-patch promotion sign-off** (asked 05:40Z);
-sim100 amendments 5 + 6, v3-rerun unhold + arm set, disk-draws
-sign-off, GRPO cells 3/4 re-queue, phase-2 token-GRPO go.
-
-**Done** (commit `2e15ae7`; pre-reg 05:23Z, results in-channel
-05:40Z): `make_clutter_crops.py` mined RGBA crops of the real
-mouse/mug/laptop/pcb from bank-episode naive medians (alpha =
-feathered novelty vs the corrected global plate; areas bit-match the
-manifest, centroid drift ≤0.1 px); `clutter_patch.py` pastes them at
-the drawn poses by inverse warp through the verified fisheye model
-(episode grading, zero extra RNG draws); `sim_fg_appearance_fix.py`
-(leg (a) harness, 3 arms, ONE hooked instance) read **patched 0.556
-(ΔAUROC −0.157 vs the −0.05 bar, paired Δknn5 −2.02e-06 CI-excl-0,
-100/100 closer; beats no_clutter 0.576 by −0.020, 75/100,
-CI-excl-0)** — full-recovery read fires. Integrity: in-run v3 0.7127
-in band, no_clutter reproduces leg (a) within ±0.01, bit-exact
-oracle green 100/100. Queue: appearance pass CLOSED;
-`sim-clutter-patch-promotion` (blocked, owner_hold) +
-`sim-arm-appearance-leg` queued. Artifacts on fontaine-reports
-(curl-200): analysis JSON, chart, v3-vs-patched strip, crops strip.
-
-**Next**: `queue_cli.py next` → `token-grpo-phase2-design-memo`
-(CPU) or `sim-arm-appearance-leg` diagnostic (pre-reg first, ~0.02
-GPU-h). Promotion + GPU legs launch on owner calls only.
-`queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-13 06:14–06:1xZ (tick, babysit; 0 new GPU-h — GPU
+idle-by-design): quiet tick — no owner messages/reactions (06:14Z),
+babysit exit 0 with 0 registered runs, nvidia-smi 0%/0 MiB, queue
+green (depth 2, 14 open). `run_work_next` re-armed for the CPU lanes
+(arm-appearance leg pre-reg / phase-2 instrument, veto window open).
 
 Session 2026-08-13 05:59–06:1xZ (work; 0 new GPU-h — CPU-only design
 session, exploit): token-GRPO phase-2 design memo + pre-reg DRAFT
@@ -121,12 +113,6 @@ gate 35, repricing the 08-12 sketch ~5×), composite reward, surface
 fork (B recommended), 5 tripwires, instrument delta. Queue: memo item
 closed, instrument item queued (veto window). Launch pends the owner
 phase-2 go. `run_work_next` re-armed (CPU lanes queued).
-
-Session 2026-08-13 05:57–06:0xZ (tick, babysit; 0 new GPU-h — GPU
-idle-by-design): quiet tick — no owner messages/reactions (05:58Z),
-babysit exit 0 with 0 registered runs, nvidia-smi 0%/0 MiB, queue
-green (depth 2, 14 open). `run_work_next` stays armed for the CPU
-lanes (token-GRPO phase-2 memo / arm-appearance leg pre-reg).
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
