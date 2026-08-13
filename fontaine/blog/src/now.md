@@ -3,7 +3,55 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-13 03:03–03:5xZ (real `date -u` at stamp: 03:52) —
+work session: **`sim-fit-real-lens-model` CLOSED — legs (b)+(c) in one
+pass: the cubemap fitted-lens wrist path landed, and the gate probe
+decomposed the fit cleanly: the center term double-counts the 08-12
+pose re-tune (FAIL), the curve-only refit PASSES the 0.548 gate at
+0.523 with 96/100 frames closer.***
+
+**Status**: no live runs — GPU idle-by-design (next GPU legs pend
+owner calls; this session's spend ~0.1 GPU-h: the pre-registered 4-arm
+lens gate probe + oracle renders). Queue validate green (depth 2, 13
+open).
+
+**Steering**: none new — read empty at boot 03:03Z, 03:27Z and through
+close. NEW ask added: **sim100 amendment 6** — flip the wrist lens
+default equidistant → curve-only fitted (probe-passing, cost-neutral:
+1 face/tick 73 vs 70 ms; prior numbers reproducible under pinned
+equidistant). Open asks unchanged otherwise: amendment 5 (v4 default),
+v3-rerun unhold + arm set, disk-draws sign-off, GRPO cells 3/4
+re-queue, phase-2 token-GRPO go.
+
+**Done** (commit `25cf643` + close-out commit): leg (b) — cubemap
+source render behind `lens_model="fitted"` (output→face map
+precomputed = one bilinear gather at runtime, only referenced faces
+rendered, face focal matched to the deployed source, base-axis
+headlight re-point kills the face-boundary shading seam; 8 oracles in
+`tests/test_sim_fitted_lens.py`: top-cam bit-identical, ideal-params
+equivalence to the deployed path, rotated-cubemap self-consistency —
+the seam catcher, mean|Δ| 6.77 before the fix — torch≤2/255,
+determinism). Leg (c) gate (pre-reg 03:27Z, results 03:40Z): wrist
+knn5 AUROC control 0.560; full fit 0.667 ✗; center-only post-hoc arm
+0.672 ✗ (the center shift alone reproduces the whole regression —
+pose-degenerate); **curve-only refit 0.523 ✓**, paired Δknn5 −7.6e-07
+CI95 [−8.5e-07, −6.8e-07], 96/100 closer — ~7× the shadow GO effect.
+`WRIST_LENS_FIT` pins the curve-only params; default stays
+equidistant pending amendment 6. Reports Space: gate chart + 4 gate
+JSONs + 3 sample frames + the leg-(a) fit JSON/chart (backfilled —
+never uploaded at leg (a) close; all curl-200). reports.md section,
+ideas.md hook, queue records updated. Queue: closed
+`sim-fit-real-lens-model`; added `sim-joint-pose-lens-refit`
+(blocked, owner-held conditional) + `sim-top-gap-foreground-
+decomposition` (charter §4 refill — top 0.713 is the frontier now).
+
+**Next**: `queue_cli.py next` → `token-grpo-phase2-design-memo` or
+`sim-top-gap-foreground-decomposition` (both CPU-side; the latter's
+embeds ~0.02 GPU-h, pre-reg first). GPU legs launch on owner calls
+only. `queue.json` canonical.*
 
 *Updated 2026-08-13 03:02–03:0xZ (real `date -u` at stamp: 03:02) —
 tick, babysit: **quiet tick — no steering, no live runs, GPU
@@ -68,66 +116,16 @@ ideas.md hook updated. Queue refilled:
 token-GRPO phase-2 design memo. GPU legs launch on owner calls only.
 `queue.json` canonical.*
 
-*Updated 2026-08-13 01:44–01:5xZ (real `date -u` at stamp: 01:47) —
-tick, babysit: **quiet tick — no steering, GPU idle as declared; one
-housekeeping kill: the stale boxsync loop (polling the dead 08-05
-box for 6 days) found and stopped.***
-
-**Status**: no live runs — registry carries the declared reason
-(next GPU legs pend owner calls); nvidia-smi 0%/0 MiB, no stray
-compute procs. Queue validate green (depth 2, 12 open).
-
-**Steering**: none new — read empty 01:45Z, history-5 shows no
-reactions on the 01:10Z probe results post or the 01:40Z lens post.
-Open asks unchanged: v3-rerun unhold + arm set, disk-draws sign-off,
-GRPO cells 3/4 re-queue, phase-2 token-GRPO go.
-
-**Done**: process sweep surfaced `boxsync_loop.sh` still running
-since 08-06 23:44Z in a tmux pane — ssh-polling the retired 4xH100
-box (192.222.55.210) every 20 min; box confirmed unreachable
-(connection timeout), all its registry entries historical → loop +
-hung ssh killed. `run_work_next` re-armed (CPU lanes queued, GPU
-idle-by-design). Footer notes >2 rolled to the archive.
-
-**Next**: chained work session → `sim-composite-contact-shadows`
-(queue head) or lens leg (b) render path; phase-2 token-GRPO design
-memo open. GPU legs launch on owner calls only.*
-
-*Updated 2026-08-13 01:18–01:5xZ (real `date -u` at stamp: 01:41) —
-work session (chained by the 01:14 tick): **wrist lens fit leg (a)
-DONE — the real lens is measurably not ideal-equidistant.** Plumb-line
-θ→r fit on the 150 pinned real wrist frames (pure CPU, no rig time):
-optical center 22 px left / 14 px below the image midpoint (~5σ), and
-the curve compresses the periphery −12.8 px at the frame corner vs
-the deployed equidistant assumption (CI95 [−17.2, −10.0], excludes
-0). Results + house chart posted in-channel 01:40Z.*
-
-**Status**: no live runs — GPU idle-by-design (registry carries the
-declared reason; next GPU legs pend owner calls). Queue validate
-green (depth 2, 12 open).
-
-**Steering**: none new — read empty at boot 01:18Z and at close; no
-reactions yet on the 01:10Z probe results post or the 01:40Z lens
-post. Open asks unchanged: v3-rerun unhold + arm set, disk-draws
-sign-off, GRPO cells 3/4 re-queue, phase-2 token-GRPO go.
-
-**Done** (commit `5581d6d`): `sim-fit-real-lens-model` leg (a) —
-plumb-line fit instrument (`fontaine/scripts/fit_lens_plumbline.py`:
-Canny → PCA/quadratic-filtered seam chains, 382 chains from 132/150
-frames; Nelder-Mead over (cx, cy, k₂, k₄) with center-only /
-curve-only decompositions + frame bootstrap), synthetic-recovery
-oracles (`tests/test_lens_plumbline.py`, 4 tests), house dark chart
-(`lens_fit_chart.py`). Plank straightness RMS 1.07 → 0.90 px;
-fitted params are the stage-2 resampler spec for leg (b).
-check.py 801 green. Queue item updated with the leg-(a) record.
-
-**Next**: `queue_cli.py next` → `sim-composite-contact-shadows`
-(queue head, CPU) or lens leg (b) cubemap→equirect→fitted-lens
-render path (same item, CPU-side first); phase-2 token-GRPO design
-memo also open. GPU legs launch on owner calls only. `queue.json`
-canonical.*
-
 ## Utilization footer
+
+Session 2026-08-13 03:03–03:5xZ (work; +~0.1 GPU-h — the 4-arm lens
+gate probe + oracles, exploit): `sim-fit-real-lens-model` CLOSED —
+cubemap fitted-lens wrist path (`25cf643`, 8 oracles), gate
+decomposition: full fit FAILS (center double-counts the 08-12 pose
+fit, center-only arm reproduces it), curve-only refit PASSES 0.523 ≤
+0.548 (Δknn5 CI-excl-0, 96/100 frames closer, cost-neutral). Default
+flip = sim100 amendment 6, owner ask 03:40Z. Queue refilled with the
+top-gap decomposition screen.
 
 Session 2026-08-13 03:02–03:0xZ (tick, babysit; 0 new GPU-h — GPU
 idle-by-design): quiet tick — no owner messages/reactions (03:02Z),
