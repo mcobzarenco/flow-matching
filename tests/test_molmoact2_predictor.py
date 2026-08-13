@@ -200,10 +200,18 @@ def _tiny_stats(dim: int, offset: float) -> QuantileStats:
     )
 
 
-@pytest.fixture(scope="module")
-def predictor() -> MolmoAct2Predictor:
+def build_predictor(*, vocab_size: int = _BASE_VOCAB) -> MolmoAct2Predictor:
+    """The tiny-trunk predictor, seeded and deterministic. ``vocab_size``
+    widens the text config (and with it the REAL lm_head, which stops at
+    ``config.vocab_size``): the default stops below the ``<action_i>``
+    block at 151,934+ — fine for the continuous path and the
+    scripted-head discrete tests, but the replay oracles
+    (tests/test_molmoact2_replay.py) need genuine logits over the block
+    and build with 156,032."""
     torch.manual_seed(0)
-    config = Molmo2Config.from_dict(_tiny_trunk_config())
+    config_dict = _tiny_trunk_config()
+    config_dict["text_config"]["vocab_size"] = vocab_size
+    config = Molmo2Config.from_dict(config_dict)
     assert config.vit is not None and config.adapter is not None
     text = Molmo2TextModel(config.text, lm_head=True)
     vision = Molmo2VisionBackbone(config.vit, config.adapter)
@@ -253,6 +261,11 @@ def predictor() -> MolmoAct2Predictor:
         flow_matching_num_steps=_FLOW_STEPS,
         mask_action_dim_padding=True,
     )
+
+
+@pytest.fixture(scope="module")
+def predictor() -> MolmoAct2Predictor:
+    return build_predictor()
 
 
 def _observation() -> dict[str, Any]:
