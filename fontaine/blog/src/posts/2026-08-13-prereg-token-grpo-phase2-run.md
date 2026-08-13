@@ -191,3 +191,36 @@ in-channel as a new pre-reg, per the frozen rule. Gate accounting:
 launches 1+2 spent ~1.85 GPU-h on the two plumbing crashes; the R0
 **ops** gate rises to 5.5 GPU-h to cover them — the 35 GPU-h ladder
 total is unchanged (R2 shrinks by whatever R0 overruns).*
+
+**Addendum 3 (2026-08-13 19:5xZ — worker-headroom fix + RESUME
+relaunch, no frozen constant changed).** Launch 3 (17:56:31Z)
+delivered the run's biggest milestone before dying: **the first
+gradient step SURVIVED with every step-1 gate green** (row 18:54:02Z:
+mean_ratio 1.00138, clip_fraction 0.132, median group std 4.17 cm,
+groups 8/8, approx_kl 0.0232, anchor_kl 0.0215, loss 0.0317,
+grad_norm 2.56, strikes 0, 4/64 sampled successes, vram_gib 70.93,
+0.76 GPU-h/step measured) and `step_0001.pt` saved. Then wave 1's
+first worker OOM'd at episode reset (18:57:55Z, `_gather` in the GPU
+photometric post): after the gradient pass the parent's caching
+allocator retains the ~70 GiB activation peak as RESERVED segments
+(nvidia-smi showed 78–80 GiB; allocated was ~50), and the 8 spawned
+sim workers — own CUDA contexts + post tensors — could no longer fit.
+Wave 0 never saw this because Adam states didn't exist yet. Fixes
+(allocation-shape only, semantics oracle-pinned unchanged):
+`release_cached_vram()` (`torch.cuda.empty_cache()`) before every
+wave and eval. Relaunch RESUMES `step_0001.pt` rather than re-running
+from scratch — deterministic keying makes the remaining work
+identical (step-2 wave seeds 1008–1015, baseline rides in the
+checkpoint), it saves ~1.1 GPU-h, and it exercises the exact resume
+path R1 depends on. One resume-correctness fix landed with it: the
+KL anchor is now snapshotted BEFORE the checkpoint restore (the old
+order would have silently rebased `anchor_kl` onto the resumed
+weights); new CPU oracle pins it (13 loop oracles). Watch item
+carried to the boundary: step-1 `knockaway_frac` 0.234 vs the
+2×(10/120) = 0.167 tripwire line — ×3 consecutive fires it; R0's own
+measured knockaway baseline lands at the boundary read as registered.
+Gate accounting: launch 3 spent ~1.0 GPU-h (plus ~1.0 h GPU idle
+after the 18:58Z crash — a babysit watcher bug, pgrep matching its
+own cmdline; fixed in-session). Crashes 1–3 total ~2.9 GPU-h; resume
+needs ~1.0 → R0 lands ~3.9 of the 5.5 ops gate. Ladder total 35
+unchanged.*
