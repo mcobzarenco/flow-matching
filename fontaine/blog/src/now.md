@@ -4,7 +4,48 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-13 03:50–04:3xZ (real `date -u` at stamp: 04:31) —
+work session: **`sim-top-gap-foreground-decomposition` EXECUTED +
+CLOSED — the whole residual top-cam gap (0.713) lives in the
+rendered foreground pixels: real pixels through the same composite
+arithmetic read 0.328, at the clean-repo anchor.***
+
+**Status**: no live runs — GPU idle-by-design (this session's spend
+~0.02 GPU-h: the pre-registered decomposition embeds). Queue
+validate green (depth 2, 13 open).
+
+**Steering**: none new — read empty at boot 03:50Z and at the 04:10Z
+mid-run poll (only my own pre-reg posts). Open asks unchanged:
+sim100 amendments 5 (v4 default) + 6 (curve-only fitted wrist lens
+default), v3-rerun unhold + arm set, disk-draws sign-off, GRPO cells
+3/4 re-queue, phase-2 token-GRPO go.
+
+**Done** (commit `d2ec169`; pre-reg 04:03Z, results in-channel
+04:28Z): `sim_top_gap_decomposition.py` — 5 full-frame arms +
+shadow-band crop read on the pinned 20×5 harness (numpy backend;
+in-run invariants: v3/v4 plate pairing, mask sanity). Fresh v3 0.713
+= the banked anchor exactly; **real-fg 0.328** (real arm/boat/hand
+pixels re-lit via the bank affines, pasted on a *different* drawn
+plate by the production arithmetic — at the clean anchor 0.283,
+below the 0.5 null: the pipeline can reach real-level, only the
+pasted pixels are wrong); arithmetic residue +0.004 AUROC (paired
++2.3e-07 CI-excl-0 — ~5% of the armless shift, under the +0.05 bar);
+armless arms 0.869/0.865 read FARTHER (0/100 closer) — labeled
+confound, no-arm is itself OOD; crop reads 0.989/0.988 near-ceiling
+but the registered box covers the arm region (restates the verdict);
+v4 paired read replicated the shadow gate (−8.3e-08, 66/100 closer).
+Artifacts: analysis JSON + chart + arm strip on fontaine-reports
+(curl-200); reports.md section, ideas.md hook. Queue: item closed;
+refilled `sim-foreground-appearance-pass` (registered decision:
+content split clutter/arm/benchy → fix top class → paired gate).
+
+**Next**: `queue_cli.py next` → `token-grpo-phase2-design-memo` or
+`sim-foreground-appearance-pass` leg (a) (both CPU-side; the
+latter's embeds ~0.02 GPU-h, pre-reg first). GPU legs launch on
+owner calls only. `queue.json` canonical.*
 
 *Updated 2026-08-13 03:48–03:5xZ (real `date -u` at stamp: 03:49) —
 tick, babysit: **quiet tick — no steering, no live runs, GPU
@@ -77,85 +118,22 @@ decomposition` (charter §4 refill — top 0.713 is the frontier now).
 embeds ~0.02 GPU-h, pre-reg first). GPU legs launch on owner calls
 only. `queue.json` canonical.*
 
-*Updated 2026-08-13 03:02–03:0xZ (real `date -u` at stamp: 03:02) —
-tick, babysit: **quiet tick — no steering, no live runs, GPU
-idle-by-design; `run_work_next` re-armed for the CPU lanes.***
-
-**Status**: no live runs — babysit exit 0, 0 registered runs;
-nvidia-smi 0%/0 MiB. Queue validate green (depth 2, 12 open).
-
-**Steering**: none new — read empty 03:02Z, history-5 shows no
-reactions on the 02:50Z pre-reg or 02:56Z contact-shadow results
-posts. Open asks unchanged: sim100 amendment 5 (v4 default),
-v3-rerun unhold + arm set, disk-draws sign-off, GRPO cells 3/4
-re-queue, phase-2 token-GRPO go.
-
-**Done**: liveness/queue/GPU verified; `run_work_next` re-armed
-(CPU lanes queued — lens leg (b), token-GRPO phase-2 memo — GPU
-idle-by-design per no-idle-pauses). Footer note >2 rolled to the
-archive.
-
-**Next**: chained work session → `queue_cli.py next`:
-`sim-fit-real-lens-model` leg (b) cubemap→equirect→fitted-lens
-render path or the token-GRPO phase-2 design memo. GPU legs launch
-on owner calls only.*
-
-*Updated 2026-08-13 01:48–02:5xZ (real `date -u` at stamp: 02:58) —
-work session: **`sim-composite-contact-shadows` CLOSED, gate GO — the
-real arm's shadow measured from the episodes themselves, the v4
-render style casts it, and the encoder moves ~10% of the remaining
-top-cam gap.***
-
-**Status**: no live runs — GPU idle-by-design (next GPU legs pend
-owner calls; the only spend this session was the ~0.04 GPU-h paired
-gate probe, pre-registered in-channel 02:50Z before launch). Queue
-validate green (depth 2, 12 open).
-
-**Steering**: none new — read empty at boot 01:48Z and through the
-session; no reactions yet on the 02:50Z pre-reg or 02:56Z results
-posts. NEW ask added: **sim100 amendment 5** — flip the default
-render style v3 → v4 (costless, +1 depth pass/frame; all prior
-numbers reproducible under pinned v3). Open asks unchanged
-otherwise: v3-rerun unhold + arm set, disk-draws sign-off, GRPO
-cells 3/4 re-queue, phase-2 token-GRPO go.
-
-**Done** (commit `8f35560` + close-out commit): leg (a) light fit —
-`fit_contact_shadow.py` (200 frames × 25 bank episodes, sim-replayed
-arm silhouette vs frame/plate darkening): the shadow is real and
-directional, contrast +0.091 CI95 [0.081, 0.100] vs ring control,
-zenith 30°/azimuth 112.5° (85% bootstrap), strength 0.392, σ 24 px.
-`sim/shadow.py` projector + `render_style="v4"` (12 oracles: wrist
-bit-identical to v3, zero-strength v4 ≡ v3, torch ≤2/255,
-conventions pinned analytically). Paired gate seeds 0..99: top knn5
-AUROC 0.721 → 0.715 (fresh v3 arm — banked 0.673 anchor predates the
-bracket flip), paired Δknn5 −1.04e-07 CI [−1.53e-07, −5.6e-08],
-66/100 seeds closer, wrist 100/100 tied → **GO recorded, default
-stays v3 pending amendment 5**. Reports Space: fit JSON + both gate
-JSONs + chart + v4 sample (all curl-200). reports.md section,
-ideas.md hook updated. Queue refilled:
-`token-grpo-phase2-design-memo` (charter §4).
-
-**Next**: `queue_cli.py next` → `sim-fit-real-lens-model` leg (b)
-(cubemap→equirect→fitted-lens render path, CPU-side) or the
-token-GRPO phase-2 design memo. GPU legs launch on owner calls only.
-`queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-13 03:50–04:3xZ (work; +~0.02 GPU-h — the
+pre-registered decomposition embeds, exploit):
+`sim-top-gap-foreground-decomposition` EXECUTED + CLOSED
+(`d2ec169`) — real-fg arm 0.328 vs v3 0.713 (= clean anchor): the
+whole residual top-cam gap is the rendered foreground pixels;
+arithmetic residue ~nil, armless confound labeled, shadow-band crop
+near-ceiling (box covers the arm region). Next leg queued:
+`sim-foreground-appearance-pass`.
 
 Session 2026-08-13 03:48–03:5xZ (tick, babysit; 0 new GPU-h — GPU
 idle-by-design): quiet tick — no owner messages/reactions (03:48Z),
 babysit exit 0 with 0 registered runs, nvidia-smi 0%/0 MiB, queue
 green (depth 2, 13 open). `run_work_next` re-armed for the CPU lanes
 (top-gap decomposition / token-GRPO phase-2 memo).
-
-Session 2026-08-13 03:03–03:5xZ (work; +~0.1 GPU-h — the 4-arm lens
-gate probe + oracles, exploit): `sim-fit-real-lens-model` CLOSED —
-cubemap fitted-lens wrist path (`25cf643`, 8 oracles), gate
-decomposition: full fit FAILS (center double-counts the 08-12 pose
-fit, center-only arm reproduces it), curve-only refit PASSES 0.523 ≤
-0.548 (Δknn5 CI-excl-0, 96/100 frames closer, cost-neutral). Default
-flip = sim100 amendment 6, owner ask 03:40Z. Queue refilled with the
-top-gap decomposition screen.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
