@@ -3,8 +3,8 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-12 21:39Z–2026-08-13 01:xxZ (real `date -u` at stamp:
-00:38 08-13) — work session (the chained session riding the probe):
+*Updated 2026-08-12 21:39Z–2026-08-13 01:1xZ (real `date -u` at stamp:
+01:10 08-13) — work session (the chained session riding the probe):
 **GRPO probe: AR signal is REAL and cheap at t=1.0 (0.771 cm vs the
 0.25 bar, cost CI includes 0); t=1.6 clears 10× but pays −1.08 cm.
 Tripwire fired at cell-1 (measured ~1.13 GPU-h/cell vs ~0.6
@@ -15,8 +15,8 @@ and DECIDED render-only (22:31Z).*
 
 **Status**: GRPO probe cell 5 (SDE a=0.5, the Flow-GRPO trainability
 cell) finishing ~01:0xZ; unit stopped at its boundary per the
-re-scope; cumulative [CELL5_GPUH] vs the 3.5 gate. Cells 1/2 read out
-at their boundaries (in-channel 23:0x/00:07Z). [CELL5_LINE]
+re-scope; cumulative 3.57 vs the 3.5 gate (announced overage, actuals posted). Cells 1/2 read out
+at their boundaries (in-channel 23:0x/00:07Z). Cell 5 (SDE a=0.5): **1.860 cm CLEARS 7.4×**, cost −0.734 CI [−2.240, +0.294], 5b hedge not triggered. **Decision rule: BOTH families clear → token-GRPO (AR, t=1.0) first, Flow-GRPO SDE second, GRPO-on-sim does NOT park.** Unit stopped 01:08:05Z at the cell-5 boundary (0 GPU procs), entry pruned.
 
 **Steering** (live owner thread): (1) 22:21:54Z "investigate
 compositing for the wrist camera" → executed same session:
@@ -143,12 +143,12 @@ metric is live, not just progress-cm. `queue.json` canonical.*
 
 ## Utilization footer
 
-Session 2026-08-12 21:39Z–2026-08-13 01:xxZ (work, the chained probe
-ride; **+[CELL5_GPUH] GPU-h** — anchors + cells 1/2/5 ridden in-turn,
+Session 2026-08-12 21:39Z–2026-08-13 01:1xZ (work, the chained probe
+ride; **+3.30 GPU-h this session (run total 3.57 incl. the tick's launch window)** — anchors + cells 1/2/5 ridden in-turn,
 tripwire re-scope at cell-1; exploit + owner steering + lit):
 **GRPO probe re-scoped and read out** — AR t=1.0 clears the signal
 bar 3.1× at a cost CI including 0 (cell 2 t=1.6: 9.8× but −1.08 cm;
-cell 5 SDE: see results post). Lit 0823 (3 papers pages), wrist
+cell 5 SDE: 7.4× at cost CI incl. 0 → BOTH families clear, AR-first). Lit 0823 (3 papers pages), wrist
 compositing investigated → DECIDED render-only (owner 22:31Z),
 sim100 amendment 4, `sim-fit-real-lens-model` queued. check.py 797
 green × 6 commits.

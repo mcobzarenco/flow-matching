@@ -1,6 +1,8 @@
 # Babysit run registry (#21 P1). One entry per LIVE run; update at
 # launch time, prune at completion. Schema: fontaine/scripts/babysit.py.
 
+no_live_runs_reason = "declared 01:1xZ 08-13 work session: grpo_signal_probe COMPLETE and pruned (re-scoped cells 1/2/5, both families clear, unit stopped 01:08:05Z at the cell-5 boundary). Local GPU idle; next GPU legs pend owner calls (v3-rerun unhold, cells 3/4 re-queue, phase-2 token-GRPO design first lands CPU-side)."
+
 # (no_live_runs_reason cleared 14:1xZ 08-09 — adamc_100k launched; the
 # prior reason: attach_K owner-killed 12:31Z, box idle pending the
 # AdamC parameter-sheet approval, which landed 13:19Z.)
@@ -680,26 +682,11 @@
 # Results on pre-reg amendment 3 + in-channel 21:15Z; rows/chart/9
 # videos curl-verified on fontaine-reports.
 
-[[run]]
-name = "grpo_signal_probe"
-kind = "progress-log"
-host = "local"
-pgrep = "rollout_sim_parallel"
-pgrep_min = 1
-gpu_indices = [0]
-gpu_mem_min_mib = 4000
-log = "/home/ubuntu/flow-matching/outputs/sim/grpo_signal_probe/launcher.log"
-progress_re = "probe pass \\w+ (start|done)|episode budget|episodes in|ALL PROBE PASSES DONE"
-started_utc = "2026-08-12T21:33:58Z"
-gpu_hours_per_wall_hour = 1.0
-boundary = "RE-SCOPED 22:58Z 08-12 (tripwire fired at the cell-1 boundary: measured ~1.13 GPU-h/cell vs ~0.6 assumed; announced 21:58Z, no owner objection): run anchors + cell1 + cell2 + cell5 ONLY, then STOP the unit fontaine-grpo-probe at the cell-5 boundary BEFORE cell3 starts (watch for cell3_teacher80k_heun30 dir or 'probe pass cell5' done in launcher.log; cell5 rows = 120 in outputs/sim/grpo_signal_probe/cell5_teacher80k_sde05/rows.jsonl; `systemctl --user stop fontaine-grpo-probe`). Cells 3/4 PARK (re-queue ~2.2 GPU-h pair on owner call). Cell-5 boundary ETA ~01:0x-01:1xZ, cumulative ~3.5-3.7 vs 3.5 gate (announced, actuals to channel). Cell-1 read POSTED 23:0xZ (clears bar 0.771 >= 0.25, cost CI [-1.117,+0.207]). At stop: read_grpo_signal_probe.py + grpo_probe_chart.py + results post + PRUNE this entry"
-anchors = [
-    "pre-reg posts/2026-08-12-prereg-grpo-signal-probe.md FROZEN 20:0xZ: seeds 0-14, --episode-seconds 30, bf16 expert, v3 frames; launched at HEAD 85e9a16",
-    "signal bar: median (over 15 seeds) within-group std of progress_final_cm >= 0.25 cm per cell; decision rule frozen on the pre-reg (no cell -> park; AR -> token-GRPO; flow-only -> Flow-GRPO SDE; both -> AR first)",
-    "competence cost per cell vs its registered anchor (cells 1-2 -> anchor_er60k_greedy; 3/4 -> in-cell draw 0; 5 -> anchor_teacher80k_euler10), paired bootstrap CI95; cell 5b hedge (a=0.3) runs ONLY if cell 5 cost CI excludes -1.0 on the bad side",
-    "tripwire: first completed cell's pace projects total past 3.5 GPU-h -> stop at the cell boundary, re-scope in-channel; partial cells discarded never pooled",
-    "validity: reset strikes must be 0; all comparisons within-driver (parallel-oracle FAIL rule)",
-]
-[[run.gates]]
-kind = "gpu_hours_max"
-value = 3.5
+# grpo_signal_probe entry PRUNED 01:1xZ 08-13 work session — re-scoped run
+# COMPLETE (anchors + cells 1/2/5, cells 3/4 parked; tripwire fired at
+# cell-1, ~3.57 GPU-h vs 3.5 gate, announced). ALL RUN CELLS CLEAR the
+# 0.25 cm bar: 0.771 / 2.461 / 1.860 (t=1.0 / t=1.6 / SDE a=0.5); both
+# families qualify -> AR-first token-GRPO at t=1.0, Flow-GRPO SDE second.
+# Unit stopped 01:08:05Z at the cell-5 boundary; results post + pre-reg
+# amendment 1 same session.
+

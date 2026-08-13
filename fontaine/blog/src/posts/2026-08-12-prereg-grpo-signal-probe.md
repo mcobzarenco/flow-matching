@@ -123,7 +123,7 @@ Launch checklist (at GPU handback): re-pin HEAD + checkpoint paths in
 the launcher, babysit entry + registry at launch, per-cell
 `--rows-jsonl` stream, results post same session.
 
-## Results (amendment 1, 2026-08-13 01:xxZ — re-scoped run)
+## Results (amendment 1, 2026-08-13 01:1xZ — re-scoped run)
 
 **Tripwire fired at the cell-1 boundary** (22:58Z 08-12): measured
 pace ~1.13 GPU-h/cell (68 min; the parallel driver runs one seed's 8
@@ -138,24 +138,44 @@ none (every reported cell is complete, 15/15 groups).
 
 | read (frozen) | cell 1 AR t=1.0 | cell 2 AR t=1.6 | cell 5 SDE a=0.5 |
 |---|---|---|---|
-| median group std (ddof0) | **0.771** | **2.461** | CELL5_STD |
-| vs 0.25 cm bar | CLEARS 3.1× | CLEARS 9.8× | CELL5_BAR |
-| non-degeneracy (≥0.05 cm) | 13/15 | 15/15 | CELL5_NONDEG |
-| competence cost (cm) | −0.351 | −1.081 | CELL5_COST |
-| cost CI95 (paired) | [−1.117, +0.207] | [−1.556, −0.634] | CELL5_CI |
-| knock-aways / tipped | 10 / 6 | 42 / 10 | CELL5_GUARD |
-| successes | 1 | 0 | CELL5_SUCC |
-| reset strikes (must be 0) | 0 | 0 | CELL5_STRIKES |
+| median group std (ddof0) | **0.771** | **2.461** | **1.860** |
+| vs 0.25 cm bar | CLEARS 3.1× | CLEARS 9.8× | CLEARS 7.4× |
+| non-degeneracy (≥0.05 cm) | 13/15 | 15/15 | 14/15 |
+| competence cost (cm) | −0.351 | −1.081 | −0.734 |
+| cost CI95 (paired) | [−1.117, +0.207] | [−1.556, −0.634] | [−2.240, +0.294] |
+| knock-aways / tipped | 10 / 6 | 42 / 10 | 18 / 2 |
+| successes | 1 | 0 | 0 |
+| reset strikes (must be 0) | 0 | 0 | 0 |
 
 Anchors: er60k greedy 15/15, teacher80k euler-10 ODE 15/15 (both
 complete before cell 1). Best-point (progress_cm) medians: 0.228 /
-0.891 / CELL5_BEST. ddof=1 medians recorded in the reads JSON (ddof
+0.891 / 0.444. ddof=1 medians recorded in the reads JSON (ddof
 was not frozen in the pre-reg; primary is ddof=0, the population std
 GRPO's own advantage normalization uses).
 
-DECISION_BLOCK
+**Decision rule (frozen) applied — BOTH families clear**: every run
+cell's median group std beats the 0.25 cm bar (3.1× / 9.8× / 7.4×),
+and no qualifying cell's cost CI sits entirely below −1.0 cm (cell 1
+[−1.117, +0.207] includes 0; cell 5 [−2.240, +0.294] is wide but
+includes 0; cell 2's [−1.556, −0.634] straddles the floor and is in
+any case dominated by cell 1 within its family). The cell-5b hedge
+(a=0.3) did NOT trigger — its condition was a cell-5 CI *excluding*
+−1.0 on the bad side. **Phase 2 = token-GRPO on the AR head first
+(cheapest infra), at t=1.0 not SimpleVLA-RL's 1.6** (t=1.6 buys 3.2×
+more spread at 3× the competence cost and 4× the knock-aways — at our
+floor the extra violence is advantage noise, not signal); **Flow-GRPO
+SDE second** (cell 5's spread is real and its cost CI includes 0 —
+the SDE channel is trainable on the teacher). Joint stays parked for
+the merged molmo_flow lane. GRPO-on-sim does NOT park.
 
-Cost: GPU_HOURS GPU-h total vs the 3.5 gate (re-scoped). Instrument:
+A working-hypothesis footnote the probe adds beyond the rule: the
+within-group spread is dominated by a knock-away tail (violent
+draws), not gentle trajectory diversity — group-relative advantage
+at this floor will mostly learn "don't knock the boat off," which is
+a real reward-signal but not task progress per se. Worth one line in
+the phase-2 design memo.
+
+Cost: 3.57 GPU-h total vs the 3.5 gate (re-scoped). Instrument:
 `read_grpo_signal_probe.py` (frozen reads), `grpo_probe_chart.py`.
 Chart + reads JSON on the reports Space. Cells 3/4 re-queue as a
 final-word pair (~2.2 GPU-h) on owner call only.
