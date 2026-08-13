@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-13T20:56:00Z",
+ "updated_utc": "2026-08-13T21:15:30Z",
  "depth_reason": "depth 3: arm-B read+prune at its ~13:3xZ boundary; token-grpo-phase2-instrument items 3-4 on the molmoact2 surface (gate passed, lane GO); sim-arm-photometric-links pre-reg.",
  "items": [
   {
@@ -1437,6 +1437,15 @@
    "boundary": "Queued 20:5xZ 08-13 at the R0 STOP close. CPU-side design + pre-reg post; the GPU rung it authorizes prices its own gate inside the remaining ~31 GPU-h of the 35 ladder total."
   },
   {
+   "id": "discord-unreplied-inbox",
+   "class": "cpu",
+   "status": "queued",
+   "owner_hold": false,
+   "title": "Harness fix \u2014 discord unreplied inbox (process-integrity, from the 08-13 missed-reply incident): two owner questions (19:05Z + 20:03Z 08-13) were consumed by babysit-embedded `read`s but logged as 'reads empty' and never answered until the 21:0xZ tick (~2 h / ~1 h latency; likely output truncation of the babysit poll section \u2014 the exact never-truncate failure mode, now with a cursor that advances anyway). Fix structurally: discord.py `read` appends every surfaced non-bot message to fontaine/harness/state/discord_unreplied.jsonl; session boot + babysit print the pending-inbox count LOUDLY (first line, impossible to truncate away); entries cleared only by an explicit `discord.py ack <id>` at reply time (posts alone never clear \u2014 result posts don't count as replies). Gate: unit test (read populates, ack clears, bot messages skipped), check.py green, boot-prompt/babysit surface the count.",
+   "boundary": "next work session; small CPU item, do before or alongside the rescope pre-reg",
+   "prereg": null
+  },
+  {
    "id": "sim-arm-photometric-links",
    "class": "cpu",
    "status": "queued",
@@ -1455,5 +1464,5 @@
    "boundary": "CLOSED 20:5xZ 08-13 at the R0 STOP boundary. Follow-up = token-grpo-phase2-rescope-prereg (queued): the registered option-A fallback + collapse mitigation, NEW pre-reg before any launch."
   }
  ],
- "updated": "2026-08-13T20:56:00Z"
+ "updated": "2026-08-13T21:15:30Z"
 }

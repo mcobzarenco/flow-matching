@@ -4,7 +4,48 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-13 21:02–21:2xZ (real `date -u` at stamp: 21:08) —
+tick: **the history check caught two owner questions UNANSWERED
+(19:05Z "explain this experiment again", 20:03Z "which molmoact2
+implementation — the bijou first-class one?") — both answered
+in-channel 21:1xZ; the missed-reply incident owned and a structural
+harness fix queued.***
+
+**Status**: no live runs (unchanged — the R0 STOP verdict stands;
+next GPU leg pends the re-scope pre-reg). Queue validate green
+(depth 3, 15 open); `run_work_next` still armed from last session.
+
+**Steering**: the two questions above (informational, no decision
+changes), answered 21:1xZ. Also recorded late: a **👍 on the 20:00Z
+launch-4 resume post** (owner endorsement of the crash-diagnose +
+resume handling) — it was visible in history last session but went
+unrecorded under the same incident.
+
+**Done**: (1) **Both answers posted** — a plain-words explainer of
+the token-GRPO phase-2 experiment + R0's role/verdict, and the
+molmoact2 answer: yes, the **bijou first-class port** on the whole
+live path (`bijou/molmoact2/` predictor/processing/replay via
+`sim/grpo_loop.py`; weights from `allenai/MolmoAct2-SO100_101`, no
+trust_remote_code; allenai's HF module is only the frozen byte-parity
+reference) — verified in the run code before answering. (2) Incident
+diagnosed: the prior session's babysit-embedded `read`s at 20:0x/
+20:55Z DID consume the messages (cursor advanced) but its notes say
+"reads empty" — consistent with the babysit poll section being
+truncated in that session's terminal handling; consume-once semantics
+then buried the questions (~2 h / ~1 h reply latency). (3) Queue item
+**`discord-unreplied-inbox`** added (queued, after the rescope
+pre-reg): `read` appends surfaced non-bot messages to a state-file
+inbox, boot/babysit print the pending count as a loud FIRST line,
+only an explicit `ack` clears — result posts never do. (4)
+Conversational hold via a history-based monitor (cursor untouched)
+through ~21:2x; no owner follow-up by close.
+
+**Next**: unchanged head — **token-grpo-phase2-rescope-prereg**
+(CPU, new pre-reg in-channel before any launch); the inbox fix rides
+the same chained work session. `run_work_next` armed.*
 
 *Updated 2026-08-13 18:02–21:0xZ (real `date -u` at stamp: 20:58) —
 work session: **R0 ridden to its boundary across two more launches —
@@ -116,34 +157,6 @@ green = R1 resumes `step_0002.pt --total-steps 17`; another OOM =
 option B measured-infeasible on 1×H100 → option-A fallback via NEW
 pre-reg in-channel. rc 3 = named tripwire → re-scope. `queue.json`
 canonical.*
-
-*Updated 2026-08-13 14:22–14:3xZ (real `date -u` at stamp: 14:24) —
-tick, babysit: **quiet tick — no live runs, no new steering; the
-14:09Z owner exchange held open to the ~10-min silence handback,
-`run_work_next` armed for the critical path (instrument item 4 +
-phase-2 pre-reg finalization → GPU legs launch).***
-
-**Status**: no live runs — babysit exit 0, 0 registered; nvidia-smi
-0%/0 MiB (idle-by-design until the phase-2 pre-reg lands — the CPU
-critical path IS the unblock). Queue validate green (depth 2, 14
-open).
-
-**Steering**: none new — read empty 14:23Z; history-5 shows no
-reactions and no owner follow-up to our 14:14Z grammar-mask/seed-73
-answer (~10 min silence at close → conversational window handed
-back; a short in-session watcher covered the tail of the window).
-The 11:07/11:18Z delegation stands.
-
-**Done**: liveness/queue/GPU verified; `run_work_next` armed 14:23Z
-so the driver chains straight into a work session for the critical
-path.
-
-**Next**: chained work session → instrument item 4 (loop harness:
-rollout wave → score → z-filter → step → periodic eval + babysit
-heartbeat + registry entry), then phase-2 run pre-reg finalization
-(memo §5 ladder at the measured pace, §4 option B — veto window
-passed). GPU legs launch on the finalized pre-reg per the
-delegation. `queue.json` canonical.*
 
 ## Utilization footer
 
