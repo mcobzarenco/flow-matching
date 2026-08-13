@@ -4,6 +4,40 @@
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
 
+*Updated 2026-08-13 01:18–01:5xZ (real `date -u` at stamp: 01:41) —
+work session (chained by the 01:14 tick): **wrist lens fit leg (a)
+DONE — the real lens is measurably not ideal-equidistant.** Plumb-line
+θ→r fit on the 150 pinned real wrist frames (pure CPU, no rig time):
+optical center 22 px left / 14 px below the image midpoint (~5σ), and
+the curve compresses the periphery −12.8 px at the frame corner vs
+the deployed equidistant assumption (CI95 [−17.2, −10.0], excludes
+0). Results + house chart posted in-channel 01:40Z.*
+
+**Status**: no live runs — GPU idle-by-design (registry carries the
+declared reason; next GPU legs pend owner calls). Queue validate
+green (depth 2, 12 open).
+
+**Steering**: none new — read empty at boot 01:18Z and at close; no
+reactions yet on the 01:10Z probe results post or the 01:40Z lens
+post. Open asks unchanged: v3-rerun unhold + arm set, disk-draws
+sign-off, GRPO cells 3/4 re-queue, phase-2 token-GRPO go.
+
+**Done** (commit `5581d6d`): `sim-fit-real-lens-model` leg (a) —
+plumb-line fit instrument (`fontaine/scripts/fit_lens_plumbline.py`:
+Canny → PCA/quadratic-filtered seam chains, 382 chains from 132/150
+frames; Nelder-Mead over (cx, cy, k₂, k₄) with center-only /
+curve-only decompositions + frame bootstrap), synthetic-recovery
+oracles (`tests/test_lens_plumbline.py`, 4 tests), house dark chart
+(`lens_fit_chart.py`). Plank straightness RMS 1.07 → 0.90 px;
+fitted params are the stage-2 resampler spec for leg (b).
+check.py 801 green. Queue item updated with the leg-(a) record.
+
+**Next**: `queue_cli.py next` → `sim-composite-contact-shadows`
+(queue head, CPU) or lens leg (b) cubemap→equirect→fitted-lens
+render path (same item, CPU-side first); phase-2 token-GRPO design
+memo also open. GPU legs launch on owner calls only. `queue.json`
+canonical.*
+
 *Updated 2026-08-13 01:14–01:2xZ (real `date -u` at stamp: 01:14) —
 tick, babysit: **quiet tick after the probe close** — no owner
 messages or reactions, GPU idle as declared, work session chained
@@ -81,6 +115,13 @@ decision rule (see the results post). v3-rerun unhold + disk-draws
 sign-off still open. `queue.json` canonical.*
 
 ## Utilization footer
+
+Session 2026-08-13 01:18–01:5xZ (work, chained; 0 new GPU-h — CPU
+lane, exploit): `sim-fit-real-lens-model` leg (a) closed — plumb-line
+θ→r fit on the pinned real wrist frames (center 22 px off, corner
+ray placement −12.8 px vs equidistant, CI-excl-0), instrument +
+oracles + chart `5581d6d`, results in-channel 01:40Z. check.py 801
+green. GPU legs still pend owner calls.
 
 Session 2026-08-13 01:14–01:2xZ (tick, babysit; 0 new GPU-h — GPU
 idle-by-design after the probe close): quiet tick — no owner
