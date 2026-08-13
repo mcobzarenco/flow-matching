@@ -9,7 +9,10 @@ cd "$(dirname "$0")/../.."
 
 mkdir -p outputs/sim/grpo_phase2
 echo "=== grpo phase2 R0 start $(date -u +%FT%TZ) ==="
-MUJOCO_GL=egl uv run python -m sim.grpo_loop \
+# expandable_segments: launch 2 died with 1.36 GiB reserved-but-
+# unallocated at a 96 MiB request — the budget is fragmentation-tight.
+MUJOCO_GL=egl PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
+    uv run python -m sim.grpo_loop \
     --checkpoint allenai/MolmoAct2-SO100_101 \
     --out-dir outputs/sim/grpo_phase2 \
     --total-steps 2 --eval-every 5 --save-every 1
