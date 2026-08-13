@@ -1,7 +1,6 @@
 # Babysit run registry (#21 P1). One entry per LIVE run; update at
 # launch time, prune at completion. Schema: fontaine/scripts/babysit.py.
 
-no_live_runs_reason = ""
 
 # (no_live_runs_reason cleared 11:2xZ 08-13 — molmoact2_ar100 launched under the owner 11:07Z delegation; prior: "declared 01:1xZ 08-13 work session: grpo_signal_probe COMPLETE and pruned (re-scoped cells 1/2/5, both families clear, unit stopped 01:08:05Z at the cell-5 boundary). Local GPU idle; next GPU legs pend owner calls (v3-rerun unhold, cells 3/4 re-queue, phase-2 token-GRPO design first lands CPU-side).")
 
@@ -13,28 +12,17 @@ no_live_runs_reason = ""
 # arm B (grammar-masked) launched to measure the repair. Results in
 # posts/2026-08-13-prereg-molmoact2-ar100.md + in-channel.
 
-[[run]]
-name = "molmoact2_ar100b_masked"
-kind = "progress-log"
-host = "local"
-pgrep = "rollout_sim_parallel"
-pgrep_min = 1
-gpu_indices = [0]
-gpu_mem_min_mib = 4000
-log = "/home/ubuntu/flow-matching/outputs/sim/molmoact2_ar100b_masked/launcher.log"
-progress_re = "seed \\d+ replan|episode budget|episodes in|discrete decode"
-started_utc = "2026-08-13T12:29:00Z"
-gpu_hours_per_wall_hour = 1.0
-boundary = "COMPLETION ~13:3x-13:4xZ (arm A measured 69.1 min). At completion: amendment-1 reads — successes/100, paired per-seed progress_final delta vs arm A (outputs/sim/molmoact2_ar100/rows.json, same seeds, bootstrap CI95), violation counts (launcher.log 'discrete decode:' line: fallbacks must be 0 by construction; violations ride the out-json in masked mode... NOTE the counter printed is zero-fallbacks — masked mode expects 0; per-predict violations are inside DiscreteActionResult only, so the scale read is fallbacks==0 + paired deltas), per-seed chart; results appended to posts/2026-08-13-prereg-molmoact2-ar100.md + in-channel; PRUNE this entry. Unit: fontaine-molmoact2-ar100b."
-anchors = [
-    "amendment 1 (frozen 12:3xZ pre-launch, commit 42c4485) on posts/2026-08-13-prereg-molmoact2-ar100.md: arm B = arm A + --molmoact2-grammar-masked ONLY; same seeds 0-99 @30 s workers 8",
-    "arm A baseline: 1/100 successes (seed 73), mean final -0.87, knock 27/100, 202/2991 (6.8%) zero-fallbacks",
-    "primary: successes/100 + paired per-seed progress_final delta vs arm A (CI95); >=1 success keeps the token-GRPO lane GO either way (arm A already cleared it)",
-    "validity: strikes 0; masked mode must report 0 zero-fallbacks (decodable by construction)",
-]
-[[run.gates]]
-kind = "gpu_hours_max"
-value = 1.5
+no_live_runs_reason = "declared 13:3xZ 08-13 work session: BOTH ar100 arms COMPLETE and pruned (A 12:26Z 1/100 + 6.8% fallback finding; B 13:31Z masked decode paired +0.728 CI-excludes-zero, knock-aways 27->13, fallbacks 0). GPU idle at close; critical path is CPU-side (instrument items 3-4 on the molmoact2 surface) then the token-GRPO run pre-reg — owner delegation 11:07/11:18Z active (no confirmation waits), so the next session may launch GPU legs by frozen rules."
+
+# molmoact2_ar100b_masked entry PRUNED 13:3xZ 08-13 work session —
+# COMPLETE 13:31Z rc 0, ridden end-to-end (~1.05/1.5 GPU-h, 63.1
+# min). PAIRED READ (B - A, same seeds): +0.728 cm CI95 [+0.147,
+# +1.325] EXCLUDES ZERO; knock-aways 27 -> 13; mean final -0.87 ->
+# -0.14; 47/100 seeds differ; fallbacks 0/2996 by construction;
+# successes 1/100 each (different seeds: A 73, B 1). Standing
+# decision: grammar_masked = default serving mode for the AR
+# pathway. Results in posts/2026-08-13-prereg-molmoact2-ar100.md +
+# in-channel 13:3xZ.
 
 # (no_live_runs_reason cleared 14:1xZ 08-09 — adamc_100k launched; the
 # prior reason: attach_K owner-killed 12:31Z, box idle pending the
