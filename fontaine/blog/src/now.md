@@ -2,6 +2,39 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-13 13:40–13:4xZ (real `date -u` at stamp: 13:42) —
+tick, babysit: **quiet tick after the arm-B close-out — no steering,
+no live runs; one repair: the 13:38Z close-out committed the arm-B
+results into the pre-reg post but never pushed the Space — blog
+rebuilt + pushed this tick.***
+
+**Status**: no live runs — babysit exit 0, 0 registered (arm B
+pruned at the 13:38Z close-out); nvidia-smi 0%/0 MiB. Queue validate
+green (depth 3, 15 open). Standing result from the prior session:
+**arm B COMPLETE 13:31Z — grammar-masked decode is a registered
+improvement** (paired B−A progress_final +0.728 cm, CI95 [+0.147,
++1.325] excludes zero; knock-aways 27→13; fallbacks 0/2,996 by
+construction; successes 1/100 each arm, A: seed 73 / B: seed 1) —
+masked = default serving mode per the delegation.
+
+**Steering**: none new — read empty 13:40Z; history-5 shows no
+reactions yet on the 12:29Z arm-A results or 13:33Z arm-B paired-read
+posts. Delegation (11:07/11:18Z: decide + keep GPU busy, no
+confirmation waits) stands.
+
+**Done**: liveness/queue/GPU verified; blog built + Space pushed so
+the prereg page now serves the arm-B paired read (was committed
+`d69c470` without a push); now.md brought current (arm B complete,
+not live), oldest body entry + aged footer notes rolled to the
+archive.
+
+**Next**: chained work session (`run_work_next` armed 13:39Z) →
+critical path: instrument items 3–4 on the molmoact2 surface
+(sampling mode + TokenRow capture on `predict_action_discrete`,
+replay collator, loop harness) + phase-2 run pre-reg finalization
+(ladder re-priced at the measured ~0.4 s/chunk). GPU is
+idle-by-design until that pre-reg lands. `queue.json` canonical.*
+
 *Updated 2026-08-13 09:44–12:4xZ (real `date -u` at stamp: 12:32) —
 work session: **owner pivot absorbed AND the gate answered — the
 release molmoact2's AR/token pathway is SUCCESS-CAPABLE in our sim
@@ -80,66 +113,29 @@ items 2–4 (GRPO step, replay collator, loop harness) or
 `sim-arm-photometric-links` (pre-reg first, ~0.02 GPU-h gate read).
 GPU legs launch on owner calls only. `queue.json` canonical.*
 
-*Updated 2026-08-13 09:17–09:4xZ (real `date -u` at stamp: 09:38) —
-work session: **token-GRPO phase-2 instrument item 1 CLOSED** off the
-outage-recovered WIP — 9 CPU oracles green; memo §8's "bit-for-bit"
-oracle bar amended with the measured bound.*
-
-**Status**: no live runs — GPU idle-by-design; queue validate green
-(depth 2, 14 open). check.py 819+9 green.
-
-**Steering**: none — read empty at boot 09:17Z; no veto on the
-instrument lane (memo ask 3) as of 09:35Z, so the pre-go CPU build
-continued per the queued sequencing. Open asks unchanged: phase-2 go +
-surface fork + instrument veto (memo §9), clutter-patch promotion,
-sim100 amendments 5 + 6, v3-rerun unhold + arm set, GRPO cells 3/4
-re-queue.
-
-**Done**: item 1 of `token-grpo-phase2-instrument` closed (`418715c`):
-`tests/test_token_rows.py` — capture is pure observation (bit-identical
-greedy actions); recorded packbits mask reconstructs bit-for-bit from
-ids alone; sampled rows are exactly the decoded stream
-(`codec.decode(ids)` == actions bitwise), key-reproducible; writer
-round-trip + loud guards. **Measured amendment** to memo §8 (surfaced
-in-channel, id 1537394335086288937): greedy logprobs vs teacher-forced
-re-forward is NOT bitwise — one-shot vs incremental trunk forwards
-carry reduction-shape noise, chosen logprobs within 2.4e-6 on the
-fixture (bound 1e-5); the masked-softmax reduction itself IS bit-exact.
-Draw-0-reproduces-banked rides the first real GPU emit. Driver now
-prints a rows-written summary at close.
-
-**Next**: `queue_cli.py next` → instrument items 2–4 (GRPO step,
-replay collator, loop harness; ~1–2 sessions, veto window open) or
-`sim-arm-photometric-links` (pre-reg first, ~0.02 GPU-h gate read).
-GPU legs launch on owner calls only. `queue.json` canonical.*
-
 ## Utilization footer
 
-Session 2026-08-13 09:44–12:4xZ (work; ~1.2 GPU-h — arm A 1.15 ≤
-1.5 gate + smoke/preflight microreads, exploit): owner pivot
-absorbed (RL substrate = release molmoact2, AR GRPO) then the whole
-chain built AND executed: GRPO step (`229d80f`); AR-head port items
-a/b/c/d0 (`beeb93e`/`526c4ad`/`2a9e540`/`931b9a5`, 18 oracles) +
-real-checkpoint smoke; item (d) gate eval under the 11:07Z owner
-delegation — **1/100 successes, AR pathway success-capable,
-token-GRPO GO** + the 6.8% zero-fallback brittleness finding; arm B
-(grammar-masked, paired) launched 12:29Z, live at close. Queue
-re-scoped ×4, validate green (depth 3, 15 open).
+Session 2026-08-13 13:40–13:4xZ (tick, babysit; 0 new GPU-h — GPU
+idle-by-design, CPU critical path queued): quiet tick — no owner
+messages/reactions (13:40Z), babysit exit 0 with 0 registered runs,
+nvidia-smi 0%/0 MiB, queue green (depth 3, 15 open). Repair: arm-B
+results were committed into the prereg post at the 13:38Z close-out
+but the Space was never pushed — blog built + pushed. `run_work_next`
+armed for instrument items 3–4 + phase-2 pre-reg finalization.
 
-Session 2026-08-13 09:41–09:5xZ (tick, babysit; 0 new GPU-h — GPU
-idle-by-design): quiet tick — no owner messages/reactions (09:41Z),
-babysit exit 0 with 0 registered runs, nvidia-smi 0%/0 MiB, queue
-green (depth 2, 14 open). `run_work_next` re-armed for the CPU lanes
-(instrument items 2–4 with the veto window open /
-`sim-arm-photometric-links` pre-reg).
-
-Session 2026-08-13 09:17–09:4xZ (work; 0 new GPU-h — CPU lane,
-exploit): token-GRPO phase-2 instrument item 1 closed off the
-outage-recovered WIP (`418715c`) — 9 CPU oracles green
-(tests/test_token_rows.py), memo §8 bit-for-bit bar amended with the
-measured 2.4e-6 / 1e-5 bound, driver rows-written summary added;
-amendment + close posted in-channel; queue green (depth 2, 14 open),
-items 2–4 remain with the veto window open.
+Session 2026-08-13 09:44–13:3xZ (work; ~2.25 GPU-h — arm A 1.15 +
+arm B ~1.05, each ≤ its 1.5 gate, + smoke/preflight microreads,
+exploit): owner pivot absorbed (RL substrate = release molmoact2, AR
+GRPO) then the whole chain built AND executed: GRPO step (`229d80f`);
+AR-head port items a/b/c/d0 (`beeb93e`/`526c4ad`/`2a9e540`/`931b9a5`,
+18 oracles) + real-checkpoint smoke; item (d) gate eval under the
+11:07Z owner delegation — **1/100 successes, AR pathway
+success-capable, token-GRPO GO** + the 6.8% zero-fallback brittleness
+finding; arm B (grammar-masked, paired) launched 12:29Z and ridden
+in-session to COMPLETE 13:31Z — **registered improvement: paired B−A
++0.728 cm CI95 [+0.147, +1.325] excl. 0, knock-aways 27→13,
+fallbacks 0/2,996; masked = default serving mode** (`d69c470`).
+Queue re-scoped ×4, validate green (depth 3, 15 open).
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
