@@ -11,6 +11,29 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-13 06:47–06:5xZ (real `date -u` at stamp: 06:48) —
+tick, babysit: **quiet tick — no steering, no live runs, GPU
+idle-by-design; `run_work_next` re-armed for the CPU lanes.***
+
+**Status**: no live runs — babysit exit 0, 0 registered runs;
+nvidia-smi 0%/0 MiB. Queue validate green (depth 2, 14 open).
+
+**Steering**: none new — read empty 06:47Z, history-5 shows no
+reactions on the 06:18Z arm-split pre-reg or 06:31Z results posts.
+Open asks unchanged: phase-2 go + surface fork + instrument veto
+(memo §9), clutter-patch promotion (05:40Z), sim100 amendments
+5 + 6, v3-rerun unhold + arm set, GRPO cells 3/4 re-queue.
+
+**Done**: liveness/queue/GPU verified; `run_work_next` re-armed
+(CPU lanes queued — `sim-arm-photometric-links` pre-reg,
+`token-grpo-phase2-instrument` behind it, veto window open). Oldest
+body entry + footer note rolled to the archive.
+
+**Next**: chained work session → `queue_cli.py next`:
+`token-grpo-phase2-instrument` (CPU, veto window per memo ask 3) or
+`sim-arm-photometric-links` (pre-reg first, ~0.02 GPU-h gate read).
+GPU legs launch on owner calls only. `queue.json` canonical.*
+
 *Updated 2026-08-13 06:17–06:4xZ (real `date -u` at stamp: 06:32) —
 work session: **arm sub-part split EXECUTED + CLOSED** — pre-reg
 06:18Z, run, and results in one session; the registered rule names
@@ -69,46 +92,14 @@ body entry + footer note rolled to the archive.
 then `token-grpo-phase2-instrument` (CPU, unless vetoed). Promotion
 + GPU legs launch on owner calls only. `queue.json` canonical.*
 
-*Updated 2026-08-13 05:59–06:1xZ (real `date -u` at stamp: 06:10) —
-work session: **token-GRPO phase-2 design memo + pre-reg DRAFT
-POSTED** — the probe decision rule's follow-through; ~33 GPU-h gate
-35 laddered run fully priced at measured pace; launch pends the
-owner phase-2 go.*
-
-**Status**: no live runs — babysit exit 0, 0 registered runs;
-nvidia-smi 0%/0 MiB (CPU-only session, 0 new GPU-h). Queue validate
-green (depth 2, 14 open).
-
-**Steering**: none new — read empty at boot 05:59Z and at the 06:1xZ
-post; babysit history-5 shows no reactions. Open asks unchanged plus
-the memo's three (§9, posted 06:1xZ): **phase-2 go with exact price**,
-trainable-surface A/B fork (B recommended), instrument pre-start
-veto window. Earlier: clutter-patch promotion (05:40Z), sim100
-amendments 5 + 6, v3-rerun unhold + arm set, cells-3/4 re-queue.
-
-**Done** (this session): design memo + pre-reg DRAFT
-[posted](posts/2026-08-13-token-grpo-phase2-design.md) + Space-pushed
-(curl-200) + Discord summary in-channel. Substance: measured probe
-pace (1.13 GPU-h/cell → ~0.0094 GPU-h/episode) reprices the 08-12
-sketch ~5× → ladder R0 2 / R1 15 / R2 +25 steps at ~0.75 GPU-h/step,
-~33 GPU-h gate 35, R1→R2 boundary rule; composite reward
-(progress + 10·success − 2·tip − 5·strike, in-group z ddof0,
-zero-var groups dropped); S=8×G=8 at t=1.0, clip-higher [0.8,1.28],
-μ=1, lr 5e-6, KL measured-not-penalized vs frozen er60k; surface
-fork A patch-only vs B patch+text-5e-6 (B recommended — SimpleVLA-RL
-precedent, 69.2 GiB preflight fit); 5 tripwires incl.
-spread-collapse + violence-explosion (the probe's knock-away-tail
-hypothesis made testable); instrument delta rides ActionCaptureStep.
-Queue: memo item CLOSED; `token-grpo-phase2-instrument` queued
-(behind arm leg, veto window per ask 3); ideas.md #16 hook updated
-(probe execution + memo).
-
-**Next**: `queue_cli.py next` → `sim-arm-appearance-leg` diagnostic
-(pre-reg first, ~0.02 GPU-h), then `token-grpo-phase2-instrument`
-(CPU, unless vetoed). GPU legs launch on owner calls only.
-`queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-13 06:47–06:5xZ (tick, babysit; 0 new GPU-h — GPU
+idle-by-design): quiet tick — no owner messages/reactions (06:47Z),
+babysit exit 0 with 0 registered runs, nvidia-smi 0%/0 MiB, queue
+green (depth 2, 14 open). `run_work_next` re-armed for the CPU lanes
+(sim-arm-photometric-links pre-reg / phase-2 instrument, veto window
+open).
 
 Session 2026-08-13 06:17–06:4xZ (work; ~0.03 GPU-h embeds, exploit):
 arm sub-part split pre-reg'd (06:18Z) + executed + closed in one
@@ -123,15 +114,6 @@ idle-by-design): quiet tick — no owner messages/reactions (06:14Z),
 babysit exit 0 with 0 registered runs, nvidia-smi 0%/0 MiB, queue
 green (depth 2, 14 open). `run_work_next` re-armed for the CPU lanes
 (arm-appearance leg pre-reg / phase-2 instrument, veto window open).
-
-Session 2026-08-13 05:59–06:1xZ (work; 0 new GPU-h — CPU-only design
-session, exploit): token-GRPO phase-2 design memo + pre-reg DRAFT
-posted (blog + Discord, curl-200) per the probe decision rule —
-measured-pace budget model (~0.75 GPU-h/RL-step, ladder ~33 GPU-h
-gate 35, repricing the 08-12 sketch ~5×), composite reward, surface
-fork (B recommended), 5 tripwires, instrument delta. Queue: memo item
-closed, instrument item queued (veto window). Launch pends the owner
-phase-2 go. `run_work_next` re-armed (CPU lanes queued).
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
