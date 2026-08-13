@@ -6,6 +6,30 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-13 03:48–03:5xZ (real `date -u` at stamp: 03:49) —
+tick, babysit: **quiet tick — no steering, no live runs, GPU
+idle-by-design; `run_work_next` re-armed for the CPU lanes.***
+
+**Status**: no live runs — babysit exit 0, 0 registered runs;
+nvidia-smi 0%/0 MiB. Queue validate green (depth 2, 13 open).
+
+**Steering**: none new — read empty 03:48Z, history-5 shows no
+reactions on the 03:27Z pre-reg or 03:40Z lens-gate results posts.
+Open asks unchanged: sim100 amendment 5 (v4 default), amendment 6
+(curve-only fitted wrist lens default), v3-rerun unhold + arm set,
+disk-draws sign-off, GRPO cells 3/4 re-queue, phase-2 token-GRPO go.
+
+**Done**: liveness/queue/GPU verified; `run_work_next` re-armed
+(CPU lanes queued — `sim-top-gap-foreground-decomposition`,
+`token-grpo-phase2-design-memo` — GPU idle-by-design per
+no-idle-pauses). Footer notes >2 rolled to the archive.
+
+**Next**: chained work session → `queue_cli.py next`:
+`token-grpo-phase2-design-memo` or
+`sim-top-gap-foreground-decomposition` (CPU-side; the latter's
+~0.02 GPU-h embeds pre-reg first). GPU legs launch on owner calls
+only. `queue.json` canonical.*
+
 *Updated 2026-08-13 03:03–03:5xZ (real `date -u` at stamp: 03:52) —
 work session: **`sim-fit-real-lens-model` CLOSED — legs (b)+(c) in one
 pass: the cubemap fitted-lens wrist path landed, and the gate probe
@@ -118,6 +142,12 @@ token-GRPO phase-2 design memo. GPU legs launch on owner calls only.
 
 ## Utilization footer
 
+Session 2026-08-13 03:48–03:5xZ (tick, babysit; 0 new GPU-h — GPU
+idle-by-design): quiet tick — no owner messages/reactions (03:48Z),
+babysit exit 0 with 0 registered runs, nvidia-smi 0%/0 MiB, queue
+green (depth 2, 13 open). `run_work_next` re-armed for the CPU lanes
+(top-gap decomposition / token-GRPO phase-2 memo).
+
 Session 2026-08-13 03:03–03:5xZ (work; +~0.1 GPU-h — the 4-arm lens
 gate probe + oracles, exploit): `sim-fit-real-lens-model` CLOSED —
 cubemap fitted-lens wrist path (`25cf643`, 8 oracles), gate
@@ -126,21 +156,6 @@ fit, center-only arm reproduces it), curve-only refit PASSES 0.523 ≤
 0.548 (Δknn5 CI-excl-0, 96/100 frames closer, cost-neutral). Default
 flip = sim100 amendment 6, owner ask 03:40Z. Queue refilled with the
 top-gap decomposition screen.
-
-Session 2026-08-13 03:02–03:0xZ (tick, babysit; 0 new GPU-h — GPU
-idle-by-design): quiet tick — no owner messages/reactions (03:02Z),
-babysit exit 0 with 0 registered runs, nvidia-smi 0%/0 MiB, queue
-green (depth 2, 12 open). `run_work_next` re-armed for the CPU lanes
-(lens leg (b) / token-GRPO phase-2 memo).
-
-Session 2026-08-13 01:48–02:5xZ (work; +~0.04 GPU-h — the paired
-contact-shadow gate probe, exploit): `sim-composite-contact-shadows`
-CLOSED with gate GO — real-arm shadow fit (contrast +0.091
-CI-excl-0, zen 30°/az 112.5°), v4 render style + 12 oracles
-(`8f35560`), paired probe closed ~10% of the remaining top-cam knn5
-excess (Δknn5 CI-excl-0, 66/100 seeds closer; wrist 100/100 tied).
-Default flip = sim100 amendment 5, owner ask posted 02:56Z. Queue
-refilled with `token-grpo-phase2-design-memo`.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
