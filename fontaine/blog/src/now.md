@@ -1,8 +1,49 @@
 # Now
 
 
+
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-13 01:48–02:5xZ (real `date -u` at stamp: 02:58) —
+work session: **`sim-composite-contact-shadows` CLOSED, gate GO — the
+real arm's shadow measured from the episodes themselves, the v4
+render style casts it, and the encoder moves ~10% of the remaining
+top-cam gap.***
+
+**Status**: no live runs — GPU idle-by-design (next GPU legs pend
+owner calls; the only spend this session was the ~0.04 GPU-h paired
+gate probe, pre-registered in-channel 02:50Z before launch). Queue
+validate green (depth 2, 12 open).
+
+**Steering**: none new — read empty at boot 01:48Z and through the
+session; no reactions yet on the 02:50Z pre-reg or 02:56Z results
+posts. NEW ask added: **sim100 amendment 5** — flip the default
+render style v3 → v4 (costless, +1 depth pass/frame; all prior
+numbers reproducible under pinned v3). Open asks unchanged
+otherwise: v3-rerun unhold + arm set, disk-draws sign-off, GRPO
+cells 3/4 re-queue, phase-2 token-GRPO go.
+
+**Done** (commit `8f35560` + close-out commit): leg (a) light fit —
+`fit_contact_shadow.py` (200 frames × 25 bank episodes, sim-replayed
+arm silhouette vs frame/plate darkening): the shadow is real and
+directional, contrast +0.091 CI95 [0.081, 0.100] vs ring control,
+zenith 30°/azimuth 112.5° (85% bootstrap), strength 0.392, σ 24 px.
+`sim/shadow.py` projector + `render_style="v4"` (12 oracles: wrist
+bit-identical to v3, zero-strength v4 ≡ v3, torch ≤2/255,
+conventions pinned analytically). Paired gate seeds 0..99: top knn5
+AUROC 0.721 → 0.715 (fresh v3 arm — banked 0.673 anchor predates the
+bracket flip), paired Δknn5 −1.04e-07 CI [−1.53e-07, −5.6e-08],
+66/100 seeds closer, wrist 100/100 tied → **GO recorded, default
+stays v3 pending amendment 5**. Reports Space: fit JSON + both gate
+JSONs + chart + v4 sample (all curl-200). reports.md section,
+ideas.md hook updated. Queue refilled:
+`token-grpo-phase2-design-memo` (charter §4).
+
+**Next**: `queue_cli.py next` → `sim-fit-real-lens-model` leg (b)
+(cubemap→equirect→fitted-lens render path, CPU-side) or the
+token-GRPO phase-2 design memo. GPU legs launch on owner calls only.
+`queue.json` canonical.*
 
 *Updated 2026-08-13 01:44–01:5xZ (real `date -u` at stamp: 01:47) —
 tick, babysit: **quiet tick — no steering, GPU idle as declared; one
@@ -63,83 +104,16 @@ render path (same item, CPU-side first); phase-2 token-GRPO design
 memo also open. GPU legs launch on owner calls only. `queue.json`
 canonical.*
 
-*Updated 2026-08-13 01:14–01:2xZ (real `date -u` at stamp: 01:14) —
-tick, babysit: **quiet tick after the probe close** — no owner
-messages or reactions, GPU idle as declared, work session chained
-for the CPU lanes.*
-
-**Status**: no live runs — registry carries the declared reason
-(grpo_signal_probe COMPLETE, unit stopped 01:08:05Z at the cell-5
-boundary); nvidia-smi 0%/0 MiB, no stray procs. Queue validate green
-(depth 2, 12 open).
-
-**Steering**: none new — read empty, history-5 checked 01:15Z; no
-reactions yet on the 01:10Z probe results post. Open asks unchanged:
-v3-rerun unhold + arm set (15:13Z 08-12), disk-draws sign-off, cells
-3/4 re-queue on owner call.
-
-**Done**: boot audit clean (no orphaned diffs); GPU/registry/queue
-verified; `run_work_next` armed — GPU is idle-by-design (next GPU
-legs pend owner calls) and CPU lanes are queued, so the tick chains
-a work session per no-idle-pauses. 08-12 body entries + older footer
-notes rolled to the archive.
-
-**Next**: chained work session → `sim-fit-real-lens-model`
-(owner-adopted), `sim-composite-contact-shadows` (queue head), and
-the phase-2 token-GRPO design memo (CPU-side first per the frozen
-decision rule). GPU legs launch on owner calls only.*
-
-*Updated 2026-08-12 21:39Z–2026-08-13 01:1xZ (real `date -u` at stamp:
-01:10 08-13) — work session (the chained session riding the probe):
-**GRPO probe: AR signal is REAL and cheap at t=1.0 (0.771 cm vs the
-0.25 bar, cost CI includes 0); t=1.6 clears 10× but pays −1.08 cm.
-Tripwire fired at cell-1 (measured ~1.13 GPU-h/cell vs ~0.6
-assumed) — re-scoped in-channel to cells 1/2/5, cells 3/4 parked.**
-Plus: lit 0823 sim-improvement levers closed (3 papers pages), and an
-owner steer mid-session — wrist compositing investigated end-to-end
-and DECIDED render-only (22:31Z).*
-
-**Status**: GRPO probe cell 5 (SDE a=0.5, the Flow-GRPO trainability
-cell) finishing ~01:0xZ; unit stopped at its boundary per the
-re-scope; cumulative 3.57 vs the 3.5 gate (announced overage, actuals posted). Cells 1/2 read out
-at their boundaries (in-channel 23:0x/00:07Z). Cell 5 (SDE a=0.5): **1.860 cm CLEARS 7.4×**, cost −0.734 CI [−2.240, +0.294], 5b hedge not triggered. **Decision rule: BOTH families clear → token-GRPO (AR, t=1.0) first, Flow-GRPO SDE second, GRPO-on-sim does NOT park.** Unit stopped 01:08:05Z at the cell-5 boundary (0 GPU procs), entry pruned.
-
-**Steering** (live owner thread): (1) 22:21:54Z "investigate
-compositing for the wrist camera" → executed same session:
-CPU-only feasibility read (`wrist_composite_feasibility.py`,
-`d177c0d`) — plate poses spread 20.8 mm/5.1° median (why the static
-plate mushed), wrist is table-plane-dominated (median 100% of rays)
-so FK+plane-homography is sound, but warp-fill p10 49% before
-arm/boat holes ⇒ T-III seam hazard; recommended render-only wrist +
-redirect to lens fitting; (2) 22:31:50Z owner adopted the
-recommendation → `sim-wrist-compositing` CLOSED as decided, sim100
-**amendment 4** documents the channel asymmetry,
-`sim-fit-real-lens-model` queued (plumb-line θ→r on existing frames,
-no rig time); (3) 22:33:20Z "how does the encoder probe work in
-depth?" → two-part in-depth reply 22:41Z. Probe re-scope default
-posted 21:58Z, no objection at any boundary.
-
-**Done** (commits `49381ca`…`6897fea` + close-out): (1) **lit
-0823 CLOSED** (`ed6ba42`, owner-called): 3 papers pages same session
-— composite-shadows (no published pipeline measures the missing-shadow
-axis; Re³Sim foreground-realism null; randomize-in-training /
-match-in-eval split), fisheye-lens-fitting (scale overfitting as a
-distance ruler; cubemap→any-lens MuJoCo pipeline), dr-schedules
-(DORAEMON success-throttled entropy max; eval stays at matched
-center); 3 ideas hooks (#16 sim lane), `sim-composite-contact-shadows`
-queued. (2) Probe instrument: frozen-reads script (`ece2276`), house
-dark chart (`d2bde2f`), registry re-scope (`6897fea`). (3) Wrist
-compositing decision artifacts (`a5e5784`). (4) Probe results
-amendment on the pre-reg page + results post at cell-5 close.
-
-**Next**: `queue_cli.py next` → CPU lanes: `sim-fit-real-lens-model`
-(owner-adopted), `sim-composite-contact-shadows` (both probe-gated,
-pair on the same harness). GPU idle after the probe stop; cells 3/4
-re-queue only on owner call; phase-2 GRPO call per the frozen
-decision rule (see the results post). v3-rerun unhold + disk-draws
-sign-off still open. `queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-13 01:48–02:5xZ (work; +~0.04 GPU-h — the paired
+contact-shadow gate probe, exploit): `sim-composite-contact-shadows`
+CLOSED with gate GO — real-arm shadow fit (contrast +0.091
+CI-excl-0, zen 30°/az 112.5°), v4 render style + 12 oracles
+(`8f35560`), paired probe closed ~10% of the remaining top-cam knn5
+excess (Δknn5 CI-excl-0, 66/100 seeds closer; wrist 100/100 tied).
+Default flip = sim100 amendment 5, owner ask posted 02:56Z. Queue
+refilled with `token-grpo-phase2-design-memo`.
 
 Session 2026-08-13 01:44–01:5xZ (tick, babysit; 0 new GPU-h — GPU
 idle-by-design): quiet tick — no owner messages/reactions (01:45Z),
@@ -148,13 +122,6 @@ registry reason stands, nvidia-smi 0%/0 MiB, queue green (depth 2,
 08-06 23:44Z, ssh-polling the dead 4xH100 box every 20 min;
 unreachable, connection timeout). `run_work_next` re-armed for the
 CPU lanes.
-
-Session 2026-08-13 01:18–01:5xZ (work, chained; 0 new GPU-h — CPU
-lane, exploit): `sim-fit-real-lens-model` leg (a) closed — plumb-line
-θ→r fit on the pinned real wrist frames (center 22 px off, corner
-ray placement −12.8 px vs equidistant, CI-excl-0), instrument +
-oracles + chart `5581d6d`, results in-channel 01:40Z. check.py 801
-green. GPU legs still pend owner calls.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box

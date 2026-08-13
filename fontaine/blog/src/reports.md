@@ -336,6 +336,33 @@ the engagement/direction split is the finding.
   ordering read auto-skipped — rung arms killed by the phase-2
   amendment)
 
+## Contact-shadow pass v4 — the composite's missing shadow, fitted and gated ([lit page](papers/composite-shadows.md), 08-13)
+
+The v3 composite's pasted arm casts no shadow on the real plate —
+the one physics law every real frame obeys that no composite frame
+did. Leg (a) measured the real arm's own shadow from 200 frames × 25
+bank episodes (frame ÷ episode-plate darkening vs the sim-replayed
+silhouette slid along candidate light directions): **real and
+directional** — contrast +0.091 CI95 [0.081, 0.100] vs ring control,
+zenith 30° / azimuth 112.5° (85% bootstrap stability), strength
+0.392, softness σ 24 px. `render_style="v4"` = v3 + the fitted
+shadow multiply-darkening the top plate (shared projector
+`sim/shadow.py`, 12 oracles; wrist bit-identical to v3). Paired
+encoder gate (seeds 0..99, fresh both arms — the banked v3 anchor
+0.673 predates the bracket flip; fresh v3 reads 0.721): top 5-NN
+AUROC 0.721 → **0.715**, and the paired per-seed read is decisive —
+Δknn5 −1.04e-07 CI95 [−1.53e-07, −5.6e-08], 66/100 seeds closer,
+**~10% of the remaining top-cam knn5 excess closed**. Wrist 100/100
+tied. GO recorded; default stays v3 pending the sim100 amendment-5
+owner call. ~0.04 GPU-h. For scale: v1 scene −0.049, v2 inpainting
+−0.103, v3 content −0.100, v4 shadows −0.006 — the tail is thinning.
+
+- [light-fit JSON](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__contact_shadow_fit.json)
+  · [gate v3 arm](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_encoder_ood_probe_v4gate_v3arm.json)
+  · [gate v4 arm](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_encoder_ood_probe_v4gate_v4arm.json)
+- [direction/softness chart](https://mcobzarenco-fontaine-reports.static.hf.space/chart__contact_shadow_fit.png)
+  · [v4 sample frame](https://mcobzarenco-fontaine-reports.static.hf.space/chart__contact_shadow_v4_sample.png)
+
 ## 20-seed behavioral spot-check under v3 ([pre-reg](posts/2026-08-12-prereg-sim-spot20-v3.md), [results](posts/2026-08-12-sim-spot20-v3-results.md), 08-12)
 
 Same 20 seeds, physics bit-identical (spawn rows byte-matched
