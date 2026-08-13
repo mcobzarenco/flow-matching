@@ -6,7 +6,7 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-13 18:02–21:1xZ (real `date -u` at stamp: 21:05) —
+*Updated 2026-08-13 18:02–21:0xZ (real `date -u` at stamp: 20:58) —
 work session: **R0 ridden to its boundary across two more launches —
 the first gradient step on the 4B text stack SURVIVED with every
 step-1 gate green, the run completed rc 0, and the frozen boundary
@@ -14,7 +14,7 @@ reads said STOP: one-step policy collapse + VRAM over gate. R1 not
 launched; the re-scope pre-reg is queued at head.***
 
 **Status**: no live runs — `grpo_phase2_r0` COMPLETE 20:54:30Z rc 0
-(launch 4), babysit entry pruned 21:0xZ with the STOP verdict;
+(launch 4), babysit entry pruned 20:55Z with the STOP verdict;
 no_live_runs_reason declared (next GPU leg pends the re-scope
 pre-reg). Queue validate green (depth 2, 14 open).
 
@@ -52,7 +52,7 @@ of R1's ~13. Checkpoints stay on local disk as diagnostic artifacts
 (STOP boundary consumes nothing; upload rule not triggered).
 Registry pruned; queue ×2 (run item CLOSED with the verdict,
 re-scope item queued at head); in-channel posts 18:5xZ, 20:0xZ,
-21:0xZ. (5) Watcher bug owned + fixed in-session: the crash-3 watch
+20:5xZ. (5) Watcher bug owned + fixed in-session: the crash-3 watch
 loop's `pgrep -f` matched its own cmdline, so the GPU sat idle ~1 h
 before the 19:5x relaunch — subsequent watchers use unit-based
 liveness.
@@ -147,7 +147,7 @@ delegation. `queue.json` canonical.*
 
 ## Utilization footer
 
-Session 2026-08-13 18:02–21:1xZ (work; +~1.9 GPU-h — R0 launches 3–4
+Session 2026-08-13 18:02–21:0xZ (work; +~1.9 GPU-h — R0 launches 3–4
 ridden to the STOP boundary, exploit): launch-3 tail ~0.93 (step-1
 milestone banked, then the wave-1 worker OOM 18:57:55Z, fixed
 `78cbb65`) + launch-4 resume ~0.94 (19:58:20→20:54:30Z rc 0). Debit
