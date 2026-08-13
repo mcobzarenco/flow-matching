@@ -493,6 +493,46 @@ the gap, it is just the best ROI per rendered pixel. Renders CPU
 - [arm strip](https://mcobzarenco-fontaine-reports.static.hf.space/fg_split_arms_seed0_strip.png)
   — v3 / no_clutter / only_clutter, same slot
 
+## Foreground appearance fix — real-crop clutter patches beat the removal ceiling, gate PASS (08-13)
+
+Legs (b)+(c) of the appearance pass (pre-reg in-channel 05:23Z)
+executed the registered follow-up: replace the untextured gray
+stand-ins with **real-pixel crops pasted into the plate**.
+`make_clutter_crops.py` mined per-object RGBA crops from the bank
+episodes' naive per-pixel medians (source episode = largest measured
+blob; alpha = the feathered static-novelty mask vs the
+gain/bias-corrected global plate — the same statistic the bank pass
+localized the objects with; recomputed areas bit-match the manifest),
+normalized to global-plate lighting. `clutter_patch.py` pastes them
+at the drawn poses by inverse warp through the verified analytic
+fisheye model (target pixel → object-height plane → rigid
+drawn→mined transform → source pixel, bilinear), so translation, yaw
+jitter and the fisheye's local scale all ride the camera model; the
+active episode's affine grades the patch exactly like the rendered
+foreground; the `fixed_canonical` pcb pastes at its real measured
+location (identity). Zero extra appearance-RNG draws — slots pair
+1:1 with production v3. The leg (a) harness then read three arms off
+one hooked instance: **patched 0.556 vs v3 0.713 (ΔAUROC −0.157,
+paired Δknn5 −2.02e-06 CI95 [−2.21e-06, −1.83e-06], 100/100 slots
+closer) — the registered −0.05 gate passes at 3× the bar**, and
+patched lands 0.020 BELOW the no_clutter removal ceiling 0.576
+(75/100 closer, CI-excl-0): real-looking clutter beats clutter-free
+plates, as the real reference (clutter present in 15–77% of
+episodes) predicts. Integrity: in-run v3 0.7127 inside the abort
+band, no_clutter 0.5764 reproduces leg (a) within the registered
+±0.01, hooked-v3 bit-exact all 100 slots, clean anchor 0.283
+unchanged. Promotion of the patch paste into production v3/v4 is an
+owner call (asked in-channel 05:40Z); the remaining ceiling to
+real-fg 0.328 is the arm's ~7% of pixels — a separate future item.
+Renders CPU (~4 min), embeds 5 groups ~0.02 GPU-h.
+
+- [analysis JSON](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_fg_appearance_fix.json)
+  · [chart](https://mcobzarenco-fontaine-reports.static.hf.space/chart__sim_fg_appearance_fix.png)
+- [v3 vs patched strip](https://mcobzarenco-fontaine-reports.static.hf.space/fg_fix_v3_vs_patched_strip.png)
+  — same slots, gray stand-ins vs pasted real crops
+- [crops strip](https://mcobzarenco-fontaine-reports.static.hf.space/fg_fix_crops_strip.png)
+  — mined RGBA crops: on checker / source naive median / identity paste
+
 ## 20-seed behavioral spot-check under v3 ([pre-reg](posts/2026-08-12-prereg-sim-spot20-v3.md), [results](posts/2026-08-12-sim-spot20-v3-results.md), 08-12)
 
 Same 20 seeds, physics bit-identical (spawn rows byte-matched
