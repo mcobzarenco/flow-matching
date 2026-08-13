@@ -5,24 +5,32 @@ no_live_runs_reason = ""
 
 # (no_live_runs_reason cleared 11:2xZ 08-13 — molmoact2_ar100 launched under the owner 11:07Z delegation; prior: "declared 01:1xZ 08-13 work session: grpo_signal_probe COMPLETE and pruned (re-scoped cells 1/2/5, both families clear, unit stopped 01:08:05Z at the cell-5 boundary). Local GPU idle; next GPU legs pend owner calls (v3-rerun unhold, cells 3/4 re-queue, phase-2 token-GRPO design first lands CPU-side).")
 
+# molmoact2_ar100 entry PRUNED 12:3xZ 08-13 work session — COMPLETE
+# 12:26Z rc 0, ridden end-to-end (~1.15/1.5 GPU-h, 69.1 min). 1/100
+# successes (seed 73 tick 622, a flow-success seed) => AR pathway
+# success-capable, token-GRPO proceeds on it (frozen rule). Strikes
+# 0. Decode brittleness: 202/2991 predicts (6.8%) zero-fallback —
+# arm B (grammar-masked) launched to measure the repair. Results in
+# posts/2026-08-13-prereg-molmoact2-ar100.md + in-channel.
+
 [[run]]
-name = "molmoact2_ar100"
+name = "molmoact2_ar100b_masked"
 kind = "progress-log"
 host = "local"
 pgrep = "rollout_sim_parallel"
 pgrep_min = 1
 gpu_indices = [0]
 gpu_mem_min_mib = 4000
-log = "/home/ubuntu/flow-matching/outputs/sim/molmoact2_ar100/launcher.log"
+log = "/home/ubuntu/flow-matching/outputs/sim/molmoact2_ar100b_masked/launcher.log"
 progress_re = "seed \\d+ replan|episode budget|episodes in|discrete decode"
-started_utc = "2026-08-13T11:20:00Z"
+started_utc = "2026-08-13T12:29:00Z"
 gpu_hours_per_wall_hour = 1.0
-boundary = "COMPLETION ~12:1x-12:3xZ (est ~40-70 min wall; flow comparator took 51 min). At completion: primary read successes/100 vs flow 9/100 (record-only cross-stack), validity strikes==0 + zero-fallback count (launcher.log 'discrete decode:' line + out-json molmoact2_discrete record), secondary engagement/knock-away/progress reads + per-seed chart; results post + prune this entry. Pace tripwire: projected wall > 2.5 h at ~10 episodes -> stop at an episode boundary (systemctl --user stop fontaine-molmoact2-ar100), re-scope in-channel. Unit: fontaine-molmoact2-ar100."
+boundary = "COMPLETION ~13:3x-13:4xZ (arm A measured 69.1 min). At completion: amendment-1 reads — successes/100, paired per-seed progress_final delta vs arm A (outputs/sim/molmoact2_ar100/rows.json, same seeds, bootstrap CI95), violation counts (launcher.log 'discrete decode:' line: fallbacks must be 0 by construction; violations ride the out-json in masked mode... NOTE the counter printed is zero-fallbacks — masked mode expects 0; per-predict violations are inside DiscreteActionResult only, so the scale read is fallbacks==0 + paired deltas), per-seed chart; results appended to posts/2026-08-13-prereg-molmoact2-ar100.md + in-channel; PRUNE this entry. Unit: fontaine-molmoact2-ar100b."
 anchors = [
-    "pre-reg posts/2026-08-13-prereg-molmoact2-ar100.md FROZEN 11:1xZ, launched at HEAD faa5855; owner 11:07Z delegation is the go (lane owner-called 10:02Z)",
-    "primary: successes/100, comparator flow pathway 9/100 same seeds+budget (release_officialmap_a_100ep_30s) - NEVER pooled (different serving stacks)",
-    "validity: reset strikes 0; zero-fallback emissions counted per predict (high rate = decode brittleness finding, invalidates competence read)",
-    "decision rule frozen: >=1 success -> token-GRPO pre-reg finalizes on this pathway; 0/100 -> AR-SFT-then-RL vs Flow-GRPO owner decision point",
+    "amendment 1 (frozen 12:3xZ pre-launch, commit 42c4485) on posts/2026-08-13-prereg-molmoact2-ar100.md: arm B = arm A + --molmoact2-grammar-masked ONLY; same seeds 0-99 @30 s workers 8",
+    "arm A baseline: 1/100 successes (seed 73), mean final -0.87, knock 27/100, 202/2991 (6.8%) zero-fallbacks",
+    "primary: successes/100 + paired per-seed progress_final delta vs arm A (CI95); >=1 success keeps the token-GRPO lane GO either way (arm A already cleared it)",
+    "validity: strikes 0; masked mode must report 0 zero-fallbacks (decodable by construction)",
 ]
 [[run.gates]]
 kind = "gpu_hours_max"
