@@ -810,7 +810,16 @@ record; the line here is the hook). *Index last updated 2026-08-13.*
   (75/100, CI-excl-0)** — real-looking clutter outperforms
   clutter-free plates. Promotion into production v3/v4 pends the
   owner go (asked 05:40Z); arm appearance (~7% of pixels, the
-  remaining ceiling to 0.328) is the natural next leg. GRPO thread
+  remaining ceiling to 0.328) is the natural next leg. Arm sub-part
+  split EXECUTED 06:4xZ 08-13 ([pre-reg](posts/2026-08-13-prereg-sim-arm-split.md),
+  [record](reports.md)): 14 paired arms over two exact partitions of
+  the 96 arm-class geoms — **registered rule names LINKS (88% of the
+  arm's keep-only delta on 6.1% px; only_links 0.705 ≈ v3 0.713)**;
+  follower/leader sub-additive (~77–79% each alone) so a fix must
+  treat both instances; record-only: `no_mount` is the only removal
+  moving v3 TOWARD real (0.713→0.654, 97/100) — the 6 mount geoms
+  are per-pixel the most sim-distinctive class, queued as a cheap
+  rider on `sim-arm-photometric-links`. GRPO thread
   2026-08-13: the signal probe EXECUTED overnight (re-scoped at the
   registered tripwire — cells 1/2/5 + anchors, 3.57 GPU-h;
   [results as amendment 1](posts/2026-08-12-prereg-grpo-signal-probe.md))

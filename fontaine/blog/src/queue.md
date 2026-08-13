@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-13T06:08:10Z
+**Updated:** 2026-08-13T06:45:00Z
 
-**Depth call:** depth 2 open at 06:0xZ 08-13: phase-2 design memo CLOSED (draft posted, launch pends owner go); CPU lanes = sim-arm-appearance-leg (diagnostic first) + token-grpo-phase2-instrument (veto window per memo ask 3); GPU legs pend owner calls (v3-rerun unhold, phase-2 go, promotion sign-off, compute options).
+**Depth call:** depth 2 open at 06:4xZ 08-13: arm-split diagnostic CLOSED (links named); CPU lanes = token-grpo-phase2-instrument (veto window per memo ask 3) + sim-arm-photometric-links (pre-reg first); GPU legs pend owner calls (v3-rerun unhold, phase-2 go, promotion sign-off, compute options).
 
-**14 open** (Live 0 · Queued 2 · Blocked 12 · Done 143)
+**14 open** (Live 0 · Queued 2 · Blocked 12 · Done 144)
 
 ## 🔴 Live (0)
 
@@ -18,6 +18,20 @@
 
 *ready — waiting on a window or a boundary*
 
+**`sim-arm-photometric-links`** · `cpu`
+
+Arm photometric fix, named target LINKS both instances (arm-split diagnostic 06:4xZ 08-13: links 88% of the arm's keep-only delta on 6.1% px; follower/leader sub-additive so both must be treated): replace the flat recolored link…
+
+**boundary:** Queued 06:4xZ 08-13 at the arm-split close; CPU render + ~0.02 GPU-h embeds per gate read.
+
+<details><summary>full record</summary>
+
+Arm photometric fix, named target LINKS both instances (arm-split diagnostic 06:4xZ 08-13: links 88% of the arm's keep-only delta on 6.1% px; follower/leader sub-additive so both must be treated): replace the flat recolored link material with a real-arm-derived photometric model — mine link-region pixel stats (median color, specular highlights, texture) from real v2 top frames via the leg-(a) segmentation masks projected onto real-registered poses OR simple material grade (specular+roughness) fit to real crops; gate on the pinned 20x5 probe vs the no_links removal ceiling 0.814 direction (patched-arm target: only_links moves toward plate_only). Record-only rider: mounts are per-pixel most distinctive (no_mount 0.713-&gt;0.654) — include a cheap mount-retexture arm in the same run if it costs no extra RNG draws. Pre-reg with explicit bar before any read.
+
+</details>
+
+---
+
 **`token-grpo-phase2-instrument`** · `cpu`
 
 Token-GRPO phase-2 instrument build (CPU, oracle-gated, zero behavior change - all new flags default-off), per posts/2026-08-13-token-grpo-phase2-design.md section 8: (1) --emit-training-rows on the parallel driver (frames + samp…
@@ -27,20 +41,6 @@ Token-GRPO phase-2 instrument build (CPU, oracle-gated, zero behavior change - a
 <details><summary>full record</summary>
 
 Token-GRPO phase-2 instrument build (CPU, oracle-gated, zero behavior change - all new flags default-off), per posts/2026-08-13-token-grpo-phase2-design.md section 8: (1) --emit-training-rows on the parallel driver (frames + sampled ids + per-token chosen logprobs off the existing ActionCaptureStep surface; oracle: greedy logprobs bit-match a teacher-forced re-forward, draw-0 rows reproduce banked sequential rows); (2) GRPO step (advantage-weighted clipped token-CE; oracles: ratio-1 reduces to weighted CE, zero-advantage -&gt; zero grad, train-time grammar mask == rollout mask); (3) replay collator rows -&gt; CollatedBatch (fixture-episode bf16 logit-reproduction oracle); (4) loop harness (rollout-&gt;score-&gt;filter-&gt;step-&gt;eval + babysit heartbeat). check.py green per landing; ~2-3 sessions.
-
-</details>
-
----
-
-**`sim-arm-appearance-leg`** · `cpu`
-
-Arm appearance leg: the rendered arm (~7.1% of pixels) carries the remaining ceiling to the real-fg anchor (patched 0.556 / no_clutter 0.576 &gt;&gt; real-fg 0.328; only_arm 0.654 vs plate 0.866 in leg (a))
-
-**boundary:** Queued 05:4xZ 08-13 at the appearance-pass close; diagnostic leg is CPU + ~0.02 GPU-h embeds, launch per no-idle rules.
-
-<details><summary>full record</summary>
-
-Arm appearance leg: the rendered arm (~7.1% of pixels) carries the remaining ceiling to the real-fg anchor (patched 0.556 / no_clutter 0.576 &gt;&gt; real-fg 0.328; only_arm 0.654 vs plate 0.866 in leg (a)). Candidate fixes ladder (cheapest first): (1) photometric - the recolored flat-black arm vs the real arm's specular/texture (real-crop material stats or measured reflectance grade); (2) geometry-registered real-arm texture projection (hard: articulated, pose-dependent); scope a leg-(a)-style diagnostic first (WHICH arm sub-part carries it: gripper/links/mounts via geom-partition masks on the hooked harness, ~0.02 GPU-h). Pre-reg before any read.
 
 </details>
 
@@ -216,9 +216,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (143)
+## ✅ Done (144)
 
 *closed — the full record stays in each fold*
+
+**`sim-arm-appearance-leg`** · `cpu`
+
+Arm appearance leg: the rendered arm (~7.1% of pixels) carries the remaining ceiling to the real-fg anchor (patched 0.556 / no_clutter 0.576 &gt;&gt; real-fg 0.328; only_arm 0.654 vs plate 0.866 in leg (a))
+
+**boundary:** Closed 06:4xZ 08-13; follow-on photometric leg queued with the named target. · [pre-reg](posts/2026-08-13-prereg-sim-arm-split.md)
+
+<details><summary>full record</summary>
+
+Arm appearance leg: the rendered arm (~7.1% of pixels) carries the remaining ceiling to the real-fg anchor (patched 0.556 / no_clutter 0.576 &gt;&gt; real-fg 0.328; only_arm 0.654 vs plate 0.866 in leg (a)). Candidate fixes ladder (cheapest first): (1) photometric - the recolored flat-black arm vs the real arm's specular/texture (real-crop material stats or measured reflectance grade); (2) geometry-registered real-arm texture projection (hard: articulated, pose-dependent); scope a leg-(a)-style diagnostic first (WHICH arm sub-part carries it: gripper/links/mounts via geom-partition masks on the hooked harness, ~0.02 GPU-h). Pre-reg before any read. || CLOSED 06:4xZ 08-13: diagnostic COMPLETE, all gates green (in-run v3 0.713 in band; bridges plate_only 0.866 / only_arm 0.654 / no_arm 0.825 all in band). Registered rule names LINKS (88% of the only_arm paired delta on 6.1% px, CI-excl-0; gripper 26%, mount 31% — below both thresholds). Instance axis: follower/leader ~equal and sub-additive (only_follower -4.05e-6, only_leader -4.14e-6 vs whole arm -5.26e-6) — a fix must treat BOTH instances. Record-only: no_mount is the ONLY removal that moves v3 TOWARD real (0.713-&gt;0.654, 97/100, CI-excl-0) despite the absence-OOD confound — rendered mounts are per-pixel the most sim-distinctive class. Artifacts: analysis__sim_arm_split.json + chart + frame strip on fontaine-reports.
+
+</details>
+
+---
 
 **`sim-foreground-appearance-pass`** · `cpu`
 

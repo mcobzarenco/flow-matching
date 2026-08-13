@@ -533,6 +533,40 @@ Renders CPU (~4 min), embeds 5 groups ~0.02 GPU-h.
 - [crops strip](https://mcobzarenco-fontaine-reports.static.hf.space/fg_fix_crops_strip.png)
   — mined RGBA crops: on checker / source naive median / identity paste
 
+## Arm sub-part split — the links carry 88% of the arm's signature; mounts are the per-pixel worst ([pre-reg](posts/2026-08-13-prereg-sim-arm-split.md), 08-13)
+
+The arm-class follow-on to the content split: the rendered arm
+(~7.1% of pixels) is the biggest remaining rendered class after the
+clutter patches (patched 0.556 ≫ real-fg 0.328), so WHICH arm
+sub-part carries it? Same hooked harness — one production v3
+instance, `_composite` re-run per segmentation subset with RNG-state
+restore, 20 seeds × 5 draws — over two exact partitions of the 96
+arm-class geoms: gripper+jaw (46 geoms, 0.3% px) / links base→wrist
+(44, 6.1%) / camera mounts (6, 0.7%), and follower (48, 3.6%) /
+leader (48, 3.5%). All gates green: in-run v3 0.713 (band ±0.005),
+bridges plate_only 0.866 / only_arm 0.654 / no_arm 0.825 all inside
+their registered ±0.02. **The registered rule names LINKS**: 88% of
+the whole arm's keep-only paired delta (only_links −4.63e-06 of
+−5.26e-06, CI-excl-0; only_links alone reads 0.705 vs plate-only
+0.866 — nearly the full v3 0.713). Gripper 26% and mount 31% sit
+below both the 60% and 35% thresholds. The instance axis is
+sub-additive — only_follower −4.05e-06 and only_leader −4.14e-06
+each carry ~77–79% alone — so the encoder saturates on either
+instance and **a fix must treat both arms**. Record-only but
+striking: `no_mount` is the ONLY removal that moves v3 TOWARD real
+(0.713 → 0.654, 97/100 frames closer, CI-excl-0) despite the
+absence-OOD confound that makes no_arm read +0.113 WORSE — the six
+camera-mount geoms are per-pixel the most sim-distinctive thing in
+the frame, a cheap rider for the photometric rung. Follow-on queued:
+`sim-arm-photometric-links` (links material fix, both instances,
+mount-retexture rider). Renders CPU (~7 min), embeds 16 groups
+~0.03 GPU-h.
+
+- [analysis JSON](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_arm_split.json)
+  · [chart](https://mcobzarenco-fontaine-reports.static.hf.space/chart__sim_arm_split.png)
+- [frame strip](https://mcobzarenco-fontaine-reports.static.hf.space/strip__sim_arm_split.png)
+  — v3 / only_links / only_gripper / only_mount / plate-only, same slot
+
 ## 20-seed behavioral spot-check under v3 ([pre-reg](posts/2026-08-12-prereg-sim-spot20-v3.md), [results](posts/2026-08-12-sim-spot20-v3-results.md), 08-12)
 
 Same 20 seeds, physics bit-identical (spawn rows byte-matched
