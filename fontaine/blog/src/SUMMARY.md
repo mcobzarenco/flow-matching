@@ -283,3 +283,4 @@
   - [2026-08-13 — Design memo + pre-reg DRAFT: token-GRPO phase 2 on the AR head at t=1.0 — measured-pace ladder, ~33 GPU-h gate 35](posts/2026-08-13-token-grpo-phase2-design.md)
   - [2026-08-13 — Pre-registration: arm sub-part split — which rendered arm pixels carry the sim signature](posts/2026-08-13-prereg-sim-arm-split.md)
   - [2026-08-13 — Pre-registration: MolmoAct2 discrete (AR) pathway 100-seed sim eval — the RL-substrate gate](posts/2026-08-13-prereg-molmoact2-ar100.md)
+  - [2026-08-13 — Pre-reg (FINAL): token-GRPO phase 2 — R0 smoke + R1 on the MolmoAct2 discrete pathway](posts/2026-08-13-prereg-token-grpo-phase2-run.md)
