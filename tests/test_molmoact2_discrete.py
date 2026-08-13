@@ -358,10 +358,27 @@ def test_driver_adapter_parser_guards(monkeypatch: pytest.MonkeyPatch) -> None:
     argv("--molmoact2-discrete", "ckpt", "--ar-temperature", "1.0")
     with pytest.raises(SystemExit):
         parse_args()
+    # Greedy draws replay the identical stream — refused without a
+    # sampling temperature.
     argv("--molmoact2-discrete", "ckpt", "--draws", "2")
     with pytest.raises(SystemExit):
         parse_args()
+    # Training rows record the masked-softmax capture — refused on the
+    # unconstrained reference decode.
     argv("--molmoact2-discrete", "ckpt", "--emit-training-rows", "rows")
+    with pytest.raises(SystemExit):
+        parse_args()
+    # Sampling requires the grammar mask (and a positive temperature).
+    argv("--molmoact2-discrete", "ckpt", "--molmoact2-temperature", "1.0")
+    with pytest.raises(SystemExit):
+        parse_args()
+    argv(
+        "--molmoact2-discrete",
+        "ckpt",
+        "--molmoact2-grammar-masked",
+        "--molmoact2-temperature",
+        "0",
+    )
     with pytest.raises(SystemExit):
         parse_args()
     argv("--checkpoint", "ckpt", "--molmoact2-grammar-masked")
@@ -371,6 +388,22 @@ def test_driver_adapter_parser_guards(monkeypatch: pytest.MonkeyPatch) -> None:
     args = parse_args()
     assert args.molmoact2_discrete == "ckpt"
     assert args.molmoact2_grammar_masked
+    # The RL rollout flag set parses whole: masked sampling + rows + draws.
+    argv(
+        "--molmoact2-discrete",
+        "ckpt",
+        "--molmoact2-grammar-masked",
+        "--molmoact2-temperature",
+        "1.0",
+        "--emit-training-rows",
+        "rows",
+        "--draws",
+        "4",
+    )
+    args = parse_args()
+    assert args.molmoact2_temperature == 1.0
+    assert args.emit_training_rows == Path("rows")
+    assert args.draws == 4
 
 
 def test_discrete_guards(

@@ -41,10 +41,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import torch
 from safetensors import safe_open
 from torch import Tensor
 
+from ..decoders.ar_backbone import ActionCaptureStep
 from ..gemma4.loading import resolve_checkpoint_dir
 from ..molmo2.cache import Molmo2KVCache
 from ..molmo2.model import (
@@ -512,6 +514,9 @@ class MolmoAct2Predictor:
         normalize_language: bool = True,
         on_undecodable: str = "raise",
         grammar_masked: bool = False,
+        temperature: float | None = None,
+        sample_rng: np.random.Generator | None = None,
+        action_capture: list[ActionCaptureStep] | None = None,
     ) -> DiscreteActionResult:
         """One observation -> the executed action chunk through the
         checkpoint's TRAINED DISCRETE pathway — their ``predict_action``
@@ -539,8 +544,32 @@ class MolmoAct2Predictor:
         stream at budget 0. Every emission decodes by construction —
         no EOS race, no zeros fallback, no cap. Wherever the
         unconstrained argmax was already a legal bin the two modes
-        emit identical streams; ``masked_violations`` counts the steps
-        where they differ (the record-only divergence instrument).
+        emit identical streams; ``masked_violations`` counts the bin
+        steps where the unconstrained full-vocab argmax was NOT a
+        legal bin (under greedy exactly the steps where the two modes
+        diverge — the record-only divergence instrument; under
+        sampling the same mask-binding count, no longer a stream
+        diff).
+
+        ``temperature`` + ``sample_rng`` (the RL rollout draw, phase-2
+        instrument item 3): each bin step samples the masked softmax
+        ``softmax((block/T) | legality mask)`` via Gumbel-max with
+        fp32 Exp(1) noise from the caller's keyed CPU generator —
+        bit-reproducible under its key, exactly
+        :func:`~bijou.decoders.ar_backbone._sample_action_ids`'s
+        scheme. Sampling requires ``grammar_masked`` (the RL decode IS
+        the masked decode — unconstrained sampling would sample the
+        zeros-fallback class) and an explicit generator (no ambient
+        RNG).
+
+        ``action_capture`` (requires ``grammar_masked``): appends one
+        :class:`ActionCaptureStep` per bin step — pre-mask BLOCK
+        logits (fp32, the ``block_vocab`` slice), the applied legality
+        mask, the chosen backbone id — so
+        ``token_rows_from_capture(capture,
+        block_base=action_token_start_id, temperature=...)`` yields
+        the TokenRow records the replay collator trains from. Capture
+        is observation, never intervention.
 
         Shapes:
         - ``images``: per camera [H, W, 3]-coercible frames
@@ -553,6 +582,23 @@ class MolmoAct2Predictor:
         if on_undecodable not in ("raise", "zeros"):
             raise ValueError(
                 f"on_undecodable must be 'raise' or 'zeros', got {on_undecodable!r}",
+            )
+        if temperature is not None and temperature <= 0.0:
+            raise ValueError(f"temperature {temperature} must be positive")
+        if (temperature is None) != (sample_rng is None):
+            raise ValueError(
+                "sampled decode takes temperature AND sample_rng together "
+                "— the draw must be explicitly keyed (no ambient RNG), and "
+                "a generator without a temperature has nothing to consume",
+            )
+        if (temperature is not None or action_capture is not None) and (
+            not grammar_masked
+        ):
+            raise ValueError(
+                "temperature/action_capture require grammar_masked — the "
+                "RL rollout decode is the masked decode (unconstrained "
+                "sampling would sample the zeros-fallback class, and the "
+                "capture surface records the masked-softmax distribution)",
             )
         if self.action_mode not in ("discrete", "both"):
             raise ValueError(
@@ -658,11 +704,47 @@ class MolmoAct2Predictor:
                 row = logits[0, -1].float()
                 legal = (lengths > 0) & (lengths <= remaining)
                 block = row[base : base + codec.block_vocab]
-                choice = int(
-                    torch.argmax(block.masked_fill(~legal, float("-inf"))),
-                )
-                if int(torch.argmax(row)) != base + choice:
+                if temperature is None:
+                    choice = int(
+                        torch.argmax(block.masked_fill(~legal, float("-inf"))),
+                    )
+                else:
+                    assert sample_rng is not None  # guarded above
+                    # Gumbel-max over the masked softmax: argmax of
+                    # (block/T | mask) + G with G = -log(Exp(1)) fp32
+                    # from the keyed CPU generator — _sample_action_ids'
+                    # scheme, one stream per predict.
+                    exponential = sample_rng.standard_exponential(
+                        codec.block_vocab,
+                        dtype=np.float32,
+                    )
+                    gumbel = -np.log(
+                        np.maximum(exponential, np.finfo(np.float32).tiny),
+                    )
+                    scaled = (block / temperature).masked_fill(
+                        ~legal,
+                        float("-inf"),
+                    )
+                    choice = int(
+                        torch.argmax(
+                            scaled + torch.from_numpy(gumbel).to(scaled.device),
+                        ),
+                    )
+                full_argmax = int(torch.argmax(row))
+                if not (
+                    base <= full_argmax < base + codec.block_vocab
+                    and bool(legal[full_argmax - base])
+                ):
                     masked_violations += 1
+                if action_capture is not None:
+                    action_capture.append(
+                        ActionCaptureStep(
+                            block_logits=block.detach().float().cpu()[None],
+                            allowed=legal.cpu()[None],
+                            active=torch.ones(1, dtype=torch.bool),
+                            chosen=torch.tensor([base + choice]),
+                        ),
+                    )
                 remaining -= int(lengths[choice])
                 chosen = torch.full(
                     (1,),

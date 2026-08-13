@@ -246,6 +246,15 @@ def parse_args() -> argparse.Namespace:
         "instead of the reference's unconstrained greedy + zeros "
         "fallback; per-request violations are counted in the out-json",
     )
+    parser.add_argument(
+        "--molmoact2-temperature",
+        type=float,
+        default=None,
+        help="sample the masked softmax at this temperature instead of "
+        "the masked argmax (the RL rollout draw, keyed per (seed, "
+        "replan, draw) via stable_sample_rng) — requires "
+        "--molmoact2-grammar-masked",
+    )
     parser.add_argument("--out-dir", type=Path, default=OUTPUT_DIR)
     parser.add_argument(
         "--out-json",
@@ -265,19 +274,39 @@ def parse_args() -> argparse.Namespace:
     if args.molmoact2_discrete is not None:
         for flag, name in (
             (args.convmap_seam_stats is not None, "--convmap-seam-stats"),
-            (args.emit_training_rows is not None, "--emit-training-rows"),
             (args.ar_temperature is not None, "--ar-temperature"),
             (args.sde_noise_level is not None, "--sde-noise-level"),
-            (args.draws > 1, "--draws > 1"),
         ):
             if flag:
                 parser.error(
-                    f"{name} is not wired for --molmoact2-discrete (the "
-                    "gate eval is greedy, batch-1; sampling/replay come "
-                    "with the RL loop items)",
+                    f"{name} is not wired for --molmoact2-discrete "
+                    "(bijou-policy flags; the discrete pathway's sampling "
+                    "flag is --molmoact2-temperature)",
                 )
+        if args.emit_training_rows is not None and not args.molmoact2_grammar_masked:
+            parser.error(
+                "--emit-training-rows on the discrete pathway records the "
+                "masked-softmax capture surface — pass "
+                "--molmoact2-grammar-masked (the RL rollout decode)",
+            )
+        if args.draws > 1 and args.molmoact2_temperature is None:
+            parser.error(
+                "--draws > 1 without --molmoact2-temperature replays the "
+                "identical greedy stream per draw — meaningless",
+            )
     if args.molmoact2_grammar_masked and args.molmoact2_discrete is None:
         parser.error("--molmoact2-grammar-masked requires --molmoact2-discrete")
+    if args.molmoact2_temperature is not None and not args.molmoact2_grammar_masked:
+        parser.error(
+            "--molmoact2-temperature requires --molmoact2-grammar-masked "
+            "— unconstrained sampling would sample the zeros-fallback "
+            "class (the 6.8% finding, posts/2026-08-13-prereg-molmoact2-"
+            "ar100.md)",
+        )
+    if args.molmoact2_temperature is not None and args.molmoact2_temperature <= 0:
+        parser.error(
+            f"--molmoact2-temperature must be > 0, got {args.molmoact2_temperature}",
+        )
     if args.convmap_seam_stats is not None and args.hold:
         parser.error("--convmap-seam-stats wraps a policy — meaningless with --hold")
     if args.emit_training_rows is not None and args.hold:
@@ -328,6 +357,10 @@ def molmoact2_discrete_chunks(
     *,
     task: str,
     grammar_masked: bool,
+    temperature: float | None = None,
+    rng_for: Callable[[int, int, int], Any] | None = None,
+    token_rows: list[Any] | None = None,
+    model_states: list[np.ndarray] | None = None,
 ) -> tuple[list[np.ndarray], list[bool]]:
     """Parent-side predict round for the discrete (AR) pathway: batch-1
     per request, strictly in request order (the predictor's prompt
@@ -335,22 +368,49 @@ def molmoact2_discrete_chunks(
     the sorted ``observation.images.*`` convention the parity anchors
     packed. Returns (sim-unit chunks, per-request zero-fallback flags —
     always False under the grammar mask, which decodes by
-    construction)."""
+    construction).
+
+    ``temperature`` + ``rng_for`` (the RL rollout draw): sample the
+    masked softmax with one keyed generator per request —
+    ``rng_for(seed, replan, draw)``. ``token_rows``/``model_states``
+    are ``--emit-training-rows`` out-lists: one TokenRow (the
+    masked-softmax capture reduced by ``token_rows_from_capture``) and
+    one MODEL-unit state vector per request, in request order — the
+    replay collator consumes the state the predictor consumed, not the
+    sim's."""
     import torch
 
+    from bijou.eval.policies import token_rows_from_capture
+
+    if (temperature is None) != (rng_for is None):
+        raise ValueError("temperature and rng_for come together")
     chunks: list[np.ndarray] = []
     fallbacks: list[bool] = []
-    for _, _, _, _, _, top, wrist, state in requests:
+    for _, _, seed, replan, draw, top, wrist, state in requests:
         model_state = shim.apply(
             torch.from_numpy(np.asarray(state, dtype=np.float32)),
         )
+        capture: list[Any] | None = [] if token_rows is not None else None
         result = predictor.predict_action_discrete(
             images=[top, wrist],
             task=task,
             state=model_state,
             grammar_masked=grammar_masked,
             on_undecodable="zeros",
+            temperature=temperature,
+            sample_rng=None if rng_for is None else rng_for(seed, replan, draw),
+            action_capture=capture,
         )
+        if token_rows is not None:
+            assert capture is not None  # built together above
+            rows = token_rows_from_capture(
+                capture,
+                block_base=predictor.action_token_start_id,
+                temperature=temperature,
+            )
+            token_rows.append(rows[0])
+        if model_states is not None:
+            model_states.append(model_state.numpy())
         codec = predictor.fast_codec
         horizon = int(predictor.metadata.get("action_horizon") or 0)
         total = horizon * int(predictor.action_stats.q01.numel())
@@ -638,7 +698,27 @@ def main() -> int:
             f"({args.method}-{args.sample_steps}, horizon {horizon})",
         )
     row_writer: TrainingRowWriter | None = None
-    if args.emit_training_rows is not None:
+    if args.emit_training_rows is not None and predictor is not None:
+        row_writer = TrainingRowWriter(
+            args.emit_training_rows,
+            {
+                "checkpoint": str(args.molmoact2_discrete),
+                "run_seed": args.seed,
+                "decode": "molmoact2_grammar_masked",
+                "temperature": args.molmoact2_temperature,
+                "task": TASK,
+                # The stored state is MODEL units — the official shim
+                # applied, exactly what predict_action_discrete consumed
+                # (the replay collator feeds it back verbatim).
+                "state_units": "model (official shim applied)",
+                "norm_tag": MOLMOACT2_NORM_TAG,
+                "stats_repo_id": STATS_REPO_ID,
+                "commit": commit,
+                "rng_key": "stable_sample_rng(run_seed, repo_id(draw), seed, replan, 0)",
+            },
+        )
+        print(f"training rows -> {args.emit_training_rows}")
+    elif args.emit_training_rows is not None:
         from bijou.decoders.ar_backbone import ARSuffixDecoder
 
         assert policy is not None  # parse_args refused --hold
@@ -718,18 +798,49 @@ def main() -> int:
     discrete_fallbacks: list[bool] = []
 
     if predictor is not None:
+        from bijou.eval.policies import stable_sample_rng
+
+        def discrete_rng_for(seed: int, replan: int, draw: int) -> Any:
+            repo = "sim/eval100" if draw == 0 else f"sim/eval100/draw{draw:02d}"
+            return stable_sample_rng(args.seed, repo, seed, replan, 0)
 
         def predict_batch(requests: list[tuple[Any, ...]]) -> list[np.ndarray]:
             start = time.perf_counter()
+            token_rows: list[Any] | None = [] if row_writer is not None else None
+            states: list[np.ndarray] | None = [] if row_writer is not None else None
             chunks, fallbacks = molmoact2_discrete_chunks(
                 predictor,
                 discrete_shim,
                 requests,
                 task=TASK,
                 grammar_masked=args.molmoact2_grammar_masked,
+                temperature=args.molmoact2_temperature,
+                rng_for=(
+                    discrete_rng_for if args.molmoact2_temperature is not None else None
+                ),
+                token_rows=token_rows,
+                model_states=states,
             )
             predict_ms.append((time.perf_counter() - start) * 1000)
             discrete_fallbacks.extend(fallbacks)
+            if row_writer is not None:
+                assert token_rows is not None and states is not None
+                for message, row, model_state in zip(
+                    requests,
+                    token_rows,
+                    states,
+                    strict=True,
+                ):
+                    _, _, seed, replan, draw, top, wrist, _ = message
+                    row_writer.write(
+                        seed=seed,
+                        replan=replan,
+                        draw=draw,
+                        top=top,
+                        wrist=wrist,
+                        state=model_state,
+                        row=row,
+                    )
             return chunks
     elif policy is None:
 
