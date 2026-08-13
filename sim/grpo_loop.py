@@ -21,9 +21,16 @@ steps alternate on one GPU):
    ``molmoact2_grpo_sums`` (each chunk's objective sum divided by the
    FULL-batch token count, so chunking never changes the gradient),
    grad-clip 1.0 over the trainable set, non-finite grad norm skips
-   the step loudly. Trainable surface = memo §4 option B retargeted:
-   the trunk's TEXT stack (embeddings + transformer + lm_head),
-   vision frozen.
+   the step loudly. Trainable surface = memo §4, selectable
+   (``--surface``): B — the trunk's TEXT stack (embeddings +
+   transformer + lm_head), vision frozen (R0's surface); A — ONLY the
+   FAST-block rows of the untied embedding + lm_head (~10.5M params;
+   the R0-A re-scope's surface, grad rows outside the block zeroed
+   before the step). Re-scope mitigation levers (R0-A pre-reg,
+   2026-08-13): ``--advantage-clip`` clamps group z-scores;
+   ``--kl-beta`` adds a DIFFERENTIABLE k3 penalty to the step-0 anchor
+   (per-chunk reference forwards via one anchor swap per step,
+   heartbeat key ``anchor_k3_pre``).
 5. **Telemetry** — k3 KL to the frozen step-0 anchor measured on a row
    subsample via a parameter-swap reference forward (memo §2: recorded
    every step, the hacking early-warning; judged at boundaries, §7),
@@ -143,13 +150,19 @@ def group_advantages(
     episodes: list[EpisodeResult],
     *,
     min_std: float,
+    clip: float | None = None,
 ) -> tuple[dict[tuple[int, int], float], GroupFacts]:
     """((seed, draw) -> advantage for episodes of KEPT groups,
     grouping facts). Advantages are within-group z-scores of the
     composite reward (ddof=0 — the probe's statistic); a group is
     dropped whole when its reward std falls below ``min_std`` OR is
     exactly zero (a z-score needs spread; the dynamic-sampling filter,
-    memo §2 step 2). Loud on duplicate (seed, draw) identities."""
+    memo §2 step 2). ``clip`` clamps the z-scores to ``[-clip, clip]``
+    (advantage tempering — the R0 collapse fed a lone success's z≈+2.6
+    into one overshooting update). Loud on duplicate (seed, draw)
+    identities."""
+    if clip is not None and clip <= 0.0:
+        raise ValueError(f"advantage clip {clip} must be positive")
     groups: dict[int, list[EpisodeResult]] = {}
     seen: set[tuple[int, int]] = set()
     for episode in episodes:
@@ -170,7 +183,10 @@ def group_advantages(
         kept += 1
         mean = float(rewards.mean())
         for member, reward in zip(members, rewards, strict=True):
-            advantages[(member.seed, member.draw)] = (float(reward) - mean) / std
+            z = (float(reward) - mean) / std
+            if clip is not None:
+                z = max(-clip, min(clip, z))
+            advantages[(member.seed, member.draw)] = z
     facts = GroupFacts(
         total=len(groups),
         kept=kept,
@@ -199,6 +215,65 @@ def build_optimizer(
         weight_decay=0.0,
         foreach=False,
     )
+
+
+def option_a_row_span(predictor: Any) -> tuple[int, int]:
+    """The FAST action block's row span ``[base, end)`` in the untied
+    embedding/head id space — memo §4 option A's trainable rows. Loud
+    when the discrete resources are missing or the block does not sit
+    inside the base matrices (a straddle into ``new_embedding`` or past
+    the head would silently train the wrong rows)."""
+    base = predictor.action_token_start_id
+    codec = predictor.fast_codec
+    if base is None or codec is None:
+        raise ValueError(
+            "option A needs the discrete resources (action_token_start_id "
+            "+ fast codec) on the predictor",
+        )
+    end = int(base) + int(codec.block_vocab)
+    text = predictor.trunk.text
+    embedding_rows = int(text.transformer.wte.embedding.shape[0])
+    assert text.lm_head is not None
+    head_rows = int(text.lm_head.weight.shape[0])
+    if not (int(base) >= 0 and end <= embedding_rows and end <= head_rows):
+        raise ValueError(
+            f"FAST block rows [{base}, {end}) must sit inside the base "
+            f"embedding ({embedding_rows} rows) and lm_head ({head_rows} "
+            "rows) — wrong checkpoint geometry for option A",
+        )
+    return int(base), end
+
+
+def apply_option_a_freeze(predictor: Any) -> list[tuple[str, nn.Parameter]]:
+    """Memo §4 option A (patch-only): ONLY the FAST-block rows of the
+    untied token embedding + lm_head train (~2048 rows × hidden × 2
+    matrices ≈ 10.5M params at the release geometry); everything else
+    is frozen. The two FULL matrices are the trainable parameters —
+    the row restriction is enforced by ``grpo_train_step``'s
+    ``grad_row_span`` (non-block grad rows zeroed after accumulation,
+    BEFORE clip/step; with wd=0 AdamW a zero-grad row's moments stay
+    zero and the row never moves — oracle-pinned). The head's grads
+    are naturally block-confined (replay slices the block columns);
+    the embedding's are NOT (prompt/scaffold ids are fed too), which
+    is what the span masking is for."""
+    trunk = predictor.trunk
+    trunk.requires_grad_(False)
+    option_a_row_span(predictor)  # geometry guards
+    text = trunk.text
+    text.transformer.wte.embedding.requires_grad_(True)
+    text.lm_head.weight.requires_grad_(True)
+    named = [
+        (f"text.{name}", param)
+        for name, param in text.named_parameters()
+        if param.requires_grad
+    ]
+    expected = {"text.transformer.wte.embedding", "text.lm_head.weight"}
+    if {name for name, _ in named} != expected:
+        raise ValueError(
+            f"option-A surface must be exactly {sorted(expected)} — got "
+            f"{sorted(name for name, _ in named)}",
+        )
+    return named
 
 
 def apply_option_b_freeze(predictor: Any) -> list[tuple[str, nn.Parameter]]:
@@ -313,6 +388,36 @@ class TrainStepFacts:
     approx_kl: float
     grad_norm: float
     skipped: bool
+    anchor_k3: float | None = None
+
+
+def anchor_chunk_logprobs(
+    predictor: Any,
+    anchor: AnchorSnapshot,
+    rows: list[ReplayRow],
+    *,
+    task: str,
+    temperature: float,
+    microbatch_rows: int,
+) -> list[Tensor]:
+    """Per-CHUNK anchor logprob tensors for the KL penalty — the SAME
+    chunking ``accumulate_grpo_grads`` uses, so each tensor's padded
+    width matches its chunk's replay forward exactly. One anchor swap
+    around chunked no-grad reference forwards (a whole-wave single
+    forward would hold every row's activations at once); tensors land
+    on CPU and travel back per chunk."""
+    out: list[Tensor] = []
+    with anchor.swapped(), torch.no_grad():
+        for start in range(0, len(rows), microbatch_rows):
+            chunk = rows[start : start + microbatch_rows]
+            logprobs, _ = replay_logprobs(
+                predictor,
+                chunk,
+                task=task,
+                temperature=temperature,
+            )
+            out.append(logprobs.to("cpu"))
+    return out
 
 
 def accumulate_grpo_grads(
@@ -323,24 +428,36 @@ def accumulate_grpo_grads(
     task: str,
     config: GRPOConfig,
     microbatch_rows: int,
-) -> tuple[float, int, float, float, float, float, float]:
+    anchor_chunks: list[Tensor] | None = None,
+    kl_beta: float = 0.0,
+) -> tuple[float, int, float, float, float, float, float, float | None]:
     """Chunked backward accumulation: (loss, tokens, mean_ratio,
-    min_ratio, max_ratio, clip_fraction, approx_kl). Each chunk's
-    objective sum is divided by the FULL-batch token count before
-    ``backward()`` — the accumulated gradient equals the single-batch
-    token-weighted mean's (the sum-form discipline; oracle in
-    tests/test_grpo_loop.py). Stats aggregate token-weighted."""
+    min_ratio, max_ratio, clip_fraction, approx_kl, anchor_k3). Each
+    chunk's objective sum is divided by the FULL-batch token count
+    before ``backward()`` — the accumulated gradient equals the
+    single-batch token-weighted mean's (the sum-form discipline;
+    oracle in tests/test_grpo_loop.py). Stats aggregate
+    token-weighted. ``kl_beta > 0`` threads the precomputed per-chunk
+    anchor logprobs (:func:`anchor_chunk_logprobs`) into the
+    differentiable k3 penalty."""
     if not rows:
         raise ValueError("accumulate_grpo_grads on an empty row batch")
+    chunk_count = math.ceil(len(rows) / microbatch_rows)
+    if kl_beta > 0.0 and (anchor_chunks is None or len(anchor_chunks) != chunk_count):
+        raise ValueError(
+            f"kl_beta > 0 needs one anchor tensor per chunk ({chunk_count}) "
+            f"— got {None if anchor_chunks is None else len(anchor_chunks)}",
+        )
     full_count = sum(len(row.ids) for row in rows)
     loss_total = 0.0
     tokens = 0
     ratio_sum = 0.0
     kl_sum = 0.0
     clip_sum = 0.0
+    anchor_k3_sum = 0.0
     min_ratio = math.inf
     max_ratio = -math.inf
-    for start in range(0, len(rows), microbatch_rows):
+    for index, start in enumerate(range(0, len(rows), microbatch_rows)):
         chunk = rows[start : start + microbatch_rows]
         objective_sum, _, stats = molmoact2_grpo_sums(
             predictor,
@@ -348,6 +465,10 @@ def accumulate_grpo_grads(
             task=task,
             advantages=advantages[start : start + microbatch_rows],
             config=config,
+            anchor_logprobs=(
+                anchor_chunks[index] if kl_beta > 0.0 and anchor_chunks else None
+            ),
+            kl_beta=kl_beta,
         )
         loss = -objective_sum / full_count
         loss.backward()
@@ -356,6 +477,8 @@ def accumulate_grpo_grads(
         ratio_sum += stats.mean_ratio * stats.tokens
         kl_sum += stats.approx_kl * stats.tokens
         clip_sum += stats.clip_fraction * stats.tokens
+        if stats.anchor_k3 is not None:
+            anchor_k3_sum += stats.anchor_k3 * stats.tokens
         min_ratio = min(min_ratio, stats.min_ratio)
         max_ratio = max(max_ratio, stats.max_ratio)
     return (
@@ -366,6 +489,7 @@ def accumulate_grpo_grads(
         max_ratio,
         clip_sum / max(tokens, 1),
         kl_sum / max(tokens, 1),
+        anchor_k3_sum / max(tokens, 1) if kl_beta > 0.0 else None,
     )
 
 
@@ -380,13 +504,20 @@ def grpo_train_step(
     optimizer: torch.optim.Optimizer,
     microbatch_rows: int,
     grad_clip: float,
+    anchor_chunks: list[Tensor] | None = None,
+    kl_beta: float = 0.0,
+    grad_row_span: tuple[int, int] | None = None,
 ) -> TrainStepFacts:
     """One optimizer step over a wave's retained rows: chunked
     accumulation, grad-clip over the trainable set, non-finite grad
     norm SKIPS the update (loudly, in the returned facts — the §7
-    NaN tripwire reads them)."""
+    NaN tripwire reads them). ``grad_row_span`` zeroes gradient rows
+    OUTSIDE ``[base, end)`` on every trainable matrix after
+    accumulation and before the clip — the option-A row restriction
+    (equivalent to per-backward masking by linearity; with wd=0 a
+    zero-grad row never moves)."""
     optimizer.zero_grad(set_to_none=True)
-    loss, tokens, mean_ratio, min_ratio, max_ratio, clip_fraction, kl = (
+    loss, tokens, mean_ratio, min_ratio, max_ratio, clip_fraction, kl, k3 = (
         accumulate_grpo_grads(
             predictor,
             rows,
@@ -394,8 +525,17 @@ def grpo_train_step(
             task=task,
             config=config,
             microbatch_rows=microbatch_rows,
+            anchor_chunks=anchor_chunks,
+            kl_beta=kl_beta,
         )
     )
+    if grad_row_span is not None:
+        base, end = grad_row_span
+        with torch.no_grad():
+            for _, param in parameters:
+                if param.grad is not None:
+                    param.grad[:base].zero_()
+                    param.grad[end:].zero_()
     grad_norm = float(
         torch.nn.utils.clip_grad_norm_(
             [param for _, param in parameters],
@@ -416,6 +556,7 @@ def grpo_train_step(
         approx_kl=kl,
         grad_norm=grad_norm,
         skipped=skipped,
+        anchor_k3=k3,
     )
 
 
@@ -557,6 +698,11 @@ class GRPOLoopConfig:
     kl_rows: int = 32
     save_every: int = 5
     keep_checkpoints: int = 2
+    # Re-scope pre-reg (R0-A) levers — defaults preserve R0's exact
+    # behavior (surface B, no penalty, unclipped z-scores).
+    surface: str = "b"
+    kl_beta: float = 0.0
+    advantage_clip: float | None = None
 
 
 @dataclass(slots=True)
@@ -656,7 +802,15 @@ def run_grpo_loop(
     config.out_dir.mkdir(parents=True, exist_ok=True)
     heartbeat = config.out_dir / "train.jsonl"
     grpo = GRPOConfig(temperature=config.temperature)
-    named = parameters if parameters is not None else apply_option_b_freeze(predictor)
+    if config.surface not in ("a", "b"):
+        raise ValueError(f"unknown trainable surface {config.surface!r}")
+    if parameters is not None:
+        named = parameters
+    elif config.surface == "a":
+        named = apply_option_a_freeze(predictor)
+    else:
+        named = apply_option_b_freeze(predictor)
+    grad_row_span = option_a_row_span(predictor) if config.surface == "a" else None
     if optimizer is None:
         optimizer = build_optimizer(named, lr=config.lr)
     if anchor is None:
@@ -728,6 +882,7 @@ def run_grpo_loop(
         advantages_map, groups = group_advantages(
             episodes,
             min_std=config.min_group_std,
+            clip=config.advantage_clip,
         )
 
         facts: TrainStepFacts | None = None
@@ -744,6 +899,16 @@ def run_grpo_loop(
             chosen_nll = float(
                 np.mean([-r.logprobs.mean() for r in rows]),
             )
+            anchor_chunks = None
+            if config.kl_beta > 0.0:
+                anchor_chunks = anchor_chunk_logprobs(
+                    predictor,
+                    anchor,
+                    rows,
+                    task=config.task,
+                    temperature=config.temperature,
+                    microbatch_rows=config.microbatch_rows,
+                )
             facts = grpo_train_step(
                 predictor,
                 rows,
@@ -754,6 +919,9 @@ def run_grpo_loop(
                 optimizer=optimizer,
                 microbatch_rows=config.microbatch_rows,
                 grad_clip=config.grad_clip,
+                anchor_chunks=anchor_chunks,
+                kl_beta=config.kl_beta,
+                grad_row_span=grad_row_span,
             )
             kl_anchor = anchor_kl(
                 predictor,
@@ -786,6 +954,11 @@ def run_grpo_loop(
             "mean_ratio": None if facts is None else round(facts.mean_ratio, 5),
             "clip_fraction": None if facts is None else round(facts.clip_fraction, 5),
             "approx_kl": None if facts is None else round(facts.approx_kl, 8),
+            "anchor_k3_pre": (
+                None
+                if facts is None or facts.anchor_k3 is None
+                else round(facts.anchor_k3, 8)
+            ),
             "anchor_kl": None if kl_anchor is None else round(kl_anchor, 8),
             "grad_norm": None if facts is None else round(facts.grad_norm, 4),
             "step_skipped": None if facts is None else facts.skipped,
@@ -1005,6 +1178,24 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--execute-horizon", type=int, default=30)
     parser.add_argument("--post-backend", default="auto")
     parser.add_argument("--lr", type=float, default=5e-6)
+    parser.add_argument(
+        "--surface",
+        choices=("a", "b"),
+        default="b",
+        help="memo §4 trainable surface: a = FAST-block rows only, b = text stack",
+    )
+    parser.add_argument(
+        "--kl-beta",
+        type=float,
+        default=0.0,
+        help="anchor-KL penalty weight (0 = off, R0's setting)",
+    )
+    parser.add_argument(
+        "--advantage-clip",
+        type=float,
+        default=None,
+        help="clamp group z-scores to +/- this (None = off, R0's setting)",
+    )
     parser.add_argument("--microbatch-rows", type=int, default=1)
     parser.add_argument("--eval-every", type=int, default=5)
     parser.add_argument("--save-every", type=int, default=5)
@@ -1078,6 +1269,9 @@ def main(argv: list[str] | None = None) -> int:
         microbatch_rows=args.microbatch_rows,
         kl_rows=args.kl_rows,
         save_every=args.save_every,
+        surface=args.surface,
+        kl_beta=args.kl_beta,
+        advantage_clip=args.advantage_clip,
     )
     config.out_dir.mkdir(parents=True, exist_ok=True)
     (config.out_dir / "meta.json").write_text(
@@ -1102,7 +1296,11 @@ def main(argv: list[str] | None = None) -> int:
         f"x {horizon} ticks; heartbeat {config.out_dir / 'train.jsonl'}",
         flush=True,
     )
-    named = apply_option_b_freeze(predictor)
+    named = (
+        apply_option_a_freeze(predictor)
+        if config.surface == "a"
+        else apply_option_b_freeze(predictor)
+    )
     optimizer = build_optimizer(named, lr=config.lr)
     # Anchor = the step-0 policy as loaded from --checkpoint; captured
     # before any resume restore overwrites the live tensors.

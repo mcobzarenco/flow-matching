@@ -74,7 +74,10 @@ class GRPOStats:
     estimator of KL(π_old ‖ π_new) over trained tokens — ratio − 1 −
     log ratio, non-negative, 0 at an unchanged policy; the drift
     tripwire input (§7). The anchor KL (§2, vs frozen er60k) needs a
-    reference forward and rides the loop harness, not the step."""
+    reference forward and rides the loop harness, not the step.
+    ``anchor_k3`` is the PENALTY term's own token-weighted k3 mean
+    (pre-update, vs the step-0 anchor) — None when the penalty is
+    off."""
 
     tokens: int
     mean_ratio: float
@@ -82,6 +85,7 @@ class GRPOStats:
     max_ratio: float
     clip_fraction: float
     approx_kl: float
+    anchor_k3: float | None = None
 
 
 def grammar_masks_from_ids(
@@ -186,6 +190,9 @@ def grpo_objective_sums(
     advantages: Tensor,
     decisions: Tensor,
     config: GRPOConfig,
+    *,
+    anchor_logprobs: Tensor | None = None,
+    kl_beta: float = 0.0,
 ) -> tuple[Tensor, Tensor, GRPOStats]:
     """Sum-form clipped surrogate: (objective SUM with graph, decision
     count, detached stats). Per token, ratio ``r = exp(new − old)``,
@@ -197,7 +204,17 @@ def grpo_objective_sums(
     gradient ∇new, so the surrogate's gradient IS advantage-weighted
     CE's (the item-2 oracle, bit-exact — torch.minimum splits tie
     gradients evenly and the halves resum exactly); zero advantage
-    zeroes every gradient identically."""
+    zeroes every gradient identically.
+
+    ``kl_beta > 0`` subtracts a differentiable k3 anchor penalty from
+    the objective sum (the GRPO-paper estimator of
+    KL(π_new ‖ π_anchor) at the sampled tokens): per token
+    ``exp(a − n) − (a − n) − 1`` with ``a`` the CONSTANT anchor
+    logprob (one no-grad reference forward, the caller's job) and
+    ``n`` the live logprob — non-negative, exactly 0 with zero
+    gradient at ``a == n``, gradient ``β·(exp(a − n) − 1)`` pushing
+    ``n`` back toward the anchor. Loud when the penalty is on without
+    anchor logprobs."""
     if new_logprobs.shape != old_logprobs.shape or advantages.shape != (
         new_logprobs.shape[0],
     ):
@@ -225,6 +242,31 @@ def grpo_objective_sums(
     clipped = ratio.clamp(config.clip_low, config.clip_high) * advantage
     trained = decisions.to(new_logprobs.dtype)
     objective_sum = (torch.minimum(unclipped, clipped) * trained).sum()
+    anchor_k3_mean: float | None = None
+    if kl_beta > 0.0:
+        if anchor_logprobs is None:
+            raise ValueError(
+                "kl_beta > 0 needs anchor_logprobs — the penalty is k3 "
+                "against the step-0 anchor's reference forward",
+            )
+        anchor = anchor_logprobs.to(new_logprobs).detach()
+        if anchor.shape != new_logprobs.shape:
+            raise ValueError(
+                f"anchor logprobs {tuple(anchor.shape)} must match new "
+                f"{tuple(new_logprobs.shape)} — same rows, same padding",
+            )
+        if not bool(torch.isfinite(anchor[decisions]).all()):
+            raise ValueError(
+                "non-finite anchor logprobs at decision positions — the "
+                "reference forward scored an illegal token",
+            )
+        anchor_delta = anchor - new_logprobs
+        anchor_k3 = torch.exp(anchor_delta) - anchor_delta - 1.0
+        anchor_k3_sum = (anchor_k3 * trained).sum()
+        objective_sum = objective_sum - kl_beta * anchor_k3_sum
+        anchor_k3_mean = float(
+            anchor_k3_sum.detach() / decisions.sum().clamp(min=1),
+        )
     count = decisions.sum()
     with torch.no_grad():
         tokens = int(count)
@@ -243,6 +285,7 @@ def grpo_objective_sums(
             max_ratio=float(anchored.amax()),
             clip_fraction=clip_fraction,
             approx_kl=float((k3 * trained).sum() / denominator),
+            anchor_k3=anchor_k3_mean,
         )
     return objective_sum, count, stats
 
