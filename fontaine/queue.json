@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-13T21:05:00Z",
+ "updated_utc": "2026-08-13T20:56:00Z",
  "depth_reason": "depth 3: arm-B read+prune at its ~13:3xZ boundary; token-grpo-phase2-instrument items 3-4 on the molmoact2 surface (gate passed, lane GO); sim-arm-photometric-links pre-reg.",
  "items": [
   {
@@ -1433,8 +1433,8 @@
    "status": "queued",
    "owner_hold": false,
    "prereg": null,
-   "title": "Token-GRPO phase-2 RE-SCOPE pre-reg (the R0 STOP boundary's registered fallback, 21:0xZ 08-13): design + pre-register the next rung on option A (patch-only trainable surface \u2014 dissolves the VRAM fail: 76.53 GiB steady-state was option B's, and the instability fallback rule named A) + explicit collapse mitigation calibrated off the R0 curves (one step at lr 5e-6: chosen_nll 0.77->0.33, anchor_kl 0.0215->0.0885, wave-2 5/8 groups all-8-draws-identical, held-out greedy -1.868 paired). Candidate levers to price IN THE PRE-REG, not ad hoc: lr down 5-10x; advantage tempering/clip tightening; KL penalty ON with the R0-measured scale as the line; eval-every 1 on the early rung so greedy damage is visible per step. step_0001/0002.pt on local disk are the diagnostic calibration artifacts. Pre-reg in-channel BEFORE any launch (delegation 11:07/11:18Z active).",
-   "boundary": "Queued 21:0xZ 08-13 at the R0 STOP close. CPU-side design + pre-reg post; the GPU rung it authorizes prices its own gate inside the remaining ~31 GPU-h of the 35 ladder total."
+   "title": "Token-GRPO phase-2 RE-SCOPE pre-reg (the R0 STOP boundary's registered fallback, 20:5xZ 08-13): design + pre-register the next rung on option A (patch-only trainable surface \u2014 dissolves the VRAM fail: 76.53 GiB steady-state was option B's, and the instability fallback rule named A) + explicit collapse mitigation calibrated off the R0 curves (one step at lr 5e-6: chosen_nll 0.77->0.33, anchor_kl 0.0215->0.0885, wave-2 5/8 groups all-8-draws-identical, held-out greedy -1.868 paired). Candidate levers to price IN THE PRE-REG, not ad hoc: lr down 5-10x; advantage tempering/clip tightening; KL penalty ON with the R0-measured scale as the line; eval-every 1 on the early rung so greedy damage is visible per step. step_0001/0002.pt on local disk are the diagnostic calibration artifacts. Pre-reg in-channel BEFORE any launch (delegation 11:07/11:18Z active).",
+   "boundary": "Queued 20:5xZ 08-13 at the R0 STOP close. CPU-side design + pre-reg post; the GPU rung it authorizes prices its own gate inside the remaining ~31 GPU-h of the 35 ladder total."
   },
   {
    "id": "sim-arm-photometric-links",
@@ -1452,8 +1452,8 @@
    "owner_hold": false,
    "prereg": "fontaine/blog/src/posts/2026-08-13-prereg-token-grpo-phase2-run.md",
    "title": "Token-GRPO phase-2 RUN \u2014 R0 COMPLETE 20:54:30Z 08-13 rc 0 (4 launches; crashes: device mix 9ffc1c1, Adam-init OOM d0b9a44, worker-headroom OOM 78cbb65; launch 4 = step_0001.pt resume, R1 resume path validated). BOUNDARY VERDICT: STOP \u2014 VRAM gate FAIL (76.53 GiB steady-state >= 75; option B measured-marginal on 1xH100), signal gate FAIL (wave-2 median group std 0.0087 cm, 5/8 groups all-draws-identical; one step at lr 5e-6 sharpened the 4B stack: chosen_nll 0.77->0.33, anchor_kl 4x/step), endpoint held-out collapsed 1.868 -> -0.0, 0/20, paired delta -1.868 CI [-4.41,-0.03]. R1 NOT launched by frozen rule; ~3.8/5.5 GPU-h ops gate spent. Results in the pre-reg post.",
-   "boundary": "CLOSED 21:0xZ 08-13 at the R0 STOP boundary. Follow-up = token-grpo-phase2-rescope-prereg (queued): the registered option-A fallback + collapse mitigation, NEW pre-reg before any launch."
+   "boundary": "CLOSED 20:5xZ 08-13 at the R0 STOP boundary. Follow-up = token-grpo-phase2-rescope-prereg (queued): the registered option-A fallback + collapse mitigation, NEW pre-reg before any launch."
   }
  ],
- "updated": "2026-08-13T21:05:00Z"
+ "updated": "2026-08-13T20:56:00Z"
 }
