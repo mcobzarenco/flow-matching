@@ -700,6 +700,11 @@ def main() -> int:
         f"\n{len(results)} episodes in {wall_s / 60:.1f} min | "
         f"{len(batch_sizes)} predict rounds, mean batch {mean_batch:.1f}",
     )
+    if row_writer is not None:
+        print(
+            f"training rows: {row_writer.rows_written} NPZs -> "
+            f"{row_writer.root} (index.jsonl + meta.json)",
+        )
 
     if args.out_json is not None:
         commit = subprocess.run(

@@ -206,7 +206,15 @@ step 0 (before any update) and every 5 steps (~0.19 GPU-h each,
    ~0.3 GB/step, pruned after the gradient pass. Oracle: at greedy,
    emitted logprobs match a teacher-forced re-forward bit-for-bit
    (same masked softmax); draw-0 rows reproduce banked sequential
-   rows.
+   rows. *Amended 2026-08-13 (measured, tests/test_token_rows.py):
+   the re-forward is a one-shot batched trunk forward while the
+   decode fed its cache incrementally, so trunk logits carry
+   reduction-shape noise — bit-for-bit holds for the masked-softmax
+   reduction itself (captured logits + recorded mask → emitted
+   logprobs, exact), while the re-forwarded chosen logprobs land
+   within 2.4e-6 on the CPU fixture (bound registered at 1e-5). The
+   ratio-at-fresh-policy oracle in item 2 inherits this: ratio ≈ 1
+   to the same noise, not ≡ 1 bitwise.*
 2. **GRPO step** (`bijou/train_grpo.py` or a train.py mode):
    advantage-weighted clipped token-CE. Oracles: ratio≡1 (fresh
    policy) reduces to advantage-weighted CE exactly; zero advantage
