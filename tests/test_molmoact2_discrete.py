@@ -98,6 +98,8 @@ def run_scripted(
     script: list[int],
     monkeypatch: pytest.MonkeyPatch,
     on_undecodable: str = "raise",
+    *,
+    grammar_masked: bool = False,
 ) -> DiscreteActionResult:
     subject = discrete_predictor(base, loaded)
     wte = subject.trunk.text.transformer.wte
@@ -109,6 +111,7 @@ def run_scripted(
         task=observation["task"],
         state=observation["state"],
         on_undecodable=on_undecodable,
+        grammar_masked=grammar_masked,
     )
 
 
@@ -199,6 +202,79 @@ def test_missing_eos_hits_the_cap_loudly(
     loaded = codec()
     with pytest.raises(RuntimeError, match="did not emit EOS"):
         run_scripted(predictor, loaded, [ACTION_TOKEN_START], monkeypatch)
+
+
+def test_masked_mode_equals_unconstrained_on_legal_streams(
+    predictor: MolmoAct2Predictor,  # noqa: F811
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Item (c)'s first oracle: wherever the unconstrained argmax was
+    already a legal bin, the grammar-masked decode emits the identical
+    stream (modulo the scaffold: forced ``<action_end>`` instead of a
+    generated EOS), zero violations, bit-identical actions."""
+    loaded = codec()
+    bins = decodable_bins(loaded)
+    script = [
+        ACTION_START,
+        *[ACTION_TOKEN_START + b for b in bins],
+        ACTION_END,
+        EOS,
+    ]
+    unconstrained = run_scripted(predictor, loaded, script, monkeypatch)
+    masked = run_scripted(
+        predictor,
+        loaded,
+        script,
+        monkeypatch,
+        grammar_masked=True,
+    )
+    assert unconstrained.masked_violations is None
+    assert masked.masked_violations == 0
+    assert masked.token_ids[0].tolist() == [
+        ACTION_START,
+        *[ACTION_TOKEN_START + b for b in bins],
+        ACTION_END,
+    ]
+    assert masked.bins == unconstrained.bins == bins
+    assert torch.equal(masked.actions, unconstrained.actions)
+
+
+def test_masked_mode_repairs_illegal_streams(
+    predictor: MolmoAct2Predictor,  # noqa: F811
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Item (c)'s second oracle: when the unconstrained argmax leaves
+    the legal set (here: a text id mid-stream, the class that makes
+    the reference decode short → ZEROS), the masked decode substitutes
+    the best legal bin, counts the divergence, and the stream still
+    consumes the budget exactly and decodes."""
+    loaded = codec()
+    script = [ACTION_START, 42]  # head then repeats 42 forever
+    result = run_scripted(
+        predictor,
+        loaded,
+        script,
+        monkeypatch,
+        grammar_masked=True,
+    )
+    lengths = loaded.symbol_lengths
+    assert result.masked_violations == len(result.bins) > 0
+    assert int(lengths[result.bins].sum()) == HORIZON * DIM
+    assert result.token_ids[0, 0] == ACTION_START
+    assert result.token_ids[0, -1] == ACTION_END
+    assert bool(torch.isfinite(result.actions).all())
+    # And the same emission would have zero-fallen-back unconstrained:
+    # 42 is not an action token, the extracted span is empty.
+    assert (
+        extract_action_bins(
+            [ACTION_START, 42, ACTION_END],
+            action_start_id=ACTION_START,
+            action_end_id=ACTION_END,
+            action_token_start_id=ACTION_TOKEN_START,
+            block_vocab=2048,
+        )
+        == []
+    )
 
 
 def test_discrete_guards(
