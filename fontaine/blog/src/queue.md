@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-13T05:40:53Z
+**Updated:** 2026-08-13T06:08:10Z
 
-**Depth call:** depth 2 open at 05:4xZ 08-13: appearance pass CLOSED (all legs; gate PASS, promotion blocked on owner sign-off as sim-clutter-patch-promotion); CPU lanes = token-grpo-phase2-design-memo + sim-arm-appearance-leg (new, diagnostic first); GPU legs pend owner calls (v3-rerun unhold, phase-2 go, compute options).
+**Depth call:** depth 2 open at 06:0xZ 08-13: phase-2 design memo CLOSED (draft posted, launch pends owner go); CPU lanes = sim-arm-appearance-leg (diagnostic first) + token-grpo-phase2-instrument (veto window per memo ask 3); GPU legs pend owner calls (v3-rerun unhold, phase-2 go, promotion sign-off, compute options).
 
-**14 open** (Live 0 · Queued 2 · Blocked 12 · Done 142)
+**14 open** (Live 0 · Queued 2 · Blocked 12 · Done 143)
 
 ## 🔴 Live (0)
 
@@ -18,6 +18,20 @@
 
 *ready — waiting on a window or a boundary*
 
+**`token-grpo-phase2-instrument`** · `cpu`
+
+Token-GRPO phase-2 instrument build (CPU, oracle-gated, zero behavior change - all new flags default-off), per posts/2026-08-13-token-grpo-phase2-design.md section 8: (1) --emit-training-rows on the parallel driver (frames + samp…
+
+**boundary:** Queued 06:0xZ 08-13 at the memo close. Sequenced BEHIND sim-arm-appearance-leg; memo ask 3 offers the owner a veto on pre-go instrument spend - if vetoed in-channel, flip to owner_hold; the RUN itself launches only on the phase-2 go + finalized pre-reg regardless.
+
+<details><summary>full record</summary>
+
+Token-GRPO phase-2 instrument build (CPU, oracle-gated, zero behavior change - all new flags default-off), per posts/2026-08-13-token-grpo-phase2-design.md section 8: (1) --emit-training-rows on the parallel driver (frames + sampled ids + per-token chosen logprobs off the existing ActionCaptureStep surface; oracle: greedy logprobs bit-match a teacher-forced re-forward, draw-0 rows reproduce banked sequential rows); (2) GRPO step (advantage-weighted clipped token-CE; oracles: ratio-1 reduces to weighted CE, zero-advantage -&gt; zero grad, train-time grammar mask == rollout mask); (3) replay collator rows -&gt; CollatedBatch (fixture-episode bf16 logit-reproduction oracle); (4) loop harness (rollout-&gt;score-&gt;filter-&gt;step-&gt;eval + babysit heartbeat). check.py green per landing; ~2-3 sessions.
+
+</details>
+
+---
+
 **`sim-arm-appearance-leg`** · `cpu`
 
 Arm appearance leg: the rendered arm (~7.1% of pixels) carries the remaining ceiling to the real-fg anchor (patched 0.556 / no_clutter 0.576 &gt;&gt; real-fg 0.328; only_arm 0.654 vs plate 0.866 in leg (a))
@@ -27,20 +41,6 @@ Arm appearance leg: the rendered arm (~7.1% of pixels) carries the remaining cei
 <details><summary>full record</summary>
 
 Arm appearance leg: the rendered arm (~7.1% of pixels) carries the remaining ceiling to the real-fg anchor (patched 0.556 / no_clutter 0.576 &gt;&gt; real-fg 0.328; only_arm 0.654 vs plate 0.866 in leg (a)). Candidate fixes ladder (cheapest first): (1) photometric - the recolored flat-black arm vs the real arm's specular/texture (real-crop material stats or measured reflectance grade); (2) geometry-registered real-arm texture projection (hard: articulated, pose-dependent); scope a leg-(a)-style diagnostic first (WHICH arm sub-part carries it: gripper/links/mounts via geom-partition masks on the hooked harness, ~0.02 GPU-h). Pre-reg before any read.
-
-</details>
-
----
-
-**`token-grpo-phase2-design-memo`** · `cpu`
-
-Phase-2 token-GRPO design memo + pre-reg draft (AR trunk, t=1.0) per the frozen GRPO-signal-probe decision rule (both families cleared 08-13 00:0xZ: AR t=1.0 0.771 cm vs 0.25 bar at ~zero KL cost -&gt; token-GRPO first, Flow-GRPO SD…
-
-**boundary:** Queued 03:1xZ 08-13 at the contact-shadows close (queue refill, charter s4). Design work sanctioned by the probe decision rule; no GPU spend without owner go + posted pre-reg.
-
-<details><summary>full record</summary>
-
-Phase-2 token-GRPO design memo + pre-reg draft (AR trunk, t=1.0) per the frozen GRPO-signal-probe decision rule (both families cleared 08-13 00:0xZ: AR t=1.0 0.771 cm vs 0.25 bar at ~zero KL cost -&gt; token-GRPO first, Flow-GRPO SDE a=0.5 second). Memo scope: reward = sim success/progress on the v3/v4 composite eval, rollout budget model from the probe's measured 1.13 GPU-h/cell, group size + KL anchor + trunk-frozen-vs-open choices, abort tripwires, and the exact pre-reg bars. CPU-only; the launch itself pends the owner phase-2 go (open ask since 08-12).
 
 </details>
 
@@ -216,7 +216,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (142)
+## ✅ Done (143)
 
 *closed — the full record stays in each fold*
 
@@ -243,6 +243,20 @@ Locate the remaining top-cam encoder gap (knn5 AUROC 0.713, unchanged by lens ar
 <details><summary>full record</summary>
 
 Locate the remaining top-cam encoder gap (knn5 AUROC 0.713, unchanged by lens arms - it is the frontier number now that wrist reads 0.523 under curve-only): ablation embeds on the same 20x5 reset renders. Arms: (1) baseline v3 composite; (2) foreground-&gt;plate (rendered arm/benchy pixels replaced by the plate via the existing dynamic mask - if knn5 collapses toward the plate's own read, the gap lives in the RENDERED pixels, not the composite arithmetic); (3) shadow-region crop read (v4): does the fitted shadow band carry residual signal; (4) real-frame control: real episodes' arm pixels pasted on the plate (upper bound of what compositing can reach). Read: knn5 AUROC per arm vs the 0.713 baseline + per-frame paired deltas, same harness as the lens gate. Decision it feeds: which top-cam lever gets the next leg (arm appearance/materials vs mask edge vs shadow refinement). Cost: renders CPU, ~0.02 GPU-h embeds.
+
+</details>
+
+---
+
+**`token-grpo-phase2-design-memo`** · `cpu`
+
+Phase-2 token-GRPO design memo + pre-reg draft (AR trunk, t=1.0) per the frozen GRPO-signal-probe decision rule (both families cleared 08-13 00:0xZ: AR t=1.0 0.771 cm vs 0.25 bar at ~zero KL cost -&gt; token-GRPO first, Flow-GRPO SD…
+
+**boundary:** EXECUTED + CLOSED 06:0xZ 08-13 (work session): design memo + pre-reg DRAFT posted as posts/2026-08-13-token-grpo-phase2-design.md. Contents per scope: measured-pace budget model (1.13 GPU-h/cell -&gt; ~0.0094 GPU-h/episode -&gt; ~0.75 GPU-h/RL-step; corrects the 08-12 sketch ~5x up), ladder R0 smoke 2 / R1 15 / R2 +25 steps, ~33 GPU-h gate 35 with R1-&gt;R2 boundary rule; composite reward (progress_final_cm + 10 success bonus - 2 tip - 5 strike, z-scored in-group ddof0, zero-var groups dropped); S=8 seeds x G=8 at t=1.0, clip-higher [0.8,1.28], mu=1, lr 5e-6, KL off but measured vs frozen er60k anchor; trainable-surface fork A patch-only vs B patch+text-stack (B recommended, 69.2 GiB preflight precedent); 5 tripwires incl. spread-collapse + violence-explosion off the probe's knock-away-tail hypothesis; instrument delta 4 items riding ActionCaptureStep. Owner asks: phase-2 go (re-posted), A/B fork, instrument-prestart permission. NO launch, NO registration - draft finalizes on go.
+
+<details><summary>full record</summary>
+
+Phase-2 token-GRPO design memo + pre-reg draft (AR trunk, t=1.0) per the frozen GRPO-signal-probe decision rule (both families cleared 08-13 00:0xZ: AR t=1.0 0.771 cm vs 0.25 bar at ~zero KL cost -&gt; token-GRPO first, Flow-GRPO SDE a=0.5 second). Memo scope: reward = sim success/progress on the v3/v4 composite eval, rollout budget model from the probe's measured 1.13 GPU-h/cell, group size + KL anchor + trunk-frozen-vs-open choices, abort tripwires, and the exact pre-reg bars. CPU-only; the launch itself pends the owner phase-2 go (open ask since 08-12).
 
 </details>
 
