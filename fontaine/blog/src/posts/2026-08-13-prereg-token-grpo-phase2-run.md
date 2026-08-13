@@ -224,3 +224,46 @@ after the 18:58Z crash — a babysit watcher bug, pgrep matching its
 own cmdline; fixed in-session). Crashes 1–3 total ~2.9 GPU-h; resume
 needs ~1.0 → R0 lands ~3.9 of the 5.5 ops gate. Ladder total 35
 unchanged.*
+
+## R0 boundary read (2026-08-13 21:0xZ) — VERDICT: STOP
+
+R0 completed rc 0 at 20:54:30Z (launch 4, the `step_0001.pt` resume —
+the R1 resume path validated in passing). **R1 does not launch**, by
+the frozen reads:
+
+| read | value | gate | verdict |
+|---|---|---|---|
+| plumbing | rc 0; ratio 1.00138, clip 0.132 (step 1) | ratio ∈ [0.95, 1.05], clip < 0.2 | ✓ green |
+| pace | 0.76 / 0.68 GPU-h/step measured | R1 projection ~13 < 22 cum | ✓ green |
+| VRAM | **76.53 GiB** allocated peak at the steady-state step (nvidia-smi 79.5 of 81.6) | < 75 GiB | **✗ FAIL** |
+| on-surface signal | wave 1: median std 4.17 cm, 8/8 kept → wave 2: **0.0087 cm, 3/8 kept** (5 groups with all 8 draws IDENTICAL); pooled 16-group median ~0.25, borderline | median ≥ 0.25 AND ≥ 8/16 nondeg | **✗ FAIL** (trend decisive) |
+| endpoint held-out | **−0.0 composite, 0/20 successes**; paired Δ **−1.868**, CI95 [−4.41, −0.03] | record; competence line −1.0 | **CI entirely < 0** (no tripwire: CI hi −0.03 > −1.0) |
+
+**The mechanism, from the recorded curves**: one gradient step at
+lr 5e-6 on the ~3.9B fp32 text stack sharpened the policy into
+near-determinism — chosen-token NLL 0.766 → 0.329, anchor-KL 0.0215 →
+0.0885 (≈4×/step), sampled diversity collapsed (T=1.0 draws within a
+group ending bit-identically), and held-out GREEDY competence dropped
+with it (1.868 → −0.0). Wave 0's 4/64 sampled successes fed large
+positive advantages into a single update that overshot. No tripwire
+fired mechanically (each needs ×3 consecutive or CI < −1.0; a 2-step
+smoke ends first) — the boundary gates did exactly the job they were
+frozen for, at ~3.8 of the 5.5 GPU-h ops gate instead of R1's ~13.
+
+**What R0 banked**: the full plumbing chain works end-to-end (sampled
+waves → z-filter → chunked GRPO step → anchor-KL → paired eval →
+resume); the memory envelope on 1×H100 is measured-marginal for
+option B (steady-state peak 76.5 GiB allocated, ~2 GiB physical
+headroom); the pace book is real (0.7 GPU-h/step); and the FIRST
+gradient step at these constants is already destructive on this
+surface. Checkpoints `step_0001/0002.pt` stay on local disk for
+diagnosis (not uploaded: a STOP boundary consumes nothing; weights of
+a collapsed policy are a diagnostic artifact, not a bankable one).
+
+**Re-scope (next pre-reg, per the frozen fallback rule)**: option A
+(patch-only surface) — it dissolves the VRAM problem outright
+(trainable set orders of magnitude smaller) — plus explicit collapse
+mitigation for whichever surface runs: lower lr and/or fewer
+advantage-concentrated rows per step, with the R0 curves as the
+calibration. Goes in-channel as a NEW pre-registration before any
+launch.
