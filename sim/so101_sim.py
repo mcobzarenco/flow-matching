@@ -98,6 +98,7 @@ class _TorchPost:
         self,
         fisheye: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray],
         blur_sigma: float,
+        wrist_grid: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray] | None = None,
     ) -> None:
         import torch
 
@@ -108,6 +109,25 @@ class _TorchPost:
         self.y0 = torch.from_numpy(y0).to(self.device)
         self.wx = torch.from_numpy(wx.astype(np.float32)).to(self.device)
         self.wy = torch.from_numpy(wy.astype(np.float32)).to(self.device)
+        # Fitted-lens wrist map (cubemap source); None on the deployed
+        # equidistant path, where remap() serves both cameras.
+        self.wrist: (
+            tuple[
+                _torch_types.Tensor,
+                _torch_types.Tensor,
+                _torch_types.Tensor,
+                _torch_types.Tensor,
+            ]
+            | None
+        ) = None
+        if wrist_grid is not None:
+            gx0, gy0, gwx, gwy = wrist_grid
+            self.wrist = (
+                torch.from_numpy(gx0).to(self.device),
+                torch.from_numpy(gy0).to(self.device),
+                torch.from_numpy(gwx.astype(np.float32)).to(self.device),
+                torch.from_numpy(gwy.astype(np.float32)).to(self.device),
+            )
         radius = max(1, int(np.ceil(2.5 * blur_sigma)))
         taps = np.arange(-radius, radius + 1, dtype=np.float64)
         kernel = np.exp(-0.5 * (taps / blur_sigma) ** 2)
@@ -133,14 +153,26 @@ class _TorchPost:
 
     def remap(self, src: _torch_types.Tensor) -> _torch_types.Tensor:
         """Bilinear fisheye remap, [H, W, C] float32 tensor in/out."""
-        top = (
-            src[self.y0, self.x0] * (1 - self.wx) + src[self.y0, self.x0 + 1] * self.wx
-        )
-        bottom = (
-            src[self.y0 + 1, self.x0] * (1 - self.wx)
-            + src[self.y0 + 1, self.x0 + 1] * self.wx
-        )
-        return top * (1 - self.wy) + bottom * self.wy
+        return self._gather(src, self.x0, self.y0, self.wx, self.wy)
+
+    def remap_wrist(self, src: _torch_types.Tensor) -> _torch_types.Tensor:
+        """Fitted-lens wrist remap — src is the vertically concatenated
+        cubemap face stack [F*S, S, C]."""
+        assert self.wrist is not None
+        x0, y0, wx, wy = self.wrist
+        return self._gather(src, x0, y0, wx, wy)
+
+    def _gather(
+        self,
+        src: _torch_types.Tensor,
+        x0: _torch_types.Tensor,
+        y0: _torch_types.Tensor,
+        wx: _torch_types.Tensor,
+        wy: _torch_types.Tensor,
+    ) -> _torch_types.Tensor:
+        top = src[y0, x0] * (1 - wx) + src[y0, x0 + 1] * wx
+        bottom = src[y0 + 1, x0] * (1 - wx) + src[y0 + 1, x0 + 1] * wx
+        return top * (1 - wy) + bottom * wy
 
     def blur(self, image: _torch_types.Tensor) -> _torch_types.Tensor:
         """Separable Gaussian PSF with edge padding, [H, W, C]
@@ -169,6 +201,19 @@ class _TorchPost:
 
 
 @dataclass(frozen=True, slots=True)
+class _WristLens:
+    """Precomputed fitted-lens wrist render state (lens_model="fitted"):
+    the output->face-stack bilinear map, the camera-local face
+    rotations to render (only faces the map references), and the face
+    frustum geometry."""
+
+    grid: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]
+    face_quats: tuple[np.ndarray, ...]
+    face_size: int
+    fovy: float
+
+
+@dataclass(frozen=True, slots=True)
 class SimObservation:
     """One control-tick observation.
 
@@ -191,6 +236,7 @@ class SO101Sim:
         render_style: str = "v3",
         post_backend: str = "auto",
         *,
+        lens_model: str = "equidistant",
         flip_camera_mount: bool = True,
     ) -> None:
         if render_style not in ("v0", "v1", "v2", "v3", "v4"):
@@ -201,8 +247,15 @@ class SO101Sim:
             raise ValueError(
                 f"post_backend {post_backend!r} not in ('auto', 'numpy', 'torch')",
             )
+        if lens_model not in ("equidistant", "fitted"):
+            raise ValueError(
+                f"lens_model {lens_model!r} not in ('equidistant', 'fitted')",
+            )
+        if lens_model == "fitted" and render_style == "v0":
+            raise ValueError("lens_model 'fitted' needs a fisheye style (v1..v4)")
         self.render_style = render_style
         self.post_backend = post_backend
+        self.lens_model = lens_model
         self.model = mujoco.MjModel.from_xml_path(str(SCENE_PATH))
         self._widen_joint_limits()
         self._apply_servo_sysid()
@@ -248,8 +301,14 @@ class SO101Sim:
         if flip_camera_mount:
             self._flip_camera_mount()
         self._noise_rng = np.random.default_rng(0)  # re-seeded per reset
+        # Fitted-lens wrist path (leg (b)); None on the deployed
+        # equidistant path. Set by _init_wrist_fitted_lens.
+        self._wrist_lens: _WristLens | None = None
+        self._face_renderer: mujoco.Renderer | None = None
         if self.render_style in ("v1", "v2", "v3", "v4"):
             self._init_fisheye(width, height)
+            if self.lens_model == "fitted":
+                self._init_wrist_fitted_lens(width, height)
         if self.render_style in ("v2", "v3", "v4"):
             self._init_inpainting(width, height)
         if self.render_style in ("v3", "v4"):
@@ -267,7 +326,13 @@ class SO101Sim:
             except ImportError:
                 cuda = False
             if cuda:
-                self._post = _TorchPost(self._fisheye, self.V1_BLUR_SIGMA)
+                self._post = _TorchPost(
+                    self._fisheye,
+                    self.V1_BLUR_SIGMA,
+                    wrist_grid=(
+                        None if self._wrist_lens is None else self._wrist_lens.grid
+                    ),
+                )
             elif post_backend == "torch":
                 raise ValueError("post_backend='torch' needs CUDA torch")
 
@@ -430,7 +495,14 @@ class SO101Sim:
     def _remap(self, src: np.ndarray) -> np.ndarray:
         """Bilinear fisheye remap of a source pinhole image — [H, W, C]
         float in/out (any channel count)."""
-        x0, y0, wx, wy = self._fisheye
+        return self._remap_grid(src, self._fisheye)
+
+    @staticmethod
+    def _remap_grid(
+        src: np.ndarray,
+        grid: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray],
+    ) -> np.ndarray:
+        x0, y0, wx, wy = grid
         top = src[y0, x0] * (1 - wx) + src[y0, x0 + 1] * wx
         bottom = src[y0 + 1, x0] * (1 - wx) + src[y0 + 1, x0 + 1] * wx
         return top * (1 - wy) + bottom * wy
@@ -441,6 +513,178 @@ class SO101Sim:
         if self._post is not None:
             return self._post.to_uint8(self._post.remap(self._post.frame(frame)))
         remapped = self._remap(frame.astype(np.float64))
+        return np.clip(remapped, 0, 255).astype(np.uint8)
+
+    # Fitted wrist lens (sim-fit-real-lens-model leg (b), lit 0823
+    # papers/fisheye-lens-fitting.md, owner-adopted 22:31Z 08-12): the
+    # deployed v1 warp assumes an IDEAL equidistant lens centered at
+    # the image midpoint; the plumb-line fit on the 150 pinned real
+    # wrist frames (fontaine/scripts/fit_lens_plumbline.py, leg (a),
+    # outputs/sim/lens_fit/wrist_lens_fit.json) measures the real
+    # module's optical center 22 px left / 14 px below the midpoint
+    # (~5 sigma) and a stronger peripheral compression:
+    #   theta = rho * (1 + k2 rho^2 + k4 rho^4),  rho = r_px / F_DIST
+    # with F_DIST the V1_CENTER_FOVY pinhole focal (492.07 at 480p —
+    # center magnification unchanged, same anchor as v1). The source
+    # is no longer a single 72-deg pinhole (whose diagonal the fitted
+    # corner rays overrun) but a pinhole CUBEMAP around the wrist
+    # camera axis (2603.02139's MuJoCo recipe with the equirect stage
+    # composed away): the output->face map is precomputed once, so
+    # runtime cost is one bilinear gather plus one extra ~squarish
+    # render per referenced face. Faces span LENS_FACE_HALF_DEG=46 deg
+    # per half-axis with faces selected by dominant ray component
+    # (boundary 45 deg), so every bilinear footprint sits >=1 deg
+    # inside its face — no seam pixels. Face size is chosen so the
+    # face focal matches the deployed 72-deg source focal: center
+    # sharpness is unchanged and a fitted-vs-deployed A/B reads lens
+    # geometry, not resolution. Wrist only — the top plate composite
+    # already carries the real top lens (bit-identical oracle).
+    WRIST_LENS_FIT: ClassVar[dict[str, float]] = {
+        "cx": 297.72522293567516,
+        "cy": 253.23730631916195,
+        "k2": 0.03263446384297104,
+        "k4": 0.023544191668793214,
+    }
+    LENS_FACE_HALF_DEG = 46.0
+
+    # Camera-local face rotations (MuJoCo cam frame: x right, y up,
+    # looking along -z; w-first quats). Rotating the camera by q makes
+    # a base-frame ray d appear in the face frame as R(q)^T d.
+    _COS45 = float(np.sqrt(0.5))
+    LENS_FACES: ClassVar[dict[str, tuple[float, float, float, float]]] = {
+        "front": (1.0, 0.0, 0.0, 0.0),
+        "right": (_COS45, 0.0, -_COS45, 0.0),
+        "left": (_COS45, 0.0, _COS45, 0.0),
+        "up": (_COS45, _COS45, 0.0, 0.0),
+        "down": (_COS45, -_COS45, 0.0, 0.0),
+    }
+
+    def _init_wrist_fitted_lens(self, width: int, height: int) -> None:
+        """Precompute the output-pixel -> cubemap-face bilinear map for
+        the fitted wrist lens, keep only the faces the map references,
+        and point the wrist camera's fovy at the face frustum (the
+        equidistant map set by _init_fisheye keeps serving the top
+        cam). The fit is in 640x480 real-frame pixels; center and
+        focal scale with the render size."""
+        fit = self.WRIST_LENS_FIT
+        cx = fit["cx"] * width / 640.0
+        cy = fit["cy"] * height / 480.0
+        f_dist = (height / 2.0) / np.tan(np.deg2rad(self.V1_CENTER_FOVY) / 2.0)
+        f_src = (height / 2.0) / np.tan(np.deg2rad(self.V1_SRC_FOVY) / 2.0)
+        half = np.deg2rad(self.LENS_FACE_HALF_DEG)
+        size = 2 * round(float(f_src * np.tan(half)))  # face focal ~= f_src
+        f_face = (size / 2.0) / np.tan(half)
+
+        v, u = np.mgrid[0:height, 0:width].astype(np.float64)
+        x = u - cx
+        y = v - cy
+        r = np.hypot(x, y)
+        rho = r / f_dist
+        theta = rho * (1 + fit["k2"] * rho**2 + fit["k4"] * rho**4)
+        with np.errstate(invalid="ignore", divide="ignore"):
+            ux = np.where(r > 0, x / r, 0.0)
+            uy = np.where(r > 0, y / r, 0.0)
+        # Ray in the base camera frame (image down = -y_cam; the
+        # convention verified in sim/shadow.py).
+        d = np.stack([np.sin(theta) * ux, -np.sin(theta) * uy, -np.cos(theta)])
+        rotations = {}
+        for name, quat in self.LENS_FACES.items():
+            mat = np.empty(9)
+            mujoco.mju_quat2Mat(mat, np.array(quat))
+            rotations[name] = mat.reshape(3, 3)
+        names = list(self.LENS_FACES)
+        # d in each face's frame, [F, 3, H*W]; the face whose axis is
+        # nearest the ray (max forward component) always contains its
+        # bilinear footprint: the chosen -z_face is the largest ray
+        # component, so both tangents are <= tan(45 deg) < tan(half).
+        face_d = np.stack(
+            [rotations[name].T @ d.reshape(3, -1) for name in names],
+        )
+        forward = -face_d[:, 2]
+        chosen = np.argmax(forward, axis=0)
+        pick = face_d[chosen, :, np.arange(chosen.size)]  # [H*W, 3]
+        depth = -pick[:, 2]
+        center = (size - 1) / 2.0
+        sx = (center + f_face * pick[:, 0] / depth).reshape(height, width)
+        sy = (center - f_face * pick[:, 1] / depth).reshape(height, width)
+        used = sorted(set(chosen.tolist()))
+        slot = np.full(len(names), -1)
+        slot[used] = np.arange(len(used))
+        x0 = np.clip(np.floor(sx).astype(np.int64), 0, size - 2)
+        y0 = np.clip(np.floor(sy).astype(np.int64), 0, size - 2)
+        wx = np.clip(sx - x0, 0.0, 1.0)[..., None]
+        wy = np.clip(sy - y0, 0.0, 1.0)[..., None]
+        y0 += slot[chosen].reshape(height, width) * size
+        # The vendored XML sizes the offscreen framebuffer for 640x480;
+        # face renders are square and slightly wider (runtime override,
+        # same convention as the servo/limit edits — set before any
+        # Renderer exists, both lazy).
+        self.model.vis.global_.offwidth = max(self.model.vis.global_.offwidth, size)
+        self.model.vis.global_.offheight = max(
+            self.model.vis.global_.offheight,
+            size,
+        )
+        self._wrist_lens = _WristLens(
+            grid=(x0, y0, wx, wy),
+            face_quats=tuple(np.array(self.LENS_FACES[names[i]]) for i in used),
+            face_size=size,
+            fovy=2.0 * self.LENS_FACE_HALF_DEG,
+        )
+        self.model.camera("wrist_cam").fovy[0] = self._wrist_lens.fovy
+
+    @property
+    def face_renderer(self) -> mujoco.Renderer:
+        assert self._wrist_lens is not None
+        if self._face_renderer is None:
+            size = self._wrist_lens.face_size
+            self._face_renderer = mujoco.Renderer(self.model, height=size, width=size)
+        return self._face_renderer
+
+    def _render_wrist_source(self) -> np.ndarray:
+        """The wrist camera's source render: the single wide pinhole on
+        the deployed path, or the vertically concatenated cubemap face
+        stack on the fitted path (camera re-aimed per face through
+        model.cam_quat + mj_camlight — pure camera state, physics and
+        the RNG streams untouched; base pose restored after)."""
+        if self._wrist_lens is None:
+            self.renderer.update_scene(self.data, camera="wrist_cam")
+            return self.renderer.render()
+        cam = self.model.camera("wrist_cam")
+        cam_id = self.model.camera("wrist_cam").id
+        # The scene's headlight rides the render camera, so face
+        # renders would each be lit from their own axis — a shading
+        # seam at face boundaries. The real light of the deployed path
+        # is the headlight along the BASE wrist axis: re-point every
+        # face's headlight there (specular is 0 in this scene, so the
+        # light direction is the only view-dependent shading term).
+        base_forward = -self.data.cam_xmat[cam_id].reshape(3, 3)[:, 2].copy()
+        base = cam.quat.copy()
+        faces = []
+        for quat in self._wrist_lens.face_quats:
+            aimed = np.empty(4)
+            mujoco.mju_mulQuat(aimed, base, quat)
+            cam.quat[:] = aimed
+            mujoco.mj_camlight(self.model, self.data)
+            self.face_renderer.update_scene(self.data, camera="wrist_cam")
+            scene = self.face_renderer.scene
+            for index in range(scene.nlight):
+                if scene.lights[index].headlight:
+                    scene.lights[index].dir[:] = base_forward
+            faces.append(self.face_renderer.render())
+        cam.quat[:] = base
+        mujoco.mj_camlight(self.model, self.data)
+        return np.concatenate(faces, axis=0)
+
+    def _apply_wrist_lens(self, frame: np.ndarray) -> np.ndarray:
+        """Wrist source -> distorted output ([H, W, 3] uint8): the
+        fitted-lens gather when active, else the deployed fisheye."""
+        if self._wrist_lens is None:
+            return self._apply_fisheye(frame)
+        if self._post is not None:
+            return self._post.to_uint8(
+                self._post.remap_wrist(self._post.frame(frame)),
+            )
+        remapped = self._remap_grid(frame.astype(np.float64), self._wrist_lens.grid)
         return np.clip(remapped, 0, 255).astype(np.uint8)
 
     # v2 render style (real-frame inpainting, prereg 2026-08-12): the
@@ -891,14 +1135,13 @@ class SO101Sim:
             )
             top = self._composite(top, mask, "top", shadow=shadow)
             self._set_clutter(drawn=False)
-        self.renderer.update_scene(self.data, camera="wrist_cam")
-        wrist = self.renderer.render()
+        wrist = self._render_wrist_source()
         if self.render_style in ("v3", "v4"):
             self._set_clutter(drawn=True)
-            wrist = self._grade(self._apply_fisheye(wrist), "wrist")
+            wrist = self._grade(self._apply_wrist_lens(wrist), "wrist")
         elif self.render_style == "v1":
             top = self._grade(self._apply_fisheye(top), "top")
-            wrist = self._grade(self._apply_fisheye(wrist), "wrist")
+            wrist = self._grade(self._apply_wrist_lens(wrist), "wrist")
         elif self.render_style == "v2":
             top = self._composite(top, self._render_mask("top_cam"), "top")
             # Wrist keeps the v1 render path (v3 included): the wrist
@@ -908,7 +1151,7 @@ class SO101Sim:
             # probe (5-NN AUROC 0.951 vs 0.900, 08-12; pure-composite
             # read reproducible at commit f75c341). Real fix was the
             # wrist periphery re-tune (0.548, 08-12).
-            wrist = self._grade(self._apply_fisheye(wrist), "wrist")
+            wrist = self._grade(self._apply_wrist_lens(wrist), "wrist")
         return SimObservation(top=top, wrist=wrist, state=state)
 
     def _grade(self, frame: np.ndarray, camera: str) -> np.ndarray:
