@@ -45,6 +45,7 @@ import argparse
 import json
 import subprocess
 from pathlib import Path
+from typing import Any
 
 import av
 import numpy as np
@@ -118,6 +119,12 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="with --render-resets: SO101Sim render_style override "
         "(default: the class default)",
+    )
+    parser.add_argument(
+        "--lens-model",
+        default=None,
+        help="with --render-resets: SO101Sim lens_model override "
+        "('equidistant' | 'fitted'; default: the class default)",
     )
     return parser.parse_args()
 
@@ -228,13 +235,19 @@ def rendered_reset_frames(
     n_seeds: int,
     appearance_draws: int,
     render_style: str | None = None,
+    lens_model: str | None = None,
 ) -> dict[str, list[np.ndarray]]:
     """Live settled reset frames, seeds 0..n_seeds-1 (x appearance
     draws), through the exact SO101Sim.observe() path the policy sees.
     Frame order: seed-major, draw-minor."""
     from sim.so101_sim import SO101Sim
 
-    sim = SO101Sim() if render_style is None else SO101Sim(render_style=render_style)
+    kwargs: dict[str, Any] = {}
+    if render_style is not None:
+        kwargs["render_style"] = render_style
+    if lens_model is not None:
+        kwargs["lens_model"] = lens_model
+    sim = SO101Sim(**kwargs)
     per_camera: dict[str, list[np.ndarray]] = {name: [] for name in CAMERAS}
     for seed in range(n_seeds):
         for draw in range(appearance_draws):
@@ -263,6 +276,7 @@ def main() -> int:
             args.render_resets,
             args.appearance_draws,
             args.render_style,
+            args.lens_model,
         )
     else:
         sim = sim_frames(args.sim_dir)
@@ -394,7 +408,8 @@ def main() -> int:
             "sim_source": (
                 f"live reset renders, seeds 0..{args.render_resets - 1}"
                 f" x {args.appearance_draws} appearance draws, "
-                f"render_style={args.render_style or 'default'}"
+                f"render_style={args.render_style or 'default'}, "
+                f"lens_model={args.lens_model or 'default'}"
                 if args.render_resets is not None
                 else str(args.sim_dir)
             ),
