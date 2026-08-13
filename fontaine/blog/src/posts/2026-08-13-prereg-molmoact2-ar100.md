@@ -77,3 +77,47 @@ flow pathway got, decoded through the token head instead.
   flow-locked: the owner decision point becomes AR-SFT-then-RL vs
   Flow-GRPO on the flow head — with these numbers in hand either
   way.
+
+## Results (2026-08-13 12:2xZ, same session — run 11:20–12:26Z, rc 0)
+
+**1/100 successes — the AR pathway IS success-capable in our sim.**
+Seed 73 (success tick 622), one of the flow pathway's own nine
+success seeds. By the frozen decision rule the token-GRPO lane
+proceeds on this checkpoint + pathway.
+
+- **Validity green**: reset strikes 0/100; spend **~1.15 GPU-h ≤
+  1.5 gate** (69.1 min wall, 390 predict rounds, mean batch 7.7).
+- **The decode-brittleness finding (frozen read 2)**: **202 / 2,991
+  predicts (6.8%) hit the zeros-fallback** — the model's
+  unconstrained greedy emission failed to decode (short/over-long
+  stream or a quantization-hole symbol), so ~1 in 15 chunks executed
+  as a ZERO-action chunk under reference semantics. This is exactly
+  the class the `grammar_masked` decode repairs by construction
+  (and at greedy it changes nothing else — 0 violations on legal
+  streams, smoke + fixture oracles).
+- Secondary: engagement 13/100 (best-point > 1 cm), knock-aways
+  27/100 (≤ −1 cm, worst −11.8 at seed 67), 67 quiet; mean
+  `progress_final` −0.87 cm, median −0.00.
+- **vs the flow pathway (record-only, cross-stack)**: 1/100 vs
+  9/100 successes, mean −0.87 vs −0.27, knock-aways 27 vs 27. The
+  token head is ~9× less likely to complete the place at greedy but
+  is not inert — and it carries a 6.8% self-inflicted zero-action
+  handicap the flow head doesn't have.
+
+## Amendment 1 (frozen 12:3xZ pre-launch): arm B — grammar-masked decode
+
+The 6.8% fallback rate converts a design assumption into a
+measurable question: **does repairing the non-decodable emissions
+(the RL rollout decode) change deployment competence?** Arm B is
+arm A with `--molmoact2-grammar-masked` — identical seeds, budget,
+serving, shim; the ONLY change is the decode loop (scaffold fed,
+bins budget-masked, end forced; every emission decodes).
+
+- **Primary**: successes / 100; paired per-seed `progress_final_cm`
+  delta vs arm A (same seeds → paired bootstrap CI95).
+- **Record-only**: masked-violation counts per predict (the
+  divergence instrument — expected ≈ the fallback sites), per-seed
+  chart, flow-seed overlap.
+- **Gate ≤ 1.5 GPU-h** (arm A measured 1.15). Launched detached at
+  the amendment commit under the 11:07Z delegation; results ride
+  the next session if the wall crosses the session deadline.
