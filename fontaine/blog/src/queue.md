@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-12T21:35:53Z
+**Updated:** 2026-08-13T02:56:01Z
 
 **Depth call:** depth 3 open at 16:0xZ 08-12: ftrig-eval20-flipped-parallel CLOSED this session (owner prio, ridden end-to-end); remaining open: sim-wrist-compositing + 2 lit items; grpo-signal-probe owner_hold (memo review), v3-rerun unhold ask 15:13Z still open.
 
-**12 open** (Live 0 · Queued 2 · Blocked 10 · Done 138)
+**12 open** (Live 0 · Queued 2 · Blocked 10 · Done 139)
 
 ## 🔴 Live (0)
 
@@ -18,29 +18,29 @@
 
 *ready — waiting on a window or a boundary*
 
-**`sim-fit-real-lens-model`** · `cpu`
+**`token-grpo-phase2-design-memo`** · `cpu`
 
-Fit the REAL rig lens into the wrist render (lit 0823 papers/fisheye-lens-fitting.md, owner-adopted 22:31Z 08-12 over wrist compositing): replace the assumed ideal-equidistant warp (V1_SRC_FOVY 72 source) with (a) theta-&gt;r fit by…
+Phase-2 token-GRPO design memo + pre-reg draft (AR trunk, t=1.0) per the frozen GRPO-signal-probe decision rule (both families cleared 08-13 00:0xZ: AR t=1.0 0.771 cm vs 0.25 bar at ~zero KL cost -&gt; token-GRPO first, Flow-GRPO SD…
 
-**boundary:** Queued 22:3xZ 08-12 on owner adoption. Sim-visuals lane; natural sequence: plumb-line fit (pure CPU, this or next session) -&gt; cubemap render path -&gt; probe-gated swap. Pairs with sim-composite-contact-shadows (same probe harness).
+**boundary:** Queued 03:1xZ 08-13 at the contact-shadows close (queue refill, charter s4). Design work sanctioned by the probe decision rule; no GPU spend without owner go + posted pre-reg.
 
 <details><summary>full record</summary>
 
-Fit the REAL rig lens into the wrist render (lit 0823 papers/fisheye-lens-fitting.md, owner-adopted 22:31Z 08-12 over wrist compositing): replace the assumed ideal-equidistant warp (V1_SRC_FOVY 72 source) with (a) theta-&gt;r fit by PLUMB-LINE calibration on the 150 pinned real reference frames (table planks = known-straight lines; no rig time needed), (b) cubemap-&gt;equirectangular-&gt;fitted-lens two-stage render (2603.02139's MuJoCo recipe, removes the 72-deg source ceiling entirely). Why it matters beyond appearance: policies use absolute pixel scale as a distance ruler (0.0025-&gt;0.60 cross-lens with RSA) - a mis-fit lens shifts perceived distance in ways the AUROC probe cannot see. Gates: plank-curvature residual vs real frames (direct theta-&gt;r readout), wrist 5-NN AUROC holds &lt;=0.548 (20x5 sensitivity), top-cam composite path bit-identical (real plate already carries the true lens; only the rendered-arm overlay changes if applied to top), reset-render probe ~0.02 GPU-h.
+Phase-2 token-GRPO design memo + pre-reg draft (AR trunk, t=1.0) per the frozen GRPO-signal-probe decision rule (both families cleared 08-13 00:0xZ: AR t=1.0 0.771 cm vs 0.25 bar at ~zero KL cost -&gt; token-GRPO first, Flow-GRPO SDE a=0.5 second). Memo scope: reward = sim success/progress on the v3/v4 composite eval, rollout budget model from the probe's measured 1.13 GPU-h/cell, group size + KL anchor + trunk-frozen-vs-open choices, abort tripwires, and the exact pre-reg bars. CPU-only; the launch itself pends the owner phase-2 go (open ask since 08-12).
 
 </details>
 
 ---
 
-**`sim-composite-contact-shadows`** · `cpu`
+**`sim-fit-real-lens-model`** · `cpu`
 
-Contact-shadow pass for the v3 composites (lit 0823, papers/composite-shadows.md): the pasted sim arm casts no shadow on the real clean plate - the one physics law every real frame obeys that no composite frame does, and an axis…
+Fit the REAL rig lens into the wrist render (lit 0823 papers/fisheye-lens-fitting.md, owner-adopted 22:31Z 08-12 over wrist compositing): replace the assumed ideal-equidistant warp (V1_SRC_FOVY 72 source) with (a) theta-&gt;r fit by…
 
-**boundary:** Queued 22:0xZ 08-12 at the lit-slice close. Sim-visuals lane, sequenced at my discretion; natural pairing with sim-wrist-compositing (same probe harness). Independent of the GRPO probe outcome.
+**boundary:** Queued 22:3xZ 08-12 on owner adoption. Sim-visuals lane; natural sequence: plumb-line fit (pure CPU, this or next session) -&gt; cubemap render path -&gt; probe-gated swap. Pairs with sim-composite-contact-shadows (same probe harness). | LEG (a) DONE 01:4xZ 08-13 (5581d6d): plumb-line theta-&gt;r fit landed (fit_lens_plumbline.py + oracles tests/test_lens_plumbline.py + house chart, outputs/sim/lens_fit/wrist_lens_fit.json). 382 seam chains from 132/150 pinned frames. FINDINGS: optical center (297.7, 253.2) — 22 px left / 14 px below the image midpoint (cx ~5-sigma by 20-frame-bootstrap); curve k2=+0.033 k4=+0.024 — the real lens compresses the periphery MORE than ideal equidistant: ray placement -2.2 px at r=240 (CI95 [-3.9,-1.2]), -12.8 px at the corner r=400 (CI95 [-17.2,-10.0]), both CI-exclude-0. Plank straightness RMS 1.07 px (deployed assumption) -&gt; 0.90 px (fitted); decompositions center-only 0.95 / curve-only 0.94. Remaining legs: (b) cubemap-&gt;equirect-&gt;fitted-lens render path (removes the 72-deg source ceiling; the fitted (cx,cy,k2,k4) is its stage-2 resampler spec), (c) probe-gated swap (wrist 5-NN must hold &lt;=0.548, reset-render probe ~0.02 GPU-h).
 
 <details><summary>full record</summary>
 
-Contact-shadow pass for the v3 composites (lit 0823, papers/composite-shadows.md): the pasted sim arm casts no shadow on the real clean plate - the one physics law every real frame obeys that no composite frame does, and an axis no published pipeline measures (ConCent 2606.30268 randomizes it, ReBot/Re3Sim skip it). Recipe: estimate the room's dominant light direction once from static shadows already in the clean plates, project arm+boat silhouette onto the table plane, multiply-darken with soft edge, one strength parameter. Pure compositing arithmetic, no renderer change. Gate exactly like every render-style change: reset-render probe (~0.02 GPU-h), top-cam 5-NN AUROC must DROP from 0.773 (wrist path untouched, 0.548 must not regress); if the encoder does not care, the axis dies cheap.
+Fit the REAL rig lens into the wrist render (lit 0823 papers/fisheye-lens-fitting.md, owner-adopted 22:31Z 08-12 over wrist compositing): replace the assumed ideal-equidistant warp (V1_SRC_FOVY 72 source) with (a) theta-&gt;r fit by PLUMB-LINE calibration on the 150 pinned real reference frames (table planks = known-straight lines; no rig time needed), (b) cubemap-&gt;equirectangular-&gt;fitted-lens two-stage render (2603.02139's MuJoCo recipe, removes the 72-deg source ceiling entirely). Why it matters beyond appearance: policies use absolute pixel scale as a distance ruler (0.0025-&gt;0.60 cross-lens with RSA) - a mis-fit lens shifts perceived distance in ways the AUROC probe cannot see. Gates: plank-curvature residual vs real frames (direct theta-&gt;r readout), wrist 5-NN AUROC holds &lt;=0.548 (20x5 sensitivity), top-cam composite path bit-identical (real plate already carries the true lens; only the rendered-arm overlay changes if applied to top), reset-render probe ~0.02 GPU-h.
 
 </details>
 
@@ -188,7 +188,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (138)
+## ✅ Done (139)
 
 *closed — the full record stays in each fold*
 
@@ -271,6 +271,20 @@ Design research (owner-called 09:23Z 08-12, research-only, no training): GRPO on
 <details><summary>full record</summary>
 
 Design research (owner-called 09:23Z 08-12, research-only, no training): GRPO on the sim for our two heads. AR objective: token-level GRPO is standard - map group sampling onto rollout returns (progress_final as reward; k rollouts per seed = the group). Flow-matching head: the logprob problem - survey Flow-GRPO (ODE-&gt;SDE stochasticization), ReinFlow, DPPO (diffusion policy PO); what gives usable per-action logprobs for our heun-10 decode. Deliverable: a design memo post naming the first cheap experiment (arms, reward, group size, GPU gate) for owner review; papers pages for what it reads.
+
+</details>
+
+---
+
+**`sim-composite-contact-shadows`** · `cpu`
+
+Contact-shadow pass for the v3 composites (lit 0823, papers/composite-shadows.md): the pasted sim arm casts no shadow on the real clean plate - the one physics law every real frame obeys that no composite frame does, and an axis…
+
+**boundary:** Closed 08-13. Open ask: sim100 amendment 5 (default style v3 -&gt; v4) on owner call.
+
+<details><summary>full record</summary>
+
+Contact-shadow pass for the v3 composites (lit 0823, papers/composite-shadows.md): the pasted sim arm casts no shadow on the real clean plate - the one physics law every real frame obeys that no composite frame does, and an axis no published pipeline measures (ConCent 2606.30268 randomizes it, ReBot/Re3Sim skip it). Recipe: estimate the room's dominant light direction once from static shadows already in the clean plates, project arm+boat silhouette onto the table plane, multiply-darken with soft edge, one strength parameter. Pure compositing arithmetic, no renderer change. Gate exactly like every render-style change: reset-render probe (~0.02 GPU-h), top-cam 5-NN AUROC must DROP from 0.773 (wrist path untouched, 0.548 must not regress); if the encoder does not care, the axis dies cheap.
 
 </details>
 

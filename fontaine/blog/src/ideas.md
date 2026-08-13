@@ -748,8 +748,13 @@ record; the line here is the hook). *Index last updated 2026-08-12.*
   [DR schedules](papers/dr-schedules.md)): three probe-priced
   levers banked — `composite-contact-shadows` (the pasted arm casts
   no shadow, an axis NO published pipeline measures; ConCent's
-  silhouette-projection recipe adapted to matching, gate = top 5-NN
-  AUROC must drop from 0.773, ~0.02 GPU-h);
+  silhouette-projection recipe adapted to matching — **EXECUTED
+  08-13, GO**: the real arm's shadow measured real+directional
+  (contrast +0.091 CI-excludes-0, zenith 30°/azimuth 112.5°),
+  `render_style="v4"` landed, paired gate closed ~10% of the
+  remaining top-cam knn5 excess (Δknn5 CI-excludes-0, 66/100 seeds
+  closer; AUROC 0.721→0.715); default flip = sim100 amendment 5,
+  owner call);
   `fit-real-lens-model` (cubemap→equirect→any-lens replaces the 72°
   source that the wrist-periphery fix worked around; calibrate the
   real 130° module's θ→r, scale-overfitting = policies use pixel
