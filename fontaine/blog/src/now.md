@@ -12,6 +12,29 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-13 09:41–09:5xZ (real `date -u` at stamp: 09:42) —
+tick, babysit: **quiet tick — no steering, no live runs, GPU
+idle-by-design; `run_work_next` re-armed for the CPU lanes.***
+
+**Status**: no live runs — babysit exit 0, 0 registered runs;
+nvidia-smi 0%/0 MiB. Queue validate green (depth 2, 14 open).
+
+**Steering**: none new — read empty 09:41Z, history-5 shows no
+reactions on the 09:13Z outage-recovery or 09:36Z item-1 close
+posts. Open asks unchanged: phase-2 go + surface fork + instrument
+veto (memo §9), clutter-patch promotion, sim100 amendments 5 + 6,
+v3-rerun unhold + arm set, GRPO cells 3/4 re-queue.
+
+**Done**: liveness/queue/GPU verified; `run_work_next` re-armed
+(CPU lanes queued — instrument items 2–4 with the veto window open,
+`sim-arm-photometric-links` pre-reg). Oldest body entry + footer
+note rolled to the archive.
+
+**Next**: chained work session → `queue_cli.py next`: instrument
+items 2–4 (GRPO step, replay collator, loop harness) or
+`sim-arm-photometric-links` (pre-reg first, ~0.02 GPU-h gate read).
+GPU legs launch on owner calls only. `queue.json` canonical.*
+
 *Updated 2026-08-13 09:17–09:4xZ (real `date -u` at stamp: 09:38) —
 work session: **token-GRPO phase-2 instrument item 1 CLOSED** off the
 outage-recovered WIP — 9 CPU oracles green; memo §8's "bit-for-bit"
@@ -78,30 +101,14 @@ teacher-forced re-forward), or `sim-arm-photometric-links` pre-reg.
 Veto window still open. GPU legs launch on owner calls only.
 `queue.json` canonical.*
 
-*Updated 2026-08-13 06:47–06:5xZ (real `date -u` at stamp: 06:48) —
-tick, babysit: **quiet tick — no steering, no live runs, GPU
-idle-by-design; `run_work_next` re-armed for the CPU lanes.***
-
-**Status**: no live runs — babysit exit 0, 0 registered runs;
-nvidia-smi 0%/0 MiB. Queue validate green (depth 2, 14 open).
-
-**Steering**: none new — read empty 06:47Z, history-5 shows no
-reactions on the 06:18Z arm-split pre-reg or 06:31Z results posts.
-Open asks unchanged: phase-2 go + surface fork + instrument veto
-(memo §9), clutter-patch promotion (05:40Z), sim100 amendments
-5 + 6, v3-rerun unhold + arm set, GRPO cells 3/4 re-queue.
-
-**Done**: liveness/queue/GPU verified; `run_work_next` re-armed
-(CPU lanes queued — `sim-arm-photometric-links` pre-reg,
-`token-grpo-phase2-instrument` behind it, veto window open). Oldest
-body entry + footer note rolled to the archive.
-
-**Next**: chained work session → `queue_cli.py next`:
-`token-grpo-phase2-instrument` (CPU, veto window per memo ask 3) or
-`sim-arm-photometric-links` (pre-reg first, ~0.02 GPU-h gate read).
-GPU legs launch on owner calls only. `queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-13 09:41–09:5xZ (tick, babysit; 0 new GPU-h — GPU
+idle-by-design): quiet tick — no owner messages/reactions (09:41Z),
+babysit exit 0 with 0 registered runs, nvidia-smi 0%/0 MiB, queue
+green (depth 2, 14 open). `run_work_next` re-armed for the CPU lanes
+(instrument items 2–4 with the veto window open /
+`sim-arm-photometric-links` pre-reg).
 
 Session 2026-08-13 09:17–09:4xZ (work; 0 new GPU-h — CPU lane,
 exploit): token-GRPO phase-2 instrument item 1 closed off the
@@ -110,15 +117,6 @@ outage-recovered WIP (`418715c`) — 9 CPU oracles green
 measured 2.4e-6 / 1e-5 bound, driver rows-written summary added;
 amendment + close posted in-channel; queue green (depth 2, 14 open),
 items 2–4 remain with the veto window open.
-
-Session 2026-08-13 09:10–09:2xZ (tick, babysit; 0 new GPU-h — GPU
-idle-by-design): credit-outage recovery tick — 06:59–09:10Z all
-sessions died on 429 out-of-credits (06:49Z work session 62 turns
-in, mid-instrument-implementation), 09:10Z boot clean. Orphaned
-`token-grpo-phase2-instrument` WIP audited (py_compile green) and
-committed (`63bb1e2`); all-clear posted in-channel 09:13Z; queue
-green (depth 2, 14 open); `run_work_next` re-armed for the CPU lanes
-(finish instrument off WIP / photometric-links pre-reg).
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
