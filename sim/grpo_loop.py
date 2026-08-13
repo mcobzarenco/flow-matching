@@ -699,10 +699,18 @@ class GRPOLoopConfig:
     save_every: int = 5
     keep_checkpoints: int = 2
     # Re-scope pre-reg (R0-A) levers — defaults preserve R0's exact
-    # behavior (surface B, no penalty, unclipped z-scores).
+    # behavior (surface B, no penalty, unclipped z-scores, KL
+    # record-only).
     surface: str = "b"
     kl_beta: float = 0.0
     advantage_clip: float | None = None
+    # The §7 KL numeric line, set from R0's measured scale (boundary
+    # promise): anchor_kl above this at any step fires a tripwire.
+    # NOTE the telemetry's floor — disk-row JPEG re-decode puts
+    # ~0.02 of reduction noise in anchor_kl even at zero drift (R0
+    # step-1 read 0.0215 at the anchor itself); the line must sit
+    # above the floor.
+    kl_stop: float | None = None
 
 
 @dataclass(slots=True)
@@ -972,6 +980,18 @@ def run_grpo_loop(
             knockaway_frac=knockaway_frac,
             config=config,
         )
+        if (
+            config.kl_stop is not None
+            and kl_anchor is not None
+            and kl_anchor > config.kl_stop
+        ):
+            # The §7 KL numeric line (R0 boundary promise): one reading
+            # over the line stops the run — no streak; the rollout-vs-
+            # anchor telemetry lags the update by a step, so a streak
+            # would let a runaway policy roll another wave.
+            fired.append(
+                f"anchor-KL runaway: {kl_anchor:.6f} > the {config.kl_stop} line",
+            )
         if fired:
             stopped = "; ".join(fired)
             append_jsonl(heartbeat, {"step": step + 1, "tripwire": fired})
@@ -1196,6 +1216,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=None,
         help="clamp group z-scores to +/- this (None = off, R0's setting)",
     )
+    parser.add_argument(
+        "--kl-stop",
+        type=float,
+        default=None,
+        help="anchor_kl tripwire line (None = record-only, R0's setting)",
+    )
     parser.add_argument("--microbatch-rows", type=int, default=1)
     parser.add_argument("--eval-every", type=int, default=5)
     parser.add_argument("--save-every", type=int, default=5)
@@ -1272,6 +1298,7 @@ def main(argv: list[str] | None = None) -> int:
         surface=args.surface,
         kl_beta=args.kl_beta,
         advantage_clip=args.advantage_clip,
+        kl_stop=args.kl_stop,
     )
     config.out_dir.mkdir(parents=True, exist_ok=True)
     (config.out_dir / "meta.json").write_text(

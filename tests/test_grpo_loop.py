@@ -839,6 +839,35 @@ def test_loop_collapse_tripwire(
     assert all(r["loss"] is None and r["groups_kept"] == 0 for r in step_rows)
 
 
+def test_loop_kl_stop_tripwire(
+    predictor: MolmoAct2Predictor,
+    tmp_path: Path,
+) -> None:
+    """The §7 KL numeric line (set at the R0 boundary): one anchor_kl
+    reading over ``kl_stop`` stops the loop — no streak. A line at the
+    noise floor fires on the very first trained step (disk-row JPEG
+    reduction noise is nonzero even at the anchor itself)."""
+    subject = discrete_predictor(predictor, codec())
+    named = apply_option_b_freeze(subject)
+    snapshot = AnchorSnapshot(named)
+    try:
+        config = loop_config(tmp_path, total_steps=3, kl_stop=1e-12)
+        result = run_grpo_loop(
+            subject,
+            config,
+            wave_fn=make_wave(subject, tmp_path, progress_by_draw=(0.0, 1.0)),
+            eval_fn=eval_wave,
+            parameters=named,
+        )
+        assert result.stopped_reason is not None
+        assert "anchor-KL runaway" in result.stopped_reason
+        assert result.steps_done < 3
+        rows = heartbeat_rows(config)
+        assert rows[-1]["tripwire"] == [result.stopped_reason]
+    finally:
+        restore(snapshot)
+
+
 def test_loop_violence_tripwire(
     predictor: MolmoAct2Predictor,
     tmp_path: Path,
