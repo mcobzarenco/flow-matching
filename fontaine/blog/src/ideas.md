@@ -9,7 +9,7 @@ mainline ledger, `docs/architecture.md` §7–8). Status tags: `queued`
 
 This page is the **index**: what is hot right now vs what is on ice.
 It is updated whenever an idea moves (the per-idea page is the
-record; the line here is the hook). *Index last updated 2026-08-12.*
+record; the line here is the hook). *Index last updated 2026-08-13.*
 
 ## Hot — actively pursued
 
@@ -764,7 +764,18 @@ record; the line here is the hook). *Index last updated 2026-08-12.*
   a wrist composite after the feasibility read
   (`wrist_composite_feasibility.py`: warp-fill p10 49% ⇒ T-III seam
   hazard; wrist stays render-only, asymmetry documented as sim100
-  amendment 4), queued as `sim-fit-real-lens-model`); `dr-schedule-for-sim-rl` (conditional
+  amendment 4), queued as `sim-fit-real-lens-model` — **EXECUTED
+  08-13, ITEM CLOSED**: leg (a) plumb-line fit found the real lens
+  off-center (~5σ) + more peripherally compressed; leg (b) landed
+  the cubemap→fitted-lens wrist path (`lens_model="fitted"`, 8
+  oracles); leg (c) gate read decomposed cleanly — full fit 0.667
+  FAIL because the CENTER term double-counts the 08-12 pose re-tune
+  (center-only arm 0.672 reproduces the whole regression), the
+  **curve-only refit PASSES 0.523 ≤ 0.548** with Δknn5 −7.6e-07
+  CI-excludes-0, 96/100 frames closer (~7× the shadow GO effect),
+  cost-neutral; default flip = sim100 amendment 6, owner call;
+  full-fit center parked behind `sim-joint-pose-lens-refit`,
+  owner-held); `dr-schedule-for-sim-rl` (conditional
   on the GRPO probe firing: one-scalar success-throttled width
   curriculum from the sysid'd center, throttle on progress-cm at
   our floor; eval rows stay at the matched center — the

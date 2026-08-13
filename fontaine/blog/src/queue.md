@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-13T02:56:01Z
+**Updated:** 2026-08-13T03:42:00Z
 
 **Depth call:** depth 3 open at 16:0xZ 08-12: ftrig-eval20-flipped-parallel CLOSED this session (owner prio, ridden end-to-end); remaining open: sim-wrist-compositing + 2 lit items; grpo-signal-probe owner_hold (memo review), v3-rerun unhold ask 15:13Z still open.
 
-**12 open** (Live 0 · Queued 2 · Blocked 10 · Done 139)
+**13 open** (Live 0 · Queued 2 · Blocked 11 · Done 140)
 
 ## 🔴 Live (0)
 
@@ -17,6 +17,20 @@
 ## 🟢 Queued (2)
 
 *ready — waiting on a window or a boundary*
+
+**`sim-top-gap-foreground-decomposition`** · `cpu`
+
+Locate the remaining top-cam encoder gap (knn5 AUROC 0.713, unchanged by lens arms - it is the frontier number now that wrist reads 0.523 under curve-only): ablation embeds on the same 20x5 reset renders
+
+**boundary:** Queued 03:4xZ 08-13 at lens-item close (charter s4 refill). Pre-reg in-channel before the embed run; no default changes on any outcome.
+
+<details><summary>full record</summary>
+
+Locate the remaining top-cam encoder gap (knn5 AUROC 0.713, unchanged by lens arms - it is the frontier number now that wrist reads 0.523 under curve-only): ablation embeds on the same 20x5 reset renders. Arms: (1) baseline v3 composite; (2) foreground-&gt;plate (rendered arm/benchy pixels replaced by the plate via the existing dynamic mask - if knn5 collapses toward the plate's own read, the gap lives in the RENDERED pixels, not the composite arithmetic); (3) shadow-region crop read (v4): does the fitted shadow band carry residual signal; (4) real-frame control: real episodes' arm pixels pasted on the plate (upper bound of what compositing can reach). Read: knn5 AUROC per arm vs the 0.713 baseline + per-frame paired deltas, same harness as the lens gate. Decision it feeds: which top-cam lever gets the next leg (arm appearance/materials vs mask edge vs shadow refinement). Cost: renders CPU, ~0.02 GPU-h embeds.
+
+</details>
+
+---
 
 **`token-grpo-phase2-design-memo`** · `cpu`
 
@@ -32,23 +46,23 @@ Phase-2 token-GRPO design memo + pre-reg draft (AR trunk, t=1.0) per the frozen 
 
 ---
 
-**`sim-fit-real-lens-model`** · `cpu`
+## 🟡 Blocked (11)
 
-Fit the REAL rig lens into the wrist render (lit 0823 papers/fisheye-lens-fitting.md, owner-adopted 22:31Z 08-12 over wrist compositing): replace the assumed ideal-equidistant warp (V1_SRC_FOVY 72 source) with (a) theta-&gt;r fit by…
+*waiting on a prerequisite, a boundary, or the owner*
 
-**boundary:** Queued 22:3xZ 08-12 on owner adoption. Sim-visuals lane; natural sequence: plumb-line fit (pure CPU, this or next session) -&gt; cubemap render path -&gt; probe-gated swap. Pairs with sim-composite-contact-shadows (same probe harness). | LEG (a) DONE 01:4xZ 08-13 (5581d6d): plumb-line theta-&gt;r fit landed (fit_lens_plumbline.py + oracles tests/test_lens_plumbline.py + house chart, outputs/sim/lens_fit/wrist_lens_fit.json). 382 seam chains from 132/150 pinned frames. FINDINGS: optical center (297.7, 253.2) — 22 px left / 14 px below the image midpoint (cx ~5-sigma by 20-frame-bootstrap); curve k2=+0.033 k4=+0.024 — the real lens compresses the periphery MORE than ideal equidistant: ray placement -2.2 px at r=240 (CI95 [-3.9,-1.2]), -12.8 px at the corner r=400 (CI95 [-17.2,-10.0]), both CI-exclude-0. Plank straightness RMS 1.07 px (deployed assumption) -&gt; 0.90 px (fitted); decompositions center-only 0.95 / curve-only 0.94. Remaining legs: (b) cubemap-&gt;equirect-&gt;fitted-lens render path (removes the 72-deg source ceiling; the fitted (cx,cy,k2,k4) is its stage-2 resampler spec), (c) probe-gated swap (wrist 5-NN must hold &lt;=0.548, reset-render probe ~0.02 GPU-h).
+**`sim-joint-pose-lens-refit`** · `cpu` · **⛔ owner hold**
+
+CONDITIONAL follow-up (lens gate read 03:4xZ 08-13): jointly refit the wrist camera pose AND the full lens model (center + curvature) against the 150 pinned real frames
+
+**boundary:** Queued 03:4xZ 08-13 at lens-item close. owner_hold: run only if amendment 6 lands and wrist gap persists; ~0.02 GPU-h per probe read.
 
 <details><summary>full record</summary>
 
-Fit the REAL rig lens into the wrist render (lit 0823 papers/fisheye-lens-fitting.md, owner-adopted 22:31Z 08-12 over wrist compositing): replace the assumed ideal-equidistant warp (V1_SRC_FOVY 72 source) with (a) theta-&gt;r fit by PLUMB-LINE calibration on the 150 pinned real reference frames (table planks = known-straight lines; no rig time needed), (b) cubemap-&gt;equirectangular-&gt;fitted-lens two-stage render (2603.02139's MuJoCo recipe, removes the 72-deg source ceiling entirely). Why it matters beyond appearance: policies use absolute pixel scale as a distance ruler (0.0025-&gt;0.60 cross-lens with RSA) - a mis-fit lens shifts perceived distance in ways the AUROC probe cannot see. Gates: plank-curvature residual vs real frames (direct theta-&gt;r readout), wrist 5-NN AUROC holds &lt;=0.548 (20x5 sensitivity), top-cam composite path bit-identical (real plate already carries the true lens; only the rendered-arm overlay changes if applied to top), reset-render probe ~0.02 GPU-h.
+CONDITIONAL follow-up (lens gate read 03:4xZ 08-13): jointly refit the wrist camera pose AND the full lens model (center + curvature) against the 150 pinned real frames. The 08-12 pose re-tune absorbed the real principal-point offset (22 px ~ 2.6 deg yaw-equivalent) under the deployed equidistant lens, so the leg-(a) full fit's center term double-counts it (probe: center-only arm 0.672 vs 0.560 control). A joint fit would let the full lens (plank residual 0.898 px vs 0.937 curve-only) land without the double count. Cheap falsification first: sweep a small yaw/pitch compensation on the existing pose with the full lens, read the same 20x5 probe. Only worth running if the curve-only swap (amendment 6) lands and the remaining wrist gap still reads as geometry.
 
 </details>
 
 ---
-
-## 🟡 Blocked (10)
-
-*waiting on a prerequisite, a boundary, or the owner*
 
 **`sim100-v1-rerun`** · `gpu-local` · **⛔ owner hold**
 
@@ -188,7 +202,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (139)
+## ✅ Done (140)
 
 *closed — the full record stays in each fold*
 
@@ -229,6 +243,20 @@ GRPO signal probe (proposed in posts/2026-08-12-grpo-sim-design-memo.md SS4, pen
 <details><summary>full record</summary>
 
 GRPO signal probe (proposed in posts/2026-08-12-grpo-sim-design-memo.md SS4, pends owner review - the memo's ask #1): rollout-only measurement of whether group-relative advantage has signal at our competence floor. 4 cells x 15 seeds x K=8 stochastic rollouts, v3 frames, sim100 conventions: er60k AR T=1.0, er60k AR T=1.6 (SimpleVLA-RL setting), teacher80k flow fresh-ODE-noise draws, ftrig4k flow fresh-ODE-noise draws; cell 5 CONFIRMED (owner 13:16Z 08-12: 'Yes, let's do this') = teacher80k SDE a=0.5 (a=0.3 the hedge constant if competence craters) (needs the ~30-line Euler-Maruyama sampler + bit-identity-at-a=0 oracle). Deterministic per-seed anchors join FREE from the v3 rerun rows (same seeds, same spawn stream - ordering logically forced). Instrument delta: --ar-temperature + --flow-draws K flags on rollout_sim over existing BijouPolicy knobs, per-draw RNG keyed (seed, replan, draw), draw-0 bit-identity oracle. Primary read: within-group std of progress_final_cm (+ best-point) per cell + fraction of groups surviving the dynamic-sampling filter; candidate bar (finalize at pre-reg) median group std &gt;= 0.25 cm. Secondary: competence cost vs anchor, guard-trip rates (strikes/upright/knock-offs), AR token entropy. Decision rule: no cell clears -&gt; GRPO-on-sim parks; AR clears -&gt; phase 2 = token-GRPO per SimpleVLA-RL recipe; flow-only clears -&gt; phase 2 = Flow-GRPO SDE expert-only; both -&gt; AR first. Gate &lt;=3 GPU-h parallel-path, &lt;=8 sequential.
+
+</details>
+
+---
+
+**`sim-fit-real-lens-model`** · `cpu`
+
+Fit the REAL rig lens into the wrist render (lit 0823 papers/fisheye-lens-fitting.md, owner-adopted 22:31Z 08-12 over wrist compositing): replace the assumed ideal-equidistant warp (V1_SRC_FOVY 72 source) with (a) theta-&gt;r fit by…
+
+**boundary:** Queued 22:3xZ 08-12 on owner adoption. Sim-visuals lane; natural sequence: plumb-line fit (pure CPU, this or next session) -&gt; cubemap render path -&gt; probe-gated swap. Pairs with sim-composite-contact-shadows (same probe harness). | LEG (a) DONE 01:4xZ 08-13 (5581d6d): plumb-line theta-&gt;r fit landed (fit_lens_plumbline.py + oracles tests/test_lens_plumbline.py + house chart, outputs/sim/lens_fit/wrist_lens_fit.json). 382 seam chains from 132/150 pinned frames. FINDINGS: optical center (297.7, 253.2) — 22 px left / 14 px below the image midpoint (cx ~5-sigma by 20-frame-bootstrap); curve k2=+0.033 k4=+0.024 — the real lens compresses the periphery MORE than ideal equidistant: ray placement -2.2 px at r=240 (CI95 [-3.9,-1.2]), -12.8 px at the corner r=400 (CI95 [-17.2,-10.0]), both CI-exclude-0. Plank straightness RMS 1.07 px (deployed assumption) -&gt; 0.90 px (fitted); decompositions center-only 0.95 / curve-only 0.94. Remaining legs: (b) cubemap-&gt;equirect-&gt;fitted-lens render path (removes the 72-deg source ceiling; the fitted (cx,cy,k2,k4) is its stage-2 resampler spec), (c) probe-gated swap (wrist 5-NN must hold &lt;=0.548, reset-render probe ~0.02 GPU-h). | LEGS (b)+(c) DONE, ITEM CLOSED 03:4xZ 08-13 (25cf643 + close-out commit): cubemap-&gt;fitted-lens wrist render path landed behind lens_model='fitted' (SO101Sim; output-&gt;face map precomputed so runtime = one gather + per-referenced-face renders, 92-deg faces, face focal matched to the deployed source, base-axis headlight re-point kills the face-boundary shading seam; 8 oracles tests/test_sim_fitted_lens.py incl. top-cam bit-identical + rotated-cubemap self-consistency). GATE READ (pre-reg 03:27Z, results 03:40Z in-channel, 20x5 resets er60k, control 0.560): full fit 0.667 FAIL, center-only post-hoc arm 0.672 (center shift alone reproduces the regression - pose-degenerate with the 08-12 wrist re-tune), CURVE-ONLY REFIT 0.523 PASS (&lt;=0.548 gate), paired dknn5 -7.6e-07 CI95 [-8.5e-07,-6.8e-07], 96/100 frames closer, ~7x the contact-shadow GO effect, cost-neutral (1 face/tick, 73 vs 70 ms). WRIST_LENS_FIT now pins the curve-only params; default stays equidistant pending sim100 amendment 6 (owner ask posted 03:40Z). Full-fit center use requires joint pose+lens refit -&gt; queued sim-joint-pose-lens-refit (conditional). Artifacts on reports Space: chart__lens_gate.png, 4 gate JSONs, 3 sample frames (all curl-200).
+
+<details><summary>full record</summary>
+
+Fit the REAL rig lens into the wrist render (lit 0823 papers/fisheye-lens-fitting.md, owner-adopted 22:31Z 08-12 over wrist compositing): replace the assumed ideal-equidistant warp (V1_SRC_FOVY 72 source) with (a) theta-&gt;r fit by PLUMB-LINE calibration on the 150 pinned real reference frames (table planks = known-straight lines; no rig time needed), (b) cubemap-&gt;equirectangular-&gt;fitted-lens two-stage render (2603.02139's MuJoCo recipe, removes the 72-deg source ceiling entirely). Why it matters beyond appearance: policies use absolute pixel scale as a distance ruler (0.0025-&gt;0.60 cross-lens with RSA) - a mis-fit lens shifts perceived distance in ways the AUROC probe cannot see. Gates: plank-curvature residual vs real frames (direct theta-&gt;r readout), wrist 5-NN AUROC holds &lt;=0.548 (20x5 sensitivity), top-cam composite path bit-identical (real plate already carries the true lens; only the rendered-arm overlay changes if applied to top), reset-render probe ~0.02 GPU-h.
 
 </details>
 
