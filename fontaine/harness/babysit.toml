@@ -1,7 +1,32 @@
 # Babysit run registry (#21 P1). One entry per LIVE run; update at
 # launch time, prune at completion. Schema: fontaine/scripts/babysit.py.
 
-no_live_runs_reason = "declared 01:1xZ 08-13 work session: grpo_signal_probe COMPLETE and pruned (re-scoped cells 1/2/5, both families clear, unit stopped 01:08:05Z at the cell-5 boundary). Local GPU idle; next GPU legs pend owner calls (v3-rerun unhold, cells 3/4 re-queue, phase-2 token-GRPO design first lands CPU-side)."
+no_live_runs_reason = ""
+
+# (no_live_runs_reason cleared 11:2xZ 08-13 — molmoact2_ar100 launched under the owner 11:07Z delegation; prior: "declared 01:1xZ 08-13 work session: grpo_signal_probe COMPLETE and pruned (re-scoped cells 1/2/5, both families clear, unit stopped 01:08:05Z at the cell-5 boundary). Local GPU idle; next GPU legs pend owner calls (v3-rerun unhold, cells 3/4 re-queue, phase-2 token-GRPO design first lands CPU-side).")
+
+[[run]]
+name = "molmoact2_ar100"
+kind = "progress-log"
+host = "local"
+pgrep = "rollout_sim_parallel"
+pgrep_min = 1
+gpu_indices = [0]
+gpu_mem_min_mib = 4000
+log = "/home/ubuntu/flow-matching/outputs/sim/molmoact2_ar100/launcher.log"
+progress_re = "seed \\d+ replan|episode budget|episodes in|discrete decode"
+started_utc = "2026-08-13T11:20:00Z"
+gpu_hours_per_wall_hour = 1.0
+boundary = "COMPLETION ~12:1x-12:3xZ (est ~40-70 min wall; flow comparator took 51 min). At completion: primary read successes/100 vs flow 9/100 (record-only cross-stack), validity strikes==0 + zero-fallback count (launcher.log 'discrete decode:' line + out-json molmoact2_discrete record), secondary engagement/knock-away/progress reads + per-seed chart; results post + prune this entry. Pace tripwire: projected wall > 2.5 h at ~10 episodes -> stop at an episode boundary (systemctl --user stop fontaine-molmoact2-ar100), re-scope in-channel. Unit: fontaine-molmoact2-ar100."
+anchors = [
+    "pre-reg posts/2026-08-13-prereg-molmoact2-ar100.md FROZEN 11:1xZ, launched at HEAD faa5855; owner 11:07Z delegation is the go (lane owner-called 10:02Z)",
+    "primary: successes/100, comparator flow pathway 9/100 same seeds+budget (release_officialmap_a_100ep_30s) - NEVER pooled (different serving stacks)",
+    "validity: reset strikes 0; zero-fallback emissions counted per predict (high rate = decode brittleness finding, invalidates competence read)",
+    "decision rule frozen: >=1 success -> token-GRPO pre-reg finalizes on this pathway; 0/100 -> AR-SFT-then-RL vs Flow-GRPO owner decision point",
+]
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 1.5
 
 # (no_live_runs_reason cleared 14:1xZ 08-09 — adamc_100k launched; the
 # prior reason: attach_K owner-killed 12:31Z, box idle pending the
