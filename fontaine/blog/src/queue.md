@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-13T04:54:18Z
+**Updated:** 2026-08-13T05:40:53Z
 
-**Depth call:** depth 2 open at 04:5xZ 08-13: fg-content-split leg (a) executed inside sim-foreground-appearance-pass (item stays queued for legs b/c, target class = clutter); token-grpo-phase2-design-memo the other CPU lane; GPU legs pend owner calls (v3-rerun unhold, phase-2 go, compute options).
+**Depth call:** depth 2 open at 05:4xZ 08-13: appearance pass CLOSED (all legs; gate PASS, promotion blocked on owner sign-off as sim-clutter-patch-promotion); CPU lanes = token-grpo-phase2-design-memo + sim-arm-appearance-leg (new, diagnostic first); GPU legs pend owner calls (v3-rerun unhold, phase-2 go, compute options).
 
-**13 open** (Live 0 · Queued 2 · Blocked 11 · Done 141)
+**14 open** (Live 0 · Queued 2 · Blocked 12 · Done 142)
 
 ## 🔴 Live (0)
 
@@ -18,15 +18,15 @@
 
 *ready — waiting on a window or a boundary*
 
-**`sim-foreground-appearance-pass`** · `cpu`
+**`sim-arm-appearance-leg`** · `cpu`
 
-Foreground appearance pass - LEG (A) DONE 04:5xZ 08-13 (pre-reg 04:41Z, results in-channel 04:52Z, analysis__sim_fg_content_split.json): 10 paired arms off ONE hooked production v3 instance (same physics/plate/noise per slot, hoo…
+Arm appearance leg: the rendered arm (~7.1% of pixels) carries the remaining ceiling to the real-fg anchor (patched 0.556 / no_clutter 0.576 &gt;&gt; real-fg 0.328; only_arm 0.654 vs plate 0.866 in leg (a))
 
-**boundary:** Leg (a) closed 04:5xZ 08-13 (commit pending this session). Leg (b) pre-reg in-channel before any material/texture work lands; leg (c) gate before any default consideration.
+**boundary:** Queued 05:4xZ 08-13 at the appearance-pass close; diagnostic leg is CPU + ~0.02 GPU-h embeds, launch per no-idle rules.
 
 <details><summary>full record</summary>
 
-Foreground appearance pass - LEG (A) DONE 04:5xZ 08-13 (pre-reg 04:41Z, results in-channel 04:52Z, analysis__sim_fg_content_split.json): 10 paired arms off ONE hooked production v3 instance (same physics/plate/noise per slot, hooked-v3 bit-exact oracle green, in-run v3 0.7127 inside the registered abort band) - REGISTERED PRIMARY RULE FIRED: target class = CLUTTER (no_clutter 0.576 = -0.137 vs v3, paired dknn5 -1.73e-06 CI-excl-0, 99/100 closer; unique class past the +/-0.05 material bar; no_disk -0.006 / no_benchy -0.002 immaterial; no_arm +0.113 = the labeled armless confound). REMAINING LEGS: (b) appearance fix for the clutter stand-ins mouse/mug/laptop/pcb (~5.1% of pixels; real-crop textures or plate-sourced patches; the stand-ins are untextured gray primitives on photoreal plates - see fg_split_arms_seed0_strip.png), oracle-pinned like the v4/lens legs; (c) paired gate on the pinned 20x5 probe, bar registered at leg-(b) pre-reg time; no default flip without owner sign-off. REGISTERED CEILING: no_clutter 0.576 still far above the real-fg anchor 0.328 - the arm's ~7.1% of pixels carries most of the remainder (only_arm 0.654); an arm-appearance leg is a separate future item, not this one. Cost: renders CPU, ~0.02 GPU-h embeds per gate read.
+Arm appearance leg: the rendered arm (~7.1% of pixels) carries the remaining ceiling to the real-fg anchor (patched 0.556 / no_clutter 0.576 &gt;&gt; real-fg 0.328; only_arm 0.654 vs plate 0.866 in leg (a)). Candidate fixes ladder (cheapest first): (1) photometric - the recolored flat-black arm vs the real arm's specular/texture (real-crop material stats or measured reflectance grade); (2) geometry-registered real-arm texture projection (hard: articulated, pose-dependent); scope a leg-(a)-style diagnostic first (WHICH arm sub-part carries it: gripper/links/mounts via geom-partition masks on the hooked harness, ~0.02 GPU-h). Pre-reg before any read.
 
 </details>
 
@@ -46,9 +46,23 @@ Phase-2 token-GRPO design memo + pre-reg draft (AR trunk, t=1.0) per the frozen 
 
 ---
 
-## 🟡 Blocked (11)
+## 🟡 Blocked (12)
 
 *waiting on a prerequisite, a boundary, or the owner*
+
+**`sim-clutter-patch-promotion`** · `cpu` · **⛔ owner hold**
+
+Promote the real-crop clutter patch paste into production v3/v4: move clutter_patch.py paste into sim/so101_sim.py as the default clutter appearance (patched plate at _draw_content, clutter geoms dropped from the top render/mask/…
+
+**boundary:** Queued 05:4xZ 08-13 at the appearance-pass close. Implementation ~1 session CPU; re-gate on the pinned 20x5 probe (~0.02 GPU-h) before any behavioral eval moves.
+
+<details><summary>full record</summary>
+
+Promote the real-crop clutter patch paste into production v3/v4: move clutter_patch.py paste into sim/so101_sim.py as the default clutter appearance (patched plate at _draw_content, clutter geoms dropped from the top render/mask/shadow; wrist path untouched, zero extra RNG draws so v3 slot-pairing survives), oracle-pinned (wrist bit-exact vs v3; top bit-exact outside clutter-affected pixels; tests/test_sim_appearance.py extension). Gate evidence: legs (b)+(c) PASS 05:4xZ 08-13 (patched 0.556 vs v3 0.713, beats no_clutter 0.576). OWNER_HOLD: no default flip without sign-off (asked in-channel 05:40Z 08-13).
+
+</details>
+
+---
 
 **`sim-joint-pose-lens-refit`** · `cpu` · **⛔ owner hold**
 
@@ -202,9 +216,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (141)
+## ✅ Done (142)
 
 *closed — the full record stays in each fold*
+
+**`sim-foreground-appearance-pass`** · `cpu`
+
+Foreground appearance pass - ALL LEGS DONE 05:4xZ 08-13. Leg (a) 04:5xZ: clutter the unique material class (no_clutter 0.576 vs v3 0.713, -0.137)
+
+**boundary:** Closed 05:4xZ 08-13; promotion + arm-appearance follow-ups queued separately.
+
+<details><summary>full record</summary>
+
+Foreground appearance pass - ALL LEGS DONE 05:4xZ 08-13. Leg (a) 04:5xZ: clutter the unique material class (no_clutter 0.576 vs v3 0.713, -0.137). Legs (b)+(c) 05:4xZ (pre-reg 05:23Z, results in-channel 05:40Z, analysis__sim_fg_appearance_fix.json): real-crop RGBA patches (make_clutter_crops.py, bank-episode naive medians, novelty alpha, areas bit-match manifest) pasted at drawn poses by inverse fisheye warp (clutter_patch.py; episode grading; fixed_canonical pcb = identity) - REGISTERED GATE PASS: patched 0.556 vs v3 0.713 (dAUROC -0.157 vs -0.05 bar, paired dknn5 -2.02e-06 CI-excl-0, 100/100 closer); beats the no_clutter ceiling 0.576 by -0.020 (75/100, CI-excl-0) - full-recovery read fires. Integrity: v3 0.7127 in abort band, no_clutter 0.5764 reproduces leg (a) within +/-0.01, bit-exact oracle green 100/100. Promotion -&gt; new item sim-clutter-patch-promotion (owner_hold).
+
+</details>
+
+---
 
 **`sim-top-gap-foreground-decomposition`** · `cpu`
 

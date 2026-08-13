@@ -6,7 +6,46 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-13 05:17–05:5xZ (real `date -u` at stamp: 05:56) —
+work session: **fg appearance pass legs (b)+(c) EXECUTED, registered
+gate PASS — real-crop clutter patches read 0.556 vs v3 0.713 (−0.157,
+100/100 closer) and beat the no_clutter removal ceiling 0.576; the
+appearance pass is CLOSED, promotion pends the owner go.***
+
+**Status**: no live runs — GPU idle-by-design (this session's spend
+~0.02 GPU-h: the pre-registered gate embeds). Queue validate green
+(depth 2, 14 open).
+
+**Steering**: none new — read empty at boot 05:17Z and at the 05:55Z
+close poll (only my own pre-reg/results posts). Open asks unchanged
+plus one new: **clutter-patch promotion sign-off** (asked 05:40Z);
+sim100 amendments 5 + 6, v3-rerun unhold + arm set, disk-draws
+sign-off, GRPO cells 3/4 re-queue, phase-2 token-GRPO go.
+
+**Done** (commit `2e15ae7`; pre-reg 05:23Z, results in-channel
+05:40Z): `make_clutter_crops.py` mined RGBA crops of the real
+mouse/mug/laptop/pcb from bank-episode naive medians (alpha =
+feathered novelty vs the corrected global plate; areas bit-match the
+manifest, centroid drift ≤0.1 px); `clutter_patch.py` pastes them at
+the drawn poses by inverse warp through the verified fisheye model
+(episode grading, zero extra RNG draws); `sim_fg_appearance_fix.py`
+(leg (a) harness, 3 arms, ONE hooked instance) read **patched 0.556
+(ΔAUROC −0.157 vs the −0.05 bar, paired Δknn5 −2.02e-06 CI-excl-0,
+100/100 closer; beats no_clutter 0.576 by −0.020, 75/100,
+CI-excl-0)** — full-recovery read fires. Integrity: in-run v3 0.7127
+in band, no_clutter reproduces leg (a) within ±0.01, bit-exact
+oracle green 100/100. Queue: appearance pass CLOSED;
+`sim-clutter-patch-promotion` (blocked, owner_hold) +
+`sim-arm-appearance-leg` queued. Artifacts on fontaine-reports
+(curl-200): analysis JSON, chart, v3-vs-patched strip, crops strip.
+
+**Next**: `queue_cli.py next` → `token-grpo-phase2-design-memo`
+(CPU) or `sim-arm-appearance-leg` diagnostic (pre-reg first, ~0.02
+GPU-h). Promotion + GPU legs launch on owner calls only.
+`queue.json` canonical.*
 
 *Updated 2026-08-13 05:15–05:1xZ (real `date -u` at stamp: 05:17) —
 tick, babysit: **quiet tick — no steering, no live runs, GPU
@@ -71,46 +110,23 @@ real-crop textures / plate-sourced patches; pre-reg first, ~0.02
 GPU-h per gate read). GPU legs launch on owner calls only.
 `queue.json` canonical.*
 
-*Updated 2026-08-13 04:31–04:3xZ (real `date -u` at stamp: 04:33) —
-tick, babysit: **quiet tick — no steering, no live runs, GPU
-idle-by-design; `run_work_next` stays armed for the CPU lanes.***
-
-**Status**: no live runs — babysit exit 0, 0 registered runs;
-nvidia-smi 0%/0 MiB. Queue validate green (depth 2, 13 open).
-
-**Steering**: none new — read empty 04:31Z, history-5 shows no
-reactions on the 04:03Z pre-reg or 04:28Z decomposition results
-posts. Open asks unchanged: sim100 amendments 5 (v4 default) + 6
-(curve-only fitted wrist lens default), v3-rerun unhold + arm set,
-disk-draws sign-off, GRPO cells 3/4 re-queue, phase-2 token-GRPO go.
-
-**Done**: liveness/queue/GPU verified; `run_work_next` confirmed
-armed (CPU lanes queued — `sim-foreground-appearance-pass`,
-`token-grpo-phase2-design-memo` — GPU idle-by-design per
-no-idle-pauses). Oldest body entry + footer note >2 rolled to the
-archive.
-
-**Next**: chained work session → `queue_cli.py next`:
-`token-grpo-phase2-design-memo` or `sim-foreground-appearance-pass`
-leg (a) (both CPU-side; the latter's embeds ~0.02 GPU-h, pre-reg
-first). GPU legs launch on owner calls only. `queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-13 05:17–05:5xZ (work; +~0.02 GPU-h — the
+pre-registered gate embeds, exploit): fg appearance pass legs (b)+(c)
+EXECUTED (`2e15ae7`) — real-crop clutter patches mined from the bank
+episodes' own medians and pasted by inverse fisheye warp read 0.556
+vs v3 0.713 (gate PASS at 3× the bar, 100/100 closer) and beat the
+no_clutter removal ceiling 0.576 (−0.020, 75/100): the appearance
+pass is CLOSED, promotion queued owner_hold (asked 05:40Z),
+arm-appearance leg queued next. `run_work_next` re-armed (CPU lanes
+queued).
 
 Session 2026-08-13 05:15–05:1xZ (tick, babysit; 0 new GPU-h — GPU
 idle-by-design): quiet tick — no owner messages/reactions (05:15Z),
 babysit exit 0 with 0 registered runs, nvidia-smi 0%/0 MiB, queue
 green (depth 2, 13 open). `run_work_next` stays armed for the CPU
 lanes (fg appearance leg (b) / token-GRPO phase-2 memo).
-
-Session 2026-08-13 04:34–05:0xZ (work; +~0.02 GPU-h — the
-pre-registered content-split embeds, exploit): fg content split leg
-(a) EXECUTED (`e51773f`) — no_clutter 0.576 vs v3 0.713 (−0.137,
-99/100 closer, the unique material class): leg (b) target = clutter
-appearance (mouse/mug/laptop/pcb, ~5.1% of pixels); armless
-confound reproduced (+0.113), ceiling registered (real-fg 0.328,
-arm pixels carry the remainder). Queue item updated for legs b/c;
-`run_work_next` re-armed (CPU lanes queued).
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
