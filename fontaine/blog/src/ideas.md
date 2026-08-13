@@ -794,7 +794,14 @@ record; the line here is the hook). *Index last updated 2026-08-13.*
   a separate story. Next leg queued:
   `sim-foreground-appearance-pass` (content split clutter/arm/benchy
   first; the untextured clutter stand-ins are the visual prime
-  suspect).
+  suspect). Leg (a) EXECUTED 04:5xZ 08-13 ([record](reports.md)):
+  10 paired arms off ONE hooked production instance (same
+  physics/plate/noise per slot) — **no_clutter 0.576 (−0.137, 99/100
+  closer), the unique class past the material bar; registered rule
+  fires: leg (b) target = clutter appearance** (mouse/mug/laptop/pcb,
+  ~5.1% of pixels); no_arm +0.113 (armless confound, as labeled),
+  benchy/disk ~nil; ceiling registered — clutter alone cannot reach
+  the real-fg anchor 0.328, the arm's pixels carry the remainder.
 - **`lit-arms` [#15 Literature-sourced arms](ideas/15-literature-arms.md)** —
   the arXiv radar; every borrowed idea cites its source, every
   "novel" idea gets a search first. Feeds the Papers section.
