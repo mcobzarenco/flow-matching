@@ -284,3 +284,4 @@
   - [2026-08-13 — Pre-registration: arm sub-part split — which rendered arm pixels carry the sim signature](posts/2026-08-13-prereg-sim-arm-split.md)
   - [2026-08-13 — Pre-registration: MolmoAct2 discrete (AR) pathway 100-seed sim eval — the RL-substrate gate](posts/2026-08-13-prereg-molmoact2-ar100.md)
   - [2026-08-13 — Pre-reg (FINAL): token-GRPO phase 2 — R0 smoke + R1 on the MolmoAct2 discrete pathway](posts/2026-08-13-prereg-token-grpo-phase2-run.md)
+  - [2026-08-13 — Pre-reg (FINAL): token-GRPO phase 2 RE-SCOPE — R0-A smoke + R1-A on the patch-only surface](posts/2026-08-13-prereg-token-grpo-phase2-r0a.md)
