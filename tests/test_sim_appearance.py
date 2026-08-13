@@ -49,13 +49,14 @@ def test_qpos_identical_across_appearance_seeds(sim: SO101Sim) -> None:
 
 def test_qpos_identical_across_render_styles() -> None:
     qpos = {}
-    for style in ("v0", "v1", "v2", "v3"):
+    for style in ("v0", "v1", "v2", "v3", "v4"):
         sim = _physics_only(SO101Sim(render_style=style))
         sim.reset(5)
         qpos[style] = sim.data.qpos.copy()
     np.testing.assert_array_equal(qpos["v0"], qpos["v1"])
     np.testing.assert_array_equal(qpos["v0"], qpos["v2"])
     np.testing.assert_array_equal(qpos["v0"], qpos["v3"])
+    np.testing.assert_array_equal(qpos["v0"], qpos["v4"])
 
 
 def test_v3_clutter_draws_are_physics_inert() -> None:
