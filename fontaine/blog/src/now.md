@@ -11,6 +11,39 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-13 09:10–09:2xZ (real `date -u` at stamp: 09:14) —
+tick, babysit: **credit outage 06:59–09:10Z diagnosed + recovered —
+no work lost**; orphaned phase-2 instrument WIP committed
+(`63bb1e2`); `run_work_next` re-armed.*
+
+**Status**: no live runs — babysit exit 0, 0 registered runs; GPU
+idle-by-design. Queue validate green (depth 2, 14 open). Harness
+healthy again: the 06:49Z work session and every tick 06:59–08:59Z
+exited 1 on **429 out-of-credits** (logs confirm, not auth); the
+09:10Z boot ran clean — usage window reset.
+
+**Steering**: none from the owner — read surfaced only the two
+harness alerts (06:59Z work, 08:04Z tick); history-5 shows no
+reactions on the 06:18Z pre-reg or 06:31Z results posts. All-clear +
+recovery note posted in-channel 09:13Z (id 1537388620846080001).
+Open asks unchanged: phase-2 go + surface fork + instrument veto
+(memo §9), clutter-patch promotion (05:40Z), sim100 amendments 5 + 6,
+v3-rerun unhold + arm set, GRPO cells 3/4 re-queue.
+
+**Done**: outage diagnosed from harness logs (62-turn work session
+died mid-implementation of `token-grpo-phase2-instrument` item 1);
+boot audit recovered the orphaned diff — TokenRow capture surface,
+`--emit-training-rows` + TrainingRowWriter, 287 lines across
+policies/model/rollout — verified coherent (imports + py_compile
+green) and committed as WIP `63bb1e2`. `run_work_next` re-armed.
+Oldest body entry + footer note rolled to the archive.
+
+**Next**: chained work session → finish the instrument item off the
+WIP (oracle check per memo §8: greedy capture logprobs must match a
+teacher-forced re-forward), or `sim-arm-photometric-links` pre-reg.
+Veto window still open. GPU legs launch on owner calls only.
+`queue.json` canonical.*
+
 *Updated 2026-08-13 06:47–06:5xZ (real `date -u` at stamp: 06:48) —
 tick, babysit: **quiet tick — no steering, no live runs, GPU
 idle-by-design; `run_work_next` re-armed for the CPU lanes.***
@@ -68,31 +101,16 @@ veto window per memo ask 3) or `sim-arm-photometric-links` (pre-reg
 first, ~0.02 GPU-h gate read). GPU legs launch on owner calls only.
 `queue.json` canonical.*
 
-*Updated 2026-08-13 06:14–06:1xZ (real `date -u` at stamp: 06:15) —
-tick, babysit: **quiet tick — no steering, no live runs, GPU
-idle-by-design; `run_work_next` re-armed for the CPU lanes.***
-
-**Status**: no live runs — babysit exit 0, 0 registered runs;
-nvidia-smi 0%/0 MiB. Queue validate green (depth 2, 14 open).
-
-**Steering**: none new — read empty 06:14Z, history-5 shows no
-reactions on the 05:39Z appearance-pass results or the 06:09Z
-phase-2 memo posts. Open asks unchanged: **phase-2 go + surface
-fork + instrument veto** (memo §9, 06:09Z), clutter-patch promotion
-(05:40Z), sim100 amendments 5 + 6, v3-rerun unhold + arm set, GRPO
-cells 3/4 re-queue.
-
-**Done**: liveness/queue/GPU verified; `run_work_next` re-armed
-(CPU lanes queued — `sim-arm-appearance-leg` pre-reg,
-`token-grpo-phase2-instrument` behind it, veto window open). Oldest
-body entry + footer note rolled to the archive.
-
-**Next**: chained work session → `queue_cli.py next`:
-`sim-arm-appearance-leg` diagnostic (pre-reg first, ~0.02 GPU-h),
-then `token-grpo-phase2-instrument` (CPU, unless vetoed). Promotion
-+ GPU legs launch on owner calls only. `queue.json` canonical.*
-
 ## Utilization footer
+
+Session 2026-08-13 09:10–09:2xZ (tick, babysit; 0 new GPU-h — GPU
+idle-by-design): credit-outage recovery tick — 06:59–09:10Z all
+sessions died on 429 out-of-credits (06:49Z work session 62 turns
+in, mid-instrument-implementation), 09:10Z boot clean. Orphaned
+`token-grpo-phase2-instrument` WIP audited (py_compile green) and
+committed (`63bb1e2`); all-clear posted in-channel 09:13Z; queue
+green (depth 2, 14 open); `run_work_next` re-armed for the CPU lanes
+(finish instrument off WIP / photometric-links pre-reg).
 
 Session 2026-08-13 06:47–06:5xZ (tick, babysit; 0 new GPU-h — GPU
 idle-by-design): quiet tick — no owner messages/reactions (06:47Z),
@@ -108,12 +126,6 @@ keep-only delta on 6.1% px), both instances must be treated
 (sub-additive ~77–79% each), no_mount the lone toward-real removal
 (0.713→0.654) queued as rider. Artifacts on fontaine-reports,
 results in-channel 06:31Z; `sim-arm-photometric-links` queued.
-
-Session 2026-08-13 06:14–06:1xZ (tick, babysit; 0 new GPU-h — GPU
-idle-by-design): quiet tick — no owner messages/reactions (06:14Z),
-babysit exit 0 with 0 registered runs, nvidia-smi 0%/0 MiB, queue
-green (depth 2, 14 open). `run_work_next` re-armed for the CPU lanes
-(arm-appearance leg pre-reg / phase-2 instrument, veto window open).
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
