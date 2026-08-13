@@ -219,6 +219,33 @@ def parse_args() -> argparse.Namespace:
         "masks — the token-GRPO replay surface (AR-suffix checkpoints "
         "only; rollout rows are untouched, capture is observation)",
     )
+    parser.add_argument(
+        "--molmoact2-discrete",
+        type=str,
+        default=None,
+        metavar="CHECKPOINT",
+        help="OFF-CONTRACT release-in-sim arm, DISCRETE (AR) pathway: "
+        "serve the first-class MolmoAct2Predictor's "
+        "predict_action_discrete (HF layout dir or hub id) instead of a "
+        "BijouPolicy — greedy, batch-1 per request, the official SO-101 "
+        "shim pinned (state in through it, chunks back through its "
+        "inverse; the exact map the flow-pathway convmap eval "
+        "validated). Rows never pool with contract reads",
+    )
+    parser.add_argument(
+        "--molmoact2-fast-tokenizer",
+        type=str,
+        default="allenai/MolmoAct2-FAST-Tokenizer",
+        help="released OpenFAST artifact (dir or hub id) for --molmoact2-discrete",
+    )
+    parser.add_argument(
+        "--molmoact2-grammar-masked",
+        action="store_true",
+        help="decode with the budget-arithmetic grammar mask (the RL "
+        "decode mode — every emission decodable by construction) "
+        "instead of the reference's unconstrained greedy + zeros "
+        "fallback; per-request violations are counted in the out-json",
+    )
     parser.add_argument("--out-dir", type=Path, default=OUTPUT_DIR)
     parser.add_argument(
         "--out-json",
@@ -228,8 +255,29 @@ def parse_args() -> argparse.Namespace:
         "distance series) for the reads instrument",
     )
     args = parser.parse_args()
-    if (args.checkpoint is None) == (not args.hold):
-        parser.error("exactly one of --checkpoint / --hold is required")
+    modes = sum(
+        [args.checkpoint is not None, args.hold, args.molmoact2_discrete is not None],
+    )
+    if modes != 1:
+        parser.error(
+            "exactly one of --checkpoint / --hold / --molmoact2-discrete is required",
+        )
+    if args.molmoact2_discrete is not None:
+        for flag, name in (
+            (args.convmap_seam_stats is not None, "--convmap-seam-stats"),
+            (args.emit_training_rows is not None, "--emit-training-rows"),
+            (args.ar_temperature is not None, "--ar-temperature"),
+            (args.sde_noise_level is not None, "--sde-noise-level"),
+            (args.draws > 1, "--draws > 1"),
+        ):
+            if flag:
+                parser.error(
+                    f"{name} is not wired for --molmoact2-discrete (the "
+                    "gate eval is greedy, batch-1; sampling/replay come "
+                    "with the RL loop items)",
+                )
+    if args.molmoact2_grammar_masked and args.molmoact2_discrete is None:
+        parser.error("--molmoact2-grammar-masked requires --molmoact2-discrete")
     if args.convmap_seam_stats is not None and args.hold:
         parser.error("--convmap-seam-stats wraps a policy — meaningless with --hold")
     if args.emit_training_rows is not None and args.hold:
@@ -261,6 +309,57 @@ def parse_args() -> argparse.Namespace:
         if args.method != "euler":
             parser.error("the SDE decode is Euler-only — pass --method euler")
     return args
+
+
+# The canonical SO-101 shim the flow-pathway convmap eval validated
+# (posts/2026-08-12-prereg-release-eval20-convmap.md amendment 3, the
+# 9/100 run): the official LeRobot->MolmoAct2 snippet map exactly —
+# shoulder_lift mirrored, lift/elbow offset +90 deg. State goes IN
+# through it, chunks come BACK through its inverse.
+MOLMOACT2_OFFICIAL_SIGNS = (1.0, -1.0, 1.0, 1.0, 1.0, 1.0)
+MOLMOACT2_OFFICIAL_OFFSETS_DEG = (0.0, 90.0, 90.0, 0.0, 0.0, 0.0)
+MOLMOACT2_NORM_TAG = "so100_so101_molmoact2"
+
+
+def molmoact2_discrete_chunks(
+    predictor: Any,
+    shim: Any,
+    requests: list[tuple[Any, ...]],
+    *,
+    task: str,
+    grammar_masked: bool,
+) -> tuple[list[np.ndarray], list[bool]]:
+    """Parent-side predict round for the discrete (AR) pathway: batch-1
+    per request, strictly in request order (the predictor's prompt
+    packing is single-observation). Camera order [top, wrist] matches
+    the sorted ``observation.images.*`` convention the parity anchors
+    packed. Returns (sim-unit chunks, per-request zero-fallback flags —
+    always False under the grammar mask, which decodes by
+    construction)."""
+    import torch
+
+    chunks: list[np.ndarray] = []
+    fallbacks: list[bool] = []
+    for _, _, _, _, _, top, wrist, state in requests:
+        model_state = shim.apply(
+            torch.from_numpy(np.asarray(state, dtype=np.float32)),
+        )
+        result = predictor.predict_action_discrete(
+            images=[top, wrist],
+            task=task,
+            state=model_state,
+            grammar_masked=grammar_masked,
+            on_undecodable="zeros",
+        )
+        codec = predictor.fast_codec
+        horizon = int(predictor.metadata.get("action_horizon") or 0)
+        total = horizon * int(predictor.action_stats.q01.numel())
+        decodable = (
+            bool(result.bins) and int(codec.symbol_lengths[result.bins].sum()) == total
+        )
+        fallbacks.append(not decodable)
+        chunks.append(shim.invert(result.actions[0]).numpy())
+    return chunks, fallbacks
 
 
 def run_worker_episodes(
@@ -481,10 +580,42 @@ def main() -> int:
         check=False,
     ).stdout.strip()
 
+    predictor = None
+    discrete_shim = None
     if args.hold:
         policy = None
         horizon = args.execute_horizon
         print(f"policy: hold (settled reset state, horizon {horizon})")
+    elif args.molmoact2_discrete is not None:
+        from bijou.eval.molmo_norm import AffineMap
+        from bijou.molmoact2 import MolmoAct2Predictor
+
+        policy = None
+        fast_source = args.molmoact2_fast_tokenizer
+        if not Path(fast_source).exists():
+            from huggingface_hub import snapshot_download
+
+            fast_source = snapshot_download(fast_source)
+        predictor = MolmoAct2Predictor.load(
+            args.molmoact2_discrete,
+            MOLMOACT2_NORM_TAG,
+            device=device,
+            dtype=torch.bfloat16,
+            fast_tokenizer=fast_source,
+        )
+        discrete_shim = AffineMap(
+            scale=torch.tensor(MOLMOACT2_OFFICIAL_SIGNS),
+            offset=torch.tensor(MOLMOACT2_OFFICIAL_OFFSETS_DEG),
+        )
+        tag_horizon = int(predictor.metadata.get("action_horizon") or 0)
+        horizon = min(args.execute_horizon, tag_horizon or args.execute_horizon)
+        print(
+            f"policy: molmoact2-discrete {args.molmoact2_discrete} "
+            f"({'grammar-masked' if args.molmoact2_grammar_masked else 'reference greedy'}, "
+            f"horizon {horizon}, official shim signs "
+            f"{MOLMOACT2_OFFICIAL_SIGNS} offsets "
+            f"{MOLMOACT2_OFFICIAL_OFFSETS_DEG})",
+        )
     else:
         policy = BijouPolicy(
             args.checkpoint,
@@ -584,8 +715,23 @@ def main() -> int:
     results: list[EpisodeResult] = []
     predict_ms: list[float] = []
     seam = None
+    discrete_fallbacks: list[bool] = []
 
-    if policy is None:
+    if predictor is not None:
+
+        def predict_batch(requests: list[tuple[Any, ...]]) -> list[np.ndarray]:
+            start = time.perf_counter()
+            chunks, fallbacks = molmoact2_discrete_chunks(
+                predictor,
+                discrete_shim,
+                requests,
+                task=TASK,
+                grammar_masked=args.molmoact2_grammar_masked,
+            )
+            predict_ms.append((time.perf_counter() - start) * 1000)
+            discrete_fallbacks.extend(fallbacks)
+            return chunks
+    elif policy is None:
 
         def predict_batch(requests: list[tuple[Any, ...]]) -> list[np.ndarray]:
             raise WorkerDiedError("hold arm workers must not request predicts")
@@ -705,6 +851,12 @@ def main() -> int:
             f"training rows: {row_writer.rows_written} NPZs -> "
             f"{row_writer.root} (index.jsonl + meta.json)",
         )
+    if predictor is not None:
+        print(
+            f"discrete decode: {sum(discrete_fallbacks)} zero-fallback "
+            f"emission(s) across {len(discrete_fallbacks)} predicts "
+            f"({'grammar-masked' if args.molmoact2_grammar_masked else 'reference greedy'})",
+        )
 
     if args.out_json is not None:
         commit = subprocess.run(
@@ -747,6 +899,25 @@ def main() -> int:
                         "fit_offset": seam.fit.map.offset.tolist(),
                         "overrides": seam.overrides,
                         "policy_name": policy.name,
+                    }
+                ),
+                # Off-contract provenance, discrete (AR) pathway: the
+                # first-class predictor + pinned official shim. Rows
+                # under a non-None record never pool with contract
+                # reads OR with the flow-pathway convmap rows (different
+                # serving stacks).
+                "molmoact2_discrete": (
+                    None
+                    if predictor is None
+                    else {
+                        "checkpoint": str(args.molmoact2_discrete),
+                        "fast_tokenizer": str(args.molmoact2_fast_tokenizer),
+                        "norm_tag": MOLMOACT2_NORM_TAG,
+                        "grammar_masked": args.molmoact2_grammar_masked,
+                        "shim_signs": list(MOLMOACT2_OFFICIAL_SIGNS),
+                        "shim_offsets_deg": list(MOLMOACT2_OFFICIAL_OFFSETS_DEG),
+                        "zero_fallbacks": sum(discrete_fallbacks),
+                        "predicts": len(discrete_fallbacks),
                     }
                 ),
             },
