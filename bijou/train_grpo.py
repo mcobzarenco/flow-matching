@@ -207,14 +207,20 @@ def grpo_objective_sums(
             f"{tuple(advantages.shape)} — old must match new [B, T], "
             "advantages one scalar per row [B]",
         )
+    # .to(new_logprobs) carries device AND dtype: callers hand rollout
+    # records / group z-scores as fresh CPU tensors while the training
+    # forward lives on the GPU (measured live: the R0 first gradient
+    # step, 2026-08-13 15:51Z — cuda/cpu crash the CPU oracles cannot
+    # see).
+    old_logprobs = old_logprobs.to(new_logprobs)
+    advantage = advantages.to(new_logprobs)[:, None]
     if not bool(torch.isfinite(old_logprobs[decisions]).all()):
         raise ValueError(
             "non-finite rollout logprobs at decision positions — "
             "corrupt rows (every recorded logprob is a finite masked "
             "log-softmax value)",
         )
-    ratio = torch.exp(new_logprobs - old_logprobs.to(new_logprobs.dtype))
-    advantage = advantages.to(new_logprobs.dtype)[:, None]
+    ratio = torch.exp(new_logprobs - old_logprobs)
     unclipped = ratio * advantage
     clipped = ratio.clamp(config.clip_low, config.clip_high) * advantage
     trained = decisions.to(new_logprobs.dtype)
