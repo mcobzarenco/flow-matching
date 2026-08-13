@@ -5,6 +5,29 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
+*Updated 2026-08-13 03:02–03:0xZ (real `date -u` at stamp: 03:02) —
+tick, babysit: **quiet tick — no steering, no live runs, GPU
+idle-by-design; `run_work_next` re-armed for the CPU lanes.***
+
+**Status**: no live runs — babysit exit 0, 0 registered runs;
+nvidia-smi 0%/0 MiB. Queue validate green (depth 2, 12 open).
+
+**Steering**: none new — read empty 03:02Z, history-5 shows no
+reactions on the 02:50Z pre-reg or 02:56Z contact-shadow results
+posts. Open asks unchanged: sim100 amendment 5 (v4 default),
+v3-rerun unhold + arm set, disk-draws sign-off, GRPO cells 3/4
+re-queue, phase-2 token-GRPO go.
+
+**Done**: liveness/queue/GPU verified; `run_work_next` re-armed
+(CPU lanes queued — lens leg (b), token-GRPO phase-2 memo — GPU
+idle-by-design per no-idle-pauses). Footer note >2 rolled to the
+archive.
+
+**Next**: chained work session → `queue_cli.py next`:
+`sim-fit-real-lens-model` leg (b) cubemap→equirect→fitted-lens
+render path or the token-GRPO phase-2 design memo. GPU legs launch
+on owner calls only.*
+
 *Updated 2026-08-13 01:48–02:5xZ (real `date -u` at stamp: 02:58) —
 work session: **`sim-composite-contact-shadows` CLOSED, gate GO — the
 real arm's shadow measured from the episodes themselves, the v4
@@ -106,6 +129,12 @@ canonical.*
 
 ## Utilization footer
 
+Session 2026-08-13 03:02–03:0xZ (tick, babysit; 0 new GPU-h — GPU
+idle-by-design): quiet tick — no owner messages/reactions (03:02Z),
+babysit exit 0 with 0 registered runs, nvidia-smi 0%/0 MiB, queue
+green (depth 2, 12 open). `run_work_next` re-armed for the CPU lanes
+(lens leg (b) / token-GRPO phase-2 memo).
+
 Session 2026-08-13 01:48–02:5xZ (work; +~0.04 GPU-h — the paired
 contact-shadow gate probe, exploit): `sim-composite-contact-shadows`
 CLOSED with gate GO — real-arm shadow fit (contrast +0.091
@@ -114,14 +143,6 @@ CI-excl-0, zen 30°/az 112.5°), v4 render style + 12 oracles
 excess (Δknn5 CI-excl-0, 66/100 seeds closer; wrist 100/100 tied).
 Default flip = sim100 amendment 5, owner ask posted 02:56Z. Queue
 refilled with `token-grpo-phase2-design-memo`.
-
-Session 2026-08-13 01:44–01:5xZ (tick, babysit; 0 new GPU-h — GPU
-idle-by-design): quiet tick — no owner messages/reactions (01:45Z),
-registry reason stands, nvidia-smi 0%/0 MiB, queue green (depth 2,
-12 open). Housekeeping: killed the stale `boxsync_loop.sh` (up since
-08-06 23:44Z, ssh-polling the dead 4xH100 box every 20 min;
-unreachable, connection timeout). `run_work_next` re-armed for the
-CPU lanes.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
