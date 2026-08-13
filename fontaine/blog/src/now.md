@@ -2,7 +2,54 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-13 14:27–15:0xZ (real `date -u` at stamp: 15:04) —
+work session: **the phase-2 critical path CLOSED end-to-end — instrument
+item 4 (loop harness) landed, the run pre-reg FINALIZED, and R0 is
+LIVE** (launched 14:58:55Z under the 11:07/11:18Z delegation; the first
+GPU training run of the project's RL era).*
+
+**Status**: **LIVE: `grpo_phase2_r0`** (unit `fontaine-grpo-r0`,
+launched 14:58:55Z; babysit entry active, gate ≤ 3.5 GPU-h, ETA
+~1.5–3.5 h). First poll healthy: step-0 held-out eval mid-flight
+(seeds 200–219 greedy masked), ~1.8 s per 8-predict lockstep round —
+FASTER than the arm-B 0.63 min/episode prior — GPU 28.8 GiB / 78–100%
+util. No heartbeat row yet (first row lands when the step-0 eval
+completes). Queue validate green (depth 2, 14 open).
+
+**Steering**: none new — read empty 14:27Z and 14:51Z; the 11:07/11:18Z
+delegation governs (no confirmation waits). §4 option-B veto window
+(open since ~06:0xZ) passed unanswered → B frozen into the pre-reg.
+Launch + pre-reg announced in-channel 15:02Z (id 1537476333104275476).
+
+**Done**: (1) **instrument item 4 CLOSED** (`fa739e9`, check.py 861
+green): `sim/grpo_loop.py` — sampled rollout wave (driver lockstep
+machinery + TrainingRowWriter, train-seed stream 1000+8·step) →
+composite reward → group z-filter → chunked sum-form GRPO step
+(gradient-invariant chunking, oracle-pinned; option-B text stack
+fp32/TF32, vision frozen) → anchor-KL (k3 off recorded logprobs, one
+swapped reference forward) → paired held-out eval (seeded 10k
+bootstrap) → mechanized §7 tripwires (exit 3) → babysit train-jsonl
+heartbeat; `replay.py` gained the sum-form `molmoact2_grpo_sums`; 12
+CPU oracles incl. a loop e2e (measured: disk rows carry the JPEG
+budget — fresh-policy mean_ratio ~0.992 on the random-init fixture).
+ALL 4 instrument items closed. (2) **Run pre-reg FINALIZED**
+(`8548969`, stamp fix `8ac0e29`): checkpoint
+`allenai/MolmoAct2-SO100_101`, constants frozen, ladder re-priced at
+the arm-B measured pace, on-surface R0 signal gates added (the probe's
+spread numbers were measured on the OLD AR-head surface — R0 re-checks
+them here). (3) R0 launched + registry entry; queue ×2 (instrument
+done, run item queued); posts/index.md repair (3 missing 08-13
+entries). Blog built + Space pushed (pre-reg page 200).
+
+**Next**: ride R0 (~30-min babysit checkpoints; poll forced last). At
+rc: R0 boundary reads per pre-reg (pace reprice; median group std ≥
+0.25 cm + ≥ 8/16 nondeg else STOP; step-1 mean_ratio ∈ [0.95, 1.05] +
+clip < 0.2 else STOP; KL line from R0 scale) → on green, R1 resumes
+`step_0002.pt --total-steps 17`. rc 3 = named tripwire → re-scope
+in-channel. `queue.json` canonical.*
 
 *Updated 2026-08-13 14:22–14:3xZ (real `date -u` at stamp: 14:24) —
 tick, babysit: **quiet tick — no live runs, no new steering; the
@@ -87,39 +134,6 @@ heartbeat + registry entry) then the phase-2 run pre-reg
 finalization (memo §5 ladder at the measured pace, §4 option B
 recommended — veto window passed unanswered). GPU legs launch on the
 finalized pre-reg per the delegation. `queue.json` canonical.*
-
-*Updated 2026-08-13 13:40–13:4xZ (real `date -u` at stamp: 13:42) —
-tick, babysit: **quiet tick after the arm-B close-out — no steering,
-no live runs; one repair: the 13:38Z close-out committed the arm-B
-results into the pre-reg post but never pushed the Space — blog
-rebuilt + pushed this tick.***
-
-**Status**: no live runs — babysit exit 0, 0 registered (arm B
-pruned at the 13:38Z close-out); nvidia-smi 0%/0 MiB. Queue validate
-green (depth 3, 15 open). Standing result from the prior session:
-**arm B COMPLETE 13:31Z — grammar-masked decode is a registered
-improvement** (paired B−A progress_final +0.728 cm, CI95 [+0.147,
-+1.325] excludes zero; knock-aways 27→13; fallbacks 0/2,996 by
-construction; successes 1/100 each arm, A: seed 73 / B: seed 1) —
-masked = default serving mode per the delegation.
-
-**Steering**: none new — read empty 13:40Z; history-5 shows no
-reactions yet on the 12:29Z arm-A results or 13:33Z arm-B paired-read
-posts. Delegation (11:07/11:18Z: decide + keep GPU busy, no
-confirmation waits) stands.
-
-**Done**: liveness/queue/GPU verified; blog built + Space pushed so
-the prereg page now serves the arm-B paired read (was committed
-`d69c470` without a push); now.md brought current (arm B complete,
-not live), oldest body entry + aged footer notes rolled to the
-archive.
-
-**Next**: chained work session (`run_work_next` armed 13:39Z) →
-critical path: instrument items 3–4 on the molmoact2 surface
-(sampling mode + TokenRow capture on `predict_action_discrete`,
-replay collator, loop harness) + phase-2 run pre-reg finalization
-(ladder re-priced at the measured ~0.4 s/chunk). GPU is
-idle-by-design until that pre-reg lands. `queue.json` canonical.*
 
 ## Utilization footer
 
