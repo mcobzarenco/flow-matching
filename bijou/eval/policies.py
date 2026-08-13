@@ -394,6 +394,82 @@ def tile_stats(batch: CollatedBatch[Any], draws: int) -> CollatedBatch[Any]:
     )
 
 
+@dataclasses.dataclass(frozen=True, slots=True)
+class TokenRow:
+    """One frame's action-token record for RL replay — the token-GRPO
+    training-rows instrument (design memo 2026-08-13 §8 item 1). Per
+    emitted symbol (active decode steps only, in emission order): the
+    CODEC id (backbone id − block_base), its chosen log-probability
+    under the decode's OWN sampling distribution — fp32
+    ``log_softmax(block_logits / temperature)`` with illegal columns at
+    −inf, i.e. exactly the masked softmax :func:`_sample_action_ids`
+    drew from — and the applied grammar mask, bit-packed per step
+    (``np.packbits`` over the vocab axis). Greedy decodes record
+    temperature 1.0: their logprobs are the plain masked softmax a
+    teacher-forced re-forward recomputes (the item-1 oracle)."""
+
+    ids: np.ndarray  # [T] int64 — codec space
+    logprobs: np.ndarray  # [T] float32
+    allowed_packed: np.ndarray  # [T, ceil(vocab_total/8)] uint8
+    vocab_total: int
+    temperature: float
+
+
+def token_rows_from_capture(
+    capture: list[ActionCaptureStep],
+    *,
+    block_base: int,
+    temperature: float | None,
+) -> list[TokenRow]:
+    """Reduce a decode's :class:`ActionCaptureStep` list to per-row
+    :class:`TokenRow` records. Pure CPU post-processing of the captured
+    surface — the decode itself is untouched (capture is observation,
+    never intervention). ``temperature`` None means a greedy decode
+    (recorded as 1.0). One .cpu() per step, mcselect's sync discipline —
+    never per row."""
+    scale = 1.0 if temperature is None else temperature
+    steps = [
+        (
+            step.block_logits.float().cpu(),
+            step.allowed.cpu(),
+            step.active.cpu(),
+            step.chosen.cpu(),
+        )
+        for step in capture
+    ]
+    if not steps:
+        raise ValueError("token_rows_from_capture on an empty capture")
+    batch_size, vocab_total = steps[0][0].shape
+    rows: list[TokenRow] = []
+    for row in range(batch_size):
+        ids: list[int] = []
+        logprobs: list[float] = []
+        masks: list[np.ndarray] = []
+        for logits, allowed, active, chosen in steps:
+            if not bool(active[row]):
+                continue
+            legal = allowed[row]
+            step_logprobs = (
+                (logits[row] / scale)
+                .masked_fill(~legal, float("-inf"))
+                .log_softmax(-1)
+            )
+            codec_id = int(chosen[row]) - block_base
+            ids.append(codec_id)
+            logprobs.append(float(step_logprobs[codec_id]))
+            masks.append(np.packbits(legal.numpy()))
+        rows.append(
+            TokenRow(
+                ids=np.asarray(ids, dtype=np.int64),
+                logprobs=np.asarray(logprobs, dtype=np.float32),
+                allowed_packed=np.stack(masks),
+                vocab_total=vocab_total,
+                temperature=scale,
+            ),
+        )
+    return rows
+
+
 def collapse_draws(stacked: Tensor) -> tuple[list[Tensor], list[Tensor]]:
     """Split a [draws, batch, chunk, dim] stack into the per-item ensemble
     means (the policy's prediction — the mean commutes with the affine
@@ -534,6 +610,13 @@ class BijouPolicy:
         # of chunks, so retention is trivial). None until the first
         # ensembled batch — and always None at draws=1.
         self.last_draws: list[Tensor] | None = None
+        # Training-rows instrument (--emit-training-rows): when the flag
+        # is set, every AR predict retains per-item TokenRows from the
+        # decode's own capture surface (same retention pattern as
+        # last_draws). Guarded in predict_with_text: AR-suffix decoders
+        # at sample_draws 1 only — every other path is loud.
+        self.capture_token_rows = False
+        self.last_token_rows: list[TokenRow] | None = None
         self.generate = generate
         # Per-frame generations under an EXPLICIT --generate (the main
         # arm narrates; no second pass runs) — the NarratedBijouPolicy
@@ -1017,6 +1100,24 @@ class BijouPolicy:
         that generate no text. Rollout prints these live; eval's
         ChunkPolicy protocol keeps consuming ``predict``."""
         items = self.apply_overrides(items)
+        self.last_token_rows = None
+        if self.capture_token_rows:
+            # Loud before any compute: the flag promises rows, so a
+            # predict that cannot produce them must never run quietly.
+            if not isinstance(self.model.decoder, ARSuffixDecoder):
+                raise SystemExit(
+                    "capture_token_rows needs an AR-suffix decoder (the "
+                    "token stream IS the trainable surface); this "
+                    "checkpoint's decoder is "
+                    f"{type(self.model.decoder).__name__}",
+                )
+            if self.sample_draws > 1:
+                raise SystemExit(
+                    "capture_token_rows at --sample-draws "
+                    f"{self.sample_draws}: the ensembled mean executes no "
+                    "single token stream — rollout draws ride (seed, "
+                    "draw) work units instead",
+                )
         item_maps: list[ItemMaps] | None = None
         if self.molmo_norm is not MolmoNorm.CHECKPOINT:
             # Off-contract normalization (molmo_flow only — __init__
@@ -1081,12 +1182,24 @@ class BijouPolicy:
                         for item in items
                     ),
                 )
+                capture: list[ActionCaptureStep] | None = (
+                    [] if self.capture_token_rows else None
+                )
                 prediction = self.model.ar_predict_sampled(
                     memory,
                     batch,
                     generate=self.generate,
                     sampling=sampling,
+                    action_capture=capture,
                 )
+                if capture is not None:
+                    # sample_draws == 1 here (the top guard), so this
+                    # single-draw retention is the whole batch's rows.
+                    self.last_token_rows = token_rows_from_capture(
+                        capture,
+                        block_base=decoder.config.block_base,
+                        temperature=self.ar_temperature,
+                    )
                 if generations is None:
                     generations = prediction.generations
                 draws.append(prediction.actions)
@@ -1131,6 +1244,25 @@ class BijouPolicy:
                 sde_step_noise=step_noise,
             )
             return [chunk.cpu() for chunk in prediction.actions], None
+        if self.capture_token_rows and isinstance(decoder, ARSuffixDecoder):
+            # Greedy decode WITH the capture surface: encode + greedy
+            # dispatch is compute-identical to model.predict_chunk's AR
+            # case (generator/noise are None there), the capture is
+            # observation only — the training-rows oracle path.
+            memory = self.model.encode(batch.encoder_inputs, with_grad=False)
+            greedy_capture: list[ActionCaptureStep] = []
+            prediction = self.model.ar_predict_greedy(
+                memory,
+                batch,
+                generate=self.generate,
+                action_capture=greedy_capture,
+            )
+            self.last_token_rows = token_rows_from_capture(
+                greedy_capture,
+                block_base=decoder.config.block_base,
+                temperature=None,
+            )
+            return [chunk.cpu() for chunk in prediction.actions], prediction.generations
         # Flow integrates from per-item seeded noise (deterministic and
         # batch-composition-independent); AR decodes greedily and takes
         # none.

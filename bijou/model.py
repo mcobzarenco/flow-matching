@@ -453,15 +453,18 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
         *,
         generate: tuple[AuxField, ...] = (),
         sampling: ARSampling,
+        action_capture: list[ActionCaptureStep] | None = None,
     ) -> BijouPrediction:
         """AR suffix decode against an ALREADY-ENCODED memory with the
         action block temperature-sampled — the sampled-draws eval
         instrument's per-draw call: the caller encodes once, snapshots
         the prefix cache, and restores between draws
         (:meth:`ARSuffixDecoder.cache_snapshot`/``cache_restore``), so
-        N draws share one prefill. Loud on decoders without a suffix
-        cache to share (flow samples noise instead)."""
-        match self.decoder:
+N draws share one prefill. ``action_capture`` records the
+        decode's own scoring surface exactly as in
+        :meth:`ar_predict_greedy` — the sampled ids land in ``chosen``
+        (the training-rows instrument). Loud on decoders without a
+        suffix cache to share (flow samples noise instead)."""        match self.decoder:
             case ARBackboneDecoder():
                 return self.decoder.predict_chunk(
                     self._gemma_backbone(),
@@ -469,6 +472,7 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                     batch,
                     generate=generate,
                     sampling=sampling,
+                    action_capture=action_capture,
                 )
             case Molmo2ARDecoder():
                 return self.decoder.predict_chunk(
@@ -477,6 +481,7 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                     batch,
                     generate=generate,
                     sampling=sampling,
+                    action_capture=action_capture,
                 )
             case _:
                 raise TypeError(
