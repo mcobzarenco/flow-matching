@@ -5,51 +5,57 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-13 14:27–15:0xZ (real `date -u` at stamp: 15:04) —
-work session: **the phase-2 critical path CLOSED end-to-end — instrument
-item 4 (loop harness) landed, the run pre-reg FINALIZED, and R0 is
-LIVE** (launched 14:58:55Z under the 11:07/11:18Z delegation; the first
-GPU training run of the project's RL era).*
+*Updated 2026-08-13 14:27–18:1xZ (real `date -u` at stamp: 18:00) —
+work session: **the phase-2 critical path CLOSED end-to-end and the
+first RL training run is LIVE on its third launch** — instrument
+item 4 landed, the run pre-reg FINALIZED, R0 launched 14:58:55Z, two
+plumbing crashes diagnosed + fixed same-session (a cuda/cpu device
+mix, then an Adam-init OOM that measured the real model size), launch
+3 live 17:56:31Z.*
 
-**Status**: **LIVE: `grpo_phase2_r0`** (unit `fontaine-grpo-r0`,
-launched 14:58:55Z; babysit entry active, gate ≤ 3.5 GPU-h, ETA
-~1.5–3.5 h). First poll healthy: step-0 held-out eval mid-flight
-(seeds 200–219 greedy masked), ~1.8 s per 8-predict lockstep round —
-FASTER than the arm-B 0.63 min/episode prior — GPU 28.8 GiB / 78–100%
-util. No heartbeat row yet (first row lands when the step-0 eval
-completes). Queue validate green (depth 2, 14 open).
+**Status**: **LIVE: `grpo_phase2_r0` launch 3** (unit
+`fontaine-grpo-r0`, 17:56:31Z on `d0b9a44`; babysit entry current).
+Banked from launches 1–2: step-0 held-out baseline **1.868 composite,
+2/20 greedy successes** (reproduced bit-identically across launches);
+wave pace ~35 min/64-episode sampled wave (~0.58 GPU-h, inside the
+estimate); full gradient accumulation clean. Crashes: launch 1 rc 1
+15:51Z (device mix in `grpo_objective_sums`, fixed `9ffc1c1`); launch
+2 rc 1 17:12Z (OOM at Adam init — the option-B text stack is ~3.9B
+params fp32, a ~4B-class model; fixed `d0b9a44`: foreach=False,
+CPU-staged anchor swap, expandable_segments; projected peak ~68–70 vs
+the 75 gate). Ops gate 3.5 → 5.5 GPU-h (addendum 2; ~1.85 spent on
+crashes), ladder total 35 unchanged. Queue validate green (depth 2,
+14 open).
 
-**Steering**: none new — read empty 14:27Z and 14:51Z; the 11:07/11:18Z
-delegation governs (no confirmation waits). §4 option-B veto window
-(open since ~06:0xZ) passed unanswered → B frozen into the pre-reg.
-Launch + pre-reg announced in-channel 15:02Z (id 1537476333104275476).
+**Steering**: none all session — reads empty 14:27Z, 14:51Z, 16:1xZ,
+17:0xZ (babysit-forced). The 11:07/11:18Z delegation governs; §4
+option-B veto window passed unanswered → B frozen. Full trail
+in-channel: 15:02Z launch post, 16:15Z crash-1/fix, 17:5xZ
+crash-2/fix (ids …333104275476, …893340004372, …312609022104).
 
 **Done**: (1) **instrument item 4 CLOSED** (`fa739e9`, check.py 861
-green): `sim/grpo_loop.py` — sampled rollout wave (driver lockstep
-machinery + TrainingRowWriter, train-seed stream 1000+8·step) →
-composite reward → group z-filter → chunked sum-form GRPO step
-(gradient-invariant chunking, oracle-pinned; option-B text stack
-fp32/TF32, vision frozen) → anchor-KL (k3 off recorded logprobs, one
-swapped reference forward) → paired held-out eval (seeded 10k
-bootstrap) → mechanized §7 tripwires (exit 3) → babysit train-jsonl
-heartbeat; `replay.py` gained the sum-form `molmoact2_grpo_sums`; 12
-CPU oracles incl. a loop e2e (measured: disk rows carry the JPEG
-budget — fresh-policy mean_ratio ~0.992 on the random-init fixture).
-ALL 4 instrument items closed. (2) **Run pre-reg FINALIZED**
-(`8548969`, stamp fix `8ac0e29`): checkpoint
-`allenai/MolmoAct2-SO100_101`, constants frozen, ladder re-priced at
-the arm-B measured pace, on-surface R0 signal gates added (the probe's
-spread numbers were measured on the OLD AR-head surface — R0 re-checks
-them here). (3) R0 launched + registry entry; queue ×2 (instrument
-done, run item queued); posts/index.md repair (3 missing 08-13
-entries). Blog built + Space pushed (pre-reg page 200).
+green): `sim/grpo_loop.py` — sampled rollout wave → composite reward
+→ group z-filter → chunked sum-form GRPO step (gradient-invariant
+chunking, oracle-pinned; option-B text stack fp32/TF32, vision
+frozen) → anchor-KL (k3 off recorded logprobs) → paired held-out eval
+→ mechanized §7 tripwires (exit 3) → babysit train-jsonl heartbeat;
+12 CPU oracles incl. a loop e2e. ALL 4 instrument items closed. (2)
+**Run pre-reg FINALIZED** (`8548969` + addenda 1–2): checkpoint
+`allenai/MolmoAct2-SO100_101`, constants frozen, on-surface R0 signal
+gates. (3) R0 launched ×3 with same-session diagnosis + fix + oracle
++ addendum per crash (`9ffc1c1`, `d0b9a44`); registry current; queue
+×2; posts/index.md repair; blog + Space pushed each cycle.
 
-**Next**: ride R0 (~30-min babysit checkpoints; poll forced last). At
-rc: R0 boundary reads per pre-reg (pace reprice; median group std ≥
-0.25 cm + ≥ 8/16 nondeg else STOP; step-1 mean_ratio ∈ [0.95, 1.05] +
-clip < 0.2 else STOP; KL line from R0 scale) → on green, R1 resumes
-`step_0002.pt --total-steps 17`. rc 3 = named tripwire → re-scope
-in-channel. `queue.json` canonical.*
+**Next**: launch-3 milestones — baseline ~18:08Z, wave 0 ~18:45Z,
+**step-1 row ~19:0xZ (Adam-step survival verdict + first loss/ratio/
+KL facts)**, rc ~20:3xZ. `run_work_next` armed: next tick babysits;
+at rc the boundary session runs the frozen R0 reads (pace reprice;
+median group std ≥ 0.25 cm + ≥ 8/16 nondeg else STOP; step-1
+mean_ratio ∈ [0.95, 1.05] + clip < 0.2 else STOP; KL line from R0) →
+green = R1 resumes `step_0002.pt --total-steps 17`; another OOM =
+option B measured-infeasible on 1×H100 → option-A fallback via NEW
+pre-reg in-channel. rc 3 = named tripwire → re-scope. `queue.json`
+canonical.*
 
 *Updated 2026-08-13 14:22–14:3xZ (real `date -u` at stamp: 14:24) —
 tick, babysit: **quiet tick — no live runs, no new steering; the
@@ -136,6 +142,15 @@ recommended — veto window passed unanswered). GPU legs launch on the
 finalized pre-reg per the delegation. `queue.json` canonical.*
 
 ## Utilization footer
+
+Session 2026-08-13 14:27–18:1xZ (work; +~2.3 GPU-h — R0 launches 1–3,
+exploit): instrument item 4 (loop harness, `fa739e9`) + run pre-reg
+FINALIZED (`8548969`) + R0 launched, crashed ×2, fixed ×2 (device mix
+`9ffc1c1`; Adam-init OOM `d0b9a44` — measured the text stack at ~3.9B
+params fp32), launch 3 live 17:56:31Z riding into the next tick.
+Banked despite the crashes: held-out baseline 1.868 + 2/20 (bit-
+reproduced), wave pace 0.58 GPU-h/64 eps. check.py 861 green
+throughout; blog + Space pushed each cycle.
 
 Session 2026-08-13 14:22–14:3xZ (tick, babysit; 0 new GPU-h — GPU
 idle-by-design, CPU critical path queued): quiet tick — no owner
