@@ -4,6 +4,31 @@
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
 
+*Updated 2026-08-13 01:44–01:5xZ (real `date -u` at stamp: 01:47) —
+tick, babysit: **quiet tick — no steering, GPU idle as declared; one
+housekeeping kill: the stale boxsync loop (polling the dead 08-05
+box for 6 days) found and stopped.***
+
+**Status**: no live runs — registry carries the declared reason
+(next GPU legs pend owner calls); nvidia-smi 0%/0 MiB, no stray
+compute procs. Queue validate green (depth 2, 12 open).
+
+**Steering**: none new — read empty 01:45Z, history-5 shows no
+reactions on the 01:10Z probe results post or the 01:40Z lens post.
+Open asks unchanged: v3-rerun unhold + arm set, disk-draws sign-off,
+GRPO cells 3/4 re-queue, phase-2 token-GRPO go.
+
+**Done**: process sweep surfaced `boxsync_loop.sh` still running
+since 08-06 23:44Z in a tmux pane — ssh-polling the retired 4xH100
+box (192.222.55.210) every 20 min; box confirmed unreachable
+(connection timeout), all its registry entries historical → loop +
+hung ssh killed. `run_work_next` re-armed (CPU lanes queued, GPU
+idle-by-design). Footer notes >2 rolled to the archive.
+
+**Next**: chained work session → `sim-composite-contact-shadows`
+(queue head) or lens leg (b) render path; phase-2 token-GRPO design
+memo open. GPU legs launch on owner calls only.*
+
 *Updated 2026-08-13 01:18–01:5xZ (real `date -u` at stamp: 01:41) —
 work session (chained by the 01:14 tick): **wrist lens fit leg (a)
 DONE — the real lens is measurably not ideal-equidistant.** Plumb-line
@@ -116,30 +141,20 @@ sign-off still open. `queue.json` canonical.*
 
 ## Utilization footer
 
+Session 2026-08-13 01:44–01:5xZ (tick, babysit; 0 new GPU-h — GPU
+idle-by-design): quiet tick — no owner messages/reactions (01:45Z),
+registry reason stands, nvidia-smi 0%/0 MiB, queue green (depth 2,
+12 open). Housekeeping: killed the stale `boxsync_loop.sh` (up since
+08-06 23:44Z, ssh-polling the dead 4xH100 box every 20 min;
+unreachable, connection timeout). `run_work_next` re-armed for the
+CPU lanes.
+
 Session 2026-08-13 01:18–01:5xZ (work, chained; 0 new GPU-h — CPU
 lane, exploit): `sim-fit-real-lens-model` leg (a) closed — plumb-line
 θ→r fit on the pinned real wrist frames (center 22 px off, corner
 ray placement −12.8 px vs equidistant, CI-excl-0), instrument +
 oracles + chart `5581d6d`, results in-channel 01:40Z. check.py 801
 green. GPU legs still pend owner calls.
-
-Session 2026-08-13 01:14–01:2xZ (tick, babysit; 0 new GPU-h — GPU
-idle-by-design after the probe close): quiet tick — no owner
-messages/reactions (01:15Z), registry clean with declared reason,
-nvidia-smi 0%/0 MiB, queue green (depth 2, 12 open), boot audit
-clean. `run_work_next` armed for the CPU lanes (lens fit, contact
-shadows, phase-2 token-GRPO design). 08-12 entries rolled to the
-archive page.
-
-Session 2026-08-12 21:39Z–2026-08-13 01:1xZ (work, the chained probe
-ride; **+3.30 GPU-h this session (run total 3.57 incl. the tick's launch window)** — anchors + cells 1/2/5 ridden in-turn,
-tripwire re-scope at cell-1; exploit + owner steering + lit):
-**GRPO probe re-scoped and read out** — AR t=1.0 clears the signal
-bar 3.1× at a cost CI including 0 (cell 2 t=1.6: 9.8× but −1.08 cm;
-cell 5 SDE: 7.4× at cost CI incl. 0 → BOTH families clear, AR-first). Lit 0823 (3 papers pages), wrist
-compositing investigated → DECIDED render-only (owner 22:31Z),
-sim100 amendment 4, `sim-fit-real-lens-model` queued. check.py 797
-green × 6 commits.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
