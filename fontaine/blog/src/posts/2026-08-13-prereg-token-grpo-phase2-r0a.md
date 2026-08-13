@@ -130,3 +130,19 @@ flags. Babysit registry entry at launch (`train-jsonl`, probe
 
 *Frozen at commit time; the launch immediately follows the push.
 Amendments only via numbered addenda below.*
+
+---
+
+**Addendum 1 (2026-08-13 21:5xZ — launch-env fix + relaunch, no
+constant changed).** Launch 1 (21:55:48Z) died at 21:56:21Z in its
+FIRST sim worker: `mujoco.FatalError: an OpenGL platform library has
+not been loaded` — the command's `MUJOCO_GL=egl` prefix sets the env
+for `run_detached.sh` itself, but the transient systemd unit gets the
+USER MANAGER's clean environment (only PATH/HOME were forwarded), and
+that manager env no longer carries `MUJOCO_GL` (R0's four launches
+inherited it from a state that has since been lost). Zero GPU-h
+consumed (died pre-load, ~1.6 min CPU). Fix, both belts:
+`systemctl --user set-environment MUJOCO_GL=egl` (manager-durable),
+and `run_detached.sh` now forwards `MUJOCO_GL` into the unit whenever
+the caller sets it — the verbatim command's semantics, made real.
+Launch 2: **21:58:04Z**, same command bit-for-bit.*
