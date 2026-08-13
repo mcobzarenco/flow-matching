@@ -12,7 +12,46 @@
 # arm B (grammar-masked) launched to measure the repair. Results in
 # posts/2026-08-13-prereg-molmoact2-ar100.md + in-channel.
 
-no_live_runs_reason = "declared 13:3xZ 08-13 work session: BOTH ar100 arms COMPLETE and pruned (A 12:26Z 1/100 + 6.8% fallback finding; B 13:31Z masked decode paired +0.728 CI-excludes-zero, knock-aways 27->13, fallbacks 0). GPU idle at close; critical path is CPU-side (instrument items 3-4 on the molmoact2 surface) then the token-GRPO run pre-reg — owner delegation 11:07/11:18Z active (no confirmation waits), so the next session may launch GPU legs by frozen rules."
+# (no_live_runs_reason cleared 15:2xZ 08-13 work session — grpo_phase2_r0
+# launched under the 11:07/11:18Z delegation off the finalized pre-reg.
+# PRIOR: "declared 13:3xZ 08-13 work session: BOTH ar100 arms COMPLETE and
+# pruned (A 12:26Z 1/100 + 6.8% fallback finding; B 13:31Z masked decode
+# paired +0.728 CI-excludes-zero, knock-aways 27->13, fallbacks 0). GPU
+# idle at close; critical path is CPU-side (instrument items 3-4 on the
+# molmoact2 surface) then the token-GRPO run pre-reg — owner delegation
+# 11:07/11:18Z active (no confirmation waits), so the next session may
+# launch GPU legs by frozen rules.")
+
+# LIVE — token-GRPO phase-2 R0 smoke (local GPU, unit fontaine-grpo-r0;
+# pre-reg posts/2026-08-13-prereg-token-grpo-phase2-run.md FINALIZED
+# 14:55Z, HEAD fa739e9 + pre-reg 8548969; launcher
+# fontaine/scripts/launch_grpo_phase2_r0.sh). 2 steps: step-0 held-out
+# greedy eval (seeds 200-219, the pairing baseline) then 2x (64-episode
+# sampled wave at T=1.0 -> z-filter -> option-B gradient step) + the
+# endpoint eval. First heartbeat rows are EVAL rows (no loss key);
+# training step rows carry loss/ratio/KL facts.
+[[run]]
+name = "grpo_phase2_r0"
+kind = "train-jsonl"
+host = "local"
+pgrep = "sim.grpo_loop"
+pgrep_min = 1
+gpu_indices = [0]
+gpu_mem_min_mib = 4000
+jsonl = "outputs/sim/grpo_phase2/train.jsonl"
+total_steps = 2
+probe_key = "eval_reward_mean"
+vram_key = "vram_gib"
+boundary = "R0 = 2 steps, gate <= 3.5 GPU-h (est ~1.0-1.4/step + 2 evals ~0.2 each; ETA ~2.5-3.5 h from the 14:58:55Z launch). At rc: R0 boundary reads per pre-reg (measured pace; ON-SURFACE signal median group std >= 0.25 cm AND >= 8/16 nondeg groups else STOP; step-1 mean_ratio in [0.95,1.05] + clip_fraction < 0.2 else STOP; KL line set from R0 scale; VRAM < 75). rc=3 = a mechanized tripwire fired (heartbeat 'tripwire' row names it) — stop + re-scope in-channel, rows kept for diagnosis. On green boundary: R1 resumes step_0002.pt with --total-steps 17."
+anchors = [
+    "sampled waves: 8 fresh seeds x 8 draws at T=1.0, train stream 1000+8*step; eval greedy masked seeds 200-219",
+    "loop mechanizes the §7 tripwires (strike/NaN/collapse/violence/competence) — exit 3, never silent",
+    "arm-B measured rollout pace 0.63 min/episode is the prior; fp32 text stack + sampled streams may run 1.0-1.3x that",
+    "step rows: loss/mean_ratio/clip_fraction/approx_kl/anchor_kl/median_group_std/knockaway_frac; eval rows: eval_reward_mean/_delta_*",
+]
+[[run.gates]]
+kind = "vram_max_gib"
+value = 75.0
 
 # molmoact2_ar100b_masked entry PRUNED 13:3xZ 08-13 work session —
 # COMPLETE 13:31Z rc 0, ridden end-to-end (~1.05/1.5 GPU-h, 63.1

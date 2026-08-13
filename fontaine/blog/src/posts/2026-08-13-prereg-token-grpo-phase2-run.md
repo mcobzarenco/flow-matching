@@ -1,6 +1,8 @@
 # Pre-reg (FINAL): token-GRPO phase 2 — R0 smoke + R1 on the MolmoAct2 discrete pathway
 
-*2026-08-13 15:1xZ. The finalization the [design
+*2026-08-13 14:5xZ (frozen at commit `8548969`, 14:55:52Z; stamp
+corrected from a mis-clocked 15:1xZ before first publication — no
+content change). The finalization the [design
 memo](2026-08-13-token-grpo-phase2-design.md) §9.4 promised: constants
 frozen, HEAD + checkpoint pinned, launch follows the commit. Executed
 under the owner delegation (11:07Z "you make the decisions, ensure we
