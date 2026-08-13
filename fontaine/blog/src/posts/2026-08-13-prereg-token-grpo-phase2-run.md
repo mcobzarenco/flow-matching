@@ -165,3 +165,29 @@ at one point in the surrogate — semantics unchanged, check.py 861
 green. Relaunch rides the fix commit; the ~0.9 GPU-h of launch 1
 counts against the R0 gate (honest accounting: R0 total budget may
 land ~3.1 of the 3.5 gate).*
+
+**Addendum 2 (2026-08-13 17:5xZ — memory fixes + relaunch, no frozen
+constant changed; R0 ops gate raised 3.5 → 5.5 GPU-h).** Launch 2
+(16:15:26Z) reproduced the step-0 baseline bit-identically (1.868,
+2/20) and ran wave 0 + the FULL gradient accumulation cleanly, then
+OOM'd at 17:12:17Z inside the first `optimizer.step()` — Adam state
+init via the `_foreach` path materializes whole-surface temporaries.
+The measured fact that matters: **77 GiB PyTorch-allocated at the
+step** → the option-B text stack is ~15 GB fp32 (~3.9B params — this
+checkpoint is a ~4B-class model, not the 2B the memo's 69.2-GiB
+memory precedent was calibrated on; that precedent was measured on
+the OLD er60k surface and did not survive the 10:02Z retarget).
+Params+grads+2·Adam ≈ 62 GiB steady DOES fit; the two +P transients
+did not. Fixes (allocation-shape only, semantics oracle-pinned
+unchanged): (1) `AdamW(foreach=False)` — per-tensor step, no
+whole-surface temporary; (2) the anchor-KL swap now stages live
+weights to CPU for the reference forward instead of holding both
+copies on GPU; (3) `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True`
+(launch 2 died with 1.36 GiB reserved-unallocated at a 96 MiB
+request). Projected steady peak ~68–70 GiB vs the 75 vram gate —
+tight; if launch 3 still OOMs, option B is measured-infeasible on one
+H100 for this model and the fallback discussion (§4 option A) goes
+in-channel as a new pre-reg, per the frozen rule. Gate accounting:
+launches 1+2 spent ~1.85 GPU-h on the two plumbing crashes; the R0
+**ops** gate rises to 5.5 GPU-h to cover them — the 35 GPU-h ladder
+total is unchanged (R2 shrinks by whatever R0 overruns).*

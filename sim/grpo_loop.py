@@ -180,6 +180,27 @@ def group_advantages(
     return advantages, facts
 
 
+def build_optimizer(
+    named: list[tuple[str, nn.Parameter]],
+    *,
+    lr: float,
+) -> torch.optim.Optimizer:
+    """AdamW at the memo §2 constants, ``foreach=False``: the fused
+    foreach path materializes whole-surface temporaries (+P) during
+    the step — the exact allocation that OOM'd R0 launch 2 at
+    ``_foreach_sqrt`` (17:12Z 08-13; params+grads+2·Adam ≈ 4P is the
+    budget, there is no headroom for a fifth P). Per-tensor Adam is
+    slower per step and allocation-flat."""
+    return torch.optim.AdamW(
+        [param for _, param in named],
+        lr=lr,
+        betas=(0.9, 0.95),
+        eps=1e-6,
+        weight_decay=0.0,
+        foreach=False,
+    )
+
+
 def apply_option_b_freeze(predictor: Any) -> list[tuple[str, nn.Parameter]]:
     """Memo §4 option B retargeted to the molmoact2 trunk: the TEXT
     stack (embeddings + transformer + lm_head) trains, vision stays
@@ -218,22 +239,35 @@ class AnchorSnapshot:
 
 
 class _AnchorSwap:
+    """In-place swap with the LIVE values staged to CPU for the
+    duration: materializing a second GPU copy of the trainable set is
+    a +P transient the R0 memory budget cannot afford once the Adam
+    states exist (params+grads+2·Adam ≈ 4P steady, measured 17:1xZ
+    08-13). ``copy_`` keeps tensor identity, so optimizer state
+    stays attached; a CPU round trip is value-preserving, so the
+    restore stays bit-exact (oracle-pinned)."""
+
     def __init__(self, snapshot: AnchorSnapshot) -> None:
         self.snapshot = snapshot
         self.live: list[Tensor] = []
 
     def __enter__(self) -> None:
-        self.live = [param.data for _, param in self.snapshot.named]
-        for (_, param), value in zip(
-            self.snapshot.named,
-            self.snapshot.values,
-            strict=True,
-        ):
-            param.data = value.to(param.device)
+        with torch.no_grad():
+            self.live = [
+                param.detach().to("cpu", copy=True) for _, param in self.snapshot.named
+            ]
+            for (_, param), value in zip(
+                self.snapshot.named,
+                self.snapshot.values,
+                strict=True,
+            ):
+                param.copy_(value.to(param.device, param.dtype))
 
     def __exit__(self, *exc: object) -> None:
-        for (_, param), data in zip(self.snapshot.named, self.live, strict=True):
-            param.data = data
+        with torch.no_grad():
+            for (_, param), live in zip(self.snapshot.named, self.live, strict=True):
+                param.copy_(live.to(param.device, param.dtype))
+        self.live = []
 
 
 def anchor_kl(
@@ -611,13 +645,7 @@ def run_grpo_loop(
     grpo = GRPOConfig(temperature=config.temperature)
     named = parameters if parameters is not None else apply_option_b_freeze(predictor)
     if optimizer is None:
-        optimizer = torch.optim.AdamW(
-            [param for _, param in named],
-            lr=config.lr,
-            betas=(0.9, 0.95),
-            eps=1e-6,
-            weight_decay=0.0,
-        )
+        optimizer = build_optimizer(named, lr=config.lr)
     anchor = AnchorSnapshot(named)
     tripwires = TripwireState()
     eval_seeds = list(
@@ -1056,13 +1084,7 @@ def main(argv: list[str] | None = None) -> int:
         flush=True,
     )
     named = apply_option_b_freeze(predictor)
-    optimizer = torch.optim.AdamW(
-        [param for _, param in named],
-        lr=config.lr,
-        betas=(0.9, 0.95),
-        eps=1e-6,
-        weight_decay=0.0,
-    )
+    optimizer = build_optimizer(named, lr=config.lr)
     start_step = 0
     baseline: dict[int, float] | None = None
     if args.resume is not None:
