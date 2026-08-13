@@ -278,6 +278,8 @@ def molmoact2_grpo_sums(
     task: str,
     advantages: Tensor,
     config: GRPOConfig,
+    anchor_logprobs: Tensor | None = None,
+    kl_beta: float = 0.0,
 ) -> tuple[Tensor, Tensor, GRPOStats]:
     """Sum-form replay step for a row batch: guards (every row sampled
     at ``config.temperature``; recorded masks reproduce bit-for-bit
@@ -313,6 +315,8 @@ def molmoact2_grpo_sums(
         advantages,
         decisions,
         config,
+        anchor_logprobs=anchor_logprobs,
+        kl_beta=kl_beta,
     )
 
 

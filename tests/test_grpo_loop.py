@@ -45,20 +45,24 @@ from bijou.decoders.ar_backbone import ActionCaptureStep
 from bijou.eval.policies import stable_sample_rng, token_rows_from_capture
 from bijou.molmoact2 import MolmoAct2Predictor
 from bijou.molmoact2.replay import ReplayRow, molmoact2_grpo_loss
-from bijou.train_grpo import GRPOConfig
+from bijou.train_grpo import GRPOConfig, grpo_objective_sums
 from sim.grpo_loop import (
     AnchorSnapshot,
     GRPOLoopConfig,
     TripwireState,
     WaveFn,
     accumulate_grpo_grads,
+    anchor_chunk_logprobs,
     anchor_kl,
+    apply_option_a_freeze,
     apply_option_b_freeze,
     build_optimizer,
     composite_reward,
     eval_facts,
     group_advantages,
+    grpo_train_step,
     load_checkpoint,
+    option_a_row_span,
     paired_bootstrap_ci,
     run_grpo_loop,
     save_checkpoint,
@@ -182,6 +186,22 @@ def test_group_advantages_zscores_and_dead_group_drop() -> None:
         group_advantages([episode(1, 0), episode(1, 0)], min_std=0.05)
 
 
+def test_group_advantages_clip_tempers_outliers() -> None:
+    """R0-A lever: a lone big reward in a group of 8 puts z ≈ +2.65 on
+    one row (R0's collapse driver); clip=2.0 clamps it and leaves
+    sub-threshold z-scores untouched."""
+    episodes = [episode(1, draw, progress=0.0) for draw in range(7)]
+    episodes.append(episode(1, 7, progress=10.0))
+    raw, _ = group_advantages(episodes, min_std=0.05)
+    assert raw[(1, 7)] == pytest.approx(2.6458, abs=1e-3)
+    clipped, _ = group_advantages(episodes, min_std=0.05, clip=2.0)
+    assert clipped[(1, 7)] == 2.0
+    assert clipped[(1, 0)] == pytest.approx(raw[(1, 0)])
+    assert abs(clipped[(1, 0)]) < 2.0
+    with pytest.raises(ValueError, match="clip"):
+        group_advantages(episodes, min_std=0.05, clip=0.0)
+
+
 def test_paired_bootstrap_and_eval_facts() -> None:
     lo, hi = paired_bootstrap_ci(np.full(20, 1.0))
     assert lo == hi == 1.0
@@ -246,6 +266,76 @@ def test_update_tripwires_streaks() -> None:
     assert fired and "violence" in fired[0]
 
 
+def test_grpo_objective_kl_penalty_math() -> None:
+    """The differentiable anchor penalty, pinned analytically: k3 per
+    token is exp(a−n) − (a−n) − 1 (0 with zero gradient at a == n),
+    the objective subtracts β·k3_sum, and the loss gradient w.r.t. the
+    live logprobs is −β·(exp(a−n) − 1). Loud when the penalty is on
+    without anchors, on shape mismatch, and on non-finite anchors."""
+    config = GRPOConfig()
+    new = torch.tensor([[-1.0, -2.0, -0.5]], requires_grad=True)
+    old = new.detach().clone()
+    advantages = torch.zeros(1)  # zero advantage isolates the penalty
+    decisions = torch.tensor([[True, True, False]])
+    anchor = torch.tensor([[-1.5, -2.0, 7.7]])  # pad position ignored
+    beta = 0.5
+    objective, count, stats = grpo_objective_sums(
+        new,
+        old,
+        advantages,
+        decisions,
+        config,
+        anchor_logprobs=anchor,
+        kl_beta=beta,
+    )
+    delta = (anchor - new.detach())[decisions]
+    k3 = (delta.exp() - delta - 1.0).sum()
+    assert float(objective.detach()) == pytest.approx(-beta * float(k3), rel=1e-6)
+    assert stats.anchor_k3 == pytest.approx(float(k3) / 2, rel=1e-6)
+    (-objective / count).backward()
+    grad = new.grad
+    assert grad is not None
+    expected = -(beta / 2) * ((anchor - old).exp() - 1.0)
+    assert torch.allclose(grad[decisions], expected[decisions], atol=1e-6)
+    assert float(grad[~decisions].abs().max()) == 0.0
+    # a == n: penalty exactly 0 with exactly-zero gradient.
+    fresh = torch.tensor([[-1.0, -2.0, -0.5]], requires_grad=True)
+    objective, count, stats = grpo_objective_sums(
+        fresh,
+        old,
+        advantages,
+        decisions,
+        config,
+        anchor_logprobs=old.clone(),
+        kl_beta=beta,
+    )
+    assert float(objective.detach()) == 0.0 and stats.anchor_k3 == 0.0
+    (-objective / count).backward()
+    assert fresh.grad is not None and float(fresh.grad.abs().max()) == 0.0
+    with pytest.raises(ValueError, match="needs anchor_logprobs"):
+        grpo_objective_sums(new, old, advantages, decisions, config, kl_beta=beta)
+    with pytest.raises(ValueError, match="must match"):
+        grpo_objective_sums(
+            new,
+            old,
+            advantages,
+            decisions,
+            config,
+            anchor_logprobs=anchor[:, :2],
+            kl_beta=beta,
+        )
+    with pytest.raises(ValueError, match="non-finite anchor"):
+        grpo_objective_sums(
+            new,
+            old,
+            advantages,
+            decisions,
+            config,
+            anchor_logprobs=torch.tensor([[-1.5, -math.inf, 0.0]]),
+            kl_beta=beta,
+        )
+
+
 # ------------------------------------------------------ surface + step oracle
 
 
@@ -265,6 +355,54 @@ def test_option_b_freeze_and_anchor_swap(predictor: MolmoAct2Predictor) -> None:
     assert torch.equal(target, original + 1.0)
     restore(anchor)
     assert torch.equal(target, original)
+
+
+def test_option_a_freeze_trains_only_block_rows(
+    predictor: MolmoAct2Predictor,
+) -> None:
+    """The R0-A surface: exactly the two untied matrices are trainable,
+    and a full gradient step moves ONLY their FAST-block rows — every
+    row outside [base, end) stays bit-identical (the embedding sees
+    real prompt/scaffold-token gradients; the span masking is what
+    keeps them frozen)."""
+    subject = discrete_predictor(predictor, codec())
+    named = apply_option_a_freeze(subject)
+    assert {name for name, _ in named} == {
+        "text.transformer.wte.embedding",
+        "text.lm_head.weight",
+    }
+    assert all(not p.requires_grad for p in subject.trunk.vision.parameters())
+    frozen = sum(1 for p in subject.trunk.text.parameters() if not p.requires_grad)
+    assert frozen > 0, "the rest of the text stack must stay frozen"
+    base, end = option_a_row_span(subject)
+    assert base == ACTION_TOKEN_START and end == base + 2048
+    snapshot = AnchorSnapshot(named)
+    try:
+        rows = [memory_row(subject, 11, 0), memory_row(subject, 11, 1)]
+        before = {name: p.detach().clone() for name, p in named}
+        facts = grpo_train_step(
+            subject,
+            rows,
+            torch.tensor([1.0, -1.0]),
+            task=TASK,
+            config=GRPOConfig(),
+            parameters=named,
+            optimizer=build_optimizer(named, lr=1e-2),
+            microbatch_rows=1,
+            grad_clip=1.0,
+            grad_row_span=(base, end),
+        )
+        assert not facts.skipped and facts.tokens > 0
+        moved = 0
+        for name, param in named:
+            after = param.detach()
+            assert torch.equal(after[:base], before[name][:base]), name
+            assert torch.equal(after[end:], before[name][end:]), name
+            if not torch.equal(after[base:end], before[name][base:end]):
+                moved += 1
+        assert moved == 2, "both matrices' block rows should move"
+    finally:
+        restore(snapshot)
 
 
 def test_chunked_grads_match_single_batch(predictor: MolmoAct2Predictor) -> None:
@@ -498,6 +636,77 @@ def test_loop_end_to_end(predictor: MolmoAct2Predictor, tmp_path: Path) -> None:
             torch.optim.AdamW([p for _, p in named], lr=1e-3),
         )
         assert step == 2 and loaded_baseline == result.baseline
+    finally:
+        restore(snapshot)
+
+
+def test_loop_end_to_end_option_a_with_mitigation(
+    predictor: MolmoAct2Predictor,
+    tmp_path: Path,
+) -> None:
+    """The R0-A configuration through the production loop: surface A
+    selected by config (the loop builds the freeze + row span itself),
+    KL penalty on (anchor_k3_pre in every trained step's heartbeat
+    row), advantage clip threaded — and only block rows move."""
+    subject = discrete_predictor(predictor, codec())
+    named = apply_option_a_freeze(subject)
+    snapshot = AnchorSnapshot(named)
+    base, end = option_a_row_span(subject)
+    try:
+        config = loop_config(
+            tmp_path,
+            surface="a",
+            kl_beta=0.5,
+            advantage_clip=2.0,
+            eval_every=1,
+        )
+        before = {name: p.detach().clone() for name, p in named}
+        result = run_grpo_loop(
+            subject,
+            config,
+            wave_fn=make_wave(subject, tmp_path, progress_by_draw=(0.0, 1.0)),
+            eval_fn=eval_wave,
+        )
+        assert result.stopped_reason is None and result.steps_done == 2
+        trained = [row for row in heartbeat_rows(config) if row.get("loss") is not None]
+        assert len(trained) == 2
+        for row in trained:
+            assert row["anchor_k3_pre"] is not None
+            assert row["anchor_k3_pre"] >= 0.0
+            assert math.isfinite(row["loss"])
+        moved = 0
+        for name, param in named:
+            after = param.detach()
+            assert torch.equal(after[:base], before[name][:base]), name
+            assert torch.equal(after[end:], before[name][end:]), name
+            moved += int(not torch.equal(after[base:end], before[name][base:end]))
+        assert moved == 2, "the option-A block rows should move"
+        # The anchor-chunk widths must align with the accumulation
+        # chunking (mixed chunk sizes: 4 rows at microbatch 3).
+        rows = [memory_row(subject, 21, d) for d in range(4)]
+        anchor = AnchorSnapshot(named)
+        chunks = anchor_chunk_logprobs(
+            subject,
+            anchor,
+            rows,
+            task=TASK,
+            temperature=1.0,
+            microbatch_rows=3,
+        )
+        assert [c.shape[0] for c in chunks] == [3, 1]
+        with pytest.raises(ValueError, match="one anchor tensor per chunk"):
+            accumulate_grpo_grads(
+                subject,
+                rows,
+                torch.tensor([1.0, -1.0, 0.5, -0.5]),
+                task=TASK,
+                config=GRPOConfig(),
+                microbatch_rows=3,
+                anchor_chunks=chunks[:1],
+                kl_beta=0.5,
+            )
+        for _, p in named:
+            p.grad = None
     finally:
         restore(snapshot)
 
