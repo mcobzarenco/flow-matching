@@ -6,7 +6,7 @@
 
 **Depth call:** depth 3 open at 16:0xZ 08-12: ftrig-eval20-flipped-parallel CLOSED this session (owner prio, ridden end-to-end); remaining open: sim-wrist-compositing + 2 lit items; grpo-signal-probe owner_hold (memo review), v3-rerun unhold ask 15:13Z still open.
 
-**13 open** (Live 0 · Queued 3 · Blocked 10 · Done 137)
+**12 open** (Live 0 · Queued 2 · Blocked 10 · Done 138)
 
 ## 🔴 Live (0)
 
@@ -14,23 +14,9 @@
 
 *(empty)*
 
-## 🟢 Queued (3)
+## 🟢 Queued (2)
 
 *ready — waiting on a window or a boundary*
-
-**`grpo-signal-probe`** · `gpu-local`
-
-GRPO signal probe (proposed in posts/2026-08-12-grpo-sim-design-memo.md SS4, pends owner review - the memo's ask #1): rollout-only measurement of whether group-relative advantage has signal at our competence floor
-
-**boundary:** Queued 11:4xZ 08-12 at memo close. BLOCKED on owner review of the memo (ask posted in-channel 11:4xZ). Memo SS4 is the draft-level design (linked as prereg); on approval: finalized pre-reg with final thresholds + instrument delta FIRST, then sequenced strictly after sim_parallel_oracle.py (owner 09:32Z first-GPU-item rule) AND the v3 rerun (anchor rows come from it). | APPROVED 13:16Z 08-12 ('Yes, let's do this, get everything ready for when I give you back the GPU') - 5 cells x 15 seeds x K=8 (+120 episodes vs the 4-cell shape). UNBLOCKED for prep: finalized pre-reg + EM sampler + a=0 bit-identity oracle land CPU-side ahead of release; GPU sequence per owner 13:36Z = parallel oracle -&gt; molmoact2-ftrig-sim-eval-20 -&gt; this probe (anchor rows still want the v3 rerun). | PREP COMPLETE 20:1xZ 08-12 (work session): finalized pre-reg POSTED (posts/2026-08-12-prereg-grpo-signal-probe.md — frozen: seeds 0-14, --episode-seconds 30 [the item text's '15 replans' was drift, sim100 protocol is 30 replans = 30 s], signal bar median group std &gt;= 0.25 cm, 5 cells + 2 anchor passes + registered a=0.3 hedge cell 5b, decision rule, gate &lt;=3.5 GPU-h parallel workers=8, within-driver paired-only discipline per the parallel-oracle FAIL). Instrument ALL LANDED: SDE sampler 80a5388, sequential draws 0f7ea86, SDE end-to-end + parallel (seed,draw) units 8b6d034, --episode-seconds c26a99e; check.py 797 green. Owner 13:36Z sequence SATISFIED (parallel oracle done 14:37Z, molmoact2-ftrig eval done 19:06Z) =&gt; LAUNCH-READY on GPU handback; launch checklist in the pre-reg (re-pin HEAD + checkpoint paths, babysit entry at launch). v3-rerun row join demoted to record-only cross-check (drivers differ), so the probe no longer hard-depends on the v3 rerun. | LAUNCHED 21:33:58Z 08-12 tick (standing-sequence handback call): unit fontaine-grpo-probe via launch_grpo_signal_probe.sh at HEAD 85e9a16 (2 anchors + 5 cells, out-dir outputs/sim/grpo_signal_probe); babysit entry live, first poll 85% util; ~2.8 h wall projected, results post at completion closes this item. · [pre-reg](posts/2026-08-12-prereg-grpo-signal-probe.md)
-
-<details><summary>full record</summary>
-
-GRPO signal probe (proposed in posts/2026-08-12-grpo-sim-design-memo.md SS4, pends owner review - the memo's ask #1): rollout-only measurement of whether group-relative advantage has signal at our competence floor. 4 cells x 15 seeds x K=8 stochastic rollouts, v3 frames, sim100 conventions: er60k AR T=1.0, er60k AR T=1.6 (SimpleVLA-RL setting), teacher80k flow fresh-ODE-noise draws, ftrig4k flow fresh-ODE-noise draws; cell 5 CONFIRMED (owner 13:16Z 08-12: 'Yes, let's do this') = teacher80k SDE a=0.5 (a=0.3 the hedge constant if competence craters) (needs the ~30-line Euler-Maruyama sampler + bit-identity-at-a=0 oracle). Deterministic per-seed anchors join FREE from the v3 rerun rows (same seeds, same spawn stream - ordering logically forced). Instrument delta: --ar-temperature + --flow-draws K flags on rollout_sim over existing BijouPolicy knobs, per-draw RNG keyed (seed, replan, draw), draw-0 bit-identity oracle. Primary read: within-group std of progress_final_cm (+ best-point) per cell + fraction of groups surviving the dynamic-sampling filter; candidate bar (finalize at pre-reg) median group std &gt;= 0.25 cm. Secondary: competence cost vs anchor, guard-trip rates (strikes/upright/knock-offs), AR token entropy. Decision rule: no cell clears -&gt; GRPO-on-sim parks; AR clears -&gt; phase 2 = token-GRPO per SimpleVLA-RL recipe; flow-only clears -&gt; phase 2 = Flow-GRPO SDE expert-only; both -&gt; AR first. Gate &lt;=3 GPU-h parallel-path, &lt;=8 sequential.
-
-</details>
-
----
 
 **`sim-fit-real-lens-model`** · `cpu`
 
@@ -202,7 +188,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (137)
+## ✅ Done (138)
 
 *closed — the full record stays in each fold*
 
@@ -229,6 +215,20 @@ OWNER PRIO 17:13:24Z 08-12 (FIRST GPU claim): released MolmoAct2-SO100_101 check
 <details><summary>full record</summary>
 
 OWNER PRIO 17:13:24Z 08-12 (FIRST GPU claim): released MolmoAct2-SO100_101 checkpoint directly in sim, WITH the unit shim per the owner-forwarded box note (/tmp/owner_note_molmoact2_norm.txt, committed copy fontaine/notes/molmoact2-unit-contracts-box-note.md). Raw-in-v3-sim is pre-declared MEANINGLESS (v3 rest lift ~-30 sits below the release box floor +45.2 -&gt; state tokens saturate, model blind, number = unit mismatch); run case 3: per-joint affine shim state-in (v3 -&gt; model units before its q01/q99 table) + action-out (model units -&gt; v3 before controller), labeled OFF-CONTRACT _convmap, never pooled with ftrig contract reads, treated as lower bound (release trained on mixed conventions through one table). Converted release already on disk: ~/marius-convert-gate/converted/molmoact2_so100_101_release. MANDATORY pre-run tripwires (from the note): (a) print release box from its norm_stats + verify mapped reachable set A-inv(box) covers the sim task workspace (clamp travels with the model); (b) first-action-vs-current-state check as unit-bug detector (release contract read: first_mae 18.0 vs state-copy 2.5 - a correct shim collapses this to ~state-copy scale; if it does not, STOP, do not spend the GPU). Then: same 20 seeds (sim100 list 0-19), fixed post-flip sim, parallel driver workers=8, paired vs step-500/step-2000 corrected arms (parallel-path rough rows). Also bank the cross-check the box asked for: does our sim calibration imply the same lift +180 / elbow +90 old-convention map as fit_convention_map snapped - flag disagreement in-channel. Ack posted 17:2xZ.
+
+</details>
+
+---
+
+**`grpo-signal-probe`** · `gpu-local`
+
+GRPO signal probe (proposed in posts/2026-08-12-grpo-sim-design-memo.md SS4, pends owner review - the memo's ask #1): rollout-only measurement of whether group-relative advantage has signal at our competence floor
+
+**boundary:** Queued 11:4xZ 08-12 at memo close. BLOCKED on owner review of the memo (ask posted in-channel 11:4xZ). Memo SS4 is the draft-level design (linked as prereg); on approval: finalized pre-reg with final thresholds + instrument delta FIRST, then sequenced strictly after sim_parallel_oracle.py (owner 09:32Z first-GPU-item rule) AND the v3 rerun (anchor rows come from it). | APPROVED 13:16Z 08-12 ('Yes, let's do this, get everything ready for when I give you back the GPU') - 5 cells x 15 seeds x K=8 (+120 episodes vs the 4-cell shape). UNBLOCKED for prep: finalized pre-reg + EM sampler + a=0 bit-identity oracle land CPU-side ahead of release; GPU sequence per owner 13:36Z = parallel oracle -&gt; molmoact2-ftrig-sim-eval-20 -&gt; this probe (anchor rows still want the v3 rerun). | PREP COMPLETE 20:1xZ 08-12 (work session): finalized pre-reg POSTED (posts/2026-08-12-prereg-grpo-signal-probe.md — frozen: seeds 0-14, --episode-seconds 30 [the item text's '15 replans' was drift, sim100 protocol is 30 replans = 30 s], signal bar median group std &gt;= 0.25 cm, 5 cells + 2 anchor passes + registered a=0.3 hedge cell 5b, decision rule, gate &lt;=3.5 GPU-h parallel workers=8, within-driver paired-only discipline per the parallel-oracle FAIL). Instrument ALL LANDED: SDE sampler 80a5388, sequential draws 0f7ea86, SDE end-to-end + parallel (seed,draw) units 8b6d034, --episode-seconds c26a99e; check.py 797 green. Owner 13:36Z sequence SATISFIED (parallel oracle done 14:37Z, molmoact2-ftrig eval done 19:06Z) =&gt; LAUNCH-READY on GPU handback; launch checklist in the pre-reg (re-pin HEAD + checkpoint paths, babysit entry at launch). v3-rerun row join demoted to record-only cross-check (drivers differ), so the probe no longer hard-depends on the v3 rerun. | LAUNCHED 21:33:58Z 08-12 tick (standing-sequence handback call): unit fontaine-grpo-probe via launch_grpo_signal_probe.sh at HEAD 85e9a16 (2 anchors + 5 cells, out-dir outputs/sim/grpo_signal_probe); babysit entry live, first poll 85% util; ~2.8 h wall projected, results post at completion closes this item. | CLOSED 01:1xZ 08-13 (work session, ridden end-to-end): TRIPWIRE fired at cell-1 boundary (measured ~1.13 GPU-h/cell, 7-pass plan -&gt; ~5.9 GPU-h) -&gt; re-scoped in-channel 21:58Z (no objection): anchors + cells 1/2/5 ran, cells 3/4 (flow ODE fresh-noise, the channel the ceiling-ladder read already measured NULL) parked, re-queue on owner call only. ALL RUN CELLS CLEAR the 0.25 cm bar: cell1 AR t=1.0 0.771 (cost -0.351 CI [-1.117,+0.207]), cell2 AR t=1.6 2.461 (cost -1.081 CI [-1.556,-0.634] - dominated by cell1), cell5 SDE a=0.5 1.860 (cost -0.734 CI [-2.240,+0.294]); 5b hedge NOT triggered; 0 reset strikes everywhere. DECISION (frozen rule): BOTH families clear -&gt; phase 2 = token-GRPO on AR at t=1.0 first, Flow-GRPO SDE second, joint parked. ~3.57 GPU-h vs 3.5 gate (announced overage). Results: amendment 1 on the pre-reg page, chart + reads JSON on reports Space, per-cell in-channel posts at every boundary. GRPO-on-sim does NOT park. · [pre-reg](posts/2026-08-12-prereg-grpo-signal-probe.md)
+
+<details><summary>full record</summary>
+
+GRPO signal probe (proposed in posts/2026-08-12-grpo-sim-design-memo.md SS4, pends owner review - the memo's ask #1): rollout-only measurement of whether group-relative advantage has signal at our competence floor. 4 cells x 15 seeds x K=8 stochastic rollouts, v3 frames, sim100 conventions: er60k AR T=1.0, er60k AR T=1.6 (SimpleVLA-RL setting), teacher80k flow fresh-ODE-noise draws, ftrig4k flow fresh-ODE-noise draws; cell 5 CONFIRMED (owner 13:16Z 08-12: 'Yes, let's do this') = teacher80k SDE a=0.5 (a=0.3 the hedge constant if competence craters) (needs the ~30-line Euler-Maruyama sampler + bit-identity-at-a=0 oracle). Deterministic per-seed anchors join FREE from the v3 rerun rows (same seeds, same spawn stream - ordering logically forced). Instrument delta: --ar-temperature + --flow-draws K flags on rollout_sim over existing BijouPolicy knobs, per-draw RNG keyed (seed, replan, draw), draw-0 bit-identity oracle. Primary read: within-group std of progress_final_cm (+ best-point) per cell + fraction of groups surviving the dynamic-sampling filter; candidate bar (finalize at pre-reg) median group std &gt;= 0.25 cm. Secondary: competence cost vs anchor, guard-trip rates (strikes/upright/knock-offs), AR token entropy. Decision rule: no cell clears -&gt; GRPO-on-sim parks; AR clears -&gt; phase 2 = token-GRPO per SimpleVLA-RL recipe; flow-only clears -&gt; phase 2 = Flow-GRPO SDE expert-only; both -&gt; AR first. Gate &lt;=3 GPU-h parallel-path, &lt;=8 sequential.
 
 </details>
 
