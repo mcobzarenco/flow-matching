@@ -1,12 +1,50 @@
 # Now
 
-
-
-
-
-
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-14 21:17–21:3xZ (real `date -u` at stamp: 21:29) —
+tick: **owner returned — credits topped up, GPU RELEASED, molmoact2
+retirement COMPLETE on main; orphaned stage-0 hook recovered;
+fontaine rebased onto `26ac1e6`.***
+
+**Status**: **No live run** — GPU free at 0 MiB and **RELEASED**
+(owner 21:14Z: "Your GPU is all yours"; the 12:54Z reserve is over).
+Main at `26ac1e6` — molmoact2 retirement **ALL PHASES COMPLETE**
+(phases 3–5 landed: objective matrix, `bijou/grpo_replay.py` re-point
++ replay-parity gate executed on my banked R1-A/R1-B waves with
+receipts, `bijou/molmoact2/` deleted); fontaine rebased on top —
+**zero conflicts**, 836 non-GPU green, pushed `64c93e6` (old tip
+tagged `pre-rebase-26ac1e6`). Queue validate OK: depth 1, 16 open
+(chained work session refills). Discord: inbox empty — both owner
+messages replied + acked.
+
+**Steering**: three-part (owner 21:13/21:14Z + the handoff
+attachment): (1) **credits topped up** — the 19:17Z/20:22Z exit-1
+harness alerts were the usage cap; (2) **GPU released**; (3) *"I'd
+start by reviewing the new code from main after you rebase and let me
+know your thoughts"* → queued **`main-review-molmoact2-final`** as
+the top item. The handoff also binds: Decision 11 (any post-rebase
+GRPO run is a FRESH pre-reg on the new stack, `.pt` resume
+salvage-only), masked-only decode (old-side comparisons at tag
+`pre-molmoact2-retirement`), full-width Gumbel sample streams.
+
+**Done**: orphan recovery — the capped 18:59Z work session's
+**stage-0 `--wrist-transform` hook** audited, lint+pyright fixed,
+tests 11/11 + check.py 901 green, committed (both drivers + the W3
+`wrist_arm_mask` path + oracles + spotcheck); **rebase onto
+`26ac1e6`** (16 commits, zero conflicts); queue re-scoped
+(`molmoact2-retirement-adoption` + `wrist-transfer-stage0-cpu-prep`
+closed DONE, the main review queued, GPU release recorded on the
+screen-run item); in-channel reply + both inbox ids acked.
+
+**Next**: chained work session (`run_work_next` armed):
+**`main-review-molmoact2-final` FIRST** (in-channel thoughts post,
+parity-probe rerun on the banked waves, and the wrist-screen
+checkpoint-surface verdict — the retirement re-pointed checkpoint
+loading to bijou checkpoints, so the frozen ftrig4k/simft launch
+surfaces must be verified or amended in-channel BEFORE stage 0), then
+**`wrist-transfer-screen-run`** launches on the released GPU.
+`renderer-pbr-wrist-pilot` stays owner-gated.*
 
 *Updated 2026-08-14 18:57–19:0xZ (real `date -u` at stamp: 18:59) —
 tick: **quiet — minutes after the prereg-final session closed; every
@@ -64,29 +102,20 @@ Executable CPU item: `wrist-transfer-stage0-cpu-prep` (`run_work_next`
 armed); `wrist-transfer-screen-run` waits ONLY on the in-channel GPU
 release; `renderer-pbr-wrist-pilot` stays owner-gated.*
 
-*Updated 2026-08-14 18:45–18:5xZ (real `date -u` at stamp: 18:45) —
-tick: **quiet — minutes after the preflight session closed; every
-signal verified unchanged.***
-
-**Status**: **No live run** — GPU verified 0 MiB / 0% (owner reserve
-12:54:19Z stands); registry empty. Main unchanged at `e5b6113` (phase 3
-not landed). Queue validate green: depth 2, 17 open. Discord: inbox
-empty, no new messages, no new reactions in history.
-
-**Steering**: none this tick.
-
-**Done**: quiet tick — Discord read + history (nothing new; the 👍 on
-the 17:20Z post remains the last steering), GPU/main/queue verified,
-archive roll.
-
-**Next**: unchanged — `molmoact2-retirement-adoption` phase-3 watch;
-`wrist-transfer-screen-prereg-final` is the executable CPU item
-(`run_work_next` already armed at session start, the chained work
-session picks it up); `wrist-transfer-screen-run` blocked on
-prereg-final + the in-channel GPU release; `renderer-pbr-wrist-pilot`
-stays owner-gated.*
-
 ## Utilization footer
+
+Session 2026-08-14 21:17–21:3xZ (tick; 0 GPU-h — GPU released 21:14Z,
+nothing launched pending the review): owner returned — credits topped
+up (the 19:17Z/20:22Z exit-1 alerts were the cap), GPU released
+in-channel, molmoact2 retirement ALL PHASES COMPLETE on main
+`26ac1e6`; orphaned stage-0 `--wrist-transform` hook recovered from
+the capped 18:59Z session (lint+pyright fixed, check.py 901 green,
+committed); fontaine rebased onto `26ac1e6` zero-conflict (836 green,
+pushed `64c93e6`, old tip tagged); queue re-scoped (two items closed
+DONE, `main-review-molmoact2-final` queued at the owner ask, GPU
+release recorded on the screen-run item), depth 1 with the chained
+work session refilling; both owner messages replied + acked;
+`run_work_next` armed for the review-first work session.
 
 Session 2026-08-14 18:57–19:0xZ (tick; 0 GPU-h — GPU owner-reserved):
 quiet tick minutes after the prereg-final session closed — Discord
@@ -106,14 +135,6 @@ DONE — FINAL pre-reg posted freezing the design memo §5–§7 verbatim
 caption erratum fixed; queue refilled with
 `wrist-transfer-stage0-cpu-prep` — validate green depth 2, 17 open;
 `run_work_next` armed for the phase-3 watch + the stage-0 CPU prep.
-
-Session 2026-08-14 18:45–18:5xZ (tick; 0 GPU-h — GPU owner-reserved):
-quiet tick minutes after the preflight session closed — Discord read +
-history clean (no new messages or reactions; the 17:20Z 👍 remains the
-last steering), GPU 0 MiB verified, main unchanged at `e5b6113`
-(phase 3 not landed), queue validate green (depth 2, 17 open), inbox
-empty; `run_work_next` already armed for the phase-3 watch +
-`wrist-transfer-screen-prereg-final`.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
