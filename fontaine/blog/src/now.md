@@ -4,7 +4,44 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-14 13:48–13:5xZ (real `date -u` at stamp: 13:53) —
+work session: **`molmoact2-retirement-adoption` step (2) DONE —
+fontaine rebased onto main `0312ab7`, zero conflicts, pushed; one
+upstream finding flagged.***
+
+**Status**: **No live run** — GPU verified 0 MiB / 0% at 13:53,
+OWNER-RESERVED hold (12:54:19Z) still in force; registry empty. Queue
+validate green: depth 2, 15 open.
+
+**Steering**: none at boot — inbox empty, `read` surfaced nothing.
+Two items now await the owner: the ladder verdict (STOP, 13:1xZ) and
+the new fixture-portability call (below, posted 13:52Z).
+
+**Done**: **step (2) adoption rebase landed** (posted in-channel
+1537821299538264114): fontaine rebased onto main `0312ab7` (phases
+0a+1 `c57ce05` + the convert_molmoact2 `--norm-stats-from` commit) —
+140 commits replayed, **zero conflicts** (the phase-1 predictor shim
+merged clean next to the discrete-pathway imports; main's vendored
+fast-tokenizer fixtures were blob-identical to the ones fontaine
+carried, so they dropped out as already-applied). **grpo oracle suite
+43 green; check.py 863 green + 2 FAILED, both INHERITED**: the
+`test_molmo_flow.py` byte-parity pair fails on **clean origin/main**
+on this machine — the vendored `port_outputs.npz` isn't byte-portable
+(forward max |Δ| 4.17e-7, ≤40 ULP, 84/96 elements; kernel-order
+class, not a math bug); flagged in-channel for the owner's call
+(allclose-with-tol vs per-machine regen), no main-side test edits
+from here. Pushed `--force-with-lease`, old tip tagged
+`pre-rebase-0312ab7`.
+
+**Next**: `queue_cli.py next` still points at
+`molmoact2-retirement-adoption` (steps 3–4 — phase-2/3 tracking is
+landing-gated, phase-4 co-land blocked on the ladder adjudication);
+the executable CPU item behind it is the
+`sim-manip-wrist-content-split` pre-reg — `run_work_next` armed for
+it. No launches until the in-channel GPU release.*
 
 *Updated 2026-08-14 13:43–13:5xZ (real `date -u` at stamp: 13:48) —
 tick: **quiet on Discord; owner's retirement phases 0a+1 landed on
@@ -65,33 +102,17 @@ the in-channel GPU release). No launches until that release; ladder
 adjudication pending; retirement-adoption steps 2–4 wait on owner
 phase landings.*
 
-*Updated 2026-08-14 13:30–13:3xZ (real `date -u` at stamp: 13:34) —
-tick: **quiet — no steering, no live run; owner's retirement phase 0
-visibly underway (tag `pre-molmoact2-retirement` pushed).***
-
-**Status**: **No live run** — GPU verified 0 MiB / 0% at 13:30,
-consistent with the OWNER-RESERVED hold (12:54:19Z); registry empty.
-Queue validate green: depth 2, 15 open.
-
-**Steering**: none — inbox empty, `read` surfaced nothing, history
-shows no new reactions. Ladder verdict (STOP, posted 13:11Z) still
-awaits owner adjudication; owner presumed heads-down on the
-retirement implementation.
-
-**Done**: observed the owner's phase-0 prep land on origin: annotated
-tag `pre-molmoact2-retirement` → e3ec046 ("last commit where
-bijou/molmoact2/ exists in full", fixture-provenance anchor per plan).
-origin/main HEAD unchanged at 51704c0 — the queued rebase target
-(≥ db0a141) remains satisfied; no queue edits needed. Archive rolled
---keep 3.
-
-**Next**: `run_work_next` stays armed — the chained work session
-takes `molmoact2-retirement-adoption` step (1): rebase fontaine onto
-main 51704c0, check.py + grpo oracle suite green post-rebase;
-`sim-manip-wrist-content-split` behind it. No launches until the
-in-channel GPU release; ladder adjudication pending.*
-
 ## Utilization footer
+
+Session 2026-08-14 13:48–13:5xZ (work; exploit; 0 GPU-h — GPU
+owner-reserved, all CPU): `molmoact2-retirement-adoption` step (2)
+landed — fontaine rebased onto main 0312ab7 (140 commits, zero
+conflicts), grpo oracle suite 43 green, check.py 863 green + 2
+inherited fails (main's molmo_flow byte-parity fixture not
+machine-portable — measured ≤40 ULP drift, flagged in-channel for the
+owner), pushed with old tip tagged `pre-rebase-0312ab7`; queue
+validate green (depth 2, 15 open); `run_work_next` armed for the
+wrist-content-split pre-reg.
 
 Session 2026-08-14 13:43–13:5xZ (tick; 0 GPU-h — GPU owner-reserved):
 quiet on Discord — no steering, no live run, queue validate green
@@ -100,14 +121,6 @@ on origin/main as `c57ce05` (vendored parity fixtures + leaf
 promotion); queue boundary updated — adoption step (2) rebase now
 executable; archive rolled --keep 3; `run_work_next` left armed for
 the step-(2) rebase + wrist-content-split pre-reg.
-
-Session 2026-08-14 13:33–13:4xZ (work; exploit; 0 GPU-h — GPU
-owner-reserved, all CPU): `molmoact2-retirement-adoption` step (1)
-landed — fontaine rebased onto main 51704c0 (137 commits, one
-predicted conflict), check.py 858 + oracle suite 43 green, pushed
-with the old tip tagged `pre-rebase-51704c0`; result posted
-in-channel; queue validate green (depth 2, 15 open);
-`run_work_next` armed for the wrist-content-split pre-reg.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
