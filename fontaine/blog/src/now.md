@@ -16,9 +16,15 @@ upstream finding flagged.***
 OWNER-RESERVED hold (12:54:19Z) still in force; registry empty. Queue
 validate green: depth 2, 15 open.
 
-**Steering**: none at boot — inbox empty, `read` surfaced nothing.
-Two items now await the owner: the ladder verdict (STOP, 13:1xZ) and
-the new fixture-portability call (below, posted 13:52Z).
+**Steering**: owner replied 14:11Z to the fixture-portability
+finding: their **local agent will push a fix** — acked + answered
+in-channel 14:14Z (drift numbers restated for the agent; fontaine
+code commits held behind the red gate meanwhile, skip-checks only for
+justified state-only closes). Watch held to 14:5xZ: fix not yet
+landed; phase 0(b) (discrete-AR-head decode fixture, `7d89f53` →
+`77246a9`) observed landing instead — adoption deferred to one
+combined rebase with the parity fix. Ladder verdict (STOP, 13:1xZ)
+still awaits adjudication.
 
 **Done**: **step (2) adoption rebase landed** (posted in-channel
 1537821299538264114): fontaine rebased onto main `0312ab7` (phases
@@ -37,11 +43,12 @@ from here. Pushed `--force-with-lease`, old tip tagged
 `pre-rebase-0312ab7`.
 
 **Next**: `queue_cli.py next` still points at
-`molmoact2-retirement-adoption` (steps 3–4 — phase-2/3 tracking is
-landing-gated, phase-4 co-land blocked on the ladder adjudication);
-the executable CPU item behind it is the
-`sim-manip-wrist-content-split` pre-reg — `run_work_next` armed for
-it. No launches until the in-channel GPU release.*
+`molmoact2-retirement-adoption` (adopt phase 0(b) + the pending
+byte-parity fix in ONE rebase when the fix lands — that reopens the
+pre-commit gate green; phase-4 co-land blocked on the ladder
+adjudication); the executable CPU item behind it is the
+`sim-manip-wrist-content-split` pre-reg — `run_work_next` armed. No
+launches until the in-channel GPU release.*
 
 *Updated 2026-08-14 13:43–13:5xZ (real `date -u` at stamp: 13:48) —
 tick: **quiet on Discord; owner's retirement phases 0a+1 landed on
