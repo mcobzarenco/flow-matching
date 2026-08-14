@@ -439,6 +439,21 @@ decode compute (§7 curated-plan ledger).
 Params live ~50% in the MLPs, ~33% in cross-attention (8 heads × 512
 over the residual 1024), ~17% in self-attention.
 
+### 2.2a MolmoAct2 discrete head (`ar_molmoact2`, suffix format 6)
+
+The MolmoAct2 family's second pathway (§8.13 step-8 closure):
+`MolmoAct2ARDecoder` continues the trunk's own action rows
+(`<action_start>` + bins + `<action_end>`, empty opener — their
+serving prompt carries the whole scaffold) against the retained
+prefix cache; grammar-masked decode by symbol-budget arithmetic over
+the released FAST codec (1005 reachable of 2048 block rows, 7
+quantization holes loud-by-default, reference-verbatim short
+tokenization opt-in for training). Zero decoder parameters — the
+trainable surface is the trunk (`--backbone-text-lr`); checkpoints
+record the format-6 `ar_backbone` section (no expert/prompt weight
+files). Joint runs mount it as the parameterless `joint_ce` rider
+beside `molmo_flow` (L_flow + λ·L_CE, `--insulate-expert` for KI).
+
 ### 2.2 AR FAST decoder (cross-attention) — RETIRED 2026-08-13
 
 `ARFastDecoder` (the same sandwich blocks over a causal FAST-token
@@ -1931,6 +1946,27 @@ fixed: the frozen-trunk `state_proj` freeze assumed every encoder has
 one, and the launch banner lacked the encoder arm. Remaining for
 §8.13: the rig-rung repeat (gate d, ≤6 GPU-h — the pre-registered
 2k-step recipe through bijou.train), then step 6 (narration).**
+
+**STEP-8 CLOSURE (2026-08-14, docs/molmoact2-retirement.md executed
+phases 0–5).** The port package `bijou/molmoact2/` is DELETED. Its
+discrete head is first-class: `MolmoAct2ARDecoder`
+(`decoders/ar_molmoact2.py`) — the third `ARSuffixDecoder` concrete,
+decoder kind `ar_backbone` at suffix format 6, ZERO own parameters
+(trunk-native rows; `MolmoAct2ActionCodec`'s −2/−1 special offsets
+make the scaffold arithmetic land on `<action_start>`/`<action_end>`
+with `block_base = action_token_start_id` — capture stays [B, 2048]
+block-relative). Byte-parity vs the port's decode gated on the frozen
+fixture (ids/bins/actions equal ×6, logprobs 2.4e-7). The molmoact2
+family trains under `--objective {flow, ar, joint}` (+
+`--joint-ce-weight`, `--expert-init {inherit, fresh, <ckpt>}`) with
+decision-5 ordering (flow KV extracted before the CE append) and KI
+test-pinned both ways; CPU anchors in §5's regression gates. GRPO
+rides `bijou/grpo_replay.py` (`MolmoAct2DiscreteStack` + the thin
+replay; row NPZ + loop `.pt` formats frozen) — frozen-wave replay
+gate PASSED on both R1 banks (masks bit-equal 1904+904 rows;
+port-vs-first-class ≤5.7e-5 under the re-baselined 1e-4
+cross-decomposition bound; fresh v2 wave through the new driver ran
+end-to-end). Full record: docs/molmoact2-retirement.md.**
 
 **Decisions (register).**
 

@@ -34,6 +34,7 @@ import torch
 from safetensors.torch import save_file
 
 from bijou.convert_molmoact2 import convert
+from bijou.decoders.molmo_flow import MolmoFlowConfig
 from bijou.loading import (
     MolmoAct2PromptConfig,
     MolmoFlowDecoderConfig,
@@ -41,14 +42,18 @@ from bijou.loading import (
     from_checkpoint,
     read_checkpoint_info,
 )
-from bijou.molmoact2.action_expert import ActionExpertConfig
 
 _ACTION_DIM = 6
 _STATE_DIM = 6
 _MAX_ACTION_DIM = 8
 _HORIZON = 4
 
-_TINY_AE = ActionExpertConfig(
+# The source-export fabricator's expert shape. First-class since the
+# port's retirement (phase 5): MolmoFlowConfig produces the SAME
+# state-dict names as their module (the §8.13 byte-parity contract —
+# the converter's tensor-name surface is exactly this state dict minus
+# the loader-injected compat tensors).
+_TINY_AE = MolmoFlowConfig(
     max_horizon=_HORIZON,
     max_action_dim=_MAX_ACTION_DIM,
     hidden_size=16,
@@ -64,6 +69,7 @@ _TINY_AE = ActionExpertConfig(
     qk_norm_eps=1e-6,
     rope=True,
     causal_attn=False,
+    llm_kv_dim=16,
 )
 
 
@@ -206,7 +212,7 @@ def _expert_state() -> dict[str, torch.Tensor]:
     """The HF-export tensor set: the port module's state_dict minus the
     loader-injected compat tensors, under the model.action_expert prefix."""
     torch.manual_seed(0)
-    expert = _TINY_AE.build(llm_kv_dim=16)
+    expert = _TINY_AE.build()
     return {
         f"model.action_expert.{name}": tensor.clone()
         for name, tensor in expert.state_dict().items()
@@ -350,9 +356,9 @@ def test_expert_bytes_verbatim_and_names_match_port(
     assert set(written) == set(source)
     for name, tensor in source.items():
         assert torch.equal(written[name], tensor), name
-    # The names contract for step 3: the port module's state_dict minus
+    # The names contract: MolmoFlowConfig.build()'s state_dict minus
     # the loader-injected compat tensors.
-    expert = _TINY_AE.build(llm_kv_dim=16)
+    expert = _TINY_AE.build()
     module_names = {
         name
         for name in expert.state_dict()

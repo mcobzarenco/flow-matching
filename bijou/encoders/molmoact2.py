@@ -36,7 +36,7 @@ Their serving prompt, as a first-class bijou encoder strategy:
 
 Assembly is OWNED here (template, split, batching); the leaf transforms
 (task normalization, state binning, uint8 image path, token expansion,
-sequence budget) are imported from ``bijou.molmoact2.processing`` — the
+sequence budget) are imported from ``bijou.encoders.molmoact2_processing`` — the
 frozen, golden-fixture-pinned reference semantics. The byte gate
 (tests/test_molmoact2_encoder.py) compares this collator's ASSEMBLY
 against the port's ``pack_action_example``, which stays meaningful

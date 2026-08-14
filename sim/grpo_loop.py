@@ -1246,7 +1246,11 @@ def make_sim_wave_fns(
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--checkpoint", required=True, help="BIJOU molmoact2-family checkpoint dir (phase-4 re-point)")
+    parser.add_argument(
+        "--checkpoint",
+        required=True,
+        help="BIJOU molmoact2-family checkpoint dir (phase-4 re-point)",
+    )
     parser.add_argument(
         "--fast-tokenizer",
         default="allenai/MolmoAct2-FAST-Tokenizer",

@@ -33,7 +33,8 @@ from .vision import Molmo2VisionBackbone
 
 _VISION_PREFIX = "model.vision_backbone."
 # MolmoAct2 checkpoints carry the flow action expert alongside the trunk;
-# bijou.molmoact2 loads those tensors into its own module.
+# the converter extracts those tensors (expert.safetensors) and the
+# molmo_flow decoder loads them — the trunk loader skips the prefix.
 _ACTION_EXPERT_PREFIX = "model.action_expert."
 _LM_HEAD_KEY = "lm_head.weight"
 _BLOCK_RE = re.compile(r"^transformer\.blocks\.(\d+)\.")

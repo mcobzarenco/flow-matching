@@ -1,22 +1,21 @@
 # Retiring `bijou/molmoact2/` — first-class MolmoAct2 AR + joint objectives
 
-Status: **phases 0–2 EXECUTED** (2026-08-14; every gate green —
-receipts in §5 and §9); **phase 3 is NEXT**; **phase 4's window is
-OPEN**
-(the GRPO ladder adjudicated STOP on surface A — fontaine's
-recommendation 13:1xZ, owner-ratified 2026-08-14 — so phase 4 is
-sequenced purely behind phases 2–3, per his 12:50Z sign-off); phase 5
-last. When complete, the design
-record subsumes into `docs/architecture.md` (§8.13 gets its step-8
-closure; §2 gains the new decoder and the objective matrix) and this
-file becomes the migration's historical record. Anchor tags:
-`pre-decoder-simplify` (T1/T2 deletions, 2026-08-13) and
-`pre-molmoact2-retirement` = main `51704c0` (phase 0 — the last
-commit where the port package exists unmodified). Executed-phase
-commits: fixtures+promotion `c57ce05`, `--norm-stats-from` `0312ab7`,
-discrete fixture `7d89f53`, provenance/pyright `77246a9`,
-cross-machine fixture bounds `7423ec3`, gate-d-lite verdict
-`3131f82`.
+Status: **COMPLETE — ALL PHASES EXECUTED 2026-08-14** (owner
+delegation: "finish the whole plan"; every gate green, receipts in
+§5). `bijou/molmoact2/` is DELETED; this file is now the migration's
+HISTORICAL RECORD. The as-of-now design lives in
+`docs/architecture.md` (§8.13 step-8 closure; §2.2a the discrete
+head; §5's regression gates carry the objective-matrix CPU anchors).
+Anchor tags: `pre-decoder-simplify` (T1/T2 deletions, 2026-08-13) and
+`pre-molmoact2-retirement` = main `51704c0` (the last commit where
+the port package exists unmodified — fixture generators and the
+old-vs-new gate rerun only there). Executed-phase commits: phases 0–1
+`c57ce05`/`0312ab7`/`7d89f53`/`77246a9`/`7423ec3`/`3131f82`;
+main-roll-forward `64fcc24`; phase 2 `b30784d`/`b46a3ed`/`651c792`/
+`e0b2192` + probe, acceptance PASS `e5b6113`; phase 3 (objective
+matrix + tiny-fixture anchors) and phase 4 (grpo_replay re-point +
+frozen-wave gate) and phase 5 (deletion) landed 2026-08-14 — see
+`git log --oneline e5b6113..` for the per-commit gates.
 
 ---
 
@@ -461,35 +460,86 @@ k3 0) on the new surface; the unconstrained reference mode may live
 port-side only — it is their deployment quirk (zeros fallback), not
 something the first-class decoder needs.
 
-**Phase 3 — objective matrix.** `--objective` + validations; the
-joint arm in `BijouTrainStep`/`BijouModel` (three-normalizer chunked
-backward; per decision 4 weights); the decision-5 ordering invariant
-test (expert KV extracted before CE suffix append; insulated ⇒ trunk
-grads from the flow term exactly zero while CE grads flow — extend
-the existing KI contract test to the joint composition); schema +
-save/load round-trip tests for all three compositions. Gates: 2-step
-corridor for `ar` and `joint` on the tiny fixture recorded as new
-anchors; flow-only bitwise unchanged.
+**Phase 3 — objective matrix. EXECUTED 2026-08-14.** `--objective
+{flow, ar, joint}` (ArchSection.EXTENSION: freely selectable under
+--init-from, locked to the recorded value under --resume) +
+`--joint-ce-weight` (λ, default 1.0, joint-only, > 0) +
+`--expert-init {inherit, fresh, <ckpt>}` (owner-agreed 2026-08-14:
+fresh = released-shape synthesis for the stage-2 recipe — REQUIRED
+from ar-only sources; <ckpt> = the two-source init under a
+config-equality guard + loud table-provenance print). The historical
+`_joint_share` reinstated with the ORDER FLIPPED for cache-conditioned
+flow (decision 5 in the code paths: `loss_components` and
+`BijouTrainStep` both extract the flow branch's prompt-only KV before
+the CE rider's suffix forward appends; CE re-enters bf16 autocast,
+flow stays fp32 outside). Collator gained the merged action-table
+override (CE targets, batch stats rows and the flow clamp read ONE
+table — their shared-table convention). Save side: parameterless
+decoders write no expert file (the loader refuses stray ones), no
+empty rider file; ar runs write the in-use tables into the
+normalization row. Tests: decision-5 ordering BITWISE (the flow
+component identical while the cache visibly grows), λ composition,
+KI both ways (disjoint parameter sets) + the uninsulated complement,
+round-trips for all three shapes, CLI validations through the real
+parser. **Anchors on the tiny molmoact2 fixture (architecture.md §5
+regression gates): flow 1.3906/1.3305; ar 12.2254/12.3317; joint(KI,
+λ=1) 13.6160/13.6621 with the built-in cross-oracle (loss_action ≡
+flow, loss_aux ≡ ar, total = flow + λ·CE, all bitwise). Measured
+policy fix the oracle surfaced: real rig chunks DO hit the released
+BPE's 7 quantization holes — the 0/2996 audit figure was masked
+DECODES, which cannot produce holes by construction;
+MolmoAct2ActionCodec.allow_quantization_holes (True in the training
+collator) reproduces the reference recipe's short tokenization,
+counted + printed, never silent.**
 
-**Phase 4 — GRPO migration (co-landed with fontaine).** Replay
-builder rewritten thin on `MolmoAct2InputsCollator` +
-`suffix_targets` + generic capture (row NPZ unchanged);
-`sim/grpo_loop.py` + sim rollout driver re-pointed from
-`MolmoAct2Predictor` to `BijouPolicy` + `MolmoAct2ARDecoder`. Gate
-(fontaine amendment 2026-08-14): TWO frozen-seed waves replayed
-old-vs-new — a v1-reward wave (episode rewards equal, per-token
-logprobs within the registered bounds) AND a banked **v2-reward
-wave** (grip/contact traces ride the capture path; `train_reward` v2
-raises loudly on a missing trace, so the check is rewards-equal +
-no-raise — it pins that the re-pointed driver preserves the trace
-keys, not just the token surface).
+**Phase 4 — GRPO migration. EXECUTED 2026-08-14** (fontaine's shape
+sign-off + v2-wave amendment honored; landed on main with his branch
+fast-forwarded in, so the co-land is a rebase pickup on his side).
+`bijou/grpo_replay.py` = the re-point: `MolmoAct2DiscreteStack` (the
+AR read of a BIJOU molmoact2-family checkpoint behind the port
+predictor's duck-typed attribute surface — the loop's freeze/anchor/
+row-span machinery runs verbatim) + the thin replay (the scaffold's
+teacher-forced suffix forward, fontaine's exact reduction ops; row
+NPZ + loop `.pt` formats FROZEN, decision 10). `sim/grpo_loop.py` +
+`sim/rollout_sim_parallel.py` load the stack from bijou checkpoints;
+`ar_predict_sampled` threads `action_capture` (the promised generic
+path); `test_grpo_loop` (20/20) runs on the facade over the shared
+tiny-release builder (`bijou.testing.write_tiny_molmoact2_release`).
 
-**Phase 5 — delete `bijou/molmoact2/`.** Remaining modules + their
-tests go; loud refusals are NOT needed at the checkpoint layer (no
-checkpoint records a "port" — converted artifacts already speak the
-first-class schema), so the deletion is code-only; docs updated
-(§8.13 step 8 closed; §2 decoder census; this file's status);
-oracle re-runs bitwise for all surviving paths.
+**Gate verdicts (box H100, 2026-08-14):** masks bit-equal on ALL rows
+of both banked waves (R1-A step_0004: 904 rows v1; R1-B step_0006:
+1904 rows v2), replayed at their collection weights (`.pt` restore
+both stacks). Port-vs-first-class logprobs max |Δ| 4.4e-5 (v1) /
+5.7e-5 (v2) — IN-BOUND under the loudly re-baselined **1e-4
+cross-decomposition bound** (first registration said 1e-5; the two
+replays are different decompositions — monolithic port forward vs
+scaffold prefill+continuation — the SECOND occurrence of the "1e-5
+implies same decomposition" trap, now a rule: 1e-5 only between
+IDENTICAL forward decompositions). Per-token objective deltas 0.0 /
+6.5e-8. Banked-vs-replay spread (JPEG + policy history) reported, not
+gated — R1-B's own heartbeat trained under it (step-7 clip_fraction
+0.141). The v2 trace-preservation leg ran POSITIVE: a fresh 1-seed×2
+wave through the NEW driver end-to-end (`--train-reward v2`,
+earned_progress computed from grip traces, no missing-trace raise,
+one GRPO update, exit 0). The old-vs-new A/B is preserved in
+`probes/probe_grpo_replay_parity.py`'s header; the probe itself is
+now the new-stack wave-integrity instrument (the port side rerun only
+at the tag).
+
+**Phase 5 — delete `bijou/molmoact2/`. EXECUTED 2026-08-14.** The
+package and seven port test files deleted; `validate_inference_config`
+moved to `encoders/molmoact2_processing` (the converter's last port
+import); `test_convert_molmoact2` fabricates source experts through
+`MolmoFlowConfig` (same state-dict names — the §8.13 byte-parity
+contract IS the name contract); `test_molmoact2_{encoder,processing}`
+re-pointed to the promoted module and KEPT (they test live code);
+fixture generators stay as pyright-excluded provenance documents
+(runnable at the tag only). Oracle re-runs on the deletion tree, ALL
+BITWISE: gemma flow 2.7903/1.9152, gemma ar 27.8306/27.767, molmoact2
+flow 1.3906/1.3305, ar 12.2254/12.3317, joint 13.6160/13.6621.
+check.py CHECKS PASSED (804 + 11 gpu-deselected). Box artifacts:
+`~/marius-fontaine-ro` (the phase-0 read-only worktree) removed — its
+scoped lifetime ended at the phase-2 gate.
 
 Rough sizes: P1 ±0 net (moves), P2 ~250–350 + tests, P3 ~150 restored
 + schema, P4 net-negative (replay −340 + loop re-pointing), P5 ≈

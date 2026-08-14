@@ -47,6 +47,7 @@ from __future__ import annotations
 import json
 import math
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -96,6 +97,7 @@ __all__ = [
     "to_uint8_rgb",
     "unnormalize_action",
     "unnormalize_q01q99",
+    "validate_inference_config",
 ]
 
 # Special-token ids, pinned from the MolmoAct2 checkpoint tokenizer
@@ -539,6 +541,26 @@ IMAGE_TOKEN_STRINGS = (
 #: :func:`encoder_attention_mask`). Discrete-only checkpoints and the
 #: depth gate stay out of scope.
 SUPPORTED_ACTION_MODES = ("continuous", "both")
+
+
+def validate_inference_config(config: Mapping[str, object]) -> None:
+    """Loud guard over a SOURCE checkpoint's top-level ``config.json``:
+    raise on any action-path feature this stack does not implement
+    (moved from the port's wiring at its retirement, phase 5 — the
+    converter's P-guard)."""
+    if not config.get("add_action_expert", False):
+        raise ValueError("checkpoint has no action expert (add_action_expert falsy)")
+    if config.get("action_expert_depth_gate", False):
+        raise NotImplementedError(
+            "action_expert_depth_gate=true is not wired (off in the released "
+            "SO-100/101 and rig-ft checkpoints)",
+        )
+    mode = config.get("action_mode", "continuous")
+    if mode not in SUPPORTED_ACTION_MODES:
+        raise NotImplementedError(
+            f"action_mode={mode!r} is not wired (continuous-path scope: "
+            f"{SUPPORTED_ACTION_MODES})",
+        )
 
 
 def require_single_obs(config: dict[str, Any]) -> int:

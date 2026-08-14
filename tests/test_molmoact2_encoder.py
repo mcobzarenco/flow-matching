@@ -36,13 +36,7 @@ from bijou.encoders.molmoact2 import (
     MolmoAct2InputsCollator,
     robot_prompt,
 )
-from bijou.interface import CameraFrame, PromptInputs
-from bijou.molmo2.cache import Molmo2KVCache
-from bijou.molmo2.config import Molmo2Config
-from bijou.molmo2.model import Molmo2Model
-from bijou.molmo2.text import Molmo2TextModel
-from bijou.molmo2.vision import Molmo2VisionBackbone
-from bijou.molmoact2.processing import (
+from bijou.encoders.molmoact2_processing import (
     ACTION_OUTPUT_ID,
     BOS_ID,
     IM_END_ID,
@@ -54,6 +48,12 @@ from bijou.molmoact2.processing import (
     build_robot_prompt,
     pack_action_example,
 )
+from bijou.interface import CameraFrame, PromptInputs
+from bijou.molmo2.cache import Molmo2KVCache
+from bijou.molmo2.config import Molmo2Config
+from bijou.molmo2.model import Molmo2Model
+from bijou.molmo2.text import Molmo2TextModel
+from bijou.molmo2.vision import Molmo2VisionBackbone
 
 # The rig-ft token layout, borrowed from tests/test_molmoact2_predictor.py
 # (tests/ is not a package, so the stub is restated).

@@ -50,7 +50,11 @@ from torch import Tensor
 
 from .data import DatasetStats
 from .encoders.molmoact2 import MOLMOACT2_PROMPT_FORMAT
-from .encoders.molmoact2_processing import require_single_obs
+from .encoders.molmoact2_processing import (
+    load_norm_stats,
+    require_single_obs,
+    validate_inference_config,
+)
 from .gemma4.loading import resolve_checkpoint_dir
 from .loading import (
     BackboneConfig,
@@ -60,8 +64,6 @@ from .loading import (
     MolmoFlowDecoderConfig,
     read_checkpoint_info,
 )
-from .molmoact2.processing import load_norm_stats
-from .molmoact2.wiring import validate_inference_config
 
 _EXPERT_PREFIX = "model.action_expert."
 

@@ -90,7 +90,12 @@ def _stub_ids(collator: Any) -> Any:
     collator (the tiny source ships no real tokenizer)."""
     from test_molmoact2_encoder import _StubTokenizer
 
-    from bijou.molmoact2.processing import BOS_ID, IM_END_ID, IM_PATCH_ID, IM_START_ID
+    from bijou.encoders.molmoact2_processing import (
+        BOS_ID,
+        IM_END_ID,
+        IM_PATCH_ID,
+        IM_START_ID,
+    )
 
     collator._tokenizer = _StubTokenizer()
     collator._image_ids = (IM_START_ID, IM_END_ID, IM_PATCH_ID)
