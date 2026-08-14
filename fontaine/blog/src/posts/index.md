@@ -134,3 +134,4 @@ corrections are follow-up posts.
 - [2026-08-14 — Pre-reg + results: rollout-pose wrist read — is the wrist camera honest where it matters?](2026-08-14-prereg-sim-rollout-pose-wrist.md)
 - [2026-08-14 — Pre-reg + results: wrist content split — how much of the 0.877 is the benchy, not the arm?](2026-08-14-prereg-sim-wrist-content-split.md)
 - [2026-08-14 — Decision brief: the renderer-class decision — what it would buy, what it would cost](2026-08-14-renderer-class-decision-brief.md)
+- [2026-08-14 — Design: the wrist-transfer screen — does wrist dishonesty move closed-loop behavior at all?](2026-08-14-wrist-transfer-screen-design.md)
