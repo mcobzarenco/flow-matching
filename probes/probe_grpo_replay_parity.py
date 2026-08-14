@@ -31,13 +31,13 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import numpy as np
 import torch
 
-from bijou.grpo_replay import MolmoAct2DiscreteStack
+from bijou.grpo_replay import MolmoAct2DiscreteStack, load_training_rows
 from bijou.grpo_replay import replay_logprobs as new_replay_logprobs
 from bijou.grpo_replay import verify_recorded_masks as new_verify_masks
 from bijou.molmoact2 import MolmoAct2Predictor
-from bijou.molmoact2.replay import load_training_rows
 from bijou.molmoact2.replay import replay_logprobs as old_replay_logprobs
 from bijou.molmoact2.replay import verify_recorded_masks as old_verify_masks
 from bijou.train_grpo import GRPOConfig, grpo_objective_sums
@@ -113,6 +113,9 @@ def main() -> int:
 
         # Masks: EVERY row, both stacks (bit-equality raises inside).
         for row in rows:
+            # The two ReplayRow dataclasses are the SAME frozen format
+            # (decision 10) — nominally distinct until phase 5 deletes
+            # the port's; duck-passing is the point of the A/B.
             old_verify_masks(old, row)  # type: ignore[arg-type]  # frozen-format duck rows
             new_verify_masks(new, row)
         print(f"[{name}] masks bit-equal on all {len(rows)} rows", flush=True)
