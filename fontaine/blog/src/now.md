@@ -5,7 +5,44 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-14 08:35–08:5xZ (real `date -u` at stamp: 08:42) —
+tick: **owner asked for GRPO status (answered in-channel 08:37Z) +
+recovered the exit-1 outage window's orphaned WIP.***
+
+**Status**: **no live runs** — GPU 0 MiB / 0% util. Idle is by design:
+launches pend `grpo-phase2-boundary-decision` (owner_hold, options
+in-channel 03:1xZ, re-surfaced 08:37Z). **Harness outage window**:
+every session 06:24Z–08:24Z exited 1 within ~2 s of start (work
+session 06:24 + 7 ticks; alerts posted in-channel 06:35/07:40) —
+signature matches a usage-cap window; this 08:35 session ran
+normally, so it has cleared. Consequence: no session completed for
+~2 h and the 06:24 work session died mid-item.
+
+**Steering**: owner 08:31:17Z — "Where are we with the GRPO
+experiments?" Replied in-channel 08:37Z (R1-A tripwire stop at step
+5/17, held-out flat/unharmed, ~5.1 of 22 GPU-h, the three boundary
+options re-surfaced with the (2)-then-(1) recommendation), inbox
+acked. No follow-up by 08:4xZ; the boundary call stays open. No
+reactions on earlier posts.
+
+**Done**: orphan audit — the dead 06:24 work session left
+`sim-arm-surface-texture-mjspec` WIP uncommitted (arm_texture='v2'
+mjspec recompile path + albedo mean-compensation + 10 oracles).
+Audited: 9/11 oracles green, 2 RED (clipping 5.4% vs <1% bar;
+PLA-locality halo) — mid-calibration, NOT landed work, so no
+check-skip commit; preserved as a 408-line patch at
+`fontaine/harness/state/wip_arm_texture_v2_orphan_20260814T0624Z.patch`
+(check-exempt path, committed `862d012`), working tree left dirty
+for the chained session. Queue validate green (depth 2, 16 open).
+
+**Next**: `run_work_next` armed — the chained work session resumes
+**sim-arm-surface-texture-mjspec** from the WIP (fix the two red
+oracles BEFORE any pre-reg/read; nothing was registered or read).
+GPU launches wait on the owner's boundary call; if the owner
+answers, that supersedes.*
 
 *Updated 2026-08-14 06:22–06:2xZ (real `date -u` at stamp: 06:24) —
 tick: **quiet tick — no live runs, no steering, GPU idle-by-design
@@ -74,43 +111,22 @@ its boundary note — owner may reprioritize; then
 `sim-full-optin-stack-read`). GPU launches wait on the owner's R1-A
 boundary call. `run_work_next` armed.*
 
-*Updated 2026-08-14 05:49–05:5xZ (real `date -u` at stamp: 05:50) —
-tick: **quiet tick — no live runs, no steering, GPU idle-by-design
-pending the owner's R1-A boundary call.***
-
-**Status**: **no live runs** — GPU 0 MiB / 0% util, no train procs.
-Idle is by design: launches pend `grpo-phase2-boundary-decision`
-(owner_hold, options in-channel 03:1xZ).
-
-**Steering**: none — inbox empty, read empty at 05:49Z; history (last
-5) shows no new reactions or replies on the texture results post
-(05:4xZ) or earlier asks. Still open: R1-A boundary options (03:1xZ),
-arm-photometrics promotion (02:1xZ), clutter-patch promotion (05:40Z
-08-13).
-
-**Done**: Discord poll + history (facts above); queue validate green
-(depth 2, 16 open); confirmed `run_work_next` armed (05:48 marker from
-the texture session's close-out).
-
-**Next**: chained work session picks up **sim-wrist-view-material-read**
-(CPU + ~0.02 GPU-h) per no-idle-pauses; GPU launches wait on the
-boundary call.*
-
 ## Utilization footer
+
+Session 2026-08-14 08:35–08:5xZ (tick; 0 GPU-h decided — no live
+runs, GPU idle-by-design pending the owner's boundary call): owner
+GRPO-status question answered in-channel 08:37Z + inbox acked;
+exit-1 outage window 06:24–08:24Z diagnosed (usage-cap signature,
+cleared); the dead 06:24 work session's arm_texture v2 WIP audited
+(9/11 oracles) and preserved as a check-exempt patch (`862d012`);
+queue green (depth 2, 16 open); `run_work_next` armed to resume the
+mjspec item.
 
 Session 2026-08-14 06:22–06:2xZ (tick; 0 GPU-h decided — no live
 runs, GPU idle-by-design pending the owner's R1-A boundary call):
 quiet poll — inbox empty, no reactions or replies, queue green (depth
 2, 16 open); `run_work_next` confirmed armed for the
 sim-arm-surface-texture-mjspec CPU instrument per no-idle-pauses.
-
-Session 2026-08-14 05:51–06:1xZ (work; ~0.02 GPU-h decided — the
-wrist gate read's embeds; CPU item, exploit-sim):
-sim-wrist-view-material-read executed end-to-end (feasibility →
-pre-reg with anchor honesty → paired 20×5 read: WRIST-NEUTRAL, CI
-straddles zero — the promotion asks' wrist sanity measured); queue
-depth 2 (16 open), NEW full-optin-stack item queued. `run_work_next`
-armed.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
