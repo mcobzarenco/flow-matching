@@ -35,18 +35,18 @@ from typing import Any
 import numpy as np
 import pytest
 import torch
-from test_molmoact2_discrete import (
-    ACTION_TOKEN_START,
-    codec,
-    discrete_predictor,
-)
-from test_molmoact2_predictor import _observation, build_predictor
 
 from bijou.decoders.ar_backbone import ActionCaptureStep
 from bijou.eval.policies import stable_sample_rng, token_rows_from_capture
-from bijou.molmoact2 import MolmoAct2Predictor
-from bijou.molmoact2.replay import ReplayRow, molmoact2_grpo_loss
+from bijou.grpo_replay import (
+    MolmoAct2DiscreteStack,
+    ReplayRow,
+    molmoact2_grpo_loss,
+)
+from bijou.testing import write_tiny_molmoact2_release
 from bijou.train_grpo import GRPOConfig, grpo_objective_sums
+
+ACTION_TOKEN_START = 151_934  # the release block base (fixture-mirrored)
 from sim.grpo_loop import (
     AnchorSnapshot,
     GRPOLoopConfig,
@@ -73,12 +73,39 @@ from sim.grpo_loop import (
 from sim.rollout_sim import EpisodeResult
 from sim.rollout_sim_parallel import TrainingRowWriter
 
-TASK = _observation()["task"]
+TASK = "Pick up the cube."
+
+
+def _observation() -> dict[str, Any]:
+    """One deterministic observation at the tiny fixture's geometry
+    (6-dim state, two [H, W, 3] uint8 frames)."""
+    generator = np.random.default_rng(7)
+    return {
+        "images": [
+            generator.integers(0, 256, size=(48, 64, 3), dtype=np.uint8),
+            generator.integers(0, 256, size=(48, 64, 3), dtype=np.uint8),
+        ],
+        "task": TASK,
+        "state": torch.tensor([0.5, -0.25, 1.75, 10.0, -4.0, 2.0]),
+    }
 
 
 @pytest.fixture(scope="module")
-def predictor() -> MolmoAct2Predictor:
-    return build_predictor(vocab_size=156_032)
+def subject(tmp_path_factory: pytest.TempPathFactory) -> MolmoAct2DiscreteStack:
+    """The retirement phase-4 subject: the first-class discrete stack
+    over a tiny release-class bijou checkpoint (the port predictor's
+    tiny-fabrication analog, fp32 CPU like the port suite ran)."""
+    _, checkpoint = write_tiny_molmoact2_release(
+        tmp_path_factory.mktemp("grpo-loop") / "tiny",
+    )
+    return MolmoAct2DiscreteStack.load(
+        checkpoint,
+        device="cpu",
+        dtype=torch.float32,
+        fast_tokenizer=str(
+            Path(__file__).parent / "fixtures" / "molmoact2_fast_tokenizer",
+        ),
+    )
 
 
 def episode(
@@ -110,7 +137,7 @@ def rng(seed: int, draw: int) -> np.random.Generator:
     return stable_sample_rng(0, repo, seed, 0, 0)
 
 
-def sampled_row(subject: MolmoAct2Predictor, seed: int, draw: int) -> Any:
+def sampled_row(subject: MolmoAct2DiscreteStack, seed: int, draw: int) -> Any:
     """One grammar-masked sampled decode at T=1.0 -> TokenRow."""
     obs = _observation()
     capture: list[ActionCaptureStep] = []
@@ -131,7 +158,7 @@ def sampled_row(subject: MolmoAct2Predictor, seed: int, draw: int) -> Any:
     return row
 
 
-def memory_row(subject: MolmoAct2Predictor, seed: int, draw: int) -> ReplayRow:
+def memory_row(subject: MolmoAct2DiscreteStack, seed: int, draw: int) -> ReplayRow:
     obs = _observation()
     row = sampled_row(subject, seed, draw)
     return ReplayRow(
@@ -394,8 +421,7 @@ def test_grpo_objective_kl_penalty_math() -> None:
 # ------------------------------------------------------ surface + step oracle
 
 
-def test_option_b_freeze_and_anchor_swap(predictor: MolmoAct2Predictor) -> None:
-    subject = discrete_predictor(predictor, codec())
+def test_option_b_freeze_and_anchor_swap(subject: MolmoAct2DiscreteStack) -> None:
     named = apply_option_b_freeze(subject)
     assert named and all(name.startswith("text.") for name, _ in named)
     assert all(not p.requires_grad for p in subject.trunk.vision.parameters())
@@ -413,14 +439,13 @@ def test_option_b_freeze_and_anchor_swap(predictor: MolmoAct2Predictor) -> None:
 
 
 def test_option_a_freeze_trains_only_block_rows(
-    predictor: MolmoAct2Predictor,
+    subject: MolmoAct2DiscreteStack,
 ) -> None:
     """The R0-A surface: exactly the two untied matrices are trainable,
     and a full gradient step moves ONLY their FAST-block rows — every
     row outside [base, end) stays bit-identical (the embedding sees
     real prompt/scaffold-token gradients; the span masking is what
     keeps them frozen)."""
-    subject = discrete_predictor(predictor, codec())
     named = apply_option_a_freeze(subject)
     assert {name for name, _ in named} == {
         "text.transformer.wte.embedding",
@@ -460,8 +485,7 @@ def test_option_a_freeze_trains_only_block_rows(
         restore(snapshot)
 
 
-def test_chunked_grads_match_single_batch(predictor: MolmoAct2Predictor) -> None:
-    subject = discrete_predictor(predictor, codec())
+def test_chunked_grads_match_single_batch(subject: MolmoAct2DiscreteStack) -> None:
     named = apply_option_b_freeze(subject)
     snapshot = AnchorSnapshot(named)
     try:
@@ -524,8 +548,7 @@ def test_chunked_grads_match_single_batch(predictor: MolmoAct2Predictor) -> None
         restore(snapshot)
 
 
-def test_anchor_kl_zero_then_positive(predictor: MolmoAct2Predictor) -> None:
-    subject = discrete_predictor(predictor, codec())
+def test_anchor_kl_zero_then_positive(subject: MolmoAct2DiscreteStack) -> None:
     named = apply_option_b_freeze(subject)
     anchor = AnchorSnapshot(named)
     try:
@@ -546,10 +569,9 @@ def test_anchor_kl_zero_then_positive(predictor: MolmoAct2Predictor) -> None:
 
 
 def test_checkpoint_roundtrip(
-    predictor: MolmoAct2Predictor,
+    subject: MolmoAct2DiscreteStack,
     tmp_path: Path,
 ) -> None:
-    subject = discrete_predictor(predictor, codec())
     named = apply_option_b_freeze(subject)
     snapshot = AnchorSnapshot(named)
     try:
@@ -594,7 +616,7 @@ def loop_config(tmp_path: Path, **overrides: Any) -> GRPOLoopConfig:
 
 
 def make_wave(
-    subject: MolmoAct2Predictor,
+    subject: MolmoAct2DiscreteStack,
     tmp_path: Path,
     *,
     progress_by_draw: tuple[float, ...],
@@ -639,8 +661,7 @@ def heartbeat_rows(config: GRPOLoopConfig) -> list[dict[str, Any]]:
     return [json.loads(line) for line in lines]
 
 
-def test_loop_end_to_end(predictor: MolmoAct2Predictor, tmp_path: Path) -> None:
-    subject = discrete_predictor(predictor, codec())
+def test_loop_end_to_end(subject: MolmoAct2DiscreteStack, tmp_path: Path) -> None:
     named = apply_option_b_freeze(subject)
     snapshot = AnchorSnapshot(named)
     try:
@@ -696,14 +717,13 @@ def test_loop_end_to_end(predictor: MolmoAct2Predictor, tmp_path: Path) -> None:
 
 
 def test_loop_end_to_end_option_a_with_mitigation(
-    predictor: MolmoAct2Predictor,
+    subject: MolmoAct2DiscreteStack,
     tmp_path: Path,
 ) -> None:
     """The R0-A configuration through the production loop: surface A
     selected by config (the loop builds the freeze + row span itself),
     KL penalty on (anchor_k3_pre in every trained step's heartbeat
     row), advantage clip threaded — and only block rows move."""
-    subject = discrete_predictor(predictor, codec())
     named = apply_option_a_freeze(subject)
     snapshot = AnchorSnapshot(named)
     base, end = option_a_row_span(subject)
@@ -767,14 +787,13 @@ def test_loop_end_to_end_option_a_with_mitigation(
 
 
 def test_resume_uses_step0_anchor_and_completes(
-    predictor: MolmoAct2Predictor,
+    subject: MolmoAct2DiscreteStack,
     tmp_path: Path,
 ) -> None:
     """A resumed loop keeps the step-0 policy as the KL anchor: main()
     snapshots BEFORE load_checkpoint restores the live tensors —
     snapshotting after the restore would silently rebase anchor_kl
     onto the resumed weights (the reference R1 leans on)."""
-    subject = discrete_predictor(predictor, codec())
     named = apply_option_b_freeze(subject)
     snapshot = AnchorSnapshot(named)
     try:
@@ -834,10 +853,9 @@ def test_resume_uses_step0_anchor_and_completes(
 
 
 def test_loop_strike_tripwire_stops_before_update(
-    predictor: MolmoAct2Predictor,
+    subject: MolmoAct2DiscreteStack,
     tmp_path: Path,
 ) -> None:
-    subject = discrete_predictor(predictor, codec())
     named = apply_option_b_freeze(subject)
     snapshot = AnchorSnapshot(named)
     try:
@@ -869,10 +887,9 @@ def test_loop_strike_tripwire_stops_before_update(
 
 
 def test_loop_collapse_tripwire(
-    predictor: MolmoAct2Predictor,
+    subject: MolmoAct2DiscreteStack,
     tmp_path: Path,
 ) -> None:
-    subject = discrete_predictor(predictor, codec())
     named = apply_option_b_freeze(subject)
     config = loop_config(tmp_path, total_steps=5)
     result = run_grpo_loop(
@@ -895,14 +912,13 @@ def test_loop_collapse_tripwire(
 
 
 def test_loop_kl_stop_tripwire(
-    predictor: MolmoAct2Predictor,
+    subject: MolmoAct2DiscreteStack,
     tmp_path: Path,
 ) -> None:
     """The §7 KL numeric line (set at the R0 boundary): one anchor_kl
     reading over ``kl_stop`` stops the loop — no streak. A line at the
     noise floor fires on the very first trained step (disk-row JPEG
     reduction noise is nonzero even at the anchor itself)."""
-    subject = discrete_predictor(predictor, codec())
     named = apply_option_b_freeze(subject)
     snapshot = AnchorSnapshot(named)
     try:
@@ -924,10 +940,9 @@ def test_loop_kl_stop_tripwire(
 
 
 def test_loop_violence_tripwire(
-    predictor: MolmoAct2Predictor,
+    subject: MolmoAct2DiscreteStack,
     tmp_path: Path,
 ) -> None:
-    subject = discrete_predictor(predictor, codec())
     named = apply_option_b_freeze(subject)
     config = loop_config(tmp_path, total_steps=5, min_group_std=0.0)
     result = run_grpo_loop(

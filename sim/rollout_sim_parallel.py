@@ -225,12 +225,13 @@ def parse_args() -> argparse.Namespace:
         default=None,
         metavar="CHECKPOINT",
         help="OFF-CONTRACT release-in-sim arm, DISCRETE (AR) pathway: "
-        "serve the first-class MolmoAct2Predictor's "
-        "predict_action_discrete (HF layout dir or hub id) instead of a "
-        "BijouPolicy — greedy, batch-1 per request, the official SO-101 "
-        "shim pinned (state in through it, chunks back through its "
-        "inverse; the exact map the flow-pathway convmap eval "
-        "validated). Rows never pool with contract reads",
+        "serve the first-class MolmoAct2DiscreteStack (the AR read of a "
+        "BIJOU molmoact2-family checkpoint — converted release/rigtable "
+        "or an ar/joint descendant; retirement phase 4 re-point) — "
+        "grammar-masked, batch-1 per request, the official SO-101 shim "
+        "pinned (state in through it, chunks back through its inverse; "
+        "the exact map the flow-pathway convmap eval validated). Rows "
+        "never pool with contract reads",
     )
     parser.add_argument(
         "--molmoact2-fast-tokenizer",
@@ -648,20 +649,19 @@ def main() -> int:
         print(f"policy: hold (settled reset state, horizon {horizon})")
     elif args.molmoact2_discrete is not None:
         from bijou.eval.molmo_norm import AffineMap
-        from bijou.molmoact2 import MolmoAct2Predictor
+        from bijou.grpo_replay import MolmoAct2DiscreteStack
 
         policy = None
-        fast_source = args.molmoact2_fast_tokenizer
-        if not Path(fast_source).exists():
-            from huggingface_hub import snapshot_download
-
-            fast_source = snapshot_download(fast_source)
-        predictor = MolmoAct2Predictor.load(
+        # The retirement phase-4 re-point: the discrete policy is the
+        # first-class AR read of a BIJOU molmoact2-family checkpoint
+        # (converted release / rigtable / ar-joint descendants). The
+        # port predictor (HF-layout dirs, their norm tags) retired
+        # with bijou/molmoact2.
+        predictor = MolmoAct2DiscreteStack.load(
             args.molmoact2_discrete,
-            MOLMOACT2_NORM_TAG,
             device=device,
             dtype=torch.bfloat16,
-            fast_tokenizer=fast_source,
+            fast_tokenizer=args.molmoact2_fast_tokenizer,
         )
         discrete_shim = AffineMap(
             scale=torch.tensor(MOLMOACT2_OFFICIAL_SIGNS),

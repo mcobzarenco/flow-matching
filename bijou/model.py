@@ -546,11 +546,10 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
         instrument's per-draw call: the caller encodes once, snapshots
         the prefix cache, and restores between draws
         (:meth:`ARSuffixDecoder.cache_snapshot`/``cache_restore``), so
-        N draws share one prefill. ``action_capture`` records the
-        decode's own scoring surface exactly as in
-        :meth:`ar_predict_greedy` — the sampled ids land in ``chosen``
-        (the training-rows instrument). Loud on decoders without a
-        suffix cache to share (flow samples noise instead)."""
+        N draws share one prefill. ``action_capture`` is the GRPO
+        rollout's scoring surface (one :class:`ActionCaptureStep` per
+        bin step — observation, never intervention). Loud on decoders
+        without a suffix cache to share (flow samples noise instead)."""
         match self.decoder:
             case ARBackboneDecoder():
                 return self.decoder.predict_chunk(
@@ -568,6 +567,7 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                     batch,
                     generate=generate,
                     sampling=sampling,
+                    action_capture=action_capture,
                 )
             case _:
                 raise TypeError(

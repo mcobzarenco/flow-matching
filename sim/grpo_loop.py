@@ -86,7 +86,7 @@ import numpy as np
 import torch
 from torch import Tensor, nn
 
-from bijou.molmoact2.replay import (
+from bijou.grpo_replay import (
     ReplayRow,
     load_training_rows,
     molmoact2_grpo_sums,
@@ -1313,7 +1313,7 @@ def main(argv: list[str] | None = None) -> int:
     import torch as _torch  # noqa: F401 — parity with the driver's parent-only import
 
     from bijou.eval.molmo_norm import AffineMap
-    from bijou.molmoact2 import MolmoAct2Predictor
+    from bijou.grpo_replay import MolmoAct2DiscreteStack
 
     args = parse_args(argv)
     torch.set_float32_matmul_precision("high")
@@ -1326,17 +1326,17 @@ def main(argv: list[str] | None = None) -> int:
         check=False,
     ).stdout.strip()
 
-    fast_source = args.fast_tokenizer
-    if not Path(fast_source).exists():
-        from huggingface_hub import snapshot_download
-
-        fast_source = snapshot_download(fast_source)
-    predictor = MolmoAct2Predictor.load(
+    # Retirement phase-4 re-point: the policy is the first-class AR
+    # read of a BIJOU molmoact2-family checkpoint; the port predictor
+    # (HF layout + norm tags) retired with bijou/molmoact2. Loop .pt
+    # checkpoints stay format-compatible (the named trainable tensors
+    # live on the SAME Molmo2Model structure) — but per decision 11,
+    # post-migration runs START FRESH; .pt resume is salvage-only.
+    predictor = MolmoAct2DiscreteStack.load(
         args.checkpoint,
-        MOLMOACT2_NORM_TAG,
         device=device,
         dtype=torch.bfloat16,
-        fast_tokenizer=fast_source,
+        fast_tokenizer=args.fast_tokenizer,
     )
     # Training dtype (module docstring): the text stack — the option-B
     # trainable surface — runs fp32 for BOTH rollout and replay; vision
