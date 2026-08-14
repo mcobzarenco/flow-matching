@@ -460,11 +460,12 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
         instrument's per-draw call: the caller encodes once, snapshots
         the prefix cache, and restores between draws
         (:meth:`ARSuffixDecoder.cache_snapshot`/``cache_restore``), so
-N draws share one prefill. ``action_capture`` records the
+        N draws share one prefill. ``action_capture`` records the
         decode's own scoring surface exactly as in
         :meth:`ar_predict_greedy` — the sampled ids land in ``chosen``
         (the training-rows instrument). Loud on decoders without a
-        suffix cache to share (flow samples noise instead)."""        match self.decoder:
+        suffix cache to share (flow samples noise instead)."""
+        match self.decoder:
             case ARBackboneDecoder():
                 return self.decoder.predict_chunk(
                     self._gemma_backbone(),
