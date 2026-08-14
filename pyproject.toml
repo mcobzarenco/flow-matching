@@ -57,8 +57,15 @@ markers = [
 include = ["bijou", "sim", "tests", "probes", "check.py"]
 # convert_benchy and probe_phantom_volume are PEP-723 scripts running in
 # their own uv envs (trimesh, xatlas); their imports don't exist in the
-# project venv.
-exclude = ["sim/convert_benchy.py", "sim/probe_phantom_volume.py"]
+# project venv. Fixture generate.py scripts are PROVENANCE documents
+# runnable only at the commits recorded in their READMEs (the
+# pre-molmoact2-retirement tag / the research agent's branch) — they
+# reference APIs that do not exist at main HEAD by design.
+exclude = [
+    "sim/convert_benchy.py",
+    "sim/probe_phantom_volume.py",
+    "tests/fixtures/**/generate.py",
+]
 # Local Any-stubs for untyped C-extension packages (mujoco). pyright picks
 # up ./typings automatically; kept explicit for greppability.
 stubPath = "typings"
