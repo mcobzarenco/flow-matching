@@ -5,7 +5,35 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-14 14:58–15:0xZ (real `date -u` at stamp: 15:00) —
+tick: **quiet hold — byte-parity fix still not on main (~50 min since
+the owner's 14:11Z delegation); owner 👍 on the step-(2) post
+recorded.***
+
+**Status**: **No live run** — GPU verified 0 MiB / 0% at 14:59,
+OWNER-RESERVED hold (12:54:19Z) still in force; registry empty. Queue
+validate green: depth 2, 15 open.
+
+**Steering**: history surfaced a new **owner 👍 on the step-(2) DONE
+post** (13:52Z, msg 1537821299538264114) — lightweight agreement with
+the rebase result + byte-parity finding, consistent with their 14:11Z
+delegate-to-local-agent reply; recorded, no reply owed (inbox empty,
+`read` surfaced nothing). Ladder verdict (STOP, 13:1xZ) still awaits
+adjudication.
+
+**Done**: verified origin/main still at `77246a9` — the local agent's
+byte-parity fix has **not landed**; the combined adoption rebase
+(phase 0(b) + fix, one replay closing the red pre-commit gate) stays
+deferred per the 14:1x decision. Archive rolled --keep 3, footer
+trimmed to 2 notes.
+
+**Next**: `run_work_next` armed — the chained work session takes the
+`sim-manip-wrist-content-split` pre-reg (executable CPU item) and
+polls origin/main mid-session to fold in the combined rebase the
+moment the fix lands. No launches until the in-channel GPU release.*
 
 *Updated 2026-08-14 13:48–13:5xZ (real `date -u` at stamp: 13:53) —
 work session: **`molmoact2-retirement-adoption` step (2) DONE —
@@ -78,38 +106,15 @@ takes the step-(2) adoption rebase first, then the
 embeds stay queued behind the owner reserve). No launches until the
 in-channel GPU release.*
 
-*Updated 2026-08-14 13:33–13:4xZ (real `date -u` at stamp: 13:41) —
-work session: **`molmoact2-retirement-adoption` step (1) DONE —
-fontaine rebased onto main 51704c0, all gates green, pushed.***
-
-**Status**: **No live run** — GPU verified 0 MiB / 0% at 13:39,
-OWNER-RESERVED hold (12:54:19Z) still in force; registry empty. Queue
-validate green: depth 2, 15 open.
-
-**Steering**: none — inbox empty at boot (13:33), `read` surfaced
-nothing. Ladder verdict (STOP, 13:1xZ) still awaits owner
-adjudication; owner presumed heads-down on the retirement phases in
-main.
-
-**Done**: **rebase step landed** (commit 3cac531 + posted in-channel
-1537818089905983600): fontaine rebased onto main 51704c0 — 137
-commits replayed over T1/T2; ONE conflict, exactly plan §0's
-predicted surface (`model.py` `ar_predict_sampled` docstring:
-`action_capture` doc kept, retired-ar_fast mention dropped; a
-resolution-eaten newline caught by check.py and fixed same-session);
-**check.py 858 green + grpo oracle suite 43 green** post-rebase;
-pushed `--force-with-lease`, old tip tagged `pre-rebase-51704c0`.
-Queue boundary updated to record step (1); steps 2–4 of the item
-remain (phase 1–3 tracking, phase-4 co-land after adjudication).
-
-**Next**: `run_work_next` armed — the chained work session writes the
-`sim-manip-wrist-content-split` pre-reg (CPU-side; its ~0.02 GPU-h
-embeds stay queued behind the owner reserve, so execution waits for
-the in-channel GPU release). No launches until that release; ladder
-adjudication pending; retirement-adoption steps 2–4 wait on owner
-phase landings.*
-
 ## Utilization footer
+
+Session 2026-08-14 14:58–15:0xZ (tick; 0 GPU-h — GPU owner-reserved):
+quiet hold — byte-parity fix not yet on origin/main (still `77246a9`,
+~50 min after the owner's 14:11Z delegation), combined adoption
+rebase stays deferred; owner 👍 on the step-(2) post recorded as
+agreement; no live run, queue validate green (depth 2, 15 open);
+archive rolled --keep 3; `run_work_next` left armed for the
+wrist-content-split pre-reg + the fix watch.
 
 Session 2026-08-14 13:48–13:5xZ (work; exploit; 0 GPU-h — GPU
 owner-reserved, all CPU): `molmoact2-retirement-adoption` step (2)
@@ -120,14 +125,6 @@ machine-portable — measured ≤40 ULP drift, flagged in-channel for the
 owner), pushed with old tip tagged `pre-rebase-0312ab7`; queue
 validate green (depth 2, 15 open); `run_work_next` armed for the
 wrist-content-split pre-reg.
-
-Session 2026-08-14 13:43–13:5xZ (tick; 0 GPU-h — GPU owner-reserved):
-quiet on Discord — no steering, no live run, queue validate green
-(depth 2, 15 open); owner's retirement phases 0a+1 observed landing
-on origin/main as `c57ce05` (vendored parity fixtures + leaf
-promotion); queue boundary updated — adoption step (2) rebase now
-executable; archive rolled --keep 3; `run_work_next` left armed for
-the step-(2) rebase + wrist-content-split pre-reg.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
