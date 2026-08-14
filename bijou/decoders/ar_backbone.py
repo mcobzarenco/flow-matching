@@ -78,6 +78,14 @@ from ..nn import DeviceLike
 # decoder's retirement (tag pre-decoder-simplify).
 IGNORE_INDEX = -100
 
+# The MolmoAct2 release's discrete emission format (suffix_format 6):
+# <action_start> + bins + <action_end> continued from their serving
+# prompt — empty opener, no value lines, specials at negative codec
+# offsets (MolmoAct2ActionCodec). Registered beside the config guard
+# (aux_text.SUFFIX_FORMAT = 5 is the Gemma/Molmo2 value-line scaffold);
+# each concrete asserts ITS format at construction.
+MOLMOACT2_SUFFIX_FORMAT = 6
+
 
 @dataclass(frozen=True, slots=True)
 class ARBackboneConfig:
@@ -94,29 +102,40 @@ class ARBackboneConfig:
     block_base: int
     chunk_size: int
     action_dim: int
-    # Suffix format (aux_text.SUFFIX_FORMAT when written): 5 = the
-    # request-conditioned headerless format every new run trains.
-    # Formats ≤ 4 (fed mode tokens, suffix state slot, header bytes)
-    # are REFUSED at construction — no trained artifact worth loading
-    # exists (owner call, 2026-08-03; the parameter sets are
-    # incompatible anyway: state_proj moved prompt-side, mode tables
-    # deleted).
+    # Suffix format — WHICH suffix grammar the checkpoint trained:
+    # 5 (aux_text.SUFFIX_FORMAT) = the request-conditioned headerless
+    # format of the Gemma/Molmo2 concretes (opener bytes, value lines,
+    # BOA, FAST block); 6 (MOLMOACT2_SUFFIX_FORMAT) = the MolmoAct2
+    # release emission (<action_start> + bins + <action_end> against
+    # their serving prompt — no opener bytes, no value lines). Each
+    # concrete asserts ITS format at construction; formats ≤ 4 (fed
+    # mode tokens, suffix state slot, header bytes) are REFUSED — no
+    # trained artifact worth loading exists (owner call, 2026-08-03;
+    # the parameter sets are incompatible anyway: state_proj moved
+    # prompt-side, mode tables deleted).
     suffix_format: int
     # Aux text record: template version + fields + label provenance
     # (None = trained without aux — every sample was [generate|actions]).
     aux: AuxDecodeConfig | None
 
     def __post_init__(self) -> None:
-        if self.vocab_total < 3:  # ≥ 1 body token + BOA + PAD
+        if self.vocab_total < 3:  # ≥ 1 body token + the special offsets
             raise ValueError(f"vocab_total {self.vocab_total} is not a FAST vocabulary")
         if self.block_base < 0:
             raise ValueError(f"block_base {self.block_base} must be non-negative")
-        if self.suffix_format != SUFFIX_FORMAT:
+        if self.suffix_format < SUFFIX_FORMAT:
             raise ValueError(
-                f"suffix format {self.suffix_format} != {SUFFIX_FORMAT}: "
+                f"suffix format {self.suffix_format} < {SUFFIX_FORMAT}: "
                 "pre-5 checkpoints trained mode tokens/suffix state/header "
                 "bytes this code no longer implements — retrain (no "
                 "back-compat, 2026-08-03)",
+            )
+        if self.suffix_format not in (SUFFIX_FORMAT, MOLMOACT2_SUFFIX_FORMAT):
+            raise ValueError(
+                f"unknown suffix format {self.suffix_format} — registered "
+                f"formats: {SUFFIX_FORMAT} (Gemma/Molmo2 value-line "
+                f"scaffold), {MOLMOACT2_SUFFIX_FORMAT} (MolmoAct2 release "
+                "emission)",
             )
 
 
@@ -664,7 +683,11 @@ class ARSuffixDecoder[B: nn.Module](nn.Module, abc.ABC):
             t_max = max(t_max, len(ids))
         if t_max == 0:
             return [None for _ in action_ids]
-        device = next(self.parameters()).device
+        # The trunk's device, not the decoder's: parameterless concretes
+        # (MolmoAct2 — trunk-native rows, zero own parameters) have no
+        # parameters to read a device from, and the suffix runs through
+        # the trunk either way.
+        device = next(backbone.parameters()).device
         width = k + 1 + t_max
         rows: list[list[int]] = []
         for ids in action_ids:
@@ -898,6 +921,12 @@ class ARBackboneDecoder(ARSuffixDecoder[Gemma4Model]):
             aux_runtime=aux_runtime,
             aux_loss_weight=aux_loss_weight,
         )
+        if config.suffix_format != SUFFIX_FORMAT:
+            raise ValueError(
+                f"suffix format {config.suffix_format} is not the "
+                f"value-line scaffold ({SUFFIX_FORMAT}) this concrete "
+                "implements — format-6 checkpoints load MolmoAct2ARDecoder",
+            )
         if config.block_base + config.vocab_total > text_config.vocab_size:
             raise ValueError(
                 f"FAST block [{config.block_base}, "
@@ -1183,9 +1212,12 @@ def suffix_targets(
     # sequence. Opener tokens are constants: ignore every target that
     # IS an opener token (shifted indices 0..len(prefix)−2); the last
     # opener position's target — content[0], the first value token or
-    # BOA on [generate|actions] rows — stays trained.
+    # BOA on [generate|actions] rows — stays trained. max(…, 0): an
+    # EMPTY opener (the MolmoAct2 format — the prompt carries the whole
+    # scaffold) must mask nothing; the raw -1 would slice [:, :-1] and
+    # silently ignore every target but the last.
     targets = full[:, 1:].clone()
-    targets[:, : prefix.shape[1] - 1] = IGNORE_INDEX
+    targets[:, : max(prefix.shape[1] - 1, 0)] = IGNORE_INDEX
     targets[targets == pad_id] = IGNORE_INDEX
     if is_aux_content is None:
         return full, targets, None

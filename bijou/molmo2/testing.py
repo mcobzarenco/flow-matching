@@ -135,15 +135,23 @@ def tiny_config_json() -> dict[str, Any]:
     }
 
 
-def write_tiny_text_checkpoint(output_dir: Path | str, *, seed: int = 0) -> Path:
+def write_tiny_text_checkpoint(
+    output_dir: Path | str,
+    *,
+    seed: int = 0,
+    config_json: dict[str, Any] | None = None,
+) -> Path:
     """Write a loadable tiny random Molmo2 checkpoint to ``output_dir``:
     tiny config.json plus random bf16 model.safetensors with the real key
     layout (keys/dtypes as shipped, including a vision key the text loader
-    must skip)."""
+    must skip). ``config_json`` overrides the architecture (the MolmoAct2
+    AR tests widen the vocabulary to host an in-base action block);
+    None = :func:`tiny_config_json`."""
     output = Path(output_dir).expanduser()
     output.mkdir(parents=True, exist_ok=True)
 
-    config_json = tiny_config_json()
+    if config_json is None:
+        config_json = tiny_config_json()
     (output / "config.json").write_text(json.dumps(config_json, indent=2))
 
     torch.manual_seed(seed)

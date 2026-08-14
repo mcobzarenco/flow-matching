@@ -30,6 +30,7 @@ from .aux_text import AuxDecodeConfig, build_aux_runtime
 from .data import DatasetStats
 from .decoders.ar_backbone import ARBackboneConfig, ARBackboneDecoder
 from .decoders.ar_molmo2 import Molmo2ARDecoder
+from .decoders.ar_molmoact2 import MolmoAct2ARDecoder
 from .decoders.flow import (
     ExpertConfig,
     FlowDecoder,
@@ -580,7 +581,13 @@ def parse_decoder_config(
 
 
 def decoder_schema_dict(
-    decoder: (FlowDecoder | ARBackboneDecoder | Molmo2ARDecoder | MolmoFlowDecoder),
+    decoder: (
+        FlowDecoder
+        | ARBackboneDecoder
+        | Molmo2ARDecoder
+        | MolmoAct2ARDecoder
+        | MolmoFlowDecoder
+    ),
 ) -> dict[str, Any]:
     """The checkpoint-schema dict of a built decoder (write side + the
     --init-from config guard). The Molmo2 suffix decoder records the SAME
@@ -600,7 +607,10 @@ def decoder_schema_dict(
             return dict(decoder.checkpoint_schema)
         case FlowDecoder():
             return flow_decoder_config_from_expert(decoder.config).to_dict()
-        case ARBackboneDecoder() | Molmo2ARDecoder():
+        case ARBackboneDecoder() | Molmo2ARDecoder() | MolmoAct2ARDecoder():
+            # The MolmoAct2 concrete records the SAME section shape —
+            # suffix_format 6 + the released-tokenizer ref are the
+            # discriminating fields; the trunk axis stays the PROMPT kind.
             return ar_backbone_config_to_dict(decoder.config)
 
 

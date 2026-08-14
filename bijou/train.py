@@ -102,6 +102,7 @@ from .decoders.ar_backbone import (
     ARSuffixDecoder,
 )
 from .decoders.ar_molmo2 import Molmo2ARDecoder
+from .decoders.ar_molmoact2 import MolmoAct2ARDecoder
 from .decoders.flow import (
     SNAPFLOW_ALPHA,
     SNAPFLOW_LAMBDA,
@@ -2110,7 +2111,13 @@ def build_checkpoint_metadata(
 
 
 def ensure_matching_decoder_config(
-    decoder: (FlowDecoder | ARBackboneDecoder | Molmo2ARDecoder | MolmoFlowDecoder),
+    decoder: (
+        FlowDecoder
+        | ARBackboneDecoder
+        | Molmo2ARDecoder
+        | MolmoAct2ARDecoder
+        | MolmoFlowDecoder
+    ),
     checkpoint: Path,
 ) -> dict[str, Any]:
     """Loud, early failure when a checkpoint's decoder differs from the

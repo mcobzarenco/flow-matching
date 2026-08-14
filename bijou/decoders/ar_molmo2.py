@@ -44,7 +44,7 @@ import torch
 from torch import Tensor, nn
 from torch.nn.attention import SDPBackend, sdpa_kernel
 
-from ..aux_text import AuxRuntime, TextTokenizer
+from ..aux_text import SUFFIX_FORMAT, AuxRuntime, TextTokenizer
 from ..fast.codec import ActionCodec
 from ..interface import ObservationMemory
 from ..molmo2.cache import Molmo2KVCache
@@ -90,6 +90,12 @@ class Molmo2ARDecoder(ARSuffixDecoder[Molmo2Model]):
             aux_loss_weight=aux_loss_weight,
             newline_carrier_ids=newline_carrier_ids,
         )
+        if config.suffix_format != SUFFIX_FORMAT:
+            raise ValueError(
+                f"suffix format {config.suffix_format} is not the "
+                f"value-line scaffold ({SUFFIX_FORMAT}) this concrete "
+                "implements — format-6 checkpoints load MolmoAct2ARDecoder",
+            )
         if config.block_base != text_config.fast_block_base:
             raise ValueError(
                 f"FAST block base {config.block_base} != the trunk's "

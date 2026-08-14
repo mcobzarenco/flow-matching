@@ -51,6 +51,7 @@ from .decoders.ar_backbone import (
     ar_backbone_losses,
 )
 from .decoders.ar_molmo2 import Molmo2ARDecoder
+from .decoders.ar_molmoact2 import MolmoAct2ARDecoder
 from .decoders.flow import (
     FlowDecoder,
     SamplingMethod,
@@ -84,7 +85,13 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
         self,
         backbone: B,
         encoder: ObservationEncoder[I, B],
-        decoder: (FlowDecoder | ARBackboneDecoder | Molmo2ARDecoder | MolmoFlowDecoder),
+        decoder: (
+            FlowDecoder
+            | ARBackboneDecoder
+            | Molmo2ARDecoder
+            | MolmoAct2ARDecoder
+            | MolmoFlowDecoder
+        ),
     ) -> None:
         super().__init__()
         self.backbone = backbone
@@ -161,7 +168,13 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
     @property
     def expert(
         self,
-    ) -> FlowDecoder | ARBackboneDecoder | Molmo2ARDecoder | MolmoFlowDecoder:
+    ) -> (
+        FlowDecoder
+        | ARBackboneDecoder
+        | Molmo2ARDecoder
+        | MolmoAct2ARDecoder
+        | MolmoFlowDecoder
+    ):
         return self.decoder
 
     def _flow_decoder(self) -> FlowDecoder:
@@ -240,7 +253,7 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                     None if aux_sum is None else aux_sum.detach(),
                     aux_count,
                 )
-            case Molmo2ARDecoder():
+            case Molmo2ARDecoder() | MolmoAct2ARDecoder():
                 total, action, aux_sum, aux_count = ar_backbone_losses(
                     self._molmo2_backbone(),
                     decoder,
@@ -283,7 +296,7 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                     None,
                 )
 
-            case ARBackboneDecoder() | Molmo2ARDecoder():
+            case ARBackboneDecoder() | Molmo2ARDecoder() | MolmoAct2ARDecoder():
                 return ar_backbone_counts(decoder, batch)
             case MolmoFlowDecoder():
                 # Position count B*T (the per-position valid-dim mean is
@@ -327,7 +340,7 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                     memory,
                     batch,
                 )
-            case Molmo2ARDecoder():
+            case Molmo2ARDecoder() | MolmoAct2ARDecoder():
                 return ar_backbone_loss_sums(
                     self._molmo2_backbone(),
                     decoder,
@@ -421,7 +434,7 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                     generator=generator,
                     noise=noise,
                 )
-            case Molmo2ARDecoder():
+            case Molmo2ARDecoder() | MolmoAct2ARDecoder():
                 return decoder.predict_chunk(
                     self._molmo2_backbone(),
                     memory,
@@ -475,14 +488,13 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                     sampling=sampling,
                     action_capture=action_capture,
                 )
-            case Molmo2ARDecoder():
+            case Molmo2ARDecoder() | MolmoAct2ARDecoder():
                 return self.decoder.predict_chunk(
                     self._molmo2_backbone(),
                     memory,
                     batch,
                     generate=generate,
                     sampling=sampling,
-                    action_capture=action_capture,
                 )
             case _:
                 raise TypeError(
@@ -514,7 +526,7 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                     generate=generate,
                     action_capture=action_capture,
                 )
-            case Molmo2ARDecoder():
+            case Molmo2ARDecoder() | MolmoAct2ARDecoder():
                 return self.decoder.predict_chunk(
                     self._molmo2_backbone(),
                     memory,
@@ -546,7 +558,7 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                     memory,
                     action_ids,
                 )
-            case Molmo2ARDecoder():
+            case Molmo2ARDecoder() | MolmoAct2ARDecoder():
                 return self.decoder.teacher_forced_block_logits(
                     self._molmo2_backbone(),
                     memory,
@@ -612,6 +624,12 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                 prediction, candidates = run(self.decoder, self._gemma_backbone())
             case Molmo2ARDecoder():
                 prediction, candidates = run(self.decoder, self._molmo2_backbone())
+            case MolmoAct2ARDecoder():
+                raise TypeError(
+                    "the MolmoAct2 emission has no value lines (aux is "
+                    "None by construction) — there is no field to decode "
+                    "candidates from",
+                )
             case _:
                 raise TypeError(
                     "value-candidate decode continues a trunk suffix; the "
