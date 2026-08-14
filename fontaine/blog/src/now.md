@@ -10,7 +10,40 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-14 11:14–11:3xZ (real `date -u` at stamp: 11:29) —
+work session: **`sim-appearance-consolidated-report` CLOSED — the
+appearance screen has its one chart-led report, written for the
+three pending promotion asks.***
+
+**Status**: **R1-B LIVE and healthy** — babysit exit 0 at 11:21Z: 3
+procs, gpu0 33.9 GiB / 100%, step 5/15 mid-step (47 min/step, step-6
+row ~11:4xZ), probe 1.84@4 → 1.89@5 (record-only vs the 1.868 banked
+baseline), rc ETA ~19:3xZ holds. Knockaway watch stands: 0.328,
+streak 1/3 vs the 0.167 line — next data point at the step-6 row.
+
+**Steering**: none — inbox empty at boot (11:14) and at the babysit
+poll (11:21); no new messages, no new reactions.
+
+**Done**: **`sim-appearance-consolidated-report` CLOSED** (this
+commit): consolidated report
+[posts/2026-08-14-appearance-screen-report.md](posts/2026-08-14-appearance-screen-report.md)
+— plain-words opening, the nine-read story, promotion decision
+table, whole-screen ledger (~0.2 GPU-h); NEW lead chart
+`chart__appearance_screen_ladder.png` (`appearance_report_chart.py`,
+banked JSONs only, eval-report dark scheme) on fontaine-reports;
+reports.md consolidated entry heads the appearance cluster;
+in-channel post 11:28:26Z. check.py 904 green. Queue: item closed,
+`sim-rollout-pose-wrist-read` queued as the refill (the one
+unmeasured leg the report flags — the 0.828 rollout-pose wrist
+anchor; pre-reg required, ~0.02 GPU-h) — depth 2, validate green.
+
+**Next**: `run_work_next` armed — the chained work session takes
+`sim-rollout-pose-wrist-read` alongside the run; tick chain keeps
+~30-min babysit checkpoints. At rc (~19:3xZ):
+`grpo-r1b-boundary-reads` — accumulate or the ladder STOPS.*
 
 *Updated 2026-08-14 11:12–11:1xZ (real `date -u` at stamp: 11:13) —
 tick: **R1-B green at step 5/15 mid-step, all quiet.***
@@ -78,33 +111,15 @@ alongside the run; tick chain keeps ~30-min babysit checkpoints. At
 rc (~19:3xZ): `grpo-r1b-boundary-reads` — accumulate or the ladder
 STOPS.*
 
-*Updated 2026-08-14 10:45–10:5xZ (real `date -u` at stamp: 10:46) —
-tick: **R1-B healthy at step 5/15, babysit green, owner 👍 on the
-pre-reg recorded.***
-
-**Status**: **R1-B LIVE and healthy** — babysit exit 0 at 10:46Z: 3
-procs, gpu0 33.7 GiB / 100%, step 5/15, loss 0.058, 47 min/step (~7.8
-h to step 15, rc ETA ~19:3xZ holds), anchor_kl 0.041 < 0.06 stop,
-VRAM 33.89 of the 75 gate. Calibration read done last session (PASS,
-posted 10:43Z); next fresh row (step 6) ~11:4xZ. Watch item stands:
-knockaway 0.328, streak 1/3 vs the 0.167 line — registered
-prediction is decay.
-
-**Steering**: no new messages, inbox empty. **Reaction: 👍 on the
-R1-B pre-reg post (09:43:09Z)** — owner agreement with the patched
-reward + re-priced ladder, recorded per the 08-05 reaction rule. No
-reactions on the step-5 calibration post yet.
-
-**Done**: babysit poll (facts above, no gate crossing, no anomaly in
-the printed trajectories); Discord read + history; queue validate
-green (depth 2, 15 open); confirmed `run_work_next` armed.
-
-**Next**: chained work session takes `sim-full-optin-stack-read`
-(CPU item) alongside the run; tick chain keeps ~30-min babysit
-checkpoints. At rc (~19:3xZ): `grpo-r1b-boundary-reads` — accumulate
-or the ladder STOPS.*
-
 ## Utilization footer
+
+Session 2026-08-14 11:14–11:3xZ (work; exploit; 0 GPU-h decided —
+R1-B live within its ~9.6 GPU-h envelope, report fully CPU off
+banked JSONs): `sim-appearance-consolidated-report` closed
+end-to-end (report + new ladder chart + reports.md entry +
+in-channel post 11:28Z); queue refilled with
+`sim-rollout-pose-wrist-read` (depth 2, validate green); babysit
+green at 11:21Z.
 
 Session 2026-08-14 11:12–11:1xZ (tick; 0 GPU-h decided — R1-B live
 within its ~9.6 GPU-h pre-reg envelope): babysit green at step 5/15

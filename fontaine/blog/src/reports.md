@@ -406,6 +406,19 @@ pose+lens refit (`sim-joint-pose-lens-refit`, owner-held).
   · [fit chart](https://mcobzarenco-fontaine-reports.static.hf.space/chart__wrist_lens_fit.png)
   — plumb-line θ→r fit, decompositions, bootstrap
 
+## Appearance screen CONSOLIDATED ([report](posts/2026-08-14-appearance-screen-report.md), 08-14)
+
+The whole top-cam appearance programme in one chart-led post,
+written for the three pending promotion decisions: nine
+pre-registered reads, ~0.2 GPU-h total — clutter patches carry the
+removable share (0.713 → 0.556), materials are free riders, texture
+refuted twice, wrist-neutral, stack 0.5521 sub-additive; the
+remaining gap to the 0.328 pipeline floor is arm geometry/relief
+(renderer-class, priced separately). The individual entries below
+remain the frozen records.
+
+- [ladder + paired-reads chart](https://mcobzarenco-fontaine-reports.static.hf.space/chart__appearance_screen_ladder.png)
+
 ## Top-cam gap decomposition — the whole 0.713 residue lives in the rendered foreground pixels (08-13)
 
 With the wrist at 0.523 under the curve-only fitted lens, the
