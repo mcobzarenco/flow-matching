@@ -1,6 +1,28 @@
 # Now
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-14 04:44–04:4xZ (real `date -u` at stamp: 04:44) —
+tick: **quiet tick — no live runs, no steering, GPU idle-by-design
+pending the owner's R1-A boundary call.***
+
+**Status**: **no live runs** — GPU 0 MiB / 0% util, no train procs
+(R1-A tripwire-stopped 03:05Z last session, checkpoint banked). Idle
+is by design: launches pend `grpo-phase2-boundary-decision`
+(owner_hold, options in-channel 03:1xZ).
+
+**Steering**: none — inbox empty, read empty at 04:44Z; history shows
+no new reactions or replies. Three asks still open: R1-A boundary
+options (03:1xZ), arm-photometrics promotion (02:1xZ 08-14),
+clutter-patch promotion (05:40Z 08-13); mount two-flag rider noted on
+the 04:4xZ results post.
+
+**Done**: Discord poll + history (facts above); queue validate green
+(depth 2, 16 open); confirmed `run_work_next` armed (04:40 marker).
+
+**Next**: chained work session picks up **sim-arm-texture-followup**
+(CPU) per no-idle-pauses; GPU launches wait on the boundary call.*
 
 *Updated 2026-08-14 02:38–04:5xZ (real `date -u` at stamp: 04:44) —
 work session: **R1-A tripwire-stopped mid-session (the wire doing its
@@ -86,56 +108,13 @@ rule. `run_work_next` stays armed (02:34 marker) — GPU busy and
 `sim-mount-material-split` (CPU) is the next executable work item
 per no-idle-pauses.*
 
-*Updated 2026-08-14 00:36–02:2xZ (real `date -u` at stamp: 02:16) —
-work session: **`sim-arm-photometric-links` EXECUTED end-to-end
-(`4515ab4`) — mined the real arm's pixels at recorded poses, fitted a
-material grade through the production composite, and the registered
-probe read passed BOTH bars: the missing term was shine, not paint.***
-
-**Status**: **LIVE: `grpo_phase2_r1a`** — babysits 00:36/00:48/01:02/
-01:08/01:34/02:04/02:15 all exit 0: 3 procs, GPU ~100% at ~34 GiB
-(75-gate headroom ~41 GiB). First fresh rows landed: step 3 (loss
-0.0385, eval 1.8441 — flat-at-noise, as the accumulation question
-expects) and step 4 (loss 0.0343), ~2880 s/step incl. per-step eval
-→ ~10.4 h to step 17 at the 02:15 read, rc within the ~14:3xZ ETA.
-No tripwires, knockaway streak quiet.
-
-**Steering**: none — inbox empty and read empty at every babysit poll.
-NEW ASK OUT (02:1xZ, with the results post): promote
-`arm_photometrics='v1'` into the production v3/v4 default? (Same
-contract as the clutter-patch promotion ask, 05:40Z 08-13, still
-open — they could flip together.)
-
-**Done**: **sim-arm-photometric-links CLOSED** (`4515ab4`, pre-reg
-posted 01:53Z BEFORE the read): (1) mining — sim posed at the
-recorded joints of 142 real v2 frames, silhouette projected through
-the production fisheye, per-body FFT darkness-snap ±60 px + ring +
-absolute-darkness guards → 436k real PLA px + 77k servo px; real arm
-reads brighter than the flat recolor (median luma 66 vs 54),
-cool-cast, 16–18% glints vs sim's 5%/0%; (2) fit — albedo per channel
-solved through the production composite, spec×shin by grid; both
-populations chose the specular ceiling (1.0, shin 0.1), loss ↓8.5×/
-2.3×; (3) opt-in `arm_photometrics="v1"` (default byte-identical,
-zero RNG draws, 5 oracles, check.py 874→879); (4) registered 20×5
-read GREEN — in-run v3 0.713 dead-center, **PRIMARY v3_photo CI95
-[−3.08e-07, −1.38e-07] < 0 (0.713→0.698, 72/100), MECHANISM
-only_links CI95 < 0 (0.705→0.652, 96/100) ≈ the no_mount amputation
-ceiling without amputating**. Artifacts on fontaine-reports
-(curl-200): chart, before/after strip, mining overlay, 3 JSONs;
-reports.md section + ideas.md hook; results + promotion ask
-in-channel 02:1xZ. Queue: item done; NEW —
-`sim-arm-photometrics-promotion` (owner_hold),
-`sim-mount-material-split` (the mount is WHITE in reality, black in
-sim — per-pixel worst offender), `sim-arm-texture-followup` (print
-layers + servo glint tail). Validate green (depth 3, 16 open).
-
-**Next**: `queue_cli.py next` → **token-grpo-phase2-r1a-run** (ride
-via ~30-min ticks to rc ~14:3xZ 08-14 → §6 endpoint reads → R2-A only
-via the frozen rule). `run_work_next` armed — GPU busy,
-`sim-mount-material-split` (CPU) is the next executable work item per
-no-idle-pauses.*
-
 ## Utilization footer
+
+Session 2026-08-14 04:44–04:4xZ (tick; 0 GPU-h decided — no live
+runs, GPU idle-by-design pending the owner's R1-A boundary call):
+quiet poll — inbox empty, no reactions, queue green (depth 2, 16
+open); `run_work_next` confirmed armed for sim-arm-texture-followup
+(CPU) per no-idle-pauses.
 
 Session 2026-08-14 02:38–04:5xZ (work; ~0.04 GPU-h decided — the mount
 read's embeds ×2 attempts + oracle-abort diagnostics; CPU item,
@@ -146,12 +125,6 @@ primary null, `2ee8132` + close-out commit); R1-A tripwire
 post-processed same session (S6 reads + 3 priced boundary options
 in-channel, checkpoint uploaded, registry pruned); queue depth 2 (16
 open). `run_work_next` armed for sim-arm-texture-followup.
-
-Session 2026-08-14 02:35–02:4xZ (tick, babysit; 0 new GPU-h decided —
-R1-A live and healthy, ~2.5 GPU-h accrued on its ~14.4 leg): quiet
-poll, no anomalies, no steering, inbox empty; queue green (depth 3,
-16 open). `run_work_next` stays armed for sim-mount-material-split;
-step-5 row ~03:0xZ lands with the next session.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
