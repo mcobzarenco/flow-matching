@@ -2,7 +2,7 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-14T13:15:00Z
+**Updated:** 2026-08-14T13:39:00Z
 
 **Depth call:** depth 2: grpo-r1b-boundary-reads (gated at R1-B rc ~19:3xZ) + sim-rollout-pose-wrist-read (executable now, refill at the consolidated-report close).
 
@@ -36,7 +36,7 @@ Manipulation-pose wrist content split: price how much of the banked 0.877 manip-
 
 Adopt the molmoact2 retirement plan (docs/molmoact2-retirement.md, main 02a58e0; owner ask 12:46Z 08-14, thoughts + sign-offs posted in-channel 12:50Z): (1) rebase fontaine onto main &gt;= db0a141 (T1 ar_fast retirement + T2 residua…
 
-**boundary:** Queued 12:5xZ 08-14 at the owner ask. Step (1) executable at the current run boundary AFTER grpo-r1b-boundary-reads (banked rows consumed via current import paths first); steps 3-4 sequenced with the owner's phase landings — never under a live run. | Moved ahead of sim-manip-wrist-content-split 13:1xZ 08-14 (the 12:5x signed order: rebase after the boundary reads; main is already &gt;= db0a141 at 51704c0, so the rebase step is executable now).
+**boundary:** Queued 12:5xZ 08-14 at the owner ask. Step (1) executable at the current run boundary AFTER grpo-r1b-boundary-reads (banked rows consumed via current import paths first); steps 3-4 sequenced with the owner's phase landings — never under a live run. | Moved ahead of sim-manip-wrist-content-split 13:1xZ 08-14 (the 12:5x signed order: rebase after the boundary reads; main is already &gt;= db0a141 at 51704c0, so the rebase step is executable now). | STEP (1) DONE 13:3xZ 08-14 (work session): fontaine rebased onto main 51704c0 (137 commits replayed, one conflict — model.py ar_predict_sampled docstring, action_capture doc kept + retired ar_fast mention dropped, exactly plan §0's predicted surface); check.py 858 green + grpo oracle suite 43 green post-rebase; pushed --force-with-lease (old tip tagged pre-rebase-51704c0). Steps 2-4 remain: track phases 1-3 as they land on main; phase-4 co-land blocked on owner ladder adjudication + phase landings.
 
 <details><summary>full record</summary>
 

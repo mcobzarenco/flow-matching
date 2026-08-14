@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-14T13:15:00Z",
+ "updated_utc": "2026-08-14T13:39:00Z",
  "depth_reason": "depth 2: grpo-r1b-boundary-reads (gated at R1-B rc ~19:3xZ) + sim-rollout-pose-wrist-read (executable now, refill at the consolidated-report close).",
  "items": [
   {
@@ -1596,7 +1596,7 @@
    "owner_hold": false,
    "prereg": null,
    "title": "Adopt the molmoact2 retirement plan (docs/molmoact2-retirement.md, main 02a58e0; owner ask 12:46Z 08-14, thoughts + sign-offs posted in-channel 12:50Z): (1) rebase fontaine onto main >= db0a141 (T1 ar_fast retirement + T2 residual-conditioning removal; conflict surface per plan §0: flow.py sample_actions_sde, model.py action_capture kwarg, eval/policies.py TokenRow/stable_sde_step_noise vs tile_memory, train.py 3 lines — expect trivial); check.py green + grpo oracle suite green post-rebase (test_grpo_step/test_token_rows/test_molmoact2_replay/test_grpo_loop). (2) Track phases 1-3 as they land on main, adopt at convenience. (3) PHASE 4 CO-LAND (my instrument, boundary I signed: after grpo-r1b-boundary-reads land + owner ladder adjudication): thin replay builder + loop/driver re-point to BijouPolicy+MolmoAct2ARDecoder; gate = frozen-wave replay parity on banked R1-B waves (rewards equal, logprobs in registered 1e-5+JPEG bounds) INCLUDING one v2-reward wave (grip-trace keys preserved — the gate addition asked in-channel). (4) Phase-5 sign-off after 4 is green.",
-   "boundary": "Queued 12:5xZ 08-14 at the owner ask. Step (1) executable at the current run boundary AFTER grpo-r1b-boundary-reads (banked rows consumed via current import paths first); steps 3-4 sequenced with the owner's phase landings — never under a live run. | Moved ahead of sim-manip-wrist-content-split 13:1xZ 08-14 (the 12:5x signed order: rebase after the boundary reads; main is already >= db0a141 at 51704c0, so the rebase step is executable now)."
+   "boundary": "Queued 12:5xZ 08-14 at the owner ask. Step (1) executable at the current run boundary AFTER grpo-r1b-boundary-reads (banked rows consumed via current import paths first); steps 3-4 sequenced with the owner's phase landings — never under a live run. | Moved ahead of sim-manip-wrist-content-split 13:1xZ 08-14 (the 12:5x signed order: rebase after the boundary reads; main is already >= db0a141 at 51704c0, so the rebase step is executable now). | STEP (1) DONE 13:3xZ 08-14 (work session): fontaine rebased onto main 51704c0 (137 commits replayed, one conflict — model.py ar_predict_sampled docstring, action_capture doc kept + retired ar_fast mention dropped, exactly plan §0's predicted surface); check.py 858 green + grpo oracle suite 43 green post-rebase; pushed --force-with-lease (old tip tagged pre-rebase-51704c0). Steps 2-4 remain: track phases 1-3 as they land on main; phase-4 co-land blocked on owner ladder adjudication + phase landings."
   },
   {
    "id": "sim-manip-wrist-content-split",
@@ -1608,5 +1608,5 @@
    "boundary": "Queued 12:3xZ 08-14 at the rollout-pose read close (depth refill). Executable any GPU-busy window; pre-reg in-channel BEFORE the read; the registered caveat section of 2026-08-14-prereg-sim-rollout-pose-wrist.md is the contract this item discharges."
   }
  ],
- "updated": "2026-08-14 13:15Z"
+ "updated": "2026-08-14 13:39Z"
 }

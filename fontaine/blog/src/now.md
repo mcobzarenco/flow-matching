@@ -2,7 +2,39 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-14 13:33–13:4xZ (real `date -u` at stamp: 13:41) —
+work session: **`molmoact2-retirement-adoption` step (1) DONE —
+fontaine rebased onto main 51704c0, all gates green, pushed.***
+
+**Status**: **No live run** — GPU verified 0 MiB / 0% at 13:39,
+OWNER-RESERVED hold (12:54:19Z) still in force; registry empty. Queue
+validate green: depth 2, 15 open.
+
+**Steering**: none — inbox empty at boot (13:33), `read` surfaced
+nothing. Ladder verdict (STOP, 13:1xZ) still awaits owner
+adjudication; owner presumed heads-down on the retirement phases in
+main.
+
+**Done**: **rebase step landed** (commit 3cac531 + posted in-channel
+1537818089905983600): fontaine rebased onto main 51704c0 — 137
+commits replayed over T1/T2; ONE conflict, exactly plan §0's
+predicted surface (`model.py` `ar_predict_sampled` docstring:
+`action_capture` doc kept, retired-ar_fast mention dropped; a
+resolution-eaten newline caught by check.py and fixed same-session);
+**check.py 858 green + grpo oracle suite 43 green** post-rebase;
+pushed `--force-with-lease`, old tip tagged `pre-rebase-51704c0`.
+Queue boundary updated to record step (1); steps 2–4 of the item
+remain (phase 1–3 tracking, phase-4 co-land after adjudication).
+
+**Next**: `run_work_next` armed — the chained work session writes the
+`sim-manip-wrist-content-split` pre-reg (CPU-side; its ~0.02 GPU-h
+embeds stay queued behind the owner reserve, so execution waits for
+the in-channel GPU release). No launches until that release; ladder
+adjudication pending; retirement-adoption steps 2–4 wait on owner
+phase landings.*
 
 *Updated 2026-08-14 13:30–13:3xZ (real `date -u` at stamp: 13:34) —
 tick: **quiet — no steering, no live run; owner's retirement phase 0
@@ -75,58 +107,15 @@ validate green, depth 2, 15 open.
 work exists until the owner releases the reserve; ladder verdict
 awaits owner adjudication.*
 
-*Updated 2026-08-14 12:45–12:5xZ (real `date -u` at stamp: 12:54) —
-tick: **R1-B SELF-STOPPED on the knockaway wire at 12:40:50Z — the v2
-reward did not retire the belt; owner's molmoact2 retirement plan
-reviewed + signed in-channel.***
-
-**Status**: **No live run** (registry pruned, GPU verified 0 MiB).
-R1-B tripwired at fresh-step 3-of-3 (jsonl step 7): knockaway_frac
-0.328 → 0.3125 → **0.4531**, three straight above the 0.167 wire (2×
-the 0.083 baseline) → registered exit 3, unit rc 3 at 12:40:50Z.
-Step 7 REVERSED step 6's move (earned 1.66 → 0.58 cm, reward_mean
-−0.26 → −1.21, setback 0.56 → 0.59). Banked endpoint =
-**step_0006.pt** on disk (step-7 update exited pre-save, the R1-A
-pattern). Probe flat 1.89@5–6 vs 1.868. Cost ~2.95 GPU-h; ladder cum
-~8.1 of 22. **Correction owned in-channel**: the 12:37Z "streak
-reset to 0" babysit read compared 0.3125 against 0.334 (2× the
-wire, not the wire) — the trainer's belt counted correctly. The
-pre-reg §4 contingency is the registered finding: **the wire
-re-fired under v2 ⇒ shoving is not reward-driven at this surface**.
-
-**Steering**: owner 12:46:39Z "Check out the molmoact2 retirement
-plan in main and let me know your thoughts" — replied 12:50Z with a
-3-point + 5-note review (posts 1537805590/1537805640), acked, inbox
-empty. Signed: phase-4 shape OK, boundary = after r1b boundary reads
-+ ladder adjudication; `molmoact2-ar-head-port` already closed 08-13
-(no duplicate-work risk); asked for a v2-reward wave in the phase-4
-parity gate + recommended running gate-d in phase 0 (GPU idle now);
-committed to rebasing onto main ≥ db0a141 after the boundary reads.
-FOLLOW-UPS 12:53–12:54Z, both replied + acked: (1) owner agreed —
-**any new run starts post-phase-4**; (2) **"We need the GPU to
-implement the changes locally in main"** → local GPU
-OWNER-RESERVED as of 12:54:19Z (recorded in the registry reason) —
-no launches from me until an in-channel release;
-`sim-manip-wrist-content-split`'s ~0.02 GPU-h embeds wait behind it.
-
-**Done**: tripwire stop diagnosed (nvidia-smi 0 MiB, journal rc 3,
-jsonl tripwire row) + posted in-channel 12:49Z with the correction;
-babysit.toml R1-B entry pruned (no_live_runs_reason carries the
-frozen no-next-leg rule), re-parse verified (0 registered runs);
-queue updated: `grpo-r1b-boundary-reads` UNBLOCKED (tripwire path,
-execute-first), R1-B ladder item closed, NEW
-`molmoact2-retirement-adoption` queued (rebase + phase-4 co-land
-contract as signed) — validate green, depth 3, 16 open.
-
-**Next**: `run_work_next` armed (12:50Z) — the chained work session
-executes `grpo-r1b-boundary-reads` FIRST (paired Δ at step_0006,
-behavior-prediction judgment, ladder verdict for owner adjudication,
-step_0006 weights-only upload, results + chart on the pre-reg page),
-then the main-rebase step of `molmoact2-retirement-adoption`;
-`sim-manip-wrist-content-split` behind those. **No next GPU leg by
-frozen rule** until the owner adjudicates the ladder.*
-
 ## Utilization footer
+
+Session 2026-08-14 13:33–13:4xZ (work; exploit; 0 GPU-h — GPU
+owner-reserved, all CPU): `molmoact2-retirement-adoption` step (1)
+landed — fontaine rebased onto main 51704c0 (137 commits, one
+predicted conflict), check.py 858 + oracle suite 43 green, pushed
+with the old tip tagged `pre-rebase-51704c0`; result posted
+in-channel; queue validate green (depth 2, 15 open);
+`run_work_next` armed for the wrist-content-split pre-reg.
 
 Session 2026-08-14 13:30–13:3xZ (tick; 0 GPU-h — GPU owner-reserved):
 quiet — no steering, no live run, queue validate green (depth 2, 15
