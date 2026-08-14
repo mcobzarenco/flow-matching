@@ -6,7 +6,10 @@ and finish it; leave the rest queued. Repo `~/flow-matching`, branch
    `fontaine/blog/src/now.md`, `fontaine/queue.json` (canonical
    queue), poll Discord (`uv run python
    fontaine/harness/discord.py read`; reply with `... post`), read
-   `ideas.md`.
+   `ideas.md`. Heed the unreplied-inbox banner (class fix
+   2026-08-13): pending entries are consumed-but-unanswered owner
+   messages — reply in-channel, then `... discord.py ack <id>`;
+   result posts never clear the inbox.
 2. Pick, in priority order: owner steering → post-processing a
    finished run → launching the next pre-registered run →
    integrity/infra debt → analysis or screens (charter §3 ladder) →
