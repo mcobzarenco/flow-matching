@@ -5,7 +5,30 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-14 18:57–19:0xZ (real `date -u` at stamp: 18:59) —
+tick: **quiet — minutes after the prereg-final session closed; every
+signal verified unchanged.***
+
+**Status**: **No live run** — GPU verified 0 MiB / 0% (owner reserve
+12:54:19Z stands); registry empty. Main unchanged at `e5b6113` (phase 3
+not landed). Queue validate green: depth 2, 17 open. Discord: inbox
+empty, no new messages, no new reactions in history (the 17:20Z 👍
+remains the last steering).
+
+**Steering**: none this tick.
+
+**Done**: quiet tick — Discord read + history (nothing new; the
+18:57Z pre-reg pointer sits as the channel tail), GPU/main/queue
+verified, archive roll.
+
+**Next**: unchanged — `molmoact2-retirement-adoption` phase-3 watch;
+`wrist-transfer-stage0-cpu-prep` is the executable CPU item
+(`run_work_next` already armed, the chained work session picks it
+up); `wrist-transfer-screen-run` waits ONLY on the in-channel GPU
+release; `renderer-pbr-wrist-pilot` stays owner-gated.*
 
 *Updated 2026-08-14 18:47–19:0xZ (real `date -u` at stamp: 18:55) —
 work session: **`wrist-transfer-screen-prereg-final` DONE — the
@@ -63,47 +86,16 @@ session picks it up); `wrist-transfer-screen-run` blocked on
 prereg-final + the in-channel GPU release; `renderer-pbr-wrist-pilot`
 stays owner-gated.*
 
-*Updated 2026-08-14 18:14–18:3xZ (real `date -u` at stamp: 18:26) —
-work session: **`squint-twin-preflight` DONE, verdict GO mechanically
-— the SO-101 twin installs, steps, renders at 224, and speaks our
-absolute-joint convention, all CPU-only with the GPU reserve at 0 MiB
-throughout.***
-
-**Status**: **No live run** — GPU verified 0 MiB / 0% before and after
-every probe (owner reserve 12:54:19Z stands; probes ran on PhysX CPU +
-lavapipe software Vulkan). Main unchanged at `e5b6113` (phase 3 not
-landed). Queue validate green: depth 2, 17 open. Discord: inbox empty.
-
-**Steering**: none this session.
-
-**Done**: **`squint-twin-preflight`** — CPU-only feasibility probe of
-the Squint SO-101 digital twin ([the
-note](posts/2026-08-14-squint-twin-preflight.md); script
-`fontaine/scripts/squint_preflight.py`, facts + frames in
-`outputs/squint_preflight/` and on fontaine-reports). All 8
-`SO101*-v1` envs register + step headless; `pd_joint_pos` verified
-raw absolute-joint radians end-to-end (hold drift **0.0 rad**,
-random-walk p50 tracking 0.014 rad, 50-step truncation, per-predicate
-`info` + `success` every step); 224×224 is a `sensor_configs` kwarg;
-wrist raw / wrist greenscreen / third-person frames rendered and
-published. Step cost at the CPU floor: 1.9 ms state / 27 ms
-wrist-rgb224 / 128 ms third-rgb224. Two API traps documented: overlay
-silently no-ops without `rgb+segmentation` obs mode; `CAMERA_TYPE` is
-a per-process module constant (in-process alias flip provably
-impossible — package `__init__` binds first). Tier decision stays
-with the wrist-transfer screen outcome. Queue refill:
-**`wrist-transfer-screen-prereg-final`** queued (CPU; freezing the
-design memo into the FINAL pre-reg converts the run item to
-GPU-release-only).
-
-**Next**: `queue_cli.py next` → `molmoact2-retirement-adoption`:
-watch phase 3 land (phase-4 co-land sequenced purely behind it).
-Executable CPU item: `wrist-transfer-screen-prereg-final`
-(`run_work_next` armed); `wrist-transfer-screen-run` blocked on
-prereg-final + the in-channel GPU release; `renderer-pbr-wrist-pilot`
-stays owner-gated.*
-
 ## Utilization footer
+
+Session 2026-08-14 18:57–19:0xZ (tick; 0 GPU-h — GPU owner-reserved):
+quiet tick minutes after the prereg-final session closed — Discord
+read + history clean (no new messages or reactions; the 17:20Z 👍
+remains the last steering, the 18:57Z pre-reg pointer is the channel
+tail), GPU 0 MiB verified, main unchanged at `e5b6113` (phase 3 not
+landed), queue validate green (depth 2, 17 open), inbox empty;
+`run_work_next` already armed for the phase-3 watch +
+`wrist-transfer-stage0-cpu-prep`.
 
 Session 2026-08-14 18:47–19:0xZ (work; exploit; 0 GPU-h — GPU
 owner-reserved, CPU-only writing task): `wrist-transfer-screen-prereg-final`
@@ -122,16 +114,6 @@ last steering), GPU 0 MiB verified, main unchanged at `e5b6113`
 (phase 3 not landed), queue validate green (depth 2, 17 open), inbox
 empty; `run_work_next` already armed for the phase-3 watch +
 `wrist-transfer-screen-prereg-final`.
-
-Session 2026-08-14 18:14–18:3xZ (work; explore; 0 GPU-h — GPU
-owner-reserved, probe forced onto PhysX CPU + lavapipe):
-`squint-twin-preflight` DONE, GO mechanically — 8 SO-101 twin envs
-step headless, absolute-joint control verified end-to-end (hold drift
-0.0 rad), 224 rendering a kwarg, step costs measured (1.9/27/128 ms
-state/wrist/third at the CPU floor), two API traps documented;
-feasibility note + three frames published; queue refilled with
-`wrist-transfer-screen-prereg-final` — validate green depth 2, 17
-open; `run_work_next` armed for the phase-3 watch + the prereg-final.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
