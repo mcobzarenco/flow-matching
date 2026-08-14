@@ -24,8 +24,15 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+import torch
 
-from bijou.fast.molmoact2 import MolmoAct2FastTokenizer
+from bijou.fast.codec import ActionCodec, FastActionCodec
+from bijou.fast.molmoact2 import (
+    MolmoAct2ActionCodec,
+    MolmoAct2FastTokenizer,
+    QuantileStats,
+    unnormalize_action,
+)
 
 FIXTURE = Path(__file__).parent / "fixtures" / "molmoact2_fast_tokenizer"
 HOLES = {3, 9, 12, 14, 19, 22, 27}
@@ -117,3 +124,124 @@ def test_guards_are_loud() -> None:
         loaded.decode(bins[0][:-1], time_horizon=T, action_dim=D)
     with pytest.raises(ValueError, match="one \\[T, D\\] chunk"):
         loaded.encode(np.zeros((2, T, D)))
+
+
+# --- MolmoAct2ActionCodec (the codec layer over the released artifact) ---
+
+TINY_FAST_FIXTURE = Path(__file__).parent / "fixtures" / "tiny_fast_tokenizer"
+
+# Identity-class quantile rows (q01 = −1, q99 = 1 ⇒ denom = 2): the
+# affine maps reduce to (x + 1) − 1, so raw ≈ normalized and the
+# fixture's NORMALIZED chunks can drive raw-unit surfaces. Each test
+# asserts the round-trip precondition it relies on.
+Q01 = np.full(D, -1.0)
+Q99 = np.full(D, 1.0)
+# A deliberately non-trivial table for op-order tests (bitwise
+# comparisons against the inline reference recipe — same ops, any
+# values).
+Q01_RIG = np.array([-92.3, -104.1, -3.7, -88.0, -45.5, 2.1])
+Q99_RIG = np.array([88.9, 102.6, 178.2, 91.4, 47.0, 97.3])
+
+
+def adapter() -> MolmoAct2ActionCodec:
+    return MolmoAct2ActionCodec(codec(), time_horizon=T, action_dim=D)
+
+
+def test_protocol_conformance_and_id_space() -> None:
+    """Both families satisfy the ActionCodec Protocol (the annotations
+    make pyright prove it), and the released family's id-space facts
+    hold: bare 2048 block, specials at NEGATIVE offsets — block_base +
+    boa/pad = <action_start>/<action_end> (151932/3 for release
+    block_base 151934) with zero ±2 rebase of the bins."""
+    released: ActionCodec = adapter()
+    fitted: ActionCodec = FastActionCodec.load(TINY_FAST_FIXTURE)
+    assert (released.boa, released.pad) == (-2, -1)
+    assert released.vocab_total == 2048
+    assert (released.time_horizon, released.action_dim) == (T, D)
+    assert released.symbol_lengths.shape == (2048,)
+    assert (released.symbol_lengths == codec().symbol_lengths).all()
+    # Our fitted family keeps specials INSIDE the block, after the body.
+    assert fitted.boa == fitted.vocab_total - 2
+    assert fitted.pad == fitted.vocab_total - 1
+
+
+def test_adapter_encode_prepends_boa_and_matches_reference_bins() -> None:
+    """Raw-unit encode = [boa, *reference bins] under the identity-class
+    table (round-trip exactness asserted as a precondition — if a
+    machine ever drifts a coefficient onto a rounding boundary, this
+    names the mechanism instead of flaking)."""
+    loaded = adapter()
+    chunks, bins, _ = fixture()
+    stats = QuantileStats(
+        q01=torch.tensor(Q01, dtype=torch.float32),
+        q99=torch.tensor(Q99, dtype=torch.float32),
+    )
+    for chunk, reference in zip(chunks, bins, strict=True):
+        raw = unnormalize_action(torch.from_numpy(chunk), stats).double().numpy()
+        renormalized = (
+            2.0 * (torch.from_numpy(raw).float() - stats.q01) / (stats.q99 - stats.q01)
+        ) - 1.0
+        np.testing.assert_allclose(
+            renormalized.double().numpy(),
+            chunk,
+            atol=5e-7,
+            err_msg="identity-table round-trip drifted — re-baseline the test",
+        )
+        assert loaded.encode(raw, Q01, Q99) == [-2, *reference]
+
+
+def test_adapter_decode_is_the_reference_tail_bitwise() -> None:
+    """decode = their output tail op-for-op: fp64 DCT decode → fp32 →
+    clamp [−1, 1] → q01/q99 inversion (torch fp32) — BITWISE equal to
+    the inline recipe, returned as fp64-of-fp32 so a downstream
+    ``.float()`` recovers the exact executed bytes. A leading boa
+    strips; the pad offset inside a body raises."""
+    loaded = adapter()
+    raw_tokenizer = codec()
+    _, bins, _ = fixture()
+    stats = QuantileStats(
+        q01=torch.tensor(Q01_RIG, dtype=torch.float32),
+        q99=torch.tensor(Q99_RIG, dtype=torch.float32),
+    )
+    for stream in bins:
+        expected = (
+            unnormalize_action(
+                torch.from_numpy(
+                    raw_tokenizer.decode(stream, time_horizon=T, action_dim=D),
+                ).to(torch.float32),
+                stats,
+            )
+            .double()
+            .numpy()
+        )
+        ours = loaded.decode(stream, Q01_RIG, Q99_RIG)
+        assert np.array_equal(ours, expected)
+        assert np.array_equal(loaded.decode([-2, *stream], Q01_RIG, Q99_RIG), expected)
+        fp32_roundtrip = ours.astype(np.float32).astype(np.float64)
+        assert np.array_equal(fp32_roundtrip, ours)  # fp64-of-fp32 contract
+    with pytest.raises(ValueError, match="pad offset"):
+        loaded.decode([-1, *bins[0]], Q01_RIG, Q99_RIG)
+
+
+def test_adapter_encode_refuses_quantization_hole_chunks() -> None:
+    """The encode-side totality guard: a chunk that hits a released-BPE
+    hole would silently shorten a CE target — the codec refuses it by
+    symbol-budget arithmetic instead."""
+    loaded = adapter()
+    hole_level = (min(HOLES) + codec().min_token) / codec().scale  # −5.2
+    normalized = np.zeros((T, D))
+    normalized[:, 0] = hole_level / np.sqrt(T)
+    stats = QuantileStats(
+        q01=torch.tensor(Q01, dtype=torch.float32),
+        q99=torch.tensor(Q99, dtype=torch.float32),
+    )
+    raw = unnormalize_action(torch.from_numpy(normalized), stats).double().numpy()
+    with pytest.raises(ValueError, match="quantization hole"):
+        loaded.encode(raw, Q01, Q99)
+
+
+def test_adapter_geometry_guards() -> None:
+    with pytest.raises(ValueError, match="geometry must be positive"):
+        MolmoAct2ActionCodec(codec(), time_horizon=0, action_dim=D)
+    with pytest.raises(ValueError, match=r"encode expects \[30, 6\]"):
+        adapter().encode(np.zeros((T, D + 1)), Q01, Q99)

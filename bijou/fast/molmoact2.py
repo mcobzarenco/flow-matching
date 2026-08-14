@@ -42,15 +42,94 @@ Measured release-artifact facts the port must not paper over
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
 import numpy.typing as npt
+import torch
 from tokenizers import Tokenizer
+from torch import Tensor
 
+from .codec import AnyFloatArray
 from .tokenizer import dct_matrix
 
 FloatArray = npt.NDArray[np.float64]
+
+#: Their normalizer's division-by-zero guard (lerobot
+#: ``_NormalizationMixin.eps``); substituted where q99 == q01. Moved
+#: here from molmoact2_processing 2026-08-14: the q01/q99 maps are
+#: codec-layer math (the raw-unit glue), and ``fast`` sits below
+#: ``encoders`` in the import DAG — processing re-exports.
+_NORM_EPS = 1e-8
+
+
+@dataclass(frozen=True, slots=True)
+class QuantileStats:
+    """q01/q99 rows for one feature, float32 like their normalizer casts
+    to (stats follow the input tensor dtype; inputs are float32)."""
+
+    q01: Tensor  # [D] float32
+    q99: Tensor  # [D] float32
+
+    def __post_init__(self) -> None:
+        if self.q01.shape != self.q99.shape or self.q01.ndim != 1:
+            raise ValueError(
+                f"expected matching 1-D q01/q99, got {self.q01.shape} / {self.q99.shape}",
+            )
+
+
+def normalize_q01q99(value: Tensor, stats: QuantileStats) -> Tensor:
+    """Their QUANTILES normalization: ``2 * (x - q01) / (q99 - q01) - 1``
+    in float32, zero-width quantile ranges replaced by eps.
+
+    Shapes:
+    - ``value``: [..., D] raw units
+    - returns: [..., D] float32 normalized
+    """
+    value = torch.as_tensor(value, dtype=torch.float32)
+    denom = stats.q99 - stats.q01
+    denom = torch.where(denom == 0, torch.tensor(_NORM_EPS, dtype=torch.float32), denom)
+    return 2.0 * (value - stats.q01) / denom - 1.0
+
+
+def unnormalize_q01q99(value: Tensor, stats: QuantileStats) -> Tensor:
+    """Inverse map: ``(x + 1) * (q99 - q01) / 2 + q01`` (their op order).
+
+    Shapes:
+    - ``value``: [..., D] normalized
+    - returns: [..., D] float32 raw units
+    """
+    value = torch.as_tensor(value, dtype=torch.float32)
+    denom = stats.q99 - stats.q01
+    denom = torch.where(denom == 0, torch.tensor(_NORM_EPS, dtype=torch.float32), denom)
+    return (value + 1.0) * denom / 2.0 + stats.q01
+
+
+def normalize_state(value: Tensor, stats: QuantileStats) -> Tensor:
+    """Input-side path: q01/q99 normalize then clamp to [-1, 1] (their
+    ``MolmoAct2ClampNormalizedProcessorStep``) — the SAME map their
+    recipe applies to action targets before FAST-encoding (train.py
+    normalizes actions with this before ``encode``).
+
+    Shapes:
+    - ``value``: [..., D] raw units
+    - returns: [..., D] float32 in [-1, 1]
+    """
+    return normalize_q01q99(value, stats).clamp(-1.0, 1.0)
+
+
+def unnormalize_action(value: Tensor, stats: QuantileStats) -> Tensor:
+    """Output-side action path: clamp the sampled normalized chunk to
+    [-1, 1] (their ``MolmoAct2ClampActionProcessorStep``) then invert
+    the q01/q99 map back to joint units.
+
+    Shapes:
+    - ``value``: [..., D] sampled normalized chunk
+    - returns: [..., D] float32 joint units
+    """
+    value = torch.as_tensor(value, dtype=torch.float32).clamp(-1.0, 1.0)
+    return unnormalize_q01q99(value, stats)
 
 
 class MolmoAct2FastTokenizer:
@@ -162,3 +241,133 @@ class MolmoAct2FastTokenizer:
             np.array([ord(ch) for ch in symbols], dtype=np.float64) + self.min_token
         ).reshape(time_horizon, action_dim)
         return self._matrix(time_horizon).T @ (coefficients / self.scale)
+
+
+def _quantile_stats(q01: AnyFloatArray, q99: AnyFloatArray) -> QuantileStats:
+    """Per-call q01/q99 rows → their float32 stats object (norm_stats
+    tables are read as float32; batch stats arrive as fp32/64 arrays)."""
+    return QuantileStats(
+        q01=torch.tensor(np.asarray(q01), dtype=torch.float32),
+        q99=torch.tensor(np.asarray(q99), dtype=torch.float32),
+    )
+
+
+class MolmoAct2ActionCodec:
+    """The released family's CODEC layer — the
+    :class:`bijou.fast.codec.ActionCodec` implementation over
+    :class:`MolmoAct2FastTokenizer` plus the release geometry
+    (docs/molmoact2-retirement.md phase 2, decision 3).
+
+    **Id space.** Codec-relative body ids ARE the block-relative bins
+    (backbone id = ``block_base + bin`` with ``block_base =
+    action_token_start_id`` — the frozen capture/TokenRow convention),
+    so the specials sit at NEGATIVE offsets: ``boa = −2``
+    (``<action_start>``, backbone 151932 on the release) and ``pad =
+    −1`` (``<action_end>``, 151933). The suffix scaffold's ``block_base
+    + offset`` arithmetic then lands on the real trunk ids with no ±2
+    rebase anywhere, and ``<action_end>`` doubles as the pad/filler id:
+    legal to emit exactly when a row's symbol budget reaches 0 — their
+    "closes the stream at budget 0" semantics — and fed to finished
+    rows in batch lockstep. Neither special is ever a CE target
+    (``suffix_targets`` ignores pad targets; BOA is fed, not
+    predicted) — a deliberate, documented narrowing of their SFT span
+    to what the masked decode and the GRPO line actually train (bins).
+
+    **Raw units.** The reference's op order, op-for-op: decode returns
+    fp64-of-fp32 values so a downstream ``.float()`` reproduces their
+    executed chunks byte-for-byte (they cast the fp64 DCT decode to
+    fp32 BEFORE the [-1, 1] clamp + q01/q99 inversion; fp32 → fp64 →
+    fp32 is lossless). Encode applies their clamp-normalize
+    (:func:`normalize_state` — the map their recipe applies to action
+    targets) before the DCT, then guards the symbol budget: a chunk
+    whose coefficients hit one of the 7 released-BPE quantization holes
+    cannot round-trip and is REFUSED (a silently short CE target is the
+    exact failure class the loud path exists for).
+    """
+
+    def __init__(
+        self,
+        tokenizer: MolmoAct2FastTokenizer,
+        *,
+        time_horizon: int,
+        action_dim: int,
+    ) -> None:
+        if time_horizon <= 0 or action_dim <= 0:
+            raise ValueError(
+                f"geometry must be positive, got time_horizon="
+                f"{time_horizon}, action_dim={action_dim}",
+            )
+        self.tokenizer = tokenizer
+        self.time_horizon = time_horizon
+        self.action_dim = action_dim
+        self.boa = -2
+        self.pad = -1
+        # [block_vocab] int64; 0 beyond bpe_vocab — the 1043 untrained
+        # rows and both specials are excluded by the grammar mask for
+        # free (lengths > 0 legality).
+        self.symbol_lengths = tokenizer.symbol_lengths
+
+    @property
+    def vocab_total(self) -> int:
+        """The bare 2048-wide bin block — the specials sit BELOW it and
+        do not count (they are trunk vocabulary, not block rows)."""
+        return self.tokenizer.block_vocab
+
+    def encode(
+        self,
+        actions: AnyFloatArray,
+        q01: AnyFloatArray,
+        q99: AnyFloatArray,
+    ) -> list[int]:
+        """RAW-unit chunk [time_horizon, action_dim] → ``[boa, bins…]``
+        under their clamp-normalize convention. Raises on geometry
+        mismatches and on quantization-hole chunks (see class
+        docstring)."""
+        array = np.asarray(actions, dtype=np.float64)
+        if array.shape != (self.time_horizon, self.action_dim):
+            raise ValueError(
+                f"encode expects [{self.time_horizon}, {self.action_dim}] "
+                f"raw chunks, got {array.shape}",
+            )
+        normalized = normalize_state(
+            torch.from_numpy(array),
+            _quantile_stats(q01, q99),
+        )
+        bins = self.tokenizer.encode(normalized.double().numpy())
+        budget = self.time_horizon * self.action_dim
+        expanded = int(self.symbol_lengths[bins].sum()) if bins else 0
+        if expanded != budget:
+            raise ValueError(
+                f"encoded stream expands to {expanded} DCT coefficients, "
+                f"expected {budget} — the chunk hit a released-BPE "
+                "quantization hole (7 symbol values the artifact cannot "
+                "represent) and would decode short; refusing to emit a "
+                "silently truncated target",
+            )
+        return [self.boa, *bins]
+
+    def decode(
+        self,
+        token_ids: list[int],
+        q01: AnyFloatArray,
+        q99: AnyFloatArray,
+    ) -> npt.NDArray[np.float64]:
+        """``[boa?, bins…]`` → RAW-unit chunk [time_horizon, action_dim]
+        float64 (of exact fp32 values — see the class docstring's op
+        order). Malformed bodies raise; the caller owns any fallback."""
+        body = [int(t) for t in token_ids if int(t) != self.boa]
+        if any(t == self.pad for t in body):
+            raise ValueError(
+                "<action_end> (the pad offset) inside a decoded body — "
+                "the stream close is scaffold-owned, never a body token",
+            )
+        normalized = self.tokenizer.decode(
+            body,
+            time_horizon=self.time_horizon,
+            action_dim=self.action_dim,
+        )
+        raw = unnormalize_action(
+            torch.from_numpy(normalized).to(torch.float32),
+            _quantile_stats(q01, q99),
+        )
+        return raw.double().numpy()
