@@ -1430,11 +1430,20 @@
   {
    "id": "token-grpo-phase2-r1a-run",
    "class": "gpu-local",
-   "status": "queued",
+   "status": "done",
    "owner_hold": false,
    "prereg": "fontaine/blog/src/posts/2026-08-13-prereg-token-grpo-phase2-r0a.md",
    "title": "Token-GRPO phase-2 R1-A LIVE (00:06:00Z 08-14, unit fontaine-grpo-r1a, resume of R0-A step_0002.pt, steps 3-17, same frozen constants): babysit rides it (~0.96 GPU-h/step incl. per-step eval, rc ETA ~14:3xZ 08-14). At rc: S6 endpoint reads (paired delta CI95 primary; knockaway vs 10/120 \u2014 WATCH: R0-A waves 0.234->0.359 vs the 0.167 x3 line, a legitimate exit-3 is registered behavior; success count) => R2-A extension only via the frozen R1->R2 rule, else boundary discussion in-channel (incl. lr/beta re-price if eval stays flat-at-noise).",
-   "boundary": "Queued 00:1xZ 08-14 at launch. Leg budget 16.5 GPU-h in-registry; ladder cum ~20.3 of gate 22 at rc; 35 GPU-h total unchanged."
+   "boundary": "Queued 00:1xZ 08-14 at launch. Leg budget 16.5 GPU-h in-registry; ladder cum ~20.3 of gate 22 at rc; 35 GPU-h total unchanged. | SELF-STOPPED 03:05Z 08-14 at step 5/17: knockaway tripwire exit 3 (fresh waves 0.406->0.359->0.312 vs the 0.167 x3 line \u2014 registered behavior). S6 endpoint reads: eval flat 1.8441 2/20 through step 4 (delta -0.0239 CI [-0.0716,0.0] touching zero \u2014 unharmed, unimproved; accumulation question cut short); knockaway pooled 69/192=0.359 but DECAYING while train success recovered 0->4->4; drift gentle (k3_pre 8e-7, nll softening). FROZEN RULE: tripwire -> NO R2-A. step_0004 weights-only -> fontaine-checkpoints/grpo_phase2_r1a (verified). Cost ~2.95 GPU-h (ladder cum ~5.1 of 22). Boundary options in-channel 03:1xZ (R1-B re-price / reward-patch pre-reg / stop) \u2014 owner adjudicates."
+  },
+  {
+   "id": "grpo-phase2-boundary-decision",
+   "class": "cpu",
+   "status": "blocked",
+   "owner_hold": true,
+   "prereg": "fontaine/blog/src/posts/2026-08-13-prereg-token-grpo-phase2-r0a.md",
+   "title": "Token-GRPO phase-2 boundary decision (OWNER CALL, options posted in-channel 03:1xZ 08-14 at the R1-A tripwire stop): (1) R1-B re-price lr 3e-7 + kl_beta 1.0 from the banked step_0004 (fontaine-checkpoints/grpo_phase2_r1a, weights-only), wire unchanged, ~9.6 GPU-h for 10 steps; (2) reward-patch pre-reg FIRST \u2014 in-reward knock-away penalty (progress reward currently pays for boat displacement without a grasp; the wire keeps firing at any lr while shoving pays), ~0 GPU-h to design; (3) stop the ladder, bank the negative accumulation read. Recommendation posted: (2) then (1). Ladder cum ~5.1 of the 22 GPU-h gate; ~17 headroom.",
+   "boundary": "Queued 03:2xZ 08-14 at the R1-A tripwire boundary. On owner word: option 2 lands a pre-reg (CPU) then option 1 launches from step_0004 under it; option 3 closes the phase-2 GRPO screen with the R0-A GO + R1-A tripwire record."
   },
   {
    "id": "token-grpo-phase2-r0a-run",
@@ -1509,5 +1518,5 @@
    "boundary": "Queued 02:1xZ 08-14 at the photometric close. The per-pixel most distinctive class \u2014 likely the highest-leverage remaining arm fix. CPU + ~0.02 GPU-h per gate read."
   }
  ],
- "updated": "2026-08-14T02:16:00Z"
+ "updated": "2026-08-14T03:25:00Z"
 }
