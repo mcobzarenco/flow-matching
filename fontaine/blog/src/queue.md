@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-14T11:01:47Z
+**Updated:** 2026-08-14T11:29:00Z
 
-**Depth call:** depth 2: grpo-r1b-boundary-reads (gated at R1-B rc ~19:3xZ) + sim-appearance-consolidated-report (executable now, closed-screen report rule).
+**Depth call:** depth 2: grpo-r1b-boundary-reads (gated at R1-B rc ~19:3xZ) + sim-rollout-pose-wrist-read (executable now, refill at the consolidated-report close).
 
-**15 open** (Live 0 · Queued 2 · Blocked 13 · Done 160)
+**15 open** (Live 0 · Queued 2 · Blocked 13 · Done 161)
 
 ## 🔴 Live (0)
 
@@ -18,15 +18,15 @@
 
 *ready — waiting on a window or a boundary*
 
-**`sim-appearance-consolidated-report`** · `cpu`
+**`sim-rollout-pose-wrist-read`** · `cpu`
 
-Appearance programme consolidated report (chart-led, closed-screen rule): the sim top-cam appearance screen is measured end-to-end
+Rollout-pose wrist gap read: the one unmeasured leg the consolidated report flags
 
-**boundary:** Queued 11:1xZ 08-14 at the full-optin-stack close (depth refill; owner standing preference: chart-led consolidated reports for closed screens). Fully CPU, no pre-reg needed (no new claims). If an owner promotion call lands first, fold the decision into the report rather than re-scoping.
+**boundary:** Queued 11:2xZ 08-14 at the consolidated-report close (depth refill). Executable any GPU-busy window; pre-reg in-channel BEFORE the read; if the owner answers the promotion asks first, fold the flipped defaults into the arm set.
 
 <details><summary>full record</summary>
 
-Appearance programme consolidated report (chart-led, closed-screen rule): the sim top-cam appearance screen is measured end-to-end — v3 0.713 anchor; clutter real-crop patches 0.556 (carries the gap's removable share); arm_photometrics 0.698; mount rides the material stack to 0.702; texture REFUTED twice (albedo channel exhausted, relief/light-transport hypothesis banked); wrist-side neutral at reset poses; full opt-in stack 0.5521 (materials absorbed next to clutter, interaction +0.0063 sub-additive). One blog-post report telling the whole story with the ladder chart + frame strips, written for the owner's three pending promotion decisions — what to flip, in what order, what each flag is worth alone vs stacked, and what remains (real-fg 0.328 floor: geometry/light-transport, renderer-upgrade priced separately). No new measurements — banked numbers only.
+Rollout-pose wrist gap read: the one unmeasured leg the consolidated report flags — the banked 0.828 wrist anchor is ROLLOUT-frame (gripper filling the frame mid-manipulation); every wrist read so far is reset-pose (0.548-0.561 band). Render wrist frames at banked rollout trajectories' recorded qpos (settled mid-episode poses, production v3 + fitted curve-only lens + re-tuned pose), pair against real mid-manipulation wrist frames from the held-out episodes, er_60k knn5 probe. Answers whether the wrist camera is honest where it matters for policy (manipulation frames), prices the material flags' wrist-side effect at poses where the arm FILLS the frame (~230 px at reset vs most-of-frame mid-grasp). Pre-reg required before the read (anchors: reset band 0.548-0.561, rollout 0.828 banked rollout-frame; bars frozen at pre-reg). CPU renders + ~0.02 GPU-h embeds.
 
 </details>
 
@@ -230,9 +230,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (160)
+## ✅ Done (161)
 
 *closed — the full record stays in each fold*
+
+**`sim-appearance-consolidated-report`** · `cpu`
+
+Appearance programme consolidated report (chart-led, closed-screen rule): the sim top-cam appearance screen is measured end-to-end
+
+**boundary:** Queued 11:1xZ 08-14 at the full-optin-stack close (depth refill; owner standing preference: chart-led consolidated reports for closed screens). Fully CPU, no pre-reg needed (no new claims). If an owner promotion call lands first, fold the decision into the report rather than re-scoping. | CLOSED 11:2xZ 08-14: report posted (posts/2026-08-14-appearance-screen-report.md, chart-led, banked numbers only), lead chart chart__appearance_screen_ladder.png on fontaine-reports (curl 200), reports.md consolidated entry added, in-channel post 11:28:26Z. Promotion guidance on record: clutter = payload, materials = free riders, remainder = renderer-class (geometry/relief).
+
+<details><summary>full record</summary>
+
+Appearance programme consolidated report (chart-led, closed-screen rule): the sim top-cam appearance screen is measured end-to-end — v3 0.713 anchor; clutter real-crop patches 0.556 (carries the gap's removable share); arm_photometrics 0.698; mount rides the material stack to 0.702; texture REFUTED twice (albedo channel exhausted, relief/light-transport hypothesis banked); wrist-side neutral at reset poses; full opt-in stack 0.5521 (materials absorbed next to clutter, interaction +0.0063 sub-additive). One blog-post report telling the whole story with the ladder chart + frame strips, written for the owner's three pending promotion decisions — what to flip, in what order, what each flag is worth alone vs stacked, and what remains (real-fg 0.328 floor: geometry/light-transport, renderer-upgrade priced separately). No new measurements — banked numbers only.
+
+</details>
+
+---
 
 **`grpo-r1b-repriced-launch`** · `gpu-local`
 
