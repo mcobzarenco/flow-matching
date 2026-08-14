@@ -3,7 +3,57 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-14 00:36–02:2xZ (real `date -u` at stamp: 02:16) —
+work session: **`sim-arm-photometric-links` EXECUTED end-to-end
+(`4515ab4`) — mined the real arm's pixels at recorded poses, fitted a
+material grade through the production composite, and the registered
+probe read passed BOTH bars: the missing term was shine, not paint.***
+
+**Status**: **LIVE: `grpo_phase2_r1a`** — babysits 00:36/00:48/01:02/
+01:08/01:34/02:04/02:15 all exit 0: 3 procs, GPU ~100% at ~34 GiB
+(75-gate headroom ~41 GiB). First fresh rows landed: step 3 (loss
+0.0385, eval 1.8441 — flat-at-noise, as the accumulation question
+expects) and step 4 (loss 0.0343), ~2880 s/step incl. per-step eval
+→ ~10.4 h to step 17 at the 02:15 read, rc within the ~14:3xZ ETA.
+No tripwires, knockaway streak quiet.
+
+**Steering**: none — inbox empty and read empty at every babysit poll.
+NEW ASK OUT (02:1xZ, with the results post): promote
+`arm_photometrics='v1'` into the production v3/v4 default? (Same
+contract as the clutter-patch promotion ask, 05:40Z 08-13, still
+open — they could flip together.)
+
+**Done**: **sim-arm-photometric-links CLOSED** (`4515ab4`, pre-reg
+posted 01:53Z BEFORE the read): (1) mining — sim posed at the
+recorded joints of 142 real v2 frames, silhouette projected through
+the production fisheye, per-body FFT darkness-snap ±60 px + ring +
+absolute-darkness guards → 436k real PLA px + 77k servo px; real arm
+reads brighter than the flat recolor (median luma 66 vs 54),
+cool-cast, 16–18% glints vs sim's 5%/0%; (2) fit — albedo per channel
+solved through the production composite, spec×shin by grid; both
+populations chose the specular ceiling (1.0, shin 0.1), loss ↓8.5×/
+2.3×; (3) opt-in `arm_photometrics="v1"` (default byte-identical,
+zero RNG draws, 5 oracles, check.py 874→879); (4) registered 20×5
+read GREEN — in-run v3 0.713 dead-center, **PRIMARY v3_photo CI95
+[−3.08e-07, −1.38e-07] < 0 (0.713→0.698, 72/100), MECHANISM
+only_links CI95 < 0 (0.705→0.652, 96/100) ≈ the no_mount amputation
+ceiling without amputating**. Artifacts on fontaine-reports
+(curl-200): chart, before/after strip, mining overlay, 3 JSONs;
+reports.md section + ideas.md hook; results + promotion ask
+in-channel 02:1xZ. Queue: item done; NEW —
+`sim-arm-photometrics-promotion` (owner_hold),
+`sim-mount-material-split` (the mount is WHITE in reality, black in
+sim — per-pixel worst offender), `sim-arm-texture-followup` (print
+layers + servo glint tail). Validate green (depth 3, 16 open).
+
+**Next**: `queue_cli.py next` → **token-grpo-phase2-r1a-run** (ride
+via ~30-min ticks to rc ~14:3xZ 08-14 → §6 endpoint reads → R2-A only
+via the frozen rule). `run_work_next` armed — GPU busy,
+`sim-mount-material-split` (CPU) is the next executable work item per
+no-idle-pauses.*
 
 *Updated 2026-08-14 00:34–00:4xZ (real `date -u` at stamp: 00:37) —
 tick, babysit: **quiet tick — R1-A healthy 28 min into its overnight
@@ -64,37 +114,15 @@ R2-A only via the frozen rule). `run_work_next` armed —
 `sim-arm-photometric-links` (CPU) is queued and the GPU is busy; the
 chained work session takes it per no-idle-pauses.*
 
-*Updated 2026-08-14 00:18–00:2xZ (real `date -u` at stamp: 00:21) —
-tick, babysit: **quiet tick — R1-A healthy 12 min into its overnight
-leg, R0-A's preservation upload verified landed on the Hub.***
-
-**Status**: **LIVE: `grpo_phase2_r1a`** — babysit exit 0: 3 procs,
-GPU 100% at 34.2 GiB (75-gate has 41 GiB headroom), at step 2/17
-which is exactly the registered resume behavior (first fresh row is
-step 3, ~01:0xZ — the duplicate step-2 eval row is pre-registered
-loop behavior, not an anomaly). Probe trajectory 1.87@0 → 1.84@1-2,
-flat-at-noise as the accumulation question expects this early.
-Knockaway streak fresh (R1-A restarts the ×3 count). Upload
-`fontaine-upload-r0a` COMPLETE 00:06:53Z — `step_0002_weights.pt` +
-meta + train.jsonl verified present in
-`fontaine-checkpoints/grpo_phase2_r0a` by Hub listing.
-
-**Steering**: none — read empty 00:18Z; history shows no new
-reactions (the 👍 on the 22:10Z pre-reg post was already recorded
-last session; nothing yet on the 00:08Z GO post).
-
-**Done**: babysit poll (all facts above); queue validate green
-(depth 3, 15 open); upload verification closes the R0-A
-checkpoint-preservation rule same-session.
-
-**Next**: unchanged — ride **token-grpo-phase2-r1a-run** via ~30-min
-ticks to rc ~14:3xZ. Step-3 fresh row lands ~01:0xZ (next tick
-catches it; holding in-session can't reach it inside the cap).
-`run_work_next` stays armed — GPU is busy and
-`discord-unreplied-inbox` (CPU) is queued; the chained work session
-takes it per no-idle-pauses.*
-
 ## Utilization footer
+
+Session 2026-08-14 00:36–02:2xZ (work; ~0.02 GPU-h decided — the probe
+embeds, run alongside R1-A which accrued ~2.1 GPU-h of its ~14.4 leg
+under 7 in-session babysits; CPU item, exploit-sim):
+sim-arm-photometric-links executed end-to-end inside the GPU-busy
+window (mine → fit → sim patch → pre-reg → registered read GREEN,
+`4515ab4`); promotion ask out; queue depth 3 (16 open).
+`run_work_next` armed for sim-mount-material-split.
 
 Session 2026-08-14 00:34–00:4xZ (tick, babysit; 0 new GPU-h decided —
 R1-A live and healthy, ~0.45 GPU-h accrued on its ~14.4 leg): quiet
