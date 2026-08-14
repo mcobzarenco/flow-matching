@@ -239,6 +239,7 @@ class SO101Sim:
         lens_model: str = "equidistant",
         flip_camera_mount: bool = True,
         arm_photometrics: str | None = None,
+        mount_material: str | None = None,
     ) -> None:
         if render_style not in ("v0", "v1", "v2", "v3", "v4"):
             raise ValueError(
@@ -258,7 +259,12 @@ class SO101Sim:
             raise ValueError(
                 f"arm_photometrics {arm_photometrics!r} not in (None, 'v1')",
             )
+        if mount_material not in (None, "v1"):
+            raise ValueError(
+                f"mount_material {mount_material!r} not in (None, 'v1')",
+            )
         self.arm_photometrics = arm_photometrics
+        self.mount_material = mount_material
         self.render_style = render_style
         self.post_backend = post_backend
         self.lens_model = lens_model
@@ -302,6 +308,9 @@ class SO101Sim:
         self._recolor_arm()
         if arm_photometrics == "v1":
             self._grade_arm_photometrics()
+        if mount_material == "v1":
+            self._split_mount_material()
+            self._grade_mount_material()
         self._repose_wrist_cam()
         # flip_camera_mount=False reproduces the pre-flip (mirrored
         # Menagerie bracket) physics for paired flip-effect reads only —
@@ -1040,6 +1049,81 @@ class SO101Sim:
             self.model.mat_rgba[index, :3] = grade["rgba"]
             self.model.mat_specular[index] = grade["specular"]
             self.model.mat_shininess[index] = grade["shininess"]
+
+    # Camera-mount material (sim-mount-material-split): the mount is
+    # WHITE in reality but the sim recolors it black — the arm-split read
+    # named it the per-pixel most sim-distinctive class (no_mount is the
+    # only removal moving v3 toward real, 0.713->0.654 on ~0.66% px).
+    # Its material (wrist_roll_follower_so101_v1_material) is SHARED with
+    # the gripper's wrist-roll piece, so the fix first splits ownership:
+    # the gripper geom detaches to matid=-1 with the material's rgba
+    # copied into geom_rgba — byte-identical render (the material carries
+    # only defaults: spec 0.5 shin 0.5 refl 0 emis 0 no texture, exactly
+    # mjv's material-less defaults; oracle-pinned) — leaving the material
+    # exclusively the mount's, fully gradeable with zero new slots and
+    # zero physics/RNG impact. Fitted 2026-08-14 by
+    # fontaine/scripts/sim_mount_material_fit.py (mount pixels mined from
+    # real v2 frames at recorded poses, riding the dark gripper-cluster
+    # snap; fit through the production v3 composite); fit record:
+    # reports/analysis__mount_material_fit.json.
+    # Mined: 81/156 frames locked (gripper 54 / wrist 27), 91k mount px;
+    # the real mount region reads neutral light gray-white — channel
+    # medians [123, 120, 125], luma p50 121 vs the recolor-black
+    # composite's 55 — with the dark camera PCB inside the bracket ring
+    # in the pool (the sim has no PCB model; the fit targets the
+    # region's statistics as the encoder sees them). Fit: albedo probes
+    # 0.3/0.8, spec x shin by 4x4 grid — chose the specular ceiling like
+    # both link populations; loss 177188 -> 9028, composited luma p50
+    # 121.4 / medians [124, 120, 126] vs real 121.2 / [123, 120, 125].
+    # Known residual: highlight fraction 0.075 vs real 0.121.
+    MOUNT_MATERIAL_V1: ClassVar[dict[str, tuple | float]] = {
+        "rgba": (0.4546, 0.43, 0.4311),
+        "specular": 1.0,
+        "shininess": 0.1,
+    }
+
+    def _split_mount_material(self) -> None:
+        """Detach the gripper's wrist-roll geom from the material it
+        shares with the camera mount (matid=-1 + rgba copy — render
+        byte-identical); the material becomes mount-exclusive."""
+        for prefix in ("", "leader-"):
+            mat = self.model.material(prefix + "wrist_roll_follower_so101_v1_material")
+            gripper = self.model.body(prefix + "gripper").id
+            detached = 0
+            for geom in range(self.model.ngeom):
+                if (
+                    self.model.geom_bodyid[geom] == gripper
+                    and self.model.geom_matid[geom] == mat.id
+                ):
+                    self.model.geom_rgba[geom, :3] = self.model.mat_rgba[mat.id, :3]
+                    self.model.geom_rgba[geom, 3] = 1.0
+                    self.model.geom_matid[geom] = -1
+                    detached += 1
+            if detached != 1:
+                raise RuntimeError(
+                    f"{prefix}gripper: detached {detached} geoms from the "
+                    "shared wrist-roll material, expected exactly 1",
+                )
+            holders = {
+                self.model.body(self.model.geom_bodyid[g]).name
+                for g in range(self.model.ngeom)
+                if self.model.geom_matid[g] == mat.id
+            }
+            if holders != {prefix + "camera_mount"}:
+                raise RuntimeError(
+                    f"material {mat.id} not mount-exclusive after split: {holders}",
+                )
+
+    def _grade_mount_material(self) -> None:
+        """Apply the fitted mount grade (mount_material='v1') to the now
+        mount-exclusive materials; deterministic writes at init — no RNG
+        draws, physics untouched."""
+        grade = self.MOUNT_MATERIAL_V1
+        for prefix in ("", "leader-"):
+            mat = self.model.material(prefix + "wrist_roll_follower_so101_v1_material")
+            self.model.mat_rgba[mat.id, :3] = grade["rgba"]
+            self.model.mat_specular[mat.id] = grade["specular"]
+            self.model.mat_shininess[mat.id] = grade["shininess"]
 
     def reset(self, seed: int, appearance_seed: int | None = None) -> SimObservation:
         """Home the arm, place benchy at a seeded pose, randomize
