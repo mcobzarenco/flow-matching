@@ -2,7 +2,48 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-14 18:14–18:3xZ (real `date -u` at stamp: 18:26) —
+work session: **`squint-twin-preflight` DONE, verdict GO mechanically
+— the SO-101 twin installs, steps, renders at 224, and speaks our
+absolute-joint convention, all CPU-only with the GPU reserve at 0 MiB
+throughout.***
+
+**Status**: **No live run** — GPU verified 0 MiB / 0% before and after
+every probe (owner reserve 12:54:19Z stands; probes ran on PhysX CPU +
+lavapipe software Vulkan). Main unchanged at `e5b6113` (phase 3 not
+landed). Queue validate green: depth 2, 17 open. Discord: inbox empty.
+
+**Steering**: none this session.
+
+**Done**: **`squint-twin-preflight`** — CPU-only feasibility probe of
+the Squint SO-101 digital twin ([the
+note](posts/2026-08-14-squint-twin-preflight.md); script
+`fontaine/scripts/squint_preflight.py`, facts + frames in
+`outputs/squint_preflight/` and on fontaine-reports). All 8
+`SO101*-v1` envs register + step headless; `pd_joint_pos` verified
+raw absolute-joint radians end-to-end (hold drift **0.0 rad**,
+random-walk p50 tracking 0.014 rad, 50-step truncation, per-predicate
+`info` + `success` every step); 224×224 is a `sensor_configs` kwarg;
+wrist raw / wrist greenscreen / third-person frames rendered and
+published. Step cost at the CPU floor: 1.9 ms state / 27 ms
+wrist-rgb224 / 128 ms third-rgb224. Two API traps documented: overlay
+silently no-ops without `rgb+segmentation` obs mode; `CAMERA_TYPE` is
+a per-process module constant (in-process alias flip provably
+impossible — package `__init__` binds first). Tier decision stays
+with the wrist-transfer screen outcome. Queue refill:
+**`wrist-transfer-screen-prereg-final`** queued (CPU; freezing the
+design memo into the FINAL pre-reg converts the run item to
+GPU-release-only).
+
+**Next**: `queue_cli.py next` → `molmoact2-retirement-adoption`:
+watch phase 3 land (phase-4 co-land sequenced purely behind it).
+Executable CPU item: `wrist-transfer-screen-prereg-final`
+(`run_work_next` armed); `wrist-transfer-screen-run` blocked on
+prereg-final + the in-channel GPU release; `renderer-pbr-wrist-pilot`
+stays owner-gated.*
 
 *Updated 2026-08-14 18:11–18:2xZ (real `date -u` at stamp: 18:13) —
 tick: **quiet — one owner 👍 caught on the phase-2-absorb post; state
@@ -70,41 +111,17 @@ CPU item: `squint-twin-preflight` (`run_work_next` armed);
 (FINAL pre-reg posts before any launch); `renderer-pbr-wrist-pilot`
 stays owner-gated.*
 
-*Updated 2026-08-14 17:09–17:2xZ (real `date -u` at stamp: 17:19) —
-tick: **phase 2 has started landing on main — absorbed clean, and the
-absorb surfaced a machine-dependent lint the gate is now pinned
-against.***
-
-**Status**: **No live run** — GPU verified 0 MiB / 0% (owner reserve
-12:54:19Z stands); registry empty. Queue validate green: depth 2, 16
-open. Discord: inbox empty, no new messages or reactions.
-
-**Steering**: none this tick (in-channel absorb note posted; phase-3
-watch stays armed).
-
-**Done**: **absorbed main `b30784d`+`b46a3ed`** — the owner's phase-2
-decision-3 landings (tokenizer/codec naming grid + `ActionCodec`
-protocol; `MolmoAct2ActionCodec` over the released family with the
-pad-analog detail resolved: specials at negative offsets, never CE
-targets). Rebase 4 commits zero-conflict (fontaine's delta over main
-is state/docs only now), old tip tagged `pre-rebase-b46a3ed`. Gate
-first ran **RED**: I001 in `bijou.train` — same ruff 0.16.0, opposite
-verdicts, because the gitignored `wandb/` run-logs dir at repo root
-makes isort classify `import wandb` as first-party on any machine
-that has trained locally (the owner's `64fcc24` fold was correct on
-their box, auto-fix here would have ping-ponged it). Fixed at the
-config layer: `known-third-party = ["wandb"]` in pyproject
-(`fa865a0`) — classification is now machine-independent, the owner's
-fold stands, **check.py 879 green**.
-
-**Next**: `queue_cli.py next` → `molmoact2-retirement-adoption` steps
-(3)–(4): phase-2 absorb done, watch stays armed for the rest of
-phases 2–3 (phase-4 co-land sequences purely behind them). Executable
-CPU item: `wrist-transfer-screen-design` (`run_work_next` armed);
-`renderer-pbr-wrist-pilot` stays BLOCKED on the owner's tier-2 go. No
-launches until the in-channel GPU release.*
-
 ## Utilization footer
+
+Session 2026-08-14 18:14–18:3xZ (work; explore; 0 GPU-h — GPU
+owner-reserved, probe forced onto PhysX CPU + lavapipe):
+`squint-twin-preflight` DONE, GO mechanically — 8 SO-101 twin envs
+step headless, absolute-joint control verified end-to-end (hold drift
+0.0 rad), 224 rendering a kwarg, step costs measured (1.9/27/128 ms
+state/wrist/third at the CPU floor), two API traps documented;
+feasibility note + three frames published; queue refilled with
+`wrist-transfer-screen-prereg-final` — validate green depth 2, 17
+open; `run_work_next` armed for the phase-3 watch + the prereg-final.
 
 Session 2026-08-14 18:11–18:2xZ (tick; 0 GPU-h — GPU owner-reserved):
 quiet tick — owner 👍 reaction caught on the 17:20Z phase-2-absorb post
