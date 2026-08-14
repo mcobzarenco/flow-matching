@@ -777,3 +777,34 @@ no_live_runs_reason = "declared 03:2xZ 08-14 work session: grpo_phase2_r1a self-
 # Unit stopped 01:08:05Z at the cell-5 boundary; results post + pre-reg
 # amendment 1 same session.
 
+
+# grpo_phase2_r1a: see 03:1xZ 08-14 prune (tripwire stop, step_0004
+# banked). R1-B below resumes it under the patched reward — pre-reg
+# posts/2026-08-14-prereg-token-grpo-phase2-r1b.md.
+
+[[run]]
+name = "grpo_phase2_r1b"
+kind = "train-jsonl"
+host = "local"
+pgrep = "sim.grpo_loop"
+pgrep_min = 1                     # parent loop (waves spawn 8 transient workers); unit grpo-phase2-r1b
+gpu_indices = [0]
+gpu_mem_min_mib = 8000
+jsonl = "/home/ubuntu/flow-matching/outputs/sim/grpo_phase2_b/train.jsonl"
+total_steps = 15
+probe_key = "eval_reward_mean"
+vram_key = "vram_gib"
+started_utc = "2026-08-14T09:43:20Z"
+gpu_hours_per_wall_hour = 1.0
+boundary = "R1-B: steps 5-14 resuming R1-A's step_0004.pt into fresh grpo_phase2_b under the PATCHED reward (train_reward v2: grasped-progress pay + 0.5x ungrasped-displacement charge), lr 3e-7, kl_beta 1.0 — owner-approved (2)-then-(1) 09:16Z 08-14. ~0.96 GPU-h/step => ~9.6 GPU-h, rc ETA ~19:3xZ 08-14; cum ~14.7 of the 22 gate. Endpoint: held-out paired delta CI (v1 metric, banked baseline) — accumulate or the ladder STOPS."
+anchors = [
+    "CALIBRATION READ (registered): first wave's earned_progress_mean / ungrasped_disp_mean + groups_kept — >=6/8 groups dropped in BOTH first two waves = calibration FAIL (lambda re-price amendment), not a training verdict",
+    "eval metric stays v1 (composite_reward): baseline 1.868 2/20 map rides the checkpoint; R1-A read flat 1.8441 2/20 through step 4 — the question is accumulation once shoving stops paying",
+    "behavior prediction on record: knockaway_frac (R1-A: 0.41->0.36->0.31, all above the 0.167 x3 line) should DECAY under v2; setback_frac + earned/shoved decomposition are new telemetry keys — no baseline, record-only",
+    "wires unchanged incl. knockaway 2x-baseline x3 (belt stays on) + kl_stop 0.06; kl_beta doubled to 1.0 — anchor_k3_pre should stay ~e-07-scale early, watch it accumulate",
+    "resume correctness: anchor = pristine step-0 policy from --checkpoint captured pre-restore (oracle-pinned); duplicate step-4 eval row at start is expected loop behavior; first FRESH row is step 5",
+    "train_reward v2 raises loudly if any episode lacks a grip trace — a ValueError crash here means a worker ran stale code, not a training failure",
+]
+[[run.gates]]
+kind = "vram_max_gib"
+value = 75.0
