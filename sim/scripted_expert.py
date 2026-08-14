@@ -355,31 +355,44 @@ class ScriptedExpert:
             return self._command(lifted, JAW_CLOSED_RAD)
 
         if state.phase == "traverse":
-            # Steer the BOAT, not the pads: the hull hangs off-center in
-            # the grip, so the pad target is the disk hover shifted by
-            # the measured grip offset (pads − boat).
-            grip_offset = pads_now - boat_pos
-            hover = self.disk + np.array([0.0, 0.0, self.CLEARANCE_Z + 0.01])
-            arm, _ = planner.solve_ik_pads(
-                hover + np.array([grip_offset[0], grip_offset[1], 0.0]),
-                self._arm_now(sim),
+            # Pure PAN arc: pan's axis is vertical so it carries no
+            # gravity load (no saturation) — swinging at the lifted
+            # posture preserves the carry height exactly, and the disk
+            # sits at nearly the spawn band's radius. Steer the BOAT's
+            # bearing (it hangs off-center in the grip) to the disk's.
+            arm = self._arm_now(sim)
+            boat_bearing = float(np.arctan2(boat_pos[1], boat_pos[0]))
+            disk_bearing = float(np.arctan2(self.disk[1], self.disk[0]))
+            # Pan and world bearing are NEGATIVELY coupled (measured:
+            # pan +0.2 rad moves the pads' bearing −9.4°).
+            arm[0] = float(
+                np.clip(
+                    arm[0] - (disk_bearing - boat_bearing),
+                    planner.arm_low[0],
+                    planner.arm_high[0],
+                ),
             )
-            if float(np.hypot(*(boat_pos[:2] - self.disk[:2]))) < 0.03 or timeout:
+            aligned = abs(disk_bearing - boat_bearing) < np.deg2rad(3.0)
+            if aligned or timeout:
                 self._enter("lower")
             return self._carry(sim, arm, JAW_CLOSED_RAD, rate_deg=2.5)
 
         if state.phase == "lower":
+            # Radial correction at the held bearing: steer the BOAT's
+            # radius to the disk's with shoulder/elbow only (pan holds
+            # the bearing; wrist holds the grip pose).
             grip_offset = pads_now - boat_pos
             place = (
                 self.disk
                 + np.array([0.0, 0.0, self.PLACE_Z])
                 + np.array([grip_offset[0], grip_offset[1], 0.0])
             )
-            arm, _ = planner.solve_ik_pads(place, self._arm_now(sim))
-            boat_placed = (
-                float(np.hypot(*(boat_pos[:2] - self.disk[:2]))) < 0.03
-                and boat_pos[2] < 0.03
+            arm, _ = planner.solve_ik_pads(
+                place,
+                self._arm_now(sim),
+                free_dofs=3,
             )
+            boat_placed = float(np.hypot(*(boat_pos[:2] - self.disk[:2]))) < 0.03
             if boat_placed or timeout:
                 self._enter("open")
             return self._carry(sim, arm, JAW_CLOSED_RAD, rate_deg=2.0)
