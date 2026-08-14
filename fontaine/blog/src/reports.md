@@ -533,6 +533,35 @@ Renders CPU (~4 min), embeds 5 groups ~0.02 GPU-h.
 - [crops strip](https://mcobzarenco-fontaine-reports.static.hf.space/fg_fix_crops_strip.png)
   — mined RGBA crops: on checker / source naive median / identity paste
 
+## Wrist-view read of the arm material fixes — wrist-neutral: the two-flag stack moves ~230 raw px and the CI straddles zero ([pre-reg](posts/2026-08-14-prereg-sim-wrist-view-material-read.md), 08-14)
+
+The wrist-side fact the two pending promotion asks (photometrics +
+mount) assumed rather than measured. Both flags are model-level
+material writes, so the wrist camera — inches from the recolored
+surfaces, its frame a RAW render (no composite) — sees them directly.
+Two paired production instances, 20 seeds × 5 draws, settled resets,
+er_60k knn5 probe, both cameras; gates all green (in-run TOP 0.713
+dead-center; WRIST 0.561 in the registered [0.50, 0.60] reset band;
+qpos bit-equal ×100; changed-px tripwire quiet at 0.56% max).
+**PRIMARY: paired wrist Δknn5 −1.39e-08, CI95 [−4.53, +1.73]e-08
+straddles zero (46/100) — wrist-neutral**; AUROC 0.561 → 0.560. The
+mechanism is visibility: at the home pose the wrist camera sees ~230
+raw px of graded surface (servo 208 / PLA 21 / mount 1), so there is
+nearly nothing for the encoder to read — no regression (the texture
+failure mode did not fire), no gain. The top rider **replicated the
+mount read's combo delta bit-for-bit** (−1.4937e-07, CI [−2.451,
+−0.570]e-07, 0.713 → 0.702) — production `reset()` observations and
+the `_composite` hook path produce identical frames: the hook was
+bit-exact. Registered limitation stands: the 0.828 ROLLOUT-pose wrist
+gap (gripper filling the frame mid-manipulation) is a different,
+still-open fact — needs banked trajectories or fresh rollouts, priced
+separately. Renders CPU (~9 min), embeds 8 groups ~0.02 GPU-h.
+
+- [analysis JSON](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_wrist_material_read.json)
+  · [chart](https://mcobzarenco-fontaine-reports.static.hf.space/chart__wrist_material_read.png)
+- [frame strip](https://mcobzarenco-fontaine-reports.static.hf.space/strip__wrist_material_read.png)
+  — v3 / stack / amplified-Δ (near-black) / real wrist
+
 ## Arm micro-texture — a clean negative: statistically-matched grain reads MORE fake, both registered CIs above zero ([pre-reg](posts/2026-08-14-prereg-sim-arm-texture-followup.md), 08-14)
 
 The registered residual branch of the photometric close, executed and
