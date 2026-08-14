@@ -44,6 +44,7 @@ REPO = Path(__file__).resolve().parents[2]
 REGISTRY = REPO / "fontaine" / "harness" / "babysit.toml"
 PREV = REPO / "fontaine" / "harness" / "state" / "babysit_prev.json"
 DISCORD = REPO / "fontaine" / "harness" / "discord.py"
+INBOX = REPO / "fontaine" / "harness" / "state" / "discord_unreplied.jsonl"
 
 EXIT_OK = 0
 EXIT_LIVENESS = 1
@@ -547,6 +548,27 @@ def babysit_run(
 # ---------------------------------------------------------------- main
 
 
+def inbox_pending(path: Path = INBOX) -> int:
+    """Count of unreplied owner messages in the discord inbox state file
+    (fed by discord.py `read`, cleared only by an explicit `ack`)."""
+    if not path.exists():
+        return 0
+    return sum(1 for line in path.read_text().splitlines() if line.strip())
+
+
+def print_inbox_banner(pending: int) -> None:
+    """FIRST line of every babysit (2026-08-13 missed-reply class fix):
+    the tail of a babysit's output has been truncated before — the
+    Discord poll section vanished and two owner questions sat unseen
+    ~2 h. A head-of-output banner cannot be truncated away."""
+    if pending:
+        print(
+            f"!!! UNREPLIED DISCORD INBOX: {pending} owner message(s) pending"
+            " an in-channel reply — `discord.py inbox` to reprint,"
+            " `discord.py ack <id>` after replying",
+        )
+
+
 def discord_poll() -> tuple[bool, str]:
     """Mandatory, runs last: read (advances cursor) + history -n 5."""
     chunks = []
@@ -582,6 +604,7 @@ def main() -> int:
     now = datetime.now(UTC)
 
     exit_code = EXIT_OK
+    print_inbox_banner(inbox_pending())
     print(
         f"babysit @ {now.isoformat(timespec='seconds')} — {len(runs)} registered run(s)",
     )
@@ -604,6 +627,10 @@ def main() -> int:
         if not ok:
             print("DISCORD POLL FAILED — treat as a liveness-grade failure")
             exit_code = EXIT_LIVENESS
+        # the poll's `read` may have just fed the inbox — surface the
+        # updated count here too (the head banner covers the NEXT
+        # invocation if this tail is truncated)
+        print_inbox_banner(inbox_pending())
     print(
         f"babysit exit {exit_code} (exit codes: 0=ok, 1=liveness/poll failure, 3=gate crossing surfaced)",
     )
