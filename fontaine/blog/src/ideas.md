@@ -839,7 +839,20 @@ record; the line here is the hook). *Index last updated 2026-08-13.*
   the whole-frame read's floor) → no standalone promotion**; the
   two-flag stack reads 0.713→0.702 CI-excl-0, so the mount rides
   free if photometrics promotes; wrist-view read queued
-  (`sim-wrist-view-material-read`). GRPO thread
+  (`sim-wrist-view-material-read`). Micro-texture EXECUTED 05:4xZ
+  08-14 ([pre-reg + results](posts/2026-08-14-prereg-sim-arm-texture-followup.md),
+  [record](reports.md)): composite-stage screen-space grain fitted to
+  the mined real stats (PLA local contrast 8.24 vs real 8.36, servo
+  tail ~20% closed) — **REFUTED, both registered CIs entirely ABOVE
+  zero (v3_photo 0.698→0.751, 3/100; only_links 0.652→0.740, 0/100):
+  the encoder reads spatial structure, not pooled statistics** —
+  statistically-matched blotch reads MORE fake than smooth. Kills
+  composite-stage stats-matching for texture generally (a useful
+  lens: any future appearance fix must produce structure the encoder
+  recognizes, not match marginals); escalation queued
+  `sim-arm-surface-texture-mjspec` (true UV-mapped anisotropic layer
+  lines via recompile, physics oracles as the bar), not auto-run;
+  the photometric grade stays the arm frontier. GRPO thread
   2026-08-13: the signal probe EXECUTED overnight (re-scoped at the
   registered tripwire — cells 1/2/5 + anchors, 3.57 GPU-h;
   [results as amendment 1](posts/2026-08-12-prereg-grpo-signal-probe.md))
