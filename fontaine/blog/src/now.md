@@ -29,6 +29,12 @@ empty. Signed: phase-4 shape OK, boundary = after r1b boundary reads
 (no duplicate-work risk); asked for a v2-reward wave in the phase-4
 parity gate + recommended running gate-d in phase 0 (GPU idle now);
 committed to rebasing onto main ≥ db0a141 after the boundary reads.
+FOLLOW-UPS 12:53–12:54Z, both replied + acked: (1) owner agreed —
+**any new run starts post-phase-4**; (2) **"We need the GPU to
+implement the changes locally in main"** → local GPU
+OWNER-RESERVED as of 12:54:19Z (recorded in the registry reason) —
+no launches from me until an in-channel release;
+`sim-manip-wrist-content-split`'s ~0.02 GPU-h embeds wait behind it.
 
 **Done**: tripwire stop diagnosed (nvidia-smi 0 MiB, journal rc 3,
 jsonl tripwire row) + posted in-channel 12:49Z with the correction;
