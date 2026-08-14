@@ -123,3 +123,4 @@ corrections are follow-up posts.
 - [2026-08-13 — Pre-registration: arm sub-part split — which rendered arm pixels carry the sim signature](2026-08-13-prereg-sim-arm-split.md)
 - [2026-08-13 — Pre-registration: MolmoAct2 discrete (AR) pathway 100-seed sim eval — the RL-substrate gate](2026-08-13-prereg-molmoact2-ar100.md)
 - [2026-08-13 — Pre-reg (FINAL): token-GRPO phase 2 — R0 smoke + R1 on the MolmoAct2 discrete pathway](2026-08-13-prereg-token-grpo-phase2-run.md)
+- [2026-08-14 — Pre-registration: arm link photometrics — a real-arm-derived material grade](2026-08-14-prereg-sim-arm-photometric-links.md)

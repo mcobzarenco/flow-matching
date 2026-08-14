@@ -238,6 +238,7 @@ class SO101Sim:
         *,
         lens_model: str = "equidistant",
         flip_camera_mount: bool = True,
+        arm_photometrics: str | None = None,
     ) -> None:
         if render_style not in ("v0", "v1", "v2", "v3", "v4"):
             raise ValueError(
@@ -253,6 +254,11 @@ class SO101Sim:
             )
         if lens_model == "fitted" and render_style == "v0":
             raise ValueError("lens_model 'fitted' needs a fisheye style (v1..v4)")
+        if arm_photometrics not in (None, "v1"):
+            raise ValueError(
+                f"arm_photometrics {arm_photometrics!r} not in (None, 'v1')",
+            )
+        self.arm_photometrics = arm_photometrics
         self.render_style = render_style
         self.post_backend = post_backend
         self.lens_model = lens_model
@@ -294,6 +300,8 @@ class SO101Sim:
         self.disk_center: tuple[float, float] = (float(disk.pos[0]), float(disk.pos[1]))
         self.disk_radius: float = float(disk.size[0])
         self._recolor_arm()
+        if arm_photometrics == "v1":
+            self._grade_arm_photometrics()
         self._repose_wrist_cam()
         # flip_camera_mount=False reproduces the pre-flip (mirrored
         # Menagerie bracket) physics for paired flip-effect reads only —
@@ -988,6 +996,50 @@ class SO101Sim:
                 continue
             follower_jaw = "moving_jaw" in name and not name.startswith("leader-")
             self.model.mat_rgba[index] = orange if follower_jaw else black
+
+    # Real-arm-derived link material grades (sim-arm-photometric-links;
+    # arm-split leg named LINKS at 88% of the arm's keep-only delta).
+    # Fitted by fontaine/scripts/sim_arm_photometric_fit.py: real link
+    # pixels mined from 26 reference-half v2 episodes at their recorded
+    # poses (per-body darkness-snapped seg projection, ring-guarded),
+    # then albedo/specular/shininess matched through the production v3
+    # composite; fit record: reports/analysis__arm_photometric_fit.json.
+    # Two populations: the printed-PLA link surfaces and the STS3215 servo
+    # casings. The moving jaws and wrist_roll_follower (gripper/mount
+    # territory) are untouched; the grade applies to BOTH instances —
+    # the arm-split instance axis read follower/leader sub-additive.
+    # Fitted 2026-08-14 (mine: 142/156 frames, 436k PLA + 77k servo px;
+    # fit: pla loss 37180->4355, servo 99887->43624 on the luma-percentile
+    # + channel-median objective). Both populations chose the specular
+    # ceiling with broad highlights (spec 1.0, shin 0.1) — the flat
+    # recolor read hf 0.05/0.00 vs real 0.16/0.18. Known residual: the
+    # real servo glint tail (p97 206) tops out ~125 under the grade, and
+    # local contrast stays under real (no print-layer texture) — the
+    # registered texture follow-up if the probe underdelivers.
+    ARM_PHOTOMETRICS_V1: ClassVar[dict[str, dict[str, tuple | float]]] = {
+        "pla": {"rgba": (0.1197, 0.1607, 0.2182), "specular": 1.0, "shininess": 0.1},
+        "servo": {"rgba": (0.02, 0.02, 0.0661), "specular": 1.0, "shininess": 0.1},
+    }
+
+    def _grade_arm_photometrics(self) -> None:
+        """Apply the fitted material grades (arm_photometrics='v1');
+        deterministic material writes at init — no RNG draws, spawn and
+        noise streams stay bit-identical to the default path."""
+        for index in range(self.model.nmat):
+            name = self.model.mat(index).name
+            if "sts3215" in name:
+                grade = self.ARM_PHOTOMETRICS_V1["servo"]
+            elif (
+                "so101" in name
+                and "moving_jaw" not in name
+                and "wrist_roll_follower" not in name
+            ):
+                grade = self.ARM_PHOTOMETRICS_V1["pla"]
+            else:
+                continue
+            self.model.mat_rgba[index, :3] = grade["rgba"]
+            self.model.mat_specular[index] = grade["specular"]
+            self.model.mat_shininess[index] = grade["shininess"]
 
     def reset(self, seed: int, appearance_seed: int | None = None) -> SimObservation:
         """Home the arm, place benchy at a seeded pose, randomize
