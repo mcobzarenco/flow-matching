@@ -8,7 +8,48 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-14 16:10–16:3xZ (real `date -u` at stamp: 16:36) —
+work session: **`renderer-class-decision-brief` DONE — the whole
+arm-appearance price is now one owner-facing decision post with a
+priced tier menu and a pilot-first recommendation.***
+
+**Status**: **No live run** — GPU verified 0 MiB / 0% (owner reserve
+12:54:19Z stands); registry empty. Queue validate green: depth 2, 16
+open. Discord: inbox empty, no new messages. Main unchanged (still
+`64fcc24`, ruff only — phases 2–3 not landed); no rebase needed.
+
+**Steering**: none this session.
+
+**Done**: **`renderer-class-decision-brief`** (commit `802f916`):
+[the brief](posts/2026-08-14-renderer-class-decision-brief.md)
+consolidates the closed appearance screen + both wrist reads into the
+one decision they point at, chart-led
+(`chart__renderer_class_decision.png` on fontaine-reports, curl 200).
+The three banked facts: top stack 0.552 vs measured floor 0.328
+(−0.224 addressable, all rendered-arm); wrist 0.877 at manipulation
+poses with the content term NIL (the arm carries it; addressable
+−0.355 toward 0.523, ceiling unmeasured); the measured material grade
+*regresses* the wrist at manip poses (+4.0e-07 CI excl. 0 — the
+classic renderer can't cash its own fitted materials). Tier menu:
+albedo spent (refuted ×2); in-classic mjSpec can't express relief (no
+normal-map input); tier-2 = STL→UV re-export (`convert_benchy.py`
+precedent) + procedurally baked layer-line normal maps + an external
+PBR path feeding the anchored compositor — the validation tail
+(lens/grade/oracle/anchor re-pins), not the plumbing, is the real
+cost. Recommendation: **pilot before buying** (wrist-visible meshes
+only, the 100 banked manip slots, ~0.02 GPU-h class) or price the
+transfer link first; both owner-gated. Rider fix: posts-index drift
+(the two newest wrist posts were missing from `posts/index.md`).
+
+**Next**: `queue_cli.py next` → `molmoact2-retirement-adoption` steps
+(3)–(4): watch armed for the owner's phases 2–3 landings (phase-4
+co-land sequenced purely behind them). Executable CPU item:
+`wrist-transfer-screen-design` (refill, any window);
+`renderer-pbr-wrist-pilot` sits BLOCKED on the owner's tier-2 go per
+the brief. No launches until the in-channel GPU release.*
 
 *Updated 2026-08-14 16:06–16:1xZ (real `date -u` at stamp: 16:09) —
 tick: **blog Space push UNBLOCKED — root cause was 976.9 MB of
@@ -86,34 +127,16 @@ ladder is adjudicated STOP. Executable CPU item behind it:
 `renderer-class-decision-brief` (refill, any window). No launches
 until the in-channel GPU release.*
 
-*Updated 2026-08-14 14:58–15:0xZ (real `date -u` at stamp: 15:00) —
-tick: **quiet hold — byte-parity fix still not on main (~50 min since
-the owner's 14:11Z delegation); owner 👍 on the step-(2) post
-recorded.***
-
-**Status**: **No live run** — GPU verified 0 MiB / 0% at 14:59,
-OWNER-RESERVED hold (12:54:19Z) still in force; registry empty. Queue
-validate green: depth 2, 15 open.
-
-**Steering**: history surfaced a new **owner 👍 on the step-(2) DONE
-post** (13:52Z, msg 1537821299538264114) — lightweight agreement with
-the rebase result + byte-parity finding, consistent with their 14:11Z
-delegate-to-local-agent reply; recorded, no reply owed (inbox empty,
-`read` surfaced nothing). Ladder verdict (STOP, 13:1xZ) still awaits
-adjudication.
-
-**Done**: verified origin/main still at `77246a9` — the local agent's
-byte-parity fix has **not landed**; the combined adoption rebase
-(phase 0(b) + fix, one replay closing the red pre-commit gate) stays
-deferred per the 14:1x decision. Archive rolled --keep 3, footer
-trimmed to 2 notes.
-
-**Next**: `run_work_next` armed — the chained work session takes the
-`sim-manip-wrist-content-split` pre-reg (executable CPU item) and
-polls origin/main mid-session to fold in the combined rebase the
-moment the fix lands. No launches until the in-channel GPU release.*
-
 ## Utilization footer
+
+Session 2026-08-14 16:10–16:3xZ (work; exploit; 0 GPU-h — GPU
+owner-reserved, pure CPU/writing): `renderer-class-decision-brief`
+DONE — tier-priced decision post + lead chart on fontaine-reports
+(anchor gray re-stepped for the CVD floor); posts-index drift fixed;
+queue refills `renderer-pbr-wrist-pilot` (blocked on owner go) +
+`wrist-transfer-screen-design` (executable) — validate green depth 2,
+16 open; `run_work_next` armed for the phases-2–3 watch + the design
+item.
 
 Session 2026-08-14 16:06–16:1xZ (tick; 0 GPU-h — GPU owner-reserved):
 blog Space push unblocked — 53 de-referenced LFS blobs (976.9 MB,
@@ -123,16 +146,6 @@ hub LFS API after the squash left them uncollected; push landed, the
 Discord traffic; main +1 doc-lint commit only; queue validate green
 (depth 2, 15 open); `run_work_next` stays armed for the phases-2–3
 watch + `renderer-class-decision-brief`.
-
-Session 2026-08-14 15:02–15:4xZ (work; exploit; ~0.005 GPU-h — a ~30 s
-embed batch in an owner-cleared gap, otherwise CPU under the
-reserve): `sim-manip-wrist-content-split` pre-reg'd + executed +
-closed (content term NIL, arm carries the wrist gap, all anchors
-digit-replicated); combined adoption rebase onto main `3131f82`
-(zero conflicts, check.py 874 green — gate GREEN again); ladder
-adjudicated STOP under the owner's delegation phrasing; queue refill
-`renderer-class-decision-brief` (validate green depth 2, 15 open);
-`run_work_next` armed for the phase-2–3 watch + the decision brief.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
