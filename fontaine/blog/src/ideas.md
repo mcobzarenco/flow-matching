@@ -828,7 +828,18 @@ record; the line here is the hook). *Index last updated 2026-08-13.*
   0.713→0.698, only_links 0.705→0.652 ≈ the amputation ceiling
   without amputating**; promotion pends owner go; texture + servo
   glint tail + white-mount material split are the registered
-  follow-ups. GRPO thread
+  follow-ups. Mount material split EXECUTED 04:4xZ 08-14
+  ([pre-reg](posts/2026-08-14-prereg-sim-mount-material-split.md),
+  [record](reports.md)): byte-identical material detach frees the
+  shared slot, mined real mount = neutral light gray [123,120,125]
+  (white-mount finding confirmed), fit = the links' specular ceiling;
+  **split verdict: MECHANISM decisive (only_mount 0.821→0.793,
+  93/100; presence now BEATS absence vs plate, 100/100 — the
+  amputation confound reversed) but PRIMARY null (0.66% px is below
+  the whole-frame read's floor) → no standalone promotion**; the
+  two-flag stack reads 0.713→0.702 CI-excl-0, so the mount rides
+  free if photometrics promotes; wrist-view read queued
+  (`sim-wrist-view-material-read`). GRPO thread
   2026-08-13: the signal probe EXECUTED overnight (re-scoped at the
   registered tripwire — cells 1/2/5 + anchors, 3.57 GPU-h;
   [results as amendment 1](posts/2026-08-12-prereg-grpo-signal-probe.md))
@@ -845,7 +856,19 @@ record; the line here is the hook). *Index last updated 2026-08-13.*
   guard penalties, z-scored in-group), recommended trainable surface
   = FAST patch + text stack at 5e-6 (vision frozen), old-policy
   logprobs ride the existing `ActionCaptureStep` surface. Launch
-  pends the owner phase-2 go (open since 08-12).
+  pends the owner phase-2 go (open since 08-12). Ladder executed
+  08-13/14: R0 STOP (VRAM + collapse at lr 5e-6), re-scoped R0-A GO
+  (option-A patch surface: diversity survives, drift 5 orders
+  gentler, VRAM 34 vs 76 GiB), **R1-A SELF-STOPPED 03:05Z 08-14 at
+  step 5/17 — the knock-away tripwire, fresh waves 0.41/0.36/0.31 vs
+  the 0.167 ×3 line; eval flat-at-noise through step 4, drift gentle,
+  NO R2-A by the frozen rule**. Named finding: at lr 1e-6 the surface
+  moves BEHAVIOR (shoving up, train success up) but not the held-out
+  read — and shoving PAYS under the current progress reward; the
+  reward patch (in-reward knock-away penalty), an lr/β re-price from
+  the banked step_0004, or stopping the ladder are the owner's
+  boundary options (in-channel 03:1xZ,
+  `grpo-phase2-boundary-decision`).
 - **`lit-arms` [#15 Literature-sourced arms](ideas/15-literature-arms.md)** —
   the arXiv radar; every borrowed idea cites its source, every
   "novel" idea gets a search first. Feeds the Papers section.
