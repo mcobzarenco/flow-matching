@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-14T02:16:00Z
+**Updated:** 2026-08-14T05:44:00Z
 
 **Depth call:** depth 3: arm-B read+prune at its ~13:3xZ boundary; token-grpo-phase2-instrument items 3-4 on the molmoact2 surface (gate passed, lane GO); sim-arm-photometric-links pre-reg.
 
-**16 open** (Live 0 · Queued 2 · Blocked 14 · Done 153)
+**16 open** (Live 0 · Queued 2 · Blocked 14 · Done 154)
 
 ## 🔴 Live (0)
 
@@ -18,6 +18,20 @@
 
 *ready — waiting on a window or a boundary*
 
+**`sim-arm-surface-texture-mjspec`** · `cpu`
+
+TRUE surface texture for the arm links via the mjSpec recompile path (escalation registered by the micro-texture REFUTATION 05:4xZ 08-14: statistically-matched screen-space grain read MORE fake - both CIs above zero, 0.698-&gt;0.751…
+
+**boundary:** Queued 05:4xZ 08-14 at the micro-texture refutation. Do not auto-run: sequenced behind sim-wrist-view-material-read unless the owner reprioritizes; the photometric grade 0.698/0.652 is the arm frontier meanwhile. CPU (recompile+oracles) + ~0.02 GPU-h per gate read.
+
+<details><summary>full record</summary>
+
+TRUE surface texture for the arm links via the mjSpec recompile path (escalation registered by the micro-texture REFUTATION 05:4xZ 08-14: statistically-matched screen-space grain read MORE fake - both CIs above zero, 0.698-&gt;0.751 - the encoder wants coherent surface-tracking structure, not matched marginals): UV-mapped anisotropic print-layer texture assets on the link PLA materials (and servo glint via specular map if the path allows), model recompiled via mjSpec with physics-preservation oracles (qpos trajectories bit-equal or bounded, spawn/appearance/noise streams untouched, mass/inertia/contacts identical) as the hard bar before any render read. Gate on the same pinned 20x5 probe vs the v1-graded baseline 0.698/0.652 with the micro-texture read's stats as anchors. Pre-reg with explicit bar before any read. Higher risk than the composite route (recompile touches the model) - that is WHY it was sequenced second.
+
+</details>
+
+---
+
 **`sim-wrist-view-material-read`** · `cpu`
 
 Wrist-view read of the arm material fixes (follow-on to sim-arm-photometric-links + sim-mount-material-split, both banked opt-in): the wrist camera sees the arm links/gripper up close, and both material fixes change wrist-view pi…
@@ -27,20 +41,6 @@ Wrist-view read of the arm material fixes (follow-on to sim-arm-photometric-link
 <details><summary>full record</summary>
 
 Wrist-view read of the arm material fixes (follow-on to sim-arm-photometric-links + sim-mount-material-split, both banked opt-in): the wrist camera sees the arm links/gripper up close, and both material fixes change wrist-view pixels — the photometrics results post flagged the wrist knn5 as the promotion sanity. Run the encoder OOD probe on WRIST frames: paired v3 default vs the two-flag stack (arm_photometrics + mount_material), same 20x5 slot schedule, er_60k trunk; anchors = the OOD probe's wrist baseline (5-NN AUROC 0.828, ratio 1.33x, centroid 0.707). PRIMARY: paired wrist dknn5 CI95 &lt; 0. Feeds the pending promotion asks with the wrist-side fact instead of assuming it. Pre-reg with explicit bar before any read.
-
-</details>
-
----
-
-**`sim-arm-texture-followup`** · `cpu`
-
-Arm texture follow-up (registered in the photometric pre-reg fail/residual branch): the grade closes the albedo+shine gap but leaves (a) print-layer local contrast real 8.4 vs graded 4.7 and (b) the servo glint tail p97 206 vs 125
-
-**boundary:** Queued 02:1xZ 08-14 at the photometric close. Lower priority than the mount material split (bigger per-pixel offender). CPU + ~0.02 GPU-h per gate read.
-
-<details><summary>full record</summary>
-
-Arm texture follow-up (registered in the photometric pre-reg fail/residual branch): the grade closes the albedo+shine gap but leaves (a) print-layer local contrast real 8.4 vs graded 4.7 and (b) the servo glint tail p97 206 vs 125. Candidate: procedural print-layer texture on link PLA materials via mjSpec texture assets (needs model recompile path) or a composite-stage micro-texture on the arm mask (zero RNG draws, oracle-pinned); gate on the same pinned 20x5 probe vs the v1-graded baseline 0.698/0.652. Pre-reg with explicit bar before any read.
 
 </details>
 
@@ -244,7 +244,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (153)
+## ✅ Done (154)
 
 *closed — the full record stays in each fold*
 
@@ -257,6 +257,20 @@ Camera-mount material split + white retexture (rider finding 08-14: the mount is
 <details><summary>full record</summary>
 
 Camera-mount material split + white retexture (rider finding 08-14: the mount is WHITE/silver in reality, sim paints it black via _recolor_arm; arm-split read no_mount as the ONLY removal moving v3 toward real, 0.713-&gt;0.654 on 0.66% px): the mount geoms share wrist_roll_follower_so101_v1_material with the gripper's wrist-roll piece, so first split the material (mjSpec edit or vendored-XML material clone at load), then set the mount to a mined real color (same pose-projection mining path, mount population), gate on the pinned 20x5 probe (only_mount 0.821 / no_mount 0.654 anchors). Pre-reg with explicit bar before any read.
+
+</details>
+
+---
+
+**`sim-arm-texture-followup`** · `cpu`
+
+Arm texture follow-up (registered in the photometric pre-reg fail/residual branch): the grade closes the albedo+shine gap but leaves (a) print-layer local contrast real 8.4 vs graded 4.7 and (b) the servo glint tail p97 206 vs 125
+
+**boundary:** Queued 02:1xZ 08-14 at the photometric close. Lower priority than the mount material split (bigger per-pixel offender). CPU + ~0.02 GPU-h per gate read. | EXECUTED + CLOSED 05:4xZ 08-14: composite-stage micro-texture (arm_texture='v1', deterministic static fields, zero shared-RNG draws, 6 oracles) fitted through the production composite to the mined real stats (PLA lc 8.24 vs real 8.36 dead-on; servo speckle-only, tail ~20% closed). Registered 20x5 read, all gates green (v3_photo 0.698 dead-center): REFUTED decisively in the registered over-texturing direction - PRIMARY +9.33e-7 CI [8.27,10.42]e-7 ABOVE zero, 3/100, AUROC 0.698-&gt;0.751; MECHANISM +1.30e-6 CI [1.22,1.38]e-6, 0/100, 0.652-&gt;0.740. The encoder reads spatial structure, not pooled statistics; screen-space grain reads as blotch. No promotion ask; escalation queued sim-arm-surface-texture-mjspec (not auto-run); flag stays opt-in. · [pre-reg](posts/2026-08-14-prereg-sim-arm-texture-followup.md)
+
+<details><summary>full record</summary>
+
+Arm texture follow-up (registered in the photometric pre-reg fail/residual branch): the grade closes the albedo+shine gap but leaves (a) print-layer local contrast real 8.4 vs graded 4.7 and (b) the servo glint tail p97 206 vs 125. Candidate: procedural print-layer texture on link PLA materials via mjSpec texture assets (needs model recompile path) or a composite-stage micro-texture on the arm mask (zero RNG draws, oracle-pinned); gate on the same pinned 20x5 probe vs the v1-graded baseline 0.698/0.652. Pre-reg with explicit bar before any read.
 
 </details>
 
