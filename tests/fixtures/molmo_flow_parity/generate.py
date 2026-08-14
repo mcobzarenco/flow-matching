@@ -13,7 +13,7 @@ parity oracle survives the port's deletion.
 import numpy as np
 import torch
 
-from bijou.decoders.molmo_flow import MolmoFlowConfig, SamplingMethod
+from bijou.decoders.molmo_flow import MolmoFlowConfig
 from bijou.molmoact2.action_expert import ActionExpertConfig
 from bijou.molmoact2.wiring import generate_actions
 
