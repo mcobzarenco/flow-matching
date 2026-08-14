@@ -494,6 +494,16 @@ class Collator[I: BatchInputs]:
     # byte-identical. Both-or-neither, checked at construction.
     state_q01: Tensor | None = None
     state_q99: Tensor | None = None
+    # The molmoact2-format ACTION table (retirement phase 3, --objective
+    # ar/joint): when set ([action_dim] fp32 each), action tokenization
+    # AND the batch action_stats quantile rows use this ONE merged table
+    # — their shared-table training convention and molmo_flow's
+    # decision-6 decoder table, kept on one source so CE targets, the
+    # in-train greedy decode and the flow clamp can never disagree.
+    # None keeps every existing path byte-identical (Gemma/Molmo2 AR
+    # tokenize with per-sample dataset quantiles). Both-or-neither.
+    action_q01: Tensor | None = None
+    action_q99: Tensor | None = None
     _generator: torch.Generator | None = dataclasses.field(
         default=None,
         repr=False,
@@ -533,6 +543,17 @@ class Collator[I: BatchInputs]:
             raise ValueError(
                 "state_q01/state_q99 travel together (the merged clamp "
                 "table) — got one without the other",
+            )
+        if (self.action_q01 is None) != (self.action_q99 is None):
+            raise ValueError(
+                "action_q01/action_q99 travel together (the merged action "
+                "table) — got one without the other",
+            )
+        if self.action_q01 is not None and self.action_codec is None:
+            raise ValueError(
+                "an action table override without an action codec — the "
+                "table exists to drive tokenization; drop it or pass the "
+                "codec",
             )
         if self.aux is not None and (
             self.camera_filter is not None or self.max_cameras is not None
@@ -649,6 +670,18 @@ class Collator[I: BatchInputs]:
             return None
         sequences: list[list[int]] = []
         for item in items:
+            if self.action_q01 is not None and self.action_q99 is not None:
+                # The merged-table override (molmoact2 ar/joint): every
+                # sample tokenizes under the ONE table the run trains
+                # with — per-item quantiles deliberately unused.
+                sequences.append(
+                    codec.encode(
+                        item["action"].numpy(),
+                        self.action_q01.numpy(),
+                        self.action_q99.numpy(),
+                    ),
+                )
+                continue
             if "action_q01" not in item:
                 raise SystemExit(
                     f"item from {item.get('repo_id', '<unknown>')} carries no "
@@ -715,6 +748,21 @@ class Collator[I: BatchInputs]:
                 f"batch mixes items with and without {modality} quantile "
                 "stats — items from datasets always carry them, items from "
                 "an old checkpoint's stats table never do; do not mix",
+            )
+        if (
+            modality == "action"
+            and self.action_q01 is not None
+            and self.action_q99 is not None
+        ):
+            # The merged-table override: the batch stats' quantile rows
+            # carry THE table tokenization used, so the decode side
+            # (predict_chunk reads batch.action_stats) can never
+            # disagree with the CE targets.
+            return NormStats(
+                mean=torch.stack([item["action_mean"] for item in items]),
+                std=torch.stack([item["action_std"] for item in items]),
+                q01=self.action_q01.expand(len(items), -1).clone(),
+                q99=self.action_q99.expand(len(items), -1).clone(),
             )
         return NormStats(
             mean=torch.stack([item[f"{modality}_mean"] for item in items]),

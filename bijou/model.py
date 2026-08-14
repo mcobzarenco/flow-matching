@@ -102,14 +102,18 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
         # self-distillation mix (flow decoders with φ_s only). Never
         # serialized — a run property, not a checkpoint property.
         self.distill: str | None = None
-        # The CE-rider slot (dormant since the flow-residual F-arm
-        # retired with residual conditioning, tag pre-decoder-simplify):
-        # a Molmo2ARDecoder whose phase-1 CE objective runs beside a
-        # training decoder. §8.13 step 6 (molmo_flow narration) is the
-        # planned consumer; nothing assigns it until then. Module
-        # attribute assignment registers it, so DDP/param_groups/
-        # state_dict all see it when it returns.
-        self.joint_ce: Molmo2ARDecoder | None = None
+        # The CE-rider slot (revived for the molmoact2 objective matrix,
+        # docs/molmoact2-retirement.md phase 3): a MolmoAct2ARDecoder
+        # whose discrete-head CE runs beside the molmo_flow decoder
+        # (--objective joint). The rider owns ZERO parameters — its
+        # trainable surface is the trunk — so registration matters for
+        # dispatch, not for DDP/param_groups/state_dict contents.
+        self.joint_ce: MolmoAct2ARDecoder | None = None
+        # λ of the joint objective (L_flow + λ·L_CE): --joint-ce-weight,
+        # a run hyperparameter like the LRs — recorded in train_args for
+        # provenance, never serialized here (the distill/insulate
+        # convention).
+        self.joint_ce_weight: float = 1.0
         # Knowledge insulation on the molmo_flow KV seam (§8.13 decision
         # 8, their post-train): extracted per-layer K/V detach before
         # the expert, so flow gradients into every trunk parameter are
@@ -267,13 +271,82 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
                     aux_count,
                 )
             case MolmoFlowDecoder():
+                # Decision-5 ordering (test-pinned): the flow objective
+                # extracts its prompt-only KV pairs BEFORE the CE
+                # rider's suffix forward appends to the same cache —
+                # the expert never conditions on teacher-forced action
+                # tokens (their 'both'-mode span-strip semantics).
                 total = molmo_flow_loss(
                     decoder,
                     memory,
                     batch,
                     insulate=self.insulate_expert,
                 )
+                if self.joint_ce is not None:
+                    ce_total, ce_action, ce_aux_sum, _ = ar_backbone_losses(
+                        self._molmo2_backbone(),
+                        self.joint_ce,
+                        memory,
+                        batch,
+                    )
+                    # The molmoact2 emission has no value lines; the aux
+                    # slots instead carry the CE branch's action read
+                    # (the pinned CE-health metric) — the historical
+                    # joint-arm logging convention.
+                    assert ce_aux_sum is None  # rider constructed aux-None
+                    return (
+                        total + self.joint_ce_weight * ce_total,
+                        total.detach(),
+                        ce_action.detach(),
+                        torch.ones((), device=ce_action.device),
+                    )
                 return total, total.detach(), None, None
+
+    def joint_ce_count_normalizers(
+        self,
+        batch: CollatedBatch[I],
+    ) -> tuple[Tensor, Tensor, Tensor | None]:
+        """(flow position count, CE action-token count, CE aux position
+        count | None) for one batch/chunk — the joint arm's three
+        normalizers (data-only, no model forward; the molmoact2 rider's
+        aux count is always None). The chunked-backward contract
+        mirrors ``loss_count_normalizers``: summed over chunks BEFORE
+        the first forward, each chunk's sum-form share divides by the
+        full-batch normalizers. Flow normalizer = B·T positions (the
+        molmo_flow inner reduction is the per-position valid-dim mean —
+        molmo_flow_loss_sums' contract)."""
+        joint_ce = self.joint_ce
+        assert joint_ce is not None  # joint-arm-only path (train.py routes)
+        ce_action_count, ce_aux_count = ar_backbone_counts(joint_ce, batch)
+        return (
+            torch.tensor(
+                batch.actions.shape[0] * batch.actions.shape[1],
+                device=batch.actions.device,
+            ),
+            ce_action_count,
+            ce_aux_count,
+        )
+
+    def joint_ce_loss_sums(
+        self,
+        memory: ObservationMemory,
+        batch: CollatedBatch[I],
+    ) -> tuple[Tensor, Tensor, Tensor | None, Tensor | None]:
+        """The joint arm's CE branch in sum form — exactly the ar
+        chunked objective (``ar_backbone_loss_sums`` on the rider),
+        split out so BijouTrainStep can run the suffix forward INSIDE
+        the autocast region (the [B, S, 154k] logits want bf16) while
+        the flow branch stays fp32 outside it — and AFTER the flow
+        branch extracted its prompt-only KV (decision 5: this forward
+        APPENDS suffix K/V to the memory's cache)."""
+        joint_ce = self.joint_ce
+        assert joint_ce is not None  # joint-arm-only path (train.py routes)
+        return ar_backbone_loss_sums(
+            self._molmo2_backbone(),
+            joint_ce,
+            memory,
+            batch,
+        )
 
     def loss_count_normalizers(
         self,

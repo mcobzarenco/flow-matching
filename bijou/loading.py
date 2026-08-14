@@ -850,6 +850,13 @@ class CheckpointTrainArgs:
     time_conditioning: TimeConditioning
     target_time_embed: bool
     fast_tokenizer: str | None
+    # The molmoact2 objective matrix (retirement phase 3): which of the
+    # family's trained pathways this run optimized — 'flow' (the
+    # molmo_flow expert, the historical implicit value), 'ar' (the
+    # discrete head), 'joint' (both, L_flow + λ·L_CE). 'flow' for every
+    # checkpoint predating the field and for every non-molmoact2 run
+    # (the field is inert off-family).
+    objective: str = "flow"
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> CheckpointTrainArgs:
@@ -895,6 +902,7 @@ class CheckpointTrainArgs:
             ),
             target_time_embed=bool(data.get("target_time_embed", False)),
             fast_tokenizer=None if fast_tokenizer is None else str(fast_tokenizer),
+            objective=str(data.get("objective", "flow")),
         )
 
 
@@ -1368,6 +1376,54 @@ def molmoact2_ar_config_from_flow_section(
     )
 
 
+def molmoact2_fresh_flow_section(
+    ar_config: ARBackboneConfig,
+) -> MolmoFlowDecoderConfig:
+    """``--expert-init fresh`` from an ar-only source (retirement phase
+    3): the released expert ARCHITECTURE
+    (:meth:`MolmoFlowConfig.released_so100_101` — the literals' home)
+    plus the released serving/t-law constants (num_flow_steps 10,
+    mask_action_dim_padding, t = 0.001 + 0.999·Beta(1, 1.5) — the
+    convert-time reads of their config, oracle-pinned in
+    test_convert_molmoact2), geometry from the format-6 section
+    (identity output tail by construction: the decode budget IS the
+    executed chunk). The q01/q99 clamp table binds at build time from
+    the run's normalization row, as for every molmo_flow section."""
+    shape = MolmoFlowConfig.released_so100_101()
+    if ar_config.chunk_size > shape.max_horizon:
+        raise SystemExit(
+            f"chunk {ar_config.chunk_size} exceeds the released expert's "
+            f"max_horizon {shape.max_horizon} — a fresh released-shape "
+            "expert cannot host this geometry",
+        )
+    return MolmoFlowDecoderConfig(
+        max_horizon=shape.max_horizon,
+        max_action_dim=shape.max_action_dim,
+        hidden_size=shape.hidden_size,
+        num_layers=shape.num_layers,
+        num_heads=shape.num_heads,
+        mlp_ratio=shape.mlp_ratio,
+        ffn_multiple_of=shape.ffn_multiple_of,
+        timestep_embed_dim=shape.timestep_embed_dim,
+        context_layer_norm=shape.context_layer_norm,
+        qk_norm=shape.qk_norm,
+        qk_norm_eps=shape.qk_norm_eps,
+        rope=shape.rope,
+        causal_attn=shape.causal_attn,
+        llm_kv_dim=shape.llm_kv_dim,
+        num_flow_steps=10,
+        mask_action_dim_padding=True,
+        action_dim=ar_config.action_dim,
+        action_horizon=ar_config.chunk_size,
+        n_action_steps=ar_config.chunk_size,
+        normalization="q01q99",
+        time_offset=0.001,
+        time_scale=0.999,
+        beta_alpha=1.0,
+        beta_beta=1.5,
+    )
+
+
 def molmo_flow_state_table(normalization: DatasetStats) -> tuple[Tensor, Tensor]:
     """The merged q01/q99 STATE clamp table (§8.13 decision 6) as the
     Collator's ``state_q01``/``state_q99`` pair — [state_dim] fp32 CPU
@@ -1544,6 +1600,19 @@ def from_checkpoint(
             encoder=molmo_flow_encoder,
             decoder=molmo_flow,
         )
+        # Joint checkpoints (retirement phase 3) carry the discrete
+        # head's format-6 section in the joint_ce slot — mount the
+        # parameterless rider so --resume rebuilds the composition and
+        # the AR read of a joint checkpoint stays one construction away.
+        joint_section = meta.get("joint_ce")
+        if joint_section is not None:
+            rider_config = ar_backbone_config_from_dict(joint_section)
+            model.joint_ce = build_molmoact2_ar_decoder(
+                rider_config,
+                sections.prompt,
+                load_molmo2_config(trunk_dir).text,
+                info.backbone,
+            )
         # No prompt.safetensors (the encoder has zero parameters) and no
         # backbone.safetensors (the trunk IS the recorded artifact —
         # conversion invariant); a future trunk-trained molmo_flow run

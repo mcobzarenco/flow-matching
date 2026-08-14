@@ -110,7 +110,11 @@ from .decoders.flow import (
     SelfAttentionMode,
     TimeConditioning,
 )
-from .decoders.molmo_flow import MolmoFlowDecoder, load_expert_state
+from .decoders.molmo_flow import (
+    MolmoFlowDecoder,
+    load_expert_state,
+    molmo_flow_loss_sums,
+)
 from .encoders.gemma4 import PROMPT_FORMAT, GemmaEncoder, GemmaInputsCollator
 from .encoders.molmo2 import (
     MOLMO2_PROMPT_FORMAT,
@@ -118,6 +122,8 @@ from .encoders.molmo2 import (
     Molmo2InputsCollator,
 )
 from .encoders.molmoact2 import MolmoAct2Encoder, MolmoAct2InputsCollator
+from .fast.codec import ActionCodec
+from .fast.molmoact2 import MolmoAct2ActionCodec, MolmoAct2FastTokenizer
 from .gemma4.config import Gemma4Config
 from .gemma4.loading import load_config, resolve_checkpoint_dir
 from .gemma4.model import Gemma4Model
@@ -136,9 +142,11 @@ from .loading import (
     Molmo2PromptConfig,
     MolmoAct2PromptConfig,
     MolmoFlowDecoderConfig,
+    ar_backbone_config_from_dict,
     backbone_snapshot,
     build_gemma_encoder,
     build_molmo_flow_decoder,
+    build_molmoact2_ar_decoder,
     checkpoint_sections,
     decoder_schema_dict,
     default_expert_config,
@@ -146,6 +154,8 @@ from .loading import (
     load_adapted_backbone,
     load_backbone_init,
     molmo_flow_state_table,
+    molmoact2_ar_config_from_flow_section,
+    molmoact2_fresh_flow_section,
     read_checkpoint_info,
     resolve_action_codec,
 )
@@ -205,6 +215,11 @@ ARCH_FLAGS: dict[str, tuple[str, ArchSection]] = {
     "time_conditioning": ("--time-conditioning", ArchSection.DECODER),
     "fast_tokenizer": ("--fast-tokenizer", ArchSection.DECODER),
     "target_time_embed": ("--target-time-embed", ArchSection.EXTENSION),
+    # The molmoact2 objective matrix (docs/molmoact2-retirement.md phase
+    # 3): EXTENSION so --init-from may pick any pathway of a
+    # 'both'-mode source (the transition matrix), while --resume stays
+    # locked to the recorded objective (the standard resume refusal).
+    "objective": ("--objective", ArchSection.EXTENSION),
 }
 
 #: Fresh-run values for the ARCH_FLAGS sentinels (argparse defaults
@@ -226,6 +241,7 @@ ARCH_DEFAULTS: dict[str, Any] = {
     "time_conditioning": TimeConditioning.ADDITIVE.value,
     "fast_tokenizer": None,
     "target_time_embed": False,
+    "objective": "flow",
 }
 
 
@@ -361,6 +377,26 @@ class TrainArgs:
     # (unlike every field above) so checkpoints predating the flag
     # replay their train_args cleanly.
     sync_save: bool = False
+    # The molmoact2 objective matrix (docs/molmoact2-retirement.md
+    # phase 3; molmo_flow-family only): 'flow' = the expert pathway
+    # (the historical implicit value — defaulted so recorded train_args
+    # predating the field replay cleanly), 'ar' = the trunk's discrete
+    # head (MolmoAct2ARDecoder — zero decoder parameters, trains via
+    # --backbone-text-lr), 'joint' = both, L_flow + λ·L_CE with the
+    # decision-5 ordering (flow extracts prompt-only KV BEFORE the CE
+    # suffix appends to the cache).
+    objective: str = "flow"
+    # λ of the joint objective — a run hyperparameter like the LRs
+    # (re-passable on --resume; recorded for provenance, never
+    # checkpoint-inferred). 1.0 = the KI no-tuning default.
+    joint_ce_weight: float = 1.0
+    # The flow expert's weight source under --init-from (molmoact2
+    # flow/joint): 'inherit' = the source checkpoint's expert;
+    # 'fresh' = released-shape adaLN-Zero init (the stage-2 recipe —
+    # REQUIRED from ar-only sources, which carry no expert); any other
+    # value = a checkpoint dir whose expert.safetensors loads under a
+    # config-equality guard (the two-source init).
+    expert_init: str = "inherit"
     # "adamw" (default) or "adamc" — AdamC (arXiv 2506.02285) is AdamW
     # with a time-varying decay coefficient on the hidden ("normalized")
     # layers: λ̂_t = λ·γ_t/γ_max, written into the corrected param
@@ -440,6 +476,38 @@ class TrainArgs:
             raise ValueError(
                 "--fast-tokenizer is only consumed by the AR decoders",
             )
+        if self.objective not in ("flow", "ar", "joint"):
+            raise ValueError(
+                f"unknown objective {self.objective!r} — one of flow, ar, "
+                "joint (the molmoact2 objective matrix)",
+            )
+        if self.objective != "flow" and self.decoder != "molmo_flow":
+            raise ValueError(
+                "--objective selects among the molmoact2 family's trained "
+                "pathways; other families pick ONE decoder with --decoder "
+                "(there is no second pathway to select)",
+            )
+        if self.objective in ("ar", "joint") and self.backbone_text_lr is None:
+            raise ValueError(
+                f"--objective {self.objective} trains the trunk's own "
+                "action rows (the discrete head has ZERO decoder "
+                "parameters) — --backbone-text-lr is required",
+            )
+        if self.joint_ce_weight <= 0:
+            raise ValueError(
+                f"--joint-ce-weight {self.joint_ce_weight} must be > 0 "
+                "(λ = 0 is spelled --objective flow)",
+            )
+        if self.joint_ce_weight != 1.0 and self.objective != "joint":
+            raise ValueError(
+                "--joint-ce-weight scales the joint objective's CE term — "
+                "it requires --objective joint",
+            )
+        if self.expert_init != "inherit" and self.objective == "ar":
+            raise ValueError(
+                "--expert-init selects the flow expert's weight source; "
+                "--objective ar builds no expert — drop the flag",
+            )
         if self.decoder == "molmo_flow":
             # Inherit-only (§8.13 step 5): the decoder is never declared
             # fresh — it resolves from an --init-from/--resume checkpoint
@@ -460,12 +528,22 @@ class TrainArgs:
             # Deliberately NOT refused: --camera-kind-dropout (inert —
             # this format never renders kinds) and --instruction-augment
             # (task text renders; judge rewrites are format-compatible).
-            if self.backbone_trained and self.insulate_expert:
+            if self.objective == "ar" and self.insulate_expert:
+                raise ValueError(
+                    "--insulate-expert is the flow KV seam; --objective ar "
+                    "builds no expert to insulate",
+                )
+            if (
+                self.objective == "flow"
+                and self.backbone_trained
+                and self.insulate_expert
+            ):
                 raise ValueError(
                     "--insulate-expert with an unfrozen trunk trains the "
-                    "trunk on NOTHING (insulated flow is the only "
-                    "objective; the CE rider is §8.13 step 6) — freeze the "
-                    "trunk or open the seam",
+                    "trunk on NOTHING under --objective flow (insulated "
+                    "flow is its only objective) — --objective joint gives "
+                    "the trunk the CE rider, or freeze the trunk / open "
+                    "the seam",
                 )
         elif self.insulate_expert:
             raise ValueError(
@@ -726,6 +804,25 @@ class TrainArgs:
             else (0.5 if subgoal_conditioned else 0.0)
         )
 
+        # -- the molmoact2 objective matrix (phase 3) ----------------------
+        objective = arch["objective"]
+        if raw.joint_ce_weight is not None and objective != "joint":
+            parser.error(
+                "--joint-ce-weight scales the joint objective's CE term — "
+                f"this run resolves --objective {objective}",
+            )
+        if raw.expert_init is not None:
+            if resume:
+                parser.error(
+                    "--expert-init is an --init-from concern — a resumed "
+                    "run's expert weights come from the resume checkpoint",
+                )
+            if raw.init_from is None:
+                parser.error(
+                    "--expert-init selects the expert's weight source when "
+                    "warm-starting — it requires --init-from",
+                )
+
         if raw.backbone_vision_lr is not None and raw.backbone_text_lr is None:
             print(
                 "NOTE: vision tower unfrozen with the text stack FROZEN - "
@@ -759,6 +856,13 @@ class TrainArgs:
                 max_crops=arch["max_crops"],
                 stream_counts=arch["stream_counts"],
                 insulate_expert=raw.insulate_expert,
+                objective=objective,
+                joint_ce_weight=(
+                    raw.joint_ce_weight if raw.joint_ce_weight is not None else 1.0
+                ),
+                expert_init=(
+                    raw.expert_init if raw.expert_init is not None else "inherit"
+                ),
                 self_attention_mode=arch["self_attention_mode"],
                 time_conditioning=arch["time_conditioning"],
                 target_time_embed=arch["target_time_embed"],
@@ -1291,7 +1395,9 @@ class BijouTrainStep[I: BatchInputs](torch.nn.Module):
     def forward(
         self,
         batch: CollatedBatch[I],
-        normalizers: tuple[Tensor, Tensor | None] | None = None,
+        normalizers: (
+            tuple[Tensor, Tensor | None] | tuple[Tensor, Tensor, Tensor | None] | None
+        ) = None,
     ) -> tuple[Tensor, Tensor, Tensor | None, Tensor | None]:
         """Batch (shapes in CollatedBatch's docstring) -> (total loss with
         graph, detached action component, detached aux CE sum | None,
@@ -1305,16 +1411,19 @@ class BijouTrainStep[I: BatchInputs](torch.nn.Module):
         SUM, detached aux CE sum | None, aux position count | None) —
         the shares sum over chunks to exactly the unchunked total (up
         to fp reduction order), so backwarding each share accumulates
-        the unchunked gradient."""
+        the unchunked gradient.
+
+        The joint arm (``model.joint_ce`` set — the molmoact2 objective
+        matrix) uses THREE normalizers (flow position count, CE action
+        count, CE aux count | None) and returns the CE branch's action
+        CE in the aux slots (the pinned CE-health read); the action
+        slot carries the flow component."""
         inputs = batch.encoder_inputs
         # Any batch tensor names the device; the inputs protocol has no
         # per-field surface (trunk-generic).
         device_type = next(iter(inputs.tensors().values())).device.type
-        with torch.autocast(
-            device_type,
-            torch.bfloat16,
-            enabled=device_type == "cuda" and self.backbone_trained,
-        ):
+        autocast_on = device_type == "cuda" and self.backbone_trained
+        with torch.autocast(device_type, torch.bfloat16, enabled=autocast_on):
             memory = self.model.encode(inputs, with_grad=self.backbone_trained)
             if isinstance(self.model.decoder, ARSuffixDecoder):
                 # ar_backbone's "decoder" IS the backbone: its suffix
@@ -1328,11 +1437,71 @@ class BijouTrainStep[I: BatchInputs](torch.nn.Module):
                 # byte-identical to the historical path (oracle-exact).
                 if normalizers is None:
                     return self.model.loss_components(memory, batch)
+                assert len(normalizers) == 2  # AR runs: (action, aux)
                 return self._chunk_share(memory, batch, normalizers)
         # Cross-attention decoders are fp32-by-design OUTSIDE autocast.
+        if self.model.joint_ce is not None:
+            # Decision-5 ordering (docs/molmoact2-retirement.md): the
+            # flow branch extracts its PROMPT-ONLY KV pairs first — the
+            # CE rider's suffix forward APPENDS to the same cache, and
+            # the expert must never condition on teacher-forced action
+            # tokens. The CE branch then re-enters the autocast regime
+            # (its [B, S, 154k] logits want bf16 on live trunks) — its
+            # sums leave the region as tensors and compose with the
+            # fp32 flow sums below.
+            decoder = self.model.decoder
+            assert isinstance(decoder, MolmoFlowDecoder)
+            flow_sums = molmo_flow_loss_sums(
+                decoder,
+                memory,
+                batch,
+                insulate=self.model.insulate_expert,
+            )
+            with torch.autocast(device_type, torch.bfloat16, enabled=autocast_on):
+                ce_sums = self.model.joint_ce_loss_sums(memory, batch)
+            if normalizers is not None:
+                assert len(normalizers) == 3  # joint runs: 3 normalizers
+                return self._joint_share(flow_sums, ce_sums, normalizers)
+            return self._joint_share(flow_sums, ce_sums, None)
         if normalizers is None:
             return self.model.loss_components(memory, batch)
+        assert len(normalizers) == 2  # non-joint runs: (action, aux)
         return self._chunk_share(memory, batch, normalizers)
+
+    def _joint_share(
+        self,
+        flow_sums: tuple[Tensor, Tensor],
+        ce_sums: tuple[Tensor, Tensor, Tensor | None, Tensor | None],
+        normalizers: tuple[Tensor, Tensor, Tensor | None] | None,
+    ) -> tuple[Tensor, Tensor, Tensor | None, Tensor | None]:
+        """The joint arm's composition (the pre-decoder-simplify
+        ``_joint_share`` reinstated for molmo_flow + the parameterless
+        rider): fp32 flow sums + the CE branch's sums, over this
+        batch's own counts (unchunked) or the full-step normalizers
+        (chunked) — ONE composition for both modes, so chunked and
+        unchunked joint numerics agree up to fp reduction order. CE
+        weight λ = --joint-ce-weight (decision 4; default 1.0, the KI
+        no-tuning value); the molmoact2 rider has no aux fields."""
+        flow_sum, flow_count = flow_sums
+        ce_action_sum, ce_action_count, ce_aux_sum, _ = ce_sums
+        assert ce_aux_sum is None  # rider constructed aux-None
+        if normalizers is None:
+            flow_norm, ce_action_norm = flow_count, ce_action_count
+        else:
+            flow_norm, ce_action_norm, _ = normalizers
+        loss = flow_sum / flow_norm + self.model.joint_ce_weight * (
+            ce_action_sum / ce_action_norm
+        )
+        return (
+            loss,
+            (
+                (flow_sum / flow_norm).detach()
+                if normalizers is None
+                else flow_sum.detach()
+            ),
+            ce_action_sum.detach(),
+            ce_action_count,
+        )
 
     def _chunk_share(
         self,
@@ -1929,13 +2098,19 @@ def write_checkpoint(
     if staging_dir.exists():
         shutil.rmtree(staging_dir)
     staging_dir.mkdir(parents=True)
-    save_file(tensors.expert, str(staging_dir / "expert.safetensors"))
+    if tensors.expert:
+        save_file(tensors.expert, str(staging_dir / "expert.safetensors"))
+    # else: a parameterless decoder (molmoact2 --objective ar — the
+    # discrete head is trunk-native rows). No file, deliberately: the
+    # loader REFUSES an ar-only checkpoint carrying expert.safetensors
+    # (format confusion), and an empty file is not a checkpoint section.
     # Prompt-side parameters (state_proj) — always present at prompt
     # format 3.
     save_file(tensors.prompt, str(staging_dir / "prompt.safetensors"))
-    if tensors.joint_ce is not None:
-        # The K arm's CE rider (its continued FAST tables) — the
-        # trunk-drift read's AR view loads from here.
+    if tensors.joint_ce:
+        # A PARAMETERIZED rider's tables (none exists today: the
+        # molmoact2 rider is trunk-native, decision 2 — its section
+        # rides the metadata's joint_ce slot with no weights file).
         save_file(tensors.joint_ce, str(staging_dir / "joint_ce.safetensors"))
     if tensors.backbone is not None:
         # Adapted backbones ride along; from_checkpoint/--init-from detect the
@@ -2086,6 +2261,21 @@ def build_checkpoint_metadata(
             action_q99=tuple(
                 model.decoder.action_q99[: runtime.action_dim].tolist(),
             ),
+            state_q01=encoder.state_table[0],
+            state_q99=encoder.state_table[1],
+        )
+    elif isinstance(model.decoder, MolmoAct2ARDecoder):
+        # --objective ar: no flow decoder to read tables off — the
+        # collator tokenized under the encoder-stashed merged tables;
+        # the written row carries THE tables in use (same invariant as
+        # the flow branch, different source of truth).
+        assert isinstance(encoder, MolmoAct2Encoder)
+        assert encoder.state_table is not None
+        assert encoder.action_table is not None
+        normalization = dataclasses.replace(
+            normalization,
+            action_q01=encoder.action_table[0],
+            action_q99=encoder.action_table[1],
             state_q01=encoder.state_table[0],
             state_q99=encoder.state_table[1],
         )
@@ -2502,8 +2692,44 @@ def _build_parser() -> argparse.ArgumentParser:
         help="knowledge insulation on the molmo_flow KV seam (§8.13 "
         "decision 8, their post-train): the extracted per-layer K/V "
         "detach before the expert, so flow gradients into every trunk "
-        "parameter are exactly zero. molmo_flow only; irrelevant (and "
-        "refused) elsewhere",
+        "parameter are exactly zero. molmo_flow only (--objective flow "
+        "with a frozen trunk, or joint — the RL-then-refine recipe); "
+        "irrelevant (and refused) elsewhere",
+    )
+    parser.add_argument(
+        "--objective",
+        choices=["flow", "ar", "joint"],
+        default=None,
+        help="the molmoact2 family's pathway selector "
+        "(docs/molmoact2-retirement.md phase 3; other families pick ONE "
+        "decoder with --decoder): flow = the molmo_flow expert (the "
+        "historical default), ar = the trunk's discrete head (zero "
+        "decoder parameters — requires --backbone-text-lr), joint = "
+        "both, L_flow + λ·L_CE. Checkpoint-inferred under --resume; "
+        "freely selectable under --init-from (the transition matrix — "
+        "ar-only sources carry no expert, so flow/joint from them need "
+        "--expert-init fresh)",
+    )
+    parser.add_argument(
+        "--joint-ce-weight",
+        type=float,
+        default=None,
+        help="λ of the joint objective (L_flow + λ·L_CE); default 1.0 — "
+        "the KI no-tuning value. A run hyperparameter like the LRs "
+        "(re-passable on --resume); requires --objective joint; must be "
+        "> 0 (λ = 0 is spelled --objective flow)",
+    )
+    parser.add_argument(
+        "--expert-init",
+        default=None,
+        help="the flow expert's weight source under --init-from "
+        "(molmoact2 flow/joint): 'inherit' (default) = the source "
+        "checkpoint's expert; 'fresh' = released-shape adaLN-Zero init "
+        "(REQUIRED from ar-only sources — the stage-2 recipe); any "
+        "other value = a checkpoint dir whose expert.safetensors loads "
+        "under a config-equality guard (the two-source init — note the "
+        "borrowed expert's outputs live in ITS training table's "
+        "normalized space)",
     )
     parser.add_argument(
         "--self-attention-mode",
@@ -3065,29 +3291,107 @@ def main() -> int:
             "molmo_flow decoder only (inherit it: --init-from a converted "
             "checkpoint with no --decoder flag; §8.13)",
         )
-    # The molmo_flow composition rebuilds from the source checkpoint's
+    # The molmoact2 compositions rebuild from the source checkpoint's
     # sections (inherit-only, §8.13 step 5) — read them once, early.
+    # The objective matrix (retirement phase 3) derives per-objective
+    # sections here: the flow section for flow/joint (synthesized under
+    # --expert-init fresh from ar-only sources), the format-6 AR
+    # section for ar/joint (derived from a flow-section source's
+    # geometry + trunk tokenizer on first transition).
     molmo_flow_info: CheckpointInfo | None = None
     molmo_flow_prompt: MolmoAct2PromptConfig | None = None
     molmo_flow_section: MolmoFlowDecoderConfig | None = None
+    molmoact2_ar_section: ARBackboneConfig | None = None
+    molmoact2_source_decoder_kind: str | None = None
     if args.decoder == "molmo_flow":
         source = args.init_from if args.init_from is not None else args.resume
         assert source is not None  # TrainArgs.__post_init__ guard
         molmo_flow_info = read_checkpoint_info(source)
-        source_sections = checkpoint_sections(
-            json.loads((source / "bijou_config.json").read_text()),
-        )
-        if not isinstance(source_sections.prompt, MolmoAct2PromptConfig) or not (
-            isinstance(source_sections.decoder, MolmoFlowDecoderConfig)
-        ):
+        source_meta = json.loads((source / "bijou_config.json").read_text())
+        source_sections = checkpoint_sections(source_meta)
+        if not isinstance(source_sections.prompt, MolmoAct2PromptConfig):
             raise SystemExit(
-                f"{source} is not a molmo_flow checkpoint (prompt "
-                f"{type(source_sections.prompt).__name__}, decoder "
-                f"{type(source_sections.decoder).__name__}) — convert the "
+                f"{source} is not a molmoact2-family checkpoint (prompt "
+                f"{type(source_sections.prompt).__name__}) — convert the "
                 "MolmoAct2 artifact first (bijou.convert_molmoact2)",
             )
         molmo_flow_prompt = source_sections.prompt
-        molmo_flow_section = source_sections.decoder
+        source_joint_section = source_meta.get("joint_ce")
+        if isinstance(source_sections.decoder, MolmoFlowDecoderConfig):
+            molmoact2_source_decoder_kind = "molmo_flow"
+            molmo_flow_section = source_sections.decoder
+            if args.objective in ("ar", "joint"):
+                # The rider/head section: a joint source already records
+                # it; a flow/release source derives it once (geometry
+                # from the flow section, block_base from the trunk
+                # tokenizer's own <action_0>).
+                molmoact2_ar_section = (
+                    ar_backbone_config_from_dict(source_joint_section)
+                    if source_joint_section is not None
+                    else molmoact2_ar_config_from_flow_section(
+                        molmo_flow_section,
+                        molmo_flow_prompt,
+                        str(checkpoint_dir),
+                    )
+                )
+        elif isinstance(source_sections.decoder, ARBackboneConfig):
+            # An ar-only source (this plan's stage-1 product): carries
+            # the format-6 section and NO expert.
+            molmoact2_source_decoder_kind = "ar_backbone"
+            molmoact2_ar_section = source_sections.decoder
+            if args.objective in ("flow", "joint"):
+                if args.expert_init == "inherit":
+                    raise SystemExit(
+                        f"--objective {args.objective} from the ar-only "
+                        f"checkpoint {source} — it carries no expert to "
+                        "inherit; pass --expert-init fresh (released-shape "
+                        "init) or --expert-init <checkpoint> (borrow one)",
+                    )
+                if args.expert_init == "fresh":
+                    molmo_flow_section = molmoact2_fresh_flow_section(
+                        molmoact2_ar_section,
+                    )
+                # A <ref> expert-init resolves its section (and weights)
+                # in the init block below — the built decoder must equal
+                # the ref's recorded shape, so the section IS the ref's.
+        else:
+            raise SystemExit(
+                f"{source} records a "
+                f"{type(source_sections.decoder).__name__} under the "
+                "molmoact2 prompt — this family carries molmo_flow or a "
+                "format-6 ar_backbone section",
+            )
+        if args.objective == "joint" and molmoact2_source_decoder_kind == (
+            "molmo_flow"
+        ):
+            assert molmoact2_ar_section is not None
+        if args.expert_init not in ("inherit", "fresh") and args.objective != "ar":
+            # The two-source init: the expert section comes from the REF
+            # checkpoint (config-equality is the load-time guard); read
+            # it now so the decoder builds the right shape.
+            ref_sections = checkpoint_sections(
+                json.loads(
+                    (Path(args.expert_init) / "bijou_config.json").read_text(),
+                ),
+            )
+            if not isinstance(ref_sections.decoder, MolmoFlowDecoderConfig):
+                raise SystemExit(
+                    f"--expert-init {args.expert_init} is not a "
+                    "molmo_flow-carrying checkpoint (decoder "
+                    f"{type(ref_sections.decoder).__name__}) — nothing to "
+                    "borrow",
+                )
+            if (
+                molmo_flow_section is not None
+                and ref_sections.decoder != molmo_flow_section
+            ):
+                raise SystemExit(
+                    f"--expert-init {args.expert_init}: the ref's "
+                    "molmo_flow section differs from the source "
+                    "checkpoint's — borrowed weights must match the shape "
+                    "being built exactly (config-equality guard)",
+                )
+            molmo_flow_section = ref_sections.decoder
 
     # -- datasets --------------------------------------------------------
     selection = select_datasets(
@@ -3162,11 +3466,40 @@ def main() -> int:
         ),
     )
 
-    action_codec = (
+    action_codec: ActionCodec | None = (
         resolve_action_codec(args.fast_tokenizer)
         if args.fast_tokenizer is not None
         else None
     )
+    # The molmoact2 ar/joint objectives tokenize CE targets through the
+    # released codec under the ONE merged table (their shared-table
+    # convention, and molmo_flow's decision-6 clamp table — same row,
+    # one source of truth).
+    molmoact2_action_table: tuple[Tensor, Tensor] | None = None
+    if args.decoder == "molmo_flow" and args.objective in ("ar", "joint"):
+        assert molmoact2_ar_section is not None and molmo_flow_info is not None
+        assert action_codec is None  # --fast-tokenizer refused for the family
+        action_codec = MolmoAct2ActionCodec(
+            MolmoAct2FastTokenizer.load(
+                resolve_checkpoint_dir(molmoact2_ar_section.tokenizer),
+            ),
+            time_horizon=molmoact2_ar_section.chunk_size,
+            action_dim=molmoact2_ar_section.action_dim,
+        )
+        source_normalization = molmo_flow_info.normalization
+        if (
+            source_normalization.action_q01 is None
+            or source_normalization.action_q99 is None
+        ):
+            raise SystemExit(
+                "the source checkpoint's normalization row carries no "
+                "action q01/q99 — the discrete head tokenizes under the "
+                "merged table (decision 6); this table predates it",
+            )
+        molmoact2_action_table = (
+            torch.tensor(source_normalization.action_q01, dtype=torch.float32),
+            torch.tensor(source_normalization.action_q99, dtype=torch.float32),
+        )
     aux_decode_config: AuxDecodeConfig | None = None
     aux_spec: AuxSpec | None = None
     if args.aux_fields is not None:
@@ -3262,6 +3595,12 @@ def main() -> int:
         state_dropout=args.state_dropout,
         state_q01=state_table[0] if state_table is not None else None,
         state_q99=state_table[1] if state_table is not None else None,
+        action_q01=(
+            molmoact2_action_table[0] if molmoact2_action_table is not None else None
+        ),
+        action_q99=(
+            molmoact2_action_table[1] if molmoact2_action_table is not None else None
+        ),
     )
     if is_main and args.state_dropout > 0:
         print(
@@ -3406,28 +3745,38 @@ def main() -> int:
     backbone_dtype = torch.float32 if args.backbone_trained else None
     model: BijouModel[Any, Any]
     if args.decoder == "molmo_flow":
-        # The molmo_flow composition (§8.13 step 5): full multimodal
-        # trunk (the MolmoAct2 artifact recorded as this run's
-        # --backbone), their-format encoder, and the expert rebuilt
-        # from the source checkpoint's sections — weights land in the
-        # generic init block below via load_expert_state.
-        assert molmo_flow_prompt is not None and molmo_flow_section is not None
-        assert molmo_flow_info is not None
-        if action_dim != molmo_flow_section.action_dim:
+        # The molmoact2 compositions (§8.13 step 5 + the phase-3
+        # objective matrix): full multimodal trunk (the MolmoAct2
+        # artifact recorded as this run's --backbone), their-format
+        # encoder, and the objective's decoder(s) rebuilt from the
+        # derived sections — flow weights land in the init block below.
+        assert molmo_flow_prompt is not None and molmo_flow_info is not None
+        geometry = (
+            molmo_flow_section
+            if molmo_flow_section is not None
+            else molmoact2_ar_section
+        )
+        assert geometry is not None  # the source block derived one
+        geometry_dim = geometry.action_dim
+        geometry_horizon = (
+            geometry.action_horizon
+            if isinstance(geometry, MolmoFlowDecoderConfig)
+            else geometry.chunk_size
+        )
+        if action_dim != geometry_dim:
             raise SystemExit(
                 f"data action dim {action_dim} != the checkpoint's "
-                f"{molmo_flow_section.action_dim} — wrong rig/corpus for "
-                "this artifact",
+                f"{geometry_dim} — wrong rig/corpus for this artifact",
             )
         if state_dim != molmo_flow_prompt.state_dim:
             raise SystemExit(
                 f"data state dim {state_dim} != the checkpoint's "
                 f"{molmo_flow_prompt.state_dim}",
             )
-        if args.chunk_size != molmo_flow_section.action_horizon:
+        if args.chunk_size != geometry_horizon:
             raise SystemExit(
                 f"--chunk-size {args.chunk_size} != the checkpoint horizon "
-                f"{molmo_flow_section.action_horizon} (checkpoint-inferred "
+                f"{geometry_horizon} (checkpoint-inferred "
                 "under --init-from/--resume — drop any explicit flag)",
             )
         molmo_flow_backbone = load_molmo2_model(
@@ -3449,26 +3798,67 @@ def main() -> int:
             tuple(state_table[0].tolist()),
             tuple(state_table[1].tolist()),
         )
-        model = BijouModel(
-            backbone=molmo_flow_backbone,
-            encoder=molmo_flow_encoder,
-            decoder=build_molmo_flow_decoder(
-                molmo_flow_section,
-                molmo_flow_info.normalization,
-                device=device,
-                dtype=torch.float32,
-            ),
-        )
+        if molmoact2_action_table is not None:
+            # The ar-run save side reads the action table off the
+            # encoder stash (flow/joint read the decoder's own tables).
+            molmo_flow_encoder.action_table = (
+                tuple(molmoact2_action_table[0].tolist()),
+                tuple(molmoact2_action_table[1].tolist()),
+            )
+        molmo2_text_config = load_molmo2_config(checkpoint_dir).text
+        if args.objective == "ar":
+            assert molmoact2_ar_section is not None
+            model = BijouModel(
+                backbone=molmo_flow_backbone,
+                encoder=molmo_flow_encoder,
+                decoder=build_molmoact2_ar_decoder(
+                    molmoact2_ar_section,
+                    molmo_flow_prompt,
+                    molmo2_text_config,
+                    str(checkpoint_dir),
+                ),
+            )
+            schedule_desc = (
+                f"molmoact2 discrete head (format-6 suffix; block "
+                f"[{molmoact2_ar_section.block_base}, "
+                f"{molmoact2_ar_section.block_base + molmoact2_ar_section.vocab_total}"
+                ") — zero decoder params, the trunk trains)"
+            )
+        else:
+            assert molmo_flow_section is not None
+            model = BijouModel(
+                backbone=molmo_flow_backbone,
+                encoder=molmo_flow_encoder,
+                decoder=build_molmo_flow_decoder(
+                    molmo_flow_section,
+                    molmo_flow_info.normalization,
+                    device=device,
+                    dtype=torch.float32,
+                ),
+            )
+            schedule_desc = (
+                f"molmo_flow {molmo_flow_section.num_layers}-layer KV "
+                f"conditioning (seam "
+                f"{'INSULATED (KI)' if args.insulate_expert else 'open'}; "
+                f"t-law {molmo_flow_section.time_offset} + "
+                f"{molmo_flow_section.time_scale}*Beta("
+                f"{molmo_flow_section.beta_alpha}, "
+                f"{molmo_flow_section.beta_beta}))"
+            )
+            if args.objective == "joint":
+                assert molmoact2_ar_section is not None
+                model.joint_ce = build_molmoact2_ar_decoder(
+                    molmoact2_ar_section,
+                    molmo_flow_prompt,
+                    molmo2_text_config,
+                    str(checkpoint_dir),
+                )
+                model.joint_ce_weight = args.joint_ce_weight
+                schedule_desc += (
+                    f" + joint CE rider (λ={args.joint_ce_weight:g}, "
+                    "decision-5 ordering: flow KV before the CE append)"
+                )
         model.insulate_expert = args.insulate_expert
-        schedule_desc = (
-            f"molmo_flow {molmo_flow_section.num_layers}-layer KV "
-            f"conditioning (seam "
-            f"{'INSULATED (KI)' if args.insulate_expert else 'open'}; "
-            f"t-law {molmo_flow_section.time_offset} + "
-            f"{molmo_flow_section.time_scale}*Beta("
-            f"{molmo_flow_section.beta_alpha}, "
-            f"{molmo_flow_section.beta_beta}))"
-        )
     elif args.decoder == "flow":
         if molmo2_trunk:
             raise SystemExit(
@@ -3848,17 +4238,81 @@ def main() -> int:
     adapted_backbone_source: Path | None = None
     checkpoint_to_load = args.init_from or args.resume
     if checkpoint_to_load is not None:
-        saved_decoder_config = ensure_matching_decoder_config(
-            model.decoder,
-            checkpoint_to_load,
+        # An objective TRANSITION (the phase-3 matrix: ar ↔ flow/joint
+        # across molmoact2 sources) legitimately builds a different
+        # decoder section than the source records — the source block
+        # above derived and validated the built config, so the equality
+        # guard is skipped exactly there and nowhere else.
+        built_kind = (
+            "ar_backbone"
+            if isinstance(model.decoder, MolmoAct2ARDecoder)
+            else "molmo_flow"
+            if isinstance(model.decoder, MolmoFlowDecoder)
+            else None
         )
-        # CPU-load + copy-in: loading straight to the device transiently
-        # holds a second copy of the weights next to the built module
-        # (see loading.load_adapted_backbone).
-        expert_state = load_file(
-            str(checkpoint_to_load / "expert.safetensors"),
-            device="cpu",
+        objective_transition = (
+            args.decoder == "molmo_flow"
+            and molmoact2_source_decoder_kind is not None
+            and built_kind is not None
+            and molmoact2_source_decoder_kind != built_kind
         )
+        saved_decoder_config: dict[str, Any] = {}
+        if not objective_transition:
+            saved_decoder_config = ensure_matching_decoder_config(
+                model.decoder,
+                checkpoint_to_load,
+            )
+        if isinstance(model.decoder, MolmoAct2ARDecoder):
+            # The discrete head owns ZERO parameters — there is nothing
+            # to load (the trunk deltas ride backbone.safetensors below;
+            # a flow-section source's expert.safetensors is deliberately
+            # left behind: --objective ar drops the expert).
+            expert_state = {}
+        elif isinstance(model.decoder, MolmoFlowDecoder):
+            # The expert weight source (--expert-init, decision on
+            # 2026-08-14): inherit = the source checkpoint; fresh = the
+            # built adaLN-Zero init (stage-2); <ref> = another
+            # checkpoint's expert under the config-equality guard the
+            # source block enforced.
+            if args.expert_init == "fresh":
+                if is_main:
+                    print(
+                        "expert-init: FRESH released-shape expert "
+                        "(adaLN-Zero init) — no expert weights inherited",
+                        flush=True,
+                    )
+            else:
+                expert_source = (
+                    Path(args.expert_init)
+                    if args.expert_init != "inherit"
+                    else checkpoint_to_load
+                )
+                if args.expert_init != "inherit" and is_main:
+                    print(
+                        f"expert-init: borrowing the expert from "
+                        f"{expert_source} (two-source init) — its weights "
+                        "live in ITS training table's normalized space; "
+                        "this run clamps with the SOURCE checkpoint's "
+                        "table (provenance: both recorded in train_args)",
+                        flush=True,
+                    )
+                load_expert_state(
+                    model.decoder,
+                    load_file(
+                        str(expert_source / "expert.safetensors"),
+                        device="cpu",
+                    ),
+                )
+                model.decoder.to(device=device, dtype=torch.float32)
+            expert_state = {}
+        else:
+            # CPU-load + copy-in: loading straight to the device
+            # transiently holds a second copy of the weights next to the
+            # built module (see loading.load_adapted_backbone).
+            expert_state = load_file(
+                str(checkpoint_to_load / "expert.safetensors"),
+                device="cpu",
+            )
         # Strict always: pre-format-5 checkpoints carry parameters this
         # code deleted (mode tables, suffix state_proj) and are refused
         # by the key mismatch — no migration path (owner call,
@@ -3871,12 +4325,8 @@ def main() -> int:
             and model.decoder.config.target_time_embed
             and not saved_decoder_config.get("target_time_embed", False)
         )
-        if isinstance(model.decoder, MolmoFlowDecoder):
-            # Converted exports omit the compat tensors (their loader
-            # convention); trained descendants carry them. Either loads
-            # strictly after injection.
-            load_expert_state(model.decoder, expert_state)
-            model.decoder.to(device=device, dtype=torch.float32)
+        if isinstance(model.decoder, MolmoFlowDecoder | MolmoAct2ARDecoder):
+            pass  # handled above (weights loaded / nothing to load)
         elif phi_s_extension:
             phi_s_keys = {
                 key
@@ -3913,22 +4363,20 @@ def main() -> int:
                 "the encoder has prompt-side parameters — not a valid "
                 "checkpoint for this composition",
             )
-        if model.joint_ce is not None:
-            # A joint run's continuation must continue the rider too —
-            # a checkpoint without the file is not a joint checkpoint.
-            rider_path = checkpoint_to_load / "joint_ce.safetensors"
-            if not rider_path.exists():
-                raise SystemExit(
-                    f"--joint-ce continuation from {checkpoint_to_load}, "
-                    "but it carries no joint_ce.safetensors — that "
-                    "checkpoint was not written by a joint run (use "
-                    "--backbone-init-from for the stage-2 warm start)",
-                )
-            model.joint_ce.load_state_dict(
-                load_file(str(rider_path), device="cpu"),
-                strict=True,
+        if model.joint_ce is not None and (len(list(model.joint_ce.parameters())) > 0):
+            # The molmoact2 rider owns ZERO parameters (trunk-native
+            # rows) — nothing to load; a future parameterized rider
+            # needs a load path designed, not silently skipped.
+            raise SystemExit(
+                "joint_ce rider carries parameters but no load path "
+                "exists — the molmoact2 rider is parameterless by "
+                "design (decision 2)",
             )
-        if is_main:
+        if (
+            is_main
+            and not isinstance(model.decoder, MolmoAct2ARDecoder)
+            and (args.expert_init != "fresh")
+        ):
             print(f"loaded expert weights from {checkpoint_to_load}", flush=True)
         # Backbone-trained checkpoints carry the adapted file; plain ones
         # don't, and the HF backbone loaded above simply stays (that is the
@@ -3961,18 +4409,11 @@ def main() -> int:
         load_backbone_init(model, args.backbone_init_from)
         if not args.backbone_trained:
             adapted_backbone_source = args.backbone_init_from / "backbone.safetensors"
-        if model.joint_ce is not None:
-            # "The phase-1 CE objective continuing VERBATIM" includes its
-            # decoder-owned FAST tables: the source checkpoint's
-            # expert.safetensors IS the phase-1 Molmo2ARDecoder state
-            # (same config surface), loaded strictly — a fresh-table
-            # rider would restart the action head, not continue it.
-            model.joint_ce.load_state_dict(
-                load_file(
-                    str(args.backbone_init_from / "expert.safetensors"),
-                    device="cpu",
-                ),
-                strict=True,
+        if model.joint_ce is not None and (len(list(model.joint_ce.parameters())) > 0):
+            raise SystemExit(
+                "joint_ce rider carries parameters but no load path "
+                "exists — the molmoact2 rider is parameterless by "
+                "design (decision 2)",
             )
             if is_main:
                 print(
@@ -4223,16 +4664,32 @@ def main() -> int:
                 # chunk — the accumulated gradient and every logged
                 # quantity match the unchunked step up to fp reduction
                 # order, at one chunk's activation footprint.
-                counts = [model.loss_count_normalizers(c) for c in batch.chunks]
-                action_norm = torch.stack([c[0] for c in counts]).sum()
-                aux_norm = (
-                    torch.stack(
-                        [n for c in counts if (n := c[1]) is not None],
-                    ).sum()
-                    if counts[0][1] is not None
-                    else None
+                step_normalizers: (
+                    tuple[Tensor, Tensor | None] | tuple[Tensor, Tensor, Tensor | None]
                 )
-                step_normalizers = (action_norm, aux_norm)
+                if model.joint_ce is not None:
+                    # The joint arm's THREE normalizers (flow positions,
+                    # CE action tokens, CE aux — None on the molmoact2
+                    # rider), summed over chunks before any forward.
+                    joint_counts = [
+                        model.joint_ce_count_normalizers(c) for c in batch.chunks
+                    ]
+                    step_normalizers = (
+                        torch.stack([c[0] for c in joint_counts]).sum(),
+                        torch.stack([c[1] for c in joint_counts]).sum(),
+                        None,
+                    )
+                else:
+                    counts = [model.loss_count_normalizers(c) for c in batch.chunks]
+                    action_norm = torch.stack([c[0] for c in counts]).sum()
+                    aux_norm = (
+                        torch.stack(
+                            [n for c in counts if (n := c[1]) is not None],
+                        ).sum()
+                        if counts[0][1] is not None
+                        else None
+                    )
+                    step_normalizers = (action_norm, aux_norm)
                 optimizer.zero_grad(set_to_none=True)
                 loss = torch.zeros((), device=device)
                 action_sum_total = torch.zeros((), device=device)
@@ -4274,7 +4731,10 @@ def main() -> int:
                         )
                 if distributed and args.chunk_grad_allreduce:
                     allreduce_gradients(clipped_parameters)
-                action_component = action_sum_total / action_norm
+                # The first normalizer is the action-loss normalizer in
+                # BOTH tuple shapes (2 = action/aux, 3 = the joint arm's
+                # flow/CE-action/CE-aux).
+                action_component = action_sum_total / step_normalizers[0]
             else:
                 loss, action_component, aux_sum, aux_count = train_step(batch)
                 optimizer.zero_grad(set_to_none=True)

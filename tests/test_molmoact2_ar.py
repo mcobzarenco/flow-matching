@@ -89,10 +89,14 @@ def molmoact2_config_json() -> dict[str, object]:
     return config
 
 
-@pytest.fixture(scope="module")
-def tiny_checkpoint(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    directory = write_tiny_text_checkpoint(
-        tmp_path_factory.mktemp("molmoact2-ar") / "tiny-molmoact2",
+def write_tiny_molmoact2_trunk(directory: Path) -> Path:
+    """A loadable tiny MolmoAct2-flavored trunk: widened vocab hosting
+    the real 2048-wide action block IN-BASE at the release anchoring
+    (specials directly below <action_0>), plus a WordLevel tokenizer
+    carrying the anchor tokens. Plain function so sibling suites
+    (test_molmoact2_objectives) build their own copies."""
+    written = write_tiny_text_checkpoint(
+        directory,
         config_json=molmoact2_config_json(),
     )
     vocab = {
@@ -106,9 +110,16 @@ def tiny_checkpoint(tmp_path_factory: pytest.TempPathFactory) -> Path:
         "<action_0>": BLOCK_BASE,
     }
     Tokenizer(WordLevel(vocab, unk_token="<unk>")).save(
-        str(directory / "tokenizer.json"),
+        str(written / "tokenizer.json"),
     )
-    return directory
+    return written
+
+
+@pytest.fixture(scope="module")
+def tiny_checkpoint(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    return write_tiny_molmoact2_trunk(
+        tmp_path_factory.mktemp("molmoact2-ar") / "tiny-molmoact2",
+    )
 
 
 @pytest.fixture(scope="module")
