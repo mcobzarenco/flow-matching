@@ -39,6 +39,7 @@ import torch
 from tokenizers import Tokenizer
 from tokenizers.models import WordLevel
 
+from bijou.data import DatasetStats
 from bijou.decoders.ar_backbone import (
     IGNORE_INDEX,
     MOLMOACT2_SUFFIX_FORMAT,
@@ -48,10 +49,23 @@ from bijou.decoders.ar_backbone import (
     suffix_targets,
 )
 from bijou.decoders.ar_molmoact2 import MolmoAct2ARDecoder
+from bijou.encoders.molmoact2 import MOLMOACT2_PROMPT_FORMAT, MolmoAct2Encoder
 from bijou.fast.codec import FastActionCodec
 from bijou.fast.molmoact2 import MolmoAct2ActionCodec, MolmoAct2FastTokenizer
 from bijou.interface import CollatedBatch, NormStats, ObservationMemory
-from bijou.loading import decoder_schema_dict, parse_decoder_config
+from bijou.loading import (
+    BackboneConfig,
+    BackboneDepth,
+    CheckpointMetadata,
+    MolmoAct2PromptConfig,
+    MolmoFlowDecoderConfig,
+    ar_backbone_config_to_dict,
+    build_molmoact2_ar_decoder,
+    decoder_schema_dict,
+    from_checkpoint,
+    molmoact2_ar_config_from_flow_section,
+    parse_decoder_config,
+)
 from bijou.molmo2.cache import Molmo2KVCache
 from bijou.molmo2.config import Molmo2Config
 from bijou.molmo2.model import Molmo2Model, build_multimodal_mask, load_model
@@ -486,3 +500,193 @@ def test_schema_roundtrip(tiny_checkpoint: Path) -> None:
     assert payload["kind"] == "ar_backbone"
     assert payload["suffix_format"] == MOLMOACT2_SUFFIX_FORMAT
     assert parse_decoder_config(payload) == decoder_config()
+
+
+# --- loading arm (from_checkpoint + the release-read helper) ---
+
+
+def prompt_config(*, action_mode: str = "both") -> MolmoAct2PromptConfig:
+    return MolmoAct2PromptConfig(
+        format=MOLMOACT2_PROMPT_FORMAT,
+        norm_tag="tiny",
+        setup_type="tabletop",
+        control_mode="joint",
+        num_state_tokens=32,
+        state_dim=D,
+        action_mode=action_mode,
+        n_obs_steps=1,
+        camera_keys=("top",),
+        narration=False,
+    )
+
+
+def tiny_stats() -> DatasetStats:
+    return DatasetStats(
+        action_mean=(0.0,) * D,
+        action_std=(1.0,) * D,
+        state_mean=(0.0,) * D,
+        state_std=(1.0,) * D,
+        action_q01=tuple(Q01.tolist()),
+        action_q99=tuple(Q99.tolist()),
+        state_q01=(-1.0,) * D,
+        state_q99=(1.0,) * D,
+    )
+
+
+def write_ar_checkpoint(
+    directory: Path,
+    tiny_checkpoint: Path,
+    *,
+    action_mode: str = "both",
+    suffix_format: int = MOLMOACT2_SUFFIX_FORMAT,
+) -> Path:
+    """A POSSIBLE ar-only molmoact2 checkpoint dir: the format-3
+    metadata phase-3 training will write — no expert/prompt weight
+    files (both roles parameterless), no backbone.safetensors (frozen
+    trunk)."""
+    directory.mkdir(parents=True, exist_ok=True)
+    section = ar_backbone_config_to_dict(decoder_config())
+    section["suffix_format"] = suffix_format
+    metadata = CheckpointMetadata(
+        backbone=BackboneConfig(id=str(tiny_checkpoint), depth=BackboneDepth.FULL),
+        prompt=prompt_config(action_mode=action_mode),
+        decoder=section,
+        normalization=tiny_stats(),
+        per_dataset_normalization={"marius/rig": tiny_stats()},
+        train_args={
+            "decoder": "ar_backbone",
+            "decoder_hidden": 64,
+            "decoder_heads": 2,
+            "decoder_intermediate": 128,
+            "decoder_cross_heads": 2,
+            "stream_counts": [],
+            "self_attention_mode": "bidirectional",
+            "chunk_size": T,
+            "max_soft_tokens": 140,
+            "max_crops": 1,
+            "time_conditioning": "additive",
+            "target_time_embed": False,
+            "fast_tokenizer": str(FAST_FIXTURE),
+            "joint_ce": False,
+        },
+        step=0,
+    )
+    (directory / "bijou_config.json").write_text(
+        json.dumps(metadata.to_json_dict()),
+    )
+    return directory
+
+
+def test_from_checkpoint_ar_roundtrip(
+    tiny_checkpoint: Path,
+    tmp_path: Path,
+) -> None:
+    checkpoint = write_ar_checkpoint(tmp_path / "ar_only", tiny_checkpoint)
+    model, info = from_checkpoint(
+        checkpoint,
+        device="cpu",
+        dtype=torch.float32,
+    )
+    assert isinstance(model.decoder, MolmoAct2ARDecoder)
+    assert isinstance(model.encoder, MolmoAct2Encoder)
+    assert model.decoder.config == decoder_config()
+    assert model.decoder.opener_ids == ()
+    assert len(list(model.decoder.parameters())) == 0
+    assert info.backbone == str(tiny_checkpoint)
+
+
+def test_from_checkpoint_ar_refusals(
+    tiny_checkpoint: Path,
+    tmp_path: Path,
+) -> None:
+    # 'continuous' (the rig-ft class) refused by name, before any
+    # trunk mount.
+    continuous = write_ar_checkpoint(
+        tmp_path / "continuous",
+        tiny_checkpoint,
+        action_mode="continuous",
+    )
+    with pytest.raises(SystemExit, match="never trained the discrete head"):
+        from_checkpoint(continuous, device="cpu", dtype=torch.float32)
+    # A stray expert file on a parameterless decoder = format confusion.
+    stray = write_ar_checkpoint(tmp_path / "stray", tiny_checkpoint)
+    (stray / "expert.safetensors").write_bytes(b"")
+    with pytest.raises(SystemExit, match="owns no parameters"):
+        from_checkpoint(stray, device="cpu", dtype=torch.float32)
+    # A value-line (format-5) section under the molmoact2 prompt.
+    mixed = write_ar_checkpoint(
+        tmp_path / "mixed",
+        tiny_checkpoint,
+        suffix_format=5,
+    )
+    with pytest.raises(SystemExit, match="format-5 ar_backbone section"):
+        from_checkpoint(mixed, device="cpu", dtype=torch.float32)
+
+
+def release_flow_section(*, n_action_steps: int = T) -> MolmoFlowDecoderConfig:
+    """The release-shaped molmo_flow section fields the AR read consumes
+    (geometry); expert shape values are plausible fillers."""
+    return MolmoFlowDecoderConfig(
+        max_horizon=T,
+        max_action_dim=32,
+        hidden_size=64,
+        num_layers=2,
+        num_heads=2,
+        mlp_ratio=4.0,
+        ffn_multiple_of=64,
+        timestep_embed_dim=32,
+        context_layer_norm=True,
+        qk_norm=True,
+        qk_norm_eps=1e-6,
+        rope=True,
+        causal_attn=False,
+        llm_kv_dim=32,
+        num_flow_steps=10,
+        mask_action_dim_padding=True,
+        action_dim=D,
+        action_horizon=T,
+        n_action_steps=n_action_steps,
+        normalization="q01q99",
+        time_offset=0.001,
+        time_scale=0.999,
+        beta_alpha=1.0,
+        beta_beta=1.5,
+    )
+
+
+def test_release_read_derives_the_ar_config(tiny_checkpoint: Path) -> None:
+    """The AR read of a RELEASE-class checkpoint (no format-6 section):
+    geometry from the flow section, block_base from the trunk
+    tokenizer's own <action_0>, block width from the artifact — and
+    the derived config builds a working decoder through the shared
+    builder."""
+    config = molmoact2_ar_config_from_flow_section(
+        release_flow_section(),
+        prompt_config(),
+        str(tiny_checkpoint),
+        fast_tokenizer=str(FAST_FIXTURE),
+    )
+    assert config == decoder_config()
+    decoder = build_molmoact2_ar_decoder(
+        config,
+        prompt_config(),
+        text_config().text,
+        str(tiny_checkpoint),
+    )
+    assert decoder.opener_ids == ()
+    # Non-identity output tails have no first-class consumer.
+    with pytest.raises(SystemExit, match="non-identity discrete output tail"):
+        molmoact2_ar_config_from_flow_section(
+            release_flow_section(n_action_steps=T - 5),
+            prompt_config(),
+            str(tiny_checkpoint),
+            fast_tokenizer=str(FAST_FIXTURE),
+        )
+    # The builder holds the action-mode line for direct callers too.
+    with pytest.raises(SystemExit, match="never trained the discrete head"):
+        build_molmoact2_ar_decoder(
+            config,
+            prompt_config(action_mode="continuous"),
+            text_config().text,
+            str(tiny_checkpoint),
+        )

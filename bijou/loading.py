@@ -28,7 +28,11 @@ from torch import Tensor
 
 from .aux_text import AuxDecodeConfig, build_aux_runtime
 from .data import DatasetStats
-from .decoders.ar_backbone import ARBackboneConfig, ARBackboneDecoder
+from .decoders.ar_backbone import (
+    MOLMOACT2_SUFFIX_FORMAT,
+    ARBackboneConfig,
+    ARBackboneDecoder,
+)
 from .decoders.ar_molmo2 import Molmo2ARDecoder
 from .decoders.ar_molmoact2 import MolmoAct2ARDecoder
 from .decoders.flow import (
@@ -48,6 +52,7 @@ from .encoders.gemma4 import PROMPT_FORMAT, GemmaEncoder
 from .encoders.molmo2 import Molmo2Encoder
 from .encoders.molmoact2 import MolmoAct2Encoder
 from .fast.codec import FastActionCodec
+from .fast.molmoact2 import MolmoAct2ActionCodec, MolmoAct2FastTokenizer
 from .gemma4.config import Gemma4Config, LayerType
 from .gemma4.loading import (
     load_config,
@@ -58,6 +63,7 @@ from .gemma4.loading import (
 from .gemma4.model import Gemma4Model
 from .interface import kv_stream_name
 from .model import BijouModel
+from .molmo2.config import Molmo2TextConfig
 from .molmo2.loading import load_config as load_molmo2_config
 from .molmo2.model import Molmo2Model
 from .molmo2.model import load_model as load_molmo2_model
@@ -1275,6 +1281,93 @@ def build_molmo_flow_decoder(
     return decoder
 
 
+# The released FAST action-tokenizer artifact — the discrete head's
+# codec. AR/joint checkpoints record their own ref
+# (ARBackboneConfig.tokenizer); RELEASE-class checkpoints predate the
+# discrete read, so the AR read of one defaults to the canonical
+# artifact (the box snapshot pins d45593b4c8…).
+MOLMOACT2_FAST_TOKENIZER_REF = "allenai/MolmoAct2-FAST-Tokenizer"
+
+
+def build_molmoact2_ar_decoder(
+    config: ARBackboneConfig,
+    prompt: MolmoAct2PromptConfig,
+    text_config: Molmo2TextConfig,
+    backbone_ref: str,
+) -> MolmoAct2ARDecoder:
+    """Format-6 AR section → the discrete-head decoder: the
+    action-mode refusal (BY NAME — the rig-ft exports are
+    'continuous', their fine-tune never trained the discrete head),
+    hub-routable codec resolution, then the constructor's own id-space
+    guards against the trunk tokenizer. Shared by ``from_checkpoint``
+    (format-6 checkpoints) and the release-read path (probes, phase-3
+    ``--objective ar/joint`` init)."""
+    if prompt.action_mode != "both":
+        raise SystemExit(
+            f"the discrete pathway exists on action_mode='both' "
+            f"checkpoints; this one records {prompt.action_mode!r} — the "
+            "rig-ft exports are 'continuous' (their fine-tune never "
+            "trained the discrete head; the reference decode refuses "
+            "them too)",
+        )
+    fast = MolmoAct2FastTokenizer.load(resolve_checkpoint_dir(config.tokenizer))
+    codec = MolmoAct2ActionCodec(
+        fast,
+        time_horizon=config.chunk_size,
+        action_dim=config.action_dim,
+    )
+    return MolmoAct2ARDecoder(
+        config,
+        text_config,
+        codec,
+        tokenizer=Molmo2TextTokenizer(backbone_ref),
+    )
+
+
+def molmoact2_ar_config_from_flow_section(
+    flow: MolmoFlowDecoderConfig,
+    prompt: MolmoAct2PromptConfig,
+    backbone_ref: str,
+    *,
+    fast_tokenizer: str = MOLMOACT2_FAST_TOKENIZER_REF,
+) -> ARBackboneConfig:
+    """The discrete (AR) read of a RELEASE-class checkpoint, whose
+    decoder section is molmo_flow and which records no format-6
+    section: geometry from the flow section — refusing non-identity
+    output tails loudly (their tail slices ``[n_obs_steps-1 :
+    n_obs_steps-1+n_action_steps]`` of the decoded horizon; the
+    first-class decode budget IS the executed chunk, and the release
+    is identity: n_obs_steps 1, n_action_steps == horizon 30) — block
+    width from the released artifact, ``block_base`` from the trunk
+    tokenizer's own ``<action_0>`` row (the decoder's constructor
+    re-verifies it against ``<action_start>``/``<action_end>``)."""
+    if prompt.n_obs_steps != 1 or flow.n_action_steps != flow.action_horizon:
+        raise SystemExit(
+            f"non-identity discrete output tail (n_obs_steps "
+            f"{prompt.n_obs_steps}, n_action_steps {flow.n_action_steps} "
+            f"of horizon {flow.action_horizon}) — the first-class decode "
+            "budget IS the executed chunk; this checkpoint's tail has no "
+            "first-class consumer",
+        )
+    fast = MolmoAct2FastTokenizer.load(resolve_checkpoint_dir(fast_tokenizer))
+    backend = Molmo2TextTokenizer(backbone_ref).tokenizer
+    block_base = backend.token_to_id("<action_0>")
+    if block_base is None:
+        raise SystemExit(
+            f"{backbone_ref} tokenizer has no <action_0> — not a "
+            "MolmoAct2 'both'-mode vocabulary",
+        )
+    return ARBackboneConfig(
+        tokenizer=fast_tokenizer,
+        vocab_total=fast.block_vocab,
+        block_base=int(block_base),
+        chunk_size=flow.action_horizon,
+        action_dim=flow.action_dim,
+        suffix_format=MOLMOACT2_SUFFIX_FORMAT,
+        aux=None,
+    )
+
+
 def molmo_flow_state_table(normalization: DatasetStats) -> tuple[Tensor, Tensor]:
     """The merged q01/q99 STATE clamp table (§8.13 decision 6) as the
     Collator's ``state_q01``/``state_q99`` pair — [state_dim] fp32 CPU
@@ -1348,20 +1441,78 @@ def from_checkpoint(
         sections.prompt,
         MolmoAct2PromptConfig,
     ):
-        if not (
-            isinstance(sections.decoder, MolmoFlowDecoderConfig)
-            and isinstance(sections.prompt, MolmoAct2PromptConfig)
-        ):
+        if not isinstance(sections.prompt, MolmoAct2PromptConfig):
             raise SystemExit(
-                f"{checkpoint} mixes the molmo_flow decoder and the "
-                "molmoact2 prompt format with foreign sections — the two "
-                "travel together (§8.13; converted and molmo_flow-trained "
-                "checkpoints carry both)",
+                f"{checkpoint} records the molmo_flow decoder under a "
+                f"{type(sections.prompt).__name__} — molmo_flow rides the "
+                "molmoact2 prompt format only (§8.13)",
             )
         if offload_ple:
             raise SystemExit(
                 "--offload-ple parks Gemma's PLE token table; molmo2-family "
                 "trunks have no PLE — drop the flag",
+            )
+        if isinstance(sections.decoder, ARBackboneConfig):
+            # The discrete-head arm (retirement phase 2): format-6
+            # ar_backbone section + molmoact2 prompt. Cheap refusals
+            # BEFORE any trunk download/mount.
+            if sections.decoder.suffix_format != MOLMOACT2_SUFFIX_FORMAT:
+                raise SystemExit(
+                    f"{checkpoint} pairs a format-"
+                    f"{sections.decoder.suffix_format} ar_backbone section "
+                    "with the molmoact2 prompt — this prompt family's "
+                    f"emission is format {MOLMOACT2_SUFFIX_FORMAT} "
+                    "(value-line checkpoints ride the Gemma/Molmo2 "
+                    "prompts)",
+                )
+            if (checkpoint / "expert.safetensors").exists():
+                raise SystemExit(
+                    f"{checkpoint} is an ar-only molmoact2 checkpoint but "
+                    "carries expert.safetensors — the discrete head owns "
+                    "no parameters; joint checkpoints record the "
+                    "molmo_flow decoder section (with the AR rider in "
+                    "joint_ce) instead",
+                )
+            ar_trunk_dir = resolve_checkpoint_dir(info.backbone)
+            ar_decoder = build_molmoact2_ar_decoder(
+                sections.decoder,
+                sections.prompt,
+                load_molmo2_config(ar_trunk_dir).text,
+                info.backbone,
+            )
+            backbone = load_molmo2_model(
+                ar_trunk_dir,
+                device="cpu" if device is None else device,
+                dtype=torch.bfloat16 if dtype is None else dtype,
+            )
+            ar_encoder = MolmoAct2Encoder(
+                info.backbone,
+                setup_type=sections.prompt.setup_type,
+                control_mode=sections.prompt.control_mode,
+                num_state_tokens=sections.prompt.num_state_tokens,
+                action_mode=sections.prompt.action_mode,
+                narration=sections.prompt.narration,
+            )
+            model = BijouModel(
+                backbone=backbone,
+                encoder=ar_encoder,
+                decoder=ar_decoder,
+            )
+            # No expert.safetensors (guarded above) and no
+            # prompt.safetensors (the encoder owns nothing); trunk
+            # deltas ride the standard file.
+            if (checkpoint / "backbone.safetensors").exists():
+                load_adapted_backbone(model, checkpoint)
+                print(f"loaded adapted backbone from {checkpoint}", flush=True)
+            model.eval()
+            return model, info
+        if not isinstance(sections.decoder, MolmoFlowDecoderConfig):
+            raise SystemExit(
+                f"{checkpoint} records a "
+                f"{type(sections.decoder).__name__} under the molmoact2 "
+                "prompt — this family carries molmo_flow (the expert "
+                "pathway) or a format-6 ar_backbone section (the "
+                "discrete head)",
             )
         trunk_dir = resolve_checkpoint_dir(info.backbone)
         backbone = load_molmo2_model(
