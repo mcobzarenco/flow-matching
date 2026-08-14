@@ -55,7 +55,7 @@ from bijou.aux_text import (
 from bijou.decoders.ar_backbone import ARSampling
 from bijou.decoders.ar_molmo2 import Molmo2ARDecoder
 from bijou.eval.policies import BijouPolicy, stable_sample_rng
-from bijou.fast.codec import ActionCodec
+from bijou.fast.codec import FastActionCodec
 from bijou.model import BijouModel
 from bijou.molmo2.cache import Molmo2KVCache
 from bijou.molmo2.model import Molmo2Model, load_model
@@ -225,7 +225,7 @@ def aux_config() -> AuxDecodeConfig:
     )
 
 
-def build_aux_decoder(model: Molmo2Model) -> tuple[Molmo2ARDecoder, ActionCodec]:
+def build_aux_decoder(model: Molmo2Model) -> tuple[Molmo2ARDecoder, FastActionCodec]:
     """An aux-CAPABLE molmo2 decoder — build_decoder plus the trained
     aux record + runtime (test_ar_backbone_aux.build_with_aux's shape
     on this trunk)."""

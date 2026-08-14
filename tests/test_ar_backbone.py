@@ -34,7 +34,7 @@ from bijou.decoders.ar_backbone import (
     ar_backbone_loss,
 )
 from bijou.encoders.gemma4 import GemmaEncoder
-from bijou.fast.codec import ActionCodec
+from bijou.fast.codec import ActionCodec, FastActionCodec
 from bijou.gemma4.config import Gemma4Config
 from bijou.gemma4.model import Gemma4Model
 from bijou.interface import CollatedBatch, NormStats, ObservationMemory
@@ -47,8 +47,8 @@ PROMPT_LENGTHS = (11, 7)
 VOCAB = 256
 
 
-def codec() -> ActionCodec:
-    return ActionCodec.load(FIXTURE)
+def codec() -> FastActionCodec:
+    return FastActionCodec.load(FIXTURE)
 
 
 def gemma_config() -> Gemma4Config:
@@ -69,7 +69,7 @@ def gemma_config() -> Gemma4Config:
     )
 
 
-def decoder_config(loaded: ActionCodec) -> ARBackboneConfig:
+def decoder_config(loaded: FastActionCodec) -> ARBackboneConfig:
     return ARBackboneConfig(
         tokenizer=str(FIXTURE),
         vocab_total=loaded.vocab_total,
@@ -81,7 +81,7 @@ def decoder_config(loaded: ActionCodec) -> ARBackboneConfig:
     )
 
 
-def build() -> tuple[Gemma4Model, ARBackboneDecoder, ActionCodec]:
+def build() -> tuple[Gemma4Model, ARBackboneDecoder, FastActionCodec]:
     loaded = codec()
     torch.manual_seed(0)
     backbone = Gemma4Model(gemma_config(), attn_backend=AttentionBackend.EAGER)
@@ -138,6 +138,8 @@ class FakeInputs:
 
 
 def batch(loaded: ActionCodec) -> CollatedBatch[FakeInputs]:
+    """Protocol-typed on purpose: downstream suites (test_grpo_step)
+    feed ``decoder.codec`` — the scaffold's protocol-typed slot."""
     generator = torch.Generator().manual_seed(2)
     chunk, dim = loaded.time_horizon, loaded.action_dim
     actions = torch.cumsum(

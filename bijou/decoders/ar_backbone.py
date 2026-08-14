@@ -83,9 +83,11 @@ IGNORE_INDEX = -100
 class ARBackboneConfig:
     """Construction config of the decoder-only path. Deliberately tiny:
     the backbone defines all geometry; this records only the action
-    vocabulary and its placement. ``vocab_total`` = BPE vocabulary +
-    BOA + PAD (ActionCodec's convention); ``block_base`` is the first
-    backbone vocabulary id of the reserved block."""
+    vocabulary and its placement. ``vocab_total`` = the width of the
+    codec-relative body id space (our artifacts: BPE + BOA + PAD; the
+    MolmoAct2 release: the bare 2048 bin block — its specials sit
+    below); ``block_base`` is the first backbone vocabulary id of the
+    reserved block."""
 
     tokenizer: str  # artifact ref (local dir or <user>/<repo>/<subfolder>)
     vocab_total: int
@@ -277,15 +279,19 @@ class ARSuffixDecoder[B: nn.Module](nn.Module, abc.ABC):
                 f"{codec.action_dim}) != decoder chunk/action_dim "
                 f"({config.chunk_size}, {config.action_dim})",
             )
-        # Constrained decoding needs each token's symbol expansion length
-        # (one BPE piece = a run of quantized DCT coefficients). Specials
-        # stay 0 and are handled explicitly in the decode mask. Plain
-        # attribute, not a buffer: derived from the codec, never saved.
-        symbol_lengths = torch.zeros(config.vocab_total, dtype=torch.long)
-        for token_id in range(codec.tokenizer.vocab_size):
-            piece = codec.tokenizer.bpe.id_to_token(token_id)
-            assert piece is not None, f"BPE id {token_id} has no piece"
-            symbol_lengths[token_id] = len(piece)
+        # Constrained decoding needs each token's symbol expansion
+        # length. CODEC-owned (the measurement is artifact-family
+        # specific: our fit reads BPE piece lengths, the released
+        # byte-level BPE needs decoded-string lengths). Copied into a
+        # fresh tensor — plain attribute, not a buffer: derived from
+        # the codec, never saved.
+        symbol_lengths = torch.tensor(codec.symbol_lengths, dtype=torch.long)
+        if symbol_lengths.shape[0] != config.vocab_total:
+            raise ValueError(
+                f"codec symbol_lengths covers {symbol_lengths.shape[0]} "
+                f"ids, config vocab_total is {config.vocab_total} — "
+                "mismatched codec/config pairing",
+            )
         if not bool((symbol_lengths == 1).any()):
             raise ValueError(
                 "BPE vocabulary has no single-symbol token — exact fill "

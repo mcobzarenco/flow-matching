@@ -1,7 +1,9 @@
 """MolmoAct2's released FAST action tokenizer, loaded natively — the
-discrete AR head's codec half (docs/molmoact2-retirement.md phase 1;
-authored on the research agent's branch 2026-08-13, promoted here
-verbatim with its vendored reference fixture).
+TOKENIZER layer of the discrete AR head (docs/molmoact2-retirement.md
+phase 1; authored on the research agent's branch 2026-08-13, promoted
+here verbatim with its vendored reference fixture; renamed
+``MolmoAct2FastCodec`` → ``MolmoAct2FastTokenizer`` 2026-08-14 per the
+tokenizer/codec layer split — docs/code-styleguide.md).
 
 The artifact (``allenai/MolmoAct2-FAST-Tokenizer``) is π's FAST
 recipe: orthonormal DCT-II along time, ×``scale`` (10), round,
@@ -51,8 +53,11 @@ from .tokenizer import dct_matrix
 FloatArray = npt.NDArray[np.float64]
 
 
-class MolmoAct2FastCodec:
-    """The released OpenFAST artifact behind a bijou-native surface.
+class MolmoAct2FastTokenizer:
+    """The released OpenFAST artifact behind a bijou-native surface —
+    tokenizer layer only: normalized space, bare bin ids, no specials
+    (``<action_start>``/``<action_end>`` are TRUNK vocabulary, carried
+    by the codec layer above).
 
     ``block_vocab`` is the trunk block width (2048 — what the
     ``<action_i>`` rows address); ``bpe_vocab`` the trained BPE's
@@ -85,7 +90,7 @@ class MolmoAct2FastCodec:
         self._dct_cache: dict[int, FloatArray] = {}
 
     @classmethod
-    def load(cls, artifact_dir: str | Path) -> MolmoAct2FastCodec:
+    def load(cls, artifact_dir: str | Path) -> MolmoAct2FastTokenizer:
         """Load from the released artifact layout (``tokenizer.json``
         + ``processor_config.json`` — scale/min_token/vocab_size)."""
         directory = Path(artifact_dir)

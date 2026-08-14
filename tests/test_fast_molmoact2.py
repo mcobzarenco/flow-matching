@@ -25,15 +25,15 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from bijou.fast.molmoact2 import MolmoAct2FastCodec
+from bijou.fast.molmoact2 import MolmoAct2FastTokenizer
 
 FIXTURE = Path(__file__).parent / "fixtures" / "molmoact2_fast_tokenizer"
 HOLES = {3, 9, 12, 14, 19, 22, 27}
 T, D = 30, 6
 
 
-def codec() -> MolmoAct2FastCodec:
-    return MolmoAct2FastCodec.load(FIXTURE)
+def codec() -> MolmoAct2FastTokenizer:
+    return MolmoAct2FastTokenizer.load(FIXTURE)
 
 
 def fixture() -> tuple[np.ndarray, list[list[int]], np.ndarray]:

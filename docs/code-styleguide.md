@@ -80,6 +80,7 @@ cited, and the doc-cited `probe_rollout_vram.py` is lost outright
   in a probe AND a test; module-level `*_config()` factories were the
   older form and were migrated the same day.)
 - **One word per concept: the pretrained trunk network (Gemma or Molmo2) is the `backbone`** — in
+  - **One word per concept: the Gemma network is the `backbone`** — in
   both senses (the pretrained artifact: `--backbone`,
   `BackboneConfig.id`, `backbone.safetensors`; and the mounted module:
   `model.backbone`, `backbone_text`/`backbone_vision` groups,
@@ -89,6 +90,19 @@ cited, and the doc-cited `probe_rollout_vram.py` is lost outright
   convention; it produced `trunk.backbone` in the metadata and was
   reverted the same day — a naming rule that needs a judgment call at
   every site is a trap.)
+- **One word per layer: a *tokenizer* is the artifact + its math**
+  (normalized chunk ↔ body token ids — DCT/BPE, fit and load I/O); **a
+  *codec* is the AR conventions around one** (specials and their
+  placement, raw-unit quantile glue, per-id symbol lengths — what
+  decoders and collators agree on). The unqualified `ActionCodec` is
+  the Protocol; implementations are named after the tokenizer they
+  wrap (`FastActionCodec` wraps `FastTokenizer`,
+  `MolmoAct2ActionCodec` wraps `MolmoAct2FastTokenizer`) — a new
+  artifact family lands on this grid without a naming debate. (Added
+  2026-08-14: the released-artifact port shipped a tokenizer-layer
+  class named `…FastCodec`, and the scaffold reached through the codec
+  into `tokenizer.bpe` for symbol lengths — a layer boundary that
+  exists only by convention gets violated silently.)
 
 ## Functions and arguments
 

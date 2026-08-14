@@ -38,7 +38,7 @@ from bijou.data import EpisodeSplit, select_datasets
 from bijou.decoders.ar_backbone import ARBackboneConfig, ARBackboneDecoder
 from bijou.decoders.flow import FlowDecoder
 from bijou.encoders.gemma4 import GemmaEncoder, GemmaInputsCollator
-from bijou.fast.codec import ActionCodec
+from bijou.fast.codec import FastActionCodec
 from bijou.gemma4.loading import load_config
 from bijou.gemma4.text import DecoderLayer
 from bijou.interface import CollatedBatch, Collator
@@ -172,7 +172,7 @@ def build_flow(args: TrainArgs) -> BijouTrainStep:
 def build_ar_backbone(args: TrainArgs) -> BijouTrainStep:
     torch.manual_seed(args.seed)
     backbone_config = load_config(Path(TINY))
-    codec = ActionCodec.load(FIXTURE_TOKENIZER)
+    codec = FastActionCodec.load(FIXTURE_TOKENIZER)
     stop = backbone_config.text.first_kv_shared_layer_idx - 1
     backbone, encoder = build_gemma_encoder(
         Path(TINY),
@@ -285,7 +285,7 @@ def ar_batch(items: list, *, generate_bracket: bool = False) -> CollatedBatch:
         instruction=None,
         camera_filter=None,
         max_cameras=None,
-        action_codec=ActionCodec.load(FIXTURE_TOKENIZER),
+        action_codec=FastActionCodec.load(FIXTURE_TOKENIZER),
         aux=None,
         generate_bracket=generate_bracket,
         generate_override=None,

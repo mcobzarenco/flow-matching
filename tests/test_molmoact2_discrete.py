@@ -33,7 +33,7 @@ import torch
 from test_molmoact2_predictor import _observation, predictor  # noqa: F401
 
 from bijou.molmoact2 import MolmoAct2Predictor, unnormalize_action
-from bijou.molmoact2.fast_codec import MolmoAct2FastCodec
+from bijou.molmoact2.fast_codec import MolmoAct2FastTokenizer
 from bijou.molmoact2.predictor import DiscreteActionResult, extract_action_bins
 
 FIXTURE = Path(__file__).parent / "fixtures" / "molmoact2_fast_tokenizer"
@@ -65,11 +65,11 @@ class _ScriptedHead(torch.nn.Module):
         return logits
 
 
-def codec() -> MolmoAct2FastCodec:
-    return MolmoAct2FastCodec.load(FIXTURE)
+def codec() -> MolmoAct2FastTokenizer:
+    return MolmoAct2FastTokenizer.load(FIXTURE)
 
 
-def decodable_bins(loaded: MolmoAct2FastCodec) -> list[int]:
+def decodable_bins(loaded: MolmoAct2FastTokenizer) -> list[int]:
     """Real release-BPE ids whose symbol lengths sum to exactly the
     fixture tag's HORIZON×DIM = 12."""
     lengths = loaded.symbol_lengths
@@ -83,7 +83,7 @@ def decodable_bins(loaded: MolmoAct2FastCodec) -> list[int]:
 
 def discrete_predictor(
     base: MolmoAct2Predictor,
-    loaded: MolmoAct2FastCodec,
+    loaded: MolmoAct2FastTokenizer,
 ) -> MolmoAct2Predictor:
     return dataclasses.replace(
         base,
@@ -95,7 +95,7 @@ def discrete_predictor(
 
 def run_scripted(
     base: MolmoAct2Predictor,
-    loaded: MolmoAct2FastCodec,
+    loaded: MolmoAct2FastTokenizer,
     script: list[int],
     monkeypatch: pytest.MonkeyPatch,
     on_undecodable: str = "raise",

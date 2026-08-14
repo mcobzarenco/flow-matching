@@ -46,7 +46,7 @@ from .decoders.molmo_flow import (
 from .encoders.gemma4 import PROMPT_FORMAT, GemmaEncoder
 from .encoders.molmo2 import Molmo2Encoder
 from .encoders.molmoact2 import MolmoAct2Encoder
-from .fast.codec import ActionCodec
+from .fast.codec import FastActionCodec
 from .gemma4.config import Gemma4Config, LayerType
 from .gemma4.loading import (
     load_config,
@@ -604,13 +604,13 @@ def decoder_schema_dict(
             return ar_backbone_config_to_dict(decoder.config)
 
 
-def resolve_action_codec(ref: str) -> ActionCodec:
-    """Load a FAST tokenizer artifact from a local directory or from the
-    hub (``<user>/<repo>/<subfolder>``, e.g.
+def resolve_action_codec(ref: str) -> FastActionCodec:
+    """Load OUR fitted FAST tokenizer artifact from a local directory or
+    from the hub (``<user>/<repo>/<subfolder>``, e.g.
     mcobzarenco/bijou-checkpoints/fast_tokenizer_v1)."""
     local = Path(ref).expanduser()
     if (local / "fast_config.json").exists():
-        return ActionCodec.load(local)
+        return FastActionCodec.load(local)
     parts = ref.split("/")
     if len(parts) < 3:
         raise SystemExit(
@@ -624,7 +624,7 @@ def resolve_action_codec(ref: str) -> ActionCodec:
         repo_type="model",
         allow_patterns=[f"{subfolder}/*"],
     )
-    return ActionCodec.load(Path(downloaded) / subfolder)
+    return FastActionCodec.load(Path(downloaded) / subfolder)
 
 
 def prefix_global_layers(config: Gemma4Config) -> tuple[int, ...]:

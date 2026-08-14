@@ -61,7 +61,7 @@ from .action_expert import (
     ActionExpertConfig,
     load_action_expert_state,
 )
-from .fast_codec import MolmoAct2FastCodec
+from .fast_codec import MolmoAct2FastTokenizer
 from .processing import (
     IMAGE_TOKEN_STRINGS,
     QuantileStats,
@@ -200,7 +200,7 @@ class MolmoAct2Predictor:
     # block (release: 151934); ``fast_codec`` is the released OpenFAST
     # artifact. Both optional: the continuous path never touches them.
     action_token_start_id: int | None = None
-    fast_codec: MolmoAct2FastCodec | None = None
+    fast_codec: MolmoAct2FastTokenizer | None = None
 
     @classmethod
     def load(
@@ -278,7 +278,7 @@ class MolmoAct2Predictor:
             fast_codec=(
                 None
                 if fast_tokenizer is None
-                else MolmoAct2FastCodec.load(fast_tokenizer)
+                else MolmoAct2FastTokenizer.load(fast_tokenizer)
             ),
         )
 

@@ -23,7 +23,7 @@ from bijou.aux_text import SUFFIX_FORMAT
 from bijou.decoders.ar_backbone import ARBackboneConfig, suffix_targets
 from bijou.decoders.ar_molmo2 import MOLMO2_GENERATION_OPENER, Molmo2ARDecoder
 from bijou.encoders.molmo2 import Molmo2Encoder, Molmo2Inputs
-from bijou.fast.codec import ActionCodec
+from bijou.fast.codec import FastActionCodec
 from bijou.interface import CollatedBatch, NormStats, ObservationMemory
 from bijou.loading import decoder_schema_dict, parse_decoder_config
 from bijou.model import BijouModel
@@ -47,15 +47,15 @@ def model(tiny_checkpoint: Path) -> Molmo2Model:
     return load_model(str(tiny_checkpoint), dtype=torch.float32)
 
 
-def codec() -> ActionCodec:
-    return ActionCodec.load(FIXTURE)
+def codec() -> FastActionCodec:
+    return FastActionCodec.load(FIXTURE)
 
 
 def text_config() -> Molmo2Config:
     return Molmo2Config.from_dict(tiny_config_json())
 
 
-def decoder_config(loaded: ActionCodec) -> ARBackboneConfig:
+def decoder_config(loaded: FastActionCodec) -> ARBackboneConfig:
     text = text_config().text
     return ARBackboneConfig(
         tokenizer=str(FIXTURE),
@@ -68,7 +68,7 @@ def decoder_config(loaded: ActionCodec) -> ARBackboneConfig:
     )
 
 
-def build_decoder(model: Molmo2Model) -> tuple[Molmo2ARDecoder, ActionCodec]:
+def build_decoder(model: Molmo2Model) -> tuple[Molmo2ARDecoder, FastActionCodec]:
     loaded = codec()
     torch.manual_seed(0)
     decoder = Molmo2ARDecoder(
@@ -127,7 +127,7 @@ def encode_memory(
     )
 
 
-def batch(loaded: ActionCodec, inputs: Molmo2Inputs) -> CollatedBatch[Molmo2Inputs]:
+def batch(loaded: FastActionCodec, inputs: Molmo2Inputs) -> CollatedBatch[Molmo2Inputs]:
     generator = torch.Generator().manual_seed(2)
     chunk, dim = loaded.time_horizon, loaded.action_dim
     actions = torch.cumsum(
