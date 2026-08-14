@@ -1,8 +1,8 @@
 # Retiring `bijou/molmoact2/` — first-class MolmoAct2 AR + joint objectives
 
-Status: **phases 0 + 1 EXECUTED** (2026-08-14; every gate green —
-receipts in §5 and §9); **phases 2–3 are NEXT** (a fresh session
-continues from §9's state-of-the-world); **phase 4's window is OPEN**
+Status: **phases 0–2 EXECUTED** (2026-08-14; every gate green —
+receipts in §5 and §9); **phase 3 is NEXT**; **phase 4's window is
+OPEN**
 (the GRPO ladder adjudicated STOP on surface A — fontaine's
 recommendation 13:1xZ, owner-ratified 2026-08-14 — so phase 4 is
 sequenced purely behind phases 2–3, per his 12:50Z sign-off); phase 5
@@ -362,13 +362,75 @@ converter gained `--norm-stats-from` (decision 7's mechanism,
 oracle-pinned: table substituted, weights invariant, provenance
 recorded). Gates: check.py green; 2-step oracles bitwise.
 
-**Phase 2 — `bijou/decoders/ar_molmoact2.py`.** The concrete per
-decisions 1–3: trunk-native `_suffix_hidden` (plain `wte` lookup — no
-extension-table select; SIMPLER than the Molmo2 concrete), `_logits`
-= trunk `lm_head` (full-id-space, grammar legality handled by the
-mask, not column surgery), construction guards (block inside base
-matrices; codec/geometry anchors). Loading/schema arms; `BijouPolicy`
-works via the existing `ARSuffixDecoder` genericity.
+**Phase 2 — `bijou/decoders/ar_molmoact2.py`. EXECUTED 2026-08-14**
+(main-roll-forward `64fcc24` first — fontaine's branch fast-forwarded
+into main so one tree carries the GRPO line; then `b30784d` codec
+layer split, `b46a3ed` adapter, `651c792` decoder, `e0b2192` loading,
+`40799e9`+ probe). The concrete per decisions 1–3: trunk-native
+`_suffix_hidden` (plain `wte` lookup — no extension-table select;
+SIMPLER than the Molmo2 concrete), `_logits` = trunk `lm_head`
+(full-id-space, grammar legality handled by the mask, not column
+surgery), construction guards (block inside base matrices;
+codec/geometry anchors; the trunk tokenizer's real
+`<action_start>`/`<action_end>`/`<action_0>` verified against
+block_base). Loading/schema arms; `BijouPolicy` works via the
+existing `ARSuffixDecoder` genericity.
+
+Execution facts (how the built thing differs from no-context
+expectation):
+
+- **The codec layer grew a naming grid + Protocol** (styleguide rule
+  added): tokenizer = artifact + math, codec = AR conventions;
+  `ActionCodec` is now the PROTOCOL, the concretes are
+  `FastActionCodec` (ours) and `MolmoAct2ActionCodec` (theirs;
+  `MolmoAct2FastCodec` → `MolmoAct2FastTokenizer`, atomic rename, no
+  legacy alias — owner call). `symbol_lengths` is codec-owned (the
+  scaffold's `id_to_token` reach-through was FastTokenizer-only API,
+  wrong for their byte-level BPE).
+- **The pad-analog open detail (decision 3) resolved by NEGATIVE
+  special offsets**: the adapter presents `boa = −2`, `pad = −1`, so
+  the scaffold's `block_base + offset` arithmetic lands on
+  151932/151933 with `block_base = action_token_start_id` unchanged —
+  capture stays [B, 2048] block-relative, zero ±2 rebase anywhere.
+  `<action_end>` ≡ pad: legal exactly at symbol budget 0 (their
+  close), fed as lockstep filler at B>1, NEVER a CE target — a
+  documented narrowing of their SFT span to what masked decoding and
+  the GRPO line train (bins; `<action_start>` is fed, not predicted).
+- **Suffix format 6** registered beside format 5; each concrete
+  asserts its own. Empty opener (their prompt carries the whole
+  scaffold) exposed two latent scaffold bugs, fixed + test-pinned:
+  `suffix_targets`' opener mask sliced `[:, :-1]` at width 0, and
+  `teacher_forced_block_logits` read `next(self.parameters())` on a
+  parameterless decoder.
+- **The release AR read**: `molmoact2_ar_config_from_flow_section`
+  derives the format-6 section from a RELEASE-class checkpoint
+  (geometry from the molmo_flow section — identity output tail
+  verified: n_obs_steps 1, n_action_steps == horizon 30 × dim 6,
+  confirmed on the converted release; block_base from the trunk
+  tokenizer's own `<action_0>`), then the shared
+  `build_molmoact2_ar_decoder` (action_mode refusal by name;
+  hub-routable codec via `resolve_checkpoint_dir`,
+  `MOLMOACT2_FAST_TOKENIZER_REF`).
+
+**Acceptance verdict (box H100, bf16 mount matching the generator):
+PASS on every registered gate** — all 6 rows masked
+ids/bins/actions BYTE-EQUAL to `decode_anchors.npz`; fixture
+logprobs max |Δ| 2.384e-07 (bound 1e-5). One instrument lesson: the
+probe's first run gated teacher-forced-replay-vs-capture logprobs at
+1e-5 and FAILED — mis-registered bound. That comparison is
+CROSS-surface (one wide suffix forward vs L single-token forwards);
+under a bf16 trunk it sits at the batch-shape reduction-order floor
+(measured 1.4e-2–5.6e-2 worst-step across the rows), and the fp32
+diagnostic collapses it to 2.8e-5 — mechanism confirmed as shape
+numerics (sharding.py's caveat), not semantics. The registered
+1e-5(+JPEG) replay bound is SAME-surface (teacher-forced vs
+teacher-forced) and governs phase 4's frozen-wave gate, which is
+unaffected. Probe: `probes/probe_molmoact2_ar_parity.py`
+(`--trunk-dtype float32` = the mechanism diagnostic); CPU suite:
+`tests/test_molmoact2_ar.py` (11). check.py green throughout (869
+passed); both 2-step oracles bitwise at every commit.
+`~/marius-fontaine-ro` is now past its scoped lifetime (kept only
+until this gate passed) — removable at the next box cleanup.
 
 Execution facts learned generating the acceptance fixture (phase 0):
 - **Scope: RELEASE-class checkpoints only** (`action_mode='both'`).
@@ -439,7 +501,7 @@ Rough sizes: P1 ±0 net (moves), P2 ~250–350 + tests, P3 ~150 restored
 |---|---|---|
 | fixtures reproduce port bytes | 0 | executing the port at the tag |
 | leaf moves are inert | 1 | check.py + bitwise 2-step oracles (flow, ar_backbone) |
-| discrete decode parity | 2 | phase-0 fixture (b); banked-anchor rows |
+| discrete decode parity | 2 | phase-0 fixture (b) — **PASS 2026-08-14** (byte-equal ×6, logprobs 2.4e-7) |
 | replay ratio contract | 2/4 | unchanged-policy ratio≈1 oracle; 1e-5 + JPEG bounds |
 | KI both ways under joint | 3 | extended gradient-contract test |
 | flow-only untouched | 3 | bitwise vs pre-phase oracles + molmo_flow fixture tests |
