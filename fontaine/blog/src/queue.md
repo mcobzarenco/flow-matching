@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-14T09:46:49Z
+**Updated:** 2026-08-14T11:01:47Z
 
-**Depth call:** depth 2 (sim-full-optin-stack-read, grpo-r1b-boundary-reads)
+**Depth call:** depth 2: grpo-r1b-boundary-reads (gated at R1-B rc ~19:3xZ) + sim-appearance-consolidated-report (executable now, closed-screen report rule).
 
-**15 open** (Live 0 · Queued 2 · Blocked 13 · Done 159)
+**15 open** (Live 0 · Queued 2 · Blocked 13 · Done 160)
 
 ## 🔴 Live (0)
 
@@ -17,6 +17,20 @@
 ## 🟢 Queued (2)
 
 *ready — waiting on a window or a boundary*
+
+**`sim-appearance-consolidated-report`** · `cpu`
+
+Appearance programme consolidated report (chart-led, closed-screen rule): the sim top-cam appearance screen is measured end-to-end
+
+**boundary:** Queued 11:1xZ 08-14 at the full-optin-stack close (depth refill; owner standing preference: chart-led consolidated reports for closed screens). Fully CPU, no pre-reg needed (no new claims). If an owner promotion call lands first, fold the decision into the report rather than re-scoping.
+
+<details><summary>full record</summary>
+
+Appearance programme consolidated report (chart-led, closed-screen rule): the sim top-cam appearance screen is measured end-to-end — v3 0.713 anchor; clutter real-crop patches 0.556 (carries the gap's removable share); arm_photometrics 0.698; mount rides the material stack to 0.702; texture REFUTED twice (albedo channel exhausted, relief/light-transport hypothesis banked); wrist-side neutral at reset poses; full opt-in stack 0.5521 (materials absorbed next to clutter, interaction +0.0063 sub-additive). One blog-post report telling the whole story with the ladder chart + frame strips, written for the owner's three pending promotion decisions — what to flip, in what order, what each flag is worth alone vs stacked, and what remains (real-fg 0.328 floor: geometry/light-transport, renderer-upgrade priced separately). No new measurements — banked numbers only.
+
+</details>
+
+---
 
 **`grpo-r1b-boundary-reads`** · `cpu`
 
@@ -32,20 +46,6 @@ R1-B boundary reads at rc (ETA ~19:3xZ 08-14, unit grpo-phase2-r1b): execute the
 
 ---
 
-**`sim-full-optin-stack-read`** · `cpu`
-
-Full opt-in stack read (prices the combined promotion): the owner has three pending appearance promotions measured SEPARATELY (clutter real-crop patches 0.713-&gt;0.556; arm_photometrics 0.713-&gt;0.698; mount rides the stack at 0.713-…
-
-**boundary:** Queued 06:0xZ 08-14 at the wrist-read close (depth refill). CPU renders + ~0.02 GPU-h embeds; fully executable without any promotion (all flags opt-in). Sequenced after sim-arm-surface-texture-mjspec only if the owner has not answered the promotion asks by then; if a promotion lands first, re-scope to the promoted default as baseline.
-
-<details><summary>full record</summary>
-
-Full opt-in stack read (prices the combined promotion): the owner has three pending appearance promotions measured SEPARATELY (clutter real-crop patches 0.713-&gt;0.556; arm_photometrics 0.713-&gt;0.698; mount rides the stack at 0.713-&gt;0.702). If they flip together, interactions are unmeasured. One paired 20x5 top read: v3 default vs the full opt-in stack (clutter patches + arm_photometrics + mount_material), er_60k knn5, in-run v3 gate 0.713+/-0.005. PRIMARY: paired dknn5 CI95 &lt; 0 AND full stack &lt;= best single (0.556) - epsilon registered in the pre-reg; record additivity vs the sum of parts. Pre-reg with explicit bar before any read.
-
-</details>
-
----
-
 ## 🟡 Blocked (13)
 
 *waiting on a prerequisite, a boundary, or the owner*
@@ -54,7 +54,7 @@ Full opt-in stack read (prices the combined promotion): the owner has three pend
 
 Promote arm_photometrics='v1' into production v3/v4 defaults (registered read GREEN 02:1xZ 08-14: v3 0.713-&gt;0.698 CI-excl-0, only_links 0.705-&gt;0.652; commit 4515ab4): flip the default in SO101Sim (+ rollout/eval surfaces that pin…
 
-**boundary:** OWNER_HOLD per the registered rule (pre-reg decision rule: no default flip without sign-off; same contract as clutter-patch promotion 05:40Z 08-13). Asked in-channel 02:1xZ 08-14 with the results post. · [pre-reg](posts/2026-08-14-prereg-sim-arm-photometric-links.md)
+**boundary:** OWNER_HOLD per the registered rule (pre-reg decision rule: no default flip without sign-off; same contract as clutter-patch promotion 05:40Z 08-13). Asked in-channel 02:1xZ 08-14 with the results post. | STACK READ 10:58Z 08-14: safe to stack with clutter patches (no regression, point estimate still negative) but the banked solo gain is attenuated ~3x and statistically absorbed at n=100 next to clutter — NOT additive as separately sold; stacked value unresolved, bigger-n read priced on request. · [pre-reg](posts/2026-08-14-prereg-sim-arm-photometric-links.md)
 
 <details><summary>full record</summary>
 
@@ -68,7 +68,7 @@ Promote arm_photometrics='v1' into production v3/v4 defaults (registered read GR
 
 Promote the real-crop clutter patch paste into production v3/v4: move clutter_patch.py paste into sim/so101_sim.py as the default clutter appearance (patched plate at _draw_content, clutter geoms dropped from the top render/mask/…
 
-**boundary:** Queued 05:4xZ 08-13 at the appearance-pass close. Implementation ~1 session CPU; re-gate on the pinned 20x5 probe (~0.02 GPU-h) before any behavioral eval moves.
+**boundary:** Queued 05:4xZ 08-13 at the appearance-pass close. Implementation ~1 session CPU; re-gate on the pinned 20x5 probe (~0.02 GPU-h) before any behavioral eval moves. | STACK READ 10:58Z 08-14: clutter patches carry essentially the whole combined three-flag gain (stack 0.5521 vs patched-alone 0.5561, materials marginal absorbed) — this promotion is the payload; promote first or alone.
 
 <details><summary>full record</summary>
 
@@ -230,7 +230,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (159)
+## ✅ Done (160)
 
 *closed — the full record stays in each fold*
 
@@ -243,6 +243,20 @@ R1-B re-priced ladder (option 1, owner-approved 09:16Z 08-14, sequenced behind g
 <details><summary>full record</summary>
 
 R1-B re-priced ladder (option 1, owner-approved 09:16Z 08-14, sequenced behind grpo-reward-patch-prereg): resume from banked step_0004 (fontaine-checkpoints/grpo_phase2_r1a, weights-only) under the PATCHED reward with lr 3e-7 + kl_beta 1.0, wire unchanged (knock tripwire stays as belt even with the in-reward fix), ~0.96 GPU-h/step; 10 steps ~9.6 GPU-h, ladder cum ~5.1 of the 22 gate -&gt; fits with headroom. Own pre-reg (final constants + boundary reads) before launch.
+
+</details>
+
+---
+
+**`sim-full-optin-stack-read`** · `cpu`
+
+Full opt-in stack read (prices the combined promotion): the owner has three pending appearance promotions measured SEPARATELY (clutter real-crop patches 0.713-&gt;0.556; arm_photometrics 0.713-&gt;0.698; mount rides the stack at 0.713-…
+
+**boundary:** CLOSED 10:58Z 08-14 rc=0, all gates green (in-run v3 0.7127 band-center; in-run patched 0.5561 bit-matching the banked fg-fix read; cross-instance qpos/draws/affine bit-equal x100; changed-px 12.3% material footprint). MIDDLE BRANCH of the frozen rule: paired stack vs v3 -2.075e-06 CI [-2.254,-1.891]e-06 (99/100) but stack AUROC 0.5521 &gt; bar 0.5511 (beats best single by only -0.0040 &lt; eps 0.005). Materials' marginal on top of clutter -5.50e-08 CI [-1.44e-07,+3.37e-08] straddles 0 (~1/3 of banked solo effect) — attenuated ~3x, statistically absorbed. Additivity: predicted 0.5458 measured 0.5521, interaction +0.0063 sub-additive. Disposition: clutter carries the combined gain (promote first/alone); material flags safe to stack but not additive as separately sold; bigger-n marginal read priced only on owner request. Results in the pre-reg post + in-channel 11:00Z. · [pre-reg](posts/2026-08-14-prereg-sim-full-optin-stack.md)
+
+<details><summary>full record</summary>
+
+Full opt-in stack read (prices the combined promotion): the owner has three pending appearance promotions measured SEPARATELY (clutter real-crop patches 0.713-&gt;0.556; arm_photometrics 0.713-&gt;0.698; mount rides the stack at 0.713-&gt;0.702). If they flip together, interactions are unmeasured. One paired 20x5 top read: v3 default vs the full opt-in stack (clutter patches + arm_photometrics + mount_material), er_60k knn5, in-run v3 gate 0.713+/-0.005. PRIMARY: paired dknn5 CI95 &lt; 0 AND full stack &lt;= best single (0.556) - epsilon registered in the pre-reg; record additivity vs the sum of parts. Pre-reg with explicit bar before any read.
 
 </details>
 
