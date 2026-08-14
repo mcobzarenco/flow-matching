@@ -103,12 +103,24 @@ def _inputs(
     return actions, timesteps, kv_states, enc_mask
 
 
-def test_forward_byte_parity_with_port_fixture() -> None:
-    """Same weights, same inputs -> byte-equal velocity vs the vendored
-    port outputs, masked rows and padded batch columns included — the
-    state path too (dormant at inference, still copied math). The
-    states tensor rides IN the fixture so the comparison never depends
-    on ambient RNG stream position."""
+# Cross-machine bound for the vendored-fixture comparisons: the
+# fixture was BYTE-EQUAL to our decoder on the generating machine
+# (2026-08-14), but fp32 CPU kernels differ across boxes — measured on
+# a second machine (research-agent report, 2026-08-14): forward max
+# |Δ| 4.17e-7, ≤ 40 ULP, 84/96 elements differing (kernel/reduction-
+# order class). The registered bound is that measurement ×5 margin;
+# the 4-step Euler loop compounds per-step noise, so its bound is one
+# decade up. TIGHTENING is free; loosening is a re-baseline decision.
+FORWARD_ATOL = 2e-6
+EULER_ATOL = 1e-5
+
+
+def test_forward_parity_with_port_fixture() -> None:
+    """Same weights, same inputs -> the vendored port outputs within
+    the registered cross-machine bound, masked rows and padded batch
+    columns included — the state path too (dormant at inference, still
+    copied math). The states tensor rides IN the fixture so the
+    comparison never depends on ambient RNG stream position."""
     fixture = np.load(PARITY_FIXTURE)
     decoder = _fixture_decoder()
     actions, timesteps, kv_states, enc_mask = _inputs()
@@ -118,20 +130,32 @@ def test_forward_byte_parity_with_port_fixture() -> None:
         kv_states,
         encoder_attention_mask=enc_mask,
     )
-    assert torch.equal(ours, torch.from_numpy(fixture["forward"]))
+    torch.testing.assert_close(
+        ours,
+        torch.from_numpy(fixture["forward"]),
+        atol=FORWARD_ATOL,
+        rtol=0.0,
+    )
     states = torch.from_numpy(fixture["states"])
     ours_state = decoder(actions, timesteps, kv_states, state_embeddings=states)
-    assert torch.equal(ours_state, torch.from_numpy(fixture["forward_state"]))
-    # Non-vacuity: the perturbed field is nonzero and the state path
-    # actually moves the output.
+    torch.testing.assert_close(
+        ours_state,
+        torch.from_numpy(fixture["forward_state"]),
+        atol=FORWARD_ATOL,
+        rtol=0.0,
+    )
+    # Non-vacuity: the perturbed field is nonzero, the state path
+    # actually moves the output, and the bound is far below the
+    # signal (fixture magnitudes are O(0.1–1)).
     assert float(ours.abs().sum()) > 1.0
     assert not torch.equal(ours, ours_state)
 
 
-def test_euler_loop_byte_parity_with_port_fixture() -> None:
+def test_euler_loop_parity_with_port_fixture() -> None:
     """The whole serving loop: decoder.sample_actions(EULER) equals the
     port's generate_actions output under the shared seed — noise draw,
-    per-step dim masking, trajectory update, byte-for-byte."""
+    per-step dim masking, trajectory update — within the registered
+    integration bound."""
     fixture = np.load(PARITY_FIXTURE)
     decoder = _fixture_decoder()
     _actions, _timesteps, kv_states, enc_mask = _inputs()
@@ -145,7 +169,12 @@ def test_euler_loop_byte_parity_with_port_fixture() -> None:
         method=SamplingMethod.EULER,
         generator=torch.Generator().manual_seed(7),
     )
-    assert torch.equal(ours, torch.from_numpy(fixture["euler"]))
+    torch.testing.assert_close(
+        ours,
+        torch.from_numpy(fixture["euler"]),
+        atol=EULER_ATOL,
+        rtol=0.0,
+    )
 
 
 def test_ascending_direction_ties_loss_to_sampler() -> None:

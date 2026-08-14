@@ -20,8 +20,14 @@ Contents (all float32, tiny geometry `[2, 6, 8]` / states `[2, 64]`):
   `num_steps=4`, noise generator seed 7, last-two dims padded.
 
 Consumed by `tests/test_molmo_flow.py`'s
-`test_forward_byte_parity_with_port_fixture` /
-`test_euler_loop_byte_parity_with_port_fixture` with `torch.equal`
-(byte parity). A failure means our decoder's construction/init/math
-drifted from the port — that is a re-baseline DECISION (regenerate
-only from the tag, with a written reason), never a tolerance bump.
+`test_forward_parity_with_port_fixture` /
+`test_euler_loop_parity_with_port_fixture` under the REGISTERED
+cross-machine bounds (forward atol 2e-6, euler atol 1e-5, rtol 0).
+Byte equality held on the generating machine; a second box measured
+kernel-class drift of max |Δ| 4.17e-7 / ≤ 40 ULP on the forward
+(research-agent report, 2026-08-14) — fp32 CPU kernels are not
+bit-portable across machines, and a fixture that must be regenerated
+per-machine cannot outlive its generator (the port is deleted in
+phase 5). Bounds are that measurement with margin: TIGHTENING is
+free; loosening — or any failure beyond the bound — is a re-baseline
+decision taken at the tag, with a written reason.
