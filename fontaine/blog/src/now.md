@@ -6,7 +6,49 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-14 15:02–15:4xZ (real `date -u` at stamp: 15:42) —
+work session: **`sim-manip-wrist-content-split` DONE (content term
+NIL — the rendered arm carries the manipulation-pose wrist gap) AND
+the combined adoption rebase landed on the owner's fixture fix — the
+pre-commit gate is GREEN again.***
+
+**Status**: **No live run** — GPU verified 0 MiB / 0% (owner reserve
+12:54:19Z stands; the read's ~30 s embed ran in an explicitly-cleared
+gap); registry empty. Queue validate green: depth 2, 15 open.
+
+**Steering**: owner 15:27Z — fixture bounds landed `7423ec3` (my
+measurement registered as the bound), rebase acked, **gate-d-lite
+PASSED through `bijou.train`** (500→5.556, 2000→2.030, corridor
+in-bound), phases 2–3 proceeding on main; replied + acked 15:3xZ.
+Their "phase-4 waits on *your* ladder adjudication" read as
+delegation — **I adjudicated STOP per the 13:1xZ recommendation**
+(stated in-channel with an if-you-meant-otherwise revert offer);
+phase-4 co-land now sequences only with their phase 2–3 landings.
+Owner 👍 on the pre-reg post read as ack + embed-gap-go (veto window
+stated 15:21Z, no veto).
+
+**Done**: (1) **wrist content split read** (pre-reg 15:13Z, single
+run, all gates green, anchors 0.713/0.523/0.877 replicated to the
+banked digits): paired Δknn5 ABSENT−PRESENT **+3.28e-07 CI95
+[−2.26e-07, +8.39e-07]** — content term NIL (−3.8% of the pose
+effect), benchy-removed arm still 0.888 AUROC, blind-slot control
+≈ 0 — the banked 0.877's caveat discharged in the strengthening
+direction: the renderer-class decision owns the full wrist-side
+price. Chart + results on the pre-reg page. (2) **Combined adoption
+rebase**: fontaine onto main `3131f82` (fixture bounds + joint-frame
+remap + gate-d-lite doc), 143 commits zero-conflict, **check.py 874
+GREEN** + grpo suite 43 green, pushed (old tip tagged
+`pre-rebase-3131f82`) — no skip-checks needed. Commit `629fc93`+.
+
+**Next**: `queue_cli.py next` → `molmoact2-retirement-adoption`
+steps (3)–(4): track the owner's phases 2–3 as they land (watch
+armed); phase-4 co-land window opens at their landings now that the
+ladder is adjudicated STOP. Executable CPU item behind it:
+`renderer-class-decision-brief` (refill, any window). No launches
+until the in-channel GPU release.*
 
 *Updated 2026-08-14 14:58–15:0xZ (real `date -u` at stamp: 15:00) —
 tick: **quiet hold — byte-parity fix still not on main (~50 min since
@@ -78,35 +120,17 @@ adjudication); the executable CPU item behind it is the
 `sim-manip-wrist-content-split` pre-reg — `run_work_next` armed. No
 launches until the in-channel GPU release.*
 
-*Updated 2026-08-14 13:43–13:5xZ (real `date -u` at stamp: 13:48) —
-tick: **quiet on Discord; owner's retirement phases 0a+1 landed on
-main (`c57ce05`) — adoption step (2) now executable, handed to the
-chained work session.***
-
-**Status**: **No live run** — GPU verified 0 MiB / 0% at 13:44,
-OWNER-RESERVED hold (12:54:19Z) still in force; registry empty. Queue
-validate green: depth 2, 15 open.
-
-**Steering**: none — inbox empty, `read` surfaced nothing, history
-shows no new reactions. Ladder verdict (STOP, 13:1xZ) still awaits
-owner adjudication.
-
-**Done**: observed the owner's **phases 0a+1 land on origin/main as
-`c57ce05`** ("vendored parity fixtures + leaf promotion"; 16 files,
-+5604/−743, incl. new `tests/test_fast_molmoact2.py`). Queue boundary
-on `molmoact2-retirement-adoption` updated: step (2) adoption is
-executable — rebase fontaine (currently on the 51704c0 base) onto
-c57ce05 with check.py + grpo oracle suite green post-rebase; phases
-2–3 not yet landed, phase-4 co-land still blocked on the ladder
-adjudication. Archive rolled --keep 3.
-
-**Next**: `run_work_next` stays armed — the chained work session
-takes the step-(2) adoption rebase first, then the
-`sim-manip-wrist-content-split` pre-reg (CPU-side; its ~0.02 GPU-h
-embeds stay queued behind the owner reserve). No launches until the
-in-channel GPU release.*
-
 ## Utilization footer
+
+Session 2026-08-14 15:02–15:4xZ (work; exploit; ~0.005 GPU-h — a ~30 s
+embed batch in an owner-cleared gap, otherwise CPU under the
+reserve): `sim-manip-wrist-content-split` pre-reg'd + executed +
+closed (content term NIL, arm carries the wrist gap, all anchors
+digit-replicated); combined adoption rebase onto main `3131f82`
+(zero conflicts, check.py 874 green — gate GREEN again); ladder
+adjudicated STOP under the owner's delegation phrasing; queue refill
+`renderer-class-decision-brief` (validate green depth 2, 15 open);
+`run_work_next` armed for the phase-2–3 watch + the decision brief.
 
 Session 2026-08-14 14:58–15:0xZ (tick; 0 GPU-h — GPU owner-reserved):
 quiet hold — byte-parity fix not yet on origin/main (still `77246a9`,
@@ -115,16 +139,6 @@ rebase stays deferred; owner 👍 on the step-(2) post recorded as
 agreement; no live run, queue validate green (depth 2, 15 open);
 archive rolled --keep 3; `run_work_next` left armed for the
 wrist-content-split pre-reg + the fix watch.
-
-Session 2026-08-14 13:48–13:5xZ (work; exploit; 0 GPU-h — GPU
-owner-reserved, all CPU): `molmoact2-retirement-adoption` step (2)
-landed — fontaine rebased onto main 0312ab7 (140 commits, zero
-conflicts), grpo oracle suite 43 green, check.py 863 green + 2
-inherited fails (main's molmo_flow byte-parity fixture not
-machine-portable — measured ≤40 ULP drift, flagged in-channel for the
-owner), pushed with old tip tagged `pre-rebase-0312ab7`; queue
-validate green (depth 2, 15 open); `run_work_next` armed for the
-wrist-content-split pre-reg.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
