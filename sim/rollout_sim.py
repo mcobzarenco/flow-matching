@@ -272,9 +272,9 @@ def sim_item(
     item = observation_to_item(
         to_observation(obs),
         TASK,
-        stats,
-        chunk_size,
-        camera_kinds_from_names(SIM_CAMERAS),
+        stats=stats,
+        chunk_size=chunk_size,
+        camera_kinds=camera_kinds_from_names(SIM_CAMERAS),
     )
     item["repo_id"] = "sim/eval100"
     item["episode_index"] = seed

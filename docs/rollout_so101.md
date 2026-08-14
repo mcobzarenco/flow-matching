@@ -10,6 +10,11 @@ core path; flags added since it was written — `--sample-draws`,
 `--offload-ple`, `--target-time`, `--control-fps`, `--noise-ticket`
 (fixed noise vector for every replan, npz `tickets [count, chunk,
 dim]` — the eval CLI's ticket format; sha256 echoed in the banner),
+`--joint-frame` (arm↔model joint-convention remap — required as
+`v30-to-v21` when a checkpoint bakes in the pre-lerobot-0.5 degrees
+frame, e.g. converted MolmoAct2 releases, on an arm calibrated with
+lerobot ≥ 0.5; molmo_flow checkpoints are additionally gated against
+their own model-frame state band at the first observation),
 and the safety envelope gate (`--unclamped`/`--skip-envelope-check`
 escape hatches) — are documented in `python -m bijou.rollout --help`
 and architecture.md §6.

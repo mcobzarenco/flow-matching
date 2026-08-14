@@ -23,6 +23,12 @@ Safety gates before the arm moves (``bijou.rollout_safety``):
 ``--max-relative-target`` is mandatory (``--unclamped`` opts out,
 explicitly), and the first observation must lie inside the rig stats'
 per-joint envelope (``--skip-envelope-check`` opts out).
+``--joint-frame`` remaps between the arm's calibration convention and
+the checkpoint's training frame (state arm→model into the prompt,
+chunks model→arm before ``send_action``); checkpoints with GLOBAL
+normalization (molmo_flow) are additionally gated against their own
+baked-in state q01/q99 band in model frame, so a missing or wrong
+remap dies before any action is sent.
 
 Usage::
 
@@ -55,10 +61,12 @@ from lerobot.robots.so_follower import SOFollower, SOFollowerRobotConfig
 from .annotations import ConditionField
 from .aux_text import AuxField, AuxGeneration
 from .data import DatasetStats
+from .decoders.molmo_flow import MolmoFlowDecoder
 from .eval.policies import BijouPolicy
 from .model import SamplingMethod
-from .rollout_async import AsyncExecutor, AsyncPlanner, sustainable
+from .rollout_async import AsyncExecutor, AsyncPlanner, PredictFn, sustainable
 from .rollout_safety import (
+    JointFrameTransform,
     envelope_violations,
     home_trajectory,
     parse_camera_kind_overrides,
@@ -261,6 +269,22 @@ def parse_args() -> argparse.Namespace:
         "stats envelope (deliberately unusual start pose only — the check "
         "exists to catch wrong stats and ticks-vs-degrees mismatches)",
     )
+    parser.add_argument(
+        "--joint-frame",
+        choices=["rig", "v30-to-v21"],
+        default="rig",
+        help="joint-angle convention remap between the arm's calibration "
+        "frame and the checkpoint's training frame: state maps arm→model "
+        "into the prompt, chunks map model→arm before send_action. "
+        "'rig' = identity (bijou fine-tunes normalize per dataset with "
+        "stats recorded under the deployment calibration — nothing to "
+        "remap). 'v30-to-v21' = the official lerobot PR#777 SO-100/101 "
+        "conversion (huggingface.co/docs/lerobot/backwardcomp: "
+        "shoulder_lift sign-flip + 90°, elbow_flex + 90°) for checkpoints "
+        "trained on pre-0.5 degree conventions — e.g. converted MolmoAct2 "
+        "releases, whose GLOBAL q01/q99 table bakes the old frame in — "
+        "deployed on an arm calibrated with lerobot ≥ 0.5",
+    )
     parser.add_argument("--device", default="cuda")
     parser.add_argument(
         "--offload-ple",
@@ -325,15 +349,22 @@ def rig_stats(args: argparse.Namespace, policy: BijouPolicy) -> DatasetStats:
 def observation_to_item(
     observation: dict[str, Any],
     task: str,
+    *,
     stats: DatasetStats,
     chunk_size: int,
     camera_kinds: dict[str, str],
     condition_values: dict[str, str] | None = None,
+    frame: JointFrameTransform | None = None,
 ) -> dict[str, Any]:
     """Robot observation -> the item shape BijouPolicy consumes (mirrors a
     StatsAttachedDataset item, including the stats tensors). Ground-truth
     fields are zero stubs: the collator requires them and the policy reads
     only their shapes.
+
+    ``frame`` remaps arm-calibration state into the checkpoint's joint
+    frame (None = identity: the sim and rig-native checkpoints).
+    Predicted chunks come back in MODEL frame — the rollout maps them
+    to the arm through the same transform before ``send_action``.
 
     Produced item shapes (matching the Collator's contract):
     observation.state [state_dim]; action [chunk, action_dim];
@@ -341,7 +372,10 @@ def observation_to_item(
     (float, [0, 1], from the camera's HWC uint8 frame). Stats resolved
     from an old checkpoint's tables carry no quantile keys — the flow
     policy never reads them."""
-    state = torch.tensor([float(observation[f"{m}.pos"]) for m in SO_MOTORS])
+    values = [float(observation[f"{m}.pos"]) for m in SO_MOTORS]
+    if frame is not None:
+        values = frame.state_to_model(values)
+    state = torch.tensor(values)
     item: dict[str, Any] = {
         "task": task,
         # Kinds travel with the item, like the stats (the collator reads
@@ -361,9 +395,31 @@ def observation_to_item(
     for key, value in observation.items():
         if key.endswith(".pos"):
             continue
-        frame = torch.from_numpy(value)  # HWC uint8
-        item[f"observation.images.{key}"] = frame.permute(2, 0, 1).float() / 255.0
+        image = torch.from_numpy(value)  # HWC uint8
+        item[f"observation.images.{key}"] = image.permute(2, 0, 1).float() / 255.0
     return item
+
+
+def frame_transformed_predict(
+    policy: BijouPolicy,
+    frame: JointFrameTransform,
+) -> PredictFn:
+    """Single-item predict with chunks mapped model→arm — the ONE seam
+    where actions cross back over the robot boundary. The sync loop,
+    the async planner and --check all decode through this, so no path
+    can ship model-frame degrees to the servos. Mapping here (not at
+    send_action) also keeps the async switch crossfade in arm frame —
+    equivalent under a per-joint affine map, and the executor stays
+    frame-blind."""
+
+    def predict(
+        item: dict[str, Any],
+        replan_index: int,
+    ) -> tuple[list[torch.Tensor], list[AuxGeneration] | None]:
+        chunks, generations = policy.predict_with_text([item], [replan_index])
+        return [frame.chunk_to_arm(chunk) for chunk in chunks], generations
+
+    return predict
 
 
 def print_generation(
@@ -412,6 +468,11 @@ def main() -> int:
     }
     if args.subgoal is not None:
         condition_values[ConditionField.SUBGOAL.value] = args.subgoal
+    frame = (
+        JointFrameTransform.lerobot_v30_to_v21()
+        if args.joint_frame == "v30-to-v21"
+        else JointFrameTransform.identity(len(SO_MOTORS))
+    )
 
     policy = BijouPolicy(
         args.checkpoint,
@@ -440,6 +501,18 @@ def main() -> int:
     )
     stats = rig_stats(args, policy)
     envelope = state_envelope(stats, expected_dim=len(SO_MOTORS))
+    # molmo_flow normalizes with ONE checkpoint-resident table (§8.13
+    # decision 6), so the joint-angle convention is baked into the
+    # checkpoint — gate the first observation in MODEL frame against
+    # that table's own band: this is what catches a missing or wrong
+    # --joint-frame before any action is sent. Per-dataset decoders
+    # need no second gate (their model frame IS the rig stats frame).
+    model_envelope = (
+        state_envelope(policy.info.normalization, expected_dim=len(SO_MOTORS))
+        if isinstance(policy.model.decoder, MolmoFlowDecoder)
+        else None
+    )
+    predict = frame_transformed_predict(policy, frame)
     chunk_size = policy.info.chunk_size
     horizon = min(args.execute_horizon, chunk_size)
 
@@ -477,6 +550,15 @@ def main() -> int:
     print(f"cameras (prompt order): {sorted(cameras)}")
     print(f"camera kinds (prompt tags): {rig_kinds}")
     print(f"state stats mean: {[round(x, 1) for x in stats.state_mean]}")
+    if not frame.is_identity:
+        # Attribution line: a physical run under a remap must be
+        # traceable to the exact per-joint map it drove with.
+        print(
+            f"joint frame: {args.joint_frame} — state→model = signs·arm + "
+            f"offsets, signs {[int(s) for s in frame.signs]}, offsets "
+            f"{[round(o, 1) for o in frame.offsets]}; actions mapped back "
+            "arm←model",
+        )
     print(
         "first-obs envelope: "
         + ", ".join(
@@ -484,6 +566,14 @@ def main() -> int:
             for motor, lo, hi in zip(SO_MOTORS, *envelope, strict=True)
         ),
     )
+    if model_envelope is not None:
+        print(
+            "model-frame envelope (checkpoint global q01/q99): "
+            + ", ".join(
+                f"{motor} [{lo:.1f}, {hi:.1f}]"
+                for motor, lo, hi in zip(SO_MOTORS, *model_envelope, strict=True)
+            ),
+        )
     print(
         f"loop: {args.control_fps} Hz, execute {horizon}/{chunk_size} per replan, "
         f"{args.duration:.0f}s, max_relative_target={args.max_relative_target}",
@@ -504,13 +594,14 @@ def main() -> int:
         item = observation_to_item(
             synthetic,
             args.task,
-            stats,
-            chunk_size,
-            rig_kinds,
-            condition_values,
+            stats=stats,
+            chunk_size=chunk_size,
+            camera_kinds=rig_kinds,
+            condition_values=condition_values,
+            frame=frame,
         )
         start = time.perf_counter()
-        chunks, generations = policy.predict_with_text([item], [0])
+        chunks, generations = predict(item, 0)
         latency = time.perf_counter() - start
         print(
             f"predict ok: chunk {tuple(chunks[0].shape)} in {latency * 1000:.0f} ms",
@@ -521,9 +612,7 @@ def main() -> int:
             # Async dry-run: measure the warm path and report the slack
             # arithmetic the trigger will run on — a starvation-prone
             # configuration is visible here, before the arm moves.
-            planner = AsyncPlanner(
-                lambda one, index: policy.predict_with_text([one], [index]),
-            )
+            planner = AsyncPlanner(predict)
             planner.warmup(item, replan_index=0)
             latency_ticks = planner.latency_ticks(args.control_fps)
             trigger_at = horizon - latency_ticks - args.trigger_margin_ticks
@@ -588,6 +677,40 @@ def main() -> int:
                 "pass --skip-envelope-check for a deliberately unusual "
                 "start pose.",
             )
+    if model_envelope is not None:
+        model_state = frame.state_to_model(first_state)
+        model_out = envelope_violations(model_state, model_envelope)
+        model_lo, model_hi = model_envelope
+        for j, motor in enumerate(SO_MOTORS):
+            print(
+                f"  first-obs (model frame) | {motor}: {model_state[j]:.1f} "
+                f"in [{model_lo[j]:.1f}, {model_hi[j]:.1f}] "
+                + ("OUT" if j in model_out else "ok"),
+                flush=True,
+            )
+        if model_out:
+            joints = ", ".join(SO_MOTORS[j] for j in model_out)
+            if args.skip_envelope_check:
+                print(
+                    f"WARNING: first observation outside the checkpoint's "
+                    f"model-frame envelope ({joints}) — proceeding under "
+                    "--skip-envelope-check",
+                    flush=True,
+                )
+            else:
+                robot.disconnect()
+                raise SystemExit(
+                    f"first observation, mapped to the checkpoint's joint "
+                    f"frame, is outside its global q01/q99 envelope "
+                    f"({joints}). molmo_flow normalizes with ONE baked-in "
+                    "table, so this is a joint-convention mismatch: a "
+                    "missing or wrong --joint-frame (converted MolmoAct2 "
+                    "releases speak the pre-lerobot-0.5 degrees frame — try "
+                    "--joint-frame v30-to-v21), or an arm calibrated "
+                    "differently than the checkpoint's training rigs. "
+                    "--skip-envelope-check overrides for a deliberately "
+                    "unusual start pose.",
+                )
 
     tick = 1.0 / args.control_fps
     deadline = time.perf_counter() + args.duration
@@ -597,9 +720,10 @@ def main() -> int:
                 args,
                 robot,
                 policy,
-                stats,
-                rig_kinds,
-                condition_values,
+                stats=stats,
+                rig_kinds=rig_kinds,
+                condition_values=condition_values,
+                frame=frame,
                 chunk_size=chunk_size,
                 horizon=horizon,
                 tick=tick,
@@ -610,9 +734,10 @@ def main() -> int:
                 args,
                 robot,
                 policy,
-                stats,
-                rig_kinds,
-                condition_values,
+                stats=stats,
+                rig_kinds=rig_kinds,
+                condition_values=condition_values,
+                frame=frame,
                 chunk_size=chunk_size,
                 horizon=horizon,
                 tick=tick,
@@ -672,10 +797,11 @@ def run_sync_loop(
     args: argparse.Namespace,
     robot: SOFollower,
     policy: BijouPolicy,
+    *,
     stats: DatasetStats,
     rig_kinds: dict[str, str],
     condition_values: dict[str, str],
-    *,
+    frame: JointFrameTransform,
     chunk_size: int,
     horizon: int,
     tick: float,
@@ -683,20 +809,22 @@ def run_sync_loop(
 ) -> None:
     """The original serial loop: observe → predict (arm frozen) →
     execute horizon actions → repeat. Byte-identical behavior to the
-    pre-async rollout."""
+    pre-async rollout (identity ``frame`` transforms nothing)."""
+    predict = frame_transformed_predict(policy, frame)
     replans = 0
     while time.perf_counter() < deadline:
         observation = robot.get_observation()
         item = observation_to_item(
             observation,
             args.task,
-            stats,
-            chunk_size,
-            rig_kinds,
-            condition_values,
+            stats=stats,
+            chunk_size=chunk_size,
+            camera_kinds=rig_kinds,
+            condition_values=condition_values,
+            frame=frame,
         )
         start = time.perf_counter()
-        chunks, generations = policy.predict_with_text([item], [replans])
+        chunks, generations = predict(item, replans)
         chunk = chunks[0]
         latency = time.perf_counter() - start
         replans += 1
@@ -725,10 +853,11 @@ def run_async_loop(
     args: argparse.Namespace,
     robot: SOFollower,
     policy: BijouPolicy,
+    *,
     stats: DatasetStats,
     rig_kinds: dict[str, str],
     condition_values: dict[str, str],
-    *,
+    frame: JointFrameTransform,
     chunk_size: int,
     horizon: int,
     tick: float,
@@ -736,21 +865,22 @@ def run_async_loop(
 ) -> None:
     """Overlapped loop: one action per tick, planning in the background,
     switches at the horizon boundary with skip-ahead (design:
-    rollout_async module docstring)."""
+    rollout_async module docstring). Planned chunks land in ARM frame
+    (the planner's predict maps them), so the executor's blend and
+    skip-ahead stay frame-blind."""
 
     def snapshot() -> dict[str, Any]:
         return observation_to_item(
             robot.get_observation(),
             args.task,
-            stats,
-            chunk_size,
-            rig_kinds,
-            condition_values,
+            stats=stats,
+            chunk_size=chunk_size,
+            camera_kinds=rig_kinds,
+            condition_values=condition_values,
+            frame=frame,
         )
 
-    planner = AsyncPlanner(
-        lambda one, index: policy.predict_with_text([one], [index]),
-    )
+    planner = AsyncPlanner(frame_transformed_predict(policy, frame))
     executor = AsyncExecutor(
         chunk_size=chunk_size,
         execute_horizon=horizon,

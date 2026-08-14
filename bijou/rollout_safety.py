@@ -20,6 +20,15 @@ Three gates, all cheap and all before the arm moves:
   the few-shot-transfer surface; the name heuristic survives only when
   no dataset directory is available.
 
+Plus the joint-frame remap the rollout applies around the robot
+boundary (``--joint-frame``, :class:`JointFrameTransform`): state maps
+arm→model before the prompt, chunks map model→arm before
+``send_action``. For checkpoints with GLOBAL normalization
+(molmo_flow — the joint-angle convention is baked into the checkpoint
+table) ``bijou.rollout`` additionally gates the first observation
+against the checkpoint's OWN state q01/q99 band in model frame, so a
+missing or wrong remap dies before any action is sent.
+
 Pure CPU, no lerobot imports — testable without a robot.
 """
 
@@ -27,7 +36,11 @@ from __future__ import annotations
 
 import math
 from collections.abc import Iterable, Sequence
+from dataclasses import dataclass
 from pathlib import Path
+
+import torch
+from torch import Tensor
 
 from .annotations import CAMERA_KINDS
 from .data import DatasetStats, annotation_stamp, camera_kinds_of
@@ -67,6 +80,97 @@ def require_clamp(max_relative_target: float | None, *, unclamped: bool) -> None
         "min/max against calibration). Start with --max-relative-target 20; "
         "--unclamped is the explicit opt-out.",
     )
+
+
+@dataclass(frozen=True, slots=True)
+class JointFrameTransform:
+    """Per-joint affine map between the arm's CALIBRATION frame and a
+    checkpoint's MODEL (training-data) frame, in degrees:
+
+        state_to_model:  model = signs · arm + offsets
+        chunk_to_arm:    arm   = signs · (model − offsets)
+
+    (the inverse form holds because every sign is ±1). Needed when a
+    checkpoint's action/state distribution was recorded under a
+    DIFFERENT calibration convention than the deployed arm: the lerobot
+    PR#777 hardware redesign (shipped 0.5.x) moved the SO-100/101 zero
+    from arm-extended-horizontal to mid-range and flipped
+    shoulder_lift, so a model trained on pre-0.5 data — e.g. a
+    converted MolmoAct2 release, whose GLOBAL q01/q99 table bakes the
+    old frame in — commands ~90°-off shoulder/elbow poses on a
+    post-0.5-calibrated arm (the slam-into-the-table failure).
+    Identity for rig-native checkpoints: bijou fine-tunes normalize per
+    dataset with stats recorded under the deployment calibration, so
+    the convention cancels and there is no remap to get wrong.
+    See https://huggingface.co/docs/lerobot/backwardcomp.
+    """
+
+    signs: tuple[float, ...]
+    offsets: tuple[float, ...]
+
+    def __post_init__(self) -> None:
+        if len(self.signs) != len(self.offsets):
+            raise ValueError(
+                f"signs ({len(self.signs)}) and offsets ({len(self.offsets)}) "
+                "must have one entry per joint",
+            )
+        if any(sign not in (-1.0, 1.0) for sign in self.signs):
+            raise ValueError(
+                f"signs must be ±1 (the map must invert exactly), got {self.signs}",
+            )
+
+    @staticmethod
+    def identity(dim: int) -> JointFrameTransform:
+        """No remap: the arm's frame IS the model's frame."""
+        return JointFrameTransform(signs=(1.0,) * dim, offsets=(0.0,) * dim)
+
+    @staticmethod
+    def lerobot_v30_to_v21() -> JointFrameTransform:
+        """The official post-PR#777 ↔ pre-PR#777 SO-100/101 conversion
+        (the backwardcomp doc's replay transform, model→arm:
+        shoulder_lift' = −(x − 90), elbow_flex' = x − 90, identity
+        elsewhere — here stated arm→model, matching the reference
+        MolmoAct2 deployment defaults ``--joint-signs 1,-1,1,1,1,1`` /
+        ``--joint-offsets 0,90,90,0,0,0``). The literals live HERE
+        only; tests pin both directions against the doc's form."""
+        return JointFrameTransform(
+            signs=(1.0, -1.0, 1.0, 1.0, 1.0, 1.0),
+            offsets=(0.0, 90.0, 90.0, 0.0, 0.0, 0.0),
+        )
+
+    @property
+    def is_identity(self) -> bool:
+        return all(sign == 1.0 for sign in self.signs) and all(
+            offset == 0.0 for offset in self.offsets
+        )
+
+    def state_to_model(self, state: Sequence[float]) -> list[float]:
+        """Arm-frame joint positions → model frame, one vector (degrees;
+        length must match the per-joint tables, loud otherwise)."""
+        return [
+            sign * value + offset
+            for sign, value, offset in zip(
+                self.signs,
+                state,
+                self.offsets,
+                strict=True,
+            )
+        ]
+
+    def chunk_to_arm(self, chunk: Tensor) -> Tensor:
+        """Model-frame action rows → arm frame for ``send_action``.
+        Identity passes the tensor through untouched, keeping the
+        no-remap deployment path byte-identical.
+
+        Shapes:
+        - ``chunk``: [T, dim] absolute joint targets, model frame (degrees)
+        - returns: [T, dim] absolute joint targets, arm frame (degrees)
+        """
+        if self.is_identity:
+            return chunk
+        signs = torch.tensor(self.signs, dtype=chunk.dtype, device=chunk.device)
+        offsets = torch.tensor(self.offsets, dtype=chunk.dtype, device=chunk.device)
+        return (chunk - offsets) * signs
 
 
 def state_envelope(
