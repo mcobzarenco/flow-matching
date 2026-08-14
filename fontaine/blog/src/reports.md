@@ -533,6 +533,43 @@ Renders CPU (~4 min), embeds 5 groups ~0.02 GPU-h.
 - [crops strip](https://mcobzarenco-fontaine-reports.static.hf.space/fg_fix_crops_strip.png)
   — mined RGBA crops: on checker / source naive median / identity paste
 
+## Arm micro-texture — a clean negative: statistically-matched grain reads MORE fake, both registered CIs above zero ([pre-reg](posts/2026-08-14-prereg-sim-arm-texture-followup.md), 08-14)
+
+The registered residual branch of the photometric close, executed and
+decisively refuted — the cheap kind of negative result. The graded arm
+is locally FLAT vs real (PLA print-layer local contrast 8.36 vs 4.66;
+servo glint tail p97 205.6 vs 125.2), so a composite-stage micro-texture
+(opt-in `arm_texture="v1"`, deterministic static fields from a private
+pinned RNG, zero shared-stream draws, applied under seg masks before
+the production remap/blur/noise; 6 test oracles + init checks) was
+fitted THROUGH the composite to the mined real statistics: PLA local
+contrast landed **8.24 vs real 8.36**, servo 10.46 vs 9.22, glint tail
+~20% closed, photometric guard loss improved on both populations. The
+registered 20×5 read, all gates green (in-run v3_photo 0.698
+dead-center, anchors exact): **PRIMARY v3_tex vs v3_photo +9.33e-07
+CI95 [+8.27, +10.42]e-07 entirely ABOVE zero, 3/100 closer, AUROC
+0.698 → 0.751; MECHANISM only_links_tex +1.30e-06 CI95 [+1.22,
++1.38]e-06, 0/100 closer, 0.652 → 0.740** — the texture undoes most of
+the grade's gain. Reading: the pooled per-pixel statistics moved toward
+real while the encoder moved away — **the probe sees spatial structure,
+not marginal statistics**; screen-fixed band-limited grain reads as
+blotchy mottling (the zoom strip shows it), not as anisotropic,
+surface-tracking, shading-coupled print ridges. Composite-stage
+stats-matching is the wrong instrument class for texture; the branch
+dies in one session at ~0.02 GPU-h. Disposition per the frozen rule:
+no promotion ask; `sim-arm-surface-texture-mjspec` (true UV-mapped
+surface texture via the recompile path, physics-preservation oracles
+as its bar) queued as the escalation, not auto-run; the photometric
+grade (0.698/0.652) remains the arm-appearance frontier.
+
+- [analysis JSON](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_arm_texture_read.json)
+  · [chart](https://mcobzarenco-fontaine-reports.static.hf.space/chart__arm_texture_read.png)
+  · [fit record](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__arm_texture_fit.json)
+- [frame strip](https://mcobzarenco-fontaine-reports.static.hf.space/strip__arm_texture_read.png)
+  — v3_photo / v3_tex, three slots
+- [arm zoom 2×](https://mcobzarenco-fontaine-reports.static.hf.space/zoom__arm_texture_read.png)
+  — the mottling the encoder flagged, side by side with the smooth grade
+
 ## Camera-mount material split — mechanism lands (93/100), whole-frame null: the part is fixed but too small to move the frame read ([pre-reg](posts/2026-08-14-prereg-sim-mount-material-split.md), 08-14)
 
 The arm-split's per-pixel worst offender, measured and fixed — with a

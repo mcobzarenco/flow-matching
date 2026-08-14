@@ -240,6 +240,7 @@ class SO101Sim:
         flip_camera_mount: bool = True,
         arm_photometrics: str | None = None,
         mount_material: str | None = None,
+        arm_texture: str | None = None,
     ) -> None:
         if render_style not in ("v0", "v1", "v2", "v3", "v4"):
             raise ValueError(
@@ -263,8 +264,19 @@ class SO101Sim:
             raise ValueError(
                 f"mount_material {mount_material!r} not in (None, 'v1')",
             )
+        if arm_texture not in (None, "v1"):
+            raise ValueError(
+                f"arm_texture {arm_texture!r} not in (None, 'v1')",
+            )
+        if arm_texture == "v1" and arm_photometrics != "v1":
+            # the texture was fitted ON TOP of the graded materials and is
+            # gated as that combination; an ungated pairing has no read
+            raise ValueError("arm_texture='v1' requires arm_photometrics='v1'")
+        if arm_texture == "v1" and render_style not in ("v3", "v4"):
+            raise ValueError("arm_texture='v1' needs the composite path (v3/v4)")
         self.arm_photometrics = arm_photometrics
         self.mount_material = mount_material
+        self.arm_texture = arm_texture
         self.render_style = render_style
         self.post_backend = post_backend
         self.lens_model = lens_model
@@ -311,6 +323,8 @@ class SO101Sim:
         if mount_material == "v1":
             self._split_mount_material()
             self._grade_mount_material()
+        if arm_texture == "v1":
+            self._init_arm_texture()
         self._repose_wrist_cam()
         # flip_camera_mount=False reproduces the pre-flip (mirrored
         # Menagerie bracket) physics for paired flip-effect reads only —
@@ -1125,6 +1139,156 @@ class SO101Sim:
             self.model.mat_specular[mat.id] = grade["specular"]
             self.model.mat_shininess[mat.id] = grade["shininess"]
 
+    # Arm micro-texture (sim-arm-texture-followup): the photometric grade
+    # closes the albedo/shine gap but the graded surfaces stay locally
+    # FLAT — real PLA carries print-layer relief (local-contrast median
+    # 8.36 vs 4.66 graded) and the STS3215 casings a specular glint tail
+    # (real luma p97 205.6 / p99 250.0 vs 125.2 / 127.2; local contrast
+    # 9.22 vs 2.20). MuJoCo can't add texture assets to a compiled model
+    # without an mjSpec recompile (physics-risky), so the texture is
+    # COMPOSITE-STAGE: deterministic static screen-space fields (private
+    # pinned Generator at init — the spawn/appearance/noise streams are
+    # untouched, zero per-frame draws) modulate the rendered top source
+    # frame under per-population segmentation masks BEFORE the production
+    # remap/blur/noise chain. A stats stand-in for the real relief, not a
+    # physical model: the fields do not track the surface (screen-space,
+    # static per process); the pooled per-pixel statistics the probe sees
+    # are the target. Fitted by fontaine/scripts/sim_arm_texture_fit.py
+    # through the production v3 composite against the mined real stats
+    # (reports/analysis__arm_photometric_mine.json); fit record:
+    # reports/analysis__arm_texture_fit.json. Top camera only (the wrist
+    # view is a separate queued read).
+    ARM_TEXTURE_V1: ClassVar[dict] = {
+        "field_seed": 20260814,
+        "mod_blur_passes": 1,  # 3x3 box passes: ~2 px correlation length
+        "speckle_blur_passes": 1,
+        "speckle_soften_passes": 2,
+        # fitted 2026-08-14 (fit record above): PLA closes its local-
+        # contrast gap by modulation alone (8.24 vs real 8.36); the servo
+        # solve chose speckle-only (amplitude re-solved to 0 with the
+        # speckle live) — lc 10.46 vs real 9.22, glint tail p97
+        # 125.2 -> 141.7 of the real 205.6 (the registered residual of
+        # the screen-space stand-in: pushing single glints through the
+        # PSF to 250 triples local contrast first; the mjSpec
+        # surface-texture route is the queued escalation)
+        "pla": {"amplitude": 0.2321, "speckle_density": 0.0, "speckle_gain": 0.0},
+        "servo": {
+            "amplitude": 0.0,
+            "speckle_density": 0.08,
+            "speckle_gain": 1.0,
+        },
+    }
+    ARM_TEXTURE_GEOM_COUNTS: ClassVar[dict[str, int]] = {"pla": 18, "servo": 12}
+
+    def _init_arm_texture(self) -> None:
+        """Build the per-population geom sets and the deterministic
+        static fields (arm_texture='v1'); init-time only — no RNG draws
+        from the shared streams, physics untouched."""
+        pops: dict[str, list[int]] = {"pla": [], "servo": []}
+        for geom in range(self.model.ngeom):
+            matid = int(self.model.geom_matid[geom])
+            if matid < 0:
+                continue
+            name = self.model.mat(matid).name
+            if "sts3215" in name:
+                pops["servo"].append(geom)
+            elif (
+                "so101" in name
+                and "moving_jaw" not in name
+                and "wrist_roll_follower" not in name
+            ):
+                pops["pla"].append(geom)
+        counts = {name: len(ids) for name, ids in pops.items()}
+        if counts != self.ARM_TEXTURE_GEOM_COUNTS:
+            raise RuntimeError(
+                f"texture geom sets {counts} != pinned "
+                f"{self.ARM_TEXTURE_GEOM_COUNTS} — model drifted under the "
+                "texture instrument",
+            )
+        self._texture_geoms = {
+            name: np.array(sorted(ids)) for name, ids in pops.items()
+        }
+        params = self.ARM_TEXTURE_V1
+        rng = np.random.default_rng(params["field_seed"])
+        shape = self._render_size
+
+        def box_blur(field: np.ndarray, passes: int) -> np.ndarray:
+            for _ in range(passes):
+                total = np.zeros_like(field)
+                for dy in (-1, 0, 1):
+                    for dx in (-1, 0, 1):
+                        total += np.roll(np.roll(field, dy, 0), dx, 1)
+                field = total / 9.0
+            return field
+
+        mod = box_blur(rng.standard_normal(shape), params["mod_blur_passes"])
+        mod = (mod - mod.mean()) / mod.std()
+        if abs(float(mod.mean())) > 1e-9 or abs(float(mod.std()) - 1.0) > 1e-9:
+            raise RuntimeError("texture modulation field not zero-mean unit-std")
+        self._texture_mod = mod
+
+        speckles = {}
+        for name in pops:
+            density = params[name]["speckle_density"]
+            if density <= 0.0:
+                speckles[name] = np.zeros(shape)
+                continue
+            smooth = box_blur(rng.random(shape), params["speckle_blur_passes"])
+            threshold = np.quantile(smooth, 1.0 - density)
+            # binary blobs softened into smooth peak-1 bumps: a graded
+            # ramp left most speckle pixels too faint to survive the PSF
+            # blur (p97 moved ~8 counts), raw binary blobs threw sharp
+            # edges that tripled local contrast — real glints bloom
+            # smoothly, so the bump keeps the full push at its center
+            # and spreads the gradient over its skirt
+            speckle = (smooth > threshold).astype(np.float64)
+            lit = float((speckle > 0).mean())  # density is the binary stage
+            if not 0.5 * density <= lit <= 2.0 * density:
+                raise RuntimeError(
+                    f"{name} speckle density {lit:.4f} vs target {density}",
+                )
+            speckle = box_blur(speckle, params["speckle_soften_passes"])
+            speckles[name] = speckle / max(float(speckle.max()), 1e-9)
+        self._texture_speckle = speckles
+
+    @staticmethod
+    def _texture_pixels(
+        pixels: np.ndarray,
+        mod: np.ndarray,
+        speckle: np.ndarray,
+        params: dict,
+    ) -> np.ndarray:
+        """The pure pixel math: multiplicative zero-mean relief, then a
+        push-toward-white specular speckle. [N, 3] float in/out."""
+        out = pixels * (1.0 + params["amplitude"] * mod[:, None])
+        gain = params["speckle_gain"]
+        if gain > 0.0:
+            out = out + gain * speckle[:, None] * (255.0 - out)
+        return out
+
+    def _apply_arm_texture(self, frame: np.ndarray) -> np.ndarray:
+        """Modulate the rendered top source frame under the population
+        seg masks at the current pose (source pinhole space — the result
+        rides the production remap/blur/noise like any rendered pixel)."""
+        renderer = self.renderer
+        renderer.enable_segmentation_rendering()
+        renderer.update_scene(self.data, camera="top_cam")
+        seg = renderer.render()
+        renderer.disable_segmentation_rendering()
+        is_geom = seg[..., 1] == mujoco.mjtObj.mjOBJ_GEOM.value
+        out = frame.astype(np.float64)
+        for name, ids in self._texture_geoms.items():
+            mask = is_geom & np.isin(seg[..., 0], ids)
+            if not mask.any():
+                continue
+            out[mask] = self._texture_pixels(
+                out[mask],
+                self._texture_mod[mask],
+                self._texture_speckle[name][mask],
+                self.ARM_TEXTURE_V1[name],
+            )
+        return np.clip(out, 0, 255).astype(frame.dtype)
+
     def reset(self, seed: int, appearance_seed: int | None = None) -> SimObservation:
         """Home the arm, place benchy at a seeded pose, randomize
         appearance (benchy tint, lighting), settle physics until
@@ -1277,6 +1441,8 @@ class SO101Sim:
             # Composite (and its segmentation mask) BEFORE the swap:
             # drawn clutter is masked at its drawn poses; the wrist
             # then renders the canonical scene (bit-identical to v2).
+            if self.arm_texture == "v1":
+                top = self._apply_arm_texture(top)
             mask = self._render_mask("top_cam")
             shadow = (
                 self._render_shadow("top_cam", mask)

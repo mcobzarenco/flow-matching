@@ -1,7 +1,50 @@
 # Now
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-14 04:46–05:5xZ (real `date -u` at stamp: 05:44) —
+work session: **`sim-arm-texture-followup` executed end-to-end and
+REFUTED cleanly — statistically-matched micro-texture reads MORE fake;
+both registered CIs above zero. A one-session negative that kills the
+composite-stage stats-matching class for texture.***
+
+**Status**: **no live runs** — GPU idle-by-design pending the owner's
+R1-A boundary call (`grpo-phase2-boundary-decision`, owner_hold,
+options in-channel 03:1xZ 08-14); the gate read's embeds (~0.02 GPU-h)
+were this session's only GPU touch.
+
+**Steering**: none — inbox empty, read empty at 04:46 / 05:00 / 05:05
+polls. Asks still open: R1-A boundary options (03:1xZ), arm-photometrics
+promotion (02:1xZ), clutter-patch promotion (05:40Z 08-13). This
+session's results post (05:4xZ) asks nothing — no promotion per the
+frozen rule.
+
+**Done**: **sim-arm-texture-followup CLOSED** (this commit): (1)
+instrument — opt-in `arm_texture='v1'` composite-stage micro-texture
+(deterministic static fields, private pinned RNG, zero shared-stream
+draws, applied under seg masks pre-remap; 6 test oracles + init
+checks, check.py 891 green); (2) fit — solve-based through the
+production composite vs the mined real stats (PLA lc 8.24 vs real
+8.36 dead-on; servo speckle-only, glint tail ~20% closed; two speckle
+profiles rejected pre-read, recorded in the pre-reg); (3) pre-reg
+posted in-channel 05:3xZ BEFORE the read with the explicit bar; (4)
+registered 20×5 read, all gates green (v3_photo 0.698 dead-center):
+**PRIMARY +9.33e-7 CI95 [+8.27,+10.42]e-7 ABOVE zero, 3/100, AUROC
+0.698→0.751; MECHANISM +1.30e-6 [+1.22,+1.38]e-6, 0/100, 0.652→0.740
+— REFUTED in the registered over-texturing direction**. The lesson
+banked in ideas.md: the encoder reads spatial structure, not pooled
+statistics. Artifacts on fontaine-reports (curl-200 ×5: analysis,
+fit, chart, strip, zoom); reports.md section; results + disposition
+in-channel 05:4xZ. Queue: item done, NEW
+`sim-arm-surface-texture-mjspec` escalation (queued, NOT auto-run,
+sequenced behind the wrist read).
+
+**Next**: `queue_cli.py next` → **sim-wrist-view-material-read** (CPU
++ ~0.02 GPU-h; the wrist-side fact for the pending promotion asks);
+GPU launches wait on the owner's R1-A boundary call. `run_work_next`
+armed.*
 
 *Updated 2026-08-14 04:44–04:4xZ (real `date -u` at stamp: 04:44) —
 tick: **quiet tick — no live runs, no steering, GPU idle-by-design
@@ -82,33 +125,15 @@ baseline). GPU launches pend the owner's R1-A boundary call
 (`grpo-phase2-boundary-decision`, options in-channel 03:1xZ).
 `run_work_next` armed — CPU queue non-empty per no-idle-pauses.*
 
-*Updated 2026-08-14 02:35–02:4xZ (real `date -u` at stamp: 02:36) —
-tick, babysit: **quiet tick — R1-A healthy at step 4/17, no steering,
-no anomalies.***
-
-**Status**: **LIVE: `grpo_phase2_r1a`** — babysit 02:35:39Z exit 0:
-3 procs, GPU 34.4 GiB steady (75-gate headroom ~41 GiB), util 64–74%
-at the sampled instants (mid-step/eval phase; memory and step cadence
-on pace). Step 4/17 current; probe 1.87@0 → 1.84 flat through step 4
-vs baseline 1.868 — flat-at-noise as the accumulation question
-expects this early. Step-5 row ~03:0xZ at ~2880 s/step. Knockaway
-streak quiet, no tripwires. rc ETA ~14:3xZ.
-
-**Steering**: none — inbox empty, read empty at 02:35Z and at the
-babysit poll; history shows no new reactions or replies (both
-promotion asks — clutter-patch 05:40Z 08-13 and arm-photometrics
-02:1xZ — still open, owner_hold).
-
-**Done**: babysit poll (facts above); queue validate green (depth 3,
-16 open).
-
-**Next**: unchanged — ride **token-grpo-phase2-r1a-run** via ~30-min
-ticks to rc ~14:3xZ → §6 endpoint reads → R2-A only via the frozen
-rule. `run_work_next` stays armed (02:34 marker) — GPU busy and
-`sim-mount-material-split` (CPU) is the next executable work item
-per no-idle-pauses.*
-
 ## Utilization footer
+
+Session 2026-08-14 04:46–05:5xZ (work; ~0.02 GPU-h decided — the
+texture gate read's embeds; CPU item, exploit-sim):
+sim-arm-texture-followup executed end-to-end (instrument → fit ×3
+speckle-profile iterations → pre-reg → read: REFUTED, both CIs above
+zero — the clean negative banked); queue depth 2 (16 open), NEW
+mjSpec escalation item queued not-auto-run. `run_work_next` armed for
+sim-wrist-view-material-read.
 
 Session 2026-08-14 04:44–04:4xZ (tick; 0 GPU-h decided — no live
 runs, GPU idle-by-design pending the owner's R1-A boundary call):
