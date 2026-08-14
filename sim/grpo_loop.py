@@ -136,6 +136,42 @@ def composite_reward(episode: EpisodeResult) -> float:
     return reward
 
 
+# Reward patch (owner-approved option 2, 09:16Z 2026-08-14): any charge
+# rate > 0 makes ungrasped displacement strictly unprofitable (it stops
+# being PAID and starts being charged); 0.5 keeps incidental approach
+# nudges from dominating the base policy's group signal — the R1-B
+# step-0 wave records the earned/shoved decomposition as the
+# registered calibration read.
+UNGRASPED_DISPLACEMENT_PENALTY = 0.5
+
+
+def composite_reward_v2(episode: EpisodeResult) -> float:
+    """The reward patch: progress pays ONLY while pinched (two-sided
+    jaw contact), and ungrasped boat displacement is charged
+    direction-blind — bulldozing toward the disk is as unearned as
+    knocking away. Success/tip/strike terms unchanged from v1. Raises
+    on rows without the grip trace: silently reverting to endpoint
+    progress would resurrect the exact leak this patch removes."""
+    earned = episode.grasped_progress_cm
+    shoved = episode.ungrasped_displacement_cm
+    if np.isnan(earned) or np.isnan(shoved):
+        raise ValueError(
+            f"episode (seed {episode.seed}, draw {episode.draw}) has no "
+            "grip trace — composite_reward_v2 needs the grasp instrument",
+        )
+    reward = earned - UNGRASPED_DISPLACEMENT_PENALTY * shoved
+    if episode.success_tick is not None:
+        reward += SUCCESS_BONUS
+    if episode.final_upright < TIP_UPRIGHT:
+        reward -= TIP_PENALTY
+    if episode.reset_strikes > 0:
+        reward -= STRIKE_PENALTY
+    return reward
+
+
+TRAIN_REWARDS = {"v1": composite_reward, "v2": composite_reward_v2}
+
+
 @dataclass(frozen=True, slots=True)
 class GroupFacts:
     """Per-wave grouping telemetry (§6 record-only reads)."""
@@ -151,6 +187,7 @@ def group_advantages(
     *,
     min_std: float,
     clip: float | None = None,
+    reward_fn: Callable[[EpisodeResult], float] = composite_reward,
 ) -> tuple[dict[tuple[int, int], float], GroupFacts]:
     """((seed, draw) -> advantage for episodes of KEPT groups,
     grouping facts). Advantages are within-group z-scores of the
@@ -175,7 +212,7 @@ def group_advantages(
     stds: dict[int, float] = {}
     kept = 0
     for seed, members in groups.items():
-        rewards = np.array([composite_reward(m) for m in members], dtype=np.float64)
+        rewards = np.array([reward_fn(m) for m in members], dtype=np.float64)
         std = float(rewards.std(ddof=0))
         stds[seed] = std
         if std < min_std or std == 0.0:
@@ -702,6 +739,12 @@ class GRPOLoopConfig:
     # behavior (surface B, no penalty, unclipped z-scores, KL
     # record-only).
     surface: str = "b"
+    # Training incentive (R1-B reward patch): "v2" pays progress only
+    # under a two-sided pinch and charges ungrasped displacement. The
+    # HELD-OUT EVAL metric stays composite_reward v1 regardless — the
+    # outcome measure and its banked step-0 pairing must not move when
+    # the incentive does.
+    train_reward: str = "v1"
     kl_beta: float = 0.0
     advantage_clip: float | None = None
     # The §7 KL numeric line, set from R0's measured scale (boundary
@@ -812,6 +855,9 @@ def run_grpo_loop(
     grpo = GRPOConfig(temperature=config.temperature)
     if config.surface not in ("a", "b"):
         raise ValueError(f"unknown trainable surface {config.surface!r}")
+    if config.train_reward not in TRAIN_REWARDS:
+        raise ValueError(f"unknown train_reward {config.train_reward!r}")
+    train_reward_fn = TRAIN_REWARDS[config.train_reward]
     if parameters is not None:
         named = parameters
     elif config.surface == "a":
@@ -886,11 +932,21 @@ def run_grpo_loop(
         knockaway_frac = float(
             np.mean([e.progress_final_cm <= KNOCKAWAY_CM for e in episodes]),
         )
-        rewards = [composite_reward(e) for e in episodes]
+        setbacks = [e.max_setback_cm for e in episodes]
+        setback_frac = (
+            None
+            if any(np.isnan(v) for v in setbacks)
+            else float(np.mean([v >= -KNOCKAWAY_CM for v in setbacks]))
+        )
+        earned = [e.grasped_progress_cm for e in episodes]
+        shoved = [e.ungrasped_displacement_cm for e in episodes]
+        has_grip = not any(np.isnan(v) for v in earned + shoved)
+        rewards = [train_reward_fn(e) for e in episodes]
         advantages_map, groups = group_advantages(
             episodes,
             min_std=config.min_group_std,
             clip=config.advantage_clip,
+            reward_fn=train_reward_fn,
         )
 
         facts: TrainStepFacts | None = None
@@ -955,6 +1011,13 @@ def run_grpo_loop(
             "groups_kept": groups.kept,
             "groups_total": groups.total,
             "knockaway_frac": round(knockaway_frac, 4),
+            "setback_frac": None if setback_frac is None else round(setback_frac, 4),
+            "earned_progress_mean": round(float(np.mean(earned)), 4)
+            if has_grip
+            else None,
+            "ungrasped_disp_mean": round(float(np.mean(shoved)), 4)
+            if has_grip
+            else None,
             "strikes": strikes,
             "successes": sum(e.success_tick is not None for e in episodes),
             "chosen_nll": None if chosen_nll is None else round(chosen_nll, 4),
@@ -1205,6 +1268,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="memo §4 trainable surface: a = FAST-block rows only, b = text stack",
     )
     parser.add_argument(
+        "--train-reward",
+        choices=("v1", "v2"),
+        default="v1",
+        help="training incentive: v2 = grasp-gated progress + ungrasped-"
+        "displacement charge (the R1-B reward patch); eval metric stays v1",
+    )
+    parser.add_argument(
         "--kl-beta",
         type=float,
         default=0.0,
@@ -1296,6 +1366,7 @@ def main(argv: list[str] | None = None) -> int:
         kl_rows=args.kl_rows,
         save_every=args.save_every,
         surface=args.surface,
+        train_reward=args.train_reward,
         kl_beta=args.kl_beta,
         advantage_clip=args.advantage_clip,
         kl_stop=args.kl_stop,

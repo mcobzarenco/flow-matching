@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-14T06:07:00Z
+**Updated:** 2026-08-14T09:24:31Z
 
-**Depth call:** depth 2: sim-arm-surface-texture-mjspec (texture escalation, recompile path) + sim-full-optin-stack-read (prices the combined promotion); GPU launches pend the owner's R1-A boundary call.
+**Depth call:** depth 2 (grpo-reward-patch-prereg, sim-full-optin-stack-read); grpo-r1b blocked behind the patch by design
 
-**16 open** (Live 0 · Queued 2 · Blocked 14 · Done 155)
+**16 open** (Live 0 · Queued 2 · Blocked 14 · Done 157)
 
 ## 🔴 Live (0)
 
@@ -32,15 +32,15 @@ Full opt-in stack read (prices the combined promotion): the owner has three pend
 
 ---
 
-**`sim-arm-surface-texture-mjspec`** · `cpu`
+**`grpo-reward-patch-prereg`** · `cpu`
 
-TRUE surface texture for the arm links via the mjSpec recompile path (escalation registered by the micro-texture REFUTATION 05:4xZ 08-14: statistically-matched screen-space grain read MORE fake - both CIs above zero, 0.698-&gt;0.751…
+GRPO reward patch (option 2, owner-approved 09:16Z 08-14): the R1-A tripwire caught REWARDED shoving leakage - composite_reward's dense progress term pays cm-for-cm for boat displacement without a grasp, and knock-away is only th…
 
-**boundary:** Queued 05:4xZ 08-14 at the micro-texture refutation. Do not auto-run: sequenced behind sim-wrist-view-material-read unless the owner reprioritizes; the photometric grade 0.698/0.652 is the arm frontier meanwhile. CPU (recompile+oracles) + ~0.02 GPU-h per gate read.
+**boundary:** Queued 09:2xZ 08-14 on owner steering ('(2) then (1)'). CPU-side instrument + pre-reg, ~0 GPU-h (calibration replays only if priced). Blocks grpo-r1b-repriced-launch.
 
 <details><summary>full record</summary>
 
-TRUE surface texture for the arm links via the mjSpec recompile path (escalation registered by the micro-texture REFUTATION 05:4xZ 08-14: statistically-matched screen-space grain read MORE fake - both CIs above zero, 0.698-&gt;0.751 - the encoder wants coherent surface-tracking structure, not matched marginals): UV-mapped anisotropic print-layer texture assets on the link PLA materials (and servo glint via specular map if the path allows), model recompiled via mjSpec with physics-preservation oracles (qpos trajectories bit-equal or bounded, spawn/appearance/noise streams untouched, mass/inertia/contacts identical) as the hard bar before any render read. Gate on the same pinned 20x5 probe vs the v1-graded baseline 0.698/0.652 with the micro-texture read's stats as anchors. Pre-reg with explicit bar before any read. Higher risk than the composite route (recompile touches the model) - that is WHY it was sequenced second.
+GRPO reward patch (option 2, owner-approved 09:16Z 08-14): the R1-A tripwire caught REWARDED shoving leakage - composite_reward's dense progress term pays cm-for-cm for boat displacement without a grasp, and knock-away is only the punished tail of that same funded strategy (endpoint-only, no grasp/contact channel exists in EpisodeResult). Work: (a) instrument MuJoCo grasp/contact ground truth (gripper closure + pad&lt;-&gt;benchy contact per replan tick) + trace-based knock event on the recorded distance_cm trace, with oracles; (b) pre-reg the patched reward - progress pay gated on (or heavily discounted without) grasp state, knock-away redefined on trace+contact, thresholds calibrated against the signal probe's banked 360-episode distribution where recomputable (rows lack the contact channel - state exactly what is and is not recomputable); (c) registered acceptance bar for the patch BEFORE R1-B launches under it.
 
 </details>
 
@@ -49,6 +49,20 @@ TRUE surface texture for the arm links via the mjSpec recompile path (escalation
 ## 🟡 Blocked (14)
 
 *waiting on a prerequisite, a boundary, or the owner*
+
+**`grpo-r1b-repriced-launch`** · `gpu-local`
+
+R1-B re-priced ladder (option 1, owner-approved 09:16Z 08-14, sequenced behind grpo-reward-patch-prereg): resume from banked step_0004 (fontaine-checkpoints/grpo_phase2_r1a, weights-only) under the PATCHED reward with lr 3e-7 + k…
+
+**boundary:** Blocked on grpo-reward-patch-prereg (the patch IS the point of re-running). Launch same-session as the patch close if budget allows, else next session; babysit registry entry at launch. · [pre-reg](posts/2026-08-13-prereg-token-grpo-phase2-run.md)
+
+<details><summary>full record</summary>
+
+R1-B re-priced ladder (option 1, owner-approved 09:16Z 08-14, sequenced behind grpo-reward-patch-prereg): resume from banked step_0004 (fontaine-checkpoints/grpo_phase2_r1a, weights-only) under the PATCHED reward with lr 3e-7 + kl_beta 1.0, wire unchanged (knock tripwire stays as belt even with the in-reward fix), ~0.96 GPU-h/step; 10 steps ~9.6 GPU-h, ladder cum ~5.1 of the 22 gate -&gt; fits with headroom. Own pre-reg (final constants + boundary reads) before launch.
+
+</details>
+
+---
 
 **`sim-arm-photometrics-promotion`** · `cpu` · **⛔ owner hold**
 
@@ -59,20 +73,6 @@ Promote arm_photometrics='v1' into production v3/v4 defaults (registered read GR
 <details><summary>full record</summary>
 
 Promote arm_photometrics='v1' into production v3/v4 defaults (registered read GREEN 02:1xZ 08-14: v3 0.713-&gt;0.698 CI-excl-0, only_links 0.705-&gt;0.652; commit 4515ab4): flip the default in SO101Sim (+ rollout/eval surfaces that pin render_style), re-pin the banked v3 anchor 0.713 -&gt; the patched value on the pinned 20x5 probe, extend tests/test_sim_appearance.py style-equality oracles. NOTE: changes wrist-view arm pixels too (the real wrist view also sees the real arm) — flag the wrist knn5 re-read as the cheap post-flip sanity.
-
-</details>
-
----
-
-**`grpo-phase2-boundary-decision`** · `cpu` · **⛔ owner hold**
-
-Token-GRPO phase-2 boundary decision (OWNER CALL, options posted in-channel 03:1xZ 08-14 at the R1-A tripwire stop): (1) R1-B re-price lr 3e-7 + kl_beta 1.0 from the banked step_0004 (fontaine-checkpoints/grpo_phase2_r1a, weights…
-
-**boundary:** Queued 03:2xZ 08-14 at the R1-A tripwire boundary. On owner word: option 2 lands a pre-reg (CPU) then option 1 launches from step_0004 under it; option 3 closes the phase-2 GRPO screen with the R0-A GO + R1-A tripwire record. · [pre-reg](posts/2026-08-13-prereg-token-grpo-phase2-r0a.md)
-
-<details><summary>full record</summary>
-
-Token-GRPO phase-2 boundary decision (OWNER CALL, options posted in-channel 03:1xZ 08-14 at the R1-A tripwire stop): (1) R1-B re-price lr 3e-7 + kl_beta 1.0 from the banked step_0004 (fontaine-checkpoints/grpo_phase2_r1a, weights-only), wire unchanged, ~9.6 GPU-h for 10 steps; (2) reward-patch pre-reg FIRST — in-reward knock-away penalty (progress reward currently pays for boat displacement without a grasp; the wire keeps firing at any lr while shoving pays), ~0 GPU-h to design; (3) stop the ladder, bank the negative accumulation read. Recommendation posted: (2) then (1). Ladder cum ~5.1 of the 22 GPU-h gate; ~17 headroom.
 
 </details>
 
@@ -244,9 +244,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (155)
+## ✅ Done (157)
 
 *closed — the full record stays in each fold*
+
+**`sim-arm-surface-texture-mjspec`** · `cpu`
+
+TRUE surface texture for the arm links via the mjSpec recompile path (escalation registered by the micro-texture REFUTATION 05:4xZ 08-14: statistically-matched screen-space grain read MORE fake - both CIs above zero, 0.698-&gt;0.751…
+
+**boundary:** CLOSED 09:2xZ 08-14, work session: instrument landed (e408f9e, 11/11 physics oracles, zero-clip tanh generator, reflection rider registered), fit capped at the 0.42 no-clip headroom (lc 6.43 of real 8.36), registered 20x5 read all gates green -&gt; SECOND REFUTATION: PRIMARY +3.07e-07 CI [+2.42,+3.71]e-07 (0.698-&gt;0.718), MECHANISM +1.98e-07 (0.652-&gt;0.671). Arm-texture direction COLD at this abstraction level; graded arm stays the frontier; no further texture rung auto-queued (a normal-map / renderer-upgrade rung is a new design decision, owner-ask only). · [pre-reg](posts/2026-08-14-prereg-sim-arm-surface-texture-mjspec.md)
+
+<details><summary>full record</summary>
+
+TRUE surface texture for the arm links via the mjSpec recompile path (escalation registered by the micro-texture REFUTATION 05:4xZ 08-14: statistically-matched screen-space grain read MORE fake - both CIs above zero, 0.698-&gt;0.751 - the encoder wants coherent surface-tracking structure, not matched marginals): UV-mapped anisotropic print-layer texture assets on the link PLA materials (and servo glint via specular map if the path allows), model recompiled via mjSpec with physics-preservation oracles (qpos trajectories bit-equal or bounded, spawn/appearance/noise streams untouched, mass/inertia/contacts identical) as the hard bar before any render read. Gate on the same pinned 20x5 probe vs the v1-graded baseline 0.698/0.652 with the micro-texture read's stats as anchors. Pre-reg with explicit bar before any read. Higher risk than the composite route (recompile touches the model) - that is WHY it was sequenced second.
+
+</details>
+
+---
 
 **`sim-wrist-view-material-read`** · `cpu`
 
@@ -355,6 +369,20 @@ Token-GRPO phase-2 R0-A smoke LIVE (launch 2 21:58:04Z 08-13, unit fontaine-grpo
 <details><summary>full record</summary>
 
 Token-GRPO phase-2 R0-A smoke LIVE (launch 2 21:58:04Z 08-13, unit fontaine-grpo-r0a, pre-reg frozen 81e020c): 2 steps on option A (patch-only, ~10.5M params) at lr 1e-6, adv clip 2.0, kl_beta 0.5, kl-stop 0.06, eval-every 1. Babysit rides it (registry entry grpo_phase2_r0a); at rc: boundary reads per the frozen table (plumbing/signal/per-step eval/KL line/VRAM/pace + the INERT rule) =&gt; GO launches R1-A (--resume step_0002.pt --total-steps 17, same flags), INERT goes in-channel as a re-price addendum, STOP re-scopes. Step-0 baseline reproduced 1.868 2/20 (4th bit-identical).
+
+</details>
+
+---
+
+**`grpo-phase2-boundary-decision`** · `cpu` · **⛔ owner hold**
+
+Token-GRPO phase-2 boundary decision (OWNER CALL, options posted in-channel 03:1xZ 08-14 at the R1-A tripwire stop): (1) R1-B re-price lr 3e-7 + kl_beta 1.0 from the banked step_0004 (fontaine-checkpoints/grpo_phase2_r1a, weights…
+
+**boundary:** RESOLVED by owner steering 09:16Z 08-14: '(2) then (1)' approved in-channel (+ knock-away definition question, answered 09:21Z). Spawned grpo-reward-patch-prereg (option 2, next) and grpo-r1b-repriced-launch (option 1, sequenced behind the patch). · [pre-reg](posts/2026-08-13-prereg-token-grpo-phase2-r0a.md)
+
+<details><summary>full record</summary>
+
+Token-GRPO phase-2 boundary decision (OWNER CALL, options posted in-channel 03:1xZ 08-14 at the R1-A tripwire stop): (1) R1-B re-price lr 3e-7 + kl_beta 1.0 from the banked step_0004 (fontaine-checkpoints/grpo_phase2_r1a, weights-only), wire unchanged, ~9.6 GPU-h for 10 steps; (2) reward-patch pre-reg FIRST — in-reward knock-away penalty (progress reward currently pays for boat displacement without a grasp; the wire keeps firing at any lr while shoving pays), ~0 GPU-h to design; (3) stop the ladder, bank the negative accumulation read. Recommendation posted: (2) then (1). Ladder cum ~5.1 of the 22 GPU-h gate; ~17 headroom.
 
 </details>
 
