@@ -307,6 +307,12 @@ class SO101Sim:
         self._benchy_body = self.model.body("benchy").id
         self._benchy_qpos = self.model.joint("benchy_free").qposadr[0]
         self._benchy_mat = self.model.geom("benchy_visual").matid[0]
+        # Follower gripper bodies for the grasp/contact query (the
+        # leader's live under 'leader-' prefixed names): the fixed
+        # jaw+housing and the moving jaw — benchy contact with BOTH in
+        # one physics state is the two-sided pinch predicate.
+        self._gripper_body = self.model.body("gripper").id
+        self._moving_jaw_body = self.model.body("moving_jaw_so101_v1").id
         self._table_mat = self.model.geom("table").matid[0]
         # Appearance-jitter baselines: jitter multiplies/offsets these
         # stored scene values, never the (already-jittered) live ones.
@@ -1654,6 +1660,31 @@ class SO101Sim:
         pos = self.data.xpos[self._benchy_body].copy()
         upright = float(self.data.xmat[self._benchy_body].reshape(3, 3)[2, 2])
         return pos, upright
+
+    def benchy_grip_contacts(self) -> tuple[bool, bool]:
+        """Does the CURRENT physics state have benchy contact with the
+        follower gripper's (fixed jaw+housing, moving jaw)? Both True in
+        one state is the two-sided PINCH — the grasp predicate the GRPO
+        reward patch keys on; one-sided contact is a push, not a grasp.
+        Pure read of mjData.contact: no RNG draws, no state writes.
+        Known coarseness (registered): the fixed side is the whole
+        gripper body, so a boat wedged against the housing while the
+        moving jaw presses it also reads as a pinch; contacts are
+        sampled at control-tick ends, so sub-tick flicker is unseen."""
+        fixed = moving = False
+        for index in range(self.data.ncon):
+            contact = self.data.contact[index]
+            bodies = (
+                int(self.model.geom_bodyid[contact.geom1]),
+                int(self.model.geom_bodyid[contact.geom2]),
+            )
+            if self._benchy_body not in bodies:
+                continue
+            if self._gripper_body in bodies:
+                fixed = True
+            if self._moving_jaw_body in bodies:
+                moving = True
+        return fixed, moving
 
     def benchy_disk_distance(self) -> float:
         """XY distance from the benchy base to the disk center (meters)."""

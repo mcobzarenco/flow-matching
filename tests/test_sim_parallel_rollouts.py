@@ -89,6 +89,11 @@ class FakeSim:
         position = np.array([0.2, 0.1, 0.005 + 0.0001 * self._seed])
         return position, 0.9 + 0.001 * (self._seed % 5)
 
+    def benchy_grip_contacts(self) -> tuple[bool, bool]:
+        # deterministic off the same state the distance rides, so the
+        # grip trace exercises all codes across the oracle's seeds
+        return self._distance < 0.055, self._distance < 0.05
+
 
 def fake_chunk(
     seed: int,
