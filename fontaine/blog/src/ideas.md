@@ -838,8 +838,19 @@ record; the line here is the hook). *Index last updated 2026-08-13.*
   amputation confound reversed) but PRIMARY null (0.66% px is below
   the whole-frame read's floor) → no standalone promotion**; the
   two-flag stack reads 0.713→0.702 CI-excl-0, so the mount rides
-  free if photometrics promotes; wrist-view read queued
-  (`sim-wrist-view-material-read`). Micro-texture EXECUTED 05:4xZ
+  free if photometrics promotes. Wrist-view read EXECUTED 06:0xZ
+  08-14 ([pre-reg + results](posts/2026-08-14-prereg-sim-wrist-view-material-read.md),
+  [record](reports.md)): the wrist-side fact the promotion asks
+  assumed — **wrist-NEUTRAL: paired wrist Δknn5 −1.39e-08, CI95
+  [−4.53, +1.73]e-08 straddles zero (46/100)**; mechanically the
+  home-pose wrist camera sees only ~230 raw px of graded surface
+  (servo 208 / PLA 21 / mount 1), nothing for the encoder to read;
+  no regression, no gain — the asks proceed on top-side evidence,
+  now measured not assumed; top rider replicated the mount read's
+  stack delta bit-for-bit (hook path ≡ production observations);
+  registered limitation: the 0.828 ROLLOUT-pose wrist gap stays
+  open (needs trajectories or fresh rollouts, priced separately).
+  Micro-texture EXECUTED 05:4xZ
   08-14 ([pre-reg + results](posts/2026-08-14-prereg-sim-arm-texture-followup.md),
   [record](reports.md)): composite-stage screen-space grain fitted to
   the mined real stats (PLA local contrast 8.24 vs real 8.36, servo

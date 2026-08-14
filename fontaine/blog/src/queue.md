@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-14T05:44:00Z
+**Updated:** 2026-08-14T06:07:00Z
 
-**Depth call:** depth 3: arm-B read+prune at its ~13:3xZ boundary; token-grpo-phase2-instrument items 3-4 on the molmoact2 surface (gate passed, lane GO); sim-arm-photometric-links pre-reg.
+**Depth call:** depth 2: sim-arm-surface-texture-mjspec (texture escalation, recompile path) + sim-full-optin-stack-read (prices the combined promotion); GPU launches pend the owner's R1-A boundary call.
 
-**16 open** (Live 0 · Queued 2 · Blocked 14 · Done 154)
+**16 open** (Live 0 · Queued 2 · Blocked 14 · Done 155)
 
 ## 🔴 Live (0)
 
@@ -18,6 +18,20 @@
 
 *ready — waiting on a window or a boundary*
 
+**`sim-full-optin-stack-read`** · `cpu`
+
+Full opt-in stack read (prices the combined promotion): the owner has three pending appearance promotions measured SEPARATELY (clutter real-crop patches 0.713-&gt;0.556; arm_photometrics 0.713-&gt;0.698; mount rides the stack at 0.713-…
+
+**boundary:** Queued 06:0xZ 08-14 at the wrist-read close (depth refill). CPU renders + ~0.02 GPU-h embeds; fully executable without any promotion (all flags opt-in). Sequenced after sim-arm-surface-texture-mjspec only if the owner has not answered the promotion asks by then; if a promotion lands first, re-scope to the promoted default as baseline.
+
+<details><summary>full record</summary>
+
+Full opt-in stack read (prices the combined promotion): the owner has three pending appearance promotions measured SEPARATELY (clutter real-crop patches 0.713-&gt;0.556; arm_photometrics 0.713-&gt;0.698; mount rides the stack at 0.713-&gt;0.702). If they flip together, interactions are unmeasured. One paired 20x5 top read: v3 default vs the full opt-in stack (clutter patches + arm_photometrics + mount_material), er_60k knn5, in-run v3 gate 0.713+/-0.005. PRIMARY: paired dknn5 CI95 &lt; 0 AND full stack &lt;= best single (0.556) - epsilon registered in the pre-reg; record additivity vs the sum of parts. Pre-reg with explicit bar before any read.
+
+</details>
+
+---
+
 **`sim-arm-surface-texture-mjspec`** · `cpu`
 
 TRUE surface texture for the arm links via the mjSpec recompile path (escalation registered by the micro-texture REFUTATION 05:4xZ 08-14: statistically-matched screen-space grain read MORE fake - both CIs above zero, 0.698-&gt;0.751…
@@ -27,20 +41,6 @@ TRUE surface texture for the arm links via the mjSpec recompile path (escalation
 <details><summary>full record</summary>
 
 TRUE surface texture for the arm links via the mjSpec recompile path (escalation registered by the micro-texture REFUTATION 05:4xZ 08-14: statistically-matched screen-space grain read MORE fake - both CIs above zero, 0.698-&gt;0.751 - the encoder wants coherent surface-tracking structure, not matched marginals): UV-mapped anisotropic print-layer texture assets on the link PLA materials (and servo glint via specular map if the path allows), model recompiled via mjSpec with physics-preservation oracles (qpos trajectories bit-equal or bounded, spawn/appearance/noise streams untouched, mass/inertia/contacts identical) as the hard bar before any render read. Gate on the same pinned 20x5 probe vs the v1-graded baseline 0.698/0.652 with the micro-texture read's stats as anchors. Pre-reg with explicit bar before any read. Higher risk than the composite route (recompile touches the model) - that is WHY it was sequenced second.
-
-</details>
-
----
-
-**`sim-wrist-view-material-read`** · `cpu`
-
-Wrist-view read of the arm material fixes (follow-on to sim-arm-photometric-links + sim-mount-material-split, both banked opt-in): the wrist camera sees the arm links/gripper up close, and both material fixes change wrist-view pi…
-
-**boundary:** Queued 04:5xZ 08-14 at the mount close (depth refill). CPU renders + ~0.02 GPU-h embeds; fully executable without the promotion (opt-in flags).
-
-<details><summary>full record</summary>
-
-Wrist-view read of the arm material fixes (follow-on to sim-arm-photometric-links + sim-mount-material-split, both banked opt-in): the wrist camera sees the arm links/gripper up close, and both material fixes change wrist-view pixels — the photometrics results post flagged the wrist knn5 as the promotion sanity. Run the encoder OOD probe on WRIST frames: paired v3 default vs the two-flag stack (arm_photometrics + mount_material), same 20x5 slot schedule, er_60k trunk; anchors = the OOD probe's wrist baseline (5-NN AUROC 0.828, ratio 1.33x, centroid 0.707). PRIMARY: paired wrist dknn5 CI95 &lt; 0. Feeds the pending promotion asks with the wrist-side fact instead of assuming it. Pre-reg with explicit bar before any read.
 
 </details>
 
@@ -244,9 +244,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (154)
+## ✅ Done (155)
 
 *closed — the full record stays in each fold*
+
+**`sim-wrist-view-material-read`** · `cpu`
+
+Wrist-view read of the arm material fixes (follow-on to sim-arm-photometric-links + sim-mount-material-split, both banked opt-in): the wrist camera sees the arm links/gripper up close, and both material fixes change wrist-view pi…
+
+**boundary:** Queued 04:5xZ 08-14 at the mount close (depth refill). CPU renders + ~0.02 GPU-h embeds; fully executable without the promotion (opt-in flags). EXECUTED + CLOSED 06:0xZ 08-14: all gates green (top 0.713 dead-center, wrist 0.561 in the registered reset band); PRIMARY wrist paired dknn5 -1.39e-08 CI95 [-4.53,+1.73]e-08 STRADDLES ZERO -&gt; wrist-neutral; visibility diagnostic: ~230 raw px of graded surface at home pose (servo 208/pla 21/mount 1); top rider replicated the mount read's stack delta bit-for-bit. Promotion asks proceed on top-side evidence, measured not assumed. Rollout-pose wrist gap (0.828) stays open, priced separately, not auto-queued. · [pre-reg](posts/2026-08-14-prereg-sim-wrist-view-material-read.md)
+
+<details><summary>full record</summary>
+
+Wrist-view read of the arm material fixes (follow-on to sim-arm-photometric-links + sim-mount-material-split, both banked opt-in): the wrist camera sees the arm links/gripper up close, and both material fixes change wrist-view pixels — the photometrics results post flagged the wrist knn5 as the promotion sanity. Run the encoder OOD probe on WRIST frames: paired v3 default vs the two-flag stack (arm_photometrics + mount_material), same 20x5 slot schedule, er_60k trunk; anchors = the OOD probe's wrist baseline (5-NN AUROC 0.828, ratio 1.33x, centroid 0.707). PRIMARY: paired wrist dknn5 CI95 &lt; 0. Feeds the pending promotion asks with the wrist-side fact instead of assuming it. Pre-reg with explicit bar before any read.
+
+</details>
+
+---
 
 **`sim-mount-material-split`** · `cpu`
 
