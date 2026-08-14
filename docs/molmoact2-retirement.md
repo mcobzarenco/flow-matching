@@ -2,9 +2,11 @@
 
 Status: **phases 0 + 1 EXECUTED** (2026-08-14; every gate green —
 receipts in §5 and §9); **phases 2–3 are NEXT** (a fresh session
-continues from §9's state-of-the-world); phase 4 blocked on the GRPO
-ladder adjudication (owner call pending — fontaine's R1-B STOP
-verdict 13:1xZ 2026-08-14); phase 5 last. When complete, the design
+continues from §9's state-of-the-world); **phase 4's window is OPEN**
+(the GRPO ladder adjudicated STOP on surface A — fontaine's
+recommendation 13:1xZ, owner-ratified 2026-08-14 — so phase 4 is
+sequenced purely behind phases 2–3, per his 12:50Z sign-off); phase 5
+last. When complete, the design
 record subsumes into `docs/architecture.md` (§8.13 gets its step-8
 closure; §2 gains the new decoder and the objective matrix) and this
 file becomes the migration's historical record. Anchor tags:
@@ -36,11 +38,15 @@ untouched; your imports move; one of your queue items is superseded.**
 2. Adopt phases 2–3 whenever convenient after they land — they do not
    touch your live surfaces.
 3. **Phase 4 is your instrument** (GRPO rollout/replay re-pointing) —
-   co-landed at the boundary you proposed (sign-off 2026-08-14):
-   after the R1-B boundary reads land and the ladder is adjudicated.
-   Ladder STOPS ⇒ wide-open window; a re-scope run is approved ⇒
-   phase 4 lands BEFORE its launch, with the frozen-wave parity gate
-   run on the banked R1-B waves.
+   the ladder adjudicated **STOP on surface A** (your 13:1xZ
+   recommendation: probe flat across 6 steps of both runs, shove
+   redistributed not retired, competence artifact at 4/64 pinch
+   successes, the remaining ~14 GPU-h re-buying the same physics;
+   owner-ratified 2026-08-14), so the window is OPEN: phase 4 lands
+   after our phases 2–3, gated on frozen-wave replay parity on the
+   banked R1-B waves including one v2-reward wave. Any GRPO thread
+   restart (e.g. competence-first SFT) is a NEW pre-registration,
+   post-phase-4, per decision 11.
 4. Phase 5 (the deletion) only lands after your phase-4 sign-off.
 
 **What does NOT change for you:**
@@ -442,9 +448,9 @@ Rough sizes: P1 ±0 net (moves), P2 ~250–350 + tests, P3 ~150 restored
 
 ## 7. Open items before the relevant phases
 
-0. **The GRPO ladder adjudication is the owner's pending call**
-   (fontaine's R1-B STOP verdict, 13:1xZ 2026-08-14) — it gates the
-   phase-4 window, not phases 2–3.
+0. ~~The GRPO ladder adjudication~~ — **RESOLVED 2026-08-14: STOP on
+   surface A** (fontaine's recommendation, owner-ratified). Phase 4's
+   window is open, sequenced behind phases 2–3.
 
 1. ~~Decision 4's joint weight~~ — RESOLVED 2026-08-14:
    `--joint-ce-weight`, default 1.0 (decision 4). (Fontaine acked the
@@ -505,8 +511,9 @@ sequenced with narration).
   no retirement overlap.
 
 **The box** (fontaine's 1×H100, `ssh -A ubuntu@68.209.75.143`; his
-machine — GPU courtesy rules apply, and his ladder adjudication may
-reclaim it):
+machine — GPU courtesy rules apply. The GRPO ladder is STOPPED, so no
+standing GPU reservation exists, but check occupancy and his channel
+before long jobs — he schedules his own experiments):
 
 - `~/marius-convert-gate` — our clone (sync before use; it trails
   main by a few commits whenever local work lands).
@@ -531,11 +538,12 @@ reclaim it):
   `~/.cache/huggingface/hub/models--allenai--MolmoAct2-FAST-Tokenizer/`
   `snapshots/d45593b4c863d0bc1ca064f8b352fa16b75c38e8`.
 
-**Fontaine**: branch rebased onto `0312ab7` (zero conflicts; old tip
-`pre-rebase-0312ab7`); should pull ≥ `7423ec3` for the parity-bound
-fix; his GRPO ladder is STOPPED pending the owner's adjudication —
-that call gates phase 4's window. His queue expects phases 2–3 from
-our side.
+**Fontaine**: rebasing onto `3131f82`+ as of 2026-08-14 late (the
+fixture-bound fix adopted; his step-(2) replay was zero-conflict, so
+expect his branch ≥ our phases-0/1 state with suites green — he posts
+results when they finish). The GRPO ladder is adjudicated STOP
+(owner-ratified); his queue expects phases 2–3 from our side, then
+the phase-4 co-land.
 
 **Suggested phase-2 opening moves**: read §2's decision register +
 the phase-2 execution facts; read `ar_molmo2.py` + the discrete
