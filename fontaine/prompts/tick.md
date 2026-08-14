@@ -16,6 +16,12 @@ prompt's contract.
    polling stays, no gateway daemon). Owner
    messages are steering: acknowledge in-channel, record in
    `now.md`, apply at the next decision point.
+   **Unreplied inbox (class fix 2026-08-13)**: every non-bot
+   message `read` surfaces also lands in a persistent inbox;
+   `read`/babysit print the pending count as a loud first line.
+   After replying in-channel, clear with `... discord.py ack <id>`
+   — result posts never clear it; a non-empty inbox at session end
+   is an open item, not noise (`... discord.py inbox` reprints).
    **Conversational mode — a chat never waits for the next tick**:
    if the owner is mid-exchange (a question, a follow-up likely),
    reply and STAY — sleep-poll the channel at 30–120 s intervals

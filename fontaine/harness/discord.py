@@ -30,6 +30,22 @@ file; optional DISCORD_OWNER_ID for @mentions):
         session joining an ongoing conversation (e.g. after a
         tick→work chain mid-chat).
 
+    uv run python fontaine/harness/discord.py inbox
+    uv run python fontaine/harness/discord.py ack <id> [<id> ...]
+        The unreplied inbox (class fix, 2026-08-13 missed-reply
+        incident: two owner questions were consumed by ``read`` but
+        the printed lines were truncated away — consume-once
+        semantics then buried them for ~2 h). Every non-bot message
+        ``read`` surfaces is ALSO appended to
+        ``state/discord_unreplied.jsonl``; ``read`` (and babysit)
+        print the pending count as a loud FIRST line, so no amount
+        of output truncation can hide an owner message. An entry is
+        cleared ONLY by an explicit ``ack <id>`` at reply time —
+        result posts never clear it (posting a status update is not
+        answering the owner). ``inbox`` reprints the pending entries
+        in full (the recovery path when the original ``read`` output
+        was lost).
+
 Both commands render attachments (CDN URL) and emoji reactions
 (``reactions: 👍x1``) when present. Caveat (owner asked 2026-08-05):
 this is REST polling, not a gateway — a reaction added to an already-
@@ -63,6 +79,7 @@ from typing import Any
 
 API = "https://discord.com/api/v10"
 CURSOR_PATH = Path(__file__).resolve().parent / "state" / "discord_cursor"
+INBOX_PATH = Path(__file__).resolve().parent / "state" / "discord_unreplied.jsonl"
 MAX_CONTENT = 2000
 MAX_ATTACHMENT = 10 * 1024 * 1024  # the bot upload cap on an unboosted server
 
@@ -154,7 +171,87 @@ def _print_messages(messages: Any) -> None:
             print(f"    reactions: {' '.join(reactions)}")
 
 
+def _inbox_load() -> list[dict[str, Any]]:
+    if not INBOX_PATH.exists():
+        return []
+    lines = INBOX_PATH.read_text().splitlines()
+    return [json.loads(line) for line in lines if line.strip()]
+
+
+def _inbox_write(entries: list[dict[str, Any]]) -> None:
+    INBOX_PATH.parent.mkdir(parents=True, exist_ok=True)
+    INBOX_PATH.write_text("".join(json.dumps(entry) + "\n" for entry in entries))
+
+
+def _inbox_banner(entries: list[dict[str, Any]]) -> None:
+    """The loud line. Printed FIRST by read/babysit — truncation of any
+    later output cannot hide that owner messages are awaiting a reply."""
+    if entries:
+        ids = " ".join(str(entry["id"]) for entry in entries)
+        print(
+            f"[discord] !!! UNREPLIED INBOX: {len(entries)} owner message(s)"
+            f" pending an in-channel reply — `discord.py inbox` to reprint,"
+            f" `discord.py ack <id>` after replying (ids: {ids})",
+        )
+    else:
+        print("[discord] unreplied inbox: empty")
+
+
+def _inbox_add(messages: Any) -> int:
+    """Append surfaced non-bot messages; returns how many were added.
+    Dedupe by id — a message never enters the inbox twice."""
+    entries = _inbox_load()
+    known = {str(entry["id"]) for entry in entries}
+    added = 0
+    for message in reversed(messages):  # oldest first, like the transcript
+        if message["author"].get("bot", False):
+            continue
+        if str(message["id"]) in known:
+            continue
+        entries.append(
+            {
+                "id": str(message["id"]),
+                "timestamp": message["timestamp"],
+                "author": _author_name(message),
+                "content": message["content"],
+            },
+        )
+        added += 1
+    if added:
+        _inbox_write(entries)
+        print(
+            f"[discord] !!! INBOX +{added}: now {len(entries)} pending — each"
+            " needs an in-channel reply + `discord.py ack <id>`; result posts"
+            " do NOT count as replies",
+        )
+    return added
+
+
+def inbox() -> None:
+    entries = _inbox_load()
+    _inbox_banner(entries)
+    for entry in entries:
+        print(f"{entry['timestamp']} {entry['author']} [id {entry['id']}]:")
+        print(f"    {entry['content']}")
+
+
+def ack(ids: list[str]) -> None:
+    entries = _inbox_load()
+    known = {str(entry["id"]) for entry in entries}
+    unknown = [i for i in ids if i not in known]
+    if unknown:
+        raise SystemExit(
+            f"ack: id(s) not in the inbox: {' '.join(unknown)} — "
+            "`discord.py inbox` lists pending ids",
+        )
+    remaining = [entry for entry in entries if str(entry["id"]) not in set(ids)]
+    _inbox_write(remaining)
+    print(f"[discord] acked {len(ids)}; {len(remaining)} still pending")
+    _inbox_banner(remaining)
+
+
 def read() -> None:
+    _inbox_banner(_inbox_load())
     channel = _env("DISCORD_CHANNEL_ID")
     if not CURSOR_PATH.exists():
         head_batch = _request("GET", f"/channels/{channel}/messages?limit=1")
@@ -175,6 +272,7 @@ def read() -> None:
     newest = max(int(message["id"]) for message in messages)
     CURSOR_PATH.write_text(str(newest))
     print(f"[discord] {len(messages)} new message(s); cursor -> {newest}")
+    _inbox_add(messages)
 
 
 def history(count: int) -> None:
@@ -271,9 +369,19 @@ def main() -> int:
         help="print the last N messages without moving the cursor",
     )
     history_parser.add_argument("-n", "--count", type=int, default=20)
+    subparsers.add_parser("inbox", help="reprint the unreplied inbox in full")
+    ack_parser = subparsers.add_parser(
+        "ack",
+        help="clear inbox entries after replying in-channel",
+    )
+    ack_parser.add_argument("ids", nargs="+", help="message id(s) just replied to")
     args = parser.parse_args()
     if args.command == "read":
         read()
+    elif args.command == "inbox":
+        inbox()
+    elif args.command == "ack":
+        ack(args.ids)
     elif args.command == "post":
         if (args.text is None) == (args.body_file is None):
             raise SystemExit("post needs exactly one of: text argument, --body-file")
