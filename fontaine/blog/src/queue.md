@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-14T16:21:00Z
+**Updated:** 2026-08-14T17:34:00Z
 
 **Depth call:** depth 2: molmoact2-retirement-adoption (phases 2-3 watch, steps 3-4 pending) + wrist-transfer-screen-design (executable refill from the decision-brief close); renderer-pbr-wrist-pilot sits blocked on the owner's tier-2 go per the brief
 
-**16 open** (Live 0 · Queued 2 · Blocked 14 · Done 165)
+**17 open** (Live 0 · Queued 2 · Blocked 15 · Done 166)
 
 ## 🔴 Live (0)
 
@@ -18,15 +18,15 @@
 
 *ready — waiting on a window or a boundary*
 
-**`wrist-transfer-screen-design`** · `cpu`
+**`squint-twin-preflight`** · `cpu`
 
-Wrist-transfer screen design doc (the decision brief's move #2, design only
+Squint SO-101 twin preflight (lit 0819, papers/squint.md; the wrist-transfer design memo's successor tier for the success-rate form of the question): CPU-side only - install the MIT repo in an isolated venv, verify the 8 SO101*-v…
 
-**boundary:** Queued 16:2xZ 08-14 at the decision-brief close (depth refill; executable any window, pure CPU/writing). The design must state its own falsifiers before execution is queued; no launches until the in-channel GPU release.
+**boundary:** Queued 17:3xZ 08-14 at the wrist-transfer design close (depth refill; executable any window, pure CPU - no GPU needed for the preflight). Not a commitment to the twin tier: the note prices it, the wrist-transfer screen's outcome decides it.
 
 <details><summary>full record</summary>
 
-Wrist-transfer screen design doc (the decision brief's move #2, design only — no run): design the closed-loop relative screen that prices whether the banked 0.877 wrist dishonesty moves SUCCESS RATE at all (the unpriced link between the encoder-honesty proxy and the north star). Squint-style per ideas.md 0819: deterministic-seed sim rollouts as RELATIVE screens (domain gap held constant across arms), arms = wrist-conditioned policy on {classic arm render, wrist feed ablated/degraded controls}, plus the required sim-adaptation sanity arm; instrument, seeds policy (fresh-seed rule), n and CI plan, gates + abort bands, GPU-h budget. Deliverable: a pre-registrable design doc on the blog — execution is a separate, owner-visible pre-reg when a GPU window opens.
+Squint SO-101 twin preflight (lit 0819, papers/squint.md; the wrist-transfer design memo's successor tier for the success-rate form of the question): CPU-side only - install the MIT repo in an isolated venv, verify the 8 SO101*-v1 ManiSkill3 envs register and step headless; render one wrist + one third-person frame at policy-relevant resolution (224+) with apply_overlay=False and save to outputs/ for a look; verify pd_joint_pos normalize_action=False consumes our absolute-joint LeRobot convention end-to-end with a scripted hold + a random-walk episode (success/info plumbing observed); note per-step wall time at 1 env CPU. Deliverable: a short feasibility note on the blog (what works, what needs a subclass, measured step cost) feeding the tier decision if the wrist-transfer screen hits F-instrument or the success floor holds.
 
 </details>
 
@@ -46,9 +46,23 @@ Adopt the molmoact2 retirement plan (docs/molmoact2-retirement.md, main 02a58e0;
 
 ---
 
-## 🟡 Blocked (14)
+## 🟡 Blocked (15)
 
 *waiting on a prerequisite, a boundary, or the owner*
+
+**`wrist-transfer-screen-run`** · `gpu-local`
+
+Execute the wrist-transfer screen per the 08-14 design memo (posts/2026-08-14-wrist-transfer-screen-design.md, frozen sections 5-7 become the pre-reg verbatim): stage 0 wrist-transform hook (--wrist-transform {none,blackout,freez…
+
+**boundary:** Queued 17:3xZ 08-14 at the design close. BLOCKED on the in-channel GPU release (owner reserve 12:54:19Z 08-14 stands). prereg field points at the design memo (the registered skeleton); launch still requires a posted FINAL pre-reg freezing its sections 5-7 verbatim; stage boundaries are hard stops. Stage 0 is CPU-preparable during the reserve if a session wants it early - the transform hook + oracles land without touching the GPU; honesty placement (er_60k knn5) is the only stage-0 GPU-adjacent step (~0.1 GPU-h class, still gated on the release). · [pre-reg](posts/2026-08-14-wrist-transfer-screen-design.md)
+
+<details><summary>full record</summary>
+
+Execute the wrist-transfer screen per the 08-14 design memo (posts/2026-08-14-wrist-transfer-screen-design.md, frozen sections 5-7 become the pre-reg verbatim): stage 0 wrist-transform hook (--wrist-transform {none,blackout,freeze,arm_blur} on obs.wrist in both rollout drivers) + oracles (golden frames, bit-replay of none, qpos invariance, W3 mask spot-check) + honesty placement of W1/W3 on the banked 100 manip pose slots; stage 1 ftrig4k x {W0,W1,W3} 100 seeds + T1 top-blackout 25 (~3.3 GPU-h); stage 2 simft fine-tune (sim-rendered replays of real episodes 0-25 + recorded actions, ftrig4k recipe) + P2 x {W0,W1,W3} (~4.8); stage 3 conditional W2/W4 ladder (~3.8). Gates/aborts per memo section 6; worst-case 12.0 GPU-h, gate &lt;=14, hard-stop boundaries with in-channel posts.
+
+</details>
+
+---
 
 **`renderer-pbr-wrist-pilot`** · `cpu` · **⛔ owner hold**
 
@@ -244,9 +258,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (165)
+## ✅ Done (166)
 
 *closed — the full record stays in each fold*
+
+**`wrist-transfer-screen-design`** · `cpu`
+
+Wrist-transfer screen design doc (the decision brief's move #2, design only
+
+**boundary:** Queued 16:2xZ 08-14 at the decision-brief close (depth refill; executable any window, pure CPU/writing). The design must state its own falsifiers before execution is queued; no launches until the in-channel GPU release. | DONE 17:3xZ 08-14 (work session): design memo posted (posts/2026-08-14-wrist-transfer-screen-design.md) with arms (P1 ftrig4k + P2 simft sim-adaptation sanity arm; wrist columns W0 classic / W1 blackout / W2 freeze / W3 arm-mask blur / W4 measured-materials ON; T1 top-blackout positive control), honesty placement of every arm on the banked knn5 axis, paired frozen-seed 0-99 draw-0 stats, gates (W0 determinism + sanity band vs banked sim100 - git audit found the banked rows predate the fitted lens, NOT a bit-anchor; hold floor; T1 must move; placement sanity), falsifiers F-instrument/F-null/F-flat/F-live, staged ladder worst-case 12.0 GPU-h gate &lt;=14. Schematic chart on fontaine-reports (200). Execution queued as wrist-transfer-screen-run (blocked on GPU release); squint-twin-preflight queued as the successor-tier CPU prep.
+
+<details><summary>full record</summary>
+
+Wrist-transfer screen design doc (the decision brief's move #2, design only — no run): design the closed-loop relative screen that prices whether the banked 0.877 wrist dishonesty moves SUCCESS RATE at all (the unpriced link between the encoder-honesty proxy and the north star). Squint-style per ideas.md 0819: deterministic-seed sim rollouts as RELATIVE screens (domain gap held constant across arms), arms = wrist-conditioned policy on {classic arm render, wrist feed ablated/degraded controls}, plus the required sim-adaptation sanity arm; instrument, seeds policy (fresh-seed rule), n and CI plan, gates + abort bands, GPU-h budget. Deliverable: a pre-registrable design doc on the blog — execution is a separate, owner-visible pre-reg when a GPU window opens.
+
+</details>
+
+---
 
 **`renderer-class-decision-brief`** · `cpu`
 
