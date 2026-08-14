@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-14T15:52:00Z
+**Updated:** 2026-08-14T16:21:00Z
 
-**Depth call:** depth 2: molmoact2-retirement-adoption (combined rebase executable the moment the owner's byte-parity fix lands on main) + renderer-class-decision-brief (pure CPU/writing, executable any window).
+**Depth call:** depth 2: molmoact2-retirement-adoption (phases 2-3 watch, steps 3-4 pending) + wrist-transfer-screen-design (executable refill from the decision-brief close); renderer-pbr-wrist-pilot sits blocked on the owner's tier-2 go per the brief
 
-**15 open** (Live 0 · Queued 2 · Blocked 13 · Done 164)
+**16 open** (Live 0 · Queued 2 · Blocked 14 · Done 165)
 
 ## 🔴 Live (0)
 
@@ -18,15 +18,15 @@
 
 *ready — waiting on a window or a boundary*
 
-**`renderer-class-decision-brief`** · `cpu`
+**`wrist-transfer-screen-design`** · `cpu`
 
-Renderer-class decision brief (analysis/writing, no run): consolidate the now-complete arm-appearance price into ONE owner-facing decision post
+Wrist-transfer screen design doc (the decision brief's move #2, design only
 
-**boundary:** Queued 15:3xZ 08-14 at the content-split close (depth refill). Executable any window (pure CPU/writing). Not a pre-reg — no run, no claims beyond banked numbers; the owner call it supports is theirs to make.
+**boundary:** Queued 16:2xZ 08-14 at the decision-brief close (depth refill; executable any window, pure CPU/writing). The design must state its own falsifiers before execution is queued; no launches until the in-channel GPU release.
 
 <details><summary>full record</summary>
 
-Renderer-class decision brief (analysis/writing, no run): consolidate the now-complete arm-appearance price into ONE owner-facing decision post — top residual 0.552-&gt;0.328 after clutter (banked), wrist 0.877 at manipulation poses attributed to the RENDERED ARM itself (content term nil per sim-manip-wrist-content-split 15:2xZ 08-14: paired delta +3.28e-07 straddling zero, blind-slot control ~0, ABSENT AUROC 0.888), material-stack regression at manip poses (+4e-07 CI excl. 0). Brief covers: what a normal-map/PBR + real-gripper-geometry upgrade would plausibly buy per channel, rough implementation cost tiers (texture-only vs mjSpec recompile vs asset re-export), what stays unpriced without it, and the recommendation. Chart-led per the standing preference; lands on the blog + in-channel pointer.
+Wrist-transfer screen design doc (the decision brief's move #2, design only — no run): design the closed-loop relative screen that prices whether the banked 0.877 wrist dishonesty moves SUCCESS RATE at all (the unpriced link between the encoder-honesty proxy and the north star). Squint-style per ideas.md 0819: deterministic-seed sim rollouts as RELATIVE screens (domain gap held constant across arms), arms = wrist-conditioned policy on {classic arm render, wrist feed ablated/degraded controls}, plus the required sim-adaptation sanity arm; instrument, seeds policy (fresh-seed rule), n and CI plan, gates + abort bands, GPU-h budget. Deliverable: a pre-registrable design doc on the blog — execution is a separate, owner-visible pre-reg when a GPU window opens.
 
 </details>
 
@@ -46,9 +46,23 @@ Adopt the molmoact2 retirement plan (docs/molmoact2-retirement.md, main 02a58e0;
 
 ---
 
-## 🟡 Blocked (13)
+## 🟡 Blocked (14)
 
 *waiting on a prerequisite, a boundary, or the owner*
+
+**`renderer-pbr-wrist-pilot`** · `cpu` · **⛔ owner hold**
+
+Renderer-class wrist pilot (the decision read the 16:4xZ 08-14 brief recommends): re-export ONLY the wrist-visible arm meshes (gripper, camera mount, forearm links) STL-&gt;decimate-&gt;xatlas-UV-&gt;OBJ via the convert_benchy.py pipeline…
+
+**boundary:** Queued 16:2xZ 08-14 at the decision-brief close (from the decision-brief close). OWNER-GATED by design: the brief prices the decision as the owner's call — do not start the asset work without an in-channel owner go on the pilot (it commits tier-2 engineering, not just a read). On go: pre-reg required before the read (bands frozen from the banked run-3 anchors 0.713/0.523/[0.86,0.89] + calibration directional gate); renderer choice recorded in the pre-reg. No launches until the in-channel GPU release; embeds fit any cleared gap.
+
+<details><summary>full record</summary>
+
+Renderer-class wrist pilot (the decision read the 16:4xZ 08-14 brief recommends): re-export ONLY the wrist-visible arm meshes (gripper, camera mount, forearm links) STL-&gt;decimate-&gt;xatlas-UV-&gt;OBJ via the convert_benchy.py pipeline; bake procedural print-layer normal maps (parametric: known layer height + print orientation per part); render the SAME 100 pose-matched manipulation slots (sim_rollout_pose_wrist_read run-3 harness verbatim: episodes 26-49 mid-band, timestamp-exact real decode, er_60k knn5, 150-frame manip reference, episode-disjoint calibration per Amendment 1, directional gate per Amendment 2) through an external PBR path consuming the posed scene, arm layer feeding the existing anchored compositor path where applicable (wrist rides the raw render). PRIMARY: manip wrist AUROC, PBR arm vs banked 0.877 (in-run PRESENT replication gate [0.86, 0.89] on the classic arm). Decides tier-2: material move toward the 0.523 reset band = buy with evidence; null = the relief/light-transport hypothesis is wrong and the whole tier is saved. CPU renders + ~0.02 GPU-h embeds.
+
+</details>
+
+---
 
 **`sim-arm-photometrics-promotion`** · `cpu` · **⛔ owner hold**
 
@@ -230,9 +244,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (164)
+## ✅ Done (165)
 
 *closed — the full record stays in each fold*
+
+**`renderer-class-decision-brief`** · `cpu`
+
+Renderer-class decision brief (analysis/writing, no run): consolidate the now-complete arm-appearance price into ONE owner-facing decision post
+
+**boundary:** Queued 15:3xZ 08-14 at the content-split close (depth refill). Executable any window (pure CPU/writing). Not a pre-reg — no run, no claims beyond banked numbers; the owner call it supports is theirs to make. | DONE 16:2xZ 08-14 (work session): brief posted (posts/2026-08-14-renderer-class-decision-brief.md, chart-led, banked numbers only; lead chart chart__renderer_class_decision.png on fontaine-reports, curl 200). Tiers priced: tier-0 albedo spent (refuted x2), tier-1 in-classic cannot express relief (no normal-map input), tier-2 = STL-&gt;UV re-export (convert_benchy.py precedent) + procedural layer-line normal maps + external PBR path feeding the anchored compositor (validation tail is the real cost). Recommendation: pilot before buying — wrist-visible meshes only at the 100 banked manip slots (decides the tier for ~0.02 GPU-h), or the closed-loop transfer read; both owner-gated.
+
+<details><summary>full record</summary>
+
+Renderer-class decision brief (analysis/writing, no run): consolidate the now-complete arm-appearance price into ONE owner-facing decision post — top residual 0.552-&gt;0.328 after clutter (banked), wrist 0.877 at manipulation poses attributed to the RENDERED ARM itself (content term nil per sim-manip-wrist-content-split 15:2xZ 08-14: paired delta +3.28e-07 straddling zero, blind-slot control ~0, ABSENT AUROC 0.888), material-stack regression at manip poses (+4e-07 CI excl. 0). Brief covers: what a normal-map/PBR + real-gripper-geometry upgrade would plausibly buy per channel, rough implementation cost tiers (texture-only vs mjSpec recompile vs asset re-export), what stays unpriced without it, and the recommendation. Chart-led per the standing preference; lands on the blog + in-channel pointer.
+
+</details>
+
+---
 
 **`sim-manip-wrist-content-split`** · `cpu`
 
