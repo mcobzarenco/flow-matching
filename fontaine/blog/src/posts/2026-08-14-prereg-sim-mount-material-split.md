@@ -122,9 +122,63 @@ arm-split only_mount 0.821, no_mount removal best 0.654, plate_only
   no_mount amputation best 0.654 (does painting it right beat cutting
   it off?).
 
+## Amendment 1 (03:2x–04:2xZ, pre-read, in-run oracle only)
+
+The first read attempt ABORTED itself at the patched pass's first slot:
+8 pixels differed outside the 16-dilated mount mask. Diagnosed, not a
+bug — the **tabletop plane carries reflectance 0.02**, so the table
+faintly mirrors the scene and ANY arm color change moves its table
+reflection; the mount is the tallest arm part, so its reflection lands
+~35 px below the bracket, outside its own halo (the links read never
+saw this only because the arm-class halo swallowed the arm's own
+reflection). Measured: 8 px |Δ| = 1 at slot 0; up to 20 px |Δ| = 5 at
+seed 2 (the fitted specular 1.0 puts glints on the mount, and 0.02 ×
+full-scale 255 ≈ 5 counts bounds their reflection). The locality
+oracle is AMENDED from bit-equality to the physical bound with the
+mechanism named: outside the halo, ≤ 3000 px (~1% of frame) may differ
+by ≤ 6 counts; per-pass leak maxima are recorded in the results JSON.
+The registered decision reads (PRIMARY/MECHANISM CIs, abort band) are
+untouched.
+
 ## Cost
 
 CPU renders (~100 paired slots × 3 instances) + ~0.02 GPU-h embeds
 (6 sim arms × 100 + 400 real frames) on the er_60k trunk — run
 alongside R1-A (34 GiB / 100%, ~41 GiB headroom; minutes-long embed
 job, absorbed by R1-A's ~48-min step pace).
+
+---
+
+## RESULTS (04:4xZ 08-14, executed same session — split verdict, adjudicated by the frozen rule)
+
+All gates green: in-run v3 **0.713** dead-center; bridges reproduce the
+arm-split anchors exactly (plate_only 0.866, only_mount 0.821); clean
+anchor 0.283; qpos bit-equal across all three instances × 100 slots;
+locality within the amended reflection bound (≤24 px, ≤5 counts, both
+passes, vs 3000/6 allowed).
+
+- **PRIMARY — FAIL.** v3_mount vs v3 paired Δknn5 **+6.8e-08, CI95
+  [−0.07e-07, +1.42e-07] includes zero** (45/100 closer); AUROC
+  0.713 → 0.713. At ~0.66% of pixels, the fixed part sits below the
+  whole-frame read's detection floor. Per the frozen rule: **no
+  promotion ask for `mount_material` alone.**
+- **MECHANISM — PASS, decisively.** only_mount_v1 vs only_mount
+  **−1.03e-06, CI95 [−1.16e-06, −0.90e-06] entirely below zero**,
+  93/100 closer, AUROC **0.821 → 0.793**. And vs the bare plate the
+  graded mount reads **−2.67e-06 with 100/100 slots closer** — the
+  amputation confound REVERSED: with the measured color, mount
+  *presence* beats absence. The grade is right; the frame just can't
+  see 0.66% of pixels through this probe.
+- **Record-only rider (the stack).** v3_full_fix (mount + photometrics)
+  vs v3: **−1.49e-07, CI95 [−2.45e-07, −0.57e-07] entirely below
+  zero**, 61/100, AUROC **0.713 → 0.702**; vs v3_mount −2.17e-07
+  CI-excludes-zero (72/100) — the photometrics term carries the stack.
+  Implication for the pending promotion asks: if `arm_photometrics`
+  flips, `mount_material` rides at zero measured frame-level cost —
+  the owner's call, stated without a recommendation to flip it alone.
+
+Disposition: the part is fixed at the mechanism level and banked
+opt-in; no follow-up mount item queued (nothing further to execute
+unless the promotion flips it into production). The next arm item
+remains the registered texture follow-up (print layers + servo glint
+tail).

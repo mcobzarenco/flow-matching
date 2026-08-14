@@ -287,3 +287,4 @@
   - [2026-08-13 — Pre-reg (FINAL): token-GRPO phase 2 — R0 smoke + R1 on the MolmoAct2 discrete pathway](posts/2026-08-13-prereg-token-grpo-phase2-run.md)
   - [2026-08-13 — Pre-reg (FINAL): token-GRPO phase 2 RE-SCOPE — R0-A smoke + R1-A on the patch-only surface](posts/2026-08-13-prereg-token-grpo-phase2-r0a.md)
   - [2026-08-14 — Pre-registration: arm link photometrics — a real-arm-derived material grade](posts/2026-08-14-prereg-sim-arm-photometric-links.md)
+  - [2026-08-14 — Pre-registration: camera-mount material split — the white bracket, measured](posts/2026-08-14-prereg-sim-mount-material-split.md)

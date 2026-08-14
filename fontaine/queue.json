@@ -1511,11 +1511,20 @@
   {
    "id": "sim-mount-material-split",
    "class": "cpu",
+   "status": "done",
+   "owner_hold": false,
+   "prereg": "fontaine/blog/src/posts/2026-08-14-prereg-sim-mount-material-split.md",
+   "title": "Camera-mount material split + white retexture (rider finding 08-14: the mount is WHITE/silver in reality, sim paints it black via _recolor_arm; arm-split read no_mount as the ONLY removal moving v3 toward real, 0.713->0.654 on 0.66% px): the mount geoms share wrist_roll_follower_so101_v1_material with the gripper's wrist-roll piece, so first split the material (mjSpec edit or vendored-XML material clone at load), then set the mount to a mined real color (same pose-projection mining path, mount population), gate on the pinned 20x5 probe (only_mount 0.821 / no_mount 0.654 anchors). Pre-reg with explicit bar before any read.",
+   "boundary": "Queued 02:1xZ 08-14 at the photometric close. The per-pixel most distinctive class \u2014 likely the highest-leverage remaining arm fix. CPU + ~0.02 GPU-h per gate read. | EXECUTED + CLOSED 04:4xZ 08-14: material split via byte-identical gripper detach (oracle-pinned), real mount mined riding the dark gripper/wrist locks (81/156 frames, 91k px, NEUTRAL LIGHT GRAY [123,120,125] vs recolor black), fit chose the links' specular ceiling (1.0/0.1, albedo 0.455/0.430/0.431). Registered read SPLIT VERDICT: MECHANISM PASS decisively (only_mount_v1 0.821->0.793, CI [-1.16,-0.90]e-6, 93/100; vs plate -2.67e-6 at 100/100 \u2014 amputation confound REVERSED, presence now beats absence) but PRIMARY FAIL (v3_mount vs v3 CI includes zero, 0.66% px below the frame read's floor) -> NO standalone promotion ask per frozen rule. Record-only: two-flag stack 0.713->0.702 CI-excl-0 \u2014 mount rides free if the photometrics promotion flips. Amendment 1 (locality oracle -> table-reflectance bound, 0.02 reflectance) logged pre-read. Banked opt-in mount_material='v1'; no follow-up mount item (nothing to execute unless promoted)."
+  },
+  {
+   "id": "sim-wrist-view-material-read",
+   "class": "cpu",
    "status": "queued",
    "owner_hold": false,
    "prereg": null,
-   "title": "Camera-mount material split + white retexture (rider finding 08-14: the mount is WHITE/silver in reality, sim paints it black via _recolor_arm; arm-split read no_mount as the ONLY removal moving v3 toward real, 0.713->0.654 on 0.66% px): the mount geoms share wrist_roll_follower_so101_v1_material with the gripper's wrist-roll piece, so first split the material (mjSpec edit or vendored-XML material clone at load), then set the mount to a mined real color (same pose-projection mining path, mount population), gate on the pinned 20x5 probe (only_mount 0.821 / no_mount 0.654 anchors). Pre-reg with explicit bar before any read.",
-   "boundary": "Queued 02:1xZ 08-14 at the photometric close. The per-pixel most distinctive class \u2014 likely the highest-leverage remaining arm fix. CPU + ~0.02 GPU-h per gate read."
+   "title": "Wrist-view read of the arm material fixes (follow-on to sim-arm-photometric-links + sim-mount-material-split, both banked opt-in): the wrist camera sees the arm links/gripper up close, and both material fixes change wrist-view pixels \u2014 the photometrics results post flagged the wrist knn5 as the promotion sanity. Run the encoder OOD probe on WRIST frames: paired v3 default vs the two-flag stack (arm_photometrics + mount_material), same 20x5 slot schedule, er_60k trunk; anchors = the OOD probe's wrist baseline (5-NN AUROC 0.828, ratio 1.33x, centroid 0.707). PRIMARY: paired wrist dknn5 CI95 < 0. Feeds the pending promotion asks with the wrist-side fact instead of assuming it. Pre-reg with explicit bar before any read.",
+   "boundary": "Queued 04:5xZ 08-14 at the mount close (depth refill). CPU renders + ~0.02 GPU-h embeds; fully executable without the promotion (opt-in flags)."
   }
  ],
  "updated": "2026-08-14T03:25:00Z"

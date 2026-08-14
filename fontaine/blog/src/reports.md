@@ -533,6 +533,52 @@ Renders CPU (~4 min), embeds 5 groups ~0.02 GPU-h.
 - [crops strip](https://mcobzarenco-fontaine-reports.static.hf.space/fg_fix_crops_strip.png)
   — mined RGBA crops: on checker / source naive median / identity paste
 
+## Camera-mount material split — mechanism lands (93/100), whole-frame null: the part is fixed but too small to move the frame read ([pre-reg](posts/2026-08-14-prereg-sim-mount-material-split.md), 08-14)
+
+The arm-split's per-pixel worst offender, measured and fixed — with a
+split verdict the pre-reg's decision rule adjudicates cleanly. The
+mount (the wrist camera's white 3D-printed bracket) shared a material
+with a black gripper piece; the fix first made the material
+mount-exclusive via a **byte-identical detach** (the gripper geom
+drops to `matid=-1` with the color copied — the shipped material
+carries exactly mjv's material-less defaults; oracle-pinned), then
+mined the real bracket at recorded poses. The white part can't
+darkness-snap, so its mask **rode the dark gripper/wrist per-body
+locks** plus a brightness guard: 81/156 frames, 91k px — the real
+mount region reads **neutral light gray [123, 120, 125], luma p50 121**
+vs the recolor-black composite's 55. Fit through the production
+composite chose **the same specular ceiling as both link populations**
+(spec 1.0, shin 0.1; albedo 0.455/0.430/0.431), loss 177188 → 9028,
+composited medians dead-on real. The registered 20×5 read (in-run v3
+0.713 dead-center; bridges reproduce the arm-split anchors exactly):
+**MECHANISM PASSES decisively — only_mount_v1 −1.03e-06 CI95 [−1.16,
+−0.90]e-06, AUROC 0.821 → 0.793, 93/100 closer**, and against the bare
+plate the graded mount reads −2.67e-06 with **100/100 closer** — with
+the right color, mount *presence* now beats absence (the no_mount
+amputation confound, reversed). But **PRIMARY FAILS — v3_mount vs v3
+CI95 [−0.07, +1.42]e-07 includes zero**, 45/100, AUROC 0.713 → 0.713:
+at ~0.66% of pixels the fixed part is below the whole-frame read's
+detection floor. Per the frozen rule: no promotion ask for the mount
+flag alone. Record-only rider: the **two-flag stack** (mount +
+photometrics, what the pending promotion asks would flip together)
+reads **0.713 → 0.702, CI95 [−2.45, −0.57]e-07 entirely below zero**
+(61/100) — the photometrics carries it; the mount flag rides at zero
+measured frame-level cost if the owner flips both. Amendment 1 logged
+pre-read: the locality oracle's bit-equality was amended to a bound —
+the tabletop's 0.02 reflectance mirrors any arm color change (≤24 px,
+≤5 counts measured across all 200 oracle slots vs the 3000 px /
+6 count bound). Renders CPU (3 sequential instances), embeds 8 groups
+~0.02 GPU-h on the R1-A-freed GPU.
+
+- [analysis JSON](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_mount_material_read.json)
+  · [chart](https://mcobzarenco-fontaine-reports.static.hf.space/chart__mount_material_read.png)
+  · [mine](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__mount_material_mine.json)
+  · [fit](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__mount_material_fit.json)
+- [frame strip](https://mcobzarenco-fontaine-reports.static.hf.space/strip__mount_material_read.png)
+  — v3 / v3_mount / v3_full_fix and only_mount / only_mount_v1, same slot
+- [mining overlay](https://mcobzarenco-fontaine-reports.static.hf.space/overlay__mount_material_mine_ep000_f0635.png)
+  — the mount mask (blue) riding the gripper-cluster lock (red) on a real frame
+
 ## Arm link photometrics — a measured material grade lands, both registered CIs below zero ([pre-reg](posts/2026-08-14-prereg-sim-arm-photometric-links.md), 08-14)
 
 The execution of the arm-split verdict. Instead of guessing a better
