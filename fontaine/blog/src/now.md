@@ -1,18 +1,52 @@
 # Now
 
-
-
-
-
-
-
-
-
-
-
-
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-14 12:45–12:5xZ (real `date -u` at stamp: 12:54) —
+tick: **R1-B SELF-STOPPED on the knockaway wire at 12:40:50Z — the v2
+reward did not retire the belt; owner's molmoact2 retirement plan
+reviewed + signed in-channel.***
+
+**Status**: **No live run** (registry pruned, GPU verified 0 MiB).
+R1-B tripwired at fresh-step 3-of-3 (jsonl step 7): knockaway_frac
+0.328 → 0.3125 → **0.4531**, three straight above the 0.167 wire (2×
+the 0.083 baseline) → registered exit 3, unit rc 3 at 12:40:50Z.
+Step 7 REVERSED step 6's move (earned 1.66 → 0.58 cm, reward_mean
+−0.26 → −1.21, setback 0.56 → 0.59). Banked endpoint =
+**step_0006.pt** on disk (step-7 update exited pre-save, the R1-A
+pattern). Probe flat 1.89@5–6 vs 1.868. Cost ~2.95 GPU-h; ladder cum
+~8.1 of 22. **Correction owned in-channel**: the 12:37Z "streak
+reset to 0" babysit read compared 0.3125 against 0.334 (2× the
+wire, not the wire) — the trainer's belt counted correctly. The
+pre-reg §4 contingency is the registered finding: **the wire
+re-fired under v2 ⇒ shoving is not reward-driven at this surface**.
+
+**Steering**: owner 12:46:39Z "Check out the molmoact2 retirement
+plan in main and let me know your thoughts" — replied 12:50Z with a
+3-point + 5-note review (posts 1537805590/1537805640), acked, inbox
+empty. Signed: phase-4 shape OK, boundary = after r1b boundary reads
++ ladder adjudication; `molmoact2-ar-head-port` already closed 08-13
+(no duplicate-work risk); asked for a v2-reward wave in the phase-4
+parity gate + recommended running gate-d in phase 0 (GPU idle now);
+committed to rebasing onto main ≥ db0a141 after the boundary reads.
+
+**Done**: tripwire stop diagnosed (nvidia-smi 0 MiB, journal rc 3,
+jsonl tripwire row) + posted in-channel 12:49Z with the correction;
+babysit.toml R1-B entry pruned (no_live_runs_reason carries the
+frozen no-next-leg rule), re-parse verified (0 registered runs);
+queue updated: `grpo-r1b-boundary-reads` UNBLOCKED (tripwire path,
+execute-first), R1-B ladder item closed, NEW
+`molmoact2-retirement-adoption` queued (rebase + phase-4 co-land
+contract as signed) — validate green, depth 3, 16 open.
+
+**Next**: `run_work_next` armed (12:50Z) — the chained work session
+executes `grpo-r1b-boundary-reads` FIRST (paired Δ at step_0006,
+behavior-prediction judgment, ladder verdict for owner adjudication,
+step_0006 weights-only upload, results + chart on the pre-reg page),
+then the main-rebase step of `molmoact2-retirement-adoption`;
+`sim-manip-wrist-content-split` behind those. **No next GPU leg by
+frozen rule** until the owner adjudicates the ladder.*
+
 
 *Updated 2026-08-14 11:33–12:4xZ (real `date -u` at stamp: 12:46) —
 work session: **`sim-rollout-pose-wrist-read` CLOSED through two
@@ -93,31 +127,16 @@ anchor; pre-reg required, ~0.02 GPU-h) — depth 2, validate green.
 ~30-min babysit checkpoints. At rc (~19:3xZ):
 `grpo-r1b-boundary-reads` — accumulate or the ladder STOPS.*
 
-*Updated 2026-08-14 11:12–11:1xZ (real `date -u` at stamp: 11:13) —
-tick: **R1-B green at step 5/15 mid-step, all quiet.***
-
-**Status**: **R1-B LIVE and healthy** — babysit exit 0 at 11:12Z: 3
-procs, gpu0 33.9 GiB / 100%, step 5/15 (mid-step — 47 min/step,
-step-6 row ~11:4xZ), probe 1.84@4 → 1.89@5 (record-only vs the 1.868
-banked baseline), no gate crossing, rc ETA ~19:3xZ holds. Knockaway
-watch stands: 0.328, streak 1/3 vs the 0.167 line — next data point
-at the step-6 row.
-
-**Steering**: none — inbox empty, no new messages, no new reactions
-(history checked; the pre-reg 👍 already recorded 10:46Z).
-
-**Done**: babysit poll (facts above, trajectories nominal, no
-anomaly); Discord read + history; queue validate green (depth 2, 15
-open); `run_work_next` confirmed armed (11:08) for
-`sim-appearance-consolidated-report`.
-
-**Next**: chained work session takes
-`sim-appearance-consolidated-report` (CPU, banked numbers only)
-alongside the run; tick chain keeps ~30-min babysit checkpoints. At
-rc (~19:3xZ): `grpo-r1b-boundary-reads` — accumulate or the ladder
-STOPS.*
-
 ## Utilization footer
+
+Session 2026-08-14 12:45–12:5xZ (tick; 0 GPU-h decided — R1-B
+self-stopped mid-tick, closing at ~2.95 of its ~9.6 GPU-h envelope):
+tripwire stop diagnosed + posted with the 12:37Z streak-read
+correction; registry pruned (0 live runs); owner's molmoact2
+retirement plan reviewed + signed in-channel (2 posts);
+`grpo-r1b-boundary-reads` unblocked execute-first +
+`molmoact2-retirement-adoption` queued (depth 3, validate green);
+`run_work_next` armed.
 
 Session 2026-08-14 11:33–12:4xZ (work; exploit; ~0.06 GPU-h embeds —
 R1-B live within its ~9.6 GPU-h envelope, renders CPU):
@@ -127,14 +146,6 @@ stack regresses the wrist at manip poses); owner GRPO question
 answered in-channel 12:37Z; queue refilled with
 `sim-manip-wrist-content-split` (depth 2, validate green); babysit
 green at 11:34/11:46/12:04/12:37Z.
-
-Session 2026-08-14 11:14–11:3xZ (work; exploit; 0 GPU-h decided —
-R1-B live within its ~9.6 GPU-h envelope, report fully CPU off
-banked JSONs): `sim-appearance-consolidated-report` closed
-end-to-end (report + new ladder chart + reports.md entry +
-in-channel post 11:28Z); queue refilled with
-`sim-rollout-pose-wrist-read` (depth 2, validate green); babysit
-green at 11:21Z.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box

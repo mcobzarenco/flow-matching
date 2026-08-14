@@ -78,7 +78,7 @@
 # 03:1xZ (R1-B re-price / reward-patch pre-reg / stop the ladder) —
 # owner adjudicates; GPU idle for GPU-launches pending that word.
 
-no_live_runs_reason = "declared 03:2xZ 08-14 work session: grpo_phase2_r1a self-stopped on the registered knockaway tripwire at step 5 (exit 3, 03:05Z) and is pruned; NO R2-A by the frozen rule. Next GPU leg pends the owner's boundary call (options in-channel 03:1xZ). The mount-material gate read (~0.02 GPU-h embeds) rides the free GPU this session."
+# (no_live_runs_reason superseded 12:5xZ 08-14 tick — R1-B tripwire prune below carries the live key. PRIOR: "declared 03:2xZ 08-14 work session: grpo_phase2_r1a self-stopped on the registered knockaway tripwire at step 5 (exit 3, 03:05Z) and is pruned; NO R2-A by the frozen rule. Next GPU leg pends the owner's boundary call (options in-channel 03:1xZ). The mount-material gate read (~0.02 GPU-h embeds) rides the free GPU this session.")
 
 # molmoact2_ar100b_masked entry PRUNED 13:3xZ 08-13 work session —
 # COMPLETE 13:31Z rc 0, ridden end-to-end (~1.05/1.5 GPU-h, 63.1
@@ -782,29 +782,22 @@ no_live_runs_reason = "declared 03:2xZ 08-14 work session: grpo_phase2_r1a self-
 # banked). R1-B below resumes it under the patched reward — pre-reg
 # posts/2026-08-14-prereg-token-grpo-phase2-r1b.md.
 
-[[run]]
-name = "grpo_phase2_r1b"
-kind = "train-jsonl"
-host = "local"
-pgrep = "sim.grpo_loop"
-pgrep_min = 1                     # parent loop (waves spawn 8 transient workers); unit grpo-phase2-r1b
-gpu_indices = [0]
-gpu_mem_min_mib = 8000
-jsonl = "/home/ubuntu/flow-matching/outputs/sim/grpo_phase2_b/train.jsonl"
-total_steps = 15
-probe_key = "eval_reward_mean"
-vram_key = "vram_gib"
-started_utc = "2026-08-14T09:43:20Z"
-gpu_hours_per_wall_hour = 1.0
-boundary = "R1-B: steps 5-14 resuming R1-A's step_0004.pt into fresh grpo_phase2_b under the PATCHED reward (train_reward v2: grasped-progress pay + 0.5x ungrasped-displacement charge), lr 3e-7, kl_beta 1.0 — owner-approved (2)-then-(1) 09:16Z 08-14. ~0.96 GPU-h/step => ~9.6 GPU-h, rc ETA ~19:3xZ 08-14; cum ~14.7 of the 22 gate. Endpoint: held-out paired delta CI (v1 metric, banked baseline) — accumulate or the ladder STOPS."
-anchors = [
-    "CALIBRATION READ (registered): first wave's earned_progress_mean / ungrasped_disp_mean + groups_kept — >=6/8 groups dropped in BOTH first two waves = calibration FAIL (lambda re-price amendment), not a training verdict",
-    "eval metric stays v1 (composite_reward): baseline 1.868 2/20 map rides the checkpoint; R1-A read flat 1.8441 2/20 through step 4 — the question is accumulation once shoving stops paying",
-    "behavior prediction on record: knockaway_frac (R1-A: 0.41->0.36->0.31, all above the 0.167 x3 line) should DECAY under v2; setback_frac + earned/shoved decomposition are new telemetry keys — no baseline, record-only",
-    "wires unchanged incl. knockaway 2x-baseline x3 (belt stays on) + kl_stop 0.06; kl_beta doubled to 1.0 — anchor_k3_pre should stay ~e-07-scale early, watch it accumulate",
-    "resume correctness: anchor = pristine step-0 policy from --checkpoint captured pre-restore (oracle-pinned); duplicate step-4 eval row at start is expected loop behavior; first FRESH row is step 5",
-    "train_reward v2 raises loudly if any episode lacks a grip trace — a ValueError crash here means a worker ran stale code, not a training failure",
-]
-[[run.gates]]
-kind = "vram_max_gib"
-value = 75.0
+# grpo_phase2_r1b entry PRUNED 12:5xZ 08-14 tick — SELF-STOPPED on the
+# registered KNOCKAWAY TRIPWIRE 12:40:50Z (unit rc 3, GPU verified 0
+# MiB): fresh steps 5/6/7 read knockaway_frac 0.328 -> 0.3125 ->
+# 0.4531, three straight above the 0.167 line (2x the 0.083 baseline)
+# -> exit 3 at the step-7 boundary. Step 7 REVERSED the step-6
+# telemetry (earned 1.66 -> 0.58 cm, reward_mean -0.26 -> -1.21,
+# setback 0.56 -> 0.59). The 12:37Z babysit "streak reset" read was a
+# MISREAD (compared 0.3125 vs 0.334 = 2x the wire, not the 0.167
+# wire); the trainer's own belt counted correctly — owned in-channel
+# 12:5xZ. PRE-REG REGISTERED THIS CONTINGENCY VERBATIM: wire re-fires
+# under v2 => "the shoving is not reward-driven at this surface — a
+# finding on its own". Banked endpoint = step_0006.pt (post-step-6;
+# the step-7 update exited pre-save, same pattern as R1-A). Cost ~2.95
+# GPU-h this run (09:43-12:40Z), ladder cum ~8.1 of the 22 gate.
+# Boundary reads (paired delta at step_0006, behavior-prediction
+# judgment, ladder verdict) + step_0006 weights-only upload + results
+# section = grpo-r1b-boundary-reads, chained work session.
+
+no_live_runs_reason = "declared 12:5xZ 08-14 tick: grpo_phase2_r1b self-stopped on the registered knockaway tripwire at fresh-step 3-of-3 (12:40:50Z, rc 3) and is pruned; the v2 reward did NOT retire the wire — registered finding: shoving is not reward-driven at this surface. NO next GPU leg by frozen rule until the boundary reads land (grpo-r1b-boundary-reads, chained work session) and the ladder verdict is adjudicated."
