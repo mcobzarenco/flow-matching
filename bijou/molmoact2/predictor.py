@@ -60,9 +60,11 @@ from .action_expert import (
     load_action_expert_state,
 )
 from .processing import (
+    IMAGE_TOKEN_STRINGS,
     QuantileStats,
     load_norm_stats,
     pack_action_example,
+    require_single_obs,
     unnormalize_action,
 )
 from .wiring import (
@@ -72,19 +74,11 @@ from .wiring import (
     validate_inference_config,
 )
 
-#: Their processor's ``IMAGE_TOKENS`` membership strings (the
-#: ``token_type_ids`` set), resolved per checkpoint through its
-#: tokenizer — see module docstring for why ids cannot be pinned.
-IMAGE_TOKEN_STRINGS = (
-    "<im_patch>",
-    "<im_col>",
-    "<im_start>",
-    "<low_res_im_start>",
-    "<frame_start>",
-    "<im_end>",
-    "<frame_end>",
-    "<im_low>",
-)
+# IMAGE_TOKEN_STRINGS and require_single_obs moved to the first-class
+# encoder side (phase 1 of docs/molmoact2-retirement.md); imported
+# through the processing shim above and re-exported here so the port's
+# call sites keep working until the package retires (phase 5).
+__all__ = ["IMAGE_TOKEN_STRINGS", "MolmoAct2Predictor", "require_single_obs"]
 
 
 def resolve_image_token_ids(tokenizer: Molmo2TextTokenizer) -> tuple[int, ...]:
@@ -174,25 +168,6 @@ def _positive_int(value: Any, *, default: int, what: str) -> int:
     if resolved < 1:
         raise ValueError(f"{what} must be >= 1, got {resolved}")
     return resolved
-
-
-def require_single_obs(config: dict[str, Any]) -> int:
-    """Guard a checkpoint config's ``n_obs_steps``: this port packs
-    exactly ONE observation per prompt, so only 1 is loadable.
-
-    Refuses a MISSING key too, loudly: their HF config class defaults to
-    30 while training used 1 — under their reference a missing key
-    silently shifts chunk slicing to start at index 29, and silently
-    picking either side of that divergence is worse than stopping."""
-    value = config.get("n_obs_steps")
-    if value is None or int(value) != 1:
-        raise NotImplementedError(
-            f"n_obs_steps={value!r}: this port packs exactly one observation "
-            "per prompt (all released/rig checkpoints ship 1). A missing key "
-            "is refused rather than defaulted — their HF config class "
-            "defaults to 30, which shifts the chunk slice to index 29",
-        )
-    return 1
 
 
 @dataclass(frozen=True, slots=True)

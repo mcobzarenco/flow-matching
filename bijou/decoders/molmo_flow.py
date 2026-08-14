@@ -614,10 +614,10 @@ class MolmoFlowConfig:
     @staticmethod
     def released_so100_101() -> MolmoFlowConfig:
         """The released ``allenai/MolmoAct2-SO100_101`` expert on its
-        Molmo2-4B trunk (kv_dim 1024). The literals' home is the port's
-        ``ActionExpertConfig.released_so100_101``; the sync test pins
-        this mirror field-for-field until the port retires and the
-        literals move here."""
+        Molmo2-4B trunk (kv_dim 1024). THE literals' home (the port
+        mirror + its sync test retired at tag
+        ``pre-molmoact2-retirement`` — docs/molmoact2-retirement.md
+        phase 1)."""
         return MolmoFlowConfig(
             max_horizon=30,
             max_action_dim=32,

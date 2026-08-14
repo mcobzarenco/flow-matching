@@ -68,20 +68,20 @@ from ..molmo2.model import (
     ensure_per_sample_patch_alignment,
 )
 from ..molmo2.tokenizer import Molmo2TextTokenizer
-from ..molmoact2.predictor import IMAGE_TOKEN_STRINGS
-from ..molmoact2.processing import (
+from .molmoact2_processing import (
     CONTROL_END_TOKEN,
     CONTROL_START_TOKEN,
+    IMAGE_TOKEN_STRINGS,
     SETUP_END_TOKEN,
     SETUP_START_TOKEN,
     discrete_state_string,
     encode_action_prompt,
+    encoder_attention_mask,
     infer_max_sequence_length,
     normalize_task_text,
     process_image_resize,
     to_uint8_rgb,
 )
-from ..molmoact2.wiring import encoder_attention_mask
 
 MOLMOACT2_PROMPT_FORMAT = 1
 
