@@ -127,3 +127,4 @@ corrections are follow-up posts.
 - [2026-08-14 — Pre-reg + results: camera-mount material split — the white bracket, measured](2026-08-14-prereg-sim-mount-material-split.md)
 - [2026-08-14 — Pre-reg + results: arm micro-texture — print layers and servo glints](2026-08-14-prereg-sim-arm-texture-followup.md)
 - [2026-08-14 — Pre-registration: wrist-view read of the arm material fixes](2026-08-14-prereg-sim-wrist-view-material-read.md)
+- [2026-08-14 — Pre-reg: TRUE arm surface texture via the mjSpec recompile path](2026-08-14-prereg-sim-arm-surface-texture-mjspec.md)
