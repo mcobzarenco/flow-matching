@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-14T18:24:00Z
+**Updated:** 2026-08-14T18:51:30Z
 
-**Depth call:** depth 2: molmoact2-retirement-adoption (phases 2-3 watch, steps 3-4 pending) + wrist-transfer-screen-design (executable refill from the decision-brief close); renderer-pbr-wrist-pilot sits blocked on the owner's tier-2 go per the brief
+**Depth call:** depth 2: molmoact2-retirement-adoption (phase-3 watch, steps 3-4 pending) + wrist-transfer-stage0-cpu-prep (executable refill from the prereg-final close); wrist-transfer-screen-run now GPU-release-only; renderer-pbr-wrist-pilot stays owner-gated
 
-**17 open** (Live 0 · Queued 2 · Blocked 15 · Done 167)
+**17 open** (Live 0 · Queued 2 · Blocked 15 · Done 168)
 
 ## 🔴 Live (0)
 
@@ -18,15 +18,15 @@
 
 *ready — waiting on a window or a boundary*
 
-**`wrist-transfer-screen-prereg-final`** · `cpu`
+**`wrist-transfer-stage0-cpu-prep`** · `cpu`
 
-FINAL pre-registration for the wrist-transfer screen (the design memo 2026-08-14-wrist-transfer-screen-design.md frozen into a launchable pre-reg): freeze arm list {ftrig4k, simft} x {W0..W4} + T1, seeds 0-99, the knn5 honesty ax…
+Stage-0 CPU-preparable slice of the wrist-transfer screen (per the FINAL pre-reg section 1 implementation contract + the run item's standing note that the hook + oracles land without touching the GPU): land the --wrist-transform…
 
-**boundary:** Queued 18:2xZ 08-14 at the squint-preflight close (depth refill; charter S4). Executable any CPU window. Simft training-data build steps stay inside the run item; this item is ONLY the frozen pre-reg document + post.
+**boundary:** Queued 18:5xZ 08-14 at the prereg-final close (depth refill; charter S4). Executable any CPU window under the reserve. Completing it shortens the post-release critical path to: none bit-replay + honesty placement + stage 1. · [pre-reg](posts/2026-08-14-prereg-wrist-transfer-screen.md)
 
 <details><summary>full record</summary>
 
-FINAL pre-registration for the wrist-transfer screen (the design memo 2026-08-14-wrist-transfer-screen-design.md frozen into a launchable pre-reg): freeze arm list {ftrig4k, simft} x {W0..W4} + T1, seeds 0-99, the knn5 honesty axis anchors (0.877-&gt;0.523 span), the W0 determinism gate + sanity band, falsifiers F-instrument/F-null/F-flat/F-live verbatim, ladder + 14 GPU-h gate, and the abort/success readouts; post to the blog + in-channel pointer. CPU-only writing task; its completion converts wrist-transfer-screen-run from double-blocked (prereg + GPU) to GPU-release-only, so the run launches the moment the owner frees the GPU.
+Stage-0 CPU-preparable slice of the wrist-transfer screen (per the FINAL pre-reg section 1 implementation contract + the run item's standing note that the hook + oracles land without touching the GPU): land the --wrist-transform {none,blackout,freeze,arm_blur} hook in both rollout drivers (applied to obs.wrist after observe(), before policy packing — the SimObservation seam in rollout_sim_parallel.py), the W3 per-tick wrist segmentation mask path (arm+gripper geom ids, Gaussian blur inside the mask only), and the CPU-side oracles: golden-frame test per transform + W3 mask visual spot-check on 3 banked pose slots + a transform-purity check (transforms touch pixels, never state). check.py green. The two GPU-adjacent stage-0 steps (none bit-replay of a banked seed; W1/W3 honesty placement on the 100 pose slots, ~0.1 GPU-h class) stay inside wrist-transfer-screen-run, gated on the release.
 
 </details>
 
@@ -54,7 +54,7 @@ Adopt the molmoact2 retirement plan (docs/molmoact2-retirement.md, main 02a58e0;
 
 Execute the wrist-transfer screen per the 08-14 design memo (posts/2026-08-14-wrist-transfer-screen-design.md, frozen sections 5-7 become the pre-reg verbatim): stage 0 wrist-transform hook (--wrist-transform {none,blackout,freez…
 
-**boundary:** Queued 17:3xZ 08-14 at the design close. BLOCKED on the in-channel GPU release (owner reserve 12:54:19Z 08-14 stands). prereg field points at the design memo (the registered skeleton); launch still requires a posted FINAL pre-reg freezing its sections 5-7 verbatim; stage boundaries are hard stops. Stage 0 is CPU-preparable during the reserve if a session wants it early - the transform hook + oracles land without touching the GPU; honesty placement (er_60k knn5) is the only stage-0 GPU-adjacent step (~0.1 GPU-h class, still gated on the release). · [pre-reg](posts/2026-08-14-wrist-transfer-screen-design.md)
+**boundary:** Queued 17:3xZ 08-14 at the design close. BLOCKED on the in-channel GPU release (owner reserve 12:54:19Z 08-14 stands). prereg field points at the design memo (the registered skeleton); launch still requires a posted FINAL pre-reg freezing its sections 5-7 verbatim; stage boundaries are hard stops. Stage 0 is CPU-preparable during the reserve if a session wants it early - the transform hook + oracles land without touching the GPU; honesty placement (er_60k knn5) is the only stage-0 GPU-adjacent step (~0.1 GPU-h class, still gated on the release). | PREREG-FINAL POSTED 18:5xZ 08-14 (posts/2026-08-14-prereg-wrist-transfer-screen.md): the item is now GPU-RELEASE-ONLY — the in-channel release is the single remaining blocker; stage 0 launches under the FINAL pre-reg with no further paperwork. Stage-0 CPU-preparable slice split out as wrist-transfer-stage0-cpu-prep (hook + transform oracles land under the reserve; the none bit-replay oracle + honesty placement stay GPU-gated inside this item). · [pre-reg](posts/2026-08-14-prereg-wrist-transfer-screen.md)
 
 <details><summary>full record</summary>
 
@@ -258,9 +258,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (167)
+## ✅ Done (168)
 
 *closed — the full record stays in each fold*
+
+**`wrist-transfer-screen-prereg-final`** · `cpu`
+
+FINAL pre-registration for the wrist-transfer screen (the design memo 2026-08-14-wrist-transfer-screen-design.md frozen into a launchable pre-reg): freeze arm list {ftrig4k, simft} x {W0..W4} + T1, seeds 0-99, the knn5 honesty ax…
+
+**boundary:** Queued 18:2xZ 08-14 at the squint-preflight close (depth refill; charter S4). Executable any CPU window. Simft training-data build steps stay inside the run item; this item is ONLY the frozen pre-reg document + post. | DONE 18:5xZ 08-14 (work session): FINAL pre-reg posted (posts/2026-08-14-prereg-wrist-transfer-screen.md) — design memo sections 5-7 frozen VERBATIM (programmatically diffed byte-identical), arm grid {ftrig4k, simft} x {W0..W4} + T1 frozen with seeds 0-99 (T1 0-24), knn5 honesty anchors 0.877-&gt;0.523 frozen, ladder + &lt;=14 GPU-h gate frozen, amendment policy stated (in-channel before the affected stage, never retroactive). Design-memo caption erratum fixed in place (said '&lt;=12 gate'; section-9 text's &lt;=14 was always the registered figure) with a dated erratum note. wrist-transfer-screen-run converted to GPU-release-only.
+
+<details><summary>full record</summary>
+
+FINAL pre-registration for the wrist-transfer screen (the design memo 2026-08-14-wrist-transfer-screen-design.md frozen into a launchable pre-reg): freeze arm list {ftrig4k, simft} x {W0..W4} + T1, seeds 0-99, the knn5 honesty axis anchors (0.877-&gt;0.523 span), the W0 determinism gate + sanity band, falsifiers F-instrument/F-null/F-flat/F-live verbatim, ladder + 14 GPU-h gate, and the abort/success readouts; post to the blog + in-channel pointer. CPU-only writing task; its completion converts wrist-transfer-screen-run from double-blocked (prereg + GPU) to GPU-release-only, so the run launches the moment the owner frees the GPU.
+
+</details>
+
+---
 
 **`squint-twin-preflight`** · `cpu`
 
