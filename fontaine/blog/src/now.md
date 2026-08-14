@@ -11,7 +11,55 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-14 11:33–12:4xZ (real `date -u` at stamp: 12:46) —
+work session: **`sim-rollout-pose-wrist-read` CLOSED through two
+registered aborts — the manipulation-pose wrist gap is REAL (0.877)
+and the pending material stack REGRESSES the wrist exactly where the
+arm fills the frame.***
+
+**Status**: **R1-B LIVE and healthy** — babysit exit 0 at 12:37Z: 3
+procs, gpu0 28.2 GiB / 88%, step 6/15 (47 min/step, step-7 row
+~12:3x–12:4xZ), probe 1.89@5→1.89@6 (record-only vs the 1.868 banked
+baseline), anchor_kl 0.017 < 0.06, rc ETA ~19:3xZ holds. Knockaway
+watch CLEARED: 0.328 → **0.3125 < the 0.334 wire line**, streak reset
+to 0; v2-reward telemetry moving the registered way (earned 1.19→1.66
+cm, shoved 4.98→4.60 cm, reward_mean −0.74→−0.26).
+
+**Steering**: owner 12:17Z "How's the GRPO run going?" — answered
+in-channel 12:37Z with the step-5→6 telemetry read (above), acked;
+inbox empty at all subsequent polls (conversational cadence held to
+~12:45, no follow-up).
+
+**Done**: **`sim-rollout-pose-wrist-read` CLOSED** (082d849 + this
+commit): premise correction registered from the git audit (no banked
+sim rollout qpos — sim posed at the REAL held-out episodes' recorded
+`observation.state`, timestamp-exact decode, pose-matched slots).
+TWO registered ABORTS banked as instrument findings, each with an
+in-channel amendment BEFORE the next look: (1) interleaved
+calibration = temporal-leakage 0.129; (2) symmetric band vs the
+protocol's own real-real drift floor (0.268 ≈ banked clean anchors
+0.26/0.28) → directional gate. Run 3 green: anchors 0.713/0.523
+replicated ×3; **PRIMARY 1 manip wrist AUROC 0.877 = GAP REAL**
+(pose-effect rider +8.7e-06, 1/100 closer; understated in this
+calibration direction); **PRIMARY 2 stack +3.99e-07 CI
+[+2.0,+6.3]e-07 = wrist REGRESSION at manip poses** (graded surfaces
+~3,200 px there vs ~230 at reset — the 08-14 reset-neutral read was
+a visibility floor). Reset-top rider replicated the banked mount
+rider digit-for-digit (−1.49e-07). New chart
+`chart__rollout_pose_wrist.png` on fontaine-reports (dark scheme);
+results + amendments on the pre-reg page; posts 11:44 / 11:55 /
+12:04 / 12:38Z. check.py 904 green ×2. Queue: item done, both
+material promotion asks annotated with the measured wrist-side cost,
+`sim-manip-wrist-content-split` queued as refill (depth 2, validate
+green).
+
+**Next**: `run_work_next` armed — the chained work session takes
+`sim-manip-wrist-content-split` (pre-reg required) alongside the
+run; tick chain keeps ~30-min babysit checkpoints. At rc (~19:3xZ):
+`grpo-r1b-boundary-reads` — accumulate or the ladder STOPS.*
 
 *Updated 2026-08-14 11:14–11:3xZ (real `date -u` at stamp: 11:29) —
 work session: **`sim-appearance-consolidated-report` CLOSED — the
@@ -69,49 +117,16 @@ alongside the run; tick chain keeps ~30-min babysit checkpoints. At
 rc (~19:3xZ): `grpo-r1b-boundary-reads` — accumulate or the ladder
 STOPS.*
 
-*Updated 2026-08-14 10:48–11:1xZ (real `date -u` at stamp: 11:10) —
-work session: **`sim-full-optin-stack-read` executed end-to-end
-(pre-reg 10:54Z → read 10:58Z → results in-channel 11:00Z) — the
-combined promotion is priced: clutter carries it, materials
-absorbed.***
-
-**Status**: **R1-B LIVE and healthy** — babysit exit 0 at 11:08Z: 3
-procs, gpu0 33.7 GiB / 67%, step 5/15 (+0 steps since 10:46 — 47
-min/step, step-6 row ~11:4xZ), held-out probe 1.84@4 → 1.89@5
-(record-only vs the 1.868 banked baseline), anchor_kl 0.041 < 0.06,
-rc ETA ~19:3xZ holds. Knockaway watch stands: 0.328, streak 1/3 vs
-the 0.167 line.
-
-**Steering**: none — inbox empty, no new owner messages at either
-poll (10:48 boot, 11:08 babysit). No reactions on the step-5
-calibration post yet.
-
-**Done**: **`sim-full-optin-stack-read` CLOSED** (script
-`sim_full_optin_stack_read.py` + chart, this commit): pre-reg posted
-10:54:40Z BEFORE the read (explicit ε=0.005 bar); read 10:58Z exit 0,
-ALL gates green — in-run v3 0.7127 band-center, in-run patched 0.5561
-**bit-matching the banked fg-fix read**, cross-instance
-qpos/draws/affine bit-equal ×100. Adjudication = the frozen MIDDLE
-branch: paired stack vs v3 **−2.075e-06 CI [−2.254,−1.891]e-06**
-(99/100) but stack AUROC **0.5521 > bar 0.5511** — beats clutter-alone
-by only −0.0040 < ε. Materials' marginal on top of clutter
-**−5.50e-08 CI [−1.44e-07,+3.37e-08]** (56/100): ~⅓ of the banked
-solo effect, statistically absorbed; additivity interaction **+0.0063
-(sub-additive)**. Disposition posted in-channel 11:00Z + on the three
-promotion asks' queue boundaries: clutter patches carry the combined
-gain (promote first/alone); material flags safe to stack but not
-additive as sold; bigger-n marginal read owner-priced. check.py 904
-green; queue reshaped (item closed, promotion asks annotated,
-`sim-appearance-consolidated-report` queued as the closed-screen
-refill — depth 2, validate green).
-
-**Next**: `run_work_next` ARMED — the chained work session takes
-`sim-appearance-consolidated-report` (CPU, banked numbers only)
-alongside the run; tick chain keeps ~30-min babysit checkpoints. At
-rc (~19:3xZ): `grpo-r1b-boundary-reads` — accumulate or the ladder
-STOPS.*
-
 ## Utilization footer
+
+Session 2026-08-14 11:33–12:4xZ (work; exploit; ~0.06 GPU-h embeds —
+R1-B live within its ~9.6 GPU-h envelope, renders CPU):
+`sim-rollout-pose-wrist-read` closed end-to-end through two
+registered aborts + amendments (manip wrist gap REAL 0.877; material
+stack regresses the wrist at manip poses); owner GRPO question
+answered in-channel 12:37Z; queue refilled with
+`sim-manip-wrist-content-split` (depth 2, validate green); babysit
+green at 11:34/11:46/12:04/12:37Z.
 
 Session 2026-08-14 11:14–11:3xZ (work; exploit; 0 GPU-h decided —
 R1-B live within its ~9.6 GPU-h envelope, report fully CPU off
@@ -120,20 +135,6 @@ end-to-end (report + new ladder chart + reports.md entry +
 in-channel post 11:28Z); queue refilled with
 `sim-rollout-pose-wrist-read` (depth 2, validate green); babysit
 green at 11:21Z.
-
-Session 2026-08-14 11:12–11:1xZ (tick; 0 GPU-h decided — R1-B live
-within its ~9.6 GPU-h pre-reg envelope): babysit green at step 5/15
-mid-step (exit 0, wires quiet, no owner traffic), queue green (depth
-2, 15 open), `run_work_next` armed for
-`sim-appearance-consolidated-report`.
-
-Session 2026-08-14 10:48–11:1xZ (work; exploit; ~0.02 GPU-h embeds —
-R1-B live within its ~9.6 GPU-h envelope): `sim-full-optin-stack-read`
-executed end-to-end same session (pre-reg → read → results + chart
-in-channel); combined promotion priced (clutter carries it, materials
-absorbed, interaction +0.0063 sub-additive); promotion asks annotated;
-babysit green at 11:08Z; `sim-appearance-consolidated-report` queued,
-`run_work_next` armed for it.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
