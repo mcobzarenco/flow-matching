@@ -66,11 +66,10 @@ import matplotlib
 import matplotlib.pyplot as plt
 import torch
 import transformers
+import wandb
 from safetensors.torch import load_file, save_file
 from torch import Tensor
 from torch.distributed.optim import ZeroRedundancyOptimizer
-
-import wandb
 
 from .annotations import ConditionField
 from .async_save import (
