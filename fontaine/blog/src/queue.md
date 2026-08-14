@@ -6,7 +6,7 @@
 
 **Depth call:** depth 3: arm-B read+prune at its ~13:3xZ boundary; token-grpo-phase2-instrument items 3-4 on the molmoact2 surface (gate passed, lane GO); sim-arm-photometric-links pre-reg.
 
-**16 open** (Live 0 · Queued 3 · Blocked 13 · Done 151)
+**16 open** (Live 0 · Queued 2 · Blocked 14 · Done 153)
 
 ## 🔴 Live (0)
 
@@ -14,19 +14,19 @@
 
 *(empty)*
 
-## 🟢 Queued (3)
+## 🟢 Queued (2)
 
 *ready — waiting on a window or a boundary*
 
-**`sim-mount-material-split`** · `cpu`
+**`sim-wrist-view-material-read`** · `cpu`
 
-Camera-mount material split + white retexture (rider finding 08-14: the mount is WHITE/silver in reality, sim paints it black via _recolor_arm; arm-split read no_mount as the ONLY removal moving v3 toward real, 0.713-&gt;0.654 on 0.…
+Wrist-view read of the arm material fixes (follow-on to sim-arm-photometric-links + sim-mount-material-split, both banked opt-in): the wrist camera sees the arm links/gripper up close, and both material fixes change wrist-view pi…
 
-**boundary:** Queued 02:1xZ 08-14 at the photometric close. The per-pixel most distinctive class — likely the highest-leverage remaining arm fix. CPU + ~0.02 GPU-h per gate read.
+**boundary:** Queued 04:5xZ 08-14 at the mount close (depth refill). CPU renders + ~0.02 GPU-h embeds; fully executable without the promotion (opt-in flags).
 
 <details><summary>full record</summary>
 
-Camera-mount material split + white retexture (rider finding 08-14: the mount is WHITE/silver in reality, sim paints it black via _recolor_arm; arm-split read no_mount as the ONLY removal moving v3 toward real, 0.713-&gt;0.654 on 0.66% px): the mount geoms share wrist_roll_follower_so101_v1_material with the gripper's wrist-roll piece, so first split the material (mjSpec edit or vendored-XML material clone at load), then set the mount to a mined real color (same pose-projection mining path, mount population), gate on the pinned 20x5 probe (only_mount 0.821 / no_mount 0.654 anchors). Pre-reg with explicit bar before any read.
+Wrist-view read of the arm material fixes (follow-on to sim-arm-photometric-links + sim-mount-material-split, both banked opt-in): the wrist camera sees the arm links/gripper up close, and both material fixes change wrist-view pixels — the photometrics results post flagged the wrist knn5 as the promotion sanity. Run the encoder OOD probe on WRIST frames: paired v3 default vs the two-flag stack (arm_photometrics + mount_material), same 20x5 slot schedule, er_60k trunk; anchors = the OOD probe's wrist baseline (5-NN AUROC 0.828, ratio 1.33x, centroid 0.707). PRIMARY: paired wrist dknn5 CI95 &lt; 0. Feeds the pending promotion asks with the wrist-side fact instead of assuming it. Pre-reg with explicit bar before any read.
 
 </details>
 
@@ -46,21 +46,7 @@ Arm texture follow-up (registered in the photometric pre-reg fail/residual branc
 
 ---
 
-**`token-grpo-phase2-r1a-run`** · `gpu-local`
-
-Token-GRPO phase-2 R1-A LIVE (00:06:00Z 08-14, unit fontaine-grpo-r1a, resume of R0-A step_0002.pt, steps 3-17, same frozen constants): babysit rides it (~0.96 GPU-h/step incl
-
-**boundary:** Queued 00:1xZ 08-14 at launch. Leg budget 16.5 GPU-h in-registry; ladder cum ~20.3 of gate 22 at rc; 35 GPU-h total unchanged. · [pre-reg](posts/2026-08-13-prereg-token-grpo-phase2-r0a.md)
-
-<details><summary>full record</summary>
-
-Token-GRPO phase-2 R1-A LIVE (00:06:00Z 08-14, unit fontaine-grpo-r1a, resume of R0-A step_0002.pt, steps 3-17, same frozen constants): babysit rides it (~0.96 GPU-h/step incl. per-step eval, rc ETA ~14:3xZ 08-14). At rc: S6 endpoint reads (paired delta CI95 primary; knockaway vs 10/120 — WATCH: R0-A waves 0.234-&gt;0.359 vs the 0.167 x3 line, a legitimate exit-3 is registered behavior; success count) =&gt; R2-A extension only via the frozen R1-&gt;R2 rule, else boundary discussion in-channel (incl. lr/beta re-price if eval stays flat-at-noise).
-
-</details>
-
----
-
-## 🟡 Blocked (13)
+## 🟡 Blocked (14)
 
 *waiting on a prerequisite, a boundary, or the owner*
 
@@ -73,6 +59,20 @@ Promote arm_photometrics='v1' into production v3/v4 defaults (registered read GR
 <details><summary>full record</summary>
 
 Promote arm_photometrics='v1' into production v3/v4 defaults (registered read GREEN 02:1xZ 08-14: v3 0.713-&gt;0.698 CI-excl-0, only_links 0.705-&gt;0.652; commit 4515ab4): flip the default in SO101Sim (+ rollout/eval surfaces that pin render_style), re-pin the banked v3 anchor 0.713 -&gt; the patched value on the pinned 20x5 probe, extend tests/test_sim_appearance.py style-equality oracles. NOTE: changes wrist-view arm pixels too (the real wrist view also sees the real arm) — flag the wrist knn5 re-read as the cheap post-flip sanity.
+
+</details>
+
+---
+
+**`grpo-phase2-boundary-decision`** · `cpu` · **⛔ owner hold**
+
+Token-GRPO phase-2 boundary decision (OWNER CALL, options posted in-channel 03:1xZ 08-14 at the R1-A tripwire stop): (1) R1-B re-price lr 3e-7 + kl_beta 1.0 from the banked step_0004 (fontaine-checkpoints/grpo_phase2_r1a, weights…
+
+**boundary:** Queued 03:2xZ 08-14 at the R1-A tripwire boundary. On owner word: option 2 lands a pre-reg (CPU) then option 1 launches from step_0004 under it; option 3 closes the phase-2 GRPO screen with the R0-A GO + R1-A tripwire record. · [pre-reg](posts/2026-08-13-prereg-token-grpo-phase2-r0a.md)
+
+<details><summary>full record</summary>
+
+Token-GRPO phase-2 boundary decision (OWNER CALL, options posted in-channel 03:1xZ 08-14 at the R1-A tripwire stop): (1) R1-B re-price lr 3e-7 + kl_beta 1.0 from the banked step_0004 (fontaine-checkpoints/grpo_phase2_r1a, weights-only), wire unchanged, ~9.6 GPU-h for 10 steps; (2) reward-patch pre-reg FIRST — in-reward knock-away penalty (progress reward currently pays for boat displacement without a grasp; the wire keeps firing at any lr while shoving pays), ~0 GPU-h to design; (3) stop the ladder, bank the negative accumulation read. Recommendation posted: (2) then (1). Ladder cum ~5.1 of the 22 GPU-h gate; ~17 headroom.
 
 </details>
 
@@ -244,9 +244,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (151)
+## ✅ Done (153)
 
 *closed — the full record stays in each fold*
+
+**`sim-mount-material-split`** · `cpu`
+
+Camera-mount material split + white retexture (rider finding 08-14: the mount is WHITE/silver in reality, sim paints it black via _recolor_arm; arm-split read no_mount as the ONLY removal moving v3 toward real, 0.713-&gt;0.654 on 0.…
+
+**boundary:** Queued 02:1xZ 08-14 at the photometric close. The per-pixel most distinctive class — likely the highest-leverage remaining arm fix. CPU + ~0.02 GPU-h per gate read. | EXECUTED + CLOSED 04:4xZ 08-14: material split via byte-identical gripper detach (oracle-pinned), real mount mined riding the dark gripper/wrist locks (81/156 frames, 91k px, NEUTRAL LIGHT GRAY [123,120,125] vs recolor black), fit chose the links' specular ceiling (1.0/0.1, albedo 0.455/0.430/0.431). Registered read SPLIT VERDICT: MECHANISM PASS decisively (only_mount_v1 0.821-&gt;0.793, CI [-1.16,-0.90]e-6, 93/100; vs plate -2.67e-6 at 100/100 — amputation confound REVERSED, presence now beats absence) but PRIMARY FAIL (v3_mount vs v3 CI includes zero, 0.66% px below the frame read's floor) -&gt; NO standalone promotion ask per frozen rule. Record-only: two-flag stack 0.713-&gt;0.702 CI-excl-0 — mount rides free if the photometrics promotion flips. Amendment 1 (locality oracle -&gt; table-reflectance bound, 0.02 reflectance) logged pre-read. Banked opt-in mount_material='v1'; no follow-up mount item (nothing to execute unless promoted). · [pre-reg](posts/2026-08-14-prereg-sim-mount-material-split.md)
+
+<details><summary>full record</summary>
+
+Camera-mount material split + white retexture (rider finding 08-14: the mount is WHITE/silver in reality, sim paints it black via _recolor_arm; arm-split read no_mount as the ONLY removal moving v3 toward real, 0.713-&gt;0.654 on 0.66% px): the mount geoms share wrist_roll_follower_so101_v1_material with the gripper's wrist-roll piece, so first split the material (mjSpec edit or vendored-XML material clone at load), then set the mount to a mined real color (same pose-projection mining path, mount population), gate on the pinned 20x5 probe (only_mount 0.821 / no_mount 0.654 anchors). Pre-reg with explicit bar before any read.
+
+</details>
+
+---
 
 **`token-grpo-phase2-run`** · `gpu-local`
 
@@ -313,6 +327,20 @@ Token-GRPO phase-2 R0-A smoke LIVE (launch 2 21:58:04Z 08-13, unit fontaine-grpo
 <details><summary>full record</summary>
 
 Token-GRPO phase-2 R0-A smoke LIVE (launch 2 21:58:04Z 08-13, unit fontaine-grpo-r0a, pre-reg frozen 81e020c): 2 steps on option A (patch-only, ~10.5M params) at lr 1e-6, adv clip 2.0, kl_beta 0.5, kl-stop 0.06, eval-every 1. Babysit rides it (registry entry grpo_phase2_r0a); at rc: boundary reads per the frozen table (plumbing/signal/per-step eval/KL line/VRAM/pace + the INERT rule) =&gt; GO launches R1-A (--resume step_0002.pt --total-steps 17, same flags), INERT goes in-channel as a re-price addendum, STOP re-scopes. Step-0 baseline reproduced 1.868 2/20 (4th bit-identical).
+
+</details>
+
+---
+
+**`token-grpo-phase2-r1a-run`** · `gpu-local`
+
+Token-GRPO phase-2 R1-A LIVE (00:06:00Z 08-14, unit fontaine-grpo-r1a, resume of R0-A step_0002.pt, steps 3-17, same frozen constants): babysit rides it (~0.96 GPU-h/step incl
+
+**boundary:** Queued 00:1xZ 08-14 at launch. Leg budget 16.5 GPU-h in-registry; ladder cum ~20.3 of gate 22 at rc; 35 GPU-h total unchanged. | SELF-STOPPED 03:05Z 08-14 at step 5/17: knockaway tripwire exit 3 (fresh waves 0.406-&gt;0.359-&gt;0.312 vs the 0.167 x3 line — registered behavior). S6 endpoint reads: eval flat 1.8441 2/20 through step 4 (delta -0.0239 CI [-0.0716,0.0] touching zero — unharmed, unimproved; accumulation question cut short); knockaway pooled 69/192=0.359 but DECAYING while train success recovered 0-&gt;4-&gt;4; drift gentle (k3_pre 8e-7, nll softening). FROZEN RULE: tripwire -&gt; NO R2-A. step_0004 weights-only -&gt; fontaine-checkpoints/grpo_phase2_r1a (verified). Cost ~2.95 GPU-h (ladder cum ~5.1 of 22). Boundary options in-channel 03:1xZ (R1-B re-price / reward-patch pre-reg / stop) — owner adjudicates. · [pre-reg](posts/2026-08-13-prereg-token-grpo-phase2-r0a.md)
+
+<details><summary>full record</summary>
+
+Token-GRPO phase-2 R1-A LIVE (00:06:00Z 08-14, unit fontaine-grpo-r1a, resume of R0-A step_0002.pt, steps 3-17, same frozen constants): babysit rides it (~0.96 GPU-h/step incl. per-step eval, rc ETA ~14:3xZ 08-14). At rc: S6 endpoint reads (paired delta CI95 primary; knockaway vs 10/120 — WATCH: R0-A waves 0.234-&gt;0.359 vs the 0.167 x3 line, a legitimate exit-3 is registered behavior; success count) =&gt; R2-A extension only via the frozen R1-&gt;R2 rule, else boundary discussion in-channel (incl. lr/beta re-price if eval stays flat-at-noise).
 
 </details>
 
