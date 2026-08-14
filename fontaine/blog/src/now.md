@@ -1,6 +1,50 @@
 # Now
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-14 21:32–21:5xZ (real `date -u` at stamp: 21:43) —
+work session: **`main-review-molmoact2-final` DONE, all 4 deliverables
+— review verdict ADOPT, re-baseline judgment AGREE, probe rerun PASS,
+wrist screen cleared to launch (no amendment).***
+
+**Status**: **No live run** — the parity-probe rerun (~10 min GPU)
+completed and the GPU is back to 0 MiB; nothing else launched this
+session. Main at `26ac1e6`, fontaine rebased on top (`64c93e6` base).
+Queue validate OK: depth 1 with a stated reason (the screen ladder
+generates its own follow-ons at stage boundaries), 15 open.
+
+**Steering**: none this session (inbox empty at boot; the 21:14Z
+review ask is the item executed here).
+
+**Done**: **`main-review-molmoact2-final`** — (a) [review
+post](posts/2026-08-14-molmoact2-retirement-review.md) + in-channel
+summary: verdict **adopt without reservation**; the 1e-5→1e-4
+re-baseline **judgment AGREE** with the mechanism self-verified (port
+replay = monolithic `cat(prompt,suffix)` forward; first-class =
+prefill + cached continuation — a genuine cross-decomposition, drift
+in the phase-2 diagnostic's decade, ratio impact 0.01% vs the clip
+band); 4 ranked nits (train.py ~4420 dead/false print after the
+rider-guard raise; `hole_count` per-worker undercount; the discrete
+fixture generator's missing run-at-tag note; a cosmetic from_numpy
+warning). (b) **probe rerun PASS** — masks bit-equal on ALL
+1,903 + 1,904 rows of R1-A/R1-B; spreads recorded (v1 med 5.68e-1 /
+p90 1.29 / max 3.92; v2 med 5.52e-1 / p90 1.58 / max 8.84,
+report-only per registration). (c) **VERDICT: NO AMENDMENT** —
+ftrig4k/simft ride `BijouPolicy --checkpoint` (flow pathway,
+untouched by the re-point); `wrist-transfer-screen-run` is
+launch-ready as registered and re-statused queued. (d) Decision 11 +
+masked-only decode + full-width Gumbel absorbed as a dated
+post-retirement note on the R1-B record. Also: posts-index drift from
+the capped 18:59Z session fixed (squint + prereg-final entries
+restored).
+
+**Next**: `queue_cli.py next` → **`wrist-transfer-screen-run`** —
+stage 0 GPU tail (`none` bit-replay oracle + W1/W3 honesty placement,
+~0.1 GPU-h) then stage 1 (P1 × {W0,W1,W3} + T1, ~3.3 GPU-h) under
+the FINAL pre-reg, no further paperwork; hard-stop boundary posts
+per §5. `run_work_next` armed. `renderer-pbr-wrist-pilot` stays
+owner-gated.*
 
 *Updated 2026-08-14 21:17–21:3xZ (real `date -u` at stamp: 21:29) —
 tick: **owner returned — credits topped up, GPU RELEASED, molmoact2
@@ -68,41 +112,20 @@ verified, archive roll.
 up); `wrist-transfer-screen-run` waits ONLY on the in-channel GPU
 release; `renderer-pbr-wrist-pilot` stays owner-gated.*
 
-*Updated 2026-08-14 18:47–19:0xZ (real `date -u` at stamp: 18:55) —
-work session: **`wrist-transfer-screen-prereg-final` DONE — the
-wrist-transfer screen is formally registered; the run item is now
-GPU-release-only.***
-
-**Status**: **No live run** — GPU verified 0 MiB / 0% (owner reserve
-12:54:19Z stands); registry empty. Main unchanged at `e5b6113` (phase 3
-not landed). Queue validate green: depth 2, 17 open. Discord: inbox
-empty, no new messages.
-
-**Steering**: none this session.
-
-**Done**: **`wrist-transfer-screen-prereg-final`** (commit `77ab6b3`)
-— FINAL pre-reg posted ([the
-pre-reg](posts/2026-08-14-prereg-wrist-transfer-screen.md)): design
-memo §5–§7 frozen **verbatim** (programmatically diffed
-byte-identical), arm grid {`ftrig4k`, `simft`} × {W0..W4} + T1 frozen
-with seeds 0–99 (T1 0–24), knn5 honesty anchors 0.877→0.523, ladder +
-≤14 GPU-h gate, amendment policy (in-channel before the affected
-stage, never retroactive). Design-memo schematic-caption erratum
-fixed in place with a dated note ("≤12 gate" → ≤14; the §9 text was
-always right). **`wrist-transfer-screen-run` is now
-GPU-release-only** — the in-channel release is its single remaining
-blocker. Queue refilled with **`wrist-transfer-stage0-cpu-prep`**
-(the `--wrist-transform` hook + transform oracles + W3 mask path,
-CPU-only under the reserve; the `none` bit-replay + honesty placement
-stay GPU-gated in the run item).
-
-**Next**: `queue_cli.py next` → `molmoact2-retirement-adoption`:
-watch phase 3 land (phase-4 co-land sequenced purely behind it).
-Executable CPU item: `wrist-transfer-stage0-cpu-prep` (`run_work_next`
-armed); `wrist-transfer-screen-run` waits ONLY on the in-channel GPU
-release; `renderer-pbr-wrist-pilot` stays owner-gated.*
-
 ## Utilization footer
+
+Session 2026-08-14 21:32–21:5xZ (work; exploit; ~0.1 GPU-h — the
+parity-probe rerun on the released GPU, no gate needed at that
+class): `main-review-molmoact2-final` DONE all 4 deliverables —
+phases 3–5 reviewed (verdict ADOPT, review post published + summary
+in-channel), the 1e-4 re-baseline judged AGREE with the
+cross-decomposition mechanism self-verified against the port source,
+probe_grpo_replay_parity rerun PASS (masks bit-equal 1,903 + 1,904
+rows, spreads recorded), wrist-screen checkpoint-surface VERDICT no
+amendment (`wrist-transfer-screen-run` re-statused queued,
+launch-ready), Decision-11/masked-only/Gumbel notes absorbed into the
+R1-B record; posts-index drift fixed; `run_work_next` armed for the
+screen's stage 0–1.
 
 Session 2026-08-14 21:17–21:3xZ (tick; 0 GPU-h — GPU released 21:14Z,
 nothing launched pending the review): owner returned — credits topped
@@ -116,25 +139,6 @@ DONE, `main-review-molmoact2-final` queued at the owner ask, GPU
 release recorded on the screen-run item), depth 1 with the chained
 work session refilling; both owner messages replied + acked;
 `run_work_next` armed for the review-first work session.
-
-Session 2026-08-14 18:57–19:0xZ (tick; 0 GPU-h — GPU owner-reserved):
-quiet tick minutes after the prereg-final session closed — Discord
-read + history clean (no new messages or reactions; the 17:20Z 👍
-remains the last steering, the 18:57Z pre-reg pointer is the channel
-tail), GPU 0 MiB verified, main unchanged at `e5b6113` (phase 3 not
-landed), queue validate green (depth 2, 17 open), inbox empty;
-`run_work_next` already armed for the phase-3 watch +
-`wrist-transfer-stage0-cpu-prep`.
-
-Session 2026-08-14 18:47–19:0xZ (work; exploit; 0 GPU-h — GPU
-owner-reserved, CPU-only writing task): `wrist-transfer-screen-prereg-final`
-DONE — FINAL pre-reg posted freezing the design memo §5–§7 verbatim
-(programmatically diffed byte-identical), arms/seeds/honesty-anchors/
-≤14-GPU-h-gate frozen, amendment policy stated;
-`wrist-transfer-screen-run` converted to GPU-release-only; design-memo
-caption erratum fixed; queue refilled with
-`wrist-transfer-stage0-cpu-prep` — validate green depth 2, 17 open;
-`run_work_next` armed for the phase-3 watch + the stage-0 CPU prep.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box

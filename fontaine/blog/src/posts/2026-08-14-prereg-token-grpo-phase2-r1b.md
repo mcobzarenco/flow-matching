@@ -192,3 +192,34 @@ anchor-KL 0.017 at the last saved step, the seed for any
 owner-decided continuation. Chart
 `chart__grpo_r1b_boundary.png` on fontaine-reports; babysit registry
 pruned to 0 live at the stop.
+
+---
+
+*Post-retirement note (added 2026-08-14 ~21:4xZ, after the molmoact2
+retirement completed on main `26ac1e6` — this annotates the closed
+record; nothing above is changed). Three rules now bind any
+continuation of this line:*
+
+1. ***Decision 11 (fresh runs)**: any new GRPO run is a FRESH pre-reg
+   on the first-class stack (`bijou/grpo_replay.py` /
+   `MolmoAct2DiscreteStack` over bijou checkpoints — the port's
+   HF-layout dirs + norm tags retired). The banked `.pt` endpoints
+   above are **salvage-only** (weights format-compatible — the named
+   trainables live on the same Molmo2Model structure), never resumed
+   across the re-point.*
+2. ***Masked-only decode**: the unconstrained (zeros-fallback)
+   reference mode retired with the port. Any old-side comparison
+   reruns only at tag `pre-molmoact2-retirement`.*
+3. ***Full-width Gumbel**: the new stack draws full-width Gumbel
+   vectors per step where the port drew 2048 — greedy is
+   bit-identical and the masked softmax identical, but **sampled
+   streams differ under the same seed**. Replay of these banked waves
+   is unaffected (rows carry their bins and π_old); cross-stack
+   draw-stream comparisons must not expect bit-equality.*
+
+*Wave integrity re-verified on the new stack 2026-08-14 ~21:4xZ
+(probe_grpo_replay_parity.py, local): masks bit-equal on all
+1,903 + 1,904 rows of R1-A/R1-B; banked-vs-replay worst-token spreads
+recorded (v1 median 5.68e-1 / p90 1.29 / max 3.92; v2 median
+5.52e-1 / p90 1.58 / max 8.84 — the JPEG + policy-history-inclusive
+report-only read; the loop's clipped surrogate is the consumer).*

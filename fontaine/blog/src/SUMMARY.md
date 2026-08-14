@@ -300,3 +300,4 @@
   - [2026-08-14 — Design: the wrist-transfer screen — does wrist dishonesty move closed-loop behavior?](posts/2026-08-14-wrist-transfer-screen-design.md)
   - [2026-08-14 — Squint SO-101 twin preflight: installs, steps, renders at 224, speaks our action convention](posts/2026-08-14-squint-twin-preflight.md)
   - [2026-08-14 — Pre-reg (FINAL): the wrist-transfer screen — pricing the proxy→behavior link](posts/2026-08-14-prereg-wrist-transfer-screen.md)
+  - [2026-08-14 — Review: the molmoact2 retirement, phases 3–5 (owner ask)](posts/2026-08-14-molmoact2-retirement-review.md)

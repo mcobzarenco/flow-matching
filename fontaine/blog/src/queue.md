@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-14T21:27:11Z
+**Updated:** 2026-08-14T21:42:32Z
 
-**Depth call:** depth 2: molmoact2-retirement-adoption (phase-3 watch, steps 3-4 pending) + wrist-transfer-stage0-cpu-prep (executable refill from the prereg-final close); wrist-transfer-screen-run now GPU-release-only; renderer-pbr-wrist-pilot stays owner-gated
+**Depth call:** depth 1 (wrist-transfer-screen-run, immediately executable on the released GPU): the screen itself is a multi-session ladder (~6-12 GPU-h, hard-stop boundaries) and its stage boundaries generate the follow-on items; refill happens at the stage-0/1 boundary posts. Recorded 21:4xZ 08-14 at the main-review close.
 
-**16 open** (Live 0 · Queued 1 · Blocked 15 · Done 170)
+**15 open** (Live 0 · Queued 1 · Blocked 14 · Done 171)
 
 ## 🔴 Live (0)
 
@@ -18,29 +18,11 @@
 
 *ready — waiting on a window or a boundary*
 
-**`main-review-molmoact2-final`** · `cpu`
-
-Review the molmoact2-retirement final code on main 26ac1e6 (owner ask 21:14Z 08-14: 'reviewing the new code from main after you rebase and let me know your thoughts'): phases 3-5
-
-**boundary:** Queued 21:2xZ 08-14 at the owner ask (21:14Z message + the handoff attachment). Executable immediately — chained work session takes it FIRST; wrist-transfer-screen-run launch is sequenced behind deliverable (c).
-
-<details><summary>full record</summary>
-
-Review the molmoact2-retirement final code on main 26ac1e6 (owner ask 21:14Z 08-14: 'reviewing the new code from main after you rebase and let me know your thoughts'): phases 3-5 — train.py objective matrix (--objective {flow,ar,joint} + --joint-ce-weight + --expert-init + quantization-hole policy, c18d033/ba57b29), bijou/grpo_replay.py re-point (f560528) + replay-parity gate (f219a2d/f77a8c7/6bb6439 re-baseline receipts vs my signed 1e-5 shape — the decomposition-class argument needs my judgment), phase-5 deletion (26ac1e6). Deliverables: (a) in-channel thoughts post; (b) rerun probe_grpo_replay_parity.py on my banked waves locally if cheap (CPU/GPU now free); (c) VERDICT on the wrist-transfer-screen pre-reg: do ftrig4k/simft arm checkpoint-loading surfaces sit on re-pointed code (loop consumes bijou checkpoints now, not HF-layout dirs + norm tags) — if the frozen launch commands change, in-channel amendment BEFORE stage 0 per the pre-reg policy; (d) Decision 11 + masked-only decode + full-width-Gumbel notes absorbed into ledger/docs where my line cites the old behavior. [owner-requested review; no GPU gate — probe reruns ride the free-GPU window]
-
-</details>
-
----
-
-## 🟡 Blocked (15)
-
-*waiting on a prerequisite, a boundary, or the owner*
-
 **`wrist-transfer-screen-run`** · `gpu-local`
 
 Execute the wrist-transfer screen per the 08-14 design memo (posts/2026-08-14-wrist-transfer-screen-design.md, frozen sections 5-7 become the pre-reg verbatim): stage 0 wrist-transform hook (--wrist-transform {none,blackout,freez…
 
-**boundary:** Queued 17:3xZ 08-14 at the design close. BLOCKED on the in-channel GPU release (owner reserve 12:54:19Z 08-14 stands). prereg field points at the design memo (the registered skeleton); launch still requires a posted FINAL pre-reg freezing its sections 5-7 verbatim; stage boundaries are hard stops. Stage 0 is CPU-preparable during the reserve if a session wants it early - the transform hook + oracles land without touching the GPU; honesty placement (er_60k knn5) is the only stage-0 GPU-adjacent step (~0.1 GPU-h class, still gated on the release). | PREREG-FINAL POSTED 18:5xZ 08-14 (posts/2026-08-14-prereg-wrist-transfer-screen.md): the item is now GPU-RELEASE-ONLY — the in-channel release is the single remaining blocker; stage 0 launches under the FINAL pre-reg with no further paperwork. Stage-0 CPU-preparable slice split out as wrist-transfer-stage0-cpu-prep (hook + transform oracles land under the reserve; the none bit-replay oracle + honesty placement stay GPU-gated inside this item). | GPU RELEASED in-channel 21:14Z 08-14 ('Your GPU is all yours') — the single registered blocker is CLEARED. Launch sequenced behind main-review-molmoact2-final deliverable (c) only: the retirement re-pointed checkpoint loading (bijou checkpoints, not HF-layout dirs + norm tags), so the frozen ftrig4k/simft launch surfaces must be verified or amended in-channel BEFORE stage 0 per the pre-reg's own amendment policy. Stage-0 CPU prep landed (64c93e6): critical path is none bit-replay + honesty placement + stage 1. · [pre-reg](posts/2026-08-14-prereg-wrist-transfer-screen.md)
+**boundary:** Queued 17:3xZ 08-14 at the design close. BLOCKED on the in-channel GPU release (owner reserve 12:54:19Z 08-14 stands). prereg field points at the design memo (the registered skeleton); launch still requires a posted FINAL pre-reg freezing its sections 5-7 verbatim; stage boundaries are hard stops. Stage 0 is CPU-preparable during the reserve if a session wants it early - the transform hook + oracles land without touching the GPU; honesty placement (er_60k knn5) is the only stage-0 GPU-adjacent step (~0.1 GPU-h class, still gated on the release). | PREREG-FINAL POSTED 18:5xZ 08-14 (posts/2026-08-14-prereg-wrist-transfer-screen.md): the item is now GPU-RELEASE-ONLY — the in-channel release is the single remaining blocker; stage 0 launches under the FINAL pre-reg with no further paperwork. Stage-0 CPU-preparable slice split out as wrist-transfer-stage0-cpu-prep (hook + transform oracles land under the reserve; the none bit-replay oracle + honesty placement stay GPU-gated inside this item). | GPU RELEASED in-channel 21:14Z 08-14 ('Your GPU is all yours') — the single registered blocker is CLEARED. Launch sequenced behind main-review-molmoact2-final deliverable (c) only: the retirement re-pointed checkpoint loading (bijou checkpoints, not HF-layout dirs + norm tags), so the frozen ftrig4k/simft launch surfaces must be verified or amended in-channel BEFORE stage 0 per the pre-reg's own amendment policy. Stage-0 CPU prep landed (64c93e6): critical path is none bit-replay + honesty placement + stage 1. | DELIVERABLE-(c) VERDICT 21:4xZ 08-14 (main-review-molmoact2-final): NO AMENDMENT NEEDED — P1 ftrig4k (outputs/train/fontaine_flow_snapdistill_ftrig_4k_1xh100) and the stage-2 simft fine-tune are flow-pathway bijou checkpoints served via BijouPolicy --checkpoint, untouched by the phase 3-5 re-point (which moved only grpo_loop --checkpoint and rollout_sim_parallel --molmoact2-discrete); from_checkpoint changes are additive for pre-existing checkpoints. UNBLOCKED: stage 0 (none bit-replay oracle + honesty placement) launches under the FINAL pre-reg with no further paperwork — the next work session takes it FIRST. · [pre-reg](posts/2026-08-14-prereg-wrist-transfer-screen.md)
 
 <details><summary>full record</summary>
 
@@ -49,6 +31,10 @@ Execute the wrist-transfer screen per the 08-14 design memo (posts/2026-08-14-wr
 </details>
 
 ---
+
+## 🟡 Blocked (14)
+
+*waiting on a prerequisite, a boundary, or the owner*
 
 **`renderer-pbr-wrist-pilot`** · `cpu` · **⛔ owner hold**
 
@@ -244,7 +230,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (170)
+## ✅ Done (171)
 
 *closed — the full record stays in each fold*
 
@@ -285,6 +271,20 @@ Stage-0 CPU-preparable slice of the wrist-transfer screen (per the FINAL pre-reg
 <details><summary>full record</summary>
 
 Stage-0 CPU-preparable slice of the wrist-transfer screen (per the FINAL pre-reg section 1 implementation contract + the run item's standing note that the hook + oracles land without touching the GPU): land the --wrist-transform {none,blackout,freeze,arm_blur} hook in both rollout drivers (applied to obs.wrist after observe(), before policy packing — the SimObservation seam in rollout_sim_parallel.py), the W3 per-tick wrist segmentation mask path (arm+gripper geom ids, Gaussian blur inside the mask only), and the CPU-side oracles: golden-frame test per transform + W3 mask visual spot-check on 3 banked pose slots + a transform-purity check (transforms touch pixels, never state). check.py green. The two GPU-adjacent stage-0 steps (none bit-replay of a banked seed; W1/W3 honesty placement on the 100 pose slots, ~0.1 GPU-h class) stay inside wrist-transfer-screen-run, gated on the release.
+
+</details>
+
+---
+
+**`main-review-molmoact2-final`** · `cpu`
+
+Review the molmoact2-retirement final code on main 26ac1e6 (owner ask 21:14Z 08-14: 'reviewing the new code from main after you rebase and let me know your thoughts'): phases 3-5
+
+**boundary:** Queued 21:2xZ 08-14 at the owner ask (21:14Z message + the handoff attachment). Executable immediately — chained work session takes it FIRST; wrist-transfer-screen-run launch is sequenced behind deliverable (c). || CLOSED 21:4xZ 08-14 work session, all 4 deliverables: (a) review post posts/2026-08-14-molmoact2-retirement-review.md + in-channel summary — verdict ADOPT, re-baseline JUDGMENT AGREE (mechanism self-verified: port replay is monolithic cat(prompt,suffix) forward, first-class is prefill+cached continuation — genuine cross-decomposition, 4.4-5.7e-5 in the phase-2 fp32 diagnostic's decade, ratio impact 0.01% vs clip band; forcing decomposition-match to keep 1e-5 would gate surviving code on the deleted port's kernel schedule); 4 nits ranked (train.py ~4420 dead unreachable+false print after the backbone-init-from rider raise; codec.hole_count per-DataLoader-worker undercount; molmoact2_discrete/generate.py missing the run-at-tag header note; from_numpy non-writable warning); (b) probe_grpo_replay_parity RERUN local ~21:5xZ PASS — masks bit-equal ALL 1903+1904 rows, spreads v1 med 5.68e-1/p90 1.29/max 3.92, v2 med 5.52e-1/p90 1.58/max 8.84 (report-only per registration); (c) VERDICT NO AMENDMENT — ftrig4k/simft ride BijouPolicy --checkpoint (flow pathway, untouched); re-point moved only grpo_loop --checkpoint + rollout --molmoact2-discrete; from_checkpoint additive (objective defaults flow, rider mounts only on joint_ce metadata) — wrist-transfer-screen-run LAUNCH-READY as registered; (d) Decision 11 + masked-only + full-width-Gumbel absorbed as the dated post-retirement note on the R1-B record (+ probe receipts); posts index drift fixed (squint + prereg-final entries restored).
+
+<details><summary>full record</summary>
+
+Review the molmoact2-retirement final code on main 26ac1e6 (owner ask 21:14Z 08-14: 'reviewing the new code from main after you rebase and let me know your thoughts'): phases 3-5 — train.py objective matrix (--objective {flow,ar,joint} + --joint-ce-weight + --expert-init + quantization-hole policy, c18d033/ba57b29), bijou/grpo_replay.py re-point (f560528) + replay-parity gate (f219a2d/f77a8c7/6bb6439 re-baseline receipts vs my signed 1e-5 shape — the decomposition-class argument needs my judgment), phase-5 deletion (26ac1e6). Deliverables: (a) in-channel thoughts post; (b) rerun probe_grpo_replay_parity.py on my banked waves locally if cheap (CPU/GPU now free); (c) VERDICT on the wrist-transfer-screen pre-reg: do ftrig4k/simft arm checkpoint-loading surfaces sit on re-pointed code (loop consumes bijou checkpoints now, not HF-layout dirs + norm tags) — if the frozen launch commands change, in-channel amendment BEFORE stage 0 per the pre-reg policy; (d) Decision 11 + masked-only decode + full-width-Gumbel notes absorbed into ledger/docs where my line cites the old behavior. [owner-requested review; no GPU gate — probe reruns ride the free-GPU window]
 
 </details>
 
