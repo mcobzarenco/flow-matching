@@ -3,7 +3,50 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-14 05:51–06:1xZ (real `date -u` at stamp: 06:08) —
+work session: **`sim-wrist-view-material-read` executed end-to-end —
+WRIST-NEUTRAL: the two-flag stack's paired wrist Δknn5 CI straddles
+zero; the promotion asks' wrist-side sanity is now measured, not
+assumed.***
+
+**Status**: **no live runs** — GPU idle-by-design pending the owner's
+R1-A boundary call (`grpo-phase2-boundary-decision`, owner_hold,
+options in-channel 03:1xZ 08-14); this session's only GPU touch was
+the read's ~0.02 GPU-h embeds.
+
+**Steering**: none — inbox empty, read empty at 05:52 / 06:07 polls
+(only my own pre-reg + results posts in-channel). Asks still open:
+R1-A boundary options (03:1xZ), arm-photometrics promotion (02:1xZ),
+clutter-patch promotion (05:40Z 08-13) — all three now carry the
+measured wrist-neutral fact.
+
+**Done**: **sim-wrist-view-material-read CLOSED** (this commit):
+pre-reg posted in-channel 05:59Z BEFORE the read (with the anchor
+honesty registered: the queued 0.828 wrist anchor is ROLLOUT-frame;
+the reset-pose baseline is 0.544/0.548, the gate band [0.50, 0.60]);
+registered 20×5 paired read all gates green (top 0.713 dead-center,
+wrist 0.561 in-band, qpos bit-equal ×100, changed-px tripwire quiet):
+**PRIMARY wrist Δknn5 −1.39e-08 CI95 [−4.53, +1.73]e-08 straddles
+zero (46/100) → wrist-neutral per the frozen rule**; mechanism
+diagnostic: the home-pose wrist camera sees ~230 raw px of graded
+surface (servo 208 / PLA 21 / mount 1); top rider replicated the
+mount read's stack delta bit-for-bit (hook path ≡ production
+observations — a free bit-exactness cross-check). Artifacts on
+fontaine-reports curl-200 ×3 (analysis/chart/strip); results section
+on the pre-reg page; reports.md + ideas.md banked; posts/index.md
+drift fixed (mount + texture pre-regs added). Queue: wrist done, NEW
+`sim-full-optin-stack-read` (prices the three promotions flipping
+together — interactions unmeasured; depth 2, 16 open, validate
+green).
+
+**Next**: `queue_cli.py next` → **sim-arm-surface-texture-mjspec**
+(the registered texture escalation, recompile path, NOT auto-run per
+its boundary note — owner may reprioritize; then
+`sim-full-optin-stack-read`). GPU launches wait on the owner's R1-A
+boundary call. `run_work_next` armed.*
 
 *Updated 2026-08-14 05:49–05:5xZ (real `date -u` at stamp: 05:50) —
 tick: **quiet tick — no live runs, no steering, GPU idle-by-design
@@ -69,42 +112,21 @@ sequenced behind the wrist read).
 GPU launches wait on the owner's R1-A boundary call. `run_work_next`
 armed.*
 
-*Updated 2026-08-14 04:44–04:4xZ (real `date -u` at stamp: 04:44) —
-tick: **quiet tick — no live runs, no steering, GPU idle-by-design
-pending the owner's R1-A boundary call.***
-
-**Status**: **no live runs** — GPU 0 MiB / 0% util, no train procs
-(R1-A tripwire-stopped 03:05Z last session, checkpoint banked). Idle
-is by design: launches pend `grpo-phase2-boundary-decision`
-(owner_hold, options in-channel 03:1xZ).
-
-**Steering**: none — inbox empty, read empty at 04:44Z; history shows
-no new reactions or replies. Three asks still open: R1-A boundary
-options (03:1xZ), arm-photometrics promotion (02:1xZ 08-14),
-clutter-patch promotion (05:40Z 08-13); mount two-flag rider noted on
-the 04:4xZ results post.
-
-**Done**: Discord poll + history (facts above); queue validate green
-(depth 2, 16 open); confirmed `run_work_next` armed (04:40 marker).
-
-**Next**: chained work session picks up **sim-arm-texture-followup**
-(CPU) per no-idle-pauses; GPU launches wait on the boundary call.*
-
 ## Utilization footer
+
+Session 2026-08-14 05:51–06:1xZ (work; ~0.02 GPU-h decided — the
+wrist gate read's embeds; CPU item, exploit-sim):
+sim-wrist-view-material-read executed end-to-end (feasibility →
+pre-reg with anchor honesty → paired 20×5 read: WRIST-NEUTRAL, CI
+straddles zero — the promotion asks' wrist sanity measured); queue
+depth 2 (16 open), NEW full-optin-stack item queued. `run_work_next`
+armed.
 
 Session 2026-08-14 05:49–05:5xZ (tick; 0 GPU-h decided — no live
 runs, GPU idle-by-design pending the owner's R1-A boundary call):
 quiet poll — inbox empty, no reactions or replies, queue green (depth
 2, 16 open); `run_work_next` confirmed armed for
 sim-wrist-view-material-read (CPU) per no-idle-pauses.
-
-Session 2026-08-14 04:46–05:5xZ (work; ~0.02 GPU-h decided — the
-texture gate read's embeds; CPU item, exploit-sim):
-sim-arm-texture-followup executed end-to-end (instrument → fit ×3
-speckle-profile iterations → pre-reg → read: REFUTED, both CIs above
-zero — the clean negative banked); queue depth 2 (16 open), NEW
-mjSpec escalation item queued not-auto-run. `run_work_next` armed for
-sim-wrist-view-material-read.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
