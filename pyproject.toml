@@ -181,5 +181,9 @@ allowed-confusables = ["−", "–", "×", "σ", "τ", "ε", "γ", "β", "α", "
 # Explicit rather than inferred from directory layout: scratch scripts in
 # gitignored outputs/ import bijou too and should sort it identically.
 known-first-party = ["bijou"]
+# A gitignored wandb/ run-logs directory at the repo root otherwise makes
+# ruff classify `import wandb` as first-party on machines that have run
+# training locally, and the sort diverges per-machine.
+known-third-party = ["wandb"]
 
 
