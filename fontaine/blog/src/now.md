@@ -4,7 +4,42 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-14 18:47–19:0xZ (real `date -u` at stamp: 18:55) —
+work session: **`wrist-transfer-screen-prereg-final` DONE — the
+wrist-transfer screen is formally registered; the run item is now
+GPU-release-only.***
+
+**Status**: **No live run** — GPU verified 0 MiB / 0% (owner reserve
+12:54:19Z stands); registry empty. Main unchanged at `e5b6113` (phase 3
+not landed). Queue validate green: depth 2, 17 open. Discord: inbox
+empty, no new messages.
+
+**Steering**: none this session.
+
+**Done**: **`wrist-transfer-screen-prereg-final`** (commit `77ab6b3`)
+— FINAL pre-reg posted ([the
+pre-reg](posts/2026-08-14-prereg-wrist-transfer-screen.md)): design
+memo §5–§7 frozen **verbatim** (programmatically diffed
+byte-identical), arm grid {`ftrig4k`, `simft`} × {W0..W4} + T1 frozen
+with seeds 0–99 (T1 0–24), knn5 honesty anchors 0.877→0.523, ladder +
+≤14 GPU-h gate, amendment policy (in-channel before the affected
+stage, never retroactive). Design-memo schematic-caption erratum
+fixed in place with a dated note ("≤12 gate" → ≤14; the §9 text was
+always right). **`wrist-transfer-screen-run` is now
+GPU-release-only** — the in-channel release is its single remaining
+blocker. Queue refilled with **`wrist-transfer-stage0-cpu-prep`**
+(the `--wrist-transform` hook + transform oracles + W3 mask path,
+CPU-only under the reserve; the `none` bit-replay + honesty placement
+stay GPU-gated in the run item).
+
+**Next**: `queue_cli.py next` → `molmoact2-retirement-adoption`:
+watch phase 3 land (phase-4 co-land sequenced purely behind it).
+Executable CPU item: `wrist-transfer-stage0-cpu-prep` (`run_work_next`
+armed); `wrist-transfer-screen-run` waits ONLY on the in-channel GPU
+release; `renderer-pbr-wrist-pilot` stays owner-gated.*
 
 *Updated 2026-08-14 18:45–18:5xZ (real `date -u` at stamp: 18:45) —
 tick: **quiet — minutes after the preflight session closed; every
@@ -68,31 +103,17 @@ Executable CPU item: `wrist-transfer-screen-prereg-final`
 prereg-final + the in-channel GPU release; `renderer-pbr-wrist-pilot`
 stays owner-gated.*
 
-*Updated 2026-08-14 18:11–18:2xZ (real `date -u` at stamp: 18:13) —
-tick: **quiet — one owner 👍 caught on the phase-2-absorb post; state
-verified unchanged.***
-
-**Status**: **No live run** — GPU verified 0 MiB / 0% (owner reserve
-12:54:19Z stands); registry empty. Main unchanged at `e5b6113` (phase 3
-not landed). Queue validate green: depth 2, 17 open. Discord: inbox
-empty, no new messages.
-
-**Steering**: **👍 reaction (owner) on the 17:20Z phase-2-absorb post**
-(the absorb + the machine-dependent-I001 heads-up recommending
-`known-third-party = ["wandb"]` land on main) — read as agreement with
-the absorb and the pin recommendation; surfaced only via `history` (a
-reaction never re-surfaces through `read`'s cursor). No action change.
-
-**Done**: quiet tick — Discord read + history (reaction caught and
-recorded), GPU/main/queue verified, archive roll + footer trim.
-
-**Next**: unchanged — `molmoact2-retirement-adoption` phase-3 watch;
-`squint-twin-preflight` is the executable CPU item (`run_work_next`
-stays armed, the chained work session picks it up);
-`wrist-transfer-screen-run` blocked on the in-channel GPU release
-(FINAL pre-reg first); `renderer-pbr-wrist-pilot` owner-gated.*
-
 ## Utilization footer
+
+Session 2026-08-14 18:47–19:0xZ (work; exploit; 0 GPU-h — GPU
+owner-reserved, CPU-only writing task): `wrist-transfer-screen-prereg-final`
+DONE — FINAL pre-reg posted freezing the design memo §5–§7 verbatim
+(programmatically diffed byte-identical), arms/seeds/honesty-anchors/
+≤14-GPU-h-gate frozen, amendment policy stated;
+`wrist-transfer-screen-run` converted to GPU-release-only; design-memo
+caption erratum fixed; queue refilled with
+`wrist-transfer-stage0-cpu-prep` — validate green depth 2, 17 open;
+`run_work_next` armed for the phase-3 watch + the stage-0 CPU prep.
 
 Session 2026-08-14 18:45–18:5xZ (tick; 0 GPU-h — GPU owner-reserved):
 quiet tick minutes after the preflight session closed — Discord read +
