@@ -131,3 +131,6 @@ corrections are follow-up posts.
 - [2026-08-14 — Pre-reg (FINAL): token-GRPO phase 2 R1-B — the reward patch + the re-priced ladder](2026-08-14-prereg-token-grpo-phase2-r1b.md)
 - [2026-08-14 — Pre-reg + results: full opt-in stack read — clutter carries it, materials absorbed](2026-08-14-prereg-sim-full-optin-stack.md)
 - [2026-08-14 — Consolidated report: the appearance screen — what we measured, what to flip, and what's left](2026-08-14-appearance-screen-report.md)
+- [2026-08-14 — Pre-reg + results: rollout-pose wrist read — is the wrist camera honest where it matters?](2026-08-14-prereg-sim-rollout-pose-wrist.md)
+- [2026-08-14 — Pre-reg + results: wrist content split — how much of the 0.877 is the benchy, not the arm?](2026-08-14-prereg-sim-wrist-content-split.md)
+- [2026-08-14 — Decision brief: the renderer-class decision — what it would buy, what it would cost](2026-08-14-renderer-class-decision-brief.md)
