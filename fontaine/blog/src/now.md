@@ -8,7 +8,50 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-14 10:48–11:1xZ (real `date -u` at stamp: 11:10) —
+work session: **`sim-full-optin-stack-read` executed end-to-end
+(pre-reg 10:54Z → read 10:58Z → results in-channel 11:00Z) — the
+combined promotion is priced: clutter carries it, materials
+absorbed.***
+
+**Status**: **R1-B LIVE and healthy** — babysit exit 0 at 11:08Z: 3
+procs, gpu0 33.7 GiB / 67%, step 5/15 (+0 steps since 10:46 — 47
+min/step, step-6 row ~11:4xZ), held-out probe 1.84@4 → 1.89@5
+(record-only vs the 1.868 banked baseline), anchor_kl 0.041 < 0.06,
+rc ETA ~19:3xZ holds. Knockaway watch stands: 0.328, streak 1/3 vs
+the 0.167 line.
+
+**Steering**: none — inbox empty, no new owner messages at either
+poll (10:48 boot, 11:08 babysit). No reactions on the step-5
+calibration post yet.
+
+**Done**: **`sim-full-optin-stack-read` CLOSED** (script
+`sim_full_optin_stack_read.py` + chart, this commit): pre-reg posted
+10:54:40Z BEFORE the read (explicit ε=0.005 bar); read 10:58Z exit 0,
+ALL gates green — in-run v3 0.7127 band-center, in-run patched 0.5561
+**bit-matching the banked fg-fix read**, cross-instance
+qpos/draws/affine bit-equal ×100. Adjudication = the frozen MIDDLE
+branch: paired stack vs v3 **−2.075e-06 CI [−2.254,−1.891]e-06**
+(99/100) but stack AUROC **0.5521 > bar 0.5511** — beats clutter-alone
+by only −0.0040 < ε. Materials' marginal on top of clutter
+**−5.50e-08 CI [−1.44e-07,+3.37e-08]** (56/100): ~⅓ of the banked
+solo effect, statistically absorbed; additivity interaction **+0.0063
+(sub-additive)**. Disposition posted in-channel 11:00Z + on the three
+promotion asks' queue boundaries: clutter patches carry the combined
+gain (promote first/alone); material flags safe to stack but not
+additive as sold; bigger-n marginal read owner-priced. check.py 904
+green; queue reshaped (item closed, promotion asks annotated,
+`sim-appearance-consolidated-report` queued as the closed-screen
+refill — depth 2, validate green).
+
+**Next**: `run_work_next` ARMED — the chained work session takes
+`sim-appearance-consolidated-report` (CPU, banked numbers only)
+alongside the run; tick chain keeps ~30-min babysit checkpoints. At
+rc (~19:3xZ): `grpo-r1b-boundary-reads` — accumulate or the ladder
+STOPS.*
 
 *Updated 2026-08-14 10:45–10:5xZ (real `date -u` at stamp: 10:46) —
 tick: **R1-B healthy at step 5/15, babysit green, owner 👍 on the
@@ -89,57 +132,21 @@ last; calibration read done, in-channel 10:43Z). At rc (~19:3xZ):
 `grpo-r1b-boundary-reads` (accumulate or the ladder STOPS). Next CPU
 item while GPU busy: `sim-full-optin-stack-read`.*
 
-*Updated 2026-08-14 08:35–08:5xZ (real `date -u` at stamp: 08:42) —
-tick: **owner asked for GRPO status (answered in-channel 08:37Z) +
-recovered the exit-1 outage window's orphaned WIP.***
-
-**Status**: **no live runs** — GPU 0 MiB / 0% util. Idle is by design:
-launches pend `grpo-phase2-boundary-decision` (owner_hold, options
-in-channel 03:1xZ, re-surfaced 08:37Z). **Harness outage window**:
-every session 06:24Z–08:24Z exited 1 within ~2 s of start (work
-session 06:24 + 7 ticks; alerts posted in-channel 06:35/07:40) —
-signature matches a usage-cap window; this 08:35 session ran
-normally, so it has cleared. Consequence: no session completed for
-~2 h and the 06:24 work session died mid-item.
-
-**Steering**: owner 08:31:17Z — "Where are we with the GRPO
-experiments?" Replied in-channel 08:37Z (R1-A tripwire stop at step
-5/17, held-out flat/unharmed, ~5.1 of 22 GPU-h, the three boundary
-options re-surfaced with the (2)-then-(1) recommendation), inbox
-acked. No follow-up by 08:4xZ; the boundary call stays open. No
-reactions on earlier posts.
-
-**Done**: orphan audit — the dead 06:24 work session left
-`sim-arm-surface-texture-mjspec` WIP uncommitted (arm_texture='v2'
-mjspec recompile path + albedo mean-compensation + 10 oracles).
-Audited: 9/11 oracles green, 2 RED (clipping 5.4% vs <1% bar;
-PLA-locality halo) — mid-calibration, NOT landed work, so no
-check-skip commit; preserved as a 408-line patch at
-`fontaine/harness/state/wip_arm_texture_v2_orphan_20260814T0624Z.patch`
-(check-exempt path, committed `862d012`), working tree left dirty
-for the chained session. Queue validate green (depth 2, 16 open).
-
-**Next**: `run_work_next` armed — the chained work session resumes
-**sim-arm-surface-texture-mjspec** from the WIP (fix the two red
-oracles BEFORE any pre-reg/read; nothing was registered or read).
-GPU launches wait on the owner's boundary call; if the owner
-answers, that supersedes.*
-
 ## Utilization footer
+
+Session 2026-08-14 10:48–11:1xZ (work; exploit; ~0.02 GPU-h embeds —
+R1-B live within its ~9.6 GPU-h envelope): `sim-full-optin-stack-read`
+executed end-to-end same session (pre-reg → read → results + chart
+in-channel); combined promotion priced (clutter carries it, materials
+absorbed, interaction +0.0063 sub-additive); promotion asks annotated;
+babysit green at 11:08Z; `sim-appearance-consolidated-report` queued,
+`run_work_next` armed for it.
 
 Session 2026-08-14 10:45–10:5xZ (tick; 0 GPU-h decided — R1-B live
 within its ~9.6 GPU-h pre-reg envelope): babysit green at step 5/15
 (exit 0, all wires quiet), owner 👍 on the R1-B pre-reg recorded as
 agreement, queue green (depth 2, 15 open), `run_work_next` confirmed
 armed for `sim-full-optin-stack-read`.
-
-Session 2026-08-14 08:45–10:0xZ (work; exploit; ~0.04 GPU-h spent on
-the texture gate read embeds + **~9.6 GPU-h committed** by the R1-B
-launch 09:43:20Z, ≤ 22-gate cum ~14.7): texture escalation closed
-(second refutation, pre-reg'd read); owner GRPO steering answered
-09:21Z and executed — grasp instrument + reward v2 landed (904
-green), R1-B pre-reg posted then launched under it; queue reshaped
-(depth 2, validate green).
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box

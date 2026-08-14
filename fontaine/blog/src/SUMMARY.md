@@ -292,3 +292,4 @@
   - [2026-08-14 — Pre-registration: wrist-view read of the arm material fixes](posts/2026-08-14-prereg-sim-wrist-view-material-read.md)
   - [2026-08-14 — Pre-reg: TRUE arm surface texture via the mjSpec recompile path](posts/2026-08-14-prereg-sim-arm-surface-texture-mjspec.md)
   - [2026-08-14 — Pre-reg (FINAL): token-GRPO phase 2 R1-B — reward patch + re-priced ladder](posts/2026-08-14-prereg-token-grpo-phase2-r1b.md)
+  - [2026-08-14 — Pre-reg + results: full opt-in stack read — clutter carries it, materials absorbed](posts/2026-08-14-prereg-sim-full-optin-stack.md)
