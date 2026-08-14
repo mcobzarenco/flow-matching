@@ -31,7 +31,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import numpy as np
 import torch
 
 from bijou.grpo_replay import MolmoAct2DiscreteStack, load_training_rows
