@@ -9,7 +9,32 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-14 11:12–11:1xZ (real `date -u` at stamp: 11:13) —
+tick: **R1-B green at step 5/15 mid-step, all quiet.***
+
+**Status**: **R1-B LIVE and healthy** — babysit exit 0 at 11:12Z: 3
+procs, gpu0 33.9 GiB / 100%, step 5/15 (mid-step — 47 min/step,
+step-6 row ~11:4xZ), probe 1.84@4 → 1.89@5 (record-only vs the 1.868
+banked baseline), no gate crossing, rc ETA ~19:3xZ holds. Knockaway
+watch stands: 0.328, streak 1/3 vs the 0.167 line — next data point
+at the step-6 row.
+
+**Steering**: none — inbox empty, no new messages, no new reactions
+(history checked; the pre-reg 👍 already recorded 10:46Z).
+
+**Done**: babysit poll (facts above, trajectories nominal, no
+anomaly); Discord read + history; queue validate green (depth 2, 15
+open); `run_work_next` confirmed armed (11:08) for
+`sim-appearance-consolidated-report`.
+
+**Next**: chained work session takes
+`sim-appearance-consolidated-report` (CPU, banked numbers only)
+alongside the run; tick chain keeps ~30-min babysit checkpoints. At
+rc (~19:3xZ): `grpo-r1b-boundary-reads` — accumulate or the ladder
+STOPS.*
 
 *Updated 2026-08-14 10:48–11:1xZ (real `date -u` at stamp: 11:10) —
 work session: **`sim-full-optin-stack-read` executed end-to-end
@@ -79,60 +104,13 @@ green (depth 2, 15 open); confirmed `run_work_next` armed.
 checkpoints. At rc (~19:3xZ): `grpo-r1b-boundary-reads` — accumulate
 or the ladder STOPS.*
 
-*Updated 2026-08-14 08:45–10:0xZ (real `date -u` at stamp: 09:55) —
-work session: **texture escalation CLOSED (second refutation) + owner
-GRPO steering executed end-to-end — reward patch landed and R1-B
-LAUNCHED under it, all in one session.***
-
-**Status**: **R1-B LIVE** — unit `grpo-phase2-r1b` launched 09:43:20Z
-(steps 5–14 resuming R1-A's step_0004 into fresh `grpo_phase2_b`; lr
-3e-7, kl_beta 1.0, **train_reward v2**). GPU 33.6 GiB / 100% (R1-A
-envelope); first heartbeat 09:54Z: the duplicate step-4 eval row reads
-**1.8441, 2/20, Δ −0.0239 — bit-matching the banked R1-A read**
-(resume correctness confirmed live; baseline rode the checkpoint).
-**Step-5 row 10:42Z — CALIBRATION PASS**: 8/8
-groups kept, std 3.27 cm; decomposition earned **1.19** vs shoved
-**4.98 cm** (~4:1 shove:carry — the leakage, measured);
-setback_frac 0.703 vs knockaway 0.328 (excursion channel sees 2×
-the endpoint stat); mechanics green (anchor_kl 0.041 < 0.06,
-ratio 1.00026, 47 min/step). Knockaway streak 1/3 vs the 0.167
-line — prediction on record: decays. rc ETA ~19:3xZ; ~9.6 GPU-h,
-ladder cum ~14.7 of the 22 gate.
-
-**Steering**: owner 09:16:39Z — "let's try your recommendation (2)
-then (1). How is knock away currently defined? Do we actually do a
-good job of defining it?" Replied in-channel 09:21Z (code-grounded
-audit: endpoint-only, tripwire-only, reward-funded shoving blind spot,
-no grasp channel), acked, then EXECUTED same session: option (2) is
-code, option (1) is live.
-
-**Done**: (1) **sim-arm-surface-texture-mjspec CLOSED — SECOND
-REFUTATION** (`e408f9e` instrument, `92ae859` close): resumed the
-orphaned WIP, fixed both red oracles (zero-clip tanh generator;
-tabletop-reflection rider, mechanism confirmed), wrote the real fit
-(period 32 at the plausibility bound, amplitude capped at the 0.42
-no-clip headroom → lc 6.43 of real 8.36), pre-reg 09:14Z BEFORE the
-read → 20×5 gates all green, **PRIMARY +3.07e-07 CI [+2.42,+3.71]e-07
-(0.698→0.718)**: coherent surface-tracking bands still read MORE fake —
-arm-texture direction COLD, graded arm stays the frontier; surviving
-hypothesis banked (real layer contrast is RELIEF/light-transport, not
-albedo). (2) **Grasp instrument + reward v2** (`5932fb6`):
-`benchy_grip_contacts()` two-sided pinch predicate, per-tick grip
-trace, `grasped_progress_cm`/`ungrasped_displacement_cm`/
-`max_setback_cm`; `composite_reward_v2` = earned − 0.5·shoved (4 cm
-shove −2.0 vs 4 cm carry +4.0, oracle-pinned); eval metric stays v1;
-13 new oracles, check.py 904 green. (3) **R1-B pre-reg (posted 09:43Z
-before launch) + launch** (`3c7ed82`); babysit registry entry with
-the calibration bar. Queue: texture + boundary-decision + patch +
-r1b-launch items closed, `grpo-r1b-boundary-reads` queued (depth 2,
-15 open, validate green).
-
-**Next**: tick chain babysits R1-B (~30-min checkpoints, poll forced
-last; calibration read done, in-channel 10:43Z). At rc (~19:3xZ):
-`grpo-r1b-boundary-reads` (accumulate or the ladder STOPS). Next CPU
-item while GPU busy: `sim-full-optin-stack-read`.*
-
 ## Utilization footer
+
+Session 2026-08-14 11:12–11:1xZ (tick; 0 GPU-h decided — R1-B live
+within its ~9.6 GPU-h pre-reg envelope): babysit green at step 5/15
+mid-step (exit 0, wires quiet, no owner traffic), queue green (depth
+2, 15 open), `run_work_next` armed for
+`sim-appearance-consolidated-report`.
 
 Session 2026-08-14 10:48–11:1xZ (work; exploit; ~0.02 GPU-h embeds —
 R1-B live within its ~9.6 GPU-h envelope): `sim-full-optin-stack-read`
@@ -141,12 +119,6 @@ in-channel); combined promotion priced (clutter carries it, materials
 absorbed, interaction +0.0063 sub-additive); promotion asks annotated;
 babysit green at 11:08Z; `sim-appearance-consolidated-report` queued,
 `run_work_next` armed for it.
-
-Session 2026-08-14 10:45–10:5xZ (tick; 0 GPU-h decided — R1-B live
-within its ~9.6 GPU-h pre-reg envelope): babysit green at step 5/15
-(exit 0, all wires quiet), owner 👍 on the R1-B pre-reg recorded as
-agreement, queue green (depth 2, 15 open), `run_work_next` confirmed
-armed for `sim-full-optin-stack-read`.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
