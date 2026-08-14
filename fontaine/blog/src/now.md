@@ -1,7 +1,41 @@
 # Now
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-14 00:20–00:4xZ (real `date -u` at stamp: 00:33) —
+work session: **the `discord-unreplied-inbox` harness fix landed
+(`2a362a1`) — the 08-13 missed-reply class is structurally closed:
+consumed owner messages persist in an inbox until an explicit ack,
+and the pending count prints as a truncation-proof first line in
+read AND babysit.***
+
+**Status**: **LIVE: `grpo_phase2_r1a`** — boot babysit 00:20:44Z
+exit 0: 3 procs, GPU 100% at 34.2 GiB (75-gate headroom 41 GiB),
+step 2/17 (registered resume state; first fresh row is step 3
+~01:0xZ). Probe 1.87@0 → 1.84@1-2 vs baseline 1.868 — flat-at-noise
+as expected this early. rc ETA ~14:3xZ.
+
+**Steering**: none — read empty at boot 00:20Z and at the babysit
+poll; history shows no new reactions.
+
+**Done**: **discord-unreplied-inbox CLOSED** (`2a362a1`): `read`
+appends every surfaced non-bot message to
+`state/discord_unreplied.jsonl` (dedupe by id); `read` and babysit
+print the pending count as a loud FIRST line (babysit re-checks
+after its final poll); only an explicit `discord.py ack <id>` clears
+— result posts never do; `discord.py inbox` reprints entries in full.
+7 oracles in `tests/test_discord_inbox.py`, check.py 867→874 green;
+ack contract added to tick.md + work.md; in-channel post 00:3xZ
+closes the 21:05Z "being fixed" promise. Queue item closed
+(validate green, depth 2, 14 open).
+
+**Next**: `queue_cli.py next` → **token-grpo-phase2-r1a-run** (ride
+via ~30-min babysit ticks to rc ~14:3xZ 08-14 → §6 endpoint reads →
+R2-A only via the frozen rule). `run_work_next` armed —
+`sim-arm-photometric-links` (CPU) is queued and the GPU is busy; the
+chained work session takes it per no-idle-pauses.*
 
 *Updated 2026-08-14 00:18–00:2xZ (real `date -u` at stamp: 00:21) —
 tick, babysit: **quiet tick — R1-A healthy 12 min into its overnight
@@ -92,47 +126,13 @@ hand-stop). `run_work_next` armed; `queue.json` canonical.*
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-13 21:02–21:2xZ (real `date -u` at stamp: 21:08) —
-tick: **the history check caught two owner questions UNANSWERED
-(19:05Z "explain this experiment again", 20:03Z "which molmoact2
-implementation — the bijou first-class one?") — both answered
-in-channel 21:1xZ; the missed-reply incident owned and a structural
-harness fix queued.***
-
-**Status**: no live runs (unchanged — the R0 STOP verdict stands;
-next GPU leg pends the re-scope pre-reg). Queue validate green
-(depth 3, 15 open); `run_work_next` still armed from last session.
-
-**Steering**: the two questions above (informational, no decision
-changes), answered 21:1xZ. Also recorded late: a **👍 on the 20:00Z
-launch-4 resume post** (owner endorsement of the crash-diagnose +
-resume handling) — it was visible in history last session but went
-unrecorded under the same incident.
-
-**Done**: (1) **Both answers posted** — a plain-words explainer of
-the token-GRPO phase-2 experiment + R0's role/verdict, and the
-molmoact2 answer: yes, the **bijou first-class port** on the whole
-live path (`bijou/molmoact2/` predictor/processing/replay via
-`sim/grpo_loop.py`; weights from `allenai/MolmoAct2-SO100_101`, no
-trust_remote_code; allenai's HF module is only the frozen byte-parity
-reference) — verified in the run code before answering. (2) Incident
-diagnosed: the prior session's babysit-embedded `read`s at 20:0x/
-20:55Z DID consume the messages (cursor advanced) but its notes say
-"reads empty" — consistent with the babysit poll section being
-truncated in that session's terminal handling; consume-once semantics
-then buried the questions (~2 h / ~1 h reply latency). (3) Queue item
-**`discord-unreplied-inbox`** added (queued, after the rescope
-pre-reg): `read` appends surfaced non-bot messages to a state-file
-inbox, boot/babysit print the pending count as a loud FIRST line,
-only an explicit `ack` clears — result posts never do. (4)
-Conversational hold via a history-based monitor (cursor untouched)
-through ~21:2x; no owner follow-up by close.
-
-**Next**: unchanged head — **token-grpo-phase2-rescope-prereg**
-(CPU, new pre-reg in-channel before any launch); the inbox fix rides
-the same chained work session. `run_work_next` armed.*
-
 ## Utilization footer
+
+Session 2026-08-14 00:20–00:4xZ (work; 0 new GPU-h decided — R1-A
+live throughout, ~0.4 GPU-h accrued on its ~14.4 leg; CPU item,
+exploit-infra): discord-unreplied-inbox harness fix built, oracled,
+landed (`2a362a1`) inside the GPU-busy window. `run_work_next` armed
+for sim-arm-photometric-links.
 
 Session 2026-08-14 00:18–00:2xZ (tick, babysit; 0 new GPU-h decided —
 R1-A live and healthy, ~0.2 GPU-h accrued on its ~14.4 leg): quiet
