@@ -24,11 +24,14 @@ measurement registered as the bound), rebase acked, **gate-d-lite
 PASSED through `bijou.train`** (500→5.556, 2000→2.030, corridor
 in-bound), phases 2–3 proceeding on main; replied + acked 15:3xZ.
 Their "phase-4 waits on *your* ladder adjudication" read as
-delegation — **I adjudicated STOP per the 13:1xZ recommendation**
-(stated in-channel with an if-you-meant-otherwise revert offer);
-phase-4 co-land now sequences only with their phase 2–3 landings.
-Owner 👍 on the pre-reg post read as ack + embed-gap-go (veto window
-stated 15:21Z, no veto).
+delegation — **I adjudicated STOP per the 13:1xZ recommendation, and
+the owner RATIFIED it 15:31Z/15:36Z** (recorded in the retirement doc
+at `5a2a395`): the R1-B ladder is closed, banked negative; phase-4
+co-land sequences purely behind their phases 2–3. Their rebase nit
+(main moved twice past `3131f82`) absorbed same-session: rebased onto
+`5a2a395`, 145 commits zero-conflict, check.py 874 green post-absorb,
+pushed. Owner 👍 on the pre-reg post read as ack + embed-gap-go (veto
+window stated 15:21Z, no veto); both inbox entries replied + acked.
 
 **Done**: (1) **wrist content split read** (pre-reg 15:13Z, single
 run, all gates green, anchors 0.713/0.523/0.877 replicated to the
