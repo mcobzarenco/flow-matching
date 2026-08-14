@@ -264,23 +264,30 @@ class SO101Sim:
             raise ValueError(
                 f"mount_material {mount_material!r} not in (None, 'v1')",
             )
-        if arm_texture not in (None, "v1"):
+        if arm_texture not in (None, "v1", "v2"):
             raise ValueError(
-                f"arm_texture {arm_texture!r} not in (None, 'v1')",
+                f"arm_texture {arm_texture!r} not in (None, 'v1', 'v2')",
             )
-        if arm_texture == "v1" and arm_photometrics != "v1":
-            # the texture was fitted ON TOP of the graded materials and is
-            # gated as that combination; an ungated pairing has no read
-            raise ValueError("arm_texture='v1' requires arm_photometrics='v1'")
-        if arm_texture == "v1" and render_style not in ("v3", "v4"):
-            raise ValueError("arm_texture='v1' needs the composite path (v3/v4)")
+        if arm_texture is not None and arm_photometrics != "v1":
+            # both textures were fitted ON TOP of the graded materials and
+            # are gated as that combination; an ungated pairing has no read
+            raise ValueError(
+                f"arm_texture={arm_texture!r} requires arm_photometrics='v1'",
+            )
+        if arm_texture is not None and render_style not in ("v3", "v4"):
+            raise ValueError(
+                f"arm_texture={arm_texture!r} needs the composite path (v3/v4)",
+            )
         self.arm_photometrics = arm_photometrics
         self.mount_material = mount_material
         self.arm_texture = arm_texture
         self.render_style = render_style
         self.post_backend = post_backend
         self.lens_model = lens_model
-        self.model = mujoco.MjModel.from_xml_path(str(SCENE_PATH))
+        if arm_texture == "v2":
+            self.model = self._compile_arm_surface_texture()
+        else:
+            self.model = mujoco.MjModel.from_xml_path(str(SCENE_PATH))
         self._widen_joint_limits()
         self._apply_servo_sysid()
         self.data = mujoco.MjData(self.model)
@@ -1044,23 +1051,40 @@ class SO101Sim:
         "servo": {"rgba": (0.02, 0.02, 0.0661), "specular": 1.0, "shininess": 0.1},
     }
 
+    @staticmethod
+    def _is_pla_material(name: str) -> bool:
+        """The printed-PLA link material population (both instances):
+        the so101 materials minus the servo casings (no 'so101' in their
+        names), the moving jaws and the mount's wrist-roll material —
+        the SAME predicate the photometric grade and both texture paths
+        key on, so the populations can never drift apart."""
+        return (
+            "so101" in name
+            and "moving_jaw" not in name
+            and "wrist_roll_follower" not in name
+        )
+
     def _grade_arm_photometrics(self) -> None:
         """Apply the fitted material grades (arm_photometrics='v1');
         deterministic material writes at init — no RNG draws, spawn and
-        noise streams stay bit-identical to the default path."""
+        noise streams stay bit-identical to the default path. Under
+        arm_texture='v2' the PLA albedo is divided by the surface
+        texture's realized mean: the renderer MODULATES the lit material
+        color by the texture (measured, spike 2026-08-14), so the
+        compensated product preserves the fitted grade exactly."""
         for index in range(self.model.nmat):
             name = self.model.mat(index).name
             if "sts3215" in name:
                 grade = self.ARM_PHOTOMETRICS_V1["servo"]
-            elif (
-                "so101" in name
-                and "moving_jaw" not in name
-                and "wrist_roll_follower" not in name
-            ):
+                rgba = np.asarray(grade["rgba"])
+            elif self._is_pla_material(name):
                 grade = self.ARM_PHOTOMETRICS_V1["pla"]
+                rgba = np.asarray(grade["rgba"])
+                if self.arm_texture == "v2":
+                    rgba = rgba / self._surface_tex_mean
             else:
                 continue
-            self.model.mat_rgba[index, :3] = grade["rgba"]
+            self.model.mat_rgba[index, :3] = rgba
             self.model.mat_specular[index] = grade["specular"]
             self.model.mat_shininess[index] = grade["shininess"]
 
@@ -1192,11 +1216,7 @@ class SO101Sim:
             name = self.model.mat(matid).name
             if "sts3215" in name:
                 pops["servo"].append(geom)
-            elif (
-                "so101" in name
-                and "moving_jaw" not in name
-                and "wrist_roll_follower" not in name
-            ):
+            elif self._is_pla_material(name):
                 pops["pla"].append(geom)
         counts = {name: len(ids) for name, ids in pops.items()}
         if counts != self.ARM_TEXTURE_GEOM_COUNTS:
@@ -1288,6 +1308,130 @@ class SO101Sim:
                 self.ARM_TEXTURE_V1[name],
             )
         return np.clip(out, 0, 255).astype(frame.dtype)
+
+    # Arm surface texture (sim-arm-surface-texture-mjspec): the registered
+    # escalation of the REFUTED composite micro-texture — the 08-14 read
+    # showed the encoder reads spatial structure, not pooled statistics
+    # (statistically-matched screen-space grain read MORE fake, both CIs
+    # above zero). arm_texture='v2' therefore puts TRUE surface structure
+    # on the printed links: a quasi-periodic layer-line texture asset
+    # built at compile time from a private pinned RNG and cube-mapped
+    # onto the PLA link meshes (the STL meshes carry no texcoords;
+    # MuJoCo's cube shrink-wrap anchors the bands in OBJECT space, so
+    # they track the surface through every pose — the property the
+    # refutation demanded and screen-space fields cannot have). The
+    # model is recompiled from the same scene XML via mjSpec with the
+    # texture attached to the PLA materials; physics preservation is the
+    # oracle-pinned hard bar (spike + tests: every physics field of the
+    # recompiled model is bit-equal to the from_xml_path baseline, qpos
+    # trajectories bit-equal, geom/material ids unrenumbered). The
+    # renderer MODULATES lit material color by the texture, so the PLA
+    # albedo is divided by the texture's realized mean at grade time —
+    # mean appearance preserves the fitted photometric grade exactly.
+    # Servo casings are OUT OF SCOPE: their residual is a specular glint
+    # tail and the classic renderer has no specular/normal map path —
+    # albedo speckles would bake view-independent dots, the wrong
+    # mechanism. Fitted by fontaine/scripts/sim_arm_surface_texture_fit.py
+    # through the production v3 composite (period chosen by lc response,
+    # amplitude solved on the mined real PLA local-contrast target); fit
+    # record: reports/analysis__arm_surface_texture_fit.json.
+    ARM_SURFACE_TEXTURE_V2: ClassVar[dict] = {
+        "field_seed": 20260814,
+        "size": 256,
+        # fitted 2026-08-14 (fit record above): period by lc-response
+        # probe over {6, 10, 16, 24, 32} texture rows/line — response is
+        # monotonic in period (fine bands die in the blur chain), 32 is
+        # the registered plausibility bound (>= 8 bands per link face;
+        # coarser stops being print-layer-like). Amplitude solved on the
+        # real PLA local-contrast median 8.36 via the quadrature model
+        # and CAPPED at the tanh-bound clip headroom 0.42: realized lc
+        # 6.43 vs real 8.36 — the no-clip modulation channel closes ~41%
+        # of the quadrature lc gap and CANNOT close the rest (same
+        # finding class as the v1 servo contrast cap); the residual is
+        # declared, not hidden.
+        "period_px": 32.0,
+        "amplitude": 0.42,
+        # line-shape constants (registered, not fitted): phase wobble
+        # random-walk sigma per column keeps lines quasi-periodic like
+        # real print layers; per-row gain jitter breaks perfect
+        # periodicity; center 0.7 leaves clip headroom either side
+        "wobble_sigma": 0.06,
+        "line_gain_jitter": 0.25,
+        "center": 0.7,
+    }
+    ARM_SURFACE_TEXTURE_MATERIALS = 18  # 9 PLA link materials x 2 instances
+
+    @staticmethod
+    def _surface_texture_image(params: dict) -> np.ndarray:
+        """[size, size] float grayscale texture in [0, 1]: quasi-periodic
+        horizontal layer lines with per-column phase wobble and per-row
+        gain jitter, deterministic from the pinned field seed (private
+        Generator — the spawn/appearance/noise streams see no draws)."""
+        size = int(params["size"])
+        rng = np.random.default_rng(params["field_seed"])
+        wobble = np.cumsum(rng.normal(0.0, params["wobble_sigma"], size))
+        wobble -= wobble.mean()
+        gain = rng.standard_normal(size)
+        for _ in range(3):  # smooth per-row jitter to a slow envelope
+            gain = (np.roll(gain, -1) + gain + np.roll(gain, 1)) / 3.0
+        gain = 1.0 + params["line_gain_jitter"] * (gain / max(gain.std(), 1e-9))
+        rows = np.arange(size, dtype=np.float64)[:, None]
+        field = (
+            np.sin(
+                2.0 * np.pi * rows / params["period_px"] + wobble[None, :],
+            )
+            * gain[:, None]
+        )
+        field = np.tanh((field - field.mean()) / field.std())
+        center, amplitude = params["center"], params["amplitude"]
+        # tanh bounds |field| < 1, so tex sits strictly inside
+        # center*(1 -/+ amplitude): ZERO clipping by construction as long
+        # as amplitude stays under the headroom — clipping would silently
+        # break the mean compensation, so refuse instead
+        headroom = min(1.0, (1.0 - center) / center)
+        if amplitude >= headroom:
+            raise ValueError(
+                f"surface texture amplitude {amplitude} >= headroom "
+                f"{headroom:.4f} at center {center} — would clip",
+            )
+        return center * (1.0 + amplitude * field)
+
+    def _compile_arm_surface_texture(self) -> mujoco.MjModel:
+        """Load the scene through mjSpec, attach the layer-line texture
+        to every PLA link material (both instances) and recompile. The
+        spec path and the XML loader resolve the identical model (physics
+        fields bit-equal, oracle-pinned in tests/test_arm_texture.py);
+        only mat_texid/tex_* differ. Stores the realized texture mean for
+        the grade-time albedo compensation."""
+        params = self.ARM_SURFACE_TEXTURE_V2
+        spec = mujoco.MjSpec.from_file(str(SCENE_PATH))
+        quantized = np.clip(
+            np.round(self._surface_texture_image(params) * 255.0),
+            0,
+            255,
+        ).astype(np.uint8)
+        self._surface_tex_mean = float(quantized.mean() / 255.0)
+        texture = spec.add_texture()
+        texture.name = "arm_surface_v2"
+        texture.type = mujoco.mjtTexture.mjTEXTURE_CUBE
+        texture.width = int(params["size"])
+        texture.height = int(params["size"])
+        texture.nchannel = 3
+        texture.data = np.repeat(quantized[..., None], 3, axis=2).tobytes()
+        textured = 0
+        for material in spec.materials:
+            if self._is_pla_material(material.name):
+                material.textures[mujoco.mjtTextureRole.mjTEXROLE_RGB] = (
+                    "arm_surface_v2"
+                )
+                textured += 1
+        if textured != self.ARM_SURFACE_TEXTURE_MATERIALS:
+            raise RuntimeError(
+                f"surface texture attached to {textured} materials, expected "
+                f"{self.ARM_SURFACE_TEXTURE_MATERIALS} — model drifted under "
+                "the texture instrument",
+            )
+        return spec.compile()
 
     def reset(self, seed: int, appearance_seed: int | None = None) -> SimObservation:
         """Home the arm, place benchy at a seeded pose, randomize
