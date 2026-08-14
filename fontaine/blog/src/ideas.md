@@ -663,7 +663,16 @@ record; the line here is the hook). *Index last updated 2026-08-13.*
   96.1→91.3% ranking-preserving sim→real on our exact arm), but its
   default visual world is far-OOD for our policies, so first use =
   relative screens + probe labels; #16 now owns a design problem,
-  not an access problem. Bench anti-patterns banked from 2606.08881
+  not an access problem. **Preflighted 2026-08-14
+  ([note](posts/2026-08-14-squint-twin-preflight.md)): GO
+  mechanically** — 8 envs step headless CPU-only, `pd_joint_pos` is
+  raw absolute-joint radians (hold drift 0.0, walk p50 track 0.014
+  rad), 224×224 is a `sensor_configs` kwarg, success + per-predicate
+  `info` every step; costs: ~2-min install, 1.35 s/50-step episode
+  wrist-RGB at the lavapipe CPU floor, one dual-camera subclass + a
+  per-process `CAMERA_TYPE` constant of engineering; overlay
+  silently needs `rgb+segmentation`. Tier decision stays with the
+  wrist-transfer screen's outcome. Bench anti-patterns banked from 2606.08881
   (tasks into the 20–80% band, ≥50 trials/cell, pre-registered
   annotation protocol); rig-phase forgetting precedent from the CL
   triangle: rig FT must carry 229h-corpus replay ρ 0.02–0.2 @ ~20%

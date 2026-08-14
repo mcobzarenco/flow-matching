@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-14T18:08:00Z
+**Updated:** 2026-08-14T18:24:00Z
 
 **Depth call:** depth 2: molmoact2-retirement-adoption (phases 2-3 watch, steps 3-4 pending) + wrist-transfer-screen-design (executable refill from the decision-brief close); renderer-pbr-wrist-pilot sits blocked on the owner's tier-2 go per the brief
 
-**17 open** (Live 0 · Queued 2 · Blocked 15 · Done 166)
+**17 open** (Live 0 · Queued 2 · Blocked 15 · Done 167)
 
 ## 🔴 Live (0)
 
@@ -18,15 +18,15 @@
 
 *ready — waiting on a window or a boundary*
 
-**`squint-twin-preflight`** · `cpu`
+**`wrist-transfer-screen-prereg-final`** · `cpu`
 
-Squint SO-101 twin preflight (lit 0819, papers/squint.md; the wrist-transfer design memo's successor tier for the success-rate form of the question): CPU-side only - install the MIT repo in an isolated venv, verify the 8 SO101*-v…
+FINAL pre-registration for the wrist-transfer screen (the design memo 2026-08-14-wrist-transfer-screen-design.md frozen into a launchable pre-reg): freeze arm list {ftrig4k, simft} x {W0..W4} + T1, seeds 0-99, the knn5 honesty ax…
 
-**boundary:** Queued 17:3xZ 08-14 at the wrist-transfer design close (depth refill; executable any window, pure CPU - no GPU needed for the preflight). Not a commitment to the twin tier: the note prices it, the wrist-transfer screen's outcome decides it.
+**boundary:** Queued 18:2xZ 08-14 at the squint-preflight close (depth refill; charter S4). Executable any CPU window. Simft training-data build steps stay inside the run item; this item is ONLY the frozen pre-reg document + post.
 
 <details><summary>full record</summary>
 
-Squint SO-101 twin preflight (lit 0819, papers/squint.md; the wrist-transfer design memo's successor tier for the success-rate form of the question): CPU-side only - install the MIT repo in an isolated venv, verify the 8 SO101*-v1 ManiSkill3 envs register and step headless; render one wrist + one third-person frame at policy-relevant resolution (224+) with apply_overlay=False and save to outputs/ for a look; verify pd_joint_pos normalize_action=False consumes our absolute-joint LeRobot convention end-to-end with a scripted hold + a random-walk episode (success/info plumbing observed); note per-step wall time at 1 env CPU. Deliverable: a short feasibility note on the blog (what works, what needs a subclass, measured step cost) feeding the tier decision if the wrist-transfer screen hits F-instrument or the success floor holds.
+FINAL pre-registration for the wrist-transfer screen (the design memo 2026-08-14-wrist-transfer-screen-design.md frozen into a launchable pre-reg): freeze arm list {ftrig4k, simft} x {W0..W4} + T1, seeds 0-99, the knn5 honesty axis anchors (0.877-&gt;0.523 span), the W0 determinism gate + sanity band, falsifiers F-instrument/F-null/F-flat/F-live verbatim, ladder + 14 GPU-h gate, and the abort/success readouts; post to the blog + in-channel pointer. CPU-only writing task; its completion converts wrist-transfer-screen-run from double-blocked (prereg + GPU) to GPU-release-only, so the run launches the moment the owner frees the GPU.
 
 </details>
 
@@ -258,9 +258,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (166)
+## ✅ Done (167)
 
 *closed — the full record stays in each fold*
+
+**`squint-twin-preflight`** · `cpu`
+
+Squint SO-101 twin preflight (lit 0819, papers/squint.md; the wrist-transfer design memo's successor tier for the success-rate form of the question): CPU-side only - install the MIT repo in an isolated venv, verify the 8 SO101*-v…
+
+**boundary:** Queued 17:3xZ 08-14 at the wrist-transfer design close (depth refill; executable any window, pure CPU - no GPU needed for the preflight). Not a commitment to the twin tier: the note prices it, the wrist-transfer screen's outcome decides it. | DONE 18:2xZ 08-14 (work session): CPU-only preflight executed GO — 8 envs register+step headless (physx_cpu + lavapipe, GPU 0 MiB throughout); pd_joint_pos verified raw absolute-joint radians end-to-end (hold drift 0.0 rad, random-walk p50 track 0.014 rad, 50-step truncation, success/info predicates plumbed); 224x224 via sensor_configs kwarg, wrist+greenscreen+third frames saved to outputs/squint_preflight/ + fontaine-reports; step cost 1.9 ms state / 27 ms wrist-rgb224 / 128 ms third-rgb224 at the CPU floor. Two API traps documented (overlay needs rgb+segmentation obs mode or silently no-ops; CAMERA_TYPE is a per-process module constant, in-process alias flip impossible). Feasibility note on the blog (2026-08-14-squint-twin-preflight.md); probe script fontaine/scripts/squint_preflight.py. Tier decision stays with the wrist-transfer screen outcome.
+
+<details><summary>full record</summary>
+
+Squint SO-101 twin preflight (lit 0819, papers/squint.md; the wrist-transfer design memo's successor tier for the success-rate form of the question): CPU-side only - install the MIT repo in an isolated venv, verify the 8 SO101*-v1 ManiSkill3 envs register and step headless; render one wrist + one third-person frame at policy-relevant resolution (224+) with apply_overlay=False and save to outputs/ for a look; verify pd_joint_pos normalize_action=False consumes our absolute-joint LeRobot convention end-to-end with a scripted hold + a random-walk episode (success/info plumbing observed); note per-step wall time at 1 env CPU. Deliverable: a short feasibility note on the blog (what works, what needs a subclass, measured step cost) feeding the tier decision if the wrist-transfer screen hits F-instrument or the success floor holds.
+
+</details>
+
+---
 
 **`wrist-transfer-screen-design`** · `cpu`
 
