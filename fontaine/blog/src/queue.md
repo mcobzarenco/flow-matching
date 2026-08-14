@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-13T21:15:30Z
+**Updated:** 2026-08-14T00:07:51Z
 
 **Depth call:** depth 3: arm-B read+prune at its ~13:3xZ boundary; token-grpo-phase2-instrument items 3-4 on the molmoact2 surface (gate passed, lane GO); sim-arm-photometric-links pre-reg.
 
-**15 open** (Live 0 · Queued 3 · Blocked 12 · Done 147)
+**15 open** (Live 0 · Queued 3 · Blocked 12 · Done 149)
 
 ## 🔴 Live (0)
 
@@ -46,15 +46,15 @@ Harness fix — discord unreplied inbox (process-integrity, from the 08-13 misse
 
 ---
 
-**`token-grpo-phase2-rescope-prereg`** · `cpu`
+**`token-grpo-phase2-r1a-run`** · `gpu-local`
 
-Token-GRPO phase-2 RE-SCOPE pre-reg (the R0 STOP boundary's registered fallback, 20:5xZ 08-13): design + pre-register the next rung on option A (patch-only trainable surface
+Token-GRPO phase-2 R1-A LIVE (00:06:00Z 08-14, unit fontaine-grpo-r1a, resume of R0-A step_0002.pt, steps 3-17, same frozen constants): babysit rides it (~0.96 GPU-h/step incl
 
-**boundary:** Queued 20:5xZ 08-13 at the R0 STOP close. CPU-side design + pre-reg post; the GPU rung it authorizes prices its own gate inside the remaining ~31 GPU-h of the 35 ladder total.
+**boundary:** Queued 00:1xZ 08-14 at launch. Leg budget 16.5 GPU-h in-registry; ladder cum ~20.3 of gate 22 at rc; 35 GPU-h total unchanged. · [pre-reg](posts/2026-08-13-prereg-token-grpo-phase2-r0a.md)
 
 <details><summary>full record</summary>
 
-Token-GRPO phase-2 RE-SCOPE pre-reg (the R0 STOP boundary's registered fallback, 20:5xZ 08-13): design + pre-register the next rung on option A (patch-only trainable surface — dissolves the VRAM fail: 76.53 GiB steady-state was option B's, and the instability fallback rule named A) + explicit collapse mitigation calibrated off the R0 curves (one step at lr 5e-6: chosen_nll 0.77-&gt;0.33, anchor_kl 0.0215-&gt;0.0885, wave-2 5/8 groups all-8-draws-identical, held-out greedy -1.868 paired). Candidate levers to price IN THE PRE-REG, not ad hoc: lr down 5-10x; advantage tempering/clip tightening; KL penalty ON with the R0-measured scale as the line; eval-every 1 on the early rung so greedy damage is visible per step. step_0001/0002.pt on local disk are the diagnostic calibration artifacts. Pre-reg in-channel BEFORE any launch (delegation 11:07/11:18Z active).
+Token-GRPO phase-2 R1-A LIVE (00:06:00Z 08-14, unit fontaine-grpo-r1a, resume of R0-A step_0002.pt, steps 3-17, same frozen constants): babysit rides it (~0.96 GPU-h/step incl. per-step eval, rc ETA ~14:3xZ 08-14). At rc: S6 endpoint reads (paired delta CI95 primary; knockaway vs 10/120 — WATCH: R0-A waves 0.234-&gt;0.359 vs the 0.167 x3 line, a legitimate exit-3 is registered behavior; success count) =&gt; R2-A extension only via the frozen R1-&gt;R2 rule, else boundary discussion in-channel (incl. lr/beta re-price if eval stays flat-at-noise).
 
 </details>
 
@@ -230,7 +230,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (147)
+## ✅ Done (149)
 
 *closed — the full record stays in each fold*
 
@@ -243,6 +243,34 @@ Token-GRPO phase-2 RUN — R0 COMPLETE 20:54:30Z 08-13 rc 0 (4 launches; crashes
 <details><summary>full record</summary>
 
 Token-GRPO phase-2 RUN — R0 COMPLETE 20:54:30Z 08-13 rc 0 (4 launches; crashes: device mix 9ffc1c1, Adam-init OOM d0b9a44, worker-headroom OOM 78cbb65; launch 4 = step_0001.pt resume, R1 resume path validated). BOUNDARY VERDICT: STOP — VRAM gate FAIL (76.53 GiB steady-state &gt;= 75; option B measured-marginal on 1xH100), signal gate FAIL (wave-2 median group std 0.0087 cm, 5/8 groups all-draws-identical; one step at lr 5e-6 sharpened the 4B stack: chosen_nll 0.77-&gt;0.33, anchor_kl 4x/step), endpoint held-out collapsed 1.868 -&gt; -0.0, 0/20, paired delta -1.868 CI [-4.41,-0.03]. R1 NOT launched by frozen rule; ~3.8/5.5 GPU-h ops gate spent. Results in the pre-reg post.
+
+</details>
+
+---
+
+**`token-grpo-phase2-rescope-prereg`** · `cpu`
+
+Token-GRPO phase-2 RE-SCOPE pre-reg (the R0 STOP boundary's registered fallback, 20:5xZ 08-13): design + pre-register the next rung on option A (patch-only trainable surface
+
+**boundary:** CLOSED 22:1xZ 08-13 work session: pre-reg FINAL posted (posts/2026-08-13-prereg-token-grpo-phase2-r0a.md, frozen 81e020c) + instrument landed oracle-gated (69b03e8: option-A surface, differentiable KL penalty beta 0.5, advantage clip 2.0, kl-stop 0.06 mechanized; 18 loop oracles, check.py green). R0-A LAUNCHED same session (launch 2 21:58:04Z after the MUJOCO_GL env fix, addendum 1); run item queued at head.
+
+<details><summary>full record</summary>
+
+Token-GRPO phase-2 RE-SCOPE pre-reg (the R0 STOP boundary's registered fallback, 20:5xZ 08-13): design + pre-register the next rung on option A (patch-only trainable surface — dissolves the VRAM fail: 76.53 GiB steady-state was option B's, and the instability fallback rule named A) + explicit collapse mitigation calibrated off the R0 curves (one step at lr 5e-6: chosen_nll 0.77-&gt;0.33, anchor_kl 0.0215-&gt;0.0885, wave-2 5/8 groups all-8-draws-identical, held-out greedy -1.868 paired). Candidate levers to price IN THE PRE-REG, not ad hoc: lr down 5-10x; advantage tempering/clip tightening; KL penalty ON with the R0-measured scale as the line; eval-every 1 on the early rung so greedy damage is visible per step. step_0001/0002.pt on local disk are the diagnostic calibration artifacts. Pre-reg in-channel BEFORE any launch (delegation 11:07/11:18Z active).
+
+</details>
+
+---
+
+**`token-grpo-phase2-r0a-run`** · `gpu-local`
+
+Token-GRPO phase-2 R0-A smoke LIVE (launch 2 21:58:04Z 08-13, unit fontaine-grpo-r0a, pre-reg frozen 81e020c): 2 steps on option A (patch-only, ~10.5M params) at lr 1e-6, adv clip 2.0, kl_beta 0.5, kl-stop 0.06, eval-every 1
+
+**boundary:** CLOSED 00:1xZ 08-14 work session: R0-A COMPLETE 00:05:09Z rc 0 (2.12 of 3.0 GPU-h ops gate), boundary verdict GO — all frozen reads green (wave-2 signal alive 2.03 cm 8/8 vs R0's same-seed collapse; eval delta -0.0239 CI [-0.0716, 0.0]; anchor_k3_pre 5.5e-07; VRAM 33.91; pace cum projection 20.3 &lt;= 22). R1-A launched 00:06:00Z by the frozen rule; r1a ride item queued. Results section in the pre-reg post. · [pre-reg](posts/2026-08-13-prereg-token-grpo-phase2-r0a.md)
+
+<details><summary>full record</summary>
+
+Token-GRPO phase-2 R0-A smoke LIVE (launch 2 21:58:04Z 08-13, unit fontaine-grpo-r0a, pre-reg frozen 81e020c): 2 steps on option A (patch-only, ~10.5M params) at lr 1e-6, adv clip 2.0, kl_beta 0.5, kl-stop 0.06, eval-every 1. Babysit rides it (registry entry grpo_phase2_r0a); at rc: boundary reads per the frozen table (plumbing/signal/per-step eval/KL line/VRAM/pace + the INERT rule) =&gt; GO launches R1-A (--resume step_0002.pt --total-steps 17, same flags), INERT goes in-channel as a re-price addendum, STOP re-scopes. Step-0 baseline reproduced 1.868 2/20 (4th bit-identical).
 
 </details>
 

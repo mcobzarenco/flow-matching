@@ -133,6 +133,47 @@ Amendments only via numbered addenda below.*
 
 ---
 
+## R0-A boundary read (2026-08-14 00:0x–00:1xZ) — VERDICT: GO, R1-A launched
+
+R0-A completed rc 0 at **00:05:09Z** (launch 2, 2.12 GPU-h of the 3.0
+ops gate). **Every frozen read green; R1-A launched 00:06:00Z** by the
+frozen rule (unit `fontaine-grpo-r1a`, `--resume step_0002.pt
+--total-steps 17`, same flags bit-for-bit).
+
+| read | value | gate | verdict |
+|---|---|---|---|
+| plumbing | rc 0; ratio 1.00138 / 0.99825, clip 0.132 / 0.131 | ratio ∈ [0.95, 1.05], clip < 0.2 | ✓ |
+| on-surface signal | wave-1 median std 4.17 cm 8/8 (R0's wave-1 facts reproduced exactly) → wave-2 **2.03 cm, 8/8 kept**; pooled 16/16 non-degenerate | ≥ 0.25 AND ≥ 8/16; no R0-style trend | ✓ (R0's same-seed wave-2: 0.0087 cm, 3/8, 5 groups bit-identical) |
+| per-step held-out | step-1 AND endpoint: 1.8441, 2/20, paired Δ −0.0239 CI95 [−0.0716, **0.0**] | CI never entirely below −1.0; endpoint CI not entirely below 0 | ✓ (CI touches 0) |
+| KL line | anchor_kl 0.0215 (=noise floor) → 0.0019; **anchor_k3_pre 0.0 → 5.5e-07** | ≤ 0.06 every step | ✓ |
+| VRAM | **33.91 GiB** peak | < 75 | ✓ (R0: 76.53 — option A dissolved it) |
+| pace / budget | 0.77 GPU-h/step + 0.19 eval measured; R1-A projection ~14.4 → cum ~20.3 | R0-A ≤ 3.0; cum ≤ 22 | ✓ |
+| inert rule | endpoint Δ ≠ 0 (greedy changed at step 1); k3 drift > 0; chosen_nll 0.766 → 0.866 | fires only on all-three-null | not fired |
+
+**What the smoke measured**: the patch-only surface at these
+constants is *alive and gentle* — one update moved the policy by
+k3 ≈ 5.5e-07 (five orders of magnitude below R0's destructive
+0.067/step), greedy behavior shifted on ~1 seed (Δ −0.024, CI hugging
+zero), sampling diversity SURVIVED the update on exactly the seeds
+where R0's collapsed, and the policy slightly *softened* rather than
+sharpened (chosen_nll 0.766 → 0.866 vs R0's 0.766 → 0.329). The open
+question R1-A answers: whether 15 more steps of this gentle pressure
+accumulate into measurable held-out improvement, or whether
+alive-but-homeopathic needs an lr/β re-price at the R1-A boundary.
+
+**Watch item carried to R1-A**: training-wave knock-away fraction
+0.234 → 0.359 (streak 2 of the ×3-consecutive 0.167 line at rc; R1-A
+starts a fresh streak — three straight elevated waves there fires
+exit 3, which is the wire doing its registered job). Endpoint
+knock-away read for §6-2 lands at the R1-A boundary.
+
+**Consumption**: R1-A resumes `step_0002.pt` → the upload rule
+triggered; weights-only preservation copy + heartbeat + meta to
+`fontaine-checkpoints/grpo_phase2_r0a` (detached unit
+`fontaine-upload-r0a`, landing before R1-A's step-4 prune).
+
+---
+
 **Addendum 1 (2026-08-13 21:5xZ — launch-env fix + relaunch, no
 constant changed).** Launch 1 (21:55:48Z) died at 21:56:21Z in its
 FIRST sim worker: `mujoco.FatalError: an OpenGL platform library has
