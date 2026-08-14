@@ -31,6 +31,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import numpy as np
 import torch
 
 from bijou.grpo_replay import MolmoAct2DiscreteStack, load_training_rows
@@ -102,7 +103,8 @@ def main() -> int:
         temperature = float(meta["temperature"])
         print(
             f"[{name}] {len(rows)} rows @ T={temperature} "
-            f"(reward={json.loads((run_dir / 'meta.json').read_text())['train_reward']})",
+            f"(reward="
+            f"{json.loads((run_dir / 'meta.json').read_text()).get('train_reward', 'v1')})",
             flush=True,
         )
         old_named = apply_option_a_freeze(old)
