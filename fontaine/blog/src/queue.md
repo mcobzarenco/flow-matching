@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-14T14:58:00Z
+**Updated:** 2026-08-14T15:30:00Z
 
-**Depth call:** depth 2: molmoact2-retirement-adoption (step 2 executable at c57ce05) + sim-manip-wrist-content-split (pre-reg to write; embeds wait on GPU release).
+**Depth call:** depth 2: molmoact2-retirement-adoption (combined rebase executable the moment the owner's byte-parity fix lands on main) + renderer-class-decision-brief (pure CPU/writing, executable any window).
 
-**15 open** (Live 0 · Queued 2 · Blocked 13 · Done 163)
+**15 open** (Live 0 · Queued 2 · Blocked 13 · Done 164)
 
 ## 🔴 Live (0)
 
@@ -18,15 +18,15 @@
 
 *ready — waiting on a window or a boundary*
 
-**`sim-manip-wrist-content-split`** · `cpu`
+**`renderer-class-decision-brief`** · `cpu`
 
-Manipulation-pose wrist content split: price how much of the banked 0.877 manip-pose wrist AUROC (sim-rollout-pose-wrist-read, 12:2xZ 08-14) is scene-content mismatch (no boat in the sim jaw, benchy at spawn, no real clutter) vs…
+Renderer-class decision brief (analysis/writing, no run): consolidate the now-complete arm-appearance price into ONE owner-facing decision post
 
-**boundary:** Queued 12:3xZ 08-14 at the rollout-pose read close (depth refill). Executable any GPU-busy window; pre-reg in-channel BEFORE the read; the registered caveat section of 2026-08-14-prereg-sim-rollout-pose-wrist.md is the contract this item discharges.
+**boundary:** Queued 15:3xZ 08-14 at the content-split close (depth refill). Executable any window (pure CPU/writing). Not a pre-reg — no run, no claims beyond banked numbers; the owner call it supports is theirs to make.
 
 <details><summary>full record</summary>
 
-Manipulation-pose wrist content split: price how much of the banked 0.877 manip-pose wrist AUROC (sim-rollout-pose-wrist-read, 12:2xZ 08-14) is scene-content mismatch (no boat in the sim jaw, benchy at spawn, no real clutter) vs the rendered arm itself. Same harness: re-render the 100 pose-matched manip slots with (a) benchy REMOVED (clean table) and (b) benchy at spawn (the banked arm), paired per slot; optionally a real-frame arm-crop rider if separable. er_60k knn5 vs the same manip reference; paired deltas + AUROC per arm. If the content term is small, the rendered arm carries the gap -&gt; the renderer-class decision (normal-map/PBR + gripper geometry) gets its wrist-side price; if large, the 0.877 overstates the camera's dishonesty and the honest number is lower. Pre-reg required (bands frozen from the banked run: anchors 0.713/0.523, calibration 0.268 directional gate per amendment 2). CPU renders + ~0.02 GPU-h embeds.
+Renderer-class decision brief (analysis/writing, no run): consolidate the now-complete arm-appearance price into ONE owner-facing decision post — top residual 0.552-&gt;0.328 after clutter (banked), wrist 0.877 at manipulation poses attributed to the RENDERED ARM itself (content term nil per sim-manip-wrist-content-split 15:2xZ 08-14: paired delta +3.28e-07 straddling zero, blind-slot control ~0, ABSENT AUROC 0.888), material-stack regression at manip poses (+4e-07 CI excl. 0). Brief covers: what a normal-map/PBR + real-gripper-geometry upgrade would plausibly buy per channel, rough implementation cost tiers (texture-only vs mjSpec recompile vs asset re-export), what stays unpriced without it, and the recommendation. Chart-led per the standing preference; lands on the blog + in-channel pointer.
 
 </details>
 
@@ -230,9 +230,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (163)
+## ✅ Done (164)
 
 *closed — the full record stays in each fold*
+
+**`sim-manip-wrist-content-split`** · `cpu`
+
+Manipulation-pose wrist content split: price how much of the banked 0.877 manip-pose wrist AUROC (sim-rollout-pose-wrist-read, 12:2xZ 08-14) is scene-content mismatch (no boat in the sim jaw, benchy at spawn, no real clutter) vs…
+
+**boundary:** Queued 12:3xZ 08-14 at the rollout-pose read close (depth refill). Executable any GPU-busy window; pre-reg in-channel BEFORE the read; the registered caveat section of 2026-08-14-prereg-sim-rollout-pose-wrist.md is the contract this item discharges. | DONE 15:2xZ 08-14 (work session): pre-reg posted 15:13Z (owner 👍 = ack + gap-go, interpretation stated in-channel 15:21Z with veto window), CPU renders + ~30 s embed gap (~0.005 GPU-h, card at 0 MiB, reserve otherwise untouched). All gates green (reset 0.713/0.523, calibration 0.268 low-note, PRESENT manip AUROC 0.877 = banked digit, render oracles bit-exact x100). VERDICT content_nil: paired dknn5 ABSENT-PRESENT +3.28e-07 CI95 [-2.26e-07, +8.39e-07] straddles zero, content share -3.8% of the pose effect; ABSENT AUROC 0.888 (still fake-side); blind-slot control +6.4e-09; benchy-px&lt;-&gt;|d| corr 0.011. The banked 0.877 caveat is DISCHARGED strengthening it: the rendered arm carries the whole manipulation-pose wrist gap — renderer-class decision keeps its full wrist price. Results on the pre-reg page + chart__wrist_content_split.png.
+
+<details><summary>full record</summary>
+
+Manipulation-pose wrist content split: price how much of the banked 0.877 manip-pose wrist AUROC (sim-rollout-pose-wrist-read, 12:2xZ 08-14) is scene-content mismatch (no boat in the sim jaw, benchy at spawn, no real clutter) vs the rendered arm itself. Same harness: re-render the 100 pose-matched manip slots with (a) benchy REMOVED (clean table) and (b) benchy at spawn (the banked arm), paired per slot; optionally a real-frame arm-crop rider if separable. er_60k knn5 vs the same manip reference; paired deltas + AUROC per arm. If the content term is small, the rendered arm carries the gap -&gt; the renderer-class decision (normal-map/PBR + gripper geometry) gets its wrist-side price; if large, the 0.877 overstates the camera's dishonesty and the honest number is lower. Pre-reg required (bands frozen from the banked run: anchors 0.713/0.523, calibration 0.268 directional gate per amendment 2). CPU renders + ~0.02 GPU-h embeds.
+
+</details>
+
+---
 
 **`sim-rollout-pose-wrist-read`** · `cpu`
 
