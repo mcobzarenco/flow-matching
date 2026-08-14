@@ -599,6 +599,43 @@ grade (0.698/0.652) remains the arm-appearance frontier.
 - [arm zoom 2×](https://mcobzarenco-fontaine-reports.static.hf.space/zoom__arm_texture_read.png)
   — the mottling the encoder flagged, side by side with the smooth grade
 
+## Arm SURFACE texture (mjSpec) — the SECOND refutation: true surface-tracking bands still read MORE fake ([pre-reg + results](posts/2026-08-14-prereg-sim-arm-surface-texture-mjspec.md), 08-14)
+
+The micro-texture refutation's registered escalation, executed and
+refuted in one session. `arm_texture="v2"` bakes a quasi-periodic
+layer-line texture INTO the 18 PLA link materials via an mjSpec
+recompile — bands live in OBJECT space and track the surface, the
+exact property the first refutation demanded. Physics hard bar 11/11
+oracles green (every model field bit-equal, qpos bit-equal incl. a
+60-tick excursion); zero-clip tanh generator with grade-preserving
+mean compensation; registered reflection rider (the texture
+legitimately shows in the tabletop's 0.02-reflectance mirror of the
+arm — and is then fully absorbed by the PSF blur: composited max |Δ|
+0). Fit honesty: period 32 frozen at the plausibility bound (lc
+response monotonic — fine bands die in the blur chain), amplitude
+CAPPED at the 0.42 no-clip headroom → realized PLA local contrast
+**6.43 of real 8.36** (grade-only 4.66): the albedo-modulation channel
+closes ~41% of the quadrature gap and cannot close the rest. The
+registered 20×5 read, all gates green (in-run v3_photo 0.698
+dead-center): **PRIMARY v3_surf vs v3_photo +3.07e-07 CI95 [+2.42,
++3.71]e-07 entirely ABOVE zero, 14/100 closer, AUROC 0.698 → 0.718;
+MECHANISM only_links_surf +1.98e-07 CI95 [+1.36, +2.59]e-07, 27/100,
+0.652 → 0.671** — about a third of the micro-texture's harm, but
+confidently fake-ward. Coherence was NOT the missing ingredient.
+Diagnostics: the cube shrink-wrap renders sunburst fans on several
+faces (not clean layers), and the bands are pure albedo modulation
+while real print layers are RELIEF — shading/specular structure the
+classic renderer cannot express without a normal-map path. The
+arm-texture direction is COLD at this abstraction level; the graded
+arm (0.698/0.652) stays the production frontier; no further texture
+rung auto-queued.
+
+- [analysis JSON](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_arm_surface_texture_read.json)
+  · [chart](https://mcobzarenco-fontaine-reports.static.hf.space/chart__arm_surface_texture_read.png)
+  · [fit record](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__arm_surface_texture_fit.json)
+- [frame strip](https://mcobzarenco-fontaine-reports.static.hf.space/strip__arm_surface_texture_read.png)
+  — v3_photo / v3_surf / amplified-Δ / link zooms (the sunburst fans)
+
 ## Camera-mount material split — mechanism lands (93/100), whole-frame null: the part is fixed but too small to move the frame read ([pre-reg](posts/2026-08-14-prereg-sim-mount-material-split.md), 08-14)
 
 The arm-split's per-pixel worst offender, measured and fixed — with a

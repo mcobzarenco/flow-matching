@@ -863,7 +863,18 @@ record; the line here is the hook). *Index last updated 2026-08-13.*
   recognizes, not match marginals); escalation queued
   `sim-arm-surface-texture-mjspec` (true UV-mapped anisotropic layer
   lines via recompile, physics oracles as the bar), not auto-run;
-  the photometric grade stays the arm frontier. GRPO thread
+  the photometric grade stays the arm frontier. Escalation EXECUTED
+  09:2xZ 08-14 ([pre-reg + results](posts/2026-08-14-prereg-sim-arm-surface-texture-mjspec.md)):
+  TRUE surface-tracking bands (mjSpec recompile, 11/11 physics
+  oracles, zero-clip tanh generator, amplitude capped at the 0.42
+  no-clip headroom → lc 6.43 of real 8.36) — **SECOND REFUTATION,
+  PRIMARY +3.07e-07 CI [+2.42,+3.71]e-07 (0.698→0.718)**: coherence
+  was not the missing ingredient either. Surviving hypothesis: real
+  print-layer contrast is RELIEF (shading/specular structure that
+  moves with the light) — the classic renderer has no normal-map
+  path, so the residual lives in light transport, not albedo; a
+  renderer-upgrade rung would be a new design decision, priced only
+  on owner ask. Arm-texture direction COLD; frontier unchanged. GRPO thread
   2026-08-13: the signal probe EXECUTED overnight (re-scoped at the
   registered tripwire — cells 1/2/5 + anchors, 3.57 GPU-h;
   [results as amendment 1](posts/2026-08-12-prereg-grpo-signal-probe.md))
