@@ -301,4 +301,6 @@ honesty axis (anchors 0.523/0.877), the degradation side where the
 curve is measured, and the renderer span where its slope is applied.
 No y-values exist yet; the two sketched outcomes are the F-flat and
 F-live verdicts of §7. Right: the staged GPU-h ladder against its
-≤12 gate, stage 3 conditional.*
+≤14 gate (erratum 18:5xZ: this caption originally said "≤12" —
+the §9 text's registered gate ≤ 14 / worst-case 12.0 was always
+correct), stage 3 conditional.*
