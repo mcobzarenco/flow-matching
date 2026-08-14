@@ -247,6 +247,10 @@ class MolmoAct2DiscreteStack:
                 raise ValueError(
                     f"camera {index} is not [H, W, 3]-coercible: {array.shape}",
                 )
+            if not array.flags.writeable:
+                # PIL-decoded replay frames arrive read-only;
+                # torch.from_numpy warns on non-writable bases.
+                array = array.copy()
             cameras.append(
                 CameraFrame(
                     name=("top", "wrist")[index] if index < 2 else f"cam{index}",

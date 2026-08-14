@@ -4421,13 +4421,6 @@ def main() -> int:
                 "exists — the molmoact2 rider is parameterless by "
                 "design (decision 2)",
             )
-            if is_main:
-                print(
-                    "joint-CE rider: phase-1 FAST tables loaded from "
-                    f"{args.backbone_init_from}/expert.safetensors "
-                    "(the CE branch continues, not restarts)",
-                    flush=True,
-                )
         if is_main:
             print(
                 f"stage-2 init: ADAPTED backbone + prompt state_proj from "

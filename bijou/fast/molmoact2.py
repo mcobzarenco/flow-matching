@@ -313,6 +313,10 @@ class MolmoAct2ActionCodec:
         # 0/2996 audit figure was masked DECODES, whose budget
         # arithmetic cannot produce holes by construction).
         self.allow_quantization_holes = allow_quantization_holes
+        # PER-PROCESS: the training collator forks into DataLoader
+        # workers, so each worker counts (and prints) its own holes —
+        # loud, but not a run-total statistic. Aggregate across workers
+        # before ever consuming the number.
         self.hole_count = 0
         # [block_vocab] int64; 0 beyond bpe_vocab — the 1043 untrained
         # rows and both specials are excluded by the grammar mask for

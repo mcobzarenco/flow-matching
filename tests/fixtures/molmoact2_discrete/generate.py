@@ -2,6 +2,12 @@
 the discrete-AR-head parity fixture (docs/molmoact2-retirement.md
 phase 0 fixture (b), the phase-2 acceptance target).
 
+EXECUTES THE PORT (bijou/molmoact2/) — run at tag
+pre-molmoact2-retirement, the last commit where the port exists; on
+later commits the import below fails by design (the fixture is the
+port's frozen testimony, never regenerated from the first-class
+stack).
+
 Runs FONTAINE'S committed discrete-decode implementation
 (bijou/molmoact2/predictor.predict_action_discrete on the fontaine
 branch — record the commit in the provenance echo) over BOTH converted
