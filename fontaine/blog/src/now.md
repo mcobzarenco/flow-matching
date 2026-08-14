@@ -33,7 +33,12 @@ placement PASS on the serving substrate — W0 0.8769 ≈ banked 0.877,
 W1 1.0, W3 0.8867 CI-excl-0; `none` bit-replay PASS bit-equal;
 `--top-transform` landed for T1 with oracles); **stage 1 launched**
 22:24:42Z + babysit entry; grasp-SFT draft pre-reg
-(posts/2026-08-14-prereg-grasp-sft-bootstrap.md) posted + queued.
+(posts/2026-08-14-prereg-grasp-sft-bootstrap.md) posted + queued;
+**stage-A scripted expert landed as WIP** `c23863d` (5 CPU oracles
+green; pinch+hold 5/6 demo seeds, lift ~1.6 cm held, carry to ~6 cm
+of disk, 0 successes — the sysid'd shoulder's 3.478 N·m saturation
+caps carry height, recorded as a finding + the open item on the
+queue boundary; six mechanisms diagnosed and fixed in code).
 
 **Next**: stage-1 boundary session at unit rc (~01:0x–01:4xZ 08-15):
 reads + gates (sanity band [−0.3,+0.5] cm / [25,70] engaged, hold

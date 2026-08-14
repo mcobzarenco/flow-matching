@@ -816,7 +816,7 @@ pgrep_min = 1                     # parent driver (spawns 8 env workers); unit w
 gpu_indices = [0]
 gpu_mem_min_mib = 4000
 log = "/home/ubuntu/flow-matching/outputs/sim/wrist_screen/stage1_unit.log"
-progress_re = "CELL [a-z0-9_]+ (START|DONE) [0-9:]+"
+progress_re = "CELL [a-z0-9_]+ (START|DONE) [0-9:]+|seed [0-9]+ replan [0-9]+"
 started_utc = "2026-08-14T22:24:42Z"
 gpu_hours_per_wall_hour = 1.0
 boundary = "Wrist-transfer screen STAGE 1 (FINAL pre-reg posts/2026-08-14-prereg-wrist-transfer-screen.md section 5): sequential cells det_a/det_b (W0 determinism gate, seeds 0-9 x2 — the launcher ABORTS the unit on any bit-divergence), hold(25), then W0(100)/W1(100)/W3(100)/T1(25 top-blackout), ftrig4k euler-1 draw-0, out-jsons outputs/sim/wrist_screen/stage1_*.json, DONE marker STAGE1_DONE. ~345+25 episodes, ~3-3.5 GPU-h, rc ETA ~01:0x-01:4xZ 08-15. At DONE: the stage-1 boundary session runs the reads (sanity band P1xW0 mean progress [-0.3,+0.5] cm + engagement [25,70]/100; hold floor |mean| <= 0.01 + strikes 0; T1 CI95-excl-0 else F-instrument; cross-arm spawn_xy pairing bit-check; first W1/W3 paired deltas) + in-channel boundary post BEFORE any stage-2 spend."
