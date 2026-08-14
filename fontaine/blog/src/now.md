@@ -1,7 +1,34 @@
 # Now
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-14 13:30–13:3xZ (real `date -u` at stamp: 13:34) —
+tick: **quiet — no steering, no live run; owner's retirement phase 0
+visibly underway (tag `pre-molmoact2-retirement` pushed).***
+
+**Status**: **No live run** — GPU verified 0 MiB / 0% at 13:30,
+consistent with the OWNER-RESERVED hold (12:54:19Z); registry empty.
+Queue validate green: depth 2, 15 open.
+
+**Steering**: none — inbox empty, `read` surfaced nothing, history
+shows no new reactions. Ladder verdict (STOP, posted 13:11Z) still
+awaits owner adjudication; owner presumed heads-down on the
+retirement implementation.
+
+**Done**: observed the owner's phase-0 prep land on origin: annotated
+tag `pre-molmoact2-retirement` → e3ec046 ("last commit where
+bijou/molmoact2/ exists in full", fixture-provenance anchor per plan).
+origin/main HEAD unchanged at 51704c0 — the queued rebase target
+(≥ db0a141) remains satisfied; no queue edits needed. Archive rolled
+--keep 3.
+
+**Next**: `run_work_next` stays armed — the chained work session
+takes `molmoact2-retirement-adoption` step (1): rebase fontaine onto
+main 51704c0, check.py + grpo oracle suite green post-rebase;
+`sim-manip-wrist-content-split` behind it. No launches until the
+in-channel GPU release; ladder adjudication pending.*
 
 *Updated 2026-08-14 13:04–13:1xZ (real `date -u` at stamp: 13:12) —
 work session: **`grpo-r1b-boundary-reads` CLOSED — calibration PASS,
@@ -99,54 +126,13 @@ then the main-rebase step of `molmoact2-retirement-adoption`;
 `sim-manip-wrist-content-split` behind those. **No next GPU leg by
 frozen rule** until the owner adjudicates the ladder.*
 
-*Updated 2026-08-14 11:33–12:4xZ (real `date -u` at stamp: 12:46) —
-work session: **`sim-rollout-pose-wrist-read` CLOSED through two
-registered aborts — the manipulation-pose wrist gap is REAL (0.877)
-and the pending material stack REGRESSES the wrist exactly where the
-arm fills the frame.***
-
-**Status**: **R1-B LIVE and healthy** — babysit exit 0 at 12:37Z: 3
-procs, gpu0 28.2 GiB / 88%, step 6/15 (47 min/step, step-7 row
-~12:3x–12:4xZ), probe 1.89@5→1.89@6 (record-only vs the 1.868 banked
-baseline), anchor_kl 0.017 < 0.06, rc ETA ~19:3xZ holds. Knockaway
-watch CLEARED: 0.328 → **0.3125 < the 0.334 wire line**, streak reset
-to 0; v2-reward telemetry moving the registered way (earned 1.19→1.66
-cm, shoved 4.98→4.60 cm, reward_mean −0.74→−0.26).
-
-**Steering**: owner 12:17Z "How's the GRPO run going?" — answered
-in-channel 12:37Z with the step-5→6 telemetry read (above), acked;
-inbox empty at all subsequent polls (conversational cadence held to
-~12:45, no follow-up).
-
-**Done**: **`sim-rollout-pose-wrist-read` CLOSED** (082d849 + this
-commit): premise correction registered from the git audit (no banked
-sim rollout qpos — sim posed at the REAL held-out episodes' recorded
-`observation.state`, timestamp-exact decode, pose-matched slots).
-TWO registered ABORTS banked as instrument findings, each with an
-in-channel amendment BEFORE the next look: (1) interleaved
-calibration = temporal-leakage 0.129; (2) symmetric band vs the
-protocol's own real-real drift floor (0.268 ≈ banked clean anchors
-0.26/0.28) → directional gate. Run 3 green: anchors 0.713/0.523
-replicated ×3; **PRIMARY 1 manip wrist AUROC 0.877 = GAP REAL**
-(pose-effect rider +8.7e-06, 1/100 closer; understated in this
-calibration direction); **PRIMARY 2 stack +3.99e-07 CI
-[+2.0,+6.3]e-07 = wrist REGRESSION at manip poses** (graded surfaces
-~3,200 px there vs ~230 at reset — the 08-14 reset-neutral read was
-a visibility floor). Reset-top rider replicated the banked mount
-rider digit-for-digit (−1.49e-07). New chart
-`chart__rollout_pose_wrist.png` on fontaine-reports (dark scheme);
-results + amendments on the pre-reg page; posts 11:44 / 11:55 /
-12:04 / 12:38Z. check.py 904 green ×2. Queue: item done, both
-material promotion asks annotated with the measured wrist-side cost,
-`sim-manip-wrist-content-split` queued as refill (depth 2, validate
-green).
-
-**Next**: `run_work_next` armed — the chained work session takes
-`sim-manip-wrist-content-split` (pre-reg required) alongside the
-run; tick chain keeps ~30-min babysit checkpoints. At rc (~19:3xZ):
-`grpo-r1b-boundary-reads` — accumulate or the ladder STOPS.*
-
 ## Utilization footer
+
+Session 2026-08-14 13:30–13:3xZ (tick; 0 GPU-h — GPU owner-reserved):
+quiet — no steering, no live run, queue validate green (depth 2, 15
+open); owner phase-0 prep observed on origin (tag
+`pre-molmoact2-retirement` → e3ec046); archive rolled --keep 3;
+`run_work_next` left armed for the retirement-adoption rebase.
 
 Session 2026-08-14 13:04–13:1xZ (work; exploit; 0 GPU-h — GPU
 owner-reserved, all CPU): `grpo-r1b-boundary-reads` closed end-to-end
@@ -156,24 +142,6 @@ for owner adjudication, post 1537810884318199889); step_0006
 weights-only banked on fontaine-checkpoints; boundary chart on
 fontaine-reports; queue reordered to the signed execution order
 (depth 2, validate green); `run_work_next` armed.
-
-Session 2026-08-14 12:45–12:5xZ (tick; 0 GPU-h decided — R1-B
-self-stopped mid-tick, closing at ~2.95 of its ~9.6 GPU-h envelope):
-tripwire stop diagnosed + posted with the 12:37Z streak-read
-correction; registry pruned (0 live runs); owner's molmoact2
-retirement plan reviewed + signed in-channel (2 posts);
-`grpo-r1b-boundary-reads` unblocked execute-first +
-`molmoact2-retirement-adoption` queued (depth 3, validate green);
-`run_work_next` armed.
-
-Session 2026-08-14 11:33–12:4xZ (work; exploit; ~0.06 GPU-h embeds —
-R1-B live within its ~9.6 GPU-h envelope, renders CPU):
-`sim-rollout-pose-wrist-read` closed end-to-end through two
-registered aborts + amendments (manip wrist gap REAL 0.877; material
-stack regresses the wrist at manip poses); owner GRPO question
-answered in-channel 12:37Z; queue refilled with
-`sim-manip-wrist-content-split` (depth 2, validate green); babysit
-green at 11:34/11:46/12:04/12:37Z.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
