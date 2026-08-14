@@ -250,6 +250,51 @@ def _convert(source: Path, out: Path, backbone_ref: str = "user/tiny-hf") -> Pat
     return convert(str(source), out, norm_tag="tiny_tag", backbone_ref=backbone_ref)
 
 
+def test_norm_stats_from_substitutes_the_table(
+    source_dir: Path,
+    tmp_path: Path,
+) -> None:
+    """--norm-stats-from: weights from --source, q01/q99 tables from the
+    alternate artifact — their fine-tune recipe's table-recompute
+    semantics (gate-d-lite reproduces the rig rung from RELEASED
+    weights under the RIG table). Substitution recorded in provenance;
+    expert bytes unchanged."""
+    import shutil
+
+    alternate = tmp_path / "alternate"
+    shutil.copytree(source_dir, alternate)
+    stats = json.loads((alternate / "norm_stats.json").read_text())
+    tag = stats["metadata_by_tag"]["tiny_tag"]
+    tag["action_stats"]["q01"] = [-7.0] * len(tag["action_stats"]["q01"])
+    tag["action_stats"]["q99"] = [7.0] * len(tag["action_stats"]["q99"])
+    tag["state_stats"]["q01"] = [-9.0] * len(tag["state_stats"]["q01"])
+    tag["state_stats"]["q99"] = [9.0] * len(tag["state_stats"]["q99"])
+    (alternate / "norm_stats.json").write_text(json.dumps(stats))
+
+    plain = _convert(source_dir, tmp_path / "plain")
+    substituted = convert(
+        str(source_dir),
+        tmp_path / "substituted",
+        norm_tag="tiny_tag",
+        backbone_ref="user/tiny-hf",
+        norm_stats_from=str(alternate),
+    )
+    sub_info = read_checkpoint_info(substituted)
+    assert sub_info.normalization.action_q01 == (-7.0,) * _ACTION_DIM
+    assert sub_info.normalization.action_q99 == (7.0,) * _ACTION_DIM
+    assert sub_info.normalization.state_q01 == (-9.0,) * _STATE_DIM
+    assert sub_info.normalization.state_q99 == (9.0,) * _STATE_DIM
+    plain_meta = json.loads((plain / "bijou_config.json").read_text())
+    sub_meta = json.loads((substituted / "bijou_config.json").read_text())
+    assert sub_meta["converted_from"]["norm_stats_from"] == str(alternate)
+    assert "norm_stats_from" not in plain_meta["converted_from"]
+    # Weights are untouched by the substitution.
+    assert (
+        sub_meta["converted_from"]["expert_sha256"]
+        == plain_meta["converted_from"]["expert_sha256"]
+    )
+
+
 def test_happy_path_round_trips(source_dir: Path, tmp_path: Path) -> None:
     out = _convert(source_dir, tmp_path / "converted")
     info = read_checkpoint_info(out)

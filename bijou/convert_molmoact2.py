@@ -200,16 +200,33 @@ def convert(
     *,
     norm_tag: str,
     backbone_ref: str | None,
+    norm_stats_from: str | None = None,
 ) -> Path:
     """Materialize the bijou checkpoint; returns ``out``. Deterministic
-    and idempotent (same source -> byte-identical output)."""
+    and idempotent (same source -> byte-identical output).
+
+    ``norm_stats_from`` loads the q01/q99 tables (and the tag's
+    geometry/setup fields) from ANOTHER artifact's ``norm_stats.json``
+    instead of the source's — their fine-tune recipe's semantics, where
+    the table is RECOMPUTED on the target-domain data at fine-tune
+    start (docs/molmoact2-retirement.md decision 7: gate-d-lite
+    reproduces the rig rung from the RELEASED weights under the RIG
+    table, exactly their starting point). Weights still come from
+    ``source``; the substitution is recorded in ``converted_from``."""
     source_dir = resolve_checkpoint_dir(source)
     config = json.loads((source_dir / "config.json").read_text())
     _validate_source_config(config)
     if not (source_dir / "tokenizer.json").exists():
         raise SystemExit(f"{source_dir} has no tokenizer.json")
 
-    _action_stats, _state_stats, tag = load_norm_stats(source_dir, norm_tag)
+    stats_dir = (
+        resolve_checkpoint_dir(norm_stats_from)
+        if norm_stats_from is not None
+        else source_dir
+    )
+    if not (stats_dir / "norm_stats.json").exists():
+        raise SystemExit(f"{stats_dir} has no norm_stats.json")
+    _action_stats, _state_stats, tag = load_norm_stats(stats_dir, norm_tag)
     action_dim = int(tag.get("action_dim", 32))
     real_action_dim = len(tag["action_stats"]["q01"])
     ae_cfg = config["action_expert_config"]
@@ -288,8 +305,13 @@ def convert(
             (source_dir / "config.json").read_bytes(),
         ).hexdigest(),
         "source_norm_stats_sha256": hashlib.sha256(
-            (source_dir / "norm_stats.json").read_bytes(),
+            (stats_dir / "norm_stats.json").read_bytes(),
         ).hexdigest(),
+        **(
+            {"norm_stats_from": str(norm_stats_from)}
+            if norm_stats_from is not None
+            else {}
+        ),
         "expert_tensors": len(expert),
         "expert_sha256": expert_sha256,
         "converter": "bijou.convert_molmoact2",
@@ -354,6 +376,17 @@ def parse_args() -> argparse.Namespace:
         "as given; pass a hub id when converting from a local dir to "
         "keep the artifact portable)",
     )
+    parser.add_argument(
+        "--norm-stats-from",
+        default=None,
+        help="load the q01/q99 tables (norm_stats.json, selected by "
+        "--norm-tag) from ANOTHER artifact instead of --source — their "
+        "fine-tune recipe's table-recompute semantics (e.g. the released "
+        "weights under a rig-ft export's rig table = exactly their "
+        "fine-tune starting point; docs/molmoact2-retirement.md decision "
+        "7). Weights still come from --source; recorded in "
+        "converted_from.norm_stats_from",
+    )
     return parser.parse_args()
 
 
@@ -364,6 +397,7 @@ def main() -> None:
         args.out,
         norm_tag=args.norm_tag,
         backbone_ref=args.backbone_ref,
+        norm_stats_from=args.norm_stats_from,
     )
 
 
