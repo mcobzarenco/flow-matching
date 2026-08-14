@@ -1,7 +1,50 @@
 # Now
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-14 21:32–22:3xZ (real `date -u` at stamp: 22:31) —
+work session, extended live with the owner: **review DONE + nit fixes
+pushed at the owner ask; GRPO-90% plan agreed (👍) and parallelized —
+wrist-screen stage 0 EXECUTED (all oracles green), STAGE 1 LIVE
+(unit `wrist-screen-stage1`), grasp-SFT draft pre-reg posted.***
+
+**Status**: **STAGE 1 LIVE** — unit `wrist-screen-stage1` since
+22:24:42Z (det gate ×2 → hold(25) → W0/W1/W3(100 each) + T1(25),
+~3–3.5 GPU-h, rc ETA ~01:0x–01:4xZ 08-15); first babysit green
+(4 procs, GPU 13.7 GiB/100%, gate 5 GPU-h). Queue validate OK depth 2,
+16 open.
+
+**Steering**: live exchange 21:47–22:07Z — (1) *"push fixes for the
+nits to your branch"* → done `2ff6b6c`; (2) *"what should we do next
+to train a policy which solves over 90% of seeds?"* → competence-first
+plan posted, owner 👍; (3) *"do as much in parallel as you reasonably
+can"* → stage 0+1 executed/launched THIS session + the grasp-SFT
+draft pre-reg posted and queued (`grasp-sft-bootstrap`).
+
+**Done**: `main-review-molmoact2-final` all 4 deliverables (review
+post + in-channel summary, verdict ADOPT; re-baseline judgment AGREE
+with the mechanism self-verified; probe rerun PASS on both banked
+waves; checkpoint-surface VERDICT no amendment; Decision-11/
+masked-only/Gumbel notes absorbed into the R1-B record) `58cc07f`;
+nit fixes `2ff6b6c`; **stage 0 EXECUTED** `c5be36f` (honesty
+placement PASS on the serving substrate — W0 0.8769 ≈ banked 0.877,
+W1 1.0, W3 0.8867 CI-excl-0; `none` bit-replay PASS bit-equal;
+`--top-transform` landed for T1 with oracles); **stage 1 launched**
+22:24:42Z + babysit entry; grasp-SFT draft pre-reg
+(posts/2026-08-14-prereg-grasp-sft-bootstrap.md) posted + queued.
+
+**Next**: stage-1 boundary session at unit rc (~01:0x–01:4xZ 08-15):
+reads + gates (sanity band [−0.3,+0.5] cm / [25,70] engaged, hold
+floor, T1 CI95, spawn_xy pairing, first W1/W3 deltas) + in-channel
+boundary post BEFORE stage-2 spend. `grasp-sft-bootstrap` stage A
+(scripted expert) is the executable CPU slice; finalization +
+objection window before its GPU stages. `renderer-pbr-wrist-pilot`
+stays owner-gated. `run_work_next` armed.*
+
+*Superseded head entry from earlier this session (pre-steering,
+retained verbatim below):*
 
 *Updated 2026-08-14 21:32–21:5xZ (real `date -u` at stamp: 21:43) —
 work session: **`main-review-molmoact2-final` DONE, all 4 deliverables
@@ -90,33 +133,13 @@ surfaces must be verified or amended in-channel BEFORE stage 0), then
 **`wrist-transfer-screen-run`** launches on the released GPU.
 `renderer-pbr-wrist-pilot` stays owner-gated.*
 
-*Updated 2026-08-14 18:57–19:0xZ (real `date -u` at stamp: 18:59) —
-tick: **quiet — minutes after the prereg-final session closed; every
-signal verified unchanged.***
-
-**Status**: **No live run** — GPU verified 0 MiB / 0% (owner reserve
-12:54:19Z stands); registry empty. Main unchanged at `e5b6113` (phase 3
-not landed). Queue validate green: depth 2, 17 open. Discord: inbox
-empty, no new messages, no new reactions in history (the 17:20Z 👍
-remains the last steering).
-
-**Steering**: none this tick.
-
-**Done**: quiet tick — Discord read + history (nothing new; the
-18:57Z pre-reg pointer sits as the channel tail), GPU/main/queue
-verified, archive roll.
-
-**Next**: unchanged — `molmoact2-retirement-adoption` phase-3 watch;
-`wrist-transfer-stage0-cpu-prep` is the executable CPU item
-(`run_work_next` already armed, the chained work session picks it
-up); `wrist-transfer-screen-run` waits ONLY on the in-channel GPU
-release; `renderer-pbr-wrist-pilot` stays owner-gated.*
-
 ## Utilization footer
 
-Session 2026-08-14 21:32–21:5xZ (work; exploit; ~0.1 GPU-h — the
-parity-probe rerun on the released GPU, no gate needed at that
-class): `main-review-molmoact2-final` DONE all 4 deliverables —
+Session 2026-08-14 21:32–22:3xZ (work; exploit; ~0.3 GPU-h in-session
+— parity-probe rerun + stage-0 placement/bit-replay; stage 1 ~3–3.5
+GPU-h rides detached, counted at its boundary): extended live with
+the owner (21:47–22:07Z): `main-review-molmoact2-final` DONE all 4
+deliverables —
 phases 3–5 reviewed (verdict ADOPT, review post published + summary
 in-channel), the 1e-4 re-baseline judged AGREE with the
 cross-decomposition mechanism self-verified against the port source,
@@ -124,8 +147,15 @@ probe_grpo_replay_parity rerun PASS (masks bit-equal 1,903 + 1,904
 rows, spreads recorded), wrist-screen checkpoint-surface VERDICT no
 amendment (`wrist-transfer-screen-run` re-statused queued,
 launch-ready), Decision-11/masked-only/Gumbel notes absorbed into the
-R1-B record; posts-index drift fixed; `run_work_next` armed for the
-screen's stage 0–1.
+R1-B record; posts-index drift fixed. Then at the owner's live
+steering: nit fixes pushed (`2ff6b6c`), the GRPO-90% competence-first
+plan posted (owner 👍) and parallelized — **stage 0 EXECUTED**
+(`c5be36f`: honesty placement PASS on the serving substrate, `none`
+bit-replay bit-equal, `--top-transform` landed for T1), **stage 1
+LAUNCHED** 22:24:42Z (unit `wrist-screen-stage1`, babysit entry, gate
+5 GPU-h), grasp-SFT draft pre-reg posted + queued
+(`grasp-sft-bootstrap`); `run_work_next` armed for the stage-1
+boundary session.
 
 Session 2026-08-14 21:17–21:3xZ (tick; 0 GPU-h — GPU released 21:14Z,
 nothing launched pending the review): owner returned — credits topped

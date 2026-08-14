@@ -800,4 +800,32 @@
 # judgment, ladder verdict) + step_0006 weights-only upload + results
 # section = grpo-r1b-boundary-reads, chained work session.
 
-no_live_runs_reason = "declared 12:5xZ 08-14 tick: grpo_phase2_r1b self-stopped on the registered knockaway tripwire at fresh-step 3-of-3 (12:40:50Z, rc 3) and is pruned; the v2 reward did NOT retire the wire — registered finding: shoving is not reward-driven at this surface. NO next GPU leg by frozen rule until the boundary reads land (grpo-r1b-boundary-reads, chained work session) and the ladder verdict is adjudicated. ALSO: local GPU OWNER-RESERVED since 12:54:19Z 08-14 (owner implementing the molmoact2 retirement plan in main) — NO GPU launches until the owner releases it in-channel; owner agreed 12:53Z any new run starts post-phase-4."
+# (no_live_runs_reason cleared 22:2xZ 08-14 work session — wrist-screen
+# stage 1 launched on the released GPU; the R1-B boundary reads landed
+# with the ladder STOP adjudication and the retirement completed on
+# main, so both former holds are closed. PRIOR: the 12:5xZ R1-B
+# tripwire + owner-reserve declaration, retained verbatim above the
+# pruned-entry note it rode with.)
+
+[[run]]
+name = "wrist_screen_stage1"
+kind = "progress-log"
+host = "local"
+pgrep = "sim.rollout_sim_parallel"
+pgrep_min = 1                     # parent driver (spawns 8 env workers); unit wrist-screen-stage1
+gpu_indices = [0]
+gpu_mem_min_mib = 4000
+log = "/home/ubuntu/flow-matching/outputs/sim/wrist_screen/stage1_unit.log"
+progress_re = "CELL \\w+ (START|DONE)"
+started_utc = "2026-08-14T22:24:42Z"
+gpu_hours_per_wall_hour = 1.0
+boundary = "Wrist-transfer screen STAGE 1 (FINAL pre-reg posts/2026-08-14-prereg-wrist-transfer-screen.md section 5): sequential cells det_a/det_b (W0 determinism gate, seeds 0-9 x2 — the launcher ABORTS the unit on any bit-divergence), hold(25), then W0(100)/W1(100)/W3(100)/T1(25 top-blackout), ftrig4k euler-1 draw-0, out-jsons outputs/sim/wrist_screen/stage1_*.json, DONE marker STAGE1_DONE. ~345+25 episodes, ~3-3.5 GPU-h, rc ETA ~01:0x-01:4xZ 08-15. At DONE: the stage-1 boundary session runs the reads (sanity band P1xW0 mean progress [-0.3,+0.5] cm + engagement [25,70]/100; hold floor |mean| <= 0.01 + strikes 0; T1 CI95-excl-0 else F-instrument; cross-arm spawn_xy pairing bit-check; first W1/W3 paired deltas) + in-channel boundary post BEFORE any stage-2 spend."
+anchors = [
+    "stage-0 receipts (c5be36f): honesty placement PASS on the serving substrate — W0 0.8769 (banked 0.877 reproduced), W1 1.0, W3 0.8867 with W3-W0 CI95 [9.6e-08, 4.7e-07] excl-0; none bit-replay PASS (seed 0 x2 bit-equal)",
+    "banked sanity context: ftrig4k sim100 +0.08 cm mean progress / 47 engaged (predates fitted lens + v3 wrist — sanity band, NOT a bit-anchor; outside [-0.3,+0.5] or [25,70] => pause + in-channel note per section 3)",
+    "progress log = journal mirror at outputs/sim/wrist_screen/stage1_unit.log ('CELL <name> START/DONE' lines); a launcher abort (determinism divergence) exits the unit non-zero with the python diff in the tail — journalctl --user -u wrist-screen-stage1 is the source",
+    "T1 uses the NEW --top-transform blackout (landed this session, oracles green) — if T1 rows look degenerate vs W0 rows, suspect the hook seam first",
+]
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 5.0

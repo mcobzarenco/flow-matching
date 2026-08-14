@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-14T21:42:32Z
+**Updated:** 2026-08-14T22:31:24Z
 
-**Depth call:** depth 1 (wrist-transfer-screen-run, immediately executable on the released GPU): the screen itself is a multi-session ladder (~6-12 GPU-h, hard-stop boundaries) and its stage boundaries generate the follow-on items; refill happens at the stage-0/1 boundary posts. Recorded 21:4xZ 08-14 at the main-review close.
+**Depth call:** depth 2: wrist-transfer-screen-run (stage 0 executing, then stage 1 on the released GPU) + grasp-sft-bootstrap (stage A CPU-executable; GPU stages after screen + finalization). Recorded 22:3xZ 08-14.
 
-**15 open** (Live 0 · Queued 1 · Blocked 14 · Done 171)
+**16 open** (Live 0 · Queued 2 · Blocked 14 · Done 171)
 
 ## 🔴 Live (0)
 
@@ -14,15 +14,29 @@
 
 *(empty)*
 
-## 🟢 Queued (1)
+## 🟢 Queued (2)
 
 *ready — waiting on a window or a boundary*
+
+**`grasp-sft-bootstrap`** · `gpu-local`
+
+Grasp-rich SFT bootstrap (owner go 22:07Z 08-14 on the 90%-of-seeds question; DRAFT pre-reg posts/2026-08-14-prereg-grasp-sft-bootstrap.md): stage A scripted expert vs privileged sim state (waypoint policy over sim.data object po…
+
+**boundary:** Queued 22:3xZ 08-14 at the owner go (parallel with the wrist screen; screen owns the GPU window first — it is registered FINAL). Stage A scripted expert is the executable CPU slice any session can take. Interplay frozen in draft SS5: F-null/F-flat on the screen drops the stage-C flow arm; F-live inherits the owner's wrist-fidelity decision as a registered amendment before stage B. · [pre-reg](posts/2026-08-14-prereg-grasp-sft-bootstrap.md)
+
+<details><summary>full record</summary>
+
+Grasp-rich SFT bootstrap (owner go 22:07Z 08-14 on the 90%-of-seeds question; DRAFT pre-reg posts/2026-08-14-prereg-grasp-sft-bootstrap.md): stage A scripted expert vs privileged sim state (waypoint policy over sim.data object pose, CPU + ~0.2 GPU-h validation on 20 NON-EVAL demo seeds 1000+, gate &gt;=70% scripted success else F-physics -&gt; Squint twin tier); stage B demo collection 300-600 kept successes ~2-4 GPU-h (production visual config, eval seeds 0-99 NEVER in demos); stage C SFT via molmoact2 --objective ar (new-stack objective matrix, rig-ft recipe class ~3-5 GPU-h, optional ftrig4k-recipe flow arm); stage D sim100 eval ~1-1.5 GPU-h, frozen primary: &gt;=20/100 successes -&gt; GRPO GO (fresh pre-reg per Decision 11), 5-19 -&gt; one B/C iteration, &lt;5 -&gt; F-transfer (wrist-screen read becomes the binding diagnosis). Worst-case ~11 GPU-h, gate &lt;=13. Finalization (frozen params + objection window + HEAD re-pin) BEFORE any GPU stage; stage A is CPU-executable now.
+
+</details>
+
+---
 
 **`wrist-transfer-screen-run`** · `gpu-local`
 
 Execute the wrist-transfer screen per the 08-14 design memo (posts/2026-08-14-wrist-transfer-screen-design.md, frozen sections 5-7 become the pre-reg verbatim): stage 0 wrist-transform hook (--wrist-transform {none,blackout,freez…
 
-**boundary:** Queued 17:3xZ 08-14 at the design close. BLOCKED on the in-channel GPU release (owner reserve 12:54:19Z 08-14 stands). prereg field points at the design memo (the registered skeleton); launch still requires a posted FINAL pre-reg freezing its sections 5-7 verbatim; stage boundaries are hard stops. Stage 0 is CPU-preparable during the reserve if a session wants it early - the transform hook + oracles land without touching the GPU; honesty placement (er_60k knn5) is the only stage-0 GPU-adjacent step (~0.1 GPU-h class, still gated on the release). | PREREG-FINAL POSTED 18:5xZ 08-14 (posts/2026-08-14-prereg-wrist-transfer-screen.md): the item is now GPU-RELEASE-ONLY — the in-channel release is the single remaining blocker; stage 0 launches under the FINAL pre-reg with no further paperwork. Stage-0 CPU-preparable slice split out as wrist-transfer-stage0-cpu-prep (hook + transform oracles land under the reserve; the none bit-replay oracle + honesty placement stay GPU-gated inside this item). | GPU RELEASED in-channel 21:14Z 08-14 ('Your GPU is all yours') — the single registered blocker is CLEARED. Launch sequenced behind main-review-molmoact2-final deliverable (c) only: the retirement re-pointed checkpoint loading (bijou checkpoints, not HF-layout dirs + norm tags), so the frozen ftrig4k/simft launch surfaces must be verified or amended in-channel BEFORE stage 0 per the pre-reg's own amendment policy. Stage-0 CPU prep landed (64c93e6): critical path is none bit-replay + honesty placement + stage 1. | DELIVERABLE-(c) VERDICT 21:4xZ 08-14 (main-review-molmoact2-final): NO AMENDMENT NEEDED — P1 ftrig4k (outputs/train/fontaine_flow_snapdistill_ftrig_4k_1xh100) and the stage-2 simft fine-tune are flow-pathway bijou checkpoints served via BijouPolicy --checkpoint, untouched by the phase 3-5 re-point (which moved only grpo_loop --checkpoint and rollout_sim_parallel --molmoact2-discrete); from_checkpoint changes are additive for pre-existing checkpoints. UNBLOCKED: stage 0 (none bit-replay oracle + honesty placement) launches under the FINAL pre-reg with no further paperwork — the next work session takes it FIRST. · [pre-reg](posts/2026-08-14-prereg-wrist-transfer-screen.md)
+**boundary:** Queued 17:3xZ 08-14 at the design close. BLOCKED on the in-channel GPU release (owner reserve 12:54:19Z 08-14 stands). prereg field points at the design memo (the registered skeleton); launch still requires a posted FINAL pre-reg freezing its sections 5-7 verbatim; stage boundaries are hard stops. Stage 0 is CPU-preparable during the reserve if a session wants it early - the transform hook + oracles land without touching the GPU; honesty placement (er_60k knn5) is the only stage-0 GPU-adjacent step (~0.1 GPU-h class, still gated on the release). | PREREG-FINAL POSTED 18:5xZ 08-14 (posts/2026-08-14-prereg-wrist-transfer-screen.md): the item is now GPU-RELEASE-ONLY — the in-channel release is the single remaining blocker; stage 0 launches under the FINAL pre-reg with no further paperwork. Stage-0 CPU-preparable slice split out as wrist-transfer-stage0-cpu-prep (hook + transform oracles land under the reserve; the none bit-replay oracle + honesty placement stay GPU-gated inside this item). | GPU RELEASED in-channel 21:14Z 08-14 ('Your GPU is all yours') — the single registered blocker is CLEARED. Launch sequenced behind main-review-molmoact2-final deliverable (c) only: the retirement re-pointed checkpoint loading (bijou checkpoints, not HF-layout dirs + norm tags), so the frozen ftrig4k/simft launch surfaces must be verified or amended in-channel BEFORE stage 0 per the pre-reg's own amendment policy. Stage-0 CPU prep landed (64c93e6): critical path is none bit-replay + honesty placement + stage 1. | DELIVERABLE-(c) VERDICT 21:4xZ 08-14 (main-review-molmoact2-final): NO AMENDMENT NEEDED — P1 ftrig4k (outputs/train/fontaine_flow_snapdistill_ftrig_4k_1xh100) and the stage-2 simft fine-tune are flow-pathway bijou checkpoints served via BijouPolicy --checkpoint, untouched by the phase 3-5 re-point (which moved only grpo_loop --checkpoint and rollout_sim_parallel --molmoact2-discrete); from_checkpoint changes are additive for pre-existing checkpoints. UNBLOCKED: stage 0 (none bit-replay oracle + honesty placement) launches under the FINAL pre-reg with no further paperwork — the next work session takes it FIRST. | STAGE 0 EXECUTED 22:2xZ 08-14 (c5be36f, oracles ALL GREEN): honesty placement PASS on the serving substrate (equidistant wrist — wrist_arm_mask's registered path; W0 in-run 0.8769 reproduces the banked 0.877 manip anchor, W1 blackout 1.0, W3 arm_blur 0.8867 with paired W3-W0 CI95 [9.6e-08, 4.7e-07] excl-0 — small vs the W1 bracket, registered; mask coverage mean 1.6%); none bit-replay PASS (ftrig4k W0 seed 0 x2, episode row bit-equal, run-twice determinism form per the registered config drift); --top-transform blackout landed for T1 (chain_transforms seam, oracles green). STAGE 1 LAUNCHED 22:24:42Z unit wrist-screen-stage1 (launch_wrist_screen_stage1.sh): det gate x2 -&gt; hold(25) -&gt; W0/W1/W3(100 each) + T1(25), ~3-3.5 GPU-h, rc ETA ~01:0x-01:4xZ 08-15, babysit entry live (gate 5 GPU-h). Stage-1 boundary session owns the reads (sanity band, hold floor, T1 CI, spawn_xy pairing, first W1/W3 deltas) + in-channel post BEFORE stage-2 spend. · [pre-reg](posts/2026-08-14-prereg-wrist-transfer-screen.md)
 
 <details><summary>full record</summary>
 
