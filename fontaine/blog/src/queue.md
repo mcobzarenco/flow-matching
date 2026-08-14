@@ -6,7 +6,7 @@
 
 **Depth call:** depth 2: grpo-r1b-boundary-reads (gated at R1-B rc ~19:3xZ) + sim-rollout-pose-wrist-read (executable now, refill at the consolidated-report close).
 
-**15 open** (Live 0 · Queued 2 · Blocked 13 · Done 162)
+**16 open** (Live 0 · Queued 3 · Blocked 13 · Done 162)
 
 ## 🔴 Live (0)
 
@@ -14,9 +14,23 @@
 
 *(empty)*
 
-## 🟢 Queued (2)
+## 🟢 Queued (3)
 
 *ready — waiting on a window or a boundary*
+
+**`molmoact2-retirement-adoption`** · `cpu`
+
+Adopt the molmoact2 retirement plan (docs/molmoact2-retirement.md, main 02a58e0; owner ask 12:46Z 08-14, thoughts + sign-offs posted in-channel 12:50Z): (1) rebase fontaine onto main &gt;= db0a141 (T1 ar_fast retirement + T2 residua…
+
+**boundary:** Queued 12:5xZ 08-14 at the owner ask. Step (1) executable at the current run boundary AFTER grpo-r1b-boundary-reads (banked rows consumed via current import paths first); steps 3-4 sequenced with the owner's phase landings — never under a live run.
+
+<details><summary>full record</summary>
+
+Adopt the molmoact2 retirement plan (docs/molmoact2-retirement.md, main 02a58e0; owner ask 12:46Z 08-14, thoughts + sign-offs posted in-channel 12:50Z): (1) rebase fontaine onto main &gt;= db0a141 (T1 ar_fast retirement + T2 residual-conditioning removal; conflict surface per plan §0: flow.py sample_actions_sde, model.py action_capture kwarg, eval/policies.py TokenRow/stable_sde_step_noise vs tile_memory, train.py 3 lines — expect trivial); check.py green + grpo oracle suite green post-rebase (test_grpo_step/test_token_rows/test_molmoact2_replay/test_grpo_loop). (2) Track phases 1-3 as they land on main, adopt at convenience. (3) PHASE 4 CO-LAND (my instrument, boundary I signed: after grpo-r1b-boundary-reads land + owner ladder adjudication): thin replay builder + loop/driver re-point to BijouPolicy+MolmoAct2ARDecoder; gate = frozen-wave replay parity on banked R1-B waves (rewards equal, logprobs in registered 1e-5+JPEG bounds) INCLUDING one v2-reward wave (grip-trace keys preserved — the gate addition asked in-channel). (4) Phase-5 sign-off after 4 is green.
+
+</details>
+
+---
 
 **`sim-manip-wrist-content-split`** · `cpu`
 
@@ -36,7 +50,7 @@ Manipulation-pose wrist content split: price how much of the banked 0.877 manip-
 
 R1-B boundary reads at rc (ETA ~19:3xZ 08-14, unit grpo-phase2-r1b): execute the pre-reg's registered reads
 
-**boundary:** Queued 09:5xZ 08-14 at the R1-B launch. Blocked until rc/tripwire; any session at rc executes; babysit rides it meanwhile (~30-min checkpoints, poll forced last). · [pre-reg](posts/2026-08-14-prereg-token-grpo-phase2-r1b.md)
+**boundary:** Queued 09:5xZ 08-14 at the R1-B launch. Blocked until rc/tripwire; any session at rc executes; babysit rides it meanwhile (~30-min checkpoints, poll forced last). | UNBLOCKED 12:5xZ 08-14 tick: R1-B SELF-STOPPED on the knockaway wire 12:40:50Z (fresh steps 0.328/0.3125/0.4531 all &gt; 0.167, exit 3 rc 3) — the S6-style stop reads apply. Banked endpoint step_0006.pt (step-7 update exited pre-save); step-7 telemetry REVERSED step 6 (earned 1.66-&gt;0.58 cm, reward_mean -0.26-&gt;-1.21). Pre-reg §4 registered contingency = the finding: wire re-fired under v2 =&gt; shoving not reward-driven at this surface. Reads owed: paired delta at step_0006, behavior-prediction judgment, ladder verdict for owner adjudication; step_0006 weights-only upload; results section + chart + in-channel. Cost ~2.95 GPU-h, ladder cum ~8.1 of 22. EXECUTE FIRST in the chained work session. · [pre-reg](posts/2026-08-14-prereg-token-grpo-phase2-r1b.md)
 
 <details><summary>full record</summary>
 
@@ -266,7 +280,7 @@ Appearance programme consolidated report (chart-led, closed-screen rule): the si
 
 R1-B re-priced ladder (option 1, owner-approved 09:16Z 08-14, sequenced behind grpo-reward-patch-prereg): resume from banked step_0004 (fontaine-checkpoints/grpo_phase2_r1a, weights-only) under the PATCHED reward with lr 3e-7 + k…
 
-**boundary:** LAUNCHED 09:43:20Z (unit grpo-phase2-r1b), rc ETA ~19:3xZ 08-14; babysit registry entry live. Boundary reads at rc per the pre-reg (accumulate or the ladder stops). · [pre-reg](posts/2026-08-14-prereg-token-grpo-phase2-r1b.md)
+**boundary:** LAUNCHED 09:43:20Z (unit grpo-phase2-r1b), rc ETA ~19:3xZ 08-14; babysit registry entry live. Boundary reads at rc per the pre-reg (accumulate or the ladder stops). | SELF-STOPPED 12:40:50Z 08-14 at fresh-step 3-of-3 (jsonl step 7): knockaway wire 0.328/0.3125/0.4531 vs 0.167 x3 — registered exit 3, unit rc 3, GPU released. step_0006.pt banked on disk. ~2.95 GPU-h this run (09:43-12:40Z). Boundary reads item unblocked. · [pre-reg](posts/2026-08-14-prereg-token-grpo-phase2-r1b.md)
 
 <details><summary>full record</summary>
 
