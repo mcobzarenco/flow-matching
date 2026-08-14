@@ -64,6 +64,7 @@ class RolloutSim(Protocol):
     def benchy_disk_distance(self) -> float: ...
     def success(self) -> bool: ...
     def benchy_pose(self) -> tuple[np.ndarray, float]: ...
+    def benchy_grip_contacts(self) -> tuple[bool, bool]: ...
 
 
 def parse_args() -> argparse.Namespace:
@@ -190,6 +191,12 @@ class EpisodeResult:
     # every banked run); draws >= 1 re-key the policy's noise/sampling
     # streams. Defaulted so pre-probe rows and JSONs load unchanged.
     draw: int = 0
+    # Per-tick grip states aligned with distance_cm (reset sample +
+    # one per tick): 0 none, 1 fixed-side only, 2 moving-jaw only,
+    # 3 two-sided pinch (the grasp predicate). Defaulted empty so
+    # pre-instrument rows and JSONs load unchanged — the derived
+    # channels below then report nan, never a silent 0.
+    grip: list[int] = field(default_factory=list)
 
     @property
     def progress_cm(self) -> float:
@@ -200,6 +207,44 @@ class EpisodeResult:
     def progress_final_cm(self) -> float:
         """PRIMARY metric: distance recovered from spawn to episode end."""
         return self.initial_cm - self.final_cm
+
+    @property
+    def max_setback_cm(self) -> float:
+        """Worst adverse excursion over the whole trace: how far the
+        boat got from the disk beyond its spawn distance at ANY point —
+        the knock event endpoint reads can't see (an episode that bats
+        the boat away and plows it partway back still shows here). nan
+        on rows without a distance trace."""
+        if not self.distance_cm:
+            return float("nan")
+        return max(self.distance_cm) - self.distance_cm[0]
+
+    @property
+    def grasped_progress_cm(self) -> float:
+        """Distance recovered summed ONLY over ticks that end in a
+        two-sided pinch — the earned share of progress_final_cm. nan on
+        rows recorded before the grip instrument."""
+        if not self.grip or len(self.grip) != len(self.distance_cm):
+            return float("nan")
+        return sum(
+            self.distance_cm[i] - self.distance_cm[i + 1]
+            for i in range(len(self.distance_cm) - 1)
+            if self.grip[i + 1] == 3
+        )
+
+    @property
+    def ungrasped_displacement_cm(self) -> float:
+        """Total |boat displacement| over ticks that end WITHOUT a
+        pinch — the shoving channel, direction-blind (bulldozing toward
+        the disk is as unearned as knocking away). nan on
+        pre-instrument rows."""
+        if not self.grip or len(self.grip) != len(self.distance_cm):
+            return float("nan")
+        return sum(
+            abs(self.distance_cm[i + 1] - self.distance_cm[i])
+            for i in range(len(self.distance_cm) - 1)
+            if self.grip[i + 1] != 3
+        )
 
 
 def resolve_replans(
@@ -280,6 +325,7 @@ def run_episode_loop(
     closest = initial
     success_tick: int | None = None
     distances: list[float] = [initial * 100]
+    grip_states: list[int] = [_grip_code(sim.benchy_grip_contacts())]
     ticks = 0
 
     for replan in range(replans):
@@ -297,6 +343,7 @@ def run_episode_loop(
             ticks += 1
             distance = sim.benchy_disk_distance()
             distances.append(distance * 100)
+            grip_states.append(_grip_code(sim.benchy_grip_contacts()))
             closest = min(closest, distance)
             if sim.success():
                 success_tick = replan * horizon + step
@@ -320,7 +367,14 @@ def run_episode_loop(
         ticks=ticks,
         latency_ms=[round(v, 1) for v in latencies],
         distance_cm=[round(v, 3) for v in distances],
+        grip=grip_states,
     )
+
+
+def _grip_code(contacts: tuple[bool, bool]) -> int:
+    """(fixed, moving) -> the grip trace encoding (3 = pinch)."""
+    fixed, moving = contacts
+    return (1 if fixed else 0) | (2 if moving else 0)
 
 
 def hold_chunk_fn(horizon: int) -> Callable[[SimObservation, int], np.ndarray]:

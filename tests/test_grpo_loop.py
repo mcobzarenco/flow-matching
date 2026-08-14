@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import json
 import math
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -58,6 +59,7 @@ from sim.grpo_loop import (
     apply_option_b_freeze,
     build_optimizer,
     composite_reward,
+    composite_reward_v2,
     eval_facts,
     group_advantages,
     grpo_train_step,
@@ -164,6 +166,59 @@ def test_composite_reward_cases() -> None:
     assert (
         composite_reward(episode(0, 0, progress=-2.0, upright=0.5, strikes=2)) == -9.0
     )
+
+
+def test_composite_reward_v2_pays_only_grasped_progress() -> None:
+    # 4 cm endpoint progress: 3 earned under pinch, 2 shoved closer +
+    # 1 knocked away ungrasped -> v1 pays 4.0, v2 pays 3 - 0.5*3 = 1.5
+    row = episode(0, 0, progress=4.0)
+    row = replace(
+        row,
+        distance_cm=[10.0, 8.0, 5.0, 6.0],
+        grip=[0, 1, 3, 0],
+    )
+    assert composite_reward(row) == 4.0
+    assert composite_reward_v2(row) == pytest.approx(1.5)
+    # pure shove to the SAME endpoint: v1 cannot tell them apart, v2
+    # makes it strictly unprofitable
+    shove = replace(row, distance_cm=[10.0, 8.0, 6.0, 6.0], grip=[0, 0, 0, 0])
+    assert composite_reward(shove) == 4.0
+    assert composite_reward_v2(shove) == pytest.approx(-2.0)
+    # bonuses/penalties unchanged
+    win = replace(
+        episode(0, 0, progress=4.0, success=True),
+        distance_cm=[10.0, 6.0],
+        grip=[0, 3],
+    )
+    assert composite_reward_v2(win) == pytest.approx(4.0 + 10.0)
+    # pre-instrument rows refuse loudly instead of silently reverting
+    with pytest.raises(ValueError, match="grip trace"):
+        composite_reward_v2(episode(0, 0, progress=1.0))
+
+
+def test_group_advantages_takes_reward_fn() -> None:
+    # same endpoint, different mechanism: under v2 the earned episode
+    # must carry the positive advantage
+    earned = replace(
+        episode(5, 0, progress=4.0),
+        distance_cm=[10.0, 6.0],
+        grip=[0, 3],
+    )
+    shoved = replace(
+        episode(5, 1, progress=4.0),
+        distance_cm=[10.0, 6.0],
+        grip=[0, 0],
+    )
+    advantages, facts = group_advantages(
+        [earned, shoved],
+        min_std=0.05,
+        reward_fn=composite_reward_v2,
+    )
+    assert facts.kept == 1
+    assert advantages[(5, 0)] > 0 > advantages[(5, 1)]
+    # v1 sees identical rewards -> zero spread -> group dropped
+    advantages_v1, facts_v1 = group_advantages([earned, shoved], min_std=0.05)
+    assert facts_v1.kept == 0 and not advantages_v1
 
 
 def test_group_advantages_zscores_and_dead_group_drop() -> None:
