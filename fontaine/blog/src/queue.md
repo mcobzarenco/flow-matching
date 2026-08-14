@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-14T00:30:12Z
+**Updated:** 2026-08-14T02:16:00Z
 
 **Depth call:** depth 3: arm-B read+prune at its ~13:3xZ boundary; token-grpo-phase2-instrument items 3-4 on the molmoact2 surface (gate passed, lane GO); sim-arm-photometric-links pre-reg.
 
-**14 open** (Live 0 · Queued 2 · Blocked 12 · Done 150)
+**16 open** (Live 0 · Queued 3 · Blocked 13 · Done 151)
 
 ## 🔴 Live (0)
 
@@ -14,19 +14,33 @@
 
 *(empty)*
 
-## 🟢 Queued (2)
+## 🟢 Queued (3)
 
 *ready — waiting on a window or a boundary*
 
-**`sim-arm-photometric-links`** · `cpu`
+**`sim-mount-material-split`** · `cpu`
 
-Arm photometric fix, named target LINKS both instances (arm-split diagnostic 06:4xZ 08-13: links 88% of the arm's keep-only delta on 6.1% px; follower/leader sub-additive so both must be treated): replace the flat recolored link…
+Camera-mount material split + white retexture (rider finding 08-14: the mount is WHITE/silver in reality, sim paints it black via _recolor_arm; arm-split read no_mount as the ONLY removal moving v3 toward real, 0.713-&gt;0.654 on 0.…
 
-**boundary:** Queued 06:4xZ 08-13 at the arm-split close; CPU render + ~0.02 GPU-h embeds per gate read.
+**boundary:** Queued 02:1xZ 08-14 at the photometric close. The per-pixel most distinctive class — likely the highest-leverage remaining arm fix. CPU + ~0.02 GPU-h per gate read.
 
 <details><summary>full record</summary>
 
-Arm photometric fix, named target LINKS both instances (arm-split diagnostic 06:4xZ 08-13: links 88% of the arm's keep-only delta on 6.1% px; follower/leader sub-additive so both must be treated): replace the flat recolored link material with a real-arm-derived photometric model — mine link-region pixel stats (median color, specular highlights, texture) from real v2 top frames via the leg-(a) segmentation masks projected onto real-registered poses OR simple material grade (specular+roughness) fit to real crops; gate on the pinned 20x5 probe vs the no_links removal ceiling 0.814 direction (patched-arm target: only_links moves toward plate_only). Record-only rider: mounts are per-pixel most distinctive (no_mount 0.713-&gt;0.654) — include a cheap mount-retexture arm in the same run if it costs no extra RNG draws. Pre-reg with explicit bar before any read.
+Camera-mount material split + white retexture (rider finding 08-14: the mount is WHITE/silver in reality, sim paints it black via _recolor_arm; arm-split read no_mount as the ONLY removal moving v3 toward real, 0.713-&gt;0.654 on 0.66% px): the mount geoms share wrist_roll_follower_so101_v1_material with the gripper's wrist-roll piece, so first split the material (mjSpec edit or vendored-XML material clone at load), then set the mount to a mined real color (same pose-projection mining path, mount population), gate on the pinned 20x5 probe (only_mount 0.821 / no_mount 0.654 anchors). Pre-reg with explicit bar before any read.
+
+</details>
+
+---
+
+**`sim-arm-texture-followup`** · `cpu`
+
+Arm texture follow-up (registered in the photometric pre-reg fail/residual branch): the grade closes the albedo+shine gap but leaves (a) print-layer local contrast real 8.4 vs graded 4.7 and (b) the servo glint tail p97 206 vs 125
+
+**boundary:** Queued 02:1xZ 08-14 at the photometric close. Lower priority than the mount material split (bigger per-pixel offender). CPU + ~0.02 GPU-h per gate read.
+
+<details><summary>full record</summary>
+
+Arm texture follow-up (registered in the photometric pre-reg fail/residual branch): the grade closes the albedo+shine gap but leaves (a) print-layer local contrast real 8.4 vs graded 4.7 and (b) the servo glint tail p97 206 vs 125. Candidate: procedural print-layer texture on link PLA materials via mjSpec texture assets (needs model recompile path) or a composite-stage micro-texture on the arm mask (zero RNG draws, oracle-pinned); gate on the same pinned 20x5 probe vs the v1-graded baseline 0.698/0.652. Pre-reg with explicit bar before any read.
 
 </details>
 
@@ -46,9 +60,23 @@ Token-GRPO phase-2 R1-A LIVE (00:06:00Z 08-14, unit fontaine-grpo-r1a, resume of
 
 ---
 
-## 🟡 Blocked (12)
+## 🟡 Blocked (13)
 
 *waiting on a prerequisite, a boundary, or the owner*
+
+**`sim-arm-photometrics-promotion`** · `cpu` · **⛔ owner hold**
+
+Promote arm_photometrics='v1' into production v3/v4 defaults (registered read GREEN 02:1xZ 08-14: v3 0.713-&gt;0.698 CI-excl-0, only_links 0.705-&gt;0.652; commit 4515ab4): flip the default in SO101Sim (+ rollout/eval surfaces that pin…
+
+**boundary:** OWNER_HOLD per the registered rule (pre-reg decision rule: no default flip without sign-off; same contract as clutter-patch promotion 05:40Z 08-13). Asked in-channel 02:1xZ 08-14 with the results post. · [pre-reg](posts/2026-08-14-prereg-sim-arm-photometric-links.md)
+
+<details><summary>full record</summary>
+
+Promote arm_photometrics='v1' into production v3/v4 defaults (registered read GREEN 02:1xZ 08-14: v3 0.713-&gt;0.698 CI-excl-0, only_links 0.705-&gt;0.652; commit 4515ab4): flip the default in SO101Sim (+ rollout/eval surfaces that pin render_style), re-pin the banked v3 anchor 0.713 -&gt; the patched value on the pinned 20x5 probe, extend tests/test_sim_appearance.py style-equality oracles. NOTE: changes wrist-view arm pixels too (the real wrist view also sees the real arm) — flag the wrist knn5 re-read as the cheap post-flip sanity.
+
+</details>
+
+---
 
 **`sim-clutter-patch-promotion`** · `cpu` · **⛔ owner hold**
 
@@ -216,7 +244,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (150)
+## ✅ Done (151)
 
 *closed — the full record stays in each fold*
 
@@ -229,6 +257,20 @@ Token-GRPO phase-2 RUN — R0 COMPLETE 20:54:30Z 08-13 rc 0 (4 launches; crashes
 <details><summary>full record</summary>
 
 Token-GRPO phase-2 RUN — R0 COMPLETE 20:54:30Z 08-13 rc 0 (4 launches; crashes: device mix 9ffc1c1, Adam-init OOM d0b9a44, worker-headroom OOM 78cbb65; launch 4 = step_0001.pt resume, R1 resume path validated). BOUNDARY VERDICT: STOP — VRAM gate FAIL (76.53 GiB steady-state &gt;= 75; option B measured-marginal on 1xH100), signal gate FAIL (wave-2 median group std 0.0087 cm, 5/8 groups all-draws-identical; one step at lr 5e-6 sharpened the 4B stack: chosen_nll 0.77-&gt;0.33, anchor_kl 4x/step), endpoint held-out collapsed 1.868 -&gt; -0.0, 0/20, paired delta -1.868 CI [-4.41,-0.03]. R1 NOT launched by frozen rule; ~3.8/5.5 GPU-h ops gate spent. Results in the pre-reg post.
+
+</details>
+
+---
+
+**`sim-arm-photometric-links`** · `cpu`
+
+Arm photometric fix, named target LINKS both instances (arm-split diagnostic 06:4xZ 08-13: links 88% of the arm's keep-only delta on 6.1% px; follower/leader sub-additive so both must be treated): replace the flat recolored link…
+
+**boundary:** Queued 06:4xZ 08-13 at the arm-split close; CPU render + ~0.02 GPU-h embeds per gate read. | EXECUTED + CLOSED 02:1xZ 08-14 (commit 4515ab4): mined real link pixels at recorded poses (142 frames), fitted material grade (spec 1.0 shin 0.1, measured albedos), opt-in arm_photometrics='v1'; registered read GREEN — PRIMARY v3 0.713-&gt;0.698 CI-excl-0, MECHANISM only_links 0.705-&gt;0.652 (96/100), matches the no_mount amputation ceiling without amputating. Promotion + follow-ups queued as their own items.
+
+<details><summary>full record</summary>
+
+Arm photometric fix, named target LINKS both instances (arm-split diagnostic 06:4xZ 08-13: links 88% of the arm's keep-only delta on 6.1% px; follower/leader sub-additive so both must be treated): replace the flat recolored link material with a real-arm-derived photometric model — mine link-region pixel stats (median color, specular highlights, texture) from real v2 top frames via the leg-(a) segmentation masks projected onto real-registered poses OR simple material grade (specular+roughness) fit to real crops; gate on the pinned 20x5 probe vs the no_links removal ceiling 0.814 direction (patched-arm target: only_links moves toward plate_only). Record-only rider: mounts are per-pixel most distinctive (no_mount 0.713-&gt;0.654) — include a cheap mount-retexture arm in the same run if it costs no extra RNG draws. Pre-reg with explicit bar before any read.
 
 </details>
 
