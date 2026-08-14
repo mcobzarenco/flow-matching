@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-14T11:29:00Z
+**Updated:** 2026-08-14T12:30:00Z
 
 **Depth call:** depth 2: grpo-r1b-boundary-reads (gated at R1-B rc ~19:3xZ) + sim-rollout-pose-wrist-read (executable now, refill at the consolidated-report close).
 
-**15 open** (Live 0 · Queued 2 · Blocked 13 · Done 161)
+**15 open** (Live 0 · Queued 2 · Blocked 13 · Done 162)
 
 ## 🔴 Live (0)
 
@@ -18,15 +18,15 @@
 
 *ready — waiting on a window or a boundary*
 
-**`sim-rollout-pose-wrist-read`** · `cpu`
+**`sim-manip-wrist-content-split`** · `cpu`
 
-Rollout-pose wrist gap read: the one unmeasured leg the consolidated report flags
+Manipulation-pose wrist content split: price how much of the banked 0.877 manip-pose wrist AUROC (sim-rollout-pose-wrist-read, 12:2xZ 08-14) is scene-content mismatch (no boat in the sim jaw, benchy at spawn, no real clutter) vs…
 
-**boundary:** Queued 11:2xZ 08-14 at the consolidated-report close (depth refill). Executable any GPU-busy window; pre-reg in-channel BEFORE the read; if the owner answers the promotion asks first, fold the flipped defaults into the arm set.
+**boundary:** Queued 12:3xZ 08-14 at the rollout-pose read close (depth refill). Executable any GPU-busy window; pre-reg in-channel BEFORE the read; the registered caveat section of 2026-08-14-prereg-sim-rollout-pose-wrist.md is the contract this item discharges.
 
 <details><summary>full record</summary>
 
-Rollout-pose wrist gap read: the one unmeasured leg the consolidated report flags — the banked 0.828 wrist anchor is ROLLOUT-frame (gripper filling the frame mid-manipulation); every wrist read so far is reset-pose (0.548-0.561 band). Render wrist frames at banked rollout trajectories' recorded qpos (settled mid-episode poses, production v3 + fitted curve-only lens + re-tuned pose), pair against real mid-manipulation wrist frames from the held-out episodes, er_60k knn5 probe. Answers whether the wrist camera is honest where it matters for policy (manipulation frames), prices the material flags' wrist-side effect at poses where the arm FILLS the frame (~230 px at reset vs most-of-frame mid-grasp). Pre-reg required before the read (anchors: reset band 0.548-0.561, rollout 0.828 banked rollout-frame; bars frozen at pre-reg). CPU renders + ~0.02 GPU-h embeds.
+Manipulation-pose wrist content split: price how much of the banked 0.877 manip-pose wrist AUROC (sim-rollout-pose-wrist-read, 12:2xZ 08-14) is scene-content mismatch (no boat in the sim jaw, benchy at spawn, no real clutter) vs the rendered arm itself. Same harness: re-render the 100 pose-matched manip slots with (a) benchy REMOVED (clean table) and (b) benchy at spawn (the banked arm), paired per slot; optionally a real-frame arm-crop rider if separable. er_60k knn5 vs the same manip reference; paired deltas + AUROC per arm. If the content term is small, the rendered arm carries the gap -&gt; the renderer-class decision (normal-map/PBR + gripper geometry) gets its wrist-side price; if large, the 0.877 overstates the camera's dishonesty and the honest number is lower. Pre-reg required (bands frozen from the banked run: anchors 0.713/0.523, calibration 0.268 directional gate per amendment 2). CPU renders + ~0.02 GPU-h embeds.
 
 </details>
 
@@ -54,7 +54,7 @@ R1-B boundary reads at rc (ETA ~19:3xZ 08-14, unit grpo-phase2-r1b): execute the
 
 Promote arm_photometrics='v1' into production v3/v4 defaults (registered read GREEN 02:1xZ 08-14: v3 0.713-&gt;0.698 CI-excl-0, only_links 0.705-&gt;0.652; commit 4515ab4): flip the default in SO101Sim (+ rollout/eval surfaces that pin…
 
-**boundary:** OWNER_HOLD per the registered rule (pre-reg decision rule: no default flip without sign-off; same contract as clutter-patch promotion 05:40Z 08-13). Asked in-channel 02:1xZ 08-14 with the results post. | STACK READ 10:58Z 08-14: safe to stack with clutter patches (no regression, point estimate still negative) but the banked solo gain is attenuated ~3x and statistically absorbed at n=100 next to clutter — NOT additive as separately sold; stacked value unresolved, bigger-n read priced on request. · [pre-reg](posts/2026-08-14-prereg-sim-arm-photometric-links.md)
+**boundary:** OWNER_HOLD per the registered rule (pre-reg decision rule: no default flip without sign-off; same contract as clutter-patch promotion 05:40Z 08-13). Asked in-channel 02:1xZ 08-14 with the results post. | STACK READ 10:58Z 08-14: safe to stack with clutter patches (no regression, point estimate still negative) but the banked solo gain is attenuated ~3x and statistically absorbed at n=100 next to clutter — NOT additive as separately sold; stacked value unresolved, bigger-n read priced on request. | ROLLOUT-POSE READ 12:2xZ 08-14: the stack (photometrics+mount) REGRESSES the wrist at manipulation poses — paired +3.99e-07 CI95 [+2.0e-07,+6.3e-07], 22/100 closer (graded surfaces ~3,200 px there vs ~230 at reset; the 08-14 'wrist-neutral' was a visibility floor, not clearance). Flip decision now prices a measured wrist-side cost against the absorbed top-side gain. · [pre-reg](posts/2026-08-14-prereg-sim-arm-photometric-links.md)
 
 <details><summary>full record</summary>
 
@@ -68,7 +68,7 @@ Promote arm_photometrics='v1' into production v3/v4 defaults (registered read GR
 
 Promote the real-crop clutter patch paste into production v3/v4: move clutter_patch.py paste into sim/so101_sim.py as the default clutter appearance (patched plate at _draw_content, clutter geoms dropped from the top render/mask/…
 
-**boundary:** Queued 05:4xZ 08-13 at the appearance-pass close. Implementation ~1 session CPU; re-gate on the pinned 20x5 probe (~0.02 GPU-h) before any behavioral eval moves. | STACK READ 10:58Z 08-14: clutter patches carry essentially the whole combined three-flag gain (stack 0.5521 vs patched-alone 0.5561, materials marginal absorbed) — this promotion is the payload; promote first or alone.
+**boundary:** Queued 05:4xZ 08-13 at the appearance-pass close. Implementation ~1 session CPU; re-gate on the pinned 20x5 probe (~0.02 GPU-h) before any behavioral eval moves. | STACK READ 10:58Z 08-14: clutter patches carry essentially the whole combined three-flag gain (stack 0.5521 vs patched-alone 0.5561, materials marginal absorbed) — this promotion is the payload; promote first or alone. | ROLLOUT-POSE READ 12:2xZ 08-14: no bearing on this item (wrist rides the raw render; clutter patch is top-composite only) — still the payload, promote first or alone.
 
 <details><summary>full record</summary>
 
@@ -230,9 +230,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (161)
+## ✅ Done (162)
 
 *closed — the full record stays in each fold*
+
+**`sim-rollout-pose-wrist-read`** · `cpu`
+
+Rollout-pose wrist gap read: the one unmeasured leg the consolidated report flags
+
+**boundary:** Queued 11:2xZ 08-14 at the consolidated-report close (depth refill). Executable any GPU-busy window; pre-reg in-channel BEFORE the read; if the owner answers the promotion asks first, fold the flipped defaults into the arm set. | CLOSED 12:2xZ 08-14: executed as sim_rollout_pose_wrist_read.py with the registered premise correction (no banked sim qpos traces existed — poses taken from the REAL held-out episodes' recorded observation.state, exact pose-matched). Two registered ABORTS banked first (interleaved-calibration temporal leakage 0.129; symmetric band vs the protocol's real-real drift floor 0.268 — amendments 1+2 on the pre-reg page). Final: manip-pose wrist AUROC 0.877 = GAP REAL (understated in this calibration direction); material stack REGRESSES the wrist at manip poses (+3.99e-07 CI [+2.0,+6.3]e-07); pose effect +8.7e-06 (1/100). Riders replicated banked digits (reset top -1.49e-07, reset wrist neutral, anchors 0.713/0.523 x3 runs).
+
+<details><summary>full record</summary>
+
+Rollout-pose wrist gap read: the one unmeasured leg the consolidated report flags — the banked 0.828 wrist anchor is ROLLOUT-frame (gripper filling the frame mid-manipulation); every wrist read so far is reset-pose (0.548-0.561 band). Render wrist frames at banked rollout trajectories' recorded qpos (settled mid-episode poses, production v3 + fitted curve-only lens + re-tuned pose), pair against real mid-manipulation wrist frames from the held-out episodes, er_60k knn5 probe. Answers whether the wrist camera is honest where it matters for policy (manipulation frames), prices the material flags' wrist-side effect at poses where the arm FILLS the frame (~230 px at reset vs most-of-frame mid-grasp). Pre-reg required before the read (anchors: reset band 0.548-0.561, rollout 0.828 banked rollout-frame; bars frozen at pre-reg). CPU renders + ~0.02 GPU-h embeds.
+
+</details>
+
+---
 
 **`sim-appearance-consolidated-report`** · `cpu`
 
