@@ -60,35 +60,25 @@
 # detached (fontaine-upload-r0a). Results section in
 # posts/2026-08-13-prereg-token-grpo-phase2-r0a.md.
 
-[[run]]
-name = "grpo_phase2_r1a"
-kind = "train-jsonl"
-host = "local"
-pgrep = "sim.grpo_loop"
-pgrep_min = 1                     # parent loop (waves spawn 8 transient workers); unit fontaine-grpo-r1a
-gpu_indices = [0]
-gpu_mem_min_mib = 8000
-jsonl = "/home/ubuntu/flow-matching/outputs/sim/grpo_phase2_a/train.jsonl"
-total_steps = 17
-probe_key = "eval_reward_mean"
-vram_key = "vram_gib"
-started_utc = "2026-08-14T00:06:00Z"
-gpu_hours_per_wall_hour = 1.0
-boundary = "R1-A: steps 3-17 resuming R0-A's step_0002.pt (launched 00:06:00Z by the GO boundary, same flags; pre-reg posts/2026-08-13-prereg-token-grpo-phase2-r0a.md + results section). Measured pace ~0.96 GPU-h/step incl. per-step eval => ~14.4 GPU-h, rc ETA ~14:3xZ 08-14. Endpoint reads (S6): paired delta CI95 primary, knockaway rate vs 10/120, success count."
-anchors = [
-    "same frozen constants as R0-A: option A surface, lr 1e-6, adv clip 2.0, kl_beta 0.5, kl-stop 0.06 in-loop, eval-every 1 (a per-step paired CI entirely below -1.0 self-stops exit 3)",
-    "KNOCKAWAY WATCH: R0-A waves read 0.234 -> 0.359 vs the 0.167 x3-consecutive line; R1-A starts a fresh streak — 3 straight elevated waves fires exit 3 (registered behavior, judge at the row not mid-wave)",
-    "R0-A comparators: anchor_k3_pre was 5.5e-07 after 1 step (watch it accumulate over 15); anchor_kl floor ~0.002-0.02 is JPEG reduction noise; chosen_nll drifting DOWN from 0.87 toward R0's 0.33 would be the sharpening signature returning",
-    "eval trajectory: baseline 1.868 2/20; steps 1-2 read 1.8441 2/20 delta -0.0239 — the R1-A question is whether 15 gentle steps ACCUMULATE; flat-at-noise through ~step 10 feeds the lr/beta re-price discussion at the boundary, do NOT hand-stop early (tripwires own the downside)",
-    "resume correctness: anchor snapshotted pre-restore (oracle-pinned); baseline rides in the checkpoint — step-0 eval must NOT rerun; first fresh row is step 3 (a duplicate step-2 eval row at start is expected loop behavior)",
-    "R1-A endpoint => R2-A extension only via the frozen R1->R2 rule (no tripwire + endpoint CI not entirely below 0); K prices into the 35 GPU-h ladder total (cum ~20.3 at rc)",
-]
-[[run.gates]]
-kind = "vram_max_gib"
-value = 75.0
-[[run.gates]]
-kind = "gpu_hours_max"
-value = 16.5                      # R1-A leg budget (projection 14.4 + margin; ladder cum gate 22)
+# grpo_phase2_r1a entry PRUNED 03:2xZ 08-14 work session — SELF-STOPPED
+# 03:05Z at step 5/17: KNOCKAWAY TRIPWIRE fired exit 3, exactly as
+# registered (fresh waves 0.406 -> 0.359 -> 0.312, all above the 0.167
+# x3-consecutive line; R0-A's 0.234 -> 0.359 was the WATCH). S6
+# endpoint reads: PRIMARY eval flat 1.8441 2/20 every step through 4
+# (delta -0.0239 CI95 [-0.0716, 0.0] touching zero — unharmed,
+# unimproved; the wire cut the accumulation question short of its
+# ~step-10 read); knock-away pooled 69/192 = 0.359 vs 0.083 baseline
+# but DECAYING while train success recovered 0 -> 4 -> 4 (elevated
+# shoving, not runaway); drift gentle throughout (anchor_k3_pre 8e-7,
+# chosen_nll SOFTENING 0.86 -> 1.01 -> 0.91, 8/8 groups kept). FROZEN
+# RULE: tripwire -> NO R2-A. Banked endpoint = step_0004.pt (post-
+# step-4; the step-5 update exits pre-save), weights-only upload
+# fontaine-checkpoints/grpo_phase2_r1a. Cost R0-A 2.12 + R1-A ~2.95 =
+# ~5.1 of the 22 GPU-h ladder gate. Boundary options posted in-channel
+# 03:1xZ (R1-B re-price / reward-patch pre-reg / stop the ladder) —
+# owner adjudicates; GPU idle for GPU-launches pending that word.
+
+no_live_runs_reason = "declared 03:2xZ 08-14 work session: grpo_phase2_r1a self-stopped on the registered knockaway tripwire at step 5 (exit 3, 03:05Z) and is pruned; NO R2-A by the frozen rule. Next GPU leg pends the owner's boundary call (options in-channel 03:1xZ). The mount-material gate read (~0.02 GPU-h embeds) rides the free GPU this session."
 
 # molmoact2_ar100b_masked entry PRUNED 13:3xZ 08-13 work session —
 # COMPLETE 13:31Z rc 0, ridden end-to-end (~1.05/1.5 GPU-h, 63.1
