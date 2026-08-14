@@ -7,7 +7,34 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-14 10:45–10:5xZ (real `date -u` at stamp: 10:46) —
+tick: **R1-B healthy at step 5/15, babysit green, owner 👍 on the
+pre-reg recorded.***
+
+**Status**: **R1-B LIVE and healthy** — babysit exit 0 at 10:46Z: 3
+procs, gpu0 33.7 GiB / 100%, step 5/15, loss 0.058, 47 min/step (~7.8
+h to step 15, rc ETA ~19:3xZ holds), anchor_kl 0.041 < 0.06 stop,
+VRAM 33.89 of the 75 gate. Calibration read done last session (PASS,
+posted 10:43Z); next fresh row (step 6) ~11:4xZ. Watch item stands:
+knockaway 0.328, streak 1/3 vs the 0.167 line — registered
+prediction is decay.
+
+**Steering**: no new messages, inbox empty. **Reaction: 👍 on the
+R1-B pre-reg post (09:43:09Z)** — owner agreement with the patched
+reward + re-priced ladder, recorded per the 08-05 reaction rule. No
+reactions on the step-5 calibration post yet.
+
+**Done**: babysit poll (facts above, no gate crossing, no anomaly in
+the printed trajectories); Discord read + history; queue validate
+green (depth 2, 15 open); confirmed `run_work_next` armed.
+
+**Next**: chained work session takes `sim-full-optin-stack-read`
+(CPU item) alongside the run; tick chain keeps ~30-min babysit
+checkpoints. At rc (~19:3xZ): `grpo-r1b-boundary-reads` — accumulate
+or the ladder STOPS.*
 
 *Updated 2026-08-14 08:45–10:0xZ (real `date -u` at stamp: 09:55) —
 work session: **texture escalation CLOSED (second refutation) + owner
@@ -98,32 +125,13 @@ oracles BEFORE any pre-reg/read; nothing was registered or read).
 GPU launches wait on the owner's boundary call; if the owner
 answers, that supersedes.*
 
-*Updated 2026-08-14 06:22–06:2xZ (real `date -u` at stamp: 06:24) —
-tick: **quiet tick — no live runs, no steering, GPU idle-by-design
-pending the owner's R1-A boundary call.***
-
-**Status**: **no live runs** — GPU 0 MiB / 0% util, no train procs.
-Idle is by design: launches pend `grpo-phase2-boundary-decision`
-(owner_hold, options in-channel 03:1xZ).
-
-**Steering**: none — inbox empty, read empty at 06:22Z; history (last
-5) shows no reactions or replies on the wrist results post (06:07Z)
-or earlier asks. Still open: R1-A boundary options (03:1xZ),
-arm-photometrics promotion (02:1xZ), clutter-patch promotion (05:40Z
-08-13) — all three now carry the measured wrist-neutral fact.
-
-**Done**: Discord poll + history (facts above); queue validate green
-(depth 2, 16 open); confirmed `run_work_next` armed (marker present at
-06:22).
-
-**Next**: chained work session takes `queue_cli.py next` →
-**sim-arm-surface-texture-mjspec** (CPU instrument + oracles; its
-boundary note bars auto-running the gate read out of sequence — the
-wrist read it was sequenced behind is now done, and the recompile +
-physics-oracle work is CPU-side either way; `sim-full-optin-stack-read`
-follows). GPU launches wait on the boundary call.*
-
 ## Utilization footer
+
+Session 2026-08-14 10:45–10:5xZ (tick; 0 GPU-h decided — R1-B live
+within its ~9.6 GPU-h pre-reg envelope): babysit green at step 5/15
+(exit 0, all wires quiet), owner 👍 on the R1-B pre-reg recorded as
+agreement, queue green (depth 2, 15 open), `run_work_next` confirmed
+armed for `sim-full-optin-stack-read`.
 
 Session 2026-08-14 08:45–10:0xZ (work; exploit; ~0.04 GPU-h spent on
 the texture gate read embeds + **~9.6 GPU-h committed** by the R1-B
@@ -132,15 +140,6 @@ launch 09:43:20Z, ≤ 22-gate cum ~14.7): texture escalation closed
 09:21Z and executed — grasp instrument + reward v2 landed (904
 green), R1-B pre-reg posted then launched under it; queue reshaped
 (depth 2, validate green).
-
-Session 2026-08-14 08:35–08:5xZ (tick; 0 GPU-h decided — no live
-runs, GPU idle-by-design pending the owner's boundary call): owner
-GRPO-status question answered in-channel 08:37Z + inbox acked;
-exit-1 outage window 06:24–08:24Z diagnosed (usage-cap signature,
-cleared); the dead 06:24 work session's arm_texture v2 WIP audited
-(9/11 oracles) and preserved as a check-exempt patch (`862d012`);
-queue green (depth 2, 16 open); `run_work_next` armed to resume the
-mjspec item.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
