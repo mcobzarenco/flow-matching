@@ -951,6 +951,60 @@ class SO101Sim:
             np.float64,
         )
 
+    def wrist_arm_mask(self) -> np.ndarray:
+        """[H, W] float 0..1 arm+gripper coverage in the FINAL wrist
+        frame (the W3 treatment of the wrist-transfer screen, pre-reg
+        2026-08-14 §1): a segmentation pass of the wrist source render
+        — every geom on both arm trees, follower and leader; benchy,
+        clutter and scene excluded, occluders drop out of the mask via
+        the segmentation itself — pushed through the same lens remap as
+        ``obs.wrist`` (soft edges are the remap's bilinear footprint;
+        no grade/noise, so masks are identical across post backends).
+        Valid after ``observe()``; v3/v4 mirror its canonical-clutter
+        wrist convention."""
+        if self._wrist_lens is not None:
+            raise NotImplementedError(
+                "wrist_arm_mask is registered on the deployed equidistant "
+                "wrist path (the frozen sim100 substrate), not the fitted "
+                "cubemap leg",
+            )
+        swap = self.render_style in ("v3", "v4")
+        if swap:
+            self._set_clutter(drawn=False)
+        renderer = self.renderer
+        renderer.enable_segmentation_rendering()
+        renderer.update_scene(self.data, camera="wrist_cam")
+        seg = renderer.render()
+        renderer.disable_segmentation_rendering()
+        if swap:
+            self._set_clutter(drawn=True)
+        is_geom = seg[..., 1] == mujoco.mjtObj.mjOBJ_GEOM.value
+        mask = (is_geom & np.isin(seg[..., 0], self._arm_geoms())).astype(
+            np.float64,
+        )
+        if self.render_style == "v0":
+            return mask
+        return np.clip(self._remap(mask[..., None])[..., 0], 0.0, 1.0)
+
+    def _arm_geoms(self) -> np.ndarray:
+        """Geom ids on the two arm kinematic trees (world and the
+        benchy subtree excluded) — the W3 mask's geom set."""
+        cached = getattr(self, "_arm_geom_ids", None)
+        if cached is not None:
+            return cached
+        arm = []
+        for geom in range(self.model.ngeom):
+            body = int(self.model.geom_bodyid[geom])
+            if body == 0:
+                continue
+            ancestor = body
+            while ancestor not in (0, self._benchy_body):
+                ancestor = int(self.model.body_parentid[ancestor])
+            if ancestor != self._benchy_body:
+                arm.append(geom)
+        self._arm_geom_ids = np.array(sorted(arm))
+        return self._arm_geom_ids
+
     def _composite(
         self,
         frame: np.ndarray,

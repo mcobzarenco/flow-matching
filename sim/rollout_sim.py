@@ -42,6 +42,7 @@ from bijou.rollout_safety import camera_kinds_from_names
 
 from . import OUTPUT_DIR
 from .so101_sim import CONTROL_HZ, SimObservation, SO101Sim
+from .wrist_transform import WRIST_TRANSFORMS, make_wrist_transform, print_coverage
 
 # The sim's cameras, named for what they ARE (both names sit inside the
 # semantic kind vocabulary, so the tags follow for free).
@@ -137,6 +138,15 @@ def parse_args() -> argparse.Namespace:
         default="bfloat16",
         choices=["float32", "bfloat16"],
     )
+    parser.add_argument(
+        "--wrist-transform",
+        default="none",
+        choices=WRIST_TRANSFORMS,
+        help="wrist-transfer screen treatment (pre-reg 2026-08-14 §1): "
+        "rewrite ONLY the wrist frame the policy sees — physics, video "
+        "and every state read stay raw; 'freeze' replays the reset "
+        "frame, 'arm_blur' is the W3 masked-arm corruption",
+    )
     parser.add_argument("--out-dir", type=Path, default=OUTPUT_DIR)
     parser.add_argument(
         "--out-json",
@@ -148,6 +158,11 @@ def parse_args() -> argparse.Namespace:
     args = parser.parse_args()
     if (args.checkpoint is None) == (not args.hold):
         parser.error("exactly one of --checkpoint / --hold is required")
+    if args.wrist_transform != "none" and args.hold:
+        parser.error(
+            "--wrist-transform rewrites the policy's wrist input — "
+            "meaningless with --hold (which never looks at frames)",
+        )
     if args.replans is not None and args.episode_seconds is not None:
         parser.error(
             "--replans and --episode-seconds state the same budget in "
@@ -313,12 +328,18 @@ def run_episode_loop(
     horizon: int,
     video_path: Path | None,
     latencies: list[float],
+    transform: Callable[[SimObservation], SimObservation] | None = None,
 ) -> EpisodeResult:
     """One episode's control loop, with the chunk source abstracted:
     ``next_chunk(obs, replan)`` is the policy call in the sequential
     driver and the predict round-trip in the parallel one (it appends its
     own timing to ``latencies``). The parallel-vs-sequential determinism
-    oracle rides on both drivers sharing this exact loop."""
+    oracle rides on both drivers sharing this exact loop.
+
+    ``transform`` (the ``--wrist-transform`` hook, wrist-transfer screen
+    pre-reg §1) rewrites ONLY the observation handed to the policy —
+    the loop's own obs stream, the video record and every state read
+    stay raw, so physics cannot see the treatment."""
     obs = sim.reset(seed)
     writer = VideoWriter(video_path) if video_path is not None else None
     initial = sim.benchy_disk_distance()
@@ -329,7 +350,7 @@ def run_episode_loop(
     ticks = 0
 
     for replan in range(replans):
-        chunk = next_chunk(obs, replan)
+        chunk = next_chunk(obs if transform is None else transform(obs), replan)
         print(
             f"  seed {seed} replan {replan}: "
             f"{latencies[-1] if latencies else 0:.0f} ms | "
@@ -432,6 +453,7 @@ def run_episode(
     horizon: int,
     video_path: Path | None,
     draw: int = 0,
+    wrist_transform: str = "none",
 ) -> EpisodeResult:
     latencies: list[float] = []
     next_chunk: Callable[[SimObservation, int], np.ndarray]
@@ -465,6 +487,7 @@ def run_episode(
     else:
         next_chunk = hold_chunk_fn(horizon)
 
+    transform = make_wrist_transform(wrist_transform, sim)
     row = run_episode_loop(
         sim,
         seed,
@@ -473,7 +496,9 @@ def run_episode(
         horizon=horizon,
         video_path=video_path,
         latencies=latencies,
+        transform=transform,
     )
+    print_coverage(transform, seed, draw)
     return dataclasses.replace(row, draw=draw) if draw else row
 
 
@@ -525,6 +550,7 @@ def main() -> int:
                     horizon=horizon,
                     video_path=video_path,
                     draw=draw,
+                    wrist_transform=args.wrist_transform,
                 ),
             )
 
@@ -563,6 +589,7 @@ def main() -> int:
                 "ar_temperature": args.ar_temperature,
                 "sde_noise_level": args.sde_noise_level,
                 "expert_dtype": args.expert_dtype,
+                "wrist_transform": args.wrist_transform,
                 "control_hz": CONTROL_HZ,
                 "task": TASK,
                 "stats_repo_id": STATS_REPO_ID,

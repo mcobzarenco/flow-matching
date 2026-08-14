@@ -64,6 +64,7 @@ from .rollout_sim import (
     sim_item,
 )
 from .so101_sim import CONTROL_HZ, SimObservation, SO101Sim
+from .wrist_transform import WRIST_TRANSFORMS, make_wrist_transform, print_coverage
 
 # Worker -> parent messages are picklable tagged tuples: "predict"
 # carries (worker_id, seed, replan, top, wrist, state); "row" carries
@@ -86,6 +87,10 @@ class WorkerConfig:
     out_dir: Path | None
     post_backend: str
     flip_camera_mount: bool = True
+    # wrist-transfer screen treatment (pre-reg 2026-08-14 §1): rewrites
+    # only the wrist frame each predict request carries — worker-local,
+    # one fresh transform per (seed, draw) unit.
+    wrist_transform: str = "none"
 
 
 def parse_args() -> argparse.Namespace:
@@ -256,6 +261,15 @@ def parse_args() -> argparse.Namespace:
         "replan, draw) via stable_sample_rng) — requires "
         "--molmoact2-grammar-masked",
     )
+    parser.add_argument(
+        "--wrist-transform",
+        default="none",
+        choices=WRIST_TRANSFORMS,
+        help="wrist-transfer screen treatment (pre-reg 2026-08-14 §1): "
+        "rewrite ONLY the wrist frame the policy sees — physics, video "
+        "and every state read stay raw; 'freeze' replays the reset "
+        "frame, 'arm_blur' is the W3 masked-arm corruption",
+    )
     parser.add_argument("--out-dir", type=Path, default=OUTPUT_DIR)
     parser.add_argument(
         "--out-json",
@@ -328,6 +342,11 @@ def parse_args() -> argparse.Namespace:
         parser.error(f"--draws must be >= 1, got {args.draws}")
     if args.draws > 1 and args.hold:
         parser.error("--draws > 1 is meaningless for --hold (deterministic)")
+    if args.wrist_transform != "none" and args.hold:
+        parser.error(
+            "--wrist-transform rewrites the policy's wrist input — "
+            "meaningless with --hold (which never looks at frames)",
+        )
     if args.sde_noise_level is not None:
         if args.hold:
             parser.error("--sde-noise-level decodes a policy — meaningless with --hold")
@@ -436,6 +455,7 @@ def run_worker_episodes(
     not a solo forward."""
     for seed, draw in config.units:
         latencies: list[float] = []
+        transform = make_wrist_transform(config.wrist_transform, sim)
         next_chunk: Callable[[SimObservation, int], np.ndarray]
 
         if config.hold:
@@ -481,7 +501,9 @@ def run_worker_episodes(
             horizon=config.horizon,
             video_path=video_path,
             latencies=latencies,
+            transform=transform,
         )
+        print_coverage(transform, seed, draw)
         if draw:
             row = dataclasses.replace(row, draw=draw)
         send(("row", config.worker_id, row))
@@ -777,6 +799,7 @@ def main() -> int:
             out_dir=args.out_dir,
             post_backend=args.post_backend,
             flip_camera_mount=not args.no_mount_flip,
+            wrist_transform=args.wrist_transform,
         )
         process = context.Process(
             target=_worker_main,
@@ -992,6 +1015,7 @@ def main() -> int:
                 "ar_temperature": args.ar_temperature,
                 "sde_noise_level": args.sde_noise_level,
                 "expert_dtype": args.expert_dtype,
+                "wrist_transform": args.wrist_transform,
                 "control_hz": CONTROL_HZ,
                 "task": TASK,
                 "stats_repo_id": STATS_REPO_ID,
