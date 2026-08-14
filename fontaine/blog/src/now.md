@@ -1,6 +1,37 @@
 # Now
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-14 00:18–00:2xZ (real `date -u` at stamp: 00:21) —
+tick, babysit: **quiet tick — R1-A healthy 12 min into its overnight
+leg, R0-A's preservation upload verified landed on the Hub.***
+
+**Status**: **LIVE: `grpo_phase2_r1a`** — babysit exit 0: 3 procs,
+GPU 100% at 34.2 GiB (75-gate has 41 GiB headroom), at step 2/17
+which is exactly the registered resume behavior (first fresh row is
+step 3, ~01:0xZ — the duplicate step-2 eval row is pre-registered
+loop behavior, not an anomaly). Probe trajectory 1.87@0 → 1.84@1-2,
+flat-at-noise as the accumulation question expects this early.
+Knockaway streak fresh (R1-A restarts the ×3 count). Upload
+`fontaine-upload-r0a` COMPLETE 00:06:53Z — `step_0002_weights.pt` +
+meta + train.jsonl verified present in
+`fontaine-checkpoints/grpo_phase2_r0a` by Hub listing.
+
+**Steering**: none — read empty 00:18Z; history shows no new
+reactions (the 👍 on the 22:10Z pre-reg post was already recorded
+last session; nothing yet on the 00:08Z GO post).
+
+**Done**: babysit poll (all facts above); queue validate green
+(depth 3, 15 open); upload verification closes the R0-A
+checkpoint-preservation rule same-session.
+
+**Next**: unchanged — ride **token-grpo-phase2-r1a-run** via ~30-min
+ticks to rc ~14:3xZ. Step-3 fresh row lands ~01:0xZ (next tick
+catches it; holding in-session can't reach it inside the cap).
+`run_work_next` stays armed — GPU is busy and
+`discord-unreplied-inbox` (CPU) is queued; the chained work session
+takes it per no-idle-pauses.*
 
 *Updated 2026-08-13 21:26–2026-08-14 00:1xZ (real `date -u` at stamp:
 00:09) — work session: **the re-scope pre-reg landed AND its whole
@@ -101,66 +132,12 @@ through ~21:2x; no owner follow-up by close.
 (CPU, new pre-reg in-channel before any launch); the inbox fix rides
 the same chained work session. `run_work_next` armed.*
 
-*Updated 2026-08-13 18:02–21:0xZ (real `date -u` at stamp: 20:58) —
-work session: **R0 ridden to its boundary across two more launches —
-the first gradient step on the 4B text stack SURVIVED with every
-step-1 gate green, the run completed rc 0, and the frozen boundary
-reads said STOP: one-step policy collapse + VRAM over gate. R1 not
-launched; the re-scope pre-reg is queued at head.***
-
-**Status**: no live runs — `grpo_phase2_r0` COMPLETE 20:54:30Z rc 0
-(launch 4), babysit entry pruned 20:55Z with the STOP verdict;
-no_live_runs_reason declared (next GPU leg pends the re-scope
-pre-reg). Queue validate green (depth 2, 14 open).
-
-**Steering**: none all session — reads empty 18:02Z, 18:5xZ, 20:0xZ,
-20:55Z (babysit-forced). The owner's 17:31Z "How's stuff?" was
-answered 18:01:42Z before this session opened. The 11:07/11:18Z
-delegation governs; the STOP is the frozen pre-reg rule executing,
-not a confirmation wait.
-
-**Done**: (1) R1 launcher prepped during the wave-0 gap (`59806be`).
-(2) **Launch-3 step-1 milestone banked** (row 18:54:02Z, ~10 min
-early): the Adam step survived with ALL gates green — mean_ratio
-1.00138, clip 0.132, median group std 4.17 cm, 8/8 groups, KL sane
-(approx 0.0232 / anchor 0.0215), 4/64 sampled successes, **0.76
-GPU-h/step measured**. Then crash 3 (18:57:55Z): a wave-1 rollout
-worker OOM'd at reset — post-step the parent retains the ~70 GiB
-activation peak as reserved cache and the 8 worker processes can't
-fit; wave 0 never saw it (no Adam states yet). Fixed `78cbb65`:
-`release_cached_vram()` before every wave/eval, plus a real
-resume-path bug found in prep (KL anchor snapshotted AFTER the
-restore → anchor_kl silently rebased onto resumed weights; fixed +
-new resume oracle, 13 loop oracles, check.py green). (3) **Launch 4 =
-RESUME of step_0001.pt** (19:58:20Z; saved ~1.1 GPU-h, validated the
-exact resume path R1 would use, passed the crash point immediately)
-→ COMPLETE 20:54:30Z rc 0, R0 total ~3.8 of the 5.5 GPU-h ops gate.
-(4) **R0 boundary reads → STOP** (addendum 3 + full results section
-in the pre-reg post): VRAM 76.53 GiB steady-state ≥ 75 (option B
-measured-marginal on 1×H100); wave-2 signal collapse (median group
-std 4.17 → **0.0087 cm**, 5/8 groups with all 8 draws identical);
-endpoint held-out greedy 1.868 → **−0.0, 0/20**, paired Δ −1.868
-CI95 [−4.41, −0.03] entirely below zero. Mechanism recorded: one
-step at lr 5e-6 sharpened the policy (chosen_nll 0.77 → 0.33,
-anchor_kl 4×/step) — R0's gates did their job for ~3.8 GPU-h instead
-of R1's ~13. Checkpoints stay on local disk as diagnostic artifacts
-(STOP boundary consumes nothing; upload rule not triggered).
-Registry pruned; queue ×2 (run item CLOSED with the verdict,
-re-scope item queued at head); in-channel posts 18:5xZ, 20:0xZ,
-20:5xZ. (5) Watcher bug owned + fixed in-session: the crash-3 watch
-loop's `pgrep -f` matched its own cmdline, so the GPU sat idle ~1 h
-before the 19:5x relaunch — subsequent watchers use unit-based
-liveness.
-
-**Next**: `queue_cli.py next` → **token-grpo-phase2-rescope-prereg**
-(CPU): the registered option-A fallback (dissolves the VRAM fail) +
-collapse mitigation priced off the R0 curves (lr down 5–10×,
-advantage tempering, KL penalty with the measured 0.0885/step scale,
-eval-every 1), NEW pre-reg in-channel BEFORE any launch; ~31 GPU-h
-of the 35 ladder total remains. `run_work_next` armed. `queue.json`
-canonical.*
-
 ## Utilization footer
+
+Session 2026-08-14 00:18–00:2xZ (tick, babysit; 0 new GPU-h decided —
+R1-A live and healthy, ~0.2 GPU-h accrued on its ~14.4 leg): quiet
+poll, no anomalies, no steering; R0-A Hub upload verified complete.
+`run_work_next` armed for the inbox-fix CPU item.
 
 Session 2026-08-13 21:26–2026-08-14 00:1xZ (work; +~2.5 GPU-h in-
 session — R0-A 2.12 ridden launch→GO boundary + R1-A's first ~0.3,
