@@ -1,7 +1,8 @@
 # Retiring `bijou/molmoact2/` — first-class MolmoAct2 AR + joint objectives
 
-Status: **PLAN, pre-implementation** (owner-approved direction,
-2026-08-14). Implemented phase by phase on `main`; each phase lands
+Status: **phases 0 + 1 EXECUTED** (2026-08-14; fixtures committed,
+leaves promoted, gate-d-lite run — verdict in decision 7); phases 2–5
+pending. Implemented phase by phase on `main`; each phase lands
 with its gates green and this document's status lines updated. When
 complete, the design record subsumes into `docs/architecture.md`
 (§8.13 gets its step-8 closure; §2 gains the new decoder and the
@@ -206,12 +207,34 @@ Relevant prior art already on `main` and load-bearing here:
    measured 0.31 s/step at batch 8 (frozen trunk), so lite ≈ 20–40
    min + evals and even the full 2000 ≈ 1.5–2 GPU-h — the original
    ≤6 GPU-h figure was a budget bound, not an estimate. The
-   norm-table sub-decision (their recipe RECOMPUTES the q01/q99
+   sub-decision (their recipe RECOMPUTES the q01/q99
    table on rig data at fine-tune start; our converted release
    carries the community table) is settled at this run's launch — a
    small `--norm-table` recompute knob or a convert-time alternate,
    chosen in the pre-registration; reproducing the rung requires the
    rig table either way.
+
+   **EXECUTED 2026-08-14, verdict: PASS with a favorable deviation.**
+   Mechanism: convert-time (`--norm-stats-from` the rig-ft export;
+   `converted/molmoact2_release_rigtable`). Full 2000 steps ran (the
+   opportunistic continuation cost ~50 min total, 1.47 s/step @ batch
+   64). Corridor: loss 0.191@20 (≤ the registered 1.5× bound on the
+   reference 0.135), monotone throughout, 0.0089@2000 (reference
+   ~0.008 class ✓). Anchor reads on the reference's 240 banked rows
+   (row mapping verified bit-exact against the bank's states;
+   state-copy reproduced at 9.082): **step-500 MAE 5.556** (beats
+   both anchors ✓, but BELOW the registered 6.76 ± 1.0 band — 1.2
+   BETTER than the reference at quarter-training) and **step-2000 MAE
+   2.030** (reference 3.23 ± 1.0 — again better, outside the band on
+   the favorable side). The gate's bug-detection intent passes on
+   every sub-gate; the unexplained IMPROVEMENT is recorded as a
+   deviation with unattributed mechanism (candidates: trunk mount
+   dtype at train time, batch composition/order, loss-normalization
+   details — the reference recipe's cosine warmup matches ours, so
+   not the schedule shape). Lesson recorded: recipe-repeat bands
+   should be one-sided-worse plus a better-than flag, since "better"
+   is a deviation to explain, not a failure — but it is also not
+   grounds to block retirement.
 8. **Sequencing:** nothing lands under a live fontaine run; phase 4
    co-landed with him; phase 5 only after his phase-4 sign-off.
 9. **Surface-A row restriction** (training only the action-block rows;
