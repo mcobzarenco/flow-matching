@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-14T00:07:51Z
+**Updated:** 2026-08-14T00:30:12Z
 
 **Depth call:** depth 3: arm-B read+prune at its ~13:3xZ boundary; token-grpo-phase2-instrument items 3-4 on the molmoact2 surface (gate passed, lane GO); sim-arm-photometric-links pre-reg.
 
-**15 open** (Live 0 · Queued 3 · Blocked 12 · Done 149)
+**14 open** (Live 0 · Queued 2 · Blocked 12 · Done 150)
 
 ## 🔴 Live (0)
 
@@ -14,7 +14,7 @@
 
 *(empty)*
 
-## 🟢 Queued (3)
+## 🟢 Queued (2)
 
 *ready — waiting on a window or a boundary*
 
@@ -27,20 +27,6 @@ Arm photometric fix, named target LINKS both instances (arm-split diagnostic 06:
 <details><summary>full record</summary>
 
 Arm photometric fix, named target LINKS both instances (arm-split diagnostic 06:4xZ 08-13: links 88% of the arm's keep-only delta on 6.1% px; follower/leader sub-additive so both must be treated): replace the flat recolored link material with a real-arm-derived photometric model — mine link-region pixel stats (median color, specular highlights, texture) from real v2 top frames via the leg-(a) segmentation masks projected onto real-registered poses OR simple material grade (specular+roughness) fit to real crops; gate on the pinned 20x5 probe vs the no_links removal ceiling 0.814 direction (patched-arm target: only_links moves toward plate_only). Record-only rider: mounts are per-pixel most distinctive (no_mount 0.713-&gt;0.654) — include a cheap mount-retexture arm in the same run if it costs no extra RNG draws. Pre-reg with explicit bar before any read.
-
-</details>
-
----
-
-**`discord-unreplied-inbox`** · `cpu`
-
-Harness fix — discord unreplied inbox (process-integrity, from the 08-13 missed-reply incident): two owner questions (19:05Z + 20:03Z 08-13) were consumed by babysit-embedded `read`s but logged as 'reads empty' and never answered…
-
-**boundary:** next work session; small CPU item, do before or alongside the rescope pre-reg
-
-<details><summary>full record</summary>
-
-Harness fix — discord unreplied inbox (process-integrity, from the 08-13 missed-reply incident): two owner questions (19:05Z + 20:03Z 08-13) were consumed by babysit-embedded `read`s but logged as 'reads empty' and never answered until the 21:0xZ tick (~2 h / ~1 h latency; likely output truncation of the babysit poll section — the exact never-truncate failure mode, now with a cursor that advances anyway). Fix structurally: discord.py `read` appends every surfaced non-bot message to fontaine/harness/state/discord_unreplied.jsonl; session boot + babysit print the pending-inbox count LOUDLY (first line, impossible to truncate away); entries cleared only by an explicit `discord.py ack &lt;id&gt;` at reply time (posts alone never clear — result posts don't count as replies). Gate: unit test (read populates, ack clears, bot messages skipped), check.py green, boot-prompt/babysit surface the count.
 
 </details>
 
@@ -230,7 +216,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (149)
+## ✅ Done (150)
 
 *closed — the full record stays in each fold*
 
@@ -243,6 +229,20 @@ Token-GRPO phase-2 RUN — R0 COMPLETE 20:54:30Z 08-13 rc 0 (4 launches; crashes
 <details><summary>full record</summary>
 
 Token-GRPO phase-2 RUN — R0 COMPLETE 20:54:30Z 08-13 rc 0 (4 launches; crashes: device mix 9ffc1c1, Adam-init OOM d0b9a44, worker-headroom OOM 78cbb65; launch 4 = step_0001.pt resume, R1 resume path validated). BOUNDARY VERDICT: STOP — VRAM gate FAIL (76.53 GiB steady-state &gt;= 75; option B measured-marginal on 1xH100), signal gate FAIL (wave-2 median group std 0.0087 cm, 5/8 groups all-draws-identical; one step at lr 5e-6 sharpened the 4B stack: chosen_nll 0.77-&gt;0.33, anchor_kl 4x/step), endpoint held-out collapsed 1.868 -&gt; -0.0, 0/20, paired delta -1.868 CI [-4.41,-0.03]. R1 NOT launched by frozen rule; ~3.8/5.5 GPU-h ops gate spent. Results in the pre-reg post.
+
+</details>
+
+---
+
+**`discord-unreplied-inbox`** · `cpu`
+
+Harness fix — discord unreplied inbox CLOSED 00:3xZ 08-14 (process-integrity, from the 08-13 missed-reply incident): discord.py `read` now appends every surfaced non-bot message to state/discord_unreplied.jsonl (dedupe by id); re…
+
+**boundary:** CLOSED 00:3xZ 08-14; the structural fix for the ~2 h / ~1 h reply-latency class.
+
+<details><summary>full record</summary>
+
+Harness fix — discord unreplied inbox CLOSED 00:3xZ 08-14 (process-integrity, from the 08-13 missed-reply incident): discord.py `read` now appends every surfaced non-bot message to state/discord_unreplied.jsonl (dedupe by id); read AND babysit print the pending count as a loud FIRST line (babysit re-checks after its poll too); only an explicit `discord.py ack &lt;id&gt;` clears — result posts never do; `discord.py inbox` reprints entries in full (the recovery path for truncated read output). Gate met: 7 oracles in tests/test_discord_inbox.py (populate/skip-bot/dedupe/ack/unknown-ack/reprint/babysit-count), check.py 867-&gt;874 green, tick.md+work.md state the ack contract.
 
 </details>
 
