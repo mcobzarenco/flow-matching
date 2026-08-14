@@ -2,7 +2,45 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-14 23:45–23:5xZ (real `date -u` at stamp: 23:49) —
+tick (babysit): **stage-1 healthy mid-W1; owner v30→v21 question
+answered in-channel with receipts; grasp-SFT pre-reg gap patched
+(§6 finalization item 4 — convention seam).***
+
+**Status**: **STAGE 1 LIVE + healthy** — babysit green (3 procs, GPU
+13.9 GiB/100%, cumulative projection 1.4/5 GPU-h); W0 cell landed
+23:37Z (early reads GREEN, posted 23:43Z), W1 mid-cell (seeds 18–22
+replan 3 at 23:46Z); journal mirror refreshed. rc ETA unchanged
+~01:0x–01:4xZ 08-15. Queue validate OK depth 2, 16 open.
+
+**Steering**: two owner messages surfaced (23:17Z *"can you share one
+of these pinch+hold videos?"* — the 23:25Z video post answered it;
+23:19Z *"do we do the v30 to v21 state convention mapping when
+training the released checkpoint in the sim?"*). Answered 23:5xZ
+in-channel: **yes, on every released-checkpoint-in-sim path, exactly
+the official map** — signs (1,−1,1,1,1,1) / offsets (0,+90,+90,0,0,0)°
+(`MOLMOACT2_OFFICIAL_SIGNS/OFFSETS`), state in through the shim,
+chunks back through the inverse, GRPO training rows captured post-map
+(`state_units: "model (official shim applied)"`), validated by the
+08-12 convmap eval; ftrig4k/simft are identity **by design**
+(per-dataset stats in the rig frame). Both inbox ids acked — inbox
+empty.
+
+**Done**: the owner's question surfaced a real gap — the grasp-SFT
+draft pre-reg never pinned the stage-B/C convention seam. §6
+finalization checklist item (4) added: declare the demo rows'
+`state_units`; SFT against the release's global q01/q99 table ⇒ demos
+written through the official shim (the GRPO training-row contract);
+recomputed dataset table (rig-ft recipe default) ⇒ identity,
+frame-self-consistent; the choice rides the rows JSON as provenance.
+
+**Next**: unchanged — stage-1 boundary session at unit rc (reads +
+gates + in-channel boundary post BEFORE stage-2 spend); grasp-SFT
+finalization + objection window (now incl. item 4) ahead of its GPU
+stages. `run_work_next` armed (confirmed present).*
 
 *Updated 2026-08-14 21:32–22:3xZ (real `date -u` at stamp: 22:31) —
 work session, extended live with the owner: **review DONE + nit fixes
@@ -100,51 +138,18 @@ the FINAL pre-reg, no further paperwork; hard-stop boundary posts
 per §5. `run_work_next` armed. `renderer-pbr-wrist-pilot` stays
 owner-gated.*
 
-*Updated 2026-08-14 21:17–21:3xZ (real `date -u` at stamp: 21:29) —
-tick: **owner returned — credits topped up, GPU RELEASED, molmoact2
-retirement COMPLETE on main; orphaned stage-0 hook recovered;
-fontaine rebased onto `26ac1e6`.***
-
-**Status**: **No live run** — GPU free at 0 MiB and **RELEASED**
-(owner 21:14Z: "Your GPU is all yours"; the 12:54Z reserve is over).
-Main at `26ac1e6` — molmoact2 retirement **ALL PHASES COMPLETE**
-(phases 3–5 landed: objective matrix, `bijou/grpo_replay.py` re-point
-+ replay-parity gate executed on my banked R1-A/R1-B waves with
-receipts, `bijou/molmoact2/` deleted); fontaine rebased on top —
-**zero conflicts**, 836 non-GPU green, pushed `64c93e6` (old tip
-tagged `pre-rebase-26ac1e6`). Queue validate OK: depth 1, 16 open
-(chained work session refills). Discord: inbox empty — both owner
-messages replied + acked.
-
-**Steering**: three-part (owner 21:13/21:14Z + the handoff
-attachment): (1) **credits topped up** — the 19:17Z/20:22Z exit-1
-harness alerts were the usage cap; (2) **GPU released**; (3) *"I'd
-start by reviewing the new code from main after you rebase and let me
-know your thoughts"* → queued **`main-review-molmoact2-final`** as
-the top item. The handoff also binds: Decision 11 (any post-rebase
-GRPO run is a FRESH pre-reg on the new stack, `.pt` resume
-salvage-only), masked-only decode (old-side comparisons at tag
-`pre-molmoact2-retirement`), full-width Gumbel sample streams.
-
-**Done**: orphan recovery — the capped 18:59Z work session's
-**stage-0 `--wrist-transform` hook** audited, lint+pyright fixed,
-tests 11/11 + check.py 901 green, committed (both drivers + the W3
-`wrist_arm_mask` path + oracles + spotcheck); **rebase onto
-`26ac1e6`** (16 commits, zero conflicts); queue re-scoped
-(`molmoact2-retirement-adoption` + `wrist-transfer-stage0-cpu-prep`
-closed DONE, the main review queued, GPU release recorded on the
-screen-run item); in-channel reply + both inbox ids acked.
-
-**Next**: chained work session (`run_work_next` armed):
-**`main-review-molmoact2-final` FIRST** (in-channel thoughts post,
-parity-probe rerun on the banked waves, and the wrist-screen
-checkpoint-surface verdict — the retirement re-pointed checkpoint
-loading to bijou checkpoints, so the frozen ftrig4k/simft launch
-surfaces must be verified or amended in-channel BEFORE stage 0), then
-**`wrist-transfer-screen-run`** launches on the released GPU.
-`renderer-pbr-wrist-pilot` stays owner-gated.*
-
 ## Utilization footer
+
+Session 2026-08-14 23:45–23:5xZ (tick; 0 GPU-h in-session — stage 1
+rides detached, counted at its boundary): babysit green mid-W1
+(3 procs, GPU 100%, 1.4/5 GPU-h projection; journal mirror
+refreshed); owner v30→v21 question answered in-channel with receipts
+(yes — the official shim on every released-checkpoint-in-sim path,
+training rows post-map; bijou fine-tunes identity by design); the
+23:17Z video ask acked (the 23:25Z video post was its answer);
+grasp-SFT pre-reg §6 gap patched (finalization item 4: pin the
+stage-B/C convention seam); inbox cleared to empty; queue validate OK
+depth 2; `run_work_next` armed for the stage-1 boundary session.
 
 Session 2026-08-14 21:32–22:3xZ (work; exploit; ~0.3 GPU-h in-session
 — parity-probe rerun + stage-0 placement/bit-replay; stage 1 ~3–3.5
@@ -167,19 +172,6 @@ LAUNCHED** 22:24:42Z (unit `wrist-screen-stage1`, babysit entry, gate
 5 GPU-h), grasp-SFT draft pre-reg posted + queued
 (`grasp-sft-bootstrap`); `run_work_next` armed for the stage-1
 boundary session.
-
-Session 2026-08-14 21:17–21:3xZ (tick; 0 GPU-h — GPU released 21:14Z,
-nothing launched pending the review): owner returned — credits topped
-up (the 19:17Z/20:22Z exit-1 alerts were the cap), GPU released
-in-channel, molmoact2 retirement ALL PHASES COMPLETE on main
-`26ac1e6`; orphaned stage-0 `--wrist-transform` hook recovered from
-the capped 18:59Z session (lint+pyright fixed, check.py 901 green,
-committed); fontaine rebased onto `26ac1e6` zero-conflict (836 green,
-pushed `64c93e6`, old tip tagged); queue re-scoped (two items closed
-DONE, `main-review-molmoact2-final` queued at the owner ask, GPU
-release recorded on the screen-run item), depth 1 with the chained
-work session refilling; both owner messages replied + acked;
-`run_work_next` armed for the review-first work session.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box

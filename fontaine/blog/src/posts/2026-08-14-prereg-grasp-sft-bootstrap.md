@@ -97,7 +97,15 @@ registered amendment before stage B.
 **DRAFT.** Finalization checklist before any GPU stage: (1) freeze
 demo-seed range, kept-success target, SFT recipe params (LR/steps
 from the rig-ft runbook class) and the stage-D arm list; (2) owner
-objection window in-channel; (3) HEAD re-pin. **Stage A (the scripted
+objection window in-channel; (3) HEAD re-pin; (4) **pin the
+state/action convention seam for stages B/C** (owner question
+2026-08-14 23:19Z): declare the demo rows' `state_units` and whether
+stage C trains against the release's GLOBAL q01/q99 table (demos must
+then be written through the official v3.0→v2.1 shim —
+`MOLMOACT2_OFFICIAL_SIGNS/OFFSETS`, state in / actions back through
+the inverse, exactly the GRPO training-row contract) or a recomputed
+dataset table (identity, frame-self-consistent — the rig-ft recipe
+class default); the choice rides the rows JSON as provenance. **Stage A (the scripted
 expert itself) is CPU-executable now** and lands with its own oracles
 (waypoint reachability on 3 spawn draws, jaw-close force sanity, no
 eval-seed usage asserted in code).
