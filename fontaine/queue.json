@@ -1,6 +1,6 @@
 {
- "updated_utc": "2026-08-14T06:07:00Z",
- "depth_reason": "depth 2: sim-arm-surface-texture-mjspec (texture escalation, recompile path) + sim-full-optin-stack-read (prices the combined promotion); GPU launches pend the owner's R1-A boundary call.",
+ "updated_utc": "2026-08-14T09:24:31Z",
+ "depth_reason": "depth 2 (grpo-reward-patch-prereg, sim-full-optin-stack-read); grpo-r1b blocked behind the patch by design",
  "items": [
   {
    "id": "ftrig-eval20-flipped-parallel",
@@ -1439,11 +1439,11 @@
   {
    "id": "grpo-phase2-boundary-decision",
    "class": "cpu",
-   "status": "blocked",
+   "status": "done",
    "owner_hold": true,
    "prereg": "fontaine/blog/src/posts/2026-08-13-prereg-token-grpo-phase2-r0a.md",
    "title": "Token-GRPO phase-2 boundary decision (OWNER CALL, options posted in-channel 03:1xZ 08-14 at the R1-A tripwire stop): (1) R1-B re-price lr 3e-7 + kl_beta 1.0 from the banked step_0004 (fontaine-checkpoints/grpo_phase2_r1a, weights-only), wire unchanged, ~9.6 GPU-h for 10 steps; (2) reward-patch pre-reg FIRST \u2014 in-reward knock-away penalty (progress reward currently pays for boat displacement without a grasp; the wire keeps firing at any lr while shoving pays), ~0 GPU-h to design; (3) stop the ladder, bank the negative accumulation read. Recommendation posted: (2) then (1). Ladder cum ~5.1 of the 22 GPU-h gate; ~17 headroom.",
-   "boundary": "Queued 03:2xZ 08-14 at the R1-A tripwire boundary. On owner word: option 2 lands a pre-reg (CPU) then option 1 launches from step_0004 under it; option 3 closes the phase-2 GRPO screen with the R0-A GO + R1-A tripwire record."
+   "boundary": "RESOLVED by owner steering 09:16Z 08-14: '(2) then (1)' approved in-channel (+ knock-away definition question, answered 09:21Z). Spawned grpo-reward-patch-prereg (option 2, next) and grpo-r1b-repriced-launch (option 1, sequenced behind the patch)."
   },
   {
    "id": "token-grpo-phase2-r0a-run",
@@ -1529,11 +1529,20 @@
   {
    "id": "sim-arm-surface-texture-mjspec",
    "class": "cpu",
-   "status": "queued",
+   "status": "done",
    "owner_hold": false,
    "title": "TRUE surface texture for the arm links via the mjSpec recompile path (escalation registered by the micro-texture REFUTATION 05:4xZ 08-14: statistically-matched screen-space grain read MORE fake - both CIs above zero, 0.698->0.751 - the encoder wants coherent surface-tracking structure, not matched marginals): UV-mapped anisotropic print-layer texture assets on the link PLA materials (and servo glint via specular map if the path allows), model recompiled via mjSpec with physics-preservation oracles (qpos trajectories bit-equal or bounded, spawn/appearance/noise streams untouched, mass/inertia/contacts identical) as the hard bar before any render read. Gate on the same pinned 20x5 probe vs the v1-graded baseline 0.698/0.652 with the micro-texture read's stats as anchors. Pre-reg with explicit bar before any read. Higher risk than the composite route (recompile touches the model) - that is WHY it was sequenced second.",
-   "boundary": "Queued 05:4xZ 08-14 at the micro-texture refutation. Do not auto-run: sequenced behind sim-wrist-view-material-read unless the owner reprioritizes; the photometric grade 0.698/0.652 is the arm frontier meanwhile. CPU (recompile+oracles) + ~0.02 GPU-h per gate read.",
-   "prereg": null
+   "boundary": "CLOSED 09:2xZ 08-14, work session: instrument landed (e408f9e, 11/11 physics oracles, zero-clip tanh generator, reflection rider registered), fit capped at the 0.42 no-clip headroom (lc 6.43 of real 8.36), registered 20x5 read all gates green -> SECOND REFUTATION: PRIMARY +3.07e-07 CI [+2.42,+3.71]e-07 (0.698->0.718), MECHANISM +1.98e-07 (0.652->0.671). Arm-texture direction COLD at this abstraction level; graded arm stays the frontier; no further texture rung auto-queued (a normal-map / renderer-upgrade rung is a new design decision, owner-ask only).",
+   "prereg": "fontaine/blog/src/posts/2026-08-14-prereg-sim-arm-surface-texture-mjspec.md"
+  },
+  {
+   "id": "grpo-reward-patch-prereg",
+   "class": "cpu",
+   "status": "queued",
+   "owner_hold": false,
+   "prereg": null,
+   "title": "GRPO reward patch (option 2, owner-approved 09:16Z 08-14): the R1-A tripwire caught REWARDED shoving leakage - composite_reward's dense progress term pays cm-for-cm for boat displacement without a grasp, and knock-away is only the punished tail of that same funded strategy (endpoint-only, no grasp/contact channel exists in EpisodeResult). Work: (a) instrument MuJoCo grasp/contact ground truth (gripper closure + pad<->benchy contact per replan tick) + trace-based knock event on the recorded distance_cm trace, with oracles; (b) pre-reg the patched reward - progress pay gated on (or heavily discounted without) grasp state, knock-away redefined on trace+contact, thresholds calibrated against the signal probe's banked 360-episode distribution where recomputable (rows lack the contact channel - state exactly what is and is not recomputable); (c) registered acceptance bar for the patch BEFORE R1-B launches under it.",
+   "boundary": "Queued 09:2xZ 08-14 on owner steering ('(2) then (1)'). CPU-side instrument + pre-reg, ~0 GPU-h (calibration replays only if priced). Blocks grpo-r1b-repriced-launch."
   },
   {
    "id": "sim-full-optin-stack-read",
@@ -1543,7 +1552,16 @@
    "prereg": null,
    "title": "Full opt-in stack read (prices the combined promotion): the owner has three pending appearance promotions measured SEPARATELY (clutter real-crop patches 0.713->0.556; arm_photometrics 0.713->0.698; mount rides the stack at 0.713->0.702). If they flip together, interactions are unmeasured. One paired 20x5 top read: v3 default vs the full opt-in stack (clutter patches + arm_photometrics + mount_material), er_60k knn5, in-run v3 gate 0.713+/-0.005. PRIMARY: paired dknn5 CI95 < 0 AND full stack <= best single (0.556) - epsilon registered in the pre-reg; record additivity vs the sum of parts. Pre-reg with explicit bar before any read.",
    "boundary": "Queued 06:0xZ 08-14 at the wrist-read close (depth refill). CPU renders + ~0.02 GPU-h embeds; fully executable without any promotion (all flags opt-in). Sequenced after sim-arm-surface-texture-mjspec only if the owner has not answered the promotion asks by then; if a promotion lands first, re-scope to the promoted default as baseline."
+  },
+  {
+   "id": "grpo-r1b-repriced-launch",
+   "class": "gpu-local",
+   "status": "blocked",
+   "owner_hold": false,
+   "prereg": "fontaine/blog/src/posts/2026-08-13-prereg-token-grpo-phase2-run.md",
+   "title": "R1-B re-priced ladder (option 1, owner-approved 09:16Z 08-14, sequenced behind grpo-reward-patch-prereg): resume from banked step_0004 (fontaine-checkpoints/grpo_phase2_r1a, weights-only) under the PATCHED reward with lr 3e-7 + kl_beta 1.0, wire unchanged (knock tripwire stays as belt even with the in-reward fix), ~0.96 GPU-h/step; 10 steps ~9.6 GPU-h, ladder cum ~5.1 of the 22 gate -> fits with headroom. Own pre-reg (final constants + boundary reads) before launch.",
+   "boundary": "Blocked on grpo-reward-patch-prereg (the patch IS the point of re-running). Launch same-session as the patch close if budget allows, else next session; babysit registry entry at launch."
   }
  ],
- "updated": "2026-08-14T06:07:00Z"
+ "updated": "2026-08-14T09:24:31Z"
 }
