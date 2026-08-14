@@ -3,7 +3,30 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-14 18:45–18:5xZ (real `date -u` at stamp: 18:45) —
+tick: **quiet — minutes after the preflight session closed; every
+signal verified unchanged.***
+
+**Status**: **No live run** — GPU verified 0 MiB / 0% (owner reserve
+12:54:19Z stands); registry empty. Main unchanged at `e5b6113` (phase 3
+not landed). Queue validate green: depth 2, 17 open. Discord: inbox
+empty, no new messages, no new reactions in history.
+
+**Steering**: none this tick.
+
+**Done**: quiet tick — Discord read + history (nothing new; the 👍 on
+the 17:20Z post remains the last steering), GPU/main/queue verified,
+archive roll.
+
+**Next**: unchanged — `molmoact2-retirement-adoption` phase-3 watch;
+`wrist-transfer-screen-prereg-final` is the executable CPU item
+(`run_work_next` already armed at session start, the chained work
+session picks it up); `wrist-transfer-screen-run` blocked on
+prereg-final + the in-channel GPU release; `renderer-pbr-wrist-pilot`
+stays owner-gated.*
 
 *Updated 2026-08-14 18:14–18:3xZ (real `date -u` at stamp: 18:26) —
 work session: **`squint-twin-preflight` DONE, verdict GO mechanically
@@ -69,49 +92,15 @@ stays armed, the chained work session picks it up);
 `wrist-transfer-screen-run` blocked on the in-channel GPU release
 (FINAL pre-reg first); `renderer-pbr-wrist-pilot` owner-gated.*
 
-*Updated 2026-08-14 17:20–18:1xZ (real `date -u` at stamp: 18:08) —
-work session: **`wrist-transfer-screen-design` DONE — the proxy→behavior
-link now has a pre-registrable screen with its falsifiers frozen; and
-phase 2 went from "landing" to EXECUTED on main mid-session, absorbed
-clean.***
-
-**Status**: **No live run** — GPU verified 0 MiB / 0% (owner reserve
-12:54:19Z stands); registry empty. Queue validate green: depth 2, 17
-open. Discord: inbox empty; design pointer posted 18:05Z (id
-1537884919542321172).
-
-**Steering**: none this session.
-
-**Done**: **`wrist-transfer-screen-design`** (commit `f798e73` +
-SUMMARY fix `1f80035`): [the design
-memo](posts/2026-08-14-wrist-transfer-screen-design.md) turns the
-decision brief's move #2 into a pre-registrable closed-loop relative
-screen — sim100 harness verbatim, frozen seeds 0–99, bit-paired
-deterministic arms; policies `ftrig4k` + `simft` (the sim-adaptation
-sanity arm: student BC'd on sim-rendered replays of real episodes
-0–25, the honest escape from the banked 0/500 success floor); wrist
-columns {classic, blackout, freeze, arm-mask blur, materials-ON} each
-placed on the banked knn5 honesty axis so the deliverable is a
-Δbehavior-per-Δhonesty curve extrapolated across 0.877→0.523;
-top-blackout positive control; falsifiers
-F-instrument/F-null/F-flat/F-live frozen; ladder worst-case 12.0
-GPU-h, gate ≤14. Audit catch en route: the banked sim100 rows predate
-the fitted wrist lens — not a valid bit-anchor, so W0 is a fresh
-in-run baseline (determinism gate + sanity band). Schematic chart on
-fontaine-reports (200). **Rider absorb 18:0xZ**: main `e5b6113` —
-**phase 2 EXECUTED (acceptance PASS, byte-equal ×6, logprobs 2.4e-7)**
-+ two decode-parity probe commits — rebased in zero-conflict (8
-commits), check.py 879 green + grpo oracle suite 43 green, old tip
-tagged `pre-rebase-e5b6113`.
-
-**Next**: `queue_cli.py next` → `molmoact2-retirement-adoption`: watch
-phase 3 land (phase-4 co-land sequenced purely behind it). Executable
-CPU item: `squint-twin-preflight` (`run_work_next` armed);
-`wrist-transfer-screen-run` blocked on the in-channel GPU release
-(FINAL pre-reg posts before any launch); `renderer-pbr-wrist-pilot`
-stays owner-gated.*
-
 ## Utilization footer
+
+Session 2026-08-14 18:45–18:5xZ (tick; 0 GPU-h — GPU owner-reserved):
+quiet tick minutes after the preflight session closed — Discord read +
+history clean (no new messages or reactions; the 17:20Z 👍 remains the
+last steering), GPU 0 MiB verified, main unchanged at `e5b6113`
+(phase 3 not landed), queue validate green (depth 2, 17 open), inbox
+empty; `run_work_next` already armed for the phase-3 watch +
+`wrist-transfer-screen-prereg-final`.
 
 Session 2026-08-14 18:14–18:3xZ (work; explore; 0 GPU-h — GPU
 owner-reserved, probe forced onto PhysX CPU + lavapipe):
@@ -122,27 +111,6 @@ state/wrist/third at the CPU floor), two API traps documented;
 feasibility note + three frames published; queue refilled with
 `wrist-transfer-screen-prereg-final` — validate green depth 2, 17
 open; `run_work_next` armed for the phase-3 watch + the prereg-final.
-
-Session 2026-08-14 18:11–18:2xZ (tick; 0 GPU-h — GPU owner-reserved):
-quiet tick — owner 👍 reaction caught on the 17:20Z phase-2-absorb post
-via `history` (agreement with the absorb + the wandb
-`known-third-party` pin recommendation), recorded as steering, no
-action change; GPU 0 MiB verified, main unchanged at `e5b6113` (phase
-3 not landed), queue validate green (depth 2, 17 open), inbox empty;
-`run_work_next` stays armed for the phase-3 watch +
-`squint-twin-preflight`.
-
-Session 2026-08-14 17:20–18:1xZ (work; exploit; 0 GPU-h — GPU
-owner-reserved, pure CPU/design): `wrist-transfer-screen-design` DONE
-— pre-registrable closed-loop screen pricing the proxy→behavior link
-(arms bit-paired on frozen seeds, falsifiers frozen, worst-case 12.0
-GPU-h gate ≤14), schematic chart on fontaine-reports; git audit
-caught the banked sim100 rows as an invalid bit-anchor (predate the
-fitted lens); rider absorb of main `e5b6113` (phase 2 EXECUTED,
-acceptance PASS) zero-conflict, check.py 879 + grpo 43 green; queue
-refills `wrist-transfer-screen-run` (blocked on GPU release) +
-`squint-twin-preflight` (executable) — validate green depth 2, 17
-open; `run_work_next` armed for the phase-3 watch + the preflight.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
