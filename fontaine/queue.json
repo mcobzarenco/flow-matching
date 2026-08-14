@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-14T12:30:00Z",
+ "updated_utc": "2026-08-14T13:15:00Z",
  "depth_reason": "depth 2: grpo-r1b-boundary-reads (gated at R1-B rc ~19:3xZ) + sim-rollout-pose-wrist-read (executable now, refill at the consolidated-report close).",
  "items": [
   {
@@ -1565,11 +1565,11 @@
   {
    "id": "grpo-r1b-boundary-reads",
    "class": "cpu",
-   "status": "queued",
+   "status": "done",
    "owner_hold": false,
    "prereg": "fontaine/blog/src/posts/2026-08-14-prereg-token-grpo-phase2-r1b.md",
    "title": "R1-B boundary reads at rc (ETA ~19:3xZ 08-14, unit grpo-phase2-r1b): execute the pre-reg's registered reads — PRIMARY held-out paired delta CI (v1 metric, banked 1.868 baseline) -> accumulate = R2 pricing discussion, flat+wires-quiet = ladder STOPS as a banked negative; calibration read (first-wave earned/shoved decomposition, >=6/8-drop bar -> lambda re-price amendment); behavior predictions (knockaway_frac decay vs R1-A 0.41->0.36->0.31, setback_frac, earned/shoved trends). Results section on the pre-reg page + in-channel post + chart; endpoint checkpoint upload if boundary-worthy; babysit entry prune. If the run tripwired instead, the S6-style stop reads apply (which wire, wave facts, banked step).",
-   "boundary": "Queued 09:5xZ 08-14 at the R1-B launch. Blocked until rc/tripwire; any session at rc executes; babysit rides it meanwhile (~30-min checkpoints, poll forced last). | UNBLOCKED 12:5xZ 08-14 tick: R1-B SELF-STOPPED on the knockaway wire 12:40:50Z (fresh steps 0.328/0.3125/0.4531 all > 0.167, exit 3 rc 3) — the S6-style stop reads apply. Banked endpoint step_0006.pt (step-7 update exited pre-save); step-7 telemetry REVERSED step 6 (earned 1.66->0.58 cm, reward_mean -0.26->-1.21). Pre-reg §4 registered contingency = the finding: wire re-fired under v2 => shoving not reward-driven at this surface. Reads owed: paired delta at step_0006, behavior-prediction judgment, ladder verdict for owner adjudication; step_0006 weights-only upload; results section + chart + in-channel. Cost ~2.95 GPU-h, ladder cum ~8.1 of 22. EXECUTE FIRST in the chained work session."
+   "boundary": "Queued 09:5xZ 08-14 at the R1-B launch. Blocked until rc/tripwire; any session at rc executes; babysit rides it meanwhile (~30-min checkpoints, poll forced last). | UNBLOCKED 12:5xZ 08-14 tick: R1-B SELF-STOPPED on the knockaway wire 12:40:50Z (fresh steps 0.328/0.3125/0.4531 all > 0.167, exit 3 rc 3) — the S6-style stop reads apply. Banked endpoint step_0006.pt (step-7 update exited pre-save); step-7 telemetry REVERSED step 6 (earned 1.66->0.58 cm, reward_mean -0.26->-1.21). Pre-reg §4 registered contingency = the finding: wire re-fired under v2 => shoving not reward-driven at this surface. Reads owed: paired delta at step_0006, behavior-prediction judgment, ladder verdict for owner adjudication; step_0006 weights-only upload; results section + chart + in-channel. Cost ~2.95 GPU-h, ladder cum ~8.1 of 22. EXECUTE FIRST in the chained work session. | CLOSED 13:1xZ 08-14 work session: all reads executed on the banked jsonl (CPU only, GPU untouched under the owner reserve). Calibration PASS (8/8 groups kept every wave, median std 3.27/3.02/2.14 -> no lambda amendment); PRIMARY flat (+0.0246 CI95 [-0.0716,+0.1455] at step_0006 vs the 1.868 pairing, probe digit-identical steps 5/6); behavior prediction FALSIFIED on the deciding channel (ungrasped_disp decayed 4.98->4.60->4.20 cm but knockaway rose to run-max 0.4531, earned collapsed to 0.58) -> registered finding: shoving is a competence artifact, not reward-driven. Recommended ladder verdict STOP posted for owner adjudication (post 1537810884318199889). step_0006_weights.pt (2.9 GiB) + train.jsonl + meta.json on fontaine-checkpoints grpo_phase2_r1b/; chart__grpo_r1b_boundary.png on fontaine-reports; results section on the pre-reg page."
   },
   {
    "id": "sim-appearance-consolidated-report",
@@ -1590,6 +1590,15 @@
    "boundary": "Queued 11:2xZ 08-14 at the consolidated-report close (depth refill). Executable any GPU-busy window; pre-reg in-channel BEFORE the read; if the owner answers the promotion asks first, fold the flipped defaults into the arm set. | CLOSED 12:2xZ 08-14: executed as sim_rollout_pose_wrist_read.py with the registered premise correction (no banked sim qpos traces existed — poses taken from the REAL held-out episodes' recorded observation.state, exact pose-matched). Two registered ABORTS banked first (interleaved-calibration temporal leakage 0.129; symmetric band vs the protocol's real-real drift floor 0.268 — amendments 1+2 on the pre-reg page). Final: manip-pose wrist AUROC 0.877 = GAP REAL (understated in this calibration direction); material stack REGRESSES the wrist at manip poses (+3.99e-07 CI [+2.0,+6.3]e-07); pose effect +8.7e-06 (1/100). Riders replicated banked digits (reset top -1.49e-07, reset wrist neutral, anchors 0.713/0.523 x3 runs)."
   },
   {
+   "id": "molmoact2-retirement-adoption",
+   "class": "cpu",
+   "status": "queued",
+   "owner_hold": false,
+   "prereg": null,
+   "title": "Adopt the molmoact2 retirement plan (docs/molmoact2-retirement.md, main 02a58e0; owner ask 12:46Z 08-14, thoughts + sign-offs posted in-channel 12:50Z): (1) rebase fontaine onto main >= db0a141 (T1 ar_fast retirement + T2 residual-conditioning removal; conflict surface per plan §0: flow.py sample_actions_sde, model.py action_capture kwarg, eval/policies.py TokenRow/stable_sde_step_noise vs tile_memory, train.py 3 lines — expect trivial); check.py green + grpo oracle suite green post-rebase (test_grpo_step/test_token_rows/test_molmoact2_replay/test_grpo_loop). (2) Track phases 1-3 as they land on main, adopt at convenience. (3) PHASE 4 CO-LAND (my instrument, boundary I signed: after grpo-r1b-boundary-reads land + owner ladder adjudication): thin replay builder + loop/driver re-point to BijouPolicy+MolmoAct2ARDecoder; gate = frozen-wave replay parity on banked R1-B waves (rewards equal, logprobs in registered 1e-5+JPEG bounds) INCLUDING one v2-reward wave (grip-trace keys preserved — the gate addition asked in-channel). (4) Phase-5 sign-off after 4 is green.",
+   "boundary": "Queued 12:5xZ 08-14 at the owner ask. Step (1) executable at the current run boundary AFTER grpo-r1b-boundary-reads (banked rows consumed via current import paths first); steps 3-4 sequenced with the owner's phase landings — never under a live run. | Moved ahead of sim-manip-wrist-content-split 13:1xZ 08-14 (the 12:5x signed order: rebase after the boundary reads; main is already >= db0a141 at 51704c0, so the rebase step is executable now)."
+  },
+  {
    "id": "sim-manip-wrist-content-split",
    "class": "cpu",
    "status": "queued",
@@ -1597,16 +1606,7 @@
    "prereg": null,
    "title": "Manipulation-pose wrist content split: price how much of the banked 0.877 manip-pose wrist AUROC (sim-rollout-pose-wrist-read, 12:2xZ 08-14) is scene-content mismatch (no boat in the sim jaw, benchy at spawn, no real clutter) vs the rendered arm itself. Same harness: re-render the 100 pose-matched manip slots with (a) benchy REMOVED (clean table) and (b) benchy at spawn (the banked arm), paired per slot; optionally a real-frame arm-crop rider if separable. er_60k knn5 vs the same manip reference; paired deltas + AUROC per arm. If the content term is small, the rendered arm carries the gap -> the renderer-class decision (normal-map/PBR + gripper geometry) gets its wrist-side price; if large, the 0.877 overstates the camera's dishonesty and the honest number is lower. Pre-reg required (bands frozen from the banked run: anchors 0.713/0.523, calibration 0.268 directional gate per amendment 2). CPU renders + ~0.02 GPU-h embeds.",
    "boundary": "Queued 12:3xZ 08-14 at the rollout-pose read close (depth refill). Executable any GPU-busy window; pre-reg in-channel BEFORE the read; the registered caveat section of 2026-08-14-prereg-sim-rollout-pose-wrist.md is the contract this item discharges."
-  },
-  {
-   "id": "molmoact2-retirement-adoption",
-   "class": "cpu",
-   "status": "queued",
-   "owner_hold": false,
-   "prereg": null,
-   "title": "Adopt the molmoact2 retirement plan (docs/molmoact2-retirement.md, main 02a58e0; owner ask 12:46Z 08-14, thoughts + sign-offs posted in-channel 12:50Z): (1) rebase fontaine onto main >= db0a141 (T1 ar_fast retirement + T2 residual-conditioning removal; conflict surface per plan §0: flow.py sample_actions_sde, model.py action_capture kwarg, eval/policies.py TokenRow/stable_sde_step_noise vs tile_memory, train.py 3 lines — expect trivial); check.py green + grpo oracle suite green post-rebase (test_grpo_step/test_token_rows/test_molmoact2_replay/test_grpo_loop). (2) Track phases 1-3 as they land on main, adopt at convenience. (3) PHASE 4 CO-LAND (my instrument, boundary I signed: after grpo-r1b-boundary-reads land + owner ladder adjudication): thin replay builder + loop/driver re-point to BijouPolicy+MolmoAct2ARDecoder; gate = frozen-wave replay parity on banked R1-B waves (rewards equal, logprobs in registered 1e-5+JPEG bounds) INCLUDING one v2-reward wave (grip-trace keys preserved — the gate addition asked in-channel). (4) Phase-5 sign-off after 4 is green.",
-   "boundary": "Queued 12:5xZ 08-14 at the owner ask. Step (1) executable at the current run boundary AFTER grpo-r1b-boundary-reads (banked rows consumed via current import paths first); steps 3-4 sequenced with the owner's phase landings — never under a live run."
   }
  ],
- "updated": "2026-08-14T12:53:00Z"
+ "updated": "2026-08-14 13:15Z"
 }

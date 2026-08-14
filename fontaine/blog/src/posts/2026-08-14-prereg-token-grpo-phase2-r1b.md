@@ -122,3 +122,73 @@ before the resume restore (loop contract, oracle-pinned).
 projected; ladder cum ~5.1 + 9.6 ≈ **14.7 of the 22 GPU-h gate**
 (~7 headroom). Babysit registry entry at launch; ~30-min checkpoint
 cadence.
+
+## R1-B boundary read (2026-08-14 13:1xZ) — the §4 contingency IS the finding; recommended ladder verdict: STOP
+
+R1-B self-stopped at 12:40:50Z (registered exit 3, unit rc 3): the
+knock-away wire re-fired at fresh steps 5/6/7 — `knockaway_frac`
+0.3281 / 0.3125 / **0.4531**, three straight above the 0.167 line,
+with 0.4531 the highest wave of EITHER run. The step-7 update exited
+before its save; **`step_0006.pt` is the banked endpoint** (the R1-A
+pattern). Cost ~2.95 GPU-h; ladder cum ~8.1 of 22.
+
+![R1-B boundary — the wire fired under both rewards, the v2 decomposition, and the flat held-out probe](https://mcobzarenco-fontaine-reports.static.hf.space/chart__grpo_r1b_boundary.png)
+
+**Calibration read (§4 bar): PASS — the λ re-price amendment path is
+NOT triggered.** The degenerate-reward bar was ≥ 6 of 8 groups
+dropped in each of the first two waves; observed 8/8 kept in every
+wave (median group std 3.27 / 3.02 / 2.14 cm). The v2 reward had
+spread at this policy's competence; the run's stop is a training
+verdict, not a calibration failure.
+
+**PRIMARY (paired Δ, v1 metric, banked step-0 pairing): flat — no
+accumulation measured.** At the banked endpoint the 20-episode paired
+Δ vs the pristine step-0 policy (1.868) is **+0.0246, CI95 [−0.0716,
++0.1455]** (2/20 successes, unchanged). The greedy probe was
+digit-identical at steps 5 and 6 (1.8926) — the same determinism
+R1-A showed across its flat 1.8441 steps 1–4: at lr 3e-7 the held-out
+greedy policy is measurably unchanged wave-to-wave. Neither §4
+PRIMARY branch fires cleanly (the CI is not above 0; "flat with wires
+quiet" requires quiet wires) — the run exits through the registered
+behavior contingency instead.
+
+**Behavior reads: the patch's prediction is FALSIFIED on the deciding
+channel.** The prediction was knockaway decays (R1-A tail 0.41 → 0.36
+→ 0.31) and shoved displacement decays while earned progress holds or
+grows. What happened: `ungrasped_disp_mean` — the exact quantity v2
+charges — DID decay monotonically (4.98 → 4.60 → 4.20 cm, −16%), but
+`knockaway_frac` rose to its run max and `earned_progress_mean`
+collapsed at the tripwire wave (1.19 → 1.66 → **0.58 cm**;
+`reward_mean` −0.74 → −0.26 → **−1.21**). `setback_frac` banked its
+first baseline: 0.703 / 0.5625 / 0.5938 (record-only, as registered).
+Read together: total ungrasped contact shrank slightly while its
+endpoint-adverse share GREW — the displacement redistributed rather
+than retired. **§4's registered contingency is the finding: the wire
+re-fired under a reward that pays nothing for shoving and charges
+every ungrasped centimeter — shoving at this surface is not
+reward-driven.** A policy at this pinch competence (successes 4/3/3
+of 64) does not control its contact outcomes finely enough for the
+incentive to reach the behavior; the shoving is a competence
+artifact, not an incentive artifact.
+
+**Recommended ladder verdict (owner adjudicates, frozen rule): STOP
+phase 2 on surface A, banked as a real negative.** One run consumed
+both boundary options at once — the re-price (lr ÷3.3, β ×2) and the
+reward fix — and the deciding behavior got worse while the held-out
+probe stayed flat across 6 banked steps of the two runs. The
+remaining ~14 GPU-h of ladder headroom buys more waves of the same
+physics, not a different answer; the R2 pricing discussion is moot
+without accumulation. If the thread continues, the registered next
+shape is a NEW pre-reg that raises pinch competence FIRST (e.g.
+grasp-rich SFT before RL pressure) rather than re-pricing pressure on
+a policy that can't yet grasp — and the owner has already ruled any
+new run starts post-phase-4 of the molmoact2 retirement.
+
+**Banked**: `grpo_phase2_r1b/step_0006_weights.pt` on
+fontaine-checkpoints (weights-only, 2.9 GiB, with the final
+train.jsonl incl. the tripwire row + meta.json) — unlike R0's
+collapsed weights this endpoint is bankable: two healthy v2 updates,
+anchor-KL 0.017 at the last saved step, the seed for any
+owner-decided continuation. Chart
+`chart__grpo_r1b_boundary.png` on fontaine-reports; babysit registry
+pruned to 0 live at the stop.

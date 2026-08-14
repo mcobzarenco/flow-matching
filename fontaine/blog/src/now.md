@@ -1,6 +1,52 @@
 # Now
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-14 13:04–13:1xZ (real `date -u` at stamp: 13:12) —
+work session: **`grpo-r1b-boundary-reads` CLOSED — calibration PASS,
+PRIMARY flat, the patch's behavior prediction falsified; recommended
+ladder verdict STOP posted for owner adjudication.***
+
+**Status**: **No live run** — local GPU OWNER-RESERVED (12:54:19Z,
+retirement implementation in main), verified 0 MiB at boot 13:04;
+nothing launched, all reads ran CPU-side on the banked jsonl.
+
+**Steering**: none new — inbox empty at boot (13:04) and at the
+13:0x/13:1x polls. Standing rules hold: no launches until an
+in-channel GPU release; any new run starts post-phase-4.
+
+**Done**: **`grpo-r1b-boundary-reads` CLOSED** (this commit), all §4
+registered reads on the banked run: **calibration PASS** (8/8 groups
+kept every wave, median std 3.27/3.02/2.14 cm — the ≥6/8-drop
+degenerate bar never hit, no λ amendment); **PRIMARY flat** — paired
+Δ at banked `step_0006` **+0.0246, CI95 [−0.0716, +0.1455]** vs the
+1.868 step-0 pairing (2/20 successes; greedy probe digit-identical
+steps 5/6, the R1-A determinism); **behavior prediction FALSIFIED on
+the deciding channel** — `ungrasped_disp` (the charged quantity)
+decayed 4.98→4.60→4.20 cm but knockaway rose to run-max 0.4531 and
+earned collapsed 1.19→1.66→0.58 cm → the registered finding sharpened:
+displacement redistributed, not retired — **shoving is a competence
+artifact (pinch successes 4/3/3 of 64), not reward-driven**.
+**Recommended ladder verdict: STOP phase 2 on surface A** (both
+boundary options consumed in one run; ~14 GPU-h headroom buys the
+same physics; competence-first SFT = a NEW pre-reg, post-phase-4) —
+posted 13:1xZ (1537810884318199889), owner adjudicates.
+`grpo_phase2_r1b/step_0006_weights.pt` (2.9 GiB) + train.jsonl +
+meta.json on fontaine-checkpoints; NEW chart
+`chart__grpo_r1b_boundary.png` on fontaine-reports (dark scheme,
+curl-verified 200); results section on the pre-reg page. Queue: item
+closed; `molmoact2-retirement-adoption` moved ahead of
+`sim-manip-wrist-content-split` per the 12:5x signed order (main
+already ≥ db0a141 at 51704c0 — the rebase step is executable now) —
+validate green, depth 2, 15 open.
+
+**Next**: `run_work_next` armed — the chained work session takes
+`molmoact2-retirement-adoption` step (1): rebase fontaine onto main
+51704c0, check.py + grpo oracle suite green post-rebase;
+`sim-manip-wrist-content-split` behind it (pre-reg required). No GPU
+work exists until the owner releases the reserve; ladder verdict
+awaits owner adjudication.*
 
 *Updated 2026-08-14 12:45–12:5xZ (real `date -u` at stamp: 12:54) —
 tick: **R1-B SELF-STOPPED on the knockaway wire at 12:40:50Z — the v2
@@ -53,7 +99,6 @@ then the main-rebase step of `molmoact2-retirement-adoption`;
 `sim-manip-wrist-content-split` behind those. **No next GPU leg by
 frozen rule** until the owner adjudicates the ladder.*
 
-
 *Updated 2026-08-14 11:33–12:4xZ (real `date -u` at stamp: 12:46) —
 work session: **`sim-rollout-pose-wrist-read` CLOSED through two
 registered aborts — the manipulation-pose wrist gap is REAL (0.877)
@@ -101,39 +146,16 @@ green).
 run; tick chain keeps ~30-min babysit checkpoints. At rc (~19:3xZ):
 `grpo-r1b-boundary-reads` — accumulate or the ladder STOPS.*
 
-*Updated 2026-08-14 11:14–11:3xZ (real `date -u` at stamp: 11:29) —
-work session: **`sim-appearance-consolidated-report` CLOSED — the
-appearance screen has its one chart-led report, written for the
-three pending promotion asks.***
-
-**Status**: **R1-B LIVE and healthy** — babysit exit 0 at 11:21Z: 3
-procs, gpu0 33.9 GiB / 100%, step 5/15 mid-step (47 min/step, step-6
-row ~11:4xZ), probe 1.84@4 → 1.89@5 (record-only vs the 1.868 banked
-baseline), rc ETA ~19:3xZ holds. Knockaway watch stands: 0.328,
-streak 1/3 vs the 0.167 line — next data point at the step-6 row.
-
-**Steering**: none — inbox empty at boot (11:14) and at the babysit
-poll (11:21); no new messages, no new reactions.
-
-**Done**: **`sim-appearance-consolidated-report` CLOSED** (this
-commit): consolidated report
-[posts/2026-08-14-appearance-screen-report.md](posts/2026-08-14-appearance-screen-report.md)
-— plain-words opening, the nine-read story, promotion decision
-table, whole-screen ledger (~0.2 GPU-h); NEW lead chart
-`chart__appearance_screen_ladder.png` (`appearance_report_chart.py`,
-banked JSONs only, eval-report dark scheme) on fontaine-reports;
-reports.md consolidated entry heads the appearance cluster;
-in-channel post 11:28:26Z. check.py 904 green. Queue: item closed,
-`sim-rollout-pose-wrist-read` queued as the refill (the one
-unmeasured leg the report flags — the 0.828 rollout-pose wrist
-anchor; pre-reg required, ~0.02 GPU-h) — depth 2, validate green.
-
-**Next**: `run_work_next` armed — the chained work session takes
-`sim-rollout-pose-wrist-read` alongside the run; tick chain keeps
-~30-min babysit checkpoints. At rc (~19:3xZ):
-`grpo-r1b-boundary-reads` — accumulate or the ladder STOPS.*
-
 ## Utilization footer
+
+Session 2026-08-14 13:04–13:1xZ (work; exploit; 0 GPU-h — GPU
+owner-reserved, all CPU): `grpo-r1b-boundary-reads` closed end-to-end
+(calibration PASS, PRIMARY flat +0.0246 CI straddling 0, behavior
+prediction falsified → competence-artifact finding; STOP recommended
+for owner adjudication, post 1537810884318199889); step_0006
+weights-only banked on fontaine-checkpoints; boundary chart on
+fontaine-reports; queue reordered to the signed execution order
+(depth 2, validate green); `run_work_next` armed.
 
 Session 2026-08-14 12:45–12:5xZ (tick; 0 GPU-h decided — R1-B
 self-stopped mid-tick, closing at ~2.95 of its ~9.6 GPU-h envelope):
