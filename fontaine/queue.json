@@ -1,6 +1,6 @@
 {
-  "updated_utc": "2026-08-14T21:42:32Z",
-  "depth_reason": "depth 1 (wrist-transfer-screen-run, immediately executable on the released GPU): the screen itself is a multi-session ladder (~6-12 GPU-h, hard-stop boundaries) and its stage boundaries generate the follow-on items; refill happens at the stage-0/1 boundary posts. Recorded 21:4xZ 08-14 at the main-review close.",
+  "updated_utc": "2026-08-14T22:15:05Z",
+  "depth_reason": "depth 2: wrist-transfer-screen-run (stage 0 executing, then stage 1 on the released GPU) + grasp-sft-bootstrap (stage A CPU-executable; GPU stages after screen + finalization). Recorded 22:3xZ 08-14.",
   "items": [
     {
       "id": "ftrig-eval20-flipped-parallel",
@@ -1678,7 +1678,16 @@
       "prereg": null,
       "title": "FINAL pre-registration for the wrist-transfer screen (the design memo 2026-08-14-wrist-transfer-screen-design.md frozen into a launchable pre-reg): freeze arm list {ftrig4k, simft} x {W0..W4} + T1, seeds 0-99, the knn5 honesty axis anchors (0.877->0.523 span), the W0 determinism gate + sanity band, falsifiers F-instrument/F-null/F-flat/F-live verbatim, ladder + 14 GPU-h gate, and the abort/success readouts; post to the blog + in-channel pointer. CPU-only writing task; its completion converts wrist-transfer-screen-run from double-blocked (prereg + GPU) to GPU-release-only, so the run launches the moment the owner frees the GPU.",
       "boundary": "Queued 18:2xZ 08-14 at the squint-preflight close (depth refill; charter S4). Executable any CPU window. Simft training-data build steps stay inside the run item; this item is ONLY the frozen pre-reg document + post. | DONE 18:5xZ 08-14 (work session): FINAL pre-reg posted (posts/2026-08-14-prereg-wrist-transfer-screen.md) \u2014 design memo sections 5-7 frozen VERBATIM (programmatically diffed byte-identical), arm grid {ftrig4k, simft} x {W0..W4} + T1 frozen with seeds 0-99 (T1 0-24), knn5 honesty anchors 0.877->0.523 frozen, ladder + <=14 GPU-h gate frozen, amendment policy stated (in-channel before the affected stage, never retroactive). Design-memo caption erratum fixed in place (said '<=12 gate'; section-9 text's <=14 was always the registered figure) with a dated erratum note. wrist-transfer-screen-run converted to GPU-release-only."
+    },
+    {
+      "id": "grasp-sft-bootstrap",
+      "class": "gpu-local",
+      "status": "queued",
+      "prereg": "fontaine/blog/src/posts/2026-08-14-prereg-grasp-sft-bootstrap.md",
+      "title": "Grasp-rich SFT bootstrap (owner go 22:07Z 08-14 on the 90%-of-seeds question; DRAFT pre-reg posts/2026-08-14-prereg-grasp-sft-bootstrap.md): stage A scripted expert vs privileged sim state (waypoint policy over sim.data object pose, CPU + ~0.2 GPU-h validation on 20 NON-EVAL demo seeds 1000+, gate >=70% scripted success else F-physics -> Squint twin tier); stage B demo collection 300-600 kept successes ~2-4 GPU-h (production visual config, eval seeds 0-99 NEVER in demos); stage C SFT via molmoact2 --objective ar (new-stack objective matrix, rig-ft recipe class ~3-5 GPU-h, optional ftrig4k-recipe flow arm); stage D sim100 eval ~1-1.5 GPU-h, frozen primary: >=20/100 successes -> GRPO GO (fresh pre-reg per Decision 11), 5-19 -> one B/C iteration, <5 -> F-transfer (wrist-screen read becomes the binding diagnosis). Worst-case ~11 GPU-h, gate <=13. Finalization (frozen params + objection window + HEAD re-pin) BEFORE any GPU stage; stage A is CPU-executable now.",
+      "boundary": "Queued 22:3xZ 08-14 at the owner go (parallel with the wrist screen; screen owns the GPU window first \u2014 it is registered FINAL). Stage A scripted expert is the executable CPU slice any session can take. Interplay frozen in draft SS5: F-null/F-flat on the screen drops the stage-C flow arm; F-live inherits the owner's wrist-fidelity decision as a registered amendment before stage B.",
+      "owner_hold": false
     }
   ],
-  "updated": "2026-08-14T21:42:32Z"
+  "updated": "2026-08-14T22:15:05Z"
 }

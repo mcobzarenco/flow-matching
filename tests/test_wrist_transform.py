@@ -23,10 +23,13 @@ from sim.rollout_sim import EpisodeResult, run_episode_loop
 from sim.so101_sim import SimObservation
 from sim.wrist_transform import (
     ARM_BLUR_SIGMA,
+    TOP_TRANSFORMS,
     WRIST_TRANSFORMS,
     ArmBlurTransform,
     WristTransform,
+    chain_transforms,
     gaussian_blur,
+    make_top_transform,
     make_wrist_transform,
 )
 
@@ -114,6 +117,42 @@ def test_blackout_golden() -> None:
     assert not out.wrist.any()
     # top and state pass through untouched (same objects — zero copies)
     assert out.top is obs.top
+    assert out.state is obs.state
+
+
+def test_top_blackout_golden() -> None:
+    obs = synthetic_obs()
+    transform = make_top_transform("blackout")
+    assert transform is not None
+    out = transform(obs)
+    assert out.top.shape == obs.top.shape
+    assert out.top.dtype == np.uint8
+    assert not out.top.any()
+    # wrist and state pass through untouched (same objects — zero copies)
+    assert out.wrist is obs.wrist
+    assert out.state is obs.state
+
+
+def test_top_none_routes_around_the_hook() -> None:
+    assert make_top_transform("none") is None
+    with pytest.raises(ValueError, match="not in"):
+        make_top_transform("sepia")
+    assert TOP_TRANSFORMS == ("none", "blackout")
+
+
+def test_chain_transforms_composition() -> None:
+    # all-None → None (the untouched pipeline stays hook-free); a
+    # single hook passes through unwrapped; two hooks apply in order
+    # and touch disjoint views.
+    assert chain_transforms(None, None) is None
+    wrist_hook = _built("blackout")
+    assert chain_transforms(wrist_hook, None) is wrist_hook
+    chained = chain_transforms(wrist_hook, make_top_transform("blackout"))
+    assert chained is not None
+    obs = synthetic_obs()
+    out = chained(obs)
+    assert not out.wrist.any()
+    assert not out.top.any()
     assert out.state is obs.state
 
 

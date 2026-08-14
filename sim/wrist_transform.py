@@ -60,6 +60,52 @@ class _Blackout:
         )
 
 
+TOP_TRANSFORMS = ("none", "blackout")
+
+
+def make_top_transform(name: str) -> WristTransform | None:
+    """The T1 positive-control seam (pre-reg §1 arm grid): the same
+    obs→obs contract on ``obs.top``. ``none`` routes around the hook
+    like the wrist factory."""
+    if name == "none":
+        return None
+    if name == "blackout":
+        return _TopBlackout()
+    raise ValueError(f"top transform {name!r} not in {TOP_TRANSFORMS}")
+
+
+class _TopBlackout:
+    """T1: zeros on the top view — the harness-sensitivity positive
+    control (a policy that consumes the top view must move)."""
+
+    def __call__(self, obs: SimObservation) -> SimObservation:
+        return SimObservation(
+            top=np.zeros_like(obs.top),
+            wrist=obs.wrist,
+            state=obs.state,
+        )
+
+
+def chain_transforms(
+    *transforms: WristTransform | None,
+) -> WristTransform | None:
+    """Compose the per-view hooks into the loop's single transform
+    slot, skipping Nones; all-None returns None so the untouched
+    pipeline stays hook-free."""
+    live = [t for t in transforms if t is not None]
+    if not live:
+        return None
+    if len(live) == 1:
+        return live[0]
+
+    def chained(obs: SimObservation) -> SimObservation:
+        for transform in live:
+            obs = transform(obs)
+        return obs
+
+    return chained
+
+
 class _Freeze:
     """W2: every policy tick sees the FIRST frame this instance saw —
     the reset frame, when the driver builds one instance per episode."""
