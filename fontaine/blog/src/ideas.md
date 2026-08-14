@@ -819,7 +819,16 @@ record; the line here is the hook). *Index last updated 2026-08-13.*
   treat both instances; record-only: `no_mount` is the only removal
   moving v3 TOWARD real (0.713→0.654, 97/100) — the 6 mount geoms
   are per-pixel the most sim-distinctive class, queued as a cheap
-  rider on `sim-arm-photometric-links`. GRPO thread
+  rider on `sim-arm-photometric-links`. Photometric grade EXECUTED
+  02:1xZ 08-14 ([pre-reg](posts/2026-08-14-prereg-sim-arm-photometric-links.md),
+  [record](reports.md)): real link pixels mined at recorded poses
+  (142 frames, per-body darkness-snap) — the real arm is brighter,
+  cool-cast, 16–18% glints vs sim's matte flat; **fitted grade (spec
+  1.0, shin 0.1, measured albedos) passes BOTH registered CIs: v3
+  0.713→0.698, only_links 0.705→0.652 ≈ the amputation ceiling
+  without amputating**; promotion pends owner go; texture + servo
+  glint tail + white-mount material split are the registered
+  follow-ups. GRPO thread
   2026-08-13: the signal probe EXECUTED overnight (re-scoped at the
   registered tripwire — cells 1/2/5 + anchors, 3.57 GPU-h;
   [results as amendment 1](posts/2026-08-12-prereg-grpo-signal-probe.md))

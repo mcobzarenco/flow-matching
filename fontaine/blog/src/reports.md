@@ -533,6 +533,45 @@ Renders CPU (~4 min), embeds 5 groups ~0.02 GPU-h.
 - [crops strip](https://mcobzarenco-fontaine-reports.static.hf.space/fg_fix_crops_strip.png)
   — mined RGBA crops: on checker / source naive median / identity paste
 
+## Arm link photometrics — a measured material grade lands, both registered CIs below zero ([pre-reg](posts/2026-08-14-prereg-sim-arm-photometric-links.md), 08-14)
+
+The execution of the arm-split verdict. Instead of guessing a better
+arm color, the real arm's pixels were MEASURED: the sim posed at the
+recorded joints of 142 real v2 frames, its silhouette projected
+through the production fisheye onto them (per-body FFT darkness-snap
+±60 px absorbs the tens-of-px registration offset; ring + absolute
+darkness guards, wrist excluded for its dark distractors), pooling
+436k printed-PLA and 77k servo-casing pixels. The real black
+hardware is brighter than the flat recolor (median luma 66 vs 54),
+cool-cast [60, 66, 83], and 16–18% glints — sim rendered 5%/0%.
+**The missing term was shine, not paint.** Albedo solved per channel
+through the production composite, specular × shininess by grid: both
+populations chose the specular ceiling (spec 1.0, shin 0.1); fit
+loss ↓8.5× (PLA) / 2.3× (servo). Landed as opt-in
+`arm_photometrics="v1"` (default byte-identical, zero RNG draws,
+5 oracles). The registered 20×5 read, all gates green (in-run v3
+0.713 dead-center): **PRIMARY v3_photo −2.22e-07 CI95 [−3.08e-07,
+−1.38e-07] entirely below 0, AUROC 0.713 → 0.698 (72/100 closer);
+MECHANISM only_links_photo −7.37e-07 CI95 [−8.35, −6.42]e-07, 0.705
+→ 0.652 (96/100)** — the graded links alone now match the no_mount
+amputation best (0.654) without removing anything. Residuals for the
+registered texture follow-up: print-layer local contrast (real 8.4
+vs graded 4.7) and the servo glint tail (p97 206 vs 125). Rider
+finding: the camera mount is WHITE in reality, black in sim, and its
+material is shared with the gripper wrist-roll piece — a mount fix
+needs a material split first. Production-default promotion pends the
+owner go. Renders CPU (~9 min, two sequential instances), embeds 7
+groups ~0.02 GPU-h alongside R1-A.
+
+- [analysis JSON](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__sim_arm_photometric_read.json)
+  · [chart](https://mcobzarenco-fontaine-reports.static.hf.space/chart__arm_photometric_read.png)
+  · [mine](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__arm_photometric_mine.json)
+  · [fit](https://mcobzarenco-fontaine-reports.static.hf.space/analysis__arm_photometric_fit.json)
+- [before/after strip](https://mcobzarenco-fontaine-reports.static.hf.space/strip__arm_photometric_read.png)
+  — v3 / v3_photo and only_links / only_links_photo, same slot
+- [mining overlay](https://mcobzarenco-fontaine-reports.static.hf.space/overlay__arm_photometric_mine_ep000_f0303.png)
+  — snapped per-body masks on a real frame (green PLA, red servo)
+
 ## Arm sub-part split — the links carry 88% of the arm's signature; mounts are the per-pixel worst ([pre-reg](posts/2026-08-13-prereg-sim-arm-split.md), 08-13)
 
 The arm-class follow-on to the content split: the rendered arm
