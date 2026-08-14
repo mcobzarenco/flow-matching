@@ -3485,6 +3485,12 @@ def main() -> int:
             ),
             time_horizon=molmoact2_ar_section.chunk_size,
             action_dim=molmoact2_ar_section.action_dim,
+            # The reference recipe's behavior for real chunks that hit
+            # the 7 released-BPE holes: tokenize the short stream as-is
+            # (counted + printed by the codec). Refusal is for parity
+            # harnesses; a training run cannot die on a data artifact
+            # the released tokenizer itself produces.
+            allow_quantization_holes=True,
         )
         source_normalization = molmo_flow_info.normalization
         if (

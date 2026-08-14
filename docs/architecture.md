@@ -1035,7 +1035,27 @@ must reproduce **flow 2.7903 / 1.9152** exactly; with `--decoder
 ar_backbone --fast-tokenizer tests/fixtures/tiny_fast_tokenizer` (and
 the `--decoder-*` shape flags OMITTED — ar_backbone rejects them),
 **27.8306 / 27.767** (random tiny weights under full-vocabulary CE —
-an anchor, not a quality signal). Re-baselined 2026-08-13 at the T1
+an anchor, not a quality signal).
+
+The **molmoact2 objective matrix** (retirement phase 3) anchors on the
+tiny molmoact2 fixture (`PYTHONPATH=. uv run python
+probes/generate_tiny_molmoact2.py` → `outputs/tiny-molmoact2/` —
+per-checkout like tiny-gemma4; regenerating re-baselines these
+loudly). Same 2-step CLI shape with `--init-from
+outputs/tiny-molmoact2/checkpoint` on the rig v2 data, seed 0, batch
+2:
+
+- `--objective flow`: **1.3906 / 1.3305**
+- `--objective ar --backbone-text-lr 1e-5`: **12.2254 / 12.3317**
+- `--objective joint --insulate-expert --backbone-text-lr 1e-5`:
+  **13.6160 / 13.6621**, with the built-in cross-oracle: its
+  `loss_action` ≡ the flow anchors and `loss_aux` ≡ the ar anchors
+  BITWISE, and total = flow + λ·CE exactly (λ = 1) — the decision-5
+  ordering and λ-composition proven inside the real trainer (recorded
+  2026-08-14 at phase-3 landing; the run also exercises the
+  released-BPE quantization-hole policy — real rig chunks DO hit
+  holes, tokenized short + counted like the reference recipe, loud
+  never silent). Re-baselined 2026-08-13 at the T1
 (ar_fast-retirement) pre-deletion measurement: flow reproduced its
 2026-08-05 anchor bitwise, ar_backbone had MOVED from 27.8262/27.7701
 somewhere in the 08-05→08-13 window with no re-baseline note — the

@@ -291,6 +291,7 @@ class MolmoAct2ActionCodec:
         *,
         time_horizon: int,
         action_dim: int,
+        allow_quantization_holes: bool = False,
     ) -> None:
         if time_horizon <= 0 or action_dim <= 0:
             raise ValueError(
@@ -302,6 +303,17 @@ class MolmoAct2ActionCodec:
         self.action_dim = action_dim
         self.boa = -2
         self.pad = -1
+        # Encode-side hole policy. False (default): a chunk whose
+        # coefficients hit one of the 7 released-BPE holes REFUSES
+        # (parity harnesses, round-trip tests — a silently short target
+        # is a wiring bug there). True (the TRAINING collator): tokenize
+        # the dropped-symbol stream AS-IS — the reference recipe's
+        # verbatim behavior — counted and printed, never silent
+        # (measured 2026-08-14: real rig chunks DO hit holes; the
+        # 0/2996 audit figure was masked DECODES, whose budget
+        # arithmetic cannot produce holes by construction).
+        self.allow_quantization_holes = allow_quantization_holes
+        self.hole_count = 0
         # [block_vocab] int64; 0 beyond bpe_vocab — the 1043 untrained
         # rows and both specials are excluded by the grammar mask for
         # free (lengths > 0 legality).
@@ -337,13 +349,25 @@ class MolmoAct2ActionCodec:
         budget = self.time_horizon * self.action_dim
         expanded = int(self.symbol_lengths[bins].sum()) if bins else 0
         if expanded != budget:
-            raise ValueError(
-                f"encoded stream expands to {expanded} DCT coefficients, "
-                f"expected {budget} — the chunk hit a released-BPE "
-                "quantization hole (7 symbol values the artifact cannot "
-                "represent) and would decode short; refusing to emit a "
-                "silently truncated target",
-            )
+            if not self.allow_quantization_holes:
+                raise ValueError(
+                    f"encoded stream expands to {expanded} DCT coefficients, "
+                    f"expected {budget} — the chunk hit a released-BPE "
+                    "quantization hole (7 symbol values the artifact cannot "
+                    "represent) and would decode short; refusing to emit a "
+                    "silently truncated target (construct with "
+                    "allow_quantization_holes=True for the reference "
+                    "recipe's behavior)",
+                )
+            self.hole_count += 1
+            if self.hole_count == 1 or self.hole_count % 100 == 0:
+                print(
+                    f"[molmoact2-codec] quantization-hole chunk "
+                    f"#{self.hole_count}: tokenized SHORT ({expanded}/"
+                    f"{budget} coefficients — the reference recipe's "
+                    "silent drop, kept loud here)",
+                    flush=True,
+                )
         return [self.boa, *bins]
 
     def decode(
