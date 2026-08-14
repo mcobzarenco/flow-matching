@@ -6,7 +6,61 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-14 08:45–10:0xZ (real `date -u` at stamp: 09:55) —
+work session: **texture escalation CLOSED (second refutation) + owner
+GRPO steering executed end-to-end — reward patch landed and R1-B
+LAUNCHED under it, all in one session.***
+
+**Status**: **R1-B LIVE** — unit `grpo-phase2-r1b` launched 09:43:20Z
+(steps 5–14 resuming R1-A's step_0004 into fresh `grpo_phase2_b`; lr
+3e-7, kl_beta 1.0, **train_reward v2**). GPU 33.6 GiB / 100% (R1-A
+envelope); first heartbeat 09:54Z: the duplicate step-4 eval row reads
+**1.8441, 2/20, Δ −0.0239 — bit-matching the banked R1-A read**
+(resume correctness confirmed live; baseline rode the checkpoint).
+**Step-5 row 10:42Z — CALIBRATION PASS**: 8/8
+groups kept, std 3.27 cm; decomposition earned **1.19** vs shoved
+**4.98 cm** (~4:1 shove:carry — the leakage, measured);
+setback_frac 0.703 vs knockaway 0.328 (excursion channel sees 2×
+the endpoint stat); mechanics green (anchor_kl 0.041 < 0.06,
+ratio 1.00026, 47 min/step). Knockaway streak 1/3 vs the 0.167
+line — prediction on record: decays. rc ETA ~19:3xZ; ~9.6 GPU-h,
+ladder cum ~14.7 of the 22 gate.
+
+**Steering**: owner 09:16:39Z — "let's try your recommendation (2)
+then (1). How is knock away currently defined? Do we actually do a
+good job of defining it?" Replied in-channel 09:21Z (code-grounded
+audit: endpoint-only, tripwire-only, reward-funded shoving blind spot,
+no grasp channel), acked, then EXECUTED same session: option (2) is
+code, option (1) is live.
+
+**Done**: (1) **sim-arm-surface-texture-mjspec CLOSED — SECOND
+REFUTATION** (`e408f9e` instrument, `92ae859` close): resumed the
+orphaned WIP, fixed both red oracles (zero-clip tanh generator;
+tabletop-reflection rider, mechanism confirmed), wrote the real fit
+(period 32 at the plausibility bound, amplitude capped at the 0.42
+no-clip headroom → lc 6.43 of real 8.36), pre-reg 09:14Z BEFORE the
+read → 20×5 gates all green, **PRIMARY +3.07e-07 CI [+2.42,+3.71]e-07
+(0.698→0.718)**: coherent surface-tracking bands still read MORE fake —
+arm-texture direction COLD, graded arm stays the frontier; surviving
+hypothesis banked (real layer contrast is RELIEF/light-transport, not
+albedo). (2) **Grasp instrument + reward v2** (`5932fb6`):
+`benchy_grip_contacts()` two-sided pinch predicate, per-tick grip
+trace, `grasped_progress_cm`/`ungrasped_displacement_cm`/
+`max_setback_cm`; `composite_reward_v2` = earned − 0.5·shoved (4 cm
+shove −2.0 vs 4 cm carry +4.0, oracle-pinned); eval metric stays v1;
+13 new oracles, check.py 904 green. (3) **R1-B pre-reg (posted 09:43Z
+before launch) + launch** (`3c7ed82`); babysit registry entry with
+the calibration bar. Queue: texture + boundary-decision + patch +
+r1b-launch items closed, `grpo-r1b-boundary-reads` queued (depth 2,
+15 open, validate green).
+
+**Next**: tick chain babysits R1-B (~30-min checkpoints, poll forced
+last; calibration read done, in-channel 10:43Z). At rc (~19:3xZ):
+`grpo-r1b-boundary-reads` (accumulate or the ladder STOPS). Next CPU
+item while GPU busy: `sim-full-optin-stack-read`.*
 
 *Updated 2026-08-14 08:35–08:5xZ (real `date -u` at stamp: 08:42) —
 tick: **owner asked for GRPO status (answered in-channel 08:37Z) +
@@ -69,49 +123,15 @@ wrist read it was sequenced behind is now done, and the recompile +
 physics-oracle work is CPU-side either way; `sim-full-optin-stack-read`
 follows). GPU launches wait on the boundary call.*
 
-*Updated 2026-08-14 05:51–06:1xZ (real `date -u` at stamp: 06:08) —
-work session: **`sim-wrist-view-material-read` executed end-to-end —
-WRIST-NEUTRAL: the two-flag stack's paired wrist Δknn5 CI straddles
-zero; the promotion asks' wrist-side sanity is now measured, not
-assumed.***
-
-**Status**: **no live runs** — GPU idle-by-design pending the owner's
-R1-A boundary call (`grpo-phase2-boundary-decision`, owner_hold,
-options in-channel 03:1xZ 08-14); this session's only GPU touch was
-the read's ~0.02 GPU-h embeds.
-
-**Steering**: none — inbox empty, read empty at 05:52 / 06:07 polls
-(only my own pre-reg + results posts in-channel). Asks still open:
-R1-A boundary options (03:1xZ), arm-photometrics promotion (02:1xZ),
-clutter-patch promotion (05:40Z 08-13) — all three now carry the
-measured wrist-neutral fact.
-
-**Done**: **sim-wrist-view-material-read CLOSED** (this commit):
-pre-reg posted in-channel 05:59Z BEFORE the read (with the anchor
-honesty registered: the queued 0.828 wrist anchor is ROLLOUT-frame;
-the reset-pose baseline is 0.544/0.548, the gate band [0.50, 0.60]);
-registered 20×5 paired read all gates green (top 0.713 dead-center,
-wrist 0.561 in-band, qpos bit-equal ×100, changed-px tripwire quiet):
-**PRIMARY wrist Δknn5 −1.39e-08 CI95 [−4.53, +1.73]e-08 straddles
-zero (46/100) → wrist-neutral per the frozen rule**; mechanism
-diagnostic: the home-pose wrist camera sees ~230 raw px of graded
-surface (servo 208 / PLA 21 / mount 1); top rider replicated the
-mount read's stack delta bit-for-bit (hook path ≡ production
-observations — a free bit-exactness cross-check). Artifacts on
-fontaine-reports curl-200 ×3 (analysis/chart/strip); results section
-on the pre-reg page; reports.md + ideas.md banked; posts/index.md
-drift fixed (mount + texture pre-regs added). Queue: wrist done, NEW
-`sim-full-optin-stack-read` (prices the three promotions flipping
-together — interactions unmeasured; depth 2, 16 open, validate
-green).
-
-**Next**: `queue_cli.py next` → **sim-arm-surface-texture-mjspec**
-(the registered texture escalation, recompile path, NOT auto-run per
-its boundary note — owner may reprioritize; then
-`sim-full-optin-stack-read`). GPU launches wait on the owner's R1-A
-boundary call. `run_work_next` armed.*
-
 ## Utilization footer
+
+Session 2026-08-14 08:45–10:0xZ (work; exploit; ~0.04 GPU-h spent on
+the texture gate read embeds + **~9.6 GPU-h committed** by the R1-B
+launch 09:43:20Z, ≤ 22-gate cum ~14.7): texture escalation closed
+(second refutation, pre-reg'd read); owner GRPO steering answered
+09:21Z and executed — grasp instrument + reward v2 landed (904
+green), R1-B pre-reg posted then launched under it; queue reshaped
+(depth 2, validate green).
 
 Session 2026-08-14 08:35–08:5xZ (tick; 0 GPU-h decided — no live
 runs, GPU idle-by-design pending the owner's boundary call): owner
@@ -121,12 +141,6 @@ cleared); the dead 06:24 work session's arm_texture v2 WIP audited
 (9/11 oracles) and preserved as a check-exempt patch (`862d012`);
 queue green (depth 2, 16 open); `run_work_next` armed to resume the
 mjspec item.
-
-Session 2026-08-14 06:22–06:2xZ (tick; 0 GPU-h decided — no live
-runs, GPU idle-by-design pending the owner's R1-A boundary call):
-quiet poll — inbox empty, no reactions or replies, queue green (depth
-2, 16 open); `run_work_next` confirmed armed for the
-sim-arm-surface-texture-mjspec CPU instrument per no-idle-pauses.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box

@@ -1,6 +1,6 @@
 {
- "updated_utc": "2026-08-14T09:24:31Z",
- "depth_reason": "depth 2 (grpo-reward-patch-prereg, sim-full-optin-stack-read); grpo-r1b blocked behind the patch by design",
+ "updated_utc": "2026-08-14T09:46:49Z",
+ "depth_reason": "depth 2 (sim-full-optin-stack-read, grpo-r1b-boundary-reads)",
  "items": [
   {
    "id": "ftrig-eval20-flipped-parallel",
@@ -1538,11 +1538,11 @@
   {
    "id": "grpo-reward-patch-prereg",
    "class": "cpu",
-   "status": "queued",
+   "status": "done",
    "owner_hold": false,
-   "prereg": null,
+   "prereg": "fontaine/blog/src/posts/2026-08-14-prereg-token-grpo-phase2-r1b.md",
    "title": "GRPO reward patch (option 2, owner-approved 09:16Z 08-14): the R1-A tripwire caught REWARDED shoving leakage - composite_reward's dense progress term pays cm-for-cm for boat displacement without a grasp, and knock-away is only the punished tail of that same funded strategy (endpoint-only, no grasp/contact channel exists in EpisodeResult). Work: (a) instrument MuJoCo grasp/contact ground truth (gripper closure + pad<->benchy contact per replan tick) + trace-based knock event on the recorded distance_cm trace, with oracles; (b) pre-reg the patched reward - progress pay gated on (or heavily discounted without) grasp state, knock-away redefined on trace+contact, thresholds calibrated against the signal probe's banked 360-episode distribution where recomputable (rows lack the contact channel - state exactly what is and is not recomputable); (c) registered acceptance bar for the patch BEFORE R1-B launches under it.",
-   "boundary": "Queued 09:2xZ 08-14 on owner steering ('(2) then (1)'). CPU-side instrument + pre-reg, ~0 GPU-h (calibration replays only if priced). Blocks grpo-r1b-repriced-launch."
+   "boundary": "CLOSED 09:4xZ 08-14 same session as approval: instrument + reward v2 landed (5932fb6), pre-reg posted 09:43Z, R1-B launched under it 09:43:20Z."
   },
   {
    "id": "sim-full-optin-stack-read",
@@ -1556,12 +1556,21 @@
   {
    "id": "grpo-r1b-repriced-launch",
    "class": "gpu-local",
-   "status": "blocked",
+   "status": "done",
    "owner_hold": false,
-   "prereg": "fontaine/blog/src/posts/2026-08-13-prereg-token-grpo-phase2-run.md",
+   "prereg": "fontaine/blog/src/posts/2026-08-14-prereg-token-grpo-phase2-r1b.md",
    "title": "R1-B re-priced ladder (option 1, owner-approved 09:16Z 08-14, sequenced behind grpo-reward-patch-prereg): resume from banked step_0004 (fontaine-checkpoints/grpo_phase2_r1a, weights-only) under the PATCHED reward with lr 3e-7 + kl_beta 1.0, wire unchanged (knock tripwire stays as belt even with the in-reward fix), ~0.96 GPU-h/step; 10 steps ~9.6 GPU-h, ladder cum ~5.1 of the 22 gate -> fits with headroom. Own pre-reg (final constants + boundary reads) before launch.",
-   "boundary": "Blocked on grpo-reward-patch-prereg (the patch IS the point of re-running). Launch same-session as the patch close if budget allows, else next session; babysit registry entry at launch."
+   "boundary": "LAUNCHED 09:43:20Z (unit grpo-phase2-r1b), rc ETA ~19:3xZ 08-14; babysit registry entry live. Boundary reads at rc per the pre-reg (accumulate or the ladder stops)."
+  },
+  {
+   "id": "grpo-r1b-boundary-reads",
+   "class": "cpu",
+   "status": "queued",
+   "owner_hold": false,
+   "prereg": "fontaine/blog/src/posts/2026-08-14-prereg-token-grpo-phase2-r1b.md",
+   "title": "R1-B boundary reads at rc (ETA ~19:3xZ 08-14, unit grpo-phase2-r1b): execute the pre-reg's registered reads \u2014 PRIMARY held-out paired delta CI (v1 metric, banked 1.868 baseline) -> accumulate = R2 pricing discussion, flat+wires-quiet = ladder STOPS as a banked negative; calibration read (first-wave earned/shoved decomposition, >=6/8-drop bar -> lambda re-price amendment); behavior predictions (knockaway_frac decay vs R1-A 0.41->0.36->0.31, setback_frac, earned/shoved trends). Results section on the pre-reg page + in-channel post + chart; endpoint checkpoint upload if boundary-worthy; babysit entry prune. If the run tripwired instead, the S6-style stop reads apply (which wire, wave facts, banked step).",
+   "boundary": "Queued 09:5xZ 08-14 at the R1-B launch. Blocked until rc/tripwire; any session at rc executes; babysit rides it meanwhile (~30-min checkpoints, poll forced last)."
   }
  ],
- "updated": "2026-08-14T09:24:31Z"
+ "updated": "2026-08-14T09:46:49Z"
 }
