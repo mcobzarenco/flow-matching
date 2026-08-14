@@ -2,7 +2,34 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-14 00:34–00:4xZ (real `date -u` at stamp: 00:37) —
+tick, babysit: **quiet tick — R1-A healthy 28 min into its overnight
+leg, no steering, no anomalies.***
+
+**Status**: **LIVE: `grpo_phase2_r1a`** — babysit 00:34:31Z exit 0:
+3 procs, GPU 100% at 34.3 GiB (75-gate headroom ~41 GiB), step 2/17
+(registered resume state; the step-3 fresh row lands ~01:0xZ,
+just past this tick's cap — the next session catches it). Probe
+1.87@0 → 1.84@1-2 vs baseline 1.868, flat-at-noise as the
+accumulation question expects this early. Knockaway streak fresh.
+rc ETA ~14:3xZ.
+
+**Steering**: none — inbox empty, read empty at 00:34Z and at the
+babysit poll; history shows no new reactions (👍 on the 22:10Z
+pre-reg post already recorded; nothing on the 00:08Z GO post or the
+00:32Z inbox-fix post).
+
+**Done**: babysit poll (facts above); queue validate green (depth 2,
+14 open).
+
+**Next**: unchanged — ride **token-grpo-phase2-r1a-run** via ~30-min
+ticks to rc ~14:3xZ; step-3 row is the first accumulation datapoint.
+`run_work_next` stays armed (00:33 marker) — GPU busy and
+`sim-arm-photometric-links` (CPU) queued; the chained work session
+takes it per no-idle-pauses.*
 
 *Updated 2026-08-14 00:20–00:4xZ (real `date -u` at stamp: 00:33) —
 work session: **the `discord-unreplied-inbox` harness fix landed
@@ -67,66 +94,13 @@ catches it; holding in-session can't reach it inside the cap).
 `discord-unreplied-inbox` (CPU) is queued; the chained work session
 takes it per no-idle-pauses.*
 
-*Updated 2026-08-13 21:26–2026-08-14 00:1xZ (real `date -u` at stamp:
-00:09) — work session: **the re-scope pre-reg landed AND its whole
-ladder moved in one session — instrument built + oracle-gated, R0-A
-frozen, launched, ridden to its boundary with every read GREEN, and
-R1-A (15 steps, overnight) launched by the frozen GO rule. The
-collapse read reversed: sampling diversity survived the update on
-exactly the seeds where R0's died.***
-
-**Status**: **LIVE: `grpo_phase2_r1a`** (unit `fontaine-grpo-r1a`,
-00:06:00Z resume of R0-A's `step_0002.pt`, steps 3–17 at the frozen
-constants; registry entry current, leg gate 16.5 GPU-h, rc ETA
-~14:3xZ 08-14; babysit probe eval trajectory from 1.8441 vs baseline
-1.868). Preservation upload `fontaine-upload-r0a` detached
-(weights-only `step_0002` → `fontaine-checkpoints/grpo_phase2_r0a`).
-Queue validate green (depth 3, 15 open).
-
-**Steering**: none — reads empty at boot 21:27Z and every babysit
-poll (22:42, 23:30 — only my own posts consumed). Recorded: owner
-**👍 on the 22:10Z re-scope pre-reg announcement** (endorsement of
-the frozen plan; the 11:07/11:18Z delegation governs, R0-A GO → R1-A
-was frozen-rule execution, not a confirmation wait).
-
-**Done**: (1) **Instrument for the re-scope** (`69b03e8`): option-A
-trainable surface (FAST-block rows [151934, 153982) of the untied
-`wte.embedding` + `lm_head`, ~10.5M params, post-backward row-mask —
-oracle bit-compares rows outside the span through a real step),
-differentiable anchor-KL penalty (β·k3 inside the objective, per-chunk
-anchor reference forwards under ONE swap/step, heartbeat
-`anchor_k3_pre`), advantage clip, and the §7 KL numeric line
-mechanized (`--kl-stop`); 18 loop oracles, check.py 866→867 green.
-(2) **Pre-reg FINAL frozen + posted** (`81e020c`,
-posts/2026-08-13-prereg-token-grpo-phase2-r0a.md): option A + lr 1e-6
-+ clip ±2.0 + β 0.5 + eval-every 1 + kl-stop 0.06 (≈3× the 0.0215
-JPEG-noise floor, below R0's 0.0885 collapse), 2-step smoke gate 3.0
-GPU-h, explicit INERT rule. (3) **R0-A ridden launch to boundary**:
-launch 1 died pre-GPU (MUJOCO_GL doesn't survive into transient
-units — fixed both manager-side and in `run_detached.sh`, addendum 1,
-`9a29575`); launch 2 21:58:04Z → rc 0 00:05:09Z, 2.12 GPU-h.
-**Boundary GO, all reads green**: wave-2 signal ALIVE (2.03 cm median
-std, 8/8 kept vs R0's same-seed 0.0087/3-of-8), held-out 1.8441 2/20
-Δ −0.0239 CI [−0.0716, 0.0] at step 1 AND endpoint, anchor_k3_pre
-5.5e-07 (5 orders gentler than R0's 0.067/step), VRAM 33.91 GiB (R0:
-76.53), chosen_nll SOFTENED 0.766→0.866 (anti-sharpening). (4)
-**R1-A launched 00:06:00Z** by the frozen rule; knockaway watch
-carried (0.234→0.359 vs the 0.167 ×3 line — a legitimate exit-3 is
-registered behavior). (5) Queue ×2 (rescope-prereg CLOSED, r0a-run
-CLOSED with the verdict, r1a ride item queued); registry pruned+new
-entry; 4 in-channel posts (pre-reg announce, step-1 milestone,
-GO boundary; all Discord-markdown).
-
-**Next**: `queue_cli.py next` → **token-grpo-phase2-r1a-run** (ride
-via babysit ~30-min ticks; rc ~14:3xZ 08-14 → §6 endpoint reads →
-R2-A only via the frozen R1→R2 rule; flat-at-noise eval through ~step
-10 feeds an lr/β re-price discussion at the boundary, no early
-hand-stop). `run_work_next` armed; `queue.json` canonical.*
-
-
-*Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
-
 ## Utilization footer
+
+Session 2026-08-14 00:34–00:4xZ (tick, babysit; 0 new GPU-h decided —
+R1-A live and healthy, ~0.45 GPU-h accrued on its ~14.4 leg): quiet
+poll, no anomalies, no steering, inbox empty; queue green (depth 2,
+14 open). `run_work_next` stays armed for sim-arm-photometric-links;
+step-3 fresh row ~01:0xZ lands with the next session.
 
 Session 2026-08-14 00:20–00:4xZ (work; 0 new GPU-h decided — R1-A
 live throughout, ~0.4 GPU-h accrued on its ~14.4 leg; CPU item,
