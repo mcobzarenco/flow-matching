@@ -34,8 +34,11 @@ untouched; your imports move; one of your queue items is superseded.**
 2. Adopt phases 1–3 whenever convenient after they land — they do not
    touch your live surfaces.
 3. **Phase 4 is your instrument** (GRPO rollout/replay re-pointing) —
-   it is co-landed with you at a boundary you pick, gated on a
-   frozen-wave replay parity check (below).
+   co-landed at the boundary you proposed (sign-off 2026-08-14):
+   after the R1-B boundary reads land and the ladder is adjudicated.
+   Ladder STOPS ⇒ wide-open window; a re-scope run is approved ⇒
+   phase 4 lands BEFORE its launch, with the frozen-wave parity gate
+   run on the banked R1-B waves.
 4. Phase 5 (the deletion) only lands after your phase-4 sign-off.
 
 **What does NOT change for you:**
@@ -62,11 +65,11 @@ untouched; your imports move; one of your queue items is superseded.**
 | `bijou.molmoact2.processing` leaves (if you import any directly) | `bijou.encoders.molmoact2` |
 
 **Queue impact:** your `molmoact2-ar-head-port` item is **superseded
-by phase 2** of this plan — we are building the first-class discrete
-AR head on main. Hold/close that item to avoid duplicate work; review
-phase 2's design below instead (it deliberately adopts your
-`fast_codec` audit facts and your grammar-mask/budget-arithmetic
-contract verbatim).
+by phase 2** of this plan — confirmed already CLOSED on your side
+(08-13; sign-off 2026-08-14), so nothing is pending and there is no
+duplicate-work risk. Phase 2 deliberately adopts your `fast_codec`
+audit facts and your grammar-mask/budget-arithmetic contract
+verbatim.
 
 **What you gain:** molmoact2 GRPO rides the same `ARSuffixDecoder`
 path as er-60k (one capture/replay/objective code path across both
@@ -149,10 +152,13 @@ Relevant prior art already on `main` and load-bearing here:
    surface `ARSuffixDecoder` consumes (`boa` ≡ `<action_start>`,
    `pad` convention, `vocab_total`, `symbol_lengths`). Release-artifact
    facts carried verbatim: 2048-wide block with only **1005 reachable
-   bins** (symbol_lengths 0 elsewhere — the grammar mask excludes them
-   for free) and **7 quantization-hole symbols** (their pipeline
-   silently zero-falls-back; ours raises). The `pad` analog for the
-   discrete surface is pinned during phase 2 (open detail, flagged).
+   bins** (symbol_lengths 0 elsewhere — the grammar mask excludes the
+   1043 unreachable rows for free) and **7 quantization-hole symbols**
+   — raise-not-fallback stays (fontaine sign-off 2026-08-14, with the
+   cost measured: **0/2996 fallbacks** across arm B's masked decodes,
+   so the loud path costs nothing in practice). The `pad` analog for
+   the discrete surface is pinned during phase 2 (open detail,
+   flagged).
 4. **Objective matrix** on molmoact2-format checkpoints:
    `--objective {flow, ar, joint}` — flow = today's `molmo_flow`
    composition; ar = `MolmoAct2ARDecoder` alone; joint =
@@ -213,6 +219,19 @@ Relevant prior art already on `main` and load-bearing here:
    `bijou.train` flag.
 10. **Formats frozen:** GRPO row NPZ and loop `.pt` checkpoints
     unchanged.
+11. **Run provenance across phase 4** (fontaine's question, resolved
+    2026-08-14): loop `.pt` resume compatibility is a SALVAGE-ONLY
+    escape hatch — any run launched after the re-point **starts
+    fresh** (one code path per run: anchor reference forwards, rollout
+    waves and replay all on one stack; a run whose early steps rolled
+    out under the old driver and later steps under the new one is a
+    two-instrument run even inside the parity bounds). Inheriting a
+    pre-migration run's PROGRESS is done as a warm START — a new run
+    initialized from the `.pt` weights with a fresh pre-registration —
+    never a resume. Mathematically a resume would be near-clean (GRPO
+    rows are consumed the step they are collected, each carrying its
+    own π_old), which is exactly why this is pinned as a provenance
+    rule rather than left to case-by-case judgment.
 
 ## 3. Inventory and disposition of `bijou/molmoact2/`
 
@@ -325,9 +344,14 @@ anchors; flow-only bitwise unchanged.
 builder rewritten thin on `MolmoAct2InputsCollator` +
 `suffix_targets` + generic capture (row NPZ unchanged);
 `sim/grpo_loop.py` + sim rollout driver re-pointed from
-`MolmoAct2Predictor` to `BijouPolicy` + `MolmoAct2ARDecoder`. Gate:
-one frozen-seed sim wave replayed old-vs-new — episode rewards equal,
-per-token logprobs within the registered bounds.
+`MolmoAct2Predictor` to `BijouPolicy` + `MolmoAct2ARDecoder`. Gate
+(fontaine amendment 2026-08-14): TWO frozen-seed waves replayed
+old-vs-new — a v1-reward wave (episode rewards equal, per-token
+logprobs within the registered bounds) AND a banked **v2-reward
+wave** (grip/contact traces ride the capture path; `train_reward` v2
+raises loudly on a missing trace, so the check is rewards-equal +
+no-raise — it pins that the re-pointed driver preserves the trace
+keys, not just the token surface).
 
 **Phase 5 — delete `bijou/molmoact2/`.** Remaining modules + their
 tests go; loud refusals are NOT needed at the checkpoint layer (no
@@ -350,18 +374,26 @@ Rough sizes: P1 ±0 net (moves), P2 ~250–350 + tests, P3 ~150 restored
 | replay ratio contract | 2/4 | unchanged-policy ratio≈1 oracle; 1e-5 + JPEG bounds |
 | KI both ways under joint | 3 | extended gradient-contract test |
 | flow-only untouched | 3 | bitwise vs pre-phase oracles + molmo_flow fixture tests |
-| old-vs-new GRPO stack | 4 | frozen-seed wave replay (rewards equal, logprobs in-bound) |
+| old-vs-new GRPO stack | 4 | frozen-seed wave replay ×2: v1 wave (rewards equal, logprobs in-bound) + v2 wave (grip traces preserved — rewards equal, no missing-trace raise) |
 | rig-rung class reproduction | 0 | gate-d-lite: step-500 MAE in the 6.76 class + loss-corridor match; 2000-step endpoint read free when the window holds (decision 7) |
 
 ## 7. Open items before the relevant phases
 
 1. ~~Decision 4's joint weight~~ — RESOLVED 2026-08-14:
-   `--joint-ce-weight`, default 1.0 (decision 4).
+   `--joint-ce-weight`, default 1.0 (decision 4). (Fontaine acked the
+   earlier fixed-1.0 form; the owner's knob-with-default supersedes —
+   same default, re-passable.)
 2. ~~Decision 7: gate-d~~ — RESOLVED 2026-08-14: gate-d-lite, the
    500-step prefix with opportunistic 2000-step continuation
-   (decision 7); needs a GPU window (owner arranging).
-3. Fontaine's sign-offs: the phase-4 boundary, and holding his
-   `molmoact2-ar-head-port` queue item (superseded).
+   (decision 7). Fontaine independently endorsed running over
+   waiving; the box H100 is idle post-R1-B (tripwire stop 12:40Z)
+   through his ladder adjudication — the phase-0 GPU window is
+   effectively open.
+3. ~~Fontaine's sign-offs~~ — RESOLVED 2026-08-14: phase-4 boundary
+   = after the R1-B boundary reads + ladder adjudication (§0);
+   `molmoact2-ar-head-port` was already closed 08-13; phase-4 shape
+   signed off with the v2-wave gate amendment (adopted, phase 4);
+   run-provenance question resolved as decision 11.
 4. Gate-d-lite pre-registration details owed at launch: the loss
    corridor intermediates from the reference rung's train log, the
    MAE band around 6.76, and the norm-table mechanism (decision 7).
