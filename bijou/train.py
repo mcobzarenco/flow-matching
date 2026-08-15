@@ -306,6 +306,10 @@ class TrainArgs:
     # sample's proprioceptive state is masked to its dataset mean at
     # collation (normalized token ≡ 0). Probes score intact state.
     state_dropout: float
+    # Sim2real appearance regularizer: probability a camera frame gets
+    # the bijou.image_augment photometric recipe at collation. Probes
+    # and evals always see clean frames.
+    image_augment: float
     decoder_hidden: int
     decoder_heads: int
     decoder_intermediate: int
@@ -609,6 +613,10 @@ class TrainArgs:
             raise ValueError(
                 f"--instruction-augment {self.instruction_augment} outside [0, 1]",
             )
+        if not 0.0 <= self.image_augment <= 1.0:
+            raise ValueError(
+                f"--image-augment {self.image_augment} outside [0, 1]",
+            )
         if self.condition_fields is not None and len(self.condition_fields) == 0:
             raise ValueError("--condition-fields given with no fields — omit the flag")
         if self.condition_fields is not None:
@@ -886,6 +894,7 @@ class TrainArgs:
                 condition_dropout=condition_dropout,
                 subgoal_dropout=subgoal_dropout,
                 state_dropout=raw.state_dropout,
+                image_augment=raw.image_augment,
                 decoder_hidden=arch["decoder_hidden"],
                 decoder_heads=arch["decoder_heads"],
                 decoder_intermediate=arch["decoder_intermediate"],
@@ -2857,6 +2866,17 @@ def _build_parser() -> argparse.ArgumentParser:
         "score intact state",
     )
     parser.add_argument(
+        "--image-augment",
+        type=float,
+        default=0.0,
+        help="probability a camera frame gets the train-time sim2real "
+        "photometric recipe at collation (brightness/contrast/"
+        "saturation/hue/gamma jitter, Gaussian sensor noise, slight "
+        "defocus blur, JPEG artifacts, small random crop/translate — "
+        "the bijou.image_augment v0 spec). Probes and evals always "
+        "see clean frames",
+    )
+    parser.add_argument(
         "--condition-fields",
         nargs="*",
         choices=[f.value for f in ConditionField],
@@ -3599,6 +3619,7 @@ def main() -> int:
         condition_dropout=args.condition_dropout,
         subgoal_condition_dropout=args.subgoal_dropout,
         state_dropout=args.state_dropout,
+        image_augment=args.image_augment,
         state_q01=state_table[0] if state_table is not None else None,
         state_q99=state_table[1] if state_table is not None else None,
         action_q01=(
@@ -3613,6 +3634,13 @@ def main() -> int:
             f"state dropout: p={args.state_dropout} — proprioceptive state "
             "masked to the dataset mean per sample (train-time "
             "regularizer; probes score intact state)",
+            flush=True,
+        )
+    if is_main and args.image_augment > 0:
+        print(
+            f"image augment: p={args.image_augment} — per-frame sim2real "
+            "photometric recipe at collation (train-time regularizer; "
+            "probes and evals see clean frames)",
             flush=True,
         )
     if is_main and (args.instruction_augment > 0 or args.condition_fields):
@@ -3670,8 +3698,10 @@ def main() -> int:
         condition_dropout=0.0,
         subgoal_condition_dropout=0.0,
         # Probes score deployment conditions: intact state (the masked
-        # readout is the offline --mask-state reliance probe).
+        # readout is the offline --mask-state reliance probe) and
+        # clean frames (eval never augments).
         state_dropout=0.0,
+        image_augment=0.0,
     )
     # The explicit generator (both modes) makes the shuffle order and the
     # dataloader worker base-seeds a pure function of (--seed, rank) —

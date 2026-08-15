@@ -43,6 +43,7 @@ from .aux_text import (
     subgoal_text,
 )
 from .fast.codec import ActionCodec
+from .image_augment import augment_image
 from .nn import RopeParameters
 
 
@@ -487,6 +488,18 @@ class Collator[I: BatchInputs]:
     # Default 0.0 so every non-train construction site stays inert, and
     # p=0 draws nothing from the RNG (existing streams byte-identical).
     state_dropout: float = 0.0
+    # With probability p per camera frame, apply the sim2real
+    # photometric recipe (bijou.image_augment: brightness/contrast/
+    # saturation/hue/gamma jitter, sensor noise, slight defocus, JPEG
+    # artifacts, small random crop/translate) at collation — the
+    # pi0/OpenVLA-class appearance-shift regularizer. Train-time only:
+    # the probe clone runs augment-0 and the eval-side construction
+    # sites leave the default, so scored/served frames are NEVER
+    # augmented. Default 0.0 keeps every existing path byte-identical —
+    # p=0 draws nothing from the RNG and passes tensors through by
+    # identity (no clone/clamp/dtype round-trip; the molmoact2 uint8
+    # truncation downstream would amplify any float epsilon).
+    image_augment: float = 0.0
     # The molmoact2-format state scheme (§8.13 decision 6): when set
     # ([state_dim] fp32 each), PromptInputs.state is q01/q99-CLAMP
     # normalized with this ONE merged table — their semantics — instead
@@ -538,6 +551,10 @@ class Collator[I: BatchInputs]:
         if not 0.0 <= self.state_dropout < 1.0:
             raise ValueError(
                 f"state dropout {self.state_dropout} outside [0, 1)",
+            )
+        if not 0.0 <= self.image_augment <= 1.0:
+            raise ValueError(
+                f"image augment {self.image_augment} outside [0, 1]",
             )
         if (self.state_q01 is None) != (self.state_q99 is None):
             raise ValueError(
@@ -591,6 +608,17 @@ class Collator[I: BatchInputs]:
         if self._generator is None:
             self._generator = torch.Generator().manual_seed(torch.initial_seed())
         return self._generator
+
+    def _augment_image(self, image: Tensor) -> Tensor:
+        """One camera frame through the aug gate: identity (zero RNG)
+        when off, per-frame Bernoulli(p) then the bijou.image_augment
+        recipe when on. Rebuilds, never mutates — dataloader items are
+        shared with the raw batch surfaces."""
+        if self.image_augment <= 0.0:
+            return image
+        if float(torch.rand((), generator=self._rng())) >= self.image_augment:
+            return image
+        return augment_image(image, self._rng())
 
     def _camera_kind(self, item: dict[str, Any], camera: str) -> str:
         kind = (item.get("camera_kinds") or {}).get(camera, "unknown")
@@ -842,7 +870,7 @@ class Collator[I: BatchInputs]:
                         CameraFrame(
                             name=(name := key.removeprefix(_IMAGE_KEY_PREFIX)),
                             kind=self._camera_kind(item, name),
-                            image=item[key],
+                            image=self._augment_image(item[key]),
                         )
                         for key in self.cameras_of(item)
                     ),
