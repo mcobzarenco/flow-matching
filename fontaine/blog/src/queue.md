@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-15T14:48:00Z
+**Updated:** 2026-08-15T15:50:00Z
 
 **Depth call:** depth 3: grasp-sft-bootstrap (retrain arm owner-pending) + grasp-sft-chain-results-page (writing ladder) + grpo-r2-post-sft (re-based per A2; token-sft arm item blocked owner-gated). Recorded 14:48Z 08-15.
 
-**18 open** (Live 0 · Queued 3 · Blocked 15 · Done 177)
+**17 open** (Live 0 · Queued 2 · Blocked 15 · Done 178)
 
 ## 🔴 Live (0)
 
@@ -14,7 +14,7 @@
 
 *(empty)*
 
-## 🟢 Queued (3)
+## 🟢 Queued (2)
 
 *ready — waiting on a window or a boundary*
 
@@ -27,20 +27,6 @@ GRPO R2 on the grasp-SFT policy (DRAFT pre-reg posted 08-15): fresh Decision-11 
 <details><summary>full record</summary>
 
 GRPO R2 on the grasp-SFT policy (DRAFT pre-reg posted 08-15): fresh Decision-11 run on the first-class stack (bijou/grpo_replay.py over the CONVERTED stage-C endpoint — the exact bijou dir stage D evaluates), reward v2 trained-on / v1 held-out, 8x8 groups T=1.0, full R1 tripwire set inherited, proposed lr 1e-6 (3e-7 fallback) kl_beta 1.0, 10 steps ~10 GPU-h gate &lt;=12. PRIMARY: paired sim100 vs the banked stage-D base count; wave-0 calibration read on group success-variance (predicted &gt;=60% mixed at p&gt;=0.2). CONDITIONAL: activates ONLY on stage-D GRPO_GO (&gt;=20/100).
-
-</details>
-
----
-
-**`grasp-sft-chain-results-page`** · `cpu`
-
-Grasp-SFT chain results page (blog, chart-led per the owner standing preference; writing-ladder item): the competence-before-RL story end-to-end once stage D banks its verdict
-
-**boundary:** Queued 04:2xZ 08-15 at the stage-d-eval-prep close (depth refill). Blocked in practice until stage D banks analysis__grasp_sft_stageD_sim100.json; any writing-ladder session takes it after that. The Discord boundary posts are the canonical short record meanwhile. · [pre-reg](posts/2026-08-14-prereg-grasp-sft-bootstrap.md)
-
-<details><summary>full record</summary>
-
-Grasp-SFT chain results page (blog, chart-led per the owner standing preference; writing-ladder item): the competence-before-RL story end-to-end once stage D banks its verdict — stage-A scripted-expert arc (breakthrough mechanisms, gate FAIL -&gt; A1 -&gt; PASS, the n=20 CI lesson vs the measured 62.5% true rate at n=200), stage-B collection facts (keep rate, seed integrity, provenance), stage-C SFT curves vs the rig-ft r1 reference, stage-D sim100 verdict vs the banked context anchors (ftrig4k / W0), and what the verdict means for the GRPO registration (Decision 11). Plain-words open per the papers rule; dark-mode charts (per-band keep-rate strip, SFT loss curve, per-seed progress strip vs anchors); links the banked analysis JSONs + demo videos.
 
 </details>
 
@@ -272,7 +258,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (177)
+## ✅ Done (178)
 
 *closed — the full record stays in each fold*
 
@@ -299,6 +285,20 @@ Grasp-SFT stage-B demo collector (CPU instrument, prereg §2/§6): scripted-expe
 <details><summary>full record</summary>
 
 Grasp-SFT stage-B demo collector (CPU instrument, prereg §2/§6): scripted-expert rollouts on demo seeds ascending from 1000, rendered under the production visual config, SUCCESSES KEPT, obs (top/wrist/state) + executed action targets written in the molmoact2 train_lerobot.py training format with state_units provenance 'rig (identity — recomputed dataset table)' (§6 item 4, no shim anywhere in B-D). Eval seeds 0-99 refused at the writer (the run_expert_episode guard rides through). Target 400 kept / gate &gt;=300 within &lt;=4 GPU-h; checkpointable (resume from the last banked seed) so the GPU leg can ride any window. Oracles: format round-trip vs a real training-set row, seed-refusal, success-only filter, action-vs-replay consistency on one episode. CPU-buildable NOW; the GPU collection leg is gated on the A1 fresh gate read (seeds 1040-1059) passing.
+
+</details>
+
+---
+
+**`grasp-sft-chain-results-page`** · `cpu`
+
+Grasp-SFT chain results page (blog, chart-led per the owner standing preference; writing-ladder item): the competence-before-RL story end-to-end once stage D banks its verdict
+
+**boundary:** Queued 04:2xZ 08-15 at the stage-d-eval-prep close (depth refill). Blocked in practice until stage D banks analysis__grasp_sft_stageD_sim100.json; any writing-ladder session takes it after that. The Discord boundary posts are the canonical short record meanwhile. | DONE 15:4x-15:5xZ 08-15 (work session; draft 2439869, probe section 13:4xZ, finalized this commit): page live + in-channel post 1538212636477624320 — the stage-D verdict section became the SUSPENSION record (10:10Z re-steer; formal exam never ran) plus the A2 re-base note (a flow-head sim100 no longer triggers R2; the token arm's discrete-head count does), and a new 'Where this goes next' section carries the three pending owner decisions (retrain arm / route A/B/C / GPU release) with pre-reg links. All 5 dark-mode charts curl-verified live; charts regenerate from banked JSONs via grasp_sft_chain_charts.py; blog built + Space pushed. Chain ledger on the page: ~11 GPU-h vs the &lt;=13 gate. · [pre-reg](posts/2026-08-14-prereg-grasp-sft-bootstrap.md)
+
+<details><summary>full record</summary>
+
+Grasp-SFT chain results page (blog, chart-led per the owner standing preference; writing-ladder item): the competence-before-RL story end-to-end once stage D banks its verdict — stage-A scripted-expert arc (breakthrough mechanisms, gate FAIL -&gt; A1 -&gt; PASS, the n=20 CI lesson vs the measured 62.5% true rate at n=200), stage-B collection facts (keep rate, seed integrity, provenance), stage-C SFT curves vs the rig-ft r1 reference, stage-D sim100 verdict vs the banked context anchors (ftrig4k / W0), and what the verdict means for the GRPO registration (Decision 11). Plain-words open per the papers rule; dark-mode charts (per-band keep-rate strip, SFT loss curve, per-seed progress strip vs anchors); links the banked analysis JSONs + demo videos.
 
 </details>
 

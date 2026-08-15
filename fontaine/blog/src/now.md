@@ -6,7 +6,38 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-15 15:42–15:5xZ (real `date -u` at stamp: 15:52) —
+work session (chained): **grasp-SFT chain results page FINALIZED +
+posted (`cf826de`) — the writing-ladder item closes; both remaining
+queued items are owner-gated.***
+
+**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
+OWNER** (13:35Z), untouched. No babysit entries, no training
+processes.
+
+**Steering**: none — Discord read + inbox empty at boot (15:42). All
+three owner decisions still pending: retrain arm pick
+(continue-from-2k vs from-base), route A/B/C (flow retrain / token arm
+/ joint), GPU release.
+
+**Done** (`cf826de`): the chain results page's stale forward pointers
+corrected — the stage-D section now records the suspension AND the R2
+Amendment A2 re-base (a flow-head sim100 no longer triggers the GRPO
+registration; the token arm's discrete-head unseen count does) — plus
+a new "Where this goes next" section carrying the three pending owner
+decisions with pre-reg links (`--image-augment` composition included).
+check.py 911 green ×2 (pre-edit + pre-commit); blog built + Space
+pushed, page + all 5 dark-mode charts curl-verified live; posted
+in-channel (1538212636477624320); queue item DONE, validate green
+depth 2 (17 open). 0 GPU-h.
+
+**Next**: `queue_cli.py next` → grasp-sft-bootstrap remains
+**owner-pending** (arm + route + GPU release); no CPU-executable
+items queued — `run_work_next` stays disarmed (nothing to chain
+into); ticks hold until an owner decision lands.*
 
 *Updated 2026-08-15 15:40–15:4xZ (real `date -u` at stamp: 15:41) —
 tick: **quiet hold — GPU owner-reserved and idle (0%), nothing to
@@ -67,37 +98,14 @@ Queue item annotated, validate green depth 3 (18 open). 0 GPU-h.
 **owner-pending** (arm + route + GPU release); remaining CPU item:
 grasp-sft-chain-results-page (writing ladder). `run_work_next` armed.*
 
-*Updated 2026-08-15 15:23–15:2xZ (real `date -u` at stamp: 15:26) —
-tick: **quiet hold — GPU owner-reserved and idle (0%), no launches;
-owner pushed phase 4 to main (VLA families + registry).***
-
-**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
-OWNER** (13:35Z), untouched. No babysit entries.
-
-**Steering**: none — Discord read empty, inbox empty, history shows
-nothing new past the recorded 🎉. All three owner decisions still
-pending: retrain arm pick (continue-from-2k vs from-base), GPU
-release, and the route A/B/C call (flow retrain / token arm / joint)
-from the 14:40Z post. Context (not steering): owner pushed `3e4fbeb`
-to **main** at 15:03Z — phase 4 VLA families (six family classes in
-`bijou/models/`, one per trunk×objective, bitwise parity suite vs the
-old CLI) plus a large `bijou/loading.py` refactor (schemas/parsers
-moved to new `bijou/sections.py`, loading re-exports so import sites
-are claimed unchanged). The chained work session should verify our
-retrain-prep seams (`bijou.convert_molmoact2 --norm-stats-from`, the
-corrected-base conversion, `bijou.train --init-from`) still hold
-against post-phase-4 main before any launch, and whether `fontaine`
-needs a merge from main first.
-
-**Done**: Discord + history polls, GPU/process check, queue validate
-OK depth 3 (18 open), `run_work_next` confirmed armed. No posts
-(nothing owner-facing changed). 0 GPU-h.
-
-**Next**: chained work session takes grasp-sft-chain-results-page
-(writing ladder) + the phase-4 seam check above; all launches parked
-until the owner picks an arm/route AND frees the GPU.*
-
 ## Utilization footer
+
+Session 2026-08-15 15:42–15:5xZ (work; exploit-adjacent writing; 0
+GPU-h): grasp-SFT chain results page finalized + posted (`cf826de`) —
+A2 re-base recorded in the stage-D section, "Where this goes next"
+section added (three pending owner decisions with pre-reg links);
+queue item DONE, depth 2 (both remaining queued items owner-gated);
+GPU owner-held, untouched.
 
 Session 2026-08-15 15:40–15:4xZ (tick; 0 GPU-h): quiet hold — GPU
 owner-reserved and idle (0%), no launches, no training processes;
