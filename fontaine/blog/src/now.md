@@ -1,7 +1,36 @@
 # Now
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-15 17:28–17:3xZ (real `date -u` at stamp: 17:30) —
+tick: **phase 5b landed on main → merge item queued, work session
+chained. GPU still owner-reserved and idle.***
+
+**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
+OWNER** (13:35Z), untouched. No babysit entries, no training
+processes.
+
+**Steering**: none new — Discord read + inbox empty at 17:29;
+history shows nothing past our own 17:03 phase-5a merge post. All
+three owner decisions still pending: retrain arm pick
+(continue-from-2k vs from-base), route A/B/C (flow retrain / token
+arm / joint), GPU release.
+
+**Done**: spotted **phase 5b on origin/main** (`03c2b27`,
+"bijou.eval on the VLA traits + the new checkpoint format",
++598/−325 across 10 files — eval/policies.py 584-line rework +
+eval/cli.py + 6 eval test suites). Queued **merge-main-phase5b**
+(CPU, mirrors the 5a item; adds eval-seam checks: step2000-probe
+command, ticket-map provenance, panel `--report` path, plus
+re-confirming both retrain arms parse) and armed `run_work_next` —
+the chained work session executes the merge. Queue validate OK
+depth 3 (18 open). 0 GPU-h.
+
+**Next**: chained work session runs merge-main-phase5b. Owner
+decisions still gate everything GPU: arm pick + route A/B/C
+unblock the retrain launch, GPU release unblocks any launch.*
 
 *Updated 2026-08-15 17:17–17:2xZ (real `date -u` at stamp: 17:18) —
 tick: **quiet hold — GPU owner-reserved and idle (0%), nothing to
@@ -51,56 +80,21 @@ chain into). No posts (nothing owner-facing changed). 0 GPU-h.
 route A/B/C unblock the retrain launch (either arm is one command
 post-merge), GPU release unblocks any launch at all.*
 
-*Updated 2026-08-15 16:50–17:1xZ (real `date -u` at stamp: 17:03) —
-work session: **merge-main-phase5a executed — phase 5a merged, two
-launch-path breaks found + fixed, both retrain arms re-verified
-launch-ready.***
-
-**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
-OWNER** (13:35Z), untouched all session (CPU-only work).
-
-**Steering**: none new — Discord read + inbox empty at boot (16:50);
-the three owner decisions stay pending (arm pick, route A/B/C, GPU
-release).
-
-**Done**: **merge-main-phase5a** (`351c56e` merge, check.py 922
-green; one conflict — upstream inlined the gradflow probe's harness,
-our obsolete `TrainArgs.image_augment` line dropped in favor of
-theirs). Seam findings, all fixed CPU-side: (1) `--expert-init`
-renamed `--flow-decoder-init` (inherit = default = same warm-AE
-semantics) — pre-reg §3 amended, §8 amendment section added; (2)
-**format break**: new `--init-from` refuses legacy
-`bijou_config.json` conversions — both migrated via `convert_legacy`
-(hard links, validate green): `molmoact2_base_corrected_stats_v0_vla`
-+ `molmoact2_grasp_sft_stagec_ar_step2000_vla`; (3) continue-from-2k
-arm made REAL — fresh convert of step2000-hf with the corrected table
-→ `molmoact2_grasp_sft_stagec_ar_step2000_corrected_v1` (trained
-expert `b778bbf2…`, wrist_roll ±157.2 baked + stats_note); (4) both
-arms full-parse green vs the family CLI; (5) image-augment p=0
-bitwise oracle 11/11 + gradflow probe loss oracle 27.8546 exact
-post-merge; (6) `parents[2]` fixture bug still on main — our
-`parents[3]` carry stands. Result post id 1538231709517090876. Queue:
-merge-main-phase5a → done (depth 2, 17 open). 0 GPU-h.
-
-**Next**: `queue_cli.py next` → grasp-sft-bootstrap (gpu-local,
-owner-gated). Everything owner-gated: arm pick + route A/B/C unblock
-the retrain launch (either arm is now one command), GPU release
-unblocks any launch at all. `run_work_next` stays disarmed — no
-CPU-executable items remain.*
-
 ## Utilization footer
+
+Session 2026-08-15 17:28–17:3xZ (tick; 0 GPU-h): phase 5b spotted
+on origin/main (`03c2b27`, bijou.eval VLA rework) →
+merge-main-phase5b queued (CPU, eval-seam checklist) +
+`run_work_next` armed for the chained work session; GPU
+owner-reserved and idle (0%), Discord/inbox/history empty, all
+three owner decisions pending (arm pick, route A/B/C, GPU
+release); queue OK depth 3 (18 open).
 
 Session 2026-08-15 17:17–17:2xZ (tick; 0 GPU-h): quiet hold — GPU
 owner-reserved and idle (0%), no launches, no training processes;
 Discord/inbox/history empty past our own 17:03 phase-5a merge post,
 all three owner decisions pending (arm pick, route A/B/C, GPU
 release); queue validate OK depth 2 (17 open, both items
-owner-gated), `run_work_next` disarmed.
-
-Session 2026-08-15 17:07–17:1xZ (tick; 0 GPU-h): quiet hold — GPU
-owner-reserved and idle (0%), no launches, no training processes;
-Discord/inbox/history empty past our own 17:03 phase-5a merge post,
-all three owner decisions pending; queue OK depth 2 (17 open, both
 owner-gated), `run_work_next` disarmed.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
