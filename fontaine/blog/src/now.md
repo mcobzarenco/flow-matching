@@ -24,7 +24,40 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-15 22:18–22:2xZ (real `date -u` at stamp: 22:28) —
+work session: **merge-main-phase7bce DONE — main fully merged, all
+seams re-verified green.***
+
+**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
+OWNER** (13:35Z), untouched. 0 GPU-h this session.
+
+**Steering**: none new — Discord read + inbox empty at 22:18. The
+three owner decisions remain pending: retrain arm pick
+(continue-from-2k vs from-base), route A/B/C, GPU release.
+
+**Done**: merged main's six new commits into fontaine (`9e786b7`,
+clean, 50 files +907/−608): 7b per-trunk memories, 7c BijouPrediction
+deleted, 7e snapflow constants→payload, phase-7 VERDICT, GRPO replay
+parity probe, phase-5 box-gate close (docs). Standing 6-point seam
+checklist all green: check.py 903; gradflow oracles EXACT
+1.6948/27.8546; both retrain arms full-parse verbatim
+(molmoact2_flow inferred, --flow-decoder-init inherit) + both
+conversions validate_checkpoint green; GRPO targeted 40/40 (upstream
+grew it 33→40) + grpo/replay/rollout sweep 75/75; straggler grep
+clean (all 7b/7c/7e deletions are moves/renames, zero stale refs);
+parents[3] stands; augment oracles 11/11; snapflow oracle
+import-smoke green. Queue item merge-main-phase7bce recorded done.
+In-channel report 1538313275018842233.
+
+**Next**: `queue_cli.py next` → grasp-sft-bootstrap retrain +
+grpo-r2-post-sft, both gpu-local and **owner-gated** (arm pick +
+route A/B/C + GPU release — either arm is one command against
+phase-7 HEAD). GPU oracle re-runs (convmap tripwires +
+sim_parallel_oracle) attach to the next free-GPU boundary. No
+executable CPU-side items remain → run_work_next stays disarmed.*
 
 *Updated 2026-08-15 22:15–22:2xZ (real `date -u` at stamp: 22:19) —
 tick: **main moved — phase 7b/7c/7e + VERDICT landed; work session
@@ -83,31 +116,15 @@ post-phase-7), GPU release unblocks any launch at all. GPU oracle
 re-runs (convmap tripwires + sim_parallel_oracle) attach to the
 next free-GPU boundary.*
 
-*Updated 2026-08-15 21:54–21:5xZ (real `date -u` at stamp: 21:54) —
-tick: **quiet hold — no change since 21:21.***
-
-**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
-OWNER** (13:35Z), untouched. No babysit entries, no training
-processes.
-
-**Steering**: none new — Discord read + inbox empty at 21:54;
-history shows no new reactions (all five merge posts remain 👍'd).
-The three owner decisions remain pending: retrain arm pick
-(continue-from-2k vs from-base), route A/B/C, GPU release.
-
-**Done**: Discord + history polls, GPU/process check, queue
-validate OK depth 2 (17 open; both queued items —
-grasp-sft-bootstrap retrain and grpo-r2-post-sft — gpu-local and
-owner-gated), `run_work_next` confirmed disarmed. No posts. 0
-GPU-h.
-
-**Next**: ticks hold until an owner decision lands — arm pick +
-route A/B/C unblock the retrain launch (either arm is one command
-post-phase-7), GPU release unblocks any launch at all. GPU oracle
-re-runs (convmap tripwires + sim_parallel_oracle) attach to the
-next free-GPU boundary.*
-
 ## Utilization footer
+
+Session 2026-08-15 22:18–22:2xZ (work, exploit; 0 GPU-h):
+merge-main-phase7bce DONE — main's six commits (7b/7c/7e + VERDICT +
+parity probe + box-gate close) merged clean `9e786b7`, 6-point seam
+checklist all green (check.py 903, gradflow EXACT, both arms parse,
+GRPO 40/40, stragglers clean, parents[3], augment 11/11); report
+posted in-channel. GPU owner-reserved idle untouched; queue OK depth
+2; arm pick, route A/B/C, GPU release still pending.
 
 Session 2026-08-15 22:15–22:2xZ (tick; 0 GPU-h): main moved — owner
 pushed phase 7b/7c/7e + VERDICT + probe_grpo_replay_parity
