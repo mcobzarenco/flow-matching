@@ -1,6 +1,31 @@
 # Now
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-15 22:52–22:5xZ (real `date -u` at stamp: 22:53) —
+tick: **quiet hold — no change.***
+
+**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
+OWNER** (13:35Z), untouched. Main unmoved (`origin/main` =
+`1fb709a`, fully merged). 0 GPU-h.
+
+**Steering**: none new — Discord read + inbox empty at 22:53;
+history shows no new reactions (the 22:27 phase-7bce merge report
+still unreacted; the four earlier merge posts remain 👍'd). The
+three owner decisions remain pending: retrain arm pick
+(continue-from-2k vs from-base), route A/B/C, GPU release.
+
+**Done**: routine tick only — Discord + history polls, GPU/process
+check, fetch confirms main unmoved, queue validate OK depth 2 (17
+open), `run_work_next` stays disarmed (both queued items gpu-local
+and owner-gated, no executable CPU-side items). No posts.
+
+**Next**: unchanged — ticks hold until an owner decision lands (arm
+pick + route A/B/C unblock the retrain launch, either arm is one
+command against phase-7 HEAD; GPU release unblocks any launch). GPU
+oracle re-runs (convmap tripwires + sim_parallel_oracle) attach to
+the next free-GPU boundary.*
 
 *Updated 2026-08-15 22:42–22:4xZ (real `date -u` at stamp: 22:42) —
 tick: **quiet hold — no change.***
@@ -54,39 +79,14 @@ against phase-7 HEAD), GPU release unblocks any launch at all. GPU
 oracle re-runs (convmap tripwires + sim_parallel_oracle) attach to
 the next free-GPU boundary.*
 
-*Updated 2026-08-15 22:18–22:2xZ (real `date -u` at stamp: 22:28) —
-work session: **merge-main-phase7bce DONE — main fully merged, all
-seams re-verified green.***
-
-**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
-OWNER** (13:35Z), untouched. 0 GPU-h this session.
-
-**Steering**: none new — Discord read + inbox empty at 22:18. The
-three owner decisions remain pending: retrain arm pick
-(continue-from-2k vs from-base), route A/B/C, GPU release.
-
-**Done**: merged main's six new commits into fontaine (`9e786b7`,
-clean, 50 files +907/−608): 7b per-trunk memories, 7c BijouPrediction
-deleted, 7e snapflow constants→payload, phase-7 VERDICT, GRPO replay
-parity probe, phase-5 box-gate close (docs). Standing 6-point seam
-checklist all green: check.py 903; gradflow oracles EXACT
-1.6948/27.8546; both retrain arms full-parse verbatim
-(molmoact2_flow inferred, --flow-decoder-init inherit) + both
-conversions validate_checkpoint green; GRPO targeted 40/40 (upstream
-grew it 33→40) + grpo/replay/rollout sweep 75/75; straggler grep
-clean (all 7b/7c/7e deletions are moves/renames, zero stale refs);
-parents[3] stands; augment oracles 11/11; snapflow oracle
-import-smoke green. Queue item merge-main-phase7bce recorded done.
-In-channel report 1538313275018842233.
-
-**Next**: `queue_cli.py next` → grasp-sft-bootstrap retrain +
-grpo-r2-post-sft, both gpu-local and **owner-gated** (arm pick +
-route A/B/C + GPU release — either arm is one command against
-phase-7 HEAD). GPU oracle re-runs (convmap tripwires +
-sim_parallel_oracle) attach to the next free-GPU boundary. No
-executable CPU-side items remain → run_work_next stays disarmed.*
-
 ## Utilization footer
+
+Session 2026-08-15 22:52–22:5xZ (tick; 0 GPU-h): quiet hold — no
+change. Discord read + inbox empty, no new reactions (22:27 merge
+post still unreacted), main unmoved at `1fb709a` (fully merged),
+GPU owner-reserved idle (0%) untouched, queue OK depth 2 (17 open),
+`run_work_next` disarmed; arm pick, route A/B/C, GPU release still
+pending.
 
 Session 2026-08-15 22:42–22:4xZ (tick; 0 GPU-h): quiet hold — no
 change. Discord read + inbox empty, no new reactions (22:27 merge
@@ -94,13 +94,6 @@ post still unreacted), main unmoved at `1fb709a` (fully merged),
 GPU owner-reserved idle (0%) untouched, queue OK depth 2 (17 open),
 `run_work_next` disarmed; arm pick, route A/B/C, GPU release still
 pending.
-
-Session 2026-08-15 22:31–22:3xZ (tick; 0 GPU-h): quiet hold —
-post-merge steady state; boot audit committed the orphaned
-regenerated queue.md from the 22:18Z work session. Discord read +
-inbox empty, no new reactions, main unmoved, GPU owner-reserved idle
-(0%) untouched, queue OK depth 2 (17 open), `run_work_next`
-disarmed; arm pick, route A/B/C, GPU release still pending.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
