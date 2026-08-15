@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-15T19:44:30Z",
+ "updated_utc": "2026-08-15T21:05:00Z",
  "depth_reason": "depth 2: grasp-sft-bootstrap (retrain arm owner-pending) + grpo-r2-post-sft (re-based per A2; token-sft arm item blocked owner-gated). merge-main-phase6 closed 19:4xZ 08-15.",
  "items": [
   {
@@ -1795,7 +1795,16 @@
    "prereg": null,
    "owner_hold": false,
    "boundary": "Queued 19:3xZ 08-15 tick on seeing 393163f on origin/main (phase-6 drop, pushed 19:07:58Z). CPU-only, no GPU touch (owner reserve stands). Urgent same as 5a/5b/5c: owner arm/route decision may land any time and the launch + eval + convert paths must be green against the old-world deletion first; upstream touched three of our own files (sim_encoder_ood_probe, both probes), so a diff-audit of those is part of the merge. || DONE 19:4xZ 08-15 work session (19:33 boot): merged clean (no conflicts), check.py 902 green (925 minus the 23 retired test_vla_parity tests; five loss oracles remain the gate). All 7 seams verified: (1) our-files diff-audit = pure API migration (sim_encoder_ood_probe: from_checkpoint->load_vla+read_metadata, model.decoder->model.ar_decoder, info.backbone->metadata.backbone_id; ar_parity probe: hand-rolled stack->MolmoAct2DiscreteStack.load; gradflow probe: BijouModel harness->family classes GemmaFlowVLA/GemmaARVLA, re-anchored upstream) \u2014 all imports green; (2) gradflow oracles EXACT: flow 1.6948 + ar_backbone 27.8546, all partition checks PASS (CPU run); (3) both retrain arms full-parse green verbatim, family checkpoint-inferred molmoact2_flow, flow_decoder_init=inherit; (4) convert_legacy smoke on real stage-C step2000 legacy dir rc=0, validate_checkpoint OK, output bit-identical (recursive hash sweep 0 diffs) to the banked 5a conversion; legacy refusal LOUD = SystemExit naming the exact convert_legacy command; (5) GRPO seam 33/33 targeted (test_grpo_loop + test_molmo_flow_integration on MolmoAct2FlowVLA); (6) parents[3] carry stands (bank_processor_goldens.py untouched by phase 6, last touch our merge commit; cherry-pick note to main stands); (7) straggler grep clean \u2014 only a docstring mention in materialize_joint_ar_view.py, no code use of deleted symbols. BONUS: er_60k/step_060000 (reference trunk, still legacy) converted -> ~/checkpoints/converted/er_60k_step_060000_vla (molmo2_ar, allenai/Molmo2-ER, step 60000, mean/std stats carried, validate OK) \u2014 OOD-probe/sim100/rig-mixture mounts stay one-command-ready post-deletion. Pre-reg section-10 amendment added (posts/2026-08-15-prereg-grasp-sft-retrain-corrected-table.md). Launch remains owner-gated (arm pick + route A/B/C + GPU release)."
+  },
+  {
+   "id": "merge-main-phase7",
+   "class": "cpu",
+   "status": "queued",
+   "title": "Merge main phases 7a+7d (a460258 'delete the ObservationEncoder ABC - encoders are plain modules' + fb74f7f 'extract suffix_positions + continue_molmo2_suffix (3 copies -> 1)', +191/-256 across 8 files, all in bijou/modelling: interface.py 94-line rework, new decoders/ar_suffix.py, decoders ar_gemma/ar_molmo2/ar_molmoact2, encoders gemma4/molmo2/molmoact2; NO fontaine/probes files in the diff) into fontaine; re-run check.py; re-verify the standing seams: (1) gradflow loss oracles EXACT post-merge - flow 1.6948, ar_backbone 27.8546 (interface.py + encoder/decoder internals moved under the probe); (2) both retrain arms full-parse green verbatim (frozen section-3, family molmoact2_flow, --flow-decoder-init inherit) - ar_molmoact2 + molmoact2 encoder are in the diff; (3) GRPO seam targeted suite (test_grpo_loop + test_molmo_flow_integration) - molmo2/molmoact2 suffix path rewired through continue_molmo2_suffix; (4) straggler grep: ObservationEncoder + any deleted interface.py symbols across fontaine/ + probes/ + sim/ - migrate stragglers; (5) parents[3] carry check (goldens file not in the diff, should stand); (6) image-augment p=0 oracle 11/11 if encoders' preprocess seam moved.",
+   "prereg": null,
+   "owner_hold": false,
+   "boundary": "Queued 21:0xZ 08-15 tick on seeing a460258 on origin/main. CPU-only, GPU owner reserve untouched. Same urgency class as 5a-6: owner arm/route/release decision may land any time and both retrain launch commands must stay green against the encoder/decoder rework."
   }
  ],
- "updated": "2026-08-15 19:3xZ tick: queued merge-main-phase6 (393163f on origin/main); armed run_work_next"
+ "updated": "2026-08-15T21:05:00Z"
 }

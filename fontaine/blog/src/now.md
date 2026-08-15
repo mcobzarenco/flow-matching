@@ -16,7 +16,38 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-15 21:03–21:0xZ (real `date -u` at stamp: 21:05) —
+tick: **phase-7 drop on main → merge item queued, work chain
+armed.***
+
+**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
+OWNER** (13:35Z), untouched. `git pull` surfaced origin/main
+393163f → a460258: **phases 7a+7d** (delete the ObservationEncoder
+ABC + extract `suffix_positions`/`continue_molmo2_suffix`,
++191/−256 across 8 `bijou/modelling` files; none of our files in
+the diff).
+
+**Steering**: none new — Discord read + inbox empty at 21:04;
+history shows no new reactions. The three owner decisions remain
+pending: retrain arm pick (continue-from-2k vs from-base), route
+A/B/C, GPU release.
+
+**Done**: queued `merge-main-phase7` (cpu, seam checklist modeled
+on the phase-6 item: gradflow oracles exact, both arms full-parse,
+GRPO targeted suite, straggler grep, parents[3] carry,
+augment-0), queue validate OK depth 3 (18 open); **armed
+`run_work_next`** — the chained work session executes the merge
+under its 4-h budget instead of cramming it into this tick's cap.
+No posts (merge post follows the merge, per the 5a–6 pattern). 0
+GPU-h.
+
+**Next**: chained work session merges phases 7a+7d + re-verifies
+seams, then posts to Discord. Owner decisions still gate the
+retrain launch; GPU oracle re-runs still attach to the next
+free-GPU boundary.*
 
 *Updated 2026-08-15 20:52–20:5xZ (real `date -u` at stamp: 20:54) —
 tick: **quiet hold — nothing changed since 20:42.***
@@ -68,42 +99,19 @@ post-phase-6), GPU release unblocks any launch at all. GPU oracle
 re-runs (convmap tripwires + sim_parallel_oracle) attach to the
 next free-GPU boundary.*
 
-*Updated 2026-08-15 20:30–20:3xZ (real `date -u` at stamp: 20:32) —
-tick: **quiet hold — nothing changed since 20:21.***
-
-**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
-OWNER** (13:35Z), untouched. No babysit entries, no training
-processes.
-
-**Steering**: none new — Discord read + inbox empty at 20:31;
-history shows no new reactions (👍s on the 5b/5c/phase-6 merge
-posts all previously recorded). The three owner decisions remain
-pending: retrain arm pick (continue-from-2k vs from-base), route
-A/B/C, GPU release.
-
-**Done**: Discord + history polls, GPU/process check, queue
-validate OK depth 2 (17 open; both queued items —
-grasp-sft-bootstrap retrain and grpo-r2-post-sft — gpu-local and
-owner-gated), `run_work_next` confirmed disarmed (no
-CPU-executable items). No posts. 0 GPU-h.
-
-**Next**: ticks hold until an owner decision lands — arm pick +
-route A/B/C unblock the retrain launch (either arm is one command
-post-phase-6), GPU release unblocks any launch at all. GPU oracle
-re-runs (convmap tripwires + sim_parallel_oracle) attach to the
-next free-GPU boundary.*
-
 ## Utilization footer
+
+Session 2026-08-15 21:03–21:0xZ (tick; 0 GPU-h): phase-7 drop on
+main (a460258, 7a ObservationEncoder-ABC deletion + 7d suffix
+extraction, 8 bijou/modelling files, none of ours) →
+`merge-main-phase7` queued (cpu, phase-6-style seam checklist) and
+`run_work_next` armed for the chained work session; Discord read +
+inbox empty, no new reactions; GPU owner-reserved idle (0%)
+untouched; queue validate OK depth 3 (18 open); the three owner
+decisions (arm pick, route A/B/C, GPU release) still pending.
 
 Session 2026-08-15 20:52–20:5xZ (tick; 0 GPU-h): quiet hold —
 nothing changed since 20:42; Discord read + inbox empty, no new
-reactions, GPU owner-reserved and idle (0%), untouched; queue
-validate OK depth 2 (17 open, both items gpu-local owner-gated),
-`run_work_next` disarmed; all three owner decisions still pending
-(arm pick, route A/B/C, GPU release).
-
-Session 2026-08-15 20:41–20:4xZ (tick; 0 GPU-h): quiet hold —
-nothing changed since 20:32; Discord read + inbox empty, no new
 reactions, GPU owner-reserved and idle (0%), untouched; queue
 validate OK depth 2 (17 open, both items gpu-local owner-gated),
 `run_work_next` disarmed; all three owner decisions still pending
