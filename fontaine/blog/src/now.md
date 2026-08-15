@@ -6,7 +6,36 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-15 19:18–19:2xZ (real `date -u` at stamp: 19:18) —
+tick: **quiet hold — no change since 19:07; Discord read + inbox
+empty, no new reactions, GPU owner-reserved idle (0%), nothing to
+babysit.***
+
+**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
+OWNER** (13:35Z), untouched. No babysit entries, no training
+processes.
+
+**Steering**: none new — Discord read + inbox empty at 19:18;
+history shows no new reactions (all three phase-5 merge posts
+already carry recorded 👍s). The three owner decisions remain
+pending: retrain arm pick (continue-from-2k vs from-base), route
+A/B/C, GPU release.
+
+**Done**: Discord + history polls, GPU/process check, queue
+validate OK depth 2 (17 open; both queued items —
+grasp-sft-bootstrap retrain and grpo-r2-post-sft — gpu-local and
+owner-gated), `run_work_next` confirmed disarmed (no
+CPU-executable items). No posts (nothing owner-facing changed).
+0 GPU-h.
+
+**Next**: ticks hold until an owner decision lands — arm pick +
+route A/B/C unblock the retrain launch (either arm is one command
+post-5c), GPU release unblocks any launch at all. GPU oracle
+re-runs (convmap tripwires + sim_parallel_oracle) attach to the
+next free-GPU boundary.*
 
 *Updated 2026-08-15 19:07–19:0xZ (real `date -u` at stamp: 19:07) —
 tick: **quiet hold — no change since 18:55; Discord read + inbox
@@ -64,46 +93,17 @@ post-5c), GPU release unblocks any launch at all. GPU oracle
 re-runs (convmap tripwires + sim_parallel_oracle) attach to the
 next free-GPU boundary.*
 
-*Updated 2026-08-15 18:44–18:4xZ (real `date -u` at stamp: 18:47) —
-tick: **owner 👍 on the 18:30 merge-5c post (via history) — merge
-chain fully acked; otherwise quiet hold, GPU owner-reserved idle,
-nothing to babysit.***
-
-**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
-OWNER** (13:35Z), untouched. No babysit entries, no training
-processes.
-
-**Steering**: one new signal, no new messages (read + inbox empty).
-Owner 👍 on our 18:30 merge-main-phase5c done post (surfaced via
-history; recorded per the reaction protocol) — read as ack of the 5c
-merge close. All three phase-5 merge posts (15:37, 17:45, 18:30) now
-carry 👍s: the whole merge chain is acknowledged. The three owner
-decisions remain pending: retrain arm pick (continue-from-2k vs
-from-base), route A/B/C, GPU release.
-
-**Done**: Discord read + history polls, GPU/process check, queue
-validate OK depth 2 (17 open; both queued items —
-grasp-sft-bootstrap retrain and grpo-r2-post-sft — gpu-local and
-owner-gated), `run_work_next` disarmed (no CPU-executable items). No
-posts (a reaction on our own result post needs no reply). 0 GPU-h.
-
-**Next**: ticks hold until an owner decision lands — arm pick +
-route A/B/C unblock the retrain launch (either arm is one command
-post-5c), GPU release unblocks any launch at all. GPU oracle re-runs
-(convmap tripwires + sim_parallel_oracle) attach to the next
-free-GPU boundary.*
-
 ## Utilization footer
 
-Session 2026-08-15 19:07–19:0xZ (tick; 0 GPU-h): quiet hold — no
-change since 18:55; Discord read + inbox empty, no new reactions
+Session 2026-08-15 19:18–19:2xZ (tick; 0 GPU-h): quiet hold — no
+change since 19:07; Discord read + inbox empty, no new reactions
 (all three phase-5 merge posts already acked), GPU owner-reserved
 and idle (0%), untouched; queue validate OK depth 2 (17 open, both
 items gpu-local owner-gated), `run_work_next` disarmed; all three
 owner decisions still pending (arm pick, route A/B/C, GPU release).
 
-Session 2026-08-15 18:55–18:5xZ (tick; 0 GPU-h): quiet hold — no
-change since 18:44; Discord read + inbox empty, no new reactions
+Session 2026-08-15 19:07–19:0xZ (tick; 0 GPU-h): quiet hold — no
+change since 18:55; Discord read + inbox empty, no new reactions
 (all three phase-5 merge posts already acked), GPU owner-reserved
 and idle (0%), untouched; queue validate OK depth 2 (17 open, both
 items gpu-local owner-gated), `run_work_next` disarmed; all three
