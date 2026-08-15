@@ -4,7 +4,32 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-15 17:57–18:0xZ (real `date -u` at stamp: 17:57) —
+tick: **quiet hold — no change since 17:46; GPU owner-reserved and
+idle (0%), nothing to babysit, no launches.***
+
+**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
+OWNER** (13:35Z), untouched. No babysit entries, no training
+processes.
+
+**Steering**: none new — Discord read + inbox empty at 17:57;
+history shows nothing past our own 17:45 phase-5b merge post (last
+owner activity remains the recorded 👍 on the 15:37 merge post).
+All three owner decisions still pending: retrain arm pick
+(continue-from-2k vs from-base), route A/B/C (flow retrain / token
+arm / joint), GPU release.
+
+**Done**: Discord + history polls, GPU/process check, queue validate
+OK depth 2 (17 open, both queued items owner-gated),
+`run_work_next` confirmed disarmed (no CPU-executable items to
+chain into). No posts (nothing owner-facing changed). 0 GPU-h.
+
+**Next**: ticks hold until an owner decision lands — arm pick +
+route A/B/C unblock the retrain launch (either arm is one command
+post-5b), GPU release unblocks any launch at all.*
 
 *Updated 2026-08-15 17:46–17:5xZ (real `date -u` at stamp: 17:47) —
 tick: **quiet hold — GPU owner-reserved and idle (0%), nothing to
@@ -69,42 +94,14 @@ Queue item done (depth 2, 17 open). 0 GPU-h.
 launch, both owner-gated (arm pick + route A/B/C + GPU release);
 either retrain arm is one command post-5b. No dated boundaries.*
 
-*Updated 2026-08-15 17:28–17:3xZ (real `date -u` at stamp: 17:30) —
-tick: **phase 5b landed on main → merge item queued, work session
-chained. GPU still owner-reserved and idle.***
-
-**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
-OWNER** (13:35Z), untouched. No babysit entries, no training
-processes.
-
-**Steering**: none new — Discord read + inbox empty at 17:29;
-history shows nothing past our own 17:03 phase-5a merge post. All
-three owner decisions still pending: retrain arm pick
-(continue-from-2k vs from-base), route A/B/C (flow retrain / token
-arm / joint), GPU release.
-
-**Done**: spotted **phase 5b on origin/main** (`03c2b27`,
-"bijou.eval on the VLA traits + the new checkpoint format",
-+598/−325 across 10 files — eval/policies.py 584-line rework +
-eval/cli.py + 6 eval test suites). Queued **merge-main-phase5b**
-(CPU, mirrors the 5a item; adds eval-seam checks: step2000-probe
-command, ticket-map provenance, panel `--report` path, plus
-re-confirming both retrain arms parse) and armed `run_work_next` —
-the chained work session executes the merge. Queue validate OK
-depth 3 (18 open). 0 GPU-h.
-
-**Next**: chained work session runs merge-main-phase5b. Owner
-decisions still gate everything GPU: arm pick + route A/B/C
-unblock the retrain launch, GPU release unblocks any launch.*
-
 ## Utilization footer
 
-Session 2026-08-15 17:46–17:5xZ (tick; 0 GPU-h): quiet hold — GPU
-owner-reserved and idle (0%), no launches, no training processes;
-Discord/inbox/history empty past our own 17:45 phase-5b merge post,
-all three owner decisions pending (arm pick, route A/B/C, GPU
-release); queue validate OK depth 2 (17 open, both items
-owner-gated), `run_work_next` disarmed.
+Session 2026-08-15 17:57–18:0xZ (tick; 0 GPU-h): quiet hold, no
+change since 17:46 — GPU owner-reserved and idle (0%), no launches,
+no training processes; Discord/inbox/history empty past our own
+17:45 phase-5b merge post, all three owner decisions pending (arm
+pick, route A/B/C, GPU release); queue validate OK depth 2 (17
+open, both items owner-gated), `run_work_next` disarmed.
 
 Session 2026-08-15 17:33–17:4xZ (work, exploit; 0 GPU-h):
 merge-main-phase5b DONE — `03c2b27` merged clean, check.py 924
