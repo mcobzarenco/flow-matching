@@ -17,7 +17,40 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-15 21:07–21:1xZ (real `date -u` at stamp: 21:16) —
+work session: **merge-main-phase7 DONE — phases 7a+7d merged, all
+seams green.***
+
+**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
+OWNER** (13:35Z), untouched. CPU-only session.
+
+**Steering**: none new — Discord read + inbox empty at 21:08. The
+three owner decisions remain pending: retrain arm pick
+(continue-from-2k vs from-base), route A/B/C, GPU release.
+
+**Done**: merged origin/main a460258 (7a ObservationEncoder-ABC
+deletion + 7d suffix extraction) into fontaine — merge commit
+f90f15b; one conflict (interface.py import block: our augment-seam
+import kept, dead RopeParameters import dropped — 7a moved it out);
+check.py 902 green (pre-commit); 6-point seam verify ALL GREEN —
+gradflow oracles EXACT (flow 1.6948 / ar_backbone 27.8546, all
+partitions PASS), both retrain arms full-parse verbatim (family
+checkpoint-inferred molmoact2_flow, --flow-decoder-init inherit,
+both arm conversions load), GRPO targeted 33/33, straggler grep
+clean (no ObservationEncoder anywhere; StreamGeometry now lives
+upstream in encoders/gemma4.py), parents[3] goldens carry stands,
+image-augment oracles 11/11. Result posted in-channel
+(1538295137140998165). Queue item marked done (validate OK depth 2,
+17 open). 0 GPU-h.
+
+**Next**: `queue_cli.py next` → grasp-sft-bootstrap (gpu-local,
+owner-gated). Both retrain launch commands stay green against the
+encoder/decoder rework; launch still gated on owner arm pick + route
+A/B/C + GPU release. GPU oracle re-runs (convmap tripwires +
+sim_parallel_oracle) attach to the next free-GPU boundary.*
 
 *Updated 2026-08-15 21:03–21:0xZ (real `date -u` at stamp: 21:05) —
 tick: **phase-7 drop on main → merge item queued, work chain
@@ -74,32 +107,16 @@ post-phase-6), GPU release unblocks any launch at all. GPU oracle
 re-runs (convmap tripwires + sim_parallel_oracle) attach to the
 next free-GPU boundary.*
 
-*Updated 2026-08-15 20:41–20:4xZ (real `date -u` at stamp: 20:42) —
-tick: **quiet hold — nothing changed since 20:32.***
-
-**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
-OWNER** (13:35Z), untouched. No babysit entries, no training
-processes.
-
-**Steering**: none new — Discord read + inbox empty at 20:42;
-history shows no new reactions (👍s on the 5b/5c/phase-6 merge
-posts all previously recorded). The three owner decisions remain
-pending: retrain arm pick (continue-from-2k vs from-base), route
-A/B/C, GPU release.
-
-**Done**: Discord + history polls, GPU/process check, queue
-validate OK depth 2 (17 open; both queued items —
-grasp-sft-bootstrap retrain and grpo-r2-post-sft — gpu-local and
-owner-gated), `run_work_next` confirmed disarmed (no
-CPU-executable items). No posts. 0 GPU-h.
-
-**Next**: ticks hold until an owner decision lands — arm pick +
-route A/B/C unblock the retrain launch (either arm is one command
-post-phase-6), GPU release unblocks any launch at all. GPU oracle
-re-runs (convmap tripwires + sim_parallel_oracle) attach to the
-next free-GPU boundary.*
-
 ## Utilization footer
+
+Session 2026-08-15 21:07–21:1xZ (work; exploit; 0 GPU-h):
+merge-main-phase7 DONE — phases 7a+7d (a460258) merged into fontaine
+(f90f15b, one interface.py import conflict resolved), check.py 902
+green, 6-point seam verify all green (gradflow 1.6948/27.8546 exact,
+both retrain arms full-parse molmoact2_flow, GRPO 33/33, straggler
+grep clean, parents[3] stands, augment oracles 11/11); posted
+in-channel; queue depth 2 (17 open); GPU owner-reserved untouched;
+arm/route/GPU-release decisions still pending.
 
 Session 2026-08-15 21:03–21:0xZ (tick; 0 GPU-h): phase-7 drop on
 main (a460258, 7a ObservationEncoder-ABC deletion + 7d suffix

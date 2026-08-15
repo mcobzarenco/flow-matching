@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-15T19:44:30Z
+**Updated:** 2026-08-15T21:16:00Z
 
 **Depth call:** depth 2: grasp-sft-bootstrap (retrain arm owner-pending) + grpo-r2-post-sft (re-based per A2; token-sft arm item blocked owner-gated). merge-main-phase6 closed 19:4xZ 08-15.
 
-**17 open** (Live 0 · Queued 2 · Blocked 15 · Done 182)
+**17 open** (Live 0 · Queued 2 · Blocked 15 · Done 183)
 
 ## 🔴 Live (0)
 
@@ -258,9 +258,23 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (182)
+## ✅ Done (183)
 
 *closed — the full record stays in each fold*
+
+**`merge-main-phase7`** · `cpu`
+
+Merge main phases 7a+7d (a460258 'delete the ObservationEncoder ABC - encoders are plain modules' + fb74f7f 'extract suffix_positions + continue_molmo2_suffix (3 copies -&gt; 1)', +191/-256 across 8 files, all in bijou/modelling: in…
+
+**boundary:** Queued 21:0xZ 08-15 tick on seeing a460258 on origin/main. CPU-only, GPU owner reserve untouched. Same urgency class as 5a-6: owner arm/route/release decision may land any time and both retrain launch commands must stay green against the encoder/decoder rework. || DONE 21:1xZ 08-15 (work session): merged f90f15b, one conflict (interface.py imports; augment seam kept, dead RopeParameters import dropped), check.py 902 green, 6-point seam verify all green (gradflow 1.6948/27.8546 exact, both arms full-parse molmoact2_flow, GRPO 33/33, straggler grep clean, parents[3] stands, augment oracles 11/11); posted 1538295137140998165.
+
+<details><summary>full record</summary>
+
+Merge main phases 7a+7d (a460258 'delete the ObservationEncoder ABC - encoders are plain modules' + fb74f7f 'extract suffix_positions + continue_molmo2_suffix (3 copies -&gt; 1)', +191/-256 across 8 files, all in bijou/modelling: interface.py 94-line rework, new decoders/ar_suffix.py, decoders ar_gemma/ar_molmo2/ar_molmoact2, encoders gemma4/molmo2/molmoact2; NO fontaine/probes files in the diff) into fontaine; re-run check.py; re-verify the standing seams: (1) gradflow loss oracles EXACT post-merge - flow 1.6948, ar_backbone 27.8546 (interface.py + encoder/decoder internals moved under the probe); (2) both retrain arms full-parse green verbatim (frozen section-3, family molmoact2_flow, --flow-decoder-init inherit) - ar_molmoact2 + molmoact2 encoder are in the diff; (3) GRPO seam targeted suite (test_grpo_loop + test_molmo_flow_integration) - molmo2/molmoact2 suffix path rewired through continue_molmo2_suffix; (4) straggler grep: ObservationEncoder + any deleted interface.py symbols across fontaine/ + probes/ + sim/ - migrate stragglers; (5) parents[3] carry check (goldens file not in the diff, should stand); (6) image-augment p=0 oracle 11/11 if encoders' preprocess seam moved.
+
+</details>
+
+---
 
 **`merge-main-phase6`** · `cpu`
 
