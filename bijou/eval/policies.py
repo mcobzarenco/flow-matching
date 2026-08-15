@@ -1288,14 +1288,15 @@ class BijouPolicy:
                 self.sample_draws,
                 shape,
             ).to(self.device)
-            stacked = model.flow_decoder.predict_chunk(
+            tiled_actions, _ = model.flow_decoder.predict_chunk(
                 tile_memory(memory, self.sample_draws),
                 tile_stats(batch, self.sample_draws),
                 noise=noise,
                 num_steps=self.sample_steps,
                 method=self.method,
                 target_time=self.target_time,
-            ).actions.reshape(self.sample_draws, len(items), *shape)
+            )
+            stacked = tiled_actions.reshape(self.sample_draws, len(items), *shape)
             means, self.last_draws = collapse_draws(stacked)
             return means, None
         if self.ar_temperature is not None:
@@ -1376,7 +1377,7 @@ class BijouPolicy:
                 ],
                 dim=1,
             ).to(self.device)
-            prediction = model.flow_decoder.predict_chunk(
+            sde_actions, _ = model.flow_decoder.predict_chunk(
                 memory,
                 batch,
                 noise=sde_noise,
@@ -1385,7 +1386,7 @@ class BijouPolicy:
                 sde_noise_level=self.sde_noise_level,
                 sde_step_noise=step_noise,
             )
-            return [chunk.cpu() for chunk in prediction.actions], None
+            return [chunk.cpu() for chunk in sde_actions], None
         if self.capture_token_rows:
             # Greedy decode WITH the capture surface: the trait block
             # decode is compute-identical to the plain AR path
@@ -1442,14 +1443,14 @@ class BijouPolicy:
                     with_grad=False,
                     retain_cache=False,
                 )
-                actions = model.flow_decoder.predict_chunk(
+                actions, _ = model.flow_decoder.predict_chunk(
                     memory,
                     batch,
                     noise=noise,
                     num_steps=self.sample_steps,
                     method=self.method,
                     target_time=self.target_time,
-                ).actions
+                )
             else:
                 actions = self.flow.predict_flow(
                     batch,

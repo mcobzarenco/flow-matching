@@ -52,7 +52,6 @@ from torch import Tensor, nn
 
 from ..encoders.molmo2 import Molmo2Memory
 from ..interface import (
-    BijouPrediction,
     CollatedBatch,
     SamplingMethod,
 )
@@ -796,7 +795,7 @@ class MolmoFlowDecoder(nn.Module):
         noise: Tensor | None = None,
         num_steps: int | None = None,
         method: SamplingMethod = SamplingMethod.EULER,
-    ) -> BijouPrediction:
+    ) -> tuple[Tensor, Tensor]:
         """RAW-unit chunk prediction — their serving tail on our seam:
         extract per-layer KV off the prefix cache, integrate (default =
         the checkpoint's recorded ``num_flow_steps``, Euler — their
@@ -805,10 +804,15 @@ class MolmoFlowDecoder(nn.Module):
         ``batch`` stats are deliberately unused — normalization is
         decoder-owned (§8.13 decision 6).
 
+        Returns ``(actions, noise)`` — the raw natural product; the
+        family wraps it. ``noise`` is ALWAYS the initial draw the
+        solver integrated (supplied or drawn).
+
         Shapes:
-        - ``noise`` (when given): [B, action_horizon, max_action_dim]
-        - returns: BijouPrediction actions [B, n_action_steps,
-          action_dim] fp32 raw units; generations None
+        - ``noise`` (given or returned): [B, action_horizon,
+          max_action_dim] — the decoder's own geometry
+        - returns actions: [B, n_action_steps, action_dim] fp32 raw
+          units
         """
         del batch  # stats intentionally unused; signature mirrors flow's
         runtime = self._configured()
@@ -842,7 +846,7 @@ class MolmoFlowDecoder(nn.Module):
         # BACK to the sampled dtype, then fp32 — the bf16 quantization is
         # part of the reference output when the expert runs bf16.
         actions = unnormalized.to(sliced.dtype).to(torch.float32)
-        return BijouPrediction(actions=actions, generations=None, noise=noise)
+        return actions, noise
 
     def iter_blocks(self) -> Iterator[MolmoFlowBlock]:
         for block in self.blocks:

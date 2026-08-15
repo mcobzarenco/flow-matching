@@ -194,7 +194,7 @@ class GemmaFlowVLA(FlowVLA[GemmaInputs]):
             with_grad=False,
             retain_cache=False,
         )
-        prediction = self.flow_decoder.predict_chunk(
+        actions, drawn = self.flow_decoder.predict_chunk(
             memory,
             batch,
             generator=generator,
@@ -202,8 +202,7 @@ class GemmaFlowVLA(FlowVLA[GemmaInputs]):
             num_steps=num_steps,
             method=method,
         )
-        assert prediction.noise is not None  # flow decodes always carry the draw
-        return FlowPrediction(actions=prediction.actions, noise=prediction.noise)
+        return FlowPrediction(actions=actions, noise=drawn)
 
     @override
     def param_groups(self) -> dict[str, list[nn.Parameter]]:

@@ -54,7 +54,6 @@ from torch import Tensor, nn
 
 from ..encoders.gemma4 import GemmaMemory
 from ..interface import (
-    BijouPrediction,
     CollatedBatch,
     MemoryStream,
     SamplingMethod,
@@ -711,22 +710,32 @@ class FlowDecoder(nn.Module):
         target_time: float | None = None,
         sde_noise_level: float | None = None,
         sde_step_noise: Tensor | None = None,
-    ) -> BijouPrediction:
-        """RAW-unit chunk prediction (BijouPrediction, generations None —
-        flow has no text surface): normalize the batch's state with its
+    ) -> tuple[Tensor, Tensor]:
+        """RAW-unit chunk prediction: normalize the batch's state with its
         per-sample stats, integrate the field, and unnormalize with the
         action stats. ``num_steps``/``method``/``target_time`` are
         flow-specific solver knobs (other decoder kinds have none).
 
+        Returns ``(actions, noise)`` — the raw natural product; the
+        family wraps it into its prediction struct. ``noise`` is ALWAYS
+        the initial draw the solver actually integrated (supplied or
+        drawn) — paired re-decodes must reuse it, or sampling variance
+        floors any conditioning-sensitivity signal.
+
         ``sde_noise_level`` routes the decode through
         :meth:`sample_actions_sde` (Euler-only, no φ_s) with the same
         normalization seam — ``method`` must be EULER and ``target_time``
-        None so an SDE read can never silently wear ODE solver knobs."""
+        None so an SDE read can never silently wear ODE solver knobs.
+
+        Shapes:
+          - returns actions: [B, chunk, action_dim] — RAW action units
+          - returns noise: [B, chunk, action_dim] — normalized units
+        """
         state = (batch.state - batch.state_stats.mean) / batch.state_stats.std
         if noise is None:
             # The identical draw sample_actions would make (same shape/
             # dtype/device/generator ⇒ bit-exact result and generator
-            # consumption) — made here so the prediction can carry it.
+            # consumption) — made here so the return can carry it.
             noise = torch.randn(
                 state.shape[0],
                 self.config.chunk_size,
@@ -772,7 +781,7 @@ class FlowDecoder(nn.Module):
             sampled.float() * batch.action_stats.std[:, None, :]
             + batch.action_stats.mean[:, None, :]
         )
-        return BijouPrediction(actions=chunks, generations=None, noise=noise)
+        return chunks, noise
 
 
 def flow_matching_loss(

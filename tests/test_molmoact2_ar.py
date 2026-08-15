@@ -454,13 +454,13 @@ def test_predict_chunk_masked_decode_and_capture(
     sample = batch(raw, sequences)
     capture: list[ActionCaptureStep] = []
     with torch.no_grad():
-        prediction = decoder.predict_chunk(
+        actions, _ = decoder.predict_chunk(
             model,
             encode_memory(model),
             sample,
             action_capture=capture,
         )
-    assert prediction.actions.shape == (BATCH, T, D)
+    assert actions.shape == (BATCH, T, D)
     assert len(capture) > 0
     lengths = loaded.symbol_lengths
     bins_per_row: list[list[int]] = [[] for _ in range(BATCH)]
@@ -482,7 +482,7 @@ def test_predict_chunk_masked_decode_and_capture(
         expected = torch.from_numpy(
             loaded.decode(bins_per_row[row], Q01, Q99),
         ).float()
-        torch.testing.assert_close(prediction.actions[row], expected)
+        torch.testing.assert_close(actions[row], expected)
 
 
 def test_sampled_decode_is_keyed_deterministic(
@@ -504,7 +504,7 @@ def test_sampled_decode_is_keyed_deterministic(
                 encode_memory(model),
                 sample,
                 sampling=sampling,
-            ).actions
+            )[0]
 
     assert torch.equal(draw(), draw())
 

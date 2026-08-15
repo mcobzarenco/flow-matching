@@ -89,8 +89,9 @@ def ar_block_prediction[B: nn.Module, M: PrefixMemory](
     sampling: ARSampling | None,
     capture: list[ActionCaptureStep] | None,
 ) -> ARPrediction:
-    """The action-block decode (``generate=()`` — never any text)."""
-    prediction = decoder.predict_chunk(
+    """The action-block decode (``generate=()`` — never any text; the
+    empty-request generations are discarded, not surfaced)."""
+    actions, _ = decoder.predict_chunk(
         backbone,
         memory,
         batch,
@@ -98,7 +99,7 @@ def ar_block_prediction[B: nn.Module, M: PrefixMemory](
         sampling=sampling,
         action_capture=capture,
     )
-    return ARPrediction(actions=prediction.actions)
+    return ARPrediction(actions=actions)
 
 
 def ar_block_logits[B: nn.Module, M: PrefixMemory](
@@ -139,12 +140,13 @@ def narrated_prediction[B: nn.Module, M: PrefixMemory](
             "predict_narrated needs a non-empty generate request — "
             "action-only inference is predict/predict_ar",
         )
-    prediction = decoder.predict_chunk(backbone, memory, batch, generate=generate)
-    assert prediction.generations is not None  # AR suffix always generates
-    return NarratedPrediction(
-        actions=prediction.actions,
-        generations=prediction.generations,
+    actions, generations = decoder.predict_chunk(
+        backbone,
+        memory,
+        batch,
+        generate=generate,
     )
+    return NarratedPrediction(actions=actions, generations=generations)
 
 
 def value_candidates[B: nn.Module, M: PrefixMemory](
@@ -169,7 +171,12 @@ def value_candidates[B: nn.Module, M: PrefixMemory](
     if draws < 0:
         raise ValueError(f"draws must be >= 0, got {draws}")
     snapshot = decoder.cache_snapshot(memory)
-    full = decoder.predict_chunk(backbone, memory, batch, generate=generate)
+    actions, generations = decoder.predict_chunk(
+        backbone,
+        memory,
+        batch,
+        generate=generate,
+    )
     rows: list[list[ValueCandidate]] = [[] for _ in range(batch.state.shape[0])]
     for draw in range(draws + 1):
         decoder.cache_restore(memory, snapshot)
@@ -183,9 +190,8 @@ def value_candidates[B: nn.Module, M: PrefixMemory](
             ),
         ):
             rows[row].append(candidate)
-    assert full.generations is not None  # AR suffix always generates
     for row, (generation, row_candidates) in enumerate(
-        zip(full.generations, rows, strict=True),
+        zip(generations, rows, strict=True),
     ):
         parsed = getattr(generation, field.value)
         if parsed is not None and not isinstance(parsed, str):
@@ -201,6 +207,6 @@ def value_candidates[B: nn.Module, M: PrefixMemory](
                 f"{full_value!r} — the shared-prefill contract broke, stop",
             )
     return (
-        NarratedPrediction(actions=full.actions, generations=full.generations),
+        NarratedPrediction(actions=actions, generations=generations),
         rows,
     )

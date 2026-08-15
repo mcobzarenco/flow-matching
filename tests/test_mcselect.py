@@ -379,16 +379,16 @@ def test_capture_off_leaves_decode_untouched() -> None:
     backbone, decoder, loaded = build()
     memory = encode_memory(backbone)
     snapshot = decoder.cache_snapshot(memory)
-    plain = decoder.predict_chunk(backbone, memory, tiny_batch(loaded))
+    plain, _ = decoder.predict_chunk(backbone, memory, tiny_batch(loaded))
     decoder.cache_restore(memory, snapshot)
     capture: list[ActionCaptureStep] = []
-    captured = decoder.predict_chunk(
+    captured, _ = decoder.predict_chunk(
         backbone,
         memory,
         tiny_batch(loaded),
         action_capture=capture,
     )
-    assert torch.equal(plain.actions, captured.actions)
+    assert torch.equal(plain, captured)
 
 
 # ------------------------------------------------------- CLI guards

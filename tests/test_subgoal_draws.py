@@ -565,16 +565,15 @@ def test_greedy_candidate_matches_full_pass_off_restored_prefill() -> None:
     loaded = codec()
     memory = encode_memory(backbone)
     snapshot = decoder.cache_snapshot(memory)
-    prediction = decoder.predict_chunk(
+    _, generations = decoder.predict_chunk(
         backbone,
         memory,
         tiny_batch(loaded),
         generate=(AuxField.SUBGOAL,),
     )
-    assert prediction.generations is not None
     decoder.cache_restore(memory, snapshot)
     first = decoder.decode_value_line(backbone, memory, field=AuxField.SUBGOAL)
-    for generation, candidate in zip(prediction.generations, first, strict=True):
+    for generation, candidate in zip(generations, first, strict=True):
         assert (generation.subgoal or "") == candidate.text
         # Greedy argmax property: the chosen id's log-prob is >= the
         # mean over the allowed vocabulary, every step.

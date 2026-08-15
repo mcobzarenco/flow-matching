@@ -236,7 +236,7 @@ class MolmoAct2JointVLA(ARVLA[MolmoAct2Inputs], FlowVLA[MolmoAct2Inputs]):
         generator: torch.Generator | None = None,
     ) -> FlowPrediction:
         memory = self._encode(batch, with_grad=False)
-        prediction = self.flow_decoder.predict_chunk(
+        actions, drawn = self.flow_decoder.predict_chunk(
             memory,
             batch,
             generator=generator,
@@ -244,8 +244,7 @@ class MolmoAct2JointVLA(ARVLA[MolmoAct2Inputs], FlowVLA[MolmoAct2Inputs]):
             num_steps=num_steps,
             method=method,
         )
-        assert prediction.noise is not None  # flow decodes always carry the draw
-        return FlowPrediction(actions=prediction.actions, noise=prediction.noise)
+        return FlowPrediction(actions=actions, noise=drawn)
 
     @override
     @torch.no_grad()

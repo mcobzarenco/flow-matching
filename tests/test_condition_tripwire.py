@@ -44,7 +44,7 @@ def test_generator_draw_is_the_documented_randn() -> None:
     probe number or the generator's downstream draws."""
     decoder, memory, batch = _decoder_memory_batch()
     g_used = torch.Generator().manual_seed(11)
-    prediction = decoder.predict_chunk(memory, batch, generator=g_used, num_steps=3)
+    actions, drawn = decoder.predict_chunk(memory, batch, generator=g_used, num_steps=3)
 
     g_manual = torch.Generator().manual_seed(11)
     expected_noise = torch.randn(
@@ -54,12 +54,16 @@ def test_generator_draw_is_the_documented_randn() -> None:
         dtype=batch.state.dtype,
         generator=g_manual,
     )
-    assert prediction.noise is not None
-    assert torch.equal(prediction.noise, expected_noise)
+    assert torch.equal(drawn, expected_noise)
     assert torch.equal(g_used.get_state(), g_manual.get_state())
 
-    via_noise = decoder.predict_chunk(memory, batch, noise=expected_noise, num_steps=3)
-    assert torch.equal(via_noise.actions, prediction.actions)
+    via_noise, _ = decoder.predict_chunk(
+        memory,
+        batch,
+        noise=expected_noise,
+        num_steps=3,
+    )
+    assert torch.equal(via_noise, actions)
 
 
 def test_supplied_noise_is_returned_verbatim() -> None:
@@ -70,8 +74,8 @@ def test_supplied_noise_is_returned_verbatim() -> None:
         ACTION_DIM,
         generator=torch.Generator().manual_seed(5),
     )
-    prediction = decoder.predict_chunk(memory, batch, noise=noise, num_steps=3)
-    assert prediction.noise is noise
+    _, returned = decoder.predict_chunk(memory, batch, noise=noise, num_steps=3)
+    assert returned is noise
 
 
 def test_reused_noise_zeroes_the_blind_model_delta() -> None:
@@ -83,16 +87,20 @@ def test_reused_noise_zeroes_the_blind_model_delta() -> None:
     spurious nonzero Δ."""
     decoder, memory, batch = _decoder_memory_batch()
     generator = torch.Generator().manual_seed(11)
-    scalar = decoder.predict_chunk(memory, batch, generator=generator, num_steps=3)
-
-    assert scalar.noise is not None
-    reused = decoder.predict_chunk(
+    scalar, scalar_noise = decoder.predict_chunk(
         memory,
         batch,
-        noise=scalar.noise,
+        generator=generator,
         num_steps=3,
     )
-    assert torch.equal(reused.actions, scalar.actions)
 
-    fresh = decoder.predict_chunk(memory, batch, generator=generator, num_steps=3)
-    assert not torch.equal(fresh.actions, scalar.actions)
+    reused, _ = decoder.predict_chunk(
+        memory,
+        batch,
+        noise=scalar_noise,
+        num_steps=3,
+    )
+    assert torch.equal(reused, scalar)
+
+    fresh, _ = decoder.predict_chunk(memory, batch, generator=generator, num_steps=3)
+    assert not torch.equal(fresh, scalar)

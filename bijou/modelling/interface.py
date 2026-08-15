@@ -48,7 +48,6 @@ from ..annotations import ConditionField
 from .aux_text import (
     IMAGE_KEY_PREFIX,
     AuxField,
-    AuxGeneration,
     AuxSpec,
     assemble_suffix,
     camera_prompt_order,
@@ -96,31 +95,6 @@ class MemoryStream:
 
     key: Tensor
     value: Tensor
-
-
-@dataclass(frozen=True, slots=True)
-class BijouPrediction:
-    """Everything the model predicts for one observation batch, crossing
-    the seam back to the caller: one action chunk per sample (RAW units
-    — the field mirrors ``CollatedBatch.actions``, the ground truth it
-    is scored against) plus, for decoders with a text surface
-    (ar_backbone), one :class:`AuxGeneration` per row. ``None``
-    generations = this decoder kind produces no text (the flow kinds);
-    ar_backbone always returns the list — rows are empty-text under ACT
-    decode.
-
-    ``noise`` is the initial noise the flow solver actually integrated
-    (supplied or drawn), kept so a paired re-decode can reuse it — the
-    Q3 conditioning tripwire needs |Δ| against the SAME draw, or the
-    sampling variance floors the signal for a conditioning-blind model.
-    None for decoders that draw none (the AR kinds).
-
-    Shapes: actions [B, chunk, action_dim] (raw action units);
-    noise [B, chunk, action_dim] (normalized units)."""
-
-    actions: Tensor
-    generations: list[AuxGeneration] | None
-    noise: Tensor | None = None
 
 
 class BatchInputs(Protocol):
@@ -311,8 +285,10 @@ class InputsCollator[I: BatchInputs](Protocol):
 # the backbone itself), and every consumer goes through the family's
 # trait surface. Shared conventions: training objectives are
 # module-level functions beside each decoder (``flow_matching_loss``,
-# ``ar_backbone_loss``), and ``predict_chunk`` returns
-# RAW-unit chunks [B, chunk, action_dim] (per-sample stats applied inside).
+# ``ar_backbone_loss``), and ``predict_chunk`` returns its NATURAL raw
+# product — RAW-unit chunks [B, chunk, action_dim] plus the decode's
+# other output (the integrated noise draw / the per-row generations) —
+# which the family wraps into its typed prediction struct (bijou.vla).
 
 _IMAGE_KEY_PREFIX = IMAGE_KEY_PREFIX
 

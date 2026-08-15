@@ -438,16 +438,14 @@ def test_predict_chunk_decodes_a_valid_chunk(
     encoder = build_encoder(tiny_checkpoint)
     sample = batch(loaded, tiny_inputs())
     memory = encode_memory(encoder, model)
-    prediction = decoder.predict_chunk(model, memory, sample)
-    assert prediction.actions.shape == (
+    actions, generations = decoder.predict_chunk(model, memory, sample)
+    assert actions.shape == (
         BATCH,
         loaded.time_horizon,
         loaded.action_dim,
     )
-    assert torch.isfinite(prediction.actions).all()
-    assert prediction.generations is not None
-    assert len(prediction.generations) == BATCH
-    assert prediction.noise is None
+    assert torch.isfinite(actions).all()
+    assert len(generations) == BATCH
 
 
 def test_generation_opener_is_chatml() -> None:

@@ -69,7 +69,6 @@ from ..codecs import ActionCodec
 from ..interface import (
     ActionCaptureStep,
     ARSampling,
-    BijouPrediction,
     CollatedBatch,
     ValueCandidate,
 )
@@ -401,19 +400,16 @@ class ARSuffixDecoder[B: nn.Module, M: PrefixMemory](nn.Module, abc.ABC):
         batch: CollatedBatch[Any],
         *,
         generate: tuple[AuxField, ...] = (),
-        generator: torch.Generator | None = None,
-        noise: Tensor | None = None,
         sampling: ARSampling | None = None,
         action_capture: list[ActionCaptureStep] | None = None,
-    ) -> BijouPrediction:
+    ) -> tuple[Tensor, list[AuxGeneration]]:
         """The single decode path, fully scaffolded by the request set.
         Deterministic greedy by default; ``sampling`` switches the
         ACTION block (only) to per-row temperature sampling — the
-        sampled-draws eval instrument. ``generator``/``noise``
-        unused/must be None. ``action_capture`` (mcselect): a list
-        the ACTION phase appends one :class:`ActionCaptureStep` to per
-        decode step — the conditional scoring surface, captured from
-        the very logits the decode chose from (no re-forward, no
+        sampled-draws eval instrument. ``action_capture`` (mcselect): a
+        list the ACTION phase appends one :class:`ActionCaptureStep` to
+        per decode step — the conditional scoring surface, captured
+        from the very logits the decode chose from (no re-forward, no
         numeric drift vs the executed decode).
 
         ``generate`` must equal the request the PROMPT was collated with
@@ -431,10 +427,9 @@ class ARSuffixDecoder[B: nn.Module, M: PrefixMemory](nn.Module, abc.ABC):
         Requires an aux-trained checkpoint for non-empty ``generate``
         (requested-but-untrained fields would be elicited off-manifold).
 
-        Returns a BijouPrediction: chunks [B, chunk, action_dim] raw
-        units + one AuxGeneration per row (empty for ``generate=()``)."""
-        if noise is not None:
-            raise ValueError("GemmaARDecoder.predict_chunk takes no noise")
+        Returns ``(actions, generations)`` — the raw natural product;
+        the family wraps it: chunks [B, chunk, action_dim] raw units +
+        one AuxGeneration per row (empty-text for ``generate=()``)."""
         config = self.config
         if generate:
             trained = () if config.aux is None else config.aux.fields
@@ -660,10 +655,7 @@ class ARSuffixDecoder[B: nn.Module, M: PrefixMemory](nn.Module, abc.ABC):
             )
             for row in value_ids
         ]
-        return BijouPrediction(
-            actions=torch.stack(chunks).to(device),
-            generations=generations,
-        )
+        return torch.stack(chunks).to(device), generations
 
     @torch.no_grad()
     def teacher_forced_block_logits(

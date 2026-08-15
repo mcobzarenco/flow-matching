@@ -260,11 +260,14 @@ def test_predict_chunk_fast_path_always_valid() -> None:
     phase — a full valid chunk and empty generations."""
     backbone, decoder, loaded = build()
     sample = batch(loaded)
-    prediction = decoder.predict_chunk(backbone, encode_memory(backbone), sample)
-    assert prediction.actions.shape == (BATCH, loaded.time_horizon, loaded.action_dim)
-    assert bool(torch.isfinite(prediction.actions).all())
-    assert prediction.generations is not None  # ar_backbone always has text
-    assert all(generation.text == "" for generation in prediction.generations)
+    actions, generations = decoder.predict_chunk(
+        backbone,
+        encode_memory(backbone),
+        sample,
+    )
+    assert actions.shape == (BATCH, loaded.time_horizon, loaded.action_dim)
+    assert bool(torch.isfinite(actions).all())
+    assert all(generation.text == "" for generation in generations)
 
 
 def test_generate_on_auxless_checkpoint_is_rejected() -> None:
