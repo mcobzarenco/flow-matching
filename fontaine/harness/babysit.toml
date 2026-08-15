@@ -819,4 +819,45 @@
 # Reads banked reports/analysis__wrist_screen_stage1.json; in-channel
 # boundary post 01:34Z. GPU FREE 01:32Z.
 
-no_live_runs_reason = "declared 01:3xZ 08-15 work session: wrist-screen stage 1 COMPLETE and pruned (F-instrument abort at the boundary — stage 2/3 never launch). Local GPU free 01:32Z; next GPU leg is the grasp-SFT stage-A 20-seed gate read, gated on the finalization post + objection window (competence tier)."
+# (no_live_runs_reason cleared 03:29Z 08-15 tick — grasp-SFT stage-B
+# collection launched below; the owner's 👍 on the 01:40Z finalization
+# post (seen at this tick's history poll) collapsed the objection
+# window, and this tick IS the next session boundary per A1. PRIOR:
+# "declared 01:3xZ 08-15 work session: wrist-screen stage 1 COMPLETE
+# and pruned (F-instrument abort at the boundary — stage 2/3 never
+# launch). Local GPU free 01:32Z; next GPU leg is the grasp-SFT
+# stage-A 20-seed gate read, gated on the finalization post +
+# objection window (competence tier)." — that gate read ran and
+# CLOSED stage A [FAIL 11/20 -> A1 -> PASS 15/20] in the 01:48-03:3xZ
+# work session.)
+
+# LIVE — grasp-SFT STAGE-B demo collection (local GPU; pre-reg
+# posts/2026-08-14-prereg-grasp-sft-bootstrap.md §6 + amendment A1
+# §7, stage-A PASS 15/20 banked 03:13Z). Unit
+# fontaine-grasp-sft-stageb via run_detached.sh: MUJOCO_GL=egl
+# collect_demos --out ~/datasets/fontaine/grasp_sft_demos_v0
+# --target-kept 400 --max-wall-hours 4. Resume-capable
+# (collect_state.json); SUCCESSES ONLY, seeds ascend from 1000,
+# eval seeds 0-99 refused by the writer. Prune at completion.
+[[run]]
+name = "grasp_sft_stageB_collect"
+kind = "progress-log"
+host = "local"
+pgrep = "collect_demos"
+pgrep_min = 1
+gpu_indices = [0]
+gpu_mem_min_mib = 100                # EGL render context only (no training) — calibrate at first poll if steady-state sits higher
+log = "/home/ubuntu/collect_grasp_sft_demos_v0.log"
+progress_re = "[0-9]+/400 kept, [0-9]+ attempted"
+started_utc = "2026-08-15T03:29:18Z"
+gpu_hours_per_wall_hour = 1.0
+boundary = "target 400 kept (gate >=300); expected ~3.4 GPU-h at the measured 75-80% keep rate and 10-23 s/success; --max-wall-hours 4 self-stops at the cost gate; DONE line = '[collect] DONE (<reason>): N/400 kept', provenance meta/demo_provenance.json banked at finalize"
+anchors = [
+    "frozen consequence (§6): >=300 kept at stop => stage C launches per ladder; <300 at the 4 h wall => boundary judgment, NO silent re-run (collection is resume-capable, a top-up is a recorded decision)",
+    "keep-rate watch: stage-A fresh read measured 75% (15/20); a sustained window below ~60% kept/attempted means a NEW failure mode in the production visual config — diagnose, don't just let the wall clock burn",
+    "convention seam frozen: rows are rig-frame identity (state_units provenance in meta) — any shim ANYWHERE in B-D is a violation, not a fix",
+    "eval-seed integrity: writer refuses seeds 0-99; kept_seeds in collect_state.json must all be >=1000",
+]
+[[run.gates]]
+kind = "gpu_hours_max"
+value = 4.0
