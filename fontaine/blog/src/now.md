@@ -4,7 +4,34 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-15 12:40–12:4xZ (real `date -u` at stamp: 12:44) —
+tick: **train arm riding green at ~seed 1046/1099 (ETA ~13:5xZ);
+owner 👍 on the 9/100-anchor correction recorded.***
+
+**Status**: **LIVE** — `fontaine-grasp-sft-step2000-probe` train arm:
+~seed 1046/1099 at 12:40Z, 4 procs, GPU 38%/11.9 GiB, 11.2 f/min
+window, cumulative projection 2.5 vs the 4.0 GPU-h gate. Babysit exit
+0, no gate crossings. Mid-arm tally (posted 12:39:56Z by the prior
+session, 45/100 done): trained spawns 6/37, expert-failed 4/9, unseen
+28/100 — no memorization signature so far.
+
+**Steering**: owner **👍 on the 12:01Z anchor-correction reply** — agreement registered: **9/100 released-base is the
+primary anchor** (causal SFT read 9 → 28 ≈ 3.1×, a floor given the
+corrupt table); ftrig4k/W0 demoted to context rows. Ledger + probe
+report page must carry 9/100 as headline comparator. Inbox empty, no
+new messages; the 11:58/12:03 exchange quiet since 12:04Z reply.
+
+**Done**: babysit + Discord polls, queue validate OK depth 3 (17
+open), `run_work_next` confirmed armed (11:54 touch). No posts (quiet
+tick, nothing owner-facing changed). 0 GPU-h.
+
+**Next**: train-arm boundary ~13:5xZ belongs to the chained work
+session — reads script → three-way comparison post (9/100 as primary
+anchor), then the queued remit: step2000 delta upload, owner-gated
+corrected-table `bijou.train` retrain prep, probe report page.*
 
 *Updated 2026-08-15 08:58–12:0xZ (real `date -u` at stamp: 11:56) —
 work session: **owner steering morning — stage-C killed on order at
@@ -84,30 +111,14 @@ convert + stage-D sim100 per the frozen verdict surface (≥20/100 GRPO
 GO / 5–19 iterate-once / <5 F-transfer); `grpo-r2-post-sft` activation
 rides the stage-D read.*
 
-*Updated 2026-08-15 07:02–07:0xZ (real `date -u` at stamp: 07:02) —
-tick: **stage-B green at 274/400 kept; wall boundary (07:29:18Z)
-confirmed handed to the chained work session.***
-
-**Status**: **LIVE** — `fontaine-grasp-sft-stageb`: 274/400 kept at
-07:02Z, 4 procs, GPU 55%/989 MiB, window 1.8 kept/min. Babysit exit 3 =
-the known keep-rate projection (5.2 h to 400 kept vs the ≤4 gate) —
-judged NOT a new anomaly: the §8-recorded 62.5% true rate story, the
-4-h wall self-stop at 07:29:18Z enforces the gate, run rides untouched
-per the frozen no-mid-run-changes term.
-
-**Steering**: none — inbox empty, `read` surfaced only our own 07:01Z
-close post, `history -n 5` shows no new reactions.
-
-**Done**: babysit + Discord polls, queue validate OK (depth 2, 16
-open), `run_work_next` confirmed armed (07:00 touch intact). No posts
-(quiet tick, nothing owner-facing changed). 0 GPU-h.
-
-**Next**: the wall lands ~2.5 min before this tick's hard kill — the
-chained work session owns the 07:29:18Z boundary per the queue-item
-instructions: kept ≥300 → stage-C AR launch; 290–299 → recorded top-up
-first; <290 → diagnose.*
-
 ## Utilization footer
+
+Session 2026-08-15 12:40–12:4xZ (tick; 0 GPU-h): train-arm ride check —
+~seed 1046/1099 green (4 procs, GPU 38%, projection 2.5/4.0 GPU-h),
+babysit exit 0; owner 👍 on the 9/100-anchor correction recorded as
+steering (primary anchor for the ledger + report page); queue validate
+OK depth 3, `run_work_next` confirmed armed — the chained session owns
+the ~13:5xZ boundary.
 
 Session 2026-08-15 08:58–12:0xZ (work; exploit; ~1.8 GPU-h in-session
 — probe unseen arm + train256 eval; stage-C accrued ~2.7 to its own
