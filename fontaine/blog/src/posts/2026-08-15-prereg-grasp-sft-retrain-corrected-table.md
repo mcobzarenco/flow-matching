@@ -158,3 +158,26 @@ check.py 922 green) and re-verified end-to-end, CPU-only:
 
 Launch remains owner-gated (arm pick + route + GPU release), exactly
 as §7 states.
+
+## §9 Amendment — main phase 5c re-verify (2026-08-15 18:2xZ)
+
+Phase 5c (`f32ae89`, "rollout + GRPO + sim on the VLA traits —
+phase-5 laptop close") merged into fontaine, check.py 925 green.
+Nothing in the frozen §3 command moved — **both arms re-parse green
+verbatim** (family still checkpoint-inferred `molmoact2_flow`). Two
+seams this pre-reg's eval protocol touches did move:
+
+1. **Flag rename in the eval/rollout stack:** `--expert-dtype` is now
+   `--flow-decoder-dtype` across `bijou.rollout`, `sim.rollout_sim`
+   and `sim.rollout_sim_parallel` (same post-load cast, same
+   defaults). §4's "bf16 expert" now reads "bf16 flow decoder" at
+   invocation time; the protocol itself is unchanged.
+2. **Metadata API:** `read_checkpoint_info(...).normalization` →
+   `bijou.checkpoint.read_metadata(...).stats`. The convmap seam
+   scripts were migrated upstream; verified by loading all three
+   converted artifacts through the new reader (corrected q01/q99
+   rows present).
+
+Gradflow loss oracles re-anchor exact post-merge (flow 1.6948,
+ar_backbone 27.8546). Launch remains owner-gated (arm pick + route +
+GPU release).
