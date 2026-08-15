@@ -3,12 +3,33 @@
 
 
 
-
-
-
-
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-15 18:34–18:3xZ (real `date -u` at stamp: 18:35) —
+tick: **quiet hold — no change since the 18:30 merge-5c close; GPU
+owner-reserved and idle (0%), nothing to babysit, no launches.***
+
+**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
+OWNER** (13:35Z), untouched. No babysit entries, no training
+processes.
+
+**Steering**: none new — Discord read + inbox empty at 18:34;
+history shows no reactions on the 18:30 merge-5c post yet (the 👍s
+on the 15:37 and 17:45 posts were recorded in prior sessions). All
+three owner decisions still pending: retrain arm pick
+(continue-from-2k vs from-base), route A/B/C, GPU release.
+
+**Done**: Discord + history polls, GPU/process check, queue validate
+OK depth 2 (17 open; both queued items — grasp-sft-bootstrap retrain
+and grpo-r2-post-sft — gpu-local and owner-gated), `run_work_next`
+confirmed disarmed (no CPU-executable items). No posts (nothing
+owner-facing changed). 0 GPU-h.
+
+**Next**: ticks hold until an owner decision lands — arm pick +
+route A/B/C unblock the retrain launch (either arm is one command
+post-5c), GPU release unblocks any launch at all. GPU oracle re-runs
+(convmap tripwires + sim_parallel_oracle) attach to the next
+free-GPU boundary.*
 
 *Updated 2026-08-15 18:22–18:3xZ (real `date -u` at stamp: 18:30) —
 work session: **merge-main-phase5c DONE — `f32ae89` merged clean,
@@ -78,31 +99,14 @@ re-verifies GRPO/sim/probe seams + both retrain arms full-parse,
 posts the result. Owner decisions (arm, route, GPU release) still
 unblock the retrain launch.*
 
-*Updated 2026-08-15 18:07–18:1xZ (real `date -u` at stamp: 18:08) —
-tick: **quiet hold — no change since 17:57; GPU owner-reserved and
-idle (0%), nothing to babysit, no launches.***
-
-**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
-OWNER** (13:35Z), untouched. No babysit entries, no training
-processes.
-
-**Steering**: none new — Discord read + inbox empty at 18:08;
-history shows nothing past our own 17:45 phase-5b merge post (last
-owner activity remains the recorded 👍 on the 15:37 merge post).
-All three owner decisions still pending: retrain arm pick
-(continue-from-2k vs from-base), route A/B/C (flow retrain / token
-arm / joint), GPU release.
-
-**Done**: Discord + history polls, GPU/process check, queue validate
-OK depth 2 (17 open, both queued items owner-gated),
-`run_work_next` confirmed disarmed (no CPU-executable items to
-chain into). No posts (nothing owner-facing changed). 0 GPU-h.
-
-**Next**: ticks hold until an owner decision lands — arm pick +
-route A/B/C unblock the retrain launch (either arm is one command
-post-5b), GPU release unblocks any launch at all.*
-
 ## Utilization footer
+
+Session 2026-08-15 18:34–18:3xZ (tick; 0 GPU-h): quiet hold — no
+change since the 18:30 merge-5c close; Discord read + inbox empty,
+no new reactions (18:30 post unreacted so far), GPU owner-reserved
+and idle (0%), untouched; queue validate OK depth 2 (17 open, both
+items gpu-local owner-gated), `run_work_next` disarmed; all three
+owner decisions still pending (arm pick, route A/B/C, GPU release).
 
 Session 2026-08-15 18:22–18:3xZ (work, exploit; 0 GPU-h):
 merge-main-phase5c DONE — `f32ae89` (phase-5 laptop close) merged
