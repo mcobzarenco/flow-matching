@@ -5,7 +5,30 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-15 15:40–15:4xZ (real `date -u` at stamp: 15:41) —
+tick: **quiet hold — GPU owner-reserved and idle (0%), nothing to
+babysit, no launches.***
+
+**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
+OWNER** (13:35Z), untouched. No babysit entries, no training
+processes.
+
+**Steering**: none — Discord read + inbox empty at 15:41; history
+shows nothing new past the recorded 🎉 (last channel activity is our
+own 15:37 merge post). All three owner decisions still pending:
+retrain arm pick (continue-from-2k vs from-base), route A/B/C (flow
+retrain / token arm / joint), GPU release.
+
+**Done**: Discord + history polls, GPU/process check, queue validate
+OK depth 3 (18 open), `run_work_next` confirmed armed. No posts
+(nothing owner-facing changed). 0 GPU-h.
+
+**Next**: chained work session takes grasp-sft-chain-results-page
+(writing ladder); all launches parked until the owner picks an
+arm/route AND frees the GPU.*
 
 *Updated 2026-08-15 15:24–15:3xZ (real `date -u` at stamp: 15:37) —
 work session: **main phase 0–4 merged into fontaine (`bb0f036`) +
@@ -74,44 +97,14 @@ OK depth 3 (18 open), `run_work_next` confirmed armed. No posts
 (writing ladder) + the phase-4 seam check above; all launches parked
 until the owner picks an arm/route AND frees the GPU.*
 
-*Updated 2026-08-15 14:28–14:4xZ (real `date -u` at stamp: 14:38) —
-work session: **R2 Amendment A2 + token-SFT arm pre-reg DRAFT landed
-(`da873c9`) — the owed R2 CPU slice discharged; GPU untouched
-(owner-held).***
-
-**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
-OWNER** (13:35Z), untouched. No babysit entries.
-
-**Steering**: none — Discord read + inbox empty at boot (14:28) and
-mid-session (14:38). Retrain arm pick (continue-from-2k vs from-base)
-and GPU release both still **owner-pending**; the token-SFT arm adds a
-THIRD owner decision: route A/B/C (flow retrain / token arm / one
-joint run) for the next SFT GPU-hours.
-
-**Done** (commit `da873c9`): the owed R2 amendment slice —
-[token-SFT arm pre-reg
-DRAFT](posts/2026-08-15-prereg-grasp-sft-token-sft-arm.md) posted per
-A1 decision 2 (bijou.train `--objective ar --backbone-text-lr 1e-5`,
-2000×gb64 matching the probed stage-C budget, eval verbatim the
-step2000 probe under grammar-masked greedy, primary vs the ≥20/100
-bar, ~7–8 GPU-h gate ≤9). Two verified seams recorded: (1)
-`bijou/fast/codec.py` normalizes token targets with the baked q01/q99
-→ corrected-table init is MANDATORY for the token head too; (2) owner
-main `4fd6875` (VLA checkpoint format) re-spells R2's checkpoint
-receipt — convert_legacy + validate_checkpoint, stats_note provenance;
-our format-3 launcher/babysit readers flagged for a follow-up when
-bijou.train adopts it (not blocking). R2 draft §8 A2 re-bases
-activation on the DISCRETE head's unseen count (stage-D flow verdict
-no longer activates R2). queue.json: `grasp-sft-token-sft-arm` added
-(blocked, owner_hold), R2 boundary updated, validate green depth 3
-(18 open). check.py green (865). 0 GPU-h.
-
-**Next**: `queue_cli.py next` → grasp-sft-bootstrap retrain remains
-**owner-pending** (arm pick + GPU release); token-GRPO lane now waits
-on the route A/B/C call. Remaining CPU items:
-grasp-sft-chain-results-page (writing ladder). `run_work_next` armed.*
-
 ## Utilization footer
+
+Session 2026-08-15 15:40–15:4xZ (tick; 0 GPU-h): quiet hold — GPU
+owner-reserved and idle (0%), no launches, no training processes;
+Discord/inbox/history empty past the recorded 🎉, all three owner
+decisions pending (arm pick, route A/B/C, GPU release); queue
+validate OK depth 3 (18 open), `run_work_next` armed for
+grasp-sft-chain-results-page.
 
 Session 2026-08-15 15:24–15:3xZ (work; exploit; 0 GPU-h): main phase
 0–4 merged into fontaine (`bb0f036`) — image-augment seam ported to
@@ -120,29 +113,6 @@ retrain-prep seams all verified post-merge (conversions load, CLI
 flags intact, convert_legacy validate-green on step2000);
 --replace-stats format mismatch noted → two-hop --norm-stats-from
 route stays operative; posted in-channel; GPU owner-held, untouched.
-
-Session 2026-08-15 15:23–15:2xZ (tick; 0 GPU-h): quiet hold — GPU
-owner-reserved and idle (0%), no launches; Discord/inbox/history
-empty, all three owner decisions pending (arm pick, GPU release,
-route A/B/C); noted owner `3e4fbeb` on main (phase 4 VLA families +
-loading.py→sections.py refactor) — chained work session to verify
-retrain-prep seams against it; queue validate OK depth 3 (18 open),
-`run_work_next` armed.
-
-Session 2026-08-15 14:28–14:4xZ (work; exploit; 0 GPU-h): the owed R2
-CPU slice — token-SFT arm pre-reg DRAFT posted (per A1 decision 2)
-+ R2 §8 Amendment A2 re-basing activation on the discrete head;
-fast-codec table seam verified in code (corrected-table init
-mandatory for the token head), owner `4fd6875` VLA-format
-implications recorded; queue item added (blocked, owner-gated),
-validate green depth 3 (18 open); GPU owner-held, untouched.
-
-Session 2026-08-15 14:26–14:2xZ (tick; 0 GPU-h): quiet hold — GPU
-owner-reserved and idle (0%), no launches; Discord/inbox/history
-empty, retrain arm pick + GPU release both owner-pending; noted owner
-commit `4fd6875` on main (phase 3 VLA checkpoint format) for the
-chained work session to skim; queue validate OK depth 3 (17 open),
-`run_work_next` confirmed armed (R2-amendment CPU slice).
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
