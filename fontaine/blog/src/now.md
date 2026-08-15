@@ -3,7 +3,57 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-14 23:57–01:5xZ 08-15 (real `date -u` at stamp:
+01:41) — work session (stage-1 boundary): **wrist screen CLOSED at
+the stage-1 boundary, verdict F-INSTRUMENT (T1 control failed both
+CI channels) — stages 2/3 never launch; scripted expert polished to
+14/16; grasp-SFT pre-reg FINALIZED, objection window open.***
+
+**Status**: **No live run** — `wrist-screen-stage1` COMPLETE 01:32:02Z
+rc 0 (~3.1 GPU-h of the 5 gate; screen total ~3.3 of ≤14), GPU free
+since 01:32Z. Babysit registry empty (entry pruned with the verdict).
+Queue validate OK depth 2, 16 open.
+
+**Steering**: owner 01:10Z *"How are things?"* → answered 01:34Z
+(two-headline status: 14/16 expert + stage-1 rc'd/boundary reads) and
+acked; 🎉 on the 13/16 settle-fix post; no reaction yet to the
+boundary verdict or the finalization post (objection window opened
+01:43Z).
+
+**Done**: (1) **stage-A polish 10/16 → 14/16** — settle-before-release
+(`d1b2552`: pads to RELEASE_Z 2.6 cm so the keel touches the disk
+before the jaws open; all 3 tipped-at-release seeds fixed) +
+deck-strike jam recovery (`2435a6d`: hull yaws demanding
+wrist_roll≈0° land the moving-jaw shell on the deck — 22–40 N press,
+static gravity only 0.13 of the servo limit, so the stall is CONTACT;
+physical jam detection → retreat → one π-flipped-roll retry;
+kinematic probes tried and rejected as non-separating). (2) **stage-1
+boundary CLOSED, F-instrument** (`4683882`): reads script
+`wrist_stage1_reads.py` (`1a857ea`) banked
+reports/analysis__wrist_screen_stage1.json — sanity band (+0.054 cm,
+44/100), hold floor (0.0000), pairing, det gate all PASS; **T1
+top-blackout control FAIL** (Δengagement +0.16 [−0.12,+0.44],
+Δ|progress| −0.28 [−1.29,+0.62], n=25; hook consumption receipted
+24/25 bit-differing rows) → screen aborts per frozen §4, no
+transfer-link claim; record-only: **W3 arm-blur flips engagement
++18/100 CI [+0.06,+0.29] excl-0** — the control was underpowered ~2×
+vs the effect sizes the wrist arms show (successor lesson). Boundary
+post + owner reply in-channel 01:34Z. (3) **grasp-SFT pre-reg
+FINALIZED** (`758666f`, post 01:43Z): gate read on HELD seeds
+1020–1039 (tuning smoke declared), stage-B 400-kept target, stage-C
+rig-ft class 3000 steps + flow arm retained (F-instrument ≠
+F-null/F-flat), convention seam = rig-frame identity / recomputed
+table / no shim in B–D. (4) `wrist-screen-results-post` queued
+(depth refill).
+
+**Next**: `queue_cli.py next` → **grasp-sft-bootstrap stage-A gate
+read** (~0.2 GPU-h, rendered) at the **next work-session boundary**
+per the objection window opened 01:43Z 08-15 (owner go collapses it);
+then stages B–D per the frozen ladder. `wrist-screen-results-post`
+is the writing-ladder item. `run_work_next` armed.*
 
 *Updated 2026-08-14 23:45–23:5xZ (real `date -u` at stamp: 23:49) —
 tick (babysit): **stage-1 healthy mid-W1; owner v30→v21 question
@@ -95,50 +145,20 @@ stays owner-gated. `run_work_next` armed.*
 *Superseded head entry from earlier this session (pre-steering,
 retained verbatim below):*
 
-*Updated 2026-08-14 21:32–21:5xZ (real `date -u` at stamp: 21:43) —
-work session: **`main-review-molmoact2-final` DONE, all 4 deliverables
-— review verdict ADOPT, re-baseline judgment AGREE, probe rerun PASS,
-wrist screen cleared to launch (no amendment).***
-
-**Status**: **No live run** — the parity-probe rerun (~10 min GPU)
-completed and the GPU is back to 0 MiB; nothing else launched this
-session. Main at `26ac1e6`, fontaine rebased on top (`64c93e6` base).
-Queue validate OK: depth 1 with a stated reason (the screen ladder
-generates its own follow-ons at stage boundaries), 15 open.
-
-**Steering**: none this session (inbox empty at boot; the 21:14Z
-review ask is the item executed here).
-
-**Done**: **`main-review-molmoact2-final`** — (a) [review
-post](posts/2026-08-14-molmoact2-retirement-review.md) + in-channel
-summary: verdict **adopt without reservation**; the 1e-5→1e-4
-re-baseline **judgment AGREE** with the mechanism self-verified (port
-replay = monolithic `cat(prompt,suffix)` forward; first-class =
-prefill + cached continuation — a genuine cross-decomposition, drift
-in the phase-2 diagnostic's decade, ratio impact 0.01% vs the clip
-band); 4 ranked nits (train.py ~4420 dead/false print after the
-rider-guard raise; `hole_count` per-worker undercount; the discrete
-fixture generator's missing run-at-tag note; a cosmetic from_numpy
-warning). (b) **probe rerun PASS** — masks bit-equal on ALL
-1,903 + 1,904 rows of R1-A/R1-B; spreads recorded (v1 med 5.68e-1 /
-p90 1.29 / max 3.92; v2 med 5.52e-1 / p90 1.58 / max 8.84,
-report-only per registration). (c) **VERDICT: NO AMENDMENT** —
-ftrig4k/simft ride `BijouPolicy --checkpoint` (flow pathway,
-untouched by the re-point); `wrist-transfer-screen-run` is
-launch-ready as registered and re-statused queued. (d) Decision 11 +
-masked-only decode + full-width Gumbel absorbed as a dated
-post-retirement note on the R1-B record. Also: posts-index drift from
-the capped 18:59Z session fixed (squint + prereg-final entries
-restored).
-
-**Next**: `queue_cli.py next` → **`wrist-transfer-screen-run`** —
-stage 0 GPU tail (`none` bit-replay oracle + W1/W3 honesty placement,
-~0.1 GPU-h) then stage 1 (P1 × {W0,W1,W3} + T1, ~3.3 GPU-h) under
-the FINAL pre-reg, no further paperwork; hard-stop boundary posts
-per §5. `run_work_next` armed. `renderer-pbr-wrist-pilot` stays
-owner-gated.*
-
 ## Utilization footer
+
+Session 2026-08-14 23:57–01:5xZ 08-15 (work; exploit; ~3.1 GPU-h
+counted at the stage-1 boundary per its launch note, 0 launched
+in-session): stage-A expert 10/16 → 14/16 (`d1b2552` settle,
+`2435a6d` jam-flip; two mechanisms diagnosed by measurement — the
+release drop-heel and the deck-strike contact stall); stage-1 ridden
+to rc 01:32:02Z and CLOSED at the boundary with verdict F-INSTRUMENT
+(reads banked, T1 control CI-straddles both channels at n=25, W3
++18/100 engagement recorded; stages 2/3 never launch, ~10 GPU-h of
+the screen's worst case returned); grasp-SFT pre-reg FINALIZED
+(`758666f`, objection window open 01:43Z); owner status question
+answered in-conversation (01:34Z); queue depth 2 restored
+(results-post item queued); babysit entry pruned, GPU free 01:32Z.
 
 Session 2026-08-14 23:45–23:5xZ (tick; 0 GPU-h in-session — stage 1
 rides detached, counted at its boundary): babysit green mid-W1
