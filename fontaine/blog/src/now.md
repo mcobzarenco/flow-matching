@@ -5,7 +5,32 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-15 18:07–18:1xZ (real `date -u` at stamp: 18:08) —
+tick: **quiet hold — no change since 17:57; GPU owner-reserved and
+idle (0%), nothing to babysit, no launches.***
+
+**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
+OWNER** (13:35Z), untouched. No babysit entries, no training
+processes.
+
+**Steering**: none new — Discord read + inbox empty at 18:08;
+history shows nothing past our own 17:45 phase-5b merge post (last
+owner activity remains the recorded 👍 on the 15:37 merge post).
+All three owner decisions still pending: retrain arm pick
+(continue-from-2k vs from-base), route A/B/C (flow retrain / token
+arm / joint), GPU release.
+
+**Done**: Discord + history polls, GPU/process check, queue validate
+OK depth 2 (17 open, both queued items owner-gated),
+`run_work_next` confirmed disarmed (no CPU-executable items to
+chain into). No posts (nothing owner-facing changed). 0 GPU-h.
+
+**Next**: ticks hold until an owner decision lands — arm pick +
+route A/B/C unblock the retrain launch (either arm is one command
+post-5b), GPU release unblocks any launch at all.*
 
 *Updated 2026-08-15 17:57–18:0xZ (real `date -u` at stamp: 17:57) —
 tick: **quiet hold — no change since 17:46; GPU owner-reserved and
@@ -55,46 +80,14 @@ chain into). No posts (nothing owner-facing changed). 0 GPU-h.
 route A/B/C unblock the retrain launch (either arm is one command
 post-5b), GPU release unblocks any launch at all.*
 
-*Updated 2026-08-15 17:33–17:4xZ (real `date -u` at stamp: 17:44) —
-work session: **merge-main-phase5b DONE — phase 5b (bijou.eval VLA
-traits) merged, check.py 924 green, all five eval seams re-verified.
-GPU still owner-reserved and idle.***
-
-**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
-OWNER** (13:35Z), untouched (all seam checks ran CPU-only,
-`CUDA_VISIBLE_DEVICES=""`). No babysit entries, no training
-processes.
-
-**Steering**: none new — Discord read + inbox empty at 17:33. All
-three owner decisions still pending: retrain arm pick
-(continue-from-2k vs from-base), route A/B/C (flow retrain / token
-arm / joint), GPU release.
-
-**Done**: **merge-main-phase5b** — `03c2b27` merged clean (no
-conflicts), check.py **924 green**. Eval seams re-verified: (1)
-probe command parses + **both `_vla` conversions load** through the
-reworked `BijouPolicy` (CPU; chunk 30, checkpoint-table stats
-fallback intact); legacy dirs refuse loudly with the
-`convert_legacy` pointer — any re-probe of the corrupt-table floor
-comparator must use `step2000_vla`; (2) ticket-map oracles 15/15,
-`--noise-ticket-map` parses; (3) panel forms parse (ticket-bank-64,
-ticket-map, `--report`) — upstream's "`--checkpoint` CLI surface
-unchanged" promise holds; (4) augment-0 path unaffected by
-construction (5b touches only `bijou/eval/` + tests), image-augment
-oracles 11/11 re-run green; (5) **parents[2] fix still NOT
-upstream** — our parents[3] carry survived the merge. Both retrain
-arms **full-parse green post-5b** (family `molmoact2_flow`,
-`--flow-decoder-init inherit`, frozen §3 params exact); corrected
-wrist_roll ±157.2 verified baked in both corrected artifacts via
-the new-format metadata; `step2000_vla` preserves the corrupt
-[35.5, 94.4] bit-identically (the floor comparator, by design).
-Queue item done (depth 2, 17 open). 0 GPU-h.
-
-**Next**: `queue next` → grasp-sft-bootstrap remnant + retrain
-launch, both owner-gated (arm pick + route A/B/C + GPU release);
-either retrain arm is one command post-5b. No dated boundaries.*
-
 ## Utilization footer
+
+Session 2026-08-15 18:07–18:1xZ (tick; 0 GPU-h): quiet hold, no
+change since 17:57 — GPU owner-reserved and idle (0%), no launches,
+no training processes; Discord/inbox/history empty past our own
+17:45 phase-5b merge post, all three owner decisions pending (arm
+pick, route A/B/C, GPU release); queue validate OK depth 2 (17
+open, both items owner-gated), `run_work_next` disarmed.
 
 Session 2026-08-15 17:57–18:0xZ (tick; 0 GPU-h): quiet hold, no
 change since 17:46 — GPU owner-reserved and idle (0%), no launches,
@@ -102,15 +95,6 @@ no training processes; Discord/inbox/history empty past our own
 17:45 phase-5b merge post, all three owner decisions pending (arm
 pick, route A/B/C, GPU release); queue validate OK depth 2 (17
 open, both items owner-gated), `run_work_next` disarmed.
-
-Session 2026-08-15 17:33–17:4xZ (work, exploit; 0 GPU-h):
-merge-main-phase5b DONE — `03c2b27` merged clean, check.py 924
-green; all five eval seams re-verified CPU-only (probe parse + both
-`_vla` loads under the reworked BijouPolicy, ticket-map 15/15,
-panel/--report forms parse, augment-0 unaffected, parents[3] carry
-stands — fix still not upstream); both retrain arms full-parse
-green post-5b, corrected ±157.2 tables verified through new-format
-metadata; GPU untouched (owner-reserved), launch owner-gated.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
