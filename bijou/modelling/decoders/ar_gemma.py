@@ -28,7 +28,7 @@ from ..gemma4.config import Gemma4TextConfig
 from ..gemma4.model import Gemma4Model
 from ..interface import ObservationMemory
 from ..nn import DeviceLike
-from .ar_suffix import ARDecoderConfig, ARSuffixDecoder
+from .ar_suffix import ARDecoderConfig, ARSuffixDecoder, suffix_positions
 
 
 class GemmaARDecoder(ARSuffixDecoder[Gemma4Model]):
@@ -219,25 +219,13 @@ class GemmaARDecoder(ARSuffixDecoder[Gemma4Model]):
                 f"carries {type(cache).__name__}",
             )
         batch, seq_len, _ = embeds.shape
-        device = embeds.device
-        offsets = torch.arange(seq_len, device=device)[None, :] + fed
-        if memory.padding_mask is not None:
-            real = memory.padding_mask.to(device=device, dtype=torch.bool)
-            positions = real.long().sum(dim=1, keepdim=True) + offsets
-            full_mask = torch.cat(
-                [
-                    real,
-                    torch.ones(
-                        (batch, fed + seq_len),
-                        dtype=torch.bool,
-                        device=device,
-                    ),
-                ],
-                dim=1,
-            )
-        else:
-            positions = torch.full((batch, 1), memory.length, device=device) + offsets
-            full_mask = None
+        positions, full_mask = suffix_positions(
+            memory,
+            batch=batch,
+            seq_len=seq_len,
+            fed=fed,
+            device=embeds.device,
+        )
         # cuDNN's fused-attention graph intermittently fails to EXECUTE
         # its backward on the suffix geometry (bf16 head_dim-512 queries
         # at ragged lengths against the prefix cache) — the
