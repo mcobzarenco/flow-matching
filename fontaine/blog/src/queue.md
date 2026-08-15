@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-15T14:22:00Z
+**Updated:** 2026-08-15T14:48:00Z
 
-**Depth call:** depth 2: wrist-transfer-screen-run (stage 0 executing, then stage 1 on the released GPU) + grasp-sft-bootstrap (stage A CPU-executable; GPU stages after screen + finalization). Recorded 22:3xZ 08-14.
+**Depth call:** depth 3: grasp-sft-bootstrap (retrain arm owner-pending) + grasp-sft-chain-results-page (writing ladder) + grpo-r2-post-sft (re-based per A2; token-sft arm item blocked owner-gated). Recorded 14:48Z 08-15.
 
-**17 open** (Live 0 · Queued 3 · Blocked 14 · Done 177)
+**18 open** (Live 0 · Queued 3 · Blocked 15 · Done 177)
 
 ## 🔴 Live (0)
 
@@ -22,7 +22,7 @@
 
 GRPO R2 on the grasp-SFT policy (DRAFT pre-reg posted 08-15): fresh Decision-11 run on the first-class stack (bijou/grpo_replay.py over the CONVERTED stage-C endpoint
 
-**boundary:** DRAFT posted 07:5xZ 08-15 (queue-refill slice of the stage-C ride session; stage C launched 07:29:55Z same session). ACTIVATION RULE: stage-D verdict owns this item — GRPO_GO (&gt;=20/100) -&gt; finalization per prereg SS6 (base count + checkpoint receipt + lr decision + setback wire call + HEAD re-pin + objection window) THEN launch; ITERATE_BC_ONCE (5-19) -&gt; the bootstrap's iterate arm consumes the GPU slot first, this item waits; F_TRANSFER (&lt;5) -&gt; PARK this item (visual/renderer lane becomes binding per bootstrap SS4). Fresh budget — the bootstrap &lt;=13 gate does NOT carry over. · [pre-reg](posts/2026-08-15-prereg-grpo-r2-post-sft.md)
+**boundary:** DRAFT posted 07:5xZ 08-15 (queue-refill slice of the stage-C ride session; stage C launched 07:29:55Z same session). ACTIVATION RULE: stage-D verdict owns this item — GRPO_GO (&gt;=20/100) -&gt; finalization per prereg SS6 (base count + checkpoint receipt + lr decision + setback wire call + HEAD re-pin + objection window) THEN launch; ITERATE_BC_ONCE (5-19) -&gt; the bootstrap's iterate arm consumes the GPU slot first, this item waits; F_TRANSFER (&lt;5) -&gt; PARK this item (visual/renderer lane becomes binding per bootstrap SS4). Fresh budget — the bootstrap &lt;=13 gate does NOT carry over. || AMENDMENT A2 REGISTERED 14:4xZ 08-15 (SS8): token-SFT arm pre-reg DRAFT posted (posts/2026-08-15-prereg-grasp-sft-token-sft-arm.md, per A1 decision 2) — if the owner routes token-GRPO, R2 RE-BASES on that arm's endpoint and the activation bar becomes the arm's primary read (unseen sim100 &gt;=20/100 on the DISCRETE head, greedy decode); the stage-D flow-head verdict no longer activates this item. Table lineage inherited (fast codec normalizes token targets with baked q01/q99 — corrected-base init mandatory). Checkpoint receipt re-spelled per owner main 4fd6875 (VLA format: convert_legacy + validate_checkpoint, stats_note provenance). · [pre-reg](posts/2026-08-15-prereg-grpo-r2-post-sft.md)
 
 <details><summary>full record</summary>
 
@@ -60,9 +60,23 @@ Grasp-rich SFT bootstrap (owner go 22:07Z 08-14 on the 90%-of-seeds question; DR
 
 ---
 
-## 🟡 Blocked (14)
+## 🟡 Blocked (15)
 
 *waiting on a prerequisite, a boundary, or the owner*
+
+**`grasp-sft-token-sft-arm`** · `gpu-local` · **⛔ owner hold**
+
+Token-SFT arm (DRAFT pre-reg posted 14:4xZ 08-15, per R2 Amendment A1 decision 2 owner direction 10:14Z): bijou.train --objective ar --backbone-text-lr 1e-5 (2e-5 registered alt) over grasp_sft_demos_v0, --init-from the corrected…
+
+**boundary:** BLOCKED doubly owner-gated: (1) route choice A/B/C per the pre-reg SS4 (A = flow retrain corrected-table draft, B = this arm, C = one --objective joint run replacing A+B under a registered merge amendment + confound acknowledgment); (2) GPU owner-reserved since 13:35Z 08-15. On route B/C go: finalization (LR decision, anchor-leg decision, HEAD re-pin, objection window) then launch at the next free boundary; endpoint gets convert_legacy + validate_checkpoint (owner main 4fd6875 VLA format) before it pins as R2's base. If the owner re-scopes R2 to the flow head, this item PARKS with the token-GRPO lane. · [pre-reg](posts/2026-08-15-prereg-grasp-sft-token-sft-arm.md)
+
+<details><summary>full record</summary>
+
+Token-SFT arm (DRAFT pre-reg posted 14:4xZ 08-15, per R2 Amendment A1 decision 2 owner direction 10:14Z): bijou.train --objective ar --backbone-text-lr 1e-5 (2e-5 registered alt) over grasp_sft_demos_v0, --init-from the corrected-table base conversion (molmoact2_base_corrected_stats_v0 — MANDATORY: bijou/fast/codec.py normalizes token targets with the baked q01/q99, corrupt table would distort the token stream too), 2000 steps gb64 matching the probed stage-C budget so the flow head's 28/100 is the cross-head row. Eval verbatim the step2000 probe protocol under the ar head's grammar-masked GREEDY decode; primary = unseen 0-99 count vs the R2 activation bar &gt;=20/100; optional base token-head sim100 anchor leg (default run). ~7-8 GPU-h expected, gate &lt;=9.
+
+</details>
+
+---
 
 **`renderer-pbr-wrist-pilot`** · `cpu` · **⛔ owner hold**
 

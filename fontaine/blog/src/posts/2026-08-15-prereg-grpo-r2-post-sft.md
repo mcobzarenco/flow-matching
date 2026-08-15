@@ -184,3 +184,36 @@ at amendment time). §§1–6 above are retained verbatim as the registered
 record of the draft's reasoning; activation now requires BOTH a
 competent-base verdict on the head GRPO would train AND the owner's
 choice of route through decision 2.
+
+## §8 Amendment A2 (pre-finalization, 2026-08-15 14:4xZ) — the token-SFT arm is now a registered draft; re-basing spelled out
+
+A1's decision 2 said the token-SFT arm "would need its own
+pre-registration"; that document now exists — [token-SFT arm
+pre-reg (DRAFT)](2026-08-15-prereg-grasp-sft-token-sft-arm.md) — and
+this amendment binds the two:
+
+1. **Re-basing.** If the owner routes token-GRPO (route B or C in the
+   arm's §4), R2's **base policy** (§2 bullet 2) becomes the token-SFT
+   arm's endpoint, and the **activation bar** becomes that arm's
+   primary read: unseen sim100 **≥ 20/100 on the discrete head under
+   greedy decode** — the same competence bar, measured on the head
+   this run actually pushes. The stage-D flow-head verdict no longer
+   activates this page (it measured the wrong head; A1's finding).
+   §3's PRIMARY comparator becomes the token arm's banked unseen
+   count.
+2. **Table lineage.** The arm inits from the corrected-table base
+   (verified in code this session: `bijou/fast/codec.py` normalizes
+   token targets with the baked q01/q99), so R2 inherits the
+   corrected lineage automatically —
+   the §6.2 receipt must show it.
+3. **Checkpoint receipt format.** Owner main `4fd6875` landed the
+   phase-3 VLA checkpoint format after this draft was written. §6.2's
+   "checkpoint id + conversion receipt" is now spelled: the pinned
+   base carries a `convert_legacy`-produced (or natively written)
+   VLA-format dir passing `validate_checkpoint`, whose metadata
+   `stats` block + `stats_note` record the corrected-table
+   provenance first-class.
+4. **Unchanged.** Reward v2/v1 split, 8×8 groups at T=1.0, tripwire
+   belt, lr proposal + fallback, ≤ 12 gate — all stand. §5's pace
+   anchor (R1-B ~0.98 GPU-h/step) remains the estimate; it was
+   measured on this same discrete stack.

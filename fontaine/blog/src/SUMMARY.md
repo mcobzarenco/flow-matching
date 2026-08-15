@@ -308,3 +308,4 @@
   - [2026-08-15 — Grasp-SFT bootstrap: the chain end to end, chart-led (probe read banked)](posts/2026-08-15-grasp-sft-chain-results.md)
   - [2026-08-15 — Pre-reg (DRAFT, owner-gated): grasp-SFT retrain on the corrected table, via bijou.train](posts/2026-08-15-prereg-grasp-sft-retrain-corrected-table.md)
   - [2026-08-15 — Pre-reg: --image-augment — the train-time sim2real photometric recipe (v0, frozen)](posts/2026-08-15-prereg-image-augment-sim2real.md)
+  - [2026-08-15 — Pre-reg (DRAFT, owner-gated): token-SFT arm — measured competence for the discrete head, via bijou.train](posts/2026-08-15-prereg-grasp-sft-token-sft-arm.md)
