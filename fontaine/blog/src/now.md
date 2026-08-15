@@ -23,7 +23,41 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-15 22:15–22:2xZ (real `date -u` at stamp: 22:19) —
+tick: **main moved — phase 7b/7c/7e + VERDICT landed; work session
+armed for the merge.***
+
+**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
+OWNER** (13:35Z), untouched. Owner pushed to main 21:40–22:10Z:
+`c75814d` 7b (per-trunk memories — GemmaMemory/Molmo2Memory, static
+caches), `234dae9` 7c (decoders return natural products,
+BijouPrediction deleted), `a93c5d1` 7e (snapflow constants →
+payload, SDE/phi_s reads hoisted), `4ee456d` phase 7 VERDICT ("all
+five seam dissolutions landed, oracle-gated"), `d799192`
+probe_grpo_replay_parity (RELEASE_BIJOU → VLA-format conversion).
+Our 21:15Z merge covered only 7a+7d — **merge-main-phase7bce is now
+pending CPU-side work**.
+
+**Steering**: none new — Discord read + inbox empty at 22:16;
+history shows no new reactions (all five merge posts remain 👍'd).
+The three owner decisions remain pending: retrain arm pick
+(continue-from-2k vs from-base), route A/B/C, GPU release.
+
+**Done**: pull surfaced the 5 new main commits; Discord + history
+polls, GPU/process check, queue validate OK depth 2 (17 open),
+**`run_work_next` ARMED** — the chained work session merges
+7b/7c/7e+VERDICT+parity-probe into fontaine and runs the standing
+seam checklist (check.py, gradflow oracles exact, both retrain arms
+full-parse, GRPO 33/33, straggler grep, parents[3] carry), then
+posts the merge report. No posts this tick. 0 GPU-h.
+
+**Next**: work session executes the phase-7bce merge + re-verify;
+retrain launch stays owner-gated (arm pick + route A/B/C + GPU
+release). GPU oracle re-runs still attach to the next free-GPU
+boundary.*
 
 *Updated 2026-08-15 22:04–22:0xZ (real `date -u` at stamp: 22:05) —
 tick: **quiet hold — no change since 21:21.***
@@ -73,39 +107,16 @@ post-phase-7), GPU release unblocks any launch at all. GPU oracle
 re-runs (convmap tripwires + sim_parallel_oracle) attach to the
 next free-GPU boundary.*
 
-*Updated 2026-08-15 21:42–21:4xZ (real `date -u` at stamp: 21:44) —
-tick: **quiet hold — no change since 21:21.***
-
-**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
-OWNER** (13:35Z), untouched. No babysit entries, no training
-processes.
-
-**Steering**: none new — Discord read + inbox empty at 21:43;
-history shows no new reactions (all five merge posts remain 👍'd).
-The three owner decisions remain pending: retrain arm pick
-(continue-from-2k vs from-base), route A/B/C, GPU release.
-
-**Done**: Discord + history polls, GPU/process check, queue
-validate OK depth 2 (17 open; both queued items —
-grasp-sft-bootstrap retrain and grpo-r2-post-sft — gpu-local and
-owner-gated), `run_work_next` confirmed disarmed. No posts. 0
-GPU-h.
-
-**Next**: ticks hold until an owner decision lands — arm pick +
-route A/B/C unblock the retrain launch (either arm is one command
-post-phase-7), GPU release unblocks any launch at all. GPU oracle
-re-runs (convmap tripwires + sim_parallel_oracle) attach to the
-next free-GPU boundary.*
-
 ## Utilization footer
 
-Session 2026-08-15 22:04–22:0xZ (tick; 0 GPU-h): quiet hold — no
-change since 21:21; Discord read + inbox empty, no new reactions,
-GPU owner-reserved idle (0%) untouched, queue validate OK depth 2
-(17 open, both items gpu-local owner-gated), `run_work_next`
-disarmed; arm pick, route A/B/C, GPU release still pending.
+Session 2026-08-15 22:15–22:2xZ (tick; 0 GPU-h): main moved — owner
+pushed phase 7b/7c/7e + VERDICT + probe_grpo_replay_parity
+(21:40–22:10Z); `run_work_next` ARMED for the merge + seam
+re-verify. Discord read + inbox empty, no new reactions, GPU
+owner-reserved idle (0%) untouched, queue OK depth 2; arm pick,
+route A/B/C, GPU release still pending.
 
-Session 2026-08-15 21:54–21:5xZ (tick; 0 GPU-h): quiet hold — no
+Session 2026-08-15 22:04–22:0xZ (tick; 0 GPU-h): quiet hold — no
 change since 21:21; Discord read + inbox empty, no new reactions,
 GPU owner-reserved idle (0%) untouched, queue validate OK depth 2
 (17 open, both items gpu-local owner-gated), `run_work_next`
