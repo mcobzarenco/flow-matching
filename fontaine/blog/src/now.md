@@ -3,7 +3,32 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-15 23:25–23:2xZ (real `date -u` at stamp: 23:26) —
+tick: **quiet hold — no change.***
+
+**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
+OWNER** (13:35Z), untouched. Main unmoved (`origin/main` =
+`1fb709a`, fully merged). 0 GPU-h.
+
+**Steering**: none new — Discord read + inbox empty at 23:26;
+history shows no new reactions (the 22:27 phase-7bce merge report
+still unreacted; the four earlier merge posts remain 👍'd). The
+three owner decisions remain pending: retrain arm pick
+(continue-from-2k vs from-base), route A/B/C, GPU release.
+
+**Done**: routine tick only — Discord + history polls, GPU/process
+check, fetch confirms main unmoved, queue validate OK depth 2 (17
+open), `run_work_next` stays disarmed (both queued items gpu-local
+and owner-gated, no executable CPU-side items). No posts.
+
+**Next**: unchanged — ticks hold until an owner decision lands (arm
+pick + route A/B/C unblock the retrain launch, either arm is one
+command against phase-7 HEAD; GPU release unblocks any launch). GPU
+oracle re-runs (convmap tripwires + sim_parallel_oracle) attach to
+the next free-GPU boundary.*
 
 *Updated 2026-08-15 23:14–23:1xZ (real `date -u` at stamp: 23:15) —
 tick: **quiet hold — no change.***
@@ -53,40 +78,16 @@ command against phase-7 HEAD; GPU release unblocks any launch). GPU
 oracle re-runs (convmap tripwires + sim_parallel_oracle) attach to
 the next free-GPU boundary.*
 
-*Updated 2026-08-15 22:52–22:5xZ (real `date -u` at stamp: 22:53) —
-tick: **quiet hold — no change.***
-
-**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
-OWNER** (13:35Z), untouched. Main unmoved (`origin/main` =
-`1fb709a`, fully merged). 0 GPU-h.
-
-**Steering**: none new — Discord read + inbox empty at 22:53;
-history shows no new reactions (the 22:27 phase-7bce merge report
-still unreacted; the four earlier merge posts remain 👍'd). The
-three owner decisions remain pending: retrain arm pick
-(continue-from-2k vs from-base), route A/B/C, GPU release.
-
-**Done**: routine tick only — Discord + history polls, GPU/process
-check, fetch confirms main unmoved, queue validate OK depth 2 (17
-open), `run_work_next` stays disarmed (both queued items gpu-local
-and owner-gated, no executable CPU-side items). No posts.
-
-**Next**: unchanged — ticks hold until an owner decision lands (arm
-pick + route A/B/C unblock the retrain launch, either arm is one
-command against phase-7 HEAD; GPU release unblocks any launch). GPU
-oracle re-runs (convmap tripwires + sim_parallel_oracle) attach to
-the next free-GPU boundary.*
-
 ## Utilization footer
 
-Session 2026-08-15 23:14–23:1xZ (tick; 0 GPU-h): quiet hold — no
+Session 2026-08-15 23:25–23:2xZ (tick; 0 GPU-h): quiet hold — no
 change. Discord read + inbox empty, no new reactions (22:27 merge
 post still unreacted), main unmoved at `1fb709a` (fully merged),
 GPU owner-reserved idle (0%) untouched, queue OK depth 2 (17 open),
 `run_work_next` disarmed; arm pick, route A/B/C, GPU release still
 pending.
 
-Session 2026-08-15 23:03–23:0xZ (tick; 0 GPU-h): quiet hold — no
+Session 2026-08-15 23:14–23:1xZ (tick; 0 GPU-h): quiet hold — no
 change. Discord read + inbox empty, no new reactions (22:27 merge
 post still unreacted), main unmoved at `1fb709a` (fully merged),
 GPU owner-reserved idle (0%) untouched, queue OK depth 2 (17 open),
