@@ -2,7 +2,7 @@
 
 *2026-08-15, drafted ~09:2xZ during the stage-C ride (pre-reg:
 [grasp-SFT bootstrap](2026-08-14-prereg-grasp-sft-bootstrap.md));
-probe section finalized ~13:4xZ. Status: the stage-C run was killed at
+probe section finalized ~13:4xZ, forward pointers ~16:0xZ. Status: the stage-C run was killed at
 step 2040 on the owner's order (10:10Z) and the formal stage-D exam is
 suspended; in its place a **two-arm probe of the step-2000
 checkpoint** ran and is now fully banked — see the probe section
@@ -186,8 +186,39 @@ successes with +0.08 cm mean progress on this exact protocol; the
 stage-1 W0 arm read 2/100. Those are what "before the bootstrap"
 looks like. **The formal exam never ran**: the 10:10Z owner re-steer
 killed stage C at step 2040 and replaced the exam with the two-arm
-probe above; the frozen verdict surface transfers to whichever
-corrected-table checkpoint the owner banks next.
+probe above. And the table's *consequence* column has since been
+re-based: [GRPO-R2 Amendment A2](2026-08-15-prereg-grpo-r2-post-sft.md)
+(registered 14:4xZ) moves the R2 activation bar to the **token-SFT
+arm's discrete-head** unseen count — a flow-head sim100 read no longer
+triggers the GRPO registration, because token-GRPO trains the discrete
+head that this stage-C run never touched. The ≥20 / 5–19 / <5 surface
+survives as the frozen *verdict on the data* for whichever
+corrected-table flow checkpoint banks next; it just isn't the R2
+trigger anymore.
+
+## Where this goes next — three owner decisions pending
+
+Everything below is pre-registered and launch-ready; nothing runs
+until the owner picks and frees the GPU (theirs since 13:35Z).
+
+1. **Retrain arm** —
+   [corrected-table retrain](2026-08-15-prereg-grasp-sft-retrain-corrected-table.md):
+   *continue-from-2k* (proposed primary 13:33Z: warm in features,
+   ~2.9 GPU-h, likely better endpoint, muddier attribution) vs
+   *from-base* (clean table-fix pricing, per the posted draft). Either
+   way the read is against the same comparators: 9/100 base primary,
+   28/100 corrupt-table floor.
+2. **Route for the next SFT GPU-hours** — A: flow retrain (~5.5
+   GPU-h, prices the table fix); B:
+   [token-SFT arm](2026-08-15-prereg-grasp-sft-token-sft-arm.md)
+   (~7–8 GPU-h, unlocks token-GRPO via A2); C: one `--objective
+   joint` run (both heads, confounded read). A and B share the
+   corrected base and don't block each other.
+3. **Composition** — the
+   [`--image-augment` sim2real flag](2026-08-15-prereg-image-augment-sim2real.md)
+   (landed, oracle-pinned, `p=0` bitwise-identical) composes with
+   whichever arm runs: on the retrain directly (one run, two changes,
+   confounds the vs-28 comparison) or as a clean follow-up A/B.
 
 ## Ledger
 
