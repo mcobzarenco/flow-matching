@@ -9,7 +9,35 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-15 19:47–19:5xZ (real `date -u` at stamp: 19:49) —
+tick: **quiet hold — owner 👍 on the phase-6 merge post (19:43,
+id 1538272016078209066) recorded; nothing else changed.***
+
+**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
+OWNER** (13:35Z), untouched. No babysit entries, no training
+processes.
+
+**Steering**: new reaction — **👍 on the merge-main-phase6 result
+post** (19:43Z), owner ack of the merge; all four merge-chain posts
+(5a/5b/5c/6) now carry recorded 👍s. Discord read + inbox empty at
+19:48. The three owner decisions remain pending: retrain arm pick
+(continue-from-2k vs from-base), route A/B/C, GPU release.
+
+**Done**: Discord + history polls, GPU/process check, queue
+validate OK depth 2 (17 open; both queued items —
+grasp-sft-bootstrap retrain and grpo-r2-post-sft — gpu-local and
+owner-gated), `run_work_next` confirmed disarmed (no
+CPU-executable items). No posts (a reaction needs no reply).
+0 GPU-h.
+
+**Next**: ticks hold until an owner decision lands — arm pick +
+route A/B/C unblock the retrain launch (either arm is one command
+post-phase-6), GPU release unblocks any launch at all. GPU oracle
+re-runs (convmap tripwires + sim_parallel_oracle) attach to the
+next free-GPU boundary.*
 
 *Updated 2026-08-15 19:33–19:4xZ (real `date -u` at stamp: 19:44) —
 work session: **merge-main-phase6 CLOSED — `393163f` (old-world
@@ -83,35 +111,15 @@ gate the retrain launch; post-merge, both arms must re-verify as
 one-command-ready. GPU oracle re-runs still attach to the next
 free-GPU boundary.*
 
-*Updated 2026-08-15 19:18–19:2xZ (real `date -u` at stamp: 19:18) —
-tick: **quiet hold — no change since 19:07; Discord read + inbox
-empty, no new reactions, GPU owner-reserved idle (0%), nothing to
-babysit.***
-
-**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
-OWNER** (13:35Z), untouched. No babysit entries, no training
-processes.
-
-**Steering**: none new — Discord read + inbox empty at 19:18;
-history shows no new reactions (all three phase-5 merge posts
-already carry recorded 👍s). The three owner decisions remain
-pending: retrain arm pick (continue-from-2k vs from-base), route
-A/B/C, GPU release.
-
-**Done**: Discord + history polls, GPU/process check, queue
-validate OK depth 2 (17 open; both queued items —
-grasp-sft-bootstrap retrain and grpo-r2-post-sft — gpu-local and
-owner-gated), `run_work_next` confirmed disarmed (no
-CPU-executable items). No posts (nothing owner-facing changed).
-0 GPU-h.
-
-**Next**: ticks hold until an owner decision lands — arm pick +
-route A/B/C unblock the retrain launch (either arm is one command
-post-5c), GPU release unblocks any launch at all. GPU oracle
-re-runs (convmap tripwires + sim_parallel_oracle) attach to the
-next free-GPU boundary.*
-
 ## Utilization footer
+
+Session 2026-08-15 19:47–19:5xZ (tick; 0 GPU-h): quiet hold — owner
+👍 recorded on the merge-main-phase6 result post (19:43Z; all four
+merge-chain posts 5a/5b/5c/6 now acked); Discord read + inbox empty,
+GPU owner-reserved and idle (0%), untouched; queue validate OK depth
+2 (17 open, both items gpu-local owner-gated), `run_work_next`
+disarmed; all three owner decisions still pending (arm pick, route
+A/B/C, GPU release).
 
 Session 2026-08-15 19:33–19:4xZ (work, exploit-side infra; 0 GPU-h):
 merge-main-phase6 closed — `393163f` (old-world deletion) merged
@@ -123,22 +131,6 @@ format (reference-trunk mounts stay one-command-ready); pre-reg §10
 amendment + in-channel result post; queue OK depth 2 (17 open, both
 gpu-local owner-gated), `run_work_next` disarmed; all three owner
 decisions still pending (arm pick, route A/B/C, GPU release).
-
-Session 2026-08-15 19:28–19:3xZ (tick; 0 GPU-h): phase 6 landed on
-origin/main (`393163f`, old-world deletion, pushed 19:07:58Z) —
-queued merge-main-phase6 (7-point seam checklist incl. our-files
-diff-audit + gradflow oracle anchors), armed `run_work_next` for
-the chained merge session; Discord read + inbox empty, no new
-reactions, GPU owner-reserved and idle (0%), untouched; queue
-validate OK depth 3 (18 open); all three owner decisions still
-pending (arm pick, route A/B/C, GPU release).
-
-Session 2026-08-15 19:18–19:2xZ (tick; 0 GPU-h): quiet hold — no
-change since 19:07; Discord read + inbox empty, no new reactions
-(all three phase-5 merge posts already acked), GPU owner-reserved
-and idle (0%), untouched; queue validate OK depth 2 (17 open, both
-items gpu-local owner-gated), `run_work_next` disarmed; all three
-owner decisions still pending (arm pick, route A/B/C, GPU release).
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
