@@ -175,7 +175,7 @@ class Molmo2Inputs:
 
 class Molmo2InputsCollator:
     """InputsCollator for the Molmo2 trunk (module docstring has the
-    format). ``max_crops`` is the ONE image knob: 1 = the port plan's
+    format). ``max_crops`` is the ONE image knob: 1 = the
     operating point (global view + a single full-image crop, the smallest
     layout the shipped distribution contains)."""
 
@@ -314,7 +314,7 @@ class Molmo2Encoder(ObservationEncoder[Molmo2Inputs, Molmo2Model]):
     """The Molmo2 prompt-side strategy: collation, multimodal prefix
     encoding, and the trunk's unfreeze surface.
 
-    Phase 1 is AR-first (port plan §6 amendment): the encoder exports NO
+    AR-first: the encoder exports NO
     memory streams — its whole product is the prefix KV cache the suffix
     decoder continues (``retain_cache=True``; molmo_flow conditions on
     every layer of it).
@@ -325,7 +325,7 @@ class Molmo2Encoder(ObservationEncoder[Molmo2Inputs, Molmo2Model]):
     the user-turn close, ZERO-initialized so the prompt starts
     undisturbed), serialized as ``prompt.safetensors``.
 
-    Unfreeze surface (the 2026-08-06 18:1xZ freezing split): ``"text"``
+    Unfreeze surface (the freezing split): ``"text"``
     = decoder blocks + ``ln_f``; ``"vision"`` = the vision tower +
     connector. ``wte.embedding``, ``wte.new_embedding`` and the shipped
     ``lm_head`` stay frozen BY DESIGN (few rows touched per batch, dense

@@ -1,45 +1,47 @@
-"""First-class GRPO serving + replay for the MolmoAct2 discrete head —
-the `bijou/molmoact2/{predictor,replay}` re-point (docs/
-molmoact2-retirement.md phase 4, fontaine sign-off 2026-08-14).
+"""GRPO serving + replay for the MolmoAct2 discrete head.
 
-**What is frozen** (decision 10): the row NPZ format (TrainingRowWriter
-output — frames + sampled bins + per-token logprobs + packed masks +
-MODEL-unit state) and the loop's ``step_NNNN.pt`` checkpoints. This
-module reads the same rows and exposes the same functional surface the
-loop consumes (``load_training_rows``, ``grammar_masks_from_bins``,
-``verify_recorded_masks``, ``replay_logprobs``, ``molmoact2_grpo_sums``
-/ ``_loss``), swapping the port predictor for the first-class stack:
+The RL loop (``sim/grpo_loop.py``) needs three things from a policy:
+a rollout decode that records its own scoring surface, a
+teacher-forced replay that re-scores stored rows under the live
+weights, and the grammar-mask arithmetic that keeps the two on the
+SAME masked softmax. This module provides all three over the
+first-class stack:
 
-- serving: :class:`MolmoAct2DiscreteStack` — the AR read of a BIJOU
-  molmoact2-family checkpoint (release-class molmo_flow section or a
-  format-6 ar/joint descendant) behind the port predictor's
-  duck-typed attribute surface (``trunk``, ``fast_codec``,
-  ``action_token_start_id``, ``metadata``, ``action_stats``…), so the
-  loop's freeze/anchor/row-span machinery runs verbatim;
-- rollout decode: ``predict_action_discrete`` = the scaffold's
-  grammar-masked ``predict_chunk`` (phase-2 byte-parity-gated against
-  the port's decode) with the same keyed-Gumbel sampling scheme and
-  the same [B, 2048] block-relative capture surface
+- serving: :class:`MolmoAct2DiscreteStack` — the AR read of a bijou
+  molmoact2-family checkpoint (a release-class molmo_flow section, or
+  an ar/joint descendant's recorded format-6 section), exposing the
+  attribute surface the loop's freeze/anchor/row-span machinery
+  reads (``trunk``, ``fast_codec``, ``action_token_start_id``,
+  ``metadata``, ``action_stats``…);
+- rollout decode: ``predict_action_discrete`` = the suffix scaffold's
+  grammar-masked ``predict_chunk`` with keyed-Gumbel sampling and the
+  [B, 2048] block-relative capture surface
   (``token_rows_from_capture`` consumes it unchanged);
 - replay: one teacher-forced suffix forward per row through the SAME
   decoder (``ARSuffixDecoder.forward`` — position t of
   ``[<action_start>, bins…]`` predicts bin t), block columns reduced
-  under the bins-recomputed grammar mask at the sampling temperature —
-  fontaine's exact reduction ops.
+  under the bins-recomputed grammar mask at the sampling temperature.
 
-Numerics note (registered): the replay bound (1e-5 + the JPEG budget)
-was measured with the TEXT stack fp32 for both rollout and replay —
-the loop's ``stack.trunk.text.float()`` convention. Mount bf16 and the
-teacher-forced-vs-incremental comparison sits at the batch-shape
-reduction-order floor instead (measured ≤5.6e-2 worst-step; see
-probes/probe_molmoact2_ar_parity.py's fp32 diagnostic).
+The row NPZ format (``TrainingRowWriter`` output — frames + sampled
+bins + per-token logprobs + packed masks + MODEL-unit state) and the
+loop's ``step_NNNN.pt`` checkpoints are FROZEN artifact formats:
+banked rows stay readable forever, and this module's functional
+surface (``load_training_rows``, ``grammar_masks_from_bins``,
+``verify_recorded_masks``, ``replay_logprobs``,
+``molmoact2_grpo_sums`` / ``_loss``) is what the loop consumes.
 
-RNG note (decision 11): sampled draws consume full-width Gumbel
-vectors per step (the scaffold's device-agnostic scheme) where the
-port drew 2048 per step — bit-identical GREEDY and identical masked
-softmax, different sample streams under the same seed. Replay of
-banked rows is unaffected (rows carry their bins and π_old);
-post-migration runs start fresh, never resume across the re-point.
+Numerics: replay-vs-rollout logprob agreement assumes the TEXT stack
+runs fp32 for both (the loop's ``stack.trunk.text.float()``
+convention) — under a bf16 trunk the teacher-forced-vs-incremental
+comparison sits at the batch-shape reduction-order floor instead
+(see probes/probe_molmoact2_ar_parity.py's fp32 diagnostic).
+
+RNG: sampled draws consume one full-vocabulary-width Gumbel vector
+per step (the scaffold's device-agnostic scheme). Greedy decodes and
+the masked softmax itself are unaffected; two policies drawing from
+the same seed agree only if they consume identically, so runs are
+never resumed across policy-stack changes — banked-row replay is safe
+regardless (rows carry their bins and π_old).
 """
 
 from __future__ import annotations
@@ -81,9 +83,10 @@ from .train_grpo import GRPOConfig, GRPOStats, grpo_objective_sums
 
 @dataclass(frozen=True, slots=True)
 class DiscreteActionResult:
-    """The rollout decode's full record — the port result's shape
-    (``masked_violations`` retired with the unconstrained mode: the
-    first-class decode is masked-only)."""
+    """One rollout decode's full record: the executed chunk plus the
+    raw emission the RL instruments consume. ``masked_violations`` is
+    always None — the decode is grammar-masked only, so there is no
+    unconstrained argmax to diverge from."""
 
     actions: Tensor  # [1, n_action_steps, action_dim] fp32 CPU
     token_ids: Tensor  # [1, K] long CPU — [<action_start>, bins…, <action_end>]
@@ -92,8 +95,9 @@ class DiscreteActionResult:
 
 
 class MolmoAct2DiscreteStack:
-    """The GRPO loop's policy object: first-class serving + the port
-    predictor's duck-typed attribute surface (see module docstring)."""
+    """The GRPO loop's policy object: serving plus the duck-typed
+    attribute surface the loop's freeze/anchor/row-span machinery
+    reads (see the module docstring)."""
 
     def __init__(
         self,
@@ -287,9 +291,12 @@ class MolmoAct2DiscreteStack:
         action_capture: list[ActionCaptureStep] | None = None,
     ) -> DiscreteActionResult:
         """One observation → the executed chunk through the discrete
-        head — the port's masked mode on the first-class stack (byte
-        parity gated in phase 2). The unconstrained reference mode
-        retired with the port; ``grammar_masked`` must be True."""
+        head: ``<action_start>`` fed, bins decoded under the
+        symbol-budget grammar mask (greedy, or keyed-Gumbel sampled at
+        ``temperature``), raw units via the checkpoint's merged table.
+        Masked-only — ``grammar_masked`` must be True (an unconstrained
+        full-vocabulary decode has a zeros-fallback failure mode this
+        stack deliberately does not implement)."""
         if not grammar_masked:
             raise ValueError(
                 "the unconstrained (zeros-fallback) mode retired with the "
@@ -345,13 +352,17 @@ class MolmoAct2DiscreteStack:
         )
 
 
-# --- the frozen row format (decision 10) --------------------------------
+# --- the frozen row format ----------------------------------------------
 
 
 @dataclass(frozen=True, slots=True)
 class ReplayRow:
-    """One stored rollout predict, decoded back from the writer's NPZ —
-    the port replay's row, format-frozen (see its docstring)."""
+    """One stored rollout predict, decoded back from the writer's NPZ
+    (a FROZEN artifact format): the two frames (JPEG-decoded — a lossy
+    leg the replay bounds account for), the MODEL-unit state the
+    policy consumed, and the token surface — block-relative bins, the
+    rollout's chosen logprobs under the decode's own masked softmax,
+    bit-packed legality masks."""
 
     top: np.ndarray  # [H, W, 3] uint8
     wrist: np.ndarray  # [H, W, 3] uint8
@@ -406,8 +417,11 @@ def grammar_masks_from_bins(
     bins: list[int],
 ) -> Tensor:
     """[T, block_vocab] bool legality masks recomputed from the bins
-    alone — pure budget arithmetic over the codec's symbol lengths
-    (the port replay's contract, verbatim on the first-class codec)."""
+    alone — pure budget arithmetic over the codec's symbol lengths.
+    The decode's mask at step ``t`` is a function of the bin prefix
+    (legal ids are trained rows whose expansion fits the remaining
+    T×D budget), so a row's masks are exactly recomputable; loud on
+    streams that cannot be a real masked decode's output."""
     codec = stack.fast_codec
     total = stack.decoder.config.chunk_size * stack.decoder.config.action_dim
     lengths = torch.from_numpy(codec.symbol_lengths)
@@ -523,9 +537,13 @@ def molmoact2_grpo_sums(
     anchor_logprobs: Tensor | None = None,
     kl_beta: float = 0.0,
 ) -> tuple[Tensor, Tensor, GRPOStats]:
-    """Sum-form replay step — the port function's contract on the
-    first-class stack (guards, teacher-forced forward, the
-    decoder-generic clipped surrogate)."""
+    """Sum-form replay step for a row batch: guards (every row sampled
+    at ``config.temperature``; recorded masks reproduce bit-for-bit
+    from bins), the teacher-forced forward, then the decoder-generic
+    clipped surrogate — (objective SUM with graph, decision count,
+    detached stats). The caller owns normalization: chunked backward
+    divides each chunk's sum by the FULL-batch token count, so
+    chunking never changes the gradient."""
     for row in rows:
         if float(row.temperature) != config.temperature:
             raise ValueError(

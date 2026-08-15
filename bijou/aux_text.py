@@ -631,7 +631,7 @@ def events_text(item: dict[str, Any]) -> str | None:
     event-style row in it belongs to this exact frame — read directly
     rather than through ``emitted_at``, whose single-row resolver raises
     on multi-event frames (drop + regression on one frame is real data;
-    it killed a corpus run on 2026-08-02)."""
+    it killed a corpus run)."""
     contents = [
         str(row["content"])
         for row in item.get("language_events") or []

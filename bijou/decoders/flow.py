@@ -788,7 +788,7 @@ def flow_matching_loss(
     indices to the episode range (dataset_reader._get_query_indices), so
     positions past the end already hold the final real action — the
     desired "reach and hold" target — and ``action_is_pad`` is deliberately
-    ignored here (decision 2026-07-29: full-chunk targets over masking;
+    ignored here (full-chunk targets over masking;
     the expert attends every position, so masked-out padding was still
     silently shaping predictions). Eval stays real-steps-only.
 

@@ -9,7 +9,7 @@ the checkpoint and outside ``transformer`` here). Checkpoint quirks handled:
 - the released checkpoint ships fp32; pass ``dtype=torch.bfloat16`` to cast
   at load (matching how the mount will run),
 - with ``truncate_layers=N`` only decoder blocks ``0..N-1`` are instantiated
-  and loaded — the 15-layer mount of the port plan (D2). Unlike gemma4 there
+  and loaded — the truncated prefix mount. Unlike gemma4 there
   are no KV-sharing or layer-type constraints: every layer is a legal
   truncation point. The truncated model is built WITHOUT the LM head (the
   mount only exports residual taps); a full-depth load includes it for the

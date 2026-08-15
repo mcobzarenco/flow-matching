@@ -337,8 +337,9 @@ class BijouModel[I: BatchInputs, B: nn.Module](nn.Module):
         split out so BijouTrainStep can run the suffix forward INSIDE
         the autocast region (the [B, S, 154k] logits want bf16) while
         the flow branch stays fp32 outside it — and AFTER the flow
-        branch extracted its prompt-only KV (decision 5: this forward
-        APPENDS suffix K/V to the memory's cache)."""
+        branch extracted its prompt-only KV: this forward APPENDS
+        suffix K/V to the memory's cache, and the expert must never
+        condition on teacher-forced action tokens."""
         joint_ce = self.joint_ce
         assert joint_ce is not None  # joint-arm-only path (train.py routes)
         return ar_backbone_loss_sums(

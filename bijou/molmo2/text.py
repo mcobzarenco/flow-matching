@@ -16,8 +16,8 @@ path (conventions pinned in ``docs/molmo2.md``):
 
 The forward supports the ``residual_taps``/``residual_sink`` protocol of
 ``bijou.gemma4.text.TextModel`` (tap = the hidden state AFTER a layer, post
-both residual adds) — under design decision D1 of the port plan this is the
-ONLY export the FLOW expert consumes (no ``kv_stop_layer``). The AR suffix
+both residual adds) — the ONLY export a residual-conditioned flow
+expert would consume (no ``kv_stop_layer``). The AR suffix
 role and the MolmoAct2 expert conditioning use ``Molmo2KVCache`` instead:
 each layer appends its post-RoPE K/V at prefill and attends over the full
 T = seen + S keys on continuation (see ``cache.py``).

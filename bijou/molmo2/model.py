@@ -1,8 +1,8 @@
 """Full-model Molmo2 assembly (WP4 slice): vision injection + multimodal
 mask + compose + a cache-free greedy decode.
 
-Faithful to the checkpoint's ``modeling_molmo2.py`` (conventions re-read
-2026-08-06):
+Faithful to the checkpoint's ``modeling_molmo2.py``, conventions read
+from the raw file:
 
 - Injection: pooled/projected image features are **added** (``+=``) into
   the input-embedding sequence at ``input_ids == image_patch_id``

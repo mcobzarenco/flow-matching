@@ -1,10 +1,8 @@
 """Token-GRPO synchronous training loop on the molmoact2 discrete
-surface (phase-2 instrument item 4, design memo
-posts/2026-08-13-token-grpo-phase2-design.md §2/§8; rollout + replay
-halves landed as item 3, ``bijou/molmoact2/replay.py``).
+surface (rollout + replay halves in ``bijou.grpo_replay``).
 
-One RL step (memo §2, πRL-style synchronous — rollouts and gradient
-steps alternate on one GPU):
+One RL step (πRL-style synchronous — rollouts and gradient steps
+alternate on one GPU):
 
 1. **Rollout wave** — S fresh spawn seeds from the dedicated training
    stream (``train_seed_base + step*S``, disjoint from sim100's 0–99,
@@ -25,9 +23,8 @@ steps alternate on one GPU):
    (``--surface``): B — the trunk's TEXT stack (embeddings +
    transformer + lm_head), vision frozen (R0's surface); A — ONLY the
    FAST-block rows of the untied embedding + lm_head (~10.5M params;
-   the R0-A re-scope's surface, grad rows outside the block zeroed
-   before the step). Re-scope mitigation levers (R0-A pre-reg,
-   2026-08-13): ``--advantage-clip`` clamps group z-scores;
+   grad rows outside the block zeroed before the step). Mitigation
+   levers: ``--advantage-clip`` clamps group z-scores;
    ``--kl-beta`` adds a DIFFERENTIABLE k3 penalty to the step-0 anchor
    (per-chunk reference forwards via one anchor swap per step,
    heartbeat key ``anchor_k3_pre``).
@@ -712,8 +709,8 @@ def update_tripwires(
 
 @dataclass(frozen=True, slots=True)
 class GRPOLoopConfig:
-    """Frozen loop constants (memo §2/§5/§6/§7 candidates; the
-    finalized pre-reg pins the actual run's values)."""
+    """Frozen loop constants (each run's pre-registration pins its
+    actual values)."""
 
     out_dir: Path
     total_steps: int

@@ -20,8 +20,7 @@ and every row carries the same identity triple as the sequential driver
 ``frame_index=replan``), so stable-key flow noise is untouched by
 batching or by which worker runs a seed.
 
-Determinism contract (pre-registered, posts/
-2026-08-12-prereg-sim-parallel-rollouts.md): the CPU-tier oracle in
+Determinism contract (pre-registered): the CPU-tier oracle in
 tests/test_sim_parallel_rollouts.py pins harness equivalence — same
 per-seed (obs -> chunk -> step) sequence and rows as the sequential
 loop, which both drivers share via ``run_episode_loop``. Whether the
@@ -333,8 +332,8 @@ def parse_args() -> argparse.Namespace:
         parser.error(
             "--molmoact2-temperature requires --molmoact2-grammar-masked "
             "— unconstrained sampling would sample the zeros-fallback "
-            "class (the 6.8% finding, posts/2026-08-13-prereg-molmoact2-"
-            "ar100.md)",
+            "class (a measured 6.8% zero-fallback rate on unconstrained "
+            "greedy)",
         )
     if args.molmoact2_temperature is not None and args.molmoact2_temperature <= 0:
         parser.error(
@@ -553,8 +552,7 @@ class WorkerDiedError(RuntimeError):
 
 
 class TrainingRowWriter:
-    """``--emit-training-rows`` sink (token-GRPO phase-2 instrument,
-    design memo 2026-08-13 §8 item 1): one NPZ per (seed, draw, replan)
+    """``--emit-training-rows`` sink: one NPZ per (seed, draw, replan)
     predict — the two observation frames as encoded JPEG bytes, the
     state vector, and the policy's TokenRow (sampled codec ids,
     per-token chosen logprobs under the decode's own masked softmax,

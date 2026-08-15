@@ -1,7 +1,7 @@
 """Pure-torch Molmo2 vision tower + connector (SigLIP-so400m class).
 
 Faithful reimplementation of the checkpoint's ``modeling_molmo2.py`` vision
-path, op-for-op (conventions read from the raw file, 2026-08-06):
+path, op-for-op (conventions read from the raw file):
 
 - ViT: linear patch embedding over flattened 14x14x3 patches (bias), learned
   positional embedding added (no class token), pre-norm blocks with standard

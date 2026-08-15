@@ -18,7 +18,7 @@ The image pipeline (per image):
    overlap margins (4+4 patches per dim) make neighboring crops share
    borders; resize the image so crops tile it exactly, then slice. With
    ``max_crops=1`` the tiling is 1x1 — the whole image as one crop — which
-   is the port plan's "crops off" operating point WITHOUT leaving the
+   is the "crops off" operating point WITHOUT leaving the
    shipped token-layout distribution (the reference always emits the
    global view + at least one crop).
 3. POOLING INDEX: for each output token (2x2 patch group, global view

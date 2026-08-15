@@ -24,7 +24,7 @@ Two pieces, split for testability:
 Skip-ahead counts EXECUTED motion ticks since the plan's observation,
 not wall time: held ticks advance the clock but not the arm, and a
 wall-clock skip after holds adopts far-future rows the arm never
-traveled toward — field-tested 2026-08-05 as a max_relative_target
+traveled toward — field-tested as a max_relative_target
 clamp storm ("chaotic fast motion"): 42-tick latency at 30 Hz produced
 switches at rows 45-47/50 with 38-43 held ticks between.
 

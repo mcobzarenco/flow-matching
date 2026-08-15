@@ -1,8 +1,7 @@
 """MolmoAct2 action-side processing — prompt template, discrete state
-tokens, q01/q99 norm-stats (port item 2, rig-path scope).
+tokens, q01/q99 norm-stats.
 
-Pre-reg posts/2026-08-10-prereg-molmoact2-firstclass-port.md. The
-backbone-side image/prompt machinery is reused from ``bijou.molmo2``;
+The backbone-side image/prompt machinery is reused from ``bijou.molmo2``;
 this module holds the ACTION-side deltas their serving stack applies on
 top, mirrored op-for-op from two shipped sources and parity-gated
 against them executing on the same inputs

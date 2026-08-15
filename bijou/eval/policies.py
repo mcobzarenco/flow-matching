@@ -397,7 +397,7 @@ def tile_stats(batch: CollatedBatch[Any], draws: int) -> CollatedBatch[Any]:
 @dataclasses.dataclass(frozen=True, slots=True)
 class TokenRow:
     """One frame's action-token record for RL replay — the token-GRPO
-    training-rows instrument (design memo 2026-08-13 §8 item 1). Per
+    training-rows instrument. Per
     emitted symbol (active decode steps only, in emission order): the
     CODEC id (backbone id − block_base), its chosen log-probability
     under the decode's OWN sampling distribution — fp32
@@ -820,7 +820,7 @@ class BijouPolicy:
             include_subgoal_condition or subgoal_mode == "oracle"
         )
         # molmo_flow state tokens are BINNED from the checkpoint's merged
-        # q01/q99 table (§8.13 decision 6) — the same wiring as training's
+        # q01/q99 table (§8.13) — the same wiring as training's
         # collator; without it the per-sample mean/std path would silently
         # shift every state bin off its trained meaning.
         state_table = (

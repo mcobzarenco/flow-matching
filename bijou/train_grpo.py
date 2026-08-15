@@ -1,4 +1,4 @@
-"""Token-GRPO gradient step (design memo 2026-08-13 §2/§8 item 2):
+"""Token-GRPO gradient step:
 advantage-weighted clipped token-level CE over the action block of a
 SAMPLED suffix, DAPO clip-higher bounds, ratio against the rollout's
 recorded per-token logprobs (the TokenRow surface, §8 item 1).

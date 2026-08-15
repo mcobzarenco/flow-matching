@@ -1,4 +1,4 @@
-"""The MolmoAct2 prompt-side encoder mode (§8.13 step 4, decision 5).
+"""The MolmoAct2 prompt-side encoder mode (§8.13).
 
 Their serving prompt, as a first-class bijou encoder strategy:
 
@@ -9,14 +9,14 @@ Their serving prompt, as a first-class bijou encoder strategy:
     Given these, what action should the robot take to complete the
     task?<|im_end|>\\n<|im_start|>assistant\\n{<action_output> | ε}
 
-- The PREFILL SPLIT POINT is the narration switch (decision 7):
+- The PREFILL SPLIT POINT is the narration switch:
   narration OFF ends the prefill with ``<action_output>`` — their exact
   serving prompt, byte-for-byte (the parity surface); narration ON ends
   it at the ChatML opener, aux text decodes as suffix and
   ``<action_output>`` appends after it. OFF-ids == ON-ids + one token,
   pinned by test.
 - State is DISCRETE: ``PromptInputs.state`` arrives q01/q99-clamp-
-  normalized to [-1, 1] (the run's scheme — decision 6; the data side
+  normalized to [-1, 1] (the run's merged-table scheme; the data side
   normalizes with the checkpoint's merged table, NOT per-dataset
   mean/std), and this collator only bins it into ``<state_N>`` tokens.
 - Images run their UINT8 single-view path (``to_uint8_rgb`` truncation
@@ -107,7 +107,7 @@ def robot_prompt(
     Byte-identical to the port's ``build_robot_prompt`` for
     ``narration=False`` (the gate pins this); ``narration=True`` stops
     at the ChatML opener — the suffix decoder emits aux text there and
-    ``<action_output>`` appends after it (decision 7)."""
+    ``<action_output>`` appends after it."""
     setup = f"{SETUP_START_TOKEN}{setup_type}{SETUP_END_TOKEN}"
     control = f"{CONTROL_START_TOKEN}{control_mode}{CONTROL_END_TOKEN}"
     prompt = (

@@ -89,7 +89,7 @@ class _TorchPost:
     """CUDA implementation of the per-tick image post-processing
     (fisheye remap, PSF blur, grade/composite arithmetic) — the
     rollout profile is render-bound on the numpy reference path
-    (~0.3 s/tick, owner-approved port 08:12Z 2026-08-12). Numerics
+    (~0.3 s/tick). Numerics
     are float32 on GPU vs the reference's float64; frames may differ
     by ±2/255 counts (oracle-pinned in tests/test_sim_appearance.py).
     The sensor-noise stream stays on the seeded numpy RNG."""
@@ -429,7 +429,7 @@ class SO101Sim:
         sensor model swapped for the top cam's fovy (the rig captures
         4:3 640x480 center crops on both modules).
 
-        Re-tuned 2026-08-12 (sim-wrist-periphery-fix): the original
+        Re-tuned (sim-wrist-periphery-fix): the original
         pose sat at the wrist top behind the gripper (world ~(0.096,
         -0.004, 0.160), ~55 deg), which under the 72-deg v1 source
         filled the bottom ~40% of frame with the gripper body — real
@@ -444,8 +444,8 @@ class SO101Sim:
 
     def _flip_camera_mount(self) -> None:
         """Menagerie mounts the wrist camera BRACKET mirrored, 180 deg
-        from the real assembly (owner spot 2026-08-12 from rollout
-        videos; the real bracket starts rotated toward the ceiling).
+        from the real assembly (visible in rollout videos; the real
+        bracket starts rotated toward the ceiling).
         Probe-measured: at the settled home the bracket hangs on the JAW
         side 40 mm over the table, its volume dips below the table on
         31.9% of the 26 reference episodes' recorded REAL poses (center
@@ -1074,7 +1074,7 @@ class SO101Sim:
 
     def _recolor_arm(self) -> None:
         """Menagerie ships the yellow-print arm; the rig's are black, and
-        only the FOLLOWER has the bright orange moving jaw (owner-confirmed,
+        only the FOLLOWER has the bright orange moving jaw (rig fact,
         and visible in the follower's own wrist view,
         outputs/sim/real/wrist_00260.png). Runtime recolor instead of
         editing the vendored XML."""
@@ -1130,7 +1130,7 @@ class SO101Sim:
         noise streams stay bit-identical to the default path. Under
         arm_texture='v2' the PLA albedo is divided by the surface
         texture's realized mean: the renderer MODULATES the lit material
-        color by the texture (measured, spike 2026-08-14), so the
+        color by the texture (measured), so the
         compensated product preserves the fitted grade exactly."""
         for index in range(self.model.nmat):
             name = self.model.mat(index).name

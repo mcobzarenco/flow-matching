@@ -7,7 +7,7 @@ are positional (community image/image2 keys carry no reliable semantics;
 SmolVLA precedent). The processor is built lazily so the strategy can be
 pickled into dataloader workers.
 
-Padding orientation (decided 2026-08-01, test-gated in
+Padding orientation (test-gated in
 tests/test_backbone_continuation.py): prompts are LEFT-padded with
 per-sample logical position_ids. For the exported-K/V consumers both
 orientations produce identical real-token K/V (pads are masked columns

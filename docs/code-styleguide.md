@@ -227,6 +227,22 @@ cited, and the doc-cited `probe_rollout_vram.py` is lost outright
   collective behavior (e.g. "every rank must call this at the same step").
   Math typography (τ, ε, σ, −) is welcome; the confusables whitelist in
   `pyproject.toml` covers it.
+- **Docstrings are EVERGREEN and self-contained.** They describe what
+  the code IS — contract, invariants, semantics — never how it got
+  here: no dates, no decision/phase numbers, no sign-offs, no "owner
+  call", no author or agent names, no pointers into planning or
+  historical documents. A reader must not need the project's history
+  to understand a module, and narrative provenance in docstrings rots
+  silently (git log and the historical docs in `docs/` are the
+  provenance). Pointers to AS-OF-NOW docs (architecture.md sections)
+  are fine. The boundary with the neighbouring rules: `#` comments MAY
+  carry dated measurements and incident notes (that convention
+  stands), and probe/launcher module HEADERS MUST (pre-registered
+  expectations are dated by nature) — the docstring rule is about
+  library code's contract surface. (Added after the molmoact2
+  retirement repeatedly landed module docstrings narrating decisions,
+  dates and sign-offs — a recurring class; the fix is the rule plus a
+  sweep, not another cleanup commit.)
 - **Every function that takes tensors documents their shapes as
   docstring bullets** — a `Shapes:` block, one line per tensor argument
   (and the return): ``- ``x``: [B, T, hidden] role``. Inline `# [B, S]`

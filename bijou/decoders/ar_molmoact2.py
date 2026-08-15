@@ -1,6 +1,6 @@
-"""The MolmoAct2 trunk's discrete-head suffix role — the third
-`ARSuffixDecoder` concrete (docs/molmoact2-retirement.md phase 2,
-decisions 1–3).
+"""The MolmoAct2 trunk's discrete-head suffix role — an
+`ARSuffixDecoder` concrete (checkpoint decoder kind ``ar_backbone``;
+the trunk axis is the PROMPT kind, §2.2a of architecture.md).
 
 **Zero new parameters.** The release trained its action rows into the
 trunk's OWN base matrices: suffix ids embed through the frozen-or-live
@@ -31,8 +31,8 @@ class is ever constructed, and the construction guards here hold the
 line for direct builders (probes, tests).
 
 **Construction guards** (the id-space seam made unrepresentable —
-getting the bins-vs-specials rebase wrong was the phase-0 fixture
-generator's one real bug):
+bins are block-relative while emissions are backbone ids, and a ±2
+rebase error between them is silent everywhere except here):
 
 - the codec must carry the below-block special offsets (−2/−1);
 - the block plus both specials must sit INSIDE the base matrices
@@ -48,9 +48,9 @@ Continuation semantics are the Molmo2 concrete's verbatim: all-layer
 continuation against the prefix :class:`~bijou.molmo2.cache.Molmo2KVCache`
 (built by ``MolmoAct2Encoder.encode(retain_cache=True)``), text-typed
 suffix queries under shifted-causal masking, and the same non-cuDNN
-sdpa pin (cheap insurance; if the box byte-parity gate ever disagrees
-with the fixture, this pin and the mount dtype are the first suspects
-— the reference decode ran the full dispatcher).
+sdpa pin (cheap insurance; if the decode-parity fixture gate ever
+disagrees, this pin and the mount dtype are the first suspects — the
+reference implementation decoded under the full kernel dispatcher).
 """
 
 from __future__ import annotations
@@ -112,8 +112,8 @@ class MolmoAct2ARDecoder(ARSuffixDecoder[Molmo2Model]):
         if config.aux is not None:
             raise ValueError(
                 "the MolmoAct2 release emission has no value lines — "
-                "aux must be None (narration on this trunk is §8.13 "
-                "step 6, not this decoder)",
+                "aux must be None (narration on this trunk is a prompt-"
+                "format extension, not this decoder)",
             )
         if (codec.boa, codec.pad) != (-2, -1):
             raise ValueError(

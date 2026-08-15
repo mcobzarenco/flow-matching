@@ -71,8 +71,7 @@ class Molmo2TextConfig:
 
     @property
     def fast_block_base(self) -> int:
-        """First backbone id of the FAST action block (AR-first amendment,
-        2026-08-06): the 1,026 FAST ids (1,024 BPE + BOA + PAD) do NOT fit
+        """First backbone id of the FAST action block: the 1,026 FAST ids (1,024 BPE + BOA + PAD) do NOT fit
         Qwen3's ~271-id unused tail, so they anchor as a SECOND extension
         block directly after the image specials — ids
         [vocab + additional, vocab + additional + vocab_total), i.e.

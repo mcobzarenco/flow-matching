@@ -4,11 +4,10 @@ lives beside ``train``/``loading``; ``bijou/molmo2/testing.py`` stays
 the trunk-only builder underneath).
 
 ``write_tiny_molmoact2_release`` fabricates a loadable, TRAINABLE tiny
-molmoact2-family artifact pair in the CONVERTED layout — the phase-3
-loss-oracle fixture and the phase-4 GRPO suite's subject
-(docs/molmoact2-retirement.md). See
-``probes/generate_tiny_molmoact2.py`` (the per-checkout CLI wrapper)
-for the anchor-recording discipline.
+molmoact2-family artifact pair in the CONVERTED layout — the fixture
+behind the objective-matrix CPU loss oracles and the GRPO suite's
+subject. See ``probes/generate_tiny_molmoact2.py`` (the per-checkout
+CLI wrapper) for the anchor-recording discipline.
 """
 
 from __future__ import annotations

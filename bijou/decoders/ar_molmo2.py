@@ -1,5 +1,5 @@
 """The Molmo2 (Qwen3) trunk's suffix role — the AR-first phase-1 decoder
-(port plan §6 amendment, owner-confirmed 2026-08-06).
+(the AR-first suffix role on this trunk).
 
 Rides the trunk-generic :class:`~bijou.decoders.ar_backbone.ARSuffixDecoder`
 scaffold; what differs from the Gemma concrete is exactly the trunk
@@ -16,7 +16,7 @@ compute:
   — Molmo2's own ``new_embedding`` pattern. The trunk carries no rows for
   these ids: this module owns them.
 - **Head**: the shipped ``lm_head`` is UNTIED and covers the base vocab
-  only, and it stays frozen (the 2026-08-06 18:1xZ freezing split: for
+  only, and it stays frozen (the freezing split: for
   the original vocabulary BOTH sides freeze; aux text reads the frozen
   head with gradients flowing through it into the trunk). The FAST
   columns are FRESH untied rows (``fast_head``), appended — not

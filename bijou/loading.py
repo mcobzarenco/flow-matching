@@ -124,7 +124,7 @@ class PromptKind(StrEnum):
     # stable identity from day one; loading dispatches once the Molmo2
     # prompt config lands (WP4).
     MOLMO2 = "molmo2"
-    # The MolmoAct2 prompt format (architecture.md §8.13 decision 5):
+    # The MolmoAct2 prompt format (architecture.md §8.13):
     # their verbatim QA template, discrete state tokens, uint8
     # single-view images — written by the converter from day one; the
     # encoder mode lands with step 4.
@@ -145,11 +145,12 @@ class DecoderKind(StrEnum):
 
 
 def _refuse_residual_exports(data: dict[str, Any], trunk: str) -> None:
-    """Residual conditioning was removed 2026-08-13 (superseded by
+    """Residual conditioning no longer exists (superseded by
     molmo_flow as the flow-on-Molmo2 story): a checkpoint recording
     non-empty ``residual_exports`` cannot rebuild at HEAD — refused by
-    name rather than silently dropping its adapters. Absent/empty keys
-    (every surviving checkpoint) parse unchanged."""
+    name rather than silently dropping its adapters (git tag
+    'pre-decoder-simplify' still loads them). Absent/empty keys (every
+    surviving checkpoint) parse unchanged."""
     taps = data.get("residual_exports", [])
     if taps:
         raise SystemExit(
@@ -172,8 +173,7 @@ class GemmaPromptConfig:
     the [generate|…] request and the soft state token — whose
     projection width is ``state_dim``). Loading REFUSES formats < 3:
     the prompt-side parameter set (state_proj) does not exist there
-    and no checkpoint worth preserving does either (owner call,
-    2026-08-03)."""
+    and no checkpoint worth preserving does either."""
 
     exports: tuple[int, ...]
     max_soft_tokens: int
@@ -241,7 +241,7 @@ class GemmaPromptConfig:
 @dataclass(frozen=True, slots=True)
 class Molmo2PromptConfig:
     """The Molmo2 prompt-side strategy as recorded in a checkpoint
-    (WP5; port plan §6). ``max_crops`` is the trunk's one image-budget
+    ``max_crops`` is the trunk's one image-budget
     knob (its dial is crops, not Gemma's ``max_soft_tokens`` — the two
     are deliberately not conflated); ``format`` is
     ``encoders.molmo2.MOLMO2_PROMPT_FORMAT`` (namespaced per trunk, not
@@ -282,7 +282,7 @@ class Molmo2PromptConfig:
 @dataclass(frozen=True, slots=True)
 class MolmoAct2PromptConfig:
     """The MolmoAct2 prompt-side strategy as recorded in a checkpoint
-    (§8.13 decision 5): their verbatim template with the tag's
+    (§8.13): their verbatim template with the tag's
     ``setup_type``/``control_mode`` rendered in special-token wrappers,
     the q01/q99-normalized state as ``num_state_tokens``-bin discrete
     prompt tokens, and their uint8 single-view 378x378 image path.
@@ -303,7 +303,7 @@ class MolmoAct2PromptConfig:
     action_mode: str
     n_obs_steps: int
     camera_keys: tuple[str, ...]
-    # The prefill split point (§8.13 decision 7): False = their serving
+    # The prefill split point (the narration switch): False = their serving
     # prompt verbatim (``<action_output>`` in the prefill, the parity
     # surface); True = the prefill stops at the ChatML opener and aux
     # text decodes as suffix. Converted checkpoints are always False
@@ -364,7 +364,7 @@ class MolmoFlowDecoderConfig:
     geometry of the tag (``action_dim`` of ``max_action_dim`` padded
     dims, ``action_horizon`` of ``max_horizon``).
 
-    ``normalization`` is the decoder-owned scheme tag (decision 6):
+    ``normalization`` is the decoder-owned scheme tag:
     ``"q01q99"`` = clamp-normalized targets against the checkpoint's
     ``normalization`` DatasetStats table (whose q01/q99 fields ARE the
     tag's merged table — stored once, not duplicated here)."""
@@ -1230,14 +1230,14 @@ def build_molmo_flow_decoder(
     """The section → module bridge: build the expert from the recorded
     geometry, configure it with the tag's action geometry, recorded
     t-law and the q01/q99 clamp table (the checkpoint normalization
-    row's quantile fields — stored once, §8.13 decision 6), and stash
+    row's quantile fields — stored once, §8.13), and stash
     the write-side schema dict (decoders cannot import this module).
     Weights are NOT loaded here — the caller owns that (converted
     checkpoints inject compat tensors; fresh sections would init)."""
     if normalization.action_q01 is None or normalization.action_q99 is None:
         raise SystemExit(
             "molmo_flow needs the q01/q99 quantile rows in the checkpoint "
-            "normalization table (decision 6: the decoder-owned clamp "
+            "normalization table (the decoder-owned clamp "
             "table) — this table predates them",
         )
     if len(normalization.action_q01) != section.action_dim:
@@ -1379,16 +1379,17 @@ def molmoact2_ar_config_from_flow_section(
 def molmoact2_fresh_flow_section(
     ar_config: ARBackboneConfig,
 ) -> MolmoFlowDecoderConfig:
-    """``--expert-init fresh`` from an ar-only source (retirement phase
-    3): the released expert ARCHITECTURE
-    (:meth:`MolmoFlowConfig.released_so100_101` — the literals' home)
-    plus the released serving/t-law constants (num_flow_steps 10,
-    mask_action_dim_padding, t = 0.001 + 0.999·Beta(1, 1.5) — the
-    convert-time reads of their config, oracle-pinned in
-    test_convert_molmoact2), geometry from the format-6 section
-    (identity output tail by construction: the decode budget IS the
-    executed chunk). The q01/q99 clamp table binds at build time from
-    the run's normalization row, as for every molmo_flow section."""
+    """The molmo_flow section for ``--expert-init fresh`` from an
+    ar-only source (which carries no expert to inherit): the released
+    expert ARCHITECTURE (:meth:`MolmoFlowConfig.released_so100_101` —
+    the literals' home) plus the released serving/t-law constants
+    (num_flow_steps 10, mask_action_dim_padding, t = 0.001 +
+    0.999·Beta(1, 1.5) — the convert-time reads of their config,
+    oracle-pinned in test_convert_molmoact2), geometry from the
+    format-6 section (identity output tail by construction: the decode
+    budget IS the executed chunk). The q01/q99 clamp table binds at
+    build time from the run's normalization row, as for every
+    molmo_flow section."""
     shape = MolmoFlowConfig.released_so100_101()
     if ar_config.chunk_size > shape.max_horizon:
         raise SystemExit(
@@ -1425,7 +1426,7 @@ def molmoact2_fresh_flow_section(
 
 
 def molmo_flow_state_table(normalization: DatasetStats) -> tuple[Tensor, Tensor]:
-    """The merged q01/q99 STATE clamp table (§8.13 decision 6) as the
+    """The merged q01/q99 STATE clamp table (§8.13) as the
     Collator's ``state_q01``/``state_q99`` pair — [state_dim] fp32 CPU
     tensors. molmo_flow state tokens are BINNED from this normalization
     (the MolmoAct2 encoder consumes clamp-normalized state), so a table
@@ -1436,8 +1437,8 @@ def molmo_flow_state_table(normalization: DatasetStats) -> tuple[Tensor, Tensor]
     if normalization.state_q01 is None or normalization.state_q99 is None:
         raise SystemExit(
             "molmo_flow needs state q01/q99 in the checkpoint's "
-            "normalization table (the merged state scheme, §8.13 "
-            "decision 6) — this table carries none",
+            "normalization table (the merged state scheme, §8.13) — "
+            "this table carries none",
         )
     return (
         torch.tensor(normalization.state_q01, dtype=torch.float32),
