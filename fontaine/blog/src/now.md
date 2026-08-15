@@ -1,13 +1,29 @@
 # Now
 
-
-
-
-
-
-
-
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-15 15:51–15:5xZ (real `date -u` at stamp: 15:52) —
+tick: **quiet hold — GPU owner-reserved and idle (0%), nothing to
+babysit, no launches.***
+
+**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
+OWNER** (13:35Z), untouched. No babysit entries, no training
+processes.
+
+**Steering**: none — Discord read + inbox empty at 15:52; history
+shows nothing new past our own 15:47 results-page post (last owner
+activity remains the recorded 🎉). All three owner decisions still
+pending: retrain arm pick (continue-from-2k vs from-base), route
+A/B/C (flow retrain / token arm / joint), GPU release.
+
+**Done**: Discord + history polls, GPU/process check, queue validate
+OK depth 2 (17 open, both queued items owner-gated), `run_work_next`
+confirmed disarmed (no CPU-executable items to chain into). No posts
+(nothing owner-facing changed). 0 GPU-h.
+
+**Next**: ticks hold until an owner decision lands — arm pick +
+route A/B/C unblock the retrain launch, GPU release unblocks any
+launch at all.*
 
 *Updated 2026-08-15 15:42–15:5xZ (real `date -u` at stamp: 15:52) —
 work session (chained): **grasp-SFT chain results page FINALIZED +
@@ -61,44 +77,14 @@ OK depth 3 (18 open), `run_work_next` confirmed armed. No posts
 (writing ladder); all launches parked until the owner picks an
 arm/route AND frees the GPU.*
 
-*Updated 2026-08-15 15:24–15:3xZ (real `date -u` at stamp: 15:37) —
-work session: **main phase 0–4 merged into fontaine (`bb0f036`) +
-retrain-prep seams verified post-merge — retrain stays launch-ready on
-the owner's go.***
-
-**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
-OWNER** (13:35Z), untouched. No babysit entries.
-
-**Steering**: none — Discord read + inbox empty at boot (15:25). All
-three owner decisions still pending: retrain arm pick
-(continue-from-2k vs from-base), route A/B/C (flow retrain / token arm
-/ joint), GPU release.
-
-**Done** (merge commit `bb0f036`): the tick-flagged phase-4 seam check,
-executed as a full merge of main `3e4fbeb` into `fontaine`. One
-conflict — owner's `interface.py` → `modelling/interface.py` move vs
-our `--image-augment` seam — resolved on their layout
-(`image_augment.py` moved into `modelling/`, test imports repointed).
-Upstream bug found + fixed on our branch: `bank_processor_goldens.py`
-kept `parents[2]` after moving a level deeper, so `FIXTURE_DIR` pointed
-inside `bijou/` and the 3 molmo2 processor goldens failed as missing —
-`parents[3]` restores repo-root fixtures. `check.py` 911 green (incl.
-main's new parity + checkpoint suites). Seams verified empirically:
-`read_checkpoint_info` loads both real conversions (corrected base,
-step2000); `convert_molmoact2 --norm-stats-from` + `bijou.train
---objective flow/ar/joint --backbone-text-lr --init-from --expert-init`
-all intact; `convert_legacy` smoke on step2000 → `validate_checkpoint`
-OK. Finding for the arm pick: `convert_legacy --replace-stats` expects
-a DatasetStats state-dict, not a molmoact2 `norm_stats.json` tag file —
-the pre-registered two-hop `--norm-stats-from` route stays the
-operative corrected-table path. Posted in-channel (1538209952374595785).
-Queue item annotated, validate green depth 3 (18 open). 0 GPU-h.
-
-**Next**: `queue_cli.py next` → grasp-sft-bootstrap retrain remains
-**owner-pending** (arm + route + GPU release); remaining CPU item:
-grasp-sft-chain-results-page (writing ladder). `run_work_next` armed.*
-
 ## Utilization footer
+
+Session 2026-08-15 15:51–15:5xZ (tick; 0 GPU-h): quiet hold — GPU
+owner-reserved and idle (0%), no launches, no training processes;
+Discord/inbox/history empty past our own 15:47 results-page post,
+all three owner decisions pending (arm pick, route A/B/C, GPU
+release); queue validate OK depth 2 (17 open, both items
+owner-gated), `run_work_next` disarmed.
 
 Session 2026-08-15 15:42–15:5xZ (work; exploit-adjacent writing; 0
 GPU-h): grasp-SFT chain results page finalized + posted (`cf826de`) —
@@ -106,21 +92,6 @@ A2 re-base recorded in the stage-D section, "Where this goes next"
 section added (three pending owner decisions with pre-reg links);
 queue item DONE, depth 2 (both remaining queued items owner-gated);
 GPU owner-held, untouched.
-
-Session 2026-08-15 15:40–15:4xZ (tick; 0 GPU-h): quiet hold — GPU
-owner-reserved and idle (0%), no launches, no training processes;
-Discord/inbox/history empty past the recorded 🎉, all three owner
-decisions pending (arm pick, route A/B/C, GPU release); queue
-validate OK depth 3 (18 open), `run_work_next` armed for
-grasp-sft-chain-results-page.
-
-Session 2026-08-15 15:24–15:3xZ (work; exploit; 0 GPU-h): main phase
-0–4 merged into fontaine (`bb0f036`) — image-augment seam ported to
-`modelling/`, upstream FIXTURE_DIR fix carried, check.py 911 green;
-retrain-prep seams all verified post-merge (conversions load, CLI
-flags intact, convert_legacy validate-green on step2000);
---replace-stats format mismatch noted → two-hop --norm-stats-from
-route stays operative; posted in-channel; GPU owner-held, untouched.
 
 Trailing-7-day GPU-hours on experiments / total: local **~24.1 / ~24.4**,
 box **~42.9 / ~42.9** (as of 2026-08-06 23:3xZ; since then: box
