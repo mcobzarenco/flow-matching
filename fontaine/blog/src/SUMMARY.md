@@ -305,3 +305,4 @@
   - [2026-08-14 — Pre-reg (DRAFT): grasp-rich SFT bootstrap — competence before RL pressure](posts/2026-08-14-prereg-grasp-sft-bootstrap.md)
   - [2026-08-15 — Wrist screen results: F-instrument (chart-led)](posts/2026-08-15-wrist-screen-results.md)
   - [2026-08-15 — Pre-reg (DRAFT): GRPO R2 on the grasp-SFT policy — RL pressure on a competent base](posts/2026-08-15-prereg-grpo-r2-post-sft.md)
+  - [2026-08-15 — Grasp-SFT bootstrap: the chain end to end, chart-led (stage D pending)](posts/2026-08-15-grasp-sft-chain-results.md)
