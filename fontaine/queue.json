@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-15T15:50:00Z",
+ "updated_utc": "2026-08-15T16:47:19Z",
  "depth_reason": "depth 3: grasp-sft-bootstrap (retrain arm owner-pending) + grasp-sft-chain-results-page (writing ladder) + grpo-r2-post-sft (re-based per A2; token-sft arm item blocked owner-gated). Recorded 14:48Z 08-15.",
  "items": [
   {
@@ -1758,6 +1758,15 @@
    "prereg": "fontaine/blog/src/posts/2026-08-15-prereg-grpo-r2-post-sft.md",
    "title": "GRPO R2 on the grasp-SFT policy (DRAFT pre-reg posted 08-15): fresh Decision-11 run on the first-class stack (bijou/grpo_replay.py over the CONVERTED stage-C endpoint — the exact bijou dir stage D evaluates), reward v2 trained-on / v1 held-out, 8x8 groups T=1.0, full R1 tripwire set inherited, proposed lr 1e-6 (3e-7 fallback) kl_beta 1.0, 10 steps ~10 GPU-h gate <=12. PRIMARY: paired sim100 vs the banked stage-D base count; wave-0 calibration read on group success-variance (predicted >=60% mixed at p>=0.2). CONDITIONAL: activates ONLY on stage-D GRPO_GO (>=20/100).",
    "boundary": "DRAFT posted 07:5xZ 08-15 (queue-refill slice of the stage-C ride session; stage C launched 07:29:55Z same session). ACTIVATION RULE: stage-D verdict owns this item — GRPO_GO (>=20/100) -> finalization per prereg SS6 (base count + checkpoint receipt + lr decision + setback wire call + HEAD re-pin + objection window) THEN launch; ITERATE_BC_ONCE (5-19) -> the bootstrap's iterate arm consumes the GPU slot first, this item waits; F_TRANSFER (<5) -> PARK this item (visual/renderer lane becomes binding per bootstrap SS4). Fresh budget — the bootstrap <=13 gate does NOT carry over. || AMENDMENT A2 REGISTERED 14:4xZ 08-15 (SS8): token-SFT arm pre-reg DRAFT posted (posts/2026-08-15-prereg-grasp-sft-token-sft-arm.md, per A1 decision 2) — if the owner routes token-GRPO, R2 RE-BASES on that arm's endpoint and the activation bar becomes the arm's primary read (unseen sim100 >=20/100 on the DISCRETE head, greedy decode); the stage-D flow-head verdict no longer activates this item. Table lineage inherited (fast codec normalizes token targets with baked q01/q99 — corrected-base init mandatory). Checkpoint receipt re-spelled per owner main 4fd6875 (VLA format: convert_legacy + validate_checkpoint, stats_note provenance).",
+   "owner_hold": false
+  },
+  {
+   "id": "merge-main-phase5a",
+   "class": "cpu",
+   "status": "queued",
+   "title": "Merge main phase 5a (a51b172, 'bijou.train on the family CLI + the VLA checkpoint format', +3115/-2046 across 20 files incl. train args, checkpoint_backbone, convert_molmoact2, test_train_vla) into fontaine; re-run check.py; re-verify the retrain-prep seams exactly as the 15:37Z 08-15 post did (read_checkpoint_info on both real conversions, convert_molmoact2 --norm-stats-from, bijou.train --objective/--backbone-text-lr/--init-from/--expert-init, --image-augment p=0 bitwise oracle, convert_legacy+validate_checkpoint smoke); confirm the pre-registered retrain launch commands still parse against the new family CLI (391-line test_train_args churn suggests arg surface moved). Also confirm whether the parents[2]->parents[3] bank_processor_goldens fix from bb0f036 landed upstream or still needs the cherry-pick note.",
+   "boundary": "Queued 16:5xZ 08-15 tick on seeing a51b172 on origin/main (owner-pushed 16:34Z). CPU-only, no GPU touch (owner reserve stands). Urgent: the owner's arm/route decision may land any time and the launch path must be green against phase 5a first.",
+   "prereg": null,
    "owner_hold": false
   }
  ]

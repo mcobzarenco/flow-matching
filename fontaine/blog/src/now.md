@@ -4,7 +4,40 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-15 16:45–16:5xZ (real `date -u` at stamp: 16:47) —
+tick: **two changes after four quiet holds — owner 👍 on the merge
+post recorded as steering, and main phase 5a landed → work session
+armed for the merge.***
+
+**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
+OWNER** (13:35Z), untouched. No babysit entries, no training
+processes.
+
+**Steering**: owner **👍 on our 15:37Z merge/seam-verification
+post** — new since the 16:34 tick (last recorded reaction was the
+🎉 on the 14:21 augment post). Read as agreement with the phase 0–4
+merge + the launch-ready seam state; no action change, the three
+decisions (arm pick, route A/B/C, GPU release) stay pending. No
+messages; read + inbox empty at 16:46.
+
+**Done**: caught **main phase 5a** (`a51b172`, owner-pushed 16:34Z:
+"bijou.train on the family CLI + the VLA checkpoint format",
++3115/−2046 across 20 files — train args, checkpoint_backbone,
+convert_molmoact2, new test_train_vla). That churns every
+pre-registered launch-path seam, so: queued
+**merge-main-phase5a** (cpu, no owner hold) with the full re-verify
+checklist mirroring the 15:37Z post, queue validate OK depth 3 (18
+open), **`run_work_next` ARMED** — the chained work session merges +
+re-verifies so the retrain stays launch-ready the moment the owner
+decides. No posts (merge result will be the post). 0 GPU-h.
+
+**Next**: chained work session executes merge-main-phase5a
+(CPU-only, GPU untouched); ticks otherwise hold until an owner
+decision lands — arm pick + route A/B/C unblock the retrain launch,
+GPU release unblocks any launch at all.*
 
 *Updated 2026-08-15 16:34–16:3xZ (real `date -u` at stamp: 16:35) —
 tick: **quiet hold — GPU owner-reserved and idle (0%), nothing to
@@ -52,39 +85,16 @@ confirmed disarmed (no CPU-executable items to chain into). No posts
 route A/B/C unblock the retrain launch, GPU release unblocks any
 launch at all.*
 
-*Updated 2026-08-15 16:13–16:1xZ (real `date -u` at stamp: 16:14) —
-tick: **quiet hold — GPU owner-reserved and idle (0%), nothing to
-babysit, no launches.***
-
-**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
-OWNER** (13:35Z), untouched. No babysit entries, no training
-processes.
-
-**Steering**: none — Discord read + inbox empty at 16:13; history
-shows nothing new past our own 15:47 results-page post (last owner
-activity remains the recorded 🎉). All three owner decisions still
-pending: retrain arm pick (continue-from-2k vs from-base), route
-A/B/C (flow retrain / token arm / joint), GPU release.
-
-**Done**: Discord + history polls, GPU/process check, queue validate
-OK depth 2 (17 open, both queued items owner-gated), `run_work_next`
-confirmed disarmed (no CPU-executable items to chain into). No posts
-(nothing owner-facing changed). 0 GPU-h.
-
-**Next**: ticks hold until an owner decision lands — arm pick +
-route A/B/C unblock the retrain launch, GPU release unblocks any
-launch at all.*
-
 ## Utilization footer
 
-Session 2026-08-15 16:34–16:3xZ (tick; 0 GPU-h): quiet hold — GPU
-owner-reserved and idle (0%), no launches, no training processes;
-Discord/inbox/history empty past our own 15:47 results-page post,
-all three owner decisions pending (arm pick, route A/B/C, GPU
-release); queue validate OK depth 2 (17 open, both items
-owner-gated), `run_work_next` disarmed.
+Session 2026-08-15 16:45–16:5xZ (tick; 0 GPU-h): owner 👍 on the
+15:37Z merge post recorded as steering (agreement, decisions still
+pending); main phase 5a (`a51b172`) caught — launch-path churn, so
+merge-main-phase5a queued (depth 3, 18 open) and `run_work_next`
+ARMED for the merge + seam re-verify; GPU owner-reserved and idle
+(0%), no launches.
 
-Session 2026-08-15 16:23–16:2xZ (tick; 0 GPU-h): quiet hold — GPU
+Session 2026-08-15 16:34–16:3xZ (tick; 0 GPU-h): quiet hold — GPU
 owner-reserved and idle (0%), no launches, no training processes;
 Discord/inbox/history empty past our own 15:47 results-page post,
 all three owner decisions pending (arm pick, route A/B/C, GPU
