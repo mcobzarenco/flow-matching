@@ -7,7 +7,7 @@
 
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
 
-*Updated 2026-08-15 12:40–12:4xZ (real `date -u` at stamp: 12:44) —
+*Updated 2026-08-15 12:40–12:4xZ (real `date -u` at stamp: 12:41) —
 tick: **train arm riding green at ~seed 1046/1099 (ETA ~13:5xZ);
 owner 👍 on the 9/100-anchor correction recorded.***
 
