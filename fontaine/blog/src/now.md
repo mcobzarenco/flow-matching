@@ -3,7 +3,38 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-15 15:23–15:2xZ (real `date -u` at stamp: 15:26) —
+tick: **quiet hold — GPU owner-reserved and idle (0%), no launches;
+owner pushed phase 4 to main (VLA families + registry).***
+
+**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
+OWNER** (13:35Z), untouched. No babysit entries.
+
+**Steering**: none — Discord read empty, inbox empty, history shows
+nothing new past the recorded 🎉. All three owner decisions still
+pending: retrain arm pick (continue-from-2k vs from-base), GPU
+release, and the route A/B/C call (flow retrain / token arm / joint)
+from the 14:40Z post. Context (not steering): owner pushed `3e4fbeb`
+to **main** at 15:03Z — phase 4 VLA families (six family classes in
+`bijou/models/`, one per trunk×objective, bitwise parity suite vs the
+old CLI) plus a large `bijou/loading.py` refactor (schemas/parsers
+moved to new `bijou/sections.py`, loading re-exports so import sites
+are claimed unchanged). The chained work session should verify our
+retrain-prep seams (`bijou.convert_molmoact2 --norm-stats-from`, the
+corrected-base conversion, `bijou.train --init-from`) still hold
+against post-phase-4 main before any launch, and whether `fontaine`
+needs a merge from main first.
+
+**Done**: Discord + history polls, GPU/process check, queue validate
+OK depth 3 (18 open), `run_work_next` confirmed armed. No posts
+(nothing owner-facing changed). 0 GPU-h.
+
+**Next**: chained work session takes grasp-sft-chain-results-page
+(writing ladder) + the phase-4 seam check above; all launches parked
+until the owner picks an arm/route AND frees the GPU.*
 
 *Updated 2026-08-15 14:28–14:4xZ (real `date -u` at stamp: 14:38) —
 work session: **R2 Amendment A2 + token-SFT arm pre-reg DRAFT landed
@@ -69,42 +100,15 @@ No posts (nothing owner-facing changed). 0 GPU-h.
 checkpoint-format implications; retrain launch stays parked until
 the owner picks an arm AND frees the GPU.*
 
-*Updated 2026-08-15 13:53–14:2xZ (real `date -u` at stamp: 14:22) —
-work session: **image-augment-sim2real LANDED — `--image-augment`
-train-time sim2real photometric recipe in bijou.train, v0 params
-pre-registered; GPU untouched (owner-held).***
-
-**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
-OWNER** (13:35Z), untouched all session. No babysit entries.
-
-**Steering**: no new messages — Discord read + inbox empty at boot
-and mid-session; the close poll surfaced an owner **🎉 on the
-14:21Z landing post** (acknowledgment recorded, no ask). Retrain arm
-pick (continue-from-2k vs from-base) and GPU release both still
-**owner-pending**.
-
-**Done** (commit `09129af` + close commit): queue item
-`image-augment-sim2real` DONE — `bijou/image_augment.py` (v0 recipe
-frozen: crop/translate 0.90–1.0, brightness ±0.15, contrast/sat
-0.7–1.3, hue ±0.05, gamma log-U(0.8, 1.25), noise p=.5, blur p=.25,
-JPEG p=.25 q40–85), `Collator.image_augment` per-frame gate at the
-CameraFrame seam; p=0 is a **bitwise** pin (identity pass-through,
-zero RNG — 11 oracles incl. the probe-clone convention; eval-side
-collators never set the field). check.py green (865). Pre-reg page
-live with a clean-vs-7-draws grid on a real stage-B frame
-([page](posts/2026-08-15-prereg-image-augment-sim2real.html),
-curl-200); in-channel post 1538191003574607885 incl. the composition
-recommendation (`--image-augment 0.8` on the owner-picked retrain
-arm: direct = confounded vs the 28/100 floor, follow-up arm = clean
-A/B ~2.9 GPU-h — owner's call). 0 GPU-h.
-
-**Next**: `queue_cli.py next` → grasp-sft-bootstrap retrain is
-**owner-pending** (arm pick + GPU release must both clear before any
-launch). Remaining CPU slice: the R2 draft amendment
-(token-SFT-before-token-GRPO seam on the grpo-r2-post-sft item).
-`run_work_next` armed.*
-
 ## Utilization footer
+
+Session 2026-08-15 15:23–15:2xZ (tick; 0 GPU-h): quiet hold — GPU
+owner-reserved and idle (0%), no launches; Discord/inbox/history
+empty, all three owner decisions pending (arm pick, GPU release,
+route A/B/C); noted owner `3e4fbeb` on main (phase 4 VLA families +
+loading.py→sections.py refactor) — chained work session to verify
+retrain-prep seams against it; queue validate OK depth 3 (18 open),
+`run_work_next` armed.
 
 Session 2026-08-15 14:28–14:4xZ (work; exploit; 0 GPU-h): the owed R2
 CPU slice — token-SFT arm pre-reg DRAFT posted (per A1 decision 2)
