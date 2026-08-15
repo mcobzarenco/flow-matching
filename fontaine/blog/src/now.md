@@ -1,6 +1,42 @@
 # Now
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-15 13:53–14:2xZ (real `date -u` at stamp: 14:22) —
+work session: **image-augment-sim2real LANDED — `--image-augment`
+train-time sim2real photometric recipe in bijou.train, v0 params
+pre-registered; GPU untouched (owner-held).***
+
+**Status**: no live jobs; GPU 0% / 0 MiB — still **RESERVED BY THE
+OWNER** (13:35Z), untouched all session. No babysit entries.
+
+**Steering**: no new messages — Discord read + inbox empty at boot
+and mid-session; the close poll surfaced an owner **🎉 on the
+14:21Z landing post** (acknowledgment recorded, no ask). Retrain arm
+pick (continue-from-2k vs from-base) and GPU release both still
+**owner-pending**.
+
+**Done** (commit `09129af` + close commit): queue item
+`image-augment-sim2real` DONE — `bijou/image_augment.py` (v0 recipe
+frozen: crop/translate 0.90–1.0, brightness ±0.15, contrast/sat
+0.7–1.3, hue ±0.05, gamma log-U(0.8, 1.25), noise p=.5, blur p=.25,
+JPEG p=.25 q40–85), `Collator.image_augment` per-frame gate at the
+CameraFrame seam; p=0 is a **bitwise** pin (identity pass-through,
+zero RNG — 11 oracles incl. the probe-clone convention; eval-side
+collators never set the field). check.py green (865). Pre-reg page
+live with a clean-vs-7-draws grid on a real stage-B frame
+([page](posts/2026-08-15-prereg-image-augment-sim2real.html),
+curl-200); in-channel post 1538191003574607885 incl. the composition
+recommendation (`--image-augment 0.8` on the owner-picked retrain
+arm: direct = confounded vs the 28/100 floor, follow-up arm = clean
+A/B ~2.9 GPU-h — owner's call). 0 GPU-h.
+
+**Next**: `queue_cli.py next` → grasp-sft-bootstrap retrain is
+**owner-pending** (arm pick + GPU release must both clear before any
+launch). Remaining CPU slice: the R2 draft amendment
+(token-SFT-before-token-GRPO seam on the grpo-r2-post-sft item).
+`run_work_next` armed.*
 
 *Updated 2026-08-15 13:50–13:5xZ (real `date -u` at stamp: 13:51) —
 tick: **quiet hold — GPU owner-reserved and idle (0%), no launches;
@@ -68,33 +104,14 @@ owner-held — both must clear before any launch).
 no-GPU slice. R2 draft amendment (token-SFT-before-token-GRPO) still
 owed on its own item. `run_work_next` armed.*
 
-*Updated 2026-08-15 12:40–12:4xZ (real `date -u` at stamp: 12:41) —
-tick: **train arm riding green at ~seed 1046/1099 (ETA ~13:5xZ);
-owner 👍 on the 9/100-anchor correction recorded.***
-
-**Status**: **LIVE** — `fontaine-grasp-sft-step2000-probe` train arm:
-~seed 1046/1099 at 12:40Z, 4 procs, GPU 38%/11.9 GiB, 11.2 f/min
-window, cumulative projection 2.5 vs the 4.0 GPU-h gate. Babysit exit
-0, no gate crossings. Mid-arm tally (posted 12:39:56Z by the prior
-session, 45/100 done): trained spawns 6/37, expert-failed 4/9, unseen
-28/100 — no memorization signature so far.
-
-**Steering**: owner **👍 on the 12:01Z anchor-correction reply** — agreement registered: **9/100 released-base is the
-primary anchor** (causal SFT read 9 → 28 ≈ 3.1×, a floor given the
-corrupt table); ftrig4k/W0 demoted to context rows. Ledger + probe
-report page must carry 9/100 as headline comparator. Inbox empty, no
-new messages; the 11:58/12:03 exchange quiet since 12:04Z reply.
-
-**Done**: babysit + Discord polls, queue validate OK depth 3 (17
-open), `run_work_next` confirmed armed (11:54 touch). No posts (quiet
-tick, nothing owner-facing changed). 0 GPU-h.
-
-**Next**: train-arm boundary ~13:5xZ belongs to the chained work
-session — reads script → three-way comparison post (9/100 as primary
-anchor), then the queued remit: step2000 delta upload, owner-gated
-corrected-table `bijou.train` retrain prep, probe report page.*
-
 ## Utilization footer
+
+Session 2026-08-15 13:53–14:2xZ (work; exploit; 0 GPU-h): queue item
+`image-augment-sim2real` landed end to end — `--image-augment` in
+bijou.train (v0 recipe, bitwise off-path pin, 11 oracles, check.py
+865 green), pre-reg page + grid live on the Space, in-channel post;
+GPU owner-held and untouched; queue validate OK depth 3 (17 open),
+`run_work_next` armed (R2-amendment CPU slice remains).
 
 Session 2026-08-15 13:50–13:5xZ (tick; 0 GPU-h): quiet hold — GPU
 owner-reserved and idle (0%, untouched since the 13:41Z handoff), no

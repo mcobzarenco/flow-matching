@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-15T13:50:00Z
+**Updated:** 2026-08-15T14:22:00Z
 
 **Depth call:** depth 2: wrist-transfer-screen-run (stage 0 executing, then stage 1 on the released GPU) + grasp-sft-bootstrap (stage A CPU-executable; GPU stages after screen + finalization). Recorded 22:3xZ 08-14.
 
-**18 open** (Live 0 · Queued 4 · Blocked 14 · Done 176)
+**17 open** (Live 0 · Queued 3 · Blocked 14 · Done 177)
 
 ## 🔴 Live (0)
 
@@ -14,7 +14,7 @@
 
 *(empty)*
 
-## 🟢 Queued (4)
+## 🟢 Queued (3)
 
 *ready — waiting on a window or a boundary*
 
@@ -41,20 +41,6 @@ Grasp-SFT chain results page (blog, chart-led per the owner standing preference;
 <details><summary>full record</summary>
 
 Grasp-SFT chain results page (blog, chart-led per the owner standing preference; writing-ladder item): the competence-before-RL story end-to-end once stage D banks its verdict — stage-A scripted-expert arc (breakthrough mechanisms, gate FAIL -&gt; A1 -&gt; PASS, the n=20 CI lesson vs the measured 62.5% true rate at n=200), stage-B collection facts (keep rate, seed integrity, provenance), stage-C SFT curves vs the rig-ft r1 reference, stage-D sim100 verdict vs the banked context anchors (ftrig4k / W0), and what the verdict means for the GRPO registration (Decision 11). Plain-words open per the papers rule; dark-mode charts (per-band keep-rate strip, SFT loss curve, per-seed progress strip vs anchors); links the banked analysis JSONs + demo videos.
-
-</details>
-
----
-
-**`image-augment-sim2real`** · `cpu`
-
-image-augment-sim2real: train-time photometric augmentation in bijou.train (owner ask 13:09Z 08-15, Q2 reply 1538178752582787093): --image-augment flag applying brightness/contrast/saturation/hue jitter + gamma, Gaussian sensor n…
-
-**boundary:** Queued 13:4xZ 08-15 from the owner's sim2real question. Value prices in only at rig transfer (sim100 may dip slightly with aug on — expected, say so in the pre-reg). Composes with whichever retrain arm the owner picks (flag on the same run or a follow-up arm). Render-time domain randomization (lighting/textures/camera pose at collection) is the recorded heavier alternative — needs demo re-collection, machinery exists from the arm-photometrics/texture screens.
-
-<details><summary>full record</summary>
-
-image-augment-sim2real: train-time photometric augmentation in bijou.train (owner ask 13:09Z 08-15, Q2 reply 1538178752582787093): --image-augment flag applying brightness/contrast/saturation/hue jitter + gamma, Gaussian sensor noise, slight defocus blur, JPEG artifacts, small random crop/translate to camera frames at TRAIN time only (pi0/OpenVLA-class sim2real recipe); aug-off path oracle-pinned bitwise to today's pipeline; eval NEVER augmented. CPU-implementable (feature + oracles) any session; pre-reg the aug recipe params before any training arm uses it.
 
 </details>
 
@@ -272,7 +258,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (176)
+## ✅ Done (177)
 
 *closed — the full record stays in each fold*
 
@@ -327,6 +313,20 @@ Grasp-SFT stage-C launch prep (CPU, prereg §6 frozen params): the train_lerobot
 <details><summary>full record</summary>
 
 Grasp-SFT stage-C launch prep (CPU, prereg §6 frozen params): the train_lerobot.py launcher script for the AR primary — base allenai/MolmoAct2-SO100_101, rig-ft recipe class verbatim (ft_action_expert=true only, ft_vlm=false, ft_embedding=none, lora=false), action-expert LR 5e-5, global batch 64 (device 8), save every 500, max_duration 3000 steps, --objective ar, dataset = the stage-B demo set with RECOMPUTED per-dataset q01/q99 (identity rig frame, §6 item 4 — verify no shim flag anywhere in the arg list) — plus the optional ftrig4k-recipe flow arm variant (4k steps, decoder LR 1e-5, dataset swapped). Deliverables: launcher(s) with a demo-set precondition audit (&gt;=300 kept per gate, provenance/state_units check, epoch math logged at gb64), prepared babysit.toml entries, and the arg lists diffed against the banked rig-ft run-1 command line as the verbatim-class receipt. NO launch from this item — stage C launches per the frozen ladder after stage B's gate (&gt;=300 kept) reads green.
+
+</details>
+
+---
+
+**`image-augment-sim2real`** · `cpu`
+
+image-augment-sim2real: train-time photometric augmentation in bijou.train (owner ask 13:09Z 08-15, Q2 reply 1538178752582787093): --image-augment flag applying brightness/contrast/saturation/hue jitter + gamma, Gaussian sensor n…
+
+**boundary:** Queued 13:4xZ 08-15 from the owner's sim2real question. Value prices in only at rig transfer (sim100 may dip slightly with aug on — expected, say so in the pre-reg). Composes with whichever retrain arm the owner picks (flag on the same run or a follow-up arm). Render-time domain randomization (lighting/textures/camera pose at collection) is the recorded heavier alternative — needs demo re-collection, machinery exists from the arm-photometrics/texture screens. || DONE 14:2xZ 08-15 (work session, commit 09129af + blog commit): --image-augment landed in bijou.train — bijou/image_augment.py (v0 spec frozen: crop/translate 0.90-1.0, brightness +-0.15, contrast/sat 0.7-1.3, hue +-0.05, gamma log-U(0.8,1.25), noise p=.5 sigma .002-.02, blur p=.25, JPEG p=.25 q40-85), Collator.image_augment per-frame gate at the CameraFrame seam, probe clone augment-0, eval-side default 0.0. 11 oracles (p=0 identity + zero-RNG bitwise pin, determinism, non-mutation, probe-clone convention); check.py green 865. Pre-reg page live (posts/2026-08-15-prereg-image-augment-sim2real.md, curl-200) with a clean-vs-7-draws grid on a real stage-B frame; in-channel post 1538191003574607885. Recommended first use --image-augment 0.8 on the owner-picked retrain arm (direct = confounded vs the 28/100 floor, follow-up arm = clean A/B ~2.9 GPU-h more) — owner's call, recorded in the page SS4.
+
+<details><summary>full record</summary>
+
+image-augment-sim2real: train-time photometric augmentation in bijou.train (owner ask 13:09Z 08-15, Q2 reply 1538178752582787093): --image-augment flag applying brightness/contrast/saturation/hue jitter + gamma, Gaussian sensor noise, slight defocus blur, JPEG artifacts, small random crop/translate to camera frames at TRAIN time only (pi0/OpenVLA-class sim2real recipe); aug-off path oracle-pinned bitwise to today's pipeline; eval NEVER augmented. CPU-implementable (feature + oracles) any session; pre-reg the aug recipe params before any training arm uses it.
 
 </details>
 

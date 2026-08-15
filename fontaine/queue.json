@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-08-15T13:50:00Z",
+ "updated_utc": "2026-08-15T14:22:00Z",
  "depth_reason": "depth 2: wrist-transfer-screen-run (stage 0 executing, then stage 1 on the released GPU) + grasp-sft-bootstrap (stage A CPU-executable; GPU stages after screen + finalization). Recorded 22:3xZ 08-14.",
  "items": [
   {
@@ -1691,9 +1691,9 @@
   {
    "id": "image-augment-sim2real",
    "class": "cpu",
-   "status": "queued",
+   "status": "done",
    "title": "image-augment-sim2real: train-time photometric augmentation in bijou.train (owner ask 13:09Z 08-15, Q2 reply 1538178752582787093): --image-augment flag applying brightness/contrast/saturation/hue jitter + gamma, Gaussian sensor noise, slight defocus blur, JPEG artifacts, small random crop/translate to camera frames at TRAIN time only (pi0/OpenVLA-class sim2real recipe); aug-off path oracle-pinned bitwise to today's pipeline; eval NEVER augmented. CPU-implementable (feature + oracles) any session; pre-reg the aug recipe params before any training arm uses it.",
-   "boundary": "Queued 13:4xZ 08-15 from the owner's sim2real question. Value prices in only at rig transfer (sim100 may dip slightly with aug on \u2014 expected, say so in the pre-reg). Composes with whichever retrain arm the owner picks (flag on the same run or a follow-up arm). Render-time domain randomization (lighting/textures/camera pose at collection) is the recorded heavier alternative \u2014 needs demo re-collection, machinery exists from the arm-photometrics/texture screens.",
+   "boundary": "Queued 13:4xZ 08-15 from the owner's sim2real question. Value prices in only at rig transfer (sim100 may dip slightly with aug on \u2014 expected, say so in the pre-reg). Composes with whichever retrain arm the owner picks (flag on the same run or a follow-up arm). Render-time domain randomization (lighting/textures/camera pose at collection) is the recorded heavier alternative \u2014 needs demo re-collection, machinery exists from the arm-photometrics/texture screens. || DONE 14:2xZ 08-15 (work session, commit 09129af + blog commit): --image-augment landed in bijou.train \u2014 bijou/image_augment.py (v0 spec frozen: crop/translate 0.90-1.0, brightness +-0.15, contrast/sat 0.7-1.3, hue +-0.05, gamma log-U(0.8,1.25), noise p=.5 sigma .002-.02, blur p=.25, JPEG p=.25 q40-85), Collator.image_augment per-frame gate at the CameraFrame seam, probe clone augment-0, eval-side default 0.0. 11 oracles (p=0 identity + zero-RNG bitwise pin, determinism, non-mutation, probe-clone convention); check.py green 865. Pre-reg page live (posts/2026-08-15-prereg-image-augment-sim2real.md, curl-200) with a clean-vs-7-draws grid on a real stage-B frame; in-channel post 1538191003574607885. Recommended first use --image-augment 0.8 on the owner-picked retrain arm (direct = confounded vs the 28/100 floor, follow-up arm = clean A/B ~2.9 GPU-h more) \u2014 owner's call, recorded in the page SS4.",
    "owner_hold": false,
    "prereg": null
   },
@@ -1752,5 +1752,5 @@
    "owner_hold": false
   }
  ],
- "updated": "2026-08-14T23:41:50Z"
+ "updated": "2026-08-15T14:22:00Z"
 }
