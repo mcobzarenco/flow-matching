@@ -918,3 +918,26 @@ value = 4.0
 # [[run.gates]]
 # kind = "gpu_hours_max"
 # value = 1.5
+#
+# [[run]]
+# name = "grasp_sft_stageD_eval"
+# kind = "progress-log"
+# host = "local"
+# pgrep = "rollout_sim"
+# pgrep_min = 1
+# gpu_indices = [0]
+# gpu_mem_min_mib = 4000
+# log = "/home/ubuntu/eval__grasp_sft_stageD_ar.log"     # flow arm: eval__grasp_sft_stageD_flow.log
+# progress_re = "seed +[0-9]+"
+# started_utc = "FILL-AT-LAUNCH"
+# gpu_hours_per_wall_hour = 1.0
+# boundary = "stage-D sim100 (frozen seeds 0-99, sequential driver — the only registered path, 08-12 parallel oracle FAIL): AR-primary converted checkpoint euler-10 first, optional flow arm euler-1 after; ~1-1.5 GPU-h class (eval20 measured ~0.15/20 seeds + video encode). At DONE: grasp_sft_staged_reads.py banks analysis__grasp_sft_stageD_sim100.json — FROZEN verdict surface >=20/100 GRPO_GO / 5-19 ITERATE_BC_ONCE / <5 F_TRANSFER; boundary post owns the verdict"
+# anchors = [
+#     "frozen consequence (§2): >=20/100 -> GRPO registers FRESH (Decision 11, success-variance groups); 5-19 -> ONE more B/C round; <5 -> F-transfer, wrist-screen F-instrument read becomes the binding diagnosis, renderer/visual work outranks more demos",
+#     "context anchors record-only, NOT gates: ftrig4k +0.08 cm / 47 moved / ~1 success; stage-1 W0 +0.054 / 44 / 2 successes",
+#     "gates: reset strikes == 0 everywhere; seed list must be exactly 0-99 (reads script refuses otherwise)",
+#     "seam: the converted checkpoint's merged stats ARE the demo-set recomputed table (rollout_sim molmoact2-lineage fallback) — NO shim anywhere in B-D (§6 item 4)",
+# ]
+# [[run.gates]]
+# kind = "gpu_hours_max"
+# value = 2.0

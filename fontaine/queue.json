@@ -1700,11 +1700,20 @@
   {
    "id": "grasp-sft-stage-d-eval-prep",
    "class": "cpu",
-   "status": "queued",
+   "status": "done",
    "owner_hold": false,
    "prereg": "fontaine/blog/src/posts/2026-08-14-prereg-grasp-sft-bootstrap.md",
    "title": "Grasp-SFT stage-D eval prep (CPU, prereg §6 frozen arm list): the sim100 eval leg for the stage-C endpoint(s) — (1) checkpoint conversion: convert_molmoact2_to_hf on the stage-C AR final step (rig-ft r1 precedent: serve dir ~/checkpoints/...-hf) + the flow endpoint if trained; (2) eval launcher on the FROZEN 100 eval seeds 0-99 (standard sim100 harness gates + reset-strike checks, --report HTML per the owner standing rule), consuming the endpoint through the same recomputed-table rig-identity frame it trained in (§6: NO shim anywhere in B-D); (3) prepared babysit entry (~1-1.5 GPU-h class); (4) the frozen primary read wired as the decision surface: >=20/100 -> GRPO GO (fresh pre-reg per Decision 11), 5-19 -> one B/C iteration, <5 -> F-transfer (wrist-screen F-instrument read becomes the binding diagnosis). Context anchors (not gates): banked ftrig4k +0.08 cm / 47 moved / ~1 success; stage-1 W0 in-run row +0.054 / 44 / 2 successes. NO launch from this item — stage D launches per the frozen ladder after stage C lands.",
-   "boundary": "Queued 03:5xZ 08-15 at the stage-c-launch-prep close (depth refill). Executable CPU once stage C is training (conversion/launcher code can be built against the rig-ft r1 precedent before the endpoint exists); the GPU leg rides the grasp-sft-bootstrap ladder."
+   "boundary": "Queued 03:5xZ 08-15 at the stage-c-launch-prep close (depth refill). Executable CPU once stage C is training (conversion/launcher code can be built against the rig-ft r1 precedent before the endpoint exists); the GPU leg rides the grasp-sft-bootstrap ladder. | DONE 04:2xZ 08-15 same session (stage-B ride window, no-idle rule): (1) launch_local_grasp_sft_staged_eval.sh — convert mode (two-hop: their convert_molmoact2_to_hf on the olmo step dir -> HF serve dir carrying the demo-set recomputed norm_stats, then bijou.convert_molmoact2 --norm-tag so100_so101_molmoact2 -> converted dir; rig-r1 runbook + eval20 precedent) + eval100 mode (sequential rollout_sim ONLY — 08-12 parallel oracle FAIL froze sequential; frozen seeds 0-99, --episode-seconds 30 per the eval20 replans-vs-chunk lesson, euler-10 AR / euler-1 flow, videos + out-json, GPU-free guard). (2) grasp_sft_staged_reads.py — the frozen §2 decision surface as code: success == recorded success_tick (sim100 convention, verified against the banked ftrig4k arm JSON schema), refuses any seed set != 0-99, reset-strikes gate, verdict bands ORACLE-TESTED at the edges (20->GRPO_GO, 19/5->ITERATE_BC_ONCE, 4->F_TRANSFER, strikes flag, non-frozen-set refusal all green); context anchors ride record-only. (3) PREPARED babysit entry grasp_sft_stageD_eval (2.0 GPU-h gate). NO launch — stage D rides the ladder after stage C."
+  },
+  {
+   "id": "grasp-sft-chain-results-page",
+   "class": "cpu",
+   "status": "queued",
+   "owner_hold": false,
+   "prereg": "fontaine/blog/src/posts/2026-08-14-prereg-grasp-sft-bootstrap.md",
+   "title": "Grasp-SFT chain results page (blog, chart-led per the owner standing preference; writing-ladder item): the competence-before-RL story end-to-end once stage D banks its verdict — stage-A scripted-expert arc (breakthrough mechanisms, gate FAIL -> A1 -> PASS, the n=20 CI lesson vs the measured 62.5% true rate at n=200), stage-B collection facts (keep rate, seed integrity, provenance), stage-C SFT curves vs the rig-ft r1 reference, stage-D sim100 verdict vs the banked context anchors (ftrig4k / W0), and what the verdict means for the GRPO registration (Decision 11). Plain-words open per the papers rule; dark-mode charts (per-band keep-rate strip, SFT loss curve, per-seed progress strip vs anchors); links the banked analysis JSONs + demo videos.",
+   "boundary": "Queued 04:2xZ 08-15 at the stage-d-eval-prep close (depth refill). Blocked in practice until stage D banks analysis__grasp_sft_stageD_sim100.json; any writing-ladder session takes it after that. The Discord boundary posts are the canonical short record meanwhile."
   },
   {
    "id": "grasp-sft-stage-b-collector",
