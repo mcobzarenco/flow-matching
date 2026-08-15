@@ -1197,6 +1197,67 @@ probe narrows capability traits: flow families integrate 10 steps at
 the family's RECORDED serving method (exactly the historical
 heun-10/euler-10), AR families decode greedily, narrated tables behind
 `NarratingVLA`.
+5b VERDICT (the eval slice: `eval/policies.py`, `eval/cli.py`, the
+eval tests; rollout/grpo/sim re-points are 5c): PASS — `BijouPolicy`
+loads through `bijou.loading.load_vla` (new format only; a legacy
+directory exits with the `bijou.convert_legacy` pointer, test-pinned),
+narrows capabilities ONCE at construction into typed handles
+(`flow`/`ar`/`narrating` + the family-concrete decoder views), and
+every explicitly requested instrument a family cannot back is a
+SystemExit naming the family (test-pinned on the converted
+molmoact2_flow fixture for --generate/--ar-temperature/
+--sde-noise-level/--target-time); predict paths ride the traits
+(serving-default `predict_ar`, knobbed `predict_flow(num_steps,
+method, noise)`, `predict_narrated`/`predict_with_value_candidates`,
+mcselect via `predict_ar(capture=…)` + the rectangular
+`teacher_forced_block_logits`); eval banners read `model.spec`.
+`check.py` 887 green (ported fakes speak the trait surface; +2 new:
+loud narrowing, legacy refusal; the integration suite's state-table /
+keyed-noise / convmap / pdnorm oracles now run BijouPolicy on the
+CONVERTED fixture). Eval tiny smoke (end-to-end report, CPU):
+`uv run python -m bijou.eval --data
+~/datasets/mcobzarenco/so101_pick_place_v2 --checkpoint
+outputs/train/oracle_p5v_flow/step_000002 --num-samples 4 --batch-size
+2 --num-workers 0 --device cpu --output-json … --report …` → banner
+“family gemma_flow, chunk 50, action dim 6”; chunk MAE state-copy
+20.488 / state-copy-norm 20.591 / bijou@2 41.015; JSON + HTML written
+(smoke evidence — a 2-step checkpoint, not an anchor). Amendments at
+execution: (1) `eval/molmo_norm.py` STAYS, contra §9's “absorbed;
+file deleted” — its pdnorm/convmap modes are per-item I/O maps (an
+eval diagnostic), not stats substitutions (`--replace-stats` replaces
+the RECORDED table at conversion — a different instrument), and
+`sim/convmap.py` + fontaine's convmap tripwires consume its fit
+machinery. (2) `--expert-dtype`: the eval CLI never had it (checked)
+— nothing to rename; the `BijouPolicy` ctor keeps its
+`expert_dtype`/`offload_ple` keywords for the un-ported 5c consumers
+(sim drivers pass `expert_dtype`, honored as a post-load decoder cast;
+`offload_ple=True` is refused loudly — the VLA loader carries no
+offload path). (3) `BijouPolicy.model` survives as an Any-typed legacy
+alias of the loaded VLA — rollout/sim still reach `.model.decoder`
+(pyright-covered, untouched until 5c); eval-side code reads only the
+typed handles; fontaine's er60k script (outside pyright) reaches
+`.model.encode`/`._molmo2_backbone` and re-pins with §0's discipline.
+(4) Two instrument combinations the trait surface cannot express are
+now refused at construction instead of silently riding:
+`--ar-temperature` with `--generate` (the old sampled decode carried
+greedy value lines along; `predict_ar` is text-free) and
+`capture_token_rows` with a generate request — and the AR fast path
+returns generations=None (the old path returned empty-text rows nobody
+consumed). (5) §5's family-concrete instruments were NOT hoisted onto
+`GemmaFlowVLA` (models/ untouched in this slice): the SDE, φ_s,
+ticket-geometry and draws-tiling paths narrow to the family and
+compose its public parts inside eval — hoisting them onto the family
+is 5c/phase-7 cleanup. (6) The sampled-draws and mcselect instruments
+re-encode the prefill per draw/candidate through the traits (the old
+shared-prefill snapshot/restore was an efficiency trick; prefills are
+deterministic, so values are unchanged — compute rises by one prefill
+per draw/candidate); mcselect's teacher-forced call PAD-fills a
+rectangle over the full masked batch exactly as the decoder's ragged
+per-row form did, so the tokens tensor is position-identical. (7) The
+trunk mounts bf16 explicitly (the historical `dtype=None` default
+resolved to bf16 on molmo trunks and to the artifact's recorded dtype
+— bf16 — on every real Gemma artifact; fp32-config tiny fixtures now
+also eval-mount bf16).
 
 **Phase 6 — delete the old world.** `model.py`, the live old-format
 read path in `loading`, `BijouPrediction`, the phase-4 parity bridges

@@ -26,7 +26,6 @@ from __future__ import annotations
 
 import argparse
 import math
-from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
@@ -38,7 +37,8 @@ from test_selfsubgoal import FakeBase, eval_collator, labeled_item
 from test_selfsubgoal import _parse as parse_cli
 
 from bijou.eval.policies import BijouPolicy, MaskedContrastSubgoalPolicy
-from bijou.modelling.interface import ActionCaptureStep, BijouPrediction
+from bijou.modelling.interface import ActionCaptureStep, ARSampling
+from bijou.vla import ARPrediction
 
 # ------------------------------------------------- scripted harness
 
@@ -46,25 +46,14 @@ FAKE_VOCAB = 4  # scripted block width; last id kept illegal so the
 # grammar mask is exercised on both KL sides
 
 
-class _FakeCache:
-    def __init__(self) -> None:
-        self.seen_tokens = 0
-        self.layers = [SimpleNamespace(keys=None, values=None)]
-
-
-class _FakeMemory:
-    def __init__(self) -> None:
-        self.cache = _FakeCache()
-
-
 class ScriptedModel:
-    """Speaks exactly the model surface MaskedContrastSubgoalPolicy
-    consumes. The decoder is the REAL tiny GemmaARDecoder (the
-    isinstance gate + block_base arithmetic are exercised for real);
-    encode/decode/teacher-forcing are scripted: one active action step
-    whose conditional block logits are keyed on the RENDERED condition
-    text (so a candidate that fails to reach the prompt slot is a loud
-    KeyError, not a silent wrong number)."""
+    """Speaks exactly the trait surface MaskedContrastSubgoalPolicy
+    consumes (predict_ar + teacher_forced_block_logits). The decoder is
+    the REAL tiny GemmaARDecoder (the AR gate + block_base/PAD
+    arithmetic are exercised for real); the decodes are scripted: one
+    active action step whose conditional block logits are keyed on the
+    RENDERED condition text (so a candidate that fails to reach the
+    prompt slot is a loud KeyError, not a silent wrong number)."""
 
     def __init__(
         self,
@@ -76,10 +65,6 @@ class ScriptedModel:
         self.masked_logits = masked_logits
         self.conditioned_prompts: list[str] = []
 
-    def encode(self, inputs: Any, *, with_grad: bool) -> _FakeMemory:
-        assert not with_grad
-        return _FakeMemory()
-
     def _logits_for(self, condition_text: str) -> torch.Tensor:
         for needle, logits in self.script.items():
             if needle in condition_text:
@@ -89,17 +74,16 @@ class ScriptedModel:
             "conditioned collator did not inject the candidate text",
         )
 
-    def ar_predict_greedy(
+    def predict_ar(
         self,
-        memory: _FakeMemory,
         batch: Any,
         *,
-        generate: tuple = (),
-        action_capture: list[ActionCaptureStep] | None = None,
-    ) -> BijouPrediction:
+        sampling: ARSampling | None = None,
+        capture: list[ActionCaptureStep] | None = None,
+    ) -> ARPrediction:
         samples = tuple(batch.encoder_inputs.samples)
         rows = len(samples)
-        if action_capture is not None:
+        if capture is not None:
             # Conditioned pass: one active step of scripted logits.
             for sample in samples:
                 self.conditioned_prompts.append(sample.condition_text)
@@ -113,7 +97,7 @@ class ScriptedModel:
                 logits.masked_fill(~allowed, torch.finfo(torch.float32).min).argmax(-1)
                 + base
             )
-            action_capture.append(
+            capture.append(
                 ActionCaptureStep(
                     block_logits=logits.float(),
                     allowed=allowed,
@@ -121,20 +105,15 @@ class ScriptedModel:
                     chosen=chosen,
                 ),
             )
-        return BijouPrediction(
-            actions=torch.zeros(rows, CHUNK, DIM),
-            generations=None,
-        )
+        return ARPrediction(actions=torch.zeros(rows, CHUNK, DIM))
 
-    def ar_teacher_forced_block_logits(
+    def teacher_forced_block_logits(
         self,
-        memory: _FakeMemory,
-        action_ids: list[list[int] | None],
-    ) -> list[torch.Tensor | None]:
-        return [
-            None if ids is None else self.masked_logits[None, :].clone()
-            for ids in action_ids
-        ]
+        batch: Any,
+        action_ids: torch.Tensor,
+    ) -> torch.Tensor:
+        rows, width = action_ids.shape
+        return self.masked_logits.expand(rows, width, FAKE_VOCAB).clone()
 
 
 def build_mcselect(

@@ -44,9 +44,14 @@ from bijou.eval.policies import (
     SelfSubgoalPass1Policy,
     SelfSubgoalPolicy,
 )
-from bijou.model import SamplingMethod
 from bijou.modelling.aux_text import AuxField, AuxGeneration
-from bijou.modelling.interface import BijouPrediction, Collator, PromptInputs
+from bijou.modelling.interface import (
+    ActionCaptureStep,
+    ARSampling,
+    Collator,
+    PromptInputs,
+)
+from bijou.vla import ARPrediction, NarratedPrediction, VLAFamily, VLASpec
 
 STAGE1 = (
     Path(__file__).resolve().parents[1]
@@ -111,22 +116,21 @@ def eval_collator(condition_fields: tuple[ConditionField, ...]) -> Collator[Any]
 
 
 class FakeModel:
-    """Stands in for the loaded model: records every batch's prompts
-    and request set, generates a canned subgoal per instruction when
-    pass 1 asks for one."""
+    """Stands in for the loaded model — speaks the narrated + AR trait
+    surfaces the two-pass policies consume: records every batch's
+    prompts and request set (pass 2's block decode records ``()``),
+    generates a canned subgoal per instruction when pass 1 asks."""
 
     def __init__(self, subgoals: dict[str, str | None]) -> None:
         self.subgoals = subgoals
         self.calls: list[tuple[tuple[PromptInputs, ...], tuple[AuxField, ...]]] = []
 
-    def predict_chunk(
+    def predict_narrated(
         self,
         batch: Any,
         *,
-        num_steps: int = 5,
-        method: SamplingMethod = SamplingMethod.HEUN,
-        generate: tuple[AuxField, ...] = (),
-    ) -> BijouPrediction:
+        generate: tuple[AuxField, ...],
+    ) -> NarratedPrediction:
         samples = tuple(batch.encoder_inputs.samples)
         self.calls.append((samples, generate))
         generations = []
@@ -146,19 +150,32 @@ class FakeModel:
                     visible=None,
                 ),
             )
-        return BijouPrediction(
+        return NarratedPrediction(
             actions=torch.zeros(len(samples), CHUNK, DIM),
             generations=generations,
         )
 
+    def predict_ar(
+        self,
+        batch: Any,
+        *,
+        sampling: ARSampling | None = None,
+        capture: list[ActionCaptureStep] | None = None,
+    ) -> ARPrediction:
+        samples = tuple(batch.encoder_inputs.samples)
+        self.calls.append((samples, ()))
+        return ARPrediction(actions=torch.zeros(len(samples), CHUNK, DIM))
+
 
 class FakeBase:
     """The BijouPolicy surface the two-pass policies consume — no
-    checkpoint load; the collator is the real shared Collator."""
+    checkpoint load; the collator is the real shared Collator and the
+    capability handles point at the fake model (the trait shape the
+    ported policies narrow on)."""
 
     def __init__(
         self,
-        model: FakeModel,
+        model: Any,
         *,
         trained_condition_fields: tuple[str, ...] = ("subgoal", "outcome"),
         aux_fields: tuple[AuxField, ...] = (AuxField.SUBGOAL, AuxField.HOLDING),
@@ -166,9 +183,18 @@ class FakeBase:
     ) -> None:
         self.name = "bijou@100000"
         self.model = model
+        self.spec = VLASpec(
+            family=VLAFamily.GEMMA_AR,
+            chunk_size=CHUNK,
+            action_dim=DIM,
+        )
+        # Capability handles as BijouPolicy narrows them: the fake
+        # model answers both trait surfaces; the concrete decoder view
+        # rides along when the fake carries one (mcselect).
+        self.narrating = model
+        self.ar = model
+        self.ar_decoder = getattr(model, "decoder", None)
         self.device = torch.device("cpu")
-        self.sample_steps = 10
-        self.method = SamplingMethod.HEUN
         self.aux_fields = aux_fields
         self.info = argparse.Namespace(condition_fields=trained_condition_fields)
         self.collator = eval_collator(

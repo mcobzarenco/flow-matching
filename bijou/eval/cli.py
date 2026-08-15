@@ -45,7 +45,6 @@ import numpy as np
 import torch
 
 from ..data import EpisodeSplit, select_datasets
-from ..model import SamplingMethod
 from ..modelling.aux_text import (
     EVENT_NONE,
     HOLDING_VALUES,
@@ -54,6 +53,7 @@ from ..modelling.aux_text import (
     label_values,
     parse_visibility,
 )
+from ..modelling.interface import SamplingMethod
 from .metrics import (
     DatasetSlice,
     FrameScore,
@@ -452,8 +452,8 @@ def parse_args() -> argparse.Namespace:
         "tickets npz ([count, chunk, dim] float32) replacing per-frame "
         "flow-noise keying entirely — draw d at EVERY frame integrates "
         "from tickets[d], so one --sample-draws M run scores every "
-        "candidate on every frame. Flow checkpoints only; --sample-draws "
-        "must not exceed the bank. The policy name gains _ticket and the "
+        "candidate on every frame. Gemma-flow-family checkpoints only; "
+        "--sample-draws must not exceed the bank. The policy name gains _ticket and the "
         "report/dump provenance carries the file's sha256 — a ticket "
         "read must never pass as a keyed-noise (--noise-key) read",
     )
@@ -517,11 +517,11 @@ def parse_args() -> argparse.Namespace:
         "--ar-temperature",
         type=float,
         default=None,
-        help="ar_backbone sampled-draws instrument (the flow "
-        "ensembling's mirror): temperature-sample the ACTION block "
-        "(Gumbel-max over the grammar-masked softmax; aux value lines "
-        "stay greedy) — combine with --sample-draws N for the "
-        "mean-of-samples read. The policy name gains a _tT suffix. "
+        help="AR sampled-draws instrument (the flow ensembling's "
+        "mirror, discrete-decoder families only): temperature-sample "
+        "the ACTION block (Gumbel-max over the grammar-masked softmax) "
+        "— combine with --sample-draws N for the mean-of-samples read. "
+        "The policy name gains a _tT suffix. "
         "Draw RNGs are always frame-identity keyed (a new instrument "
         "has no legacy index path; --noise-key governs flow noise "
         "only). The narrated pass is skipped under sampling — its "
@@ -532,11 +532,12 @@ def parse_args() -> argparse.Namespace:
         nargs="*",
         choices=[f.value for f in AuxField],
         default=None,
-        help="ar_backbone request set: fields to elicit before the "
+        help="narration request set: fields to elicit before the "
         "actions (template order; 'actions' is implicit and terminal). "
         "Omit for the deployment fast path [generate|actions] — "
-        "comparable to aux-less arms. Requires an aux-trained "
-        "checkpoint; other decoder kinds reject it",
+        "comparable to aux-less arms. Requires an aux-trained narrating "
+        "checkpoint; a family without the narration surface rejects it, "
+        "naming itself",
     )
     parser.add_argument(
         "--mask-state",
@@ -554,7 +555,7 @@ def parse_args() -> argparse.Namespace:
         choices=[m.value for m in MolmoNorm],
         default=MolmoNorm.CHECKPOINT.value,
         help="how a molmo_flow checkpoint's normalization meets the eval "
-        "data (other decoder kinds reject non-default values — "
+        "data (families without that decoder reject non-default values — "
         "per-dataset stats are already their native scheme). "
         "'checkpoint' (default) = the trained contract: state clamps/"
         "bins and actions unnormalize through the ONE global q01/q99 "
@@ -591,7 +592,7 @@ def parse_args() -> argparse.Namespace:
         choices=["oracle", "self", "draws", "mcselect"],
         default=None,
         help="subgoal-conditioning probes "
-        "(condition-trained ar_backbone checkpoints): 'oracle' renders "
+        "(condition-trained narrating checkpoints): 'oracle' renders "
         "each frame's TRUE segment label through the trained "
         "[subgoal|…] slot (label-less frames decode identically to "
         "baseline; policy name gains _oraclesubgoal); 'self' runs the "
@@ -1215,9 +1216,18 @@ def main() -> int:
             subgoal_mode=args.subgoal_mode,
             subgoal_swap=subgoal_swap,
         )
-        if bijou_policy.info.chunk_size != args.chunk_size:
+        spec = bijou_policy.spec
+        if is_main:
+            # The provenance banner — family/chunk/action_dim from the
+            # model's own identity card.
+            print(
+                f"bijou policy {bijou_policy.name}: family {spec.family.value}, "
+                f"chunk {spec.chunk_size}, action dim {spec.action_dim}",
+                flush=True,
+            )
+        if spec.chunk_size != args.chunk_size:
             raise SystemExit(
-                f"checkpoint chunk size {bijou_policy.info.chunk_size} != "
+                f"checkpoint chunk size {spec.chunk_size} != "
                 f"--chunk-size {args.chunk_size}",
             )
         if args.subgoal_mode == "self":

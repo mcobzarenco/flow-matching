@@ -71,7 +71,8 @@ from bijou.eval.subgoal_scoring import (
     token_f1,
 )
 from bijou.modelling.aux_text import AuxField, AuxGeneration
-from bijou.modelling.interface import ARSampling, BijouPrediction, ValueCandidate
+from bijou.modelling.interface import ARSampling, ValueCandidate
+from bijou.vla import NarratedPrediction
 
 # ------------------------------------------------------------- scorers
 
@@ -194,7 +195,7 @@ class DrawsFakeModel(FakeModel):
         self.candidates = candidates
         self.candidate_calls: list[tuple[AuxField, int]] = []
 
-    def ar_predict_with_value_candidates(
+    def predict_with_value_candidates(
         self,
         batch: Any,
         *,
@@ -202,7 +203,7 @@ class DrawsFakeModel(FakeModel):
         generate: tuple[AuxField, ...],
         draws: int,
         sampling_for_draw: Any,
-    ) -> tuple[BijouPrediction, list[list[ValueCandidate]]]:
+    ) -> tuple[NarratedPrediction, list[list[ValueCandidate]]]:
         samples = tuple(batch.encoder_inputs.samples)
         self.calls.append((samples, generate))
         self.candidate_calls.append((field, draws))
@@ -224,7 +225,7 @@ class DrawsFakeModel(FakeModel):
         from test_selfsubgoal import CHUNK, DIM
 
         return (
-            BijouPrediction(
+            NarratedPrediction(
                 actions=torch.zeros(len(samples), CHUNK, DIM),
                 generations=generations,
             ),
@@ -304,8 +305,8 @@ def test_pass1_draws_mode_captures_candidates() -> None:
 
 
 def test_pass1_legacy_mode_is_untouched() -> None:
-    """draws=None keeps the rung-(a) single-greedy path: predict_chunk,
-    no candidate capture."""
+    """draws=None keeps the rung-(a) single-greedy path: the plain
+    narrated pass, no candidate capture."""
     model = DrawsFakeModel(CANDS)
     base = cast(BijouPolicy, FakeBase(model))
     pass1 = SelfSubgoalPass1Policy(base)

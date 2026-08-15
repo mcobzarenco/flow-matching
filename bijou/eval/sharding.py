@@ -23,7 +23,7 @@ batch-shape-dependent kernel path flips near-tie greedy argmaxes
 (observed even at identical padding width), and one flipped token
 cascades autoregressively (max 4.34 raw units on the probe row). The
 narrated pass additionally has a designed composition dependence (the
-lockstep value phase's repeat-terminators, see ar_backbone.py) —
+lockstep value phase's repeat-terminators, see ar_suffix.py) —
 hence its slightly larger Q3/paired drift. Flow decoders additionally
 consume noise draws in shard order — same caveat as training's
 per-rank RNG streams.
