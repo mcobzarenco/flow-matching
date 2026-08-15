@@ -2,11 +2,11 @@
 
 *Generated from [`fontaine/queue.json`](https://github.com/mcobzarenco/flow-matching/blob/fontaine/fontaine/queue.json) — the canonical queue — by `fontaine/scripts/queue_page.py` (rides every `blog_build.sh`). Do not hand-edit.*
 
-**Updated:** 2026-08-15T17:29:51Z
+**Updated:** 2026-08-15T18:30:03Z
 
 **Depth call:** depth 3: grasp-sft-bootstrap (retrain arm owner-pending) + grasp-sft-chain-results-page (writing ladder) + grpo-r2-post-sft (re-based per A2; token-sft arm item blocked owner-gated). Recorded 14:48Z 08-15.
 
-**17 open** (Live 0 · Queued 2 · Blocked 15 · Done 180)
+**17 open** (Live 0 · Queued 2 · Blocked 15 · Done 181)
 
 ## 🔴 Live (0)
 
@@ -258,7 +258,7 @@ Rig-mixture screen EXECUTION (pends the owner compute call — pre-reg draft pos
 
 ---
 
-## ✅ Done (180)
+## ✅ Done (181)
 
 *closed — the full record stays in each fold*
 
@@ -2777,6 +2777,20 @@ OWNER PRIO (15:27Z 08-12): re-run the ftrig 20 episodes on flipped-mount physics
 <details><summary>full record</summary>
 
 OWNER PRIO (15:27Z 08-12): re-run the ftrig 20 episodes on flipped-mount physics (d5cf9fd) with parallel workers for speed. Design (confirmed in-channel 15:28Z): BOTH arms parallel workers=8 — pre-flip (flip disabled) + post-flip, same 20 seeds as molmoact2_ftrig_eval20, paired per-seed = the sanctioned within-parallel-path read (parallel oracle FAILED 14:37Z: rows are rough/exploratory, never registered-comparable to sequential banked rows; state the asterisk in the readout). Reads: paired progress_final_cm delta (flip effect), knock-away count change (4/20 pre-flip, bracket-collision hypothesis), videos. Est ~2x ~5 min wall, &lt;=0.5 GPU-h. Rough numbers + videos in-channel same session.
+
+</details>
+
+---
+
+**`merge-main-phase5c`** · `cpu`
+
+Merge main phase 5c (f32ae89, 'rollout + GRPO + sim on the VLA traits (phase-5 laptop close)', +401/-203 across 16 files: bijou/rollout.py, bijou/modelling/gemma4/loading.py, sim/rollout_sim.py + rollout_sim_parallel.py + convmap…
+
+**boundary:** Queued 18:2xZ 08-15 tick on seeing f32ae89 on origin/main ('phase-5 laptop close' - final phase-5 drop). CPU-only, no GPU touch (owner reserve stands). Urgent same as 5a/5b: owner arm/route decision may land any time and launch + eval + GRPO paths must be green against the full phase-5 close first; upstream touched three of our own fontaine/scripts, so a diff-audit of those files is part of the merge. || DONE 18:3xZ 08-15 work session (18:22 boot): merged clean (no conflicts, 'ort'), check.py 925 green (+1 test vs 5b, new phase-5c coverage). Seams re-verified: (1) GRPO seam green - tests/test_grpo_loop.py + test_molmo_flow_integration.py 33/33 targeted (grpo_replay.py 247-line rework covered; route B / R2-A2 decision path clear); (2) sim oracles CPU-tier: diff-audit of upstream edits to our three fontaine/scripts = pure API migration (--expert-dtype -&gt; --flow-decoder-dtype; read_checkpoint_info().normalization -&gt; bijou.checkpoint.read_metadata().stats; er60k_events_report moved to family-narrowed policy.vla / Molmo2ARVLA.ar_decoder+backbone with retain_cache encode) - no semantic drift, all three import green, sim_parallel_oracle --help surface matches both sim drivers' --flow-decoder-dtype, CPU twin suite test_sim_parallel_rollouts 6/6, read_metadata().stats loads all three converted artifacts (q01/q99 present); full GPU oracle runs (tripwires + parallel-vs-seq, ~15-20 min) deferred to the next free-GPU boundary - owner reserve stands; (3) gradflow loss oracles EXACT post-merge: flow 1.6948 + ar_backbone 27.8546, all partition checks PASS; (4) both retrain arms full-parse green, frozen section-3 verbatim (family checkpoint-inferred molmoact2_flow); (5) parents[2] fix STILL NOT upstream (main ships parents[2] in modelling/molmo2/bank_processor_goldens.py) - our parents[3] carry survived the merge, cherry-pick note stands; (6) rollout CLI surface: --expert-dtype renamed --flow-decoder-dtype in bijou.rollout + docs/rollout_so101.md (same cast, same default; 8GB-laptop guidance re-stated under the new name), --offload-ple now gemma_ar-only (refuses loudly elsewhere), --generate help re-worded for narrating checkpoints - rig rollout path intact, rename only. Pre-reg section-9 amendment added (posts/2026-08-15-prereg-grasp-sft-retrain-corrected-table.md). Launch remains owner-gated (arm pick + route A/B/C + GPU release).
+
+<details><summary>full record</summary>
+
+Merge main phase 5c (f32ae89, 'rollout + GRPO + sim on the VLA traits (phase-5 laptop close)', +401/-203 across 16 files: bijou/rollout.py, bijou/modelling/gemma4/loading.py, sim/rollout_sim.py + rollout_sim_parallel.py + convmap.py, tests/test_grpo_loop.py, tests/test_molmo_flow_integration.py, probes/probe_molmoact2_anchor_read.py, and OUR fontaine/scripts (convmap_tripwires.py, er60k_events_report.py, sim_parallel_oracle.py) touched upstream) into fontaine; re-run check.py; re-verify the seams our protocols depend on: (1) GRPO loop suite green post-merge - route B (token arm) feeds token-GRPO and R2 A2 activation reads through the discrete head, so the GRPO seam is now decision-relevant; (2) sim rollout oracles: convmap tripwires + sim_parallel_oracle re-run green after the upstream edits to our own scripts (diff-audit what upstream changed in fontaine/scripts and reconcile); (3) probe_molmoact2_anchor_read.py churn - re-run the gradflow/anchor probe oracle (loss 27.8546 exact anchor from 17:03Z); (4) both retrain arms full-parse green post-5c (frozen section-3 exact); (5) parents[2]-&gt;parents[3] bank_processor_goldens fix - landed upstream this phase or carry still stands; (6) rollout_so101 doc + bijou/rollout.py rework - note any CLI-surface moves for the eventual rig rollout path.
 
 </details>
 
