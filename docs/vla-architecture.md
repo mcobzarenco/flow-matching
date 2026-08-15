@@ -1049,6 +1049,10 @@ it; the artifact layer is the lower one).
 **Phase 2 — trait scaffolding (additive).** `vla.py`,
 `models/objectives.py`, `VLAFamily`; unit tests for the currencies and
 payload validation. Nothing consumes them yet. Gate: `check.py`.
+VERDICT: PASS — `check.py` 838 green (10 new tests:
+`tests/test_vla_types.py` — payload validation, frozen currencies,
+trait abstractness/statelessness, a stub family proving narrowing +
+forward/backward through the two-phase counts protocol).
 
 **Phase 3 — checkpoint schema + toolkit + converter.**
 `CheckpointMetadata`, the save/load toolkit (atomic writes, hard-link
