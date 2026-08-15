@@ -4,7 +4,28 @@
 
 
 
+
 *Older entries: see the [now archive](archive/index.md) — one dated page per day, verbatim.*
+
+*Updated 2026-08-15 01:44–01:4xZ (real `date -u` at stamp: 01:46) —
+tick (verification only, fired at the boundary-session close):
+**no-op — all state confirmed as the head entry below records it.***
+
+**Status**: no live run — GPU idle (0 %, no training/eval procs),
+babysit registry empty. Queue validate OK depth 2, 16 open.
+
+**Steering**: none new — Discord read empty, inbox empty; no owner
+reaction yet to the 01:34Z boundary post or the 01:43Z grasp-SFT
+finalization (objection window open, ~3 min old at this poll).
+
+**Done**: verification only (Discord read + history, GPU/proc check,
+queue validate). 0 GPU-h.
+
+**Next**: unchanged from the entry below — `run_work_next` armed
+(confirmed on disk): the chained work session is the next
+work-session boundary, where the grasp-SFT **stage-A gate read**
+(~0.2 GPU-h, held seeds 1020–1039, ≥14/20) launches absent objection;
+`wrist-screen-results-post` is the writing-ladder item.*
 
 *Updated 2026-08-14 23:57–01:5xZ 08-15 (real `date -u` at stamp:
 01:41) — work session (stage-1 boundary): **wrist screen CLOSED at
@@ -92,60 +113,13 @@ gates + in-channel boundary post BEFORE stage-2 spend); grasp-SFT
 finalization + objection window (now incl. item 4) ahead of its GPU
 stages. `run_work_next` armed (confirmed present).*
 
-*Updated 2026-08-14 21:32–22:3xZ (real `date -u` at stamp: 22:31) —
-work session, extended live with the owner: **review DONE + nit fixes
-pushed at the owner ask; GRPO-90% plan agreed (👍) and parallelized —
-wrist-screen stage 0 EXECUTED (all oracles green), STAGE 1 LIVE
-(unit `wrist-screen-stage1`), grasp-SFT draft pre-reg posted.***
-
-**Status**: **STAGE 1 LIVE** — unit `wrist-screen-stage1` since
-22:24:42Z (det gate ×2 → hold(25) → W0/W1/W3(100 each) + T1(25),
-~3–3.5 GPU-h, rc ETA ~01:0x–01:4xZ 08-15); first babysit green
-(4 procs, GPU 13.7 GiB/100%, gate 5 GPU-h). Queue validate OK depth 2,
-16 open.
-
-**Steering**: live exchange 21:47–22:07Z — (1) *"push fixes for the
-nits to your branch"* → done `2ff6b6c`; (2) *"what should we do next
-to train a policy which solves over 90% of seeds?"* → competence-first
-plan posted, owner 👍; (3) *"do as much in parallel as you reasonably
-can"* → stage 0+1 executed/launched THIS session + the grasp-SFT
-draft pre-reg posted and queued (`grasp-sft-bootstrap`).
-
-**Done**: `main-review-molmoact2-final` all 4 deliverables (review
-post + in-channel summary, verdict ADOPT; re-baseline judgment AGREE
-with the mechanism self-verified; probe rerun PASS on both banked
-waves; checkpoint-surface VERDICT no amendment; Decision-11/
-masked-only/Gumbel notes absorbed into the R1-B record) `58cc07f`;
-nit fixes `2ff6b6c`; **stage 0 EXECUTED** `c5be36f` (honesty
-placement PASS on the serving substrate — W0 0.8769 ≈ banked 0.877,
-W1 1.0, W3 0.8867 CI-excl-0; `none` bit-replay PASS bit-equal;
-`--top-transform` landed for T1 with oracles); **stage 1 launched**
-22:24:42Z + babysit entry; grasp-SFT draft pre-reg
-(posts/2026-08-14-prereg-grasp-sft-bootstrap.md) posted + queued;
-**stage-A scripted expert WORKS** (`c23863d` WIP → `b564337`
-breakthrough): **10/16 demo-seed successes end-to-end** (~4–5 s per
-success; pan-arc traverse was the unlock — pan's vertical axis
-carries no gravity load, so the lifted posture's carry height
-survives the swing where IK-to-hover fought the saturated shoulder);
-3 of 6 misses are ON the disk (tipped at release — the polish item);
-success video in-channel; 5 CPU oracles green; seven mechanisms
-diagnosed and fixed in code, the servo-saturation envelope recorded
-as a finding. Stage-1 early reads GREEN (not the formal boundary):
-W0 mean +0.054 cm / moved 44 per 100 — both in-band vs banked
-+0.08 / 47; hold floor +0.0000; 2 W0 successes.
-
-**Next**: stage-1 boundary session at unit rc (~01:0x–01:4xZ 08-15):
-reads + gates (sanity band [−0.3,+0.5] cm / [25,70] engaged, hold
-floor, T1 CI95, spawn_xy pairing, first W1/W3 deltas) + in-channel
-boundary post BEFORE stage-2 spend. `grasp-sft-bootstrap` stage A
-(scripted expert) is the executable CPU slice; finalization +
-objection window before its GPU stages. `renderer-pbr-wrist-pilot`
-stays owner-gated. `run_work_next` armed.*
-
-*Superseded head entry from earlier this session (pre-steering,
-retained verbatim below):*
-
 ## Utilization footer
+
+Session 2026-08-15 01:44–01:4xZ (tick; 0 GPU-h): no-op verification —
+GPU idle confirmed, Discord/inbox empty (no objection to the 01:43Z
+grasp-SFT finalization yet), queue validate OK depth 2,
+`run_work_next` confirmed armed for the stage-A gate-read work
+session.
 
 Session 2026-08-14 23:57–01:5xZ 08-15 (work; exploit; ~3.1 GPU-h
 counted at the stage-1 boundary per its launch note, 0 launched
