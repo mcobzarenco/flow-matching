@@ -48,7 +48,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--sample-steps", type=int, default=10)
     parser.add_argument("--method", default="heun", choices=["euler", "heun"])
     parser.add_argument(
-        "--expert-dtype",
+        "--flow-decoder-dtype",
         default="bfloat16",
         choices=["float32", "bfloat16"],
     )
@@ -83,8 +83,8 @@ def run_driver(module: str, args: argparse.Namespace, extra: list[str]) -> float
         str(args.sample_steps),
         "--method",
         args.method,
-        "--expert-dtype",
-        args.expert_dtype,
+        "--flow-decoder-dtype",
+        args.flow_decoder_dtype,
         "--out-dir",
         str(out_dir),
         "--out-json",

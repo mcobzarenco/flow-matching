@@ -46,6 +46,7 @@ from ..modelling.aux_text import AuxField, AuxGeneration, subgoal_text
 from ..modelling.decoders.ar_suffix import ARSuffixDecoder
 from ..modelling.decoders.flow import FlowDecoder
 from ..modelling.decoders.molmo_flow import MolmoFlowDecoder
+from ..modelling.gemma4.loading import to_device_with_ple_parked
 from ..modelling.interface import (
     ActionCaptureStep,
     ARSampling,
@@ -65,7 +66,7 @@ from ..models.molmo2_ar import Molmo2ARVLA
 from ..models.molmoact2_ar import MolmoAct2ARVLA
 from ..models.molmoact2_flow import MolmoAct2FlowVLA
 from ..models.molmoact2_joint import MolmoAct2JointVLA
-from ..vla import ARVLA, VLA, FlowVLA, NarratingVLA, VLASpec
+from ..vla import ARVLA, VLA, FlowVLA, NarratingVLA, VLAFamily, VLASpec
 from .molmo_norm import ItemMaps, MolmoNorm, fit_item_maps
 from .subgoal_scoring import ceiling_pick, eligible_indices, self_certainty_pick
 from .subgoal_swap import SubgoalSwapMap, SwapRecord
@@ -545,7 +546,7 @@ class BijouPolicy:
         ar_temperature: float | None = None,
         sde_noise_level: float | None = None,
         target_time: float | None = None,
-        expert_dtype: torch.dtype = torch.float32,
+        flow_decoder_dtype: torch.dtype = torch.float32,
         generate: tuple[AuxField, ...] = (),
         condition_override: dict[str, str] | None = None,
         include_subgoal_condition: bool = False,
@@ -675,28 +676,54 @@ class BijouPolicy:
                 f"--noise-key must be one of {NOISE_KEYS}, got {noise_key!r}",
             )
         self.noise_key = noise_key
-        if offload_ple:
+        # Metadata parses BEFORE the (slow) weight mount: the offload
+        # gate narrows on the recorded family fail-early, and a legacy
+        # bijou_config.json directory dies here with the converter
+        # pointer before any weights move.
+        metadata = read_metadata(checkpoint)
+        if offload_ple and metadata.family is not VLAFamily.GEMMA_AR:
+            if metadata.family is VLAFamily.GEMMA_FLOW:
+                raise SystemExit(
+                    "--offload-ple targets the full-depth Gemma trunk "
+                    "(the PLE token table is half its bytes); gemma_flow "
+                    "mounts the prefix-depth trunk, which fits small "
+                    "GPUs without it — drop the flag",
+                )
             raise SystemExit(
-                "--offload-ple parked Gemma's PLE table through the legacy "
-                "loader; the VLA loader does not carry the offload path — "
-                "drop the flag",
+                "--offload-ple parks Gemma's per-layer-embedding token "
+                f"table; {metadata.family.value} rides a Molmo2 trunk "
+                "with no PLE — drop the flag",
             )
         # bf16 is the trunk's serving mount (the released artifacts' own
         # dtype; fp32 masters beyond bf16 live only in optimizer.pt).
         # Decoders and prompt-side parameters load fp32 — the families'
-        # "new parameters" convention.
-        vla: VLA[Any] = load_vla(checkpoint, device=device, dtype=torch.bfloat16)
-        # The legacy composition-root alias: rollout/sim still reach
-        # `.model.<part>` (the BijouModel shape) and re-point with their
-        # own port — typed Any until that lands. Eval-side code reads
-        # the typed handles below, never this.
-        self.model: Any = vla
+        # "new parameters" convention. The offload path mounts on HOST
+        # RAM first and moves everything but the parked PLE table over —
+        # the table must never transit the accelerator (the point: the
+        # full-depth trunk does not fit beside it on ≤8 GiB GPUs).
+        vla: VLA[Any] = load_vla(
+            checkpoint,
+            device="cpu" if offload_ple else device,
+            dtype=torch.bfloat16,
+        )
+        if offload_ple:
+            assert isinstance(vla, GemmaARVLA)  # family-gated above
+            to_device_with_ple_parked(vla, backbone=vla.backbone, device=device)
+            print(
+                "PLE token table parked in host RAM (--offload-ple); "
+                "lookups hop devices per predict",
+                flush=True,
+            )
+        # The loaded model, trait-typed — the load boundary erased the
+        # batch pairing to VLA[Any]. Family-narrowing consumers
+        # isinstance THIS handle; eval-side code reads the typed
+        # capability handles below.
+        self.vla: VLA[Any] = vla
         self.spec: VLASpec = vla.spec
         # Taken BEFORE the family narrowing below: the trait's collator
         # is the [Any]-erased pairing boundary (isinstance chains would
         # re-sharpen it into a family union).
         inputs_collator: InputsCollator[Any] = vla.collator()
-        metadata = read_metadata(checkpoint)
         prompt = parse_prompt_config(metadata.components["prompt"]["config"])
         self.info = PolicyInfo(
             chunk_size=metadata.chunk_size,
@@ -732,14 +759,17 @@ class BijouPolicy:
             self.ar_decoder: ARSuffixDecoder[Any] | None = vla.ar_decoder
         else:
             self.ar_decoder = None
-        if expert_dtype is not torch.float32:
-            # The legacy serving-speed knob (sim drivers mount the flow
-            # decoder bf16): families load decoders fp32, so honor it as
-            # a post-load cast — bit-equivalent to building at the dtype
-            # (load_state_dict copies cast either way).
+        if flow_decoder_dtype is not torch.float32:
+            # The serving-memory knob (sim drivers mount decoders bf16):
+            # families load decoders fp32, so honor it as a post-load
+            # cast — bit-equivalent to building at the dtype
+            # (load_state_dict copies cast either way). The flow decoder
+            # is the tonnage; AR-suffix tables ride the same cast (the
+            # knob's historical reach, kept so sim AR reads stay
+            # comparable with their banked rows).
             for decoder_module in (self.flow_decoder, self.ar_decoder):
                 if decoder_module is not None:
-                    decoder_module.to(dtype=expert_dtype)
+                    decoder_module.to(dtype=flow_decoder_dtype)
         if generate and self.narrating is None:
             raise SystemExit(
                 f"--generate requested but {self.spec.family.value} has "
@@ -1458,7 +1488,8 @@ class NarratedBijouPolicy:
     does-narration-help comparison — and retains per-frame generations
     (``self.generations[index]``) for the aux metrics (holding/progress
     vs weak labels) and the report blocks. No second model load: shares
-    ``base.model``; the collator is a generate_override clone."""
+    the base policy's loaded model; the collator is a generate_override
+    clone."""
 
     def __init__(self, base: BijouPolicy) -> None:
         fields = base.aux_fields

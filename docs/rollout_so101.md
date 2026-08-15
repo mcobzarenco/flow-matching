@@ -77,7 +77,7 @@ uv run python -m bijou.rollout \
     --port /dev/ttyACM0 --robot-id follower0 \
     --camera front=/dev/video6 --camera wrist=/dev/video4 \
     --task "Pick up the toy boat and place it on the wooden disk." \
-    --expert-dtype bfloat16 \
+    --flow-decoder-dtype bfloat16 \
     --max-relative-target 20 \
     --duration 30 \
     --check
@@ -97,12 +97,13 @@ replugging, device indices move.
   swapping names silently swaps views in the prompt.
 - **`--max-relative-target 20`** engages lerobot's per-tick joint-motion
   clamp. Keep it on until the policy is trusted; it damps large motions.
-- **`--expert-dtype bfloat16` fits the 8 GB laptop, measured**: on the
-  owner's RTX 3000 Ada (8 GiB), loading step_001000 puts 4.77 GiB of
+- **`--flow-decoder-dtype bfloat16` fits the 8 GB laptop, measured**: on
+  the owner's RTX 3000 Ada (8 GiB), loading step_001000 puts 4.77 GiB of
   weights on the GPU and a full predict peaks at 6.29 GiB reserved
   (outputs/probe_rollout_vram.py — synthetic 2-camera observation through
-  the real predict path). fp32 expert would add ~0.8 GiB weights plus
-  larger activations — possible but with no headroom.
+  the real predict path; measured under the flag's old name
+  `--expert-dtype`, same cast). An fp32 decoder would add ~0.8 GiB
+  weights plus larger activations — possible but with no headroom.
 - **Replan latency, measured on the same laptop**: ~250 ms warm (Heun-5,
   2 cameras; the first replan pays ~2 s of CUDA warmup). At
   `--execute-horizon 40` @ 30 fps that is a ~250 ms hold every 1.33 s of

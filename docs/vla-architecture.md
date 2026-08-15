@@ -1258,6 +1258,72 @@ trunk mounts bf16 explicitly (the historical `dtype=None` default
 resolved to bf16 on molmo trunks and to the artifact's recorded dtype
 — bf16 — on every real Gemma artifact; fp32-config tiny fixtures now
 also eval-mount bf16).
+5c VERDICT (the rollout/GRPO/sim slice — `rollout.py`,
+`grpo_replay.py`, `sim/` re-points, consumer re-points; closes the
+laptop-side phase-5 work): PASS on the laptop gates, ONE gate
+PENDING-BOX. `check.py` 888 green (+1: `--offload-ple` narrows on the
+RECORDED family before any weight mounts — pinned on a
+metadata.json-only directory — and the loud-narrowing suite gained the
+no-PLE arm); the GRPO replay-math suite + `test_grpo_loop` green with
+the subject now loaded through `load_vla` on the builder's CONVERTED
+fixture; `python -m bijou.rollout --help` + both sim drivers' parsers
+run; CPU rollout smoke end-to-end on the converted tiny molmoact2
+fixture (`--check --device cpu --stats-dataset … --joint-frame
+v30-to-v21`: banner "chunk 30, euler-2, float32 decoder", BOTH
+envelope gates printed — the model-frame gate narrowed through the
+typed `flow_decoder` handle — predict ok [30, 6]). Flag renames
+landed: `--expert-dtype` → `--flow-decoder-dtype` on rollout + both
+sim drivers (sim out-json config key follows). `rollout_async.py`,
+`rollout_safety.py` and `train_grpo.py` needed ZERO diffs (async rides
+PredictFn through BijouPolicy; train_grpo was already modelling-only).
+Amendments at execution: (1) `--offload-ple` is HONORED again, contra
+5b's blanket refusal: the policy narrows on the metadata family —
+gemma_ar (the only full-depth Gemma family) mounts on host RAM and
+moves everything but the PLE table over (`to_device_with_ple_parked`,
+new in `modelling/gemma4/loading.py` — the post-mount twin of
+`load_model(offload_ple=True)`; the table never transits the
+accelerator); gemma_flow refuses with the prefix-depth reason, molmo
+families with no-PLE. (2) `flow_decoder_dtype` keeps 5b's cast
+semantics VERBATIM (a post-load cast of BOTH decoder handles where
+present — AR-suffix tables ride along, the legacy knob's reach, so
+sim AR reads stay comparable with their banked rows); the rename is
+nominal. (3) `BijouPolicy.model` (Any) retired for a TYPED `.vla:
+VLA[Any]` — family-narrowing consumers isinstance it (er60k does);
+the `expert_dtype` ctor keyword retired by the rename; `offload_ple`
+STAYS as a ctor keyword — the offload changes the MOUNT sequence,
+which only the loading site can do. (4) `MolmoAct2DiscreteStack` is
+the thin adapter as planned — ar/joint families serve their own
+recorded decoder through `predict_ar(sampling, capture)`; the flow
+family (release-class) wraps its own backbone/encoder in a derived
+`MolmoAct2ARVLA` (the `fast_tokenizer` parameter serves ONLY this
+derive; recorded sections carry their own ref) — but the REPLAY kept
+its with-grad direct decoder forward behind the stack's one `encode`
+seam: the trait's `teacher_forced_block_logits` is no_grad + detached
+(a scoring surface, not a training path), and the replay math
+functions are byte-identical (only `stack.model.encode` →
+`stack.encode`, the same encoder op). Duck-typed surface
+(trunk/fast_codec/action_token_start_id/metadata/action_stats/…)
+unchanged; row-NPZ + loop-`.pt` schemas untouched. (5) Consumers
+beyond §9's list needed mechanical re-points:
+`probes/probe_molmoact2_anchor_read.py` (ctor kw), `sim/convmap.py`
+(seam stats via `read_metadata` — `--convmap-seam-stats` directories
+must now be VLA-format), fontaine's `convmap_tripwires.py` (ctor kw) +
+`sim_parallel_oracle.py` (flag pass-through) + `er60k_events_report.py`
+(`.model.decoder`/`._molmo2_backbone()`/`.model.encode` → `policy.vla`
+narrowed to `Molmo2ARVLA` + `encoder.encode(retain_cache=True)`), and
+`docs/rollout_so101.md`'s copy-paste command. (6)
+`rollout_sim_parallel --emit-training-rows` narrows on the trait
+handles (AR-serving = `ar` present ∧ `flow` absent): the joint family
+is refused with "serves through its flow decoder" — the old concrete
+isinstance refused it too, via its molmo_flow decoder kind — and the
+old `policy.model.decoder` AttributeError class is dead (pyright now
+types the handle). PENDING-BOX: the phase-5 box gate — banked-wave
+mask bit-equality + the registered 1e-4 cross-decomposition logprob
+bound on fontaine's R1-A/R1-B waves via `probe_grpo_replay_parity`
+(unchanged decode/replay decomposition, so the bound carries; the
+probe's `RELEASE_BIJOU` path must point at a NEW-format conversion of
+the release checkpoint when it runs) — phase 5 closes, and the
+fontaine boundary post (§0) goes out, only after it passes.
 
 **Phase 6 — delete the old world.** `model.py`, the live old-format
 read path in `loading`, `BijouPrediction`, the phase-4 parity bridges

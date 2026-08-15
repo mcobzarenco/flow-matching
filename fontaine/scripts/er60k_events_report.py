@@ -290,6 +290,7 @@ def phase_probe() -> None:
     from bijou.eval.policies import BijouPolicy
     from bijou.eval.report import _image_data_uri
     from bijou.modelling.aux_text import AuxField
+    from bijou.models.molmo2_ar import Molmo2ARVLA
 
     dump = json.loads(DUMP.read_text())
     rows = event_rows(dump)
@@ -333,8 +334,16 @@ def phase_probe() -> None:
     )
     fields = policy.aux_fields
     event_position = fields.index(AuxField.EVENT)
-    decoder = policy.model.decoder
-    backbone = policy.model._molmo2_backbone()
+    # Family narrowing on the loaded VLA (the typed handle BijouPolicy
+    # exposes): this probe replays the molmo2_ar suffix stack itself.
+    model = policy.vla
+    if not isinstance(model, Molmo2ARVLA):
+        raise SystemExit(
+            "er-60k events probe replays the molmo2_ar suffix; the "
+            f"checkpoint loaded as {policy.spec.family.value}",
+        )
+    decoder = model.ar_decoder
+    backbone = model.backbone
     runtime = decoder.aux_runtime
     assert runtime is not None
     tokenizer = runtime.tokenizer
@@ -389,7 +398,13 @@ def phase_probe() -> None:
         item = dataset[index]
         items = policy.apply_overrides([item])
         batch = policy.collator(items).to(policy.device)
-        memory = policy.model.encode(batch.encoder_inputs, with_grad=False)
+        # The suffix role continues the prefix cache — always retained.
+        memory = model.encoder.encode(
+            backbone,
+            batch.encoder_inputs,
+            with_grad=False,
+            retain_cache=True,
+        )
         return item, memory
 
     probe_results: list[dict[str, Any]] = []

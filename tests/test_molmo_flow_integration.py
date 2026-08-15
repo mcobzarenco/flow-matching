@@ -36,7 +36,8 @@ import pytest
 import torch
 from test_convert_molmoact2 import _ACTION_DIM, _HORIZON, _convert, source_dir
 
-from bijou.checkpoint import read_metadata
+from bijou.checkpoint import VLAMetadata, read_metadata
+from bijou.data import DatasetStats
 from bijou.eval.molmo_norm import MolmoNorm
 from bijou.eval.policies import BijouPolicy
 from bijou.loading import from_checkpoint
@@ -50,6 +51,7 @@ from bijou.modelling.interface import (
     PromptInputs,
     SamplingMethod,
 )
+from bijou.vla import VLAFamily
 
 assert source_dir is not None  # re-exported pytest fixture (module-scoped)
 
@@ -454,6 +456,52 @@ def test_eval_policy_narrows_capabilities_loudly(
     refused(ar_temperature=1.0)
     refused(sde_noise_level=0.0)
     refused(target_time=0.0)
+    refused(offload_ple=True)  # Molmo2 trunks have no PLE table
+
+
+def test_offload_ple_narrows_on_family_before_load(tmp_path: Path) -> None:
+    """--offload-ple narrows on the RECORDED family fail-early — the
+    directory here carries metadata.json and NOTHING else, so the
+    refusal proves no weight ever mounts. gemma_flow's prefix-depth
+    trunk fits small GPUs without the offload and is refused with that
+    reason (only the full-depth gemma_ar family honors the flag)."""
+    checkpoint = tmp_path / "gemma-flow-metadata-only"
+    checkpoint.mkdir()
+    zeros, ones = (0.0,) * 6, (1.0,) * 6
+    metadata = VLAMetadata(
+        family=VLAFamily.GEMMA_FLOW,
+        chunk_size=50,
+        action_dim=6,
+        backbone_id="tiny",
+        backbone_depth="prefix",
+        backbone_trained=False,
+        objective={"kind": "flow"},
+        serving={"kind": "flow", "num_steps": 5, "method": "heun"},
+        components={},
+        artifacts={},
+        stats=DatasetStats(
+            action_mean=zeros,
+            action_std=ones,
+            state_mean=zeros,
+            state_std=ones,
+            action_q01=None,
+            action_q99=None,
+            state_q01=None,
+            state_q99=None,
+        ),
+        per_dataset_stats={},
+        train_args={},
+        step=0,
+        stats_note=None,
+    )
+    (checkpoint / "metadata.json").write_text(json.dumps(metadata.to_json_dict()))
+    with pytest.raises(SystemExit, match="prefix-depth"):
+        BijouPolicy(
+            checkpoint,
+            device=torch.device("cpu"),
+            seed=7,
+            offload_ple=True,
+        )
 
 
 def test_eval_policy_refuses_legacy_directory(tiny_checkpoint: Path) -> None:

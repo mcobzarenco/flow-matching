@@ -29,9 +29,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from bijou.checkpoint import read_metadata
 from bijou.data import DatasetStats
 from bijou.eval.molmo_norm import AffineMap, ConventionFit, ItemMaps, fit_convention_map
-from bijou.loading import read_checkpoint_info
 from bijou.rollout import SO_MOTORS
 
 
@@ -95,7 +95,7 @@ def seam_convention_map(
     that); ``model_table`` is the release checkpoint's global table
     (``policy.info.normalization``).
     """
-    seam_stats = read_checkpoint_info(seam_checkpoint).normalization
+    seam_stats = read_metadata(seam_checkpoint).stats
     if seam_stats.action_q01 is None or model_table.action_q01 is None:
         raise SystemExit(
             "convention map needs q01/q99 on both tables — one of the "

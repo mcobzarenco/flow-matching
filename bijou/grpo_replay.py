@@ -4,18 +4,19 @@ The RL loop (``sim/grpo_loop.py``) needs three things from a policy:
 a rollout decode that records its own scoring surface, a
 teacher-forced replay that re-scores stored rows under the live
 weights, and the grammar-mask arithmetic that keeps the two on the
-SAME masked softmax. This module provides all three over the
-first-class stack:
+SAME masked softmax. This module provides all three:
 
-- serving: :class:`MolmoAct2DiscreteStack` — the AR read of a bijou
-  molmoact2-family checkpoint (a release-class molmo_flow section, or
-  an ar/joint descendant's recorded format-6 section), exposing the
-  attribute surface the loop's freeze/anchor/row-span machinery
-  reads (``trunk``, ``fast_codec``, ``action_token_start_id``,
-  ``metadata``, ``action_stats``…);
-- rollout decode: ``predict_action_discrete`` = the suffix scaffold's
-  grammar-masked ``predict_chunk`` with keyed-Gumbel sampling and the
-  [B, 2048] block-relative capture surface
+- serving: :class:`MolmoAct2DiscreteStack` — a thin adapter over the
+  loaded molmoact2 family (``bijou.loading.load_vla``): the ar and
+  joint families carry the discrete decoder already (their recorded
+  format-6 section); the flow family (release-class conversions)
+  gets it derived from the recorded molmo_flow section's geometry.
+  The adapter exposes the attribute surface the loop's
+  freeze/anchor/row-span machinery reads (``trunk``, ``fast_codec``,
+  ``action_token_start_id``, ``metadata``, ``action_stats``…);
+- rollout decode: ``predict_action_discrete`` = the family's
+  grammar-masked :meth:`~bijou.vla.ARVLA.predict_ar` with keyed-Gumbel
+  sampling and the [B, 2048] block-relative capture surface
   (``token_rows_from_capture`` consumes it unchanged);
 - replay: one teacher-forced suffix forward per row through the SAME
   decoder (``ARSuffixDecoder.forward`` — position t of
@@ -56,34 +57,34 @@ import numpy as np
 import torch
 from torch import Tensor
 
+from .checkpoint import backbone_directory, read_metadata
+from .data import DatasetStats
 from .fast.molmoact2 import QuantileStats, normalize_state
 from .loading import (
     MOLMOACT2_FAST_TOKENIZER_REF,
-    ARDecoderConfig,
-    CheckpointInfo,
-    MolmoAct2PromptConfig,
     MolmoFlowDecoderConfig,
-    ar_backbone_config_from_dict,
     build_molmoact2_ar_decoder,
-    checkpoint_sections,
-    load_adapted_backbone,
+    load_vla,
     molmoact2_ar_config_from_flow_section,
-    read_checkpoint_info,
-    resolve_checkpoint_dir,
+    parse_decoder_config,
 )
-from .model import BijouModel
 from .modelling.decoders.ar_molmoact2 import MolmoAct2ARDecoder
-from .modelling.encoders.molmoact2 import MolmoAct2Encoder, MolmoAct2InputsCollator
+from .modelling.encoders.molmoact2 import MolmoAct2InputsCollator
 from .modelling.interface import (
     ActionCaptureStep,
     ARSampling,
     CameraFrame,
     CollatedBatch,
     NormStats,
+    ObservationMemory,
     PromptInputs,
 )
 from .modelling.molmo2.loading import load_config as load_molmo2_config
-from .modelling.molmo2.model import load_model as load_molmo2_model
+from .models.molmoact2_ar import MolmoAct2ARVLA
+from .models.molmoact2_flow import MolmoAct2FlowVLA, molmoact2_prompt_of
+from .models.molmoact2_joint import MolmoAct2JointVLA
+from .models.objectives import ARObjective
+from .models.serving import ARServing
 from .train_grpo import GRPOConfig, GRPOStats, grpo_objective_sums
 
 
@@ -101,49 +102,42 @@ class DiscreteActionResult:
 
 
 class MolmoAct2DiscreteStack:
-    """The GRPO loop's policy object: serving plus the duck-typed
-    attribute surface the loop's freeze/anchor/row-span machinery
-    reads (see the module docstring)."""
+    """The GRPO loop's policy object: a thin adapter over the loaded
+    molmoact2 family, exposing serving plus the duck-typed attribute
+    surface the loop's freeze/anchor/row-span machinery reads (see the
+    module docstring)."""
 
     def __init__(
         self,
-        model: BijouModel,
-        info: CheckpointInfo,
-        prompt: MolmoAct2PromptConfig,
+        vla: MolmoAct2ARVLA | MolmoAct2JointVLA,
+        stats: DatasetStats,
     ) -> None:
-        decoder = model.decoder
-        if not isinstance(decoder, MolmoAct2ARDecoder):
-            raise TypeError(
-                f"MolmoAct2DiscreteStack serves the discrete head; the "
-                f"model carries {type(decoder).__name__}",
-            )
-        self.model = model
-        self.info = info
-        self.decoder = decoder
-        self.collator: MolmoAct2InputsCollator = model.encoder.inputs_collator()  # type: ignore[assignment]  # the molmoact2 encoder's collator by construction
-        # The port surface the loop's freeze/anchor/row-span machinery
-        # reads (duck-typed over `.trunk` etc.).
-        self.trunk = model.backbone
-        self.fast_codec = decoder.codec.tokenizer  # type: ignore[union-attr]  # MolmoAct2ActionCodec by construction
-        self.action_token_start_id: int = decoder.config.block_base
-        self.action_start_token_id: int = decoder.config.block_base - 2
-        self.action_end_token_id: int = decoder.config.block_base - 1
+        self.vla = vla
+        self.decoder: MolmoAct2ARDecoder = vla.ar_decoder
+        self.encoder = vla.encoder
+        self.collator: MolmoAct2InputsCollator = vla.encoder.inputs_collator()  # type: ignore[assignment]  # the molmoact2 encoder's collator by construction
+        # The surface the loop's freeze/anchor/row-span machinery reads
+        # (duck-typed over `.trunk` etc.).
+        self.trunk = vla.backbone
+        self.fast_codec = self.decoder.codec.tokenizer  # type: ignore[union-attr]  # MolmoAct2ActionCodec by construction
+        self.action_token_start_id: int = self.decoder.config.block_base
+        self.action_start_token_id: int = self.decoder.config.block_base - 2
+        self.action_end_token_id: int = self.decoder.config.block_base - 1
         self.metadata: dict[str, Any] = {
-            "action_horizon": decoder.config.chunk_size,
-            "n_action_steps": decoder.config.chunk_size,
+            "action_horizon": self.decoder.config.chunk_size,
+            "n_action_steps": self.decoder.config.chunk_size,
         }
-        normalization = info.normalization
-        assert normalization.action_q01 is not None  # loading guards
-        assert normalization.action_q99 is not None
-        assert normalization.state_q01 is not None
-        assert normalization.state_q99 is not None
+        assert stats.action_q01 is not None  # family loaders guard
+        assert stats.action_q99 is not None
+        assert stats.state_q01 is not None
+        assert stats.state_q99 is not None
         self.action_stats = QuantileStats(
-            q01=torch.tensor(normalization.action_q01, dtype=torch.float32),
-            q99=torch.tensor(normalization.action_q99, dtype=torch.float32),
+            q01=torch.tensor(stats.action_q01, dtype=torch.float32),
+            q99=torch.tensor(stats.action_q99, dtype=torch.float32),
         )
         self.state_stats = QuantileStats(
-            q01=torch.tensor(normalization.state_q01, dtype=torch.float32),
-            q99=torch.tensor(normalization.state_q99, dtype=torch.float32),
+            q01=torch.tensor(stats.state_q01, dtype=torch.float32),
+            q99=torch.tensor(stats.state_q99, dtype=torch.float32),
         )
 
     @property
@@ -159,66 +153,66 @@ class MolmoAct2DiscreteStack:
         dtype: torch.dtype = torch.bfloat16,
         fast_tokenizer: str = MOLMOACT2_FAST_TOKENIZER_REF,
     ) -> MolmoAct2DiscreteStack:
-        """The AR read of a BIJOU molmoact2-family checkpoint:
-        release-class (molmo_flow section — the format-6 config derives
-        from its geometry + the trunk tokenizer) or an ar/joint
-        descendant (its own recorded section). Trunk deltas
-        (``backbone.safetensors``) load when present."""
+        """The AR read of a bijou molmoact2-family checkpoint, loaded
+        through the family registry (``load_vla``): the ar and joint
+        families carry the discrete decoder already (their recorded
+        format-6 section, ``fast_tokenizer`` unused); the flow family
+        (release-class conversions record no format-6 section) derives
+        it — geometry from the recorded molmo_flow section, block ids
+        from the trunk tokenizer, block width from ``fast_tokenizer``."""
         checkpoint = Path(checkpoint)
-        info = read_checkpoint_info(checkpoint)
-        meta = json.loads((checkpoint / "bijou_config.json").read_text())
-        sections = checkpoint_sections(meta)
-        prompt = sections.prompt
-        if not isinstance(prompt, MolmoAct2PromptConfig):
-            raise SystemExit(
-                f"{checkpoint} is not a molmoact2-family checkpoint "
-                f"(prompt {type(prompt).__name__})",
+        metadata = read_metadata(checkpoint)
+        vla = load_vla(checkpoint, device=device, dtype=dtype)
+        if isinstance(vla, MolmoAct2ARVLA | MolmoAct2JointVLA):
+            return cls(vla, metadata.stats)
+        if isinstance(vla, MolmoAct2FlowVLA):
+            prompt = molmoact2_prompt_of(metadata)
+            section = parse_decoder_config(
+                dict(metadata.components["flow_decoder"]["config"]),
             )
-        if isinstance(sections.decoder, ARDecoderConfig):
-            # An ar-only descendant: its own recorded format-6 section.
-            config = sections.decoder
-        elif isinstance(sections.decoder, MolmoFlowDecoderConfig):
-            # A joint descendant records the rider's section verbatim;
-            # a release-class checkpoint derives it (geometry from the
-            # flow section, block_base from the trunk tokenizer).
-            joint_section = meta.get("joint_ce")
-            config = (
-                ar_backbone_config_from_dict(joint_section)
-                if joint_section is not None
-                else molmoact2_ar_config_from_flow_section(
-                    sections.decoder,
+            assert isinstance(section, MolmoFlowDecoderConfig)  # the family parsed it
+            trunk_dir = backbone_directory(checkpoint, metadata)
+            config = molmoact2_ar_config_from_flow_section(
+                section,
+                prompt,
+                str(trunk_dir),
+                fast_tokenizer=fast_tokenizer,
+            )
+            ar = MolmoAct2ARVLA(
+                vla.backbone,
+                vla.encoder,
+                build_molmoact2_ar_decoder(
+                    config,
                     prompt,
-                    info.backbone,
-                    fast_tokenizer=fast_tokenizer,
-                )
+                    load_molmo2_config(trunk_dir).text,
+                    str(trunk_dir),
+                ),
+                # Adapter construction facts, not checkpoint records:
+                # the AR read decodes greedily unless sampled (the unit
+                # ARServing) and format 6 has no aux for the weight to
+                # mix — both inert for serving and replay.
+                objective=ARObjective(aux_loss_weight=1.0),
+                serving=ARServing(),
             )
-        else:
-            raise SystemExit(
-                f"{checkpoint} records {type(sections.decoder).__name__} — "
-                "not a molmoact2-family decoder section",
-            )
-        trunk_dir = resolve_checkpoint_dir(info.backbone)
-        decoder = build_molmoact2_ar_decoder(
-            config,
-            prompt,
-            load_molmo2_config(trunk_dir).text,
-            info.backbone,
+            ar.eval()
+            return cls(ar, metadata.stats)
+        raise SystemExit(
+            f"{checkpoint} records family {vla.spec.family.value!r} — the "
+            "discrete stack serves the MolmoAct2 trunk's AR read "
+            "(molmoact2_flow/ar/joint checkpoints)",
         )
-        backbone = load_molmo2_model(trunk_dir, device=device, dtype=dtype)
-        encoder = MolmoAct2Encoder(
-            info.backbone,
-            setup_type=prompt.setup_type,
-            control_mode=prompt.control_mode,
-            num_state_tokens=prompt.num_state_tokens,
-            action_mode=prompt.action_mode,
-            narration=prompt.narration,
+
+    def encode(self, inputs: Any, *, with_grad: bool) -> ObservationMemory:
+        """Prefix-encode collated inputs against the trunk with the
+        cache retained (the suffix decoder consumes it) — the ONE
+        encode both the rollout decode and the teacher-forced replay
+        ride, so the two sides cannot drift."""
+        return self.encoder.encode(
+            self.trunk,
+            inputs,
+            with_grad=with_grad,
+            retain_cache=True,
         )
-        model = BijouModel(backbone=backbone, encoder=encoder, decoder=decoder)
-        if (checkpoint / "backbone.safetensors").exists():
-            load_adapted_backbone(model, checkpoint)
-            print(f"loaded adapted backbone from {checkpoint}", flush=True)
-        model.eval()
-        return cls(model, info, prompt)
 
     def _batch(self, inputs: Any, state: Tensor) -> CollatedBatch[Any]:
         chunk = self.decoder.config.chunk_size
@@ -320,25 +314,16 @@ class MolmoAct2DiscreteStack:
             )
         inputs, _ = self.prompt_inputs(images, task, torch.as_tensor(state))
         batch = self._batch(inputs, torch.as_tensor(state, dtype=torch.float32))
-        with torch.no_grad():
-            memory = self.model.encode(inputs, with_grad=False)
-            capture: list[ActionCaptureStep] = (
-                action_capture if action_capture is not None else []
-            )
-            if temperature is None:
-                prediction = self.model.ar_predict_greedy(
-                    memory,
-                    batch,
-                    action_capture=capture,
-                )
-            else:
-                assert sample_rng is not None  # guarded above
-                prediction = self.model.ar_predict_sampled(
-                    memory,
-                    batch,
-                    sampling=ARSampling(temperature=temperature, rngs=(sample_rng,)),
-                    action_capture=capture,
-                )
+        capture: list[ActionCaptureStep] = (
+            action_capture if action_capture is not None else []
+        )
+        sampling: ARSampling | None = None
+        if temperature is not None:
+            assert sample_rng is not None  # guarded above
+            sampling = ARSampling(temperature=temperature, rngs=(sample_rng,))
+        # The trait decode (no_grad by contract): prompt encode, BOA
+        # forced, grammar-masked block decode — greedy at sampling=None.
+        prediction = self.vla.predict_ar(batch, sampling=sampling, capture=capture)
         base = self.action_token_start_id
         bins = [int(step.chosen[0]) - base for step in capture if bool(step.active[0])]
         token_ids = torch.tensor(
@@ -507,7 +492,7 @@ def replay_logprobs(
             task,
             row.state,
         )
-        memory = stack.model.encode(inputs, with_grad=True)
+        memory = stack.encode(inputs, with_grad=True)
         suffix = torch.tensor(
             [[stack.action_start_token_id, *(base + b for b in bins)]],
             dtype=torch.long,

@@ -23,6 +23,7 @@ from pathlib import Path
 import torch
 from huggingface_hub import snapshot_download
 from safetensors import safe_open
+from torch import nn
 
 from ..nn import DEFAULT_ATTENTION_BACKEND, AttentionBackend
 from .config import Gemma4Config, LayerType
@@ -245,6 +246,38 @@ def load_model(
             if buffer is not None and buffer.device != target:
                 module._buffers[name] = buffer.to(target)
     return model
+
+
+def to_device_with_ple_parked(
+    module: nn.Module,
+    *,
+    backbone: Gemma4Model,
+    device: torch.device | str,
+) -> None:
+    """Move a CPU-mounted module tree onto ``device`` with the
+    backbone's PLE token table PARKED in host RAM — the post-mount twin
+    of ``load_model(offload_ple=True)`` for models assembled by loaders
+    without an offload knob (mount everything on CPU first, then call
+    this instead of ``.to(device)``). The table never transits the
+    accelerator, and its ``embed_scale`` buffer stays co-located with
+    the CPU weight (moving it produced a cuda-vs-cpu mismatch INSIDE
+    the table's forward — the load-time offload learned the same);
+    ``TextModel.get_per_layer_inputs`` hops ids/rows across per lookup.
+    Serving-only, like the load-time offload: training would run the
+    table at PCIe speed."""
+    parked = backbone.language_model.embed_tokens_per_layer
+    target = torch.device(device)
+    for sub in module.modules():
+        if sub is parked:
+            continue
+        for parameter in sub._parameters.values():
+            if parameter is not None and parameter.device != target:
+                # .data move keeps the Parameter object (no optimizer or
+                # DDP identities exist on the serving path).
+                parameter.data = parameter.data.to(target)
+        for name, buffer in list(sub._buffers.items()):
+            if buffer is not None and buffer.device != target:
+                sub._buffers[name] = buffer.to(target)
 
 
 @dataclass(frozen=True, slots=True)
