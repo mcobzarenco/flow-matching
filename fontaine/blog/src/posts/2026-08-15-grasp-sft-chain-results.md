@@ -83,12 +83,19 @@ collection itself was never touched mid-run.
 
 ## Stage C — SFT on the demos, riding the rig-ft r1 recipe
 
-Stage C fine-tunes the MolmoAct2 trunk (AR objective, action-expert
-params only, LR 5e-5, global batch 64, 3000 steps ≈ 3.5 epochs over
-the 313 episodes / 54,101 frames) — deliberately *verbatim-class* on
-the rig-ft r1 recipe that worked before, with a mechanical diff
-receipt in the launcher header: only the data mixture, run names, and
-step count differ.
+Stage C fine-tunes the MolmoAct2 **action expert only** — the
+flow-matching denoising loss is the sole training objective; the VLM
+trunk (the autoregressive part) is completely frozen
+(`--ft_vlm=false --ft_embedding=none`). "AR" in this arm's *name*
+refers to the model family / decode path, not the loss. Recipe: LR
+5e-5 on the action-expert params, global batch 64, 3000 steps ≈ 3.5
+epochs over the 313 episodes / 54,101 frames — deliberately
+*verbatim-class* on the rig-ft r1 recipe that worked before, with a
+mechanical diff receipt in the launcher header: only the data
+mixture, run names, and step count differ. (Owner decision 10:07Z
+2026-08-15, registered mid-ride: this is the **last** run on their
+`train_lerobot.py` — all subsequent training goes through
+`bijou.train` / the first-class stack.)
 
 ![Stage-C action_flow_loss vs the rig-ft r1 reference](../img/grasp_sft/stagec_loss.png)
 
